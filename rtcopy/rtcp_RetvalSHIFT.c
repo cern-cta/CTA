@@ -4,13 +4,15 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: rtcp_RetvalSHIFT.c,v $ $Revision: 1.5 $ $Date: 2000/02/16 10:48:46 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "$RCSfile: rtcp_RetvalSHIFT.c,v $ $Revision: 1.6 $ $Date: 2000/03/13 11:29:23 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
  * rtcpd_RetvalSHIFT.c - RTCOPY routines to calculate tpread/tpwrite command RC
  */
 
+#include <stdlib.h>
+#include <time.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 extern char *geterr();
@@ -18,12 +20,10 @@ extern char *geterr();
 #include <sys/param.h>
 #include <sys/types.h>                  /* Standard data types          */
 #include <netdb.h>                      /* Network "data base"          */
-#include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>                 /* Internet data types          */
 #endif /* _WIN32 */
 
-#include <stdlib.h>
 #include <errno.h>
 #include <pwd.h>
 #include <Castor_limits.h>

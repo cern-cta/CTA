@@ -4,13 +4,15 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.18 $ $Date: 2000/03/13 10:03:57 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.19 $ $Date: 2000/03/13 11:29:38 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
  * rtcpd_stageupdc.c - RTCOPY interface to stageupdc
  */
 
+#include <stdlib.h>
+#include <time.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 extern char *geterr();
@@ -20,13 +22,11 @@ extern char *geterr();
 #include <sys/param.h>
 #include <sys/types.h>                  /* Standard data types          */
 #include <netdb.h>                      /* Network "data base"          */
-#include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>                 /* Internet data types          */
 #endif /* _WIN32 */
 
 #include <signal.h>
-#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <stdarg.h>

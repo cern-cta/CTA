@@ -4,28 +4,26 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.17 $ $Date: 2000/03/10 14:38:49 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.18 $ $Date: 2000/03/13 11:29:32 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
  * rtcpd_SHIFTClients.c - RTCOPY routines to serve old SHIFT clients
  */
 
-
+#include <stdlib.h>
+#include <time.h>
 #if defined(_WIN32)
 #include <winsock2.h>
-#include <time.h>
 extern char *geterr();
 #else /* _WIN32 */
 #include <sys/param.h>
 #include <sys/types.h>                  /* Standard data types          */
 #include <netdb.h>                      /* Network "data base"          */
-#include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>                 /* Internet data types          */
 #endif /* _WIN32 */
 
-#include <stdlib.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>

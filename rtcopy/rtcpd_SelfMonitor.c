@@ -4,20 +4,19 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SelfMonitor.c,v $ $Revision: 1.2 $ $Date: 2000/03/04 14:00:38 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SelfMonitor.c,v $ $Revision: 1.3 $ $Date: 2000/03/13 11:29:33 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
  * rtcpd_SelfMonitor.c - RTCOPY server self monitor
  */
 
-
+#include <stdlib.h>
+#include <time.h>
 #if defined(_WIN32)
 #include <winsock2.h>
-#include <time.h>
 #endif /* _WIN32 */
 
-#include <stdlib.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.45 $ $Date: 2000/03/13 10:17:35 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.46 $ $Date: 2000/03/13 11:29:29 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -12,11 +12,11 @@ static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.45 $ $Date: 
  */
 
 #include <stdlib.h>
+#include <time.h>
 #include <fcntl.h>
 #include <stdio.h>
 #if defined(_WIN32)
 #include <winsock2.h>
-#include <time.h>
 #include <io.h>
 extern char *geterr();
 #else /* _WIN32 */
@@ -24,7 +24,6 @@ extern char *geterr();
 #include <sys/param.h>
 #include <sys/types.h>                  /* Standard data types          */
 #include <netdb.h>                      /* Network "data base"          */
-#include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>                 /* Internet data types          */
 #endif /* _WIN32 */

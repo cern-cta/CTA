@@ -9,23 +9,22 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.9 $ $Date: 2000/02/29 15:16:09 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.10 $ $Date: 2000/03/13 11:29:25 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
+#include <stdlib.h>
+#include <time.h>
 #if defined(_WIN32)
 #include <winsock2.h>
-#include <time.h>
 extern char *geterr();
 #else /* _WIN32 */
 #include <sys/param.h>
 #include <sys/types.h>                  /* Standard data types          */
 #include <netdb.h>                      /* Network "data base"          */
-#include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>                 /* Internet data types          */
 #endif /* _WIN32 */
 
-#include <stdlib.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>

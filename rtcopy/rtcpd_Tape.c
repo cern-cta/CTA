@@ -4,14 +4,15 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.42 $ $Date: 2000/03/13 10:17:33 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.43 $ $Date: 2000/03/13 11:29:35 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
  * rtcpd_Tape.c - RTCOPY server tape IO thread
  */
 
-
+#include <stdlib.h>
+#include <time.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #include <io.h>
@@ -20,12 +21,10 @@ extern char *geterr();
 #include <sys/param.h>
 #include <sys/types.h>                  /* Standard data types          */
 #include <netdb.h>                      /* Network "data base"          */
-#include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>                 /* Internet data types          */
 #endif /* _WIN32 */
 
-#include <stdlib.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <sys/stat.h>

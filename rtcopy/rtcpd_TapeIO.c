@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.18 $ $Date: 2000/03/13 09:07:01 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.19 $ $Date: 2000/03/13 11:29:37 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -12,16 +12,15 @@ static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.18 $ $Date
  */
 
 #include <stdlib.h>
+#include <time.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #if !defined(_WIN32)
 #include <sys/ioctl.h>
-#include <sys/time.h>
 #else /* _WIN32 */
 #include <io.h>
-#include <time.h>
 #include <winsock2.h>
 #endif /* _WIN32 */
 #include <sys/types.h>
