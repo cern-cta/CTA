@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.8 $ $Date: 1999/11/17 10:36:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.9 $ $Date: 1999/11/17 11:03:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -275,8 +275,8 @@ char	**argv;
 
 	/* Build UPDFIL request body */
 
-	marshall_WORD (sbp, uid);
-	marshall_WORD (sbp, gid);
+	marshall_LONG (sbp, uid);
+	marshall_LONG (sbp, gid);
 	marshall_LONG (sbp, jid);
 	marshall_WORD (sbp, ux);
 	marshall_LONG (sbp, blksize);
@@ -354,8 +354,8 @@ void cleanup()
  
 	/* Build request body */
 
-	marshall_WORD (sbp, uid);
-	marshall_WORD (sbp, gid);
+	marshall_LONG (sbp, uid);
+	marshall_LONG (sbp, gid);
 	marshall_LONG (sbp, jid);
 	marshall_WORD (sbp, flags);
 	marshall_STRING (sbp, path);
