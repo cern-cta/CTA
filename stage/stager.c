@@ -1482,7 +1482,12 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 					} else {
 						strcpy (fl[j].filereq.recfm, stcp->recfm);
 					}
-					strncpy (fl[j].filereq.fid, stcp->u1.t.fid, CA_MAXFIDLEN);
+					if (strlen(stcp->u1.t.fid) > CA_MAXFIDLEN) {
+						/* Take the LAST 17 characters of fid */
+						strncpy (fl[j].filereq.fid, &(stcp->u1.t.fid[strlen(stcp->u1.t.fid) - CA_MAXFIDLEN]), CA_MAXFIDLEN);
+					} else {
+						strcpy (fl[j].filereq.fid, stcp->u1.t.fid);
+					}
 					sprintf (fl[j].filereq.stageID, "%d.%d@%s", reqid, key,
 									 hostname);
 					switch (stcp->u1.t.fseq[0]) {
@@ -1649,7 +1654,12 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				return(-1);
 			}
 			fid++;
-			strncpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.fid, fid, CA_MAXFIDLEN);
+			if (strlen(fid) > CA_MAXFIDLEN) {
+				/* Take the LAST 17 characters of fid */
+				strncpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.fid, &(fid[strlen(fid) - CA_MAXFIDLEN]), CA_MAXFIDLEN);
+			} else {
+				strcpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.fid, fid);
+			}
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.position_method = TPPOSIT_FSEQ;
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.tape_fseq = hsm_fseq[ihsm];
 #ifndef SKIP_FILEREQ_MAXSIZE
