@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.96 $ $Release$ $Date: 2004/12/03 11:45:51 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.97 $ $Release$ $Date: 2004/12/06 08:25:01 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.96 $ $Release$ $Date: 2004/12/03 11:45:51 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.97 $ $Release$ $Date: 2004/12/06 08:25:01 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1224,6 +1224,12 @@ static int nextSegmentToRecall(
     save_serrno = serrno;
     LOG_DBCALL_ERR("Cstager_IStagerSvc_bestFileSystemForSegment()",
                    Cstager_IStagerSvc_errorMsg(*stgsvc));
+    filereq->err.errorcode = save_serrno;
+    filereq->err.severity = RTCP_FAILED;
+    strncpy(filereq->err.errmsgtxt,
+            Cstager_IStagerSvc_errorMsg(*stgsvc),
+            sizeof(filereq->err.errmsgtxt)-1);
+    (void)rtcpcld_updcRecallFailed(tape,fl);
     serrno = save_serrno;
     return(-1);
   }
@@ -1231,6 +1237,11 @@ static int nextSegmentToRecall(
   if ( recallCandidate == NULL ) {
     LOG_DBCALL_ERR("Cstager_IStagerSvc_bestFileSystemForSegment()",
                    "Unexpected successful return without candidate");
+    filereq->err.errorcode = ENOENT;
+    filereq->err.severity = RTCP_FAILED;
+    strcpy(filereq->err.errmsgtxt,
+           "Cstager_IStagerSvc_bestFileSystemForSegment() returned no candidate");
+    (void)rtcpcld_updcRecallFailed(tape,fl);
     serrno = ENOENT;
     return(-1);
   }
@@ -1305,6 +1316,11 @@ static int nextSegmentToRecall(
                     (pathName == NULL ? "(null)" : pathName),
                     RTCPCLD_LOG_WHERE
                     );
+    filereq->err.errorcode = save_serrno;
+    filereq->err.severity = RTCP_FAILED;
+    strcpy(filereq->err.errmsgtxt,
+           "Failed to construct pathname");
+    (void)rtcpcld_updcRecallFailed(tape,fl);
     serrno = save_serrno;
     return(-1);
   }
