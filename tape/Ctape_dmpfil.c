@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.11 $ $Date: 2000/12/20 08:53:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.12 $ $Date: 2001/02/05 05:58:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -20,9 +20,7 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.11 $ $Date
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h"
-#if defined(IRIX64)
-extern int dmp_usrmsg (int, char *, ...);
-#endif
+void DLL_DECL (*Ctape_dmpmsg) _PROTO((int, const char *, ...)) = NULL;
 #if !defined(linux)
 extern	char	*sys_errlist[];
 #endif
@@ -67,15 +65,15 @@ int flags;
 	int errflg = 0;
 
 	if (! vid || *vid == '\0') {
-		dmp_usrmsg (MSG_ERR, TP031);
+		Ctape_dmpmsg (MSG_ERR, TP031);
 		errflg++;
 	}
 	if (code != DMP_ASC && code != DMP_EBC) {
-		dmp_usrmsg (MSG_ERR, TP006, "code");
+		Ctape_dmpmsg (MSG_ERR, TP006, "code");
 		errflg++;
 	}
 	if (flags != 0 && flags != IGNOREEOI) {
-		dmp_usrmsg (MSG_ERR, TP006, "flags");
+		Ctape_dmpmsg (MSG_ERR, TP006, "flags");
 		errflg++;
 	}
 	if (errflg) {
@@ -83,7 +81,7 @@ int flags;
 		return (-1);
 	}
 
-	dmp_usrmsg (MSG_OUT, " DUMP - TAPE MOUNTED ON DRIVE %s\n", drive);
+	Ctape_dmpmsg (MSG_OUT, " DUMP - TAPE MOUNTED ON DRIVE %s\n", drive);
 
 	/* Set default values */
 
@@ -140,7 +138,7 @@ int flags;
 	case DDSC:
 		break;
 	default:
-		dmp_usrmsg (MSG_ERR, TP006, "density");
+		Ctape_dmpmsg (MSG_ERR, TP006, "density");
 		serrno = EINVAL;
 		return (-1);
 	}
@@ -169,29 +167,29 @@ int flags;
 
 	/* print headers */
 
-	dmp_usrmsg (MSG_OUT, " DUMP - PARAMETERS :\n");
+	Ctape_dmpmsg (MSG_OUT, " DUMP - PARAMETERS :\n");
 	if (maxbyte == 0)
-		dmp_usrmsg (MSG_OUT, " DUMP - ALL BYTES\n");
+		Ctape_dmpmsg (MSG_OUT, " DUMP - ALL BYTES\n");
 	else
-		dmp_usrmsg (MSG_OUT, " DUMP - MAX. NB OF BYTES: %d\n", maxbyte);
-	dmp_usrmsg (MSG_OUT, " DUMP - FROM BLOCK: %d\n", fromblock);
+		Ctape_dmpmsg (MSG_OUT, " DUMP - MAX. NB OF BYTES: %d\n", maxbyte);
+	Ctape_dmpmsg (MSG_OUT, " DUMP - FROM BLOCK: %d\n", fromblock);
 	if (toblock == 0)
-		dmp_usrmsg (MSG_OUT, " DUMP - TO LAST BLOCK\n");
+		Ctape_dmpmsg (MSG_OUT, " DUMP - TO LAST BLOCK\n");
 	else
-		dmp_usrmsg (MSG_OUT, " DUMP - TO BLOCK: %d\n", toblock);
+		Ctape_dmpmsg (MSG_OUT, " DUMP - TO BLOCK: %d\n", toblock);
 	if (fromfile > 0)
-		dmp_usrmsg (MSG_OUT, " DUMP - FROM FILE %d\n", fromfile);
+		Ctape_dmpmsg (MSG_OUT, " DUMP - FROM FILE %d\n", fromfile);
 	if (maxfile == 0)
-		dmp_usrmsg (MSG_OUT, " DUMP - ALL FILES\n");
+		Ctape_dmpmsg (MSG_OUT, " DUMP - ALL FILES\n");
 	else
-		dmp_usrmsg (MSG_OUT, " DUMP - MAX. NB OF FILES: %d\n", maxfile);
-	dmp_usrmsg (MSG_OUT, " DUMP - %s INTERPRETATION\n", codes[code]);
-	dmp_usrmsg (MSG_OUT, " DUMP -\n");
+		Ctape_dmpmsg (MSG_OUT, " DUMP - MAX. NB OF FILES: %d\n", maxfile);
+	Ctape_dmpmsg (MSG_OUT, " DUMP - %s INTERPRETATION\n", codes[code]);
+	Ctape_dmpmsg (MSG_OUT, " DUMP -\n");
 
 	/* open path */
 
 	if (infd < 0 && (infd = open (path, O_RDONLY)) < 0) {
-		dmp_usrmsg (MSG_ERR, " DUMP ! ERROR OPENING TAPE FILE: %s\n",
+		Ctape_dmpmsg (MSG_ERR, " DUMP ! ERROR OPENING TAPE FILE: %s\n",
 			sys_errlist[errno]);
 		serrno = errno;
 		return (-1);
@@ -285,15 +283,15 @@ u_signed64 *Size;
 					}
 				}
 				if (lcode) {
-					dmp_usrmsg (MSG_OUT, "               %s HAS AN %s LABEL\n",
+					Ctape_dmpmsg (MSG_OUT, "               %s HAS AN %s LABEL\n",
 					    dmpparm.vid, codes[lcode]);
-					dmp_usrmsg (MSG_OUT, "\n VOLUME LABEL :\n");
-					dmp_usrmsg (MSG_OUT, " VOLUME SERIAL NUMBER:       %.6s\n",
+					Ctape_dmpmsg (MSG_OUT, "\n VOLUME LABEL :\n");
+					Ctape_dmpmsg (MSG_OUT, " VOLUME SERIAL NUMBER:       %.6s\n",
 					    label+4);
-					dmp_usrmsg (MSG_OUT, " OWNER IDENTIFIER:           %.14s\n",
+					Ctape_dmpmsg (MSG_OUT, " OWNER IDENTIFIER:           %.14s\n",
 					    label+37);
 				} else {
-					dmp_usrmsg (MSG_OUT, "               %s IS UNLABELLED\n",
+					Ctape_dmpmsg (MSG_OUT, "               %s IS UNLABELLED\n",
 					    dmpparm.vid);
 				}
 				if (lbltype)
@@ -304,10 +302,10 @@ u_signed64 *Size;
 					n = dmpparm.fromfile - 1;
 					if (lcode == AL || lcode == SL)
 						n *= 3;
-					dmp_usrmsg (MSG_OUT, "\n DUMP - SKIPPING TO FILE %d\n",
+					Ctape_dmpmsg (MSG_OUT, "\n DUMP - SKIPPING TO FILE %d\n",
 					    dmpparm.fromfile);
 					if (skiptpff (infd, path, n) < 0) {
-						dmp_usrmsg (MSG_ERR, " DUMP ! SKIP ERROR\n");
+						Ctape_dmpmsg (MSG_ERR, " DUMP ! SKIP ERROR\n");
 						errcat = EIO;
 						break;
 					}
@@ -369,7 +367,7 @@ u_signed64 *Size;
 			if (irec >= dmpparm.fromblock &&
 				(dmpparm.toblock == 0 || irec <= dmpparm.toblock)) {
 				dumpblock (buffer, nbytes);
-				dmp_usrmsg (MSG_OUT, " BLOCK NUMBER %d  LENGTH = %d BYTES\n",
+				Ctape_dmpmsg (MSG_OUT, " BLOCK NUMBER %d  LENGTH = %d BYTES\n",
 					irec, nbytes);
 			}
 
@@ -378,7 +376,7 @@ u_signed64 *Size;
 			if (gettperror (infd, path, &msgaddr) == ETBLANK) {
 				if (dev1tm && !qbov && irec == 0) break;
 				fflush (stdout);
-				dmp_usrmsg (MSG_ERR, " DUMP ! READ ERROR: %s (BLOCK # %d)\n",
+				Ctape_dmpmsg (MSG_ERR, " DUMP ! READ ERROR: %s (BLOCK # %d)\n",
 					"Blank check", irec+1);
 				break;
 			}
@@ -399,42 +397,42 @@ u_signed64 *Size;
 			else if (den == DDS || den == DDSC)
 				tape_used = tape_used + 4.0;
 			if (qbov) {	/* beginning of tape */
-				dmp_usrmsg (MSG_OUT, "               %s IS UNLABELLED\n", dmpparm.vid);
+				Ctape_dmpmsg (MSG_OUT, "               %s IS UNLABELLED\n", dmpparm.vid);
 				if (lbltype)
 					strcpy (lbltype, labels[lcode]);
 			}
 			if (qlab) {
-				dmp_usrmsg (MSG_OUT, " ***** TAPE MARK READ *****      END OF LABEL GROUP\n");
-				dmp_usrmsg (MSG_OUT, " *********************************************************************************************************************\n");
+				Ctape_dmpmsg (MSG_OUT, " ***** TAPE MARK READ *****      END OF LABEL GROUP\n");
+				Ctape_dmpmsg (MSG_OUT, " *********************************************************************************************************************\n");
 				if (dmpparm.maxfile != 0 && nfile >= dmpparm.maxfile) {
 					(void) report_comp_stats (infd, path, dmpparm.devtype);
-					dmp_usrmsg (MSG_OUT, " DUMP - DUMPING PROGRAM COMPLETE.\n");
+					Ctape_dmpmsg (MSG_OUT, " DUMP - DUMPING PROGRAM COMPLETE.\n");
 					close (infd);
 					return (1);
 				}
 				qlab = 0;
 			} else {
 				nfile++;
-				dmp_usrmsg (MSG_OUT, " ***** TAPE MARK READ *****      FILE %d CONTAINED %d BLOCKS.\n",
+				Ctape_dmpmsg (MSG_OUT, " ***** TAPE MARK READ *****      FILE %d CONTAINED %d BLOCKS.\n",
 					nfile, irec);
 				if (goodrec != 0) {
 					avg_block_length = sum_block_length / goodrec;
-					dmp_usrmsg (MSG_OUT, "                                 MAXIMUM BLOCK LENGTH WAS %d BYTES\n",
+					Ctape_dmpmsg (MSG_OUT, "                                 MAXIMUM BLOCK LENGTH WAS %d BYTES\n",
 						max_block_length);
-					dmp_usrmsg (MSG_OUT, "                                 MINIMUM BLOCK LENGTH WAS %d BYTES\n",
+					Ctape_dmpmsg (MSG_OUT, "                                 MINIMUM BLOCK LENGTH WAS %d BYTES\n",
 						min_block_length);
-					dmp_usrmsg (MSG_OUT, "                                 AVERAGE BLOCK LENGTH WAS %d BYTES\n",
+					Ctape_dmpmsg (MSG_OUT, "                                 AVERAGE BLOCK LENGTH WAS %d BYTES\n",
 						avg_block_length);
-					dmp_usrmsg (MSG_OUT, " *********************************************************************************************************************\n");
+					Ctape_dmpmsg (MSG_OUT, " *********************************************************************************************************************\n");
 					if (lcode == 0 && dmpparm.maxfile != 0 &&
 					    nfile >= dmpparm.maxfile) {
 						(void) report_comp_stats (infd, path, dmpparm.devtype);
-						dmp_usrmsg (MSG_OUT, " DUMP - DUMPING PROGRAM COMPLETE.\n");
+						Ctape_dmpmsg (MSG_OUT, " DUMP - DUMPING PROGRAM COMPLETE.\n");
 						close (infd);
 						return (1);
 					}
 				} else if ((dmpparm.flags & IGNOREEOI) == 0 && !qbov) {
-					dmp_usrmsg (MSG_OUT, " ***** DOUBLE TAPE MARK READ *****\n");
+					Ctape_dmpmsg (MSG_OUT, " ***** DOUBLE TAPE MARK READ *****\n");
 					break;
 				}
 			}
@@ -467,11 +465,11 @@ u_signed64 *Size;
 			if (errcat == ETBLANK && dev1tm && !qbov && irec == 0) break;
 			irec++;
 			fflush (stdout);
-			dmp_usrmsg (MSG_ERR, " DUMP ! READ ERROR: %s (BLOCK # %d)\n",
+			Ctape_dmpmsg (MSG_ERR, " DUMP ! READ ERROR: %s (BLOCK # %d)\n",
 				msgaddr, irec);
 			if (errcat == ETBLANK) break;
 			if (++nerr >= 10) {
-				dmp_usrmsg (MSG_ERR, " DUMP ! TOO MANY READ ERRORS.\n");
+				Ctape_dmpmsg (MSG_ERR, " DUMP ! TOO MANY READ ERRORS.\n");
 				break;
 			}
 		}
@@ -479,15 +477,15 @@ u_signed64 *Size;
 	if (irec) {
 		if (goodrec) {
 			avg_block_length = sum_block_length / goodrec;
-			dmp_usrmsg (MSG_OUT, "                                 MAXIMUM BLOCK LENGTH WAS %d BYTES\n",
+			Ctape_dmpmsg (MSG_OUT, "                                 MAXIMUM BLOCK LENGTH WAS %d BYTES\n",
 				max_block_length);
-			dmp_usrmsg (MSG_OUT, "                                 MINIMUM BLOCK LENGTH WAS %d BYTES\n",
+			Ctape_dmpmsg (MSG_OUT, "                                 MINIMUM BLOCK LENGTH WAS %d BYTES\n",
 				min_block_length);
-			dmp_usrmsg (MSG_OUT, "                                 AVERAGE BLOCK LENGTH WAS %d BYTES\n",
+			Ctape_dmpmsg (MSG_OUT, "                                 AVERAGE BLOCK LENGTH WAS %d BYTES\n",
 				avg_block_length);
-			dmp_usrmsg (MSG_OUT, " *********************************************************************************************************************\n");
+			Ctape_dmpmsg (MSG_OUT, " *********************************************************************************************************************\n");
 		}
-		dmp_usrmsg (MSG_OUT, " DUMP - DUMP ABORTED\n");
+		Ctape_dmpmsg (MSG_OUT, " DUMP - DUMP ABORTED\n");
 		serrno = (errcat > 0) ? errcat : EIO;
 		close (infd);
 		return (-1);
@@ -495,40 +493,40 @@ u_signed64 *Size;
 
 	if (den <= D6250) {
 		perc = (tape_used * 100) / (2400 * 12);
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A FULL 2400 FOOT TAPE *****\n",
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A FULL 2400 FOOT TAPE *****\n",
 			perc);
 	} else if (den == D38000 || den == D38KC) {
 		perc = (tape_used * 100) / (500 * 12);
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A STANDARD 3480 CARTRIDGE *****\n",
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A STANDARD 3480 CARTRIDGE *****\n",
 			perc);
 	} else if (den == D38KD || den == D38KDC) {
 		perc = (tape_used * 100) / (500 * 4 * 12);
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A DOUBLE LENGTH CARTRIDGE *****\n",
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A DOUBLE LENGTH CARTRIDGE *****\n",
 			perc);
 	} else if (den == D8200 || den == D8200C) {
 		perc = tape_used / 23000000;
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A STANDARD LENGTH (2.3GB) EXABYTE TAPE *****\n",
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A STANDARD LENGTH (2.3GB) EXABYTE TAPE *****\n",
 			perc);
 	} else if (den == D8500 || den == D8500C) {
 		perc = tape_used / 50000000;
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A STANDARD LENGTH (5GB) EXABYTE TAPE *****\n",
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A STANDARD LENGTH (5GB) EXABYTE TAPE *****\n",
 			perc);
 	} else if (den == D2G) {
 		perc = tape_used / 26000000;
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A CompacTapeIII (2.6GB) *****\n",
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A CompacTapeIII (2.6GB) *****\n",
 			perc);
 	} else if (den == D6G) {
 		perc = tape_used / 60000000;
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A CompacTapeIII (6GB) *****\n",
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A CompacTapeIII (6GB) *****\n",
 			perc);
 	} else if (den == D10G || den == D10GC) {
 	    if (strncmp (dmpparm.devtype, "DLT", 3) == 0) {
 		perc = tape_used / 100000000;
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A CompacTapeIII (10GB) *****\n",
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A CompacTapeIII (10GB) *****\n",
 			perc);
 	    } else if (strcmp (dmpparm.devtype, "SD3") == 0) {
 		perc = tape_used / 100000000;
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A Redwood CARTRIDGE (10GB) *****\n",
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A Redwood CARTRIDGE (10GB) *****\n",
 			perc);
 #if defined(_AIX) && defined(_IBMR2) && defined(ADSTAR)
 	    } else if (strcmp (dmpparm.devtype, "3590") == 0) {
@@ -538,7 +536,7 @@ u_signed64 *Size;
 		unsigned int wrap;
 
 		if (ioctl (infd, SIOC_REQSENSE, sense) < 0) {
-			dmp_usrmsg (MSG_ERR, " DUMP ! UNABLE TO DETERMINE TAPE OCCUPANCY");
+			Ctape_dmpmsg (MSG_ERR, " DUMP ! UNABLE TO DETERMINE TAPE OCCUPANCY");
 			serrno = EIO;
 			close (infd);
 			return (-1);
@@ -551,47 +549,47 @@ u_signed64 *Size;
 		else
 			cpos += (244 - tach);
 		perc = (cpos * 100) / (235 * 8);
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A STANDARD 3590 CARTRIDGE *****\n",
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A STANDARD 3590 CARTRIDGE *****\n",
 			perc);
 #endif
 	    }
 	} else if (den == D20G || den == D20GC) {
 	    if (strncmp (dmpparm.devtype, "DLT", 3) == 0) {
 		perc = tape_used / 200000000;
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A CompacTapeIV (20GB) *****\n",
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A CompacTapeIV (20GB) *****\n",
 			perc);
 	    } else if (strcmp (dmpparm.devtype, "9840") == 0) {
 		perc = tape_used / 200000000;
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN STK 9840 CARTRIDGE (20GB) *****\n",
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN STK 9840 CARTRIDGE (20GB) *****\n",
 			perc);
 	    }
 	} else if (den == D25G || den == D25GC) {
 		perc = tape_used / 250000000;
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A Redwood CARTRIDGE (25GB) *****\n",
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A Redwood CARTRIDGE (25GB) *****\n",
 			perc);
 	} else if (den == D35G || den == D35GC) {
 		perc = tape_used / 350000000;
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A CompacTapeIV (35GB) *****\n",
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A CompacTapeIV (35GB) *****\n",
 			perc);
 	} else if (den == D50G || den == D50GC) {
 		perc = tape_used / 500000000;
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A Redwood CARTRIDGE (50GB) *****\n",
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A Redwood CARTRIDGE (50GB) *****\n",
 			perc);
 	} else if (den == D60G || den == D60GC) {
 		perc = tape_used / 600000000;
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN STK 9940 CARTRIDGE (60GB) *****\n",
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN STK 9940 CARTRIDGE (60GB) *****\n",
 			perc);
 	} else if (den == D100G || den == D100GC) {
 		perc = tape_used / 1000000000;
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN LTO CARTRIDGE (100GB) *****\n",
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN LTO CARTRIDGE (100GB) *****\n",
 			perc);
 	} else if (den == DDS || den == DDSC) {
 		perc = tape_used / 40000000;
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A DDS2 CARTRIDGE (4GB) *****\n",
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A DDS2 CARTRIDGE (4GB) *****\n",
 			perc);
 	}
 	(void) report_comp_stats (infd, path, dmpparm.devtype);
-	dmp_usrmsg (MSG_OUT, " DUMP - DUMPING PROGRAM COMPLETE.\n");
+	Ctape_dmpmsg (MSG_OUT, " DUMP - DUMPING PROGRAM COMPLETE.\n");
 	close (infd);
 	return (1);
 }
@@ -605,7 +603,7 @@ int nbytes;
 	int iad;
 	char *p;
 
-	dmp_usrmsg (MSG_OUT, " BLOCK NUMBER %d\n", irec);
+	Ctape_dmpmsg (MSG_OUT, " BLOCK NUMBER %d\n", irec);
 	for (iad = 0, p = buffer; iad < nbytes; iad += 32) {
 		if (dmpparm.maxbyte != 0 && iad >= dmpparm.maxbyte) break;
 		l = iad + 31;
@@ -616,14 +614,14 @@ int nbytes;
 		else
 			asc_asc (p, bufftr, k);
 		bufftr[k] = '\0';
-		dmp_usrmsg (MSG_OUT, " %.8x   ", iad);
+		Ctape_dmpmsg (MSG_OUT, " %.8x   ", iad);
 		for (i = 0; i < k; i++) {
 			if (i % 8 == 0) putchar (' ');
-			dmp_usrmsg (MSG_OUT, "%.2x", *(p++) & 0xff);
+			Ctape_dmpmsg (MSG_OUT, "%.2x", *(p++) & 0xff);
 		}
 		for (i = k; i < 32; i++)
 			putchar (' ');
-		dmp_usrmsg (MSG_OUT, "    *%s*\n", bufftr);
+		Ctape_dmpmsg (MSG_OUT, "    *%s*\n", bufftr);
 	}
 }
 
@@ -721,39 +719,39 @@ islabel(label)
 char *label;
 {
 	if (strncmp (label, "HDR1", 4) == 0) {
-		dmp_usrmsg (MSG_OUT, "\n HEADER LABEL 1:\n");
+		Ctape_dmpmsg (MSG_OUT, "\n HEADER LABEL 1:\n");
 		printlabel1 (label);
 		return (1);
 	} else if (strncmp (label, "HDR2", 4) == 0) {
-		dmp_usrmsg (MSG_OUT, "\n HEADER LABEL 2:\n");
+		Ctape_dmpmsg (MSG_OUT, "\n HEADER LABEL 2:\n");
 		printlabel2 (label);
 		return (2);
 	} else if (strncmp (label, "HDR3", 4) == 0) {
-		dmp_usrmsg (MSG_OUT, "\n HEADER LABEL 3:             %.76s\n", label+4);
+		Ctape_dmpmsg (MSG_OUT, "\n HEADER LABEL 3:             %.76s\n", label+4);
 		return (3);
 	} else if (strncmp (label, "HDR4", 4) == 0) {
-		dmp_usrmsg (MSG_OUT, "\n HEADER LABEL 4:             %.76s\n", label+4);
+		Ctape_dmpmsg (MSG_OUT, "\n HEADER LABEL 4:             %.76s\n", label+4);
 		return (4);
 	} else if (strncmp (label, "EOF1", 4) == 0) {
-		dmp_usrmsg (MSG_OUT, "\n TRAILER LABEL 1:\n");
+		Ctape_dmpmsg (MSG_OUT, "\n TRAILER LABEL 1:\n");
 		printlabel1 (label);
 		return (-1);
 	} else if (strncmp (label, "EOF2", 4) == 0) {
-		dmp_usrmsg (MSG_OUT, "\n TRAILER LABEL 2:\n");
+		Ctape_dmpmsg (MSG_OUT, "\n TRAILER LABEL 2:\n");
 		printlabel2 (label);
 		return (-2);
 	} else if (strncmp (label, "EOF3", 4) == 0) {
-		dmp_usrmsg (MSG_OUT, "\n TRAILER LABEL 3:            %.76s\n", label+4);
+		Ctape_dmpmsg (MSG_OUT, "\n TRAILER LABEL 3:            %.76s\n", label+4);
 		return (-3);
 	} else if (strncmp (label, "EOF4", 4) == 0) {
-		dmp_usrmsg (MSG_OUT, "\n TRAILER LABEL 4:            %.76s\n", label+4);
+		Ctape_dmpmsg (MSG_OUT, "\n TRAILER LABEL 4:            %.76s\n", label+4);
 		return (-4);
 	} else if (strncmp (label, "EOV1", 4) == 0) {
-		dmp_usrmsg (MSG_OUT, "\n END OF VOLUME LABEL 1:\n");
+		Ctape_dmpmsg (MSG_OUT, "\n END OF VOLUME LABEL 1:\n");
 		printlabel1 (label);
 		return (-1);
 	} else if (strncmp (label, "EOV2", 4) == 0) {
-		dmp_usrmsg (MSG_OUT, "\n END OF VOLUME LABEL 2:\n");
+		Ctape_dmpmsg (MSG_OUT, "\n END OF VOLUME LABEL 2:\n");
 		printlabel2 (label);
 		return (-2);
 	}
@@ -763,23 +761,23 @@ char *label;
 printlabel1 (label)
 char *label;
 {
-	dmp_usrmsg (MSG_OUT, " FILE ID:                    %.17s\n", label + 4);
-	dmp_usrmsg (MSG_OUT, " VOLUME SEQNO:               %.4s\n", label + 27);
-	dmp_usrmsg (MSG_OUT, " FILE SEQNO:                 %.4s\n", label + 31);
-	dmp_usrmsg (MSG_OUT, " CREATION DATE:              %.6s\n", label + 41);
-	dmp_usrmsg (MSG_OUT, " EXPIRATION DATE:            %.6s\n", label + 47);
-	dmp_usrmsg (MSG_OUT, " BLOCK COUNT:                %.6s\n", label + 54);
+	Ctape_dmpmsg (MSG_OUT, " FILE ID:                    %.17s\n", label + 4);
+	Ctape_dmpmsg (MSG_OUT, " VOLUME SEQNO:               %.4s\n", label + 27);
+	Ctape_dmpmsg (MSG_OUT, " FILE SEQNO:                 %.4s\n", label + 31);
+	Ctape_dmpmsg (MSG_OUT, " CREATION DATE:              %.6s\n", label + 41);
+	Ctape_dmpmsg (MSG_OUT, " EXPIRATION DATE:            %.6s\n", label + 47);
+	Ctape_dmpmsg (MSG_OUT, " BLOCK COUNT:                %.6s\n", label + 54);
 }
 
 printlabel2 (label)
 char *label;
 {
-	dmp_usrmsg (MSG_OUT, " RECORD FORMAT:              %.1s\n", label + 4);
-	dmp_usrmsg (MSG_OUT, " BLOCK LENGTH:               %.5s\n", label + 5);
-	dmp_usrmsg (MSG_OUT, " RECORD LENGTH:              %.5s\n", label + 10);
-	dmp_usrmsg (MSG_OUT, " DENSITY:                    %.1s\n", label + 15);
-	dmp_usrmsg (MSG_OUT, " DATA RECORDING:             %.1s\n", label + 34);
-	dmp_usrmsg (MSG_OUT, " BLOCKING ATTRIBUTE:         %.1s\n", label + 38);
+	Ctape_dmpmsg (MSG_OUT, " RECORD FORMAT:              %.1s\n", label + 4);
+	Ctape_dmpmsg (MSG_OUT, " BLOCK LENGTH:               %.5s\n", label + 5);
+	Ctape_dmpmsg (MSG_OUT, " RECORD LENGTH:              %.5s\n", label + 10);
+	Ctape_dmpmsg (MSG_OUT, " DENSITY:                    %.1s\n", label + 15);
+	Ctape_dmpmsg (MSG_OUT, " DATA RECORDING:             %.1s\n", label + 34);
+	Ctape_dmpmsg (MSG_OUT, " BLOCKING ATTRIBUTE:         %.1s\n", label + 38);
 }
 
 report_comp_stats (infd, path, devtype)
@@ -792,7 +790,7 @@ char *devtype;
 	memset (&compstats, 0, sizeof(compstats));
 	if (get_compression_stats (infd, path, devtype, &compstats) == 0) {
 		if (compstats.from_tape)
-			dmp_usrmsg (MSG_OUT, " ***** COMPRESSION RATE ON TAPE: %8.2f\n",
+			Ctape_dmpmsg (MSG_OUT, " ***** COMPRESSION RATE ON TAPE: %8.2f\n",
 			    (float)compstats.to_host / (float)compstats.from_tape);
 	}
 	return (0);

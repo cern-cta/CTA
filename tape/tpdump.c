@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.23 $ $Date: 2001/01/29 07:35:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.24 $ $Date: 2001/02/05 06:00:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpdump - analyse the content of a tape */
@@ -23,6 +23,23 @@ int Ctape_kill_needed;
 char *dvrname;
 char infil[CA_MAXPATHLEN+1];
 int reserve_done;
+
+void tpdump_usrmsg(va_alist) va_dcl
+{
+	va_list args;
+	char *msg;
+	int msg_type;
+
+	va_start (args);
+	msg_type = va_arg (args, int);
+	msg = va_arg (args, char *);
+	if (msg_type == MSG_OUT)
+		vprintf (msg, args);
+	else {
+		fflush (stdout);
+		vfprintf (stderr, msg, args);
+	}
+}
 
 main(argc, argv)
 int	argc;
@@ -269,6 +286,7 @@ char	**argv;
 	    NULL, NULL, NULL))
 		exit_prog (SYERR);
 
+	Ctape_dmpmsg = (void (*) _PROTO((int, CONST char *, ...))) (&tpdump_usrmsg);
 	if (Ctape_dmpinit (infil, vid, aden, drive, devtype, maxblksize,
 	    fromblock, toblock, maxbyte, fromfile, maxfile, code, flags))
 		exit_prog (SYERR);
@@ -288,23 +306,6 @@ int sig;
 	else
 		Ctape_dmpend();
 	exit (USERR);
-}
-
-dmp_usrmsg(va_alist) va_dcl
-{
-	va_list args;
-	char *msg;
-	int msg_type;
-
-	va_start (args);
-	msg_type = va_arg (args, int);
-	msg = va_arg (args, char *);
-	if (msg_type == MSG_OUT)
-		vprintf (msg, args);
-	else {
-		fflush (stdout);
-		vfprintf (stderr, msg, args);
-	}
 }
 
 exit_prog(exit_code)
