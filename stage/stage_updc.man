@@ -1,10 +1,10 @@
-.\" $Id: stage_updc.man,v 1.5 2000/06/17 08:16:25 jdurand Exp $
+.\" $Id: stage_updc.man,v 1.6 2001/06/17 07:59:48 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_updc.man,v $ $Revision: 1.5 $ $Date: 2000/06/17 08:16:25 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_updc.man,v $ $Revision: 1.6 $ $Date: 2001/06/17 07:59:48 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGE_UPDC "3" "$Date: 2000/06/17 08:16:25 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_UPDC "3" "$Date: 2001/06/17 07:59:48 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_updc \- update the stager catalog
 .SH SYNOPSIS
@@ -15,6 +15,8 @@ stage_updc \- update the stager catalog
 .BI "int stage_updc_filcp(char *" stageid ", int " status ", char *" ifce ", u_signed64 " size ", int " waiting_time ", int " transfer_time ", int " blksize ", char *" drive ", char *" fid ", int " fseq ", int " lrecl ", char *" recfm ", char *" path ");"
 .sp
 .BI "int stage_updc_filchg(char *" host ", stage_hsm_t " *hsmstruct ");"
+.sp
+.BI "int stage_updc_user(char *" host ", stage_hsm_t " *hsmstruct ");"
 
 .SH DESCRIPTION
 The \fBstage_updc_filcp\fP, \fBstage_updc_tppos\fP and \fBstage_updc_filchg\fP API methods calls for an update of a entry in the
@@ -26,6 +28,8 @@ The \fBstage_updc_tppos\fP method is typically used to indicate to the stager th
 is over.
 .P
 The \fBstage_updc_filchg\fP changes the status of an HSM file from STAGED to STAGEOUT.
+.P
+The \fBstage_updc_user\fP changes the status of a file from STAGEIN or STAGEOUT to STAGED.
 
 .SH PARAMETERS
 .TP 2.0i
@@ -110,3 +114,5 @@ Connection closed by remote end
 .TP
 .B SECOMERR
 Communication error
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
