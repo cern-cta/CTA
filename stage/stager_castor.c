@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.38 2003/04/17 07:56:08 jdurand Exp $
+ * $Id: stager_castor.c,v 1.39 2003/04/17 08:25:13 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.38 $ $Date: 2003/04/17 07:56:08 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.39 $ $Date: 2003/04/17 08:25:13 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -3652,7 +3652,7 @@ void stager_process_error(save_serrno,tapereq,filereq,castor_hsm)
 	if (is_this_flag != 0) {
 		/* Two cases: segments to soft-delete (action in NS) or not (action in VMGR) */
 		if ((castor_hsm != NULL) && (filereq != NULL) && (segments_to_soft_delete != 0)) {
-			/* We need find again which copyno/fsec exactly refers to this tape/vid.fseq */
+			/* We need find again which copyno/fsec exactly refers to this tape/side.fseq */
 			/* This must be in the list of segments that are known in advance: */
 			if (hsm_segments != NULL && hsm_nsegments != NULL) {
 				int i;
@@ -3722,7 +3722,7 @@ void stager_process_error(save_serrno,tapereq,filereq,castor_hsm)
 			}
 		} else {
 			SAVE_EID;
-			sendrep(&rpfd, MSG_ERR, "### [%s] Trying to set tape/vid %s/%d to %s state\n", (castor_hsm != NULL) ? castor_hsm : "...", tapereq->vid, tapereq->side, this_string);
+			sendrep(&rpfd, MSG_ERR, "### [%s] Trying to set tape/side %s/%d to %s state\n", (castor_hsm != NULL) ? castor_hsm : "...", tapereq->vid, tapereq->side, this_string);
 			if (vmgr_updatetape(tapereq->vid, tapereq->side, 0, 0, 0, this_flag) != 0) {
 				if (tapereq->side > 0) {
 					sendrep (&rpfd, MSG_ERR, STG202, tapereq->vid, tapereq->side, "vmgr_updatetape", sstrerror(serrno));
