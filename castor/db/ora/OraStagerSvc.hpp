@@ -306,7 +306,7 @@ namespace castor {
          * has to wait until the end of the copy.
          * The DiskCopy found is returned, sources remains empty.
          *  - one DiskCopy on the selected FileSystem in
-         * DISKCOPY_STAGOUT or DISKCOPY_STAGED status :
+         * DISKCOPY_STAGEOUT or DISKCOPY_STAGED status :
          * the SubRequest is ready, the DiskCopy is returned and
          * sources remains empty.
          * @param subreq  the SubRequest to consider
