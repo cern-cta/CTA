@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/12/09 20:08:17 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.10 $ $Release$ $Date: 2005/01/14 16:03:22 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/12/09 20:08:17 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.10 $ $Release$ $Date: 2005/01/14 16:03:22 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -99,6 +99,7 @@ WSADATA wsadata;
 #include <rfio_api.h>
 #include <Cns_api.h>
 static int runAsDaemon = 0;
+static int legacyMode = 0;
 /** Global needed for determine which uuid to log
  */
 int inChild;
@@ -366,6 +367,11 @@ int tapePoolCreator(
   u_signed64 sz;
   int rc, i, j;
 
+  if ( (tapeCopyArray == NULL) || (fileClass == NULL) ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  
   rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
@@ -692,7 +698,8 @@ int addTapeCopyToStreams(
   Cstager_SvcClass_tapePools(svcClass,&tapePoolArray,&nbTapePools);
   for ( i=0; i<nbTapePools; i++ ) {
     Cstager_TapePool_name(tapePoolArray[i],(CONST char **)&tapePoolName);
-    if ( findTapePoolInFileClass(fileClass,tapePoolName) == 1 ) {
+    if ( (legacyMode == 0 ) ||
+         (findTapePoolInFileClass(fileClass,tapePoolName) == 1) ) {
       addedToStream = 1;
       streamArray = NULL;
       Cstager_TapePool_streams(tapePoolArray[i],&streamArray,&nbStreams);
@@ -772,10 +779,11 @@ int getMigrCandidates(
     return(-1);
   }
 
-  fileClassArray = (struct Cns_fileclass **)calloc(nbTapeCopies,
-                                                   sizeof(struct Cns_fileclass *));
+  if ( legacyMode == 1 ) {
+    fileClassArray = (struct Cns_fileclass **)calloc(nbTapeCopies,
+                                                     sizeof(struct Cns_fileclass *));
+  }
   for ( i=0; i<nbTapeCopies; i++ ) {
-    memset(&fileClass,'\0',sizeof(fileClass));
     iObj = Cstager_TapeCopy_getIObject(tapeCopyArray[i]);
     rc = C_Services_fillObj(
                             dbSvc,
@@ -806,38 +814,41 @@ int getMigrCandidates(
     }
     Cstager_CastorFile_fileSize(castorFile,&sz);
     *initialSizeToTransfer += sz;
-    rc = Cns_statx(castorFileName,&fileId,&statbuf);
-    if ( rc == -1 ) {
-      if ( runAsDaemon == 0 ) {
-        fprintf(stderr,"Cns_statx(): %s\n",sstrerror(serrno));
-      } else {
-        LOG_SYSCALL_ERR("Cns_statx()");
+    if ( legacyMode == 1 ) {
+      rc = Cns_statx(castorFileName,&fileId,&statbuf);
+      if ( rc == -1 ) {
+        if ( runAsDaemon == 0 ) {
+          fprintf(stderr,"Cns_statx(): %s\n",sstrerror(serrno));
+        } else {
+          LOG_SYSCALL_ERR("Cns_statx()");
+        }
+        continue;
       }
-      continue;
-    }
-    memset(&fileClass,'\0',sizeof(fileClass));
-    rc = Cns_queryclass(
-                        fileId.server,
-                        statbuf.fileclass,
-                        NULL,
-                        &fileClass
-                        );
-    if ( rc == -1 ) {
-      if ( runAsDaemon == 0 ) {
-        fprintf(stderr,"Cns_queryclass(%d): %s\n",
-                statbuf.fileclass,sstrerror(serrno));
-      } else {
-        LOG_SYSCALL_ERR("Cns_Queryclass()");
+      memset(&fileClass,'\0',sizeof(fileClass));
+      rc = Cns_queryclass(
+                          fileId.server,
+                          statbuf.fileclass,
+                          NULL,
+                          &fileClass
+                          );
+      if ( rc == -1 ) {
+        if ( runAsDaemon == 0 ) {
+          fprintf(stderr,"Cns_queryclass(%d): %s\n",
+                  statbuf.fileclass,sstrerror(serrno));
+        } else {
+          LOG_SYSCALL_ERR("Cns_Queryclass()");
+        }
+        continue;
       }
-      continue;
+      fileClassArray[i] = (struct Cns_fileclass *)calloc(1,sizeof(struct Cns_fileclass));
+      memcpy(fileClassArray[i],&fileClass,sizeof(struct Cns_fileclass));
     }
-    fileClassArray[i] = (struct Cns_fileclass *)calloc(1,sizeof(struct Cns_fileclass));
-    memcpy(fileClassArray[i],&fileClass,sizeof(struct Cns_fileclass));
+    *nsFileClassArray = fileClassArray;
   }
   *migrCandidates = tapeCopyArray;
-  *nsFileClassArray = fileClassArray;
   *nbMigrCandidates = nbTapeCopies;
   C_IAddress_delete(iAddr);
+  
   return(0);
 }
 
@@ -905,7 +916,7 @@ int addMigrationCandidatesToStreams(
     rc = addTapeCopyToStreams(
                               svcClass,
                               tapeCopyArray[i],
-                              nsFileClassArray[i]
+                              (nsFileClassArray == NULL ? NULL : nsFileClassArray[i])
                               );
     if ( rc == -1 ) {
       if ( runAsDaemon == 0 ) {
@@ -974,8 +985,9 @@ int addMigrationCandidatesToStreams(
 
 void usage(char *cmd) 
 {
-  fprintf(stdout,"Usage: %s [-d] [-t sleepTime(seconds)] svcClass1 svcClass2 svcClass3 ...\n"
+  fprintf(stdout,"Usage: %s [-d] [-L] [-t sleepTime(seconds)] svcClass1 svcClass2 svcClass3 ...\n"
           "-d                     : run as runAsDaemon\n"
+          "-L                     : Legacy mode, emulate old stgdaemon taking information from Cns\n"
           "-t sleepTime(seconds)  : sleep time (in seconds) between two checks. Default=300\n"
           "For instance:\n"
           "%s default\n",cmd,cmd);
@@ -1006,10 +1018,13 @@ int main(int argc, char *argv[])
   Coptind = 1;
   Copterr = 1;
   
-  while ( (c = Cgetopt(argc,argv,"dt:")) != -1 ) {
+  while ( (c = Cgetopt(argc,argv,"dLt:")) != -1 ) {
     switch (c) {
     case 'd':
       runAsDaemon = 1;
+      break;
+    case 'L':
+      legacyMode = 1;
       break;
     case 't':
       sleepTime = atoi(Coptarg);
@@ -1040,6 +1055,7 @@ int main(int argc, char *argv[])
   }
   do {
     for ( i=Coptind; i<argc; i++ ) {
+      (void)C_Services_rollback(dbSvc,iAddr);
       if ( svcClass != NULL ) Cstager_SvcClass_delete(svcClass);
       svcClass = NULL;
       if ( runAsDaemon == 0 ) {
@@ -1086,20 +1102,22 @@ int main(int argc, char *argv[])
         if ( runAsDaemon == 0 ) {
           fprintf(stdout,"Create new tape pools for %s if necessary\n",argv[i]);
         }
-        rc = tapePoolCreator(
-                             svcClass,
-                             migrCandidates,
-                             nsFileClassArray,
-                             nbMigrCandidates
-                             );
-        if ( rc == -1 ) {
-          if ( runAsDaemon == 0 ) {
-            fprintf(stderr,"tapePoolCreator(%s): %s\n",
-                    argv[i],sstrerror(serrno));
-          } else {
-            LOG_SYSCALL_ERR("tapePoolCreator()");
+        if ( legacyMode == 1 ) {
+          rc = tapePoolCreator(
+                               svcClass,
+                               migrCandidates,
+                               nsFileClassArray,
+                               nbMigrCandidates
+                               );
+          if ( rc == -1 ) {
+            if ( runAsDaemon == 0 ) {
+              fprintf(stderr,"tapePoolCreator(%s): %s\n",
+                      argv[i],sstrerror(serrno));
+            } else {
+              LOG_SYSCALL_ERR("tapePoolCreator()");
+            }
+            continue;
           }
-          continue;
         }
         if ( runAsDaemon == 0 ) {
           fprintf(stdout,"Initial size to transfer: %s\n",
