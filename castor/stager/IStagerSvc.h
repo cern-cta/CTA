@@ -92,7 +92,8 @@ int Cstager_IStagerSvc_anySegmentsForTape(struct Cstager_IStagerSvc_t* stgSvc,
  * The matching Segments entries must have the status
  * SEGMENT_UNPROCESSED.
  * Before return this function atomically updates the
- * matching catalog entries Tape status to TAPE_MOUNTED.
+ * matching catalog entries Tape status to TAPE_MOUNTED
+ * and the segments to SEGMENT_SELECTED.
  * @param stgSvc the IStagerSvc used
  * @param searchItem the tape information used for the search
  * @param segmentArray array with pointers to all waiting segments

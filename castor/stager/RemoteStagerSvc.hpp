@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.22 $ $Release$ $Date: 2005/01/27 16:25:43 $ $Author: bcouturi $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.23 $ $Release$ $Date: 2005/01/31 10:49:44 $ $Author: sponcec3 $
  *
  *
  *
@@ -100,7 +100,8 @@ namespace castor {
        * The matching Segments entries must have the status
        * SEGMENT_UNPROCESSED.
        * Before return this function atomically updates the
-       * matching catalog entries Tape status to TAPE_MOUNTED.
+       * matching catalog entries Tape status to TAPE_MOUNTED
+       * and the segments to SEGMENT_SELECTED.
        * @param searchItem the tape information used for the search
        * @return vector with all waiting segments
        * @exception in case of error

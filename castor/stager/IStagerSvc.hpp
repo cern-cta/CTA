@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.42 $ $Release$ $Date: 2005/01/25 13:46:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.43 $ $Release$ $Date: 2005/01/31 10:49:44 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -98,7 +98,8 @@ namespace castor {
        * The matching Segments entries must have the status
        * SEGMENT_UNPROCESSED.
        * Before return this function atomically updates the
-       * matching catalog entries Tape status to TAPE_MOUNTED.
+       * matching catalog entries Tape status to TAPE_MOUNTED
+       * and the segments to SEGMENT_SELECTED.
        * @param searchItem the tape information used for the search
        * @return vector with all waiting segments
        * @exception in case of error

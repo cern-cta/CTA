@@ -104,7 +104,8 @@ namespace castor {
          * The matching Segments entries must have the status
          * SEGMENT_UNPROCESSED.
          * Before return this function atomically updates the
-         * matching catalog entries Tape status to TAPE_MOUNTED.
+         * matching catalog entries Tape status to TAPE_MOUNTED
+         * and the segments to SEGMENT_SELECTED.
          * @param searchItem the tape information used for the search
          * @return vector with all waiting segments
          * @exception in case of error
@@ -774,6 +775,18 @@ namespace castor {
 
         /// SQL statement object for function bestFileSystemForJob
         oracle::occi::Statement *m_bestFileSystemForJobStatement;
+
+        /// SQL statement for function segmentsForTape
+        static const std::string s_segmentsForTapeStatementString;
+
+        /// SQL statement object for function segmentsForTape
+        oracle::occi::Statement *m_segmentsForTapeStatement;
+
+        /// SQL statement for function anySegmentsForTape
+        static const std::string s_anySegmentsForTapeStatementString;
+
+        /// SQL statement object for function anySegmentsForTape
+        oracle::occi::Statement *m_anySegmentsForTapeStatement;
 
       }; // end of class OraStagerSvc
 

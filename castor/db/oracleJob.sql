@@ -588,7 +588,7 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForJob
 BEGIN
  IF fileSystems.COUNT > 0 THEN
   DECLARE
-   fsIds numList := numList();
+   fsIds "numList" := "numList"();
   BEGIN
    fsIds.EXTEND(fileSystems.COUNT);
    FOR i in fileSystems.FIRST .. fileSystems.LAST LOOP
@@ -642,18 +642,17 @@ END;
 /* PL/SQL method implementing segmentsForTape */
 CREATE OR REPLACE PROCEDURE segmentsForTape
 (tapeId IN INTEGER, segments OUT castor.Segment_Cur) AS
-  found NUMBER = FALSE;
+  segs "numList";
 BEGIN
-  OPEN segments FOR SELECT Segment.* FROM Segment
-  WHERE Segment.tape = tapeId
-    AND Segment.status = 0; -- UNPROCESSED
-  FOR item in segments LOOP
-    UPDATE Segment SET status = 7 -- SELECTED
-    WHERE id = item.id;
-    found := TRUE;
-  END LOOP;
-  IF found THEN
+  SELECT Segment.id BULK COLLECT INTO segs FROM Segment
+   WHERE Segment.tape = tapeId
+     AND Segment.status = 0 FOR UPDATE;
+  IF segs.COUNT > 0 THEN
     UPDATE Tape SET status = 4 -- MOUNTED
-    WHERE id = tapeId;
+     WHERE id = tapeId;
+    UPDATE Segment set status = 7 -- SELECTED
+     WHERE id MEMBER OF segs;
   END IF;
+  OPEN segments FOR SELECT * FROM Segment 
+                     where id MEMBER OF segs;
 END;
