@@ -1,6 +1,6 @@
-.\"   $Id: Cthread.man,v 1.10 2001/11/30 11:18:05 jdurand Exp $
+.\"   $Id: Cthread.man,v 1.11 2002/01/09 08:53:01 jdurand Exp $
 .\"
-.TH CTHREAD "3" "$Date: 2001/11/30 11:18:05 $" "CASTOR" "Common Library Functions"
+.TH CTHREAD "3" "$Date: 2002/01/09 08:53:01 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCthread\fP \- \fBCASTOR\fP \fBThread\fP inferface
 .SH SYNOPSIS
@@ -142,12 +142,12 @@ at its end.
 .P
 Return value is 0 on success, or -1 on error.
 .P
-\fBCthread_mutex_lock\fP is an alias for \fBCthread_mutex_timelock\fP with a
+\fBCthread_mutex_lock\fP is an alias for \fBCthread_mutex_timedlock\fP with a
 .I timeout
 of -1.
 .P
 .P
-\fBCthread_mutex_trylock\fP is an alias for \fBCthread_mutex_timelock\fP with a
+\fBCthread_mutex_trylock\fP is an alias for \fBCthread_mutex_timedlock\fP with a
 .I timeout
 of 0.
 .P
