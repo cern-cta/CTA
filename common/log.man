@@ -1,8 +1,8 @@
-.\" @(#)log.man	1.1     CERN CN-SW/DC Frederic Hemmer 08/10/91
-.\" Copyright (C) 1990,1991 by CERN/CN/SW/DC
+.\" @(#)$RCSfile: log.man,v $ $Revision: 1.2 $ $Date: 2000/02/04 14:50:13 $ CERN IT-PDP/DC Frederic Hemmer
+.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DC
 .\" All rights reserved
 .\"
-.TH LOG l "08/10/91"
+.TH LOG 3 "$Date: 2000/02/04 14:50:13 $" CASTOR "Common Library Functions"
 .SH NAME
 log, initlog  \- log messages
 .SH SYNOPSIS

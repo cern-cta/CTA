@@ -1,8 +1,8 @@
-.\" @(#)getacctent.man	1.2 CERN CN-PDP/CS Antony Simmins 02/10/99
-.\" Copyright (C) 1995-1999 by CERN CN-PDP/CS
+.\" @(#)$RCSfile: getacctent.man,v $ $Revision: 1.2 $ $Date: 2000/02/04 14:50:10 $ CERN IT-PDP/CS Antony Simmins
+.\" Copyright (C) 1995-2000 by CERN IT-PDP/CS
 .\" All rights reserved
 .\"
-.TH GETACCT l "02/10/99"
+.TH GETACCT 3 "$Date: 2000/02/04 14:50:10 $" CASTOR "Common Library Functions"
 .SH NAME
 .B getacct 
 \- get SHIFT account identifier
@@ -77,7 +77,7 @@ map server.
 .SH FILES
 .B /etc/account
 .SH SEE ALSO
-.BR account (l), 
-.BR newacct (l)
+.BR account (4), 
+.BR newacct (1)
 .SH AUTHORS
-Antony Simmins, Antoine Trannoy, CERN-CN Division CH-1211 Geneva 23, Switzerland
+Antony Simmins, Antoine Trannoy, CERN-IT Division CH-1211 Geneva 23, Switzerland

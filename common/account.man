@@ -1,8 +1,8 @@
-.\" @(#)account.man	1.1		CERN-SW/DC	Antoine Trannoy		08/13/91
-.\" Copyright (C) 1990,1991 by CERN/CN/SW/DC
+.\" @(#)@(#)$RCSfile: account.man,v $ $Revision: 1.2 $ $Date: 2000/02/04 14:50:06 $ CERN IT-PDP/DC	Antoine Trannoy
+.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DC
 .\" All rights reserved
 .\"
-.TH ACCOUNT l "08/13/91"
+.TH ACCOUNT 4 "$Date: 2000/02/04 14:50:06 $" CASTOR "File Formats"
 .SH NAME
 account \- account file
 .SH SYNOPSIS
@@ -40,9 +40,6 @@ Yellow Pages account file. All following entries in the account file are ignored
 .SH FILES
 .B /etc/account
 .SH SEE ALSO
-.BR account (l), 
-.BR newacct (l)
+.BR newacct (1)
 .SH AUTHOR
-Antoine Trannoy, CERN-CN Division CH-1211 Geneva 23, Switzerland
-(trannoy@cernvm.cern.ch)
-
+Antoine Trannoy, CERN-IT Division CH-1211 Geneva 23, Switzerland
