@@ -1,5 +1,5 @@
 /*
- * $Id: Cstage_ifce.c,v 1.13 2002/01/24 10:42:01 jdurand Exp $
+ * $Id: Cstage_ifce.c,v 1.14 2002/04/30 12:22:56 jdurand Exp $
  */
 
 /*
@@ -19,7 +19,7 @@
 #include "Cstage_ifce.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.13 $ $Date: 2002/01/24 10:42:01 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.14 $ $Date: 2002/04/30 12:22:56 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -51,9 +51,7 @@ int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,castor,alloc)
 		tape->status      =   stcp->status;
 		tape->blksize     =   stcp->blksize;
 		tape->retentd     =   stcp->u1.t.retentd;
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 		tape->side        =   stcp->u1.t.side;
-#endif
 		tape->lrecl       =   stcp->lrecl;
 		tape->uid         =   stcp->uid;
 		tape->gid         =   stcp->gid;
@@ -233,9 +231,7 @@ int DLL_DECL Cdb2stcp(stcp,tape,disk,hsm,castor,alloc)
 		stcp->status      =         tape->status;
 		stcp->blksize     =         tape->blksize;
 		stcp->u1.t.retentd =        tape->retentd;
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 		stcp->u1.t.side    =        tape->side;
-#endif
 		stcp->lrecl       =         tape->lrecl;
 		stcp->uid         =         tape->uid;
 		stcp->gid         =         tape->gid;
