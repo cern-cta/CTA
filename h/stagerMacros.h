@@ -1,5 +1,5 @@
 /*
- * $Id: stagerMacros.h,v 1.1 2004/10/19 18:16:43 jdurand Exp $
+ * $Id: stagerMacros.h,v 1.2 2004/10/22 23:08:02 jdurand Exp $
  */
 
 #ifndef __stagerMacros_h
@@ -9,6 +9,9 @@
 #include "Cns_api.h"
 #include "stagerMessages.h"
 #include "serrno.h"
+#include "osdep.h"
+#include "Cthread_api.h"
+#include "Cpool_api.h"
 
 /*
               DLF_LVL_EMERGENCY                     Not used
@@ -32,8 +35,12 @@
               DLF_LVL_DEBUG                         Debug level
 */
 
-/* Generic macro accepting a string or an integer or no additional message */
+/* Gcc does not like statement like: xxxx ? 1 : "" */
+/* It will issue a warning about type mismatch... */
+/* So I convert the integers to string */
 #define STAGER_LOG(what,fileid,message,value) { \
+  extern int DLL_DECL _Cpool_self _PROTO(()); \
+  char tmpbuf1[21], tmpbuf2[21]; \
   int _save_serrno = serrno; \
   if (message != NULL) { \
     dlf_write( \
@@ -41,8 +48,10 @@
 	      stagerMessages[what].defaultSeverity, \
 	      what, \
 	      (struct Cns_fileid *)fileid, \
-	      STAGER_NB_PARAMS+2, \
+	      STAGER_NB_PARAMS+4, \
 	      stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func, \
+	      "THREAD_ID",DLF_MSG_PARAM_STR,(Cthread_self() >= 0) ? u64tostr((u_signed64) Cthread_self(), tmpbuf1, 0) : "", \
+	      "POOL_ID",  DLF_MSG_PARAM_STR,(_Cpool_self()  >= 0) ? u64tostr((u_signed64) _Cpool_self() , tmpbuf2, 0) : "", \
 	      message,((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) ? DLF_MSG_PARAM_STR : DLF_MSG_PARAM_INT,value, \
 	      STAGER_LOG_WHERE \
 	      ); \
@@ -52,8 +61,10 @@
 	      stagerMessages[what].defaultSeverity, \
 	      what, \
 	      (struct Cns_fileid *)fileid, \
-	      STAGER_NB_PARAMS+1, \
+	      STAGER_NB_PARAMS+3, \
 	      stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func, \
+	      "THREAD_ID",DLF_MSG_PARAM_STR,(Cthread_self() >= 0) ? u64tostr((u_signed64) Cthread_self(), tmpbuf1, 0) : "", \
+	      "POOL_ID",  DLF_MSG_PARAM_STR,(_Cpool_self()  >= 0) ? u64tostr((u_signed64) _Cpool_self() , tmpbuf2, 0) : "", \
 	      STAGER_LOG_WHERE \
 	      ); \
   } \
@@ -74,7 +85,7 @@
   extern stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_ENTER ,NULL  ,NULL     ,NULL  );} \
 }
 #define STAGER_LOG_LEAVE()                  { \
-  extern stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_LEAVE ,NULL  ,NULL     ,NULL  );} \
+  extern stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_LEAVE ,NULL  ,NULL     ,NULL  ); return; } \
 }
 #define STAGER_LOG_RETURN(value)            { \
   extern stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"RC"     ,value ); return(value);} \
