@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.19 2001/09/18 21:08:10 jdurand Exp $
+ * $Id: sendrep.c,v 1.20 2001/12/13 17:54:24 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.19 $ $Date: 2001/09/18 21:08:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.20 $ $Date: 2001/12/13 17:54:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -24,7 +24,6 @@ static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.19 $ $Date: 200
 #include <varargs.h>
 #include "marshall.h"
 #include "net.h"
-#include "stage.h"
 #include "osdep.h"
 #include "stage_api.h"
 #ifndef linux 
