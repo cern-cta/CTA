@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.141 2001/03/22 14:00:54 jdurand Exp $
+ * $Id: stager.c,v 1.142 2001/03/28 08:58:00 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.141 $ $Date: 2001/03/22 14:00:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.142 $ $Date: 2001/03/28 08:58:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -841,9 +841,9 @@ int hsmidx_vs_ipath(ipath)
 	char *filename = NULL;
 	char save_ipath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];	/* internal path */
 	char host1[CA_MAXHOSTNAMELEN+1];
-	char path1[MAXPATH];
+	char path1[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
 	char host2[CA_MAXHOSTNAMELEN+1];
-	char path2[MAXPATH];
+	char path2[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
 
 	strcpy(save_ipath,ipath);
 
@@ -3772,6 +3772,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Thursday 22 March, 2001 at 15:00:22 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Wednesday 28 March, 2001 at 10:56:37 CEST by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
