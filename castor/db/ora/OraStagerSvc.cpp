@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.71 $ $Release$ $Date: 2004/12/03 13:45:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.72 $ $Release$ $Date: 2004/12/03 14:03:46 $ $Author: sponcec3 $
  *
  *
  *
@@ -115,7 +115,7 @@ const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStateme
 
 /// SQL statement for getUpdateStart
 const std::string castor::db::ora::OraStagerSvc::s_getUpdateStartStatementString =
-  "BEGIN getUpdateStart(:1, :2, :3, :4, :5, :6 :7 :8); END;";
+  "BEGIN getUpdateStart(:1, :2, :3, :4, :5, :6, :7, :8); END;";
 
 /// SQL statement for putStart
 const std::string castor::db::ora::OraStagerSvc::s_putStartStatementString =
@@ -1072,6 +1072,7 @@ castor::db::ora::OraStagerSvc::getUpdateStart
           item->setId((u_signed64) rs->getDouble(1));
           item->setPath(rs->getString(2));
           item->setStatus((castor::stager::DiskCopyStatusCodes)rs->getInt(3));
+          item->setDiskcopyId(rs->getString(4));
           sources.push_back(item);
           status = rs->next();
         }
