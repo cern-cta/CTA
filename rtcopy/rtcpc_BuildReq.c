@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.37 $ $Date: 2001/01/30 16:11:48 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)rtcpc_BuildReq.c,v 1.37 2001/01/30 16:11:48 CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -776,7 +776,7 @@ static int rtcpc_i_opt(int mode,
     char **argv = NULL;
     int argc = 0;
 
-    if ( value == NULL ) {
+    if ( tape == NULL || value == NULL ) {
         serrno = EINVAL;
         return(-1);
     }
@@ -835,13 +835,17 @@ static int rtcpc_i_opt(int mode,
             strcpy(last_input_file,input_file);
             tmp_tape = NULL;
             if ( rc != -1 ) {
+                rtcp_log(LOG_DEBUG,"recursive call rtcpc_BuildReq() with argc=%d, argv=",
+                    argc);
+                for (i=1; i<argc; i++) rtcp_log(LOG_DEBUG,"%s ",argv[i]);
+                rtcp_log(LOG_DEBUG,"%s","\n");
                 rc = rtcpc_BuildReq(&tmp_tape,argc,argv);
                 if ( rc != -1 ) {
                     /*
                      * Merge tape lists
                      */
                     tmp_tapereq = &tmp_tape->tapereq;
-                    if ( tape != NULL ) tapereq = &(*tape)->tapereq;
+                    if ( *tape != NULL ) tapereq = &(*tape)->tapereq;
                     else tapereq = tmp_tapereq;
                     if (strcmp(tmp_tapereq->vid,tapereq->vid) != 0 &&
                         *tmp_tapereq->vid != '\0' && *tapereq->vid != '\0') {
@@ -850,7 +854,8 @@ static int rtcpc_i_opt(int mode,
                         serrno = EINVAL;
                         rc = -1;
                     } else {
-                        CLIST_INSERT((*tape)->file->prev,tmp_tape->file);
+                        if ( *tape == NULL ) *tape = tmp_tape;
+                        else CLIST_INSERT((*tape)->file,tmp_tape->file);
                     }
                 }
             }
