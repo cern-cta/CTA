@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.195 2002/05/22 14:48:35 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.196 2002/05/23 10:24:28 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.195 $ $Date: 2002/05/22 14:48:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.196 $ $Date: 2002/05/23 10:24:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -271,7 +271,7 @@ extern int selectfs _PROTO((char *, u_signed64 *, char *, int, int));
 extern int updfreespace _PROTO((char *, char *, int, u_signed64 *, signed64));
 extern void procupdreq _PROTO((int, int, char *, char *));
 struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
-int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int));
+int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int, int));
 extern void checkfile2mig _PROTO(());
 extern int updpoolconf _PROTO((char *, char *, char *));
 extern void procioreq _PROTO((int, int, char *, char *));
@@ -911,7 +911,7 @@ int main(argc,argv)
 				(stcp->status == (STAGEOUT|WAITING_SPC)) ||
 				(stcp->status == (STAGEOUT|WAITING_NS)) ||
 				(stcp->status == (STAGEALLOC|WAITING_SPC))) {
-			if (delfile (stcp, 0, 0, 1, "startup", 0, 0, 0, 0) < 0) { /* remove incomplete file */
+			if (delfile (stcp, 0, 0, 1, "startup", 0, 0, 0, 0, 0) < 0) { /* remove incomplete file */
 				stglogit (func, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
 									rfio_serror());
 				stcp++;
@@ -2681,7 +2681,7 @@ void checkwaitq()
 						continue;
 					}
 					if (delfile (stcp, 1, 0, 1, ((wqp->status == REQKILD) || (wqp->status == ESTKILLED)) ?
-											 "req killed" : "failing req", wqp->req_uid, wqp->req_gid, 0, 0) < 0)
+											 "req killed" : "failing req", wqp->req_uid, wqp->req_gid, 0, 0, 0) < 0)
 						stglogit (func, STG02, stcp->ipath,
 											RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 					check_waiting_on_req (wfp->subreqid,
@@ -2882,7 +2882,7 @@ void create_link(stcp, upath)
 #endif
 }
 
-int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, allow_one_stagein)
+int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, allow_one_stagein, nodisk_flag)
 		 struct stgcat_entry *stcp;
 		 int freersv;
 		 int dellinks;
@@ -2892,6 +2892,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 		 gid_t bygid;
 		 int remove_hsm;
 		 int allow_one_stagein;
+		 int nodisk_flag;
 {
 	int actual_size = 0;
 	struct stat st;
@@ -2946,32 +2947,34 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 			) {
 			/* it's the last entry - we can remove the file and release the space */
 			/* or it's the last entry but another STAGED + STAGEIN */
-			if (! freersv) {
-				PRE_RFIO;
-				if (RFIO_STAT(stcp->ipath, &st) == 0) {
-					actual_size = st.st_size;
-					if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < actual_size) {
+			if (! nodisk_flag) {
+				if (! freersv) {
+					PRE_RFIO;
+					if (RFIO_STAT(stcp->ipath, &st) == 0) {
+						actual_size = st.st_size;
+						if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < actual_size) {
+							actual_size_block = actual_size;
+						}
+					} else {
+						stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+						/* No block information - assume mismatch with actual_size will be acceptable */
 						actual_size_block = actual_size;
 					}
-				} else {
-					stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
-					/* No block information - assume mismatch with actual_size will be acceptable */
-					actual_size_block = actual_size;
 				}
-			}
-			PRE_RFIO;
-			if (RFIO_UNLINK(stcp->ipath) == 0) {
+				PRE_RFIO;
+				if (RFIO_UNLINK(stcp->ipath) == 0) {
 #if SACCT
-				stageacct (STGFILC, byuid, bygid, "",
-									 reqid, 0, 0, 0, stcp, "", (char) 0);
+					stageacct (STGFILC, byuid, bygid, "",
+							   reqid, 0, 0, 0, stcp, "", (char) 0);
 #endif
-				stglogit (func, STG95, stcp->ipath, by);
-			} else if ((errno != ENOENT) && (rfio_errno != ENOENT)) {
-				if ((errno != EIO) && (rfio_errno != EIO))
-					return (-1);
-				else
-					stglogit (func, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
-										rfio_serror());
+					stglogit (func, STG95, stcp->ipath, by);
+				} else if ((errno != ENOENT) && (rfio_errno != ENOENT)) {
+					if ((errno != EIO) && (rfio_errno != EIO))
+						return (-1);
+					else
+						stglogit (func, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
+								  rfio_serror());
+				}
 			}
 			if ((((stcp->status & (STAGEPUT|CAN_BE_MIGR)) == (STAGEPUT|CAN_BE_MIGR)) && ((stcp->status & PUT_FAILED) != PUT_FAILED)) ||
 				((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR)) ||
@@ -2980,8 +2983,9 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 				/* This is a file coming from (automatic or not) migration */
 				update_migpool(&stcp,-1,0);
 			}
-			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) ((freersv) ?
-						(signed64) (stcp->size) : ((signed64) actual_size_block)));
+			if (! nodisk_flag) {
+				updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) ((freersv) ? (signed64) (stcp->size) : ((signed64) actual_size_block)));
+			}
 		} else {
 			/* We neverthless take into account the migration counters */
 			if ((((stcp->status & (STAGEPUT|CAN_BE_MIGR)) == (STAGEPUT|CAN_BE_MIGR)) && ((stcp->status & PUT_FAILED) != PUT_FAILED)) ||
@@ -3797,7 +3801,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 				/* We cannot put a to-be-migrated file in status CAN_BE_MIGR if its size is zero */
 				if (delfile(stcp, 0, 1, 1,
 							"upd_stageout update on zero-length to-be-migrated file ok",
-							stcp->uid, stcp->gid, 0, 0) < 0) {
+							stcp->uid, stcp->gid, 0, 0, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 									 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 				}
