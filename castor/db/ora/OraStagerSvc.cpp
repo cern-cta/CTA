@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2004/11/22 14:33:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2004/11/22 14:43:03 $ $Author: sponcec3 $
  *
  *
  *
@@ -130,7 +130,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_bestTapeCopyForStreamStatement(0),
   m_bestFileSystemForSegmentStatement(0),
   m_fileRecalledStatement(0), m_subRequestToDoStatement(0),
-  m_selectSvcClassStatement(0), m_selectSvcClassStatement(0),
+  m_selectSvcClassStatement(0), m_selectFileClassStatement(0),
   m_selectCastorFileStatement(0), m_updateAndCheckSubRequestStatement(0) {
 }
 

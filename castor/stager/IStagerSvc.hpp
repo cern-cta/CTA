@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/22 14:33:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/22 14:43:02 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -47,6 +47,7 @@ namespace castor {
     class TapeCopy;
     class DiskCopy;
     class SvcClass;
+    class FileClass;
     class FileSystem;
     class SubRequest;
     class CastorFile;
