@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.103 2000/11/28 14:27:29 jdurand Exp $
+ * $Id: stager.c,v 1.104 2000/11/29 07:16:52 jdurand Exp $
  */
 
 /*
@@ -19,7 +19,7 @@
 /* -DTAPESRVR=\"your_tape_server_hostname\" */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.103 $ $Date: 2000/11/28 14:27:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.104 $ $Date: 2000/11/29 07:16:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -896,7 +896,7 @@ int stagein_castor_hsm_file() {
 	for (stcp = stcs, i = 0; stcp < stce; stcp++, i++) {
 		hsm_vid[i] = NULL;
 		hsm_fseq[i] = -1;
-		memset(&(hsm_blockid[i]),0,sizeof(blockid_t));
+		memset(hsm_blockid[i],0,sizeof(blockid_t));
 	}
 
 	/* We initialize the latest vid from vmgr_gettape() */
@@ -3318,5 +3318,5 @@ int rtcpd_PrintCmd(tape)
 #endif /* STAGER_DEBUG */
 
 /*
- * Last Update: "Tuesday 28 November, 2000 at 15:26:09 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Wednesday 29 November, 2000 at 08:14:24 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
