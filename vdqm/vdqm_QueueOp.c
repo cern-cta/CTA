@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.17 $ $Date: 2000/01/11 18:19:47 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.18 $ $Date: 2000/01/12 15:58:09 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -760,6 +760,7 @@ int vdqm_DelVolReq(vdqmVolReq_t *VolReq) {
     rc = GetVolRecord(dgn_context,VolReq,&volrec);
     if ( rc == -1 || volrec == NULL ) {
         log(LOG_ERR,"vdqm_DelVolReq() volume record not in queue.\n");
+        FreeDgnContext(&dgn_context);
         return(-1);
     }
     /*
