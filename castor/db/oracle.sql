@@ -520,8 +520,8 @@ CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
                                                  fs IN INTEGER,
                                                  fId OUT NUMBER,
                                                  nh OUT VARCHAR,
-                                                 uid OUT INTEGER,
-                                                 gid OUT INTEGER) AS
+                                                 userId OUT INTEGER,
+                                                 groupId OUT INTEGER) AS
   nc INTEGER;
   cfId INTEGER;
   tcId INTEGER;
@@ -532,12 +532,13 @@ BEGIN
  UPDATE CastorFile set fileSize = fs WHERE id = cfId
   RETURNING fileId, nsHost INTO fId, nh;
  -- get uid, gid from Request
- SELECT euid, egid INTO uid, gid FROM SubRequest,
+ SELECT euid, egid INTO userId, groupId FROM SubRequest,
       (SELECT euid, egid, id from StagePutRequest UNION
        SELECT euid, egid, id from StagePrepareToPutRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
  -- if 0 length file, stop here
  IF fs = 0 THEN
+   COMMIT;
    RETURN;
  END IF;
  -- get number of copies to create
@@ -553,4 +554,5 @@ BEGIN
   INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
   tcId := tcId + 1;
  END LOOP TapeCopyCreation;
+ COMMIT;
 END;
