@@ -1,0 +1,99 @@
+.\" @(#)$RCSfile: rfiosetopt.man,v $ $Revision: 1.1 $ $Date: 2001/05/31 05:17:24 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RFIOSETOPT 3 "$Date: 2001/05/31 05:17:24 $" CASTOR "Rfio Library Functions"
+.SH NAME
+rfiosetopt \- set RFIO options
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "int rfiosetopt (int " opt ,
+.BI "int *" pval ,
+.BI "int " len )
+.SH DESCRIPTION
+.B rfiosetopt
+sets the RFIO option
+.I opt
+to the content of the memory cell pointed by
+.IR pval .
+.LP
+.I opt
+can have on of the following values:
+.RS
+.TP
+.B RFIO_READOPT
+The value pointed by pval can be 0, RFIO_READBUF, RFIO_READAHEAD or RFIO_STREAM
+(V3).
+.RS
+.TP
+If set to zero, a normal read will be used (one request to the server per read).
+.LP
+If set to RFIO_READBUF, an internal buffer is allocated in the client API,
+each call to the server fills this buffer and the user buffer is filled from
+the internal buffer. There is one server call per buffer fill.
+.LP
+If set to RFIO_READAHEAD, RFIO_READBUF is forced, an internal buffer is
+allocated in the client API, an initial call is sent to the server which pushes
+data to the client until end of file is reached or an error occurs or a new
+request comes from the client.
+.LP
+If RFIO_STREAM is set, the V3 protocol is enabled.
+This uses 2 socket connections between the client and the server and the server
+itself is multi-threaded allowing overlap of disk and network operations.
+The data is pushed on the data socket until end of file is reached or an error
+occurs. The transfer can be interrupted by sending a packet on the control
+socket.
+.br
+Default is RFIO_READBUF.
+.RE
+.TP
+.B RFIO_NETOPT
+The value pointed by pval can be RFIO_NONET or RFIO_NET.
+If set to RFIO_NONET, the NET entries in
+.B shift.conf
+are ignored.
+Default is RFIO_NET.
+.TP
+.B RFIO_NETRETRYOPT
+The value pointed by pval can be RFIO_RETRYIT or RFIO_NOTIME2RETRY.
+.RS
+.LP
+If set to RFIO_RETRYIT, there will be retries on failing connect.
+The number of retries is given by the environment variable RFIO_CONRETRY or
+the RFIO CONRETRY entry in
+.BR shift.conf .
+The retry interval (in seconds) is given by the environment variable
+RFIO_CONRETRYINT or the RFIO CONRETRYINT entry.
+.LP
+If set to RFIO_NOTIME2RETRY, there will be no retry on failing connect.
+.br
+Default is RFIO_RETRYIT.
+.RE
+.TP
+.B RFIO_CONNECTOPT
+The value pointed by pval can be RFIO_NOLOCAL or RFIO_FORCELOCAL.
+If set to RFIO_FORCELOCAL, no parsing is done on pathname. The file is
+assumed to be local.
+Default is RFIO_NOLOCAL.
+.RE
+.LP
+The
+.I len
+argument is ignored.
+.SH RETURN VALUE
+.B rfiosetopt
+returns 0 if the operation was successful or -1 if the operation failed.
+In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EINVAL
+.I opt
+is not a valid option.
+.SH SEE ALSO
+.BR rfio_open(3) ,
+.BR rfioreadopt(3)

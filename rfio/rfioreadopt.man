@@ -1,0 +1,43 @@
+.\" @(#)$RCSfile: rfioreadopt.man,v $ $Revision: 1.1 $ $Date: 2001/05/31 05:17:23 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RFIOREADOPT 3 "$Date: 2001/05/31 05:17:23 $" CASTOR "Rfio Library Functions"
+.SH NAME
+rfioreadopt \- get RFIO options
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "int rfioreadopt (int " opt )
+.SH DESCRIPTION
+.B rfioreadopt
+returns the option value.
+.TP
+.I opt
+can have on of the following values:
+.RS
+.TP 1.3i
+.B RFIO_READOPT
+.TP
+.B RFIO_NETOPT
+.TP
+.B RFIO_NETRETRYOPT
+.TP
+.B RFIO_CONNECTOPT
+.RE
+.SH RETURN VALUE
+.B rfioreadopt
+returns the option value when successful or -1 if the operation failed.
+In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EINVAL
+.I opt
+is not a valid option.
+.SH SEE ALSO
+.BR rfiosetopt(3) ,
+.BR rfio_open(3)
