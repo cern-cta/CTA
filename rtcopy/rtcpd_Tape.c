@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.69 $ $Date: 2000/09/15 11:55:36 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.70 $ $Date: 2000/09/15 16:52:13 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1307,9 +1307,7 @@ void *tapeIOthread(void *arg) {
                  */ 
                 if ( (nexttape->tapereq.mode == WRITE_DISABLE) &&
                      (((nextfile->filereq.concat & CONCAT_TO_EOD) != 0) ||
-                      (((nextfile->filereq.concat & NOCONCAT_TO_EOD) != 0) && 
-                       (nextfile->filereq.def_alloc > 0))) ) {
-                    rtcpd_CheckReqStatus(NULL,nextfile,NULL,&severity); 
+                      ((nextfile->filereq.concat & NOCONCAT_TO_EOD) != 0)) ) { 
                     if ( severity == (RTCP_OK | RTCP_EOD) ) {
                         nextfile->filereq.TEndTransferDisk = 
                            nextfile->filereq.TEndTransferTape = (int)time(NULL);
@@ -1321,7 +1319,9 @@ void *tapeIOthread(void *arg) {
                         (void)Cthread_mutex_unlock_ext(databufs[indxp]->lock);
                         (void)rtcpd_SetProcError(severity);
                         break;
-                    } else if ( nextfile->next->next == nexttape->file ) {
+                    } else if ( nextfile->next->next == nexttape->file &&
+                                ((nextfile->filereq.concat & NOCONCAT_TO_EOD) == 0 || 
+                                  nextfile->filereq.def_alloc > 0) ) {
                         /* 
                          * We will reach end of current tape request in
                          * the next iteration. If we are reading tape to EOD
