@@ -36,8 +36,13 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_NOREQS,
     RTCPCLD_MSG_CALLBACK_GETW,
     RTCPCLD_MSG_VIDWORKER_ENDED,
-    RTCPCLD_MSG_RESERVED19,
-    RTCPCLD_MSG_RESERVED20
+    RTCPCLD_MSG_DBSVC,
+    RTCPCLD_MSG_WRONG_TAPE,
+    RTCPCLD_MSG_RESERVED21,
+    RTCPCLD_MSG_RESERVED22,
+    RTCPCLD_MSG_RESERVED23,
+    RTCPCLD_MSG_RESERVED24,
+    RTCPCLD_MSG_RESERVED25
 };
 
 struct RtcpcldMessages {
@@ -67,8 +72,13 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_NOREQS, DLF_LVL_SYSTEM, "Nothing left to do for this VID"},
     { RTCPCLD_MSG_CALLBACK_GETW, DLF_LVL_DEBUG, "rtcopy client daemon callback: get more work"},
     { RTCPCLD_MSG_VIDWORKER_ENDED, DLF_LVL_SYSTEM, "VidWorker ended"},
-    { RTCPCLD_MSG_RESERVED19, DLF_LVL_DEBUG, ""},
-    { RTCPCLD_MSG_RESERVED20, DLF_LVL_DEBUG, ""}
+    { RTCPCLD_MSG_DBSVC, DLF_LVL_ERROR, "Database service error"},
+    { RTCPCLD_MSG_WRONG_TAPE, DLF_LVL_ALERT, "Retrieved inconsistent tape request"},
+    { RTCPCLD_MSG_RESERVED21, DLF_LVL_DEBUG, ""},
+    { RTCPCLD_MSG_RESERVED22, DLF_LVL_DEBUG, ""},
+    { RTCPCLD_MSG_RESERVED23, DLF_LVL_DEBUG, ""},
+    { RTCPCLD_MSG_RESERVED24, DLF_LVL_DEBUG, ""},
+    { RTCPCLD_MSG_RESERVED25, DLF_LVL_DEBUG, ""}
 };
 #else /* RTCPCLD_COMMON */
 extern struct RtcpcldMessages rtcpcldMessages;
