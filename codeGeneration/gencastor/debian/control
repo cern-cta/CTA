@@ -7,7 +7,7 @@ Standards-Version: 3.6.0
 
 Package: gencastor
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, kdelibs4 (>= 3.3.2)
+Depends: ${shlibs:Depends}, ${misc:Depends}, kdelibs4 (>= 3.3.2), tcsh (>=6.0.0)
 Suggests: umbrello (>= 4:3.2.3)
 Description: Automatic generation of castor code from UML diagrams
  genCastor generates part of the castor source code in the current directory from
