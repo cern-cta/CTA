@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.120 2001/03/19 12:42:36 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.121 2001/03/20 07:31:28 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.120 $ $Date: 2001/03/19 12:42:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.121 $ $Date: 2001/03/20 07:31:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -1582,22 +1582,30 @@ void checkpoolstatus()
 						} else {
 							int hsm_ns_error = 0;
 							stcp->status &= 0xF;
-							if (stcp->t_or_d == 'h') {
-								stcp->status |= WAITING_NS;
-							}
-#ifdef USECDB
-							if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-								stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-							}
-#endif
-							if (stcp->t_or_d == 'h') {
-								int this_status;
-								/* Try now to create entry in the HSM name server */
-								if ((this_status = create_hsm_entry(wqp->rpfd, stcp, wqp->api_out, wqp->openmode, 0)) != 0) {
-									/* Too bad - finally this request fails because of the name server */
-									wqp->status = this_status;
-									hsm_ns_error = 1;
+							if (ISSTAGEOUT(stcp)) {
+								if (stcp->t_or_d == 'h') {
+									stcp->status |= WAITING_NS;
 								}
+#ifdef USECDB
+								if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+									stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+								}
+#endif
+								if (stcp->t_or_d == 'h') {
+									int this_status;
+									/* Try now to create entry in the HSM name server */
+									if ((this_status = create_hsm_entry(wqp->rpfd, stcp, wqp->api_out, wqp->openmode, 0)) != 0) {
+										/* Too bad - finally this request fails because of the name server */
+										wqp->status = this_status;
+										hsm_ns_error = 1;
+									}
+								}
+							} else {
+#ifdef USECDB
+								if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+									stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+								}
+#endif
 							}
 							if (hsm_ns_error == 0) {
 								*wqp->waiting_pool = '\0';
@@ -1651,22 +1659,30 @@ void checkwaitingspc()
 					/* We succeeded to allocate space for this WAITING_SPC request */
 					/* regardless of an existing gc or not */
 					stcp->status &= 0xF;
-					if (stcp->t_or_d == 'h') {
-						stcp->status |= WAITING_NS;
-					}
-#ifdef USECDB
-					if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-						stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-					}
-#endif
-					if (stcp->t_or_d == 'h') {
-						int this_status;
-						/* Try now to create entry in the HSM name server */
-						if ((this_status = create_hsm_entry(wqp->rpfd, stcp, wqp->api_out, wqp->openmode, 0)) != 0) {
-							/* Too bad - finally this request fails because of the name server */
-							wqp->status = this_status;
-							hsm_ns_error = 1;
+					if (ISSTAGEOUT(stcp)) {
+						if (stcp->t_or_d == 'h') {
+							stcp->status |= WAITING_NS;
 						}
+#ifdef USECDB
+						if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+							stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+						}
+#endif
+						if (stcp->t_or_d == 'h') {
+							int this_status;
+							/* Try now to create entry in the HSM name server */
+							if ((this_status = create_hsm_entry(wqp->rpfd, stcp, wqp->api_out, wqp->openmode, 0)) != 0) {
+								/* Too bad - finally this request fails because of the name server */
+								wqp->status = this_status;
+								hsm_ns_error = 1;
+							}
+						}
+					} else {
+#ifdef USECDB
+						if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+							stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+						}
+#endif
 					}
 					if (hsm_ns_error == 0) {
 						*wqp->waiting_pool = '\0';
