@@ -1,5 +1,5 @@
 /*
- * $Id: osdep.h,v 1.9 1999/12/09 13:46:17 jdurand Exp $
+ * $Id: osdep.h,v 1.10 2000/01/04 11:51:00 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: osdep.h,v $ $Revision: 1.9 $ $Date: 1999/12/09 13:46:17 $ CERN IT-PDP/IP Frederic Hemmer
+ * @(#)$RCSfile: osdep.h,v $ $Revision: 1.10 $ $Date: 2000/01/04 11:51:00 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */
@@ -92,8 +92,10 @@ typedef u_signed64 U_HYPER;
 #if (defined(__STDC__) || defined(_WIN32))
 /* On Win32, compiler is STDC compliant but the */
 /* __STDC__ definition itself is not a default. */
+#define CONST const
 #define _PROTO(a) a
 #else
+#define CONST
 #define _PROTO(a) ()
 #endif
 
