@@ -7,7 +7,7 @@
 /* For the what command                 */
 /* ------------------------------------ */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.32 $ $Date: 2004/03/17 18:37:14 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.33 $ $Date: 2004/03/18 09:14:00 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cpool_api.h>
@@ -870,13 +870,6 @@ void *_Cpool_starter(arg)
 #endif
 			Cthread_cond_signal_ext(current->state_cthread_structure[index]);
 					
-#ifdef CPOOL_DEBUG
-			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : Set current->state[%d] to 0 (Ready)\n",
-					_Cpool_self(),_Cthread_self(),index);
-			}
-#endif			  
-
 			/* We loop indefinitely */
 			while (1) {
 			  
@@ -2009,8 +2002,8 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 					}
 				} else {
 					if (Cpool_debug != 0) {
-						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : lock on current->state_cthread_structure[%d]\n",
-							_Cpool_self(),_Cthread_self(), i);
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : lock on current->state_cthread_structure[%d], timeout=%d\n",
+							_Cpool_self(),_Cthread_self(), i, timeout);
 					}
 				}
 #endif
@@ -2765,7 +2758,6 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 #endif
 							return(i);
 						}
-#ifdef CPOOL_DEBUG
 					} else {
 #ifdef CPOOL_DEBUG
 						if (Cpool_debug != 0) {
@@ -2774,7 +2766,6 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 						}
 #endif
 						Cthread_mutex_unlock_ext(current->state_cthread_structure[i]);
-#endif
 					}
 #ifdef CPOOL_DEBUG
 				} else {
