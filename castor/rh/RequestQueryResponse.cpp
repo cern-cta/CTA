@@ -115,6 +115,6 @@ int castor::rh::RequestQueryResponse::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::rh::RequestQueryResponse::clone() {
-  return this;
+  return new RequestQueryResponse(*this);
 }
 

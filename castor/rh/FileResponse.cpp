@@ -121,6 +121,6 @@ int castor::rh::FileResponse::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::rh::FileResponse::clone() {
-  return this;
+  return new FileResponse(*this);
 }
 

@@ -109,6 +109,6 @@ int castor::MessageAck::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::MessageAck::clone() {
-  return this;
+  return new MessageAck(*this);
 }
 

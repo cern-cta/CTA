@@ -138,6 +138,6 @@ int castor::stager::DiskPool::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::stager::DiskPool::clone() {
-  return this;
+  return new DiskPool(*this);
 }
 

@@ -131,6 +131,6 @@ int castor::stager::DiskCopy::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::stager::DiskCopy::clone() {
-  return this;
+  return new DiskCopy(*this);
 }
 

@@ -107,6 +107,6 @@ int castor::stager::StageFileQueryRequest::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::stager::StageFileQueryRequest::clone() {
-  return this;
+  return new StageFileQueryRequest(*this);
 }
 

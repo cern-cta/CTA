@@ -97,6 +97,6 @@ int castor::rh::StringResponse::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::rh::StringResponse::clone() {
-  return this;
+  return new StringResponse(*this);
 }
 

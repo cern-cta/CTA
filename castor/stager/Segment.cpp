@@ -150,6 +150,6 @@ int castor::stager::Segment::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::stager::Segment::clone() {
-  return this;
+  return new Segment(*this);
 }
 

@@ -154,6 +154,6 @@ int castor::stager::SubRequest::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::stager::SubRequest::clone() {
-  return this;
+  return new SubRequest(*this);
 }
 

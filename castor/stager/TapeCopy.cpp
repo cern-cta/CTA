@@ -152,6 +152,6 @@ int castor::stager::TapeCopy::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::stager::TapeCopy::clone() {
-  return this;
+  return new TapeCopy(*this);
 }
 

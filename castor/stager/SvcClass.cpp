@@ -142,6 +142,6 @@ int castor::stager::SvcClass::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::stager::SvcClass::clone() {
-  return this;
+  return new SvcClass(*this);
 }
 

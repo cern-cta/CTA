@@ -125,6 +125,6 @@ int castor::rh::Client::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::rh::Client::clone() {
-  return this;
+  return new Client(*this);
 }
 

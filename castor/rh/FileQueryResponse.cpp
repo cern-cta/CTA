@@ -123,6 +123,6 @@ int castor::rh::FileQueryResponse::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::rh::FileQueryResponse::clone() {
-  return this;
+  return new FileQueryResponse(*this);
 }
 

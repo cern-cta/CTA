@@ -109,6 +109,6 @@ int castor::rh::AbortResponse::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::rh::AbortResponse::clone() {
-  return this;
+  return new AbortResponse(*this);
 }
 

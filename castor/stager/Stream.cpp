@@ -146,6 +146,6 @@ int castor::stager::Stream::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::stager::Stream::clone() {
-  return this;
+  return new Stream(*this);
 }
 

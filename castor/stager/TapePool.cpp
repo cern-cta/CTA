@@ -138,6 +138,6 @@ int castor::stager::TapePool::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::stager::TapePool::clone() {
-  return this;
+  return new TapePool(*this);
 }
 

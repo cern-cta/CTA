@@ -107,6 +107,6 @@ int castor::stager::StageGetNextRequest::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::stager::StageGetNextRequest::clone() {
-  return this;
+  return new StageGetNextRequest(*this);
 }
 

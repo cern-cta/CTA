@@ -107,6 +107,6 @@ int castor::rh::EndResponse::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::rh::EndResponse::clone() {
-  return this;
+  return new EndResponse(*this);
 }
 

@@ -124,6 +124,6 @@ int castor::stager::DiskServer::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::stager::DiskServer::clone() {
-  return this;
+  return new DiskServer(*this);
 }
 

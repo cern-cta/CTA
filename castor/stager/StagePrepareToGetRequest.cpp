@@ -107,6 +107,6 @@ int castor::stager::StagePrepareToGetRequest::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::stager::StagePrepareToGetRequest::clone() {
-  return this;
+  return new StagePrepareToGetRequest(*this);
 }
 

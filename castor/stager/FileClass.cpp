@@ -111,6 +111,6 @@ int castor::stager::FileClass::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::stager::FileClass::clone() {
-  return this;
+  return new FileClass(*this);
 }
 

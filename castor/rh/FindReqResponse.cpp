@@ -109,6 +109,6 @@ int castor::rh::FindReqResponse::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::rh::FindReqResponse::clone() {
-  return this;
+  return new FindReqResponse(*this);
 }
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequest.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/22 17:01:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequest.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/23 08:35:04 $ $Author: sponcec3 $
  *
  * 
  *
@@ -107,6 +107,6 @@ int castor::stager::StageUpdateFileStatusRequest::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::stager::StageUpdateFileStatusRequest::clone() {
-  return this;
+  return new StageUpdateFileStatusRequest(*this);
 }
 

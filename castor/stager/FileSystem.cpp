@@ -150,6 +150,6 @@ int castor::stager::FileSystem::type() const {
 // clone
 //------------------------------------------------------------------------------
 castor::IObject* castor::stager::FileSystem::clone() {
-  return this;
+  return new FileSystem(*this);
 }
 
