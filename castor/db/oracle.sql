@@ -17,6 +17,16 @@ DROP TABLE RH_REQUESTSSTATUS;
 CREATE TABLE RH_REQUESTSSTATUS (id INTEGER PRIMARY KEY, status CHAR(8), creation DATE, lastChange DATE);
 CREATE INDEX I_RH_REQUESTSSTATUS_FULL on RH_REQUESTSSTATUS (id, status);
 
+/* SQL statements for type Cuuid */
+DROP TABLE rh_Cuuid;
+CREATE TABLE rh_Cuuid (id INTEGER PRIMARY KEY, time_low NUMBER, time_mid NUMBER, time_hv NUMBER, clock_hi NUMBER, clock_low NUMBER, node CHAR(6));
+
+/* PL/SQL procedure for getting the next request to handle */
+CREATE OR REPLACE PROCEDURE getNRStatement(reqid OUT INTEGER) AS
+BEGIN
+  SELECT ID INTO reqid FROM rh_requestsStatus WHERE status = 'NEW' AND rownum <=1;
+  UPDATE rh_requestsStatus SET status = 'RUNNING', lastChange = SYSDATE WHERE ID = reqid;
+END;
 /* SQL statements for type Client */
 DROP TABLE rh_Client;
 CREATE TABLE rh_Client (ipAddress NUMBER, port NUMBER, id INTEGER PRIMARY KEY, request INTEGER);
@@ -71,10 +81,6 @@ CREATE TABLE rh_Tape2Segment (Parent INTEGER, Child INTEGER);
 DROP TABLE rh_TapeCopy2Segment;
 CREATE TABLE rh_TapeCopy2Segment (Parent INTEGER, Child INTEGER);
 
-/* SQL statements for type Cuuid */
-DROP TABLE rh_Cuuid;
-CREATE TABLE rh_Cuuid (id INTEGER PRIMARY KEY, time_low NUMBER, time_mid NUMBER, time_hv NUMBER, clock_hi NUMBER, clock_low NUMBER, node CHAR(6));
-
 /* SQL statements for type TapePool */
 DROP TABLE rh_TapePool;
 CREATE TABLE rh_TapePool (name VARCHAR(255), id INTEGER PRIMARY KEY);
@@ -123,9 +129,3 @@ CREATE TABLE rh_FileClass (name VARCHAR(255), minFileSize NUMBER, maxFileSize NU
 DROP TABLE rh_DiskServer;
 CREATE TABLE rh_DiskServer (name VARCHAR(255), id INTEGER PRIMARY KEY, status INTEGER);
 
-/* PL/SQL procedure for getting the next request to handle */
-CREATE OR REPLACE PROCEDURE getNRStatement(reqid OUT INTEGER) AS
-BEGIN
-  SELECT ID INTO reqid FROM rh_requestsStatus WHERE status = 'NEW' AND rownum <=1;
-  UPDATE rh_requestsStatus SET status = 'RUNNING', lastChange = SYSDATE WHERE ID = reqid;
-END;

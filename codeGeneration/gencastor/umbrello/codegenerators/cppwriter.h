@@ -21,6 +21,16 @@
 #include "cppbasewriter.h"
 
 class UMLOperation;
+class CppHClassWriter;
+class CHClassWriter;
+class CCClassWriter;
+class CppCppClassWriter;
+class CppHOraCnvWriter;
+class CppCppOraCnvWriter;
+class CppHOdbcCnvWriter;
+class CppCppOdbcCnvWriter;
+class CppHStreamCnvWriter;
+class CppCppStreamCnvWriter;
 
 /**
  * class CppWriter is a code generator for UMLClassifier objects.
@@ -49,14 +59,27 @@ class CppWriter : public CppCastorWriter {
 
  private:
   /** configures a new generator using parameters of this one */
-  void configGenerator(CppBaseWriter &cg);
+  void configGenerator(CppBaseWriter *cg);
   /** configure and runs a generator */
-  void runGenerator(CppBaseWriter &cg,
+  void runGenerator(CppBaseWriter *cg,
                     QString fileName,
                     UMLClassifier *c);
 
+  // The code generators used
+  CppHClassWriter* hppw;
+  CHClassWriter* hw;
+  CCClassWriter* cw;
+  CppCppClassWriter* cppw;
+  CppHOraCnvWriter* orahw;
+  CppCppOraCnvWriter* oracppw;
+  CppHOdbcCnvWriter* odbchw;
+  CppCppOdbcCnvWriter* odbccppw;
+  CppHStreamCnvWriter* streamhw;
+  CppCppStreamCnvWriter* streamcppw;
+
+  // whether the next code generation will be the first one
+  bool firstGeneration;
+
 };
-
-
 
 #endif // CPPWRITER_H

@@ -116,6 +116,16 @@ class CppCppOraCnvWriter : public CppCppBaseCnvWriter {
    */
   bool isRequest();
 
+  /**
+   * creates file oracle.sql and write beginning of it
+   */
+  void startSQLFile();
+
+ private:
+
+  // Says whether it is the first call to writeClass
+  bool m_firstClass;
+
 };
 
 #endif // CODEGENERATORS_CPPCPPORACNVWRITER_H

@@ -32,31 +32,69 @@
 #include <iostream>
 
 CppWriter::CppWriter( UMLDoc *parent, const char *name ) :
-  CppCastorWriter(parent, name) {}
-
-CppWriter::~CppWriter() {}
-
-void CppWriter::configGenerator(CppBaseWriter &cg) {
-  cg.setForceDoc(forceDoc());
-  cg.setForceSections(forceSections());
-  cg.setIncludeHeadings(includeHeadings());
-  cg.setHeadingFileDir(headingFileDir());
-  cg.setModifyNamePolicy(modifyNamePolicy());
-  cg.setOutputDirectory(outputDirectory());
-  cg.setOverwritePolicy(overwritePolicy());
+  CppCastorWriter(parent, name), firstGeneration(true) {
+  // Create all needed generators
+  hppw = new CppHClassWriter(m_doc, ".hpp file generator");
+  hw = new CHClassWriter(m_doc, ".h file generator for C interfaces");
+  cw = new CCClassWriter(m_doc, ".cpp file generator for C interfaces");
+  cppw = new CppCppClassWriter(m_doc, ".cpp file generator");
+  orahw = new CppHOraCnvWriter(m_doc, "Oracle converter generator");
+  oracppw = new CppCppOraCnvWriter(m_doc, "Oracle converter generator");
+  odbchw = new CppHOdbcCnvWriter(m_doc, "Odbc converter generator");
+  odbccppw = new CppCppOdbcCnvWriter(m_doc, "Odbc converter generator");
+  streamhw = new CppHStreamCnvWriter(m_doc, "Stream converter generator");
+  streamcppw = new CppCppStreamCnvWriter(m_doc, "Stream converter generator");
 }
 
-void CppWriter::runGenerator(CppBaseWriter &cg,
+CppWriter::~CppWriter() {
+  // delete Generators
+  // Create all needed generators
+  delete hppw;
+  delete hw;
+  delete cw;
+  delete cppw;
+  delete orahw;
+  delete oracppw;
+  delete odbchw;
+  delete odbccppw;
+  delete streamhw;
+  delete streamcppw;
+}
+
+void CppWriter::configGenerator(CppBaseWriter *cg) {
+  cg->setForceDoc(forceDoc());
+  cg->setForceSections(forceSections());
+  cg->setIncludeHeadings(includeHeadings());
+  cg->setHeadingFileDir(headingFileDir());
+  cg->setModifyNamePolicy(modifyNamePolicy());
+  cg->setOutputDirectory(outputDirectory());
+  cg->setOverwritePolicy(overwritePolicy());
+}
+
+void CppWriter::runGenerator(CppBaseWriter *cg,
                              QString fileName,
                              UMLClassifier *c) {
-  configGenerator(cg);
-  if (cg.init(c, fileName)) {
-    cg.writeClass(c);
-    cg.finalize();
+  if (cg->init(c, fileName)) {
+    cg->writeClass(c);
+    cg->finalize();
   }
 }
 
 void CppWriter::writeClass(UMLClassifier *c) {
+  if (firstGeneration) {
+    configGenerator(hppw);
+    configGenerator(hw);
+    configGenerator(cw);
+    configGenerator(cppw);
+    configGenerator(orahw);
+    configGenerator(oracppw);
+    configGenerator(odbchw);
+    configGenerator(odbccppw);
+    configGenerator(streamhw);
+    configGenerator(streamcppw);
+    firstGeneration = false;
+  }
+
   // Ignore the classes to be ignored
   if (m_ignoreClasses.find(c->getName()) != m_ignoreClasses.end()) {
     return;
@@ -145,15 +183,12 @@ void CppWriter::writeClass(UMLClassifier *c) {
   }
 
   // write Header file
-  CppHClassWriter hppw(m_doc, ".hpp file generator");
   runGenerator(hppw, fileName + ".hpp", c);
   if (m_castorTypes.find(c->getName()) == m_castorTypes.end()) {
-    CHClassWriter hw(m_doc, ".h file generator for C interfaces");
     runGenerator(hw, fileName + ".h", c);
     // Write C implementation.
     // Needed even when the CPP one does not exist, except for enums
     if (!classInfo.isEnum) {
-      CCClassWriter cw(m_doc, ".cpp file generator for C interfaces");
       QString fileNameC = fileName;
       runGenerator(cw, fileNameC + "CInt.cpp", c);
     }
@@ -164,7 +199,6 @@ void CppWriter::writeClass(UMLClassifier *c) {
   // or an enumeration.)
   if ((dynamic_cast<UMLInterface*>(c)) == 0 &&
       !classInfo.isEnum) {
-    CppCppClassWriter cppw(m_doc, ".cpp file generator");
     runGenerator(cppw, fileName + ".cpp", c);
 
     // Persistency and streaming for castor type is done by hand
@@ -203,13 +237,9 @@ void CppWriter::writeClass(UMLClassifier *c) {
           // run generation
           int i = fileName.findRev('/') + 1;
           QString file = fileName.right(fileName.length()-i);
-          CppHOraCnvWriter orahw(m_doc, "Oracle converter generator");
           runGenerator(orahw, "castor/db/ora/Ora" + file + "Cnv.hpp", c);
-          CppCppOraCnvWriter oracppw(m_doc, "Oracle converter generator");
           runGenerator(oracppw, "castor/db/ora/Ora" + file + "Cnv.cpp", c);
-          CppHOdbcCnvWriter odbchw(m_doc, "Odbc converter generator");
           runGenerator(odbchw, "castor/db/odbc/Odbc" + file + "Cnv.hpp", c);
-          CppCppOdbcCnvWriter odbccppw(m_doc, "Odbc converter generator");
           runGenerator(odbccppw, "castor/db/odbc/Odbc" + file + "Cnv.cpp", c);
         }
         obj = m_doc->findUMLObject(QString("IStreamable"),
@@ -227,9 +257,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
           // run generation
           int i = fileName.findRev('/') + 1;
           QString file = fileName.right(fileName.length()-i);
-          CppHStreamCnvWriter streamhw(m_doc, "Stream converter generator");
           runGenerator(streamhw, "castor/io/Stream" + file + "Cnv.hpp", c);
-          CppCppStreamCnvWriter streamcppw(m_doc, "Stream converter generator");
           runGenerator(streamcppw, "castor/io/Stream" + file + "Cnv.cpp", c);
         }
       }

@@ -1,4 +1,5 @@
 // Include files
+#include <iostream>
 #include <qmap.h>
 #include <qfile.h>
 #include <qregexp.h>
@@ -18,8 +19,50 @@
 // Standard constructor, initializes variables
 //=============================================================================
 CppCppOraCnvWriter::CppCppOraCnvWriter(UMLDoc *parent, const char *name) :
-  CppCppBaseCnvWriter(parent, name) {
+  CppCppBaseCnvWriter(parent, name), m_firstClass(true) {
   setPrefix("Ora");
+}
+
+//=============================================================================
+// startSQLFile
+//=============================================================================
+void CppCppOraCnvWriter::startSQLFile() {
+  // Preparing SQL file for creation/deletion of the database
+  QFile file;
+  openFile(file,
+           "castor/db/oracle.sql",
+           IO_WriteOnly | IO_Truncate);
+  QTextStream stream(&file);
+  stream << "/* SQL statements for object types */" << endl
+         << "DROP INDEX I_RH_ID2TYPE_FULL;" << endl
+         << "DROP TABLE RH_ID2TYPE;" << endl
+         << "CREATE TABLE RH_ID2TYPE (id INTEGER PRIMARY KEY, type NUMBER);" << endl
+         << "CREATE INDEX I_RH_ID2TYPE_FULL on RH_ID2TYPE (id, type);" << endl
+         << endl
+         << "/* SQL statements for indices */" << endl
+         << "DROP INDEX I_RH_INDICES_FULL;" << endl
+         << "DROP TABLE RH_INDICES;" << endl
+         << "CREATE TABLE RH_INDICES (name CHAR(8), value NUMBER);" << endl
+         << "CREATE INDEX I_RH_INDICES_FULL on RH_INDICES (name, value);" << endl
+         << "INSERT INTO RH_INDICES (name, value) VALUES ('next_id', 1);" << endl
+         << endl
+         << "/* SQL statements for requests status */" << endl
+         << "DROP INDEX I_RH_REQUESTSSTATUS_FULL;" << endl
+         << "DROP TABLE RH_REQUESTSSTATUS;" << endl
+         << "CREATE TABLE RH_REQUESTSSTATUS (id INTEGER PRIMARY KEY, status CHAR(8), creation DATE, lastChange DATE);" << endl
+         << "CREATE INDEX I_RH_REQUESTSSTATUS_FULL on RH_REQUESTSSTATUS (id, status);" << endl
+         << endl
+         << "/* SQL statements for type Cuuid */" << endl
+         << "DROP TABLE rh_Cuuid;" << endl
+         << "CREATE TABLE rh_Cuuid (id INTEGER PRIMARY KEY, time_low NUMBER, time_mid NUMBER, time_hv NUMBER, clock_hi NUMBER, clock_low NUMBER, node CHAR(6));" << endl
+         << endl
+         << "/* PL/SQL procedure for getting the next request to handle */" << endl
+         << "CREATE OR REPLACE PROCEDURE getNRStatement(reqid OUT INTEGER) AS" << endl
+         << "BEGIN" << endl
+         << "  SELECT ID INTO reqid FROM rh_requestsStatus WHERE status = 'NEW' AND rownum <=1;" << endl
+         << "  UPDATE rh_requestsStatus SET status = 'RUNNING', lastChange = SYSDATE WHERE ID = reqid;" << endl
+         << "END;" << endl;
+  file.close();
 }
 
 //=============================================================================
@@ -45,6 +88,10 @@ bool CppCppOraCnvWriter::init(UMLClassifier* c, QString fileName) {
 // writeClass
 //=============================================================================
 void CppCppOraCnvWriter::writeClass(UMLClassifier */*c*/) {
+  if (m_firstClass) {
+    startSQLFile();
+    m_firstClass = false;
+  }
   // static factory declaration
   writeFactory();
   // static constants initialization

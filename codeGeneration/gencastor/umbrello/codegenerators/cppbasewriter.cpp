@@ -418,6 +418,13 @@ bool CppBaseWriter::finalize() {
   m_stream = 0;
   // No more class
   m_class = 0;
+  // reset some members
+  m_buffer = "";
+  m_arrayPart = "";
+  m_firstInclude = true;
+  m_indent = 0;
+  m_includes.clear();
+  m_forward.clear();
   return true;
 }
 
