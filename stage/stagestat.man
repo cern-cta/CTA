@@ -1,31 +1,37 @@
-.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.9 $ $Date: 2002/04/05 13:36:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.10 $ $Date: 2002/05/22 12:36:14 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGESTAT l "$Date: 2002/04/05 13:36:54 $"
+.TH STAGESTAT l "$Date: 2002/05/22 12:36:14 $"
 .SH NAME
 stagestat \- gives global statistics on stager usage and detailed statistics on
 each file staged in 
 .SH SYNOPSIS
 .B stagestat
 [
+.BI \-a
+] [
+.BI \-c
+] [
+.BI \-d
+] [
 .BI \-D " diskfile"
 ] [
 .BI \-e " end_time"
 ] [
 .BI \-f " accounting_file"
 ] [
-.BI \-H " castorfile"
-] [
 .BI \-h
 ] [
-.BI \-H " noncastorfile"
+.BI \-H " castorfile"
+] [
+.BI \-M " noncastorfile"
 ] [
 .BI \-p " pool_name"
 ] [
-.BI \-S " sorting_criteria"
-] [
 .BI \-s " start_time"
+] [
+.BI \-S " sorting_criteria"
 ] [
 .BI \-T " vid"
 ]
@@ -48,6 +54,15 @@ average lifetime per file and per group if garbage collected, and
 average number of accesses per file and per group.
 .SH OPTIONS
 .TP
+.BI \-a
+Considers deleted records by both administrator (considered as part of garbage collection) and user when computing average file lifetime. Default is deletion from administrator only.
+.TP
+.BI \-c
+Use creation time instead of last access time to compute average lifetime. Default is last access time.
+.TP
+.BI \-d
+Turns debugging mode on.
+.TP
 .BI \-D " diskfile"
 print records of disk type and matching
 .BI diskfile
@@ -69,12 +84,12 @@ default is the current
 .B sacct
 file
 .TP
+.BI \-h
+prints usage
+.TP
 .BI \-H " castorfile"
 print records of castor type and matching
 .BI castorfile
-.TP
-.BI \-h
-prints usage
 .TP
 .BI \-M " noncastorfile"
 print records of HSM but non-castor type and matching

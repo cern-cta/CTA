@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.24 2002/05/09 08:20:00 jdurand Exp $
+ * $Id: stagestat.c,v 1.25 2002/05/22 12:36:14 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.24 $ $Date: 2002/05/09 08:20:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.25 $ $Date: 2002/05/22 12:36:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -53,8 +53,10 @@ struct file_inf{
 	int gid;				/* group id number */
 	char poolname[CA_MAXPOOLNAMELEN + 1];	/* pool name */
 	time_t last_stgin;			/* time file was last staged in */
-	time_t total_stgin_gc;	/* total stagein time if clrd by garbage collector */
-	time_t total_stgin_uc;	/* total stagein time if clrd by use */	
+	time_t total_stgin_gc;	/* total stagein time if clrd by garbage collector using last access */
+	time_t total_stgin_uc;	/* total stagein time if clrd by user using last access */	
+	time_t total_stgin_gc2;	/* total stagein time if clrd by garbage collector using creation time */
+	time_t total_stgin_uc2;	/* total stagein time if clrd by user using creation time */	
 	union{
 		struct{				/* tape files */
 			char vid[7];		/* volume id */
@@ -74,6 +76,8 @@ struct file_inf{
 	int stage_status;			/* current stage status */
 	int num_periods_gc;		/* number periods terminated by garbage collector */
 	int num_periods_uc;		/* number periods terminated by user */
+	int num_periods_gc2;		/* number periods terminated by garbage collector using creation time */
+	int num_periods_uc2;		/* number periods terminated by user using creation time */
 	int num_accesses;		/* number times file accessed in current time period */
 	char t_or_d;				/* identifies if file is from tape or allocation or disk or non-CASTOR-HSM or CASTOR-HSM */
 	struct file_inf *next;
@@ -96,7 +100,8 @@ struct frec_nbaccs{
 
 struct frec_avg{
 	struct file_inf *rec;		/* pointer to a file_inf record */
-	float avg_life;			/* total average life for the file */
+	float avg_life;			/* total average life for the file using last access */
+	float avg_life2;		/* total average life for the file using creation time */
 	char poolname[CA_MAXPOOLNAMELEN + 1];	/* pool name */
 };
 
@@ -111,9 +116,11 @@ struct pool_inf{
 	int acc_clrd;	/* num files accesses and clrd, not staged in */
 	int stg_acc;		/* num files staged in and accessed, not clrd */
 	int stg_acc_clrd;	/* num files staged in, accessed and clrd */
-	int total_stged_files;  /* num files staged in, accd, clrd by garbage collector */ 
+	int total_stged_files;  /* num files staged in, accd, clrd by garbage collector using last access time */ 
+	int total_stged_files2;  /* num files staged in, accd, clrd by garbage collector using creation time */ 
 	float total_accesses;   /* total num of file accesses for pool */
-	float total_avg_life;   /* total avg life of files clrd by garbage collector */
+	float total_avg_life;   /* total avg life of files clrd by garbage collector using last access time */
+	float total_avg_life2;  /* total avg life of files clrd by garbage collector using creation time */
 	struct pool_inf *next;
 };
 struct pool_inf *pool_last, *pool_list = NULL;
@@ -160,6 +167,8 @@ char *Tflag = NULL;
 char *Dflag = NULL;
 char *Mflag = NULL;
 char *Hflag = NULL;
+int use_c_time = 0;
+int all_c_time = 0;
 
 int main(argc, argv)
 	int argc;
@@ -200,8 +209,14 @@ int main(argc, argv)
 
 	Coptind = 1;
 	Copterr = 1;
-	while ((c = Cgetopt (argc, argv, "dD:e:f:hH:M:p:r:S:s:T:v")) != -1) {
+	while ((c = Cgetopt (argc, argv, "acdD:e:f:hH:M:p:r:S:s:T:v")) != -1) {
 		switch (c) {
+		case 'a':
+			all_c_time++;
+			break;
+		case 'c':
+			use_c_time++;
+			break;
 		case 'd':
 			debug++;
 			break;
@@ -657,9 +672,9 @@ void enter_filc_details (rp, accthdr)
 {
 	int found = 0;			/* record found flag */
 	struct file_inf *frecord;		/* pointer to file_inf record */
-
+	
 	/* search through file list for record relating to same file */ 
-
+	
 	frecord = file_in_list;
 	while (frecord != NULL) {
 		if (frecord->t_or_d == 't') {
@@ -701,14 +716,39 @@ void enter_filc_details (rp, accthdr)
 				frecord->total_stgin_gc = frecord->total_stgin_gc + 
 					(accthdr.timestamp - frecord->last_stgin);
 				frecord->num_periods_gc++;
-			}	
-			else {				/* user cleared */
+				if (rp->u2.s.c_time > 0) {
+					frecord->total_stgin_gc2 = frecord->total_stgin_gc2 + 
+						(accthdr.timestamp - rp->u2.s.c_time);
+					frecord->num_periods_gc2++;
+				}
+			} else {				/* user cleared */
 				frecord->total_stgin_uc = frecord->total_stgin_uc +
 					(accthdr.timestamp - frecord->last_stgin);
 				frecord->num_periods_uc++;
+				if (rp->u2.s.c_time > 0) {
+					frecord->total_stgin_uc2 = frecord->total_stgin_uc2 + 
+						(accthdr.timestamp - rp->u2.s.c_time);
+					frecord->num_periods_uc2++;
+				}
 			}
 		}
 		frecord->stage_status = 0;
+	} else if ((use_c_time) && (rp->u2.s.c_time > 0)) {
+		/* Record not staged in during relevant time period but use_c_time */
+		/* is in action and we have the creation_time information */
+		/* This mean we can simulate a sucessful stagein by creation the frecord */
+		create_filelist (&file_in_list, &file_in_last, rp);
+		enter_pool_details (rp);
+		frecord = file_in_last;
+		if (rp->uid == 0) {		/* garbage collected */
+			frecord->total_stgin_gc2 = frecord->total_stgin_gc2 + 
+				(accthdr.timestamp - rp->u2.s.c_time);
+			frecord->num_periods_gc2++;
+		} else {				/* user cleared */
+			frecord->total_stgin_uc2 = frecord->total_stgin_uc2 + 
+				(accthdr.timestamp - rp->u2.s.c_time);
+			frecord->num_periods_uc2++;
+		}
 	}
 }
 
@@ -1022,7 +1062,8 @@ void print_fdetails (frecord)
 {
 	struct passwd *pwd;				/* password structure */
 	struct group *grp;				/* group structure */
-	float avg = 0.0;				/* average life */
+	float avg = 0.0;				/* average lifetime using last access */
+	float avg2 = 0.0;				/* average lifetime using creation time */
 	struct passwd pwd_unknown;
 	struct group grp_unknown;
 	char pw_name_unknown[21];
@@ -1062,22 +1103,49 @@ void print_fdetails (frecord)
 		avg = (frecord->total_stgin_uc / 3600.0) / frecord->num_periods_uc;
 	else avg = 0.0;
 
-	if ((frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0) ||
-		(frecord->total_stgin_uc > 0 && frecord->num_periods_uc > 0))
-		printf ("\n%8s %8s    %8.2f  %8d %12s %8s", frecord->u1.t.vid,
-				frecord->u1.t.fseq, avg, frecord->num_accesses, pwd->pw_name, 
-				grp->gr_name);
-	else if (frecord->stage_status == 1)
-		printf ("\n%8s %8s    %8s  %8d %12s %8s", frecord->u1.t.vid,
-				frecord->u1.t.fseq,"      nc", frecord->num_accesses, 
-				pwd->pw_name, grp->gr_name);
-	else if (frecord->last_stgin == 0)
-		printf ("\n%8s %8s    %8s  %8d %12s %8s", frecord->u1.t.vid,
-				frecord->u1.t.fseq,"      ac", frecord->num_accesses, 
-				pwd->pw_name, grp->gr_name);
-	else printf ("\n%8s %8s    %8.2f  %8d %12s %8s", frecord->u1.t.vid,
-				 frecord->u1.t.fseq, 0., frecord->num_accesses, pwd->pw_name, 
-				 grp->gr_name);
+	if (frecord->num_periods_gc2 > 0) 
+		avg2 = (frecord->total_stgin_gc2 / 3600.0) / frecord->num_periods_gc2;
+	else if (frecord->num_periods_uc2 > 0)
+		avg2 = (frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2;
+	else avg2 = 0.0;
+
+	if (use_c_time) {
+		if ((frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0) ||
+			(frecord->total_stgin_uc2 > 0 && frecord->num_periods_uc2 > 0))
+			printf ("\n%8s %8s    %8.2f  %8d %12s %8s", frecord->u1.t.vid,
+					frecord->u1.t.fseq, avg2, frecord->num_accesses, pwd->pw_name, 
+					grp->gr_name);
+		else if (frecord->stage_status == 1)
+			printf ("\n%8s %8s    %8s  %8d %12s %8s", frecord->u1.t.vid,
+					frecord->u1.t.fseq,"      nc", frecord->num_accesses, 
+					pwd->pw_name, grp->gr_name);
+		else if (frecord->last_stgin == 0)
+			printf ("\n%8s %8s    %8s  %8d %12s %8s", frecord->u1.t.vid,
+					frecord->u1.t.fseq,"      ac", frecord->num_accesses, 
+					pwd->pw_name, grp->gr_name);
+		else printf ("\n%8s %8s    %8.2f  %8d %12s %8s", frecord->u1.t.vid,
+					 frecord->u1.t.fseq, 0., frecord->num_accesses, pwd->pw_name, 
+					 grp->gr_name);
+
+	} else {
+		if ((frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0) ||
+			(frecord->total_stgin_uc > 0 && frecord->num_periods_uc > 0))
+			printf ("\n%8s %8s    %8.2f  %8d %12s %8s", frecord->u1.t.vid,
+					frecord->u1.t.fseq, avg, frecord->num_accesses, pwd->pw_name, 
+					grp->gr_name);
+		else if (frecord->stage_status == 1)
+			printf ("\n%8s %8s    %8s  %8d %12s %8s", frecord->u1.t.vid,
+					frecord->u1.t.fseq,"      nc", frecord->num_accesses, 
+					pwd->pw_name, grp->gr_name);
+		else if (frecord->last_stgin == 0)
+			printf ("\n%8s %8s    %8s  %8d %12s %8s", frecord->u1.t.vid,
+					frecord->u1.t.fseq,"      ac", frecord->num_accesses, 
+					pwd->pw_name, grp->gr_name);
+		else printf ("\n%8s %8s    %8.2f  %8d %12s %8s", frecord->u1.t.vid,
+					 frecord->u1.t.fseq, 0., frecord->num_accesses, pwd->pw_name, 
+					 grp->gr_name);
+
+	}
 }
 
 /* Function to print out global statistics */
@@ -1157,6 +1225,7 @@ void print_ddetails (frecord)
 	struct passwd *pwd;				/* password structure */
 	struct group *grp;				/* group structure */
 	float avg = 0.0;				/* average life */
+	float avg2 = 0.0;				/* average life */
 	struct passwd pwd_unknown;
 	struct group grp_unknown;
 	char pw_name_unknown[21];
@@ -1196,21 +1265,42 @@ void print_ddetails (frecord)
 		avg = (frecord->total_stgin_uc / 3600.0) / frecord->num_periods_uc;
 	else avg = 0.0;
 
-	if ((frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0) ||
-		(frecord->num_periods_uc > 0 && frecord->total_stgin_uc > 0))
-		printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.d.xfile,
-				avg, frecord->num_accesses, pwd->pw_name, grp->gr_name);
-	else if (frecord->stage_status == 1)
-		printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.d.xfile,
-				"      nc", frecord->num_accesses, pwd->pw_name, grp->gr_name);
-	else if (frecord->last_stgin == 0)
-		printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.d.xfile,
-				"      ac", frecord->num_accesses, pwd->pw_name, grp->gr_name);
-	else printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.d.xfile,
-				 0., frecord->num_accesses, pwd->pw_name, grp->gr_name);
+	if (frecord->num_periods_gc2 > 0) 
+		avg2 = (frecord->total_stgin_gc2 / 3600.0) / frecord->num_periods_gc2;
+	else if (frecord->num_periods_uc2 > 0)
+		avg2 = (frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2;
+	else avg2 = 0.0;
+
+	if (use_c_time) {
+		if ((frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0) ||
+			(frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2 > 0))
+			printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.d.xfile,
+					avg2, frecord->num_accesses, pwd->pw_name, grp->gr_name);
+		else if (frecord->stage_status == 1)
+			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.d.xfile,
+					"      nc", frecord->num_accesses, pwd->pw_name, grp->gr_name);
+		else if (frecord->last_stgin == 0)
+			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.d.xfile,
+					"      ac", frecord->num_accesses, pwd->pw_name, grp->gr_name);
+		else printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.d.xfile,
+					 0., frecord->num_accesses, pwd->pw_name, grp->gr_name);
+	} else {
+		if ((frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0) ||
+			(frecord->num_periods_uc > 0 && frecord->total_stgin_uc > 0))
+			printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.d.xfile,
+					avg, frecord->num_accesses, pwd->pw_name, grp->gr_name);
+		else if (frecord->stage_status == 1)
+			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.d.xfile,
+					"      nc", frecord->num_accesses, pwd->pw_name, grp->gr_name);
+		else if (frecord->last_stgin == 0)
+			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.d.xfile,
+					"      ac", frecord->num_accesses, pwd->pw_name, grp->gr_name);
+		else printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.d.xfile,
+					 0., frecord->num_accesses, pwd->pw_name, grp->gr_name);
+	}
 }
 
-/*Function to print out a Disk record*/
+/*Function to print out a Hsm record*/
 
 void print_mdetails (frecord)
 	struct file_inf * frecord;
@@ -1218,6 +1308,7 @@ void print_mdetails (frecord)
 	struct passwd *pwd;				/* password structure */
 	struct group *grp;				/* group structure */
 	float avg = 0.0;				/* average life */
+	float avg2 = 0.0;				/* average life */
 	struct passwd pwd_unknown;
 	struct group grp_unknown;
 	char pw_name_unknown[21];
@@ -1258,28 +1349,50 @@ void print_mdetails (frecord)
 		avg = (frecord->total_stgin_uc / 3600.0) / frecord->num_periods_uc;
 	else avg = 0.0;
 
-	if ((frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0) ||
-		(frecord->num_periods_uc > 0 && frecord->total_stgin_uc > 0))
-		printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.m.xfile,
-				avg, frecord->num_accesses, pwd->pw_name, grp->gr_name);
-	else if (frecord->stage_status == 1)
-		printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.m.xfile,
-				"      nc", frecord->num_accesses, pwd->pw_name, grp->gr_name);
-	else if (frecord->last_stgin == 0)
-		printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.m.xfile,
-				"      ac", frecord->num_accesses, pwd->pw_name, grp->gr_name);
-	else printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.m.xfile,
-				 0., frecord->num_accesses, pwd->pw_name, grp->gr_name);
+	if (frecord->num_periods_gc2 > 0) 
+		avg2 = (frecord->total_stgin_gc2 / 3600.0) / frecord->num_periods_gc2;
+	else if (frecord->num_periods_uc2 > 0)
+		avg2 = (frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2;
+	else avg2 = 0.0;
+
+	if (use_c_time) {
+		if ((frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0) ||
+			(frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2 > 0))
+			printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.m.xfile,
+					avg2, frecord->num_accesses, pwd->pw_name, grp->gr_name);
+		else if (frecord->stage_status == 1)
+			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.m.xfile,
+					"      nc", frecord->num_accesses, pwd->pw_name, grp->gr_name);
+		else if (frecord->last_stgin == 0)
+			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.m.xfile,
+					"      ac", frecord->num_accesses, pwd->pw_name, grp->gr_name);
+		else printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.m.xfile,
+					 0., frecord->num_accesses, pwd->pw_name, grp->gr_name);
+	} else {
+		if ((frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0) ||
+			(frecord->num_periods_uc > 0 && frecord->total_stgin_uc > 0))
+			printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.m.xfile,
+					avg, frecord->num_accesses, pwd->pw_name, grp->gr_name);
+		else if (frecord->stage_status == 1)
+			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.m.xfile,
+					"      nc", frecord->num_accesses, pwd->pw_name, grp->gr_name);
+		else if (frecord->last_stgin == 0)
+			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.m.xfile,
+					"      ac", frecord->num_accesses, pwd->pw_name, grp->gr_name);
+		else printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.m.xfile,
+					 0., frecord->num_accesses, pwd->pw_name, grp->gr_name);
+	}
 }
 
-/*Function to print out a Disk record*/
+/*Function to print out a CASTOR record*/
 
 void print_hdetails (frecord)
 	struct file_inf * frecord;
 {
 	struct passwd *pwd;				/* password structure */
 	struct group *grp;				/* group structure */
-	float avg = 0.0;				/* average life */
+	float avg = 0.0;				/* average life using last access */
+	float avg2 = 0.0;				/* average life using creation time */
 	struct passwd pwd_unknown;
 	struct group grp_unknown;
 	char pw_name_unknown[21];
@@ -1319,18 +1432,39 @@ void print_hdetails (frecord)
 		avg = (frecord->total_stgin_uc / 3600.0) / frecord->num_periods_uc;
 	else avg = 0.0;
 
-	if ((frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0) ||
-		(frecord->num_periods_uc > 0 && frecord->total_stgin_uc > 0))
-		printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.h.xfile,
-				avg, frecord->num_accesses, pwd->pw_name, grp->gr_name);
-	else if (frecord->stage_status == 1)
-		printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.h.xfile,
-				"      nc", frecord->num_accesses, pwd->pw_name, grp->gr_name);
-	else if (frecord->last_stgin == 0)
-		printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.h.xfile,
-				"      ac", frecord->num_accesses, pwd->pw_name, grp->gr_name);
-	else printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.h.xfile,
-				 0., frecord->num_accesses, pwd->pw_name, grp->gr_name);
+	if (frecord->num_periods_gc2 > 0) 
+		avg2 = (frecord->total_stgin_gc2 / 3600.0) / frecord->num_periods_gc2;
+	else if (frecord->num_periods_uc2 > 0)
+		avg2 = (frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2;
+	else avg2 = 0.0;
+
+	if (use_c_time) {
+		if ((frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0) ||
+			(frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2 > 0))
+			printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.h.xfile,
+					avg2, frecord->num_accesses, pwd->pw_name, grp->gr_name);
+		else if (frecord->stage_status == 1)
+			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.h.xfile,
+					"      nc", frecord->num_accesses, pwd->pw_name, grp->gr_name);
+		else if (frecord->last_stgin == 0)
+			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.h.xfile,
+					"      ac", frecord->num_accesses, pwd->pw_name, grp->gr_name);
+		else printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.h.xfile,
+					 0., frecord->num_accesses, pwd->pw_name, grp->gr_name);
+	} else {
+		if ((frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0) ||
+			(frecord->num_periods_uc > 0 && frecord->total_stgin_uc > 0))
+			printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.h.xfile,
+					avg, frecord->num_accesses, pwd->pw_name, grp->gr_name);
+		else if (frecord->stage_status == 1)
+			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.h.xfile,
+					"      nc", frecord->num_accesses, pwd->pw_name, grp->gr_name);
+		else if (frecord->last_stgin == 0)
+			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.h.xfile,
+					"      ac", frecord->num_accesses, pwd->pw_name, grp->gr_name);
+		else printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.h.xfile,
+					 0., frecord->num_accesses, pwd->pw_name, grp->gr_name);
+	}
 }
 
 
@@ -1354,12 +1488,24 @@ void sort_poolinf ()
 					pf->stg_acc++;
 				else if (frecord->stage_status == 0 && frecord->last_stgin > 0) 
 					pf->stg_acc_clrd++; 
-				else if (frecord->stage_status == 0 && frecord->last_stgin == 0) 				pf->acc_clrd++;
-				if (frecord->num_periods_gc>0 && frecord->total_stgin_gc > 0) {
-					pf->total_stged_files++;
-					pf->total_avg_life = pf->total_avg_life + 
-						((frecord->total_stgin_gc / 3600.0) /
-						 frecord->num_periods_gc);
+				else if (frecord->stage_status == 0 && frecord->last_stgin == 0)
+					pf->acc_clrd++;
+				if (use_c_time) {
+					if (frecord->num_periods_gc2>0 && frecord->total_stgin_gc2 > 0) {
+						pf->total_stged_files2++;
+						pf->total_avg_life2 += ((frecord->total_stgin_gc2 / 3600.0) / frecord->num_periods_gc2);
+					} else if ((all_c_time) && (frecord->num_periods_uc2>0 && frecord->total_stgin_uc2 > 0)) {
+						pf->total_stged_files2++;
+						pf->total_avg_life2 += ((frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2);
+					}
+				} else {
+					if (frecord->num_periods_gc>0 && frecord->total_stgin_gc > 0) {
+						pf->total_stged_files++;
+						pf->total_avg_life += ((frecord->total_stgin_gc / 3600.0) / frecord->num_periods_gc);
+					} else if ((all_c_time) && (frecord->num_periods_uc>0 && frecord->total_stgin_uc > 0)) {
+						pf->total_stged_files++;
+						pf->total_avg_life += ((frecord->total_stgin_uc / 3600.0) / frecord->num_periods_uc);
+					}
 				}
 				if (frecord->t_or_d == 't') pf->num_frecs++;
 				else if (frecord->t_or_d == 'd') pf->num_drecs++;
@@ -1440,14 +1586,25 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 				} else if (tflag) {
 					favg[fi].rec = frecord;
 					strcpy (favg[fi].poolname, frecord->poolname);
-					if (frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0)
-						favg[fi].avg_life = (frecord->total_stgin_gc / 3600.0)
-							/ frecord->num_periods_gc;
-					else if (frecord->num_periods_uc > 0 && frecord->total_stgin_uc
-							 > 0)
-						favg[fi].avg_life = (frecord->total_stgin_uc / 3600.0)
-							/ frecord->num_periods_uc;
-					else favg[fi].avg_life = 0.0;
+					if (use_c_time) {
+						if (frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0)
+							favg[fi].avg_life2 = (frecord->total_stgin_gc2 / 3600.0)
+								/ frecord->num_periods_gc2;
+						else if (frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
+								 > 0)
+							favg[fi].avg_life2 = (frecord->total_stgin_uc2 / 3600.0)
+								/ frecord->num_periods_uc2;
+						else favg[fi].avg_life2 = 0.0;
+					} else {
+						if (frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0)
+							favg[fi].avg_life = (frecord->total_stgin_gc / 3600.0)
+								/ frecord->num_periods_gc;
+						else if (frecord->num_periods_uc > 0 && frecord->total_stgin_uc
+								 > 0)
+							favg[fi].avg_life = (frecord->total_stgin_uc / 3600.0)
+								/ frecord->num_periods_uc;
+						else favg[fi].avg_life = 0.0;
+					}
 				}
 				fi++;
 			}
@@ -1459,14 +1616,25 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 				} else if (tflag) {
 					davg[di].rec = frecord;
 					strcpy (davg[di].poolname, frecord->poolname);
-					if (frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0)
-						davg[di].avg_life = (frecord->total_stgin_gc / 3600.0)
-							/ frecord->num_periods_gc;
-					else if (frecord->num_periods_uc > 0 && frecord->total_stgin_uc
-							 > 0)
-						davg[di].avg_life = (frecord->total_stgin_uc / 3600.0)
-							/ frecord->num_periods_uc;
-					else davg[di].avg_life = 0.0;
+					if (use_c_time) {
+						if (frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0)
+							davg[di].avg_life2 = (frecord->total_stgin_gc2 / 3600.0)
+								/ frecord->num_periods_gc2;
+						else if (frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
+								 > 0)
+							davg[di].avg_life2 = (frecord->total_stgin_uc2 / 3600.0)
+								/ frecord->num_periods_uc2;
+						else davg[di].avg_life2 = 0.0;
+					} else {
+						if (frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0)
+							davg[di].avg_life = (frecord->total_stgin_gc / 3600.0)
+								/ frecord->num_periods_gc;
+						else if (frecord->num_periods_uc > 0 && frecord->total_stgin_uc
+								 > 0)
+							davg[di].avg_life = (frecord->total_stgin_uc / 3600.0)
+								/ frecord->num_periods_uc;
+						else davg[di].avg_life = 0.0;
+					}
 				}
 				di++;
 			}
@@ -1478,14 +1646,25 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 				} else if (tflag) {
 					mavg[mi].rec = frecord;
 					strcpy (mavg[mi].poolname, frecord->poolname);
-					if (frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0)
-						mavg[mi].avg_life = (frecord->total_stgin_gc / 3600.0)
-							/ frecord->num_periods_gc;
-					else if (frecord->num_periods_uc > 0 && frecord->total_stgin_uc
-							 > 0)
-						mavg[mi].avg_life = (frecord->total_stgin_uc / 3600.0)
-							/ frecord->num_periods_uc;
-					else mavg[mi].avg_life = 0.0;
+					if (use_c_time) {
+						if (frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0)
+							mavg[mi].avg_life2 = (frecord->total_stgin_gc2 / 3600.0)
+								/ frecord->num_periods_gc2;
+						else if (frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
+								 > 0)
+							mavg[mi].avg_life2 = (frecord->total_stgin_uc2 / 3600.0)
+								/ frecord->num_periods_uc2;
+						else mavg[mi].avg_life2 = 0.0;
+					} else {
+						if (frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0)
+							mavg[mi].avg_life = (frecord->total_stgin_gc / 3600.0)
+								/ frecord->num_periods_gc;
+						else if (frecord->num_periods_uc > 0 && frecord->total_stgin_uc
+								 > 0)
+							mavg[mi].avg_life = (frecord->total_stgin_uc / 3600.0)
+								/ frecord->num_periods_uc;
+						else mavg[mi].avg_life = 0.0;
+					}
 				}
 				mi++;
 			}
@@ -1497,14 +1676,25 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 				} else if (tflag) {
 					havg[hi].rec = frecord;
 					strcpy (havg[hi].poolname, frecord->poolname);
-					if (frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0)
-						havg[hi].avg_life = (frecord->total_stgin_gc / 3600.0)
-							/ frecord->num_periods_gc;
-					else if (frecord->num_periods_uc > 0 && frecord->total_stgin_uc
-							 > 0)
-						havg[hi].avg_life = (frecord->total_stgin_uc / 3600.0)
-							/ frecord->num_periods_uc;
-					else havg[hi].avg_life = 0.0;
+					if (use_c_time) {
+						if (frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0)
+							havg[hi].avg_life2 = (frecord->total_stgin_gc2 / 3600.0)
+								/ frecord->num_periods_gc2;
+						else if (frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
+								 > 0)
+							havg[hi].avg_life2 = (frecord->total_stgin_uc2 / 3600.0)
+								/ frecord->num_periods_uc2;
+						else havg[hi].avg_life2 = 0.0;
+					} else {
+						if (frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0)
+							havg[hi].avg_life = (frecord->total_stgin_gc / 3600.0)
+								/ frecord->num_periods_gc;
+						else if (frecord->num_periods_uc > 0 && frecord->total_stgin_uc
+								 > 0)
+							havg[hi].avg_life = (frecord->total_stgin_uc / 3600.0)
+								/ frecord->num_periods_uc;
+						else havg[hi].avg_life = 0.0;
+					}
 				}
 				hi++;
 			}
@@ -1560,10 +1750,17 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 		if (pf->num_files > 0)
 			printf ("\nAverage number of file accesses \t:\t %8.2f",
 					pf->total_accesses/pf->num_files);
-		if (pf->total_avg_life > 0.0 && pf->total_stged_files > 0)
-			printf ("\n Average lifetime of a staged file \t:\t %8.2f hours\n",
-					(float) ((pf->total_avg_life/pf->total_stged_files)/3600.));
-
+		if (use_c_time) {
+			if (pf->total_avg_life2 > 0.0 && pf->total_stged_files2 > 0)
+				printf ("\n Average lifetime of staged and then garbaged%s file using creation time \t:\t %8.2f hours\n",
+						(all_c_time ? "/cleared_by_user" : ""),
+						(float) (pf->total_avg_life2/pf->total_stged_files2));
+		} else {
+			if (pf->total_avg_life > 0.0 && pf->total_stged_files > 0)
+				printf ("\n Average lifetime of a staged and then deleted file using last access time \t:\t %8.2f hours\n",
+						(float) (pf->total_avg_life/pf->total_stged_files));
+		}
+		
 		/* if sort criteria given print out file details */
 
 		if (aflag && pf->num_frecs > 0) {
@@ -1587,7 +1784,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 			for (i = 0; i<num_frecs ; i++) {
 				frecord = favg[i].rec;
 				if ((strcmp (frecord->poolname, current_pool) == 0) &&
-					(frecord->total_stgin_gc > 0 || frecord->total_stgin_uc > 0))
+					(frecord->total_stgin_gc > 0 || frecord->total_stgin_uc > 0 || frecord->total_stgin_gc2 > 0 || frecord->total_stgin_uc2 > 0))
 					print_fdetails (frecord);
 			}
 		}
@@ -1613,7 +1810,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 			for(i=0; i< num_drecs; i++) {
 				frecord = davg[i].rec;
 				if ((strcmp (frecord->poolname, current_pool) == 0) &&
-					(frecord->total_stgin_gc > 0 || frecord->total_stgin_uc > 0))
+					(frecord->total_stgin_gc > 0 || frecord->total_stgin_uc > 0 || frecord->total_stgin_gc2 > 0 || frecord->total_stgin_uc2 > 0))
 					print_ddetails (frecord);
 			}
 		}
@@ -1639,7 +1836,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 			for(i=0; i< num_mrecs; i++) {
 				frecord = mavg[i].rec;
 				if ((strcmp (frecord->poolname, current_pool) == 0) &&
-					(frecord->total_stgin_gc > 0 || frecord->total_stgin_uc > 0))
+					(frecord->total_stgin_gc > 0 || frecord->total_stgin_uc > 0 || frecord->total_stgin_gc2 > 0 || frecord->total_stgin_uc2 > 0))
 					print_mdetails (frecord);
 			}
 		}
@@ -1665,7 +1862,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 			for(i=0; i< num_mrecs; i++) {
 				frecord = mavg[i].rec;
 				if ((strcmp (frecord->poolname, current_pool) == 0) &&
-					(frecord->total_stgin_gc > 0 || frecord->total_stgin_uc > 0))
+					(frecord->total_stgin_gc > 0 || frecord->total_stgin_uc > 0 || frecord->total_stgin_gc2 > 0 || frecord->total_stgin_uc2 > 0))
 					print_mdetails (frecord);
 			}
 		}
@@ -1694,10 +1891,17 @@ int comp2 (a, b)
 {
 	int c = 0;
 
-	if ((c = strcmp(a->poolname, b->poolname)) != 0) return (c);
-	else if (a->avg_life < b->avg_life) return (1);
-	else if (a->avg_life == b->avg_life) return (0);
-	else return (-1);
+	if (use_c_time) {
+		if ((c = strcmp(a->poolname, b->poolname)) != 0) return (c);
+		else if (a->avg_life2 < b->avg_life2) return (1);
+		else if (a->avg_life2 == b->avg_life2) return (0);
+		else return (-1);
+	} else {
+		if ((c = strcmp(a->poolname, b->poolname)) != 0) return (c);
+		else if (a->avg_life < b->avg_life) return (1);
+		else if (a->avg_life == b->avg_life) return (0);
+		else return (-1);
+	}
 }
 
 void swap_fields (rp)
@@ -1718,13 +1922,23 @@ void usage (cmd)
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "%s",
-			 "[-e end_time][-f accounting_file][-h][-s start_time][-p pool_name][-S <a or t>][-v]\n"
+			 "[-a][-c][-d][-e end_time][-f accounting_file][-h][-s start_time][-p pool_name][-S <a or t>][-v]\n"
 			 "[-D diskfile][-H castorfile][-M noncastorfile][-T vid]\n"
 			 "\n"
-			 "where -D diskfile   is for searching and dumping accounting for DISK entries matching \"diskfile\"\n"
-			 "      -H castorfile is for searching and dumping accounting for CASTOR entries matching \"castorfile\"\n"
-			 "      -M hsmfile    is for searching and dumping accounting for HSM and NON-CASTOR entries matching \"hsmfile\"\n"
-			 "      -T vid        is for searching and dumping accounting for TAPE entries matching \"vid\"\n"
+			 "      -a                 Use files deleted by user and admin for lifetime analysis - Default to admin (== garbage collector) only\n"
+			 "where -c                 Use creation time for doing lifetime analysis\n"
+			 "      -d                 Debug mode\n"
+			 "      -e end_time        Limits analysis up to mmddhhmm[yy]\n"
+			 "      -f accounting_file For using \"accounting_file\" (rfio syntax)\n"
+			 "      -h accounting_file This help\n"
+			 "      -s start_time      Limits analysis from mmddhhmm[yy]\n"
+			 "      -p pool_name       Limits analysis to pool \"pool_name\"\n"
+			 "      -S <a or t>        Sorting criteria (\"a\" per access number, \"t\" per lifetime)\n"
+			 "      -v                 Verbose mode\n"
+			 "where -D diskfile        is for searching and dumping accounting for DISK entries matching \"diskfile\"\n"
+			 "      -H castorfile      is for searching and dumping accounting for CASTOR entries matching \"castorfile\"\n"
+			 "      -M hsmfile         is for searching and dumping accounting for HSM and NON-CASTOR entries matching \"hsmfile\"\n"
+			 "      -T vid             is for searching and dumping accounting for TAPE entries matching \"vid\"\n"
 		);
 }
 
