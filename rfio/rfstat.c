@@ -1,14 +1,14 @@
 /*
- * $Id: rfstat.c,v 1.4 2000/02/03 09:35:59 obarring Exp $
+ * $Id: rfstat.c,v 1.5 2000/09/04 09:13:39 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfstat.c,v $ $Revision: 1.4 $ $Date: 2000/02/03 09:35:59 $ CERN/IT/PDP/DM fhe";
+static char sccsid[] = "@(#)$RCSfile: rfstat.c,v $ $Revision: 1.5 $ $Date: 2000/09/04 09:13:39 $ CERN/IT/PDP/DM fhe";
 #endif /* not lint */
 
 #define RFIO_KERNEL 1
@@ -19,25 +19,6 @@ static char sccsid[] = "@(#)$RCSfile: rfstat.c,v $ $Revision: 1.4 $ $Date: 2000/
 #include <time.h>
 #include <pwd.h>
 #include <grp.h>
-#ifdef CRAY
-extern  struct group * getgrgid();
-#endif /* CRAY */
-#if defined(apollo) || defined(_WIN32)
-#define S_IRGRP 0000040         /* read permission, group */
-#define S_IWGRP 0000020         /* write permission, grougroup */
-#define S_IXGRP 0000010         /* execute/search permission, group */
-#define S_IROTH 0000004         /* read permission, other */
-#define S_IWOTH 0000002         /* write permission, other */
-#define S_IXOTH 0000001         /* execute/search permission, other */
-#endif /* apollo || _WIN32 */
-#if defined(_WIN32)
-#define S_IFBLK 0060000		/* block special */
-#define S_IFLNK 0120000		/* symbolic link */
-#define S_IFSOCK 0140000	/* socket */
-#define S_ISUID 0004000		/* set user id on execution */
-#define S_ISGID 0002000		/* set group id on execution */
-#define S_ISVTX 0001000		/* save text even after use */
-#endif
 
 static char *ftype="dbclps-";
 static char *perm="rwx-";
