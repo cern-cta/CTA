@@ -4,14 +4,16 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cinitdaemon.c,v $ $Revision: 1.3 $ $Date: 2000/03/03 14:47:33 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Cinitdaemon.c,v $ $Revision: 1.4 $ $Date: 2000/03/13 12:45:11 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
  * Cinitdaemon.c - Common routine for CASTOR daemon initialisation
  */
 
+#if ! defined(_WIN32)
 #include <unistd.h>
+#endif
 #include <stdio.h>
 #include <signal.h> 
 #include <errno.h>
@@ -24,7 +26,9 @@ void (*wait4child) _PROTO((int));
 {
         int c, _jid;
         int maxfds;
+#if ! defined(_WIN32)
         struct sigaction sa;
+#endif
 
 #if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(sgi)
         maxfds = getdtablesize();
