@@ -1,5 +1,5 @@
 /*
- * $Id: Cinitservice.c,v 1.1 2000/08/25 07:26:34 baud Exp $
+ * $Id: Cinitservice.c,v 1.2 2000/08/25 12:53:58 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cinitservice.c,v $ $Revision: 1.1 $ $Date: 2000/08/25 07:26:34 $ CERN/IT/PDP/DM Aneta Baran/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cinitservice.c,v $ $Revision: 1.2 $ $Date: 2000/08/25 12:53:58 $ CERN/IT/PDP/DM Aneta Baran/Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -200,7 +200,6 @@ char *argv[];
 
    main_args.argc = argc;
    main_args.argv = argv;
-   main_args.maxfds = 0;
    rcode = service_init();
    if(rcode) {
       terminate(GetLastError());
