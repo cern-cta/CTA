@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/12 14:44:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamBaseCnv.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/11/01 09:13:02 $ $Author: sponcec3 $
  *
  * 
  *
@@ -138,18 +138,6 @@ namespace castor {
       virtual void fillObj(castor::IAddress* address,
                            castor::IObject* object,
                            unsigned int type)
-        throw (castor::exception::Exception);
-      
-      /**
-       * Removes a link from a parent to a child.
-       * This implementation always raises an exception
-       * since this method makes no sense for streaming.
-       * @param parent the parent
-       * @param child the child
-       * @exception Exception Always thrown, see above.
-       */
-      virtual void unlinkChild(const castor::IObject* parent,
-                               const castor::IObject* child)
         throw (castor::exception::Exception);
 
     protected:

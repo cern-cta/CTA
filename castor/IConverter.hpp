@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IConverter.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/10/14 16:34:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IConverter.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/01 09:13:01 $ $Author: sponcec3 $
  *
  *
  *
@@ -153,16 +153,6 @@ namespace castor {
     virtual void fillObj(castor::IAddress* address,
                          castor::IObject* object,
                          unsigned int type)
-      throw (castor::exception::Exception) = 0;
-
-    /**
-     * Removes a link from a parent to a child
-     * @param parent the parent
-     * @param child the child
-     * @exception Exception throws an Exception in case of error
-     */
-    virtual void unlinkChild(const castor::IObject* parent,
-                             const castor::IObject* child)
       throw (castor::exception::Exception) = 0;
 
   };

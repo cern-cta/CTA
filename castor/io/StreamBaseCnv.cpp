@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/10/12 14:44:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/01 09:13:02 $ $Author: sponcec3 $
  *
  *
  *
@@ -133,18 +133,6 @@ void castor::io::StreamBaseCnv::fillObj(castor::IAddress* address,
   ex.getMessage() << "fillObj should never be called in case of streaming."
                   << std::endl;
   throw ex;
-}
-
-// -----------------------------------------------------------------------
-// unlinkChild
-// -----------------------------------------------------------------------
-void castor::io::StreamBaseCnv::unlinkChild
-(const castor::IObject* parent,
- const castor::IObject* child)
-  throw (castor::exception::Exception) {
-  castor::exception::Internal e;
-  e.getMessage() << "unlinkChild should never be called while streaming.";
-  throw e;
 }
 
 // -----------------------------------------------------------------------
