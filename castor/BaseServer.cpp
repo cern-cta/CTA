@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/12/16 18:29:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/01/24 14:48:57 $ $Author: sponcec3 $
  *
  *
  *
@@ -31,6 +31,7 @@
 #include "castor/Services.hpp"
 #include "Cgetopt.h"
 #include "Cinit.h"
+#include "Cuuid.h"
 #include "Cpool_api.h"
 #include "castor/logstream.h"
 #include <sstream>
@@ -42,7 +43,13 @@
 castor::BaseServer::BaseServer(const std::string serverName,
                                const int nbThreads):
   m_foreground(false), m_singleThreaded(false), m_threadPoolId(-1),
-  m_threadNumber(nbThreads), m_serverName(serverName) {}
+  m_threadNumber(nbThreads), m_serverName(serverName) {
+  // gives a Cuuid to this server
+  // XXX Interface to Cuuid has to be improved !
+  // XXX its length has currently to be hardcoded
+  // XXX wherever you use it !!!
+  Cuuid_create(&m_uuid);
+}
 
 //------------------------------------------------------------------------------
 // destructor

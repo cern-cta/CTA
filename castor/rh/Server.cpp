@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2004/12/17 16:49:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2005/01/24 14:48:57 $ $Author: sponcec3 $
  *
  *
  *
@@ -170,6 +170,18 @@ void *castor::rh::Server::processRequest(void *param) throw() {
   if (ack.status()) {
     clog() << INFO << "Processing request" << std::endl;
     try {
+      // gives a Cuuid to the request
+      // XXX Interface to Cuuid has to be improved !
+      // XXX its length has currently to be hardcoded
+      // XXX wherever you use it !!!
+      Cuuid_t cuuid;
+      Cuuid_create(&cuuid);
+      char uuid[CUUID_STRING_LEN+1];
+      uuid[CUUID_STRING_LEN] = 0;
+      Cuuid2string(uuid, CUUID_STRING_LEN, &cuuid);
+      fr->setReqId(uuid);
+      clog() << cuuid;
+
       // Complete its client field
       unsigned short port;
       unsigned long ip;
@@ -192,16 +204,7 @@ void *castor::rh::Server::processRequest(void *param) throw() {
       }
       client->setIpAddress(ip);
       
-      // handle the request (and give a Cuuid to it)
-      // XXX Interface to Cuuid has to be improved !
-      // XXX its length has currently yo be hardcoded
-      // XXX wherever you use it !!!
-      Cuuid_t cuuid;
-      Cuuid_create(&cuuid);
-      char uuid[CUUID_STRING_LEN+1];
-      uuid[CUUID_STRING_LEN] = 0;
-      Cuuid2string(uuid, CUUID_STRING_LEN, &cuuid);
-      fr->setReqId(uuid);
+      // handle the request
       handleRequest(fr);
       ack.setRequestId(uuid);
       ack.setStatus(true);
@@ -223,6 +226,10 @@ void *castor::rh::Server::processRequest(void *param) throw() {
            << sstrerror(e.code()) << std::endl
            << e.getMessage().str() << std::endl;
   }
+
+  // reset uuid to the main one in the log
+  clog() << m_uuid;
+  
   delete fr;
   delete sock;
   return 0;

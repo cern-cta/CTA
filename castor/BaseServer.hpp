@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/05 17:47:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/01/24 14:48:57 $ $Author: sponcec3 $
  *
  * 
  *
@@ -153,6 +153,14 @@ namespace castor {
      * Name of the server
      */
     std::string m_serverName;
+
+  protected:
+
+    /**
+     * UUID of the server (for log purposes)
+     */
+    Cuuid_t m_uuid;
+
   };
   
 } // end of namespace castor
