@@ -4,13 +4,16 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tapetohsm.c,v $ $Revision: 1.1 $ $Date: 2001/03/28 05:23:38 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tapetohsm.c,v $ $Revision: 1.2 $ $Date: 2001/05/04 10:37:21 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tapetohsm - catalog in the CASTOR Name Server files from a non HSM tape */
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif
 #include "Cgetopt.h"
 #include "Cns_api.h"
 #include "serrno.h"
