@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.7 2004/12/08 14:47:46 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.8 2004/12/08 15:10:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.7 $ $Date: 2004/12/08 14:47:46 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.8 $ $Date: 2004/12/08 15:10:06 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -533,15 +533,13 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
     castor::exception::Internal e;
     e.getMessage() << "Unknown Request type : "
                    << castor::ObjectsIdStrings[req->type()];
+    if (req) delete req;
+    if (stgSvc) stgSvc->release();
     throw e;
-
   }  
 
   // Cleanup
-  if (req) {
-    req->client()->setRequest(0);
-    delete req;
-  }
+  if (req) delete req;
   if (stgSvc) stgSvc->release();
   STAGER_LOG_RETURN(serrno == 0 ? 0 : -1);
 }
