@@ -1,7 +1,7 @@
 .\"
-.\" $Id: Cglobals.man,v 1.5 2001/10/26 09:32:49 jdurand Exp $
+.\" $Id: Cglobals.man,v 1.6 2001/10/26 11:56:31 jdurand Exp $
 .\"
-.TH CGLOBALS "3" "$Date: 2001/10/26 09:32:49 $" "CASTOR" "Common Library Functions"
+.TH CGLOBALS "3" "$Date: 2001/10/26 11:56:31 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCglobals\fP \- \fBC\fPASTOR thread-specific \fBglobal\fP variable\fBs\fP interface
 .SH SYNOPSIS
@@ -39,11 +39,11 @@
 
 .SH DESCRIPTION
 
-\fBCglobals\fP is the interface where are defined all necessary functions that always return a thread-safe value of global variables. Each package of \fBCASTOR\fP that needs to externalize thread-safe global variables contains in its header, if compiled with threads turned on (e.g. the default), a set of:
+\fBCglobals\fP is the interface where are defined all necessary functions that always return a thread-specific value of global variables. Each package of \fBCASTOR\fP that needs to externalize thread-specific global variables contains in its header, if compiled with threads turned on (e.g. the default), a set of:
 .RS
 an \fBextern\fP definition to a function contained in Cglobals
 .br
-a \fB#define\fP macro that replaces all occurences of any global variable that needs to be thread-safe to this Cglobal's function.
+a \fB#define\fP macro that replaces all occurences of any global variable that needs to be thread-specific to this Cglobal's function.
 .RE
 In order to satisfy packages not compiled with threads turned on, or that do not initialize \fBCASTOR\fP Thread Interface's \fBCthread\fP, any such global variable is also explicitely defined in \fBCglobals\fP.
 .P
@@ -55,7 +55,7 @@ an explicit definition, with source code, of a function \fBC_serrno()\fP that do
 .RS
 if \fBCglobals_init\fP was not (successfully) called, return the address of the global variable \fBserrno\fP
 .br
-else return the adress of a thread-safe specific memory, instanciated at the first call to this function, that holds the content of the current instance of the thread-safe value of \fBserrno\fP
+else return the adress of a thread-safe specific memory, instanciated at the first call to this function, that holds the content of the current instance of the thread-specific value of \fBserrno\fP
 .RE
 .RE
 .P
@@ -137,14 +137,14 @@ This allows to distinguish when Cglobals_get() initialize the memory with zeros 
 content the value returned by 
 .I getTid.
 .P
-\fBC__serrno\fP, \fBC__rfio_errno\fP, \fBC__Copterr\fP, \fBC__Coptind\fP, \fBC__Coptopt\fP, \fBC__Coptreset\fP, \fBC__Coptarg\fP and \fBC__h_errno\fP are all the internal functions that return the address of the thread-safe memory hosting the value of the 'global' variables serrno, rfio_errno, Copterr, Coptind, Coptopt, Coptreset, Coptarg and h_errno, respectively.
+\fBC__serrno\fP, \fBC__rfio_errno\fP, \fBC__Copterr\fP, \fBC__Coptind\fP, \fBC__Coptopt\fP, \fBC__Coptreset\fP, \fBC__Coptarg\fP and \fBC__h_errno\fP are all the internal functions that return the address of the thread-specific memory hosting the value of the 'global' variables serrno, rfio_errno, Copterr, Coptind, Coptopt, Coptreset, Coptarg and h_errno, respectively.
 .SH EXAMPLE
-Any application can create its own instance of thread-safe global variable using \fBCglobals\fP. You need only to use \fBCglobals_get\fP. Here is how to proceed.
+Any application can create its own instance of thread-specific global variable using \fBCglobals\fP. You need only to use \fBCglobals_get\fP. Here is how to proceed.
 .ft CW
 .nf
 .sp
 /*
- * The following shows how to define and use a thread-safe
+ * The following shows how to define and use a thread-specific
  * integer, my_var, inside your package
  */
 
