@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2004/07/29 15:08:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/08/18 16:02:56 $ $Author: sponcec3 $
  *
  *
  *
@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <serrno.h>
 #include "castor/IService.hpp"
+#include "castor/BaseObject.hpp"
 #include "castor/Services.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/ServicesCInt.hpp"
@@ -40,23 +41,21 @@ extern "C" {
   // C_Services_create
   //------------------------------------------------------------------------------
   int C_Services_create(C_Services_t** svcs) {
-    *svcs = new C_Services_t();
-    (*svcs)->svcs = new castor::Services();
-    (*svcs)->errorMsg = "";
-    return 0;
+    try {
+      *svcs = new C_Services_t();
+      (*svcs)->svcs = castor::BaseObject::services();
+      (*svcs)->errorMsg = "";
+      return 0;
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      return -1;
+    }
   }
 
   //------------------------------------------------------------------------------
   // C_Services_delete
   //------------------------------------------------------------------------------
   int C_Services_delete(C_Services_t* svcs) {
-    try {
-      if (0 != svcs->svcs) delete svcs->svcs;
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      svcs->errorMsg = e.getMessage().str();
-      return -1;
-    }
     delete svcs;
     return 0;
   }
