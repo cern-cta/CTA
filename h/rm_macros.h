@@ -350,18 +350,15 @@
     if ((in)->partitionmask[0] != '\0') strcpy((out)->partitionmask,(in)->partitionmask); \
     if ((in)->requestid[0] != '\0') strcpy((out)->requestid,(in)->requestid);       \
     if ((in)->subrequestid[0] != '\0') strcpy((out)->subrequestid,(in)->subrequestid); \
-    if ((out)->clientStruct != NULL) free((out)->clientStruct);                     \
+    if ((in)->clientStruct != NULL && (out)->clientStruct != NULL) { free((out)->clientStruct); (out)->clientStruct = NULL; } \
     if ((in)->clientStructLenWithNullByte > 0) (out)->clientStructLenWithNullByte = (in)->clientStructLenWithNullByte; \
-    (out)->clientStruct = NULL;                                                     \
-    if ((out)->clientStructLenWithNullByte > 0) {                                    \
+    if ((in)->clientStructLenWithNullByte > 0) {                                    \
           if (((out)->clientStruct = (char *) malloc((out)->clientStructLenWithNullByte)) == NULL) { \
             serrno = errno;                                   \
             status = -1;                                      \
           } else {                                            \
             strcpy((out)->clientStruct,(in)->clientStruct);   \
           }                                                   \
-        } else {                                              \
-          (out)->clientStruct = NULL;                         \
     }                                                         \
 }
 
@@ -412,6 +409,8 @@
     if ((filter)->partitionmask[0] != '\0' && strcmp((ref)->partitionmask,(filter)->partitionmask) != 0) status++;  \
     if ((filter)->requestid[0] != '\0' && strcmp((ref)->requestid,(filter)->requestid) != 0) status++;  \
     if ((filter)->subrequestid[0] != '\0' && strcmp((ref)->subrequestid,(filter)->subrequestid) != 0) status++;  \
+    if ((filter)->clientStructLenWithNullByte > 0 && (ref)->clientStructLenWithNullByte != (filter)->clientStructLenWithNullByte) status++;  \
+    if ((filter)->clientStruct != NULL && memcmp((ref)->clientStruct, (filter)->clientStruct, (filter)->clientStructLenWithNullByte) != 0) status++;  \
 }
 
 #define unmarshall_RELEVANT_RMJOB(p, out, status) {  \
