@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/12 10:58:41 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/11/12 13:47:26 $ $Author: sponcec3 $
  *
  * 
  *
@@ -369,7 +369,8 @@ extern "C" {
                                                   int* result) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      *result = stgSvc->stgSvc->updateAndCheckSubRequest(subreq);
+      *result =
+        stgSvc->stgSvc->updateAndCheckSubRequest(subreq) ? 1 : 0;
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

@@ -386,8 +386,9 @@ int Cstager_IStagerSvc_selectCastorFile(struct Cstager_IStagerSvc_t* stgSvc,
  * The update is commited before returning.
  * @param stgSvc the IStagerSvc used
  * @param subreq the SubRequest to update
- * @param result whether there are still SubRequests in
- * SUBREQUEST_START status within the same request
+ * @param result 1 is there are still SubRequests in
+ * SUBREQUEST_START status within the same request, 0 if
+ * there are none
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
