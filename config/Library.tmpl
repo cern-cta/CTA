@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.9 $ $Date: 2004/06/28 11:31:56 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.10 $ $Date: 2004/06/30 16:34:03 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #if BuildCopytapeServer
@@ -303,4 +303,8 @@ RHPROTOLIB = DepLibraryTargetName(castor/proto,castorProto)
 
 #if BuildClientCpp
 RHCLIENTLIB = DepLibraryTargetName(castor,castorClient)
+#endif
+
+#if BuildExpertClient || BuildExpertDaemon
+EXPERTLIB = DepLibraryTargetName(expert,expert)
 #endif

@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.17 $ $Date: 2004/06/29 14:11:50 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.18 $ $Date: 2004/06/30 16:34:04 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -18,7 +18,7 @@ SYMTABNAM = __.SYMDEF
 #endif
 
 COMM Libraries to include in SharedLibraryTargetName(shift)
-LIBRARIES0 = $(COMMONLIB) $(RFIOLIB) $(SYSREQLIB) $(HPSSLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHCLIENTLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB)
+LIBRARIES0 = $(COMMONLIB) $(RFIOLIB) $(SYSREQLIB) $(HPSSLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHCLIENTLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB) $(EXPERTLIB)
 LIBRARIES2 = $(RHORALIB)
 SHLIBREQLIBS2 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L . -lshift
 LIBRARIES3 = $(RHPROTOLIB)
