@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.31 2000/05/18 14:20:09 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.32 2000/05/18 14:54:11 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.31 $ $Date: 2000/05/18 14:20:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.32 $ $Date: 2000/05/18 14:54:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -460,8 +460,12 @@ main(argc,argv)
 			stcp++;
 		} else if (stcp->status == STAGEWRT) {
 			delreq (stcp,0);
-		} else if (stcp->status == STAGEPUT) {
-			stcp->status = STAGEOUT|PUT_FAILED;
+		} else if ((stcp->status & 0xF) == STAGEPUT) {
+			if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+				stcp->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
+			} else {
+				stcp->status = STAGEOUT|PUT_FAILED;
+			}
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
