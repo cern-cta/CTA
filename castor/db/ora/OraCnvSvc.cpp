@@ -94,6 +94,10 @@ castor::db::ora::OraCnvSvc::OraCnvSvc(const std::string name) :
   if (0 != cpasswd) m_passwd = std::string(cpasswd);
   char* cdbName = getconfent(name.c_str(), "dbName", 0);
   if (0 != cdbName) m_dbName = std::string(cdbName);
+  // Add alias for DiskCopyForRecall on DiskCopy
+  addAlias(58, 5);
+  // Add alias for TapeCopyForMigration on TapeCopy
+  addAlias(59, 30);  
 }
 
 // -----------------------------------------------------------------------
