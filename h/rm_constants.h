@@ -1,4 +1,4 @@
-/* $Id: rm_constants.h,v 1.9 2005/01/25 15:25:25 jdurand Exp $ */
+/* $Id: rm_constants.h,v 1.10 2005/01/29 15:37:40 jdurand Exp $ */
 
 #ifndef __rm_constants_h
 
@@ -11,10 +11,20 @@
 #endif
 #define RM_PRTBUFSZ ONE_MB
 
+#ifdef RMMAGIC01
+#undef RMMAGIC01
+#endif
+#define RMMAGIC01 0x14140701
+
+#ifdef RMMAGIC02
+#undef RMMAGIC02
+#endif
+#define RMMAGIC02 0x14140702
+
 #ifdef RMMAGIC
 #undef RMMAGIC
 #endif
-#define RMMAGIC 0x14140701
+#define RMMAGIC RMMAGIC02       /* Default magic number */
 
 #ifdef RM_REPBUFSZ
 #undef RM_REPBUFSZ
