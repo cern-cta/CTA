@@ -1,10 +1,10 @@
 /*
- *  Copyright (C) 1996-1999 by CERN/IT/PDP/DM
+ *  Copyright (C) 1996-2003 by CERN/IT/PDP/DM
  *  All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.7 $ $Date: 2002/09/19 12:09:01 $ CERN CN-PDP/DM Claire Redmond/Andrew Askew/Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.8 $ $Date: 2003/09/14 06:57:18 $ CERN CN-PDP/DM Claire Redmond/Andrew Askew/Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -51,9 +51,6 @@ static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.7 $ $Date: 2002
 
 /* ************************************************************************** */
 
-#if !defined(linux)
-extern char *sys_errlist[];	/* External system error list strings */
-#endif
 #if (!defined(_IBMR2)) && (!defined(hpux)) && (!(defined(__osf__) && defined(__alpha))) || defined(linux)
 extern char *loc1, *loc2;	/* Regular expression character position vars */
 #endif
@@ -1839,7 +1836,7 @@ int *swapped;
       fprintf(stderr, "Read returns unexpected: %d\n", c);
     }
     else {
-      fprintf(stderr, "Read error: %s\n", sys_errlist[errno]);
+      fprintf(stderr, "Read error: %s\n", sstrerror(errno));
     }
     server_failed = 1;
     return (0);
@@ -1871,7 +1868,7 @@ int *swapped;
       fprintf(stderr, "Read returns unexpected: %d\n", c);
     }
     else {
-      fprintf(stderr, "Read error: %s\n", sys_errlist[errno]);
+      fprintf(stderr, "Read error: %s\n", sstrerror(errno));
     }
     server_failed = 1;
     return (0);
