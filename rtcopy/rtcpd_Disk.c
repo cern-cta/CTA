@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.8 $ $Date: 1999/12/13 13:46:05 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.9 $ $Date: 1999/12/15 07:31:22 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -564,9 +564,10 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                             rtcpd_AppendClientMsg(NULL, file,errmsgtxt);
                     }
                     DK_STATUS(RTCP_PS_WRITE);
-                    rc = rfio_write(disk_fd,bufp,nb_bytes);
+                    if ( nb_bytes > 0 ) rc = rfio_write(disk_fd,bufp,nb_bytes);
+                    else rc = nb_bytes;
                     DK_STATUS(RTCP_PS_NOBLOCKING);
-                    save_serrno = rfio_errno;
+                    if ( rc == -1 ) save_serrno = rfio_errno;
                 } else {
                     rc = 0;
                     for (j=0; j*blksiz < nb_bytes; j++) {
@@ -825,9 +826,10 @@ static int DiskToMemory(int disk_fd, int pool_index,
         if ( Uformat == FALSE ) {
             bufp = databufs[i]->buffer + *offset;
             DK_STATUS(RTCP_PS_READ);
-            rc = rfio_read(disk_fd,bufp,nb_bytes);
+            if ( nb_bytes > 0 ) rc = rfio_read(disk_fd,bufp,nb_bytes);
+            else rc = nb_bytes;
             DK_STATUS(RTCP_PS_NOBLOCKING);
-            save_serrno = rfio_errno;
+            if ( rc == -1 ) save_serrno = rfio_errno;
         } else {
             rc = irc = 0;
             databufs[i]->nbrecs = 0;
