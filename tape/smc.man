@@ -1,14 +1,17 @@
-.\" @(#)$RCSfile: smc.man,v $ $Revision: 1.4 $ $Date: 2002/10/08 07:33:04 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: smc.man,v $ $Revision: 1.5 $ $Date: 2002/12/09 09:56:40 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1998-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH SMC 1 "$Date: 2002/10/08 07:33:04 $" CASTOR "Ctape User Commands"
+.TH SMC 1 "$Date: 2002/12/09 09:56:40 $" CASTOR "Ctape User Commands"
 .SH NAME
 smc \- command line interface to drive robotic devices through SCSI
 .SH SYNOPSIS
 .B smc
 .BI -d
 .BI -D " drive_ordinal"
+[
+.BI -h " rmcserver"
+]
 .BI -l " loader"
 [
 .BI -V " vid"
@@ -18,6 +21,9 @@ smc \- command line interface to drive robotic devices through SCSI
 .br
 .B smc
 .BI -e
+[
+.BI -h " rmcserver"
+]
 .BI -l " loader"
 .BI -V " vid"
 [
@@ -26,6 +32,9 @@ smc \- command line interface to drive robotic devices through SCSI
 .br
 .B smc
 .BI -i
+[
+.BI -h " rmcserver"
+]
 .BI -l " loader"
 [
 .BI -V " vid"
@@ -36,7 +45,11 @@ smc \- command line interface to drive robotic devices through SCSI
 .B smc
 .BI -m
 .BI -D " drive_ordinal"
+[
+.BI -h " rmcserver"
+] [
 .BI -I
+]
 .BI -l " loader"
 .BI -V " vid"
 [
@@ -44,6 +57,9 @@ smc \- command line interface to drive robotic devices through SCSI
 ]
 .br
 .B smc
+[
+.BI -h " rmcserver"
+]
 .BI -l " loader"
 .B -q D
 [
@@ -54,6 +70,9 @@ smc \- command line interface to drive robotic devices through SCSI
 ]
 .br
 .B smc
+[
+.BI -h " rmcserver"
+]
 .BI -l " loader"
 .B -q L
 [
@@ -61,6 +80,9 @@ smc \- command line interface to drive robotic devices through SCSI
 ]
 .br
 .B smc
+[
+.BI -h " rmcserver"
+]
 .BI -l " loader"
 .B -q P
 [
@@ -68,6 +90,9 @@ smc \- command line interface to drive robotic devices through SCSI
 ]
 .br
 .B smc
+[
+.BI -h " rmcserver"
+]
 .BI -l " loader"
 .B -q S
 [
@@ -79,9 +104,14 @@ smc \- command line interface to drive robotic devices through SCSI
 ]
 .br
 .B smc
+[
+.BI -h " rmcserver"
+]
 .BI -l " loader"
 .B -q V
 [
+.BI -N " nbelem"
+] [
 .BI -V " vid"
 ] [
 .BI -v
@@ -102,6 +132,10 @@ is specified, the vid must match the vid on the cartridge to be dismounted.
 .BI \-e
 exports a volume. The cartridge must be in a storage slot (not a drive).
 The vid must be specified.
+.TP
+.BI \-h " rmcserver"
+specifies the hostname of the machine where the Remote SCSI Media Changer
+daemon runs.
 .TP
 .BI \-I
 flips media side.
