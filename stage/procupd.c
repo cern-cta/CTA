@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.118 2002/10/16 09:35:42 jdurand Exp $
+ * $Id: procupd.c,v 1.119 2002/10/19 08:22:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.118 $ $Date: 2002/10/16 09:35:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.119 $ $Date: 2002/10/19 08:22:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1783,8 +1783,13 @@ int update_hsm_a_time(stcp)
 	switch (stcp->t_or_d) {
 	case 'm':
 		/* HPSS */
+		setegid(stcp->gid);
+		seteuid(stcp->uid);
 		PRE_RFIO;
-		if (rfio_stat(stcp->u1.m.xfile, &statbuf) == 0) {
+		rc = rfio_stat(stcp->u1.m.xfile, &statbuf);
+		setegid(start_passwd.pw_gid);
+		seteuid(start_passwd.pw_uid);
+		if (rc == 0) {
 			stcp->a_time = statbuf.st_mtime;
 		} else {
 			rc = rfio_serrno();
