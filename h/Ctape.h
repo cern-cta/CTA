@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.23 2000/03/08 06:44:22 baud Exp $
+ * $Id: Ctape.h,v 1.24 2000/03/09 08:59:05 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.23 $ $Date: 2000/03/08 06:44:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.24 $ $Date: 2000/03/09 08:59:05 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -224,20 +224,6 @@ struct confq {		/* config queue */
 	int	ovly_pid;
 	int	status;
 	int	ux;		/* index in drive table tptab */
-};
-struct devinfo {	/* device characteristics */
-	char	devtype[CA_MAXDVTLEN+1];
-	int	bsr;		/* support backspace block */
-	int	eoitpmrks;	/* number of tapemarks at EOI */
-	int	fastpos;	/* use fast positionning because of directory */
-	int	minblksize;
-	int	maxblksize;
-	int	defblksize;
-	unsigned char	comppage;	/* compression page 0x0F or 0x10 */
-	struct {
-		short den;		/* density code */
-		unsigned char code;	/* code to send to the drive */
-	} dencodes[6];
 };
 struct rlsq {		/* rls queue */
 	struct rlsq *next;

@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_api.h,v 1.9 2000/02/16 06:50:53 baud Exp $
+ * $Id: Ctape_api.h,v 1.10 2000/03/09 08:59:05 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.9 $ $Date: 2000/02/16 06:50:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.10 $ $Date: 2000/03/09 08:59:05 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -22,6 +22,20 @@ typedef struct {
 	unsigned long from_tape;
 	unsigned long to_host;
 } COMPRESSION_STATS;
+struct devinfo {	/* device characteristics */
+	char	devtype[CA_MAXDVTLEN+1];
+	int	bsr;		/* support backspace block */
+	int	eoitpmrks;	/* number of tapemarks at EOI */
+	int	fastpos;	/* use fast positionning because of directory */
+	int	minblksize;
+	int	maxblksize;
+	int	defblksize;
+	unsigned char	comppage;	/* compression page 0x0F or 0x10 */
+	struct {
+		short den;		/* density code */
+		unsigned char code;	/* code to send to the drive */
+	} dencodes[6];
+};
 struct dgn_rsv {		/* device group reservation */
 	char	name[CA_MAXDGNLEN+1];
 	int	num;
@@ -57,6 +71,7 @@ struct rsv_status {		/* resource reservation status reply entry */
 
 #if defined(__STDC__)
 extern int Ctape_config(char *, int, int);
+extern struct devinfo *Ctape_devinfo(char *);
 extern int Ctape_info(char *, int *, unsigned int *, char *, char *, char *,
 	char *, int *, int *, char *);
 extern int Ctape_kill(char *);
@@ -73,6 +88,7 @@ extern void Ctape_seterrbuf(char *, int);
 extern int Ctape_status(char *, struct drv_status *, int);
 #else
 extern int Ctape_config();
+extern struct devinfo *Ctape_devinfo();
 extern int Ctape_info();
 extern int Ctape_kill();
 extern int Ctape_label();
