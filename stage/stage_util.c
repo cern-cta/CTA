@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.14 2002/01/24 10:46:43 jdurand Exp $
+ * $Id: stage_util.c,v 1.15 2002/03/27 08:13:28 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <limits.h>
 #include <time.h>
 #ifndef _WIN32
 #include <unistd.h>
