@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.7 $ $Release$ $Date: 2004/11/09 10:39:59 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.8 $ $Release$ $Date: 2004/11/19 18:30:48 $ $Author: bcouturi $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.7 $
- * @date $Date: 2004/11/09 10:39:59 $
+ * @version $Revision: 1.8 $
+ * @date $Date: 2004/11/19 18:30:48 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.7 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.8 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -146,6 +146,23 @@
 /** \addtogroup Functions */
 /*\@{*/
 
+
+////////////////////////////////////////////////////////////
+//    stager options                                      //
+////////////////////////////////////////////////////////////
+
+/**
+ * Structure common to calls, containing API options,
+ * such as the stage
+ * The CASTOR file name must be specified, as well as the mode (RO/RW)
+ */
+struct stage_options {
+  char *stage_host;
+  char *service_class;
+};
+
+
+
 ////////////////////////////////////////////////////////////
 //    stage_PrepareToGet                                  //
 ////////////////////////////////////////////////////////////
@@ -222,7 +239,8 @@ EXTERN_C int DLL_DECL stage_prepareToGet _PROTO((const char *userTag,
 						 int nbreqs,
 						 struct stage_prepareToGet_fileresp **responses,
 						 int *nbresps,
-						 char **requestId));
+						 char **requestId,
+						 struct stage_options* opts));
 
 
 
@@ -296,7 +314,8 @@ EXTERN_C int DLL_DECL stage_get _PROTO ((const char *userTag,
 					 const char *protocol,
 					 const char *filename,
 					 struct stage_get_fileresp **response,
-					 char **requestId));
+					 char **requestId,
+					 struct stage_options* opts));
 
 
 ////////////////////////////////////////////////////////////
@@ -317,7 +336,8 @@ EXTERN_C int DLL_DECL stage_get _PROTO ((const char *userTag,
  * @returns 0 in case of success, -1 otherwise
  */
 EXTERN_C int stage_getNext _PROTO((const char *reqId,
-				   struct stage_get_fileresp ** response));
+				   struct stage_get_fileresp ** response,
+				   struct stage_options* opts));
 
 
 
@@ -348,7 +368,8 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate _PROTO((const char *userTag,
 						    int nbreqs,
 						    struct stage_prepareToGet_fileresp **responses,
 						    int *nbresps,
-						    char **requestId));
+						    char **requestId,
+						    struct stage_options* opts));
 
 
 ////////////////////////////////////////////////////////////
@@ -377,7 +398,8 @@ EXTERN_C int DLL_DECL stage_update _PROTO ((const char *userTag,
 					 const char *protocol,
 					 const char *filename,
 					 struct stage_get_fileresp **response,
-					 char **requestId));
+					 char **requestId,
+					    struct stage_options* opts));
 
 
 ////////////////////////////////////////////////////////////
@@ -398,7 +420,8 @@ EXTERN_C int DLL_DECL stage_update _PROTO ((const char *userTag,
  * @returns 0 in case of success, -1 otherwise
  */
 EXTERN_C int stage_updateNext _PROTO((const char *reqId,
-				   struct stage_get_fileresp ** response));
+				      struct stage_get_fileresp ** response,
+				      struct stage_options* opts));
 
 
 
@@ -447,12 +470,13 @@ struct stage_prepareToPut_fileresp {
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
-					 struct stage_prepareToPut_filereq *requests,
-					 int nbreqs,
-					 struct stage_prepareToPut_fileresp **responses,
-					 int *nbresps,
-					 char **requestId);
+EXTERN_C int DLL_DECL stage_prepareToPut _PROTO ((const char *userTag,
+						 struct stage_prepareToPut_filereq *requests,
+						 int nbreqs,
+						 struct stage_prepareToPut_fileresp **responses,
+						 int *nbresps,
+						 char **requestId,
+						 struct stage_options* opts));
 
 ////////////////////////////////////////////////////////////
 //    stage_put                                           //
@@ -493,7 +517,8 @@ EXTERN_C int DLL_DECL stage_put _PROTO((const char *userTag,
 					const char *filename,
 					int mode,
 					struct stage_put_fileresp **response,
-					char **requestId));
+					char **requestId,
+					struct stage_options* opts));
 
 
 
@@ -515,7 +540,8 @@ EXTERN_C int DLL_DECL stage_put _PROTO((const char *userTag,
  * @returns 0 in case of success, -1 otherwise
  */
 EXTERN_C int stage_putNext _PROTO((const char *reqId,
-				   struct stage_put_fileresp ** response));
+				   struct stage_put_fileresp ** response,
+				   struct stage_options* opts));
 
 
 
@@ -549,9 +575,14 @@ struct stage_fileresp {
   int		status;
 
   /**
+   * Error code
+   */
+  int		errorCode;
+
+  /**
    * Error message, if the error code indicates a problem
    */
-  char		*errstring;
+  char		*errorMessage;
 
 
 };
@@ -579,7 +610,8 @@ EXTERN_C int DLL_DECL stage_putDone _PROTO((struct stage_filereq *requests,
 					    int nbreqs,
 					    struct stage_fileresp **responses,
 					    int *nbresps,
-					    char **requestId));
+					    char **requestId,
+					    struct stage_options* opts));
 
 
 ////////////////////////////////////////////////////////////
@@ -623,7 +655,8 @@ EXTERN_C int DLL_DECL stage_updateFileStatus _PROTO((struct stage_filereq *reque
 						     int nbreqs,
 						     struct stage_fileresp **responses,
 						     int *nbresps,
-						     char **requestId));
+						     char **requestId,
+						     struct stage_options* opts));
 
 
 ////////////////////////////////////////////////////////////
@@ -646,11 +679,12 @@ EXTERN_C int DLL_DECL stage_updateFileStatus _PROTO((struct stage_filereq *reque
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_rm(struct stage_filereq *requests,
-			       int nbreqs,
-			       struct stage_fileresp **responses,
-			       int *nbresps,
-			       char **requestId);
+EXTERN_C int DLL_DECL stage_rm _PROTO ((struct stage_filereq *requests,
+					int nbreqs,
+					struct stage_fileresp **responses,
+					int *nbresps,
+					char **requestId,
+					struct stage_options* opts));
 
 ////////////////////////////////////////////////////////////
 //    stage_releaseFiles                                  //
@@ -679,7 +713,8 @@ EXTERN_C int DLL_DECL stage_releaseFiles _PROTO((struct stage_filereq *requests,
 						 int nbreqs,
 						 struct stage_fileresp **responses,
 						 int *nbresps,
-						 char **requestId));
+						 char **requestId,
+						 struct stage_options* opts));
 
 
 ////////////////////////////////////////////////////////////
@@ -697,7 +732,8 @@ EXTERN_C int DLL_DECL stage_releaseFiles _PROTO((struct stage_filereq *requests,
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int DLL_DECL stage_abortRequest _PROTO((char *requestId));
+EXTERN_C int DLL_DECL stage_abortRequest _PROTO((char *requestId,
+						 struct stage_options* opts));
 
 
 
@@ -792,7 +828,8 @@ struct stage_filequery_resp {
 EXTERN_C int DLL_DECL stage_filequery _PROTO((struct stage_query_req *requests,
 					      int nbreqs,
 					      struct stage_filequery_resp **responses,
-					      int *nbresps));
+					      int *nbresps,
+					      struct stage_options* opts));
 
 
 ////////////////////////////////////////////////////////////
@@ -867,7 +904,8 @@ EXTERN_C int DLL_DECL stage_requestquery _PROTO((struct stage_query_req *request
 						 struct stage_requestquery_resp **responses,
 						 int *nbresps,
 						 struct stage_subrequestquery_resp **subresponses,
-						 int *nbsubresps));
+						 int *nbsubresps,
+						 struct stage_options* opts));
 
 
 
@@ -910,7 +948,8 @@ struct stage_findrequest_resp {
 EXTERN_C int DLL_DECL stage_findrequest _PROTO((struct stage_query_req *requests,
 						int nbreqs,
 						struct stage_findrequest_resp **responses,
-						int *nbresps));
+						int *nbresps,
+						struct stage_options* opts));
 
 
 ////////////////////////////////////////////////////////////
