@@ -9,8 +9,21 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 15:48:12 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.4 $ $Date: 1999/12/17 12:03:22 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
+
+#if defined(_WIN32)
+#include <winsock2.h>
+#include <time.h>
+extern char *geterr();
+#else /* _WIN32 */
+#include <sys/param.h>
+#include <sys/types.h>                  /* Standard data types          */
+#include <netdb.h>                      /* Network "data base"          */
+#include <sys/time.h>
+#include <sys/socket.h>
+#include <netinet/in.h>                 /* Internet data types          */
+#endif /* _WIN32 */
 
 #include <stdlib.h>
 #include <errno.h>
@@ -20,10 +33,15 @@ static char sccsid[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.3 $ $Date: 199
 
 #include <Castor_limits.h>
 #include <log.h>
+#include <net.h>
 #include <osdep.h>
 #include <Cglobals.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
+#if defined(RTCP_SERVER)
+#include <rtcp_server.h>
+#endif /* RTCP_SERVER */
+
 
 #if !defined(linux)
 extern char *sys_errlist[];
@@ -32,19 +50,21 @@ extern char *sys_errlist[];
 static int errmsg_key = -1;
 static int out_key = -1;
 static int err_key = -1;
+static int client_socket_key = -1;
 
 void DLL_DECL (*rtcp_log) _PROTO((int, const char *, ...)) = NULL;
 
-#if !defined(RTCP_SERVER)
-void rtcpc_SetErrTxt(int level, const char *format, ...) {
+void rtcpc_SetErrTxt(int level, char *format, ...) {
     va_list args;
     char *p;
     char *msgbuf = NULL;
     char **msgbuf_p;
     int loglevel = LOG_INFO;
     FILE **err_p, **out_p;
+    SOCKET **client_socket_p;
 
     err_p = out_p = NULL;
+    client_socket_p = NULL;
     Cglobals_get(&errmsg_key,(void *)&msgbuf_p,sizeof(char *));
     if ( msgbuf_p == NULL ) return;
     msgbuf = *msgbuf_p;
@@ -54,6 +74,7 @@ void rtcpc_SetErrTxt(int level, const char *format, ...) {
     }
     Cglobals_get(&out_key,(void *)&out_p,sizeof(FILE *));
     Cglobals_get(&err_key,(void *)&err_p,sizeof(FILE *));
+    Cglobals_get(&client_socket_key,(void *)&client_socket_p,sizeof(SOCKET *));
     if ( level <= loglevel ) {
         va_start(args,format);
         vsprintf(msgbuf,format,args);
@@ -63,26 +84,29 @@ void rtcpc_SetErrTxt(int level, const char *format, ...) {
             fprintf(*out_p,msgbuf);
         else if ( err_p != NULL && *err_p != NULL ) 
             fprintf( *err_p,msgbuf);
+
+        if ( client_socket_p != NULL && *client_socket_p != NULL )
+            rtcp_ClientMsg(*client_socket_p,msgbuf);
     }
     return;
 }
-#endif /* RTCP_SERVER */
 
-int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err) {
+int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
     char *p = NULL;
     char **msgbuf_p = NULL;
-    int loglevel = LOG_INFO;
-#if !defined(RTCP_SERVER)
+    int loglevel = LOG_DEBUG;
     FILE **out_p, **err_p;
-#endif /* RTCP_SERVER */
+    SOCKET **client_socket_p;
 
     if ( (p = getenv("RTCOPY_LOGLEVEL")) != NULL ) {
         loglevel = atoi(p);
     }
 #if defined(RTCP_SERVER)
-    initlog("rtcopyd",loglevel,RTCOPY_LOGFILE);
-    rtcp_log = (void (*) _PROTO((int, const char *, ...)))log;
-#else
+    if ( msgbuf == NULL && out == NULL && err == NULL && client_socket == NULL ) {
+        initlog("rtcopyd",loglevel,RTCOPY_LOGFILE);
+        rtcp_log = (void (*)(int, const char *, ...))log;
+    }
+#endif /* RTCP_SERVER */
     if ( p == NULL ) {
         if ( out == NULL ) loglevel = LOG_ERR;
         else loglevel = LOG_INFO;
@@ -99,8 +123,11 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err) {
     if ( err != NULL && err_p == NULL ) return(-1);
     else *err_p = err;
 
-    rtcp_log = (void(*) _PROTO((int, const char *, ...)))rtcpc_SetErrTxt;
-#endif /* RTCP_SERVER */
+    Cglobals_get(&client_socket_key,(void **)&client_socket_p,sizeof(SOCKET *));
+    if ( client_socket != NULL && client_socket_p == NULL ) return(-1);
+    else *client_socket_p = client_socket;
+
+    rtcp_log = (void (*)(int, const char *, ...))rtcpc_SetErrTxt;
     return(0);
 }
 
