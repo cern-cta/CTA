@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.19 2000/03/30 05:41:39 jdurand Exp $
+ * $Id: stager.c,v 1.20 2000/03/30 09:54:08 jdurand Exp $
  */
 
 /*
@@ -7,11 +7,11 @@
  * All rights reserved
  */
 
-/* When filereq.maxsize will work removed, remove the define below and it the the code below again */
+/* When filereq.maxsize will work removed, remove the define below and in the code below again */
 /* #define SKIP_FILEREQ_MAXSIZE */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.19 $ $Date: 2000/03/30 05:41:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.20 $ $Date: 2000/03/30 09:54:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -333,8 +333,10 @@ char *hsmpath(stcp)
 		/* or nothing or something wrong. In those three last cases, we will let */
 		/* the nameserver API get CNS_HOST from shift.conf                       */
 		if (strstr(host_hsm,"hpss") != host_hsm) {
-			/* It is an explicit and valid castor nameserver - probably for testing */
-
+			/* It is an explicit and valid castor nameserver : the API will be able */
+			/* to connect directly to this host. No need to do a putenv ourself. */
+			return(stcp->u1.m.xfile);
+			/*
 #ifdef STAGER_DEBUG
 			sendrep(rpfd, MSG_OUT, "[DEBUG-XXX] Will set environment variable CNS_HOST=%s\n",host_hsm);
 #endif
@@ -344,6 +346,7 @@ char *hsmpath(stcp)
 				sendrep(rpfd, MSG_ERR, "### putenv(%s) error in stager (%s)\n",putenv_string,strerror(errno));
 				exit(SYERR);
 			}
+			*/
 		} else {
 #ifdef STAGER_DEBUG
 		sendrep(rpfd, MSG_OUT, "[DEBUG-XXX] Hsm Host %s is incompatible with a /castor file. Default CNS_HOST (from shift.conf) will apply\n",host_hsm);
@@ -1607,12 +1610,15 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				dummysize *= (u_signed64) ONE_MB;
 				dummysize -= (u_signed64) hsm_transferedsize[ihsm];
 				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.maxsize = 1 + dummysize;
+				/* Default is NOT to specify maxsize if user did not */
+				/*
 			} else {
 				u_signed64 dummysize;
 
 				dummysize = (u_signed64) hsm_totalsize[ihsm];
 				dummysize -= (u_signed64) hsm_transferedsize[ihsm];
 				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.maxsize = 1 + dummysize;
+				*/
 			}
 #endif
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.offset = hsm_transferedsize[ihsm];
