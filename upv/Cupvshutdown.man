@@ -1,0 +1,42 @@
+.\" @(#)$RCSfile: Cupvshutdown.man,v $ $Revision: 1.1 $ $Date: 2003/11/04 10:43:21 $ CERN IT/ADC/CA Ben Couturier
+.\" Copyright (C) 2003 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\" 
+.TH "Cupvshutdown" "1" "$Date: 2003/11/04 10:43:21 $" "CASTOR" "UPV Administrator commands"
+.SH "NAME"
+Cupvshutdown \- Shuts down the CASTOR User Privilege validation server
+.SH "SYNOPSIS"
+.B Cupvshutdown
+.RB [ -f ]
+
+.SH "DESCRIPTION"
+.B Cupvshutdown
+Shuts down the CASTOR User Privilege validation server
+It waits for outstanding requests to complete. New requests will be rejected
+with
+.B serrno
+set to
+.BR ENSNACT .
+Connections to the database server are closed one by one when they are not
+used anymore and when all connections are closed, the server exits.
+.LP
+This command requires UPV_ADMIN privilege in the Cupv database.
+.SH OPTIONS
+.TP
+.B -f
+force shutdown, i.e. long operations like Cupvlist can be aborted.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Cupvcheck(1) ,
+.BR Cupvdelete(1) ,
+.BR Cupvlist(1) ,
+.BR Cupvmodify(1)
+.BR Cupv_add(3) ,
+.BR Cupv_delete(3) ,
+.BR Cupv_list(3) ,
+.B Cupv_modify(3)
+.SH "AUTHOR"
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
