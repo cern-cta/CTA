@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.46 2002/04/11 10:34:16 jdurand Exp $
+ * $Id: stagein.c,v 1.47 2002/04/30 13:07:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.46 $ $Date: 2002/04/11 10:34:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.47 $ $Date: 2002/04/30 13:07:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -46,6 +46,7 @@ static char sccsid[] = "@(#)RCSfile$ $Revision: 1.46 $ $Date: 2002/04/11 10:34:1
 #include "Ctape_constants.h"   /* For WRITE_ENABLE and WRITE_DISABLE */
 #include "vmgr_api.h"          /* For vmgrcheck() */
 #endif
+#include "stage_api.h"
 
 EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
 extern	char	*getenv();
@@ -66,9 +67,7 @@ int nohsmcreat_flag = 0;
 int noretry_flag = 0;
 int rdonly_flag = 0;
 int silent_flag = 0;
-#ifdef STAGER_SIDE_CLIENT_SUPPORT
 int side_flag = 0;
-#endif
 int nocopy_flag = 0;
 
 #if TMS
@@ -119,7 +118,7 @@ int main(argc, argv)
 	int pflag = 0;
 	char *pool_user = NULL;
 	char *poolname = NULL;
-	int req_type;
+	int req_type = 0;
 	char *sbp;
 	char sendbuf[REQBUFSZ];
 	int stagedisk = 0;
@@ -173,9 +172,7 @@ int main(argc, argv)
 		{"poolname",           REQUIRED_ARGUMENT,  NULL,      'p'},
 		{"file_sequence",      REQUIRED_ARGUMENT,  NULL,      'q'},
 		{"tape_server",        REQUIRED_ARGUMENT,  NULL,      'S'},
-#ifdef STAGER_SIDE_CLIENT_SUPPORT
 		{"side",               REQUIRED_ARGUMENT, &side_flag,   1},
-#endif
 		{"size",               REQUIRED_ARGUMENT,  NULL,      's'},
 		{"trailer_label_off",  NO_ARGUMENT,        NULL,      'T'},
 		{"retention_period",   REQUIRED_ARGUMENT,  NULL,      't'},
@@ -228,7 +225,7 @@ int main(argc, argv)
 		if (noretry_flag != 0) enospc_retry = 0;
 	}
 
-	uid = getuid();
+	uid = Guid = getuid();
 	gid = getgid();
 #if defined(_WIN32)
 	if (uid < 0 || gid < 0) {
@@ -498,12 +495,10 @@ int main(argc, argv)
 		fprintf (stderr, STG35, "-I", "-M");
 		errflg++;
 	}
-#ifdef STAGER_SIDE_CLIENT_SUPPORT
 	if ((side_flag != 0) && (! stagetape)) {
 		fprintf (stderr, STG17, "--side", "any request but direct 'tape' access");
 		errflg++;
 	}
-#endif
 
 	if (errflg != 0) {
 		usage (argv[0]);
@@ -1110,7 +1105,6 @@ void usage(cmd)
 		 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
-#ifdef STAGER_SIDE_CLIENT_SUPPORT
 	fprintf (stderr, "%s%s%s%s%s%s%s%s%s",
 					 "[-A alloc_mode] [-b max_block_size] [-C charconv] [-c off|on]\n",
 					 "[-d density] [-E error_action] [-F record_format] [-f file_id] [-G]\n",
@@ -1121,16 +1115,4 @@ void usage(cmd)
 					 "[-X xparm]\n",
 					 "[--nohsmcreat] [--nocopy] [--noretry] [--nowait] [--side sidenumber] [--silent] [--tppool tapepool] [--rdonly]\n",
 					 "pathname(s)\n");
-#else
-	fprintf (stderr, "%s%s%s%s%s%s%s%s%s",
-					 "[-A alloc_mode] [-b max_block_size] [-C charconv] [-c off|on]\n",
-					 "[-d density] [-E error_action] [-F record_format] [-f file_id] [-G]\n",
-					 "[-g device_group_name] [-h stage_host] [-I external_filename] [-K]\n",
-					 "[-L record_length] [-l label_type] [-M hsmfile [-M...]] [-N nread] [-n] [-o] [-p pool]\n",
-					 "[-q file_sequence_number] [-S tape_server] [-s size] [-T] [-t retention_period]\n",
-					 "[-U fun] [-u user] [-V visual_identifier(s)] [-v volume_serial_number(s)]\n",
-					 "[-X xparm]\n",
-					 "[--nohsmcreat] [--nocopy] [--noretry] [--nowait] [--silent] [--tppool tapepool] [--rdonly]\n",
-					 "pathname(s)\n");
-#endif
 }
