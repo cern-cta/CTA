@@ -48,7 +48,6 @@ namespace castor {
       
       /**
        * A base converter for Oracle database
-       * Deals with the connection and representation type
        */
       class OraBaseCnv : public BaseObject, public IConverter {
         
@@ -100,11 +99,6 @@ namespace castor {
           throw (oracle::occi::SQLException);
         
         /**
-         * access to the Oracle connection for child classes
-         */
-        oracle::occi::Connection* connection() const;
-        
-        /**
          * access to the Oracle conversion service for child classes
          */
         castor::db::ora::OraCnvSvc* cnvSvc() const;
@@ -117,9 +111,6 @@ namespace castor {
         
         /// The corresponding conversion service
         castor::db::ora::OraCnvSvc* m_cnvSvc;
-        
-        /// The database connection
-        oracle::occi::Connection* m_connection;
         
       };
 

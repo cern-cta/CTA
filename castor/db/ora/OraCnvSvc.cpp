@@ -143,6 +143,9 @@ const unsigned int castor::db::ora::OraCnvSvc::REPTYPE() {
 // -----------------------------------------------------------------------
 oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
   throw (oracle::occi::SQLException) {
+  // Quick answer if connection available
+  if (0 != m_connection) return m_connection;
+  // Else try to build one
   if (0 == m_environment) {
     m_environment = oracle::occi::Environment::createEnvironment
       (oracle::occi::Environment::THREADED_MUTEXED);

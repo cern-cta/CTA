@@ -129,7 +129,7 @@ void castor::db::ora::OraCuuidCnv::createRep(castor::IAddress* address,
     m_insertStatement->setString(7, nodeS);
     m_insertStatement->executeUpdate();
     if (autocommit) {
-      connection()->commit();
+      cnvSvc()->getConnection()->commit();
     }
   } catch (oracle::occi::SQLException e) {
     cnvSvc()->getConnection()->rollback();
@@ -173,7 +173,7 @@ void castor::db::ora::OraCuuidCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(7, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
-      connection()->commit();
+      cnvSvc()->getConnection()->commit();
     }
   } catch (oracle::occi::SQLException e) {
     cnvSvc()->getConnection()->rollback();
@@ -214,7 +214,7 @@ void castor::db::ora::OraCuuidCnv::deleteRep(castor::IAddress* address,
     m_deleteStatement->setInt(1, obj->id());
     m_deleteStatement->executeUpdate();
     if (autocommit) {
-      connection()->commit();
+      cnvSvc()->getConnection()->commit();
     }
   } catch (oracle::occi::SQLException e) {
     cnvSvc()->getConnection()->rollback();

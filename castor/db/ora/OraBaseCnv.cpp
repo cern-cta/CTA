@@ -42,20 +42,10 @@
 // -----------------------------------------------------------------------
 castor::db::ora::OraBaseCnv::OraBaseCnv() :
   BaseObject(),
-  m_cnvSvc(0),
-  m_connection(0) {
+  m_cnvSvc(0) {
   m_cnvSvc = dynamic_cast<castor::db::ora::OraCnvSvc*>
     (svcs()->cnvService("OraCnvSvc", SVC_ORACNV));
-  if (m_cnvSvc) {
-    try {
-      m_connection = m_cnvSvc->getConnection();
-    } catch (oracle::occi::SQLException e) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Error trying to get a connection to ORACLE :"
-                      << std::endl << e.what();
-      throw ex;
-    }
-  } else {
+  if (!m_cnvSvc) {
     castor::exception::Internal ex;
     ex.getMessage() << "No OraCnvSvc available";
     throw ex;
@@ -66,7 +56,6 @@ castor::db::ora::OraBaseCnv::OraBaseCnv() :
 // Destructor
 // -----------------------------------------------------------------------
 castor::db::ora::OraBaseCnv::~OraBaseCnv() {
-  m_cnvSvc->deleteConnection(m_connection);
   m_cnvSvc->release();
 }
 
@@ -90,13 +79,9 @@ inline const unsigned int castor::db::ora::OraBaseCnv::repType() const {
 oracle::occi::Statement*
 castor::db::ora::OraBaseCnv::createStatement (const std::string &stmtString)
   throw (castor::exception::Exception) {
-  if (0 == m_connection) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Cannot create statement without connection.";
-    throw ex;
-  };
   try {
-    oracle::occi::Statement* stmt = m_connection->createStatement();
+    oracle::occi::Statement* stmt =
+      cnvSvc()->getConnection()->createStatement();
     stmt->setSQL(stmtString);
     return stmt;
   } catch (oracle::occi::SQLException e) {
@@ -115,14 +100,7 @@ castor::db::ora::OraBaseCnv::createStatement (const std::string &stmtString)
 // -----------------------------------------------------------------------
 void castor::db::ora::OraBaseCnv::deleteStatement(oracle::occi::Statement* stmt)
   throw (oracle::occi::SQLException) {
-  m_connection->terminateStatement(stmt);
-}
-
-// -----------------------------------------------------------------------
-// connection
-// -----------------------------------------------------------------------
-oracle::occi::Connection* castor::db::ora::OraBaseCnv::connection() const {
-  return m_connection;
+  cnvSvc()->getConnection()->terminateStatement(stmt);
 }
 
 // -----------------------------------------------------------------------

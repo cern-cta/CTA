@@ -92,6 +92,12 @@ namespace castor {
           throw();
 
         /**
+         * deletes an existing connection to the database
+         */
+        void dropConnection(oracle::occi::Connection* connection)
+          throw();
+
+        /**
          * create C++ object from foreign representation.
          * Reimplemented from BaseCnvSvc. This version is able to
          * make use of OraAdresses and to deduce the object type in
