@@ -33,6 +33,7 @@ struct Cstager_IStagerSvc_t;
 struct Cstager_Tape_t;
 struct Cstager_Stream_t;
 struct Cstager_Segment_t;
+struct Cstager_TapeCopyForMigration_t;
 
 /**
  * Dynamic cast from IService
@@ -47,11 +48,10 @@ int Cstager_IStagerSvc_delete(struct Cstager_IStagerSvc_t* svcs);
 
 /*
  * Get the array of segments currently waiting for a given tape.
- * Search the catalog for all eligible tape files (segments) that
+ * Search the catalog for all eligible segments that
  * are waiting for the given tape VID to become ready.
- * The matching Segment entries must have one of the
- * following status values: SEGMENT_UNPROCESSED,
- * SEGMENT_WAITFSEQ, SEGMENT_WAITPATH or SEGMENT_WAITCOPY.
+ * The matching Segments entries must have the status
+ * SEGMENT_UNPROCESSED.
  * Before return this function atomically updates the
  * matching catalog entries Tape status to TAPE_MOUNTED.
  * @param stgSvc the IStagerSvc used
@@ -63,10 +63,33 @@ int Cstager_IStagerSvc_delete(struct Cstager_IStagerSvc_t* svcs);
  * A detailed error message can be retrieved by calling
  * Cstager_IStagerSvc_errorMsg
  */
-int Cstager_IStagerSvc_segmentsForTape (struct Cstager_IStagerSvc_t* stgSvc,
-                                        struct Cstager_Tape_t* searchItem,
-                                        struct Cstager_Segment_t*** segmentArray,
-                                        int* nbItems);
+int Cstager_IStagerSvc_segmentsForTape
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_Tape_t* searchItem,
+ struct Cstager_Segment_t*** segmentArray,
+ int* nbItems);
+
+/*
+ * Get the best TapeCopy currently waiting for a given Stream.
+ * Search the catalog for the best eligible TapeCopies that
+ * is waiting for the given Stream to become ready.
+ * The matching TapeCopies entry must have the status
+ * TAPECOPY_WAITINSTREAMS.
+ * Before return this function atomically updates the
+ * matching catalog entry Stream status to STREAM_RUNNING.
+ * @param stgSvc the IStagerSvc used
+ * @param searchItem the Stream information used for the search
+ * @param tapecopy the best waiting tapecopy or 0 if none found
+ * In this later case, the serrno is set to ENOENT
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_bestTapeCopyForStream
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_Stream_t* searchItem,
+ struct Cstager_TapeCopyForMigration_t** tapeCopy);
 
 /**
  * Check if there still are any segments waiting for a given tape.
@@ -83,13 +106,29 @@ int Cstager_IStagerSvc_segmentsForTape (struct Cstager_IStagerSvc_t* stgSvc,
  * for other files that reside on that tape.
  * @param stgSvc the IStagerSvc used
  * @param searchItem the tape information used for the search
- * @return >0 : number of waiting requests found. 0 : no requests found
+ * @return >0 : at least one tapeCopy found. 0 : no Tapecopy found
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
  * Cstager_IStagerSvc_errorMsg
  */
 int Cstager_IStagerSvc_anySegmentsForTape(struct Cstager_IStagerSvc_t* stgSvc,
-                                          struct Cstager_Tape_t* searchItem);
+                                          struct Cstager_Stream_t* searchItem);
+
+/**
+ * Check if there still is any tapeCopy waiting for a stream.
+ * The matching TapeCopies entry must have the status
+ * TAPECOPY_WAITINSTREAM. If there is at least one, the Stream
+ * status is updated to STREAM_WAITMOUNT before return. This
+ * indicates that the stream will continue mounting the tape.
+ * @param stgSvc the IStagerSvc used
+ * @param searchItem the stream information used for the search
+ * @return >0 : at least one TapeCopy is waiting. 0 : no TapeCopy is waiting
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_anyTapeCopyForStream(struct Cstager_IStagerSvc_t* stgSvc,
+                                            struct Cstager_Tape_t* searchItem);
 
 /**
  * Get an array of the tapes to be processed.

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/07 14:34:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/19 16:02:58 $ $Author: sponcec3 $
  *
  * 
  *
@@ -93,6 +93,28 @@ extern "C" {
   }
   
   //---------------------------------------------------------------------------
+  // Cstager_IStagerSvc_bestTapeCopyForStream
+  //---------------------------------------------------------------------------
+  int Cstager_IStagerSvc_bestTapeCopyForStream
+  (Cstager_IStagerSvc_t* stgSvc,
+   castor::stager::Stream* searchItem,
+   castor::stager::TapeCopyForMigration** tapecopy) {
+    if (0 == stgSvc || 0 == stgSvc->stgSvc) {
+      errno = EINVAL;
+      stgSvc->errorMsg = "Empty context";
+      return -1;
+    }
+    try {
+      *tapecopy = stgSvc->stgSvc->bestTapeCopyForStream(searchItem);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+  
+  //---------------------------------------------------------------------------
   // Cstager_IStagerSvc_anySegmentsForTape
   //---------------------------------------------------------------------------
   int Cstager_IStagerSvc_anySegmentsForTape(Cstager_IStagerSvc_t* stgSvc,
@@ -104,6 +126,29 @@ extern "C" {
     }
     try {
       return stgSvc->stgSvc->anySegmentsForTape(searchItem);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+  }
+
+  //---------------------------------------------------------------------------
+  // Cstager_IStagerSvc_anyTapeCopyForStream
+  //---------------------------------------------------------------------------
+  int Cstager_IStagerSvc_anyTapeCopyForStream(Cstager_IStagerSvc_t* stgSvc,
+                                              castor::stager::Stream* searchItem) {
+    if (0 == stgSvc || 0 == stgSvc->stgSvc) {
+      errno = EINVAL;
+      stgSvc->errorMsg = "Empty context";
+      return -1;
+    }
+    try {
+      if (stgSvc->stgSvc->anyTapeCopyForStream(searchItem)) {
+        return 1;
+      } else {
+        return 0;
+      }
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

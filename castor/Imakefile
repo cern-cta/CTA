@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.41 $ $Release$ $Date: 2004/10/15 12:55:50 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.42 $ $Release$ $Date: 2004/10/19 16:02:58 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -183,6 +183,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/TapeCInt.cpp \
               stager/TapeCopy.cpp \
               stager/TapeCopyCInt.cpp \
+              stager/TapeCopyForMigration.cpp \
+              stager/TapeCopyForMigrationCInt.cpp \
               stager/TapePool.cpp \
               stager/TapePoolCInt.cpp \
               db/DbAddress.cpp \

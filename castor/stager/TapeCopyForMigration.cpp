@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/StreamStatusCodes.hpp
+ *                      castor/stager/TapeCopyForMigration.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,30 +24,26 @@
  * @author Sebastien Ponce, sebastien.ponce@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_STAGER_STREAMSTATUSCODES_HPP
-#define CASTOR_STAGER_STREAMSTATUSCODES_HPP
+// Include Files
+#include "castor/stager/TapeCopyForMigration.hpp"
+#include "osdep.h"
+#include <string>
 
-#ifdef __cplusplus
-namespace castor {
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
+castor::stager::TapeCopyForMigration::TapeCopyForMigration() throw() :
+  TapeCopy(),
+  m_diskServer(""),
+  m_path(""),
+  m_castorFileID(),
+  m_nsHost(""),
+  m_fileSize() {
+};
 
-  namespace stager {
+//------------------------------------------------------------------------------
+// Destructor
+//------------------------------------------------------------------------------
+castor::stager::TapeCopyForMigration::~TapeCopyForMigration() throw() {
+};
 
-#endif
-    /**
-     * enum StreamStatusCodes
-     * Possible status codes for a Stream
-     */
-    enum StreamStatusCodes {
-      STREAM_PENDING = 0,
-      STREAM_WAITDRIVE = 1,
-      STREAM_WAITMOUNT = 2,
-      STREAM_RUNNING = 3
-    }; // end of enum StreamStatusCodes
-
-#ifdef __cplusplus
-  }; // end of namespace stager
-
-}; // end of namespace castor
-
-#endif
-#endif // CASTOR_STAGER_STREAMSTATUSCODES_HPP

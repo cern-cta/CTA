@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2004/10/18 13:04:04 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/10/19 16:02:58 $ $Author: sponcec3 $
  *
  *
  *
@@ -32,18 +32,21 @@
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Segment.hpp"
+#include "castor/stager/TapeCopyForMigration.hpp"
 #include "castor/db/ora/OraStagerSvc.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/NoEntry.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
+#include "castor/stager/TapeCopyStatusCodes.hpp"
 #include "castor/stager/StreamStatusCodes.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/db/DbAddress.hpp"
 #include "occi.h"
-
 #include <string>
+#include <vector>
 
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -66,13 +69,32 @@ const std::string castor::db::ora::OraStagerSvc::s_streamsToDoStatementString =
 const std::string castor::db::ora::OraStagerSvc::s_selectTapeStatementString =
   "SELECT id FROM rh_Tape WHERE vid = :1 AND side = :2 AND tpmode = :3 FOR UPDATE";
 
+/// SQL statement for anyTapeCopyForStream
+const std::string castor::db::ora::OraStagerSvc::s_anyTapeCopyForStreamStatementString =
+  "SELECT id FROM rh_TapeCopy, rh_Stream2TapeCopy WHERE status = :1 and child == id and ROWNUM < 2";
+
+/// SQL statement for bestTapeCopyForStream
+const std::string castor::db::ora::OraStagerSvc::s_bestTapeCopyForStreamStatementString =
+  "SELECT rh_DiskServer.name, rh_FileSystem.mountPoint, rh_DiskCopy.path, rh_CastorFile.fileId, \
+   rh_CastorFile.nsHost, rh_CastorFile.fileSize, rh_TapeCopy.id \
+   FROM rh_DiskServer, rh_FileSystem, rh_DiskCopy, rh_CastorFile, rh_TapeCopy, rh_Stream2TapeCopy \
+   WHERE rh_DiskServer.id = rh_FileSystem.diskserver \
+   AND rh_FileSystem.id = rh_DiskCopy.filesystem \
+   AND rh_DiskCopy.castorfile = rh_CastorFile.id \
+   AND rh_TapeCopy.castorfile = rh_Castorfile.id \
+   AND rh_Stream2TapeCopy.child = rh_TapeCopy.id \
+   AND rh_Stream2TapeCopy.parent = :1 \
+   AND rh_TapeCopy.status = :2 \
+   AND rh_FileSystem.weight = (SELECT MAX(weight) FROM rh_FileSystem);";
+
 // -----------------------------------------------------------------------
 // OraStagerSvc
 // -----------------------------------------------------------------------
 castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   BaseSvc(name), OraBaseObj(),
   m_tapesToDoStatement(0), m_streamsToDoStatement(0),
-  m_selectTapeStatement(0) {
+  m_selectTapeStatement(0), m_anyTapeCopyForStreamStatement(0),
+  m_bestTapeCopyForStreamStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -106,11 +128,15 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_tapesToDoStatement);
     deleteStatement(m_streamsToDoStatement);
     deleteStatement(m_selectTapeStatement);
+    deleteStatement(m_anyTapeCopyForStreamStatement);
+    deleteStatement(m_bestTapeCopyForStreamStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;
   m_streamsToDoStatement = 0;
   m_selectTapeStatement = 0;
+  m_anyTapeCopyForStreamStatement = 0;
+  m_bestTapeCopyForStreamStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -143,6 +169,59 @@ castor::db::ora::OraStagerSvc::segmentsForTape
 }
 
 // -----------------------------------------------------------------------
+// bestTapeCopyForStream
+// -----------------------------------------------------------------------
+castor::stager::TapeCopyForMigration*
+castor::db::ora::OraStagerSvc::bestTapeCopyForStream
+(castor::stager::Stream* searchItem)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_bestTapeCopyForStreamStatement) {
+    m_bestTapeCopyForStreamStatement =
+      createStatement(s_bestTapeCopyForStreamStatementString);
+    m_bestTapeCopyForStreamStatement->setInt
+      (2, castor::stager::TAPECOPY_WAITINSTREAMS);
+  }
+  // execute the statement and see whether we found something
+  m_bestTapeCopyForStreamStatement->setDouble(1, searchItem->id());
+  oracle::occi::ResultSet *rset =
+    m_bestTapeCopyForStreamStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    m_bestTapeCopyForStreamStatement->closeResultSet(rset);
+    castor::exception::NoEntry e;
+    e.getMessage() << "No TapeCopy found";
+    throw e;
+  }
+  // Create result
+  castor::stager::TapeCopyForMigration* result =
+    new castor::stager::TapeCopyForMigration();
+  result->setDiskServer(rset->getString(1));
+  std::string mountPoint = rset->getString(2);
+  std::string path = rset->getString(3);
+  result->setPath(mountPoint + path);
+  result->setCastorFileID((u_signed64)rset->getDouble(4));
+  result->setNsHost(rset->getString(5));
+  result->setFileSize((u_signed64)rset->getDouble(6));
+  result->setId((u_signed64)rset->getDouble(7));
+  m_bestTapeCopyForStreamStatement->closeResultSet(rset);
+  // Fill result for TapeCopy, Segments and Tape
+  cnvSvc()->updateObj(result);
+  castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+  cnvSvc()->fillObj(&ad, result, OBJ_Segment);
+  for (std::vector<castor::stager::Segment*>::iterator it =
+         result->segments().begin();
+       it != result->segments().end();
+       it++) {
+    cnvSvc()->fillObj(&ad, *it, OBJ_Tape);
+  }
+  // Update the status of the Stream
+  searchItem->setStatus(castor::stager::STREAM_RUNNING);
+  cnvSvc()->updateRep(&ad, searchItem, true);
+  // return
+  return result;
+}
+
+// -----------------------------------------------------------------------
 // anySegmentsForTape
 // -----------------------------------------------------------------------
 int castor::db::ora::OraStagerSvc::anySegmentsForTape
@@ -157,6 +236,26 @@ int castor::db::ora::OraStagerSvc::anySegmentsForTape
     cnvSvc()->updateRep(0, searchItem, true);
   }
   return result.size();
+}
+
+// -----------------------------------------------------------------------
+// anyTapeCopyForStream
+// -----------------------------------------------------------------------
+bool castor::db::ora::OraStagerSvc::anyTapeCopyForStream
+(castor::stager::Stream* searchItem)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_anyTapeCopyForStreamStatement) {
+    m_anyTapeCopyForStreamStatement =
+      createStatement(s_anyTapeCopyForStreamStatementString);
+  }
+  m_anyTapeCopyForStreamStatement->setInt(1, searchItem->id());
+  oracle::occi::ResultSet *rset =
+    m_anyTapeCopyForStreamStatement->executeQuery();
+  bool result = 
+    oracle::occi::ResultSet::END_OF_FETCH == rset->next();
+  m_anyTapeCopyForStreamStatement->closeResultSet(rset);
+  return result;
 }
 
 // -----------------------------------------------------------------------
@@ -210,6 +309,7 @@ castor::db::ora::OraStagerSvc::tapesToDo()
       cnvSvc()->updateRep(0, tape, false);
       result.push_back(tape);
     }
+    m_tapesToDoStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback
@@ -285,9 +385,10 @@ castor::db::ora::OraStagerSvc::streamsToDo()
       cnvSvc()->updateRep(0, stream, false);
       // Fill TapePool pointer
       castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
-      cnvSvc()->fillRep(&ad, obj, OBJ_TapePool, false);
+      cnvSvc()->fillObj(&ad, obj, OBJ_TapePool);
       result.push_back(stream);
     }
+    m_streamsToDoStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {
       // Always try to rollback
@@ -352,6 +453,7 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
     m_selectTapeStatement->setInt(3, tpmode);
     oracle::occi::ResultSet *rset = m_selectTapeStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      m_selectTapeStatement->closeResultSet(rset);
       // we found nothing, so let's create the tape
       castor::stager::Tape* tape = new castor::stager::Tape();
       tape->setVid(vid);
@@ -371,6 +473,7 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
           rset = m_selectTapeStatement->executeQuery();
           if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
             // Still nothing ! Here it's a real error
+            m_selectTapeStatement->closeResultSet(rset);
             castor::exception::Internal ex;
             ex.getMessage()
               << "Unable to select tape while inserting violated unique constraint :"
@@ -378,6 +481,7 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
             throw ex;
           }
         }
+        m_selectTapeStatement->closeResultSet(rset);
         // Else, "standard" error, throw exception
         castor::exception::Internal ex;
         ex.getMessage()
@@ -389,6 +493,7 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
     // If we reach this point, then we selected successfully
     // a tape and it's id is in rset
     id = rset->getInt(1);
+    m_selectTapeStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()
