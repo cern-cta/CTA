@@ -1,6 +1,9 @@
 /*
- * $Id: vdqm_ProcReq.c,v 1.3 1999/09/01 15:10:29 obarring Exp $
+ * $Id: vdqm_ProcReq.c,v 1.4 1999/09/03 14:49:58 obarring Exp $
  * $Log: vdqm_ProcReq.c,v $
+ * Revision 1.4  1999/09/03 14:49:58  obarring
+ * Include osdep.h because of use of u_signed64 in vdqm.h
+ *
  * Revision 1.3  1999/09/01 15:10:29  obarring
  * Fix sccsid string
  *
@@ -22,7 +25,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$Id: vdqm_ProcReq.c,v 1.3 1999/09/01 15:10:29 obarring Exp $";
+static char sccsid[] = "@(#)$Id: vdqm_ProcReq.c,v 1.4 1999/09/03 14:49:58 obarring Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -35,6 +38,7 @@ extern char *geterr();
 #include <sys/socket.h>
 #include <netinet/in.h>                 /* Internet data types          */
 #endif /* _WIN32 */
+#include <osdep.h>
 #include <log.h>
 #include <net.h>
 #include <serrno.h>
