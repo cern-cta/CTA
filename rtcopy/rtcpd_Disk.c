@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.92 $ $Date: 2000/12/04 09:02:19 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.93 $ $Date: 2000/12/08 11:13:59 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -539,6 +539,10 @@ static int DiskFileClose(int disk_fd,
             } else {
                 rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED);
             }
+        } else {
+            rtcpd_SetReqStatus(NULL,file,
+                               (save_serrno != 0 ? save_serrno : last_errno),
+                               RTCP_FAILED);
         }
     }
 
@@ -1705,7 +1709,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
              */
             rc= rtcpd_CheckProcError();
             if ( rc != RTCP_OK && rc != RTCP_RETRY_OK ) {
-                rtcp_log(LOG_ERR,"rtcp_StartDiskIO() processing error detected\n");
+                rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() processing error detected, severity=0x%x (%d)\n",rc,rc);
                 proc_cntl.diskIOfinished = 1;
                 (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
                 (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
@@ -1771,7 +1775,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                  */
                 rc= rtcpd_CheckProcError();
                 if ( rc != RTCP_OK && rc != RTCP_RETRY_OK ) {
-                    rtcp_log(LOG_ERR,"rtcp_StartDiskIO() processing error detected\n");
+                    rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() processing error detected, severity=0x%x (%d)\n",rc,rc);
                     proc_cntl.diskIOfinished = 1;
                     (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
                     (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
