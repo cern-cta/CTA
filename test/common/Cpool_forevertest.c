@@ -11,6 +11,7 @@
 
 void *master_thread (void *);
 void *testit (void *);
+char *timestamp (time_t);
 int npools;
 int nthreads_per_pool;
 
@@ -42,7 +43,7 @@ int main(argc,argv)
 	Cpool_debug = 0;
 	Cthread_debug = 0;
 
-	initlog("Cpool_forevertest",LOG_DEBUG,"");
+	initlog("Cpool_forevertest",LOG_INFO,"");
 
 	for (i = 0; i < n; i++) {
 		log(LOG_INFO,"Creating master thread No %d\n", i);
@@ -64,7 +65,9 @@ void *master_thread(arg)
 	void *arg;
 {
 	int i, j;
-	time_t thistime;
+	time_t thistime, newtime;
+	int nassign = 0;
+	int nfailure = 0;
 
 	log(LOG_INFO,"Started\n");
 	log(LOG_INFO,"Creating a pool of %d threads\n", nthreads_per_pool);
@@ -81,15 +84,20 @@ void *master_thread(arg)
 	while (1) {
 		int k;
 
-		log(LOG_ERR,"Cpool_next_index_timeout(%d,-1)\n", j);
-		if ((k = Cpool_next_index_timeout(j,-1)) < 0) {
+		if ((k = Cpool_next_index_timeout(j,0)) < 0) {
 			log(LOG_ERR,"Cpool_next_index_timeout error: %s\n", sstrerror(errno));
+			++nfailure;
 		} else {
-			log(LOG_ERR,"Cpool_next_index_timeout returned %d\n", k);
+			if (Cpool_assign(j,testit,NULL,-1) < 0) {
+				/* log(LOG_ERR,"Cpool_assign error: %s\n", sstrerror(errno)); */
+				++nfailure;
+			} else {
+				++nassign;
+			}
 		}
-		log(LOG_ERR,"Cpool_assign(%d,testit,NULL,-1)\n", j);
-		if (Cpool_assign(j,testit,NULL,-1) < 0) {
-			log(LOG_ERR,"Cpool_assign error: %s\n", sstrerror(errno));
+		if ((newtime = time(NULL)) > thistime) {
+			log(LOG_INFO,"%s Master of pool No %d alive, %d assign ok, %d assign/next_index failure\n", timestamp(newtime), j, nassign, nfailure);
+			thistime = time(NULL);
 		}
 	}
 }
@@ -100,8 +108,16 @@ void * testit (void *arg) {
 	
 	thattime = 1+(int) (1000000.0*rand()/(RAND_MAX+1.0));
 	
-	log(LOG_ERR,"usleep(%ld)\n", thattime);
 	usleep(thattime);
-	log(LOG_ERR,"return\n", thattime);
 	return(NULL);
+}
+
+char *timestamp(time_t current_time) {
+	static char timestr[16];
+	struct tm *tm;
+	
+	(void) time (&current_time);
+	tm = localtime (&current_time);
+	(void) strftime(timestr, 16, "%b %e %H:%M:%S", tm);
+	return (timestr);
 }
