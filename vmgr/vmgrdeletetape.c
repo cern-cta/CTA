@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrdeletetape.c,v $ $Revision: 1.4 $ $Date: 2000/03/02 08:41:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrdeletetape.c,v $ $Revision: 1.5 $ $Date: 2000/03/20 08:53:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrdeletetape - delete a tape volume */
@@ -22,7 +22,7 @@ char **argv;
 	int errflg = 0;
 	char *vid = NULL;
 
-        while ((c = getopt (argc, argv, "V")) != EOF) {
+        while ((c = getopt (argc, argv, "V:")) != EOF) {
                 switch (c) {
                 case 'V':
 			vid = optarg;
