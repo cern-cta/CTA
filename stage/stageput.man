@@ -1,10 +1,10 @@
-.\" $Id: stageput.man,v 1.13 2002/10/08 09:02:30 jdurand Exp $
+.\" $Id: stageput.man,v 1.14 2002/10/08 11:45:58 baud Exp $
 .\"
-.\" @(#)$RCSfile: stageput.man,v $ $Revision: 1.13 $ $Date: 2002/10/08 09:02:30 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageput.man,v $ $Revision: 1.14 $ $Date: 2002/10/08 11:45:58 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEPUT "1" "$Date: 2002/10/08 09:02:30 $" "CASTOR" "Stage User Commands"
+.TH STAGEPUT "1" "$Date: 2002/10/08 11:45:58 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageput \- copy disk files to tape, to an external disk file or to a
 Hierarchical Storage Management System.
@@ -25,7 +25,7 @@ Hierarchical Storage Management System.
 .BI \-h " host"
 ] [
 .BI \-M " hsmfile"
-[
+] [
 .BI \-M ...
 ] [
 .BI \-\-noretry
@@ -76,7 +76,7 @@ specifies that the command should return immediately. Copy in done in the backgr
 .br
 28	ENOSPC: tape volume overflow.
 .br
-188 Tape is held
+188	Tape is held
 .br
 192	Request cancelled by stageclr.
 .br

@@ -1,10 +1,10 @@
-.\" $Id: stagewrt_hsm.man,v 1.1 2002/10/08 09:20:36 jdurand Exp $
+.\" $Id: stagewrt_hsm.man,v 1.2 2002/10/08 11:45:57 baud Exp $
 .\"
-.\" @(#)$RCSfile: stagewrt_hsm.man,v $ $Revision: 1.1 $ $Date: 2002/10/08 09:20:36 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stagewrt_hsm.man,v $ $Revision: 1.2 $ $Date: 2002/10/08 11:45:57 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEWRT_HSM "3" "$Date: 2002/10/08 09:20:36 $" "CASTOR" "Stage Library Functions"
+.TH STAGEWRT_HSM "3" "$Date: 2002/10/08 11:45:57 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stagewrt_hsm \- Asks for one or more HSM files to be migrated
 .SH SYNOPSIS
@@ -22,7 +22,7 @@ stagewrt_hsm \- Asks for one or more HSM files to be migrated
 .BI "struct stgpath_entry *" stpp_input ");"
 
 .SH DESCRIPTION
-The \fBstagewrt_hsm\fP API method asks the stager for one or more HSM files to be migrated on their third\-party store.
+The \fBstagewrt_hsm\fP API method asks the stager for one or more HSM files to be migrated to the tertiary storage.
 There are two ouputs: the default ttys (unless you use \fBstage_setlog\fP, see in the example below) and the output parameters, that are allocated on the fly (e.g. the user will have to free them if necessary/wanted).
 
 .SH PARAMETERS
@@ -78,7 +78,7 @@ Entries describing the files you want to be migrated. Only the member xfile of t
 .RS
 .TP
 .I size
-Gives how many bytes should be writen. Not recommended.
+Gives how many bytes should be written. Not recommended.
 .TP
 .I poolname
 Specify explicitely a disk pool
@@ -166,7 +166,7 @@ Stager not active (if you specify the STAGE_NORETRY flag - default is to retry f
 .B SENOSHOST
 Host not known
 
-.LP
+.SH NOTES
 It is highly recommended to use the RFIO interface, POSIX compliant, if you want to open one single file. RFIO interface will internally call the stage interface.
 
 .SH SEE ALSO

@@ -1,10 +1,10 @@
-.\" $Id: stageupdc.man,v 1.10 2002/10/03 14:03:56 jdurand Exp $
+.\" $Id: stageupdc.man,v 1.11 2002/10/08 11:45:59 baud Exp $
 .\"
-.\" @(#)$RCSfile: stageupdc.man,v $ $Revision: 1.10 $ $Date: 2002/10/03 14:03:56 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageupdc.man,v $ $Revision: 1.11 $ $Date: 2002/10/08 11:45:59 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1995-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEUPDC "1" "$Date: 2002/10/03 14:03:56 $" "CASTOR" "Stager User Commands"
+.TH STAGEUPDC "1" "$Date: 2002/10/08 11:45:59 $" "CASTOR" "Stager User Commands"
 .SH NAME
 stageupdc \- update the stager catalog
 .SH SYNOPSIS
@@ -16,7 +16,7 @@ stageupdc \- update the stager catalog
 ]
 .LP
 .B stageupdc
-] [
+[
 .BI \-h " host"
 ] [
 .BI \-R " exit_code"
@@ -52,7 +52,7 @@ When applied on a CASTOR HSM file, previously created with
 .B stageupdc
 makes it eligible for automatic migration.
 .LP
-The second format is used by rtcopy to send back information to the stager.
+The second format was used by rtcopy to send back information to the stager.
 .SH OPTIONS
 .TP
 .BI \-h " host"

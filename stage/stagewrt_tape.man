@@ -1,12 +1,12 @@
-.\" $Id: stagewrt_tape.man,v 1.1 2002/10/08 09:20:36 jdurand Exp $
+.\" $Id: stagewrt_tape.man,v 1.2 2002/10/08 11:45:57 baud Exp $
 .\"
-.\" @(#)$RCSfile: stagewrt_tape.man,v $ $Revision: 1.1 $ $Date: 2002/10/08 09:20:36 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stagewrt_tape.man,v $ $Revision: 1.2 $ $Date: 2002/10/08 11:45:57 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEWRT_TAPE "3" "$Date: 2002/10/08 09:20:36 $" "CASTOR" "Stage Library Functions"
+.TH STAGEWRT_TAPE "3" "$Date: 2002/10/08 11:45:57 $" "CASTOR" "Stage Library Functions"
 .SH NAME
-stagewrt_tape \- Asks for one or more tape files, present on disk, to be writen to tape
+stagewrt_tape \- Asks for one or more tape files, present on disk, to be written to tape
 .SH SYNOPSIS
 .BI "#include <" stage_api.h ">"
 .sp
@@ -22,7 +22,7 @@ stagewrt_tape \- Asks for one or more tape files, present on disk, to be writen 
 .BI "struct stgpath_entry *" stpp_input ");"
 
 .SH DESCRIPTION
-The \fBstagewrt_tape\fP API method asks the stager for one or more files present on disk to be writen to tape.
+The \fBstagewrt_tape\fP API method asks the stager for one or more files present on disk to be written to tape.
 There are two ouputs: the default ttys (unless you use \fBstage_setlog\fP) and the output parameters, that are allocated on the fly (e.g. the user will have to free them if necessary/wanted).
 
 .SH PARAMETERS
