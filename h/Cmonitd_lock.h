@@ -7,7 +7,7 @@
 /* 
  * Cmonitd_lock.h - Header for the monitoring locking module  
  */
-#include "semaphore.h"
+#include "Csemaphore.h"
 
 #ifndef _CMONITD_LOCK_H_INCLUDED_
 #define _CMONITD_LOCK_H_INCLUDED_
@@ -18,11 +18,11 @@
 
 /* Struct holding all the vars for the readers/writers locking mechanism */
 struct Cthread_rwlock {
-  Semaphore mutex1;
-  Semaphore mutex2;
-  Semaphore mutex3;
-  Semaphore db;
-  Semaphore r;
+  CSemaphore mutex1;
+  CSemaphore mutex2;
+  CSemaphore mutex3;
+  CSemaphore db;
+  CSemaphore r;
   int rcount;
   int wcount;
 };
