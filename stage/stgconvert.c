@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.14 2000/01/26 18:30:56 jdurand Exp $
+ * $Id: stgconvert.c,v 1.15 2000/01/27 08:33:36 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.14 $ $Date: 2000/01/26 18:30:56 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.15 $ $Date: 2000/01/27 08:33:36 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -207,8 +207,13 @@ int main(argc,argv)
   char t_or_d = '\0';
   char tmpbuf[21];
   int frequency = FREQUENCY;
+  /* For the firstrow/nextrow method */
+  int nodump = 0;
+  int ntoclean;
+  Cdb_off_t remember_before[2];
 
-  while ((c = getopt(argc,argv,"bc:Cg:hl:Ln:u:p:qt:v")) != EOF) {
+
+  while ((c = getopt(argc,argv,"bc:Cg:hl:Ln:u:p:qQt:v")) != EOF) {
     switch (c) {
     case 'b':
       bindiff = 1;
@@ -236,6 +241,9 @@ int main(argc,argv)
       break;
     case 'q':
       warns = 0;
+      break;
+    case 'Q':
+      nodump = 1;
       break;
     case 'u':
       Cdb_username = optarg;
@@ -369,6 +377,7 @@ int main(argc,argv)
         printf("### Do you really want to proceed (y/n) ? ");
         
         answer = getchar();
+        fflush(stdin);
         if (answer != 'y' && answer != 'Y') {
           rc = EXIT_FAILURE;
           goto stgconvert_return;
@@ -659,45 +668,114 @@ int main(argc,argv)
 
       printf("\n*** DUMPING stgcat_tape TABLE ***\n\n");
 
-    /* We ask for a dump of tape table from Cdb */
-    /* ---------------------------------------- */
-      if (Cdb_dump_start(&Cdb_db,"stgcat_tape") != 0) {
-        printf("### Cdb_dump_start error on table \"stgcat_tape\" (%s)\n",sstrerror(serrno));
-        if (Cdb_error(&Cdb_session,&error) == 0) {
-          printf("--> more info:\n%s",error);
+      /* We ask for a dump of tape table from Cdb */
+      /* ---------------------------------------- */
+      if (nodump == 0) {
+        if (Cdb_dump_start(&Cdb_db,"stgcat_tape") != 0) {
+          printf("### Cdb_dump_start error on table \"stgcat_tape\" (%s)\n",sstrerror(serrno));
+          if (Cdb_error(&Cdb_session,&error) == 0) {
+            printf("--> more info:\n%s",error);
+          }
+          rc = EXIT_FAILURE;
+          goto stgconvert_return;
         }
-        rc = EXIT_FAILURE;
-        goto stgconvert_return;
-      }
-
-      while (Cdb_dump(&Cdb_db,"stgcat_tape",&Cdb_offset,&tape) == 0) {
-        struct stgcat_entry thisstcp;
-
-        if (Cdb2stcp(&thisstcp,&tape,NULL,NULL,NULL) != 0) {
-          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",tape.reqid);
-          continue;
-        }
-
-        if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
-          printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
-        } else {
-          ++i;
-          if (i == 1 || i % frequency == 0) {
-            last_reqid = thisstcp.reqid;
-            printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+        while (Cdb_dump(&Cdb_db,"stgcat_tape",&Cdb_offset,&tape) == 0) {
+          struct stgcat_entry thisstcp;
+          
+          if (Cdb2stcp(&thisstcp,&tape,NULL,NULL,NULL) != 0) {
+            printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",tape.reqid);
+            continue;
+          }
+          
+          if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+            printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+          } else {
+            ++i;
+            if (i == 1 || i % frequency == 0) {
+              last_reqid = thisstcp.reqid;
+              printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+            }
           }
         }
+      } else {
+        ntoclean = 0;
+        Cdb_debuglevel(&Cdb_session,0);
+        if (Cdb_firstrow(&Cdb_db,"stgcat_tape","r",&Cdb_offset,&tape) != 0) {
+          if (serrno != EDB_D_LISTEND) {
+            printf("### Cdb_firstrow error on table \"stgcat_tape\" (%s)\n",sstrerror(serrno));
+            if (Cdb_error(&Cdb_session,&error) == 0) {
+              printf("--> more info:\n%s",error);
+            }
+            rc = EXIT_FAILURE;
+            goto stgconvert_return;
+          }
+        } else {
+          remember_before[ntoclean++] = Cdb_offset;
+          while(1) {
+            struct stgcat_entry thisstcp;
 
+            if (Cdb2stcp(&thisstcp,&tape,NULL,NULL,NULL) != 0) {
+              printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",tape.reqid);
+            } else {
+              if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+                printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+              } else {
+                ++i;
+                if (i == 1 || i % frequency == 0) {
+                  last_reqid = thisstcp.reqid;
+                  printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+                }
+              }
+              if (ntoclean >= 2) {
+                if (Cdb_unlock(&Cdb_db,"stgcat_tape",&(remember_before[0])) != 0) {
+                  /* non-fatal (?) error */
+                  printf("### Cdb_unlock error on table \"stgcat_tape\" (%s)\n",sstrerror(serrno));
+                  if (Cdb_error(&Cdb_session,&error) == 0) {
+                    printf("--> more info:\n%s",error);
+                  }
+                }
+                remember_before[0] = remember_before[1];
+                ntoclean = 1;
+              }
+              if (Cdb_nextrow(&Cdb_db,"stgcat_tape","r",&Cdb_offset,&tape) != 0) {
+                break;
+              }
+              remember_before[ntoclean++] = Cdb_offset;
+            }
+          }
+          if (serrno != EDB_D_LISTEND) {
+            printf("### Cdb_nextrow end but unexpected serrno (%d) error on table \"stgcat_tape\" (%s)\n",serrno,sstrerror(serrno));
+          }
+          /* nextrow error (normal serrno is EDB_D_LISTEND) */         
+          if (ntoclean >= 2) {
+            if (Cdb_unlock(&Cdb_db,"stgcat_tape",&(remember_before[0])) != 0) {
+              printf("### Cdb_unlock error on table \"stgcat_tape\" (%s)\n",sstrerror(serrno));
+              if (Cdb_error(&Cdb_session,&error) == 0) {
+                printf("--> more info:\n%s",error);
+              }
+            }
+          }
+          if (ntoclean >= 1) {
+            if (Cdb_unlock(&Cdb_db,"stgcat_tape",&(remember_before[1])) != 0) {
+              printf("### Cdb_unlock error on table \"stgcat_tape\" (%s)\n",sstrerror(serrno));
+              if (Cdb_error(&Cdb_session,&error) == 0) {
+                printf("--> more info:\n%s",error);
+              }
+            }
+          }
+        }
       }
 
       if (! (i == 1 || i % frequency == 0)) {
         printf("--> (%6d) reqid = %d OK\n",i,last_reqid);
       }
 
-      if (Cdb_dump_end(&Cdb_db,"stgcat_tape") != 0) {
-        printf("### Cdb_dump_end error on table \"stgcat_tape\" (%s)\n",sstrerror(serrno));
-        if (Cdb_error(&Cdb_session,&error) == 0) {
-          printf("--> more info:\n%s",error);
+      if (nodump == 0) {
+        if (Cdb_dump_end(&Cdb_db,"stgcat_tape") != 0) {
+          printf("### Cdb_dump_end error on table \"stgcat_tape\" (%s)\n",sstrerror(serrno));
+          if (Cdb_error(&Cdb_session,&error) == 0) {
+            printf("--> more info:\n%s",error);
+          }
         }
       }
 
@@ -712,30 +790,97 @@ int main(argc,argv)
 
       printf("\n*** DUMPING stgcat_disk TABLE ***\n\n");
 
-      if (Cdb_dump_start(&Cdb_db,"stgcat_disk") != 0) {
-        printf("### Cdb_dump_start error on table \"stgcat_disk\" (%s)\n",sstrerror(serrno));
-        if (Cdb_error(&Cdb_session,&error) == 0) {
-          printf("--> more info:\n%s",error);
+      if (nodump == 0) {
+        if (Cdb_dump_start(&Cdb_db,"stgcat_disk") != 0) {
+          printf("### Cdb_dump_start error on table \"stgcat_disk\" (%s)\n",sstrerror(serrno));
+          if (Cdb_error(&Cdb_session,&error) == 0) {
+            printf("--> more info:\n%s",error);
+          }
+          rc = EXIT_FAILURE;
+          goto stgconvert_return;
         }
-        rc = EXIT_FAILURE;
-        goto stgconvert_return;
-      }
-
-      while (Cdb_dump(&Cdb_db,"stgcat_disk",&Cdb_offset,&disk) == 0) {
-        struct stgcat_entry thisstcp;
-
-        if (Cdb2stcp(&thisstcp,NULL,&disk,NULL,NULL) != 0) {
-          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",disk.reqid);
-          continue;
+        while (Cdb_dump(&Cdb_db,"stgcat_disk",&Cdb_offset,&disk) == 0) {
+          struct stgcat_entry thisstcp;
+          
+          if (Cdb2stcp(&thisstcp,NULL,&disk,NULL,NULL) != 0) {
+            printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",disk.reqid);
+            continue;
+          }
+          
+          if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+            printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+          } else {
+            ++i;
+            if (i == 1 || i % frequency == 0) {
+              last_reqid = thisstcp.reqid;
+              printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+            }
+          }
         }
-
-        if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
-          printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+      } else {
+        ntoclean = 0;
+        if (Cdb_firstrow(&Cdb_db,"stgcat_disk","r",&Cdb_offset,&disk) != 0) {
+          if (serrno != EDB_D_LISTEND) {
+            printf("### Cdb_firstrow error on table \"stgcat_disk\" (%s)\n",sstrerror(serrno));
+            if (Cdb_error(&Cdb_session,&error) == 0) {
+              printf("--> more info:\n%s",error);
+            }
+            rc = EXIT_FAILURE;
+            goto stgconvert_return;
+          }
         } else {
-          ++i;
-          if (i == 1 || i % frequency == 0) {
-            last_reqid = thisstcp.reqid;
-            printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+          remember_before[ntoclean++] = Cdb_offset;
+          while(1) {
+            struct stgcat_entry thisstcp;
+
+            if (Cdb2stcp(&thisstcp,NULL,&disk,NULL,NULL) != 0) {
+              printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",disk.reqid);
+            } else {
+              if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+                printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+              } else {
+                ++i;
+                if (i == 1 || i % frequency == 0) {
+                  last_reqid = thisstcp.reqid;
+                  printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+                }
+              }
+              if (ntoclean >= 2) {
+                if (Cdb_unlock(&Cdb_db,"stgcat_disk",&(remember_before[0])) != 0) {
+                  /* non-fatal (?) error */
+                  printf("### Cdb_unlock error on table \"stgcat_disk\" (%s)\n",sstrerror(serrno));
+                  if (Cdb_error(&Cdb_session,&error) == 0) {
+                    printf("--> more info:\n%s",error);
+                  }
+                }
+                remember_before[0] = remember_before[1];
+                ntoclean = 1;
+              }
+              if (Cdb_nextrow(&Cdb_db,"stgcat_disk","r",&Cdb_offset,&disk) != 0) {
+              break;
+              }
+              remember_before[ntoclean++] = Cdb_offset;
+            }
+          }
+          if (serrno != EDB_D_LISTEND) {
+            printf("### Cdb_nextrow end but unexpected serrno (%d) error on table \"stgcat_disk\" (%s)\n",serrno,sstrerror(serrno));
+          }
+          /* nextrow error (normal serrno is EDB_D_LISTEND) */         
+          if (ntoclean >= 2) {
+            if (Cdb_unlock(&Cdb_db,"stgcat_disk",&(remember_before[0])) != 0) {
+              printf("### Cdb_unlock error on table \"stgcat_disk\" (%s)\n",sstrerror(serrno));
+              if (Cdb_error(&Cdb_session,&error) == 0) {
+                printf("--> more info:\n%s",error);
+              }
+            }
+          }
+          if (ntoclean >= 1) {
+            if (Cdb_unlock(&Cdb_db,"stgcat_disk",&(remember_before[1])) != 0) {
+              printf("### Cdb_unlock error on table \"stgcat_disk\" (%s)\n",sstrerror(serrno));
+              if (Cdb_error(&Cdb_session,&error) == 0) {
+                printf("--> more info:\n%s",error);
+              }
+            }
           }
         }
       }
@@ -744,10 +889,12 @@ int main(argc,argv)
         printf("--> (%6d) reqid = %d OK\n",i,last_reqid);
       }
 
-      if (Cdb_dump_end(&Cdb_db,"stgcat_disk") != 0) {
-        printf("### Cdb_dump_end error on table \"stgcat_disk\" (%s)\n",sstrerror(serrno));
-        if (Cdb_error(&Cdb_session,&error) == 0) {
-          printf("--> more info:\n%s",error);
+      if (nodump == 0) {
+        if (Cdb_dump_end(&Cdb_db,"stgcat_disk") != 0) {
+          printf("### Cdb_dump_end error on table \"stgcat_disk\" (%s)\n",sstrerror(serrno));
+          if (Cdb_error(&Cdb_session,&error) == 0) {
+            printf("--> more info:\n%s",error);
+          }
         }
       }
 
@@ -762,30 +909,97 @@ int main(argc,argv)
 
       printf("\n*** DUMPING stgcat_hsm TABLE ***\n\n");
 
-      if (Cdb_dump_start(&Cdb_db,"stgcat_hsm") != 0) {
-        printf("### Cdb_dump_start error on table \"stgcat_hsm\" (%s)\n",sstrerror(serrno));
-        if (Cdb_error(&Cdb_session,&error) == 0) {
-          printf("--> more info:\n%s",error);
+      if (nodump == 0) {
+        if (Cdb_dump_start(&Cdb_db,"stgcat_hsm") != 0) {
+          printf("### Cdb_dump_start error on table \"stgcat_hsm\" (%s)\n",sstrerror(serrno));
+          if (Cdb_error(&Cdb_session,&error) == 0) {
+            printf("--> more info:\n%s",error);
+          }
+          rc = EXIT_FAILURE;
+          goto stgconvert_return;
         }
-        rc = EXIT_FAILURE;
-        goto stgconvert_return;
-      }
-
-      while (Cdb_dump(&Cdb_db,"stgcat_hsm",&Cdb_offset,&hsm) == 0) {
-        struct stgcat_entry thisstcp;
-
-        if (Cdb2stcp(&thisstcp,NULL,NULL,&hsm,NULL) != 0) {
-          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",hsm.reqid);
-          continue;
+        while (Cdb_dump(&Cdb_db,"stgcat_hsm",&Cdb_offset,&hsm) == 0) {
+          struct stgcat_entry thisstcp;
+          
+          if (Cdb2stcp(&thisstcp,NULL,NULL,&hsm,NULL) != 0) {
+            printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",hsm.reqid);
+            continue;
+          }
+          
+          if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+            printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+          } else {
+            ++i;
+            if (i == 1 || i % frequency == 0) {
+              last_reqid = thisstcp.reqid;
+              printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+            }
+          }
         }
-
-        if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
-          printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+      } else {
+        ntoclean = 0;
+        if (Cdb_firstrow(&Cdb_db,"stgcat_hsm","r",&Cdb_offset,&hsm) != 0) {
+          if (serrno != EDB_D_LISTEND) {
+            printf("### Cdb_firstrow error on table \"stgcat_hsm\" (%s)\n",sstrerror(serrno));
+            if (Cdb_error(&Cdb_session,&error) == 0) {
+              printf("--> more info:\n%s",error);
+            }
+            rc = EXIT_FAILURE;
+            goto stgconvert_return;
+          }
         } else {
-          ++i;
-          if (i == 1 || i % frequency == 0) {
-            last_reqid = thisstcp.reqid;
-            printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+          remember_before[ntoclean++] = Cdb_offset;
+          while(1) {
+            struct stgcat_entry thisstcp;
+
+            if (Cdb2stcp(&thisstcp,NULL,NULL,&hsm,NULL) != 0) {
+              printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",hsm.reqid);
+            } else {
+              if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+                printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+              } else {
+                ++i;
+                if (i == 1 || i % frequency == 0) {
+                  last_reqid = thisstcp.reqid;
+                  printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+                }
+              }
+              if (ntoclean >= 2) {
+                if (Cdb_unlock(&Cdb_db,"stgcat_hsm",&(remember_before[0])) != 0) {
+                  /* non-fatal (?) error */
+                  printf("### Cdb_unlock error on table \"stgcat_hsm\" (%s)\n",sstrerror(serrno));
+                  if (Cdb_error(&Cdb_session,&error) == 0) {
+                    printf("--> more info:\n%s",error);
+                  }
+                }
+                remember_before[0] = remember_before[1];
+                ntoclean = 1;
+              }
+              if (Cdb_nextrow(&Cdb_db,"stgcat_hsm","r",&Cdb_offset,&hsm) != 0) {
+              break;
+              }
+              remember_before[ntoclean++] = Cdb_offset;
+            }
+          }
+          if (serrno != EDB_D_LISTEND) {
+            printf("### Cdb_nextrow end but unexpected serrno (%d) error on table \"stgcat_hsm\" (%s)\n",serrno,sstrerror(serrno));
+          }
+          /* nextrow error (normal serrno is EDB_D_LISTEND) */         
+          if (ntoclean >= 2) {
+            if (Cdb_unlock(&Cdb_db,"stgcat_hsm",&(remember_before[0])) != 0) {
+              printf("### Cdb_unlock error on table \"stgcat_hsm\" (%s)\n",sstrerror(serrno));
+              if (Cdb_error(&Cdb_session,&error) == 0) {
+                printf("--> more info:\n%s",error);
+              }
+            }
+          }
+          if (ntoclean >= 1) {
+            if (Cdb_unlock(&Cdb_db,"stgcat_hsm",&(remember_before[1])) != 0) {
+              printf("### Cdb_unlock error on table \"stgcat_hsm\" (%s)\n",sstrerror(serrno));
+              if (Cdb_error(&Cdb_session,&error) == 0) {
+                printf("--> more info:\n%s",error);
+              }
+            }
           }
         }
       }
@@ -794,10 +1008,12 @@ int main(argc,argv)
         printf("--> (%6d) reqid = %d OK\n",i,last_reqid);
       }
 
-      if (Cdb_dump_end(&Cdb_db,"stgcat_hsm") != 0) {
-        printf("### Cdb_dump_end error on table \"stgcat_hsm\" (%s)\n",sstrerror(serrno));
-        if (Cdb_error(&Cdb_session,&error) == 0) {
-          printf("--> more info:\n%s",error);
+      if (nodump == 0) {
+        if (Cdb_dump_end(&Cdb_db,"stgcat_hsm") != 0) {
+          printf("### Cdb_dump_end error on table \"stgcat_hsm\" (%s)\n",sstrerror(serrno));
+          if (Cdb_error(&Cdb_session,&error) == 0) {
+            printf("--> more info:\n%s",error);
+          }
         }
       }
 
@@ -812,30 +1028,97 @@ int main(argc,argv)
 
       printf("\n*** DUMPING stgcat_alloc TABLE ***\n\n");
 
-      if (Cdb_dump_start(&Cdb_db,"stgcat_alloc") != 0) {
-        printf("### Cdb_dump_start error on table \"stgcat_alloc\" (%s)\n",sstrerror(serrno));
-        if (Cdb_error(&Cdb_session,&error) == 0) {
-          printf("--> more info:\n%s",error);
+      if (nodump == 0) {
+        if (Cdb_dump_start(&Cdb_db,"stgcat_alloc") != 0) {
+          printf("### Cdb_dump_start error on table \"stgcat_alloc\" (%s)\n",sstrerror(serrno));
+          if (Cdb_error(&Cdb_session,&error) == 0) {
+            printf("--> more info:\n%s",error);
+          }
+          rc = EXIT_FAILURE;
+          goto stgconvert_return;
         }
-        rc = EXIT_FAILURE;
-        goto stgconvert_return;
-      }
-
-      while (Cdb_dump(&Cdb_db,"stgcat_alloc",&Cdb_offset,&alloc) == 0) {
-        struct stgcat_entry thisstcp;
-
-        if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,&alloc) != 0) {
-          printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",alloc.reqid);
-          continue;
+        while (Cdb_dump(&Cdb_db,"stgcat_alloc",&Cdb_offset,&alloc) == 0) {
+          struct stgcat_entry thisstcp;
+          
+          if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,&alloc) != 0) {
+            printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",alloc.reqid);
+            continue;
+          }
+          
+          if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+            printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+          } else {
+            ++i;
+            if (i == 1 || i % frequency == 0) {
+              last_reqid = thisstcp.reqid;
+              printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+            }
+          }
         }
-
-        if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
-          printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+      } else {
+        ntoclean = 0;
+        if (Cdb_firstrow(&Cdb_db,"stgcat_alloc","r",&Cdb_offset,&alloc) != 0) {
+          if (serrno != EDB_D_LISTEND) {
+            printf("### Cdb_firstrow error on table \"stgcat_alloc\" (%s)\n",sstrerror(serrno));
+            if (Cdb_error(&Cdb_session,&error) == 0) {
+              printf("--> more info:\n%s",error);
+            }
+            rc = EXIT_FAILURE;
+            goto stgconvert_return;
+          }
         } else {
-          ++i;
-          if (i == 1 || i % frequency == 0) {
-            last_reqid = thisstcp.reqid;
-            printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+          remember_before[ntoclean++] = Cdb_offset;
+          while(1) {
+            struct stgcat_entry thisstcp;
+
+            if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,&alloc) != 0) {
+              printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",alloc.reqid);
+            } else {
+              if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+                printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+              } else {
+                ++i;
+                if (i == 1 || i % frequency == 0) {
+                  last_reqid = thisstcp.reqid;
+                  printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+                }
+              }
+              if (ntoclean >= 2) {
+                if (Cdb_unlock(&Cdb_db,"stgcat_alloc",&(remember_before[0])) != 0) {
+                  /* non-fatal (?) error */
+                  printf("### Cdb_unlock error on table \"stgcat_alloc\" (%s)\n",sstrerror(serrno));
+                  if (Cdb_error(&Cdb_session,&error) == 0) {
+                    printf("--> more info:\n%s",error);
+                  }
+                }
+                remember_before[0] = remember_before[1];
+                ntoclean = 1;
+              }
+              if (Cdb_nextrow(&Cdb_db,"stgcat_alloc","r",&Cdb_offset,&alloc) != 0) {
+              break;
+              }
+              remember_before[ntoclean++] = Cdb_offset;
+            }
+          }
+          if (serrno != EDB_D_LISTEND) {
+            printf("### Cdb_nextrow end but unexpected serrno (%d) error on table \"stgcat_alloc\" (%s)\n",serrno,sstrerror(serrno));
+          }
+          /* nextrow error (normal serrno is EDB_D_LISTEND) */         
+          if (ntoclean >= 2) {
+            if (Cdb_unlock(&Cdb_db,"stgcat_alloc",&(remember_before[0])) != 0) {
+              printf("### Cdb_unlock error on table \"stgcat_alloc\" (%s)\n",sstrerror(serrno));
+              if (Cdb_error(&Cdb_session,&error) == 0) {
+                printf("--> more info:\n%s",error);
+              }
+            }
+          }
+          if (ntoclean >= 1) {
+            if (Cdb_unlock(&Cdb_db,"stgcat_alloc",&(remember_before[1])) != 0) {
+              printf("### Cdb_unlock error on table \"stgcat_alloc\" (%s)\n",sstrerror(serrno));
+              if (Cdb_error(&Cdb_session,&error) == 0) {
+                printf("--> more info:\n%s",error);
+              }
+            }
           }
         }
       }
@@ -844,10 +1127,12 @@ int main(argc,argv)
         printf("--> (%6d) reqid = %d OK\n",i,last_reqid);
       }
 
-      if (Cdb_dump_end(&Cdb_db,"stgcat_alloc") != 0) {
-        printf("### Cdb_dump_end error on table \"stgcat_alloc\" (%s)\n",sstrerror(serrno));
-        if (Cdb_error(&Cdb_session,&error) == 0) {
-          printf("--> more info:\n%s",error);
+      if (nodump == 0) {
+        if (Cdb_dump_end(&Cdb_db,"stgcat_alloc") != 0) {
+          printf("### Cdb_dump_end error on table \"stgcat_alloc\" (%s)\n",sstrerror(serrno));
+          if (Cdb_error(&Cdb_session,&error) == 0) {
+            printf("--> more info:\n%s",error);
+          }
         }
       }
 
@@ -905,33 +1190,101 @@ int main(argc,argv)
       
       i = 0;
       
-      if (Cdb_dump_start(&Cdb_db,"stgcat_link") != 0) {
-        printf("### Cdb_dump_start error on table \"stgcat_link\" (%s)\n",sstrerror(serrno));
-        if (Cdb_error(&Cdb_session,&error) == 0) {
-          printf("--> more info:\n%s",error);
+      if (nodump == 0) {
+        if (Cdb_dump_start(&Cdb_db,"stgcat_link") != 0) {
+          printf("### Cdb_dump_start error on table \"stgcat_link\" (%s)\n",sstrerror(serrno));
+          if (Cdb_error(&Cdb_session,&error) == 0) {
+            printf("--> more info:\n%s",error);
+          }
+          rc = EXIT_FAILURE;
+          goto stgconvert_return;
         }
-        rc = EXIT_FAILURE;
-        goto stgconvert_return;
-      }
-      
-      while (Cdb_dump(&Cdb_db,"stgcat_link",&Cdb_offset,&link) == 0) {
-        struct stgpath_entry thisstpp;
-        int convert_status = 0;
-        
-        if (Cdb2stpp(&thisstpp,&link) != 0) {
-          printf("### Cannot convert entry with reqid = %d from Cdb's table \"stgcat_link\"\n"
-                 ,link.reqid);
-          convert_status = -1;
+        while (Cdb_dump(&Cdb_db,"stgcat_link",&Cdb_offset,&link) == 0) {
+          struct stgpath_entry thisstpp;
+          int convert_status = 0;
+          
+          if (Cdb2stpp(&thisstpp,&link) != 0) {
+            printf("### Cannot convert entry with reqid = %d from Cdb's table \"stgcat_link\"\n"
+                   ,link.reqid);
+            convert_status = -1;
+          }
+          
+          if (convert_status == 0) {
+            if (write(stgpath_fd,&thisstpp,sizeof(struct stgpath_entry)) != sizeof(struct stgpath_entry)) {
+              printf("### write() error on %s (%s)\n",stgpath,strerror(errno));
+            } else {
+              ++i;
+              if (i == 1 || i % frequency == 0) {
+                last_reqid = thisstpp.reqid;
+                printf("--> (%6d) reqid = %d converted back\n",i,thisstpp.reqid);
+              }
+            }
+          }
         }
-        
-        if (convert_status == 0) {
-          if (write(stgpath_fd,&thisstpp,sizeof(struct stgpath_entry)) != sizeof(struct stgpath_entry)) {
-            printf("### write() error on %s (%s)\n",stgpath,strerror(errno));
-          } else {
-            ++i;
-            if (i == 1 || i % frequency == 0) {
-              last_reqid = thisstpp.reqid;
-              printf("--> (%6d) reqid = %d converted back\n",i,thisstpp.reqid);
+      } else {
+        ntoclean = 0;
+        if (Cdb_firstrow(&Cdb_db,"stgcat_link","r",&Cdb_offset,&link) != 0) {
+          if (serrno != EDB_D_LISTEND) {
+            printf("### Cdb_firstrow error on table \"stgcat_link\" (%s)\n",sstrerror(serrno));
+            if (Cdb_error(&Cdb_session,&error) == 0) {
+              printf("--> more info:\n%s",error);
+            }
+            rc = EXIT_FAILURE;
+            goto stgconvert_return;
+          }
+        } else {
+          remember_before[ntoclean++] = Cdb_offset;
+          while(1) {
+            struct stgpath_entry thisstpp;
+
+            if (Cdb2stpp(&thisstpp,&link) != 0) {
+              printf("### Cannot convert entry with reqid = %d from Cdb's table \"stgcat_link\"\n"
+                     ,link.reqid);
+            } else {
+              if (write(stgpath_fd,&thisstpp,sizeof(struct stgpath_entry)) != sizeof(struct stgpath_entry)) {
+                printf("### write() error on %s (%s)\n",stgpath,strerror(errno));
+              } else {
+                ++i;
+                if (i == 1 || i % frequency == 0) {
+                  last_reqid = thisstpp.reqid;
+                  printf("--> (%6d) reqid = %d converted back\n",i,thisstpp.reqid);
+                }
+              }
+              if (ntoclean >= 2) {
+                if (Cdb_unlock(&Cdb_db,"stgcat_link",&(remember_before[0])) != 0) {
+                  /* non-fatal (?) error */
+                  printf("### Cdb_unlock error on table \"stgcat_link\" (%s)\n",sstrerror(serrno));
+                  if (Cdb_error(&Cdb_session,&error) == 0) {
+                    printf("--> more info:\n%s",error);
+                  }
+                }
+                remember_before[0] = remember_before[1];
+                ntoclean = 1;
+              }
+              if (Cdb_nextrow(&Cdb_db,"stgcat_link","r",&Cdb_offset,&link) != 0) {
+              break;
+              }
+              remember_before[ntoclean++] = Cdb_offset;
+            }
+          }
+          if (serrno != EDB_D_LISTEND) {
+            printf("### Cdb_nextrow end but unexpected serrno (%d) error on table \"stgcat_link\" (%s)\n",serrno,sstrerror(serrno));
+          }
+          /* nextrow error (normal serrno is EDB_D_LISTEND) */         
+          if (ntoclean >= 2) {
+            if (Cdb_unlock(&Cdb_db,"stgcat_link",&(remember_before[0])) != 0) {
+              printf("### Cdb_unlock error on table \"stgcat_link\" (%s)\n",sstrerror(serrno));
+              if (Cdb_error(&Cdb_session,&error) == 0) {
+                printf("--> more info:\n%s",error);
+              }
+            }
+          }
+          if (ntoclean >= 1) {
+            if (Cdb_unlock(&Cdb_db,"stgcat_link",&(remember_before[1])) != 0) {
+              printf("### Cdb_unlock error on table \"stgcat_link\" (%s)\n",sstrerror(serrno));
+              if (Cdb_error(&Cdb_session,&error) == 0) {
+                printf("--> more info:\n%s",error);
+              }
             }
           }
         }
@@ -941,12 +1294,15 @@ int main(argc,argv)
         printf("--> (%6d) reqid = %d converted back\n",i,last_reqid);
       }
       
-      if (Cdb_dump_end(&Cdb_db,"stgcat_link") != 0) {
-        printf("### Cdb_dump_end error on table \"stgcat_link\" (%s)\n",sstrerror(serrno));
-        if (Cdb_error(&Cdb_session,&error) == 0) {
-          printf("--> more info:\n%s",error);
+      if (nodump == 0) {
+        if (Cdb_dump_end(&Cdb_db,"stgcat_link") != 0) {
+          printf("### Cdb_dump_end error on table \"stgcat_link\" (%s)\n",sstrerror(serrno));
+          if (Cdb_error(&Cdb_session,&error) == 0) {
+            printf("--> more info:\n%s",error);
+          }
         }
       }
+
       /* We reload all the entries into memory */
       {
         struct stat statbuff;
@@ -1450,6 +1806,11 @@ void stgconvert_usage() {
          "  -u <login>        Cdb username. Defaults to \"%s\"\n"
          "  -p <password>     Cdb password. Defaults to \"%s\"\n"
          "  -q                Do not print warnings\n"
+         "  -Q                Use the firstrow/nextrow methods instead of the dump ones while\n"
+         "                    extracting data from Cdb in the CASTOR/CDB -> CASTOR/DISK process.\n"
+         "                    If you use this tool in a cron job, you might set this option, because\n"
+         "                    the dump is an exclusive access to the database (but more efficient)\n"
+         "                    while the list is a concurrent access.\n"
          "  -t <type>         Restrict stgcat catalog to data of type:\n"
          "                    \"t\" (tape)\n"
          "                    \"d\" (disk)\n"
