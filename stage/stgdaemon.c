@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.182 2002/03/08 14:34:47 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.183 2002/03/21 08:01:04 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.182 $ $Date: 2002/03/08 14:34:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.183 $ $Date: 2002/03/21 08:01:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -498,23 +498,24 @@ int main(argc,argv)
 	}
 
 
+	FD_ZERO (&readmask);
+	FD_ZERO (&readfd);
+	signal (SIGPIPE,SIG_IGN);
+
+	/* Set daemon mask to zero */
+	umask (0);
+
+	/* Ignore NET entries in /etc/shift.conf */
+	c = RFIO_NONET;
+	rfiosetopt (RFIO_NETOPT, &c, 4);
+
 	/* Set Cns error buffer */
 	if (Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0) {
 		stglogit(func, "### Cns_seterrbuf error (%s)\n", sstrerror(serrno));
  		exit (SYERR);
 	}
 
-
-	FD_ZERO (&readmask);
-	FD_ZERO (&readfd);
-	signal (SIGPIPE,SIG_IGN);
-
-	umask (0);
-	c = RFIO_NONET;
-	rfiosetopt (RFIO_NETOPT, &c, 4);
-
 	/* Open request socket */
-
 	if ((stg_s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		stglogit (func, STG02, "", "socket", sys_errlist[errno]);
 		exit (CONFERR);
