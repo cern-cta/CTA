@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.30 2002/09/20 10:07:43 jdurand Exp $
+ * $Id: stage_constants.h,v 1.31 2002/09/26 08:55:42 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -484,6 +484,7 @@
 #define STAGE_NODISK            CONSTLL(0x0400000000000)  /* --nodisk  [stage_clr]               */
 #define STAGE_MIGRINIT          CONSTLL(0x1000000000000)  /* -X  [stage_init]                    */
 #define STAGE_HSMCREAT          CONSTLL(0x2000000000000)  /* --hsmcreat [stage_chng]             */
+#define STAGE_FORMAT            CONSTLL(0x4000000000000)  /* --format [stageqry - hint for stgdaemon]  */
 
 /* ======================================================================= */
 /* =================== DEFINITION OF API METHODS ========================= */
