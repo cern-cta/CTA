@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2004/10/27 15:02:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2004/10/27 15:40:13 $ $Author: sponcec3 $
  *
  *
  *
@@ -95,7 +95,7 @@ const std::string castor::db::ora::OraStagerSvc::s_fileRecalledStatementString =
 
 /// SQL statement for isSubRequestToSchedule
 const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStatementString =
-  "BEGIN isSubRequestToSchedule(:1) END;";
+  "BEGIN isSubRequestToSchedule(:1, :2) END;";
 
 /// SQL statement for scheduleSubRequest
 const std::string castor::db::ora::OraStagerSvc::s_scheduleSubRequestStatementString =
@@ -694,9 +694,10 @@ bool castor::db::ora::OraStagerSvc::isSubRequestToSchedule
       m_isSubRequestToScheduleStatement =
         createStatement(s_isSubRequestToScheduleStatementString);
       m_isSubRequestToScheduleStatement->registerOutParam
-        (1, oracle::occi::OCCIINT);
+        (2, oracle::occi::OCCIINT);
     }
     // execute the statement and see whether we found something
+    m_isSubRequestToScheduleStatement->setDouble(1, subreq->id());
     unsigned int nb =
       m_isSubRequestToScheduleStatement->executeUpdate();
     if (0 == nb) {
@@ -706,7 +707,7 @@ bool castor::db::ora::OraStagerSvc::isSubRequestToSchedule
       throw ex;
     }
     // Get result and return
-    return 0 != m_isSubRequestToScheduleStatement->getInt(1);
+    return 0 != m_isSubRequestToScheduleStatement->getInt(2);
   } catch (oracle::occi::SQLException e) {
     rollback();
     castor::exception::Internal ex;
