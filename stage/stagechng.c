@@ -1,5 +1,5 @@
 /*
- * $Id: stagechng.c,v 1.7 2001/03/02 18:12:23 jdurand Exp $
+ * $Id: stagechng.c,v 1.8 2001/06/20 11:07:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.7 $ $Date: 2001/03/02 18:12:23 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.8 $ $Date: 2001/06/20 11:07:25 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -38,6 +38,13 @@ extern	char	*sys_errlist[];
 EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
 void usage _PROTO((char *));
 void cleanup _PROTO((int));
+extern	char	*getconfent();
+
+int mintime_beforemigr_flag = 0;
+int reqid_flag = 0;
+int retenp_on_disk_flag = 0;
+int status_flag = 0;
+int poolname_flag = 0;
 
 int main(argc, argv)
 		 int	argc;
@@ -61,6 +68,30 @@ int main(argc, argv)
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
+	char *hsm_host;
+	char hsm_path[2 + CA_MAXHOSTNAMELEN + 1 + MAXPATH];
+	int attached = 0;
+	char *dummy;
+	int Mflag = 0;
+	int pflag = 0;
+	int done_status = 0;
+	char *poolname = NULL;
+	static struct Coptions longopts[] =
+	{
+		{"host",               REQUIRED_ARGUMENT,  NULL,               'h'},
+		{"migration_filename", REQUIRED_ARGUMENT,  NULL,               'M'},
+		{"mintime_beforemigr", REQUIRED_ARGUMENT,  &mintime_beforemigr_flag, 1},
+		{"poolname",           REQUIRED_ARGUMENT,  &poolname_flag,       1},
+		{"reqid",              REQUIRED_ARGUMENT,  &reqid_flag,          1},
+		{"retenp_on_disk",     REQUIRED_ARGUMENT,  &retenp_on_disk_flag, 1},
+		{"status",             REQUIRED_ARGUMENT,  &status_flag,         1},
+		{NULL,                 0,                  NULL,                 0}
+	};
+
+	mintime_beforemigr_flag = 0;
+	reqid_flag = 0;
+	retenp_on_disk_flag = 0;
+	status_flag = 0;
 
 	nargs = argc;
 	uid = getuid();
@@ -73,10 +104,61 @@ int main(argc, argv)
 #endif
 	Coptind = 1;
 	Copterr = 1;
-	while ((c = Cgetopt (argc, argv, "h:")) != -1) {
+	while ((c = Cgetopt_long (nargs, argv, "h:M:p:", longopts, NULL)) != -1) {
 		switch (c) {
 		case 'h':
 			stghost = Coptarg;
+			break;
+		case 'M':
+			Mflag++;
+			/* Check if the option -M is attached or not */
+			if (strstr(argv[Coptind - 1],"-M") == argv[Coptind - 1]) {
+				attached = 1;
+			}
+			/* We want to know if there is no ':' in the string or, if there is such a ':' */
+			/* if there is no '/' before (then is will indicate a hostname)                */
+			if (! ISCASTOR(Coptarg)) {
+				/* We prepend HSM_HOST only for non CASTOR-like files */
+				if ((dummy = strchr(Coptarg,':')) == NULL || (dummy != Coptarg && strrchr(dummy,'/') == NULL)) {
+					if ((hsm_host = getenv("HSM_HOST")) != NULL) {
+						if (attached != 0) {
+							strcpy (hsm_path, "-M");
+							strcat (hsm_path, hsm_host);
+						} else {
+							strcpy (hsm_path, hsm_host);
+						}
+						strcat (hsm_path, ":");
+						strcat (hsm_path, Coptarg);
+						argv[Coptind - 1] = hsm_path;
+					} else if ((hsm_host = getconfent("STG", "HSM_HOST",0)) != NULL) {
+						if (attached != 0) {
+							strcpy (hsm_path, "-M");
+							strcat (hsm_path, hsm_host);
+						} else {
+							strcpy (hsm_path, hsm_host);
+						}
+						strcat (hsm_path, ":");
+						strcat (hsm_path, Coptarg);
+						argv[Coptind - 1] = hsm_path;
+					} else {
+						fprintf (stderr, STG54);
+						errflg++;
+					}
+				}
+			}
+			break;
+		case 'p':
+			poolname = Coptarg;
+			pflag++;
+		break;
+		case 0:
+			if (status_flag && ! done_status) { /* --status */
+				if ((strcmp(Coptarg,"CAN_BE_MIGR") == 0) || (strcmp(Coptarg,"STAGEOUT|CAN_BE_MIGR") == 0)) {
+					/* Per definition Coptarg has enough place to support to format 0x%x == STAGEOUT|CAN_BE_MIGR */
+					sprintf(Coptarg, "0x%x", (STAGEOUT|CAN_BE_MIGR));
+				}
+				done_status = 1;
+			}
 			break;
 		case '?':
 			errflg++;
@@ -85,15 +167,14 @@ int main(argc, argv)
 			break;
 		}
 	}
-	if (Coptind >= argc) {
-		fprintf (stderr, STG07);
-		errflg++;
-	}
 
 	if (errflg) {
 		usage (argv[0]);
 		exit (USERR);
 	}
+
+	if (pflag == 0 && (poolname = getenv ("STAGE_POOL")) != NULL)
+		nargs += 2;
 
 	/* Build request header */
 
@@ -119,6 +200,10 @@ int main(argc, argv)
 	marshall_WORD (sbp, pid);
 
 	marshall_WORD (sbp, nargs);
+	if (pflag == 0 && poolname) {
+		marshall_STRING (sbp, "-p");
+		marshall_STRING (sbp, poolname);
+	}
 	for (i = 0; i < Coptind; i++)
 		marshall_STRING (sbp, argv[i]);
 #if defined(_WIN32)
@@ -183,5 +268,9 @@ void cleanup(sig)
 void usage(cmd)
 		 char *cmd;
 {
-	fprintf (stderr, "usage: %s [-h stagehost] pathname(s)", cmd);
+	fprintf (stderr,
+				"usage: %s [-h stagehost] pathname(s)\n"
+				"\nor\n\n"
+				"%s [-h stagehost] -M filename [--mintime_beforemigr mintime_in_seconds] [-p poolname] [--reqid request_id] [--retenp_on_disk retention_in_days] [--status status]\n",
+				cmd, cmd);
 }

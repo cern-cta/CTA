@@ -1,33 +1,96 @@
 .\"
-.\" $Id: stagechng.man,v 1.3 2000/06/17 08:27:18 jdurand Exp $
+.\" $Id: stagechng.man,v 1.4 2001/06/20 11:07:25 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.3 $ $Date: 2000/06/17 08:27:18 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.4 $ $Date: 2001/06/20 11:07:25 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECHNG l "$Date: 2000/06/17 08:27:18 $"
+.TH STAGECHNG l "$Date: 2001/06/20 11:07:25 $"
 .SH NAME
 stagechng \- change status in the stager catalog
 .SH SYNOPSIS
 .B stagechng
 [
 .BI -h " host"
+] [
+.BI -p " poolname"
 ]
 .I files
-.SH DESCRIPTION
+.LP
 .B stagechng
+[
+.BI -h " host"
+] [
+.BI -M " hsmfile"
+] [
+.BI --mintime " mintime"
+]  [
+.BI -p " poolname"
+]  [
+.BI -reqid " reqid"
+] [
+.BI --retenp " retenp"
+] [
+.BI -status " status"
+]
+.SH DESCRIPTION
+In the first form, 
+.BI stagechng
 changes request in status STAGED to status STAGEOUT in the stager catalog.
 The file must be in state STAGED and corresponding to an HSM file.
 .I file
 may be a local path, the combination
 .I machine:fullpath
 (NFS syntax) or a full path starting with the NFS_ROOT, i.e. /shift.
+.LP
+In the second form, 
+.BI stagechng
+can change the 
+.BI mintime
+before migration, the retention period on disk (
+.BI retenp
+) and the
+.BI status
+of an 
+.BI hsmfile.
+The minimum time before migration is in second unit, while the retention period on disk is in day unit. The status can be an explicit value that correspond to a bit-OR'ed of several values, known only a-priori to stager gurus. Neverthless the shortcuts
+.BI CAN_BE_MIGR
+and
+.BI STAGEOUT|CAN_BE_MIGR
+, \fBonly\fP in the scope of this application, are provided and are considered equivalent (
+.BI stagechng
+will convert them to a single value). That is, if you say --status CAN_BE_MIGR, it will be converted to the explicit value equivalent of STAGEOUT|CAN_BE_MIGR, which is the the bit-OR'ed value that describes a candidate for migration in the stager. Although, in theory, all bit-OR'ed allowed values could be supported, the functionnality of this command is restricted to the only one possible option value which is \fBCAN_BE_MIGR\fP (or \fBSTAGEOUT|CAN_BE_MIGR\fP). This --status option value is then useful only if you want to put back in migration candidates stack a file that was put in PUT_FAILED status, e.g. for which a previous migration has failed or could not have been executed for configuration reasons.
 .SH OPTIONS
 .TP
 .BI \-h " host"
 Sends the request to the stager on
 .IR host .
 This may also be specified thru the environment variable STAGE_HOST.
+.TP
+.BI \-M " hsmfile"
+Restrict the action on CASTOR HSM name that is
+.IR hsmfile .
+.TP
+.BI \--mintime " mintime"
+Sets the minimum time before migration, with respect to original value of its fileclass. You cannot extend a minimum time before migration, only decrease it. Unit is in second.
+.TP
+.BI \-p " poolname"
+Restrict the pools where file is to be searched in pool
+.IR poolname .
+This may also be specified thru the environment variable STAGE_POOL.
+.TP
+.BI \--reqid " reqid"
+Forces the search to this internal request id.
+.TP
+.BI \--retenp " retenp"
+Sets the retention period on disk, with respect to original value of its fileclass. You cannot extend a retention period on disk, on decrease it. Unit is in day.
+.TP
+.BI \--status " status"
+Sets the internal status. Only
+.IR CAN_BE_MIGR
+or its equivalent
+.IR STAGEOUT|CAN_BE_MIGR
+option values are supported.
 .SH RETURN CODES
 \
 .br
@@ -38,3 +101,7 @@ This may also be specified thru the environment variable STAGE_HOST.
 2       System error.
 .br
 4       Configuration error.
+.SH SEE ALSO
+\fBstageqry\fP(l)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
