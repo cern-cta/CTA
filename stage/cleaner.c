@@ -1,5 +1,5 @@
 /*
- * $Id: cleaner.c,v 1.15 2001/11/30 11:29:01 jdurand Exp $
+ * $Id: cleaner.c,v 1.16 2002/04/11 10:01:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: cleaner.c,v $ $Revision: 1.15 $ $Date: 2001/11/30 11:29:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: cleaner.c,v $ $Revision: 1.16 $ $Date: 2002/04/11 10:01:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -57,7 +57,7 @@ int main(argc, argv)
 	if (rf == NULL) {
 		stglogit (func, "garbage collector %s failed to start on pool %s@%s\n",
 							gc, poolname, hostname);
-		exit (SYERR);
+		exit (SYERR); /* Warning: this is the exit code of a process, not a return code */
 	}
 	stglogit (func, "garbage collector %s started on pool %s@%s\n",
 						gc, poolname, hostname);
@@ -95,5 +95,5 @@ int main(argc, argv)
 	if (c) {
 		stglogit(func, "STG02 - %s : %s error : exiting with status 0x%x\n", "cleaner", "rfio_pclose", c);
 	}
-	exit (c);
+	exit (c); /* Warning: this is an exit code of a process, not a return code */
 }
