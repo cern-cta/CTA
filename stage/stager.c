@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.70 2000/05/23 07:18:02 jdurand Exp $
+ * $Id: stager.c,v 1.71 2000/05/23 09:14:59 jdurand Exp $
  */
 
 /*
@@ -14,7 +14,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.70 $ $Date: 2000/05/23 07:18:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.71 $ $Date: 2000/05/23 09:14:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -268,6 +268,12 @@ int main(argc, argv)
 	close (0);
 #endif
 
+#ifdef STAGER_DEBUG
+    sendrep(rpfd, MSG_ERR, "[DEBUG] GO ON WITH gdb /usr/local/bin/stager %d, then break %d\n",getpid(),__LINE__ + 6);
+    sendrep(rpfd, MSG_ERR, "[DEBUG] sleep(10)\n");
+    sleep(10);
+#endif
+
 	/* Initialize RFIO's NFSROOT and hostname */
 	init_nfsroot_and_hostname();
 
@@ -275,46 +281,40 @@ int main(argc, argv)
 	{
 		char *host;
 		char *filename;
+		int parseln_status;
 		char	ipath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
 
 		for (stcp = stcs; stcp < stce; stcp++) {
-			rfio_parseln (stcp->ipath, &host, &filename, NORDLINKS);
-			if (host == NULL) {
-				if (! *nfsroot ||
-						strncmp (stcp->ipath, nfsroot, strlen (nfsroot)) != 0 ||
-						*(stcp->ipath + strlen(nfsroot)) != '/')  {
-					/* not /shift syntax */
-					strcpy(ipath,hostname);
-					strcat(ipath,":");
-					strcat(ipath,stcp->ipath);
-				} else {
-					/* /shift syntax : we get the second component as a hostname */
-					char *shifthost;
-
-					if ((shifthost = strchr(stcp->ipath + strlen(nfsroot) + 1, '/')) != NULL) {
-						/* There is a second component, global syntax is then /shift/host/... */
-						*shifthost = '\0';
-						strcpy(ipath,stcp->ipath + strlen(nfsroot) + 1);
-						strcat(ipath,":");
-						*shifthost = '/';
-						strcat(ipath,stcp->ipath);
-					} else {
-						/* No second component (strange !) */
-						strcpy(ipath,hostname);
-						strcat(ipath,":");
-						strcat(ipath,stcp->ipath);
-					}
+			switch ((parseln_status = rfio_parseln(stcp->ipath, &host, &filename, NORDLINKS))) {
+			case 0:
+				/* It is localhost */
+				host = hostname;
+			case 1:
+				if (filename == NULL) {
+					parseln_status = -1;
+					sendrep(rpfd, MSG_ERR, "rfio_parseln returns 1 (remote file) but filename == NULL. Internal error.\n");
+					break;
 				}
+				if (strlen(host) + 1 + strlen(filename) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
+					parseln_status = -1;
+					sendrep(rpfd, MSG_ERR, "length of %s:%s too big (max %d characters)\n",host,filename,CA_MAXHOSTNAMELEN+MAXPATH);
+					break;
+				}
+				strcpy(ipath,host);
+				strcat(ipath,":");
+				strcat(ipath,filename);
 				strcpy(stcp->ipath,ipath);
+				parseln_status = 0;
+				break;
+			default:
+				sendrep(rpfd, MSG_ERR, "rfio_parseln returns -1 (%s - %s)\n",strerror(errno),sstrerror(serrno));
+				break;
+			}
+			if (parseln_status != 0) {
+				sendrep(rpfd, MSG_ERR, "### Global status after rfio_parseln failure. Internal error.\n");
 			}
 		}
 	}
-
-#ifdef STAGER_DEBUG
-		sendrep(rpfd, MSG_ERR, "[DEBUG] GO ON WITH gdb /usr/local/bin/stager %d, then break %d\n",getpid(),__LINE__ + 1);
-		sendrep(rpfd, MSG_ERR, "[DEBUG] sleep(10)\n");
-		sleep(10);
-#endif
 
     if (stcs->t_or_d == 'm') {
       /* We cannot mix HPSS and CASTOR files... */
@@ -1015,6 +1015,8 @@ int stagewrt_castor_hsm_file() {
       int istart, iend;
       struct stgcat_entry *stcp_start, *stcp_end;
       char tape_pool[CA_MAXPOOLNAMELEN + 1];
+      int vmgr_gettape_nretry;
+      int vmgr_gettape_iretry;
 
       totalsize_to_transfer = 0;
 
@@ -1032,6 +1034,9 @@ int stagewrt_castor_hsm_file() {
       Flags = 0;
       
       SETTAPEEID(stcs->uid,stcs->gid);
+
+      vmgr_gettape_nretry = 3;
+      vmgr_gettape_iretry = 0;
 
       while (1) {
         stagewrt_nomoreupdatetape = 0;
@@ -1081,7 +1086,13 @@ int stagewrt_castor_hsm_file() {
         strcpy(vid,"");
         sendrep (rpfd, MSG_ERR, STG02, "", "vmgr_gettape",
                  sstrerror (serrno));
-        sendrep (rpfd, MSG_ERR, "Trying on another migration pool (if any)\n");
+        if (++vmgr_gettape_iretry > vmgr_gettape_nretry) {
+          sendrep (rpfd, MSG_ERR, STG02, "", "Number of retries exceeded on vmgr_gettape. Exit.",
+                   sstrerror (serrno));
+          RETURN (SYERR);
+        }
+        sendrep (rpfd, MSG_ERR, "Trying on another migration pool (if any). Retry No %d/%d\n",
+                 vmgr_gettape_iretry, vmgr_gettape_nretry);
         sleep(10);
       }
       /* From now on, "vid" is in status TAPE_BUSY */
