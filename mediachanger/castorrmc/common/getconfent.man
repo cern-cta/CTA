@@ -1,0 +1,36 @@
+.\" @(#)getconfent.man	1.1     CERN CN-SW/DC Frederic Hemmer   08/10/91
+.\" Copyright (C) 1990,1991 by CERN/CN/SW/DC
+.\" All rights reserved
+.\"
+.TH GETCONFENT l "08/10/91"
+.SH NAME
+getconfent \- Get configuration entry
+.SH SYNOPSIS
+.nf
+.LP
+.B char * getconfent(category, name, flags)
+.B char \(**category;
+.B char \(**name;
+.B int flags;
+.fi
+.IX  "getconfent function"  ""  "\fLget\fP \(em configuration entry"
+.SH DESCRIPTION
+.LP
+.B getconfent(\|)
+get the
+.I name
+entry from the  configuration file.
+Every entry in the configuration file is categorized. The
+.I category
+parameter is its specifier.
+.SH "RETURN VALUE"
+.B getconfent(\|)
+return NULL if the entry is not found. Otherwise,
+it returns the matched entry.
+If
+.B flags
+is not null, the return value is a pointer to the full string matched
+in the configuration file. Otherwise, only the pointer to the first
+blank separated token is returned.
+.SH "SEE ALSO"
+.BR shift.conf
