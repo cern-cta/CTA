@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 1994-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1994-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: wsacct.c,v $ $Revision: 1.5 $ $Date: 2000/05/31 10:33:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: wsacct.c,v $ $Revision: 1.6 $ $Date: 2003/10/29 13:06:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <time.h>
 #include "../h/sacct.h"
 wsacct(package, acctstruct, len)
 int package;
