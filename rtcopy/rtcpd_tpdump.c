@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.10 $ $Date: 2000/11/08 14:03:02 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.11 $ $Date: 2001/02/05 10:45:33 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -50,7 +50,7 @@ extern char *geterr();
 extern processing_status_t proc_stat;
 extern int AbortFlag;
 
-int dmp_usrmsg(int dmpmsg_level, char *format, ...) {
+void dmp_usrmsg(int dmpmsg_level, char *format, ...) {
     va_list args;
     char msgtxtbuf[RTCP_SHIFT_BUFSZ];
 
@@ -67,7 +67,7 @@ int dmp_usrmsg(int dmpmsg_level, char *format, ...) {
     } else {
         rtcp_log(LOG_ERR,"%s",msgtxtbuf);
     }
-    return(0);
+    return;
 }
 
 #define CHECK_PROC_ERR(X,Y,Z) { \
@@ -116,6 +116,7 @@ int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
 
     msgtxtbuf = (char *)calloc(1,CA_MAXLINELEN+1);
     rtcp_InitLog(msgtxtbuf,NULL,NULL,client_socket);
+    Ctape_dmpmsg = (void (*) _PROTO((int, const char *, ...)))dmp_usrmsg;
 
     /*
      * Initialize Ctape error message buffer
