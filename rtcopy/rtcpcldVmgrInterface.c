@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.16 $ $Release$ $Date: 2005/01/20 16:27:26 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.17 $ $Release$ $Date: 2005/02/03 07:58:47 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.16 $ $Release$ $Date: 2005/01/20 16:27:26 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.17 $ $Release$ $Date: 2005/02/03 07:58:47 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -703,13 +703,17 @@ int rtcpcld_updateTape(
           if ( (flags & (TAPE_FULL|DISABLED|EXPORTED|TAPE_RDONLY|ARCHIVED)) == 0 ) {
             flags = TAPE_FULL;
           }
-          /*
-           * Try to set the real free space
-           * Note that vmgr_updatetape() gives the increment, not the
-           * absolute value.
+          /**
+           * @todo: FIX VMGR
+           *
+           * Try to set the real free space... this is really ugly but it works
+           * exploiting some hidden feature (bug) in VMGR we give it a negative
+           * byte count and it will happily update the volume free space even if
+           * status is FULL.
+           *
            */
           if ( freeSpace > filereq->bytes_in) {
-            bytesWritten = freeSpace - filereq->bytes_in;
+            bytesWritten = - filereq->bytes_in;
           }
           filesWritten = 0;
           if ( (filereq->bytes_out > 0) && (filereq->host_bytes>0) ) {
@@ -749,10 +753,12 @@ int rtcpcld_updateTape(
 
   (void)getVmgrErrBuf(&vmgrErrMsg);
   if ( flags == TAPE_FULL ) {
-    /*
+    /**
+     * @todo: FIX VMGR
      * A dirty hack to make the free space work for FULL tapes:
      * we must first declare the tape full and *thereafter* give
-     * the free space
+     * the free space in terms of a negative increment (decrement)
+     * from 0Bytes.... yeerrrk, but it works :)
      */
     rc = vmgr_updatetape(
                          tapereq->vid,
