@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.39 2002/03/25 17:24:24 jdurand Exp $
+ * $Id: stage_api.c,v 1.40 2002/03/26 09:09:38 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -618,8 +618,6 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 
   /* Dial with the daemon */
   while (1) {
-    int sav_serrno;
-
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, nstcp_output, stcp_output, NULL, NULL);
     if ((c == 0) ||
         (serrno == EINVAL)     || (serrno == ERTBLKSKPD) || (serrno == ERTTPE_LSZ) || (serrno == EACCES) ||
@@ -630,7 +628,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
       serrno = USERR;
       break;
     }
-	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
+	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > maxretry) break;
 	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
     stage_sleep (RETRYI);
@@ -999,6 +997,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   WSADATA wsadata;
 #endif
   char *func = "stage_qry";
+  int maxretry = MAXRETRY;
 
   /* It is not allowed to have anything else but one single entry in input */
   if (nstcp_input != 1) {
@@ -1037,6 +1036,17 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
     stgpool_forced[CA_MAXPOOLNAMELEN] = '\0';
   } else {
     stgpool_forced[0] = '\0';
+  }
+
+  /* We check existence of an STG NORETRY from environment variable or configuration or flags */
+  if (
+	  (((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
+	  (((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0)) ||
+	  ((flags & STAGE_NORETRY) == STAGE_NORETRY)
+	  ) {
+	  /* Makes sure STAGE_NORETRY is anyway in the flags so that the server will log it */
+	  flags |= STAGE_NORETRY;
+	  maxretry = 0;
   }
 
   switch (t_or_d) {                     /* This method supports only */
@@ -1153,8 +1163,8 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   while (1) {
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, &nstcp_output_internal, &stcp_output_internal, &nstpp_output_internal, &stpp_output_internal);
     if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES)) break;
-	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
-    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
+	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
+    if (serrno != ESTNACT && ntries++ > maxretry) break;
 	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
     stage_sleep (RETRYI);
   }
@@ -1341,6 +1351,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   int Tid = 0;
   u_signed64 uniqueid = 0;
   char tmpbuf[21];
+  int maxretry = MAXRETRY;
 
   /* It is not allowed to have no input */
   if (nstpp_input <= 0) {
@@ -1389,6 +1400,17 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
       } else
         Geuid = pw->pw_uid;              /* In such a case we grab its uid */
     }
+  }
+
+  /* We check existence of an STG NORETRY from environment variable or configuration or flags */
+  if (
+	  (((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
+	  (((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0)) ||
+	  ((flags & STAGE_NORETRY) == STAGE_NORETRY)
+	  ) {
+	  /* Makes sure STAGE_NORETRY is anyway in the flags so that the server will log it */
+	  flags |= STAGE_NORETRY;
+	  maxretry = 0;
   }
 
   /* If no user specified we check environment variable STAGE_USER */
@@ -1567,8 +1589,8 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, nstcp_output, stcp_output, NULL, NULL);
     if ((c == 0) ||
         (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == EACCES)) break;
-	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
-    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
+	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
+    if (serrno != ESTNACT && ntries++ > maxretry) break;
 	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
     stage_sleep (RETRYI);
   }
@@ -1619,6 +1641,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   int Tid = 0;
   u_signed64 uniqueid = 0;
   u_signed64 flagsok = flags;
+  int maxretry = MAXRETRY;
 
   /* It is not allowed to have no input */
   if ((nstcp_input <= 0) && (nstpp_input <= 0)) {
@@ -1685,6 +1708,17 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
       } else
         Geuid = pw->pw_uid;              /* In such a case we grab its uid */
     }
+  }
+
+  /* We check existence of an STG NORETRY from environment variable or configuration or flags */
+  if (
+	  (((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
+	  (((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0)) ||
+	  ((flagsok & STAGE_NORETRY) == STAGE_NORETRY)
+	  ) {
+	  /* Makes sure STAGE_NORETRY is anyway in the flagsok so that the server will log it */
+	  flagsok |= STAGE_NORETRY;
+	  maxretry = 0;
   }
 
   switch (t_or_d) {                     /* This method supports only */
@@ -1918,8 +1952,8 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
     c = send2stgd(hostname, req_type, flagsok, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, 0, NULL, NULL, NULL);
     if ((c == 0) ||
         (serrno == EINVAL)     || (serrno == EBUSY) || (serrno == ENOUGHF) || (serrno == EACCES)) break;
-	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
-    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
+	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
+    if (serrno != ESTNACT && ntries++ > maxretry) break;
 	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
     stage_sleep (RETRYI);
   }
@@ -2069,9 +2103,7 @@ int DLL_DECL stage_ping(flags,hostname)
   size_t sendbuf_size;          /* Total socket send buffer length */
   uid_t euid;                   /* Current effective uid */
   gid_t egid;                   /* Current effective gid */
-  int status;                   /* Variable overwritten by macros in header */
   int c;                        /* Output of send2stgd() */
-  char stgpool_forced[CA_MAXPOOLNAMELEN + 1];
   int pid = 0;
   int Tid = 0;
   u_signed64 uniqueid = 0;
@@ -2079,6 +2111,7 @@ int DLL_DECL stage_ping(flags,hostname)
   WSADATA wsadata;
 #endif
   char *func = "stage_ping";
+  int maxretry = MAXRETRY;
 
   euid = geteuid();             /* Get current effective uid */
   egid = getegid();             /* Get current effective gid */
@@ -2116,6 +2149,17 @@ int DLL_DECL stage_ping(flags,hostname)
     WSACleanup();
 #endif
     return (-1);
+  }
+
+  /* We check existence of an STG NORETRY from environment variable or configuration or flags */
+  if (
+	  (((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
+	  (((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0)) ||
+	  ((flags & STAGE_NORETRY) == STAGE_NORETRY)
+	  ) {
+	  /* Makes sure STAGE_NORETRY is anyway in the flags so that the server will log it */
+	  flags |= STAGE_NORETRY;
+	  maxretry = 0;
   }
 
   /* How many bytes do we need ? */
@@ -2163,8 +2207,8 @@ int DLL_DECL stage_ping(flags,hostname)
   while (1) {
     c = send2stgd(hostname, req_type, (u_signed64) 0, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, NULL, NULL, NULL, NULL);
     if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES)) break;
-	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(NULL, STG161);
-    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
+	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
+    if (serrno != ESTNACT && ntries++ > maxretry) break;
 	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
     stage_sleep (RETRYI);
   }
