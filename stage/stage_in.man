@@ -1,0 +1,65 @@
+.\" $Id: stage_in.man,v 1.1 2000/05/15 13:41:20 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_in.man,v $ $Revision: 1.1 $ $Date: 2000/05/15 13:41:20 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH STAGE_IN "3" "$Date: 2000/05/15 13:41:20 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_in_hsm \- allocate space in a disk pool and copy migrated files from tape to disk or from disk to disk
+
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_in_hsm(char *" stghost ", char *" diskpool ", stage_hsm_t *" hsmstruct ");"
+
+.SH DESCRIPTION
+This \fBstage_in_hsm\fP method asks the \fBstager\fP to allocate space in one of its disk pool and to copy in it the migrated file(s) specified in the structure \fBhsmstruct\fP
+
+.SH PARAMETERS
+.TP 2.0i
+.BI "char *" stghost
+Forces to use this stager hostname. Will use the default if this parameter is NULL.
+.TP
+.BI "char *" diskpool
+Forces to use this given disk pool for all migrated files. If the file is not staged yet, pools have been configured and
+.B "NOPOOL"
+is not specified, the file is allocated in a pool of which the space is managed by the stage daemon.
+.TP
+.BI "stage_hsm_t *" hsmstruct
+Linked list of structures that contain the following members:
+.RS
+.TP
+.BI "char *" xfile;
+Pointer to a HSM name, required to be non-NULL.
+.TP
+.BI "char *" upath;
+Pointer to a user filename, required to be non-NULL.
+.TP
+.BI "u_signed64 " size;
+Size, in bytes, of the amount of data you want to stage-in. Will be ignore is its value is 0 (zero).
+.TP
+.BI "stage_hsm_t *" next;
+Pointer to next HSM structure. The last element has a NULL for this member.
+.RE
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SENOMAPFND
+Can't open mapping database
+.TP
+.B EFAULT
+Bad address (invalid argument)
+.TP
+.B EINVAL
+Invalid argument (bad stageid)
+.TP
+.B SECONNDROP
+Connection closed by remote end
+.TP
+.B SECOMERR
+Communication error
