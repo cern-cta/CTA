@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_open.man,v 1.10 2002/11/21 17:09:54 bcouturi Exp $
+.\" $Id: rfio_open.man,v 1.11 2003/06/30 12:03:24 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_open.man,v $ $Revision: 1.10 $ $Date: 2002/11/21 17:09:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_open.man,v $ $Revision: 1.11 $ $Date: 2003/06/30 12:03:24 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_OPEN 3 "$Date: 2002/11/21 17:09:54 $" CASTOR "Rfio Library Functions"
+.TH RFIO_OPEN 3 "$Date: 2003/06/30 12:03:24 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_open \- opens a file
 .SH SYNOPSIS
@@ -78,6 +78,9 @@ The named file/directory does not exist or is a null pathname.
 Search permission is denied on a component of the
 .I path
 prefix.
+.TP
+.B EBUSY
+Device or resource busy. Happens if you try to open in write mode a CASTOR file that is in an active migration stream.
 .TP
 .B EFAULT
 .I path
