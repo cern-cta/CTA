@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.153 2002/01/21 17:37:57 jdurand Exp $
+ * $Id: procio.c,v 1.154 2002/01/24 17:41:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.153 $ $Date: 2002/01/21 17:37:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.154 $ $Date: 2002/01/24 17:41:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -27,6 +27,38 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.153 $ $Date: 200
 #endif
 #include <sys/stat.h>
 #include <errno.h>
+#ifdef STAGER_DEBUG
+#ifndef _WIN32
+#include <unistd.h>
+#include <sys/times.h>
+struct _stage_times {
+	struct tms tms;
+	clock_t     time;
+};
+typedef struct _stage_times _stage_times_t;
+#define STAGE_TIME_START { \
+	char *thisfile = __FILE__; \
+	int thisline = __LINE__; \
+	_stage_times_t _stage_times_start; \
+	_stage_times_t _stage_times_end; \
+	long clktck; \
+	_stage_times_start.time = times(&_stage_times_start.tms);
+#define STAGE_TIME_END \
+	_stage_times_end.time = times(&_stage_times_end.tms); \
+	clktck = sysconf(_SC_CLK_TCK); \
+	stglogit("timer", "Between %s:%d and %s:%d, timer gives:\n", thisfile, thisline, __FILE__, __LINE__); \
+	stglogit("timer", "Real Time : %7.2f\n", (_stage_times_end.time - _stage_times_start.time) / (double) clktck); \
+	stglogit("timer", "User Time : %7.2f\n", (_stage_times_end.tms.tms_utime - _stage_times_start.tms.tms_utime) / (double) clktck); \
+	stglogit("timer", "Sys  Time : %7.2f\n", (_stage_times_end.tms.tms_stime - _stage_times_start.tms.tms_stime) / (double) clktck); \
+}
+#else
+#define STAGE_TIME_START {
+#define STAGE_TIME_END }
+#endif
+#else
+#define STAGE_TIME_START {
+#define STAGE_TIME_END }
+#endif
 
 #include "marshall.h"
 #define local_unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
@@ -152,7 +184,7 @@ extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *, 
 extern int ask_stageout _PROTO((int, char *, struct stgcat_entry **));
 extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
 extern int nextreqid _PROTO(());
-int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *, int, char *, int *));
+int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *, int, char *, int *, int *, struct Cns_filestat *));
 int maxfseq_per_vid _PROTO((struct stgcat_entry *, int, char *, char *));
 extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
@@ -244,8 +276,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 	int errflg = 0;
 	char *fid = NULL;
 	struct stat filemig_stat;          /* For non-CASTOR HSM stat() */
+	int have_Cnsfilestat;
 	struct Cns_filestat Cnsfilestat;   /* For     CASTOR hsm stat() */
 	struct Cns_fileid Cnsfileid;       /* For     CASTOR hsm IDs */
+	struct stat *yetdone_rfio_stat;
+	char *yetdone_rfio_stat_path;
 	char *fseq = NULL;
 	fseq_elem *fseq_list = NULL;
 	struct group *gr;
@@ -445,11 +480,14 @@ void procioreq(req_type, magic, req_data, clienthost)
 #endif
 
 	if (req_type > STAGE_00) {
+		int reqid_flag = 0;
+		
 		/* This is coming from the API */
 		api_out = 1;
 		local_unmarshall_STRING(rbp, User);
 		if (User[0] != '\0') pool_user = User;
 		unmarshall_HYPER(rbp, flags);
+		if ((flags & STAGE_REQID) == STAGE_REQID) reqid_flag = 1;
 		unmarshall_LONG(rbp, openflags);
 		unmarshall_LONG(rbp, openmode);
 		{
@@ -508,7 +546,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 				}
 			}
 			logit[0] = '\0';
-			if (stage_stcp2buf(logit,BUFSIZ,&(stcp_input[i])) == 0 || serrno == SEUMSG2LONG) {
+			if (! reqid_flag) stcp_input[i].reqid = 0; /* Disable explicitely eventual reqid in the protocol */
+			if ((stage_stcp2buf(logit,BUFSIZ,&(stcp_input[i])) == 0) || (serrno == SEUMSG2LONG)) {
 				logit[BUFSIZ] = '\0';
 				stglogit(func,"stcp[%d/%d] :%s\n",i+1,nstcp_input,logit);
  			}
@@ -1053,9 +1092,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 	}
 #endif
 
-	/* We reset the rdonly_flag if it is set and if it is not a STAGEIN because it has serious implications */
+	/* We makes sure rdonly_flag is zero if it is not a STAGEIN because it has serious implications */
 	/* onto the crucial routine isstaged() */
-	if ((req_type != STAGEIN) && (rdonly_flag != 0)) rdonly_flag = 0;
+	if (req_type != STAGEIN) rdonly_flag = 0;
 
 	if (nhsmfiles > 0) {
 		/* We check that there is no redundant hsm files (multiple equivalent ones) */
@@ -1385,10 +1424,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 		u_signed64 size_to_recall;
 		int stage_wrt_migration;
 		struct stgcat_entry save_stcp_for_Cns_creatx;
-		int have_save_stcp_for_Cns_creatx = 0;
+		int have_save_stcp_for_Cns_creatx;
 		mode_t stagewrt_Cns_creatx_mode;
 		int forced_yet_staged_branch;
 
+		have_save_stcp_for_Cns_creatx = 0;
 		global_c_stagewrt = 0;
 		global_c_stagewrt_SYERR = 0;
 		forced_yet_staged_branch = 0;
@@ -1561,7 +1601,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		switch (req_type) {
 		case STAGEIN:
 		  stagein_isstaged_retry:
-		  switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname, rdonly_flag, poolname_exclusion, &isstaged_nomore)) {
+		  switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname, rdonly_flag, poolname_exclusion, &isstaged_nomore, NULL, NULL)) {
 		  case ISSTAGEDBUSY:
 			  c = EBUSY;
 			  goto reply;
@@ -1985,7 +2025,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			while (isstaged_rc != NOTSTAGED) {
 				/* We have to loop up to when we will be sure that all copies are removed */
 				isstaged_nomore = -1;
-				switch ((isstaged_rc = isstaged (&stgreq, &stcp, poolflag, stgreq.poolname, rdonly_flag, poolname_exclusion, &isstaged_nomore))) {
+				switch ((isstaged_rc = isstaged (&stgreq, &stcp, poolflag, stgreq.poolname, rdonly_flag, poolname_exclusion, &isstaged_nomore, NULL, NULL))) {
 				case ISSTAGEDBUSY:
 					c = EBUSY;
 					goto reply;
@@ -2154,7 +2194,10 @@ void procioreq(req_type, magic, req_data, clienthost)
 				actual_poolname[0] = '\0';
 			}
 			stage_wrt_migration = 0;
-			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname, rdonly_flag, poolname_exclusion, &isstaged_nomore)) {
+			have_Cnsfilestat = 0;
+			yetdone_rfio_stat = NULL;
+			yetdone_rfio_stat_path = NULL;
+			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname, rdonly_flag, poolname_exclusion, &isstaged_nomore, &have_Cnsfilestat, &Cnsfilestat)) {
 			case ISSTAGEDBUSY:
 				global_c_stagewrt++;
 				c = EBUSY;
@@ -2265,7 +2308,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 					strcpy(Cnsfileid.server,stgreq.u1.h.server);
 					Cnsfileid.fileid = stgreq.u1.h.fileid;
 				}
-				if (Cns_statx(hsmfiles[ihsmfiles], &Cnsfileid, &Cnsfilestat) == 0) {
+				/* The following allows to bypass call to Cns_statx if and only if have_Cnsfilestat is set */
+				if ((have_Cnsfilestat) || ((! have_Cnsfilestat) && (Cns_statx(hsmfiles[ihsmfiles], &Cnsfileid, &Cnsfilestat) == 0))) {
 					/* File already exist */
 					/* We already checked that nbdskf is equal to nhsmfiles */
 					/* So using index ihsmfiles onto argv[Coptind + ihsmfiles] will point */
@@ -2285,13 +2329,15 @@ void procioreq(req_type, magic, req_data, clienthost)
 					setegid(start_passwd.pw_gid);
 					seteuid(start_passwd.pw_uid);
 					PRE_RFIO;
-					if (RFIO_STAT((api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, &filemig_stat) < 0) {
+					yetdone_rfio_stat_path = (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath;
+					if (RFIO_STAT(yetdone_rfio_stat_path, &filemig_stat) < 0) {
 						int save_serrno = rfio_serrno();
 						sendrep (rpfd, MSG_ERR, STG02, (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, RFIO_STAT_FUNC((api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath), rfio_serror());
 						global_c_stagewrt++;
 						c = (api_out != 0) ? save_serrno : USERR;
 						goto stagewrt_continue_loop;
 					}
+					yetdone_rfio_stat = &filemig_stat;
 					SET_CORRECT_EUID_EGID;
 					correct_size = (u_signed64) filemig_stat.st_size;
 					if (stgreq.size && ((u_signed64) (stgreq.size * ONE_MB) < correct_size)) {
@@ -2342,13 +2388,15 @@ void procioreq(req_type, magic, req_data, clienthost)
 					setegid(start_passwd.pw_gid);
 					seteuid(start_passwd.pw_uid);
 					PRE_RFIO;
-					if (RFIO_STAT((api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, &filemig_stat) < 0) {
+					yetdone_rfio_stat_path = (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath;
+					if (RFIO_STAT(yetdone_rfio_stat_path, &filemig_stat) < 0) {
 						int save_serrno = rfio_serrno();
 						sendrep (rpfd, MSG_ERR, STG02, (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, RFIO_STAT_FUNC((api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath), rfio_serror());
 						global_c_stagewrt++;
 						c = (api_out != 0) ? save_serrno : USERR;
 						goto stagewrt_continue_loop;
 					}
+					yetdone_rfio_stat = &filemig_stat;
 					SET_CORRECT_EUID_EGID;
 					if (filemig_stat.st_size <= 0) {
 						setegid(start_passwd.pw_gid);
@@ -2405,8 +2453,16 @@ void procioreq(req_type, magic, req_data, clienthost)
 			seteuid(start_passwd.pw_uid);
 			if (stgreq.t_or_d == 'h' && forced_Cns_creatx != 0) {
 				if (forced_rfio_stat != 0) {
-					PRE_RFIO;
-					if (RFIO_STAT(upath, &st) == 0) {
+					int rfio_stat_rc;
+					
+					if ((yetdone_rfio_stat_path != NULL) && (strcmp(yetdone_rfio_stat_path,upath) == 0)) {
+						memcpy(&st,yetdone_rfio_stat, sizeof(struct stat));
+						rfio_stat_rc = 0;
+					} else {
+						PRE_RFIO;
+						rfio_stat_rc = RFIO_STAT(upath, &st);
+					}
+					if (rfio_stat_rc == 0) {
 						correct_size = (u_signed64) st.st_size;
 						if (stgreq.size && ((u_signed64) (stgreq.size * ONE_MB) < correct_size)) {
 							/* If user specified a maxsize of bytes to transfer and if this */
@@ -2415,6 +2471,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 							correct_size = (u_signed64) (stgreq.size * ONE_MB);
 						}
 					} else {
+						/* This must have fail because of RFIO */
 						int save_serrno = rfio_serrno();
 						sendrep (rpfd, MSG_ERR, STG02, upath,
 								 RFIO_STAT_FUNC(upath), rfio_serror());
@@ -2462,12 +2519,23 @@ void procioreq(req_type, magic, req_data, clienthost)
 			stcp->status = (Aflag ? (STAGEOUT|CAN_BE_MIGR) : STAGEWRT);
 			strcpy (stcp->poolname, actual_poolname);
 			if (stgreq.t_or_d == 'h') stcp->actual_size = correct_size;
-			PRE_RFIO;
-			if (RFIO_STAT(upath, &st) == 0) {
-				if (stgreq.t_or_d != 'h') stcp->actual_size = st.st_size;
-				stcp->c_time = st.st_mtime;
-			} else {
-				stglogit(func, STG02, upath, RFIO_STAT_FUNC(upath), rfio_serror());
+			{
+				int rfio_stat_rc;
+					
+				if ((yetdone_rfio_stat_path != NULL) && (strcmp(yetdone_rfio_stat_path,upath) == 0)) {
+					memcpy(&st,yetdone_rfio_stat, sizeof(struct stat));
+					rfio_stat_rc = 0;
+				} else {
+					PRE_RFIO;
+					rfio_stat_rc = RFIO_STAT(upath, &st);
+				}
+				if (rfio_stat_rc == 0) {
+					if (stgreq.t_or_d != 'h') stcp->actual_size = st.st_size;
+					stcp->c_time = st.st_mtime;
+				} else {
+					/* This must have fail because of RFIO */
+					stglogit(func, STG02, upath, RFIO_STAT_FUNC(upath), rfio_serror());
+				}
 			}
 			stcp->a_time = time(NULL);
 			if (! stcp->c_time) stcp->c_time = stcp->a_time;
@@ -2641,7 +2709,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				actual_poolflag = -1;
 				actual_poolname[0] = '\0';
 			}
-			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname, rdonly_flag, poolname_exclusion, &isstaged_nomore)) {
+			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname, rdonly_flag, poolname_exclusion, &isstaged_nomore, NULL, NULL)) {
 			case ISSTAGEDBUSY:
 				c = EBUSY;
 				goto reply;
@@ -3559,7 +3627,7 @@ void procputreq(req_type, req_data, clienthost)
 }
 
 int
-isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion, isstaged_nomore)
+isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion, isstaged_nomore, have_Cnsfilestat, Cnsfilestat)
 	struct stgcat_entry *cur;
 	struct stgcat_entry **p;
 	int poolflag;
@@ -3567,6 +3635,8 @@ isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion, isstaged_nomore
 	int rdonly;
 	char *poolname_exclusion;
 	int *isstaged_nomore;
+	int *have_Cnsfilestat;
+	struct Cns_filestat *Cnsfilestat;
 {
 	int found = 0;
 	int found_regardless_of_rdonly = 0;
@@ -3577,19 +3647,33 @@ isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion, isstaged_nomore
 	struct stgcat_entry *stcp_rdonly = NULL;
 	struct stgcat_entry *stcp_regardless_of_rdonly = NULL;
 	int Cns_getpath_on_input = 0;
+	int Cns_stat_on_input = 0;
 	char tmpbuf[21];
 
-	/* If the input is a CASTOR file and gives also (server,fileid) invariants we check right now */
-	/* the avaibility of the name given as well */
 	if ((cur->t_or_d == 'h') && (cur->u1.h.server[0] != '\0') && (cur->u1.h.fileid != 0)) {
 		char checkpath[CA_MAXPATHLEN+1];
-
-		if (Cns_getpath(cur->u1.h.server, cur->u1.h.fileid, checkpath) == 0) {
-			Cns_getpath_on_input = 1;
-			if (strcmp(checkpath, cur->u1.h.xfile) != 0) {
-				sendrep (rpfd, MSG_ERR, STG157, cur->u1.h.xfile, checkpath, u64tostr((u_signed64) cur->u1.h.fileid, tmpbuf, 0), cur->u1.h.server);
-				strncpy(cur->u1.h.xfile, checkpath, (CA_MAXHOSTNAMELEN+MAXPATH));
-				cur->u1.h.xfile[(CA_MAXHOSTNAMELEN+MAXPATH)] = '\0';
+		struct Cns_fileid Cnsfileid;       /* For     CASTOR hsm IDs */
+			
+		if (cur->reqid <= 0) {
+			/* If the input is a CASTOR file and gives also (server,fileid) invariants we check right now */
+			/* the avaibility of the name given as well */
+			if (Cns_getpath(cur->u1.h.server, cur->u1.h.fileid, checkpath) == 0) {
+				Cns_getpath_on_input = 1;
+				if (strcmp(checkpath, cur->u1.h.xfile) != 0) {
+					sendrep (rpfd, MSG_ERR, STG157, cur->u1.h.xfile, checkpath, u64tostr((u_signed64) cur->u1.h.fileid, tmpbuf, 0), cur->u1.h.server);
+					strncpy(cur->u1.h.xfile, checkpath, (CA_MAXHOSTNAMELEN+MAXPATH));
+					cur->u1.h.xfile[(CA_MAXHOSTNAMELEN+MAXPATH)] = '\0';
+				}
+			}
+		} else if ((have_Cnsfilestat != NULL) && (Cnsfilestat != NULL)) {
+			/* If user gave reqid in input this is to speed up things - we do not check path if it is given with invariants */
+			strcpy(Cnsfileid.server,cur->u1.h.server);
+			Cnsfileid.fileid = cur->u1.h.fileid;
+			/* ... But we instead check immediately filesize if it is CASTOR file with invariants */
+			*have_Cnsfilestat = 0;
+			Cns_stat_on_input = 1;
+			if (Cns_statx(cur->u1.h.xfile, &Cnsfileid, Cnsfilestat) == 0) {
+ 				*have_Cnsfilestat = 1;
 			}
 		}
 	}
@@ -3662,8 +3746,8 @@ isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion, isstaged_nomore
 				(strcmp (cur->u1.h.server, stcp->u1.h.server) == 0) &&
 				(cur->u1.h.fileid == stcp->u1.h.fileid)) {
 				/* If invariants matches this means input got them, of course, and if, then, the initial Cns_getpath was successful */
-				/* we check consistency of the filename as well */
-				if ((Cns_getpath_on_input != 0) && (strcmp(stcp->u1.h.xfile, cur->u1.h.xfile) != 0)) {
+				/* we check consistency of the filename as well also in case we did Cns_statx instead of Cns_getpath */
+				if (((Cns_getpath_on_input != 0) || (Cns_stat_on_input != 0)) && (strcmp(stcp->u1.h.xfile, cur->u1.h.xfile) != 0)) {
 					sendrep (rpfd, MSG_ERR, STG154, stcp->u1.h.xfile, cur->u1.h.xfile, u64tostr((u_signed64) stcp->u1.h.fileid, tmpbuf, 0), stcp->u1.h.server, stcp->reqid);
 					strcpy(stcp->u1.h.xfile, cur->u1.h.xfile);
 #ifdef USECDB
@@ -3724,7 +3808,8 @@ isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion, isstaged_nomore
 				if ((stcp->u1.h.server[0] != '\0') && (stcp->u1.h.fileid != 0)) {
 					/* If the input contains as well a (server,fileid) invariant pair and if it the same as the input */
 					/* we do not call again Cns_getpath in order to be as much atomic as possible [one Cns_getpath at a maximum] */
-					if ((Cns_getpath_on_input != 0) &&
+					/* We also bypath name checking when we did a Cns_statx on input */
+					if (((Cns_getpath_on_input != 0) || (Cns_stat_on_input != 0)) &&
 						(strcmp(cur->u1.h.server,stcp->u1.h.server) == 0) &&
 						(cur->u1.h.fileid == stcp->u1.h.fileid)) {
 						/* By definition, the name matches */
