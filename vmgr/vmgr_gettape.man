@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_gettape.man,v $ $Revision: 1.8 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr_gettape.man,v $ $Revision: 1.9 $ $Date: 2002/02/07 06:43:06 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_GETTAPE 3 "$Date: 2001/09/26 09:13:56 $" CASTOR "vmgr Library Functions"
+.TH VMGR_GETTAPE 3 "$Date: 2002/02/07 06:43:06 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_gettape \- get a tape volume to store a given amount of data
 .SH SYNOPSIS
@@ -18,6 +18,8 @@ vmgr_gettape \- get a tape volume to store a given amount of data
 .BI "char *" dgn ,
 .BI "char *" density ,
 .BI "char *" lbltype ,
+.BI "char *" model ,
+.BI "int *" side ,
 .BI "int *" fseq ,
 .BI "u_signed64 *" estimated_free_space )
 .SH DESCRIPTION
@@ -56,7 +58,11 @@ The buffer must be at least CA_MAXDENLEN+1 characters long.
 .TP
 .I lbltype
 points at a buffer to receive the label type corresponding to the tape.
-The buffer must be at least 3 characters long.
+The buffer must be at least CA_MAXLBLTYPLEN+1 characters long.
+.TP
+.I model
+points at a buffer to receive the model of cartridge.
+The buffer must be at least CA_MAXMODELLEN+1 characters long.
 .TP
 .I estimated_free_space
 receives the estimated free space on this volume. It can be smaller than
