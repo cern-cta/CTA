@@ -40,95 +40,99 @@ namespace castor {
 
   namespace db {
 
-    // Forward Declarations
-    class OraCnvSvc;
+    namespace ora {
 
-    /**
-     * A base converter for Oracle database
-     * Deals with the connection and representation type
-     */
-    class OraBaseCnv : public BaseObject, public IConverter {
-      
-    public:
+      // Forward Declarations
+      class OraCnvSvc;
       
       /**
-       * Constructor
+       * A base converter for Oracle database
+       * Deals with the connection and representation type
        */
-      OraBaseCnv();
+      class OraBaseCnv : public BaseObject, public IConverter {
+        
+      public:
+        
+        /**
+         * Constructor
+         */
+        OraBaseCnv();
+        
+        /**
+         * Destructor
+         */
+        virtual ~OraBaseCnv();
+        
+        /**
+         * gets the representation type, that is the type of
+         * the representation this converter can deal with
+         */
+        static const unsigned int RepType();
+        
+        /**
+         * gets the representation type, that is the type of
+         * the representation this converter can deal with
+         */
+        virtual const unsigned int repType() const;
+        
+        
+      protected:
+        
+        /**
+         * creates a statement from a string. Note that the
+         * deallocation of the statement is the responsability
+         * of the caller. delete Statement should be used
+         * @param stmtString the statement as a string
+         * @exception Exception if the creation fails
+         * @return the newly created statement
+         * @see deleteStatement()
+         */
+        oracle::occi::Statement* createStatement(const std::string &stmtString)
+          throw (castor::Exception);
+        
+        /**
+         * deletes a statement and frees the associated memory
+         * @exception SQLException if the deletion fails
+         * @param stmt the statement to be deleted
+         */
+        void deleteStatement(oracle::occi::Statement* stmt)
+          throw (oracle::occi::SQLException);
+        
+        /**
+         * Get an object from its id.
+         * Essentially a wrapper around createObj that
+         * don't call it if the object is in the newlyCreated
+         * vector
+         */
+        castor::IObject* getObjFromId (unsigned long id,
+                                       ObjectCatalog& newlyCreated)
+          throw (castor::Exception);
+        
+        /**
+         * access to the Oracle connection for child classes
+         */
+        oracle::occi::Connection* connection() const;
+        
+        /**
+         * access to the Oracle conversion service for child classes
+         */
+        castor::db::ora::OraCnvSvc* cnvSvc() const;
+        
+      protected:
+        
+        /***********/
+        /* Members */
+        /***********/
+        
+        /// The corresponding conversion service
+        castor::db::ora::OraCnvSvc* m_cnvSvc;
+        
+        /// The database connection
+        oracle::occi::Connection* m_connection;
+        
+      };
 
-      /**
-       * Destructor
-       */
-      virtual ~OraBaseCnv();
-
-      /**
-       * gets the representation type, that is the type of
-       * the representation this converter can deal with
-       */
-      static const unsigned int RepType();
-
-      /**
-       * gets the representation type, that is the type of
-       * the representation this converter can deal with
-       */
-      virtual const unsigned int repType() const;
-
-
-    protected:
-      
-      /**
-       * creates a statement from a string. Note that the
-       * deallocation of the statement is the responsability
-       * of the caller. delete Statement should be used
-       * @param stmtString the statement as a string
-       * @exception Exception if the creation fails
-       * @return the newly created statement
-       * @see deleteStatement()
-       */
-      oracle::occi::Statement* createStatement(const std::string &stmtString)
-        throw (castor::Exception);
-      
-      /**
-       * deletes a statement and frees the associated memory
-       * @exception SQLException if the deletion fails
-       * @param stmt the statement to be deleted
-       */
-      void deleteStatement(oracle::occi::Statement* stmt)
-        throw (oracle::occi::SQLException);
-
-      /**
-       * Get an object from its id.
-       * Essentially a wrapper around createObj that
-       * don't call it if the object is in the newlyCreated
-       * vector
-       */
-      castor::IObject* getObjFromId (unsigned long id,
-                                     ObjectCatalog& newlyCreated)
-        throw (castor::Exception);
-      
-      /**
-       * access to the Oracle connection for child classes
-       */
-      oracle::occi::Connection* connection() const;
-
-      /**
-       * access to the Oracle conversion service for child classes
-       */
-      castor::db::OraCnvSvc* cnvSvc() const;
-
-    protected:
-
-      /***********/
-      /* Members */
-      /***********/
-
-      /// The corresponding conversion service
-      castor::db::OraCnvSvc* m_cnvSvc;
-
-      /// The database connection
-      oracle::occi::Connection* m_connection;
-
-    };
+    } // end of namespace ora
 
   } // end of namespace db
 

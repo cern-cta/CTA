@@ -38,11 +38,11 @@
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::db::OraBaseCnv::OraBaseCnv() :
+castor::db::ora::OraBaseCnv::OraBaseCnv() :
   BaseObject(),
   m_cnvSvc(0),
   m_connection(0) {
-  m_cnvSvc = dynamic_cast<castor::db::OraCnvSvc*>
+  m_cnvSvc = dynamic_cast<castor::db::ora::OraCnvSvc*>
     (svcs()->cnvService("OraCnvSvc", SVC_ORACNV));
   if (m_cnvSvc) {
     try {
@@ -64,7 +64,7 @@ castor::db::OraBaseCnv::OraBaseCnv() :
 // -----------------------------------------------------------------------
 // Destructor
 // -----------------------------------------------------------------------
-castor::db::OraBaseCnv::~OraBaseCnv() {
+castor::db::ora::OraBaseCnv::~OraBaseCnv() {
   m_cnvSvc->deleteConnection(m_connection);
   m_cnvSvc->release();
 }
@@ -72,14 +72,14 @@ castor::db::OraBaseCnv::~OraBaseCnv() {
 // -----------------------------------------------------------------------
 // RepType
 // -----------------------------------------------------------------------
-const unsigned int castor::db::OraBaseCnv::RepType() {
+const unsigned int castor::db::ora::OraBaseCnv::RepType() {
   return castor::REP_ORACLE;
 }
 
 // -----------------------------------------------------------------------
 // repType
 // -----------------------------------------------------------------------
-inline const unsigned int castor::db::OraBaseCnv::repType() const {
+inline const unsigned int castor::db::ora::OraBaseCnv::repType() const {
   return RepType();
 }
 
@@ -87,7 +87,7 @@ inline const unsigned int castor::db::OraBaseCnv::repType() const {
 // createStatement
 // -----------------------------------------------------------------------
 oracle::occi::Statement*
-castor::db::OraBaseCnv::createStatement (const std::string &stmtString)
+castor::db::ora::OraBaseCnv::createStatement (const std::string &stmtString)
   throw (castor::Exception) {
   if (0 == m_connection) {
     castor::Exception ex;
@@ -113,7 +113,7 @@ castor::db::OraBaseCnv::createStatement (const std::string &stmtString)
 // -----------------------------------------------------------------------
 // deleteStatement
 // -----------------------------------------------------------------------
-void castor::db::OraBaseCnv::deleteStatement(oracle::occi::Statement* stmt)
+void castor::db::ora::OraBaseCnv::deleteStatement(oracle::occi::Statement* stmt)
   throw (oracle::occi::SQLException) {
   m_connection->terminateStatement(stmt);
 }
@@ -121,21 +121,21 @@ void castor::db::OraBaseCnv::deleteStatement(oracle::occi::Statement* stmt)
 // -----------------------------------------------------------------------
 // connection
 // -----------------------------------------------------------------------
-oracle::occi::Connection* castor::db::OraBaseCnv::connection() const {
+oracle::occi::Connection* castor::db::ora::OraBaseCnv::connection() const {
   return m_connection;
 }
 
 // -----------------------------------------------------------------------
 // cnvSvc
 // -----------------------------------------------------------------------
-castor::db::OraCnvSvc* castor::db::OraBaseCnv::cnvSvc() const {
+castor::db::ora::OraCnvSvc* castor::db::ora::OraBaseCnv::cnvSvc() const {
   return m_cnvSvc;
 }
 
 // -----------------------------------------------------------------------
 // getObjFromId
 // -----------------------------------------------------------------------
-castor::IObject* castor::db::OraBaseCnv::getObjFromId
+castor::IObject* castor::db::ora::OraBaseCnv::getObjFromId
 (unsigned long id,
  castor::ObjectCatalog& newlyCreated)
   throw (castor::Exception) {

@@ -47,32 +47,32 @@ extern "C" {
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
-static castor::SvcFactory<castor::db::OraCnvSvc> s_factoryOraCnvSvc;
+static castor::SvcFactory<castor::db::ora::OraCnvSvc> s_factoryOraCnvSvc;
 const castor::IFactory<castor::IService>& OraCnvSvcFactory = s_factoryOraCnvSvc;
 
 //------------------------------------------------------------------------------
 // Static constants initialization
 //------------------------------------------------------------------------------
 /// SQL statement for type retrieval
-const std::string castor::db::OraCnvSvc::s_getTypeStatementString =
+const std::string castor::db::ora::OraCnvSvc::s_getTypeStatementString =
   "SELECT type FROM rh_Id2Type WHERE id = :1";
 
 /// SQL statement for id retrieval
-const std::string castor::db::OraCnvSvc::s_getIdStatementString =
+const std::string castor::db::ora::OraCnvSvc::s_getIdStatementString =
   "BEGIN UPDATE rh_indices SET value = value + :1 WHERE name='next_id' RETURNING value INTO :result; END;";
 
 /// SQL statement for selecting next request to be processed
-const std::string castor::db::OraCnvSvc::s_getNRStatementString =
+const std::string castor::db::ora::OraCnvSvc::s_getNRStatementString =
   "BEGIN UPDATE rh_requestsStatus SET status = 'RUNNING', lastChange = SYSDATE WHERE status = 'NEW' AND rownum <=1 RETURNING ID INTO :result; END;";
 
 /// SQL statement for getting index of next request to be processed
-const std::string castor::db::OraCnvSvc::s_getNBRStatementString =
+const std::string castor::db::ora::OraCnvSvc::s_getNBRStatementString =
   "SELECT count(*) FROM rh_requestsStatus WHERE status = 'NEW'";
 
 // -----------------------------------------------------------------------
 // OraCnvSvc
 // -----------------------------------------------------------------------
-castor::db::OraCnvSvc::OraCnvSvc(const std::string name) :
+castor::db::ora::OraCnvSvc::OraCnvSvc(const std::string name) :
   BaseCnvSvc(name),
   m_user(""),
   m_passwd(""),
@@ -94,7 +94,7 @@ castor::db::OraCnvSvc::OraCnvSvc(const std::string name) :
 // -----------------------------------------------------------------------
 // ~OraCnvSvc
 // -----------------------------------------------------------------------
-castor::db::OraCnvSvc::~OraCnvSvc() {
+castor::db::ora::OraCnvSvc::~OraCnvSvc() {
   if (0 != m_connection) {
     m_connection->terminateStatement(m_getTypeStatement);
     m_connection->terminateStatement(m_getIdStatement);
@@ -108,35 +108,35 @@ castor::db::OraCnvSvc::~OraCnvSvc() {
 // -----------------------------------------------------------------------
 // id
 // -----------------------------------------------------------------------
-const unsigned int castor::db::OraCnvSvc::id() const {
+const unsigned int castor::db::ora::OraCnvSvc::id() const {
   return ID();
 }
 
 // -----------------------------------------------------------------------
 // ID
 // -----------------------------------------------------------------------
-const unsigned int castor::db::OraCnvSvc::ID() {
+const unsigned int castor::db::ora::OraCnvSvc::ID() {
   return castor::SVC_ORACNV;
 }
 
 // -----------------------------------------------------------------------
 // repType
 // -----------------------------------------------------------------------
-const unsigned int castor::db::OraCnvSvc::repType() const {
+const unsigned int castor::db::ora::OraCnvSvc::repType() const {
   return REPTYPE();
 }
 
 // -----------------------------------------------------------------------
 // REPTYPE
 // -----------------------------------------------------------------------
-const unsigned int castor::db::OraCnvSvc::REPTYPE() {
+const unsigned int castor::db::ora::OraCnvSvc::REPTYPE() {
   return castor::REP_ORACLE;
 }
 
 //------------------------------------------------------------------------------
 // Utility function to get the current timestamp
 //------------------------------------------------------------------------------
-std::string castor::db::OraCnvSvc::getTimestamp() {
+std::string castor::db::ora::OraCnvSvc::getTimestamp() {
   struct tm tmstruc, *tm;
   time_t current_time;
   (void) time (&current_time);
@@ -152,7 +152,7 @@ std::string castor::db::OraCnvSvc::getTimestamp() {
 // -----------------------------------------------------------------------
 // getConnection
 // -----------------------------------------------------------------------
-oracle::occi::Connection* castor::db::OraCnvSvc::getConnection()
+oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
   throw (oracle::occi::SQLException) {
   if (0 == m_environment) {
     m_environment = oracle::occi::Environment::createEnvironment
@@ -177,7 +177,7 @@ oracle::occi::Connection* castor::db::OraCnvSvc::getConnection()
 // -----------------------------------------------------------------------
 // deleteConnection
 // -----------------------------------------------------------------------
-void castor::db::OraCnvSvc::deleteConnection
+void castor::db::ora::OraCnvSvc::deleteConnection
 (oracle::occi::Connection* connection) throw() {
   if (0 != m_environment) {
     //oracle::occi::Statement* stmt = m_connection->createStatement
@@ -192,7 +192,7 @@ void castor::db::OraCnvSvc::deleteConnection
 // -----------------------------------------------------------------------
 // createObj
 // -----------------------------------------------------------------------
-castor::IObject* castor::db::OraCnvSvc::createObj (castor::IAddress* address,
+castor::IObject* castor::db::ora::OraCnvSvc::createObj (castor::IAddress* address,
                                                    ObjectCatalog& newlyCreated)
   throw (castor::Exception) {
   // If the address has no type, find it out
@@ -211,7 +211,7 @@ castor::IObject* castor::db::OraCnvSvc::createObj (castor::IAddress* address,
 // getIds
 // -----------------------------------------------------------------------
 const unsigned long
-castor::db::OraCnvSvc::getIds(const unsigned int nids)
+castor::db::ora::OraCnvSvc::getIds(const unsigned int nids)
   throw (oracle::occi::SQLException) {
   if (0 == nids) return 0;
   if (0 == m_getIdStatement) {
@@ -244,7 +244,7 @@ castor::db::OraCnvSvc::getIds(const unsigned int nids)
 // -----------------------------------------------------------------------
 // nextRequestAddress
 // -----------------------------------------------------------------------
-castor::IAddress* castor::db::OraCnvSvc::nextRequestAddress()
+castor::IAddress* castor::db::ora::OraCnvSvc::nextRequestAddress()
   throw (castor::Exception) {
   // Prepare statement
   if (0 == m_getNRStatement) {
@@ -278,7 +278,7 @@ castor::IAddress* castor::db::OraCnvSvc::nextRequestAddress()
 // -----------------------------------------------------------------------
 // nbRequestsToProcess
 // -----------------------------------------------------------------------
-unsigned int castor::db::OraCnvSvc::nbRequestsToProcess()
+unsigned int castor::db::ora::OraCnvSvc::nbRequestsToProcess()
   throw (Exception) {
   try {
     // Prepare statements
@@ -313,7 +313,7 @@ unsigned int castor::db::OraCnvSvc::nbRequestsToProcess()
 // getTypeFromId
 // -----------------------------------------------------------------------
 const unsigned int
-castor::db::OraCnvSvc::getTypeFromId(const unsigned long id)
+castor::db::ora::OraCnvSvc::getTypeFromId(const unsigned long id)
   throw (castor::Exception) {
   // a null id has a null type
   if (0 == id) return 0;
