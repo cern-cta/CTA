@@ -1,5 +1,5 @@
 /*
- * $Id: stagechng.c,v 1.18 2002/04/11 10:31:57 jdurand Exp $
+ * $Id: stagechng.c,v 1.19 2002/09/20 12:27:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.18 $ $Date: 2002/04/11 10:31:57 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.19 $ $Date: 2002/09/20 12:27:35 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -46,6 +46,7 @@ int reqid_flag = 0;
 int retenp_on_disk_flag = 0;
 int status_flag = 0;
 int poolname_flag = 0;
+int hsmcreat_flag = 0;
 
 int main(argc, argv)
 		 int	argc;
@@ -82,6 +83,7 @@ int main(argc, argv)
 	static struct Coptions longopts[] =
 	{
 		{"host",               REQUIRED_ARGUMENT,  NULL,                    'h'},
+		{"hsmcreat",           NO_ARGUMENT,        &hsmcreat_flag,            1},
 		{"migration_filename", REQUIRED_ARGUMENT,  NULL,                    'M'},
 		{"mintime_beforemigr", REQUIRED_ARGUMENT,  &mintime_beforemigr_flag,  1},
 		{"poolname",           REQUIRED_ARGUMENT,  &poolname_flag,            1},
@@ -293,12 +295,13 @@ void usage(cmd)
 		 char *cmd;
 {
 	fprintf (stderr,
-				"usage: %s [-h stagehost] pathname(s)\n"
-				"\nor\n\n"
-				"%s [-h stagehost] [-p poolname] -M filename\n"
-				"[--mintime_beforemigr mintime_before_migration[unit]]\n"
-				"[--reqid request_id]\n"
-				"[--retenp_on_disk retention_period[unit]]\n"
-				"[--status status]\n",
-				cmd, cmd);
+			 "usage: %s [-h stagehost] pathname(s)\n"
+			 "\nor\n\n"
+			 "%s [-h stagehost] [-p poolname] -M filename\n"
+			 "[--hsmcreat]"
+			 "[--mintime_beforemigr mintime_before_migration[unit]]\n"
+			 "[--reqid request_id]\n"
+			 "[--retenp_on_disk retention_period[unit]]\n"
+			 "[--status status]\n",
+			 cmd, cmd);
 }
