@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.64 2002/08/27 08:38:03 jdurand Exp $
+ * $Id: procclr.c,v 1.65 2002/09/17 11:47:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.64 $ $Date: 2002/08/27 08:38:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.65 $ $Date: 2002/09/17 11:47:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -41,10 +41,12 @@ static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.64 $ $Date: 200
 #include "rfio_api.h"
 #include "Cupv_api.h"
 #include "serrno.h"
+#include "u64subr.h"
 #ifdef STAGER_DEBUG
 #ifndef _WIN32
 #include <unistd.h>
 #include <sys/times.h>
+
 struct _stage_times {
 	struct tms tms;
 	clock_t     time;
@@ -694,7 +696,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag, clienth
 	int savereqid;
 	struct waitf *wfp;
 	struct waitq *wqp;
-	int isadmin; /* Case of granted privilege */
+	int isadmin = 0; /* Case of granted privilege */
 
 	/*	return	<0	request deleted
 	 *		 0	running request (status set to ESTCLEARED and req signalled)
