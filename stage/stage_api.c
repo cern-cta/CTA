@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.4 2001/02/01 08:36:12 jdurand Exp $
+ * $Id: stage_api.c,v 1.5 2001/02/01 08:39:24 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -1098,37 +1098,6 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   return (rc);
 }
 
-int DLL_DECL stageqry_Hsm(flags,hostname,poolname,hsmname,nstcp_output,stcp_output,nstpp_output,stpp_output)
-     u_signed64 flags;
-     char *hostname;
-     char *poolname;
-     char *hsmname;
-     int *nstcp_output;
-     struct stgcat_entry **stcp_output;
-     int *nstpp_output;
-     struct stgpath_entry **stpp_output;
-{
-  struct stgcat_entry stcp_input;
-
-  /* Check hsmname in input */
-  if (hsmname == NULL) {
-    serrno = EINVAL;
-    return(-1);
-  }
-  /* Check hsmname length and poolname validity */
-  if (((*hsmname == '\0') || (strlen(hsmname)  > 166              )) ||
-      ((poolname != NULL) && (strlen(poolname) > CA_MAXPOOLNAMELEN))) {
-    serrno = ENAMETOOLONG;
-    return(-1);
-  }
-
-  /* We build the full stageqry API request */
-  memset(&stcp_input, 0, sizeof(struct stgcat_entry));
-  strcpy(stcp_input.poolname,poolname); /* Can be zero-length */
-  strcpy(stcp_input.u1.h.xfile,hsmname); /* Cannot be zero-length */
-  return(stage_qry_hsm(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
-}
-
 int DLL_DECL stageqry_Tape(flags,hostname,poolname,tape,fseq,nstcp_output,stcp_output,nstpp_output,stpp_output)
      u_signed64 flags;
      char *hostname;
@@ -1162,4 +1131,68 @@ int DLL_DECL stageqry_Tape(flags,hostname,poolname,tape,fseq,nstcp_output,stcp_o
   strcpy(stcp_input.u1.t.fseq,fseq); /* Can be zero-length */
   return(stage_qry_tape(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
 }
+
+int DLL_DECL stageqry_Hsm(flags,hostname,poolname,hsmname,nstcp_output,stcp_output,nstpp_output,stpp_output)
+     u_signed64 flags;
+     char *hostname;
+     char *poolname;
+     char *hsmname;
+     int *nstcp_output;
+     struct stgcat_entry **stcp_output;
+     int *nstpp_output;
+     struct stgpath_entry **stpp_output;
+{
+  struct stgcat_entry stcp_input;
+
+  /* Check hsmname in input */
+  if (hsmname == NULL) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  /* Check hsmname length and poolname validity */
+  if (((*hsmname == '\0') || (strlen(hsmname)  > 166              )) ||
+      ((poolname != NULL) && (strlen(poolname) > CA_MAXPOOLNAMELEN))) {
+    serrno = ENAMETOOLONG;
+    return(-1);
+  }
+
+  /* We build the full stageqry API request */
+  memset(&stcp_input, 0, sizeof(struct stgcat_entry));
+  strcpy(stcp_input.poolname,poolname); /* Can be zero-length */
+  strcpy(stcp_input.u1.h.xfile,hsmname); /* Cannot be zero-length */
+  return(stage_qry_hsm(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
+}
+
+
+int DLL_DECL stageqry_Disk(flags,hostname,poolname,diskname,nstcp_output,stcp_output,nstpp_output,stpp_output)
+     u_signed64 flags;
+     char *hostname;
+     char *poolname;
+     char *diskname;
+     int *nstcp_output;
+     struct stgcat_entry **stcp_output;
+     int *nstpp_output;
+     struct stgpath_entry **stpp_output;
+{
+  struct stgcat_entry stcp_input;
+
+  /* Check diskname in input */
+  if (diskname == NULL) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  /* Check diskname length and poolname validity */
+  if (((*diskname == '\0') || (strlen(diskname)  > (CA_MAXHOSTNAMELEN+MAXPATH))) ||
+      ((poolname  != NULL) && (strlen(poolname)  > CA_MAXPOOLNAMELEN         ))) {
+    serrno = ENAMETOOLONG;
+    return(-1);
+  }
+
+  /* We build the full stageqry API request */
+  memset(&stcp_input, 0, sizeof(struct stgcat_entry));
+  strcpy(stcp_input.poolname,poolname); /* Can be zero-length */
+  strcpy(stcp_input.u1.d.xfile,diskname); /* Cannot be zero-length */
+  return(stage_qry_disk(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
+}
+
 
