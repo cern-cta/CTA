@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.138 2001/06/20 13:24:53 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.139 2001/06/21 10:50:24 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.138 $ $Date: 2001/06/20 13:24:53 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.139 $ $Date: 2001/06/21 10:50:24 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -231,7 +231,7 @@ extern void procqryreq _PROTO((int, int, char *, char *));
 extern void procclrreq _PROTO((int, int, char *, char *));
 extern void procallocreq _PROTO((char *, char *));
 extern void procgetreq _PROTO((char *, char *));
-extern void procfilchgreq _PROTO((char *, char *));
+extern void procfilchgreq _PROTO((int, int, char *, char *));
 extern int getpoolconf _PROTO((char *, char *, char *));
 extern int checkpoolcleaned _PROTO((char ***));
 extern void checkpoolspace _PROTO(());
@@ -241,11 +241,11 @@ extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, str
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 extern int upd_fileclasses _PROTO(());
 extern char *getconfent();
-extern int retenp_on_disk _PROTO((int));
 extern void check_lifetime_on_disk _PROTO(());
 extern int create_hsm_entry _PROTO((int, struct stgcat_entry *, int, mode_t, int));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
+extern u_signed64 findblocksize _PROTO((char *));
 
 /* Function with variable list of arguments - defined as in non-_STDC_ to avoir proto problem */
 extern int stglogit _PROTO(());
@@ -254,11 +254,6 @@ extern int sendrep _PROTO((int, int, ...));
 #else
 extern int sendrep _PROTO(());
 #endif
-
-/* Why does HP-UX reports it in 1K block-size ? - We Handle this by making sure that BLOCKS_TO_SIZE >= actual_size */
-/* We can't handle this exactly in this macro because file systems can be remote and we have no way */
-/* to determine if the remote file system is an HP-UX one or not */
-#define BLOCKS_TO_SIZE(blocks) (((u_signed64) blocks) * 512)
 
 int main(argc,argv)
 		 int argc;
@@ -293,7 +288,7 @@ int main(argc,argv)
 	char tmpbuf[21];
 	struct passwd *this_passwd;             /* password structure pointer */
 	struct passwd root_passwd;
-	char myenv[11 + CA_MAXHOSTNAMELEN + 1];
+	char myenv[11 + CA_MAXHOSTNAMELEN + 1]; /* 11 == strlen("STAGE_HOST=") */
 	char *upd_fileclasses_int_p;
 
 	Coptind = 1;
@@ -379,7 +374,7 @@ int main(argc,argv)
 	strcpy(myenv, "STAGE_HOST=");
 	strcat(myenv, localhost);
 	if (putenv(myenv) != 0) {
-		stglogit(func, "Cannot set %s (%s)\n", myenv, strerror(errno));
+		stglogit(func, "Cannot putenv(\"%s\"), %s\n", myenv, strerror(errno));
     } else {
 		stglogit(func, "Setted environment variable %s\n", myenv);
     }
@@ -455,13 +450,15 @@ int main(argc,argv)
 	sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	if (setsockopt (stg_s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
 		stglogit (func, STG02, "", "setsockopt", sys_errlist[errno]);
+	/*
 	if (setsockopt (stg_s, IPPROTO_TCP, TCP_NODELAY, (char *)&on, sizeof(on)) < 0)
 		stglogit (func, STG02, "", "setsockopt", sys_errlist[errno]);
+	*/
 	if (bind (stg_s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 		stglogit (func, STG02, "", "bind", sys_errlist[errno]);
 		exit (CONFERR);
 	}
-	listen (stg_s, 1) ;
+	listen (stg_s, 5) ;
 	
 	FD_SET (stg_s, &readmask);
 
@@ -634,7 +631,7 @@ int main(argc,argv)
 			u_signed64 actual_size_block;
 			if (rfio_stat (stcp->ipath, &st) == 0) {
 				stcp->actual_size = st.st_size;
-				if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks)) < stcp->actual_size) {
+				if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 					actual_size_block = stcp->actual_size;
 				}
 #ifdef USECDB
@@ -651,6 +648,8 @@ int main(argc,argv)
 						(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB));
 			rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
 			stcp++;
+		} else if (stcp->status == (STAGEIN|STAGED|STAGE_RDONLY)) {
+			delreq (stcp,0);
 		} else if (stcp->status == STAGEWRT) {
 			delreq (stcp,0);
 		} else if ((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR)) {
@@ -697,6 +696,9 @@ int main(argc,argv)
 	while (1) {
 		int upd_fileclasses_int_old_value;
 
+		/* Before accept() we execute some automatic thing that are client disconnected */
+		rpfd = -1;
+
 		upd_fileclasses_int_old_value = upd_fileclasses_int;
 		/* Run-time update upd_fileclasses parameter from configuration if needed */
 		if ((upd_fileclasses_int_p = getconfent("STG", "UPD_FILECLASSES_INT", 0)) != NULL) {
@@ -737,7 +739,7 @@ int main(argc,argv)
 
 					if (rfio_stat (stcp->ipath, &st) == 0) {
 						stcp->actual_size = st.st_size;
-						if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks)) < stcp->actual_size) {
+						if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 							actual_size_block = stcp->actual_size;
 						}
 #ifdef USECDB
@@ -761,7 +763,11 @@ int main(argc,argv)
 		}
 
 		if (FD_ISSET (stg_s, &readfd)) {
-			rqfd = accept (stg_s, (struct sockaddr *) &from, &fromlen);
+			if ((rqfd = accept (stg_s, (struct sockaddr *) &from, &fromlen)) < 0) {
+				stglogit (func, STG02, "", "accept",
+										sys_errlist[errno]);
+				goto select_continue;
+			}
 			if (getpeername (rqfd, (struct sockaddr*)&from,
 										 &fromlen) < 0) {
 				stglogit (func, STG02, "", "getpeername",
@@ -817,13 +823,13 @@ int main(argc,argv)
 						}
 					}
 					if ((req_type == STAGE_UPDC) && (magic != STGMAGIC2)) {
-						/* The API of stage_updc only exist with magic number version 2 */
+						/* The API of stage_updc only exist with magic number version >= 2 */
 						stglogit(func, STG141, (unsigned long) magic);
 						close(rqfd);
 						goto endreq;
 					}
 					if ((req_type == STAGE_CLR) && (magic != STGMAGIC2)) {
-						/* The API of stage_clr only exist with magic number version 2 */
+						/* The API of stage_clr only exist with magic number version >= 2 */
 						stglogit(func, STG141, (unsigned long) magic);
 						close(rqfd);
 						goto endreq;
@@ -876,8 +882,9 @@ int main(argc,argv)
 					case STAGEGET:
 						procgetreq (req_data, clienthost);
 						break;
+					case STAGE_FILCHG:
 					case STAGEFILCHG:
-						procfilchgreq (req_data, clienthost);
+						procfilchgreq (req_type, magic, req_data, clienthost);
 						break;
 					case STAGESHUTDOWN:
 						procshutdownreq (req_data, clienthost);
@@ -903,19 +910,8 @@ int main(argc,argv)
 		memcpy (&readfd, &readmask, sizeof(readmask));
 		timeval.tv_sec = CHECKI;	/* must set each time for linux */
 		timeval.tv_usec = 0;
-		if (select (maxfds, &readfd, (fd_set *)0, (fd_set *)0, &timeval) < 0) {
-			int select_eintr;
-
-			if (errno == EINTR) {
-				/* Select has been interrupted - might happen if one of our child died */
-				select_eintr = 1;
-			} else {
-				select_eintr = 0;
-			}
+		if (select (maxfds, &readfd, (fd_set *) NULL, (fd_set *) NULL, &timeval) < 0) {
 			FD_ZERO (&readfd);
-			if (select_eintr != 0) {
-				goto select_continue;
-			}
 		}
 	}
 }
@@ -1373,19 +1369,42 @@ int build_ipath(upath, stcp, pool_user)
 	}
 
 	/* Do not create empty file on stagein/out (for Objectivity DB) */
+	/* But create subdirectories if needed */
 
-	if (get_create_file_option (stcp->poolname))
+	if (get_create_file_option (stcp->poolname)) {
+		/* Create group directory if needed */
+		*p_u = '\0';
+		c = create_dir (stcp->ipath, 0, stcp->gid, 0755);
+		*p_u = '/';
+		if (c) {
+			stcp->ipath[0] = '\0';
+			return (c);
+		}
+		if ((pw = Cgetpwnam (pool_user)) == NULL) {
+			sendrep (rpfd, MSG_ERR, STG11, pool_user);
+			stcp->ipath[0] = '\0';
+			return (SYERR);
+		}
+		*p_f = '\0';
+		c = create_dir (stcp->ipath, pw->pw_uid, stcp->gid, 0775);
+		*p_f = '/';
+		if (c) {
+			stcp->ipath[0] = '\0';
+			return (c);
+		}
+		/* Okay */
 		return(0);
+	}
 
 	/* try to create file */
 
 	(void) umask (stcp->mask);
 	fd = rfio_open (stcp->ipath, O_WRONLY | O_CREAT, 0777);
 	(void) umask (0);
-	/* If rfio_open fails, it can be a real open error or a client/or/server error */
-	/* We reset our internal path */
 	if (fd < 0) {
 		if (errno != ENOENT && rfio_errno != ENOENT) {
+			/* If rfio_open fails, it can be a real open error or a client/or/server error */
+			/* We reset our internal path */
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_open",
 							 rfio_serror());
 			stcp->ipath[0] = '\0';
@@ -1582,11 +1601,15 @@ void checkpoolstatus()
 	struct stgcat_entry *stcp;
 	struct waitf *wfp;
 	struct waitq *wqp;
+	int have_waiting_spc;
+	int have_found_spc;
 
 	n = checkpoolcleaned (&poolc);
 	for (j = 0; j < n; j++) {
 		for (wqp = waitqp; wqp; wqp = wqp->next) {
 			if (strcmp (wqp->waiting_pool, poolc[j]) == 0) {
+				have_waiting_spc = 0;
+				have_found_spc = 0;
 				reqid = wqp->reqid;
 				rpfd = wqp->rpfd;
 				if ((shutdownreq_reqid != 0) && (wqp->status != STAGESHUTDOWN)) {
@@ -1603,6 +1626,7 @@ void checkpoolstatus()
 					}
 					if ((stcp->status & 0xF0) == WAITING_SPC) {
 						int has_trailing = 0;
+						++have_waiting_spc;       /* Count the number of entries in WAITING_SPC */
 						if ((wqp->concat_off_fseq > 0) && (i == (wqp->nbdskf - 1))) {
 							/* We remove the trailing '-' */
 							if (stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] == '-') {
@@ -1656,10 +1680,10 @@ void checkpoolstatus()
 #endif
 							}
 							if (hsm_ns_error == 0) {
-								*wqp->waiting_pool = '\0';
+								++have_found_spc;           /* Count the number of entries WAITING_SPC recovered */
 								if ((stcp->status == STAGEOUT) ||
 									(stcp->status == STAGEALLOC)) {
-									if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
+									if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp);
 									if (wqp->Pflag)
 										sendrep (rpfd, MSG_OUT,
 														 "%s\n", stcp->ipath);
@@ -1674,6 +1698,10 @@ void checkpoolstatus()
 						}
 					}
 				}
+				if ((have_waiting_spc > 0) && (have_waiting_spc == have_found_spc)) {
+					/* All entries in WAITING_SPC state were recovered - we can remove the waiting_pool global entry */
+					wqp->waiting_pool[0] = '\0';
+				}
 			}
 		}
 	}
@@ -1685,8 +1713,13 @@ void checkwaitingspc()
 	struct stgcat_entry *stcp;
 	struct waitf *wfp;
 	struct waitq *wqp;
+	int have_waiting_spc;
+	int have_found_spc;
 
 	for (wqp = waitqp; wqp; wqp = wqp->next) {
+		if (wqp->waiting_pool[0] == '\0') continue;
+		have_waiting_spc = 0;
+		have_found_spc = 0;
 		reqid = wqp->reqid;
 		rpfd = wqp->rpfd;
 		if ((shutdownreq_reqid != 0) && (wqp->status != STAGESHUTDOWN)) {
@@ -1703,6 +1736,7 @@ void checkwaitingspc()
 			}
 			if ((stcp->status & 0xF0) == WAITING_SPC) {
 				int has_trailing = 0;
+				++have_waiting_spc;       /* Count the number of entries in WAITING_SPC */
 				if ((wqp->concat_off_fseq > 0) && (i == (wqp->nbdskf - 1))) {
 					/* We remove the trailing '-' */
 					if (stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] == '-') {
@@ -1747,10 +1781,10 @@ void checkwaitingspc()
 #endif
 					}
 					if (hsm_ns_error == 0) {
-						*wqp->waiting_pool = '\0';
+						++have_found_spc;           /* Count the number of entries WAITING_SPC recovered */
 						if ((stcp->status == STAGEOUT) ||
 							(stcp->status == STAGEALLOC)) {
-							if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
+							if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp);
 							if (wqp->Pflag)
 								sendrep (rpfd, MSG_OUT,
 												 "%s\n", stcp->ipath);
@@ -1763,6 +1797,10 @@ void checkwaitingspc()
 					}
 				}
 			}
+		}
+		if ((have_waiting_spc > 0) && (have_waiting_spc == have_found_spc)) {
+			/* All entries in WAITING_SPC state were recovered - we can remove the waiting_pool global entry */
+			wqp->waiting_pool[0] = '\0';
 		}
 	}
 }
@@ -1825,7 +1863,7 @@ check_waiting_on_req(subreqid, state)
 								 stcp->actual_size,
 								 (float)(stcp->actual_size)/(1024.*1024.),
 								 stcp->nbaccesses);
-				if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
+				if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp);
 				if (wqp->copytape)
 					sendinfo2cptape (rpfd, stcp);
 				if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
@@ -1896,7 +1934,7 @@ check_waiting_on_req(subreqid, state)
 					}
 			   		wqp->nb_waiting_on_req--;
 				   	wfp->waiting_on_req = -1;
-				   	firstreqid = wfp->subreqid;
+					firstreqid = wfp->subreqid;
 				} else {
 					wfp->waiting_on_req = firstreqid;
 				}
@@ -2214,7 +2252,7 @@ void checkwaitq()
 						stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 					}
 #endif
-					if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
+					if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp);
 				}
 			}
 			wqp1 = wqp;
@@ -2405,7 +2443,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 			if (! freersv) {
 				if (rfio_stat (stcp->ipath, &st) == 0) {
 					actual_size = st.st_size;
-					if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks)) < actual_size) {
+					if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < actual_size) {
 						actual_size_block = actual_size;
 					}
 				} else {
@@ -2448,6 +2486,8 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 		}
 	}
 	if (remove_hsm) {
+		setegid(bygid);
+		seteuid(byuid);
 		if (stcp->t_or_d == 'm') {
 			if (rfio_unlink (stcp->u1.m.xfile) == 0) {
 				stglogit (func, STG95, stcp->u1.m.xfile, by);
@@ -2463,6 +2503,8 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 								 "Cns_unlink", sstrerror(serrno));
 			}
 		}
+		setegid(start_passwd.pw_gid);
+		seteuid(start_passwd.pw_uid);
 	}
 	if (dellinks) {
 		for (stpp = stps; stpp < stpe; ) {
@@ -2506,13 +2548,17 @@ void dellink(stpp)
 	int n;
 	char *p1, *p2;
 
-	stglogit (func, STG93, stpp->upath);
 #ifdef USECDB
 	if (stgdb_del_stgpath(&dbfd,stpp) != 0) {
 		stglogit(func, STG100, "delete", sstrerror(serrno), __FILE__, __LINE__);
 	}
 #endif
-	sendrep (rpfd, RMSYMLINK, stpp->upath);
+	if (rpfd >= 0) {
+		stglogit (func, STG93, stpp->upath);
+		sendrep (rpfd, RMSYMLINK, stpp->upath);
+	} else {
+		stglogit (func, "STG93 - removing silently link %s\n", stpp->upath);
+	}
 	nbpath_ent--;
 	p2 = (char *)stps + (nbpath_ent * sizeof(struct stgpath_entry));
 	if ((char *)stpp != p2) {	/* not last path in the list */
@@ -2994,7 +3040,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 
 		if (rfio_stat (stcp->ipath, &st) == 0) {
 			stcp->actual_size = st.st_size;
-			if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks)) < stcp->actual_size) {
+			if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 				actual_size_block = stcp->actual_size;
 			}
 		} else {
@@ -3038,7 +3084,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 		}
 	}
 	stcp->a_time = time(NULL);
-	*subreqid = stcp->reqid;
+	if (subreqid != NULL) *subreqid = stcp->reqid;
 
 #ifdef USECDB
 	if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
@@ -3079,7 +3125,7 @@ int upd_staged(upath)
 			break;
 		}
 	}
-	if ((found == 0) || ((stcp->t_or_d != 'm') && (stcp->t_or_d != 'h')) || ((stcp->status & BEING_MIGR) == BEING_MIGR) || (! (((stcp->status & 0xF0) == STAGED) || ((stcp->status & (STAGEOUT|CAN_BE_MIGR)) == (STAGEOUT|CAN_BE_MIGR))))) {
+	if ((found == 0) || ((stcp->t_or_d != 'm') && (stcp->t_or_d != 'h')) || ((stcp->status & BEING_MIGR) == BEING_MIGR) || ((stcp->status & WAITING_MIGR) == WAITING_MIGR) || (! (((stcp->status & 0xF0) == STAGED) || ((stcp->status & (STAGEOUT|CAN_BE_MIGR)) == (STAGEOUT|CAN_BE_MIGR))))) {
 		if (found == 0) {
 			sendrep (rpfd, MSG_ERR, STG22);
 		} else if ((stcp->t_or_d != 'm') && (stcp->t_or_d != 'h')) {
@@ -3105,7 +3151,7 @@ int upd_staged(upath)
 	savereqs();
 	if (rfio_stat (stcp->ipath, &st) == 0) {
 		stcp->actual_size = st.st_size;
-		if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks)) < stcp->actual_size) {
+		if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 			actual_size_block = stcp->actual_size;
 		}
 	} else {
@@ -3270,3 +3316,7 @@ void check_upd_fileclasses() {
 		last_upd_fileclasses = time(NULL);
 	}
 }
+
+/*
+ * Last Update: "Thursday 21 June, 2001 at 12:44:11 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ */
