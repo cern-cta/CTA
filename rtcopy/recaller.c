@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/25 09:41:14 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/25 11:54:51 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/25 09:41:14 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/25 11:54:51 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -676,6 +676,12 @@ int main(
   rc = rtcpcld_initLocks(tape);
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("rtcpcld_initLocks()");
+    return(1);
+  }
+
+  rc = initLocks();
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("initLocks()");
     return(1);
   }
 
