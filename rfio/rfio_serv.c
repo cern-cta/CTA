@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.13 2004/12/02 17:26:22 jdurand Exp $
+ * $Id: rfio_serv.c,v 1.14 2004/12/07 10:50:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.13 $ $Date: 2004/12/02 17:26:22 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.14 $ $Date: 2004/12/07 10:50:54 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */
@@ -801,11 +801,14 @@ char    **argv;
       timeval.tv_sec = CHECKI;  /* must set each time for linux */
       timeval.tv_usec = 0;
       if ((select_status = select (s + 1, &readfd, NULL, NULL, &timeval)) < 0) { /* Error */
+	log(LOG_DEBUG,"select error No %d (%s)\n", errno, strerror(errno));
 		  if (once_only) {
 		    if (have_a_child && exit_code_from_last_child >= 0) {
+		      log(LOG_DEBUG,"Exiting with status %d\n", exit_code_from_last_child);
 		      exit(exit_code_from_last_child);
 		    } else if (! have_a_child) {
 		      /* error and no child : we assume very old client */
+		      log(LOG_DEBUG,"Exiting with status %d\n", 0);
 		      exit(0);
 		    }
 		  }
@@ -813,9 +816,11 @@ char    **argv;
       }
 	  if (select_status == 0 && once_only) { /* Timeout */
 	    if (have_a_child && exit_code_from_last_child >= 0) {
+	      log(LOG_DEBUG,"Exiting with status %d\n", exit_code_from_last_child);
 	      exit(exit_code_from_last_child);
 	    } else if (! have_a_child) {
 	      /* timeout and no child : we assume very old client */
+	      log(LOG_DEBUG,"Exiting with status %d\n", 0);
 	      exit(0);
 	    }
 	  }
