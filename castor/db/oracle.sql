@@ -517,7 +517,11 @@ END;
 
 /* PL/SQL method implementing prepareForMigration */
 CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
-                                                 fs IN INTEGER) AS
+                                                 fs IN INTEGER,
+                                                 fId OUT NUMBER,
+                                                 nh OUT VARCHAR,
+                                                 uid OUT INTEGER,
+                                                 gid OUT INTEGER) AS
   nc INTEGER;
   cfId INTEGER;
   tcId INTEGER;
@@ -525,7 +529,13 @@ BEGIN
  -- get CastorFile
  SELECT castorFile INTO cfId FROM SubRequest where id = srId;
  -- update CastorFile
- UPDATE CastorFile set fileSize = fs WHERE id = cfId;
+ UPDATE CastorFile set fileSize = fs WHERE id = cfId
+  RETURNING fileId, nsHost INTO fId, nh;
+ -- get uid, gid from Request
+ SELECT euid, egid INTO uid, gid FROM SubRequest,
+      (SELECT euid, egid, id from StagePutRequest UNION
+       SELECT euid, egid, id from StagePrepareToPutRequest) Request
+  WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
  -- if 0 length file, stop here
  IF fs = 0 THEN
    RETURN;

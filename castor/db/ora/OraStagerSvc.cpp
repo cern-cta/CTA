@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.79 $ $Release$ $Date: 2004/12/07 13:06:21 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.80 $ $Release$ $Date: 2004/12/07 14:33:54 $ $Author: sponcec3 $
  *
  *
  *
@@ -159,7 +159,7 @@ const std::string castor::db::ora::OraStagerSvc::s_recreateCastorFileStatementSt
 
 /// SQL statement for prepareForMigration
 const std::string castor::db::ora::OraStagerSvc::s_prepareForMigrationStatementString =
-  "BEGIN prepareForMigration(:1, :2); END;";
+  "BEGIN prepareForMigration(:1, :2, :3, :4, :5, :6); END;";
 
 // -----------------------------------------------------------------------
 // OraStagerSvc
@@ -1784,11 +1784,60 @@ void castor::db::ora::OraStagerSvc::prepareForMigration
       m_prepareForMigrationStatement =
         createStatement(s_prepareForMigrationStatementString);
       m_prepareForMigrationStatement->setAutoCommit(true);
+      m_prepareForMigrationStatement->registerOutParam
+        (3, oracle::occi::OCCIDOUBLE);
+      m_prepareForMigrationStatement->registerOutParam
+        (4, oracle::occi::OCCISTRING, 2048);
+      m_prepareForMigrationStatement->registerOutParam
+        (5, oracle::occi::OCCIINT);
+      m_prepareForMigrationStatement->registerOutParam
+        (6, oracle::occi::OCCIINT);
     }
     // execute the statement and see whether we found something
     m_prepareForMigrationStatement->setDouble(1, subreq->id());
     m_prepareForMigrationStatement->setDouble(2, fileSize);
-    m_prepareForMigrationStatement->executeUpdate();
+    unsigned int nb = m_prepareForMigrationStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "prepareForMigration did not return any result.";
+      throw ex;
+    }
+    // collect output
+    struct Cns_fileid fileid;
+    fileid.fileid =
+      (u_signed64)m_prepareForMigrationStatement->getDouble(3);
+    std::string nsHost =
+      m_prepareForMigrationStatement->getString(4);
+    strncpy(fileid.server,
+            nsHost.c_str(),
+            CA_MAXHOSTNAMELEN);
+    unsigned long euid =
+      m_prepareForMigrationStatement->getInt(5);
+    unsigned long egid =
+      m_prepareForMigrationStatement->getInt(6);
+    // Update name server
+    char cns_error_buffer[512];  /* Cns error buffer */
+    if (Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "prepareForMigration : Cns_seterrbuf failed.";
+      throw ex;
+    }
+    if (Cns_setid(euid,egid) != 0) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "prepareForMigration : Cns_setid failed :"
+        << std::endl << cns_error_buffer;
+      throw ex;
+    }
+    if (Cns_setfsize(0, &fileid, fileSize) != 0) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "prepareForMigration : Cns_setfsize failed :"
+        << std::endl << cns_error_buffer;
+      throw ex;
+    }
   } catch (oracle::occi::SQLException e) {
     rollback();
     castor::exception::Internal ex;
