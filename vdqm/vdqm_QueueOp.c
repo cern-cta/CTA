@@ -267,7 +267,10 @@ static int NextDgnContext(dgn_element_t **dgn_context) {
     if ( *dgn_context != NULL ) FreeDgnContext(dgn_context);
 
     if ( *tmpdgn != '\0' ) return(SetDgnContext(dgn_context,tmpdgn));
-    else return(-1);
+    else {
+        vdqm_SetError(EVQEOQREACHED);
+        return(-1);
+    }
 }
 
 static int AnyVolRecForDgn(const dgn_element_t *dgn_context) {
@@ -1098,6 +1101,7 @@ int vdqm_DelDrvReq(vdqmDrvReq_t *DrvReq) {
          !(drvrec->drv.status & VDQM_UNIT_DOWN) ) {
         drvrec->update = 0;
         log(LOG_ERR,"vdqm_DelDrvReq() cannot remove drive record with assigned job\n");
+        vdqm_SetError(EVQREQASS);
         FreeDgnContext(&dgn_context);
         return(-1);
     }
