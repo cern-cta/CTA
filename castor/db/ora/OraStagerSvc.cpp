@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.61 $ $Release$ $Date: 2004/11/30 16:09:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.62 $ $Release$ $Date: 2004/11/30 16:13:47 $ $Author: sponcec3 $
  *
  *
  *
@@ -1453,6 +1453,8 @@ void castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   // Go through Segments
   u_signed64 totalSize = 0;
   for (int i = 0; i < nbNsSegments; i++) {
+    // Only deal with segments of the copy we choose
+    if (nsSegmentAttrs[i].copyno != useCopyNb) continue;
     // create Segment
     castor::stager::Segment segment;
     segment.setBlockid(nsSegmentAttrs[i].blockid);
