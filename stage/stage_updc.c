@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.16 2001/06/08 15:18:56 jdurand Exp $
+ * $Id: stage_updc.c,v 1.17 2001/09/18 21:10:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.16 $ $Date: 2001/06/08 15:18:56 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.17 $ $Date: 2001/09/18 21:10:54 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -104,12 +104,12 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
   if (strlen (stageid) <= CA_MAXSTGRIDLEN) {
     strcpy (Zparm, stageid);
     if ((p = strtok (Zparm, ".")) != NULL) {
-      reqid = strtol (p, &dp, 10);
+      stage_strtoi(&reqid, p, &dp, 10);
       if (*dp != '\0' || reqid <= 0 ||
           (p = strtok (NULL, "@")) == NULL) {
         errflg++;
       } else {
-        key = strtol (p, &dp, 10);
+        stage_strtoi(&key, p, &dp, 10);
         if (*dp != '\0' ||
             (stghost = strtok (NULL, " ")) == NULL) {
           errflg++;
@@ -300,7 +300,7 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
-    if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
+    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
   if (c == 0 && path != NULL && repbuf[0] != '\0') {
@@ -375,12 +375,12 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
   if (strlen (stageid) <= CA_MAXSTGRIDLEN) {
     strcpy (Zparm, stageid);
     if ((p = strtok (Zparm, ".")) != NULL) {
-      reqid = strtol (p, &dp, 10);
+      stage_strtoi(&reqid, p, &dp, 10);
       if (*dp != '\0' || reqid <= 0 ||
           (p = strtok (NULL, "@")) == NULL) {
         errflg++;
       } else {
-        key = strtol (p, &dp, 10);
+        stage_strtoi(&key, p, &dp, 10);
         if (*dp != '\0' ||
             (stghost = strtok (NULL, " ")) == NULL) {
           errflg++;
@@ -532,7 +532,7 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
-    if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
+    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
   if (c == 0 && path != NULL && repbuf[0] != '\0') {
@@ -647,7 +647,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
-    if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
+    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
   free(sendbuf);
@@ -772,7 +772,7 @@ int DLL_DECL stage_updc_error(stghost,copyrc,hsmstruct)
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
-    if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
+    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
   free(sendbuf);
@@ -886,7 +886,7 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
-    if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
+    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
   free(sendbuf);
