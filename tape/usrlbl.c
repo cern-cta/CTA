@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.9 $ $Date: 2001/01/31 08:32:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.10 $ $Date: 2001/07/02 13:11:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	usrlbl - user callable routines to read/write header and trailer labels */
@@ -45,7 +45,7 @@ char	*path;
 			return (0);
 		else
 			return (c);
-	if (dlip->lblcode == NL || dlip->lblcode == 'b') {	/* tape is unlabelled */
+	if (dlip->lblcode == NL || dlip->lblcode == BLP) {	/* tape is unlabelled */
 		if (c > 1) {	/* last file on this tape */
 			if ((c = skiptpfb (tapefd, path, 1)) < 0) return (c);
 			return (ETEOV);
