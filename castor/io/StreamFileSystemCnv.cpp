@@ -137,7 +137,7 @@ void castor::io::StreamFileSystemCnv::marshalObject(castor::IObject* object,
     dynamic_cast<castor::stager::FileSystem*>(object);
   if (0 == obj) {
     // Case of a null pointer
-    address->stream() << castor::OBJ_Ptr << 0;
+    address->stream() << castor::OBJ_Ptr << ((unsigned int)0);
   } else if (alreadyDone.find(obj) == alreadyDone.end()) {
     // Case of a pointer to a non streamed object
     createRep(address, obj, true);
@@ -164,22 +164,25 @@ castor::IObject* castor::io::StreamFileSystemCnv::unmarshalObject(castor::io::bi
                                                                   castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
-  castor::IObject* object = cnvSvc()->createObj(&ad);
+  castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
   // Fill object with associations
   castor::stager::FileSystem* obj = 
     dynamic_cast<castor::stager::FileSystem*>(object);
+  ad.setObjType(castor::OBJ_INVALID);
   IObject* objDiskPool = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setDiskPool(dynamic_cast<castor::stager::DiskPool*>(objDiskPool));
   unsigned int copiesNb;
   ad.stream() >> copiesNb;
   for (unsigned int i = 0; i < copiesNb; i++) {
+    ad.setObjType(castor::OBJ_INVALID);
     IObject* objCopies = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addCopies(dynamic_cast<castor::stager::DiskCopy*>(objCopies));
   }
+  ad.setObjType(castor::OBJ_INVALID);
   IObject* objDiskserver = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setDiskserver(dynamic_cast<castor::stager::DiskServer*>(objDiskserver));
-return object;
+  return object;
 }
 

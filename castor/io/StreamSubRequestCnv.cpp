@@ -149,7 +149,7 @@ void castor::io::StreamSubRequestCnv::marshalObject(castor::IObject* object,
     dynamic_cast<castor::stager::SubRequest*>(object);
   if (0 == obj) {
     // Case of a null pointer
-    address->stream() << castor::OBJ_Ptr << 0;
+    address->stream() << castor::OBJ_Ptr << ((unsigned int)0);
   } else if (alreadyDone.find(obj) == alreadyDone.end()) {
     // Case of a pointer to a non streamed object
     createRep(address, obj, true);
@@ -172,20 +172,24 @@ castor::IObject* castor::io::StreamSubRequestCnv::unmarshalObject(castor::io::bi
                                                                   castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
-  castor::IObject* object = cnvSvc()->createObj(&ad);
+  castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
   // Fill object with associations
   castor::stager::SubRequest* obj = 
     dynamic_cast<castor::stager::SubRequest*>(object);
+  ad.setObjType(castor::OBJ_INVALID);
   IObject* objDiskcopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setDiskcopy(dynamic_cast<castor::stager::DiskCopy*>(objDiskcopy));
+  ad.setObjType(castor::OBJ_INVALID);
   IObject* objCastorFile = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setCastorFile(dynamic_cast<castor::stager::CastorFile*>(objCastorFile));
+  ad.setObjType(castor::OBJ_INVALID);
   IObject* objParent = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setParent(dynamic_cast<castor::stager::SubRequest*>(objParent));
+  ad.setObjType(castor::OBJ_INVALID);
   IObject* objRequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setRequest(dynamic_cast<castor::stager::Request*>(objRequest));
-return object;
+  return object;
 }
 

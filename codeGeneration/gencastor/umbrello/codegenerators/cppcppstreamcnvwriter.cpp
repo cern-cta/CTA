@@ -250,7 +250,7 @@ void CppCppStreamCnvWriter::writeMarshal() {
   *m_stream << getIndent()
             << "// Case of a null pointer"
             << endl << getIndent()
-            << "address->stream() << castor::OBJ_Ptr << 0;"
+            << "address->stream() << castor::OBJ_Ptr << ((unsigned int)0);"
             << endl;
   m_indent--;
   *m_stream << getIndent()
@@ -358,7 +358,7 @@ void CppCppStreamCnvWriter::writeUnmarshal() {
             << fixTypeName("IObject*",
                            "castor",
                            m_classInfo->packageName)
-            << " object = cnvSvc()->createObj(&ad);"
+            << " object = createObj(&ad);"
             << endl;
   // Add new object to the list of newly created objects
   *m_stream << getIndent() << "// Mark object as created"
@@ -389,7 +389,10 @@ void CppCppStreamCnvWriter::writeUnmarshal() {
     if (as->type.multiRemote == MULT_ONE &&
         !isEnum(as->remotePart.typeName)) {
       fixTypeName("StreamCnvSvc", "castor::io", m_classInfo->packageName);
+      addInclude("\"castor/Constants.hpp\"");
       *m_stream << getIndent()
+                << "ad.setObjType(castor::OBJ_INVALID);"
+                << endl << getIndent()
                 << "IObject* obj"
                 << capitalizeFirstLetter(as->remotePart.name)
                 << " = cnvSvc()->unmarshalObject(ad, newlyCreated);"
@@ -412,8 +415,11 @@ void CppCppStreamCnvWriter::writeUnmarshal() {
                 << "for (unsigned int i = 0; i < "
                 << as->remotePart.name << "Nb; i++) {" << endl;
       m_indent++;
+      addInclude("\"castor/Constants.hpp\"");
       fixTypeName("StreamCnvSvc", "castor::io", m_classInfo->packageName);
       *m_stream << getIndent()
+                << "ad.setObjType(castor::OBJ_INVALID);"
+                << endl << getIndent()
                 << "IObject* obj"
                 << capitalizeFirstLetter(as->remotePart.name)
                 << " = cnvSvc()->unmarshalObject(ad, newlyCreated);"
@@ -431,7 +437,7 @@ void CppCppStreamCnvWriter::writeUnmarshal() {
       *m_stream << getIndent() << "}" << endl;
     }
   }
+  *m_stream << getIndent() << "return object;" << endl;
   m_indent--;
-  *m_stream << getIndent() << "return object;" << endl
-            << getIndent() << "}" << endl << endl;
+  *m_stream << getIndent() << "}" << endl << endl;
 }

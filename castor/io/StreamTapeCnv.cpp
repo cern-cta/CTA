@@ -153,7 +153,7 @@ void castor::io::StreamTapeCnv::marshalObject(castor::IObject* object,
     dynamic_cast<castor::stager::Tape*>(object);
   if (0 == obj) {
     // Case of a null pointer
-    address->stream() << castor::OBJ_Ptr << 0;
+    address->stream() << castor::OBJ_Ptr << ((unsigned int)0);
   } else if (alreadyDone.find(obj) == alreadyDone.end()) {
     // Case of a pointer to a non streamed object
     createRep(address, obj, true);
@@ -179,20 +179,22 @@ castor::IObject* castor::io::StreamTapeCnv::unmarshalObject(castor::io::biniostr
                                                             castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
-  castor::IObject* object = cnvSvc()->createObj(&ad);
+  castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
   // Fill object with associations
   castor::stager::Tape* obj = 
     dynamic_cast<castor::stager::Tape*>(object);
+  ad.setObjType(castor::OBJ_INVALID);
   IObject* objStream = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setStream(dynamic_cast<castor::stager::Stream*>(objStream));
   unsigned int segmentsNb;
   ad.stream() >> segmentsNb;
   for (unsigned int i = 0; i < segmentsNb; i++) {
+    ad.setObjType(castor::OBJ_INVALID);
     IObject* objSegments = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addSegments(dynamic_cast<castor::stager::Segment*>(objSegments));
   }
-return object;
+  return object;
 }
 

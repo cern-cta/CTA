@@ -125,7 +125,7 @@ void castor::io::StreamClientCnv::marshalObject(castor::IObject* object,
     dynamic_cast<castor::rh::Client*>(object);
   if (0 == obj) {
     // Case of a null pointer
-    address->stream() << castor::OBJ_Ptr << 0;
+    address->stream() << castor::OBJ_Ptr << ((unsigned int)0);
   } else if (alreadyDone.find(obj) == alreadyDone.end()) {
     // Case of a pointer to a non streamed object
     createRep(address, obj, true);
@@ -145,14 +145,15 @@ castor::IObject* castor::io::StreamClientCnv::unmarshalObject(castor::io::binios
                                                               castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
-  castor::IObject* object = cnvSvc()->createObj(&ad);
+  castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
   // Fill object with associations
   castor::rh::Client* obj = 
     dynamic_cast<castor::rh::Client*>(object);
+  ad.setObjType(castor::OBJ_INVALID);
   IObject* objRequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setRequest(dynamic_cast<castor::stager::Request*>(objRequest));
-return object;
+  return object;
 }
 

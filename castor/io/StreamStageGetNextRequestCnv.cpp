@@ -158,7 +158,7 @@ void castor::io::StreamStageGetNextRequestCnv::marshalObject(castor::IObject* ob
     dynamic_cast<castor::stager::StageGetNextRequest*>(object);
   if (0 == obj) {
     // Case of a null pointer
-    address->stream() << castor::OBJ_Ptr << 0;
+    address->stream() << castor::OBJ_Ptr << ((unsigned int)0);
   } else if (alreadyDone.find(obj) == alreadyDone.end()) {
     // Case of a pointer to a non streamed object
     createRep(address, obj, true);
@@ -186,24 +186,28 @@ castor::IObject* castor::io::StreamStageGetNextRequestCnv::unmarshalObject(casto
                                                                            castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
-  castor::IObject* object = cnvSvc()->createObj(&ad);
+  castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
   // Fill object with associations
   castor::stager::StageGetNextRequest* obj = 
     dynamic_cast<castor::stager::StageGetNextRequest*>(object);
+  ad.setObjType(castor::OBJ_INVALID);
   IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));
   unsigned int subRequestsNb;
   ad.stream() >> subRequestsNb;
   for (unsigned int i = 0; i < subRequestsNb; i++) {
+    ad.setObjType(castor::OBJ_INVALID);
     IObject* objSubRequests = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addSubRequests(dynamic_cast<castor::stager::SubRequest*>(objSubRequests));
   }
+  ad.setObjType(castor::OBJ_INVALID);
   IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setClient(dynamic_cast<castor::IClient*>(objClient));
+  ad.setObjType(castor::OBJ_INVALID);
   IObject* objParent = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setParent(dynamic_cast<castor::stager::Request*>(objParent));
-return object;
+  return object;
 }
 

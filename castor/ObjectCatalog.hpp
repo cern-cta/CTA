@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ObjectCatalog.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/05 13:37:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ObjectCatalog.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/29 15:25:31 $ $Author: sponcec3 $
  *
  * 
  *
@@ -41,7 +41,7 @@ namespace castor {
    * The ids are automatically generated on insertion, starting
    * from 1 and going up.
    */
-  class ObjectCatalog : public std::map<u_signed64, castor::IObject*> {
+  class ObjectCatalog : public std::map<unsigned int, castor::IObject*> {
     
   public:
 

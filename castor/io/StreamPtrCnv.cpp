@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamPtrCnv.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/10/14 16:34:46 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamPtrCnv.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/10/29 15:25:32 $ $Author: sponcec3 $
  *
  * 
  *
@@ -105,11 +105,15 @@ void castor::io::StreamPtrCnv::marshalObject(castor::IObject* object,
                                              castor::io::StreamAddress* address,
                                              castor::ObjectSet& alreadyDone)
   throw (castor::exception::Exception) {
-  // This is normally never called, so just raise an exception
-  castor::exception::Internal ex;
-  ex.getMessage() << "castor::io::StreamPtrCnv::marshalObject "
-                  << "should never be called";
-  throw ex;
+  if (0 != object) {
+    // This is normally never called, so just raise an exception
+    castor::exception::Internal ex;
+    ex.getMessage() << "castor::io::StreamPtrCnv::marshalObject "
+                    << "should only be called with null objects";
+    throw ex;
+  }
+  // marshall null id
+  address->stream() << castor::OBJ_Ptr << ((unsigned int)0);
 }
 
 //------------------------------------------------------------------------------
@@ -121,7 +125,7 @@ castor::IObject* castor::io::StreamPtrCnv::unmarshalObject(castor::io::biniostre
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
   // Just retrieve the object from the newlyCreated catalog
   // using the id stored in the stream
-  u_signed64 id;
+  unsigned int id;
   ad.stream() >> id;
   // Case of a null pointer
   if (id == 0) return 0;

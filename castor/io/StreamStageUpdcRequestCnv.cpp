@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageUpdcRequestCnv.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/10/29 10:03:50 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageUpdcRequestCnv.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/10/29 15:25:32 $ $Author: sponcec3 $
  *
  * 
  *
@@ -158,7 +158,7 @@ void castor::io::StreamStageUpdcRequestCnv::marshalObject(castor::IObject* objec
     dynamic_cast<castor::stager::StageUpdcRequest*>(object);
   if (0 == obj) {
     // Case of a null pointer
-    address->stream() << castor::OBJ_Ptr << 0;
+    address->stream() << castor::OBJ_Ptr << ((unsigned int)0);
   } else if (alreadyDone.find(obj) == alreadyDone.end()) {
     // Case of a pointer to a non streamed object
     createRep(address, obj, true);
@@ -191,7 +191,7 @@ castor::IObject* castor::io::StreamStageUpdcRequestCnv::unmarshalObject(castor::
                                                                         castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
-  castor::IObject* object = cnvSvc()->createObj(&ad);
+  castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
   // Fill object with associations
@@ -200,19 +200,23 @@ castor::IObject* castor::io::StreamStageUpdcRequestCnv::unmarshalObject(castor::
   unsigned int reqidsNb;
   ad.stream() >> reqidsNb;
   for (unsigned int i = 0; i < reqidsNb; i++) {
+    ad.setObjType(castor::OBJ_INVALID);
     IObject* objReqids = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addReqids(dynamic_cast<castor::stager::ReqId*>(objReqids));
   }
+  ad.setObjType(castor::OBJ_INVALID);
   IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));
   unsigned int subRequestsNb;
   ad.stream() >> subRequestsNb;
   for (unsigned int i = 0; i < subRequestsNb; i++) {
+    ad.setObjType(castor::OBJ_INVALID);
     IObject* objSubRequests = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addSubRequests(dynamic_cast<castor::stager::SubRequest*>(objSubRequests));
   }
+  ad.setObjType(castor::OBJ_INVALID);
   IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setClient(dynamic_cast<castor::IClient*>(objClient));
-return object;
+  return object;
 }
 

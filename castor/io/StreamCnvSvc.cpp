@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCnvSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/14 16:34:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCnvSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/29 15:25:32 $ $Author: sponcec3 $
  *
  *
  *
@@ -114,16 +114,20 @@ void castor::io::StreamCnvSvc::marshalObject(castor::IObject* object,
                                              castor::io::StreamAddress* address,
                                              castor::ObjectSet& alreadyDone)
   throw (castor::exception::Exception) {
-  // If no object, nothing to create
+  // Look for an adapted converter
+  IConverter* conv;
   if (0 != object) {
-    // Look for an adapted converter
     // The converter is always valid if no exception is thrown
-    IConverter* conv = converter(object->type());
-    IStreamConverter* sconv =
-      dynamic_cast<IStreamConverter*>(conv);
-    // convert
-    sconv->marshalObject(object, address, alreadyDone);
+    conv = converter(object->type());
+  } else {
+    // Marshalling a null pointer using PtrConverter
+    conv = converter(castor::OBJ_Ptr);
   }
+  // Get Stream dedicated converter
+  IStreamConverter* sconv =
+    dynamic_cast<IStreamConverter*>(conv);
+  // convert
+  sconv->marshalObject(object, address, alreadyDone);
 }
 
 //------------------------------------------------------------------------------

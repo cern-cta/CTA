@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamReqIdCnv.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/29 10:03:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamReqIdCnv.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/29 15:25:32 $ $Author: sponcec3 $
  *
  * 
  *
@@ -122,7 +122,7 @@ void castor::io::StreamReqIdCnv::marshalObject(castor::IObject* object,
     dynamic_cast<castor::stager::ReqId*>(object);
   if (0 == obj) {
     // Case of a null pointer
-    address->stream() << castor::OBJ_Ptr << 0;
+    address->stream() << castor::OBJ_Ptr << ((unsigned int)0);
   } else if (alreadyDone.find(obj) == alreadyDone.end()) {
     // Case of a pointer to a non streamed object
     createRep(address, obj, true);
@@ -142,14 +142,15 @@ castor::IObject* castor::io::StreamReqIdCnv::unmarshalObject(castor::io::biniost
                                                              castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
-  castor::IObject* object = cnvSvc()->createObj(&ad);
+  castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
   // Fill object with associations
   castor::stager::ReqId* obj = 
     dynamic_cast<castor::stager::ReqId*>(object);
+  ad.setObjType(castor::OBJ_INVALID);
   IObject* objRequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setRequest(dynamic_cast<castor::stager::ReqIdRequest*>(objRequest));
-return object;
+  return object;
 }
 

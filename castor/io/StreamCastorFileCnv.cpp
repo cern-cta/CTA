@@ -134,7 +134,7 @@ void castor::io::StreamCastorFileCnv::marshalObject(castor::IObject* object,
     dynamic_cast<castor::stager::CastorFile*>(object);
   if (0 == obj) {
     // Case of a null pointer
-    address->stream() << castor::OBJ_Ptr << 0;
+    address->stream() << castor::OBJ_Ptr << ((unsigned int)0);
   } else if (alreadyDone.find(obj) == alreadyDone.end()) {
     // Case of a pointer to a non streamed object
     createRep(address, obj, true);
@@ -167,28 +167,32 @@ castor::IObject* castor::io::StreamCastorFileCnv::unmarshalObject(castor::io::bi
                                                                   castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
-  castor::IObject* object = cnvSvc()->createObj(&ad);
+  castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
   // Fill object with associations
   castor::stager::CastorFile* obj = 
     dynamic_cast<castor::stager::CastorFile*>(object);
+  ad.setObjType(castor::OBJ_INVALID);
   IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));
+  ad.setObjType(castor::OBJ_INVALID);
   IObject* objFileClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setFileClass(dynamic_cast<castor::stager::FileClass*>(objFileClass));
   unsigned int diskCopiesNb;
   ad.stream() >> diskCopiesNb;
   for (unsigned int i = 0; i < diskCopiesNb; i++) {
+    ad.setObjType(castor::OBJ_INVALID);
     IObject* objDiskCopies = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addDiskCopies(dynamic_cast<castor::stager::DiskCopy*>(objDiskCopies));
   }
   unsigned int tapeCopiesNb;
   ad.stream() >> tapeCopiesNb;
   for (unsigned int i = 0; i < tapeCopiesNb; i++) {
+    ad.setObjType(castor::OBJ_INVALID);
     IObject* objTapeCopies = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addTapeCopies(dynamic_cast<castor::stager::TapeCopy*>(objTapeCopies));
   }
-return object;
+  return object;
 }
 
