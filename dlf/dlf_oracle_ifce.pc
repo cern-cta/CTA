@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.4 $ $Date: 2004/07/06 12:43:33 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.5 $ $Date: 2004/07/08 11:13:52 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -196,7 +196,7 @@ const char* msg_txt;
 
 	strcpy(func, "dlf_insert_text_entry");
 
-	if (dlf_get_facility_no (dbfd, fac_name, &fac_no, &dblistptr) < 0)
+	if (dlf_get_facility_no (dbfd, fac_name, &fac_no, &dblistptr) != 0)
 		return (-1);
 
 	EXEC SQL INSERT INTO dlf_msg_texts (fac_no, msg_no, msg_text)
