@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.153 2001/09/22 07:57:27 jdurand Exp $
+ * $Id: poolmgr.c,v 1.154 2001/09/23 07:43:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.153 $ $Date: 2001/09/22 07:57:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.154 $ $Date: 2001/09/23 07:43:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3595,7 +3595,7 @@ int migpoolfiles(pool_p)
               seteuid(tppool_vs_stcp[j].euid);
               stage_sleep(1);
               goto stagewrt_hsm_retry;
-            } else if ((serrno == SEINTERNAL) || (serrno == ESTMEM) || (serrno == EINVAL)) {
+            } else if ((serrno == SEINTERNAL) || (serrno == ESTMEM) || (serrno == EINVAL) || (serrno == ESTKILLED)) {
               break;
             }
           } else {
