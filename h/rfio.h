@@ -1,7 +1,10 @@
 /*
- * $Id: rfio.h,v 1.2 1999/07/20 20:07:22 jdurand Exp $
+ * $Id: rfio.h,v 1.3 1999/12/09 09:49:47 baran Exp $
  *
  * $Log: rfio.h,v $
+ * Revision 1.3  1999/12/09 09:49:47  baran
+ * Included rfio_errno.h.  Removed declaration of rfio_errno.
+ *
  * Revision 1.2  1999/07/20 20:07:22  jdurand
  * Added -lnsl for Linux
  *
@@ -48,7 +51,7 @@
  * Remote file I/O C routines
  */
 
-extern int      rfio_errno;     /* global rfio error number             */
+/* extern int      rfio_errno;     /* global rfio error number             */
 extern int      rfio_fclose();  /* RFIO's fclose()                      */
 extern int	rfio_fflush();	/* RFIO's fflush()			*/
 extern int      rfio_fwrite();  /* RFIO's fwrite()                      */
@@ -136,10 +139,6 @@ struct rfstatfs {
  */
 #define RQSTSIZE	3*(LONGSIZE+WORDSIZE)
 
-/*
- * Declaration of a rfio buffer defined in open.c
- */
-extern char rfio_buf[] ;
 
 struct iobuf {                  /* I/O buffer data structure            */
 	char    *base;          /* I/O buffer base pointer              */
@@ -287,6 +286,7 @@ extern RDIR *   rfio_opendir(); /* RFIO's opendir()                     */
 #include <marshall.h>           /* marshalling macros and definitions   */
 #endif /* RFIO_KERNEL && HPSS */
 #include <serrno.h>             /* special error numbers                */
+#include <rfio_errno.h>
 #include <trace.h>              /* tracing definitions                  */
 
 #if defined(_AIX) && defined(_IBMR2)
@@ -457,6 +457,7 @@ extern char *lun2fn();          /* resolve lun to filename translation  */
 #else   /* !RFIO_KERNEL */
 
 extern FILE *   rfio_fopen();   /* RFIO's fopen()                       */
+
 #if !defined(_WIN32) & !(defined(__hpux) & !defined(_INCLUDE_POSIX_SOURCE))
 extern DIR *    rfio_opendir(); /* RFIO's opendir()                     */
 extern struct dirent * rfio_readdir();
