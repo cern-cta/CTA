@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdcRequest.h,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/05 13:37:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdcRequest.h,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/07 14:34:03 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,6 +29,7 @@
 
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
+struct C_int_t;
 struct Cstager_ReqIdRequest_t;
 struct Cstager_StageUpdcRequest_t;
 
@@ -66,7 +67,7 @@ int Cstager_StageUpdcRequest_print(struct Cstager_StageUpdcRequest_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_StageUpdcRequest_TYPE(int* ret);
+int Cstager_StageUpdcRequest_TYPE(struct C_int_t* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -87,6 +88,6 @@ int Cstager_StageUpdcRequest_id(struct Cstager_StageUpdcRequest_t* instance,
  * Gets the type of the object
  */
 int Cstager_StageUpdcRequest_type(struct Cstager_StageUpdcRequest_t* instance,
-                                  int* ret);
+                                  struct C_int_t* ret);
 
 #endif // CASTOR_STAGER_STAGEUPDCREQUEST_H

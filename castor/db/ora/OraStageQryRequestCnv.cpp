@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageQryRequestCnv.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/07 09:46:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageQryRequestCnv.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/07 14:33:59 $ $Author: sponcec3 $
  *
  * 
  *
@@ -505,7 +505,8 @@ void castor::db::ora::OraStageQryRequestCnv::deleteRep(castor::IAddress* address
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraStageQryRequestCnv::createObj(castor::IAddress* address,
-                                                                   castor::ObjectCatalog& newlyCreated)
+                                                                   castor::ObjectCatalog& newlyCreated,
+                                                                   bool recursive)
   throw (castor::exception::Exception) {
   castor::db::DbAddress* ad = 
     dynamic_cast<castor::db::DbAddress*>(address);
@@ -541,22 +542,26 @@ castor::IObject* castor::db::ora::OraStageQryRequestCnv::createObj(castor::IAddr
     object->setProjectName(rset->getString(8));
     object->setId((unsigned long long)rset->getDouble(9));
     newlyCreated[object->id()] = object;
-    u_signed64 clientId = (unsigned long long)rset->getDouble(10);
-    IObject* objClient = cnvSvc()->getObjFromId(clientId, newlyCreated);
-    object->setClient(dynamic_cast<castor::IClient*>(objClient));
-    object->setStatus((enum castor::stager::RequestStatusCodes)rset->getInt(11));
+    object->setStatus((enum castor::stager::RequestStatusCodes)rset->getInt(10));
+    if (recursive) {
+      u_signed64 clientId = (unsigned long long)rset->getDouble(11);
+      IObject* objClient = cnvSvc()->getObjFromId(clientId, newlyCreated);
+      object->setClient(dynamic_cast<castor::IClient*>(objClient));
+    }
     m_selectStatement->closeResultSet(rset);
-    // Get ids of objs to retrieve
-    if (0 == m_Request2SubRequestStatement) {
-      m_Request2SubRequestStatement = createStatement(s_Request2SubRequestStatementString);
+    if (recursive) {
+      // Get ids of objs to retrieve
+      if (0 == m_Request2SubRequestStatement) {
+        m_Request2SubRequestStatement = createStatement(s_Request2SubRequestStatementString);
+      }
+      m_Request2SubRequestStatement->setDouble(1, ad->id());
+      rset = m_Request2SubRequestStatement->executeQuery();
+      while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+        IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), newlyCreated);
+        object->addSubRequests(dynamic_cast<castor::stager::SubRequest*>(obj));
+      }
+      m_Request2SubRequestStatement->closeResultSet(rset);
     }
-    m_Request2SubRequestStatement->setDouble(1, ad->id());
-    rset = m_Request2SubRequestStatement->executeQuery();
-    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), newlyCreated);
-      object->addSubRequests(dynamic_cast<castor::stager::SubRequest*>(obj));
-    }
-    m_Request2SubRequestStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
     try {

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCnvSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/05 16:14:00 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCnvSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/07 14:34:01 $ $Author: sponcec3 $
  *
  * 
  *
@@ -80,12 +80,18 @@ namespace castor {
        * last user call to createObj, indexed by id. If a reference to one if
        * these id is found, the existing associated object should be used.
        * This trick basically allows circular dependencies.
+       * @param recursive if set to true, the objects refered
+       * by the returned object will be created too and recursively.
+       * In case the object was in the newlyCreated catalog, it will
+       * not be touched and may thus contain references.
        * @return the C++ object created from its reprensentation
        * or 0 if unsuccessful. Note that the caller is responsible
        * for the deallocation of the newly created object
        * @exception Exception throws an Exception in cas of error
        */
-      IObject* createObj (IAddress* address, ObjectCatalog& newlyCreated)
+      IObject* createObj (IAddress* address,
+                          ObjectCatalog& newlyCreated,
+                          bool recursive)
         throw (castor::exception::Exception);
       
     };

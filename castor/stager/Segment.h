@@ -31,6 +31,7 @@
 #include "castor/stager/SegmentStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
+struct C_int_t;
 struct Cstager_Segment_t;
 struct Cstager_TapeCopy_t;
 struct Cstager_Tape_t;
@@ -72,7 +73,7 @@ int Cstager_Segment_print(struct Cstager_Segment_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_Segment_TYPE(int* ret);
+int Cstager_Segment_TYPE(struct C_int_t* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -93,7 +94,7 @@ int Cstager_Segment_id(struct Cstager_Segment_t* instance,
  * Gets the type of the object
  */
 int Cstager_Segment_type(struct Cstager_Segment_t* instance,
-                         int* ret);
+                         struct C_int_t* ret);
 
 /**
  * Get the value of blockid
@@ -109,13 +110,13 @@ int Cstager_Segment_setBlockid(struct Cstager_Segment_t* instance, const unsigne
  * Get the value of fseq
  * Tape media file sequence number (if no locate)
  */
-int Cstager_Segment_fseq(struct Cstager_Segment_t* instance, int* var);
+int Cstager_Segment_fseq(struct Cstager_Segment_t* instance, const struct C_int_t** var);
 
 /**
  * Set the value of fseq
  * Tape media file sequence number (if no locate)
  */
-int Cstager_Segment_setFseq(struct Cstager_Segment_t* instance, int new_var);
+int Cstager_Segment_setFseq(struct Cstager_Segment_t* instance, const struct C_int_t* new_var);
 
 /**
  * Get the value of offset
@@ -195,23 +196,23 @@ int Cstager_Segment_setErrMsgTxt(struct Cstager_Segment_t* instance, const char*
  * Get the value of errorCode
  * RTCOPY serrno if status == SEGMENT_FAILED
  */
-int Cstager_Segment_errorCode(struct Cstager_Segment_t* instance, int* var);
+int Cstager_Segment_errorCode(struct Cstager_Segment_t* instance, struct C_int_t* var);
 
 /**
  * Set the value of errorCode
  * RTCOPY serrno if status == SEGMENT_FAILED
  */
-int Cstager_Segment_setErrorCode(struct Cstager_Segment_t* instance, int new_var);
+int Cstager_Segment_setErrorCode(struct Cstager_Segment_t* instance, struct C_int_t new_var);
 
 /**
  * Get the value of severity
  */
-int Cstager_Segment_severity(struct Cstager_Segment_t* instance, int* var);
+int Cstager_Segment_severity(struct Cstager_Segment_t* instance, struct C_int_t* var);
 
 /**
  * Set the value of severity
  */
-int Cstager_Segment_setSeverity(struct Cstager_Segment_t* instance, int new_var);
+int Cstager_Segment_setSeverity(struct Cstager_Segment_t* instance, struct C_int_t new_var);
 
 /**
  * Get the value of tape

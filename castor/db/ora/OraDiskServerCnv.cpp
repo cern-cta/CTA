@@ -390,7 +390,8 @@ void castor::db::ora::OraDiskServerCnv::deleteRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraDiskServerCnv::createObj(castor::IAddress* address,
-                                                              castor::ObjectCatalog& newlyCreated)
+                                                              castor::ObjectCatalog& newlyCreated,
+                                                              bool recursive)
   throw (castor::exception::Exception) {
   castor::db::DbAddress* ad = 
     dynamic_cast<castor::db::DbAddress*>(address);
@@ -421,17 +422,19 @@ castor::IObject* castor::db::ora::OraDiskServerCnv::createObj(castor::IAddress* 
     newlyCreated[object->id()] = object;
     object->setStatus((enum castor::stager::DiskServerStatusCode)rset->getInt(3));
     m_selectStatement->closeResultSet(rset);
-    // Get ids of objs to retrieve
-    if (0 == m_DiskServer2FileSystemStatement) {
-      m_DiskServer2FileSystemStatement = createStatement(s_DiskServer2FileSystemStatementString);
+    if (recursive) {
+      // Get ids of objs to retrieve
+      if (0 == m_DiskServer2FileSystemStatement) {
+        m_DiskServer2FileSystemStatement = createStatement(s_DiskServer2FileSystemStatementString);
+      }
+      m_DiskServer2FileSystemStatement->setDouble(1, ad->id());
+      rset = m_DiskServer2FileSystemStatement->executeQuery();
+      while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+        IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), newlyCreated);
+        object->addFileSystems(dynamic_cast<castor::stager::FileSystem*>(obj));
+      }
+      m_DiskServer2FileSystemStatement->closeResultSet(rset);
     }
-    m_DiskServer2FileSystemStatement->setDouble(1, ad->id());
-    rset = m_DiskServer2FileSystemStatement->executeQuery();
-    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), newlyCreated);
-      object->addFileSystems(dynamic_cast<castor::stager::FileSystem*>(obj));
-    }
-    m_DiskServer2FileSystemStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
     try {

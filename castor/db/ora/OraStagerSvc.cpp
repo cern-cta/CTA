@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/10/05 13:37:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/10/07 14:34:00 $ $Author: sponcec3 $
  *
  *
  *
@@ -31,12 +31,14 @@
 #include "castor/SvcFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/stager/Tape.hpp"
+#include "castor/stager/Stream.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/db/ora/OraStagerSvc.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
+#include "castor/stager/StreamStatusCodes.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/db/DbAddress.hpp"
@@ -57,6 +59,10 @@ const castor::IFactory<castor::IService>& OraStagerSvcFactory = s_factoryOraStag
 const std::string castor::db::ora::OraStagerSvc::s_tapesToDoStatementString =
   "SELECT id FROM rh_Tape WHERE status = :1";
 
+/// SQL statement for streamsToDo
+const std::string castor::db::ora::OraStagerSvc::s_streamsToDoStatementString =
+  "SELECT id FROM rh_Stream WHERE status = :1";
+
 /// SQL statement for selectTape
 const std::string castor::db::ora::OraStagerSvc::s_selectTapeStatementString =
   "SELECT id FROM rh_Tape WHERE vid = :1 AND side = :2 AND tpmode = :3 FOR UPDATE";
@@ -66,7 +72,8 @@ const std::string castor::db::ora::OraStagerSvc::s_selectTapeStatementString =
 // -----------------------------------------------------------------------
 castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   BaseSvc(name), OraBaseObj(),
-  m_tapesToDoStatement(0), m_selectTapeStatement(0) {
+  m_tapesToDoStatement(0), m_streamsToDoStatement(0),
+  m_selectTapeStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -98,10 +105,12 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   try {
     deleteStatement(m_tapesToDoStatement);
+    deleteStatement(m_streamsToDoStatement);
     deleteStatement(m_selectTapeStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;
+  m_streamsToDoStatement = 0;
   m_selectTapeStatement = 0;
 }
 
@@ -194,7 +203,7 @@ castor::db::ora::OraStagerSvc::tapesToDo()
   try {
     oracle::occi::ResultSet *rset = m_tapesToDoStatement->executeQuery();
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), done);
+      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), done, false);
       castor::stager::Tape* tape =
         dynamic_cast<castor::stager::Tape*>(obj);
       if (0 == tape) {
@@ -225,6 +234,83 @@ castor::db::ora::OraStagerSvc::tapesToDo()
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error in tapesToDo while retrieving list of tapes."
+      << std::endl << e.what();
+    throw ex;
+  }
+  // Commit all status changes
+  cnvSvc()->getConnection()->commit();
+  return result;
+}
+
+
+// -----------------------------------------------------------------------
+// streamsToDo
+// -----------------------------------------------------------------------
+std::vector<castor::stager::Stream*>
+castor::db::ora::OraStagerSvc::streamsToDo()
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_streamsToDoStatement) {
+    try {
+      m_streamsToDoStatement = cnvSvc()->getConnection()->createStatement();
+      m_streamsToDoStatement->setSQL(s_streamsToDoStatementString);
+      m_streamsToDoStatement->setInt(1, castor::stager::STREAM_PENDING);
+    } catch (oracle::occi::SQLException e) {
+      try {
+        // Always try to rollback
+        cnvSvc()->getConnection()->rollback();
+        if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+          // We've obviously lost the ORACLE connection here
+          cnvSvc()->dropConnection();
+        }
+      } catch (oracle::occi::SQLException e) {
+        // rollback failed, let's drop the connection for security
+        cnvSvc()->dropConnection();
+      }
+      m_streamsToDoStatement = 0;
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "Error in creating streamsToDo statement."
+        << std::endl << e.what();
+      throw ex;
+    }
+  }
+  std::vector<castor::stager::Stream*> result;
+  castor::ObjectCatalog done;
+  try {
+    oracle::occi::ResultSet *rset = m_streamsToDoStatement->executeQuery();
+    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), done, false);
+      castor::stager::Stream* stream =
+        dynamic_cast<castor::stager::Stream*>(obj);
+      if (0 == stream) {
+        castor::exception::Internal ex;
+        ex.getMessage()
+          << "In method OraStagerSvc::streamsToDo, got a non stream object";
+        delete obj;
+        throw ex;
+      }
+      // Change stream status
+      stream->setStatus(castor::stager::STREAM_WAITDRIVE);
+      castor::ObjectSet alreadyDone;
+      cnvSvc()->updateRep(0, stream, alreadyDone, false, false);
+      result.push_back(stream);
+    }
+  } catch (oracle::occi::SQLException e) {
+    try {
+      // Always try to rollback
+      cnvSvc()->getConnection()->rollback();
+      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+        // We've obviously lost the ORACLE connection here
+        cnvSvc()->dropConnection();
+      }
+    } catch (oracle::occi::SQLException e) {
+      // rollback failed, let's drop the connection for security
+      cnvSvc()->dropConnection();
+    }
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error in streamsToDo while retrieving list of streams."
       << std::endl << e.what();
     throw ex;
   }
@@ -267,7 +353,7 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
     }
   }
   // Execute statement and get result
-  u_signed64 id;
+  unsigned long id;
   try {
     m_selectTapeStatement->setString(1, vid);
     m_selectTapeStatement->setInt(2, side);
@@ -283,7 +369,7 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
       castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       castor::ObjectSet objset;
       try {
-        cnvSvc()->createRep(&ad, tape, objset, true, true);
+        cnvSvc()->createRep(&ad, tape, objset, false, true);
         return tape;
       } catch (oracle::occi::SQLException e) {
         delete tape;
@@ -323,7 +409,7 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
   try {
     castor::db::DbAddress ad(id, "OraCnvSvc", castor::SVC_ORACNV);
     castor::ObjectCatalog newlyCreated;
-    castor::IObject* obj = cnvSvc()->createObj(&ad, newlyCreated);
+    castor::IObject* obj = cnvSvc()->createObj(&ad, newlyCreated, false);
     castor::stager::Tape* tape =
       dynamic_cast<castor::stager::Tape*> (obj);
     if (0 == tape) {

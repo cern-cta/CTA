@@ -31,6 +31,8 @@
 #include "castor/stager/SubRequestStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
+struct C_int_t;
+struct C_uns_tigned int;
 struct Cstager_Request_t;
 struct Cstager_SubRequest_t;
 
@@ -68,7 +70,7 @@ int Cstager_SubRequest_print(struct Cstager_SubRequest_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_SubRequest_TYPE(int* ret);
+int Cstager_SubRequest_TYPE(struct C_int_t* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -89,17 +91,17 @@ int Cstager_SubRequest_id(struct Cstager_SubRequest_t* instance,
  * Gets the type of the object
  */
 int Cstager_SubRequest_type(struct Cstager_SubRequest_t* instance,
-                            int* ret);
+                            struct C_int_t* ret);
 
 /**
  * Get the value of retryCounter
  */
-int Cstager_SubRequest_retryCounter(struct Cstager_SubRequest_t* instance, unsigned int* var);
+int Cstager_SubRequest_retryCounter(struct Cstager_SubRequest_t* instance, struct C_uns_tigned int* var);
 
 /**
  * Set the value of retryCounter
  */
-int Cstager_SubRequest_setRetryCounter(struct Cstager_SubRequest_t* instance, unsigned int new_var);
+int Cstager_SubRequest_setRetryCounter(struct Cstager_SubRequest_t* instance, struct C_uns_tigned int new_var);
 
 /**
  * Get the value of fileName

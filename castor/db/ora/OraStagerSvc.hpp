@@ -33,6 +33,7 @@
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Tape.hpp"
+#include "castor/stager/Stream.hpp"
 #include "occi.h"
 
 namespace castor {
@@ -128,6 +129,19 @@ namespace castor {
          */
         virtual std::vector<castor::stager::Tape*> tapesToDo()
           throw (castor::exception::Exception);
+
+        /**
+         * Get an array of the streams to be processed.
+         * This method searches the catalog for all streams that are
+         * in STREAM_PENDING status. It atomically updates the status to
+         * STREAM_WAITDRIVE and returns the corresponding Stream objects.
+         * This means that a subsequent call to this method will not return
+         * the same entries.
+         * @return vector of streams to be processed
+         * @exception in case of error
+         */
+        virtual std::vector<castor::stager::Stream*> streamsToDo()
+          throw (castor::exception::Exception);
         
         /**
          * Retrieves a tape from the database based on its vid,
@@ -154,6 +168,12 @@ namespace castor {
         
         /// SQL statement object for function tapesToDo
         oracle::occi::Statement *m_tapesToDoStatement;
+
+        /// SQL statement for function streamsToDo
+        static const std::string s_streamsToDoStatementString;
+        
+        /// SQL statement object for function streamsToDo
+        oracle::occi::Statement *m_streamsToDoStatement;
 
         /// SQL statement for function selectTape
         static const std::string s_selectTapeStatementString;

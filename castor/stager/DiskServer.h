@@ -31,6 +31,7 @@
 #include "castor/stager/DiskServerStatusCode.h"
 #include "osdep.h"
 struct C_IObject_t;
+struct C_int_t;
 struct Cstager_DiskServer_t;
 struct Cstager_FileSystem_t;
 
@@ -68,7 +69,7 @@ int Cstager_DiskServer_print(struct Cstager_DiskServer_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_DiskServer_TYPE(int* ret);
+int Cstager_DiskServer_TYPE(struct C_int_t* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -89,7 +90,7 @@ int Cstager_DiskServer_id(struct Cstager_DiskServer_t* instance,
  * Gets the type of the object
  */
 int Cstager_DiskServer_type(struct Cstager_DiskServer_t* instance,
-                            int* ret);
+                            struct C_int_t* ret);
 
 /**
  * Get the value of name

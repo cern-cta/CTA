@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/08/19 10:12:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/10/07 14:33:58 $ $Author: sponcec3 $
  *
  *
  *
@@ -208,7 +208,7 @@ castor::IObject* castor::Services::createObj(castor::IAddress* address)
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   ObjectCatalog newlyCreated;
-  return cnvSvc->createObj(address, newlyCreated);
+  return cnvSvc->createObj(address, newlyCreated, true);
 }
 
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/08/19 10:12:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/07 14:33:58 $ $Author: sponcec3 $
  *
  *
  *
@@ -167,10 +167,15 @@ namespace castor {
      * @return the C++ object created from its reprensentation
      * or 0 if unsuccessful. Note that the caller is responsible
      * for the deallocation of the newly created object
+     * @param recursive if set to true, the objects refered
+     * by the returned object will be created too and recursively.
+     * In case the object was in the newlyCreated catalog, it will
+     * not be touched and may thus contain references.
      * @exception Exception throws an Exception in cas of error
      */
     virtual IObject* createObj (IAddress* address,
-                                ObjectCatalog& newlyCreated)
+                                ObjectCatalog& newlyCreated,
+                                bool recursive)
       throw (castor::exception::Exception);
 
     /**

@@ -29,6 +29,7 @@
 
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
+struct C_int_t;
 struct Crh_EndResponse_t;
 struct Crh_Response_t;
 
@@ -67,7 +68,7 @@ int Crh_EndResponse_print(struct Crh_EndResponse_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Crh_EndResponse_TYPE(int* ret);
+int Crh_EndResponse_TYPE(struct C_int_t* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -88,6 +89,6 @@ int Crh_EndResponse_id(struct Crh_EndResponse_t* instance,
  * Gets the type of the object
  */
 int Crh_EndResponse_type(struct Crh_EndResponse_t* instance,
-                         int* ret);
+                         struct C_int_t* ret);
 
 #endif // CASTOR_RH_ENDRESPONSE_H

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/28 12:15:59 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/07 14:34:03 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -39,6 +39,7 @@ namespace castor {
 
     // Forward declaration
     class Tape;
+    class Stream;
     class Segment;
 
     /**
@@ -99,6 +100,19 @@ namespace castor {
        * @exception in case of error
        */
       virtual std::vector<castor::stager::Tape*> tapesToDo()
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Get an array of the streams to be processed.
+       * This method searches the stager catalog for all streams that are
+       * in STREAM_PENDING status. It atomically updates the status to
+       * STREAM_WAITDRIVE and returns the corresponding STREAM objects.
+       * This means that a subsequent call to this method will not return
+       * the same entries.
+       * @return vector of streams to be processed
+       * @exception in case of error
+       */
+      virtual std::vector<castor::stager::Stream*> streamsToDo()
         throw (castor::exception::Exception) = 0;
 
       /**

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageInRequestCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/05 13:37:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageInRequestCnv.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/07 14:34:01 $ $Author: sponcec3 $
  *
  * 
  *
@@ -148,7 +148,8 @@ void castor::io::StreamStageInRequestCnv::deleteRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamStageInRequestCnv::createObj(castor::IAddress* address,
-                                                                castor::ObjectCatalog& newlyCreated)
+                                                                castor::ObjectCatalog& newlyCreated,
+                                                                bool recursive)
   throw (castor::exception::Exception) {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);

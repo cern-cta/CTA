@@ -303,7 +303,8 @@ void castor::db::ora::OraTapePoolCnv::deleteRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraTapePoolCnv::createObj(castor::IAddress* address,
-                                                            castor::ObjectCatalog& newlyCreated)
+                                                            castor::ObjectCatalog& newlyCreated,
+                                                            bool recursive)
   throw (castor::exception::Exception) {
   castor::db::DbAddress* ad = 
     dynamic_cast<castor::db::DbAddress*>(address);

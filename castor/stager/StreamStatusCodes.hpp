@@ -38,8 +38,10 @@ namespace castor {
      * Possible status codes for a Stream
      */
     enum StreamStatusCodes {
-      STREAM_NODRIVE = 0,
-      STREAM_RUNNING = 1
+      STREAM_PENDING = 0,
+      STREAM_WAITDRIVE = 1,
+      STREAM_WAITMOUNT = 2,
+      STREAM_MOUNTED = 3
     }; // end of enum StreamStatusCodes
 
 #ifdef __cplusplus

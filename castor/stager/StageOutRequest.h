@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageOutRequest.h,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/05 13:37:33 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageOutRequest.h,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/07 14:34:03 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,6 +29,7 @@
 
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
+struct C_int_t;
 struct Cstager_Request_t;
 struct Cstager_StageOutRequest_t;
 
@@ -66,7 +67,7 @@ int Cstager_StageOutRequest_print(struct Cstager_StageOutRequest_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_StageOutRequest_TYPE(int* ret);
+int Cstager_StageOutRequest_TYPE(struct C_int_t* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -87,20 +88,20 @@ int Cstager_StageOutRequest_id(struct Cstager_StageOutRequest_t* instance,
  * Gets the type of the object
  */
 int Cstager_StageOutRequest_type(struct Cstager_StageOutRequest_t* instance,
-                                 int* ret);
+                                 struct C_int_t* ret);
 
 /**
  * Get the value of openmode
  * Specifies the permissions to use when creating the internal disk file. Modified
  * by the process's umask (mode & ~umask).
  */
-int Cstager_StageOutRequest_openmode(struct Cstager_StageOutRequest_t* instance, int* var);
+int Cstager_StageOutRequest_openmode(struct Cstager_StageOutRequest_t* instance, struct C_int_t* var);
 
 /**
  * Set the value of openmode
  * Specifies the permissions to use when creating the internal disk file. Modified
  * by the process's umask (mode & ~umask).
  */
-int Cstager_StageOutRequest_setOpenmode(struct Cstager_StageOutRequest_t* instance, int new_var);
+int Cstager_StageOutRequest_setOpenmode(struct Cstager_StageOutRequest_t* instance, struct C_int_t new_var);
 
 #endif // CASTOR_STAGER_STAGEOUTREQUEST_H

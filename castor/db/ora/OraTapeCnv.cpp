@@ -415,7 +415,8 @@ void castor::db::ora::OraTapeCnv::deleteRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraTapeCnv::createObj(castor::IAddress* address,
-                                                        castor::ObjectCatalog& newlyCreated)
+                                                        castor::ObjectCatalog& newlyCreated,
+                                                        bool recursive)
   throw (castor::exception::Exception) {
   castor::db::DbAddress* ad = 
     dynamic_cast<castor::db::DbAddress*>(address);
@@ -452,17 +453,19 @@ castor::IObject* castor::db::ora::OraTapeCnv::createObj(castor::IAddress* addres
     newlyCreated[object->id()] = object;
     object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(9));
     m_selectStatement->closeResultSet(rset);
-    // Get ids of objs to retrieve
-    if (0 == m_Tape2SegmentStatement) {
-      m_Tape2SegmentStatement = createStatement(s_Tape2SegmentStatementString);
+    if (recursive) {
+      // Get ids of objs to retrieve
+      if (0 == m_Tape2SegmentStatement) {
+        m_Tape2SegmentStatement = createStatement(s_Tape2SegmentStatementString);
+      }
+      m_Tape2SegmentStatement->setDouble(1, ad->id());
+      rset = m_Tape2SegmentStatement->executeQuery();
+      while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+        IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), newlyCreated);
+        object->addSegments(dynamic_cast<castor::stager::Segment*>(obj));
+      }
+      m_Tape2SegmentStatement->closeResultSet(rset);
     }
-    m_Tape2SegmentStatement->setDouble(1, ad->id());
-    rset = m_Tape2SegmentStatement->executeQuery();
-    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), newlyCreated);
-      object->addSegments(dynamic_cast<castor::stager::Segment*>(obj));
-    }
-    m_Tape2SegmentStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
     try {

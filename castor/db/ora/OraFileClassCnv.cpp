@@ -312,7 +312,8 @@ void castor::db::ora::OraFileClassCnv::deleteRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraFileClassCnv::createObj(castor::IAddress* address,
-                                                             castor::ObjectCatalog& newlyCreated)
+                                                             castor::ObjectCatalog& newlyCreated,
+                                                             bool recursive)
   throw (castor::exception::Exception) {
   castor::db::DbAddress* ad = 
     dynamic_cast<castor::db::DbAddress*>(address);

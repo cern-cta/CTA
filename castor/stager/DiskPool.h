@@ -30,6 +30,7 @@
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
 struct C_IObject_t;
+struct C_int_t;
 struct Cstager_DiskPool_t;
 
 //------------------------------------------------------------------------------
@@ -67,7 +68,7 @@ int Cstager_DiskPool_print(struct Cstager_DiskPool_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_DiskPool_TYPE(int* ret);
+int Cstager_DiskPool_TYPE(struct C_int_t* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -88,7 +89,7 @@ int Cstager_DiskPool_id(struct Cstager_DiskPool_t* instance,
  * Gets the type of the object
  */
 int Cstager_DiskPool_type(struct Cstager_DiskPool_t* instance,
-                          int* ret);
+                          struct C_int_t* ret);
 
 /**
  * Get the value of name

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/07 09:46:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/07 14:33:59 $ $Author: sponcec3 $
  *
  * 
  *
@@ -438,7 +438,8 @@ void castor::db::ora::OraReqIdCnv::deleteRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraReqIdCnv::createObj(castor::IAddress* address,
-                                                         castor::ObjectCatalog& newlyCreated)
+                                                         castor::ObjectCatalog& newlyCreated,
+                                                         bool recursive)
   throw (castor::exception::Exception) {
   castor::db::DbAddress* ad = 
     dynamic_cast<castor::db::DbAddress*>(address);
@@ -467,9 +468,11 @@ castor::IObject* castor::db::ora::OraReqIdCnv::createObj(castor::IAddress* addre
     object->setValue(rset->getString(1));
     object->setId((unsigned long long)rset->getDouble(2));
     newlyCreated[object->id()] = object;
-    u_signed64 requestId = (unsigned long long)rset->getDouble(3);
-    IObject* objRequest = cnvSvc()->getObjFromId(requestId, newlyCreated);
-    object->setRequest(dynamic_cast<castor::stager::ReqIdRequest*>(objRequest));
+    if (recursive) {
+      u_signed64 requestId = (unsigned long long)rset->getDouble(3);
+      IObject* objRequest = cnvSvc()->getObjFromId(requestId, newlyCreated);
+      object->setRequest(dynamic_cast<castor::stager::ReqIdRequest*>(objRequest));
+    }
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {

@@ -134,7 +134,8 @@ void castor::io::StreamDiskCopyCnv::deleteRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamDiskCopyCnv::createObj(castor::IAddress* address,
-                                                          castor::ObjectCatalog& newlyCreated)
+                                                          castor::ObjectCatalog& newlyCreated,
+                                                          bool recursive)
   throw (castor::exception::Exception) {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);

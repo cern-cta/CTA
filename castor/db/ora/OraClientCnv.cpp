@@ -441,7 +441,8 @@ void castor::db::ora::OraClientCnv::deleteRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraClientCnv::createObj(castor::IAddress* address,
-                                                          castor::ObjectCatalog& newlyCreated)
+                                                          castor::ObjectCatalog& newlyCreated,
+                                                          bool recursive)
   throw (castor::exception::Exception) {
   castor::db::DbAddress* ad = 
     dynamic_cast<castor::db::DbAddress*>(address);
@@ -471,9 +472,11 @@ castor::IObject* castor::db::ora::OraClientCnv::createObj(castor::IAddress* addr
     object->setPort(rset->getInt(2));
     object->setId((unsigned long long)rset->getDouble(3));
     newlyCreated[object->id()] = object;
-    u_signed64 requestId = (unsigned long long)rset->getDouble(4);
-    IObject* objRequest = cnvSvc()->getObjFromId(requestId, newlyCreated);
-    object->setRequest(dynamic_cast<castor::stager::Request*>(objRequest));
+    if (recursive) {
+      u_signed64 requestId = (unsigned long long)rset->getDouble(4);
+      IObject* objRequest = cnvSvc()->getObjFromId(requestId, newlyCreated);
+      object->setRequest(dynamic_cast<castor::stager::Request*>(objRequest));
+    }
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {

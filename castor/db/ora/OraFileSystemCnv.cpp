@@ -503,7 +503,8 @@ void castor::db::ora::OraFileSystemCnv::deleteRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraFileSystemCnv::createObj(castor::IAddress* address,
-                                                              castor::ObjectCatalog& newlyCreated)
+                                                              castor::ObjectCatalog& newlyCreated,
+                                                              bool recursive)
   throw (castor::exception::Exception) {
   castor::db::DbAddress* ad = 
     dynamic_cast<castor::db::DbAddress*>(address);
@@ -536,21 +537,25 @@ castor::IObject* castor::db::ora::OraFileSystemCnv::createObj(castor::IAddress* 
     object->setMountPoint(rset->getString(5));
     object->setId((unsigned long long)rset->getDouble(6));
     newlyCreated[object->id()] = object;
-    u_signed64 diskserverId = (unsigned long long)rset->getDouble(7);
-    IObject* objDiskserver = cnvSvc()->getObjFromId(diskserverId, newlyCreated);
-    object->setDiskserver(dynamic_cast<castor::stager::DiskServer*>(objDiskserver));
+    if (recursive) {
+      u_signed64 diskserverId = (unsigned long long)rset->getDouble(8);
+      IObject* objDiskserver = cnvSvc()->getObjFromId(diskserverId, newlyCreated);
+      object->setDiskserver(dynamic_cast<castor::stager::DiskServer*>(objDiskserver));
+    }
     m_selectStatement->closeResultSet(rset);
-    // Get ids of objs to retrieve
-    if (0 == m_FileSystem2DiskCopyStatement) {
-      m_FileSystem2DiskCopyStatement = createStatement(s_FileSystem2DiskCopyStatementString);
+    if (recursive) {
+      // Get ids of objs to retrieve
+      if (0 == m_FileSystem2DiskCopyStatement) {
+        m_FileSystem2DiskCopyStatement = createStatement(s_FileSystem2DiskCopyStatementString);
+      }
+      m_FileSystem2DiskCopyStatement->setDouble(1, ad->id());
+      rset = m_FileSystem2DiskCopyStatement->executeQuery();
+      while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+        IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), newlyCreated);
+        object->addCopies(dynamic_cast<castor::stager::DiskCopy*>(obj));
+      }
+      m_FileSystem2DiskCopyStatement->closeResultSet(rset);
     }
-    m_FileSystem2DiskCopyStatement->setDouble(1, ad->id());
-    rset = m_FileSystem2DiskCopyStatement->executeQuery();
-    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), newlyCreated);
-      object->addCopies(dynamic_cast<castor::stager::DiskCopy*>(obj));
-    }
-    m_FileSystem2DiskCopyStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
     try {

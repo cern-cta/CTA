@@ -30,6 +30,7 @@
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
 struct C_IObject_t;
+struct C_int_t;
 struct Cstager_CastorFile_t;
 struct Cstager_DiskCopy_t;
 struct Cstager_TapeCopy_t;
@@ -68,7 +69,7 @@ int Cstager_CastorFile_print(struct Cstager_CastorFile_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_CastorFile_TYPE(int* ret);
+int Cstager_CastorFile_TYPE(struct C_int_t* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -89,7 +90,7 @@ int Cstager_CastorFile_id(struct Cstager_CastorFile_t* instance,
  * Gets the type of the object
  */
 int Cstager_CastorFile_type(struct Cstager_CastorFile_t* instance,
-                            int* ret);
+                            struct C_int_t* ret);
 
 /**
  * Get the value of fileId

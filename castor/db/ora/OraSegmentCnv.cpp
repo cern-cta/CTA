@@ -563,7 +563,8 @@ void castor::db::ora::OraSegmentCnv::deleteRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraSegmentCnv::createObj(castor::IAddress* address,
-                                                           castor::ObjectCatalog& newlyCreated)
+                                                           castor::ObjectCatalog& newlyCreated,
+                                                           bool recursive)
   throw (castor::exception::Exception) {
   castor::db::DbAddress* ad = 
     dynamic_cast<castor::db::DbAddress*>(address);
@@ -602,13 +603,15 @@ castor::IObject* castor::db::ora::OraSegmentCnv::createObj(castor::IAddress* add
     object->setSeverity(rset->getInt(11));
     object->setId((unsigned long long)rset->getDouble(12));
     newlyCreated[object->id()] = object;
-    u_signed64 tapeId = (unsigned long long)rset->getDouble(13);
-    IObject* objTape = cnvSvc()->getObjFromId(tapeId, newlyCreated);
-    object->setTape(dynamic_cast<castor::stager::Tape*>(objTape));
-    u_signed64 copyId = (unsigned long long)rset->getDouble(14);
-    IObject* objCopy = cnvSvc()->getObjFromId(copyId, newlyCreated);
-    object->setCopy(dynamic_cast<castor::stager::TapeCopy*>(objCopy));
-    object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(15));
+    object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(13));
+    if (recursive) {
+      u_signed64 tapeId = (unsigned long long)rset->getDouble(13);
+      IObject* objTape = cnvSvc()->getObjFromId(tapeId, newlyCreated);
+      object->setTape(dynamic_cast<castor::stager::Tape*>(objTape));
+      u_signed64 copyId = (unsigned long long)rset->getDouble(14);
+      IObject* objCopy = cnvSvc()->getObjFromId(copyId, newlyCreated);
+      object->setCopy(dynamic_cast<castor::stager::TapeCopy*>(objCopy));
+    }
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {

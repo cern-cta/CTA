@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageOutRequestCnv.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/01 14:26:18 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageOutRequestCnv.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/07 14:34:01 $ $Author: sponcec3 $
  *
  * 
  *
@@ -144,10 +144,15 @@ namespace castor {
        * @return the C++ object created from its reprensentation
        * or 0 if unsuccessful. Note that the caller is responsible
        * for the deallocation of the newly created object
+       * @param recursive if set to true, the objects refered
+       * by the returned object will be created too and recursively.
+       * In case the object was in the newlyCreated catalog, it will
+       * not be touched and may thus contain references.
        * @exception Exception throws an Exception in cas of error
        */
       virtual castor::IObject* createObj(castor::IAddress* address,
-                                         castor::ObjectCatalog& newlyCreated)
+                                         castor::ObjectCatalog& newlyCreated,
+                                         bool recursive)
         throw (castor::exception::Exception);
 
       /**

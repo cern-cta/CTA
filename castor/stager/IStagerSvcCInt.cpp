@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/28 13:41:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/07 14:34:03 $ $Author: sponcec3 $
  *
  * 
  *
@@ -130,6 +130,34 @@ extern "C" {
         malloc((*nbItems) * sizeof(castor::stager::Tape*));
       for (int i = 0; i < *nbItems; i++) {
         (*tapeArray)[i] = result[i];
+      }
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //---------------------------------------------------------------------------
+  // Cstager_IStagerSvc_streamsToDo
+  //---------------------------------------------------------------------------
+  int Cstager_IStagerSvc_streamsToDo(Cstager_IStagerSvc_t* stgSvc,
+                                     castor::stager::Stream*** streamArray,
+                                     int *nbItems) {
+    if (0 == stgSvc || 0 == stgSvc->stgSvc) {
+      errno = EINVAL;
+      stgSvc->errorMsg = "Empty context";
+      return -1;
+    }
+    try {
+      std::vector<castor::stager::Stream*> result =
+        stgSvc->stgSvc->streamsToDo();
+      *nbItems = result.size();
+      *streamArray = (castor::stager::Stream**)
+        malloc((*nbItems) * sizeof(castor::stager::Stream*));
+      for (int i = 0; i < *nbItems; i++) {
+        (*streamArray)[i] = result[i];
       }
     } catch (castor::exception::Exception e) {
       serrno = e.code();

@@ -146,10 +146,15 @@ namespace castor {
          * @return the C++ object created from its reprensentation
          * or 0 if unsuccessful. Note that the caller is responsible
          * for the deallocation of the newly created object
+         * @param recursive if set to true, the objects refered
+         * by the returned object will be created too and recursively.
+         * In case the object was in the newlyCreated catalog, it will
+         * not be touched and may thus contain references.
          * @exception Exception throws an Exception in cas of error
          */
         virtual castor::IObject* createObj(castor::IAddress* address,
-                                           castor::ObjectCatalog& newlyCreated)
+                                           castor::ObjectCatalog& newlyCreated,
+                                           bool recursive)
           throw (castor::exception::Exception);
 
         /**

@@ -31,6 +31,7 @@
 #include "castor/stager/StreamStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
+struct C_int_t;
 struct Cstager_Stream_t;
 
 //------------------------------------------------------------------------------
@@ -67,7 +68,7 @@ int Cstager_Stream_print(struct Cstager_Stream_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_Stream_TYPE(int* ret);
+int Cstager_Stream_TYPE(struct C_int_t* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -88,7 +89,7 @@ int Cstager_Stream_id(struct Cstager_Stream_t* instance,
  * Gets the type of the object
  */
 int Cstager_Stream_type(struct Cstager_Stream_t* instance,
-                        int* ret);
+                        struct C_int_t* ret);
 
 /**
  * Get the value of initialSizeToTransfer

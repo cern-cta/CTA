@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/08/19 10:12:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/07 14:33:58 $ $Author: sponcec3 $
  *
  *
  *
@@ -155,12 +155,14 @@ void castor::BaseCnvSvc::deleteRep(castor::IAddress* address,
 // createObj
 // -----------------------------------------------------------------------
 castor::IObject* castor::BaseCnvSvc::createObj
-(castor::IAddress* address, castor::ObjectCatalog& newlyCreated)
+(castor::IAddress* address,
+ castor::ObjectCatalog& newlyCreated,
+ bool recursive)
   throw (castor::exception::Exception) {
   // Look for an adapted converter
   // The converter is always valid if no exception is thrown
   castor::IConverter* conv = converter(address->objType());
-  return conv->createObj(address, newlyCreated);
+  return conv->createObj(address, newlyCreated, recursive);
 }
 
 // -----------------------------------------------------------------------
@@ -182,7 +184,7 @@ void castor::BaseCnvSvc::deleteRepByAddress (castor::IAddress* address,
                                              bool autocommit)
   throw (castor::exception::Exception) {
   castor::ObjectCatalog alreadyCreated;
-  castor::IObject* obj = createObj(address, alreadyCreated);
+  castor::IObject* obj = createObj(address, alreadyCreated, true);
   address->setObjType(obj->type());
   castor::ObjectSet alreadyDeleted;
   deleteRep(address, obj, alreadyDeleted, autocommit);

@@ -455,7 +455,8 @@ void castor::db::ora::OraCastorFileCnv::deleteRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraCastorFileCnv::createObj(castor::IAddress* address,
-                                                              castor::ObjectCatalog& newlyCreated)
+                                                              castor::ObjectCatalog& newlyCreated,
+                                                              bool recursive)
   throw (castor::exception::Exception) {
   castor::db::DbAddress* ad = 
     dynamic_cast<castor::db::DbAddress*>(address);
@@ -487,27 +488,29 @@ castor::IObject* castor::db::ora::OraCastorFileCnv::createObj(castor::IAddress* 
     object->setId((unsigned long long)rset->getDouble(4));
     newlyCreated[object->id()] = object;
     m_selectStatement->closeResultSet(rset);
-    // Get ids of objs to retrieve
-    if (0 == m_CastorFile2DiskCopyStatement) {
-      m_CastorFile2DiskCopyStatement = createStatement(s_CastorFile2DiskCopyStatementString);
+    if (recursive) {
+      // Get ids of objs to retrieve
+      if (0 == m_CastorFile2DiskCopyStatement) {
+        m_CastorFile2DiskCopyStatement = createStatement(s_CastorFile2DiskCopyStatementString);
+      }
+      m_CastorFile2DiskCopyStatement->setDouble(1, ad->id());
+      rset = m_CastorFile2DiskCopyStatement->executeQuery();
+      while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+        IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), newlyCreated);
+        object->addDiskFileCopies(dynamic_cast<castor::stager::DiskCopy*>(obj));
+      }
+      m_CastorFile2DiskCopyStatement->closeResultSet(rset);
+      if (0 == m_CastorFile2TapeCopyStatement) {
+        m_CastorFile2TapeCopyStatement = createStatement(s_CastorFile2TapeCopyStatementString);
+      }
+      m_CastorFile2TapeCopyStatement->setDouble(1, ad->id());
+      rset = m_CastorFile2TapeCopyStatement->executeQuery();
+      while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+        IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), newlyCreated);
+        object->addCopies(dynamic_cast<castor::stager::TapeCopy*>(obj));
+      }
+      m_CastorFile2TapeCopyStatement->closeResultSet(rset);
     }
-    m_CastorFile2DiskCopyStatement->setDouble(1, ad->id());
-    rset = m_CastorFile2DiskCopyStatement->executeQuery();
-    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), newlyCreated);
-      object->addDiskFileCopies(dynamic_cast<castor::stager::DiskCopy*>(obj));
-    }
-    m_CastorFile2DiskCopyStatement->closeResultSet(rset);
-    if (0 == m_CastorFile2TapeCopyStatement) {
-      m_CastorFile2TapeCopyStatement = createStatement(s_CastorFile2TapeCopyStatementString);
-    }
-    m_CastorFile2TapeCopyStatement->setDouble(1, ad->id());
-    rset = m_CastorFile2TapeCopyStatement->executeQuery();
-    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), newlyCreated);
-      object->addCopies(dynamic_cast<castor::stager::TapeCopy*>(obj));
-    }
-    m_CastorFile2TapeCopyStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
     try {

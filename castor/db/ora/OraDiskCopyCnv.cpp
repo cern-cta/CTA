@@ -520,7 +520,8 @@ void castor::db::ora::OraDiskCopyCnv::deleteRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraDiskCopyCnv::createObj(castor::IAddress* address,
-                                                            castor::ObjectCatalog& newlyCreated)
+                                                            castor::ObjectCatalog& newlyCreated,
+                                                            bool recursive)
   throw (castor::exception::Exception) {
   castor::db::DbAddress* ad = 
     dynamic_cast<castor::db::DbAddress*>(address);
@@ -549,13 +550,15 @@ castor::IObject* castor::db::ora::OraDiskCopyCnv::createObj(castor::IAddress* ad
     object->setPath(rset->getString(1));
     object->setId((unsigned long long)rset->getDouble(2));
     newlyCreated[object->id()] = object;
-    u_signed64 fileSystemId = (unsigned long long)rset->getDouble(3);
-    IObject* objFileSystem = cnvSvc()->getObjFromId(fileSystemId, newlyCreated);
-    object->setFileSystem(dynamic_cast<castor::stager::FileSystem*>(objFileSystem));
-    u_signed64 castorFileId = (unsigned long long)rset->getDouble(4);
-    IObject* objCastorFile = cnvSvc()->getObjFromId(castorFileId, newlyCreated);
-    object->setCastorFile(dynamic_cast<castor::stager::CastorFile*>(objCastorFile));
-    object->setStatus((enum castor::stager::DiskCopyStatusCode)rset->getInt(5));
+    object->setStatus((enum castor::stager::DiskCopyStatusCode)rset->getInt(3));
+    if (recursive) {
+      u_signed64 fileSystemId = (unsigned long long)rset->getDouble(3);
+      IObject* objFileSystem = cnvSvc()->getObjFromId(fileSystemId, newlyCreated);
+      object->setFileSystem(dynamic_cast<castor::stager::FileSystem*>(objFileSystem));
+      u_signed64 castorFileId = (unsigned long long)rset->getDouble(4);
+      IObject* objCastorFile = cnvSvc()->getObjFromId(castorFileId, newlyCreated);
+      object->setCastorFile(dynamic_cast<castor::stager::CastorFile*>(objCastorFile));
+    }
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {

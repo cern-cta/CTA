@@ -504,7 +504,8 @@ void castor::db::ora::OraTapeCopyCnv::deleteRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraTapeCopyCnv::createObj(castor::IAddress* address,
-                                                            castor::ObjectCatalog& newlyCreated)
+                                                            castor::ObjectCatalog& newlyCreated,
+                                                            bool recursive)
   throw (castor::exception::Exception) {
   castor::db::DbAddress* ad = 
     dynamic_cast<castor::db::DbAddress*>(address);
@@ -532,22 +533,26 @@ castor::IObject* castor::db::ora::OraTapeCopyCnv::createObj(castor::IAddress* ad
     // Now retrieve and set members
     object->setId((unsigned long long)rset->getDouble(1));
     newlyCreated[object->id()] = object;
-    u_signed64 castorFileId = (unsigned long long)rset->getDouble(2);
-    IObject* objCastorFile = cnvSvc()->getObjFromId(castorFileId, newlyCreated);
-    object->setCastorFile(dynamic_cast<castor::stager::CastorFile*>(objCastorFile));
-    object->setStatus((enum castor::stager::TapeCopyStatusCodes)rset->getInt(3));
+    object->setStatus((enum castor::stager::TapeCopyStatusCodes)rset->getInt(2));
+    if (recursive) {
+      u_signed64 castorFileId = (unsigned long long)rset->getDouble(3);
+      IObject* objCastorFile = cnvSvc()->getObjFromId(castorFileId, newlyCreated);
+      object->setCastorFile(dynamic_cast<castor::stager::CastorFile*>(objCastorFile));
+    }
     m_selectStatement->closeResultSet(rset);
-    // Get ids of objs to retrieve
-    if (0 == m_TapeCopy2SegmentStatement) {
-      m_TapeCopy2SegmentStatement = createStatement(s_TapeCopy2SegmentStatementString);
+    if (recursive) {
+      // Get ids of objs to retrieve
+      if (0 == m_TapeCopy2SegmentStatement) {
+        m_TapeCopy2SegmentStatement = createStatement(s_TapeCopy2SegmentStatementString);
+      }
+      m_TapeCopy2SegmentStatement->setDouble(1, ad->id());
+      rset = m_TapeCopy2SegmentStatement->executeQuery();
+      while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+        IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), newlyCreated);
+        object->addSegments(dynamic_cast<castor::stager::Segment*>(obj));
+      }
+      m_TapeCopy2SegmentStatement->closeResultSet(rset);
     }
-    m_TapeCopy2SegmentStatement->setDouble(1, ad->id());
-    rset = m_TapeCopy2SegmentStatement->executeQuery();
-    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), newlyCreated);
-      object->addSegments(dynamic_cast<castor::stager::Segment*>(obj));
-    }
-    m_TapeCopy2SegmentStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
     try {

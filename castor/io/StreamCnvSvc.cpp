@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCnvSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/05 16:14:00 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCnvSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/07 14:34:01 $ $Author: sponcec3 $
  *
  * 
  *
@@ -83,7 +83,9 @@ const unsigned int castor::io::StreamCnvSvc::REPTYPE() {
 // createObj
 // -----------------------------------------------------------------------
 castor::IObject* castor::io::StreamCnvSvc::createObj
- (castor::IAddress* address, ObjectCatalog& newlyCreated)
+(castor::IAddress* address,
+ ObjectCatalog& newlyCreated,
+ bool recursive)
   throw (castor::exception::Exception) {
   // If the address has no type, find it out
   if (OBJ_INVALID == address->objType()) {
@@ -93,5 +95,5 @@ castor::IObject* castor::io::StreamCnvSvc::createObj
     ad->setObjType(objType);
   }
   // call method of parent object
-  return this->BaseCnvSvc::createObj(address, newlyCreated);
+  return this->BaseCnvSvc::createObj(address, newlyCreated, recursive);
 }

@@ -144,7 +144,8 @@ void castor::io::StreamTapeCnv::deleteRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamTapeCnv::createObj(castor::IAddress* address,
-                                                      castor::ObjectCatalog& newlyCreated)
+                                                      castor::ObjectCatalog& newlyCreated,
+                                                      bool recursive)
   throw (castor::exception::Exception) {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);

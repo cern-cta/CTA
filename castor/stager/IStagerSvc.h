@@ -31,6 +31,7 @@
 struct C_IService_t;
 struct Cstager_IStagerSvc_t;
 struct Cstager_Tape_t;
+struct Cstager_Stream_t;
 struct Cstager_Segment_t;
 
 /**
@@ -110,6 +111,25 @@ int Cstager_IStagerSvc_anySegmentsForTape(struct Cstager_IStagerSvc_t* stgSvc,
 int Cstager_IStagerSvc_tapesToDo(struct Cstager_IStagerSvc_t* stgSvc,
                                  struct Cstager_Tape_t*** tapeArray,
                                  int *nbItems);
+
+/**
+ * Get an array of the streams to be processed.
+ * This method searches the catalog for all streams that are
+ * in STREAM_PENDING status. It atomically updates the status to
+ * STREAM_WAITDRIVE and returns the corresponding Stream objects.
+ * This means that a subsequent call to this method will not return
+ * the same entries.
+ * @param stgSvc the IStagerSvc used
+ * @param streamArray output array of pointers to stream objects
+ * @param nbItems output number of items returned in the tapeArray
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_streamsToDo(struct Cstager_IStagerSvc_t* stgSvc,
+                                   struct Cstager_Stream_t*** streamArray,
+                                   int *nbItems);
 
 /**
  * Retrieves a tape from the database based on its vid,
