@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.176 2002/04/12 06:42:52 jdurand Exp $
+ * $Id: procio.c,v 1.177 2002/04/30 12:37:07 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.176 $ $Date: 2002/04/12 06:42:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.177 $ $Date: 2002/04/30 12:37:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -177,9 +177,7 @@ static int tppool_flag = 0;
 static int noretry_flag = 0;
 static int nohsmcreat_flag = 0;
 static int rdonly_flag = 0;
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 static int side_flag = 0;
-#endif
 static int nocopy_flag = 0;
 extern struct fileclass *fileclasses;
 
@@ -196,7 +194,7 @@ int maxfseq_per_vid _PROTO((struct stgcat_entry *, int, char *, char *));
 extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
 extern int updfreespace _PROTO((char *, char *, int, u_signed64 *, signed64));
 extern u_signed64 stage_uniqueid;
-extern void getdefsize _PROTO((char *, int *));
+extern void getdefsize _PROTO((char *, u_signed64 *));
 int check_hsm_type _PROTO((char *, int *, int *, int *, int *, char *));
 int check_hsm_type_light _PROTO((char *, char *));
 #ifdef hpux
@@ -272,7 +270,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	int actual_poolflag;
 	char actual_poolname[CA_MAXPOOLNAMELEN + 1];
 	char **argv = NULL;
-	int c, i, j, iokstagewrt;
+	int c = 0, i, j, iokstagewrt;
 	int concat_off = 0;
 	int concat_off_fseq = 0;
 	int clientpid;
@@ -296,7 +294,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	int ihsmfiles;
 	int jhsmfiles;
 	char *name;
-	int nargs;
+	int nargs = 0;
 	int nbdskf;
 	int nbtpf;
 	int nhsmfiles = 0;
@@ -308,7 +306,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	char *p, *q;
 	char *pool_user = NULL;
 	char *poolname_exclusion;
-	int poolflag;
+	int poolflag = 0;
 	char *rbp;
 	int savereqid;
 	char *size = NULL;
@@ -348,10 +346,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 	extern struct passwd stage_passwd;             /* Generic uid/gid stage:st */
 	int have_tppool = 0;
 	char *tppool = NULL;
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 	int side = 0; /* Default value */
 	int have_parsed_side = 0;
-#endif
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 	char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
@@ -392,9 +388,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		{"poolname",           REQUIRED_ARGUMENT,  NULL,      'p'},
 		{"file_sequence",      REQUIRED_ARGUMENT,  NULL,      'q'},
 		{"tape_server",        REQUIRED_ARGUMENT,  NULL,      'S'},
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 		{"side",               REQUIRED_ARGUMENT,  &side_flag,  1},
-#endif
 		{"size",               REQUIRED_ARGUMENT,  NULL,      's'},
 		{"trailer_label_off",  NO_ARGUMENT,        NULL,      'T'},
 		{"retention_period",   REQUIRED_ARGUMENT,  NULL,      't'},
@@ -429,9 +423,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	nohsmcreat_flag = 0;
 	rdonly_flag = 0;
 	this_tppool[0] = '\0';
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 	side_flag = 0;
-#endif
 
 	local_unmarshall_STRING (rbp, name);
 	if (req_type > STAGE_00) {
@@ -978,10 +970,16 @@ void procioreq(req_type, magic, req_data, clienthost)
 				size = Coptarg;
 				p = strtok (size, ":");
 				while (p != NULL) {
-					stage_strtoi(&j, p, &dp, 10);
-					if (*dp != '\0' || j <= 0) {
+					int checkrc;
+
+					if ((checkrc = stage_util_check_for_strutou64(p)) < 0) {
 						sendrep (rpfd, MSG_ERR, STG06, "-s");
 						errflg++;
+					} else {
+						if (strutou64(p) <= 0) {
+							sendrep (rpfd, MSG_ERR, STG06, "-s");
+							errflg++;
+						}
 					}
 					if ((p = strtok (NULL, ":")) != NULL) *(p - 1) = ':';
 				}
@@ -1041,7 +1039,6 @@ void procioreq(req_type, magic, req_data, clienthost)
 				if ((tppool_flag != 0) && (tppool == NULL)) { /* Not yet done */
 					tppool = Coptarg;
 				}
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 				if ((side_flag != 0) && (! have_parsed_side)) {  /* Not yet done */
 					stage_strtoi(&side, Coptarg, &dp, 10);
 					if ((*dp != '\0') || (side < 0)) {
@@ -1050,7 +1047,6 @@ void procioreq(req_type, magic, req_data, clienthost)
 					}
 					have_parsed_side = 1;
 				}
-#endif
 				break;
 			case '?':
 				errflg++;
@@ -1107,7 +1103,6 @@ void procioreq(req_type, magic, req_data, clienthost)
 		}
 	}
 
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 	if (side_flag) {
 		if (stgreq.t_or_d != 't') {
 			/* We reject side argument in the request is not a pure tape request */
@@ -1121,7 +1116,6 @@ void procioreq(req_type, magic, req_data, clienthost)
 			stgreq.u1.t.side = side;
 		}
 	}
-#endif
 
 	/* We makes sure rdonly_flag is zero if it is not a STAGEIN because it has serious implications */
 	/* onto the crucial routine isstaged() */
@@ -1501,7 +1495,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		int stage_wrt_migration;
 		struct stgcat_entry save_stcp_for_Cns_creatx;
 		int have_save_stcp_for_Cns_creatx;
-		mode_t stagewrt_Cns_creatx_mode;
+		mode_t stagewrt_Cns_creatx_mode = 0;
 		int forced_yet_staged_branch;
 		int isstaged_count;
 
@@ -1646,21 +1640,34 @@ void procioreq(req_type, magic, req_data, clienthost)
 			seteuid(start_passwd.pw_uid);
 			if (((api_out == 0) && (! size)) || (api_out != 0 && ! stgreq.size)) {
 				/* We force size to be allocated to exactly what we need */
-				stgreq.size = (int) (hsmsize > 0 ? ((hsmsize / ONE_MB) + 1) : 0);
+				stgreq.size = hsmsize;
 				if (ncastorfiles > 0) size_to_recall = hsmsize;
 			} else {
 				if (size != NULL) goto get_size_from_user;
 			}
 		} else if (size) {
+			int checkrc;
+
 		  get_size_from_user:
 			if ((p = strchr (size, ':')) != NULL) *p = '\0';
-			stage_strtoi(&(stgreq.size), size, &dp, 10);
+			if ((checkrc = stage_util_check_for_strutou64(size)) < 0) {
+				sendrep (rpfd, MSG_ERR, STG06, "-s");
+				c = EINVAL;
+				goto reply;
+			}
+			stgreq.size = strutou64(size);
+			if (stgreq.size <= 0) {
+				sendrep (rpfd, MSG_ERR, STG06, "-s");
+				c = EINVAL;
+				goto reply;
+			}
+			if (checkrc == 0) stgreq.size *= ONE_MB; /* Not unit : default MB */
 			if (p != NULL) {
 				*p = ':';
 				size = p + 1;
 			}
 			if (ncastorfiles > 0) {
-				size_to_recall = (u_signed64) (((u_signed64) stgreq.size) * (u_signed64) ONE_MB);
+				size_to_recall = stgreq.size;
 				if (size_to_recall > hsmsize) {
 					/* We take the minimum of -s option and real size in the nameserver */
 					size_to_recall = hsmsize;
@@ -1854,8 +1861,6 @@ void procioreq(req_type, magic, req_data, clienthost)
 						stcp->status |= WAITING_SPC;
 						strcpy (wqp->waiting_pool, stcp->poolname);
 					} else if (c) {
-						updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
-									  (signed64) ((signed64) stcp->size * (signed64) ONE_MB));
 						delreq(stcp,1);
 						goto reply;
 					}
@@ -1918,11 +1923,14 @@ void procioreq(req_type, magic, req_data, clienthost)
 			stageacct (STGFILS, stgreq.uid, stgreq.gid,
 					   clienthost, reqid, req_type, 0, 0, stcp, "", (char) 0);
 #endif
-			sendrep (rpfd, RTCOPY_OUT, STG96,
-					 strrchr (stcp->ipath, '/')+1,
-					 stcp->actual_size,
-					 (float)(stcp->actual_size)/(1024.*1024.),
-					 stcp->nbaccesses);
+			{
+				char tmpbuf[21];
+				sendrep (rpfd, RTCOPY_OUT, STG96,
+						 strrchr (stcp->ipath, '/')+1,
+						 u64tostr(stcp->actual_size,tmpbuf,0),
+						 (float)(stcp->actual_size)/(1024.*1024.),
+						 stcp->nbaccesses);
+			}
 			if (api_out != 0) sendrep(rpfd, API_STCP_OUT, stcp, magic);
 			if (copytape)
 				sendinfo2cptape (rpfd, stcp);
@@ -2016,8 +2024,6 @@ void procioreq(req_type, magic, req_data, clienthost)
 					  goto reply;
 				  }
 				  if ((c = build_ipath (upath, stcp, pool_user, 1)) != 0) {
-					  updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
-									(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
 					  delreq(stcp,1);
 					  goto reply;
 				  }
@@ -2069,8 +2075,6 @@ void procioreq(req_type, magic, req_data, clienthost)
 						  stcp->status |= WAITING_SPC;
 						  strcpy (wqp->waiting_pool, stcp->poolname);
 					  } else if (c) {
-						  updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
-										(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
 						  delreq(stcp,1);
 						  goto reply;
 					  }
@@ -2138,8 +2142,26 @@ void procioreq(req_type, magic, req_data, clienthost)
 						goto reply;
 					}
 					break;
-				case STAGEOUT:
 				case STAGEOUT|CAN_BE_MIGR:
+					if (stgreq.t_or_d == 't' && *stgreq.u1.t.fseq == 'n') break;
+					if (strcmp (user, stcp->user)) {
+						sendrep (rpfd, MSG_ERR, STG37);
+						c = EINVAL;
+						goto reply;
+					}
+					if ((stcp->t_or_d == 'h') && (stcp->status == STAGEOUT)) {
+						/* We decrement the r/w counter on this file system */
+						rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
+					}
+					if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1) < 0) {
+						int save_serrno = rfio_serrno();
+						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
+								 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+						c = (api_out != 0) ? save_serrno : SESYSERR;
+						goto reply;
+					}
+					break;
+				case STAGEOUT:
 				case STAGEOUT|WAITING_SPC:
 				case STAGEOUT|WAITING_NS:
 					if (stgreq.t_or_d == 't' && *stgreq.u1.t.fseq == 'n') break;
@@ -2234,8 +2256,6 @@ void procioreq(req_type, magic, req_data, clienthost)
 				strcpy (wqp->pool_user, pool_user);
 				strcpy (wqp->waiting_pool, stcp->poolname);
 			} else if (c) {
-				updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
-							  (signed64) ((signed64) stcp->size * (signed64) ONE_MB));
 				delreq(stcp,stcp->t_or_d == 'h' ? 0 : 1);
 				goto reply;
 			} else {
@@ -2324,7 +2344,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				struct stat st;
 				int ifileclass;
 				struct pool *pool_p;
-				int okpoolname;
+				int okpoolname = 0;
 				int ipoolname;
 				extern struct pool *pools;
 				extern int nbpool;
@@ -2395,7 +2415,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					stcp->ipath,
 					0,
 					NULL,
-					(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB)
+					(signed64) ((signed64) actual_size_block - (signed64) stcp->size)
 					);
 				rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT);
 				if ((c = upd_stageout(STAGEUPDC, NULL, NULL, 1, stcp, 1)) != 0) {
@@ -2547,11 +2567,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 					yetdone_rfio_stat = &filemig_stat;
 					SET_CORRECT_EUID_EGID;
 					correct_size = (u_signed64) filemig_stat.st_size;
-					if (stgreq.size && ((u_signed64) ((u_signed64) stgreq.size * (u_signed64) ONE_MB) < correct_size)) {
+					if (stgreq.size && (stgreq.size < correct_size)) {
 						/* If user specified a maxsize of bytes to transfer and if this */
 						/* maxsize is lower than physical file size, then the size of */
 						/* of the migrated file will be the minimum of the twos */
-						correct_size = (u_signed64) ((u_signed64) stgreq.size * (u_signed64) ONE_MB);
+						correct_size = stgreq.size;
 					}
 					if (correct_size > 0 && correct_size == Cnsfilestat.filesize) {
 						/* Same size and > 0 : we assume user asks for a new copy */
@@ -2671,11 +2691,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 					}
 					if (rfio_stat_rc == 0) {
 						correct_size = (u_signed64) st.st_size;
-						if (stgreq.size && ((u_signed64) ((u_signed64) stgreq.size * (u_signed64) ONE_MB) < correct_size)) {
+						if (stgreq.size && (stgreq.size < correct_size)) {
 							/* If user specified a maxsize of bytes to transfer and if this */
 							/* maxsize is lower than physical file size, then the size of */
 							/* of the migrated file will be the minimum of the twos */
-							correct_size = (u_signed64) ((u_signed64) stgreq.size * (u_signed64) ONE_MB);
+							correct_size = stgreq.size;
 						}
 					} else {
 						/* This must have fail because of RFIO */
@@ -3019,7 +3039,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			if (found == 0) continue;
 			if (! wfp->waiting_on_req)
 				updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
-							  (signed64) ((signed64) stcp->size * (signed64) ONE_MB));
+							  (signed64) stcp->size);
 			if (ISSTAGEWRT(stcp) && (t_or_d == 'h') && HAVE_SENSIBLE_STCP(stcp)) {
 				/* This was a stagewrt on CASTOR hsm files. */
 				/* We have to find the corresponding record that is in STAGEOUT|CAN_BE_MIGR|BEING_MIGR */
@@ -3084,7 +3104,7 @@ void procputreq(req_type, magic, req_data, clienthost)
 	int clientpid;
 	char *dp;
 	int errflg = 0;
-	char *externfile;
+	char *externfile = NULL;
 	int found;
 	char fseq[CA_MAXFSEQLEN + 1];
 	gid_t gid;
@@ -3092,7 +3112,7 @@ void procputreq(req_type, magic, req_data, clienthost)
 	int Iflag = 0;
 	int Mflag = 0;
 	char *name;
-	int nargs;
+	int nargs = 0;
 	int nbdskf;
 	int numvid = 0;
 	int n1 = 0;
@@ -3108,7 +3128,7 @@ void procputreq(req_type, magic, req_data, clienthost)
 	char *user;
 	char vid[7];
 	struct waitf *wfp;
-	struct waitq *wqp;
+	struct waitq *wqp = NULL;
 	char **hsmfiles = NULL;
 	struct stgcat_entry **hsmfilesstcp = NULL;
 	int nhsmfiles = 0;
@@ -3122,8 +3142,8 @@ void procputreq(req_type, magic, req_data, clienthost)
 	int nexplevel = 0;
 	uid_t euid = 0;
 	gid_t egid = 0;
-	uid_t uid_waitq;
-	gid_t gid_waitq;
+	uid_t uid_waitq = 0;
+	gid_t gid_waitq = 0;
 	char user_waitq[CA_MAXUSRNAMELEN+1];
 	char group_waitq[CA_MAXGRPNAMELEN+1];
 	char *tppool = NULL;
@@ -3182,7 +3202,6 @@ void procputreq(req_type, magic, req_data, clienthost)
 			   reqid, STAGEPUT, 0, 0, NULL, "", (char) 0);
 #endif
 
-	wqp = NULL;
 	Coptind = 1;
 	Copterr = 0;
 	nowait_flag = 0;
@@ -3333,7 +3352,7 @@ void procputreq(req_type, magic, req_data, clienthost)
 					actual_size_block = stcp->actual_size;
 				}
 				updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
-							  (signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) actual_size_block));
+							  (signed64) (((signed64) stcp->size) - (signed64) actual_size_block));
 			}
 			stcp->status = STAGEPUT;
 			stcp->a_time = time(NULL);
@@ -3441,7 +3460,7 @@ void procputreq(req_type, magic, req_data, clienthost)
 				}
 			} else {
 				if (stcp->t_or_d != 'd') continue;
-				if (strcmp (stcp->u1.d.xfile, externfile) != 0) continue;
+				if ((externfile != NULL) && (strcmp (stcp->u1.d.xfile, externfile) != 0)) continue;
 				found = 1;
 				break;
 			}
@@ -3468,7 +3487,7 @@ void procputreq(req_type, magic, req_data, clienthost)
 					actual_size_block = stcp->actual_size;
 				}
 				updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
-							  (signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) actual_size_block));
+							  (signed64) (((signed64) stcp->size) - (signed64) actual_size_block));
 			}
 			stcp->status = STAGEPUT;
 			stcp->a_time = time(NULL);
@@ -4018,9 +4037,7 @@ isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion, isstaged_nomore
 				if (strcmp (cur->u1.t.vsn[i], stcp->u1.t.vsn[i])) break;
 			if (i < MAXVSN) continue;
 			if (strcmp (cur->u1.t.lbl, stcp->u1.t.lbl)) continue;
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 			if (cur->u1.t.side != stcp->u1.t.side) continue;
-#endif
 			if (cur->u1.t.fseq[0] != 'u') {
 				if ((stcp->status & 0xF000) == LAST_TPFILE)
 					last_tape_file = atoi (stcp->u1.t.fseq);
@@ -4735,7 +4752,6 @@ int create_hsm_entry(rpfd,stcp,api_out,openmode,immediate_delete)
 	mode_t okmode;
 	struct Cns_fileid Cnsfileid;
 	extern struct passwd start_passwd;             /* Start uid/gid stage:st */
-	struct Cns_filestat Cnsfilestat;   /* For     CASTOR hsm stat() */
 	char *func = "create_hsm_entry";
 
 	memset(&Cnsfileid,0,sizeof(struct Cns_fileid));
