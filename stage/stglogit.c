@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.17 2001/03/03 06:19:28 jdurand Exp $
+ * $Id: stglogit.c,v 1.18 2001/03/04 08:46:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.17 $ $Date: 2001/03/03 06:19:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.18 $ $Date: 2001/03/04 08:46:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -46,9 +46,11 @@ int stglogit(va_alist) va_dcl
 	msg = va_arg (args, char *);
 	time (&current_time);		/* Get current time */
 	tm = localtime (&current_time);
-	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
+	snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
 		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
-	vsprintf (prtbuf+strlen(prtbuf), msg, args);
+	prtbuf[PRTBUFSZ-1] = '\0';
+	if ((strlen(prtbuf) + 1) < PRTBUFSZ) vsnprintf (prtbuf+strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
+	prtbuf[PRTBUFSZ-1] = '\0';
 	va_end (args);
 	if ((fd_log = open (LOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664)) >= 0) {
 		write (fd_log, prtbuf, strlen(prtbuf));
@@ -82,8 +84,9 @@ int stglogtppool(va_alist) va_dcl
 	/* Buffersize all the flags */
 	time (&current_time);		/* Get current time */
 	tm = localtime (&current_time);
-	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s tppool: %s\n", tm->tm_mon+1,
+	snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s tppool: %s\n", tm->tm_mon+1,
 		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func, tppool);
+	prtbuf[PRTBUFSZ-1] = '\0';
 	if ((fd_log = open (LOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664)) >= 0) {
 		write (fd_log, prtbuf, strlen(prtbuf));
 		close (fd_log);
@@ -141,8 +144,9 @@ int stglogflags(va_alist) va_dcl
 	/* Buffersize all the flags */
 	time (&current_time);		/* Get current time */
 	tm = localtime (&current_time);
-	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s flags: ", tm->tm_mon+1,
+	snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s flags: ", tm->tm_mon+1,
 		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
+	prtbuf[PRTBUFSZ-1] = '\0';
 	thisp = prtbuf + strlen(prtbuf);
 	i = -1;
 	something_to_print = 0;
@@ -183,9 +187,11 @@ int stgmiglogit(va_alist) va_dcl
 	msg = va_arg (args, char *);
 	time (&current_time);		/* Get current time */
 	tm = localtime (&current_time);
-	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
+	snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
 		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
-	vsprintf (prtbuf+strlen(prtbuf), msg, args);
+	prtbuf[PRTBUFSZ-1] = '\0';
+	if ((strlen(prtbuf) + 1) < PRTBUFSZ) vsnprintf (prtbuf+strlen(prtbuf), PRTBUFSZ - strlen(prtbuf), msg, args);
+	prtbuf[PRTBUFSZ-1] = '\0';
 	va_end (args);
 	if ((fd_log = open (MIGLOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664)) >= 0) {
 		write (fd_log, prtbuf, strlen(prtbuf));

@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.15 2001/02/04 22:21:11 jdurand Exp $
+ * $Id: sendrep.c,v 1.16 2001/03/04 08:46:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.15 $ $Date: 2001/02/04 22:21:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.16 $ $Date: 2001/03/04 08:46:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -79,7 +79,8 @@ int sendrep(va_alist) va_dcl
 	case MSG_ERR:
 	case RTCOPY_OUT:
 		msg = va_arg (args, char *);
-		vsprintf (prtbuf, msg, args);
+		vsnprintf (prtbuf, PRTBUFSZ, msg, args);
+		prtbuf[PRTBUFSZ-1] = '\0';
 		marshall_LONG (rbp, strlen (prtbuf) + 1);
 		marshall_STRING (rbp, prtbuf);
 		if (rep_type == MSG_ERR) stglogit (func, "%s", prtbuf);
