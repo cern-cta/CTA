@@ -1,7 +1,10 @@
 /*
- * $Id: Cpool.c,v 1.4 1999/08/24 15:49:18 jdurand Exp $
+ * $Id: Cpool.c,v 1.5 1999/09/02 08:43:24 jdurand Exp $
  *
  * $Log: Cpool.c,v $
+ * Revision 1.5  1999/09/02 08:43:24  jdurand
+ * Added serrno error values
+ *
  * Revision 1.4  1999/08/24 15:49:18  jdurand
  * Changed Cpool_assign() behaviour when timeout == 0 (return immediately
  * if no thread available)
@@ -25,6 +28,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
+#include <serrno.h>
 #endif /* _WIN32 */
 #ifdef _AIX
 /* Otherwise cc will not know about fd_set on */
@@ -211,7 +215,7 @@ CTHREAD_DECL Cpool_create(int nbreq, int *nbget) {
 #endif
 
   if (nbreq <= 0) {
-    errno = EINVAL;
+    serrno = EINVAL;
     return(-1);
   }
 
@@ -242,6 +246,7 @@ CTHREAD_DECL Cpool_create(int nbreq, int *nbget) {
     /* We prepare the list of fd's to close */
     if ((to_close = malloc(2 * nbreq * sizeof(int))) == NULL) {
       Cthread_mutex_unlock(&Cpool);
+      serrno = SEINTERNAL;
       return(-1);
     }
   }
@@ -250,6 +255,7 @@ CTHREAD_DECL Cpool_create(int nbreq, int *nbget) {
   /* We create a new pool element */
   if ((current = malloc(sizeof(struct Cpool_t))) == NULL) {
     Cthread_mutex_unlock(&Cpool);
+    serrno = SEINTERNAL;
     return(-1);
   }
 
@@ -262,6 +268,7 @@ CTHREAD_DECL Cpool_create(int nbreq, int *nbget) {
 #endif
     free(current);
     Cthread_mutex_unlock(&Cpool);
+    serrno = SEINTERNAL;
     return(-1);
   }
 #ifndef _WIN32
@@ -272,6 +279,7 @@ CTHREAD_DECL Cpool_create(int nbreq, int *nbget) {
       free(current->cid);
       free(current);
       Cthread_mutex_unlock(&Cpool);
+      serrno = SEINTERNAL;
       return(-1);
     }
     /* Allocation for reading pipes (unix only) */
@@ -281,6 +289,7 @@ CTHREAD_DECL Cpool_create(int nbreq, int *nbget) {
       free(current->cid);
       free(current);
       Cthread_mutex_unlock(&Cpool);
+      serrno = SEINTERNAL;
       return(-1);
     }
   } else {
@@ -290,6 +299,7 @@ CTHREAD_DECL Cpool_create(int nbreq, int *nbget) {
       free(current->cid);
       free(current);
       Cthread_mutex_unlock(&Cpool);
+      serrno = SEINTERNAL;
       return(-1);
     }
     /* Allocation for threads starting routines */
@@ -298,6 +308,7 @@ CTHREAD_DECL Cpool_create(int nbreq, int *nbget) {
       free(current->cid);
       free(current);
       Cthread_mutex_unlock(&Cpool);
+      serrno = SEINTERNAL;
       return(-1);
     }
     /* Allocation for threads arguments addresses */
@@ -307,6 +318,7 @@ CTHREAD_DECL Cpool_create(int nbreq, int *nbget) {
       free(current->cid);
       free(current);
       Cthread_mutex_unlock(&Cpool);
+      serrno = SEINTERNAL;
       return(-1);
     }
 #ifndef _WIN32
@@ -361,6 +373,7 @@ CTHREAD_DECL Cpool_create(int nbreq, int *nbget) {
           free(cpool_arg);
         }
       } else {
+        serrno = SEINTERNAL;
         current->cid[i] = -1;
       }
 #ifndef _WIN32
@@ -486,7 +499,7 @@ void *_Cpool_starter(void *arg) {
                   _Cpool_self(),_Cthread_self(),errno);
           Cthread_mutex_unlock(&lock_cpool_debug);
 #endif
-          if (errno == ETIMEDOUT) {
+          if (serrno == SETIMEDOUT) {
             /* Timeout */
             /* We check that the parent is still there */
 #ifdef CPOOL_DEBUG
@@ -522,7 +535,7 @@ void *_Cpool_starter(void *arg) {
           fprintf(stderr,"[Cpool  [%2d][%2d]] In _Cpool_starter : error No %d\n",_Cpool_self(),_Cthread_self(),errno);
           Cthread_mutex_unlock(&lock_cpool_debug);
 #endif
-          if (errno == ETIMEDOUT) {
+          if (serrno == SETIMEDOUT) {
             /* Timeout */
             /* We check that the parent is still there */
 #ifdef CPOOL_DEBUG
@@ -804,6 +817,7 @@ size_t _Cpool_writen_timeout(int fd, const void *vptr, size_t n, int timeout) {
 
   /* Get previous handler */
   if ((sigfunc = _Cpool_signal(SIGALRM, _Cpool_alarm)) == SIG_ERR) {
+    serrno = SEINTERNAL;
     return(0);
   }
   
@@ -817,6 +831,7 @@ size_t _Cpool_writen_timeout(int fd, const void *vptr, size_t n, int timeout) {
     if ( (nwritten = write(fd, ptr, nleft)) <= 0) {
       if (errno == EINTR) {
         errno = ETIMEDOUT;
+        serrno = SETIMEDOUT;
         goto doreturn;
       } else {
         goto doreturn;
@@ -958,6 +973,7 @@ size_t _Cpool_readn_timeout(int fd, void *vptr, size_t n, int timeout) {
 
   /* Get previous handler */
   if ((sigfunc = _Cpool_signal(SIGALRM, _Cpool_alarm)) == SIG_ERR) {
+    serrno = SEINTERNAL;
     return(0);
   }
 
@@ -978,6 +994,7 @@ size_t _Cpool_readn_timeout(int fd, void *vptr, size_t n, int timeout) {
 #endif
       if (errno == EINTR) {
         errno = ETIMEDOUT;
+        serrno = SETIMEDOUT;
         goto doreturn;
       } else {
         goto doreturn;
@@ -1347,7 +1364,7 @@ CTHREAD_DECL Cpool_assign(int poolnb,
     int                     ready;
     
     if (poolnb < 0) {
-      errno = EINVAL;
+      serrno = EINVAL;
       return(-1);
     }
     
@@ -1408,7 +1425,7 @@ CTHREAD_DECL Cpool_assign(int poolnb,
     Cthread_mutex_unlock(&Cpool);
     
     if (found == 0) {
-      errno = EINVAL;
+      serrno = EINVAL;
       return(-1);
     }
     
@@ -1453,7 +1470,7 @@ CTHREAD_DECL Cpool_assign(int poolnb,
         /* Error or timeout */
         /* ... We reset any call to Cpool_next_index */
         current->forceid = -1;
-        errno = ETIMEDOUT;
+        serrno = SETIMEDOUT;
         return(-1);
       }
     } else {
@@ -1564,7 +1581,7 @@ CTHREAD_DECL Cpool_assign(int poolnb,
     Cthread_mutex_unlock(&Cpool);
     
     if (found == 0) {
-      errno = EINVAL;
+      serrno = EINVAL;
       return(-1);
     }
     
@@ -1704,6 +1721,7 @@ CTHREAD_DECL Cpool_assign(int poolnb,
     if (timeout == 0) {
       /* No thread immediately available, and timeout == 0 */
       /* So we exit immediately                            */
+      serrno = SETIMEDOUT;
       return(-1);
     }
 
@@ -1951,7 +1969,7 @@ CTHREAD_DECL Cpool_next_index(int poolnb) {
     int                     ready;
     
     if (poolnb < 0) {
-      errno = EINVAL;
+      serrno = EINVAL;
       return(-1);
     }
     
@@ -2008,6 +2026,7 @@ CTHREAD_DECL Cpool_next_index(int poolnb) {
     /* We wait for a flag of any of the child */
     if (select(maxfd+1, (_cpool_fd_set *) &readlist, NULL, NULL, NULL) < 0) {
       /* Error */
+      serrno = SEINTERNAL;
       return(-1);
     }
     
@@ -2045,7 +2064,7 @@ CTHREAD_DECL Cpool_next_index(int poolnb) {
     }
     
     /* We should not be there */
-    errno = ENOENT;
+    errno = SEINTERNAL;
     return(-1);
     
   } else {
@@ -2281,7 +2300,7 @@ CTHREAD_DECL _Cpool_self() {
     }
   }
   
-  errno = EINVAL;
+  serrno = EINVAL;
   return(-1);
 }
 

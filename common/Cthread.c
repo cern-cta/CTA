@@ -1,7 +1,10 @@
 /*
- * $Id: Cthread.c,v 1.9 1999/08/24 15:50:03 jdurand Exp $
+ * $Id: Cthread.c,v 1.10 1999/09/02 08:39:39 jdurand Exp $
  *
  * $Log: Cthread.c,v $
+ * Revision 1.10  1999/09/02 08:39:39  jdurand
+ * Added serrno error values
+ *
  * Revision 1.9  1999/08/24 15:50:03  jdurand
  * Changed debug printout for exported functions to have source:line information
  *
@@ -31,6 +34,8 @@
 
 #include <Cthread_api.h>
 #include <Cglobals.h>
+#include <serrno.h>
+#include <errno.h>
 
 #ifdef DEBUG
 #ifndef CTHREAD_DEBUG
@@ -304,7 +309,7 @@ struct Cmtx_element_t {
   Cth_mtx_t            mtx; /* Associated mutex */
   Cth_cond_t           cond; /* Associate cond  */
   struct Cmtx_element_t *next; /* Next element  */
-  int                  pred; /* Timer Predicate */
+  int                  nwait; /* cond_wait nb   */
 };
 
 /* -------------------------------------------- */
@@ -453,8 +458,8 @@ CTHREAD_DECL Cthread_init() {
 /* any Cthread function.                        */
 /* ============================================ */
 int _Cthread_init() {
-  int status;
-
+  int status = 0;
+  
 #ifndef _CTHREAD
   if ( !once ) (void)_Cthread_once();
 #else
@@ -472,10 +477,29 @@ int _Cthread_init() {
   /* dynamically, since we don't rely on the fact    */
   /* that the macro PTHREAD_MUTEX_INITIALIZER exists */
   /* everywhere                                      */
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+  int n;
+
+  if ((n = pthread_once(&once,_Cthread_once)) != 0) {
+    errno = n;
+    _Cthread_once_status = -1;
+  }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+  if (pthread_once(&once,_Cthread_once) != 0)
+    _Cthread_once_status = -1;
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+  /* On linux, pthread_once always returns 0... */
   pthread_once(&once,_Cthread_once);
+#  else
+  _Cthread_once_status = -1;
+  serrno = SEOPNOTSUP;
+  return(-1);
+#  endif
 #endif /* _CTHREAD_PROTO_WIN32 */
 #endif /* _CTHREAD */
-  status = _Cthread_once_status;
+  if ((status = _Cthread_once_status) != 0)
+    serrno = SECTHREADINIT;
+
   return(status);
 }
 
@@ -517,7 +541,10 @@ unsigned __stdcall _Cthread_start_threadex(void *arg) {
     void               *routineargs;
 
     thID = GetCurrentThreadId();
-	if ( arg == NULL ) return(-1);
+	if ( arg == NULL ) {
+      serrno = EINVAL;
+      return(-1);
+    }
 	start_params = (Cthread_start_params_t *)arg;
     if (_Cthread_addcid(NULL,thID,start_params->_thread_routine,start_params->detached) < 0) {
       free(arg);
@@ -570,7 +597,10 @@ void __cdecl _Cthread_start_thread(void *arg) {
 
 
     thID = GetCurrentThreadId();
-	if ( arg == NULL ) return;
+	if ( arg == NULL ) {
+      serrno = EINVAL;
+      return;
+    }
 	start_params = (Cthread_start_params_t *)arg;
     if (_Cthread_addcid(NULL,thID,start_params->_thread_routine,start_params->detached) < 0) {
       free(arg);
@@ -609,7 +639,10 @@ void *_Cthread_start_pthread(void *arg) {
   fprintf(stderr,"[Cthread    [%2d]] In _Cthread_start_pthread(0x%x)\n",_Cthread_self(),(unsigned long) arg);
 #endif
 
-  if (arg == NULL) return(NULL);
+  if (arg == NULL) {
+    serrno = EINVAL;
+    return(NULL);
+  }
   start_params = (Cthread_start_params_t *) arg;
 
 
@@ -645,6 +678,10 @@ void *_Cthread_start_pthread(void *arg) {
 Sigfunc *_Cthread_signal(int signo, Sigfunc *func) {
   struct sigaction	act, oact;
   
+#ifdef CTHREAD_DEBUG
+  fprintf(stderr,"[Cthread    [%2d]] In _Cthread_signal(%d,0x%x)\n",_Cthread_self(),signo,(unsigned long) func);
+#endif
+
   act.sa_handler = func;
   sigemptyset(&act.sa_mask);
   act.sa_flags = 0;
@@ -657,14 +694,16 @@ Sigfunc *_Cthread_signal(int signo, Sigfunc *func) {
     act.sa_flags |= SA_RESTART;		/* SVR4, 44BSD */
 #endif
   }
-  if (sigaction(signo, &act, &oact) < 0)
+  if (sigaction(signo, &act, &oact) < 0) {
+    serrno = SEINTERNAL;
     return(SIG_ERR);
+  }
   return(oact.sa_handler);
 }
 
 /* ============================================ */
 /* Routine  : _Cthread_sigchld                  */
-/* Arguments: errno                             */
+/* Arguments: error code                        */
 /* -------------------------------------------- */
 /* Output   :                                   */
 /* -------------------------------------------- */
@@ -758,7 +797,10 @@ void *_Cthread_start_nothread(void *(*startroutine)(void *), void *arg, Sigfunc 
   struct Cspec_element_t *current = &Cspec;   /* Curr Cspec_element */
   struct Cspec_element_t *previous = NULL;    /* Curr Cspec_element */
 
-  if (startroutine == NULL) return(NULL);
+  if (startroutine == NULL) {
+    serrno = EINVAL;
+    return(NULL);
+  }
 
   pid = getpid();
 
@@ -851,6 +893,7 @@ CTHREAD_DECL Cthread_Create(char *file, int line,
   /* Verify the arguments */
   if (startroutine == NULL) {
     /* startroutine not specified */
+    serrno = EINVAL;
     return(-1);
   }
 
@@ -869,6 +912,7 @@ CTHREAD_DECL Cthread_Create(char *file, int line,
             _Cthread_self(),
             (unsigned long) startroutine,(unsigned long) arg);
 #endif
+    serrno = SEINTERNAL;
     return(-1);
   }
   if (pid == 0) {
@@ -896,6 +940,7 @@ CTHREAD_DECL Cthread_Create(char *file, int line,
 
   /* Create the starter              */
   if ((starter = (Cthread_start_params_t *) malloc(sizeof(Cthread_start_params_t))) == NULL) {
+    serrno = SEINTERNAL;
     return(-1);
   }
   starter->_thread_routine = startroutine;
@@ -907,42 +952,53 @@ CTHREAD_DECL Cthread_Create(char *file, int line,
   
   /* a-la POSIX */
   /* Create a thread default attr    */
-  if ((n = pthread_attr_init(&attr))) {
+  if ((n = pthread_attr_init(&attr)) != 0) {
     free(starter);
     errno = n;
+    serrno = SECTHREADERR;
     return(-1);
   }
-  if ((n = pthread_create(&pid,&attr,_Cthread_start_pthread, (void *) starter))) {
+  if ((n = pthread_create(&pid,&attr,_Cthread_start_pthread, (void *) starter)) != 0) {
     pthread_attr_destroy(&attr);
     free(starter);
     errno = n;
+    serrno = SECTHREADERR;
     return(-1);
   }
   /* Clear the thread default attr */
-  pthread_attr_destroy(&attr);
+  if ((n = pthread_attr_destroy(&attr)) != 0) {
+    free(starter);
+    errno = n;
+    serrno = SECTHREADERR;
+    return(-1);
+  }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
   /* a-la DCE */
   /* Create a thread default attr    */
-  if (pthread_attr_create(&attr)) {
+  if (pthread_attr_create(&attr) != 0) {
+    serrno = SECTHREADERR;
     free(starter);
     return(-1);
   }
-  if ((n = pthread_create(&pid,attr,_Cthread_start_pthread, (void *) starter))) {
-    /* EAGAIN or ENOMEM */
-    n = errno;
+  if (pthread_create(&pid,attr,_Cthread_start_pthread, (void *) starter) != 0) {
+    serrno = SECTHREADERR;
     pthread_attr_delete(&attr);
     free(starter);
-    errno = n;
     return(-1);
   }
   /* Clear the thread default attr */
-  pthread_attr_delete(&attr);
+  if (pthread_attr_delete(&attr) != 0) {
+    serrno = SECTHREADERR;
+    free(starter);
+    return(-1);
+  }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
   /* a-la LinuxThreads */
   /* Create a thread default attr    */
   if ((n = pthread_attr_init(&attr))) {
     free(starter);
     errno = n;
+    serrno = SECTHREADERR;
     return(-1);
   }
   if ((n = pthread_create(&pid,&attr,_Cthread_start_pthread, (void *) starter))) {
@@ -950,16 +1006,23 @@ CTHREAD_DECL Cthread_Create(char *file, int line,
     free(starter);
     pthread_attr_destroy(&attr);
     errno = n;
+    serrno = SECTHREADERR;
     return(-1);
   }
   /* Clear the thread default attr */
-  pthread_attr_destroy(&attr);
+  if ((n = pthread_attr_destroy(&attr)) != 0) {
+    errno = n;
+    serrno = SECTHREADERR;
+    return(-1);
+  }
 #elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
   if ( (pid = _beginthreadex(NULL,0,_Cthread_start_threadex,starter,0,&thID)) == 0 ) {
     free(starter);
+    serrno = SECTHREADERR;
 	return(-1);
   }
 #else
+  serrno = SEOPNOTSUP;
   return(-1);
 #endif
   /* Add it               */
@@ -1016,6 +1079,7 @@ CTHREAD_DECL Cthread_Create_Detached(char *file, int line,
   /* Verify the arguments */
   if (startroutine == NULL) {
     /* startroutine not specified */
+    serrno = EINVAL;
     return(-1);
   }
 
@@ -1026,6 +1090,7 @@ CTHREAD_DECL Cthread_Create_Detached(char *file, int line,
   /* This is a thread implementation */
   /* Create the starter              */
   if ((starter = (Cthread_start_params_t *) malloc(sizeof(Cthread_start_params_t))) == NULL) {
+    serrno = SEINTERNAL;
     return(-1);
   }
   starter->_thread_routine = startroutine;
@@ -1035,8 +1100,10 @@ CTHREAD_DECL Cthread_Create_Detached(char *file, int line,
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
   /* a-la POSIX */
   /* Create a thread default attr    */
-  if (pthread_attr_init(&attr)) {
+  if ((n = pthread_attr_init(&attr))) {
     free(starter);
+    errno = n;
+    serrno = SECTHREADERR;
     return(-1);
   }
   /* And make it detach as a default */
@@ -1044,6 +1111,7 @@ CTHREAD_DECL Cthread_Create_Detached(char *file, int line,
     free(starter);
     pthread_attr_destroy(&attr);
     errno = n;
+    serrno = SECTHREADERR;
     return(-1);
   }
   if ((n = pthread_create(&pid,&attr,_Cthread_start_pthread, (void *) starter))) {
@@ -1051,18 +1119,25 @@ CTHREAD_DECL Cthread_Create_Detached(char *file, int line,
     free(starter);
     pthread_attr_destroy(&attr);
     errno = n;
+    serrno = SECTHREADERR;
     return(-1);
   }
   /* Clear the thread default attr */
-  pthread_attr_destroy(&attr);
+  if ((n = pthread_attr_destroy(&attr))) {
+    errno = n;
+    serrno = SECTHREADERR;
+    return(-1);
+  }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
   /* a-la DCE : impossible, there is no detach atribute */
   return(Cthread_create(startroutine,arg));
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
   /* a-la LinuxThreads */
   /* Create a thread default attr    */
-  if (pthread_attr_init(&attr)) {
+  if ((n = pthread_attr_init(&attr))) {
     free(starter);
+    errno = n;
+    serrno = SECTHREADERR;
     return(-1);
   }
   /* And make it detach as a default */
@@ -1070,6 +1145,7 @@ CTHREAD_DECL Cthread_Create_Detached(char *file, int line,
     free(starter);
     pthread_attr_destroy(&attr);
     errno = n;
+    serrno = SECTHREADERR;
     return(-1);
   }
   if ((n = pthread_create(&pid,&attr,_Cthread_start_pthread, (void *) starter))) {
@@ -1077,19 +1153,26 @@ CTHREAD_DECL Cthread_Create_Detached(char *file, int line,
     free(starter);
     pthread_attr_destroy(&attr);
     errno = n;
+    serrno = SECTHREADERR;
     return(-1);
   }
   /* Clear the thread default attr */
-  pthread_attr_destroy(&attr);
+  if ((n = pthread_attr_destroy(&attr))) {
+    errno = n;
+    serrno = SECTHREADERR;
+    return(-1);
+  }
 #elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
   starter = (Cthread_start_params_t *)malloc(sizeof(Cthread_start_params_t));
   starter->_thread_routine = startroutine;
   starter->_thread_arg = arg;
   if ( (pid = _beginthread(_Cthread_start_thread,0,starter)) == -1 ) {
       free(starter);
+      serrno = SECTHREADERR;
       return(-1);
   }
 #else
+  serrno = EOPNOTSUP;
   return(-1);
 #endif
   return(_Cthread_addcid(&pid,thID,startroutine,1));
@@ -1140,12 +1223,16 @@ CTHREAD_DECL Cthread_Join(char *file, int line, int cid, int **status) {
   }
   _Cthread_release_mtx(&(Cthread.mtx));
 
-  if (n)
+  if (n) {
+    serrno = EINVAL;
     return(-1);
+  }
 
 #ifdef _NOCTHREAD
   n = (waitpid(current->pid,*status,WNOHANG) == current->pid ? 0 : -1);
   _Cthread_destroy(current->cid);
+  if (n != 0)
+    serrno = SEINTERNAL;
   return(n);
 #else /* ifdef _NOCTHREAD */
 #if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
@@ -1154,6 +1241,7 @@ CTHREAD_DECL Cthread_Join(char *file, int line, int cid, int **status) {
 	for (;;) {
 	  if ( (n = WaitForSingleObject((HANDLE)current->pid,INFINITE)) == 
 	   	        WAIT_FAILED ) {
+        serrno = SECTHREADERR;
         n = -1;
 		break;
 	  }
@@ -1163,21 +1251,40 @@ CTHREAD_DECL Cthread_Join(char *file, int line, int cid, int **status) {
           continue;
 		}
         n = 0;
-	  } else  n = -1;
+	  } else {
+        serrno = SECTHREADERR;
+        n = -1;
+      }
       break;
 	}
     _Cthread_destroy(cid);
   }
   return(n);
 #else /* _CTHREAD_PROTO_WIN32 */
-  /* This is a thread implementation */
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
   if ((n = pthread_join(current->pid,(void **) status))) {
-    /* Error */
     errno = n;
+    serrno = SECTHREADERR;
     return(-1);
-  } else {
-    return(0);
   }
+  return(0);
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+  if (pthread_join(current->pid,(void **) status)) {
+    serrno = SECTHREADERR;
+    return(-1);
+  }
+  return(0);
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+  if ((n = pthread_join(current->pid,(void **) status))) {
+    errno = n;
+    serrno = SECTHREADERR;
+    return(-1);
+  }
+  return(0);
+#  else
+  serrno = EOPNOTSUP;
+  return(-1);
+#  endif
 #endif /* _CTHREAD_PROTO_WIN32 */
 #endif /* ifdef _NOCTHREAD */
 }
@@ -1222,8 +1329,10 @@ CTHREAD_DECL Cthread_Detach(char *file, int line, int cid) {
   }
   _Cthread_release_mtx(&(Cthread.mtx));
 
-  if (n)
+  if (n) {
+    serrno = EINVAL;
     return(-1);
+  }
 
 #ifdef _NOCTHREAD
   /* This is not a thread implementation */
@@ -1239,6 +1348,7 @@ CTHREAD_DECL Cthread_Detach(char *file, int line, int cid) {
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
   if ((n = pthread_detach(current->pid))) {
     errno = n;
+    serrno = SECTHREADERR;
     return(-1);
   }
   current->detached = 1;
@@ -1250,6 +1360,7 @@ CTHREAD_DECL Cthread_Detach(char *file, int line, int cid) {
 
     memcpy(&thispid,&(current->pid),sizeof(Cth_pid_t));
     if (pthread_detach(&thispid)) {
+      serrno = SECTHREADERR;
       return(-1);
     }
   }
@@ -1257,6 +1368,7 @@ CTHREAD_DECL Cthread_Detach(char *file, int line, int cid) {
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
   if ((n = pthread_detach(current->pid))) {
     errno = n;
+    serrno = SECTHREADERR;
     return(-1);
   }
   current->detached = 1;
@@ -1264,6 +1376,7 @@ CTHREAD_DECL Cthread_Detach(char *file, int line, int cid) {
   /* This is a noop. Windows doesn't make any real distinction */
   current->detached = 1;
 #else /* _CTHREAD_PROTO */
+  serrno = EOPNOTSUP;
   return(-1);
 #endif
   return(0);
@@ -1356,6 +1469,8 @@ CTHREAD_DECL Cthread_Self(char *file, int line) {
   }
   _Cthread_release_mtx(&(Cthread.mtx));
 
+  if (n < 0)
+    serrno = EINVAL;
   return(n);
 }
 
@@ -1396,6 +1511,7 @@ int _Cthread_destroy(int cid) {
 
   if (n) {
     _Cthread_release_mtx(&(Cthread.mtx));
+    serrno = EINVAL;
     return(-1);
   }
 
@@ -1429,6 +1545,7 @@ CTHREAD_DECL Cthread_Cond_Broadcast(char *file, int line, void *addr)
 #ifdef _CTHREAD
   struct Cmtx_element_t *current = &Cmtx;   /* Curr Cmtx_element */
   int                  n;                 /* Status            */
+  int                  rc;
 #endif
 
 #ifdef CTHREAD_DEBUG
@@ -1442,8 +1559,10 @@ CTHREAD_DECL Cthread_Cond_Broadcast(char *file, int line, void *addr)
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
   /* Verify the arguments */
-  if (addr == NULL)
+  if (addr == NULL) {
+    serrno = EINVAL;
     return(-1);
+  }
 
 #ifdef _NOCTHREAD
   /* This is not a thread implementation */
@@ -1454,7 +1573,6 @@ CTHREAD_DECL Cthread_Cond_Broadcast(char *file, int line, void *addr)
   /* implemented                                */
   if (_Cthread_obtain_mtx(&(Cthread.mtx),-1))
     return(-1);
-
   n = 1;
   while (current->next != NULL) {
     current = current->next;
@@ -1463,9 +1581,6 @@ CTHREAD_DECL Cthread_Cond_Broadcast(char *file, int line, void *addr)
       break;
     }
   }
-
-  _Cthread_release_mtx(&(Cthread.mtx));
-
   if (n) {
     /* There is NO already associated mutex     */
     /* Cthread consider it as a progamming logic  */
@@ -1480,19 +1595,56 @@ CTHREAD_DECL Cthread_Cond_Broadcast(char *file, int line, void *addr)
     /* (this automatically release the mutex)   */
     /* 4 - Release the mutex, gained again at   */
     /* the return of the wait condition         */
+    _Cthread_release_mtx(&(Cthread.mtx));
+    serrno = EINVAL;
     return(-1);
   }
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
-  return(pthread_cond_broadcast(&(current->cond)));
+  if (current->nwait > 1) {
+    if ((rc = pthread_cond_broadcast(&(current->cond)))) {
+      errno = rc;
+      serrno = SECTHREADERR;
+      rc = -1;
+    }
+  } else {
+    if ((rc = pthread_cond_signal(&(current->cond)))) {
+      errno = rc;
+      serrno = SECTHREADERR;
+      rc = -1;
+    }
+  }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-  return(pthread_cond_broadcast(&(current->cond)));
+  if (current->nwait > 1) {
+    if (pthread_cond_broadcast(&(current->cond))) {
+      serrno = SECTHREADERR;
+      rc = -1;
+    }
+  } else {
+    if (pthread_cond_signal(&(current->cond))) {
+      serrno = SECTHREADERR;
+      rc = -1;
+    }
+  }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
-  return(pthread_cond_broadcast(&(current->cond)));
+  /* On linux pthread_cond_broadcast and pthread_cond_signal */
+  /* never returns an error code...                          */
+  if (current->nwait > 1)
+    pthread_cond_broadcast(&(current->cond));
+  else
+    pthread_cond_signal(&(current->cond));
+  rc = 0;
 #elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
-  return(_Cthread_win32_cond_broadcast(&(current->cond)));
+  if (current->nwait > 1) {
+    rc = _Cthread_win32_cond_broadcast(&(current->cond));
+  } else {
+    rc = _Cthread_win32_cond_signal(&(current->cond));
+  }
 #else
+  serrno = EOPNOTSUP;
   return(-1);
 #endif /* _CTHREAD_PROTO */
+  _Cthread_release_mtx(&(Cthread.mtx));
+  return(rc);
 #endif /* ifdef _NOCTHREAD */
 }
 
@@ -1513,7 +1665,8 @@ CTHREAD_DECL Cthread_Wait_Condition(char *file, int line, void *addr, int timeou
 {
 #ifdef _CTHREAD
   struct Cmtx_element_t *current = &Cmtx;   /* Curr Cmtx_element */
-  int                  n;                 /* Status            */
+  int                    n;                 /* Status            */
+  int                    rc;
 #endif
   
 #ifdef CTHREAD_DEBUG
@@ -1528,20 +1681,22 @@ CTHREAD_DECL Cthread_Wait_Condition(char *file, int line, void *addr, int timeou
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
   /* Verify the arguments */
-  if (addr == NULL)
+  if (addr == NULL) {
+    serrno = EINVAL;
     return(-1);
+  }
   
 #ifdef _NOCTHREAD
   /* This is not a thread implementation */
   return(0);
 #else
+
   /* This is a thread implementation            */
   /* We search to see if the mutex is already   */
   /* implemented                                */
   
   if (_Cthread_obtain_mtx(&(Cthread.mtx),-1))
     return(-1);
-  
   n = 1;
   while (current->next != NULL) {
     current = current->next;
@@ -1550,10 +1705,7 @@ CTHREAD_DECL Cthread_Wait_Condition(char *file, int line, void *addr, int timeou
       break;
     }
   }
-  
-  _Cthread_release_mtx(&(Cthread.mtx));
-                    
-  if (n) {
+  if (n != 0) {
     /* There is NO already associated mutex     */
     /* Cthread consider it as a progamming logic*/
     /* error, since in thread programming, the  */
@@ -1567,38 +1719,44 @@ CTHREAD_DECL Cthread_Wait_Condition(char *file, int line, void *addr, int timeou
     /* (this automatically release the mutex)   */
     /* 4 - Release the mutex, gained again at   */
     /* the return of the wait condition         */
+
+    _Cthread_release_mtx(&(Cthread.mtx));
+    serrno = EINVAL;
     return(-1);
   }
+
+  /* Flag the number of threads waiting on addr */
+
+  ++current->nwait;
+
+  _Cthread_release_mtx(&(Cthread.mtx));
+                    
   if (timeout <= 0) {
     /* No timeout : pthread_cond_wait */
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
     if ((n = pthread_cond_wait(&(current->cond),&(current->mtx)))) {
       errno = n;
-      return(-1);
+      serrno = ECTHREADERROR;
+      rc = -1;
     } else {
-      return(0);
+      rc = 0;
     }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-    if ((n = pthread_cond_wait(&(current->cond),&(current->mtx)))) {
-      return(-1);
+    if (pthread_cond_wait(&(current->cond),&(current->mtx))) {
+      serrno = ECTHREADERROR;
+      rc = -1;
     } else {
-      return(0);
+      rc = 0;
     }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
-    if ((n = pthread_cond_wait(&(current->cond),&(current->mtx)))) {
-      errno = n;
-      return(-1);
-    } else {
-      return(0);
-    }
+    /* On linux pthread_cond_wait never returns an error code... */
+    pthread_cond_wait(&(current->cond),&(current->mtx));
+    rc = 0;
 #elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32 
-    if ( (n = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),-1))) {
-        return(-1);
-    } else {
-        return(0);
-    }
+    rc = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),-1);
 #else
-    return(-1);
+    serrno = SEOPNOTSUP;
+    rc = -1;
 #endif /* _CTHREAD_PROTO */
   } else {
 #if _CTHREAD_PROTO !=  _CTHREAD_PROTO_WIN32
@@ -1607,43 +1765,66 @@ CTHREAD_DECL Cthread_Wait_Condition(char *file, int line, void *addr, int timeou
     struct timespec         ts;
     /* Get current time */
     if (gettimeofday(&tv, (void *) NULL) < 0) {
-      return(-1);
-    }
-    /* timeout seconds in the future */
-    ts.tv_sec = tv.tv_sec + timeout;
-    /* microsec to nanosec */
-    ts.tv_nsec = tv.tv_usec * 1000;
+      serrno = SEINTERNAL;
+      rc = -1;
+    } else {
+      /* timeout seconds in the future */
+      ts.tv_sec = tv.tv_sec + timeout;
+      /* microsec to nanosec */
+      ts.tv_nsec = tv.tv_usec * 1000;
 #endif /* _CTHREAD_PROTO !=  _CTHREAD_PROTO_WIN32 */
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
-    if ((n = pthread_cond_timedwait(&(current->cond),
-                                    &(current->mtx),&ts))) {
-      errno = n;
-      return(-1);
-    }
+      if ((n = pthread_cond_timedwait(&(current->cond),
+                                      &(current->mtx),&ts))) {
+        errno = n;
+        serrno = ( errno = ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+        rc = -1;
+      } else {
+        rc = 0;
+      }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-    if ((n = pthread_cond_timedwait(&(current->cond),
-                                    &(current->mtx),&ts))) {
-      /* EINVAL or EAIGAIN or EDEADLK */
-      return(-1);
-    }
+      if (pthread_cond_timedwait(&(current->cond),
+                                      &(current->mtx),&ts)) {
+        serrno = ( errno = ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+        rc = -1;
+      } else {
+        rc = 0;
+      }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
-    if ((n = pthread_cond_timedwait(&(current->cond),
-                                    &(current->mtx),&ts))) {
-      errno = n;
-      return(-1);
-    }
+      if ((n = pthread_cond_timedwait(&(current->cond),
+                                      &(current->mtx),&ts))) {
+        errno = n;
+        serrno = ( errno = ETIMEDOUT ? SETIMEDOUT : SECTHREADERR );
+        rc = -1;
+      } else {
+        rc = 0;
+      }
 #elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32 
-    if ( (n = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),timeout))) {
-        return(-1);
-    } else {
-        return(0);
-    }
+      rc = _Cthread_win32_cond_wait(&(current->cond),&(current->mtx),timeout);
 #else
-    return(-1);
+      serrno = SEOPNOTSUP;
+      rc = -1;
 #endif
+    }
     /* OK */
-    return(0);
+    /* [jdurand] why is it there ??? rc = 0; */
   }
+
+  /* This end of the routine will decrease the number */
+  /* of wait doing a Wait_Condition on addr           */
+
+  if (_Cthread_obtain_mtx(&(Cthread.mtx),-1))
+    return(-1);
+  while (current->next != NULL) {
+    current = current->next;
+    if (current->addr == addr) {
+      /* Decrease the number of waiting threads */
+      --current->nwait;
+      break;
+    }
+  }
+  _Cthread_release_mtx(&(Cthread.mtx));
+  return(rc);
 #endif /* ifdef _NOCTHREAD */
 }
 
@@ -1680,8 +1861,10 @@ CTHREAD_DECL Cthread_Lock_Mtx(char *file, int line, void *addr, int timeout) {
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
   /* Verify the arguments */
-  if (addr == NULL)
+  if (addr == NULL) {
+    serrno = EINVAL;
     return(-1);
+  }
 
 #ifdef _NOCTHREAD
   /* This is not a thread implementation */
@@ -1711,6 +1894,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(char *file, int line, void *addr, int timeout) {
 
     if ((Cmtx_new = (struct Cmtx_element_t *) malloc(sizeof(struct Cmtx_element_t)))
         == NULL) {
+      serrno = SEINTERNAL;
       return(-1);
     }
 
@@ -1718,6 +1902,8 @@ CTHREAD_DECL Cthread_Lock_Mtx(char *file, int line, void *addr, int timeout) {
     Cmtx_new->addr = addr;
     /* Make sure it points to nothing after */
     Cmtx_new->next = NULL;
+    /* Counter to know the number of thread waiting on addr */
+    Cmtx_new->nwait = 0;
     /* Create the mutex and cond. var. associated */
     {
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
@@ -1729,6 +1915,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(char *file, int line, void *addr, int timeout) {
         /* Release Cmtx element */
         free(Cmtx_new);
         errno = n;
+        serrno = SECTHREADERR;
         return(-1);
       }
       if ((n = pthread_mutex_init(&(Cmtx_new->mtx),&mattr))) {
@@ -1737,6 +1924,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(char *file, int line, void *addr, int timeout) {
         /* Release Cmtx element */
         free(Cmtx_new);
         errno = n;
+        serrno = SECTHREADERR;
         return(-1);
       }
       /* Create the associate conditionnal variable attribute */
@@ -1748,6 +1936,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(char *file, int line, void *addr, int timeout) {
         /* Release Cmtx element */
         free(Cmtx_new);
         errno = n;
+        serrno = SECTHREADERR;
         return(-1);
       }
       if ((n = pthread_cond_init(&(Cmtx_new->cond),&cattr))) {
@@ -1760,6 +1949,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(char *file, int line, void *addr, int timeout) {
         /* Release Cmtx element */
         free(Cmtx_new);
         errno = n;
+        serrno = SECTHREADERR;
         return(-1);
       }
       /* Release cond attribute resources */
@@ -1768,18 +1958,18 @@ CTHREAD_DECL Cthread_Lock_Mtx(char *file, int line, void *addr, int timeout) {
       pthread_mutexattr_destroy(&mattr);
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
       /* Create the mutex a-la DCE */
-      if ((n = pthread_mutex_init(&(Cmtx_new->mtx),pthread_mutexattr_default))) {
+      if (pthread_mutex_init(&(Cmtx_new->mtx),pthread_mutexattr_default)) {
         /* Release Cmtx element */
         free(Cmtx_new);
-        errno = n;
+        serrno = SECTHREADERR;
         return(-1);
       }
-      if ((n = pthread_cond_init(&(Cmtx_new->cond),pthread_condattr_default))) {
+      if (pthread_cond_init(&(Cmtx_new->cond),pthread_condattr_default)) {
         /* Release mutexes */
         pthread_mutex_destroy(&(Cmtx_new->mtx));
         /* Release Cmtx element */
         free(Cmtx_new);
-        errno = n;
+        serrno = SECTHREADERR;
         return(-1);
       }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
@@ -1791,6 +1981,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(char *file, int line, void *addr, int timeout) {
         /* Release Cmtx element */
         free(Cmtx_new);
         errno = n;
+        serrno = SECTHREADERR;
         return(-1);
       }
       if ((n = pthread_mutex_init(&(Cmtx_new->mtx),&mattr))) {
@@ -1799,6 +1990,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(char *file, int line, void *addr, int timeout) {
         /* Release Cmtx element */
         free(Cmtx_new);
         errno = n;
+        serrno = SECTHREADERR;
         return(-1);
       }
       /* Create the associate conditionnal variable attribute */
@@ -1810,6 +2002,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(char *file, int line, void *addr, int timeout) {
         /* Release Cmtx element */
         free(Cmtx_new);
         errno = n;
+        serrno = SECTHREADERR;
         return(-1);
       }
       if ((n = pthread_cond_init(&(Cmtx_new->cond),&cattr))) {
@@ -1822,6 +2015,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(char *file, int line, void *addr, int timeout) {
         /* Release Cmtx element */
         free(Cmtx_new);
         errno = n;
+        serrno = SECTHREADERR;
         return(-1);
       }
       /* Release cond attribute resources */
@@ -1833,6 +2027,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(char *file, int line, void *addr, int timeout) {
       if ( (Cmtx_new->mtx = CreateMutex(NULL,FALSE,NULL)) == NULL ) {
         /* Release Cmtx element */
         free(Cmtx_new);
+        serrno = SECTHREADERR;
         return(-1);
 	  }
 #  else /* _CTHREAD_WIN32MTX */
@@ -1853,9 +2048,11 @@ CTHREAD_DECL Cthread_Lock_Mtx(char *file, int line, void *addr, int timeout) {
 #  endif /* _CTHREAD_WIN32MTX */
 		/* Release Cmtx element */
         free(Cmtx_new);
+        serrno = SECTHREADERR;
         return(-1);
       }
 #else
+      serrno = SEOPNOTSUP;
       return(-1);
 #endif
     }
@@ -1926,8 +2123,10 @@ CTHREAD_DECL Cthread_Mutex_Unlock(char *file, int line, void *addr) {
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
   /* Verify the arguments */
-  if (addr == NULL)
+  if (addr == NULL) {
+    serrno = EINVAL;
     return(-1);
+  }
 
 #ifdef _NOCTHREAD
   /* This is not a thread implementation */
@@ -1953,6 +2152,7 @@ CTHREAD_DECL Cthread_Mutex_Unlock(char *file, int line, void *addr) {
 
   if (n) {
     /* Not yet existing mutex */
+    serrno = EINVAL;
     return(-1);
   } else {
     return(_Cthread_release_mtx(&(current->mtx)));
@@ -1989,8 +2189,10 @@ CTHREAD_DECL Cthread_Mutex_Destroy(char *file, int line, void *addr) {
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
   /* Verify the arguments */
-  if (addr == NULL)
+  if (addr == NULL) {
+    serrno = EINVAL;
     return(-1);
+  }
 
 #ifdef _NOCTHREAD
   /* This is not a thread implementation */
@@ -2018,6 +2220,7 @@ CTHREAD_DECL Cthread_Mutex_Destroy(char *file, int line, void *addr) {
 
   if (n) {
     /* Not yet existing mutex */
+    serrno = EINVAL;
     return(-1);
   } else {
     /* Destroy the mutex */
@@ -2027,15 +2230,16 @@ CTHREAD_DECL Cthread_Mutex_Destroy(char *file, int line, void *addr) {
     if (previous != NULL)
       previous->next = current->next;
     /*     - Releasing the mutex and cond       */
+    n = 0;
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
-    pthread_mutex_destroy(&(current->mtx));
-    pthread_cond_destroy(&(current->cond));
+    n += pthread_mutex_destroy(&(current->mtx));
+    n += pthread_cond_destroy(&(current->cond));
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-    pthread_mutex_destroy(&(current->mtx));
-    pthread_cond_destroy(&(current->cond));
+    n += pthread_mutex_destroy(&(current->mtx));
+    n += pthread_cond_destroy(&(current->cond));
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
-    pthread_mutex_destroy(&(current->mtx));
-    pthread_cond_destroy(&(current->cond));
+    n += pthread_mutex_destroy(&(current->mtx));
+    n += pthread_cond_destroy(&(current->cond));
 #elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
 #  ifdef _CTHREAD_WIN32MTX
     CloseHandle(current->mtx);
@@ -2044,10 +2248,15 @@ CTHREAD_DECL Cthread_Mutex_Destroy(char *file, int line, void *addr) {
 #  endif /* _CTHREAD_WIN32MTX */
     _Cthread_win32_cond_destroy(&(current->cond));
 #else
+    serrno = SEOPNOTSUP;
     return(-1);
 #endif
     free(current);
-    return(0);
+    if (n != 0) {
+      serrno = SECTHREADERR;
+      n = -1;
+    }
+    return(n);
   }
 #endif /* ifdef _NOCTHREAD */
 }
@@ -2081,14 +2290,15 @@ int _Cthread_release_mtx(Cth_mtx_t *mtx)
   /* This is a thread environment */
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
   if ((n = pthread_mutex_unlock(mtx))) {
+    serrno = SECTHREADERR;
     errno = n;
     return(-1);
   } else {
     return(0);
   }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-  if ((n = pthread_mutex_unlock(mtx))) {
-    /* Should be EINVAL */
+  if (pthread_mutex_unlock(mtx)) {
+    serrno = SECTHREADERR;
     return(-1);
   } else {
     return(0);
@@ -2096,14 +2306,19 @@ int _Cthread_release_mtx(Cth_mtx_t *mtx)
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
   if ((n = pthread_mutex_unlock(mtx))) {
     errno = n;
+    serrno = SECTHREADERR;
     return(-1);
   } else {
     return(0);
   }
 #elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
 #  ifdef _CTHREAD_WIN32MTX
-  if ( ( n = ReleaseMutex((HANDLE)*mtx) ) ) return(0);
-  else return(-1);
+  if ( ( n = ReleaseMutex((HANDLE)*mtx) ) ) {
+    return(0);
+  } else {
+    serrno = SECTHREADERR;
+    return(-1);
+  }
 #  else /* _CTHREAD_WIN32MTX */
   /*
    * We must make sure that we own the critical section
@@ -2118,10 +2333,14 @@ int _Cthread_release_mtx(Cth_mtx_t *mtx)
        */
       mtx->nb_locks = 0;
       while ( n-- > 0 ) LeaveCriticalSection(&(mtx->mtx));
- } else n = -1;
+  } else {
+    serrno = SECTHREADERR;
+    n = -1;
+  }
   return(n);
 #  endif /* _CTHREAD_WIN32MTX */
 #else
+  serrno = SEOPNOTSUP;
   return(-1);
 #endif /* _CTHREAD_PROTO */
 #endif
@@ -2169,12 +2388,22 @@ int _Cthread_obtain_mtx(Cth_mtx_t *mtx, int timeout)
    * Use Win32 mutex handles
    */
   if ( timeout < 0 ) {
-	if ( (n = WaitForSingleObject((HANDLE)*mtx,INFINITE)) == WAIT_FAILED ) return(-1);
-	else return(0);
+	if ( (n = WaitForSingleObject((HANDLE)*mtx,INFINITE)) == WAIT_FAILED ) {
+      serrno = SECTHREADERR;
+      return(-1);
+	} else {
+      return(0);
+    }
   } else {
-    if ( (n=WaitForSingleObject((HANDLE)*mtx,timeout * 1000)) == WAIT_FAILED ) return(-1);
-	else if ( n == WAIT_TIMEOUT ) return(-1);
-	else return(0);
+    if ( (n=WaitForSingleObject((HANDLE)*mtx,timeout * 1000)) == WAIT_FAILED ) {
+      serrno = SECTHREADERR;
+      return(-1);
+	} else if ( n == WAIT_TIMEOUT ) {
+      serrno = SETIMEDOUT;
+      return(-1);
+	} else {
+      return(0);
+    }
   }
 #else 
   /* This is a thread implementation */
@@ -2191,23 +2420,44 @@ int _Cthread_obtain_mtx(Cth_mtx_t *mtx, int timeout)
     return(0);
 #  else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 && _CTHREAD_WIN32MTX */
     /* Try to get the lock */
+#    if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
     if ((n = pthread_mutex_lock(mtx))) {
+      serrno = SECTHREADERR;
       errno = n;
       return(-1);
     }
     return(0);
+#    elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+    if (pthread_mutex_lock(mtx)) {
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+    return(0);
+#    elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+    if ((n = pthread_mutex_lock(mtx))) {
+      serrno = SECTHREADERR;
+      errno = n;
+      return(-1);
+    }
+    return(0);
+#    else
+    serrno = SEOPNOTSUP;
+    return(-1);
+#    endif /* _CTHREAD_PROTO */
 #  endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 && _CTHREAD_WIN32MTX */
   } else if (timeout == 0) {
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
     if ((n = pthread_mutex_trylock(mtx))) {
       /* EBUSY or EINVAL */
       errno = n;
+      serrno = SECTHREADERR;
       return(-1);
     } else {
       return(0);
     }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-    if ((n = pthread_mutex_trylock(mtx)) != 1) {
+    if (pthread_mutex_trylock(mtx) != 1) {
+      serrno = SECTHREADERR;
       return(-1);
     } else {
       return(0);
@@ -2216,6 +2466,7 @@ int _Cthread_obtain_mtx(Cth_mtx_t *mtx, int timeout)
     if ((n = pthread_mutex_trylock(mtx))) {
       /* EBUSY or EINVAL */
       errno = n;
+      serrno = SECTHREADERR;
       return(-1);
     } else {
       return(0);
@@ -2224,9 +2475,12 @@ int _Cthread_obtain_mtx(Cth_mtx_t *mtx, int timeout)
     if ( TryEnterCriticalSection(&(mtx->mtx)) == TRUE ) {
         mtx->nb_locks++;
         return(0);
+    } else {
+      serrno = SECTHREADERR;
+      return(-1);
     }
-    else return(-1);
 #else
+    serrno = SEOPNOTSUP;
     return(-1);
 #endif /* _CTHREAD_PROTO */
   } else {
@@ -2253,8 +2507,11 @@ int _Cthread_obtain_mtx(Cth_mtx_t *mtx, int timeout)
       if ( TryEnterCriticalSection(&(mtx->mtx)) == TRUE ) {
           n = 0;
           mtx->nb_locks++;
-      } else errno = EBUSY;
+      } else {
+        errno = EBUSY;
+      }
 #else
+      serrno = SEOPNOTSUP;
       return(-1);
 #endif /* _CTHREAD_PROTO */
       if (errno == EDEADLK || n == 0) {
@@ -2272,6 +2529,7 @@ int _Cthread_obtain_mtx(Cth_mtx_t *mtx, int timeout)
 #endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
       }
     }
+    serrno = ETIMEDOUT;
     return(-1);
   }
 #endif /* ifndef _CTHREAD */
@@ -2409,12 +2667,14 @@ int _Cthread_addcid(Cth_pid_t *pid,
   /* Make sure next cid is positive... */
   if (++current_cid < 0) {
     _Cthread_release_mtx(&(Cthread.mtx));
+    serrno = SEINTERNAL;
     return(-1);
   }
 
   /* Change pointer of last element to its next one */
   if ((current->next = malloc(sizeof(struct Cid_element_t))) == NULL) {
     _Cthread_release_mtx(&(Cthread.mtx));
+    serrno = SEINTERNAL;
     return(-1);
   }
   
@@ -2459,7 +2719,7 @@ int _Cthread_addcid(Cth_pid_t *pid,
 }
 
 /* ============================================ */
-/* Routine  : _Cthread_once                       */
+/* Routine  : _Cthread_once                     */
 /* Arguments:                                   */
 /* -------------------------------------------- */
 /* Output   : 0 (OK) -1 (ERROR)                 */
@@ -2477,6 +2737,7 @@ void _Cthread_once(void) {
 #ifdef _CTHREAD
 #if _CTHREAD_PROTO !=  _CTHREAD_PROTO_WIN32
   pthread_mutexattr_t  mattr;
+  int                  n;
 #endif /* _CTHREAD_PROTO != _CTHREAD_PROTO_WIN32 */
 #endif
 
@@ -2493,21 +2754,25 @@ void _Cthread_once(void) {
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
   /* Create the mutex a-la POSIX */
   /* Create the mutex attribute */
-  if (pthread_mutexattr_init(&mattr))
+  if ((n = pthread_mutexattr_init(&mattr)) != 0) {
+    errno = n;
 	return;
-  if (pthread_mutex_init(&(Cthread.mtx),&mattr))
+  }
+  if ((n = pthread_mutex_init(&(Cthread.mtx),&mattr)) != 0) {
+    errno = n;
 	return;
+  }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
     /* Create the mutex a-la DCE */
-  if (pthread_mutex_init(&(Cthread.mtx),pthread_mutexattr_default))
+  if (pthread_mutex_init(&(Cthread.mtx),pthread_mutexattr_default) != 0) {
     return;
+  }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
-  /* Create the mutex a-la LinuxThreads */
-  /* Create the mutex attribute */
-  if (pthread_mutexattr_init(&mattr))
-    return;
-  if (pthread_mutex_init(&(Cthread.mtx),&mattr))
-	return;
+  /* Create the mutex a-la LinuxThreads      */
+  /* On this OS, pthread_mutexattr_init and  */
+  /* pthread_mutex_init always returns 0 ... */
+  pthread_mutexattr_init(&mattr);
+  pthread_mutex_init(&(Cthread.mtx),&mattr);
 #elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
 #  ifdef _CTHREAD_WIN32MTX
   if ( !once ) Cthread.mtx = CreateMutex(NULL,FALSE,NULL);
@@ -2563,8 +2828,10 @@ struct Cspec_element_t *_Cthread_findglobalkey(int *global_key) {
   int                  n;                 /* Status            */
 
   /* Verify the arguments */
-  if (global_key == NULL)
+  if (global_key == NULL) {
+    serrno = EINVAL;
     return(NULL);
+  }
 
   if (_Cthread_obtain_mtx(&(Cthread.mtx),-1))
     return(NULL);
@@ -2580,6 +2847,7 @@ struct Cspec_element_t *_Cthread_findglobalkey(int *global_key) {
 
   _Cthread_release_mtx(&(Cthread.mtx));
   if (n) {
+    serrno = EINVAL;
     return(NULL);
   } else {
     return(current);
@@ -2622,9 +2890,10 @@ CTHREAD_DECL Cthread_Setspecific(char *file, int line, int *global_key, void *ad
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
   /* Verify the arguments */
-  if (global_key == NULL)
+  if (global_key == NULL) {
+    serrno = EINVAL;
     return(-1);
-
+  }
 #ifdef _NOCTHREAD
   /* This is not a thread implementation */
   if ((current = _Cthread_findglobalkey(global_key)) == NULL) {
@@ -2635,6 +2904,7 @@ CTHREAD_DECL Cthread_Setspecific(char *file, int line, int *global_key, void *ad
     }
     /* And we check again the global structure    */
     if ((current = _Cthread_findglobalkey(global_key)) == NULL) {
+      /* This should not happen */
       return(-1);
     }
   }
@@ -2663,21 +2933,27 @@ CTHREAD_DECL Cthread_Setspecific(char *file, int line, int *global_key, void *ad
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
   if ((n = pthread_setspecific(current->key, addr))) {
     errno = n;
+    serrno = SECTHREADERR;
     return(-1);
   }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-  if ((n = pthread_setspecific(current->key, addr))) {
-    errno = n;
+  if (pthread_setspecific(current->key, addr)) {
+    serrno = SECTHREADERR;
     return(-1);
   }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
   if ((n = pthread_setspecific(current->key, addr))) {
     errno = n;
+    serrno = SECTHREADERR;
     return(-1);
   }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
-  if ( !(n = TlsSetValue(current->key,addr)) ) return(-1);
+  if ( !(n = TlsSetValue(current->key,addr)) ) {
+    serrno = SECTHREADERR;
+    return(-1);
+  }
 #else
+  serrno = SEOPNOTSUP;
   return(-1);
 #endif
   /* OK */
@@ -2722,8 +2998,10 @@ CTHREAD_DECL Cthread_Getspecific(char *file, int line, int *global_key, void **a
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
   /* Verify the arguments */
-  if (global_key == NULL || addr == NULL)
+  if (global_key == NULL || addr == NULL) {
+    serrno = EINVAL;
     return(-1);
+  }
 
 #ifdef _NOCTHREAD
   /* This is not a thread implementation */
@@ -2733,6 +3011,7 @@ CTHREAD_DECL Cthread_Getspecific(char *file, int line, int *global_key, void **a
     
     if ((Cspec_new = (struct Cspec_element_t *) malloc(sizeof(struct Cspec_element_t)))
         == NULL) {
+      serrno = SEINTERNAL;
       return(-1);
     }
     
@@ -2766,6 +3045,7 @@ CTHREAD_DECL Cthread_Getspecific(char *file, int line, int *global_key, void **a
 
     if ((Cspec_new = (struct Cspec_element_t *) malloc(sizeof(struct Cspec_element_t)))
         == NULL) {
+      serrno = SEINTERNAL;
       return(-1);
     }
 
@@ -2773,12 +3053,14 @@ CTHREAD_DECL Cthread_Getspecific(char *file, int line, int *global_key, void **a
     /* Create the specific variable a-la POSIX */
     if ((n = pthread_key_create(&(Cspec_new->key), _Cthread_keydestructor))) {
       errno = n;
+      serrno = SECTHREADERR;
       free(Cspec_new);
       return(-1);
     }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
     /* Create the specific variable a-la DCE */
     if (pthread_keycreate(&(Cspec_new->key), _Cthread_keydestructor)) {
+      serrno = SECTHREADERR;
       free(Cspec_new);
       return(-1);
     }
@@ -2786,15 +3068,18 @@ CTHREAD_DECL Cthread_Getspecific(char *file, int line, int *global_key, void **a
     /* Create the specific variable a-la LinuxThreads */
     if ((n = pthread_key_create(&(Cspec_new->key), _Cthread_keydestructor))) {
       errno = n;
+      serrno = SECTHREADERR;
       free(Cspec_new);
       return(-1);
     }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
     if ( (n = TlsAlloc()) == 0xFFFFFFFF ) {
       free(Cspec_new);
+      serrno = SECTHREADERR;
       return(-1);
 	} else Cspec_new->key = n;
 #else
+    serrno = SEOPNOTSUP;
     return(-1);
 #endif /* _CTHREAD_PROTO */
     /* Initialize global_key */
@@ -2839,6 +3124,7 @@ CTHREAD_DECL Cthread_Getspecific(char *file, int line, int *global_key, void **a
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
   tsd = TlsGetValue(current->key);
 #else
+  serrno = SEOPNOTSUP;
   return(-1);
 #endif
   /* We change the address location */
@@ -2920,6 +3206,7 @@ static int _Cthread_win32_cond_init(Cth_cond_t *cv) {
      */
     if ( (cv->cond_events[CTHREAD_WIN32_SIGNAL] = 
         CreateEvent(NULL,FALSE,FALSE,NULL)) == NULL ) {
+        serrno = SECTHREADERR;
         return(-1);
     }
     /*
@@ -2927,6 +3214,7 @@ static int _Cthread_win32_cond_init(Cth_cond_t *cv) {
      */
     if ( (cv->cond_events[CTHREAD_WIN32_BROADCAST] = 
         CreateEvent(NULL,TRUE,FALSE,NULL)) == NULL ) {
+        serrno = SECTHREADERR;
         return(-1);
     }
     /*
@@ -2935,6 +3223,7 @@ static int _Cthread_win32_cond_init(Cth_cond_t *cv) {
      */
     if ( (cv->last_waiter_done = 
         CreateEvent(NULL,TRUE,FALSE,NULL)) == NULL ) {
+        serrno = SECTHREADERR;
         return(-1);
     }
     return(0);
@@ -3025,7 +3314,10 @@ static int _Cthread_win32_cond_wait(Cth_cond_t *cv,
             PulseEvent(cv->last_waiter_done);
         }
         LeaveCriticalSection(&(cv->nb_waiters_lock));
-        if ( rc == WAIT_FAILED || rc == WAIT_TIMEOUT ) return(-1);
+        if ( rc == WAIT_FAILED || rc == WAIT_TIMEOUT ) {
+          serrno = (rc == WAIT_TIMEOUT ? SETIMEDOUT : SECTHREADERR);
+          return(-1);
+        }
     } else {
         /*
          * Release counter mutex to next waiter or new
@@ -3038,7 +3330,10 @@ static int _Cthread_win32_cond_wait(Cth_cond_t *cv,
          */
         if ( broadcast) {
             rc = WaitForSingleObject(cv->last_waiter_done,timeout_msec);
-            if ( rc == WAIT_FAILED || rc == WAIT_TIMEOUT ) return(-1);
+            if ( rc == WAIT_FAILED || rc == WAIT_TIMEOUT ) {
+              serrno = (rc == WAIT_TIMEOUT ? SETIMEDOUT : SECTHREADERR);
+              return(-1);
+            }
 
         }
     }
@@ -3153,7 +3448,6 @@ CTHREAD_DECL Cthread_proto() {
 #ifdef _CTHREAD
   return(_CTHREAD_PROTO);
 #else
-  errno = ENOENT;
   return(0);
 #endif
 }
@@ -3177,24 +3471,40 @@ CTHREAD_DECL Cthread_proto() {
 /* ============================================ */
 CTHREAD_DECL Cthread_isproto(char *proto) {
   if (proto == NULL) {
-    errno = EINVAL;
+    serrno = EINVAL;
     return(1);
   }
 #ifdef _CTHREAD
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
-  return(strcmp(proto,"POSIX"));
+  if (strcmp(proto,"POSIX") != 0) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  return(0);
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-  return(strcmp(proto,"DCE"));
+  if (strcmp(proto,"DCE") != 0) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  return(0);
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
-  return(strcmp(proto,"LINUX"));
+  if (strcmp(proto,"LINUX") != 0) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  return(0);
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
-  return(strcmp(proto,"WIN32"));
+  if (strcmp(proto,"WIN32") != 0) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  return(0);
 #else
-  errno = ENOENT;
+  serrno = SEOPNOTSUP;
   return(1);
 #endif
 #else
-  errno = ENOENT;
+  serrno = SEINVAL;
   return(1);
 #endif
 }
@@ -3292,6 +3602,8 @@ CTHREAD_DECL _Cthread_self(void) {
 #endif
   }
 
+  if (n < 0)
+    serrno = EINVAL;
   return(n);
 }
 
