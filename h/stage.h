@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.8 2000/01/07 12:18:34 jdurand Exp $
+ * $Id: stage.h,v 1.9 2000/01/09 11:40:21 jdurand Exp $
  */
 
 /*
@@ -24,18 +24,10 @@
 
 #define STGTIMEOUT 10   /* Stager network timeout (seconds) */
 #define DEFDGN "CART"	/* default device group name */
-#define MAXFSEQ CA_MAXFSEQ + 1	/* maximum fseq string length for one disk file */
-#define	MAXGRPNAMELEN	CA_MAXGRPNAMELEN + 1
-#ifdef MAXHOSTNAMELEN
-#undef MAXHOSTNAMELEN
-#endif
-#define MAXHOSTNAMELEN  CA_MAXHOSTNAMELEN + 1
 #ifdef MAXPATH
 #undef MAXPATH
 #endif
 #define MAXPATH 80	/* maximum path length */
-#define MAXPOOLNAMELEN	CA_MAXPOOLNAMELEN + 1
-#define	MAXREQID 999999 /* maximum value for a request id */
 #define	MAXRETRY 5
 #define	MAXVSN 3	/* maximum number of vsns/vids on a stage command */
 #define PRTBUFSZ 1024
@@ -45,9 +37,6 @@
 #define	RETRYI	60
 #define STGMAGIC    0x13140701
 #define STG	"stage"	/* service name in /etc/services */
-
-#define	STG_MAXDENLEN       5	/* maximum length for a alphanumeric density */
-#define	STG_MAXDGNLEN       8	/* maximum length for a device group name */
 
 #define UPPER(s) \
 	{ \
@@ -243,12 +232,12 @@ struct stgcat_entry {		/* entry format in STGCAT table */
 	int	nbaccesses;
 	union {
 	    struct {			/* tape specific info */
-		char	den[STG_MAXDENLEN+1];	/* density */
-		char	dgn[STG_MAXDGNLEN+1];	/* device group */
+		char	den[CA_MAXDENLEN+1];	/* density */
+		char	dgn[CA_MAXDGNLEN+1];	/* device group */
 		char	fid[CA_MAXFIDLEN+1];	/* file id */
 		char	filstat;	/* file status: new = 'n', old = 'o' */
-		char	fseq[CA_MAXFSEQ+1];	/* file sequence number requested by user */
-		char	lbl[CA_MAXLBL+1];	/* label type: al, nl, sl or blp */
+		char	fseq[CA_MAXFSEQLEN+1];	/* file sequence number requested by user */
+		char	lbl[CA_MAXLBLTYPLEN+1];	/* label type: al, nl, sl or blp */
 		int	retentd;	/* retention period in days */
 		char	tapesrvr[CA_MAXHOSTNAMELEN+1];	/* tape server */
 		char	E_Tflags;	/* SKIPBAD, KEEPFILE, NOTRLCHK */
@@ -280,7 +269,7 @@ struct waitq {
 	struct waitq *prev;
 	struct waitq *next;
 	char	pool_user[15];
-	char	clienthost[MAXHOSTNAMELEN];
+	char	clienthost[CA_MAXHOSTNAMELEN+1];
 	char	user[15];	/* login name */
 	uid_t	uid;		/* uid or Guid */
 	gid_t	gid;
@@ -298,7 +287,7 @@ struct waitq {
 	int	nb_waiting_on_req;
 	struct waitf *wf;
 	int	nb_clnreq;
-	char	waiting_pool[MAXPOOLNAMELEN];	/* if waiting space */
+	char	waiting_pool[CA_MAXPOOLNAMELEN+1];	/* if waiting space */
 	int	clnreq_reqid;		/* disk full reported by rtcopy */
 	int	clnreq_rpfd;
 	int	status;
@@ -307,11 +296,11 @@ struct waitq {
 };
 
 struct pool {
-	char	name[MAXPOOLNAMELEN];
+	char	name[CA_MAXPOOLNAMELEN+1];
 	struct pool_element *elemp;
 	int	defsize;
 	int	minfree;
-	char	gc[MAXHOSTNAMELEN+MAXPATH];	/* garbage collector */
+	char	gc[CA_MAXHOSTNAMELEN+MAXPATH+1];	/* garbage collector */
 	int	no_file_creation;		/* Do not create empty file on stagein/out (for Objectivity DB) */
 	int	nbelem;
 	int	next_pool_elem;		/* next pool element to be used */
@@ -323,7 +312,7 @@ struct pool {
 };
 
 struct pool_element {
-	char	server[MAXHOSTNAMELEN];
+	char	server[CA_MAXHOSTNAMELEN+1];
 	char	dirpath[MAXPATH];
 	long	capacity;	/* filesystem capacity in blocks */
 	long	free;		/* number of free blocks */
@@ -336,62 +325,6 @@ struct sorted_ent {
 	struct stgcat_entry *stcp;
 	struct stgpath_entry *stpp;
 	double	weight;
-};
-
-struct stgcat_entry_old {		/* entry format in STGCAT table */
-	int	blksize;	/* maximum block size */
-	char	filler[2];
-	char	charconv;	/* character conversion */
-	char	keep;		/* keep data on disk after successful stagewrt */
-	int	lrecl;		/* record length */
-	int	nread;		/* number of blocks/records to be copied */
-	char	poolname[MAXPOOLNAMELEN];
-	char	recfm[4];	/* record format */
-	int	size;		/* size in Mbytes of data to be staged */
-	char	ipath[MAXHOSTNAMELEN+MAXPATH];	/* internal path */
-	char	t_or_d;		/* 't' for tape/disk, 'd' for disk/disk */
-	char	group[MAXGRPNAMELEN];
-	char	user[15];	/* login name */
-	uid_t	uid;		/* uid or Guid */
-	gid_t	gid;
-#if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(vms) || defined(_WIN32)
-	int mask;
-#else
-	mode_t	mask;
-#endif
-	int	reqid;
-	int	status;
-	off_t	actual_size;
-	time_t	c_time;
-	time_t	a_time;
-	int	nbaccesses;
-	union {
-	    struct {			/* tape specific info */
-		char	den[6];		/* density */
-		char	dgn[9];		/* device group */
-		char	fid[18];	/* file id */
-		char	filstat;	/* file status: new = 'n', old = 'o' */
-		char	fseq[MAXFSEQ];	/* file sequence number requested by user */
-		char	lbl[4];		/* label type: al, nl, sl or blp */
-		int	retentd;	/* retention period in days */
-		char	tapesrvr[MAXHOSTNAMELEN];	/* tape server */
-		char	E_Tflags;	/* SKIPBAD, KEEPFILE, NOTRLCHK */
-		char	vid[MAXVSN][7];
-		char	vsn[MAXVSN][7];
-	    } t;
-	    struct {			/* info for disk file stageing */
-		char	xfile[MAXHOSTNAMELEN+MAXPATH];
-		char	Xparm[23];
-	    } d;
-	    struct {			/* migrated files (HSM) */
-		char	xfile[167];
-	    } m;
-	} u1;
-};
-
-struct stgpath_entry_old {		/* entry format in STGPATH table */
-	int	reqid;
-	char	upath[MAXHOSTNAMELEN+MAXPATH];
 };
 #endif
 
