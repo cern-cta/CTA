@@ -74,6 +74,7 @@ static char sccsid[] = "@(#)rfio_calls.c,v 1.3 2004/03/22 12:11:24 CERN/IT/PDP/D
 #endif
 
 #ifdef CSEC
+extern int Csec_service_type;
 extern int peer_uid;
 extern int peer_gid;
 #endif
@@ -3480,8 +3481,10 @@ int *ptrcode ;          /* Return code                       */
 char *permstr;          /* permission string for the request */
 {
 #ifdef CSEC
-  *uid = peer_uid;
-  *gid = peer_gid;
+  if (Csec_service_type < 0) {
+    *uid = peer_uid;
+    *gid = peer_gid;
+  }
 #endif
   return chsuser(*uid,*gid,hostname,ptrcode,permstr);
 }
@@ -3505,8 +3508,10 @@ char *permstr;          /* permission string for the request */
    struct passwd *pw ;
 
 #ifdef CSEC
-   uid = peer_uid;
-   gid = peer_gid;
+   if (Csec_service_type < 0) {
+     uid = peer_uid;
+     gid = peer_gid;
+   }
 #endif
 
    if ( chksuser(uid,gid,hostname,ptrcode,permstr) < 0 )
