@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.23 $ $Release$ $Date: 2005/01/27 14:45:09 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.24 $ $Release$ $Date: 2005/02/04 13:02:40 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.23 $ $Release$ $Date: 2005/01/27 14:45:09 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.24 $ $Release$ $Date: 2005/02/04 13:02:40 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -613,9 +613,26 @@ static void checkWorkerExit()
         if ( rtcpcld_returnStream(item->tape) == -1 ) {
           LOG_SYSCALL_ERR("rtcpcld_returnStream()");
         }
-      }
-      if ( value != 0 ) {
-        (void)rtcpcld_setVIDFailedStatus(item->tape);
+        if ( value != 0 ) {
+          (void)rtcpcld_setVIDFailedStatus(item->tape);
+        }
+      } else if ( (item->tape->tapereq.mode == WRITE_DISABLE) &&
+                  (value != 0) ) {
+        /*
+         * Restore segments that are left in SELECTED status. This
+         * will allow another recaller to pick them up later. If there
+         * were such segments the tape status is reset to PENDING
+         */
+        rc = rtcpcld_restoreSelectedSegments(item->tape);
+        if ( rc == -1 ) {
+          LOG_SYSCALL_ERR("rtcpcld_returnStream()");
+        } else if ( rc == 0 ) {
+          /*
+           * If no segments were restored and the recaller had failed
+           * we set the tape status to FAILED.
+           */
+          (void)rtcpcld_setVIDFailedStatus(item->tape);
+        }
       }
       CLIST_DELETE(requestList,item);
       (void)rtcpcld_cleanupTape(item->tape);
@@ -1124,7 +1141,7 @@ int rtcpcld_main(
                         "MODE",
                         DLF_MSG_PARAM_INT,
                         tape->tapereq.mode,
-                        "VOLREQID",
+                        "VDQMID",
                         DLF_MSG_PARAM_INT,
                         tape->tapereq.VolReqID,
                         "WORKPID",
