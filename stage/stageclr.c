@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.24 2001/12/05 10:10:17 jdurand Exp $
+ * $Id: stageclr.c,v 1.25 2002/01/15 08:35:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.24 $ $Date: 2001/12/05 10:10:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.25 $ $Date: 2002/01/15 08:35:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -39,6 +39,10 @@ extern	char	*getconfent();
 
 void cleanup _PROTO((int));
 void usage _PROTO((char *));
+
+#ifdef STAGER_SIDE_CLIENT_SUPPORT
+int side_flag = 0;
+#endif
 
 int main(argc, argv)
 		 int	argc;
@@ -78,6 +82,29 @@ int main(argc, argv)
 #endif
 	int attached = 0;
 	char *dummy;
+	static struct Coptions longopts[] =
+	{
+		{"conditionnal",       NO_ARGUMENT,        NULL,      'c'},
+		{"force",              NO_ARGUMENT,        NULL,      'F'},
+		{"grpuser",            NO_ARGUMENT,        NULL,      'G'},
+		{"host",               REQUIRED_ARGUMENT,  NULL,      'h'},
+		{"external_filename",  REQUIRED_ARGUMENT,  NULL,      'I'},
+		{"input",              NO_ARGUMENT,        NULL,      'i'},
+		{"link_name",          REQUIRED_ARGUMENT,  NULL,      'L'},
+		{"label_type",         REQUIRED_ARGUMENT,  NULL,      'l'},
+		{"migration_filename", REQUIRED_ARGUMENT,  NULL,      'M'},
+		{"minfree",            REQUIRED_ARGUMENT,  NULL,      'm'},
+		{"pathname",           REQUIRED_ARGUMENT,  NULL,      'P'},
+		{"poolname",           REQUIRED_ARGUMENT,  NULL,      'p'},
+		{"file_sequence",      REQUIRED_ARGUMENT,  NULL,      'q'},
+		{"file_range",         REQUIRED_ARGUMENT,  NULL,      'Q'},
+		{"r",                  REQUIRED_ARGUMENT,  NULL,      'r'},
+#ifdef STAGER_SIDE_CLIENT_SUPPORT
+		{"side",               REQUIRED_ARGUMENT, &side_flag,   1},
+#endif
+		{"vid",                REQUIRED_ARGUMENT,  NULL,      'V'},
+		{NULL,                 0,                  NULL,        0}
+	};
 
 	/* char repbuf[CA_MAXPATHLEN+1]; */
 
@@ -98,7 +125,7 @@ int main(argc, argv)
 #endif
 	Coptind = 1;
 	Copterr = 1;
-	while ((c = Cgetopt (argc, argv, "cFGh:I:iL:l:M:m:P:p:q:Q:r:V:")) != -1) {
+	while ((c = Cgetopt_long (argc, argv, "cFGh:I:iL:l:M:m:P:p:q:Q:r:V:", longopts, NULL)) != -1) {
 		switch (c) {
 		case 'F':
 			Fflag++;
@@ -204,6 +231,9 @@ int main(argc, argv)
 			break;
 		case 'V':
 			errflg += getlist_of_vid ("-V", vid, &numvid);
+			break;
+		case 0:
+			/* Long option without short option correspondance */
 			break;
 		case '?':
 			errflg++;
@@ -361,9 +391,17 @@ void usage(cmd)
 		 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
+#ifdef STAGER_SIDE_CLIENT_SUPPORT
+	fprintf (stderr, "%s%s%s%s",
+					 "[-c] [-h stage_host] [-F] [-G] [-I external_filename] [-i] [-L link]\n",
+					 "[-l label_type] [-M hsmfile] [-m minfree] [-P path] [-p pool]\n",
+					 "[-q file_sequence_number] [-Q file_sequence_range]\n",
+					 "[-remove_from_hsm] [-V visual_identifier(s)] [--side sidenumber]\n");
+#else
 	fprintf (stderr, "%s%s%s%s",
 					 "[-c] [-h stage_host] [-F] [-G] [-I external_filename] [-i] [-L link]\n",
 					 "[-l label_type] [-M hsmfile] [-m minfree] [-P path] [-p pool]\n",
 					 "[-q file_sequence_number] [-Q file_sequence_range]\n",
 					 "[-remove_from_hsm] [-V visual_identifier(s)]\n");
+#endif
 }
