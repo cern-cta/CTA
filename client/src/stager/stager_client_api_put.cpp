@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.15 2005/01/19 10:49:56 bcouturi Exp $
+ * $Id: stager_client_api_put.cpp,v 1.16 2005/01/24 15:13:52 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.15 $ $Date: 2005/01/19 10:49:56 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.16 $ $Date: 2005/01/24 15:13:52 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -32,7 +32,6 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.
 #include "castor/stager/StagePrepareToPutRequest.hpp"
 #include "castor/stager/StagePutRequest.hpp"
 #include "castor/stager/StagePutDoneRequest.hpp"
-#include "castor/stager/StageUpdateFileStatusRequest.hpp"
 #include "castor/rh/Response.hpp"
 #include "castor/rh/FileResponse.hpp"
 #include "castor/rh/IOResponse.hpp"
@@ -49,6 +48,11 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.
 /* ================= */
 /* External routines */
 /* ================= */
+
+
+////////////////////////////////////////////////////////////
+//    stage_prepareToPut                                  //
+////////////////////////////////////////////////////////////
 
 EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
 					struct stage_prepareToPut_filereq *requests,
@@ -170,6 +174,10 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
 }
 
 
+////////////////////////////////////////////////////////////
+//    stage_put                                           //
+////////////////////////////////////////////////////////////
+
 
 EXTERN_C int DLL_DECL stage_put(const char *userTag,
 				const char *protocol,
@@ -290,7 +298,8 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
 ////////////////////////////////////////////////////////////
 
 
-EXTERN_C int DLL_DECL stage_putDone(struct stage_filereq *requests,
+EXTERN_C int DLL_DECL stage_putDone(char *putRequestId,
+				    struct stage_filereq *requests,
                                     int nbreqs,
                                     struct stage_fileresp **responses,
                                     int *nbresps,
@@ -319,6 +328,11 @@ EXTERN_C int DLL_DECL stage_putDone(struct stage_filereq *requests,
 
     castor::stager::RequestHelper reqh(&req);
     reqh.setOptions(opts);
+
+    // Setting the request ID if specified
+    if (putRequestId != NULL) {
+      req.setParentUuid(putRequestId);
+    }
 
     // Setting the mask on the request
     mode_t mask;
@@ -405,21 +419,5 @@ EXTERN_C int DLL_DECL stage_putDone(struct stage_filereq *requests,
     return -1;
   }
   
-  return 0;
-}
-
-
-////////////////////////////////////////////////////////////
-//    stage_updateFileStatus                              //
-////////////////////////////////////////////////////////////
-
-
-EXTERN_C int DLL_DECL stage_updateFileStatus _PROTO((struct stage_filereq *requests,
-						     int nbreqs,
-						     struct stage_fileresp **responses,
-						     int *nbresps,
-						     char **requestId,
-						     struct stage_options* opts)) {
-
   return 0;
 }

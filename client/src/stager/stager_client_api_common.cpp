@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.8 2004/12/15 21:39:54 bcouturi Exp $
+ * $Id: stager_client_api_common.cpp,v 1.9 2005/01/24 15:13:52 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.8 $ $Date: 2004/12/15 21:39:54 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.9 $ $Date: 2005/01/24 15:13:52 $ CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
@@ -87,11 +87,6 @@ int _free_fileresp (struct stage_fileresp  *ptr){
   return 0; 
 }
 
-int _free_updateFileStatus_filereq (struct stage_updateFileStatus_filereq  *ptr){ 
-  if (ptr->filename != NULL) free (ptr->filename);
-  return 0; 
-}
-
 int _free_query_req (struct stage_query_req  *ptr){ 
   if (ptr->param != NULL) free (ptr->param);
   return 0; 
@@ -133,7 +128,6 @@ ALLOC_STRUCT_LIST(prepareToUpdate_filereq)
 ALLOC_STRUCT_LIST(prepareToUpdate_fileresp)
 ALLOC_STRUCT_LIST(filereq)
 ALLOC_STRUCT_LIST(fileresp)
-ALLOC_STRUCT_LIST(updateFileStatus_filereq)
 ALLOC_STRUCT_LIST(query_req)
 ALLOC_STRUCT_LIST(filequery_resp)
 ALLOC_STRUCT_LIST(requestquery_resp)
@@ -150,7 +144,6 @@ FREE_STRUCT_LIST(prepareToUpdate_filereq)
 FREE_STRUCT_LIST(prepareToUpdate_fileresp)
 FREE_STRUCT_LIST(filereq)
 FREE_STRUCT_LIST(fileresp)
-FREE_STRUCT_LIST(updateFileStatus_filereq)
 FREE_STRUCT_LIST(query_req)
 FREE_STRUCT_LIST(filequery_resp)
 FREE_STRUCT_LIST(requestquery_resp)
