@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cinitdaemon.c,v $ $Revision: 1.4 $ $Date: 2000/03/13 12:45:11 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Cinitdaemon.c,v $ $Revision: 1.5 $ $Date: 2000/08/25 07:24:24 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -13,7 +13,6 @@ static char sccsid[] = "@(#)$RCSfile: Cinitdaemon.c,v $ $Revision: 1.4 $ $Date: 
 
 #if ! defined(_WIN32)
 #include <unistd.h>
-#endif
 #include <stdio.h>
 #include <signal.h> 
 #include <errno.h>
@@ -24,11 +23,9 @@ int Cinitdaemon(name,wait4child)
 char *name;
 void (*wait4child) _PROTO((int));
 {
-        int c, _jid;
+        int c;
         int maxfds;
-#if ! defined(_WIN32)
         struct sigaction sa;
-#endif
 
 #if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(sgi)
         maxfds = getdtablesize();
@@ -52,16 +49,11 @@ void (*wait4child) _PROTO((int));
 #endif
         for (c = 0; c < maxfds; c++)
                 close (c);
-        _jid = getpid();
-#if ! defined(_WIN32)
         if ( wait4child != NULL ) {
-            sa.sa_handler = wait4child;
-        } else {
-            sa.sa_handler = SIG_IGN;
+                sa.sa_handler = wait4child;
+                sa.sa_flags = SA_RESTART;
+                sigaction (SIGCHLD, &sa, NULL);
         }
-        sa.sa_flags = SA_RESTART;
-        sigaction (SIGCHLD, &sa, NULL);
-#endif
-        return(_jid);
+        return (maxfds);
 }
-
+#endif
