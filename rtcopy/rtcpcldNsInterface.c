@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/30 15:49:26 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/12/01 14:44:06 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/30 15:49:26 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/12/01 14:44:06 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -347,19 +347,39 @@ int rtcpcld_updateNsSegmentAttributes(
                        );
   if ( rc == -1 ) {
     save_serrno = serrno;
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
-                    (struct Cns_fileid *)&castorFileId,
-                    RTCPCLD_NB_PARAMS+2,
-                    "SYSCALL",
-                    DLF_MSG_PARAM_STR,
-                    "Cns_setsegattrs()",
-                    "ERROR_STR",
-                    DLF_MSG_PARAM_STR,
-                    sstrerror(save_serrno),
-                    RTCPCLD_LOG_WHERE
-                    );
+    if ( save_serrno == ENOENT ) {
+      /*
+       * We ignore ENOENT. This means that the user has removed the
+       * file before migrated to tape.
+       */
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_IGNORE_ENOENT),
+                      (struct Cns_fileid *)&castorFileId,
+                      2,
+                      "SYSCALL",
+                      DLF_MSG_PARAM_STR,
+                      "Cns_setsegattrs()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(save_serrno)
+                      );
+      rc = 0;
+    } else {
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
+                      (struct Cns_fileid *)&castorFileId,
+                      RTCPCLD_NB_PARAMS+2,
+                      "SYSCALL",
+                      DLF_MSG_PARAM_STR,
+                      "Cns_setsegattrs()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(save_serrno),
+                      RTCPCLD_LOG_WHERE
+                      );
+    }
     serrno = save_serrno;
   }
 
