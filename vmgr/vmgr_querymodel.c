@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_querymodel.c,v $ $Revision: 1.5 $ $Date: 2000/04/11 13:43:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_querymodel.c,v $ $Revision: 1.6 $ $Date: 2000/07/07 06:08:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_querymodel - query about a model of cartridge */
@@ -57,7 +57,7 @@ vmgr_querymodel(const char *model, char *media_letter, int *native_capacity, int
 	}
 
 	if (strlen (model) > CA_MAXMODELLEN ||
-	    (media_letter && strlen (media_letter) > 1)) {
+	    (media_letter && strlen (media_letter) > CA_MAXMLLEN)) {
 		serrno = EINVAL;
 		return (-1);
 	}

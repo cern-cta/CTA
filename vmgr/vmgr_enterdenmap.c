@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_enterdenmap.c,v $ $Revision: 1.3 $ $Date: 2000/04/03 12:38:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_enterdenmap.c,v $ $Revision: 1.4 $ $Date: 2000/07/07 06:08:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_enterdenmap - enter a new triplet model/media_letter/density */
@@ -53,7 +53,7 @@ vmgr_enterdenmap(const char *model, char *media_letter, char *density)
 	}
 
 	if (strlen (model) > CA_MAXMODELLEN ||
-	    (media_letter && strlen (media_letter) > 1) ||
+	    (media_letter && strlen (media_letter) > CA_MAXMLLEN) ||
 	    strlen (density) > CA_MAXDENLEN) {
 		serrno = EINVAL;
 		return (-1);
