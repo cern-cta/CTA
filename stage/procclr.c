@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.58 2002/05/31 08:07:28 jdurand Exp $
+ * $Id: procclr.c,v 1.59 2002/05/31 10:10:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.58 $ $Date: 2002/05/31 08:07:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.59 $ $Date: 2002/05/31 10:10:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -696,28 +696,22 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag, clienth
 	int isadmin; /* Case of granted privilege */
 
 	/*	return	<0	request deleted
-	 *		 0	running request (status set to CLEARED and req signalled)
+	 *		 0	running request (status set to ESTCLEARED and req signalled)
 	 *		>0	in case of error
 	 */
 
-	/* We determine in advance if the caller have an admin privilege from stager point of view */
-	/* RFIO TRUSTs will do the rest */
-	if (ISROOT(uid,gid)) {
-		isadmin = 1;
-	} else {
-		/* Request not coming from an admin account */
-		/* In case group differs we check it this (uid,gid) have admin privilege */
-		if (strcmp (group, stcp->group) != 0) {
-			switch (Cupv_check(uid, gid, clienthost, NULL, P_ADMIN)) {
-			case 0:
-				/* Yes */
-				isadmin = 1;
-				break;
-			default:
-				/* No */
-				isadmin = 0;
-				break;
-			}
+	/* We check admin privilege if necessary */
+	if ((ISCASTORWAITINGMIG(stcp) || ISCASTORBEINGMIG(stcp) || ((stcp->t_or_d == 'h') && (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) && (! ISSTAGED(stcp)))) ||
+		((strcmp (group, STGGRP) != 0) && (strcmp (group, stcp->group) != 0))) {
+		switch (Cupv_check(uid, gid, clienthost, NULL, P_ADMIN)) {
+		case 0:
+			/* Yes */
+			isadmin = 1;
+			break;
+		default:
+			/* No */
+			isadmin = 0;
+			break;
 		}
 	}
 
@@ -763,13 +757,12 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag, clienth
 				reqid = wqp->reqid;
 				sendrep (wqp->rpfd, MSG_ERR, STG95, "request", user);
 				reqid = savereqid;
-				wqp->status = CLEARED;
+				wqp->status = ESTCLEARED;
 				/* is there an active stager overlay for this file? */
 				if (wqp->ovl_pid) {
 					stglogit (func, "killing process %d\n",
 							  wqp->ovl_pid);
 					kill (wqp->ovl_pid, SIGINT);
-					wqp->ovl_pid = 0;
 				}
 				return (0);
 			}
