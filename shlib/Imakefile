@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.22 $ $Date: 2004/07/19 13:04:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.23 $ $Date: 2004/07/19 13:05:32 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -179,6 +179,8 @@ MakeDepLibrary(castor/db/ora,castorCommonOra)
 MakeDepLibrary(expert,expert)
 
 MakeDepLibrary(db,db)
+
+MakeDepLibrary(monitor,monitor)
 
 #if BuildSecurity
 MakeDepLibrary(security,security)
