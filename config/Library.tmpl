@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.11 $ $Date: 2004/07/05 15:10:02 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.12 $ $Date: 2004/07/09 14:42:26 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #if BuildCopytapeServer
@@ -66,6 +66,7 @@ DBLIB = DepLibraryTargetName(db,db)
 #define BuildCupvClient	YES
 #endif
 #if BuildExpertClient != YES
+#undef BuildExpertClient
 #define BuildExpertClient YES
 #endif
 #if BuildNameServerLibrary != YES
