@@ -855,10 +855,39 @@ int stagewrt_castor_hsm_file() {
           /* Yet transfered */
           continue;
         }
+        /* This is the first of file to continue transfer with */
         istart = i;
-        iend = nbcat_ent - 1;
         stcp_start = stcp;
-        stcp_end = stce;
+        /* We found the first of the files that is not yet totally transfered */
+        /* We now search up to which one we can go trying not to fragment     */
+        if (estimated_free_space >= (hsm_totalsize[i] - hsm_transferedsize[i]) && i != (nbcat_ent - 1)) {
+          /* New estimated free space available */
+          estimated_free_space -= (hsm_totalsize[i] - hsm_transferedsize[i]);
+          for (++stcp, ++i; stcp < stce; stcp++, i++) {
+            if (estimated_free_space >= (hsm_totalsize[i] - hsm_transferedsize[i])) {
+              estimated_free_space -= (hsm_totalsize[i] - hsm_transferedsize[i]);
+              continue;
+            } else {
+              /* Not enough room for next file */
+              iend = --i;
+              stcp_end = stcp;
+              break;
+           }
+          }
+          if (iend < 0) {
+            /* We reached the end of the list, and there is still enough free space */
+            /* This mean that we can build a full rtcpc() request.                  */
+            iend = nbcat_ent - 1;
+            stcp_end = stce;
+          }
+        } else {
+          /* Vmgr claims that there is not already enough room for the first file, or */
+          /* we know this is the last of the file.                                    */
+          /* We will, so, build a rtcpc() request only for this one. Others, if any,  */
+          /* will wait the next round.                                                */
+          iend = istart;
+          stcp_end = ++stcp;
+        }
         break;
       }
       
