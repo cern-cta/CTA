@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.171 2002/03/11 15:43:21 jdurand Exp $
+ * $Id: procio.c,v 1.172 2002/03/13 10:07:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.171 $ $Date: 2002/03/11 15:43:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.172 $ $Date: 2002/03/13 10:07:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3587,7 +3587,7 @@ void procputreq(req_type, req_data, clienthost)
 						strcpy(found_stcp->u1.h.tppool,(this_tppool[0] != '\0') ? this_tppool : next_tppool(&(fileclasses[ifileclass])));
 					}
 					/* Remember this for eventual next iteration */
-					if (this_tppool[0] == '\0') strcpy(this_tppool,stcp->u1.h.tppool);
+					if (this_tppool[0] == '\0') strcpy(this_tppool,found_stcp->u1.h.tppool);
 					{
 						struct stgcat_entry stcx = *found_stcp;
 						stcx.uid = uid;
