@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.12 $ $Date: 2000/05/30 10:59:41 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.13 $ $Date: 2000/05/31 07:33:20 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -62,9 +62,9 @@ EXTERN_C int DLL_DECL rfio_open _PROTO((char *, int, int));
 EXTERN_C int DLL_DECL rfio_open_v3 _PROTO((char *, int, int));
 EXTERN_C int DLL_DECL rfio_close _PROTO((int));
 EXTERN_C int DLL_DECL rfio_close_v3 _PROTO((int));
-EXTERN_C int DLL_DECL rfio_write _PROTO((int, char *, int));
+EXTERN_C int DLL_DECL rfio_write _PROTO((int, void *, int));
 EXTERN_C int DLL_DECL rfio_write_v3 _PROTO((int, char *, int));
-EXTERN_C int DLL_DECL rfio_read _PROTO((int, char *, int));
+EXTERN_C int DLL_DECL rfio_read _PROTO((int, void *, int));
 EXTERN_C int DLL_DECL rfio_read_v3 _PROTO((int, char *, int));
 EXTERN_C void DLL_DECL rfio_perror _PROTO((char *));
 EXTERN_C int DLL_DECL rfio_fstat _PROTO((int, struct stat *));
