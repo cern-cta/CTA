@@ -1,8 +1,8 @@
-.\" @(#)stageqry.man	1.15 10/28/99 CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.5 $ $Date: 1999/12/04 09:47:18 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEQRY l "10/28/99"
+.TH STAGEQRY l "$Date: 1999/12/04 09:47:18 $"
 .SH NAME
 stageqry \- give the status of all staged tapes
 .SH SYNOPSIS

@@ -1,8 +1,8 @@
-.\" @(#)stagealloc.man	1.6 11/21/96 CERN CN-PDP/DH Jean-Philippe Baud
-.\" Copyright (C) 1995 by CERN/CN/PDP/DH
+.\" @(#)$RCSfile: stagealloc.man,v $ $Revision: 1.4 $ $Date: 1999/12/04 09:47:16 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEALLOC l "11/21/96"
+.TH STAGEALLOC l "$Date: 1999/12/04 09:47:16 $"
 .SH NAME
 stagealloc \- allocate space in a disk pool
 .SH SYNOPSIS

@@ -1,8 +1,8 @@
-.\" @(#)stagecat.man	1.7 09/14/97 CERN CN-PDP/DH Jean-Philippe Baud
-.\" Copyright (C) 1994-1997 by CERN/CN/PDP/DH
+.\" @(#)$RCSfile: stagecat.man,v $ $Revision: 1.4 $ $Date: 1999/12/04 09:47:17 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECAT l "09/14/97"
+.TH STAGECAT l "$Date: 1999/12/04 09:47:17 $"
 .SH NAME
 stagecat \- put an entry in the stage daemon catalog for an existing file
 .SH SYNOPSIS

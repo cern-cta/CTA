@@ -1,8 +1,8 @@
-.\" @(#)stageupdc.man	1.1 9/13/95 CERN CN-PDP/DH Jean-Philippe Baud
-.\" Copyright (C) 1995 by CERN/CN/PDP/DH
+.\" @(#)$RCSfile: stageupdc.man,v $ $Revision: 1.4 $ $Date: 1999/12/04 09:47:18 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEUPDC l "9/13/95"
+.TH STAGEUPDC l "$Date: 1999/12/04 09:47:18 $"
 .SH NAME
 stageupdc \- update the stager catalog
 .SH SYNOPSIS

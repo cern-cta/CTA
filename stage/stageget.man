@@ -1,8 +1,8 @@
-.\" @(#)stageget.man	1.1 4/18/96 CERN CN-PDP/DS Jean-Philippe Baud
-.\" Copyright (C) 1996 by CERN/CN/PDP/DS
+.\" @(#)$RCSfile: stageget.man,v $ $Revision: 1.4 $ $Date: 1999/12/04 09:47:17 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1996-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEGET l "4/18/96"
+.TH STAGEGET l "$Date: 1999/12/04 09:47:17 $"
 .SH NAME
 stageget \- find file allocated in a disk pool with stagealloc
 .SH SYNOPSIS
