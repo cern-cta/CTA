@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.157 2002/01/30 10:21:03 jdurand Exp $
+ * $Id: procio.c,v 1.158 2002/02/04 17:54:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.157 $ $Date: 2002/01/30 10:21:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.158 $ $Date: 2002/02/04 17:54:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1115,19 +1115,62 @@ void procioreq(req_type, magic, req_data, clienthost)
 					if (stcp_input[jhsmfiles].filler[0] != '\0') continue; /* Yet skipped */
 				}
 				if (strcmp(hsmfiles[ihsmfiles],hsmfiles[jhsmfiles]) == 0) {
-					/* If both ihsmfiles and jhsmfiles have exactly the same invariants */
-					/* We neverthless continue, skipping the offending entry */
 					if ((api_out) && (ncastorfiles) &&
 						(stcp_input[ihsmfiles].u1.h.server[0] != '\0') &&
 						(strcmp(stcp_input[ihsmfiles].u1.h.server, stcp_input[jhsmfiles].u1.h.server) == 0) &&
 						(stcp_input[ihsmfiles].u1.h.fileid != 0) &&
 						(stcp_input[ihsmfiles].u1.h.fileid == stcp_input[jhsmfiles].u1.h.fileid)) {
 						char tmpbuf[21];
+
+						/* If both ihsmfiles and jhsmfiles have exactly the same invariants */
+						/* We neverthless continue, skipping the offending entry */
 						stcp_input[jhsmfiles].filler[0] = 'D';
 						sendrep (rpfd, MSG_ERR, STG172, hsmfiles[ihsmfiles], u64tostr((u_signed64) stcp_input[ihsmfiles].u1.h.fileid, tmpbuf, 0), stcp_input[ihsmfiles].u1.h.server);
 					} else {
-						sendrep (rpfd, MSG_ERR, STG59, hsmfiles[ihsmfiles]);
-						errflg++;
+						/* If ihsmfiles and jhsmfiles do not have exactly the same invariants */
+						/* We check if one of them at least is irrelevant - we accept to withdraw */
+						/* an entry from migration only if we are sure that it has been deleted from */
+						/* the name server, e.g. Cns_statx() error with serrno == ENOENT */
+						int was_able_to_repair = 0;
+						char tmpbuf[21];
+						
+						if ((stcp_input[ihsmfiles].u1.h.server[0] != '\0') &&
+							(stcp_input[ihsmfiles].u1.h.fileid != 0)) {
+							strcpy(Cnsfileid.server,stcp_input[ihsmfiles].u1.h.server);
+							Cnsfileid.fileid = stcp_input[ihsmfiles].u1.h.fileid;
+							if ((Cns_statx(hsmfiles[ihsmfiles], &Cnsfileid, &Cnsfilestat) != 0) && (serrno == ENOENT)) {
+								sendrep (rpfd, MSG_ERR, STG174,
+										 hsmfiles[ihsmfiles],
+										 u64tostr((u_signed64) stcp_input[ihsmfiles].u1.h.fileid, tmpbuf, 0),
+										 stcp_input[ihsmfiles].u1.h.server,
+										 "skipped",
+										 "Cns_statx",
+										 sstrerror(serrno));
+								stcp_input[ihsmfiles].filler[0] = 'D';
+								was_able_to_repair++;
+							}
+						}
+
+						if ((stcp_input[jhsmfiles].u1.h.server[0] != '\0') &&
+							(stcp_input[jhsmfiles].u1.h.fileid != 0)) {
+							strcpy(Cnsfileid.server,stcp_input[jhsmfiles].u1.h.server);
+							Cnsfileid.fileid = stcp_input[jhsmfiles].u1.h.fileid;
+							if ((Cns_statx(hsmfiles[jhsmfiles], &Cnsfileid, &Cnsfilestat) != 0) && (serrno == ENOENT)) {
+								sendrep (rpfd, MSG_ERR, STG174,
+										 hsmfiles[jhsmfiles],
+										 u64tostr((u_signed64) stcp_input[jhsmfiles].u1.h.fileid, tmpbuf, 0),
+										 stcp_input[jhsmfiles].u1.h.server,
+										 "skipped",
+										 "Cns_statx",
+										 sstrerror(serrno));
+								stcp_input[jhsmfiles].filler[0] = 'D';
+								was_able_to_repair++;
+							}
+						}
+						if (! was_able_to_repair) {
+							sendrep (rpfd, MSG_ERR, STG59, hsmfiles[ihsmfiles]);
+							errflg++;
+						}
 					}
 				} else if ((api_out) && (ncastorfiles) &&
 						   (stcp_input[ihsmfiles].u1.h.server[0] != '\0') &&
