@@ -1,0 +1,129 @@
+.\" @(#)csec_api.man,v 1.3 2001/09/26 09:13:51 CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2004 by CERN/IT/ADC/CA
+.\" All rights reserved
+.\"
+.TH CSEC_API 3 "2001/09/26 09:13:51" CASTOR "CASTOR Security Functions"
+.SH NAME
+Csec_api \- Provides authentication in CASTOR services
+.SH SYNOPSIS
+Header file:
+.sp
+\fB#include "Csec_api.h"\fR
+.sp
+On the client side:
+.sp
+.BI "int Csec_client_init_context (Csec_context_t *" ctx,
+.BI "int " service_type,
+.BI "Csec_protocol *" protocols );
+.br
+.BI "int Csec_client_establish_context (Csec_context_t *" ctx,
+.BI "int " socket );
+.sp
+On the server side:
+.sp
+.BI "int Csec_server_init_context (Csec_context_t *" ctx,
+.BI "int " service_type ,
+.BI "Csec_protocol *" protocols );
+.br
+.BI "int Csec_server_reinit_context (Csec_context_t *" ctx,
+.BI "int " service_type ,
+.BI "Csec_protocol *" protocols );
+.br
+.BI "int Csec_server_establish_context (Csec_context_t *" ctx,
+.BI "int " socket );
+.br
+.BI "char *Csec_server_get_client_username (Csec_context_t *" ctx,
+.BI "int *" uid ,
+.BI "int *" gid );
+.sp
+Common functions:
+.sp
+.BI "int Csec_clear_context (Csec_context_t *" ctx );
+.br
+.BI "int Csec_geterrmsg();"
+.br
+.BI "Csec_context_t * Csec_get_default_context();"
+
+.SH DESCRIPTION
+.B Csec_api
+functions allow to implement strong authentications in CASTOR servers and clients, it is integrated with the CASTOR 
+framework for errors.
+.sp
+.TP
+.B "Csec_client_init_context,Csec_server_init_context,Csec_server_reinit_context
+Allow to initialize the 
+.B Csec_context_t
+structure. The service type parameter defines which type of key will be used by the service. Its value can be:
+.RS
+.TP 
+.B CSEC_SERVICE_TYPE_HOST 
+A normal host key (e.g. host/machine_name@DOMAIN for KRB5) will be used
+.TP 
+.B
+CSEC_SERVICE_TYPE_CENTRAL
+A  CASTOR Central host type key (e.g. castorcentral/machine_name@DOMAIN for KRB5) will be used
+.TP 
+.B CSEC_SERVICE_TYPE_DISK
+A  CASTOR disk host type key (e.g. castordisk/machine_name@DOMAIN for KRB5) will be used
+.TP 
+.B CSEC_SERVICE_TYPE_TAPE
+A  CASTOR tape host type key (e.g. castortape/machine_name@DOMAIN for KRB5) will be used
+.RE
+.TP
+.B Csec_client_establish_context,Csec_server_establish_context
+Given a initialized context and an opened socket, establishes a security context according to the chosen security mechanism.
+.TP
+.B Csec_server_get_client_username
+Once a context has been established, this allows the server to know the identity of the client after the mapping from DN/probicpal to username/uid/gid has been done.
+.TP
+.B Csec_clear_context 
+Clears the context and deallocates the memory used.
+.TP
+.B Csec_get_default_context
+Utility function that provides the applications with one default per thread security context that can be used by the security layer.
+
+.SH ERROR HANDLING
+In case of errors in the Csec_pai layer, the functions return -1 (or NULL for the functions returning strings), the serrno is set accourdingly. It is possible to get the detailed error message by using the
+.B Csec_geterrmsg()
+function.
+
+
+.SH ENVIRONMENT
+.TP
+.B CSEC_MECH
+environment variable or 
+.B "CSEC MECH" 
+entry in 
+.B /etc/shift.conf 
+.br
+This environment variable contains the list of protocols to be used for authentication. The variable has precedence over the 
+CASTOR configuration file.
+.br
+On the client side, this list is used to choose which security mechanism should be used to address the server.
+On the server side, this is is of list of mechanisms that should be accepted by the server.
+.TP
+.B CSEC_TRACE
+If defined wwitches the tracing on in the CASTOR security module. Tracing information is sent to stderr, unless
+.B CSEC_TRACEFILE is defined.
+.TP
+.B CSEC_TRACEFILE
+If defined, the CASTOR security tracing information is written to afile which name is the value of this variable.
+
+.SH SECURITY MECHANISMS
+The currently supported methods for authentication are:
+.TP
+.BI KRB5  
+Kerberos 5 mechanism
+.TP
+.BI KRB4  
+Kerberos 4 mechanism
+.TP
+.BI GSI
+Globus Security Infrastructure
+.TP
+.BI ID
+Unsecure protocol, should be used for testing only.
+
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
