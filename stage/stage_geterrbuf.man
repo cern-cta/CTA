@@ -1,0 +1,81 @@
+.\" $Id: stage_geterrbuf.man,v 1.1 2002/09/08 07:34:17 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_geterrbuf.man,v $ $Revision: 1.1 $ $Date: 2002/09/08 07:34:17 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_GETERRBUF "3" "$Date: 2002/09/08 07:34:17 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_geterrbuf \- Get error buffer
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_geterrbuf(char **" buffer ", int *" buflen ");"
+
+.SH DESCRIPTION
+The \fBstage_geterrbuf\fP API method queries the error buffer of stage API. This is meaningful only if you setted explicitely yourself the error buffer using \fBstage_seterrbuf\fP method.
+
+.SH PARAMETERS
+.BI buffer
+will contain at return is the pointer to a buffer message and
+.BI buflen
+will contain the length of this buffer.
+
+.SH EXAMPLE
+.ft CW
+.nf
+.sp
+#include <stdlib.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <stage_api.h>
+#include <serrno.h>
+
+char mybuf[1024]; /* Not thread-safe */
+
+int main(argc,argv)
+     int argc;
+     char **argv;
+{
+  char *verifbuf;
+  int veriflength;
+
+  if (stage_seterrbuf(mybuf,1024) != 0) {
+    fprintf(stderr,"### stage_seterrbuf error (%s)\\n", sstrerror(serrno));
+    exit(EXIT_FAILURE);
+  }
+  if (stage_geterrbuf(&verifbuf,&veriflength) != 0) {
+    fprintf(stderr,"### stage_geterrbuf error (%s)\\n", sstrerror(serrno));
+    exit(EXIT_FAILURE);
+  }
+  if (verifbuf != mybuf || veriflength != 1024) {
+    fprintf(stderr,"### stage_geterrbuf returns something wrong\\n");
+    exit(EXIT_FAILURE);
+  }
+  exit(0);
+}
+.ft
+.LP
+.fi
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SEINTERNAL
+Internal error
+.TP
+.B SECTHREADERR
+Thread interface call error
+.TP
+.B SECTHREADINIT
+Cthread initialization error
+
+.SH SEE ALSO
+\fBstage_seterrbuf\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
