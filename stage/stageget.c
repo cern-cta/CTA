@@ -1,5 +1,5 @@
 /*
- * $Id: stageget.c,v 1.24 2003/10/31 06:58:07 jdurand Exp $
+ * $Id: stageget.c,v 1.25 2003/11/03 06:32:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.24 $ $Date: 2003/10/31 06:58:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.25 $ $Date: 2003/11/03 06:32:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -35,7 +35,6 @@ static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.24 $ $Date: 20
 
 EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
 extern	char	*getenv();
-extern	char	*getconfent();
 static gid_t gid;
 static struct passwd *pw;
 char *stghost;

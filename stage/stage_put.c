@@ -1,5 +1,5 @@
 /*
- * $Id: stage_put.c,v 1.23 2003/10/31 06:58:06 jdurand Exp $
+ * $Id: stage_put.c,v 1.24 2003/11/03 06:31:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.23 $ $Date: 2003/10/31 06:58:06 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.24 $ $Date: 2003/11/03 06:31:23 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -29,8 +29,6 @@ static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.23 $ $Date: 2
 #include "Cpwd.h"
 #include "Castor_limits.h"
 #include "stage_api.h"
-
-extern char *getconfent();
 
 int DLL_DECL stage_put_hsm(stghost,hsmstruct)
 	char *stghost;
