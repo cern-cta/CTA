@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.18 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.19 $ $Date: 2002/01/31 14:02:45 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEQRY l "$Date: 2002/01/30 08:12:54 $"
+.TH STAGEQRY l "$Date: 2002/01/31 14:02:45 $"
 .SH NAME
 stageqry \- give the status of all staged tapes
 .SH SYNOPSIS
@@ -41,10 +41,10 @@ stageqry \- give the status of all staged tapes
 .BI \-\-reqid " reqid "
 ] [
 .BI \-\-retenp
-] [
-.BI \-\-side " sidenumber"
-] [
-.BI \-\-display_side
+.\" ] [
+.\" .BI \-\-side " sidenumber"
+.\" ] [
+.\" .BI \-\-display_side
 ]
 .LP
 .B stageqry
@@ -341,14 +341,14 @@ outputs only entries that have this given reqid.
 .TP
 .BI \-\-retenp
 gives current retention period on disk. This period will be showed in terms of either maximum timestamp, or generic keywords that are: AS_LONG_AS_POSSIBLE and INFINITE_LIFETIME, or Exhausted. The CASTOR files lifetime can be changed using the \fBstagesetretenp\fP command. A retention period of INFINITE_LIFETIME guarantees that the corresponding entry will never be purged. A retention period of AS_LONG_AS_POSSIBLE says that the corresponding entry can be purged if there is missing space into internal disks. Another value specifies that the corresponding entry will be automatically removed if local time of the stager daemon exceeds printed value, or will be removed almost immediated if it says Exhausted.
-.TP
-.BI \-\-side " sidenumber "
-outputs only entries coming from multi-sided media (like DVD). Only with
+.\" .TP
+.\" .BI \-\-side " sidenumber "
+.\" outputs only entries coming from multi-sided media (like DVD). Only with
 .BI \-V
 option. Please see the NOTES section.
-.TP
-.BI \-\-display_side
-Forces 'tape' files with a side number greater than zero to follow the multi-sided format as quoted in the NOTES section below. Please see the NOTES section.
+.\" .TP
+.\" .BI \-\-display_side
+.\" Forces 'tape' files with a side number greater than zero to follow the multi-sided format as quoted in the NOTES section below. Please see the NOTES section.
 .SH EXAMPLES
 .TP
 stageqry
@@ -428,8 +428,8 @@ stageqry \-T
 \-b 32760 \-F U \-f SOMEDATA \-L 32760
 .cs R
 .fi
-.SH NOTES
-\'Tape\' files coming from what is in fact multi-sided media (like DVD) and from a side number greater than zero (zero mean the first side) are shown with the following format in the first column: "%s/%d" where the string correspond to the VolumeID and the number to the side, respectively. For side zero (which is the default and only possible value for magnetic tape) the format of the first column is "%s", showing only the VolumeID.
+.\" .SH NOTES
+.\" \'Tape\' files coming from what is in fact multi-sided media (like DVD) and from a side number greater than zero (zero mean the first side) are shown with the following format in the first column: "%s/%d" where the string correspond to the VolumeID and the number to the side, respectively. For side zero (which is the default and only possible value for magnetic tape) the format of the first column is "%s", showing only the VolumeID.
 .SH RETURN CODES
 \
 .br

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.11 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.12 $ $Date: 2002/01/31 14:02:45 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECLR l "$Date: 2002/01/30 08:12:54 $"
+.TH STAGECLR l "$Date: 2002/01/31 14:02:45 $"
 .SH NAME
 stageclr \- remove staged files
 .SH SYNOPSIS
@@ -27,8 +27,8 @@ stageclr \- remove staged files
 .BI \-Q " file_sequence_range"
 ]
 .BI \-V " visual_identifier(s)"
-] [
-.BI \-\-side " sidenumber"
+.\" ] [
+.\" .BI \-\-side " sidenumber"
 .br
 .B stageclr
 [
@@ -192,11 +192,11 @@ to remove only entry that has this explicit request ID.
 .BI \-V " vid(s)"
 restricts the search to files corresponding to given vids.
 Multiple vids will be separated by colons.
-.TP
-.B \-\-side "sidenumber"
-Tells which side of the device you refer to (applies to multi-side medias files yet in the disk pool, like DVD). Only when used with
-.B \-V
-option.
+.\" .TP
+.\" .B \-\-side "sidenumber"
+.\" Tells which side of the device you refer to (applies to multi-side medias files yet in the disk pool, like DVD). Only when used with
+.\" .B \-V
+.\" option.
 .SH RETURN CODES
 \
 .br
