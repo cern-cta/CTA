@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcDaemon.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/03/16 10:37:01 $ $Author: jiltsov $
+ * @(#)$RCSfile: GcDaemon.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/03/16 11:14:45 $ $Author: jiltsov $
  *
  * Garbage collector daemon handling the deletion of local
  * files on a filesystem. Makes remote calls to the stager
@@ -49,11 +49,14 @@
 #include <stdlib.h>
 
 #define  GCINTERVAL 300
+
+/*** for test only
 #define  GCDATAFILE "/tmp/gcdata.lst"
-//
-std::vector<castor::stager::GCLocalFile>*
+
+ std::vector<castor::stager::GCLocalFile>*
    ZselectFiles2Delete( std::string diskServer);
-//
+***/
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -140,9 +143,6 @@ int castor::gc::GcDaemon::start()
   clog() << USAGE << "Garbage Collector started on " << diskServerName 
          << "; Sleep interval: " << gcinterval << " sec."
          << std::endl;
-//  std::cout << "Garbage Collector  started on " << diskServerName 
-//            << "; Sleep interval: " << gcinterval << " sec."
-//            << std::endl;
   
 
  
@@ -153,16 +153,11 @@ int castor::gc::GcDaemon::start()
   for (;;) {
     int cid;
     clog() << DEBUG << " GC checking garbage on " << diskServerName << "... " << std::endl;
-//    std::cout << "GC checking garbage on " << diskServerName << "... ";
 
     // Retrieve list of files to delete
     std::vector<castor::stager::GCLocalFile>* files2Delete = 0;
     try {
-//+++++++++++++++
           files2Delete = stgSvc->selectFiles2Delete(diskServerName);
-//---------------
-//          files2Delete = ZselectFiles2Delete(diskServerName);
-//---------------
     } catch (castor::exception::Exception e) {
           clog() << DEBUG << "No garbage files found - Nothing to do."
                  << " GC sleeping  " << gcinterval << " sec..." 
@@ -170,22 +165,10 @@ int castor::gc::GcDaemon::start()
           sleep(gcinterval);
           continue;
     }
-/*** //---------------
-    if (files2Delete == 0) {
-          clog() << ERROR << "No garbage files found - Nothing to do." 
-                 << " GC sleeping  " << gcinterval << " sec..." 
-                 << std::endl;
-//          std::cout << "No garbage files found - Nothing to do."
-//                    << " GC sleeping  " << gcinterval << " sec..." << std::endl;
-          sleep(gcinterval);
-          continue;
-    }      
-***/ //---------------
 
     // Fork a child if there are files to delete
     if (0 < files2Delete) {
        clog() << USAGE << "Garbage files found. Cleaning..." << std::endl;
-//          std::cout << "Garbage files found. Cleaning..." << std::endl;
 
        cid = fork();
        if(cid < 0) {
@@ -214,20 +197,16 @@ int castor::gc::GcDaemon::start()
             if ( (gcfilesize = GCremoveFilePath(it->fileName())) < 0 ) {
                gcfilesfailed++;
                clog() << ERROR << "-Failed: " << it->fileName() << std::endl;
-//               std::cout << "-Failed: " << it->fileName() << std::endl;
             } else {
                gcfilesremoved++;
                gcremovedsize =+ gcfilesize;
                clog() << DEBUG << "Removed " << it->fileName() << ": " 
                                << gcfilesize << " KB" 
                                << std::endl;
-//               std::cout       << "Removed " << it->fileName() << ": " 
-//                               << gcfilesize << " KB";
             }
             // Add the file to the list of deleted ones
             u_signed64 gcfileid = it->diskCopyId();
             deletedFiles.push_back(&gcfileid);
-//            std::cout << "; FileID: " << gcfileid << std::endl;
          }
        } // end of delete files loop
 
@@ -239,17 +218,7 @@ int castor::gc::GcDaemon::start()
                           << "; Files toal: " << gcfilestotal
                           << "; Space freed: " << gcremovedsize << " KB;"
                           << std::endl;
-
-/* //---------------
-          std::cout << "Files removed: " << gcfilesremoved << std::endl; 
-          std::cout << "Files failed: " << gcfilesfailed << std::endl;
-          std::cout << "Files total: " << gcfilestotal << std::endl;
-          std::cout << "Space freed, KB: " << gcremovedsize << std::endl;
-          char gcdatafile[1024];
-          strcpy(gcdatafile, GCDATAFILE);
-*/ //---------------
        }
-//+++++++++++++++++++++++
        // Inform stager of the deletion
        try {
             stgSvc->filesDeleted(deletedFiles);
@@ -263,20 +232,18 @@ int castor::gc::GcDaemon::start()
               clog() << **it << " ";
          }
        }
-//+++++++++++++++++++++++
        exit(cid); // end child
        }
        clog() << "GC check finished on " << diskServerName 
               << " - sleeping " << gcinterval << " sec..." 
               << std::endl;
 
-//       std::cout << "GC check finished on " << diskServerName
-//                 << " - sleeping  " << gcinterval << " sec...\n" << std::endl;
        sleep(gcinterval);
   } // End of main loop
 }
+/***
 // -----------------------------------------------------------------------
-// ZselectFiles2Delete -tst
+// ZselectFiles2Delete - for test only - stager response emulator
 // -----------------------------------------------------------------------
 std::vector<castor::stager::GCLocalFile>*
    ZselectFiles2Delete (std::string diskServer)
@@ -312,6 +279,7 @@ std::vector<castor::stager::GCLocalFile>*
 
    return result;
 }
+***/
 //------------------------------------------------------------------------------
 // GCremoveFilePath
 //------------------------------------------------------------------------------
@@ -320,13 +288,9 @@ long castor::gc::GcDaemon::GCremoveFilePath( std::string gcfilepath)
    long gcfilesize = -1;
     
    if( (gcfilesize = GCgetFileSize( gcfilepath) ) < 0 ) {
-//     clog() << ERROR << "GCremoveFilePath: Cannot access file " << gcfilepath
-//            << std::endl;
      return (-1);
    }
    if( unlink( &gcfilepath[0]) < 0) {
-//     clog() << ERROR << "GCremoveFilePath: Cannot remove file " << gcfilepath
-//            << std::endl;
      return (-1);
    }
    return (gcfilesize);
