@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlistpool.c,v $ $Revision: 1.5 $ $Date: 2000/05/04 14:30:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlistpool.c,v $ $Revision: 1.6 $ $Date: 2000/08/22 13:13:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlistpool - query a given pool or list all existing tape pools */
@@ -14,8 +14,12 @@ static char sccsid[] = "@(#)$RCSfile: vmgrlistpool.c,v $ $Revision: 1.5 $ $Date:
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif
 #include "serrno.h"
 #include "u64subr.h"
+#include "vmgr.h"
 #include "vmgr_api.h"
 extern	char	*optarg;
 extern	int	optind;
@@ -32,6 +36,9 @@ char **argv;
 	char *pool_name = NULL;
 	uid_t pool_uid = 0;
 	u_signed64 tot_free_space;
+#if defined(_WIN32)
+	WSADATA wsadata;
+#endif
 
         while ((c = getopt (argc, argv, "P:")) != EOF) {
                 switch (c) {
@@ -53,11 +60,20 @@ char **argv;
                 exit (USERR);
         }
  
+#if defined(_WIN32)
+	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
+		fprintf (stderr, VMG52);
+		exit (SYERR);
+	}
+#endif
 	if (pool_name) {
 		if (vmgr_querypool (pool_name, &pool_uid, &pool_gid,
 		    &tot_free_space) < 0) {
 			fprintf (stderr, "vmgrlistpool %s: %s\n", pool_name,
 			    (serrno == ENOENT) ? "No such pool" : sstrerror(serrno));
+#if defined(_WIN32)
+			WSACleanup();
+#endif
 			exit (USERR);
 		}
 		listentry (pool_name, pool_uid, pool_gid, tot_free_space);
@@ -69,6 +85,9 @@ char **argv;
 		}
 		(void) vmgr_listpool (VMGR_LIST_END, &list);
 	}
+#if defined(_WIN32)
+	WSACleanup();
+#endif
 	exit (0);
 }
 

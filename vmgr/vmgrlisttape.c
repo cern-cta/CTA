@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.6 $ $Date: 2000/07/07 06:35:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.7 $ $Date: 2000/08/22 13:13:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlisttape - query a given volume or list all existing tapes */
@@ -13,8 +13,12 @@ static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.6 $ $Date:
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif
 #include "serrno.h"
 #include "u64subr.h"
+#include "vmgr.h"
 #include "vmgr_api.h"
 extern	char	*optarg;
 extern	int	optind;
@@ -44,6 +48,9 @@ char **argv;
 	char vsn[CA_MAXVSNLEN+1];
 	int wcount;
 	time_t wtime;
+#if defined(_WIN32)
+	WSADATA wsadata;
+#endif
 	int xflag = 0;
 
 	dgn[0]= '\0';
@@ -94,12 +101,21 @@ char **argv;
                 exit (USERR);
         }
  
+#if defined(_WIN32)
+	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
+		fprintf (stderr, VMG52);
+		exit (SYERR);
+	}
+#endif
 	if (*vid) {
 		if (vmgr_querytape (vid, vsn, dgn, density, lbltype, model,
 		    media_letter, manufacturer, sn, pool_name, &free_space,
 		    &nbfiles, &rcount, &wcount, &rtime, &wtime, &status) < 0) {
 			fprintf (stderr, "vmgrlisttape %s: %s\n", vid,
 			    (serrno == ENOENT) ? "No such tape" : sstrerror(serrno));
+#if defined(_WIN32)
+			WSACleanup();
+#endif
 			exit (USERR);
 		}
 		listentry (vid, vsn, dgn, density, lbltype, model,
@@ -117,6 +133,9 @@ char **argv;
 		}
 		(void) vmgr_listtape (VMGR_LIST_END, &list);
 	}
+#if defined(_WIN32)
+	WSACleanup();
+#endif
 	exit (0);
 }
 

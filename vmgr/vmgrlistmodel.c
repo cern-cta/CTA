@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlistmodel.c,v $ $Revision: 1.4 $ $Date: 2000/07/07 06:35:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlistmodel.c,v $ $Revision: 1.5 $ $Date: 2000/08/22 13:13:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      vmgrlistmodel - list cartridge model entries */
@@ -14,9 +14,13 @@ static char sccsid[] = "@(#)$RCSfile: vmgrlistmodel.c,v $ $Revision: 1.4 $ $Date
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif
 #include "Cgetopt.h"
 #include "serrno.h"
 #include "u64subr.h"
+#include "vmgr.h"
 #include "vmgr_api.h"
 main(argc, argv)
 int argc;
@@ -39,6 +43,9 @@ char **argv;
 	char *model = NULL;
 	int native_capacity;
 	char tmpbuf[8];
+#if defined(_WIN32)
+	WSADATA wsadata;
+#endif
 
 	Coptind = 1;
 	while ((c = Cgetopt_long (argc, argv, "", longopts, NULL)) != EOF) {
@@ -65,11 +72,20 @@ char **argv;
 		exit (USERR);
 	}
  
+#if defined(_WIN32)
+	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
+		fprintf (stderr, VMG52);
+		exit (SYERR);
+	}
+#endif
 	if (model) {
 		if (vmgr_querymodel (model, media_letter, &native_capacity,
 		    &media_cost) < 0) {
 			fprintf (stderr, "vmgrlistmodel %s: %s\n", model,
 			    (serrno == ENOENT) ? "No such model" : sstrerror(serrno));
+#if defined(_WIN32)
+			WSACleanup();
+#endif
 			exit (USERR);
 		}
 		printf ("%-6s %s %-7s %d\n", model, media_letter,
@@ -85,5 +101,8 @@ char **argv;
 		}
 		(void) vmgr_listmodel (VMGR_LIST_END, &list);
 	}
+#if defined(_WIN32)
+	WSACleanup();
+#endif
 	exit (0);
 }
