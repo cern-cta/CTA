@@ -1,0 +1,109 @@
+.\" @(#)$RCSfile: vmgr_querytape.man,v $ $Revision: 1.1 $ $Date: 1999/12/17 10:35:05 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGR_QUERYTAPE l "$Date: 1999/12/17 10:35:05 $"
+.SH NAME
+vmgr_querytape \- query the CASTOR Volume Manager about a tape
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "vmgr_api.h"\fR
+.sp
+.BI "int vmgr_querytape (const char *" vid ,
+.BI "char *" vsn ,
+.BI "char *" dgn ,
+.BI "char *" density ,
+.BI "char *" lbltype ,
+.BI "char *" model ,
+.BI "char *" media_letter ,
+.BI "char *" manufacturer ,
+.BI "char *" sn ,
+.BI "char *" poolname ,
+.BI "int *" free_space ,
+.BI "int *" nbfiles ,
+.BI "int *" status )
+.SH DESCRIPTION
+.B vmgr_querytape
+queries the CASTOR Volume Manager about a tape.
+.TP
+.I vid
+is the volume visual identifier.
+It must be at most six characters long.
+.TP
+.I vsn
+points at a buffer to receive the magnetically recorded volume serial number of
+the tape.
+The buffer must be at least CA_MAXVIDLEN+1 characters long.
+.TP
+.I dgn
+points at a buffer to receive the device group name corresponding to
+the tape.
+The buffer must be at least CA_MAXDGNLEN+1 characters long.
+.TP
+.I density
+points at a buffer to receive the alphanumeric density corresponding to
+the tape.
+The buffer must be at least CA_MAXDENLEN+1 characters long.
+.TP
+.I lbltype
+points at a buffer to receive the label type corresponding to the tape.
+The buffer must be at least 3 characters long.
+.TP
+.I manufacturer
+The buffer should be at least 13 characters long.
+.TP
+.I sn
+points at a buffer to receive the cartridge serial number.
+The buffer should be at least 25 characters long.
+.TP
+.I poolname
+The buffer should be at least 25 characters long.
+.TP
+.I free_space
+in kbytes.
+.TP
+.I status
+will be returned as a combination of
+.BR TAPE_FULL ,
+.BR DISABLED
+and
+.BR EXPORTED .
+.LP
+Only
+.I vid
+is mandatory. When a pointer to a field is NULL, the field value is not returned.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named volume does not exist.
+.TP
+.B EFAULT
+.I vid
+is a NULL pointer.
+.TP
+.B EINVAL
+The length of
+.I vid
+exceeds
+.BR CA_MAXVIDLEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B EVMGRNACT
+Volume manager is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(l) ,
+.B vmgr_entertape(l)
