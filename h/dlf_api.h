@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: dlf_api.h,v $ $Revision: 1.2 $ $Date: 2003/09/24 14:52:31 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: dlf_api.h,v $ $Revision: 1.3 $ $Date: 2003/11/03 09:30:49 $ CERN IT-ADC Vitaly Motyakov
  */
 
 #ifndef _DLFAPI_H_
@@ -75,7 +75,7 @@ EXTERN_C int DLL_DECL send2dlf _PROTO((int*, dlf_log_dst_t*, char*, int));
 EXTERN_C int DLL_DECL dlf_isinteger _PROTO((const char*));
 EXTERN_C int DLL_DECL dlf_isfloat _PROTO((const char*));
 EXTERN_C int DLL_DECL dlf_hex2uuid _PROTO((const char*, Cuuid_t));
-EXTERN_C int DLL_DECL dlf_hexto4bits _PROTO((const char));
+EXTERN_C int DLL_DECL dlf_hexto4bits _PROTO((const int));
 EXTERN_C int DLL_DECL dlf_hex2u64 _PROTO((const char*, u_signed64*));
 
 EXTERN_C int DLL_DECL dlf_enterfacility _PROTO((const char*, int));
