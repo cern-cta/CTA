@@ -60,7 +60,7 @@ extern "C" {
 // constructor
 //------------------------------------------------------------------------------
 castor::client::BaseClient::BaseClient() throw() :
-  BaseObject(), m_callbackSocket(0), m_rhPort(-1) {}
+  BaseObject(), m_callbackSocket(0), m_rhPort(-1), m_requestId("") {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -189,22 +189,33 @@ std::string castor::client::BaseClient::sendRequest
   struct pollfd pollit;
   pollit.events = POLLIN | POLLHUP;
   while (!stop) {
+    //std::cerr << "starting 1st loop" << std::endl;
     castor::io::ServerSocket* socket = waitForCallBack();
     pollit.fd = socket->socket();
+    //std::cerr << "Socket created" << std::endl;
     // Then loop on the responses sent over a given connection
     while (!stop) {  
       /* Will return > 0 if the descriptor is readable
          No timeout is used, we wait forever */
       pollit.revents = 0;
+      //std::cerr << "starting poll" << std::endl;
+      
       int rc = poll(&pollit,1,-1);
+      //std::cerr << "rc=" << rc << " errno=" << errno 
+      //          << " error:" << strerror(errno) << std::endl;
+      
       if (0 == rc) {
         castor::exception::Communication e(requestId, SEINTERNAL);
         e.getMessage() << "Poll with no timeout did timeout !";
         delete socket;
         throw e;
       } else if (rc < 0) {
+        if (errno == EINTR) {
+          //std::cerr <<  "EINTR caught" << std::endl;
+          continue;
+        }
         castor::exception::Communication e(requestId, SEINTERNAL);
-        e.getMessage() << "Poll error";
+        e.getMessage() << "Poll error for request" << requestId;
         delete socket;
         throw e;
       }
@@ -282,6 +293,7 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
     throw e;
   }
   requestId = ack->requestId();
+  setRequestId(requestId);
   if (!ack->status()) {
     castor::exception::InvalidArgument e; // XXX To be changed
     e.getMessage() << "Server Error "
@@ -297,6 +309,7 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
 //------------------------------------------------------------------------------
 // waitForCallBack
 //------------------------------------------------------------------------------
+// This function blocks until one call back has been made
 castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
   throw (castor::exception::Exception) {
 
@@ -311,21 +324,30 @@ castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
 
   struct pollfd pollit;
   int timeout = 1800; // In seconds, half an hour
-
+  bool stop =false;
+  
   pollit.fd = m_callbackSocket->socket();
   pollit.events = POLLIN;
   pollit.revents = 0;
 
-  /* Will return > 0 if the descriptor is readable */
-  rc = poll(&pollit,1,timeout*1000);
-  if (0 == rc) {
-    castor::exception::InvalidArgument e; // XXX To be changed
-    e.getMessage() << "Accept timeout";
-    throw e;
-  } else if (rc < 0) {
-    castor::exception::InvalidArgument e; // XXX To be changed
-    e.getMessage() << "Poll error";
-    throw e;
+  // Here we have anyway to retry the EINTR
+  while (!stop) {
+    /* Will return > 0 if the descriptor is readable */
+    rc = poll(&pollit,1,timeout*1000);
+    if (0 == rc) { 
+      castor::exception::Communication e(requestId(), SETIMEDOUT); // XXX To be changed
+      e.getMessage() << "Accept timeout";
+      throw e;
+    } else if (rc < 0) {
+      if (errno = EINTR) {
+        continue;
+      }
+      castor::exception::Communication e(requestId(), errno); // XXX To be changed
+      e.getMessage() << "Poll error:" < strerror(errno);
+      throw e;
+    } else if (rc > 0) {
+      stop = true;
+    }
   }
 
   return m_callbackSocket->accept();
@@ -388,3 +410,16 @@ void castor::client::BaseClient::setRhHost()
   }
 }
 
+//------------------------------------------------------------------------------
+// setRequestId
+//------------------------------------------------------------------------------
+void castor::client::BaseClient::setRequestId(std::string requestId) {
+  m_requestId = requestId;
+}
+
+//------------------------------------------------------------------------------
+// requestId
+//------------------------------------------------------------------------------
+std::string castor::client::BaseClient::requestId() {
+  return m_requestId;
+}

@@ -109,8 +109,20 @@ namespace castor {
        */
       virtual void setRhHost() throw (castor::exception::Exception);
 
-    private:
+      /**
+       * Sets the request ID in the base client
+       */
+      void setRequestId(std::string requestId);
+      
 
+      /**
+       * Returns the request id 
+       */
+      std::string requestId();
+      
+
+    private:
+      
       /**
        * creates a Client object from the callback socket
        * The caller is responsible for deallocating the
@@ -134,6 +146,9 @@ namespace castor {
       castor::io::ServerSocket* waitForCallBack()
         throw (castor::exception::Exception);
 
+
+      
+
     protected:
       
       /// The request handler host
@@ -145,6 +160,7 @@ namespace castor {
       /// The callback socket
       castor::io::ServerSocket* m_callbackSocket;
 
+      std::string m_requestId;
     };
 
   } // end of namespace client
