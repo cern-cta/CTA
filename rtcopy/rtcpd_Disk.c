@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.12 $ $Date: 1999/12/29 10:44:31 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.13 $ $Date: 1999/12/29 11:28:48 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -923,6 +923,20 @@ static int DiskToMemory(int disk_fd, int pool_index,
         databufs[i]->data_length += rc;
         totsz += (u_signed64)rc;
         DK_SIZE(totsz);
+        if ( totsz - filereq->startsize > filereq->bytes_in ) {
+            /*
+             * This can happen if the user still writes to the file after
+             * having submit the tape write request for it.
+             */
+            rtcp_log(LOG_ERR,"File %s: size changed during request!\n",
+                     filereq->file_path);
+            rtcpd_AppendClientMsg(NULL,file,RT150,"CPDSKTP",filereq->file_path);
+            rtcpd_SetReqStatus(NULL,file,SEWOULDBLOCK,RTCP_USERR | RTCP_FAILED);
+            (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
+            (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
+            serrno = SEWOULDBLOCK;
+            return(-1);
+        }
 
         if ( (end_of_dkfile == TRUE) ||
              ((rc < nb_bytes) && 
