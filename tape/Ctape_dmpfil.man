@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_dmpfil.man,v $ $Revision: 1.3 $ $Date: 2002/01/30 10:49:33 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_dmpfil.man,v $ $Revision: 1.4 $ $Date: 2002/04/08 16:00:33 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_DMPFIL 3 "$Date: 2002/01/30 10:49:33 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_DMPFIL 3 "$Date: 2002/04/08 16:00:33 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_dmpfil \- analyze the content of a tape
 .SH SYNOPSIS
@@ -172,10 +172,12 @@ is zero,
 the dump will terminate only when encountering blank tape or too many parity
 errors (on IBM3420, the reel would wind off).
 .SH RETURN VALUE
-This routine returns 0 if the operation was successful or -1 if the operation
+These routines return 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
 .B serrno
 is set appropriately.
+.B Ctape_dmpfil
+returns also 1 when the dump is complete.
 .SH ERRORS
 .TP 1.2i
 .B EIO
