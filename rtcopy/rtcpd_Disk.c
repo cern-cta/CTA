@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.61 $ $Date: 2000/03/28 09:12:01 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.62 $ $Date: 2000/03/29 11:30:26 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -103,6 +103,9 @@ static int DiskIOstarted() {
         return(-1);
     }
     proc_cntl.diskIOstarted = 1;
+    proc_cntl.nb_diskIOactive++;
+    rtcp_log(LOG_DEBUG,"DiskIOstarted() nb active disk IO threads=%d\n",
+             proc_cntl.nb_diskIOactive);
     rc = Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"DiskIOstarted(): Cthread_cond_broadcast_ext(proc_cntl): %s\n",
@@ -119,8 +122,11 @@ static int DiskIOstarted() {
     return(0);
 }
 
-static void SignalFinished() {
+static void DiskIOfinished() {
     (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+    proc_cntl.nb_diskIOactive--;
+    rtcp_log(LOG_DEBUG,"DiskIOfinished() nb active disk IO threads=%d\n",
+             proc_cntl.nb_diskIOactive);
     (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
     (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
     return;
@@ -1364,6 +1370,7 @@ void *diskIOthread(void *arg) {
     if ( mode == WRITE_DISABLE ) {
         nbbytes = file->diskbytes_sofar;
         if ( (filereq->concat & CONCAT) != 0 ) nbbytes -= filereq->startsize;
+        if ( (filereq->concat & CONCAT_TO_EOD) != 0 ) {
             if ( (severity & RTCP_EOD) == 0 ) {
                 nbbytes -= filereq->startsize;
                 filereq->proc_status = RTCP_PARTIALLY_FINISHED;
@@ -1453,8 +1460,9 @@ void *diskIOthread(void *arg) {
             filereq->proc_status,severity);
         if ( (filereq->convert & FIXVAR) != 0 && fl != NULL ) free(fl);
     } 
-        SignalFinished();
 
+    DiskIOfinished();
+    tellClient(&client_socket,NULL,NULL,0);
     rtcp_CloseConnection(&client_socket);
     return((void *)&success);
 }
@@ -1554,6 +1562,8 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
      */
     proc_cntl.diskIOstarted = 1;
     proc_cntl.diskIOfinished = 0;
+    proc_cntl.nb_diskIOactive = 0;
+    proc_cntl.nb_reserved_bufs = 0;
     nexttape = tape;
     /*
      * We don't loop over volumes since volume spanning is only allowed
@@ -1607,11 +1617,18 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
              *    Ctape_info() for more info. (i.e. blocksize)
              *    before starting the disk -> memory copy.
              * For tape read we must also check if the tapeIO has
+             * finished, in which case we can just go on copying the
+             * the remainin data in memory to disk.
+             */
             rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO(): nb_reserver_bufs=%d, nb_bufs=%d, mode=%d, diskIOstarted=%d, tapeIOfinished=%d, blocksize=%d\n",
-            rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO(): nb_reserver_bufs=%d, nb_bufs=%d, mode=%d, diskIOstarted=%d, blocksize=%d\n",
+                    proc_cntl.nb_reserved_bufs,nb_bufs,tapereq->mode,
                     proc_cntl.diskIOstarted,proc_cntl.tapeIOfinished,
-                    proc_cntl.diskIOstarted,filereq->blocksize);
-            while ( proc_cntl.nb_reserved_bufs >= nb_bufs ||
+                    filereq->blocksize);
+            while ( (proc_cntl.nb_reserved_bufs >= nb_bufs && 
+                     (tapereq->mode == WRITE_ENABLE || 
+                      (tapereq->mode == WRITE_DISABLE &&
+                       proc_cntl.tapeIOfinished == 0 &&
+                       proc_cntl.tapeIOfinished == 0))) ||
                    ((proc_cntl.diskIOstarted == 0) ||
                      (filereq->blocksize <= 0))) ) {
                 rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() waiting... (nb_reserved_bufs=%d\n",proc_cntl.nb_reserved_bufs);
@@ -1797,6 +1814,13 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
         }
     } CLIST_ITERATE_END(nexttape->file,nextfile);
     /*
+     * Tell the others that we've finished
+     */
+    rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+    (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+    rc = Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
+    (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
+    (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
     return(0);
 }
 
