@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.157 2001/10/16 19:34:35 jdurand Exp $
+ * $Id: stager.c,v 1.158 2001/11/06 10:53:00 jdurand Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.157 $ $Date: 2001/10/16 19:34:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.158 $ $Date: 2001/11/06 10:53:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1612,8 +1612,12 @@ int stagein_castor_hsm_file() {
 
 			/* Rtcopy bits suggest to stop */
 			SAVE_EID;
-			sendrep (rpfd, MSG_ERR, STG02, "", "rtcpc",sstrerror(save_serrno));
-			if (error_already_processed != 0) {
+			sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc",sstrerror(save_serrno));
+			if (
+				(error_already_processed != 0) ||
+				/* Catch cases when error is a TAPE one not yet handle by stager_process_error() */
+				((save_serrno >= ETBASEOFF) && (save_serrno <= ETMAXERR))
+				) {
 				forced_exit = 1;
 			} else {
 				for (stcp_tmp = stcp_start, i = 0; stcp_tmp < stcp_end; stcp_tmp++, i++) {
@@ -4084,6 +4088,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Tuesday 16 October, 2001 at 21:33:14 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Tuesday 06 November, 2001 at 11:52:00 CET by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
