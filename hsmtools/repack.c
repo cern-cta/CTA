@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.1 $ $Date: 2003/10/14 13:05:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.2 $ $Date: 2003/11/11 06:25:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      repack - copy the active segments from a set of volumes to another set */
@@ -508,7 +508,7 @@ rtcpFileRequest_t *fl;
 			    old_segattrs.fsec, sstrerror(serrno));
 		}
 		if (! nodelete_flag) {
-			printf ("%s Deleting %s.%s from disk\n", timestamp(),
+			printf ("%s Deleting %s.%d from disk\n", timestamp(),
 			    seg_list[last_seg_repacked].vid,
 			    seg_list[last_seg_repacked].fseq);
 			fflush (stdout);
