@@ -140,7 +140,7 @@ int *Csec_check_creds(Csec_context_t *ctx) {
     }
 
     if (Csec_acquire_creds(ctx) != 0) {
-      if (serrno == ENOSYS) {
+      if (serrno == ENOTSUP) {
 	result[i] |= CSEC_PROT_NOCHECK;
       } else {
 	result[i] |= CSEC_PROT_NOCREDS;

@@ -128,7 +128,7 @@ int Csec_acquire_creds_impl(ctx, service_name, is_client)
     char *service_name;
     int is_client;
 {
-  serrno = ENOSYS;
+  serrno = ENOTSUP;
   return -1;
 }
 
