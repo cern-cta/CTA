@@ -1,5 +1,5 @@
 /*
- * @(#)$RCSfile: marshall.h,v $ $Revision: 1.5 $ $Date: 1999/11/08 07:48:09 $ CERN IT-PDP/DM  Fabrizio Cane
+ * @(#)$RCSfile: marshall.h,v $ $Revision: 1.6 $ $Date: 1999/12/02 17:02:02 $ CERN IT-PDP/DM  Fabrizio Cane
  */
 
 /*
@@ -132,7 +132,7 @@ typedef  char*          bitvct; /* bit vector type definition           */
  *    H Y P E R   ( 6 4   B I T S )
  */
 
-#if !defined(__alpha) && !defined(i386)
+#if !defined(__alpha) && !defined(i386) && !defined(_WIN32)
 #define  marshall_HYPER(ptr,n)          { LONG n_ = htonl(*((unsigned long *)&(n))); \
 					  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \
 					  INC_PTR(ptr,LONGSIZE); \
