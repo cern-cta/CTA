@@ -1,5 +1,5 @@
 /*
- * $Id: Csec_plugin_KRB4.c,v 1.9 2004/08/27 14:41:12 motiakov Exp $
+ * $Id: Csec_plugin_KRB4.c,v 1.10 2004/10/22 20:15:41 jdurand Exp $
  * Copyright (C) 2003 by CERN/IT/ADC/CA Benjamin Couturier
  * All rights reserved
  */
@@ -399,7 +399,7 @@ int Csec_get_service_name_KRB4(Csec_context_t *ctx,
                service_name,
                service_namelen);
     
-    if (service_type < 0 ||  service_type > CSEC_SERVICE_TYPE_TAPE
+    if (service_type < 0 ||  service_type >= CSEC_SERVICE_TYPE_MAX
         || service_name == NULL || service_namelen <= 0) {
         serrno = EINVAL;
         return -1;
