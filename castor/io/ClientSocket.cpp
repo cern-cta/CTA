@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ClientSocket.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/30 14:30:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ClientSocket.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/08/24 16:30:36 $ $Author: sponcec3 $
  *
  *
  *
@@ -92,15 +92,15 @@ void castor::io::ClientSocket::connect()
   // Connects the socket
   if (::connect(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr)) < 0) {
     castor::exception::Exception ex(errno);
-    ex.getMessage() << "Unable to connect socket.";
+    ex.getMessage() << "Unable to connect socket";
     if (m_saddr.sin_family == AF_INET) {
       unsigned long ip = m_saddr.sin_addr.s_addr;
-      ex.getMessage() << "to "
+      ex.getMessage() << " to "
                       << (ip%256) << "."
                       << ((ip >> 8)%256) << "."
                       << ((ip >> 16)%256) << "."
                       << (ip >> 24) << ":"
-                      << m_saddr.sin_port;
+                      << ntohs(m_saddr.sin_port);
     }
     close(m_socket);
     throw ex;
