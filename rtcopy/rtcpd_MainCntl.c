@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.57 $ $Date: 2000/04/07 15:51:22 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.58 $ $Date: 2000/04/12 14:18:31 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1093,6 +1093,11 @@ void rtcpd_BroadcastException() {
     (void)Cthread_mutex_lock_ext(proc_cntl.DiskFileAppend_lock);
     (void)Cthread_cond_broadcast_ext(proc_cntl.DiskFileAppend_lock);
     (void)Cthread_mutex_unlock_ext(proc_cntl.DiskFileAppend_lock);
+
+    rtcp_log(LOG_DEBUG,"rtcpd_BroadcastException() broadcast to TpPos_lock\n");
+    (void)Cthread_mutex_lock_ext(proc_cntl.TpPos_lock);
+    (void)Cthread_cond_broadcast_ext(proc_cntl.TpPos_lock);
+    (void)Cthread_mutex_unlock_ext(proc_cntl.TpPos_lock);
 
     rtcp_log(LOG_DEBUG,"rtcpd_BroadcastException() finished\n");
     return; 
