@@ -1,0 +1,17 @@
+#
+# $Id: CleanStageArea.sysconfig,v 1.1 2003/11/06 10:47:36 jdurand Exp $
+#
+# @(#)$RCSfile: CleanStageArea.sysconfig,v $ $Revision: 1.1 $ $Date: 2003/11/06 10:47:36 $ CERN/IT/ADC/CA Jean-Damien Durand
+#
+# should CleanStageArea run?
+# any string but "yes" will equivalent to "NO"
+#
+RUN_CLEANSTAGEAREA="yes"
+#
+# should we try to remove files in the name server on behalf of the user?
+# WARNING. This is extremele dangerous, and will usually fail, UNLESS
+# the stager daemon runs on the same host as the name server
+# Say "yes" if you want so. For Safety I comment the line below AND I put
+# NO as default...
+#REMOVE_FROM_HSM=NO
+
