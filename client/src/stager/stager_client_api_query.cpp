@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.4 2004/11/23 15:34:15 sponcec3 Exp $
+ * $Id: stager_client_api_query.cpp,v 1.5 2004/12/17 15:31:14 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.4 $ $Date: 2004/11/23 15:34:15 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.5 $ $Date: 2004/12/17 15:31:14 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -25,9 +25,13 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 
 #include "castor/Constants.hpp"
 #include "castor/client/IResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
-#include "castor/stager/StageFileQueryRequest.hpp"
+#include "castor/client/VectorResponseHandler.hpp"
+#include "castor/rh/FileQueryResponse.hpp"
 #include "castor/stager/StageRequestQueryRequest.hpp"
+#include "castor/stager/StageFileQueryRequest.hpp"
+#include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/SubRequest.hpp"
+
 
 /* ================= */
 /* External routines */
@@ -40,69 +44,106 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 
 ////////////////////////////////////////////////////////////
 
 
-/**
- * StageGet Response Handler for Root files
- */
-class FileQueryResponseHandler : public castor::client::IResponseHandler {
-
- public:
-
-  FileQueryResponseHandler() {
-    // Already preparing the stageget rsponse stucture
-    m_response = (struct stage_filequery_resp *)
-      calloc(sizeof(struct stage_filequery_resp), 1);
-
-    if (m_response == NULL) {
-      castor::exception::Exception e(ENOMEM);
-      e.getMessage() << "Could not allocate memory for response";
-      throw e;
-    }
-  }
-
-  virtual void handleResponse(castor::rh::Response& r)
-    throw (castor::exception::Exception) {
-    std::cout << "Handling response !" << std::endl;
-  };
-
-  virtual void terminate()
-    throw (castor::exception::Exception) {
-  };
-
-  
-  struct stage_filequery_resp *m_response;
-};
-
 EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
 				      int nbreqs,
 				      struct stage_filequery_resp **responses,
 				      int *nbresps,
 				      struct stage_options* opts){
 
-  castor::BaseObject::initLog("", castor::SVC_NOMSG);
   
   char *func = "stage_filequery";
-
+ 
+  if (requests == NULL
+      || nbreqs <= 0
+      || responses == NULL
+      || nbresps == NULL) {
+    serrno = EINVAL;
+    stage_errmsg(func, "Invalid input parameter");
+    return -1;
+  }
+  
   try {
     castor::BaseObject::initLog("", castor::SVC_NOMSG);
     
-    FileQueryResponseHandler rh;
-
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client;
     castor::stager::StageFileQueryRequest req;
 
+    
+    // Preparing the requests
+    for(int i=0; i<nbreqs; i++) {
+      
+      if (!(requests[i].param)) {
+        serrno = EINVAL;
+        stage_errmsg(func, "Parameter in request %d is NULL", i);
+        return -1;
+      }
+      
+      castor::stager::QueryParameter *par = new castor::stager::QueryParameter();
+      par->setQueryType((castor::stager::RequestQueryType)(requests[i].type));
+      par->setValue((const char *)requests[i].param);
+      req.addParameters(par);
+    }
+
+    // Using the VectorResponseHandler which stores everything in
+    // A vector. BEWARE, the responses must be de-allocated afterwards
+    std::vector<castor::rh::Response *>respvec;    
+    castor::client::VectorResponseHandler rh(&respvec);
     client.sendRequest(&req, &rh);
 
+    // Parsing the responses which have been stored in the vector
+    int nbResponses =  respvec.size();
+
+    if (nbResponses <= 0) {
+      // We got not replies, this is not normal !
+      serrno = SEINTERNAL;
+      stage_errmsg(func, "No responses received");
+      return -1;
+    }
+    
+
+    // Creating the array of file responses
+    // Same size as requests as we only do files for the moment
+    *responses = (struct stage_filequery_resp *) 
+      malloc(sizeof(struct stage_filequery_resp) * nbResponses);
+
+    if (*responses == NULL) {
+      serrno = ENOMEM;
+      stage_errmsg(func, "Could not allocate memory for responses");
+      return -1;
+    }
+    *nbresps = nbResponses;
+    
+    for (int i=0; i<(int)respvec.size(); i++) {
+
+      // Casting the response into a FileResponse !
+      castor::rh::FileQueryResponse* fr = 
+        dynamic_cast<castor::rh::FileQueryResponse*>(respvec[i]);
+      if (0 == fr) {
+        castor::exception::Exception e(SEINTERNAL);
+        e.getMessage() << "Error in dynamic cast, response was NOT a file query response";
+        throw e;
+      }
+
+      (*responses)[i].filename = strdup(fr->fileName().c_str());
+      (*responses)[i].fileid = fr->fileId();
+      (*responses)[i].status = fr->status();
+      (*responses)[i].size = fr->size();
+      (*responses)[i].poolname = strdup(fr->poolName().c_str());
+      (*responses)[i].creationTime = (time_t)fr->creationTime();
+      (*responses)[i].accessTime = (time_t)fr->accessTime();
+      (*responses)[i].nbAccesses = fr->nbAccesses();
+
+      // The responses should be deallocated by the API !
+      delete respvec[i];
+    } // for
+    
   } catch (castor::exception::Exception e) {
     serrno = e.code();
     stage_errmsg(func, (char *)(e.getMessage().str().c_str()));
     return -1;
   }
-  
   return 0;
-
-
-
 }
 
 
@@ -119,30 +160,7 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
 					 struct stage_options* opts) {
 
 
-  castor::BaseObject::initLog("", castor::SVC_NOMSG);
-  
-  char *func = "stage_requestquery";
-
-  try {
-    castor::BaseObject::initLog("", castor::SVC_NOMSG);
-    
-    FileQueryResponseHandler rh;
-
-    // Uses a BaseClient to handle the request
-    castor::client::BaseClient client;
-    castor::stager::StageRequestQueryRequest req;
-
-    client.sendRequest(&req, &rh);
-
-  } catch (castor::exception::Exception e) {
-    serrno = e.code();
-    stage_errmsg(func, (char *)(e.getMessage().str().c_str()));
-    return -1;
-  }
-  
-  return 0;
-
-
+ 
 
 }
 
