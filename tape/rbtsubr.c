@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.4 $ $Date: 2000/05/30 05:24:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.5 $ $Date: 2000/06/05 15:49:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -675,6 +675,7 @@ unsigned int force;
 			tplogit (func, "ACSLS req_id = %d\n", dismount_req_id);
 		}
 	} while (rtype != RT_FINAL);
+	dismount_req_id = 0;
 	if (status) {
 		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
 		usrmsg (func, "%s\n", msg);
