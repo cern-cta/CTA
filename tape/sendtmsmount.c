@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendtmsmount.c,v $ $Revision: 1.3 $ $Date: 1999/11/19 17:02:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendtmsmount.c,v $ $Revision: 1.4 $ $Date: 2000/01/06 16:03:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*	sendtmsmount -  send a MOUNT request to TMS */
@@ -63,16 +63,16 @@ char *drive;
 		case 187:
 		case 189:
 		case 2193:
-			sendrep (rpfd, MSG_ERR, tmrepbuf);
+			sendrep (rpfd, MSG_ERR, "%s\n", tmrepbuf);
 			rc = EACCES;	/* access denied or volume inactive */
 			break;
 		case 190:
 		case 2190:
-			sendrep (rpfd, MSG_ERR, tmrepbuf);
+			sendrep (rpfd, MSG_ERR, "%s\n", tmrepbuf);
 			rc = ETVBSY;	/* volume busy */
 			break;
 		case 188:
-			sendrep (rpfd, MSG_ERR, tmrepbuf);
+			sendrep (rpfd, MSG_ERR, "%s\n", tmrepbuf);
 			rc = EACCES;	/* volume unknown */
 			break;
 		default:
