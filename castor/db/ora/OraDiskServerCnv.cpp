@@ -81,6 +81,10 @@ const std::string castor::db::ora::OraDiskServerCnv::s_deleteTypeStatementString
 const std::string castor::db::ora::OraDiskServerCnv::s_selectFileSystemStatementString =
 "SELECT id from rh_FileSystem WHERE diskserver = :1";
 
+/// SQL delete statement for member fileSystems
+const std::string castor::db::ora::OraDiskServerCnv::s_deleteFileSystemStatementString =
+"UPDATE rh_FileSystem SET diskserver = 0 WHERE diskserver = :1";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -92,7 +96,8 @@ castor::db::ora::OraDiskServerCnv::OraDiskServerCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_selectFileSystemStatement(0) {}
+  m_selectFileSystemStatement(0),
+  m_deleteFileSystemStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -114,6 +119,7 @@ void castor::db::ora::OraDiskServerCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_deleteFileSystemStatement);
     deleteStatement(m_selectFileSystemStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -124,6 +130,7 @@ void castor::db::ora::OraDiskServerCnv::reset() throw() {
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
   m_selectFileSystemStatement = 0;
+  m_deleteFileSystemStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -192,15 +199,17 @@ void castor::db::ora::OraDiskServerCnv::fillRepFileSystem(castor::stager::DiskSe
       cnvSvc()->createRep(0, *it, false, OBJ_DiskServer);
     } else {
       fileSystemsList.erase(item);
-      cnvSvc()->updateRep(0, *it, false);
     }
   }
-  // Delete old data
+  // Delete old links
   for (std::set<int>::iterator it = fileSystemsList.begin();
        it != fileSystemsList.end();
        it++) {
-    castor::db::DbAddress ad(*it, " ", 0);
-    cnvSvc()->deleteRepByAddress(&ad, false);
+    if (0 == m_deleteFileSystemStatement) {
+      m_deleteFileSystemStatement = createStatement(s_deleteFileSystemStatementString);
+    }
+    m_deleteFileSystemStatement->setDouble(1, obj->id());
+    m_deleteFileSystemStatement->executeUpdate();
   }
 }
 

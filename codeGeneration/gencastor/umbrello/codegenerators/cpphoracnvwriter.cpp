@@ -356,9 +356,8 @@ void CppHOraCnvWriter::writeMembers() {
                 << "Statement;"
                 << endl << endl;
     } else {
-      if (as->type.multiRemote == MULT_N) {
-        // One to N association
-        // In this case, the child has a column with the id of its parent
+      if (as->type.multiLocal == MULT_ONE) {
+        // 1 to * association
         *m_stream << getIndent()
                   << "/// SQL select statement for member "
                   << as->remotePart.name
@@ -373,11 +372,39 @@ void CppHOraCnvWriter::writeMembers() {
                   << "oracle::occi::Statement *m_select"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement;"
+                  << endl << endl << getIndent()
+                  << "/// SQL delete statement for member "
+                  << as->remotePart.name
+                  << endl << getIndent()
+                  << "static const std::string s_delete"
+                  << capitalizeFirstLetter(as->remotePart.typeName)
+                  << "StatementString;"
+                  << endl << endl << getIndent()
+                  << "/// SQL delete statement object for member "
+                  << as->remotePart.name
+                  << endl << getIndent()
+                  << "oracle::occi::Statement *m_delete"
+                  << capitalizeFirstLetter(as->remotePart.typeName)
+                  << "Statement;"
                   << endl << endl;
-      } else {
-        // * to 1 association, we need to be able to update
-        // the id of the remote object in the local table
+      }
+      if (as->type.multiRemote == MULT_ONE) {
+        // * to 1
         *m_stream << getIndent()
+                  << "/// SQL checkExist statement for member "
+                  << as->remotePart.name
+                  << endl << getIndent()
+                  << "static const std::string s_check"
+                  << capitalizeFirstLetter(as->remotePart.typeName)
+                  << "ExistStatementString;"
+                  << endl << endl << getIndent()
+                  << "/// SQL checkExist statement object for member "
+                  << as->remotePart.name
+                  << endl << getIndent()
+                  << "oracle::occi::Statement *m_check"
+                  << capitalizeFirstLetter(as->remotePart.typeName)
+                  << "ExistStatement;"
+                  << endl << endl << getIndent()
                   << "/// SQL update statement for member "
                   << as->remotePart.name
                   << endl << getIndent()

@@ -26,6 +26,7 @@
 
 // Include Files
 #include "OraStreamCnv.hpp"
+#include "castor/BaseAddress.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
@@ -91,9 +92,25 @@ const std::string castor::db::ora::OraStreamCnv::s_deleteTapeCopyStatementString
 const std::string castor::db::ora::OraStreamCnv::s_selectTapeCopyStatementString =
 "SELECT Child from rh_Stream2TapeCopy WHERE Parent = :1";
 
+/// SQL select statement for member tape
+const std::string castor::db::ora::OraStreamCnv::s_selectTapeStatementString =
+"SELECT id from rh_Tape WHERE stream = :1";
+
+/// SQL delete statement for member tape
+const std::string castor::db::ora::OraStreamCnv::s_deleteTapeStatementString =
+"UPDATE rh_Tape SET stream = 0 WHERE stream = :1";
+
+/// SQL existence statement for member tape
+const std::string castor::db::ora::OraStreamCnv::s_checkTapeExistStatementString =
+"SELECT id from rh_Tape WHERE id = :1";
+
 /// SQL update statement for member tape
 const std::string castor::db::ora::OraStreamCnv::s_updateTapeStatementString =
 "UPDATE rh_Stream SET tape = : 1 WHERE id = :2";
+
+/// SQL existence statement for member tapePool
+const std::string castor::db::ora::OraStreamCnv::s_checkTapePoolExistStatementString =
+"SELECT id from rh_TapePool WHERE id = :1";
 
 /// SQL update statement for member tapePool
 const std::string castor::db::ora::OraStreamCnv::s_updateTapePoolStatementString =
@@ -113,7 +130,11 @@ castor::db::ora::OraStreamCnv::OraStreamCnv() :
   m_insertTapeCopyStatement(0),
   m_deleteTapeCopyStatement(0),
   m_selectTapeCopyStatement(0),
+  m_selectTapeStatement(0),
+  m_deleteTapeStatement(0),
+  m_checkTapeExistStatement(0),
   m_updateTapeStatement(0),
+  m_checkTapePoolExistStatement(0),
   m_updateTapePoolStatement(0) {}
 
 //------------------------------------------------------------------------------
@@ -139,7 +160,11 @@ void castor::db::ora::OraStreamCnv::reset() throw() {
     deleteStatement(m_insertTapeCopyStatement);
     deleteStatement(m_deleteTapeCopyStatement);
     deleteStatement(m_selectTapeCopyStatement);
+    deleteStatement(m_deleteTapeStatement);
+    deleteStatement(m_selectTapeStatement);
+    deleteStatement(m_checkTapeExistStatement);
     deleteStatement(m_updateTapeStatement);
+    deleteStatement(m_checkTapePoolExistStatement);
     deleteStatement(m_updateTapePoolStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -152,7 +177,11 @@ void castor::db::ora::OraStreamCnv::reset() throw() {
   m_insertTapeCopyStatement = 0;
   m_deleteTapeCopyStatement = 0;
   m_selectTapeCopyStatement = 0;
+  m_selectTapeStatement = 0;
+  m_deleteTapeStatement = 0;
+  m_checkTapeExistStatement = 0;
   m_updateTapeStatement = 0;
+  m_checkTapePoolExistStatement = 0;
   m_updateTapePoolStatement = 0;
 }
 
@@ -234,15 +263,12 @@ void castor::db::ora::OraStreamCnv::fillRepTapeCopy(castor::stager::Stream* obj)
       m_insertTapeCopyStatement->executeUpdate();
     } else {
       tapeCopyList.erase(item);
-      cnvSvc()->updateRep(0, *it, false);
     }
   }
-  // Delete old data
+  // Delete old links
   for (std::set<int>::iterator it = tapeCopyList.begin();
        it != tapeCopyList.end();
        it++) {
-    castor::db::DbAddress ad(*it, " ", 0);
-    cnvSvc()->deleteRepByAddress(&ad, false);
     if (0 == m_deleteTapeCopyStatement) {
       m_deleteTapeCopyStatement = createStatement(s_deleteTapeCopyStatementString);
     }
@@ -257,36 +283,41 @@ void castor::db::ora::OraStreamCnv::fillRepTapeCopy(castor::stager::Stream* obj)
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStreamCnv::fillRepTape(castor::stager::Stream* obj)
   throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
+  // Check selectTape statement
+  if (0 == m_selectTapeStatement) {
+    m_selectTapeStatement = createStatement(s_selectTapeStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
+  m_selectTapeStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectTapeStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    u_signed64 tapeId = (u_signed64)rset->getDouble(3);
+    if (0 != tapeId &&
+        0 == obj->tape() ||
+        obj->tape()->id() != tapeId) {
+      if (0 == m_deleteTapeStatement) {
+        m_deleteTapeStatement = createStatement(s_deleteTapeStatementString);
+      }
+      m_deleteTapeStatement->setDouble(1, obj->id());
+      m_deleteTapeStatement->executeUpdate();
+    }
   }
-  u_signed64 tapeId = (u_signed64)rset->getDouble(3);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
-  castor::db::DbAddress ad(tapeId, " ", 0);
-  // Check whether old object should be deleted
-  if (0 != tapeId &&
-      0 != obj->tape() &&
-      obj->tape()->id() != tapeId) {
-    cnvSvc()->deleteRepByAddress(&ad, false);
-    tapeId = 0;
-  }
-  // Update remote object or create new one
-  if (tapeId == 0) {
-    if (0 != obj->tape()) {
+  if (0 != obj->tape()) {
+    // Check checkTapeExist statement
+    if (0 == m_checkTapeExistStatement) {
+      m_checkTapeExistStatement = createStatement(s_checkTapeExistStatementString);
+    }
+    // retrieve the object from the database
+    m_checkTapeExistStatement->setDouble(1, obj->tape()->id());
+    oracle::occi::ResultSet *rset = m_checkTapeExistStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->tape(), false, OBJ_Stream);
     }
-  } else {
-    cnvSvc()->updateRep(&ad, obj->tape(), false);
+    // Close resultset
+    m_selectStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateTapeStatement) {
@@ -303,36 +334,20 @@ void castor::db::ora::OraStreamCnv::fillRepTape(castor::stager::Stream* obj)
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStreamCnv::fillRepTapePool(castor::stager::Stream* obj)
   throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 tapePoolId = (u_signed64)rset->getDouble(4);
-  // Close resultset
-  m_selectStatement->closeResultSet(rset);
-  castor::db::DbAddress ad(tapePoolId, " ", 0);
-  // Check whether old object should be deleted
-  if (0 != tapePoolId &&
-      0 != obj->tapePool() &&
-      obj->tapePool()->id() != tapePoolId) {
-    cnvSvc()->deleteRepByAddress(&ad, false);
-    tapePoolId = 0;
-  }
-  // Update remote object or create new one
-  if (tapePoolId == 0) {
-    if (0 != obj->tapePool()) {
+  if (0 != obj->tapePool()) {
+    // Check checkTapePoolExist statement
+    if (0 == m_checkTapePoolExistStatement) {
+      m_checkTapePoolExistStatement = createStatement(s_checkTapePoolExistStatementString);
+    }
+    // retrieve the object from the database
+    m_checkTapePoolExistStatement->setDouble(1, obj->tapePool()->id());
+    oracle::occi::ResultSet *rset = m_checkTapePoolExistStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->tapePool(), false);
     }
-  } else {
-    cnvSvc()->updateRep(&ad, obj->tapePool(), false);
+    // Close resultset
+    m_selectStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateTapePoolStatement) {

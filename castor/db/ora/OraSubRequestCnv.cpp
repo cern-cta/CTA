@@ -26,6 +26,7 @@
 
 // Include Files
 #include "OraSubRequestCnv.hpp"
+#include "castor/BaseAddress.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
@@ -77,17 +78,33 @@ const std::string castor::db::ora::OraSubRequestCnv::s_storeTypeStatementString 
 const std::string castor::db::ora::OraSubRequestCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
+/// SQL existence statement for member diskcopy
+const std::string castor::db::ora::OraSubRequestCnv::s_checkDiskCopyExistStatementString =
+"SELECT id from rh_DiskCopy WHERE id = :1";
+
 /// SQL update statement for member diskcopy
 const std::string castor::db::ora::OraSubRequestCnv::s_updateDiskCopyStatementString =
 "UPDATE rh_SubRequest SET diskcopy = : 1 WHERE id = :2";
+
+/// SQL existence statement for member castorFile
+const std::string castor::db::ora::OraSubRequestCnv::s_checkCastorFileExistStatementString =
+"SELECT id from rh_CastorFile WHERE id = :1";
 
 /// SQL update statement for member castorFile
 const std::string castor::db::ora::OraSubRequestCnv::s_updateCastorFileStatementString =
 "UPDATE rh_SubRequest SET castorFile = : 1 WHERE id = :2";
 
+/// SQL existence statement for member parent
+const std::string castor::db::ora::OraSubRequestCnv::s_checkSubRequestExistStatementString =
+"SELECT id from rh_SubRequest WHERE id = :1";
+
 /// SQL update statement for member parent
 const std::string castor::db::ora::OraSubRequestCnv::s_updateSubRequestStatementString =
 "UPDATE rh_SubRequest SET parent = : 1 WHERE id = :2";
+
+/// SQL existence statement for member request
+const std::string castor::db::ora::OraSubRequestCnv::s_checkRequestExistStatementString =
+"SELECT id from rh_Request WHERE id = :1";
 
 /// SQL update statement for member request
 const std::string castor::db::ora::OraSubRequestCnv::s_updateRequestStatementString =
@@ -104,9 +121,13 @@ castor::db::ora::OraSubRequestCnv::OraSubRequestCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
+  m_checkDiskCopyExistStatement(0),
   m_updateDiskCopyStatement(0),
+  m_checkCastorFileExistStatement(0),
   m_updateCastorFileStatement(0),
+  m_checkSubRequestExistStatement(0),
   m_updateSubRequestStatement(0),
+  m_checkRequestExistStatement(0),
   m_updateRequestStatement(0) {}
 
 //------------------------------------------------------------------------------
@@ -129,9 +150,13 @@ void castor::db::ora::OraSubRequestCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_checkDiskCopyExistStatement);
     deleteStatement(m_updateDiskCopyStatement);
+    deleteStatement(m_checkCastorFileExistStatement);
     deleteStatement(m_updateCastorFileStatement);
+    deleteStatement(m_checkSubRequestExistStatement);
     deleteStatement(m_updateSubRequestStatement);
+    deleteStatement(m_checkRequestExistStatement);
     deleteStatement(m_updateRequestStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -141,9 +166,13 @@ void castor::db::ora::OraSubRequestCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
+  m_checkDiskCopyExistStatement = 0;
   m_updateDiskCopyStatement = 0;
+  m_checkCastorFileExistStatement = 0;
   m_updateCastorFileStatement = 0;
+  m_checkSubRequestExistStatement = 0;
   m_updateSubRequestStatement = 0;
+  m_checkRequestExistStatement = 0;
   m_updateRequestStatement = 0;
 }
 
@@ -201,36 +230,20 @@ void castor::db::ora::OraSubRequestCnv::fillRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::ora::OraSubRequestCnv::fillRepDiskCopy(castor::stager::SubRequest* obj)
   throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 diskcopyId = (u_signed64)rset->getDouble(8);
-  // Close resultset
-  m_selectStatement->closeResultSet(rset);
-  castor::db::DbAddress ad(diskcopyId, " ", 0);
-  // Check whether old object should be deleted
-  if (0 != diskcopyId &&
-      0 != obj->diskcopy() &&
-      obj->diskcopy()->id() != diskcopyId) {
-    cnvSvc()->deleteRepByAddress(&ad, false);
-    diskcopyId = 0;
-  }
-  // Update remote object or create new one
-  if (diskcopyId == 0) {
-    if (0 != obj->diskcopy()) {
+  if (0 != obj->diskcopy()) {
+    // Check checkDiskCopyExist statement
+    if (0 == m_checkDiskCopyExistStatement) {
+      m_checkDiskCopyExistStatement = createStatement(s_checkDiskCopyExistStatementString);
+    }
+    // retrieve the object from the database
+    m_checkDiskCopyExistStatement->setDouble(1, obj->diskcopy()->id());
+    oracle::occi::ResultSet *rset = m_checkDiskCopyExistStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->diskcopy(), false);
     }
-  } else {
-    cnvSvc()->updateRep(&ad, obj->diskcopy(), false);
+    // Close resultset
+    m_selectStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateDiskCopyStatement) {
@@ -247,36 +260,20 @@ void castor::db::ora::OraSubRequestCnv::fillRepDiskCopy(castor::stager::SubReque
 //------------------------------------------------------------------------------
 void castor::db::ora::OraSubRequestCnv::fillRepCastorFile(castor::stager::SubRequest* obj)
   throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 castorFileId = (u_signed64)rset->getDouble(9);
-  // Close resultset
-  m_selectStatement->closeResultSet(rset);
-  castor::db::DbAddress ad(castorFileId, " ", 0);
-  // Check whether old object should be deleted
-  if (0 != castorFileId &&
-      0 != obj->castorFile() &&
-      obj->castorFile()->id() != castorFileId) {
-    cnvSvc()->deleteRepByAddress(&ad, false);
-    castorFileId = 0;
-  }
-  // Update remote object or create new one
-  if (castorFileId == 0) {
-    if (0 != obj->castorFile()) {
+  if (0 != obj->castorFile()) {
+    // Check checkCastorFileExist statement
+    if (0 == m_checkCastorFileExistStatement) {
+      m_checkCastorFileExistStatement = createStatement(s_checkCastorFileExistStatementString);
+    }
+    // retrieve the object from the database
+    m_checkCastorFileExistStatement->setDouble(1, obj->castorFile()->id());
+    oracle::occi::ResultSet *rset = m_checkCastorFileExistStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->castorFile(), false);
     }
-  } else {
-    cnvSvc()->updateRep(&ad, obj->castorFile(), false);
+    // Close resultset
+    m_selectStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateCastorFileStatement) {
@@ -293,36 +290,20 @@ void castor::db::ora::OraSubRequestCnv::fillRepCastorFile(castor::stager::SubReq
 //------------------------------------------------------------------------------
 void castor::db::ora::OraSubRequestCnv::fillRepSubRequest(castor::stager::SubRequest* obj)
   throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 parentId = (u_signed64)rset->getDouble(10);
-  // Close resultset
-  m_selectStatement->closeResultSet(rset);
-  castor::db::DbAddress ad(parentId, " ", 0);
-  // Check whether old object should be deleted
-  if (0 != parentId &&
-      0 != obj->parent() &&
-      obj->parent()->id() != parentId) {
-    cnvSvc()->deleteRepByAddress(&ad, false);
-    parentId = 0;
-  }
-  // Update remote object or create new one
-  if (parentId == 0) {
-    if (0 != obj->parent()) {
+  if (0 != obj->parent()) {
+    // Check checkSubRequestExist statement
+    if (0 == m_checkSubRequestExistStatement) {
+      m_checkSubRequestExistStatement = createStatement(s_checkSubRequestExistStatementString);
+    }
+    // retrieve the object from the database
+    m_checkSubRequestExistStatement->setDouble(1, obj->parent()->id());
+    oracle::occi::ResultSet *rset = m_checkSubRequestExistStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->parent(), false);
     }
-  } else {
-    cnvSvc()->updateRep(&ad, obj->parent(), false);
+    // Close resultset
+    m_selectStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateSubRequestStatement) {
@@ -339,36 +320,20 @@ void castor::db::ora::OraSubRequestCnv::fillRepSubRequest(castor::stager::SubReq
 //------------------------------------------------------------------------------
 void castor::db::ora::OraSubRequestCnv::fillRepRequest(castor::stager::SubRequest* obj)
   throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 requestId = (u_signed64)rset->getDouble(11);
-  // Close resultset
-  m_selectStatement->closeResultSet(rset);
-  castor::db::DbAddress ad(requestId, " ", 0);
-  // Check whether old object should be deleted
-  if (0 != requestId &&
-      0 != obj->request() &&
-      obj->request()->id() != requestId) {
-    cnvSvc()->deleteRepByAddress(&ad, false);
-    requestId = 0;
-  }
-  // Update remote object or create new one
-  if (requestId == 0) {
-    if (0 != obj->request()) {
+  if (0 != obj->request()) {
+    // Check checkRequestExist statement
+    if (0 == m_checkRequestExistStatement) {
+      m_checkRequestExistStatement = createStatement(s_checkRequestExistStatementString);
+    }
+    // retrieve the object from the database
+    m_checkRequestExistStatement->setDouble(1, obj->request()->id());
+    oracle::occi::ResultSet *rset = m_checkRequestExistStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->request(), false);
     }
-  } else {
-    cnvSvc()->updateRep(&ad, obj->request(), false);
+    // Close resultset
+    m_selectStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateRequestStatement) {

@@ -26,6 +26,7 @@
 
 // Include Files
 #include "OraTapeCnv.hpp"
+#include "castor/BaseAddress.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
@@ -78,6 +79,18 @@ const std::string castor::db::ora::OraTapeCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraTapeCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
+/// SQL select statement for member stream
+const std::string castor::db::ora::OraTapeCnv::s_selectStreamStatementString =
+"SELECT id from rh_Stream WHERE tape = :1";
+
+/// SQL delete statement for member stream
+const std::string castor::db::ora::OraTapeCnv::s_deleteStreamStatementString =
+"UPDATE rh_Stream SET tape = 0 WHERE tape = :1";
+
+/// SQL existence statement for member stream
+const std::string castor::db::ora::OraTapeCnv::s_checkStreamExistStatementString =
+"SELECT id from rh_Stream WHERE id = :1";
+
 /// SQL update statement for member stream
 const std::string castor::db::ora::OraTapeCnv::s_updateStreamStatementString =
 "UPDATE rh_Tape SET stream = : 1 WHERE id = :2";
@@ -85,6 +98,10 @@ const std::string castor::db::ora::OraTapeCnv::s_updateStreamStatementString =
 /// SQL select statement for member segments
 const std::string castor::db::ora::OraTapeCnv::s_selectSegmentStatementString =
 "SELECT id from rh_Segment WHERE tape = :1";
+
+/// SQL delete statement for member segments
+const std::string castor::db::ora::OraTapeCnv::s_deleteSegmentStatementString =
+"UPDATE rh_Segment SET tape = 0 WHERE tape = :1";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -97,8 +114,12 @@ castor::db::ora::OraTapeCnv::OraTapeCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
+  m_selectStreamStatement(0),
+  m_deleteStreamStatement(0),
+  m_checkStreamExistStatement(0),
   m_updateStreamStatement(0),
-  m_selectSegmentStatement(0) {}
+  m_selectSegmentStatement(0),
+  m_deleteSegmentStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -120,7 +141,11 @@ void castor::db::ora::OraTapeCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_deleteStreamStatement);
+    deleteStatement(m_selectStreamStatement);
+    deleteStatement(m_checkStreamExistStatement);
     deleteStatement(m_updateStreamStatement);
+    deleteStatement(m_deleteSegmentStatement);
     deleteStatement(m_selectSegmentStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -130,8 +155,12 @@ void castor::db::ora::OraTapeCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
+  m_selectStreamStatement = 0;
+  m_deleteStreamStatement = 0;
+  m_checkStreamExistStatement = 0;
   m_updateStreamStatement = 0;
   m_selectSegmentStatement = 0;
+  m_deleteSegmentStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -182,36 +211,41 @@ void castor::db::ora::OraTapeCnv::fillRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::ora::OraTapeCnv::fillRepStream(castor::stager::Tape* obj)
   throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
+  // Check selectStream statement
+  if (0 == m_selectStreamStatement) {
+    m_selectStreamStatement = createStatement(s_selectStreamStatementString);
   }
   // retrieve the object from the database
-  m_selectStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
+  m_selectStreamStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStreamStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    u_signed64 streamId = (u_signed64)rset->getDouble(9);
+    if (0 != streamId &&
+        0 == obj->stream() ||
+        obj->stream()->id() != streamId) {
+      if (0 == m_deleteStreamStatement) {
+        m_deleteStreamStatement = createStatement(s_deleteStreamStatementString);
+      }
+      m_deleteStreamStatement->setDouble(1, obj->id());
+      m_deleteStreamStatement->executeUpdate();
+    }
   }
-  u_signed64 streamId = (u_signed64)rset->getDouble(9);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
-  castor::db::DbAddress ad(streamId, " ", 0);
-  // Check whether old object should be deleted
-  if (0 != streamId &&
-      0 != obj->stream() &&
-      obj->stream()->id() != streamId) {
-    cnvSvc()->deleteRepByAddress(&ad, false);
-    streamId = 0;
-  }
-  // Update remote object or create new one
-  if (streamId == 0) {
-    if (0 != obj->stream()) {
+  if (0 != obj->stream()) {
+    // Check checkStreamExist statement
+    if (0 == m_checkStreamExistStatement) {
+      m_checkStreamExistStatement = createStatement(s_checkStreamExistStatementString);
+    }
+    // retrieve the object from the database
+    m_checkStreamExistStatement->setDouble(1, obj->stream()->id());
+    oracle::occi::ResultSet *rset = m_checkStreamExistStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->stream(), false, OBJ_Tape);
     }
-  } else {
-    cnvSvc()->updateRep(&ad, obj->stream(), false);
+    // Close resultset
+    m_selectStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateStreamStatement) {
@@ -249,15 +283,17 @@ void castor::db::ora::OraTapeCnv::fillRepSegment(castor::stager::Tape* obj)
       cnvSvc()->createRep(0, *it, false, OBJ_Tape);
     } else {
       segmentsList.erase(item);
-      cnvSvc()->updateRep(0, *it, false);
     }
   }
-  // Delete old data
+  // Delete old links
   for (std::set<int>::iterator it = segmentsList.begin();
        it != segmentsList.end();
        it++) {
-    castor::db::DbAddress ad(*it, " ", 0);
-    cnvSvc()->deleteRepByAddress(&ad, false);
+    if (0 == m_deleteSegmentStatement) {
+      m_deleteSegmentStatement = createStatement(s_deleteSegmentStatementString);
+    }
+    m_deleteSegmentStatement->setDouble(1, obj->id());
+    m_deleteSegmentStatement->executeUpdate();
   }
 }
 

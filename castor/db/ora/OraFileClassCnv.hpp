@@ -237,6 +237,12 @@ namespace castor {
         /// SQL select statement object for member 
         oracle::occi::Statement *m_selectCastorFileStatement;
 
+        /// SQL delete statement for member 
+        static const std::string s_deleteCastorFileStatementString;
+
+        /// SQL delete statement object for member 
+        oracle::occi::Statement *m_deleteCastorFileStatement;
+
       }; // end of class OraFileClassCnv
 
     }; // end of namespace ora

@@ -26,6 +26,7 @@
 
 // Include Files
 #include "OraCastorFileCnv.hpp"
+#include "castor/BaseAddress.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
@@ -79,13 +80,25 @@ const std::string castor::db::ora::OraCastorFileCnv::s_storeTypeStatementString 
 const std::string castor::db::ora::OraCastorFileCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
-/// SQL update statement for member 
-const std::string castor::db::ora::OraCastorFileCnv::s_updateSubRequestStatementString =
-"UPDATE rh_CastorFile SET  = : 1 WHERE id = :2";
+/// SQL select statement for member 
+const std::string castor::db::ora::OraCastorFileCnv::s_selectSubRequestStatementString =
+"SELECT id from rh_SubRequest WHERE castorFile = :1";
+
+/// SQL delete statement for member 
+const std::string castor::db::ora::OraCastorFileCnv::s_deleteSubRequestStatementString =
+"UPDATE rh_SubRequest SET castorFile = 0 WHERE castorFile = :1";
+
+/// SQL existence statement for member svcClass
+const std::string castor::db::ora::OraCastorFileCnv::s_checkSvcClassExistStatementString =
+"SELECT id from rh_SvcClass WHERE id = :1";
 
 /// SQL update statement for member svcClass
 const std::string castor::db::ora::OraCastorFileCnv::s_updateSvcClassStatementString =
 "UPDATE rh_CastorFile SET svcClass = : 1 WHERE id = :2";
+
+/// SQL existence statement for member fileClass
+const std::string castor::db::ora::OraCastorFileCnv::s_checkFileClassExistStatementString =
+"SELECT id from rh_FileClass WHERE id = :1";
 
 /// SQL update statement for member fileClass
 const std::string castor::db::ora::OraCastorFileCnv::s_updateFileClassStatementString =
@@ -95,9 +108,17 @@ const std::string castor::db::ora::OraCastorFileCnv::s_updateFileClassStatementS
 const std::string castor::db::ora::OraCastorFileCnv::s_selectDiskCopyStatementString =
 "SELECT id from rh_DiskCopy WHERE castorFile = :1";
 
+/// SQL delete statement for member diskCopies
+const std::string castor::db::ora::OraCastorFileCnv::s_deleteDiskCopyStatementString =
+"UPDATE rh_DiskCopy SET castorFile = 0 WHERE castorFile = :1";
+
 /// SQL select statement for member copies
 const std::string castor::db::ora::OraCastorFileCnv::s_selectTapeCopyStatementString =
 "SELECT id from rh_TapeCopy WHERE castorFile = :1";
+
+/// SQL delete statement for member copies
+const std::string castor::db::ora::OraCastorFileCnv::s_deleteTapeCopyStatementString =
+"UPDATE rh_TapeCopy SET castorFile = 0 WHERE castorFile = :1";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -110,11 +131,16 @@ castor::db::ora::OraCastorFileCnv::OraCastorFileCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_updateSubRequestStatement(0),
+  m_selectSubRequestStatement(0),
+  m_deleteSubRequestStatement(0),
+  m_checkSvcClassExistStatement(0),
   m_updateSvcClassStatement(0),
+  m_checkFileClassExistStatement(0),
   m_updateFileClassStatement(0),
   m_selectDiskCopyStatement(0),
-  m_selectTapeCopyStatement(0) {}
+  m_deleteDiskCopyStatement(0),
+  m_selectTapeCopyStatement(0),
+  m_deleteTapeCopyStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -136,10 +162,15 @@ void castor::db::ora::OraCastorFileCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
-    deleteStatement(m_updateSubRequestStatement);
+    deleteStatement(m_deleteSubRequestStatement);
+    deleteStatement(m_selectSubRequestStatement);
+    deleteStatement(m_checkSvcClassExistStatement);
     deleteStatement(m_updateSvcClassStatement);
+    deleteStatement(m_checkFileClassExistStatement);
     deleteStatement(m_updateFileClassStatement);
+    deleteStatement(m_deleteDiskCopyStatement);
     deleteStatement(m_selectDiskCopyStatement);
+    deleteStatement(m_deleteTapeCopyStatement);
     deleteStatement(m_selectTapeCopyStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -149,11 +180,16 @@ void castor::db::ora::OraCastorFileCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
-  m_updateSubRequestStatement = 0;
+  m_selectSubRequestStatement = 0;
+  m_deleteSubRequestStatement = 0;
+  m_checkSvcClassExistStatement = 0;
   m_updateSvcClassStatement = 0;
+  m_checkFileClassExistStatement = 0;
   m_updateFileClassStatement = 0;
   m_selectDiskCopyStatement = 0;
+  m_deleteDiskCopyStatement = 0;
   m_selectTapeCopyStatement = 0;
+  m_deleteTapeCopyStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -210,36 +246,20 @@ void castor::db::ora::OraCastorFileCnv::fillRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::ora::OraCastorFileCnv::fillRepSvcClass(castor::stager::CastorFile* obj)
   throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 svcClassId = (u_signed64)rset->getDouble(5);
-  // Close resultset
-  m_selectStatement->closeResultSet(rset);
-  castor::db::DbAddress ad(svcClassId, " ", 0);
-  // Check whether old object should be deleted
-  if (0 != svcClassId &&
-      0 != obj->svcClass() &&
-      obj->svcClass()->id() != svcClassId) {
-    cnvSvc()->deleteRepByAddress(&ad, false);
-    svcClassId = 0;
-  }
-  // Update remote object or create new one
-  if (svcClassId == 0) {
-    if (0 != obj->svcClass()) {
+  if (0 != obj->svcClass()) {
+    // Check checkSvcClassExist statement
+    if (0 == m_checkSvcClassExistStatement) {
+      m_checkSvcClassExistStatement = createStatement(s_checkSvcClassExistStatementString);
+    }
+    // retrieve the object from the database
+    m_checkSvcClassExistStatement->setDouble(1, obj->svcClass()->id());
+    oracle::occi::ResultSet *rset = m_checkSvcClassExistStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->svcClass(), false);
     }
-  } else {
-    cnvSvc()->updateRep(&ad, obj->svcClass(), false);
+    // Close resultset
+    m_selectStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateSvcClassStatement) {
@@ -256,36 +276,20 @@ void castor::db::ora::OraCastorFileCnv::fillRepSvcClass(castor::stager::CastorFi
 //------------------------------------------------------------------------------
 void castor::db::ora::OraCastorFileCnv::fillRepFileClass(castor::stager::CastorFile* obj)
   throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 fileClassId = (u_signed64)rset->getDouble(6);
-  // Close resultset
-  m_selectStatement->closeResultSet(rset);
-  castor::db::DbAddress ad(fileClassId, " ", 0);
-  // Check whether old object should be deleted
-  if (0 != fileClassId &&
-      0 != obj->fileClass() &&
-      obj->fileClass()->id() != fileClassId) {
-    cnvSvc()->deleteRepByAddress(&ad, false);
-    fileClassId = 0;
-  }
-  // Update remote object or create new one
-  if (fileClassId == 0) {
-    if (0 != obj->fileClass()) {
+  if (0 != obj->fileClass()) {
+    // Check checkFileClassExist statement
+    if (0 == m_checkFileClassExistStatement) {
+      m_checkFileClassExistStatement = createStatement(s_checkFileClassExistStatementString);
+    }
+    // retrieve the object from the database
+    m_checkFileClassExistStatement->setDouble(1, obj->fileClass()->id());
+    oracle::occi::ResultSet *rset = m_checkFileClassExistStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->fileClass(), false);
     }
-  } else {
-    cnvSvc()->updateRep(&ad, obj->fileClass(), false);
+    // Close resultset
+    m_selectStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateFileClassStatement) {
@@ -323,15 +327,17 @@ void castor::db::ora::OraCastorFileCnv::fillRepDiskCopy(castor::stager::CastorFi
       cnvSvc()->createRep(0, *it, false, OBJ_CastorFile);
     } else {
       diskCopiesList.erase(item);
-      cnvSvc()->updateRep(0, *it, false);
     }
   }
-  // Delete old data
+  // Delete old links
   for (std::set<int>::iterator it = diskCopiesList.begin();
        it != diskCopiesList.end();
        it++) {
-    castor::db::DbAddress ad(*it, " ", 0);
-    cnvSvc()->deleteRepByAddress(&ad, false);
+    if (0 == m_deleteDiskCopyStatement) {
+      m_deleteDiskCopyStatement = createStatement(s_deleteDiskCopyStatementString);
+    }
+    m_deleteDiskCopyStatement->setDouble(1, obj->id());
+    m_deleteDiskCopyStatement->executeUpdate();
   }
 }
 
@@ -361,15 +367,17 @@ void castor::db::ora::OraCastorFileCnv::fillRepTapeCopy(castor::stager::CastorFi
       cnvSvc()->createRep(0, *it, false, OBJ_CastorFile);
     } else {
       copiesList.erase(item);
-      cnvSvc()->updateRep(0, *it, false);
     }
   }
-  // Delete old data
+  // Delete old links
   for (std::set<int>::iterator it = copiesList.begin();
        it != copiesList.end();
        it++) {
-    castor::db::DbAddress ad(*it, " ", 0);
-    cnvSvc()->deleteRepByAddress(&ad, false);
+    if (0 == m_deleteTapeCopyStatement) {
+      m_deleteTapeCopyStatement = createStatement(s_deleteTapeCopyStatementString);
+    }
+    m_deleteTapeCopyStatement->setDouble(1, obj->id());
+    m_deleteTapeCopyStatement->executeUpdate();
   }
 }
 

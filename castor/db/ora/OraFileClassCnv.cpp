@@ -80,6 +80,10 @@ const std::string castor::db::ora::OraFileClassCnv::s_deleteTypeStatementString 
 const std::string castor::db::ora::OraFileClassCnv::s_selectCastorFileStatementString =
 "SELECT id from rh_CastorFile WHERE fileClass = :1";
 
+/// SQL delete statement for member 
+const std::string castor::db::ora::OraFileClassCnv::s_deleteCastorFileStatementString =
+"UPDATE rh_CastorFile SET fileClass = 0 WHERE fileClass = :1";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -91,7 +95,8 @@ castor::db::ora::OraFileClassCnv::OraFileClassCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_selectCastorFileStatement(0) {}
+  m_selectCastorFileStatement(0),
+  m_deleteCastorFileStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -113,6 +118,7 @@ void castor::db::ora::OraFileClassCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_deleteCastorFileStatement);
     deleteStatement(m_selectCastorFileStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -123,6 +129,7 @@ void castor::db::ora::OraFileClassCnv::reset() throw() {
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
   m_selectCastorFileStatement = 0;
+  m_deleteCastorFileStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -191,15 +198,17 @@ void castor::db::ora::OraFileClassCnv::fillRepCastorFile(castor::stager::FileCla
       cnvSvc()->createRep(0, *it, false, OBJ_FileClass);
     } else {
       List.erase(item);
-      cnvSvc()->updateRep(0, *it, false);
     }
   }
-  // Delete old data
+  // Delete old links
   for (std::set<int>::iterator it = List.begin();
        it != List.end();
        it++) {
-    castor::db::DbAddress ad(*it, " ", 0);
-    cnvSvc()->deleteRepByAddress(&ad, false);
+    if (0 == m_deleteCastorFileStatement) {
+      m_deleteCastorFileStatement = createStatement(s_deleteCastorFileStatementString);
+    }
+    m_deleteCastorFileStatement->setDouble(1, obj->id());
+    m_deleteCastorFileStatement->executeUpdate();
   }
 }
 

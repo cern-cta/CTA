@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/10/18 15:53:37 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/10/25 07:48:55 $ $Author: sponcec3 $
  *
  * 
  *
@@ -26,6 +26,7 @@
 
 // Include Files
 #include "OraReqIdCnv.hpp"
+#include "castor/BaseAddress.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
@@ -74,6 +75,10 @@ const std::string castor::db::ora::OraReqIdCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraReqIdCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
+/// SQL existence statement for member request
+const std::string castor::db::ora::OraReqIdCnv::s_checkReqIdRequestExistStatementString =
+"SELECT id from rh_ReqIdRequest WHERE id = :1";
+
 /// SQL update statement for member request
 const std::string castor::db::ora::OraReqIdCnv::s_updateReqIdRequestStatementString =
 "UPDATE rh_ReqId SET request = : 1 WHERE id = :2";
@@ -89,6 +94,7 @@ castor::db::ora::OraReqIdCnv::OraReqIdCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
+  m_checkReqIdRequestExistStatement(0),
   m_updateReqIdRequestStatement(0) {}
 
 //------------------------------------------------------------------------------
@@ -111,6 +117,7 @@ void castor::db::ora::OraReqIdCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_checkReqIdRequestExistStatement);
     deleteStatement(m_updateReqIdRequestStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -120,6 +127,7 @@ void castor::db::ora::OraReqIdCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
+  m_checkReqIdRequestExistStatement = 0;
   m_updateReqIdRequestStatement = 0;
 }
 
@@ -168,36 +176,20 @@ void castor::db::ora::OraReqIdCnv::fillRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::ora::OraReqIdCnv::fillRepReqIdRequest(castor::stager::ReqId* obj)
   throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 requestId = (u_signed64)rset->getDouble(3);
-  // Close resultset
-  m_selectStatement->closeResultSet(rset);
-  castor::db::DbAddress ad(requestId, " ", 0);
-  // Check whether old object should be deleted
-  if (0 != requestId &&
-      0 != obj->request() &&
-      obj->request()->id() != requestId) {
-    cnvSvc()->deleteRepByAddress(&ad, false);
-    requestId = 0;
-  }
-  // Update remote object or create new one
-  if (requestId == 0) {
-    if (0 != obj->request()) {
+  if (0 != obj->request()) {
+    // Check checkReqIdRequestExist statement
+    if (0 == m_checkReqIdRequestExistStatement) {
+      m_checkReqIdRequestExistStatement = createStatement(s_checkReqIdRequestExistStatementString);
+    }
+    // retrieve the object from the database
+    m_checkReqIdRequestExistStatement->setDouble(1, obj->request()->id());
+    oracle::occi::ResultSet *rset = m_checkReqIdRequestExistStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->request(), false);
     }
-  } else {
-    cnvSvc()->updateRep(&ad, obj->request(), false);
+    // Close resultset
+    m_selectStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateReqIdRequestStatement) {

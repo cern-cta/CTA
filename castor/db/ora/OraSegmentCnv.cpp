@@ -26,6 +26,7 @@
 
 // Include Files
 #include "OraSegmentCnv.hpp"
+#include "castor/BaseAddress.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
@@ -77,9 +78,17 @@ const std::string castor::db::ora::OraSegmentCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraSegmentCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
+/// SQL existence statement for member tape
+const std::string castor::db::ora::OraSegmentCnv::s_checkTapeExistStatementString =
+"SELECT id from rh_Tape WHERE id = :1";
+
 /// SQL update statement for member tape
 const std::string castor::db::ora::OraSegmentCnv::s_updateTapeStatementString =
 "UPDATE rh_Segment SET tape = : 1 WHERE id = :2";
+
+/// SQL existence statement for member copy
+const std::string castor::db::ora::OraSegmentCnv::s_checkTapeCopyExistStatementString =
+"SELECT id from rh_TapeCopy WHERE id = :1";
 
 /// SQL update statement for member copy
 const std::string castor::db::ora::OraSegmentCnv::s_updateTapeCopyStatementString =
@@ -96,7 +105,9 @@ castor::db::ora::OraSegmentCnv::OraSegmentCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
+  m_checkTapeExistStatement(0),
   m_updateTapeStatement(0),
+  m_checkTapeCopyExistStatement(0),
   m_updateTapeCopyStatement(0) {}
 
 //------------------------------------------------------------------------------
@@ -119,7 +130,9 @@ void castor::db::ora::OraSegmentCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_checkTapeExistStatement);
     deleteStatement(m_updateTapeStatement);
+    deleteStatement(m_checkTapeCopyExistStatement);
     deleteStatement(m_updateTapeCopyStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -129,7 +142,9 @@ void castor::db::ora::OraSegmentCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
+  m_checkTapeExistStatement = 0;
   m_updateTapeStatement = 0;
+  m_checkTapeCopyExistStatement = 0;
   m_updateTapeCopyStatement = 0;
 }
 
@@ -181,36 +196,20 @@ void castor::db::ora::OraSegmentCnv::fillRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 void castor::db::ora::OraSegmentCnv::fillRepTape(castor::stager::Segment* obj)
   throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 tapeId = (u_signed64)rset->getDouble(13);
-  // Close resultset
-  m_selectStatement->closeResultSet(rset);
-  castor::db::DbAddress ad(tapeId, " ", 0);
-  // Check whether old object should be deleted
-  if (0 != tapeId &&
-      0 != obj->tape() &&
-      obj->tape()->id() != tapeId) {
-    cnvSvc()->deleteRepByAddress(&ad, false);
-    tapeId = 0;
-  }
-  // Update remote object or create new one
-  if (tapeId == 0) {
-    if (0 != obj->tape()) {
+  if (0 != obj->tape()) {
+    // Check checkTapeExist statement
+    if (0 == m_checkTapeExistStatement) {
+      m_checkTapeExistStatement = createStatement(s_checkTapeExistStatementString);
+    }
+    // retrieve the object from the database
+    m_checkTapeExistStatement->setDouble(1, obj->tape()->id());
+    oracle::occi::ResultSet *rset = m_checkTapeExistStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->tape(), false);
     }
-  } else {
-    cnvSvc()->updateRep(&ad, obj->tape(), false);
+    // Close resultset
+    m_selectStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateTapeStatement) {
@@ -227,36 +226,20 @@ void castor::db::ora::OraSegmentCnv::fillRepTape(castor::stager::Segment* obj)
 //------------------------------------------------------------------------------
 void castor::db::ora::OraSegmentCnv::fillRepTapeCopy(castor::stager::Segment* obj)
   throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 copyId = (u_signed64)rset->getDouble(14);
-  // Close resultset
-  m_selectStatement->closeResultSet(rset);
-  castor::db::DbAddress ad(copyId, " ", 0);
-  // Check whether old object should be deleted
-  if (0 != copyId &&
-      0 != obj->copy() &&
-      obj->copy()->id() != copyId) {
-    cnvSvc()->deleteRepByAddress(&ad, false);
-    copyId = 0;
-  }
-  // Update remote object or create new one
-  if (copyId == 0) {
-    if (0 != obj->copy()) {
+  if (0 != obj->copy()) {
+    // Check checkTapeCopyExist statement
+    if (0 == m_checkTapeCopyExistStatement) {
+      m_checkTapeCopyExistStatement = createStatement(s_checkTapeCopyExistStatementString);
+    }
+    // retrieve the object from the database
+    m_checkTapeCopyExistStatement->setDouble(1, obj->copy()->id());
+    oracle::occi::ResultSet *rset = m_checkTapeCopyExistStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->copy(), false);
     }
-  } else {
-    cnvSvc()->updateRep(&ad, obj->copy(), false);
+    // Close resultset
+    m_selectStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateTapeCopyStatement) {

@@ -263,6 +263,12 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
+        /// SQL checkExist statement for member diskPool
+        static const std::string s_checkDiskPoolExistStatementString;
+
+        /// SQL checkExist statement object for member diskPool
+        oracle::occi::Statement *m_checkDiskPoolExistStatement;
+
         /// SQL update statement for member diskPool
         static const std::string s_updateDiskPoolStatementString;
 
@@ -274,6 +280,18 @@ namespace castor {
 
         /// SQL select statement object for member copies
         oracle::occi::Statement *m_selectDiskCopyStatement;
+
+        /// SQL delete statement for member copies
+        static const std::string s_deleteDiskCopyStatementString;
+
+        /// SQL delete statement object for member copies
+        oracle::occi::Statement *m_deleteDiskCopyStatement;
+
+        /// SQL checkExist statement for member diskserver
+        static const std::string s_checkDiskServerExistStatementString;
+
+        /// SQL checkExist statement object for member diskserver
+        oracle::occi::Statement *m_checkDiskServerExistStatement;
 
         /// SQL update statement for member diskserver
         static const std::string s_updateDiskServerStatementString;

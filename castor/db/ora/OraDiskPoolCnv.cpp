@@ -81,6 +81,10 @@ const std::string castor::db::ora::OraDiskPoolCnv::s_deleteTypeStatementString =
 const std::string castor::db::ora::OraDiskPoolCnv::s_selectFileSystemStatementString =
 "SELECT id from rh_FileSystem WHERE diskPool = :1";
 
+/// SQL delete statement for member fileSystems
+const std::string castor::db::ora::OraDiskPoolCnv::s_deleteFileSystemStatementString =
+"UPDATE rh_FileSystem SET diskPool = 0 WHERE diskPool = :1";
+
 /// SQL insert statement for member svcClasses
 const std::string castor::db::ora::OraDiskPoolCnv::s_insertSvcClassStatementString =
 "INSERT INTO rh_DiskPool2SvcClass (Parent, Child) VALUES (:1, :2)";
@@ -105,6 +109,7 @@ castor::db::ora::OraDiskPoolCnv::OraDiskPoolCnv() :
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
   m_selectFileSystemStatement(0),
+  m_deleteFileSystemStatement(0),
   m_insertSvcClassStatement(0),
   m_deleteSvcClassStatement(0),
   m_selectSvcClassStatement(0) {}
@@ -129,6 +134,7 @@ void castor::db::ora::OraDiskPoolCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_deleteFileSystemStatement);
     deleteStatement(m_selectFileSystemStatement);
     deleteStatement(m_insertSvcClassStatement);
     deleteStatement(m_deleteSvcClassStatement);
@@ -142,6 +148,7 @@ void castor::db::ora::OraDiskPoolCnv::reset() throw() {
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
   m_selectFileSystemStatement = 0;
+  m_deleteFileSystemStatement = 0;
   m_insertSvcClassStatement = 0;
   m_deleteSvcClassStatement = 0;
   m_selectSvcClassStatement = 0;
@@ -216,15 +223,17 @@ void castor::db::ora::OraDiskPoolCnv::fillRepFileSystem(castor::stager::DiskPool
       cnvSvc()->createRep(0, *it, false, OBJ_DiskPool);
     } else {
       fileSystemsList.erase(item);
-      cnvSvc()->updateRep(0, *it, false);
     }
   }
-  // Delete old data
+  // Delete old links
   for (std::set<int>::iterator it = fileSystemsList.begin();
        it != fileSystemsList.end();
        it++) {
-    castor::db::DbAddress ad(*it, " ", 0);
-    cnvSvc()->deleteRepByAddress(&ad, false);
+    if (0 == m_deleteFileSystemStatement) {
+      m_deleteFileSystemStatement = createStatement(s_deleteFileSystemStatementString);
+    }
+    m_deleteFileSystemStatement->setDouble(1, obj->id());
+    m_deleteFileSystemStatement->executeUpdate();
   }
 }
 
@@ -260,15 +269,12 @@ void castor::db::ora::OraDiskPoolCnv::fillRepSvcClass(castor::stager::DiskPool* 
       m_insertSvcClassStatement->executeUpdate();
     } else {
       svcClassesList.erase(item);
-      cnvSvc()->updateRep(0, *it, false);
     }
   }
-  // Delete old data
+  // Delete old links
   for (std::set<int>::iterator it = svcClassesList.begin();
        it != svcClassesList.end();
        it++) {
-    castor::db::DbAddress ad(*it, " ", 0);
-    cnvSvc()->deleteRepByAddress(&ad, false);
     if (0 == m_deleteSvcClassStatement) {
       m_deleteSvcClassStatement = createStatement(s_deleteSvcClassStatementString);
     }

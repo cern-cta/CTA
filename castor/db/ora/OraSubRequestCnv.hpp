@@ -279,11 +279,23 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
+        /// SQL checkExist statement for member diskcopy
+        static const std::string s_checkDiskCopyExistStatementString;
+
+        /// SQL checkExist statement object for member diskcopy
+        oracle::occi::Statement *m_checkDiskCopyExistStatement;
+
         /// SQL update statement for member diskcopy
         static const std::string s_updateDiskCopyStatementString;
 
         /// SQL update statement object for member diskcopy
         oracle::occi::Statement *m_updateDiskCopyStatement;
+
+        /// SQL checkExist statement for member castorFile
+        static const std::string s_checkCastorFileExistStatementString;
+
+        /// SQL checkExist statement object for member castorFile
+        oracle::occi::Statement *m_checkCastorFileExistStatement;
 
         /// SQL update statement for member castorFile
         static const std::string s_updateCastorFileStatementString;
@@ -291,11 +303,23 @@ namespace castor {
         /// SQL update statement object for member castorFile
         oracle::occi::Statement *m_updateCastorFileStatement;
 
+        /// SQL checkExist statement for member parent
+        static const std::string s_checkSubRequestExistStatementString;
+
+        /// SQL checkExist statement object for member parent
+        oracle::occi::Statement *m_checkSubRequestExistStatement;
+
         /// SQL update statement for member parent
         static const std::string s_updateSubRequestStatementString;
 
         /// SQL update statement object for member parent
         oracle::occi::Statement *m_updateSubRequestStatement;
+
+        /// SQL checkExist statement for member request
+        static const std::string s_checkRequestExistStatementString;
+
+        /// SQL checkExist statement object for member request
+        oracle::occi::Statement *m_checkRequestExistStatement;
 
         /// SQL update statement for member request
         static const std::string s_updateRequestStatementString;

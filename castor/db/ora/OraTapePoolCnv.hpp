@@ -271,6 +271,12 @@ namespace castor {
         /// SQL select statement object for member streams
         oracle::occi::Statement *m_selectStreamStatement;
 
+        /// SQL delete statement for member streams
+        static const std::string s_deleteStreamStatementString;
+
+        /// SQL delete statement object for member streams
+        oracle::occi::Statement *m_deleteStreamStatement;
+
       }; // end of class OraTapePoolCnv
 
     }; // end of namespace ora

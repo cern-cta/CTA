@@ -287,6 +287,18 @@ namespace castor {
         /// SQL select statement object for member segments
         oracle::occi::Statement *m_selectSegmentStatement;
 
+        /// SQL delete statement for member segments
+        static const std::string s_deleteSegmentStatementString;
+
+        /// SQL delete statement object for member segments
+        oracle::occi::Statement *m_deleteSegmentStatement;
+
+        /// SQL checkExist statement for member castorFile
+        static const std::string s_checkCastorFileExistStatementString;
+
+        /// SQL checkExist statement object for member castorFile
+        oracle::occi::Statement *m_checkCastorFileExistStatement;
+
         /// SQL update statement for member castorFile
         static const std::string s_updateCastorFileStatementString;
 

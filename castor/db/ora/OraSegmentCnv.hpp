@@ -247,11 +247,23 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
+        /// SQL checkExist statement for member tape
+        static const std::string s_checkTapeExistStatementString;
+
+        /// SQL checkExist statement object for member tape
+        oracle::occi::Statement *m_checkTapeExistStatement;
+
         /// SQL update statement for member tape
         static const std::string s_updateTapeStatementString;
 
         /// SQL update statement object for member tape
         oracle::occi::Statement *m_updateTapeStatement;
+
+        /// SQL checkExist statement for member copy
+        static const std::string s_checkTapeCopyExistStatementString;
+
+        /// SQL checkExist statement object for member copy
+        oracle::occi::Statement *m_checkTapeCopyExistStatement;
 
         /// SQL update statement for member copy
         static const std::string s_updateTapeCopyStatementString;

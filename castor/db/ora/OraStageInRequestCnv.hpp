@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageInRequestCnv.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/14 16:34:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageInRequestCnv.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/25 07:48:55 $ $Author: sponcec3 $
  *
  * 
  *
@@ -275,6 +275,12 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
+        /// SQL checkExist statement for member svcClass
+        static const std::string s_checkSvcClassExistStatementString;
+
+        /// SQL checkExist statement object for member svcClass
+        oracle::occi::Statement *m_checkSvcClassExistStatement;
+
         /// SQL update statement for member svcClass
         static const std::string s_updateSvcClassStatementString;
 
@@ -286,6 +292,30 @@ namespace castor {
 
         /// SQL select statement object for member subRequests
         oracle::occi::Statement *m_selectSubRequestStatement;
+
+        /// SQL delete statement for member subRequests
+        static const std::string s_deleteSubRequestStatementString;
+
+        /// SQL delete statement object for member subRequests
+        oracle::occi::Statement *m_deleteSubRequestStatement;
+
+        /// SQL select statement for member client
+        static const std::string s_selectIClientStatementString;
+
+        /// SQL select statement object for member client
+        oracle::occi::Statement *m_selectIClientStatement;
+
+        /// SQL delete statement for member client
+        static const std::string s_deleteIClientStatementString;
+
+        /// SQL delete statement object for member client
+        oracle::occi::Statement *m_deleteIClientStatement;
+
+        /// SQL checkExist statement for member client
+        static const std::string s_checkIClientExistStatementString;
+
+        /// SQL checkExist statement object for member client
+        oracle::occi::Statement *m_checkIClientExistStatement;
 
         /// SQL update statement for member client
         static const std::string s_updateIClientStatementString;

@@ -93,6 +93,10 @@ const std::string castor::db::ora::OraTapePoolCnv::s_selectSvcClassStatementStri
 const std::string castor::db::ora::OraTapePoolCnv::s_selectStreamStatementString =
 "SELECT id from rh_Stream WHERE tapePool = :1";
 
+/// SQL delete statement for member streams
+const std::string castor::db::ora::OraTapePoolCnv::s_deleteStreamStatementString =
+"UPDATE rh_Stream SET tapePool = 0 WHERE tapePool = :1";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -107,7 +111,8 @@ castor::db::ora::OraTapePoolCnv::OraTapePoolCnv() :
   m_insertSvcClassStatement(0),
   m_deleteSvcClassStatement(0),
   m_selectSvcClassStatement(0),
-  m_selectStreamStatement(0) {}
+  m_selectStreamStatement(0),
+  m_deleteStreamStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -132,6 +137,7 @@ void castor::db::ora::OraTapePoolCnv::reset() throw() {
     deleteStatement(m_insertSvcClassStatement);
     deleteStatement(m_deleteSvcClassStatement);
     deleteStatement(m_selectSvcClassStatement);
+    deleteStatement(m_deleteStreamStatement);
     deleteStatement(m_selectStreamStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -145,6 +151,7 @@ void castor::db::ora::OraTapePoolCnv::reset() throw() {
   m_deleteSvcClassStatement = 0;
   m_selectSvcClassStatement = 0;
   m_selectStreamStatement = 0;
+  m_deleteStreamStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -222,15 +229,12 @@ void castor::db::ora::OraTapePoolCnv::fillRepSvcClass(castor::stager::TapePool* 
       m_insertSvcClassStatement->executeUpdate();
     } else {
       svcClassesList.erase(item);
-      cnvSvc()->updateRep(0, *it, false);
     }
   }
-  // Delete old data
+  // Delete old links
   for (std::set<int>::iterator it = svcClassesList.begin();
        it != svcClassesList.end();
        it++) {
-    castor::db::DbAddress ad(*it, " ", 0);
-    cnvSvc()->deleteRepByAddress(&ad, false);
     if (0 == m_deleteSvcClassStatement) {
       m_deleteSvcClassStatement = createStatement(s_deleteSvcClassStatementString);
     }
@@ -266,15 +270,17 @@ void castor::db::ora::OraTapePoolCnv::fillRepStream(castor::stager::TapePool* ob
       cnvSvc()->createRep(0, *it, false, OBJ_TapePool);
     } else {
       streamsList.erase(item);
-      cnvSvc()->updateRep(0, *it, false);
     }
   }
-  // Delete old data
+  // Delete old links
   for (std::set<int>::iterator it = streamsList.begin();
        it != streamsList.end();
        it++) {
-    castor::db::DbAddress ad(*it, " ", 0);
-    cnvSvc()->deleteRepByAddress(&ad, false);
+    if (0 == m_deleteStreamStatement) {
+      m_deleteStreamStatement = createStatement(s_deleteStreamStatementString);
+    }
+    m_deleteStreamStatement->setDouble(1, obj->id());
+    m_deleteStreamStatement->executeUpdate();
   }
 }
 

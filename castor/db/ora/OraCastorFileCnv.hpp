@@ -279,17 +279,35 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL update statement for member 
-        static const std::string s_updateSubRequestStatementString;
+        /// SQL select statement for member 
+        static const std::string s_selectSubRequestStatementString;
 
-        /// SQL update statement object for member 
-        oracle::occi::Statement *m_updateSubRequestStatement;
+        /// SQL select statement object for member 
+        oracle::occi::Statement *m_selectSubRequestStatement;
+
+        /// SQL delete statement for member 
+        static const std::string s_deleteSubRequestStatementString;
+
+        /// SQL delete statement object for member 
+        oracle::occi::Statement *m_deleteSubRequestStatement;
+
+        /// SQL checkExist statement for member svcClass
+        static const std::string s_checkSvcClassExistStatementString;
+
+        /// SQL checkExist statement object for member svcClass
+        oracle::occi::Statement *m_checkSvcClassExistStatement;
 
         /// SQL update statement for member svcClass
         static const std::string s_updateSvcClassStatementString;
 
         /// SQL update statement object for member svcClass
         oracle::occi::Statement *m_updateSvcClassStatement;
+
+        /// SQL checkExist statement for member fileClass
+        static const std::string s_checkFileClassExistStatementString;
+
+        /// SQL checkExist statement object for member fileClass
+        oracle::occi::Statement *m_checkFileClassExistStatement;
 
         /// SQL update statement for member fileClass
         static const std::string s_updateFileClassStatementString;
@@ -303,11 +321,23 @@ namespace castor {
         /// SQL select statement object for member diskCopies
         oracle::occi::Statement *m_selectDiskCopyStatement;
 
+        /// SQL delete statement for member diskCopies
+        static const std::string s_deleteDiskCopyStatementString;
+
+        /// SQL delete statement object for member diskCopies
+        oracle::occi::Statement *m_deleteDiskCopyStatement;
+
         /// SQL select statement for member copies
         static const std::string s_selectTapeCopyStatementString;
 
         /// SQL select statement object for member copies
         oracle::occi::Statement *m_selectTapeCopyStatement;
+
+        /// SQL delete statement for member copies
+        static const std::string s_deleteTapeCopyStatementString;
+
+        /// SQL delete statement object for member copies
+        oracle::occi::Statement *m_deleteTapeCopyStatement;
 
       }; // end of class OraCastorFileCnv
 

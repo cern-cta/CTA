@@ -237,6 +237,12 @@ namespace castor {
         /// SQL select statement object for member fileSystems
         oracle::occi::Statement *m_selectFileSystemStatement;
 
+        /// SQL delete statement for member fileSystems
+        static const std::string s_deleteFileSystemStatementString;
+
+        /// SQL delete statement object for member fileSystems
+        oracle::occi::Statement *m_deleteFileSystemStatement;
+
       }; // end of class OraDiskServerCnv
 
     }; // end of namespace ora

@@ -26,6 +26,7 @@
 
 // Include Files
 #include "OraTapeCopyCnv.hpp"
+#include "castor/BaseAddress.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
@@ -95,6 +96,14 @@ const std::string castor::db::ora::OraTapeCopyCnv::s_selectStreamStatementString
 const std::string castor::db::ora::OraTapeCopyCnv::s_selectSegmentStatementString =
 "SELECT id from rh_Segment WHERE copy = :1";
 
+/// SQL delete statement for member segments
+const std::string castor::db::ora::OraTapeCopyCnv::s_deleteSegmentStatementString =
+"UPDATE rh_Segment SET copy = 0 WHERE copy = :1";
+
+/// SQL existence statement for member castorFile
+const std::string castor::db::ora::OraTapeCopyCnv::s_checkCastorFileExistStatementString =
+"SELECT id from rh_CastorFile WHERE id = :1";
+
 /// SQL update statement for member castorFile
 const std::string castor::db::ora::OraTapeCopyCnv::s_updateCastorFileStatementString =
 "UPDATE rh_TapeCopy SET castorFile = : 1 WHERE id = :2";
@@ -114,6 +123,8 @@ castor::db::ora::OraTapeCopyCnv::OraTapeCopyCnv() :
   m_deleteStreamStatement(0),
   m_selectStreamStatement(0),
   m_selectSegmentStatement(0),
+  m_deleteSegmentStatement(0),
+  m_checkCastorFileExistStatement(0),
   m_updateCastorFileStatement(0) {}
 
 //------------------------------------------------------------------------------
@@ -139,7 +150,9 @@ void castor::db::ora::OraTapeCopyCnv::reset() throw() {
     deleteStatement(m_insertStreamStatement);
     deleteStatement(m_deleteStreamStatement);
     deleteStatement(m_selectStreamStatement);
+    deleteStatement(m_deleteSegmentStatement);
     deleteStatement(m_selectSegmentStatement);
+    deleteStatement(m_checkCastorFileExistStatement);
     deleteStatement(m_updateCastorFileStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -153,6 +166,8 @@ void castor::db::ora::OraTapeCopyCnv::reset() throw() {
   m_deleteStreamStatement = 0;
   m_selectStreamStatement = 0;
   m_selectSegmentStatement = 0;
+  m_deleteSegmentStatement = 0;
+  m_checkCastorFileExistStatement = 0;
   m_updateCastorFileStatement = 0;
 }
 
@@ -234,15 +249,12 @@ void castor::db::ora::OraTapeCopyCnv::fillRepStream(castor::stager::TapeCopy* ob
       m_insertStreamStatement->executeUpdate();
     } else {
       streamList.erase(item);
-      cnvSvc()->updateRep(0, *it, false);
     }
   }
-  // Delete old data
+  // Delete old links
   for (std::set<int>::iterator it = streamList.begin();
        it != streamList.end();
        it++) {
-    castor::db::DbAddress ad(*it, " ", 0);
-    cnvSvc()->deleteRepByAddress(&ad, false);
     if (0 == m_deleteStreamStatement) {
       m_deleteStreamStatement = createStatement(s_deleteStreamStatementString);
     }
@@ -278,15 +290,17 @@ void castor::db::ora::OraTapeCopyCnv::fillRepSegment(castor::stager::TapeCopy* o
       cnvSvc()->createRep(0, *it, false, OBJ_TapeCopy);
     } else {
       segmentsList.erase(item);
-      cnvSvc()->updateRep(0, *it, false);
     }
   }
-  // Delete old data
+  // Delete old links
   for (std::set<int>::iterator it = segmentsList.begin();
        it != segmentsList.end();
        it++) {
-    castor::db::DbAddress ad(*it, " ", 0);
-    cnvSvc()->deleteRepByAddress(&ad, false);
+    if (0 == m_deleteSegmentStatement) {
+      m_deleteSegmentStatement = createStatement(s_deleteSegmentStatementString);
+    }
+    m_deleteSegmentStatement->setDouble(1, obj->id());
+    m_deleteSegmentStatement->executeUpdate();
   }
 }
 
@@ -295,36 +309,20 @@ void castor::db::ora::OraTapeCopyCnv::fillRepSegment(castor::stager::TapeCopy* o
 //------------------------------------------------------------------------------
 void castor::db::ora::OraTapeCopyCnv::fillRepCastorFile(castor::stager::TapeCopy* obj)
   throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setDouble(1, obj->id());
-  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 castorFileId = (u_signed64)rset->getDouble(2);
-  // Close resultset
-  m_selectStatement->closeResultSet(rset);
-  castor::db::DbAddress ad(castorFileId, " ", 0);
-  // Check whether old object should be deleted
-  if (0 != castorFileId &&
-      0 != obj->castorFile() &&
-      obj->castorFile()->id() != castorFileId) {
-    cnvSvc()->deleteRepByAddress(&ad, false);
-    castorFileId = 0;
-  }
-  // Update remote object or create new one
-  if (castorFileId == 0) {
-    if (0 != obj->castorFile()) {
+  if (0 != obj->castorFile()) {
+    // Check checkCastorFileExist statement
+    if (0 == m_checkCastorFileExistStatement) {
+      m_checkCastorFileExistStatement = createStatement(s_checkCastorFileExistStatementString);
+    }
+    // retrieve the object from the database
+    m_checkCastorFileExistStatement->setDouble(1, obj->castorFile()->id());
+    oracle::occi::ResultSet *rset = m_checkCastorFileExistStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->castorFile(), false);
     }
-  } else {
-    cnvSvc()->updateRep(&ad, obj->castorFile(), false);
+    // Close resultset
+    m_selectStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateCastorFileStatement) {
