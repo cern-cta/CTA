@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2004/12/17 11:18:59 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2004/12/17 16:49:16 $ $Author: sponcec3 $
  *
  *
  *
@@ -100,14 +100,14 @@ int castor::rh::Server::main () {
     castor::ICnvSvc *svc =
       svcs()->cnvService("OraCnvSvc", castor::SVC_ORACNV);
     if (0 == svc) {
-      clog() << "Could not get Conversion Service for Oracle"
+      clog() << ERROR << "Could not get Conversion Service for Oracle"
              << std::endl;
       return -1;
     }
     castor::ICnvSvc *svc2 =
       svcs()->cnvService("StreamCnvSvc", castor::SVC_STREAMCNV);
     if (0 == svc2) {
-      clog() << "Could not get Conversion Service for Streaming"
+      clog() << ERROR << "Could not get Conversion Service for Streaming"
              << std::endl;
       return -1;
     }
@@ -129,7 +129,7 @@ int castor::rh::Server::main () {
     svc2->release();
     
   } catch(castor::exception::Exception e) {
-    clog() << sstrerror(e.code())
+    clog() << ERROR << sstrerror(e.code())
            << e.getMessage().str() << std::endl;
   }
 }
@@ -207,7 +207,7 @@ void *castor::rh::Server::processRequest(void *param) throw() {
       ack.setStatus(true);
       
     } catch (castor::exception::Exception e) {
-      clog() << "Exception : " << sstrerror(e.code())
+      clog() << ERROR << "Exception : " << sstrerror(e.code())
              << std::endl << e.getMessage().str() << std::endl;
       ack.setStatus(false);
       ack.setErrorCode(1);
@@ -215,11 +215,11 @@ void *castor::rh::Server::processRequest(void *param) throw() {
     }
   }
 
-  clog() << "Sending reply to client !" << std::endl;
+  clog() << INFO << "Sending reply to client !" << std::endl;
   try {
     sock->sendObject(ack);
   } catch (castor::exception::Exception e) {
-    clog() << "Could not send ack to client : "
+    clog() << ERROR << "Could not send ack to client : "
            << sstrerror(e.code()) << std::endl
            << e.getMessage().str() << std::endl;
   }
@@ -256,7 +256,7 @@ void castor::rh::Server::handleRequest(castor::IObject* fr)
       svcs()->fillRep(&ad, qryReq, OBJ_QueryParameter, false);
     }
     svcs()->commit(&ad);
-    clog() << "request stored in Oracle, id "
+    clog() << INFO << "request stored in Oracle, id "
            << fr->id() << std::endl;
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);
