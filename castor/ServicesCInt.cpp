@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/14 09:40:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/05/14 14:06:20 $ $Author: sponcec3 $
  *
  *
  *
@@ -49,6 +49,7 @@ extern "C" {
   int C_Services_create(C_Services_t** svcs) {
     *svcs = (C_Services_t*) malloc(sizeof(C_Services_t));
     (*svcs)->svcs = new castor::Services();
+    (*svcs)->errorMsg = "";
     return 0;
   }
 
