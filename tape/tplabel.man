@@ -1,0 +1,150 @@
+.\" @(#)$RCSfile: tplabel.man,v $ $Revision: 1.1 $ $Date: 1999/12/23 08:51:12 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-1996 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH TPLABEL l "$Date: 1999/12/23 08:51:12 $"
+.SH NAME
+tplabel \- initialize a new blank tape
+.SH SYNOPSIS
+.B tplabel
+[
+.BI -D " drive"
+] [
+.BI -d " density"
+] [
+.BI -g " device_group_name"
+] [
+.BI -H " number_headers"
+] [
+.BI -l " label_type"
+] [
+.BI -V " visual_identifier"
+] [
+.BI -v " volume_serial_number"
+]
+.SH DESCRIPTION
+.B tplabel
+checks with TMS if the tape is available and if the user
+has write permission. It asks the operator or the robot to mount it write
+enabled on a drive selected by the tape daemon or specified in the -D option.
+When the tape is ready, it checks if the tape is blank (if not the operator will
+be asked for confirmation). Then the tape daemon
+rewinds it and writes VOL1 and HDR1 label records followed by two
+tape marks for labelled tapes or only two tape marks for unlabelled
+tapes.
+.SH OPTIONS
+.TP
+.BI \-D " drive"
+Explicit drive name.
+.TP
+.BI \-d " density"
+.B 1600
+or
+.B 6250
+for round (IBM 3420) tapes,
+.B 38000
+for standard IBM 3480 cartridges,
+.B 38KC
+for 3480 cartridges with compaction (IDRC),
+.B 38KD
+for double density IBM 3490 cartridges,
+.B 38KDC
+for 3490 cartridges with compaction (IDRC),
+.BR 8200 ,
+.B 8500
+or
+.B 8500C
+for Exabytes,
+.B DDS
+or
+.B DDSC
+for DAT cartridges,
+.BR 2G ,
+.BR 6G ,
+.BR 10G ,
+.BR 10GC ,
+.BR 20G ,
+.BR 20GC ,
+.B 35G
+or
+.B 35GC
+for DLT cartridges,
+.B 10G
+or
+.B 10GC
+for IBM 3590 cartridges,
+.BR 10G ,
+.BR 10GC ,
+.BR 25G ,
+.BR 25GC ,
+.B 50G
+or
+.B 50GC
+for Redwood cartridges,
+.B 20G
+or
+.B 20GC
+for STK 9840 cassettes.
+.TP
+.BI \-g " dgn"
+The device group must be a member of an installation defined set of "device groups".
+It must match the device group specified in TMS (if installed).
+Default is CART.
+.TP
+.BI \-H " number_headers"
+Defines the number of headers included in the prelabel: if
+.BR 0 ,
+only a VOL1 record is written; if
+.BR 1 ,
+VOL1 and HDR1 are written (this is the default); if
+.BR 2 ,
+VOL1, HDR1 and HDR2 are written to tape.
+.TP
+.BI \-l " lab_type"
+Label type:
+.BR al ,
+.B nl
+or
+.BR sl .
+It must match the label type specified in TMS.
+Default is sl.
+.TP
+.BI \-V " vid"
+Specifies the tape visual identifier. It must be at most six characters long
+and is converted to upper case.
+.TP
+.BI \-v " vsn"
+Specifies the magnetically recorded volume serial number of the tape.
+It must be at most six characters long and is converted to upper case.
+The vsn must match the one specified in TMS.
+.LP
+VOL1 record structure:
+
+1:4	"VOL1"
+.br
+5:10	vsn (maximum 6 characters in upper case).
+.br
+42:51	Owner (login name) for SL tapes.
+
+HDR1 record structure:
+
+1:4	"HDR1"
+.br
+5:12	"PRELABEL"
+.br
+28:31	0001 (volume sequence number)
+.br
+32:35	0001 (file sequence number)
+.br
+43:47	today's date in Julian form (creation date)
+.br
+49:53	today's date in Julian form (expiration date)
+.br
+55:60	000000 (block count)
+.br
+61:73	system name ("SUN", "SGI/IRIX", "DEC3100")
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.B Ctape_label(l)
