@@ -1,5 +1,5 @@
 /*
- * $id$
+ * $Id: Cmonit_tapeclient.c,v 1.4 2002/06/17 14:01:11 bcouturi Exp $
  * Copyright (C) 2002 by CERN/IT/DS/HSM
  * All rights reserved
  */
@@ -76,7 +76,7 @@ int DLL_DECL Cmonit_send_tape_status(tape_table, nbtpdrives)
       marshall_LONG (sbp, tunp->gid);
       marshall_LONG (sbp, tunp->jid);
       marshall_STRING (sbp, tunp->dgn != NULL ? tunp->dgn : "");
-      marshall_WORD (sbp, tunp->up != NULL ? tunp->up : "");
+      marshall_WORD (sbp, tunp->up);
       marshall_WORD (sbp, tunp->asn);
       marshall_LONG (sbp, tunp->asn_time);
       marshall_STRING (sbp, tunp->drive != NULL ? tunp->drive : "");
