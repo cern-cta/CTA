@@ -1,5 +1,5 @@
 /*
- * $Id: stage_macros.h,v 1.3 2002/11/19 09:04:58 baud Exp $
+ * $Id: stage_macros.h,v 1.4 2004/01/28 22:04:36 jdurand Exp $
  */
 
 #ifndef __stage_macros_h
@@ -204,7 +204,8 @@
                               (serrno == ETVUNKN)  || \
                               (serrno == ETWLBL)   || \
                               (serrno == ETWPROT)  || \
-                              (serrno == ETWVSN))
+                              (serrno == ETWVSN))  || \
+                              (serrno == ETBADMIR))
 
 #define ISVDQMSERRNO(serrno) ((serrno == EVQSYERR)     || \
                               (serrno == EVQINCONSIST) || \
