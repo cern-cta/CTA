@@ -1,5 +1,5 @@
 /*
- * $Id: sacct.h,v 1.10 2001/12/10 15:35:44 jdurand Exp $
+ * $Id: sacct.h,v 1.11 2002/03/27 08:08:26 jdurand Exp $
  */
 
 /*
@@ -8,11 +8,12 @@
  */
 
 /*
- * @(#)$RCSfile: sacct.h,v $ $Revision: 1.10 $ $Date: 2001/12/10 15:35:44 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: sacct.h,v $ $Revision: 1.11 $ $Date: 2002/03/27 08:08:26 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Include file for CASTOR software accounting */
 
 #include "Castor_limits.h"
+#include "stage_constants.h"
 #include "osdep.h"
 
 struct accthdr {	/* header for accounting record */
@@ -230,6 +231,9 @@ struct acctstage {	/* accounting record for stage software */
 			int nbaccesses;
 			union {
 				struct {		/* tape specific info */
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+					int  side;
+#endif
 					char dgn[CA_MAXDGNLEN+1];
 					char fseq[CA_MAXFSEQLEN+1];
 					char vid[CA_MAXVIDLEN+1];
@@ -239,10 +243,10 @@ struct acctstage {	/* accounting record for stage software */
 					char xfile[CA_MAXHOSTNAMELEN+MAXPATH+1];
 				} d;
 				struct {		/* info for disk file stageing */
-					char xfile[167];
+					char xfile[STAGE_MAX_HSMLENGTH+1];
 				} m;
 				struct {		/* info for disk file stageing */
-					char xfile[167];
+					char xfile[STAGE_MAX_HSMLENGTH+1];
 					u_signed64 fileid;
 				} h;
 			} u1;
