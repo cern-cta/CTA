@@ -96,6 +96,17 @@ exportshr:
 	 ) ; done ; \
 	) ;
 
+deb:
+	(if [ "x$(MAJOR_CASTOR_VERSION)" = "x" -o "x$(MINOR_CASTOR_VERSION)" = "x" ] ; \
+	 then \
+	 echo "MAJOR_CASTOR_VERSION or MINOR_CASTOR_VERSION must be set (thru make or environment)" ; exit 1 ; \
+	 else \
+	 echo "Packaging of CASTOR version $(MAJOR_CASTOR_VERSION).$(MINOR_CASTOR_VERSION) is starting" ; \
+	fi ; \
+	sh ./makedeb.sh \
+	) ;
+
+
 deploy: install FORCE 
 	@(cd deploy ; perl ./proto_deploy.pl)
 
