@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.13 $ $Date: 2000/01/24 08:59:37 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.14 $ $Date: 2000/01/25 10:02:57 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1125,7 +1125,7 @@ static int rtcpc_expand_fseq(int mode, const char *q_opt, char **fseq_list) {
          */
         if ( tmp[strlen(tmp)-1] == '-' ) {
             if ( mode == WRITE_ENABLE ) {
-                rtcp_log(LOG_ERR,"trailing minus in -q sequence list is invalide for cpdsktp\n");
+                rtcp_log(LOG_ERR,"trailing minus in -q sequence list is invalid for cpdsktp\n");
                 serrno = EINVAL;
                 if ( q_list != NULL ) free(q_list);
                 q_list = NULL;
@@ -1673,7 +1673,7 @@ static int rtcpc_Z_opt(int mode,
 static int rtcpc_diskfiles(int mode,
                            const char *filename,
                            tape_list_t **tape) {
-    int rc, disk_fseq;
+    int rc, toomany, disk_fseq;
     tape_list_t *tl;
     file_list_t *fl;
     rtcpFileRequest_t *filereq;
@@ -1702,16 +1702,25 @@ static int rtcpc_diskfiles(int mode,
             rc = newFileList(tape,&fl,mode);
             if ( fl != NULL ) fl->filereq.tape_fseq = 1;
         } 
+        toomany = 1;
         CLIST_ITERATE_BEGIN(tl->file,fl) {
             filereq = &fl->filereq;
             if ( ((filereq->tape_fseq > 0) || 
                   (filereq->position_method != TPPOSIT_FSEQ)) && 
                  (*filereq->file_path == '\0') ) {
                 strcpy(filereq->file_path,filename);
+                /*
+                 * If same file name is repeated it is *not* a
+                 * concatenation. The user explicitly want's to overwrite
+                 * the same file (useful for perf. tests to /dev/null).
+                 */
+                if ( strcmp(fl->prev->filereq.file_path,filename) == 0 )
+                    filereq->concat = NOCONCAT;
+                toomany = 0;
                 break;
             }
         } CLIST_ITERATE_END(tl->file,fl);
-        if ( (filereq != NULL) && (strcmp(filereq->file_path,filename) != 0) ) {
+        if ( (filereq != NULL) && (toomany != 0) ) {
             if ( (fl == tl->file) && 
                  (fl->prev->filereq.tape_fseq == 0) &&
                  (filereq->position_method == TPPOSIT_FSEQ) &&
@@ -1738,6 +1747,7 @@ static int rtcpc_diskfiles(int mode,
                     filereq->tape_fseq = fl->prev->filereq.tape_fseq + 1;
                     filereq->concat = NOCONCAT_TO_EOD;
                     strcpy(filereq->file_path,filename);
+                    toomany = 0;
                 } 
             } else if ( (fl == tl->file) && 
                         (((fl->prev->filereq.tape_fseq > 0) &&
@@ -1756,6 +1766,7 @@ static int rtcpc_diskfiles(int mode,
                     fl->filereq = fl->prev->filereq;
                     fl->filereq.concat = CONCAT;
                     strcpy(fl->filereq.file_path,filename);
+                    toomany = 0;
                 } 
             } else {
                 rtcp_log(LOG_ERR,"incorrect number of filenames specified\n");
@@ -1807,9 +1818,11 @@ static int rtcpc_diskfiles(int mode,
                      strcmp(filereq->file_path,".") != 0 &&
                      strcmp(last_filename,filereq->file_path) == 0 ) {
                     /*
-                     * Concatenate but not to EOD
+                     * Concatenate but not to EOD. Don't override
+                     * NOCONCAT if same file name has been repeated on the
+                     * command line (e.g. tpread ... -q 1-2 crap crap).
                      */
-                    filereq->concat = CONCAT;
+                    if ( filereq->concat == -1 ) filereq->concat = CONCAT;
                 } else {
                     /*
                      * Don't overwrite previous set NOCONCAT_TO_EOD since
