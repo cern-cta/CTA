@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.39 2001/02/01 16:31:30 jdurand Exp $
+ * $Id: stage.h,v 1.40 2001/02/02 22:43:19 jdurand Exp $
  */
 
 /*
@@ -258,6 +258,8 @@
 #define STG133  "STG133 - %s : Fileclass %s@%s (classid %d) specified retention period %d > %d seconds lifetime\n"
 #define STG134  "STG134 - Tape %s is not accessible (%s status)\n"
 #define STG135  "STG135 - Fileclass %s@%s (classid %d) : specifies up to %d stream - Created a new one of size %s on tape pool %s\n"
+#define STG136  "STG136 - %s (copy number No %d) claims that start segment No %d is ok, while its segment No %d (same copy number) is NOT - Please contact your admin - copy number No %d declared non valid for recall\n"
+#define STG137  "STG137 - %s (copy number No %d) : segment No %d not taken into account because of segment No %d - Please contact your admin\n"
 
 			/* stage daemon return codes */
 
