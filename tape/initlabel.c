@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: initlabel.c,v $ $Revision: 1.6 $ $Date: 2000/05/03 06:34:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: initlabel.c,v $ $Revision: 1.7 $ $Date: 2001/05/11 06:48:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -76,6 +76,7 @@ int flags;
 	}
 	if ((flags & TPRLS_ALL) || nb_rsvd_resources == 0)
 		free (devlblinfop);
+	return (0);
 }
 
 /*	setdevinfo - set flags for optimization of label processing routines
