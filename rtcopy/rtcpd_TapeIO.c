@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.17 $ $Date: 2000/02/26 15:10:25 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.18 $ $Date: 2000/03/13 09:07:01 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -480,6 +480,7 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
     if ( (rc != -1) && (file->trec > 0) ) {
         serrno = 0;
         errno = 0;
+        memset(&compstats,'\0',sizeof(compstats));
         comp_rc = get_compression_stats(fd,filereq->tape_path,
                                         tapereq->devtype,&compstats);
         if ( comp_rc == 0 ) {
@@ -496,8 +497,10 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
             }
         } else {
             serrno = (serrno != 0 ? serrno : errno);
-            rtcp_log(LOG_ERR,"get_compression_stats() failed, rc = %d: %s\n",
+            if ( serrno != SEOPNOTSUP ) rtcp_log(LOG_ERR,
+                "get_compression_stats() failed, rc = %d: %s\n",
                 comp_rc,sstrerror(serrno));
+            filereq->host_bytes = 0;
         }
     }
 #endif /* !_WIN32 && !(_AIX && !ADSTAR) */
