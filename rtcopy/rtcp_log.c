@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.6 $ $Date: 1999/12/28 15:19:18 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.7 $ $Date: 2000/01/09 09:41:02 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #if defined(_WIN32)
@@ -51,6 +51,8 @@ static int errmsg_key = -1;
 static int out_key = -1;
 static int err_key = -1;
 static int client_socket_key = -1;
+extern int tpread_command;
+int tpread_command = FALSE;
 
 void DLL_DECL (*rtcp_log) _PROTO((int, const char *, ...)) = NULL;
 
@@ -80,6 +82,14 @@ void rtcpc_SetErrTxt(int level, char *format, ...) {
         vsprintf(msgbuf,format,args);
         va_end(args);
 
+        /*
+         * tpread/tpwrite command output for client log messages.
+         */
+        if ( (strncmp(msgbuf," CP",3) != 0 &&
+             *msgbuf != '\0' && *msgbuf != '\n') ) {
+            if (tpread_command == TRUE ) log(LOG_INFO,msgbuf);
+            return;
+        }
         if ( level >= LOG_INFO && out_p != NULL && *out_p != NULL )
             fprintf(*out_p,msgbuf);
         else if ( err_p != NULL && *err_p != NULL ) 
@@ -162,7 +172,7 @@ void rtcpd_AppendClientMsg(tape_list_t *tape, file_list_t *file,
         va_end(args);
         if ( tmpbuf[strlen(tmpbuf)-1] != '\0' )
             strcat(tmpbuf,"\n");
-        rtcp_log(LOG_ERR,tmpbuf);
+        rtcp_log(LOG_DEBUG,"rtcpd_AppendClientMsg() send: %s",tmpbuf);
         l_buf = strlen(buf) + strlen(tmpbuf);
         if ( l_buf < CA_MAXLINELEN ) strcat(buf,tmpbuf);
     }

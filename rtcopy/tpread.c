@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.2 $ $Date: 1999/12/17 12:58:53 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.3 $ $Date: 2000/01/09 09:41:01 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -32,6 +32,7 @@ static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.2 $ $Date: 1999/
 #include <rtcp_api.h>
 #include <serrno.h>
 
+extern int tpread_command;
 extern int rtcp_InitLog(char *, FILE *, FILE *, SOCKET *);
 
 static int CheckRetry(tape_list_t *tape) {
@@ -54,10 +55,11 @@ int main(int argc, char *argv[]) {
     rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
     char errtxt[1024];
-    int rc;
+    int rc, retval;
 
     rtcp_InitLog(errtxt,stdout,stderr,NULL);
     initlog(argv[0],LOG_INFO,"");
+    tpread_command = TRUE;
     tape = NULL;
     rc = rtcpc_BuildReq(&tape,argc,argv);
 
@@ -87,5 +89,7 @@ int main(int argc, char *argv[]) {
         } CLIST_ITERATE_END(tl->file,fl);
     } CLIST_ITERATE_END(tape,tl);
 
-    return(0);
+    rc = rtcp_RetvalSHIFT(tape,&retval);
+    if ( rc == -1 ) retval = UNERR;
+    return(retval);
 }
