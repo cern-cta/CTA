@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.90 2001/02/13 12:27:48 jdurand Exp $
+ * $Id: poolmgr.c,v 1.91 2001/02/13 13:00:37 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.90 $ $Date: 2001/02/13 12:27:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.91 $ $Date: 2001/02/13 13:00:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1549,8 +1549,11 @@ void checkfile2mig()
     /* (Note that because of explicit migration there can be files in BEING_MIGR without going through this routine) */
 
     /* We check global predicates that are the sum of every fileclasses predicates */
-    if (((pool_p->mig_data_thresh > 0) && ((pool_p->migr->global_predicates.space_canbemig - pool_p->migr->global_predicates.space_beingmig) > pool_p->mig_data_thresh)) ||
-        ((pool_p->mig_start_thresh > 0) && ((pool_p->free * 100) < (pool_p->capacity * pool_p->mig_start_thresh)))) {
+    if ((pool_p->mig_data_thresh > 0) && ((pool_p->migr->global_predicates.space_canbemig - pool_p->migr->global_predicates.space_beingmig) < pool_p->mig_data_thresh))
+      continue;
+    if ((pool_p->mig_start_thresh > 0) && ((pool_p->free * 100) > (pool_p->capacity * pool_p->mig_start_thresh)))
+      continue;
+    {
       char tmpbuf1[21];
       char tmpbuf2[21];
       char tmpbuf3[21];
@@ -1583,8 +1586,11 @@ void checkfile2mig()
       for (j = 0; j < pool_p->migr->nfileclass; j++) {
         if ((pool_p->migr->fileclass_predicates[j].nbfiles_canbemig - pool_p->migr->fileclass_predicates[j].nbfiles_beingmig) <= 0)	/* No point anyway */
           continue;
-        if (((pool_p->mig_data_thresh > 0) && ((pool_p->migr->fileclass_predicates[j].space_canbemig - pool_p->migr->fileclass_predicates[j].space_beingmig) > pool_p->mig_data_thresh)) ||
-            ((pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval > 0) && ((time(NULL) - pool_p->migr->migreqtime_last_end) > pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval))) {
+        if ((pool_p->mig_data_thresh > 0) && ((pool_p->migr->fileclass_predicates[j].space_canbemig - pool_p->migr->fileclass_predicates[j].space_beingmig) < pool_p->mig_data_thresh))
+          continue;
+        if ((pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval > 0) && ((time(NULL) - pool_p->migr->migreqtime_last_end) < pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval))
+          continue;
+        {
           char tmpbuf1[21];
           char tmpbuf2[21];
           char tmpbuf3[21];
