@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.165 2001/12/07 10:44:37 jdurand Exp $
+ * $Id: stager.c,v 1.166 2001/12/17 17:02:18 jdurand Exp $
  */
 
 /*
@@ -38,7 +38,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.165 $ $Date: 2001/12/07 10:44:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.166 $ $Date: 2001/12/17 17:02:18 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1126,7 +1126,6 @@ int stagein_castor_hsm_file() {
 	char tmpbuf1[21];
 	char tmpbuf2[21];
 #endif
-    struct devinfo *devinfo;
     int isegments;
     int jsegments;
     int ksegments;
@@ -1615,8 +1614,6 @@ int stagein_castor_hsm_file() {
 		RESTORE_EID;
 		sleep(RETRYI);
 	}
-	/* We grab the optimal blocksize */
-	devinfo = Ctape_devinfo(model);
 
 	/* Build the request from where we found vid (included) up to our next (excluded) */
 	nbcat_ent_current = 0;
@@ -1674,8 +1671,6 @@ int stagein_castor_hsm_file() {
 	for (stcp = stcs, i = 0, stcp_tmp = stcp_start; stcp < stce; stcp++, i++) {
 		if (hsm_vid[i] != NULL) {
 			*stcp_tmp = *stcp;
-			/* We also force the blocksize while migrating */
-			stcp_tmp->blksize = devinfo->defblksize;
 			stcp_tmp++;
 		}
 	}
