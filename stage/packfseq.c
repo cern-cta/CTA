@@ -1,5 +1,5 @@
 /*
- * $Id: packfseq.c,v 1.13 2001/09/18 20:15:07 jdurand Exp $
+ * $Id: packfseq.c,v 1.14 2001/11/30 11:30:02 jdurand Exp $
  */
 
 /*
@@ -8,16 +8,15 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: packfseq.c,v $ $Revision: 1.13 $ $Date: 2001/09/18 20:15:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: packfseq.c,v $ $Revision: 1.14 $ $Date: 2001/11/30 11:30:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
-#include "stage.h"
-#include "stage_api.h"
-#include "osdep.h"
 #include <stdlib.h>
+#include "osdep.h"
+#include "stage_server_struct.h"
 
 #ifdef hpux
 /* What the hell does hpux does not like this prototype ??? */
