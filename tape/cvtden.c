@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: cvtden.c,v $ $Revision: 1.4 $ $Date: 2001/01/24 08:38:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: cvtden.c,v $ $Revision: 1.5 $ $Date: 2002/05/17 12:27:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	cvtden - check and convert alphanumeric densities to integer */
@@ -12,12 +12,12 @@ static char sccsid[] = "@(#)$RCSfile: cvtden.c,v $ $Revision: 1.4 $ $Date: 2001/
 #include <sys/types.h>
 #include "Ctape.h"
 #include "serrno.h"
-static char adens[21][6] = {"0", "800", "1600", "6250", "38000",
+static char adens[22][6] = {"0", "800", "1600", "6250", "38000",
 	"8200", "8500", "38KD", "2G", "6G", "10G", "FMT", "RAW", "DDS",
-	"20G", "25G", "35G", "50G", "40G", "60G", "100G"};
-static char adensc[21][6] = {"", "", "", "", "38KC",
+	"20G", "25G", "35G", "50G", "40G", "60G", "100G", "200G"};
+static char adensc[22][6] = {"", "", "", "", "38KC",
 	"8200C", "8500C", "38KDC", "", "", "10GC", "", "", "DDSC",
-	"20GC", "25GC", "35GC", "50GC", "40GC", "60GC", "100GC"};
+	"20GC", "25GC", "35GC", "50GC", "40GC", "60GC", "100GC", "200GC"};
 cvtden(aden)
 char	*aden;
 {
