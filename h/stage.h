@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.27 2000/09/27 07:52:56 jdurand Exp $
+ * $Id: stage.h,v 1.28 2000/10/17 14:40:47 jdurand Exp $
  */
 
 /*
@@ -349,8 +349,8 @@ struct pool {
 	int	no_file_creation;	/* Do not create empty file on stagein/out (for Objectivity DB) */
 	int	nbelem;
 	int	next_pool_elem;		/* next pool element to be used */
-	u_signed64	capacity;		/* in 512 bytes blocks */
-	u_signed64	free;			/* in 512 bytes blocks */
+	u_signed64	capacity;	/* Capacity in bytes */
+	u_signed64	free;		/* Free space in bytes */
 	int	ovl_pid;
 	time_t	cleanreqtime;
 	int	cleanstatus;	/* 0 = normal, 1 = just cleaned */
@@ -375,9 +375,8 @@ struct migrator {
 struct pool_element {
 	char	server[CA_MAXHOSTNAMELEN+1];
 	char	dirpath[MAXPATH];
-	long	capacity;	/* filesystem capacity in blocks */
-	long	free;		/* number of free blocks */
-	long	bsize;		/* block size */
+	u_signed64	capacity;	/* filesystem capacity in bytes */
+	u_signed64	free;		/* free space in bytes */
 };
 
 struct sorted_ent {
