@@ -88,7 +88,7 @@ int rtcpcld_InitNW  _PROTO((
                             ));
 int rtcp_Listen  _PROTO((
                          SOCKET, SOCKET *,
-                         int
+                         int, int
                          ));
 int rtcp_CleanUp  _PROTO((
                           SOCKET **, 

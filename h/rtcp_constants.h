@@ -1,12 +1,12 @@
 /*
- * $Id: rtcp_constants.h,v 1.1 2004/08/03 15:42:49 motiakov Exp $
+ * $Id: rtcp_constants.h,v 1.2 2004/08/05 15:40:07 motiakov Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: rtcp_constants.h,v $ $Revision: 1.1 $ $Date: 2004/08/03 15:42:49 $ CERN IT/ADC Olof Barring
+ * @(#)$RCSfile: rtcp_constants.h,v $ $Revision: 1.2 $ $Date: 2004/08/05 15:40:07 $ CERN IT/ADC Olof Barring
  */
 
 /*
@@ -25,6 +25,11 @@
 #define RFIO2TPREAD_MAGIC       (0X0110)
 #define VALID_MAGIC(X) (X==RTCOPY_MAGIC || X== RTCOPY_MAGIC_OLD0 || X==RTCOPY_MAGIC_SHIFT || \
     X==RTCOPY_MAGIC_VERYOLD)
+
+#define RTCP_CONNECT_TO_CLIENT  1
+#define RTCP_CONNECT_TO_SERVER  2
+#define RTCP_ACCEPT_FROM_CLIENT 3
+#define RTCP_ACCEPT_FROM_SERVER 4
 
 /*
  * If one is missing we have to define both
