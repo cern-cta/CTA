@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.13 $ $Date: 2000/09/25 10:07:06 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.14 $ $Date: 2000/09/25 10:42:45 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -199,6 +199,14 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
                 sprintf(errmsgtxt,"%s\n","request aborted by operator");
             }
         }
+    }
+    /*
+     * Make sure to account for all failed requests
+     */
+    if ( subtype == RTCPCMDC && exitcode == 0 && 
+         (rtcpd_CheckProcError() & RTCP_FAILED) != 0 ) {
+        rtcp_log(LOG_ERR,"rtcp_WriteAccountRecord(RTCPCMDC) severity=0x%x but exitcode=%d. Force exitcode=%d!\n",rtcpd_CheckProcError(),exitcode,UNERR);
+        exitcode = UNERR;
     }
 
     rc = rtcp_wacct(subtype,(uid_t)client->uid,(gid_t)client->gid,jobID,
