@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/12 16:07:35 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/18 06:51:24 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/12 16:07:35 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/18 06:51:24 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -139,6 +139,7 @@ int rtcpcld_findRunningTpCopy(
     } else {
       segment = (struct Cstager_Segment_t *)file->dbRef->row;
       Cstager_Segment_copy(segment,tpCopy);
+      if ( tpCopy == NULL ) found = 0;
     }
   }
 
@@ -715,9 +716,9 @@ int rtcpcld_checkNsSegment(
                             sizeof(filereq->blockid)
                             );
   if ( blkid == NULL ) blkid = strdup("unknown");
-  
+
   if ( found == 0 ) {
-     (void)dlf_write(
+    (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
                     DLF_LVL_ERROR,
                     RTCPCLD_MSG_NSSEGNOTFOUND,
@@ -745,7 +746,7 @@ int rtcpcld_checkNsSegment(
     serrno = ENOENT;
     return(-1);
   }
-
+  
   if ( (use_checksum == 1) &&
        (filereq->castorSegAttr.segmCksumAlgorithm[0] != '\0') ) {
     if ( (currentSegattrs[i].checksum_name[0] == '\0') ||
