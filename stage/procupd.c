@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.59 2001/03/04 07:38:42 jdurand Exp $
+ * $Id: procupd.c,v 1.60 2001/03/05 12:07:24 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.59 $ $Date: 2001/03/04 07:38:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.60 $ $Date: 2001/03/05 12:07:24 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -78,7 +78,7 @@ extern int savereqs _PROTO(());
 extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *));
 extern int cleanpool _PROTO((char *));
 extern void delreq _PROTO((struct stgcat_entry *, int));
-extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int));
+extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int));
 extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 extern void create_link _PROTO((struct stgcat_entry *, char *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
@@ -600,7 +600,7 @@ procupdreq(req_data, clienthost)
 				delreq (stcp,0);
 				continue;
 			}
-			if (delfile (stcp, 1, 0, 1, "no more file", uid, gid, 0) < 0)
+			if (delfile (stcp, 1, 0, 1, "no more file", uid, gid, 0, 0) < 0)
 				sendrep (wqp->rpfd, MSG_ERR, STG02, stcp->ipath,
 								 "rfio_unlink", rfio_serror());
 			check_coff_waiting_on_req (wfp->subreqid, LAST_TPFILE);
@@ -644,7 +644,7 @@ procupdreq(req_data, clienthost)
 			c = ENOSPC;
 			goto reply;
 		}
-		if (delfile (stcp, 1, 0, 0, "nospace retry", uid, gid, 0) < 0)
+		if (delfile (stcp, 1, 0, 0, "nospace retry", uid, gid, 0, 0) < 0)
 			sendrep (wqp->rpfd, MSG_ERR, STG02, stcp->ipath,
 							 "rfio_unlink", rfio_serror());
 		wqp->status = 0;
@@ -802,7 +802,7 @@ procupdreq(req_data, clienthost)
 							} else {
 							delete_entry:
 								/* We can delete this entry */
-								if (delfile (stcp_found, 0, 1, 1, ((save_status & STAGEWRT) == STAGEWRT) ? "stagewrt ok" : "stageput ok", uid, gid, 0) < 0) {
+								if (delfile (stcp_found, 0, 1, 1, ((save_status & 0xF) == STAGEWRT) ? "stagewrt ok" : "stageput ok", uid, gid, 0, ((save_status & 0xF) == STAGEWRT) ? 1 : 0) < 0) {
 									sendrep (rpfd, MSG_ERR, STG02, stcp_found->ipath,
 												 "rfio_unlink", rfio_serror());
 								}

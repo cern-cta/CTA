@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.111 2001/03/04 19:06:51 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.112 2001/03/05 12:07:24 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.111 $ $Date: 2001/03/04 19:06:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.112 $ $Date: 2001/03/05 12:07:24 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -225,7 +225,7 @@ extern void procupdreq _PROTO((char *, char *));
 int stcp_cmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
 int stpp_cmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
 struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
-int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int));
+int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int));
 extern void checkfile2mig _PROTO(());
 extern int updpoolconf _PROTO((char *, char *, char *));
 extern void procioreq _PROTO((int, int, char *, char *));
@@ -618,7 +618,7 @@ int main(argc,argv)
 				(stcp->status == (STAGEOUT|WAITING_SPC)) ||
 				(stcp->status == (STAGEOUT|WAITING_NS)) ||
 				(stcp->status == (STAGEALLOC|WAITING_SPC))) {
-			if (delfile (stcp, 0, 0, 1, "startup", 0, 0, 0) < 0) { /* remove incomplete file */
+			if (delfile (stcp, 0, 0, 1, "startup", 0, 0, 0, 0) < 0) { /* remove incomplete file */
 				stglogit (func, STG02, stcp->ipath, "rfio_unlink",
 									rfio_serror());
 				stcp++;
@@ -2039,7 +2039,7 @@ void checkwaitq()
 						continue;
 					}
 					if (delfile (stcp, 1, 0, 1, (wqp->status == REQKILD) ?
-											 "req killed" : "failing req", wqp->req_uid, wqp->req_gid, 0) < 0)
+											 "req killed" : "failing req", wqp->req_uid, wqp->req_gid, 0, 0) < 0)
 						stglogit (func, STG02, stcp->ipath,
 											"rfio_unlink", rfio_serror());
 					check_waiting_on_req (wfp->subreqid,
@@ -2210,7 +2210,7 @@ void create_link(stcp, upath)
 #endif
 }
 
-int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
+int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, allow_one_stagein)
 		 struct stgcat_entry *stcp;
 		 int freersv;
 		 int dellinks;
@@ -2219,27 +2219,52 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
 		 uid_t byuid;
 		 gid_t bygid;
 		 int remove_hsm;
+		 int allow_one_stagein;
 {
 	int actual_size = 0;
 	struct stat st;
 	struct stgpath_entry *stpp;
+	int found = 0;
+	struct stgcat_entry *stcp_perhaps_stagein = NULL;
 
 	if (stcp->ipath[0]) {
 		/* Is there any other entry pointing at the same disk file?
 			 It could be the case if stagein+stagewrt or several stagewrt */
-		int found = 0;
+		/* We accept to remove the entry also if there is another entry pointing */
+		/* to the same disk file under one unique condition : there is only ONE */
+		/* other entry matching the disk file, it is a STAGEIN|STAGED one and its */
+		/* nbaccesses is <= 1 and it is an automatic delfile() call from procupd */
+		/* (.e.g at a STAGEWRT successful callback) */
 		struct stgcat_entry *stclp;
+
 		for (stclp = stcs; stclp < stce; stclp++) {
 			if (stclp->reqid == 0) break;
 			if (stclp == stcp) continue;
 			if (strcmp (stcp->ipath, stclp->ipath) == 0) {
-				found = 1;
-				break;
+				stcp_perhaps_stagein = stclp;
+				if (allow_one_stagein != 0) {
+                	if (++found > 1) {
+						/* More than two entries found */
+						break;
+					}
+				} else {
+					/* We accept only one entry */
+					found = 1;
+					break;
+				}
 			}
 		}
-		if (! found) {
-			/* it's the last entry;
-				 we can remove the file and release the space */
+		if ((found == 0) ||
+			((allow_one_stagein != 0) && (found == 1) && ISSTAGEIN(stcp_perhaps_stagein) && 
+				(
+				 ((stcp_perhaps_stagein->status & STAGED) == STAGED) ||
+				 ((stcp_perhaps_stagein->status & STAGED_TPE) == STAGED_TPE) ||
+				 ((stcp_perhaps_stagein->status & STAGED_LSZ) == STAGED_LSZ)
+				)
+             )
+			) {
+			/* it's the last entry - we can remove the file and release the space */
+			/* or it's the last entry but another STAGED + STAGEIN */
 			if (! freersv) {
 				if ((stcp->status & 0xF0) != STAGED) {
 					if (rfio_stat (stcp->ipath, &st) == 0)
@@ -2311,8 +2336,29 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
 				stpp++;
 		}
 	}
-	if (delreqflg)
-		delreq (stcp,0);
+	if (delreqflg) {
+		if ((allow_one_stagein != 0) && (found == 1) && ISSTAGEIN(stcp_perhaps_stagein) && 
+				(
+				 ((stcp_perhaps_stagein->status & STAGED) == STAGED) ||
+				 ((stcp_perhaps_stagein->status & STAGED_TPE) == STAGED_TPE) ||
+				 ((stcp_perhaps_stagein->status & STAGED_LSZ) == STAGED_LSZ)
+				)
+			) {
+			/* We have no only stcp to delete - but also stcp_perhaps_stagein */
+			struct stgcat_entry *stclp;
+			struct stgcat_entry save_stcp = *stcp_perhaps_stagein;
+			delreq (stcp,0);
+			/* And we have to rescan to find save_stcp.reqid */
+			for (stclp = stcs; stclp < stce; stclp++) {
+				if (stclp->reqid == 0) break;
+				if (stclp->reqid != save_stcp.reqid) continue;
+				delreq (stclp,0);
+				break;
+			}
+		} else {
+			delreq (stcp,0);
+		}
+	}
 	savepath ();
 	return (0);
 }
@@ -2818,7 +2864,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 				/* We cannot put a to-be-migrated file in status CAN_BE_MIGR if its size is zero */
 				if (delfile(stcp, 0, 1, 1,
 							"upd_stageout update on zero-length to-be-migrated file ok",
-							stcp->uid, stcp->gid, 0) < 0) {
+							stcp->uid, stcp->gid, 0, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 									 "rfio_unlink", rfio_serror());
 				}

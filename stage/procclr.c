@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.25 2001/03/02 18:16:45 jdurand Exp $
+ * $Id: procclr.c,v 1.26 2001/03/05 12:07:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.25 $ $Date: 2001/03/02 18:16:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.26 $ $Date: 2001/03/05 12:07:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -57,7 +57,7 @@ extern int isvalidpool _PROTO((char *));
 extern void dellink _PROTO((struct stgpath_entry *));
 extern int enoughfreespace _PROTO((char *, int));
 extern int checklastaccess _PROTO((char *, time_t));
-extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int));
+extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int));
 extern int savepath _PROTO(());
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
@@ -356,7 +356,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 	}
 	if ((stcp->status & 0xF0) == STAGED ||
 		(stcp->status & (STAGEOUT | PUT_FAILED)) == (STAGEOUT | PUT_FAILED)) {
-		if (delfile (stcp, 0, 1, 1, user, uid, gid, rflag) < 0) {
+		if (delfile (stcp, 0, 1, 1, user, uid, gid, rflag, 0) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
 							 rfio_serror());
 			return (USERR);
@@ -365,7 +365,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 		if ((ISSTAGEOUT(stcp) && (! ISCASTORMIG(stcp))) || (ISSTAGEALLOC(stcp) && ((stcp->status | STAGED) != STAGED))) {
 			rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
 		}
-		if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag) < 0) {
+		if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag, 0) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
 							 rfio_serror());
 			return (USERR);
@@ -404,7 +404,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 					rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
 				}
 			}
-			if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag) < 0) {
+			if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag, 0) < 0) {
 				sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
 						 rfio_serror());
 				return (USERR);

@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.100 2001/03/04 19:55:11 jdurand Exp $
+ * $Id: poolmgr.c,v 1.101 2001/03/05 12:07:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.100 $ $Date: 2001/03/04 19:55:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.101 $ $Date: 2001/03/05 12:07:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -76,7 +76,7 @@ extern int sendrep _PROTO((int, int, ...));
 extern int sendrep _PROTO(());
 #endif
 extern struct stgcat_entry *newreq _PROTO(());
-extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int));
+extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int));
 extern int nextreqid _PROTO(());
 
 #if !defined(linux)
@@ -2936,7 +2936,8 @@ int upd_fileclass(pool_p,stcp)
     }
 
     /* @@@@ EXCEPTIONNAL @@@@ */
-    /* Cnsfileclass.migr_time_interval = 0; */
+    /* Cnsfileclass.migr_time_interval = 1; */
+    /* Cnsfileclass.retenp_on_disk = 0; */
     /* @@@@ END OF EXCEPTIONNAL @@@@ */
 
     /* We check that this fileclass does not contain values that we cannot sustain */
@@ -3578,7 +3579,7 @@ void check_retenp_on_disk() {
 		if (((int) (this_time - stcp->a_time)) > retenp_on_disk(ifileclass)) { /* Lifetime exceeds ? */
 			/* Candidate for garbage */
 			stglogit (func, STG133, stcp->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, fileclasses[ifileclass].Cnsfileclass.retenp_on_disk, (int) (this_time - stcp->a_time));
-			if (delfile (stcp, 0, 1, 1, "check_retenp_on_disk", start_passwd.pw_uid, start_passwd.pw_gid, 0) < 0) {
+			if (delfile (stcp, 0, 1, 1, "check_retenp_on_disk", start_passwd.pw_uid, start_passwd.pw_gid, 0, 0) < 0) {
 				stglogit (STG02, stcp->ipath, "rfio_unlink", rfio_serror());
 			}
 		}
