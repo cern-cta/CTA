@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.158 2002/02/04 17:54:23 jdurand Exp $
+ * $Id: procio.c,v 1.159 2002/02/05 15:25:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.158 $ $Date: 2002/02/04 17:54:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.159 $ $Date: 2002/02/05 15:25:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -198,9 +198,9 @@ int create_hsm_entry _PROTO(());
 int create_hsm_entry _PROTO((int, struct stgcat_entry *, int, mode_t, int));
 #endif
 extern int stglogit _PROTO(());
-extern int stglogflags _PROTO(());
-extern int stglogopenflags _PROTO(());
-extern int stglogtppool _PROTO(());
+extern char *stglogflags _PROTO((char *, char *, u_signed64));
+extern int stglogopenflags _PROTO((char *, u_signed64));
+extern int stglogtppool _PROTO((char *, char *));
 extern int req2argv _PROTO((char *, char ***));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int, int, ...));
@@ -790,9 +790,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 			if (errflg != 0) break;
 		}
 		/* Print the general flags */
-		stglogflags(func,flags);
+		stglogflags(func,LOGFILE,(u_signed64) flags);
 		/* Print the open flags (meaningful, currently, only if stage_in) */
-		if (req_type == STAGE_IN) stglogopenflags(func,flags);
+		if (req_type == STAGE_IN) stglogopenflags(func,(u_signed64) openflags);
 	} else {
 		Coptind = 1;
 		Copterr = 0;
@@ -1702,6 +1702,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				  wqp->magic = magic;
 				  wqp->uniqueid = stage_uniqueid;
 				  wqp->silent = silent_flag;
+				  wqp->flags = flags;
 				  if (nowait_flag != 0) {
 					  /* User said nowait - we force silent flag anyway and reset rpfd to N/A */
 					  wqp->silent = 1;
@@ -1798,6 +1799,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					wqp->magic = magic;
 					wqp->uniqueid = stage_uniqueid;
 					wqp->silent = silent_flag;
+					wqp->flags = flags;
 					if (nowait_flag != 0) {
 						/* User said nowait - we force silent flag anyway and reset rpfd to N/A */
 						wqp->silent = 1;
@@ -2011,6 +2013,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					  wqp->magic = magic;
 					  wqp->uniqueid = stage_uniqueid;
 					  wqp->silent = silent_flag;
+					  wqp->flags = flags;
 					  if (nowait_flag != 0) {
 						  /* User said nowait - we force silent flag anyway and reset rpfd to N/A */
 						  wqp->silent = 1;
@@ -2178,6 +2181,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					wqp->openmode = openmode;
 					wqp->uniqueid = stage_uniqueid;
 					wqp->silent = silent_flag;
+					wqp->flags = flags;
 					if (nowait_flag != 0) {
 						/* User said nowait - we force silent flag anyway and reset rpfd to N/A */
 						wqp->silent = 1;
@@ -2694,6 +2698,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					wqp->magic = magic;
 					wqp->uniqueid = stage_uniqueid;
 					wqp->silent = silent_flag;
+					wqp->flags = flags;
 					if (nowait_flag != 0) {
 						/* User said nowait - we force silent flag anyway and reset rpfd to N/A */
 						wqp->silent = 1;
