@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.40 2001/02/02 22:43:19 jdurand Exp $
+ * $Id: stage.h,v 1.41 2001/02/03 09:20:19 jdurand Exp $
  */
 
 /*
@@ -129,22 +129,7 @@
 
 			/* stage states */
 
-#define	NOTSTAGED	  0
-#define	WAITING_SPC	  0x10	/* waiting space */
-#define	WAITING_REQ	  0x20	/* waiting on an other request */
-#define	STAGED		  0x30	/* stage complete */
-#define	KILLED		  0x40	/* stage killed */
-#define	STG_FAILED	  0x50	/* stage failed */
-#define	PUT_FAILED	  0x60	/* stageput failed */
-#define	STAGED_LSZ	  0x100	/* stage limited by size */
-#define	STAGED_TPE	  0x200	/* blocks with parity error have been skipped */
-#define	CAN_BE_MIGR	  0x400	/* file can be migrated */
-#define	LAST_TPFILE	  0x1000 /* last file on this tape */
-#define	BEING_MIGR	  0x2000 /* file being migrated */
-#define ISSTAGEDBUSY  0x4000  /* Internal error while scanning catalog : matched twice in catalog and the one to delete is busy */
-#define ISSTAGEDSYERR 0x10000 /* Internal error while scanning catalog : matched twice in catalog and cannot delete one of them */
-#define	WAITING_MIGR  0x20000 /* file being migrated and waiting confirmation (e.g. the real migration request) */
-#define	WAITING_NS    0x40000 /* file waiting for an entry in the HSM name server */
+#include "stage_states.h"
 
 			/* stage daemon messages */
 
