@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2000 by CERN/IT/PDP/DM
+ * Copyright (C) 2000-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: marshall.c,v $ $Revision: 1.4 $ $Date: 2001/01/08 12:24:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: marshall.c,v $ $Revision: 1.5 $ $Date: 2001/05/11 07:48:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*
@@ -12,6 +12,7 @@ static char sccsid[] = "@(#)$RCSfile: marshall.c,v $ $Revision: 1.4 $ $Date: 200
  */
 
 #include <string.h> 
+#include "marshall.h"
 #include "osdep.h"
 
 int DLL_DECL
