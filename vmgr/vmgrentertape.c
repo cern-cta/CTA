@@ -22,8 +22,9 @@ main(argc, argv)
   char *sn;
   char *vid;
   char *vsn;
+  int status;
 
-  if (argc != 11) {
+  if (argc != 12) {
     fprintf (stderr,
              "usage: vmgrentertape vid vsn dgn density lbltype model media_letter manufacturer sn poolname\n"
              "\n"
@@ -37,6 +38,7 @@ main(argc, argv)
              "        manufacturer     Manufacturer            ex: STK (can be \"\")\n"
              "        sn               Volume Serial Number    ex: 1234567890 (can be \"\")\n"
              "        poolname         Associated Poolname     ex: Public (can be \"\")\n"
+             "        status           Associated status       ex: 0\n"
              "\n"
              "Comments to the CASTOR Developpment Team <castor-dev@listbox.cern.ch>\n"
              "\n");
@@ -53,9 +55,10 @@ main(argc, argv)
   manufacturer = argv[8];
   sn = argv[9];
   poolname = argv[10];
+  status = atoi(argv[11]);
 
   if (vmgr_entertape (vid, NULL, dgn, density, lbltype, model,
-                      media_letter, manufacturer, sn, poolname)) {
+                      media_letter, manufacturer, sn, poolname,status)) {
     fprintf (stderr, "%s: %s\n", vid, sstrerror(serrno));
     return(EXIT_FAILURE);
   }
