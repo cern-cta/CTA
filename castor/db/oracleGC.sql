@@ -406,7 +406,7 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN
   BEGIN
     -- lock table to be atomic
-    LOCK TABLE CastorFile in share mode;
+    LOCK TABLE CastorFile in exclusive mode;
     -- retry the select in case a creation was done in between
     SELECT id, fileSize INTO rid, rfs FROM CastorFile
       WHERE fileId = fid AND nsHost = nh;
