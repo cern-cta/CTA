@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.99 2001/03/06 17:33:55 jdurand Exp $
+ * $Id: procio.c,v 1.100 2001/03/06 18:20:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.99 $ $Date: 2001/03/06 17:33:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.100 $ $Date: 2001/03/06 18:20:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1926,6 +1926,13 @@ void procioreq(req_type, magic, req_data, clienthost)
 				/* We set the size in the name server */
 				setegid(stgreq.gid);
 				seteuid(stgreq.uid);
+				if (have_save_stcp_for_Cns_creatx) {
+					/* Makes sure we are under correct uid,gid */
+					setegid(start_passwd.pw_gid);
+					seteuid(start_passwd.pw_uid);
+					setegid(save_stcp_for_Cns_creatx.gid);
+					seteuid(save_stcp_for_Cns_creatx.uid);
+				}
 				if (Cns_setfsize(NULL,&Cnsfileid,correct_size) != 0) {
 					setegid(start_passwd.pw_gid);
 					seteuid(start_passwd.pw_uid);
