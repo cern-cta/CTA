@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.42 2000/07/07 11:05:55 jdurand Exp $
+ * $Id: Cthread.c,v 1.43 2000/08/23 13:59:12 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.42 $ $Date: 2000/07/07 11:05:55 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.43 $ $Date: 2000/08/23 13:59:12 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cthread_api.h>
@@ -1570,6 +1570,7 @@ int DLL_DECL Cthread_Cond_Broadcast_ext(file, line, addr)
   } else {
     rc = _Cthread_win32_cond_signal(&(current->cond));
   }
+  if ( rc != -1 ) rc = 0;
 #else
   serrno = SEOPNOTSUP;
   return(-1);
@@ -1696,6 +1697,7 @@ int DLL_DECL Cthread_Cond_Broadcast(file, line, addr)
   } else {
     rc = _Cthread_win32_cond_signal(&(current->cond));
   }
+  if ( rc != -1 ) rc = 0;
 #else
   serrno = SEOPNOTSUP;
   return(-1);
@@ -4579,9 +4581,10 @@ int _Cthread_win32_cond_broadcast(Cth_cond_t *cv) {
     EnterCriticalSection(&(cv->nb_waiters_lock));
     have_waiters = (cv->nb_waiters > 0);
     LeaveCriticalSection(&(cv->nb_waiters_lock));
-    if ( have_waiters ) 
-        return(SetEvent(cv->cond_events[CTHREAD_WIN32_BROADCAST]));
-    else return(0);
+    if ( have_waiters ) {
+        if ( SetEvent(cv->cond_events[CTHREAD_WIN32_BROADCAST]) == 0 ) return(-1);
+        else return(0);
+    } else return(0);
 }
 /* ============================================ */
 /* Routine  : _Cthread_win32_cond_signal        */
@@ -4610,9 +4613,10 @@ int _Cthread_win32_cond_signal(Cth_cond_t *cv) {
     EnterCriticalSection(&(cv->nb_waiters_lock));
     have_waiters = (cv->nb_waiters > 0);
     LeaveCriticalSection(&(cv->nb_waiters_lock));
-    if ( have_waiters ) 
-        return(SetEvent(cv->cond_events[CTHREAD_WIN32_SIGNAL]));
-    else return(0);
+    if ( have_waiters ) {
+        if ( SetEvent(cv->cond_events[CTHREAD_WIN32_SIGNAL]) == 0 ) return(-1);
+        else return(0);
+    } else return(0);
 }
 /* ============================================ */
 /* Routine  : _Cthread_win32_cond_destroy       */
