@@ -156,7 +156,7 @@
 #else
 #define DlfConfigFile  /etc/DLFCONFIG
 #endif
-#define DlfHost        "castordev"
+#define DlfHost        "lxshare001d"
 #define DlfSpool       /usr/spool/dlf
 
 #define W2000MapDir	\\\\cern.ch\\dfs\\Applications\\CERN\\CASTOR\\Config
