@@ -30,8 +30,6 @@
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
 struct C_IObject_t;
-struct C_int_t;
-struct C_uns_tigned int;
 struct Cstager_FileClass_t;
 
 //------------------------------------------------------------------------------
@@ -69,7 +67,7 @@ int Cstager_FileClass_print(struct Cstager_FileClass_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_FileClass_TYPE(struct C_int_t* ret);
+int Cstager_FileClass_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -90,7 +88,7 @@ int Cstager_FileClass_id(struct Cstager_FileClass_t* instance,
  * Gets the type of the object
  */
 int Cstager_FileClass_type(struct Cstager_FileClass_t* instance,
-                           struct C_int_t* ret);
+                           int* ret);
 
 /**
  * Get the value of name
@@ -108,36 +106,36 @@ int Cstager_FileClass_setName(struct Cstager_FileClass_t* instance, const char* 
  * Get the value of minFileSize
  * The minimum size of a file in this FileClass
  */
-int Cstager_FileClass_minFileSize(struct Cstager_FileClass_t* instance, struct C_uns_tigned int* var);
+int Cstager_FileClass_minFileSize(struct Cstager_FileClass_t* instance, unsigned int* var);
 
 /**
  * Set the value of minFileSize
  * The minimum size of a file in this FileClass
  */
-int Cstager_FileClass_setMinFileSize(struct Cstager_FileClass_t* instance, struct C_uns_tigned int new_var);
+int Cstager_FileClass_setMinFileSize(struct Cstager_FileClass_t* instance, unsigned int new_var);
 
 /**
  * Get the value of maxFileSize
  * The maximum size of a file in this FileClass
  */
-int Cstager_FileClass_maxFileSize(struct Cstager_FileClass_t* instance, struct C_uns_tigned int* var);
+int Cstager_FileClass_maxFileSize(struct Cstager_FileClass_t* instance, unsigned int* var);
 
 /**
  * Set the value of maxFileSize
  * The maximum size of a file in this FileClass
  */
-int Cstager_FileClass_setMaxFileSize(struct Cstager_FileClass_t* instance, struct C_uns_tigned int new_var);
+int Cstager_FileClass_setMaxFileSize(struct Cstager_FileClass_t* instance, unsigned int new_var);
 
 /**
  * Get the value of nbCopies
  * The number of copies on tape for a file of this FileClass
  */
-int Cstager_FileClass_nbCopies(struct Cstager_FileClass_t* instance, struct C_uns_tigned int* var);
+int Cstager_FileClass_nbCopies(struct Cstager_FileClass_t* instance, unsigned int* var);
 
 /**
  * Set the value of nbCopies
  * The number of copies on tape for a file of this FileClass
  */
-int Cstager_FileClass_setNbCopies(struct Cstager_FileClass_t* instance, struct C_uns_tigned int new_var);
+int Cstager_FileClass_setNbCopies(struct Cstager_FileClass_t* instance, unsigned int new_var);
 
 #endif // CASTOR_STAGER_FILECLASS_H

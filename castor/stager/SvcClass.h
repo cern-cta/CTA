@@ -30,8 +30,6 @@
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
 struct C_IObject_t;
-struct C_int_t;
-struct C_uns_tigned int;
 struct Cstager_SvcClass_t;
 
 //------------------------------------------------------------------------------
@@ -69,7 +67,7 @@ int Cstager_SvcClass_print(struct Cstager_SvcClass_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_SvcClass_TYPE(struct C_int_t* ret);
+int Cstager_SvcClass_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -90,7 +88,7 @@ int Cstager_SvcClass_id(struct Cstager_SvcClass_t* instance,
  * Gets the type of the object
  */
 int Cstager_SvcClass_type(struct Cstager_SvcClass_t* instance,
-                          struct C_int_t* ret);
+                          int* ret);
 
 /**
  * Get the value of policy
@@ -108,7 +106,7 @@ int Cstager_SvcClass_setPolicy(struct Cstager_SvcClass_t* instance, const char* 
  * could be that occasionnally more drives are used, if a resource is shared with
  * another project using more drives
  */
-int Cstager_SvcClass_nbDrives(struct Cstager_SvcClass_t* instance, struct C_uns_tigned int* var);
+int Cstager_SvcClass_nbDrives(struct Cstager_SvcClass_t* instance, unsigned int* var);
 
 /**
  * Set the value of nbDrives
@@ -116,6 +114,6 @@ int Cstager_SvcClass_nbDrives(struct Cstager_SvcClass_t* instance, struct C_uns_
  * could be that occasionnally more drives are used, if a resource is shared with
  * another project using more drives
  */
-int Cstager_SvcClass_setNbDrives(struct Cstager_SvcClass_t* instance, struct C_uns_tigned int new_var);
+int Cstager_SvcClass_setNbDrives(struct Cstager_SvcClass_t* instance, unsigned int new_var);
 
 #endif // CASTOR_STAGER_SVCCLASS_H

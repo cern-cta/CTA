@@ -30,7 +30,6 @@
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
 struct C_IObject_t;
-struct C_int_t;
 struct Cstager_DiskCopy_t;
 struct Cstager_DiskServer_t;
 struct Cstager_FileSystem_t;
@@ -69,7 +68,7 @@ int Cstager_FileSystem_print(struct Cstager_FileSystem_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_FileSystem_TYPE(struct C_int_t* ret);
+int Cstager_FileSystem_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -90,7 +89,7 @@ int Cstager_FileSystem_id(struct Cstager_FileSystem_t* instance,
  * Gets the type of the object
  */
 int Cstager_FileSystem_type(struct Cstager_FileSystem_t* instance,
-                            struct C_int_t* ret);
+                            int* ret);
 
 /**
  * Get the value of free
@@ -129,12 +128,12 @@ int Cstager_FileSystem_setFsDeviation(struct Cstager_FileSystem_t* instance, flo
 /**
  * Get the value of randomize
  */
-int Cstager_FileSystem_randomize(struct Cstager_FileSystem_t* instance, struct C_int_t* var);
+int Cstager_FileSystem_randomize(struct Cstager_FileSystem_t* instance, int* var);
 
 /**
  * Set the value of randomize
  */
-int Cstager_FileSystem_setRandomize(struct Cstager_FileSystem_t* instance, struct C_int_t new_var);
+int Cstager_FileSystem_setRandomize(struct Cstager_FileSystem_t* instance, int new_var);
 
 /**
  * Get the value of mountPoint

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageInRequest.h,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/07 14:34:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageInRequest.h,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/08 10:19:08 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,7 +29,6 @@
 
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
-struct C_int_t;
 struct Cstager_Request_t;
 struct Cstager_StageInRequest_t;
 
@@ -67,7 +66,7 @@ int Cstager_StageInRequest_print(struct Cstager_StageInRequest_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_StageInRequest_TYPE(struct C_int_t* ret);
+int Cstager_StageInRequest_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -88,20 +87,20 @@ int Cstager_StageInRequest_id(struct Cstager_StageInRequest_t* instance,
  * Gets the type of the object
  */
 int Cstager_StageInRequest_type(struct Cstager_StageInRequest_t* instance,
-                                struct C_int_t* ret);
+                                int* ret);
 
 /**
  * Get the value of openflags
  * If it contains O_RDWR or O_WRONLY the file is considered to be opened by an
  * application that want to modify it.
  */
-int Cstager_StageInRequest_openflags(struct Cstager_StageInRequest_t* instance, struct C_int_t* var);
+int Cstager_StageInRequest_openflags(struct Cstager_StageInRequest_t* instance, int* var);
 
 /**
  * Set the value of openflags
  * If it contains O_RDWR or O_WRONLY the file is considered to be opened by an
  * application that want to modify it.
  */
-int Cstager_StageInRequest_setOpenflags(struct Cstager_StageInRequest_t* instance, struct C_int_t new_var);
+int Cstager_StageInRequest_setOpenflags(struct Cstager_StageInRequest_t* instance, int new_var);
 
 #endif // CASTOR_STAGER_STAGEINREQUEST_H

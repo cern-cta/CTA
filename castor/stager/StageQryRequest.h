@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageQryRequest.h,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/07 14:34:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageQryRequest.h,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/08 10:19:08 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,7 +29,6 @@
 
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
-struct C_int_t;
 struct Cstager_Request_t;
 struct Cstager_StageQryRequest_t;
 
@@ -67,7 +66,7 @@ int Cstager_StageQryRequest_print(struct Cstager_StageQryRequest_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_StageQryRequest_TYPE(struct C_int_t* ret);
+int Cstager_StageQryRequest_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -88,6 +87,6 @@ int Cstager_StageQryRequest_id(struct Cstager_StageQryRequest_t* instance,
  * Gets the type of the object
  */
 int Cstager_StageQryRequest_type(struct Cstager_StageQryRequest_t* instance,
-                                 struct C_int_t* ret);
+                                 int* ret);
 
 #endif // CASTOR_STAGER_STAGEQRYREQUEST_H

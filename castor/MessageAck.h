@@ -31,7 +31,6 @@
 #include "osdep.h"
 struct C_IObject_t;
 struct C_MessageAck_t;
-struct C_int_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -67,7 +66,7 @@ int C_MessageAck_print(struct C_MessageAck_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int C_MessageAck_TYPE(struct C_int_t* ret);
+int C_MessageAck_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -88,7 +87,7 @@ int C_MessageAck_id(struct C_MessageAck_t* instance,
  * Gets the type of the object
  */
 int C_MessageAck_type(struct C_MessageAck_t* instance,
-                      struct C_int_t* ret);
+                      int* ret);
 
 /**
  * Get the value of status
@@ -103,12 +102,12 @@ int C_MessageAck_setStatus(struct C_MessageAck_t* instance, int new_var);
 /**
  * Get the value of errorCode
  */
-int C_MessageAck_errorCode(struct C_MessageAck_t* instance, struct C_int_t* var);
+int C_MessageAck_errorCode(struct C_MessageAck_t* instance, int* var);
 
 /**
  * Set the value of errorCode
  */
-int C_MessageAck_setErrorCode(struct C_MessageAck_t* instance, struct C_int_t new_var);
+int C_MessageAck_setErrorCode(struct C_MessageAck_t* instance, int new_var);
 
 /**
  * Get the value of errorMessage

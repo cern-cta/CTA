@@ -30,7 +30,6 @@
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
 struct C_IObject_t;
-struct C_int_t;
 struct Crh_FileResponse_t;
 struct Crh_Response_t;
 
@@ -78,7 +77,7 @@ int Crh_FileResponse_print(struct Crh_FileResponse_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Crh_FileResponse_TYPE(struct C_int_t* ret);
+int Crh_FileResponse_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -99,19 +98,19 @@ int Crh_FileResponse_id(struct Crh_FileResponse_t* instance,
  * Gets the type of the object
  */
 int Crh_FileResponse_type(struct Crh_FileResponse_t* instance,
-                          struct C_int_t* ret);
+                          int* ret);
 
 /**
  * Get the value of status
  * The current status of the file
  */
-int Crh_FileResponse_status(struct Crh_FileResponse_t* instance, struct C_int_t* var);
+int Crh_FileResponse_status(struct Crh_FileResponse_t* instance, int* var);
 
 /**
  * Set the value of status
  * The current status of the file
  */
-int Crh_FileResponse_setStatus(struct Crh_FileResponse_t* instance, struct C_int_t new_var);
+int Crh_FileResponse_setStatus(struct Crh_FileResponse_t* instance, int new_var);
 
 /**
  * Get the value of reqid
@@ -141,13 +140,13 @@ int Crh_FileResponse_setServer(struct Crh_FileResponse_t* instance, const char* 
  * Get the value of port
  * The port where to find the file
  */
-int Crh_FileResponse_port(struct Crh_FileResponse_t* instance, struct C_int_t* var);
+int Crh_FileResponse_port(struct Crh_FileResponse_t* instance, int* var);
 
 /**
  * Set the value of port
  * The port where to find the file
  */
-int Crh_FileResponse_setPort(struct Crh_FileResponse_t* instance, struct C_int_t new_var);
+int Crh_FileResponse_setPort(struct Crh_FileResponse_t* instance, int new_var);
 
 /**
  * Get the value of protocol

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ReqId.h,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/07 14:34:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ReqId.h,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/08 10:19:07 $ $Author: sponcec3 $
  *
  * 
  *
@@ -30,7 +30,6 @@
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
 struct C_IObject_t;
-struct C_int_t;
 struct Cstager_ReqIdRequest_t;
 struct Cstager_ReqId_t;
 
@@ -68,7 +67,7 @@ int Cstager_ReqId_print(struct Cstager_ReqId_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_ReqId_TYPE(struct C_int_t* ret);
+int Cstager_ReqId_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -89,7 +88,7 @@ int Cstager_ReqId_id(struct Cstager_ReqId_t* instance,
  * Gets the type of the object
  */
 int Cstager_ReqId_type(struct Cstager_ReqId_t* instance,
-                       struct C_int_t* ret);
+                       int* ret);
 
 /**
  * Get the value of value

@@ -31,7 +31,6 @@
 #include "castor/stager/TapeStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
-struct C_int_t;
 struct Cstager_Segment_t;
 struct Cstager_Tape_t;
 
@@ -71,7 +70,7 @@ int Cstager_Tape_print(struct Cstager_Tape_t* instance);
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_Tape_TYPE(struct C_int_t* ret);
+int Cstager_Tape_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -92,7 +91,7 @@ int Cstager_Tape_id(struct Cstager_Tape_t* instance,
  * Gets the type of the object
  */
 int Cstager_Tape_type(struct Cstager_Tape_t* instance,
-                      struct C_int_t* ret);
+                      int* ret);
 
 /**
  * Get the value of vid
@@ -110,25 +109,25 @@ int Cstager_Tape_setVid(struct Cstager_Tape_t* instance, const char* new_var);
  * Get the value of side
  * Side (for future support of two sided media)
  */
-int Cstager_Tape_side(struct Cstager_Tape_t* instance, struct C_int_t* var);
+int Cstager_Tape_side(struct Cstager_Tape_t* instance, int* var);
 
 /**
  * Set the value of side
  * Side (for future support of two sided media)
  */
-int Cstager_Tape_setSide(struct Cstager_Tape_t* instance, struct C_int_t new_var);
+int Cstager_Tape_setSide(struct Cstager_Tape_t* instance, int new_var);
 
 /**
  * Get the value of tpmode
  * Tape access mode (WRITE_DISABLE or WRITE_ENABLE)
  */
-int Cstager_Tape_tpmode(struct Cstager_Tape_t* instance, struct C_int_t* var);
+int Cstager_Tape_tpmode(struct Cstager_Tape_t* instance, int* var);
 
 /**
  * Set the value of tpmode
  * Tape access mode (WRITE_DISABLE or WRITE_ENABLE)
  */
-int Cstager_Tape_setTpmode(struct Cstager_Tape_t* instance, struct C_int_t new_var);
+int Cstager_Tape_setTpmode(struct Cstager_Tape_t* instance, int new_var);
 
 /**
  * Get the value of errMsgTxt
@@ -144,23 +143,23 @@ int Cstager_Tape_setErrMsgTxt(struct Cstager_Tape_t* instance, const char* new_v
  * Get the value of errorCode
  * RTCOPY serrno if status == SEGMENT_FAILED
  */
-int Cstager_Tape_errorCode(struct Cstager_Tape_t* instance, struct C_int_t* var);
+int Cstager_Tape_errorCode(struct Cstager_Tape_t* instance, int* var);
 
 /**
  * Set the value of errorCode
  * RTCOPY serrno if status == SEGMENT_FAILED
  */
-int Cstager_Tape_setErrorCode(struct Cstager_Tape_t* instance, struct C_int_t new_var);
+int Cstager_Tape_setErrorCode(struct Cstager_Tape_t* instance, int new_var);
 
 /**
  * Get the value of severity
  */
-int Cstager_Tape_severity(struct Cstager_Tape_t* instance, struct C_int_t* var);
+int Cstager_Tape_severity(struct Cstager_Tape_t* instance, int* var);
 
 /**
  * Set the value of severity
  */
-int Cstager_Tape_setSeverity(struct Cstager_Tape_t* instance, struct C_int_t new_var);
+int Cstager_Tape_setSeverity(struct Cstager_Tape_t* instance, int new_var);
 
 /**
  * Get the value of vwAddress

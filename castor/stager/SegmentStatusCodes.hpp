@@ -39,13 +39,8 @@ namespace castor {
      */
     enum SegmentStatusCodes {
       SEGMENT_UNPROCESSED = 0,
-      SEGMENT_WAITFSEQ = 1,
-      SEGMENT_WAITPATH = 2,
-      SEGMENT_WAITCOPY = 3,
-      SEGMENT_COPYRUNNING = 4,
       SEGMENT_FILECOPIED = 5,
-      SEGMENT_FAILED = 6,
-      SEGMENT_UNKNOWN = -1
+      SEGMENT_FAILED = 6
     }; // end of enum SegmentStatusCodes
 
 #ifdef __cplusplus
