@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/11/03 11:47:35 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/11/04 15:48:53 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/11/03 11:47:35 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/11/04 15:48:53 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -662,13 +662,15 @@ int rtcpcld_updateTape(
         if ( (filereq->cprc != 0) &&
              ((filereq->err.severity & RTCP_FAILED) == RTCP_FAILED) &&
              (filereq->err.errorcode == ENOSPC) ) {
-          flags = TAPE_FULL;
           if ( freeSpace == 0 ) {
             rc = tapeStatus(tape,&freeSpace,&flags);
             if ( rc == -1 ) {
               LOG_SYSCALL_ERR("rtcpcld_tapeStatus()");
               return(-1);
             }
+          }
+          if ( (flags & (TAPE_FULL|DISABLED|EXPORTED|TAPE_RDONLY|ARCHIVED)) == 0 ) {
+            flags = TAPE_FULL;
           }
           /*
            * Try to set the real free space
@@ -685,14 +687,18 @@ int rtcpcld_updateTape(
             compressionFactor = 100;
           }
           {
-            char u64buf[32];
+            char u64buf1[32];
+            char u64buf2[32];
+            char u64buf3[32];
+            char u64buf4[32];
+            char u64buf5[32];
             rtcp_log(LOG_DEBUG,
                      "updateTape() on ENOSPC: bytes_in=%s, bytes_out=%s, host_bytes=%s, freeSpace=%s, bytesWritten=%s\n",
-                     u64tostr(filereq->bytes_in,u64buf,-sizeof(u64buf)),
-                     u64tostr(filereq->bytes_out,u64buf,-sizeof(u64buf)),
-                     u64tostr(filereq->host_bytes,u64buf,-sizeof(u64buf)),
-                     u64tostr(freeSpace,u64buf,-sizeof(u64buf)),
-                     u64tostr(bytesWritten,u64buf,-sizeof(u64buf))
+                     u64tostr(filereq->bytes_in,u64buf1,-sizeof(u64buf1)),
+                     u64tostr(filereq->bytes_out,u64buf2,-sizeof(u64buf2)),
+                     u64tostr(filereq->host_bytes,u64buf3,-sizeof(u64buf3)),
+                     u64tostr(freeSpace,u64buf4,-sizeof(u64buf4)),
+                     u64tostr(bytesWritten,u64buf5,-sizeof(u64buf5))
                      );
           }
         } else {
