@@ -12,7 +12,7 @@
 #define RTCPCLIENTD_FACILITY_NAME "rtcpcld"
 
 #define RTCPCLD_NB_PARAMS (4)
-#define RTCPCLD_LOG_WHERE "File:",DLF_MSG_PARAM_STR,__FILE__,"Line:",DLF_MSG_PARAM_INT,__LINE__,"errno", \
+#define RTCPCLD_LOG_WHERE "File",DLF_MSG_PARAM_STR,__FILE__,"Line",DLF_MSG_PARAM_INT,__LINE__,"errno", \
     DLF_MSG_PARAM_INT,errno,"serrno",DLF_MSG_PARAM_INT,serrno
 
 enum RtcpcldMessageNo {
@@ -42,7 +42,12 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_SEGMFAILED,
     RTCPCLD_MSG_EXECCMD,
     RTCPCLD_MSG_NEWCONNECT,
-    RTCPCLD_MSG_RESERVED25
+    RTCPCLD_MSG_UNKNOPT,
+    RTCPCLD_MSG_RESERVED26,
+    RTCPCLD_MSG_RESERVED27,
+    RTCPCLD_MSG_RESERVED28,
+    RTCPCLD_MSG_RESERVED29,
+    RTCPCLD_MSG_RESERVED30
 };
 
 struct RtcpcldMessages {
@@ -78,7 +83,12 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_SEGMFAILED, DLF_LVL_ERROR, "Attempt to update segment with SEGMENT_FAILED status "},
     { RTCPCLD_MSG_EXECCMD, DLF_LVL_SYSTEM, "Execute command"},
     { RTCPCLD_MSG_NEWCONNECT, DLF_LVL_SYSTEM, "New connection"},
-    { RTCPCLD_MSG_RESERVED25, DLF_LVL_DEBUG, ""}
+    { RTCPCLD_MSG_UNKNOPT, DLF_LVL_ERROR, "Unknown option"},
+    { RTCPCLD_MSG_RESERVED26, DLF_LVL_DEBUG, ""},
+    { RTCPCLD_MSG_RESERVED27, DLF_LVL_DEBUG, ""},
+    { RTCPCLD_MSG_RESERVED28, DLF_LVL_DEBUG, ""},
+    { RTCPCLD_MSG_RESERVED29, DLF_LVL_DEBUG, ""},
+    { RTCPCLD_MSG_RESERVED30, DLF_LVL_DEBUG, ""}
 };
 #else /* RTCPCLD_COMMON */
 extern struct RtcpcldMessages rtcpcldMessages;
