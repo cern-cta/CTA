@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IClientFactoryCInt.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/16 11:01:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IClientFactoryCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/01/04 13:22:35 $ $Author: bcouturi $
  *
  * 
  *
@@ -39,10 +39,10 @@ extern "C" {
     try {
       std::string res =
         castor::IClientFactory::client2String(*cl);
-      return res.c_str();
+      return strdup(res.c_str());
     } catch (castor::exception::Exception e) {
       serrno = e.code();
-      *errorMsg = e.getMessage().str().c_str();
+      *errorMsg = strdup(e.getMessage().str().c_str());
     }
     return 0;
   }
@@ -56,7 +56,7 @@ extern "C" {
       return castor::IClientFactory::string2Client(st);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
-      *errorMsg = e.getMessage().str().c_str();
+      *errorMsg = strdup(e.getMessage().str().c_str());
     }
     return 0;    
   }
