@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.14 2001/02/02 16:53:36 jdurand Exp $
+ * $Id: stglogit.c,v 1.15 2001/02/12 12:29:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.14 $ $Date: 2001/02/02 16:53:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.15 $ $Date: 2001/02/12 12:29:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -101,7 +101,7 @@ int stglogflags(va_alist) va_dcl
 	/* Buffersize all the flags */
 	time (&current_time);		/* Get current time */
 	tm = localtime (&current_time);
-	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
+	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s flags: ", tm->tm_mon+1,
 		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
 	thisp = prtbuf + strlen(prtbuf);
 	i = -1;
