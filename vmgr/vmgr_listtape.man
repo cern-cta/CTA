@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_listtape.man,v $ $Revision: 1.4 $ $Date: 2001/09/26 09:13:57 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr_listtape.man,v $ $Revision: 1.5 $ $Date: 2002/02/07 06:46:24 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_LISTTAPE 3 "$Date: 2001/09/26 09:13:57 $" CASTOR "vmgr Library Functions"
+.TH VMGR_LISTTAPE 3 "$Date: 2002/02/07 06:46:24 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_listtape \- list all existing tape entries in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -10,12 +10,16 @@ vmgr_listtape \- list all existing tape entries in the CASTOR Volume Manager
 .br
 \fB#include "vmgr_api.h"\fR
 .sp
-.BI "struct vmgr_tape_info *vmgr_listtape (char *" pool_name ,
+.BI "struct vmgr_tape_info *vmgr_listtape (char *" vid ,
+.BI "char *" pool_name ,
 .BI "int " flags ,
 .BI "vmgr_list *" listp )
 .SH DESCRIPTION
 .B vmgr_listtape
 lists all existing tape entries in the CASTOR Volume Manager.
+.TP
+.I vid
+if not NULL, restricts the list to the media having this volume visual identifier.
 .TP
 .I pool_name
 if not NULL, restricts the list to the tapes belonging to this pool.
