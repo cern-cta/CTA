@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.33 $ $Date: 2000/02/29 15:18:34 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.34 $ $Date: 2000/03/02 11:48:56 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -97,6 +97,7 @@ int rtcpd_SignalFilePositioned(tape_list_t *tape, file_list_t *file) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_cond_broadcast_ext(proc_cntl): %s\n",
             sstrerror(serrno));
+        (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
         return(-1);
     }
     rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
@@ -184,6 +185,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                     if ( convert_buffer != NULL ) free(convert_buffer);
                     if ( convert_context != NULL ) free(convert_context);
                 }
+                (void)Chtread_mutex_unlock_ext(databufs[i]->lock);
                 return(-1);
             }
             databufs[i]->nb_waiters--;
@@ -431,6 +433,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                     if ( convert_buffer != NULL ) free(convert_buffer);
                     if ( convert_context != NULL ) free(convert_context);
                 }
+                (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 return(-1);
             }
         }
@@ -473,6 +476,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                         if ( convert_buffer != NULL ) free(convert_buffer);
                         if ( convert_context != NULL ) free(convert_context);
                     }
+                    (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
                     return(-1);
                 }
             }
@@ -633,6 +637,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"TapeToMemory() Cthread_cond_wait_ext(): %s\n",
                     sstrerror(serrno));
+                (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 return(-1);
             }
             databufs[i]->nb_waiters--;
@@ -860,6 +865,8 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
              if ( rc == -1 ) {
                  rtcp_log(LOG_ERR,"TapeToMemory() Cthread_mutex_lock_ext(proc_cntl): %s\n",
                      sstrerror(serrno));
+                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
+                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                  return(-1);
              }
              proc_cntl.nb_reserved_bufs = 0;
@@ -870,12 +877,17 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
              if ( rc == -1 ) {
                  rtcp_log(LOG_ERR,"TapeToMemory() Cthread_cond_broadcast_ext(proc_cntl): %s\n",
                      sstrerror(serrno));
+                 (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
+                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                  return(-1);
              }
              rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
              if ( rc == -1 ) {
                  rtcp_log(LOG_ERR,"TapeToMemory() Cthread_mutex_unlock_ext(proc_cntl): %s\n",
                      sstrerror(serrno));
+                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
+                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                  return(-1);
              }
              /*
@@ -891,6 +903,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"TapeToMemory() Cthread_cond_broadcast_ext(): %s\n",
                     sstrerror(serrno));
+                (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 return(-1);
             }
         }
@@ -1208,6 +1221,14 @@ void *tapeIOthread(void *arg) {
                 TP_STATUS(RTCP_PS_INFO);
                 rc = rtcpd_Info(nexttape,nextfile);
                 TP_STATUS(RTCP_PS_NOBLOCKING);
+                if ( rc == -1 ) {
+                    save_errno = errno;
+                    save_serrno = serrno;
+                    (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
+                    (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+                    errno = save_errno;
+                    serrno = save_serrno;
+                }
                 CHECK_PROC_ERR(NULL,nextfile,"rtcpd_Info() error");
                 if ( BroadcastInfo == TRUE ) {
                     /*

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.39 $ $Date: 2000/02/29 15:18:31 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.40 $ $Date: 2000/03/02 11:48:53 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -107,6 +107,7 @@ static int DiskIOstarted() {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"DiskIOstarted(): Cthread_cond_broadcast_ext(proc_cntl): %s\n",
             sstrerror(serrno));
+        (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
         return(-1);
     }
     rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
@@ -140,6 +141,7 @@ int rtcpd_WaitForPosition(tape_list_t *tape, file_list_t *file) {
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"rtcpd_WaitForPosition(): Cthread_cond_broadcast_ext(proc_cntl) : %s\n", 
                 sstrerror(serrno));
+            (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
             return(-1);
         }
         rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
@@ -265,7 +267,11 @@ static int LockForAppend(const int lock) {
          * There cannot be more waiters than the number of disk IO threads.
          */
         wait_list = (int *)calloc(1,proc_stat.nb_diskIO);
-        if ( wait_list == NULL ) return(-1);
+        if ( wait_list == NULL ) {
+            (void)Cthread_cond_broadcast_ext(proc_cntl.DiskFileAppend_lock);
+            (void)Cthread_mutex_unlock_ext(proc_cntl.DiskFileAppend_lock);
+            return(-1);
+        }
     }
     if ( lock != 0 ) {
         wait_list[next_entry] = nb_waiters;
@@ -274,13 +280,12 @@ static int LockForAppend(const int lock) {
         nb_waiters++;
         while ( proc_cntl.DiskFileAppend == lock || *my_wait_entry > 0 ) {
             rc = Cthread_cond_wait_ext(proc_cntl.DiskFileAppend_lock);
-            if ( (rtcpd_CheckProcError() & 
+            if ( rc == -1 || (rtcpd_CheckProcError() & 
                  (RTCP_FAILED | RTCP_RESELECT_SERV)) != 0 ) { 
                 (void)Cthread_cond_broadcast_ext(proc_cntl.DiskFileAppend_lock);
                 (void)Cthread_mutex_unlock_ext(proc_cntl.DiskFileAppend_lock);
                 return(-1);
             }
-            if ( rc == -1 ) return(-1);
         }
         nb_waiters--;
         for (i=0; i<proc_stat.nb_diskIO; i++) wait_list[i]--;
@@ -289,9 +294,8 @@ static int LockForAppend(const int lock) {
     proc_cntl.DiskFileAppend = lock;
     if ( lock == 0 ) {
         rc = Cthread_cond_broadcast_ext(proc_cntl.DiskFileAppend_lock);
-        if ( rc == -1 ) return(-1);
     }
-    rc = Cthread_mutex_unlock_ext(proc_cntl.DiskFileAppend_lock);
+    (void)Cthread_mutex_unlock_ext(proc_cntl.DiskFileAppend_lock);
     if ( rc == -1 ) return(-1);
     return(0);
 }
@@ -605,6 +609,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                     sstrerror(serrno));
                 if ( convert_buffer != NULL ) free(convert_buffer);
                 if ( f77conv_context != NULL ) free(f77conv_context);
+                (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 return(-1);
             }
 
@@ -857,6 +862,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                     sstrerror(serrno));
                 if ( convert_buffer != NULL ) free(convert_buffer);
                 if ( f77conv_context != NULL ) free(f77conv_context);
+                (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 return(-1);
             }
         }
@@ -978,6 +984,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"DiskToMemory() Cthread_cond_wait_ext(): %s\n",
                     sstrerror(serrno));
+                (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 return(-1);
             }
             databufs[i]->nb_waiters--;
@@ -1158,6 +1165,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"DiskToMemory() Cthread_cond_broadcast_ext(): %s\n",
                     sstrerror(serrno));
+                (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 return(-1);
             }
         }
@@ -1599,6 +1607,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
             if ( rc != RTCP_OK && rc != RTCP_RETRY_OK ) {
                 rtcp_log(LOG_ERR,"rtcp_StartDiskIO() processing error detected\n");
                 proc_cntl.diskIOfinished = 1;
+                /* It's not our error */
                 return(0);
             }
             /*
