@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: makedeb.sh,v 1.7 2005/01/24 15:08:44 jdurand Exp $
+# $Id: makedeb.sh,v 1.8 2005/01/30 12:13:08 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -77,6 +77,7 @@ perl -pi -e s/__TIMESTAMP__/\"${timestamp}\"/g h/patchlevel.h
 ## Ask for a changelog
 ## We need an editor that supports the +n option
 #
+cvs update -Ad debian/changelog
 fakeroot dch --newversion ${a}.${b}.${c}-${d}
 cvs commit  -m "Version ${a}.${b}.${c}-${d}" debian/changelog
 #
