@@ -1,11 +1,11 @@
 .\"
-.\" $Id: stagechng.man,v 1.12 2002/07/27 06:51:44 jdurand Exp $
+.\" $Id: stagechng.man,v 1.13 2002/09/24 04:51:06 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.12 $ $Date: 2002/07/27 06:51:44 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.13 $ $Date: 2002/09/24 04:51:06 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECHNG l "$Date: 2002/07/27 06:51:44 $"
+.TH STAGECHNG l "$Date: 2002/09/24 04:51:06 $"
 .SH NAME
 stagechng \- change status and time dependency of records in the stager catalog
 .SH SYNOPSIS
@@ -26,6 +26,8 @@ stagechng \- change status and time dependency of records in the stager catalog
 .BI \-\-mintime " mintime"
 ]  [
 .BI \-p " poolname"
+]  [
+.BI \-\-hsmcreat
 ]  [
 .BI \-\-reqid " reqid"
 ] [
@@ -78,6 +80,9 @@ Sets the minimum time before migration, with respect to original value of its fi
 Restrict the pools where file is to be searched in pool
 .IR poolname .
 This may also be specified thru the environment variable STAGE_POOL.
+.TP
+.BI \-\-hsmcreat
+Creates file in the Name Server if necessary.
 .TP
 .BI \-\-reqid " reqid"
 Forces the search to this internal request id.
