@@ -595,7 +595,7 @@ clean:
 	-@RemoveFiles(FilesToClean)
  
 clobber:        clean
-	-@RemoveFiles($(NSLIBTARGET) $(CLIENT) $(PROGS_D))
+	-@RemoveFiles($(NSLIBTARGET) $(CLIENT) $(PROGS_D) Cns_oracle_ifce.c Cns_oracle_ifce.lis)
  
 #if _WIN32
 depend:
