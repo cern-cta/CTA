@@ -26,7 +26,6 @@
 
 // Include Files
 #include "castor/IObject.hpp"
-#include "castor/IPersistent.hpp"
 
 extern "C" {
 
@@ -36,20 +35,6 @@ extern "C" {
   int C_IObject_delete(castor::IObject* obj) {
     delete obj;
     return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // C_IObject_getIPersistent
-  //----------------------------------------------------------------------------
-  castor::IPersistent* C_IObject_getIPersistent(castor::IObject* obj) {
-    return obj;
-  }
-
-  //----------------------------------------------------------------------------
-  // C_IObject_fromIPersistent
-  //----------------------------------------------------------------------------
-  castor::IObject* C_IObject_fromIPersistent(castor::IPersistent* obj) {
-    return dynamic_cast<castor::IObject*>(obj);
   }
 
   //----------------------------------------------------------------------------
