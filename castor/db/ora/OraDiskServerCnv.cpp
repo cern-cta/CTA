@@ -317,6 +317,7 @@ void castor::db::ora::OraDiskServerCnv::createRep(castor::IAddress* address,
     dynamic_cast<castor::stager::DiskServer*>(object);
   // check whether something needs to be done
   if (0 == obj) return;
+  if (0 != obj->id()) return;
   try {
     // Check whether the statements are ok
     if (0 == m_insertStatement) {

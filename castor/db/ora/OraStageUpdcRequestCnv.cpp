@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdcRequestCnv.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2004/11/01 15:19:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdcRequestCnv.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2004/11/01 17:30:06 $ $Author: sponcec3 $
  *
  * 
  *
@@ -612,6 +612,7 @@ void castor::db::ora::OraStageUpdcRequestCnv::createRep(castor::IAddress* addres
     dynamic_cast<castor::stager::StageUpdcRequest*>(object);
   // check whether something needs to be done
   if (0 == obj) return;
+  if (0 != obj->id()) return;
   try {
     // Check whether the statements are ok
     if (0 == m_insertStatement) {

@@ -374,6 +374,7 @@ void castor::db::ora::OraSegmentCnv::createRep(castor::IAddress* address,
     dynamic_cast<castor::stager::Segment*>(object);
   // check whether something needs to be done
   if (0 == obj) return;
+  if (0 != obj->id()) return;
   try {
     // Check whether the statements are ok
     if (0 == m_insertStatement) {

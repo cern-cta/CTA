@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/11/01 15:19:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/01 17:30:06 $ $Author: sponcec3 $
  *
  * 
  *
@@ -259,6 +259,7 @@ void castor::db::ora::OraReqIdCnv::createRep(castor::IAddress* address,
     dynamic_cast<castor::stager::ReqId*>(object);
   // check whether something needs to be done
   if (0 == obj) return;
+  if (0 != obj->id()) return;
   try {
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
