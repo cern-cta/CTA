@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.25 2000/03/13 16:34:03 baud Exp $
+ * $Id: Ctape.h,v 1.26 2000/03/31 14:10:04 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.25 $ $Date: 2000/03/13 16:34:03 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.26 $ $Date: 2000/03/31 14:10:04 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -252,7 +252,7 @@ struct tpfil {		/* tape file description */
 	char	filstat;	/* CHECK_FILE, NEW_FILE or APPEND */
 	int	fsec;		/* file section number */
 	int	fseq;		/* file sequence number requested by user */
-	unsigned int blockid;	/* for positionning with locate command */
+	unsigned char blockid[4];	/* for positionning with locate command */
 	int	lrecl;		/* record length */
 	int	Qfirst;		/* fseq of first file of a mapped volume */
 	int	Qlast;		/* fseq of last file of a mapped volume */
