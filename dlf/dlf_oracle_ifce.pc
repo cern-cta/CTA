@@ -6,11 +6,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.1 $ $Date: 2003/08/20 12:59:18 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.2 $ $Date: 2003/10/10 11:35:56 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
 #include <string.h>
+#include <time.h>
 #include <sys/types.h>
 #include <sqlca.h>
 #ifndef USE_ORACLE
@@ -626,7 +627,7 @@ dlf_log_message_t *log_message;
 		(message_seq.currval, :param->name, TO_NUMBER(:param->strval));
 		break;
 	      case DLF_MSG_PARAM_UUID:
-		suuid = dlf_uuid2hex(param->strval, subrq_id_str, sizeof(subrq_id_str));
+		suuid = dlf_uuid2hex(*((Cuuid_t*)param->strval), subrq_id_str, sizeof(subrq_id_str));
 		if (suuid == NULL) {
 		    serrno = SEINTERNAL;
 		    return (-1);
