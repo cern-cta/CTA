@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_mount.man,v $ $Revision: 1.8 $ $Date: 1999/09/08 12:24:46 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_mount.man,v $ $Revision: 1.9 $ $Date: 1999/11/25 16:19:40 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_MOUNT l "$Date: 1999/09/08 12:24:46 $"
+.TH CTAPE_MOUNT l "$Date: 1999/11/25 16:19:40 $"
 .SH NAME
 Ctape_mount \- send a request to the tape daemon to have a tape mounted
 .SH SYNOPSIS
@@ -18,7 +18,8 @@ Ctape_mount \- send a request to the tape daemon to have a tape mounted
 .BI "char *" drive ,
 .BI "int " mode ,
 .BI "char *" vsn ,
-.BI "char *" lbltype );
+.BI "char *" lbltype ,
+.BI "int " vdqm_reqid );
 .SH DESCRIPTION
 .B Ctape_mount
 checks with TMS if the tape identified by
@@ -126,6 +127,10 @@ It must match the label type specified in TMS.
 is allowed only for read.
 Default is
 .BR sl .
+.TP
+.I vdqm_reqid
+is the request identifier assigned by vdqm.
+It should be zero in case vdqm is not used.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
@@ -195,3 +200,5 @@ Reselect server requested by operator.
 .TP
 .B ETVBSY
 Volume busy or inaccessible.
+.SH SEE ALSO
+.BR vdqm_SendVolReq(l)
