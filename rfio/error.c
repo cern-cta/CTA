@@ -1,5 +1,5 @@
 /*
- * $Id: error.c,v 1.8 2001/06/01 12:08:55 jdurand Exp $
+ * $Id: error.c,v 1.9 2003/09/09 11:13:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: error.c,v $ $Revision: 1.8 $ $Date: 2001/06/01 12:08:55 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: error.c,v $ $Revision: 1.9 $ $Date: 2003/09/09 11:13:45 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* error.c      Remote File I/O - error numbers and message handling    */
@@ -24,11 +24,6 @@ static char sccsid[] = "@(#)$RCSfile: error.c,v $ $Revision: 1.8 $ $Date: 2001/0
 /*
  * RFIO global error number.
  */
-
-#ifndef linux 
-extern char * sys_errlist[];
-#endif
-
 
 char *rfio_lasthost() ;
 char *rfio_serror() ;
@@ -148,7 +143,7 @@ size_t buflen;
 	    return (buf);
 	 }
 	 else {
-	    strcpy(buf, sys_errlist[last_err]);
+	    strcpy(buf, strerror(last_err));
 	    return (buf);
 	 }
       }
