@@ -1,6 +1,9 @@
 /*
- * $Id: getuser.c,v 1.3 1999/07/29 07:40:41 obarring Exp $
+ * $Id: getuser.c,v 1.4 1999/07/29 10:48:56 obarring Exp $
  * $Log: getuser.c,v $
+ * Revision 1.4  1999/07/29 10:48:56  obarring
+ * Fixed infile declaration again...
+ *
  * Revision 1.3  1999/07/29 07:40:41  obarring
  * Fix infile declaration
  *
@@ -15,7 +18,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: getuser.c,v 1.3 1999/07/29 07:40:41 obarring Exp $";
+static char cvsId[] = "$Id: getuser.c,v 1.4 1999/07/29 10:48:56 obarring Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -33,16 +36,21 @@ extern char     *sys_errlist[] ;        /* System error list  */
 #ifndef MAPPING_FILE
 #if defined(_WIN32)
 #define MAPPING_FILE "%SystemRoot%\\system32\\drivers\\etc\\users.ext"
+#else
+#define MAPPING_FILE "/etc/ext.users"
+#endif /* _WIN32 */
+#endif  
+
+#if defined(_WIN32)
 /*
  * infile will be modified at runtime when %SystemRoot% is
  * resolved. Must reserv enough space to hold new pathname.
  */
 static char infile[CA_MAXPATHLEN+1] = MAPPING_FILE;
 #else
-#define MAPPING_FILE "/etc/ext.users"
 static char *infile = MAPPING_FILE;
 #endif  /* WIN32 */
-#endif  
+
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
