@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: checkjobdied.c,v $ $Revision: 1.1 $ $Date: 1999/09/20 09:50:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: checkjobdied.c,v $ $Revision: 1.2 $ $Date: 1999/10/03 06:33:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	checkjobdied - returns the list of jobs that have died */
@@ -40,7 +40,7 @@ int jobs[];
 #else
 #if _AIX && _IBMR2
 	long lastprocaddr;
-	static struct nlist nl[3];
+	struct nlist nl[3];
 	int nproc;
 	struct proc *p;
 	struct proc *proctab;

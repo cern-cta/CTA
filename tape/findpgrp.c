@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: findpgrp.c,v $ $Revision: 1.2 $ $Date: 1999/09/20 11:31:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: findpgrp.c,v $ $Revision: 1.3 $ $Date: 1999/10/03 06:37:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	findpgrp - get process group (replaces getpgrp broken by C-shell) */
@@ -52,7 +52,7 @@ findpgrp()
 #if _AIX && _IBMR2
 	struct proc *findproc();
 	long lastprocaddr;
-	static struct nlist nl[3];
+	struct nlist nl[3];
 	struct proc *p;
 	struct proc *proctab;
 	long proctabaddr;
