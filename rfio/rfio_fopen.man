@@ -1,0 +1,85 @@
+.\" @(#)$RCSfile: rfio_fopen.man,v $ $Revision: 1.1 $ $Date: 2000/07/07 13:37:46 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RFIO_FOPEN 3 "$Date: 2000/07/07 13:37:46 $" CASTOR "Rfio Library Functions"
+.SH NAME
+rfio_fopen \- opens a file
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "RFILE *rfio_fopen (char *" path ", char *" mode ");"
+.SH DESCRIPTION
+.B rfio_fopen
+opens the file whose name is the string pointed to by
+.BI path
+, a character string containing the filename specification, and associates a RFILE stream with it.
+.P
+.BI mode
+is an access mode indicator. One of the characters "r" or "w".
+.SH RETURN VALUE
+This routine returns NULL if the operation failed or a non-NULL pointer to a RFILE structure if the operation was successful. If it fails, \fBserrno\fP variable is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named file/directory does not exist or is a null pathname.
+.TP
+.B EACCES
+Search permission is denied on a component of the
+.I path
+prefix.
+.TP
+.B EFAULT
+path is NULL
+.TP
+.B ENOTDIR
+A component of
+.I path
+prefix is not a directory.
+.TP
+.B EINVAL
+The mode provided to local open is invalid (see \fBfopen\fP(3))
+.TP
+.B EMFILE
+Too many open files
+.TP
+.B ECONNRESET
+Connection reset by peer
+.TP
+.B ETIMEDOUT
+Connection timed out
+.TP
+.B ECONNREFUSED
+Connection refused
+.TP
+.B EHOSTUNREACH
+No route to host
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SEBADVERSION
+Version ID mismatch
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B SERTYEXHAUST
+Retry count exhausted
+.TP
+.B SENORCODE
+Host did not return error number
+.TP
+.B SEHOSTREFUSED
+Host is not on local network and no mapping found
+
+.SH SEE ALSO
+.BR fopen(3) ,
+.BR rfio_serror(3) ,
+.BR rfio_perror(3) ,
+.BR serrno(3)
