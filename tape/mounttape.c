@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.22 $ $Date: 2000/04/07 09:05:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)mounttape.c,v 1.22 2000/04/07 09:05:07 CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -177,9 +177,9 @@ char	**argv;
 
 #ifdef TMS
 	vbsyretry = 0;
-	while ((c = sendtmsmount (mode, "PE", vid, jid, name, acctname, drive)) == ETVBSY &&
-	    vbsyretry++ == 0) {
-			n = sendtmsmount (mode, "CA", vid, jid, name, acctname, drive);
+	while ((c = sendtmsmount (mode, "PE", vid, jid, name, acctname, drive)) == ETVBSY) {
+		n = sendtmsmount (mode, "CA", vid, jid, name, acctname, drive);
+		if (vbsyretry++) break;
 		sleep (10);
 	}
 	if (c)
