@@ -253,6 +253,8 @@ void *arg;
 	Csec_server_reinit_context(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
 	if (Csec_server_establish_context(&(thip->sec_ctx),thip->s) < 0) {
 	  nslogit(func, "Could not establish context: %s !\n", Csec_geterrmsg());
+	  netclose (thip->s);
+	  thip->s = -1;
 	  return NULL;
 	}
 	/* Connection could be done from another castor service */
@@ -271,6 +273,7 @@ void *arg;
 	  else {
 	    nslogit(func, "CSEC: Can't get client username\n");
 	    netclose (thip->s);
+	    thip->s = -1;
 	    return (NULL);
 	  }
 	}
