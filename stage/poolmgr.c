@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.200 2002/05/26 09:44:43 jdurand Exp $
+ * $Id: poolmgr.c,v 1.201 2002/05/30 09:38:21 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.200 $ $Date: 2002/05/26 09:44:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.201 $ $Date: 2002/05/30 09:38:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -95,9 +95,9 @@ extern int nextreqid _PROTO(());
 #if !defined(linux)
 extern char *sys_errlist[];
 #endif
-static struct migrator *migrators;
+struct migrator *migrators;
 struct fileclass *fileclasses;
-static int nbmigrator;
+int nbmigrator;
 int nbpool;
 int nbhost;
 static char *nfsroot;
