@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.9 $ $Date: 2001/06/22 05:15:52 $ CERN IT-PDP/DM Claire Redmond";
+static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.10 $ $Date: 2001/10/04 13:47:08 $ CERN IT-PDP/DM Claire Redmond";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -23,6 +23,7 @@ static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.9 $ $Date: 2001/
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
+#include <Cgetopt.h>
 #include <sacct.h>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -45,9 +46,6 @@ static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.9 $ $Date: 2001/
 #define swap_it(a) {int __a; \
 	swab((char *)&a, (char *)&__a, sizeof(a)); \
 	a = (unsigned int)__a<<16 | ((unsigned int)__a>>16); }
-
-extern char *optarg;	/* Optional command line arguments */
-extern int optind; 
 
 #ifndef linux
 extern char *sys_errlist[];
@@ -316,6 +314,7 @@ main (argc, argv)
      int argc;
      char **argv;
 {
+  char acctdir[80];		/* Accounting directory name and path */
   char acctfile[80];		/* accounting file path and name */
   char acctweek[80];		/* week number.. optional */
   char acctfile2[80];		/* input accounting file */
@@ -331,6 +330,10 @@ main (argc, argv)
   int fd_acct;		/* file descriptor */
   int gflag = 0;		/* set if device group specified */
   int i;			/* counter */
+  static struct Coptions longopts[] = {
+        {"acctdir", REQUIRED_ARGUMENT, 0, 'A'},
+        {0, 0, 0, 0}
+  };
   int nrec = 0;		/* number of records read */
   int num_serv_errs = 0;	/* number of servers on which open failed */
   struct accttape *rp;	/* pointer to accttape record */
@@ -356,6 +359,7 @@ main (argc, argv)
   struct tapeseq *tpseq;
   
   /* set acctfile = NULL */
+  acctdir[0] = '\0';
   acctfile[0] = '\0';
   acctfile2[0] = '\0';
   acctweek[0] = '\0';
@@ -365,8 +369,13 @@ main (argc, argv)
 
   /* Read in command line options */
 
-  while ((c = getopt (argc, argv, "cde:f:g:S:s:vw:")) != EOF) {
+  Copterr = 1;
+  Coptind = 1;
+  while ((c = Cgetopt_long (argc, argv, "cde:f:g:S:s:vw:", longopts, NULL)) != EOF) {
 	switch (c) {
+    case 'A':                 /* Accounting directory */
+      strcpy(acctdir, Coptarg);
+      break;
     case 'c':
       use_conffile++;
       break; 
@@ -386,34 +395,34 @@ main (argc, argv)
 #endif
       break;
     case 'e':		/* endtime */
-      if ((endtime = cvt_datime (optarg)) < 0) {
-        fprintf (stderr, "incorrect time value %s\n", optarg);
+      if ((endtime = cvt_datime (Coptarg)) < 0) {
+        fprintf (stderr, "incorrect time value %s\n", Coptarg);
         errflg = 1;
       }
       eflag++;
       break;
     case 'f':		/* accounting file */
-      strcpy (acctfile2, optarg);
+      strcpy (acctfile2, Coptarg);
       break;
     case 'g':		/* device group */
-      strcpy (dev_group, optarg);
+      strcpy (dev_group, Coptarg);
       gflag++;
       break;
     case 'S':		/* server */
-      strcpy (server_name, optarg);
+      strcpy (server_name, Coptarg);
       Sflag++;
       break;
     case 's':
-      if (strncmp (optarg, "-", 1) == 0) {
-        sub_time = atoi (optarg+1);
+      if (strncmp (Coptarg, "-", 1) == 0) {
+        sub_time = atoi (Coptarg+1);
         time (&current_time);
         if ((starttime = current_time - sub_time) <= 0) {
           fprintf (stderr, "starttime is a not valid %d\n", starttime);
           errflg = 1;
         }
       }
-      else if ((starttime = cvt_datime (optarg)) < 0) {
-        fprintf (stderr, "incorrect time value %s\n", optarg);
+      else if ((starttime = cvt_datime (Coptarg)) < 0) {
+        fprintf (stderr, "incorrect time value %s\n", Coptarg);
         errflg = 1;
       }
       sflag++;
@@ -422,7 +431,7 @@ main (argc, argv)
       vflag++;
       break;
     case 'w':
-      strcpy (acctweek, optarg);
+      strcpy (acctweek, Coptarg);
       wflag++;
       break;
     case '?':
@@ -433,7 +442,7 @@ main (argc, argv)
 
   /* if invalid options or additional parameters given exit program with message */
 
-  if (argc > optind) {	/* additional parameters */
+  if (argc > Coptind) {	/* additional parameters */
 	fprintf (stderr, "Additional parameters given\n");
 	errflg = 1;
   }
@@ -474,12 +483,19 @@ main (argc, argv)
   serv_list = serv_first;
  
   while (serv_list) {
+    if (! *acctdir) {
 	strcpy (acctfile, serv_list->server_name);
 	strcat (acctfile, ":");
 	if (acctfile2[0] != '\0')
       strcat (acctfile, acctfile2);
 	else
       strcat (acctfile, ACCTFILE);
+    } else {
+      strcpy(acctfile, acctdir);
+      strcat(acctfile, "/");
+      strcat(acctfile, serv_list->server_name);
+      strcat(acctfile, "/sacct");
+    }
 	if (wflag) {
       strcat (acctfile, ".");
       strcat (acctfile, acctweek);
@@ -3403,7 +3419,9 @@ usage (cmd)
      char *cmd;
 {
   fprintf (stderr, "usage: %s ", cmd);
-  fprintf (stderr, "%s", "[-e end_time][-f accounting_file][-g device_group][-S server_name][-s start_time][-v][-w week_number]\n");
+  fprintf (stderr, "%s%s%s", "[--acctdir accounting_dir][-e end_time]\n",
+    "\t[-f accounting_file][-g device_group][-S server_name][-s start_time]\n",
+    "\t[-v][-w week_number]\n");
 }		
 
 /***************************************************/
@@ -3589,7 +3607,7 @@ sorted_grp = sorted_groups_first;
 
      i = 0;
       
-      while ( i < 10)
+      while ( i < 20)
        {
          usr = users_first;
          
@@ -3612,7 +3630,7 @@ sorted_grp = sorted_groups_first;
              usr = usr->next;
            }
 
-          if((i < 9) && (tot_max != 0))
+          if((i < 19) && (tot_max != 0))
             {
               sorted_usr->next = (struct users*) calloc (1, sizeof (struct users));
 	      sorted_usr->next->prev = sorted_usr;
@@ -3630,7 +3648,7 @@ sorted_grp = sorted_groups_first;
      tot_prev = 999999*1024;
      tot = 0;
      
-      while ( i < 10)
+      while ( i < 20)
        {
          grp = groups_first;
          
@@ -3653,7 +3671,7 @@ sorted_grp = sorted_groups_first;
              grp = grp->next;
            }
 
-          if((i < 9) && (tot_max != 0))
+          if((i < 19) && (tot_max != 0))
             {
               sorted_grp->next = (struct groups*) calloc (1, sizeof (struct groups));
 	      sorted_grp->next->prev = sorted_grp;
@@ -3685,7 +3703,7 @@ printf("\t******************************************\n");
 
 printf("\n\tTapes read : %d\n\tTapes written : %d\n", tapes_read, tapes_written);
 printf("\n");
-printf("-- 10 most active users and groups --\n\n");
+printf("-- 20 most active users and groups --\n\n");
 usr = sorted_users_first;
 printf("User         Tapes read    Tapes written  MB read  MB write  Drive hrs\n");
 printf("----------   ------------  -------------  -------  --------  ---------\n");
