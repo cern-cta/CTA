@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrmodifypool.c,v $ $Revision: 1.2 $ $Date: 2001/02/04 08:38:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrmodifypool.c,v $ $Revision: 1.3 $ $Date: 2001/02/21 06:05:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrmodifypool - modify an existing tape pool definition */
@@ -36,6 +36,7 @@ char **argv;
 	uid_t pool_uid = -1;
 	struct passwd *pwd;
 
+	Copterr = 1;
 	Coptind = 1;
         while ((c = Cgetopt_long (argc, argv, "P:", longopts, NULL)) != EOF) {
                 switch (c) {

@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrentertape.c,v $ $Revision: 1.6 $ $Date: 2000/03/05 16:41:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrentertape.c,v $ $Revision: 1.7 $ $Date: 2001/02/21 06:05:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrentertape - enter a new tape volume */
@@ -42,6 +42,7 @@ char **argv;
 	char *vid = NULL;
 	char *vsn = NULL;
 
+	Copterr = 1;
 	Coptind = 1;
         while ((c = Cgetopt_long (argc, argv, "d:g:l:P:V:v:", longopts, NULL)) != EOF) {
                 switch (c) {

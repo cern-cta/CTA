@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlistmodel.c,v $ $Revision: 1.6 $ $Date: 2001/01/19 11:21:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlistmodel.c,v $ $Revision: 1.7 $ $Date: 2001/02/21 06:05:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      vmgrlistmodel - list cartridge model entries */
@@ -47,6 +47,7 @@ char **argv;
 	WSADATA wsadata;
 #endif
 
+	Copterr = 1;
 	Coptind = 1;
 	while ((c = Cgetopt_long (argc, argv, "", longopts, NULL)) != EOF) {
 		switch (c) {

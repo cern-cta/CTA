@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrentermodel.c,v $ $Revision: 1.4 $ $Date: 2000/03/05 16:13:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrentermodel.c,v $ $Revision: 1.5 $ $Date: 2001/02/21 06:05:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrentermodel - enter a new model of cartridge */
@@ -37,6 +37,7 @@ char **argv;
 	char *model = NULL;
 	int native_capacity = 0;
 
+	Copterr = 1;
 	Coptind = 1;
         while ((c = Cgetopt_long (argc, argv, "", longopts, NULL)) != EOF) {
                 switch (c) {
