@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.54 $ $Date: 2004/03/16 17:22:01 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.55 $ $Date: 2004/06/01 16:02:26 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -2244,8 +2244,12 @@ int vdqm_DedicateDrv(vdqmDrvReq_t *DrvReq) {
     if ( DrvReq == NULL ) return(-1);
     rc = 0;
 
-    log(LOG_INFO,"vdqm_DedicateDrv() dgn: %s, drive: %s@%s, dedicate=%s\n",
-        DrvReq->dgn,DrvReq->server,DrvReq->drive,DrvReq->dedicate);
+    log(LOG_INFO,"vdqm_DedicateDrv() from %s for dgn: %s, drive: %s@%s, dedicate=%s\n",
+        DrvReq->reqhost,
+        DrvReq->dgn,
+        DrvReq->drive,
+        DrvReq->server,
+        DrvReq->dedicate);
 
     /*
      * Set DGN context
