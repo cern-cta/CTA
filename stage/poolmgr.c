@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.219 2002/09/23 11:08:00 jdurand Exp $
+ * $Id: poolmgr.c,v 1.220 2002/09/30 14:03:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.219 $ $Date: 2002/09/23 11:08:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.220 $ $Date: 2002/09/30 14:03:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -106,6 +106,7 @@ struct fileclass *fileclasses;
 int nbmigrator;
 int nbpool;
 int nbhost;
+int nbstageout;
 static char *nfsroot;
 static char **poolc;
 struct pool *pools;
@@ -192,6 +193,7 @@ int retenp_on_disk _PROTO((int));
 int mintime_beforemigr _PROTO((int));
 int mintime_beforemigr_vs_pool _PROTO((struct pool *, int));
 void check_delaymig _PROTO(());
+void check_expired _PROTO(());
 int ispool_out _PROTO((char *));
 void nextpool_out _PROTO((char *));
 void bestnextpool_out _PROTO((char *, int));
@@ -212,6 +214,9 @@ extern int create_dir _PROTO(());
 extern int create_dir _PROTO((char *, uid_t, gid_t, mode_t));
 #endif
 #endif
+signed64 get_stageout_retenp _PROTO((struct stgcat_entry *));
+signed64 get_stagealloc_retenp _PROTO((struct stgcat_entry *));
+signed64 get_put_failed_retenp _PROTO((struct stgcat_entry *));
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -1572,7 +1577,6 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 	char tmpbuf5[21];
 	char tmpbuf6[21];
 	u_signed64 before_fraction, after_fraction;
-	int is_poolout;
 
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
 		if (*poolname && strcmp (poolname, pool_p->name)) continue;
@@ -1629,7 +1633,6 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 				 u64tostru(pool_p->free, tmpbuf2, 0),
 				 u64tostr(before_fraction, tmpbuf3, 0),
 				 u64tostr(after_fraction, tmpbuf4, 0));
-		is_poolout = (ispool_out(pool_p->name) == 0) ? 1 : 0;
 		for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++) {
 			before_fraction = elemp->capacity ? (100 * elemp->free) / elemp->capacity : 0;
 			after_fraction = elemp->capacity ?
@@ -1642,12 +1645,12 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 					 u64tostru(elemp->free, tmpbuf2, 0),
 					 u64tostr(before_fraction, tmpbuf3, 0),
 					 u64tostr(after_fraction, tmpbuf4, 0),
-					 (counters_flag && is_poolout) ?       " " : "",
-					 (counters_flag && is_poolout) ?  "nread " : "",
-					 (counters_flag && is_poolout) ? u64tostr((u_signed64) elemp->nbreadaccess, tmpbuf5, 0) : "",
-					 (counters_flag && is_poolout) ?       " " : "",
-					 (counters_flag && is_poolout) ? "nwrite " : "",
-					 (counters_flag && is_poolout) ? u64tostr((u_signed64) elemp->nbwriteaccess, tmpbuf6, 0) : ""
+					 counters_flag ?       " " : "",
+					 counters_flag ?  "nread " : "",
+					 counters_flag ? u64tostr((u_signed64) elemp->nbreadaccess, tmpbuf5, 0) : "",
+					 counters_flag ?       " " : "",
+					 counters_flag ? "nwrite " : "",
+					 counters_flag ? u64tostr((u_signed64) elemp->nbwriteaccess, tmpbuf6, 0) : ""
 				);
 		}
 	}
@@ -1929,10 +1932,12 @@ rwcountersfs(poolname, ipath, status, req_type)
 	}
 
 	/* Not supported on pool other but defpoolname_out */
+	/*
 	if (ispool_out(poolname) != 0) {
 		return;
 	}
-
+	*/
+	
 	switch (req_type) {
 	case STAGEOUT:
 	case STAGEALLOC:
@@ -2013,16 +2018,29 @@ rwcountersfs(poolname, ipath, status, req_type)
 		    elemp->nbreadaccess = 0;
 		}
 		if (read_incr != 0 || write_incr != 0) {
-		  elemp->nbreadaccess += read_incr;
-		  elemp->nbwriteaccess += write_incr;
-		  stglogit ("rwcountersfs", "%s read[%s%d]/write[%s%d]=%2d/%2d\n",
-			    path,
-			    read_incr >= 0 ? "+" : "-",
-			    read_incr >= 0 ? read_incr : -read_incr,
-			    write_incr >= 0 ? "+" : "-",
-			    write_incr >= 0 ? write_incr : -write_incr,
-			    elemp->nbreadaccess,
-			    elemp->nbwriteaccess);
+			elemp->nbreadaccess += read_incr;
+			elemp->nbwriteaccess += write_incr;
+			stglogit ("rwcountersfs", "%s read[%s%d]/write[%s%d]=%2d/%2d\n",
+					  path,
+					  read_incr >= 0 ? "+" : "-",
+					  read_incr >= 0 ? read_incr : -read_incr,
+					  write_incr >= 0 ? "+" : "-",
+					  write_incr >= 0 ? write_incr : -write_incr,
+					  elemp->nbreadaccess,
+					  elemp->nbwriteaccess);
+			/* We changed the counters - keep in mind exactly how many stageouts we have */
+			switch (req_type) {
+			case STAGEOUT:
+				nbstageout++;
+				break;
+			case STAGEUPDC:
+				if ((status & 0xF) == STAGEOUT) {
+					nbstageout--;
+				}
+				break;
+			default:
+				break;
+			}
 		}
 	}
 }
@@ -2239,6 +2257,8 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 			}
 			free (sav_migrators);
 		}
+		/* Counters on the number of entries in STAGEOUT status */
+		nbstageout = 0;
 		/* And restore rw counters + check poolname definition */
 		for (stcp = stcs; stcp < stce; stcp++) {
 			if (stcp->reqid == 0) break;
@@ -2288,7 +2308,7 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 			      migr_init = 1;
 			    }
 			  }
-				rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
+			  rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
 			}
 		}
 		for (wqp = waitqp; wqp; wqp = wqp->next) {
@@ -4143,6 +4163,14 @@ void migpoolfiles_log_callback(level,message)
 	return;
 }
 
+void stageclr_log_callback(level,message)
+	int level;
+	char *message;
+{
+	stglogit("stageclr","%s",message);
+	return;
+}
+
 int isuserlevel(path)
 	char *path;
 {
@@ -5079,7 +5107,7 @@ int mintime_beforemigr_vs_pool(pool_p,ifileclass)
 }
 
 void check_delaymig() {
-	time_t thistime = time(NULL);
+	time_t thistime;
 	struct stgcat_entry *stcp;
     int i;
     struct migrator *migr_p;
@@ -5097,6 +5125,8 @@ void check_delaymig() {
     }
 
     if (! have_delaymig) return;
+
+	thistime = time(NULL);
 
 	for (stcp = stcs; stcp < stce; stcp++) {
 		int ifileclass;
@@ -5127,6 +5157,74 @@ void check_delaymig() {
 				update_migpool(&stcp, 1, 3);   /* immediate flag is 3 */
 			}
 		}
+	}
+	return;
+}
+
+void check_expired() {
+	time_t thistime;
+	struct stgcat_entry *stcp;
+	char *func = "check_expired";
+	int fork_pid;
+
+    /* We do NOT loop if there is nothing to check */
+    if (nbstageout <= 0) return;
+
+	thistime = time(NULL);
+
+	for (stcp = stcs; stcp < stce; stcp++) {
+		signed64 thisretenp;
+		char tmpbuf[21];
+		
+		if (stcp->reqid == 0) break;
+		if ((stcp->status != STAGEOUT) && (stcp->status != STAGEALLOC)) continue;
+		if (stcp->filler[0] == 'Z') continue; /* Flag to prevent another stageclr */
+		if (stcp->a_time > thistime) continue;
+		if (stcp->status == STAGEOUT) {
+			if ((thisretenp = get_stageout_retenp(stcp)) < 0) continue;
+		}
+		if (stcp->status == STAGEALLOC) {
+			if ((thisretenp = get_stagealloc_retenp(stcp)) < 0) continue;
+		}
+		if ((thistime - stcp->a_time) <= thisretenp) continue;
+
+		/* Generate a stageclr on this internal path */
+		if ((fork_pid = fork()) < 0) {
+			stglogit(func, "### Cannot fork (%s)\n",strerror(errno));
+			return;
+		}
+		if (fork_pid == 0) {
+			/* We are in the child */
+			struct stgcat_entry thisstcp = *stcp;
+
+			stglogit (func, "execing stageclr, pid=%d\n", getpid());
+
+			/* No need to waste memory inherited by parent anymore */
+			if (stcs != NULL) free(stcs); stcs = NULL;
+			if (stps != NULL) free(stps); stps = NULL;
+			
+			rfio_mstat_reset();  /* Reset permanent RFIO stat connections */
+			rfio_munlink_reset(); /* Reset permanent RFIO unlink connections */
+
+			if (stage_setlog((void (*) _PROTO((int, char *))) &stageclr_log_callback) != 0) {
+				stglogit(func, "### stage_setlog error (%s)\n",sstrerror(serrno));
+				exit(SYERR);
+			}
+
+			if (stageclr_Path((u_signed64) STAGE_NOLINKCHECK, NULL, thisstcp.ipath) != 0) {
+				exit(rc_castor2shift(serrno));
+			}
+			exit(0);
+			/* Our exit status will be catched by main process */
+		}
+		stglogit(func, STG177,
+				 stcp->t_or_d == 'h' ? stcp->u1.h.xfile :
+				 (stcp->t_or_d == 'm' ? stcp->u1.m.xfile :
+				  (stcp->t_or_d == 'a' ? stcp->u1.d.xfile :
+				   (stcp->t_or_d == 'd' ? stcp->u1.d.xfile :
+					stcp->ipath))), u64tostr((u_signed64) thisretenp, tmpbuf, 0));
+
+		stcp->filler[0] = 'Z';
 	}
 	return;
 }
@@ -5812,4 +5910,49 @@ void stage_stgcleanup(sig)
 {
 	stage_kill(sig);
 	exit(USERR);
+}
+
+signed64 get_stageout_retenp(stcp)
+	struct stgcat_entry *stcp;
+{
+	int i;
+	struct pool *pool_p;
+
+	if ((stcp->t_or_d == 'h') && (stcp->u1.h.retenp_on_disk >= 0))
+		return((signed64) stcp->u1.h.retenp_on_disk);
+	if (nbpool == 0) return (-1);
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+		if (strcmp (stcp->poolname, pool_p->name) == 0) 
+			return((signed64) pool_p->stageout_retenp);
+	return ((signed64) -1);
+}
+
+signed64 get_stagealloc_retenp(stcp)
+	struct stgcat_entry *stcp;
+{
+	int i;
+	struct pool *pool_p;
+
+	if ((stcp->t_or_d == 'h') && (stcp->u1.h.retenp_on_disk >= 0))
+		return((signed64) stcp->u1.h.retenp_on_disk);
+	if (nbpool == 0) return (-1);
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+		if (strcmp (stcp->poolname, pool_p->name) == 0) 
+			return((signed64) pool_p->stagealloc_retenp);
+	return ((signed64) -1);
+}
+
+signed64 get_put_failed_retenp(stcp)
+	struct stgcat_entry *stcp;
+{
+	int i;
+	struct pool *pool_p;
+
+	if ((stcp->t_or_d == 'h') && (stcp->u1.h.retenp_on_disk >= 0))
+		return((signed64) stcp->u1.h.retenp_on_disk);
+	if (nbpool == 0) return (-1);
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+		if (strcmp (stcp->poolname, pool_p->name) == 0) 
+			return((signed64) pool_p->put_failed_retenp);
+	return ((signed64) -1);
 }
