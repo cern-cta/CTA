@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.33 $ $Date: 2004/02/23 17:43:47 $ CERN/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.34 $ $Date: 2004/02/24 14:13:22 $ CERN/ADC Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -418,9 +418,9 @@ int topen(tape_list_t *tape, file_list_t *file) {
     }
   }
   
-  if ( file->cksumRoutine == (unsigned long (*) _PROTO((unsigned long, 
-                                                        const char *,
-                                                        unsigned int)))NULL ) {
+  while ( file->cksumRoutine == (unsigned long (*) _PROTO((unsigned long, 
+                                                           const char *,
+                                                           unsigned int)))NULL ) {
 
     /*
      * Set configured checksum algorithm once for the whole request to
@@ -435,7 +435,7 @@ int topen(tape_list_t *tape, file_list_t *file) {
       } else {
         strncpy(
                 cfgCksumAlgorithm,
-                RTCP_CKSUM_ADLER32,
+                RTCP_CKSUM_DEFAULT,
                 CA_MAXCKSUMNAMELEN
                 );
       }
@@ -457,11 +457,25 @@ int topen(tape_list_t *tape, file_list_t *file) {
                                                       const char *,
                                                       unsigned int
                                                       )))crc32;
-    } else if ( strcmp(p,"none") == 0 || strcmp(p,"NONE") == 0 ) {
+    } else if ( strncmp(cfgCksumAlgorithm,"none",CA_MAXCKSUMNAMELEN) == 0 || 
+                strncmp(cfgCksumAlgorithm,"NONE",CA_MAXCKSUMNAMELEN) == 0 ) {
       rtcp_log(
                LOG_INFO,
-               "Segment checksum is disabled by configuration\n"
+               "topen() Segment checksum is disabled by configuration\n"
                );
+      break;
+    } else {
+      rtcp_log(
+               LOG_ERR,
+               "topen() Unknown segment checksum algorithm configuration: %s. Use default %s\n",
+               cfgCksumAlgorithm,
+               RTCP_CKSUM_DEFAULT
+               );
+      strncpy(
+              cfgCksumAlgorithm,
+              RTCP_CKSUM_DEFAULT,
+              CA_MAXCKSUMNAMELEN
+              );
     } 
   }
  
