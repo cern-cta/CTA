@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.1.1.1 $ $Date: 2004/05/12 12:13:33 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.2 $ $Date: 2004/05/17 16:56:04 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #define NullParameter
@@ -58,6 +58,13 @@ LibraryTargetName(libname): objects			@@\
 	$(RANLIB) $@
 #endif
 
+#ifndef ExtendedLibraryTarget
+#define ExtendedLibraryTarget(libname,objects,libs,deplibs) \
+LibraryTargetName(libname): objects deplibs			@@\
+	$(AR) $(ARFLAGS) $@ objects libs	@@\
+	$(RANLIB) $@
+#endif
+
 #ifndef DepLibraryTargetName
 #define DepLibraryTargetName(dir,libname)../dir/LibraryTargetName(libname)
 #endif
@@ -68,6 +75,10 @@ LibraryTargetName(libname): objects			@@\
 #else
 #define SharedLibraryTargetName(libname)lib/**/libname.so
 #endif
+#endif
+
+#ifndef DepSharedLibraryTargetName
+#define DepSharedLibraryTargetName(dir,libname)../dir/SharedLibraryTargetName(libname)
 #endif
 
 #ifndef SharedLibraryTarget
@@ -84,6 +95,12 @@ SharedLibraryTargetName(libname): objects deplibs     @@\
 #define MakeDepLibrary(dir,libname) \
 DepLibraryTargetName(dir,libname):	FORCE		@@\
 	cd ../dir ; $(MAKE) LibraryTargetName(libname)
+#endif
+
+#ifndef MakeDepSharedLibrary
+#define MakeDepSharedLibrary(dir,libname) \
+DepSharedLibraryTargetName(dir,libname):	FORCE		@@\
+	cd ../dir ; $(MAKE) SharedLibraryTargetName(libname)
 #endif
 
 #ifndef ProgramTargetName

@@ -35,6 +35,18 @@
 #endif
 #define CupvHost	"castor"
 #define CupvSpool	/usr/spool/upv
+#define RmMasterSpool	/usr/spool/rmmaster
+#if defined(_WIN32)
+#define RmMasterConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\RMMASTERCONFIG
+#else
+#define RmMasterConfigFile	/etc/RMMASTERCONFIG
+#endif
+#define RmNodeSpool	/usr/spool/rmnode
+#if defined(_WIN32)
+#define RmNodeConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\RMNODECONFIG
+#else
+#define RmNodeConfigFile	/etc/RMNODECONFIG
+#endif
 #define	DMSCDir	/dms/fbs/src
 #if defined(_WIN32)
 #define DbConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\DBCONFIG
@@ -171,8 +183,11 @@
 #define BuildRtcopyServer	YES
 #define BuildRtstat		YES
 #define BuildStageClient	NO
-#define BuildStageDaemon	NO
+#define BuildStageDaemon	YES
 #define BuildStageLibrary	YES
+#define BuildRmLocal		YES
+#define BuildRmCentral		YES
+#define BuildRmNode		YES
 #define BuildSysreq		YES
 #define BuildTapeClient		YES
 #define BuildTapeDaemon		YES
@@ -185,11 +200,11 @@
 #define BuildDlfClient    	NO
 #define BuildDlfDaemon    	NO
 
-#define BuildClientCpp          YES
-#define BuildDstageCpp          YES
-#define BuildRHCpp              YES
-#define BuildOraCpp             YES
-#define BuildCppTest	        YES
+#define BuildClientCpp          NO
+#define BuildDstageCpp          NO
+#define BuildRHCpp              NO
+#define BuildOraCpp             NO
+#define BuildCppTest	        NO
 
 #define Accounting		YES
 #define ClientLogging           NO
@@ -208,6 +223,8 @@
 #define UseStageCdb		YES
 #define UseTms			NO
 #define UseVmgr			YES
+#define UseLsf			NO
+#define UseMaui			YES
 
 /* 
  * The following flag enables rfio client interface
