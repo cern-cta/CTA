@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.90 2001/02/13 13:01:09 jdurand Exp $
+ * $Id: procio.c,v 1.91 2001/02/14 14:01:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.90 $ $Date: 2001/02/13 13:01:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.91 $ $Date: 2001/02/14 14:01:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -962,7 +962,7 @@ void procioreq(req_type, req_data, clienthost)
 		}
 	}
 
-	if ((tppool != NULL) && (req_type != STAGEWRT) && (req_type != STAGEOUT)) {
+	if ((have_tppool != 0) && (req_type != STAGEWRT) && (req_type != STAGEOUT)) {
 		sendrep (rpfd, MSG_ERR, STG17, "--tppool", (req_type == STAGEIN) ? "stagein" : "stagecat");
 		errflg++;
 	}
