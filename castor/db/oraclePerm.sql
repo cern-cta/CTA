@@ -39,8 +39,8 @@ BEGIN
     AND rh_FileSystem.id = rh_DiskCopy.filesystem
     AND rh_DiskCopy.castorfile = rh_CastorFile.id
     AND rh_TapeCopy.castorfile = rh_Castorfile.id
-    AND rh_Stream2TapeCopy.parent = rh_TapeCopy.id
-    AND rh_Stream2TapeCopy.child = streamId
+    AND rh_Stream2TapeCopy.child = rh_TapeCopy.id
+    AND rh_Stream2TapeCopy.parent = streamId
     AND rh_TapeCopy.status = tapeCopyStatus
     AND ROWNUM < 2
   ORDER by rh_FileSystem.weight DESC;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/11/01 15:20:09 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/02 15:25:40 $ $Author: sponcec3 $
  *
  *
  *
@@ -85,8 +85,8 @@ int main(int argc, char *argv[]) {
 // Constructor
 //------------------------------------------------------------------------------
 castor::rh::Server::Server() :
-  castor::BaseServer("RHServer", 20) {
-  initLog("RHLog", SVC_DLFMSG);
+  castor::BaseServer("RHServer", 2) {
+  initLog("RHLog", SVC_STDMSG);
 }
 
 //------------------------------------------------------------------------------
