@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2004/10/20 14:15:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2004/10/21 12:40:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -177,53 +177,72 @@ castor::stager::TapeCopyForMigration*
 castor::db::ora::OraStagerSvc::bestTapeCopyForStream
 (castor::stager::Stream* searchItem)
   throw (castor::exception::Exception) {
-  // Check whether the statements are ok
-  if (0 == m_bestTapeCopyForStreamStatement) {
-    m_bestTapeCopyForStreamStatement =
-      createStatement(s_bestTapeCopyForStreamStatementString);
-    m_bestTapeCopyForStreamStatement->setInt
-      (2, castor::stager::TAPECOPY_WAITINSTREAMS);
-  }
-  // execute the statement and see whether we found something
-  m_bestTapeCopyForStreamStatement->setDouble(1, searchItem->id());
-  oracle::occi::ResultSet *rset =
-    m_bestTapeCopyForStreamStatement->executeQuery();
-  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_bestTapeCopyForStreamStatement) {
+      m_bestTapeCopyForStreamStatement =
+        createStatement(s_bestTapeCopyForStreamStatementString);
+      m_bestTapeCopyForStreamStatement->setInt
+        (2, castor::stager::TAPECOPY_WAITINSTREAMS);
+    }
+    // execute the statement and see whether we found something
+    m_bestTapeCopyForStreamStatement->setDouble(1, searchItem->id());
+    oracle::occi::ResultSet *rset =
+      m_bestTapeCopyForStreamStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      m_bestTapeCopyForStreamStatement->closeResultSet(rset);
+      castor::exception::NoEntry e;
+      e.getMessage() << "No TapeCopy found";
+      throw e;
+    }
+    // Create result
+    castor::stager::TapeCopyForMigration* result =
+      new castor::stager::TapeCopyForMigration();
+    result->setDiskServer(rset->getString(1));
+    result->setMountPoint(rset->getString(2));
+    castor::stager::DiskCopy* diskCopy =
+      new castor::stager::DiskCopy();
+    diskCopy->setPath(rset->getString(3));
+    diskCopy->setId((u_signed64)rset->getDouble(4));
+    result->setDiskCopy(diskCopy);
+    result->setCastorFileID((u_signed64)rset->getDouble(5));
+    result->setNsHost(rset->getString(6));
+    result->setFileSize((u_signed64)rset->getDouble(7));
+    result->setId((u_signed64)rset->getDouble(8));
     m_bestTapeCopyForStreamStatement->closeResultSet(rset);
-    castor::exception::NoEntry e;
-    e.getMessage() << "No TapeCopy found";
-    throw e;
+    // Fill result for TapeCopy, Segments and Tape
+    cnvSvc()->updateObj(result);
+    castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+    cnvSvc()->fillObj(&ad, result, OBJ_Segment);
+    for (std::vector<castor::stager::Segment*>::iterator it =
+           result->segments().begin();
+         it != result->segments().end();
+         it++) {
+      cnvSvc()->fillObj(&ad, *it, OBJ_Tape);
+    }
+    // Update the status of the Stream
+    searchItem->setStatus(castor::stager::STREAM_RUNNING);
+    cnvSvc()->updateRep(&ad, searchItem, true);
+    // return
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    try {
+      // Always try to rollback
+      cnvSvc()->getConnection()->rollback();
+      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+        // We've obviously lost the ORACLE connection here
+        cnvSvc()->dropConnection();
+      }
+    } catch (oracle::occi::SQLException e) {
+      // rollback failed, let's drop the connection for security
+      cnvSvc()->dropConnection();
+    }
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in bestTapeCopyForStream."
+      << std::endl << e.what();
+    throw ex;
   }
-  // Create result
-  castor::stager::TapeCopyForMigration* result =
-    new castor::stager::TapeCopyForMigration();
-  result->setDiskServer(rset->getString(1));
-  result->setMountPoint(rset->getString(2));
-  castor::stager::DiskCopy* diskCopy =
-    new castor::stager::DiskCopy();
-  diskCopy->setPath(rset->getString(3));
-  diskCopy->setId((u_signed64)rset->getDouble(4));
-  result->setDiskCopy(diskCopy);
-  result->setCastorFileID((u_signed64)rset->getDouble(5));
-  result->setNsHost(rset->getString(6));
-  result->setFileSize((u_signed64)rset->getDouble(7));
-  result->setId((u_signed64)rset->getDouble(8));
-  m_bestTapeCopyForStreamStatement->closeResultSet(rset);
-  // Fill result for TapeCopy, Segments and Tape
-  cnvSvc()->updateObj(result);
-  castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
-  cnvSvc()->fillObj(&ad, result, OBJ_Segment);
-  for (std::vector<castor::stager::Segment*>::iterator it =
-         result->segments().begin();
-       it != result->segments().end();
-       it++) {
-    cnvSvc()->fillObj(&ad, *it, OBJ_Tape);
-  }
-  // Update the status of the Stream
-  searchItem->setStatus(castor::stager::STREAM_RUNNING);
-  cnvSvc()->updateRep(&ad, searchItem, true);
-  // return
-  return result;
 }
 
 // -----------------------------------------------------------------------
