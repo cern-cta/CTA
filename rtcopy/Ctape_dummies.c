@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.8 $ $Date: 2000/07/28 15:24:25 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.9 $ $Date: 2000/08/04 14:38:47 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -260,10 +260,10 @@ int clear_compression_stats(int a, char *b, char *c) {
 }
 
 int Ctape_dmpinit(char *a, char *b, char *c, char *d, char *e, int f, int g,
-                  int h, int i, int j, int k, int l) {
+                  int h, int i, int j, int k, int l, int m) {
     CTAPE_DECL
-    CTAPE_BODY((stdout,"Ctape_dmpinit(%s,%s,%s,%s,%s,%d,%d,%d,%d,%d,%d,%d)\n",
-                a,b,c,d,e,f,g,h,i,j,k,l));
+    CTAPE_BODY((stdout,"Ctape_dmpinit(%s,%s,%s,%s,%s,%d,%d,%d,%d,%d,%d,%d,%d)\n",
+                a,b,c,d,e,f,g,h,i,j,k,l,m));
 }
 
 int Ctape_dmpfil(char *a, char *b, int *c, char *d, int *e, int *f, 

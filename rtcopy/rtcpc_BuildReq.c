@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.31 $ $Date: 2000/08/03 11:10:45 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.32 $ $Date: 2000/08/04 14:38:43 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1994,6 +1994,7 @@ int rtcpc_InitDumpTapeReq(rtcpDumpTapeRequest_t *dump) {
     dump->blocksize = -1;
     dump->convert = -1;
     dump->tp_err_action = -1;
+    dump->startfile = -1;
     dump->maxfile = -1;
     dump->fromblock = -1;
     dump->toblock = -1; 
@@ -2024,7 +2025,7 @@ int rtcpc_BuildDumpTapeReq(tape_list_t **tape,
     rc = rtcpc_InitDumpTapeReq(dumpreq);
     if ( rc == -1 ) return(rc);
 
-    while ( (c = getopt(argc,argv,"B:b:C:d:E:F:g:N:S:T:V:v:")) != EOF) {
+    while ( (c = getopt(argc,argv,"B:b:C:d:E:F:g:N:q:S:T:V:v:")) != EOF) {
         switch (c) {
         case 'B':
             DMPTP_INT_OPT(dumpreq->maxbyte,-B);
@@ -2082,6 +2083,9 @@ int rtcpc_BuildDumpTapeReq(tape_list_t **tape,
                     errflg++;
                 }
             }
+            break;
+        case 'q':
+            DMPTP_INT_OPT(dumpreq->startfile,-q);
             break;
         case 'S':
             DMPTP_STR_OPT(tapereq->server,-S);

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.36 $ $Date: 2000/08/04 13:51:48 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.37 $ $Date: 2000/08/04 14:38:46 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -855,7 +855,7 @@ int rtcpd_DmpInit(tape_list_t *tape) {
 
     rtcp_log(LOG_DEBUG,"rtcpd_DmpInit() called\n");
 
-    rtcp_log(LOG_DEBUG,"Ctape_dmpinit(%s,%s,%s,%s,%s,%d,%d,%d,%d,%d,%d,%d)\n",
+    rtcp_log(LOG_DEBUG,"Ctape_dmpinit(%s,%s,%s,%s,%s,%d,%d,%d,%d,%d,%d,%d,%d)\n",
              tape->file->filereq.tape_path,
              tape->tapereq.vid,
              tape->tapereq.density,
@@ -865,6 +865,7 @@ int rtcpd_DmpInit(tape_list_t *tape) {
              tape->dumpreq.fromblock,
              tape->dumpreq.toblock,
              tape->dumpreq.maxbyte,
+             tape->dumpreq.startfile,
              tape->dumpreq.maxfile,
              code,
              tape->dumpreq.tp_err_action);
@@ -879,6 +880,7 @@ int rtcpd_DmpInit(tape_list_t *tape) {
                        tape->dumpreq.fromblock,
                        tape->dumpreq.toblock,
                        tape->dumpreq.maxbyte,
+                       tape->dumpreq.startfile,
                        tape->dumpreq.maxfile,
                        code,
                        tape->dumpreq.tp_err_action);
