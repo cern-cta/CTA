@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_api.c,v 1.1 2000/01/26 08:37:18 jdurand Exp $
+ * $Id: send2stgd_api.c,v 1.2 2000/03/14 09:55:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.1 $ $Date: 2000/01/26 08:37:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.2 $ $Date: 2000/03/14 09:55:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -33,9 +33,11 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.1 $ $Date
 #include "serrno.h"
 #include "osdep.h"
 #include "stage.h"
+#include "Cnetdb.h"
+
 extern int rfio_errno;
 int nb_ovl;
-#if (defined(_AIX) && defined(_IBMR2)) || defined(SOLARIS) || defined(IRIX5) || (defined(__osf__) && defined(__alpha)) || defined(linux)
+#ifndef _WIN32
 struct sigaction sa;
 #endif
 
@@ -71,31 +73,26 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
   struct servent *sp;
   int stg_s;
   char stghost[CA_MAXHOSTNAMELEN+1];
-#if !defined(_WIN32)
-  void wait4child();
-#endif
 
   strcpy (func, "send2stgd");
-#if (defined(sgi) && !defined(IRIX5)) || defined(hpux)
-  signal (SIGCLD, wait4child);
-#else
-#if (defined(_AIX) && defined(_IBMR2)) || defined(SOLARIS) || defined(IRIX5) || (defined(__osf__) && defined(__alpha)) || defined(linux)
+#ifndef _WIN32
   sa.sa_handler = wait4child;
   sa.sa_flags = SA_RESTART;
   sigaction (SIGCHLD, &sa, NULL);
 #endif
-#endif
   link_rc = 0;
   nb_ovl = 0;
-  if ((sp = getservbyname (STG, "tcp")) == NULL) {
+  if ((sp = Cgetservbyname (STG, "tcp")) == NULL) {
     stage_errmsg (func, STG09, STG, "not defined in /etc/services");
-    return (CONFERR);
+    serrno = SENOSSERV;
+    return (-1);
   }
   if (host == NULL) {
     if ((p = getenv ("STAGE_HOST")) == NULL &&
         (p = getconfent("STG", "HOST",0)) == NULL) {
       stage_errmsg (func, STG31);
-      return (CONFERR);
+      serrno = SENOSHOST;
+      return (-1);
     }
     strcpy (stghost, p);
   } else {
@@ -103,7 +100,8 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
   }
   if ((hp = gethostbyname (stghost)) == NULL) {
     stage_errmsg (func, STG09, "Host unknown:", stghost);
-    return (CONFERR);
+    serrno = SENOSHOST;
+    return (-1);
   }
   sin.sin_family = AF_INET;
   sin.sin_port = sp->s_port;
@@ -111,7 +109,8 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 
   if ((stg_s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
     stage_errmsg (func, STG02, "", "socket", neterror());
-    return (SYERR);
+    serrno = SECOMERR;
+    return (-1);
   }
 
   c = RFIO_NONET;
@@ -127,11 +126,13 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
         ) {
       stage_errmsg (func, STG00, stghost);
       (void) netclose (stg_s);
-      return (ESTNACT);
+      serrno = ESTNACT;
+      return (-1);
     } else {
       stage_errmsg (func, STG02, "", "connect", neterror());
       (void) netclose (stg_s);
-      return (SYERR);
+      serrno = SECOMERR;
+      return (-1);
     }
   }
   if ((n = netwrite_timeout (stg_s, reqp, reql, STGTIMEOUT)) != reql) {
@@ -140,7 +141,8 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
     else
       stage_errmsg (func, STG02, "", "send", neterror());
     (void) netclose (stg_s);
-    return (SYERR);
+    serrno = SECOMERR;
+    return (-1);
   }
   if (! want_reply) {
     (void) netclose (stg_s);
@@ -154,7 +156,8 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
       else
         stage_errmsg (func, STG02, "", "recv", neterror());
       (void) netclose (stg_s);
-      return (SYERR);
+      serrno = SECOMERR;
+      return (-1);
     }
     p = repbuf;
     unmarshall_LONG (p, magic) ;
@@ -162,6 +165,14 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
     unmarshall_LONG (p, c) ;
     if (rep_type == STAGERC) {
       (void) netclose (stg_s);
+      if (c) {
+        if (magic == STGOLDMAGIC) {
+          if (c == USERR) c = EINVAL;
+          else if (c == SYERR) c = SESYSERR;
+        }
+        serrno = c;
+        c = -1;
+      }
       break;
     }
     if ((n = netread(stg_s, repbuf, c)) != c) {
@@ -170,14 +181,14 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
       else
         stage_errmsg (func, STG02, "", "recv", neterror());
       (void) netclose (stg_s);
-      c = SYERR;
-      break;
+      serrno = SECOMERR;
+      return (-1);
     }
     p = repbuf;
     unmarshall_STRING (p, prtbuf);
     switch (rep_type) {
     case MSG_OUT:
-      if (user_repbuf) {
+      if (user_repbuf != NULL) {
         if (actual_replen + c <= user_repbuf_len)
           n = c;
         else
@@ -187,11 +198,11 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
           actual_replen += n;
         }
       } else
-        stage_outmsg ("%s", prtbuf);
+        stage_outmsg (NULL, "%s", prtbuf);
       break;
     case MSG_ERR:
     case RTCOPY_OUT:
-      stage_errmsg (func, "%s", prtbuf);
+      stage_errmsg (NULL, "%s", prtbuf);
       break;
     case SYMLINK:
       unmarshall_STRING (p, file2);
@@ -223,13 +234,19 @@ int dosymlink (file1, file2)
   if (rfio_symlink (file1, file2) &&
       ((!remote && errno != EEXIST) || (remote && rfio_errno != EEXIST))) {
     stage_errmsg (func, STG02, file1, "symlink", rfio_serror());
-    if (serrno == SEOPNOTSUP) return (LNKNSUP);
+    if (serrno == SEOPNOTSUP) {
+      serrno = ESTLNKNSUP;
+      return (-1);
+    }
     if ((remote &&
-         (rfio_errno == EACCES || rfio_errno == ENOENT)) ||
-        (remote == 0 && (errno == EACCES || errno == ENOENT)))
-      return (USERR);
-    else
-      return (SYERR);
+		    (rfio_errno == EACCES || rfio_errno == ENOENT)) ||
+        (remote == 0 && (errno == EACCES || errno == ENOENT))) {
+      serrno = ESTLNKNCR;
+      return (-1);
+    } else {
+      serrno = SESYSERR;
+      return (-1);
+    }
   }
   return (0);
 }
@@ -289,13 +306,8 @@ void wait4child()
   int pid;
   int status;
   
-#if defined(_IBMR2) || defined(SOLARIS) || defined(IRIX5) || (defined(__osf__) && defined(__alpha)) || defined(linux)
   while ((pid = waitpid (-1, &status, WNOHANG)) > 0)
     nb_ovl--;
-#else
-  pid = wait (&status);
-  nb_ovl--;
-  signal (SIGCLD, wait4child);
-#endif
 }
 #endif
+

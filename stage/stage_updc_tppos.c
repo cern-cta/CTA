@@ -1,14 +1,14 @@
 /*
- * $Id: stage_updc_tppos.c,v 1.3 2000/02/27 10:42:41 baud Exp $
+ * $Id: stage_updc_tppos.c,v 1.4 2000/03/14 09:55:27 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc_tppos.c,v $ $Revision: 1.3 $ $Date: 2000/02/27 10:42:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc_tppos.c,v $ $Revision: 1.4 $ $Date: 2000/03/14 09:55:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -26,7 +26,7 @@ static char sccsid[] = "@(#)$RCSfile: stage_updc_tppos.c,v $ $Revision: 1.3 $ $D
 #include "serrno.h"
 #include "stage.h"
 
-int DLL_DECL stage_updc_tppos(stageid, status, blksize, drive, fid, fseq, lrecl, recfm, path, want_reply)
+int DLL_DECL stage_updc_tppos(stageid, status, blksize, drive, fid, fseq, lrecl, recfm, path)
      char *stageid;
      int status;
      int blksize;
@@ -36,7 +36,6 @@ int DLL_DECL stage_updc_tppos(stageid, status, blksize, drive, fid, fseq, lrecl,
      int lrecl;
      char *recfm;
      char *path;
-     int want_reply;
 {
   int c;
   char *dp;
@@ -152,12 +151,6 @@ int DLL_DECL stage_updc_tppos(stageid, status, blksize, drive, fid, fseq, lrecl,
     marshall_STRING (sbp, tmpbuf);
     nargs += 2;
   }
-  if (fseq > 0) {
-    sprintf (tmpbuf, "%d", fseq);
-    marshall_STRING (sbp,"-q");
-    marshall_STRING (sbp, tmpbuf);
-    nargs += 2;
-  }
   if (status == ETFSQ) {
     n = 211;	/* emulate old (SHIFT) ETFSQ */
     sprintf (tmpbuf, "%d", n);
@@ -170,15 +163,15 @@ int DLL_DECL stage_updc_tppos(stageid, status, blksize, drive, fid, fseq, lrecl,
   msglen = sbp - sendbuf;
   marshall_LONG (q, msglen);	/* update length field */
 
-  while (c = send2stgd (stghost, sendbuf, msglen, want_reply, repbuf, sizeof(repbuf))) {
-    if (c != ESTNACT || ntries++ > MAXRETRY) break;
+  while (1) {
+    c = send2stgd (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
+    if (c == 0) break;
+    if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
     sleep (RETRYI);
   }
-  if (want_reply) {
-    if (c == 0) {
-      rbp = repbuf;
-      unmarshall_STRING (rbp, path);
-    }
+  if (c == 0 && path != NULL) {
+    rbp = repbuf;
+    unmarshall_STRING (rbp, path);
   }
-  return (c);
+  return (c == 0 ? 0 : -1);
 }
