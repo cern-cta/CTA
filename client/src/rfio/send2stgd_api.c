@@ -243,6 +243,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 	u_signed64 current_uniqueid = 0;
 	int save_serrno, orig_serrno;
 	int magic_client = stage_stgmagic();
+	int on = 1;
 
 	strcpy (func, "send2stgd");
 	orig_serrno = serrno;
@@ -322,6 +323,11 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 		serrno = SECOMERR;
 		SEND2STGD_API_ERROR(-1);
 	}
+
+#if (defined(SOL_SOCKET) && defined(SO_KEEPALIVE))
+	/* Set socket option */
+	setsockopt(stg_s,SOL_SOCKET,SO_KEEPALIVE,(char *) &on,sizeof(on));
+#endif
 
 	c = RFIO_NONET;
 	rfiosetopt (RFIO_NETOPT, &c, 4);
