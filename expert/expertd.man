@@ -1,0 +1,103 @@
+.lf 1 expertd.man
+.\" @(#)$RCSfile: expertd.man,v $ $Revision: 1.1 $ $Date: 2004/07/02 07:56:27 $ CERN IT-ADC Vitaly Motyakov
+.\" Copyright (C) 2004 by CERN/IT/ADC
+.\" All rights reserved
+.\"
+.TH EXPERTD 1 "$Date: 2004/07/02 07:56:27 $" CASTOR "Expert Administrator Commands"
+.SH NAME
+expertd \- start the CASTOR Expert daemon
+.SH SYNOPSIS
+.B EXPERTD
+.SH DESCRIPTION
+.LP
+The
+.B expertd
+command starts the Expert service.
+This command is usually executed at system startup time
+.RB ( /etc/rc.local ).
+This will start the Expert daemon which will look for requests.
+When a request arrives the daemon forks a child which processes the request.
+The child reads the configuration file and if the request is valid and
+can be fulfilled it replaces itself by the external program.
+.LP
+All error messages are kept in a log.
+.LP
+The Expert daemon listen port number can be defined on client hosts
+and on the machine where the Expert daemon runs in either of the
+following ways:
+.RS
+.LP
+setting an environment variable EXPERT_PORT
+.RS
+.HP
+setenv DLF_PORT 5045
+.RE
+.LP
+an entry in
+.B /etc/castor.conf
+like:
+.RS
+.HP
+EXPERT	PORT	5045
+.RE
+.LP
+an entry in
+.B /etc/services
+like:
+.RS
+.HP
+expert   5045/tcp     # CASTOR Expert
+.RE
+.RE
+.LP
+If none of these methods is used, the default port number is taken from the
+definition of EXPERT_PORT in expert_constants.h.
+.LP
+The EXPERT host name can be defined on client hosts
+in either of the following ways:
+.RS
+.LP
+setting an environment variable EXPERT_HOST, for example:
+.RS
+.HP
+setenv EXPERT_HOST castorexp
+.RE
+.LP
+an entry in
+.B /etc/castor.conf
+for example:
+.RS
+.HP
+EXPERT	HOST	castorexp
+.RE
+.RE
+.LP
+If none of these methods is used, the default host is taken from the
+definition of ExpertHost in site.def.
+.LP
+The Expert configuration file contains the associations between requests
+and command lines which should be executed.The working directory
+(i.e. the directory where files are located) should also be specified.
+For example:
+.RS
+.HP
+EXP_RQ_STAGER   /etc/expert/  /usr/bin/clips -f stager.clp
+.HP
+EXP_RQ_MIGRATOR /etc/expert/  /usr/bin/clips -f migrator.clp
+.RE
+.LP
+The name of the configuration file can be defined also through the environment
+variable 
+.B EXPERT_CONFIG
+or via the entry in 
+.B /etc/castor.conf:
+.RS
+.RS
+.HP
+EXPERT CONFIG /etc/sysconfig/castor/expert.conf
+.RE
+.LP
+If none of these methods is used, the name of the configuration file
+is taken from the definition of ExpertConfig in site.def.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,0 +1,52 @@
+.lf 1 expert_send_request.man
+.\" @(#)$RCSfile: expert_send_request.man,v $ $Revision: 1.1 $ $Date: 2004/07/02 07:56:29 $ CERN IT-ADC Vitaly Motyakov
+.\" Copyright (C) 2004 by CERN/IT/ADC
+.\" All rights reserved
+.\"
+.TH EXPERT_SEND_REQUEST 3 "$Date: 2004/07/02 07:56:29 $" CASTOR "Expert Library Functions"
+.SH NAME
+expert_send_request \- sends request to the expert server
+.SH SYNOPSIS
+.br
+\fB#include "expert_api.h"\fR
+.sp
+.BI "int expert_send_request (int * " socket ", int " request ")"
+.SH DESCRIPTION
+.B expert_send_request
+sends request to the expert server.
+.TP
+.I socket
+pointer to the integer the socket descriptor will be placed in.
+You need this descriptor for subsequent calls to 
+expert_send_data() and expert_receive_data()
+.TP
+.I request
+specifies the request which should be processed.
+It must be one of the following:
+.RS
+.TP
+.B EXP_RQ_STAGER
+.TP
+.B EXP_RQ_MIGRATOR
+.SH RETURN VALUE
+This function returns 0 if the operation was successful or -1 otherwise.
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B EEXPNACT
+Expert daemon is not running.
+.SH SEE ALSO
+.BR expert_send_data(3)
+.BR expert_receive_data(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

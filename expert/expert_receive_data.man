@@ -1,0 +1,48 @@
+.lf 1 expert_receive_data.man
+.\" @(#)$RCSfile: expert_receive_data.man,v $ $Revision: 1.1 $ $Date: 2004/07/02 07:56:28 $ CERN IT-ADC Vitaly Motyakov
+.\" Copyright (C) 2004 by CERN/IT/ADC
+.\" All rights reserved
+.\"
+.TH EXPERT_RECEIVE_DATA 3 "$Date: 2004/07/02 07:56:28 $" CASTOR "Expert Library Functions"
+.SH NAME
+expert_receive_data \- receives data from the expert system
+.SH SYNOPSIS
+.br
+\fB#include "expert_api.h"\fR
+.sp
+.BI "int expert_receive_data (int " socket ", char * " buffer
+.BI ", int " buf_length ", int " timeout ")"
+.SH DESCRIPTION
+.B expert_send_data
+receives data from the expert service.This function tries
+to fill the buffer and returns when the buffer is full,
+connection closed by the server, or timeout or error occures.
+.TP
+.I socket
+socket descriptor which has been initialized
+by the previous call to expert_send_request().
+.TP
+.I buffer
+pointer to the buffer data should be placed in.
+.TP
+.I
+buf_length
+the length of the buffer in bytes.
+.TP
+.I
+timeout
+specifies the read timeout in seconds.
+.SH RETURN VALUE
+number of received bytes if data were received independent of
+the completion status of the last recv(), or <= 0 on error.
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EINVAL
+Buffer too small or timeout <= 0.
+.SH SEE ALSO
+.BR expert_send_request(3)
+.BR expert_send_data(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

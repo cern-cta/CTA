@@ -1,0 +1,56 @@
+.lf 1 expert.man
+.\" @(#)$RCSfile: expert.man,v $ $Revision: 1.1 $ $Date: 2004/07/02 07:56:28 $ CERN IT-ADC Vitaly Motyakov
+.\" Copyright (C) 2004 by CERN/IT/ADC
+.\" All rights reserved
+.\"
+.TH EXPERT 1 "$Date: 2004/07/02 07:56:28 $" CASTOR "EXPERT Service"
+.SH DESCRIPTION
+An Expert Facility Daemon is used to execute external programs (such as CLIPS)
+which get their input from stdin and send output to stdout.
+The Expert Daemon host should be specified by one of the following ways:
+.RS
+.LP
+setting an environment variable 
+.B EXPERT_HOST
+, for example: 
+.RS
+.HP
+setenv EXPERT_HOST castorexp
+.RE
+.LP
+or an entry in 
+.B /etc/castor.conf
+, for example:
+.RS
+.HP
+EXPERT  HOST castorexp
+.RE
+.RE
+.LP
+The Expert Daemon listen TCP port number can be defined in the similar way
+through the environment variable 
+.B EXPERT_PORT
+or via the entry in 
+.B /etc/castor.conf:
+.RS
+.RS
+.HP
+EXPERT PORT 5045
+.RE
+.RE
+.LP
+The Expert Daemon uses the configuration file to determine the task to perform.
+The name of the configuration file can be defined also through the environment
+variable 
+.B EXPERT_CONFIG
+or via the entry in 
+.B /etc/castor.conf:
+.RS
+.RS
+.HP
+EXPERT CONFIG /etc/sysconfig/castor/expert.conf
+.RE
+.RE
+.LP
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,0 +1,38 @@
+.lf 1 expert_send_data.man
+.\" @(#)$RCSfile: expert_send_data.man,v $ $Revision: 1.1 $ $Date: 2004/07/02 07:56:29 $ CERN IT-ADC Vitaly Motyakov
+.\" Copyright (C) 2004 by CERN/IT/ADC
+.\" All rights reserved
+.\"
+.TH EXPERT_SEND_DATA 3 "$Date: 2004/07/02 07:56:29 $" CASTOR "Expert Library Functions"
+.SH NAME
+expert_send_data \- sends data to the expert system
+.SH SYNOPSIS
+.br
+\fB#include "expert_api.h"\fR
+.sp
+.BI "int expert_send_data (int " socket ", const char * " buffer
+.BI ", int " buf_length ")"
+.SH DESCRIPTION
+.B expert_send_data
+sends data to the expert service.
+.TP
+.I socket
+socket descriptor which has been initialized
+by the previous call to expert_send_request().
+.TP
+.I buffer
+pointer to the data buffer.
+.TP
+.I
+buf_length
+the length of the data in bytes.
+.SH RETURN VALUE
+This function returns number of sent bytes if the operation
+was successful or -1 otherwise.
+.B serrno
+is set appropriately.
+.SH SEE ALSO
+.BR expert_send_request(3)
+.BR expert_receive_data(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
