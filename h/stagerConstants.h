@@ -1,5 +1,5 @@
 /*
- * $Id: stagerConstants.h,v 1.4 2004/10/24 22:17:57 jdurand Exp $
+ * $Id: stagerConstants.h,v 1.5 2004/10/25 10:59:16 jdurand Exp $
  */
 
 #ifndef __stagerConstants_h
@@ -40,6 +40,7 @@
 #define STAGER_ENV_USER_NBTHREAD  "STAGER_USER_NBTHREAD" /* Environment variable for user_nbthread */
 #define STAGER_ENV_FACILITY       "STAGER_FACILITY"      /* Environment variable for facility */
 #define STAGER_ENV_IGNORECOMMANDLINE "STAGER_IGNORECOMMANDLINE" /* Environment variable for ignore-command-line */
+#define STAGER_ENV_HOST           "STAGER_HOST"          /* Environment variable for host */
 
 #define STAGER_MUTEX_TIMEOUT      10                     /* Timeout on getting a mutex */
 #define STAGER_COND_TIMEOUT       1                      /* Timeout on waiting on a condition variable */
@@ -56,6 +57,7 @@
 #define STAGE_SERVICE_PROTO       "tcp"                  /* Proto in /etc/services if any */
 
 #define STAGE_OPTION_ECHO     CONSTLL(0x00000000000001)  /* --echo */
+#define STAGE_OPTION_START    CONSTLL(0x00000000000002)  /* --start */
 
 #define STAGER_PRTBUFSZ           4096                   /* Buffer size in the client for printout */
 
