@@ -1,123 +1,76 @@
 /*
- * Copyright (C) 1990-1998 by CERN/CN/SW/DC
+ * $Id: log.c,v 1.2 1999/07/23 16:05:48 obarring Exp $
+ * $Log: log.c,v $
+ * Revision 1.2  1999/07/23 16:05:48  obarring
+ * Make MT safe. Add thread ID to log-line.
+ *
+ */
+
+/*
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)log.c	1.27 06/04/98   CERN CN-SW/DC Frederic Hemmer";
+static char cvsId[] = "$Id: log.c,v 1.2 1999/07/23 16:05:48 obarring Exp $";
 #endif /* not lint */
 
 /* log.c        - generalized logging routines                          */
 
+#if defined(_WIN32)
+#include <io.h>
+#include <pwd.h>
+#endif /* _WIN32 */
+
+#include <stdlib.h>
+
 #include <stdio.h>              /* standard input/output definitions    */
-#if !defined(vms)
+#include <string.h>
 #include <fcntl.h>              /* file control                         */
-#else
-#include <stdlib.h>             /* general utility definitions          */
-#include <unixio.h>             /* VMS's unix-emulation I/O             */
-#include <file.h>               /* VMS's BSD 4.2 open() constants       */
-#include <unixlib.h>            /* VMS's UNIX emulation prototypes      */
-#include <string.h>             /* string manipulation functions        */
-#endif /* vms */
 #include <time.h>               /* time related definitions             */
 
-#if defined(vms) && defined(__alpha) && defined(COMPILE_NOPREFIX)
-#define atoi    DECC$ATOI
-#define chmod   DECC$CHMOD
-#define close   DECC$CLOSE
-#define ctime   DECC$CTIME
-#define getenv  DECC$GETENV
-#define getpid  DECC$GETPID
-#define open    DECC$OPEN
-/* sprintf defined in stdio.h */
-#define strcmp  DECC$STRCMP
-#define strcpy  DECC$STRCPY
-#define strlen  DECC$STRLEN
-#define time    DECC$TIME
-#define write   DECC$WRITE
-#endif /* vms && __alpha && COMPILE_NOPREFIX */
-
-#if !defined(VM) && !defined(IRIX5) && !defined(__Lynx__)
+#if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
 #include <varargs.h>            /* variable argument list definitions   */
 #else
 #include <stdarg.h>             /* variable argument list definitions   */
 #include <errno.h>              /* standard error numbers & codes       */
-#endif /* VM || IRIX5 */
+#endif /* IRIX5 || __Lynx__ */
 #include <log.h>                /* logging options and definitions      */
+#include <Cglobals.h>           /* Thread globals. Get Thread ID.       */
 
 
 static int loglevel=LOG_NOLOG;  /* logging level                        */
 static char logname[64];        /* logging facility name                */
 static char logfilename[64]=""; /* log file name                        */
+#if defined(_WIN32)
+static char strftime_format[] = "%b %d %H:%M:%S";
+#else /* _WIN32 */
+static char strftime_format[] = "%b %e %H:%M:%S";
+#endif /* _WIN32 */
 
-#if defined(vms)
-syslog() { 
-        return 0; 
-}
-#endif /* vms */
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+#define localtime(X) localtime_r(X,&tmstruc)
+#endif /* _REENTRANT || _THREAD_SAFE */
 
-#if !defined(VM)
 static int pid;                 /* process identifier                   */
 static int logfd ;              /* logging file descriptor              */
-#if !defined(SOLARIS) && !defined(IRIX5) && !defined(apollo) && !defined(HPUX10) && !defined(linux) && !defined(AIX42) && !defined(__Lynx__)
+#if !defined(SOLARIS) && !defined(IRIX5) && !defined(HPUX10) && \
+    !defined(linux) && !defined(AIX42) && !defined(__Lynx__) && \
+    !defined(_WIN32)
 extern int syslog();
-#endif /* !SOLARIS && !IRIX5 && !apollo */
+#endif /* !SOLARIS && !IRIX5 && ... */
+
+#if !defined(_WIN32)
 extern char *getenv();
-#else  /* VM */
-static char *console="CONSOLE";/* VM default console userid            */
-static FILE *logfp;             /* logging file pointer                 */
+#else  /* _WIN32 */
+uid_t getpid();
+#endif /* _WIN32 */
 
-static int logpriority=LOG_ALERT;
-
-int syslog(int priority, ...)
-{
-        va_list args;           /* arguments                            */
-        register char *p;
-        register char *message;
-        char    buffer[132];
-        char    command[200];
-
-        va_start(args, priority);
-        /* get syslog() priority */
-        if ((p = getenv("SYSLOG_PRIORITY")) != NULL)       {
-                if (atoi(p) <= priority)       {
-                        return(0);
-                }
-        }
-        else {
-                /* default logging to LOG_CRIT */
-                if (LOG_CRIT <= priority)       {
-                        return(0);
-                }
-        }
-        /* get syslog() VM console user id */
-        if ((p = getenv("SYSLOG_CONSOLE")) != NULL)     {
-                console = p;
-        }
-
-        message = va_arg(args, char *);
-        (void) vsprintf(buffer, message, args);
-        strcpy(command,"EXEC TELL ");
-        strcat(command, console);
-        strcat(command, " ");
-        strcat(command, logname);
-        strcat(command, ": ");
-        strcat(command,buffer);
-        (void) system(command);
-        va_end(args);
-}
-#endif /* VM */
-
-
-#if !defined(VM)
 #if !defined(IRIX5) && !defined(__Lynx__)
 void     logit();
 #else
 void     logit(int level, ...);
-#endif
-#else
-int      logit(int level, ...);
-#endif /* VM || IRIX5 */
+#endif /* IRIX5 || __Lynx__ */
 void (*logfunc)()=(void (*)())logit;
 
 /*
@@ -129,140 +82,100 @@ char    *name;                  /* facility name                        */
 int     level;                  /* logging level                        */
 char    *output;                /* output specifier                     */
 {
-        register char  *p;
+    register char  *p;
 
-        loglevel=level;
+    loglevel=level;
 
-        /* bypass level if set in environment */
-        if ((p = getenv("LOG_PRIORITY")) != NULL)       {
-                loglevel=atoi(p);
-        }
-        /*
-         * Opening syslog path.
-         */
-        strcpy(logname,name);
-#if defined(sun) || defined(CRAY) || defined(sgi) || defined(apollo) || defined(hpux) || defined(_AIX)
-        openlog(logname, LOG_PID, LOG_USER);
-#endif  /* sun || CRAY || sgi || apollo || hpux || _AIX */
-#if (defined(ultrix) && defined(mips))
-        openlog(logname, LOG_PID);
-#endif /* ultrix && mips */
+    /* bypass level if set in environment */
+    if ((p = getenv("LOG_PRIORITY")) != NULL) {
+        loglevel=atoi(p);
+    }
+    /*
+     * Opening syslog path.
+     */
+    strcpy(logname,name);
+#if defined(sun) || defined(sgi) || defined(hpux) || defined(_AIX)
+    openlog(logname, LOG_PID, LOG_USER);
+#endif  /* sun || sgi || hpux || _AIX */
 
-        /*
-         * Opening log file and setting logfunc
-         * to either syslog or logit.
-         */
-        if (!strcmp(output,"syslog"))   {
-                logfunc=(void (*)())syslog;
-        }
-        else {
-                logfunc=(void (*)())logit;
-                if (strlen(output) == 0)        {
-#if !defined(VM)
-                        logfd= fileno(stderr) ; /* standard error       */
-#else
-                        logfp=stderr;
-#endif
-                }
-                else {
-                        strcpy(logfilename,output);
-                }
-        }
+    /*
+     * Opening log file and setting logfunc
+     * to either syslog or logit.
+     */
+    if (!strcmp(output,"syslog"))   {
+        logfunc=(void (*)())syslog;
+    } else {
+        logfunc=(void (*)())logit;
+        if (strlen(output) == 0) {
+            logfd= fileno(stderr) ; /* standard error       */
+        } else {
+            strcpy(logfilename,output);        
+        }    
+    }
 }
 
 /*
  * logit should be called with the following syntax
  * logit(LOG_LEVEL,format[,value,...]) ;
  */
-#if !defined(VM)
-#if !defined(IRIX5) && !defined(__Lynx__)
+#if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
 void logit(va_alist)     va_dcl
 #else
 void logit(int level, ...)
 #endif
-#else
-int logit(int level, ...)
-#endif /* VM */
 {
-        va_list args ;          /* Variable argument list               */
-        char    *format;        /* Format of the log message            */
-#if !defined(VM) && !defined(vms)
-	time_t	clock;
+    va_list args ;          /* Variable argument list               */
+    char    *format;        /* Format of the log message            */
+    time_t  clock;
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+    struct tm tmstruc;
+#endif /* _REENTRANT || _THREAD_SAFE */
+    struct tm *tp;
+    char    timestr[64] ;   /* Time in its ASCII format             */
+    char    line[BUFSIZ] ;  /* Formatted log message                */
+    int     fd;             /* log file descriptor                  */
+    int     Tid = 0;        /* Thread ID if MT                      */
+#if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
+    int     level;          /* Level of the message                 */
+
+    va_start(args);         /* initialize to beginning of list      */
+    level = va_arg(args, int);
 #else
-        unsigned long    clock; /* What time is it ?                    */
-#endif /* !VM && !vms */
-        char    timestr[64] ;   /* Time in its ASCII format             */
-        char    line[BUFSIZ] ;  /* Formatted log message                */
-#if !defined(VM)
-        int     fd;             /* log file descriptor                  */
-#endif
-#if !defined(VM) && !defined(IRIX5) && !defined(__Lynx__)
-        int     level;          /* Level of the message                 */
 
-        va_start(args);         /* initialize to beginning of list      */
-        level = va_arg(args, int);
-#else
-
-	va_start(args, level);
-#endif /* VM || IRIX5 */
-        if (loglevel >= level)  {
-		format = va_arg(args, char *);
-		(void) time(&clock);
-		(void) strcpy(timestr,ctime(&clock)+strlen("Ddd "));
-		timestr[strlen(timestr)-1-strlen(" YYYY")]='\0';
-
-#if !defined(VM)
-                pid = getpid();
-#if !defined(vms)
-                        (void) sprintf(line,"%s %s[%d]: ",timestr,logname,
-                            pid) ;
-#else /* vms */
-                        (void) sprintf(line,"%s %s[%X]: ",timestr,logname,
-                            pid) ;
-#endif /* vms   */
-                        (void) vsprintf(line+strlen(line),format,args);
-#else /* VM */
-                        (void) sprintf(line,"%s %s: ",timestr,logname) ;
-                        (void) vsprintf(line+strlen(line),format,args);
-#endif /* VM */
-
-                        if (strlen(logfilename)!=0) {
-#if !defined(VM)
-                                if ( (fd= open(logfilename,O_CREAT|O_WRONLY|
-                                    O_APPEND,0666)) == -1 ) {
-                                        syslog(LOG_ERR,"open: %s: %m", logfilename);
-                                        /* FH we probably should retry */
-                                        return;
-                                }
-                                /*
-                         * To be sure that file access is enables
-                         * even if root umask is not 0 
-                         */
-                                else
-                                        (void) chmod( logfilename, 0666 );
-                        }
-                        else {
-                                if  (strlen(logfilename)==0)
-                                        fd= fileno (stderr); /* standard error */
-                        }
-                        (void) write(fd,line,strlen(line)) ;
-                        if (strlen(logfilename)!=0)
-                                (void) close(fd);
-#else
-                        if ( (logfp= fopen(output,"a+")) == NULL ) {
-                                perror(output);
-                                syslog(LOG_ERR,"fopen: %s: %s", output, strerror(errno));
-                                return(-1);
-                        }
-                        (void) fwrite(line,strlen(line),1, logfp) ;
-                        if (strlen(logfilename)!=0)
-                                (void) fclose(logfp);
-#endif /* VM */
-                }
-                va_end(args);
+    va_start(args, level);
+#endif /* IRIX5 || __Lynx__ */
+    if (loglevel >= level)  {
+        format = va_arg(args, char *);
+        (void) time(&clock);
+        tp = localtime(&clock);
+        (void) strftime(timestr,64,strftime_format,tp);
+        pid = getpid();
+        Cglobals_getTid(&Tid);
+        (void) sprintf(line,"%s %s[%d,%d]: ",timestr,logname,pid,Tid) ;
+        (void) vsprintf(line+strlen(line),format,args);
+        if (strlen(logfilename)!=0) {
+            if ( (fd= open(logfilename,O_CREAT|O_WRONLY|
+                O_APPEND,0666)) == -1 ) {
+                syslog(LOG_ERR,"open: %s: %m", logfilename);
+                /* FH we probably should retry */
+                return;
+            } else
+                /*
+                 * To be sure that file access is enables
+                 * even if root umask is not 0 
+                 */
+                 (void) chmod( logfilename, 0666 );           
+        } else {
+            if  (strlen(logfilename)==0)
+                fd= fileno (stderr); /* standard error */
         }
-
-        int getloglv()
-        {
-                return(loglevel);
-        }
+        (void) write(fd,line,strlen(line)) ;
+        if (strlen(logfilename)!=0) (void) close(fd);
+    }
+    va_end(args);
+}
+        
+int getloglv()
+{
+    return(loglevel);
+}
