@@ -1,0 +1,65 @@
+.\" @(#)$RCSfile: vmgr_enterpool.man,v $ $Revision: 1.1 $ $Date: 2000/01/31 16:07:31 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGR_ENTERPOOL l "$Date: 2000/01/31 16:07:31 $"
+.SH NAME
+vmgr_enterpool \- define a new tape pool in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "vmgr_api.h"\fR
+.sp
+.BI "int vmgr_enterpool (const char *" pool_name ,
+.BI "uid_t " pool_user ,
+.BI "gid_t " pool_group )
+.SH DESCRIPTION
+.B vmgr_enterpool
+defines a new tape pool in the CASTOR Volume Manager.
+.TP
+.I pool_name
+is the name of the tape pool.
+It must be at most 24 characters long.
+.TP
+.I pool_user
+if greater than zero, the tape pool is restricted to this user uid.
+.TP
+.I pool_group
+if greater than zero, the tape pool is restricted to this group gid.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EFAULT
+.I pool_name
+is a NULL pointer.
+.TP
+.B EEXIST
+The named pool exists already.
+.TP
+.B EINVAL
+The length of
+.I pool_name
+exceeds 24.
+.TP
+.B ENOSPC
+The volume manager database is full.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B EVMGRNACT
+Volume manager is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(l) ,
+.BR vmgr_deletepool(l) ,
+.B vmgr_modifypool(l)
