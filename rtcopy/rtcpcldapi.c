@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/25 15:29:24 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/05/25 15:57:10 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.4 $ $Date: 2004/05/25 15:29:24 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.5 $ $Date: 2004/05/25 15:57:10 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 
@@ -60,30 +60,7 @@ static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.4 $ $Date: 2
 #include <rtcp_api.h>
 #include <rtcpcld_constants.h>
 #include <rtcpcld_messages.h>
-
-#define ID_TYPE unsigned long
-
-typedef struct RtcpcldTapeList 
-{
-  tape_list_t *tape;
-  struct Cstager_Tape_t *tp;
-  struct C_IAddress_t *iAddr;
-  struct RtcpcldSegmentList *segments;
-  struct RtcpcldTapeList *next;
-  struct RtcpcldTapeList *prev;
-}
-RtcpcldTapeList_t;
-
-typedef struct RtcpcldSegmentList 
-{
-  file_list_t *file;
-  struct Cstager_Segment_t *segment;
-  struct RtcpcldTapeList *tp;
-  struct C_IAdress_t *iAddr;
-  struct RtcpcldSegmentList *next;
-  struct RtcpcldSegmentList *prev;
-}
-RtcpcldSegmentList_t;
+#include <rtcpcld.h>
 
 typedef struct TpReqMap 
 {
