@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.7 $ $Date: 1999/12/28 15:16:23 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.8 $ $Date: 2000/01/04 08:44:39 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -574,6 +574,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     struct passwd *pwd;
     char *cmd = NULL;
 
+    (void)setpgrp();
     rtcp_log(LOG_DEBUG,"rtcpd_MainCntl() called\n");
     rtcpd_SetDebug();
     AbortFlag = 0;
@@ -906,7 +907,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         }
         rtcp_log(LOG_INFO,"rtcpd_MainCntl() tape I/O thread returned status=%d\n",
             status);
-        if ( !(rtcpd_CheckProcError() & RTCP_LOCAL_RETRY) ) break;
+        if ( (rtcpd_CheckProcError() & RTCP_LOCAL_RETRY) == 0 ) break;
         /*
          * do a local retry
          */
