@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.42 2002/01/18 09:38:33 jdurand Exp $
+ * $Id: procclr.c,v 1.43 2002/01/18 11:17:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.42 $ $Date: 2002/01/18 09:38:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.43 $ $Date: 2002/01/18 11:17:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -503,8 +503,8 @@ void procclrreq(req_type, magic, req_data, clienthost)
 						c = i;
 						goto reply;
 					}
+					stcp += i;
 				}
-				stcp += i;
 			}
 		}
 		if (! found) {
