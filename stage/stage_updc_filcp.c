@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc_filcp.c,v 1.4 2000/03/14 09:55:27 jdurand Exp $
+ * $Id: stage_updc_filcp.c,v 1.5 2000/03/15 10:06:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc_filcp.c,v $ $Revision: 1.4 $ $Date: 2000/03/14 09:55:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc_filcp.c,v $ $Revision: 1.5 $ $Date: 2000/03/15 10:06:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -26,6 +26,28 @@ static char sccsid[] = "@(#)$RCSfile: stage_updc_filcp.c,v $ $Revision: 1.4 $ $D
 #include "serrno.h"
 #include "stage.h"
 #include "u64subr.h"
+
+int copyrc_shift2castor _PROTO((int));
+
+int copyrc_castor2shift(copyrc)
+     int copyrc;
+{
+  /* Input  is a CASTOR return code */
+  /* Output is a SHIFT  return code */
+  switch (copyrc) {
+  case ERTBLKSKPD:
+    return(BLKSKPD);
+  case ERTTPE_LSZ:
+    return(TPE_LSZ);
+  case ERTMNYPARY:
+  case ETPARIT:
+    return(MNYPARI);
+  case ERTLIMBYSZ:
+    return(LIMBYSZ);
+  default:
+    return(copyrc);
+  }
+}
 
 int DLL_DECL stage_updc_filcp(stageid, copyrc, ifce, size, waiting_time, transfer_time, blksize, drive, fid, fseq, lrecl, recfm, path)
      char *stageid;
@@ -168,7 +190,7 @@ int DLL_DECL stage_updc_filcp(stageid, copyrc, ifce, size, waiting_time, transfe
     nargs += 2;
   }
   if (copyrc >= 0) {
-    sprintf (tmpbuf, "%d", copyrc);
+    sprintf (tmpbuf, "%d", copyrc_castor2shift(copyrc));
     marshall_STRING (sbp, "-R");
     marshall_STRING (sbp, tmpbuf);
     nargs += 2;

@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_api.c,v 1.2 2000/03/14 09:55:26 jdurand Exp $
+ * $Id: send2stgd_api.c,v 1.3 2000/03/15 10:06:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.2 $ $Date: 2000/03/14 09:55:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.3 $ $Date: 2000/03/15 10:06:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -46,6 +46,30 @@ void dounlink _PROTO((char *));
 #ifndef _WIN32
 void wait4child _PROTO(());
 #endif
+int rc_shift2castor _PROTO((int));
+
+int rc_shift2castor(rc)
+     int copyrc;
+{
+  /* Input  is a SHIFT  return code */
+  /* Output is a CASTOR return code */
+  switch (copyrc) {
+  case BLKSKPD:
+    return(ERTBLKSKPD);
+  case TPE_LSZ:
+    return(ERTTPE_LSZ);
+  case MNYPARI:
+    return(ERTMNYPARY);
+  case LIMBYSZ:
+    return(ERTLIMBYSZ);
+  case USERR:
+    return(EINVAL);
+  case SYERR:
+    return(SESYSERR);
+  default:
+    return(rc);
+  }
+}
 
 int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_len)
      char *host;
@@ -166,11 +190,7 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
     if (rep_type == STAGERC) {
       (void) netclose (stg_s);
       if (c) {
-        if (magic == STGOLDMAGIC) {
-          if (c == USERR) c = EINVAL;
-          else if (c == SYERR) c = SESYSERR;
-        }
-        serrno = c;
+        serrno = rc_shift2castor(c);
         c = -1;
       }
       break;

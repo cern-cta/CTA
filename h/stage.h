@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.13 2000/03/14 09:49:08 jdurand Exp $
+ * $Id: stage.h,v 1.14 2000/03/15 10:05:58 jdurand Exp $
  */
 
 /*
@@ -29,8 +29,7 @@
 #define REQBUFSZ 20000	/* must be >= max stage daemon request size */
 #define CHECKI	10	/* max interval to check for work to be done */
 #define	RETRYI	60
-#define STGOLDMAGIC 0x13140701
-#define STGMAGIC    0x13140702
+#define STGMAGIC    0x13140701
 #define STG	"stage"	/* service name in /etc/services */
 
 #define UPPER(s) \
@@ -159,7 +158,6 @@
 
 			/* stage daemon return codes */
 
-#if ! defined(vms)
 #define	USERR	  1	/* user error */
 #define	SYERR 	  2	/* system error */
 #define	UNERR	  3	/* undefined error */
@@ -172,20 +170,6 @@
 #define	REQKILD	196	/* request killed by user */
 #define	LIMBYSZ	197	/* limited by size */
 #define	ENOUGHF	199	/* enough free space */
-#else
-#define	USERR	  1*2	/* user error */
-#define	SYERR 	  2*2	/* system error */
-#define	UNERR	  3*2	/* undefined error */
-#define	CONFERR	  4*2	/* configuration error */
-#define	LNKNSUP	189*2	/* symbolic links not supported on that platform */
-#define	CLEARED	192*2	/* aborted by stageclr */
-#define	BLKSKPD	193*2	/* blocks were skipped */
-#define	TPE_LSZ	194*2	/* blocks were skipped, stageing limited by size */
-#define	MNYPARI	195*2	/* stagein stopped: too many tape errors, but -E keep */
-#define	REQKILD	196*2	/* request killed by user */
-#define	LIMBYSZ	197*2	/* limited by size */
-#define	ENOUGHF	199*2	/* enough free space */
-#endif
 
 			/* stage daemon internal tables */
 
