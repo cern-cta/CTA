@@ -1,0 +1,19 @@
+#
+# $Id: rhserver.logrotate,v 1.1 2004/10/27 14:28:35 jdurand Exp $
+#
+# @(#)$RCSfile: rhserver.logrotate,v $ $Revision: 1.1 $ $Date: 2004/10/27 14:28:35 $ CERN/IT/ADC/CA Jean-Damien Durand
+#
+/var/log/rhserver {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}
+/usr/spool/rhserver/log {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}
