@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.15 $ $Date: 2003/09/09 15:59:41 $ CERN IT/ADC/CA Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.16 $ $Date: 2003/09/26 13:52:31 $ CERN IT/ADC/CA Jean-Damien Durand";
 #endif /* not lint */
 
 /* log.c        - generalized logging routines                          */
@@ -123,7 +123,9 @@ void DLL_DECL logit(int level, char *format, ...)
     char    line[BUFSIZ] ;  /* Formatted log message                */
     int     fd;             /* log file descriptor                  */
     int     Tid = 0;        /* Thread ID if MT                      */
+	int     save_errno;
 
+	save_errno = errno;
     va_start(args, format);
     if (loglevel >= level)  {
         (void) time(&clock);
@@ -155,6 +157,8 @@ void DLL_DECL logit(int level, char *format, ...)
                 O_APPEND,logbits)) == -1 ) {
                 syslog(LOG_ERR,"open: %s: %m", logfilename);
                 /* FH we probably should retry */
+				va_end(args);
+				errno = save_errno;
                 return;
             } else
                 /*
@@ -170,6 +174,7 @@ void DLL_DECL logit(int level, char *format, ...)
         if (strlen(logfilename)!=0) (void) close(fd);
     }
     va_end(args);
+	errno = save_errno;
 }
         
 int DLL_DECL getloglv()
