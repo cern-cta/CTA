@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_info.c,v $ $Revision: 1.5 $ $Date: 1999/10/13 14:14:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_info.c,v $ $Revision: 1.6 $ $Date: 1999/11/16 14:40:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_info - get tape file information */
@@ -46,6 +46,7 @@ char *recfm;
 	char repbuf[66];
 	char *sbp;
 	char sendbuf[REQBUFSZ];
+	char tmpbuf[20];
 	uid_t uid;
  
 	strcpy (func, "Ctape_info");
@@ -91,7 +92,7 @@ char *recfm;
 
 	sbp = sendbuf;
 	marshall_LONG (sbp, TPMAGIC);
-	marshall_LONG (sbp, TPRLS);
+	marshall_LONG (sbp, TPINFO);
 	q = sbp;        /* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
 	marshall_LONG (sbp, msglen);
@@ -108,15 +109,33 @@ char *recfm;
 	c = send2tpd (NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
 	if (c == 0) {
 		rbp = repbuf;
-		unmarshall_LONG (rbp, *blksize);
-		unmarshall_LONG (rbp, *blockid);
-		unmarshall_STRING (rbp, density);
-		unmarshall_STRING (rbp, devtype);
-		unmarshall_STRING (rbp, drive);
-		unmarshall_STRING (rbp, fid);
-		unmarshall_LONG (rbp, *fseq);
-		unmarshall_LONG (rbp, *lrecl);
-		unmarshall_STRING (rbp, recfm);
+		unmarshall_LONG (rbp, n);
+		if (blksize)
+			*blksize = n;
+		unmarshall_LONG (rbp, n);
+		if (blockid)
+			*blockid = n;
+		unmarshall_STRING (rbp, tmpbuf);
+		if (density)
+			strcpy (density, tmpbuf);
+		unmarshall_STRING (rbp, tmpbuf);
+		if (devtype)
+			strcpy (devtype, tmpbuf);
+		unmarshall_STRING (rbp, tmpbuf);
+		if (drive)
+			strcpy (drive, tmpbuf);
+		unmarshall_STRING (rbp, tmpbuf);
+		if (fid)
+			strcpy (fid, tmpbuf);
+		unmarshall_LONG (rbp, n);
+		if (fseq)
+			*fseq = n;
+		unmarshall_LONG (rbp, n);
+		if (lrecl)
+			*lrecl = n;
+		unmarshall_STRING (rbp, tmpbuf);
+		if (recfm)
+			strcpy (recfm, tmpbuf);
 	}
 	return (c);
 }
