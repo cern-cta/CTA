@@ -6,7 +6,7 @@
 
 
 #ifndef lint
-static char cvsId[] = "$RCSfile: Cnetdb.c,v $ $Revision: 1.4 $ $Date: 1999/12/14 14:32:51 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "$RCSfile: Cnetdb.c,v $ $Revision: 1.5 $ $Date: 1999/12/14 17:05:06 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -28,6 +28,8 @@ static char cvsId[] = "$RCSfile: Cnetdb.c,v $ $Revision: 1.4 $ $Date: 1999/12/14
 #if (defined(IRIX5) || defined(IRIX6) || defined(IRIX64))
 extern struct hostent *gethostbyname_r(const char *, struct hostent *, char *, int, int *);
 extern struct hostent *gethostbyaddr_r(const void *, size_t, int, struct hostent *, char *, int, int *);
+extern struct servent   *getservbyname_r(const char *, const char *,
+                                         struct servent *, char *, int);
 #endif
 
 struct hostent *Cgethostbyname(name)
@@ -185,3 +187,75 @@ int type;
     return(NULL);
 #endif
 }
+
+struct servent *Cgetservbyname(name,proto)
+const char *name;
+const char *proto;
+{
+#if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(__osf__) && defined(__alpha) || defined(_WIN32)
+    /*
+     * If single-thread compilation we don't do anything.
+     * Also: Windows and Digital UNIX v4 and higher already
+     *       provide thread safe version.
+     */
+    return(getservbyname(name,proto));
+#elif defined(SOLARIS) || defined(IRIX6)
+    static int servent_key = -1;
+    static int servdata_key = -1;
+    struct servent *sp;
+    struct servent *result = (struct servent *)NULL;
+    char *buffer = (char *)NULL;
+    int bufsize = 1024;
+   
+    Cglobals_get(&servent_key,(void **)&result,sizeof(struct servent));
+    Cglobals_get(&servdata_key,(void **)&buffer,bufsize);
+
+    if ( result == (struct servent *)NULL || buffer == (char *)NULL ) {
+        return(NULL);
+    }
+    sp = getservbyname_r(name,proto,result,buffer,bufsize);
+    return(sp);
+#elif defined(AIX42) || defined(hpux) || defined(HPUX10)
+    static int servent_key = -1;
+    static int servdata_key = -1;
+    int rc;
+    struct servent *result = (struct servent *)NULL;
+    struct servent_data *st_data = (struct servent_data *)NULL;
+
+    Cglobals_get(&servent_key,(void **)&result,sizeof(struct servent));
+    Cglobals_get(&servdata_key,(void **)&st_data,sizeof(struct servent_data));
+
+    if ( result == (struct servent *)NULL ||
+        st_data == (struct servent_data *)NULL ) {
+         return(NULL);
+    }
+
+    rc = getservbyname_r(name,proto,result,st_data);
+    if (rc == -1) return(NULL);
+    else return(result);
+#elif defined(linux)
+    static int servent_key = -1;
+    static int servdata_key = -1;
+    int rc;
+    struct servent *sp;
+    struct servent *result = (struct servent *)NULL;
+    char *buffer = (char *)NULL;
+    int bufsize = 1024;
+
+    Cglobals_get(&servent_key,(void **)&result,sizeof(struct servent));
+    Cglobals_get(&servdata_key,(void **)&buffer,bufsize);
+
+    if ( result == (struct hostent *)NULL || buffer == (char *)NULL ) {
+        return(NULL);
+    }
+    rc = getservbyname_r(name,proto,result,buffer,bufsize,&sp);
+    if ( rc == -1 ) sp = NULL;
+    return(sp);
+#else
+    /*
+     * Not supported
+     */
+    return(NULL);
+#endif
+}
+
