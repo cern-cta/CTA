@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.51 2002/06/10 14:59:03 jdurand Exp $
+ * $Id: stage_api.c,v 1.52 2002/07/22 09:31:11 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -32,9 +32,10 @@
 #if VMGR
 #include "vmgr_api.h"          /* For vmgrcheck() */
 #endif
+#include "net.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.51 $ $Date: 2002/06/10 14:59:03 $ CERN IT/DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.52 $ $Date: 2002/07/22 09:31:11 $ CERN IT/DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifdef hpux
@@ -725,20 +726,18 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 		switch (magic_server) {
 		case STGMAGIC4:
 			magic_server = STGMAGIC3;
-			/* stage_errmsg(func, "Server do not support STGMAGIC4 - Downgrade to STGMAGIC3\n"); */
 #if defined(_WIN32)
 			WSACleanup();
 #endif
 			goto _stage_iowc_retry;
 		case STGMAGIC3:
 			magic_server = STGMAGIC2;
-			/* stage_errmsg(func, "Server do not support STGMAGIC3 - Downgrade to STGMAGIC2\n"); */
 #if defined(_WIN32)
 			WSACleanup();
 #endif
 			goto _stage_iowc_retry;
 		default:
-			stage_errmsg(func, "Server do not support any satisfactory client's protocol\n");
+			stage_errmsg(func, "Server do not support any satisfactory client's protocol (%s)\n", neterror());
 			serrno = SEOPNOTSUP;
 			break;
 		}
@@ -1356,20 +1355,18 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 		switch (magic_server) {
 		case STGMAGIC4:
 			magic_server = STGMAGIC3;
-			/* stage_errmsg(func, "Server do not support STGMAGIC4 - Downgrade to STGMAGIC3\n"); */
 #if defined(_WIN32)
 			WSACleanup();
 #endif
 			goto _stage_qry_retry;
 		case STGMAGIC3:
 			magic_server = STGMAGIC2;
-			/* stage_errmsg(func, "Server do not support STGMAGIC3 - Downgrade to STGMAGIC2\n"); */
 #if defined(_WIN32)
 			WSACleanup();
 #endif
 			goto _stage_qry_retry;
 		default:
-			stage_errmsg(func, "Server do not support any satisfactory client's protocol\n");
+			stage_errmsg(func, "Server do not support any satisfactory client's protocol (%s)\n", neterror());
 			serrno = SEOPNOTSUP;
 			break;
 		}
@@ -1821,20 +1818,18 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
 		switch (magic_server) {
 		case STGMAGIC4:
 			magic_server = STGMAGIC3;
-			/* stage_errmsg(func, "Server do not support STGMAGIC4 - Downgrade to STGMAGIC3\n"); */
 #if defined(_WIN32)
 			WSACleanup();
 #endif
 			goto _stageupdc_retry;
 		case STGMAGIC3:
 			magic_server = STGMAGIC2;
-			/* stage_errmsg(func, "Server do not support STGMAGIC3 - Downgrade to STGMAGIC2\n"); */
 #if defined(_WIN32)
 			WSACleanup();
 #endif
 			goto _stageupdc_retry;
 		default:
-			stage_errmsg(func, "Server do not support any satisfactory client's protocol\n");
+			stage_errmsg(func, "Server do not support any satisfactory client's protocol (%s)\n", neterror());
 			serrno = SEOPNOTSUP;
 			break;
 		}
@@ -2253,20 +2248,18 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
 		switch (magic_server) {
 		case STGMAGIC4:
 			magic_server = STGMAGIC3;
-			/* stage_errmsg(func, "Server do not support STGMAGIC4 - Downgrade to STGMAGIC3\n"); */
 #if defined(_WIN32)
 			WSACleanup();
 #endif
 			goto _stage_clr_retry;
 		case STGMAGIC3:
 			magic_server = STGMAGIC2;
-			/* stage_errmsg(func, "Server do not support STGMAGIC3 - Downgrade to STGMAGIC2\n"); */
 #if defined(_WIN32)
 			WSACleanup();
 #endif
 			goto _stage_clr_retry;
 		default:
-			stage_errmsg(func, "Server do not support any satisfactory client's protocol\n");
+			stage_errmsg(func, "Server do not support any satisfactory client's protocol (%s)\n", neterror());
 			serrno = SEOPNOTSUP;
 #if defined(_WIN32)
 			WSACleanup();
@@ -2552,20 +2545,18 @@ int DLL_DECL stage_ping(flags,hostname)
 		switch (magic_server) {
 		case STGMAGIC4:
 			magic_server = STGMAGIC3;
-			/* stage_errmsg(func, "Server do not support STGMAGIC4 - Downgrade to STGMAGIC3\n"); */
 #if defined(_WIN32)
 			WSACleanup();
 #endif
 			goto _stage_ping_retry;
 		case STGMAGIC3:
 			magic_server = STGMAGIC2;
-			/* stage_errmsg(func, "Server do not support STGMAGIC3 - Downgrade to STGMAGIC2\n"); */
 #if defined(_WIN32)
 			WSACleanup();
 #endif
 			goto _stage_ping_retry;
 		default:
-			stage_errmsg(func, "Server do not support any satisfactory client's protocol\n");
+			stage_errmsg(func, "Server do not support any satisfactory client's protocol (%s)\n", neterror());
 			serrno = SEOPNOTSUP;
 			break;
 		}
