@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.138 2001/06/20 13:27:35 jdurand Exp $
+ * $Id: poolmgr.c,v 1.139 2001/06/21 08:19:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.138 $ $Date: 2001/06/20 13:27:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.139 $ $Date: 2001/06/21 08:19:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -98,11 +98,6 @@ extern struct stgdb_fd dbfd;
 #endif
 extern int savereqs _PROTO(());
 extern char localhost[CA_MAXHOSTNAMELEN+1];
-
-/* Why does HP-UX reports it in 1K block-size ? - We Handle this by making sure that BLOCKS_TO_SIZE >= actual_size */
-/* We can't handle this exactly in this macro because file systems can be remote and we have no way */
-/* to determine if the remote file system is an HP-UX one or not */
-#define BLOCKS_TO_SIZE(blocks) (((u_signed64) blocks) * 512)
 
 struct files_per_stream {
   struct stgcat_entry *stcp;
@@ -575,8 +570,8 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 				pool_p->name, pool_p->defsize, pool_p->gc_stop_thresh, pool_p->gc_start_thresh);
       stglogit (func,".... GC %s\n",
 				*(pool_p->gc) != '\0' ? pool_p->gc : "<none>");
-      stglogit (func,".... NO_FILE_CREATION %d\n",
-				pool_p->no_file_creation);
+      stglogit (func,".... NO_FILE_CREATION %s\n",
+				(pool_p->no_file_creation ? "NO (== 0)" : "YES (!= 0)"));
       if (pool_p->migr_name[0] != '\0') {
         stglogit (func,".... MIGRATOR %s\n", pool_p->migr_name);
         stglogit (func,".... MIG_STOP_THRESH %d MIG_START_THRESH %d\n",
@@ -620,13 +615,18 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
       } else {
         char tmpbuf1[21];
         char tmpbuf2[21];
-        elemp->capacity = (u_signed64) ((u_signed64) st.totblks * (u_signed64) st.bsize);
-        elemp->free = (u_signed64) ((u_signed64) st.freeblks * (u_signed64) st.bsize);
+        char tmpbuf3[21];
+        elemp->bsize = (u_signed64) st.bsize;
+        elemp->capacity = (u_signed64) ((u_signed64) st.totblks * elemp->bsize);
+        elemp->free = (u_signed64) ((u_signed64) st.freeblks * elemp->bsize);
         pool_p->capacity += elemp->capacity;
         pool_p->free += elemp->free;
         stglogit (func,
-                  "... %s capacity=%s, free=%s\n",
-                  path, u64tostru(elemp->capacity, tmpbuf1, 0), u64tostru(elemp->free, tmpbuf2, 0));
+                  "... %s capacity=%s, free=%s, blocksize=%s\n",
+                  path, u64tostru(elemp->capacity, tmpbuf1, 0),
+                  u64tostru(elemp->free, tmpbuf2, 0),
+                  u64tostru(elemp->bsize, tmpbuf3, 0)
+                  );
       }
       elemp++;
     }
@@ -1756,7 +1756,9 @@ int update_migpool(stcp,flag,immediate)
   }
   /* We check that this pool have a migrator */
   if (pool_p->migr == NULL) {
-    return(0);
+    sendrep(rpfd, MSG_ERR, STG149, (*stcp)->u1.h.xfile, (*stcp)->poolname);
+    rc = -1;
+    goto update_migpool_return;
   }
   /* We check that this stcp have a known fileclass v.s. its pool migrator */
   if ((ifileclass = upd_fileclass(pool_p,*stcp)) < 0) {
@@ -2114,7 +2116,9 @@ void checkfile2mig()
       char tmpbuf2[21];
       char tmpbuf3[21];
       char tmpbuf4[21];
+      int save_reqid = reqid;
 
+      reqid = 0;
       stglogit("checkfile2mig", "STG98 - Migrator %s@%s - Global Predicate returns true:\n",
                pool_p->migr->name,
                pool_p->name);
@@ -2133,6 +2137,7 @@ void checkfile2mig()
                u64tostru((pool_p->capacity * pool_p->mig_start_thresh) /
                          ((u_signed64) 100), tmpbuf3, 0)
                );
+      reqid = save_reqid;
     }
 
     if (global_or == 0) {
@@ -2150,7 +2155,9 @@ void checkfile2mig()
           char tmpbuf2[21];
           char tmpbuf3[21];
           char tmpbuf4[21];
+          int save_reqid = reqid;
 
+          reqid = 0;
           stglogit("checkfile2mig", "STG98 - Migrator %s@%s - Fileclass %s@%s (classid %d) - %d cop%s - Predicates returns true:\n",
                    pool_p->migr->name,
                    pool_p->name,
@@ -2170,6 +2177,7 @@ void checkfile2mig()
                    pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval > 0 ? "ON" : "OFF",
                    (int) (time(NULL) - pool_p->migr->migreqtime_last_end),
                    pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval);
+          reqid = save_reqid;
           break;
         }
       }
@@ -2188,14 +2196,17 @@ int migrate_files(pool_p)
   char func[16];
   struct stgcat_entry *stcp;
   int pid, ifileclass;
+  int save_reqid = reqid;
 
   strcpy (func, "migrate_files");
   pool_p->migr->mig_pid = fork ();
   pid = pool_p->migr->mig_pid;
 
   if (pid < 0) {
+    reqid = 0;
     stglogit (func, STG02, "", "fork", sys_errlist[errno]);
     pool_p->migr->mig_pid = 0;
+    reqid = save_reqid;
     return (SYERR);
   } else if (pid == 0) {  /* we are in the child */
     /* @@@@ EXCEPTIONNAL @@@@ */
@@ -2209,6 +2220,7 @@ int migrate_files(pool_p)
     int j;
     char tmpbuf[21];
 
+    reqid = 0;
     /* For logging purpose we reset these variables, used only in this routine */
     pool_p->migr->global_predicates.nbfiles_to_mig = 0;
     pool_p->migr->global_predicates.space_to_mig = 0;
@@ -2221,6 +2233,8 @@ int migrate_files(pool_p)
     for (stcp = stcs; stcp < stce; stcp++) {
       if (stcp->reqid == 0) break;
       if (! ISCASTORCANBEMIG(stcp)) continue;       /* Not a candidate for migration */
+      if (ISCASTORWAITINGMIG(stcp)) continue;       /* This cannot already have the flag we are going to put it to */
+      if (ISCASTORBEINGMIG(stcp)) continue;         /* Cannot have this status at this step - this is too early */
       okpoolname = 0;
       /* Does it belong to a pool managed by this migrator ? */
       for (ipoolname = 0, pool_n = pools; ipoolname < nbpool; ipoolname++, pool_n++) {
@@ -2294,6 +2308,7 @@ int migrate_files(pool_p)
       redomigpool();
     }
   }
+  reqid = save_reqid;
   return (0);
 }
 
@@ -2307,6 +2322,7 @@ int migpoolfiles(pool_p)
   struct stgcat_entry *stcp;
   struct stgpath_entry *stpp;
   int found_nbfiles = 0;
+  int found_nbfiles_max = 0;
   char func[16];
   int okpoolname;
   int ipoolname;
@@ -2365,12 +2381,27 @@ int migpoolfiles(pool_p)
 #endif
 
 #ifndef _WIN32
-  signal(SIGCHLD, poolmgr_wait4child);
+  sa_poolmgr.sa_handler = poolmgr_wait4child;
+  sa_poolmgr.sa_flags = SA_RESTART;
+  sigaction (SIGCHLD, &sa_poolmgr, NULL);
 #endif
+
+  /* Protect ourself agains something impossible unless a problem in the counters */
+  if ((pool_p == NULL) || (pool_p->migr == NULL)) {
+    stglogit(func, "### (pool_p == NULL) || (pool_p->migr == NULL)\n");
+    return(SYERR);
+  }
+  if ((found_nbfiles_max = (pool_p->migr->global_predicates.nbfiles_canbemig - pool_p->migr->global_predicates.nbfiles_beingmig)) <= 0) {
+    stglogit(func, "### pool_p->migr->global_predicates.nbfiles_canbemig - pool_p->migr->global_predicates.nbfiles_beingmig = %d - %d = %d\n",
+             pool_p->migr->global_predicates.nbfiles_canbemig,
+             pool_p->migr->global_predicates.nbfiles_beingmig,
+             pool_p->migr->global_predicates.nbfiles_canbemig - pool_p->migr->global_predicates.nbfiles_beingmig);
+    return(SYERR);
+  }
 
   /* build a sorted list of stage catalog entries for the specified pool */
   scf = NULL;
-  if ((scs = (struct sorted_ent *) calloc ((pool_p->migr->global_predicates.nbfiles_canbemig - pool_p->migr->global_predicates.nbfiles_beingmig), sizeof(struct sorted_ent))) == NULL) {
+  if ((scs = (struct sorted_ent *) calloc (found_nbfiles_max, sizeof(struct sorted_ent))) == NULL) {
     stglogit(func, "### calloc error (%s)\n",strerror(errno));
     return(SYERR);
   }
@@ -2384,6 +2415,8 @@ int migpoolfiles(pool_p)
   for (stcp = stcs; stcp < stce; stcp++) {
     if (stcp->reqid == 0) break;
     if (! ISCASTORCANBEMIG(stcp)) continue;       /* Not a being migrated candidate */
+    if (ISCASTORWAITINGMIG(stcp)) continue;       /* Cannot have this because it is setted only after the fork */
+    if (ISCASTORBEINGMIG(stcp)) continue;         /* Cannot have this status at this step - this is too early */
     okpoolname = 0;
     /* Does it belong to a pool managed by this migrator ? */
     for (ipoolname = 0, pool_n = pools; ipoolname < nbpool; ipoolname++, pool_n++) {
@@ -2424,13 +2457,19 @@ int migpoolfiles(pool_p)
       }
     }
     sci->stcp = stcp;
-    ++found_nbfiles;
     sci++;
+    if (++found_nbfiles >= found_nbfiles_max) {
+      /* We should have find already all the candidates - no need to go further */
+      /* And if we would ever have find other candidates further we cannot */
+      /* treat them otherwise this would cause a memory corruption */
+      break;
+    }
   }
 
   if (found_nbfiles == 0) {
     stglogit(func, "### Internal error - Found 0 files to migrate !??\n");
-    exit(0);
+    free(scs);
+    return(0);
   }
 
   /* All entries that are to be migrated have a not-empty tape pool in member  */
@@ -2553,7 +2592,7 @@ int migpoolfiles(pool_p)
         ++nfiles_per_tppool;
         if ((ifileclass = upd_fileclass(pool_p,scc->stcp)) >= 0) {
           if (pool_p->migr->fileclass[ifileclass]->flag == 0) {
-            /* This pool was not yet counted */
+            /* This fileclass [ifileclass] was not yet counted for this tape pool [scc_found->stcp->u1.h.tpool] */
             pool_p->migr->fileclass[ifileclass]->streams++;
             pool_p->migr->fileclass[ifileclass]->orig_streams++;
             pool_p->migr->fileclass[ifileclass]->flag = 1;
@@ -2580,7 +2619,7 @@ int migpoolfiles(pool_p)
       if (scc->scanned != 0) continue;
       if ((scc == scc_found) || (strcmp(scc->stcp->u1.h.tppool,scc_found->stcp->u1.h.tppool) == 0)) {
         ++j;
-        memcpy(stcp +j,scc->stcp,sizeof(struct stgcat_entry));
+        memcpy(stcp+j,scc->stcp,sizeof(struct stgcat_entry));
         /* We makes sure that the -K option is disabled... This means that when this copy will be migrated */
         /* The corresponding STAGEWRT entry in the catalog will disappear magically !... */
         (stcp+j)->keep = 0;
@@ -2588,6 +2627,8 @@ int migpoolfiles(pool_p)
         (stcp+j)->size = 0;
         /* We remove the poolname argument that we will sent via stagewrt_hsm */
         (stcp+j)->poolname[0] = '\0';
+        /* We remove other arguments - not needed - will be logged for nothing */
+        (stcp+j)->u1.h.fileclass = 0;
         /* Please note that the (stcp+j)->ipath will be our user path (stpp) */
         strcpy((stpp+j)->upath, (stcp+j)->ipath);
         scc->scanned = 1;
@@ -2598,7 +2639,7 @@ int migpoolfiles(pool_p)
   }
 
   /* Here we have all the ntppool_vs_stcp streams to launch, each of them composed of */
-  /* tppool_vs_stcp[0..ntppool_vs_stcp].nstcp entries */
+  /* tppool_vs_stcp[0..(ntppool_vs_stcp - 1)].nstcp entries */
 
   /* We check if the size of the migration does fit the minimum size per stream - default to 2GB */
   if (minsize > 0) {
@@ -2669,7 +2710,7 @@ int migpoolfiles(pool_p)
       int nfree_stream;
       int has_fileclass_i;
       
-      if (pool_p->migr->fileclass[i]->orig_streams <= 0) continue; /* This fileclass is not concerned */
+      if (pool_p->migr->fileclass[i]->orig_streams <= 0) continue; /* This fileclass cannot be concerned */
 
       /* We start with a number of virtual stream equal to the real number of streams */
       pool_p->migr->fileclass[i]->nfree_stream = 0;
@@ -2904,6 +2945,14 @@ int migpoolfiles(pool_p)
 #endif
 
       free(scs);                                      /* Neither for the sorted entries */
+      /* We remove the non-needed ipath members */
+      {
+        int j2;
+
+        for (j2 = 0; j2 < tppool_vs_stcp[j].nstcp; j2++) {
+          tppool_vs_stcp[j].stcp[j2].ipath[0] = '\0';
+        }
+      }
       setegid(start_passwd.pw_gid);                   /* Move to admin (who knows) */
       seteuid(start_passwd.pw_uid);
       setegid(tppool_vs_stcp[j].egid);                /* Move to requestor (from fileclasses) */
@@ -3049,7 +3098,7 @@ int upd_fileclass(pool_p,stcp)
     return(-1);
   }
 
-  /* We grab fileclass if necessary */
+  /* We grab fileclass - this also permits to check that file still is in exist in the nameserver */
   if (stcp->u1.h.fileclass <= 0) {
     strcpy(Cnsfileid.server,stcp->u1.h.server);
     Cnsfileid.fileid = stcp->u1.h.fileid;
@@ -3731,7 +3780,7 @@ int retenp_on_disk(ifileclass)
 }
 
 void check_lifetime_on_disk() {
-	time_t this_time = time(NULL);
+	time_t thistime = time(NULL);
 	struct stgcat_entry *stcp;
 	char *func = "check_lifetime_on_disk";
 	extern struct fileclass *fileclasses;
@@ -3744,24 +3793,32 @@ void check_lifetime_on_disk() {
       stageout_lifetime = atoi(stageout_lifetime_p);
     }
 
+ check_lifetime_on_disk_redo:
 	for (stcp = stcs; stcp < stce; stcp++) {
 		int ifileclass;
 		int thisretenp;
+		int thisnextreqid;
 
 		if (stcp->reqid == 0) break;
+        /* We keep in mind what would be the next reqid */
+        thisnextreqid = (stcp+1)->reqid;
+
+        /* ======================= */
+        /* CHECK STAGEOUT LIFETIME */
+        /* ======================= */
 
         /* Is is a STAGEOUT file not yet STAGED and its exceeds the STAGEOUT lifetime limit ? */
-        if (ISSTAGEOUT(stcp) && (! ISCASTORMIG(stcp)) && ((stcp->status & STAGED) != STAGED) && ((stcp->status & PUT_FAILED) != PUT_FAILED) && (stageout_lifetime > 0) && ((time(NULL) - stcp->a_time) > stageout_lifetime)) {
+        if (ISSTAGEOUT(stcp) && (! ISCASTORMIG(stcp)) && ((stcp->status & STAGED) != STAGED) && ((stcp->status & PUT_FAILED) != PUT_FAILED) && (stageout_lifetime >= 0) && ((thistime - stcp->a_time) > stageout_lifetime)) {
           u_signed64 actual_size_block;
           struct stat st;
           int save_reqid = reqid;
 
           reqid = 0;
-          stglogit (func, STG143, stcp->ipath, stageout_lifetime);
+          stglogit (func, STG143, stcp->ipath, "stageout", (int) (stageout_retenp / ONE_DAY), "move to PUT_FAILED");
           reqid = save_reqid;
           if (rfio_stat(stcp->ipath, &st) == 0) {
             stcp->actual_size = (u_signed64) st.st_size;
-            if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks)) < stcp->actual_size) {
+            if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
               /* This happens unfortunately if remote fs is an HP-UX file system */
               actual_size_block = stcp->actual_size;
             }
@@ -3790,19 +3847,44 @@ void check_lifetime_on_disk() {
         }
 
 		if (stcp->t_or_d != 'h') continue;      /* Not a CASTOR file */
-		if (stcp->keep) continue;               /* Has -K option */
-		if ((! ISSTAGEOUT(stcp)) || (! ISSTAGEWRT(stcp))) continue; /* Not coming from a STAGEOUT or a STAGEWRT request */
-		if ((stcp->status & STAGED) != STAGED) continue; /* Not STAGEd */
 		if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) continue; /* Unknown fileclass */
-		thisretenp = retenp_on_disk(ifileclass);
-		if ((thisretenp == INFINITE_LIFETIME) || (thisretenp == AS_LONG_AS_POSSIBLE)) continue;
-		if (((int) (this_time - stcp->a_time)) > thisretenp) { /* Lifetime exceeds ? */
-			/* Candidate for garbage */
-			stglogit (func, STG133, stcp->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, thisretenp, (int) (this_time - stcp->a_time));
-			if (delfile (stcp, 0, 1, 1, "check_lifetime_on_disk (retention period)", start_passwd.pw_uid, start_passwd.pw_gid, 0, 0) < 0) {
-				stglogit (STG02, stcp->ipath, "rfio_unlink", rfio_serror());
+
+        /* ======================================================= */
+        /* CHECK CASTOR's STAGEOUT|STAGED RETENTION PERIOD ON DISK */
+        /* ======================================================= */
+
+		if ((stcp->status & (STAGEOUT|STAGED)) == (STAGEOUT|STAGED)) {
+			/* We grab retention period on disk */
+			if (stcp->keep) continue;               /* Has -K option */
+			if ((thisretenp = stcp->u1.h.retenp_on_disk) < 0) thisretenp = retenp_on_disk(ifileclass);
+			if ((thisretenp == INFINITE_LIFETIME) || (thisretenp == AS_LONG_AS_POSSIBLE)) continue;
+			if (((int) (thistime - stcp->a_time)) > thisretenp) { /* Lifetime exceeds ? */
+				/* Candidate for garbage */
+				stglogit (func, STG133, stcp->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, thisretenp, (int) (thistime - stcp->a_time));
+				if (delfile (stcp, 0, 1, 1, "check_lifetime_on_disk (retention period)", start_passwd.pw_uid, start_passwd.pw_gid, 0, 0) < 0) {
+					stglogit (STG02, stcp->ipath, "rfio_unlink", rfio_serror());
+				}
+    	        goto check_lifetime_on_disk_continue;
 			}
 		}
+
+        continue;
+    check_lifetime_on_disk_continue:
+        if (thisnextreqid == (stcp+1)->reqid) {
+          /* The catalog has not been shifted - we can continue unless end of the catalog */
+          if (thisnextreqid == 0) break;
+          continue;
+        }
+        if (thisnextreqid == stcp->reqid) {
+          /* The catalog has been shifted by one - we lye to the for() loop unless end of the catalog */
+          if (thisnextreqid == 0) break;
+          stcp--;
+          /* And we continue */
+          continue;
+        }
+        /* Here the catalog has been shifted by more than one, this is a bit too much */
+        /* for us so we restart the whole loop */
+        goto check_lifetime_on_disk_redo;
 	}
 }
 
