@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stage.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stage.man,v $ $Revision: 1.7 $ $Date: 2001/12/13 17:10:34 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1996-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGE l "$Date: 2001/09/26 09:13:54 $"
+.TH STAGE l "$Date: 2001/12/13 17:10:34 $"
 .SH DESCRIPTION
 The staging facilities offer fast access to tape data via copies in a disk pool.
 A stage daemon manages the pool space and keeps a catalog of staged files.
@@ -19,6 +19,9 @@ allocate space in a disk pool
 .TP
 stagecat
 put an entry in the stage daemon catalog for an existing file (admin only)
+.TP
+stagechng
+change files attributes
 .TP
 stageclr
 remove staged files
@@ -37,6 +40,9 @@ tell stgdaemon to reread the pool configuration file (admin only)
 stageout
 allocate space and store the option values in the
 stgdaemon catalog for use by stageput later
+.TP
+stageping
+ping stager daemon
 .TP
 stageput
 copy disk files to tape. It can only be used for a file allocated with stageout
