@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.12 $ $Date: 2000/04/11 08:34:53 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.13 $ $Date: 2000/04/13 13:14:43 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -44,9 +44,11 @@ static int CheckRetry(tape_list_t *tape) {
 
     if ( tape == NULL ) return(FALSE);
     CLIST_ITERATE_BEGIN(tape,tl) {
-        if ( (tl->tapereq.err.severity & RTCP_RESELECT_SERV) != 0 ) return(TRUE);
+        if ( (tl->tapereq.err.severity & RTCP_RESELECT_SERV) != 0 &&
+             (tl->tapereq.err.severity & RTCP_FAILED) == 0 ) return(TRUE);
         CLIST_ITERATE_BEGIN(tl->file,fl) {
-            if ( (fl->filereq.err.severity & RTCP_RESELECT_SERV) != 0 ) return(TRUE);
+            if ( (fl->filereq.err.severity & RTCP_RESELECT_SERV) != 0 &&
+                 (fl->filereq.err.severity & RTCP_FAILED) == 0 ) return(TRUE);
         } CLIST_ITERATE_END(tl->file,fl);
     } CLIST_ITERATE_END(tape,tl);
     return(FALSE);
