@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.12 2002/03/21 17:51:58 jdurand Exp $
+ * $Id: stager_castor.c,v 1.13 2002/03/22 10:25:57 jdurand Exp $
  */
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.12 $ $Date: 2002/03/21 17:51:58 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.13 $ $Date: 2002/03/22 10:25:57 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -158,7 +158,8 @@ int stagewrt_nomoreupdatetape = 0;  /* Tell if the last updatetape from callback
 int error_already_processed = 0;    /* Set by the callback if it processes error */
 struct passwd start_passwd;
 int callback_error = 0;             /* Flag to tell us that there was an error in the callback */
-int fatal_callback_error = 0;       /* Flag to tell us that there error in the callback was fatal or not */
+int fatal_callback_error = 0;       /* Flag to tell us that there was a fatal error in the callback */
+int callback_forced_noretry = 0;    /* Flag to tell us that the callback do NOT want to see retry when mover says so */
 int rtcpc_kill_cleanup = 0;         /* Flag to tell if we have to call rtcpc_kill() in the signal handler */
 int dont_change_srv = 0;            /* If != 0 means that we will not change tape_server */
 char tape_pool[CA_MAXPOOLNAMELEN + 1]; /* Global tape pool for write migration */
@@ -1746,7 +1747,7 @@ int stagein_castor_hsm_file() {
 		}
 	}
 
-	fatal_callback_error = callback_error = 0;
+	fatal_callback_error = callback_error = callback_forced_noretry = 0;
 	rtcp_rc = rtcpc(rtcpcreqs[0]);
 	save_serrno = serrno;
 	rtcpc_kill_cleanup = 0;
@@ -1755,10 +1756,18 @@ int stagein_castor_hsm_file() {
 		if (callback_error != 0) {
 			/* This is a callback error - considered as fatal */
 			SAVE_EID;
-			sendrep (rpfd, MSG_ERR, STG02, "stagein_castor_hsm_file", "callback", sstrerror(serrno));
+			sendrep (rpfd, MSG_ERR, STG02, "stagein_castor_hsm_file", "callback", save_serrno ? sstrerror(save_serrno) : "");
 			RESTORE_EID;
 			free(stcp_start);
 			RETURN (SYERR);
+		}
+		if ((rtcpc_CheckRetry(rtcpcreqs[0]) == TRUE) && (callback_forced_noretry != 0)) {
+			/* Callback wants to exit immediately in contrary to what to the mover's API says */
+			SAVE_EID;
+			sendrep (rpfd, MSG_ERR, STG02, "stagein_castor_hsm_file", "forced exit", save_serrno ? sstrerror(save_serrno) : "");
+			RESTORE_EID;
+			free(stcp_start);
+			RETURN (USERR);
 		}
 		/* Because if serrno == EVQDGNINVL rtcpc_CheckRetry() would return also TRUE */
 		if ((rtcpc_CheckRetry(rtcpcreqs[0]) == TRUE)
@@ -2214,7 +2223,7 @@ int stagewrt_castor_hsm_file() {
 			}
 		}
 
-		fatal_callback_error = callback_error = 0;
+		fatal_callback_error = callback_error = callback_forced_noretry = 0;
 		rtcp_rc = rtcpc(rtcpcreqs[0]);
 		save_serrno = serrno;
 		rtcpc_kill_cleanup = 0;
@@ -2277,6 +2286,15 @@ int stagewrt_castor_hsm_file() {
 					goto gettape;
 				}
 				RETURN (SYERR);
+			}
+
+			if ((rtcpc_CheckRetry(rtcpcreqs[0]) == TRUE) && (callback_forced_noretry != 0)) {
+				/* Callback wants to exit immediately in contrary to what mover's API says */
+				SAVE_EID;
+				sendrep (rpfd, MSG_ERR, STG02, "stagewrt_castor_hsm_file", "callback asks for exit", serrno ? sstrerror(serrno) : "");
+				RESTORE_EID;
+				free(stcp_start);
+				RETURN (USERR);
 			}
 
 			/* Because if serrno == EVQDGNINVL rtcpc_CheckRetry() would return also TRUE */
@@ -3556,6 +3574,13 @@ void stager_process_error(save_serrno,tapereq,filereq,castor_hsm)
 		side = -1;
 		/* We say to the remaining process that we already took action for error processing */
 		error_already_processed = 1;
+	}
+	if (this_flag == DISABLED) {
+		/* We have decided to DISABLE a tape - in such a case can NEVER admit to do a retry even if the mover says so */
+		/* - Apply to recall mode */
+		if (ISSTAGEIN(stcs)) {
+			callback_forced_noretry = 1;
+		}
 	}
 }
 
