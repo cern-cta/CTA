@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.98 $ $Release$ $Date: 2004/12/06 14:54:38 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.99 $ $Release$ $Date: 2004/12/07 14:21:05 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.98 $ $Release$ $Date: 2004/12/06 14:54:38 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.99 $ $Release$ $Date: 2004/12/07 14:21:05 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -648,6 +648,40 @@ int rtcpcld_getTapesToDo(
       if ( rc == -1 ) {
         save_serrno = serrno;
         LOG_SYSCALL_ERR("rtcpcld_gettape()");
+        switch (save_serrno) {
+        case EFAULT:
+        case EACCES:
+        case EINVAL:
+        case ENOENT:
+          /*
+           * Don't know what to do with those... in longer term the best
+           * is probably to remove the stream all together but for the
+           * moment we'll keep it for debugging purposes.
+           */
+          break;
+        case ENOSPC:
+          Cstager_Stream_setStatus(streamArray[i],STREAM_WAITSPACE);
+          break;
+        case SENOSHOST:
+        case SENOSSERV:
+        case SECOMERR:
+        case SESYSERR:
+        case EVMGRNACT:
+          /*
+           * Retry next time
+           */
+          Cstager_Stream_setStatus(streamArray[i],STREAM_PENDING);
+          break;
+        default:
+          break;
+        }
+        iObj = Cstager_Stream_getIObject(streamArray[i]);
+        (void)C_Services_updateRep(
+                                   *dbSvc,
+                                   iAddr,
+                                   iObj,
+                                   1
+                                   );
         if ( tl != NULL ) free(tl);
         continue;
       }
