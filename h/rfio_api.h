@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.5 $ $Date: 2000/05/29 15:23:11 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.6 $ $Date: 2000/05/29 15:25:03 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -133,7 +133,7 @@ EXTERN_C int DLL_DECL rfio_HsmIf_mkdir _PROTO((const char *, mode_t));
 EXTERN_C int DLL_DECL rfio_HsmIf_open _PROTO((const char *, int, mode_t));
 EXTERN_C DIR DLL_DECL rfio_HsmIf_opendir _PROTO((const char *));
 EXTERN_C int DLL_DECL rfio_HsmIf_rename _PROTO((const char *, const char *));
-EXTERN_C dirent DLL_DECL *rfio_HsmIf_readdir _PROTO((DIR *));
+EXTERN_C struct dirent DLL_DECL *rfio_HsmIf_readdir _PROTO((DIR *));
 EXTERN_C void DLL_DECL rfio_HsmIf_rewinddir _PROTO((DIR *));
 EXTERN_C int DLL_DECL rfio_HsmIf_rmdir _PROTO((const char *));
 EXTERN_C int DLL_DECL rfio_HsmIf_stat _PROTO((const char *, struct stat *));
