@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_entertape.man,v $ $Revision: 1.8 $ $Date: 2000/03/05 16:25:38 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_entertape.man,v $ $Revision: 1.9 $ $Date: 2000/09/03 16:25:11 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_ENTERTAPE 3 "$Date: 2000/03/05 16:25:38 $" CASTOR "vmgr Library Functions"
+.TH VMGR_ENTERTAPE 3 "$Date: 2000/09/03 16:25:11 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_entertape \- enter a new tape in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -104,6 +104,9 @@ failed. In the latter case,
 is set appropriately.
 .SH ERRORS
 .TP 1.3i
+.B ENOENT
+The named model or pool does not exist.
+.TP
 .B EACCES
 The requestor is not super-user.
 .TP
