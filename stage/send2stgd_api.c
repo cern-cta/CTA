@@ -40,6 +40,8 @@ static char sccsid[] = "@(#)send2stgd_api.c,v 1.19 2001/05/31 13:52:27 CERN IT-P
 #include "stage_messages.h"
 #include "stage_protocol.h"
 #include "socket_timeout.h"
+#include "u64subr.h"
+#include "stage_api.h"
 
 int dosymlink _PROTO((char *, char *));
 void dounlink _PROTO((char *));
