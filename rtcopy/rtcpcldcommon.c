@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/08/06 08:30:53 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/08/11 12:03:33 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/08/06 08:30:53 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/08/11 12:03:33 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -435,10 +435,10 @@ char *rtcpcld_fixStr(
 
   p = retStr;
   while ( (p != NULL) && (*p != '\0') ) {
-    if ( !isalnum(*p) ) {
-      if ( (*p == '\n') || (*p == '\t') ) *p = ' ';
+    if ( !isprint(*p) ) {
+      if ( isspace(*p) ) *p = ' ';  /* space includes ' ', \n, \t, ... */
       else *p = '?';
-    }
+    } else if ( isspace(*p) ) *p = ' '; /* space includes ' ', \n, \t, ... */
     p++;
   }
   return(retStr);
