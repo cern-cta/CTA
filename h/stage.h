@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.41 2001/02/03 09:20:19 jdurand Exp $
+ * $Id: stage.h,v 1.42 2001/02/05 10:04:44 jdurand Exp $
  */
 
 /*
@@ -87,9 +87,10 @@
 
 #define UPPER(s) \
 	{ \
-	char * q; \
-	for (q = s; *q; q++) \
-		if (*q >= 'a' && *q <= 'z') *q = *q + ('A' - 'a'); \
+	char *q; \
+	if (*q != '\0') \
+		for (q = s; *q; q++) \
+			if (*q >= 'a' && *q <= 'z') *q = *q + ('A' - 'a'); \
 	}
 
 			/* stage daemon request types */
