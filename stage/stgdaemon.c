@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.174 2002/02/20 15:45:44 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.175 2002/02/20 15:56:36 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.174 $ $Date: 2002/02/20 15:45:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.175 $ $Date: 2002/02/20 15:56:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1878,7 +1878,7 @@ void checkpoolstatus()
 							strcat(stcp->u1.t.fseq,"-");
 						}
 						if (c < 0) {
-							if (wqp->nb_clnreq++ > MAXRETRY) {
+							if (wqp->nb_clnreq++ > (wqp->noretry ? 0 : MAXRETRY)) {
 								sendrep (rpfd, MSG_ERR, STG45,
 										(stcp->poolname[0] != '\0' ? stcp->poolname : "<none>"));
 								wqp->status = ENOSPC;
