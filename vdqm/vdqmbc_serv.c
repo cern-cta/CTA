@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqmbc_serv.c,v $ $Revision: 1.4 $ $Date: 2003/02/18 14:01:19 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqmbc_serv.c,v $ $Revision: 1.5 $ $Date: 2004/01/28 15:15:11 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -292,6 +292,7 @@ int vdqmbc_main() {
     hold = 1;
 #if !defined(_WIN32)
     signal(SIGPIPE,SIG_IGN);
+    signal(SIGXFSZ,SIG_IGN);
 #endif /* _WIN32 */
 
 #if !defined(BCSERVER_LOGFILE)
