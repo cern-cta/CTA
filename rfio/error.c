@@ -1,5 +1,5 @@
 /*
- * $Id: error.c,v 1.6 2000/05/29 16:41:59 obarring Exp $
+ * $Id: error.c,v 1.7 2001/03/22 10:56:10 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: error.c,v $ $Revision: 1.6 $ $Date: 2000/05/29 16:41:59 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: error.c,v $ $Revision: 1.7 $ $Date: 2001/03/22 10:56:10 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* error.c      Remote File I/O - error numbers and message handling    */
@@ -152,6 +152,42 @@ size_t buflen;
 	    return (buf);
 	 }
       }
+   }
+}
+
+int DLL_DECL rfio_serrno()   /* get error number - return -1 if cannot get it */
+{
+   int          s;
+   int		last_rferr ; 	/* to preserve rfio_errno 		*/
+   int		last_err ; 	/* to preserve errno 			*/
+   int          last_serrno ;   /* to preserve serrno                   */
+   int 		rt ;		/* Request is from other network?  	*/
+
+   INIT_TRACE("RFIO_TRACE");
+   last_err = errno ;
+   last_rferr = rfio_errno ;
+   last_serrno = serrno ;
+   TRACE(2, "rfio", "rfio_serrno: errno=%d, serrno=%d, rfio_errno=%d",
+	 errno, serrno, rfio_errno);
+   END_TRACE();
+   if (last_serrno != 0) {
+     return (serrno);
+   } else {
+     if (last_rferr != 0) {
+       if ((s=rfio_connect(rfio_lasthost(),&rt)) == -1)  {
+         rfio_errno = last_rferr ;
+         return (-1);
+       } else {
+         rfio_errno = last_rferr ;
+         return (rfio_errno);
+       }
+     } else {
+       if (serrno != 0)  {
+         return (serrno);
+       } else {
+         return (last_err);
+       }
+     }
    }
 }
 
