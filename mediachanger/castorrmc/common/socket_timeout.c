@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.19 $ $Date: 2002/09/04 08:06:56 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.20 $ $Date: 2003/04/17 07:22:14 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -361,15 +361,7 @@ Sigfunc *_netsignal(signo, func)
     act.sa_flags |= SA_RESTART;		/* SVR4, 44BSD */
 #endif
   }
-#ifdef __INSURE__
-  /* Insure don't like the value I give to sigaction... */
-  _Insure_set_option("runtime","off");
-#endif
   n = sigaction(signo, &act, &oact);
-#ifdef __INSURE__
-  /* Restore runtime checking */
-  _Insure_set_option("runtime","on");
-#endif
   if (n < 0) {
     return(SIG_ERR);
   }
