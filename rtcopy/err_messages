@@ -310,3 +310,4 @@
 "TP023 - mount cancelled by operator",6,
 "TMS02 - Volume held",6,
 "write protected",6,
+"request aborted by operator",6,
