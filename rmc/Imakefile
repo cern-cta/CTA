@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2001-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 2004/12/21 22:38:39 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Date: 2005/01/20 08:22:55 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM 	Make SCSI media changer server programs. 
 
@@ -10,21 +10,21 @@ COMM 	Make SCSI media changer server programs.
 
 INCLUDES = FileName(..,h)
 #if linux
-LIBS = -L../lib -lshift $(ADNSLIB) -lnsl
+LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl
 #else
 #if SOLARIS
-LIBS = -L../lib -lshift -lsocket -lnsl
+LIBS = -L../shlib -lshift -lsocket -lnsl
 #else
 #if defined(_AIX) && defined(_IBMR2)
-LIBS = -L../lib -lshift -lodm
+LIBS = -L../shlib -lshift -lodm
 #else
 #if defined(__alpha) && defined(__osf__)
-LIBS = -no_so -L../lib -lshift -so_archive
+LIBS = -no_so -L../shlib -lshift -so_archive
 #else
 #if _WIN32
 LIBS = ..\lib\shift.lib wsock32.lib advapi32.lib
 #else
-LIBS = -L../lib -lshift
+LIBS = -L../shlib -lshift
 #endif
 #endif
 #endif
@@ -42,7 +42,7 @@ CFLAGS =	-I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS)
 
 COMM######################### DEPENDENCY LIBRARIES ###############
 
-GLOBLIB = DepLibraryTargetName(lib,shift)
+GLOBLIB = DepSharedLibraryTargetName(shlib,shift)
 
 COMM######################### RULES ##############################
 
@@ -94,7 +94,7 @@ NormalProgramTarget(rmcdaemon,$(RMCDAEMON_OBJS),$(GLOBLIB),$(LIBS))
 
 NormalLibraryTarget(rmc,$(RMCLIB_OBJS))
 
-MakeDepLibrary(lib,shift)
+MakeDepSharedLibrary(shlib,shift)
 
 #if BuildRmcServer
 install: $(BIN) $(IPROGS_D) $(SPOOL) $(SACCTDIR)
