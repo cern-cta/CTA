@@ -1,5 +1,5 @@
 /*
- * $Id: stager_constants.h,v 1.5 2004/11/24 14:17:16 jdurand Exp $
+ * $Id: stager_constants.h,v 1.6 2004/11/24 15:55:49 jdurand Exp $
  */
 
 #ifndef __stager_constants_h
@@ -8,6 +8,7 @@
 #include "osdep.h"
 
 #define STAGER_DEFAULT_TIMEOUT      20                   /* Default send/recv timeout */
+#define STAGER_DEFAULT_FSUPDATE     30                   /* Default number of seconds between every fs update */
 #define STAGER_DEFAULT_SECURE_PORT 5515                  /* Default secure port number */
 #define STAGER_DEFAULT_PORT        5015                  /* Default port number */
 #define STAGER_DEFAULT_NOTIFY_PORT 55015                 /* Default notify port number */
@@ -27,6 +28,7 @@
 #define STAGER_CLASS              "STAGER"               /* Label in config file (1st column) */
 
 #define STAGER_CLASS_TIMEOUT      "TIMEOUT"              /* Sub-label in config file for timeout */
+#define STAGER_CLASS_FSUPDATE     "FSUPDATE"             /* Sub-label in config file for fs update */
 #define STAGER_CLASS_SECURE_PORT  "SPORT"                /* Sub-label in config file for secure port */
 #define STAGER_CLASS_SECURE       "SECURE"               /* Sub-label in config file for secure mode */
 #define STAGER_CLASS_NOTIFY_PORT  "NOTIFY_PORT"          /* Sub-label in config file for notification port */
@@ -44,6 +46,7 @@
 #define STAGER_CLASS_HOST         "HOST"                 /* Sub-label in config file for host */
 
 #define STAGER_ENV_TIMEOUT        "STAGER_TIMEOUT"       /* Environment variable for timeout */
+#define STAGER_ENV_FSUPDATE       "STAGER_FSUPDATE"      /* Environment variable for fs update */
 #define STAGER_ENV_SECURE_PORT    "STAGER_SPORT"         /* Environment variable for secure port */
 #define STAGER_ENV_SECURE         "STAGER_SECURE"        /* Environment variable for secure stager */
 #define STAGER_ENV_NOTIFY_PORT    "STAGER_NOTIFY_PORT"   /* Environment variable for notification port */
