@@ -29,8 +29,11 @@
 
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
+struct C_IClient_t;
+struct Cstager_FileRequest_t;
 struct Cstager_ReqIdRequest_t;
 struct Cstager_StageGetNextRequest_t;
+struct Cstager_SvcClass_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -68,9 +71,166 @@ int Cstager_StageGetNextRequest_print(struct Cstager_StageGetNextRequest_t* inst
  */
 int Cstager_StageGetNextRequest_TYPE(int* ret);
 
+/*************************************************/
+/* Implementation of ReqIdRequest abstract class */
+/*************************************************/
+
+/**
+ * Get the value of parent
+ */
+int Cstager_StageGetNextRequest_parent(struct Cstager_StageGetNextRequest_t* instance, struct Cstager_FileRequest_t** var);
+
+/**
+ * Set the value of parent
+ */
+int Cstager_StageGetNextRequest_setParent(struct Cstager_StageGetNextRequest_t* instance, struct Cstager_FileRequest_t* new_var);
+
+/********************************************/
+/* Implementation of Request abstract class */
+/********************************************/
+
+/**
+ * Get the value of flags
+ */
+int Cstager_StageGetNextRequest_flags(struct Cstager_StageGetNextRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of flags
+ */
+int Cstager_StageGetNextRequest_setFlags(struct Cstager_StageGetNextRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of userName
+ * Name of the user that submitted the request
+ */
+int Cstager_StageGetNextRequest_userName(struct Cstager_StageGetNextRequest_t* instance, const char** var);
+
+/**
+ * Set the value of userName
+ * Name of the user that submitted the request
+ */
+int Cstager_StageGetNextRequest_setUserName(struct Cstager_StageGetNextRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of euid
+ * Id of the user that submitted the request
+ */
+int Cstager_StageGetNextRequest_euid(struct Cstager_StageGetNextRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of euid
+ * Id of the user that submitted the request
+ */
+int Cstager_StageGetNextRequest_setEuid(struct Cstager_StageGetNextRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of egid
+ * Id of the group of the user that submitted the request
+ */
+int Cstager_StageGetNextRequest_egid(struct Cstager_StageGetNextRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of egid
+ * Id of the group of the user that submitted the request
+ */
+int Cstager_StageGetNextRequest_setEgid(struct Cstager_StageGetNextRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of mask
+ * Mask for accessing files in the user space
+ */
+int Cstager_StageGetNextRequest_mask(struct Cstager_StageGetNextRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of mask
+ * Mask for accessing files in the user space
+ */
+int Cstager_StageGetNextRequest_setMask(struct Cstager_StageGetNextRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of pid
+ * Process id of the user process
+ */
+int Cstager_StageGetNextRequest_pid(struct Cstager_StageGetNextRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of pid
+ * Process id of the user process
+ */
+int Cstager_StageGetNextRequest_setPid(struct Cstager_StageGetNextRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of machine
+ * The machine that submitted the request
+ */
+int Cstager_StageGetNextRequest_machine(struct Cstager_StageGetNextRequest_t* instance, const char** var);
+
+/**
+ * Set the value of machine
+ * The machine that submitted the request
+ */
+int Cstager_StageGetNextRequest_setMachine(struct Cstager_StageGetNextRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of svcClassName
+ */
+int Cstager_StageGetNextRequest_svcClassName(struct Cstager_StageGetNextRequest_t* instance, const char** var);
+
+/**
+ * Set the value of svcClassName
+ */
+int Cstager_StageGetNextRequest_setSvcClassName(struct Cstager_StageGetNextRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of userTag
+ * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
+ */
+int Cstager_StageGetNextRequest_userTag(struct Cstager_StageGetNextRequest_t* instance, const char** var);
+
+/**
+ * Set the value of userTag
+ * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
+ */
+int Cstager_StageGetNextRequest_setUserTag(struct Cstager_StageGetNextRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of reqId
+ * The Cuuid identifying the Request, stored as a human readable string
+ */
+int Cstager_StageGetNextRequest_reqId(struct Cstager_StageGetNextRequest_t* instance, const char** var);
+
+/**
+ * Set the value of reqId
+ * The Cuuid identifying the Request, stored as a human readable string
+ */
+int Cstager_StageGetNextRequest_setReqId(struct Cstager_StageGetNextRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of svcClass
+ */
+int Cstager_StageGetNextRequest_svcClass(struct Cstager_StageGetNextRequest_t* instance, struct Cstager_SvcClass_t** var);
+
+/**
+ * Set the value of svcClass
+ */
+int Cstager_StageGetNextRequest_setSvcClass(struct Cstager_StageGetNextRequest_t* instance, struct Cstager_SvcClass_t* new_var);
+
+/**
+ * Get the value of client
+ */
+int Cstager_StageGetNextRequest_client(struct Cstager_StageGetNextRequest_t* instance, struct C_IClient_t** var);
+
+/**
+ * Set the value of client
+ */
+int Cstager_StageGetNextRequest_setClient(struct Cstager_StageGetNextRequest_t* instance, struct C_IClient_t* new_var);
+
 /********************************************/
 /* Implementation of IObject abstract class */
 /********************************************/
+
 /**
  * Sets the id of the object
  */

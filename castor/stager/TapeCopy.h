@@ -75,6 +75,7 @@ int Cstager_TapeCopy_TYPE(int* ret);
 /********************************************/
 /* Implementation of IObject abstract class */
 /********************************************/
+
 /**
  * Sets the id of the object
  */

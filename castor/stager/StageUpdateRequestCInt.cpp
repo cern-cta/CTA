@@ -25,9 +25,13 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/IClient.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StageUpdateRequest.hpp"
+#include "castor/stager/SubRequest.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
+#include <vector>
 
 extern "C" {
 
@@ -73,6 +77,232 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_StageUpdateRequest_TYPE(int* ret) {
     *ret = castor::stager::StageUpdateRequest::TYPE();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_addSubRequests
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_addSubRequests(castor::stager::StageUpdateRequest* instance, castor::stager::SubRequest* obj) {
+    instance->addSubRequests(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_removeSubRequests
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_removeSubRequests(castor::stager::StageUpdateRequest* instance, castor::stager::SubRequest* obj) {
+    instance->removeSubRequests(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_subRequests
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_subRequests(castor::stager::StageUpdateRequest* instance, castor::stager::SubRequest*** var, int* len) {
+    std::vector<castor::stager::SubRequest*> result = instance->subRequests();
+    *len = result.size();
+    *var = (castor::stager::SubRequest**) malloc((*len) * sizeof(castor::stager::SubRequest*));
+    for (int i = 0; i < *len; i++) {
+      (*var)[i] = result[i];
+    }
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_flags
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_flags(castor::stager::StageUpdateRequest* instance, u_signed64* var) {
+    *var = instance->flags();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_setFlags
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_setFlags(castor::stager::StageUpdateRequest* instance, u_signed64 new_var) {
+    instance->setFlags(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_userName
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_userName(castor::stager::StageUpdateRequest* instance, const char** var) {
+    *var = instance->userName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_setUserName
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_setUserName(castor::stager::StageUpdateRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setUserName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_euid
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_euid(castor::stager::StageUpdateRequest* instance, unsigned long* var) {
+    *var = instance->euid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_setEuid
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_setEuid(castor::stager::StageUpdateRequest* instance, unsigned long new_var) {
+    instance->setEuid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_egid
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_egid(castor::stager::StageUpdateRequest* instance, unsigned long* var) {
+    *var = instance->egid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_setEgid
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_setEgid(castor::stager::StageUpdateRequest* instance, unsigned long new_var) {
+    instance->setEgid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_mask
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_mask(castor::stager::StageUpdateRequest* instance, unsigned long* var) {
+    *var = instance->mask();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_setMask
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_setMask(castor::stager::StageUpdateRequest* instance, unsigned long new_var) {
+    instance->setMask(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_pid
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_pid(castor::stager::StageUpdateRequest* instance, unsigned long* var) {
+    *var = instance->pid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_setPid
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_setPid(castor::stager::StageUpdateRequest* instance, unsigned long new_var) {
+    instance->setPid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_machine
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_machine(castor::stager::StageUpdateRequest* instance, const char** var) {
+    *var = instance->machine().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_setMachine
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_setMachine(castor::stager::StageUpdateRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setMachine(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_svcClassName
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_svcClassName(castor::stager::StageUpdateRequest* instance, const char** var) {
+    *var = instance->svcClassName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_setSvcClassName
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_setSvcClassName(castor::stager::StageUpdateRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setSvcClassName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_userTag
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_userTag(castor::stager::StageUpdateRequest* instance, const char** var) {
+    *var = instance->userTag().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_setUserTag
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_setUserTag(castor::stager::StageUpdateRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setUserTag(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_reqId
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_reqId(castor::stager::StageUpdateRequest* instance, const char** var) {
+    *var = instance->reqId().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_setReqId
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_setReqId(castor::stager::StageUpdateRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setReqId(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_svcClass
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_svcClass(castor::stager::StageUpdateRequest* instance, castor::stager::SvcClass** var) {
+    *var = instance->svcClass();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_setSvcClass
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_setSvcClass(castor::stager::StageUpdateRequest* instance, castor::stager::SvcClass* new_var) {
+    instance->setSvcClass(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_client
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_client(castor::stager::StageUpdateRequest* instance, castor::IClient** var) {
+    *var = instance->client();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_setClient
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_setClient(castor::stager::StageUpdateRequest* instance, castor::IClient* new_var) {
+    instance->setClient(new_var);
     return 0;
   }
 

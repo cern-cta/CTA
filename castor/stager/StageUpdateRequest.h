@@ -29,8 +29,11 @@
 
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
+struct C_IClient_t;
 struct Cstager_FileRequest_t;
 struct Cstager_StageUpdateRequest_t;
+struct Cstager_SubRequest_t;
+struct Cstager_SvcClass_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -68,9 +71,171 @@ int Cstager_StageUpdateRequest_print(struct Cstager_StageUpdateRequest_t* instan
  */
 int Cstager_StageUpdateRequest_TYPE(int* ret);
 
+/************************************************/
+/* Implementation of FileRequest abstract class */
+/************************************************/
+
+/**
+ * Add a struct Cstager_SubRequest_t* object to the subRequests list
+ */
+int Cstager_StageUpdateRequest_addSubRequests(struct Cstager_StageUpdateRequest_t* instance, struct Cstager_SubRequest_t* obj);
+
+/**
+ * Remove a struct Cstager_SubRequest_t* object from subRequests
+ */
+int Cstager_StageUpdateRequest_removeSubRequests(struct Cstager_StageUpdateRequest_t* instance, struct Cstager_SubRequest_t* obj);
+
+/**
+ * Get the list of struct Cstager_SubRequest_t* objects held by subRequests
+ */
+int Cstager_StageUpdateRequest_subRequests(struct Cstager_StageUpdateRequest_t* instance, struct Cstager_SubRequest_t*** var, int* len);
+
+/********************************************/
+/* Implementation of Request abstract class */
+/********************************************/
+
+/**
+ * Get the value of flags
+ */
+int Cstager_StageUpdateRequest_flags(struct Cstager_StageUpdateRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of flags
+ */
+int Cstager_StageUpdateRequest_setFlags(struct Cstager_StageUpdateRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of userName
+ * Name of the user that submitted the request
+ */
+int Cstager_StageUpdateRequest_userName(struct Cstager_StageUpdateRequest_t* instance, const char** var);
+
+/**
+ * Set the value of userName
+ * Name of the user that submitted the request
+ */
+int Cstager_StageUpdateRequest_setUserName(struct Cstager_StageUpdateRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of euid
+ * Id of the user that submitted the request
+ */
+int Cstager_StageUpdateRequest_euid(struct Cstager_StageUpdateRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of euid
+ * Id of the user that submitted the request
+ */
+int Cstager_StageUpdateRequest_setEuid(struct Cstager_StageUpdateRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of egid
+ * Id of the group of the user that submitted the request
+ */
+int Cstager_StageUpdateRequest_egid(struct Cstager_StageUpdateRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of egid
+ * Id of the group of the user that submitted the request
+ */
+int Cstager_StageUpdateRequest_setEgid(struct Cstager_StageUpdateRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of mask
+ * Mask for accessing files in the user space
+ */
+int Cstager_StageUpdateRequest_mask(struct Cstager_StageUpdateRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of mask
+ * Mask for accessing files in the user space
+ */
+int Cstager_StageUpdateRequest_setMask(struct Cstager_StageUpdateRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of pid
+ * Process id of the user process
+ */
+int Cstager_StageUpdateRequest_pid(struct Cstager_StageUpdateRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of pid
+ * Process id of the user process
+ */
+int Cstager_StageUpdateRequest_setPid(struct Cstager_StageUpdateRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of machine
+ * The machine that submitted the request
+ */
+int Cstager_StageUpdateRequest_machine(struct Cstager_StageUpdateRequest_t* instance, const char** var);
+
+/**
+ * Set the value of machine
+ * The machine that submitted the request
+ */
+int Cstager_StageUpdateRequest_setMachine(struct Cstager_StageUpdateRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of svcClassName
+ */
+int Cstager_StageUpdateRequest_svcClassName(struct Cstager_StageUpdateRequest_t* instance, const char** var);
+
+/**
+ * Set the value of svcClassName
+ */
+int Cstager_StageUpdateRequest_setSvcClassName(struct Cstager_StageUpdateRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of userTag
+ * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
+ */
+int Cstager_StageUpdateRequest_userTag(struct Cstager_StageUpdateRequest_t* instance, const char** var);
+
+/**
+ * Set the value of userTag
+ * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
+ */
+int Cstager_StageUpdateRequest_setUserTag(struct Cstager_StageUpdateRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of reqId
+ * The Cuuid identifying the Request, stored as a human readable string
+ */
+int Cstager_StageUpdateRequest_reqId(struct Cstager_StageUpdateRequest_t* instance, const char** var);
+
+/**
+ * Set the value of reqId
+ * The Cuuid identifying the Request, stored as a human readable string
+ */
+int Cstager_StageUpdateRequest_setReqId(struct Cstager_StageUpdateRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of svcClass
+ */
+int Cstager_StageUpdateRequest_svcClass(struct Cstager_StageUpdateRequest_t* instance, struct Cstager_SvcClass_t** var);
+
+/**
+ * Set the value of svcClass
+ */
+int Cstager_StageUpdateRequest_setSvcClass(struct Cstager_StageUpdateRequest_t* instance, struct Cstager_SvcClass_t* new_var);
+
+/**
+ * Get the value of client
+ */
+int Cstager_StageUpdateRequest_client(struct Cstager_StageUpdateRequest_t* instance, struct C_IClient_t** var);
+
+/**
+ * Set the value of client
+ */
+int Cstager_StageUpdateRequest_setClient(struct Cstager_StageUpdateRequest_t* instance, struct C_IClient_t* new_var);
+
 /********************************************/
 /* Implementation of IObject abstract class */
 /********************************************/
+
 /**
  * Sets the id of the object
  */

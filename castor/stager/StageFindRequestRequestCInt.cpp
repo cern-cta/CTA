@@ -25,8 +25,10 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/IClient.hpp"
 #include "castor/stager/QryRequest.hpp"
 #include "castor/stager/StageFindRequestRequest.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
 
 extern "C" {
@@ -73,6 +75,203 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_StageFindRequestRequest_TYPE(int* ret) {
     *ret = castor::stager::StageFindRequestRequest::TYPE();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_flags
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_flags(castor::stager::StageFindRequestRequest* instance, u_signed64* var) {
+    *var = instance->flags();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_setFlags
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_setFlags(castor::stager::StageFindRequestRequest* instance, u_signed64 new_var) {
+    instance->setFlags(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_userName
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_userName(castor::stager::StageFindRequestRequest* instance, const char** var) {
+    *var = instance->userName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_setUserName
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_setUserName(castor::stager::StageFindRequestRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setUserName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_euid
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_euid(castor::stager::StageFindRequestRequest* instance, unsigned long* var) {
+    *var = instance->euid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_setEuid
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_setEuid(castor::stager::StageFindRequestRequest* instance, unsigned long new_var) {
+    instance->setEuid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_egid
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_egid(castor::stager::StageFindRequestRequest* instance, unsigned long* var) {
+    *var = instance->egid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_setEgid
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_setEgid(castor::stager::StageFindRequestRequest* instance, unsigned long new_var) {
+    instance->setEgid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_mask
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_mask(castor::stager::StageFindRequestRequest* instance, unsigned long* var) {
+    *var = instance->mask();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_setMask
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_setMask(castor::stager::StageFindRequestRequest* instance, unsigned long new_var) {
+    instance->setMask(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_pid
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_pid(castor::stager::StageFindRequestRequest* instance, unsigned long* var) {
+    *var = instance->pid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_setPid
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_setPid(castor::stager::StageFindRequestRequest* instance, unsigned long new_var) {
+    instance->setPid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_machine
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_machine(castor::stager::StageFindRequestRequest* instance, const char** var) {
+    *var = instance->machine().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_setMachine
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_setMachine(castor::stager::StageFindRequestRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setMachine(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_svcClassName
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_svcClassName(castor::stager::StageFindRequestRequest* instance, const char** var) {
+    *var = instance->svcClassName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_setSvcClassName
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_setSvcClassName(castor::stager::StageFindRequestRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setSvcClassName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_userTag
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_userTag(castor::stager::StageFindRequestRequest* instance, const char** var) {
+    *var = instance->userTag().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_setUserTag
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_setUserTag(castor::stager::StageFindRequestRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setUserTag(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_reqId
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_reqId(castor::stager::StageFindRequestRequest* instance, const char** var) {
+    *var = instance->reqId().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_setReqId
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_setReqId(castor::stager::StageFindRequestRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setReqId(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_svcClass
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_svcClass(castor::stager::StageFindRequestRequest* instance, castor::stager::SvcClass** var) {
+    *var = instance->svcClass();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_setSvcClass
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_setSvcClass(castor::stager::StageFindRequestRequest* instance, castor::stager::SvcClass* new_var) {
+    instance->setSvcClass(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_client
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_client(castor::stager::StageFindRequestRequest* instance, castor::IClient** var) {
+    *var = instance->client();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_setClient
+  //----------------------------------------------------------------------------
+  int Cstager_StageFindRequestRequest_setClient(castor::stager::StageFindRequestRequest* instance, castor::IClient* new_var) {
+    instance->setClient(new_var);
     return 0;
   }
 

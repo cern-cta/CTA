@@ -25,8 +25,11 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/IClient.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "castor/stager/ReqIdRequest.hpp"
 #include "castor/stager/StagePutNextRequest.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
 
 extern "C" {
@@ -73,6 +76,219 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_StagePutNextRequest_TYPE(int* ret) {
     *ret = castor::stager::StagePutNextRequest::TYPE();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_parent
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_parent(castor::stager::StagePutNextRequest* instance, castor::stager::FileRequest** var) {
+    *var = instance->parent();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_setParent
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_setParent(castor::stager::StagePutNextRequest* instance, castor::stager::FileRequest* new_var) {
+    instance->setParent(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_flags
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_flags(castor::stager::StagePutNextRequest* instance, u_signed64* var) {
+    *var = instance->flags();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_setFlags
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_setFlags(castor::stager::StagePutNextRequest* instance, u_signed64 new_var) {
+    instance->setFlags(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_userName
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_userName(castor::stager::StagePutNextRequest* instance, const char** var) {
+    *var = instance->userName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_setUserName
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_setUserName(castor::stager::StagePutNextRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setUserName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_euid
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_euid(castor::stager::StagePutNextRequest* instance, unsigned long* var) {
+    *var = instance->euid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_setEuid
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_setEuid(castor::stager::StagePutNextRequest* instance, unsigned long new_var) {
+    instance->setEuid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_egid
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_egid(castor::stager::StagePutNextRequest* instance, unsigned long* var) {
+    *var = instance->egid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_setEgid
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_setEgid(castor::stager::StagePutNextRequest* instance, unsigned long new_var) {
+    instance->setEgid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_mask
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_mask(castor::stager::StagePutNextRequest* instance, unsigned long* var) {
+    *var = instance->mask();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_setMask
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_setMask(castor::stager::StagePutNextRequest* instance, unsigned long new_var) {
+    instance->setMask(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_pid
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_pid(castor::stager::StagePutNextRequest* instance, unsigned long* var) {
+    *var = instance->pid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_setPid
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_setPid(castor::stager::StagePutNextRequest* instance, unsigned long new_var) {
+    instance->setPid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_machine
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_machine(castor::stager::StagePutNextRequest* instance, const char** var) {
+    *var = instance->machine().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_setMachine
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_setMachine(castor::stager::StagePutNextRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setMachine(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_svcClassName
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_svcClassName(castor::stager::StagePutNextRequest* instance, const char** var) {
+    *var = instance->svcClassName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_setSvcClassName
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_setSvcClassName(castor::stager::StagePutNextRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setSvcClassName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_userTag
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_userTag(castor::stager::StagePutNextRequest* instance, const char** var) {
+    *var = instance->userTag().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_setUserTag
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_setUserTag(castor::stager::StagePutNextRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setUserTag(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_reqId
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_reqId(castor::stager::StagePutNextRequest* instance, const char** var) {
+    *var = instance->reqId().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_setReqId
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_setReqId(castor::stager::StagePutNextRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setReqId(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_svcClass
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_svcClass(castor::stager::StagePutNextRequest* instance, castor::stager::SvcClass** var) {
+    *var = instance->svcClass();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_setSvcClass
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_setSvcClass(castor::stager::StagePutNextRequest* instance, castor::stager::SvcClass* new_var) {
+    instance->setSvcClass(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_client
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_client(castor::stager::StagePutNextRequest* instance, castor::IClient** var) {
+    *var = instance->client();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_setClient
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutNextRequest_setClient(castor::stager::StagePutNextRequest* instance, castor::IClient* new_var) {
+    instance->setClient(new_var);
     return 0;
   }
 

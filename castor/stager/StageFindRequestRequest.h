@@ -29,8 +29,10 @@
 
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
+struct C_IClient_t;
 struct Cstager_QryRequest_t;
 struct Cstager_StageFindRequestRequest_t;
+struct Cstager_SvcClass_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -69,8 +71,151 @@ int Cstager_StageFindRequestRequest_print(struct Cstager_StageFindRequestRequest
 int Cstager_StageFindRequestRequest_TYPE(int* ret);
 
 /********************************************/
+/* Implementation of Request abstract class */
+/********************************************/
+
+/**
+ * Get the value of flags
+ */
+int Cstager_StageFindRequestRequest_flags(struct Cstager_StageFindRequestRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of flags
+ */
+int Cstager_StageFindRequestRequest_setFlags(struct Cstager_StageFindRequestRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of userName
+ * Name of the user that submitted the request
+ */
+int Cstager_StageFindRequestRequest_userName(struct Cstager_StageFindRequestRequest_t* instance, const char** var);
+
+/**
+ * Set the value of userName
+ * Name of the user that submitted the request
+ */
+int Cstager_StageFindRequestRequest_setUserName(struct Cstager_StageFindRequestRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of euid
+ * Id of the user that submitted the request
+ */
+int Cstager_StageFindRequestRequest_euid(struct Cstager_StageFindRequestRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of euid
+ * Id of the user that submitted the request
+ */
+int Cstager_StageFindRequestRequest_setEuid(struct Cstager_StageFindRequestRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of egid
+ * Id of the group of the user that submitted the request
+ */
+int Cstager_StageFindRequestRequest_egid(struct Cstager_StageFindRequestRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of egid
+ * Id of the group of the user that submitted the request
+ */
+int Cstager_StageFindRequestRequest_setEgid(struct Cstager_StageFindRequestRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of mask
+ * Mask for accessing files in the user space
+ */
+int Cstager_StageFindRequestRequest_mask(struct Cstager_StageFindRequestRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of mask
+ * Mask for accessing files in the user space
+ */
+int Cstager_StageFindRequestRequest_setMask(struct Cstager_StageFindRequestRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of pid
+ * Process id of the user process
+ */
+int Cstager_StageFindRequestRequest_pid(struct Cstager_StageFindRequestRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of pid
+ * Process id of the user process
+ */
+int Cstager_StageFindRequestRequest_setPid(struct Cstager_StageFindRequestRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of machine
+ * The machine that submitted the request
+ */
+int Cstager_StageFindRequestRequest_machine(struct Cstager_StageFindRequestRequest_t* instance, const char** var);
+
+/**
+ * Set the value of machine
+ * The machine that submitted the request
+ */
+int Cstager_StageFindRequestRequest_setMachine(struct Cstager_StageFindRequestRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of svcClassName
+ */
+int Cstager_StageFindRequestRequest_svcClassName(struct Cstager_StageFindRequestRequest_t* instance, const char** var);
+
+/**
+ * Set the value of svcClassName
+ */
+int Cstager_StageFindRequestRequest_setSvcClassName(struct Cstager_StageFindRequestRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of userTag
+ * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
+ */
+int Cstager_StageFindRequestRequest_userTag(struct Cstager_StageFindRequestRequest_t* instance, const char** var);
+
+/**
+ * Set the value of userTag
+ * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
+ */
+int Cstager_StageFindRequestRequest_setUserTag(struct Cstager_StageFindRequestRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of reqId
+ * The Cuuid identifying the Request, stored as a human readable string
+ */
+int Cstager_StageFindRequestRequest_reqId(struct Cstager_StageFindRequestRequest_t* instance, const char** var);
+
+/**
+ * Set the value of reqId
+ * The Cuuid identifying the Request, stored as a human readable string
+ */
+int Cstager_StageFindRequestRequest_setReqId(struct Cstager_StageFindRequestRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of svcClass
+ */
+int Cstager_StageFindRequestRequest_svcClass(struct Cstager_StageFindRequestRequest_t* instance, struct Cstager_SvcClass_t** var);
+
+/**
+ * Set the value of svcClass
+ */
+int Cstager_StageFindRequestRequest_setSvcClass(struct Cstager_StageFindRequestRequest_t* instance, struct Cstager_SvcClass_t* new_var);
+
+/**
+ * Get the value of client
+ */
+int Cstager_StageFindRequestRequest_client(struct Cstager_StageFindRequestRequest_t* instance, struct C_IClient_t** var);
+
+/**
+ * Set the value of client
+ */
+int Cstager_StageFindRequestRequest_setClient(struct Cstager_StageFindRequestRequest_t* instance, struct C_IClient_t* new_var);
+
+/********************************************/
 /* Implementation of IObject abstract class */
 /********************************************/
+
 /**
  * Sets the id of the object
  */

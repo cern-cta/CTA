@@ -31,6 +31,7 @@
 #include "osdep.h"
 struct C_IClient_t;
 struct Crh_Client_t;
+struct Cstager_Request_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -72,6 +73,7 @@ int Crh_Client_TYPE(int* ret);
 /********************************************/
 /* Implementation of IClient abstract class */
 /********************************************/
+
 /**
  * Reconnects to the client in case the connection was closed or lost
  */
@@ -86,9 +88,20 @@ int Crh_Client_disconnect(struct Crh_Client_t* instance);
  */
 int Crh_Client_sendRep(struct Crh_Client_t* instance);
 
+/**
+ * Get the value of request
+ */
+int Crh_Client_request(struct Crh_Client_t* instance, struct Cstager_Request_t** var);
+
+/**
+ * Set the value of request
+ */
+int Crh_Client_setRequest(struct Crh_Client_t* instance, struct Cstager_Request_t* new_var);
+
 /********************************************/
 /* Implementation of IObject abstract class */
 /********************************************/
+
 /**
  * Sets the id of the object
  */

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequest.h,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/09 13:04:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequest.h,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/10 18:17:00 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,8 +29,11 @@
 
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
+struct C_IClient_t;
 struct Cstager_FileRequest_t;
 struct Cstager_StageUpdateFileStatusRequest_t;
+struct Cstager_SubRequest_t;
+struct Cstager_SvcClass_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -68,9 +71,171 @@ int Cstager_StageUpdateFileStatusRequest_print(struct Cstager_StageUpdateFileSta
  */
 int Cstager_StageUpdateFileStatusRequest_TYPE(int* ret);
 
+/************************************************/
+/* Implementation of FileRequest abstract class */
+/************************************************/
+
+/**
+ * Add a struct Cstager_SubRequest_t* object to the subRequests list
+ */
+int Cstager_StageUpdateFileStatusRequest_addSubRequests(struct Cstager_StageUpdateFileStatusRequest_t* instance, struct Cstager_SubRequest_t* obj);
+
+/**
+ * Remove a struct Cstager_SubRequest_t* object from subRequests
+ */
+int Cstager_StageUpdateFileStatusRequest_removeSubRequests(struct Cstager_StageUpdateFileStatusRequest_t* instance, struct Cstager_SubRequest_t* obj);
+
+/**
+ * Get the list of struct Cstager_SubRequest_t* objects held by subRequests
+ */
+int Cstager_StageUpdateFileStatusRequest_subRequests(struct Cstager_StageUpdateFileStatusRequest_t* instance, struct Cstager_SubRequest_t*** var, int* len);
+
+/********************************************/
+/* Implementation of Request abstract class */
+/********************************************/
+
+/**
+ * Get the value of flags
+ */
+int Cstager_StageUpdateFileStatusRequest_flags(struct Cstager_StageUpdateFileStatusRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of flags
+ */
+int Cstager_StageUpdateFileStatusRequest_setFlags(struct Cstager_StageUpdateFileStatusRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of userName
+ * Name of the user that submitted the request
+ */
+int Cstager_StageUpdateFileStatusRequest_userName(struct Cstager_StageUpdateFileStatusRequest_t* instance, const char** var);
+
+/**
+ * Set the value of userName
+ * Name of the user that submitted the request
+ */
+int Cstager_StageUpdateFileStatusRequest_setUserName(struct Cstager_StageUpdateFileStatusRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of euid
+ * Id of the user that submitted the request
+ */
+int Cstager_StageUpdateFileStatusRequest_euid(struct Cstager_StageUpdateFileStatusRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of euid
+ * Id of the user that submitted the request
+ */
+int Cstager_StageUpdateFileStatusRequest_setEuid(struct Cstager_StageUpdateFileStatusRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of egid
+ * Id of the group of the user that submitted the request
+ */
+int Cstager_StageUpdateFileStatusRequest_egid(struct Cstager_StageUpdateFileStatusRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of egid
+ * Id of the group of the user that submitted the request
+ */
+int Cstager_StageUpdateFileStatusRequest_setEgid(struct Cstager_StageUpdateFileStatusRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of mask
+ * Mask for accessing files in the user space
+ */
+int Cstager_StageUpdateFileStatusRequest_mask(struct Cstager_StageUpdateFileStatusRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of mask
+ * Mask for accessing files in the user space
+ */
+int Cstager_StageUpdateFileStatusRequest_setMask(struct Cstager_StageUpdateFileStatusRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of pid
+ * Process id of the user process
+ */
+int Cstager_StageUpdateFileStatusRequest_pid(struct Cstager_StageUpdateFileStatusRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of pid
+ * Process id of the user process
+ */
+int Cstager_StageUpdateFileStatusRequest_setPid(struct Cstager_StageUpdateFileStatusRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of machine
+ * The machine that submitted the request
+ */
+int Cstager_StageUpdateFileStatusRequest_machine(struct Cstager_StageUpdateFileStatusRequest_t* instance, const char** var);
+
+/**
+ * Set the value of machine
+ * The machine that submitted the request
+ */
+int Cstager_StageUpdateFileStatusRequest_setMachine(struct Cstager_StageUpdateFileStatusRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of svcClassName
+ */
+int Cstager_StageUpdateFileStatusRequest_svcClassName(struct Cstager_StageUpdateFileStatusRequest_t* instance, const char** var);
+
+/**
+ * Set the value of svcClassName
+ */
+int Cstager_StageUpdateFileStatusRequest_setSvcClassName(struct Cstager_StageUpdateFileStatusRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of userTag
+ * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
+ */
+int Cstager_StageUpdateFileStatusRequest_userTag(struct Cstager_StageUpdateFileStatusRequest_t* instance, const char** var);
+
+/**
+ * Set the value of userTag
+ * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
+ */
+int Cstager_StageUpdateFileStatusRequest_setUserTag(struct Cstager_StageUpdateFileStatusRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of reqId
+ * The Cuuid identifying the Request, stored as a human readable string
+ */
+int Cstager_StageUpdateFileStatusRequest_reqId(struct Cstager_StageUpdateFileStatusRequest_t* instance, const char** var);
+
+/**
+ * Set the value of reqId
+ * The Cuuid identifying the Request, stored as a human readable string
+ */
+int Cstager_StageUpdateFileStatusRequest_setReqId(struct Cstager_StageUpdateFileStatusRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of svcClass
+ */
+int Cstager_StageUpdateFileStatusRequest_svcClass(struct Cstager_StageUpdateFileStatusRequest_t* instance, struct Cstager_SvcClass_t** var);
+
+/**
+ * Set the value of svcClass
+ */
+int Cstager_StageUpdateFileStatusRequest_setSvcClass(struct Cstager_StageUpdateFileStatusRequest_t* instance, struct Cstager_SvcClass_t* new_var);
+
+/**
+ * Get the value of client
+ */
+int Cstager_StageUpdateFileStatusRequest_client(struct Cstager_StageUpdateFileStatusRequest_t* instance, struct C_IClient_t** var);
+
+/**
+ * Set the value of client
+ */
+int Cstager_StageUpdateFileStatusRequest_setClient(struct Cstager_StageUpdateFileStatusRequest_t* instance, struct C_IClient_t* new_var);
+
 /********************************************/
 /* Implementation of IObject abstract class */
 /********************************************/
+
 /**
  * Sets the id of the object
  */

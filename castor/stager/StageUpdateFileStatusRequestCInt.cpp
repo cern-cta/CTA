@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequestCInt.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/09 13:04:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequestCInt.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/10 18:17:00 $ $Author: sponcec3 $
  *
  * 
  *
@@ -25,9 +25,13 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/IClient.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StageUpdateFileStatusRequest.hpp"
+#include "castor/stager/SubRequest.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
+#include <vector>
 
 extern "C" {
 
@@ -73,6 +77,232 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_StageUpdateFileStatusRequest_TYPE(int* ret) {
     *ret = castor::stager::StageUpdateFileStatusRequest::TYPE();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_addSubRequests
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_addSubRequests(castor::stager::StageUpdateFileStatusRequest* instance, castor::stager::SubRequest* obj) {
+    instance->addSubRequests(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_removeSubRequests
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_removeSubRequests(castor::stager::StageUpdateFileStatusRequest* instance, castor::stager::SubRequest* obj) {
+    instance->removeSubRequests(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_subRequests
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_subRequests(castor::stager::StageUpdateFileStatusRequest* instance, castor::stager::SubRequest*** var, int* len) {
+    std::vector<castor::stager::SubRequest*> result = instance->subRequests();
+    *len = result.size();
+    *var = (castor::stager::SubRequest**) malloc((*len) * sizeof(castor::stager::SubRequest*));
+    for (int i = 0; i < *len; i++) {
+      (*var)[i] = result[i];
+    }
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_flags
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_flags(castor::stager::StageUpdateFileStatusRequest* instance, u_signed64* var) {
+    *var = instance->flags();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_setFlags
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_setFlags(castor::stager::StageUpdateFileStatusRequest* instance, u_signed64 new_var) {
+    instance->setFlags(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_userName
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_userName(castor::stager::StageUpdateFileStatusRequest* instance, const char** var) {
+    *var = instance->userName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_setUserName
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_setUserName(castor::stager::StageUpdateFileStatusRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setUserName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_euid
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_euid(castor::stager::StageUpdateFileStatusRequest* instance, unsigned long* var) {
+    *var = instance->euid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_setEuid
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_setEuid(castor::stager::StageUpdateFileStatusRequest* instance, unsigned long new_var) {
+    instance->setEuid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_egid
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_egid(castor::stager::StageUpdateFileStatusRequest* instance, unsigned long* var) {
+    *var = instance->egid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_setEgid
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_setEgid(castor::stager::StageUpdateFileStatusRequest* instance, unsigned long new_var) {
+    instance->setEgid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_mask
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_mask(castor::stager::StageUpdateFileStatusRequest* instance, unsigned long* var) {
+    *var = instance->mask();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_setMask
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_setMask(castor::stager::StageUpdateFileStatusRequest* instance, unsigned long new_var) {
+    instance->setMask(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_pid
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_pid(castor::stager::StageUpdateFileStatusRequest* instance, unsigned long* var) {
+    *var = instance->pid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_setPid
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_setPid(castor::stager::StageUpdateFileStatusRequest* instance, unsigned long new_var) {
+    instance->setPid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_machine
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_machine(castor::stager::StageUpdateFileStatusRequest* instance, const char** var) {
+    *var = instance->machine().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_setMachine
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_setMachine(castor::stager::StageUpdateFileStatusRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setMachine(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_svcClassName
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_svcClassName(castor::stager::StageUpdateFileStatusRequest* instance, const char** var) {
+    *var = instance->svcClassName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_setSvcClassName
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_setSvcClassName(castor::stager::StageUpdateFileStatusRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setSvcClassName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_userTag
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_userTag(castor::stager::StageUpdateFileStatusRequest* instance, const char** var) {
+    *var = instance->userTag().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_setUserTag
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_setUserTag(castor::stager::StageUpdateFileStatusRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setUserTag(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_reqId
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_reqId(castor::stager::StageUpdateFileStatusRequest* instance, const char** var) {
+    *var = instance->reqId().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_setReqId
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_setReqId(castor::stager::StageUpdateFileStatusRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setReqId(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_svcClass
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_svcClass(castor::stager::StageUpdateFileStatusRequest* instance, castor::stager::SvcClass** var) {
+    *var = instance->svcClass();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_setSvcClass
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_setSvcClass(castor::stager::StageUpdateFileStatusRequest* instance, castor::stager::SvcClass* new_var) {
+    instance->setSvcClass(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_client
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_client(castor::stager::StageUpdateFileStatusRequest* instance, castor::IClient** var) {
+    *var = instance->client();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_setClient
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_setClient(castor::stager::StageUpdateFileStatusRequest* instance, castor::IClient* new_var) {
+    instance->setClient(new_var);
     return 0;
   }
 
