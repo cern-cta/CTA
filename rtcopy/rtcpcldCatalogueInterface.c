@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.62 $ $Release$ $Date: 2004/10/28 10:09:44 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.63 $ $Release$ $Date: 2004/10/28 10:29:18 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.62 $ $Release$ $Date: 2004/10/28 10:09:44 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.63 $ $Release$ $Date: 2004/10/28 10:29:18 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -2074,6 +2074,8 @@ int rtcpcld_updcFileMigrated(
 
   tp = (struct Cstager_Tape_t *)tape->dbRef->row;
   segment = (struct Cstager_Segment_t *)file->dbRef->row;
+  free(file->dbRef);
+  file->dbRef = NULL;
   if ( segment != NULL ) Cstager_Segment_copy(segment,&tapeCopy);
   if ( (segment == NULL) || (tapeCopy == NULL) ) {
     (void)dlf_write(
@@ -2218,6 +2220,7 @@ int rtcpcld_updcFileMigrated(
                                 &diskCopyArray,
                                 &nbDiskCopies
                                 );
+  Cstager_CastorFile_delete(castorFile);
   for ( i=0; i<nbDiskCopies; i++ ) {
     Cstager_DiskCopy_status(diskCopyArray[i],&diskCopyStatus);
     if ( diskCopyStatus == DISKCOPY_STAGEOUT ) {
@@ -2260,6 +2263,7 @@ int rtcpcld_updcFileMigrated(
         serrno = save_serrno;
         return(-1);
       }
+      Cstager_DiskCopy_delete(diskCopyArray[i]);
     }
   }
   if ( diskCopyArray != NULL ) free(diskCopyArray);
