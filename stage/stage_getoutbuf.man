@@ -1,10 +1,10 @@
-.\" $Id: stage_getoutbuf.man,v 1.1 2002/09/08 07:37:42 jdurand Exp $
+.\" $Id: stage_getoutbuf.man,v 1.2 2002/10/04 07:54:41 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_getoutbuf.man,v $ $Revision: 1.1 $ $Date: 2002/09/08 07:37:42 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_getoutbuf.man,v $ $Revision: 1.2 $ $Date: 2002/10/04 07:54:41 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_GETOUTBUF "3" "$Date: 2002/09/08 07:37:42 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_GETOUTBUF "3" "$Date: 2002/10/04 07:54:41 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_getoutbuf \- Get output buffer
 .SH SYNOPSIS
@@ -74,7 +74,7 @@ Thread interface call error
 Cthread initialization error
 
 .SH SEE ALSO
-\fBstage_setoutbuf\fP(3)
+\fBstage_setoutbuf\fP(3), \fBstage_setlog\fP(3)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

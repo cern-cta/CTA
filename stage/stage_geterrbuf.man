@@ -1,10 +1,10 @@
-.\" $Id: stage_geterrbuf.man,v 1.1 2002/09/08 07:34:17 jdurand Exp $
+.\" $Id: stage_geterrbuf.man,v 1.2 2002/10/04 07:53:12 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_geterrbuf.man,v $ $Revision: 1.1 $ $Date: 2002/09/08 07:34:17 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_geterrbuf.man,v $ $Revision: 1.2 $ $Date: 2002/10/04 07:53:12 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_GETERRBUF "3" "$Date: 2002/09/08 07:34:17 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_GETERRBUF "3" "$Date: 2002/10/04 07:53:12 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_geterrbuf \- Get error buffer
 .SH SYNOPSIS
@@ -74,7 +74,7 @@ Thread interface call error
 Cthread initialization error
 
 .SH SEE ALSO
-\fBstage_seterrbuf\fP(3)
+\fBstage_seterrbuf\fP(3), \fBstage_setlog\fP(3)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
