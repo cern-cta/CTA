@@ -1,5 +1,5 @@
 /*
- * $Id: stagerConstants.h,v 1.5 2004/10/25 10:59:16 jdurand Exp $
+ * $Id: stagerConstants.h,v 1.6 2004/10/25 11:00:42 jdurand Exp $
  */
 
 #ifndef __stagerConstants_h
@@ -52,12 +52,12 @@
 #define STAGER_MSG_ERR            1                      /* Stager MSG_ERR type */
 #define STAGER_MSG_OUT            2                      /* Stager MSG_OUT type */
 
-#define STAGE_SERVICE_NAME        "stage"                /* Name in /etc/services if any */
-#define STAGE_SECURE_SERVICE_NAME "sstage"               /* Name force sure service in /etc/services if any */
-#define STAGE_SERVICE_PROTO       "tcp"                  /* Proto in /etc/services if any */
+#define STAGER_SERVICE_NAME        "stager"              /* Name in /etc/services if any */
+#define STAGER_SECURE_SERVICE_NAME "sstager"             /* Name force sure service in /etc/services if any */
+#define STAGER_SERVICE_PROTO       "tcp"                 /* Proto in /etc/services if any */
 
-#define STAGE_OPTION_ECHO     CONSTLL(0x00000000000001)  /* --echo */
-#define STAGE_OPTION_START    CONSTLL(0x00000000000002)  /* --start */
+#define STAGER_OPTION_ECHO     CONSTLL(0x00000000000001) /* --echo */
+#define STAGER_OPTION_START    CONSTLL(0x00000000000002) /* --start */
 
 #define STAGER_PRTBUFSZ           4096                   /* Buffer size in the client for printout */
 
