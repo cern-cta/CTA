@@ -1,13 +1,16 @@
 /*
- * $Id: Cglobals.h,v 1.2 1999/07/30 15:59:10 obarring Exp $
+ * $Id: Cglobals.h,v 1.3 1999/07/30 16:00:12 obarring Exp $
  * $Log: Cglobals.h,v $
+ * Revision 1.3  1999/07/30 16:00:12  obarring
+ * Correct the copyright notice ....
+ *
  * Revision 1.2  1999/07/30 15:59:10  obarring
  * Add copyright notice
  *
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
