@@ -102,7 +102,8 @@ namespace castor {
     OBJ_StartResponse = 68,
     OBJ_IObject = 69,
     OBJ_IAddress = 70,
-    OBJ_QueryParameter = 71
+    OBJ_QueryParameter = 71,
+    OBJ_DiskCopyInfo = 72
   };
     
   /**
