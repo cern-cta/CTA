@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.12 $ $Date: 2001/08/17 13:52:40 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.13 $ $Date: 2001/08/17 13:58:35 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -190,7 +190,7 @@ int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
     while ( rc == 0 ) {
         rc = rtcpd_DmpFile(tape,tape->file->prev);
         CHECK_PROC_ERR(tape,NULL,"rtcpd_dmpfil() error");
-        tellClient(client_socket,NULL,tape->file->prev,0);
+        tellClient(client_socket,NULL,tape->file->prev,rc);
         if ( rc != 0 ) break;
 
         tl = tape;
