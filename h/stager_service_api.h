@@ -15,12 +15,13 @@
 
 /* Define one type of service per stager pool */
 enum {
-  STAGER_SERVICE_DB  = 0,
+  STAGER_SERVICE_DB      = 0,
   STAGER_SERVICE_QUERY   = 1,
   STAGER_SERVICE_UPDATE  = 2,
   STAGER_SERVICE_GETNEXT = 3,
+  STAGER_SERVICE_JOB     = 4,
 
-  STAGER_SERVICE_MAX     = 4        /* Nb of services - Do not forget to update this variable */
+  STAGER_SERVICE_MAX     = 5        /* Nb of services - Do not forget to update this variable */
 };
 
 struct stagerService {
