@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.13 2001/01/31 19:00:06 jdurand Exp $
+ * $Id: stageqry.c,v 1.14 2001/02/01 15:45:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.13 $ $Date: 2001/01/31 19:00:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.14 $ $Date: 2001/02/01 15:45:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -38,6 +38,8 @@ void cleanup _PROTO((int));
 int noregexp_flag = 0;
 int reqid_flag = 0;
 int dump_flag = 0;
+int migrator_flag = 0;
+int fileclass_flag = 0;
 
 int main(argc, argv)
 		 int	argc;
@@ -89,6 +91,8 @@ int main(argc, argv)
 		{"noregexp",           NO_ARGUMENT,  &noregexp_flag,    1},
 		{"reqid",              REQUIRED_ARGUMENT,  &reqid_flag, 1},
 		{"dump",               NO_ARGUMENT,  &dump_flag,        1},
+		{"migrator",           NO_ARGUMENT,  &migrator_flag,    1},
+		{"fileclass",          NO_ARGUMENT,  &fileclass_flag,   1},
 		{NULL,                 0,                  NULL,        0}
 	};
 
@@ -103,7 +107,7 @@ int main(argc, argv)
 	numvid = 0;
 	Coptind = 1;
 	Copterr = 1;
-	while ((c = Cgetopt_long (argc, argv, "A:afGh:I:LlM:Pp:q:Q:SsTuV:xX", longopts, NULL)) != -1) {
+	while ((c = Cgetopt_long (argc, argv, "A:afGh:I:LlM:Pp:q:Q:SsTuV:x", longopts, NULL)) != -1) {
 		switch (c) {
 		case 'A':
 			Aflag = 1;
@@ -160,8 +164,6 @@ int main(argc, argv)
 			errflg += getlist_of_vid ("-V", vid, &numvid);
 			break;
 		case 'x':
-			break;
-		case 'X':
 			break;
 		case 0:
 			/* Here are the long options */
@@ -257,8 +259,9 @@ void usage(cmd)
 		 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
-	fprintf (stderr, "%s%s%s",
+	fprintf (stderr, "%s%s%s%s",
 					 "[-A pattern | -M pattern] [-a] [-f] [-G] [-h stage_host] [-I external_filename]\n",
 					 "[-L] [-l] [-P] [-p pool] [-q file_sequence_number(s)] [-Q file_sequence_range] [-S] [-s] [-T]\n",
-					 "[-u] [-V visual_identifier(s)] [-x] [--noregexp] [--reqid reqid] [--dump]\n");
+					 "[-u] [-V visual_identifier(s)] [-x]\n",
+					 "[--migrator] [--fileclass] [--noregexp] [--reqid reqid] [--dump] \n");
 }

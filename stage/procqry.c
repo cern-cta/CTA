@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.43 2001/01/31 18:59:52 jdurand Exp $
+ * $Id: procqry.c,v 1.44 2001/02/01 15:45:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.43 $ $Date: 2001/01/31 18:59:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.44 $ $Date: 2001/02/01 15:45:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -74,7 +74,7 @@ extern int sendrep _PROTO(());
 extern int isvalidpool _PROTO((char *));
 extern int stglogit _PROTO(());
 extern int stglogflags _PROTO(());
-extern void print_pool_utilization _PROTO((int, char *, char *, char *, char *, int));
+extern void print_pool_utilization _PROTO((int, char *, char *, char *, char *, int, int));
 extern int nextreqid _PROTO(());
 extern int savereqs _PROTO(());
 extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *));
@@ -114,6 +114,8 @@ int nbtpf;
 int noregexp_flag;
 int reqid_flag;
 int dump_flag;
+int migrator_flag;
+int fileclass_flag;
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
@@ -188,7 +190,6 @@ void procqryreq(req_type, req_data, clienthost)
 	static char x_stat[7][12] = {"", "WAITING_SPC", "WAITING_REQ", "STAGED","KILLED", "FAILED", "PUT_FAILED"};
 	char *xfile = NULL;
 	int xflag = 0;
-	int Xflag = 0;
 	char trailing;
 	fseq_elem *fseq_list = NULL;
 	int inbtpf;
@@ -225,12 +226,16 @@ void procqryreq(req_type, req_data, clienthost)
 		{"noregexp",           NO_ARGUMENT,  &noregexp_flag,    1},
 		{"reqid",              REQUIRED_ARGUMENT,  &reqid_flag, 1},
 		{"dump",               NO_ARGUMENT,  &dump_flag,        1},
+		{"migrator",           NO_ARGUMENT,  &migrator_flag,    1},
+		{"fileclass",          NO_ARGUMENT,  &fileclass_flag,   1},
 		{NULL,                 0,                  NULL,        0}
 	};
 
 	noregexp_flag = 0;
 	reqid_flag = 0;
 	dump_flag = 0;
+	migrator_flag = 0;
+	fileclass_flag = 0;
 	poolname[0] = '\0';
 	rbp = req_data;
 	local_unmarshall_STRING (rbp, user);	/* login name */
@@ -424,14 +429,17 @@ void procqryreq(req_type, req_data, clienthost)
 			xflag++;
 		}
 		if ((flags & STAGE_MIGRULES) == STAGE_MIGRULES) {
-			Xflag++;
+			migrator_flag++;
+		}
+		if ((flags & STAGE_FILECLASS) == STAGE_FILECLASS) {
+			fileclass_flag++;
 		}
 		/* Print the flags */
 		stglogflags("stage_qry",flags);
 	} else {
 		Coptind = 1;
 		Copterr = 0;
-		while ((c = Cgetopt_long (nargs, argv, "A:afGh:I:LlM:Pp:q:Q:SsTuV:xX", longopts, NULL)) != -1) {
+		while ((c = Cgetopt_long (nargs, argv, "A:afGh:I:LlM:Pp:q:Q:SsTuV:x", longopts, NULL)) != -1) {
 			switch (c) {
 			case 'A':
 				afile = Coptarg;
@@ -501,9 +509,6 @@ void procqryreq(req_type, req_data, clienthost)
 				break;
 			case 'x':	/* debug: reqid + internal pathname */
 				xflag++;
-				break;
-			case 'X':	/* if used with -s : migration rules and current status */
-				Xflag++;
 				break;
 			case 0:
 				/* These are the long options */
@@ -618,7 +623,7 @@ void procqryreq(req_type, req_data, clienthost)
 		goto reply;
 	}
 	if (sflag) {
-		print_pool_utilization (rpfd, poolname, defpoolname, defpoolname_in, defpoolname_out, Xflag);
+		print_pool_utilization (rpfd, poolname, defpoolname, defpoolname_in, defpoolname_out, migrator_flag, fileclass_flag);
 		goto reply;
 	}
 	if (Sflag) {

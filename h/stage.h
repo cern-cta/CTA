@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.37 2001/02/01 12:43:04 jdurand Exp $
+ * $Id: stage.h,v 1.38 2001/02/01 15:45:21 jdurand Exp $
  */
 
 /*
@@ -265,6 +265,7 @@
 #define STG132  "STG132 - %s fileclass : %s\n"
 #define STG133  "STG133 - %s : Fileclass %s@%s (classid %d) specified retention period %d > %d seconds lifetime\n"
 #define STG134  "STG134 - Tape %s is not accessible (%s status)\n"
+#define STG135  "STG135 - Fileclass %s@%s (classid %d) : specifies up to %d stream - Created a new one of size %s on tape pool %s\n"
 
 			/* stage daemon return codes */
 

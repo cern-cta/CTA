@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.23 2001/02/01 10:37:21 jdurand Exp $
+ * $Id: stage_api.h,v 1.24 2001/02/01 15:45:22 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -211,11 +211,12 @@ typedef struct stage_hsm stage_hsm_t;
 #define STAGE_FILENAME    0x08000     /* -f           [stage_qry]            */
 #define STAGE_EXTERNAL    0x10000     /* -I           [stage_qry]            */
 #define STAGE_MULTIFSEQ   0x20000     /* -Q           [stage_qry]            */
-#define STAGE_MIGRULES    0x40000     /* -X           [stage_qry]            */
+#define STAGE_MIGRULES    0x40000     /* --migrator   [stage_qry]            */
 #define STAGE_SILENT      0x80000     /* --silent     [stage_iowc]           */
 #define STAGE_NOWAIT      0x100000    /* --nowait     [stage_iowc]           */
 #define STAGE_NOREGEXP    0x200000    /* --noregexp   [stage_qry]            */
 #define STAGE_DUMP        0x400000    /* --dump       [stage_qry]            */
+#define STAGE_FILECLASS   0x800000    /* --fileclass  [stage_qry]            */
 
 /* For stage_qry only */
 /* ------------------ */
