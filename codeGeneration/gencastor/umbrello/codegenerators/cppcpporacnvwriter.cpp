@@ -936,14 +936,12 @@ void CppCppOraCnvWriter::writeFillRep() {
 
   // Now write the dedicated fillRep Methods
   MemberList members = createMembersList();
-  unsigned int n = members.count();
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
     if (!isEnum(as->remotePart.typeName)) {
       if (as->type.multiRemote == MULT_ONE) {
-        n++;
-        writeBasicMult1FillRep(as, n);
+        writeBasicMult1FillRep(as);
       } else if  (as->type.multiRemote == MULT_N) {
         writeBasicMultNFillRep(as);
       }
@@ -1044,8 +1042,7 @@ void CppCppOraCnvWriter::writeFillObj() {
 //=============================================================================
 // writeBasicMult1FillRep
 //=============================================================================
-void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
-                                                unsigned int n) {
+void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as) {
   writeWideHeaderComment("fillRep" +
                          capitalizeFirstLetter(as->remotePart.typeName),
                          getIndent(), *m_stream);
@@ -1097,7 +1094,7 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
               << "if (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {"
               << endl;
     m_indent++;
-    writeSingleGetFromSelect(as->remotePart, n, true);
+    writeSingleGetFromSelect(as->remotePart, 1, true);
     *m_stream << getIndent()
               << "if (0 != " << as->remotePart.name
               << "Id &&" << endl
@@ -1569,10 +1566,6 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
     // N to N association
     // Here we will use a dedicated table for the association
     // Find out the parent and child in this table
-    Member* firstMember = 0;
-    Member* secondMember = 0;
-    ordonnateMembersInAssoc(as, &firstMember, &secondMember);
-    bool inverted = firstMember == &as->remotePart;
     *m_stream << getIndent()
               << "if (0 == m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
@@ -1589,15 +1582,11 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
     *m_stream << getIndent() << "}" << endl << getIndent()
               << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setDouble(1, "
-              << (inverted ? "*it" : "obj->id()")
-              << ");" << endl << getIndent()
-              << "m_delete"
+              << "Statement->setDouble(1, obj->id());"
+              << endl << getIndent() << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setDouble(2, "
-              << (inverted ? "obj->id()" : "*it")
-              << ");" << endl << getIndent()
-              << "m_delete"
+              << "Statement->setDouble(2, *it);"
+              << endl << getIndent() << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
               << "Statement->executeUpdate();"
               << endl;

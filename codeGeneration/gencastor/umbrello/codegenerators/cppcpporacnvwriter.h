@@ -58,8 +58,7 @@ class CppCppOraCnvWriter : public CppCppBaseCnvWriter {
   void writeFillObj();
     
   /// writes one basic fillRep method for one to one assoc
-  void writeBasicMult1FillRep(Assoc* as,
-                              unsigned int n);
+  void writeBasicMult1FillRep(Assoc* as);
     
   /// writes one basic fillObj method for one to one assoc
   void writeBasicMult1FillObj(Assoc* as,
