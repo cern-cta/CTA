@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.38 $ $Date: 2000/03/04 14:00:36 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.39 $ $Date: 2000/03/06 16:08:47 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -725,8 +725,21 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                         nb_skipped_blks++;
                     } else if ( file->eovflag == 1 ) {
                         /*
-                         * EOV reached
+                         * EOV reached. Note that this is the normal EOD
+                         * status for a non-labeled volume (since there is
+                         * no way to tell the difference in that case). We
+                         * allow it also for labelled tapes (strictly this
+                         * is an error) to allow users to read only first part
+                         * of a spanned volume without getting an error. 
+                         * Re-assinging it to an EOF instead of EOV allows 
+                         * common treatment of all EOD conditions when
+                         * trying to position to the next file.
                          */
+                        if ( (filereq->concat & VOLUME_SPANNING) == 0 ) {
+                            DEBUG_PRINT((LOG_DEBUG,"TapeToMemory() EOV condition without spanning volume\n"));
+                            end_of_tpfile = TRUE;
+                            file->eovflag = 0;
+                        }
                     } else {
                         /*
                          * EOF reached
@@ -832,71 +845,71 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
              * to the control thread that a new disk IO thread can
              * be started.
              */
-             /*
-              * Note down the actual file size to 
-              * allow for start up of next disk IO thread.
-              */
-             DEBUG_PRINT((LOG_DEBUG,
-                 "TapeToMemory() tapebytes_sofar=%d, max=%d, start=%d\n",
-                 (int)file->tapebytes_sofar,(int)filereq->maxsize,
-                 (int)filereq->startsize));
-             if ((filereq->maxsize > 0) &&
-                 (filereq->maxsize <= file->tapebytes_sofar) ) {
-                 /*
-                  * Truncated due to user specified max size. 
-                  * Re-calculate number of bytes out and number
-                  * of tape records.
-                  */
-                 filereq->bytes_out = filereq->maxsize - filereq->startsize;
-                 if ( lrecl > 0 )
-                     filereq->nbrecs = filereq->bytes_out / lrecl;
-             } else
-                 filereq->bytes_out = file->tapebytes_sofar - 
-                     filereq->startsize;
-             DEBUG_PRINT((LOG_DEBUG,"TapeToMemory() bytes_out=%d\n",
-                          (int)filereq->bytes_out));
+            /*
+             * Note down the actual file size to 
+             * allow for start up of next disk IO thread.
+             */
+            DEBUG_PRINT((LOG_DEBUG,
+                "TapeToMemory() tapebytes_sofar=%d, max=%d, start=%d\n",
+                (int)file->tapebytes_sofar,(int)filereq->maxsize,
+                (int)filereq->startsize));
+            if ((filereq->maxsize > 0) &&
+                (filereq->maxsize <= file->tapebytes_sofar) ) {
+                /*
+                 * Truncated due to user specified max size. 
+                 * Re-calculate number of bytes out and number
+                 * of tape records.
+                 */
+                filereq->bytes_out = filereq->maxsize - filereq->startsize;
+                if ( lrecl > 0 )
+                    filereq->nbrecs = filereq->bytes_out / lrecl;
+            } else
+                filereq->bytes_out = file->tapebytes_sofar - 
+                    filereq->startsize;
+            DEBUG_PRINT((LOG_DEBUG,"TapeToMemory() bytes_out=%d\n",
+                         (int)filereq->bytes_out));
 
-             /*
-              * Tell main control thread that we finished by
-              * resetting the number of reserved buffers.
-              */
-             TP_STATUS(RTCP_PS_WAITMTX);
-             rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
-             TP_STATUS(RTCP_PS_NOBLOCKING);
-             if ( rc == -1 ) {
-                 rtcp_log(LOG_ERR,"TapeToMemory() Cthread_mutex_lock_ext(proc_cntl): %s\n",
-                     sstrerror(serrno));
-                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
-                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
-                 return(-1);
-             }
-             proc_cntl.nb_reserved_bufs = 0;
-             file->end_index = *indxp;
-             /*
-              * Signal to main thread that we changed cntl info
-              */
-             rc = Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
-             if ( rc == -1 ) {
-                 rtcp_log(LOG_ERR,"TapeToMemory() Cthread_cond_broadcast_ext(proc_cntl): %s\n",
-                     sstrerror(serrno));
-                 (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
-                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
-                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
-                 return(-1);
-             }
-             rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
-             if ( rc == -1 ) {
-                 rtcp_log(LOG_ERR,"TapeToMemory() Cthread_mutex_unlock_ext(proc_cntl): %s\n",
-                     sstrerror(serrno));
-                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
-                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
-                 return(-1);
-             }
-             /*
-              * Set switch to break out and return after having
-              * signalled and released the buffer.
-              */
-             break_and_return = TRUE;
+            /*
+             * Tell main control thread that we finished by
+             * resetting the number of reserved buffers.
+             */
+            TP_STATUS(RTCP_PS_WAITMTX);
+            rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+            TP_STATUS(RTCP_PS_NOBLOCKING);
+            if ( rc == -1 ) {
+                rtcp_log(LOG_ERR,"TapeToMemory() Cthread_mutex_lock_ext(proc_cntl): %s\n",
+                    sstrerror(serrno));
+                (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
+                (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
+                return(-1);
+            }
+            proc_cntl.nb_reserved_bufs = 0;
+            file->end_index = *indxp;
+            /*
+             * Signal to main thread that we changed cntl info
+             */
+            rc = Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
+            if ( rc == -1 ) {
+                rtcp_log(LOG_ERR,"TapeToMemory() Cthread_cond_broadcast_ext(proc_cntl): %s\n",
+                    sstrerror(serrno));
+                (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+                (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
+                (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
+                return(-1);
+            }
+            rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+            if ( rc == -1 ) {
+                rtcp_log(LOG_ERR,"TapeToMemory() Cthread_mutex_unlock_ext(proc_cntl): %s\n",
+                    sstrerror(serrno));
+                (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
+                (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
+                return(-1);
+            }
+            /*
+             * Set switch to break out and return after having
+             * signalled and released the buffer.
+             */
+            break_and_return = TRUE;
         }
         if ( databufs[i]->flag == BUFFER_FULL ) 
             DEBUG_PRINT((LOG_DEBUG,"TapeToMemory() flag buffer %d full\n",i);
@@ -944,10 +957,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
          * If end of volume, break out from inifinite loop
          * and return to main tape I/O thread
          */
-        if ( file->eovflag == 1 ) {
-            filereq->bytes_out = file->tapebytes_sofar - filereq->startsize;
-            break;
-        }
+        if ( file->eovflag == 1 ) break;
 
         /*
          * Has something fatal happened while we were occupied
@@ -1316,26 +1326,11 @@ void *tapeIOthread(void *arg) {
                          * can't distinguish between a physical EOV and
                          * a double tape mark.
                          */
+                        serrno = ETEOV;
                         if ( nexttape->tapereq.mode == WRITE_ENABLE ) {
-                            serrno = ETEOV;
                             severity = RTCP_FAILED | RTCP_USERR;
                         } else {
-                            if ( strcmp(nexttape->tapereq.label,"nl") == 0 ) {
-                                /*
-                                 * Set last buffer FULL and flag end of tape
-                                 * file to force disk IO to flush data and
-                                 * return normally.
-                                 */
-                                (void)Cthread_mutex_lock_ext(databufs[indxp]->lock);
-                                databufs[indxp]->flag = BUFFER_FULL;
-                                databufs[indxp]->end_of_tpfile = TRUE;
-                                (void)Cthread_mutex_unlock_ext(databufs[indxp]->lock);
-                                serrno = 0;
-                                severity = RTCP_OK;
-                            } else {
-                                serrno = ETEOV;
-                                severity = RTCP_FAILED | RTCP_ENDVOL;
-                            }
+                            severity = RTCP_FAILED | RTCP_ENDVOL;
                         }
                         if ( (severity & RTCP_FAILED) != 0 )
                             rtcpd_AppendClientMsg(NULL,nextfile,RT124,
@@ -1347,7 +1342,7 @@ void *tapeIOthread(void *arg) {
                             TP_STATUS(RTCP_PS_STAGEUPDC);
                             rc = rtcpd_stageupdc(nexttape,nextfile);
                             TP_STATUS(RTCP_PS_NOBLOCKING);
-                            rtcpd_SetProcError(RTCP_FAILED | RTCP_USERR);
+                            rtcpd_SetProcError(severity);
                             (void)rtcp_WriteAccountRecord(client,nexttape,nextfile,RTCPEMSG);
                         }
                         TP_STATUS(RTCP_PS_RELEASE);
@@ -1356,11 +1351,12 @@ void *tapeIOthread(void *arg) {
                         tellClient(&client_socket,NULL,NULL,0);
                         (void) rtcp_CloseConnection(&client_socket);
                         return((void *)&failure);
+                    } else {
+                        rtcp_log(LOG_DEBUG,"tapeIOthread() file %d spanns volumes %s:%s\n",
+                                 nextfile->filereq.tape_fseq,
+                                 nexttape->tapereq.vid,
+                                 nexttape->next->tapereq.vid);
                     }
-                    rtcp_log(LOG_DEBUG,"tapeIOthread() file %d spanns volumes %s:%s\n",
-                             nextfile->filereq.tape_fseq,
-                             nexttape->tapereq.vid,
-                             nexttape->next->tapereq.vid);
                 }
 
                 /*
