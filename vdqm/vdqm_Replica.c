@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.22 $ $Date: 2003/12/10 15:25:45 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.23 $ $Date: 2004/03/16 17:23:05 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1146,7 +1146,7 @@ int vdqm_PipeHangup() {
 }
 
 int vdqm_UpdateReplica(dgn_element_t *dgn_context) {
-    int rc;
+    int rc = 0;
     vdqm_volrec_t *vol;
     vdqm_drvrec_t *drv;
     int vol_update, drv_update;
