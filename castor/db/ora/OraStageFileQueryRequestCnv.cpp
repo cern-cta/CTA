@@ -89,15 +89,15 @@ const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_deleteStatusSt
 
 /// SQL select statement for member parameters
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_selectQueryParameterStatementString =
-"SELECT id from QueryParameter WHERE  = :1 FOR UPDATE";
+"SELECT id from QueryParameter WHERE query = :1 FOR UPDATE";
 
 /// SQL delete statement for member parameters
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_deleteQueryParameterStatementString =
-"UPDATE QueryParameter SET  = 0 WHERE id = :1";
+"UPDATE QueryParameter SET query = 0 WHERE id = :1";
 
 /// SQL remote update statement for member parameters
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_remoteUpdateQueryParameterStatementString =
-"UPDATE QueryParameter SET  = :1 WHERE id = :2";
+"UPDATE QueryParameter SET query = :1 WHERE id = :2";
 
 /// SQL existence statement for member svcClass
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_checkSvcClassExistStatementString =
@@ -391,6 +391,7 @@ void castor::db::ora::OraStageFileQueryRequestCnv::fillObjQueryParameter(castor:
        it != toBeDeleted.end();
        it++) {
     obj->removeParameters(*it);
+    (*it)->setQuery(0);
   }
   // Create new objects
   for (std::set<int>::iterator it = parametersList.begin();
@@ -400,6 +401,7 @@ void castor::db::ora::OraStageFileQueryRequestCnv::fillObjQueryParameter(castor:
     castor::stager::QueryParameter* remoteObj = 
       dynamic_cast<castor::stager::QueryParameter*>(item);
     obj->addParameters(remoteObj);
+    remoteObj->setQuery(obj);
   }
 }
 

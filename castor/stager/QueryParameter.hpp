@@ -41,6 +41,9 @@ namespace castor {
 
   namespace stager {
 
+    // Forward declarations
+    class QryRequest;
+
     /**
      * class QueryParameter
      * A parameter of a query request. Depending on its type, its value can contain a
@@ -134,6 +137,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_query
+       * @return the value of m_query
+       */
+      QryRequest* query() const {
+        return m_query;
+      }
+
+      /**
+       * Set the value of m_query
+       * @param new_var the new value of m_query
+       */
+      void setQuery(QryRequest* new_var) {
+        m_query = new_var;
+      }
+
+      /**
        * Get the value of m_queryType
        * @return the value of m_queryType
        */
@@ -156,6 +175,8 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
+
+      QryRequest* m_query;
 
       RequestQueryType m_queryType;
 

@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/stager/QryRequest.hpp"
 #include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/RequestQueryType.hpp"
 #include "osdep.h"
@@ -125,6 +126,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_QueryParameter_setId(castor::stager::QueryParameter* instance, u_signed64 new_var) {
     instance->setId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QueryParameter_query
+  //----------------------------------------------------------------------------
+  int Cstager_QueryParameter_query(castor::stager::QueryParameter* instance, castor::stager::QryRequest** var) {
+    *var = instance->query();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QueryParameter_setQuery
+  //----------------------------------------------------------------------------
+  int Cstager_QueryParameter_setQuery(castor::stager::QueryParameter* instance, castor::stager::QryRequest* new_var) {
+    instance->setQuery(new_var);
     return 0;
   }
 

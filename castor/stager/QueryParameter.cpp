@@ -28,6 +28,7 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/stager/QryRequest.hpp"
 #include "castor/stager/QueryParameter.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -39,6 +40,7 @@
 castor::stager::QueryParameter::QueryParameter() throw() :
   m_value(""),
   m_id(0),
+  m_query(0),
   m_queryType(RequestQueryType(0)) {
 };
 
@@ -46,6 +48,9 @@ castor::stager::QueryParameter::QueryParameter() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::QueryParameter::~QueryParameter() throw() {
+  if (0 != m_query) {
+    m_query->removeParameters(this);
+  }
 };
 
 //------------------------------------------------------------------------------
@@ -64,6 +69,12 @@ void castor::stager::QueryParameter::print(std::ostream& stream,
   stream << indent << "value : " << m_value << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "Query : " << std::endl;
+  if (0 != m_query) {
+    m_query->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
   stream << indent << "queryType : " << RequestQueryTypeStrings[m_queryType] << std::endl;
 }
 

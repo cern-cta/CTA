@@ -28,6 +28,7 @@
 #include "OraQueryParameterCnv.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/CnvFactory.hpp"
+#include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
@@ -37,6 +38,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
+#include "castor/stager/QryRequest.hpp"
 #include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/RequestQueryType.hpp"
 
@@ -52,7 +54,7 @@ const castor::ICnvFactory& OraQueryParameterCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraQueryParameterCnv::s_insertStatementString =
-"INSERT INTO QueryParameter (value, id, queryType) VALUES (:1,ids_seq.nextval,:2) RETURNING id INTO :3";
+"INSERT INTO QueryParameter (value, id, query, queryType) VALUES (:1,ids_seq.nextval,:2,:3) RETURNING id INTO :4";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraQueryParameterCnv::s_deleteStatementString =
@@ -60,7 +62,7 @@ const std::string castor::db::ora::OraQueryParameterCnv::s_deleteStatementString
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraQueryParameterCnv::s_selectStatementString =
-"SELECT value, id, queryType FROM QueryParameter WHERE id = :1";
+"SELECT value, id, query, queryType FROM QueryParameter WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraQueryParameterCnv::s_updateStatementString =
@@ -74,6 +76,10 @@ const std::string castor::db::ora::OraQueryParameterCnv::s_storeTypeStatementStr
 const std::string castor::db::ora::OraQueryParameterCnv::s_deleteTypeStatementString =
 "DELETE FROM Id2Type WHERE id = :1";
 
+/// SQL update statement for member query
+const std::string castor::db::ora::OraQueryParameterCnv::s_updateQryRequestStatementString =
+"UPDATE QueryParameter SET query = : 1 WHERE id = :2";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -84,7 +90,8 @@ castor::db::ora::OraQueryParameterCnv::OraQueryParameterCnv(castor::ICnvSvc* cnv
   m_selectStatement(0),
   m_updateStatement(0),
   m_storeTypeStatement(0),
-  m_deleteTypeStatement(0) {}
+  m_deleteTypeStatement(0),
+  m_updateQryRequestStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -106,6 +113,7 @@ void castor::db::ora::OraQueryParameterCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_updateQryRequestStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -114,6 +122,7 @@ void castor::db::ora::OraQueryParameterCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
+  m_updateQryRequestStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -142,6 +151,9 @@ void castor::db::ora::OraQueryParameterCnv::fillRep(castor::IAddress* address,
     dynamic_cast<castor::stager::QueryParameter*>(object);
   try {
     switch (type) {
+    case castor::OBJ_QryRequest :
+      fillRepQryRequest(obj);
+      break;
     default :
       castor::exception::InvalidArgument ex;
       ex.getMessage() << "fillRep called for type " << type 
@@ -161,6 +173,21 @@ void castor::db::ora::OraQueryParameterCnv::fillRep(castor::IAddress* address,
 }
 
 //------------------------------------------------------------------------------
+// fillRepQryRequest
+//------------------------------------------------------------------------------
+void castor::db::ora::OraQueryParameterCnv::fillRepQryRequest(castor::stager::QueryParameter* obj)
+  throw (castor::exception::Exception, oracle::occi::SQLException) {
+  // Check update statement
+  if (0 == m_updateQryRequestStatement) {
+    m_updateQryRequestStatement = createStatement(s_updateQryRequestStatementString);
+  }
+  // Update local object
+  m_updateQryRequestStatement->setDouble(1, 0 == obj->query() ? 0 : obj->query()->id());
+  m_updateQryRequestStatement->setDouble(2, obj->id());
+  m_updateQryRequestStatement->executeUpdate();
+}
+
+//------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
 void castor::db::ora::OraQueryParameterCnv::fillObj(castor::IAddress* address,
@@ -170,12 +197,55 @@ void castor::db::ora::OraQueryParameterCnv::fillObj(castor::IAddress* address,
   castor::stager::QueryParameter* obj = 
     dynamic_cast<castor::stager::QueryParameter*>(object);
   switch (type) {
+  case castor::OBJ_QryRequest :
+    fillObjQryRequest(obj);
+    break;
   default :
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "fillObj called on type " << type 
                     << " on object of type " << obj->type() 
                     << ". This is meaningless.";
     throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObjQryRequest
+//------------------------------------------------------------------------------
+void castor::db::ora::OraQueryParameterCnv::fillObjQryRequest(castor::stager::QueryParameter* obj)
+  throw (castor::exception::Exception) {
+  // Check whether the statement is ok
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 queryId = (u_signed64)rset->getDouble(3);
+  // Close ResultSet
+  m_selectStatement->closeResultSet(rset);
+  // Check whether something should be deleted
+  if (0 != obj->query() &&
+      (0 == queryId ||
+       obj->query()->id() != queryId)) {
+    obj->query()->removeParameters(obj);
+    obj->setQuery(0);
+  }
+  // Update object or create new one
+  if (0 != queryId) {
+    if (0 == obj->query()) {
+      obj->setQuery
+        (dynamic_cast<castor::stager::QryRequest*>
+         (cnvSvc()->getObjFromId(queryId)));
+    } else {
+      cnvSvc()->updateObj(obj->query());
+    }
+    obj->query()->addParameters(obj);
   }
 }
 
@@ -196,16 +266,17 @@ void castor::db::ora::OraQueryParameterCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(3, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(4, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->value());
-    m_insertStatement->setInt(2, (int)obj->queryType());
+    m_insertStatement->setDouble(2, (type == OBJ_QryRequest && obj->query() != 0) ? obj->query()->id() : 0);
+    m_insertStatement->setInt(3, (int)obj->queryType());
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(3));
+    obj->setId((u_signed64)m_insertStatement->getDouble(4));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -232,6 +303,7 @@ void castor::db::ora::OraQueryParameterCnv::createRep(castor::IAddress* address,
                     << "and parameters' values were :" << std::endl
                     << "  value : " << obj->value() << std::endl
                     << "  id : " << obj->id() << std::endl
+                    << "  query : " << obj->query() << std::endl
                     << "  queryType : " << obj->queryType() << std::endl;
     throw ex;
   }

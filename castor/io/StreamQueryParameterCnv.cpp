@@ -37,6 +37,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
+#include "castor/stager/QryRequest.hpp"
 #include "castor/stager/QueryParameter.hpp"
 #include "castor/stager/RequestQueryType.hpp"
 #include "osdep.h"
@@ -132,6 +133,7 @@ void castor::io::StreamQueryParameterCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
+    cnvSvc()->marshalObject(obj->query(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -148,6 +150,12 @@ castor::IObject* castor::io::StreamQueryParameterCnv::unmarshalObject(castor::io
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
+  // Fill object with associations
+  castor::stager::QueryParameter* obj = 
+    dynamic_cast<castor::stager::QueryParameter*>(object);
+  ad.setObjType(castor::OBJ_INVALID);
+  IObject* objQuery = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setQuery(dynamic_cast<castor::stager::QryRequest*>(objQuery));
   return object;
 }
 

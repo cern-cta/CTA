@@ -31,6 +31,7 @@
 #include "castor/stager/RequestQueryType.h"
 #include "osdep.h"
 struct C_IObject_t;
+struct Cstager_QryRequest_t;
 struct Cstager_QueryParameter_t;
 
 //------------------------------------------------------------------------------
@@ -109,6 +110,16 @@ int Cstager_QueryParameter_id(struct Cstager_QueryParameter_t* instance, u_signe
  * The id of this object
  */
 int Cstager_QueryParameter_setId(struct Cstager_QueryParameter_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of query
+ */
+int Cstager_QueryParameter_query(struct Cstager_QueryParameter_t* instance, struct Cstager_QryRequest_t** var);
+
+/**
+ * Set the value of query
+ */
+int Cstager_QueryParameter_setQuery(struct Cstager_QueryParameter_t* instance, struct Cstager_QryRequest_t* new_var);
 
 /**
  * Get the value of queryType

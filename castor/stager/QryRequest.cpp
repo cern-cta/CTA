@@ -44,6 +44,10 @@ castor::stager::QryRequest::QryRequest() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::QryRequest::~QryRequest() throw() {
+  for (unsigned int i = 0; i < m_parametersVector.size(); i++) {
+    m_parametersVector[i]->setQuery(0);
+    delete m_parametersVector[i];
+  }
   m_parametersVector.clear();
 };
 

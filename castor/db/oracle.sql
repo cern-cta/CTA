@@ -59,7 +59,7 @@ CREATE TABLE GetUpdateStartRequest (subreqId INTEGER, diskServer VARCHAR2(2048),
 
 /* SQL statements for type QueryParameter */
 DROP TABLE QueryParameter;
-CREATE TABLE QueryParameter (value VARCHAR2(2048), id INTEGER PRIMARY KEY, queryType INTEGER);
+CREATE TABLE QueryParameter (value VARCHAR2(2048), id INTEGER PRIMARY KEY, query INTEGER, queryType INTEGER);
 
 /* SQL statements for type StagePrepareToGetRequest */
 DROP TABLE StagePrepareToGetRequest;
