@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stagein.man,v $ $Revision: 1.9 $ $Date: 2001/02/02 14:39:47 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagein.man,v $ $Revision: 1.10 $ $Date: 2001/03/05 07:20:17 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEIN l "$Date: 2001/02/02 14:39:47 $"
+.TH STAGEIN l "$Date: 2001/03/05 07:20:17 $"
 .SH NAME
 stagein \- allocate space in a disk pool and copy files from tape to disk or
 from disk to disk
@@ -505,7 +505,9 @@ stagein -v CIN111 inp
 .br
 4	Configuration error.
 .br
-28	ENOSPC: unable to find enough disk space.
+16	EBUSY: Device or resource busy.
+.br
+28	ENOSPC: No space left on device.
 .br
 192	Request cancelled by stageclr.
 .br
