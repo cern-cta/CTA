@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.92 2001/02/14 15:27:44 jdurand Exp $
+ * $Id: poolmgr.c,v 1.93 2001/02/16 09:38:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.92 $ $Date: 2001/02/14 15:27:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.93 $ $Date: 2001/02/16 09:38:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -103,6 +103,7 @@ struct files_per_stream {
   u_signed64 size;
   uid_t euid;
   gid_t egid;
+  char tppool[CA_MAXPOOLNAMELEN+1];
 };
 void print_pool_utilization _PROTO((int, char *, char *, char *, char *, int, int));
 int update_migpool _PROTO((struct stgcat_entry *, int, int));
@@ -1757,6 +1758,7 @@ int migpoolfiles(pool_p)
   char remember_tppool[CA_MAXPOOLNAMELEN+1];
   u_signed64 ideal_minsize;
   int nideal_minsize;
+  int itppool, found_tppool;
 
   /* We get the minimum size to be transfered */
   minsize = defminsize;
@@ -1894,38 +1896,50 @@ int migpoolfiles(pool_p)
       break;
     }
     /* We want to know all migration requests before we execute them */
-    if (ntppool_vs_stcp == 0) {
-      if ((tppool_vs_stcp = (struct files_per_stream *) malloc(sizeof(struct files_per_stream))) == NULL) {
-        stglogit(func, "### malloc error (%s)\n",strerror(errno));
-        free(scs);
-        return(SYERR);
-      }
-    } else {
-      struct files_per_stream *dummy;
 
-      if ((dummy = (struct files_per_stream *) realloc(tppool_vs_stcp,(ntppool_vs_stcp + 1) * sizeof(struct files_per_stream))) == NULL) {
-        stglogit(func, "### realloc error (%s)\n",strerror(errno));
-        free(scs);
-        for (i = 0; i < ntppool_vs_stcp; i++) {
-          if (tppool_vs_stcp[i].stcp != NULL) free(tppool_vs_stcp[i].stcp);
-          if (tppool_vs_stcp[i].stpp != NULL) free(tppool_vs_stcp[i].stpp);
-        }
-        free(tppool_vs_stcp);
-        return(SYERR);
+    /* Is it a known poolname ? */
+    found_tppool = 0;
+    for (itppool = 0; itppool < ntppool_vs_stcp; itppool++) {
+      if (strcmp(scc_found->stcp->u1.h.tppool, tppool_vs_stcp[itppool].tppool) == 0) {
+        found_tppool = 1;
+        break;
       }
-      tppool_vs_stcp = dummy;
     }
-    ntppool_vs_stcp++;
-    tppool_vs_stcp[ntppool_vs_stcp - 1].stcp = NULL;
-    tppool_vs_stcp[ntppool_vs_stcp - 1].stpp = NULL;
-    tppool_vs_stcp[ntppool_vs_stcp - 1].nstcp = 0;
-    tppool_vs_stcp[ntppool_vs_stcp - 1].size = 0;       /* In BYTES - not MBytes */
+    if (found_tppool == 0) {
+      if (ntppool_vs_stcp == 0) {
+        if ((tppool_vs_stcp = (struct files_per_stream *) malloc(sizeof(struct files_per_stream))) == NULL) {
+          stglogit(func, "### malloc error (%s)\n",strerror(errno));
+          free(scs);
+          return(SYERR);
+        }
+      } else {
+        struct files_per_stream *dummy;
+        
+        if ((dummy = (struct files_per_stream *) realloc(tppool_vs_stcp,(ntppool_vs_stcp + 1) * sizeof(struct files_per_stream))) == NULL) {
+          stglogit(func, "### realloc error (%s)\n",strerror(errno));
+          free(scs);
+          for (i = 0; i < ntppool_vs_stcp; i++) {
+            if (tppool_vs_stcp[i].stcp != NULL) free(tppool_vs_stcp[i].stcp);
+            if (tppool_vs_stcp[i].stpp != NULL) free(tppool_vs_stcp[i].stpp);
+          }
+          free(tppool_vs_stcp);
+          return(SYERR);
+        }
+        tppool_vs_stcp = dummy;
+      }
+      found_tppool = ntppool_vs_stcp++;
+      tppool_vs_stcp[ntppool_vs_stcp - 1].stcp = NULL;
+      tppool_vs_stcp[ntppool_vs_stcp - 1].stpp = NULL;
+      tppool_vs_stcp[ntppool_vs_stcp - 1].nstcp = 0;
+      tppool_vs_stcp[ntppool_vs_stcp - 1].size = 0;       /* In BYTES - not MBytes */
+      tppool_vs_stcp[ntppool_vs_stcp - 1].euid = 0;
+      tppool_vs_stcp[ntppool_vs_stcp - 1].egid = 0;
+      strcpy(tppool_vs_stcp[ntppool_vs_stcp - 1].tppool,scc_found->stcp->u1.h.tppool);
+    }
 
     /* We grab the most restrictive (euid/egid) pair based on our known fileclasses */
-    tppool_vs_stcp[ntppool_vs_stcp - 1].euid = 0;
-    tppool_vs_stcp[ntppool_vs_stcp - 1].egid = 0;
-    if (euid_egid(&(tppool_vs_stcp[ntppool_vs_stcp - 1].euid),
-                  &(tppool_vs_stcp[ntppool_vs_stcp - 1].egid),
+    if (euid_egid(&(tppool_vs_stcp[found_tppool].euid),
+                  &(tppool_vs_stcp[found_tppool].egid),
                   scc_found->stcp->u1.h.tppool,
                   pool_p->migr, scc_found->stcp, NULL, NULL, 1) != 0) {
       free(scs);
@@ -1936,13 +1950,17 @@ int migpoolfiles(pool_p)
       free(tppool_vs_stcp);
       return(SYERR);
     }
-    if (tppool_vs_stcp[ntppool_vs_stcp - 1].euid == 0) {
-      tppool_vs_stcp[ntppool_vs_stcp - 1].euid = stage_passwd.pw_uid; /* Put default uid */
+    if (tppool_vs_stcp[found_tppool].egid == 0) {      /* No gid filter */
+      tppool_vs_stcp[found_tppool].egid = stage_passwd.pw_gid; /* Put default gid */
+      if (tppool_vs_stcp[found_tppool].euid == 0) {   /* No uid filter */
+        tppool_vs_stcp[found_tppool].euid = stage_passwd.pw_uid; /* Put default uid */
+      }
+    } else {
+      if (tppool_vs_stcp[found_tppool].euid == 0) {   /* No uid filter */
+        tppool_vs_stcp[found_tppool].euid = scc_found->stcp->uid; /* Put current gid */
+      }
     }
-    if (tppool_vs_stcp[ntppool_vs_stcp - 1].egid == 0) {
-      tppool_vs_stcp[ntppool_vs_stcp - 1].egid = stage_passwd.pw_gid; /* Put default gid */
-    }
-    if (verif_euid_egid(tppool_vs_stcp[ntppool_vs_stcp - 1].euid,tppool_vs_stcp[ntppool_vs_stcp - 1].egid, NULL, NULL) != 0) {
+    if (verif_euid_egid(tppool_vs_stcp[found_tppool].euid,tppool_vs_stcp[found_tppool].egid, NULL, NULL) != 0) {
       free(scs);
       for (i = 0; i < ntppool_vs_stcp; i++) {
         if (tppool_vs_stcp[i].stcp != NULL) free(tppool_vs_stcp[i].stcp);
@@ -1976,8 +1994,8 @@ int migpoolfiles(pool_p)
       }
     }
     /* We group them into a single entity for API compliance */
-    if (((stcp = tppool_vs_stcp[ntppool_vs_stcp - 1].stcp = (struct stgcat_entry *) calloc(nfiles_per_tppool,sizeof(struct stgcat_entry))) == NULL) ||
-        ((stpp = tppool_vs_stcp[ntppool_vs_stcp - 1].stpp = (struct stgpath_entry *) calloc(nfiles_per_tppool,sizeof(struct stgpath_entry))) == NULL)) {
+    if (((stcp = tppool_vs_stcp[found_tppool].stcp = (struct stgcat_entry *) calloc(nfiles_per_tppool,sizeof(struct stgcat_entry))) == NULL) ||
+        ((stpp = tppool_vs_stcp[found_tppool].stpp = (struct stgpath_entry *) calloc(nfiles_per_tppool,sizeof(struct stgpath_entry))) == NULL)) {
       stglogit(func, "### calloc error (%s)\n",strerror(errno));
       free(scs);
       for (i = 0; i < ntppool_vs_stcp; i++) {
@@ -1987,7 +2005,7 @@ int migpoolfiles(pool_p)
       free(tppool_vs_stcp);
       return(SYERR);
     }
-    tppool_vs_stcp[ntppool_vs_stcp - 1].nstcp = nfiles_per_tppool;
+    tppool_vs_stcp[found_tppool].nstcp = nfiles_per_tppool;
     /* We store them in this area */
     j = -1;
     for (scc = scf; scc; scc = scc->next) {
@@ -2003,7 +2021,7 @@ int migpoolfiles(pool_p)
         /* Please note that the (stcp+j)->ipath will be our user path (stpp) */
         strcpy((stpp+j)->upath, (stcp+j)->ipath);
         scc->scanned = 1;
-        tppool_vs_stcp[ntppool_vs_stcp - 1].size += scc->stcp->actual_size;
+        tppool_vs_stcp[found_tppool].size += scc->stcp->actual_size;
       }
     }
     /* Next round */
@@ -2079,7 +2097,7 @@ int migpoolfiles(pool_p)
           for (k = tppool_vs_stcp[j].nstcp - 1; k >= 0; k--) {
             /* If we are trying to expand more than once a given tape pool we check that this one matches */
             /* the old one */
-            if ((remember_tppool[0] != '\0') && (strcmp(tppool_vs_stcp[j].stcp[k].u1.h.tppool,remember_tppool) != 0)) break;
+            if ((remember_tppool[0] != '\0') && (strcmp(tppool_vs_stcp[j].tppool,remember_tppool) != 0)) break;
 
             if (i != upd_fileclass(pool_p,&(tppool_vs_stcp[j].stcp[k]))) continue;
             /* This stcp shares the same fileclass as i's */
@@ -2862,10 +2880,17 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr)
         if (*euid != stcp_check->uid) {
           sendrep(rpfd, MSG_ERR, STG125, stcp_check->user, "uid", stcp_check->uid, "user", *euid, stcp_check->u1.h.xfile);
           return(-1);
+        } else {
+          /* Current's stcp_check's uid is matching ok */
+          *euid = stcp_check->uid;
+          /* And it is also matching gid per def in this branch */
+          *egid = stcp_check->gid;
         }
       } else {
         /* Current's stcp_check's uid is matching since there is no filter on this */
         *euid = stcp_check->uid;
+        /* And it is also matching gid per def in this branch */
+        *egid = stcp_check->gid;
       }
     } else {
       /* There is no explicit filter on group id - Is there explicit filter on user id ? */
@@ -2874,7 +2899,17 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr)
         if (*euid != stcp_check->uid) {
           sendrep(rpfd, MSG_ERR, STG125, stcp_check->user, "uid", stcp_check->uid, "user", *euid, stcp_check->u1.h.xfile);
           return(-1);
+        } else {
+          /* Current's stcp_check's uid is matching ok */
+          *euid = stcp_check->uid;
+          /* Current's stcp_check's gid is matching since there is no filter on this */
+          *egid = stcp_check->gid;
         }
+      } else {
+        /* Current's stcp_check's uid is matching since there is no filter on this */
+        *euid = stcp_check->uid;
+        /* Current's stcp_check's gid is matching since there is no filter on this */
+        *egid = stcp_check->gid;
       }
     }
   }
