@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.163 2001/12/07 13:43:23 jdurand Exp $
+ * $Id: poolmgr.c,v 1.164 2001/12/10 11:06:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.163 $ $Date: 2001/12/07 13:43:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.164 $ $Date: 2001/12/10 11:06:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3836,7 +3836,7 @@ int upd_fileclasses()
                 "Cns_queryclass",
                 sstrerror(serrno));
       /* We do not want to stop the update of other fileclasses, if any */
-      /* return(-1); */
+      continue;
     }
     if (fileclasses[i].Cnsfileclass.tppools != NULL) {
       free(fileclasses[i].Cnsfileclass.tppools);
