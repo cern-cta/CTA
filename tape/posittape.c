@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.7 $ $Date: 2000/10/30 06:28:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.8 $ $Date: 2000/11/07 15:33:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -58,7 +58,7 @@ char *vol1, *hdr1, *hdr2;
 	if (strcmp (devtype, "8200") && den != D8200 && den != D8200C)
 		rewritetm = 0;
 	if (lblcode == NL || lblcode == BLP) {
-		if (flags & NOPOS) {	/* tape is already positionned */
+		if ((flags & NOPOS) || (flags & LOCATE_DONE)) {	/* tape is already positionned */
 			if (filstat == CHECK_FILE) {	/* must check if the file exist */
 				if ((c = readlbl (tapefd, path, vol1)) < 0) goto reply;
 				if (c >= 2) {
@@ -199,6 +199,24 @@ char *vol1, *hdr1, *hdr2;
 		if (flags & NOPOS && cfseq && filstat == NEW_FILE) {	/* already positionned */
 			(*cfseq)++;
 			return (0);
+		}
+		if (flags & LOCATE_DONE) {
+			if ((c = readlbl (tapefd, path, hdr1)) < 0) goto reply;
+			if (c) {
+				c = ETLBL;
+				goto reply;
+			}
+			if (lblcode == SL) ebc2asc (hdr1, 80);
+			if (strncmp (hdr1, "HDR1", 4)) {
+				c = ETLBL;
+				goto reply;
+			}
+			sscanf (hdr1 + 31, "%4d", cfseq);
+			if (*cfseq != fseq) {
+				c = ETLBL;
+				goto reply;
+			}
+			goto gethdr2;
 		}
 		if (*cfseq == 0 || fseq == 1 || fsec > 1 || 
 		    (fseq == *cfseq && mode == WRITE_ENABLE)) {
@@ -389,6 +407,7 @@ char *vol1, *hdr1, *hdr2;
 			}
 			sscanf (hdr1 + 31, "%4d", cfseq);
 		}
+gethdr2:
 		tplogit (func, "hdr1 = %s\n", hdr1);
 		nohdr2 = 0;
 		if ((c = readlbl (tapefd, path, hdr2)) < 0) goto reply;

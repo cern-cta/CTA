@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.19 $ $Date: 2000/04/01 09:12:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.20 $ $Date: 2000/11/07 15:33:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -201,10 +201,17 @@ char	**argv;
 			c = ETNRDY;
 			goto reply;
 		}
+		if (method == TPPOSIT_BLKID) {
+			if (c = locate (tapefd, path, blockid)) goto reply;
+			flags |= LOCATE_DONE;
+		}
 		if ((c = posittape (tapefd, path, devtype, lblcode, mode,
 		    &cfseq, fid, filstat, fsec, fseq, den, flags, Qfirst, Qlast,
 		    vol1, hdr1, hdr2)))
 			goto reply;
+		if (mode == WRITE_ENABLE)
+			if (c = read_pos (tapefd, path, blockid))
+				goto reply;
 #if SONYRAW
 	}
 #endif
