@@ -1,5 +1,5 @@
 /*
- * rfio_serv.c,v 1.4 2004/03/22 12:50:01 jdurand Exp
+ * $Id: rfio_serv.c,v 1.10 2004/08/12 13:05:59 motiakov Exp $
  */
 
 /*
@@ -562,10 +562,17 @@ char    **argv;
 		  port = Socket_parent_port;
 	  } else {
 		  if (!port)  {
+#ifdef CSEC
+			  sp = Cgetservbyname(SRFIO_NAME, SRFIO_PROTO);
+			  if (sp == NULL) {
+				  log(LOG_ERR, "srfio/tcp: no such service - Use default port number %d\n", (int) SRFIO_PORT);
+				  sin.sin_port = htons((u_short) SRFIO_PORT);
+#else
 			  sp = Cgetservbyname(RFIO_NAME, RFIO_PROTO);
 			  if (sp == NULL) {
 				  log(LOG_ERR, "rfio/tcp: no such service - Use default port number %d\n", (int) RFIO_PORT);
 				  sin.sin_port = htons((u_short) RFIO_PORT);
+#endif
 			  } else {
 				  sin.sin_port = sp->s_port;
 			  }
