@@ -330,6 +330,10 @@ BEGIN
  SELECT castorFile INTO cfId FROM SubRequest where id = srId;
  -- update CastorFile
  UPDATE CastorFile set fileSize = fs WHERE id = cfId;
+ -- if 0 length file, stop here
+ IF fs = 0 THEN
+   RETURN;
+ END IF;
  -- get number of copies to create
  SELECT nbCopies INTO nc FROM FileClass, CastorFile
   WHERE CastorFile.id = cfId AND CastorFile.fileClass = FileClass.id;
