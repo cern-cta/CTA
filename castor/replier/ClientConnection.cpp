@@ -205,10 +205,13 @@ void castor::replier::ClientConnection::pop()  throw(castor::exception::Exceptio
 }
 
 void castor::replier::ClientConnection::sendData()  throw(castor::exception::Exception) {
+
   if (m_responses.empty()) {
-    NoMoreMessagesException nme;
+     clog() << DEBUG << "sendData: No more messages in queue!" << std::endl;
+     NoMoreMessagesException nme;
     throw nme;
   }
+  clog() << DEBUG << "sendData: Sending Next Message !" << std::endl;
   send();
 }
 

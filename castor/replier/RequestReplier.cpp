@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/16 15:45:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/19 18:29:33 $ $Author: bcouturi $
  *
  *
  *
@@ -36,6 +36,7 @@
 #include "castor/io/biniostream.h"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/Services.hpp"
+#include "castor/rh/EndResponse.hpp"
 
 #include <sys/poll.h>
 #include <unistd.h>
@@ -598,13 +599,18 @@ castor::replier::RequestReplier::replyToClient(castor::IClient *client,
                                                castor::IObject *response,
                                                bool isLastResponse)
   throw(castor::exception::Exception) {
+
+  char *func = "replyToClient: ";
+
+  clog() << DEBUG << func << "ISLASTRESPONSE:" <<  isLastResponse << std::endl;
+
   // Marshalling the response
   castor::io::biniostream* buffer = new castor::io::biniostream();
   castor::io::StreamAddress ad(*buffer, "StreamCnvSvc", castor::SVC_STREAMCNV);
   svcs()->createRep(&ad, response, true);
 
   // Adding the client to the queue, taking proper lock
-  clog() << VERBOSE << "Taking lock on queue !" << std::endl;
+  clog() << func << VERBOSE << "Taking lock on queue !" << std::endl;
   Cthread_mutex_lock(&m_clientQueue);
 
   ClientResponse cr;
@@ -615,18 +621,57 @@ castor::replier::RequestReplier::replyToClient(castor::IClient *client,
   cr.response = buffer;
   cr.isLast = isLastResponse;
 
-  clog() << DEBUG << "Adding client to queue" << std::endl;
+  clog() << DEBUG << func << "Adding client to queue" << std::endl;
   m_clientQueue->push(cr);
 
+
+  if (isLastResponse) {
+    castor::rh::EndResponse endresp;
+    castor::io::biniostream* buffer = new castor::io::biniostream();
+    castor::io::StreamAddress ad(*buffer, "StreamCnvSvc", castor::SVC_STREAMCNV);
+    svcs()->createRep(&ad, &endresp, true);
+
+    ClientResponse cr;
+    castor::rh::Client* cl = dynamic_cast<castor::rh::Client*>(client);
+    cr.client = *cl;
+    cr.response = buffer;
+    cr.isLast = isLastResponse;
+
+    clog() << DEBUG << func << "Adding End Response to queue" << std::endl;
+    m_clientQueue->push(cr);
+
+  }
+
   // Now notifying the replierThread
-  clog() << VERBOSE << "Sending message to replierThread" << std::endl;
+  clog() << VERBOSE << func << "Sending message to replierThread" << std::endl;
   int val = 1;
   int rc = write(*m_pipeWrite, (void *)&val, sizeof(val));
   if (rc != sizeof(val)) {
-    clog() << ERROR << "Error writing to pipe !" << std::endl;
+    clog() << ERROR << func << "Error writing to communication pipe with RRThread" << std::endl;
   } else {
-    clog() << DEBUG << "Successful to pipe !" << std::endl;
+    clog() << DEBUG 
+	   << func 
+	   <<"Successfully written to communication pipe with RRThread" 
+	   << std::endl;
   }
-  clog() << VERBOSE << "Removing lock on queue !" << std::endl;
+
+  // In case of the last response, notify that and end response has been added 
+  if (isLastResponse) {
+    int rc = write(*m_pipeWrite, (void *)&val, sizeof(val));
+    if (rc != sizeof(val)) {
+      clog() << ERROR << func 
+	     << "Error written EndResponse to communication pipe with RRThread" 
+	     << std::endl;
+    } else {
+      clog() << DEBUG 
+	     << func 
+	     <<"Successfully written EndResponse to communication pipe with RRThread" 
+	     << std::endl;
+    }
+  }
+
+  // Exiting...
+  clog() << VERBOSE << func 
+	 << "Removing lock on queue !" << std::endl;
   Cthread_mutex_unlock(&m_clientQueue);
 }
