@@ -3,7 +3,7 @@
 #  Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 #  All rights reserved
 #
-#       @(#)$RCSfile: rtcpcheck.fix,v $ $Revision: 1.1 $ $Date: 2000/03/05 09:30:15 $ CERN IT-PDP/DM Jean-Philippe Baud
+#       @(#)$RCSfile: rtcpcheck.fix,v $ $Revision: 1.2 $ $Date: 2000/03/06 08:26:04 $ CERN IT-PDP/DM Jean-Philippe Baud
 #
 #	rtcpcheck.fix - test rtcopy in fixed format mode
 #
@@ -305,6 +305,7 @@ do
 		exit 1
 	fi
 	echo "OK"
+	sleep 60
 done
 
 #
