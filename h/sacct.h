@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: sacct.h,v $ $Revision: 1.2 $ $Date: 1999/09/20 12:25:46 $ CERN CN-PDP/DH   Jean-Philippe Baud
+ * @(#)$RCSfile: sacct.h,v $ $Revision: 1.3 $ $Date: 1999/10/08 06:49:51 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Include file for CASTOR software accounting */
 
