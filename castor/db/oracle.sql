@@ -612,17 +612,16 @@ END;
 
 /* PL/SQL method implementing resetStream */
 CREATE OR REPLACE PROCEDURE resetStream (sid IN INTEGER) AS
-  fake : NUMBER;
+  fake NUMBER;
 BEGIN
   -- needed to avoid dead locks. Anyway, this won't be
   -- executed very often
   LOCK TABLE Stream2TapeCopy, Stream IN exclusive mode;
-  SELECT Stream2TapeCopy.Child
+  SELECT Stream2TapeCopy.Child INTO fake
     FROM Stream2TapeCopy, TapeCopy
     WHERE Stream2TapeCopy.Parent = sid
-      AND Stream2TapeCopyChild = TapeCopy.id
-      AND status = 2 -- TAPECOPY_WAITINSTREAMS
-    INTO fake;
+      AND Stream2TapeCopy.Child = TapeCopy.id
+      AND status = 2; -- TAPECOPY_WAITINSTREAMS
   UPDATE Stream SET status = 0 WHERE id = sid; -- STREAM_PENDING
 EXCEPTION WHEN NO_DATA_FOUND THEN
   DELETE FROM Stream2TapeCopy WHERE Parent = sid;
