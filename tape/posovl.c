@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.6 $ $Date: 1999/11/12 10:22:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.7 $ $Date: 1999/11/16 07:10:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -334,7 +334,7 @@ void cleanup()
 	char *sbp;
 	char sendbuf[REQBUFSZ];
 
-	tplogit (func, "cleanup started");
+	tplogit (func, "cleanup started\n");
 	if (tapefd >= 0)
 		close (tapefd);
 

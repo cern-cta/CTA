@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: omsg.c,v $ $Revision: 1.1 $ $Date: 1999/11/05 06:56:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: omsg.c,v $ $Revision: 1.2 $ $Date: 1999/11/16 07:10:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -49,23 +49,23 @@ int logmsg;
 		omsgdel (func, msg_num);
 
 	if (logmsg)
-		tplogit (func, "%s", msg);
+		tplogit (func, "%s\n", msg);
 	mymsgindex++;
 	while (sndmsgr (msg, orport, mymsgindex) < 0) {
 		tplogit (func, TP002, "sndmsgr",
 		    serrno ? sys_serrlist[SERRNO] : sys_errlist[errno]);
 		sleep (SMSGI);
 	}
-	tplogit (func, "msg sent to msgdaemon");
+	tplogit (func, "msg sent to msgdaemon\n");
 
 	if (rcvmsgr (orfd, &reply_type, &n, &msg_num, NULL, 0) < 0)
 		tplogit (func, TP002, "rcvmsgr",
 		    serrno ? sys_serrlist[SERRNO] : sys_errlist[errno]);
 	else
 		if (reply_type != 0x2001)
-			tplogit (func, "wrong reply type %x from msgdaemon", reply_type);
+			tplogit (func, "wrong reply type %x from msgdaemon\n", reply_type);
 		else
-			tplogit (func, "msgdaemon ack received: msg_num=%d", msg_num);
+			tplogit (func, "msgdaemon ack received: msg_num=%d\n", msg_num);
 
 	return (msg_num);
 }
@@ -82,7 +82,7 @@ char *orepbuf;
 		tplogit (func, TP002, "rcvmsgr",
 		    serrno ? sys_serrlist[SERRNO] : sys_errlist[errno]);
 	if (reply_type != 0x1007)
-		tplogit (func, "wrong reply type %x from msgdaemon", reply_type);
+		tplogit (func, "wrong reply type %x from msgdaemon\n", reply_type);
 	msg_num = 0;
 }
 

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.4 $ $Date: 1999/11/10 14:32:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.5 $ $Date: 1999/11/16 07:10:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -729,7 +729,7 @@ void cleanup()
 	char *sbp;
 	char sendbuf[REQBUFSZ];
 
-	tplogit (func, "cleanup started");
+	tplogit (func, "cleanup started\n");
 	if (tapefd >= 0)
 		close (tapefd);
 #if defined(_AIX) && defined(_IBMR2) && (defined(RS6000PCTA) || defined(ADSTAR))
