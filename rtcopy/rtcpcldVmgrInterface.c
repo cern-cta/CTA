@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/30 11:19:29 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/12/07 13:54:05 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/30 11:19:29 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/12/07 13:54:05 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -300,6 +300,9 @@ int rtcpcld_gettape(
          * which is our caller, is single threaded while selecting
          * tapes so we cannot allow to block
          */
+      case EFAULT:
+      case EACCES:
+      case EINVAL:
       case ENOENT:
         (void)dlf_write(
                         (inChild == 0 ? mainUuid : childUuid),
@@ -322,10 +325,7 @@ int rtcpcld_gettape(
       case ESEC_NO_CONTEXT:
       case ESEC_CTX_NOT_INITIALIZED:
         LOG_SECURITY_ERR("vmgr_gettape()");
-      break;
-      case EFAULT:
-      case EACCES:
-      case EINVAL:
+        break;
       default:
         /*
          * Should never happen. We log VID as a string here since EFAULT may
