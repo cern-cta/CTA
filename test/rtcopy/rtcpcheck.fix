@@ -3,7 +3,7 @@
 #  Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 #  All rights reserved
 #
-#       @(#)$RCSfile: rtcpcheck.fix,v $ $Revision: 1.2 $ $Date: 2000/03/06 08:26:04 $ CERN IT-PDP/DM Jean-Philippe Baud
+#       @(#)$RCSfile: rtcpcheck.fix,v $ $Revision: 1.3 $ $Date: 2002/05/07 08:56:37 $ CERN IT-PDP/DM Jean-Philippe Baud
 #
 #	rtcpcheck.fix - test rtcopy in fixed format mode
 #
@@ -11,37 +11,41 @@
 #
 # rtcpcheck.fix -V vid [-d density] [-g dgn] [-l lbltype] [-v vsn] [-L lrecl] [-N nbrecords]
 #
+# example:
+# rtcpcheck.fix -F U -V P04060 -l al -L 32400 -b 32400
 #set -x
 #
-echo "TESTING RTCOPY IN FIXED FORMAT MODE"
 #
 # Set default values
 #
 ###############################
 dir=/tmp
 file=RTCOPYTEST
-lbltypes="al nl sl"
-lrecl=32400
+lbltypes="al nl sl aul"
 nbrecords=50
+format=F
 ###############################
 #
 # Get arguments
 #
-set -- `getopt L:N:V:d:g:l:v: $*`
+set -- `getopt F:L:N:V:b:d:g:l:S:v: $*`
 if [ $? != 0 ]
 then
-	echo "usage: rtcpcheck.fix -V vid [-d density] [-g dgn] [-l lbltype] [-v vsn] [-L lrecl] [-N nbrecords]"
+	echo "usage: rtcpcheck.fix -V vid [-b blksiz] [-d density] [-F format] [-g dgn] [-l lbltype] [-v vsn] [-L lrecl] [-N nbrecords]"
 	exit 1
 fi
 #
 while [ $# -gt 0 ]
 do  case $1 in
-    -L)    lrecl=$2; shift;;
+    -F)    format=$2; shift;;
+    -L)    lrecl=$2; lreclopt="-L $2"; shift;;
     -N)    nbrecords=$2; shift;;
     -V)    vid=$2; shift;;
+    -b)    blksiz=$2; blksizopt="-b $2"; shift;;
     -d)    denopt="-d $2"; shift;;
     -g)    dgnopt="-g $2"; shift;;
     -l)    lbltypes=$2; shift;;
+    -S)    Sopt="-S $2"; shift;;
     -v)    vsnopt="-v $2"; shift;;
     --)    break;;
     *)     echo "Bad parameter: " $1; exit 1;;
@@ -51,20 +55,60 @@ done
 #
 if [ -z "$vid" ]
 then
-echo "The vid must be specified"
+	echo "usage: rtcpcheck.fix -V vid [-b blksiz] [-d density] [-F format] [-g dgn] [-l lbltype] [-v vsn] [-L lrecl] [-N nbrecords]"
+    echo "The vid must be specified"
     exit 1
+fi
+#
+if [ "$format" = "F" ]; then
+  echo "TESTING RTCOPY IN FIXED FORMAT MODE"
+elif [ "$format" = "U" ]; then
+  echo "TESTING RTCOPY IN SEQUENTIAL FORTRAN UNFORMATTED I/O MODE (-F U, or -F U,f77)"
+elif [ "$format" = "U,bin" ]; then
+  echo "TESTING RTCOPY IN DIRECT ACCESS UNFORMATED I/O or C I/O (-F U,bin)"
+elif [ "$format" = "FB" ]; then
+  echo "TESTING RTCOPY IN FIXED FORMAT MODE BUT GROUPING RECORDS INTO TAPE BLOCKS (-F FB, implies -L abd -b options)"
+elif [ "$format" = "F,-f77" ]; then
+  echo "TESTING RTCOPY IN SEQUENTIAL FORTRAN UNFORMATTED I/O MODE CONVERTED FROM TAPE TO DISK INTO DIRECT ACCESS UNFORMATTED (e.g. ctonrol words of Fortran are skipped)"
+else
+  echo "UNSUPPORTED FORMAT"
+  exit 1
 fi
 #
 # Creating test file.
 #
 echo "CREATING TEST FILE ..."
-cc -o create_test_file create_test_file.c
 if [ $? != 0 ]
 then
 	echo "TEST FAILED !!!"
 	exit 1
 fi
-./create_test_file $dir/$file".IN" $nbrecords $lrecl
+if [ `uname` = "Linux" ]; then
+  F77=g77
+else
+  F77=f77
+fi
+if [ "$format" = "F" ]; then
+  echo cc -o ./create_test_file ./create_test_file.c
+  cc -o ./create_test_file ./create_test_file.c
+  ./create_test_file $dir/$file".IN" $nbrecords $lrecl
+elif [ "$format" = "U" -o "$format" = "U,f77" ]; then
+  echo $F77 -o ./test.sequent ./test.sequent.f
+  $F77 -o ./test.sequent ./test.sequent.f
+  ./test.sequent $dir/$file".IN"
+elif [ "$format" = "U,bin" ]; then
+  echo cc -o ./create_test_file ./create_test_file.c
+  cc -o ./create_test_file ./create_test_file.c
+  ./create_test_file $dir/$file".IN" $nbrecords $lrecl
+elif [ "$format" = "FB" ]; then
+  echo cc -o ./create_test_file ./create_test_file.c
+  cc -o ./create_test_file ./create_test_file.c
+  ./create_test_file $dir/$file".IN" $nbrecords $lrecl
+elif [ "$format" = "F,-f77" ]; then
+  echo $F77 -o ./test.sequent ./test.sequent.f
+  $F77 -o ./test.sequent ./test.sequent.f
+  ./test.sequent $dir/$file".IN"
+fi
 if [ $? != 0 ]
 then
 	echo "TEST FAILED !!!"
@@ -79,43 +123,49 @@ do
 	#
 	# Updating TMS
 	#
-	echo sysreq tms update vid $vid SET LABEL $lab
-	sysreq tms update vid $vid SET LABEL $lab
-	if [ $? != 0 ]
-	then
-		echo "ERROR UPDATING TMS"
-		exit 1 
-	fi
-
+    if [ "$lab" != "aul" ]; then
+	  echo sysreq tms update vid $vid SET LABEL $lab
+	  sysreq tms update vid $vid SET LABEL $lab
+	  if [ $? != 0 ]
+	  then
+		  echo "ERROR UPDATING TMS"
+		  exit 1 
+	  fi
+    else
+        echo "TMS UPDATE SKIPPED (label type is $lab)"
+    fi
 	#
 	# Prelabeling the tape
 	#
-	echo tplabel -V $vid $denopt $dgnopt -l $lab $vsnopt
-	tplabel -V $vid $denopt $dgnopt -l $lab $vsnopt
-	if [ $? != 0 ]
-	then
-		echo "ERROR PRELABELING TAPE"
-		exit 1 
-	fi
+	  echo tplabel -V $vid $denopt $dgnopt -l $lab $vsnopt
+	  tplabel -V $vid $denopt $dgnopt -l $lab $vsnopt
+	  if [ $? != 0 ]
+	  then
+ 	 	echo "ERROR PRELABELING TAPE"
+	 	exit 1 
+	  fi
 
 	#
 	# Writing to tape.
 	#
 	echo "WRITING A FILE TO TAPE ..."
-	echo tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1 `hostname`:$dir/$file".IN"
-	tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1 `hostname`:$dir/$file".IN"
+	echo tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 1 `hostname`:$dir/$file".IN"
+	tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 1 `hostname`:$dir/$file".IN"
 	if [ $? != 0 ]
 	then
 		echo "TEST FAILED !!!"
 		exit 1 
 	fi
+    # echo "DUMPTAPE"
+    # echo dumptape -V $vid -F 0 -S `hostname`
+    # dumptape -V $vid -F 0 -S `hostname`
 
 	#
 	# Reading from tape.
 	#
 	echo "READING IT BACK ..."
-	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1 `hostname`:$dir/$file".OUT"
-	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1 `hostname`:$dir/$file".OUT"
+	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 1 `hostname`:$dir/$file".OUT"
+	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 1 `hostname`:$dir/$file".OUT"
 	if [ $? != 0 ]
 	then
 		echo "TEST FAILED !!!"
@@ -133,20 +183,23 @@ do
 	# Overwriting first file on tape.
 	#
 	echo "OVER WRITING FIRST FILE ON TAPE ..."
-	echo tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1 `hostname`:$dir/$file".IN"
-	tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1 `hostname`:$dir/$file".IN"
+	echo tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 1 `hostname`:$dir/$file".IN"
+	tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 1 `hostname`:$dir/$file".IN"
 	if [ $? != 0 ]
 	then
 		echo "TEST FAILED !!!"
 		exit 1 
 	fi
+    # echo "DUMPTAPE"
+    # echo dumptape -V $vid -F 0 -S `hostname`
+    # dumptape -V $vid -F 0 -S `hostname`
 
 	#
 	# Reading from tape.
 	#
 	echo "READING IT BACK ..."
-	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1 `hostname`:$dir/$file".OUT"
-	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1 `hostname`:$dir/$file".OUT"
+	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 1 `hostname`:$dir/$file".OUT"
+	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 1 `hostname`:$dir/$file".OUT"
 	if [ $? != 0 ]
 	then
 		echo "TEST FAILED !!!"
@@ -164,18 +217,22 @@ do
 	# Concatenating on tape.
 	#
 	echo "WRITING TWO FILES INTO A SINGLE ONE ON TAPE ..."
-	echo tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2 `hostname`:$dir/$file".IN" `hostname`:$dir/$file".OUT"
-	tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2 `hostname`:$dir/$file".IN" `hostname`:$dir/$file".OUT"
+	echo tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 2 `hostname`:$dir/$file".IN" `hostname`:$dir/$file".OUT"
+	tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 2 `hostname`:$dir/$file".IN" `hostname`:$dir/$file".OUT"
 	if [ $? != 0 ]
 	then
 		echo "TEST FAILED !!!"
 		exit 1 
 	fi
+    # echo "DUMPTAPE"
+    # echo dumptape -V $vid -F 0 -S `hostname`
+    # dumptape -V $vid -F 0 -S `hostname`
+
 	cat $dir/$file".IN" $dir/$file".OUT" > $dir/$file".GLOB"
 	rm $dir/$file".OUT"
 	echo "READING IT BACK ..."
-	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2 `hostname`:$dir/$file".OUT"
-	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2 `hostname`:$dir/$file".OUT"
+	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 2 `hostname`:$dir/$file".OUT"
+	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 2 `hostname`:$dir/$file".OUT"
 	if [ $? != 0 ]
 	then
 		echo "TEST FAILED !!!"
@@ -193,16 +250,20 @@ do
 	# Over writing second file on tape.
 	#
 	echo "OVER WRITING SECOND FILE ON TAPE..."
-	echo tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2 `hostname`:$dir/$file".GLOB"
-	tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2 `hostname`:$dir/$file".GLOB"
+	echo tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 2 `hostname`:$dir/$file".GLOB"
+	tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 2 `hostname`:$dir/$file".GLOB"
 	if [ $? != 0 ]
 	then
 		echo "TEST FAILED !!!"
 		exit 1 
 	fi
+    # echo "DUMPTAPE"
+    # echo dumptape -V $vid -F 0 -S `hostname`
+    # dumptape -V $vid -F 0 -S `hostname`
+
 	echo "READING IT BACK ..."
-	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2 `hostname`:$dir/$file".OUT"
-	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2 `hostname`:$dir/$file".OUT"
+	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 2 `hostname`:$dir/$file".OUT"
+	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 2 `hostname`:$dir/$file".OUT"
 	if [ $? != 0 ]
 	then
 		echo "TEST FAILED !!!"
@@ -220,13 +281,17 @@ do
 	# Writing 2 files on tape
 	#
 	echo "WRITING TWO FILES ON TAPE..."
-	echo tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1,2 `hostname`:$dir/$file".IN" `hostname`:$dir/$file".GLOB"
-	tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1,2 `hostname`:$dir/$file".IN" `hostname`:$dir/$file".GLOB"
+	echo tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 1,2 `hostname`:$dir/$file".IN" `hostname`:$dir/$file".GLOB"
+	tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 1,2 `hostname`:$dir/$file".IN" `hostname`:$dir/$file".GLOB"
 	if [ $? != 0 ]
 	then
 		echo "TEST FAILED !!!"
 		exit 1 
 	fi
+    # echo "DUMPTAPE"
+    # echo dumptape -V $vid -F 0 -S `hostname`
+    # dumptape -V $vid -F 0 -S `hostname`
+
 	#
 	rm $dir/$file".GLOB"
 	cat $dir/$file".IN" $dir/$file".OUT" > $dir/$file".GLOB"
@@ -236,8 +301,8 @@ do
 	# Concatenating from tape to disk
 	#
 	echo "READING INTO A SINGLE FILE TWO FILES FROM TAPE ..."
-	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1,2 `hostname`:$dir/$file".OUT"
-	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1,2 `hostname`:$dir/$file".OUT"
+	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 1,2 `hostname`:$dir/$file".OUT"
+	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 1,2 `hostname`:$dir/$file".OUT"
 	if [ $? != 0 ]
 	then
 		echo "TEST FAILED !!!"
@@ -256,16 +321,20 @@ do
 	# Writing a file at the end of the tape.
 	#
 	echo "WRITING A FILE AT THE END OF THE TAPE ..."
-	echo tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q n -f LASTFILE `hostname`:$dir/$file".IN"
-	tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q n -f LASTFILE `hostname`:$dir/$file".IN"
+	echo tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q n -f LASTFILE `hostname`:$dir/$file".IN"
+	tpwrite -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q n -f LASTFILE `hostname`:$dir/$file".IN"
 	if [ $? != 0 ]
 	then
 		echo "TEST FAILED !!!"
 		exit 1
 	fi
+    # echo "DUMPTAPE"
+    # echo dumptape -V $vid -F 0 -S `hostname`
+    # dumptape -V $vid -F 0 -S `hostname`
+
 	echo "READING IT BACK WITH THE PREVIOUS ONE ..."
-	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2- `hostname`:$dir/$file".GLOB" `hostname`:$dir/$file".OUT"
-	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 2- `hostname`:$dir/$file".GLOB" `hostname`:$dir/$file".OUT"
+	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 2- `hostname`:$dir/$file".GLOB" `hostname`:$dir/$file".OUT"
+	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 2- `hostname`:$dir/$file".GLOB" `hostname`:$dir/$file".OUT"
 	if [ $? != 0 ]
 	then
 		echo "TEST FAILED !!!"
@@ -280,8 +349,8 @@ do
 	echo "OK"
 	rm $dir/$file".OUT"
 	echo "READING THE FIRST AND THE THIRD ONE ..."
-	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1,3 `hostname`:$dir/$file".OUT"
-	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q 1,3 `hostname`:$dir/$file".OUT"
+	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 1,3 `hostname`:$dir/$file".OUT"
+	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q 1,3 `hostname`:$dir/$file".OUT"
 	if [ $? != 0 ]
 	then
 		echo "TEST FAILED !!!"
@@ -297,8 +366,9 @@ do
 #
 # test -q u
 #
-	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q u  -f LASTFILE /dev/null
-	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F F -L $lrecl -q u  -f LASTFILE /dev/null
+	echo "READING THE LAST ONE POSITIONNING BY FID ..."
+	echo tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q u  -f LASTFILE /dev/null
+	tpread -V $vid $denopt $dgnopt -l $lab $vsnopt -F $format $lreclopt $blksizopt $Sopt -q u  -f LASTFILE /dev/null
 	if [ $? != 0 ]
 	then
 		echo "TEST FAILED !!!"
