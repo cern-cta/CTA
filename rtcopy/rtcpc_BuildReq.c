@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.21 $ $Date: 2000/02/29 15:20:09 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.22 $ $Date: 2000/03/02 16:10:00 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -176,6 +176,7 @@ static int newTapeList(tape_list_t **tape, tape_list_t **newtape,
     tl->tapereq.mode = mode;
     tl->tapereq.err.max_tpretry = -1;
     tl->tapereq.err.max_cpretry = -1;
+    tl->tapereq.err.severity = RTCP_OK;
     if ( *tape != NULL ) {
         CLIST_INSERT((*tape)->prev,tl);
     } else {
@@ -222,6 +223,7 @@ static int newFileList(tape_list_t **tape, file_list_t **newfile,
     filereq->concat = -1;
     filereq->err.max_tpretry = -1;
     filereq->err.max_cpretry = -1;
+    filereq->err.severity = RTCP_OK;
 
     /*
      * Insert at end of file request list
