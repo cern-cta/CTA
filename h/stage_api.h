@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.47 2001/11/30 11:21:56 jdurand Exp $
+ * $Id: stage_api.h,v 1.48 2001/12/05 09:52:13 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -208,7 +208,7 @@ EXTERN_C int DLL_DECL stageclr_Link _PROTO((u_signed64,                /* flags 
 /* Generic STAGE_UPDC interface */
 /* ---------------------------- */
 #ifdef hpux
-/* Why does hpux's cc complain on the following proyotype when */
+/* Why does hpux's cc complain on the following prototype when */
 /* compiled with -Ae ? */
 EXTERN_C int DLL_DECL stageupdc _PROTO(());
 #else /* hpux */
@@ -227,6 +227,15 @@ EXTERN_C int DLL_DECL stageupdc _PROTO((u_signed64,               /* flags */
 /* --------------------------- */
 /* Not available yet - only old protocol */
 EXTERN_C int  DLL_DECL  stage_put_hsm _PROTO((char *, int, stage_hsm_t *));
+
+/* ----------------------------- */
+/* Generic STAGE_PING interface  */
+/* ----------------------------- */
+#ifdef hpux
+EXTERN_C int DLL_DECL stage_ping _PROTO(());
+#else
+EXTERN_C int DLL_DECL stage_ping _PROTO((u_signed64, char *));
+#endif
 
 /* ------------------------------------------ */
 /* Utilities used by the API (stage_util.c)   */
@@ -248,6 +257,7 @@ EXTERN_C void DLL_DECL print_stpp _PROTO((struct stgpath_entry *));
 EXTERN_C void DLL_DECL print_stcp _PROTO((struct stgcat_entry *));
 #endif
 EXTERN_C int  DLL_DECL stage_strtoi _PROTO((int *,char *,char **, int));
+EXTERN_C void DLL_DECL stage_util_time _PROTO((time_t, char *));
 
 /* ------------------------------------------- */
 /* Utilities used by the API (stage_usrmsg.c)  */
