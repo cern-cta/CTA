@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.20 2001/03/22 11:01:20 jdurand Exp $
+ * $Id: stglogit.c,v 1.21 2001/03/28 14:10:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.20 $ $Date: 2001/03/22 11:01:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.21 $ $Date: 2001/03/28 14:10:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -125,32 +125,35 @@ int stglogflags(va_alist) va_dcl
 	int something_to_print;
 
 	struct flag2name flag2names[] = {
-		{ STAGE_DEFERRED  , "STAGE_DEFERRED"  },
-		{ STAGE_GRPUSER   , "STAGE_GRPUSER"   },
-		{ STAGE_COFF      , "STAGE_COFF"      },
-		{ STAGE_UFUN      , "STAGE_UFUN"      },
-		{ STAGE_INFO      , "STAGE_INFO"      },
-		{ STAGE_ALL       , "STAGE_ALL"       },
-		{ STAGE_LINKNAME  , "STAGE_LINKNAME"  },
-		{ STAGE_LONG      , "STAGE_LONG"      },
-		{ STAGE_PATHNAME  , "STAGE_PATHNAME"  },
-		{ STAGE_SORTED    , "STAGE_SORTED"    },
-		{ STAGE_STATPOOL  , "STAGE_STATPOOL"  },
-		{ STAGE_TAPEINFO  , "STAGE_TAPEINFO"  },
-		{ STAGE_USER      , "STAGE_USER"      },
-		{ STAGE_EXTENDED  , "STAGE_EXTENDED"  },
-		{ STAGE_ALLOCED   , "STAGE_ALLOCED"   },
-		{ STAGE_FILENAME  , "STAGE_FILENAME"  },
-		{ STAGE_EXTERNAL  , "STAGE_EXTERNAL"  },
-		{ STAGE_MULTIFSEQ , "STAGE_MULTIFSEQ" },
-		{ STAGE_MIGRULES  , "STAGE_MIGRULES"  },
-		{ STAGE_SILENT    , "STAGE_SILENT"    },
-		{ STAGE_NOWAIT    , "STAGE_NOWAIT"    },
-		{ STAGE_CLASS     , "STAGE_CLASS"     },
-		{ STAGE_QUEUE     , "STAGE_QUEUE"     },
-		{ STAGE_COUNTERS  , "STAGE_COUNTERS"  },
-		{ STAGE_NOHSMCREAT, "STAGE_NOHSMCREAT"},
-        { 0               , NULL              }
+		{ STAGE_DEFERRED   , "STAGE_DEFERRED"   },
+		{ STAGE_GRPUSER    , "STAGE_GRPUSER"    },
+		{ STAGE_COFF       , "STAGE_COFF"       },
+		{ STAGE_UFUN       , "STAGE_UFUN"       },
+		{ STAGE_INFO       , "STAGE_INFO"       },
+		{ STAGE_ALL        , "STAGE_ALL"        },
+		{ STAGE_LINKNAME   , "STAGE_LINKNAME"   },
+		{ STAGE_LONG       , "STAGE_LONG"       },
+		{ STAGE_PATHNAME   , "STAGE_PATHNAME"   },
+		{ STAGE_SORTED     , "STAGE_SORTED"     },
+		{ STAGE_STATPOOL   , "STAGE_STATPOOL"   },
+		{ STAGE_TAPEINFO   , "STAGE_TAPEINFO"   },
+		{ STAGE_USER       , "STAGE_USER"       },
+		{ STAGE_EXTENDED   , "STAGE_EXTENDED"   },
+		{ STAGE_ALLOCED    , "STAGE_ALLOCED"    },
+		{ STAGE_FILENAME   , "STAGE_FILENAME"   },
+		{ STAGE_EXTERNAL   , "STAGE_EXTERNAL"   },
+		{ STAGE_MULTIFSEQ  , "STAGE_MULTIFSEQ"  },
+		{ STAGE_MIGRULES   , "STAGE_MIGRULES"   },
+		{ STAGE_SILENT     , "STAGE_SILENT"     },
+		{ STAGE_NOWAIT     , "STAGE_NOWAIT"     },
+		{ STAGE_CLASS      , "STAGE_CLASS"      },
+		{ STAGE_QUEUE      , "STAGE_QUEUE"      },
+		{ STAGE_COUNTERS   , "STAGE_COUNTERS"   },
+		{ STAGE_NOHSMCREAT , "STAGE_NOHSMCREAT" },
+		{ STAGE_CONDITIONAL, "STAGE_CONDITIONAL"},
+		{ STAGE_FORCE      , "STAGE_FORCE"      },
+		{ STAGE_REMOVEHSM  , "STAGE_REMOVEHSM"  },
+        { 0                , NULL               }
 	};
       
 	va_start (args);
