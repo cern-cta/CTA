@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.29 2003/03/12 11:08:40 jdurand Exp $
+ * $Id: sendrep.c,v 1.30 2003/04/28 10:01:56 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.29 $ $Date: 2003/03/12 11:08:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.30 $ $Date: 2003/04/28 10:01:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -143,11 +143,14 @@ int sendrep(va_alist) va_dcl
 			/* We know that this client do not fully support error codes */
 			rc = rc_castor2shift(rc);
 		} else if ((magic_client == STGMAGIC3) && (rc == SENAMETOOLONG)) {
-			/* Known pb with clients using STGMAGIC3 */
+			/* API mode only (magic > STGMAGIC2) - Known pb with clients using STGMAGIC3 */
 			rc = EINVAL;
 		} else if ((magic_client <= STGMAGIC3) && (rc == ECUPVNACT)) {
-			/* Clients below STGMAGIC4 do not know about ECUPVNACT */
+			/* API mode only (magic > STGMAGIC2) - Clients below STGMAGIC4 do not know about ECUPVNACT */
 			rc = SYERR;
+		} else if (rc == SHIFT_ESTNACT) {
+			/* API mode only (magic > STGMAGIC2) - Convert generic SHIFT value to a real serrno */
+			rc = ESTNACT;
 		}
 		marshall_LONG (sav_rbp_magic, magic_client);
 		marshall_LONG (rbp, rc);
