@@ -126,6 +126,25 @@ namespace castor {
    * RH server port
    */
 #define RHSERVER_PORT 9002
+
+
+  /**
+   * Names of the differents objects, used to display
+   * correctly the ObjectsIds enum
+   */
+  extern const char* ObjectsIdStrings[60];
+
+  /**
+   * Names of the differents Services, used to display
+   * correctly the ServicesIds enum
+   */
+  extern const char* ServicesIdStrings[8];
+
+  /**
+   * Names of the differents representations, used to display
+   * correctly the RepresentationsIds enum
+   */
+  extern const char* RepresentationsIdStrings[4];
     
 #ifdef __cplusplus
 } // end of namespace castor

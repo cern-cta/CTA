@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/DiskCopyStatusCodes.hpp
+ *                      castor/stager/StreamStatusCodes.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,40 +24,17 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_STAGER_DISKCOPYSTATUSCODES_HPP
-#define CASTOR_STAGER_DISKCOPYSTATUSCODES_HPP
+// Include Files
+#include "castor/stager/StreamStatusCodes.hpp"
 
-#ifdef __cplusplus
-namespace castor {
+//------------------------------------------------------------------------------
+// StreamStatusCodesStrings
+//------------------------------------------------------------------------------
+const char* castor::stager::StreamStatusCodesStrings[5] = {
+  "STREAM_PENDING",
+  "STREAM_WAITDRIVE",
+  "STREAM_WAITMOUNT",
+  "STREAM_RUNNING",
+  "STREAM_WAITSPACE"
+};
 
-  namespace stager {
-
-#endif
-    /**
-     * enum DiskCopyStatusCodes
-     * Possible status codes for a DiskCopy
-     */
-    enum DiskCopyStatusCodes {
-      DISKCOPY_STAGED = 0,
-      DISKCOPY_WAITDISK2DISKCOPY = 1,
-      DISKCOPY_WAITTAPERECALL = 2,
-      DISKCOPY_DELETED = 3,
-      DISKCOPY_FAILED = 4,
-      DISKCOPY_WAITFS = 5,
-      DISKCOPY_STAGEOUT = 6,
-      DISKCOPY_INVALID = 7
-    }; // end of enum DiskCopyStatusCodes
-
-    /**
-     * Names of the differents representations, used to display
-     * correctly the DiskCopyStatusCodes enum
-     */
-    extern const char* DiskCopyStatusCodesStrings[8];
-
-#ifdef __cplusplus
-  }; // end of namespace stager
-
-}; // end of namespace castor
-
-#endif
-#endif // CASTOR_STAGER_DISKCOPYSTATUSCODES_HPP

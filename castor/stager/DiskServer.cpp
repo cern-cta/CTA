@@ -80,7 +80,7 @@ void castor::stager::DiskServer::print(std::ostream& stream,
       (*it)->print(stream, indent + "    ", alreadyPrinted);
     }
   }
-  stream << indent << "status : " << m_status << std::endl;
+  stream << indent << "status : " << DiskServerStatusCodeStrings[m_status] << std::endl;
 }
 
 //------------------------------------------------------------------------------

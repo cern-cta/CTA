@@ -46,6 +46,12 @@ namespace castor {
       TAPECOPY_STAGED = 5
     }; // end of enum TapeCopyStatusCodes
 
+    /**
+     * Names of the differents representations, used to display
+     * correctly the TapeCopyStatusCodes enum
+     */
+    extern const char* TapeCopyStatusCodesStrings[6];
+
 #ifdef __cplusplus
   }; // end of namespace stager
 

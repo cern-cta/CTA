@@ -48,6 +48,12 @@ namespace castor {
       TAPE_UNKNOWN = -1 //Unknown status code
     }; // end of enum TapeStatusCodes
 
+    /**
+     * Names of the differents representations, used to display
+     * correctly the TapeStatusCodes enum
+     */
+    extern const char* TapeStatusCodesStrings[8];
+
 #ifdef __cplusplus
   }; // end of namespace stager
 

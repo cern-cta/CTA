@@ -108,7 +108,7 @@ void castor::stager::TapeCopy::print(std::ostream& stream,
   } else {
     stream << indent << "  null" << std::endl;
   }
-  stream << indent << "status : " << m_status << std::endl;
+  stream << indent << "status : " << TapeCopyStatusCodesStrings[m_status] << std::endl;
 }
 
 //------------------------------------------------------------------------------

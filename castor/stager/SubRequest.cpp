@@ -104,7 +104,7 @@ void castor::stager::SubRequest::print(std::ostream& stream,
   } else {
     stream << indent << "  null" << std::endl;
   }
-  stream << indent << "status : " << m_status << std::endl;
+  stream << indent << "status : " << SubRequestStatusCodesStrings[m_status] << std::endl;
   stream << indent << "Request : " << std::endl;
   if (0 != m_request) {
     m_request->print(stream, indent + "  ", alreadyPrinted);

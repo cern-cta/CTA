@@ -42,6 +42,12 @@ namespace castor {
       DISKSERVER_MAINTENANCE
     }; // end of enum DiskServerStatusCode
 
+    /**
+     * Names of the differents representations, used to display
+     * correctly the DiskServerStatusCode enum
+     */
+    extern const char* DiskServerStatusCodeStrings[2];
+
 #ifdef __cplusplus
   }; // end of namespace stager
 

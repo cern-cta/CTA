@@ -48,6 +48,12 @@ namespace castor {
       SUBREQUEST_FAILED = 7
     }; // end of enum SubRequestStatusCodes
 
+    /**
+     * Names of the differents representations, used to display
+     * correctly the SubRequestStatusCodes enum
+     */
+    extern const char* SubRequestStatusCodesStrings[8];
+
 #ifdef __cplusplus
   }; // end of namespace stager
 

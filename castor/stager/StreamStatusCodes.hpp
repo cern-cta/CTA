@@ -45,6 +45,12 @@ namespace castor {
       STREAM_WAITSPACE = 4
     }; // end of enum StreamStatusCodes
 
+    /**
+     * Names of the differents representations, used to display
+     * correctly the StreamStatusCodes enum
+     */
+    extern const char* StreamStatusCodesStrings[5];
+
 #ifdef __cplusplus
   }; // end of namespace stager
 

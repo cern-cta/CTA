@@ -31,6 +31,10 @@
 #define ServicesIds C_ServicesIds
 #define RepresentationsIds C_RepresentationsIds
 
+#define ObjectsIdStrings C_ObjectsIdStrings
+#define ServicesIdStrings C_ServicesIdStrings
+#define RepresentationsIdStrings C_RepresentationsIdStrings
+
 #include "Constants.hpp"
 
 #endif // CASTOR_CONSTANTS_H

@@ -43,6 +43,12 @@ namespace castor {
       SEGMENT_FAILED = 6
     }; // end of enum SegmentStatusCodes
 
+    /**
+     * Names of the differents representations, used to display
+     * correctly the SegmentStatusCodes enum
+     */
+    extern const char* SegmentStatusCodesStrings[3];
+
 #ifdef __cplusplus
   }; // end of namespace stager
 

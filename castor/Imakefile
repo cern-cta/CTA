@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.51 $ $Release$ $Date: 2004/11/16 15:45:33 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.52 $ $Release$ $Date: 2004/11/22 16:27:35 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -83,6 +83,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               BaseObjectCInt.cpp \
               BaseServer.cpp \
               BaseSvc.cpp \
+              Constants.cpp \
               Converters.cpp \
               Factories.cpp \
               IAddress.cpp \
@@ -173,12 +174,14 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/DiskCopyCInt.cpp \
               stager/DiskCopyForRecall.cpp \
               stager/DiskCopyForRecallCInt.cpp \
+              stager/DiskCopyStatusCodes.cpp \
               stager/DiskFile.cpp \
               stager/DiskFileCInt.cpp \
               stager/DiskPool.cpp \
               stager/DiskPoolCInt.cpp \
               stager/DiskServer.cpp \
               stager/DiskServerCInt.cpp \
+              stager/DiskServerStatusCode.cpp \
               stager/FileClass.cpp \
               stager/FileClassCInt.cpp \
               stager/FileRequest.cpp \
@@ -196,6 +199,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/RequestCInt.cpp \
               stager/Segment.cpp \
               stager/SegmentCInt.cpp \
+              stager/SegmentStatusCodes.cpp \
               stager/StageAbortRequest.cpp \
               stager/StageAbortRequestCInt.cpp \
 	      stager/StageFileQueryRequest.cpp \
@@ -232,8 +236,10 @@ STGLIB_SRCS = IAddressCInt.cpp \
 	      stager/StageUpdateRequestCInt.cpp \
               stager/Stream.cpp \
               stager/StreamCInt.cpp \
+              stager/StreamStatusCodes.cpp \
               stager/SubRequest.cpp \
               stager/SubRequestCInt.cpp \
+              stager/SubRequestStatusCodes.cpp \
               stager/Tape.cpp \
               stager/TapeCInt.cpp \
               stager/TapeCopy.cpp \
@@ -242,6 +248,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/TapeCopyForMigrationCInt.cpp \
               stager/TapePool.cpp \
               stager/TapePoolCInt.cpp \
+              stager/TapeStatusCodes.cpp \
+              stager/TapeCopyStatusCodes.cpp \
               db/DbAddress.cpp \
               db/DbAddressCInt.cpp \
               exception/Exception.cpp \
