@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/10/19 16:02:58 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2004/10/20 10:23:34 $ $Author: sponcec3 $
  *
  *
  *
@@ -85,7 +85,8 @@ const std::string castor::db::ora::OraStagerSvc::s_bestTapeCopyForStreamStatemen
    AND rh_Stream2TapeCopy.child = rh_TapeCopy.id \
    AND rh_Stream2TapeCopy.parent = :1 \
    AND rh_TapeCopy.status = :2 \
-   AND rh_FileSystem.weight = (SELECT MAX(weight) FROM rh_FileSystem);";
+   AND ROWNUM < 2 \
+   ORDER by rh_FileSystem.weight DESC;";
 
 // -----------------------------------------------------------------------
 // OraStagerSvc
