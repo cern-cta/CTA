@@ -5,7 +5,7 @@
 
 
 /*
- * $RCSfile: rtcp_api.h,v $ $Revision: 1.9 $ $Date: 2000/10/06 08:58:57 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rtcp_api.h,v $ $Revision: 1.10 $ $Date: 2000/10/11 06:43:29 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -21,7 +21,7 @@
 #include <rtcp.h>
 
 EXTERN_C int DLL_DECL rtcpc _PROTO((tape_list_t *));
-EXTERN_C int DLL_DECL rtcpcCallTMS _PROTO((tape_list_t *));
+EXTERN_C int DLL_DECL rtcp_CallTMS _PROTO((tape_list_t *, char *));
 EXTERN_C void DLL_DECL rtcp_SetErrTxt _PROTO((int, char *, ...));
 EXTERN_C int DLL_DECL rtcpc_BuildReq _PROTO((tape_list_t **, int, char **));
 EXTERN_C int DLL_DECL rtcpc_GetDeviceQueues _PROTO((char *, char *, int *, int *, int *));
