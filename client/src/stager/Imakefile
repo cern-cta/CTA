@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.19 $ $Date: 2004/12/01 15:14:40 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.20 $ $Date: 2004/12/06 10:25:48 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -39,6 +39,7 @@ STAGEGROUP = st
 
 STAGEFLAGS = -DSTAGEUSER=\"$(STAGEUSER)\" -DSTAGEGROUP=\"$(STAGEGROUP)\"
 THREADFLAGS = $(MTCCFLAGS)
+LDFLAGS = $(MTLDFLAGS)
 
 #if SOLARIS
 LDLIBS = -lsocket -lnsl
