@@ -1,0 +1,66 @@
+.\" $Id: stage_wrt.man,v 1.1 2000/05/15 14:46:25 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_wrt.man,v $ $Revision: 1.1 $ $Date: 2000/05/15 14:46:25 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH STAGE_WRT "3" "$Date: 2000/05/15 14:46:25 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_wrt_hsm \- copy  existing files from disk to a Hierarchical Storage Management System (HSM).
+
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_wrt_hsm(char *" stghost ", int " Kopt ", char *" diskpool ", stage_hsm_t *" hsmstruct ");"
+
+.SH DESCRIPTION
+This \fBstage_wrt_hsm\fP sends a request to a stage daemon to copy existing disk files to tape or to disk. They must be not empty. To do the actual copy a call to \fBRTCOPY\fP is issued.
+
+.SH PARAMETERS
+.TP 2.0i
+.BI "char *" stghost
+Forces to use this stager hostname. Will use the default if this parameter is NULL.
+.TP
+.BI "int " Kopt
+If different than 0 (zero), keeps file(s) on disk. If this option is absent, the disk file is removed as soon as the stageput operation is successful.
+.TP
+.BI "char *" diskpool
+Forces to use this given disk pool for all migrated files.
+.TP
+.BI "stage_hsm_t *" hsmstruct
+Linked list of structures that contain the following members:
+.RS
+.TP
+.BI "char *" xfile;
+Pointer to a HSM name, required to be non-NULL.
+.TP
+.BI "char *" upath;
+Pointer to a user filename, required to be non-NULL.
+.TP
+.BI "u_signed64 " size;
+Size, in bytes, of the amount of data you want to stage-in. Will be ignore is its value is 0 (zero).
+.TP
+.BI "stage_hsm_t *" next;
+Pointer to next HSM structure. The last element has a NULL for this member.
+.RE
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SENOMAPFND
+Can't open mapping database
+.TP
+.B EFAULT
+Bad address (invalid argument)
+.TP
+.B EINVAL
+Invalid argument (bad stageid)
+.TP
+.B SECONNDROP
+Connection closed by remote end
+.TP
+.B SECOMERR
+Communication error
