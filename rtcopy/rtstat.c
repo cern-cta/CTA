@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.10 $ $Date: 2001/10/04 13:47:08 $ CERN IT-PDP/DM Claire Redmond";
+static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.11 $ $Date: 2002/09/30 09:52:18 $ CERN IT-PDP/DM Claire Redmond";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -278,6 +278,7 @@ struct processed_error *processed_error_first = NULL;
 struct users /*Structure to store users statistics */
 {
     char name[9];
+    char groupname[9];	
     int readops; /* Number of tpread commands done by user */
     int writeops; /* Number of tpwrite commands done by user */
     int MBwrite;
@@ -3456,6 +3457,7 @@ if(users_first == NULL)
 	{
 	users_first = (struct users *) calloc (1, sizeof (struct users));
 	strcpy(users_first->name,rq->uid);
+	strcpy(users_first->groupname, rq->gid);
 	users_first->readops = 0;
 	users_first->writeops = 0;
         users_first->MBwrite = 0;
@@ -3498,6 +3500,7 @@ if(found_usr == 0)
 	{
 	usr = (struct users *) calloc (1, sizeof (struct users));
 	strcpy(usr->name,rq->uid);
+	strcpy(usr->groupname,rq->gid);
 	usr->readops = 0;
 	usr->writeops = 0;
         usr->MBread = usr->MBwrite = usr->totDrvSecs = 0;
@@ -3617,7 +3620,8 @@ sorted_grp = sorted_groups_first;
              
              if (( tot > tot_max) && (tot < tot_prev) )            
                {     
-                 strcpy(sorted_usr->name,usr->name);
+		 strcpy(sorted_usr->name,usr->name);
+		 strcpy(sorted_usr->groupname, usr->groupname);
 		 sorted_usr->readops = usr->readops;
 		 sorted_usr->writeops = usr->writeops;
                  sorted_usr->MBread = usr->MBread;
@@ -3705,11 +3709,11 @@ printf("\n\tTapes read : %d\n\tTapes written : %d\n", tapes_read, tapes_written)
 printf("\n");
 printf("-- 20 most active users and groups --\n\n");
 usr = sorted_users_first;
-printf("User         Tapes read    Tapes written  MB read  MB write  Drive hrs\n");
-printf("----------   ------------  -------------  -------  --------  ---------\n");
+printf("User /Group     Tapes read   Tapes written  MB read  MB write  Drive hrs\n");
+printf("-----------    ------------  -------------  -------  --------  ---------\n");
 while(usr)
 	{
-	printf("%-12s %6d        %6d          %6d    %6d     %6d\n", usr->name, usr->readops, usr->writeops,usr->MBread,usr->MBwrite,usr->totDrvSecs/3600);
+	printf("%-8s/%-2s    %6d       %6d          %6d    %6d     %6d\n", usr->name, usr->groupname, usr->readops, usr->writeops,usr->MBread,usr->MBwrite,usr->totDrvSecs/3600);
 	usr = usr->next;
 	}
 printf("\n");
