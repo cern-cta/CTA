@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.160 2001/12/04 10:26:29 jdurand Exp $
+ * $Id: poolmgr.c,v 1.161 2001/12/04 11:08:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.160 $ $Date: 2001/12/04 10:26:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.161 $ $Date: 2001/12/04 11:08:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -22,9 +22,9 @@ static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.160 $ $Date: 20
 #include <string.h>
 #include <time.h>
 #include <dirent.h>
+#include <signal.h>
 #ifndef _WIN32
 #include <unistd.h>
-#include <signal.h>
 #else
 #define R_OK 4
 #define W_OK 2
@@ -59,6 +59,20 @@ static char strftime_format[] = "%b %d %H:%M:%S";
 #else /* _WIN32 */
 static char strftime_format[] = "%b %e %H:%M:%S";
 #endif /* _WIN32 */
+
+#ifndef _WIN32
+/* Signal handler - Simplify the POSIX sigaction calls */
+#ifdef __STDC__
+typedef void    Sigfunc(int);
+Sigfunc *_stage_signal(int, Sigfunc *);
+#else
+typedef void    Sigfunc();
+Sigfunc *_stage_signal();
+#endif
+#else
+#define _stage_signal(a,b) signal(a,b)
+#endif
+void stage_stgcleanup _PROTO((int));
 
 #if (defined(IRIX5) || defined(IRIX6) || defined(IRIX64))
 /* Surpringly, on Silicon Graphics, strdup declaration depends on non-obvious macros */
@@ -3406,6 +3420,12 @@ int migpoolfiles(pool_p)
           seteuid(tppool_vs_stcp[j].euid);
           nb_per_request /= nb_consecutive_stream;
         }
+#if ! defined(_WIN32)
+        _stage_signal (SIGHUP, stage_stgcleanup);
+        _stage_signal (SIGQUIT, stage_stgcleanup);
+#endif
+        _stage_signal (SIGINT, stage_stgcleanup);
+        _stage_signal (SIGTERM, stage_stgcleanup);
         /* We loop on all the consecutive streams */
         while (nb_done_request < tppool_vs_stcp[j].nstcp) {
           int nb_in_this_request;
@@ -5009,4 +5029,47 @@ void get_global_stream_count(server,nbreadserver,nbwriteserver)
       *nbwriteserver += elemp->nbwriteaccess;
     }
   }
+}
+
+#ifndef _WIN32
+Sigfunc *_stage_signal(signo, func)
+     int signo;
+     Sigfunc *func;
+{
+  struct sigaction	act, oact;
+  int n = 0;
+
+  act.sa_handler = func;
+  sigemptyset(&act.sa_mask);
+  act.sa_flags = 0;
+  if (signo == SIGALRM) {
+#ifdef	SA_INTERRUPT
+    act.sa_flags |= SA_INTERRUPT;	/* SunOS 4.x */
+#endif
+  } else {
+#ifdef	SA_RESTART
+    act.sa_flags |= SA_RESTART;		/* SVR4, 44BSD */
+#endif
+  }
+#ifdef __INSURE__
+  /* Insure don't like the value I give to sigaction... */
+  _Insure_set_option("runtime","off");
+#endif
+  n = sigaction(signo, &act, &oact);
+#ifdef __INSURE__
+  /* Restore runtime checking */
+  _Insure_set_option("runtime","on");
+#endif
+  if (n < 0) {
+    return(SIG_ERR);
+  }
+  return(oact.sa_handler);
+}
+#endif /* #ifndef _WIN32 */
+
+void stage_stgcleanup(sig)
+     int sig;
+{
+  stage_kill(sig);
+  exit(USERR);
 }
