@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/07/19 16:48:24 $ $Author: jdurand $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/07/22 07:00:34 $ $Author: jdurand $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/07/19 16:48:24 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/07/22 07:00:34 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -530,10 +530,6 @@ static int startVidWorker(
   char usePipeStr[16];
   char cmd[CA_MAXLINELEN+1], cmdline[CA_MAXLINELEN+1];
 
-  /* Initializing the C++ log */
-  /* Necessary at start of program and after any fork */
-  C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
-  
   if ( s == NULL || *s == INVALID_SOCKET || 
        tape == NULL || *tape->tapereq.vid == '\0' ) {
     serrno = EINVAL;

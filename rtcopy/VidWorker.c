@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/07/01 10:24:56 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/07/22 07:00:34 $ $Author: jdurand $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/07/01 10:24:56 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/07/22 07:00:34 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1098,6 +1098,10 @@ int main(
    * duplicated to file descriptor 0
    */
   SOCKET origSocket = 0;
+  
+  /* Initializing the C++ log */
+  /* Necessary at start of program and after any fork */
+  C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
   
   Coptind = 1;
   Copterr = 1;
