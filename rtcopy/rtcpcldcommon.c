@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/10/25 15:20:32 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/10/27 08:00:03 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/10/25 15:20:32 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/10/27 08:00:03 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -558,6 +558,31 @@ int rtcpcld_findFile(
   serrno = ENOENT;
   return(-1);
 }
+
+int rtcpcld_nextFileToRecall(
+                             tape,
+                             file
+                             )
+     tape_list_t *tape;
+     file_list_t **file;
+{
+  file_list_t *fl = NULL;
+  rtcpFileRequest_t *filereq;
+  int found = 0;
+  
+  CLIST_ITERATE_BEGIN(tape->file,fl) 
+    {
+      filereq = &(fl->filereq);
+      if ( (rtcpcld_validPosition(filereq->tape_fseq,filereq->blockid) == 1) &&
+           (rtcpcld_validPath(filereq->file_path) == 0) ) {
+        found = 1;
+        break;
+      }
+    }
+  CLIST_ITERATE_END(tape->file,fl);
+  if ( (found == 1) && (file != NULL) ) *file = fl;
+  return(found);
+} 
 
 static int updateClientInfo(
                             origSocket,
