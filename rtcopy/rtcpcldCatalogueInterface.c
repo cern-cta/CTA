@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.35 $ $Release$ $Date: 2004/08/12 09:23:09 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.36 $ $Release$ $Date: 2004/08/12 13:57:24 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.35 $ $Release$ $Date: 2004/08/12 09:23:09 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.36 $ $Release$ $Date: 2004/08/12 13:57:24 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1138,7 +1138,7 @@ static int validPosition(
   Cstager_Segment_fseq(segment,&fseq);
   Cstager_Segment_blockid(segment,(CONST unsigned char **)&blockid);
 
-  if ( (fseq < 0) &&
+  if ( (fseq <= 0) &&
        (blockid == NULL || memcmp(blockid,nullblkid,sizeof(nullblkid)) == 0) ) {
     return(0);
   } else {
@@ -1166,10 +1166,6 @@ static int validSegment(
                         )
      struct Cstager_Segment_t *segment;
 {
-  char *diskPath = NULL;
-  unsigned char *blockid = NULL;
-  int fseq = -1;
-  
   if ( segment == NULL ) {
     serrno = EINVAL;
     return(-1);
