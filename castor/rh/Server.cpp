@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/07/12 14:19:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/07/21 09:10:43 $ $Author: sponcec3 $
  *
  *
  *
@@ -32,7 +32,7 @@
 #include <signal.h>
 #include <errno.h>
 
-#include "castor/io/Socket.hpp"
+#include "castor/io/ServerSocket.hpp"
 #include "castor/IObject.hpp"
 #include "castor/Constants.hpp"
 #include "castor/ICnvSvc.hpp"
@@ -93,29 +93,26 @@ castor::rh::Server::Server() :
 // main
 //------------------------------------------------------------------------------
 int castor::rh::Server::main () {
-  // create oracle conversion service
-  castor::ICnvSvc *svc =
-    svcs()->cnvService("OraCnvSvc", castor::SVC_ORACNV);
-  if (svc == 0) {
-    clog() << "Could not get Conversion Service for Oracle"
-           << std::endl;
-    return -1;
-  }
-  /* Create a socket for the server, bind, and listen */
-  castor::io::Socket sock(CSP_RHSERVER_PORT, true);
   try {
-    sock.reusable();
+    // create oracle conversion service
+    castor::ICnvSvc *svc =
+      svcs()->cnvService("OraCnvSvc", castor::SVC_ORACNV);
+    if (svc == 0) {
+      clog() << "Could not get Conversion Service for Oracle"
+             << std::endl;
+      return -1;
+    }
+    /* Create a socket for the server, bind, and listen */
+    castor::io::ServerSocket sock(CSP_RHSERVER_PORT, true);  
+    /* Accept connexions */
+    for (;;) {
+      castor::io::ServerSocket* s = sock.accept();
+      /* handle the command. */
+      threadAssign(s);
+    }
   } catch(castor::exception::Exception e) {
     clog() << sstrerror(e.code())
            << e.getMessage().str() << std::endl;
-  }
-  
-  
-  /* Accept connexions */
-  for (;;) {
-    castor::io::Socket* s = sock.accept();
-    /* handle the command. */
-    threadAssign(s);
   }
 }
 
@@ -127,7 +124,8 @@ void *castor::rh::Server::processRequest(void *param) throw() {
   ack.setStatus(true);
 
   // get the incoming request
-  castor::io::Socket* sock = (castor::io::Socket*) param;
+  castor::io::ServerSocket* sock =
+    (castor::io::ServerSocket*) param;
   castor::rh::Request* fr = 0;
   try {
     castor::IObject* obj = sock->readObject();

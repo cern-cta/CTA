@@ -33,7 +33,8 @@
 #include <sys/poll.h>
 #include <sys/stat.h>
 #include <Cpwd.h>
-#include "castor/io/Socket.hpp"
+#include "castor/io/ClientSocket.hpp"
+#include "castor/io/ServerSocket.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
@@ -139,7 +140,8 @@ void castor::client::BaseClient::sendRequest
     free(hostname);
   }
   // create a socket for the callback
-  m_callbackSocket = new castor::io::Socket(0, true);
+  m_callbackSocket = new castor::io::ServerSocket(0, true);
+  m_callbackSocket->listen();
   unsigned short port;
   unsigned long ip;
   m_callbackSocket->getPortIp(port, ip);
@@ -205,7 +207,8 @@ castor::IClient* castor::client::BaseClient::createClient()
 void castor::client::BaseClient::internalSendRequest(castor::rh::Request& request)
   throw (castor::exception::Exception) {
   // creates a socket
-  castor::io::Socket s(RHSERVER_PORT, m_rhHost);
+  castor::io::ClientSocket s(RHSERVER_PORT, m_rhHost);
+  s.connect();
   // sends the request
   s.sendObject(request);
   // wait for acknowledgment
@@ -263,9 +266,8 @@ castor::IObject* castor::client::BaseClient::waitForCallBack()
     throw e;
   }
 
-  castor::io::Socket* s = m_callbackSocket->accept();
+  castor::io::ServerSocket* s = m_callbackSocket->accept();
   IObject* obj = s->readObject();
   delete s;
   return obj;
-
 }

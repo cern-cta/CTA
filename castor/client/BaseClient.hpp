@@ -41,7 +41,7 @@ namespace castor {
 
   namespace io {
     // Forward declaration
-    class Socket;
+    class ServerSocket;
   }
   
   namespace rh {
@@ -116,7 +116,7 @@ namespace castor {
       int m_rhPort;
       
       /// The callback socket
-      castor::io::Socket* m_callbackSocket;
+      castor::io::ServerSocket* m_callbackSocket;
 
     };
 
