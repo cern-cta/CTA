@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: usrmsg.c,v $ $Revision: 1.4 $ $Date: 1999/11/05 08:29:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: usrmsg.c,v $ $Revision: 1.5 $ $Date: 1999/11/12 07:54:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -39,7 +39,8 @@ usrmsg(va_alist) va_dcl
 	p = prtbuf + strlen (prtbuf);
 	vsprintf (p, msg, args);
 	tplogit (func, "%s", p);
-	sendrep (rpfd, MSG_ERR, "%s", prtbuf);
+	if (rpfd >= 0)
+		sendrep (rpfd, MSG_ERR, "%s", prtbuf);
 #endif
 	va_end (args);
 	errno = save_errno;
