@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.h,v $ $Revision: 1.15 $ $Release$ $Date: 2005/02/17 10:56:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logstream.h,v $ $Revision: 1.16 $ $Release$ $Date: 2005/04/04 09:34:25 $ $Author: bcouturi $
  *
  * A generic logstream for castor, handling IP addresses
  * and timestamps
@@ -136,16 +136,20 @@ namespace castor {
        * This operator deals with UUIDs
        */
       logstream& operator<< (Cuuid_t var) {
-        m_logbuf->setUuid(var);
-        return *this;
+        if (0 != m_logbuf) {
+	  m_logbuf->setUuid(var);
+	}
+       	return *this;
       }
 
       /**
        * This operator deals with FileIds
        */
       logstream& operator<< (Cns_fileid* var) {
-        m_logbuf->setFileId(var);
-        return *this;
+        if (0 != m_logbuf) {
+          m_logbuf->setFileId(var);
+        }
+	return *this;
       }
 
       /**
