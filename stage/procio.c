@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.197 2002/09/25 07:17:42 jdurand Exp $
+ * $Id: procio.c,v 1.198 2002/10/18 08:48:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.197 $ $Date: 2002/09/25 07:17:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.198 $ $Date: 2002/10/18 08:48:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1177,7 +1177,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 							(stcp_input[ihsmfiles].u1.h.fileid != 0)) {
 							strcpy(Cnsfileid.server,stcp_input[ihsmfiles].u1.h.server);
 							Cnsfileid.fileid = stcp_input[ihsmfiles].u1.h.fileid;
+							setegid(stgreq.gid);
+							seteuid(stgreq.uid);
 							if ((Cns_statx(hsmfiles[ihsmfiles], &Cnsfileid, &Cnsfilestat) != 0) && (serrno == ENOENT)) {
+								setegid(start_passwd.pw_gid);
+								seteuid(start_passwd.pw_uid);
 								sendrep (&rpfd, MSG_ERR, STG174,
 										 hsmfiles[ihsmfiles],
 										 u64tostr((u_signed64) stcp_input[ihsmfiles].u1.h.fileid, tmpbuf, 0),
@@ -1187,6 +1191,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 										 sstrerror(serrno));
 								stcp_input[ihsmfiles].filler[0] = 'D';
 								was_able_to_repair++;
+							} else {
+								setegid(start_passwd.pw_gid);
+								seteuid(start_passwd.pw_uid);
 							}
 						}
 
@@ -1195,7 +1202,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 							(stcp_input[jhsmfiles].u1.h.fileid != 0)) {
 							strcpy(Cnsfileid.server,stcp_input[jhsmfiles].u1.h.server);
 							Cnsfileid.fileid = stcp_input[jhsmfiles].u1.h.fileid;
+							setegid(stgreq.gid);
+							seteuid(stgreq.uid);
 							if ((Cns_statx(hsmfiles[jhsmfiles], &Cnsfileid, &Cnsfilestat) != 0) && (serrno == ENOENT)) {
+								setegid(start_passwd.pw_gid);
+								seteuid(start_passwd.pw_uid);
 								sendrep (&rpfd, MSG_ERR, STG174,
 										 hsmfiles[jhsmfiles],
 										 u64tostr((u_signed64) stcp_input[jhsmfiles].u1.h.fileid, tmpbuf, 0),
@@ -1205,6 +1216,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 										 sstrerror(serrno));
 								stcp_input[jhsmfiles].filler[0] = 'D';
 								was_able_to_repair++;
+							} else {
+								setegid(start_passwd.pw_gid);
+								seteuid(start_passwd.pw_uid);
 							}
 						}
 						if (! was_able_to_repair) {
@@ -2134,10 +2148,17 @@ void procioreq(req_type, magic, req_data, clienthost)
 					strcpy(Cnsfileid.server,stgreq.u1.h.server);
 					Cnsfileid.fileid = stgreq.u1.h.fileid;
 				}
+				setegid(stgreq.gid);
+				seteuid(stgreq.uid);
 				if (Cns_statx(hsmfiles[ihsmfiles], &Cnsfileid, &Cnsfilestat) == 0) {
+					setegid(start_passwd.pw_gid);
+					seteuid(start_passwd.pw_uid);
 					strcpy(stgreq.u1.h.server,Cnsfileid.server);
 					stgreq.u1.h.fileid = Cnsfileid.fileid;
 					stgreq.u1.h.fileclass = Cnsfilestat.fileclass;
+				} else {
+					setegid(start_passwd.pw_gid);
+					seteuid(start_passwd.pw_uid);
 				}
 			}
 */
@@ -4075,6 +4096,7 @@ isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion, isstaged_nomore
 	int Cns_getpath_on_input = 0;
 	int Cns_stat_on_input = 0;
 	char tmpbuf[21];
+	extern struct passwd start_passwd;             /* Start uid/gid stage:st */
 
 	int Cns_getpath_on_input_sav = 0;
 	struct stgcat_entry cur_sav;
@@ -4091,13 +4113,20 @@ isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion, isstaged_nomore
 			if (cur->reqid <= 0) {
 				/* If the input is a CASTOR file and gives also (server,fileid) invariants we check right now */
 				/* the avaibility of the name given as well */
+				setegid(cur->gid);
+				seteuid(cur->uid);
 				if (Cns_getpath(cur->u1.h.server, cur->u1.h.fileid, checkpath) == 0) {
+					setegid(start_passwd.pw_gid);
+					seteuid(start_passwd.pw_uid);
 					Cns_getpath_on_input = 1;
 					if (strcmp(checkpath, cur->u1.h.xfile) != 0) {
 						sendrep (&rpfd, MSG_ERR, STG157, cur->u1.h.xfile, checkpath, u64tostr((u_signed64) cur->u1.h.fileid, tmpbuf, 0), cur->u1.h.server);
 						strncpy(cur->u1.h.xfile, checkpath, (CA_MAXHOSTNAMELEN+MAXPATH));
 						cur->u1.h.xfile[(CA_MAXHOSTNAMELEN+MAXPATH)] = '\0';
 					}
+				} else {
+					setegid(start_passwd.pw_gid);
+					seteuid(start_passwd.pw_uid);
 				}
 			} else if ((have_Cnsfilestat != NULL) && (Cnsfilestat != NULL)) {
 				/* If user gave reqid in input this is to speed up things - we do not check path if it is given with invariants */
@@ -4106,9 +4135,13 @@ isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion, isstaged_nomore
 				/* ... But we instead check immediately filesize if it is CASTOR file with invariants */
 				*have_Cnsfilestat = 0;
 				Cns_stat_on_input = 1;
+				setegid(cur->gid);
+				seteuid(cur->uid);
 				if (Cns_statx(cur->u1.h.xfile, &Cnsfileid, Cnsfilestat) == 0) {
 					*have_Cnsfilestat = 1;
 				}
+				setegid(start_passwd.pw_gid);
+				seteuid(start_passwd.pw_uid);
 			}
 		}
 	}
