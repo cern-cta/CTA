@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.34 2001/06/06 07:47:50 baud Exp $
+ * $Id: Ctape.h,v 1.35 2001/06/11 05:16:46 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.34 $ $Date: 2001/06/06 07:47:50 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.35 $ $Date: 2001/06/11 05:16:46 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -276,6 +276,7 @@ struct tprrt {		/* resource reservation table: one entry per jid */
 	struct tprrt *prev;
 	struct tprrt *next;
 	uid_t	uid;
+	char	user[CA_MAXUSRNAMELEN+1];
 	int	jid;		/* process-group-id */
 	int	unldcnt;	/* count of unload in progress for this jid */
 	int	totrsvd;	/* total number of reserved resources */
@@ -299,7 +300,6 @@ struct tptab {		/* tape drive table */
 	struct tpfil *filp;	/* pointer to tape file description */
 	uid_t	uid;
 	gid_t	gid;
-	char	user[CA_MAXUSRNAMELEN+1];
 	char	acctname[7];	/* uuu$gg */
 	int	jid;		/* process group id or session id */
 
