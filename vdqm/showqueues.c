@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.14 $ $Date: 2003/04/17 08:19:12 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.15 $ $Date: 2003/04/22 08:17:43 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -120,6 +120,7 @@ int main(int argc, char *argv[]) {
            tmp = NULL;
        } 
     } while (rc != -1);
+    if ( tmp != NULL ) free(tmp);
 
     nw = NULL;
     /*
