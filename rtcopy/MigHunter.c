@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.14 $ $Release$ $Date: 2005/02/18 16:31:28 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.15 $ $Release$ $Date: 2005/02/19 09:24:12 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.14 $ $Release$ $Date: 2005/02/18 16:31:28 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.15 $ $Release$ $Date: 2005/02/19 09:24:12 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -100,6 +100,7 @@ WSADATA wsadata;
 #include <Cns_api.h>
 static int runAsDaemon = 0;
 static int legacyMode = 0;
+static int doCloneStream = 0;
 /** Global needed for determine which uuid to log
  */
 int inChild;
@@ -704,14 +705,17 @@ int streamCreator(
         C_IAddress_delete(iAddr);
         return(-1);
       }
-      rc = cloneStream(streamsToClone[j],newStream);
-      if ( rc == -1 ) return(-1);
+      if ( doCloneStream == 1 ) {
+        rc = cloneStream(streamsToClone[j],newStream);
+        if ( rc == -1 ) return(-1);
+      }
       _nbNewStreams++;
     }
   }
 
   if ( iAddr != NULL ) C_IAddress_delete(iAddr);
   if ( streamsPerTapePool != NULL ) free(streamsPerTapePool);
+  if ( streamsToClone != NULL ) free(streamsToClone);
   if ( nbNewStreams != NULL ) *nbNewStreams = _nbNewStreams;
   return(0);
 }
@@ -1140,6 +1144,7 @@ int addMigrationCandidatesToStreams(
 void usage(char *cmd) 
 {
   fprintf(stdout,"Usage: %s [-d] [-L] [-t sleepTime(seconds)] svcClass1 svcClass2 svcClass3 ...\n"
+          "-C                     : clone tapecopies from existing to new streams (very slow!)\n"
           "-d                     : run as runAsDaemon\n"
           "-L                     : Legacy mode, emulate old stgdaemon taking information from Cns\n"
           "-t sleepTime(seconds)  : sleep time (in seconds) between two checks. Default=300\n"
@@ -1172,8 +1177,11 @@ int main(int argc, char *argv[])
   Coptind = 1;
   Copterr = 1;
   
-  while ( (c = Cgetopt(argc,argv,"dLt:")) != -1 ) {
+  while ( (c = Cgetopt(argc,argv,"CdLt:")) != -1 ) {
     switch (c) {
+    case 'C':
+      doCloneStream = 1;
+      break;
     case 'd':
       runAsDaemon = 1;
       break;
