@@ -180,6 +180,7 @@
 #define BuildCupvDaemon		NO
 #define	BuildCupvLibrary	NO
 #define BuildExamples		NO
+#define BuildGcDaemon		NO
 #define BuildHsmTools		NO
 #define BuildMonitorClient	NO
 #define BuildMonitorServer	NO

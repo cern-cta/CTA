@@ -457,6 +457,12 @@
 #endif
 #endif
 
+/* ------------------ */
+/* Garbage Collection */
+/* ------------------ */
+/* Nothing special for the moment */
+
+
 /* ------- */
 /* CPPTEST */
 /* ------- */
@@ -543,6 +549,9 @@ COMMONCPPDIR = castor
 #if BuildOraCpp
 ORACPPDIR = ora
 DBCPPDIR = db
+#endif
+#if BuildGcDaemon
+GCDIR = gc
 #endif
 #if BuildCppTest
 COMMONCPPTESTDIR = castor
