@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 1996-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1996-1999 by CERN/CN/PDP
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.4 $ $Date: 1999/10/13 14:50:41 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.5 $ $Date: 1999/11/09 15:54:21 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <sys/types.h>
 #if defined(ADSTAR)
 #include <sys/Atape.h>
+#include <sys/scsi.h>
 #else
 #include "scsictl.h"
 #endif
@@ -33,7 +34,7 @@ COMPRESSION_STATS *comp_stats;
 	unsigned short pagelen;
 	unsigned short parmcode;
 #if defined(ADSTAR)
-	struct log_sense log_sense;
+	struct log_sense_page log_sense_page;
 #else
 	unsigned char buffer[256];	/* LOG pages are returned in this buffer */
 	unsigned char cdb[10];
@@ -43,9 +44,11 @@ COMPRESSION_STATS *comp_stats;
 #endif
 #if defined(ADSTAR)
 	if (strcmp (devtype, "3590") == 0) {
-		if ((c = ioctl (tapefd, STIOC_LOG_SENSE, &log_sense)) < 0)
+		memset (&log_sense_page, 0, sizeof(log_sense_page));
+		log_sense_page.page_code = 0x38;
+		if ((c = ioctl (tapefd, SIOC_LOG_SENSE_PAGE, &log_sense_page)) < 0)
 			return (c);
-		p = log_sense.data;
+		p = log_sense_page.data;
 	}
 #else
 	memset (cdb, 0, sizeof(cdb));
@@ -199,7 +202,16 @@ char *devtype;
 	unsigned char *endpage;
 	unsigned char *p;
 #if defined(ADSTAR)
-#error Not implemented ???
+	struct sc_iocmd sc_iocmd;
+
+	memset (&sc_iocmd, 0, sizeof(sc_iocmd));
+	sc_iocmd.scsi_cdb[0] = 0x4C;
+	sc_iocmd.scsi_cdb[1] = 0x02;	/* PCR set */
+	sc_iocmd.timeout_value = 10;	/* seconds */
+	sc_iocmd.command_length = 10;
+
+	if ((c = ioctl (tapefd, STIOCMD, &sc_iocmd)) < 0)
+		return (c);
 #else
 	unsigned char cdb[10];
 	char *msgaddr;
@@ -212,7 +224,7 @@ char *devtype;
 	cdb[2] = 0xC0; /* PC = 3 */
 
 	if ((c = send_scsi_cmd (tapefd, path, 0, cdb, 10, NULL, 0,
-	    sense, 38, 10000, SCSI_IN, &nb_sense_ret, &msgaddr)) < 0)
+	    sense, 38, 10000, SCSI_NONE, &nb_sense_ret, &msgaddr)) < 0)
 		return (c);
 
 	return (0);
