@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd.c,v 1.10 1999/12/14 14:51:41 jdurand Exp $
+ * $Id: send2stgd.c,v 1.11 1999/12/27 13:23:04 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.10 $ $Date: 1999/12/14 14:51:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.11 $ $Date: 1999/12/27 13:23:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -34,9 +34,6 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.10 $ $Date: 1
 #include "stage.h"
 #include "osdep.h"
 extern int rfio_errno;
-#if !defined(linux)
-extern char *sys_errlist[];
-#endif
 int nb_ovl;
 #if (defined(_AIX) && defined(_IBMR2)) || defined(SOLARIS) || defined(IRIX5) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 struct sigaction sa;
@@ -108,11 +105,7 @@ int want_reply;
 	sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
 
 	if ((stg_s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
-#if defined(_WIN32)
-		fprintf (stderr, STG53, "socket", WSAGetLastError());
-#else
-		fprintf (stderr, STG02, "", "socket", sys_errlist[errno]);
-#endif
+		fprintf (stderr, STG02, "", "socket", neterror());
 		return (SYERR);
 	}
 
@@ -129,11 +122,7 @@ int want_reply;
 			(void) netclose (stg_s);
 			return (ESTNACT);
 		} else {
-#if defined(_WIN32)
-			fprintf (stderr, STG53, "connect", WSAGetLastError());
-#else
-			fprintf (stderr, STG02, "", "connect", sys_errlist[errno]);
-#endif
+			fprintf (stderr, STG02, "", "connect", neterror());
 			(void) netclose (stg_s);
 			return (SYERR);
 		}
@@ -142,11 +131,7 @@ int want_reply;
 		if (n == 0)
 			fprintf (stderr, STG02, "", "send", sys_serrlist[SERRNO]);
 		else
-#if defined(_WIN32)
-			fprintf (stderr, STG53, "send", WSAGetLastError());
-#else
-			fprintf (stderr, STG02, "", "send", sys_errlist[errno]);
-#endif
+			fprintf (stderr, STG02, "", "send", neterror());
 		(void) netclose (stg_s);
 		return (SYERR);
 	}
@@ -160,11 +145,7 @@ int want_reply;
 			if (n == 0)
 				fprintf (stderr, STG02, "", "recv", sys_serrlist[SERRNO]);
 			else
-#if defined(_WIN32)
-				fprintf (stderr, STG53, "recv", WSAGetLastError());
-#else
-				fprintf (stderr, STG02, "", "recv", sys_errlist[errno]);
-#endif
+				fprintf (stderr, STG02, "", "recv", neterror());
 			(void) netclose (stg_s);
 			return (SYERR);
 		}
@@ -183,11 +164,7 @@ int want_reply;
 			if (n == 0)
 				fprintf (stderr, STG02, "", "recv", sys_serrlist[SERRNO]);
 			else
-#if defined(_WIN32)
-				fprintf (stderr, STG53, "recv", WSAGetLastError());
-#else
-				fprintf (stderr, STG02, "", "recv", sys_errlist[errno]);
-#endif
+				fprintf (stderr, STG02, "", "recv", neterror());
 			(void) netclose (stg_s);
 			c = SYERR;
 			break;
