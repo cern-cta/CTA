@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.5 $ $Date: 2000/01/09 10:05:14 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.6 $ $Date: 2000/01/10 13:14:06 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -405,19 +405,6 @@ int rtcpd_Position(tape_list_t *tape,
 
 
     filstat = filereq->check_fid;
-    if ( tapereq->mode == WRITE_ENABLE && prevreq != NULL ) {
-        /*
-         * If we are writing to same file as last request
-         * it is an append. Note that normally a tape file append
-         * should be done at file copy level and not at position
-         * (to avoid backspace over trailer label). However, the
-         * code here make sure that the latter case is supported
-         * if needed.
-         */
-        if ( (filereq->tape_fseq == prevreq->tape_fseq) ) {
-            filstat = APPEND;
-        }
-    }
 
     do_retry = 1;
 
