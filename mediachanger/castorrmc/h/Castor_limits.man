@@ -1,8 +1,8 @@
-.\" $Id: Castor_limits.man,v 1.14 2003/10/28 12:33:56 baud Exp $
+.\" $Id: Castor_limits.man,v 1.15 2004/02/12 15:40:32 obarring Exp $
 .\"
 .\" Man page for the CASTOR's limits header file Castor_limits.h
 .\"
-.TH CASTOR_LIMITS "4" "$Date: 2003/10/28 12:33:56 $" "CASTOR" "File Formats"
+.TH CASTOR_LIMITS "4" "$Date: 2004/02/12 15:40:32 $" "CASTOR" "File Formats"
 .SH NAME
 \fBCastor_limits\fP \- CASTOR internal limits
 
@@ -14,6 +14,11 @@ The \fBCastor_limits.h\fP header file contains all the common limits that all CA
 .br
 These are:
 .br
+.TP
+.B CA_MAXCKSUMNAMELEN
+maximum lenght for a checksum algorithm name
+.br
+Default value: 15
 .TP
 .B CA_MAXCLASNAMELEN
 maximum length for a fileclass name
