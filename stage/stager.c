@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.74 2000/05/31 07:32:38 jdurand Exp $
+ * $Id: stager.c,v 1.75 2000/06/08 12:43:49 jdurand Exp $
  */
 
 /*
@@ -14,7 +14,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.74 $ $Date: 2000/05/31 07:32:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.75 $ $Date: 2000/06/08 12:43:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1988,6 +1988,16 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			strcpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.file_path, stcp->ipath);
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.disk_fseq = nfile_list;
 			strcpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.recfm, "F");
+            /*
+             * For HSM files - if the file is renamed, then the check on fid will NOT work.
+             * I leave this code commented because it can perhaps be useful sometime in the future.
+             */
+
+            /*
+             * Nota : fid is maximum 17 characters
+             */
+
+            /*
 			if ((castor_hsm = hsmpath(stcp)) == NULL) {
 				sendrep (rpfd, MSG_ERR, STG02, stcp->u1.m.xfile, "hsmpath", sstrerror(serrno));
 				RETURN (USERR);
@@ -1998,11 +2008,11 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			}
 			fid++;
 			if (strlen(fid) > CA_MAXFIDLEN) {
-				/* Take the LAST 17 characters of fid */
 				strncpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.fid, &(fid[strlen(fid) - CA_MAXFIDLEN]), CA_MAXFIDLEN);
 			} else {
 				strcpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.fid, fid);
 			}
+            */
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.position_method = TPPOSIT_FSEQ;
 			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.tape_fseq = hsm_fseq[ihsm];
 #ifndef SKIP_FILEREQ_MAXSIZE
