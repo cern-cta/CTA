@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.201 2002/05/30 09:38:21 bcouturi Exp $
+ * $Id: poolmgr.c,v 1.202 2002/05/31 08:03:16 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.201 $ $Date: 2002/05/30 09:38:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.202 $ $Date: 2002/05/31 08:03:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1515,7 +1515,7 @@ selectfs(poolname, size, path, status, noallocation)
 	}
 
 	/* If this is an OUT pool we do qsort() anyway */
-	if (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp)) {
+	if ((stcp->status == STAGEOUT) || (stcp->status == STAGEALLOC)) {
 		if ((this_element = betterfs_vs_pool(poolname,WRITE_MODE,reqsize,&i)) == NULL) {
 			/* Oups... Tant-pis, return what will provocate the ENOENT */
 			return(-1);
@@ -1621,13 +1621,13 @@ rwcountersfs(poolname, ipath, status, req_type)
 			/* Not supported for the moment */
 			/* write_incr = -1; */
 		} else {
-			stglogit ("rwcountersfs", "### Warning, called in STAGEUPDC mode for an unsupported stcp->status = 0x%lx\n", (unsigned long) status);
+			stglogit ("rwcountersfs", "### Warning - called in STAGEUPDC mode for an unsupported stcp->status = 0x%lx\n", (unsigned long) status);
 			return;      
 		}
 		break;
 	default:
 		/*
-		  stglogit ("rwcountersfs", "### Warning, called in unsupported mode %d (%s)\n", req_type,
+		stglogit ("rwcountersfs", "### Warning, called in unsupported mode %d (%s)\n", req_type,
 		  req_type == STAGEIN ? "STAGEIN" :
 		  (req_type == STAGEQRY ? "STAGEQRY" :
 		  (req_type == STAGECLR ? "STAGECLR" :
@@ -1939,7 +1939,7 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 					}
 				}
 			}
-			if (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp)) {
+			if ((stcp->status == STAGEOUT) || (stcp->status == STAGEALLOC)) {
 				rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
 			}
 		}
