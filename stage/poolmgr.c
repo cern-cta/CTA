@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.26 2000/05/30 11:33:10 jdurand Exp $
+ * $Id: poolmgr.c,v 1.27 2000/06/09 10:12:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.26 $ $Date: 2000/05/30 11:33:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.27 $ $Date: 2000/06/09 10:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -41,6 +41,11 @@ static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.26 $ $Date: 200
 #include "osdep.h"
 #undef  unmarshall_STRING
 #define unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
+#if defined(_WIN32)
+static char strftime_format[] = "%b %d %H:%M:%S";
+#else /* _WIN32 */
+static char strftime_format[] = "%b %e %H:%M:%S";
+#endif /* _WIN32 */
 
 extern char *getconfent();
 extern char defpoolname[];
@@ -850,13 +855,39 @@ void print_pool_utilization(rpfd, poolname, defpoolname)
 	char free_s[9];
 	int i, j;
 	struct pool *pool_p;
+	struct migrator *migr_p;
+	struct migpolicy *migp_p;
+	char tmpbuf[21];
+	char timestr[64] ;   /* Time in its ASCII format             */
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+	struct tm tmstruc;
+#endif /* _REENTRANT || _THREAD_SAFE */
+	struct tm *tp;
 
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
 		if (*poolname && strcmp (poolname, pool_p->name)) continue;
-		sendrep (rpfd, MSG_OUT, "POOL %s DEFSIZE %d MINFREE %d GC %s\n",
-			pool_p->name, pool_p->defsize, pool_p->minfree, pool_p->gc);
+		sendrep (rpfd, MSG_OUT, "POOL %s DEFSIZE %d MINFREE %d GC %s%s%s\n",
+			pool_p->name,
+			pool_p->defsize,
+			pool_p->minfree,
+			pool_p->gc,
+			pool_p->migr_name[0] != '\0' ? " MIGRATOR " : "",
+			pool_p->migr_name[0] != '\0' ? pool_p->migr_name : ""
+			);
 			cvtdbl2str ((double) pool_p->capacity * (double) 512, capacity_s);
 			cvtdbl2str ((double) pool_p->free * (double) 512, free_s);
+		if (pool_p->cleanreqtime > 0) {
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+			localtime_r(&(pool_p->cleanreqtime),&tmstruc);
+			tp = &tmstruc;
+#else
+			tp = localtime(&(pool_p->cleanreqtime));
+#endif /* _REENTRANT || _THREAD_SAFE */
+			strftime(timestr,64,strftime_format,tp);
+			sendrep (rpfd, MSG_OUT, "\tLAST GARBAGE COLLECTION STARTED %s%s\n", timestr, pool_p->ovl_pid > 0 ? " STILL ACTIVE" : "");
+		} else {
+			sendrep (rpfd, MSG_OUT, "\tLAST GARBAGE COLLECTION STARTED <none>\n");
+		}
 		sendrep (rpfd, MSG_OUT,
 			"                              CAPACITY %s FREE %s (%5.1f%%)\n",
 			capacity_s, free_s, pool_p->capacity ?
@@ -871,6 +902,47 @@ void print_pool_utilization(rpfd, poolname, defpoolname)
 		}
 	}
 	if (*poolname == '\0') sendrep (rpfd, MSG_OUT, "DEFPOOL %s\n", defpoolname);
+	if (migrators != NULL) {
+		sendrep (rpfd, MSG_OUT, "\n");
+		for (i = 0, migr_p = migrators; i < nbmigrator; i++, migr_p++) {
+			sendrep (rpfd, MSG_OUT, "MIGRATOR %s MIGPOLICY %s\n",migr_p->name,migr_p->migp->name);
+			sendrep (rpfd, MSG_OUT, "\tNBFILES_CAN_BE_MIGR    %d\n", migr_p->nbfiles_canbemig);
+			sendrep (rpfd, MSG_OUT, "\tSPACE_CAN_BE_MIGR      %s BYTES\n", u64tostr(migr_p->space_canbemig, tmpbuf, 0));
+			if (migr_p->migreqtime > 0) {
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+				localtime_r(&(migr_p->migreqtime),&tmstruc);
+				tp = &tmstruc;
+#else
+				tp = localtime(&(migr_p->migreqtime));
+#endif /* _REENTRANT || _THREAD_SAFE */
+				strftime(timestr,64,strftime_format,tp);
+				sendrep (rpfd, MSG_OUT, "\tLAST MIGRATION STARTED %s%s\n", timestr, migr_p->mig_pid > 0 ? " STILL ACTIVE" : "");
+			} else {
+				sendrep (rpfd, MSG_OUT, "\tLAST MIGRATION STARTED <none>\n");
+			}
+		}
+	}
+	if (migpolicies != NULL) {
+		sendrep (rpfd, MSG_OUT, "\n");
+		for (i = 0, migp_p = migpolicies; i < nbmigpolicy; i++, migp_p++) {
+			sendrep (rpfd, MSG_OUT, "MIGPOLICY %s\n",migp_p->name);
+			if (migp_p->data_mig_threshold > 0) {
+				sendrep (rpfd, MSG_OUT, "\tDATATHRESHOLD %s BYTES\n", u64tostr(migp_p->data_mig_threshold, tmpbuf, 0));
+			}
+			if (migp_p->freespace_threshold > 0) {
+				sendrep (rpfd, MSG_OUT, "\tPERCFREE      %d%%\n", migp_p->freespace_threshold);
+			}
+			if (migp_p->maxdrives > 0) {
+				sendrep (rpfd, MSG_OUT, "\tMAXDRIVES     %d\n", migp_p->maxdrives);
+			}
+			if (migp_p->seg_allowed != 0) {
+				sendrep (rpfd, MSG_OUT, "\tSEGALLOWED    %s\n", migp_p->seg_allowed ? "YES" : "NO");
+			}
+			if (migp_p->time_interval > 0) {
+				sendrep (rpfd, MSG_OUT, "\tTIMEINTERVAL  %d SECONDS\n", migp_p->time_interval);
+			}
+		}
+	}
 }
 
 int
