@@ -1,5 +1,5 @@
 /*
- * $Id: xxx_test.c,v 1.1 2002/11/19 09:25:48 jdurand Exp $
+ * $Id: xxx_test.c,v 1.2 2003/01/22 10:54:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: xxx_test.c,v $ $Revision: 1.1 $ $Date: 2002/11/19 09:25:48 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: xxx_test.c,v $ $Revision: 1.2 $ $Date: 2003/01/22 10:54:18 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -21,8 +21,6 @@ static char sccsid[] = "@(#)$RCSfile: xxx_test.c,v $ $Revision: 1.1 $ $Date: 200
 #include "rfio_api.h"
 #include "u64subr.h"
 #include "Cgetopt.h"
-
-#define PRIVDEBUG
 
 int main(argc,argv)
 	int argc;
@@ -38,7 +36,9 @@ int main(argc,argv)
 	size_t dummysize = 10;
 	ssize_t gotsize;
 	off64_t bigsize = INT_MAX-1000;
+	u_signed64 savsize;
 	char tmpbuf[21];
+	char tmpbuf2[21];
 	int rfio64 = 32;
 	int v3 = 2;
 	int c;
@@ -127,7 +127,27 @@ int main(argc,argv)
 		fprintf(stdout,"OK\n");
 	}
 
-	/* In V3 mode we can seek only before any write or read */
+	/* Test rfio_access */
+	fprintf(stdout,"[RFIOV%d-%dbits-T%02d] Test rfio_access(path,W_OK|R_OK|F_OK)... ", v3, rfio64, ++t);
+	if (rfio_access(argv[Coptind],W_OK|R_OK|F_OK) != 0) {
+		fprintf(stdout,"NOT OK\n");
+		fflush(stdout);
+		rfio_perror("rfio_access");
+		exit(1);
+	}
+	fprintf(stdout,"OK\n");
+	
+	/* Test rfio_chmod */
+	fprintf(stdout,"[RFIOV%d-%dbits-T%02d] Test rfio_chmod(path,0777)... ", v3, rfio64, ++t);
+	if (rfio_chmod(argv[Coptind],0777) != 0) {
+		fprintf(stdout,"NOT OK\n");
+		fflush(stdout);
+		rfio_perror("rfio_chmod");
+		exit(1);
+	}
+	fprintf(stdout,"OK\n");
+
+    /* In V3 mode we can seek only before any write or read */
 	fprintf(stdout,"[RFIOV%d-%dbits-T%02d] Seek at %s bytes... ", v3, rfio64, ++t, u64tostr((u_signed64) bigsize, tmpbuf, 0));
 	if (rfio64 == 64) {
 		if (rfio_lseek64(fd,(off64_t) bigsize,SEEK_SET) < 0) {
@@ -303,6 +323,55 @@ int main(argc,argv)
 		}
 	}
 	
+
+	/* MStat the file */
+	fprintf(stdout,"[RFIOV%d-%dbits-T%02d] MStating %s... ", v3, rfio64, ++t, argv[Coptind]);
+	if (rfio64 == 64) {
+		if (rfio_mstat64(argv[Coptind],&statbuf64) != 0) {
+			fprintf(stdout,"NOT OK\n");
+			fflush(stdout);
+			rfio_perror("rfio_mstat");
+			exit(1);
+		}
+	} else {
+		if (rfio_mstat(argv[Coptind],&statbuf) != 0) {
+			fprintf(stdout,"NOT OK\n");
+			fflush(stdout);
+			rfio_perror("rfio_mstat");
+			exit(1);
+		}
+	}
+	rfio_end();
+	if (v3 == 2) {
+		char tmpbuf[21];
+		char tmpbuf1[21];
+		/* In v2 mode we created a gap */
+		if ((rfio64 == 64 ? statbuf64.st_size : statbuf.st_size) != (bigsize + 120)) {
+			fprintf(stdout,"Size %s != %s - NOT OK\n", u64tostr((rfio64 == 64 ? statbuf64.st_size : statbuf.st_size), tmpbuf, 0), u64tostr((u_signed64) (bigsize+120), tmpbuf1, 0));
+			fflush(stdout);
+			exit(1);
+		}
+		savsize = bigsize + 120;
+	} else {
+		char tmpbuf[21];
+		char tmpbuf1[21];
+		if ((rfio64 == 64 ? statbuf64.st_size : statbuf.st_size) != (bigsize + 110)) {
+			fprintf(stdout,"Size %s != %s - NOT OK\n", u64tostr((rfio64 == 64 ? statbuf64.st_size : statbuf.st_size), tmpbuf, 0), u64tostr((u_signed64) (bigsize+10), tmpbuf1, 0));
+			fflush(stdout);
+			exit(1);
+		}
+		savsize = bigsize + 110;
+	}
+	{
+		char tmpbuf1[21];
+		if (v3 == 2) {
+			fprintf(stdout,"Size %s - OK\n", u64tostr((u_signed64) (bigsize+120), tmpbuf1, 0));
+		} else {
+			fprintf(stdout,"Size %s - OK\n", u64tostr((u_signed64) (bigsize+110), tmpbuf1, 0));
+		}
+	}
+	
+
 #ifdef PRIVDEBUG
 	exit(0);
 #endif
@@ -557,8 +626,66 @@ int main(argc,argv)
 	}
 	fprintf(stdout,"OK\n");
 
+	/* Open it in readmode */
+	if (rfio64 == 64) {
+		fprintf(stdout,"[RFIOV%d-%dbits-T%02d] Opening %s in 64bits-read-mode... ", v3, rfio64, ++t, argv[Coptind]);
+		if ((fd = rfio_open64(argv[Coptind],O_RDONLY,0755)) < 0) {
+			fprintf(stdout,"NOT OK\n");
+			fflush(stdout);
+			rfio_perror("rfio_open64");
+			exit(1);
+		}
+		fprintf(stdout,"OK\n");
+	} else {
+		fprintf(stdout,"[RFIOV%d-%dbits-T%02d] Opening %s in 32bits-read-mode... ", v3, rfio64, ++t, argv[Coptind]);
+		if ((fd = rfio_open(argv[Coptind],O_RDONLY,0755)) < 0) {
+			fprintf(stdout,"NOT OK\n");
+			fflush(stdout);
+			rfio_perror("rfio_open");
+			exit(1);
+		}
+		fprintf(stdout,"OK\n");
+	}
+
+	fprintf(stdout,"[RFIOV%d-%dbits-T%02d] Read by chunks of 1M up to eof using rfio_read... ", v3, rfio64, ++t);
+	{
+		u_signed64 totalread = 0;
+		while (1) {
+			char dummy[1024 * 1024];
+			int thisrc;
+			
+			thisrc = rfio_read(fd,dummy,sizeof(dummy));
+			if (thisrc == 0) {
+				fprintf(stdout," EOF\n");
+				break;
+			} else if (thisrc < 0) {
+				rfio_perror("rfio_read");
+				exit(1);
+			}
+			totalread += thisrc;
+			fprintf(stdout,"\n... %s bytes (%d%%)",  u64tostr((u_signed64) totalread, tmpbuf, 0), (int) (totalread * 100 / savsize));
+			fflush(stdout);
+		}
+		if (totalread != savsize) {
+			fprintf(stderr,"Got %s bytes instead of %s !?\n", u64tostr((u_signed64) totalread, tmpbuf, 0), u64tostr((u_signed64) savsize, tmpbuf2, 0));
+		} else {
+			fprintf(stdout,"Got %s bytes OK\n", u64tostr((u_signed64) totalread, tmpbuf, 0), u64tostr((u_signed64) savsize, tmpbuf2, 0));
+		}
+	}
+	fprintf(stdout,"OK\n");
+
+	/* Close file */
+	fprintf(stdout,"[RFIOV%d-%dbits-T%02d] Closing %s... ", v3, rfio64, ++t, argv[Coptind]);
+	if (rfio_close(fd) != 0) {
+		fprintf(stdout,"NOT OK\n");
+		fflush(stdout);
+		rfio_perror("rfio_close");
+		exit(1);
+	}
+	fprintf(stdout,"OK\n");
+
 	/* Unlink file */
-	fprintf(stdout,"[RFIOV%d-%dbits-%d] Unlink %s... ", v3, rfio64, ++t, argv[Coptind]);
+	fprintf(stdout,"[RFIOV%d-%dbits-T%d] Unlink %s... ", v3, rfio64, ++t, argv[Coptind]);
 	if (rfio_unlink(argv[Coptind]) != 0) {
 		fprintf(stdout,"NOT OK\n");
 		fflush(stdout);
