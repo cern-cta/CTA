@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.9 $ $Date: 1999/11/24 15:04:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.10 $ $Date: 1999/12/24 07:29:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_mount - send a request to the tape daemon to have a tape mounted
@@ -71,7 +71,7 @@ int vdqm_reqid;
 		return (-1);
 	}
 #endif
-	jid = getpid();
+	jid = getpgrp();
 #ifdef TMS
 	p = getacct();
 	if (p == NULL) {

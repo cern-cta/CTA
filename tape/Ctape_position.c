@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.9 $ $Date: 1999/11/26 15:53:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.10 $ $Date: 1999/12/24 07:29:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_position - send a request to the tape daemon to get the tape
@@ -66,7 +66,7 @@ int flags;
 		return (SENOMAPFND);
 	}
 #endif
-	jid = getpid();
+	jid = getpgrp();
 
 	/* path */
 

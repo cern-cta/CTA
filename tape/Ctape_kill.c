@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_kill.c,v $ $Revision: 1.6 $ $Date: 1999/11/19 10:28:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_kill.c,v $ $Revision: 1.7 $ $Date: 1999/12/24 07:29:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_kill - cancel a tape mount or position request */
@@ -48,7 +48,7 @@ char *path;
 		return (-1);
 	}
 #endif
-	jid = getpid();
+	jid = getpgrp();
 
 	/* path */
 
