@@ -2686,7 +2686,7 @@ QString CppCppOraCnvWriter::getSQLType(QString& type) {
   } else if (type == "u_signed64") {
     SQLType = "INTEGER";
   } else if (SQLType == "string") {
-    SQLType = "VARCHAR(2048)";
+    SQLType = "VARCHAR2(2048)";
   } else if (SQLType.left(5) == "char["){
     QString res = "CHAR(";
     res.append(SQLType.mid(5, SQLType.find("]")-5));
