@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.34 $ $Date: 2000/03/30 06:33:41 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.35 $ $Date: 2000/04/03 13:02:47 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -389,7 +389,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
     rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() stageupdc returns %d, %s\n",
              rc,newpath);
     if ( (*newpath == '\0' && tapereq->mode == WRITE_DISABLE) || rc != 0 ) {
-        rtcp_log(LOG_ERR,"rtcpd_stageupdc() stageupdc returned, rc=%d, path=%s, serrno=%d\n",
+        if ( rc == -1 ) rtcp_log(LOG_ERR,"rtcpd_stageupdc() stageupdc returned, rc=%d, path=%s, serrno=%d\n",
                  rc,newpath,save_serrno);
         if ( rc != 0 ) {
             rtcpd_AppendClientMsg(NULL,file,
