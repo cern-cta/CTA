@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServerSocket.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/07/19 10:22:25 $ $Author: bcouturi $
+ * @(#)$RCSfile: ServerSocket.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/19 12:28:19 $ $Author: bcouturi $
  *
  * defines a dedicated socket that handles most of the network
  * calls
@@ -64,7 +64,7 @@ namespace castor {
        * @param doListen whether to start listening on the socket.
        */
       ServerSocket(const unsigned short port,
-		   const bool doListen)
+		   const bool reusable)
         throw (castor::exception::Exception);
 
       /**
@@ -74,7 +74,8 @@ namespace castor {
        * @param host the host to connect to, given by its name
        */
       ServerSocket(const unsigned short port,
-             const std::string host)
+		   const std::string host,
+		   const bool reusable)
         throw (castor::exception::Exception);
 
       /**
@@ -84,7 +85,8 @@ namespace castor {
        * @param host the host to connect to, given as an ip address
        */
       ServerSocket(const unsigned short port,
-             const unsigned long ip)
+		   const unsigned long ip,
+		   const bool reusable)
         throw (castor::exception::Exception);
 
       /**

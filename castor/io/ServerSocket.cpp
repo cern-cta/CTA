@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServerSocket.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/07/19 10:22:25 $ $Author: bcouturi $
+ * @(#)$RCSfile: ServerSocket.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/19 12:28:19 $ $Author: bcouturi $
  *
  *
  *
@@ -63,13 +63,13 @@ castor::io::ServerSocket::ServerSocket(int socket) throw () {
 // constructor
 //------------------------------------------------------------------------------
 castor::io::ServerSocket::ServerSocket(const unsigned short port,
-				       const bool doListen)
+				       const bool reusable)
   throw (castor::exception::Exception) {
   m_socket =0;
   createSocket();
-  struct sockaddr_in saddr = buildAddress(port);
-  bind(saddr);
-  if (doListen) listen();
+  if (reusable) this->reusable();
+  m_saddr = buildAddress(port);
+  bind(m_saddr);
 }
 
 
@@ -77,22 +77,28 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
 // constructor
 //------------------------------------------------------------------------------
 castor::io::ServerSocket::ServerSocket(const unsigned short port,
-                           const std::string host)
+				       const std::string host, 
+				       const bool reusable)
   throw (castor::exception::Exception) {
   m_socket = 0;
   createSocket();
+  if (reusable) this->reusable();
   struct sockaddr_in saddr = buildAddress(port, host);
+  bind(m_saddr);
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::io::ServerSocket::ServerSocket(const unsigned short port,
-                           const unsigned long ip)
+				       const unsigned long ip,
+				       const bool reusable)
   throw (castor::exception::Exception) {
   m_socket = 0;
   createSocket();
-  struct sockaddr_in saddr = buildAddress(port, ip);
+  if (reusable) this->reusable();
+  m_saddr = buildAddress(port, ip);
+  bind(m_saddr);
 }
 
 //------------------------------------------------------------------------------
