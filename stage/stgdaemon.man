@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.5 $ $Date: 2000/09/11 07:48:23 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.6 $ $Date: 2001/03/26 07:52:47 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1994-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STGDAEMON l "$Date: 2000/09/11 07:48:23 $"
+.TH STGDAEMON 1 "$Date: 2001/03/26 07:52:47 $" CASTOR "stage Administrator Commands"
 .SH NAME
 stgdaemon \- starts the stage daemon
 .SH SYNOPSIS
@@ -18,16 +18,22 @@ This will read the pool configuration file,
 the stage catalog to remove uncompleted transactions
 and look for requests.
 Short requests like
-.B stageqry
+.B stageclr
 are processed in the main loop. The daemon forks overlays to execute
 long requests like disk/tape copy or pool cleanup.
 In case of system error, the commands are automatically retried from the
 failing subrequest.
 If a file
 .B nomorestage
-exists in the operator directory, new stage commands will be rejected by
-the daemon and will wait on the client side.
+exists in the operator directory, new stage commands (stageqry and stageinit
+excepted) will be rejected by the daemon and will wait on the client side.
+If a file
+.B nomoremigr
+exists in the operator directory, automatic migration will not be started.
 All error messages and statistical information are kept in a log.
+.B stgdaemon
+keeps the catalog in a database managed by
+.BR Cdb .
 On all client hosts and on the stager host there should be entries for the
 stager in
 .B /etc/services
@@ -36,7 +42,13 @@ like:
 .HP
 rfio             5001/tcp                        # Remote File Access System
 .HP
-stage           5007/tcp                        # SHIFT stager
+rtcopy         5003/tcp                        # Remote Tape Access
+.HP
+stage           5007/tcp                        # CASTOR stager
+.HP
+cns             5010/tcp                        # CASTOR name server
+.HP
+vmgr           5013/tcp                        # CASTOR volume manager
 .RE
 .LP
 On all client hosts there should be an entry in
@@ -68,13 +80,15 @@ runs does not need these entries.
 For example:
 .RS
 .LP
+RFIOD   CHOWNTRUST     shd02
+.br
+RFIOD   LINKTRUST        shd02
+.br
+RFIOD   MKDIRTRUST     shd02
+.br
+RFIOD   OPENTRUST       shd02
+.br
 RFIOD   POPENTRUST      shd02
-.br
-RFIOD   LINKTRUST       shd02
-.br
-RFIOD   MKDIRTRUST      shd02
-.br
-RFIOD   CHOWNTRUST      shd02
 .RE
 .HP
 There must be one entry in the configuration file per pool giving:
@@ -88,13 +102,34 @@ DEFSIZE	maximum filesize if the
 .B \-s
 option is not specified on user commands
 .HP
-MINFREE	minimum free space to be available in the pool.
-This is a percentage.
+GC_START_THRESH when the percentage of free space in the pool gets below this
+value the garbage collector is started.
+.HP
+GC_STOP_THRESH when the percentage of free space in the pool gets above this
+value the garbage collector is stopped.
+For backward compatibility with SHIFT, the keyword MINFREE can be used instead.
 For example,
 .B MINFREE 10
 corresponds to 10% of free space.
 .HP
 GC	full path name of the garbage collector program (NFS syntax).
+.HP
+NO_FILE_CREATION suppress the creation of an empty file (stageout only).
+.HP
+MIGRATOR name
+.HP
+MIG_START_THRESH when the percentage of free space in the pool gets below this
+value the migrator is started.
+.HP
+MIG_STOP_THRESH when the percentage of free space in the pool gets above this
+value the migrator is stopped.
+.HP
+MIG_DATA_THRESH when the amount of data ready to be migrated exceeds this value
+the migrator is started. The value is specified in bytes.
+A postfix letter can be used to specify the unit.
+For example,
+.B MIG_DATA_THRESH 800G
+specifies a 800 GB threshold.
 .RE
 .TP
 There must be also one entry per pool element giving:
@@ -106,26 +141,22 @@ server		full path of the stage directory
 If several pools are configured, a default pool must be defined by an entry
 .RS
 .HP
-DEFPOOL        default pool name
+DEFPOOL        default pool name for all requests
+.HP
+DEFPOOL_IN     default pool name for stagein requests (if none, defaults to DEFPOOL value)
+.HP
+DEFPOOL_OUT    default pool name for stageout requests (if none, defaults to DEFPOOL value)
 .RE
 .HP
-The stage catalog contains the following information:
+The stage catalog is split into sub-catalogs, one for each type of entry:
+tape, disk, alloc, HSM. Each entry consists of 2 parts: non-specific and
+specific.
+The non-specific part contains the following information:
 .br
 maximum block size
-.br
-density
-.br
-device group
-.br
-file id
-.br
-file status: new = 'n', old = 'o'
-.br
-file sequence number requested by user
+.br character conversion
 .br
 keep flag; if non zero, keep data on disk after successful stagewrt
-.br
-label type: al, nl, sl or blp
 .br
 record length
 .br
@@ -135,17 +166,7 @@ pool name
 .br
 record format
 .br
-retention period in days
-.br
 size in Mbytes of data to be staged
-.br
-tape server specified by user
-.br
-Tflag; if non zero,  do not check trailer labels
-.br
-visual_identifier(s)
-.br
-volume_serial_number(s)
 .br
 internal path
 .br
@@ -170,6 +191,30 @@ creation time
 last access time
 .br
 nb of accesses
+.HP
+The tape specific part contains:
+.br
+density
+.br
+device group
+.br
+file id
+.br
+file status: new = 'n', old = 'o'
+.br
+file sequence number requested by user
+.br
+label type: al, nl, sl or blp
+.br
+retention period in days
+.br
+tape server specified by user
+.br
+E_Tflags; error processing flags
+.br
+visual_identifier(s)
+.br
+volume_serial_number(s)
 .LP
 A secondary catalog contains the list of symbolic links to the staged files.
 .LP
@@ -190,13 +235,19 @@ a file is deleted.
 .B /etc/STGCONFIG
 configuration file
 .TP
-.B /usr/spool/stage/stgcat
+.B /usr/spool/db/stage/stgcat_xxx
 main catalog
 .TP
-.B /usr/spool/stage/stgpath
+.B /usr/spool/db/stage/stgcat_link
 secondary catalog (symbolic links)
 .TP
 .B /usr/spool/stage/log
+main log
+.TP
+.B /usr/spool/stage/mig_log
+automatic migration output log
+.TP
+.B /etc/operator/nomoremigr
 .TP
 .B /etc/operator/nomorestage
 .SH EXAMPLES
@@ -252,3 +303,6 @@ Here is a small log:
 01/13 07:30:07    12 stgdaemon: STG97 - shd02:CZ0134.2.al staged by (baud,c3), server shd03.cern.ch  unit cartST1  ifce le0  size 648000  wtim 687  ttim 6 rc 0
 .br
 01/13 07:30:17    12 sendrep: STG99 - stage returns 0
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.B Cdbserver(1)
