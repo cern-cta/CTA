@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.150 2001/09/19 10:49:42 jdurand Exp $
+ * $Id: poolmgr.c,v 1.151 2001/09/21 04:46:10 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.150 $ $Date: 2001/09/19 10:49:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.151 $ $Date: 2001/09/21 04:46:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2036,7 +2036,6 @@ int get_retenp(stcp,timestr)
       break;
     default:
       return(-1);
-      break;
     }
   }
   /* Okay */
