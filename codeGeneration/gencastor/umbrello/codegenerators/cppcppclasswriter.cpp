@@ -177,7 +177,7 @@ void CppCppClassWriter::writeInitInConstructor(QString name,
              m_castorTypes.end()) {
     // The _t has may have to be removed for looking in castor type !
   } else if (isEnum(type)) {
-    return;
+    content = type + "(0)";
   } else {
     content = QString("AIE : ") + type;
   }
