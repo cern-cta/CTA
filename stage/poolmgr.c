@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.149 2001/09/18 20:33:11 jdurand Exp $
+ * $Id: poolmgr.c,v 1.150 2001/09/19 10:49:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.149 $ $Date: 2001/09/18 20:33:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.150 $ $Date: 2001/09/19 10:49:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3538,9 +3538,17 @@ int migpoolfiles(pool_p)
         
         /* We look if you request will exceed MAX_NETDATA_SIZE ? */
         if (estimated_total_reqsize > (u_signed64) MAX_NETDATA_SIZE) {
+          char tmpbuf1[21];
+          char tmpbuf2[21];
+
           int nb_consecutive_stream = ((int) (estimated_total_reqsize / MAX_NETDATA_SIZE)) + 1;
-          stglogit(func, "### stagewrt_hsm request predirected to be too big, or at the limit\n");
+          if (nb_consecutive_stream > nb_per_request) nb_consecutive_stream = nb_per_request;
+          setegid(start_passwd.pw_gid);                   /* Move to admin (who knows) */
+          seteuid(start_passwd.pw_uid);
+          stglogit(func, "### stagewrt_hsm request socket buffer size (approx %s) predicted to be too big, or at the limit (which is %s)\n",u64tostr((u_signed64) estimated_total_reqsize, tmpbuf1, 0),u64tostr((u_signed64) MAX_NETDATA_SIZE, tmpbuf2, 0));
           stglogit(func, "### stagewrt_hsm splitted into %d consecutive requests\n", nb_consecutive_stream);
+          setegid(tppool_vs_stcp[j].egid);                /* Move to requestor (from fileclasses) */
+          seteuid(tppool_vs_stcp[j].euid);
           nb_per_request /= nb_consecutive_stream;
         }
         /* We loop on all the consecutive streams */
@@ -3568,15 +3576,26 @@ int migpoolfiles(pool_p)
                                  nb_in_this_request,           /* nstpp_input */
                                  tppool_vs_stcp[j].stpp + istart_for_this_request  /* stpp_input */
                                  )) != 0) {
+            setegid(start_passwd.pw_gid);                   /* Move to admin (who knows) */
+            seteuid(start_passwd.pw_uid);
             stglogit(func, "### stagewrt_hsm request error No %d (%s)\n", serrno, sstrerror(serrno));
+            setegid(tppool_vs_stcp[j].egid);                /* Move to requestor (from fileclasses) */
+            seteuid(tppool_vs_stcp[j].euid);
             if ((serrno == SECOMERR) || (serrno == SECONNDROP)) {
               /* There was a communication error */
+              setegid(start_passwd.pw_gid);                   /* Move to admin (who knows) */
+              seteuid(start_passwd.pw_uid);
               stglogit(func, "### retrying in 1 second\n");
+              setegid(tppool_vs_stcp[j].egid);                /* Move to requestor (from fileclasses) */
+              seteuid(tppool_vs_stcp[j].euid);
               stage_sleep(1);
               goto stagewrt_hsm_retry;
+            } else if ((serrno == SEINTERNAL) || (serrno == ESTMEM) || (serrno == EINVAL)) {
+              break;
             }
+          } else {
+            nb_done_request += nb_in_this_request;
           }
-          nb_done_request += nb_in_this_request;
         }
       }
       for (i = 0; i < ntppool_vs_stcp; i++) {
@@ -3589,6 +3608,11 @@ int migpoolfiles(pool_p)
 #ifdef STAGER_DEBUG
       stglogit(func, "### stagewrt_hsm request exiting with status %d\n", rc);
       if (rc != 0) {
+        stglogit(func, "### ... serrno=%d (%s), errno=%d (%s)\n", serrno, sstrerror(serrno), errno, strerror(errno));
+      }
+#else
+      if (rc != 0) {
+        stglogit(func, "### stagewrt_hsm request exiting with status %d\n", rc);
         stglogit(func, "### ... serrno=%d (%s), errno=%d (%s)\n", serrno, sstrerror(serrno), errno, strerror(errno));
       }
 #endif
