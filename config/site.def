@@ -162,8 +162,8 @@
 #define BuildCopytapeServer	NO
 #define BuildCupvClient		YES
 #define BuildCupvDaemon		NO
-#define BuildDbClient		NO
-#define BuildDbDaemon		NO
+#define BuildDbClient		YES
+#define BuildDbDaemon		YES
 #define BuildExamples		YES
 #define	BuildHpssClient		NO
 #define	BuildHpssServer		NO
@@ -181,8 +181,8 @@
 #define BuildRmcServer		NO
 #define BuildRtcopyClient	YES
 #define BuildRtcopyServer	YES
-#define BuildRtstat		YES
-#define BuildStageClient	NO
+#define BuildRtstat		NO
+#define BuildStageClient	YES
 #define BuildStageDaemon	YES
 #define BuildStageLibrary	YES
 #define BuildRmLocal		YES
@@ -191,8 +191,8 @@
 #define BuildSysreq		YES
 #define BuildTapeClient		YES
 #define BuildTapeDaemon		YES
-#define BuildTest	        YES
-#define BuildTpusage		YES
+#define BuildTest	        NO
+#define BuildTpusage		NO
 #define BuildVdqmClient		YES
 #define BuildVdqmServer		NO 
 #define BuildVolumeMgrClient	YES
