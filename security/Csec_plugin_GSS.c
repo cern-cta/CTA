@@ -66,10 +66,10 @@ static int _Csec_map_gssapi_err _PROTO ((OM_uint32 maj_stat,
  * Just sets the area to 0 for the moment.
  */
 int Csec_init_context_impl(ctx)
-     Csec_context *ctx;
+     Csec_context_t *ctx;
 {
 
-  memset(ctx, 0, sizeof(Csec_context));
+  memset(ctx, 0, sizeof(Csec_context_t));
   ctx->flags = CSEC_CTX_INITIALIZED;
   return 0;
 }
@@ -79,7 +79,7 @@ int Csec_init_context_impl(ctx)
  * Reinitializes the security context
  */
 int Csec_reinit_context_impl(ctx)
-     Csec_context *ctx;
+     Csec_context_t *ctx;
 {
 
   if (ctx->flags & CSEC_CTX_CONTEXT_ESTABLISHED) {
@@ -90,15 +90,15 @@ int Csec_reinit_context_impl(ctx)
     Csec_delete_creds_impl(ctx);
   }
 
-  memset(ctx, 0, sizeof(Csec_context));
+  memset(ctx, 0, sizeof(Csec_context_t));
   return 0;
 }
 
 /**
- * Deletes the security context inside the Csec_context
+ * Deletes the security context inside the Csec_context_t
  */
 int Csec_delete_connection_context_impl(ctx)
-     Csec_context *ctx;
+     Csec_context_t *ctx;
 {
   OM_uint32 maj_stat, min_stat;
 
@@ -114,10 +114,10 @@ int Csec_delete_connection_context_impl(ctx)
 
 
 /**
- * Deletes the credentials inside the Csec_context
+ * Deletes the credentials inside the Csec_context_t
  */
 int Csec_delete_creds_impl(ctx)
-     Csec_context *ctx;
+     Csec_context_t *ctx;
 {
   OM_uint32 maj_stat, min_stat;
 
@@ -137,11 +137,11 @@ int Csec_delete_creds_impl(ctx)
  * API function to load the server credentials.
  * It is stored in a thread specific variable
  *
- * This function caches the credentials in the Csec_context object.
+ * This function caches the credentials in the Csec_context_t object.
  * This function must be called again to refresh the credentials.
  */
 int Csec_server_acquire_creds_impl(ctx, service_name)
-     Csec_context *ctx;
+     Csec_context_t *ctx;
      char *service_name;
 {
   gss_buffer_desc name_buf;
@@ -195,7 +195,7 @@ int Csec_server_acquire_creds_impl(ctx, service_name)
  *
  */
 int Csec_server_establish_context_ext_impl(ctx, s, buf, len)
-     Csec_context *ctx;
+     Csec_context_t *ctx;
      int s;
      char *buf;
      int len;
@@ -214,7 +214,7 @@ int Csec_server_establish_context_ext_impl(ctx, s, buf, len)
   char *func= "server_establish_context";
   int ext_buf_read = 0;
 
-  /* Have context/credentials point to the Csec_context structure */
+  /* Have context/credentials point to the Csec_context_t structure */
   context=&(ctx->connection_context);
 
   if (!(ctx->flags&CSEC_CTX_CREDENTIALS_LOADED)) {
@@ -346,7 +346,7 @@ int Csec_server_establish_context_ext_impl(ctx, s, buf, len)
  * API function for client to establish function with the server
  */
 int Csec_client_establish_context_impl(ctx, s)
-     Csec_context *ctx;
+     Csec_context_t *ctx;
      int s;
 {
 

@@ -58,7 +58,7 @@ static char sccsid[] = "@(#)Csec_api_loader.c,v 1.1 2004/01/12 10:31:39 CERN IT/
 /**
  * Gets the shared library corresponding to the context !
  */
-void *Csec_get_shlib(Csec_context *ctx) {
+void *Csec_get_shlib(Csec_context_t *ctx) {
   char filename[CA_MAXNAMELEN];
   void *handle;
   char *func = "Csec_get_shlib";

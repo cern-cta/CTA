@@ -61,13 +61,13 @@ int Cdomainname(char *name, int namele);
 /**
  * Initializes the Csec the context, and the protocol as well
  */
-int Csec_client_init_context(Csec_context *ctx, 
+int Csec_client_init_context(Csec_context_t *ctx, 
 			     int service_type,
 			     Csec_protocol *protocol) {
 
   char *func="Csec_client_init_context_ext";
 
-  memset(ctx, 0, sizeof(Csec_context));
+  memset(ctx, 0, sizeof(Csec_context_t));
   ctx->magic = CSEC_CONTEXT_MAGIC_CLIENT_1;
   ctx->server_service_type = service_type;
   ctx->flags = CSEC_CTX_INITIALIZED|CSEC_CTX_SERVICE_TYPE_SET;
@@ -78,12 +78,12 @@ int Csec_client_init_context(Csec_context *ctx,
 /**
  * Initializes the Csec the context, but not the protocol
  */
-int Csec_server_init_context(Csec_context *ctx, 
+int Csec_server_init_context(Csec_context_t *ctx, 
 			     int service_type,
 			     Csec_protocol *protocol) {
   char *func="Csec_server_init_context_ext";
 
-  memset(ctx, 0, sizeof(Csec_context));
+  memset(ctx, 0, sizeof(Csec_context_t));
   ctx->magic = CSEC_CONTEXT_MAGIC_SERVER_1;
   ctx->server_service_type = service_type;
   ctx->flags = CSEC_CTX_INITIALIZED|CSEC_CTX_SERVICE_TYPE_SET;
@@ -94,7 +94,7 @@ int Csec_server_init_context(Csec_context *ctx,
 /**
  * Re-initializes the Csec the context, but not the protocol
  */
-int Csec_server_reinit_context(Csec_context *ctx, 
+int Csec_server_reinit_context(Csec_context_t *ctx, 
 			     int service_type,
 			     Csec_protocol *protocol) {
   char *func="Csec_server_reinit_context";
@@ -104,9 +104,9 @@ int Csec_server_reinit_context(Csec_context *ctx,
 }
 
 /**
- * Clears the Csec_context, deallocating memory.
+ * Clears the Csec_context_t, deallocating memory.
  */
-int Csec_clear_context(Csec_context *ctx) {
+int Csec_clear_context(Csec_context_t *ctx) {
   char *func = "Csec_clear_context";
 
   Csec_trace(func, "Clearing context\n");
@@ -134,19 +134,19 @@ int Csec_clear_context(Csec_context *ctx) {
     free(ctx->peer_protocols);
   }
 
-  memset(ctx, 0, sizeof(Csec_context));
+  memset(ctx, 0, sizeof(Csec_context_t));
 
   return 0;
     
 }
 
 /**
- * Deletes the security context inside the Csec_context
+ * Deletes the security context inside the Csec_context_t
  * 
  * @returns 0 in case of success, -1 otherwise
  */
 int Csec_delete_connection_context(ctx)
-     Csec_context *ctx;
+     Csec_context_t *ctx;
 {
   if (ctx->flags & CSEC_CTX_CONTEXT_ESTABLISHED) {
     if (ctx->protocols != NULL) {
@@ -162,10 +162,10 @@ int Csec_delete_connection_context(ctx)
 
 
 /**
- * Deletes the credentials inside the Csec_context
+ * Deletes the credentials inside the Csec_context_t
  */
 int Csec_delete_creds(ctx)
-     Csec_context *ctx;
+     Csec_context_t *ctx;
 {
   return (*(ctx->Csec_delete_creds))(ctx);   
 }
@@ -181,7 +181,7 @@ int Csec_delete_creds(ctx)
  *
  */
 int Csec_server_establish_context(ctx, s)
-     Csec_context *ctx;
+     Csec_context_t *ctx;
      int s;
 {
     
@@ -193,7 +193,7 @@ int Csec_server_establish_context(ctx, s)
  * Allows to specify a buffer for a token already received.
  */
 int Csec_server_establish_context_ext(ctx, s, buf, len)
-     Csec_context *ctx;
+     Csec_context_t *ctx;
      int s;
      char *buf;
      int len;
@@ -223,7 +223,7 @@ int Csec_server_establish_context_ext(ctx, s, buf, len)
  * API function for client to establish function with the server
  */
 int Csec_client_establish_context(ctx, s)
-     Csec_context *ctx;
+     Csec_context_t *ctx;
      int s;
 {
   char *func="Csec_client_establish_context";
@@ -291,7 +291,7 @@ int Csec_client_establish_context(ctx, s)
 
 
 
-int Csec_map2id(Csec_context *ctx, char *principal, uid_t *uid, gid_t *gid) {
+int Csec_map2id(Csec_context_t *ctx, char *principal, uid_t *uid, gid_t *gid) {
   char *func = "Csec_map2id";
   char username[CA_MAXNAMELEN];
 
@@ -312,7 +312,7 @@ int Csec_map2id(Csec_context *ctx, char *principal, uid_t *uid, gid_t *gid) {
 /**
  * Maps the credential to the corresponding name
  */
-int Csec_map2name(Csec_context *ctx, char *principal,
+int Csec_map2name(Csec_context_t *ctx, char *principal,
                   char *name, int maxnamelen) {
   return (*(ctx->Csec_map2name))(ctx, principal, name, maxnamelen);
 }
@@ -320,7 +320,7 @@ int Csec_map2name(Csec_context *ctx, char *principal,
 /**
  * Returns the name of the service for the specified mechanism
  */
-int Csec_get_service_name(Csec_context *ctx, int service_type, char *host, char *domain,
+int Csec_get_service_name(Csec_context_t *ctx, int service_type, char *host, char *domain,
                           char *service_name, int service_namelen) {
 
   char *func = "Csec_get_service_name";
@@ -335,7 +335,7 @@ int Csec_get_service_name(Csec_context *ctx, int service_type, char *host, char 
 /**
  * Returns the principal that the peer name should have
  */
-int Csec_get_peer_service_name(Csec_context *ctx, int s, int service_type, char *service_name, int service_namelen){
+int Csec_get_peer_service_name(Csec_context_t *ctx, int s, int service_type, char *service_name, int service_namelen){
 
   struct sockaddr_in from;
   socklen_t fromlen = sizeof(from);
@@ -411,7 +411,7 @@ int Csec_get_peer_service_name(Csec_context *ctx, int s, int service_type, char 
 /**
  * Returns the principal that the service on local machine should have
  */
-int Csec_get_local_service_name(Csec_context *ctx, int s, int service_type, char *service_name, int  service_namelen) {
+int Csec_get_local_service_name(Csec_context_t *ctx, int s, int service_type, char *service_name, int  service_namelen) {
 
 
   int rc;
@@ -453,17 +453,17 @@ int Csec_get_local_service_name(Csec_context *ctx, int s, int service_type, char
 /**
  * API function to load the server credentials.
  *
- * This function caches the credentials in the Csec_context object.
+ * This function caches the credentials in the Csec_context_t object.
  * This function must be called again to refresh the credentials.
  */
 int Csec_server_acquire_creds(ctx, service_name)
-     Csec_context *ctx;
+     Csec_context_t *ctx;
      char *service_name;
 {
   return (*(ctx->Csec_server_acquire_creds))(ctx, service_name);
 }
 
-int Csec_client_set_service_name(Csec_context *ctx, 
+int Csec_client_set_service_name(Csec_context_t *ctx, 
 				 int s) {
   int rc;
   char *func = "Csec_client_set_service_name";
@@ -487,7 +487,7 @@ int Csec_client_set_service_name(Csec_context *ctx,
 
 }
 
-int Csec_server_set_service_type(Csec_context *ctx, int service_type) {
+int Csec_server_set_service_type(Csec_context_t *ctx, int service_type) {
   char *func = "Csec_server_set_service_type";
   CHECKCTX(ctx,func);
   ctx->server_service_type = service_type;
@@ -497,7 +497,7 @@ int Csec_server_set_service_type(Csec_context *ctx, int service_type) {
 
 
 
-int Csec_server_set_service_name(Csec_context *ctx, 
+int Csec_server_set_service_name(Csec_context_t *ctx, 
 				 int s) {
   int rc;
   char *func = "Csec_server_set_service_name";
@@ -523,7 +523,7 @@ int Csec_server_set_service_name(Csec_context *ctx,
 /**
  * Returns the Service name on the client side
  */
-char *Csec_client_get_service_name(Csec_context *ctx) {
+char *Csec_client_get_service_name(Csec_context_t *ctx) {
   char *func = "Csec_client_get_service_name";
 
   CHECKCTX_EXT(ctx,func,NULL);
@@ -538,7 +538,7 @@ char *Csec_client_get_service_name(Csec_context *ctx) {
 /**
  * Returns the Service name on the server side
  */
-char *Csec_server_get_service_name(Csec_context *ctx) {
+char *Csec_server_get_service_name(Csec_context_t *ctx) {
   char *func = "Csec_server_get_service_name";
 
   CHECKCTX_EXT(ctx,func,NULL);
@@ -552,7 +552,7 @@ char *Csec_server_get_service_name(Csec_context *ctx) {
 /**
  * Returns the user name of the client connecting to the server.
  */
-char *Csec_server_get_client_username(Csec_context *ctx, int *uid, int *gid) {
+char *Csec_server_get_client_username(Csec_context_t *ctx, int *uid, int *gid) {
   char *func = "Csec_server_get_client_username";
 
   /* Checking whether the mapping has been done */
@@ -592,3 +592,13 @@ char *Csec_server_get_client_username(Csec_context *ctx, int *uid, int *gid) {
   return ctx->peer_username;
 }
 
+
+/* Csec_get_default_context - Returns a pointer to a default per thread context */
+Csec_context_t *Csec_get_default_context() {
+  struct Csec_api_thread_info *thip;
+  
+  if (Csec_apiinit (&thip))
+    return NULL;
+
+  return &(thip->default_context);
+}

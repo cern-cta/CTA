@@ -46,7 +46,7 @@ int Csec_map2name_GSI(char *principal, char *name, int maxnamelen);
 /**
  * Maps the credential to the corresponding name
  */
-int Csec_map2name_impl(Csec_context *ctx, char *principal, char *name, int maxnamelen) {
+int Csec_map2name_impl(Csec_context_t *ctx, char *principal, char *name, int maxnamelen) {
 
 #ifdef KRB5
     return Csec_map2name_krb5(principal, name, maxnamelen);
@@ -108,7 +108,7 @@ int Csec_map2name_GSI(char *principal, char *name, int maxnamelen) {
 
     
 
-int Csec_get_service_name_impl(Csec_context *ctx, int service_type, char *host, char *domain,
+int Csec_get_service_name_impl(Csec_context_t *ctx, int service_type, char *host, char *domain,
                           char *service_name, int service_namelen) {
     int rc;
     char *func = "Csec_get_service_name";

@@ -92,10 +92,10 @@ int get_local_ticket(char *tkfile, char *myname, char *realm);
  * Just sets the area to 0 for the moment.
  */
 int Csec_init_context_impl(ctx)
-    Csec_context *ctx;
+    Csec_context_t *ctx;
 {
 
-    memset(ctx, 0, sizeof(Csec_context));
+    memset(ctx, 0, sizeof(Csec_context_t));
     ctx->flags = CSEC_CTX_INITIALIZED;
     return 0;
 }
@@ -105,7 +105,7 @@ int Csec_init_context_impl(ctx)
  * Reinitializes the security context
  */
 int Csec_reinit_context_impl(ctx)
-    Csec_context *ctx;
+    Csec_context_t *ctx;
 {
 
     if (ctx->flags & CSEC_CTX_CONTEXT_ESTABLISHED) {
@@ -116,15 +116,15 @@ int Csec_reinit_context_impl(ctx)
         Csec_delete_creds_impl(ctx);
     }
 
-    memset(ctx, 0, sizeof(Csec_context));
+    memset(ctx, 0, sizeof(Csec_context_t));
     return 0;
 }
 
 /**
- * Deletes the security context inside the Csec_context
+ * Deletes the security context inside the Csec_context_t
  */
 int Csec_delete_connection_context_impl(ctx)
-    Csec_context *ctx;
+    Csec_context_t *ctx;
 {
     free(ctx->connection_context);
     return 0;
@@ -132,10 +132,10 @@ int Csec_delete_connection_context_impl(ctx)
 
 
 /**
- * Deletes the credentials inside the Csec_context
+ * Deletes the credentials inside the Csec_context_t
  */
 int Csec_delete_creds_impl(ctx)
-    Csec_context *ctx;
+    Csec_context_t *ctx;
 {
   return 0;
 }
@@ -146,11 +146,11 @@ int Csec_delete_creds_impl(ctx)
  * API function to load the server credentials.
  * It is stored in a thread specific variable
  *
- * This function caches the credentials in the Csec_context object.
+ * This function caches the credentials in the Csec_context_t object.
  * This function must be called again to refresh the credentials.
  */
 int Csec_server_acquire_creds_impl(ctx, service_name)
-    Csec_context *ctx;
+    Csec_context_t *ctx;
     char *service_name;
 {
     return 0;
@@ -161,7 +161,7 @@ int Csec_server_acquire_creds_impl(ctx, service_name)
  *
  */
 int Csec_server_establish_context_ext_impl(ctx, s, buf, len)
-    Csec_context *ctx;
+    Csec_context_t *ctx;
     int s;
     char *buf;
     int len;
@@ -270,7 +270,7 @@ int Csec_server_establish_context_ext_impl(ctx, s, buf, len)
  * API function for client to establish function with the server
  */
 int Csec_client_establish_context_impl(ctx, s)
-    Csec_context *ctx;
+    Csec_context_t *ctx;
     int s;
 {
 
@@ -381,7 +381,7 @@ int Csec_client_establish_context_impl(ctx, s)
 }
 
 
-int Csec_get_service_name_impl(Csec_context *ctx, 
+int Csec_get_service_name_impl(Csec_context_t *ctx, 
 			       int service_type, char *host, char *domain,
 			       char *service_name, int service_namelen) {
 
@@ -432,7 +432,7 @@ int Csec_get_service_name_impl(Csec_context *ctx,
 
 #define SEP '@'
 
-int Csec_map2name_impl(Csec_context *ctx, char *principal, char *name, int maxnamelen) {
+int Csec_map2name_impl(Csec_context_t *ctx, char *principal, char *name, int maxnamelen) {
     char *p;
     
     p = strchr(principal, SEP);

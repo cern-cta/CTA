@@ -159,7 +159,7 @@ int Csec_server_lookup_protocols(long client_address,
 
 
 
-int Csec_server_set_protocols(Csec_context *ctx,
+int Csec_server_set_protocols(Csec_context_t *ctx,
 			      int socket) {
   int rc;
   struct sockaddr_in from;
@@ -191,7 +191,7 @@ int Csec_server_set_protocols(Csec_context *ctx,
 /**
  * Sends the initial buffer to indicate the method
  */
-int Csec_client_send_protocol(int s, int timeout, Csec_context *ctx) {
+int Csec_client_send_protocol(int s, int timeout, Csec_context_t *ctx) {
 
   gss_buffer_desc buf;
   char *func = "Csec_client_send_protocol";
@@ -225,7 +225,7 @@ int Csec_client_send_protocol(int s, int timeout, Csec_context *ctx) {
 /**
  * Sends the initial buffer to indicate the method
  */
-int Csec_server_receive_protocol(int s, int timeout, Csec_context *ctx, char *buf, int len) {
+int Csec_server_receive_protocol(int s, int timeout, Csec_context_t *ctx, char *buf, int len) {
 
   gss_buffer_desc gssbuf;
   char *func = "Csec_server_receive_protocol";
@@ -324,7 +324,7 @@ int Csec_server_receive_protocol(int s, int timeout, Csec_context *ctx, char *bu
 /**
  * Sends the response to the client
  */
-int Csec_server_send_response(int s, int timeout, Csec_context *ctx, int protocol_ok) {
+int Csec_server_send_response(int s, int timeout, Csec_context_t *ctx, int protocol_ok) {
   
   gss_buffer_desc buf;
   char *func = "Csec_server_send_response";
@@ -384,7 +384,7 @@ int Csec_server_send_response(int s, int timeout, Csec_context *ctx, int protoco
 /**
  * Reads the server response
  */
-int Csec_client_receive_server_response(int s, int timeout, Csec_context *ctx) {
+int Csec_client_receive_server_response(int s, int timeout, Csec_context_t *ctx) {
 
   gss_buffer_desc gssbuf;
   char *func = "Csec_client_receive_server_response";
@@ -470,7 +470,7 @@ int Csec_client_receive_server_response(int s, int timeout, Csec_context *ctx) {
 
 
 
-int Csec_client_negociate_protocol(int socket, int timeout, Csec_context *ctx) {
+int Csec_client_negociate_protocol(int socket, int timeout, Csec_context_t *ctx) {
   char *func = "Csec_client_negociate_protocol";
   int rc;
   

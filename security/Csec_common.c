@@ -66,7 +66,7 @@ int Csec_setup_trace() {
 
 int Csec_trace(char *func, char *msg, ...) {
   va_list args;
-  char prtbuf[PRTBUFSZ];
+  char prtbuf[SECPRTBUFSZ];
   struct Csec_api_thread_info *thip;
   int funlen;
 
@@ -85,8 +85,8 @@ int Csec_trace(char *func, char *msg, ...) {
     *prtbuf = '\0';
   funlen = strlen(prtbuf);
 
-  vsnprintf (prtbuf + funlen ,  PRTBUFSZ - funlen -1, msg, args);
-  prtbuf[PRTBUFSZ]='\0';
+  vsnprintf (prtbuf + funlen ,  SEPRTBUFSZ - funlen -1, msg, args);
+  prtbuf[SECPRTBUFSZ]='\0';
 
   if (thip->trace_file[0] != '\0') {
     int fd;
@@ -365,7 +365,7 @@ void _Csec_print_token(tok)
   Csec_trace(NULL, "\n\n");
 }
 
-int check_ctx(Csec_context *ctx, char *func) {
+int check_ctx(Csec_context_t *ctx, char *func) {
   if (!(ctx->flags& CSEC_CTX_INITIALIZED)) {
     Csec_errmsg(func, "Context not initialized");
     serrno = ESEC_CTX_NOT_INITIALIZED;
