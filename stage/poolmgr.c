@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.243 2003/05/12 12:34:33 jdurand Exp $
+ * $Id: poolmgr.c,v 1.244 2003/05/13 09:34:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.243 $ $Date: 2003/05/12 12:34:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.244 $ $Date: 2003/05/13 09:34:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -5126,7 +5126,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr,only_m
 			} else {
 				/* If we already updated it - we check consistency */
 				if (*euid != fileclasses[i].Cnsfileclass.uid) {
-					sendrep(&rpfd, MSG_ERR, STG118, last_fileclass_euid, fileclasses[i].Cnsfileclass.name, tppool, "uid", *euid, fileclasses[i].Cnsfileclass.uid);
+					sendrep(&rpfd, MSG_ERR, STG118, fileclasses[i].Cnsfileclass.name, tppool, "uid", *euid, fileclasses[i].Cnsfileclass.uid);
 					serrno = EINVAL;
 					return(-1);
 				}
@@ -5141,7 +5141,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr,only_m
 			} else {
 				/* If we already updated it - we check consistency */
 				if (*egid != fileclasses[i].Cnsfileclass.gid) {
-					sendrep(&rpfd, MSG_ERR, STG118, last_fileclass_egid, fileclasses[i].Cnsfileclass.name, tppool, "gid", *egid, fileclasses[i].Cnsfileclass.gid);
+					sendrep(&rpfd, MSG_ERR, STG118, fileclasses[i].Cnsfileclass.name, tppool, "gid", *egid, fileclasses[i].Cnsfileclass.gid);
 					serrno = EINVAL;
 					return(-1);
 				}
