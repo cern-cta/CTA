@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.21 2000/05/29 07:56:22 jdurand Exp $
+ * $Id: stage.h,v 1.22 2000/06/16 14:39:15 jdurand Exp $
  */
 
 /*
@@ -68,6 +68,7 @@
 #define	STAGEALLOC	11
 #define	STAGEGET	12
 #define	STAGEMIGPOOL	13
+#define STAGEFILCHG	14
 
 			/* stage daemon reply types */
 
