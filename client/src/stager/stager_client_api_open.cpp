@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_open.cpp,v 1.3 2004/12/10 08:47:00 bcouturi Exp $
+ * $Id: stager_client_api_open.cpp,v 1.4 2004/12/14 14:36:40 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_open.cpp,v $ $Revision: 1.3 $ $Date: 2004/12/10 08:47:00 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_open.cpp,v $ $Revision: 1.4 $ $Date: 2004/12/14 14:36:40 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -43,7 +43,8 @@ EXTERN_C int DLL_DECL stage_open(const char *userTag,
                                  const char *filename,
                                  int flags,
                                  mode_t mode,
-                                 struct stage_io_fileresp **response,
+				 u_signed64 size,
+				 struct stage_io_fileresp **response,
                                  char **requestId,
                                  struct stage_options* opts) {
   
@@ -65,7 +66,7 @@ EXTERN_C int DLL_DECL stage_open(const char *userTag,
                      protocol, 
                      filename,
                      mode,
-		     0, // File size unknown
+		     size,
                      response, 
                      requestId, 
                      opts);
@@ -78,7 +79,7 @@ EXTERN_C int DLL_DECL stage_open(const char *userTag,
                         filename, 
                         ((flags & O_CREAT) == O_CREAT),
                         mode, 
-			0,
+			size,
                         response,
                         requestId, 
                         opts);
