@@ -1,5 +1,5 @@
 /*
- * $Id: stager_constants.h,v 1.4 2004/11/09 11:04:43 jdurand Exp $
+ * $Id: stager_constants.h,v 1.5 2004/11/24 14:17:16 jdurand Exp $
  */
 
 #ifndef __stager_constants_h
@@ -18,6 +18,7 @@
 #define STAGER_DEFAULT_QUERY_NBTHREAD 5                  /* Default number of query threads */
 #define STAGER_DEFAULT_UPDATE_NBTHREAD 5                 /* Default number of update threads */
 #define STAGER_DEFAULT_GETNEXT_NBTHREAD 5                /* Default number of getnext threads */
+#define STAGER_DEFAULT_JOB_NBTHREAD  5                   /* Default number of job threads */
 #define STAGER_DEFAULT_FACILITY   "stager"               /* Default Facility name */
 #define STAGER_DEFAULT_LOG        "stderr"               /* Default logging outside of DLF */
 #define STAGER_DEFAULT_IGNORECOMMANDLINE   0             /* Default ignore-comamnd-line mode (!= 0 means yes) */
@@ -36,6 +37,7 @@
 #define STAGER_CLASS_QUERY_NBTHREAD "QUERY_NBTHREAD"     /* Sub-label in config file for query_nbthread */
 #define STAGER_CLASS_UPDATE_NBTHREAD "UPDATE_NBTHREAD"   /* Sub-label in config file for update_nbthread */
 #define STAGER_CLASS_GETNEXT_NBTHREAD "GETNEXT_NBTHREAD" /* Sub-label in config file for getnext_nbthread */
+#define STAGER_CLASS_JOB_NBTHREAD "JOB_NBTHREAD"         /* Sub-label in config file for job_nbthread */
 #define STAGER_CLASS_FACILITY     "FACILITY"             /* Sub-label in config file for facility */
 #define STAGER_CLASS_LOG          "LOG"                  /* Sub-label in config file for log */
 #define STAGER_CLASS_IGNORECOMMANDLINE  "IGNORECOMMANDLINE" /* Sub-label in config file for ignore-command-line */
@@ -52,6 +54,7 @@
 #define STAGER_ENV_QUERY_NBTHREAD "STAGER_QUERY_NBTHREAD" /* Environment variable for query_nbthread */
 #define STAGER_ENV_UPDATE_NBTHREAD "STAGER_UPDATE_NBTHREAD" /* Environment variable for update_nbthread */
 #define STAGER_ENV_GETNEXT_NBTHREAD "STAGER_GETNEXT_NBTHREAD" /* Environment variable for getnext_nbthread */
+#define STAGER_ENV_JOB_NBTHREAD   "STAGER_JOB_NBTHREAD"  /* Environment variable for job_nbthread */
 #define STAGER_ENV_FACILITY       "STAGER_FACILITY"      /* Environment variable for facility */
 #define STAGER_ENV_LOG            "STAGER_LOG"           /* Environment variable for log */
 #define STAGER_ENV_IGNORECOMMANDLINE "STAGER_IGNORECOMMANDLINE" /* Environment variable for ignore-command-line */
