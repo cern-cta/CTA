@@ -1,14 +1,14 @@
 /*
- * $Id: fwrite.c,v 1.8 2000/11/20 15:01:18 jdurand Exp $
+ * $Id: fwrite.c,v 1.9 2002/09/19 06:58:05 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fwrite.c,v $ $Revision: 1.8 $ $Date: 2000/11/20 15:01:18 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fwrite.c,v $ $Revision: 1.9 $ $Date: 2002/09/19 06:58:05 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fwrite.c     Remote File I/O - write a binary file                   */
@@ -65,24 +65,24 @@ int DLL_DECL rfio_fwrite(ptr, size, items, fp)
 	switch(rc) {
 		case -1:
 #ifdef linux
-			((FILE *)fp)->_flags |= _IO_ERR_SEEN ;
+			((RFILE *)fp)->eof |= _IO_ERR_SEEN ;
 #else
 #ifdef __Lynx__
-			((FILE *)fp)->_flag |= _ERR ;
+			((RFILE *)fp)->eof |= _ERR ;
 #else
-			((FILE *)fp)->_flag |= _IOERR ;
+			((RFILE *)fp)->eof |= _IOERR ;
 #endif
 #endif
 			rc= 0 ; 
 			break ; 
 		case 0:
 #ifdef linux
-			((FILE *)fp)->_flags |= _IO_EOF_SEEN ; 
+			((RFILE *)fp)->eof |= _IO_EOF_SEEN ;
 #else
 #ifdef __Lynx__
-			((FILE *)fp)->_flag |= _EOF ; 
+			((RFILE *)fp)->eof |= _EOF ;
 #else
-			((FILE *)fp)->_flag |= _IOEOF ; 
+			((RFILE *)fp)->eof |= _IOEOF ;
 #endif
 #endif
 			break ; 
