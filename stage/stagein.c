@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.16 2000/08/14 13:19:30 baud Exp $
+ * $Id: stagein.c,v 1.17 2000/09/01 13:14:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.16 $ $Date: 2000/08/14 13:19:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.17 $ $Date: 2000/09/01 13:14:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -77,7 +77,7 @@ int main(argc, argv)
 	char hsm_path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	static char lbl[4] = "";
 	int lflag = 0;
-#if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(_WIN32)
+#if (defined(sun) && !defined(SOLARIS)) || defined(_WIN32)
 	int mask;
 #else
 	mode_t mask;

@@ -1,5 +1,5 @@
 /*
- * $Id: stage_xxx.c,v 1.6 2000/08/14 13:16:50 baud Exp $
+ * $Id: stage_xxx.c,v 1.7 2000/09/01 13:14:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_xxx.c,v $ $Revision: 1.6 $ $Date: 2000/08/14 13:16:50 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_xxx.c,v $ $Revision: 1.7 $ $Date: 2000/09/01 13:14:17 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -88,7 +88,7 @@ int _stage_xxx_hsm(command,stghost,Kopt,diskpool,hsmstruct)
   uid_t uid;
   stage_hsm_t *hsm;
   int isize;
-#if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(_WIN32)
+#if (defined(sun) && !defined(SOLARIS)) || defined(_WIN32)
   int mask;
 #else
   mode_t mask;

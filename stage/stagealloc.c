@@ -1,5 +1,5 @@
 /*
- * $Id: stagealloc.c,v 1.12 2000/05/30 12:29:57 jdurand Exp $
+ * $Id: stagealloc.c,v 1.13 2000/09/01 13:14:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.12 $ $Date: 2000/05/30 12:29:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.13 $ $Date: 2000/09/01 13:14:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -54,7 +54,7 @@ int main(argc, argv)
 	char Gname[15];
 	uid_t Guid;
 	struct group *gr;
-#if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(_WIN32)
+#if (defined(sun) && !defined(SOLARIS)) || defined(_WIN32)
 	int mask;
 #else
 	mode_t mask;
