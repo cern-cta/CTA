@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.2 2005/01/21 08:17:57 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.3 2005/01/26 14:44:04 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.2 $ $Date: 2005/01/21 08:17:57 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.3 $ $Date: 2005/01/26 14:44:04 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -40,7 +40,13 @@ static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.
 #include "castor/stager/StageFileQueryRequest.hpp"
 #include "castor/stager/StageFindRequestRequest.hpp"
 #include "castor/stager/StageRequestQueryRequest.hpp"
+#include "castor/stager/RequestQueryType.hpp"
+#include "castor/stager/QueryParameter.hpp"
+#include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/rh/BasicResponse.hpp"
+#include "castor/rh/FileQueryResponse.hpp"
+#include "castor/query/IQuerySvc.hpp"
+
 
 #undef logfunc
 
@@ -160,20 +166,20 @@ namespace castor {
        * @param req the request to handle
        * @param client the client where to send the response
        * @param svcs the Services object to use
-       * @param stgSvc the stager service to use
+       * @param qrySvc the stager service to use
        * @param ad the address where to load/store objects in the DB
        */
       void handle_fileQueryRequest(castor::stager::Request* req,
                                    castor::IClient *client,
                                    castor::Services* svcs,
-                                   castor::stager::IStagerSvc* stgSvc,
+                                   castor::query::IQuerySvc* qrySvc,
                                    castor::BaseAddress &ad) {
 
         // Usefull Variables
         char *func =  "castor::stager::queryService::handle_fileQueryRequest";
         std::string error;
         castor::stager::StageFileQueryRequest *uReq;
-
+        
         try {
 
           /* get the StageFileQueryRequest */
@@ -181,46 +187,137 @@ namespace castor {
           // cannot return 0 since we check the type before calling this method
           uReq = dynamic_cast<castor::stager::StageFileQueryRequest*> (req);
 
-          /* Invoking the method                */
-          /* ---------------------------------- */
-          STAGER_LOG_DEBUG(NULL, "Invoking diskCopies4File");
-          //std::list<castor::stager::DiskCopyForRecall*> result =
-          // stgSvc->diskCopies4File(uReq->fileId(), uReq->nsHost());
+          /* Iterating on the parameters to reply to each qry */
+          /* ------------------------------------------------ */
+          std::vector<castor::stager::QueryParameter*> params =
+            uReq->parameters();
+          
+          if (0 ==  uReq->parameters().size()) { 
+            STAGER_LOG_DB_ERROR(NULL,"handle_fileQueryRequest", 
+                                "StageFileQueryRequest has no parameters");
+          }
 
+          for(std::vector<QueryParameter*>::iterator it = params.begin();
+              it != params.end();
+              ++it) {
+            
+            std::string fid, nshost;
+            bool queryOk = false;
+            
+            castor::stager::RequestQueryType ptype = (*it)->queryType();
+            std::string pval = (*it)->value();
+            
+            switch(ptype) {
+            case REQUESTQUERYTYPE_FILENAME:
+              STAGER_LOG_DEBUG(NULL, "Looking up file id from filename");
+              struct Cns_fileid Cnsfileid;
+              memset(&Cnsfileid,'\0',sizeof(Cnsfileid));
+              struct Cns_filestat Cnsfilestat;
+              if (Cns_statx(pval.c_str(),&Cnsfileid,&Cnsfilestat) != 0) {
+                std::stringstream sst;
+                sst << Cnsfileid.fileid;
+                fid = sst.str();
+                nshost = std::string(Cnsfileid.server);
+                queryOk = true;  
+              } else {
+                castor::exception::Exception e(serrno);
+                e.getMessage() << pval.c_str() << " not found";
+                throw e;
+              }
+              break;
+            case REQUESTQUERYTYPE_REQID:
+              break;
+            case REQUESTQUERYTYPE_USERTAG:
+              break;
+            case REQUESTQUERYTYPE_FILEID:
+              STAGER_LOG_DEBUG(NULL, "Received fileif parameter");
+              std::string::size_type idx = pval.find('@');
+              if (idx == std::string::npos) {
+                // XXX Error
+              }
+              fid = pval.substr(0, idx);
+              nshost = pval.substr(idx + 1);
+              queryOk = true;
+              break;
+            }
+            
+            if (!queryOk) continue;
+            /* Invoking the method                */
+            /* ---------------------------------- */
+            STAGER_LOG_DEBUG(NULL, "Invoking diskCopies4File");
+            std::list<castor::stager::DiskCopyForRecall*> result =
+              qrySvc->diskCopies4File(fid, nshost);
+
+            if (result.size() == 0) {
+              castor::exception::Exception e(ENOENT);
+              e.getMessage() << pval.c_str() << " not in stager";
+              throw e;
+            }
+
+            for(std::list<castor::stager::DiskCopyForRecall*>::iterator dcit 
+                  = result.begin();
+                dcit != result.end();
+                ++dcit) {
+
+              castor::stager::DiskCopyForRecall* diskcopy = *dcit;
+
+              /* Preparing the response */
+              /* ---------------------- */
+              STAGER_LOG_DEBUG(NULL, "Building Response");
+              castor::rh::FileQueryResponse res;
+              res.setStatus(diskcopy->status());
+              if (ptype ==  REQUESTQUERYTYPE_FILENAME) {
+                res.setFileName(pval);
+              } else if (ptype ==  REQUESTQUERYTYPE_FILEID) {  
+                //res.setFileId(pval);
+              }
+              
+              /* Sending the response */
+              /* -------------------- */
+              replyToClient(client, &res);
+            
+            }
+            
+          }
         } catch (castor::exception::Exception e) {
           serrno = e.code();
           error = e.getMessage().str();
           STAGER_LOG_DB_ERROR(NULL, func,
                               e.getMessage().str().c_str());
-        }
+          STAGER_LOG_DEBUG(NULL, "Building Response for error");
 
-        /* Build the response             */
-        /* ------------------------------ */
-        STAGER_LOG_DEBUG(NULL, "Building Response");
-        castor::rh::BasicResponse res;
-        if (0 != serrno) {
-          res.setErrorCode(serrno);
-          res.setErrorMessage(error);
-        }
+          // try/catch this as well ?
+          /* Send the execption to the client */
+          /* -------------------------------- */
+          castor::rh::FileQueryResponse res;
+          if (0 != serrno) {
+            res.setErrorCode(serrno);
+            res.setErrorMessage(error);
+        
+          }
+          
+          /* Reply To Client                */
+          /* ------------------------------ */
+          replyToClient(client, &res);
 
-        /* Reply To Client                */
-        /* ------------------------------ */
-        replyToClient(client, &res);
-
+        }  
       }
+      
+      
+      
 
       /**
        * Handles a findRequestRequest and replies to client.
        * @param req the request to handle
        * @param client the client where to send the response
        * @param svcs the Services object to use
-       * @param stgSvc the stager service to use
+       * @param qrySvc the stager service to use
        * @param ad the address where to load/store objects in the DB
        */
       void handle_findRequestRequest(castor::stager::Request* req,
                                      castor::IClient *client,
                                      castor::Services* svcs,
-                                     castor::stager::IStagerSvc* stgSvc,
+                                     castor::query::IQuerySvc* qrySvc,
                                      castor::BaseAddress &ad) {
         char *func = "handle_findRequestRequest";
         STAGER_LOG_DEBUG(NULL,"Handling findRequestRequest");
@@ -231,13 +328,13 @@ namespace castor {
        * @param req the request to handle
        * @param client the client where to send the response
        * @param svcs the Services object to use
-       * @param stgSvc the stager service to use
+       * @param qrySvc the stager service to use
        * @param ad the address where to load/store objects in the DB
        */
       void handle_requestQueryRequest(castor::stager::Request* req,
                                       castor::IClient *client,
                                       castor::Services* svcs,
-                                      castor::stager::IStagerSvc* stgSvc,
+                                      castor::query::IQuerySvc* qrySvc,
                                       castor::BaseAddress &ad) {
         char *func = "handle_requestQueryRequest";
         STAGER_LOG_DEBUG(NULL,"Handling requestQueryRequest");
@@ -280,7 +377,7 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
 
   castor::stager::Request* req = 0;
   castor::Services *svcs = 0;
-  castor::stager::IStagerSvc *stgSvc = 0;
+  castor::query::IQuerySvc *qrySvc = 0;
   castor::IClient *client = 0;
 
   /* Setting the address to access Oracle */
@@ -296,8 +393,8 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
     STAGER_LOG_DEBUG(NULL,"Loading services");
     svcs = castor::BaseObject::services();
     castor::IService* svc =
-      svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
-    stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
+      svcs->service("OraQuerySvc", castor::SVC_ORAQUERYSVC);
+    qrySvc = dynamic_cast<castor::query::IQuerySvc*>(svc);
 
     /* Casting the request */
     /* ------------------- */
@@ -319,6 +416,17 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
       throw e;
     }
 
+    /* Getting the parameters  */
+    /* ----------------------- */
+//     castor::stager::QryRequest* qryreq = 
+//       dynamic_cast<castor::stager::QryRequest*>(req);
+//     if (0 == qryreq) {
+//       castor::exception::Internal e;
+//       e.getMessage() << "Should be preocessing a QryRequest!";
+//       throw e;
+//     }
+    svcs->fillObj(&ad, req, castor::OBJ_QueryParameter);
+
   } catch (castor::exception::Exception e) {
     // If we fail here, we do NOT have enough information to
     // reply to the client !
@@ -326,7 +434,7 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
     STAGER_LOG_DB_ERROR(NULL,"stager_query_select",
                         e.getMessage().str().c_str());
     if (req) delete req;
-    if (stgSvc) stgSvc->release();
+    if (qrySvc) qrySvc->release();
     return -1;
   }
 
@@ -341,17 +449,17 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
 
   case castor::OBJ_StageFileQueryRequest:
     castor::stager::queryService::handle_fileQueryRequest
-      (req, client, svcs, stgSvc, ad);
+      (req, client, svcs, qrySvc, ad);
     break;
 
   case castor::OBJ_StageFindRequestRequest:
     castor::stager::queryService::handle_findRequestRequest
-      (req, client, svcs, stgSvc, ad);
+      (req, client, svcs, qrySvc, ad);
     break;
 
   case castor::OBJ_StageRequestQueryRequest:
     castor::stager::queryService::handle_requestQueryRequest
-      (req, client, svcs, stgSvc, ad);
+      (req, client, svcs, qrySvc, ad);
     break;
 
   default:
@@ -359,12 +467,12 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
     e.getMessage() << "Unknown Request type : "
                    << castor::ObjectsIdStrings[req->type()];
     if (req) delete req;
-    if (stgSvc) stgSvc->release();
+    if (qrySvc) qrySvc->release();
     throw e;
   }
 
   // Cleanup
   if (req) delete req;
-  if (stgSvc) stgSvc->release();
+  if (qrySvc) qrySvc->release();
   STAGER_LOG_RETURN(serrno == 0 ? 0 : -1);
 }
