@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.17 2002/02/15 18:00:59 jdurand Exp $
+ * $Id: stage_constants.h,v 1.18 2002/02/20 15:40:22 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -437,48 +437,49 @@
 /* ==================================================================================== */
 /* =========================== DEFINITION OF API FLAGS ================================ */
 /* ==================================================================================== */
-#define STAGE_DEFERRED          0x00000000001LL  /* -A deferred  [stage_iowc]           */
-#define STAGE_GRPUSER           0x00000000002LL  /* -G           [stage_iowc,stage_qry] */
-#define STAGE_COFF              0x00000000004LL  /* -c off       [stage_iowc]           */
-#define STAGE_UFUN              0x00000000008LL  /* -U           [stage_iowc]           */
-#define STAGE_INFO              0x00000000010LL  /* -z           [stage_iowc]           */
-#define STAGE_ALL               0x00000000020LL  /* -a           [stage_qry]            */
-#define STAGE_LINKNAME          0x00000000040LL  /* -L           [stage_qry,stage_clr]  */
-#define STAGE_LONG              0x00000000080LL  /* -l           [stage_qry]            */
-#define STAGE_PATHNAME          0x00000000100LL  /* -P           [stage_qry,stage_clr]  */
-#define STAGE_SORTED            0x00000000200LL  /* -S           [stage_qry]            */
-#define STAGE_STATPOOL          0x00000000400LL  /* -s           [stage_qry]            */
-#define STAGE_TAPEINFO          0x00000000800LL  /* -T           [stage_qry]            */
-#define STAGE_USER              0x00000001000LL  /* -u           [stage_qry]            */
-#define STAGE_EXTENDED          0x00000002000LL  /* -x           [stage_qry]            */
-#define STAGE_ALLOCED           0x00000004000LL  /* -A           [stage_qry]            */
-#define STAGE_FILENAME          0x00000008000LL  /* -f           [stage_qry]            */
-#define STAGE_EXTERNAL          0x00000010000LL  /* -I           [stage_qry]            */
-#define STAGE_MULTIFSEQ         0x00000020000LL  /* -Q           [stage_qry]            */
-#define STAGE_MIGRULES          0x00000040000LL  /* --migrator   [stage_qry]            */
-#define STAGE_SILENT            0x00000080000LL  /* --silent     [stage_iowc]           */
-#define STAGE_NOWAIT            0x00000100000LL  /* --nowait     [stage_iowc]           */
-#define STAGE_NOREGEXP          0x00000200000LL  /* --noregexp   [stage_qry]            */
-#define STAGE_DUMP              0x00000400000LL  /* --dump       [stage_qry]            */
-#define STAGE_CLASS             0x00000800000LL  /* --fileclass  [stage_qry]            */
-#define STAGE_QUEUE             0x00001000000LL  /* --queue      [stage_qry]            */
-#define STAGE_COUNTERS          0x00002000000LL  /* --counters   [stage_qry]            */
-#define STAGE_NOHSMCREAT        0x00004000000LL  /* --nohsmcreat [stage_iowc]           */
-#define STAGE_CONDITIONAL       0x00008000000LL  /* -c           [stage_clr]            */
-#define STAGE_FORCE             0x00010000000LL  /* -F           [stage_clr]            */
-#define STAGE_REMOVEHSM         0x00020000000LL  /* -remove_from_hsm [stage_clr]        */
-#define STAGE_RETENP            0x00040000000LL  /* --retenp     [stage_qry]            */
-#define STAGE_MINTIME           0x00100000000LL  /* --mintime    [stage_qry]            */
-#define STAGE_VERBOSE           0x00200000000LL  /* --verbose    [stage_ping]           */
-#define STAGE_DISPLAY_SIDE      0x00400000000LL  /* --display_side [stage_qry]          */
-#define STAGE_SIDE              0x00800000000LL  /* --side       [stage_qry,stage_iowc] */
-#define STAGE_FILE_ROPEN        0x01000000000LL  /* -o           [stage_updc]           */
-#define STAGE_FILE_RCLOSE       0x02000000000LL  /* -c           [stage_updc]           */
-#define STAGE_FILE_WOPEN        0x04000000000LL  /* -O           [stage_updc]           */
-#define STAGE_FILE_WCLOSE       0x08000000000LL  /* -C           [stage_updc]           */
-#define STAGE_REQID             0x10000000000LL  /* --reqid      [stage_clr,stage_qry]  */
-#define STAGE_HSM_ENOENT_OK     0x20000000000LL  /* --enoent_ok  [stage_wrt]            */
-#define STAGE_NOLINKCHECK       0x40000000000LL  /* --nolinkcheck [stage_iowc,stage_updc,stage_clr] */
+#define STAGE_DEFERRED          0x000000000001LL  /* -A deferred  [stage_iowc]           */
+#define STAGE_GRPUSER           0x000000000002LL  /* -G           [stage_iowc,stage_qry] */
+#define STAGE_COFF              0x000000000004LL  /* -c off       [stage_iowc]           */
+#define STAGE_UFUN              0x000000000008LL  /* -U           [stage_iowc]           */
+#define STAGE_INFO              0x000000000010LL  /* -z           [stage_iowc]           */
+#define STAGE_ALL               0x000000000020LL  /* -a           [stage_qry]            */
+#define STAGE_LINKNAME          0x000000000040LL  /* -L           [stage_qry,stage_clr]  */
+#define STAGE_LONG              0x000000000080LL  /* -l           [stage_qry]            */
+#define STAGE_PATHNAME          0x000000000100LL  /* -P           [stage_qry,stage_clr]  */
+#define STAGE_SORTED            0x000000000200LL  /* -S           [stage_qry]            */
+#define STAGE_STATPOOL          0x000000000400LL  /* -s           [stage_qry]            */
+#define STAGE_TAPEINFO          0x000000000800LL  /* -T           [stage_qry]            */
+#define STAGE_USER              0x000000001000LL  /* -u           [stage_qry]            */
+#define STAGE_EXTENDED          0x000000002000LL  /* -x           [stage_qry]            */
+#define STAGE_ALLOCED           0x000000004000LL  /* -A           [stage_qry]            */
+#define STAGE_FILENAME          0x000000008000LL  /* -f           [stage_qry]            */
+#define STAGE_EXTERNAL          0x000000010000LL  /* -I           [stage_qry]            */
+#define STAGE_MULTIFSEQ         0x000000020000LL  /* -Q           [stage_qry]            */
+#define STAGE_MIGRULES          0x000000040000LL  /* --migrator   [stage_qry]            */
+#define STAGE_SILENT            0x000000080000LL  /* --silent     [stage_iowc]           */
+#define STAGE_NOWAIT            0x000000100000LL  /* --nowait     [stage_iowc]           */
+#define STAGE_NOREGEXP          0x000000200000LL  /* --noregexp   [stage_qry]            */
+#define STAGE_DUMP              0x000000400000LL  /* --dump       [stage_qry]            */
+#define STAGE_CLASS             0x000000800000LL  /* --fileclass  [stage_qry]            */
+#define STAGE_QUEUE             0x000001000000LL  /* --queue      [stage_qry]            */
+#define STAGE_COUNTERS          0x000002000000LL  /* --counters   [stage_qry]            */
+#define STAGE_NOHSMCREAT        0x000004000000LL  /* --nohsmcreat [stage_iowc]           */
+#define STAGE_CONDITIONAL       0x000008000000LL  /* -c           [stage_clr]            */
+#define STAGE_FORCE             0x000010000000LL  /* -F           [stage_clr]            */
+#define STAGE_REMOVEHSM         0x000020000000LL  /* -remove_from_hsm [stage_clr]        */
+#define STAGE_RETENP            0x000040000000LL  /* --retenp     [stage_qry]            */
+#define STAGE_MINTIME           0x000100000000LL  /* --mintime    [stage_qry]            */
+#define STAGE_VERBOSE           0x000200000000LL  /* --verbose    [stage_ping]           */
+#define STAGE_DISPLAY_SIDE      0x000400000000LL  /* --display_side [stage_qry]          */
+#define STAGE_SIDE              0x000800000000LL  /* --side       [stage_qry,stage_iowc] */
+#define STAGE_FILE_ROPEN        0x001000000000LL  /* -o           [stage_updc]           */
+#define STAGE_FILE_RCLOSE       0x002000000000LL  /* -c           [stage_updc]           */
+#define STAGE_FILE_WOPEN        0x004000000000LL  /* -O           [stage_updc]           */
+#define STAGE_FILE_WCLOSE       0x008000000000LL  /* -C           [stage_updc]           */
+#define STAGE_REQID             0x010000000000LL  /* --reqid      [stage_clr,stage_qry]  */
+#define STAGE_HSM_ENOENT_OK     0x020000000000LL  /* --enoent_ok  [stage_wrt]            */
+#define STAGE_NOLINKCHECK       0x040000000000LL  /* --nolinkcheck [stage_iowc,stage_updc,stage_clr] */
+#define STAGE_NORETRY           0x100000000000LL  /* --noretry  [stage_iowc]             */
 
 /* ======================================================================= */
 /* =================== DEFINITION OF API METHODS ========================= */
