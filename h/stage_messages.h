@@ -1,5 +1,5 @@
 /*
- * $Id: stage_messages.h,v 1.16 2002/04/11 09:59:49 jdurand Exp $
+ * $Id: stage_messages.h,v 1.17 2002/04/30 12:15:04 jdurand Exp $
  */
 
 #ifndef __stage_messages_h
@@ -75,7 +75,7 @@
 #define	STG93	"STG93 - removing link %s\n"
 #define	STG94	"STG94 - creating link %s\n"
 #define	STG95	"STG95 - %s cleared by %s\n"
-#define	STG96	"STG96 - %s already staged, size = %ld (%.1f MB), nbaccess = %d\n"
+#define	STG96	"STG96 - %s already staged, size = %s (%.1f MB), nbaccess = %d\n"
 #define	STG97	"STG97 - %s:%s staged by (%s,%s), server %s  unit %s  ifce %s  size %s  wtim %d  ttim %d rc %d\n"
 #define	STG98	"STG98 - %s\n"
 #define	STG99	"STG99 - stage returns %d\n"
@@ -87,7 +87,7 @@
 #define STG105  "STG105 - Internal error in %s : %s\n"
 #define STG106  "STG106 - Internal error in %s for %s: %s\n"
 #define	STG107	"STG107 - %s:%s segment %d staged by (%s,%s), server %s  unit %s  ifce %s  size %s  wtim %d  ttim %d rc %d\n"
-#define	STG108	"STG108 - %s:%s staged in %d tries by (%s,%s), actual_size %s size %d rc %d\n"
+#define	STG108	"STG108 - %s:%s staged in %d tries by (%s,%s), actual_size %s size %s rc %d\n"
 #define	STG109	"STG109 - New fileclass %s@%s (classid %d), internal index %d, tppools=%s\n"
 #define STG110  "STG110 - Internal error in %s for pool %s, class %s@%s: %s\n"
 #define STG111  "STG111 - Last used tape pool \"%s\" unknown to fileclass %s@%s (classid %d)\n"
