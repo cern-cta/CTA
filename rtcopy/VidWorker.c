@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.23 $ $Release$ $Date: 2004/08/20 11:20:41 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.24 $ $Release$ $Date: 2004/08/20 14:02:21 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.23 $ $Release$ $Date: 2004/08/20 11:20:41 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.24 $ $Release$ $Date: 2004/08/20 14:02:21 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -222,7 +222,7 @@ static int nbRunningSegms()
   return(nbRunning);
 }
 
-static int checkAbort(
+static int checkAborted(
                       segmFailed
                       )
      int *segmFailed;
@@ -1399,7 +1399,7 @@ static void setErrorInfo(
   
   if ( tape == NULL ) return;
   
-  rc = checkAbort(&segmFailed);
+  rc = checkAborted(&segmFailed);
   if ( (rc == 1) && (segmFailed == 0) ) {
     if ( tape->tapereq.tprc == 0 ) tape->tapereq.tprc = -1;
     if ( tape->tapereq.err.errorcode == 0 ) 
