@@ -45,6 +45,7 @@
 #include "castor/stager/Request.hpp"
 #include "castor/client/IResponseHandler.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Communication.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 extern "C" {
@@ -71,7 +72,7 @@ castor::client::BaseClient::~BaseClient() throw() {
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::client::BaseClient::sendRequest
+std::string castor::client::BaseClient::sendRequest
 (castor::stager::Request* req,
  castor::client::IResponseHandler* rh)
   throw(castor::exception::Exception) {
@@ -99,8 +100,9 @@ void castor::client::BaseClient::sendRequest
   errno = 0;
   struct passwd *pw = Cgetpwuid(euid);
   if (0 == pw) {
-    std::cout << "Unknown user " << euid << std::endl;
-    return;
+    castor::exception::Exception e(EINVAL);
+    e.getMessage() << "Unknown User" << std::endl;
+    throw e;
   } else {
     req->setUserName(pw->pw_name);
   }
@@ -124,7 +126,10 @@ void castor::client::BaseClient::sendRequest
         clog() << "Unable to get hostname : "
                << strerror(errno) << std::endl;
         free(hostname);
-        return;
+        castor::exception::Exception e(errno);
+        e.getMessage() << "gethostname error";
+        throw e;
+
       }
       // So the name was too long
       while (hostname[len - 1] != 0) {
@@ -134,7 +139,10 @@ void castor::client::BaseClient::sendRequest
           clog() << "Unable to allocate memory for hostname."
                  << std::endl;
           free(hostname);
-          return;
+          castor::exception::Exception e(ENOMEM);
+          e.getMessage() << "Could not allocate memory for hostname";
+          throw e;
+
         }
         hostname = hostnameLonger;
         memset(hostname, 0, len);
@@ -146,7 +154,10 @@ void castor::client::BaseClient::sendRequest
             clog() << "Unable to get hostname : "
                    << strerror(errno) << std::endl;
             free(hostname);
-            return;
+            castor::exception::Exception e(errno);
+            e.getMessage() << "Could not get hostname"
+                           <<  strerror(errno);
+            throw e;
           }
         }
       }
@@ -171,7 +182,7 @@ void castor::client::BaseClient::sendRequest
   cl->setRequest(req);
   req->setClient(cl);
   // sends the request
-  internalSendRequest(*req);
+  std::string requestId = internalSendRequest(*req);
   // waits for callbacks, first loop on the request
   // replier connections
   bool stop = false;
@@ -187,12 +198,12 @@ void castor::client::BaseClient::sendRequest
       pollit.revents = 0;
       int rc = poll(&pollit,1,-1);
       if (0 == rc) {
-        castor::exception::Internal e;
+        castor::exception::Communication e(requestId, SEINTERNAL);
         e.getMessage() << "Poll with no timeout did timeout !";
         delete socket;
         throw e;
       } else if (rc < 0) {
-        castor::exception::Internal e;
+        castor::exception::Communication e(requestId, SEINTERNAL);
         e.getMessage() << "Poll error";
         delete socket;
         throw e;
@@ -210,7 +221,7 @@ void castor::client::BaseClient::sendRequest
         castor::rh::Response* res =
           dynamic_cast<castor::rh::Response*>(obj);
         if (0 == res) {
-          castor::exception::Internal e;
+          castor::exception::Communication e(requestId, SEINTERNAL);
           e.getMessage() << "Receive bad response type :"
                          << obj->type();
           delete obj;
@@ -225,6 +236,7 @@ void castor::client::BaseClient::sendRequest
     // delete the socket
     delete socket;
   }
+  return requestId;
 }
 
 //------------------------------------------------------------------------------
@@ -251,8 +263,9 @@ castor::IClient* castor::client::BaseClient::createClient()
 //------------------------------------------------------------------------------
 // sendRequest
 //------------------------------------------------------------------------------
-void castor::client::BaseClient::internalSendRequest(castor::stager::Request& request)
+std::string castor::client::BaseClient::internalSendRequest(castor::stager::Request& request)
   throw (castor::exception::Exception) {
+  std::string requestId;
   // creates a socket
   castor::io::ClientSocket s(RHSERVER_PORT, m_rhHost);
   s.connect();
@@ -268,6 +281,7 @@ void castor::client::BaseClient::internalSendRequest(castor::stager::Request& re
     delete ack;
     throw e;
   }
+  requestId = ack->requestId();
   if (!ack->status()) {
     castor::exception::InvalidArgument e; // XXX To be changed
     e.getMessage() << "Server Error "
@@ -277,6 +291,7 @@ void castor::client::BaseClient::internalSendRequest(castor::stager::Request& re
     throw e;
   }
   delete ack;
+  return requestId;
 }
 
 //------------------------------------------------------------------------------

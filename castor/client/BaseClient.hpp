@@ -80,12 +80,13 @@ namespace castor {
        * @param req the Request to send to the castor system
        * @param rh the IResponseHandler interface to use
        * for callbacks
+       * @return The CASTOR request ID
        * @exception Exception when something goed wrong
        */
-      void sendRequest(castor::stager::Request* req,
-                       castor::client::IResponseHandler* rh)
+      std::string sendRequest(castor::stager::Request* req,
+                              castor::client::IResponseHandler* rh)
         throw(castor::exception::Exception);
-
+      
     protected:
 
       /**
@@ -121,7 +122,7 @@ namespace castor {
       /**
        * sends a request to the request handler
        */
-      void internalSendRequest(castor::stager::Request& request)
+      std::string internalSendRequest(castor::stager::Request& request)
         throw (castor::exception::Exception);
 
       /**
