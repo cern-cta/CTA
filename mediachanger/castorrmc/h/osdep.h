@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: osdep.h,v $ $Revision: 1.4 $ $Date: 1999/10/13 14:10:33 $ CERN IT-PDP/IP Frederic Hemmer
+ * @(#)$RCSfile: osdep.h,v $ $Revision: 1.5 $ $Date: 1999/10/14 12:03:56 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */
@@ -84,7 +84,9 @@ typedef u_signed64 U_HYPER;
 #ifdef _PROTO
 #undef _PROTO
 #endif
-#ifdef __STDC__
+#if (defined(__STDC__) || defined(_WIN32))
+/* On Win32, compiler is STDC compliant but the */
+/* __STDC__ definition itself is not a default. */
 #define _PROTO(a) a
 #else
 #define _PROTO(a) ()
