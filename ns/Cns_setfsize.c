@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)Cns_setfsize.c,v 1.10 2002/09/12 11:44:28 CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_setfsize.c,v $ $Revision: 1.2 $ $Date: 2004/11/03 09:49:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Cns_setfsize - set file size and last modification date */

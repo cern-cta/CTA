@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)Cns_getsegattrs.c,v 1.16 2004/03/03 08:51:30 CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_getsegattrs.c,v $ $Revision: 1.2 $ $Date: 2004/11/03 09:49:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      Cns_getsegattrs - get file segments attributes */

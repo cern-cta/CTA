@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)Cns_modifyclass.c,v 1.2 2001/01/23 11:03:42 CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_modifyclass.c,v $ $Revision: 1.2 $ $Date: 2004/11/03 09:49:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Cns_modifyclass - modify an existing fileclass definition */

@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)Cns_updateseg_checksum.c,v 1.1 2004/03/03 10:57:48 CERN IT-DS/HSM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_updateseg_checksum.c,v $ $Revision: 1.2 $ $Date: 2004/11/03 09:49:50 $ CERN IT-DS/HSM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      Cns_updateseg_checksum - Updates the segment checksum */

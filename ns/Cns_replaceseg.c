@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)Cns_replaceseg.c,v 1.2 2004/03/03 08:51:32 CERN IT-DS/HSM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_replaceseg.c,v $ $Revision: 1.2 $ $Date: 2004/11/03 09:49:50 $ CERN IT-DS/HSM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      Cns_replaceseg - replace file segment (used by repack) */
