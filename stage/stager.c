@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.99 2000/11/26 10:08:45 jdurand Exp $
+ * $Id: stager.c,v 1.100 2000/11/27 17:05:22 jdurand Exp $
  */
 
 /*
@@ -19,7 +19,7 @@
 /* -DTAPESRVR=\"your_tape_server_hostname\" */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.99 $ $Date: 2000/11/26 10:08:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.100 $ $Date: 2000/11/27 17:05:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -142,6 +142,9 @@ int dont_change_srv = 0;            /* If != 0 means that we will not change tap
 #undef RETRYI
 #endif
 #define RETRYI 5
+#ifndef SLEEP_DEBUG
+#define SLEEP_DEBUG 10
+#endif
 EXTERN_C int DLL_DECL dumpTapeReq _PROTO((tape_list_t *));
 EXTERN_C int DLL_DECL dumpFileReq _PROTO((file_list_t *));
 int rtcpd_PrintCmd _PROTO((tape_list_t *));
@@ -418,8 +421,8 @@ int main(argc, argv)
 #ifdef STAGER_DEBUG
 	SAVE_EID;
 	sendrep(rpfd, MSG_ERR, "[DEBUG] GO ON WITH gdb /usr/local/bin/stager %d, then break %d\n",getpid(),__LINE__ + 6);
-	sendrep(rpfd, MSG_ERR, "[DEBUG] sleep(10)\n");
-	sleep(10);
+	sendrep(rpfd, MSG_ERR, "[DEBUG] sleep(%d)\n", SLEEP_DEBUG);
+	sleep(SLEEP_DEBUG);
 	RESTORE_EID;
 #endif
 
@@ -578,8 +581,8 @@ int main(argc, argv)
 #ifdef STAGER_DEBUG
 		SAVE_EID;
 		sendrep(rpfd, MSG_ERR, "[DEBUG-STAGETAPE] GO ON WITH gdb /usr/local/bin/stager %d, then break stage_tape\n",getpid());
-		sendrep(rpfd, MSG_ERR, "[DEBUG-STAGETAPE] sleep(10)\n");
-		sleep(10);
+		sendrep(rpfd, MSG_ERR, "[DEBUG-STAGETAPE] sleep(%d)\n",SLEEP_DEBUG);
+		sleep(SLEEP_DEBUG);
 		RESTORE_EID;
 #endif
 		c = stage_tape ();
@@ -604,8 +607,8 @@ int main(argc, argv)
 #ifdef STAGER_DEBUG
 				SAVE_EID;
 				sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] GO ON WITH gdb /usr/local/bin/stager %d, then break stagewrt_castor_hsm_file\n",getpid());
-				sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] sleep(10)\n");
-				sleep(10);
+				sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] sleep(%d)\n",SLEEP_DEBUG);
+				sleep(SLEEP_DEBUG);
 				RESTORE_EID;
 #endif
 			c = stagewrt_castor_hsm_file ();
@@ -613,8 +616,8 @@ int main(argc, argv)
 #ifdef STAGER_DEBUG
 				SAVE_EID;
 				sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] GO ON WITH gdb /usr/local/bin/stager %d, then break stagein_castor_hsm_file\n",getpid());
-				sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] sleep(10)\n");
-				sleep(10);
+				sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] sleep(%d)\n",SLEEP_DEBUG);
+				sleep(SLEEP_DEBUG);
 				RESTORE_EID;
 #endif
 			c = stagein_castor_hsm_file ();
@@ -1101,8 +1104,8 @@ int stagein_castor_hsm_file() {
 	STAGER_RTCP_DUMP(rtcpcreqs[0]);
 	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] Calling rtcpd_PrintCmd()\n");
     rtcpd_PrintCmd(rtcpcreqs[0]);
-	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] sleep(10)\n");
-	sleep(10);
+	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] sleep(%d)\n",SLEEP_DEBUG);
+	sleep(SLEEP_DEBUG);
 	RESTORE_EID;
 #endif
 	Flags = 0;
@@ -1488,8 +1491,8 @@ int stagewrt_castor_hsm_file() {
 			STAGER_RTCP_DUMP(rtcpcreqs[0]);
 			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] Calling rtcpd_PrintCmd()\n");
 		    rtcpd_PrintCmd(rtcpcreqs[0]);
-			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] sleep(10)\n");
-			sleep(10);
+			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] sleep(%d)\n",SLEEP_DEBUG);
+			sleep(SLEEP_DEBUG);
 			RESTORE_EID;
 #endif
 
@@ -1647,8 +1650,8 @@ int stage_tape() {
 	STAGER_RTCP_DUMP(rtcpcreqs[0]);
 	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGETAPE] Calling rtcpd_PrintCmd()\n");
     rtcpd_PrintCmd(rtcpcreqs[0]);
-	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGETAPE] sleep(10)\n");
-	sleep(10);
+	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGETAPE] sleep(%d)\n",SLEEP_DEBUG);
+	sleep(SLEEP_DEBUG);
 	RESTORE_EID;
 #endif
 
@@ -3315,5 +3318,5 @@ int rtcpd_PrintCmd(tape)
 #endif /* STAGER_DEBUG */
 
 /*
- * Last Update: "Sunday 26 November, 2000 at 09:49:08 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Monday 27 November, 2000 at 18:04:38 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
