@@ -1,5 +1,5 @@
 /*
- * $Id: Cglobals.c,v 1.14 2000/03/30 10:09:05 jdurand Exp $
+ * $Id: Cglobals.c,v 1.15 2000/05/12 15:50:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: Cglobals.c,v $ $Revision: 1.14 $ $Date: 2000/03/30 10:09:05 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: Cglobals.c,v $ $Revision: 1.15 $ $Date: 2000/05/12 15:50:57 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* lint */
 /*
  * Castor_globals.c - central entry to maintain all Castor globals
@@ -94,21 +94,21 @@ int Coptarg_key;
  * Function prototypes for multi-thread env. version of errno externals
  */
 #if defined(__STDC__)
-int *__serrno(void);
-int *__rfio_errno(void);
-int *__Copterr(void);
-int *__Coptind(void);
-int *__Coptopt(void);
-int *__Coptreset(void);
-char **__Coptarg(void);
+int *C__serrno(void);
+int *C__rfio_errno(void);
+int *C__Copterr(void);
+int *C__Coptind(void);
+int *C__Coptopt(void);
+int *C__Coptreset(void);
+char **C__Coptarg(void);
 #else /* __STDC__ */
-int *__serrno();
-int *__rfio_errno();
-int *__Copterr();
-int *__Coptind();
-int *__Coptopt();
-int *__Coptreset();
-char **__Coptarg();
+int *C__serrno();
+int *C__rfio_errno();
+int *C__Copterr();
+int *C__Coptind();
+int *C__Coptopt();
+int *C__Coptreset();
+char **C__Coptarg();
 #endif /* __STDC__ */
 
 #if defined(hpux) || defined(HPUX10) || defined(sgi) || defined(SOLARIS)
@@ -120,9 +120,9 @@ extern int h_errno;
  * Function prototypes for muti-thread env. version of h_errno external
  */
 #if defined(__STDC__)
-int *__h_errno(void);
+int *C__h_errno(void);
 #else /* __STDC__ */
-int *__h_errno();
+int *C__h_errno();
 #endif /* __STDC__ */
 
 #endif /* hpux ||HPUX10 || sgi || SOLARIS */
@@ -165,15 +165,15 @@ void Cglobals_init(getspec,setspec,getTid)
         /*
          * Inherit the current values of the errno globals.
          */
-        *__serrno() = serrno;
-        *__rfio_errno() = rfio_errno;
-        *__Copterr() = Copterr;
-        *__Coptind() = Coptind;
-        *__Coptopt() = Coptopt;
-        *__Coptreset() = Coptreset;
-        *__Coptarg() = Coptarg;
+        *C__serrno() = serrno;
+        *C__rfio_errno() = rfio_errno;
+        *C__Copterr() = Copterr;
+        *C__Coptind() = Coptind;
+        *C__Coptopt() = Coptopt;
+        *C__Coptreset() = Coptreset;
+        *C__Coptarg() = Coptarg;
 #if defined(hpux) || defined(HPUX10) ||  defined(sgi) || defined(SOLARIS)
-        *__h_errno() = h_errno;
+        *C__h_errno() = h_errno;
 #endif /* hpux || HPUX10 || sgi || SOLARIS */
 
         single_thread_globals = NULL;
@@ -247,7 +247,7 @@ void Cglobals_getTid(Tid)
     return;
 } 
 
-int *__serrno() {
+int *C__serrno() {
     int rc;
     int *addr;
 
@@ -268,14 +268,14 @@ int *__serrno() {
          * return the external. This is obviously not
          * thread-safe but at least the application
          * will not die with a strange coredump in a
-         * hidden de-reference of __serrno().
+         * hidden de-reference of C__serrno().
          */
         if ( addr == NULL ) return(&serrno);
         else return(addr);
     }
 }
 
-int *__rfio_errno() {
+int *C__rfio_errno() {
     int rc;
     int *addr;
 
@@ -296,14 +296,14 @@ int *__rfio_errno() {
          * return the external. This is obviously not
          * thread-safe but at least the application
          * will not die with a strange coredump in a
-         * hidden de-reference of __rfio_errno().
+         * hidden de-reference of C__rfio_errno().
          */
         if ( addr == NULL ) return(&rfio_errno);
         else return(addr);
     }
 }
 
-int *__Copterr() {
+int *C__Copterr() {
     int rc;
     int *addr;
 
@@ -312,7 +312,7 @@ int *__Copterr() {
     } else {
         addr = NULL;
         /*
-         * We re-use the old single thread rfio_errno as key
+         * We re-use the old single thread Copterr as key
          */
         rc = local_getspec(&Copterr,(void **)&addr);
         if ( rc == -1 || addr == NULL ) {
@@ -324,14 +324,14 @@ int *__Copterr() {
          * return the external. This is obviously not
          * thread-safe but at least the application
          * will not die with a strange coredump in a
-         * hidden de-reference of __rfio_errno().
+         * hidden de-reference of C_Copterr.
          */
         if ( addr == NULL ) return(&Copterr);
         else return(addr);
     }
 }
 
-int *__Coptind() {
+int *C__Coptind() {
     int rc;
     int *addr;
 
@@ -352,14 +352,14 @@ int *__Coptind() {
          * return the external. This is obviously not
          * thread-safe but at least the application
          * will not die with a strange coredump in a
-         * hidden de-reference of __rfio_errno().
+         * hidden de-reference of C__Coptind.
          */
         if ( addr == NULL ) return(&Coptind);
         else return(addr);
     }
 }
 
-int *__Coptopt() {
+int *C__Coptopt() {
     int rc;
     int *addr;
 
@@ -380,14 +380,14 @@ int *__Coptopt() {
          * return the external. This is obviously not
          * thread-safe but at least the application
          * will not die with a strange coredump in a
-         * hidden de-reference of __rfio_errno().
+         * hidden de-reference of C__Coptopt.
          */
         if ( addr == NULL ) return(&Coptopt);
         else return(addr);
     }
 }
 
-int *__Coptreset() {
+int *C__Coptreset() {
     int rc;
     int *addr;
 
@@ -408,14 +408,14 @@ int *__Coptreset() {
          * return the external. This is obviously not
          * thread-safe but at least the application
          * will not die with a strange coredump in a
-         * hidden de-reference of __rfio_errno().
+         * hidden de-reference of C__Coptreset.
          */
         if ( addr == NULL ) return(&Coptreset);
         else return(addr);
     }
 }
 
-char **__Coptarg() {
+char **C__Coptarg() {
     int rc;
     char **addr;
 
@@ -436,7 +436,7 @@ char **__Coptarg() {
          * return the external. This is obviously not
          * thread-safe but at least the application
          * will not die with a strange coredump in a
-         * hidden de-reference of __rfio_errno().
+         * hidden de-reference of C__Coptarg.
          */
         if ( addr == NULL ) return(&Coptarg);
         else return(addr);
@@ -444,7 +444,7 @@ char **__Coptarg() {
 }
 
 #if defined(hpux) || defined(HPUX10) ||  defined(sgi) || defined(SOLARIS)
-int *__h_errno() {
+int *C__h_errno() {
     int rc;
     int *addr;
 

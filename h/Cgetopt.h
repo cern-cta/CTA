@@ -1,5 +1,5 @@
 /*
- * $Id: Cgetopt.h,v 1.1 2000/02/28 12:52:29 jdurand Exp $
+ * $Id: Cgetopt.h,v 1.2 2000/05/12 15:50:59 jdurand Exp $
  */
 
 #ifndef __Cgetopt_h
@@ -24,21 +24,21 @@ typedef struct Coptions Coptions_t;
 /*
  * Multi-thread (MT) environment
  */
-EXTERN_C int  DLL_DECL  *__Copterr _PROTO((void));
-EXTERN_C int  DLL_DECL  *__Coptind _PROTO((void));
-EXTERN_C int  DLL_DECL  *__Coptopt _PROTO((void));
-EXTERN_C int  DLL_DECL  *__Coptreset _PROTO((void));
-EXTERN_C char DLL_DECL **__Coptarg _PROTO((void));
+EXTERN_C int  DLL_DECL  *C__Copterr _PROTO((void));
+EXTERN_C int  DLL_DECL  *C__Coptind _PROTO((void));
+EXTERN_C int  DLL_DECL  *C__Coptopt _PROTO((void));
+EXTERN_C int  DLL_DECL  *C__Coptreset _PROTO((void));
+EXTERN_C char DLL_DECL **C__Coptarg _PROTO((void));
 
 /*
- * Thread safe serrno. Note, __serrno is defined in Cglobals.c rather
+ * Thread safe serrno. Note, C__serrno is defined in Cglobals.c rather
  * rather than serror.c .
  */
-#define Copterr (*__Copterr())
-#define Coptind (*__Coptind())
-#define Coptopt (*__Coptopt())
-#define Coptreset (*__Coptreset())
-#define Coptarg (*__Coptarg())
+#define Copterr (*C__Copterr())
+#define Coptind (*C__Coptind())
+#define Coptopt (*C__Coptopt())
+#define Coptreset (*C__Coptreset())
+#define Coptarg (*C__Coptarg())
 
 #else /* _REENTRANT || _THREAD_SAFE ... */
 /*

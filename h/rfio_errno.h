@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_errno.h,v 1.3 2000/01/06 08:35:03 jdurand Exp $
+ * $Id: rfio_errno.h,v 1.4 2000/05/12 15:50:59 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * $RCSfile: rfio_errno.h,v $ $Revision: 1.3 $ $Date: 2000/01/06 08:35:03 $
+ * $RCSfile: rfio_errno.h,v $ $Revision: 1.4 $ $Date: 2000/05/12 15:50:59 $
  */
 
 /* rfio_errno.h   Thread safe rfio_errno  */
@@ -24,13 +24,13 @@
 /*
  * Multi-thread (MT) environment
  */
-EXTERN_C int DLL_DECL *__rfio_errno _PROTO((void));
+EXTERN_C int DLL_DECL *C__rfio_errno _PROTO((void));
 
 /*
- * Thread safe rfio_errno. Note, __rfio_errno is defined in Cglobals.c rather
+ * Thread safe rfio_errno. Note, C__rfio_errno is defined in Cglobals.c rather
  * than rfio/error.c .
  */
-#define rfio_errno (*__rfio_errno())
+#define rfio_errno (*C__rfio_errno())
 
 #else /* _REENTRANT || _THREAD_SAFE ... */
 /*
