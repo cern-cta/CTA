@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.2 $ $Date: 2000/04/11 15:17:50 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.3 $ $Date: 2000/04/12 10:23:58 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
                    break;
                }
            } CLIST_ITERATE_END(reqlist,tmp1); 
-           if ( tmp->volreq.VolReqID != tmp->drvreq.VolReqID ) {
+           if ( tmp->volreq.VolReqID != tmp1->drvreq.VolReqID ) {
                CLIST_INSERT(reqlist,tmp);
                tmp = NULL;
            }
