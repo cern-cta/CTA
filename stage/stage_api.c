@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.10 2001/02/04 23:50:04 jdurand Exp $
+ * $Id: stage_api.c,v 1.11 2001/02/05 13:03:06 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -186,11 +186,20 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   int enospc_retry = -1;
   int enospc_retryint = -1;
   int enospc_ntries = 0;
+  char stgpool_forced[CA_MAXPOOLNAMELEN + 1];
 
   /* It is not allowed to have no input */
   if ((nstcp_input <= 0) || (stcp_input == NULL)) {
     serrno = EINVAL;
     return(-1);
+  }
+
+  /* We check existence of an STG POOL from environment variable or configuration */
+  if (((p = getenv("STAGE_POOL")) != NULL) || ((p = getconfent("STG","POOL")) != NULL)) {
+    strncpy(stgpool_forced,p,CA_MAXPOOLNAMELEN);
+    stgpool_forced[CA_MAXPOOLNAMELEN] = '\0';
+  } else {
+    stgpool_forced[0] = '\0';
   }
 
   switch (req_type) {                   /* This method works only for: */
@@ -329,6 +338,12 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
     int i, numvid, numvsn;
 
     thiscat = &(stcp_input[istcp]);              /* Current catalog structure */
+
+    /* If this entry has no poolname we copy it the forced one */
+    if ((thiscat->poolname[0] == '\0') && (stgpool_forced[0] != '\0')) {
+      strcpy(thiscat->poolname, stgpool_forced);
+    }
+
     switch (t_or_d) {
     case 't':                              /* For tape request we do some internal check */
       /* tape request */
@@ -844,7 +859,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   int msglen;                   /* Buffer length (incremental) */
   int ntries;                   /* Number of retries */
   struct passwd *pw;            /* Password entry */
-  char *sbp, *q;                /* Internal pointers */
+  char *sbp, *p, *q;            /* Internal pointers */
   char *sendbuf;                /* Socket send buffer pointer */
   size_t sendbuf_size;          /* Total socket send buffer length */
   uid_t euid;                   /* Current effective uid */
@@ -857,6 +872,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   int nstpp_output_internal = 0;
   struct stgpath_entry *stpp_output_internal = NULL;
   int rc;
+  char stgpool_forced[CA_MAXPOOLNAMELEN + 1];
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
@@ -886,6 +902,14 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   if ((stpp_output != NULL) && (nstpp_output == NULL)) {
     serrno = EINVAL;
     return(-1);
+  }
+
+  /* We check existence of an STG POOL from environment variable or configuration */
+  if (((p = getenv("STAGE_POOL")) != NULL) || ((p = getconfent("STG","POOL")) != NULL)) {
+    strncpy(stgpool_forced,p,CA_MAXPOOLNAMELEN);
+    stgpool_forced[CA_MAXPOOLNAMELEN] = '\0';
+  } else {
+    stgpool_forced[0] = '\0';
   }
 
   switch (t_or_d) {                     /* This method supports only */
@@ -925,6 +949,12 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
     int i, numvid, numvsn;
 
     thiscat = &(stcp_input[istcp]);              /* Current catalog structure */
+
+    /* If this entry has no poolname we copy it the forced one */
+    if ((thiscat->poolname[0] == '\0') && (stgpool_forced[0] != '\0')) {
+      strcpy(thiscat->poolname, stgpool_forced);
+    }
+
     switch (t_or_d) {
     case 't':                              /* For tape request we do some internal check */
       /* tape request */
