@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.35 2000/04/06 09:51:36 jdurand Exp $
+ * $Id: stager.c,v 1.36 2000/04/07 06:53:58 jdurand Exp $
  */
 
 /*
@@ -10,8 +10,10 @@
 /* When filereq.maxsize will work removed, remove the define below and in the code below again */
 /* #define SKIP_FILEREQ_MAXSIZE */
 
+/* For ALICE data challenge : compile the stager with -DALICETEST */
+
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.35 $ $Date: 2000/04/06 09:51:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.36 $ $Date: 2000/04/07 06:53:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -769,12 +771,16 @@ int stagewrt_castor_hsm_file() {
 	gettape:
 		Flags = 0;
 		while (1) {
+#ifdef ALICETEST
+			char *tape_pool = "alicemdc";
+#else
 			char *tape_pool = NULL;
 
 			if (stcp->poolname[0] != '\0') {
 				/* Check the corresponding tape poolname */
 				tape_pool = poolname2tapepool(stcp->poolname);
 			}
+#endif /* ALICETEST */
 
 			/* Wait for a free tape */
 #ifdef STAGER_DEBUG
@@ -1504,16 +1510,16 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 						fl[j].filereq.retention = stcp->u1.t.retentd;
 					}
 					fl[j].filereq.def_alloc = Aflag;
-					if (stcp->u1.t.E_Tflags & SKIPBAD) {
+					if ((stcp->u1.t.E_Tflags & SKIPBAD) == SKIPBAD) {
 						fl[j].filereq.rtcp_err_action |= SKIPBAD;
 					}
-					if (stcp->u1.t.E_Tflags & KEEPFILE) {
+					if ((stcp->u1.t.E_Tflags & KEEPFILE) == KEEPFILE) {
 						fl[j].filereq.rtcp_err_action |= KEEPFILE;
 					}
-					if (stcp->u1.t.E_Tflags & IGNOREEOI) {
+					if ((stcp->u1.t.E_Tflags & IGNOREEOI) == IGNOREEOI) {
 						fl[j].filereq.tp_err_action |= IGNOREEOI;
 					}
-					if (stcp->u1.t.E_Tflags & NOTRLCHK) {
+					if ((stcp->u1.t.E_Tflags & NOTRLCHK) == NOTRLCHK) {
 						fl[j].filereq.tp_err_action |= NOTRLCHK;
 					}
 					if (stcp->charconv > 0) {
@@ -1681,8 +1687,10 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 					(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.check_fid = CHECK_FILE;
 				}
 				(*rtcpcreqs_in)[i]->tapereq.mode            = WRITE_ENABLE;
+#ifdef ALICETEST
 				/* ALICE TEST - FORCE BLOCKSIZE */
 				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.blocksize = 256 * ONE_KB;
+#endif
 				break;
 			default:
 				/* This is an hsm read request */
