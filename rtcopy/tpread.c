@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.6 $ $Date: 2000/01/12 08:52:00 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.7 $ $Date: 2000/01/13 10:08:59 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
     char errtxt[1024];
     int rc, retval;
 
-    rtcp_InitLog(errtxt,stdout,stderr,NULL);
+    rtcp_InitLog(errtxt,NULL,stderr,NULL);
     initlog(argv[0],LOG_INFO,"");
     tpread_command = TRUE;
     tape = NULL;
