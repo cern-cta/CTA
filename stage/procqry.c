@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.58 2001/06/22 11:17:44 jdurand Exp $
+ * $Id: procqry.c,v 1.59 2001/06/23 11:18:52 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.58 $ $Date: 2001/06/22 11:17:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.59 $ $Date: 2001/06/23 11:18:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -752,8 +752,18 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			strcpy( p_stat, "WAITING_NS");
 		else
 			strcpy (p_stat, s_stat[stcp->status]);
-		if ((lflag || ((stcp->status & 0xFF0) == 0)) &&
-			((stcp->status & (STAGEOUT|CAN_BE_MIGR)) != (STAGEOUT|CAN_BE_MIGR)) &&
+        /* STAGEIN                    1                        001 */
+        /* STAGEOUT                   2                        010 */
+        /* STAGEWRT                   3                        011 */
+        /* STAGEPUT                   4                        100 */
+
+        /* CAN_BE_MIGR                                  0x000400   */
+        /* BEING_MIGR                                   0x002000   */
+        /* WAITING_MIGR                                 0x020000   */
+        /* WAITING_NS                                   0x040000   */
+        /* STAGE_RDONLY                                 0x100000   */
+		if ((lflag || ((stcp->status & 0xFFFFF0) == 0)) &&
+			(! (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp))) &&
 			(stcp->ipath[0] != '\0')) {
 			if (rfio_mstat(stcp->ipath, &st) == 0) {
 				int has_been_updated = 0;
@@ -1083,6 +1093,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 		if (stcp->reqid == 0) break;
 		if ((this_reqid > 0) && (stcp->reqid != this_reqid)) continue;
 		if ((stcp->status & 0xF0) != STAGED) continue;
+		if (stcp->status == (STAGEIN|STAGED|STAGE_RDONLY)) continue;
 		if (poolflag < 0) {	/* -p NOPOOL */
 			if (stcp->poolname[0]) continue;
 		} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
