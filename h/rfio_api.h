@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.18 $ $Date: 2000/06/16 15:52:58 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.19 $ $Date: 2000/09/01 07:58:43 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -101,12 +101,10 @@ EXTERN_C RFILE DLL_DECL *rfio_popen _PROTO((char *, char *));
 EXTERN_C int DLL_DECL rfio_pclose _PROTO((RFILE *));
 EXTERN_C int DLL_DECL rfio_pread _PROTO((char *, int, int, RFILE *));
 EXTERN_C int DLL_DECL rfio_pwrite _PROTO((char *, int, int, RFILE *));
-#if !defined(_WIN32)
 EXTERN_C struct dirent DLL_DECL *rfio_readdir _PROTO((RDIR *));
 EXTERN_C int DLL_DECL rfio_rewinddir _PROTO((RDIR *));
 EXTERN_C int DLL_DECL rfio_closedir _PROTO((RDIR *));
 EXTERN_C RDIR DLL_DECL *rfio_opendir _PROTO((char *));
-#endif /* !_WIN32 */
 #else /* RFIO_KERNEL */
 /*
  * External prototypes
@@ -121,12 +119,12 @@ EXTERN_C FILE DLL_DECL *rfio_popen _PROTO((char *, char *));
 EXTERN_C int DLL_DECL rfio_pclose _PROTO((FILE *));
 EXTERN_C int DLL_DECL rfio_pread _PROTO((char *, int, int, FILE *));
 EXTERN_C int DLL_DECL rfio_pwrite _PROTO((char *, int, int, FILE *));
-#if !defined(_WIN32) && !(defined(__hpux) && !defined(_INCLUDE_POSIX_SOURCE))
+#if !(defined(__hpux) && !defined(_INCLUDE_POSIX_SOURCE))
 EXTERN_C struct dirent DLL_DECL *rfio_readdir _PROTO((DIR *));
 EXTERN_C int DLL_DECL rfio_rewinddir _PROTO((DIR *));
 EXTERN_C int DLL_DECL rfio_closedir _PROTO((DIR *));
 EXTERN_C DIR DLL_DECL *rfio_opendir _PROTO((char *));
-#endif /* !_WIN32 && !__hpux && !_INCLUDE_POSIX_SOURCE */
+#endif /* !__hpux && !_INCLUDE_POSIX_SOURCE */
 #endif /* RFIO_KERNEL */
 
 /*
@@ -167,12 +165,10 @@ EXTERN_C int DLL_DECL rfio_HsmIf_IOError _PROTO((int, int));
 EXTERN_C int DLL_DECL rfio_HsmIf_IsHsmFile _PROTO((const char *));
 EXTERN_C int DLL_DECL rfio_HsmIf_GetHsmType _PROTO((int, int *));
 
-#if !defined(_WIN32)
 EXTERN_C DIR DLL_DECL *rfio_HsmIf_opendir _PROTO((const char *));
 EXTERN_C int DLL_DECL rfio_HsmIf_closedir _PROTO((DIR *));
 EXTERN_C struct dirent DLL_DECL *rfio_HsmIf_readdir _PROTO((DIR *));
 EXTERN_C void DLL_DECL rfio_HsmIf_rewinddir _PROTO((DIR *));
-#endif /* _WIN32 */
 EXTERN_C int DLL_DECL rfio_HsmIf_rmdir _PROTO((const char *));
 EXTERN_C int DLL_DECL rfio_HsmIf_stat _PROTO((const char *, struct stat *));
 EXTERN_C int DLL_DECL rfio_HsmIf_unlink _PROTO((const char *));

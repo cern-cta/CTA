@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.11 $ $Date: 2000/05/29 16:06:59 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.12 $ $Date: 2000/09/01 07:58:42 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -21,8 +21,11 @@
 
 #if !defined(_WIN32)
 #include <sys/types.h>          /* standard data types                  */
-#include <dirent.h>             /* standard directory definitions       */
+#else /* _WIN32 */
+#include <statbits.h>           /* File access macros for WIN32         */
 #endif /* _WIN32 */
+
+#include <dirent.h>             /* standard directory definitions       */
 #include <sys/stat.h>           /* file status definitions              */
 
 #if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(HPUX1010) || defined(IRIX6) || defined(linux) || defined(AIX42) || defined(IRIX5)
@@ -168,7 +171,6 @@ typedef struct {
 #define iostat(x)  *(int *)(x->_iobuf.base + 2*LONGSIZE)
 #define iodata(x)   (x->_iobuf.base + x->_iobuf.hsize)
 
-#if !defined(_WIN32)
 typedef struct {
         struct __RFIO_DIR {
 	  int    dd_fd;
@@ -190,7 +192,10 @@ typedef struct {
 	int mapping;		/* Is mapping required ?		*/
 	int passwd; 		/* passwd required if from rem. site    */
 } RDIR;
-#endif  /* _WIN32 */
+
+#if defined(_WIN32)
+typedef RDIR DIR;
+#endif /* _WIN32 */
 
 /*
  * Define RFIO statistic structure
@@ -209,6 +214,11 @@ struct rfiostat	{
 	long rnbr ;                     /* byte read count              */
 	long wnbr ;                     /* byte written count           */
 } ;
+#else /* RFIO_KERNEL */
+
+#if defined(_WIN32)
+typedef void *  DIR;
+#endif /* _WIN32 */
 
 #endif /* RFIO_KERNEL */
 
@@ -245,7 +255,6 @@ struct rfiostat	{
 #define mkdir           rfio_mkdir
 #define rmdir           rfio_rmdir
 #define chmod           rfio_chmod
-#if !defined(_WIN32)
 #define opendir         rfio_opendir
 #define readdir         rfio_readdir
 #define closedir        rfio_closedir
@@ -253,7 +262,6 @@ struct rfiostat	{
 #undef rewinddir
 #endif /* rewinddir */
 #define rewinddir       rfio_rewinddir
-#endif /* _WIN32 */
 #endif /* RFIO_KERNEL */
 
 #endif /* _RFIO_H_INCLUDED_ */
