@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.89 $ $Date: 2000/09/20 09:22:28 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.90 $ $Date: 2000/09/20 09:39:07 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -308,7 +308,7 @@ static int DiskFileOpen(int pool_index,
      */
     if ( (tapereq->mode == WRITE_DISABLE) && 
          ( (file->next->filereq.concat & CONCAT) != 0 ||
-           (filereq->concat & (CONCAT|CONCAT_TO_EOD|NOCONCAT_TO_EOD)) != 0 )) {
+           (filereq->concat & (CONCAT|CONCAT_TO_EOD)) != 0 )) {
         rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
         if ( (severity & RTCP_EOD) != 0 ) return(-1);
         log(LOG_DEBUG,"DiskFileOpen(%s) lock file for concatenation\n",
@@ -544,7 +544,7 @@ static int DiskFileClose(int disk_fd,
 
     if ( (tape->tapereq.mode == WRITE_DISABLE) &&
          ( (file->next->filereq.concat & CONCAT) != 0 ||
-           (filereq->concat & (CONCAT|CONCAT_TO_EOD|NOCONCAT_TO_EOD)) != 0 ) ) {
+           (filereq->concat & (CONCAT|CONCAT_TO_EOD)) != 0 ) ) {
         rtcp_log(LOG_DEBUG,"DiskFileClose(%s) unlock file for concatenation\n",
                  filereq->file_path);
         rc = LockForAppend(0);
