@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.52 $ $Release$ $Date: 2004/10/12 16:08:25 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.53 $ $Release$ $Date: 2004/10/18 06:53:11 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.52 $ $Release$ $Date: 2004/10/12 16:08:25 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.53 $ $Release$ $Date: 2004/10/18 06:53:11 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -73,7 +73,9 @@ WSADATA wsadata;
 #include <Ctape_constants.h>
 #include <castor/stager/Tape.h>
 #include <castor/stager/Segment.h>
+#include <castor/stager/Stream.h>
 #include <castor/stager/TapeCopy.h>
+#include <castor/stager/TapePool.h>
 #include <castor/stager/TapeStatusCodes.h>
 #include <castor/stager/SegmentStatusCodes.h>
 #include <castor/stager/IStagerSvc.h>
@@ -349,10 +351,10 @@ static int updateTapeFromDB(
       return(-1);
     }
     /*
-     * selectTape() locks the Tape in DB. We rollback immediately since
+     * selectTape() locks the Tape in DB. We commit immediately since
      * we don't intend to update the DB here.
      */
-    (void)C_Services_rollback(*svcs,iAddr);
+    (void)C_Services_commit(*svcs,iAddr);
   }
 
   if ( rc == -1 ) {
@@ -602,10 +604,14 @@ int rtcpcld_getVIDsToDo(
      tape_list_t ***tapeArray;
      int *cnt;
 {
+  struct C_IObject_t *iObj = NULL;
+  struct C_IAddress_t *iAddr;
+  struct C_BaseAddress_t *baseAddr;
   struct Cstager_Tape_t **tpArray = NULL, *tp;
   struct Cstager_Segment_t *segm;
   struct Cstager_Stream_t **streamArray = NULL;
   struct Cstager_IStagerSvc_t *stgsvc = NULL;
+  struct C_Services_t **dbSvc;
   struct Cstager_TapePool_t *tapePool;
   rtcpTapeRequest_t tapereq;
   tape_list_t *tmpTapeArray, *tape = NULL, *tl;
@@ -620,7 +626,7 @@ int rtcpcld_getVIDsToDo(
     return(-1);
   }
 
-  if ( cnt != NULL ) *cnt = 0;
+  *cnt = 0;
 
   rc = getStgSvc(&stgsvc);
   if ( rc == -1 || stgsvc == NULL ) return(-1);
@@ -652,9 +658,7 @@ int rtcpcld_getVIDsToDo(
     if ( _dbErr != NULL ) free(_dbErr);
     serrno = save_serrno;
     return(-1);
-  }
-
-  if ( nbTpItems > 0 ) {
+  } else if ( nbTpItems > 0 ) {
     for (i=0; i<nbTpItems; i++) {
       tl = NULL;
       Cstager_Tape_vid(tpArray[i],(CONST char **)&vid);
@@ -667,58 +671,80 @@ int rtcpcld_getVIDsToDo(
       if ( rc == -1 ) break;
       tl->dbRef = (RtcpDBRef_t *)calloc(1,sizeof(RtcpDBRef_t *));
       if ( tl->dbRef == NULL ) {
-        serrno = errno;
-        rc = -1;
-        break;
+        save_serrno = errno;
+        LOG_SYSCALL_ERR("calloc()");
+        CLIST_DELETE(tape,tl);
+        free(tl);
+        continue;
       }
       Cstager_Tape_id(tpArray[i],&(tl->dbRef->key));
       tl->dbRef->row = (void *)tpArray[i];
       tl->tapereq = tapereq;
       rc = rtcpcld_tapeOK(tl);
-      if ( rc == -1 ) break;
+      if ( rc == -1 ) {
+        save_serrno = errno;
+        LOG_SYSCALL_ERR("rtcpcld_tapeOK()");
+        CLIST_DELETE(tape,tl);
+        free(tl);
+        continue;
+      }
     }
-    save_serrno = serrno;
-    if ( rc != -1) nbItems = nbTpItems;
     free(tpArray);
   }
 
-  if ( rc != -1 ) {
-    /*
-     * Now do the streams. For each stream we need to call
-     * vmgr_gettape() to get the VID to be used for the stream.
-     */
-    rc = Cstager_IStagerSvc_streamsToDo(
-                                        stgsvc,
-                                        &streamArray,
-                                        &nbStreamItems
-                                        );
-    if ( rc == -1 ) {
-      char *_dbErr = NULL;
-      save_serrno = serrno;
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_DBSVC,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+3,
-                      "DBSVCCALL",
-                      DLF_MSG_PARAM_STR,
-                      "Cstager_IStagerSvc_streamsTodo()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      "DB_ERROR",
-                      DLF_MSG_PARAM_STR,
-                      (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
-                      RTCPCLD_LOG_WHERE
-                      );
-      if ( _dbErr != NULL ) free(_dbErr);
-    }
-  }
-
-  if ( (rc != -1 ) && (nbStreamItems > 0) ) {
+  /*
+   * Now do the streams. For each stream we need to call
+   * vmgr_gettape() to get the VID to be used for the stream.
+   */
+  rc = Cstager_IStagerSvc_streamsToDo(
+                                      stgsvc,
+                                      &streamArray,
+                                      &nbStreamItems
+                                      );
+  if ( rc == -1 ) {
+    char *_dbErr = NULL;
+    save_serrno = serrno;
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_DBSVC,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+3,
+                    "DBSVCCALL",
+                    DLF_MSG_PARAM_STR,
+                    "Cstager_IStagerSvc_streamsTodo()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(serrno),
+                    "DB_ERROR",
+                    DLF_MSG_PARAM_STR,
+                    (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
+                    RTCPCLD_LOG_WHERE
+                    );
+    if ( _dbErr != NULL ) free(_dbErr);
+  } else if ( nbStreamItems > 0 ) {
     for (i=0; i<nbStreamItems; i++) {
       Cstager_Stream_tapePool(streamArray[i],&tapePool);
+      if ( tapePool == NULL ) {
+        /*
+         * Try with a fillObj(), just in case
+         */
+        iAddr = NULL;
+        rc = getDbSvc(&dbSvc);
+        if ( rc != -1 ) {
+          rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
+          if ( rc != -1 ) iAddr = C_BaseAddress_getIAddress(baseAddr);
+        }
+        iObj = Cstager_Stream_getIObject(streamArray[i]);
+        if ( rc != -1 ) rc = C_Services_fillObj(
+                                                *dbSvc,
+                                                iAddr,
+                                                iObj,
+                                                OBJ_TapePool
+                                                );
+        if ( iAddr != NULL ) C_IAddress_delete(iAddr);
+        Cstager_Stream_tapePool(streamArray[i],&tapePool);
+      }
       if ( tapePool == NULL ) {
         Cstager_Stream_id(streamArray[i],&key);
         (void)dlf_write(
@@ -742,6 +768,12 @@ int rtcpcld_getVIDsToDo(
                            sizeToTransfer,
                            &tl
                            );
+      if ( rc == -1 ) {
+        save_serrno = serrno;
+        LOG_SYSCALL_ERR("rtcpcld_gettape()");
+        if ( tl != NULL ) free(tl);
+        continue;
+      }
       /*
        * OK, we got the tape. The tape is now BUSY in VMGR.
        * Need to create the Tape in DB to facilitate the cleanup
@@ -750,45 +782,46 @@ int rtcpcld_getVIDsToDo(
       rc = updateTapeFromDB(tl);
       if ( rc == -1 ) {
         save_serrno = serrno;
-        (void)rtcpcld_updateTape(&(tl->tapereq),NULL,1,0);
-        serrno = save_serrno;
-        break;
+        LOG_SYSCALL_ERR("updateTapeFromDB()");
+        (void)rtcpcld_updateTape(tl,NULL,1,0);
+        if ( tl != NULL ) free(tl);
+        continue;
+      }
+      rc = rtcpcld_tapeOK(tl);
+      if ( rc == -1 ) {
+        save_serrno = serrno;
+        LOG_SYSCALL_ERR("rtcpcld_tapeOK()");
+        (void)rtcpcld_updateTape(tl,NULL,1,0);
+        if ( tl != NULL ) free(tl);
+        continue;
       }
       CLIST_INSERT(tape,tl);
-      tl->dbRef = (RtcpDBRef_t *)calloc(1,sizeof(RtcpDBRef_t *));
-      if ( tape->dbRef == NULL ) {
-        serrno = errno;
-        rc = -1;
-        break;
-      }
-      Cstager_Tape_id(tpArray[i],&(tl->dbRef->key));
-      tl->dbRef->row = (void *)tp;
-      rc = rtcpcld_tapeOK(tape);
-      if ( rc == -1 ) break;
     }
-    save_serrno = serrno;
-    if ( rc != -1) nbItems += nbStreamItems;
     free(streamArray);
   }
 
-  if ( rc != -1 ) {
+  /*
+   * Count the number of usable tape request we found
+   */
+  nbItems = 0;
+  CLIST_ITERATE_BEGIN(tape,tl) 
+    {
+      nbItems++;
+    }
+  CLIST_ITERATE_END(tape,tl);
+
+  if ( nbItems > 0 ) {
     *tapeArray = (tape_list_t **)calloc(nbItems,sizeof(tape_list_t *));
     if ( *tapeArray == NULL ) {
       save_serrno = errno;
       LOG_SYSCALL_ERR("Cthread_mutex_lock(currentTapeFseq)");
       rc = -1;
     }
-  }
-  
-  while ( (tl = tape) != NULL ) {
-    CLIST_DELETE(tape,tl);
-    if ( rc == -1 ) {
-      if ( tl->file != NULL ) free(tl->file);
-      if ( tl->dbRef != NULL ) tp = tl->dbRef->row;
-      if ( tp != NULL ) Cstager_Tape_delete(tp);
-      free(tl);
-    } else {
-      (*tapeArray)[i] = tl;
+    
+    i = 0;
+    while ( (tl = tape) != NULL ) {
+      CLIST_DELETE(tape,tl);
+      (*tapeArray)[i++] = tl;
     }
   }
 
@@ -806,14 +839,25 @@ void rtcpcld_cleanupTape(
      tape_list_t *tape;
 {
   struct Cstager_Tape_t *tp;
+  struct Cstager_Segment_t *segm;
+  file_list_t *file;
   
   if ( tape == NULL ) return;
+
+  while ( (file = tape->file) != NULL ) {
+    if ( file->dbRef != NULL ) {
+      segm = (struct Cstager_Segment_t *)file->dbRef->row;
+      if ( segm != NULL ) Cstager_Segment_delete(segm);
+      free(file->dbRef);
+    }
+    CLIST_DELETE(tape->file,file);
+    free(file);
+  }
   if ( tape->dbRef != NULL ) {
     tp = (struct Cstager_Tape_t *)tape->dbRef->row;
     if ( tp != NULL ) Cstager_Tape_delete(tp);
     free(tape->dbRef);
   }
-  if ( tape->file != NULL ) free(tape->file);
   free(tape);
   return;
 }
@@ -1239,6 +1283,54 @@ int rtcpcld_anyReqsForVID(
   nbItems = rc;
 
   return(nbItems);
+}
+
+int rtcpcld_updcMigrFailed(
+                           tape,
+                           filereq
+                           )
+     tape_list_t *tape;
+     rtcpFileRequest_t *filereq;
+{
+  int rc = 0;
+  
+  return(rc);
+}
+
+int rtcpcld_updcRecallFailed(
+                             tape,
+                             filereq
+                             )
+     tape_list_t *tape;
+     rtcpFileRequest_t *filereq;
+{
+  int rc = 0;
+  
+  return(rc);
+}
+
+int rtcpcld_updcFileRecalled(
+                             tape,
+                             filereq
+                             )
+     tape_list_t *tape;
+     rtcpFileRequest_t *filereq;
+{
+  int rc = 0;
+  
+  return(rc);
+}
+
+int rtcpcld_updcFileMigrated(
+                             tape,
+                             filereq
+                             )
+     tape_list_t *tape;
+     rtcpFileRequest_t *filereq;
+{
+  int rc = 0;
+  
+  return(rc);
 }
 
 /**
