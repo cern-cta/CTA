@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/08/06 12:45:23 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/29 13:31:58 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.5 $ $Date: 2004/08/06 12:45:23 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.6 $ $Date: 2004/10/29 13:31:58 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
   struct Cdb_DbAddress_t *dbAddr;
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr;
-  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_IStagerSvc_t **stgSvc = NULL;
   unsigned long key = 0;
 
   /* Initializing the C++ log */
@@ -128,14 +128,14 @@ int main(int argc, char *argv[])
   }
 
   if ( key == 0 ) {
-    rc = rtcpcld_getStgDbSvc(&stgSvc);
-    if ( rc == -1 || stgSvc == NULL ) {
-      fprintf(stderr,"rtcpcld_getStgDbSvc(): %s\n",sstrerror(serrno));
+    rc = rtcpcld_getStgSvc(&stgSvc);
+    if ( rc == -1 || stgSvc == NULL || *stgSvc == NULL ) {
+      fprintf(stderr,"rtcpcld_getDbSvc(): %s\n",sstrerror(serrno));
       return(1);
     }
     
     rc = Cstager_IStagerSvc_selectTape(
-                                       stgSvc,
+                                       *stgSvc,
                                        &tp,
                                        vid,
                                        side,
@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
     if ( rc == -1 ) {
       fprintf(stderr,"Cstager_IStagerSvc_selectTape(): %s, DB ERROR=%s\n",
               sstrerror(serrno),
-              Cstager_IStagerSvc_errorMsg(stgSvc));
+              Cstager_IStagerSvc_errorMsg(*stgSvc));
       return(1);
     }
   
