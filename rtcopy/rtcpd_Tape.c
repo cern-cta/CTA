@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.27 $ $Date: 2000/02/10 08:40:13 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.28 $ $Date: 2000/02/11 10:49:53 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -962,14 +962,17 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
          if ( tape_fd != -1 ) tcloserr(tape_fd,nexttape,nextfile); \
          if ( (severity & RTCP_LOCAL_RETRY) == 0 ) { \
              if ( rc == -1 || mode == WRITE_ENABLE ) { \
+                 rtcp_log(LOG_DEBUG,"tapeIOthread() return RC=-1 to client\n");\
                  (void) tellClient(&client_socket,X,Y,-1); \
                  (void) rtcpd_stageupdc(nexttape,nextfile); \
              } \
              (void)rtcpd_Release((X),NULL); \
-             if ( mode == WRITE_ENABLE ) rtcpd_SetProcError(severity); \
          } else { \
              tape->local_retry++; \
-             if ( mode == WRITE_ENABLE ) (void) tellClient(&client_socket,X,Y,0); \
+             if ( mode == WRITE_ENABLE ) { \
+                 (void) tellClient(&client_socket,X,Y,0); \
+                 rtcpd_SetProcError(severity); \
+             }\
          } \
          (void) tellClient(&client_socket,NULL,NULL,-1); \
          rtcp_CloseConnection(&client_socket); \
@@ -1031,7 +1034,7 @@ void *tapeIOthread(void *arg) {
         if ( rc == -1 ) {
             (void)rtcpd_Deassign(-1,&tape->tapereq);
         }
-        CHECK_PROC_ERR(tape,NULL,"rtcpd_Reserv() error");
+        CHECK_PROC_ERR(tape,NULL,"rtcpd_Assign() error");
 #endif /* CTAPE_DUMMIES */
         /*
          * Reserve the unit (client should have made sure that all
@@ -1263,7 +1266,7 @@ void *tapeIOthread(void *arg) {
                          else
                              serrno = EFBIG;
                         rtcpd_SetReqStatus(NULL,nextfile,serrno,
-                            RTCP_FAILED | RTCP_USERR);
+                                           RTCP_FAILED | RTCP_USERR);
                         rtcpd_BroadcastException();
                         if ( mode == WRITE_ENABLE ) {
                             tellClient(&client_socket,NULL,nextfile,-1);
