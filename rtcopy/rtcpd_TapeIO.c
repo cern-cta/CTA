@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.12 $ $Date: 2000/01/24 16:38:57 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.13 $ $Date: 2000/01/25 13:39:10 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -85,6 +85,9 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
     filereq = &file->filereq;
     trec = file->trec;
     status = errno;
+    rtcp_log(LOG_DEBUG,"twerror(%d) called with errno=%d, serrno=%d\n",
+             fd,errno,serrno);
+    errno = status;
 
     switch(errno) {
         case ENXIO:  /* Drive not operational */
@@ -156,7 +159,7 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
 #if defined(sun)
             /* 
              * Should not happen :EACCES only occurs when the driver 
-             * gave a wrong information to tpmnt. Then exit with SYRETRYD
+             * gave a wrong information to tpmnt. 
              */
         case EACCES :
             rtcpd_AppendClientMsg(NULL, file, RT116, "CPDSKTP", 
@@ -166,7 +169,7 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
 #endif /* sun */
         default:
             rtcpd_AppendClientMsg(NULL, file, RT116, "CPDSKTP", 
-                sstrerror(errno), trec+1);
+                sstrerror(errno>0 ? errno : serrno), trec+1);
             severity = RTCP_FAILED | RTCP_UNERR;
             break;
     }
@@ -332,7 +335,7 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
  * Opening tape file.
  */
 int topen(tape_list_t *tape, file_list_t *file) {
-    int fd ; 
+    int fd , rc; 
     int tmode;
 #if defined(_WIN32)
     int binmode = O_BINARY;
@@ -370,18 +373,24 @@ int topen(tape_list_t *tape, file_list_t *file) {
     /*
      * Opening file.
      */
+    rtcp_log(LOG_DEBUG,"topen() calling open(%s,%o)\n",
+             filereq->tape_path,tmode);
     fd= open(filereq->tape_path,tmode);
 
     if ( fd == -1 ) {
         rtcpd_SetReqStatus(NULL,file,errno,RTCP_FAILED | RTCP_SYERR);
-		if ( tapereq->mode == WRITE_ENABLE ) 
-			rtcpd_AppendClientMsg(NULL,file, RT111, "CPDSKTP", 
+        if ( tapereq->mode == WRITE_ENABLE ) 
+            rtcpd_AppendClientMsg(NULL,file, RT111, "CPDSKTP", 
                                   sstrerror(errno));
-		else
-			rtcpd_AppendClientMsg(NULL,file, RT111, "CPTPDSK", 
+        else
+            rtcpd_AppendClientMsg(NULL,file, RT111, "CPTPDSK", 
                                   sstrerror(errno));
+        rtcp_log(LOG_DEBUG,"topen() open(%s,%o) returned rc=%d, errno=%d\n",
+                 filereq->tape_path,tmode,fd,errno);
         return(-1);
-	}
+    }
+    rtcp_log(LOG_DEBUG,"topen() open(%s,%o) returned fd=%d\n",
+             filereq->tape_path,tmode,fd);
 
 #if defined(_AIX) && defined(_IBMR2)
     /*
@@ -397,7 +406,13 @@ int topen(tape_list_t *tape, file_list_t *file) {
 #endif
 
 #if !defined(_WIN32) && !(defined(_AIX) && !defined(ADSTAR))
-    clear_compression_stats(fd,filereq->tape_path,tapereq->devtype);
+    rtcp_log(LOG_DEBUG,"topen() call clear_compression_stats(%d,%s,%s)\n",
+             fd,filereq->tape_path,tapereq->devtype);
+    serrno = errno = 0;
+    rc = clear_compression_stats(fd,filereq->tape_path,tapereq->devtype);
+    rtcp_log(LOG_DEBUG,
+      "topen() clear_compression_stats() returned rc=%d, errno=%d, serrno=%d\n",
+             rc,errno,serrno);
 #endif /* !_WIN32 && !(_AIX && !ADSTAR) */
     /*
      * Returning file descriptor.
@@ -554,7 +569,8 @@ int twrite(int fd,char *ptr,int len,
             filereq->TStartTransferTape = (int)time(NULL);
             rtcp_log(LOG_DEBUG,"twrite(%d): write header label, tape_path=%s\n",
                 fd,filereq->tape_path);
-            if ( wrthdrlbl(fd,filereq->tape_path) < 0 ) {
+            errno = serrno = 0;
+            if ( (rc = wrthdrlbl(fd,filereq->tape_path)) < 0 ) {
 #if defined(_IBMR2)
                 if ( errno == ENOSPC || errno == ENXIO)
 #else
@@ -563,6 +579,9 @@ int twrite(int fd,char *ptr,int len,
                     serrno = ENOSPC;
                 else
                     twerror(fd,tape,file) ;
+                rtcp_log(LOG_DEBUG,
+               "twrite(%d): wrthdrlbl(%d,%s) returns %d, errno=%d, serrno=%d\n",
+                         fd,fd,filereq->tape_path,rc,errno,serrno);
                 return(-1);
             }
         }
@@ -586,6 +605,9 @@ int twrite(int fd,char *ptr,int len,
                 file->eovflag= 1; /* tape volume overflow */
             else
                 twerror(fd,tape,file) ;
+            rtcp_log(LOG_DEBUG,
+              "twrite(%d): write(%d,0x%x,%d) returns %d, errno=%d, serrno=%d\n",
+                     fd,fd,ptr,len,rc,errno,serrno);
         }
 
 #if defined(sun) || defined(sgi)
