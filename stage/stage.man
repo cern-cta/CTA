@@ -1,8 +1,10 @@
-.\" @(#)$RCSfile: stage.man,v $ $Revision: 1.8 $ $Date: 2002/10/01 13:00:29 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1996-1999 by CERN/IT/PDP/DM
+.\" $Id: stage.man,v 1.9 2002/10/03 13:56:13 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage.man,v $ $Revision: 1.9 $ $Date: 2002/10/03 13:56:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
+.\" Copyright (C) 1996-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE "1" "$Date: 2002/10/01 13:00:29 $" "CASTOR" "Stage User and Admin Commands"
+.TH STAGE "1" "$Date: 2002/10/03 13:56:13 $" "CASTOR" "Stage User and Admin Commands"
 .SH DESCRIPTION
 The staging facilities offer fast access to tape data via copies in a disk pool.
 A stage daemon manages the pool space and keeps a catalog of staged files.
@@ -58,6 +60,9 @@ copy existing files from disk to tape or from disk to disk
 .TP
 stageshutdown
 stops stager daemon (admin only)
+
+.SH NOTES
+Old options, not for new applications, are in the \fBstage_other_options\fP(1) man page.
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
