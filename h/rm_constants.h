@@ -1,7 +1,10 @@
+/* $Id: rm_constants.h,v 1.2 2004/11/25 11:01:19 jdurand Exp $ */
+
 #ifndef __rm_constants_h
 
 #include "osdep.h"
 #include "stage_constants.h" /* For STAGE PORT */
+#include "Cuuid.h"           /* For CUUID_STRING_LEN */
 
 #ifdef RM_PRTBUFSZ
 #undef RM_PRTBUFSZ
@@ -250,7 +253,7 @@
 #define RM_JOB_PURGE_FREQUENCY (5*60)
 
 /* Job Id (uuid) length */
-#define RM_JOBIDLEN 36
+#define RM_JOBIDLEN CUUID_STRING_LEN
 
 /* API methods */
 #define RM_USERENTERJOB        1
