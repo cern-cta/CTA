@@ -1,5 +1,5 @@
 /*
- * $Id: error.c,v 1.7 2001/03/22 10:56:10 jdurand Exp $
+ * $Id: error.c,v 1.8 2001/06/01 12:08:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: error.c,v $ $Revision: 1.7 $ $Date: 2001/03/22 10:56:10 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: error.c,v $ $Revision: 1.8 $ $Date: 2001/06/01 12:08:55 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* error.c      Remote File I/O - error numbers and message handling    */
@@ -174,13 +174,8 @@ int DLL_DECL rfio_serrno()   /* get error number - return -1 if cannot get it */
      return (serrno);
    } else {
      if (last_rferr != 0) {
-       if ((s=rfio_connect(rfio_lasthost(),&rt)) == -1)  {
-         rfio_errno = last_rferr ;
-         return (-1);
-       } else {
-         rfio_errno = last_rferr ;
-         return (rfio_errno);
-       }
+       rfio_errno = last_rferr ;
+       return (rfio_errno);
      } else {
        if (serrno != 0)  {
          return (serrno);
