@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.45 $ $Date: 2001/01/26 08:25:02 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.46 $ $Date: 2001/01/28 10:36:09 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -92,13 +92,15 @@ static int rtcp_CheckTapeReq(tape_list_t *tape) {
      * Retry limits
      */
     if ( tapereq->err.max_tpretry <= 0 ) {
-        serrno = SERTYEXHAUST;
+        if ( tapereq->err.errorcode > 0 ) serrno = tapereq->err.errorcode;
+        else serrno = SERTYEXHAUST;
         sprintf(errmsgtxt,"Exiting after %d retries\n",max_tpretry);
         SET_REQUEST_ERR(tapereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
     if ( tapereq->err.max_cpretry <= 0 ) {
-        serrno = SERTYEXHAUST;
+        if ( tapereq->err.errorcode > 0 ) serrno = tapereq->err.errorcode;
+        else serrno = SERTYEXHAUST;
         sprintf(errmsgtxt,"Exiting after %d retries\n",max_cpretry);
         SET_REQUEST_ERR(tapereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
@@ -182,13 +184,15 @@ static int rtcp_CheckFileReq(file_list_t *file) {
      * Retry limits
      */
     if ( filereq->err.max_tpretry <= 0 ) {
-        serrno = SERTYEXHAUST;
+        if ( filereq->err.errorcode > 0 ) serrno = filereq->err.errorcode;
+        else serrno = SERTYEXHAUST;
         sprintf(errmsgtxt,"Exiting after %d retries\n",max_tpretry);
         SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
     if ( filereq->err.max_cpretry <= 0 ) {
-        serrno = SERTYEXHAUST;
+        if ( filereq->err.errorcode > 0 ) serrno = filereq->err.errorcode;
+        else serrno = SERTYEXHAUST;
         sprintf(errmsgtxt,"Exiting after %d retries\n",max_cpretry);
         SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
