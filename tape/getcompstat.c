@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.10 $ $Date: 2000/05/03 06:40:39 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.11 $ $Date: 2000/06/08 13:11:49 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -61,7 +61,8 @@ COMPRESSION_STATS *comp_stats;
 		cdb[2] = 0x40 | 0x39;	/* PC = 1, compression page  */
 	else if (strncmp (devtype, "DLT", 3) == 0)
 		cdb[2] = 0x40 | 0x32;	/* PC = 1, compression page  */
-	else if (strcmp (devtype, "3590") == 0)
+	else if (strcmp (devtype, "3490") == 0 ||
+		 strcmp (devtype, "3590") == 0)
 		cdb[2] = 0x40 | 0x38;	/* PC = 1, compression page  */
 	else if (strcmp (devtype, "SD3") == 0)
 		cdb[2] = 0x40 | 0x30;	/* PC = 1, compression page  */
@@ -144,7 +145,8 @@ COMPRESSION_STATS *comp_stats;
 			}
 			p += *(p+3) + 4;
 		}
-	} else if (strcmp (devtype, "3590") == 0) {	/* values in kB */
+	} else if (strcmp (devtype, "3490") == 0 ||
+		   strcmp (devtype, "3590") == 0) {	/* values in kB */
 		while (p < endpage) {
 			parmcode = *p << 8 | *(p+1);
 			switch (parmcode) {
@@ -249,8 +251,8 @@ char *devtype;
 	unsigned char sense[256];	/* Sense bytes are returned in this buffer */
 
 	memset (cdb, 0, sizeof(cdb));
-	cdb[0] = 0x4C;	/* LOG SELECT */ /* Done for STK 9840, SD3 and IBM 3590 */
-	cdb[1] = 0x02; /* PCR set */ /* Check for other devices */
+	cdb[0] = 0x4C;	/* LOG SELECT */
+	cdb[1] = 0x02; /* PCR set */
 	cdb[2] = 0xC0; /* PC = 3 */
 
 	if ((c = send_scsi_cmd (tapefd, path, 0, cdb, 10, NULL, 0,
