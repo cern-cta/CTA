@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.12 $ $Date: 2001/11/30 12:06:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.13 $ $Date: 2002/08/29 08:40:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -19,6 +19,7 @@ static char sccsid[] = "@(#)$RCSfile: stage_errmsg.c,v $ $Revision: 1.12 $ $Date
 #include "serrno.h"
 #include "Cglobals.h"
 #include "stage_constants.h"
+#include "stage_struct.h"
 
 static int errbufp_key = 0;
 static int errbuflen_key = 0;
