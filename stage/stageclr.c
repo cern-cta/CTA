@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.32 2002/10/16 22:58:55 jdurand Exp $
+ * $Id: stageclr.c,v 1.33 2002/10/27 23:24:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.32 $ $Date: 2002/10/16 22:58:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.33 $ $Date: 2002/10/27 23:24:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -348,7 +348,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 		WSACleanup();
 #endif
-		exit (rc);
+		exit (rc == 0 ? 0 : rc_castor2shift(rc));
 	} else {
 		marshall_WORD (sbp, argc);
 		for (i = 0; i < argc; i++)
