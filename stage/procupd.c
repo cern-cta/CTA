@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.54 2001/02/13 15:08:59 jdurand Exp $
+ * $Id: procupd.c,v 1.55 2001/02/13 17:36:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.54 $ $Date: 2001/02/13 15:08:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.55 $ $Date: 2001/02/13 17:36:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -678,7 +678,8 @@ procupdreq(req_data, clienthost)
 #endif
 		}
 	}
-	if (wfp->size_yet_recalled >= wfp->size_to_recall) {
+	if ((wfp->size_yet_recalled >= wfp->size_to_recall) ||
+		((rc == 0) && (((stcp->status & STAGEWRT) == STAGEWRT) || (stcp->status & STAGEPUT) == STAGEPUT))) {
 		/* Note : wfp->size_to_recall is zero if it not a recall of CASTOR file(s) */
 		/* (always the case it it is not a recall of CASTOR file) */
 		wqp->nb_subreqs--;
