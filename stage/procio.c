@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.192 2002/09/13 08:14:08 jdurand Exp $
+ * $Id: procio.c,v 1.193 2002/09/17 11:46:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.192 $ $Date: 2002/09/13 08:14:08 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.193 $ $Date: 2002/09/17 11:46:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -641,7 +641,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		case 'h':
 			break;
 		default:
-			sendrep (&rpfd, MSG_ERR, STG12);
+			sendrep(&rpfd, MSG_ERR, "STG02 - Invalid structure identifier ('%c')\n", t_or_d);
 			errflg++;
 			break;
  		}
@@ -1265,7 +1265,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			errflg++;
 		}
 		if (stgreq.t_or_d == '\0') {
-			sendrep (&rpfd, MSG_ERR, STG12);
+			sendrep(&rpfd, MSG_ERR, "STG02 - Invalid structure identifier\n");
 			errflg++;
 		}
 	} else if (stcp_input[0].t_or_d == 'h') {
@@ -1879,6 +1879,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 				strcpy (wqp->pool_user, pool_user);
 				if (! Aflag) {
 					if ((c = build_ipath (upath, stcp, pool_user, 0, api_out, (mode_t) openmode)) < 0) {
+						if (noretry_flag != 0) {
+							c = ENOSPC;
+							delreq(stcp,1);
+							goto reply;
+						}
 						stcp->status |= WAITING_SPC;
 						strcpy (wqp->waiting_pool, stcp->poolname);
 					} else if (c) {
@@ -2094,6 +2099,12 @@ void procioreq(req_type, magic, req_data, clienthost)
 				  strcpy (wqp->pool_user, pool_user);
 				  if (! Aflag) {
 					  if ((c = build_ipath (upath, stcp, pool_user, 0, api_out, (mode_t) openmode)) < 0) {
+						  if (noretry_flag != 0) {
+							  c = ENOSPC;
+							  sendrep (&rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(c));
+							  delreq(stcp,1);
+							  goto reply;
+						  }
 						  stcp->status |= WAITING_SPC;
 						  strcpy (wqp->waiting_pool, stcp->poolname);
 					  } else if (c) {
@@ -2256,6 +2267,12 @@ void procioreq(req_type, magic, req_data, clienthost)
 			c = build_ipath (upath, stcp, pool_user, 0, api_out, (mode_t) openmode);
 			STAGE_TIME_END;
 			if (c < 0) {
+				if (noretry_flag != 0) {
+					c = ENOSPC;
+					sendrep (&rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(c));
+					delreq(stcp,stcp->t_or_d == 'h' ? 0 : 1);
+					goto reply;
+				}
 				stcp->status |= WAITING_SPC;
 				if (!wqp) {
 					wqp = add2wq (clienthost,
