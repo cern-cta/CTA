@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.14 $ $Date: 2000/06/15 17:07:56 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.15 $ $Date: 2000/08/14 13:06:55 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -49,7 +49,7 @@ void *vdqm_ProcReq(void *arg) {
     int req_values[] = VDQM_REQ_VALUES;
     extern int vdqm_shutdown, vdqm_restart;
     
-    log(LOG_DEBUG,"vdqm_ProcReq() called with arg=0x%lx\n",(int)arg);
+    log(LOG_DEBUG,"vdqm_ProcReq() called with arg=0x%lx\n",arg);
     client_connection = (vdqmnw_t *)arg;
     if ( client_connection == NULL ) return((void *)&return_status);
     
