@@ -1,3 +1,11 @@
+castor (2.0.0-18) unstable; urgency=low
+
+  * Fix castor-job cron.hourly job
+  * Fix in stager client
+  * Fix in stagerJob (DISKCOPY_CANBEMIGR state)
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Tue,  8 Feb 2005 14:06:25 +0100
+
 castor (2.0.0-17) unstable; urgency=low
 
   * Fix in the stored procedure to handle the case where DELETE, for example, is done on no entry but there is nevertheless a binded value for output : that value should be explicitely initialized in the procedure
