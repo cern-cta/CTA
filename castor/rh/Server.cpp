@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/05 17:47:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2004/11/18 13:14:56 $ $Author: sponcec3 $
  *
  *
  *
@@ -42,6 +42,7 @@
 #include "castor/BaseAddress.hpp"
 
 #include "castor/stager/Request.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "castor/rh/Client.hpp"
 
 #include "castor/io/biniostream.h"
@@ -226,7 +227,11 @@ void castor::rh::Server::handleRequest(castor::IObject* fr)
   castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
   try {
     svcs()->createRep(&ad, fr, false);
-    svcs()->fillRep(&ad, fr, OBJ_SubRequest, false);
+    castor::stager::FileRequest* filreq =
+      dynamic_cast<castor::stager::FileRequest*>(fr);
+    if (0 != filreq) {
+      svcs()->fillRep(&ad, fr, OBJ_SubRequest, false);
+    }
     castor::stager::Request* req =
       dynamic_cast<castor::stager::Request*>(fr);
     if (0 != fr) {
