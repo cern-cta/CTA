@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.63 $ $Release$ $Date: 2004/11/30 16:36:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.64 $ $Release$ $Date: 2004/11/30 18:24:15 $ $Author: sponcec3 $
  *
  *
  *
@@ -1491,7 +1491,7 @@ void castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     delete tape;
   }
   // create Segments in DataBase
-  cnvSvc()->fillRep(&ad, &tapeCopy, castor::OBJ_Segment, false);
+  cnvSvc()->fillRep(&ad, &tapeCopy, castor::OBJ_Segment, true);
 }
 
 // -----------------------------------------------------------------------
