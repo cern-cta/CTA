@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.18 2000/05/12 15:49:32 jdurand Exp $
+ * $Id: stage.h,v 1.19 2000/05/17 16:27:28 jdurand Exp $
  */
 
 /*
@@ -156,7 +156,8 @@
 #define	STG53	"STG53 - %s error %d\n"
 #endif
 #define	STG54	"STG54 - HSM hostname not specified\n"
-#define	STG55	"STG55 - migration policy %s not defined\n"
+#define	STG55	"STG55 - migrator name %s not defined\n"
+#define	STG56	"STG56 - migration policy of migrator %s is not defined\n"
 #if defined(vms)
 #define	STG80	"STG80 - invalid GRPUSER entry (username missing) : %s\n"
 #define	STG81	"STG81 - invalid GRPUSER entry (uid missing) : %s\n"
@@ -315,12 +316,22 @@ struct pool {
 	int	ovl_pid;
 	time_t	cleanreqtime;
 	int	cleanstatus;	/* 0 = normal, 1 = just cleaned */
+	char	migr_name[CA_MAXMIGRNAMELEN+1];
+	struct migrator *migr;
+};
+
+struct migrator {
+	char name[CA_MAXMIGRNAMELEN+1];
+	/* Current Parameter of the migrator */
 	int	mig_pid;
 	time_t	migreqtime;
 	int	nbfiles_canbemig;	/* number of files that can be migrated */
 	u_signed64	space_canbemig;		/* total amount of data that can be migrated */
+	/* Predefined policy parameters that decide if the migrator have to be launched */
 	char	migp_name[CA_MAXMIGPNAMELEN+1];
 	struct migpolicy *migp;
+	int	nbpool;
+	struct pool	**poolp;		/* poolnames */
 };
 
 struct pool_element {
