@@ -1,8 +1,10 @@
-.\" @(#)$RCSfile: stgshift_cmp_shift.man,v $ $Revision: 1.4 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Damien Durand
-.\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+.\" $Id: stgshift_cmp_shift.man,v 1.5 2002/10/03 14:02:53 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stgshift_cmp_shift.man,v $ $Revision: 1.5 $ $Date: 2002/10/03 14:02:53 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STGSHIFT_CMP_SHIFT l "$Date: 2002/01/30 08:12:54 $"
+.TH STGSHIFT_CMP_SHIFT l "$Date: 2002/10/03 14:02:53 $"
 .SH NAME
 stgshift_cmp_shift \- Compares two SHIFT stager catalogs
 .SH SYNOPSIS
