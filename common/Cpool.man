@@ -1,20 +1,6 @@
-.\"   Cpool.man,v 1.3 1999-09-02 10:43:26+02 jdurand Exp
+.\" $Id: Cpool.man,v 1.6 2000/07/03 10:11:56 jdurand Exp $
 .\"
-.\"   Man page for the CASTOR's Pool Interface (Cpool)
-.\"
-.\"   Cpool.man,v
-.\"   Revision 1.3  1999-09-02 10:43:26+02  jdurand
-.\"   Added serrno error values
-.\"
-.\"   Revision 1.2  1999/08/24 15:49:20  jdurand
-.\"   Changed Cpool_assign() behaviour when timeout == 0 (return immediately
-.\"   if no thread available)
-.\"
-.\"   Revision 1.1.1.1  1999/07/20 08:03:08  jdurand
-.\"   Imported Sources
-.\"
-.\"
-.TH \fBCpool\fP "1" "20 May 1999" "Cpool V.1.0" "Jean-Damien Durand"
+.TH CPOOL "3" "$Date: 2000/07/03 10:11:56 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCpool\fP \- \fBCASTOR\fP \fBPool\fP inferface
 .SH SYNOPSIS
