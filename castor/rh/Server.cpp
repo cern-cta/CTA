@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2005/03/01 15:00:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2005/04/05 13:50:31 $ $Author: sponcec3 $
  *
  *
  *
@@ -88,6 +88,24 @@ int main(int argc, char *argv[]) {
 castor::rh::Server::Server() :
   castor::BaseServer("RHServer", 20) {
   initLog("RHLog", SVC_DLFMSG);
+  // Initializes the DLF logging. This includes
+  // defining the predefined messages
+  castor::dlf::Message messages[] =
+    {{ 0, " - "},
+     { 1, "New Request Arrival"},
+     { 2, "Could not get Conversion Service for Oracle"},
+     { 3, "Could not get Conversion Service for Streaming"},
+     { 4, "Exception caught : server is stopping"},
+     { 5, "Exception caught : ignored"},
+     { 6, "Invalid Request"},
+     { 7, "Unable to read Request from socket"},
+     { 8, "Processing Request"},
+     { 9, "Exception caught"},
+     {10, "Sending reply to client"},
+     {11, "Unable to send Ack to client"},
+     {12, "Request stored in DB"},
+     {-1, ""}};
+  castor::dlf::dlf_init("RHLog", messages);
 }
 
 //------------------------------------------------------------------------------
@@ -100,15 +118,15 @@ int castor::rh::Server::main () {
     castor::ICnvSvc *svc =
       svcs()->cnvService("OraCnvSvc", castor::SVC_ORACNV);
     if (0 == svc) {
-      clog() << ERROR << "Could not get Conversion Service for Oracle"
-             << std::endl;
+      // "Could not get Conversion Service for Oracle" message
+      castor::dlf::dlf_writep(m_uuid, DLF_LVL_ERROR, 2);
       return -1;
     }
     castor::ICnvSvc *svc2 =
       svcs()->cnvService("StreamCnvSvc", castor::SVC_STREAMCNV);
     if (0 == svc2) {
-      clog() << ERROR << "Could not get Conversion Service for Streaming"
-             << std::endl;
+      // "Could not get Conversion Service for Streaming" message
+      castor::dlf::dlf_writep(m_uuid, DLF_LVL_ERROR, 3);
       return -1;
     }
     /* Create a socket for the server, bind, and listen */
@@ -129,8 +147,11 @@ int castor::rh::Server::main () {
     svc2->release();
     
   } catch(castor::exception::Exception e) {
-    clog() << ERROR << sstrerror(e.code())
-           << e.getMessage().str() << std::endl;
+    // "Exception caught : server is stopping" message
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Standard Message", sstrerror(e.code())),
+       castor::dlf::Param("Precise Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(m_uuid, DLF_LVL_ERROR, 4, 2, params);
   }
 }
 
@@ -152,11 +173,17 @@ void *castor::rh::Server::processRequest(void *param) throw() {
   try {
     sock->getPeerIp(port, ip);
   } catch(castor::exception::Exception e) {
-    clog() << ERROR << "Exception :" << sstrerror(e.code())
-           << std::endl << e.getMessage() << std::endl;
+    // "Exception caught : ignored" message
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Standard Message", sstrerror(e.code())),
+       castor::dlf::Param("Precise Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(m_uuid, DLF_LVL_ERROR, 5, 2, params);
   }
-  clog() << USAGE << "Got request from client "
-         << castor::ip << ip << ":" << port << std::endl;
+  // "New Request Arrival" message
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+     castor::dlf::Param("Port", port)};
+  castor::dlf::dlf_writep(m_uuid, DLF_LVL_USAGE, 1, 2, params);
 
   // get the incoming request
   try {
@@ -164,37 +191,40 @@ void *castor::rh::Server::processRequest(void *param) throw() {
     fr = dynamic_cast<castor::stager::Request*>(obj);
     if (0 == fr) {
       delete obj;
-      clog() << ERROR
-             << "Client did not send a valid Request object."
-             << std::endl;
+      // "Invalid Request" message
+      castor::dlf::dlf_writep(m_uuid, DLF_LVL_ERROR, 6);
       ack.setStatus(false);
       ack.setErrorCode(EINVAL);
       ack.setErrorMessage("Invalid Request object sent to server.");
     }
   } catch (castor::exception::Exception e) {
+    // "Unable to read Request from socket" message
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(m_uuid, DLF_LVL_ERROR, 7, 1, params);
+    ack.setStatus(false);
+    ack.setErrorCode(EINVAL);
     std::ostringstream stst;
     stst << "Unable to read Request object from socket."
          << std::endl << e.getMessage().str();
-    clog() << ERROR << stst.str() << std::endl;
-    ack.setStatus(false);
-    ack.setErrorCode(EINVAL);
     ack.setErrorMessage(stst.str());
   }
 
+  // placeholder for the request uuid if any
+  Cuuid_t cuuid = m_uuid;
   if (ack.status()) {
-    clog() << USAGE << "Processing request" << std::endl;
     try {
       // gives a Cuuid to the request
       // XXX Interface to Cuuid has to be improved !
       // XXX its length has currently to be hardcoded
       // XXX wherever you use it !!!
-      Cuuid_t cuuid;
       Cuuid_create(&cuuid);
       char uuid[CUUID_STRING_LEN+1];
       uuid[CUUID_STRING_LEN] = 0;
       Cuuid2string(uuid, CUUID_STRING_LEN+1, &cuuid);
       fr->setReqId(uuid);
-      clog() << cuuid;
+      // "Processing Request" message
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 8);
 
       // Complete its client field
       castor::rh::Client *client =
@@ -208,31 +238,34 @@ void *castor::rh::Server::processRequest(void *param) throw() {
       client->setIpAddress(ip);
       
       // handle the request
-      handleRequest(fr);
+      handleRequest(fr, cuuid);
       ack.setRequestId(uuid);
       ack.setStatus(true);
       
     } catch (castor::exception::Exception e) {
-      clog() << ERROR << "Exception : " << sstrerror(e.code())
-             << std::endl << e.getMessage().str() << std::endl;
+    // "Exception caught" message
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Standard Message", sstrerror(e.code())),
+         castor::dlf::Param("Precise Message", e.getMessage().str())};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 2, params);
       ack.setStatus(false);
       ack.setErrorCode(1);
       ack.setErrorMessage(e.getMessage().str());
     }
   }
 
-  clog() << USAGE << "Sending reply to client !" << std::endl;
+  // "Sending reply to client" message
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 10);
   try {
     sock->sendObject(ack);
   } catch (castor::exception::Exception e) {
-    clog() << ERROR << "Could not send ack to client : "
-           << sstrerror(e.code()) << std::endl
-           << e.getMessage().str() << std::endl;
+    // "Unable to send Ack to client" message
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Standard Message", sstrerror(e.code())),
+       castor::dlf::Param("Precise Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 11, 2, params);
   }
 
-  // reset uuid to the main one in the log
-  clog() << m_uuid;
-  
   delete fr;
   delete sock;
   return 0;
@@ -241,7 +274,8 @@ void *castor::rh::Server::processRequest(void *param) throw() {
 //------------------------------------------------------------------------------
 // handleRequest
 //------------------------------------------------------------------------------
-void castor::rh::Server::handleRequest(castor::IObject* fr)
+void castor::rh::Server::handleRequest
+(castor::IObject* fr, Cuuid_t cuuid)
   throw (castor::exception::Exception) {
   // Stores it into Oracle
   castor::BaseAddress ad;
@@ -266,8 +300,11 @@ void castor::rh::Server::handleRequest(castor::IObject* fr)
       svcs()->fillRep(&ad, qryReq, OBJ_QueryParameter, false);
     }
     svcs()->commit(&ad);
-    clog() << USAGE << "request stored in Oracle, id "
-           << fr->id() << std::endl;
+    // "Request stored in DB" message
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("ID", fr->id())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_USAGE, 12, 1, params);
+
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);
     throw e;

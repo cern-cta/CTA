@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/04/05 13:50:31 $ $Author: sponcec3 $
  *
  *
  *
@@ -71,8 +71,10 @@ namespace castor {
 
       /**
        * handles an incoming request
+       * @param fr the request
+       * @param cuuid its uuid (for logging purposes only)
        */
-      void handleRequest(castor::IObject* fr)
+      void handleRequest(castor::IObject* fr, Cuuid_t cuuid)
         throw (castor::exception::Exception);
 
     }; // class Server
