@@ -1,5 +1,5 @@
 /*
- * $Id: stageupdc.c,v 1.18 2001/03/02 18:10:30 jdurand Exp $
+ * $Id: stageupdc.c,v 1.19 2001/09/18 21:22:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.18 $ $Date: 2001/03/02 18:10:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.19 $ $Date: 2001/09/18 21:22:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -94,7 +94,7 @@ int main(argc, argv)
 			stghost = Coptarg;
 			break;
 		case 'U':
-			fun = strtol (Coptarg, &dp, 10);
+			stage_strtoi(&fun, Coptarg, &dp, 10);
 			if (*dp != '\0') {
 				fprintf (stderr, STG06, "-U\n");
 				errflg++;
@@ -103,13 +103,13 @@ int main(argc, argv)
 		case 'Z':
 			strcpy (Zparm, Coptarg);
 			if ((p = strtok (Zparm, ".")) != NULL) {
-				reqid = strtol (p, &dp, 10);
+				stage_strtoi(&reqid, p, &dp, 10);
 				if (*dp != '\0' ||
 						(p = strtok (NULL, "@")) == NULL) {
 					fprintf (stderr, STG06, "-Z\n");
 					errflg++;
 				} else {
-					key = strtol (p, &dp, 10);
+					stage_strtoi(&key, p, &dp, 10);
 					if (*dp != '\0' ||
 							(stghost = strtok (NULL, " ")) == NULL) {
 						fprintf (stderr, STG06, "-Z\n");
