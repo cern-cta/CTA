@@ -6,7 +6,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cgrp.c,v $ $Revision: 1.2 $ $Date: 2002/12/11 08:29:30 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cgrp.c,v $ $Revision: 1.3 $ $Date: 2002/12/11 08:31:49 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /*
@@ -111,7 +111,7 @@ gid_t gid;
     return(getgrgid(gid));
 #elif defined(linux) || (defined(__osf__) && defined(__alpha)) || \
       (defined(SOLARIS) && defined(_POSIX_PTHREAD_SEMANTICS)) || \
-      defined(AIX42) || defined(IRIX6)
+      defined(AIX42) || defined(IRIX6) || defined(HPUX11)
     /*
      * The final POSIX.1c standard: the return value is int and
      * buffer pointer is returned as last argument

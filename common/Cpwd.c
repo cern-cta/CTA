@@ -6,7 +6,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpwd.c,v $ $Revision: 1.7 $ $Date: 2002/12/11 08:29:31 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Cpwd.c,v $ $Revision: 1.8 $ $Date: 2002/12/11 08:31:50 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -111,7 +111,7 @@ uid_t uid;
     return(getpwuid(uid));
 #elif defined(linux) || (defined(__osf__) && defined(__alpha)) || \
       (defined(SOLARIS) && defined(_POSIX_PTHREAD_SEMANTICS)) || \
-      defined(AIX42) || defined(IRIX6)
+      defined(AIX42) || defined(IRIX6) || defined(HPUX11)
     /*
      * The final POSIX.1c standard: the return value is int and
      * buffer pointer is returned as last argument
