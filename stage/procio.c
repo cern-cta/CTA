@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.58 2000/11/11 08:45:22 jdurand Exp $
+ * $Id: procio.c,v 1.59 2000/11/21 10:41:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.58 $ $Date: 2000/11/11 08:45:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.59 $ $Date: 2000/11/21 10:41:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1334,12 +1334,6 @@ void procputreq(req_data, clienthost)
 #endif
 
 	wqp = NULL;
-	if ((gr = Cgetgrgid (gid)) == NULL) {
-		sendrep (rpfd, MSG_ERR, STG36, gid);
-		c = SYERR;
-		goto reply;
-	}
-
 #ifdef linux
 	optind = 0;
 #else
@@ -1429,6 +1423,12 @@ void procputreq(req_data, clienthost)
 
 	if (errflg) {
 		c = USERR;
+		goto reply;
+	}
+
+	if ((gr = Cgetgrgid (gid)) == NULL) {
+		sendrep (rpfd, MSG_ERR, STG36, gid);
+		c = SYERR;
 		goto reply;
 	}
 
@@ -1790,34 +1790,70 @@ void procputreq(req_data, clienthost)
 	if (hsmfilesstcp != NULL) free(hsmfilesstcp);
 	return;
  reply:
-	free (argv);
-	if (hsmfiles != NULL) free(hsmfiles);
-	if (hsmfilesstcp != NULL) free(hsmfilesstcp);
 #if SACCT
 	stageacct (STGCMDC, uid, gid, clienthost,
 						 reqid, STAGEPUT, 0, c, NULL, "");
 #endif
 	sendrep (rpfd, STAGERC, STAGEPUT, c);
-	if (c && wqp) {
-		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
-			for (stcp = stcs; stcp < stce; stcp++) {
-				if (wfp->subreqid == stcp->reqid)
-					break;
-			}
-			if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-				update_migpool(stcp,-1);
-				stcp->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
-			} else {
-				stcp->status = STAGEOUT|PUT_FAILED;
-			}
+	if (c) {
+		if (wqp) {
+			for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
+				for (stcp = stcs; stcp < stce; stcp++) {
+					if (wfp->subreqid == stcp->reqid)
+						break;
+				}
+				if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+					update_migpool(stcp,-1);
+					stcp->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
+				} else {
+					stcp->status = STAGEOUT|PUT_FAILED;
+				}
 #ifdef USECDB
-			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-				stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-			}
+				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
 #endif
+			}
+			rmfromwq (wqp);
+	    } else if (Mflag) {
+			/* It was a stageput that failed immediately (for example, because gid is not in group file) */
+			/* We need to check the specific case when the HSM file had the CAN_BE_MIGR flag */
+			/* Please note that at this stage we have not yet filled the hsmfilesstcp array */
+#ifdef linux
+			optind = 0;
+#else
+			optind = 1;
+#endif
+			while ((c = getopt (nargs, argv, "Gh:I:mM:q:U:V:")) != EOF) {
+				switch (c) {
+				case 'M':
+					/* HSM filename is pointed by optarg */
+					for (stcp = stcs; stcp < stce; stcp++) {
+						if (stcp->reqid == 0) break;
+						if (stcp->t_or_d != 'm' && stcp->t_or_d != 'h') continue;
+						if (strcmp(stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile, optarg) != 0) continue;
+						if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+							update_migpool(stcp,-1);
+							stcp->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
+						} else {
+							stcp->status = STAGEOUT|PUT_FAILED;
+						}
+#ifdef USECDB
+						if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+							stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+						}
+#endif
+					}
+					break;
+				default:
+					break;
+				}
+			}
 		}
-		rmfromwq (wqp);
 	}
+	free (argv);
+	if (hsmfiles != NULL) free(hsmfiles);
+	if (hsmfilesstcp != NULL) free(hsmfilesstcp);
 }
 
 int
