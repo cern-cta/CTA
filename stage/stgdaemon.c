@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.203 2002/06/10 13:56:36 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.204 2002/06/10 15:03:44 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.203 $ $Date: 2002/06/10 13:56:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.204 $ $Date: 2002/06/10 15:03:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -2332,6 +2332,7 @@ void checkpoolstatus()
 										/* Too bad - finally this request fails because of the name server */
 										wqp->status = this_status;
 										hsm_ns_error = 1;
+										wqp->forced_exit = 1;
 									}
 								}
 							} else {
@@ -2457,6 +2458,7 @@ void checkwaitingspc()
 						/* Too bad - finally this request fails because of the name server */
 						wqp->status = this_status;
 						hsm_ns_error = 1;
+						wqp->forced_exit = 1;
 					}
 				}
 			} else {
@@ -2837,6 +2839,8 @@ void checkwaitq()
 				}
 			}
 			wqp = wqp->next;
+		} else if (wqp->forced_exit) {
+			goto wqp_forced_exit;
 		} else if ((wqp->clnreq_reqid != 0) &&	/* space requested by rtcopy */
 							 (! *(wqp->waiting_pool) ||	/* has been freed or */
 								wqp->status)) {		/* could not be found */
@@ -2863,6 +2867,7 @@ void checkwaitq()
 			wqp->clnreq_waitingreqid = 0;
 			wqp = wqp->next;
 		} else if (wqp->status) {
+		  wqp_forced_exit:
 			/* request failed */
 #if SACCT
 			stageacct (STGCMDC, wqp->req_uid, wqp->req_gid, wqp->clienthost,
