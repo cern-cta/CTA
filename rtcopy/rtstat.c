@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 1996-1997 by CERN/CN/PDP/DM
+* Copyright (C) 1996-2001 by CERN/CN/PDP/DM
 * All rights reserved
 */
 
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.5 $ $Date: 2000/12/06 14:16:02 $ CERN IT-PDP/DM Claire Redmond";
+static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.6 $ $Date: 2001/02/28 08:20:39 $ CERN IT-PDP/DM Claire Redmond";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -531,7 +531,6 @@ main (argc, argv)
               if (swapped) 
                 {
                   swap_fields (rp);
-                  swapped = 0;
                 }	
               if (rp->subtype == TPASSIGN)       
                 {
@@ -550,7 +549,6 @@ main (argc, argv)
               rtcp = (struct acctrtcp *) buf;
               if (swapped) {
                 swap_fields2 (rtcp);
-                swapped = 0;
               }  
               
               if (rtcp->subtype == RTCPCMDR) 
@@ -1645,12 +1643,14 @@ getacctrec (fd_acct, accthdr, buf, swapped)
    */
 
   if (first_rec == 1 && (accthdr->package > 255 || accthdr->package < 0)) {
+	*swapped = 1;
+	first_rec = 0;
+  }
+  if (*swapped) {
 	swap_it (accthdr->package);
 	swap_it (accthdr->len);
 	swap_it (accthdr->timestamp);
-	*swapped = 1;
   }
-  first_rec = 0;
   if (accthdr->len <= 0 || accthdr->len > SACCT_BUFLEN) {
     fprintf (stderr, "corrupted accounting file: package=%d, len=%d, timestamp=%d, swapped=%d\n",
              accthdr->package,accthdr->len,accthdr->timestamp,*swapped);
@@ -1664,6 +1664,7 @@ getacctrec (fd_acct, accthdr, buf, swapped)
   if ( c != accthdr->len) {
     if (c >= 0) fprintf (stderr, "read returns %d\n", c);
     else fprintf (stderr, "read error : %s\n", sys_errlist[errno]);
+    if (c == 0) return (0);
     exit (2);
   }
 
