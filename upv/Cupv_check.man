@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cupv_check.man,v $ $Revision: 1.2 $ $Date: 2002/06/11 14:12:04 $ CERN IT-DS/HSM Ben Couturier
+.\" @(#)$RCSfile: Cupv_check.man,v $ $Revision: 1.3 $ $Date: 2002/07/01 13:51:15 $ CERN IT-DS/HSM Ben Couturier
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\" 
-.TH "Cupv_check" "3" "$Date: 2002/06/11 14:12:04 $" "CASTOR" "UPV Library Functions"
+.TH "Cupv_check" "3" "$Date: 2002/07/01 13:51:15 $" "CASTOR" "UPV Library Functions"
 .SH "NAME"
 Cupv_check \- Checks that a given user has the right to perform an operation, according to the user privilege validation system
 .SH "SYNOPSIS"
@@ -16,6 +16,8 @@ Cupv_check \- Checks that a given user has the right to perform an operation, ac
 .SH "DESCRIPTION"
 .B Cupv_check
 checks the rights of a user in the CASTOR User Privilege Validation system. The permissions are always specified in this way: a given privilege on a target machine (see below) is given  to a given uid/gid from a source machine.
+.TP
+If several privileges are specified at the same time, in the "privilege" field, it checks that the the user has both rights (logical AND).
 .TP 
 .I uid
 is the user id of the user for whom the authorization is requested.
