@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/08/12 14:19:25 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.22 $ $Release$ $Date: 2004/08/13 06:39:11 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/08/12 14:19:25 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.22 $ $Release$ $Date: 2004/08/13 06:39:11 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -356,32 +356,6 @@ static int processGetMoreWorkCallback(
     
     if ( (found == TRUE) && (fl != NULL) ) {
       /*
-       * Request is OK. Go on with the copying
-       */
-      rc = rtcpcld_setFileStatus(
-                                 &fl->filereq,
-                                 SEGMENT_COPYRUNNING,
-                                 0 /* Not urgent to notify the client */
-                                 );
-      if ( rc == -1 ) {
-        (void)dlf_write(
-                        childUuid,
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_SYSCALL,
-                        (struct Cns_fileid *)NULL,
-                        RTCPCLD_NB_PARAMS+2,
-                        "SYSCALL",
-                        DLF_MSG_PARAM_STR,
-                        "rtcpcld_setFileStatus()",
-                        "ERROR_STRING",
-                        DLF_MSG_PARAM_STR,
-                        sstrerror(serrno),
-                        RTCPCLD_LOG_WHERE
-                        );
-        return(-1);
-      }
-
-      /*
        * Pop off request by request until all has been passed back 
        * through callback. Make sure to retain the original tape
        * path, given by server 
@@ -544,7 +518,7 @@ int rtcpcld_Callback(
       rc = rtcpcld_setFileStatus(
                                  filereq,
                                  status,
-                                 1
+                                 (status == SEGMENT_FAILED ? 1 : 0)
                                  );
       if ( rc == -1 ) {
         (void)dlf_write(
