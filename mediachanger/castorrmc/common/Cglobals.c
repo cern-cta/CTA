@@ -1,5 +1,5 @@
 /*
- * $Id: Cglobals.c,v 1.10 1999/12/09 13:39:21 jdurand Exp $
+ * $Id: Cglobals.c,v 1.11 2000/02/28 12:53:08 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: Cglobals.c,v $ $Revision: 1.10 $ $Date: 1999/12/09 13:39:21 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: Cglobals.c,v $ $Revision: 1.11 $ $Date: 2000/02/28 12:53:08 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* lint */
 /*
  * Castor_globals.c - central entry to maintain all Castor globals
@@ -78,15 +78,37 @@ extern int serrno;
 int serrno;
 extern int rfio_errno;
 int rfio_errno;
+extern int Copterr;
+int Copterr;
+extern int Coptind;
+int Coptind;
+extern int Coptopt;
+int Coptopt;
+extern int Coptreset;
+int Coptreset;
+extern char *Coptarg;
+char *Coptarg;
+extern int Coptarg_key;
+int Coptarg_key;
 /*
  * Function prototypes for multi-thread env. version of errno externals
  */
 #if defined(__STDC__)
 int *__serrno(void);
 int *__rfio_errno(void);
+int *__Copterr(void);
+int *__Coptind(void);
+int *__Coptopt(void);
+int *__Coptreset(void);
+char **__Coptarg(void);
 #else /* __STDC__ */
 int *__serrno();
 int *__rfio_errno();
+int *__Copterr();
+int *__Coptind();
+int *__Coptopt();
+int *__Coptreset();
+char **__Coptarg();
 #endif /* __STDC__ */
 
 #if defined(hpux) || defined(HPUX10) || defined(sgi) || defined(SOLARIS)
@@ -151,6 +173,11 @@ void Cglobals_init(getspec,setspec,getTid)
          */
         *__serrno() = serrno;
         *__rfio_errno() = rfio_errno;
+        *__Copterr() = Copterr;
+        *__Coptind() = Coptind;
+        *__Coptopt() = Coptopt;
+        *__Coptreset() = Coptreset;
+        *__Coptarg() = Coptarg;
 #if defined(hpux) || defined(HPUX10) ||  defined(sgi) || defined(SOLARIS)
         *__h_errno() = h_errno;
 #endif /* hpux || HPUX10 || sgi || SOLARIS */
@@ -278,6 +305,146 @@ int *__rfio_errno() {
          * hidden de-reference of __rfio_errno().
          */
         if ( addr == NULL ) return(&rfio_errno);
+        else return(addr);
+    }
+}
+
+int *__Copterr() {
+    int rc;
+    int *addr;
+
+    if ( local_setspec == NULL ) {
+        return(&Copterr);
+    } else {
+        addr = NULL;
+        /*
+         * We re-use the old single thread rfio_errno as key
+         */
+        rc = local_getspec(&Copterr,(void **)&addr);
+        if ( rc == -1 || addr == NULL ) {
+            addr = (int *)calloc(1,sizeof(int));
+            rc = local_setspec(&Copterr,(void *)addr);
+        }
+        /*
+         * If memory allocation failed, we can still
+         * return the external. This is obviously not
+         * thread-safe but at least the application
+         * will not die with a strange coredump in a
+         * hidden de-reference of __rfio_errno().
+         */
+        if ( addr == NULL ) return(&Copterr);
+        else return(addr);
+    }
+}
+
+int *__Coptind() {
+    int rc;
+    int *addr;
+
+    if ( local_setspec == NULL ) {
+        return(&Coptind);
+    } else {
+        addr = NULL;
+        /*
+         * We re-use the old single thread rfio_errno as key
+         */
+        rc = local_getspec(&Coptind,(void **)&addr);
+        if ( rc == -1 || addr == NULL ) {
+            addr = (int *)calloc(1,sizeof(int));
+            rc = local_setspec(&Coptind,(void *)addr);
+        }
+        /*
+         * If memory allocation failed, we can still
+         * return the external. This is obviously not
+         * thread-safe but at least the application
+         * will not die with a strange coredump in a
+         * hidden de-reference of __rfio_errno().
+         */
+        if ( addr == NULL ) return(&Coptind);
+        else return(addr);
+    }
+}
+
+int *__Coptopt() {
+    int rc;
+    int *addr;
+
+    if ( local_setspec == NULL ) {
+        return(&Coptopt);
+    } else {
+        addr = NULL;
+        /*
+         * We re-use the old single thread rfio_errno as key
+         */
+        rc = local_getspec(&Coptopt,(void **)&addr);
+        if ( rc == -1 || addr == NULL ) {
+            addr = (int *)calloc(1,sizeof(int));
+            rc = local_setspec(&Coptopt,(void *)addr);
+        }
+        /*
+         * If memory allocation failed, we can still
+         * return the external. This is obviously not
+         * thread-safe but at least the application
+         * will not die with a strange coredump in a
+         * hidden de-reference of __rfio_errno().
+         */
+        if ( addr == NULL ) return(&Coptopt);
+        else return(addr);
+    }
+}
+
+int *__Coptreset() {
+    int rc;
+    int *addr;
+
+    if ( local_setspec == NULL ) {
+        return(&Coptreset);
+    } else {
+        addr = NULL;
+        /*
+         * We re-use the old single thread rfio_errno as key
+         */
+        rc = local_getspec(&Coptreset,(void **)&addr);
+        if ( rc == -1 || addr == NULL ) {
+            addr = (int *)calloc(1,sizeof(int));
+            rc = local_setspec(&Coptreset,(void *)addr);
+        }
+        /*
+         * If memory allocation failed, we can still
+         * return the external. This is obviously not
+         * thread-safe but at least the application
+         * will not die with a strange coredump in a
+         * hidden de-reference of __rfio_errno().
+         */
+        if ( addr == NULL ) return(&Coptreset);
+        else return(addr);
+    }
+}
+
+char **__Coptarg() {
+    int rc;
+    char **addr;
+
+    if ( local_setspec == NULL ) {
+        return(&Coptarg);
+    } else {
+        addr = NULL;
+        /*
+         * We re-use the old single thread rfio_errno as key
+         */
+        rc = local_getspec(&Coptarg_key,(void **)&addr);
+        if ( rc == -1 || addr == NULL ) {
+            addr = (char **)calloc(1,sizeof(char *));
+            rc = local_setspec(&Coptarg_key,(void *)addr);
+        }
+        /*
+         * If memory allocation failed, we can still
+         * return the external. This is obviously not
+         * thread-safe but at least the application
+         * will not die with a strange coredump in a
+         * hidden de-reference of __rfio_errno().
+         */
+        if ( addr == NULL ) return(&Coptarg);
         else return(addr);
     }
 }
