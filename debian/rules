@@ -90,6 +90,7 @@ install: build
 	install -o root -g bin -m 600 $(CURDIR)/upv/Cupvdaemon.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/Cupvdaemon
 	install -o root -g bin -m 600 $(CURDIR)/vdqm/vdqmserv.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/vdqmserv
 	install -o root -g bin -m 600 $(CURDIR)/vmgr/vmgrdaemon.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/vmgrdaemon
+	install -o root -g bin -m 600 $(CURDIR)/job/stagerJob.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/stagerJob
 
 # Build architecture-independent files here.
 binary-indep: build install
