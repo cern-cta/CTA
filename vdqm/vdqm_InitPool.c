@@ -1,32 +1,15 @@
 /*
- * $Id: vdqm_InitPool.c,v 1.4 1999/09/02 15:21:46 obarring Exp $
- * $Log: vdqm_InitPool.c,v $
- * Revision 1.4  1999/09/02 15:21:46  obarring
- * Add osdep.h because of new u_signed64 decl. in vdqm.h
- *
- * Revision 1.3  1999/09/01 15:08:22  obarring
- * Fix sccsid string
- *
- * Revision 1.2  1999/07/29 09:33:51  obarring
- * Replace TABs with SPACEs
- *
- * Revision 1.1  1999/07/27 09:20:16  obarring
- * First version
- *
- */
-
-/*
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
  */
 
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: vdqm_InitPool.c,v $ $Revision: 1.5 $ $Date: 1999/09/27 15:18:14 $ CERN IT-PDP/DM Olof Barring";
+#endif /* not lint */
+
 /*
  * vdqm_InitPool.c - Initialise the VDQM thread pool (server only).
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$Id: vdqm_InitPool.c,v 1.4 1999/09/02 15:21:46 obarring Exp $";
-#endif /* not lint */
 
 #if defined(_WIN32)
 #include <winsock2.h>    /* Needed for SOCKET definition */
@@ -41,12 +24,6 @@ static char sccsid[] = "@(#)$Id: vdqm_InitPool.c,v 1.4 1999/09/02 15:21:46 obarr
 #include <vdqm.h>
 #include <Cthread_api.h>
 #include <Cpool_api.h>
-
-#if !defined(linux)
-extern char *sys_errlist[];
-#else /* linux */
-#include <stdio.h>   /* Contains definition of sys_errlist[] */
-#endif /* linux */
 
 int vdqm_InitPool(vdqmnw_t **nwtable) {
     extern char *getenv();
@@ -70,6 +47,9 @@ int vdqm_InitPool(vdqmnw_t **nwtable) {
     log(LOG_INFO,"vdqm_InitPool() thread pool (id=%d): pool size = %d\n",
         rc,poolsize);
     *nwtable = (vdqmnw_t *)malloc(poolsize * sizeof(vdqmnw_t));
-    if ( *nwtable == NULL ) return(-1);
+    if ( *nwtable == NULL ) {
+      log(LOG_ERR,"vdqm_InitPool() malloc(): %s\n",sstrerror(errno));
+      return(-1);
+    }
     return(rc);
 }
