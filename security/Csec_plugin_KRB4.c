@@ -108,7 +108,7 @@ int Csec_reinit_context_impl(ctx)
 {
 
     if (ctx->flags & CSEC_CTX_CONTEXT_ESTABLISHED) {
-        Csec_delete_context_impl(ctx);
+        Csec_delete_connection_context_impl(ctx);
     }
 
     if (ctx->flags & CSEC_CTX_CREDENTIALS_LOADED) {
@@ -122,10 +122,10 @@ int Csec_reinit_context_impl(ctx)
 /**
  * Deletes the security context inside the Csec_context
  */
-int Csec_delete_context_impl(ctx)
+int Csec_delete_connection_context_impl(ctx)
     Csec_context *ctx;
 {
-    free(ctx->context);
+    free(ctx->connection_context);
     return 0;
 }
 
@@ -254,7 +254,8 @@ int Csec_server_establish_context_ext_impl(ctx, s, buf, len)
     Csec_trace(func, "Client name is <%s>\n", kctx->client_name);
     Csec_trace(func, "Credentials are <%s>\n", kctx->client_creds);
 
-    ctx->context = kctx;
+    strncpy(ctx->peer_name, kctx->client_creds , CA_MAXCSECNAMELEN);
+    ctx->connection_context = kctx;
     
     /* Setting the flag in the context object ! */
     ctx->flags |= CSEC_CTX_CONTEXT_ESTABLISHED;
@@ -294,7 +295,7 @@ int Csec_client_establish_context_impl(ctx, s)
                 krb_err_txt[rc]);
         return -1;
     }
-    fprintf(stdout, "Realm is: %s\n", kctx->realm);
+    Csec_trace(func, "Realm is: %s\n", kctx->realm);
 
     /* Getting the client hostname and IP */
     if (gethostname(kctx->local_host, CA_MAXHOSTNAMELEN)<0) {
@@ -329,7 +330,7 @@ int Csec_client_establish_context_impl(ctx, s)
         *c=0;		/* 'name' part only */
     }
 
-    printf("Client: <%s> Server: <%s>\n",
+    Csec_trace(func, "Client: <%s> Server: <%s>\n",
            kctx->local_host,
            kctx->remote_host);
     
@@ -347,7 +348,7 @@ int Csec_client_establish_context_impl(ctx, s)
 	}
 
 
-    printf("Doing sendauth - Ticket build successfully\n");
+    Csec_trace(func, "Doing sendauth - Ticket build successfully\n");
     
     authopts = KOPT_DO_MUTUAL+KOPT_DONT_MK_REQ;
     rc = krb_sendauth(authopts,
@@ -370,7 +371,7 @@ int Csec_client_establish_context_impl(ctx, s)
         return -1;
     }  
 
-    ctx->context = kctx;
+    ctx->connection_context = kctx;
     
     /* Setting the flag in the context object ! */
     ctx->flags |= CSEC_CTX_CONTEXT_ESTABLISHED;

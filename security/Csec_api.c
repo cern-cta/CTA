@@ -53,14 +53,14 @@ static char sccsid[] = "@(#)Csec_api_loader.c,v 1.1 2004/01/12 10:31:39 CERN IT/
 /**
  * Initializes the Csec the context, and the protocol as well
  */
-int Csec_init_context_client(Csec_context *ctx) {
+int Csec_client_init_context(Csec_context *ctx) {
   return Csec_init_context_ext(ctx, 1, 0);
 }
 
 /**
  * Initializes the Csec the context, but not the protocol
  */
-int Csec_init_context_server(Csec_context *ctx) {
+int Csec_server_init_context(Csec_context *ctx) {
   return Csec_init_context_ext(ctx, 0, 0);
 }
 
@@ -75,8 +75,8 @@ int Csec_init_context_ext(Csec_context *ctx, int init_proto, int reinitialize) {
   
   if (reinitialize) {
     if (ctx->flags & CSEC_CTX_CONTEXT_ESTABLISHED) {
-      if (ctx->Csec_delete_context != NULL)
-	(*(ctx->Csec_delete_context))(ctx);
+      if (ctx->Csec_delete_connection_context != NULL)
+	(*(ctx->Csec_delete_connection_context))(ctx);
     }
     if (ctx->flags & CSEC_CTX_CREDENTIALS_LOADED) {
       if (ctx->Csec_delete_creds != NULL)
@@ -111,8 +111,8 @@ int Csec_init_context_ext(Csec_context *ctx, int init_proto, int reinitialize) {
 int Csec_clear_context(Csec_context *ctx) {
 
   if (ctx->flags & CSEC_CTX_CONTEXT_ESTABLISHED) {
-    if (ctx->Csec_delete_context != NULL)
-      (*(ctx->Csec_delete_context))(ctx);
+    if (ctx->Csec_delete_connection_context != NULL)
+      (*(ctx->Csec_delete_connection_context))(ctx);
   }
   if (ctx->flags & CSEC_CTX_CREDENTIALS_LOADED) {
     if (ctx->Csec_delete_creds != NULL)
@@ -138,7 +138,7 @@ int Csec_clear_context(Csec_context *ctx) {
 /**
  * Reinitializes the security context
  */
-int Csec_reinit_context_server(ctx)
+int Csec_server_reinit_context(ctx)
      Csec_context *ctx;
 {
   return  Csec_init_context_ext(ctx, 0, 1);
@@ -149,7 +149,7 @@ int Csec_reinit_context_server(ctx)
  * 
  * @returns 0 in case of success, -1 otherwise
  */
-int Csec_delete_context(ctx)
+int Csec_delete_connection_context(ctx)
      Csec_context *ctx;
 {
   if (ctx->flags & CSEC_CTX_CONTEXT_ESTABLISHED) {
@@ -157,8 +157,8 @@ int Csec_delete_context(ctx)
       free(ctx->protocols);
       ctx->nb_protocols = 0;
     }
-    if (ctx->Csec_delete_context != NULL)
-      return (*(ctx->Csec_delete_context))(ctx);
+    if (ctx->Csec_delete_connection_context != NULL)
+      return (*(ctx->Csec_delete_connection_context))(ctx);
   }
       
   return 0;
@@ -235,7 +235,7 @@ int Csec_client_establish_context(ctx, s)
   }
     
   if (!(ctx->flags& CSEC_CTX_INITIALIZED)) {
-    if (Csec_init_context_client(ctx)<-1) {
+    if (Csec_client_init_context(ctx)<-1) {
       return -1;
     }
   }
@@ -510,3 +510,47 @@ char *Csec_server_get_service_name(Csec_context *ctx) {
     return NULL;
   }
 }
+
+/**
+ * Returns the user name of the client connecting to the server.
+ */
+char *Csec_server_get_client_username(Csec_context *ctx, int *uid, int *gid) {
+  char *func = "Csec_server_get_client_username";
+
+  /* Checking whether the mapping has been done */
+  if (ctx->flags & CSEC_CTX_USER_MAPPED) {
+    if (uid != NULL) 
+      *uid = ctx->peer_uid;
+    if (gid != NULL)
+      *gid = ctx->peer_gid;
+    return ctx->peer_username;
+  }
+
+  if(Csec_map2name(ctx, 
+		   ctx->peer_name, 
+		   ctx->peer_username, 
+		   CA_MAXCSECNAMELEN)<0) {
+    Csec_errmsg(func, "Could not map principal %s to a local user name!",
+		ctx->peer_name);
+    serrno =  ESEC_NO_PRINC; 
+    return NULL;
+  }
+
+  if(Csec_name2id(ctx->peer_username, 
+		 &(ctx->peer_uid),
+		 &(ctx->peer_gid))) {
+    Csec_errmsg(func, "Could not map username  %s to uid/gid!",
+		ctx->peer_username);
+    serrno =  ESEC_NO_USER; 
+    return NULL;
+  }
+
+     
+  ctx->flags |=  CSEC_CTX_USER_MAPPED;
+    if (uid != NULL) 
+      *uid = ctx->peer_uid;
+    if (gid != NULL)
+      *gid = ctx->peer_gid;
+  return ctx->peer_username;
+}
+

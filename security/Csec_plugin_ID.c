@@ -80,7 +80,7 @@ int Csec_reinit_context_impl(ctx)
 {
 
     if (ctx->flags & CSEC_CTX_CONTEXT_ESTABLISHED) {
-        Csec_delete_context_impl(ctx);
+        Csec_delete_connection_context_impl(ctx);
     }
 
     if (ctx->flags & CSEC_CTX_CREDENTIALS_LOADED) {
@@ -94,7 +94,7 @@ int Csec_reinit_context_impl(ctx)
 /**
  * Deletes the security context inside the Csec_context
  */
-int Csec_delete_context_impl(ctx)
+int Csec_delete_connection_context_impl(ctx)
     Csec_context *ctx;
 {
     return 0;

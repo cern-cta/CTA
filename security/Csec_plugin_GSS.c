@@ -83,7 +83,7 @@ int Csec_reinit_context_impl(ctx)
 {
 
   if (ctx->flags & CSEC_CTX_CONTEXT_ESTABLISHED) {
-    Csec_delete_context_impl(ctx);
+    Csec_delete_connection_context_impl(ctx);
   }
 
   if (ctx->flags & CSEC_CTX_CREDENTIALS_LOADED) {
@@ -97,12 +97,12 @@ int Csec_reinit_context_impl(ctx)
 /**
  * Deletes the security context inside the Csec_context
  */
-int Csec_delete_context_impl(ctx)
+int Csec_delete_connection_context_impl(ctx)
      Csec_context *ctx;
 {
   OM_uint32 maj_stat, min_stat;
 
-  maj_stat = gss_delete_sec_context(&min_stat, &(ctx->context), NULL);
+  maj_stat = gss_delete_sec_context(&min_stat, &(ctx->connection_context), NULL);
   if (maj_stat != GSS_S_COMPLETE) {
     serrno = _Csec_map_gssapi_err(maj_stat, min_stat);
     _Csec_process_gssapi_err("deleting context", maj_stat, min_stat);
@@ -215,7 +215,7 @@ int Csec_server_establish_context_ext_impl(ctx, s, buf, len)
   int ext_buf_read = 0;
 
   /* Have context/credentials point to the Csec_context structure */
-  context=&(ctx->context);
+  context=&(ctx->connection_context);
 
   if (!(ctx->flags&CSEC_CTX_CREDENTIALS_LOADED)) {
     Csec_trace(func, "Acquiring server credentials\n");
@@ -359,7 +359,7 @@ int Csec_client_establish_context_impl(ctx, s)
   char *func = "client_extablish_context";
 
   Csec_trace(func, "Entering\n");
-  gss_context = &(ctx->context);
+  gss_context = &(ctx->connection_context);
   
   /* Set flags */
   in_flags = GSS_C_MUTUAL_FLAG | GSS_C_REPLAY_FLAG;

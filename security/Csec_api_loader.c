@@ -76,13 +76,16 @@ void *Csec_get_shlib(Csec_context *ctx) {
 	     ctx->protocols[ctx->current_protocol].id);
     
   handle = dlopen(filename, RTLD_NOW);
-
+  
   if (handle == NULL) {
+    char dlerrmsg[ERRBUFSIZE+1];
+    strncpy(dlerrmsg, dlerror(), ERRBUFSIZE);
+    
     ctx->shhandle = NULL;
     Csec_trace(func, "Error opening shared library %s: %s\n", filename,
-	       dlerror());
+	       dlerrmsg);
     Csec_errmsg(func, "Error opening shared library %s: %s\n", filename,
-		dlerror());
+		dlerrmsg);
        
     return NULL;
   }
@@ -91,7 +94,7 @@ void *Csec_get_shlib(Csec_context *ctx) {
 
   DLSETFUNC(ctx, handle, Csec_init_context);
   DLSETFUNC(ctx, handle, Csec_reinit_context);
-  DLSETFUNC(ctx, handle, Csec_delete_context);
+  DLSETFUNC(ctx, handle, Csec_delete_connection_context);
   DLSETFUNC(ctx, handle, Csec_delete_creds);
   DLSETFUNC(ctx, handle, Csec_server_acquire_creds);
   DLSETFUNC(ctx, handle, Csec_server_establish_context_ext);

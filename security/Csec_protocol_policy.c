@@ -46,7 +46,7 @@ int Csec_client_lookup_protocols(Csec_protocol **protocols, int *nbprotocols) {
     Csec_trace("Csec_client_get_protocols", buff);
   }
   
-  buf = (char *)malloc(strlen(p));
+  buf = (char *)malloc(strlen(p)+1);
   if (NULL == buf) {
     return -1;
   }
@@ -199,7 +199,7 @@ int Csec_client_send_protocol(int s, int timeout, Csec_context *ctx) {
   buf.length = strlen(ctx->protocols[ctx->current_protocol].id) + 1;
   buf.value = (char *)malloc(buf.length);
   strncpy(buf.value, ctx->protocols[ctx->current_protocol].id, buf.length);
-  *(((char *)buf.value) + buf.length) = '\0';
+  *(((char *)buf.value) + buf.length -1) = '\0';
 
   Csec_trace(func, "Sending %d bytes, <%s>\n", buf.length, (char *)buf.value);
      
