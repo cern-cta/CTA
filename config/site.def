@@ -24,7 +24,7 @@
    This option has no efect on all other platforms.
 */
 
-#define AdminHosts "castor tms-2 sure01 sure02"
+#define AdminHosts "castor tms-2 lxcastor sure01 sure02 castoradm1 castoradm2 castoradm3 castorsrv1 castorsrv2 castorsrv3 castorsrv4 castorsrv5 castorsrv6 castorsrv7 castorsrv8 castorsrv9"
 #define AuthorizedHosts	/etc/rtcopy.hosts
 #define CDKDir	/usr/local/src/CDK
 #if defined(_WIN32)
@@ -34,14 +34,14 @@
 #endif
 #define CupvHost	"castorcupv"
 #define PolicySpool	/etc/expert
-#define CupvSpool	/usr/spool/upv
-#define RmMasterSpool	/usr/spool/rmmaster
+#define CupvSpool	/var/spool/upv
+#define RmMasterSpool	/var/spool/rmmaster
 #if defined(_WIN32)
 #define RmMasterConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\RMMASTERCONFIG
 #else
 #define RmMasterConfigFile	/etc/RMMASTERCONFIG
 #endif
-#define RmNodeSpool	/usr/spool/rmnode
+#define RmNodeSpool	/var/spool/rmnode
 #if defined(_WIN32)
 #define RmNodeConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\RMNODECONFIG
 #else
@@ -53,11 +53,11 @@
 #else
 #define DbConfigFile	/etc/DBCONFIG
 #endif
-#define DbSpool	/usr/spool/db
+#define DbSpool	/var/spool/db
 #define DomainName	cern.ch
-#define FilManDir       /usr/man/man4
-#define FilManSuffix    4
-#define HsmToolsSpool	/usr/spool/hsmtools
+#define FilManDir       $(DESTDIR)/usr/share/man/man4
+#define FilManSuffix    4castor
+#define HsmToolsSpool	/var/spool/hsmtools
 #if defined(_WIN32)
 #define InstallConfigDir	\\cern.ch\dfs\Applications\CERN\CASTOR\sysconfig
 #else
@@ -66,36 +66,36 @@
 #if defined(_WIN32)
 #define InstallBinDir	\\cern.ch\dfs\Applications\CERN\CASTOR\bin
 #else
-#define InstallBinDir	/usr/bin
+#define InstallBinDir	$(DESTDIR)/usr/bin
 #endif
 #if defined(_WIN32)
 #define InstallIncludeDir       \\cern.ch\dfs\Applications\CERN\CASTOR\include
 #else
-#define InstallIncludeDir       /usr/include
+#define InstallIncludeDir       $(DESTDIR)/usr/include
 #endif
 #if defined(_WIN32)
 #define InstallLibDir	\\cern.ch\dfs\Applications\CERN\CASTOR\lib
 #else
-#define InstallLibDir	/usr/lib
+#define InstallLibDir	$(DESTDIR)/usr/lib
 #endif
-#define LibManDir       /usr/man/man3
-#define LibManSuffix    3
+#define LibManDir       $(DESTDIR)/usr/share/man/man3
+#define LibManSuffix    3castor
 #if defined(_WIN32)
 #define LocalHostsList 	%%SystemRoot%%\\system32\\drivers\\etc\\shift.localhosts
 #else
 #define LocalHostsList  /etc/shift.localhosts
 #endif
-#define ManDir  /usr/man/man1
-#define ManSuffix       1
+#define ManDir  $(DESTDIR)/usr/share/man/man1
+#define ManSuffix       1castor
 #if defined(_WIN32)
 #define MappingFile	%%SystemRoot%%\\system32\\drivers\\etc\\ext.users
 #else
 #define MappingFile	/etc/ext.users
 #endif
 #define MonitorHost	"castormon"
-#define MonitorSpool	/usr/spool/monitor
+#define MonitorSpool	/var/spool/monitor
 #define MsgdaemonAuthHosts /etc/msg.hosts
-#define MsgdaemonHost	"coremsg"
+#define MsgdaemonHost	"castormsg"
 #define NfsRoot	/shift
 #if defined(_WIN32)
 #define NsConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\NSCONFIG
@@ -104,7 +104,7 @@
 #endif
 #define NsHost	"castorns"
 #define NsHostPfx	cns
-#define NsSpool	/usr/spool/ns
+#define NsSpool	/var/spool/ns
 #define NsRoot  "/castor"
 #define OperConfigFile	/etc/OPERCONFIG
 #define OperatorGid	root
@@ -120,12 +120,12 @@
 #define RemoteHostsList /etc/shift.remhosts
 #endif
 #define RfioAlarmFile	rfio_alrm
-#define RfioSpool	/usr/spool/rfio
-#define RmcSpool	/usr/spool/rmc
-#define RtcopySpool	/usr/spool/rtcopy
-#define RtcopyWorkDir	/usr/tmp/RTCOPY
+#define RfioSpool	/var/spool/rfio
+#define RmcSpool	/var/spool/rmc
+#define RtcopySpool	/var/spool/rtcopy
+#define RtcopyWorkDir	/var/tmp/RTCOPY
 #define	RtcpclientdHost	"lxshare003d"
-#define SacctDir	/usr/spool/sacct
+#define SacctDir	/var/spool/sacct
 #if defined(_WIN32)
 #define ShiftConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor.conf
 #else
@@ -136,36 +136,36 @@
 #define StagerSuperGroup	st
 #define StagerSuperUser	stage
 #define StageHost	"stagepublic"
-#define StageSpool	/usr/spool/stage
+#define StageSpool	/var/spool/stage
 #define StagerGid	st
 #define SysreqHost	"sysreq tms-2 tms"
 #define TapeConfigFile	/etc/TPCONFIG
-#define TapeSpool	/usr/spool/tape
-#define VdqmHost        "castor tms-2"
-#define VdqmSpool	/usr/spool/vdqm
+#define TapeSpool	/var/spool/tape
+#define VdqmHost        "castorvdqm1 castorvdqm2"
+#define VdqmSpool	/var/spool/vdqm
 #if defined(_WIN32)
 #define VmgrConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\VMGRCONFIG
 #else
 #define VmgrConfigFile	/etc/VMGRCONFIG
 #endif
 #define VmgrHost	"castorvmgr"
-#define VmgrSpool	/usr/spool/vmgr
+#define VmgrSpool	/var/spool/vmgr
 #if defined(_WIN32)
 #define DlfConfigFile  %%SystemRoot%%\\system32\\drivers\\etc\\DLFCONFIG
 #else
 #define DlfConfigFile  /etc/DLFCONFIG
 #endif
-#define DlfHost        "lxshare003d"
-#define DlfSpool       /usr/spool/dlf
+#define DlfHost        "castordlf"
+#define DlfSpool       /var/spool/dlf
 #if defined(_WIN32)
 #define ExpertConfigFile  %%SystemRoot%%\\system32\\drivers\\etc\\EXPCONFIG
 #else
 #define ExpertConfigFile  /etc/EXPCONFIG
 #endif
 #define ExpertHost     "localhost"
-#define ExpertSpool    /usr/spool/expert
+#define ExpertSpool    /var/spool/expert
 #define RhHost        "lxfsrm464"
-#define GcSpool        /usr/spool/gc
+#define GcSpool        /var/spool/gc
 
 #define W2000MapDir	\\\\cern.ch\\dfs\\Applications\\CERN\\CASTOR\\Config
 #define WntMapDir	\\\\cerndfs01\\dfs\\Applications\\CERN\\CASTOR\\Config
