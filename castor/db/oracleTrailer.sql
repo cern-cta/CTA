@@ -141,16 +141,27 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
 END castor;
 
+/* Build diskCopy path from fileId */
+CREATE OR REPLACE PROCEDURE buildPathFromFileId(fid IN INTEGER,
+                                                nsHost IN VARCHAR,
+                                                path OUT VARCHAR) AS
+BEGIN
+  path := CONCAT(CONCAT(CONCAT(TO_CHAR(MOD(fid,100)), '/'),
+                        CONCAT(TO_CHAR(fid), '@')),
+                 nsHost);
+END;
+
 /* PL/SQL method implementing scheduleSubRequest */
 CREATE OR REPLACE PROCEDURE scheduleSubRequest(srId IN INTEGER, fileSystemId IN INTEGER,
-                                               dci OUT INTEGER, path OUT VARCHAR,
+                                               dci OUT INTEGER, rpath OUT VARCHAR,
                                                status OUT NUMBER, sources OUT castor.DiskCopy_Cur) AS
-  castorFileId INTEGER;
-  unusedPATH VARCHAR(2048);
+  cfid INTEGER;
+  fid INTEGER;
+  nh VARCHAR(2048);
 BEGIN
  dci := 0;
  SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
-  INTO dci, path, status
+  INTO dci, rpath, status
   FROM DiskCopy, SubRequest
   WHERE SubRequest.id = srId
     AND SubRequest.castorfile = DiskCopy.castorfile
@@ -159,7 +170,7 @@ BEGIN
  IF status IN (2, 5) THEN -- WAITTAPERECALL, WAITFS, Make SubRequest Wait
    makeSubRequestWait(srId, dci);
    dci := 0;
-   path := '';
+   rpath := '';
  END IF;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, look in others
  OPEN sources FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
@@ -170,13 +181,15 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
  IF sources%NOTFOUND THEN -- create DiskCopy for recall
    getId(1, dci);
    UPDATE SubRequest SET diskCopy = dci, status = 4 -- WAITTAPERECALL
-    WHERE id = srId RETURNING castorFile INTO castorFileId;
+    WHERE id = srId RETURNING castorFile INTO cfid;
+   SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
+   buildPathFromFileId(fid, nh, rpath);
    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
-    VALUES ('', dci, 0, castorFileId, 2); -- status WAITTAPERECALL
+    VALUES (rpath, dci, 0, cfid, 2); -- status WAITTAPERECALL
    status := 99; -- WAITTAPERECALL, NEWLY CREATED
    close sources;
  ELSE
-   FETCH sources INTO dci, unusedPath, status;
+   FETCH sources INTO dci, rpath, status;
    IF status IN (2,5) THEN -- WAITTAPERECALL, WAITFS, Make SubRequest Wait
      makeSubRequestWait(srId, dci);
      dci := 0;
@@ -184,9 +197,9 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
    ELSE -- create DiskCopy for Disk to Disk copy
      getId(1, dci);
      UPDATE SubRequest SET diskCopy = dci WHERE id = srId
-      RETURNING castorFile INTO castorFileId;
+      RETURNING castorFile INTO cfid;
      INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
-      VALUES ('', dci, 0, castorFileId, 1); -- status WAITDISK2DISKCOPY
+      VALUES (rpath, dci, 0, cfid, 1); -- status WAITDISK2DISKCOPY
      status := 1; -- status WAITDISK2DISKCOPY
    END IF;
  END IF;
