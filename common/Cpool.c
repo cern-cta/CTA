@@ -7,7 +7,7 @@
 /* For the what command                 */
 /* ------------------------------------ */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.26 $ $Date: 2004/03/16 16:34:21 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.27 $ $Date: 2004/03/17 10:17:23 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cpool_api.h>
@@ -76,7 +76,6 @@ int Cpool_debug = 0;
 /* ------------------------------------ */
 struct Cpool_t {
 	int                     lock_parent;
-	int                     lock_child;
 	int                     poolnb;   /* Pool number                        */
 	int                     nbelem;   /* Nb of elems                        */
 	int                    *cid;      /* Elements Cthread ID                */
@@ -96,16 +95,15 @@ struct Cpool_t {
 	void                  **arg;
 	
 	void                   *lock_parent_cthread_structure;
-	void                   *lock_child_cthread_structure;
 	void                   **state_cthread_structure;
 
 	struct Cpool_t         *next;     /* Next pool                          */
 };
 
 #ifndef _WIN32
-static struct Cpool_t Cpool = { -1, -1, 0, 0, NULL, -1, NULL, NULL, NULL, 0, NULL, NULL, NULL};
+static struct Cpool_t Cpool = { -1, 0, 0, NULL, -1, NULL, NULL, NULL, 0, NULL, NULL, NULL};
 #else
-static struct Cpool_t Cpool = { -1, -1, 0, 0, NULL, -1, NULL, 0, NULL, NULL, NULL};
+static struct Cpool_t Cpool = { -1, 0, 0, NULL, -1, NULL, 0, NULL, NULL, NULL};
 #endif
 
 #ifndef _WIN32
@@ -243,6 +241,14 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 		return(-1);
 	}
 
+#ifdef CPOOL_DEBUG
+	/* Cthread_mutex_lock(&lock_cpool_debug); */
+	if (Cpool_debug != 0)
+		log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : lock on &Cpool\n",
+			_Cpool_self(),_Cthread_self());
+	/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+
 	/* We search the last available pool */
 	if (Cthread_mutex_lock(&Cpool) != 0) {
 		return(-1);
@@ -277,6 +283,13 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 
 		/* We prepare the list of fd's to close */
 		if ((to_close = malloc(2 * nbreq * sizeof(int))) == NULL) {
+#ifdef CPOOL_DEBUG
+			/* Cthread_mutex_lock(&lock_cpool_debug); */
+			if (Cpool_debug != 0)
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : un-lock on &Cpool\n",
+					_Cpool_self(),_Cthread_self());
+			/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 			Cthread_mutex_unlock(&Cpool);
 			serrno = SEINTERNAL;
 			return(-1);
@@ -286,6 +299,13 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
   
 	/* We create a new pool element */
 	if ((current = malloc(sizeof(struct Cpool_t))) == NULL) {
+#ifdef CPOOL_DEBUG
+		/* Cthread_mutex_lock(&lock_cpool_debug); */
+		if (Cpool_debug != 0)
+			log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : un-lock on &Cpool\n",
+				_Cpool_self(),_Cthread_self());
+		/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 		Cthread_mutex_unlock(&Cpool);
 		serrno = SEINTERNAL;
 		return(-1);
@@ -299,6 +319,13 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 		}
 #endif
 		free(current);
+#ifdef CPOOL_DEBUG
+		/* Cthread_mutex_lock(&lock_cpool_debug); */
+		if (Cpool_debug != 0)
+			log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : un-lock on &Cpool\n",
+				_Cpool_self(),_Cthread_self());
+		/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 		Cthread_mutex_unlock(&Cpool);
 		serrno = SEINTERNAL;
 		return(-1);
@@ -310,6 +337,13 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 			free(to_close);
 			free(current->cid);
 			free(current);
+#ifdef CPOOL_DEBUG
+			/* Cthread_mutex_lock(&lock_cpool_debug); */
+			if (Cpool_debug != 0)
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : un-lock on &Cpool\n",
+					_Cpool_self(),_Cthread_self());
+			/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 			Cthread_mutex_unlock(&Cpool);
 			serrno = SEINTERNAL;
 			return(-1);
@@ -320,13 +354,26 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 			free(current->writefd);
 			free(current->cid);
 			free(current);
+#ifdef CPOOL_DEBUG
+			/* Cthread_mutex_lock(&lock_cpool_debug); */
+			if (Cpool_debug != 0)
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : un-lock on &Cpool\n",
+					_Cpool_self(),_Cthread_self());
+			/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 			Cthread_mutex_unlock(&Cpool);
 			serrno = SEINTERNAL;
 			return(-1);
 		}
 	} else {
 #endif /* _WIN32 */
-		/* Get lock_parent and lock_child cthread structures */
+#ifdef CPOOL_DEBUG
+		/* Cthread_mutex_lock(&lock_cpool_debug); */
+		if (Cpool_debug != 0)
+			log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : lock on &(current->lock_parent)\n",
+				_Cpool_self(),_Cthread_self());
+		/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 		if (Cthread_mutex_lock(&(current->lock_parent)) != 0) {
 			free(current->cid);
 			free(current);
@@ -337,30 +384,36 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 		if ((current->lock_parent_cthread_structure = Cthread_mutex_lock_addr(&(current->lock_parent))) == NULL) {
 			free(current->cid);
 			free(current);
+#ifdef CPOOL_DEBUG
+			/* Cthread_mutex_lock(&lock_cpool_debug); */
+			if (Cpool_debug != 0)
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : un-lock on &Cpool\n",
+					_Cpool_self(),_Cthread_self());
+			/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 			Cthread_mutex_unlock(&Cpool);
 			serrno = SEINTERNAL;
 			return(-1);
 		}
+#ifdef CPOOL_DEBUG
+		/* Cthread_mutex_lock(&lock_cpool_debug); */
+		if (Cpool_debug != 0)
+			log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : un-lock on current->lock_parent_cthread_structure\n",
+				_Cpool_self(),_Cthread_self());
+		/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 		Cthread_mutex_unlock_ext(current->lock_parent_cthread_structure);
-		if (Cthread_mutex_lock(&(current->lock_child)) != 0) {
-			free(current->cid);
-			free(current);
-			Cthread_mutex_unlock(&Cpool);
-			serrno = SEINTERNAL;
-			return(-1);
-		}
-		if ((current->lock_child_cthread_structure = Cthread_mutex_lock_addr(&(current->lock_child))) == NULL) {
-			free(current->cid);
-			free(current);
-			Cthread_mutex_unlock(&Cpool);
-			serrno = SEINTERNAL;
-			return(-1);
-		}
-		Cthread_mutex_unlock_ext(current->lock_child_cthread_structure);
 		/* Allocation for threads status */
 		if ((current->state = malloc(nbreq * sizeof(int))) == NULL) {
 			free(current->cid);
 			free(current);
+#ifdef CPOOL_DEBUG
+			/* Cthread_mutex_lock(&lock_cpool_debug); */
+			if (Cpool_debug != 0)
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : un-lock on &Cpool\n",
+					_Cpool_self(),_Cthread_self());
+			/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 			Cthread_mutex_unlock(&Cpool);
 			serrno = SEINTERNAL;
 			return(-1);
@@ -369,6 +422,13 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 			free(current->state);
 			free(current->cid);
 			free(current);
+#ifdef CPOOL_DEBUG
+			/* Cthread_mutex_lock(&lock_cpool_debug); */
+			if (Cpool_debug != 0)
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : un-lock on &Cpool\n",
+					_Cpool_self(),_Cthread_self());
+			/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 			Cthread_mutex_unlock(&Cpool);
 			serrno = SEINTERNAL;
 			return(-1);
@@ -376,11 +436,25 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 		{
 			int icthread;
 			for (icthread = 0; icthread < nbreq; icthread++) {
+#ifdef CPOOL_DEBUG
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0)
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : lock on &(current->state[%d]\n",
+						_Cpool_self(),_Cthread_self(), icthread);
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 				if (Cthread_mutex_lock(&(current->state[icthread])) != 0) {
 					free(current->state_cthread_structure);
 					free(current->state);
 					free(current->cid);
 					free(current);
+#ifdef CPOOL_DEBUG
+					/* Cthread_mutex_lock(&lock_cpool_debug); */
+					if (Cpool_debug != 0)
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : un-lock on &Cpool\n",
+							_Cpool_self(),_Cthread_self());
+					/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 					Cthread_mutex_unlock(&Cpool);
 					serrno = SEINTERNAL;
 					return(-1);
@@ -390,10 +464,24 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 					free(current->state);
 					free(current->cid);
 					free(current);
+#ifdef CPOOL_DEBUG
+					/* Cthread_mutex_lock(&lock_cpool_debug); */
+					if (Cpool_debug != 0)
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : un-lock on &Cpool\n",
+							_Cpool_self(),_Cthread_self());
+					/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 					Cthread_mutex_unlock(&Cpool);
 					serrno = SEINTERNAL;
 					return(-1);
 				}
+#ifdef CPOOL_DEBUG
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0)
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : un-lock on current->state_cthread_structure[%d]\n",
+						_Cpool_self(),_Cthread_self(), icthread);
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 				Cthread_mutex_unlock_ext(current->state_cthread_structure[icthread]);
 			}
 		}
@@ -403,6 +491,13 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 			free(current->state);
 			free(current->cid);
 			free(current);
+#ifdef CPOOL_DEBUG
+			/* Cthread_mutex_lock(&lock_cpool_debug); */
+			if (Cpool_debug != 0)
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : un-lock on &Cpool\n",
+					_Cpool_self(),_Cthread_self());
+			/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 			Cthread_mutex_unlock(&Cpool);
 			serrno = SEINTERNAL;
 			return(-1);
@@ -414,6 +509,13 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 			free(current->state);
 			free(current->cid);
 			free(current);
+#ifdef CPOOL_DEBUG
+			/* Cthread_mutex_lock(&lock_cpool_debug); */
+			if (Cpool_debug != 0)
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : un-lock on &Cpool\n",
+					_Cpool_self(),_Cthread_self());
+			/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 			Cthread_mutex_unlock(&Cpool);
 			serrno = SEINTERNAL;
 			return(-1);
@@ -466,16 +568,51 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 				dummy += sizeof(struct Cpool_t *);
 				memcpy(dummy,&i,sizeof(int));
 				/* And we don't forget to initialize the state of this thread to be STARTED... */
+#ifdef CPOOL_DEBUG
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0)
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : lock on current->state_cthread_structure[%d]\n",
+						_Cpool_self(),_Cthread_self(), i);
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 				Cthread_mutex_lock_ext(current->state_cthread_structure[i]);
 				current->state[i] = -1;
+#ifdef CPOOL_DEBUG
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0)
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : Cthread_create\n",
+						_Cpool_self(),_Cthread_self());
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 				if ((current->cid[i] = Cthread_create(_Cpool_starter,cpool_arg)) < 0) {
+#ifdef CPOOL_DEBUG
+					/* Cthread_mutex_lock(&lock_cpool_debug); */
+					if (Cpool_debug != 0)
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : un-lock on current->state_cthread_structure[%d]\n",
+							_Cpool_self(),_Cthread_self(), i);
+					/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 					Cthread_mutex_unlock_ext(current->state_cthread_structure[i]);
 					free(cpool_arg);
 				} else {
 					/* And we wait for this thread to have really started */
 					while (current->state[i] != 0) {
+#ifdef CPOOL_DEBUG
+						/* Cthread_mutex_lock(&lock_cpool_debug); */
+						if (Cpool_debug != 0)
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : cond-wait on current->state_cthread_structure[%d]\n",
+								_Cpool_self(),_Cthread_self(), i);
+						/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 						Cthread_cond_wait_ext(current->state_cthread_structure[i]);
 					}
+#ifdef CPOOL_DEBUG
+					/* Cthread_mutex_lock(&lock_cpool_debug); */
+					if (Cpool_debug != 0)
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : un-lock on current->state_cthread_structure[%d]\n",
+							_Cpool_self(),_Cthread_self(), i);
+					/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 					Cthread_mutex_unlock_ext(current->state_cthread_structure[i]);
 #ifdef CPOOL_DEBUG
 					/* Cthread_mutex_lock(&lock_cpool_debug); */
@@ -537,6 +674,13 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 	if (pooladdr != NULL) {
 		*pooladdr = current;
 	}
+#ifdef CPOOL_DEBUG
+	/* Cthread_mutex_lock(&lock_cpool_debug); */
+	if (Cpool_debug != 0)
+		log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_create : un-lock on &Cpool\n",
+			_Cpool_self(),_Cthread_self(), i);
+	/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 	Cthread_mutex_unlock(&Cpool);
   
 	return(current->poolnb);
@@ -763,7 +907,6 @@ void *_Cpool_starter(arg)
 			void		  *(*start) _PROTO((void *));
 			void		   *startarg;
 			void *lock_parent_cthread_structure;
-			void *lock_child_cthread_structure;
 			/* We receive in the argument the address of the pool structure */
 			/* And the index of our thread in this structure                */
 			current = (struct Cpool_t *) * (struct Cpool_t **) arg;
@@ -771,34 +914,47 @@ void *_Cpool_starter(arg)
 			dummy  += sizeof(struct Cpool_t *);
 			index   = (int) * (int *) dummy;
 			lock_parent_cthread_structure = current->lock_parent_cthread_structure;
-			lock_child_cthread_structure = current->lock_child_cthread_structure;
 		  
 			/* And we free this memory */
 			free(arg);
-		  
+
 #ifdef CPOOL_DEBUG
 			/* Cthread_mutex_lock(&lock_cpool_debug); */
 			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : Telling that we (index %d) are starting\n",
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : lock on current->state_cthread_structure[%d]\n",
 					_Cpool_self(),_Cthread_self(),index);
 			}
 			/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
-		  
 			/* We tell the Cpool_create that we are started */
 			Cthread_mutex_lock_ext(current->state_cthread_structure[index]);
-			current->state[index] = 0;
-			Cthread_cond_signal_ext(current->state_cthread_structure[index]);
-			Cthread_mutex_unlock_ext(current->state_cthread_structure[index]);
-		  
 #ifdef CPOOL_DEBUG
 			/* Cthread_mutex_lock(&lock_cpool_debug); */
 			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : We (index %d) signalled it\n",
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : set current->state[%d] to 0\n",
 					_Cpool_self(),_Cthread_self(),index);
 			}
 			/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
+			current->state[index] = 0;
+#ifdef CPOOL_DEBUG
+			/* Cthread_mutex_lock(&lock_cpool_debug); */
+			if (Cpool_debug != 0) {
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : cond-signal on current->state_cthread_structure[%d]\n",
+					_Cpool_self(),_Cthread_self(),index);
+			}
+			/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+			Cthread_cond_signal_ext(current->state_cthread_structure[index]);
+#ifdef CPOOL_DEBUG
+			/* Cthread_mutex_lock(&lock_cpool_debug); */
+			if (Cpool_debug != 0) {
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : un-lock on current->state_cthread_structure[%d]\n",
+					_Cpool_self(),_Cthread_self(),index);
+			}
+			/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+			Cthread_mutex_unlock_ext(current->state_cthread_structure[index]);
 		  
 			/* We loop indefinitely */
 			while (1) {
@@ -821,7 +977,7 @@ void *_Cpool_starter(arg)
 #ifdef CPOOL_DEBUG
 				/* Cthread_mutex_lock(&lock_cpool_debug); */
 				if (Cpool_debug != 0) {
-					log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : current->flag = %d\n",
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : current->flag is %d\n",
 						_Cpool_self(),_Cthread_self(),current->flag);
 				}
 				/* Cthread_mutex_unlock(&lock_cpool_debug); */
@@ -832,8 +988,8 @@ void *_Cpool_starter(arg)
 #ifdef CPOOL_DEBUG
 					/* Cthread_mutex_lock(&lock_cpool_debug); */
 					if (Cpool_debug != 0) {
-						log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : Setting current->flag to our index %d and signaling on lock_parent_p\n",
-							_Cpool_self(),_Cthread_self(),index);
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : current->forceid is %d\n",
+							_Cpool_self(),_Cthread_self(),current->forceid);
 					}
 					/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
@@ -843,10 +999,42 @@ void *_Cpool_starter(arg)
 						/* -1   : any of us           */
 						/* index: us, exactly         */
 						/* We tell what is our index  */
+#ifdef CPOOL_DEBUG
+						/* Cthread_mutex_lock(&lock_cpool_debug); */
+						if (Cpool_debug != 0) {
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : Parent waiting on %s (current->forceid=%d), setting current->flag to my index %d\n",
+								_Cpool_self(),_Cthread_self(),current->forceid == -1 ? "any of us" : "me!", current->forceid, index);
+						}
+						/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 						current->flag = index;
 						/* And we signal              */
+#ifdef CPOOL_DEBUG
+						/* Cthread_mutex_lock(&lock_cpool_debug); */
+						if (Cpool_debug != 0) {
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : cond-signal on lock_parent_cthread_structure\n",
+								_Cpool_self(),_Cthread_self());
+						}
+						/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 						if (Cthread_cond_signal_ext(lock_parent_cthread_structure)) {
 							/* Error */
+#ifdef CPOOL_DEBUG
+							/* Cthread_mutex_lock(&lock_cpool_debug); */
+							if (Cpool_debug != 0) {
+								log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : Signal on lock_parent_cthread_structure error: %s\n",
+									_Cpool_self(),_Cthread_self(), strerror(errno));
+							}
+							/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+#ifdef CPOOL_DEBUG
+							/* Cthread_mutex_lock(&lock_cpool_debug); */
+							if (Cpool_debug != 0) {
+								log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : un-lock on lock_parent_cthread_structure error\n",
+									_Cpool_self(),_Cthread_self());
+							}
+							/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 							Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
 							return(NULL);
 						}
@@ -867,13 +1055,13 @@ void *_Cpool_starter(arg)
 #ifdef CPOOL_DEBUG
 				/* Cthread_mutex_lock(&lock_cpool_debug); */
 				if (Cpool_debug != 0) {
-					log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : lock on lock_child_cthread_structure\n",_Cpool_self(),_Cthread_self());
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : lock on current->state_cthread_structure[%d]\n",_Cpool_self(),_Cthread_self(), index);
 				}
 				/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 			  
 				/* We put a lock on the state index */
-				if (Cthread_mutex_lock_ext(lock_child_cthread_structure) != 0) {
+				if (Cthread_mutex_lock_ext(current->state_cthread_structure[index]) != 0) {
 					return(NULL);
 				}
 			  
@@ -884,30 +1072,55 @@ void *_Cpool_starter(arg)
 #ifdef CPOOL_DEBUG
 				/* Cthread_mutex_lock(&lock_cpool_debug); */
 				if (Cpool_debug != 0) {
-					log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : waiting condition on lock_child_cthread_structure, with predicate: current->state[%d] == 0 (current value is: %d)\n",
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : current->state[%d] is %d\n",
 						_Cpool_self(),_Cthread_self(),index,current->state[index]);
 				}
 				/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 				while ( current->state[index] == 0 ) {
-					if (Cthread_cond_wait_ext(lock_child_cthread_structure) != 0) {
-						Cthread_mutex_unlock_ext(lock_child_cthread_structure);
-						return(NULL);
-					}
 #ifdef CPOOL_DEBUG
 					/* Cthread_mutex_lock(&lock_cpool_debug); */
 					if (Cpool_debug != 0) {
-						log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : out of the condition wait, current->state[%d] = %d\n",
-							_Cpool_self(),_Cthread_self(),index,current->state[index]);
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : cond-wait on current->state_cthread_structure[%d]\n",
+							_Cpool_self(),_Cthread_self(),index);
 					}
 					/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
+					if (Cthread_cond_wait_ext(current->state_cthread_structure[index]) != 0) {
+#ifdef CPOOL_DEBUG
+						/* Cthread_mutex_lock(&lock_cpool_debug); */
+						if (Cpool_debug != 0) {
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : wait on current->state_cthread_structure[%d] error: %s\n",
+								_Cpool_self(),_Cthread_self(),index, strerror(errno));
+						}
+						/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+#ifdef CPOOL_DEBUG
+						/* Cthread_mutex_lock(&lock_cpool_debug); */
+						if (Cpool_debug != 0) {
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : un-lock on current->state_cthread_structure[%d]\n",
+								_Cpool_self(),_Cthread_self(),index);
+						}
+						/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+						Cthread_mutex_unlock_ext(current->state_cthread_structure[index]);
+						return(NULL);
+#ifdef CPOOL_DEBUG
+					} else {
+						/* Cthread_mutex_lock(&lock_cpool_debug); */
+						if (Cpool_debug != 0) {
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : waked up on on current->state_cthread_structure[%d] with current->state[%d] == %d\n",
+								_Cpool_self(),_Cthread_self(),index, index, current->state[index]);
+						}
+						/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+					}
 				}
 			  
 #ifdef CPOOL_DEBUG
 				/* Cthread_mutex_lock(&lock_cpool_debug); */
 				if (Cpool_debug != 0) {
-					log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : out of the condition loop, current->state[%d] = %d\n",
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : out of cond-wait loop, current->state[%d] is %d\n",
 						_Cpool_self(),_Cthread_self(),index,current->state[index]);
 				}
 				/* Cthread_mutex_unlock(&lock_cpool_debug); */
@@ -916,13 +1129,13 @@ void *_Cpool_starter(arg)
 #ifdef CPOOL_DEBUG
 				/* Cthread_mutex_lock(&lock_cpool_debug); */
 				if (Cpool_debug != 0) {
-					log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : un-lock on lock_child_cthread_structure\n",_Cpool_self(),_Cthread_self());
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : un-lock on current->state_cthread_structure[%d]\n",_Cpool_self(),_Cthread_self(), index);
 				}
 				/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 			  
 				/* We release the lock on the state index    */
-				Cthread_mutex_unlock_ext(lock_child_cthread_structure);
+				Cthread_mutex_unlock_ext(current->state_cthread_structure[index]);
 			  
 				/* We are waked up: the routine and its arguments */
 				/* address are put in current->start[index] and   */
@@ -945,21 +1158,21 @@ void *_Cpool_starter(arg)
 #ifdef CPOOL_DEBUG
 				/* Cthread_mutex_lock(&lock_cpool_debug); */
 				if (Cpool_debug != 0) {
-					log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : lock on lock_child_ext\n",_Cpool_self(),_Cthread_self());
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : lock on current->state_cthread_structure[%d]\n",_Cpool_self(),_Cthread_self(), index);
 				}
 				/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 			  
 				/* We put a lock on the state index */
-				if (Cthread_mutex_lock_ext(lock_child_cthread_structure) != 0) {
+				if (Cthread_mutex_lock_ext(current->state_cthread_structure[index]) != 0) {
 					return(NULL);
 				}
 			  
 #ifdef CPOOL_DEBUG
 				/* Cthread_mutex_lock(&lock_cpool_debug); */
 				if (Cpool_debug != 0) {
-					log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : current->state[%d] = %d\n",
-						_Cpool_self(),_Cthread_self(),index,current->state[index]);
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : Set current->state[%d] to 0\n",
+						_Cpool_self(),_Cthread_self(),index);
 				}
 				/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
@@ -970,13 +1183,13 @@ void *_Cpool_starter(arg)
 #ifdef CPOOL_DEBUG
 				/* Cthread_mutex_lock(&lock_cpool_debug); */
 				if (Cpool_debug != 0) {
-					log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : un-lock on lock_child_ext\n",_Cpool_self(),_Cthread_self());
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In _Cpool_starter : un-lock on current->state_cthread_structure[%d]\n",_Cpool_self(),_Cthread_self());
 				}
 				/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 			  
 				/* We release the lock on the state index */
-				Cthread_mutex_unlock_ext(lock_child_cthread_structure);
+				Cthread_mutex_unlock_ext(current->state_cthread_structure[index]);
 			}
 		}
 #ifndef _WIN32
@@ -1722,6 +1935,13 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 			found = 1;
 			current = pooladdr;
 		} else {
+#ifdef CPOOL_DEBUG
+			/* Cthread_mutex_lock(&lock_cpool_debug); */
+			if (Cpool_debug != 0)
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : lock on &Cpool\n",
+					_Cpool_self(),_Cthread_self(),(int) length_vars);
+			/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 			if (Cthread_mutex_lock(&Cpool) != 0) {
 				return(-1);
 			}
@@ -1740,6 +1960,13 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 					break;
 				}
 			}
+#ifdef CPOOL_DEBUG
+			/* Cthread_mutex_lock(&lock_cpool_debug); */
+			if (Cpool_debug != 0)
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on &Cpool\n",
+					_Cpool_self(),_Cthread_self(),(int) length_vars);
+			/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 			Cthread_mutex_unlock(&Cpool);
 		}
     
@@ -1877,16 +2104,6 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 			int    found;
 			int    i;
 			void *lock_parent_cthread_structure;
-			void *lock_child_cthread_structure;
-		  
-#ifdef CPOOL_DEBUG
-			/* Cthread_mutex_lock(&lock_cpool_debug); */
-			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign(%d,0x%lx,0x%lx,%d)\n",
-					_Cpool_self(),_Cthread_self(),poolnb, (unsigned long) startroutine, (unsigned long) arg, timeout);
-			}
-			/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
 		  
 			if (poolnb < 0) {
 				errno = EINVAL;
@@ -1898,8 +2115,14 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 				current = pooladdr;
 				found = 1;
 				lock_parent_cthread_structure = current->lock_parent_cthread_structure;
-				lock_child_cthread_structure = current->lock_child_cthread_structure;
 			} else {
+#ifdef CPOOL_DEBUG
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0)
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : lock on &Cpool\n",
+						_Cpool_self(),_Cthread_self());
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 				if (Cthread_mutex_lock(&Cpool) != 0) {
 					return(-1);
 				}
@@ -1917,10 +2140,16 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 					if (current->poolnb == poolnb) {
 						found = 1;
 						lock_parent_cthread_structure = current->lock_parent_cthread_structure;
-						lock_child_cthread_structure = current->lock_child_cthread_structure;
 						break;
 					}
 				}
+#ifdef CPOOL_DEBUG
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0)
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on &Cpool\n",
+						_Cpool_self(),_Cthread_self());
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 				Cthread_mutex_unlock(&Cpool);
 			}
 		  
@@ -1957,116 +2186,189 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 			/* We check if there is one thread available */
 			found = 0;
 		  
-#ifdef CPOOL_DEBUG
-			/* Cthread_mutex_lock(&lock_cpool_debug); */
-			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : lock on lock_child_cthread_structure\n",
-					_Cpool_self(),_Cthread_self());
-			}
-			/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
-		  
-			if (Cthread_mutex_lock_ext(lock_child_cthread_structure) != 0) {
-				Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
-				return(-1);
-			}
 			for (i = 0; i < current->nbelem; i++) {
-				if (current->state[i] == 0) {
-					/* We take care of any previous call to Cpool_next_index */
-					if (current->forceid != -1) {
-						if (i != current->forceid) {
-#ifdef CPOOL_DEBUG
-							/* Cthread_mutex_lock(&lock_cpool_debug); */
-							if (Cpool_debug != 0) {
-								log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Found thread at index %d, but expected %d instead\n",
-									_Cpool_self(),_Cthread_self(),i,current->forceid);
-							}
-							/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
-							continue;
-						}
-					}
-#ifdef CPOOL_DEBUG
-					/* Cthread_mutex_lock(&lock_cpool_debug); */
-					if (Cpool_debug != 0) {
-						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Found thread at index %d\n",
-							_Cpool_self(),_Cthread_self(),i);
-					}
-					/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
-				  
-					/* Okay: We change the predicate */
-					/* value on which the thread is  */
-					/* waiting for to be changed     */
-#ifdef CPOOL_DEBUG
-					/* Cthread_mutex_lock(&lock_cpool_debug); */
-					if (Cpool_debug != 0) {
-						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Setting current->state[%d] to 1\n",
-							_Cpool_self(),_Cthread_self(),i);
-					}
-					/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
-					current->state[i] = 1;
-					/* We put the routine and its    */
-					/* arguments                     */
-					current->start[i] = (void *(*) _PROTO((void *))) startroutine;
-#ifdef CPOOL_DEBUG
-					/* Cthread_mutex_lock(&lock_cpool_debug); */
-					if (Cpool_debug != 0) {
-						log(LOG_INFO,"[Cpool  [%2d][%2d]] current->start = 0x%lx, i = %d, stored at 0x%lx\n",
-							_Cpool_self(),_Cthread_self(),
-							(unsigned long) current->start,i,
-							(unsigned long) (current->start + (i * sizeof(void *))));
-					}
-					/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
-					current->arg[i] = (void *) arg;
-					/* We signal the thread          */
-				  
-#ifdef CPOOL_DEBUG
-					/* Cthread_mutex_lock(&lock_cpool_debug); */
-					if (Cpool_debug != 0) {
-						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Setting condition on lock_child_cthread_structure\n",
-							_Cpool_self(),_Cthread_self());
-					}
-					/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
-				  
-					/* ... We reset any call to Cpool_next_index */
-					current->forceid = -1;
-				  
-					if (Cthread_cond_signal_ext(lock_child_cthread_structure) != 0) {
+				if (current->forceid != -1) {
+					if (i != current->forceid) {
 #ifdef CPOOL_DEBUG
 						/* Cthread_mutex_lock(&lock_cpool_debug); */
 						if (Cpool_debug != 0) {
-							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Oooups... Cthread_cond_signal_ext(lock_child_cthread_structure) error (%s)\n",
-								_Cpool_self(),_Cthread_self(),sstrerror(serrno));
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : current->forceid=%d, skipped index %d\n",
+								_Cpool_self(),_Cthread_self(), current->forceid, i);
 						}
 						/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
-						Cthread_mutex_unlock_ext(lock_child_cthread_structure);
-						Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
-						return(-1);
+						continue;
 					}
-				  
-					/* We remember for the immediate out of this loop... */
-					found = 1;
-				  
-					/* And we exit of the loop       */
-					break;
 				}
-			}
-		  
 #ifdef CPOOL_DEBUG
-			/* Cthread_mutex_lock(&lock_cpool_debug); */
-			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on lock_child_ext\n",
-					_Cpool_self(),_Cthread_self());
-			}
-			/* Cthread_mutex_unlock(&lock_cpool_debug); */
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0) {
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : lock on current->state_cthread_structure[%d]\n",
+						_Cpool_self(),_Cthread_self(), i);
+				}
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+				if (Cthread_mutex_lock_ext(current->state_cthread_structure[i]) == 0) {
+#ifdef CPOOL_DEBUG
+					/* Cthread_mutex_lock(&lock_cpool_debug); */
+					if (Cpool_debug != 0) {
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : current->state[%d]=%d, current->forceid=%d\n",
+							_Cpool_self(),_Cthread_self(), i, current->state[i], current->forceid);
+					}
+					/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+					if (current->state[i] == 0) {
+						/* We take care of any previous call to Cpool_next_index */
+						if (current->forceid != -1) {
+							if (i != current->forceid) {
+#ifdef CPOOL_DEBUG
+								/* Cthread_mutex_lock(&lock_cpool_debug); */
+								if (Cpool_debug != 0) {
+									log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Found thread at index %d, but expected %d instead\n",
+										_Cpool_self(),_Cthread_self(),i,current->forceid);
+								}
+								/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+#ifdef CPOOL_DEBUG
+								/* Cthread_mutex_lock(&lock_cpool_debug); */
+								if (Cpool_debug != 0) {
+									log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on current->state_cthread_structure[%d]\n",
+										_Cpool_self(),_Cthread_self(), i);
+								}
+								/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 		  
-			Cthread_mutex_unlock_ext(lock_child_cthread_structure);
+								Cthread_mutex_unlock_ext(current->state_cthread_structure[i]);
+								continue;
+							}
+						}
+#ifdef CPOOL_DEBUG
+						/* Cthread_mutex_lock(&lock_cpool_debug); */
+						if (Cpool_debug != 0) {
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Found thread at index %d\n",
+								_Cpool_self(),_Cthread_self(),i);
+						}
+						/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+						
+						/* Okay: We change the predicate */
+						/* value on which the thread is  */
+						/* waiting for to be changed     */
+#ifdef CPOOL_DEBUG
+						/* Cthread_mutex_lock(&lock_cpool_debug); */
+						if (Cpool_debug != 0) {
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Setting current->state[%d] to 1\n",
+								_Cpool_self(),_Cthread_self(),i);
+						}
+						/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+						current->state[i] = 1;
+						/* We put the routine and its    */
+						/* arguments                     */
+#ifdef CPOOL_DEBUG
+						/* Cthread_mutex_lock(&lock_cpool_debug); */
+						if (Cpool_debug != 0) {
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Setting current->start = 0x%lx, i = %d, stored at 0x%lx\n",
+								_Cpool_self(),_Cthread_self(),
+								(unsigned long) current->start,i,
+								(unsigned long) (current->start + (i * sizeof(void *))));
+						}
+						/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+						current->start[i] = (void *(*) _PROTO((void *))) startroutine;
+						current->arg[i] = (void *) arg;
+						/* We signal the thread          */
+						
+#ifdef CPOOL_DEBUG
+						/* Cthread_mutex_lock(&lock_cpool_debug); */
+						if (Cpool_debug != 0) {
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Set current->forceid to -1\n",
+								_Cpool_self(),_Cthread_self());
+						}
+						/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+						
+						/* ... We reset any call to Cpool_next_index */
+						current->forceid = -1;
+						
+						/* Note: Only one thread can wait on that condition variable */
+						/* It means that we are sure that Cthread will internal use */
+						/* a pure cond_signal instead of a cond_broadcast - this is */
+						/* better */
+#ifdef CPOOL_DEBUG
+						/* Cthread_mutex_lock(&lock_cpool_debug); */
+						if (Cpool_debug != 0) {
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : cond-signal on current->state_cthread_structure[%d]\n",
+								_Cpool_self(),_Cthread_self(), i);
+						}
+						/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+						if (Cthread_cond_signal_ext(current->state_cthread_structure[i]) != 0) {
+#ifdef CPOOL_DEBUG
+							/* Cthread_mutex_lock(&lock_cpool_debug); */
+							if (Cpool_debug != 0) {
+								log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Oooups... Cthread_cond_signal_ext(current->state_cthread_structure[%d]) error (%s)\n",
+									_Cpool_self(),_Cthread_self(),i,sstrerror(serrno));
+							}
+							/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+#ifdef CPOOL_DEBUG
+							/* Cthread_mutex_lock(&lock_cpool_debug); */
+							if (Cpool_debug != 0) {
+								log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on current->state_cthread_structure[%d]\n",
+									_Cpool_self(),_Cthread_self(),i);
+							}
+							/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+							Cthread_mutex_unlock_ext(current->state_cthread_structure[i]);
+#ifdef CPOOL_DEBUG
+							/* Cthread_mutex_lock(&lock_cpool_debug); */
+							if (Cpool_debug != 0) {
+								log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on lock_parent_cthread_structure\n",
+									_Cpool_self(),_Cthread_self());
+							}
+							/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+							Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
+							return(-1);
+						}
+						
+						/* We remember for the immediate out of this loop... */
+						found = 1;
+				  
+						/* And we exit of the loop       */
+#ifdef CPOOL_DEBUG
+						/* Cthread_mutex_lock(&lock_cpool_debug); */
+						if (Cpool_debug != 0) {
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on current->state_cthread_structure[%d]\n",
+								_Cpool_self(),_Cthread_self(), i);
+						}
+						/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+						Cthread_mutex_unlock_ext(current->state_cthread_structure[i]);
+						break;
+					} else {
+#ifdef CPOOL_DEBUG
+						/* Cthread_mutex_lock(&lock_cpool_debug); */
+						if (Cpool_debug != 0) {
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on current->state_cthread_structure[%d]\n",
+								_Cpool_self(),_Cthread_self(), i);
+						}
+						/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+						Cthread_mutex_unlock_ext(current->state_cthread_structure[i]);
+					}
+#ifdef CPOOL_DEBUG
+				} else {
+					/* Cthread_mutex_lock(&lock_cpool_debug); */
+					if (Cpool_debug != 0) {
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : lock on current->state_cthread_structure[%d] failed: %s\n",
+							_Cpool_self(),_Cthread_self(), i, sstrerror(serrno));
+					}
+					/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+				}
+			}
 		  
 			if (found != 0) {
 				/* We found at least one thread available: */
@@ -2112,7 +2414,7 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 #ifdef CPOOL_DEBUG
 					/* Cthread_mutex_lock(&lock_cpool_debug); */
 					if (Cpool_debug != 0) {
-						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Waiting condition on lock_parent_cthread_structure with timeout = %d seconds\n",
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : cond-timedwait on lock_parent_cthread_structure with timeout = %d seconds\n",
 							_Cpool_self(),_Cthread_self(),timeout);
 					}
 					/* Cthread_mutex_unlock(&lock_cpool_debug); */
@@ -2152,7 +2454,7 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 #ifdef CPOOL_DEBUG
 					/* Cthread_mutex_lock(&lock_cpool_debug); */
 					if (Cpool_debug != 0) {
-						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Waiting condition on lock_parent_cthread_structure with no timeout\n",
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : cond-wait on lock_parent_cthread_structure\n",
 							_Cpool_self(),_Cthread_self());
 					}
 					/* Cthread_mutex_unlock(&lock_cpool_debug); */
@@ -2240,13 +2542,29 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 #ifdef CPOOL_DEBUG
 			/* Cthread_mutex_lock(&lock_cpool_debug); */
 			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : lock on lock_child_ext\n",
-					_Cpool_self(),_Cthread_self());
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : lock on current->state_cthread_structure[%d]\n",
+					_Cpool_self(),_Cthread_self(), current->flag);
 			}
 			/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 		  
-			if (Cthread_mutex_lock_ext(lock_child_cthread_structure) != 0) {
+			if (Cthread_mutex_lock_ext(current->state_cthread_structure[current->flag]) != 0) {
+#ifdef CPOOL_DEBUG
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0) {
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : lock on current->state_cthread_structure[%d] error: %s\n",
+						_Cpool_self(),_Cthread_self(), current->flag, strerror(errno));
+				}
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+#ifdef CPOOL_DEBUG
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0) {
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on lock_parent_cthread_structure\n",
+						_Cpool_self(),_Cthread_self());
+				}
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 				Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
 				return(-1);
 			}
@@ -2290,19 +2608,43 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 		  
 			current->flag = 0;
 		  
-			/* We signal him the child       */
+			/* We signal the child       */
 		  
 #ifdef CPOOL_DEBUG
 			/* Cthread_mutex_lock(&lock_cpool_debug); */
 			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Signalling on lock_child_ext\n",
-					_Cpool_self(),_Cthread_self());
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : cond-signal on current->state_cthread_structure[%d]\n",
+					_Cpool_self(),_Cthread_self(), current->flag);
 			}
 			/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 		  
-			if (Cthread_cond_signal_ext(lock_child_cthread_structure) != 0) {
-				Cthread_mutex_unlock_ext(lock_child_cthread_structure);
+			if (Cthread_cond_signal_ext(current->state_cthread_structure[current->flag]) != 0) {
+#ifdef CPOOL_DEBUG
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0) {
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Signalling on current->state_cthread_structure[%d] error: %s\n",
+						_Cpool_self(),_Cthread_self(), current->flag, strerror(errno));
+				}
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+#ifdef CPOOL_DEBUG
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0) {
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on current->state_cthread_structure[%d]\n",
+						_Cpool_self(),_Cthread_self(), current->flag);
+				}
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+				Cthread_mutex_unlock_ext(current->state_cthread_structure[current->flag]);
+#ifdef CPOOL_DEBUG
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0) {
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on lock_parent_cthread_structure\n",
+						_Cpool_self(),_Cthread_self());
+				}
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 				Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
 				return(-1);
 			}
@@ -2311,13 +2653,13 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 #ifdef CPOOL_DEBUG
 			/* Cthread_mutex_lock(&lock_cpool_debug); */
 			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on lock_child_cthread_structure\n",
-					_Cpool_self(),_Cthread_self());
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on current->state_cthread_structure[%d]\n",
+					_Cpool_self(),_Cthread_self(), current->flag);
 			}
 			/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 		  
-			Cthread_mutex_unlock_ext(lock_child_cthread_structure);
+			Cthread_mutex_unlock_ext(current->state_cthread_structure[current->flag]);
 		  
 #ifdef CPOOL_DEBUG
 			/* Cthread_mutex_lock(&lock_cpool_debug); */
@@ -2379,8 +2721,8 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 #ifdef CPOOL_DEBUG
 	/* Cthread_mutex_lock(&lock_cpool_debug); */
 	if (Cpool_debug != 0)
-		log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d,%d)\n",
-			_Cpool_self(),_Cthread_self(),poolnb,timeout);
+		log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext(%d,0x%lx,%d)\n",
+			_Cpool_self(),_Cthread_self(),poolnb,(unsigned long) pooladdr, timeout);
 	/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
     
@@ -2411,6 +2753,13 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 			found = 1;
 			current = pooladdr;
 		} else {
+#ifdef CPOOL_DEBUG
+			/* Cthread_mutex_lock(&lock_cpool_debug); */
+			if (Cpool_debug != 0)
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : lock on &Cpool\n",
+					_Cpool_self(),_Cthread_self());
+			/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 			if (Cthread_mutex_lock(&Cpool) != 0) {
 				return(-1);
 			}
@@ -2420,7 +2769,7 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 #ifdef CPOOL_DEBUG
 				/* Cthread_mutex_lock(&lock_cpool_debug); */
 				if (Cpool_debug != 0)
-					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index : Wanted pool is %d, Got pool No %d\n",
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : Wanted pool is %d, Got pool No %d\n",
 						_Cpool_self(),_Cthread_self(),poolnb,current->poolnb);
 				/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
@@ -2429,6 +2778,13 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 					break;
 				}
 			}
+#ifdef CPOOL_DEBUG
+			/* Cthread_mutex_lock(&lock_cpool_debug); */
+			if (Cpool_debug != 0)
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : un-lock on &Cpool\n",
+					_Cpool_self(),_Cthread_self());
+			/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 			Cthread_mutex_unlock(&Cpool);
 		}
     
@@ -2441,8 +2797,8 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 #ifdef CPOOL_DEBUG
 		/* Cthread_mutex_lock(&lock_cpool_debug); */
 		if (Cpool_debug != 0)
-			log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : Wait flag on ",
-				_Cpool_self(),_Cthread_self(),poolnb);
+			log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : Wait flag on ",
+				_Cpool_self(),_Cthread_self());
 		/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 		/* We build the timeout if needed */
@@ -2484,16 +2840,16 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 #ifdef CPOOL_DEBUG
 				/* Cthread_mutex_lock(&lock_cpool_debug); */
 				if (Cpool_debug != 0)
-					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : Got flag on %d\n",
-						_Cpool_self(),_Cthread_self(),poolnb,current->readfd[i]);
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : Got flag on %d\n",
+						_Cpool_self(),_Cthread_self(),current->readfd[i]);
 				/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 				/* We read the flag */
 #ifdef CPOOL_DEBUG
 				/* Cthread_mutex_lock(&lock_cpool_debug); */
 				if (Cpool_debug != 0)
-					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : Read the flag on %d\n",
-						_Cpool_self(),_Cthread_self(),poolnb,current->readfd[i]);
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : Read the flag on %d\n",
+						_Cpool_self(),_Cthread_self(),current->readfd[i]);
 				/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 				_Cpool_readn(current->readfd[i], (void *) &ready, sizeof(int));
@@ -2501,8 +2857,8 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 #ifdef CPOOL_DEBUG
 				/* Cthread_mutex_lock(&lock_cpool_debug); */
 				if (Cpool_debug != 0)
-					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : Write sleep flag on %d\n",
-						_Cpool_self(),_Cthread_self(),poolnb,current->writefd[i]);
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : Write sleep flag on %d\n",
+						_Cpool_self(),_Cthread_self(),current->writefd[i]);
 				/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 				_Cpool_writen(current->writefd[i],(void *) &_cpool_sleep_flag,sizeof(void *));
@@ -2526,16 +2882,6 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 			int    found;
 			int    i;
 			void *lock_parent_cthread_structure;
-			void *lock_child_cthread_structure;
-		  
-#ifdef CPOOL_DEBUG
-			/* Cthread_mutex_lock(&lock_cpool_debug); */
-			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d)\n",
-					_Cpool_self(),_Cthread_self(),poolnb);
-			}
-			/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
 		  
 			if (poolnb < 0) {
 				errno = EINVAL;
@@ -2547,8 +2893,14 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 				current = pooladdr;
 				found = 1;
 				lock_parent_cthread_structure = current->lock_parent_cthread_structure;
-				lock_child_cthread_structure = current->lock_child_cthread_structure;
 			} else {
+#ifdef CPOOL_DEBUG
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0)
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : lock on &Cpool\n",
+						_Cpool_self(),_Cthread_self());
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 				if (Cthread_mutex_lock(&Cpool) != 0) {
 					return(-1);
 				}
@@ -2558,18 +2910,24 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 #ifdef CPOOL_DEBUG
 					/* Cthread_mutex_lock(&lock_cpool_debug); */
 					if (Cpool_debug != 0) {
-						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : Got pool No %d\n",
-							_Cpool_self(),_Cthread_self(),poolnb,current->poolnb);
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : Got pool No %d\n",
+							_Cpool_self(),_Cthread_self(),current->poolnb);
 					}
 					/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 					if (current->poolnb == poolnb) {
 						found = 1;
 						lock_parent_cthread_structure = current->lock_parent_cthread_structure;
-						lock_child_cthread_structure = current->lock_child_cthread_structure;
 						break;
 					}
 				}
+#ifdef CPOOL_DEBUG
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0)
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : un-lock on &Cpool\n",
+						_Cpool_self(),_Cthread_self());
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 				Cthread_mutex_unlock(&Cpool);
 			}
 		  
@@ -2581,7 +2939,7 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 #ifdef CPOOL_DEBUG
 			/* Cthread_mutex_lock(&lock_cpool_debug); */
 			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : lock on lock_parent_cthread_structure\n",
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : lock on lock_parent_cthread_structure\n",
 					_Cpool_self(),_Cthread_self());
 			}
 			/* Cthread_mutex_unlock(&lock_cpool_debug); */
@@ -2592,102 +2950,173 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 				return(-1);
 			}
 		  
-#ifdef CPOOL_DEBUG
-			/* Cthread_mutex_lock(&lock_cpool_debug); */
-			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : lock on lock_child_cthread_structure\n",
-					_Cpool_self(),_Cthread_self(),poolnb);
-			}
-			/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
-		  
-			if (Cthread_mutex_lock_ext(lock_child_cthread_structure) != 0) {
-				Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
-				return(-1);
-			}
 			for (i = 0; i < current->nbelem; i++) {
-				if (current->state[i] == 0) {
+#ifdef CPOOL_DEBUG
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0) {
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : lock on current->state_cthread_structure[%d]\n",
+						_Cpool_self(),_Cthread_self(), i);
+				}
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+				if (Cthread_mutex_lock_ext(current->state_cthread_structure[i]) == 0) {
 #ifdef CPOOL_DEBUG
 					/* Cthread_mutex_lock(&lock_cpool_debug); */
 					if (Cpool_debug != 0) {
-						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : Found thread at index %d\n",
-							_Cpool_self(),_Cthread_self(),poolnb,i);
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : current->state[%d] is %d\n",
+							_Cpool_self(),_Cthread_self(), poolnb, current->state[i]);
 					}
 					/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
-				  
-					if (current->flag == -1) {
-						if (current->forceid == i) {
-							/* We found again the same thread as before */
-#ifdef CPOOL_DEBUG
-							/* Cthread_mutex_lock(&lock_cpool_debug); */
-							if (Cpool_debug != 0) {
-								log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : Return again %d\n",
-									_Cpool_self(),_Cthread_self(),poolnb,i);
-							}
-							/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
-							Cthread_mutex_unlock_ext(lock_child_cthread_structure);
-							current->forceid = i;
-							Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
-							return(i);
-						} else {
-							/* We should have find the same ! */
-#ifdef CPOOL_DEBUG
-							/* Cthread_mutex_lock(&lock_cpool_debug); */
-							if (Cpool_debug != 0) {
-								log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : Got %d before, still valid it seems, and now got %d !\n",
-									_Cpool_self(),_Cthread_self(),poolnb,current->forceid,i);
-							}
-							/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
-							Cthread_mutex_unlock_ext(lock_child_cthread_structure);
-							Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
-							serrno = SEINTERNAL;
-							return(-1);
-						}
-					} else {
-						/* Okay: We will return this index */
-						Cthread_mutex_unlock_ext(lock_child_cthread_structure);
-						current->forceid = i;
+					if (current->state[i] == 0) {
 #ifdef CPOOL_DEBUG
 						/* Cthread_mutex_lock(&lock_cpool_debug); */
 						if (Cpool_debug != 0) {
-							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : Return %d\n",
-								_Cpool_self(),_Cthread_self(),poolnb,i);
-						}
-						/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
-#ifdef CPOOL_DEBUG
-						/* Cthread_mutex_lock(&lock_cpool_debug); */
-						if (Cpool_debug != 0) {
-							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : un-lock on lock_parent_cthread_structure\n",
-								_Cpool_self(),_Cthread_self(), poolnb);
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : Found thread at index %d\n",
+								_Cpool_self(),_Cthread_self(),i);
 						}
 						/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 						
-						Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
-						return(i);
+						if (current->flag == -1) {
+							if (current->forceid == i) {
+								/* We found again the same thread as before */
+#ifdef CPOOL_DEBUG
+								/* Cthread_mutex_lock(&lock_cpool_debug); */
+								if (Cpool_debug != 0) {
+									log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : un-lock on current->state_cthread_structure[%d], set current->forceid to %d\n",
+										_Cpool_self(),_Cthread_self(), i, i);
+								}
+								/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+								Cthread_mutex_unlock_ext(current->state_cthread_structure[i]);
+								current->forceid = i;
+#ifdef CPOOL_DEBUG
+								/* Cthread_mutex_lock(&lock_cpool_debug); */
+								if (Cpool_debug != 0) {
+									log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : un-lock on lock_parent_cthread_structure\n",
+										_Cpool_self(),_Cthread_self());
+								}
+								/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+								Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
+#ifdef CPOOL_DEBUG
+								/* Cthread_mutex_lock(&lock_cpool_debug); */
+								if (Cpool_debug != 0) {
+									log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : Return %d\n",
+										_Cpool_self(),_Cthread_self(),i);
+								}
+								/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+								return(i);
+							} else {
+								/* We should have find the same ! */
+#ifdef CPOOL_DEBUG
+								/* Cthread_mutex_lock(&lock_cpool_debug); */
+								if (Cpool_debug != 0) {
+									log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : Got %d before, still valid it seems, and now got %d !\n",
+										_Cpool_self(),_Cthread_self(),current->forceid,i);
+								}
+								/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+#ifdef CPOOL_DEBUG
+								/* Cthread_mutex_lock(&lock_cpool_debug); */
+								if (Cpool_debug != 0) {
+									log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : un-lock on current->state_cthread_structure[%d]\n",
+										_Cpool_self(),_Cthread_self(), i);
+								}
+								/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+								Cthread_mutex_unlock_ext(current->state_cthread_structure[i]);
+#ifdef CPOOL_DEBUG
+								/* Cthread_mutex_lock(&lock_cpool_debug); */
+								if (Cpool_debug != 0) {
+									log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : un-lock on lock_parent_cthread_structure\n",
+										_Cpool_self(),_Cthread_self());
+								}
+								/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+								Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
+								serrno = SEINTERNAL;
+#ifdef CPOOL_DEBUG
+								/* Cthread_mutex_lock(&lock_cpool_debug); */
+								if (Cpool_debug != 0) {
+									log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : Return %d (serrno = SEINTERNAL)\n",
+										_Cpool_self(),_Cthread_self(),-1);
+								}
+								/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+								return(-1);
+							}
+						} else {
+							/* Okay: We will return this index */
+#ifdef CPOOL_DEBUG
+							/* Cthread_mutex_lock(&lock_cpool_debug); */
+							if (Cpool_debug != 0) {
+								log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : un-lock on current->state_cthread_structure[%d], set current->forceid to %d\n",
+									_Cpool_self(),_Cthread_self(), i, i);
+							}
+							/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+							Cthread_mutex_unlock_ext(current->state_cthread_structure[i]);
+							current->forceid = i;
+#ifdef CPOOL_DEBUG
+							/* Cthread_mutex_lock(&lock_cpool_debug); */
+							if (Cpool_debug != 0) {
+								log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : un-lock on lock_parent_cthread_structure\n",
+									_Cpool_self(),_Cthread_self());
+							}
+							/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+							
+							Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
+#ifdef CPOOL_DEBUG
+							/* Cthread_mutex_lock(&lock_cpool_debug); */
+							if (Cpool_debug != 0) {
+								log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : Return %d\n",
+									_Cpool_self(),_Cthread_self(),i);
+							}
+							/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+							return(i);
+						}
+#ifdef CPOOL_DEBUG
+					} else {
+#ifdef CPOOL_DEBUG
+						/* Cthread_mutex_lock(&lock_cpool_debug); */
+						if (Cpool_debug != 0) {
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : un-lock on current->state_cthread_structure[%d]\n",
+								_Cpool_self(),_Cthread_self(), i);
+						}
+						/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+						Cthread_mutex_unlock_ext(current->state_cthread_structure[i]);
+#endif
 					}
+#ifdef CPOOL_DEBUG
+				} else {
+					/* Cthread_mutex_lock(&lock_cpool_debug); */
+					if (Cpool_debug != 0) {
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : lock on current->state_cthread_structure[%d] error: %s\n",
+							_Cpool_self(),_Cthread_self(), i, strerror(errno));
+					}
+					/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 				}
 			}
-		  
-#ifdef CPOOL_DEBUG
-			/* Cthread_mutex_lock(&lock_cpool_debug); */
-			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : un-lock on lock_child_cthread_structure\n",
-					_Cpool_self(),_Cthread_self(),poolnb);
-			}
-			/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
-		  
-			Cthread_mutex_unlock_ext(lock_child_cthread_structure);
 		  
 			/* We did not found one thread available */
 			/* We say that we are waiting            */
 		  
 			while (1) {
+#ifdef CPOOL_DEBUG
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0) {
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : set current->flag to -1\n",
+						_Cpool_self(),_Cthread_self());
+				}
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 				current->flag = -1;
 			  
 				/* And we wait on our predicate          */
@@ -2695,8 +3124,8 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 #ifdef CPOOL_DEBUG
 					/* Cthread_mutex_lock(&lock_cpool_debug); */
 					if (Cpool_debug != 0) {
-						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : Waiting condition on lock_parent_cthread_structure with no timeout\n",
-							_Cpool_self(),_Cthread_self(),poolnb);
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : cond-timedwait on lock_parent_cthread_structure\n",
+							_Cpool_self(),_Cthread_self());
 					}
 					/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
@@ -2706,8 +3135,8 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 #ifdef CPOOL_DEBUG
 						/* Cthread_mutex_lock(&lock_cpool_debug); */
 						if (Cpool_debug != 0) {
-							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : Waiting condition failed, reset current->flag to zero\n",
-								_Cpool_self(),_Cthread_self(),poolnb);
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : Waiting condition failed, reset current->flag to zero\n",
+								_Cpool_self(),_Cthread_self());
 						}
 						/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
@@ -2717,8 +3146,8 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 #ifdef CPOOL_DEBUG
 						/* Cthread_mutex_lock(&lock_cpool_debug); */
 						if (Cpool_debug != 0) {
-							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : un-lock on lock_parent_cthread_structure\n",
-								_Cpool_self(),_Cthread_self(),poolnb);
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : un-lock on lock_parent_cthread_structure\n",
+								_Cpool_self(),_Cthread_self());
 						}
 						/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
@@ -2737,8 +3166,16 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 #ifdef CPOOL_DEBUG
 				/* Cthread_mutex_lock(&lock_cpool_debug); */
 				if (Cpool_debug != 0) {
-					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : Waiting condition okay, returns current->flag=%d\n",
-						_Cpool_self(),_Cthread_self(),poolnb,current->flag);
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : Waiting condition okay, returns current->flag=%d\n",
+						_Cpool_self(),_Cthread_self(),current->flag);
+				}
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+#ifdef CPOOL_DEBUG
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0) {
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : current->state[current->flag=%d] is %d\n",
+						_Cpool_self(),_Cthread_self(), current->flag, current->state[current->flag]);
 				}
 				/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
@@ -2748,8 +3185,8 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 #ifdef CPOOL_DEBUG
 					/* Cthread_mutex_lock(&lock_cpool_debug); */
 					if (Cpool_debug != 0) {
-						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : Waiting condition okay, returns current->flag=%d, but this thread state is not READY. Continue.\n",
-							_Cpool_self(),_Cthread_self(),poolnb,current->flag);
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : Thread No %d's state is not ready for assignment. Continue.\n",
+							_Cpool_self(),_Cthread_self(),current->flag);
 					}
 					/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
@@ -2762,13 +3199,21 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 			/* ... And remember it to force assignment */
 			i = current->forceid = current->flag;
 		  
+#ifdef CPOOL_DEBUG
+			/* Cthread_mutex_lock(&lock_cpool_debug); */
+			if (Cpool_debug != 0) {
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : un-lock on lock_parent_cthread_structure\n",
+					_Cpool_self(),_Cthread_self());
+			}
+			/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
 			Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
 		  
 #ifdef CPOOL_DEBUG
 			/* Cthread_mutex_lock(&lock_cpool_debug); */
 			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : Return %d\n",
-					_Cpool_self(),_Cthread_self(),poolnb,current->flag);
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index_timeout_ext : Return %d\n",
+					_Cpool_self(),_Cthread_self(),i);
 			}
 			/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
