@@ -1,6 +1,6 @@
-.\"   $Id: Cmutex.man,v 1.1 2000/07/07 11:26:16 jdurand Exp $
+.\"   $Id: Cmutex.man,v 1.2 2000/11/27 07:07:05 baud Exp $
 .\"
-.TH CMUTEX "3" "$Date: 2000/07/07 11:26:16 $" "CASTOR" "Common Library Functions"
+.TH CMUTEX "3" "$Date: 2000/11/27 07:07:05 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCmutex\fP \- \fBCASTOR\fP \fBMutex\fP inferface
 .SH SYNOPSIS
@@ -56,10 +56,10 @@ int main() {
   initlog("testit",LOG_INFO,"");
 
   if (Cmutex_lock(&this,10) != 0) {
-    fprintf(stderr,"### Cmutex_lock (%s)\n",sstrerror(serrno));
+    fprintf(stderr,"### Cmutex_lock (%s)\\n",sstrerror(serrno));
   }
   if (Cmutex_unlock(&this) != 0) {
-    fprintf(stderr,"### Cmutex_unlock (%s)\n",sstrerror(serrno));
+    fprintf(stderr,"### Cmutex_unlock (%s)\\n",sstrerror(serrno));
   }
 }
 .fi
