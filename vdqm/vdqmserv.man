@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vdqmserv.man,v $ $Revision: 1.2 $ $Date: 2001/12/04 12:17:43 $ CERN IT-ADC Olof Barring
+.\" @(#)$RCSfile: vdqmserv.man,v $ $Revision: 1.3 $ $Date: 2002/05/14 14:44:56 $ CERN IT-ADC Olof Barring
 .\" Copyright (C) 2001 by CERN/IT/ADC
 .\" All rights reserved
 .\"
-.TH VDQMSERV 1 "$Date: 2001/12/04 12:17:43 $" CASTOR "VDQM server daemon"
+.TH VDQMSERV 1 "$Date: 2002/05/14 14:44:56 $" CASTOR "VDQM server daemon"
 .SH NAME
 vdqmserv \- Volume and Drive Queue Manager (VDQM) server
 .SH SYNOPSIS
@@ -47,9 +47,10 @@ and replica hosts.
 The VDQM replica receives replication updates over a permanently
 open TCP connection to the primary server. If the TCP connection
 is dropped by the primary server, the replica will make a few
-retries to reconnect to the primary server. The number of retries
-is specified through the macro \fBVDQM_REPLICA_RETRIES\fP at compile
-time. In case the retries fail the replica will automatically enter
+retries (3 by default) to reconnect to the primary server. The number
+of retries can be changed via the macro \fBVDQM_REPLICA_RETRIES\fP 
+in "vdqm_constants.h".
+In case the retries fail the replica will automatically enter
 production mode and begin to answer incoming client request. When the 
 primary server starts up it will connect to the first replica that
 replies and receive the full snapshot of the database. The contacted
