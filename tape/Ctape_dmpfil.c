@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.7 $ $Date: 2000/08/09 05:36:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.8 $ $Date: 2000/08/29 14:52:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -20,6 +20,9 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.7 $ $Date:
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h"
+#if defined(IRIX64)
+extern int dmp_usrmsg (int, char *, ...);
+#endif
 #if !defined(linux)
 extern	char	*sys_errlist[];
 #endif
@@ -787,4 +790,5 @@ Ctape_dmpend()
 	if (infd >= 0)
 		close (infd);
 	infd = -1;
+	return (0);
 }
