@@ -1,8 +1,11 @@
-.\"   $Id: Cthread.man,v 1.2 1999/09/02 08:39:41 jdurand Exp $
+.\"   $Id: Cthread.man,v 1.3 1999/09/07 13:46:51 jdurand Exp $
 .\"
 .\"   Man page for the CASTOR's Thread Interface (Cthread)
 .\"
 .\"   $Log: Cthread.man,v $
+.\"   Revision 1.3  1999/09/07 13:46:51  jdurand
+.\"   Fixed typo (ECHTREADERROR -> SECTHREADERR)
+.\"
 .\"   Revision 1.2  1999/09/02 08:39:41  jdurand
 .\"   Added serrno error values
 .\"
