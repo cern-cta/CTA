@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.8 2002/02/15 09:32:57 jdurand Exp $
+ * $Id: stager_castor.c,v 1.9 2002/03/04 09:40:48 jdurand Exp $
  */
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.8 $ $Date: 2002/02/15 09:32:57 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.9 $ $Date: 2002/03/04 09:40:48 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -3096,6 +3096,11 @@ int stager_hsm_callback(tapereq,filereq)
 				/* If we reach this part of the code then we know undoubly */
 				/* that the transfer of this HSM file IS ok                */
 				hsm_status[stager_client_true_i] = 1;
+			} else if (filereq->cprc != 0) {
+				/* STAGEIN callback will cprc error */
+				SAVE_EID;
+				stager_process_error(serrno,tapereq,filereq,castor_hsm);
+				RESTORE_EID;
 			}
 		}
 	} else if (filereq->cprc != 0) {
@@ -3238,7 +3243,8 @@ void stager_process_error(save_serrno,tapereq,filereq,castor_hsm)
 	int this_flag = 0;
 	int is_this_flag = 0;
 	char *this_string = NULL;
-
+	int segments_to_soft_delete = 0;
+	
 	/* We require at least tapereq to not be NULL */
 	if (tapereq == NULL) return;
 
@@ -3273,30 +3279,52 @@ void stager_process_error(save_serrno,tapereq,filereq,castor_hsm)
 		break;
 	case EACCES:                          /* Volume protected (12 in TMS) - do nothing ? */
 		break;
+	case ETBLANK:                         /* Blank tape */
+		/* In this case, and only if it is a recall, we decide to delete the copy number that correspond to */
+		/* the segment in the Name Server, that itself is refering this tape. */
+		/* This happens with 'residus' of a buggy version of stager 1.3.1.x that was putting a */
+		/* segment in the Name Server when the write-to-tape failed with an EOT, even not enough space */
+		/* to write the data block, sometimes not enough even to finish the header */
+		/* and for sure not enough space to write anything relevant */
+
+		/* We could do the API equivalent of nslisttape here */
+		/* But then we don't really know which name server to contact !? */
+		/* On the other hand if we have castor_hsm variable != NULL */
+		/* We know which server to contact (castor name are self explanatory) */
+
+		/* And we need to know exactly which tape fseq did fail. This information is in the filereq */
+		if ((castor_hsm != NULL) && (filereq != NULL)) {
+			segments_to_soft_delete = 1;
+			is_this_flag = 1;
+		}
+		break;
 	default:
 		/* what shall we do here ? */
 		break;
 	}
 	if (is_this_flag == 0) {
-		if (((filereq != NULL) && ((filereq->err.errorcode == ETPARIT) || (filereq->err.errorcode == ETUNREC) || (filereq->err.errorcode == ETLBL)))
+		/* Beware in the following if: ETBLANK is to be considered for action ONLY if it is a recall with a valid HSM name */
+		if (((filereq != NULL) && ((filereq->err.errorcode == ETPARIT) || (filereq->err.errorcode == ETUNREC) || (filereq->err.errorcode == ETLBL) || ((castor_hsm != NULL) && (! ((ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)))) && (filereq->err.errorcode == ETBLANK))))
 			||
-			((tapereq->err.errorcode == ETPARIT) || (tapereq->err.errorcode == ETUNREC) || (tapereq->err.errorcode == ETLBL))
+			((tapereq->err.errorcode == ETPARIT) || (tapereq->err.errorcode == ETUNREC) || (tapereq->err.errorcode == ETLBL) || ((castor_hsm != NULL) && (filereq != NULL) && (! ((ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)))) && (tapereq->err.errorcode == ETBLANK)))
 			) {
 			/* save_serrno was not of any help but we can anyway detect there was something serious with this tape */
 			SAVE_EID;
  			if (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)) {
+				/* Will not be executed if the match is with ETBLANK */
 				if (filereq != NULL) {
-					sendrep(rpfd, MSG_ERR, "### [%s] For tape %s/%d, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) and filereq->err.errorcode=%d (0x%lx) - Safety action is to try to flag the tape as read-only\n",
+					sendrep(rpfd, MSG_ERR, "### [%s] For tape/side.fseq %s/%d.%d, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) and filereq->err.errorcode=%d (0x%lx) - Safety action is to try to flag the tape as read-only\n",
 							(castor_hsm != NULL) ? castor_hsm : "...",
 							tapereq->vid,
 							tapereq->side,
+							filereq->tape_fseq,
 							save_serrno,
 							(int) tapereq->err.errorcode,
 							(unsigned long) tapereq->err.errorcode,
 							(int) filereq->err.errorcode,
 							(unsigned long) filereq->err.errorcode);
 				} else {
-					sendrep(rpfd, MSG_ERR, "### [%s] For tape %s/%d, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) - Safety action is to try to flag the tape as read-only\n",
+					sendrep(rpfd, MSG_ERR, "### [%s] For tape/side %s/%d, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) - Safety action is to try to flag the tape as read-only\n",
 							(castor_hsm != NULL) ? castor_hsm : "...",
 							tapereq->vid,
 							tapereq->side,
@@ -3307,46 +3335,131 @@ void stager_process_error(save_serrno,tapereq,filereq,castor_hsm)
 				this_flag = TAPE_RDONLY;
 				this_string = THIS_TAPE_RDONLY;
 			} else {
+				/* Can be be executed if the match is with ETBLANK */
 				if (filereq != NULL) {
-					sendrep(rpfd, MSG_ERR, "### [%s] For tape %s/%d, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) and filereq->err.errorcode=%d (0x%lx) - Safety action is to try to disable the tape \n",
+					if ((castor_hsm != NULL) && ((filereq->err.errorcode == ETBLANK) || (tapereq->err.errorcode == ETBLANK))) {
+						segments_to_soft_delete = 1;
+					}
+					sendrep(rpfd, MSG_ERR, "### [%s] For tape/side.fseq %s/%d.%d, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) and filereq->err.errorcode=%d (0x%lx) - Safety action is to try to %s\n",
 							(castor_hsm != NULL) ? castor_hsm : "...",
 							tapereq->vid,
 							tapereq->side,
+							filereq->tape_fseq,
 							save_serrno,
 							(int) tapereq->err.errorcode,
 							(unsigned long) tapereq->err.errorcode,
 							(int) filereq->err.errorcode,
-							(unsigned long) filereq->err.errorcode);
+							(unsigned long) filereq->err.errorcode,
+							segments_to_soft_delete ? "soft-delete the segments" : "disable the tape"
+						);
 				} else {
-					sendrep(rpfd, MSG_ERR, "### [%s] For tape %s/%d, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) - Safety action is to try to disable the tape \n",
+					sendrep(rpfd, MSG_ERR, "### [%s] For tape/side %s/%d, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) - Safety action is to try to disable the tape\n",
 							(castor_hsm != NULL) ? castor_hsm : "...",
 							tapereq->vid,
 							tapereq->side,
 							save_serrno,
 							(int) tapereq->err.errorcode,
-							(unsigned long) tapereq->err.errorcode);
+							(unsigned long) tapereq->err.errorcode
+							);
 				}
-				this_flag = DISABLED;
-				this_string = THIS_DISABLED;
+				if (! segments_to_soft_delete) {
+					/* Except segments to soft delete, this is an action on VMGR */
+					this_flag = DISABLED;
+					this_string = THIS_DISABLED;
+				}
 			}
 			RESTORE_EID;
 			is_this_flag = 1;
 		}
 	}
 	if (is_this_flag != 0) {
-		SAVE_EID;
-		sendrep(rpfd, MSG_ERR, "### [%s] Trying to set tape %s/%d to %s state\n", (castor_hsm != NULL) ? castor_hsm : "...", tapereq->vid, tapereq->side, this_string);
-		if (vmgr_updatetape(tapereq->vid, tapereq->side, 0, 0, 0, this_flag) != 0) {
-			if (tapereq->side > 0) {
-				sendrep (rpfd, MSG_ERR, STG202, tapereq->vid, tapereq->side, "vmgr_updatetape", sstrerror(serrno));
-			} else {
-				sendrep (rpfd, MSG_ERR, STG02, tapereq->vid, "vmgr_updatetape", sstrerror(serrno));
+		/* Two cases: segments to soft-delete (action in NS) or not (action in VMGR) */
+		if ((castor_hsm != NULL) && (filereq != NULL) && (segments_to_soft_delete != 0)) {
+			int i;
+			
+			/* We need find again which copyno/fsec exactly refers to this tape/vid.fseq */
+			/* This must be in the list of segments that are known in advance: */
+			if (hsm_segments != NULL && hsm_nsegments != NULL) {
+				int i;
+				for (i = 0; i < nbcat_ent; i++) {
+					if (hsm_segments[i] != NULL) {
+						int isegments, jsegments;
+						int nsegments_soft_delete = 0;
+						int jsegments_soft_delete_start = 0;
+						struct Cns_segattrs *hsm_segments_soft_delete = NULL;
+
+						for (isegments = 0; isegments < hsm_nsegments[i]; isegments++) {
+							if ((strcmp(hsm_segments[i][isegments].vid,tapereq->vid) == 0) && /* Same VID */
+								hsm_segments[i][isegments].side == tapereq->side &&           /* Same side */
+								hsm_segments[i][isegments].fseq == filereq->tape_fseq         /* Same fseq on tape */
+								) {
+								/* So we found the offending triplet [vid,side,fseq] in this segment */
+								
+								/* By definition all segments are grouped by copy number */
+								/* So we will re-use the yet existing hsm_segments[i] in memory, and make sure */
+								/* that all segments of copy number hsm_segments[i][isegments].copyno are soft */
+								/* deleted */
+								for (jsegments = 0; jsegments < hsm_nsegments[i]; jsegments++) {
+									if (hsm_segments[i][isegments].copyno == hsm_segments[i][jsegments].copyno) {
+										/* Found the copy number. We initialize start address if needed */
+										if (hsm_segments_soft_delete == NULL) {
+											hsm_segments_soft_delete = &(hsm_segments[i][isegments]);
+											jsegments_soft_delete_start = jsegments;
+										}
+										/* We explicitely soft-delete the segment */
+										hsm_segments[i][isegments].s_status = 'D';										
+										/* And we increment the number of segments to delete */
+										nsegments_soft_delete++;
+									}
+								}
+								if (nsegments_soft_delete > 0) {
+									struct Cns_fileid Cnsfileid;
+									char tmpbuf[21];
+
+									/* And we do it in the name server */
+									SAVE_EID;
+									sendrep(rpfd, MSG_ERR, "### [%s] Doing a soft-delete of %d segment%s in the Name Server:\n", castor_hsm, nsegments_soft_delete, (nsegments_soft_delete > 1) ? "s" : "");
+									for (jsegments = jsegments_soft_delete_start; jsegments < jsegments_soft_delete_start + nsegments_soft_delete; jsegments++) {
+										sendrep(rpfd, MSG_ERR, "### [%s] ... Copy Number %d, tape/side.fseq = %s/%d.%d\n", castor_hsm, hsm_segments[i][jsegments].copyno, hsm_segments[i][jsegments].vid, hsm_segments[i][jsegments].side, hsm_segments[i][jsegments].fseq);
+									}
+									sendrep(rpfd, MSG_ERR, "### [%s] ... Modifying segments (invariants of file are %s@%s)\n", castor_hsm, u64tostr((u_signed64) stcs[i].u1.h.fileid, tmpbuf, 0), stcs[i].u1.h.server);
+									RESTORE_EID;
+									strcpy(Cnsfileid.server,stcs[i].u1.h.server);
+									Cnsfileid.fileid = stcs[i].u1.h.fileid;
+									if (Cns_setsegattrs(castor_hsm,
+														&Cnsfileid,
+														nsegments_soft_delete,
+														hsm_segments_soft_delete) < 0) {
+										SAVE_EID;
+										sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setsegattrs", sstrerror(serrno));
+										RESTORE_EID;
+									}
+								} else {
+									SAVE_EID;
+									sendrep(rpfd, MSG_ERR, "### [%s] Could not find offending segment to soft-delete for tape/side.fseq = %s/%d.%d !\n", (castor_hsm != NULL) ? castor_hsm : "...", tapereq->vid, tapereq->side, filereq->tape_fseq);
+									sendrep(rpfd, MSG_ERR, "### [%s] Giving up when trying to repair segments in the Name Server\n", (castor_hsm != NULL) ? castor_hsm : "...");
+									RESTORE_EID;
+								}
+							}
+						}
+					}
+				}
+			}
+		} else {
+			SAVE_EID;
+			sendrep(rpfd, MSG_ERR, "### [%s] Trying to set tape/vid %s/%d to %s state\n", (castor_hsm != NULL) ? castor_hsm : "...", tapereq->vid, tapereq->side, this_string);
+			if (vmgr_updatetape(tapereq->vid, tapereq->side, 0, 0, 0, this_flag) != 0) {
+				if (tapereq->side > 0) {
+					sendrep (rpfd, MSG_ERR, STG202, tapereq->vid, tapereq->side, "vmgr_updatetape", sstrerror(serrno));
+				} else {
+					sendrep (rpfd, MSG_ERR, STG02, tapereq->vid, "vmgr_updatetape", sstrerror(serrno));
+				}
+				RESTORE_EID;
+				fatal_callback_error = callback_error = 1;
+				return;
 			}
 			RESTORE_EID;
-			fatal_callback_error = callback_error = 1;
-			return;
 		}
-		RESTORE_EID;
 		/* By resetting this variable we makes sure that our decision is not overwriten by the cleanup() */
 		vid[0] = '\0';
 		side = -1;
