@@ -66,7 +66,7 @@ END;
    Due to this trigger, locking the Stream is enough
    to be safe */
 CREATE OR REPLACE TRIGGER tr_Stream2TapeCopy_Stream
-BEFORE INSERT OR DELETE OR UPDATE ON Stream2TapeCopy
+BEFORE INSERT OR UPDATE ON Stream2TapeCopy
 FOR EACH ROW
 DECLARE
   unused Stream%ROWTYPE;

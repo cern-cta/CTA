@@ -13,15 +13,11 @@ CREATE INDEX main.I_Id2Type_type ON Id2Type(type);
 DROP SEQUENCE ids_seq;
 CREATE SEQUENCE ids_seq;
 
-/* SQL statements for newRequests table */
+/* SQL statements for requests status */
 DROP INDEX I_newRequests_type;
 DROP TABLE newRequests;
 CREATE TABLE newRequests (id INTEGER PRIMARY KEY, type INTEGER, creation DATE);
 CREATE INDEX I_newRequests_type on newRequests (type);
-
-/* SQL statements for newSubRequests table */
-DROP TABLE newSubRequests;
-CREATE TABLE newSubRequests (id INTEGER PRIMARY KEY, creation DATE);
 ALTER TABLE SvcClass2TapePool
   DROP CONSTRAINT fk_SvcClass2TapePool_Parent
   DROP CONSTRAINT fk_SvcClass2TapePool_Child;
@@ -42,6 +38,34 @@ CREATE TABLE Client (ipAddress NUMBER, port NUMBER, id INTEGER PRIMARY KEY);
 /* SQL statements for type Disk2DiskCopyDoneRequest */
 DROP TABLE Disk2DiskCopyDoneRequest;
 CREATE TABLE Disk2DiskCopyDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskCopyId INTEGER, status NUMBER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+
+/* SQL statements for type GetUpdateDone */
+DROP TABLE GetUpdateDone;
+CREATE TABLE GetUpdateDone (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+
+/* SQL statements for type GetUpdateFailed */
+DROP TABLE GetUpdateFailed;
+CREATE TABLE GetUpdateFailed (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+
+/* SQL statements for type PutFailed */
+DROP TABLE PutFailed;
+CREATE TABLE PutFailed (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+
+/* SQL statements for type Files2Delete */
+DROP TABLE Files2Delete;
+CREATE TABLE Files2Delete (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskServer VARCHAR2(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+
+/* SQL statements for type FilesDeleted */
+DROP TABLE FilesDeleted;
+CREATE TABLE FilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+
+/* SQL statements for type GCRemovedFile */
+DROP TABLE GCRemovedFile;
+CREATE TABLE GCRemovedFile (diskCopyId INTEGER, id INTEGER PRIMARY KEY);
+
+/* SQL statements for type GCLocalFile */
+DROP TABLE GCLocalFile;
+CREATE TABLE GCLocalFile (fileName VARCHAR2(2048), diskCopyId INTEGER, id INTEGER PRIMARY KEY);
 
 /* SQL statements for type MoverCloseRequest */
 DROP TABLE MoverCloseRequest;
@@ -274,7 +298,7 @@ END;
    Due to this trigger, locking the Stream is enough
    to be safe */
 CREATE OR REPLACE TRIGGER tr_Stream2TapeCopy_Stream
-BEFORE INSERT OR DELETE OR UPDATE ON Stream2TapeCopy
+BEFORE INSERT OR UPDATE ON Stream2TapeCopy
 FOR EACH ROW
 DECLARE
   unused Stream%ROWTYPE;
