@@ -1,5 +1,5 @@
 /*
- * $Id: stgpath_Cdbtest.c,v 1.3 2000/05/10 17:03:07 jdurand Exp $
+ * $Id: stgpath_Cdbtest.c,v 1.4 2000/05/10 17:34:19 jdurand Exp $
  */
 
 /* ============== */
@@ -166,7 +166,7 @@ int main(argc,argv)
                                                            NULL,
                                                            &stpp,
                                                            NULL,
-                                                           NULL) != 0) {
+                                                           &stpp) != 0) {
                                       fprintf(stderr,"--> [%s] Cdb_pkeyfind_fetch error (%s)\n",argv[i],sstrerror(serrno));
                                       if (serrno == EDB_D_CORRUPT) {
                                         exit(EXIT_FAILURE);
