@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpconfig.c,v $ $Revision: 1.4 $ $Date: 2000/04/12 11:45:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpconfig.c,v $ $Revision: 1.5 $ $Date: 2002/09/30 14:52:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpconfig - configure tape drive up/down */
@@ -97,6 +97,6 @@ usage(cmd)
 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
-	fprintf (stderr, "unit_name status\n");
+	fprintf (stderr, "unit_name status [reason]\n");
 }
 
