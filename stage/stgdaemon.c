@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.158 2002/01/16 17:19:30 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.159 2002/01/24 10:46:01 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.158 $ $Date: 2002/01/16 17:19:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.159 $ $Date: 2002/01/24 10:46:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -745,6 +745,8 @@ int main(argc,argv)
 		} else if ((stcp->status == STAGEOUT) ||
 					(stcp->status == STAGEALLOC)) {
 			u_signed64 actual_size_block;
+			off_t previous_actual_size = stcp->actual_size;
+			
 			PRE_RFIO;
 			if (RFIO_STAT(stcp->ipath, &st) == 0) {
 				stcp->actual_size = st.st_size;
@@ -752,8 +754,10 @@ int main(argc,argv)
 					actual_size_block = stcp->actual_size;
 				}
 #ifdef USECDB
-				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				if (previous_actual_size != stcp->actual_size) {
+					if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+						stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					}
 				}
 #endif
 			} else {
