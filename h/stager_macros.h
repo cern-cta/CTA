@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.17 2005/01/27 12:50:14 jdurand Exp $
+ * $Id: stager_macros.h,v 1.18 2005/02/04 09:42:09 jdurand Exp $
  */
 
 #ifndef __stager_macros_h
@@ -101,16 +101,34 @@
   extern void *stagerSignalCthreadStructure; \
   if (Cthread_mutex_timedlock_ext(stagerSignalCthreadStructure,STAGER_MUTEX_TIMEOUT) != 0) { \
     STAGER_LOG_SYSCALL(NULL,"Cthread_mutex_timedlock_ext"); \
-    goto label; \
+  } else { \
+    stagerSignaledBackup = stagerSignaled; \
+    if (Cthread_mutex_unlock_ext(stagerSignalCthreadStructure) != 0) { \
+      STAGER_LOG_SYSCALL(NULL,"Cthread_mutex_unlock_ext"); \
+    } \
+    if (stagerSignaledBackup >= 0) { \
+      STAGER_LOG_DEBUG(NULL,"Exiting because Signal Thread catched a signal"); \
+      goto label; \
+    } \
   } \
-  stagerSignaledBackup = stagerSignaled; \
-  if (Cthread_mutex_unlock_ext(stagerSignalCthreadStructure) != 0) { \
-    STAGER_LOG_SYSCALL(NULL,"Cthread_mutex_unlock_ext"); \
-    goto label; \
-  } \
-  if (stagerSignaledBackup >= 0) { \
-    STAGER_LOG_DEBUG(NULL,"Exiting because Signal Thread catched a signal"); \
-    goto label; \
+}
+
+#define STAGER_THREAD_CHECK_SIGNAL_EXT(label,extracode) { \
+  extern int stagerSignaled; \
+  int stagerSignaledBackup; \
+  extern void *stagerSignalCthreadStructure; \
+  if (Cthread_mutex_timedlock_ext(stagerSignalCthreadStructure,STAGER_MUTEX_TIMEOUT) != 0) { \
+    STAGER_LOG_SYSCALL(NULL,"Cthread_mutex_timedlock_ext"); \
+  } else { \
+    stagerSignaledBackup = stagerSignaled; \
+    if (Cthread_mutex_unlock_ext(stagerSignalCthreadStructure) != 0) { \
+      STAGER_LOG_SYSCALL(NULL,"Cthread_mutex_unlock_ext"); \
+    } \
+    if (stagerSignaledBackup >= 0) { \
+      STAGER_LOG_DEBUG(NULL,"Exiting because Signal Thread catched a signal"); \
+      extracode; \
+      goto label; \
+    } \
   } \
 }
 
