@@ -1,9 +1,9 @@
 .\"
-.\" $Id: Cglobals.man,v 1.4 2001/09/26 09:13:48 jdurand Exp $
+.\" $Id: Cglobals.man,v 1.5 2001/10/26 09:32:49 jdurand Exp $
 .\"
-.TH CGLOBALS "3" "$Date: 2001/09/26 09:13:48 $" "CASTOR" "Common Library Functions"
+.TH CGLOBALS "3" "$Date: 2001/10/26 09:32:49 $" "CASTOR" "Common Library Functions"
 .SH NAME
-\fBCglobals\fP \- \fBC\fPASTOR thread-safe \fBglobal\fP variable\fBs\fP interface
+\fBCglobals\fP \- \fBC\fPASTOR thread-specific \fBglobal\fP variable\fBs\fP interface
 .SH SYNOPSIS
 .B #include <Cglobals.h>
 .P
