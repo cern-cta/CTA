@@ -1,0 +1,88 @@
+.\" @(#)$RCSfile: Cupvmodify.man,v $ $Revision: 1.1 $ $Date: 2002/05/29 09:22:11 $ CERN IT-DS/HSM Ben Couturier
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\" 
+.TH "Cupvmodify" "1" "$Date: 2002/05/29 09:22:11 $" "CASTOR" "UPV Administrator commands"
+.SH "NAME"
+Cupvmodify \- Adds an entry to the user privilege validation system
+.SH "SYNOPSIS"
+.B Cupvmodify
+[
+.BI \-\-uid " uid " | \-\-user " username"
+] [
+.BI \-\-gid " gid " | \-\-group " groupname"
+]
+.BI \-\-src " source_host"
+.BI \-\-tgt " target_host"
+[
+.BI \-\-priv " privilege" | \-\-newsrc " new_source_host" | \-\-newtgt "new_target_host" 
+]
+
+.SH "DESCRIPTION"
+.B Cupvmodify
+Modifies an entry in the user privilege validation system. The permissions are always specified in this way: a given privilege level on a target machine (see below) is given  to a given uid/gid from a source machine.
+.TP 
+.I uid/user
+is the user id/user name of the user for whom the authorization is requested.
+.TP 
+.I gid/group
+is the group id/group name of the user for whom authorization is requested.
+.TP 
+.I source_host
+the regular expression for the source host.
+.TP 
+.I target_host
+the regular expression for the target host.
+.TP 
+.I privilege
+is the privilege requested. It must be one of the following:
+.TP 
+.I new_source_host
+the regular expression for the new source host.
+.TP 
+.I new_target_host
+the regular expression for the new target host.
+.IP 
+.BR OPERATOR, 
+.BR TAPE_OPERATOR, 
+.BR EXPT_ADMIN, 
+.BR ADMIN, 
+.BR UPV_ADMIN, 
+.BR TAPE_SYSTEM 
+or a combination separated with "|".
+.SH "RETURN VALUE"
+This routine returns 0 if the operation was successful, or 1 if the operation
+failed or if the authorization is rejected. 
+.SH "ERRORS"
+.TP 1.3i
+.B EACCES
+Permission denied.
+.TP 
+.B EINVAL
+a bad uid/gid or privilege has been passed as argument.
+.TP 
+.B SENOSHOST
+Host unknown.
+.TP 
+.B SENOSSERV
+Service unknown.
+.TP 
+.B SECOMERR
+Communication error.
+.TP 
+.B SEINTERNAL
+Internal CUPV error.
+.TP 
+.B SECUPVNACT
+Server is not running or is being shutdown.
+.SH "SEE ALSO"
+.BR Cupvadd(1) , 
+.B Cupvcheck(1) ,
+.B Cupvdelete(1) ,
+.B Cupvlist(1) ,
+.B Cupv_add(3) ,
+.B Cupv_delete(3) ,
+.B Cupv_list(3) ,
+.B Cupv_modify(3)
+.SH "AUTHOR"
+\fBCASTOR\fP Team <castor.support@cern.ch>

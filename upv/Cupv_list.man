@@ -1,0 +1,49 @@
+.\" @(#)$RCSfile: Cupv_list.man,v $ $Revision: 1.1 $ $Date: 2002/05/29 09:22:11 $ CERN IT-DS/HSM Ben Couturier
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\" 
+.TH "Cupv_list" "3" "$Date: 2002/05/29 09:22:11 $" "CASTOR" "UPV Library Functions"
+.SH "NAME"
+Cupv_list \- Lists the entries in the user privilege validation system.
+.SH "SYNOPSIS"
+\fB#include "Cupv_api.h"\fR
+.sp
+.BI "Cupv_list (int " flag , 
+.BI "Cupv_entry_list *"  entry , 
+.BI "struct Cupv_userpriv *" filter ) 
+.SH "DESCRIPTION"
+.B Cupv_list
+Lists the rights in the CASTOR User Privilege Validation system. It is possible to filter the entries by specifying a struct Cupv_userpriv, where \-1 is used for wildcard for uid/gid/priv and and empty string is used to specify a wildcard for source and target hosts.
+.SH "RETURN VALUE"
+This routine returns a pointer to a struct Cupv_userpriv if the call was successful, NULL if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH "ERRORS"
+.TP 1.3i
+.B EACCES
+Permission denied.
+.TP .B EINVAL
+a bad uid/gid or privilege has been passed as argument.
+.TP 
+.B SENOSHOST
+Host unknown.
+.TP 
+.B SENOSSERV
+Service unknown.
+.TP 
+.B SECOMERR
+Communication error.
+.TP 
+.B SEINTERNAL
+Internal CUPV error.
+.TP 
+.B SECUPVNACT
+Server is not running or is being shutdown.
+.SH "SEE ALSO"
+.BR Castor_limits(4) ,
+.B Cupv_add(3) ,
+.B Cupv_delete(3) ,
+.B Cupv_list(3)
+.SH "AUTHOR"
+\fBCASTOR\fP Team <castor.support@cern.ch>
