@@ -1,5 +1,5 @@
 /*
- * $Id: stage_messages.h,v 1.13 2002/02/05 16:14:18 jdurand Exp $
+ * $Id: stage_messages.h,v 1.14 2002/02/07 18:06:11 jdurand Exp $
  */
 
 #ifndef __stage_messages_h
@@ -155,5 +155,8 @@
 #define STG173  "STG173 - %s : Fileclass changed from %d to %d (fileid %s@%s), catalog updated for reqid=%d\n"
 #define	STG174  "STG174 - %s (fileid=%s@%s) %s : %s error : %s\n"
 #define	STG175  "STG175 - %s (fileid=%s@%s) %s\n"
+
+/* Special message - a mimic of STG02 only for use with TAPE error message, when side is > 0 */
+#define STG202	"STG202 - %s/%d : %s error : %s\n"
 
 #endif /* __stage_messages_h */
