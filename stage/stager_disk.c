@@ -1,5 +1,5 @@
 /*
- * $Id: stager_disk.c,v 1.7 2002/04/04 15:10:16 jdurand Exp $
+ * $Id: stager_disk.c,v 1.8 2002/04/30 13:09:55 jdurand Exp $
  */
 
 /*
@@ -15,7 +15,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.7 $ $Date: 2002/04/04 15:10:16 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.8 $ $Date: 2002/04/30 13:09:55 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -467,7 +467,7 @@ int filecopy(stcp, key, hostname)
 		/* Reading file */
 		if (stcp->size) {
 			char tmpbuf[21];
-			u64tostr((u_signed64) ((u_signed64) stcp->size) * ((u_signed64) ONE_MB), tmpbuf, 0);
+			u64tostr(stcp->size, tmpbuf, 0);
 			sprintf (command+strlen(command), " -s %s", tmpbuf);
 		}
 		if (stcp->t_or_d == 'm')
