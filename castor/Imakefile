@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.40 $ $Release$ $Date: 2004/10/07 13:08:36 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.41 $ $Release$ $Date: 2004/10/15 12:55:50 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -136,7 +136,6 @@ STGLIB_SRCS = IAddressCInt.cpp \
               rh/FileResponseCInt.cpp \
               rh/Response.cpp \
               rh/ResponseCInt.cpp \
-              rh/Server.cpp \
               rh/StringResponse.cpp \
               rh/StringResponseCInt.cpp \
               stager/CastorFile.cpp \
