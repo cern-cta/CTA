@@ -39,7 +39,7 @@
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/rh/Client.hpp"
-#include "castor/rh/Request.hpp"
+#include "castor/stager/Request.hpp"
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -147,7 +147,7 @@ castor::IObject* castor::io::StreamClientCnv::createObj(castor::IAddress* addres
   object->setId(id);
   newlyCreated.insert(object);
   IObject* objRequest = unmarshalObject(ad->stream(), newlyCreated);
-  object->setRequest(dynamic_cast<castor::rh::Request*>(objRequest));
+  object->setRequest(dynamic_cast<castor::stager::Request*>(objRequest));
   return object;
 }
 

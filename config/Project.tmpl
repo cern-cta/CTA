@@ -205,6 +205,34 @@ TAPEDIR = tape
 #endif
 #endif
 
+#if BuildRHCpp
+#if BuildOraCpp != YES
+#undef BuildOraCpp
+#define BuildOraCpp YES
+#endif
+RHCPPDIR = rh
+#endif
+
+#if BuildOraCpp
+#if BuildClientCpp != YES
+#undef BuildClientCpp
+#define BuildClientCpp YES
+#endif
+ORACPPDIR = ora
+#endif
+
+#if BuildClientCpp
+#if BuildLib != YES
+#undef BuildLib
+#define BuildLib YES
+#endif
+#if BuildCommon != YES
+#undef BuildCommon
+#define BuildCommon YES
+#endif
+COMMONCPPDIR = castor
+#endif
+
 #if BuildRfioClient || BuildRfioServer
 RFIODIR = rfio
 #if BuildCommon != YES
@@ -225,10 +253,6 @@ RFIODIR = rfio
 #define BuildLib	YES
 #endif
 #endif
-#endif
-
-#if BuildStageLibrary
-STAGEDIR = stage
 #endif
 
 #if BuildMsgClient
@@ -262,10 +286,6 @@ NSDIR = ns
 #define BuildLib	YES
 #endif
 #endif
-#endif
-
-#if BuildRmcClient || BuildRmcServer
-RMCDIR = rmc
 #endif
 
 #if BuildVdqmClient || BuildVdqmServer
@@ -353,18 +373,6 @@ MONITORDIR = monitor
 #endif
 #endif
 
-#if BuildCommon
-COMMONDIR = common
-#if BuildCommands != YES
-#undef BuildCommands
-#define BuildCommands	YES
-#endif
-#if BuildLib != YES
-#undef BuildLib
-#define BuildLib	YES
-#endif
-#endif
-
 #if BuildSysreq
 SYSREQDIR = sysreq
 #if BuildLib != YES
@@ -373,62 +381,6 @@ SYSREQDIR = sysreq
 #endif
 #endif
 
-#if BuildLib
-LIBDIR = lib
-SHLIBDIR = shlib
-#endif
-
-#if BuildCommands
-COMMANDSDIR = commands
-#endif
-
-#if BuildDpm
-DPMDIR = dpm
-#endif
-
-#if BuildHpssServer || BuildHpssClient
-HPSSDIR = hpss
-#endif
-
-#if BuildDstageCpp
-#if BuildOraCpp != YES
-#undef BuildOraCpp
-#define BuildOraCpp YES
-#endif
-DSTAGECPPDIR = dstage
-#endif
-
-#if BuildRHCpp
-#if BuildOraCpp != YES
-#undef BuildOraCpp
-#define BuildOraCpp YES
-#endif
-RHCPPDIR = rh
-#endif
-
-#if BuildOraCpp
-DBCPPDIR = db
-#endif
-
-#if BuildOraCpp
-#if BuildClientCpp != YES
-#undef BuildClientCpp
-#define BuildClientCpp YES
-#endif
-ORACPPDIR = ora
-#endif
-
-#if BuildProtoCppStager
-#if BuildClientCpp != YES
-#undef BuildClientCpp
-#define BuildClientCpp YES
-#endif
-PROTOCPPDIR = proto
-#endif
-
-#if BuildClientCpp
-COMMONCPPDIR = castor
-#endif
 
 #if BuildCppTest
 COMMONCPPTESTDIR = castor
@@ -445,3 +397,45 @@ STGSVCTESTCPPDIR = stgSvc
 #endif
 SECURITYDIR=security
 #endif
+
+#if BuildCommon
+COMMONDIR = common
+#if BuildCommands != YES
+#undef BuildCommands
+#define BuildCommands	YES
+#endif
+#if BuildLib != YES
+#undef BuildLib
+#define BuildLib	YES
+#endif
+#endif
+
+#if BuildCommands
+COMMANDSDIR = commands
+#endif
+
+#if BuildLib
+LIBDIR = lib
+SHLIBDIR = shlib
+#endif
+
+#if BuildOraCpp
+DBCPPDIR = db
+#endif
+
+#if BuildStageLibrary
+STAGEDIR = stage
+#endif
+
+#if BuildRmcClient || BuildRmcServer
+RMCDIR = rmc
+#endif
+
+#if BuildDpm
+DPMDIR = dpm
+#endif
+
+#if BuildHpssServer || BuildHpssClient
+HPSSDIR = hpss
+#endif
+

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageOut.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/08/20 16:00:13 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageOut.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/01 14:26:12 $ $Author: sponcec3 $
  *
  *
  *
@@ -27,8 +27,8 @@
 // Include Files
 #include <iostream>
 #include <vector>
-#include "castor/rh/File.hpp"
-#include "castor/rh/StageOutRequest.hpp"
+#include "castor/stager/SubRequest.hpp"
+#include "castor/stager/StageOutRequest.hpp"
 #include "castor/exception/Exception.hpp"
 #include "stage_constants.h"
 
@@ -38,7 +38,7 @@
 //------------------------------------------------------------------------------
 // buildRequest
 //------------------------------------------------------------------------------
-castor::rh::Request* castor::client::StageOut::buildRequest()
+castor::stager::Request* castor::client::StageOut::buildRequest()
   throw (castor::exception::Exception) {
   // First reject some flags parsed by BaseCmdLineClient
   std::vector<std::string> rejected;
@@ -61,25 +61,25 @@ castor::rh::Request* castor::client::StageOut::buildRequest()
     flags |= STAGE_NORETRY;
   }
   // Build request
-  castor::rh::StageOutRequest* req =
-    new castor::rh::StageOutRequest();
+  castor::stager::StageOutRequest* req =
+    new castor::stager::StageOutRequest();
   req->setFlags(flags);
   req->setOpenmode(0);  // XXX To be fixed. Ask Jean-Damien
   int n = 0;
   for (std::vector<std::string>::const_iterator it = m_inputArguments.begin();
        it != m_inputArguments.end();
        it++) {
-    castor::rh::File* f = new castor::rh::File();
-    f->setName(*it);
-    f->setPoolname(poolName);
+    castor::stager::SubRequest* s = new castor::stager::SubRequest();
+    s->setFileName(*it);
+    s->setPoolName(poolName);
     if (n < sizes.size()) {
-      f->setXsize(sizes[n]);
+      s->setXsize(sizes[n]);
     } else {
-      f->setXsize(0);
+      s->setXsize(0);
     }
     n++;
-    req->addFiles(f);
-    f->setRequest(req);
+    req->addSubRequests(s);
+    s->setRequest(req);
   }
   return req;
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/08/30 14:39:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/10/01 14:26:20 $ $Author: sponcec3 $
  *
  *
  *
@@ -41,7 +41,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/BaseAddress.hpp"
 
-#include "castor/rh/Request.hpp"
+#include "castor/stager/Request.hpp"
 #include "castor/rh/Client.hpp"
 
 #include "castor/io/biniostream.h"
@@ -126,10 +126,10 @@ void *castor::rh::Server::processRequest(void *param) throw() {
   // get the incoming request
   castor::io::ServerSocket* sock =
     (castor::io::ServerSocket*) param;
-  castor::rh::Request* fr = 0;
+  castor::stager::Request* fr = 0;
   try {
     castor::IObject* obj = sock->readObject();
-    fr = dynamic_cast<castor::rh::Request*>(obj);
+    fr = dynamic_cast<castor::stager::Request*>(obj);
     if (0 == fr) {
       delete obj;
       clog() << ERROR

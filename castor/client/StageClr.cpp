@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageClr.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/08/27 12:27:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageClr.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/01 14:26:12 $ $Author: sponcec3 $
  *
  * 
  *
@@ -27,8 +27,8 @@
 // Include Files
 #include <iostream>
 #include <vector>
-#include "castor/rh/File.hpp"
-#include "castor/rh/StageClrRequest.hpp"
+#include "castor/stager/SubRequest.hpp"
+#include "castor/stager/StageClrRequest.hpp"
 #include "castor/exception/Exception.hpp"
 #include "stage_constants.h"
 
@@ -38,7 +38,7 @@
 //------------------------------------------------------------------------------
 // buildRequest
 //------------------------------------------------------------------------------
-castor::rh::Request* castor::client::StageClr::buildRequest()
+castor::stager::Request* castor::client::StageClr::buildRequest()
   throw (castor::exception::Exception) {
   // First reject some flags parsed by BaseCmdLineClient
   std::vector<std::string> rejected;
@@ -53,19 +53,19 @@ castor::rh::Request* castor::client::StageClr::buildRequest()
   rejectFlags(rejected, "stageqry");
   // Build request
   std::string poolName = getPoolName();
-  castor::rh::StageClrRequest* req =
-    new castor::rh::StageClrRequest();
+  castor::stager::StageClrRequest* req =
+    new castor::stager::StageClrRequest();
   req->setFlags(0);
   int n = 0;
   for (std::vector<std::string>::const_iterator it = m_inputArguments.begin();
        it != m_inputArguments.end();
        it++) {
-    castor::rh::File* f = new castor::rh::File();
-    f->setName(*it);
-    f->setPoolname(poolName);
+    castor::stager::SubRequest* s = new castor::stager::SubRequest();
+    s->setFileName(*it);
+    s->setPoolName(poolName);
     n++;
-    req->addFiles(f);
-    f->setRequest(req);
+    req->addSubRequests(s);
+    s->setRequest(req);
   }
   return req;
 }

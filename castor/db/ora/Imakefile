@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.18 $ $Release$ $Date: 2004/09/01 13:45:28 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.19 $ $Release$ $Date: 2004/10/01 14:26:13 $ $Author: sponcec3 $
 #
 # Make Castor DB libraries
 #
@@ -37,30 +37,29 @@ DEBUG  = -g
 INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,demo) -I FileName($(ORACLE_HOME)/rdbms,public) -I FileName(FileName(FileName(..,..),..),h) -I FileName(FileName(..,..),..)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
-ORALIB_SRCS = OraBaseObj.cpp \
-              OraBaseCnv.cpp \
+ORALIB_SRCS = OraBaseCnv.cpp \
+              OraBaseObj.cpp \
               OraCastorFileCnv.cpp \
               OraClientCnv.cpp \
               OraCnvSvc.cpp \
-              OraStagerSvc.cpp \
               OraCuuidCnv.cpp \
-              OraDiskFileCnv.cpp \
-              OraDiskFileCopyCnv.cpp \
-              OraDiskFileSystemCnv.cpp \
+              OraDiskCopyCnv.cpp \
+              OraDiskPoolCnv.cpp \
               OraDiskServerCnv.cpp \
-              OraFileCnv.cpp \
+              OraFileSystemCnv.cpp \
               OraReqIdCnv.cpp \
               OraSegmentCnv.cpp \
-              OraStageInRequestCnv.cpp \
-              OraStageOutRequestCnv.cpp \
-              OraStageUpdcRequestCnv.cpp \
-              OraStageQryRequestCnv.cpp \
               OraStageClrRequestCnv.cpp \
               OraStageFilChgRequestCnv.cpp \
+              OraStageInRequestCnv.cpp \
+              OraStageOutRequestCnv.cpp \
+              OraStageQryRequestCnv.cpp \
+              OraStageUpdcRequestCnv.cpp \
+              OraStagerSvc.cpp \
+              OraSubRequestCnv.cpp \
               OraTapeCnv.cpp \
-              OraTapePoolCnv.cpp \
-              OraTapeRequestCnv.cpp \
-              OraTpFileCopyCnv.cpp
+              OraTapeCopyCnv.cpp \
+              OraTapePoolCnv.cpp
 
 ORALIB_OBJS = $(ORALIB_SRCS:.cpp=.Osuf)
 

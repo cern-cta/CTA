@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/09/01 13:45:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/01 14:26:12 $ $Author: sponcec3 $
  *
  *
  *
@@ -27,9 +27,8 @@
 // Include Files
 #include <iostream>
 #include <vector>
-#include "castor/rh/File.hpp"
-#include "castor/rh/StageUpdcRequest.hpp"
-#include "castor/rh/ReqId.hpp"
+#include "castor/stager/StageUpdcRequest.hpp"
+#include "castor/stager/ReqId.hpp"
 #include "castor/exception/Exception.hpp"
 #include "stage_constants.h"
 
@@ -39,7 +38,7 @@
 //------------------------------------------------------------------------------
 // buildRequest
 //------------------------------------------------------------------------------
-castor::rh::Request* castor::client::StageUpdc::buildRequest()
+castor::stager::Request* castor::client::StageUpdc::buildRequest()
   throw (castor::exception::Exception) {
   // First reject some flags parsed by BaseCmdLineClient
   std::vector<std::string> rejected;
@@ -54,14 +53,14 @@ castor::rh::Request* castor::client::StageUpdc::buildRequest()
   rejected.push_back("rdonly");
   rejectFlags(rejected, "stageqry");
   // Build request
-  castor::rh::StageUpdcRequest* req =
-    new castor::rh::StageUpdcRequest();
+  castor::stager::StageUpdcRequest* req =
+    new castor::stager::StageUpdcRequest();
   req->setFlags(0);
   int n = 0;
   for (std::vector<std::string>::const_iterator it = m_inputArguments.begin();
        it != m_inputArguments.end();
        it++) {
-    castor::rh::ReqId* r = new castor::rh::ReqId();
+    castor::stager::ReqId* r = new castor::stager::ReqId();
     r->setValue(*it);
     n++;
     req->addReqids(r);

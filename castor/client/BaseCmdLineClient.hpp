@@ -38,7 +38,7 @@
 
 namespace castor {
 
-  namespace rh {
+  namespace stager {
     // Forward declaration
     class Request;
   }
@@ -81,7 +81,7 @@ namespace castor {
        * of the request
        * @return the request to be sent to the request handler
        */
-      virtual castor::rh::Request* buildRequest()
+      virtual castor::stager::Request* buildRequest()
         throw (castor::exception::Exception) = 0;
 
       /**

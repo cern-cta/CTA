@@ -1,0 +1,196 @@
+/******************************************************************************
+ *                      castor/stager/Request.h
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
+ *
+ * 
+ *
+ * @author Sebastien Ponce, sebastien.ponce@cern.ch
+ *****************************************************************************/
+
+#ifndef CASTOR_STAGER_REQUEST_H
+#define CASTOR_STAGER_REQUEST_H
+
+// Include Files and Forward declarations for the C world
+#include "castor/stager/RequestStatusCodes.h"
+struct C_IClient_t;
+struct C_IObject_t;
+struct C_u_signed64_t;
+struct Cstager_Request_t;
+struct Cstager_SubRequest_t;
+
+//------------------------------------------------------------------------------
+// This defines a C interface to the following class
+// class Request
+// This is a common base class for all requests in the stager request queue.
+//------------------------------------------------------------------------------
+
+/**
+ * Empty Constructor
+ */
+int Cstager_Request_create(struct Cstager_Request_t** obj);
+
+/**
+ * Empty Destructor
+ */
+int Cstager_Request_delete(struct Cstager_Request_t* obj);
+
+/**
+ * Cast into IObject
+ */
+struct C_IObject_t* Cstager_Request_getIObject(struct Cstager_Request_t* obj);
+
+/**
+ * Dynamic cast from IObject
+ */
+struct Cstager_Request_t* Cstager_Request_fromIObject(struct C_IObject_t* obj);
+
+/**
+ * Outputs this object in a human readable format
+ */
+int Cstager_Request_print(struct Cstager_Request_t* instance);
+
+/**
+ * Get the value of flags
+ */
+int Cstager_Request_flags(struct Cstager_Request_t* instance, struct C_u_signed64_t* var);
+
+/**
+ * Set the value of flags
+ */
+int Cstager_Request_setFlags(struct Cstager_Request_t* instance, struct C_u_signed64_t new_var);
+
+/**
+ * Get the value of userName
+ * Name of the user that submitted the request
+ */
+int Cstager_Request_userName(struct Cstager_Request_t* instance, const char** var);
+
+/**
+ * Set the value of userName
+ * Name of the user that submitted the request
+ */
+int Cstager_Request_setUserName(struct Cstager_Request_t* instance, const char* new_var);
+
+/**
+ * Get the value of euid
+ * Id of the user that submitted the request
+ */
+int Cstager_Request_euid(struct Cstager_Request_t* instance, unsigned long* var);
+
+/**
+ * Set the value of euid
+ * Id of the user that submitted the request
+ */
+int Cstager_Request_setEuid(struct Cstager_Request_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of egid
+ * Id of the group of the user that submitted the request
+ */
+int Cstager_Request_egid(struct Cstager_Request_t* instance, unsigned long* var);
+
+/**
+ * Set the value of egid
+ * Id of the group of the user that submitted the request
+ */
+int Cstager_Request_setEgid(struct Cstager_Request_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of mask
+ * Mask for accessing files in the user space
+ */
+int Cstager_Request_mask(struct Cstager_Request_t* instance, unsigned long* var);
+
+/**
+ * Set the value of mask
+ * Mask for accessing files in the user space
+ */
+int Cstager_Request_setMask(struct Cstager_Request_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of pid
+ * Process id of the user process
+ */
+int Cstager_Request_pid(struct Cstager_Request_t* instance, unsigned long* var);
+
+/**
+ * Set the value of pid
+ * Process id of the user process
+ */
+int Cstager_Request_setPid(struct Cstager_Request_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of machine
+ * The machine that submitted the request
+ */
+int Cstager_Request_machine(struct Cstager_Request_t* instance, const char** var);
+
+/**
+ * Set the value of machine
+ * The machine that submitted the request
+ */
+int Cstager_Request_setMachine(struct Cstager_Request_t* instance, const char* new_var);
+
+/**
+ * Get the value of projectName
+ */
+int Cstager_Request_projectName(struct Cstager_Request_t* instance, const char** var);
+
+/**
+ * Set the value of projectName
+ */
+int Cstager_Request_setProjectName(struct Cstager_Request_t* instance, const char* new_var);
+
+/**
+ * Add a struct Cstager_SubRequest_t* object to the subRequests list
+ */
+int Cstager_Request_addSubRequests(struct Cstager_Request_t* instance, struct Cstager_SubRequest_t* obj);
+
+/**
+ * Remove a struct Cstager_SubRequest_t* object from subRequests
+ */
+int Cstager_Request_removeSubRequests(struct Cstager_Request_t* instance, struct Cstager_SubRequest_t* obj);
+
+/**
+ * Get the list of struct Cstager_SubRequest_t* objects held by subRequests
+ */
+int Cstager_Request_subRequests(struct Cstager_Request_t* instance, struct Cstager_SubRequest_t*** var, int* len);
+
+/**
+ * Get the value of client
+ */
+int Cstager_Request_client(struct Cstager_Request_t* instance, struct C_IClient_t** var);
+
+/**
+ * Set the value of client
+ */
+int Cstager_Request_setClient(struct Cstager_Request_t* instance, struct C_IClient_t* new_var);
+
+/**
+ * Get the value of status
+ */
+int Cstager_Request_status(struct Cstager_Request_t* instance, enum Cstager_RequestStatusCodes_t* var);
+
+/**
+ * Set the value of status
+ */
+int Cstager_Request_setStatus(struct Cstager_Request_t* instance, enum Cstager_RequestStatusCodes_t new_var);
+
+#endif // CASTOR_STAGER_REQUEST_H

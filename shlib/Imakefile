@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.26 $ $Date: 2004/08/23 14:58:10 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.27 $ $Date: 2004/10/01 14:26:28 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -93,9 +93,9 @@ libshift.sl libshift.so:     $(LIBRARIES0)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
-	@for i in $(LIBRARIES0) ;\
+	for i in $(LIBRARIES0) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	@(cd tmp; $(CXX) $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS))
+	(cd tmp; $(CXX) $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS))
 	@-rm -rf tmp
 
 libcastorCommonOra.so: $(LIBRARIES1)

@@ -46,7 +46,7 @@ namespace castor {
     class ServerSocket;
   }
   
-  namespace rh {
+  namespace stager {
     // Forward declaration
     class Request;
   }
@@ -82,7 +82,7 @@ namespace castor {
        * for callbacks
        * @exception Exception when something goed wrong
        */
-      void sendRequest(castor::rh::Request* req,
+      void sendRequest(castor::stager::Request* req,
                        castor::client::IResponseHandler* rh)
         throw(castor::exception::Exception);
 
@@ -121,7 +121,7 @@ namespace castor {
       /**
        * sends a request to the request handler
        */
-      void internalSendRequest(castor::rh::Request& request)
+      void internalSendRequest(castor::stager::Request& request)
         throw (castor::exception::Exception);
 
       /**

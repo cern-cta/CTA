@@ -1,0 +1,223 @@
+/******************************************************************************
+ *                      castor/stager/SubRequestCInt.cpp
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
+ *
+ * 
+ *
+ * @author Sebastien Ponce, sebastien.ponce@cern.ch
+ *****************************************************************************/
+
+// Include Files
+#include "castor/IObject.hpp"
+#include "castor/stager/Request.hpp"
+#include "castor/stager/SubRequest.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "osdep.h"
+
+extern "C" {
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_create
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_create(castor::stager::SubRequest** obj) {
+    *obj = new castor::stager::SubRequest();
+    return 0;
+  }
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_delete
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_delete(castor::stager::SubRequest* obj) {
+    delete obj;
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Cstager_SubRequest_getIObject(castor::stager::SubRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_fromIObject
+  //----------------------------------------------------------------------------
+  castor::stager::SubRequest* Cstager_SubRequest_fromIObject(castor::IObject* obj) {
+    return dynamic_cast<castor::stager::SubRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_print
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_print(castor::stager::SubRequest* instance) {
+    instance->print();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_TYPE
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_TYPE(int* ret) {
+    *ret = castor::stager::SubRequest::TYPE();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setId
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setId(castor::stager::SubRequest* instance,
+                               unsigned long id) {
+    instance->setId(id);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_id
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_id(castor::stager::SubRequest* instance,
+                            unsigned long* ret) {
+    *ret = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_type
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_type(castor::stager::SubRequest* instance,
+                              int* ret) {
+    *ret = instance->type();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_retryCounter
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_retryCounter(castor::stager::SubRequest* instance, unsigned int* var) {
+    *var = instance->retryCounter();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setRetryCounter
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setRetryCounter(castor::stager::SubRequest* instance, unsigned int new_var) {
+    instance->setRetryCounter(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_fileName
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_fileName(castor::stager::SubRequest* instance, const char** var) {
+    *var = instance->fileName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setFileName
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setFileName(castor::stager::SubRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setFileName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_protocol
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_protocol(castor::stager::SubRequest* instance, const char** var) {
+    *var = instance->protocol().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setProtocol
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setProtocol(castor::stager::SubRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setProtocol(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_poolName
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_poolName(castor::stager::SubRequest* instance, const char** var) {
+    *var = instance->poolName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setPoolName
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setPoolName(castor::stager::SubRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setPoolName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_xsize
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_xsize(castor::stager::SubRequest* instance, u_signed64* var) {
+    *var = instance->xsize();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setXsize
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setXsize(castor::stager::SubRequest* instance, u_signed64 new_var) {
+    instance->setXsize(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_request
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_request(castor::stager::SubRequest* instance, castor::stager::Request** var) {
+    *var = instance->request();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setRequest
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setRequest(castor::stager::SubRequest* instance, castor::stager::Request* new_var) {
+    instance->setRequest(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_status
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_status(castor::stager::SubRequest* instance, castor::stager::SubRequestStatusCodes* var) {
+    *var = instance->status();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setStatus
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setStatus(castor::stager::SubRequest* instance, castor::stager::SubRequestStatusCodes new_var) {
+    instance->setStatus(new_var);
+    return 0;
+  }
+
+} // End of extern "C"

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.37 $ $Release$ $Date: 2004/09/02 15:03:06 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.38 $ $Release$ $Date: 2004/10/01 14:26:12 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -94,7 +94,6 @@ STGLIB_SRCS = IAddressCInt.cpp \
               MsgSvc.cpp \
               NoMsgSvc.cpp \
               StdMsgSvc.cpp \
-              DlfMsgSvc.cpp \
               ObjectCatalog.cpp \
               ObjectSet.cpp \
               Services.cpp \
@@ -102,7 +101,6 @@ STGLIB_SRCS = IAddressCInt.cpp \
               logstream.cpp \
               logbuf.cpp \
               stdbuf.cpp \
-              dlfbuf.cpp \
               client/BaseClient.cpp \
               io/AbstractSocket.cpp \
               io/ClientSocket.cpp \
@@ -113,81 +111,83 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamClientCnv.cpp \
               io/StreamCnvSvc.cpp \
               io/StreamCuuidCnv.cpp \
-              io/StreamDiskFileCnv.cpp \
-              io/StreamDiskFileCopyCnv.cpp \
-              io/StreamDiskFileSystemCnv.cpp \
-              io/StreamDiskServerCnv.cpp \
-              io/StreamFileCnv.cpp \
-              io/StreamReqIdCnv.cpp \
-              io/StreamMessageAckCnv.cpp \
-              io/StreamPtrCnv.cpp \
-              io/StreamSegmentCnv.cpp \
-              io/StreamStageInRequestCnv.cpp \
-              io/StreamStageOutRequestCnv.cpp \
-              io/StreamStageUpdcRequestCnv.cpp \
-              io/StreamStageQryRequestCnv.cpp \
-              io/StreamStageClrRequestCnv.cpp \
-              io/StreamStageFilChgRequestCnv.cpp \
-              io/StreamTapeCnv.cpp \
-              io/StreamTapePoolCnv.cpp \
-              io/StreamTapeRequestCnv.cpp \
-              io/StreamStringResponseCnv.cpp \
+              io/StreamDiskCopyCnv.cpp \
               io/StreamEndResponseCnv.cpp \
               io/StreamFileResponseCnv.cpp \
+              io/StreamFileSystemCnv.cpp \
+              io/StreamMessageAckCnv.cpp \
+              io/StreamPtrCnv.cpp \
+              io/StreamReqIdCnv.cpp \
+              io/StreamSegmentCnv.cpp \
+              io/StreamStageClrRequestCnv.cpp \
+              io/StreamStageFilChgRequestCnv.cpp \
+              io/StreamStageInRequestCnv.cpp \
+              io/StreamStageOutRequestCnv.cpp \
+              io/StreamStageQryRequestCnv.cpp \
+              io/StreamStageUpdcRequestCnv.cpp \
+              io/StreamStringResponseCnv.cpp \
+              io/StreamTapeCnv.cpp \
+              io/StreamTapeCopyCnv.cpp \
+              io/StreamTapePoolCnv.cpp \
               rh/Client.cpp \
               rh/ClientCInt.cpp \
-              rh/File.cpp \
-              rh/FileCInt.cpp \
-              rh/FileRequest.cpp \
-              rh/FileRequestCInt.cpp \
-              rh/ReqId.cpp \
-              rh/ReqIdCInt.cpp \
-              rh/ReqIdRequest.cpp \
-              rh/ReqIdRequestCInt.cpp \
-              rh/Request.cpp \
-              rh/RequestCInt.cpp \
-              rh/StageInRequest.cpp \
-              rh/StageInRequestCInt.cpp \
-              rh/StageOutRequest.cpp \
-              rh/StageOutRequestCInt.cpp \
-              rh/StageUpdcRequest.cpp \
-              rh/StageUpdcRequestCInt.cpp \
-              rh/StageQryRequest.cpp \
-              rh/StageQryRequestCInt.cpp \
-              rh/StageClrRequest.cpp \
-              rh/StageClrRequestCInt.cpp \
-              rh/StageFilChgRequest.cpp \
-              rh/StageFilChgRequestCInt.cpp \
-              rh/Response.cpp \
-              rh/ResponseCInt.cpp \
-              rh/StringResponse.cpp \
-              rh/StringResponseCInt.cpp \
               rh/EndResponse.cpp \
               rh/EndResponseCInt.cpp \
               rh/FileResponse.cpp \
               rh/FileResponseCInt.cpp \
-              stager/IStagerSvcCInt.cpp \
+              rh/Response.cpp \
+              rh/ResponseCInt.cpp \
+              rh/Server.cpp \
+              rh/StringResponse.cpp \
+              rh/StringResponseCInt.cpp \
               stager/CastorFile.cpp \
               stager/CastorFileCInt.cpp \
               stager/Cuuid.cpp \
+              stager/DiskCopy.cpp \
+              stager/DiskCopyCInt.cpp \
               stager/DiskFile.cpp \
               stager/DiskFileCInt.cpp \
-              stager/DiskFileCopy.cpp \
-              stager/DiskFileCopyCInt.cpp \
-              stager/DiskFileSystem.cpp \
-              stager/DiskFileSystemCInt.cpp \
+              stager/DiskPool.cpp \
+              stager/DiskPoolCInt.cpp \
               stager/DiskServer.cpp \
               stager/DiskServerCInt.cpp \
+              stager/FileClass.cpp \
+              stager/FileClassCInt.cpp \
+              stager/FileSystem.cpp \
+              stager/FileSystemCInt.cpp \
+              stager/IStagerSvcCInt.cpp \
+              stager/Project.cpp \
+              stager/ProjectCInt.cpp \
+              stager/ReqId.cpp \
+              stager/ReqIdCInt.cpp \
+              stager/ReqIdRequest.cpp \
+              stager/ReqIdRequestCInt.cpp \
+              stager/Request.cpp \
+              stager/RequestCInt.cpp \
               stager/Segment.cpp \
               stager/SegmentCInt.cpp \
+              stager/StageClrRequest.cpp \
+              stager/StageClrRequestCInt.cpp \
+              stager/StageFilChgRequest.cpp \
+              stager/StageFilChgRequestCInt.cpp \
+              stager/StageInRequest.cpp \
+              stager/StageInRequestCInt.cpp \
+              stager/StageOutRequest.cpp \
+              stager/StageOutRequestCInt.cpp \
+              stager/StageQryRequest.cpp \
+              stager/StageQryRequestCInt.cpp \
+              stager/StageUpdcRequest.cpp \
+              stager/StageUpdcRequestCInt.cpp \
+              stager/Stream.cpp \
+              stager/StreamCInt.cpp \
+              stager/SubRequest.cpp \
+              stager/SubRequestCInt.cpp \
               stager/Tape.cpp \
               stager/TapeCInt.cpp \
+              stager/TapeCopy.cpp \
+              stager/TapeCopyCInt.cpp \
               stager/TapePool.cpp \
               stager/TapePoolCInt.cpp \
-              stager/TapeRequest.cpp \
-              stager/TapeRequestCInt.cpp \
-              stager/TpFileCopy.cpp \
-              stager/TpFileCopyCInt.cpp \
               db/DbAddress.cpp \
               db/DbAddressCInt.cpp \
               exception/Exception.cpp \
@@ -201,7 +201,9 @@ STGLIB_SRCS += io/AuthServerSocket.cpp io/AuthClientSocket.cpp
 
 
 #if BuildDlfClient
-STGLIB_SRCS += DlfMsgSvc.cpp
+STGLIB_SRCS += DlfMsgSvc.cpp \
+               DlfMsgSvc.cpp \
+               dlfbuf.cpp
 #endif
 
 STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
@@ -211,19 +213,15 @@ STAGEOUT_SRCS = client/StageOut.cpp client/BaseCmdLineClient.cpp client/CmdLineR
 STAGEUPDC_SRCS = client/StageUpdc.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp
 STAGEQRY_SRCS = client/StageQry.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp client/StageQryResponseHandler.cpp
 STAGECLR_SRCS = client/StageClr.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp
-MTTEST_SRCS = client/Mttest.cpp client/StageIn.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp
-RFCP_SRCS = client/Rfcp.cpp client/BaseCmdLineClient.cpp client/CmdLineResponseHandler.cpp client/RfcpResponseHandler.cpp
-CLIENTS_SRCS = $(STAGEIN_SRCS) $(STAGEOUT_SRCS) $(STAGEUPDC_SRCS) $(STAGEQRY_SRCS) $(STAGECLR_SRCS) $(MTTEST_SRCS) $(RFCP_SRCS)
+CLIENTS_SRCS = $(STAGEIN_SRCS) $(STAGEOUT_SRCS) $(STAGEUPDC_SRCS) $(STAGEQRY_SRCS) $(STAGECLR_SRCS)
 STAGEIN_OBJS = $(STAGEIN_SRCS:.cpp=.Osuf)
 STAGEOUT_OBJS = $(STAGEOUT_SRCS:.cpp=.Osuf)
 STAGEUPDC_OBJS = $(STAGEUPDC_SRCS:.cpp=.Osuf)
 STAGEQRY_OBJS = $(STAGEQRY_SRCS:.cpp=.Osuf)
 STAGECLR_OBJS = $(STAGECLR_SRCS:.cpp=.Osuf)
-MTTEST_OBJS = $(MTTEST_SRCS:.cpp=.Osuf)
-RFCP_OBJS = $(RFCP_SRCS:.cpp=.Osuf)
 CLIENTS_OBJS = $(CLIENTS_SRCS:.cpp=.Osuf)
 
-PROGS_S = stagein stageout stageupdc stageqry stageclr mttest rfcp
+PROGS_S = stagein stageout stageupdc stageqry stageclr
 PROGS_C = $(patsubst %,ProgramTargetName(%),$(PROGS_S))
 
 COMMONLIB = LibraryTargetName(castorClient)
@@ -241,8 +239,6 @@ NormalProgramTarget(stageout, $(STAGEOUT_OBJS), $(GLOBLIB),$(LIBS))
 NormalProgramTarget(stageupdc,$(STAGEUPDC_OBJS),$(GLOBLIB),$(LIBS))
 NormalProgramTarget(stageqry, $(STAGEQRY_OBJS) ,$(GLOBLIB),$(LIBS))
 NormalProgramTarget(stageclr, $(STAGECLR_OBJS), $(GLOBLIB),$(LIBS))
-NormalProgramTarget(mttest,   $(MTTEST_OBJS),   $(GLOBLIB),$(LIBS))
-NormalProgramTarget(rfcp,     $(RFCP_OBJS),     $(GLOBLIB),$(LIBS))
 
 MakeSubdirs(all,$(SUBDIRS))
 MakeCondSubdirs(clean,$(SUBDIRS),)
@@ -303,7 +299,6 @@ InstallProgram(stageout,$(BIN),root,bin,755)
 InstallProgram(stageupdc,$(BIN),root,bin,755)
 InstallProgram(stageqry,$(BIN),root,bin,755)
 InstallProgram(stageclr,$(BIN),root,bin,755)
-InstallProgram(rfcp,$(BIN),root,bin,755)
 
 exportman:
 

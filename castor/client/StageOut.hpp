@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageOut.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/13 13:36:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageOut.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/01 14:26:12 $ $Author: sponcec3 $
  *
  * 
  *
@@ -33,7 +33,7 @@
 
 namespace castor {
 
-  namespace rh {
+  namespace stager {
     // Forward declaration
     class Request;
   }
@@ -51,7 +51,7 @@ namespace castor {
        * of the request
        * @return the request to be sent to the request handler
        */
-      virtual castor::rh::Request* buildRequest()
+      virtual castor::stager::Request* buildRequest()
         throw (castor::exception::Exception);
 
       /**

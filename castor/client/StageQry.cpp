@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageQry.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/09/01 13:45:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageQry.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/01 14:26:12 $ $Author: sponcec3 $
  *
  *
  *
@@ -28,8 +28,8 @@
 #include <iostream>
 #include <vector>
 #include "castor/ObjectSet.hpp"
-#include "castor/rh/File.hpp"
-#include "castor/rh/StageQryRequest.hpp"
+#include "castor/stager/SubRequest.hpp"
+#include "castor/stager/StageQryRequest.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/client/StageQryResponseHandler.hpp"
 #include "stage_constants.h"
@@ -40,7 +40,7 @@
 //------------------------------------------------------------------------------
 // buildRequest
 //------------------------------------------------------------------------------
-castor::rh::Request* castor::client::StageQry::buildRequest()
+castor::stager::Request* castor::client::StageQry::buildRequest()
   throw (castor::exception::Exception) {
   // First reject some flags parsed by BaseCmdLineClient
   std::vector<std::string> rejected;
@@ -63,20 +63,20 @@ castor::rh::Request* castor::client::StageQry::buildRequest()
     flags |= STAGE_NORETRY;
   }
   // Build request
-  castor::rh::StageQryRequest* req =
-    new castor::rh::StageQryRequest();
+  castor::stager::StageQryRequest* req =
+    new castor::stager::StageQryRequest();
   req->setFlags(flags);
   int n = 0;
   for (std::vector<std::string>::const_iterator it = m_inputArguments.begin();
        it != m_inputArguments.end();
        it++) {
-    castor::rh::File* f = new castor::rh::File();
-    f->setName(*it);
-    f->setPoolname(poolName);
-    f->setXsize(0);
+    castor::stager::SubRequest* s = new castor::stager::SubRequest();
+    s->setFileName(*it);
+    s->setPoolName(poolName);
+    s->setXsize(0);
     n++;
-    req->addFiles(f);
-    f->setRequest(req);
+    req->addSubRequests(s);
+    s->setRequest(req);
   }
   return req;
 }

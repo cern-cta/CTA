@@ -27,12 +27,12 @@
  *****************************************************************************/
 
 // Include Files
+#include "util.h"
 #include "castor/Constants.hpp"
-#include "castor/rh/Request.hpp"
+#include "castor/stager/Request.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/client/CmdLineResponseHandler.hpp"
-#include "stage_api.h"
 extern "C" {
 #include <Cgetopt.h>
 }
@@ -69,7 +69,7 @@ void castor::client::BaseCmdLineClient::run(int argc, char** argv)
       return;
     }
     // builds a request
-    castor::rh::Request* req;
+    castor::stager::Request* req;
     try {
       req = buildRequest();
     } catch (castor::exception::Exception e) {
@@ -215,7 +215,7 @@ std::vector<u_signed64> castor::client::BaseCmdLineClient::getSizes()
     char* p = strtok (size, ":");
     while (p != 0) {
       u_signed64 size;
-      if (stage_util_check_for_strutou64(p) < 0 ||
+      if (check_for_strutou64(p) < 0 ||
           (size = strutou64(p)) <= 0) {
         castor::exception::Exception e(ETPRM);
         e.getMessage()

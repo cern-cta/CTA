@@ -28,6 +28,7 @@
 // Include Files
 #include <errno.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/poll.h>
@@ -40,13 +41,12 @@
 #include "castor/IObject.hpp"
 #include "castor/MessageAck.hpp"
 #include "castor/rh/Client.hpp"
-#include "castor/rh/Request.hpp"
 #include "castor/rh/Response.hpp"
+#include "castor/stager/Request.hpp"
 #include "castor/client/IResponseHandler.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-#include "stage_api.h"
 extern "C" {
 #include <Cgetopt.h>
 #include <common.h>
@@ -72,7 +72,7 @@ castor::client::BaseClient::~BaseClient() throw() {
 // run
 //------------------------------------------------------------------------------
 void castor::client::BaseClient::sendRequest
-(castor::rh::Request* req,
+(castor::stager::Request* req,
  castor::client::IResponseHandler* rh)
   throw(castor::exception::Exception) {
   // Now the common part of the request
@@ -251,7 +251,7 @@ castor::IClient* castor::client::BaseClient::createClient()
 //------------------------------------------------------------------------------
 // sendRequest
 //------------------------------------------------------------------------------
-void castor::client::BaseClient::internalSendRequest(castor::rh::Request& request)
+void castor::client::BaseClient::internalSendRequest(castor::stager::Request& request)
   throw (castor::exception::Exception) {
   // creates a socket
   castor::io::ClientSocket s(RHSERVER_PORT, m_rhHost);
@@ -327,18 +327,19 @@ void castor::client::BaseClient::setRhPort()
   // RH/PORT entry. If none is given, default is used
   if ((port = getenv ("RH_PORT")) != 0 ||
       (port = getconfent("RH","PORT",0)) != 0) {
-    int iport;
-    char* dp;
-    if (stage_strtoi(&iport, port, &dp, 0) != 0) {
+    char* dp = port;
+    errno = 0;
+    int iport = strtoul(port, &dp, 0);
+    if (*dp != 0) {
       castor::exception::Exception e(errno);
       e.getMessage() << "Bad port value." << std::endl;
       throw e;
     }
-    if (iport < 0) {
+    if (iport > 65535) {
       castor::exception::Exception e(errno);
       e.getMessage()
         << "Invalid port value : " << iport
-        << ". Must be > 0." << std::endl;
+        << ". Must be < 65535." << std::endl;
       throw e;
     }
     m_rhPort = iport;

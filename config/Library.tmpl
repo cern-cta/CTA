@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.13 $ $Date: 2004/09/15 17:18:29 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.14 $ $Date: 2004/10/01 14:26:28 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #if BuildCopytapeServer
@@ -18,10 +18,6 @@
 #if BuildStageDaemon != YES
 #undef BuildStageDaemon
 #define BuildStageDaemon YES
-#endif
-#if BuildProtoCppStager != YES
-#undef BuildProtoCppStager
-#define BuildProtoCppStager YES
 #endif
 #endif
 
@@ -162,6 +158,14 @@ TAPELIB = DepLibraryTargetName(tape,tape)
 #endif
 #endif
 
+#if BuildClientCpp
+RHCLIENTLIB = DepLibraryTargetName(castor,castorClient)
+#if BuildCommon != YES
+#undef BuildCommon
+#define BuildCommon YES
+#endif
+#endif
+
 #if BuildRfioClient
 RFIOLIB = DepLibraryTargetName(rfio,rfio)
 #if BuildCommon != YES
@@ -255,10 +259,6 @@ MONITORLIB = DepLibraryTargetName(monitor,monitor)
 #endif
 #endif
 
-#if BuildCommon
-COMMONLIB = DepLibraryTargetName(common,common)
-#endif
-
 #if BuildSysreq
 SYSREQLIB = DepLibraryTargetName(sysreq,sysreq)
 #endif
@@ -268,6 +268,10 @@ HPSSLIB = DepLibraryTargetName(hpss,hpss_common)
 #endif
 
 #if BuildDlfClient
+#if BuildCommon != YES
+#undef BuildCommon
+#define BuildCommon	YES
+#endif
 DLFLIB = DepLibraryTargetName(dlf,dlf)
 #endif
 
@@ -297,18 +301,11 @@ SECURITYLIB = DepLibraryTargetName(security,security)
 RHORALIB = DepLibraryTargetName(castor/db/ora,castorCommonOra)
 #endif
 
-#if BuildProtoCppStager
-#if BuildClientCpp != YES
-#undef BuildClientCpp
-#define BuildClientCpp YES
-#endif
-RHPROTOLIB = DepLibraryTargetName(castor/proto,castorProto)
-#endif
-
-#if BuildClientCpp
-RHCLIENTLIB = DepLibraryTargetName(castor,castorClient)
-#endif
-
 #if BuildExpertClient || BuildExpertDaemon
 EXPERTLIB = DepLibraryTargetName(expert,expert)
 #endif
+
+#if BuildCommon
+COMMONLIB = DepLibraryTargetName(common,common)
+#endif
+
