@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.22 $ $Release$ $Date: 2005/01/04 09:04:29 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.23 $ $Release$ $Date: 2005/01/06 15:55:20 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.22 $ $Release$ $Date: 2005/01/04 09:04:29 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.23 $ $Release$ $Date: 2005/01/06 15:55:20 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -418,7 +418,7 @@ int rtcpcld_checkNsSegment(
      file_list_t *file;
 {
   int rc = 0, nbSegms = 0, i, found = 0, save_serrno;
-  struct Cns_segattrs *currentSegattrs, newSegattrs;
+  struct Cns_segattrs *currentSegattrs = NULL, newSegattrs;
   struct Cns_fileid *castorFileId = NULL;
   rtcpTapeRequest_t *tapereq;
   rtcpFileRequest_t *filereq;
@@ -507,6 +507,19 @@ int rtcpcld_checkNsSegment(
   
   if ( (use_checksum == 1) &&
        (filereq->castorSegAttr.segmCksumAlgorithm[0] != '\0') ) {
+    if ( strlen(
+                filereq->castorSegAttr.segmCksumAlgorithm
+                ) > CA_MAXCKSUMNAMELEN ) {
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_CKSUMNAMETOOLONG),
+                      (struct Cns_fileid *)castorFileId,
+                      1,
+                      "CKSUMNAM",
+                      DLF_MSG_PARAM_STR,
+                      filereq->castorSegAttr.segmCksumAlgorithm
+                      );
+    }
     if ( (currentSegattrs[i].checksum_name[0] == '\0') ||
          ((change_checksum_name == 1) && 
           (strcmp(currentSegattrs[i].checksum_name,
@@ -517,12 +530,12 @@ int rtcpcld_checkNsSegment(
        * it has been created with an old CASTOR version and this is the
        * first time it is staged in since segment checksum is supported.
        */
+      memcpy(&newSegattrs,&currentSegattrs[i],sizeof(newSegattrs));
       strncpy(
-              currentSegattrs[i].checksum_name,
+              newSegattrs.checksum_name,
               filereq->castorSegAttr.segmCksumAlgorithm,
               CA_MAXCKSUMNAMELEN
               );
-      newSegattrs = currentSegattrs[i];
       newSegattrs.checksum_name[CA_MAXCKSUMNAMELEN] = '\0';
       newSegattrs.checksum = filereq->castorSegAttr.segmCksum;
       (void)dlf_write(
@@ -672,6 +685,7 @@ int rtcpcld_checkNsSegment(
 
   if ( castorFileId != NULL ) free(castorFileId);  
   if ( blkid != NULL ) free(blkid);
+  if ( currentSegattrs != NULL ) free(currentSegattrs);
   if ( rc == -1 ) serrno = save_serrno;
   return(rc);
 }
