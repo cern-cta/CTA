@@ -1,0 +1,16 @@
+#
+# $Id: vdqmserv.sysconfig,v 1.1 2004/08/06 14:58:55 motiakov Exp $
+#
+# @(#)$RCSfile: vdqmserv.sysconfig,v $ $Revision: 1.1 $ $Date: 2004/08/06 14:58:55 $ CERN/IT/ADC/CA Jean-Damien Durand
+#
+#
+# should vdqmserv run?
+# any string but "yes" will equivalent to "NO"
+#
+RUN_VDQMSERV="yes"
+
+if [ -f /etc/sysconfig/castor_security ]; then
+	. /etc/sysconfig/castor_security CENTRAL
+	export CSEC_TRACE=1
+	export CSEC_TRACEFILE=/usr/spool/vdqm/vdqm_trace
+fi
