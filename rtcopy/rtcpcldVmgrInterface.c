@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.14 $ $Release$ $Date: 2005/01/05 13:15:51 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.15 $ $Release$ $Date: 2005/01/17 12:41:55 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.14 $ $Release$ $Date: 2005/01/05 13:15:51 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.15 $ $Release$ $Date: 2005/01/17 12:41:55 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -455,8 +455,7 @@ int tapeStatus(
      u_signed64 *freeSpace;
      int *status;
 {
-  int rc, save_serrno, nbRetries = 0;
-  int retryTime = RTCPCLD_GETTAPE_RETRY_TIME;
+  int rc, save_serrno;
   struct vmgr_tape_info vmgrTapeInfo;
   char *vmgrErrMsg = NULL, *statusStr = NULL;
   rtcpTapeRequest_t *tapereq;
@@ -515,9 +514,9 @@ int tapeStatus(
     }
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
-                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_MAXRETRY),
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                     (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+5,
+                    RTCPCLD_NB_PARAMS+3,
                     "SYSCALL",
                     DLF_MSG_PARAM_STR,
                     "vmgr_querytape()",
@@ -527,15 +526,8 @@ int tapeStatus(
                     "VMGRERR",
                     DLF_MSG_PARAM_STR,
                     (vmgrErrMsg != NULL ? vmgrErrMsg : "(null)"),
-                    "NBRETRIES",
-                    DLF_MSG_PARAM_INT,
-                    nbRetries++,
-                    "RETRYTIME",
-                    DLF_MSG_PARAM_INT,
-                    retryTime,
                     RTCPCLD_LOG_WHERE
                     );
-    sleep(retryTime);
   }
   return(0);
 }
