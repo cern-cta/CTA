@@ -1,23 +1,33 @@
 .\"
-.\" $Id: rfio_chmod.man,v 1.5 2001/09/26 09:13:53 jdurand Exp $
+.\" $Id: rfio_chmod.man,v 1.6 2003/01/16 06:55:30 baud Exp $
 .\"
-.\" @(#)$RCSfile: rfio_chmod.man,v $ $Revision: 1.5 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: rfio_chmod.man,v $ $Revision: 1.6 $ $Date: 2003/01/16 06:55:30 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_CHMOD 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
+.TH RFIO_CHMOD 3 "$Date: 2003/01/16 06:55:30 $" CASTOR "Rfio Library Functions"
 .SH NAME
-rfio_chmod \- change access mode of a directory/file
+rfio_chmod, rfio_fchmod \- change access mode of a directory/file
 .SH SYNOPSIS
 .B #include <sys/types.h>
 .br
 \fB#include "rfio_api.h"\fR
 .sp
 .BI "int rfio_chmod (const char *" path ", mode_t " mode ");"
+.br
+.BI "int rfio_fchmod (int " s ", mode_t " mode ");"
 .SH DESCRIPTION
 .B rfio_chmod
 sets the access permission portion of the mode of a directory/file to the bit pattern in
 .IR mode.
+.LP
+.B rfio_fchmod
+is identical to
+.B rfio_chmod
+but works on the file descriptor
+.I s
+returned by
+.BR rfio_open .
 .TP
 .I path
 specifies the logical pathname relative to the current directory or
@@ -83,6 +93,10 @@ The effective user ID does not match the owner of the file and is not super-user
 .TP
 .B ENOENT
 The named file/directory does not exist or is a null pathname.
+.TP
+.B EBADF
+.I s
+is not a valid file descriptor.
 .TP
 .B EACCES
 Search permission is denied on a component of the
