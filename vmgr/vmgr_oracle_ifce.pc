@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.19 $ $Date: 2001/02/01 08:05:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.20 $ $Date: 2001/02/23 15:14:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -592,7 +592,8 @@ struct vmgr_tape_denmap *denmap_entry;
 	EXEC SQL DECLARE list_denmap_cursor CURSOR FOR
 		SELECT
 		 MD_MODEL, MD_MEDIA_LETTER, MD_DENSITY
-		FROM vmgr_tape_denmap;
+		FROM vmgr_tape_denmap
+		ORDER BY md_model, md_media_letter;
 
 	strcpy (func, "vmgr_list_denmap_entry");
 	if (bol) {
@@ -624,7 +625,8 @@ struct vmgr_tape_media *model_entry;
 	EXEC SQL DECLARE list_model_cursor CURSOR FOR
 		SELECT
 		 M_MODEL, M_MEDIA_LETTER, NATIVE_CAPACITY, MEDIA_COST_GB
-		FROM vmgr_tape_media;
+		FROM vmgr_tape_media
+		ORDER BY m_model, m_media_letter;
 
 	strcpy (func, "vmgr_list_model_entry");
 	if (bol) {
@@ -658,7 +660,8 @@ struct vmgr_tape_pool *pool_entry;
 	EXEC SQL DECLARE list_pool_cursor CURSOR FOR
 		SELECT
 		 NAME, OWNER_UID, GID, TO_CHAR(CAPACITY), TO_CHAR(TOT_FREE_SPACE)
-		FROM vmgr_tape_pool;
+		FROM vmgr_tape_pool
+		ORDER BY name;
 
 	strcpy (func, "vmgr_list_pool_entry");
 	if (bol) {
