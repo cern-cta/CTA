@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.108 2002/06/10 13:43:14 jdurand Exp $
+ * $Id: procupd.c,v 1.109 2002/06/11 07:41:16 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.108 $ $Date: 2002/06/10 13:43:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.109 $ $Date: 2002/06/11 07:41:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -106,6 +106,13 @@ extern int rc_shift2castor _PROTO((int,int));
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
+
+#if hpux
+/* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
+/* calls to setresuid().                                                */
+#define seteuid(euid) setresuid(-1,euid,-1)
+#define setegid(egid) setresgid(-1,egid,-1)
+#endif
 
 void
 procupdreq(req_type, magic, req_data, clienthost)
@@ -908,6 +915,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 
 			PRE_RFIO;
 			if (RFIO_STAT(stcp->ipath, &st) == 0) {
+			  rfio_stat_retry_ok:
 				stcp->actual_size = (u_signed64) st.st_size;
 				wfp->size_yet_recalled = (u_signed64) st.st_size;
 				if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
@@ -952,6 +960,24 @@ procupdreq(req_type, magic, req_data, clienthost)
 #endif
 			} else {
 				stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+				if (rfio_serrno() == EACCES) {
+					extern struct passwd start_passwd;             /* Start uid/gid stage:st */
+
+					/* We got permission denied - perhaps root is not trusted on remote machine ? */
+					stglogit (func, "STG02 - %s : try under %s (%d,%d)\n", stcp->ipath, user, (int) uid, (int) gid);
+					setegid(gid);
+					seteuid(uid);
+					PRE_RFIO;
+					if (RFIO_STAT(stcp->ipath, &st) == 0) {
+						/* Worked! */
+						setegid(start_passwd.pw_gid);
+						seteuid(start_passwd.pw_uid);
+						goto rfio_stat_retry_ok;
+					}
+					setegid(start_passwd.pw_gid);
+					seteuid(start_passwd.pw_uid);
+					stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+				}
 				stglogit (func, "STG02 - %s : Incrementing actual_size with -s option value\n", stcp->ipath);
 				/* No block information - assume mismatch with actual_size will be acceptable */
 				stcp->actual_size += size;
