@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.62 2003/01/24 11:21:34 jdurand Exp $
+ * $Id: stage_api.c,v 1.63 2003/03/11 11:06:55 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -35,7 +35,7 @@
 #include "net.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.62 $ $Date: 2003/01/24 11:21:34 $ CERN IT/DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.63 $ $Date: 2003/03/11 11:06:55 $ CERN IT/DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifdef hpux
@@ -1412,8 +1412,11 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 			rc = -1;
 		} else if ((nstcp_output_internal == 0) && (nstpp_output_internal == 0)) {
 			/* Nothing found */
-			serrno = ENOENT;
-			rc = -1;
+			if ((flags & STAGE_STATPOOL) != STAGE_STATPOOL) {
+				/* This is an error only if querying the catalog */
+				serrno = ENOENT;
+				rc = -1;
+			}
 		}
 	}
 
