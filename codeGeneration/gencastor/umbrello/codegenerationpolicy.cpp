@@ -405,14 +405,9 @@ void CodeGenerationPolicy::writeConfig (KConfig * config) {
 }
 
 QString getUserName() {
-  // get login
-  QString login = QString(getenv("USER"));
-  // try to get real name of the user
-  login.replace(QRegExp("sponce.*"), "Sebastien Ponce, sebastien.ponce@cern.ch");
-  login.replace(QRegExp("obarring.*"), "Olof Barring, olof.barring@cern.ch");
-  login.replace(QRegExp("bcouturi.*"), "Benjamin Couturier, benjamin.couturier@cern.ch");
-  login.replace(QRegExp("jdurand.*"), "Jean-Damien Durand, jean-damien.durand@cern.ch");
-  return login;
+  // Put the whole castor dev team
+  QString result = "Castor Dev team, castor-dev@cern.ch";
+  return result;
 }
 
 // return the actual text
