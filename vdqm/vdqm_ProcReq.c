@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.5 $ $Date: 1999/09/27 15:25:58 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.6 $ $Date: 1999/12/08 10:49:21 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -41,24 +41,26 @@ void *vdqm_ProcReq(void *arg) {
     vdqmnw_t *client_connection;
     char dgn[CA_MAXDGNLEN+1];
     void *vol_place_holder,*drv_place_holder,*dgn_place_holder;
-    int reqtype,rc,thID;
+    int reqtype,rc,i;
+    char req_strings[][20] = VDQM_REQ_STRINGS;
+    char *req_string;
+    int req_values[] = VDQM_REQ_VALUES;
     extern int vdqm_shutdown;
     
     client_connection = (vdqmnw_t *)arg;
     if ( client_connection == NULL ) return((void *)&return_status);
     
-    thID = Cthread_self();
-    
-    
     memset(&volumeRequest,'\0',sizeof(volumeRequest));
     memset(&driveRequest,'\0',sizeof(driveRequest));
     reqtype = vdqm_RecvReq(client_connection,&hdr,&volumeRequest,
         &driveRequest);
-    log(LOG_INFO,"vdqm_ProcReq(): thread %d: new 0x%x request, connection=0x%x\n",
-        thID,reqtype,client_connection);
+    i=0;
+    while (req_values[i] != -1 && req_values[i] != reqtype) i++;
+    req_string = req_strings[i];
+    log(LOG_INFO,"vdqm_ProcReq(): new %s request\n",req_string);
     if ( !VDQM_VALID_REQTYPE(reqtype) ) {
-        log(LOG_ERR,"vdqm_ProcReq(): thread %d: invalid request 0x%x\n",
-            thID,reqtype);
+        log(LOG_ERR,"vdqm_ProcReq(): invalid request 0x%x\n",
+            reqtype);
     } else {
         rc = 0;
         Cthread_mutex_lock(&hold);
@@ -68,20 +70,17 @@ void *vdqm_ProcReq(void *arg) {
             rc = 1;
         }
         if ( reqtype == VDQM_HOLD ) {
-            if ( !hold ) log(LOG_INFO,"vdqm_ProcReq(): thread %d: server RELEASE\n",
-                thID);
+            if ( !hold ) log(LOG_INFO,"vdqm_ProcReq(): server RELEASE\n");
             hold = 1;
             rc = 1;
         }
         if ( reqtype == VDQM_RELEASE ) {
-            if ( hold ) log(LOG_INFO,"vdqm_ProcReq(): thread %d: server RELEASE\n",
-                thID);
+            if ( hold ) log(LOG_INFO,"vdqm_ProcReq(): server RELEASE\n");
             hold = 0;
             rc = 1;
         }
         if ( hold ) {
-            log(LOG_INFO,"vdqm_ProcReq(): thread %d: server in HOLD\n",
-                thID);
+            log(LOG_INFO,"vdqm_ProcReq(): server in HOLD\n");
             rc = -1;
         }
         Cthread_mutex_unlock(&hold);
@@ -139,14 +138,13 @@ void *vdqm_ProcReq(void *arg) {
                 (void) vdqm_AcknPing(client_connection,rc);
                 break;
             default:
-                log(LOG_ERR,"vdqm_ProcReq(): thread %d: no action for request 0x%x\n",
-                    thID,reqtype);
+                log(LOG_ERR,"vdqm_ProcReq(): no action for request %s\n",
+                    req_string);
                 break;
             }
         }
         if ( rc == -1 ) {
-            log(LOG_ERR,"vdqm_ProcReq(): thread %d: request processing error\n",
-                thID);
+            log(LOG_ERR,"vdqm_ProcReq(): request processing error\n");
             (void)vdqm_AcknRollback(client_connection);
         } else {
             rc = vdqm_AcknCommit(client_connection);
@@ -156,15 +154,49 @@ void *vdqm_ProcReq(void *arg) {
                 if ( rc != -1 ) rc = vdqm_RecvAckn(client_connection);
             }
             if ( rc == -1 )
-                log(LOG_ERR,"vdqm_ProcReq(): thread %d: client error on commit\n",
-                thID);
+                log(LOG_ERR,"vdqm_ProcReq(): client error on commit\n");
+        }
+        /*
+         * Commit failed somewhere. If it was a volume request we must
+         * remove it since client is either dead or unreachable.
+         */
+        if ( rc == -1 ) {
+           switch (reqtype) {
+           case VDQM_VOL_REQ:
+                log(LOG_INFO,"vdqm_ProcReq() remove volume request from queue\n");
+                (void)vdqm_DelVolReq(&volumeRequest); 
+                break;
+           case VDQM_DRV_REQ:
+                log(LOG_INFO,"vdqm_ProcReq() rollback drive request\n");
+                (void)vdqm_QueueOpRollback(NULL,&driveRequest);
+                break;
+           default:
+                break;
+           }
         }
     }
     (void) vdqm_CloseConn(client_connection);
-    log(LOG_INFO,"vdqm_ProcReq(): thread %d: end of 0x%x request\n",
-        thID,reqtype);
+    log(LOG_INFO,"vdqm_ProcReq(): end of %s request\n",req_string);
     vdqm_ReturnPool(client_connection);
     return((void *)&return_status);
+}
+
+void *vdqm_OnRollbackThread(void *arg) {
+    int rc;
+    log(LOG_INFO,"vdqm_OnRollbackThread() started\n");
+    rc = vdqm_OnRollback();
+    log(LOG_ERR,"vdqm_OnRollbackThread() unexpected return from vdqm_OnRollback(), rc = %d\n",rc);
+    return;
+}
+int vdqm_StartRollbackThread() {
+    int rc;
+    rc = Cthread_create_detached(vdqm_OnRollbackThread,NULL);
+    if ( rc == -1 ) {
+        log(LOG_ERR,"vdqm_StartRollbackThread() Cthread_create_detached(): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    return(0);
 }
 static int vdqm_Error(int eval) {
     int *ts_eval;

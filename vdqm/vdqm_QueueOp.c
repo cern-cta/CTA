@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.13 $ $Date: 1999/11/26 15:21:11 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.14 $ $Date: 1999/12/08 10:49:14 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -30,6 +30,8 @@ static int nb_dgn = 0;
 static int dgn_key;
 static int vdqm_maxtimediff = VDQM_MAXTIMEDIFF;
 static int vdqm_retrydrvtime = VDQM_RETRYDRVTIM;
+
+static int Rollback = 0;
 
 static int SetDgnContext(dgn_element_t **dgn_context,const char *dgn) {
     dgn_element_t *tmp = NULL;
@@ -545,7 +547,7 @@ static int GetVolRecord(const dgn_element_t *dgn_context,
     vdqm_volrec_t *tmprec;
     int found;
     
-    if ( volrec == NULL || INVALID_DGN_CONTEXT ) return(-1);
+    if ( vol == NULL || volrec == NULL || INVALID_DGN_CONTEXT ) return(-1);
     
     found = 0;
     CLIST_ITERATE_BEGIN(dgn_context->vol_queue,tmprec) {
@@ -633,7 +635,7 @@ static int SelectVolAndDrv(const dgn_element_t *dgn_context,
     drvrec = (vdqm_drvrec_t *)NULL;
     rc = PopVolRecord(dgn_context,&volrec);
     if ( rc == -1 || volrec == NULL ) {
-        log(LOG_ERR,"vdqm_NewVolReq(): PopVolRecord() returned rc=%d, volrec=0x%x\n",
+        log(LOG_ERR,"SelectVolAndDrv(): PopVolRecord() returned rc=%d, volrec=0x%x\n",
             rc,volrec);
        return(-1);
     }        
@@ -767,11 +769,13 @@ int vdqm_DelVolReq(vdqmVolReq_t *VolReq) {
          * We don't reset the drive status here. It is expected
          * that the client also interrupts the tape job so that
          * the tape daemon properly cleanup and tell VDQM when the
-         * drive is ready again.
+         * drive is ready again. Still, we mark it as UNKNOWN until
+         * further notice.
          */
         volrec = drvrec->vol;
         drvrec->vol = NULL;
         drvrec->drv.VolReqID = 0;
+        drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
     } else {
         /*
          * Delete the volume record from the queue.
@@ -842,6 +846,95 @@ int vdqm_DelDrvReq(vdqmDrvReq_t *DrvReq) {
 }
 
 /*
+ * This routine is called from a separate thread to assure that
+ * queues are checked if there has been a rollback. This is necessary
+ * when for instance there are free drives and no more queued volumes
+ * when the failing request was started. 
+ */
+int vdqm_OnRollback() {
+    dgn_element_t *dgn_context;
+    vdqm_volrec_t *volrec;
+    vdqm_drvrec_t *drvrec;
+    int rc;
+
+    log(LOG_INFO,"vdqm_OnRollback(): Initializing mutex\n");
+    rc = Cthread_mutex_lock(&Rollback);
+    if ( rc == -1 ) {
+        log(LOG_ERR,"vdqm_OnRollback() Cthread_mutex_lock(): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    
+    for (;;) {
+        log(LOG_INFO,"vdqm_OnRollback(): wait for rollback operation\n");
+        rc = Cthread_cond_wait(&Rollback);
+        if ( rc == -1 ) {
+            log(LOG_ERR,"vdqm_OnRollback() Cthread_cond_wait(): %s\n",
+                sstrerror(serrno));
+            return(-1);
+        }
+        log(LOG_INFO,"vdqm_OnRollback(): woke up with Rollback=%d\n",Rollback);
+        if ( Rollback > 0 ) {
+            dgn_context = NULL;
+            while (NextDgnContext(&dgn_context) != -1 && dgn_context != NULL ) {
+                log(LOG_INFO,"vdqm_OnRollback() check DGN %s\n",dgn_context->dgn);
+                rc = AnyDrvFreeForDgn(dgn_context);
+                if ( rc < 0 ) {
+                    log(LOG_ERR,"vdqm_OnRollback() AnyDrvFreeForDgn(%s) returned error\n",
+                    dgn_context->dgn);
+                    continue;
+                }
+                if ( rc == 1 ) {
+                    for (;;) {
+                        rc = SelectVolAndDrv(dgn_context,&volrec,&drvrec);
+                        if ( rc == -1 || volrec == NULL || drvrec == NULL ) {
+                            log(LOG_ERR,"vdqm_OnRollback() SelectVolAndDrv() returned rc=%d\n",rc);
+                            break;
+                        }
+                        /*
+                         * Free memory allocated for previous request 
+                         * for this drive
+                         */
+                        if ( drvrec->vol != NULL ) free(drvrec->vol);
+                        drvrec->vol = volrec;
+                        volrec->drv = drvrec;
+                        drvrec->drv.VolReqID = volrec->vol.VolReqID;
+                        volrec->vol.DrvReqID = drvrec->drv.DrvReqID;
+                        drvrec->drv.jobID = 0;
+                        /*
+                         * Reset the drive status
+                         */
+                        drvrec->drv.status = drvrec->drv.status &
+                         ~(VDQM_UNIT_RELEASE | VDQM_UNIT_BUSY | VDQM_VOL_MOUNT |
+                           VDQM_VOL_UNMOUNT | VDQM_UNIT_ASSIGN);
+                        /*
+                         * Start the job
+                         */
+                        rc = vdqm_StartJob(volrec);
+                        if ( rc < 0 ) {
+                            log(LOG_ERR,"vdqm_OnRollback(): vdqm_StartJob() returned error\n"
+);
+                            volrec->vol.DrvReqID = 0;
+                            drvrec->drv.VolReqID = 0;
+                            volrec->drv = NULL;
+                            drvrec->vol = NULL;
+                            break;
+                        }
+                    } /* for (;;) */
+                } /*  if ( rc == 1 )  */
+            } /* while (NextDgnContext() ...) */
+       } /* if ( Rollback > 0 )  */
+       Rollback = 0;
+       rc = Cthread_mutex_unlock(&Rollback);
+       if ( rc == -1 ) {
+           log(LOG_ERR,"vdqm_OnRollback() Cthread_mutex_unlock(): %s\n",
+               sstrerror(serrno));
+           return(-1);
+       }
+   } /* for (;;) */
+   return(0);
+}
+/*
  * This routine is needed by vdqm_SendJobToRTCP() to
  * rollback a RTCOPY start request operation in case of
  * failure. Note that this routine should not be called
@@ -855,11 +948,11 @@ int vdqm_QueueOpRollback(vdqmVolReq_t *VolReq,vdqmDrvReq_t *DrvReq) {
 
     log(LOG_INFO,"vdqm_QueueOpRollback() called\n");            
 
-    if ( VolReq == NULL || DrvReq == NULL ) return(-1);
-    rc = SetDgnContext(&dgn_context,VolReq->dgn);
+    if ( DrvReq == NULL ) return(-1);
+    rc = SetDgnContext(&dgn_context,DrvReq->dgn);
     if ( rc == -1 ) {
         log(LOG_ERR,"vdqm_QueueOpRollback() cannot set Dgn context for %s\n",
-            VolReq->dgn);
+            DrvReq->dgn);
         return(-1);
     }
     /* 
@@ -869,7 +962,7 @@ int vdqm_QueueOpRollback(vdqmVolReq_t *VolReq,vdqmDrvReq_t *DrvReq) {
     volrec = NULL;
     rc = GetVolRecord(dgn_context,VolReq,&volrec);
     if ( volrec == NULL ) {
-        log(LOG_ERR,"vdqm_QueueOpRollback() input request already queued\n");
+        log(LOG_ERR,"vdqm_QueueOpRollback() GetVolRecord() returned error\n");
     }
     /*
      * Get the drive record. If it doens't exist anymore we
@@ -877,17 +970,19 @@ int vdqm_QueueOpRollback(vdqmVolReq_t *VolReq,vdqmDrvReq_t *DrvReq) {
      */
     drvrec = NULL;
     rc = GetDrvRecord(dgn_context,DrvReq,&drvrec);
+    if ( volrec == NULL && drvrec != NULL ) volrec = drvrec->vol;
     
     /*
-     * Now correct the records
+     * Now correct the records and make sure that volume request is requeued.
      */
     if ( volrec != NULL ) {
         volrec->vol.DrvReqID = 0;
         volrec->drv = NULL;
+        AddVolRecord(dgn_context,volrec);
     }
     if ( drvrec != NULL ) {
         /*
-         * We need to flag the unit with unknown status until we here
+         * We need to flag the unit with unknown status until we hear
          * from it again.
          */
         drvrec->drv.VolReqID = 0;
@@ -895,6 +990,27 @@ int vdqm_QueueOpRollback(vdqmVolReq_t *VolReq,vdqmDrvReq_t *DrvReq) {
         drvrec->vol = NULL;
     }
     FreeDgnContext(&dgn_context);
+    rc = Cthread_mutex_lock(&Rollback);
+    if ( rc == -1 ) {
+        log(LOG_ERR,"vdqm_QueueOpRollback() Cthread_mutex_lock(): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    Rollback++;
+    rc = Cthread_cond_broadcast(&Rollback);
+    if ( rc == -1 ) {
+        log(LOG_ERR,"vdqm_QueueOpRollback() Cthread_cond_broadcast(): %s\n",
+            sstrerror(serrno));
+        (void)Cthread_mutex_unlock(&Rollback);
+        return(-1);
+    }
+    rc = Cthread_mutex_unlock(&Rollback);
+    if ( rc == -1 ) {
+        log(LOG_ERR,"vdqm_QueueOpRollback() Cthread_mutex_unlock(): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+
     return(0);
 }
 
@@ -910,7 +1026,11 @@ int vdqm_NewVolReq(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) {
     /*
      * Reset Device Group Name context
      */
-    log(LOG_INFO,"vdqm_NewVolReq() set context to dgn=%s\n",VolReq->dgn);
+    log(LOG_INFO,"vdqm_NewVolReq() (%d,%d)@%s:%d requests %s in DGN %s (%s@%s)\n",
+        VolReq->clientUID,VolReq->clientGID,VolReq->client_host,
+        VolReq->client_port,VolReq->volid,VolReq->dgn,
+        (*VolReq->drive == '\0' ? "***" : VolReq->drive),
+        (*VolReq->server == '\0' ? "***" : VolReq->server));
     rc = SetDgnContext(&dgn_context,VolReq->dgn);
     if ( rc == -1 ) {
         log(LOG_ERR,"vdqm_NewVolReq() cannot set Dgn context for %s\n",
@@ -957,6 +1077,8 @@ int vdqm_NewVolReq(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) {
         FreeDgnContext(&dgn_context);
         return(-1);
     }
+    log(LOG_INFO,"vdqm_NewVolReq() Assigned volume request ID=%d\n",
+        VolReq->VolReqID);
    
     rc = AnyDrvFreeForDgn(dgn_context);
     if ( rc < 0 ) {
@@ -1366,6 +1488,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
              */
             if ( drvrec->vol == NULL ) {
                 drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_BUSY;
+                drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_ASSIGN;
                 drvrec->drv.status = drvrec->drv.status | VDQM_UNIT_FREE;
             }
         }
@@ -1434,6 +1557,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                  */
                 drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_BUSY;
                 drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_RELEASE;
+                drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_ASSIGN;
                 drvrec->drv.status = drvrec->drv.status | VDQM_UNIT_FREE;
             }
         } 
