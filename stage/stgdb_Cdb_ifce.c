@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.11 2000/01/06 15:24:50 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.12 2000/02/01 11:47:45 jdurand Exp $
  */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.11 $ $Date: 2000/01/06 15:24:50 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.12 $ $Date: 2000/02/01 11:47:45 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
@@ -782,14 +782,14 @@ int DLL_DECL Stgdb_del_stgpath(dbfd,stpp,file,line)
   if (Cdb_keyfind(&(dbfd->Cdb_db), "stgcat_link","stgcat_link_per_reqid","w",
                   (void *) &link,&Cdb_offset) != 0) {
     stglogit("stgdb_del_stgpath",
-             "### Warning[%s:%d] : unknown record to update for reqid %d called at %s:%d\n",
+             "### Warning[%s:%d] : unknown record to delete for reqid %d called at %s:%d\n",
              __FILE__,__LINE__,(int) stpp->reqid,file,line);
     return(-1);
   }
 
   if ((delete_status = Cdb_delete(&(dbfd->Cdb_db),"stgcat_link",&Cdb_offset)) != 0) {
     stglogit("stgdb_del_stgpath",
-             "### Warning[%s:%d] : Cdb_update error for reqid %d called at %s:%d\n",
+             "### Warning[%s:%d] : Cdb_delete error for reqid %d called at %s:%d\n",
              __FILE__,__LINE__,(int) stpp->reqid,file,line);
   }
 
