@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/20 16:33:02 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/20 16:47:30 $ $Author: bcouturi $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.1 $
- * @date $Date: 2004/10/20 16:33:02 $
+ * @version $Revision: 1.2 $
+ * @date $Date: 2004/10/20 16:47:30 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.1 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.2 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -130,8 +130,8 @@
  *   be duly scheduled using the proper method.
  */
 
-#ifndef _NSTAGE_API_H
-#define _NSTAGE_API_H
+#ifndef stager_client_api_h
+#define stager_client_api_h
 
 #include <osdep.h>
 
@@ -216,9 +216,9 @@ struct stage_prepareToGet_fileresp {
  *       should be freed by the client.
  */
 EXTERN_C int DLL_DECL stage_prepareToGet _PROTO((const char *userTag,
-						 struct stage_prepareToGet_filereq *requests
+						 struct stage_prepareToGet_filereq *requests,
 						 int nbreqs,
-						 struct stage_prepareToGet_fileresp **responses
+						 struct stage_prepareToGet_fileresp **responses,
 						 int *nbresps,
 						 char **requestId));
 
@@ -363,11 +363,11 @@ struct stage_prepareToPut_fileresp {
  *       should be freed by the client.
  */
 EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
-		       struct stage_prepareToPut_filereq *requests
-		       int nbreqs,
-		       struct stage_prepareToPut_fileresp **responses
-		       int *nbresps,
-		       char **requestId);
+					 struct stage_prepareToPut_filereq *requests,
+					 int nbreqs,
+					 struct stage_prepareToPut_fileresp **responses,
+					 int *nbresps,
+					 char **requestId);
 
 ////////////////////////////////////////////////////////////
 //    stage_put                                           //
@@ -471,9 +471,9 @@ struct stage_fileresp {
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_putDone _PROTO((struct stage_filereq *requests
+EXTERN_C int DLL_DECL stage_putDone _PROTO((struct stage_filereq *requests,
 					    int nbreqs,
-					    struct stage_fileresp **responses
+					    struct stage_fileresp **responses,
 					    int *nbresps,
 					    char **requestId));
 
@@ -515,9 +515,9 @@ struct stage_updateFileStatus_filereq {
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_updateFileStatus _PROTO((struct stage_putDone_filereq *requests
+EXTERN_C int DLL_DECL stage_updateFileStatus _PROTO((struct stage_filereq *requests,
 						     int nbreqs,
-						     struct stage_fileresp **responses
+						     struct stage_fileresp **responses,
 						     int *nbresps,
 						     char **requestId));
 
@@ -542,11 +542,11 @@ EXTERN_C int DLL_DECL stage_updateFileStatus _PROTO((struct stage_putDone_filere
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_removeFiles(struct stage_filereq *requests
-			   int nbreqs,
-			   struct stage_fileresp **responses
-			   int *nbresps,
-			   char **requestId);
+EXTERN_C int DLL_DECL stage_removeFiles(struct stage_filereq *requests,
+					int nbreqs,
+					struct stage_fileresp **responses,
+					int *nbresps,
+					char **requestId);
 
 ////////////////////////////////////////////////////////////
 //    stage_releaseFiles                                  //
@@ -571,9 +571,9 @@ EXTERN_C int DLL_DECL stage_removeFiles(struct stage_filereq *requests
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_releaseFiles _PROTO((struct stage_filereq *requests
+EXTERN_C int DLL_DECL stage_releaseFiles _PROTO((struct stage_filereq *requests,
 						 int nbreqs,
-						 struct stage_fileresp **responses
+						 struct stage_fileresp **responses,
 						 int *nbresps,
 						 char **requestId));
 
@@ -601,7 +601,7 @@ EXTERN_C int DLL_DECL stage_abortRequest _PROTO((char *requestId));
 //    stage_filequery                                     //
 ////////////////////////////////////////////////////////////
 
-enum filequery_type { BY_FILENAME, BY_REQID, BY_USERTAG, BY_FILEID };
+enum query_type { BY_FILENAME, BY_REQID, BY_USERTAG, BY_FILEID };
 
 
 /**
@@ -611,8 +611,8 @@ struct stage_filequery_req {
   /**
    * Type of the query
    */
-   filequery_type type;
-
+  int type;
+  
   /**
    * Pointer to value
    */
@@ -652,12 +652,12 @@ struct stage_filequery_resp {
   /**
    * The file creation time
    */
-  time_t creationTime;
+  TIME_T creationTime;
 
   /**
    * Last access time
    */
-  time_t accessTime;
+  TIME_T accessTime;
 
   /**
    * Total number of accesses for the file
@@ -685,9 +685,9 @@ struct stage_filequery_resp {
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_filequery _PROTO((struct stage_fileqry_req *requests,
+EXTERN_C int DLL_DECL stage_filequery _PROTO((struct stage_filequery_req *requests,
 					      int nbreqs,
-					      struct stage_fileqry_resp **responses,
+					      struct stage_filequery_resp **responses,
 					      int *nbresps));
 
 
@@ -695,10 +695,6 @@ EXTERN_C int DLL_DECL stage_filequery _PROTO((struct stage_fileqry_req *requests
 //    stage_requestquery                                  //
 ////////////////////////////////////////////////////////////
 
-/**
- * Type of the Query request (by request ID or by user tag)
- */
-enum requestquery_type { BY_REQID, BY_USERTAG };
 
 /**
  * Query request input structure
@@ -707,7 +703,7 @@ struct stage_requestquery_req {
   /**
    * Type of the query
    */
-  requestquery_type type;
+  int type;
 
   /**
    * Pointer to value
@@ -732,12 +728,12 @@ struct stage_requestquery_resp {
   /**
    * The request creation time
    */
-  time_t creationTime;
+  TIME_T creationTime;
 
   /**
    * Last modification time
    */
-  time_t modificationTime;
+  TIME_T modificationTime;
 };
 
 
@@ -754,7 +750,7 @@ struct stage_subrequestquery_resp {
   /**
    * Last modification time
    */
-  time_t modificationTime;
+  TIME_T modificationTime;
 
 };
 
@@ -777,11 +773,11 @@ struct stage_subrequestquery_resp {
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_requestquery _PROTO((struct stage_requestquery_req *requests
+EXTERN_C int DLL_DECL stage_requestquery _PROTO((struct stage_requestquery_req *requests,
 						 int nbreqs,
-						 struct stage_requestquery_resp **responses
+						 struct stage_requestquery_resp **responses,
 						 int *nbresps,
-						 struct stage_subrequestquert_resp **subresponses
+						 struct stage_subrequestquery_resp **subresponses,
 						 int *nbsubresps));
 
 
@@ -789,8 +785,6 @@ EXTERN_C int DLL_DECL stage_requestquery _PROTO((struct stage_requestquery_req *
 ////////////////////////////////////////////////////////////
 //    stage_findrequest                                   //
 ////////////////////////////////////////////////////////////
-
-enum findrequest_type { BY_FILENAME, BY_USERTAG, BY_FILEID };
 
 
 /**
@@ -800,7 +794,7 @@ struct stage_findrequest_req {
   /**
    * Type of the query
    */
-   findrequest_type type;
+   int type;
 
   /**
    * Pointer to value
@@ -850,4 +844,4 @@ EXTERN_C int DLL_DECL stage_findrequest _PROTO((struct stage_findrequest_req *re
 
 /*\@}*/
 
-#endif
+#endif /* stager_client_api_h */
