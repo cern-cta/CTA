@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.24 2002/05/06 17:17:17 jdurand Exp $
+ * $Id: sendrep.c,v 1.25 2002/05/06 17:31:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.24 $ $Date: 2002/05/06 17:17:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.25 $ $Date: 2002/05/06 17:31:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -63,7 +63,7 @@ int sendrep(va_alist) va_dcl
 	static char savebuf[256];
 	static int saveflag = 0;
 	u_signed64 uniqueid;
-	int magic;
+	int magic_client;
 
 	va_start (args);
 	rpfd = va_arg (args, int);
@@ -135,19 +135,19 @@ int sendrep(va_alist) va_dcl
 		break;
 	case STAGERC:
 		req_type = va_arg (args, int);
-		magic = va_arg (args, int);
+		magic_client = va_arg (args, int);
 		rc = va_arg (args, int);
-		if (magic <= STGMAGIC2) {
+		if (magic_client <= STGMAGIC2) {
 			/* We know that this client do not fully support error codes */
 			rc = rc_castor2shift(rc);
-		} else if ((magic == STGMAGIC3) && (rc == SENAMETOOLONG)) {
+		} else if ((magic_client == STGMAGIC3) && (rc == SENAMETOOLONG)) {
 			/* Known pb with clients using STGMAGIC3 */
 			rc = EINVAL;
 		}
-		marshall_LONG (sav_rbp_magic, magic);
+		marshall_LONG (sav_rbp_magic, magic_client);
 		marshall_LONG (rbp, rc);
 		if (req_type != STAGEQRY) {
-			if (magic <= STGMAGIC2) {
+			if (magic_client <= STGMAGIC2) {
 				stglogit (func, STG99, rc);
 			} else {
 				stglogit (func, STG199, rc);
@@ -169,22 +169,22 @@ int sendrep(va_alist) va_dcl
 	case API_STCP_OUT:
 		/* There is another argument on the stack */
 		stcp = va_arg (args, struct stgcat_entry *);
-		magic = va_arg (args, int);
+		magic_client = va_arg (args, int);
 		api_stcp_out_status = 0;
-		marshall_LONG (sav_rbp_magic, magic);
+		marshall_LONG (sav_rbp_magic, magic_client);
 		p = stcp_marshalled;
-		marshall_STAGE_CAT (STGDAEMON_LEVEL, magic, STAGE_OUTPUT_MODE, api_stcp_out_status, p, stcp);
+		marshall_STAGE_CAT (STGDAEMON_LEVEL, magic_client, STAGE_OUTPUT_MODE, api_stcp_out_status, p, stcp);
 		marshall_LONG(rbp, p - stcp_marshalled);
 		marshall_OPAQUE(rbp, stcp_marshalled, p - stcp_marshalled);
  		break;
 	case API_STPP_OUT:
 		/* There is another argument on the stack */
 		stpp = va_arg (args, struct stgpath_entry *);
-		magic = va_arg (args, int);
+		magic_client = va_arg (args, int);
 		api_stpp_out_status = 0;
-		marshall_LONG (sav_rbp_magic, magic);
+		marshall_LONG (sav_rbp_magic, magic_client);
 		p = stpp_marshalled;
-		marshall_STAGE_PATH (STGDAEMON_LEVEL, magic, STAGE_OUTPUT_MODE, api_stpp_out_status, p, stpp);
+		marshall_STAGE_PATH (STGDAEMON_LEVEL, magic_client, STAGE_OUTPUT_MODE, api_stpp_out_status, p, stpp);
 		marshall_LONG(rbp, p - stpp_marshalled);
 		marshall_OPAQUE(rbp, stpp_marshalled, p - stpp_marshalled);
  		break;
