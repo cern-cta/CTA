@@ -5,7 +5,7 @@
 
 
 /*
- * $RCSfile: rtcp_api.h,v $ $Revision: 1.8 $ $Date: 2000/08/03 12:24:00 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rtcp_api.h,v $ $Revision: 1.9 $ $Date: 2000/10/06 08:58:57 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -31,6 +31,7 @@ EXTERN_C int DLL_DECL rtcp_NewTapeList _PROTO((tape_list_t **, tape_list_t **, i
 EXTERN_C int DLL_DECL rtcp_NewFileList _PROTO((tape_list_t **, file_list_t **, int));
 EXTERN_C int DLL_DECL dumpTapeReq _PROTO((tape_list_t *));
 EXTERN_C int DLL_DECL dumpFileReq _PROTO((file_list_t *));
+EXTERN_C int DLL_DECL rtcpc_CheckRetry _PROTO((tape_list_t *));
 
 #endif /* RTCP_API_H */
 
