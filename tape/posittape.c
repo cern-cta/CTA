@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.12 $ $Date: 2002/04/09 07:42:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.13 $ $Date: 2002/04/09 15:30:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -74,7 +74,7 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 		}
 		if ((c = rwndtape (tapefd, path))) goto reply;
 		*cfseq = 1;
-		if (fseq == 1 && (filstat == NEW_FILE || filstat == NOCHECKFILE))
+		if (fseq == 1 && (filstat == NEW_FILE || filstat == NOFILECHECK))
 			goto reply;
 #if defined(ADSTAR) || (defined(__osf__) && defined(__alpha)) || defined(IRIX64) || defined(linux)
 #if defined(ADSTAR)
