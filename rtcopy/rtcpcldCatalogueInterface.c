@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.94 $ $Release$ $Date: 2004/12/01 18:33:11 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.95 $ $Release$ $Date: 2004/12/03 10:58:30 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.94 $ $Release$ $Date: 2004/12/01 18:33:11 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.95 $ $Release$ $Date: 2004/12/03 10:58:30 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1340,6 +1340,7 @@ int nextSegmentToMigrate(
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj;
   struct Cns_fileid *castorFileId = NULL;
+  struct stat64 st;
   rtcpFileRequest_t *filereq = NULL;
   tape_list_t *tl = NULL;
   file_list_t *fl = NULL;
@@ -1593,18 +1594,73 @@ int nextSegmentToMigrate(
                             castorFile,
                             &(filereq->castorSegAttr.castorFileId)
                             );
-  Cstager_CastorFile_fileSize(
-                              castorFile,
-                              &(filereq->bytes_in)
-                              );
   (void)u64tohexstr(
                     filereq->castorSegAttr.castorFileId,
                     filereq->fid,
                     -sizeof(filereq->fid)
                     );
 
-  C_IAddress_delete(iAddr);  
-  if ( rtcpcld_checkDualCopies(fl) == -1 ) {
+  Cstager_CastorFile_fileSize(
+                              castorFile,
+                              &(filereq->bytes_in)
+                              );
+  if ( filereq->bytes_in == 0 ) {
+    /*
+     * be sure that size>0 before sending it off to rtcpd
+     */
+    rc = rfio_stat64(filereq->file_path,&st);
+    if ( (rc == -1) || (st.st_size == 0) ) {
+      save_serrno = serrno;
+      /*
+       * Disk file is zero size or has some other problem.
+       * Not fatal but we can mark the the tape copy INVALID
+       */
+      (void)rtcpcld_getFileId(fl,&castorFileId);
+      if ( rc == -1 ) {
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
+                        (struct Cns_fileid *)castorFileId,
+                        RTCPCLD_NB_PARAMS+2,
+                        "SYSCALL",
+                        DLF_MSG_PARAM_STR,
+                        "rfio_stat()",
+                        "ERROR_STR",
+                        DLF_MSG_PARAM_STR,
+                        sstrerror(save_serrno),
+                        RTCPCLD_LOG_WHERE
+                        );
+      } else {
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_ZEROSIZE),
+                        (struct Cns_fileid *)castorFileId,
+                        0
+                        );
+        save_serrno = ERTZEROSIZE;
+      }
+      fl->filereq.cprc = -1;
+      fl->filereq.err.errorcode = save_serrno;
+      fl->filereq.err.severity = RTCP_FAILED;
+      strcpy(fl->filereq.err.errmsgtxt,sstrerror(save_serrno));
+
+      /*
+       * Mark this candidate failed
+       */
+      (void)rtcpcld_updcMigrFailed(tape,fl);
+      CLIST_DELETE(tape->file,fl);
+      free(fl);
+      /*
+       * Skip to next file
+       */
+      serrno = EAGAIN;
+      return(-1);
+    }
+  }
+  
+  C_IAddress_delete(iAddr);
+  rc = rtcpcld_checkDualCopies(fl);
+  if ( rc == -1 ) {
     save_serrno = serrno;
     if ( serrno == EEXIST ) {
       struct Cns_fileid *fileid = NULL;
@@ -1636,8 +1692,20 @@ int nextSegmentToMigrate(
                       DLF_MSG_PARAM_STR,
                       sstrerror(save_serrno)
                       );
-      Cstager_TapeCopy_setStatus(tpCp,TAPECOPY_INVALID);
-      (void)rtcpcld_updcFileMigrated(tape,fl);
+      fl->filereq.cprc = -1;
+      fl->filereq.err.errorcode = save_serrno;
+      fl->filereq.err.severity = RTCP_FAILED;
+      strcpy(fl->filereq.err.errmsgtxt,sstrerror(save_serrno));
+
+      /*
+       * Mark this candidate failed
+       */
+      (void)rtcpcld_updcMigrFailed(tape,fl);
+      CLIST_DELETE(tape->file,fl);
+      free(fl);
+      /*
+       * Skip to next file
+       */
       serrno = EAGAIN;
       return(-1);
     } else {
@@ -2628,7 +2696,7 @@ int rtcpcld_updcFileMigrated(
                             OBJ_DiskCopy
                             );
   }
-
+    
   if ( rc == -1 ) {
     save_serrno = serrno;
     LOG_DBCALL_ERR("C_Services_fillObj()",
@@ -2652,9 +2720,6 @@ int rtcpcld_updcFileMigrated(
    * Update status of this tape copy (otherwise the check below
    * would always fail since in DB the status of this tape copy 
    * is still TAPECOPY_SELECTED)
-   */
-  /**
-   * TODO: take into account TAPECOPY_INVALID !
    */
   Cstager_TapeCopy_status(tapeCopy,&tapeCopyStatus);
   if ( tapeCopyStatus != TAPECOPY_INVALID ) {
