@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.13 $ $Date: 2000/01/09 17:57:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.14 $ $Date: 2000/02/02 12:54:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -119,6 +119,8 @@ char	**argv;
 
 #if VDQM
 	vdqm_status = VDQM_UNIT_RELEASE;
+	if (rlsflags & TPRLS_UNLOAD)
+		vdqm_status |= VDQM_FORCE_UNMOUNT;
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_UNIT_RELEASE)\n");
 	vdqm_rc = vdqm_UnitStatus (NULL, vid, dgn, NULL, drive, &vdqm_status,
 		NULL, jid);
