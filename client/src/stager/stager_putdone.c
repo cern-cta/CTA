@@ -156,13 +156,12 @@ cmd_countHsmFiles(int argc, char *argv[]) {
   Copterr = 1;
   errflg = 0;
   nbargs = 0;
-  while ((c = Cgetopt_long (argc, argv, "M:", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "R:M:h:", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
       nbargs++;;
       break;
     default:
-      errflg++;
       break;
     }
     if (errflg != 0) break;
