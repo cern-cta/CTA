@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.32 $ $Release$ $Date: 2005/01/13 17:23:15 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.33 $ $Release$ $Date: 2005/01/14 22:14:40 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.32 $ $Release$ $Date: 2005/01/13 17:23:15 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.33 $ $Release$ $Date: 2005/01/14 22:14:40 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -86,8 +86,10 @@ extern int (*rtcpc_ClientCallback) _PROTO((
                                            rtcpTapeRequest_t *, 
                                            rtcpFileRequest_t *
                                            ));
+extern char *getconfent _PROTO((char *, char *, int));
 Cuuid_t childUuid, mainUuid;
 int inChild = 1;
+extern int checkFile;
 static int diskFseq = 0;
 static int filesCopied = 0;
 static u_signed64 bytesCopied = 0;
@@ -649,6 +651,8 @@ int main(
   (void)rtcpcld_initLogging(
                             migratorFacility
                             );
+
+  if ( getconfent("migrator","CHECKFILE",0) != NULL ) checkFile = 1;
   cmdline[0] = '\0';
   c=0;
   for (i=0; (i<CA_MAXLINELEN) && (c<argc);) {

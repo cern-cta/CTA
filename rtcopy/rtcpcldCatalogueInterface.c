@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.111 $ $Release$ $Date: 2005/01/13 17:21:01 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.112 $ $Release$ $Date: 2005/01/14 22:14:40 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.111 $ $Release$ $Date: 2005/01/13 17:21:01 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.112 $ $Release$ $Date: 2005/01/14 22:14:40 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -102,6 +102,9 @@ WSADATA wsadata;
 /** Global needed for determine which uuid to log
  */
 int inChild;
+/** Global switch indicating whether we should check remote disk files
+ */
+int checkFile = 0;
 /** uuid's set by calling process (rtcpclientd:mainUuid, VidWorker:childUuid)
  */
 Cuuid_t childUuid, mainUuid;
@@ -1675,7 +1678,7 @@ int nextSegmentToMigrate(
                               castorFile,
                               &(filereq->bytes_in)
                               );
-  if ( filereq->bytes_in == 0 ) {
+  if ( (filereq->bytes_in == 0) || (checkFile == 1) ) {
     /*
      * be sure that size>0 before sending it off to rtcpd
      */
