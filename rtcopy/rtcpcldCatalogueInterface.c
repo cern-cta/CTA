@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.106 $ $Release$ $Date: 2004/12/15 16:36:14 $ $Author: jdurand $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.107 $ $Release$ $Date: 2005/01/05 14:15:43 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.106 $ $Release$ $Date: 2004/12/15 16:36:14 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.107 $ $Release$ $Date: 2005/01/05 14:15:43 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -866,13 +866,16 @@ static int validPosition(
      struct Cstager_Segment_t *segment;
 {                         
   int fseq;
-  unsigned char *blockid;
+  unsigned char blockid[4];
 
   Cstager_Segment_fseq(segment,&fseq);
-  Cstager_Segment_blockid(segment,(CONST unsigned char **)&blockid);
+  Cstager_Segment_blockId0(segment,(unsigned char *)&blockid[0]);
+  Cstager_Segment_blockId1(segment,(unsigned char *)&blockid[1]);
+  Cstager_Segment_blockId2(segment,(unsigned char *)&blockid[2]);
+  Cstager_Segment_blockId3(segment,(unsigned char *)&blockid[3]);
 
   if ( (fseq <= 0) &&
-       (blockid == NULL || memcmp(blockid,nullblkid,sizeof(nullblkid)) == 0) ) {
+       (memcmp(blockid,nullblkid,sizeof(nullblkid)) == 0) ) {
     return(0);
   } else {
     return(1);
@@ -1002,7 +1005,7 @@ static int procSegmentsForTape(
   enum Cstager_SegmentStatusCodes_t cmpStatus;
   file_list_t *fl = NULL;
   tape_list_t *tl = NULL;
-  unsigned char *blockid;
+  unsigned char blockid[4];
   ID_TYPE key;
   int rc, i, nbItems = 0, save_serrno, fseq, newFileReqs = 0, doCommit = 0;
 
@@ -1060,13 +1063,25 @@ static int procSegmentsForTape(
   tl = tape;
   for ( i=0; i<nbItems; i++ ) {
     Cstager_Segment_status(segmArray[i],&cmpStatus);
-    blockid = NULL;
+    memset(blockid,'\0',sizeof(blockid));
     if ( (cmpStatus == SEGMENT_UNPROCESSED) &&
          (alreadySelected(tape,segmArray[i]) == 0) ) {
-      Cstager_Segment_blockid(
-                              segmArray[i],
-                              (CONST unsigned char **)&blockid
-                              );
+      Cstager_Segment_blockId0(
+                               segmArray[i],
+                               (unsigned char *)&blockid[0]
+                               );
+      Cstager_Segment_blockId1(
+                               segmArray[i],
+                               (unsigned char *)&blockid[1]
+                               );
+      Cstager_Segment_blockId2(
+                               segmArray[i],
+                               (unsigned char *)&blockid[2]
+                               );
+      Cstager_Segment_blockId3(
+                               segmArray[i],
+                               (unsigned char *)&blockid[3]
+                               );
       Cstager_Segment_fseq(
                            segmArray[i],
                            &fseq
@@ -1116,16 +1131,16 @@ static int procSegmentsForTape(
       fl->dbRef->row = segmArray[i];
       Cstager_Segment_id(segmArray[i],&key);
       fl->dbRef->key = key;
-      if ( blockid != NULL ) {
+      if ( memcmp(blockid,nullblkid,sizeof(blockid)) != 0 ) {
         memcpy(fl->filereq.blockid,blockid,sizeof(fl->filereq.blockid));
-      }
-    
-      if ( memcmp(fl->filereq.blockid,nullblkid,sizeof(nullblkid)) == 0 ) 
+        fl->filereq.position_method = TPPOSIT_BLKID;
+      } else {
         fl->filereq.position_method = TPPOSIT_FSEQ;
-      else fl->filereq.position_method = TPPOSIT_BLKID;
+      }
       fl->filereq.proc_status = RTCP_WAITING;
       /*
-       * Temporary hack until rtcpd_MainCntl.c fix has been deployed
+       * TODO: remove this temporary hack when rtcpd_MainCntl.c fix
+       * (revision 1.94) has been deployed on all tape servers
        */
       fl->filereq.blocksize = 32760;
       
