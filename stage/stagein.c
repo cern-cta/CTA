@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
@@ -13,6 +13,7 @@ static char sccsid[] = "@(#)stagein.c,v 1.11 2000-03-24 11:10:06+01 CERN IT-PDP/
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <fcntl.h>
