@@ -1,10 +1,10 @@
-.\" $Id: stgdaemon.man,v 1.24 2004/03/08 16:23:22 jdurand Exp $
+.\" $Id: stgdaemon.man,v 1.25 2004/03/09 07:21:43 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.24 $ $Date: 2004/03/08 16:23:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.25 $ $Date: 2004/03/09 07:21:43 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STGDAEMON 1 "$Date: 2004/03/08 16:23:22 $" CASTOR "Stage Administrator Commands"
+.TH STGDAEMON 1 "$Date: 2004/03/09 07:21:43 $" CASTOR "Stage Administrator Commands"
 .SH NAME
 stgdaemon \- starts the stage daemon
 .SH SYNOPSIS
@@ -40,8 +40,8 @@ In case of system error, the commands are automatically retried from the
 failing subrequest.
 If a file
 .B nomorestage
-exists in the operator directory, new stage commands (stageqry and stageinit
-excepted) will be rejected by the daemon and will wait on the client side.
+exists in the operator directory, new stage commands (stageqry, stageinit
+and stageshutdown excepted) will be rejected by the daemon and will wait on the client side.
 If a file
 .B nomoremigr
 exists in the operator directory, automatic migration will not be started.
