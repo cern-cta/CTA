@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Param.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/04/05 11:51:33 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Param.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/05 13:36:36 $ $Author: sponcec3 $
  *
  * A parameter for the DLF (Distributed Logging System)
  *
@@ -32,6 +32,8 @@
 #include "dlf_struct.h"
 #include "castor/IObject.hpp"
 #include "castor/stager/TapeVid.hpp"
+#include "castor/dlf/IPAddress.hpp"
+#include "castor/dlf/TimeStamp.hpp"
 
 namespace castor {
 
@@ -46,6 +48,16 @@ namespace castor {
 
       /**
        * Constructor for strings
+       */
+      Param(char* name, std::string value) :
+        m_deallocate(true) {
+        m_cParam.name = name;
+        m_cParam.type = DLF_MSG_PARAM_STR;
+        m_cParam.par.par_string = strdup(value.c_str());
+      };
+
+      /**
+       * Constructor for C strings
        */
       Param(char* name, char* value) :
         m_deallocate(false) {
@@ -113,6 +125,16 @@ namespace castor {
         m_cParam.type = DLF_MSG_PARAM_TPVID;
         m_cParam.par.par_string = value.vid();
       };
+
+      /**
+       * Constructor for IPAddress
+       */
+      Param(char* name, castor::dlf::IPAddress value);
+
+      /**
+       * Constructor for TimeStamp
+       */
+      Param(char* name, castor::dlf::TimeStamp value);
 
       /**
        * Constructor for objects
