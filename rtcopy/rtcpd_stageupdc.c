@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.45 $ $Date: 2000/09/20 09:22:30 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.46 $ $Date: 2000/09/28 09:56:29 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -110,7 +110,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
     filereq = &file->filereq;
     tapereq = &tape->tapereq;
 
-    rc = save_serrno = 0;
+    rc = save_serrno = retval = 0;
     *newpath = '\0';
     /*
      * Check if this is a stage request
@@ -357,7 +357,11 @@ int rtcpd_stageupdc(tape_list_t *tape,
         return(-1);
     }
 
-    filereq->err.errorcode = 0;
+    /*
+     * Reset error if we retry with a new path
+     */
+    if ( rc == 0 && tapereq->mode == WRITE_DISABLE && retval == ENOSPC ) 
+        filereq->err.errorcode = 0;
 
     if ( rc == 0 &&  tapereq->mode == WRITE_DISABLE && *newpath != '\0' && 
          strcmp(newpath,filereq->file_path) ) {
