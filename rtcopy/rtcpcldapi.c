@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.41 $ $Release$ $Date: 2004/08/09 14:06:04 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.42 $ $Release$ $Date: 2004/08/09 15:17:48 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.41 $ $Date: 2004/08/09 14:06:04 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.42 $ $Date: 2004/08/09 15:17:48 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -477,6 +477,7 @@ static int newOrUpdatedSegment(
   
   CLIST_ITERATE_BEGIN(tpList,tpIterator) 
     {
+      vid = NULL;
       Cstager_Tape_vid(tpIterator->tp,(CONST char **)&vid);
       Cstager_Tape_tpmode(tpIterator->tp,&mode);
       Cstager_Tape_side(tpIterator->tp,&side);
@@ -488,7 +489,9 @@ static int newOrUpdatedSegment(
           {
             segm = segmIterator->segment;
             Cstager_Segment_fseq(segm,&fseq);
+            blockid = NULL;
             Cstager_Segment_blockid(segm,(CONST unsigned char **)&blockid);
+            diskPath = NULL;
             Cstager_Segment_diskPath(segm,(CONST char **)&diskPath);
             if ( blockid == NULL ) blockid = nullblkid;
             if ( diskPath == NULL ) diskPath = nullDiskPath;
@@ -809,7 +812,9 @@ static void dumpSegmList(
   CLIST_ITERATE_BEGIN(tpList->segments,segment)
     {
       Cstager_Segment_fseq(segment->segment,&fseq);
+      blkid = NULL;
       Cstager_Segment_blockid(segment->segment,(CONST unsigned char **)&blkid);
+      diskPath = NULL;
       Cstager_Segment_diskPath(segment->segment,(CONST char **)&diskPath);
       Cstager_Segment_id(segment->segment,&key);
       rtcp_log(LOG_DEBUG,
@@ -1057,6 +1062,7 @@ static int getUpdates(
       Cstager_Tape_status(tpIterator->tp,&tpNewStatus);
       rtcp_log(LOG_DEBUG,"getUpdates() tape status (old=%d, new=%d)\n",
                tpOldStatus,tpNewStatus);
+      vwAddress = NULL;
       Cstager_Tape_vwAddress(tpIterator->tp,(CONST char **)&vwAddress);
       if ( (vwAddress != NULL) &&
            (strncmp(tpIterator->vwAddress,
@@ -1080,6 +1086,7 @@ static int getUpdates(
       if ( tpNewStatus == TAPE_FAILED ) {
         Cstager_Tape_errorCode(tpIterator->tp,&tape->tapereq.err.errorcode);
         Cstager_Tape_severity(tpIterator->tp,&tape->tapereq.err.severity);
+        errmsgtxt = NULL;
         Cstager_Tape_errMsgTxt(tpIterator->tp,(CONST char **)&errmsgtxt);
         if ( errmsgtxt != NULL ) {
           strncpy(
@@ -1137,6 +1144,7 @@ static int getUpdates(
                                            segmIterator->segment,
                                            &file->filereq.host_bytes
                                            );
+                segmCksumAlgorithm = NULL;
                 Cstager_Segment_segmCksumAlgorithm(
                                                    segmIterator->segment,
                                                    (CONST char **)&segmCksumAlgorithm
@@ -1160,6 +1168,7 @@ static int getUpdates(
                     file->filereq.TStartTransferTape = 
                     file->filereq.TStartTransferDisk = (int)time(NULL);
                 }
+                blockid = NULL;
                 Cstager_Segment_blockid(
                                         segmIterator->segment,
                                         (CONST unsigned char **)&blockid
@@ -1190,6 +1199,7 @@ static int getUpdates(
                 break;
               case SEGMENT_FAILED:
                 callGetMoreInfo = -1;
+                errmsgtxt = NULL;
                 Cstager_Segment_errMsgTxt(
                                           segmIterator->segment,
                                           (CONST char **)&errmsgtxt
