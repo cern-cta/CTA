@@ -4,339 +4,122 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.18 $ $Date: 2004/11/29 16:49:08 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.19 $ $Date: 2004/12/21 22:19:02 $ CERN IT-ADC/CA Jean-Damien Durand
  */
 
-#if BuildCopytapeServer
-#if BuildStageClient != YES
-#undef BuildStageClient
-#define BuildStageClient	YES
-#endif
-#endif
+#include <Project.tmpl>
 
-#if BuildNewStageDaemon
-#if BuildStageDaemon != YES
-#undef BuildStageDaemon
-#define BuildStageDaemon YES
-#endif
-#endif
-
-#if BuildNameServerDaemon && !UseOracle && !UseRaima
-#if BuildDbClient != YES
-#undef BuildDbClient
-#define BuildDbClient YES
-#endif
-#endif
-#if BuildStageDaemon && UseStageCdb
-#if BuildDbClient != YES
-#undef BuildDbClient
-#define BuildDbClient YES
-#endif
-#endif
-#if BuildVolumeMgrrDaemon && !UseOracle && !UseRaima
-#if BuildDbClient != YES
-#undef BuildDbClient
-#define BuildDbClient YES
-#endif
-#endif
-#if BuildDbClient
-DBLIB = DepLibraryTargetName(db,db)
-#endif
-
-#if BuildStageClient
-#if UseTms
-#if BuildSysreq != YES
-#undef BuildSysreq
-#define BuildSysreq	YES
-#endif
-#endif
-#if BuildRfioClient != YES
-#undef BuildRfioClient
-#define BuildRfioClient       YES
-#endif
-#endif
-
-#if BuildStageDaemon
-#if BuildCupvClient != YES
-#undef BuildCupvClient
-#define BuildCupvClient	YES
-#endif
-#if BuildExpertClient != YES
-#undef BuildExpertClient
-#define BuildExpertClient YES
-#endif
-#if BuildNameServerLibrary != YES
-#undef BuildNameServerLibrary
-#define BuildNameServerLibrary YES
-#endif
-#if BuildRtcopyClient != YES
-#undef BuildRtcopyClient
-#define BuildRtcopyClient       YES
-#endif
-#if BuildVolumeMgrClient != YES
-#undef BuildVolumeMgrClient
-#define BuildVolumeMgrClient YES
-#endif
-#if BuildTapeClient != YES
-#undef BuildTapeClient
-#define BuildTapeClient YES
-#endif
-#endif
-
+/* ================================ */
+/* Hidden dependencies of libraries */
+/* ================================ */
 #if BuildStageLibrary
-#if BuildRfioClient != YES
-#undef BuildRfioClient
-#define BuildRfioClient       YES
-#endif
-#endif
-
-#if BuildJob
-#if !BuildRmClient
-#define BuildRmClient YES
-#endif
-#endif
-
-#if BuildRmClient || BuildRmMaster || BuildRmNode
-RESOURCEMONITORINGLIB = DepLibraryTargetName(resourcemonitoring,resourcemonitoring)
-#endif
-
-#if BuildStageClient || BuildStageDaemon || BuildStageLibrary
-STGLIB = DepLibraryTargetName(stager,stager)
-#endif
-
-#if BuildRtcopyClient
-RTCOPYLIB = DepLibraryTargetName(rtcopy,rtcpapi)
-#if UseTms
-#if BuildSysreq != YES
-#undef BuildSysreq
-#define BuildSysreq	YES
-#endif
-#endif
-#if BuildOraCpp != YES
-#undef BuildOraCpp
-#define BuildOraCpp	YES
-#endif
-#if BuildVdqmClient != YES
-#undef BuildVdqmClient
-#define BuildVdqmClient	YES
-#endif
-#if UseVmgr
-#if BuildVolumeMgrClient != YES
-#undef BuildVolumeMgrClient
-#define BuildVolumeMgrClient	YES
-#endif
-#endif
-#if BuildDlfClient != YES
-#undef BuildDlfClient
-#define BuildDlfClient	YES
-#endif
-#if BuildRfioClient != YES
-#undef BuildRfioClient
-#define BuildRfioClient	YES
-#endif
-#endif
-
-#if BuildRtcopyServer
-#if BuildVdqmClient != YES
-#undef BuildVdqmClient
-#define BuildVdqmClient YES
-#endif
-#if UseVmgr
-#if BuildVolumeMgrClient != YES
-#undef BuildVolumeMgrClient
-#define BuildVolumeMgrClient    YES
-#endif
-#endif
-#if BuildRfioClient != YES
-#undef BuildRfioClient
-#define BuildRfioClient YES
-#endif
-#if BuildTapeClient != YES
-#undef BuildTapeClient
-#define BuildTapeClient YES
-#endif
-#endif
-
-#if BuildTapeClient
-TAPELIB = DepLibraryTargetName(tape,tape)
-#if UseTms
-#if BuildSysreq != YES
-#undef BuildSysreq
-#define BuildSysreq	YES
-#endif
-#endif
-#if BuildMsgClient != YES
-#undef BuildMsgClient
-#define BuildMsgClient	YES
-#endif
-#if BuildRmcClient != YES
-#undef BuildRmcClient
-#define BuildRmcClient	YES
-#endif
-#endif
-
-#if BuildTapeDaemon && UseVmgr
-#if BuildVolumeMgrClient != YES
-#undef BuildVolumeMgrClient
-#define BuildVolumeMgrClient YES
-#endif
-#endif
-
-#if BuildTpusage
-#if BuildRfioClient != YES
-#undef BuildRfioClient
-#define BuildRfioClient	YES
-#endif
-#endif
-
-#if BuildClientCpp
-RHCLIENTLIB = DepLibraryTargetName(castor,castorClient)
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon YES
-#endif
-#endif
-
-#if BuildRfioClient
-RFIOLIB = DepLibraryTargetName(rfio,rfio)
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon	YES
-#endif
-#if BuildNameServerLibrary != YES
+#if !BuildNameServerLibrary
 #undef BuildNameServerLibrary
 #define BuildNameServerLibrary	YES
 #endif
-#if BuildStageClient != YES && BuildStageLibrary != YES
+#if !BuildRfioLibrary
+#undef BuildRfioLibrary
+#define BuildRfioLibrary YES
+#endif
+#endif
+
+#if BuildRfioLibrary
+#if !BuildNameServerLibrary
+#undef BuildNameServerLibrary
+#define BuildNameServerLibrary	YES
+#endif
+#if !BuildStageLibrary
 #undef BuildStageLibrary
-#define BuildStageLibrary	YES
-#endif
-#endif
-
-#if BuildStageLibrary
-STGLIB = DepLibraryTargetName(stager,stager)
-#endif
-
-#if BuildMsgClient
-MSGLIB = DepLibraryTargetName(msg,msg)
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon	YES
-#endif
-#endif
-
-#if BuildNameServerDaemon
-#if BuildCupvClient != YES
-#undef BuildCupvClient
-#define BuildCupvClient	YES
-#endif
-#endif
-
-#if BuildNameServerClient || BuildNameServerLibrary
-NSLIB = DepLibraryTargetName(ns,ns)
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon	YES
-#endif
-#endif
-
-#if BuildRmcClient
-RMCLIB = DepLibraryTargetName(rmc,rmc)
-#endif
-
-#if BuildVdqmClient
-VDQMLIB = DepLibraryTargetName(vdqm,vdqmapi)
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon	YES
-#endif
-#endif
-
-#if BuildVolumeMgrDaemon
-#if BuildCupvClient != YES
-#undef BuildCupvClient
-#define BuildCupvClient	YES
-#endif
-#endif
-
-
-#if BuildVolumeMgrClient
-VMGRLIB = DepLibraryTargetName(vmgr,vmgr)
-#if UseCupv
-#if BuildCupvClient != YES
-#undef BuildCupvClient
-#define BuildCupvClient	YES
-#endif
-#endif
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon	YES
-#endif
-#endif
-
-#if BuildCupvClient || BuildCupvDaemon
-UPVLIB = DepLibraryTargetName(upv,upv)
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon	YES
-#endif
-#endif
-
-#if BuildMonitorClient || BuildMonitorServer
-MONITORLIB = DepLibraryTargetName(monitor,monitor)
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon	YES
-#endif
-#endif
-
-#if BuildSysreq
-SYSREQLIB = DepLibraryTargetName(sysreq,sysreq)
-#endif
-
-#if BuildHpssClient
-HPSSLIB = DepLibraryTargetName(hpss,hpss_common)
-#endif
-
-#if BuildDlfClient
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon	YES
-#endif
-DLFLIB = DepLibraryTargetName(dlf,dlf)
-#endif
-
-#if BuildSecurity
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon	YES
-#endif
-SECURITYLIB = DepLibraryTargetName(security,security)
-#endif
-
-#if BuildDstageCpp
-#if BuildOraCpp != YES
-#undef BuildOraCpp
-#define BuildOraCpp YES
-#endif
-#endif
-
-#if BuildRHCpp
-#if BuildOraCpp != YES
-#undef BuildOraCpp
-#define BuildOraCpp YES
+#define BuildStageLibrary YES
 #endif
 #endif
 
 #if BuildOraCpp
-RHORALIB = DepLibraryTargetName(castor/db/ora,castorCommonOra)
+#if !BuildVolumeMgrLibrary
+#undef BuildVolumeMgrLibrary
+#define BuildVolumeMgrLibrary YES
+#endif
 #endif
 
-#if BuildExpertClient || BuildExpertDaemon
-EXPERTLIB = DepLibraryTargetName(expert,expert)
+#if BuildVolumeMgrLibrary
+#if !BuildCupvLibrary
+#undef BuildCupvLibrary
+#define BuildCupvLibrary YES
+#endif
 #endif
 
+#if BuildStageLibrary
+#if !BuildCastorClientCPPLibrary
+#undef BuildCastorClientCPPLibrary
+#define BuildCastorClientCPPLibrary YES
+#endif
+#if !BuildDlfLibrary
+#undef BuildDlfLibrary
+#define BuildDlfLibrary YES
+#endif
+#endif
+
+#if BuildRtcopyLibrary
+#if !BuildVdqmLibrary
+#undef BuildVdqmLibrary
+#define BuildVdqmLibrary YES
+#endif
+#endif
+
+/* ============================= */
+/* Directories for the libraries */
+/* ============================= */
 #if BuildCommon
 COMMONLIB = DepLibraryTargetName(common,common)
 #endif
-
+#if BuildCupvLibrary
+UPVLIB = DepLibraryTargetName(upv,upv)
+#endif
+#if BuildMonitorLibrary
+MONITORLIB = DepLibraryTargetName(monitor,monitor)
+#endif
+#if BuildMsgLibrary
+MSGLIB = DepLibraryTargetName(msg,msg)
+#endif
+#if BuildNameServerLibrary
+NSLIB = DepLibraryTargetName(ns,ns)
+#endif
+#if BuildRfioLibrary
+RFIOLIB = DepLibraryTargetName(rfio,rfio)
+#endif
+#if BuildRmcLibrary
+RMCLIB = DepLibraryTargetName(rmc,rmc)
+#endif
+#if BuildRtcopyLibrary
+RTCOPYLIB = DepLibraryTargetName(rtcopy,rtcpapi)
+#endif
+#if BuildStageLibrary
+STGLIB = DepLibraryTargetName(stager,stager)
+#endif
+#if BuildRmLibrary
+RESOURCEMONITORINGLIB = DepLibraryTargetName(resourcemonitoring,resourcemonitoring)
+#endif
+#if BuildTapeLibrary
+TAPELIB = DepLibraryTargetName(tape,tape)
+#endif
+#if BuildVdqmLibrary
+VDQMLIB = DepLibraryTargetName(vdqm,vdqmapi)
+#endif
+#if BuildVolumeMgrLibrary
+VMGRLIB = DepLibraryTargetName(vmgr,vmgr)
+#endif
+#if BuildDlfLibrary
+DLFLIB = DepLibraryTargetName(dlf,dlf)
+#endif
+#if BuildExpertLibrary
+EXPERTLIB = DepLibraryTargetName(expert,expert)
+#endif
+#if BuildCastorClientCPPLibrary
+RHCLIENTLIB = DepLibraryTargetName(castor,castorClient)
+#endif
+#if BuildOraCpp
+RHORALIB = DepLibraryTargetName(castor/db/ora,castorCommonOra)
+#endif
+#if BuildSecurity
+SECURITYLIB = DepLibraryTargetName(security,security)
+#endif

@@ -1,398 +1,540 @@
 /*
- * Copyright (C) 1993-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2004 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * @(#)Project.tmpl,v 1.24 2002/12/03 05:50:07 CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile$ $Revision$ $Date$ CERN IT-ADC/CA Jean-Damien Durand
  */
 
+/* ============================= */
+/* Build dependencies v.s. flags */
+/* ============================= */
+
+/* CUPVDAEMON,NAMESERVERDAEMON,VMGRDAEMON,DLFDAEMON needs [1]UseOracle of UseMySQL */
+/* ------------------------------------------------------------------------------- */
+#if BuildCupvDaemon || BuildNameServerDaemon || BuildVolumeMgrDaemon || BuildDlfDaemon
+#if !UseOracle && !UseMySQL
+#undef UseOracle
+#define UseOracle YES
+#endif
+#endif
+
+/* RMMASTER needs [1]maui or lsf */
+/* ----------------------------- */
 #if BuildRmMaster
-#if UseMaui != YES && UseLsf != YES
+#if !UseMaui && !UseLsf
 #undef UseMaui
 #define UseMaui YES
 #endif
 #endif
 
-#if UseMaui || UseLsf
-#if UseScheduler != YES
-#undef UseScheduler
-#define UseScheduler YES
+/* RMNODE will be worker so it needs JOB */
+/* ------------------------------------- */
+#if BuildRmNode
+#if !BuildJob
+#undef BuildJob
+#define BuildJob YES
 #endif
 #endif
 
+/* ========================================== */
+/* Implicit dependencies because of libraries */
+/* ========================================== */
+
+/* --------------------------- */
+/* We force COMMON in any case */
+/* --------------------------- */
+#if !BuildCommon
+#undef BuildCommon
+#define BuildCommon YES
+#endif
+
+/* ---- */
+/* CUPV */
+/* ---- */
+#if BuildCupvClient || BuildCupvDaemon
+#if !BuildCupvLibrary
+#undef BuildCupvLibrary
+#define BuildCupvLibrary YES
+#endif
+#endif
+
+/* -------- */
+/* HSMTOOLS */
+/* -------- */
 #if BuildHsmTools
-HSMTOOLSDIR = hsmtools
-#if BuildNameServerClient != YES && BuildNameServerLibrary != YES
+#if !BuildNameServerLibrary
 #undef BuildNameServerLibrary
 #define BuildNameServerLibrary YES
 #endif
-#if BuildVolumeMgrClient != YES && BuildVolumeMgrLibrary != YES
+#if !BuildRtcopyLibrary
+#undef BuildRtcopyLibrary
+#define BuildRtcopyLibrary YES
+#endif
+#if !BuildStageLibrary
+#undef BuildStageLibrary
+#define BuildStageLibrary YES
+#endif
+#if UseVmgr
+#if !BuildVolumeMgrLibrary
+#undef BuildVolumeMgrLibrary
+#define BuildVolumeMgrLibrary YES
+#endif
+#endif
+#endif
+
+/* ------- */
+/* MONITOR */
+/* ------- */
+#if BuildMonitorClient
+#if !BuildMonitorLibrary
+#undef BuildMonitorLibrary
+#define BuildMonitorLibrary YES
+#endif
+#endif
+#if BuildMonitorServer
+#if !BuildMonitorLibrary
+#undef BuildMonitorLibrary
+#define BuildMonitorLibrary YES
+#endif
+#if !BuildMonitorLibrary
+#undef BuildMonitorLibrary
+#define BuildMonitorLibrary YES
+#endif
+#if !BuildStageLibrary
+#undef BuildStageLibrary
+#define BuildStageLibrary YES
+#endif
+#endif
+
+/* --- */
+/* MSG */
+/* --- */
+#if BuildMsgClient || BuildMsgServer
+#if !BuildMsgLibrary
+#undef BuildMsgLibrary
+#define BuildMsgLibrary YES
+#endif
+#endif
+
+/* -- */
+/* NS */
+/* -- */
+#if BuildNameServerClient || BuildNameServerDaemon
+#if !BuildNameServerLibrary
+#undef BuildNameServerLibrary
+#define BuildNameServerLibrary YES
+#endif
+#endif
+
+/* ---- */
+/* RFIO */
+/* ---- */
+#if BuildRfioClient
+#if !BuildRfioLibrary
+#undef BuildRfioLibrary
+#define BuildRfioLibrary YES
+#endif
+#endif
+
+/* --- */
+/* RMC */
+/* --- */
+#if BuildRmcClient
+#if !BuildRmcLibrary
+#undef BuildRmcLibrary
+#define BuildRmcLibrary YES
+#endif
+#endif
+#if BuildRmcServer
+#if !BuildRmcLibrary
+#undef BuildRmcLibrary
+#define BuildRmcLibrary YES
+#endif
+#if !BuildTapeLibrary
+#undef BuildTapeLibrary
+#define BuildTapeLibrary YES
+#endif
+#if !BuildCupvLibrary
+#undef BuildCupvLibrary
+#define BuildCupvLibrary YES
+#endif
+#endif
+
+/* --- */
+/* JOB */
+/* --- */
+#if BuildJob
+#if !BuildStageLibrary
+#undef BuildStageLibrary
+#define BuildStageLibrary YES
+#endif
+#if !BuildCastorClientCPPLibrary
+#undef BuildCastorClientCPPLibrary
+#define BuildCastorClientCPPLibrary YES
+#endif
+#if BuildDlfLibrary != YES
+#undef BuildDlfLibrary
+#define BuildDlfLibrary	YES
+#endif
+#if !BuildRfioLibrary
+#undef BuildRfioLibrary
+#define BuildRfioLibrary YES
+#endif
+#endif
+
+/* ------ */
+/* RTCOPY */
+/* ------ */
+#if BuildRtcopyClient
+#if !BuildRtcopyLibrary
+#undef BuildRtcopyLibrary
+#define BuildRtcopyLibrary YES
+#endif
+#if !BuildCastorClientCPPLibrary
+#undef BuildCastorClientCPPLibrary
+#define BuildCastorClientCPPLibrary YES
+#endif
+#if !BuildRfioLibrary
+#undef BuildRfioLibrary
+#define BuildRfioLibrary YES
+#endif
+#if !BuildOraCpp
+#undef BuildOraCpp
+#define BuildOraCpp YES
+#endif
+#endif
+
+#if BuildRtcopyServer
+#if !BuildRtcopyLibrary
+#undef BuildRtcopyLibrary
+#define BuildRtcopyLibrary YES
+#endif
+#if !BuildStageLibrary
+#undef BuildStageLibrary
+#define BuildStageLibrary YES
+#endif
+#if UseVmgr
+#if !BuildVolumeMgrLibrary
+#undef BuildVolumeMgrLibrary
+#define BuildVolumeMgrLibrary YES
+#endif
+#endif
+#if !BuildTapeLibrary
+#undef BuildTapeLibrary
+#define BuildTapeLibrary YES
+#endif
+#if BuildVdqmLibrary != YES
+#undef BuildVdqmLibrary
+#define BuildVdqmLibrary YES
+#endif
+#if !BuildRfioLibrary
+#undef BuildRfioLibrary
+#define BuildRfioLibrary YES
+#endif
+#endif
+
+#if BuildRtstat
+#if !BuildRfioLibrary
+#undef BuildRfioLibrary
+#define BuildRfioLibrary YES
+#endif
+#endif
+
+/* ----- */
+/* STAGE */
+/* ----- */
+#if BuildStageClient
+#if !BuildStageLibrary
+#undef BuildStageLibrary
+#define BuildStageLibrary YES
+#endif
+#if !BuildRfioLibrary
+#undef BuildRfioLibrary
+#define BuildRfioLibrary YES
+#endif
+#endif
+
+#if BuildStageDaemon
+#if !BuildStageLibrary
+#undef BuildStageLibrary
+#define BuildStageLibrary YES
+#endif
+#if !BuildCastorClientCPPLibrary
+#undef BuildCastorClientCPPLibrary
+#define BuildCastorClientCPPLibrary YES
+#endif
+#if !BuildOraCpp
+#undef BuildOraCpp
+#define BuildOraCpp YES
+#endif
+#if !BuildCupvLibrary
+#undef BuildCupvLibrary
+#define BuildCupvLibrary YES
+#endif
+#if BuildExpertLibrary != YES
+#undef BuildExpertLibrary
+#define BuildExpertLibrary YES
+#endif
+#if BuildNameServerLibrary != YES
+#undef BuildNameServerLibrary
+#define BuildNameServerLibrary YES
+#endif
+#if BuildDlfLibrary != YES
+#undef BuildDlfLibrary
+#define BuildDlfLibrary	YES
+#endif
+#if BuildRmLibrary != YES
+#undef BuildRmLibrary
+#define BuildRmLibrary YES
+#endif
+#if !BuildRfioLibrary
+#undef BuildRfioLibrary
+#define BuildRfioLibrary YES
+#endif
+#endif
+
+/* -------------------------------------------- */
+/* RM (and job because job uses few RM clients) */
+/*------------------------------------------ -- */
+#if BuildRmMaster
+#if !BuildRmLibrary
+#undef BuildRmLibrary
+#define BuildRmLibrary YES
+#endif
+#if !BuildStageLibrary
+#undef BuildStageLibrary
+#define BuildStageLibrary YES
+#endif
+#if !BuildRfioLibrary
+#undef BuildRfioLibrary
+#define BuildRfioLibrary YES
+#endif
+#if !BuildVdqmLibrary
+#undef BuildVdqmLibrary
+#define BuildVdqmLibrary YES
+#endif
+#endif
+
+#if BuildRmNode || BuildRmClient || BuildJob
+#if !BuildRmLibrary
+#undef BuildRmLibrary
+#define BuildRmLibrary YES
+#endif
+#endif
+
+/* ---- */
+/* TAPE */
+/* ---- */
+#if BuildTapeDaemon
+#if !BuildTapeLibrary
+#undef BuildTapeLibrary
+#define BuildTapeLibrary YES
+#endif
+#if BuildMsgLibrary != YES
+#undef BuildMsgLibrary
+#define BuildMsgLibrary	YES
+#endif
+#if BuildRmcLibrary != YES
+#undef BuildRmcLibrary
+#define BuildRmcLibrary	YES
+#endif
+#if UseVmgr
+#if !BuildVolumeMgrLibrary
+#undef BuildVolumeMgrLibrary
+#define BuildVolumeMgrLibrary YES
+#endif
+#endif
+#endif
+
+#if BuildTapeClient
+#if !BuildTapeLibrary
+#undef BuildTapeLibrary
+#define BuildTapeLibrary YES
+#endif
+#if BuildMsgLibrary != YES
+#undef BuildMsgLibrary
+#define BuildMsgLibrary	YES
+#endif
+#if UseVmgr
+#if !BuildVolumeMgrLibrary
+#undef BuildVolumeMgrLibrary
+#define BuildVolumeMgrLibrary YES
+#endif
+#endif
+#endif
+
+#if BuildTpusage
+#if BuildRfioLibrary != YES
+#undef BuildRfioLibrary
+#define BuildRfioLibrary YES
+#endif
+#endif
+
+/* ---- */
+/* TEST */
+/* ---- */
+/* TODO */
+
+/* ---- */
+/* VDQM */
+/* ---- */
+#if BuildVdqmClient || BuildVdqmServer
+#if !BuildVdqmLibrary
+#undef BuildVdqmLibrary
+#define BuildVdqmLibrary YES
+#endif
+#if !BuildRtcopyLibrary
+#undef BuildRtcopyLibrary
+#define BuildRtcopyLibrary YES
+#endif
+#if !BuildRfioLibrary
+#undef BuildRfioLibrary
+#define BuildRfioLibrary YES
+#endif
+#if UseVmgr
+#if !BuildVolumeMgrLibrary
+#undef BuildVolumeMgrLibrary
+#define BuildVolumeMgrLibrary YES
+#endif
+#endif
+#endif
+
+/* ---- */
+/* VMGR */
+/* ---- */
+#if BuildVolumeMgrClient || BuildVolumeMgrDaemon
+#if !BuildVolumeMgrLibrary
 #undef BuildVolumeMgrLibrary
 #define BuildVolumeMgrLibrary YES
 #endif
 #endif
 
-#if BuildCopytapeClient || BuildCopytapeServer
-COPYTAPEDIR = copytape
-#if BuildCopytapeServer
-#if BuildStageClient != YES
-#undef BuildStageClient
-#define BuildStageClient	YES
-#endif
-#endif
-#endif
-
-#if BuildNewStageDaemon
-#if BuildStageDaemon != YES
-#undef BuildStageDaemon
-#define BuildStageDaemon YES
-#endif
-#if BuildProtoCppStager != YES
-#undef BuildProtoCppStager
-#define BuildProtoCppStager YES
+/* --- */
+/* DLF */
+/* --- */
+#if BuildDlfClient || BuildDlfDaemon
+#if !BuildDlfLibrary
+#undef BuildDlfLibrary
+#define BuildDlfLibrary YES
 #endif
 #endif
 
-#if BuildStageDaemon
-#if BuildExpertClient != YES
-#undef BuildExpertClient
-#define BuildExpertClient YES
+/* ------ */
+/* EXPERT */
+/* ------ */
+#if BuildExpertClient || BuildExpertDaemon
+#if !BuildExpertLibrary
+#undef BuildExpertLibrary
+#define BuildExpertLibrary YES
 #endif
 #endif
 
-#if BuildNameServerDaemon && !UseOracle && !UseRaima
-#if BuildDbClient != YES
-#undef BuildDbClient
-#define BuildDbClient YES
-#endif
-#endif
-#if BuildStageDaemon && UseStageCdb
-#if BuildDbClient != YES
-#undef BuildDbClient
-#define BuildDbClient YES
-#endif
-#endif
-#if BuildVolumeMgrDaemon && !UseOracle && !UseRaima
-#if BuildDbClient != YES
-#undef BuildDbClient
-#define BuildDbClient YES
-#endif
-#endif
-#if BuildDbClient || BuildDbDaemon
-DBDIR = db
-#endif
-
-#if BuildJob
-JOBDIR = job
-#if !BuildRmClient
-#define BuildRmClient YES
-#endif
-#endif
-
-#if BuildRmClient || BuildRmMaster || BuildRmNode
-RESOURCEMONITORINGDIR = resourcemonitoring
-#endif
-
-#if BuildStageClient || BuildStageDaemon || BuildStageLibrary
-STAGEDIR = stager
-#if BuildStageClient || BuildStageLibrary
-#if UseTms
-#if BuildSysreq != YES
-#undef BuildSysreq
-#define BuildSysreq	YES
-#endif
-#endif
-#if BuildRfioClient != YES
-#undef BuildRfioClient
-#define BuildRfioClient       YES
-#endif
-#endif
-
-#if BuildStageDaemon
-#if BuildCupvClient != YES
-#undef BuildCupvClient
-#define BuildCupvClient	YES
-#endif
-#if BuildNameServerLibrary != YES
-#undef BuildNameServerLibrary
-#define BuildNameServerLibrary YES
-#endif
-#if BuildRtcopyClient != YES
-#undef BuildRtcopyClient
-#define BuildRtcopyClient	YES
-#endif
-#if BuildVolumeMgrClient != YES
-#undef BuildVolumeMgrClient
-#define BuildVolumeMgrClient YES
-#endif
-#if BuildTapeClient != YES
-#undef BuildTapeClient
-#define BuildTapeClient YES
-#endif
-#endif
-
-#if BuildStageLibrary
-#if BuildRfioClient != YES
-#undef BuildRfioClient
-#define BuildRfioClient       YES
-#endif
-#endif
-#endif
-
-#if BuildRtcopyClient || BuildRtcopyServer
-RTCOPYDIR = rtcopy
-#if UseTms
-#if BuildSysreq != YES
-#undef BuildSysreq
-#define BuildSysreq	YES
-#endif
-#endif
-#if UseVmgr
-#if BuildVolumeMgrClient != YES
-#undef BuildVolumeMgrClient
-#define BuildVolumeMgrClient	YES
-#endif
-#endif
-#if BuildVdqmClient != YES
-#undef BuildVdqmClient
-#define BuildVdqmClient	YES
-#endif
-#if BuildDlfClient != YES
-#undef BuildDlfClient
-#define BuildDlfClient  YES
-#endif
-#if BuildRfioClient != YES
-#undef BuildRfioClient
-#define BuildRfioClient YES
-#endif
-#if BuildRtcopyClient
-#if BuildOraCpp != YES
-#undef BuildOraCpp
-#define BuildOraCpp	YES
-#endif
-#if BuildLib != YES
-#undef BuildLib
-#define BuildLib        YES
-#endif
-#endif
-#if BuildRtcopyServer
-#if BuildTapeClient != YES
-#undef BuildTapeClient
-#define BuildTapeClient	YES
-#endif
-#endif
-#endif
-
-#if BuildTapeClient || BuildTapeDaemon || BuildTpusage
-TAPEDIR = tape
-#if BuildTapeClient || BuildTapeDaemon
-#if UseTms
-#if BuildSysreq != YES
-#undef BuildSysreq
-#define BuildSysreq	YES
-#endif
-#endif
-#if BuildMsgClient != YES
-#undef BuildMsgClient
-#define BuildMsgClient	YES
-#endif
-#if BuildRmcClient != YES
-#undef BuildRmcClient
-#define BuildRmcClient	YES
-#endif
-#endif
-#if BuildTapeDaemon && UseVmgr
-#if BuildVolumeMgrClient != YES
-#undef BuildVolumeMgrClient
-#define BuildVolumeMgrClient YES
-#endif
-#endif
-#if BuildTpusage
-#if BuildRfioClient != YES
-#undef BuildRfioClient
-#define BuildRfioClient	YES
-#endif
-#endif
-#endif
-
+/* ---------------*/
+/* REQUEST HANDLER */
+/* --------------- */
 #if BuildRHCpp
-#if BuildOraCpp != YES
+#if !BuildOraCpp
 #undef BuildOraCpp
 #define BuildOraCpp YES
 #endif
-RHCPPDIR = rh
+#if !BuildCastorClientCPPLibrary
+#undef BuildCastorClientCPPLibrary
+#define BuildCastorClientCPPLibrary YES
 #endif
-
-#if BuildOraCpp
-#if BuildClientCpp != YES
-#undef BuildClientCpp
-#define BuildClientCpp YES
+#if BuildDlfLibrary != YES
+#undef BuildDlfLibrary
+#define BuildDlfLibrary	YES
 #endif
-ORACPPDIR = ora
-#endif
-
-#if BuildClientCpp
-#if BuildLib != YES
-#undef BuildLib
-#define BuildLib YES
-#endif
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon YES
-#endif
-COMMONCPPDIR = castor
-#endif
-
-#if BuildRfioClient || BuildRfioServer
-RFIODIR = rfio
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon	YES
-#endif
-#if BuildRfioClient
-#if BuildNameServerLibrary != YES
+#if !BuildNameServerLibrary
 #undef BuildNameServerLibrary
-#define BuildNameServerLibrary	YES
+#define BuildNameServerLibrary YES
 #endif
-#if BuildStageClient != YES && BuildStageLibrary != YES
+#if !BuildStageLibrary
 #undef BuildStageLibrary
-#define BuildStageLibrary	YES
-#endif
-#if BuildLib != YES
-#undef BuildLib
-#define BuildLib	YES
-#endif
+#define BuildStageLibrary YES
 #endif
 #endif
 
-#if BuildMsgClient
+/* ------- */
+/* CPPTEST */
+/* ------- */
+#if BuildCppTest
+#if !BuildOraCpp
+#undef BuildOraCpp
+#define BuildOraCpp YES
+#endif
+#if !BuildCastorClientCPPLibrary
+#undef BuildCastorClientCPPLibrary
+#define BuildCastorClientCPPLibrary YES
+#endif
+#endif
+
+/* ========================= */
+/* Directories for the build */
+/* ========================= */
+
+#if BuildCommands
+COMMANDSDIR = commands
+#endif
+#if BuildCommon
+COMMONDIR = common
+#endif
+#if BuildCupvClient || BuildCupvDaemon || BuildCupvLibrary
+UPVDIR = upv
+#endif
+#if BuildHsmTools
+HSMTOOLSDIR = hsmtools
+#endif
+#if BuildMonitorClient || BuildMonitorServer || BuildMonitorLibrary
+MONITORDIR = monitor
+#endif
+#if BuildMsgClient || BuildMsgServer || BuildMsgLibrary
 MSGDIR = msg
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon	YES
 #endif
-#if BuildLib != YES
-#undef BuildLib
-#define BuildLib	YES
-#endif
-#endif
-
-#if BuildNameServerDaemon
-#if BuildCupvClient != YES
-#undef BuildCupvClient
-#define BuildCupvClient	YES
-#endif
-#endif
-
 #if BuildNameServerClient || BuildNameServerDaemon || BuildNameServerLibrary
 NSDIR = ns
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon	YES
 #endif
-#if BuildNameServerClient || BuildNameServerLibrary
-#if BuildLib != YES
-#undef BuildLib
-#define BuildLib	YES
+#if BuildRfioClient || BuildRfioServer || BuildRfioLibrary
+RFIODIR = rfio
 #endif
+#if BuildRmcClient || BuildRmcServer || BuildRmcLibrary
+RMCDIR = rmc
 #endif
+#if BuildJob
+JOBDIR = job
 #endif
-
-#if BuildVdqmClient || BuildVdqmServer
+#if BuildRtcopyClient || BuildRtcopyServer || BuildRtcopyLibrary || BuildRtstat
+RTCOPYDIR = rtcopy
+#endif
+#if BuildStageClient || BuildStageDaemon || BuildStageLibrary
+STAGEDIR = stager
+#endif
+#if BuildRmClient || BuildRmMaster || BuildRmNode || BuildRmLibrary
+RESOURCEMONITORINGDIR = resourcemonitoring
+#endif
+#if BuildTapeClient || BuildTapeDaemon || BuildTapeLibrary || BuildTpusage
+TAPEDIR = tape
+#endif
+#if BuildVdqmClient || BuildVdqmServer || BuildVdqmLibrary
 VDQMDIR = vdqm
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon	YES
 #endif
-#if BuildVdqmClient
-#if BuildLib != YES
-#undef BuildLib
-#define BuildLib	YES
-#endif
-#endif
-#endif
-
-#if BuildVolumeMgrDaemon
-#if BuildCupvClient != YES
-#undef BuildCupvClient
-#define BuildCupvClient	YES
-#endif
-#endif
-
-#if BuildDlfClient || BuildDlfDaemon
-DLFDIR = dlf
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon	YES
-#endif
-#if BuildDlfClient
-#if BuildLib != YES
-#undef BuildLib
-#define BuildLib	YES
-#endif
-#endif
-#endif
-
-#if BuildExpertClient || BuildExpertDaemon
-EXPERTDIR = expert
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon	YES
-#endif
-#if BuildExpertClient
-#if BuildLib != YES
-#undef BuildLib
-#define BuildLib	YES
-#endif
-#endif
-#endif
-
-#if BuildVolumeMgrClient || BuildVolumeMgrDaemon
+#if BuildVolumeMgrClient || BuildVolumeMgrDaemon || BuildVolumeMgrLibrary
 VMGRDIR = vmgr
-#if UseVmgr
-#if BuildCupvClient != YES
-#undef BuildCupvClient
-#define BuildCupvClient	YES
 #endif
+#if BuildDlfClient || BuildDlfDaemon || BuildDlfLibrary
+DLFDIR = dlf
 #endif
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon     YES
+#if BuildExpertClient || BuildExpertDaemon || BuildExpertLibrary
+EXPERTDIR = expert
 #endif
-#if BuildVolumeMgrClient
-#if BuildLib != YES
-#undef BuildLib
-#define BuildLib        YES
+#if BuildRHCpp
+RHCPPDIR = rh
 #endif
+#if BuildCastorClientCPPLibrary
+COMMONCPPDIR = castor
 #endif
-#endif
-
-#if BuildCupvClient || BuildCupvDaemon
-UPVDIR = upv
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon	YES
-#endif
-#endif
-
-#if BuildMonitorClient || BuildMonitorServer
-MONITORDIR = monitor
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon	YES
-#endif
-#endif
-
-#if BuildSysreq
-SYSREQDIR = sysreq
-#if BuildLib != YES
-#undef BuildLib
-#define BuildLib	YES
-#endif
-#endif
-
-
 #if BuildCppTest
 COMMONCPPTESTDIR = castor
 DBTESTCPPDIR = db
@@ -401,52 +543,7 @@ DBCTESTCPPDIR = dbC
 STGSVCTESTCPPDIR = stgSvc
 #endif
 
-#if BuildSecurity
-#if BuildCommon != YES
-#undef BuildCommon
-#define BuildCommon	YES
-#endif
-SECURITYDIR=security
-#endif
-
-#if BuildCommon
-COMMONDIR = common
-#if BuildCommands != YES
-#undef BuildCommands
-#define BuildCommands	YES
-#endif
-#if BuildLib != YES
-#undef BuildLib
-#define BuildLib	YES
-#endif
-#endif
-
-#if BuildCommands
-COMMANDSDIR = commands
-#endif
-
-#if BuildLib
-LIBDIR = lib
-SHLIBDIR = shlib
-#endif
-
-#if BuildOraCpp
-DBCPPDIR = db
-#endif
-
-#if BuildStageLibrary
-STAGEDIR = stager
-#endif
-
-#if BuildRmcClient || BuildRmcServer
-RMCDIR = rmc
-#endif
-
-#if BuildDpm
-DPMDIR = dpm
-#endif
-
-#if BuildHpssServer || BuildHpssClient
-HPSSDIR = hpss
-#endif
-
+/* Those directories are always defined because we always build at least */
+/* COMMON library */
+LIBDIR=lib
+SHLIBDIR=shlib
