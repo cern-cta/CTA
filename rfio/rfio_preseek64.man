@@ -1,0 +1,2 @@
+.so ./rfio_preseek.man
+.\" @(#)$RCSfile: rfio_preseek64.man,v $ $Revision: 1.1 $ $Date: 2002/11/19 15:45:58 $ CERN IT-PDP/DM Jean-Philippe Baud

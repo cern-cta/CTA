@@ -1,0 +1,75 @@
+.\"
+.\" $Id: rfio_ftell.man,v 1.1 2002/11/19 15:45:57 bcouturi Exp $
+.\"
+.\" @(#)$RCSfile: rfio_ftell.man,v $ $Revision: 1.1 $ $Date: 2002/11/19 15:45:57 $ CERN IT-DS-HSM Benjamin Couturier
+.\" Copyright (C) 2002 by CERN/IT-DS-HSM
+.\" All rights reserved
+.\"
+.TH RFIO_FTELL 3 "$Date: 2002/11/19 15:45:57 $" CASTOR "Rfio Library Functions"
+.SH NAME
+rfio_ftell \- tells the position in a stream
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "long rfio_ftell (RFILE *" fp ");"
+.sp
+Under Linux, for large files:
+.br
+.B #include <sys/types.h>
+.br
+.B #define _LARGEFILE64_SOURCE
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "off64_t rfio_ftello64 (RFILE *" fp ");"
+.br
+.sp
+For large files, under other systems:
+.br
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "off64_t rfio_ftello64 (RFILE *" fp ");"
+.SH DESCRIPTION
+.B rfio_ftell
+returns the current position in the file stream pointed by 
+.IR fp . 
+.SH RETURN VALUE
+This routine returns the position if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EBADF
+.I fp
+is not a valid descriptor.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SETIMEDOUT
+Timed out.
+.TP
+.B SEBADVERSION
+Version ID mismatch.
+.TP
+.B SEINTERNAL
+Internal error.
+.TP
+.B SECONNDROP
+Connection closed by remote end.
+.TP
+.B SECOMERR
+Communication error.
+.SH SEE ALSO
+.BR rfio_fopen(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
