@@ -170,7 +170,7 @@ static int stop_read;
 
 extern char *getconfent() ;
 extern int     checkkey(int sock, u_short key );
-extern int     chsuser(int uid, int gid, char *hostname, int *ptrcode, char *permstr) ;
+extern int     check_user_perm(int *uid, int *gid, char *hostname, int *ptrcode, char *permstr) ;
 
 #if !defined(HPSS)
 #if defined(_WIN32)
@@ -388,23 +388,23 @@ char *host; /* Where the request comes from */
        }       
      }
      if ( !status ) {
-       if (  (status=chsuser(uid,gid,host,&rcode,"FTRUST")) < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"WTRUST")) < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"RTRUST")) < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"XTRUST")) < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"OPENTRUST"))   < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"STATTRUST"))   < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"POPENTRUST"))  < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"LINKTRUST"))   < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"CHMODTRUST"))  < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"CHOWNTRUST"))  < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"MKDIRTRUST"))  < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"RMDIRTRUST"))  < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"RENAMETRUST")) < 0 ) {
+       if (  (status=check_user_perm(&uid,&gid,host,&rcode,"FTRUST")) < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"RTRUST")) < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"XTRUST")) < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST"))   < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST"))   < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST"))  < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST"))   < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST"))  < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST"))  < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST"))  < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST"))  < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0 ) {
          if (status == -2)
            log(LOG_ERR, "srlstat64: uid %d not allowed to stat()\n", uid);
          else
-           log(LOG_ERR, "srlstat64: failed at chsuser(), rcode %d\n", rcode);
+           log(LOG_ERR, "srlstat64: failed at check_user_perm(), rcode %d\n", rcode);
          memset(&statbuf,'\0',sizeof(statbuf));
          status = rcode ;
        }
@@ -528,23 +528,23 @@ char *host; /* Where the request comes from */
         */
        rcode = 0;
        if (
-           (status=chsuser(uid,gid,host,&rcode,"FTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"WTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"RTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"XTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"OPENTRUST"))   < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"STATTRUST"))   < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"POPENTRUST"))  < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"LINKTRUST"))   < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"CHMODTRUST"))  < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"CHOWNTRUST"))  < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"MKDIRTRUST"))  < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"RMDIRTRUST"))  < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"RENAMETRUST")) < 0 ) {
+           (status=check_user_perm(&uid,&gid,host,&rcode,"FTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"RTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"XTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST"))   < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST"))   < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST"))  < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST"))   < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST"))  < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST"))  < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST"))  < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST"))  < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0 ) {
          if (status == -2)
            log(LOG_ERR, "srstat64: uid %d not allowed to stat()\n", uid);
          else
-           log(LOG_ERR, "srstat64: failed at chsuser(), rcode %d\n", rcode);
+           log(LOG_ERR, "srstat64: failed at check_user_perm(), rcode %d\n", rcode);
          memset(&statbuf,'\0',sizeof(statbuf));
          status = rcode ;
        }
@@ -770,12 +770,12 @@ char tmpbuf[21], tmpbuf2[21];
        log(LOG_INFO, "sropen64: (%s,0%o,0%o) for (%d,%d)\n",
            CORRECT_FILENAME(filename), flags, mode, uid, gid);
        (void) umask(mask) ;
-       if ( ((status=chsuser(uid,gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
-            ((status=chsuser(uid,gid,host,&rcode,"OPENTRUST")) < 0) ) {
+       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
+            ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
          if (status == -2)
            log(LOG_ERR, "sropen64: uid %d not allowed to open64()\n", uid);
          else
-           log(LOG_ERR, "sropen64: failed at chsuser(), rcode %d\n", rcode);
+           log(LOG_ERR, "sropen64: failed at check_user_perm(), rcode %d\n", rcode);
          status = -1 ;
        }
        else
@@ -1921,12 +1921,12 @@ char        *host;         /* Where the request comes from        */
        log(LOG_INFO,  "ropen64_v3: (%s,0%o,0%o) for (%d,%d)\n", CORRECT_FILENAME(filename), flags, mode, uid, gid);
        (void) umask(mask) ;
 #if !defined(_WIN32)  
-       if ( ((status=chsuser(uid,gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
-            ((status=chsuser(uid,gid,host,&rcode,"OPENTRUST")) < 0) ) {
+       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
+            ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
          if (status == -2)
           log(LOG_ERR,"ropen64_v3: uid %d not allowed to open()\n", uid);
          else
-          log(LOG_ERR,"ropen64_v3: failed at chsuser(), rcode %d\n", rcode);
+          log(LOG_ERR,"ropen64_v3: failed at check_user_perm(), rcode %d\n", rcode);
          status = -1 ;
       }  else
 #endif

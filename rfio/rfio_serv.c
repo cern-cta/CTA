@@ -97,6 +97,8 @@ const char KeyTabFile[] = RFIO_KEYTAB;
 #ifdef CSEC
 #include <Csec_api.h>
 Csec_context ctx;
+int peer_uid;
+int peer_gid;
 #endif
 
 extern char     *getconfent();
@@ -923,21 +925,32 @@ char tmpbuf[21], tmpbuf2[21];
 #define CLIENT_NAME_SIZE 1000
 /* Perfom the authentication */
  {
-   char client_name[CLIENT_NAME_SIZE];
+   char* username;
    int ret_flags = 0;
-   
-   Csec_init_context(&ctx);
-   if (Csec_server_establish_context(&ctx,
-				     s,
-				     client_name,
-				     CLIENT_NAME_SIZE -1,
-				     &ret_flags)<0) {
-     return -1;
+
+   Csec_server_init_context(&ctx);
+   Csec_server_set_service_type(&ctx, CSEC_SERVICE_TYPE_DISK);
+   if (Csec_server_establish_context(&ctx, s)<0) {
+     log(LOG_ERR, "Could not establish context !");
+     exit(1);
    }
+   
+  /*  sleep(30); */
+
+   log(LOG_INFO, "The client principal is: %s\n", ctx.peer_name);
+
+   username = (char *)Csec_server_get_client_username(&ctx, &peer_uid, &peer_gid);
+
+   if (username == NULL) {
+     log(LOG_ERR,"Could not map user %s !\n", ctx.peer_name);
+     exit(1);
+   } else {
+     log(LOG_INFO, "User is is %s (%d/%d) !\n", username, peer_uid, peer_gid);
+   }
+
+
  }
 #endif
-
-
 
    /*
     * Initializing the info data structure.

@@ -335,18 +335,23 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
    /* Performing authentication */
    {
      Csec_context ctx;
-     char service[CA_MAXSERVICENAMELEN+1];
-     int ret_flags = 0;
      int rc;
      
      TRACE(1, "rfio", "Going to establish security context !");
-     Csec_init_context(&ctx);
-     Csec_get_peer_service_name(&ctx, s, CSEC_SERVICE_TYPE_DISK,
-				service, CA_MAXSERVICENAMELEN);
+     Csec_client_init_context(&ctx);
+     Csec_client_set_service_name(&ctx, s, CSEC_SERVICE_TYPE_DISK);
      
-     TRACE(1, "rfio", "Service is %s", service);
-     rc = Csec_client_establish_context(&ctx, s, service, &ret_flags);
+     TRACE(1, "rfio", "Service is %s", Csec_client_get_service_name(&ctx));
+     rc = Csec_client_establish_context(&ctx, s);
+     if (rc != 0) {
+       TRACE(2, "rfio", "Could not establish context");
+       close(s);
+       END_TRACE();
+       return(-1);
+     }
      
+     Csec_clear_context(&ctx);
+
      TRACE(1, "rfio", "client establish context returned %s", rc);
    }
 #endif

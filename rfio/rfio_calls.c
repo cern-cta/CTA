@@ -73,6 +73,12 @@ static char sccsid[] = "@(#)rfio_calls.c,v 1.3 2004/03/22 12:11:24 CERN/IT/PDP/D
 #include <nfs/nfsio.h>
 #endif
 
+#ifdef CSEC
+extern int peer_uid;
+extern int peer_gid;
+#endif
+
+
 #include <fcntl.h>
 
 #if (defined(IRIX5) || defined(IRIX6))
@@ -174,7 +180,7 @@ static int stop_read;
 
 extern char *getconfent() ;
 extern int 	checkkey();
-int 	chsuser() ;			/* Forward declaration 		*/
+int 	check_user_perm() ;			/* Forward declaration 		*/
 static int     chksuser() ;		/* Forward declaration 		*/
 
 #if !defined(HPSS)
@@ -436,7 +442,7 @@ char *host; /* Where the request comes from */
        }
      }
      
-     if ( (status == 0) && ((status = chsuser(uid,gid,host,&rcode,"WTRUST")) < 0) && ((status = chsuser(uid,gid,host,&rcode,"LINKTRUST")) < 0) ) {
+     if ( (status == 0) && ((status = check_user_perm(uid,gid,host,&rcode,"WTRUST")) < 0) && ((status = check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0) ) {
        if ( status == -2 )
          log(LOG_ERR,"srsymlink(): UID %d not allowed to r%slink().\n",uid,(name1[0]=='\0' ? "un":"sym")) ;
        else
@@ -588,7 +594,7 @@ int rt ;
        log(LOG_ERR,"Attempt to srchown() from %s denied\n",host);
      }
      else {
-       if ( ((status = chsuser(uid,gid,host,&rcode,"WTRUST")) < 0) && ((status = chsuser(uid,gid,host,&rcode,"CHOWNTRUST")) < 0) ) {
+       if ( ((status = check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0) && ((status = check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0) ) {
          if (status == -2)
            log(LOG_ERR,"srchown(): UID %d not allowed to chown\n",uid);
          else
@@ -672,7 +678,7 @@ int rt ;
        log(LOG_ERR,"Attempt to srchmod() from %s denied\n",host);
      }
      else {
-       if ( ((status=chsuser(uid,gid,host,&rcode,"WTRUST")) < 0) && ((status=chsuser(uid,gid,host,&rcode,"CHMODTRUST")) < 0) ) {
+       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0) && ((status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0) ) {
          if (status == -1)
            log(LOG_ERR,"srchmod(): UID %d not allowed to chmod()\n",uid);
          else
@@ -762,7 +768,7 @@ int rt ;
        log(LOG_ERR,"Attempt to srmkdir() from %s denied\n",host);
      }
      else {
-       if ( ((status=chsuser(uid,gid,host,&rcode,"WTRUST")) < 0) && ((status=chsuser(uid,gid,host,&rcode,"MKDIRTRUST")) < 0) ) {
+       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0) && ((status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0) ) {
          if (status == -1)
            log(LOG_ERR,"srmkdir(): UID %d not allowed to mkdir()\n",uid);
          else
@@ -851,7 +857,7 @@ int rt ;
        log(LOG_ERR,"Attempt to srrmdir() from %s denied\n",host);
      }
      else {
-       if ( ((status=chsuser(uid,gid,host,&rcode,"WTRUST")) < 0) && ((status=chsuser(uid,gid,host,&rcode,"RMDIRTRUST")) < 0) ) {
+       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0) && ((status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0) ) {
          if (status == -1)
            log(LOG_ERR,"srrmdir(): UID %d not allowed to rmdir()\n",uid);
          else
@@ -940,7 +946,7 @@ int     rt ;
        log(LOG_ERR,"Attempt to srrename() from %s denied\n",host);
      }
      else {
-       if ( ((status=chsuser(uid,gid,host,&rcode,"WTRUST")) < 0) && ((status=chsuser(uid,gid,host,&rcode,"RENAMETRUST")) < 0) ) {
+       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0) && ((status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0) ) {
          if (status == -1)
            log(LOG_ERR,"srrename(): UID %d not allowed to rename()\n",uid);
          else
@@ -1164,23 +1170,23 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
      }
      if ( !status ) {
        if (bet && 
-           (status=chsuser(uid,gid,host,&rcode,"FTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"WTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"RTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"XTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"OPENTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"STATTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"POPENTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"LINKTRUST")) < 0  &&
-           (status=chsuser(uid,gid,host,&rcode,"CHMODTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"CHOWNTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"MKDIRTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"RMDIRTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"RENAMETRUST")) < 0 ) {
+           (status=check_user_perm(&uid,&gid,host,&rcode,"FTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"RTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"XTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0  &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0 ) {
          if (status == -2)
            log(LOG_ERR,"rlstat(): uid %d not allowed to stat()\n",uid);
          else
-           log(LOG_ERR,"rlstat(): failed at chsuser(), rcode %d\n",rcode);
+           log(LOG_ERR,"rlstat(): failed at check_user_perm(), rcode %d\n",rcode);
          memset(&statbuf,'\0',sizeof(statbuf));
          status = rcode ;
        } else {
@@ -1299,23 +1305,23 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
         */
        rcode = 0;
        if (bet && 
-           (status=chsuser(uid,gid,host,&rcode,"FTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"WTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"RTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"XTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"OPENTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"STATTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"POPENTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"LINKTRUST")) < 0  &&
-           (status=chsuser(uid,gid,host,&rcode,"CHMODTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"CHOWNTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"MKDIRTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"RMDIRTRUST")) < 0 &&
-           (status=chsuser(uid,gid,host,&rcode,"RENAMETRUST")) < 0 ) {
+           (status=check_user_perm(&uid,&gid,host,&rcode,"FTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"RTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"XTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0  &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0 &&
+           (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0 ) {
          if (status == -2)
            log(LOG_ERR,"rstat(): uid %d not allowed to stat()\n",uid);
          else
-           log(LOG_ERR,"rstat(): failed at chsuser(), rcode %d\n",rcode);
+           log(LOG_ERR,"rstat(): failed at check_user_perm(), rcode %d\n",rcode);
          memset(&statbuf,'\0',sizeof(statbuf));
          status = rcode ;
        } else  {
@@ -1415,81 +1421,81 @@ int     rt;
        if ((mode & (R_OK | W_OK | X_OK)) != 0) {
          if ((mode & R_OK) == R_OK) {
            if (
-               (status=chsuser(uid,gid,host,&rcode,"RTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"OPENTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"STATTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"POPENTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"LINKTRUST")) < 0  &&
-               (status=chsuser(uid,gid,host,&rcode,"CHMODTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"CHOWNTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"MKDIRTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"RMDIRTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"RENAMETRUST")) < 0
+               (status=check_user_perm(&uid,&gid,host,&rcode,"RTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0  &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0
                ) {
              if (status == -2)
                log(LOG_ERR,"raccess(): uid %d not allowed to do access(R_OK)\n",uid);
              else
-               log(LOG_ERR,"raccess(): failed at chsuser(), rcode %d\n",rcode);
+               log(LOG_ERR,"raccess(): failed at check_user_perm(), rcode %d\n",rcode);
            }
          }
          if ((! status) && ((mode & W_OK) == W_OK)) {
            if (
-               (status=chsuser(uid,gid,host,&rcode,"WTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"OPENTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"STATTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"POPENTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"LINKTRUST")) < 0  &&
-               (status=chsuser(uid,gid,host,&rcode,"CHMODTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"CHOWNTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"MKDIRTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"RMDIRTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"RENAMETRUST")) < 0
+               (status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0  &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0
                ) {
              if (status == -2)
                log(LOG_ERR,"raccess(): uid %d not allowed to do access(W_OK)\n",uid);
              else
-               log(LOG_ERR,"raccess(): failed at chsuser(), rcode %d\n",rcode);
+               log(LOG_ERR,"raccess(): failed at check_user_perm(), rcode %d\n",rcode);
            }
          }
          if ((! status) && ((mode & X_OK) == X_OK)) {
            if (
-               (status=chsuser(uid,gid,host,&rcode,"XTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"OPENTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"STATTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"POPENTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"LINKTRUST")) < 0  &&
-               (status=chsuser(uid,gid,host,&rcode,"CHMODTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"CHOWNTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"MKDIRTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"RMDIRTRUST")) < 0 &&
-               (status=chsuser(uid,gid,host,&rcode,"RENAMETRUST")) < 0
+               (status=check_user_perm(&uid,&gid,host,&rcode,"XTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0  &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0 &&
+               (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0
                ) {
              if (status == -2)
                log(LOG_ERR,"raccess(): uid %d not allowed to do access(X_OK)\n",uid);
              else
-               log(LOG_ERR,"raccess(): failed at chsuser(), rcode %d\n",rcode);
+               log(LOG_ERR,"raccess(): failed at check_user_perm(), rcode %d\n",rcode);
            }
          }
        } else {
          if (
-             (status=chsuser(uid,gid,host,&rcode,"FTRUST")) < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"WTRUST")) < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"RTRUST")) < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"XTRUST")) < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"OPENTRUST")) < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"STATTRUST")) < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"POPENTRUST")) < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"LINKTRUST")) < 0  &&
-             (status=chsuser(uid,gid,host,&rcode,"CHMODTRUST")) < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"CHOWNTRUST")) < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"MKDIRTRUST")) < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"RMDIRTRUST")) < 0 &&
-             (status=chsuser(uid,gid,host,&rcode,"RENAMETRUST")) < 0
+             (status=check_user_perm(&uid,&gid,host,&rcode,"FTRUST")) < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"WTRUST")) < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"RTRUST")) < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"XTRUST")) < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"STATTRUST")) < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"LINKTRUST")) < 0  &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"CHMODTRUST")) < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"CHOWNTRUST")) < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"MKDIRTRUST")) < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST")) < 0 &&
+             (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0
              ) {
            if (status == -2)
              log(LOG_ERR,"raccess(): uid %d not allowed to do access(F_OK)\n",uid);
            else
-             log(LOG_ERR,"raccess(): failed at chsuser(), rcode %d\n",rcode);
+             log(LOG_ERR,"raccess(): failed at check_user_perm(), rcode %d\n",rcode);
          }
        }
        if (status) {
@@ -1782,12 +1788,12 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
        log(LOG_DEBUG, "ropen: filename: %s\n", CORRECT_FILENAME(filename));
        log(LOG_INFO, "ropen(%s,0X%X,0X%X) for (%d,%d)\n",CORRECT_FILENAME(filename),flags,mode,uid,gid);
        (void) umask(mask) ;
-       if ( ((status=chsuser(uid,gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
-            ((status=chsuser(uid,gid,host,&rcode,"OPENTRUST")) < 0) ) {
+       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
+            ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
          if (status == -2)
             log(LOG_ERR,"ropen(): uid %d not allowed to open()\n",uid);
          else
-            log(LOG_ERR,"ropen(): failed at chsuser(), rcode %d\n",rcode);
+            log(LOG_ERR,"ropen(): failed at check_user_perm(), rcode %d\n",rcode);
          status = -1 ;
       }
       else
@@ -2450,11 +2456,11 @@ int     rt;
        }
      }
      if ( status == 0 ) {
-       if ( (((status=chsuser(uid,gid,host,&rcode,"XTRUST")) < 0) || ((status=chsuser(uid,gid,host,&rcode,type[0] == 'w' ? "WTRUST" : "RTRUST")) < 0)) && ((status=chsuser(uid,gid,host,&rcode,"POPENTRUST")) < 0) ) {
+       if ( (((status=check_user_perm(&uid,&gid,host,&rcode,"XTRUST")) < 0) || ((status=check_user_perm(&uid,&gid,host,&rcode,type[0] == 'w' ? "WTRUST" : "RTRUST")) < 0)) && ((status=check_user_perm(&uid,&gid,host,&rcode,"POPENTRUST")) < 0) ) {
          if (status == -2)
            log(LOG_ERR,"rpopen(): uid %d not allowed to popen()\n",uid);
          else
-           log(LOG_ERR,"rpopen(): failed at chsuser(), rcode %d\n",rcode);
+           log(LOG_ERR,"rpopen(): failed at check_user_perm(), rcode %d\n",rcode);
          status = -1 ;
        }
      }
@@ -3256,11 +3262,11 @@ int bet;
        log(LOG_DEBUG, "ropendir: account: %s\n", account);
        log(LOG_DEBUG, "ropendir: dirname: %s\n", filename);
        log(LOG_INFO, "ropendir(%s) for (%d,%d)\n",filename,uid,gid);
-       if ( ((status=chsuser(uid,gid,host,&rcode,"RTRUST")) < 0) && ((status=chsuser(uid,gid,host,&rcode,"OPENTRUST")) < 0) ) {
+       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,"RTRUST")) < 0) && ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
          if (status == -2)
            log(LOG_ERR,"ropendir(): uid %d not allowed to open()\n",uid);
          else
-           log(LOG_ERR,"ropendir(): failed at chsuser(), rcode %d\n",rcode);
+           log(LOG_ERR,"ropendir(): failed at check_user_perm(), rcode %d\n",rcode);
          status = -1 ;
        }
        else {
@@ -3466,6 +3472,22 @@ char *permstr;		/* permission string for the request */
 /*
  * makes the setgid() and setuid(). Returns -1 if error , -2 if unauthorized.
  */
+int check_user_perm(uid,gid,hostname,ptrcode,permstr)
+int *uid;                /* uid of caller                     */
+int *gid;                /* gid of caller                     */
+char *hostname ;        /* caller's host name                */
+int *ptrcode ;          /* Return code                       */
+char *permstr;          /* permission string for the request */
+{
+  *uid = peer_uid;
+  *gid = peer_gid;
+  return chsuser(*uid,*gid,hostname,ptrcode,permstr);
+}
+
+
+/*
+ * makes the setgid() and setuid(). Returns -1 if error , -2 if unauthorized.
+ */
 int chsuser(uid,gid,hostname,ptrcode,permstr)
 int uid;                /* uid of caller                     */
 int gid;                /* gid of caller                     */
@@ -3479,6 +3501,11 @@ char *permstr;          /* permission string for the request */
    char pwbuf[1024];
 #endif /* HPSS */    
    struct passwd *pw ;
+
+#ifdef CSEC
+   uid = peer_uid;
+   gid = peer_gid;
+#endif
 
    if ( chksuser(uid,gid,hostname,ptrcode,permstr) < 0 )
       return -2 ;
@@ -3865,12 +3892,12 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
        log(LOG_INFO, "ropen_v3(%s,0X%X,0X%X) for (%d,%d)\n",CORRECT_FILENAME(filename),flags,mode,uid,gid);
        (void) umask(mask) ;
 #if !defined(_WIN32)  
-       if ( ((status=chsuser(uid,gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
-            ((status=chsuser(uid,gid,host,&rcode,"OPENTRUST")) < 0) ) {
+       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
+            ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
          if (status == -2)
            log(LOG_ERR,"ropen_v3: uid %d not allowed to open()\n",uid);
          else
-           log(LOG_ERR,"ropen_v3: failed at chsuser(), rcode %d\n",rcode);
+           log(LOG_ERR,"ropen_v3: failed at check_user_perm(), rcode %d\n",rcode);
          status = -1 ;
        }  else
 #endif
