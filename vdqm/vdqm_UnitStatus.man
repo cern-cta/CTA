@@ -1,9 +1,9 @@
 .\"
-.\" @(#)$RCSfile: vdqm_UnitStatus.man,v $ $Revision: 1.12 $ $Date: 2000/03/01 17:24:40 $ CERN IT-PDP/DM O.Barring
+.\" @(#)$RCSfile: vdqm_UnitStatus.man,v $ $Revision: 1.13 $ $Date: 2000/03/02 15:15:25 $ CERN IT-PDP/DM O.Barring
 .\"
 .\" Copyright (C) 1999 by CERN/IT/PDP/DM
 .\"
-.TH VDQM_UNITSTATUS l "$Date: 2000/03/01 17:24:40 $" "CASTOR" "VDQM Library Functions"
+.TH VDQM_UNITSTATUS 3 "$Date: 2000/03/02 15:15:25 $" "CASTOR" "VDQM Library Functions"
 .SH NAME
 .PP
 vdqm_UnitStatus \- update volume drive unit status in VDQM
@@ -331,8 +331,9 @@ which has not yet been assigned.
 .B EVQBADVOLID
 A VDQM_UNIT_MOUNT unit status to mount a volume was requested with a
 different VOLID than specified in assinged volume request.
-.TP
 
 .SH SEE ALSO
-vdqm_Connect(l), vdqm_Disconnect(l), vdqm_SendVolReq(l)
+.BR vdqm_Connect(3) ,
+.BR vdqm_Disconnect(3) , 
+.BR vdqm_SendVolReq(3)
 
