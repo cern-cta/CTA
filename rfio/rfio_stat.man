@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_stat.man,v 1.4 2001/05/28 13:59:45 baud Exp $
+.\" $Id: rfio_stat.man,v 1.5 2001/05/29 13:28:43 baud Exp $
 .\"
-.\" @(#)$RCSfile: rfio_stat.man,v $ $Revision: 1.4 $ $Date: 2001/05/28 13:59:45 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_stat.man,v $ $Revision: 1.5 $ $Date: 2001/05/29 13:28:43 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_STAT 3 "$Date: 2001/05/28 13:59:45 $" CASTOR "Rfio Library Functions"
+.TH RFIO_STAT 3 "$Date: 2001/05/29 13:28:43 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_stat \- get information about a file or directory
 .SH SYNOPSIS
@@ -14,9 +14,27 @@ rfio_stat \- get information about a file or directory
 \fB#include "rfio_api.h"\fR
 .sp
 .BI "int rfio_stat (const char *" path ", struct stat *" statbuf ");"
+.br
+.BI "int rfio_fstat (int " s ", struct stat *" statbuf ");"
+.br
+.BI "int rfio_lstat (const char *" path ", struct stat *" statbuf ");"
 .SH DESCRIPTION
 .B rfio_stat
 gets information about a file or directory.
+.LP
+.B rfio_lstat
+is identical to
+.B rfio_stat
+except for symbolic links. In this case, the link itself is statted and not
+followed.
+.LP
+.B rfio_fstat
+is identical to
+.B rfio_stat
+but works on the file descriptor
+.B s
+returned by
+.BR rfio_open .
 .LP
 .TP
 .I path
@@ -31,6 +49,10 @@ is set appropriately.
 .TP 1.3i
 .B ENOENT
 The named file/directory does not exist or is a null pathname.
+.TP
+.B EBADF
+.I s
+is not a valid file descriptor.
 .TP
 .B EACCES
 Search permission is denied on a component of the
