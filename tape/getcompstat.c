@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1996-1999 by CERN/CN/PDP
+ * Copyright (C) 1996-2000 by CERN/CN/PDP
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.8 $ $Date: 1999/12/14 11:53:24 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.9 $ $Date: 2000/03/11 14:24:20 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -16,6 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.8 $ $Date: 
 #include "scsictl.h"
 #endif
 #include "Ctape_api.h" 
+#include "serrno.h" 
 
 get_compression_stats(tapefd, path, devtype, comp_stats)
 int tapefd;
@@ -65,6 +66,10 @@ COMPRESSION_STATS *comp_stats;
 		cdb[2] = 0x40 | 0x30;	/* PC = 1, compression page  */
 	else if (strcmp (devtype, "9840") == 0)
 	        cdb[2] = 0x40 | 0x0C;   /* PC = 1, sequential access device page */
+	else {
+		serrno = SEOPNOTSUP;
+		return (-1);
+	}
  
 	if ((c = send_scsi_cmd (tapefd, path, 0, cdb, 10, buffer, sizeof(buffer),
 	    sense, 38, 10000, SCSI_IN, &nb_sense_ret, &msgaddr)) < 0)
