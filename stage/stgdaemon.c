@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.17 2000/02/01 12:21:40 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.18 2000/02/10 13:57:19 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.17 $ $Date: 2000/02/01 12:21:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.18 $ $Date: 2000/02/10 13:57:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1563,7 +1563,7 @@ upd_stageout(req_type, upath, subreqid)
   found = 0;
   /* first lets assume that internal and user path are different */
   for (stpp = stps; stpp < stpe; stpp++) {
-    stglogit(func, "stpp->reqid=%d...\n",stpp->reqid);
+    /* stglogit(func, "stpp->reqid=%d...\n",stpp->reqid); */
     if (stpp->reqid == 0) break;
     /* stglogit(func, "stpp->reqid=%d, Comparing upath=\"%s\" and stpp->upath=\"%s\"\n",stpp->reqid,upath,stpp->upath); */
     if (strcmp (upath, stpp->upath)) continue;
@@ -1572,13 +1572,13 @@ upd_stageout(req_type, upath, subreqid)
   }
   if (found) {
     for (stcp = stcs; stcp < stce; stcp++) {
-      stglogit(func, "stcp->reqid=%d...\n",stcp->reqid);
-      stglogit(func, "stpp->reqid=%d == stcp->reqid=%d ?\n",stpp->reqid,stcp->reqid);
+      /* stglogit(func, "stcp->reqid=%d...\n",stcp->reqid); */
+      /* stglogit(func, "stpp->reqid=%d == stcp->reqid=%d ?\n",stpp->reqid,stcp->reqid); */
       if (stpp->reqid == stcp->reqid) break;
     }
   } else {
     for (stcp = stcs; stcp < stce; stcp++) {
-      stglogit(func, "stcp->reqid=%d...\n",stcp->reqid);
+      /* stglogit(func, "stcp->reqid=%d...\n",stcp->reqid); */
       if (stcp->reqid == 0) break;
       /* stglogit(func, "stcp->reqid=%d, Comparing upath=\"%s\" and stcp->ipath=\"%s\"\n",stcp->reqid,upath,stcp->ipath); */
       if (strcmp (upath, stcp->ipath)) continue;
