@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2004/11/29 15:49:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2004/12/02 17:56:05 $ $Author: sponcec3 $
  *
  * 
  *
@@ -318,20 +318,21 @@ extern "C" {
   }
 
   //-------------------------------------------------------------------------
-  // Cstager_IStagerSvc_scheduleSubRequest
+  // Cstager_IStagerSvc_getUpdateStart
   //-------------------------------------------------------------------------
-  int Cstager_IStagerSvc_scheduleSubRequest
+  int Cstager_IStagerSvc_getUpdateStart
   (struct Cstager_IStagerSvc_t* stgSvc,
    castor::stager::SubRequest* subreq,
    castor::stager::FileSystem* fileSystem,
    castor::stager::DiskCopyForRecall*** sources,
    unsigned int* sourcesNb,
-   castor::stager::DiskCopy** diskCopy) {
+   castor::stager::DiskCopy** diskCopy,
+   castor::IClient** client) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       std::list<castor::stager::DiskCopyForRecall*> sourceslist;
-      *diskCopy = stgSvc->stgSvc->scheduleSubRequest
-        (subreq, fileSystem, sourceslist);
+      *client = stgSvc->stgSvc->getUpdateStart
+        (subreq, fileSystem, diskCopy, sourceslist);
       *sourcesNb = sourceslist.size();
       if (*sourcesNb > 0) {
         *sources = (castor::stager::DiskCopyForRecall**)
@@ -342,6 +343,25 @@ extern "C" {
           (*sources)[i] = *it;
         }
       }
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_putStart
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_putStart
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   castor::stager::SubRequest* subreq,
+   castor::stager::FileSystem* fileSystem,
+   castor::IClient** client) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      *client = stgSvc->stgSvc->putStart(subreq, fileSystem);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();
@@ -492,6 +512,23 @@ extern "C" {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       stgSvc->stgSvc->updateRep(address, object);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;    
+  }
+  
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_prepareForMigration
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_prepareForMigration
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   castor::stager::SubRequest* subreq) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      stgSvc->stgSvc->prepareForMigration(subreq);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/rh/ScheduleSubReqResponse.cpp
+ *                      castor/rh/ClientResponse.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ScheduleSubReqResponse.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/12/01 10:41:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ClientResponse.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/02 17:56:04 $ $Author: sponcec3 $
  *
  * 
  *
@@ -26,39 +26,37 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/rh/ClientResponse.hpp"
 #include "castor/rh/Response.hpp"
-#include "castor/rh/ScheduleSubReqResponse.hpp"
-#include "castor/stager/DiskCopy.hpp"
-#include "castor/stager/DiskCopyForRecall.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::rh::ScheduleSubReqResponse::ScheduleSubReqResponse() throw() :
+castor::rh::ClientResponse::ClientResponse() throw() :
   Response(),
   m_id(0),
-  m_diskCopy(0) {
+  m_client(0) {
 };
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::rh::ScheduleSubReqResponse::~ScheduleSubReqResponse() throw() {
+castor::rh::ClientResponse::~ClientResponse() throw() {
 };
 
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::rh::ScheduleSubReqResponse::print(std::ostream& stream,
-                                               std::string indent,
-                                               castor::ObjectSet& alreadyPrinted) const {
-  stream << indent << "[# ScheduleSubReqResponse #]" << std::endl;
+void castor::rh::ClientResponse::print(std::ostream& stream,
+                                       std::string indent,
+                                       castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# ClientResponse #]" << std::endl;
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
     stream << indent << "Back pointer, see above" << std::endl;
@@ -69,29 +67,18 @@ void castor::rh::ScheduleSubReqResponse::print(std::ostream& stream,
   // Output of all members
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "DiskCopy : " << std::endl;
-  if (0 != m_diskCopy) {
-    m_diskCopy->print(stream, indent + "  ", alreadyPrinted);
+  stream << indent << "Client : " << std::endl;
+  if (0 != m_client) {
+    m_client->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
-  }
-  {
-    stream << indent << "Sources : " << std::endl;
-    int i;
-    std::vector<castor::stager::DiskCopyForRecall*>::const_iterator it;
-    for (it = m_sourcesVector.begin(), i = 0;
-         it != m_sourcesVector.end();
-         it++, i++) {
-      stream << indent << "  " << i << " :" << std::endl;
-      (*it)->print(stream, indent + "    ", alreadyPrinted);
-    }
   }
 }
 
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::rh::ScheduleSubReqResponse::print() const {
+void castor::rh::ClientResponse::print() const {
   ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
@@ -99,21 +86,21 @@ void castor::rh::ScheduleSubReqResponse::print() const {
 //------------------------------------------------------------------------------
 // TYPE
 //------------------------------------------------------------------------------
-int castor::rh::ScheduleSubReqResponse::TYPE() {
-  return OBJ_ScheduleSubReqResponse;
+int castor::rh::ClientResponse::TYPE() {
+  return OBJ_ClientResponse;
 }
 
 //------------------------------------------------------------------------------
 // type
 //------------------------------------------------------------------------------
-int castor::rh::ScheduleSubReqResponse::type() const {
+int castor::rh::ClientResponse::type() const {
   return TYPE();
 }
 
 //------------------------------------------------------------------------------
 // clone
 //------------------------------------------------------------------------------
-castor::IObject* castor::rh::ScheduleSubReqResponse::clone() {
-  return new ScheduleSubReqResponse(*this);
+castor::IObject* castor::rh::ClientResponse::clone() {
+  return new ClientResponse(*this);
 }
 

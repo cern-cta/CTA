@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/rh/BasicResponse.hpp
+ *                      castor/rh/ClientResponse.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
+ * @(#)$RCSfile: ClientResponse.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/02 17:56:04 $ $Author: sponcec3 $
  *
  * 
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_RH_BASICRESPONSE_HPP
-#define CASTOR_RH_BASICRESPONSE_HPP
+#ifndef CASTOR_RH_CLIENTRESPONSE_HPP
+#define CASTOR_RH_CLIENTRESPONSE_HPP
 
 // Include Files
 #include "castor/rh/Response.hpp"
@@ -38,26 +38,27 @@ namespace castor {
   // Forward declarations
   class ObjectSet;
   class IObject;
+  class IClient;
 
   namespace rh {
 
     /**
-     * class BasicResponse
-     * The most basic response. Adapted to calls returning nothing.
+     * class ClientResponse
+     * A response dedicated to cases where an IClient is returned
      */
-    class BasicResponse : public virtual Response {
+    class ClientResponse : public virtual Response {
 
     public:
 
       /**
        * Empty Constructor
        */
-      BasicResponse() throw();
+      ClientResponse() throw();
 
       /**
        * Empty Destructor
        */
-      virtual ~BasicResponse() throw();
+      virtual ~ClientResponse() throw();
 
       /**
        * Outputs this object in a human readable format
@@ -114,15 +115,33 @@ namespace castor {
         m_id = new_var;
       }
 
+      /**
+       * Get the value of m_client
+       * @return the value of m_client
+       */
+      castor::IClient* client() const {
+        return m_client;
+      }
+
+      /**
+       * Set the value of m_client
+       * @param new_var the new value of m_client
+       */
+      void setClient(castor::IClient* new_var) {
+        m_client = new_var;
+      }
+
     private:
 
       /// The id of this object
       u_signed64 m_id;
 
-    }; // end of class BasicResponse
+      castor::IClient* m_client;
+
+    }; // end of class ClientResponse
 
   }; // end of namespace rh
 
 }; // end of namespace castor
 
-#endif // CASTOR_RH_BASICRESPONSE_HPP
+#endif // CASTOR_RH_CLIENTRESPONSE_HPP

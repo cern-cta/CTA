@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/30 16:36:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/12/02 17:56:05 $ $Author: sponcec3 $
  *
  *
  *
@@ -40,9 +40,12 @@
 #include "castor/stager/FileSystem.hpp"
 #include "castor/stager/RemoteStagerSvc.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
-#include "castor/stager/ScheduleSubReqRequest.hpp"
+#include "castor/stager/GetUpdateStartRequest.hpp"
+#include "castor/stager/PutStartRequest.hpp"
 #include "castor/stager/UpdateRepRequest.hpp"
-#include "castor/rh/ScheduleSubReqResponse.hpp"
+#include "castor/stager/MoverCloseRequest.hpp"
+#include "castor/rh/GetUpdateStartResponse.hpp"
+#include "castor/rh/ClientResponse.hpp"
 #include "castor/exception/NotSupported.hpp"
 #include <list>
 
@@ -245,24 +248,27 @@ bool castor::stager::RemoteStagerSvc::isSubRequestToSchedule
 }
 
 // -----------------------------------------------------------------------
-// ScheduleSubRequestResponseHandler
+// GetUpdateStartResponseHandler
 // -----------------------------------------------------------------------
 /**
- * A dedicated little response handler for the ScheduleSubReq
+ * A dedicated little response handler for the GetUpdateStart
  * requests
  */
-class ScheduleSubReqResponseHandler : public castor::client::IResponseHandler {
+class GetUpdateStartResponseHandler : public castor::client::IResponseHandler {
 public:
-  ScheduleSubReqResponseHandler
-  (castor::stager::DiskCopy** result,
+  GetUpdateStartResponseHandler
+  (castor::IClient** result,
+   castor::stager::DiskCopy** diskCopy,
    std::list<castor::stager::DiskCopyForRecall*>& sources) :
-    m_result(result), m_sources(sources){}
+    m_result(result), m_diskCopy(diskCopy),
+    m_sources(sources){}
 
   virtual void handleResponse(castor::rh::Response& r)
     throw (castor::exception::Exception) {
-    castor::rh::ScheduleSubReqResponse *resp =
-      dynamic_cast<castor::rh::ScheduleSubReqResponse*>(&r);
-    *m_result = resp->diskCopy();
+    castor::rh::GetUpdateStartResponse *resp =
+      dynamic_cast<castor::rh::GetUpdateStartResponse*>(&r);
+    *m_result = resp->client();
+    *m_diskCopy = resp->diskCopy();
     for (std::vector<castor::stager::DiskCopyForRecall*>::iterator it =
            resp->sources().begin();
          it != resp->sources().end();
@@ -274,27 +280,79 @@ public:
     throw (castor::exception::Exception) {};
 private:
   // where to store the result
-  castor::stager::DiskCopy** m_result;
+  castor::IClient** m_result;
+  // where to store the diskCopy
+  castor::stager::DiskCopy** m_diskCopy;
   // where to store the sources
   std::list<castor::stager::DiskCopyForRecall*>& m_sources;
 };
 
 
 // -----------------------------------------------------------------------
-// scheduleSubRequest
+// getUpdateStart
 // -----------------------------------------------------------------------
-castor::stager::DiskCopy*
-castor::stager::RemoteStagerSvc::scheduleSubRequest
+castor::IClient*
+castor::stager::RemoteStagerSvc::getUpdateStart
 (castor::stager::SubRequest* subreq,
  castor::stager::FileSystem* fileSystem,
+ castor::stager::DiskCopy** diskCopy,
  std::list<castor::stager::DiskCopyForRecall*>& sources)
   throw (castor::exception::Exception) {
   // placeholders for the result
-  castor::stager::DiskCopy* result;
+  castor::IClient* result;
   // Build a response Handler
-  ScheduleSubReqResponseHandler rh(&result, sources);
-  // Build the ScheduleSubReqRequest
-  castor::stager::ScheduleSubReqRequest req;
+  GetUpdateStartResponseHandler rh(&result, diskCopy, sources);
+  // Build the GetUpdateStartRequest
+  castor::stager::GetUpdateStartRequest req;
+  req.setSubreqId(subreq->id());
+  req.setDiskServer(fileSystem->diskserver()->name());
+  req.setFileSystem(fileSystem->mountPoint());
+  // Uses a BaseClient to handle the request
+  castor::client::BaseClient client;
+  client.sendRequest(&req, &rh);
+  // return
+  return result;
+}
+
+// -----------------------------------------------------------------------
+// putStartResponseHandler
+// -----------------------------------------------------------------------
+/**
+ * A dedicated little response handler for the PutStart
+ * requests
+ */
+class PutStartResponseHandler : public castor::client::IResponseHandler {
+public:
+  PutStartResponseHandler (castor::IClient** result) :
+    m_result(result) {}
+
+  virtual void handleResponse(castor::rh::Response& r)
+    throw (castor::exception::Exception) {
+    castor::rh::ClientResponse *resp =
+      dynamic_cast<castor::rh::ClientResponse*>(&r);
+    *m_result = resp->client();
+  };
+  virtual void terminate()
+    throw (castor::exception::Exception) {};
+private:
+  // where to store the result
+  castor::IClient** m_result;
+};
+
+// -----------------------------------------------------------------------
+// putStart
+// -----------------------------------------------------------------------
+castor::IClient*
+castor::stager::RemoteStagerSvc::putStart
+(castor::stager::SubRequest* subreq,
+ castor::stager::FileSystem* fileSystem)
+  throw (castor::exception::Exception) {
+  // placeholders for the result
+  castor::IClient* result;
+  // Build a response Handler
+  PutStartResponseHandler rh(&result);
+  // Build the PutStartRequest
+  castor::stager::PutStartRequest req;
   req.setSubreqId(subreq->id());
   req.setDiskServer(fileSystem->diskserver()->name());
   req.setFileSystem(fileSystem->mountPoint());
@@ -435,3 +493,18 @@ castor::stager::RemoteStagerSvc::recreateCastorFile
   throw ex;
 }
 
+// -----------------------------------------------------------------------
+// prepareForMigration
+// -----------------------------------------------------------------------
+void castor::stager::RemoteStagerSvc::prepareForMigration
+(castor::stager::SubRequest *subreq)
+  throw (castor::exception::Exception) {
+  // Build the MoverCloseRequest
+  castor::stager::MoverCloseRequest req;
+  req.setSubReqId(subreq->id());
+  // Build a response Handler
+  castor::client::BasicResponseHandler rh;
+  // Uses a BaseClient to handle the request
+  castor::client::BaseClient client;
+  client.sendRequest(&req, &rh);
+}

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.67 $ $Release$ $Date: 2004/12/02 08:35:12 $ $Author: jdurand $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.68 $ $Release$ $Date: 2004/12/02 17:56:02 $ $Author: sponcec3 $
  *
  *
  *
@@ -30,6 +30,7 @@
 #include "castor/IFactory.hpp"
 #include "castor/SvcFactory.hpp"
 #include "castor/Constants.hpp"
+#include "castor/IClient.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Request.hpp"
@@ -111,9 +112,13 @@ const std::string castor::db::ora::OraStagerSvc::s_fileRecalledStatementString =
 const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStatementString =
   "BEGIN isSubRequestToSchedule(:1, :2); END;";
 
-/// SQL statement for scheduleSubRequest
-const std::string castor::db::ora::OraStagerSvc::s_scheduleSubRequestStatementString =
-  "BEGIN scheduleSubRequest(:1, :2, :3, :4, :5, :6); END;";
+/// SQL statement for getUpdateStart
+const std::string castor::db::ora::OraStagerSvc::s_getUpdateStartStatementString =
+  "BEGIN getUpdateStart(:1, :2, :3, :4, :5, :6 :7); END;";
+
+/// SQL statement for putStart
+const std::string castor::db::ora::OraStagerSvc::s_putStartStatementString =
+  "BEGIN putStart(:1, :2, :3); END;";
 
 /// SQL statement for selectSvcClass
 const std::string castor::db::ora::OraStagerSvc::s_selectSvcClassStatementString =
@@ -139,13 +144,17 @@ const std::string castor::db::ora::OraStagerSvc::s_selectDiskPoolStatementString
 const std::string castor::db::ora::OraStagerSvc::s_selectDiskServerStatementString =
   "SELECT id, status FROM DiskServer WHERE name = :1";
 
-/// SQL statement for scheduleSubRequest
+/// SQL statement for updateAndCheckSubRequest
 const std::string castor::db::ora::OraStagerSvc::s_updateAndCheckSubRequestStatementString =
   "BEGIN updateAndCheckSubRequest(:1, :2, :3); END;";
 
-/// SQL statement for scheduleSubRequest
+/// SQL statement for recreateCastorFile
 const std::string castor::db::ora::OraStagerSvc::s_recreateCastorFileStatementString =
   "BEGIN recreateCastorFile(:1, :2); END;";
+
+/// SQL statement for prepareForMigration
+const std::string castor::db::ora::OraStagerSvc::s_prepareForMigrationStatementString =
+  "BEGIN prepareForMigration(:1); END;";
 
 // -----------------------------------------------------------------------
 // OraStagerSvc
@@ -162,7 +171,8 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_subRequestToDoStatement(0),
   m_requestToDoStatement(0),
   m_isSubRequestToScheduleStatement(0),
-  m_scheduleSubRequestStatement(0),
+  m_getUpdateStartStatement(0),
+  m_putStartStatement(0),
   m_selectSvcClassStatement(0),
   m_selectFileClassStatement(0),
   m_selectCastorFileStatement(0),
@@ -170,7 +180,8 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_selectDiskPoolStatement(0),
   m_selectDiskServerStatement(0),
   m_updateAndCheckSubRequestStatement(0),
-  m_recreateCastorFileStatement(0) {
+  m_recreateCastorFileStatement(0),
+  m_prepareForMigrationStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -211,7 +222,8 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_subRequestToDoStatement);
     deleteStatement(m_requestToDoStatement);
     deleteStatement(m_isSubRequestToScheduleStatement);
-    deleteStatement(m_scheduleSubRequestStatement);
+    deleteStatement(m_getUpdateStartStatement);
+    deleteStatement(m_putStartStatement);
     deleteStatement(m_selectSvcClassStatement);
     deleteStatement(m_selectFileClassStatement);
     deleteStatement(m_selectFileSystemStatement);
@@ -220,6 +232,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_selectDiskServerStatement);
     deleteStatement(m_updateAndCheckSubRequestStatement);
     deleteStatement(m_recreateCastorFileStatement);
+    deleteStatement(m_prepareForMigrationStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;
@@ -232,7 +245,8 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_subRequestToDoStatement = 0;
   m_requestToDoStatement = 0;
   m_isSubRequestToScheduleStatement = 0;
-  m_scheduleSubRequestStatement = 0;
+  m_getUpdateStartStatement = 0;
+  m_putStartStatement = 0;
   m_selectSvcClassStatement = 0;
   m_selectFileClassStatement = 0;
   m_selectFileSystemStatement = 0;
@@ -241,6 +255,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_selectDiskServerStatement = 0;
   m_updateAndCheckSubRequestStatement = 0;
   m_recreateCastorFileStatement = 0;
+  m_prepareForMigrationStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -909,51 +924,84 @@ bool castor::db::ora::OraStagerSvc::isSubRequestToSchedule
 }
 
 // -----------------------------------------------------------------------
-// scheduleSubRequest
+// getUpdateStart
 // -----------------------------------------------------------------------
-castor::stager::DiskCopy*
-castor::db::ora::OraStagerSvc::scheduleSubRequest
+castor::IClient*
+castor::db::ora::OraStagerSvc::getUpdateStart
 (castor::stager::SubRequest* subreq,
  castor::stager::FileSystem* fileSystem,
+ castor::stager::DiskCopy** diskCopy,
  std::list<castor::stager::DiskCopyForRecall*>& sources)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
-    if (0 == m_scheduleSubRequestStatement) {
-      m_scheduleSubRequestStatement =
-        createStatement(s_scheduleSubRequestStatementString);
-      m_scheduleSubRequestStatement->registerOutParam
+    if (0 == m_getUpdateStartStatement) {
+      m_getUpdateStartStatement =
+        createStatement(s_getUpdateStartStatementString);
+      m_getUpdateStartStatement->registerOutParam
         (3, oracle::occi::OCCIDOUBLE);
-      m_scheduleSubRequestStatement->registerOutParam
+      m_getUpdateStartStatement->registerOutParam
         (4, oracle::occi::OCCISTRING, 255);
-      m_scheduleSubRequestStatement->registerOutParam
+      m_getUpdateStartStatement->registerOutParam
         (5, oracle::occi::OCCIINT);
-      m_scheduleSubRequestStatement->registerOutParam
+      m_getUpdateStartStatement->registerOutParam
         (6, oracle::occi::OCCICURSOR);
+      m_getUpdateStartStatement->registerOutParam
+        (7, oracle::occi::OCCIDOUBLE);
     }
     // execute the statement and see whether we found something
-    m_scheduleSubRequestStatement->setDouble(1, subreq->id());
-    m_scheduleSubRequestStatement->setDouble(2, fileSystem->id());
+    m_getUpdateStartStatement->setDouble(1, subreq->id());
+    m_getUpdateStartStatement->setDouble(2, fileSystem->id());
     unsigned int nb =
-      m_scheduleSubRequestStatement->executeUpdate();
+      m_getUpdateStartStatement->executeUpdate();
     if (0 == nb) {
       castor::exception::Internal ex;
       ex.getMessage()
-        << "scheduleSubRequest : unable to schedule SubRequest.";
+        << "getUpdateStart : unable to schedule SubRequest.";
+      throw ex;
+    }
+    // First get the IClient
+    u_signed64 clientId
+      = (u_signed64)m_getUpdateStartStatement->getDouble(7);
+    // If no IClient returned, fail
+    if (0 == clientId) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "getUpdateStart : No client found.";
+      throw ex;
+    }
+    // Get Client Object and cast it into IClient
+    castor::IObject *iobj = cnvSvc()->getObjFromId(clientId);
+    if (0 == iobj) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "GetUpdateStart : Could not get IClient object from id "
+        << clientId;
+      throw ex;
+    }
+    castor::IClient *result =
+      dynamic_cast<castor::IClient*>(iobj);
+    if (0 == result) {
+      delete iobj;
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "GetUpdateStart : IClient object had a bad type : "
+        << castor::ObjectsIdStrings[clientId];
       throw ex;
     }
     // Check result
     u_signed64 id
-      = (u_signed64)m_scheduleSubRequestStatement->getDouble(3);
-    // If no DiskCopy returned, return null
+      = (u_signed64)m_getUpdateStartStatement->getDouble(3);
+    // If no DiskCopy returned, return
     if (0 == id) {
+      *diskCopy = 0;
       cnvSvc()->commit();
-      return 0;
+      return result;
     }
     // In case a diskcopy was created in WAITTAPERECALL
     // status, create the associated TapeCopy and Segments
     unsigned int status =
-      m_scheduleSubRequestStatement->getInt(5);
+      m_getUpdateStartStatement->getInt(5);
     if (status == 99) {
       // First get the DiskCopy
       castor::BaseAddress ad;
@@ -967,7 +1015,7 @@ castor::db::ora::OraStagerSvc::scheduleSubRequest
         rollback();
         castor::exception::Internal e;
         e.getMessage() << "Dynamic cast to DiskCopy failed "
-                       << "in scheduleSubRequest";
+                       << "in getUpdateStart";
         delete iobj;
         throw e;
       }
@@ -980,20 +1028,20 @@ castor::db::ora::OraStagerSvc::scheduleSubRequest
       delete dc;
       // commit and return
       cnvSvc()->commit();
-      return 0;
+      *diskCopy = 0;
+      return result;
     }
     // Else create a resulting DiskCopy
-    castor::stager::DiskCopy* result =
-      new castor::stager::DiskCopy();
-    result->setId(id);
-    result->setPath(m_scheduleSubRequestStatement->getString(4));
-    result->setStatus
+    *diskCopy = new castor::stager::DiskCopy();
+    (*diskCopy)->setId(id);
+    (*diskCopy)->setPath(m_getUpdateStartStatement->getString(4));
+    (*diskCopy)->setStatus
       ((enum castor::stager::DiskCopyStatusCodes) status);
-    if (result->status() ==
+    if ((*diskCopy)->status() ==
         castor::stager::DISKCOPY_WAITDISK2DISKCOPY) {
       try {
         oracle::occi::ResultSet *rs =
-          m_scheduleSubRequestStatement->getCursor(6);
+          m_getUpdateStartStatement->getCursor(6);
         // We don't fetch the first time since it's done
         // in the PL/SQL code
         oracle::occi::ResultSet::Status status = rs->status();
@@ -1022,7 +1070,75 @@ castor::db::ora::OraStagerSvc::scheduleSubRequest
     rollback();
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in scheduleSubRequest."
+      << "Error caught in getUpdateStart."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// putStart
+// -----------------------------------------------------------------------
+castor::IClient*
+castor::db::ora::OraStagerSvc::putStart
+(castor::stager::SubRequest* subreq,
+ castor::stager::FileSystem* fileSystem)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_putStartStatement) {
+      m_putStartStatement =
+        createStatement(s_putStartStatementString);
+      m_putStartStatement->registerOutParam
+        (3, oracle::occi::OCCIDOUBLE);
+    }
+    // execute the statement and see whether we found something
+    m_putStartStatement->setDouble(1, subreq->id());
+    m_putStartStatement->setDouble(2, fileSystem->id());
+    unsigned int nb = m_putStartStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "putStart : unable to schedule SubRequest.";
+      throw ex;
+    }
+    // Check result
+    u_signed64 id
+      = (u_signed64)m_putStartStatement->getDouble(3);
+    // If no IClient returned, return null
+    if (0 == id) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "PutStart : No client found.";
+      throw ex;
+    }
+    // Else get the client
+    castor::IObject *iobj = cnvSvc()->getObjFromId(id);
+    if (0 == iobj) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "PutStart : Could not get IClient object from id "
+        << id;
+      throw ex;
+    }
+    castor::IClient *result =
+      dynamic_cast<castor::IClient*>(iobj);
+    if (0 == result) {
+      delete iobj;
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "PutStart : IClient object had a bad type : "
+        << castor::ObjectsIdStrings[id];
+      throw ex;
+    }
+    // return
+    cnvSvc()->commit();
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in putStart."
       << std::endl << e.what();
     throw ex;
   }
@@ -1556,4 +1672,30 @@ castor::stager::CastorFile *castorFile)
       << std::endl << e.what();
     throw ex;
   }  
+}
+
+// -----------------------------------------------------------------------
+// prepareForMigration
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::prepareForMigration
+(castor::stager::SubRequest *subreq)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_prepareForMigrationStatement) {
+      m_prepareForMigrationStatement =
+        createStatement(s_prepareForMigrationStatementString);
+      m_prepareForMigrationStatement->setAutoCommit(true);
+    }
+    // execute the statement and see whether we found something
+    m_prepareForMigrationStatement->setDouble(1, subreq->id());
+    m_prepareForMigrationStatement->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in prepareForMigration."
+      << std::endl << e.what();
+    throw ex;
+  }
 }

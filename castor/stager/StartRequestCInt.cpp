@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/ScheduleSubReqRequestCInt.cpp
+ *                      castor/stager/StartRequestCInt.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ScheduleSubReqRequestCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/30 08:55:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
@@ -28,349 +28,300 @@
 #include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
 #include "castor/stager/Request.hpp"
-#include "castor/stager/ScheduleSubReqRequest.hpp"
+#include "castor/stager/StartRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
 
 extern "C" {
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_create
+  // Cstager_StartRequest_delete
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_create(castor::stager::ScheduleSubReqRequest** obj) {
-    *obj = new castor::stager::ScheduleSubReqRequest();
-    return 0;
-  }
-  //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_delete
-  //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_delete(castor::stager::ScheduleSubReqRequest* obj) {
+  int Cstager_StartRequest_delete(castor::stager::StartRequest* obj) {
     delete obj;
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_getRequest
+  // Cstager_StartRequest_getRequest
   //----------------------------------------------------------------------------
-  castor::stager::Request* Cstager_ScheduleSubReqRequest_getRequest(castor::stager::ScheduleSubReqRequest* obj) {
+  castor::stager::Request* Cstager_StartRequest_getRequest(castor::stager::StartRequest* obj) {
     return obj;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_fromRequest
+  // Cstager_StartRequest_fromRequest
   //----------------------------------------------------------------------------
-  castor::stager::ScheduleSubReqRequest* Cstager_ScheduleSubReqRequest_fromRequest(castor::stager::Request* obj) {
-    return dynamic_cast<castor::stager::ScheduleSubReqRequest*>(obj);
+  castor::stager::StartRequest* Cstager_StartRequest_fromRequest(castor::stager::Request* obj) {
+    return dynamic_cast<castor::stager::StartRequest*>(obj);
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_getIObject
+  // Cstager_StartRequest_getIObject
   //----------------------------------------------------------------------------
-  castor::IObject* Cstager_ScheduleSubReqRequest_getIObject(castor::stager::ScheduleSubReqRequest* obj) {
+  castor::IObject* Cstager_StartRequest_getIObject(castor::stager::StartRequest* obj) {
     return obj;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_fromIObject
+  // Cstager_StartRequest_fromIObject
   //----------------------------------------------------------------------------
-  castor::stager::ScheduleSubReqRequest* Cstager_ScheduleSubReqRequest_fromIObject(castor::IObject* obj) {
-    return dynamic_cast<castor::stager::ScheduleSubReqRequest*>(obj);
+  castor::stager::StartRequest* Cstager_StartRequest_fromIObject(castor::IObject* obj) {
+    return dynamic_cast<castor::stager::StartRequest*>(obj);
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_print
+  // Cstager_StartRequest_print
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_print(castor::stager::ScheduleSubReqRequest* instance) {
+  int Cstager_StartRequest_print(castor::stager::StartRequest* instance) {
     instance->print();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_TYPE
+  // Cstager_StartRequest_flags
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_TYPE(int* ret) {
-    *ret = castor::stager::ScheduleSubReqRequest::TYPE();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_flags
-  //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_flags(castor::stager::ScheduleSubReqRequest* instance, u_signed64* var) {
+  int Cstager_StartRequest_flags(castor::stager::StartRequest* instance, u_signed64* var) {
     *var = instance->flags();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_setFlags
+  // Cstager_StartRequest_setFlags
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_setFlags(castor::stager::ScheduleSubReqRequest* instance, u_signed64 new_var) {
+  int Cstager_StartRequest_setFlags(castor::stager::StartRequest* instance, u_signed64 new_var) {
     instance->setFlags(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_userName
+  // Cstager_StartRequest_userName
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_userName(castor::stager::ScheduleSubReqRequest* instance, const char** var) {
+  int Cstager_StartRequest_userName(castor::stager::StartRequest* instance, const char** var) {
     *var = instance->userName().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_setUserName
+  // Cstager_StartRequest_setUserName
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_setUserName(castor::stager::ScheduleSubReqRequest* instance, const char* new_var) {
+  int Cstager_StartRequest_setUserName(castor::stager::StartRequest* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setUserName(snew_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_euid
+  // Cstager_StartRequest_euid
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_euid(castor::stager::ScheduleSubReqRequest* instance, unsigned long* var) {
+  int Cstager_StartRequest_euid(castor::stager::StartRequest* instance, unsigned long* var) {
     *var = instance->euid();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_setEuid
+  // Cstager_StartRequest_setEuid
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_setEuid(castor::stager::ScheduleSubReqRequest* instance, unsigned long new_var) {
+  int Cstager_StartRequest_setEuid(castor::stager::StartRequest* instance, unsigned long new_var) {
     instance->setEuid(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_egid
+  // Cstager_StartRequest_egid
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_egid(castor::stager::ScheduleSubReqRequest* instance, unsigned long* var) {
+  int Cstager_StartRequest_egid(castor::stager::StartRequest* instance, unsigned long* var) {
     *var = instance->egid();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_setEgid
+  // Cstager_StartRequest_setEgid
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_setEgid(castor::stager::ScheduleSubReqRequest* instance, unsigned long new_var) {
+  int Cstager_StartRequest_setEgid(castor::stager::StartRequest* instance, unsigned long new_var) {
     instance->setEgid(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_mask
+  // Cstager_StartRequest_mask
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_mask(castor::stager::ScheduleSubReqRequest* instance, unsigned long* var) {
+  int Cstager_StartRequest_mask(castor::stager::StartRequest* instance, unsigned long* var) {
     *var = instance->mask();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_setMask
+  // Cstager_StartRequest_setMask
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_setMask(castor::stager::ScheduleSubReqRequest* instance, unsigned long new_var) {
+  int Cstager_StartRequest_setMask(castor::stager::StartRequest* instance, unsigned long new_var) {
     instance->setMask(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_pid
+  // Cstager_StartRequest_pid
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_pid(castor::stager::ScheduleSubReqRequest* instance, unsigned long* var) {
+  int Cstager_StartRequest_pid(castor::stager::StartRequest* instance, unsigned long* var) {
     *var = instance->pid();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_setPid
+  // Cstager_StartRequest_setPid
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_setPid(castor::stager::ScheduleSubReqRequest* instance, unsigned long new_var) {
+  int Cstager_StartRequest_setPid(castor::stager::StartRequest* instance, unsigned long new_var) {
     instance->setPid(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_machine
+  // Cstager_StartRequest_machine
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_machine(castor::stager::ScheduleSubReqRequest* instance, const char** var) {
+  int Cstager_StartRequest_machine(castor::stager::StartRequest* instance, const char** var) {
     *var = instance->machine().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_setMachine
+  // Cstager_StartRequest_setMachine
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_setMachine(castor::stager::ScheduleSubReqRequest* instance, const char* new_var) {
+  int Cstager_StartRequest_setMachine(castor::stager::StartRequest* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setMachine(snew_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_svcClassName
+  // Cstager_StartRequest_svcClassName
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_svcClassName(castor::stager::ScheduleSubReqRequest* instance, const char** var) {
+  int Cstager_StartRequest_svcClassName(castor::stager::StartRequest* instance, const char** var) {
     *var = instance->svcClassName().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_setSvcClassName
+  // Cstager_StartRequest_setSvcClassName
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_setSvcClassName(castor::stager::ScheduleSubReqRequest* instance, const char* new_var) {
+  int Cstager_StartRequest_setSvcClassName(castor::stager::StartRequest* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setSvcClassName(snew_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_userTag
+  // Cstager_StartRequest_userTag
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_userTag(castor::stager::ScheduleSubReqRequest* instance, const char** var) {
+  int Cstager_StartRequest_userTag(castor::stager::StartRequest* instance, const char** var) {
     *var = instance->userTag().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_setUserTag
+  // Cstager_StartRequest_setUserTag
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_setUserTag(castor::stager::ScheduleSubReqRequest* instance, const char* new_var) {
+  int Cstager_StartRequest_setUserTag(castor::stager::StartRequest* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setUserTag(snew_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_reqId
+  // Cstager_StartRequest_reqId
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_reqId(castor::stager::ScheduleSubReqRequest* instance, const char** var) {
+  int Cstager_StartRequest_reqId(castor::stager::StartRequest* instance, const char** var) {
     *var = instance->reqId().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_setReqId
+  // Cstager_StartRequest_setReqId
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_setReqId(castor::stager::ScheduleSubReqRequest* instance, const char* new_var) {
+  int Cstager_StartRequest_setReqId(castor::stager::StartRequest* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setReqId(snew_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_svcClass
+  // Cstager_StartRequest_svcClass
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_svcClass(castor::stager::ScheduleSubReqRequest* instance, castor::stager::SvcClass** var) {
+  int Cstager_StartRequest_svcClass(castor::stager::StartRequest* instance, castor::stager::SvcClass** var) {
     *var = instance->svcClass();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_setSvcClass
+  // Cstager_StartRequest_setSvcClass
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_setSvcClass(castor::stager::ScheduleSubReqRequest* instance, castor::stager::SvcClass* new_var) {
+  int Cstager_StartRequest_setSvcClass(castor::stager::StartRequest* instance, castor::stager::SvcClass* new_var) {
     instance->setSvcClass(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_client
+  // Cstager_StartRequest_client
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_client(castor::stager::ScheduleSubReqRequest* instance, castor::IClient** var) {
+  int Cstager_StartRequest_client(castor::stager::StartRequest* instance, castor::IClient** var) {
     *var = instance->client();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_setClient
+  // Cstager_StartRequest_setClient
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_setClient(castor::stager::ScheduleSubReqRequest* instance, castor::IClient* new_var) {
+  int Cstager_StartRequest_setClient(castor::stager::StartRequest* instance, castor::IClient* new_var) {
     instance->setClient(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_type
+  // Cstager_StartRequest_subreqId
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_type(castor::stager::ScheduleSubReqRequest* instance,
-                                         int* ret) {
-    *ret = instance->type();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_clone
-  //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_clone(castor::stager::ScheduleSubReqRequest* instance,
-                                          castor::IObject** ret) {
-    *ret = instance->clone();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_subreqId
-  //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_subreqId(castor::stager::ScheduleSubReqRequest* instance, u_signed64* var) {
+  int Cstager_StartRequest_subreqId(castor::stager::StartRequest* instance, u_signed64* var) {
     *var = instance->subreqId();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_setSubreqId
+  // Cstager_StartRequest_setSubreqId
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_setSubreqId(castor::stager::ScheduleSubReqRequest* instance, u_signed64 new_var) {
+  int Cstager_StartRequest_setSubreqId(castor::stager::StartRequest* instance, u_signed64 new_var) {
     instance->setSubreqId(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_diskServer
+  // Cstager_StartRequest_diskServer
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_diskServer(castor::stager::ScheduleSubReqRequest* instance, const char** var) {
+  int Cstager_StartRequest_diskServer(castor::stager::StartRequest* instance, const char** var) {
     *var = instance->diskServer().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_setDiskServer
+  // Cstager_StartRequest_setDiskServer
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_setDiskServer(castor::stager::ScheduleSubReqRequest* instance, const char* new_var) {
+  int Cstager_StartRequest_setDiskServer(castor::stager::StartRequest* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setDiskServer(snew_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_fileSystem
+  // Cstager_StartRequest_fileSystem
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_fileSystem(castor::stager::ScheduleSubReqRequest* instance, const char** var) {
+  int Cstager_StartRequest_fileSystem(castor::stager::StartRequest* instance, const char** var) {
     *var = instance->fileSystem().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_setFileSystem
+  // Cstager_StartRequest_setFileSystem
   //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_setFileSystem(castor::stager::ScheduleSubReqRequest* instance, const char* new_var) {
+  int Cstager_StartRequest_setFileSystem(castor::stager::StartRequest* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setFileSystem(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_id
-  //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_id(castor::stager::ScheduleSubReqRequest* instance, u_signed64* var) {
-    *var = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_ScheduleSubReqRequest_setId
-  //----------------------------------------------------------------------------
-  int Cstager_ScheduleSubReqRequest_setId(castor::stager::ScheduleSubReqRequest* instance, u_signed64 new_var) {
-    instance->setId(new_var);
     return 0;
   }
 

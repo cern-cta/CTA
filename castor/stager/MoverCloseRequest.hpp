@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/rh/ScheduleSubReqResponse.hpp
+ *                      castor/stager/MoverCloseRequest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,22 +17,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ScheduleSubReqResponse.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/30 08:57:50 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_RH_SCHEDULESUBREQRESPONSE_HPP
-#define CASTOR_RH_SCHEDULESUBREQRESPONSE_HPP
+#ifndef CASTOR_STAGER_MOVERCLOSEREQUEST_HPP
+#define CASTOR_STAGER_MOVERCLOSEREQUEST_HPP
 
 // Include Files
-#include "castor/rh/Response.hpp"
+#include "castor/stager/Request.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
-#include <vector>
 
 namespace castor {
 
@@ -40,34 +39,27 @@ namespace castor {
   class ObjectSet;
   class IObject;
 
-  // Forward declarations
   namespace stager {
 
-    // Forward declarations
-    class DiskCopyForRecall;
-    class DiskCopy;
-
-  }; // end of namespace stager
-
-  namespace rh {
-
     /**
-     * class ScheduleSubReqResponse
-     * 
+     * class MoverCloseRequest
+     * Internal request used when a file was closed in a mover after writing. This
+     * request exists to avoid the jobs on the diskservers to handle a connection to the
+     * database. 
      */
-    class ScheduleSubReqResponse : public virtual Response {
+    class MoverCloseRequest : public virtual Request {
 
     public:
 
       /**
        * Empty Constructor
        */
-      ScheduleSubReqResponse() throw();
+      MoverCloseRequest() throw();
 
       /**
        * Empty Destructor
        */
-      virtual ~ScheduleSubReqResponse() throw();
+      virtual ~MoverCloseRequest() throw();
 
       /**
        * Outputs this object in a human readable format
@@ -107,6 +99,24 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
+       * Get the value of m_subReqId
+       * The id of the SubRequest for which the file closing took place
+       * @return the value of m_subReqId
+       */
+      u_signed64 subReqId() const {
+        return m_subReqId;
+      }
+
+      /**
+       * Set the value of m_subReqId
+       * The id of the SubRequest for which the file closing took place
+       * @param new_var the new value of m_subReqId
+       */
+      void setSubReqId(u_signed64 new_var) {
+        m_subReqId = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -124,66 +134,18 @@ namespace castor {
         m_id = new_var;
       }
 
-      /**
-       * Get the value of m_diskCopy
-       * @return the value of m_diskCopy
-       */
-      castor::stager::DiskCopy* diskCopy() const {
-        return m_diskCopy;
-      }
-
-      /**
-       * Set the value of m_diskCopy
-       * @param new_var the new value of m_diskCopy
-       */
-      void setDiskCopy(castor::stager::DiskCopy* new_var) {
-        m_diskCopy = new_var;
-      }
-
-      /**
-       * Add a castor::stager::DiskCopyForRecall* object to the m_sourcesVector list
-       */
-      void addSources(castor::stager::DiskCopyForRecall* add_object) {
-        m_sourcesVector.push_back(add_object);
-      }
-
-      /**
-       * Remove a castor::stager::DiskCopyForRecall* object from m_sourcesVector
-       */
-      void removeSources(castor::stager::DiskCopyForRecall* remove_object) {
-        for (unsigned int i = 0; i < m_sourcesVector.size(); i++) {
-          castor::stager::DiskCopyForRecall* item = m_sourcesVector[i];
-          if (item == remove_object) {
-            std::vector<castor::stager::DiskCopyForRecall*>::iterator it = m_sourcesVector.begin() + i;
-            m_sourcesVector.erase(it);
-            return;
-          }
-        }
-      }
-
-      /**
-       * Get the list of castor::stager::DiskCopyForRecall* objects held by
-       * m_sourcesVector
-       * @return list of castor::stager::DiskCopyForRecall* objects held by
-       * m_sourcesVector
-       */
-      std::vector<castor::stager::DiskCopyForRecall*>& sources() {
-        return m_sourcesVector;
-      }
-
     private:
+
+      /// The id of the SubRequest for which the file closing took place
+      u_signed64 m_subReqId;
 
       /// The id of this object
       u_signed64 m_id;
 
-      castor::stager::DiskCopy* m_diskCopy;
+    }; // end of class MoverCloseRequest
 
-      std::vector<castor::stager::DiskCopyForRecall*> m_sourcesVector;
-
-    }; // end of class ScheduleSubReqResponse
-
-  }; // end of namespace rh
+  }; // end of namespace stager
 
 }; // end of namespace castor
 
-#endif // CASTOR_RH_SCHEDULESUBREQRESPONSE_HPP
+#endif // CASTOR_STAGER_MOVERCLOSEREQUEST_HPP

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.24 $ $Release$ $Date: 2004/11/30 16:36:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.25 $ $Release$ $Date: 2004/12/02 17:56:05 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -40,6 +40,7 @@ namespace castor {
 
   // Forward declaration
   class IObject;
+  class IClient;
   class IAddress;
 
   namespace stager {
@@ -268,10 +269,13 @@ namespace castor {
         throw (castor::exception::Exception) = 0;
 
       /**
-       * Schedules a SubRequest on a given FileSystem and
-       * return the DiskCopy to use for data access.
-       * Note that deallocation of the DiskCopy is the
-       * responsability of the caller.
+       * Handles ths start of a Get or Update job.
+       * Schedules the corresponding SubRequest on a given
+       * FileSystem and returns the DiskCopy to use for data
+       * access, as well as the IClient object to use for
+       * the reply to the client.
+       * Note that deallocation of the DiskCopy and IClient
+       * is the responsability of the caller.
        * Depending on the available DiskCopies for the file
        * the SubRequest deals with, we have different cases :
        *  - no DiskCopy at all : a DiskCopy is created with
@@ -296,14 +300,7 @@ namespace castor {
        * sources remains empty.
        * @param subreq  the SubRequest to consider
        * @param fileSystem the selected FileSystem
-       * @param sources this is a list of DiskCopies that
-       * can be used as source of a Disk to Disk copy. If
-       * this list is not empty, the Disk to Disk copy must
-       * be performed. If it is empty, the copy is performed
-       * by someone else and the caller should just wait
-       * for its end. Note that the DiskCopies returned in
-       * sources must be deallocated by the caller.
-       * @return The DiskCopy to use for the data access or
+       * @param diskCopy the DiskCopy to use for the data access or
        * a null pointer if the data access will have to wait
        * and there is nothing more to be done. Even in case
        * of a non null pointer, the data access will have to
@@ -311,12 +308,38 @@ namespace castor {
        * is in DISKCOPY_WAITDISKTODISKCOPY status. This
        * disk to disk copy is the responsability of the caller
        * if sources is not empty.
+       * @param sources this is a list of DiskCopies that
+       * can be used as source of a Disk to Disk copy. If
+       * this list is not empty, the Disk to Disk copy must
+       * be performed. If it is empty, the copy is performed
+       * by someone else and the caller should just wait
+       * for its end. Note that the DiskCopies returned in
+       * sources must be deallocated by the caller.
+       * @return the IClient object to use for client reply
        * @exception Exception in case of error
        */
-      virtual castor::stager::DiskCopy* scheduleSubRequest
+      virtual castor::IClient* getUpdateStart
       (castor::stager::SubRequest* subreq,
        castor::stager::FileSystem* fileSystem,
+       castor::stager::DiskCopy** diskCopy,
        std::list<castor::stager::DiskCopyForRecall*>& sources)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Handles the start of a Put job.
+       * Links the DiskCopy associated to the SubRequest to
+       * the given FileSystem and updates the DiskCopy status
+       * to DISKCOPY_STAGEOUT.
+       * Returns the IClient object to use for the reply
+       * to the client.
+       * @param subreq  the SubRequest to consider
+       * @param fileSystem the selected FileSystem
+       * @return the IClient object to use for client reply
+       * @exception Exception in case of error
+       */      
+      virtual castor::IClient* putStart
+      (castor::stager::SubRequest* subreq,
+       castor::stager::FileSystem* fileSystem)
         throw (castor::exception::Exception) = 0;
 
       /**
@@ -445,6 +468,17 @@ namespace castor {
        */
       virtual castor::stager::DiskCopy* recreateCastorFile
       (castor::stager::CastorFile *castorFile)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Prepares a file for migration. This involves
+       * creating the needed TapeCopies according to the
+       * FileClass of the castorFile.
+       * @param subreq The SubRequest handling the file to prepare
+       * @exception Exception throws an Exception in case of error
+       */
+      virtual void prepareForMigration
+      (castor::stager::SubRequest* subreq)
         throw (castor::exception::Exception) = 0;
 
     }; // end of class IStagerSvc

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/ScheduleSubReqRequest.hpp
+ *                      castor/stager/PutStartRequest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,18 +17,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ScheduleSubReqRequest.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/30 08:55:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_STAGER_SCHEDULESUBREQREQUEST_HPP
-#define CASTOR_STAGER_SCHEDULESUBREQREQUEST_HPP
+#ifndef CASTOR_STAGER_PUTSTARTREQUEST_HPP
+#define CASTOR_STAGER_PUTSTARTREQUEST_HPP
 
 // Include Files
 #include "castor/stager/Request.hpp"
+#include "castor/stager/StartRequest.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -42,23 +43,26 @@ namespace castor {
   namespace stager {
 
     /**
-     * class ScheduleSubReqRequest
-     * Internal request for scheduling of a subrequest. This request is there to avoid
-     * the jobs on the diskservers to handle a connection to the database. 
+     * class PutStartRequest
+     * Internal request used when a put job has just started. It creates the link
+     * between the FileSystem and the DiskCopy associated to the SubRequest. It also
+     * updates the DiskCopy statement and returns the Client object for the SubRequest.
+     * This request exists to avoid the jobs on the diskservers to handle a connection
+     * to the database. 
      */
-    class ScheduleSubReqRequest : public virtual Request {
+    class PutStartRequest : public virtual Request, public virtual StartRequest {
 
     public:
 
       /**
        * Empty Constructor
        */
-      ScheduleSubReqRequest() throw();
+      PutStartRequest() throw();
 
       /**
        * Empty Destructor
        */
-      virtual ~ScheduleSubReqRequest() throw();
+      virtual ~PutStartRequest() throw();
 
       /**
        * Outputs this object in a human readable format
@@ -98,62 +102,6 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
-       * Get the value of m_subreqId
-       * The id of the subRequest that should be scheduled
-       * @return the value of m_subreqId
-       */
-      u_signed64 subreqId() const {
-        return m_subreqId;
-      }
-
-      /**
-       * Set the value of m_subreqId
-       * The id of the subRequest that should be scheduled
-       * @param new_var the new value of m_subreqId
-       */
-      void setSubreqId(u_signed64 new_var) {
-        m_subreqId = new_var;
-      }
-
-      /**
-       * Get the value of m_diskServer
-       * The name of the diskserver on which the selected filesystem for the given
-       * SubRequest resides
-       * @return the value of m_diskServer
-       */
-      std::string diskServer() const {
-        return m_diskServer;
-      }
-
-      /**
-       * Set the value of m_diskServer
-       * The name of the diskserver on which the selected filesystem for the given
-       * SubRequest resides
-       * @param new_var the new value of m_diskServer
-       */
-      void setDiskServer(std::string new_var) {
-        m_diskServer = new_var;
-      }
-
-      /**
-       * Get the value of m_fileSystem
-       * The mount point of the selected filesystem for the given SubRequest
-       * @return the value of m_fileSystem
-       */
-      std::string fileSystem() const {
-        return m_fileSystem;
-      }
-
-      /**
-       * Set the value of m_fileSystem
-       * The mount point of the selected filesystem for the given SubRequest
-       * @param new_var the new value of m_fileSystem
-       */
-      void setFileSystem(std::string new_var) {
-        m_fileSystem = new_var;
-      }
-
-      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -173,22 +121,13 @@ namespace castor {
 
     private:
 
-      /// The id of the subRequest that should be scheduled
-      u_signed64 m_subreqId;
-
-      /// The name of the diskserver on which the selected filesystem for the given SubRequest resides
-      std::string m_diskServer;
-
-      /// The mount point of the selected filesystem for the given SubRequest
-      std::string m_fileSystem;
-
       /// The id of this object
       u_signed64 m_id;
 
-    }; // end of class ScheduleSubReqRequest
+    }; // end of class PutStartRequest
 
   }; // end of namespace stager
 
 }; // end of namespace castor
 
-#endif // CASTOR_STAGER_SCHEDULESUBREQREQUEST_HPP
+#endif // CASTOR_STAGER_PUTSTARTREQUEST_HPP

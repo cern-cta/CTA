@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.62 $ $Release$ $Date: 2004/11/30 14:34:07 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.63 $ $Release$ $Date: 2004/12/02 17:56:02 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -113,15 +113,18 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamBaseAddressCnv.cpp \
               io/StreamCastorFileCnv.cpp \
               io/StreamClientCnv.cpp \
+              io/StreamClientResponseCnv.cpp \
               io/StreamCnvSvc.cpp \
               io/StreamDiskCopyCnv.cpp \
               io/StreamEndResponseCnv.cpp \
               io/StreamFileResponseCnv.cpp \
               io/StreamFileSystemCnv.cpp \
+              io/StreamGetUpdateStartRequestCnv.cpp \
+              io/StreamGetUpdateStartResponseCnv.cpp \
               io/StreamMessageAckCnv.cpp \
+              io/StreamMoverCloseRequestCnv.cpp \
               io/StreamPtrCnv.cpp \
-              io/StreamScheduleSubReqRequestCnv.cpp \
-              io/StreamScheduleSubReqResponseCnv.cpp \
+              io/StreamPutStartRequestCnv.cpp \
               io/StreamUpdateRepRequestCnv.cpp \
               io/StreamBasicResponseCnv.cpp \
               io/StreamSegmentCnv.cpp \
@@ -157,10 +160,14 @@ STGLIB_SRCS = IAddressCInt.cpp \
               replier/RequestReplierCInt.cpp \
               rh/Client.cpp \
               rh/ClientCInt.cpp \
+              rh/ClientResponse.cpp \
+              rh/ClientResponseCInt.cpp \
               rh/EndResponse.cpp \
               rh/EndResponseCInt.cpp \
               rh/FileResponse.cpp \
               rh/FileResponseCInt.cpp \
+              rh/GetUpdateStartResponse.cpp \
+              rh/GetUpdateStartResponseCInt.cpp \
               rh/Response.cpp \
               rh/ResponseCInt.cpp \
               rh/StringResponse.cpp \
@@ -175,8 +182,6 @@ STGLIB_SRCS = IAddressCInt.cpp \
               rh/IOResponseCInt.cpp \
               rh/RequestQueryResponse.cpp \
               rh/RequestQueryResponseCInt.cpp \
-              rh/ScheduleSubReqResponse.cpp \
-              rh/ScheduleSubReqResponseCInt.cpp \
               rh/BasicResponse.cpp \
               rh/BasicResponseCInt.cpp \
               stager/CastorFile.cpp \
@@ -200,9 +205,13 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/FileSystem.cpp \
               stager/FileSystemCInt.cpp \
               stager/FileSystemStatusCodes.cpp \
+              stager/GetUpdateStartRequest.cpp \
+              stager/GetUpdateStartRequestCInt.cpp \
               stager/IStagerSvcCInt.cpp \
-              stager/SvcClass.cpp \
-              stager/SvcClassCInt.cpp \
+              stager/MoverCloseRequest.cpp \
+              stager/MoverCloseRequestCInt.cpp \
+              stager/PutStartRequest.cpp \
+              stager/PutStartRequestCInt.cpp \
               stager/QryRequest.cpp \
               stager/QryRequestCInt.cpp \
               stager/ReqIdRequest.cpp \
@@ -211,8 +220,10 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/RequestCInt.cpp \
 	      stager/RequestQueryType.cpp \
 	      stager/RemoteStagerSvc.cpp \
-              stager/ScheduleSubReqRequest.cpp \
-              stager/ScheduleSubReqRequestCInt.cpp \
+              stager/StartRequest.cpp \
+              stager/StartRequestCInt.cpp \
+              stager/SvcClass.cpp \
+              stager/SvcClassCInt.cpp \
               stager/UpdateRepRequest.cpp \
               stager/UpdateRepRequestCInt.cpp \
               stager/Segment.cpp \

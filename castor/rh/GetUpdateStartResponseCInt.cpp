@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/rh/ScheduleSubReqResponseCInt.cpp
+ *                      castor/rh/GetUpdateStartResponseCInt.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ScheduleSubReqResponseCInt.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/30 08:57:50 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
@@ -25,9 +25,11 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
+#include "castor/rh/ClientResponse.hpp"
+#include "castor/rh/GetUpdateStartResponse.hpp"
 #include "castor/rh/Response.hpp"
-#include "castor/rh/ScheduleSubReqResponse.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "osdep.h"
@@ -36,167 +38,197 @@
 extern "C" {
 
   //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_create
+  // Crh_GetUpdateStartResponse_create
   //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_create(castor::rh::ScheduleSubReqResponse** obj) {
-    *obj = new castor::rh::ScheduleSubReqResponse();
+  int Crh_GetUpdateStartResponse_create(castor::rh::GetUpdateStartResponse** obj) {
+    *obj = new castor::rh::GetUpdateStartResponse();
     return 0;
   }
   //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_delete
+  // Crh_GetUpdateStartResponse_delete
   //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_delete(castor::rh::ScheduleSubReqResponse* obj) {
+  int Crh_GetUpdateStartResponse_delete(castor::rh::GetUpdateStartResponse* obj) {
     delete obj;
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_getResponse
+  // Crh_GetUpdateStartResponse_getClientResponse
   //----------------------------------------------------------------------------
-  castor::rh::Response* Crh_ScheduleSubReqResponse_getResponse(castor::rh::ScheduleSubReqResponse* obj) {
+  castor::rh::ClientResponse* Crh_GetUpdateStartResponse_getClientResponse(castor::rh::GetUpdateStartResponse* obj) {
     return obj;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_fromResponse
+  // Crh_GetUpdateStartResponse_fromClientResponse
   //----------------------------------------------------------------------------
-  castor::rh::ScheduleSubReqResponse* Crh_ScheduleSubReqResponse_fromResponse(castor::rh::Response* obj) {
-    return dynamic_cast<castor::rh::ScheduleSubReqResponse*>(obj);
+  castor::rh::GetUpdateStartResponse* Crh_GetUpdateStartResponse_fromClientResponse(castor::rh::ClientResponse* obj) {
+    return dynamic_cast<castor::rh::GetUpdateStartResponse*>(obj);
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_getIObject
+  // Crh_GetUpdateStartResponse_getResponse
   //----------------------------------------------------------------------------
-  castor::IObject* Crh_ScheduleSubReqResponse_getIObject(castor::rh::ScheduleSubReqResponse* obj) {
+  castor::rh::Response* Crh_GetUpdateStartResponse_getResponse(castor::rh::GetUpdateStartResponse* obj) {
     return obj;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_fromIObject
+  // Crh_GetUpdateStartResponse_fromResponse
   //----------------------------------------------------------------------------
-  castor::rh::ScheduleSubReqResponse* Crh_ScheduleSubReqResponse_fromIObject(castor::IObject* obj) {
-    return dynamic_cast<castor::rh::ScheduleSubReqResponse*>(obj);
+  castor::rh::GetUpdateStartResponse* Crh_GetUpdateStartResponse_fromResponse(castor::rh::Response* obj) {
+    return dynamic_cast<castor::rh::GetUpdateStartResponse*>(obj);
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_print
+  // Crh_GetUpdateStartResponse_getIObject
   //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_print(castor::rh::ScheduleSubReqResponse* instance) {
+  castor::IObject* Crh_GetUpdateStartResponse_getIObject(castor::rh::GetUpdateStartResponse* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_GetUpdateStartResponse_fromIObject
+  //----------------------------------------------------------------------------
+  castor::rh::GetUpdateStartResponse* Crh_GetUpdateStartResponse_fromIObject(castor::IObject* obj) {
+    return dynamic_cast<castor::rh::GetUpdateStartResponse*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_GetUpdateStartResponse_print
+  //----------------------------------------------------------------------------
+  int Crh_GetUpdateStartResponse_print(castor::rh::GetUpdateStartResponse* instance) {
     instance->print();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_TYPE
+  // Crh_GetUpdateStartResponse_TYPE
   //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_TYPE(int* ret) {
-    *ret = castor::rh::ScheduleSubReqResponse::TYPE();
+  int Crh_GetUpdateStartResponse_TYPE(int* ret) {
+    *ret = castor::rh::GetUpdateStartResponse::TYPE();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_errorCode
+  // Crh_GetUpdateStartResponse_type
   //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_errorCode(castor::rh::ScheduleSubReqResponse* instance, unsigned int* var) {
-    *var = instance->errorCode();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_setErrorCode
-  //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_setErrorCode(castor::rh::ScheduleSubReqResponse* instance, unsigned int new_var) {
-    instance->setErrorCode(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_errorMessage
-  //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_errorMessage(castor::rh::ScheduleSubReqResponse* instance, const char** var) {
-    *var = instance->errorMessage().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_setErrorMessage
-  //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_setErrorMessage(castor::rh::ScheduleSubReqResponse* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setErrorMessage(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_type
-  //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_type(castor::rh::ScheduleSubReqResponse* instance,
+  int Crh_GetUpdateStartResponse_type(castor::rh::GetUpdateStartResponse* instance,
                                       int* ret) {
     *ret = instance->type();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_clone
+  // Crh_GetUpdateStartResponse_id
   //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_clone(castor::rh::ScheduleSubReqResponse* instance,
+  int Crh_GetUpdateStartResponse_id(castor::rh::GetUpdateStartResponse* instance, u_signed64* var) {
+    *var = instance->id();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_GetUpdateStartResponse_setId
+  //----------------------------------------------------------------------------
+  int Crh_GetUpdateStartResponse_setId(castor::rh::GetUpdateStartResponse* instance, u_signed64 new_var) {
+    instance->setId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_GetUpdateStartResponse_client
+  //----------------------------------------------------------------------------
+  int Crh_GetUpdateStartResponse_client(castor::rh::GetUpdateStartResponse* instance, castor::IClient** var) {
+    *var = instance->client();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_GetUpdateStartResponse_setClient
+  //----------------------------------------------------------------------------
+  int Crh_GetUpdateStartResponse_setClient(castor::rh::GetUpdateStartResponse* instance, castor::IClient* new_var) {
+    instance->setClient(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_GetUpdateStartResponse_errorCode
+  //----------------------------------------------------------------------------
+  int Crh_GetUpdateStartResponse_errorCode(castor::rh::GetUpdateStartResponse* instance, unsigned int* var) {
+    *var = instance->errorCode();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_GetUpdateStartResponse_setErrorCode
+  //----------------------------------------------------------------------------
+  int Crh_GetUpdateStartResponse_setErrorCode(castor::rh::GetUpdateStartResponse* instance, unsigned int new_var) {
+    instance->setErrorCode(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_GetUpdateStartResponse_errorMessage
+  //----------------------------------------------------------------------------
+  int Crh_GetUpdateStartResponse_errorMessage(castor::rh::GetUpdateStartResponse* instance, const char** var) {
+    *var = instance->errorMessage().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_GetUpdateStartResponse_setErrorMessage
+  //----------------------------------------------------------------------------
+  int Crh_GetUpdateStartResponse_setErrorMessage(castor::rh::GetUpdateStartResponse* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setErrorMessage(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_GetUpdateStartResponse_clone
+  //----------------------------------------------------------------------------
+  int Crh_GetUpdateStartResponse_clone(castor::rh::GetUpdateStartResponse* instance,
                                        castor::IObject** ret) {
     *ret = instance->clone();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_id
+  // Crh_GetUpdateStartResponse_diskCopy
   //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_id(castor::rh::ScheduleSubReqResponse* instance, u_signed64* var) {
-    *var = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_setId
-  //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_setId(castor::rh::ScheduleSubReqResponse* instance, u_signed64 new_var) {
-    instance->setId(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_diskCopy
-  //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_diskCopy(castor::rh::ScheduleSubReqResponse* instance, castor::stager::DiskCopy** var) {
+  int Crh_GetUpdateStartResponse_diskCopy(castor::rh::GetUpdateStartResponse* instance, castor::stager::DiskCopy** var) {
     *var = instance->diskCopy();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_setDiskCopy
+  // Crh_GetUpdateStartResponse_setDiskCopy
   //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_setDiskCopy(castor::rh::ScheduleSubReqResponse* instance, castor::stager::DiskCopy* new_var) {
+  int Crh_GetUpdateStartResponse_setDiskCopy(castor::rh::GetUpdateStartResponse* instance, castor::stager::DiskCopy* new_var) {
     instance->setDiskCopy(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_addSources
+  // Crh_GetUpdateStartResponse_addSources
   //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_addSources(castor::rh::ScheduleSubReqResponse* instance, castor::stager::DiskCopyForRecall* obj) {
+  int Crh_GetUpdateStartResponse_addSources(castor::rh::GetUpdateStartResponse* instance, castor::stager::DiskCopyForRecall* obj) {
     instance->addSources(obj);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_removeSources
+  // Crh_GetUpdateStartResponse_removeSources
   //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_removeSources(castor::rh::ScheduleSubReqResponse* instance, castor::stager::DiskCopyForRecall* obj) {
+  int Crh_GetUpdateStartResponse_removeSources(castor::rh::GetUpdateStartResponse* instance, castor::stager::DiskCopyForRecall* obj) {
     instance->removeSources(obj);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ScheduleSubReqResponse_sources
+  // Crh_GetUpdateStartResponse_sources
   //----------------------------------------------------------------------------
-  int Crh_ScheduleSubReqResponse_sources(castor::rh::ScheduleSubReqResponse* instance, castor::stager::DiskCopyForRecall*** var, int* len) {
+  int Crh_GetUpdateStartResponse_sources(castor::rh::GetUpdateStartResponse* instance, castor::stager::DiskCopyForRecall*** var, int* len) {
     std::vector<castor::stager::DiskCopyForRecall*>& result = instance->sources();
     *len = result.size();
     *var = (castor::stager::DiskCopyForRecall**) malloc((*len) * sizeof(castor::stager::DiskCopyForRecall*));

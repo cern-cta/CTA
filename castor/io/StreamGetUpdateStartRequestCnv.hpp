@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/io/StreamScheduleSubReqResponseCnv.hpp
+ *                      castor/io/StreamGetUpdateStartRequestCnv.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamScheduleSubReqResponseCnv.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/24 11:52:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_IO_SCHEDULESUBREQRESPONSE_HPP
-#define CASTOR_IO_SCHEDULESUBREQRESPONSE_HPP
+#ifndef CASTOR_IO_GETUPDATESTARTREQUEST_HPP
+#define CASTOR_IO_GETUPDATESTARTREQUEST_HPP
 
 // Include Files
 #include "castor/Constants.hpp"
@@ -47,23 +47,23 @@ namespace castor {
     class StreamAddress;
 
     /**
-     * class StreamScheduleSubReqResponseCnv
-     * A converter for marshalling/unmarshalling ScheduleSubReqResponse into/from stl
+     * class StreamGetUpdateStartRequestCnv
+     * A converter for marshalling/unmarshalling GetUpdateStartRequest into/from stl
      * streams
      */
-    class StreamScheduleSubReqResponseCnv : public StreamBaseCnv {
+    class StreamGetUpdateStartRequestCnv : public StreamBaseCnv {
 
     public:
 
       /**
        * Constructor
        */
-      StreamScheduleSubReqResponseCnv(castor::ICnvSvc* cnvSvc);
+      StreamGetUpdateStartRequestCnv(castor::ICnvSvc* cnvSvc);
 
       /**
        * Destructor
        */
-      virtual ~StreamScheduleSubReqResponseCnv() throw();
+      virtual ~StreamGetUpdateStartRequestCnv() throw();
 
       /**
        * Gets the object type.
@@ -135,10 +135,10 @@ namespace castor {
                                                castor::ObjectCatalog& newlyCreated)
         throw (castor::exception::Exception);
 
-    }; // end of class StreamScheduleSubReqResponseCnv
+    }; // end of class StreamGetUpdateStartRequestCnv
 
   }; // end of namespace io
 
 }; // end of namespace castor
 
-#endif // CASTOR_IO_SCHEDULESUBREQRESPONSE_HPP
+#endif // CASTOR_IO_GETUPDATESTARTREQUEST_HPP

@@ -91,11 +91,15 @@ namespace castor {
     OBJ_FindReqResponse = 57,
     OBJ_DiskCopyForRecall = 58,
     OBJ_TapeCopyForMigration = 59,
-    OBJ_ScheduleSubReqRequest = 60,
-    OBJ_ScheduleSubReqResponse = 61,
+    OBJ_GetUpdateStartRequest = 60,
+    OBJ_GetUpdateStartResponse = 61,
     OBJ_BaseAddress = 62,
     OBJ_BasicResponse = 63,
-    OBJ_UpdateRepRequest = 64
+    OBJ_UpdateRepRequest = 64,
+    OBJ_MoverCloseRequest = 65,
+    OBJ_StartRequest = 66,
+    OBJ_PutStartRequest = 67,
+    OBJ_ClientResponse = 68
   };
     
   /**
@@ -138,7 +142,7 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[65];
+  extern const char* ObjectsIdStrings[69];
 
   /**
    * Names of the differents Services, used to display

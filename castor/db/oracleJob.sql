@@ -130,7 +130,7 @@ EXCEPTION
  THEN result := 1;
 END;
 
-/* PL/SQL method implementing scheduleSubRequest */
+/* PL/SQL method implementing castor package */
 DECLARE
   TYPE DiskCopy_Cur IS REF CURSOR RETURN SubRequest%ROWTYPE;
 BEGIN
@@ -151,58 +151,96 @@ BEGIN
                  nsHost);
 END;
 
-/* PL/SQL method implementing scheduleSubRequest */
-CREATE OR REPLACE PROCEDURE scheduleSubRequest(srId IN INTEGER, fileSystemId IN INTEGER,
-                                               dci OUT INTEGER, rpath OUT VARCHAR,
-                                               status OUT NUMBER, sources OUT castor.DiskCopy_Cur) AS
+/* PL/SQL method implementing getUpdateStart */
+CREATE OR REPLACE PROCEDURE getUpdateStart
+        (srId IN INTEGER, fileSystemId IN INTEGER,
+         dci OUT INTEGER, rpath OUT VARCHAR,
+         rstatus OUT NUMBER, sources OUT castor.DiskCopy_Cur,
+         rclient OUT INTEGER) AS
   cfid INTEGER;
   fid INTEGER;
   nh VARCHAR(2048);
 BEGIN
+ -- Get IClient
+ SELECT client INTO rclient FROM SubRequest,
+      (SELECT client, id from StageGetRequest UNION
+       SELECT client, id from StagePrepareToGetRequest UNION
+       SELECT client, id from StageUpdateRequest UNION
+       SELECT client, id from StagePrepareToUpdateRequest) Request
+  WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
+ -- Try to find local DiskCopy
  dci := 0;
  SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
-  INTO dci, rpath, status
+  INTO dci, rpath, rstatus
   FROM DiskCopy, SubRequest
   WHERE SubRequest.id = srId
     AND SubRequest.castorfile = DiskCopy.castorfile
     AND DiskCopy.filesystem = fileSystemId
     AND DiskCopy.status IN (0, 1, 2, 5, 6); -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
- IF status IN (2, 5) THEN -- WAITTAPERECALL, WAITFS, Make SubRequest Wait
+ -- If found local one, check whether to wait on it
+ IF rstatus IN (2, 5) THEN -- WAITTAPERECALL, WAITFS, Make SubRequest Wait
    makeSubRequestWait(srId, dci);
    dci := 0;
    rpath := '';
  END IF;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, look in others
+ -- Try to find remote DiskCopies
  OPEN sources FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
  FROM DiskCopy, SubRequest
  WHERE SubRequest.id = srId
    AND SubRequest.castorfile = DiskCopy.castorfile
    AND DiskCopy.status IN (0, 1, 2, 5, 6); -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
- IF sources%NOTFOUND THEN -- create DiskCopy for recall
+ FETCH sources INTO dci, rpath, rstatus;
+ IF sources%NOTFOUND THEN
+   -- No DiskCopy, create one for recall
    getId(1, dci);
+   dci := dci - 1;
    UPDATE SubRequest SET diskCopy = dci, status = 4 -- WAITTAPERECALL
     WHERE id = srId RETURNING castorFile INTO cfid;
    SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
    buildPathFromFileId(fid, nh, rpath);
    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
     VALUES (rpath, dci, 0, cfid, 2); -- status WAITTAPERECALL
-   status := 99; -- WAITTAPERECALL, NEWLY CREATED
+   INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
+   rstatus := 99; -- WAITTAPERECALL, NEWLY CREATED
    close sources;
  ELSE
-   FETCH sources INTO dci, rpath, status;
-   IF status IN (2,5) THEN -- WAITTAPERECALL, WAITFS, Make SubRequest Wait
+   -- Found a DiskCopy, Check whether to wait on it
+   IF rstatus IN (2,5) THEN -- WAITTAPERECALL, WAITFS, Make SubRequest Wait
      makeSubRequestWait(srId, dci);
      dci := 0;
      close sources;
-   ELSE -- create DiskCopy for Disk to Disk copy
+   ELSE
+     -- create DiskCopy for Disk to Disk copy
      getId(1, dci);
+     dci := dci - 1;
      UPDATE SubRequest SET diskCopy = dci WHERE id = srId
       RETURNING castorFile INTO cfid;
      INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
       VALUES (rpath, dci, 0, cfid, 1); -- status WAITDISK2DISKCOPY
-     status := 1; -- status WAITDISK2DISKCOPY
+     INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
+     rstatus := 1; -- status WAITDISK2DISKCOPY
    END IF;
  END IF;
+END;
+
+/* PL/SQL method implementing putStart */
+CREATE OR REPLACE PROCEDURE putStart
+        (srId IN INTEGER, fileSystemId IN INTEGER,
+         rclient OUT INTEGER) AS
+  dcId INTEGER;
+BEGIN
+ -- Get IClient
+ SELECT client, diskCopy INTO rclient, dcId FROM SubRequest,
+      (SELECT client, id from StageGetRequest UNION
+       SELECT client, id from StagePrepareToGetRequest UNION
+       SELECT client, id from StageUpdateRequest UNION
+       SELECT client, id from StagePrepareToUpdateRequest) Request
+  WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
+ -- link DiskCopy and FileSystem and update DiskCopyStatus
+ UPDATE DiskCopy SET status = 6, -- DISKCOPY_STAGEOUT
+                     fileSystem = fileSystemId
+  WHERE id = dcId;
 END;
 
 /* PL/SQL method implementing updateAndCheckSubRequest */
@@ -248,4 +286,27 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we cannot recreate
   dcid := 0;
   COMMIT;
+END;
+
+/* PL/SQL method implementing prepareForMigration */
+CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER) AS
+  nc INTEGER;
+  cfId INTEGER;
+  tcId INTEGER;
+BEGIN
+ -- get CastorFile
+ SELECT castorFile INTO cfId FROM SubRequest where id = srId;
+ -- get number of copies to create
+ SELECT nbCopies INTO nc FROM FileClass, CastorFile
+  WHERE CastorFile.id = cfId AND CastorFile.fileClass = FileClass.id;
+ -- Create TapeCopies
+ <<TapeCopyCreation>>
+ getId(nc, tcId);
+ tcId := tcId - nc;
+ FOR i IN 1..nc LOOP
+  INSERT INTO TapeCopy (id, copyNb, castorFile, status)
+   VALUES (tcId, i, cfId, 0); -- TAPECOPY_CREATED
+  INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
+  tcId := tcId + 1;
+ END LOOP TapeCopyCreation;
 END;

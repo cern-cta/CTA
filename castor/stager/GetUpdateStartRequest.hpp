@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/rh/BasicResponse.hpp
+ *                      castor/stager/GetUpdateStartRequest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,11 +24,12 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_RH_BASICRESPONSE_HPP
-#define CASTOR_RH_BASICRESPONSE_HPP
+#ifndef CASTOR_STAGER_GETUPDATESTARTREQUEST_HPP
+#define CASTOR_STAGER_GETUPDATESTARTREQUEST_HPP
 
 // Include Files
-#include "castor/rh/Response.hpp"
+#include "castor/stager/Request.hpp"
+#include "castor/stager/StartRequest.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -39,25 +40,28 @@ namespace castor {
   class ObjectSet;
   class IObject;
 
-  namespace rh {
+  namespace stager {
 
     /**
-     * class BasicResponse
-     * The most basic response. Adapted to calls returning nothing.
+     * class GetUpdateStartRequest
+     * Internal request used when a get or update job has just started. It does the
+     * scheduling of the given subrequest and returns the client information. This
+     * request exists to avoid the jobs on the diskservers to handle a connection to the
+     * database. 
      */
-    class BasicResponse : public virtual Response {
+    class GetUpdateStartRequest : public virtual Request, public virtual StartRequest {
 
     public:
 
       /**
        * Empty Constructor
        */
-      BasicResponse() throw();
+      GetUpdateStartRequest() throw();
 
       /**
        * Empty Destructor
        */
-      virtual ~BasicResponse() throw();
+      virtual ~GetUpdateStartRequest() throw();
 
       /**
        * Outputs this object in a human readable format
@@ -119,10 +123,10 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-    }; // end of class BasicResponse
+    }; // end of class GetUpdateStartRequest
 
-  }; // end of namespace rh
+  }; // end of namespace stager
 
 }; // end of namespace castor
 
-#endif // CASTOR_RH_BASICRESPONSE_HPP
+#endif // CASTOR_STAGER_GETUPDATESTARTREQUEST_HPP

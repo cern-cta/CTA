@@ -32,6 +32,7 @@
 
 /// Forward declarations for the C world
 struct C_IService_t;
+struct C_IClient_t;
 struct C_IObject_t;
 struct C_IAddress_t;
 struct Cstager_IStagerSvc_t;
@@ -321,8 +322,13 @@ int Cstager_IStagerSvc_isSubRequestToSchedule
  struct Cstager_SubRequest_t* subreq);
 
 /**
- * Schedules a SubRequest on a given FileSystem and
- * return the DiskCopy to use for data access.
+ * Handles ths start of a Get or Update job.
+ * Schedules the corresponding SubRequest on a given
+ * FileSystem and returns the DiskCopy to use for data
+ * access, as well as the IClient object to use for
+ * the reply to the client.
+ * Note that deallocation of the DiskCopy and IClient
+ * is the responsability of the caller.
  * Depending on the available DiskCopies for the file
  * the SubRequest deals with, we have different cases :
  *  - no DiskCopy at all : a DiskCopy is created with
@@ -342,39 +348,63 @@ int Cstager_IStagerSvc_isSubRequestToSchedule
  * has to wait until the end of the copy.
  * The DiskCopy found is returned, sources remains empty.
  *  - one DiskCopy on the selected FileSystem in
- * DISKCOPY_STAGOUT or DISKCOPY_STAGED status :
+ * DISKCOPY_STAGEOUT or DISKCOPY_STAGED status :
  * the SubRequest is ready, the DiskCopy is returned and
  * sources remains empty.
  * @param stgSvc the IStagerSvc used
  * @param subreq  the SubRequest to consider
  * @param fileSystem the selected FileSystem
- * @param sources this is a list of DiskCopies that
- * can be used as source of a Disk to Disk copy. If
- * this list is not empty, the Disk to Disk copy must
- * be performed. If it is empty, the copy is performed
- * by someone else and the caller should just wait
- * for its end.
- * @param sourcesNb the length of the sources list
- * @param diskCopy The DiskCopy to use for the data access
- * or a null pointer if the data access will have to wait
+ * @param diskCopy the DiskCopy to use for the data access or
+ * a null pointer if the data access will have to wait
  * and there is nothing more to be done. Even in case
  * of a non null pointer, the data access will have to
  * wait for a disk to disk copy if the returned DiskCopy
  * is in DISKCOPY_WAITDISKTODISKCOPY status. This
  * disk to disk copy is the responsability of the caller
  * if sources is not empty.
+ * @param sources this is a list of DiskCopies that
+ * can be used as source of a Disk to Disk copy. If
+ * this list is not empty, the Disk to Disk copy must
+ * be performed. If it is empty, the copy is performed
+ * by someone else and the caller should just wait
+ * for its end. Note that the DiskCopies returned in
+ * sources must be deallocated by the caller.
+ * @param client the IClient object to use for client reply
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
  * Cstager_IStagerSvc_errorMsg
  */
-int Cstager_IStagerSvc_scheduleSubRequest
+int Cstager_IStagerSvc_getUpdateStart
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_SubRequest_t* subreq,
  struct Cstager_FileSystem_t* fileSystem,
  struct Cstager_DiskCopyForRecall_t*** sources,
  unsigned int* sourcesNb,
- struct Cstager_DiskCopy_t** diskCopy);
+ struct Cstager_DiskCopy_t** diskCopy,
+ struct C_IClient_t** client);
+
+/**
+ * Handles the start of a Put job.
+ * Links the DiskCopy associated to the SubRequest to
+ * the given FileSystem and updates the DiskCopy status
+ * to DISKCOPY_STAGEOUT.
+ * Returns the IClient object to use for the reply
+ * to the client.
+ * @param stgSvc the IStagerSvc used
+ * @param subreq  the SubRequest to consider
+ * @param fileSystem the selected FileSystem
+ * @param client the IClient object to use for client reply
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */      
+int Cstager_IStagerSvc_putStart
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_SubRequest_t* subreq,
+ struct Cstager_FileSystem_t* fileSystem,
+ struct C_IClient_t** client);
 
 /**
  * Returns the error message associated to the last error.
@@ -524,5 +554,52 @@ int Cstager_IStagerSvc_updateRep
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct C_IAddress_t* address,
  struct C_IObject_t* object);
+
+/**
+ * Recreates a castorFile. This method cleans up the
+ * database when a castor file is recreated. It first
+ * checks whether the recreation is possible.
+ * A recreation is considered to be possible if
+ * no TapeCopy of the given file is in TAPECOPY_SELECTED
+ * status and no DiskCopy of the file is in either
+ * DISKCOPY_WAITFS or DISKCOPY_WAITTAPERECALL or
+ * DISKCOPY_WAITDISK2DISKCOPY status.
+ * When recreation is not possible, a null pointer is
+ * returned.
+ * Else, all DiskCopies for the given file are marked
+ * INVALID (that is those not in DISKCOPY_FAILED and
+ * DISKCOPY_DELETED status) and all TapeCopies are
+ * deleted. A new DiskCopy is then created in
+ * DISKCOPY_WAITFS status and is returned.
+ * Note that everything is commited and that the caller
+ * is responsible for the deletion of the returned
+ * DiskCopy (if any)
+ * @param stgSvc the IStagerSvc used
+ * @param castorFile the file to recreate
+ * @param DiskCopy the new DiskCopy in DISKCOPY_WAITFS status
+ * or null if recreation is not possible
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_recreateCastorFile
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_CastorFile_t* castorFile,
+ struct Cstager_DiskCopy_t** diskCopy);
+
+/**
+ * Prepares a file for migration. This involves
+ * creating the needed TapeCopies according to the
+ * FileClass of the castorFile.
+ * @param stgSvc the IStagerSvc used
+ * @param subreq The SubRequest handling the file to prepare
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+void Cstager_IStagerSvc_prepareForMigration
+(struct Cstager_SubRequest_t* subreq);
 
 #endif // CASTOR_ISTAGERSVC_H

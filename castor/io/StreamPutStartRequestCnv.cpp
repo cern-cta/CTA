@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/io/StreamScheduleSubReqRequestCnv.cpp
+ *                      castor/io/StreamPutStartRequestCnv.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamScheduleSubReqRequestCnv.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/24 11:52:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 // Include Files
-#include "StreamScheduleSubReqRequestCnv.hpp"
+#include "StreamPutStartRequestCnv.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
@@ -38,7 +38,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
-#include "castor/stager/ScheduleSubReqRequest.hpp"
+#include "castor/stager/PutStartRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
 #include <string>
@@ -46,46 +46,46 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamScheduleSubReqRequestCnv> s_factoryStreamScheduleSubReqRequestCnv;
-const castor::ICnvFactory& StreamScheduleSubReqRequestCnvFactory = 
-  s_factoryStreamScheduleSubReqRequestCnv;
+static castor::CnvFactory<castor::io::StreamPutStartRequestCnv> s_factoryStreamPutStartRequestCnv;
+const castor::ICnvFactory& StreamPutStartRequestCnvFactory = 
+  s_factoryStreamPutStartRequestCnv;
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::io::StreamScheduleSubReqRequestCnv::StreamScheduleSubReqRequestCnv(castor::ICnvSvc* cnvSvc) :
+castor::io::StreamPutStartRequestCnv::StreamPutStartRequestCnv(castor::ICnvSvc* cnvSvc) :
   StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::io::StreamScheduleSubReqRequestCnv::~StreamScheduleSubReqRequestCnv() throw() {
+castor::io::StreamPutStartRequestCnv::~StreamPutStartRequestCnv() throw() {
 }
 
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamScheduleSubReqRequestCnv::ObjType() {
-  return castor::stager::ScheduleSubReqRequest::TYPE();
+const unsigned int castor::io::StreamPutStartRequestCnv::ObjType() {
+  return castor::stager::PutStartRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamScheduleSubReqRequestCnv::objType() const {
+const unsigned int castor::io::StreamPutStartRequestCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::io::StreamScheduleSubReqRequestCnv::createRep(castor::IAddress* address,
-                                                           castor::IObject* object,
-                                                           bool autocommit,
-                                                           unsigned int type)
+void castor::io::StreamPutStartRequestCnv::createRep(castor::IAddress* address,
+                                                     castor::IObject* object,
+                                                     bool autocommit,
+                                                     unsigned int type)
   throw (castor::exception::Exception) {
-  castor::stager::ScheduleSubReqRequest* obj = 
-    dynamic_cast<castor::stager::ScheduleSubReqRequest*>(object);
+  castor::stager::PutStartRequest* obj = 
+    dynamic_cast<castor::stager::PutStartRequest*>(object);
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
@@ -108,12 +108,12 @@ void castor::io::StreamScheduleSubReqRequestCnv::createRep(castor::IAddress* add
 //------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
-castor::IObject* castor::io::StreamScheduleSubReqRequestCnv::createObj(castor::IAddress* address)
+castor::IObject* castor::io::StreamPutStartRequestCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   // create the new Object
-  castor::stager::ScheduleSubReqRequest* object = new castor::stager::ScheduleSubReqRequest();
+  castor::stager::PutStartRequest* object = new castor::stager::PutStartRequest();
   // Now retrieve and set members
   u_signed64 flags;
   ad->stream() >> flags;
@@ -163,12 +163,12 @@ castor::IObject* castor::io::StreamScheduleSubReqRequestCnv::createObj(castor::I
 //------------------------------------------------------------------------------
 // marshalObject
 //------------------------------------------------------------------------------
-void castor::io::StreamScheduleSubReqRequestCnv::marshalObject(castor::IObject* object,
-                                                               castor::io::StreamAddress* address,
-                                                               castor::ObjectSet& alreadyDone)
+void castor::io::StreamPutStartRequestCnv::marshalObject(castor::IObject* object,
+                                                         castor::io::StreamAddress* address,
+                                                         castor::ObjectSet& alreadyDone)
   throw (castor::exception::Exception) {
-  castor::stager::ScheduleSubReqRequest* obj = 
-    dynamic_cast<castor::stager::ScheduleSubReqRequest*>(object);
+  castor::stager::PutStartRequest* obj = 
+    dynamic_cast<castor::stager::PutStartRequest*>(object);
   if (0 == obj) {
     // Case of a null pointer
     address->stream() << castor::OBJ_Ptr << ((unsigned int)0);
@@ -188,16 +188,16 @@ void castor::io::StreamScheduleSubReqRequestCnv::marshalObject(castor::IObject* 
 //------------------------------------------------------------------------------
 // unmarshalObject
 //------------------------------------------------------------------------------
-castor::IObject* castor::io::StreamScheduleSubReqRequestCnv::unmarshalObject(castor::io::biniostream& stream,
-                                                                             castor::ObjectCatalog& newlyCreated)
+castor::IObject* castor::io::StreamPutStartRequestCnv::unmarshalObject(castor::io::biniostream& stream,
+                                                                       castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
   // Fill object with associations
-  castor::stager::ScheduleSubReqRequest* obj = 
-    dynamic_cast<castor::stager::ScheduleSubReqRequest*>(object);
+  castor::stager::PutStartRequest* obj = 
+    dynamic_cast<castor::stager::PutStartRequest*>(object);
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));

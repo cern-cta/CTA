@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/io/StreamScheduleSubReqRequestCnv.hpp
+ *                      castor/io/StreamMoverCloseRequestCnv.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamScheduleSubReqRequestCnv.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/24 11:52:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_IO_SCHEDULESUBREQREQUEST_HPP
-#define CASTOR_IO_SCHEDULESUBREQREQUEST_HPP
+#ifndef CASTOR_IO_MOVERCLOSEREQUEST_HPP
+#define CASTOR_IO_MOVERCLOSEREQUEST_HPP
 
 // Include Files
 #include "castor/Constants.hpp"
@@ -47,23 +47,23 @@ namespace castor {
     class StreamAddress;
 
     /**
-     * class StreamScheduleSubReqRequestCnv
-     * A converter for marshalling/unmarshalling ScheduleSubReqRequest into/from stl
+     * class StreamMoverCloseRequestCnv
+     * A converter for marshalling/unmarshalling MoverCloseRequest into/from stl
      * streams
      */
-    class StreamScheduleSubReqRequestCnv : public StreamBaseCnv {
+    class StreamMoverCloseRequestCnv : public StreamBaseCnv {
 
     public:
 
       /**
        * Constructor
        */
-      StreamScheduleSubReqRequestCnv(castor::ICnvSvc* cnvSvc);
+      StreamMoverCloseRequestCnv(castor::ICnvSvc* cnvSvc);
 
       /**
        * Destructor
        */
-      virtual ~StreamScheduleSubReqRequestCnv() throw();
+      virtual ~StreamMoverCloseRequestCnv() throw();
 
       /**
        * Gets the object type.
@@ -135,10 +135,10 @@ namespace castor {
                                                castor::ObjectCatalog& newlyCreated)
         throw (castor::exception::Exception);
 
-    }; // end of class StreamScheduleSubReqRequestCnv
+    }; // end of class StreamMoverCloseRequestCnv
 
   }; // end of namespace io
 
 }; // end of namespace castor
 
-#endif // CASTOR_IO_SCHEDULESUBREQREQUEST_HPP
+#endif // CASTOR_IO_MOVERCLOSEREQUEST_HPP

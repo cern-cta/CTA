@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/ScheduleSubReqRequest.cpp
+ *                      castor/stager/PutStartRequest.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ScheduleSubReqRequest.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/12/01 10:41:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
@@ -28,8 +28,9 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/stager/PutStartRequest.hpp"
 #include "castor/stager/Request.hpp"
-#include "castor/stager/ScheduleSubReqRequest.hpp"
+#include "castor/stager/StartRequest.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -37,27 +38,25 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::stager::ScheduleSubReqRequest::ScheduleSubReqRequest() throw() :
+castor::stager::PutStartRequest::PutStartRequest() throw() :
   Request(),
-  m_subreqId(0),
-  m_diskServer(""),
-  m_fileSystem(""),
+  StartRequest(),
   m_id(0) {
 };
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::stager::ScheduleSubReqRequest::~ScheduleSubReqRequest() throw() {
+castor::stager::PutStartRequest::~PutStartRequest() throw() {
 };
 
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::stager::ScheduleSubReqRequest::print(std::ostream& stream,
-                                                  std::string indent,
-                                                  castor::ObjectSet& alreadyPrinted) const {
-  stream << indent << "[# ScheduleSubReqRequest #]" << std::endl;
+void castor::stager::PutStartRequest::print(std::ostream& stream,
+                                            std::string indent,
+                                            castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# PutStartRequest #]" << std::endl;
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
     stream << indent << "Back pointer, see above" << std::endl;
@@ -65,10 +64,8 @@ void castor::stager::ScheduleSubReqRequest::print(std::ostream& stream,
   }
   // Call print on the parent class(es)
   this->Request::print(stream, indent, alreadyPrinted);
+  this->StartRequest::print(stream, indent, alreadyPrinted);
   // Output of all members
-  stream << indent << "subreqId : " << m_subreqId << std::endl;
-  stream << indent << "diskServer : " << m_diskServer << std::endl;
-  stream << indent << "fileSystem : " << m_fileSystem << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
@@ -76,7 +73,7 @@ void castor::stager::ScheduleSubReqRequest::print(std::ostream& stream,
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::stager::ScheduleSubReqRequest::print() const {
+void castor::stager::PutStartRequest::print() const {
   ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
@@ -84,21 +81,21 @@ void castor::stager::ScheduleSubReqRequest::print() const {
 //------------------------------------------------------------------------------
 // TYPE
 //------------------------------------------------------------------------------
-int castor::stager::ScheduleSubReqRequest::TYPE() {
-  return OBJ_ScheduleSubReqRequest;
+int castor::stager::PutStartRequest::TYPE() {
+  return OBJ_PutStartRequest;
 }
 
 //------------------------------------------------------------------------------
 // type
 //------------------------------------------------------------------------------
-int castor::stager::ScheduleSubReqRequest::type() const {
+int castor::stager::PutStartRequest::type() const {
   return TYPE();
 }
 
 //------------------------------------------------------------------------------
 // clone
 //------------------------------------------------------------------------------
-castor::IObject* castor::stager::ScheduleSubReqRequest::clone() {
-  return new ScheduleSubReqRequest(*this);
+castor::IObject* castor::stager::PutStartRequest::clone() {
+  return new PutStartRequest(*this);
 }
 

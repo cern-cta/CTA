@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/db/ora/OraScheduleSubReqRequestCnv.hpp
+ *                      castor/db/ora/OraPutStartRequestCnv.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraScheduleSubReqRequestCnv.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/24 11:52:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_DB_ORA_SCHEDULESUBREQREQUEST_HPP
-#define CASTOR_DB_ORA_SCHEDULESUBREQREQUEST_HPP
+#ifndef CASTOR_DB_ORA_PUTSTARTREQUEST_HPP
+#define CASTOR_DB_ORA_PUTSTARTREQUEST_HPP
 
 // Include Files
 #include "castor/Constants.hpp"
@@ -43,7 +43,7 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
-    class ScheduleSubReqRequest;
+    class PutStartRequest;
 
   }; // end of namespace stager
 
@@ -52,23 +52,22 @@ namespace castor {
     namespace ora {
 
       /**
-       * class OraScheduleSubReqRequestCnv
-       * A converter for storing/retrieving ScheduleSubReqRequest into/from an Oracle
-       * database
+       * class OraPutStartRequestCnv
+       * A converter for storing/retrieving PutStartRequest into/from an Oracle database
        */
-      class OraScheduleSubReqRequestCnv : public OraBaseCnv {
+      class OraPutStartRequestCnv : public OraBaseCnv {
 
       public:
 
         /**
          * Constructor
          */
-        OraScheduleSubReqRequestCnv(castor::ICnvSvc* cnvSvc);
+        OraPutStartRequestCnv(castor::ICnvSvc* cnvSvc);
 
         /**
          * Destructor
          */
-        virtual ~OraScheduleSubReqRequestCnv() throw();
+        virtual ~OraPutStartRequestCnv() throw();
 
         /**
          * Gets the object type.
@@ -174,7 +173,7 @@ namespace castor {
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
-        virtual void fillRepSvcClass(castor::stager::ScheduleSubReqRequest* obj)
+        virtual void fillRepSvcClass(castor::stager::PutStartRequest* obj)
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
@@ -182,7 +181,7 @@ namespace castor {
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
-        virtual void fillRepIClient(castor::stager::ScheduleSubReqRequest* obj)
+        virtual void fillRepIClient(castor::stager::PutStartRequest* obj)
           throw (castor::exception::Exception, oracle::occi::SQLException);
 
         /**
@@ -201,7 +200,7 @@ namespace castor {
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
-        virtual void fillObjSvcClass(castor::stager::ScheduleSubReqRequest* obj)
+        virtual void fillObjSvcClass(castor::stager::PutStartRequest* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -209,7 +208,7 @@ namespace castor {
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
-        virtual void fillObjIClient(castor::stager::ScheduleSubReqRequest* obj)
+        virtual void fillObjIClient(castor::stager::PutStartRequest* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -280,7 +279,7 @@ namespace castor {
         /// SQL update statement object for member client
         oracle::occi::Statement *m_updateIClientStatement;
 
-      }; // end of class OraScheduleSubReqRequestCnv
+      }; // end of class OraPutStartRequestCnv
 
     }; // end of namespace ora
 
@@ -288,4 +287,4 @@ namespace castor {
 
 }; // end of namespace castor
 
-#endif // CASTOR_DB_ORA_SCHEDULESUBREQREQUEST_HPP
+#endif // CASTOR_DB_ORA_PUTSTARTREQUEST_HPP

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/db/ora/OraScheduleSubReqRequestCnv.cpp
+ *                      castor/db/ora/OraMoverCloseRequestCnv.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraScheduleSubReqRequestCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/30 11:24:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 // Include Files
-#include "OraScheduleSubReqRequestCnv.hpp"
+#include "OraMoverCloseRequestCnv.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
@@ -39,67 +39,67 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
-#include "castor/stager/ScheduleSubReqRequest.hpp"
+#include "castor/stager/MoverCloseRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::db::ora::OraScheduleSubReqRequestCnv> s_factoryOraScheduleSubReqRequestCnv;
-const castor::ICnvFactory& OraScheduleSubReqRequestCnvFactory = 
-  s_factoryOraScheduleSubReqRequestCnv;
+static castor::CnvFactory<castor::db::ora::OraMoverCloseRequestCnv> s_factoryOraMoverCloseRequestCnv;
+const castor::ICnvFactory& OraMoverCloseRequestCnvFactory = 
+  s_factoryOraMoverCloseRequestCnv;
 
 //------------------------------------------------------------------------------
 // Static constants initialization
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
-const std::string castor::db::ora::OraScheduleSubReqRequestCnv::s_insertStatementString =
-"INSERT INTO ScheduleSubReqRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, subreqId, diskServer, fileSystem, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,:16)";
+const std::string castor::db::ora::OraMoverCloseRequestCnv::s_insertStatementString =
+"INSERT INTO MoverCloseRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, subReqId, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14)";
 
 /// SQL statement for request deletion
-const std::string castor::db::ora::OraScheduleSubReqRequestCnv::s_deleteStatementString =
-"DELETE FROM ScheduleSubReqRequest WHERE id = :1";
+const std::string castor::db::ora::OraMoverCloseRequestCnv::s_deleteStatementString =
+"DELETE FROM MoverCloseRequest WHERE id = :1";
 
 /// SQL statement for request selection
-const std::string castor::db::ora::OraScheduleSubReqRequestCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, subreqId, diskServer, fileSystem, id, svcClass, client FROM ScheduleSubReqRequest WHERE id = :1";
+const std::string castor::db::ora::OraMoverCloseRequestCnv::s_selectStatementString =
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, subReqId, id, svcClass, client FROM MoverCloseRequest WHERE id = :1";
 
 /// SQL statement for request update
-const std::string castor::db::ora::OraScheduleSubReqRequestCnv::s_updateStatementString =
-"UPDATE ScheduleSubReqRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, subreqId = :11, diskServer = :12, fileSystem = :13 WHERE id = :14";
+const std::string castor::db::ora::OraMoverCloseRequestCnv::s_updateStatementString =
+"UPDATE MoverCloseRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, subReqId = :11 WHERE id = :12";
 
 /// SQL statement for type storage
-const std::string castor::db::ora::OraScheduleSubReqRequestCnv::s_storeTypeStatementString =
+const std::string castor::db::ora::OraMoverCloseRequestCnv::s_storeTypeStatementString =
 "INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
-const std::string castor::db::ora::OraScheduleSubReqRequestCnv::s_deleteTypeStatementString =
+const std::string castor::db::ora::OraMoverCloseRequestCnv::s_deleteTypeStatementString =
 "DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL statement for request status insertion
-const std::string castor::db::ora::OraScheduleSubReqRequestCnv::s_insertStatusStatementString =
+const std::string castor::db::ora::OraMoverCloseRequestCnv::s_insertStatusStatementString =
 "INSERT INTO requestsStatus (id, status, creation, lastChange) VALUES (:1, 'NEW', SYSDATE, SYSDATE)";
 
 /// SQL statement for request status deletion
-const std::string castor::db::ora::OraScheduleSubReqRequestCnv::s_deleteStatusStatementString =
+const std::string castor::db::ora::OraMoverCloseRequestCnv::s_deleteStatusStatementString =
 "DELETE FROM requestsStatus WHERE id = :1";
 
 /// SQL existence statement for member svcClass
-const std::string castor::db::ora::OraScheduleSubReqRequestCnv::s_checkSvcClassExistStatementString =
+const std::string castor::db::ora::OraMoverCloseRequestCnv::s_checkSvcClassExistStatementString =
 "SELECT id from SvcClass WHERE id = :1";
 
 /// SQL update statement for member svcClass
-const std::string castor::db::ora::OraScheduleSubReqRequestCnv::s_updateSvcClassStatementString =
-"UPDATE ScheduleSubReqRequest SET svcClass = : 1 WHERE id = :2";
+const std::string castor::db::ora::OraMoverCloseRequestCnv::s_updateSvcClassStatementString =
+"UPDATE MoverCloseRequest SET svcClass = : 1 WHERE id = :2";
 
 /// SQL update statement for member client
-const std::string castor::db::ora::OraScheduleSubReqRequestCnv::s_updateIClientStatementString =
-"UPDATE ScheduleSubReqRequest SET client = : 1 WHERE id = :2";
+const std::string castor::db::ora::OraMoverCloseRequestCnv::s_updateIClientStatementString =
+"UPDATE MoverCloseRequest SET client = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::db::ora::OraScheduleSubReqRequestCnv::OraScheduleSubReqRequestCnv(castor::ICnvSvc* cnvSvc) :
+castor::db::ora::OraMoverCloseRequestCnv::OraMoverCloseRequestCnv(castor::ICnvSvc* cnvSvc) :
   OraBaseCnv(cnvSvc),
   m_insertStatement(0),
   m_deleteStatement(0),
@@ -116,14 +116,14 @@ castor::db::ora::OraScheduleSubReqRequestCnv::OraScheduleSubReqRequestCnv(castor
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::db::ora::OraScheduleSubReqRequestCnv::~OraScheduleSubReqRequestCnv() throw() {
+castor::db::ora::OraMoverCloseRequestCnv::~OraMoverCloseRequestCnv() throw() {
   reset();
 }
 
 //------------------------------------------------------------------------------
 // reset
 //------------------------------------------------------------------------------
-void castor::db::ora::OraScheduleSubReqRequestCnv::reset() throw() {
+void castor::db::ora::OraMoverCloseRequestCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
@@ -156,27 +156,27 @@ void castor::db::ora::OraScheduleSubReqRequestCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraScheduleSubReqRequestCnv::ObjType() {
-  return castor::stager::ScheduleSubReqRequest::TYPE();
+const unsigned int castor::db::ora::OraMoverCloseRequestCnv::ObjType() {
+  return castor::stager::MoverCloseRequest::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraScheduleSubReqRequestCnv::objType() const {
+const unsigned int castor::db::ora::OraMoverCloseRequestCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // fillRep
 //------------------------------------------------------------------------------
-void castor::db::ora::OraScheduleSubReqRequestCnv::fillRep(castor::IAddress* address,
-                                                           castor::IObject* object,
-                                                           unsigned int type,
-                                                           bool autocommit)
+void castor::db::ora::OraMoverCloseRequestCnv::fillRep(castor::IAddress* address,
+                                                       castor::IObject* object,
+                                                       unsigned int type,
+                                                       bool autocommit)
   throw (castor::exception::Exception) {
-  castor::stager::ScheduleSubReqRequest* obj = 
-    dynamic_cast<castor::stager::ScheduleSubReqRequest*>(object);
+  castor::stager::MoverCloseRequest* obj = 
+    dynamic_cast<castor::stager::MoverCloseRequest*>(object);
   try {
     switch (type) {
     case castor::OBJ_SvcClass :
@@ -206,7 +206,7 @@ void castor::db::ora::OraScheduleSubReqRequestCnv::fillRep(castor::IAddress* add
 //------------------------------------------------------------------------------
 // fillRepSvcClass
 //------------------------------------------------------------------------------
-void castor::db::ora::OraScheduleSubReqRequestCnv::fillRepSvcClass(castor::stager::ScheduleSubReqRequest* obj)
+void castor::db::ora::OraMoverCloseRequestCnv::fillRepSvcClass(castor::stager::MoverCloseRequest* obj)
   throw (castor::exception::Exception, oracle::occi::SQLException) {
   if (0 != obj->svcClass()) {
     // Check checkSvcClassExist statement
@@ -238,7 +238,7 @@ void castor::db::ora::OraScheduleSubReqRequestCnv::fillRepSvcClass(castor::stage
 //------------------------------------------------------------------------------
 // fillRepIClient
 //------------------------------------------------------------------------------
-void castor::db::ora::OraScheduleSubReqRequestCnv::fillRepIClient(castor::stager::ScheduleSubReqRequest* obj)
+void castor::db::ora::OraMoverCloseRequestCnv::fillRepIClient(castor::stager::MoverCloseRequest* obj)
   throw (castor::exception::Exception, oracle::occi::SQLException) {
   // Check update statement
   if (0 == m_updateIClientStatement) {
@@ -253,12 +253,12 @@ void castor::db::ora::OraScheduleSubReqRequestCnv::fillRepIClient(castor::stager
 //------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
-void castor::db::ora::OraScheduleSubReqRequestCnv::fillObj(castor::IAddress* address,
-                                                           castor::IObject* object,
-                                                           unsigned int type)
+void castor::db::ora::OraMoverCloseRequestCnv::fillObj(castor::IAddress* address,
+                                                       castor::IObject* object,
+                                                       unsigned int type)
   throw (castor::exception::Exception) {
-  castor::stager::ScheduleSubReqRequest* obj = 
-    dynamic_cast<castor::stager::ScheduleSubReqRequest*>(object);
+  castor::stager::MoverCloseRequest* obj = 
+    dynamic_cast<castor::stager::MoverCloseRequest*>(object);
   switch (type) {
   case castor::OBJ_SvcClass :
     fillObjSvcClass(obj);
@@ -278,7 +278,7 @@ void castor::db::ora::OraScheduleSubReqRequestCnv::fillObj(castor::IAddress* add
 //------------------------------------------------------------------------------
 // fillObjSvcClass
 //------------------------------------------------------------------------------
-void castor::db::ora::OraScheduleSubReqRequestCnv::fillObjSvcClass(castor::stager::ScheduleSubReqRequest* obj)
+void castor::db::ora::OraMoverCloseRequestCnv::fillObjSvcClass(castor::stager::MoverCloseRequest* obj)
   throw (castor::exception::Exception) {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
@@ -292,7 +292,7 @@ void castor::db::ora::OraScheduleSubReqRequestCnv::fillObjSvcClass(castor::stage
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = (u_signed64)rset->getDouble(15);
+  u_signed64 svcClassId = (u_signed64)rset->getDouble(13);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -316,7 +316,7 @@ void castor::db::ora::OraScheduleSubReqRequestCnv::fillObjSvcClass(castor::stage
 //------------------------------------------------------------------------------
 // fillObjIClient
 //------------------------------------------------------------------------------
-void castor::db::ora::OraScheduleSubReqRequestCnv::fillObjIClient(castor::stager::ScheduleSubReqRequest* obj)
+void castor::db::ora::OraMoverCloseRequestCnv::fillObjIClient(castor::stager::MoverCloseRequest* obj)
   throw (castor::exception::Exception) {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
@@ -330,7 +330,7 @@ void castor::db::ora::OraScheduleSubReqRequestCnv::fillObjIClient(castor::stager
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = (u_signed64)rset->getDouble(16);
+  u_signed64 clientId = (u_signed64)rset->getDouble(14);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -356,13 +356,13 @@ void castor::db::ora::OraScheduleSubReqRequestCnv::fillObjIClient(castor::stager
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::ora::OraScheduleSubReqRequestCnv::createRep(castor::IAddress* address,
-                                                             castor::IObject* object,
-                                                             bool autocommit,
-                                                             unsigned int type)
+void castor::db::ora::OraMoverCloseRequestCnv::createRep(castor::IAddress* address,
+                                                         castor::IObject* object,
+                                                         bool autocommit,
+                                                         unsigned int type)
   throw (castor::exception::Exception) {
-  castor::stager::ScheduleSubReqRequest* obj = 
-    dynamic_cast<castor::stager::ScheduleSubReqRequest*>(object);
+  castor::stager::MoverCloseRequest* obj = 
+    dynamic_cast<castor::stager::MoverCloseRequest*>(object);
   // check whether something needs to be done
   if (0 == obj) return;
   if (0 != obj->id()) return;
@@ -395,12 +395,10 @@ void castor::db::ora::OraScheduleSubReqRequestCnv::createRep(castor::IAddress* a
     m_insertStatement->setString(8, obj->svcClassName());
     m_insertStatement->setString(9, obj->userTag());
     m_insertStatement->setString(10, obj->reqId());
-    m_insertStatement->setDouble(11, obj->subreqId());
-    m_insertStatement->setString(12, obj->diskServer());
-    m_insertStatement->setString(13, obj->fileSystem());
-    m_insertStatement->setDouble(14, obj->id());
-    m_insertStatement->setDouble(15, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setDouble(16, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setDouble(11, obj->subReqId());
+    m_insertStatement->setDouble(12, obj->id());
+    m_insertStatement->setDouble(13, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setDouble(14, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -433,9 +431,7 @@ void castor::db::ora::OraScheduleSubReqRequestCnv::createRep(castor::IAddress* a
                     << "  svcClassName : " << obj->svcClassName() << std::endl
                     << "  userTag : " << obj->userTag() << std::endl
                     << "  reqId : " << obj->reqId() << std::endl
-                    << "  subreqId : " << obj->subreqId() << std::endl
-                    << "  diskServer : " << obj->diskServer() << std::endl
-                    << "  fileSystem : " << obj->fileSystem() << std::endl
+                    << "  subReqId : " << obj->subReqId() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  svcClass : " << obj->svcClass() << std::endl
                     << "  client : " << obj->client() << std::endl;
@@ -446,12 +442,12 @@ void castor::db::ora::OraScheduleSubReqRequestCnv::createRep(castor::IAddress* a
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::ora::OraScheduleSubReqRequestCnv::updateRep(castor::IAddress* address,
-                                                             castor::IObject* object,
-                                                             bool autocommit)
+void castor::db::ora::OraMoverCloseRequestCnv::updateRep(castor::IAddress* address,
+                                                         castor::IObject* object,
+                                                         bool autocommit)
   throw (castor::exception::Exception) {
-  castor::stager::ScheduleSubReqRequest* obj = 
-    dynamic_cast<castor::stager::ScheduleSubReqRequest*>(object);
+  castor::stager::MoverCloseRequest* obj = 
+    dynamic_cast<castor::stager::MoverCloseRequest*>(object);
   // check whether something needs to be done
   if (0 == obj) return;
   try {
@@ -470,10 +466,8 @@ void castor::db::ora::OraScheduleSubReqRequestCnv::updateRep(castor::IAddress* a
     m_updateStatement->setString(8, obj->svcClassName());
     m_updateStatement->setString(9, obj->userTag());
     m_updateStatement->setString(10, obj->reqId());
-    m_updateStatement->setDouble(11, obj->subreqId());
-    m_updateStatement->setString(12, obj->diskServer());
-    m_updateStatement->setString(13, obj->fileSystem());
-    m_updateStatement->setDouble(14, obj->id());
+    m_updateStatement->setDouble(11, obj->subReqId());
+    m_updateStatement->setDouble(12, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -503,12 +497,12 @@ void castor::db::ora::OraScheduleSubReqRequestCnv::updateRep(castor::IAddress* a
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::ora::OraScheduleSubReqRequestCnv::deleteRep(castor::IAddress* address,
-                                                             castor::IObject* object,
-                                                             bool autocommit)
+void castor::db::ora::OraMoverCloseRequestCnv::deleteRep(castor::IAddress* address,
+                                                         castor::IObject* object,
+                                                         bool autocommit)
   throw (castor::exception::Exception) {
-  castor::stager::ScheduleSubReqRequest* obj = 
-    dynamic_cast<castor::stager::ScheduleSubReqRequest*>(object);
+  castor::stager::MoverCloseRequest* obj = 
+    dynamic_cast<castor::stager::MoverCloseRequest*>(object);
   // check whether something needs to be done
   if (0 == obj) return;
   try {
@@ -560,7 +554,7 @@ void castor::db::ora::OraScheduleSubReqRequestCnv::deleteRep(castor::IAddress* a
 //------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
-castor::IObject* castor::db::ora::OraScheduleSubReqRequestCnv::createObj(castor::IAddress* address)
+castor::IObject* castor::db::ora::OraMoverCloseRequestCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
   castor::BaseAddress* ad = 
     dynamic_cast<castor::BaseAddress*>(address);
@@ -578,7 +572,7 @@ castor::IObject* castor::db::ora::OraScheduleSubReqRequestCnv::createObj(castor:
       throw ex;
     }
     // create the new Object
-    castor::stager::ScheduleSubReqRequest* object = new castor::stager::ScheduleSubReqRequest();
+    castor::stager::MoverCloseRequest* object = new castor::stager::MoverCloseRequest();
     // Now retrieve and set members
     object->setFlags((u_signed64)rset->getDouble(1));
     object->setUserName(rset->getString(2));
@@ -590,10 +584,8 @@ castor::IObject* castor::db::ora::OraScheduleSubReqRequestCnv::createObj(castor:
     object->setSvcClassName(rset->getString(8));
     object->setUserTag(rset->getString(9));
     object->setReqId(rset->getString(10));
-    object->setSubreqId((u_signed64)rset->getDouble(11));
-    object->setDiskServer(rset->getString(12));
-    object->setFileSystem(rset->getString(13));
-    object->setId((u_signed64)rset->getDouble(14));
+    object->setSubReqId((u_signed64)rset->getDouble(11));
+    object->setId((u_signed64)rset->getDouble(12));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -621,7 +613,7 @@ castor::IObject* castor::db::ora::OraScheduleSubReqRequestCnv::createObj(castor:
 //------------------------------------------------------------------------------
 // updateObj
 //------------------------------------------------------------------------------
-void castor::db::ora::OraScheduleSubReqRequestCnv::updateObj(castor::IObject* obj)
+void castor::db::ora::OraMoverCloseRequestCnv::updateObj(castor::IObject* obj)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statement is ok
@@ -637,8 +629,8 @@ void castor::db::ora::OraScheduleSubReqRequestCnv::updateObj(castor::IObject* ob
       throw ex;
     }
     // Now retrieve and set members
-    castor::stager::ScheduleSubReqRequest* object = 
-      dynamic_cast<castor::stager::ScheduleSubReqRequest*>(obj);
+    castor::stager::MoverCloseRequest* object = 
+      dynamic_cast<castor::stager::MoverCloseRequest*>(obj);
     object->setFlags((u_signed64)rset->getDouble(1));
     object->setUserName(rset->getString(2));
     object->setEuid(rset->getInt(3));
@@ -649,10 +641,8 @@ void castor::db::ora::OraScheduleSubReqRequestCnv::updateObj(castor::IObject* ob
     object->setSvcClassName(rset->getString(8));
     object->setUserTag(rset->getString(9));
     object->setReqId(rset->getString(10));
-    object->setSubreqId((u_signed64)rset->getDouble(11));
-    object->setDiskServer(rset->getString(12));
-    object->setFileSystem(rset->getString(13));
-    object->setId((u_signed64)rset->getDouble(14));
+    object->setSubReqId((u_signed64)rset->getDouble(11));
+    object->setId((u_signed64)rset->getDouble(12));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {
