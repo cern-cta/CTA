@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.109 2001/03/09 02:46:59 jdurand Exp $
+ * $Id: poolmgr.c,v 1.110 2001/03/11 08:28:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.109 $ $Date: 2001/03/09 02:46:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.110 $ $Date: 2001/03/11 08:28:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2677,7 +2677,7 @@ int migpoolfiles(pool_p)
     /* but when they said that they do not have equal number of free streams */
 
     /* We reset internal indexes */
-    for (i = 0; i < nbfileclasses; i++) {
+    for (i = 0; i < pool_p->migr->nfileclass; i++) {
       /* Will range from 0 to (pool_p->migr->fileclass[i]->nfree_stream - 1) */
       pool_p->migr->fileclass[i]->ifree_stream = 0;
     }
