@@ -1,14 +1,14 @@
 /*
- * $Id: popen.c,v 1.8 2001/11/16 14:16:27 jdurand Exp $
+ * $Id: popen.c,v 1.9 2002/09/20 06:59:35 baud Exp $
  */
 
 /*
- * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1994-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: popen.c,v $ $Revision: 1.8 $ $Date: 2001/11/16 14:16:27 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: popen.c,v $ $Revision: 1.9 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* popen.c       Remote pipe I/O - open file a file                      */
@@ -116,9 +116,10 @@ char *type 	;
       rfio_errno = 0;
       if ( file == NULL ) {
 	 TRACE(1,"rfio","popen() failed ,error %d", errno) ;
-      TRACE(2,"rfio","freeing RFIO descriptor at 0X%X", rfp);
-      (void) free((char *)rfp);
-      END_TRACE();
+	 TRACE(2,"rfio","freeing RFIO descriptor at 0X%X", rfp);
+	 serrno = 0;
+	 (void) free((char *)rfp);
+	 END_TRACE();
 	 return (NULL) ;
       }
       rfp->fp_save = file;

@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.18 2002/03/21 10:26:24 baud Exp $
+ * $Id: read.c,v 1.19 2002/09/20 06:59:36 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.18 $ $Date: 2002/03/21 10:26:24 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.19 $ $Date: 2002/09/20 06:59:36 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* read.c       Remote File I/O - read  a file                          */
@@ -102,7 +102,7 @@ int     s, size;
    if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) == -1) {
       TRACE(2,"rfio","rfio_read: using local read(%d, %x, %d)", s, ptr, nbytes);
       status = read(s, ptr, nbytes);
-
+      if ( status < 0 ) serrno = 0;
       if ( HsmType == RFIO_HSM_CNS ) {
           save_errno = errno;
           rfio_HsmIf_IOError(s,errno);

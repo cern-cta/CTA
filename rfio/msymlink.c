@@ -1,15 +1,15 @@
 /*
- * $Id: msymlink.c,v 1.11 2002/08/15 08:27:36 jdurand Exp $
+ * $Id: msymlink.c,v 1.12 2002/09/20 06:59:35 baud Exp $
  */
 
 
 /*
- * Copyright (C) 1995-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1995-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.11 $ $Date: 2002/08/15 08:27:36 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.12 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -64,6 +64,7 @@ int DLL_DECL rfio_msymlink(n1,file2)
     /* The file is local */
 #if ! defined(_WIN32)
       rc = symlink(n1,filename) ;
+      if ( rc < 0 ) serrno = 0;
 #else
     { serrno = SEOPNOTSUP; rc = -1;}
 #endif

@@ -1,5 +1,5 @@
 /*
- * $Id: fwrite.c,v 1.9 2002/09/19 06:58:05 baud Exp $
+ * $Id: fwrite.c,v 1.10 2002/09/20 06:59:35 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fwrite.c,v $ $Revision: 1.9 $ $Date: 2002/09/19 06:58:05 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fwrite.c,v $ $Revision: 1.10 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fwrite.c     Remote File I/O - write a binary file                   */
@@ -41,6 +41,7 @@ int DLL_DECL rfio_fwrite(ptr, size, items, fp)
 
         if (rfio_rfilefdt_findptr(fp,FINDRFILE_WITH_SCAN) == -1) {
 		rc= fwrite(ptr, size, items, (FILE *)fp) ;
+		if ( rc == 0 ) serrno = 0;
 		END_TRACE() ; 
 		rfio_errno = 0;
 		return rc ;

@@ -1,14 +1,14 @@
 /*
- * $Id: chdir.c,v 1.1 2001/06/17 13:38:04 baud Exp $
+ * $Id: chdir.c,v 1.2 2002/09/20 06:59:34 baud Exp $
  */
 
 /*
- * Copyright (C) 2001 by CERN/IT/PDP/DM
+ * Copyright (C) 2001-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: chdir.c,v $ $Revision: 1.1 $ $Date: 2001/06/17 13:38:04 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: chdir.c,v $ $Revision: 1.2 $ $Date: 2002/09/20 06:59:34 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /* chdir.c       Remote File I/O - change working directory             */
@@ -46,6 +46,8 @@ char		*dirpath;       /* directory path               */
       rfio_errno = 0;
       if ( (rc = chdir(filename)) == 0 )
           rfio_HsmIf_SetCwdType(0);
+      else
+          serrno = 0;
       return(rc);
    }
 

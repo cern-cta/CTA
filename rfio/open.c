@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.16 2002/03/25 16:52:00 baud Exp $
+ * $Id: open.c,v 1.17 2002/09/20 06:59:35 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.16 $ $Date: 2002/03/25 16:52:00 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.17 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */
@@ -295,6 +295,7 @@ char  	*vmstr ;
           return(rfio_HsmIf_open(filename,flags,mode));
       }
       status= open(filename, flags, mode) ;
+      if ( status < 0 ) serrno = 0;
       rfio_errno = 0;
       END_TRACE() ; 
 #if defined (CLIENTLOG)

@@ -1,14 +1,14 @@
 /*
- * $Id: opendir.c,v 1.13 2001/06/17 14:44:09 baud Exp $
+ * $Id: opendir.c,v 1.14 2002/09/20 06:59:35 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.13 $ $Date: 2001/06/17 14:44:09 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.14 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* opendir.c       Remote File I/O - open a directory                   */
@@ -147,6 +147,7 @@ char  	*vmstr ;
            serrno = SEOPNOTSUP;
 #else /* _WIN32 */
            dp = (RDIR *)opendir(dirname);
+           if ( ! dp ) serrno = 0;
 #endif /* _WIN32 */
       }
       END_TRACE() ; 

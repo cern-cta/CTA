@@ -1,14 +1,14 @@
 /*
- * $Id: lockf.c,v 1.6 2000/10/02 08:02:30 jdurand Exp $
+ * $Id: lockf.c,v 1.7 2002/09/20 06:59:35 baud Exp $
  */
 
 /*
- * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1994-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lockf.c,v $ $Revision: 1.6 $ $Date: 2000/10/02 08:02:30 $ CERN/IT/PDP/DM Antony Simmins";
+static char sccsid[] = "@(#)$RCSfile: lockf.c,v $ $Revision: 1.7 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Antony Simmins";
 #endif /* not lint */
 
 /* lockf.c       Remote File I/O - record locking on files		*/
@@ -43,7 +43,9 @@ long		siz;		/* locked region			*/
 	    sd, op, siz);
       END_TRACE();
       rfio_errno = 0;
-      return(lockf(sd,op,siz));
+      status = lockf(sd,op,siz);
+      if ( status < 0 ) serrno = 0;
+      return(status);
    }
 
    len = 2*LONGSIZE;

@@ -1,14 +1,14 @@
 /*
- * $Id: pread.c,v 1.9 2000/11/20 15:01:18 jdurand Exp $
+ * $Id: pread.c,v 1.10 2002/09/20 06:59:35 baud Exp $
  */
 
 /*
- * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: pread.c,v $ $Revision: 1.9 $ $Date: 2000/11/20 15:01:18 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: pread.c,v $ $Revision: 1.10 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* pread.c      Remote command I/O - read from a popened command	*/
@@ -37,6 +37,7 @@ RFILE   *fp;                            /* remote file pointer          */
 		END_TRACE();
 		rfio_errno = 0;
 		if ( status > 0) ptr[status]= '\0' ;
+		else serrno = 0;
 		return status ;
 	}
 

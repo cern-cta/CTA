@@ -1,14 +1,14 @@
 /*
- * $Id: readdir.c,v 1.12 2000/11/20 16:18:24 obarring Exp $
+ * $Id: readdir.c,v 1.13 2002/09/20 06:59:36 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readdir.c,v $ $Revision: 1.12 $ $Date: 2000/11/20 16:18:24 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: readdir.c,v $ $Revision: 1.13 $ $Date: 2002/09/20 06:59:36 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* readdir.c       Remote File I/O - read  a directory entry            */
@@ -64,6 +64,7 @@ RDIR *dirp;
           serrno = SEOPNOTSUP;
 #else /* _WIN32 */
           de = readdir((DIR *)dirp);
+          if ( ! de ) serrno = 0;
 #endif /* _WIN32 */
       }
       END_TRACE();

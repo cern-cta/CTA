@@ -1,5 +1,5 @@
 /*
- * $Id: fchown.c,v 1.2 2002/09/13 06:14:10 baud Exp $
+ * $Id: fchown.c,v 1.3 2002/09/20 06:59:34 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fchown.c,v $ $Revision: 1.2 $ $Date: 2002/09/13 06:14:10 $ CERN/IT/DS/HSM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: fchown.c,v $ $Revision: 1.3 $ $Date: 2002/09/20 06:59:34 $ CERN/IT/DS/HSM Jean-Philippe Baud";
 #endif /* not lint */
 
 /* fchown.c      Remote File I/O - change ownership of a file            */
@@ -45,6 +45,7 @@ int group ;            /* Owner's gid */
    if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) == -1) {
       TRACE(2, "rfio", "rfio_fchown: using local fchown(%d, %d, %d)", s, owner, group);
       status = fchown(s, owner, group);
+      if ( status < 0 ) serrno = 0;
       rfio_errno = 0;
       END_TRACE();
       return(status);

@@ -1,14 +1,14 @@
 /*
- * $Id: fread.c,v 1.8 2000/11/20 15:01:18 jdurand Exp $
+ * $Id: fread.c,v 1.9 2002/09/20 06:59:34 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fread.c,v $ $Revision: 1.8 $ $Date: 2000/11/20 15:01:18 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fread.c,v $ $Revision: 1.9 $ $Date: 2002/09/20 06:59:34 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fread.c      Remote File I/O - write a binary file                   */
@@ -47,6 +47,7 @@ int DLL_DECL rfio_fread(ptr, size, items, fp)
 		TRACE(2,"rfio","rfio_fread() : using local fread() ") ;
 		rfio_errno = 0;
 		rc= fread(ptr, size, items, (FILE *)fp) ;
+		if ( rc == 0 ) serrno = 0;
 		END_TRACE() ; 
 		return rc ;
 	}

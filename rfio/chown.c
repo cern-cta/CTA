@@ -1,14 +1,14 @@
 /*
- * $Id: chown.c,v 1.7 2000/12/21 15:21:54 jdurand Exp $
+ * $Id: chown.c,v 1.8 2002/09/20 06:59:34 baud Exp $
  */
 
 /*
- * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1994-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: chown.c,v $ $Revision: 1.7 $ $Date: 2000/12/21 15:21:54 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: chown.c,v $ $Revision: 1.8 $ $Date: 2002/09/20 06:59:34 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* chown.c       Remote File I/O - Change a file owner */
@@ -51,7 +51,9 @@ int 		group ;		   /* Owner's gid */
 
 		END_TRACE();
 		rfio_errno = 0;
-		return(chown(filename,owner, group));
+		status = chown(filename,owner, group);
+		if ( status < 0 ) serrno = 0;
+		return(status);
 	}
 
 	s = rfio_connect(host,&rt);

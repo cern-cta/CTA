@@ -1,5 +1,5 @@
 /*
- * $Id: fstat.c,v 1.10 2002/09/13 06:14:10 baud Exp $
+ * $Id: fstat.c,v 1.11 2002/09/20 06:59:35 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fstat.c,v $ $Revision: 1.10 $ $Date: 2002/09/13 06:14:10 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fstat.c,v $ $Revision: 1.11 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fstat.c      Remote File I/O - get file status                       */
@@ -44,6 +44,7 @@ struct stat *statbuf;
    if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) == -1) {
       TRACE(2, "rfio", "rfio_fstat: using local fstat(%d, %x)", s, statbuf);
       status = fstat(s, statbuf);
+      if ( status < 0 ) serrno = 0;
       rfio_errno = 0;
       END_TRACE();
       return(status);

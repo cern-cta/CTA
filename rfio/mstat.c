@@ -1,15 +1,15 @@
 /*
- * $Id: mstat.c,v 1.27 2002/09/02 15:28:07 jdurand Exp $
+ * $Id: mstat.c,v 1.28 2002/09/20 06:59:35 baud Exp $
  */
 
 
 /*
- * Copyright (C) 1995-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1995-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.27 $ $Date: 2002/09/02 15:28:07 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.28 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -67,6 +67,7 @@ int DLL_DECL rfio_mstat(file,statb)
 
     /* The file is local */
     rc = stat(filename,statb) ;
+    if ( rc < 0 ) serrno = 0;
     rfio_errno = 0;
     END_TRACE();
     return (rc) ;

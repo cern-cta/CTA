@@ -1,14 +1,14 @@
 /*
- * $Id: pwrite.c,v 1.6 2000/05/30 10:49:47 obarring Exp $
+ * $Id: pwrite.c,v 1.7 2002/09/20 06:59:36 baud Exp $
  */
 
 /*
- * Copyright (C) 1993-1999 by  CERN/IT/PDP/DM
+ * Copyright (C) 1993-2002 by  CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: pwrite.c,v $ $Revision: 1.6 $ $Date: 2000/05/30 10:49:47 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: pwrite.c,v $ $Revision: 1.7 $ $Date: 2002/09/20 06:59:36 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* pwrite.c     Remote command I/O - write input to a popened command   */
@@ -42,6 +42,7 @@ RFILE   *fp;                            /* remote file pointer          */
    if (fp->s < 0)  {
       status = fwrite(ptr, size, items, fp->fp_save);
       TRACE(3,"rfio","local pwrite (%x,%d,%d,%x) returns %d",ptr, size, items, &(fp-> fp), status);
+      if ( status == 0 ) serrno = 0;
       END_TRACE();
       rfio_errno = 0;
       return(status);

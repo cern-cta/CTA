@@ -1,14 +1,14 @@
 /*
- * $Id: stat.c,v 1.6 2001/11/07 11:51:30 jdurand Exp $
+ * $Id: stat.c,v 1.7 2002/09/20 06:59:36 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stat.c,v $ $Revision: 1.6 $ $Date: 2001/11/07 11:51:30 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: stat.c,v $ $Revision: 1.7 $ $Date: 2002/09/20 06:59:36 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* stat.c       Remote File I/O - get file status                       */
@@ -49,7 +49,9 @@ struct stat *statbuf;           /* status buffer (subset of local used) */
 
 		END_TRACE();
 		rfio_errno = 0;
-		return(stat(filename,statbuf));
+		status = stat(filename,statbuf);
+		if ( status < 0 ) serrno = 0;
+		return(status);
 #else
 		END_TRACE();
 		rfio_errno = SENOTRFILE;

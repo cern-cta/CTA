@@ -1,14 +1,14 @@
 /*
- * $Id: rename.c,v 1.8 2000/05/29 16:42:04 obarring Exp $
+ * $Id: rename.c,v 1.9 2002/09/20 06:59:36 baud Exp $
  */
 
 /*
- * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1994-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rename.c,v $ $Revision: 1.8 $ $Date: 2000/05/29 16:42:04 $ CERN/IT/PDP/DM Antony Simmins";
+static char sccsid[] = "@(#)$RCSfile: rename.c,v $ $Revision: 1.9 $ $Date: 2002/09/20 06:59:36 $ CERN/IT/PDP/DM Antony Simmins";
 #endif /* not lint */
 
 /* rename.c       Remote File I/O - change the name of a file           */
@@ -99,7 +99,9 @@ char		*fileo,		/* remote old path  			*/
 
       END_TRACE();
       rfio_errno = 0;
-      return(rename(filenameo,filenamen));
+      status = rename(filenameo,filenamen);
+      if ( status < 0 ) serrno = 0;
+      return(status);
    }
 
    s = rfio_connect(hostnameo,&rt);

@@ -1,14 +1,14 @@
 /*
- * $Id: access.c,v 1.7 2001/09/18 19:56:18 jdurand Exp $
+ * $Id: access.c,v 1.8 2002/09/20 06:59:33 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: access.c,v $ $Revision: 1.7 $ $Date: 2001/09/18 19:56:18 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: access.c,v $ $Revision: 1.8 $ $Date: 2002/09/20 06:59:33 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* access.c       Remote File I/O - get access status 			*/
@@ -48,7 +48,9 @@ int 	mode ;			/* Access mode 				*/
 			filename, mode);
 		END_TRACE();
 		rfio_errno = 0;
-		return(access(filename,mode));
+		status = access(filename,mode);
+		if ( status < 0 ) serrno = 0;
+		return(status);
 	}
 
 	s = rfio_connect(host,&rt);

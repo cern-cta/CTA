@@ -1,5 +1,5 @@
 /*
- * $Id: getcwd.c,v 1.2 2002/03/06 09:53:04 baud Exp $
+ * $Id: getcwd.c,v 1.3 2002/09/20 06:59:35 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcwd.c,v $ $Revision: 1.2 $ $Date: 2002/03/06 09:53:04 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getcwd.c,v $ $Revision: 1.3 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #if defined(_WIN32)
@@ -22,6 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: getcwd.c,v $ $Revision: 1.2 $ $Date: 2002/
 
 char DLL_DECL *rfio_getcwd(char *buf, int size)
 {
+   char *p;
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_getcwd()");
 
@@ -38,5 +39,7 @@ char DLL_DECL *rfio_getcwd(char *buf, int size)
 
    END_TRACE();
    rfio_errno = 0;
-   return(getcwd(buf, size));
+   p = getcwd(buf, size);
+   if ( ! p ) serrno = 0;
+   return(p);
 }

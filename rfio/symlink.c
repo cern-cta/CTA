@@ -1,15 +1,15 @@
 /*
- * $Id: symlink.c,v 1.9 2001/11/07 11:52:07 jdurand Exp $
+ * $Id: symlink.c,v 1.10 2002/09/20 06:59:36 baud Exp $
  */
 
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: symlink.c,v $ $Revision: 1.9 $ $Date: 2001/11/07 11:52:07 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: symlink.c,v $ $Revision: 1.10 $ $Date: 2002/09/20 06:59:36 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #define RFIO_KERNEL     1
@@ -63,9 +63,10 @@ char *n2 ;
            status = -1;
            return(status);
       }
-       TRACE(2,"rfio","rfio_symlink local %s -> %s",filename,n1);
+      TRACE(2,"rfio","rfio_symlink local %s -> %s",filename,n1);
 #if ! defined(_WIN32)
-	 status = symlink(n1,filename) ;
+      status = symlink(n1,filename) ;
+      if ( status < 0 ) serrno = 0;
 #else
       { serrno = SEOPNOTSUP; status = -1;}
 #endif

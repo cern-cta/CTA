@@ -1,5 +1,5 @@
 /*
- * $Id: ftell.c,v 1.1 2002/02/13 06:30:10 baud Exp $
+ * $Id: ftell.c,v 1.2 2002/09/20 06:59:35 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: ftell.c,v $ $Revision: 1.1 $ $Date: 2002/02/13 06:30:10 $ IN2P3 CC Philippe Gaillardon";
+static char sccsid[] = "@(#)$RCSfile: ftell.c,v $ $Revision: 1.2 $ $Date: 2002/09/20 06:59:35 $ IN2P3 CC Philippe Gaillardon";
 #endif /* not lint */
 
 /* ftell.c      Remote File I/O - get current file position.	*/
@@ -45,6 +45,7 @@ long rfio_ftell(fp)
   if (rfio_rfilefdt_findptr(fp,FINDRFILE_WITH_SCAN) == -1) {
     TRACE(2,"rfio","rfio_ftell() : using local ftell() ");
     rc = ftell((FILE *)fp);
+    if ( rc < 0 ) serrno = 0;
     rfio_errno = 0;
     END_TRACE(); 
     return rc;

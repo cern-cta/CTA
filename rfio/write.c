@@ -1,5 +1,5 @@
 /*
- * $Id: write.c,v 1.12 2002/09/13 06:14:12 baud Exp $
+ * $Id: write.c,v 1.13 2002/09/20 06:59:36 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.12 $ $Date: 2002/09/13 06:14:12 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.13 $ $Date: 2002/09/20 06:59:36 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* write.c      Remote File I/O - write a file                          */
@@ -91,6 +91,7 @@ int     s, size;
    if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) == -1) {
       TRACE(2, "rfio", "rfio_write: using local write(%d, %x, %d)", s, ptr, size);
       status = write(s, ptr, size);
+      if ( status < 0 ) serrno = 0;
       if ( HsmType == RFIO_HSM_CNS ) {
           save_errno = errno;
           rfio_HsmIf_IOError(s,errno);

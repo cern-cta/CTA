@@ -1,5 +1,5 @@
 /*
- * $Id: getc.c,v 1.2 2002/08/28 14:01:13 baud Exp $
+ * $Id: getc.c,v 1.3 2002/09/20 06:59:35 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getc.c,v $ $Revision: 1.2 $ $Date: 2002/08/28 14:01:13 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getc.c,v $ $Revision: 1.3 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /* get.c        Remote File I/O - input of one character                */
@@ -46,6 +46,7 @@ int DLL_DECL rfio_getc(fp)
 		TRACE(2,"rfio","rfio_getc() : using local getc() ") ;
 		rfio_errno = 0;
 		rc= getc((FILE *)fp) ;
+		if ( rc == EOF ) serrno = 0;
 		END_TRACE() ; 
 		return rc ;
 	}

@@ -1,15 +1,15 @@
 /*
- * $Id: munlink.c,v 1.10 2002/08/15 08:27:36 jdurand Exp $
+ * $Id: munlink.c,v 1.11 2002/09/20 06:59:35 baud Exp $
  */
 
 
 /*
- * Copyright (C) 1995-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1995-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.10 $ $Date: 2002/08/15 08:27:36 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.11 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -60,6 +60,7 @@ int DLL_DECL rfio_munlink(file)
     }
     /* The file is local */
     rc = unlink(filename) ;
+    if ( rc < 0 ) serrno = 0;
     rfio_errno = 0;
     END_TRACE();
     return (rc) ;

@@ -1,14 +1,14 @@
 /*
- * $Id: lstat.c,v 1.9 2001/06/17 14:00:34 baud Exp $
+ * $Id: lstat.c,v 1.10 2002/09/20 06:59:35 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lstat.c,v $ $Revision: 1.9 $ $Date: 2001/06/17 14:00:34 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: lstat.c,v $ $Revision: 1.10 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* lstat.c       Remote File I/O - get file status   */
@@ -71,10 +71,12 @@ struct stat *statbuf;           	/* status buffer 		*/
       END_TRACE();
       rfio_errno = 0;
 #if !defined(vms) && !defined(_WIN32)
-      return(lstat(filename,statbuf));
+      lstatus = lstat(filename,statbuf);
 #else
-      return(stat(filename,statbuf));
+      lstatus = stat(filename,statbuf);
 #endif /* vms  || _WIN32 */
+      if ( lstatus < 0 ) serrno = 0;
+      return(lstatus);
    }
 
    serrno = 0;

@@ -1,14 +1,14 @@
 /*
- * $Id: pclose.c,v 1.10 2001/11/16 14:16:27 jdurand Exp $
+ * $Id: pclose.c,v 1.11 2002/09/20 06:59:35 baud Exp $
  */
 
 /*
- * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.10 $ $Date: 2001/11/16 14:16:27 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.11 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* pclose.c      Remote command I/O - close a popened command 		*/
@@ -48,6 +48,7 @@ RFILE 	*fs ;
 #else		
       status= pclose(fs->fp_save);
 #endif	
+      if ( status < 0 ) serrno = 0;
       free((char *)fs);
       END_TRACE() ; 
       rfio_errno = 0;
