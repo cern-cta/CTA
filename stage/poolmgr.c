@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.196 2002/05/16 06:47:11 jdurand Exp $
+ * $Id: poolmgr.c,v 1.197 2002/05/16 13:49:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.196 $ $Date: 2002/05/16 06:47:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.197 $ $Date: 2002/05/16 13:49:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1514,8 +1514,8 @@ selectfs(poolname, size, path, status, noallocation)
 		reqsize = 0;
 	}
 
-	/* If this pool is a OUT pool we do qsort() anyway */
-	if ((ispool_out(poolname) == 0) && (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp))) {
+	/* If this is an OUT pool we do qsort() anyway */
+	if (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp)) {
 		if ((this_element = betterfs_vs_pool(poolname,WRITE_MODE,reqsize,&i)) == NULL) {
 			/* Oups... Tant-pis, return what will provocate the ENOENT */
 			return(-1);
@@ -1532,20 +1532,6 @@ selectfs(poolname, size, path, status, noallocation)
 			if (elemp->free >= reqsize) {
 				found = 1;
 				break;
-			} else if (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp)) {
-				/* We do not dare to do a simple turnaround when allocating space. */
-				/* It can happens that the qsort() was ALREADY called just before but */
-				/* the best fs selected does not have enough space neverthless */
-				/* This sounds a bit redundant but until I find a better solution I do again */
-				/* a qsort() here, excluding the fs'es that do not have enough space! */
-				if ((this_element = betterfs_vs_pool(poolname,WRITE_MODE,reqsize,&i)) == NULL) {
-					/* Oups... Tant-pis, return what will provocate the ENOENT */
-					break;
-				} else {
-					elemp = this_element;
-					found = 1;
-					break;
-				}
 			}
 		  selectfs_continue:
 			i++;
