@@ -62,6 +62,7 @@ RtcpcldSegmentList_t;
 typedef struct TpReqMap 
 {
   tape_list_t *tape;
+  int killed;
   RtcpcldTapeList_t *tpList;
   struct TpReqMap *next;
   struct TpReqMap *prev;
