@@ -1,0 +1,68 @@
+.\" @(#)$RCSfile: tape_oper.man,v $ $Revision: 1.1 $ $Date: 1999/09/21 04:29:40 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1996-1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH TAPE_OPER l "$Date: 1999/09/21 04:29:40 $"
+.SH NAME
+tape_oper \- operator interface to tape subsystem
+.SH DESCRIPTION
+Here is a list of messages sent to the
+.B oper
+display and the possible actions.
+Each message is prefixed by a message number and a timestamp.
+.LP
+TP020 - mount tape 
+.IR vid ( label_type )
+.I ring_option
+on drive
+.IR drive_name @ hostname
+for
+.I username
+.IR jid ",  (" reason )
+or reply cancel | drive name
+.RS
+.I reason
+is a null string in the normal case, but could be
+.BR "wrong ring status" ,
+.BR "wrong vsn" ,
+.BR "reselect same" ,
+.BR "reselect failed"
+or
+.BR "reselect" .
+The operator or the robot must mount the tape or the operator may reply to
+the message with the command
+.B rep
+giving the message number and the action.
+.I action
+must be:
+.TP
+.BI cancel " reason_for_cancel"
+the user gets the
+.I reason_for_cancel
+message in his/her output;
+the mount request is cancelled and the drive is freed.
+.TP
+.I drive_name
+the mount request is cancelled on the original drive and reissued for the drive
+.I drive_name
+.TP
+.B reselect server
+the mount request is cancelled and the drive is freed but if
+.B tpmnt
+was issued from rtcopy, a new tape server is selected automatically.
+.RE
+.LP
+TP033 - drive
+.IR drive_name @ hostname
+not operational
+.RS
+This is an informative message. The drive is automatically configured down
+and the request cancelled.
+When the drive has been repaired, the command
+.B tpconfig
+can be used to reenable production on it.
+.RE
+.SH SEE ALSO
+.BR oper (l),
+.BR rep (l),
+.BR tpconfig (l)
