@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.30 2001/07/12 11:07:57 jdurand Exp $
+ * $Id: procalloc.c,v 1.31 2001/09/18 20:34:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.30 $ $Date: 2001/07/12 11:07:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.31 $ $Date: 2001/09/18 20:34:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -27,6 +27,7 @@ static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.30 $ $Date: 2
 #undef  unmarshall_STRING
 #define unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
 #include "stage.h"
+#include "stage_api.h"
 #if SACCT
 #include "../h/sacct.h"
 #endif
@@ -61,7 +62,7 @@ extern int sendrep _PROTO(());
 #endif
 extern int stglogit _PROTO(());
 extern int isvalidpool _PROTO((char *));
-extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *));
+extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int));
 extern int cleanpool _PROTO((char *));
 extern void delreq _PROTO((struct stgcat_entry *, int));
 extern void create_link _PROTO((struct stgcat_entry *, char *));
@@ -143,7 +144,7 @@ void procallocreq(req_data, clienthost)
 			}
 			break;
 		case 's':
-			stgreq.size = strtol (Coptarg, &dp, 10);
+			stage_strtoi(&(stgreq.size), Coptarg, &dp, 10);
 			if (*dp != '\0' || stgreq.size <= 0) {
 				sendrep (rpfd, MSG_ERR, STG06, "-s");
 				errflg++;
@@ -185,7 +186,7 @@ void procallocreq(req_data, clienthost)
 	stcp->c_time = time(NULL);
 	stcp->a_time = stcp->c_time;
 	stcp->nbaccesses++;
-	if ((c = build_ipath (upath, stcp, pool_user)) < 0) {
+	if ((c = build_ipath (upath, stcp, pool_user, 0)) < 0) {
 		stcp->status |= WAITING_SPC;
 		if (!wqp) wqp = add2wq (clienthost,
 								user, stcp->uid, stcp->gid,
