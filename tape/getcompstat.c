@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1996-2000 by CERN/CN/PDP
+ * Copyright (C) 1996-2000 by CERN/IT/PDP
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.11 $ $Date: 2000/06/08 13:11:49 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.12 $ $Date: 2000/10/26 15:18:39 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -59,14 +59,16 @@ COMPRESSION_STATS *comp_stats;
 	cdb[8] = sizeof(buffer) & 0x00FF;
 	if (strncmp (devtype, "DAT", 3) == 0)
 		cdb[2] = 0x40 | 0x39;	/* PC = 1, compression page  */
-	else if (strncmp (devtype, "DLT", 3) == 0)
+	else if (strncmp (devtype, "DLT", 3) == 0 ||
+		 strcmp (devtype, "LTO") == 0)
 		cdb[2] = 0x40 | 0x32;	/* PC = 1, compression page  */
 	else if (strcmp (devtype, "3490") == 0 ||
 		 strcmp (devtype, "3590") == 0)
 		cdb[2] = 0x40 | 0x38;	/* PC = 1, compression page  */
 	else if (strcmp (devtype, "SD3") == 0)
 		cdb[2] = 0x40 | 0x30;	/* PC = 1, compression page  */
-	else if (strcmp (devtype, "9840") == 0)
+	else if (strcmp (devtype, "9840") == 0 ||
+		 strcmp (devtype, "9940") == 0)
 	        cdb[2] = 0x40 | 0x0C;   /* PC = 1, sequential access device page */
 	else {
 		serrno = SEOPNOTSUP;
@@ -106,7 +108,8 @@ COMPRESSION_STATS *comp_stats;
 			}
 			p += *(p+3) + 4;
 		}
-	} else if (strncmp (devtype, "DLT", 3) == 0) {	/* values in bytes */
+	} else if (strncmp (devtype, "DLT", 3) == 0 ||
+		   strcmp (devtype, "LTO") == 0) {	/* values in bytes */
 		while (p < endpage) {
 			parmcode = *p << 8 | *(p+1);
 			switch (parmcode) {
@@ -192,7 +195,8 @@ COMPRESSION_STATS *comp_stats;
 			}
 			p += *(p+3) + 4;
 		}
-	} else if (strcmp (devtype, "9840") == 0) {      /* values in bytes */
+	} else if (strcmp (devtype, "9840") == 0 ||
+		   strcmp (devtype, "9940") == 0) {      /* values in bytes */
 		while (p < endpage) {
 			parmcode = *p << 8 | *(p+1);
 			switch (parmcode) {
