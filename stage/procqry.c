@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.53 2001/03/19 12:43:39 jdurand Exp $
+ * $Id: procqry.c,v 1.54 2001/03/28 14:06:52 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.53 $ $Date: 2001/03/19 12:43:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.54 $ $Date: 2001/03/28 14:06:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -305,7 +305,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			stcp_input.t_or_d = t_or_d;
 			if (stage_stcp2buf(logit,BUFSIZ,&(stcp_input)) == 0 || serrno == SEUMSG2LONG) {
 				logit[BUFSIZ] = '\0';
-				stglogit("stage_qry","stcp : %s\n",logit);
+				stglogit("stage_qry","stcp[1/1] : %s\n",logit);
  			}
 		}
 		/* We mimic the getopt below */
