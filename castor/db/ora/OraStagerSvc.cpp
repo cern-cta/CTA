@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/07/05 16:16:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/07/29 14:28:01 $ $Author: sponcec3 $
  *
  *
  *
@@ -279,6 +279,7 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
       tape->setVid(vid);
       tape->setSide(side);
       tape->setTpmode(tpmode);
+      tape->setStatus(castor::stager::TAPE_UNUSED);
       castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       castor::ObjectSet objset;
       try {
