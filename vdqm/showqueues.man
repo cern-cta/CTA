@@ -1,0 +1,36 @@
+.\" @(#)$RCSfile: showqueues.man,v $ $Revision: 1.1 $ $Date: 2000/06/15 16:32:49 $ CERN IT-PDP/DM Olof Barring
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH SHOWQUEUES 1 "$Date: 2000/06/15 16:32:49 $" CASTOR "Show tape queues"
+.SH NAME
+showqueues \- show tape queues and running requests
+.SH SYNOPSIS
+.BI "showqueues [ <" device\ group "> ] [ < " tape server ">]"
+
+.SH DESCRIPTION
+.B showqueues
+shows information on the tape queues and running requests for a device group
+or a specific tape server.
+.PP
+.BI "<" device\ group ">"
+\- show the queues and running request for the give device group.
+.PP
+.BI "<" tape server ">"
+\- show the queues and running requests on the given tape server.
+
+.SH EXAMPLE
+.nf
+.ft CW
+% showqueues SD3R
+drv1@test (1220 MB) status FREE vid:  last update Jun 15 17:22:09
+drv2@test (14525 MB) status FREE vid:  last update Jun 15 17:22:09
+% showqueues "" test
+drv1@test (1220 MB) status FREE vid:  last update Jun 15 17:22:09
+drv2@test (14525 MB) status FREE vid:  last update Jun 15 17:22:09
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
