@@ -1,5 +1,5 @@
 /*
- * $Id: readlink.c,v 1.6 2000/09/22 14:52:05 baud Exp $
+ * $Id: readlink.c,v 1.7 2000/12/21 15:21:54 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readlink.c,v $ $Revision: 1.6 $ $Date: 2000/09/22 14:52:05 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: readlink.c,v $ $Revision: 1.7 $ $Date: 2000/12/21 15:21:54 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #define RFIO_KERNEL     1
@@ -19,7 +19,7 @@ static char sccsid[] = "@(#)$RCSfile: readlink.c,v $ $Revision: 1.6 $ $Date: 200
 extern char *sys_errlist[];     /* system error list */
 #endif
 
-int rfio_readlink(path,buf, length)
+int DLL_DECL rfio_readlink(path,buf, length)
 char *path ;
 char *buf ;
 int length ;

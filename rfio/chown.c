@@ -1,5 +1,5 @@
 /*
- * $Id: chown.c,v 1.6 2000/05/03 13:42:34 obarring Exp $
+ * $Id: chown.c,v 1.7 2000/12/21 15:21:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: chown.c,v $ $Revision: 1.6 $ $Date: 2000/05/03 13:42:34 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: chown.c,v $ $Revision: 1.7 $ $Date: 2000/12/21 15:21:54 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* chown.c       Remote File I/O - Change a file owner */
@@ -17,7 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: chown.c,v $ $Revision: 1.6 $ $Date: 2000/0
 
 #include "rfio.h"               /* Remote File I/O general definitions  */
 
-int  rfio_chown(file, owner, group)     /* Remote chown	                */
+int DLL_DECL rfio_chown(file, owner, group)     /* Remote chown	                */
 char		*file;          /* remote file path             */
 int		owner ;		   /* Owner's uid */
 int 		group ;		   /* Owner's gid */
