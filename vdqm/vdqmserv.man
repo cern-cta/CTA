@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vdqmserv.man,v $ $Revision: 1.5 $ $Date: 2003/03/11 08:58:09 $ CERN IT-ADC Olof Barring
+.\" @(#)$RCSfile: vdqmserv.man,v $ $Revision: 1.6 $ $Date: 2004/09/14 13:33:55 $ CERN IT-ADC Olof Barring
 .\" Copyright (C) 2001 by CERN/IT/ADC
 .\" All rights reserved
 .\"
-.TH VDQMSERV 1 "$Date: 2003/03/11 08:58:09 $" CASTOR "VDQM server daemon"
+.TH VDQMSERV 1 "$Date: 2004/09/14 13:33:55 $" CASTOR "VDQM server daemon"
 .SH NAME
 vdqmserv \- Volume and Drive Queue Manager (VDQM) server
 .SH SYNOPSIS
@@ -79,7 +79,7 @@ utility.
 
 .SH ENVIRONMENT
 The \fBvdqmserv\fP daemon does not take any arguments. Apart from the
-VDQM host list the \fBvdqmserv\fP daemon does normally not need any special 
+VDQM host list the \fBvdqmserv\fP daemon does normally not require any special 
 configuration. CASTOR tape server software uses the VDQM client API routine
 \fBvdqm_UnitStatus(3)\fP to publish existence of tape drives and their 
 status and CASTOR RTCOPY clients publish their requests through the
@@ -90,6 +90,26 @@ In case of problems with running
 it can be started with debug logging level by setting the environment
 variable \fBLOG_PRIORITY\fP to \fB7\fP. This will cause intensive logging
 (producing huge log-files).
+
+.PP
+VDQM configuration parameters in "/etc/shift.conf" :
+.TP
+.B VDQM HOST <hostname1 ...>
+Set the VDQM primary and replica hosts. This configuration is required on
+the node running the vdqmserv daemon. The order among the hosts is significant:
+the first host name is always the primary server and the second host name
+is the replica. All the following host names (if any) are allowed to send
+replica connection requests.
+.TP
+.B VDQM WRITE_PRIORITY <YES/NO>
+Give priority to tape write requests. This feature was added as a quick solution
+for the feature request #3612. The effect of setting this configuration to
+.B YES
+is that all tape write requests will be given priority over tape read requests.
+Setting the configuration to any other value than
+.B YES
+or omitting the configuration implies the default behaviour giving same priority
+to all requests.
 
 .PP
 The following environment variables can be used to override existing
