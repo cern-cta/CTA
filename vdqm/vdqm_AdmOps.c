@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_AdmOps.c,v $ $Revision: 1.1 $ $Date: 2000/02/29 07:51:10 $  CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)vdqm_AdmOps.c,v 1.1 2000/02/29 07:51:10  CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -37,6 +37,7 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
     }
 
     DrvReq = &drv->drv;
+    log(LOG_DEBUG,"vdqm_SetDedicate() compile regexp %s\n",DrvReq->dedicate);
     rc = regcomp(&drv->expbuf, DrvReq->dedicate, REG_EXTENDED|REG_ICASE);
     if ( rc != 0 ) {
         rc = regerror(rc,&drv->expbuf,errstr,sizeof(errstr));
@@ -83,6 +84,9 @@ int vdqm_DrvMatch(vdqm_volrec_t *vol, vdqm_drvrec_t *drv) {
            VolReq->clientUID,VolReq->clientGID,VolReq->mode,
            VolReq->client_host,VolReq->volid);
 
-    if ((regexec(&drv->expbuf, match_item, (size_t)0, NULL, 0)) == 0) return(1);
-    else return(0);
+    log(LOG_DEBUG,"vdqm_DrvMatch(): match %s with %s\n",match_item,drv->drv.dedicate);
+    if ((regexec(&drv->expbuf, match_item, (size_t)0, NULL, 0)) == 0) {
+        log(LOG_DEBUG,"vdqm_DrvMatch() matched!\n");
+        return(1);
+    } else return(0);
 }
