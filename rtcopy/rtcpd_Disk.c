@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.85 $ $Date: 2000/08/07 14:55:14 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.86 $ $Date: 2000/09/13 09:39:41 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -338,6 +338,7 @@ static int DiskFileOpen(int pool_index,
                  * we don't append to an existing file....
                  */
                 if ( (filereq->concat & CONCAT_TO_EOD) != 0 &&
+                     (filereq->concat & CONCAT) == 0 &&
                      ((file->prev->filereq.concat & CONCAT_TO_EOD) == 0 ||
                       file == tape->file) )
                     flags = O_CREAT | O_WRONLY | O_TRUNC | binmode;
@@ -666,6 +667,9 @@ static int MemoryToDisk(int disk_fd, int pool_index,
             filereq->TStartTransferDisk = (int)time(NULL);
         }
 
+        /*
+         * Check if reached an allowed end-of-tape
+         */
         if ( (proc_err & 
               (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 && 
              (concat & (NOCONCAT_TO_EOD | CONCAT_TO_EOD)) != 0 ) { 
