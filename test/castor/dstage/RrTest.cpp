@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RrTest.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/09/17 09:09:07 $ $Author: bcouturi $
+ * @(#)$RCSfile: RrTest.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/02/03 18:22:46 $ $Author: bcouturi $
  *
  *
  *
@@ -59,7 +59,7 @@
 #include "castor/Constants.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/IObject.hpp"
-#include "castor/dstage/RequestReplier.hpp"
+#include "castor/replier/RequestReplier.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/ClientSocket.hpp"
 #include "castor/rh/EndResponse.hpp"
@@ -68,6 +68,33 @@
 
 #include "RrTest.hpp"
 
+#include <unistd.h>
+#include <sys/times.h>
+struct _stage_times {
+        struct tms tms;
+        clock_t     time;
+};
+typedef struct _stage_times _stage_times_t;
+
+
+#define STAGE_TIME_START(comment) { \
+        char *thisfile = __FILE__; \
+        int thisline = __LINE__; \
+    char *thiscomment = comment; \
+    _stage_times_t _stage_times_start; \
+        _stage_times_t _stage_times_end; \
+        long clktck; \
+        _stage_times_start.time = times(&_stage_times_start.tms);
+
+
+#define STAGE_TIME_END \
+        _stage_times_end.time = times(&_stage_times_end.tms); \
+        clktck = sysconf(_SC_CLK_TCK); \
+        fprintf(stderr, "[%s] Between %s:%d and %s:%d, timer gives:\n", thiscomment, thisfile, thisline, __FILE__, __LINE__); \
+        fprintf(stderr, "[%s] Real Time : %7.2f (%ld ticks)\n", thiscomment, (_stage_times_end.time - _stage_times_start.time) / (double) clktck, (long) (_stage_times_end.time - _stage_times_start.time) ); \
+        fprintf(stderr, "[%s] User Time : %7.2f\n", thiscomment, (_stage_times_end.tms.tms_utime - _stage_times_start.tms.tms_utime) / (double) clktck); \
+        fprintf(stderr, "[%s] Sys  Time : %7.2f\n", thiscomment, (_stage_times_end.tms.tms_stime - _stage_times_start.tms.tms_stime) / (double) clktck); \
+}
 
 #define PORT 25177
 #define BSIZE 100
@@ -108,7 +135,7 @@ void client_signalhandler(int sig) {
 
 
 test::RrTest::RrTest() {
-  initLog("rrtestlog", castor::SVC_STDMSG);
+  initLog("rrtestlog", castor::SVC_DLFMSG);
 }
 
 int test::RrTest::start() {
@@ -223,7 +250,7 @@ void *procreq(void *param) {
   unmarshall_LONG(p, data);
 
   int ipAddress = clientAddress.sin_addr.s_addr;
-  printf("<%d> Client magic:%xd data: %d waiting on %s:%d\n", getpid(), magic, data, inet_ntoa(clientAddress.sin_addr), port);
+  //printf("<%d> Client magic:%xd data: %d waiting on %s:%d\n", getpid(), magic, data, inet_ntoa(clientAddress.sin_addr), port);
 
   close(csd);
 
@@ -239,11 +266,10 @@ void *procreq(void *param) {
     cl->setIpAddress(ntohl(ipAddress));
     cl->setPort(port);
 
-    castor::dstage::RequestReplier *rr =
-      castor::dstage::RequestReplier::getInstance();
+    castor::replier::RequestReplier *rr =
+      castor::replier::RequestReplier::getInstance();
     for(int j=0; j<10; j++) {
       rr->replyToClient(cl, &response);
-      sleep(1);
     }
 
     rr->replyToClient(cl, &response2, true);
@@ -449,13 +475,17 @@ test::RrTestClient::~RrTestClient() {
 
 void *clientProcreq(void *param) {
   std::cout << "In clientProcreq" << std::endl; 
-  
-  for(;;) {
+  STAGE_TIME_START("GLOBAL_TIMING");
+  for(int i=0; i<1000; i++) {
+
+    STAGE_TIME_START("CLIENT_TIMING");
+    time_t starttime;
     std::cout << "NEWREQ" << std::endl; 
     test::RrTestClient rrtc((char *)param);
     rrtc.start();
-    break;
+    STAGE_TIME_END;
   }
+  STAGE_TIME_END;
 }
 
 int main(int argc, char *argv[]) {
