@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.16 2002/04/11 10:30:14 jdurand Exp $
+ * $Id: stage_util.c,v 1.17 2002/04/30 13:05:11 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -9,6 +9,7 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <ctype.h>
 #ifndef _WIN32
 #include <unistd.h>
 #else
@@ -105,8 +106,8 @@ void DLL_DECL stage_sleep(nsec)
 
 /* This function will return the preferred magic number used by the client */
 
-#define STGMAGIC_DEFAULT STGMAGIC3
-#define STGMAGIC_DEFAULT_STRING "STGMAGIC3"
+#define STGMAGIC_DEFAULT STGMAGIC4
+#define STGMAGIC_DEFAULT_STRING "STGMAGIC4"
 
 int DLL_DECL stage_stgmagic()
 {
@@ -127,10 +128,8 @@ int DLL_DECL stage_stgmagic()
       return(STGMAGIC2);
     case STGMAGIC3:
       return(STGMAGIC3);
-#ifdef STAGER_SIDE_SERVER_SUPPORT
     case STGMAGIC4:
       return(STGMAGIC4);
-#endif
     default:
       stage_errmsg(func, STG02, "Magic Number", "Configuration", "Using default magic number " STGMAGIC_DEFAULT_STRING);
       return(STGMAGIC_DEFAULT);
@@ -205,9 +204,7 @@ void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
 		DUMP_STRING(rpfd,stcp,u1.t.fseq);
 		DUMP_STRING(rpfd,stcp,u1.t.lbl);
 		DUMP_VAL(rpfd,stcp,u1.t.retentd);
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 		DUMP_VAL(rpfd,stcp,u1.t.side);
-#endif
 		DUMP_STRING(rpfd,stcp,u1.t.tapesrvr);
 		DUMP_CHAR(rpfd,stcp,u1.t.E_Tflags);
 		for (i = 0; i < MAXVSN; i++) {
@@ -305,9 +302,7 @@ void DLL_DECL print_stcp(stcp)
 		PRINT_STRING(stcp,u1.t.fseq);
 		PRINT_STRING(stcp,u1.t.lbl);
 		PRINT_VAL(stcp,u1.t.retentd);
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 		PRINT_VAL(stcp,u1.t.side);
-#endif
 		PRINT_STRING(stcp,u1.t.tapesrvr);
 		PRINT_CHAR(stcp,u1.t.E_Tflags);
 		for (i = 0; i < MAXVSN; i++) {
@@ -540,3 +535,43 @@ int DLL_DECL stage_util_maxtapefseq(labeltype)
 
 	return(-1);                           /* Unknown type : not limited */
 }
+
+/* Will return -1 if error */
+/*              0 if OK but not unit */
+/*              1 if OK with unit */
+int DLL_DECL stage_util_check_for_strutou64(str)
+	char *str;
+{
+	/* We accept only the following format */
+	/* [blanks]<digits>[k|M|G|T|P] */
+
+	char *p = (char *) str;
+
+	while (isspace (*p)) p++;	/* skip leading spaces */
+	while (*p) {
+		if (! isdigit (*p)) break;
+		p++;
+	}
+	/* End of the digits section:  */
+	/* Either there is a supported unit, either there is none */
+
+	switch (*p) {
+	case '\0':
+		return(0); /* Ok and no unit */
+	case 'b':      /* Not supported by u64 - we say it is bytes - u64 will ignore it, simply */
+	case 'k':
+	case 'M':
+	case 'G':
+	case 'T':
+	case 'P':
+		switch (*++p) {
+		case '\0':
+			return(1); /* Ok with unit */
+		default:
+			return(-1); /* Unit followed by anything, not valid */
+		}
+	default:
+		return(-1); /* Unknown unit */
+	}
+}
+
