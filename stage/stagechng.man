@@ -1,10 +1,10 @@
-.\" $Id: stagechng.man,v 1.17 2002/12/13 15:31:25 jdurand Exp $
+.\" $Id: stagechng.man,v 1.18 2003/05/12 12:45:10 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.17 $ $Date: 2002/12/13 15:31:25 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.18 $ $Date: 2003/05/12 12:45:10 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2001-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGECHNG "1" "$Date: 2002/12/13 15:31:25 $" "CASTOR" "Stage User Commands"
+.TH STAGECHNG "1" "$Date: 2003/05/12 12:45:10 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stagechng \- change status and time dependency of records in the stager catalog
 .SH SYNOPSIS
@@ -87,7 +87,9 @@ Creates file in the Name Server if necessary.
 Forces the search to this internal request id.
 .TP
 .BI \-\-retenp " retenp"
-Sets the retention period on disk, with respect to original value of its fileclass. You cannot extend a retention period on disk, only decrease it. Default unit is in day. If the option value ends with 'S', 's', second is assumed. If it ends with 'M' or 'm', unit is the minute. If it ends with 'H' or 'h', unit is the hour. If it ends with 'D' or 'd', unit is the day. With 'Y' or 'y', unit is the year (365 days). Special keywords \fBAS_LONG_AS_POSSIBLE\fP and \fBINFINITE_LIFETIME\fP are supported.
+Sets the retention period on disk. Applies only for
+.IR STAGED
+files. Default unit is in day. If the option value ends with 'S', 's', second is assumed. If it ends with 'M' or 'm', unit is the minute. If it ends with 'H' or 'h', unit is the hour. If it ends with 'D' or 'd', unit is the day. With 'Y' or 'y', unit is the year (365 days). Special keywords \fBAS_LONG_AS_POSSIBLE\fP and \fBINFINITE_LIFETIME\fP are supported. Special values are: \-1 (reset to default fileclass value) and 0 (advisory delete). Except for \fBAS_LONG_AS_POSSIBLE\fP and \fB\-1\fP, any value is checked against a maximum that is a pool parameter setted at the stager daemon level. 
 .TP
 .BI \-\-status " status"
 Sets the internal status. Only
