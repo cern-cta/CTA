@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.34 $ $Date: 2002/02/15 13:25:15 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.35 $ $Date: 2002/02/18 10:08:43 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -84,6 +84,9 @@ EXTERN_C int DLL_DECL rfio_mkdir _PROTO((char *, int));
 EXTERN_C int DLL_DECL rfio_mstat _PROTO((char *, struct stat *));
 EXTERN_C int DLL_DECL rfio_munlink _PROTO((char *));
 EXTERN_C int DLL_DECL rfio_msymlink _PROTO((char *, char *));
+EXTERN_C int DLL_DECL rfio_mstat_reset _PROTO((void));  /* Reset connections opened by rfio_mstat() [fork() case] */
+EXTERN_C int DLL_DECL rfio_munlink_reset _PROTO((void));  /* Reset connections opened by rfio_mstat() [fork() case] */
+EXTERN_C int DLL_DECL rfio_msymlink_reset _PROTO((void));  /* Reset connections opened by rfio_mstat() [fork() case] */
 #if defined(RFIO_KERNEL)
 EXTERN_C int DLL_DECL rfio_open _PROTO((char *, int, int));
 #else /* RFIO_KERNEL */
