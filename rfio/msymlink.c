@@ -1,5 +1,5 @@
 /*
- * $Id: msymlink.c,v 1.2 2001/11/13 17:25:53 jdurand Exp $
+ * $Id: msymlink.c,v 1.3 2001/11/13 17:37:07 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.2 $ $Date: 2001/11/13 17:25:53 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.3 $ $Date: 2001/11/13 17:37:07 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -381,7 +381,6 @@ static int rfio_msymlink_allocentry(hostname,Tid,s)
       msymlink_tab[i].host[0] = '\0';
       msymlink_tab[i].Tid = -1;
       msymlink_tab[i].pid = 0;
-      continue;
     }
     if (msymlink_tab[i].host[0] == '\0') {
       rc = i;
@@ -438,7 +437,6 @@ static int rfio_msymlink_findentry(hostname,Tid)
       msymlink_tab[i].host[0] = '\0';
       msymlink_tab[i].Tid = -1;
       msymlink_tab[i].pid = 0;
-      continue;
     }
     if ((strcmp(msymlink_tab[i].host,hostname) == 0) && (msymlink_tab[i].Tid == Tid)) {
       rc = i;

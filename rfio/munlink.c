@@ -1,5 +1,5 @@
 /*
- * $Id: munlink.c,v 1.2 2001/11/13 17:34:29 jdurand Exp $
+ * $Id: munlink.c,v 1.3 2001/11/13 17:37:07 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.2 $ $Date: 2001/11/13 17:34:29 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.3 $ $Date: 2001/11/13 17:37:07 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -375,7 +375,6 @@ static int rfio_munlink_allocentry(hostname,Tid,s)
       munlink_tab[i].host[0] = '\0';
       munlink_tab[i].Tid = -1;
       munlink_tab[i].pid = 0;
-      continue;
     }
     if (munlink_tab[i].host[0] == '\0') {
       rc = i;
@@ -432,7 +431,6 @@ static int rfio_munlink_findentry(hostname,Tid)
       munlink_tab[i].host[0] = '\0';
       munlink_tab[i].Tid = -1;
       munlink_tab[i].pid = 0;
-      continue;
     }
     if ((strcmp(munlink_tab[i].host,hostname) == 0) && (munlink_tab[i].Tid == Tid)) {
       rc = i;
