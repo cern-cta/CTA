@@ -1,5 +1,5 @@
 /*
- * $Id: stager_disk.c,v 1.11 2002/09/30 16:55:25 jdurand Exp $
+ * $Id: stager_disk.c,v 1.12 2002/10/01 07:10:02 jdurand Exp $
  */
 
 /*
@@ -15,7 +15,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.11 $ $Date: 2002/09/30 16:55:25 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.12 $ $Date: 2002/10/01 07:10:02 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -104,7 +104,7 @@ int save_euid, save_egid;
 #define SAVE_EID {                               \
 	save_euid = geteuid();                       \
 	save_egid = getegid();                       \
-	SETEID(0,0);                                 \
+	SETEID(start_passwd.pw_gid,start_passwd.pw_uid); \
 }
 #define RESTORE_EID {                            \
 	SETEID(save_euid,save_egid);                 \
