@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrentermodel.man,v $ $Revision: 1.1 $ $Date: 2000/03/04 14:43:03 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrentermodel.man,v $ $Revision: 1.2 $ $Date: 2000/03/05 09:24:16 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRENTERMODEL 1 "$Date: 2000/03/04 14:43:03 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRENTERMODEL 1 "$Date: 2000/03/05 09:24:16 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrentermodel \- enter a new model of cartridge in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -33,6 +33,14 @@ It must be at most CA_MAXMODELLEN characters long.
 .I native_capacity
 in bytes. The number may also have a suffix M or G to indicate Mbyte and
 Gbyte respectively.
+.SH EXAMPLES
+.nf
+.ft CW
+vmgrentermodel --mo SD3 --ml C --nc 50G --mc 48
+vmgrentermodel --mo 3590 --ml J --nc 10G --mc 45
+vmgrentermodel --mo DLT --nc 10G --mc 51
+.ft
+.fi
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or >0 if the operation
 failed.

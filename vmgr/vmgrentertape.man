@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrentertape.man,v $ $Revision: 1.1 $ $Date: 2000/03/04 14:43:03 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrentertape.man,v $ $Revision: 1.2 $ $Date: 2000/03/05 09:24:17 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRENTERTAPE 1 "$Date: 2000/03/04 14:43:03 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRENTERTAPE 1 "$Date: 2000/03/05 09:24:17 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrentertape \- enter a new tape in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -108,6 +108,12 @@ Only
 and
 .I model
 are mandatory. The other fields can be set later.
+.SH EXAMPLE
+.nf
+.ft CW
+vmgrentertape -V R02101 -g 9840R3 -d 20GC -l al --mo 9840 --ml R
+.ft
+.fi
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or >0 if the operation
 failed.
