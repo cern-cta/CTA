@@ -1,5 +1,5 @@
 /*
- * $Id: rfcat.c,v 1.2 2002/02/11 13:06:01 baud Exp $
+ * $Id: rfcat.c,v 1.3 2004/03/02 09:16:12 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfcat.c,v $ $Revision: 1.2 $ $Date: 2002/02/11 13:06:01 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rfcat.c,v $ $Revision: 1.3 $ $Date: 2004/03/02 09:16:12 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -60,7 +60,7 @@ char *inpfile;
 	
 	if (strcmp (inpfile, "-") == 0)
 		s  = stdin;
-	else if ((s = rfio_fopen (inpfile, "r")) == NULL) {
+	else if ((s = rfio_fopen64 (inpfile, "r")) == NULL) {
 		rfio_perror (inpfile);
 		return (1);
 	}
