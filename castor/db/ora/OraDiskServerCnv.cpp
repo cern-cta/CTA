@@ -301,7 +301,7 @@ void castor::db::ora::OraDiskServerCnv::createRep(castor::IAddress* address,
     m_storeTypeStatement->executeUpdate();
     m_insertStatement->setString(1, obj->name());
     m_insertStatement->setDouble(2, obj->id());
-    m_insertStatement->setDouble(3, 0);
+    m_updateStatement->setInt(3, (int)obj->status());
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
