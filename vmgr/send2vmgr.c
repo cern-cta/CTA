@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2vmgr.c,v $ $Revision: 1.3 $ $Date: 2004/08/12 13:42:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2vmgr.c,v $ $Revision: 1.4 $ $Date: 2005/03/15 22:56:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -133,14 +133,14 @@ int user_repbuf_len;
 #ifdef CSEC
 			if (secure_connection) {
 
-			  if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
+			  if (Csec_client_initContext(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
 			    vmgr_errmsg (func, VMG02, "send", "Could not init context");
 			    serrno = ESEC_CTX_NOT_INITIALIZED;
 			    (void) netclose (s);
 			    return -1;
 			}
 			
-			  if(Csec_client_establish_context(&ctx, s)< 0) {
+			  if(Csec_client_establishContext(&ctx, s)< 0) {
 			    vmgr_errmsg (func, "%s: %s\n",
 					 "send",
 					 "Could not establish context");
@@ -149,7 +149,7 @@ int user_repbuf_len;
 			    return -1;
 			  }
 
-			  Csec_clear_context(&ctx);
+			  Csec_clearContext(&ctx);
 			}
 #endif
 		if (socketp)

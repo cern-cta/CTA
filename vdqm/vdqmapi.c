@@ -1,12 +1,12 @@
 /*
- * $Id: vdqmapi.c,v 1.3 2004/08/12 16:11:25 motiakov Exp $
+ * $Id: vdqmapi.c,v 1.4 2005/03/15 22:57:11 bcouturi Exp $
  *
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqmapi.c,v $ $Revision: 1.3 $ $Date: 2004/08/12 16:11:25 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqmapi.c,v $ $Revision: 1.4 $ $Date: 2005/03/15 22:57:11 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -218,7 +218,7 @@ int DLL_DECL vdqm_Connect(vdqmnw_t **nw) {
     TRACE(1,"vdqm","vdqm_Connect() successful");
 #ifdef CSEC
     if (secure_connection) {
-      if (Csec_client_init_context(&((*nw)->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
+      if (Csec_client_initContext(&((*nw)->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
 	TRACE (1, "vdqm_CSEC", "Could not init context\n");
 	closesocket((*nw)->connect_socket);
 	free(*nw);
@@ -226,7 +226,7 @@ int DLL_DECL vdqm_Connect(vdqmnw_t **nw) {
 	VDQM_API_RETURN(-1);
       }
 	
-      if(Csec_client_establish_context(&((*nw)->sec_ctx), (*nw)->connect_socket)< 0) {
+      if(Csec_client_establishContext(&((*nw)->sec_ctx), (*nw)->connect_socket)< 0) {
 	TRACE (1, "vdqm_CSEC", "Could not establish context\n");
 	closesocket((*nw)->connect_socket);
 	free(*nw);
@@ -234,11 +234,7 @@ int DLL_DECL vdqm_Connect(vdqmnw_t **nw) {
 	return -1;
       }
 	
-      p = Csec_client_get_service_name(&((*nw)->sec_ctx));
-      n = Csec_client_get_service_type(&((*nw)->sec_ctx));
-      Csec_trace ("vdqm_Connect", "Service name = %s, type = %d\n",p, n);
-    
-      Csec_clear_context(&((*nw)->sec_ctx));
+      Csec_clearContext(&((*nw)->sec_ctx));
     }
 #endif
 

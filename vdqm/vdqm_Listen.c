@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_Listen.c,v $ $Revision: 1.1 $ $Date: 2004/07/30 12:54:08 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_Listen.c,v $ $Revision: 1.2 $ $Date: 2005/03/15 22:57:11 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -87,21 +87,22 @@ int vdqm_Listen(vdqmnw_t *nw) {
                     }
                 }
 #ifdef CSEC
-		Csec_server_reinit_context(&(nw->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
-		if (Csec_server_establish_context(&(nw->sec_ctx),nw->accept_socket) < 0) {
+		Csec_server_reinitContext(&(nw->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
+		if (Csec_server_establishContext(&(nw->sec_ctx),nw->accept_socket) < 0) {
 		  (void)log(LOG_ERR, "Could not establish context: %s !\n", Csec_geterrmsg());
 		  closesocket (nw->accept_socket);
 		  nw->accept_socket = INVALID_SOCKET;
 		  return (-1);
 		}
 		/* Connection could be done from another castor service */
-		if ((c = Csec_server_is_castor_service(&(nw->sec_ctx))) >= 0) {
+		if ((c = Csec_server_isClientAService(&(nw->sec_ctx))) >= 0) {
 		  (void)log(LOG_INFO, "CSEC: Client is castor service type: %d\n", c);
 		  nw->Csec_service_type = c;
 		} else {
-		  if (Csec_server_get_client_username(&(nw->sec_ctx), &(nw->Csec_uid), &(nw->Csec_gid)) != NULL) {
+	          char *username;
+		  if (Csec_server_mapClientToLocalUser(&(nw->sec_ctx), &username, &(nw->Csec_uid), &(nw->Csec_gid))==0) {
 		    (void)log(LOG_INFO, "CSEC: Client is %s (%d/%d)\n",
-			      Csec_server_get_client_username(&(nw->sec_ctx), NULL, NULL),
+			      username,
 			      nw->Csec_uid,
 			      nw->Csec_gid);
 		    nw->Csec_service_type = -1;

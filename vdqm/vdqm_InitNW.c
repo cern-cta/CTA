@@ -1,12 +1,12 @@
 /*
- * $Id: vdqm_InitNW.c,v 1.2 2004/08/12 16:09:39 motiakov Exp $
+ * $Id: vdqm_InitNW.c,v 1.3 2005/03/15 22:57:11 bcouturi Exp $
  *
  * Copyright (C) 1999-2001 by CERN IT-PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_InitNW.c,v $ $Revision: 1.2 $ $Date: 2004/08/12 16:09:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_InitNW.c,v $ $Revision: 1.3 $ $Date: 2005/03/15 22:57:11 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -194,25 +194,21 @@ static int InitNW(vdqmnw_t **nw, char *vdqm_host, int use_port) {
         }
 #ifdef CSEC
 	if (secure_connection) {
-	  if (Csec_client_init_context(&((*nw)->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
+	  if (Csec_client_initContext(&((*nw)->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
 	    log(LOG_ERR, "InitNW() Could not init context\n");
             closesocket((*nw)->connect_socket);
 	    serrno = ESEC_CTX_NOT_INITIALIZED;
 	    return -1;
 	  }
 	  
-	  if(Csec_client_establish_context(&((*nw)->sec_ctx), (*nw)->connect_socket)< 0) {
+	  if(Csec_client_establishContext(&((*nw)->sec_ctx), (*nw)->connect_socket)< 0) {
 	    log (LOG_ERR, "InitNW() Could not establish context\n");
             closesocket((*nw)->connect_socket);
 	    serrno = ESEC_NO_CONTEXT;
 	    return -1;
 	  }
 	
-	  p = Csec_client_get_service_name(&((*nw)->sec_ctx));
-	  n = Csec_client_get_service_type(&((*nw)->sec_ctx));
-	  Csec_trace ("InitNW", "Service name = %s, type = %d\n",p, n);
-	
-	  Csec_clear_context(&((*nw)->sec_ctx));
+	  Csec_clearContext(&((*nw)->sec_ctx));
 	}
 #endif
 

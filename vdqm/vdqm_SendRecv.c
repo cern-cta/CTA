@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_SendRecv.c,v $ $Revision: 1.1 $ $Date: 2004/07/30 12:54:08 $ CERN IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_SendRecv.c,v $ $Revision: 1.2 $ $Date: 2005/03/15 22:57:11 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -672,25 +672,21 @@ int vdqm_ConnectToRTCP(SOCKET *connect_socket, char *RTCPserver) {
     }
 #ifdef CSEC
 
-    if (Csec_client_init_context(&sec_ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
+    if (Csec_client_initContext(&sec_ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
       log(LOG_ERR, "vdqm_ConnectToRTCP(%s): Could not init context\n", servername);
       closesocket(s);
       serrno = ESEC_CTX_NOT_INITIALIZED;
       return(-1);
     }
 	
-    if(Csec_client_establish_context(&sec_ctx, s)< 0) {
+    if(Csec_client_establishContext(&sec_ctx, s)< 0) {
       log(LOG_ERR, "vdqm_ConnectToRTCP(%s): Could not establish context\n", servername);
       closesocket(s);
       serrno = ESEC_NO_CONTEXT;
       return(-1);
     }
 	
-    p = Csec_client_get_service_name(&sec_ctx);
-    n = Csec_client_get_service_type(&sec_ctx);
-    Csec_trace ("vdqm_Connect", "Service name = %s, type = %d\n",p, n);
-    
-    Csec_clear_context(&sec_ctx);
+    Csec_clearContext(&sec_ctx);
 #endif
 
     *connect_socket = s;

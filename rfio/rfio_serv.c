@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.17 2005/01/04 11:22:52 jdurand Exp $
+ * $Id: rfio_serv.c,v 1.18 2005/03/15 22:56:10 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.17 $ $Date: 2005/01/04 11:22:52 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.18 $ $Date: 2005/03/15 22:56:10 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */
@@ -977,41 +977,44 @@ char tmpbuf[21], tmpbuf2[21];
 #define CLIENT_NAME_SIZE 1000
 /* Perfom the authentication */
  {
-   char* username;
+   char username[CA_MAXUSRNAMELEN+1];
    int ret_flags = 0;
+   char *mech, *clientid;
 
-   if (Csec_server_init_context(&ctx, CSEC_SERVICE_TYPE_DISK, NULL)<0) {
+   if (Csec_server_initContext(&ctx, CSEC_SERVICE_TYPE_DISK, NULL)<0) {
      log(LOG_ERR, "Could not initailize context: %s\n", Csec_geterrmsg()); 
      closesocket(s);
      exit(1);
    }
 
-   if (Csec_server_establish_context(&ctx, s)<0) {
+   if (Csec_server_establishContext(&ctx, s)<0) {
      log(LOG_ERR, "Could not establish context: %s\n", Csec_geterrmsg());
      closesocket(s);
      exit(1);
    }
+   /* Getting the client identity */ 
+   Csec_server_getClientId(&ctx, &mech, &clientid);
    
-  /*  sleep(30); */
+   log(LOG_INFO, "The client principal is: %s/%s\n", mech, clientid);
 
-   log(LOG_INFO, "The client principal is: %s\n", ctx.peer_name);
    /* Connection could be done from another castor service */
-   if ((Csec_service_type = Csec_server_is_castor_service(&ctx)) >= 0) {
+   if ((Csec_service_type = Csec_isIdAService(mech, clientid)) >= 0) {
      log(LOG_INFO, "CSEC: Client is castor service type: %d\n", Csec_service_type);
    }
-   else {
-     if ((username = Csec_server_get_client_username(&ctx, &peer_uid, &peer_gid)) != NULL) {
-       log(LOG_INFO, "CSEC: Client is %s (%d/%d)\n",
-		 username,
-		 peer_uid,
-		 peer_gid);
-       Csec_service_type = -1;
-     }
-     else {
-       log(LOG_ERR, "CSEC: Could not map user %s\n", ctx.peer_name);
+   else {  
+     if (Csec_mapToLocalUser(mech, clientid,
+			     username, CA_MAXUSRNAMELEN,
+			     &peer_uid, &peer_gid) != 0) {
+       log(LOG_ERR, "CSEC: Could not map user %s/%s\n", mech, clientid);
        closesocket(s);
        exit(1);
      }
+
+     log(LOG_INFO, "CSEC: Client is %s (%d/%d)\n",
+	 username,
+	 peer_uid,
+	 peer_gid);
+     Csec_service_type = -1;
    }
  }
 #endif

@@ -1,5 +1,5 @@
 /*
- * $Id: connect.c,v 1.11 2005/01/19 16:22:13 obarring Exp $
+ * $Id: connect.c,v 1.12 2005/03/15 22:56:10 bcouturi Exp $
  */
 
 /*
@@ -423,12 +423,11 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
        int rc;
      
        TRACE(1, "srfio", "Going to establish security context !");
-       if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_DISK, NULL) <0) {
+       if (Csec_client_initContext(&ctx, CSEC_SERVICE_TYPE_DISK, NULL) <0) {
 	 TRACE(2, "srfio", "Could not initiate context: %s", Csec_geterrmsg());
        }
      
-       TRACE(1, "srfio", "Service is %s", Csec_client_get_service_name(&ctx));
-       rc = Csec_client_establish_context(&ctx, s);
+       rc = Csec_client_establishContext(&ctx, s);
        if (rc != 0) {
 	 TRACE(2, "srfio", "Could not establish context: %s", Csec_geterrmsg());
 	 close(s);
@@ -436,7 +435,7 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
 	 return(-1);
        }
      
-       Csec_clear_context(&ctx);
+       Csec_clearContext(&ctx);
 
        TRACE(1, "srfio", "client establish context returned %s", rc);
      }
