@@ -17,12 +17,58 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/17 16:23:38 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.h,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/18 08:44:35 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
+
+/** RTCOPY client daemon API
+ *
+ * \file rtcpcldapi.h
+ *
+ * The RTCOPY client daemon API provides an interface similar to rtcpapi.h for
+ * submitting tape mover requests. The difference is that rtcpcldapi passes the
+ * request to the stager request database using the Cstager_Tape and Cstager_Segment
+ * APIs. Apart for an unreliable (UDP) notification mechanism there are no
+ * network connections between the rtcpcldapi client and the RTCOPY subsystem. All
+ * request updates are synchronized through the databse.
+ *
+ * <P>
+ * Only a subset of the rtcpTapeRequest_t and rtcpFileRequest_t fields are passed
+ * through the database. All other fields are set to default values and any other
+ * value set by client is ignored. The relevant fields in rtcpTapeRequest_t are:
+ *   - vid
+ *   - side
+ *   - mode
+ *
+ * The relevant fields in rtcpFileRequest_t are:
+ *   - tape_fseq
+ *   - blockid
+ *   - bytes_in
+ *   - bytes_out
+ *   - offset
+ *   - host_bytes
+ *   - file_path
+ *   - castorSegAttr.segmCksumAlgorithm
+ *   - castorSegAttr.segmCksum
+ *   - castorSegAttr.nameServerHostName
+ *   - castorSegAttr.castorFileId
+ *   - stgReqId (UUID)
+ *   - err.errorcode
+ *   - err.severity
+ *   - err.errmsgtxt
+ *
+ * The fields:
+ *   - proc_status
+ *   - cprc
+ *   - stageID
+ *   - stageSubreqID
+ *
+ * are used internally in rtcpcldapi.h but not passed on to the RTCOPY server.
+ *
+ */
 
 #ifndef H_RTCPCLDAPI_H 
 #define H_RTCPCLDAPI_H 1
