@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.13 2004/12/14 10:57:10 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.14 2004/12/17 08:39:15 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.13 $ $Date: 2004/12/14 10:57:10 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.14 $ $Date: 2004/12/17 08:39:15 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -16,6 +16,7 @@ static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.13 $ $Dat
 /* ================================================================= */
 #include "Cthread_api.h"
 #include "Cmutex.h"
+#include "stager_uuid.h"                /* Thread-specific uuids */
 
 /* ============== */
 /* System headers */
@@ -118,6 +119,13 @@ EXTERN_C int DLL_DECL stager_job_select(void **output) {
       rc = 0;
     }
 
+    /* Set uuid for the log */
+    /* -------------------- */
+    Cuuid_t request_uuid;
+    if (string2Cuuid(&request_uuid,(char *) req->reqId().c_str()) == 0) {
+      stager_request_uuid = request_uuid;
+    }
+
   } catch (castor::exception::Exception e) {
     serrno = e.code();
     STAGER_LOG_DB_ERROR(NULL,"stager_job_select",
@@ -209,6 +217,14 @@ namespace castor {
                          << " for ID:" << sReq->subreqId();
           delete obj;
           throw e;
+        }
+
+        /* Set uuid for the log */
+        /* -------------------- */
+        Cuuid_t subrequest_uuid;
+        if (string2Cuuid(&subrequest_uuid,
+                         (char *) subreq->subreqId().c_str()) == 0) {
+          stager_subrequest_uuid = subrequest_uuid;
         }
 
         /* Getting the FileSystem Object      */
@@ -385,6 +401,14 @@ namespace castor {
                          << " for ID:" << mcReq->subReqId();
           delete obj;
           throw e;
+        }
+
+        /* Set uuid for the log */
+        /* -------------------- */
+        Cuuid_t subrequest_uuid;
+        if (string2Cuuid(&subrequest_uuid,
+                         (char *) subreq->subreqId().c_str()) == 0) {
+          stager_subrequest_uuid = subrequest_uuid;
         }
 
         /* Invoking the method                */
