@@ -1,5 +1,5 @@
 /*
- * $Id: xxx_test.c,v 1.2 2003/01/22 10:54:18 jdurand Exp $
+ * $Id: xxx_test.c,v 1.3 2003/01/22 11:29:45 jdurand Exp $
  */
 
 /*
@@ -8,10 +8,18 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: xxx_test.c,v $ $Revision: 1.2 $ $Date: 2003/01/22 10:54:18 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: xxx_test.c,v $ $Revision: 1.3 $ $Date: 2003/01/22 11:29:45 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
+#ifndef _WIN32
+#include <unistd.h>
+#else
+#define R_OK 4
+#define W_OK 2
+#define X_OK 1
+#define F_OK 0
+#endif
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <stdio.h>
