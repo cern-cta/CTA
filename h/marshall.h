@@ -1,9 +1,9 @@
 /*
- * $Id: marshall.h,v 1.13 2002/11/19 08:43:12 baud Exp $
+ * $Id: marshall.h,v 1.14 2003/10/31 07:19:16 jdurand Exp $
  */
 
 /*
- * @(#)$RCSfile: marshall.h,v $ $Revision: 1.13 $ $Date: 2002/11/19 08:43:12 $ CERN IT-PDP/DM  Fabrizio Cane
+ * @(#)$RCSfile: marshall.h,v $ $Revision: 1.14 $ $Date: 2003/10/31 07:19:16 $ CERN IT-PDP/DM  Fabrizio Cane
  */
 
 /*
@@ -139,7 +139,7 @@ EXTERN_C int DLL_DECL _unmarshall_STRINGN _PROTO((char **, char*, int));
  *    H Y P E R   ( 6 4   B I T S )
  */
 
-#if !defined(__alpha) && !defined(i386) && !defined(_WIN32) && !defined(__ia64__)
+#if !defined(__alpha) && !defined(i386) && !defined(_WIN32) && !defined(__ia64__) && !defined(__x86_64)
 #define  marshall_HYPER(ptr,n)          { U_HYPER u_ = n; \
 					  LONG n_ = htonl(*((unsigned long *)&(u_))); \
 					  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \
