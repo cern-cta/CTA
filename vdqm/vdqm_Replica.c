@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.17 $ $Date: 2001/09/26 13:30:11 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.18 $ $Date: 2001/12/04 11:30:01 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -979,11 +979,6 @@ int vdqm_StartReplicaThread() {
         serrno = SECOMERR;
         return(-1);
     }
-    /*
-     * Remove domain
-     */
-    q = strchr(l_hostname,'.');
-    if ( q != NULL ) *q = '\0';
 
     if ( (p = getconfent("VDQM","HOST",1)) == NULL ) {
         log(LOG_ERR,"vdqm_StartReplicaThread() No primary host configured\n");
@@ -998,6 +993,15 @@ int vdqm_StartReplicaThread() {
         return(-1);
     }
     strcpy(primary_host,q);
+
+    /*
+     * Remove domain from local hostname if configuration entry is
+     * specified without it.
+     */
+    if ( strchr(primary_host,'.') != NULL ) {
+        q = strchr(l_hostname,'.');
+        if ( q != NULL ) *q = '\0';
+    }
 
     if ( strcmp(primary_host,l_hostname) != 0 ) {
         log(LOG_INFO,"vdqm_StartReplicaThread() host (%s) is not primary\n",
