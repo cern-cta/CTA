@@ -3,21 +3,12 @@
 -- Copyright (C) 2003 by CERN/IT/ADC/CA
 -- All rights reserved
 --
--- @(#)$RCSfile: dlf_mysql_tbl.sql,v $ $Revision: 1.1 $ $Date: 2003/08/20 12:58:46 $ CERN IT-ADC Vitaly Motyakov
+-- @(#)$RCSfile: dlf_mysql_tbl.sql,v $ $Revision: 1.2 $ $Date: 2003/12/01 14:25:59 $ CERN IT-ADC Vitaly Motyakov
 --
 --     Create logging facility MySQL tables.
 
 CREATE DATABASE dlf_db;
 USE dlf_db;
-DROP TABLE dlf_messages;
-DROP TABLE dlf_facilities;
-DROP TABLE dlf_severities;
-DROP TABLE dlf_msg_texts;
-DROP TABLE dlf_num_param_values;
-DROP TABLE dlf_str_param_values;
-DROP TABLE dlf_rq_ids_map;
-DROP TABLE dlf_tape_ids;
-DROP TABLE dlf_host_map;
 
 CREATE TABLE dlf_host_map (
 	host_id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
