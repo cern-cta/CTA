@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.35 2002/12/18 17:43:18 jdurand Exp $
+ * $Id: stager_castor.c,v 1.36 2002/12/19 08:16:04 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.35 $ $Date: 2002/12/18 17:43:18 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.36 $ $Date: 2002/12/19 08:16:04 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -2063,7 +2063,7 @@ int stagewrt_castor_hsm_file() {
 			SAVE_EID;
 			sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] "
 					"Calling vmgr_gettape(tape_pool=\"%s\",size=%s,NULL,vid,vsn,dgn,aden,lbltype,model,&side,&fseq,&estimated_free_space)\n",
-					tape_pool, u64tostr((u_signed64) statbuf.st_size, tmpbuf, 0));
+					tape_pool, u64tostr((u_signed64) totalsize_to_transfer, tmpbuf, 0));
 			RESTORE_EID;
 #endif
 			if (vmgr_gettape (
