@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: rtcp.h,v $ $Revision: 1.21 $ $Date: 2004/10/07 13:21:59 $ CERN IT/ADC Olof Barring
+ * @(#)$RCSfile: rtcp.h,v $ $Revision: 1.22 $ $Date: 2004/10/07 14:48:29 $ CERN IT/ADC Olof Barring
  */
 
 /*
@@ -238,6 +238,14 @@ typedef struct rtcpDumpTapeRequest {
 #define RTCP_DUMPTAPEREQLEN(X) (8*LONGSIZE)
 
 /*
+ * Opaque DB reference for use in the new stager
+ */
+typedef struct RtcpDBRef {
+    u_signed64 key;                  /* Catalogue DB key */
+    void *row;                       /* Catalogue DB row */
+} RtcpDBRef_t;
+
+/*
  * Circular lists of tape and file requests. (Client only)
  */
 typedef struct tape_list {
@@ -246,7 +254,7 @@ typedef struct tape_list {
                                       * local retry. This is needed
                                       * to prevent Ctape_reserve() from
                                       * being called twice. */
-    u_signed64 dbKey;                /* Catalogue DB Tape key used in the new stager */
+    RtcpDBRef_t *dbRef;              /* DB reference used in new stager */
     rtcpTapeRequest_t tapereq;        
     rtcpDumpTapeRequest_t dumpreq;   /* Only used if file == NULL */
     struct file_list *file;          /* List of files for this tape */
@@ -299,6 +307,7 @@ typedef struct file_list {
                                           const char *,
                                           unsigned int
                                           ));
+    RtcpDBRef_t *dbRef;              /* DB reference used in new stager */
     rtcpFileRequest_t filereq;
     struct tape_list *tape;          /* Parent tape request */
     struct file_list *next;          /* Next in circular list */
