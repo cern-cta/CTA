@@ -1,0 +1,377 @@
+COMM
+COMM $RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 2004/05/24 14:06:31 $ CERN IT-PDP/DM Olof Barring
+COMM
+
+COMM
+COMM Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+
+COMM         Make RTCOPY API library and server
+
+INCLUDES = FileName(..,h)
+INCLUDES_CPP = FileName(..,)
+
+COMM
+COMM Define the remote tape copy daemon log file.
+COMM
+SPOOL = RtcopySpool
+LOGFILE = FileName($(SPOOL),rtcopyd.log)
+
+COMM
+COMM Define the working directory of 
+COMM the remote tape copy jobs.
+COMM
+RTCOPYWORKDIR = RtcopyWorkDir
+
+COMM
+COMM Define the file indicating that more
+COMM tape request should be submit on the
+COMM server.
+COMM
+NOMORETAPES = FileName(OperatorDir,nomoretapes)
+
+COMM
+COMM Define the file indicating the hosts
+COMM authorized to use remotely rtcopy server
+COMM 
+AUTHORIZEDHOSTS = AuthorizedHosts
+
+COMM
+COMM Define domain name for old SHIFT tpread/tpwrite
+COMM clients. Aiming an out of site server.
+COMM
+DOMAINNAME= DomainName
+
+COMM
+COMM Define CASTOR Name server root path name to prevent
+COMM tpread/tpwrite request to/from HSM files
+COMM
+NS_ROOT = NsRoot
+
+COMM
+COMM Set this flag to -O for optimization, or -g for debug
+COMM
+#ifdef _WIN32
+CCOPTIM =
+#else
+CCOPTIM = -g
+#endif
+
+#REDEF_RTCPC = -Drtcpc=rtcpcldc
+REDEF_RTCPC =
+
+DBLIBS = -L../castor -lcastorClient -L../castor/db/ora -lcastorCommonOra
+
+#if defined(SONYRAW)
+SONYRFLG = -DSONYRAW
+#endif
+
+#if UseTms
+TMSFLG = -DTMS
+TMSSERV = rtcp_CallTMS.Osuf
+TMSLIB = rtcpc_CallTMS.Osuf
+#endif
+
+#if UseVmgr
+VMGRFLG = -DVMGR
+VMGRSERV = rtcp_CallVMGR.Osuf
+VMGRLIB = rtcpc_CallVMGR.Osuf
+#endif
+
+#if BuildVdqmClient
+VDQMFLG = -DVDQM
+#endif
+
+#if BuildTapeClient
+CTAPEFLG = -DCTAPE
+#else
+CTAPEFLG = -DCTAPE_DUMMIES
+#endif
+
+OPSGRP = OperatorGid
+
+#if Accounting
+ACCTON= -DACCTON
+SACCTDIR = SacctDir
+SACCTFILE = FileName($(SACCTDIR),sacct)
+ACCTFILE = -DACCTFILE=\"$(SACCTFILE)\"
+ERRLISTDIR = FileName(InstallLibDir,rtcopy)
+ERRLISTFILE = FileName($(ERRLISTDIR),err_messages)
+ESTATD = FileName(FileName(FileName($(EXPORTSHR),lib),rtcopy),err_messages)
+RTCOPYERRLIST = -DRTCOPYERRLIST=\"$(ERRLISTFILE)\"
+#endif
+
+SCONFIGFILE = ShiftConfigFile
+CONFIGFILE = -DCONFIGFILE=\"$(SCONFIGFILE)\"
+
+TPCONFIGFILE = TapeConfigFile
+TPCONFIG = -DTPCONFIG=\"$(TPCONFIGFILE)\"
+
+THREADFLAGS = $(MTCCFLAGS)
+
+#if SOLARIS
+LDLIBS = -lsocket -lnsl
+#else
+#if _AIX
+#if defined(_IBMR2)
+LDLIBS = -lodm
+#endif
+#else
+#if linux
+LDLIBS = $(ADNSLIB) -lnsl
+#else
+#if _WIN32
+LDLIBS = wsock32.lib ws2_32.lib advapi32.lib
+#endif
+#endif
+#endif
+#endif
+
+CKSUMLIB = -lz
+
+#if BuildRtcopyServer
+RTCPFLAG=-DRTCP_SERVER
+#else
+RTCPFLAG=
+#endif
+
+#if BuildMonitorClient
+MONITORFLAG=-DMONITOR
+#else
+MONITORFLAG=
+#endif
+
+CPFILES = rtcpc_CheckReq.c rtcpc_log.c rtcpc_SendRecv.c rtcpc_CallVMGR.c rtcpc_CallTMS.c
+
+COMM######################### FLAGS ##############################
+DFLAGS = -DBIN=\"$(BIN)\" \
+	 -DRTCOPY_LOGFILE=\"$(LOGFILE)\" \
+	 -DNOMORETAPES=\"$(NOMORETAPES)\" \
+	 -DAUTH_HOSTS=\"$(AUTHORIZEDHOSTS)\" \
+	 -DDOMAINNAME=\"$(DOMAINNAME)\" \
+	 -DWORKDIR=\"$(RTCOPYWORKDIR)\" \
+	 -DNS_ROOT=\"$(NS_ROOT)\" \
+	 $(ACCTON) $(SONYRFLG) $(CONFIGFILE) $(RTCOPYERRLIST) $(TPCONFIG) \
+	 $(RTCPFLAG) $(TMSFLG) $(VMGRFLG) $(VDQMFLG) $(CTAPEFLG) $(ACCTFLAG) $(ACCTFILE)  $(MONITORFLAG)
+
+CFLAGS = $(CCOPTIM) -I$(INCLUDES) -I$(INCLUDES_CPP) $(THREADFLAGS) $(DFLAGS)
+
+COMM######################### DEPENDENCY LIBRARIES ###############
+GLOBLIB = DepLibraryTargetName(lib,shift) 
+
+COMM######################### RULES ##############################
+
+#if BuildRtcopyClient
+#if BuildRtstat
+PROGS_RTSTAT = ProgramTargetName(rtstat)
+IPROGS_RTSTAT = FileName($(BIN),ProgramTargetName(rtstat)) $(ERRLISTFILE)
+EPROGS_RTSTAT = FileName($(EXPORTBIN),rtstat)
+MANPAGES_RTSTAT = FileName($(MANDIR),rtstat.$(MANSUFFIX))
+EMANPAGES_RTSTAT = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtstat.$(MANSUFFIX)))
+#endif
+PROGS_C = ProgramTargetName(tpread) \
+	  ProgramTargetName(tpwrite) \
+	  ProgramTargetName(dumptape) $(PROGS_RTSTAT)
+IPROGS_C = FileName($(BIN),ProgramTargetName(tpread)) \
+	   FileName($(BIN),ProgramTargetName(tpwrite)) \
+	   FileName($(BIN),ProgramTargetName(dumptape)) $(IPROGS_RTSTAT)
+EPROGS_C = FileName($(EXPORTBIN),tpread) FileName($(EXPORTBIN),tpwrite) \
+	   FileName($(EXPORTBIN),dumptape) $(EPROGS_RTSTAT)
+MANPAGES_C = FileName($(MANDIR),tpread.$(MANSUFFIX)) \
+	     FileName($(MANDIR),tpwrite.$(MANSUFFIX)) \
+	     FileName($(MANDIR),dumptape.$(MANSUFFIX)) $(MANPAGES_RTSTAT)
+EMANPAGES_C = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tpread.$(MANSUFFIX))) \
+	FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tpwrite.$(MANSUFFIX))) \
+	FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),dumptape.$(MANSUFFIX))) $(EMANPAGES_RTSTAT)
+#endif
+#if BuildRtcopyServer
+PROGS_D = ProgramTargetName(rtcpd) \
+	  ProgramTargetName(killjid)
+IPROGS_D = FileName($(BIN),ProgramTargetName(rtcpd)) \
+	   FileName($(BIN),ProgramTargetName(killjid))
+EPROGS_S =
+MANPAGES_S = FileName($(MANDIR),rtcpd.$(MANSUFFIX)) \
+	     FileName($(MANDIR),killjid.$(MANSUFFIX))
+EMANPAGES_S =FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpd.$(MANSUFFIX))) \
+	FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),killjid.$(MANSUFFIX))) 
+#endif
+
+#if BuildMonitorClient 
+RTCPD_MONITORCLIENT = Cmonit_rtcopyclient.Osuf
+#endif 
+
+RTCPD_OBJS =	rtcpd.Osuf $(TMSSERV) $(VMGRSERV) rtcp_CheckReq.Osuf \
+		rtcp_Listen.Osuf rtcp_SendRecv.Osuf rtcp_log.Osuf \
+		rtcpd_ClientListen.Osuf rtcpd_Ctape.Osuf rtcpd_Disk.Osuf \
+		rtcpd_MainCntl.Osuf rtcpd_SelfMonitor.Osuf rtcpd_Tape.Osuf \
+		rtcpd_TapeIO.Osuf rtcpd_stageupdc.Osuf rtcp_InitNW.Osuf \
+		rtcpd_ConvertData.Osuf rtcpd_SHIFTClients.Osuf \
+		rtcpc_BuildReq.Osuf rtcpapi.Osuf rtcp_RetvalSHIFT.Osuf \
+		rtcpd_tpdump.Osuf Ctape_dummies.Osuf  $(RTCPD_MONITORCLIENT) \
+		rtcp_accounting.Osuf		
+
+RTCPLIB_OBJS =	rtcpc_SendRecv.Osuf rtcp_InitNW.Osuf rtcpc_log.Osuf \
+		$(TMSLIB) $(VMGRLIB) rtcp_Listen.Osuf rtcpapi.Osuf \
+		rtcpc_BuildReq.Osuf rtcp_RetvalSHIFT.Osuf rtcpc_CheckReq.Osuf \
+		rtcpcldapi.Osuf rtcpcldcommon.Osuf
+
+TPREAD_OBJS =	tpread.Osuf
+DUMPTAPE_OBJS =	dumptape.Osuf
+#if BuildRtstat
+RTSTAT_OBJS = rtstat.Osuf
+#endif
+
+all: LibraryTargetName(rtcpapi) $(PROGS_C) $(PROGS_D)
+
+rtcpc_SendRecv.c:	DepSourceName(rtcopy,rtcp_SendRecv.c)
+			RemoveFile(rtcpc_SendRecv.c)
+			$(CP) rtcp_SendRecv.c rtcpc_SendRecv.c
+
+rtcpc_log.c:		DepSourceName(rtcopy,rtcp_log.c)
+			RemoveFile(rtcpc_log.c)
+			$(CP) rtcp_log.c rtcpc_log.c
+
+rtcpc_CallTMS.c:	DepSourceName(rtcopy,rtcp_CallTMS.c)
+			RemoveFile(rtcpc_CallTMS.c)
+			$(CP) rtcp_CallTMS.c rtcpc_CallTMS.c
+
+rtcpc_CallVMGR.c:	DepSourceName(rtcopy,rtcp_CallVMGR.c)
+			RemoveFile(rtcpc_CallVMGR.c)
+			$(CP) rtcp_CallVMGR.c rtcpc_CallVMGR.c
+
+rtcpc_CheckReq.c:	DepSourceName(rtcopy,rtcp_CheckReq.c)
+			RemoveFile(rtcpc_CheckReq.c)
+			$(CP) rtcp_CheckReq.c rtcpc_CheckReq.c
+
+rtcpc_SendRecv.Osuf:	rtcpc_SendRecv.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
+	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) rtcpc_SendRecv.c
+rtcpc_log.Osuf:		rtcpc_log.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
+	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) rtcpc_log.c
+rtcpc_CallTMS.Osuf:	rtcpc_CallTMS.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
+	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) $(TMSFLG) rtcpc_CallTMS.c
+rtcpc_CallVMGR.Osuf:	rtcpc_CallVMGR.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
+	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) $(VMGRFLG) rtcpc_CallVMGR.c
+rtcpc_CheckReq.Osuf:	rtcpc_CheckReq.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
+	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) rtcpc_CheckReq.c
+tpread.Osuf:		tpread.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
+	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) $(REDEF_RTCPC) tpread.c
+dumptape.Osuf:		dumptape.c ../h/rtcp.h ../h/rtcp_constants.h ../h/rtcp_api.h
+	$(CC) -c $(CCOPTIM) $(THREADFLAGS) -I$(INCLUDES) dumptape.c
+
+#if BuildRtstat
+rtstat.Osuf:		rtstat.c ../h/vdqm.h ../h/osdep.h ../h/net.h
+	$(CC) -c $(CFLAGS) rtstat.c
+#endif
+
+NormalProgramTarget(tpread,$(TPREAD_OBJS) $(RTCPLIB_OBJS),$(GLOBLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
+
+NormalProgramTarget(dumptape,$(DUMPTAPE_OBJS) $(RTCPLIB_OBJS),$(GLOBLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
+
+#if BuildRtstat
+NormalProgramTarget(rtstat,$(RTSTAT_OBJS),$(GLOBLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
+#endif
+
+LinkFile(ProgramTargetName(tpwrite),ProgramTargetName(tpread))
+
+NormalProgramTarget(rtcpd,$(RTCPD_OBJS),$(GLOBLIB),$(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(DBLIBS) $(CKSUMLIB) $(MTLDLIBS)) 
+
+NormalProgramTarget(killjid,killjid.Osuf $(RTCPLIB_OBJS),$(GLOBLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
+
+NormalLibraryTarget(rtcpapi,$(RTCPLIB_OBJS))
+
+MakeDepLibrary(lib,shift)
+
+#if BuildRtcopyServer
+install: $(BIN) $(ERRLISTDIR) $(IPROGS_C) $(IPROGS_D) $(RTCOPYWORKDIR) $(SPOOL) $(SACCTDIR)
+#else
+install: $(BIN) $(ERRLISTDIR) $(IPROGS_C) $(IPROGS_D)
+#endif
+
+InstallProgram(rtcpd,$(BIN),root,bin,0750)
+InstallProgram(killjid,$(BIN),root,$(OPSGRP),0750)
+InstallProgram(tpread,$(BIN),root,bin,0755)
+InstallProgram(tpwrite,$(BIN),root,bin,0755)
+InstallProgram(dumptape,$(BIN),root,bin,0755)
+#if BuildRtstat
+InstallProgram(rtstat,$(BIN),root,bin,0755)
+#endif
+
+InstallNonExecFile(err_messages,$(ERRLISTDIR),root,bin,644)
+
+$(ESTATD): err_messages
+	-mkdir -p $(@D)
+	-mv $(@D)/$? $(@D)/OLD$?
+	cp $? $@
+
+MakeDir($(BIN),root,bin,0755)
+MakeDir($(SPOOL),root,bin,0755)
+MakeDir($(RTCOPYWORKDIR),root,bin,777)
+
+#if Accounting
+MakeDir($(ERRLISTDIR),root,bin,755)
+MakeDir($(SACCTDIR),root,bin,0777)
+#endif
+
+install.man: $(MANDIR) $(MANPAGES_C) $(MANPAGES_S)
+
+MakeDir($(MANDIR),root,bin,0755)
+
+COMM Because nroff does not like to change hierachy of dir
+COMM we copy the man page sourced by dumptape
+dumptape.man: DepSourceName(tape,dumptape.man)
+	RemoveFile(dumptape.man)
+	$(CP) $? $@
+
+IMANPAGE(tpread,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(tpwrite,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(dumptape,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(rtcpd,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(killjid,$(MANDIR),$(MANSUFFIX))
+#if BuildRtstat
+IMANPAGE(rtstat,$(MANDIR),$(MANSUFFIX))
+#endif
+
+export: $(EPROGS_C) $(EPROGS_S)
+IEXPORT(tpread,$(EXPORTBIN),755)
+IEXPORT(tpwrite,$(EXPORTBIN),755)
+IEXPORT(dumptape,$(EXPORTBIN),755)
+#if BuildRtstat
+IEXPORT(rtstat,$(EXPORTBIN),755)
+#endif
+
+exportman: $(EMANPAGES_C) $(EMANPAGES_S)
+EMANPAGE(tpread,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(tpwrite,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(dumptape,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(rtcpd,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(killjid,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+#if BuildRtstat
+EMANPAGE(rtstat,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+#endif
+
+exportshr: $(ESTATD)
+
+COMM###################### CLEANING RULES #######################
+
+clean:
+	@echo cleaning in CurDir
+	-@RemoveFiles(FilesToClean)
+
+clobber:	clean
+	@echo clobbering in CurDir
+	-@RemoveFiles($(PROGS_RTSTAT) $(PROGS_C) $(PROGS_D) $(CPFILES) LibraryTargetName(rtcopy))
+
+#if _WIN32
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend -Y$(INCLUDES) *.c 2> /dev/null
+#endif
+
+Makefiles:
+
+FORCE:
+
+COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
