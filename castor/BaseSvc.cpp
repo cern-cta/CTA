@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/07 15:54:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/12/14 16:10:38 $ $Author: sponcec3 $
  *
  * 
  *
@@ -41,8 +41,12 @@ castor::BaseSvc::BaseSvc(const std::string name) throw() :
 // -----------------------------------------------------------------------
 void castor::BaseSvc::release() throw() {
   m_refs--;
-  if (0 == m_refs) {
-    svcs()->removeService(name());
-    delete this;
-  }
+  // Never release services. This can lead to memory leaks
+  // in very specific contexts but is an optimisation most
+  // of the time. Otherwise, services are constantly created
+  // and released.
+//   if (0 == m_refs) {
+//     svcs()->removeService(name());
+//     delete this;
+//   }
 }
