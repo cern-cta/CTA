@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.23 2002/01/30 10:24:25 jdurand Exp $
+ * $Id: procfilchg.c,v 1.24 2002/03/04 17:40:09 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.23 $ $Date: 2002/01/30 10:24:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.24 $ $Date: 2002/03/04 17:40:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -358,8 +358,8 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 	}
 
 	if (hsmfile || donemintime_beforemigr || donereqid || doneretenp_on_disk || donestatus) {
-		if (! hsmfile) {
-			sendrep(rpfd, MSG_ERR, "STG02 - Supply of -M option is mandatory\n");
+		if (! (hsmfile || donereqid)) {
+			sendrep(rpfd, MSG_ERR, "STG02 - Supply of -M or --reqid is mandatory\n");
 			c = USERR;
 			goto reply;
 		}
@@ -388,7 +388,8 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			if (poolflag < 0) { /* -p NOPOOL */
 				if (stcp->poolname[0]) continue;
 			} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
-			if (strcmp(stcp->u1.h.xfile, hsmfile) != 0) continue; /* -M */
+			if (hsmfile)
+				if (strcmp(stcp->u1.h.xfile, hsmfile) != 0) continue; /* -M */
 			if ((ifileclass = upd_fileclass(NULL,stcp,ISSTAGED(stcp),0)) < 0) {
 				c = USERR;
 				goto reply;
@@ -405,12 +406,19 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 					}
 #endif
 					savereqs();
-					/* So, by definition, stcp->u1.h.xfile and hsmfile do not match anymore */
-					continue;
+					if (hsmfile) {
+						/* So, by definition, stcp->u1.h.xfile and hsmfile do not match anymore */
+						continue;
+					}
 				}
 			}
 
 			found++;
+
+			if (! hsmfile) {
+				/* So hsmfilename is the one given by reqid */
+				hsmfile = stcp->u1.h.xfile;
+			}
 
 			if (donestatus) {
 				/* We check if we have permissions to do so using the NameServer */
@@ -622,7 +630,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			if (loop_break) break;
 		}
 		if (! found) {
-			sendrep (rpfd, MSG_ERR, STG153, hsmfile, "file not found", poolname);
+			sendrep (rpfd, MSG_ERR, STG153, hsmfile ? hsmfile : "", "file not found", poolname);
 			c = USERR;
 			goto reply;
 		} else {
