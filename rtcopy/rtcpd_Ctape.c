@@ -755,43 +755,6 @@ int rtcpd_Position(tape_list_t *tape,
     return(rc);
 }
 
-int rtcpd_drvinfo(tape_list_t *tape) {
-    struct devinfo devInfo;
-    int rc, blksize;
-    file_list_t *fl;
-
-    if ( tape == NULL || tape->file == NULL ) {
-        serrno = EINVAL;
-        return(-1);
-    }
-    fl = tape->file;
-    rtcp_log(LOG_DEBUG,"rtcpd_drvinfo() called with vid=%s, unit=%s, mode=%d, check_fid=%d\n",
-        tape->tapereq.vid,tape->tapereq.unit,
-        tape->tapereq.mode,fl->filereq.check_fid);
-    if ( tape->tapereq.mode == WRITE_DISABLE ||
-         fl->filereq.check_fid == CHECK_FILE ) return(0);
-
-    rc = Ctape_drvinfo(tape->tapereq.unit,&devInfo);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcpd_drvinfo() (ingored) Ctape_drvinfo() %s\n",    
-            CTP_ERRTXT);
-        return(0);
-    }
-    rtcp_log(LOG_DEBUG,"rtcpd_drvinfo() Ctape_drvinfo() returned default blocksize=%d\n",
-        devInfo.defblksize);
-    CLIST_ITERATE_BEGIN(tape->file,fl) {
-        if ( fl->filereq.blocksize <= 0 ) {
-            rtcp_log(LOG_DEBUG,"rtcpd_drvinfo() set default blocksize (%d) for fseq=%d, file=%s\n",
-                devInfo.defblksize,fl->filereq.tape_fseq,fl->filereq.file_path);
-            fl->filereq.blocksize = devInfo.defblksize;
-        } else {
-            rtcp_log(LOG_DEBUG,"rtcpd_drvinfo() blocksize (%d) already set by client for fseq=%d, file=%s\n",
-                fl->filereq.blocksize,fl->filereq.tape_fseq,fl->filereq.file_path);
-        }
-    } CLIST_ITERATE_END(tape->file,fl);
-    return(0);
-}
-
 int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
     int rc, fseq, save_serrno, severity;
     rtcpTapeRequest_t *tapereq;
