@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_ConvertData.c,v $ $Revision: 1.3 $ $Date: 1999/12/08 10:03:34 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)rtcpd_ConvertData.c,v 1.3 1999/12/08 10:03:34 CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -29,6 +29,7 @@ int rtcpd_VarToFix(char *inbuf,
                    int length,
                    int blocksize,
                    int recordlength,
+                   int *bytes_used,
                    int *nb_truncated,
                    void **context) {
     struct convert_statics {
@@ -92,6 +93,7 @@ int rtcpd_VarToFix(char *inbuf,
         } else break;
     }  /* for (;;) */
     nb_bytes = p - current->inbuf_p;
+    if ( bytes_used != NULL ) *bytes_used = nb_bytes + 1; /* Disk file record */
     if ( current->outbuf_p - current->outbuf_start_p + nb_bytes > recordlength ) {
         nb_bytes = recordlength - (current->outbuf_p - current->outbuf_start_p );
         current->overflow_flag = 1;
@@ -102,7 +104,7 @@ int rtcpd_VarToFix(char *inbuf,
     current->outbuf_p += nb_bytes;
 
     if ( current->inbuf_p >= inbuf + length ) {
-        current->inbuf_p = inbuf;
+        current->inbuf_p = NULL;
         if ( newline == 0 ) return(0);
         else current->newline_at_endbuf = 1;
     } else current->inbuf_p++;   /* skip newline */

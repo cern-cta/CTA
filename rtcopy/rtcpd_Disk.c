@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.36 $ $Date: 2000/02/14 13:20:55 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.37 $ $Date: 2000/02/23 15:47:05 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -545,7 +545,6 @@ static int MemoryToDisk(int disk_fd, int pool_index,
     char *convert_buffer = NULL;
     char errmsgtxt[80] = {""};
     void *f77conv_context = NULL;
-    u_signed64 totsz;
     diskIOstatus_t *diskIOstatus = NULL;
     char *bufp;
     rtcpTapeRequest_t *tapereq = NULL;
@@ -571,8 +570,8 @@ static int MemoryToDisk(int disk_fd, int pool_index,
      * Main write loop. End with EOF on tape file or error condition
      */
     *end_of_tpfile = FALSE;
-    totsz = filereq->startsize;
-    DK_SIZE(totsz);
+    file->diskbytes_sofar = filereq->startsize;
+    DK_SIZE(file->diskbytes_sofar);
     save_serrno = 0;
     proc_err = 0;
     for (;;) {
@@ -716,9 +715,9 @@ static int MemoryToDisk(int disk_fd, int pool_index,
              * should already have stopped in this buffer but data_length
              * is a multiple of blocksize and may therefore exceed maxsize.
              */
-            if ( (filereq->maxsize > 0) && 
-                 (totsz + (u_signed64)nb_bytes > filereq->maxsize) ) {
-                nb_bytes = (int)(filereq->maxsize - totsz);
+            if ( (filereq->maxsize > 0) && (file->diskbytes_sofar + 
+                  (u_signed64)nb_bytes > filereq->maxsize) ) {
+                nb_bytes = (int)(filereq->maxsize - file->diskbytes_sofar);
                 databufs[i]->data_length = nb_bytes;
             }
             if ( nb_bytes > 0 ) {
@@ -832,8 +831,8 @@ static int MemoryToDisk(int disk_fd, int pool_index,
             rc = 0;
         }
         databufs[i]->data_length -= rc;
-        totsz += (u_signed64)rc;
-        DK_SIZE(totsz);
+        file->diskbytes_sofar += (u_signed64)rc;
+        DK_SIZE(file->diskbytes_sofar);
         /*
          * Reset the buffer semaphore only if the
          * full buffer has been succesfully written.
@@ -916,7 +915,6 @@ static int DiskToMemory(int disk_fd, int pool_index,
     register int Uformat;
     register int convert;
     register int debug = Debug;
-    u_signed64 totsz;
     diskIOstatus_t *diskIOstatus = NULL;
     char *bufp;
     rtcpTapeRequest_t *tapereq = NULL;
@@ -953,8 +951,8 @@ static int DiskToMemory(int disk_fd, int pool_index,
     end_of_dkfile = FALSE;
     SendStartSignal = TRUE;
     proc_err = 0;
-    totsz = filereq->startsize;
-    DK_SIZE(totsz);
+    file->diskbytes_sofar = filereq->startsize;
+    DK_SIZE(file->diskbytes_sofar);
     filereq->TStartTransferDisk = (int)time(NULL);
     for (;;) {
         i = *indxp;
@@ -1020,9 +1018,9 @@ static int DiskToMemory(int disk_fd, int pool_index,
          * Check that the total size does not exceed maxsize specified
          * by user. If so, reduce the nb bytes accordingly.
          */
-        if ( (filereq->maxsize > 0) &&
-             (totsz + (u_signed64)nb_bytes > filereq->maxsize) ) {
-            nb_bytes = (int)(filereq->maxsize - totsz);
+        if ( (filereq->maxsize > 0) && (file->diskbytes_sofar +
+              (u_signed64)nb_bytes > filereq->maxsize) ) {
+            nb_bytes = (int)(filereq->maxsize - file->diskbytes_sofar);
             end_of_dkfile = TRUE;
             rtcpd_SetReqStatus(NULL,file,EFBIG,RTCP_OK | RTCP_LIMBYSZ);
         }
@@ -1088,9 +1086,9 @@ static int DiskToMemory(int disk_fd, int pool_index,
         DEBUG_PRINT((LOG_DEBUG,"DiskToMemory() got %d bytes from %s\n",
             rc,filereq->file_path));
         databufs[i]->data_length += rc;
-        totsz += (u_signed64)rc;
-        DK_SIZE(totsz);
-        if ( totsz - filereq->startsize > filereq->bytes_in ) {
+        file->diskbytes_sofar += (u_signed64)rc;
+        DK_SIZE(file->diskbytes_sofar);
+        if ( file->diskbytes_sofar - filereq->startsize > filereq->bytes_in ) {
             /*
              * This can happen if the user still writes to the file after
              * having submit the tape write request for it.
@@ -1377,7 +1375,7 @@ void *diskIOthread(void *arg) {
      */
     if ( mode == WRITE_DISABLE ) {
         nbbytes = file->diskbytes_sofar;
-        nbbytes = filereq->bytes_out;
+        if ( (filereq->concat & CONCAT) != 0 ) nbbytes -= filereq->startsize;
             if ( (severity & RTCP_EOD) == 0 ) {
             if ( (severity & RTCP_EOD) == 0 )
                 filereq->proc_status = RTCP_PARTIALLY_FINISHED; 
@@ -1391,7 +1389,7 @@ void *diskIOthread(void *arg) {
                         strcmp(fl->filereq.file_path,filereq->file_path) == 0 &&
                          fl->filereq.proc_status < RTCP_PARTIALLY_FINISHED ) {
                         nbbytes += fl->diskbytes_sofar;
-                        nbbytes += fl->filereq.bytes_out;
+                        /*
                          * The disk transfer time per file section is not
                          * measured since there is only one disk IO thread
                          * for the whole file. The best we can do is to
@@ -1420,6 +1418,27 @@ void *diskIOthread(void *arg) {
         rtcp_log(LOG_INFO,
                  "network interface for data transfer (%s bytes) is %s\n",
                  u64buf,filereq->ifce);
+        fl = NULL;
+        if ( (filereq->convert & FIXVAR) != 0 ) {
+            /*
+             * If client asked for record blocking the disk file size is
+             * different from the size transferred through the memory buffers
+             * because data is converted in a temporary memory buffer before
+             * being written to disk. The true disk file size must be reported
+             * back to the client but unfortunately we cannot use bytes_out
+             * in the current filereq for that: it may still be needed by the
+             * start disk IO routine for calculation of the next file boundary
+             * in the memory buffers. Thus, we create a temporary element with
+             * bytes_out corrected to actual disk file size.
+             */
+            fl = (file_list_t *)malloc(sizeof(file_list_t));
+            if ( fl == NULL ) fl = file;
+            else *fl = *file;
+            file = fl;
+            filereq = &file->filereq;
+            filereq->bytes_out = file->diskbytes_sofar - filereq->startsize;
+        }
+        /*
          * If we are reading from tape, we must tell the
          * stager that the data has successfully arrived at
          * its final destination. Note, for tape write it is
@@ -1440,8 +1459,9 @@ void *diskIOthread(void *arg) {
         rtcp_log(LOG_DEBUG,"diskIOthread() fseq %d <-> %s copied %d bytes, rc=%d, proc_status=%d severity=%d\n",
             filereq->tape_fseq,filereq->file_path,
             (unsigned long)file->diskbytes_sofar,filereq->cprc,
-            (unsigned long)filereq->bytes_out,filereq->cprc,
+            filereq->proc_status,severity);
         if ( (filereq->convert & FIXVAR) != 0 && fl != NULL ) free(fl);
+    } 
 
     rtcp_CloseConnection(&client_socket);
     return((void *)&success);

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.31 $ $Date: 2000/02/16 17:09:21 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.32 $ $Date: 2000/02/23 15:47:03 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -116,7 +116,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                         tape_list_t *tape, 
                         file_list_t *file) {
     int nb_bytes, rc, i, j, last_sz, blksiz, severity, lrecl;
-    int end_of_tpfile, buf_done, nb_truncated, spill, proc_err;
+    int end_of_tpfile, buf_done, nb_truncated, spill, bytes_used, proc_err;
     char *convert_buffer = NULL;
     void *convert_context = NULL;
     register int Uformat;
@@ -195,6 +195,8 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                 if ( (convert & FIXVAR) != 0 ) {
                     if ( convert_buffer != NULL ) free(convert_buffer);
                     if ( convert_context != NULL ) free(convert_context);
+                    convert_buffer = NULL;
+                    convert_context = NULL;
                 }
                 break;
             }
@@ -242,7 +244,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
          * Copy the data to tape
          */
         last_sz = 0;
-        if ( filereq->maxnbrec > 0 ) {
+        if ( filereq->maxnbrec > 0 && (convert & FIXVAR) == 0 ) {
             /*
              * Check if we reached the number of records limit
              * and, if so, reduce the data_length accordingly.
@@ -299,8 +301,20 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                     for (;;) {
                         nb_bytes = rtcpd_VarToFix(
                             databufs[i]->buffer + (*firstblk)*blksiz,
-                            convert_buffer,databufs[i]->data_length,
-                            blksiz,lrecl,&nb_truncated,&convert_context);
+                            convert_buffer,
+                            databufs[i]->data_length - (*firstblk)*blksiz,
+                            blksiz,lrecl,&bytes_used,
+                            &nb_truncated,&convert_context);
+
+                        if ( nb_bytes > 0 ) filereq->nbrecs++;
+                        if ( filereq->maxnbrec > 0 &&
+                             filereq->nbrecs > filereq->maxnbrec ) {
+                            spill = nb_bytes = 0;
+                            rtcpd_SetReqStatus(NULL,file,EFBIG,RTCP_OK | 
+                                                               RTCP_LIMBYSZ);
+                            break;
+                        }
+                        file->tapebytes_sofar += (u_signed64)bytes_used;
                         if ( nb_bytes == blksiz ) {
                             spill = 0;
                             break;
@@ -324,9 +338,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                 convert_buffer = databufs[i]->buffer + j*blksiz;
             }
 
-            if ( (convert & EBCCONV) != 0 ) 
-                asc2ebc(convert_buffer,nb_bytes);
-
+            if ( (convert & EBCCONV) != 0 ) asc2ebc(convert_buffer,nb_bytes);
             /*
              * >>>>>>>>>>> write to tape <<<<<<<<<<<<<
              */
@@ -355,8 +367,12 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                 break;
             }
             last_sz += rc;
-            file->tapebytes_sofar += rc;
-            filereq->nbrecs++;
+            if ( (convert & FIXVAR) == 0 ) {
+                file->tapebytes_sofar += (u_signed64)rc;
+                if ( lrecl > 0 && rc/lrecl > 0 ) 
+                    filereq->nbrecs += (u_signed64)rc/lrecl;
+                else if ( rc > 0 ) filereq->nbrecs++;
+            }
             TP_SIZE(rc);
             j++;
         } /* End of for (j=...) */
@@ -498,10 +514,6 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
         rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
         if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
                           (RTCP_FAILED | RTCP_RESELECT_SERV))) != 0 ) {
-            if ( (convert & FIXVAR) != 0 ) {
-                if ( convert_buffer != NULL ) free(convert_buffer);
-                if ( convert_context != NULL ) free(convert_context);
-            }
             break;
         }
     } /* End of for (;;) */
@@ -510,12 +522,16 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
         /*
          * Write out spill from VarToFix conversion
          */
+        rtcp_log(LOG_DEBUG,"MemoryToTape() FIXVAR spill: %d, proc_err=%d\n",
+                 spill,proc_err);
         if ( proc_err == 0  && spill > 0 ) {
+            if ( (convert & EBCCONV) != 0 ) asc2ebc(convert_buffer,spill);
             rc = twrite(tape_fd,
                         convert_buffer,
                         spill,
                         tape,
                         file);
+            TP_SIZE(rc);
         }
         if ( nb_truncated > 0 ) {
             rtcpd_AppendClientMsg(NULL,file,RT222,"CPDSKTP",
@@ -723,7 +739,8 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                 }
                 last_sz += rc;
                 file->tapebytes_sofar += rc;
-                filereq->nbrecs++;
+                if ( lrecl > 0 && rc/lrecl > 0 ) filereq->nbrecs += rc/lrecl;
+                else if ( rc > 0 ) filereq->nbrecs++;
                 if ( Uformat == TRUE ) {
                     databufs[i]->lrecl_table[j] = rc;
                     databufs[i]->nbrecs++;
