@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.41 2000/12/21 15:36:37 jdurand Exp $
+ * $Id: procqry.c,v 1.42 2001/01/12 08:31:06 jdurand Exp $
  */
 
 /*
@@ -8,8 +8,13 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.41 $ $Date: 2000/12/21 15:36:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.42 $ $Date: 2001/01/12 08:31:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
+
+/* Disable the update of the catalog in stageqry mode */
+#ifdef USECDB
+#undef USECDB
+#endif
 
 #include <errno.h>
 #include <stdlib.h>
