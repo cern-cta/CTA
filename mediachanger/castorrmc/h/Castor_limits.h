@@ -58,7 +58,9 @@
 #define CA_MAXDMPROTNAMELEN 15    /* maximum length for Disk Mover protocol name */
 #define CA_MAXJOBIDLEN     36   /* Maximum length for the representation of the Cuuid */
 #define CA_MAXCSECNAMELEN    512   /* Maximum length for a client or service name */
+#define CA_MAXCSECPROTOLEN 20   /* Maximum length for a Csec authentication protocol name */
 #define CA_MAXUSERTAGLEN    63   /* Maximum length for a user tag (stage request) */
+
 
 /* Max allowed uid/gif */
 #define CA_MAXUID    0x7FFFFFFF /* Maximum uid */
