@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.67 $ $Release$ $Date: 2004/12/06 16:56:58 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.68 $ $Release$ $Date: 2004/12/09 14:46:12 $ $Author: bcouturi $
 #
 # Make Castor libraries and executables
 #
@@ -25,6 +25,8 @@
 #
 
 #include <Project.tmpl>
+
+RH_HOST=RhHost
 
 SUBDIRS = $(DBCPPDIR) $(RHCPPDIR) $(DSTAGECPPDIR) $(PROTOCPPDIR)
 DEPENDDIRS = $(DBCPPDIR) $(RHCPPDIR) $(DSTAGECPPDIR) $(PROTOCPPDIR)
@@ -73,7 +75,7 @@ DEBUG  = -g
 DEPLIB = DepSharedLibraryTargetName(shlib,shift)
 
 INCLUDES = -I FileName(..,h) -I ..
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
+CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DRH_HOST=\"$(RH_HOST)\"
 
 STGLIB_SRCS = IAddressCInt.cpp \
               BaseAddress.cpp \

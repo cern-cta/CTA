@@ -165,6 +165,7 @@
 #endif
 #define ExpertHost     "localhost"
 #define ExpertSpool    /usr/spool/expert
+#define RhHost        "lxfsrm464"
 
 #define W2000MapDir	\\\\cern.ch\\dfs\\Applications\\CERN\\CASTOR\\Config
 #define WntMapDir	\\\\cerndfs01\\dfs\\Applications\\CERN\\CASTOR\\Config
