@@ -40,7 +40,7 @@
 
 /* JOB needs some ResourceMonitoring tools */
 /* --------------------------------------- */
-#if !BuildJob
+#if BuildJob
 #if !BuildRmClient
 #undef BuildRmClient
 #define BuildRmClient YES
