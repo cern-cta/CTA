@@ -48,7 +48,7 @@ static char sccsid[] = "@(#)procupd.c,v 1.121 2002/10/30 16:26:10 CERN IT-PDP/DM
 void procupdreq _PROTO((int, int, char *, char *));
 int update_hsm_a_time _PROTO((struct stgcat_entry *));
 
-extern char func[16];
+extern char func[];
 extern int reqid;
 extern int rpfd;
 extern struct stgcat_entry *stce;	/* end of stage catalog */
@@ -1459,16 +1459,16 @@ procupdreq(req_type, magic, req_data, clienthost)
 									if ((thisretenp == INFINITE_LIFETIME) || (thisretenp == AS_LONG_AS_POSSIBLE)) {
 										stglogit(func, STG142, stcp_found->u1.h.xfile, (thisretenp == INFINITE_LIFETIME) ? "INFINITE_LIFETIME" : "AS_LONG_AS_POSSIBLE");
 										continue_flag = 1;
-									} else if (((int) (thistime - stcp_found->a_time)) < thisretenp) {
-										stglogit(func, STG131, stcp_found->u1.h.xfile, thisretenp, (thistime - stcp_found->a_time));
+									} else if (thistime < thisretenp) {
+										stglogit(func, STG131, stcp_found->u1.h.xfile, thisretenp, (int) thistime);
 										continue_flag = 1;
 									} else {
 										if (stcp_found->u1.h.retenp_on_disk >= 0) {
 											/* User defined retention period is in action */
-											stglogit (func, STG158, stcp_found->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp_found->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, thisretenp, stcp_found->u1.h.retenp_on_disk, (int) (thistime - stcp_found->a_time));
+											stglogit (func, STG158, stcp_found->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp_found->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, thisretenp, stcp_found->u1.h.retenp_on_disk);
 										} else {
 											/* Default fileclass retention period is in action */
-											stglogit (func, STG133, stcp_found->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp_found->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, thisretenp, (int) (thistime - stcp_found->a_time));
+											stglogit (func, STG133, stcp_found->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp_found->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, thisretenp, (int) thistime);
 										}
 									}
 								}
