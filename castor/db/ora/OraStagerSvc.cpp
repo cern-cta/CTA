@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/06/25 13:31:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/28 12:15:59 $ $Author: sponcec3 $
  *
  *
  *
@@ -38,6 +38,8 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 #include "castor/stager/SegmentStatusCodes.hpp"
+#include "castor/BaseAddress.hpp"
+#include "castor/db/DbAddress.hpp"
 #include "occi.h"
 
 #include <string>
@@ -55,11 +57,16 @@ const castor::IFactory<castor::IService>& OraStagerSvcFactory = s_factoryOraStag
 const std::string castor::db::ora::OraStagerSvc::s_tapesToDoStatementString =
   "SELECT id FROM rh_Tape WHERE status = :1";
 
+/// SQL statement for selectTape
+const std::string castor::db::ora::OraStagerSvc::s_selectTapeStatementString =
+  "SELECT id FROM rh_Tape WHERE vid = :1 AND side = :2 AND tpmode = :3 FOR UPDATE";
+
 // -----------------------------------------------------------------------
 // OraStagerSvc
 // -----------------------------------------------------------------------
 castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
-  BaseSvc(name), OraBaseObj(), m_tapesToDoStatement(0) {
+  BaseSvc(name), OraBaseObj(),
+  m_tapesToDoStatement(0), m_selectTapeStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -91,9 +98,11 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   try {
     deleteStatement(m_tapesToDoStatement);
+    deleteStatement(m_selectTapeStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;
+  m_selectTapeStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -222,4 +231,114 @@ castor::db::ora::OraStagerSvc::tapesToDo()
   // Commit all status changes
   cnvSvc()->getConnection()->commit();
   return result;
+}
+
+// -----------------------------------------------------------------------
+// selectTape
+// -----------------------------------------------------------------------
+castor::stager::Tape*
+castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
+                                          const int side,
+                                          const int tpmode)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_selectTapeStatement) {
+    try {
+      m_selectTapeStatement = cnvSvc()->getConnection()->createStatement();
+      m_selectTapeStatement->setSQL(s_selectTapeStatementString);
+    } catch (oracle::occi::SQLException e) {
+      try {
+        // Always try to rollback
+        cnvSvc()->getConnection()->rollback();
+        if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
+          // We've obviously lost the ORACLE connection here
+          cnvSvc()->dropConnection();
+        }
+      } catch (oracle::occi::SQLException e) {
+        // rollback failed, let's drop the connection for security
+        cnvSvc()->dropConnection();
+      }
+      m_selectTapeStatement = 0;
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "Error in creating selectTape statement."
+        << std::endl << e.what();
+      throw ex;
+    }
+  }
+  // Execute statement and get result
+  unsigned long id;
+  try {
+    m_selectTapeStatement->setString(1, vid);
+    m_selectTapeStatement->setInt(2, side);
+    m_selectTapeStatement->setInt(3, tpmode);
+    oracle::occi::ResultSet *rset = m_selectTapeStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      // we found nothing, so let's create the tape
+      castor::stager::Tape* tape = new castor::stager::Tape();
+      tape->setVid(vid);
+      tape->setSide(side);
+      tape->setTpmode(tpmode);
+      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+      castor::ObjectSet objset;
+      try {
+        cnvSvc()->createRep(&ad, tape, objset, true);
+        return tape;
+      } catch (oracle::occi::SQLException e) {
+        delete tape;
+        if (1 == e.getErrorCode()) {
+          // if violation of unique constraint, ie means that
+          // some other thread was quicker than us on the insertion
+          // So let's select what was inserted
+          rset = m_selectTapeStatement->executeQuery();
+          if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+            // Still nothing ! Here it's a real error
+            castor::exception::Internal ex;
+            ex.getMessage()
+              << "Unable to select tape while inserting violated unique constraint :"
+              << std::endl << e.getMessage();
+            throw ex;
+          }
+        }
+        // Else, "standard" error, throw exception
+        castor::exception::Internal ex;
+        ex.getMessage()
+          << "Exception while inserting new tape in the DB :"
+          << std::endl << e.getMessage();
+        throw ex;
+      }
+    }
+    // If we reach this point, then we selected successfully
+    // a tape and it's id is in rset
+    id = rset->getInt(1);
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select tape by vid, side and tpmode :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+  // Now get the tape from its id
+  try {
+    castor::db::DbAddress ad(id, "OraCnvSvc", castor::SVC_ORACNV);
+    castor::ObjectCatalog newlyCreated;
+    castor::IObject* obj = cnvSvc()->createObj(&ad, newlyCreated);
+    castor::stager::Tape* tape =
+      dynamic_cast<castor::stager::Tape*> (obj);
+    if (0 == tape) {
+      castor::exception::Internal e;
+      e.getMessage() << "createObj return unexpected type "
+                     << obj->type() << " for id " << id;
+      delete obj;
+      throw e;
+    }
+    return tape;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select tape for id " << id  << " :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+  // We should never reach this point
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/26 15:46:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/28 12:15:59 $ $Author: sponcec3 $
  *
  * 
  *
@@ -51,6 +51,7 @@ extern "C" {
   //------------------------------------------------------------------------------
   int Cstager_IStagerSvc_delete(Cstager_IStagerSvc_t* stgSvc) {
     try {
+      if (0 == stgSvc) return 0;
       if (0 != stgSvc->stgSvc) delete stgSvc->stgSvc;
     } catch (castor::exception::Exception e) {
       serrno = e.code();
@@ -68,6 +69,11 @@ extern "C" {
                                          castor::stager::Tape* searchItem,
                                          castor::stager::Segment*** segmentArray,
                                          int* nbItems) {
+    if (0 == stgSvc || 0 == stgSvc->stgSvc) {
+      errno = EINVAL;
+      stgSvc->errorMsg = "Empty context";
+      return -1;
+    }
     try {
       std::vector<castor::stager::Segment*> result =
         stgSvc->stgSvc->segmentsForTape(searchItem);
@@ -90,6 +96,11 @@ extern "C" {
   //---------------------------------------------------------------------------
   int Cstager_IStagerSvc_anySegmentsForTape(Cstager_IStagerSvc_t* stgSvc,
                                             castor::stager::Tape* searchItem) {
+    if (0 == stgSvc || 0 == stgSvc->stgSvc) {
+      errno = EINVAL;
+      stgSvc->errorMsg = "Empty context";
+      return -1;
+    }
     try {
       return stgSvc->stgSvc->anySegmentsForTape(searchItem);
     } catch (castor::exception::Exception e) {
@@ -105,6 +116,11 @@ extern "C" {
   int Cstager_IStagerSvc_tapesToDo(Cstager_IStagerSvc_t* stgSvc,
                                    castor::stager::Tape*** tapeArray,
                                    int *nbItems) {
+    if (0 == stgSvc || 0 == stgSvc->stgSvc) {
+      errno = EINVAL;
+      stgSvc->errorMsg = "Empty context";
+      return -1;
+    }
     try {
       std::vector<castor::stager::Tape*> result =
         stgSvc->stgSvc->tapesToDo();
@@ -114,6 +130,29 @@ extern "C" {
       for (int i = 0; i < *nbItems; i++) {
         (*tapeArray)[i] = result[i];
       }
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //---------------------------------------------------------------------------
+  // Cstager_IStagerSvc_selectTape
+  //---------------------------------------------------------------------------
+  int Cstager_IStagerSvc_selectTape(struct Cstager_IStagerSvc_t* stgSvc,
+                                    castor::stager::Tape** tape,
+                                    const std::string vid,
+                                    const int side,
+                                    const int tpmode) {
+    if (0 == stgSvc || 0 == stgSvc->stgSvc) {
+      errno = EINVAL;
+      stgSvc->errorMsg = "Empty context";
+      return -1;
+    }
+    try {
+      *tape = stgSvc->stgSvc->selectTape(vid, side, tpmode);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

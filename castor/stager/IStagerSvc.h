@@ -112,6 +112,28 @@ int Cstager_IStagerSvc_tapesToDo(struct Cstager_IStagerSvc_t* stgSvc,
                                  int *nbItems);
 
 /**
+ * Retrieves a tape from the database based on its vid,
+ * side and tpmode. If no tape is found, creates one.
+ * Note that this method creates a lock on the row of the
+ * given tape and does not release it. It is the
+ * responsability of the caller to commit the transaction.
+ * @param stgSvc the IStagerSvc used
+ * @param tape the tape object returned
+ * @param vid the vid of the tape
+ * @param side the side of the tape
+ * @param tpmode the tpmode of the tape
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_selectTape(struct Cstager_IStagerSvc_t* stgSvc,
+                                  struct Cstager_Tape_t** tape,
+                                  const std::string vid,
+                                  const int side,
+                                  const int tpmode);
+
+/**
  * Returns the error message associated to the last error.
  * Note that the error message string should be deallocated
  * by the caller.

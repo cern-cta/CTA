@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/26 15:46:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/28 12:15:59 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -99,6 +99,24 @@ namespace castor {
        * @exception in case of error
        */
       virtual std::vector<castor::stager::Tape*> tapesToDo()
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Retrieves a tape from the database based on its vid,
+       * side and tpmode. If no tape is found, creates one.
+       * Note that this method creates a lock on the row of the
+       * given tape and does not release it. It is the
+       * responsability of the caller to commit the transaction.
+       * @param vid the vid of the tape
+       * @param side the side of the tape
+       * @param tpmode the tpmode of the tape
+       * @return the tape. the return value can never be 0
+       * @exception Exception in case of error (no tape found,
+       * several tapes found, DB problem, etc...)
+       */
+      virtual castor::stager::Tape* selectTape(const std::string vid,
+                                               const int side,
+                                               const int tpmode)
         throw (castor::exception::Exception) = 0;
 
     }; // end of class IStagerSvc
