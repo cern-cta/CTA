@@ -1,8 +1,11 @@
-.\"   $Id: Cthread.man,v 1.3 1999/09/07 13:46:51 jdurand Exp $
+.\"   $Id: Cthread.man,v 1.4 2000/05/30 16:28:36 jdurand Exp $
 .\"
 .\"   Man page for the CASTOR's Thread Interface (Cthread)
 .\"
 .\"   $Log: Cthread.man,v $
+.\"   Revision 1.4  2000/05/30 16:28:36  jdurand
+.\"   Changed an old, unique and obsolete mention of Cthif to Cthread...
+.\"
 .\"   Revision 1.3  1999/09/07 13:46:51  jdurand
 .\"   Fixed typo (ECHTREADERROR -> SECTHREADERR)
 .\"
@@ -103,7 +106,7 @@ You called a routine with invalid parameter(s). Please check your code.
 .P
 For non-thread applications see the section \fBNON-THREAD ENVIRONMENT\fP
 .P
-Any created thread is identified uniquely with a \fBcid\fP, standing for \fBc\fPthif \fBid\fPentifier.
+Any created thread is identified uniquely with a \fBcid\fP, standing for \fBC\fPthread \fBid\fPentifier.
 .P
 In multithread environment, \fBCthread\fP is an interface to \fBpthread\fP functions on \fBUNIX\fP, and an interface to \fBWin32\fP C-runtime library on \fBWindows/NT\fP.
 .P
