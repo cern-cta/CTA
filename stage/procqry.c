@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.75 2002/01/25 12:28:09 jdurand Exp $
+ * $Id: procqry.c,v 1.76 2002/01/27 08:55:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.75 $ $Date: 2002/01/25 12:28:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.76 $ $Date: 2002/01/27 08:55:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -88,7 +88,7 @@ extern void delreq _PROTO((struct stgcat_entry *, int));
 extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern int retenp_on_disk _PROTO((int));
-extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, struct Cns_fileclass *));
+extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int));
 extern int mintime_beforemigr _PROTO((int));
 extern int get_mintime _PROTO((struct stgcat_entry *, char *));
 extern char *findpoolname _PROTO((char *));
@@ -122,7 +122,6 @@ extern u_signed64 stage_uniqueid;
 extern struct fileclass *fileclasses;
 extern int nbpool;
 extern struct pool *pools;
-extern int no_Cns_stat_if_stcp_have_it;
 
 static int nbtpf;
 static int noregexp_flag;
@@ -136,7 +135,7 @@ static int retenp_flag;
 static int mintime_flag;
 #ifdef STAGER_SIDE_SERVER_SUPPORT
 static int side_flag;
-static int force_side_format_flag;
+static int display_side_flag;
 #endif
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
@@ -285,7 +284,8 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		{"retenp",             NO_ARGUMENT,  &retenp_flag,      1},
 #ifdef STAGER_SIDE_SERVER_SUPPORT
 		{"side",               REQUIRED_ARGUMENT, &side_flag,   1},
-		{"force_side_format",  NO_ARGUMENT, &force_side_format_flag,   1},
+		{"display_side",       NO_ARGUMENT, &display_side_flag, 1},
+		{"ds",                 NO_ARGUMENT, &display_side_flag, 1},
 #endif
 		{"mintime",            NO_ARGUMENT,  &mintime_flag,     1},
 		{NULL,                 0,                  NULL,        0}
@@ -298,11 +298,9 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	char timestr2[64] ;   /* Time in its ASCII format             */
 	char *dp;
 
-	no_Cns_stat_if_stcp_have_it = 1;   /* Very important variable that prevent polling of name server */
-	
 #ifdef STAGER_SIDE_SERVER_SUPPORT
 	side_flag = 0;
-	force_side_format_flag = 0;
+	display_side_flag = 0;
 #endif
 	noregexp_flag = 0;
 	reqid_flag = 0;
@@ -541,8 +539,8 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			mintime_flag++;
 		}
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-		if ((flags & STAGE_FORCE_SIDE_FORMAT) == STAGE_FORCE_SIDE_FORMAT) {
-			force_side_format_flag++;
+		if ((flags & STAGE_DISPLAY_SIDE) == STAGE_DISPLAY_SIDE) {
+			display_side_flag++;
 		}
 		if ((flags & STAGE_SIDE) == STAGE_SIDE) {
 			side_flag++;
@@ -936,7 +934,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 							sendrep (rpfd, MSG_OUT, title);
 		}
 		if ((stcp->t_or_d == 'h') && (! ISWAITING(stcp))) {
-			if ((ifileclass = upd_fileclass(NULL,stcp,NULL)) >= 0) {
+			if ((ifileclass = upd_fileclass(NULL,stcp,0)) >= 0) {
 				if ((thismintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0) {
 					thismintime_beforemigr = mintime_beforemigr(ifileclass);
 				}
@@ -1032,7 +1030,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			char vid_and_side[CA_MAXVIDLEN+1+10+1]; /* VID.%d */
 
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-			if ((stcp->u1.t.side > 0) || (force_side_format_flag)) {
+			if ((stcp->u1.t.side > 0) && (display_side_flag)) {
 #if (defined(__osf__) && defined(__alpha))
 				sprintf(vid_and_side, "%s/%d", stcp->u1.t.vid[0], stcp->u1.t.side);
 #else
@@ -1050,7 +1048,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					if (mintime_flag != 0) {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									 ((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
+									 ((stcp->u1.t.side > 0) && (display_side_flag)) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n",
@@ -1068,7 +1066,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					} else {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									 ((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
+									 ((stcp->u1.t.side > 0) && (display_side_flag)) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n",
@@ -1087,7 +1085,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					if (mintime_flag != 0) {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									 ((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
+									 ((stcp->u1.t.side > 0) && (display_side_flag)) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n",
@@ -1104,7 +1102,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					} else {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									 ((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
+									 ((stcp->u1.t.side > 0) && (display_side_flag)) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n",
@@ -1124,7 +1122,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					if (mintime_flag != 0) {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									 ((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
+									 ((stcp->u1.t.side > 0) && (display_side_flag)) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %s\n",
@@ -1141,7 +1139,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					} else {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									 ((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
+									 ((stcp->u1.t.side > 0) && (display_side_flag)) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n",
@@ -1158,7 +1156,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					if (mintime_flag != 0) {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									 ((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
+									 ((stcp->u1.t.side > 0) && (display_side_flag)) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n",
@@ -1174,7 +1172,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					} else {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									 ((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
+									 ((stcp->u1.t.side > 0) && (display_side_flag)) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %s\n",
@@ -1931,7 +1929,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 
 			save_rpfd = rpfd;
 			rpfd = -1;             /* To make sure nothing does on the terminal here */
-			if (ISWAITING(stcp) || ((ifileclass = upd_fileclass(NULL,stcp,NULL)) < 0)) {
+			if (ISWAITING(stcp) || ((ifileclass = upd_fileclass(NULL,stcp,0)) < 0)) {
 				rpfd = save_rpfd;
 				continue; /* Unknown fileclass */
 			}
@@ -2013,7 +2011,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 		ifileclass = -1;
 		save_rpfd = rpfd;
 		rpfd = -1;             /* To make sure nothing does on the terminal here */
-		if ((class_flag != 0) && (scc->stcp->t_or_d == 'h')) ifileclass = upd_fileclass(NULL,scc->stcp,NULL);
+		if ((class_flag != 0) && (scc->stcp->t_or_d == 'h')) ifileclass = upd_fileclass(NULL,scc->stcp,0);
 		rpfd = save_rpfd;
 		if (ifileclass >= 0) {
 			if (sendrep (rpfd, MSG_OUT,
@@ -2196,7 +2194,7 @@ int get_retenp(stcp,timestr)
 		switch (stcp->t_or_d) {
 		case 'h':
 			/* CASTOR entry */
-			if ((ifileclass = upd_fileclass(NULL,stcp,NULL)) < 0) {
+			if ((ifileclass = upd_fileclass(NULL,stcp,0)) < 0) {
 				return(-1);
 			}
 			/* If no explicit value for retention period we take the default */
@@ -2251,7 +2249,7 @@ int get_mintime(stcp,timestr)
 	switch (stcp->status) {
 	case STAGEOUT|CAN_BE_MIGR:
 		/* CASTOR entry */
-		if ((ifileclass = upd_fileclass(NULL,stcp,NULL)) < 0) {
+		if ((ifileclass = upd_fileclass(NULL,stcp,0)) < 0) {
 			return(-1);
 		}
 		if ((this_mintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0) /* No explicit value */

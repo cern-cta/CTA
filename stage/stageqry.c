@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.24 2002/01/15 08:36:11 jdurand Exp $
+ * $Id: stageqry.c,v 1.25 2002/01/27 08:55:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.24 $ $Date: 2002/01/15 08:36:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.25 $ $Date: 2002/01/27 08:55:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -49,7 +49,7 @@ int retenp_flag = 0;
 int mintime_flag = 0;
 #ifdef STAGER_SIDE_CLIENT_SUPPORT
 int side_flag = 0;
-int force_side_format_flag = 0;
+int display_side_flag = 0;
 #endif
 
 int main(argc, argv)
@@ -110,7 +110,8 @@ int main(argc, argv)
 		{"retenp",             NO_ARGUMENT,  &retenp_flag,      1},
 #ifdef STAGER_SIDE_CLIENT_SUPPORT
 		{"side",               REQUIRED_ARGUMENT, &side_flag,   1},
-		{"force_side_format",  NO_ARGUMENT, &force_side_format_flag, 1},
+		{"display_side",       NO_ARGUMENT, &display_side_flag, 1},
+		{"ds",                 NO_ARGUMENT, &display_side_flag, 1},
 #endif
 		{"mintime",            NO_ARGUMENT,  &mintime_flag,     1},
 		{NULL,                 0,                  NULL,        0}
@@ -288,7 +289,7 @@ void usage(cmd)
 					 "[-S] [-s] [-T] [-u] [-V visual_identifier(s)] [-x]\n"
 					 "[--class] [--counters] [--dump] [--retenp] [--migrator] [--mintime] [--noregexp]\n"
 					 "[--queue] [--reqid reqid]\n"
-					 "[--force_side_format] [--side sidenumber]\n");
+					 "[--display_side or --ds] [--side sidenumber]\n");
 #else
 	fprintf (stderr, "%s",
 					 "[-A pattern | -M pattern] [-a] [-f] [-G] [-h stage_host] [-I external_filename]\n"
