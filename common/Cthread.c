@@ -1,13 +1,18 @@
 /*
+ * $Id: Cthread.c,v 1.41 2000/06/19 09:48:30 jdurand Exp $
+ */
+
+/*
  * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.40 $ $Date: 2000/06/14 14:05:18 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.41 $ $Date: 2000/06/19 09:48:30 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cthread_api.h>
+#include <Cthread_typedef.h>
 #include <Cglobals.h>
 #include <serrno.h>
 #include <errno.h>
@@ -23,329 +28,6 @@ static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.40 $ $Date: 200
 #include <log.h>
 #endif
 
-int Cthread_debug = 0;
-
-#ifdef CTHREAD_DEBUG
-#define _Cthread_obtain_mtx(a,b,c,d) _Cthread_obtain_mtx_debug(__FILE__,__LINE__,a,b,c,d)
-#endif
-
-/* ============================================ */
-/* CASTOR Thread Interface (Cthread)            */
-/* ============================================ */
-/*                                              */
-/* Dependency flag: CTHREAD                     */
-/* - If this flag is activated at the compile   */
-/*   time, then the following API will use      */
-/*   the local thread implementation.           */
-/*   The default is then the POSIX 1003.4a      */
-/*   (Draft 4) prototype. The prototypes used   */
-/*   can be altered with the following flags    */
-/*   at compile time:                           */
-/*   CTHREAD_POSIX : POSIX 1003.4a Draft 4      */
-/*   CTHREAD_DCE   : DCE Threads                */
-/*   CTHREAD_LINUX : LinuxThreads               */
-/*   CTHREAD_WIN32 : WIN32 threads              */
-/*                                              */
-/* Examples:                                    */
-/* - To use POSIX thread compile with:          */
-/*   -DCTHREAD            or                    */
-/*   -DCTHREAD -DCTHREAD_POSIX                  */
-/* - To use DCE thread compile with:            */
-/*   -DCTHREAD -DCTHREAD_DCE                    */
-/* - To use LinuxThread compile with:           */
-/*   -DCTHREAD -DCTHREAD_LINUX                  */
-/*                                              */
-/* Please note that use of CTHREAD_POSIX,       */
-/* CTHREAD_DCE, or CTHREAD_LINUX                */
-/* without the CTHREAD flag is useless          */
-/* on Unix-like systems.                        */
-/*                                              */
-/* The exception is on Windows/NT, on which the */
-/* thread behaviour will always apply,          */
-/* regardless of any cthread compile flag option*/
-/* This means that on Windows/NT, the following */
-/* flags will always be enforced:               */
-/* CTHREAD                                      */
-/* CTHREAD_WIN32                                */
-/*                                              */
-/* - To not use threads, compile with:          */
-/*   -DNOCTHREAD    or nothing                  */
-/*                                              */
-/* Again, -DNOCTHREAD is useless on             */
-/* on Windows/NT, where the following flags are */
-/* enforced:                                    */
-/* CTHREAD                                      */
-/* CTHREAD_WIN32                                */
-/*                                              */
-/* Finally please notice that the use of        */
-/* CNOCTHREAD has higher level than the         */
-/* CTHREAD. CNOCTHREAD is the default           */
-/* except on Windows/NT where CTHREAD is        */
-/* the only possibility.                        */
-/*                                              */
-/* In the same way, CTHREAD_POSIX is higher     */
-/* than CTHREAD_DCE, itself higher than         */
-/* CTHREAD_LINUX and CTHREAD_POSIX is           */
-/* the default.                                 */
-/*                                              */
-/* For Windows, default is CTHREAD_WIN32        */
-/*                                              */
-/* ============================================ */
-/*                                              */
-/* History:                                     */
-/* 06-APR-1999       First implementation       */
-/*                   Jean-Damien.Durand@cern.ch */
-/* 21-APR-1999       Windows support            */
-/*                   Olof.Barring@cern.ch       */
-/*                                              */
-/* ============================================ */
-
-/* -------------------------------------------- */
-/* Initialization:                              */
-/* Let's analyse the compile flags              */
-/* -------------------------------------------- */
-#include <Cthread_flags.h>
-#include <Cglobals.h>
-
-/* ============================================ */
-/* Typedefs                                     */
-/* ============================================ */
-/* -------------------------------------------- */
-/* Uniform definition of a thread/process ID    */
-/* -------------------------------------------- */
-#ifdef _CTHREAD
-#if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
-typedef unsigned long Cth_pid_t;
-#else /* _CTHREAD_PROTO_WIN32 */
-typedef pthread_t Cth_pid_t;
-#endif /* CTHREAD_PROTO_WIN32 */
-#else
-typedef pid_t Cth_pid_t;
-#endif /* _CTHREAD */
-/* -------------------------------------------- */
-/* Uniform definition of a lock variable        */
-/* -------------------------------------------- */
-#ifdef _CTHREAD
-#if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
-/* 
- * This is a WIN32 mutex.
- * Use handles as an option. Default is critical
- * section which should be more efficient in normal
- * working conditions. Try to set
- * _CTHREAD_WIN32MTX if perf. is low on
- * on multi-CPU platforms
- */
-#  ifdef _CTHREAD_WIN32MTX
-typedef HANDLE Cth_mtx_t
-#  else /* _CTHREAD_WIN32MTX */
-typedef struct {
-    CRITICAL_SECTION mtx;
-    int nb_locks;
-} Cth_mtx_t;
-#  endif /* _CHTREAD_WIN32MTX */
-
-#else /* _CTHREAD_PROTO_WIN32 */
-/* This is a pthread mutex */
-typedef pthread_mutex_t Cth_mtx_t;
-#endif /* _CTHREAD_PROTO_WIN32 */
-#else
-/* This is semaphore, e.g. just a counter */
-typedef int Cth_mtx_t;
-#endif
-/* -------------------------------------------- */
-/* Uniform definition of a cond variable        */
-/* -------------------------------------------- */
-#ifdef _CTHREAD
-#if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
-/*
- * The Cthread condition implementation is taken
- * from a proposal by Douglas C. Schmidt and
- * Irfan Pyarali
- * (ref. http://www.cs.wustl.edu/~schmidt/win32-cv-1.html)
- * The section 3.2 implementation is choosen to
- * assure minimal overhead.
- */
-#define CTHREAD_WIN32_SIGNAL  0
-#define CTHREAD_WIN32_BROADCAST 1
-#define CTHREAD_WIN32_MAX_EVENTS 2
-typedef struct {
-    /* 
-     * Count + lock to serialize access to count
-     * on the number of threads waiting for
-     * the condition.
-     */
-    unsigned int nb_waiters;
-    CRITICAL_SECTION nb_waiters_lock;
-    /*
-     * Signal (auto-reset) and
-     * broadcast (manual reset) events
-     */
-    HANDLE cond_events[CTHREAD_WIN32_MAX_EVENTS];
-    HANDLE last_waiter_done;
-} Cth_cond_t;
-#else /* _CTHREAD_PROTO_WIN32 */
-typedef pthread_cond_t Cth_cond_t;
-#endif /* _CTHREAD_PROT_WIN32 */
-#else
-typedef int Cth_cond_t;
-#endif
-/* -------------------------------------------- */
-/* Uniform definition of a specific variable    */
-/* -------------------------------------------- */
-#ifdef _CTHREAD
-#if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
-typedef DWORD Cth_spec_t;
-#else
-typedef pthread_key_t Cth_spec_t;
-#endif
-#else
-typedef int Cth_spec_t;
-#endif
-
-/* -------------------------------------------- */
-/* Thread starter                               */
-/* -------------------------------------------- */
-#ifdef _CTHREAD
-typedef struct Cthread_start_params {
-  void *(*_thread_routine) _PROTO((void *));
-  void *_thread_arg;
-  int   detached;
-} Cthread_start_params_t;
-#endif /* _CTHREAD_PROTO_WIN32 */
-
-/* -------------------------------------------- */
-/* Uniform declaration of a _once_t typedef and */
-/* of a _once_init value                        */
-/* -------------------------------------------- */
-#ifndef _CTHREAD
-typedef  int Cth_once_t;
-#define CTHREAD_ONCE_INIT 0
-#else
-#if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
-/*
- * For Windows there is no good possibility to
- * serialize the initialization. We use a flag and
- * rely on the fact that the process starts with one
- * single thread which will call Cthread_... routines
- * for all thread operations. Thus, the first Cthread_..
- * call is automatically serialized.
- */
-typedef int Cth_once_t;
-#define CTHREAD_ONCE_INIT 0
-#else
-#ifdef PTHREAD_ONCE_INIT
-typedef pthread_once_t Cth_once_t;
-#define CTHREAD_ONCE_INIT PTHREAD_ONCE_INIT
-#else
-#ifdef pthread_once_init
-typedef pthread_once_t Cth_once_t;
-#define CTHREAD_ONCE_INIT pthread_once_init
-#else
-typedef pthread_once_t Cth_once_t;
-/* Let's assume a (really honnest) value of 0 */
-#define CTHREAD_ONCE_INIT 0
-#endif /* pthread_once_init */
-#endif /* PTHREAD_ONCE_INIT */
-#endif /* _WIN32 */
-#endif /* _CTHREAD */
-
-/* ------------------------------------ */
-/* For the Cthread_self() command       */
-/* (Thread-Specific Variable)           */
-/* ------------------------------------ */
-#ifdef _CTHREAD
-Cth_spec_t cid_key;
-#else
-int cid_key = 0;
-#endif
-Cth_once_t cid_once = CTHREAD_ONCE_INIT;
-
-/* ============================================ */
-/* Structures                                   */
-/* ============================================ */
-/* -------------------------------------------- */
-/* Map between Cthread ID and Thread/Process ID */
-/* -------------------------------------------- */
-/* This structure is a definition of a thread   */
-/* from the Cthread point of view:              */
-/* - The Cthread ID                             */
-/* - The Thread/Process ID                      */
-/* - The startup routine                        */
-/* - The pointer to the next element            */
-/* -------------------------------------------- */
-struct Cid_element_t {
-  int       cid;            /* Cthread ID       */
-  Cth_pid_t pid;            /* Thread/Proc. ID  */
-  unsigned thID;            /* WIN32 thread ID  */
-  void   *(*addr) _PROTO((void *));  /* Start-up         */
-  int       detached;       /* Is it detached ? */
-  int       joined;         /* Has it been joined? */
-  struct Cid_element_t *next; /* Next element   */
-};
-
-/* -------------------------------------------- */
-/* Map between address to lock and a variable   */
-/* Please note that we always SYSTEMATICALLY    */
-/* associate a conditionnal variable with a     */
-/* mutex for an eventual timeout on getting     */
-/* the mutex's lock.                            */
-/* -------------------------------------------- */
-/* This structure is a definition of a mutex    */
-/* from the Cthread point of view:              */
-/* - The address to lock                        */
-/* - The mutex address                          */
-/* - The associated conditionnal variable       */
-/* - The pointer to the next element            */
-/* -------------------------------------------- */
-struct Cmtx_element_t {
-  void                *addr; /* Adress to lock  */
-  Cth_mtx_t            mtx; /* Associated mutex */
-  Cth_cond_t           cond; /* Associate cond  */
-  struct Cmtx_element_t *next; /* Next element  */
-  int                  nwait; /* cond_wait nb   */
-};
-
-/* -------------------------------------------- */
-/* Map between specific variable and Cthread's  */
-/* specific variable ID                         */
-/* -------------------------------------------- */
-/* This structure is a definition of a specific */
-/* variable from the Cthread point of view:     */
-/* - The address of the specific variable       */
-/* - A once value for initialization            */
-/* - The associated key                         */
-/* - The associated Cthread ID                  */
-/* - The pointer to next element                */
-/* -------------------------------------------- */
-struct Cspec_element_t {
-  int          *global_key; /* Client Glob. Key */
-  Cth_spec_t          key;  /* Key              */
-  struct Cspec_element_t *next; /* Next element */
-#ifndef _CTHREAD
-  void         *addr;       /* malloced address */
-#endif
-};
-
-/* -------------------------------------------- */
-/* Internal structure used by Cthread. To make  */
-/* that in thread environment the access to     */
-/* vital variables like the Cmtx_* and Cid_*    */
-/* elements is not touched by more than one     */
-/* thread at a time, Cthread uses an internal   */
-/* mutex.                                       */
-/* This has NO effect in a non-thread           */
-/* environment as of date of this library       */
-/* -------------------------------------------- */
-/* This structure is a definition of an         */
-/* internal structure useful from the Cthread   */
-/* point of view when it work in a thread       */
-/* environment:                                 */
-/* - The mutex address                          */
-/* -------------------------------------------- */
-struct Cthread_protect_t {
-  Cth_mtx_t            mtx; /* Associated mutex */
-};
-
 /* ============================================ */
 /* Internal Prototypes                          */
 /* ============================================ */
@@ -359,6 +41,7 @@ int   _Cthread_addspec _PROTO((char *, int, struct Cspec_element_t *));
 #ifndef CTHREAD_DEBUG
 int   _Cthread_obtain_mtx _PROTO((char *, int, Cth_mtx_t *, int));
 #else
+#define _Cthread_obtain_mtx(a,b,c,d) _Cthread_obtain_mtx_debug(__FILE__,__LINE__,a,b,c,d)
 int   _Cthread_obtain_mtx_debug _PROTO((char *, int, char *, int, Cth_mtx_t *, int));
 #endif
 /* Release a mutex lock */
@@ -366,7 +49,6 @@ int   _Cthread_release_mtx _PROTO((char *, int, Cth_mtx_t *));
 /* Methods to create a mutex to protect Cthread */
 /* internal tables and linked lists             */
 /* This is useful only in thread environment    */
-static int _Cthread_once_status = -1;
 void  _Cthread_once _PROTO((void));
 int   _Cthread_init _PROTO((void));
 /* Release of a thread-specific variable        */
@@ -377,11 +59,11 @@ int   _Cthread_destroy _PROTO((char *, int, int));
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
 unsigned __stdcall _Cthread_start_threadex _PROTO((void *));
 void     __cdecl   _Cthread_start_thread _PROTO((void *));
-static int _Cthread_win32_cond_init _PROTO((Cth_cond_t *));
-static int _Cthread_win32_cond_wait _PROTO((Cth_cond_t *, Cth_mtx_t *, int));
-static int _Cthread_win32_cond_broadcast _PROTO((Cth_cond_t *));
-static int _Cthread_win32_cond_signal _PROTO((Cth_cond_t *));
-static int _Cthread_win32_cond_destroy _PROTO((Cth_cond_t *));
+int _Cthread_win32_cond_init _PROTO((Cth_cond_t *));
+int _Cthread_win32_cond_wait _PROTO((Cth_cond_t *, Cth_mtx_t *, int));
+int _Cthread_win32_cond_broadcast _PROTO((Cth_cond_t *));
+int _Cthread_win32_cond_signal _PROTO((Cth_cond_t *));
+int _Cthread_win32_cond_destroy _PROTO((Cth_cond_t *));
 #else
 void *_Cthread_start_pthread _PROTO((void *));
 #endif
@@ -400,6 +82,16 @@ void _Cthread_cid_destructor _PROTO((void *));
 /* Cthread-ID once for all... */
 void _Cthread_cid_once _PROTO((void));
 
+/* ------------------------------------ */
+/* For the Cthread_self() command       */
+/* (Thread-Specific Variable)           */
+/* ------------------------------------ */
+#ifdef _CTHREAD
+Cth_spec_t cid_key;
+#else
+int cid_key = 0;
+#endif
+Cth_once_t cid_once = CTHREAD_ONCE_INIT;
 
 /* ============================================ */
 /* Static variables                             */
@@ -415,14 +107,16 @@ void _Cthread_cid_once _PROTO((void));
 /* Cid is the starting point of ALL processes   */
 /* from the Cthread point of view.              */
 /* -------------------------------------------- */
-static struct Cid_element_t   Cid;
+struct Cid_element_t   Cid;
 #ifdef _CTHREAD
-static struct Cmtx_element_t  Cmtx;
+struct Cmtx_element_t  Cmtx;
 #endif
-static struct Cthread_protect_t Cthread;
-static struct Cspec_element_t Cspec;
-static Cth_once_t             once = CTHREAD_ONCE_INIT;
-static int _Cthread_unprotect = 0;
+struct Cthread_protect_t Cthread;
+struct Cspec_element_t Cspec;
+Cth_once_t             once = CTHREAD_ONCE_INIT;
+int _Cthread_unprotect = 0;
+int Cthread_debug = 0;
+int _Cthread_once_status = -1;
 
 /* ============================================ */
 /* Routine  : _Cthread_cid_destructor           */
@@ -4693,7 +4387,7 @@ int _Cthread_addspec(file, line, Cspec_new)
 /* article                                      */
 /* http://www.cs.wustl.edu/~schmidt/win32-cv-1.html*/
 /* ============================================ */
-static int _Cthread_win32_cond_init(Cth_cond_t *cv) {
+int _Cthread_win32_cond_init(Cth_cond_t *cv) {
     /*
      * Initialize the lock on nb_waiters counter ...
      */
@@ -4774,7 +4468,7 @@ static int _Cthread_win32_cond_init(Cth_cond_t *cv) {
 /* or before the incomming thread (was that     */
 /* clear...?).                                  */
 /* ============================================ */
-static int _Cthread_win32_cond_wait(Cth_cond_t *cv,
+int _Cthread_win32_cond_wait(Cth_cond_t *cv,
                                     Cth_mtx_t *mtx,
                                     int timeout) {
     int timeout_msec,rc,last_waiter,broadcast;
@@ -4860,7 +4554,7 @@ static int _Cthread_win32_cond_wait(Cth_cond_t *cv,
 /* article                                      */
 /* http://www.cs.wustl.edu/~schmidt/win32-cv-1.html*/
 /* ============================================ */
-static int _Cthread_win32_cond_broadcast(Cth_cond_t *cv) {
+int _Cthread_win32_cond_broadcast(Cth_cond_t *cv) {
     int have_waiters;
     /*
      * Avoid race on nb_waiters counter. We don't
@@ -4891,7 +4585,7 @@ static int _Cthread_win32_cond_broadcast(Cth_cond_t *cv) {
 /* article                                      */
 /* http://www.cs.wustl.edu/~schmidt/win32-cv-1.html*/
 /* ============================================ */
-static int _Cthread_win32_cond_signal(Cth_cond_t *cv) {
+int _Cthread_win32_cond_signal(Cth_cond_t *cv) {
     int have_waiters;
     /*
      * Avoid race on nb_waiters counter. We don't
@@ -4918,7 +4612,7 @@ static int _Cthread_win32_cond_signal(Cth_cond_t *cv) {
 /* Notes:                                       */
 /* Win32 implementation of pthread_cond_destroy */
 /* ============================================ */
-static int _Cthread_win32_cond_destroy(Cth_cond_t *cv) {
+int _Cthread_win32_cond_destroy(Cth_cond_t *cv) {
     if ( cv == NULL ) return(-1);
     DeleteCriticalSection(&(cv->nb_waiters_lock));
     CloseHandle(cv->cond_events[CTHREAD_WIN32_SIGNAL]);
@@ -5204,413 +4898,4 @@ int DLL_DECL _Cthread_self() {
 /* =============================================== */
 void DLL_DECL Cthread_unprotect() {
   _Cthread_unprotect = 1;
-}
-
-/* =============================================== */
-/* Routine  : Csched_Getschedparam                 */
-/* Arguments: Caller filename                      */
-/*            Caller line number                   */
-/*            CThread ID                           */
-/*            Policy (output)                      */
-/*            Parameters (output)                  */
-/* ----------------------------------------------- */
-/* Output   : 0 if (OK), -1 if not OK              */
-/*            Policy, Parameters                   */
-/* ----------------------------------------------- */
-/* History:                                        */
-/* 12-JUN-2000       First implementation          */
-/*                   Jean-Damien.Durand@cern.ch    */
-/* =============================================== */
-/* Notes:                                          */
-/* =============================================== */
-int DLL_DECL Csched_Getschedparam(file,line,cid,policy,Cparam)
-     char *file;
-     int line;
-     int cid;
-     int *policy;
-     Csched_param_t *Cparam;
-{
-  struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
-  int                   n;                /* Status           */
-
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_Getschedparam(%d,0x%lx,0x%lx) called at/behind %s:%d\n",
-          _Cthread_self(),cid,(unsigned long) policy,(unsigned long) Cparam,file, line);
-  }
-#endif
-
-  /* Make sure initialization is/was done */
-  if ( _Cthread_once_status && _Cthread_init() ) return(-1);
-
-  /* We check that this cid correspond to a known */
-  /* process                                      */
-  if (_Cthread_obtain_mtx(file,line,&(Cthread.mtx),-1))
-    return(-1);
-
-  n = 1;
-  while (current->next != NULL) {
-    current = current->next;
-    if (current->cid == cid) {
-      n = 0;
-      break;
-    }
-  }
-  _Cthread_release_mtx(file,line,&(Cthread.mtx));
-
-  if (n) {
-    serrno = EINVAL;
-    return(-1);
-  }
-
-#ifdef _NOCTHREAD
-  /* Cannot be supported - wrong environment */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#else
-  if (policy == NULL || Cparam == NULL) {
-    /* policy and param are required to be non-NULL */
-    serrno = EINVAL;
-    return(-1);
-  }
-#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
-  /* Not yet supported on _WIN32 */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
-  {
-    struct sched_param param;
-
-    if ((n = pthread_getschedparam(current->pid, policy, &param)) != 0) {
-      errno = n;
-      serrno = SECTHREADERR;
-      return(-1);
-    }
-
-    Cparam->sched_priority = param.sched_priority;
-  }
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-  if ((n = pthread_getscheduler(current->pid)) < 0) {
-    serrno = SECTHREADERR;
-    return(-1);
-  }
-  *policy = n;
-  if ((n = pthread_getprio(current->pid)) < 0) {
-    serrno = SECTHREADERR;
-    return(-1);
-  }
-  Cparam->sched_priority = n;
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
-  {
-    struct sched_param param;
-
-    if ((n = pthread_getschedparam(current->pid, policy, &param)) != 0) {
-      errno = n;
-      serrno = SECTHREADERR;
-      return(-1);
-    }
-
-    Cparam->sched_priority = param.sched_priority;
-  }
-#endif /* _CTHREAD_PROTO */
-#endif /* _NOCTHREAD */
-  /* OK */
-  return(0);
-}
-
-/* =============================================== */
-/* Routine  : Csched_Setschedparam                 */
-/* Arguments: Caller filename                      */
-/*            Caller line number                   */
-/*            CThread ID                           */
-/*            Policy                               */
-/*            Parameters                           */
-/* ----------------------------------------------- */
-/* Output   : 0 if (OK), -1 if not OK              */
-/* ----------------------------------------------- */
-/* History:                                        */
-/* 12-JUN-2000       First implementation          */
-/*                   Jean-Damien.Durand@cern.ch    */
-/* =============================================== */
-/* Notes:                                          */
-/* =============================================== */
-int DLL_DECL Csched_Setschedparam(file,line,cid,policy,Cparam)
-     char *file;
-     int line;
-     int cid;
-     int policy;
-     Csched_param_t *Cparam;
-{
-  struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
-  int                   n;                /* Status           */
-
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_Setschedparam(%d,%d,0x%lx) called at/behind %s:%d\n",
-          _Cthread_self(),cid,policy,(unsigned long) Cparam,file, line);
-  }
-#endif
-
-  /* Make sure initialization is/was done */
-  if ( _Cthread_once_status && _Cthread_init() ) return(-1);
-
-  /* We check that this cid correspond to a known */
-  /* process                                      */
-  if (_Cthread_obtain_mtx(file,line,&(Cthread.mtx),-1))
-    return(-1);
-
-  n = 1;
-  while (current->next != NULL) {
-    current = current->next;
-    if (current->cid == cid) {
-      n = 0;
-      break;
-    }
-  }
-  _Cthread_release_mtx(file,line,&(Cthread.mtx));
-
-  if (n) {
-    serrno = EINVAL;
-    return(-1);
-  }
-
-#ifdef _NOCTHREAD
-  /* Cannot be supported - wrong environment */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#else
-  if (policy == CSCHED_UNKNOWN) {
-    /* Known to be unsupported */
-    serrno = SEOPNOTSUP;
-    return(-1);
-  }
-  if (Cparam == NULL) {
-    /* param is required to be non-NULL */
-    serrno = EINVAL;
-    return(-1);
-  }
-#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
-  /* Not yet supported on _WIN32 */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
-  {
-    struct sched_param param;
-
-    param.sched_priority = Cparam->sched_priority;
-
-    if ((n = pthread_setschedparam(current->pid, policy, &param)) != 0) {
-      errno = n;
-      serrno = SECTHREADERR;
-      return(-1);
-    }
-  }
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
-  if ((n = pthread_setscheduler(current->pid, policy, Cparam->sched_priority)) < 0) {
-    serrno = SECTHREADERR;
-    return(-1);
-  }
-#elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
-  {
-    struct sched_param param;
-
-    param.sched_priority = Cparam->sched_priority;
-
-    if ((n = pthread_setschedparam(current->pid, policy, &param)) != 0) {
-      errno = n;
-      serrno = SECTHREADERR;
-      return(-1);
-    }
-  }
-#endif /* _CTHREAD_PROTO */
-#endif /* _NOCTHREAD */
-  /* OK */
-  return(0);
-}
-
-/* =============================================== */
-/* Routine  : Csched_Get_priority_min              */
-/* Arguments: Caller filename                      */
-/*            Caller line number                   */
-/*            Policy                               */
-/* ----------------------------------------------- */
-/* Output   : 0 if (OK), -1 if not OK              */
-/* ----------------------------------------------- */
-/* History:                                        */
-/* 12-JUN-2000       First implementation          */
-/*                   Jean-Damien.Durand@cern.ch    */
-/* =============================================== */
-/* Notes:                                          */
-/* =============================================== */
-int DLL_DECL Csched_Get_priority_min(file,line,policy)
-     char *file;
-     int line;
-     int policy;
-{
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_Get_priority_min(%d) called at/behind %s:%d\n",
-          _Cthread_self(),policy,file,line);
-  }
-#endif
-
-  /* Make sure initialization is/was done */
-  if ( _Cthread_once_status && _Cthread_init() ) return(-1);
-
-#ifdef _NOCTHREAD
-  /* Cannot be supported - wrong environment */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#else
-  if (policy == CSCHED_UNKNOWN) {
-    /* Known to be unsupported */
-    serrno = SEOPNOTSUP;
-    return(-1);
-  }
-#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
-  /* Not yet supported on _WIN32 */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#else
-  {
-    int min;
-
-    if ((min = sched_get_priority_min(policy)) == -1) {
-      errno = min;
-      serrno = SECTHREADERR;
-      return(-1);
-    }
-
-    return(min);
-  }
-#endif /* _CTHREAD_PROTO */
-#endif /* _NOCTHREAD */
-}
-
-/* =============================================== */
-/* Routine  : Csched_Get_priority_max              */
-/* Arguments: Caller filename                      */
-/*            Caller line number                   */
-/*            Policy                               */
-/* ----------------------------------------------- */
-/* Output   : 0 if (OK), -1 if not OK              */
-/* ----------------------------------------------- */
-/* History:                                        */
-/* 12-JUN-2000       First implementation          */
-/*                   Jean-Damien.Durand@cern.ch    */
-/* =============================================== */
-/* Notes:                                          */
-/* =============================================== */
-int DLL_DECL Csched_Get_priority_max(file,line,policy)
-     char *file;
-     int line;
-     int policy;
-{
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_Get_priority_max(%d) called at/behind %s:%d\n",
-          _Cthread_self(),policy,file,line);
-  }
-#endif
-
-  /* Make sure initialization is/was done */
-  if ( _Cthread_once_status && _Cthread_init() ) return(-1);
-
-#ifdef _NOCTHREAD
-  /* Cannot be supported - wrong environment */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#else
-  if (policy == CSCHED_UNKNOWN) {
-    /* Known to be unsupported */
-    serrno = SEOPNOTSUP;
-    return(-1);
-  }
-#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
-  /* Not yet supported on _WIN32 */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#else
-  {
-    int max;
-
-    if ((max = sched_get_priority_max(policy)) == -1) {
-      errno = max;
-      serrno = SECTHREADERR;
-      return(-1);
-    }
-
-    return(max);
-  }
-#endif /* _CTHREAD_PROTO */
-#endif /* _NOCTHREAD */
-}
-
-/* =============================================== */
-/* Routine  : Csched_Get_priority_mid              */
-/* Arguments: Caller filename                      */
-/*            Caller line number                   */
-/*            Policy                               */
-/* ----------------------------------------------- */
-/* Output   : 0 if (OK), -1 if not OK              */
-/* ----------------------------------------------- */
-/* History:                                        */
-/* 12-JUN-2000       First implementation          */
-/*                   Jean-Damien.Durand@cern.ch    */
-/* =============================================== */
-/* Notes:                                          */
-/* =============================================== */
-int DLL_DECL Csched_Get_priority_mid(file,line,policy)
-     char *file;
-     int line;
-     int policy;
-{
-#ifdef CTHREAD_DEBUG
-  if (file != NULL) {
-    if (Cthread_debug != 0)
-      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_Get_priority_mid(%d) called at/behind %s:%d\n",
-          _Cthread_self(),policy,file,line);
-  }
-#endif
-
-  /* Make sure initialization is/was done */
-  if ( _Cthread_once_status && _Cthread_init() ) return(-1);
-
-#ifdef _NOCTHREAD
-  /* Cannot be supported - wrong environment */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#else
-  if (policy == CSCHED_UNKNOWN) {
-    /* Known to be unsupported */
-    serrno = SEOPNOTSUP;
-    return(-1);
-  }
-#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
-  /* Not yet supported on _WIN32 */
-  serrno = SEOPNOTSUP;
-  return(-1);
-#else
-  {
-    int min, max;
-
-    if ((min = Csched_get_priority_min(policy)) < 0 ||
-        (max = Csched_get_priority_max(policy)) < 0) {
-      return(-1);
-    }
-
-    if ((min % 2) != (max % 2)) {
-      /* One is even and one is odd : exact medium does not exist */
-      return((max - min + 1) / 2);
-    } else {
-      /* Both are even or both are odd */
-      return((max - min) / 2);
-    }
-  }
-#endif /* _CTHREAD_PROTO */
-#endif /* _NOCTHREAD */
 }

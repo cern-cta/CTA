@@ -1,25 +1,6 @@
-.\"   $Id: Cthread.man,v 1.5 2000/06/14 11:31:45 jdurand Exp $
+.\"   $Id: Cthread.man,v 1.6 2000/06/19 09:48:31 jdurand Exp $
 .\"
-.\"   Man page for the CASTOR's Thread Interface (Cthread)
-.\"
-.\"   $Log: Cthread.man,v $
-.\"   Revision 1.5  2000/06/14 11:31:45  jdurand
-.\"   Scheduling man page
-.\"
-.\"   Revision 1.4  2000/05/30 16:28:36  jdurand
-.\"   Changed an old, unique and obsolete mention of Cthif to Cthread...
-.\"
-.\"   Revision 1.3  1999/09/07 13:46:51  jdurand
-.\"   Fixed typo (ECHTREADERROR -> SECTHREADERR)
-.\"
-.\"   Revision 1.2  1999/09/02 08:39:41  jdurand
-.\"   Added serrno error values
-.\"
-.\"   Revision 1.1.1.1  1999/07/20 08:03:06  jdurand
-.\"   Imported Sources
-.\"
-.\"
-.TH \fBCthread\fP "1" "29 Apr 1999" "Cthread V.1.0" "Jean-Damien Durand & Olof Barring"
+.TH \fBCthread\fP "1" "29 Apr 1999" "Cthread" "Jean-Damien Durand & Olof Barring"
 .SH NAME
 \fBCthread\fP \- \fBCASTOR\fP \fBThread\fP inferface
 .SH SYNOPSIS
@@ -56,16 +37,6 @@
 .BI "int Cthread_getspecific(int *" global_key ", void **" addr ");"
 .P
 .BI "int Cthread_setspecific(int *" global_key ", void * " addr ");"
-.P
-.BI "int Csched_getschedparam(int " cid ", int *" policy ", Csched_param_t *" param ");"
-.P
-.BI "int Csched_setschedparam(int " cid ", int " policy ", Csched_param_t *" param ");"
-.P
-.BI "int Csched_get_priority_min(int " policy ");"
-.P
-.BI "int Csched_get_priority_mid(int " policy ");"
-.P
-.BI "int Csched_get_priority_max(int " policy ");"
 
 .SH ERRORS
 Beyond the errno value, \fBCthread\fP is setting the serrno value to generic values that can be:
@@ -239,85 +210,6 @@ Return value is 0 on success, or -1 on error.
 that he have previously allocated, with the
 .I global_key
 address. If he tries to do so without calling previously \fBCthread_getspecific\fP, then such a call will be done internally.
-.P
-\fBCsched_getschedparam\fP retrieves the current scheduling policy and priority of the Cthread referenced with id
-.I cid.
-The
-.I policy
-can be
-.I CSCHED_OTHER, CSCHED_FIFO, CSCHED_RR, CSCHED_FG_NP
-or
-.I CSCHED_BG_NP.
-The
-.I param
-structure contains a member, named
-.I sched_priority
-, where will be stored the current priority of the thread you ask for. Please read the
-.B NOTES
-section.
-.P
-Return value is 0 on success, or -1 on error.
-.P
-\fBCsched_setschedparam\fP sets the scheduling policy and priority of the Cthread referenced with id
-.I cid.
-The
-.I policy
-can be
-.I CSCHED_OTHER, CSCHED_FIFO, CSCHED_RR, CSCHED_FG_NP
-or
-.I CSCHED_BG_NP.
-You are neverthless
-.B warned
-that the
-.B recommended
-scheduling is
-.I CSCHED_OTHER.
-Trying to use another scheduling is an opendoor to processor deadlock if you do not code with extreme care. Furthermore, except
-.I CSCHED_OTHER
-, it is
-.B not
-guaranteed that the other possible values (
-.I CSCHED_CSCHED_FIFO, CSCHED_RR, CSCHED_FG_NP
-or
-.I CSCHED_BG_NP
-) are supported or implemented on your platform.
-The
-.I param
-structure contains a member, named
-.I sched_priority
-, where is given the priority of the thread you want the attributes to be modified. Its value can vary from
-.BI "Csched_get_priority_min(" policy ")
-to
-.BI "Csched_get_priority_max(" policy ").
-Please read the
-.B NOTES
-section.
-.P
-Return value is 0 on success, or -1 on error.
-.P
-\fBCsched_get_priority_min\fP, \fBCsched_get_priority_mid\fP and \fBCsched_get_priority_max\fB are returning the minimum, medium and maximum allowed priorities, respectively, vs. the given
-.I policy.
-The output is the one that you use in the
-.I sched_priority
-member of the Csched_param_t structure. Please read the
-.B NOTES
-section.
-.P
-Return value is != -1 on success, or -1 on error.
-.SH NOTES
-About scheduling, the Cthread interface defines
-.I CSCHED_OTHER, CSCHED_FIFO, CSCHED_RR, CSCHED_FG_NP
-and
-.I CSCHED_BG_NP
-for portability issue. This does
-.B not
-mean that all those schedulings are supported on the platform you are running on. In particular, only
-.I CSCHED_OTHER
-is officially supported everywhere. The other scheduling policies are totally system dependant and do not conform to any standardisation. Please be aware, also, that using a scheduling other than
-.I CSCHED_OTHER
-is an opendoor to processor deadlock...
-.P
-Finally, on some OSes, the scheduling interfaces are not necessarly in the thread library, nor in the C library. In particular, on Digital you may find them in librt, and on Solaris in libposix4.
 
 .SH EXAMPLES
 .B Here is an example with thread-specific data
