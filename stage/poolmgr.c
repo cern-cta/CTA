@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.105 2001/03/06 09:38:27 jdurand Exp $
+ * $Id: poolmgr.c,v 1.106 2001/03/07 13:10:29 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.105 $ $Date: 2001/03/06 09:38:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.106 $ $Date: 2001/03/07 13:10:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1742,7 +1742,7 @@ int update_migpool(stcp,flag,immediate)
     }
     /* This is a return from automatic migration */
     /* We update global migrator variables */
-    if (pool_p->migr->global_predicates.nbfiles_canbemig-- < 0) {
+    if (--pool_p->migr->global_predicates.nbfiles_canbemig < 0) {
       sendrep(rpfd, MSG_ERR, STG106, func,
               stcp->poolname,
               "nbfiles_canbemig < 0 after automatic migration OK (resetted to 0)");
@@ -1758,7 +1758,7 @@ int update_migpool(stcp,flag,immediate)
       pool_p->migr->global_predicates.space_canbemig -= stcp->actual_size;
     }
     if ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR)) {
-      if (pool_p->migr->global_predicates.nbfiles_beingmig-- < 0) {
+      if (--pool_p->migr->global_predicates.nbfiles_beingmig < 0) {
         sendrep(rpfd, MSG_ERR, STG106,
                 func,
                 stcp->poolname,
@@ -1776,7 +1776,7 @@ int update_migpool(stcp,flag,immediate)
       }
     }
     /* We update fileclass_vs_migrator variables */
-    if (pool_p->migr->fileclass_predicates[ifileclass].nbfiles_canbemig-- < 0) {
+    if (--pool_p->migr->fileclass_predicates[ifileclass].nbfiles_canbemig < 0) {
       sendrep(rpfd, MSG_ERR, STG110,
               func,
               stcp->poolname,
@@ -1797,7 +1797,7 @@ int update_migpool(stcp,flag,immediate)
       pool_p->migr->fileclass_predicates[ifileclass].space_canbemig -= stcp->actual_size;
     }
     if ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR)) {
-      if (pool_p->migr->fileclass_predicates[ifileclass].nbfiles_beingmig-- < 0) {
+      if (--pool_p->migr->fileclass_predicates[ifileclass].nbfiles_beingmig < 0) {
         sendrep(rpfd, MSG_ERR, STG110,
                 func,
                 stcp->poolname,
