@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.5 $ $Date: 2000/01/22 08:11:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.6 $ $Date: 2000/01/22 08:20:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -444,7 +444,7 @@ chkexpdat:
 				c = EACCES;
 				goto reply;
 			}
-			if (*cfseq == 1) {
+			if (*cfseq == 1 || fsec > 1) {
 				if ((c = rwndtape (tapefd, path))) goto reply;
 			} else {
 				if ((c = skiptpfb (tapefd, path, nohdr2 ? 2 : 1)))
