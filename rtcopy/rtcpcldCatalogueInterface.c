@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.118 $ $Release$ $Date: 2005/02/04 16:30:28 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.119 $ $Release$ $Date: 2005/02/17 17:51:48 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.118 $ $Release$ $Date: 2005/02/04 16:30:28 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.119 $ $Release$ $Date: 2005/02/17 17:51:48 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -305,13 +305,13 @@ static int updateTapeFromDB(
     iObj = Cstager_Tape_getIObject(tp);
     rc = C_Services_updateObj(*svcs,iAddr,iObj);
   } else {
-    rc = Cstager_IStagerSvc_selectTape(
-                                       *stgSvc,
-                                       &tp,
-                                       tape->tapereq.vid,
-                                       tape->tapereq.side,
-                                       tape->tapereq.mode
-                                       );
+    LOG_CALL_TRACE((rc = Cstager_IStagerSvc_selectTape(
+                                                       *stgSvc,
+                                                       &tp,
+                                                       tape->tapereq.vid,
+                                                       tape->tapereq.side,
+                                                       tape->tapereq.mode
+                                                       )));
     if ( rc == -1 ) {
       save_serrno = serrno;
       LOG_DBCALL_ERR("Cstager_IStagerSvc_selectTape()",
@@ -320,11 +320,30 @@ static int updateTapeFromDB(
       serrno = save_serrno;
       return(-1);
     }
+
     /*
      * selectTape() locks the Tape in DB. We commit immediately since
      * we don't intend to update the DB here.
      */
     (void)C_Services_commit(*svcs,iAddr);
+
+    if ( tp == NULL ) {
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+2,
+                      "VID",
+                      DLF_MSG_PARAM_TPVID,
+                      tape->tapereq.vid,
+                      "REASON",
+                      DLF_MSG_PARAM_STR,
+                      "Cstager_IStagerSvc_selectTape() returns no Tape",
+                      RTCPCLD_LOG_WHERE
+                      );
+      serrno = SEINTERNAL;
+      return(-1);
+    }
   }
 
   if ( rc == -1 ) {
@@ -561,11 +580,11 @@ int rtcpcld_getTapesToDo(
 
   rc = getStgSvc(&stgsvc);
   if ( rc == -1 || stgsvc == NULL || *stgsvc == NULL) return(-1);
-  rc = Cstager_IStagerSvc_tapesToDo(
-                                    *stgsvc,
-                                    &tpArray,
-                                    &nbTpItems
-                                    );
+  LOG_CALL_TRACE((rc = Cstager_IStagerSvc_tapesToDo(
+                                                    *stgsvc,
+                                                    &tpArray,
+                                                    &nbTpItems
+                                                    )));
   if ( rc == -1 ) {
     save_serrno = serrno;
     LOG_DBCALL_ERR("Cstager_IStagerSvc_tapesToDo()",
@@ -611,11 +630,11 @@ int rtcpcld_getTapesToDo(
    * Now do the streams. For each stream we need to call
    * vmgr_gettape() to get the VID to be used for the stream.
    */
-  rc = Cstager_IStagerSvc_streamsToDo(
-                                      *stgsvc,
-                                      &streamArray,
-                                      &nbStreamItems
-                                      );
+  LOG_CALL_TRACE((rc = Cstager_IStagerSvc_streamsToDo(
+                                                      *stgsvc,
+                                                      &streamArray,
+                                                      &nbStreamItems
+                                                      )));
   if ( rc == -1 ) {
     save_serrno = serrno;
     LOG_DBCALL_ERR("Cstager_IStagerSvc_streamsToDo()",
@@ -1059,12 +1078,12 @@ static int procSegmentsForTape(
 
   tp = (struct Cstager_Tape_t *)tape->dbRef->row;
 
-  rc = Cstager_IStagerSvc_segmentsForTape(
-                                          *stgsvc,
-                                          tp,
-                                          &segmArray,
-                                          &nbItems
-                                          );
+  LOG_CALL_TRACE((rc = Cstager_IStagerSvc_segmentsForTape(
+                                                          *stgsvc,
+                                                          tp,
+                                                          &segmArray,
+                                                          &nbItems
+                                                          )));
   if ( rc == -1 ) {
     save_serrno = serrno;
     LOG_DBCALL_ERR("Cstager_IStagerSvc_segmentsForSegment()",
@@ -1290,11 +1309,11 @@ static int nextSegmentToRecall(
   if ( rc == -1 || stgsvc == NULL || *stgsvc == NULL ) return(-1);
   
   recallCandidate = NULL;
-  rc = Cstager_IStagerSvc_bestFileSystemForSegment(
-                                                   *stgsvc,
-                                                   segment,
-                                                   &recallCandidate
-                                                   );
+  LOG_CALL_TRACE((rc = Cstager_IStagerSvc_bestFileSystemForSegment(
+                                                                   *stgsvc,
+                                                                   segment,
+                                                                   &recallCandidate
+                                                                   )));
   if ( rc == -1 ) {
     save_serrno = serrno;
     LOG_DBCALL_ERR("Cstager_IStagerSvc_bestFileSystemForSegment()",
@@ -1479,11 +1498,11 @@ int nextSegmentToMigrate(
     return(-1);
   }
 
-  rc = Cstager_IStagerSvc_bestTapeCopyForStream(
-                                                *stgsvc,
-                                                stream,
-                                                &nextMigrCandidate
-                                                );
+  LOG_CALL_TRACE((rc = Cstager_IStagerSvc_bestTapeCopyForStream(
+                                                                *stgsvc,
+                                                                stream,
+                                                                &nextMigrCandidate
+                                                                )));
   if ( rc == -1 ) {
     save_serrno = serrno;
     if ( save_serrno == ENOENT ) {
@@ -1491,7 +1510,7 @@ int nextSegmentToMigrate(
       serrno = ENOENT;
       return(-1);
     } else {
-      LOG_DBCALL_ERR("Cstager_IStagerSvc_bestTapeCopyForSegment()",
+      LOG_DBCALL_ERR("Cstager_IStagerSvc_bestTapeCopyForStream()",
                      Cstager_IStagerSvc_errorMsg(*stgsvc));
     }
     C_IAddress_delete(iAddr);
@@ -1921,10 +1940,10 @@ int rtcpcld_anyReqsForTape(
   
   tp = (struct Cstager_Tape_t *)tape->dbRef->row;
   if ( tape->tapereq.mode == WRITE_DISABLE ) {
-    rc = Cstager_IStagerSvc_anySegmentsForTape(*stgsvc,tp);
+    LOG_CALL_TRACE((rc = Cstager_IStagerSvc_anySegmentsForTape(*stgsvc,tp)));
   } else {
     Cstager_Tape_stream(tp,&stream);
-    rc = Cstager_IStagerSvc_anyTapeCopyForStream(*stgsvc,stream);
+    LOG_CALL_TRACE((rc = Cstager_IStagerSvc_anyTapeCopyForStream(*stgsvc,stream)));
   }
   if ( rc == -1 ) {
     save_serrno = serrno;
@@ -2789,10 +2808,10 @@ int rtcpcld_updcFileRecalled(
      */
     rc = getStgSvc(&stgSvc);
     if ( rc == -1 || stgSvc == NULL || *stgSvc == NULL ) return(-1);
-    rc = Cstager_IStagerSvc_fileRecalled(
-                                         *stgSvc,
-                                         tapeCopy
-                                         );
+    LOG_CALL_TRACE((rc = Cstager_IStagerSvc_fileRecalled(
+                                                         *stgSvc,
+                                                         tapeCopy
+                                                         )));
     if ( rc == -1 ) {
       save_serrno = serrno;
       LOG_DBCALL_ERR("Cstager_IStagerSvc_fileRecalled()",
@@ -3238,10 +3257,10 @@ int rtcpcld_returnStream(
                     DLF_MSG_PARAM_INT64,
                     key
                     );
-    rc = Cstager_IStagerSvc_resetStream(
-                                        *stgSvc,
-                                        stream
-                                        );
+    LOG_CALL_TRACE((rc = Cstager_IStagerSvc_resetStream(
+                                                        *stgSvc,
+                                                        stream
+                                                        )));
     if ( rc == -1 ) {
       save_serrno = serrno;
       LOG_DBCALL_ERR("Cstager_IStagerSvc_resetStream()",
