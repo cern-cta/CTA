@@ -1,16 +1,18 @@
-.\" $Id: stage_setlog.man,v 1.1 2002/09/08 06:28:34 jdurand Exp $
+.\" $Id: stage_setlog.man,v 1.2 2002/09/08 06:44:08 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_setlog.man,v $ $Revision: 1.1 $ $Date: 2002/09/08 06:28:34 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_setlog.man,v $ $Revision: 1.2 $ $Date: 2002/09/08 06:44:08 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_SETLOG "3" "$Date: 2002/09/08 06:28:34 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_SETLOG "3" "$Date: 2002/09/08 06:44:08 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_setlog \- Set receiving callback routine for error and output messages
 .SH SYNOPSIS
 .BI "#include <" stage_api.h ">"
 .sp
-.BI "int stage_setlog(void (*" logfunction ")(int " level ", char *" message "));"
+.BI "int stage_setlog(void (*" logfunction 
+.BI ")(int " level ,
+.BI "char *" message "));"
 
 .SH DESCRIPTION
 The \fBstage_setlog\fP API method is setting the log callback of stage API. All messages sent by a stager daemon will not be printed on the default ttys (stdout and stderr) but will be given to this routine.
