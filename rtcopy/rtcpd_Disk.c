@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.84 $ $Date: 2000/08/04 10:25:13 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.85 $ $Date: 2000/08/07 14:55:14 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1877,7 +1877,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                                        &client->clientport);
             if ( rc == -1 ) {
                 save_serrno = serrno;
-                rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() rtcp_ConnectToClient(%s,%d): %s\n",
+                rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() rtcpd_ConnectToClient(%s,%d): %s\n",
                     client->clienthost,client->clientport,sstrerror(serrno));
                 serrno = save_serrno;
                 return(-1);
