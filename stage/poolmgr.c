@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.250 2003/11/04 13:23:15 jdurand Exp $
+ * $Id: poolmgr.c,v 1.251 2003/11/04 14:37:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.250 $ $Date: 2003/11/04 13:23:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.251 $ $Date: 2003/11/04 14:37:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2957,6 +2957,7 @@ int update_migpool(stcp,flag,immediate)
 		/* immediately */
 		if ((pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbcopies == 0) || 
 			(pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbtppools == 0)) {
+			/*
 			sendrep(&rpfd, MSG_ERR, STG139,
 					(*stcp)->u1.h.xfile, 
 					pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
@@ -2964,6 +2965,7 @@ int update_migpool(stcp,flag,immediate)
 					pool_p->migr->fileclass[ifileclass]->Cnsfileclass.classid,
 					pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbcopies,
 					pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbtppools);
+			*/
 			/* We mark it as staged */
 			(*stcp)->status |= STAGED;
 			if (((*stcp)->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
