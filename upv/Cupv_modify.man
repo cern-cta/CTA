@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cupv_modify.man,v $ $Revision: 1.1 $ $Date: 2002/05/29 09:22:11 $ CERN IT-DS/HSM Ben Couturier
+.\" @(#)$RCSfile: Cupv_modify.man,v $ $Revision: 1.2 $ $Date: 2002/06/11 14:12:04 $ CERN IT-DS/HSM Ben Couturier
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\" 
-.TH "Cupv_modify" "3" "$Date: 2002/05/29 09:22:11 $" "CASTOR" "UPV Library Functions"
+.TH "Cupv_modify" "3" "$Date: 2002/06/11 14:12:04 $" "CASTOR" "UPV Library Functions"
 .SH "NAME"
 Cupv_modify \- Modifies an entry in the user privilege validation system.
 .SH "SYNOPSIS"
@@ -14,7 +14,7 @@ Cupv_modify \- Modifies an entry in the user privilege validation system.
 .BI "char *" target_host,  ) 
 .BI "char *" new_source_host , 
 .BI "char *" new_target_host,
-.BI "int " priv ) 
+.BI "int " privilege ) 
 .SH "DESCRIPTION"
 .B Cupv_modify
 Modifies the rights of a user from the CASTOR User Privilege Validation system. The permissions are always specified in this way: a given privilege level on a target machine (see below) is given  to a given uid/gid from a source machine.
@@ -35,7 +35,8 @@ is a regular expression specifying the target host(s).
 is a regular expression specifying the new source host(s).
 .TP 
 .I new_target_host
-is a regular expression specifying the new target host(s)..TP 
+is a regular expression specifying the new target host(s).
+.TP 
 .I privilege
 is the privilege requested. It must be one of the following:
 .IP 
@@ -54,7 +55,8 @@ is set appropriately.
 .TP 1.3i
 .B EACCES
 Permission denied.
-.TP .B EINVAL
+.TP 
+.B EINVAL
 a bad uid/gid or privilege has been passed as argument.
 .TP 
 .B SENOSHOST
@@ -72,9 +74,7 @@ Internal CUPV error.
 .B SECUPVNACT
 Server is not running or is being shutdown.
 .SH "SEE ALSO"
-.BR Castor_limits(4) ,
-.B Cupv_add(3) ,
-.B Cupv_delete(3) ,
+.BR Castor_limits(4), Cupv_add(3), Cupv_delete(3),
 .B Cupv_list(3)
 .SH "AUTHOR"
 \fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cupv_list.man,v $ $Revision: 1.1 $ $Date: 2002/05/29 09:22:11 $ CERN IT-DS/HSM Ben Couturier
+.\" @(#)$RCSfile: Cupv_list.man,v $ $Revision: 1.2 $ $Date: 2002/06/11 14:12:04 $ CERN IT-DS/HSM Ben Couturier
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\" 
-.TH "Cupv_list" "3" "$Date: 2002/05/29 09:22:11 $" "CASTOR" "UPV Library Functions"
+.TH "Cupv_list" "3" "$Date: 2002/06/11 14:12:04 $" "CASTOR" "UPV Library Functions"
 .SH "NAME"
 Cupv_list \- Lists the entries in the user privilege validation system.
 .SH "SYNOPSIS"
@@ -13,7 +13,7 @@ Cupv_list \- Lists the entries in the user privilege validation system.
 .BI "struct Cupv_userpriv *" filter ) 
 .SH "DESCRIPTION"
 .B Cupv_list
-Lists the rights in the CASTOR User Privilege Validation system. It is possible to filter the entries by specifying a struct Cupv_userpriv, where \-1 is used for wildcard for uid/gid/priv and and empty string is used to specify a wildcard for source and target hosts.
+Lists the rights in the CASTOR User Privilege Validation system. It is possible to filter the entries by specifying a struct Cupv_userpriv, where \-1 is used for wildcard for uid/gid/priv and an empty string is used to specify a wildcard for source and target hosts.
 .SH "RETURN VALUE"
 This routine returns a pointer to a struct Cupv_userpriv if the call was successful, NULL if the operation
 failed. In the latter case,
@@ -23,7 +23,8 @@ is set appropriately.
 .TP 1.3i
 .B EACCES
 Permission denied.
-.TP .B EINVAL
+.TP 
+.B EINVAL
 a bad uid/gid or privilege has been passed as argument.
 .TP 
 .B SENOSHOST
@@ -41,9 +42,8 @@ Internal CUPV error.
 .B SECUPVNACT
 Server is not running or is being shutdown.
 .SH "SEE ALSO"
-.BR Castor_limits(4) ,
-.B Cupv_add(3) ,
-.B Cupv_delete(3) ,
-.B Cupv_list(3)
+.B Castor_limits(4), Cupv_add(3), Cupv_check(3), Cupv_delete(3),
+.B Cupv_modify(3)
 .SH "AUTHOR"
 \fBCASTOR\fP Team <castor.support@cern.ch>
+

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cupv_delete.man,v $ $Revision: 1.1 $ $Date: 2002/05/29 09:22:11 $ CERN IT-DS/HSM Ben Couturier
+.\" @(#)$RCSfile: Cupv_delete.man,v $ $Revision: 1.2 $ $Date: 2002/06/11 14:12:04 $ CERN IT-DS/HSM Ben Couturier
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\" 
-.TH "Cupv_delete" "3" "$Date: 2002/05/29 09:22:11 $" "CASTOR" "UPV Library Functions"
+.TH "Cupv_delete" "3" "$Date: 2002/06/11 14:12:04 $" "CASTOR" "UPV Library Functions"
 .SH "NAME"
 Cupv_delete \- Deletes an entry from the user privilege validation system.
 .SH "SYNOPSIS"
@@ -36,7 +36,8 @@ is set appropriately.
 .TP 1.3i
 .B EACCES
 Permission denied.
-.TP .B EINVAL
+.TP 
+.B EINVAL
 a bad uid/gid or privilege has been passed as argument.
 .TP 
 .B SENOSHOST
@@ -54,10 +55,7 @@ Internal CUPV error.
 .B SECUPVNACT
 Server is not running or is being shutdown.
 .SH "SEE ALSO"
-.BR Castor_limits(4) ,
-.B Cupv_add(3) ,
-.B Cupv_check(3) ,
-.B Cupv_list(3)
+.B Castor_limits(4), Cupv_add(3), Cupv_check(3), Cupv_list(3),
 .B Cupv_modify(3)
 .SH "AUTHOR"
 \fBCASTOR\fP Team <castor.support@cern.ch>

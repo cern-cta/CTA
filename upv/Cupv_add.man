@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cupv_add.man,v $ $Revision: 1.1 $ $Date: 2002/05/29 09:22:11 $ CERN IT-DS/HSM Ben Couturier
+.\" @(#)$RCSfile: Cupv_add.man,v $ $Revision: 1.2 $ $Date: 2002/06/11 14:12:04 $ CERN IT-DS/HSM Ben Couturier
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\" 
-.TH "Cupv_add" "3" "$Date: 2002/05/29 09:22:11 $" "CASTOR" "UPV Library Functions"
+.TH "Cupv_add" "3" "$Date: 2002/06/11 14:12:04 $" "CASTOR" "UPV Library Functions"
 .SH "NAME"
 Cupv_add \- Adds an entry in the user privilege validation system.
 .SH "SYNOPSIS"
@@ -15,7 +15,7 @@ Cupv_add \- Adds an entry in the user privilege validation system.
 .BI "int "  privilege ) 
 .SH "DESCRIPTION"
 .B Cupv_add
-adds the rights of a user in the CASTOR User Privilege Validation system. The permissions are always specified in this way: a given privilege level on a target machine (see below) is given  to a given uid/gid from a source machine.
+adds the rights of a user in the CASTOR User Privilege Validation system. The permissions are always specified in this way: a given privilege on a target machine (see below) is given  to a given uid/gid from a source machine.
 .TP 
 .I uid
 is the user id of the user for whom the authorization is requested.
@@ -32,12 +32,24 @@ is a regular expression specifying the target host(s).
 .I privilege
 is the privilege requested. It must be one of the following:
 .IP 
-.BR P_OPERATOR, 
+.TP
+.BR P_OPERATOR
+(normal operator),
+.TP
 .BR P_TAPE_OPERATOR, 
+(tape operator), 
+.TP
 .BR P_EXPT_ADMIN, 
-.BR P_ADMIN, 
+(experiment administrator),
+.TP
+.BR P_ADMIN,
+(CASTOR administrator),
+.TP
 .BR P_UPV_ADMIN, 
+(Administrator for CASTOR privileges), 
+.TP
 .BR P_TAPE_SYSTEM 
+(Used by CASTOR tape software)
 .SH "RETURN VALUE"
 This routine returns 0 if the call was successful, \-1 if the operation
 failed. In the latter case,
@@ -47,7 +59,8 @@ is set appropriately.
 .TP 1.3i
 .B EACCES
 Permission denied.
-.TP .B EINVAL
+.TP 
+.B EINVAL
 a bad uid/gid or privilege has been passed as argument.
 .TP 
 .B SENOSHOST
@@ -65,9 +78,7 @@ Internal CUPV error.
 .B SECUPVNACT
 Server is not running or is being shutdown.
 .SH "SEE ALSO"
-.BR Castor_limits(4) ,
-.B Cupv_add(3) ,
-.B Cupv_delete(3) ,
-.B Cupv_list(3)
+.B Castor_limits(4), Cupv_check(3), Cupv_delete(3), Cupv_list(3), 
+.B Cupv_modify(3)
 .SH "AUTHOR"
 \fBCASTOR\fP Team <castor.support@cern.ch>

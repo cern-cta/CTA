@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cupvadd.man,v $ $Revision: 1.1 $ $Date: 2002/05/29 09:22:11 $ CERN IT-DS/HSM Ben Couturier
+.\" @(#)$RCSfile: Cupvadd.man,v $ $Revision: 1.2 $ $Date: 2002/06/11 14:12:04 $ CERN IT-DS/HSM Ben Couturier
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\" 
-.TH "Cupvadd" "1" "$Date: 2002/05/29 09:22:11 $" "CASTOR" "UPV Administrator commands"
+.TH "Cupvadd" "1" "$Date: 2002/06/11 14:12:04 $" "CASTOR" "UPV Administrator commands"
 .SH "NAME"
 Cupvadd \- Adds an entry to the user privilege validation system
 .SH "SYNOPSIS"
@@ -35,46 +35,37 @@ the target host.
 .I privilege
 is the privilege requested. It must be one of the following:
 .IP 
-.BR OPERATOR, 
-.BR TAPE_OPERATOR, 
-.BR EXPT_ADMIN, 
-.BR ADMIN, 
-.BR UPV_ADMIN, 
+.TP
+.BR OPERATOR 
+(normal operator), 
+.TP
+.BR TAPE_OPERATOR 
+(tape operator), 
+.TP
+.BR EXPT_ADMIN 
+(experiment Administrator), 
+.TP
+.BR ADMIN 
+(CASTOR Administrator), 
+.TP
+.BR UPV_ADMIN 
+(Administrator for CASTOR privileges), 
+.TP
 .BR TAPE_SYSTEM 
+(Used by CASTOR tape software)
+.TP
 or a combination separated with "|".
-.SH "RETURN VALUE"
-This routine returns 0 if the operation was successful, or 1 if the operation
+.SH "EXIT STATUS"
+This program returns 0 if the operation was successful, or 1 if the operation
 failed or if the authorization is rejected. 
-.SH "ERRORS"
-.TP 1.3i
-.B EACCES
-Permission denied.
-.TP 
-.B EINVAL
-a bad uid/gid or privilege has been passed as argument.
-.TP 
-.B SENOSHOST
-Host unknown.
-.TP 
-.B SENOSSERV
-Service unknown.
-.TP 
-.B SECOMERR
-Communication error.
-.TP 
-.B SEINTERNAL
-Internal CUPV error.
-.TP 
-.B SECUPVNACT
-Server is not running or is being shutdown.
 .SH "SEE ALSO"
 .BR Cupvcheck(1) ,
-.B Cupvdelete(1) ,
-.B Cupvlist(1) ,
-.B Cupvmodify(1)
-.B Cupv_add(3) ,
-.B Cupv_delete(3) ,
-.B Cupv_list(3) ,
+.BR Cupvdelete(1) ,
+.BR Cupvlist(1) ,
+.BR Cupvmodify(1)
+.BR Cupv_add(3) ,
+.BR Cupv_delete(3) ,
+.BR Cupv_list(3) ,
 .B Cupv_modify(3)
 .SH "AUTHOR"
 \fBCASTOR\fP Team <castor.support@cern.ch>
