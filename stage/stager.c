@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.65 2000/05/16 16:24:26 jdurand Exp $
+ * $Id: stager.c,v 1.66 2000/05/18 15:04:33 jdurand Exp $
  */
 
 /*
@@ -14,7 +14,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.65 $ $Date: 2000/05/16 16:24:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.66 $ $Date: 2000/05/18 15:04:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <grp.h>
@@ -1041,6 +1041,7 @@ int stagewrt_castor_hsm_file() {
         sendrep (rpfd, MSG_ERR, STG02, "", "vmgr_gettape",
                  sstrerror (serrno));
         sendrep (rpfd, MSG_ERR, "Trying on another migration pool (if any)\n");
+        sleep(10);
       }
       /* From now on, "vid" is in status TAPE_BUSY */
       
