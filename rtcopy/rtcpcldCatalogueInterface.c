@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.74 $ $Release$ $Date: 2004/11/03 17:15:32 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.75 $ $Release$ $Date: 2004/11/03 17:18:29 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.74 $ $Release$ $Date: 2004/11/03 17:15:32 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.75 $ $Release$ $Date: 2004/11/03 17:18:29 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -2006,7 +2006,7 @@ int rtcpcld_updcFileMigrated(
     for ( j=0; j<nbSegments; j++ ) {
       iObj = Cstager_Segment_getIObject(segmentArray[j]);
       Cstager_Segment_id(segmentArray[j],&key);
-      Cstager_Tape_removeSegment(tp,segmentArray[j]);
+      Cstager_Tape_removeSegments(tp,segmentArray[j]);
       Cstager_Segment_setTape(segmentArray[j],NULL);
       rc = C_Services_fillRep(
                               *svcs,
@@ -2374,7 +2374,7 @@ int rtcpcld_returnStream(
       } else {
         for ( i=0; i<nbTapeCopies; i++ ) {
           Cstager_Stream_removeTapeCopy(stream,tapeCopyArray[i]);
-          Cstager_TapeCopy_removeStream(tapeCopyArrya[i],stream);
+          Cstager_TapeCopy_removeStream(tapeCopyArray[i],stream);
         }
         rc = C_Services_fillRep(
                                 *svcs,
