@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1998-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 1998-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smc.c,v $ $Revision: 1.6 $ $Date: 2002/12/09 09:56:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smc.c,v $ $Revision: 1.7 $ $Date: 2003/09/15 08:43:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -21,9 +21,6 @@ static char sccsid[] = "@(#)$RCSfile: smc.c,v $ $Revision: 1.6 $ $Date: 2002/12/
 #define	USERR	1
 
 extern char *optarg;
-#if !defined(linux)
-extern char *sys_errlist[];
-#endif
 main(argc, argv)
 int argc;
 char **argv;
@@ -172,7 +169,7 @@ char **argv;
 				c = EBUSY;
 			else
 				c = RBT_NORETRY;
-			fprintf (stderr, SR019, loader, "open", sys_errlist[errno]);
+			fprintf (stderr, SR019, loader, "open", strerror(errno));
 			exit (c);
 		}
 #endif
@@ -460,7 +457,7 @@ int verbose;
 	else
 		vid = "*";
 	if (nbelem == 0) {
-		if (strchr (vid, '*'))	/* pattern matching */
+		if (strchr (vid, '*') || strchr (vid, '?'))	/* pattern matching */
 			nbelem = robot_info->transport_count + robot_info->slot_count +
 				 robot_info->port_count + robot_info->device_count;
 		else
