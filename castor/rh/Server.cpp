@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/10/01 14:26:20 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/01 09:13:52 $ $Author: sponcec3 $
  *
  *
  *
@@ -204,9 +204,17 @@ void castor::rh::Server::handleRequest(castor::IObject* fr)
   throw (castor::exception::Exception) {
   // Stores it into Oracle
   castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
-  svcs()->createRep(&ad, fr, true);
-  clog() << "request stored in Oracle, id "
-         << fr->id() << std::endl;
+  try {
+    svcs()->createRep(&ad, fr, false);
+    svcs()->fillRep(&ad, fr, OBJ_SubRequest, false);
+    svcs()->fillRep(&ad, fr, OBJ_IClient, true);
+    clog() << "request stored in Oracle, id "
+           << fr->id() << std::endl;
+  } catch (castor::exception::Exception e) {
+    svcs()->rollback(&ad);
+    throw e;
+  }
+
   // Send an UDP message to the stager
   int fd = socket(AF_INET, SOCK_DGRAM, 0);
   if (fd < 0) {
