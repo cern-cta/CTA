@@ -1,5 +1,5 @@
 /*
- * $id$
+ * $Id: Csec_plugin_ID.c,v 1.8 2004/08/27 14:40:46 motiakov Exp $
  * Copyright (C) 2003 by CERN/IT/ADC/CA Benjamin Couturier
  * All rights reserved
  */
@@ -62,7 +62,7 @@ typedef struct {
  * Initializes the Csec the context.
  * Just sets the area to 0 for the moment.
  */
-int Csec_init_context_impl(ctx)
+int Csec_init_context_ID(ctx)
     Csec_context_t *ctx;
 {
 
@@ -75,16 +75,16 @@ int Csec_init_context_impl(ctx)
 /**
  * Reinitializes the security context
  */
-int Csec_reinit_context_impl(ctx)
+int Csec_reinit_context_ID(ctx)
     Csec_context_t *ctx;
 {
 
     if (ctx->flags & CSEC_CTX_CONTEXT_ESTABLISHED) {
-        Csec_delete_connection_context_impl(ctx);
+        Csec_delete_connection_context_ID(ctx);
     }
 
     if (ctx->flags & CSEC_CTX_CREDENTIALS_LOADED) {
-        Csec_delete_creds_impl(ctx);
+        Csec_delete_creds_ID(ctx);
     }
 
     memset(ctx, 0, sizeof(Csec_context_t));
@@ -94,7 +94,7 @@ int Csec_reinit_context_impl(ctx)
 /**
  * Deletes the security context inside the Csec_context_t
  */
-int Csec_delete_connection_context_impl(ctx)
+int Csec_delete_connection_context_ID(ctx)
     Csec_context_t *ctx;
 {
     return 0;
@@ -104,7 +104,7 @@ int Csec_delete_connection_context_impl(ctx)
 /**
  * Deletes the credentials inside the Csec_context_t
  */
-int Csec_delete_creds_impl(ctx)
+int Csec_delete_creds_ID(ctx)
     Csec_context_t *ctx;
 {
 
@@ -123,7 +123,7 @@ int Csec_delete_creds_impl(ctx)
  * This function caches the credentials in the Csec_context_t object.
  * This function must be called again to refresh the credentials.
  */
-int Csec_acquire_creds_impl(ctx, service_name, is_client)
+int Csec_acquire_creds_ID(ctx, service_name, is_client)
     Csec_context_t *ctx;
     char *service_name;
     int is_client;
@@ -136,7 +136,7 @@ int Csec_acquire_creds_impl(ctx, service_name, is_client)
  * API function for the server to establish the context
  *
  */
-int Csec_server_establish_context_ext_impl(ctx, s, buf, len)
+int Csec_server_establish_context_ext_ID(ctx, s, buf, len)
     Csec_context_t *ctx;
     int s;
     char *buf;
@@ -187,7 +187,7 @@ int Csec_server_establish_context_ext_impl(ctx, s, buf, len)
 /**
  * API function for client to establish function with the server
  */
-int Csec_client_establish_context_impl(ctx, s)
+int Csec_client_establish_context_ID(ctx, s)
     Csec_context_t *ctx;
     int s;
 {
@@ -236,7 +236,7 @@ int Csec_client_establish_context_impl(ctx, s)
 }
 
 
-int Csec_get_service_name_impl(Csec_context_t *ctx, 
+int Csec_get_service_name_ID(Csec_context_t *ctx, 
 			       int service_type, char *host, char *domain,
 			       char *service_name, int service_namelen) {
   strncpy(service_name, "ID", service_namelen);
@@ -245,7 +245,7 @@ int Csec_get_service_name_impl(Csec_context_t *ctx,
 }
 
 
-int Csec_map2name_impl(Csec_context_t *ctx, char *principal, char *name, int maxnamelen) {
+int Csec_map2name_ID(Csec_context_t *ctx, char *principal, char *name, int maxnamelen) {
 
   strncpy(name, principal, maxnamelen);
   return 0;

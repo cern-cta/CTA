@@ -1,5 +1,5 @@
 /*
- * $id$
+ * $Id: Csec_plugin_GSS.c,v 1.10 2004/08/27 14:38:52 motiakov Exp $
  * Copyright (C) 2003 by CERN/IT/ADC/CA Benjamin Couturier
  * All rights reserved
  */
@@ -46,6 +46,12 @@ static char sccsid[] = "@(#)Csec_plugin_GSS.c,v 1.1 2004/01/12 10:31:40 CERN IT/
 
 #define TMPBUFSIZE 100
 
+#ifdef GSI
+#define MECH _GSI
+#else
+#define MECH _KRB5
+#endif
+
 /**
  * Functions for exchanging/printing tokens
  */
@@ -65,7 +71,9 @@ static int _Csec_map_gssapi_err _PROTO ((OM_uint32 maj_stat,
  * Initializes the Csec the context.
  * Just sets the area to 0 for the moment.
  */
-int Csec_init_context_impl(ctx)
+
+int (CSEC_METHOD_NAME(Csec_init_context, MECH))(ctx)
+
      Csec_context_t *ctx;
 {
 
@@ -78,16 +86,19 @@ int Csec_init_context_impl(ctx)
 /**
  * Reinitializes the security context
  */
-int Csec_reinit_context_impl(ctx)
+int (CSEC_METHOD_NAME(Csec_reinit_context, MECH))(ctx)
+
      Csec_context_t *ctx;
 {
 
   if (ctx->flags & CSEC_CTX_CONTEXT_ESTABLISHED) {
-    Csec_delete_connection_context_impl(ctx);
+    (CSEC_METHOD_NAME(Csec_delete_connection_context, MECH))(ctx);
   }
 
   if (ctx->flags & CSEC_CTX_CREDENTIALS_LOADED) {
-    Csec_delete_creds_impl(ctx);
+
+    (CSEC_METHOD_NAME(Csec_delete_creds, MECH))(ctx);
+
   }
 
   memset(ctx, 0, sizeof(Csec_context_t));
@@ -97,7 +108,8 @@ int Csec_reinit_context_impl(ctx)
 /**
  * Deletes the security context inside the Csec_context_t
  */
-int Csec_delete_connection_context_impl(ctx)
+int (CSEC_METHOD_NAME(Csec_delete_connection_context, MECH))(ctx)
+
      Csec_context_t *ctx;
 {
   OM_uint32 maj_stat, min_stat;
@@ -116,7 +128,8 @@ int Csec_delete_connection_context_impl(ctx)
 /**
  * Deletes the credentials inside the Csec_context_t
  */
-int Csec_delete_creds_impl(ctx)
+int (CSEC_METHOD_NAME(Csec_delete_creds, MECH))(ctx)
+
      Csec_context_t *ctx;
 {
   OM_uint32 maj_stat, min_stat;
@@ -140,7 +153,8 @@ int Csec_delete_creds_impl(ctx)
  * This function caches the credentials in the Csec_context_t object.
  * This function must be called again to refresh the credentials.
  */
-int Csec_acquire_creds_impl(ctx, service_name, is_client)
+int (CSEC_METHOD_NAME(Csec_acquire_creds, MECH))(ctx, service_name, is_client)
+
      Csec_context_t *ctx;
      char *service_name;
      int is_client;
@@ -148,7 +162,11 @@ int Csec_acquire_creds_impl(ctx, service_name, is_client)
   gss_buffer_desc name_buf;
   gss_name_t server_name;
   OM_uint32 maj_stat, min_stat;
-  char *func = "Csec_acquire_creds_impl";
+#ifdef GSI
+  char *func = "Csec_acquire_creds_GSI";
+#else
+  char *func = "Csec_acquire_creds_KRB5";
+#endif
   gss_cred_usage_t usage;
   
   if (is_client) {
@@ -214,7 +232,8 @@ int Csec_acquire_creds_impl(ctx, service_name, is_client)
  * API function for the server to establish the context
  *
  */
-int Csec_server_establish_context_ext_impl(ctx, s, buf, len)
+int (CSEC_METHOD_NAME(Csec_server_establish_context_ext, MECH))(ctx, s, buf, len)
+
      Csec_context_t *ctx;
      int s;
      char *buf;
@@ -244,7 +263,7 @@ int Csec_server_establish_context_ext_impl(ctx, s, buf, len)
       Csec_errmsg(func, "No service name specified to load credentials");
       return -1;
     } else {
-      if (Csec_acquire_creds_impl(ctx, ctx->local_name, Csec_context_is_client(ctx))<0) {
+      if ((CSEC_METHOD_NAME(Csec_acquire_creds, MECH))(ctx, ctx->local_name, Csec_context_is_client(ctx))<0) {
 	Csec_errmsg(func, "Could no acquire credentials for mechanism");
 	return -1;
       }
@@ -365,7 +384,9 @@ int Csec_server_establish_context_ext_impl(ctx, s, buf, len)
 /**
  * API function for client to establish function with the server
  */
-int Csec_client_establish_context_impl(ctx, s)
+
+int (CSEC_METHOD_NAME(Csec_client_establish_context, MECH))(ctx, s)
+
      Csec_context_t *ctx;
      int s;
 {

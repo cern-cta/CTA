@@ -1,5 +1,5 @@
 /*
- * $id$
+ * $Id: Csec_plugin_GSS_mapper.c,v 1.5 2004/08/27 14:39:57 motiakov Exp $
  * Copyright (C) 2003 by CERN/IT/ADC/CA Benjamin Couturier
  * All rights reserved
  */
@@ -19,56 +19,37 @@ static char sccsid[] = "@(#)Csec_plugin_GSS_mapper.c,v 1.1 2004/01/12 10:31:40 C
 
 #include <Csec_plugin.h>
 
-
+#ifdef KRB5
+#define MECH _KRB5
 char KRB5_service_prefix[][20] = { "host",
                                    "castor-central",
                                    "castor-disk",
                                    "castor-tape",
                                    "" };
 
+#endif
+#ifdef GSI
+#define MECH _GSI
 char GSI_service_prefix[][20] = { "host",
                                   "castor-central",
                                   "castor-disk",
                                   "castor-tape",
                                   "" };
-
 char *GSI_DN_header = "";
 
-
-#ifdef KRB5
-int Csec_map2name_krb5(char *principal, char *name, int maxnamelen);
-#else
-#ifdef GSI
-int Csec_map2name_GSI(char *principal, char *name, int maxnamelen);
 #endif
-#endif
-
-
-
-/**
- * Maps the credential to the corresponding name
- */
-int Csec_map2name_impl(Csec_context_t *ctx, char *principal, char *name, int maxnamelen) {
-
-#ifdef KRB5
-    return Csec_map2name_krb5(principal, name, maxnamelen);
-#else
-#ifdef GSI
-    return Csec_map2name_GSI(principal, name, maxnamelen);
-#endif
-#endif
-}
-
 #ifdef KRB5
 
 #define SEP '@'
+#endif
 
 /**
  * Maps the credential to the corresponding name
  */
-int Csec_map2name_krb5(char *principal, char *name, int maxnamelen) {
+int (CSEC_METHOD_NAME(Csec_map2name, MECH))(Csec_context_t *ctx, char *principal, char *name, int maxnamelen) {
     char *p;
-
+    char *func = "Csec_map2name";
+#ifdef KRB5
     p = strchr(principal, SEP);
     if (p== NULL) {
         strncpy(name, principal, maxnamelen);
@@ -86,12 +67,6 @@ int Csec_map2name_krb5(char *principal, char *name, int maxnamelen) {
 
 
 #ifdef GSI
-/**
- * Maps the credential to the corresponding name
- */
-int Csec_map2name_GSI(char *principal, char *name, int maxnamelen) {
-    char *p;
-    char *func = "Csec_map2name_GSI";
 
     Csec_trace(func, "Looking for mapping for <%s>\n", principal);
     
@@ -109,9 +84,9 @@ int Csec_map2name_GSI(char *principal, char *name, int maxnamelen) {
 #endif
 
     
-
-int Csec_get_service_name_impl(Csec_context_t *ctx, int service_type, char *host, char *domain,
+int (CSEC_METHOD_NAME(Csec_get_service_name, MECH))(Csec_context_t *ctx, int service_type, char *host, char *domain,
                           char *service_name, int service_namelen) {
+
     int rc;
     char *func = "Csec_get_service_name";
 
