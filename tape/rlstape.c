@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.3 $ $Date: 1999/11/08 07:55:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.4 $ $Date: 1999/11/11 06:53:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -157,7 +157,7 @@ unload_loop:
 	while ((tapefd = open (dvn, O_RDWR|O_NDELAY)) < 0 && errno == EBUSY)
 		sleep (UCHECKI);
 	if (tapefd >= 0) {
-		if (chkunitready_sony (tapefd) > 0) {
+		if (chkdriveready_sony (tapefd) > 0) {
 			if (unldtape_sony (tapefd, dvn) < 0)
 					configdown (drive);
 #if SACCT
