@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.80 2001/02/08 10:13:55 jdurand Exp $
+ * $Id: poolmgr.c,v 1.81 2001/02/08 23:54:14 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.80 $ $Date: 2001/02/08 10:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.81 $ $Date: 2001/02/08 23:54:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -135,7 +135,7 @@ int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 int upd_fileclasses _PROTO(());
 void upd_last_tppool_used _PROTO((struct fileclass *));
 char *next_tppool _PROTO((struct fileclass *));
-int euid_egid _PROTO((uid_t *, gid_t *, char *, struct migrator *, struct stgcat_entry *, char **, int));
+int euid_egid _PROTO((uid_t *, gid_t *, char *, struct migrator *, struct stgcat_entry *, struct stgcat_entry *, char **, int));
 extern int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
 void stglogfileclass _PROTO((struct Cns_fileclass *));
 void printfileclass _PROTO((int, struct fileclass *));
@@ -1719,7 +1719,7 @@ int migpoolfiles(pool_p)
   int ipoolname;
   int term_status;
   pid_t child_pid;
-  int i, j, k, nfiles_per_tppool;
+  int i, j, k, l, m, nfiles_per_tppool;
   struct pool *pool_n;
   int found_not_scanned = -1;
   int fork_pid;
@@ -1728,9 +1728,10 @@ int migpoolfiles(pool_p)
   char *minsize_per_stream;
   u_signed64 minsize;
   u_signed64 defminsize = (u_signed64) ((u_signed64) 2 * (u_signed64) ONE_GB);
-  struct files_per_stream *stcp_vs_tppool = NULL;
-  int nstcp_vs_tppool = 0;
+  struct files_per_stream *tppool_vs_stcp = NULL;
+  int ntppool_vs_stcp = 0;
   char tmpbuf[21];
+  char remember_tppool[CA_MAXPOOLNAMELEN+1];
 
   /* We get the minimum size to be transfered */
   minsize = defminsize;
@@ -1868,8 +1869,8 @@ int migpoolfiles(pool_p)
       break;
     }
     /* We want to know all migration requests before we execute them */
-    if (nstcp_vs_tppool == 0) {
-      if ((stcp_vs_tppool = (struct files_per_stream *) malloc(sizeof(struct files_per_stream))) == NULL) {
+    if (ntppool_vs_stcp == 0) {
+      if ((tppool_vs_stcp = (struct files_per_stream *) malloc(sizeof(struct files_per_stream))) == NULL) {
         stglogit(func, "### malloc error (%s)\n",strerror(errno));
         free(scs);
         return(SYERR);
@@ -1877,52 +1878,52 @@ int migpoolfiles(pool_p)
     } else {
       struct files_per_stream *dummy;
 
-      if ((dummy = (struct files_per_stream *) realloc(stcp_vs_tppool,(nstcp_vs_tppool + 1) * sizeof(struct files_per_stream))) == NULL) {
+      if ((dummy = (struct files_per_stream *) realloc(tppool_vs_stcp,(ntppool_vs_stcp + 1) * sizeof(struct files_per_stream))) == NULL) {
         stglogit(func, "### realloc error (%s)\n",strerror(errno));
         free(scs);
-        for (i = 0; i < nstcp_vs_tppool; i++) {
-          if (stcp_vs_tppool[i].stcp != NULL) free(stcp_vs_tppool[i].stcp);
-          if (stcp_vs_tppool[i].stpp != NULL) free(stcp_vs_tppool[i].stpp);
+        for (i = 0; i < ntppool_vs_stcp; i++) {
+          if (tppool_vs_stcp[i].stcp != NULL) free(tppool_vs_stcp[i].stcp);
+          if (tppool_vs_stcp[i].stpp != NULL) free(tppool_vs_stcp[i].stpp);
         }
-        free(stcp_vs_tppool);
+        free(tppool_vs_stcp);
         return(SYERR);
       }
-      stcp_vs_tppool = dummy;
+      tppool_vs_stcp = dummy;
     }
-    nstcp_vs_tppool++;
-    stcp_vs_tppool[nstcp_vs_tppool - 1].stcp = NULL;
-    stcp_vs_tppool[nstcp_vs_tppool - 1].stpp = NULL;
-    stcp_vs_tppool[nstcp_vs_tppool - 1].nstcp = 0;
-    stcp_vs_tppool[nstcp_vs_tppool - 1].size = 0;       /* In BYTES - not MBytes */
+    ntppool_vs_stcp++;
+    tppool_vs_stcp[ntppool_vs_stcp - 1].stcp = NULL;
+    tppool_vs_stcp[ntppool_vs_stcp - 1].stpp = NULL;
+    tppool_vs_stcp[ntppool_vs_stcp - 1].nstcp = 0;
+    tppool_vs_stcp[ntppool_vs_stcp - 1].size = 0;       /* In BYTES - not MBytes */
 
     /* We grab the most restrictive (euid/egid) pair based on our known fileclasses */
-    stcp_vs_tppool[nstcp_vs_tppool - 1].euid = 0;
-    stcp_vs_tppool[nstcp_vs_tppool - 1].egid = 0;
-    if (euid_egid(&(stcp_vs_tppool[nstcp_vs_tppool - 1].euid),
-                  &(stcp_vs_tppool[nstcp_vs_tppool - 1].egid),
+    tppool_vs_stcp[ntppool_vs_stcp - 1].euid = 0;
+    tppool_vs_stcp[ntppool_vs_stcp - 1].egid = 0;
+    if (euid_egid(&(tppool_vs_stcp[ntppool_vs_stcp - 1].euid),
+                  &(tppool_vs_stcp[ntppool_vs_stcp - 1].egid),
                   scc_found->stcp->u1.h.tppool,
-                  pool_p->migr, scc_found->stcp, NULL, 1) != 0) {
+                  pool_p->migr, scc_found->stcp, NULL, NULL, 1) != 0) {
       free(scs);
-      for (i = 0; i < nstcp_vs_tppool; i++) {
-        if (stcp_vs_tppool[i].stcp != NULL) free(stcp_vs_tppool[i].stcp);
-        if (stcp_vs_tppool[i].stpp != NULL) free(stcp_vs_tppool[i].stpp);
+      for (i = 0; i < ntppool_vs_stcp; i++) {
+        if (tppool_vs_stcp[i].stcp != NULL) free(tppool_vs_stcp[i].stcp);
+        if (tppool_vs_stcp[i].stpp != NULL) free(tppool_vs_stcp[i].stpp);
       }
-      free(stcp_vs_tppool);
+      free(tppool_vs_stcp);
       return(SYERR);
     }
-    if (stcp_vs_tppool[nstcp_vs_tppool - 1].euid == 0) {
-      stcp_vs_tppool[nstcp_vs_tppool - 1].euid = stage_passwd.pw_uid; /* Put default uid */
+    if (tppool_vs_stcp[ntppool_vs_stcp - 1].euid == 0) {
+      tppool_vs_stcp[ntppool_vs_stcp - 1].euid = stage_passwd.pw_uid; /* Put default uid */
     }
-    if (stcp_vs_tppool[nstcp_vs_tppool - 1].egid == 0) {
-      stcp_vs_tppool[nstcp_vs_tppool - 1].egid = stage_passwd.pw_gid; /* Put default gid */
+    if (tppool_vs_stcp[ntppool_vs_stcp - 1].egid == 0) {
+      tppool_vs_stcp[ntppool_vs_stcp - 1].egid = stage_passwd.pw_gid; /* Put default gid */
     }
-    if (verif_euid_egid(stcp_vs_tppool[nstcp_vs_tppool - 1].euid,stcp_vs_tppool[nstcp_vs_tppool - 1].egid, NULL, NULL) != 0) {
+    if (verif_euid_egid(tppool_vs_stcp[ntppool_vs_stcp - 1].euid,tppool_vs_stcp[ntppool_vs_stcp - 1].egid, NULL, NULL) != 0) {
       free(scs);
-      for (i = 0; i < nstcp_vs_tppool; i++) {
-        if (stcp_vs_tppool[i].stcp != NULL) free(stcp_vs_tppool[i].stcp);
-        if (stcp_vs_tppool[i].stpp != NULL) free(stcp_vs_tppool[i].stpp);
+      for (i = 0; i < ntppool_vs_stcp; i++) {
+        if (tppool_vs_stcp[i].stcp != NULL) free(tppool_vs_stcp[i].stcp);
+        if (tppool_vs_stcp[i].stpp != NULL) free(tppool_vs_stcp[i].stpp);
       }
-      free(stcp_vs_tppool);
+      free(tppool_vs_stcp);
       return(SYERR);
     }
 
@@ -1950,18 +1951,18 @@ int migpoolfiles(pool_p)
       }
     }
     /* We group them into a single entity for API compliance */
-    if (((stcp = stcp_vs_tppool[nstcp_vs_tppool - 1].stcp = (struct stgcat_entry *) calloc(nfiles_per_tppool,sizeof(struct stgcat_entry))) == NULL) ||
-        ((stpp = stcp_vs_tppool[nstcp_vs_tppool - 1].stpp = (struct stgpath_entry *) calloc(nfiles_per_tppool,sizeof(struct stgpath_entry))) == NULL)) {
+    if (((stcp = tppool_vs_stcp[ntppool_vs_stcp - 1].stcp = (struct stgcat_entry *) calloc(nfiles_per_tppool,sizeof(struct stgcat_entry))) == NULL) ||
+        ((stpp = tppool_vs_stcp[ntppool_vs_stcp - 1].stpp = (struct stgpath_entry *) calloc(nfiles_per_tppool,sizeof(struct stgpath_entry))) == NULL)) {
       stglogit(func, "### calloc error (%s)\n",strerror(errno));
       free(scs);
-      for (i = 0; i < nstcp_vs_tppool; i++) {
-        if (stcp_vs_tppool[i].stcp != NULL) free(stcp_vs_tppool[i].stcp);
-        if (stcp_vs_tppool[i].stpp != NULL) free(stcp_vs_tppool[i].stpp);
+      for (i = 0; i < ntppool_vs_stcp; i++) {
+        if (tppool_vs_stcp[i].stcp != NULL) free(tppool_vs_stcp[i].stcp);
+        if (tppool_vs_stcp[i].stpp != NULL) free(tppool_vs_stcp[i].stpp);
       }
-      free(stcp_vs_tppool);
+      free(tppool_vs_stcp);
       return(SYERR);
     }
-    stcp_vs_tppool[nstcp_vs_tppool - 1].nstcp = nfiles_per_tppool;
+    tppool_vs_stcp[ntppool_vs_stcp - 1].nstcp = nfiles_per_tppool;
     /* We store them in this area */
     j = -1;
     for (scc = scf; scc; scc = scc->next) {
@@ -1975,26 +1976,26 @@ int migpoolfiles(pool_p)
         strcpy((stpp+j)->upath, (stcp+j)->ipath);
         /* Please note that the (stcp+j)->ipath will be our user path (stpp) */
         scc->scanned = 1;
-        stcp_vs_tppool[nstcp_vs_tppool - 1].size += scc->stcp->actual_size;
+        tppool_vs_stcp[ntppool_vs_stcp - 1].size += scc->stcp->actual_size;
       }
     }
     /* Next round */
   }
 
-  /* Here we have all the nstcp_vs_tppool streams to launch, each of them composed of */
-  /* stcp_vs_tppool[0..nstcp_vs_tppool].nstcp entries */
+  /* Here we have all the ntppool_vs_stcp streams to launch, each of them composed of */
+  /* tppool_vs_stcp[0..ntppool_vs_stcp].nstcp entries */
 
   /* We check if the size of the migration does fit the minimum size per stream - default to 2GB */
   if (minsize > 0) {
-    for (i = 0; i < nstcp_vs_tppool; i++) {
-      if (stcp_vs_tppool[i].size < minsize) {
+    for (i = 0; i < ntppool_vs_stcp; i++) {
+      if (tppool_vs_stcp[i].size < minsize) {
         char tmpbuf1[21];
         char tmpbuf2[21];
         
         /* One of the stream is of less size than the minimum - we give up */
         stglogit(func, "### Warning - stream on tape pool %s have size to be migrated %s < %s\n",
-                 stcp_vs_tppool[i].stcp[0].u1.h.tppool,
-                 u64tostr(stcp_vs_tppool[i].size, tmpbuf1, 0),
+                 tppool_vs_stcp[i].stcp[0].u1.h.tppool,
+                 u64tostr(tppool_vs_stcp[i].size, tmpbuf1, 0),
                  u64tostr(minsize, tmpbuf2, 0));
       }
     }
@@ -2004,6 +2005,10 @@ int migpoolfiles(pool_p)
   if (stcs != NULL) free(stcs); stcs = NULL;
   if (stps != NULL) free(stps); stps = NULL;
   
+  /* At first found we do not want to remember about previous tape pool because, per definition, */
+  /* there is exactly one stream per tape pool */
+  remember_tppool[0] = '\0';
+
   /* We want to know if we can expand some of the streams to another one, depending on fileclasses policies */
   for (i = 0; i < pool_p->migr->nfileclass; i++) {
     u_signed64 virtual_new_size;
@@ -2011,47 +2016,55 @@ int migpoolfiles(pool_p)
     int can_create_new_stream;
     int nstcp_to_move;
 
+
+  retry_for_this_fileclass:
     can_create_new_stream = -1;
     nstcp_to_move = 0;
-
     if (pool_p->migr->fileclass[i]->streams <= 0) continue;
     if (pool_p->migr->fileclass[i]->streams < pool_p->migr->fileclass[i]->Cnsfileclass.maxdrives) {
       /* We are using less streams than what this fileclass allows us to do */
       /* We check within this fileclass what is the stream that is migrating the most data and if it is */
-      /* possible, then relevant, to grab some entries from it to put it in a new stream */
-      for (j = 0; j < nstcp_vs_tppool; j++) {
-        if (stcp_vs_tppool[j].size > minsize) {
+      /* possible, then relevant, to grab some entries from any stcp from the same fileclass using this tape pool */
+
+      for (j = 0; j < ntppool_vs_stcp; j++) {
+        if (tppool_vs_stcp[j].size > minsize) {
           virtual_new_size = 0;
-          virtual_old_size = stcp_vs_tppool[j].size;
+          virtual_old_size = tppool_vs_stcp[j].size;
 
           /* This stream has, from size point of view, largely enough, but is it possible to shift it by few entries ? */
-          if (stcp_vs_tppool[j].nstcp <= 1) continue;
+          if (tppool_vs_stcp[j].nstcp <= 1) continue;
           /* There is for sure more than one entry in this stream - we can try the loop below, in reverse order */
-          for (k = stcp_vs_tppool[j].nstcp - 1; k >= 0; k--) {
-            if (i != upd_fileclass(pool_p,&(stcp_vs_tppool[j].stcp[k]))) continue;
+          for (k = tppool_vs_stcp[j].nstcp - 1; k >= 0; k--) {
+            /* If we are trying to expand more than once a given tape pool we check that this one matches */
+            /* the old one */
+            if ((remember_tppool[0] != '\0') && (strcmp(tppool_vs_stcp[j].stcp[k].u1.h.tppool,remember_tppool) != 0)) break;
+
+            if (i != upd_fileclass(pool_p,&(tppool_vs_stcp[j].stcp[k]))) continue;
             /* This stcp shares the same fileclass as i's */
-            if ((virtual_old_size -= stcp_vs_tppool[j].stcp[k].actual_size) <= 0) {
+            if ((virtual_old_size -= tppool_vs_stcp[j].stcp[k].actual_size) <= 0) {
               /* We have scanned this whole stream ! */
               break;
             }
-            virtual_new_size += stcp_vs_tppool[j].stcp[k].actual_size;
+            virtual_new_size += tppool_vs_stcp[j].stcp[k].actual_size;
             nstcp_to_move++;
             if (virtual_new_size >= minsize) {
-              /* There is material to have a new stream ! */
+              /* There is right now, or already, material to have a new stream */
               /* We continue the loop up to when we have splitted the original stream almost equally */
               if ((virtual_old_size < minsize) || (virtual_old_size <= 0)) {
-                /* We have scanned a bit too much */
-                virtual_old_size += stcp_vs_tppool[j].stcp[k].actual_size;
-                if ((virtual_new_size -= stcp_vs_tppool[j].stcp[k].actual_size) > 0) {
-                  can_create_new_stream = k;
-                  nstcp_to_move--;
+                /* We have scanned a bit too much - we cares only if we have emptied the old stream */
+                if (virtual_old_size <= 0) {
+                  virtual_old_size += tppool_vs_stcp[j].stcp[k].actual_size;
+                  if ((virtual_new_size -= tppool_vs_stcp[j].stcp[k].actual_size) > 0) {
+                    can_create_new_stream = k;
+                    nstcp_to_move--;
+                  }
+                  break;
                 }
-                break;
               }
+              /* Streams are meant to be approximatively of the same size */
               if (virtual_new_size > virtual_old_size) {
-                /* Streams are approximatively of the same size */
-                virtual_old_size += stcp_vs_tppool[j].stcp[k].actual_size;
-                if ((virtual_new_size -= stcp_vs_tppool[j].stcp[k].actual_size) > 0) {
+                virtual_old_size += tppool_vs_stcp[j].stcp[k].actual_size;
+                if ((virtual_new_size -= tppool_vs_stcp[j].stcp[k].actual_size) > 0) {
                   can_create_new_stream = k;
                   nstcp_to_move--;
                 }
@@ -2064,26 +2077,32 @@ int migpoolfiles(pool_p)
       if (can_create_new_stream >= 0) {
         struct files_per_stream *dummy;
         
-        if ((dummy = (struct files_per_stream *) realloc(stcp_vs_tppool,(nstcp_vs_tppool + 1) * sizeof(struct files_per_stream))) == NULL) {
+        if ((dummy = (struct files_per_stream *) realloc(tppool_vs_stcp,(ntppool_vs_stcp + 1) * sizeof(struct files_per_stream))) == NULL) {
           stglogit(func, "### realloc error (%s)\n",strerror(errno));
           /* But this is NOT fatal in the sense that we already have working streams - we just log this */
+          /* and we do as if we found no need to create another stream... */
+          can_create_new_stream = -1;
+          remember_tppool[0] = '\0';
         } else {
-          stcp_vs_tppool = dummy;
-          nstcp_vs_tppool++;
-          stcp_vs_tppool[nstcp_vs_tppool - 1].stcp = NULL;
-          stcp_vs_tppool[nstcp_vs_tppool - 1].stpp = NULL;
-          stcp_vs_tppool[nstcp_vs_tppool - 1].nstcp = 0;
-          stcp_vs_tppool[nstcp_vs_tppool - 1].size = 0;
+          tppool_vs_stcp = dummy;
+          ntppool_vs_stcp++;
+          tppool_vs_stcp[ntppool_vs_stcp - 1].stcp = NULL;
+          tppool_vs_stcp[ntppool_vs_stcp - 1].stpp = NULL;
+          tppool_vs_stcp[ntppool_vs_stcp - 1].nstcp = 0;
+          tppool_vs_stcp[ntppool_vs_stcp - 1].size = 0;
           stcp = NULL;
           stpp = NULL;
           /* We know try to create enough room for our new stream */
-          if (((stcp = stcp_vs_tppool[nstcp_vs_tppool - 1].stcp = (struct stgcat_entry *) calloc(nstcp_to_move,sizeof(struct stgcat_entry))) == NULL) ||
-              ((stpp = stcp_vs_tppool[nstcp_vs_tppool - 1].stpp = (struct stgpath_entry *) calloc(nstcp_to_move,sizeof(struct stgpath_entry))) == NULL)) {
+          if (((stcp = tppool_vs_stcp[ntppool_vs_stcp - 1].stcp = (struct stgcat_entry *) calloc(nstcp_to_move,sizeof(struct stgcat_entry))) == NULL) ||
+              ((stpp = tppool_vs_stcp[ntppool_vs_stcp - 1].stpp = (struct stgpath_entry *) calloc(nstcp_to_move,sizeof(struct stgpath_entry))) == NULL)) {
             stglogit(func, "### calloc error (%s)\n",strerror(errno));
             /* But this is NOT fatal in the sense that we already have working streams - we just log this */
             if (stcp != NULL) free(stcp);
             if (stpp != NULL) free(stpp);
-            nstcp_vs_tppool--;
+            ntppool_vs_stcp--;
+            /* We also do as if we found no need to create another stream... */
+            can_create_new_stream = -1;
+            remember_tppool[0] = '\0';
           } else {
             int nstcp_being_moved = 0;
 
@@ -2094,17 +2113,20 @@ int migpoolfiles(pool_p)
             /* We also know in advance that this new streams will be of size virtual_new_size and */
             /* will contain nstcp_to_move entries */
 
-            for (j = 0; j < (nstcp_vs_tppool - 1); j++) {
-              if (stcp_vs_tppool[j].size > minsize) {
-                int save_nstcp = stcp_vs_tppool[j].nstcp;
+            for (j = 0; j < (ntppool_vs_stcp - 1); j++) {
+              if (tppool_vs_stcp[j].size > minsize) {
+                int save_nstcp = tppool_vs_stcp[j].nstcp;
 
-                if (stcp_vs_tppool[j].nstcp <= 1) continue;
+                if (tppool_vs_stcp[j].nstcp <= 1) continue;
                 /* This stream have more than one entry - let's scan it, still in reverse order */
                 /* (for consistency, we have to use the algorithm as done upper) */
                 for (k = save_nstcp - 1; k >= can_create_new_stream; k--) {
+                  /* If we are trying to expand more than once a given tape pool we check that this one matches */
+                  /* the old one */
+                  if ((remember_tppool[0] != '\0') && (strcmp(tppool_vs_stcp[j].stcp[k].u1.h.tppool,remember_tppool) != 0)) break;
                   /* For the moment, this algorithm can create new stream only for stcp's of the same fileclass */
-                  if (i != upd_fileclass(pool_p,&(stcp_vs_tppool[j].stcp[k]))) continue;
-                  /* We can move this stcp from tppool No j to tppool No (nstcp_vs_tppool - 1) */
+                  if (i != upd_fileclass(pool_p,&(tppool_vs_stcp[j].stcp[k]))) continue;
+                  /* We can move this stcp from tppool No j to tppool No (ntppool_vs_stcp - 1) */
 
                   /* We check the number of stcp that we move */
                   if (++nstcp_being_moved > nstcp_to_move) {
@@ -2113,24 +2135,27 @@ int migpoolfiles(pool_p)
                   }
 
                   /* First we move the stcp */
-                  *stcp++ = stcp_vs_tppool[j].stcp[k];
+                  *stcp++ = tppool_vs_stcp[j].stcp[k];
                   /* Then we move the stcpp */
-                  strcpy(stpp->upath,stcp_vs_tppool[j].stcp[k].ipath);
+                  strcpy(stpp->upath,tppool_vs_stcp[j].stcp[k].ipath);
                   stpp++;
                   /* We increment new stream number of entries */
-                  stcp_vs_tppool[nstcp_vs_tppool - 1].nstcp++;
+                  tppool_vs_stcp[ntppool_vs_stcp - 1].nstcp++;
                   /* We increment new stream total size to migrate */
-                  stcp_vs_tppool[nstcp_vs_tppool - 1].size += stcp_vs_tppool[j].stcp[k].actual_size;
+                  tppool_vs_stcp[ntppool_vs_stcp - 1].size += tppool_vs_stcp[j].stcp[k].actual_size;
                   /* We decrement old stream total size to migrate */
-                  stcp_vs_tppool[j].size -= stcp_vs_tppool[j].stcp[k].actual_size;
+                  tppool_vs_stcp[j].size -= tppool_vs_stcp[j].stcp[k].actual_size;
 
-                  /* It is not point to compress the stream at index [j] because we shift */
-                  /* the stcp's and stpp's starting at the end of it. So decrementing the */
-                  /* number of entries is totally enough for the end of the processing, when */
-                  /* the stagewrt request are physically made... */
+                  /* We have moved entry No k from tape pool No j - we shift all remaining entries */
+                  m = 0;
+                  for (l = k + 1; l < tppool_vs_stcp[j].nstcp - 1; l++) {
+                    tppool_vs_stcp[j].stcp[k+m] = tppool_vs_stcp[j].stcp[l];
+                    strcpy(tppool_vs_stcp[j].stpp[k+m].upath, tppool_vs_stcp[j].stpp[l].upath);
+                    m++;
+                  }
 
                   /* We decrement old stream number of entries */
-                  stcp_vs_tppool[j].nstcp--;
+                  tppool_vs_stcp[j].nstcp--;
                 }
               }
             }
@@ -2139,24 +2164,30 @@ int migpoolfiles(pool_p)
                      pool_p->migr->fileclass[i]->server,
                      pool_p->migr->fileclass[i]->Cnsfileclass.classid,
                      pool_p->migr->fileclass[i]->Cnsfileclass.maxdrives,
-                     u64tostr(stcp_vs_tppool[nstcp_vs_tppool - 1].size, tmpbuf, 0),
-                     stcp_vs_tppool[nstcp_vs_tppool - 1].stcp[0].u1.h.tppool);
+                     u64tostr(tppool_vs_stcp[ntppool_vs_stcp - 1].size, tmpbuf, 0),
+                     tppool_vs_stcp[ntppool_vs_stcp - 1].stcp[0].u1.h.tppool);
+            strcpy(remember_tppool,tppool_vs_stcp[ntppool_vs_stcp - 1].stcp[0].u1.h.tppool);
+            pool_p->migr->fileclass[i]->streams++;
           }
         }
       }
     }
+    if (can_create_new_stream >= 0) {
+      /* We created a new stream because of this fileclass - can we create again another one ? */
+      goto retry_for_this_fileclass;
+    }
   }
 
   /* We fork and execute the stagewrt request(s) */
-  for (j = 0; j < nstcp_vs_tppool; j++) {
+  for (j = 0; j < ntppool_vs_stcp; j++) {
     if ((fork_pid= fork()) < 0) {
       stglogit(func, "### Cannot fork (%s)\n",strerror(errno));
       free(scs);
-      for (i = 0; i < nstcp_vs_tppool; i++) {
-        if (stcp_vs_tppool[i].stcp != NULL) free(stcp_vs_tppool[i].stcp);
-        if (stcp_vs_tppool[i].stpp != NULL) free(stcp_vs_tppool[i].stpp);
+      for (i = 0; i < ntppool_vs_stcp; i++) {
+        if (tppool_vs_stcp[i].stcp != NULL) free(tppool_vs_stcp[i].stcp);
+        if (tppool_vs_stcp[i].stpp != NULL) free(tppool_vs_stcp[i].stpp);
       }
-      free(stcp_vs_tppool);
+      free(tppool_vs_stcp);
       return(SYERR);
     } else if (fork_pid == 0) {
       /* We are in the child */
@@ -2171,25 +2202,25 @@ int migpoolfiles(pool_p)
       free(scs);                                      /* Neither for the sorted entries */
       setegid(start_passwd.pw_gid);                   /* Move to admin (who knows) */
       seteuid(start_passwd.pw_uid);
-      setegid(stcp_vs_tppool[j].egid);                /* Move to requestor (from fileclasses) */
-      seteuid(stcp_vs_tppool[j].euid);
+      setegid(tppool_vs_stcp[j].egid);                /* Move to requestor (from fileclasses) */
+      seteuid(tppool_vs_stcp[j].euid);
       rc = stagewrt_hsm((u_signed64) STAGE_SILENT,    /* Flags */
                         0,                            /* open flags - disabled */
                         (mode_t) 0,                   /* open mode - disabled */
                         localhost,                    /* Hostname */
                         NULL,                         /* Pooluser */
-                        stcp_vs_tppool[j].nstcp,      /* nstcp_input */
-                        stcp_vs_tppool[j].stcp,       /* records... */
+                        tppool_vs_stcp[j].nstcp,      /* nstcp_input */
+                        tppool_vs_stcp[j].stcp,       /* records... */
                         0,                            /* nstcp_output */
                         NULL,                         /* stcp_output */
-                        stcp_vs_tppool[j].nstcp,      /* nstpp_input */
-                        stcp_vs_tppool[j].stpp        /* stpp_input */
+                        tppool_vs_stcp[j].nstcp,      /* nstpp_input */
+                        tppool_vs_stcp[j].stpp        /* stpp_input */
                         );
-      for (i = 0; i < nstcp_vs_tppool; i++) {
-        if (stcp_vs_tppool[i].stcp != NULL) free(stcp_vs_tppool[i].stcp);
-        if (stcp_vs_tppool[i].stpp != NULL) free(stcp_vs_tppool[i].stpp);
+      for (i = 0; i < ntppool_vs_stcp; i++) {
+        if (tppool_vs_stcp[i].stcp != NULL) free(tppool_vs_stcp[i].stcp);
+        if (tppool_vs_stcp[i].stpp != NULL) free(tppool_vs_stcp[i].stpp);
       }
-      free(stcp_vs_tppool);
+      free(tppool_vs_stcp);
       setegid(start_passwd.pw_gid);                   /* Go back to admin */
       seteuid(start_passwd.pw_uid);
 #ifdef STAGER_DEBUG
@@ -2203,11 +2234,11 @@ int migpoolfiles(pool_p)
   }
 
   free(scs);
-  for (i = 0; i < nstcp_vs_tppool; i++) {
-    if (stcp_vs_tppool[i].stcp != NULL) free(stcp_vs_tppool[i].stcp);
-    if (stcp_vs_tppool[i].stpp != NULL) free(stcp_vs_tppool[i].stpp);
+  for (i = 0; i < ntppool_vs_stcp; i++) {
+    if (tppool_vs_stcp[i].stcp != NULL) free(tppool_vs_stcp[i].stcp);
+    if (tppool_vs_stcp[i].stpp != NULL) free(tppool_vs_stcp[i].stpp);
   }
-  free(stcp_vs_tppool);
+  free(tppool_vs_stcp);
 
   /* No need to waste memory inherited by parent anymore */
 
@@ -2623,12 +2654,13 @@ char *next_tppool(fileclass)
   return(p);
 }
 
-int euid_egid(euid,egid,tppool,migr,stcp,tppool_out,being_migr)
+int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr)
      uid_t *euid;
      gid_t *egid;
      char *tppool;
      struct migrator *migr;   /* Migrator - case of all automatic migration calls */
      struct stgcat_entry *stcp;   /* Must be non-NULL if migr == NULL */
+     struct stgcat_entry *stcp_check;   /* Used to check requestor compatible uid/gid */
      char **tppool_out;
      int being_migr;              /* We check CAN_BE_MIGR, BEING_MIGR otherwise - only if migr != NULL */
 {
@@ -2756,34 +2788,33 @@ int euid_egid(euid,egid,tppool,migr,stcp,tppool_out,being_migr)
     }
   }
  euid_egid_return:
-  /* So here we have decided about euid and egid - If there is a stcp != NULL in the arguments, we also checks */
-  /* validity of the requestor stcp, with the exception when [euid,egid] is set to "stage:st" which is a reserved */
-  /* account */
-  if (stcp != NULL) {
+  /* So here we have decided about euid and egid - If there is a stcp_check != NULL in the arguments, we also checks */
+  /* validity of the requestor stcp_check */
+  if (stcp_check != NULL) {
     /* We check the found group id in priority */
     if (last_fileclass_egid != 0) {
-      /* There is an explicit filter on group id - current's stcp->gid have to match it */
-      if (*egid != stcp->gid) {
-        sendrep(rpfd, MSG_ERR, STG125, stcp->user, "gid", stcp->gid, "group", *egid, stcp->u1.h.xfile);
+      /* There is an explicit filter on group id - current's stcp_check->gid have to match it */
+      if (*egid != stcp_check->gid) {
+        sendrep(rpfd, MSG_ERR, STG125, stcp_check->user, "gid", stcp_check->gid, "group", *egid, stcp_check->u1.h.xfile);
         return(-1);
       }
       /* We check compatibility of uid */
       if (last_fileclass_euid != 0) {
-        /* There is an explicit filter on user id - current's stcp->uid have to match it */
-        if (*euid != stcp->uid) {
-          sendrep(rpfd, MSG_ERR, STG125, stcp->user, "uid", stcp->uid, "user", *euid, stcp->u1.h.xfile);
+        /* There is an explicit filter on user id - current's stcp_check->uid have to match it */
+        if (*euid != stcp_check->uid) {
+          sendrep(rpfd, MSG_ERR, STG125, stcp_check->user, "uid", stcp_check->uid, "user", *euid, stcp_check->u1.h.xfile);
           return(-1);
         }
       } else {
-        /* Current's stcp's uid is matching since there is no filter on this */
-        *euid = stcp->uid;
+        /* Current's stcp_check's uid is matching since there is no filter on this */
+        *euid = stcp_check->uid;
       }
     } else {
       /* There is no explicit filter on group id - Is there explicit filter on user id ? */
       if (last_fileclass_euid != 0) {
-        /* There is an explicit filter on user id - current's stcp->uid have to match it */
-        if (*euid != stcp->uid) {
-          sendrep(rpfd, MSG_ERR, STG125, stcp->user, "uid", stcp->uid, "user", *euid, stcp->u1.h.xfile);
+        /* There is an explicit filter on user id - current's stcp_check->uid have to match it */
+        if (*euid != stcp_check->uid) {
+          sendrep(rpfd, MSG_ERR, STG125, stcp_check->user, "uid", stcp_check->uid, "user", *euid, stcp_check->u1.h.xfile);
           return(-1);
         }
       }

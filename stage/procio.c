@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.86 2001/02/05 11:02:13 jdurand Exp $
+ * $Id: procio.c,v 1.87 2001/02/08 23:54:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.86 $ $Date: 2001/02/05 11:02:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.87 $ $Date: 2001/02/08 23:54:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -115,7 +115,7 @@ extern int cleanpool _PROTO((char *));
 extern int fork_exec_stager _PROTO((struct waitq *));
 extern void rmfromwq _PROTO((struct waitq *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
-extern int euid_egid _PROTO((uid_t *, gid_t *, char *, struct migrator *, struct stgcat_entry *, char **, int));
+extern int euid_egid _PROTO((uid_t *, gid_t *, char *, struct migrator *, struct stgcat_entry *, struct stgcat_entry *, char **, int));
 extern int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 extern char *next_tppool _PROTO((struct fileclass *));
@@ -1933,14 +1933,22 @@ void procioreq(req_type, req_data, clienthost)
 					strcpy(stcp->u1.h.tppool,next_tppool(&(fileclasses[ifileclass])));
 				} else if (Aflag) {        /* If Aflag is not set - check it done a little bit after */
 					/* User specified a tape pool - We check the permission to access it */
-					if (euid_egid(&euid,&egid,stcp->u1.h.tppool,NULL,stcp,NULL,0) != 0) {
-						c = USERR;
+					{
+						struct stgcat_entry stcx = *stcp;
+						stcx.uid = save_uid;
+						stcx.gid = save_gid;
+						/* stcx is a dummy req which inherits the uid/gid of the caller. */
+						/* We use it at the first round to check that requestor's uid/gid is compatible */
+						/* the uid/gid under which migration will effectively run might be different (case of stage:st) */
+						if (euid_egid(&euid,&egid,stcp->u1.h.tppool,NULL,stcp,(i == 0) ? &stcx : NULL,NULL,0) != 0) {
+							c = USERR;
 #ifdef USECDB
-						if (stgdb_del_stgcat(&dbfd,stcp) != 0) {
-							stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-						}
+							if (stgdb_del_stgcat(&dbfd,stcp) != 0) {
+								stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+							}
 #endif
-						goto reply;
+							goto reply;
+						}
 					}
  					if (euid == 0) euid = stage_passwd.pw_uid; /* Put default uid */
 	 				if (egid == 0) egid = stage_passwd.pw_gid; /* Put default gid */
@@ -1977,11 +1985,19 @@ void procioreq(req_type, req_data, clienthost)
 				if (!wqp) {
 					/* We determine under which euid:egid this migration has to run */
 					if (ncastorfiles > 0) {
-						if (euid_egid(&euid,&egid,tppool,NULL,stcp,&tppool,0) != 0) {
-							goto reply;
+						{
+							struct stgcat_entry stcx = *stcp;
+							stcx.uid = save_uid;
+							stcx.gid = save_gid;
+							/* stcx is a dummy req which inherits the uid/gid of the caller. */
+							/* We use it at the first round to check that requestor's uid/gid is compatible */
+							/* the uid/gid under which migration will effectively run might be different (case of stage:st) */
+							if (euid_egid(&euid,&egid,tppool,NULL,stcp,(i == 0) ? &stcx : NULL,&tppool,0) != 0) {
+								goto reply;
+							}
+	 						if (euid == 0) euid = stage_passwd.pw_uid; /* Put default uid */
+		 					if (egid == 0) egid = stage_passwd.pw_gid; /* Put default gid */
 						}
- 						if (euid == 0) euid = stage_passwd.pw_uid; /* Put default uid */
-	 					if (egid == 0) egid = stage_passwd.pw_gid; /* Put default gid */
 						if (verif_euid_egid(euid,egid,user_waitq,group_waitq) != 0) {
 								c = USERR;
 								goto reply;
@@ -2439,9 +2455,17 @@ void procputreq(req_type, req_data, clienthost)
 							}
 							strcpy(stcp->u1.h.tppool,next_tppool(&(fileclasses[ifileclass])));
 						}
-						if (euid_egid(&euid,&egid,tppool,NULL,stcp,&tppool,0) != 0) {
-							c = USERR;
-							goto reply;
+						{
+							struct stgcat_entry stcx = *stcp;
+							stcx.uid = uid;
+							stcx.gid = gid;
+							/* stcx is a dummy req which inherits the uid/gid of the caller. */
+							/* We use it at the first round to check that requestor's uid/gid is compatible */
+							/* the uid/gid under which migration will effectively run might be different (case of stage:st) */
+							if (euid_egid(&euid,&egid,tppool,NULL,stcp,(found == 1) ? &stcx : NULL,&tppool,0) != 0) {
+								c = USERR;
+								goto reply;
+							}
 						}
 	 					if (euid == 0) euid = stage_passwd.pw_uid; /* Put default uid */
 		 				if (egid == 0) egid = stage_passwd.pw_gid; /* Put default gid */
@@ -2617,9 +2641,17 @@ void procputreq(req_type, req_data, clienthost)
 						}
 						strcpy(found_stcp->u1.h.tppool,next_tppool(&(fileclasses[ifileclass])));
 					}
-					if (euid_egid(&euid,&egid,tppool,NULL,found_stcp,&tppool,0) != 0) {
-						c = USERR;
-						goto reply;
+					{
+						struct stgcat_entry stcx = *found_stcp;
+						stcx.uid = uid;
+						stcx.gid = gid;
+						/* stcx is a dummy req which inherits the uid/gid of the caller. */
+						/* We use it at the first round to check that requestor's uid/gid is compatible */
+						/* the uid/gid under which migration will effectively run might be different (case of stage:st) */
+						if (euid_egid(&euid,&egid,tppool,NULL,found_stcp,(found == 1) ? &stcx : NULL,&tppool,0) != 0) {
+							c = USERR;
+							goto reply;
+						}
 					}
 	 				if (euid == 0) euid = stage_passwd.pw_uid; /* Put default uid */
 		 			if (egid == 0) egid = stage_passwd.pw_gid; /* Put default gid */
