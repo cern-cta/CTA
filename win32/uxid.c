@@ -1,5 +1,5 @@
 /*
- * $Id: uxid.c,v 1.6 2000/11/28 17:14:40 jdurand Exp $
+ * $Id: uxid.c,v 1.7 2001/05/03 11:03:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: uxid.c,v $ $Revision: 1.6 $ $Date: 2000/11/28 17:14:40 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: uxid.c,v $ $Revision: 1.7 $ $Date: 2001/05/03 11:03:06 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #define _POSIX_
@@ -16,7 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: uxid.c,v $ $Revision: 1.6 $ $Date: 2000/11
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <windows.h>
+/* #include <windows.h> */
 #include "grp.h"
 #include "pwd.h"
 #include "Castor_limits.h"
@@ -41,6 +41,8 @@ static int grbuf_key = 0;
 static int pwbuf_key = 0;
 static int grlen_key = 0;
 static int pwlen_key = 0;
+char *dummy_group_member = NULL;
+char **dummy_group_members = &dummy_group_member;
 
 char * DLL_DECL
 cuserid(bufp)
@@ -185,7 +187,10 @@ char *buf;
     gr->gr_mem = *group_members;
     (*group_members)[*nb_group_members] = NULL;
   }
-  if (*nb_group_members == 0) return (gr);
+  if (*nb_group_members == 0) {
+    gr->gr_mem = dummy_group_members;
+    return (gr);
+  }
   n = 0;
   p = q;
   while ((p = strchr (q, ',')) != NULL) {
