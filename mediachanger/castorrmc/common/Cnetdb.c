@@ -6,13 +6,14 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cnetdb.c,v $ $Revision: 1.8 $ $Date: 2000/08/09 08:25:48 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Cnetdb.c,v $ $Revision: 1.9 $ $Date: 2003/03/07 10:28:14 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
  * Cnetdb.c - CASTOR MT-safe wrappers on netdb routines.
  */ 
 
+#include <sys/types.h>
 #include <stddef.h>
 #if defined(_WIN32)
 #include <winsock2.h>

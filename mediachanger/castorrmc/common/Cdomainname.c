@@ -4,9 +4,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cdomainname.c,v $ $Revision: 1.2 $ $Date: 2002/03/14 11:38:45 $ CERN IT-DS/HSM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cdomainname.c,v $ $Revision: 1.3 $ $Date: 2003/03/07 10:29:09 $ CERN IT-DS/HSM Jean-Philippe Baud";
 #endif /* not lint */
 
+#include <sys/types.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
