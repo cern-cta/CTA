@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2004/11/18 13:16:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2004/11/18 15:42:03 $ $Author: bcouturi $
  *
  *
  *
@@ -658,7 +658,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo
         << " OR status = "
         << castor::stager::SUBREQUEST_RETRY
         << ") AND ROWNUM < 2 AND "
-        << "(SELECT type FROM Id2Type WHERE id = SubRequest.id)"
+        << "(SELECT type FROM Id2Type WHERE id = SubRequest.request)"
         << " IN (";
       for (std::vector<ObjectsIds>::const_iterator it = types.begin();
            it!= types.end();
@@ -668,7 +668,8 @@ castor::db::ora::OraStagerSvc::subRequestToDo
       }
       stmtString
         << ") RETURNING id, retryCounter, fileName, protocol, xsize, priority, status"
-        << " INTO :1, :2, :3, :4, :5 ,:6 , :7, :8";
+        << " INTO :1, :2, :3, :4, :5 ,:6 , :7";
+
       m_subRequestToDoStatement =
         createStatement(stmtString.str());
       m_subRequestToDoStatement->registerOutParam
@@ -680,13 +681,11 @@ castor::db::ora::OraStagerSvc::subRequestToDo
       m_subRequestToDoStatement->registerOutParam
         (4, oracle::occi::OCCISTRING, 255);
       m_subRequestToDoStatement->registerOutParam
-        (5, oracle::occi::OCCISTRING, 255);
+        (5, oracle::occi::OCCIDOUBLE);
       m_subRequestToDoStatement->registerOutParam
-        (6, oracle::occi::OCCIDOUBLE);
+        (6, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
         (7, oracle::occi::OCCIINT);
-      m_subRequestToDoStatement->registerOutParam
-        (8, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
