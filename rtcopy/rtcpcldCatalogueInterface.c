@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/06/18 16:16:39 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/06/21 16:13:48 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/06/18 16:16:39 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/06/21 16:13:48 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -143,10 +143,12 @@ ID_TYPE rtcpcld_getTapeKey()
  */
 static int findTape(
                     tapereq,
-                    tp
+                    tp,
+                    tpItem
                     )
      rtcpTapeRequest_t *tapereq;
      struct Cstager_Tape_t **tp;
+     RtcpcldTapeList_t **tpItem;
 {
   RtcpcldTapeList_t *tpIterator;
   tape_list_t *tl;
@@ -164,6 +166,7 @@ static int findTape(
   if ( tpList == NULL ) {
     if ( currentTape == NULL ) return(0);
     if ( tp != NULL ) *tp = currentTape;
+    if ( tpItem != NULL ) *tpItem = NULL;
     return(1);
   }
   
@@ -179,6 +182,7 @@ static int findTape(
     }
   CLIST_ITERATE_END(tpList,tpIterator);
   if ( found == 1 && tp != NULL ) *tp = tpIterator->tp;
+  if ( found == 1 && tpItem != NULL ) *tpItem = tpIterator;
   return(found);
 }
 
@@ -238,6 +242,7 @@ static int delTape(
      tape_list_t **tape;
 {
   struct Cstager_Tape_t *tp;
+  RtcpcldTapeList_t *tpItem = NULL;
   int found = 0;
 
   if ( tape == NULL ) {
@@ -245,10 +250,11 @@ static int delTape(
     return(-1);
   }
   
-  found = findTape(&((*tape)->tapereq),&tp);
+  found = findTape(&((*tape)->tapereq),&tp,&tpItem);
   if ( found == 1 ) {
     Cstager_Tape_delete(tp);
     rtcpc_FreeReqLists(tape);
+    if ( tpItem != NULL ) CLIST_DELETE(tpList,tpItem);
   }
   return(0);
 }
@@ -818,7 +824,7 @@ int rtcpcld_findTapeKey(
     return(-1);
   }
   
-  rc = findTape(&(tape->tapereq),&tp);
+  rc = findTape(&(tape->tapereq),&tp,NULL);
   if ( rc != 1 || tp == NULL ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
@@ -937,7 +943,7 @@ int rtcpcld_getVIDsToDo(
       tapereq.mode = mode;
       tapereq.side = 0;
       strncpy(tapereq.vid,vid,sizeof(tapereq.vid)-1);
-      rc = findTape(&tapereq,NULL);
+      rc = findTape(&tapereq,NULL,NULL);
       if ( rc == 1 ) continue;
       rc = rtcp_NewTapeList(&tape,NULL,mode);
       if ( rc == -1 ) return(-1);
@@ -1396,10 +1402,10 @@ int rtcpcld_updateVIDStatus(
   rc = getDbSvc(&svcs);
   if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
 
-  rc = findTape(&(tape->tapereq),&tapeItem);
+  rc = findTape(&(tape->tapereq),&tapeItem,NULL);
   if ( tapeItem == NULL ) {
     (void)updateTapeFromDB(NULL);
-    rc = findTape(&(tape->tapereq),&tapeItem);
+    rc = findTape(&(tape->tapereq),&tapeItem,NULL);
   }
 
   if ( rc != 1 || tapeItem == NULL ) {
@@ -1514,10 +1520,10 @@ int rtcpcld_updateVIDFileStatus(
   rc = getDbSvc(&svcs);
   if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
 
-  rc = findTape(&(tape->tapereq),&tapeItem);
+  rc = findTape(&(tape->tapereq),&tapeItem,NULL);
   if ( tapeItem == NULL ) {
     (void)updateTapeFromDB(NULL);
-    rc = findTape(&(tape->tapereq),&tapeItem);
+    rc = findTape(&(tape->tapereq),&tapeItem,NULL);
   }
   if ( rc != 1 || tapeItem == NULL ) {
     (void)dlf_write(
