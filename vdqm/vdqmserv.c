@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.13 $ $Date: 2001/08/31 14:29:33 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.14 $ $Date: 2002/10/25 13:05:49 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -18,11 +18,6 @@ static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.13 $ $Date: 20
 #include <stdlib.h>
 #include <errno.h>
 #include <signal.h>
-#if defined(VDQMSERV)
-#if !defined(_WIN32)
-#include <regex.h>
-#endif /* _WIN32 */
-#endif /* VDQMSERV */
 
 #include <Castor_limits.h>
 #include <osdep.h>
@@ -35,6 +30,7 @@ static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.13 $ $Date: 20
 
 void initlog(char *, int, char *);
 int vdqm_shutdown;
+void cleanup _PROTO((int));
 
 int vdqm_main(struct main_args *main_args) {
     vdqmnw_t *nw, *nwtable;
@@ -46,6 +42,8 @@ int vdqm_main(struct main_args *main_args) {
 #if !defined(_WIN32)
     signal(SIGPIPE,SIG_IGN);
 #endif /* _WIN32 */
+
+    signal(SIGINT,&cleanup);
 
     initlog("vdqm",LOG_INFO,VDQM_LOG_FILE);
 #if defined(__DATE__) && defined (__TIME__)
@@ -115,4 +113,12 @@ int main() {
     if ( Cinitdaemon("vdqm",NULL) == -1 ) exit(1);
     exit(vdqm_main(NULL));
 #endif /* _WIN32 */
+}
+
+void cleanup(signo)
+	int signo;
+{
+    log(LOG_INFO,"main:\n\n ******* SIGNAL %d ******\n\n", signo);
+	exit(0);
+	
 }
