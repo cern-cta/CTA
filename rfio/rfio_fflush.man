@@ -1,0 +1,39 @@
+.\"
+.\" $Id: rfio_fflush.man,v 1.1 2001/05/29 15:03:08 baud Exp $
+.\"
+.\" @(#)$RCSfile: rfio_fflush.man,v $ $Revision: 1.1 $ $Date: 2001/05/29 15:03:08 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RFIO_FFLUSH 3 "$Date: 2001/05/29 15:03:08 $" CASTOR "Rfio Library Functions"
+.SH NAME
+rfio_fflush \- flush a file
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "int rfio_fflush (RFILE *" fp ");"
+.SH DESCRIPTION
+.B rfio_fflush
+forces a write of all buffered data for the file whose descriptor \fBfp\fP is
+the one returned by
+.B rfio_fopen.
+The file remains open.
+.SH RETURN VALUE
+This routine returns 0 if successful, -1 if the operation failed and
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EBADF
+.I fp
+is not a valid file descriptor.
+.TP
+.B SEBADVERSION
+Version ID mismatch.
+.SH SEE ALSO
+.BR rfio_fopen(3)
+.SH AUTHOR
+Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
+(olof.barring@cern.ch)
