@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_querypool.c,v $ $Revision: 1.1 $ $Date: 2000/03/10 07:39:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_querypool.c,v $ $Revision: 1.2 $ $Date: 2000/03/10 10:48:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_querypool - query about a tape pool */
@@ -79,7 +79,7 @@ vmgr_querypool(const char *pool_name, uid_t *pool_user, gid_t *pool_group, u_sig
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	c = send2vmgr (NULL, sendbuf, repbuf, sizeof(repbuf));
+	c = send2vmgr (NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
 	if (c == 0) {
 		rbp = repbuf;
 		unmarshall_LONG (rbp, n);

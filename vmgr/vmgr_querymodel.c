@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_querymodel.c,v $ $Revision: 1.2 $ $Date: 2000/01/10 14:39:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_querymodel.c,v $ $Revision: 1.3 $ $Date: 2000/03/10 10:48:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_querymodel - query about a model of cartridge */
@@ -85,7 +85,7 @@ vmgr_querymodel(const char *model, char *media_letter, int *native_capacity, int
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	c = send2vmgr (NULL, sendbuf, repbuf, sizeof(repbuf));
+	c = send2vmgr (NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
 	if (c == 0) {
 		rbp = repbuf;
 		unmarshall_STRING (rbp, tmpbuf);
