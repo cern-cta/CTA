@@ -1,0 +1,70 @@
+.\" @(#)$RCSfile: rmc_dismount.man,v $ $Revision: 1.1 $ $Date: 2002/12/06 15:58:31 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RMC_DISMOUNT 3 "$Date: 2002/12/06 15:58:31 $" CASTOR "rmc Library Functions"
+.SH NAME
+rmc_dismount \- send a request to the Remote Media Changer daemon to have a volume dismounted
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rmc_api.h"\fR
+.sp
+.BI "int rmc_dismount (char *" server ,
+.BI "char *" smc_ldr ,
+.BI "char *" vid ,
+.BI "int " drvord ,
+.BI "int " force );
+.SH DESCRIPTION
+.B rmc_dismount
+asks the Remote Media Changer server running on
+.I server
+and connected to the picker
+.I smc_ldr
+to dismount the volume
+.I vid
+from the drive specified by
+.IR drvord .
+.TP
+.I server
+specifies the Remote Media Changer to be contacted.
+.TP
+.I smc_ldr
+is the picker device as defined in /dev.
+.TP
+.I vid
+is the volume visual identifier.
+It must be at most six characters long.
+.TP
+.I drvord
+specifies the drive ordinal in the robot.
+.TP
+.I force
+tells the daemon to dismount without checking the vid.
+.LP
+This function requires TP_SYSTEM privilege in the Cupv database.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.2i
+.B SECOMERR
+Communication error.
+.TP
+.B ERMCUNREC
+Unknown host or invalid loader or vid too long or invalid drive ordinal or
+requester does not have TP_SYSTEM privilege in the Cupv database.
+.TP
+.B ERMCFASTR
+Unit attention.
+.TP
+.B ERMCOMSGR
+Hardware error or Medium Removal Prevented.
+.SH SEE ALSO
+.BR rmc_get_geometry(3) ,
+.BR Cupvlist(1) ,
+.B smc(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

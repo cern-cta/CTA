@@ -1,0 +1,60 @@
+.\" @(#)$RCSfile: rmc_import.man,v $ $Revision: 1.1 $ $Date: 2002/12/06 15:58:33 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RMC_IMPORT 3 "$Date: 2002/12/06 15:58:33 $" CASTOR "rmc Library Functions"
+.SH NAME
+rmc_import \- send a request to the Remote Media Changer daemon to have a volume imported/injected into the robot
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rmc_api.h"\fR
+.sp
+.BI "int rmc_import (char *" server ,
+.BI "char *" smc_ldr ,
+.BI "char *" vid );
+.SH DESCRIPTION
+.B rmc_import
+asks the Remote Media Changer server running on
+.I server
+and connected to the picker
+.I smc_ldr
+to import the volume
+.IR vid .
+.TP
+.I server
+specifies the Remote Media Changer to be contacted.
+.TP
+.I smc_ldr
+is the picker device as defined in /dev.
+.TP
+.I vid
+is the volume visual identifier.
+It must be at most six characters long.
+.LP
+This function requires TP_OPER privilege in the Cupv database.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.2i
+.B SECOMERR
+Communication error.
+.TP
+.B ERMCUNREC
+Unknown host or invalid loader or vid too long or
+requester does not have TP_OPER privilege in the Cupv database.
+.TP
+.B ERMCFASTR
+Unit attention.
+.TP
+.B ERMCOMSGR
+Hardware error or Medium Removal Prevented.
+.SH SEE ALSO
+.BR rmc_get_geometry(3) ,
+.BR Cupvlist(1) ,
+.B smc(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

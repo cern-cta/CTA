@@ -1,0 +1,89 @@
+.\" @(#)$RCSfile: rmc_find_cartridge.man,v $ $Revision: 1.1 $ $Date: 2002/12/06 15:58:32 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RMC_FIND_CARTRIDGE 3 "$Date: 2002/12/06 15:58:32 $" CASTOR "rmc Library Functions"
+.SH NAME
+rmc_find_cartridge \- send a request to the Remote Media Changer daemon to find volume(s) in the robot
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rmc_api.h"\fR
+.sp
+.BI "int rmc_find_cartridge (char *" server ,
+.BI "char *" smc_ldr ,
+.BI "char *" template ,
+.BI "int " type ,
+.BI "int " startaddr ,
+.BI "int " nbelem ,
+.BI "struct smc_element_info *" element_info );
+.SH DESCRIPTION
+.B rmc_find_cartridge
+asks the Remote Media Changer server running on
+.I server
+and connected to the picker
+.I smc_ldr
+to find the volume(s) identified by
+.IR pattern .
+.TP
+.I server
+specifies the Remote Media Changer to be contacted.
+.TP
+.I smc_ldr
+is the picker device as defined in /dev.
+.TP
+.I pattern
+to be matched with the volume visual identifier.
+It must be at most 40 characters long.
+.TP
+.I type
+gives the element type: 0 means all element types, 1 corresponds to the hand,
+2 to the storage cells, 3 to the import/export door (CAP) and 4 to the drives.
+.TP
+.I startaddr
+specifies the lowest element address to be searched.
+.TP
+.I nbelem
+gives the maximum number of entries to be returned
+.TP
+.I element_info
+gives the address of the buffer allocated by the calling program to receive the
+reply.
+.PP
+.nf
+.ft CW
+struct smc_element_info {
+        int element_address;
+        int element_type;
+        int state;		/* element descriptor byte 2 */
+        unsigned char asc;
+        unsigned char ascq;
+        int flags;		/* element descriptor byte 9 */
+        int source_address;
+        char name[9];
+};
+.ft
+.fi
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.2i
+.B SECOMERR
+Communication error.
+.TP
+.B ERMCUNREC
+Unknown host or invalid loader or pattern too long.
+.TP
+.B ERMCFASTR
+Unit attention.
+.TP
+.B ERMCOMSGR
+Hardware error.
+.SH SEE ALSO
+.BR rmc_get_geometry(3) ,
+.B smc(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
