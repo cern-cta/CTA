@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2005/01/27 16:25:43 $ $Author: bcouturi $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2005/01/27 16:54:18 $ $Author: bcouturi $
  *
  *
  *
@@ -54,9 +54,9 @@ EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
 //------------------------------------------------------------------------------
 // Constants
 //------------------------------------------------------------------------------
-const char* RMTSTGSVC_CATEGORY_CONF = "REMOTESTGSVC";
-const char* TIMEOUT_CONF = "TIMEOUT";
-const int   DEFAULT_REMOTESTGSVC_TIMEOUT = 1800;
+const char* castor::stager::RMTSTGSVC_CATEGORY_CONF = "REMOTESTGSVC";
+const char* castor::stager::TIMEOUT_CONF = "TIMEOUT";
+const int   castor::stager::DEFAULT_REMOTESTGSVC_TIMEOUT = 1800;
 
 
 // -----------------------------------------------------------------------
@@ -609,9 +609,9 @@ void castor::stager::RemoteStagerSvc::bestFileSystemForJob
 
 
 // -----------------------------------------------------------------------
-// bestFileSystemForJob
+// getRemoteStagerClientTimeout
 // -----------------------------------------------------------------------
-int getRemoteStagerClientTimeout() {
+int castor::stager::RemoteStagerSvc::getRemoteStagerClientTimeout() {
 
   int ret_timeout = castor::stager::DEFAULT_REMOTESTGSVC_TIMEOUT;
 
