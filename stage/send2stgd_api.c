@@ -90,19 +90,6 @@ EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
 	SEND2STGD_API_RETURN(c); \
 }
 
-#ifdef __STDC__
-#define NAMEOFVAR(x) #x
-#else
-#define NAMEOFVAR(x) "x"
-#endif
-#define CMP_ERROR_VAL(member) stage_errmsg(NULL, "### %s differs: you ask for %d and you get %d\n", NAMEOFVAR(member) , (int) stcp1->member, (int) stcp2->member)
-#define CMP_ERROR_VALHEX(member) stage_errmsg(NULl, "### %s differs: you ask for 0x%lx and you get 0x%lx\n", NAMEOFVAR(member) , (unsigned long) stcp1->member, (unsigned long) stcp2->member)
-#define CMP_ERROR_U64(member) stage_errmsg(NULL, "### %s differs: you ask for %s and you get %s\n", NAMEOFVAR(member) , u64tostr((u_signed64) stcp1->member, tmpbuf1, 0), u64tostr((u_signed64) stcp2->member, tmpbuf2, 0))
-#define CMP_ERROR_TIME(member) CMP_ERROR_U64(member)
-#define CMP_ERROR_CHAR(member) stage_errmsg(NULL, "### %s differs: you ask for '%c' and you get '%c'\n", NAMEOFVAR(member) , stcp1->member != '\0' ? stcp1->member : ' ', stcp2->member != '\0' ? stcp2->member : ' ')
-#define CMP_ERROR_STRING(member) stage_errmsg(NULL, "### %s differs: you ask for \"%s\" and you get \"%s\"\n", NAMEOFVAR(member) , stcp1->member, stcp2->member)
-
-
 static int uniqueidp_key = 0;
 static int laststghostp_key = 0;
 
@@ -800,46 +787,31 @@ int send2stgd_api_cmp(stcp1,stcp2)
 
   /* stcp1 is the reference and we check if it matches stcp2 */
   if (stcp1->blksize     != 0    && stcp1->blksize  != stcp2->blksize)  {
-    CMP_ERROR_VAL(blksize);
     return(-1);
   }
   if (stcp1->charconv    != '\0' && stcp1->charconv != stcp2->charconv) {
-    CMP_ERROR_CHAR(charconv);
     return(-1);
   }
   if (stcp1->keep        != '\0' && stcp1->keep     != stcp2->keep) {
-    CMP_ERROR_CHAR(keep);
     return(-1);
   }
   if (stcp1->lrecl       != 0    && stcp1->lrecl    != stcp2->lrecl)  {
-    CMP_ERROR_VAL(lrecl);
     return(-1);
   }
   if (stcp1->nread       != 0    && stcp1->nread    != stcp2->nread)  {
-    CMP_ERROR_VAL(nread);
     return(-1);
   }
   if (stcp1->poolname[0] != '\0' && strcmp(stcp1->poolname,stcp2->poolname) != 0) {
-    CMP_ERROR_STRING(poolname);
     return(-1);
   }
   if (stcp1->recfm[0]    != '\0' && strcmp(stcp1->recfm,stcp2->recfm) != 0) {
-    CMP_ERROR_STRING(recfm);
     return(-1);
   }
+  /*
   if (stcp1->size        != 0    && stcp1->size     != stcp2->size)  {
-    /* Is it ok to have stcp1->size != stcp2->size in case of a STAGEIN and only if */
-    /* stcp2->size >= stcp1->size (file was already staged but with a larger req) */
-	  /*
-	if (! ISSTAGEIN(stcp2)) {
-      CMP_ERROR_U64(size);
-      return(-1);
-    } else if (stcp2->size < stcp1->size) {
-      CMP_ERROR_U64(size);
-      return(-1);
-    }
-	  */
+    return(-1);
   }
+  */
   if (stcp1->t_or_d == '\0') {
     stage_errmsg(NULL, "### stcp1->t_or_d is empty !?\n");
     return(-1);
@@ -848,7 +820,6 @@ int send2stgd_api_cmp(stcp1,stcp2)
     /* This is accepted only if input was 'h' or 'm' and output was 'm' or 'h' */
     if ((stcp1->t_or_d == 'h' && stcp2->t_or_d != 'm') ||
         (stcp1->t_or_d == 'm' && stcp2->t_or_d != 'h')) {
-      CMP_ERROR_CHAR(t_or_d);
       return(-1);
     }
   }
@@ -856,89 +827,70 @@ int send2stgd_api_cmp(stcp1,stcp2)
   switch (stcp2->t_or_d) { /* We use stcp2 because it might be 'm' or 'h' when input is 'm' */
   case 't':
     if (stcp1->u1.t.den[0]      != '\0' && strcmp(stcp1->u1.t.den,stcp2->u1.t.den) != 0) {
-      CMP_ERROR_STRING(u1.t.den);
       return(-1);
     }
     if (stcp1->u1.t.dgn[0]      != '\0' && strcmp(stcp1->u1.t.dgn,stcp2->u1.t.dgn) != 0) {
-      CMP_ERROR_STRING(u1.t.dgn);
       return(-1);
     }
     if (stcp1->u1.t.fid[0]      != '\0' && strcmp(stcp1->u1.t.fid,stcp2->u1.t.fid) != 0) {
-      CMP_ERROR_STRING(u1.t.fid);
       return(-1);
     }
     if (stcp1->u1.t.filstat     != '\0' && stcp1->u1.t.filstat != stcp2->u1.t.filstat) {
-      CMP_ERROR_CHAR(u1.t.filstat);
       return(-1);
     }
     if (stcp1->u1.t.fseq[0]     != '\0' && strcmp(stcp1->u1.t.fseq,stcp2->u1.t.fseq) != 0) {
-      CMP_ERROR_STRING(u1.t.fseq);
       return(-1);
     }
     if (stcp1->u1.t.lbl[0]      != '\0' && strcmp(stcp1->u1.t.lbl,stcp2->u1.t.lbl) != 0) {
-      CMP_ERROR_STRING(u1.t.lbl);
       return(-1);
     }
     if (stcp1->u1.t.retentd     != 0    && stcp1->u1.t.retentd != stcp2->u1.t.retentd) {
-      CMP_ERROR_VAL(u1.t.retentd);
       return(-1);
     }
     if (stcp1->u1.t.tapesrvr[0] != '\0' && strcmp(stcp1->u1.t.tapesrvr,stcp2->u1.t.tapesrvr) != 0) {
-      CMP_ERROR_STRING(u1.t.tapesrvr);
       return(-1);
     }
     if (stcp1->u1.t.E_Tflags    != 0    && stcp1->u1.t.E_Tflags != stcp2->u1.t.E_Tflags) {
-      CMP_ERROR_CHAR(u1.t.E_Tflags);
       return(-1);
     }
     for (i = 0; i < MAXVSN; i++) {
       if (stcp1->u1.t.vid[i][0] != '\0' && strcmp(stcp1->u1.t.vid[i],stcp2->u1.t.vid[i]) != 0) {
-        CMP_ERROR_STRING(u1.t.vid[i]);
         return(-1);
       }
       if (stcp1->u1.t.vsn[i][0] != '\0' && strcmp(stcp1->u1.t.vsn[i],stcp2->u1.t.vsn[i]) != 0) {
-        CMP_ERROR_STRING(u1.t.vsn[i]);
         return(-1);
       }
     }
     break;
   case 'd':
     if (stcp1->u1.d.xfile[0] != '\0' && strcmp(stcp1->u1.d.xfile,stcp2->u1.d.xfile) != 0) {
-      CMP_ERROR_STRING(u1.d.xfile);
       return(-1);
     }
     if (stcp1->u1.d.Xparm[0] != '\0' && strcmp(stcp1->u1.d.Xparm,stcp2->u1.d.Xparm) != 0) {
-      CMP_ERROR_STRING(u1.d.Xparm);
       return(-1);
     }
     break;
   case 'a':
     if (stcp1->u1.d.xfile[0] != '\0' && strcmp(stcp1->u1.d.xfile,stcp2->u1.d.xfile) != 0) {
-      CMP_ERROR_STRING(u1.d.xfile);
       return(-1);
     }
     break;
   case 'm':
     if (stcp1->u1.m.xfile[0] != '\0' && strcmp(stcp1->u1.m.xfile,stcp2->u1.m.xfile) != 0) {
-      CMP_ERROR_STRING(u1.m.xfile);
       return(-1);
     }
     break;
   case 'h':
     if (stcp1->u1.h.xfile[0]       != '\0' && strcmp(stcp1->u1.h.xfile,stcp2->u1.h.xfile) != 0) {
-      CMP_ERROR_STRING(u1.h.xfile);
       return(-1);
     }
     if (stcp1->u1.h.server[0]      != '\0' && strcmp(stcp1->u1.h.server,stcp2->u1.h.server) != 0) {
-      CMP_ERROR_STRING(u1.h.server);
       return(-1);
     }
     if (stcp1->u1.h.fileid         != 0    && stcp1->u1.h.fileid != stcp2->u1.h.fileid) {
-      CMP_ERROR_U64(u1.h.fileid);
       return(-1);
     }
     if (stcp1->u1.h.fileclass      != 0    && stcp1->u1.h.fileclass != stcp2->u1.h.fileid) {
-      CMP_ERROR_VAL(u1.h.fileclass);
       return(-1);
     }
     if (stcp1->u1.h.tppool[0]      != '\0' && strcmp(stcp1->u1.h.tppool,stcp2->u1.h.tppool) != 0) return(-1);
