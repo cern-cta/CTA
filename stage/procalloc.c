@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.51 2002/09/18 05:00:31 jdurand Exp $
+ * $Id: procalloc.c,v 1.52 2002/10/04 09:20:12 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.51 $ $Date: 2002/09/18 05:00:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.52 $ $Date: 2002/10/04 09:20:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -255,8 +255,15 @@ void procallocreq(req_type, magic, req_data, clienthost)
 
 	/* setting defaults */
 
-	if (*stgreq.poolname == '\0')
-		bestnextpool_out(stgreq.poolname,WRITE_MODE);
+	if (req_type < STAGE_00) {
+		if (*stgreq.poolname == '\0') {
+			bestnextpool_out(stgreq.poolname,WRITE_MODE);
+		}
+	} else {
+		if (stcp_input.poolname[0] == '\0') {
+			bestnextpool_out(stcp_input.poolname,WRITE_MODE);
+		}
+	}
 	if (pool_user == NULL)
 		pool_user = STAGERSUPERUSER;
 
