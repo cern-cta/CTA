@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.156 2001/12/10 16:20:32 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.157 2001/12/20 11:39:15 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.156 $ $Date: 2001/12/10 16:20:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.157 $ $Date: 2001/12/20 11:39:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -910,7 +910,11 @@ int main(argc,argv)
 				rbp = req_hdr;
 				unmarshall_LONG (rbp, magic);
 
-				if ((magic != STGMAGIC) && (magic != STGMAGIC2) && (magic != STGMAGIC3)) {
+				if ((magic != STGMAGIC) && (magic != STGMAGIC2) && (magic != STGMAGIC3)
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+					&& (magic != STGMAGIC4)
+#endif
+					) {
 					stglogit(func, STG141, (unsigned long) magic);
 					close(rqfd);
 					goto endreq;
@@ -945,13 +949,21 @@ int main(argc,argv)
 							goto endreq;
 						}
 					}
-					if ((req_type == STAGE_UPDC) && (magic != STGMAGIC2) && (magic != STGMAGIC3)) {
+					if ((req_type == STAGE_UPDC) && (magic != STGMAGIC2) && (magic != STGMAGIC3)
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+						&& (magic != STGMAGIC4)
+#endif
+						) {
 						/* The API of stage_updc only exist with magic number version >= 2 */
 						stglogit(func, STG141, (unsigned long) magic);
 						close(rqfd);
 						goto endreq;
 					}
-					if ((req_type == STAGE_CLR) && (magic != STGMAGIC2) && (magic != STGMAGIC3)) {
+					if ((req_type == STAGE_CLR) && (magic != STGMAGIC2) && (magic != STGMAGIC3)
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+						&& (magic != STGMAGIC4)
+#endif
+						) {
 						/* The API of stage_clr only exist with magic number version >= 2 */
 						stglogit(func, STG141, (unsigned long) magic);
 						close(rqfd);
@@ -1542,8 +1554,15 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 	p_f = stcp->ipath + strlen (stcp->ipath);
 	if (stcp->t_or_d == 't') {
 		if (*(stcp->u1.t.fseq) != 'n')
-			sprintf (p_f, "/%s.%s.%s",
-							 stcp->u1.t.vid[0], stcp->u1.t.fseq, stcp->u1.t.lbl);
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+			if (stcp->u1.t.side > 0)
+				sprintf (p_f, "/%s.%d.%s.%s",
+								 stcp->u1.t.vid[0], stcp->u1.t.side, stcp->u1.t.fseq, stcp->u1.t.lbl);
+			else
+				/* Backward compatiblity */
+#endif
+				sprintf (p_f, "/%s.%s.%s",
+								 stcp->u1.t.vid[0], stcp->u1.t.fseq, stcp->u1.t.lbl);
 		else
 			sprintf (p_f, "/%s.%s.%s.%d",
 							 stcp->u1.t.vid[0], stcp->u1.t.fseq, stcp->u1.t.lbl,
@@ -2865,6 +2884,7 @@ int fork_exec_stager(wqp)
 	char progfullpath[MAXPATH];
 	char progname[MAXPATH];
 	struct stgcat_entry *stcp;
+	struct stgcat_entry lying_stcp;
 	struct waitf *wfp;
 #ifdef __INSURE__
 	/* INSURE DOES NOT WORK WITH THIS PIPE... I've spent three hours trying to make work */
@@ -2910,7 +2930,23 @@ int fork_exec_stager(wqp)
 		if (wfp->waiting_on_req < 0) wfp->waiting_on_req = 0;
 		for (stcp = stcs; stcp < stce; stcp++)
 			if (stcp->reqid == wfp->subreqid) break;
-		fwrite (stcp, sizeof(struct stgcat_entry), 1, f);
+		if (wfp->ipath[0] != '\0') {
+			/* We lye to the system making it believing it is a disk copy */
+			/* This apply only for internal copy of CASTOR HSM files */
+			memset((void *) &lying_stcp, 0, sizeof(struct stgcat_entry));
+			lying_stcp.t_or_d = 'd';
+			strcpy(lying_stcp.u1.d.xfile,wfp->ipath);
+			lying_stcp.u1.d.Xparm[0] = '\0';
+			lying_stcp.actual_size = stcp->actual_size;
+			lying_stcp.size = stcp->size;
+			lying_stcp.mask = stcp->mask;
+			lying_stcp.uid = stcp->uid;
+			lying_stcp.gid = stcp->gid;
+			strcpy(lying_stcp.ipath, stcp->ipath);
+			fwrite (&lying_stcp, sizeof(struct stgcat_entry), 1, f);
+		} else {
+			fwrite (stcp, sizeof(struct stgcat_entry), 1, f);
+		}
 	}
 	fclose(f);
 #endif
@@ -3052,7 +3088,24 @@ int fork_exec_stager(wqp)
 				stcp->gid = wqp->rtcp_gid;
 			}
 #ifndef __INSURE__
-			write (pfd[1], (char *) stcp, sizeof(struct stgcat_entry));
+			if (wfp->ipath[0] != '\0') {
+				/* We lye to the system making it believing it is a disk copy */
+				/* This apply only for internal copy of CASTOR HSM files */
+				/* and by definition there is only ONE entry here */
+				memset((void *) &lying_stcp, 0, sizeof(struct stgcat_entry));
+				lying_stcp.t_or_d = 'd';
+				strcpy(lying_stcp.u1.d.xfile,wfp->ipath);
+				lying_stcp.u1.d.Xparm[0] = '\0';
+				lying_stcp.actual_size = stcp->actual_size;
+				lying_stcp.size = stcp->size;
+				lying_stcp.mask = stcp->mask;
+				lying_stcp.uid = stcp->uid;
+				lying_stcp.gid = stcp->gid;
+				strcpy(lying_stcp.ipath, stcp->ipath);
+				write (pfd[1], (char *) &lying_stcp, sizeof(struct stgcat_entry));
+			} else {
+				write (pfd[1], (char *) stcp, sizeof(struct stgcat_entry));
+			}
 #endif
 			if ((wqp->rtcp_uid != 0) && (wqp->rtcp_gid) && (wqp->rtcp_user[0] != '\0') && (wqp->rtcp_group[0] != '\0')) {
 				strcpy(stcp->user,save_user);
