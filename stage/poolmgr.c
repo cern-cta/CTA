@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.53 2000/12/07 08:19:32 jdurand Exp $
+ * $Id: poolmgr.c,v 1.54 2000/12/14 15:23:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.53 $ $Date: 2000/12/07 08:19:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.54 $ $Date: 2000/12/14 15:23:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -90,6 +90,7 @@ void migpoolfiles_log_callback _PROTO((int, char *));
 int isuserlevel _PROTO((char *));
 void poolmgr_wait4child _PROTO(());
 int selectfs _PROTO((char *, int *, char *));
+void getdefsize _PROTO((char *, int *));
 int updfreespace _PROTO((char *, char *, signed64));
 
 getpoolconf(defpoolname)
@@ -1026,6 +1027,18 @@ selectfs(poolname, size, path)
 	return (1);
 }
 
+void
+getdefsize(poolname, size)
+		 char *poolname;
+		 int *size;
+{
+	int i;
+	struct pool *pool_p;
+
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+		if (strcmp (poolname, pool_p->name) == 0) break;
+	*size = pool_p->defsize;
+}
 int
 updfreespace(poolname, ipath, incr)
 		 char *poolname;
