@@ -1,13 +1,13 @@
 .\"
-.\" $Id: rfio_mkdir.man,v 1.4 2001/05/28 13:59:44 baud Exp $
+.\" $Id: rfio_mkdir.man,v 1.5 2001/05/29 14:29:37 baud Exp $
 .\"
-.\" @(#)$RCSfile: rfio_mkdir.man,v $ $Revision: 1.4 $ $Date: 2001/05/28 13:59:44 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_mkdir.man,v $ $Revision: 1.5 $ $Date: 2001/05/29 14:29:37 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_MKDIR 3 "$Date: 2001/05/28 13:59:44 $" CASTOR "Rfio Library Functions"
+.TH RFIO_MKDIR 3 "$Date: 2001/05/29 14:29:37 $" CASTOR "Rfio Library Functions"
 .SH NAME
-rfio_mkdir \- create a new directory in the name server
+rfio_mkdir \- create a new directory
 .SH SYNOPSIS
 .B #include <sys/types.h>
 .br
