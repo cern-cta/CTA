@@ -71,6 +71,35 @@
                     ); \
     serrno = _save_serrno;}
 
+#define LOG_CALL_TRACE(statement) {\
+    int _save_serrno = serrno; \
+    char *_dbErr = NULL; \
+    (void)dlf_write( \
+                    childUuid, \
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_CALL_TRACE), \
+                    (struct Cns_fileid *)NULL, \
+                    RTCPCLD_NB_PARAMS+1, \
+                    "BEGIN", \
+                    DLF_MSG_PARAM_STR, \
+                    (_dbErr = rtcpcld_fixStr(#statement)), \
+                    RTCPCLD_LOG_WHERE \
+                    ); \
+    serrno = _save_serrno; \
+    statement; \
+    _save_serrno = serrno; \
+    (void)dlf_write( \
+                    childUuid, \
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_CALL_TRACE), \
+                    (struct Cns_fileid *)NULL, \
+                    RTCPCLD_NB_PARAMS+1, \
+                    "END", \
+                    DLF_MSG_PARAM_STR, \
+                    (_dbErr = rtcpcld_fixStr(#statement)), \
+                    RTCPCLD_LOG_WHERE \
+                    ); \
+    if ( _dbErr != NULL ) free(_dbErr); \
+    serrno = _save_serrno;}
+
 #define ID_TYPE u_signed64
 enum NotificationState {
   NOT_NOTIFIED,
