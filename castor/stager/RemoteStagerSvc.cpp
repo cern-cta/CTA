@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/12/03 13:45:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/12/07 13:06:22 $ $Author: sponcec3 $
  *
  *
  *
@@ -503,7 +503,8 @@ void castor::stager::RemoteStagerSvc::updateRep(IAddress* address,
 // -----------------------------------------------------------------------
 castor::stager::DiskCopy*
 castor::stager::RemoteStagerSvc::recreateCastorFile
-(castor::stager::CastorFile *castorFile)
+(castor::stager::CastorFile *castorFile,
+ castor::stager::SubRequest *subreq)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()

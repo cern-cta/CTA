@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.28 $ $Release$ $Date: 2004/12/03 13:45:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.29 $ $Release$ $Date: 2004/12/07 13:06:22 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -477,17 +477,20 @@ namespace castor {
        * INVALID (that is those not in DISKCOPY_FAILED and
        * DISKCOPY_DELETED status) and all TapeCopies are
        * deleted. A new DiskCopy is then created in
-       * DISKCOPY_WAITFS status and is returned.
+       * DISKCOPY_WAITFS status, linked to the given
+       * SubRequest returned.
        * Note that everything is commited and that the caller
        * is responsible for the deletion of the returned
        * DiskCopy (if any)
        * @param castorFile the file to recreate
+       * @param subreq the SubRequest recreating the file
        * @return the new DiskCopy in DISKCOPY_WAITFS status
        * or null if recreation is not possible
        * @exception Exception throws an Exception in case of error
        */
       virtual castor::stager::DiskCopy* recreateCastorFile
-      (castor::stager::CastorFile *castorFile)
+      (castor::stager::CastorFile *castorFile,
+       castor::stager::SubRequest *subreq)
         throw (castor::exception::Exception) = 0;
 
       /**

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2004/12/03 13:45:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2004/12/07 13:06:22 $ $Author: sponcec3 $
  *
  * 
  *
@@ -554,10 +554,11 @@ extern "C" {
   int Cstager_IStagerSvc_recreateCastorFile
   (struct Cstager_IStagerSvc_t* stgSvc,
    castor::stager::CastorFile* castorFile,
+   castor::stager::SubRequest *subreq,
    castor::stager::DiskCopy** diskCopy) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      *diskCopy = stgSvc->stgSvc->recreateCastorFile(castorFile);
+      *diskCopy = stgSvc->stgSvc->recreateCastorFile(castorFile, subreq);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

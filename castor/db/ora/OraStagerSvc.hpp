@@ -484,17 +484,20 @@ namespace castor {
          * INVALID (that is those not in DISKCOPY_FAILED and
          * DISKCOPY_DELETED status) and all TapeCopies are
          * deleted. A new DiskCopy is then created in
-         * DISKCOPY_WAITFS status and is returned.
+         * DISKCOPY_WAITFS status, linked to the given
+         * SubRequest returned.
          * Note that everything is commited and that the caller
          * is responsible for the deletion of the returned
          * DiskCopy (if any)
          * @param castorFile the file to recreate
+         * @param subreq the SubRequest recreating the file
          * @return the new DiskCopy in DISKCOPY_WAITFS status
          * or null if recreation is not possible
          * @exception Exception throws an Exception in case of error
          */
         virtual castor::stager::DiskCopy* recreateCastorFile
-        (castor::stager::CastorFile *castorFile)
+        (castor::stager::CastorFile *castorFile,
+         castor::stager::SubRequest *subreq)
           throw (castor::exception::Exception);
 
         /**

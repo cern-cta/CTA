@@ -464,18 +464,20 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
 END;
 
 /* PL/SQL method implementing recreateCastorFile */
-CREATE OR REPLACE PROCEDURE recreateCastorFile(cfId IN INTEGER, dcid OUT INTEGER) AS
+CREATE OR REPLACE PROCEDURE recreateCastorFile(cfId IN INTEGER,
+                                               srId IN INTEGER. AS
+                                               dcId OUT INTEGER) AS
 BEGIN
  -- Lock the access to the TapeCopies and DiskCopies
  LOCK TABLE TapeCopy in share mode;
  LOCK TABLE DiskCopy in share mode;
  -- check if recreation is possible (exception if not)
  BEGIN
-   SELECT id INTO dcid FROM TapeCopy
+   SELECT id INTO dcId FROM TapeCopy
      WHERE status = 3 -- TAPECOPY_SELECTED
      AND castorFile = cfId;
    -- We found something, thus we cannot recreate
-   dcid := 0;
+   dcId := 0;
    COMMIT;
    RETURN;
  EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -483,11 +485,11 @@ BEGIN
    NULL;
  END;
  BEGIN
-   SELECT id INTO dcid FROM DiskCopy
+   SELECT id INTO dcId FROM DiskCopy
      WHERE status IN (1, 2, 5) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS
      AND castorFile = cfId;
    -- We found something, thus we cannot recreate
-   dcid := 0;
+   dcId := 0;
    COMMIT;
    RETURN;
  EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -500,9 +502,11 @@ BEGIN
  UPDATE DiskCopy SET status = 7 -- INVALID
   WHERE castorFile = cfId AND status NOT IN (3, 4, 7); -- FAILED, DELETED, INVALID
  -- create new DiskCopy
- getId(1, dcid);
+ getId(1, dcId);
  INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
-  VALUES ('', dcid, 0, cfId, 5); -- status WAITFS
+  VALUES ('', dcId, 0, cfId, 5); -- status WAITFS
+ -- link SubRequest and DiskCopy
+ UPDATE SubRequest SET diskCopy = dcId WHERE id = srId;
  COMMIT;
 END;
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.78 $ $Release$ $Date: 2004/12/06 18:06:03 $ $Author: bcouturi $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.79 $ $Release$ $Date: 2004/12/07 13:06:21 $ $Author: sponcec3 $
  *
  *
  *
@@ -155,7 +155,7 @@ const std::string castor::db::ora::OraStagerSvc::s_updateAndCheckSubRequestState
 
 /// SQL statement for recreateCastorFile
 const std::string castor::db::ora::OraStagerSvc::s_recreateCastorFileStatementString =
-  "BEGIN recreateCastorFile(:1, :2); END;";
+  "BEGIN recreateCastorFile(:1, :2, :3); END;";
 
 /// SQL statement for prepareForMigration
 const std::string castor::db::ora::OraStagerSvc::s_prepareForMigrationStatementString =
@@ -1729,8 +1729,9 @@ void castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
 // recreateCastorFile
 // -----------------------------------------------------------------------
 castor::stager::DiskCopy*
-castor::db::ora::OraStagerSvc::recreateCastorFile(
-castor::stager::CastorFile *castorFile)
+castor::db::ora::OraStagerSvc::recreateCastorFile
+(castor::stager::CastorFile *castorFile,
+ castor::stager::SubRequest *subreq)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -1738,11 +1739,12 @@ castor::stager::CastorFile *castorFile)
       m_recreateCastorFileStatement =
         createStatement(s_recreateCastorFileStatementString);
       m_recreateCastorFileStatement->registerOutParam
-        (2, oracle::occi::OCCIDOUBLE);
+        (3, oracle::occi::OCCIDOUBLE);
       m_recreateCastorFileStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
     m_recreateCastorFileStatement->setDouble(1, castorFile->id());
+    m_recreateCastorFileStatement->setDouble(1, subreq->id());
     unsigned int nb = m_recreateCastorFileStatement->executeUpdate();
     if (0 == nb) {
       castor::exception::Internal ex;
