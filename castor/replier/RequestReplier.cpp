@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/08 09:57:49 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/16 15:45:34 $ $Author: sponcec3 $
  *
  *
  *
@@ -50,18 +50,18 @@
 
 /**
  * The RequestReplier is a component of sending the replies in non-blocking mode
- * to the clients contacting the stager. 
+ * to the clients contacting the stager.
  * It is a singleton (you can get it using the static getInstance method),
  * managing a dedicated thread in charge of sending the replies.
  * The replyToClient method must be used to send replies to the clients.
- * Befire exiting the program, terminate() must be called on the RequestReplier 
- * singleton: it blocks until all requests have been sent. Otherwise, the 
+ * Befire exiting the program, terminate() must be called on the RequestReplier
+ * singleton: it blocks until all requests have been sent. Otherwise, the
  * process could exit before all requests are sent.
  */
 
 
 //////////////////////////////////////////////////////////////////////////////
-// 
+//
 // Initialization and singleton lookup methods.
 //
 //////////////////////////////////////////////////////////////////////////////
@@ -143,7 +143,7 @@ castor::replier::RequestReplier::staticReplierThread(void *arg) throw() {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-// 
+//
 // Code running in the RequestReplier thread
 //
 //////////////////////////////////////////////////////////////////////////////
@@ -158,14 +158,14 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
   const int pollTimeout = 5;
   int nbPollFd = 1000;
   struct ::pollfd *toPoll = new struct ::pollfd[nbPollFd];
-  
+
   while (1) {
 
     // Getting the value of the end processing flag
-    Cthread_mutex_lock(&m_terminate);  
+    Cthread_mutex_lock(&m_terminate);
     int terminate = m_terminate;
     Cthread_mutex_unlock(&m_terminate);
-    
+
     if (terminate) {
       if(m_connections->size() == 0
          && m_clientQueue->size() == 0) {
@@ -174,8 +174,8 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
         break;
       } else {
         clog() << ALWAYS << "Waiting to terminate - ConnQ:"
-               << m_connections->size() 
-               << " ClientQ:" 
+               << m_connections->size()
+               << " ClientQ:"
                << m_clientQueue->size()
                << std::endl;
       }
@@ -245,14 +245,14 @@ void castor::replier::RequestReplier::createNewClientConnection(ClientResponse c
 
     castor::rh::Client c = (*iter).second->getClient();
     if (newport == c.port()
-	&& newhost == c.ipAddress()) {
+        && newhost == c.ipAddress()) {
       // Found an existing connection !
       // XXX Should there be status testing ?
       clog() << DEBUG << "Found existing connection " << (*iter).second
-	     << " status " << (*iter).second->getStatusStr() << std::endl;
+             << " status " << (*iter).second->getStatusStr() << std::endl;
       r = (*iter).second;
       break;
-    } 
+    }
   }
 
   // Create new connection in case none was found !
@@ -264,16 +264,16 @@ void castor::replier::RequestReplier::createNewClientConnection(ClientResponse c
       r->connect();
       (*m_connections)[r->m_fd] = r;
       clog() << VERBOSE << "ClientConnection " << r << " added fd is "
-	     << r->m_fd << std::endl;
+             << r->m_fd << std::endl;
     } catch(castor::exception::Exception e) {
       clog() << ERROR
-	     << "Exeption while Creating new ClientConnection: "
-	     << e.getMessage().str() << std::endl;
+             << "Exeption while Creating new ClientConnection: "
+             << e.getMessage().str() << std::endl;
       r->setStatus(DONE_FAILURE);
       r->m_errorMessage = "Could not connect:" + e.getMessage().str();
     }
   } else {
-    // Add the new connection to the list 
+    // Add the new connection to the list
     r->addResponse(cr);
   }
 }
@@ -311,10 +311,10 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
       iter++) {
 
     clog() << VERBOSE << "GC Checking " << (*iter).second
-	   << " status: " << (*iter).second->getStatusStr()
-	   << " active time: " 
-	   << (t - (*iter).second->m_lastEventDate)
-	   << std::endl;
+           << " status: " << (*iter).second->getStatusStr()
+           << " active time: "
+           << (t - (*iter).second->m_lastEventDate)
+           << std::endl;
 
     if ((*iter).second->getStatus() == DONE_FAILURE) {
       toremove->push((*iter).second->m_fd);
@@ -325,15 +325,15 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
              << castor::ip << ip << ":"
              << (*iter).second->m_client.port() << std::endl;
     } else if ((*iter).second->m_terminate == true
-	       && (*iter).second->m_responses.empty()) {
+               && (*iter).second->m_responses.empty()) {
       toremove->push((*iter).second->m_fd);
       unsigned long ip = (*iter).second->m_client.ipAddress();
       clog() << DEBUG << "ClientConnection " << iter->second
-	     <<" CLOSE <"
-	     << (*iter).second->m_fd << "> client "
-	     << castor::ip << ip << ":"
-	     << (*iter).second->m_client.port() << std::endl;
-      
+             <<" CLOSE <"
+             << (*iter).second->m_fd << "> client "
+             << castor::ip << ip << ":"
+             << (*iter).second->m_client.port() << std::endl;
+
     } else if ((t - (*iter).second->m_lastEventDate) > TIMEOUT) {
       toremove->push((*iter).second->m_fd);
       unsigned long ip = (*iter).second->m_client.ipAddress();
@@ -375,8 +375,8 @@ castor::replier::RequestReplier::buildNewPollArray(struct ::pollfd pl[])
 
     if ((*iter).second->getStatus() == CONNECTING
         || (*iter).second->getStatus() == RESEND
-	|| ((*iter).second->getStatus() == CONNECTED
-	    && !(((*iter).second->m_responses).empty()))) {
+        || ((*iter).second->getStatus() == CONNECTED
+            && !(((*iter).second->m_responses).empty()))) {
       clog() << VERBOSE << "Listening to fd: "
              << (*iter).first << std::endl;
       pl[i].fd = (*iter).first;
@@ -385,21 +385,21 @@ castor::replier::RequestReplier::buildNewPollArray(struct ::pollfd pl[])
       i++;
     }
 
-//     if ((*iter).second->getStatus() == SENT) {
-//       clog() << VERBOSE << "Listening to fd: "
-//              << (*iter).first << std::endl;
-//       pl[i].fd = (*iter).first;
-//       pl[i].events = POLLIN|POLLHUP|POLLERR;
-//       pl[i].revents = 0;
-//       i++;
-//     }
+    //     if ((*iter).second->getStatus() == SENT) {
+    //       clog() << VERBOSE << "Listening to fd: "
+    //              << (*iter).first << std::endl;
+    //       pl[i].fd = (*iter).first;
+    //       pl[i].events = POLLIN|POLLHUP|POLLERR;
+    //       pl[i].revents = 0;
+    //       i++;
+    //     }
 
   }
 
   clog() << DEBUG << "There are " << (i-1)
-         << " client(s) to reply to ! (among " 
-	 << m_connections->size() << " connections)"
-	 << std::endl;
+         << " client(s) to reply to ! (among "
+         << m_connections->size() << " connections)"
+         << std::endl;
 
   // i has been increased by the ++ but that's ok as we have to add
   return i;
@@ -451,23 +451,23 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
 
       switch (cr->getStatus()) {
       case CONNECTING:
-	cr->setStatus(CONNECTED);
+        cr->setStatus(CONNECTED);
         clog() << DEBUG << "Connect successful for fd: "
                << pl[i].fd << std::endl;
       case CONNECTED:
         clog() << DEBUG << "Send successful for fd: "
                << pl[i].fd << " now sending next message" << std::endl;
-	try {
-	  cr->sendData();
-	} catch (EndConnectionException ex) {
-	  clog() << DEBUG
-		 << "Closing connection"
-		 << std::endl;
-	  cr->setStatus(CLOSE);
+        try {
+          cr->sendData();
+        } catch (EndConnectionException ex) {
+          clog() << DEBUG
+                 << "Closing connection"
+                 << std::endl;
+          cr->setStatus(CLOSE);
         } catch (NoMoreMessagesException ex) {
-	  clog() << DEBUG
-		 << "No more messages to send, waiting"
-		  << std::endl;
+          clog() << DEBUG
+                 << "No more messages to send, waiting"
+                 << std::endl;
         } catch (castor::exception::Exception ex) {
           clog() << ERROR
                  << "Exception caught in sending data : "
@@ -498,21 +498,21 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
           }
         }
         break;
-//       case SENT:
-//         if (pl[i].revents & POLLIN) {
-//           clog() << DEBUG
-//                  << "CCCD POLLIN data sent successfully"
-//                  << pl[i].fd << std::endl;
-//           cr->setStatus(DONE_SUCCESS);
-//           deleteConnection(pl[i].fd);
-//         } else if (pl[i].revents & POLLOUT) {
-//           clog() << DEBUG
-//                  << "CCCD POLLOUT data sent successfully "
-//                  << pl[i].fd << std::endl;
-//           //cr->status = DONE_SUCCESS;
-//           //close(pl[i].fd);
-//         }
-//         break;
+        //       case SENT:
+        //         if (pl[i].revents & POLLIN) {
+        //           clog() << DEBUG
+        //                  << "CCCD POLLIN data sent successfully"
+        //                  << pl[i].fd << std::endl;
+        //           cr->setStatus(DONE_SUCCESS);
+        //           deleteConnection(pl[i].fd);
+        //         } else if (pl[i].revents & POLLOUT) {
+        //           clog() << DEBUG
+        //                  << "CCCD POLLOUT data sent successfully "
+        //                  << pl[i].fd << std::endl;
+        //           //cr->status = DONE_SUCCESS;
+        //           //close(pl[i].fd);
+        //         }
+        //         break;
       default:
         clog() << ERROR << "Should not have status "
                << cr->getStatusStr() << " fd is " << pl[i].fd << std::endl;
@@ -569,10 +569,10 @@ castor::replier::RequestReplier::terminate()
   throw() {
 
   clog() << ALWAYS << "Requesting RequestReplier termination"
-	 << std::endl;
+         << std::endl;
 
   // Setting the end processing flag to 1
-  Cthread_mutex_lock(&m_terminate);  
+  Cthread_mutex_lock(&m_terminate);
   m_terminate = 1;
   Cthread_mutex_unlock(&m_terminate);
 
@@ -585,7 +585,7 @@ castor::replier::RequestReplier::terminate()
 }
 
 //////////////////////////////////////////////////////////////////////////////
-// 
+//
 // Code running in the server threads
 //
 //////////////////////////////////////////////////////////////////////////////
@@ -595,10 +595,9 @@ castor::replier::RequestReplier::terminate()
 //-----------------------------------------------------------------------------
 void
 castor::replier::RequestReplier::replyToClient(castor::IClient *client,
-                                              castor::IObject *response,
-					      bool isLastResponse)
-  throw() {
-
+                                               castor::IObject *response,
+                                               bool isLastResponse)
+  throw(castor::exception::Exception) {
   // Marshalling the response
   castor::io::biniostream* buffer = new castor::io::biniostream();
   castor::io::StreamAddress ad(*buffer, "StreamCnvSvc", castor::SVC_STREAMCNV);
@@ -630,6 +629,4 @@ castor::replier::RequestReplier::replyToClient(castor::IClient *client,
   }
   clog() << VERBOSE << "Removing lock on queue !" << std::endl;
   Cthread_mutex_unlock(&m_clientQueue);
-
-
 }

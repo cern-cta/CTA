@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/05 14:23:55 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplier.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/16 15:45:34 $ $Author: sponcec3 $
  *
  *
  *
@@ -31,12 +31,13 @@
 #include "castor/replier/ClientConnection.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/io/biniostream.h"
+#include "castor/exception/Exception.hpp"
 #include <sys/poll.h>
 #include <queue>
 #include <map>
 
 namespace castor {
-  
+
   // Forward Declarations
   class IClient;
 
@@ -60,11 +61,15 @@ namespace castor {
       /**
        * Adds a client to the queue of clients waiting for a response.
        * @param client The client object indicating the client address
+       * @param response The response to send
+       * @param isLastResponse Whether this will be the last response
+       * to this client.
+       * @exception Exception in case of error
        */
       void replyToClient(castor::IClient *client,
                          castor::IObject *response,
-			 bool isLastResponse = false) throw();
-
+                         bool isLastResponse = false)
+        throw(castor::exception::Exception);
 
       /**
        * Finishes sending the request, and blocks until all requests are sent
@@ -75,7 +80,7 @@ namespace castor {
     protected:
 
       /**
-       * Method to start the RequestReplier thread 
+       * Method to start the RequestReplier thread
        * This is called by the default constructor
        */
       void start() throw();
@@ -86,7 +91,7 @@ namespace castor {
       static void *staticReplierThread(void *arg) throw();
 
       /**
-       * Instance replier threadmethod 
+       * Instance replier threadmethod
        */
       void *replierThread(void *arg) throw();
 
@@ -112,13 +117,13 @@ namespace castor {
        * Creates the proper array for poll()
        * based on the map of connections
        */
-       int buildNewPollArray(struct pollfd pl[]) throw();
+      int buildNewPollArray(struct pollfd pl[]) throw();
 
       /**
        * Processes the poll array, when the poll()
        * system call returns > 0
        */
-       void processPollArray(struct ::pollfd pl[], int ndfd) throw();
+      void processPollArray(struct ::pollfd pl[], int ndfd) throw();
 
       /**
        * Cleans old entry from the connections map
@@ -137,12 +142,12 @@ namespace castor {
       std::queue<ClientResponse> *m_clientQueue;
 
       /**
-       * Map of client connections, indexed by file descriptor 
+       * Map of client connections, indexed by file descriptor
        */
       std::map<int, ClientConnection *> *m_connections;
 
       /**
-       * Pipe used to communicate between the caller threads and the 
+       * Pipe used to communicate between the caller threads and the
        * request replier thread
        */
       int m_commPipe[2];

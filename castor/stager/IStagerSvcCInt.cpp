@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/11/12 13:47:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/11/16 15:45:34 $ $Author: sponcec3 $
  *
  * 
  *
@@ -70,7 +70,7 @@ extern "C" {
       stgSvc->errorMsg = e.getMessage().str();
       return -1;
     }
-    free(stgSvc);
+    delete stgSvc;
     return 0;
   }
 
