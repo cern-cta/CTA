@@ -234,6 +234,10 @@
 #undef BuildCastorClientCPPLibrary
 #define BuildCastorClientCPPLibrary YES
 #endif
+#if BuildExpertLibrary != YES
+#undef BuildExpertLibrary
+#define BuildExpertLibrary YES
+#endif
 #if !BuildRfioLibrary
 #undef BuildRfioLibrary
 #define BuildRfioLibrary YES
