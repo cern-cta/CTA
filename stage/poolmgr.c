@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.161 2001/12/04 11:08:22 jdurand Exp $
+ * $Id: poolmgr.c,v 1.162 2001/12/05 10:03:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.161 $ $Date: 2001/12/04 11:08:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.162 $ $Date: 2001/12/05 10:03:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -53,12 +53,6 @@ static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.161 $ $Date: 20
 
 #undef  unmarshall_STRING
 #define unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
-
-#if defined(_WIN32)
-static char strftime_format[] = "%b %d %H:%M:%S";
-#else /* _WIN32 */
-static char strftime_format[] = "%b %e %H:%M:%S";
-#endif /* _WIN32 */
 
 #ifndef _WIN32
 /* Signal handler - Simplify the POSIX sigaction calls */
@@ -1181,10 +1175,6 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
   struct migrator *pool_p_migr = NULL;
   char tmpbuf[21];
   char timestr[64] ;   /* Time in its ASCII format             */
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
-  struct tm tmstruc;
-#endif /* _REENTRANT || _THREAD_SAFE */
-  struct tm *tp;
   char tmpbuf1[21];
   char tmpbuf2[21];
   char tmpbuf3[21];
@@ -1217,13 +1207,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
              pool_p->stageout_retenp
              );
     if (pool_p->cleanreqtime > 0) {
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
-      localtime_r(&(pool_p->cleanreqtime),&tmstruc);
-      tp = &tmstruc;
-#else
-      tp = localtime(&(pool_p->cleanreqtime));
-#endif /* _REENTRANT || _THREAD_SAFE */
-      strftime(timestr,64,strftime_format,tp);
+      stage_util_time(pool_p->cleanreqtime,timestr);
       sendrep (rpfd, MSG_OUT, "\tLAST GARBAGE COLLECTION STARTED %s%s\n", timestr, pool_p->ovl_pid > 0 ? " STILL ACTIVE" : "");
     } else {
       sendrep (rpfd, MSG_OUT, "\tLAST GARBAGE COLLECTION STARTED <none>\n");
@@ -1279,13 +1263,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
       sendrep (rpfd, MSG_OUT, "\tNBFILES_BEING_MIGR     %d\n", migr_p->global_predicates.nbfiles_beingmig);
       sendrep (rpfd, MSG_OUT, "\tSPACE_BEING_MIGR       %s\n", u64tostru(migr_p->global_predicates.space_beingmig, tmpbuf, 0));
       if (migr_p->migreqtime > 0) {
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
-        localtime_r(&(migr_p->migreqtime),&tmstruc);
-        tp = &tmstruc;
-#else
-        tp = localtime(&(migr_p->migreqtime));
-#endif /* _REENTRANT || _THREAD_SAFE */
-        strftime(timestr,64,strftime_format,tp);
+        stage_util_time(migr_p->migreqtime,timestr);
         sendrep (rpfd, MSG_OUT, "\tLAST MIGRATION STARTED %s%s\n", timestr, migr_p->mig_pid > 0 ? " STILL ACTIVE" : "");
       } else {
         sendrep (rpfd, MSG_OUT, "\tLAST MIGRATION STARTED <none>\n");
@@ -3370,7 +3348,6 @@ int migpoolfiles(pool_p)
       int rc;
       char *myenv = "STAGE_STGMAGIC=0x13140703"; /* STGMAGIC3 explicit value */
       
-      /* Set explicitely STGMAGIC3 protocol */
       if (putenv(myenv) != 0) {
 		stglogit(func, "Cannot putenv(\"%s\"), %s\n", myenv, strerror(errno));
       } else {
@@ -4398,10 +4375,6 @@ void bestnextpool_out(nextout,mode)
   char tmpbuf2[21];
 #endif
   char timestr[64] ;   /* Time in its ASCII format             */
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
-  struct tm tmstruc;
-#endif /* _REENTRANT || _THREAD_SAFE */
-  struct tm *tp;
 
 
   /* We loop until we find a poolout that have no migrator, the bigger space available, the less */
@@ -4476,13 +4449,7 @@ void bestnextpool_out(nextout,mode)
 #ifdef STAGER_DEBUG
     for (j = 0, this_best_element = best_elements; j < nbest_elements; j++, this_best_element++) {
       if (this_best_element->last_allocation > 0) {
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
-        localtime_r(&(this_best_element->last_allocation),&tmstruc);
-        tp = &tmstruc;
-#else
-        tp = localtime(&(this_best_element->last_allocation));
-#endif /* _REENTRANT || _THREAD_SAFE */
-        strftime(timestr,64,strftime_format,tp);
+        stage_util_time(this_best_element->last_allocation,timestr);
       } else {
         strcpy(timestr,"<none>");
       }
@@ -4504,13 +4471,7 @@ void bestnextpool_out(nextout,mode)
   } else {
 #ifdef STAGER_DEBUG
     if (this_best_element->last_allocation > 0) {
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
-      localtime_r(&(this_best_element->last_allocation),&tmstruc);
-      tp = &tmstruc;
-#else
-      tp = localtime(&(this_best_element->last_allocation));
-#endif /* _REENTRANT || _THREAD_SAFE */
-      strftime(timestr,64,strftime_format,tp);
+      stage_util_time(this_best_element->last_allocation,timestr);
     } else {
       strcpy(timestr,"<none>");
     }
@@ -4556,13 +4517,7 @@ void bestnextpool_out(nextout,mode)
     strcpy(nextout, thispool_out);
   } else {
     if (this_best_element->last_allocation > 0) {
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
-      localtime_r(&(this_best_element->last_allocation),&tmstruc);
-      tp = &tmstruc;
-#else
-      tp = localtime(&(this_best_element->last_allocation));
-#endif /* _REENTRANT || _THREAD_SAFE */
-      strftime(timestr,64,strftime_format,tp);
+      stage_util_time(this_best_element->last_allocation,timestr);
     } else {
       strcpy(timestr,"<none>");
     }
@@ -4689,10 +4644,6 @@ struct pool_element *betterfs_vs_pool(poolname,mode,reqsize,index)
 #endif
 #ifdef STAGER_DEBUG
   char timestr[64] ;   /* Time in its ASCII format             */
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
-  struct tm tmstruc;
-#endif /* _REENTRANT || _THREAD_SAFE */
-  struct tm *tp;
 #endif
 
   found = 0;
@@ -4741,13 +4692,7 @@ struct pool_element *betterfs_vs_pool(poolname,mode,reqsize,index)
     if (reqsize <= 0) {
 #ifdef STAGER_DEBUG
       if (elements[j].last_allocation > 0) {
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
-        localtime_r(&(elements[j].last_allocation),&tmstruc);
-        tp = &tmstruc;
-#else
-        tp = localtime(&(elements[j].last_allocation));
-#endif /* _REENTRANT || _THREAD_SAFE */
-        strftime(timestr,64,strftime_format,tp);
+        stage_util_time(elements[j].last_allocation,timestr);
       } else {
         strcpy(timestr,"<none>");
       }
@@ -4770,13 +4715,7 @@ struct pool_element *betterfs_vs_pool(poolname,mode,reqsize,index)
       if (elements[j].free < reqsize) {
 #ifdef STAGER_DEBUG
         if (elements[j].last_allocation > 0) {
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
-          localtime_r(&(elements[j].last_allocation),&tmstruc);
-          tp = &tmstruc;
-#else
-          tp = localtime(&(elements[j].last_allocation));
-#endif /* _REENTRANT || _THREAD_SAFE */
-          strftime(timestr,64,strftime_format,tp);
+          stage_util_time(elements[j].last_allocation,timestr);
         } else {
           strcpy(timestr,"<none>");
         }
@@ -4798,13 +4737,7 @@ struct pool_element *betterfs_vs_pool(poolname,mode,reqsize,index)
       } else {
 #ifdef STAGER_DEBUG
         if (elements[j].last_allocation > 0) {
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
-          localtime_r(&(elements[j].last_allocation),&tmstruc);
-          tp = &tmstruc;
-#else
-          tp = localtime(&(elements[j].last_allocation));
-#endif /* _REENTRANT || _THREAD_SAFE */
-          strftime(timestr,64,strftime_format,tp);
+          stage_util_time(elements[j].last_allocation,timestr);
         } else {
           strcpy(timestr,"<none>");
         }
