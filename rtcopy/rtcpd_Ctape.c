@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.50 $ $Date: 2000/10/02 09:44:25 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.51 $ $Date: 2000/10/03 12:58:51 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -211,7 +211,7 @@ int rtcpd_Deassign(int VolReqID,
     /*
      * If status is already FREE or DOWN we don't need to do anything more
      */
-    if ( rc != -1 && (status == VDQM_UNIT_UP|VDQM_UNIT_FREE ||
+    if ( rc != -1 && ((status == (VDQM_UNIT_UP|VDQM_UNIT_FREE)) ||
                       (status & VDQM_UNIT_DOWN) != 0) ) return(0);
     /*
      * We're here because there was no tape physically mounted on the drive.
