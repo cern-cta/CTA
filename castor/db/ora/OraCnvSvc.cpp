@@ -433,6 +433,17 @@ void castor::db::ora::OraCnvSvc::unlinkChild
 (const castor::IObject* parent,
  const castor::IObject* child)
   throw (castor::exception::Exception) {
+  // check for null pointers in order to avoid crashes
+  if (0 == parent) {
+    castor::exception::Internal e;
+    e.getMessage() << "Tried to call unlinkChild with null parent.";
+    throw e;
+  }
+  if (0 == child) {
+    castor::exception::Internal e;
+    e.getMessage() << "Tried to call unlinkChild with null child.";
+    throw e;
+  }
   // Look for an adapted converter
   // The converter is always valid if no exception is thrown
   castor::IConverter* conv = converter(parent->type());
