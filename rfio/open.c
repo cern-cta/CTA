@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.13 2001/06/17 14:25:41 baud Exp $
+ * $Id: open.c,v 1.14 2001/09/18 19:58:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.13 $ $Date: 2001/06/17 14:25:41 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.14 $ $Date: 2001/09/18 19:58:15 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */
@@ -101,6 +101,7 @@ int     rfio_cleanup(s)         /* cleanup rfio descriptor              */
 int     s;
 {
   int s_index;
+  int     HsmType;
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_cleanup(%d)", s);
@@ -118,7 +119,14 @@ int     s;
       TRACE(2, "rfio", "freeing RFIO descriptor at 0X%X", rfilefdt[s_index]);
       rfio_rfilefdt_freeentry(s_index);
       TRACE(2, "rfio", "closing %d",s) ;
-      (void)rfio_HsmIf_close(s);
+      HsmType = rfio_HsmIf_GetHsmType(s,NULL);
+      if ( HsmType > 0 ) {
+          int status = rfio_HsmIf_close(s);
+          if ( HsmType != RFIO_HSM_CNS ) {
+            END_TRACE();
+            return(status);
+          }
+      }
       (void) close(s) ;
    }
    END_TRACE();
