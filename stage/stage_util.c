@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.7 2001/10/01 11:38:15 jdurand Exp $
+ * $Id: stage_util.c,v 1.8 2001/10/28 08:02:02 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -296,10 +296,10 @@ int DLL_DECL stage_strtoi(output,nptr,endptr,base)
 		}
 		rc = -1;
 	} else {
-		if ((thislong <= INT_MIN) || (thislong >= INT_MAX)) {
-			if (thislong <= INT_MIN) {
+		if ((thislong < INT_MIN) || (thislong > INT_MAX)) {
+			if (thislong < INT_MIN) {
 				*output = INT_MIN;
-			} else if (thislong >= INT_MAX) {
+			} else if (thislong > INT_MAX) {
 				*output = INT_MAX;
 			} else {
 				*output = (int) thislong;
