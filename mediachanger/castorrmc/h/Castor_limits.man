@@ -1,8 +1,8 @@
-.\" $Id: Castor_limits.man,v 1.5 2001/01/19 08:36:30 baud Exp $
+.\" $Id: Castor_limits.man,v 1.6 2001/03/03 13:30:14 baud Exp $
 .\"
 .\" Man page for the CASTOR's limits header file Castor_limits.h
 .\"
-.TH CASTOR_LIMITS "4" "$Date: 2001/01/19 08:36:30 $" "CASTOR" "File Formats"
+.TH CASTOR_LIMITS "4" "$Date: 2001/03/03 13:30:14 $" "CASTOR" "File Formats"
 .SH NAME
 \fBCastor_limits\fP \- CASTOR internal limits
 
@@ -146,6 +146,11 @@ Default value: 999999
 maximum value for uid
 .br
 Default value: 0x7FFFFFFF
+.TP
+.B CA_MAXTAPELIBLEN
+maximum length for a tape library name
+.br
+Default value: 8
 .TP
 .B CA_MAXUNMLEN
 maximum length for a drive name
