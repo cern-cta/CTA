@@ -1,5 +1,5 @@
 /*
- * $Id: stage_protocol.h,v 1.2 2001/12/20 11:29:52 jdurand Exp $
+ * $Id: stage_protocol.h,v 1.3 2002/03/14 07:42:10 jdurand Exp $
  */
 
 #ifndef __stage_protocol_h
@@ -256,9 +256,9 @@
     output += unmarshall_STRINGN(ptr,(st)->u1.d.xfile,167);    \
     break;                                           \
   case 'm':                                          \
-    output += unmarshall_STRINGN(ptr,(st)->u1.m.xfile,250);    \
+    output += unmarshall_STRINGN(ptr,(st)->u1.m.xfile,167);    \
   case 'h':                                          \
-    output += unmarshall_STRINGN(ptr,(st)->u1.h.xfile,250);    \
+    output += unmarshall_STRINGN(ptr,(st)->u1.h.xfile,167);    \
     if (magic <= STGMAGIC2) {                        \
       if (from == STAGE_OUTPUT_MODE) {                 \
         output += unmarshall_STRINGN(ptr,(st)->u1.h.server,CA_MAXHOSTNAMELEN+1); \
@@ -336,9 +336,9 @@
     output += unmarshall_STRINGN(ptr,(st)->u1.d.xfile,167);    \
     break;                                           \
   case 'm':                                          \
-    output += unmarshall_STRINGN(ptr,(st)->u1.m.xfile,250);    \
+    output += unmarshall_STRINGN(ptr,(st)->u1.m.xfile,167);    \
   case 'h':                                          \
-    output += unmarshall_STRINGN(ptr,(st)->u1.h.xfile,250);    \
+    output += unmarshall_STRINGN(ptr,(st)->u1.h.xfile,167);    \
     if (magic <= STGMAGIC2) {                        \
       if (from == STAGE_OUTPUT_MODE) {                 \
         output += unmarshall_STRINGN(ptr,(st)->u1.h.server,CA_MAXHOSTNAMELEN+1); \
