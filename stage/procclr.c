@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.40 2001/12/10 16:18:30 jdurand Exp $
+ * $Id: procclr.c,v 1.41 2001/12/19 17:23:44 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.40 $ $Date: 2001/12/10 16:18:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.41 $ $Date: 2001/12/19 17:23:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -85,7 +85,10 @@ int check_delete _PROTO((struct stgcat_entry *, gid_t, uid_t, char *, char *, in
 
 extern u_signed64 stage_uniqueid;
 
-static int nbtpf;
+static int nbtpf = 0;
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+static int side_flag = 0;
+#endif
 
 void procclrreq(req_type, magic, req_data, clienthost)
 		 int req_type;
@@ -132,7 +135,37 @@ void procclrreq(req_type, magic, req_data, clienthost)
 	char trailing;
 	fseq_elem *fseq_list = NULL;
 	int inbtpf;
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+	int side = 0; /* The default */
+	int have_parsed_side = 0;
+#endif
+	static struct Coptions longopts[] =
+	{
+		{"conditionnal",       NO_ARGUMENT,        NULL,      'c'},
+		{"force",              NO_ARGUMENT,        NULL,      'F'},
+		{"grpuser",            NO_ARGUMENT,        NULL,      'G'},
+		{"host",               REQUIRED_ARGUMENT,  NULL,      'h'},
+		{"external_filename",  REQUIRED_ARGUMENT,  NULL,      'I'},
+		{"input",              NO_ARGUMENT,        NULL,      'i'},
+		{"link_name",          REQUIRED_ARGUMENT,  NULL,      'L'},
+		{"label_type",         REQUIRED_ARGUMENT,  NULL,      'l'},
+		{"migration_filename", REQUIRED_ARGUMENT,  NULL,      'M'},
+		{"minfree",            REQUIRED_ARGUMENT,  NULL,      'm'},
+		{"pathname",           REQUIRED_ARGUMENT,  NULL,      'P'},
+		{"poolname",           REQUIRED_ARGUMENT,  NULL,      'p'},
+		{"file_sequence",      REQUIRED_ARGUMENT,  NULL,      'q'},
+		{"file_range",         REQUIRED_ARGUMENT,  NULL,      'Q'},
+		{"r",                  REQUIRED_ARGUMENT,  NULL,      'r'},
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+		{"side",               REQUIRED_ARGUMENT, &side_flag,   1},
+#endif
+		{"vid",                REQUIRED_ARGUMENT,  NULL,      'V'},
+		{NULL,                 0,                  NULL,        0}
+	};
 
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+	side_flag = 0;
+#endif
 	c = 0;
 	save_rpfd = rpfd;
 	poolname[0] = '\0';
@@ -205,6 +238,12 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				}
 				logit[0] = '\0';
 				stcp_input.t_or_d = t_or_d;
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+				if ((flags & STAGE_SIDE) != STAGE_SIDE) {
+					/* We prepare the fact that there is no explicit side, otherwise stage_stcp2buf() would always log --side 0 */
+					if (t_or_d == 't') stcp_input.u1.t.side = -1;
+				}
+#endif
 				if (stage_stcp2buf(logit,BUFSIZ,&(stcp_input)) == 0 || serrno == SEUMSG2LONG) {
 					logit[BUFSIZ] = '\0';
 					stglogit("stage_clr","stcp[1/1] : %s\n",logit);
@@ -276,6 +315,23 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			silentflag = 1;
 			rpfd = -1;
 		}
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+		if ((flags & STAGE_SIDE) == STAGE_SIDE) {
+			side_flag++;
+			if (stcp_input.t_or_d == 't') {
+				if ((side = stcp_input.u1.t.side) < 0) {
+					sendrep (rpfd, MSG_ERR, STG06, "u1.t.side (STAGE_SIDE in the flags)");
+					c = USERR;
+					goto reply;
+				}
+			} else {
+				/* Hmmm.... STAGE_SIDE flag and not a 't' request might indicate something more wrong than expected */
+				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_SIDE flag is valid only for t_or_d == 't'\n");
+				c = USERR;
+				goto reply;
+			}
+		}
+#endif
 		/* Print the flags */
 		stglogflags(func,flags);
 	} else {
@@ -283,7 +339,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 
 		Coptind = 1;
 		Copterr = 0;
-		while ((c = Cgetopt (nargs, argv, "cFGh:I:iL:l:M:m:P:p:Q:q:r:V:")) != -1) {
+		while ((c = Cgetopt_long (nargs, argv, "cFGh:I:iL:l:M:m:P:p:q:Q:r:V:", longopts, NULL)) != -1) {
 			switch (c) {
 			case 'c':
 				cflag++;
@@ -353,6 +409,18 @@ void procclrreq(req_type, magic, req_data, clienthost)
 					numvid++;
 					q = strtok (NULL, ":");
 				}
+				break;
+			case 0:
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+				if ((side_flag != 0) && (! have_parsed_side)) {  /* Not yet done */
+					stage_strtoi(&side, Coptarg, &dp, 10);
+					if ((*dp != '\0') || (side < 0)) {
+						sendrep (rpfd, MSG_ERR, STG06, "--side");
+						errflg++;
+					}
+					have_parsed_side = 1;
+				}
+#endif
 				break;
 			}
 		}
@@ -487,9 +555,19 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				if (stcp->t_or_d != 't') continue;
 				if (strcmp (fseq, stcp->u1.t.fseq)) continue;
 			}
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+			if (side_flag) {
+				if (stcp->t_or_d != 't') continue;
+				if (side != stcp->u1.t.side) continue;
+			}
+#endif
 			if (fseq_list) {
-				for (inbtpf = 0; inbtpf < nbtpf; inbtpf++)
+				for (inbtpf = 0; inbtpf < nbtpf; inbtpf++) {
 					if (strcmp (stcp->u1.t.fseq, fseq_list[inbtpf]) == 0) break;
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+					if (stcp->u1.t.side != side) break;
+#endif
+				}
 				if (inbtpf == nbtpf) continue;
 			}
 			if (xfile) {
