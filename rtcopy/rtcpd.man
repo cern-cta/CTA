@@ -1,0 +1,138 @@
+.\" @(#)$RCSfile: rtcpd.man,v $ $Revision: 1.1 $ $Date: 2000/11/06 15:42:50 $ CERN CERN IT-PDP/DM Olof Barring
+.\" Copyright (C) 2000 by CERN IT-PDP/DM
+.\" All rights reserved
+.\"
+.nh
+.TH RTCPD 1 "$Date: 2000/11/06 15:42:50 $" CASTOR "RTCOPY daemon"
+.SH NAME
+rtcpd \- CASTOR remote tape copy daemon
+.SH SYNOPSIS
+.B rtcpd 
+.SH DESCRIPTION
+\fBrtcpd\fP is the CASTOR tape mover. It runs as a daemon on each tape
+server known to the CASTOR volume and queue manager (VDQM). An RTCOPY
+client application sends a volume request to VDQM using the \fBrtcpc(3)\fP 
+routine. The volume request consists of the visual ID of the volume (VID),
+the access mode (read/write), the address of the client (host + port number),
+the client login name and uid/gid. Once the request is eligible to run
+the VDQM server sends the volume request to the "rtcopy" service port on 
+the selected tape server and passes the tape volume request to it. The
+\fBrtcpd\fP daemon listens on the "rtcopy" service port and forks a subprocess
+upon each new connection. The child process receives the volume request and
+contacts the client to receive the full tape copy request.
+.PP
+If the tape copy request is correctly constructed, the \fBrtcpd\fP child
+process calls the \fBCtape\fP API to mount and position the tape. It also
+allocates large memory buffers (by default 128MB) for the data transfer. 
+If it is a tape write request and the tape blocksize has been specified,
+the \fBrtcpd\fP child process will also start to fill the memory buffers
+with input disk file data, while it is waiting for the tape to be mounted and
+positioned. \fBrtcpd\fP is highly multi-threaded and able to process 
+disk+network I/O in parallel with the tape I/O.
+
+.SH ENVIRONMENT
+The \fBrtcpd\fP daemon does not take any arguments. A set of configuration
+variables can be used to change default settings of \fBrtcpd\fP run parameters.
+New values of the configuration variables can be set either statically 
+through environment variables when starting the \fBrtcpd\fP daemon, or 
+dynamically (taken into account by all following request) by modifying the 
+local CASTOR configuration file "/etc/shift.conf".
+.PP
+The following configuration variables are available:
+.PP
+.B RTCOPYD_BUFSZ
+\- Size of individual memory buffers (default=4MB).
+.PP
+.B RTCOPYD_NB_BUFS
+\- Number of individual memory buffers (default=32). Note that the
+default amount of physical memory required per RTCOPY request is 128MB
+(32 times 4MB). For a tape server with 3 drives the minimum amount of
+physical memory required for RTCOPY is 384MB (3 times 128MB). The two
+parameters \fBRTCOPYD_BUFSZ\fP and \fBRTCOPYD_NB_BUFS\fP can be used
+to change the default memory usage.
+.PP
+.B RTCOPY_DEBUG
+\- Turn on printing of debug messages for each I/O operation to/from the
+memory buffers. \fBRTCOPY_LOGLEVEL\fP should be set to 7.
+.PP
+.B RTCOPY_LOGLEVEL
+\- Set logging level. Normal level (LOG_INFO) is 6 and debug level (LOG_DEBUG)
+is 7.
+.PP
+.B RTCOPYD_MAX_TPRETRY
+\- Set the maximum number of retries on retry-able tape operation errors 
+(mount/position). Default is 2.
+.PP
+.B RTCOPYD_MAX_CPRETRY
+\- Set the maximum number of retries on retry-able tape copy errors.
+Default is 2.
+.PP
+.B RTCOPY_PORT
+\- Set the RTCOPY listen port number. Default is 5003.
+.PP
+.B RTCPD_THREAD_POOL
+\- Set the disk I/O thread pool size. This is the number of disk I/O transfers
+which can run in parallel. Default is 3.
+.PP
+.B RTCOPYD_SELF_MONITOR
+\- Switch on the RTCOPY self monitor thread. The RTCOPY self monitoring thread
+is a mechanism to make sure that RTCOPY server processes always exit from
+blocking calls. The self monitoring time limits for various operations (e.g.
+tape mounts, tape position, disk file open, etc.) can be set through a
+dedicated set of configuration variables:
+.PP
+.B RTCOPYD_MOUNT_TIME
+\- is the self-monitor timeout to mount a volume. Default is 3600 seconds.
+.PP
+.B RTCOPYD_POSITION_TIME
+\- is the self-monitor timeout to position to a tape file. 
+Default is 3600 seconds.
+.PP
+.B RTCOPYD_OPEN_TIME
+\- is the self-monitor timeout open a file (disk or tape). 
+Default is 300 seconds.
+.PP 
+.B RTCOPYD_READ_TIME
+\- is the self-monitor timeout for a single read operation on a file 
+(disk or tape). Default is 300 seconds.
+.PP
+.B RTCOPYD_WRITE_TIME
+\- is the self-monitor timeout for a single write operation on a file 
+(disk or tape). Default is 300 seconds.
+.PP
+.B RTCOPYD_CLOSE_TIME
+\- is the self-monitor timeout to close a file (disk or tape). 
+Default is 300 seconds
+.PP
+.B RTCOPYD_STAGEUPDC_TIME
+\- is the self-monitor timeout for a single update of a stager catalogue.
+Default is 3600 seconds.
+.PP
+Each one of the listed environment variables can also be set through a
+corresponding CASTOR configuration parameter pair in "/etc/shift.conf".
+The CASTOR configuration parameters are constructed such that the part
+before the first underscore ("_") sets the configuration parameter "category" 
+and the remaining part sets the configuration parameter "name".
+For instance: the environment variable \fBRTCOPYD_NB_BUFS\fP corresponds to
+a "/etc/shift.conf" entry "\fBRTCOPYD   NB_BUFS\fP". The environment variables
+take precedence over "/etc/shift.conf" configuration parameters.
+
+There are a few CASTOR configuration parameters for which there is no
+corresponding environment variable:
+.PP
+.B ACCT RTCOPY
+\- toggle RTCOPY accounting on ("YES") or off ("NO").
+.PP
+.B RTCOPYD <dgn>_ERRACTION
+\- modifies the default error action for tape media errors for the specified
+device group. For instance: \fBRTCOPYD SD3R_ERRACTION\fP sets the error
+action for drives in the SD3R device group. The value has to be a decimal
+number representing a combination of RTCOPY severity flags, see \fBrtcpc(3)\fP.
+As an example: \fBRTCOPYD SD3R_ERRACTION 2056\fP forces a immediate
+failure with \fBRTCP_NORETRY\fP severity in case of tape media errors
+(2056 == \fBRTCP_FAILED|RTCP_NORETRY\fP).
+
+.SH SEE ALSO
+.BI rtcpc(3)
+
+
