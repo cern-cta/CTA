@@ -102,14 +102,22 @@ RTCOPYDIR = rtcopy
 #endif
 #endif
 #if UseVmgr
-#if BuildVmgrClient != YES
-#undef BuildVmgrClient
-#define BuildVmgrClient	YES
+#if BuildVolumeMgrClient != YES
+#undef BuildVolumeMgrClient
+#define BuildVolumeMgrClient	YES
 #endif
 #endif
 #if BuildVdqmClient != YES
 #undef BuildVdqmClient
 #define BuildVdqmClient	YES
+#endif
+#if BuildDlfClient != YES
+#undef BuildDlfClient
+#define BuildDlfClient  YES
+#endif
+#if BuildRfioClient != YES
+#undef BuildRfioClient
+#define BuildRfioClient YES
 #endif
 #if BuildRtcopyClient
 #if BuildLib != YES
