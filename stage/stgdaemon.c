@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.107 2001/02/13 15:54:37 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.108 2001/02/13 18:14:06 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.107 $ $Date: 2001/02/13 15:54:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.108 $ $Date: 2001/02/13 18:14:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -2310,7 +2310,7 @@ void dellink(stpp)
 	if ((char *)stpp != p2) {	/* not last path in the list */
 		p1 = (char *)stpp + sizeof(struct stgpath_entry);
 		n = p2 + sizeof(struct stgpath_entry) - p1;
-		memcpy ((char *)stpp, p1, n);
+		memmove ((char *)stpp, p1, n);
 	}
 	memset (p2, 0, sizeof(struct stgpath_entry));
 }
