@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_errmsg.c,v $ $Revision: 1.2 $ $Date: 1999/09/20 06:53:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_errmsg.c,v $ $Revision: 1.3 $ $Date: 2000/05/03 06:14:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 #include <varargs.h>
 #include <sys/types.h>
 #include "Ctape.h"
