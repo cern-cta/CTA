@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stagecat.man,v $ $Revision: 1.9 $ $Date: 2002/05/02 07:47:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagecat.man,v $ $Revision: 1.10 $ $Date: 2002/05/02 07:49:11 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECAT l "$Date: 2002/05/02 07:47:11 $"
+.TH STAGECAT l "$Date: 2002/05/02 07:49:11 $"
 .SH NAME
 stagecat \- put an entry in the stage daemon catalog for an existing file
 .SH SYNOPSIS
@@ -277,7 +277,7 @@ Specifies that the tape copy operation was executed on the tape server
 .BI \-s " size"
 If specified, the number of Mbytes was limited to
 .I size 
-when the data was copied from tape to disk. Only digits followed by eventual unit are accepted. The unit can be 'b' for byte, 'k' for kilo-byte, 'M' for Mega-byte (default), 'G' for Gige-byte, 'T' for Tera-byte and 'P' for Peta-byte.
+when the data was copied from tape to disk. Only digits followed by eventual unit are accepted. The unit can be 'b' for byte, 'k' for kilo-byte, 'M' for Mega-byte (default), 'G' for Giga-byte, 'T' for Tera-byte and 'P' for Peta-byte.
 .TP
 .BI \-V " vid"
 Specifies the tape 

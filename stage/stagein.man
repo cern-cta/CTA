@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stagein.man,v $ $Revision: 1.20 $ $Date: 2002/05/02 07:47:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagein.man,v $ $Revision: 1.21 $ $Date: 2002/05/02 07:49:10 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEIN l "$Date: 2002/05/02 07:47:11 $"
+.TH STAGEIN l "$Date: 2002/05/02 07:49:10 $"
 .SH NAME
 stagein \- allocate space in a disk pool and copy files from tape to disk or
 from disk to disk
@@ -434,7 +434,7 @@ Specifies that the tape copy operation has to be issued on the tape server
 If specified, only 
 .I size 
 Mbytes will be copied.
-Only digits followed by eventual unit are accepted. The unit can be 'b' for byte, 'k' for kilo-byte, 'M' for Mega-byte (default), 'G' for Gige-byte, 'T' for Tera-byte and 'P' for Peta-byte.
+Only digits followed by eventual unit are accepted. The unit can be 'b' for byte, 'k' for kilo-byte, 'M' for Mega-byte (default), 'G' for Giga-byte, 'T' for Tera-byte and 'P' for Peta-byte.
 In the case of multiple files, a series of size values may be given,
 separated by ":"s. These apply to the tape files in the specified order.
 If there are more files than size values, the last one will be used for all
