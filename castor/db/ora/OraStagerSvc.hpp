@@ -250,6 +250,12 @@ namespace castor {
         /// SQL statement object for function bestTapeCopyForStream
         oracle::occi::Statement *m_bestTapeCopyForStreamStatement;
 
+        /// SQL statement for function bestFileSystemForDiskCopy
+        static const std::string s_bestFileSystemForDiskCopyStatementString;
+        
+        /// SQL statement object for function bestFileSystemForDiskCopy
+        oracle::occi::Statement *m_bestFileSystemForDiskCopyStatement;
+
       }; // end of class OraStagerSvc
 
     } // end of namespace ora
