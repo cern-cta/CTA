@@ -143,8 +143,8 @@ static int CheckDgn(char *dgn) {
     dgn_element_t *tmp = NULL;
     int found,rc;
 
-    if ( dgn == NULL ) {
-        vdqm_SetError(SEINTERNAL);
+    if ( dgn == NULL || *dgn == '\0' ) {
+        vdqm_SetError(EVQDGNINVL);
         return(-1);
     }
 
@@ -170,8 +170,8 @@ static int SetDgnContext(dgn_element_t **dgn_context,const char *dgn) {
     dgn_element_t *tmp = NULL;
     int found,rc;
     
-    if ( dgn == NULL || dgn_context == NULL) {
-        vdqm_SetError(SEINTERNAL);
+    if ( dgn == NULL || *dgn == '\0' || dgn_context == NULL) {
+        vdqm_SetError(EVQDGNINVL);
         return(-1);
     }
     
@@ -1481,7 +1481,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
         if ( rc < 0 || drvrec == NULL ) {
             log(LOG_ERR,"vdqm_NewDrvReq(): Query request for unknown drive %s@%s\n",DrvReq->drive,DrvReq->server);
             FreeDgnContext(&dgn_context);
-            vdqm_SetError(ENOENT);
+            vdqm_SetError(EVQNOSDRV);
             return(-1);
         }
         *DrvReq = drvrec->drv;
@@ -2119,7 +2119,7 @@ int vdqm_DedicateDrv(vdqmDrvReq_t *DrvReq) {
         log(LOG_ERR,"vdqm_DedicateDrv(): unknown drive %s@%s\n",
             DrvReq->drive,DrvReq->server);
         FreeDgnContext(&dgn_context);
-        vdqm_SetError(ENOENT);
+        vdqm_SetError(EVQNOSDRV);
         return(-1);
     }
     if ( *DrvReq->dedicate == '\0' ) {
@@ -2142,8 +2142,14 @@ int vdqm_GetQueuePos(vdqmVolReq_t *VolReq) {
     if ( VolReq == NULL ) return(-1);
     
     /*
-     * Set Device Group Name context
+     * Set Device Group Name context. First check that DGN exists.
      */
+    rc = CheckDgn(VolReq->dgn);
+    if ( rc == -1 ) return(-1);
+    if ( rc == 0 ) {
+        vdqm_SetError(EVQDGNINVL);
+        return(-1);
+    }
     rc = SetDgnContext(&dgn_context,VolReq->dgn);
     if ( rc == -1 ) return(-1);
     
@@ -2155,6 +2161,7 @@ int vdqm_GetQueuePos(vdqmVolReq_t *VolReq) {
     if ( volrec == NULL ) {
         log(LOG_ERR,"vdqm_GetQueuePos() request not found\n");
         FreeDgnContext(&dgn_context);
+        vdqm_SetError(EVQNOSVOL);
         return(-1);
     }
     rc = VolRecQueuePos(dgn_context,volrec);
