@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.24 2002/05/06 17:14:40 jdurand Exp $
+ * $Id: stage_constants.h,v 1.25 2002/05/15 06:38:56 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -149,9 +149,9 @@
 #endif
 #define UNIQUEID 8
 
-/* ====================================== */
-/* stage configuration status bit values  */
-/* ====================================== */
+/* ======================== */
+/* stage status bit values  */
+/* ======================== */
 #ifdef  NOSTAGED
 #undef  NOSTAGED
 #endif
@@ -231,8 +231,23 @@
 #undef  WAITING_NS
 #endif
 #define	WAITING_NS    0x040000   /* file waiting for an entry in the HSM name server */
+
+#ifdef  STAGE_RDONLY
+#undef  STAGE_RDONLY
+#endif
 #define	STAGE_RDONLY  0x100000   /* O_RDONLY file waiting for another being migrated */
 
+/* ======================== */
+/* stage status bit values  */
+/* ======================== */
+#ifdef  STAGE_AUTO_TPPOOL
+#undef  STAGE_AUTO_TPPOOL
+#endif
+#define STAGE_AUTO_TPPOOL 1      /* Says if this castor file got a tape pool automatically or explicitely */
+
+/* =================== */
+/* stage message types */
+/* =================== */
 #ifdef  MSG_OUT
 #undef  MSG_OUT
 #endif
@@ -455,6 +470,7 @@
 #define STAGE_HSM_ENOENT_OK     CONSTLL(0x020000000000)  /* --enoent_ok  [stage_wrt]            */
 #define STAGE_NOLINKCHECK       CONSTLL(0x040000000000)  /* --nolinkcheck [stage_iowc,stage_updc,stage_clr] */
 #define STAGE_NORETRY           CONSTLL(0x100000000000)  /* --noretry  [stage_iowc]             */
+#define STAGE_VOLATILE_TPPOOL   CONSTLL(0x200000000000)  /* --volatile_tppool  [stage_iowc]     */
 
 /* ======================================================================= */
 /* =================== DEFINITION OF API METHODS ========================= */
