@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.67 2003/04/29 15:39:15 jdurand Exp $
+ * $Id: procclr.c,v 1.68 2003/05/12 12:36:00 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.67 $ $Date: 2003/04/29 15:39:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.68 $ $Date: 2003/05/12 12:36:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -86,7 +86,7 @@ typedef struct _stage_times _stage_times_t;
 
 void procclrreq _PROTO((int, int, char *, char *));
 
-extern char func[16];
+extern char func[];
 extern int nbcat_ent;
 extern int reqid;
 extern int rpfd;
@@ -103,6 +103,7 @@ extern int sendrep _PROTO(());
 #endif
 extern int stglogit _PROTO(());
 extern int isvalidpool _PROTO((char *));
+extern int ismetapoolpool _PROTO((char *));
 extern void dellink _PROTO((struct stgpath_entry *));
 extern int enoughfreespace _PROTO((char *, int));
 extern int checklastaccess _PROTO((char *, time_t));
@@ -322,7 +323,8 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			}
 			if (stcp_input.poolname[0] != '\0') {
 				if (strcmp (stcp_input.poolname, "NOPOOL") == 0 ||
-					isvalidpool (stcp_input.poolname)) {
+					isvalidpool (stcp_input.poolname) ||
+					ismetapool  (stcp_input.poolname)) {
 					strcpy (poolname, stcp_input.poolname);
 				} else {
 					sendrep (&rpfd, MSG_ERR, STG32, stcp_input.poolname);
@@ -423,7 +425,8 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				break;
 			case 'p':
 				if (strcmp (Coptarg, "NOPOOL") == 0 ||
-					isvalidpool (Coptarg)) {
+					isvalidpool (Coptarg) ||
+					ismetapool  (Coptarg)) {
 					strcpy (poolname, Coptarg);
 				} else {
 					sendrep (&rpfd, MSG_ERR, STG32, Coptarg);
@@ -571,12 +574,15 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			goto reply;
 		}
 	} else {
+		int is_metapool = ismetapool(poolname);
 		for (stcp = stcs; stcp < stce; stcp++) {
 			if (stcp->reqid == 0) break;
 			if (this_reqid && (stcp->reqid != this_reqid)) continue;
 			if (poolflag < 0) {	/* -p NOPOOL */
 				if (stcp->poolname[0]) continue;
-			} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
+			} else if (is_metapool && ! havemetapool(stcp->poolname,poolname)) {
+				continue;
+			} else if ((! is_metapool) && *poolname && strcmp (poolname, stcp->poolname)) continue;
 			if (numvid) {
 				if (stcp->t_or_d != 't') continue;
 				for (j = 0; j < numvid; j++)
