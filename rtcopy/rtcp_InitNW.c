@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_InitNW.c,v $ $Revision: 1.1 $ $Date: 1999/11/29 11:21:33 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "$Id";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -36,7 +36,6 @@ WSADATA wsadata;
 
 typedef enum rtcp_type {client,server} rtcp_type_t;
 
-extern void (*rtcp_log)(int, char *, ...);
 
 int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type) {
     struct sockaddr_in sin ; /* Internet address */
@@ -95,6 +94,7 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type) {
          *        (4) compiler constant
          *        (5) -1 : return error
          */
+#if !defined(DEBUG) && !defined(_DEBUG)
         if ( (p = getenv("RTCOPY_PORT")) != (char *)NULL ) {
             rtcp_port = atoi(p);
         } else if ( (p = getconfent("RTCOPY","PORT",0)) != (char *)NULL ) {
@@ -106,6 +106,9 @@ int rtcp_InitNW(SOCKET **ListenSocket, int *port, rtcp_type_t type) {
             rtcp_port = RTCOPY_PORT;
 #endif /* RTCOPY_PORT */
         }
+#else /* !DEBUG && !_DEBUG */
+        rtcp_port = RTCOPY_PORT_DEBUG;
+#endif /* !DEBUG && !_DEBUG */
     } else {
         /* 
          * Client just wants to listen to an arbitrary port
