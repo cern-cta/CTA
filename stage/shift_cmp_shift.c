@@ -1,5 +1,5 @@
 /*
- * $Id: shift_cmp_shift.c,v 1.2 2000/01/17 15:08:58 jdurand Exp $
+ * $Id: shift_cmp_shift.c,v 1.3 2000/01/26 18:30:55 jdurand Exp $
  */
 
 /* ============== */
@@ -228,7 +228,7 @@ int main(argc, argv)
              ,strerror(errno));
       return(EXIT_FAILURE);
     }
-    /* - stgcat_in has to be length > 0 */
+    /* - stgcat_in1 has to be length > 0 */
     if (stgcat_in1_statbuff.st_size <= 0) {
       printf("### %s is of zero size !\n"
              ,stgcat_in1);
@@ -322,6 +322,7 @@ int cmp_stgcat() {
            (int) (stgcat_in1_statbuff.st_size % sizeof(struct stgcat_entry_old)));
     printf("### Do you really want to proceed (y/n) ? ");
     answer = getchar();
+    fflush(stdin);
     if (answer != 'y' && answer != 'Y') {
       return(-1);
     }
@@ -334,6 +335,7 @@ int cmp_stgcat() {
            (int) (stgcat_in2_statbuff.st_size % sizeof(struct stgcat_entry_old)));
     printf("### Do you really want to proceed (y/n) ? ");
     answer = getchar();
+    fflush(stdin);
     if (answer != 'y' && answer != 'Y') {
       return(-1);
     }
@@ -347,6 +349,7 @@ int cmp_stgcat() {
            (int) stgcat_in2_statbuff.st_size);
     printf("### Do you really want to proceed (y/n) ? ");
     answer = getchar();
+    fflush(stdin);
     if (answer != 'y' && answer != 'Y') {
       return(-1);
     }
@@ -470,6 +473,7 @@ int cmp_stgpath() {
            (int) (stgpath_in1_statbuff.st_size % sizeof(struct stgpath_entry_old)));
     printf("### Do you really want to proceed (y/n) ? ");
     answer = getchar();
+    fflush(stdin);
     if (answer != 'y' && answer != 'Y') {
       return(-1);
     }
@@ -482,6 +486,7 @@ int cmp_stgpath() {
            (int) (stgpath_in2_statbuff.st_size % sizeof(struct stgpath_entry_old)));
     printf("### Do you really want to proceed (y/n) ? ");
     answer = getchar();
+    fflush(stdin);
     if (answer != 'y' && answer != 'Y') {
       return(-1);
     }
@@ -495,6 +500,7 @@ int cmp_stgpath() {
            (int) stgpath_in2_statbuff.st_size);
     printf("### Do you really want to proceed (y/n) ? ");
     answer = getchar();
+    fflush(stdin);
     if (answer != 'y' && answer != 'Y') {
       return(-1);
     }

@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.13 2000/01/26 17:21:26 jdurand Exp $
+ * $Id: stgconvert.c,v 1.14 2000/01/26 18:30:56 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.13 $ $Date: 2000/01/26 17:21:26 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.14 $ $Date: 2000/01/26 18:30:56 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -348,7 +348,7 @@ int main(argc,argv)
     }
   }
 
-  /* If the user said CASTOR/DISK -> CASTOR/CDB conversion and one of those files is of length > 0   */
+  /* If the user said CASTOR/CDB -> CASTOR/DISK conversion and one of those files is of length > 0   */
   /* he will overwrite existing non-zero length files. We then check if that's really what */
   /* he wants to do.                                                                       */
   if (convert_direction == CASTORCDB_TO_CASTORDISK) {

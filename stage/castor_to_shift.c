@@ -1,5 +1,5 @@
 /*
- * $Id: castor_to_shift.c,v 1.2 2000/01/17 15:08:12 jdurand Exp $
+ * $Id: castor_to_shift.c,v 1.3 2000/01/26 18:30:54 jdurand Exp $
  */
 
 /* ============== */
@@ -46,6 +46,7 @@
            #member,stcp_old.reqid,                                   \
            sizeof(stcp_castor.member),sizeof(stcp_old.member));      \
     this_answer = getchar();                                         \
+    fflush(stdin);                                                   \
     if (this_answer != 'y' && this_answer != 'Y') {                  \
       continue;                                                      \
     }                                                                \
@@ -63,6 +64,7 @@
             #member,stcp_old.reqid,                                  \
            sizeof(stcp_castor.member),strlen(stcp_old.member) + 1);  \
     this_answer = getchar();                                         \
+    fflush(stdin);                                                   \
     if (this_answer != 'y' && this_answer != 'Y') {                  \
       continue;                                                      \
     }                                                                \
@@ -181,6 +183,7 @@ int main(argc, argv)
              u64tostr((u_signed64) stgcat_out_statbuff.st_size, tmpbuf, 0));
       printf("### Do you really want to proceed (y/n) ? ");
       answer = getchar();
+      fflush(stdin);
       if (answer != 'y' && answer != 'Y') {
         return(EXIT_FAILURE);
       }
@@ -227,6 +230,7 @@ int main(argc, argv)
              u64tostr((u_signed64) stgpath_out_statbuff.st_size, tmpbuf, 0));
       printf("### Do you really want to proceed (y/n) ? ");
       answer = getchar();
+      fflush(stdin);
       if (answer != 'y' && answer != 'Y') {
         return(EXIT_FAILURE);
       }
@@ -274,6 +278,7 @@ int convert_stgcat() {
            (int) (stgcat_in_statbuff.st_size % sizeof(struct stgcat_entry)));
     printf("### Do you really want to proceed (y/n) ? ");
     answer = getchar();
+    fflush(stdin);
     if (answer != 'y' && answer != 'Y') {
       return(-1);
     }
@@ -290,7 +295,7 @@ int convert_stgcat() {
     }
     /* Convert the CASTOR entry to a SHIFT one */
     if (i == 0 || i % frequency == 0 || i == imax) {
-      printf("--> (%5d/%5d) Doing reqid = %d\n",i,imax,stcp_castor.reqid);
+      printf("--> (%5d/%5d) Doing reqid = %d\n",i+1,imax+1,stcp_castor.reqid);
     }
     memset((char *) &stcp_old, 0, sizeof(struct stgcat_entry_old));
     CHECK_VAR_SIZE(blksize);
@@ -343,6 +348,7 @@ int convert_stgcat() {
       strcpy(stcp_old.u1.t.den,    stcp_castor.u1.t.den);
       CHECK_STRING_SIZE(u1.t.dgn);
       strcpy(stcp_old.u1.t.dgn,    stcp_castor.u1.t.dgn);
+      /* printf("Castor't u1.t.dgn : \"%s\" -> Shift's u1.t.dgn : \"%s\"\n",stcp_castor.u1.t.dgn,stcp_old.u1.t.dgn); */
       CHECK_STRING_SIZE(u1.t.fid);
       strcpy(stcp_old.u1.t.fid,    stcp_castor.u1.t.fid);
       CHECK_RAW_SIZE(u1.t.filstat);
@@ -405,6 +411,7 @@ int convert_stgpath() {
            (int) (stgpath_in_statbuff.st_size % sizeof(struct stgpath_entry)));
     printf("### Do you really want to proceed (y/n) ? ");
     answer = getchar();
+    fflush(stdin);
     if (answer != 'y' && answer != 'Y') {
       return(-1);
     }
@@ -421,7 +428,7 @@ int convert_stgpath() {
     }
     /* Convert the CASTOR entry to a SHIFT one */
     if (i == 0 || i % frequency == 0 || i == imax) {
-      printf("--> (%5d/%5d) Doing reqid = %d\n",i,imax,stcp_castor.reqid);
+      printf("--> (%5d/%5d) Doing reqid = %d\n",i+1,imax+1,stcp_castor.reqid);
     }
     memset((char *) &stcp_old, 0, sizeof(struct stgpath_entry_old));
     CHECK_VAR_SIZE(reqid);
