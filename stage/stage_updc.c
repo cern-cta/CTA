@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.15 2001/03/21 15:28:46 jdurand Exp $
+ * $Id: stage_updc.c,v 1.16 2001/06/08 15:18:56 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.15 $ $Date: 2001/03/21 15:28:46 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.16 $ $Date: 2001/06/08 15:18:56 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -56,7 +56,7 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
   int c;
   char *dp;
   int errflg = 0;
-  gid_t gid;
+  gid_t egid;
   int key;
   int msglen;
   int nargs;
@@ -72,17 +72,17 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
   size_t sendbuf_size;
   char *stghost;
   char tmpbuf[21];
-  uid_t uid;
+  uid_t euid;
   char Zparm[CA_MAXSTGRIDLEN+1];
   char *command = "stage_updc_filcp";
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
   char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
 
-  uid = geteuid();
-  gid = getegid();
+  euid = geteuid();
+  egid = getegid();
 #if defined(_WIN32)
-  if (uid < 0 || gid < 0) {
+  if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
     serrno = SENOMAPFND;
     return (-1);
   }
@@ -125,15 +125,15 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
     return (-1);
   }
 
-  if ((pw = Cgetpwuid (uid)) == NULL) {
-    serrno = SENOMAPFND;
+  if ((pw = Cgetpwuid (euid)) == NULL) {
+    serrno = SEUSERUNKN;
     return (-1);
   }
 
   /* Check how many bytes we need */
   sendbuf_size = 3 * LONGSIZE;                       /* Request header */
   sendbuf_size += strlen(pw->pw_name) + 1;           /* Login name */
-  sendbuf_size += 3 * WORDSIZE;                      /* uid, gid, nargs */
+  sendbuf_size += 3 * WORDSIZE;                      /* euid, egid, nargs */
   sendbuf_size += strlen(command) + 1;               /* Command name */
   sendbuf_size += strlen("-Z") + strlen(stageid) + 2; /* -Z option and value */
   if (subreqid >= 0) {
@@ -206,8 +206,8 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
 
   /* Build request body */
   marshall_STRING (sbp, pw->pw_name);	/* login name */
-  marshall_WORD (sbp, uid);
-  marshall_WORD (sbp, gid);
+  marshall_WORD (sbp, euid);
+  marshall_WORD (sbp, egid);
   q2 = sbp;	/* save pointer. The next field will be updated */
   nargs = 1;
   marshall_WORD (sbp, nargs);
@@ -326,7 +326,7 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
   int c;
   char *dp;
   int errflg = 0;
-  gid_t gid;
+  gid_t egid;
   int key;
   int msglen;
   int n;
@@ -343,17 +343,17 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
   size_t sendbuf_size;
   char *stghost;
   char tmpbuf[21];
-  uid_t uid;
+  uid_t euid;
   char Zparm[CA_MAXSTGRIDLEN+1];
   char *command = "stage_updc_tppos";
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
   char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
 
-  uid = geteuid();
-  gid = getegid();
+  euid = geteuid();
+  egid = getegid();
 #if defined(_WIN32)
-  if (uid < 0 || gid < 0) {
+  if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
     serrno = SENOMAPFND;
     return (-1);
   }
@@ -396,15 +396,15 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
     return (-1);
   }
 
-  if ((pw = Cgetpwuid (uid)) == NULL) {
-    serrno = SENOMAPFND;
+  if ((pw = Cgetpwuid (euid)) == NULL) {
+    serrno = SEUSERUNKN;
     return (-1);
   }
 
   /* Check how many bytes we need */
   sendbuf_size = 3 * LONGSIZE;                        /* Request header */
   sendbuf_size += strlen(pw->pw_name) + 1;            /* Login name */
-  sendbuf_size += 3 * LONGSIZE;                       /* uid, gid, nargs */
+  sendbuf_size += 3 * LONGSIZE;                       /* euid, egid, nargs */
   sendbuf_size += strlen(command) + 1;                /* Command name */
   sendbuf_size += strlen("-Z") + strlen(stageid) + 2; /* -Z option and value */
   if (subreqid >= 0) {
@@ -462,8 +462,8 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
   /* Build request body */
 
   marshall_STRING (sbp, pw->pw_name);	/* login name */
-  marshall_WORD (sbp, uid);
-  marshall_WORD (sbp, gid);
+  marshall_WORD (sbp, euid);
+  marshall_WORD (sbp, egid);
   q2 = sbp;	/* save pointer. The next field will be updated */
   nargs = 1;
   marshall_WORD (sbp, nargs);
@@ -548,7 +548,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
      stage_hsm_t *hsmstruct;
 {
   int c;
-  gid_t gid;
+  gid_t egid;
   int msglen;
   int nargs;
   int ntries = 0;
@@ -558,7 +558,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   char *sbp;
   char *sendbuf;
   size_t sendbuf_size;
-  uid_t uid;
+  uid_t euid;
   stage_hsm_t *hsm;
   char *command = "stage_updc_user";
   int nupath;
@@ -568,10 +568,10 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
     return (-1);
   }
   
-  uid = geteuid();
-  gid = getegid();
+  euid = geteuid();
+  egid = getegid();
 #if defined(_WIN32)
-  if (uid < 0 || gid < 0) {
+  if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
     serrno = SENOMAPFND;
     return (-1);
   }
@@ -580,15 +580,15 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   /* Init repbuf to null */
   repbuf[0] = '\0';
 
-  if ((pw = Cgetpwuid (uid)) == NULL) {
-    serrno = SENOMAPFND;
+  if ((pw = Cgetpwuid (euid)) == NULL) {
+    serrno = SEUSERUNKN;
     return (-1);
   }
 
   /* How many bytes do we need ? */
   sendbuf_size = 3 * LONGSIZE;                     /* Request header */
   sendbuf_size += strlen(pw->pw_name) + 1;         /* Login name */
-  sendbuf_size += 3 * WORDSIZE;                    /* uid, gid and nargs */
+  sendbuf_size += 3 * WORDSIZE;                    /* euid, egid and nargs */
   sendbuf_size += strlen(command) + 1;                /* Command name */
 
   /* Count the number of link files */
@@ -625,8 +625,8 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   /* Build request body */
 
   marshall_STRING (sbp, pw->pw_name);	/* login name */
-  marshall_WORD (sbp, uid);
-  marshall_WORD (sbp, gid);
+  marshall_WORD (sbp, euid);
+  marshall_WORD (sbp, egid);
   q2 = sbp;	/* save pointer. The next field will be updated */
   nargs = 1;
   marshall_WORD (sbp, nargs);
@@ -660,7 +660,7 @@ int DLL_DECL stage_updc_error(stghost,copyrc,hsmstruct)
      stage_hsm_t *hsmstruct;
 {
   int c;
-  gid_t gid;
+  gid_t egid;
   int msglen;
   int nargs;
   int ntries = 0;
@@ -670,7 +670,7 @@ int DLL_DECL stage_updc_error(stghost,copyrc,hsmstruct)
   char *sbp;
   char *sendbuf;
   size_t sendbuf_size;
-  uid_t uid;
+  uid_t euid;
   stage_hsm_t *hsm;
   char *command = "stage_updc_error";
   int nupath;
@@ -681,10 +681,10 @@ int DLL_DECL stage_updc_error(stghost,copyrc,hsmstruct)
     return (-1);
   }
   
-  uid = geteuid();
-  gid = getegid();
+  euid = geteuid();
+  egid = getegid();
 #if defined(_WIN32)
-  if (uid < 0 || gid < 0) {
+  if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
     serrno = SENOMAPFND;
     return (-1);
   }
@@ -693,15 +693,15 @@ int DLL_DECL stage_updc_error(stghost,copyrc,hsmstruct)
   /* Init repbuf to null */
   repbuf[0] = '\0';
 
-  if ((pw = Cgetpwuid (uid)) == NULL) {
-    serrno = SENOMAPFND;
+  if ((pw = Cgetpwuid (euid)) == NULL) {
+    serrno = SEUSERUNKN;
     return (-1);
   }
 
   /* How many bytes do we need ? */
   sendbuf_size = 3 * LONGSIZE;                     /* Request header */
   sendbuf_size += strlen(pw->pw_name) + 1;         /* Login name */
-  sendbuf_size += 3 * WORDSIZE;                    /* uid, gid and nargs */
+  sendbuf_size += 3 * WORDSIZE;                    /* euid, egid and nargs */
   sendbuf_size += strlen(command) + 1;                /* Command name */
 
   if (copyrc >= 0) {
@@ -743,8 +743,8 @@ int DLL_DECL stage_updc_error(stghost,copyrc,hsmstruct)
   /* Build request body */
 
   marshall_STRING (sbp, pw->pw_name);	/* login name */
-  marshall_WORD (sbp, uid);
-  marshall_WORD (sbp, gid);
+  marshall_WORD (sbp, euid);
+  marshall_WORD (sbp, egid);
   q2 = sbp;	/* save pointer. The next field will be updated */
   nargs = 1;
   marshall_WORD (sbp, nargs);
@@ -784,7 +784,7 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
      stage_hsm_t *hsmstruct;
 {
   int c;
-  gid_t gid;
+  gid_t egid;
   int msglen;
   int nargs;
   int ntries = 0;
@@ -794,7 +794,7 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   char *sbp;
   char *sendbuf;
   size_t sendbuf_size;
-  uid_t uid;
+  uid_t euid;
   stage_hsm_t *hsm;
   char *command = "stage_updc_filchg";
   int pid;
@@ -805,10 +805,10 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
     return (-1);
   }
   
-  uid = geteuid();
-  gid = getegid();
+  euid = geteuid();
+  egid = getegid();
 #if defined(_WIN32)
-  if (uid < 0 || gid < 0) {
+  if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
     serrno = SENOMAPFND;
     return (-1);
   }
@@ -817,15 +817,15 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   /* Init repbuf to null */
   repbuf[0] = '\0';
 
-  if ((pw = Cgetpwuid (uid)) == NULL) {
-    serrno = SENOMAPFND;
+  if ((pw = Cgetpwuid (euid)) == NULL) {
+    serrno = SEUSERUNKN;
     return (-1);
   }
 
   /* How many bytes do we need ? */
   sendbuf_size = 3 * LONGSIZE;                     /* Request header */
   sendbuf_size += strlen(pw->pw_name) + 1;         /* Login name */
-  sendbuf_size += 4 * WORDSIZE;                    /* uid, gid, pid and nargs */
+  sendbuf_size += 4 * WORDSIZE;                    /* euid, egid, pid and nargs */
   sendbuf_size += strlen(command) + 1;                /* Command name */
 
   /* Count the number of link files */
@@ -862,8 +862,8 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   /* Build request body */
 
   marshall_STRING (sbp, pw->pw_name);	/* login name */
-  marshall_WORD (sbp, uid);
-  marshall_WORD (sbp, gid);
+  marshall_WORD (sbp, euid);
+  marshall_WORD (sbp, egid);
   pid = getpid();
   marshall_WORD (sbp, pid);
   q2 = sbp;	/* save pointer. The next field will be updated */
