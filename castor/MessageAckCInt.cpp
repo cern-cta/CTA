@@ -161,4 +161,21 @@ extern "C" {
     return 0;
   }
 
+  //----------------------------------------------------------------------------
+  // C_MessageAck_requestId
+  //----------------------------------------------------------------------------
+  int C_MessageAck_requestId(castor::MessageAck* instance, const char** var) {
+    *var = instance->requestId().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // C_MessageAck_setRequestId
+  //----------------------------------------------------------------------------
+  int C_MessageAck_setRequestId(castor::MessageAck* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setRequestId(snew_var);
+    return 0;
+  }
+
 } // End of extern "C"

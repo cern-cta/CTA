@@ -40,6 +40,7 @@ castor::MessageAck::MessageAck() throw() :
   m_status(false),
   m_errorCode(0),
   m_errorMessage(""),
+  m_requestId(""),
   m_id() {
 };
 
@@ -65,6 +66,7 @@ void castor::MessageAck::print(std::ostream& stream,
   stream << indent << "status : " << m_status << std::endl;
   stream << indent << "errorCode : " << m_errorCode << std::endl;
   stream << indent << "errorMessage : " << m_errorMessage << std::endl;
+  stream << indent << "requestId : " << m_requestId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

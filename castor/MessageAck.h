@@ -98,32 +98,50 @@ int C_MessageAck_clone(struct C_MessageAck_t* instance,
 
 /**
  * Get the value of status
+ * Status of the request
  */
 int C_MessageAck_status(struct C_MessageAck_t* instance, int* var);
 
 /**
  * Set the value of status
+ * Status of the request
  */
 int C_MessageAck_setStatus(struct C_MessageAck_t* instance, int new_var);
 
 /**
  * Get the value of errorCode
+ * Code of the error if status shows there is one
  */
 int C_MessageAck_errorCode(struct C_MessageAck_t* instance, int* var);
 
 /**
  * Set the value of errorCode
+ * Code of the error if status shows there is one
  */
 int C_MessageAck_setErrorCode(struct C_MessageAck_t* instance, int new_var);
 
 /**
  * Get the value of errorMessage
+ * Error message if status shows there is an error
  */
 int C_MessageAck_errorMessage(struct C_MessageAck_t* instance, const char** var);
 
 /**
  * Set the value of errorMessage
+ * Error message if status shows there is an error
  */
 int C_MessageAck_setErrorMessage(struct C_MessageAck_t* instance, const char* new_var);
+
+/**
+ * Get the value of requestId
+ * Cuuid associated to the request in case there was no error
+ */
+int C_MessageAck_requestId(struct C_MessageAck_t* instance, const char** var);
+
+/**
+ * Set the value of requestId
+ * Cuuid associated to the request in case there was no error
+ */
+int C_MessageAck_setRequestId(struct C_MessageAck_t* instance, const char* new_var);
 
 #endif // CASTOR_MESSAGEACK_H

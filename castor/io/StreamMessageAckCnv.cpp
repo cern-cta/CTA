@@ -90,6 +90,7 @@ void castor::io::StreamMessageAckCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->status();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
+  ad->stream() << obj->requestId();
   ad->stream() << obj->id();
 }
 
@@ -112,6 +113,9 @@ castor::IObject* castor::io::StreamMessageAckCnv::createObj(castor::IAddress* ad
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
+  std::string requestId;
+  ad->stream() >> requestId;
+  object->setRequestId(requestId);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

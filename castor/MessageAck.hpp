@@ -106,6 +106,7 @@ namespace castor {
     /*********************************/
     /**
      * Get the value of m_status
+     * Status of the request
      * @return the value of m_status
      */
     bool status() const {
@@ -114,6 +115,7 @@ namespace castor {
 
     /**
      * Set the value of m_status
+     * Status of the request
      * @param new_var the new value of m_status
      */
     void setStatus(bool new_var) {
@@ -122,6 +124,7 @@ namespace castor {
 
     /**
      * Get the value of m_errorCode
+     * Code of the error if status shows there is one
      * @return the value of m_errorCode
      */
     int errorCode() const {
@@ -130,6 +133,7 @@ namespace castor {
 
     /**
      * Set the value of m_errorCode
+     * Code of the error if status shows there is one
      * @param new_var the new value of m_errorCode
      */
     void setErrorCode(int new_var) {
@@ -138,6 +142,7 @@ namespace castor {
 
     /**
      * Get the value of m_errorMessage
+     * Error message if status shows there is an error
      * @return the value of m_errorMessage
      */
     std::string errorMessage() const {
@@ -146,21 +151,46 @@ namespace castor {
 
     /**
      * Set the value of m_errorMessage
+     * Error message if status shows there is an error
      * @param new_var the new value of m_errorMessage
      */
     void setErrorMessage(std::string new_var) {
       m_errorMessage = new_var;
     }
 
-  private:
+    /**
+     * Get the value of m_requestId
+     * Cuuid associated to the request in case there was no error
+     * @return the value of m_requestId
+     */
+    std::string requestId() const {
+      return m_requestId;
+    }
+
+    /**
+     * Set the value of m_requestId
+     * Cuuid associated to the request in case there was no error
+     * @param new_var the new value of m_requestId
+     */
+    void setRequestId(std::string new_var) {
+      m_requestId = new_var;
+    }
 
   private:
 
+  private:
+
+    /// Status of the request
     bool m_status;
 
+    /// Code of the error if status shows there is one
     int m_errorCode;
 
+    /// Error message if status shows there is an error
     std::string m_errorMessage;
+
+    /// Cuuid associated to the request in case there was no error
+    std::string m_requestId;
 
     /// The id of this object
     u_signed64 m_id;
