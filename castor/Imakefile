@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.20 $ $Release$ $Date: 2004/06/22 12:39:52 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.21 $ $Release$ $Date: 2004/06/29 14:16:06 $ $Author: jdurand $
 #
 # Make Castor libraries and executables
 #
@@ -66,7 +66,7 @@ DEBUG  = -g
 #endif
 #endif
 
-DEPLIB = DepLibraryTargetName(lib,shift)
+DEPLIB = DepSharedLibraryTargetName(lib,shift)
 
 INCLUDES = -I FileName(..,h) -I FileName(..,)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
@@ -199,6 +199,7 @@ all: $(COMMONLIB) $(PROGS_C)
 
 install:
 
+MakeDepSharedLibrary(shlib,shift)
 SharedLibraryTarget(castorClient,$(STGLIB_OBJS),$(DEPLIB),$(LIBS))
 NormalLibraryTarget(castorClient,$(STGLIB_OBJS))
 
