@@ -1,10 +1,10 @@
-.\" @(#)$RCSfile: stageping.man,v $ $Revision: 1.1 $ $Date: 2001/12/05 10:14:54 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stageping.man,v $ $Revision: 1.2 $ $Date: 2001/12/05 10:19:08 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEPING l "$Date: 2001/12/05 10:14:54 $"
+.TH STAGEPING l "$Date: 2001/12/05 10:19:08 $"
 .SH NAME
-stageping \- ping the stager daemon and get internal information about it
+stageping \- ping the stager daemon
 .SH SYNOPSIS
 .B stageping
 [
