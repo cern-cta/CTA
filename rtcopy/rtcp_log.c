@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.1 $ $Date: 1999/11/29 11:21:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.2 $ $Date: 1999/12/01 15:34:19 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -33,11 +33,10 @@ static int errmsg_key = -1;
 static int out_key = -1;
 static int err_key = -1;
 
-extern void DLL_DECL (*rtcp_log)(int, char *, ...);
-void (*rtcp_log)(int, char *, ...) = NULL;
+void DLL_DECL (*rtcp_log) _PROTO((int, const char *, ...)) = NULL;
 
 #if !defined(RTCP_SERVER)
-void rtcpc_SetErrTxt(int level, char *format, ...) {
+void rtcpc_SetErrTxt(int level, const char *format, ...) {
     va_list args;
     char *p;
     char *msgbuf = NULL;
@@ -82,7 +81,7 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err) {
     }
 #if defined(RTCP_SERVER)
     initlog("rtcopyd",loglevel,RTCOPY_LOGFILE);
-    rtcp_log = (void (*)(int, char *, ...))log;
+    rtcp_log = (void (*) _PROTO((int, const char *, ...)))log;
 #else
     if ( p == NULL ) {
         if ( out == NULL ) loglevel = LOG_ERR;
@@ -100,7 +99,7 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err) {
     if ( err != NULL && err_p == NULL ) return(-1);
     else *err_p = err;
 
-    rtcp_log = rtcpc_SetErrTxt;
+    rtcp_log = (void(*) _PROTO((int, const char *, ...)))rtcpc_SetErrTxt;
 #endif /* RTCP_SERVER */
     return(0);
 }
