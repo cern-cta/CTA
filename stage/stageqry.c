@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.14 2001/02/01 15:45:26 jdurand Exp $
+ * $Id: stageqry.c,v 1.15 2001/02/01 18:09:29 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.14 $ $Date: 2001/02/01 15:45:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.15 $ $Date: 2001/02/01 18:09:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -22,6 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.14 $ $Date: 20
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
+#include <unistd.h>
 #include <netinet/in.h>
 #endif
 #include "marshall.h"
@@ -33,6 +34,7 @@ static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.14 $ $Date: 20
 extern	char	*getconfent();
 
 EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
+extern int getlist_of_vid _PROTO((char *, char[MAXVSN][7], int *));
 void usage _PROTO((char *));
 void cleanup _PROTO((int));
 int noregexp_flag = 0;

@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.76 2001/02/01 16:32:06 jdurand Exp $
+ * $Id: procio.c,v 1.77 2001/02/01 18:09:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.76 $ $Date: 2001/02/01 16:32:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.77 $ $Date: 2001/02/01 18:09:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -230,7 +230,6 @@ void procioreq(req_type, req_data, clienthost)
 	gid_t gid_waitq;
 	char user_waitq[CA_MAXUSRNAMELEN+1];
 	char group_waitq[CA_MAXGRPNAMELEN+1];
-	char *user_stage = "stage";
 
 	static struct Coptions longopts[] =
 	{
@@ -1320,7 +1319,6 @@ void procioreq(req_type, req_data, clienthost)
 					strcpy (wfp->upath, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath);
 				}
 				break;
-			staged:
 			case STAGED:		/* staged */
 				if (rfio_stat (stcp->ipath, &st) < 0) {
 					stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());

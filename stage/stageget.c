@@ -1,5 +1,5 @@
 /*
- * $Id: stageget.c,v 1.14 2001/01/31 19:00:04 jdurand Exp $
+ * $Id: stageget.c,v 1.15 2001/02/01 18:09:29 jdurand Exp $
  */
 
 /*
@@ -8,24 +8,28 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.14 $ $Date: 2001/01/31 19:00:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.15 $ $Date: 2001/02/01 18:09:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
+#include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <signal.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <grp.h>
 #include <pwd.h>
 #include <string.h>
 #ifndef _WIN32
+#include <unistd.h>
 #include <netinet/in.h>
 #else
 #include <winsock2.h>
 #endif
 #include "marshall.h"
 #include "stage.h"
+#include "stage_api.h"
 #include "Cpwd.h"
 #include "Cgetopt.h"
 
@@ -47,11 +51,10 @@ int main(argc, argv)
 	char *dp;
 	int errflg = 0;
 	int fun = 0;
-	struct group *gr;
 	int msglen;
 	int nargs;
 	int ntries = 0;
-	char *p, *q;
+	char *q;
 	char path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	char *pool_user = NULL;
 	char *sbp;
@@ -137,7 +140,7 @@ int main(argc, argv)
 		marshall_STRING (sbp, path);
 	}
 	if (fun) {
-		if (build_Upath (fun, path, STAGEGET))
+		if (build_Upath (fun, path, sizeof(path), STAGEGET))
 			exit (SYERR);
 		if (sbp + strlen (path) - sendbuf >= sizeof(sendbuf)) {
 			fprintf (stderr, STG38);

@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.18 2001/01/31 19:00:04 jdurand Exp $
+ * $Id: stageclr.c,v 1.19 2001/02/01 18:09:29 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.18 $ $Date: 2001/01/31 19:00:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.19 $ $Date: 2001/02/01 18:09:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -22,15 +22,18 @@ static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.18 $ $Date: 20
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
+#include <unistd.h>
 #include <netinet/in.h>
 #endif
 #include "marshall.h"
 #include "stage.h"
+#include "stage_api.h"
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "Cgetopt.h"
 
 EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
+extern int getlist_of_vid _PROTO((char *, char[MAXVSN][7], int *));
 extern	char	*getenv();
 extern	char	*getconfent();
 
@@ -130,7 +133,7 @@ int main(argc, argv)
 			break;
 		case 'L':
 			Lflag = Coptind - 1;
-			if (n = Coptarg - argv[Lflag])
+			if ((n = Coptarg - argv[Lflag]) != 0)
 				strncpy (path, argv[Lflag], n);
 			if ((c = build_linkname (Coptarg, path+n, sizeof(path)-n, STAGECLR)) == SYERR) {
 #if defined(_WIN32)
@@ -180,7 +183,7 @@ int main(argc, argv)
 			break;
 		case 'P':
 			Pflag = Coptind - 1;
-			if (n = Coptarg - argv[Pflag])
+			if ((n = Coptarg - argv[Pflag]) != 0)
 				strncpy (path, argv[Pflag], n);
 			if ((c = build_linkname (Coptarg, path+n, sizeof(path)-n, STAGECLR)) == SYERR) {
 #if defined(_WIN32)

@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.50 2001/02/01 12:43:10 jdurand Exp $
+ * $Id: procupd.c,v 1.51 2001/02/01 18:09:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.50 $ $Date: 2001/02/01 12:43:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.51 $ $Date: 2001/02/01 18:09:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -81,6 +81,7 @@ extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 extern void create_link _PROTO((struct stgcat_entry *, char *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
 extern int retenp_on_disk _PROTO((int));
+extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 
 #define IS_RC_OK(rc) (rc == 0)
 #define IS_RC_WARNING(rc) (rc == LIMBYSZ || rc == BLKSKPD || rc == TPE_LSZ || (rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE)))

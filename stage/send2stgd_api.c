@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_api.c,v 1.13 2001/01/31 18:59:59 jdurand Exp $
+ * $Id: send2stgd_api.c,v 1.14 2001/02/01 18:09:28 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.13 $ $Date: 2001/01/31 18:59:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.14 $ $Date: 2001/02/01 18:09:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -166,7 +166,6 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 	int *nstpp_output;
 	struct stgpath_entry **stpp_output;
 {
-	int actual_replen = 0;
 	int c;
 	char file2[CA_MAXHOSTNAMELEN+CA_MAXPATHLEN+2];
 	char func[16];
@@ -308,7 +307,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 			}
 			break;
 		} else if (rep_type == API_STCP_OUT) {
-			int noutput_header,noutput_data,nstcp_out, donestcp, donestpp;
+			int noutput_data;
 			char *msgbuf_out;
 			int unmarshall_status;
 
@@ -358,7 +357,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 			if (nstcp_output != NULL) *nstcp_output = _nstcp_output;
 			continue;
 		} else if (rep_type == API_STPP_OUT) {
-			int noutput_header,noutput_data,nstpp_out, donestcp, donestpp;
+			int noutput_data;
 			char *msgbuf_out;
 			int unmarshall_status;
 

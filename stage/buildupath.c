@@ -1,5 +1,5 @@
 /*
- * $Id: buildupath.c,v 1.11 2001/01/31 18:59:48 jdurand Exp $
+ * $Id: buildupath.c,v 1.12 2001/02/01 18:09:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.11 $ $Date: 2001/01/31 18:59:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.12 $ $Date: 2001/02/01 18:09:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -17,6 +17,8 @@ static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.11 $ $Date: 
 #include <string.h>
 #if defined(_WIN32)
 #include <winsock2.h>
+#else
+#include <unistd.h>
 #endif
 #include "stage.h"
 #include "stage_api.h"
@@ -30,7 +32,6 @@ static char hostname[CA_MAXHOSTNAMELEN + 1];
 static int initialized = 0;
 static char nfsroot[MAXPATH];
 
-int build_linkname _PROTO((char *, char *, int ,int));
 int init_cwd_hostname _PROTO(());
 int resolvelinks _PROTO((char *, char *, int, int));
 int build_Upath _PROTO((int, char *, int, int));
@@ -147,7 +148,7 @@ int resolvelinks(argvi, buf, buflen, req_type)
 	return (0);
 }
 
-int build_linkname(argvi, path, size, req_type)
+int DLL_DECL build_linkname(argvi, path, size, req_type)
 		 char *argvi;
 		 char *path;
 		 int size;
@@ -193,7 +194,7 @@ int build_linkname(argvi, path, size, req_type)
 	return (0);
 }
 
-int build_Upath(fun, path, size, req_type)
+int DLL_DECL build_Upath(fun, path, size, req_type)
 		 int fun;
 		 char *path;
 		 int size;

@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.6 2001/02/01 10:36:28 jdurand Exp $
+ * $Id: stage_api.c,v 1.7 2001/02/01 18:09:28 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -29,7 +29,9 @@
 
 extern char *getenv();         /* To get environment variables */
 extern char *getconfent();     /* To get configuration entries */
-extern int build_linkname _PROTO((char *, char *, int ,int));
+EXTERN_C int DLL_DECL sysreq _PROTO((char *, char *, int *, char *, int *));
+extern int rfio_access _PROTO((char *, int));
+
 int stage_api_chkdirw _PROTO((char *));
 #if TMS
 int stage_api_tmscheck _PROTO((char *, char *, char *, char *, char *));
@@ -112,7 +114,7 @@ int copyrc_shift2castor _PROTO((int));
 #endif /* _REENTRANT || _THREAD_SAFE */
 #endif /* _WIN32 */
 
-int copyrc_castor2shift(copyrc)
+int DLL_DECL copyrc_castor2shift(copyrc)
      int copyrc;
 {
   /* Input  is a CASTOR return code */
@@ -684,13 +686,13 @@ int DLL_DECL stage_stcp2buf(buf,bufsize,flags,stcp)
     STVAL2BUF(stcp,nread,'N',buf,bufsize);
     STSTR2BUF(stcp,recfm,'F',buf,bufsize);
     /* Special case of charconv */
-    if (stcp->charconv & (EBCCONV|FIXVAR) == (EBCCONV|FIXVAR)) {
+    if ((stcp->charconv & (EBCCONV|FIXVAR)) == (EBCCONV|FIXVAR)) {
       if (strlen(buf) + strlen(" -C ebcdic,block") + 1 > bufsize) { serrno = SEUMSG2LONG; return(-1); }
       strcat(buf," -C ebcdic,block");
-    } else if (stcp->charconv & EBCCONV == EBCCONV) {
+    } else if ((stcp->charconv & EBCCONV) == EBCCONV) {
       if (strlen(buf) + strlen(" -C ebcdic") + 1 > bufsize) { serrno = SEUMSG2LONG; return(-1); }
       strcat(buf," -C ebcdic");
-    } else if (stcp->charconv & FIXVAR == FIXVAR) {
+    } else if ((stcp->charconv & FIXVAR) == FIXVAR) {
       if (strlen(buf) + strlen(" -C block") + 1 > bufsize) { serrno = SEUMSG2LONG; return(-1); }
       strcat(buf," -C block");
     }
@@ -837,24 +839,16 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 {
   int req_type = STAGE_QRY;
   struct stgcat_entry *thiscat; /* Catalog current pointer */
-  struct stgpath_entry *thispath; /* Path current pointer */
   int istcp;                    /* Counter on catalog structures passed in the protocol */
   int msglen;                   /* Buffer length (incremental) */
   int ntries;                   /* Number of retries */
   struct passwd *pw;            /* Password entry */
-  struct group *gr;             /* Group entry */
-  char *sbp, *p, *q;            /* Internal pointers */
+  char *sbp, *q;                /* Internal pointers */
   char *sendbuf;                /* Socket send buffer pointer */
   size_t sendbuf_size;          /* Total socket send buffer length */
   uid_t euid;                   /* Current effective uid */
-  uid_t Geuid;                  /* Forced effective uid (-G option) */
-  char Gname[CA_MAXUSRNAMELEN+1]; /* Forced effective name (-G option) */
-  char User[CA_MAXUSRNAMELEN+1];  /* Forced internal path with user (-u options) */
   gid_t egid;                   /* Current effective gid */
   int status;                   /* Variable overwritten by macros in header */
-  int errflg = 0;               /* Error flag */
-  int build_linkname_status;    /* Status of build_linkname() call */
-  char user_path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
   int c;                        /* Output of build_linkname() */
   char *func = "stage_qry";
   int nstcp_output_internal = 0;

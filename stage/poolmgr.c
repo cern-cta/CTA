@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.70 2001/02/01 15:45:25 jdurand Exp $
+ * $Id: poolmgr.c,v 1.71 2001/02/01 18:09:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.70 $ $Date: 2001/02/01 15:45:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.71 $ $Date: 2001/02/01 18:09:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -74,6 +74,7 @@ extern int sendrep _PROTO(());
 #endif
 extern struct stgcat_entry *newreq _PROTO(());
 extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int));
+extern int nextreqid _PROTO(());
 
 #if !defined(linux)
 extern char *sys_errlist[];
@@ -111,7 +112,7 @@ int migrate_files _PROTO((struct pool *));
 int migpoolfiles _PROTO((struct pool *));
 int iscleanovl _PROTO((int, int));
 void killcleanovl _PROTO((int));
-int ismigovl2 _PROTO((int, int));
+int ismigovl _PROTO((int, int));
 void killmigovl _PROTO((int));
 int isvalidpool _PROTO((char *));
 void migpoolfiles_log_callback _PROTO((int, char *));
@@ -167,14 +168,10 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
   int i, j;
   struct migrator *migr_p;
   int nbpool_ent;
-  int nbtape_pools;
   char *p;
   char path[MAXPATH];
   struct pool *pool_p;
-  char *q;
   struct rfstatfs st;
-  char *tape_pool_str;
-  char tmpbuf[21];
   time_t thistime;
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
   char *last = NULL;
@@ -758,7 +755,7 @@ void killcleanovl(sig)
     }
 }
 
-int ismigovl2(pid, status)
+int ismigovl(pid, status)
      int pid;
      int status;
 {
@@ -1099,7 +1096,6 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
      char *defpoolname_out;
 {
   int c, i, j;
-  struct migpolicy *migp_p;
   struct pool *pool_n, *pool_p;
   char sav_defpoolname[CA_MAXPOOLNAMELEN + 1];
   char sav_defpoolname_in[CA_MAXPOOLNAMELEN + 1];
@@ -1218,7 +1214,6 @@ int update_migpool(stcp,flag,immediate)
   int i, ipool;
   struct pool *pool_p;
   int ifileclass;
-  char *last_vid = NULL;
   struct stgcat_entry savestcp = *stcp;
   char *func = "update_migpool";
   int savereqid = reqid;
@@ -1596,8 +1591,6 @@ int migrate_files(pool_p)
     int ipoolname;
     int j;
     char tmpbuf[21];
-    int foundfiles = 0;
-    u_signed64 estimated_pool_usage;
 
     /* We remember all the entries that will be treated in this migration */
     for (stcp = stcs; stcp < stce; stcp++) {
@@ -1686,12 +1679,7 @@ int migpoolfiles(pool_p)
   struct stgcat_entry *stcp;
   struct stgpath_entry *stpp;
   int found_nbfiles = 0;
-  stage_hsm_t *files = NULL;
-  int nfiles_per_request;
-  int nfiles = 0;
   char func[16];
-  int iclass;
-  int itype;
   int okpoolname;
   int ipoolname;
   int term_status;
@@ -1699,8 +1687,6 @@ int migpoolfiles(pool_p)
   int i, j, k, nfiles_per_tppool;
   struct pool *pool_n;
   int found_not_scanned = -1;
-  struct stgcat_entry *stcp_input;
-  struct stgpath_entry *stpp_input;
   int fork_pid;
   extern struct passwd start_passwd;         /* Generic uid/gid stage:st */
   extern struct passwd stage_passwd;             /* Generic uid/gid stage:st */
@@ -1988,14 +1974,16 @@ int migpoolfiles(pool_p)
     u_signed64 virtual_new_size;
     u_signed64 virtual_old_size;
     int can_create_new_stream;
-    int nstcp_to_move = 0;
+    int nstcp_to_move;
+
+    can_create_new_stream = -1;
+    nstcp_to_move = 0;
 
     if (pool_p->migr->fileclass[i]->streams <= 0) continue;
     if (pool_p->migr->fileclass[i]->streams < pool_p->migr->fileclass[i]->Cnsfileclass.maxdrives) {
       /* We are using less streams than what this fileclass allows us to do */
       /* We check within this fileclass what is the stream that is migrating the most data and if it is */
       /* possible, then relevant, to grab some entries from it to put it in a new stream */
-      int can_create_new_stream = -1;
       for (j = 0; j < nstcp_vs_tppool; j++) {
         if (stcp_vs_tppool[j].size > minsize) {
           virtual_new_size = 0;
@@ -2530,9 +2518,8 @@ void upd_last_tppool_used(fileclass)
 char *next_tppool(fileclass)
      struct fileclass *fileclass;
 {
-  int i, j;
+  int i;
   int found_last_tppool = -1;
-  int found = 0;
   char *p;
 
   /* The array tppool_used[0..(nbtppools_used - 1)] is a filter to tppools[0..(nbtppools - 1)] */
@@ -2581,7 +2568,6 @@ int euid_egid(euid,egid,tppool,migr,stcp,tppool_out,being_migr)
      char **tppool_out;
      int being_migr;              /* We check CAN_BE_MIGR, BEING_MIGR otherwise - only if migr != NULL */
 {
-  struct Cns_fileclass Cnsfileclass;
   int i, j;
   char *p;
   int found_tppool;
@@ -2761,7 +2747,7 @@ void stglogfileclass(Cnsfileclass)
     sav_uid = Cnsfileclass->uid;
 		if (sav_uid == 0)
           strcpy (sav_uidstr, "-");
-		else if (pw = Cgetpwuid (sav_uid))
+		else if ((pw = Cgetpwuid (sav_uid)) != NULL)
           strcpy (sav_uidstr, pw->pw_name);
 		else
           sprintf (sav_uidstr, "%-8u", sav_uid);
@@ -2770,7 +2756,7 @@ void stglogfileclass(Cnsfileclass)
     sav_gid = Cnsfileclass->gid;
     if (sav_gid == 0)
       strcpy (sav_gidstr, "-");
-    else if (gr = Cgetgrgid (sav_gid))
+    else if ((gr = Cgetgrgid (sav_gid)) != NULL)
       strcpy (sav_gidstr, gr->gr_name);
     else
       sprintf (sav_gidstr, "%-6u", sav_gid);
@@ -2827,7 +2813,6 @@ void printfileclass(rpfd,fileclass)
   char sav_gidstr[7];
   uid_t sav_uid = -1;
   char sav_uidstr[CA_MAXUSRNAMELEN+1];
-  char *func = "stglogfileclass";
   int verif_nbtppools = 0;
 
   if (rpfd < 0) return;
@@ -2836,7 +2821,7 @@ void printfileclass(rpfd,fileclass)
     sav_uid = fileclass->Cnsfileclass.uid;
 		if (sav_uid == 0)
           strcpy (sav_uidstr, "-");
-		else if (pw = Cgetpwuid (sav_uid))
+		else if ((pw = Cgetpwuid (sav_uid)) != NULL)
           strcpy (sav_uidstr, pw->pw_name);
 		else
           sprintf (sav_uidstr, "%-8u", sav_uid);
@@ -2845,7 +2830,7 @@ void printfileclass(rpfd,fileclass)
     sav_gid = fileclass->Cnsfileclass.gid;
     if (sav_gid == 0)
       strcpy (sav_gidstr, "-");
-    else if (gr = Cgetgrgid (sav_gid))
+    else if ((gr = Cgetgrgid (sav_gid)) != NULL)
       strcpy (sav_gidstr, gr->gr_name);
     else
       sprintf (sav_gidstr, "%-6u", sav_gid);

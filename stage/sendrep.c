@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.13 2001/01/31 19:00:00 jdurand Exp $
+ * $Id: sendrep.c,v 1.14 2001/02/01 18:09:28 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.13 $ $Date: 2001/01/31 19:00:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.14 $ $Date: 2001/02/01 18:09:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -43,8 +43,6 @@ int sendrep(va_alist) va_dcl
 	char stcp_marshalled[sizeof(struct stgcat_entry)];
 	int  api_stcp_out_status = 0;
 	char api_stpp_out[3 * LONGSIZE + sizeof(struct stgpath_entry)];
-	char stpp_marshalled[sizeof(struct stgcat_entry)];
-	int  api_stpp_out_status = 0;
 	char *func_sendrep = "sendrep";
 	char *func_stgdaemon = "stgdaemon";
 	char *func;

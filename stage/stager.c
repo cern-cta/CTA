@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.115 2001/01/31 19:00:06 jdurand Exp $
+ * $Id: stager.c,v 1.116 2001/02/01 18:09:29 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 /* #define TAPESRVR_EVEN "shd79" */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.115 $ $Date: 2001/01/31 19:00:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.116 $ $Date: 2001/02/01 18:09:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1279,8 +1279,6 @@ int stagewrt_castor_hsm_file() {
 	extern char* poolname2tapepool _PROTO((char *));
     struct devinfo *devinfo;
     int save_serrno;
-
-    char *func = "stagewrt_castor_hsm_file";
 
     ALLOCHSM;
 
@@ -2816,16 +2814,17 @@ int stager_hsm_callback(tapereq,filereq)
 	rtcpTapeRequest_t *tapereq;
 	rtcpFileRequest_t *filereq;
 {
+#ifdef STAGER_DEBUG
 	char tmpbuf1[21];
 	char tmpbuf2[21];
 	char tmpbuf3[21];
+#endif
 	int compression_factor = 0;		/* times 100 */
 	int stager_client_callback_i = -1;
 	int stager_client_true_i = -1;
 	struct stgcat_entry *stcp;
 	char *castor_hsm;
 	struct Cns_fileid Cnsfileid;
-	char *func = "stager_hsm_callback";
 
 	if (tapereq == NULL || filereq == NULL) {
 		serrno = EINVAL;
@@ -3287,6 +3286,6 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 }
 
 /*
- * Last Update: "Wednesday 31 January, 2001 at 14:59:31 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Thursday 01 February, 2001 at 18:56:27 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
 

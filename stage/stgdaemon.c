@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.92 2001/02/01 12:43:10 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.93 2001/02/01 18:09:31 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.92 $ $Date: 2001/02/01 12:43:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.93 $ $Date: 2001/02/01 18:09:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 20000
@@ -274,7 +274,6 @@ int main(argc,argv)
 	struct passwd root_passwd;
 	char myenv[11 + CA_MAXHOSTNAMELEN + 1];
 	char *upd_fileclasses_int_p;
-	int upd_fileclasses_int_from_getenv = 0;
 	int upd_fileclasses_int_from_config = 0;
 
 	Coptind = 1;
@@ -1400,7 +1399,7 @@ checkovlstatus(pid, status)
 		stglogit (func, "cleaner process %d exiting with status %x\n",
 							pid, status & 0xFFFF);
 	/* was it a "migrator" overlay ? */
-	} else if (ismigovl2 (pid, status)) {
+	} else if (ismigovl (pid, status)) {
 		reqid = 0;
 		stglogit (func, "migration process %d exiting with status %x\n",
 							pid, status & 0xFFFF);
@@ -1599,8 +1598,7 @@ void checkpoolstatus()
 
 void checkwaitingspc()
 {
-	int c, i, j, n;
-	char **poolc;
+	int c, i;
 	struct stgcat_entry *stcp;
 	struct waitf *wfp;
 	struct waitq *wqp;

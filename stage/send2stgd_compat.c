@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_compat.c,v 1.1 2001/01/31 19:03:45 jdurand Exp $
+ * $Id: send2stgd_compat.c,v 1.2 2001/02/01 18:09:28 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.1 $ $Date: 2001/01/31 19:03:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.2 $ $Date: 2001/02/01 18:09:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -33,6 +33,7 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.1 $ $D
 #include "serrno.h"
 #include "osdep.h"
 #include "stage.h"
+#include "stage_api.h"
 #include "Cnetdb.h"
 
 extern int dosymlink _PROTO((char *, char *));
@@ -198,7 +199,7 @@ int DLL_DECL send2stgd_compat(host, reqp, reql, want_reply, user_repbuf, user_re
 			break;
 		case SYMLINK:
 			unmarshall_STRING (p, file2);
-			if (c = dosymlink (prtbuf, file2))
+			if ((c = dosymlink (prtbuf, file2)) != 0)
 				link_rc = c;
 			break;
 		case RMSYMLINK:

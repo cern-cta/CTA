@@ -1,5 +1,5 @@
 /*
- * $Id: stagechng.c,v 1.5 2001/01/31 19:00:04 jdurand Exp $
+ * $Id: stagechng.c,v 1.6 2001/02/01 18:09:29 jdurand Exp $
  */
 
 /*
@@ -8,9 +8,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.5 $ $Date: 2001/01/31 19:00:04 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.6 $ $Date: 2001/02/01 18:09:29 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
+#include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <signal.h>
@@ -21,10 +22,12 @@ static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.5 $ $Date: 20
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
+#include <unistd.h>
 #include <netinet/in.h>
 #endif
 #include "marshall.h"
 #include "stage.h"
+#include "stage_api.h"
 #include "Cpwd.h"
 #include "Cgetopt.h"
 
@@ -42,16 +45,12 @@ int main(argc, argv)
 {
 	int c, i;
 	void cleanup();
-	char *dp;
 	int errflg = 0;
-	int fun = 0;
 	gid_t gid;
 	int pid;
-	int key;
 	int msglen;
 	int nargs;
 	int ntries = 0;
-	char *p;
 	char path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	struct passwd *pw;
 	char *q;
