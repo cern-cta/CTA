@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.76 2002/01/27 08:55:30 jdurand Exp $
+ * $Id: procqry.c,v 1.77 2002/01/28 11:27:09 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.76 $ $Date: 2002/01/27 08:55:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.77 $ $Date: 2002/01/28 11:27:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -1027,7 +1027,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			}
 		}
 		if (stcp->t_or_d == 't') {
-			char vid_and_side[CA_MAXVIDLEN+1+10+1]; /* VID.%d */
+			char vid_and_side[CA_MAXVIDLEN+1+10+1]; /* VID[/%d].%d */
 
 #ifdef STAGER_SIDE_SERVER_SUPPORT
 			if ((stcp->u1.t.side > 0) && (display_side_flag)) {
@@ -1037,7 +1037,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				snprintf(vid_and_side, CA_MAXVIDLEN+1+10+1, "%s/%d", stcp->u1.t.vid[0], stcp->u1.t.side);
 #endif
 			} else {
-#endif
+#endif /* STAGER_SIDE_SERVER_SUPPORT */
 				strcpy(vid_and_side, stcp->u1.t.vid[0]);
 #ifdef STAGER_SIDE_SERVER_SUPPORT
 			}
@@ -1048,7 +1048,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					if (mintime_flag != 0) {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									 ((stcp->u1.t.side > 0) && (display_side_flag)) ?
+									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n",
@@ -1066,7 +1066,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					} else {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									 ((stcp->u1.t.side > 0) && (display_side_flag)) ?
+									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n",
@@ -1085,7 +1085,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					if (mintime_flag != 0) {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									 ((stcp->u1.t.side > 0) && (display_side_flag)) ?
+									 display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n",
@@ -1102,7 +1102,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					} else {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									 ((stcp->u1.t.side > 0) && (display_side_flag)) ?
+									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n",
@@ -1122,7 +1122,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					if (mintime_flag != 0) {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									 ((stcp->u1.t.side > 0) && (display_side_flag)) ?
+									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %s\n",
@@ -1139,7 +1139,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					} else {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									 ((stcp->u1.t.side > 0) && (display_side_flag)) ?
+									 display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n",
@@ -1156,7 +1156,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					if (mintime_flag != 0) {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									 ((stcp->u1.t.side > 0) && (display_side_flag)) ?
+									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n",
@@ -1172,7 +1172,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					} else {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									 ((stcp->u1.t.side > 0) && (display_side_flag)) ?
+									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %s\n",
