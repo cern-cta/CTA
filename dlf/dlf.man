@@ -1,16 +1,63 @@
 .lf 1 dlf.man
-.\" @(#)$RCSfile: dlf.man,v $ $Revision: 1.1 $ $Date: 2003/08/20 12:31:22 $ CERN IT-ADC Vitaly Motyakov
+.\" @(#)$RCSfile: dlf.man,v $ $Revision: 1.2 $ $Date: 2004/07/02 13:32:30 $ CERN IT-ADC Vitaly Motyakov
 .\" Copyright (C) 2003 by CERN/IT/ADC
 .\" All rights reserved
 .\"
-.TH DLF 1 "$Date: 2003/08/20 12:31:22 $" CASTOR "DLF Commands"
+.TH DLF 1 "$Date: 2004/07/02 13:32:30 $" CASTOR "DLF Commands"
 .SH DESCRIPTION
 A Distributed Logging Facility (DLF) Server stores log messages
-into the DLF database.
+into the DLF database. You can use DLF without the DLF server when
+logging to the local log file. In this case message texts can be loaded
+from a text file. You have to specify the path to this file and that you
+are using a standalone mode. This can be done by one of the following:
+.RS
+.LP
+setting environment variables:
+.LP
+.B
+<YOUR_FACILITY_NAME>_LOGMODE=STANDALONE
+.LP
+.B
+<YOUR_FACILITY_NAME>_TXTFILE=<path_to_the_text_file>
+.LP
+where <YOUR_FACILITY_NAME> must be in uppercase, for example:
+.RS
+.HP
+setenv DLFTEST_LOGMODE STANDALONE
+.HP
+setenv DLFTEST_TXTFILE /etc/castor/dlftest.txt
+.RE
+.LP
+or adding the lines to the
+.B /etc/shift.conf
+, for example:
+.RS
+.HP
+dlftest LOGMODE STANDALONE
+.HP
+dlftest TXTFILE /etc/castor/dlftest.txt
+.RE
+.LP
+The format of the text file must be as follows:
+.LP
+The first line:
+.LP
+.B
+<your_facility_name><spaces><assigned_facility_number>
+.LP
+The rest lines:
+.LP
+.B
+<message_number><spaces><message_text_until_the_end_of_line>
+.LP
+.LP
+.RE
 There should be lines specifying log destinations in the CASTOR common
 configuration file
-.B /etc/shift.conf.
-First of all the main DLF Server should be specified by one of the
+.B /etc/shift.conf
+or you can specify log destinations through environment variables.
+.LP
+The main DLF Server can be specified by one of the
 following ways:
 .RS
 .LP
@@ -47,22 +94,31 @@ This is the DLF server which will be contacted first to retrieve information
 about the facility and retrieve facility specific message texts.
 The log destinations must be specified as entries in the CASTOR common
 configuration file 
-.B /etc/shift.conf.
-The line format is as follows:
+.B /etc/shift.conf
+or through the environment variables.
+The file line format is as follows:
 .RS
 .HP
 .B <fname><sp><slvl><sp><log_dst>[<sp><log_dst>...]
 .RE
+.LP
+and if you are using environment variables the format must be as follows:
+.RS
+.HP
+.B <FNAME>_<SLVL>="<log_dst>[<sp><log_dst>...]"
 .HP
 where
 .TP
 .I fname
 is the facility name;
 .TP
+.I FNAME
+is the facility name in uppercase letters;
+.TP
 .I sp
 is any number of space characters or tabs;
 .TP
-.I slvl
+.I slvl or SLVL
 is the keyword defining the severity level of the messages
 to be logged and must be one of the following:
 .RS
@@ -109,8 +165,13 @@ Example:
 .TP
 .B dlftest     LOGALL    x-dlf://castordev.cern.ch:5035/
 .LP
+Or if you are using environment variable:
+.TP
+.B setenv DLFTEST_LOGALL  x-dlf://castordev.cern.ch:5035/
+.LP
 This means that all log messages from dlftest will go to castordev.cern.ch
 and will be stored in the database.
+.RE
 .LP
 Use 
 .B man
