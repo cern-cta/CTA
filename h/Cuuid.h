@@ -1,12 +1,12 @@
 /*
- * $Id: Cuuid.h,v 1.5 2004/11/24 19:03:33 jdurand Exp $
+ * $Id: Cuuid.h,v 1.6 2004/11/25 09:41:07 bcouturi Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
  * Based on: http://www.webdav.org/specs/draft-leach-uuids-guids-01.txt
  *
- * $RCSfile: Cuuid.h,v $ $Revision: 1.5 $ $Date: 2004/11/24 19:03:33 $ CERN IT-PDP/DM Jean-Damien Durand
+ * $RCSfile: Cuuid.h,v $ $Revision: 1.6 $ $Date: 2004/11/25 09:41:07 $ CERN IT-PDP/DM Jean-Damien Durand
  */
 
 
@@ -15,6 +15,9 @@
 
 #include <osdep.h>
 #include <sys/types.h>
+
+#define CUUID_STRING_LEN 36
+#define CUUID_STRING_FMT "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x"
 
 typedef struct _Cuuid_t {
 	U_LONG  time_low;
