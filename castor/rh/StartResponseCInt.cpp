@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/rh/ClientResponseCInt.cpp
+ *                      castor/rh/StartResponseCInt.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ClientResponseCInt.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/02 17:56:04 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
@@ -27,151 +27,168 @@
 // Include Files
 #include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
-#include "castor/rh/ClientResponse.hpp"
 #include "castor/rh/Response.hpp"
+#include "castor/rh/StartResponse.hpp"
+#include "castor/stager/DiskCopy.hpp"
 #include "osdep.h"
 
 extern "C" {
 
   //----------------------------------------------------------------------------
-  // Crh_ClientResponse_create
+  // Crh_StartResponse_create
   //----------------------------------------------------------------------------
-  int Crh_ClientResponse_create(castor::rh::ClientResponse** obj) {
-    *obj = new castor::rh::ClientResponse();
+  int Crh_StartResponse_create(castor::rh::StartResponse** obj) {
+    *obj = new castor::rh::StartResponse();
     return 0;
   }
   //----------------------------------------------------------------------------
-  // Crh_ClientResponse_delete
+  // Crh_StartResponse_delete
   //----------------------------------------------------------------------------
-  int Crh_ClientResponse_delete(castor::rh::ClientResponse* obj) {
+  int Crh_StartResponse_delete(castor::rh::StartResponse* obj) {
     delete obj;
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ClientResponse_getResponse
+  // Crh_StartResponse_getResponse
   //----------------------------------------------------------------------------
-  castor::rh::Response* Crh_ClientResponse_getResponse(castor::rh::ClientResponse* obj) {
+  castor::rh::Response* Crh_StartResponse_getResponse(castor::rh::StartResponse* obj) {
     return obj;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ClientResponse_fromResponse
+  // Crh_StartResponse_fromResponse
   //----------------------------------------------------------------------------
-  castor::rh::ClientResponse* Crh_ClientResponse_fromResponse(castor::rh::Response* obj) {
-    return dynamic_cast<castor::rh::ClientResponse*>(obj);
+  castor::rh::StartResponse* Crh_StartResponse_fromResponse(castor::rh::Response* obj) {
+    return dynamic_cast<castor::rh::StartResponse*>(obj);
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ClientResponse_getIObject
+  // Crh_StartResponse_getIObject
   //----------------------------------------------------------------------------
-  castor::IObject* Crh_ClientResponse_getIObject(castor::rh::ClientResponse* obj) {
+  castor::IObject* Crh_StartResponse_getIObject(castor::rh::StartResponse* obj) {
     return obj;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ClientResponse_fromIObject
+  // Crh_StartResponse_fromIObject
   //----------------------------------------------------------------------------
-  castor::rh::ClientResponse* Crh_ClientResponse_fromIObject(castor::IObject* obj) {
-    return dynamic_cast<castor::rh::ClientResponse*>(obj);
+  castor::rh::StartResponse* Crh_StartResponse_fromIObject(castor::IObject* obj) {
+    return dynamic_cast<castor::rh::StartResponse*>(obj);
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ClientResponse_print
+  // Crh_StartResponse_print
   //----------------------------------------------------------------------------
-  int Crh_ClientResponse_print(castor::rh::ClientResponse* instance) {
+  int Crh_StartResponse_print(castor::rh::StartResponse* instance) {
     instance->print();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ClientResponse_TYPE
+  // Crh_StartResponse_TYPE
   //----------------------------------------------------------------------------
-  int Crh_ClientResponse_TYPE(int* ret) {
-    *ret = castor::rh::ClientResponse::TYPE();
+  int Crh_StartResponse_TYPE(int* ret) {
+    *ret = castor::rh::StartResponse::TYPE();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ClientResponse_errorCode
+  // Crh_StartResponse_errorCode
   //----------------------------------------------------------------------------
-  int Crh_ClientResponse_errorCode(castor::rh::ClientResponse* instance, unsigned int* var) {
+  int Crh_StartResponse_errorCode(castor::rh::StartResponse* instance, unsigned int* var) {
     *var = instance->errorCode();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ClientResponse_setErrorCode
+  // Crh_StartResponse_setErrorCode
   //----------------------------------------------------------------------------
-  int Crh_ClientResponse_setErrorCode(castor::rh::ClientResponse* instance, unsigned int new_var) {
+  int Crh_StartResponse_setErrorCode(castor::rh::StartResponse* instance, unsigned int new_var) {
     instance->setErrorCode(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ClientResponse_errorMessage
+  // Crh_StartResponse_errorMessage
   //----------------------------------------------------------------------------
-  int Crh_ClientResponse_errorMessage(castor::rh::ClientResponse* instance, const char** var) {
+  int Crh_StartResponse_errorMessage(castor::rh::StartResponse* instance, const char** var) {
     *var = instance->errorMessage().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ClientResponse_setErrorMessage
+  // Crh_StartResponse_setErrorMessage
   //----------------------------------------------------------------------------
-  int Crh_ClientResponse_setErrorMessage(castor::rh::ClientResponse* instance, const char* new_var) {
+  int Crh_StartResponse_setErrorMessage(castor::rh::StartResponse* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setErrorMessage(snew_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ClientResponse_type
+  // Crh_StartResponse_type
   //----------------------------------------------------------------------------
-  int Crh_ClientResponse_type(castor::rh::ClientResponse* instance,
-                              int* ret) {
+  int Crh_StartResponse_type(castor::rh::StartResponse* instance,
+                             int* ret) {
     *ret = instance->type();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ClientResponse_clone
+  // Crh_StartResponse_clone
   //----------------------------------------------------------------------------
-  int Crh_ClientResponse_clone(castor::rh::ClientResponse* instance,
-                               castor::IObject** ret) {
+  int Crh_StartResponse_clone(castor::rh::StartResponse* instance,
+                              castor::IObject** ret) {
     *ret = instance->clone();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ClientResponse_id
+  // Crh_StartResponse_id
   //----------------------------------------------------------------------------
-  int Crh_ClientResponse_id(castor::rh::ClientResponse* instance, u_signed64* var) {
+  int Crh_StartResponse_id(castor::rh::StartResponse* instance, u_signed64* var) {
     *var = instance->id();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ClientResponse_setId
+  // Crh_StartResponse_setId
   //----------------------------------------------------------------------------
-  int Crh_ClientResponse_setId(castor::rh::ClientResponse* instance, u_signed64 new_var) {
+  int Crh_StartResponse_setId(castor::rh::StartResponse* instance, u_signed64 new_var) {
     instance->setId(new_var);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ClientResponse_client
+  // Crh_StartResponse_client
   //----------------------------------------------------------------------------
-  int Crh_ClientResponse_client(castor::rh::ClientResponse* instance, castor::IClient** var) {
+  int Crh_StartResponse_client(castor::rh::StartResponse* instance, castor::IClient** var) {
     *var = instance->client();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_ClientResponse_setClient
+  // Crh_StartResponse_setClient
   //----------------------------------------------------------------------------
-  int Crh_ClientResponse_setClient(castor::rh::ClientResponse* instance, castor::IClient* new_var) {
+  int Crh_StartResponse_setClient(castor::rh::StartResponse* instance, castor::IClient* new_var) {
     instance->setClient(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_StartResponse_diskCopy
+  //----------------------------------------------------------------------------
+  int Crh_StartResponse_diskCopy(castor::rh::StartResponse* instance, castor::stager::DiskCopy** var) {
+    *var = instance->diskCopy();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_StartResponse_setDiskCopy
+  //----------------------------------------------------------------------------
+  int Crh_StartResponse_setDiskCopy(castor::rh::StartResponse* instance, castor::stager::DiskCopy* new_var) {
+    instance->setDiskCopy(new_var);
     return 0;
   }
 

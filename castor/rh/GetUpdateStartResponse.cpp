@@ -28,9 +28,8 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/rh/ClientResponse.hpp"
 #include "castor/rh/GetUpdateStartResponse.hpp"
-#include "castor/stager/DiskCopy.hpp"
+#include "castor/rh/StartResponse.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include <iostream>
 #include <string>
@@ -40,8 +39,7 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::rh::GetUpdateStartResponse::GetUpdateStartResponse() throw() :
-  ClientResponse(),
-  m_diskCopy(0) {
+  StartResponse() {
 };
 
 //------------------------------------------------------------------------------
@@ -63,14 +61,8 @@ void castor::rh::GetUpdateStartResponse::print(std::ostream& stream,
     return;
   }
   // Call print on the parent class(es)
-  this->ClientResponse::print(stream, indent, alreadyPrinted);
+  this->StartResponse::print(stream, indent, alreadyPrinted);
   alreadyPrinted.insert(this);
-  stream << indent << "DiskCopy : " << std::endl;
-  if (0 != m_diskCopy) {
-    m_diskCopy->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
   {
     stream << indent << "Sources : " << std::endl;
     int i;

@@ -156,7 +156,7 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
         (srId IN INTEGER, fileSystemId IN INTEGER,
          dci OUT INTEGER, rpath OUT VARCHAR,
          rstatus OUT NUMBER, sources OUT castor.DiskCopy_Cur,
-         rclient OUT INTEGER) AS
+         rclient OUT INTEGER, rDiskCopyId OUT VARCHAR) AS
   cfid INTEGER;
   fid INTEGER;
   nh VARCHAR(2048);
@@ -170,8 +170,8 @@ BEGIN
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
  -- Try to find local DiskCopy
  dci := 0;
- SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
-  INTO dci, rpath, rstatus
+ SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskCopy.diskcopyId
+  INTO dci, rpath, rstatus, rDiskCopyId
   FROM DiskCopy, SubRequest
   WHERE SubRequest.id = srId
     AND SubRequest.castorfile = DiskCopy.castorfile
@@ -182,15 +182,16 @@ BEGIN
    makeSubRequestWait(srId, dci);
    dci := 0;
    rpath := '';
+   rDiskCopyId = '';
  END IF;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, look in others
  -- Try to find remote DiskCopies
- OPEN sources FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
+ OPEN sources FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskCopy.diskcopyId
  FROM DiskCopy, SubRequest
  WHERE SubRequest.id = srId
    AND SubRequest.castorfile = DiskCopy.castorfile
    AND DiskCopy.status IN (0, 1, 2, 5, 6); -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
- FETCH sources INTO dci, rpath, rstatus;
+ FETCH sources INTO dci, rpath, rstatus, rDiskCopyId;
  IF sources%NOTFOUND THEN
    -- No DiskCopy, create one for recall
    getId(1, dci);
@@ -209,6 +210,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
    IF rstatus IN (2,5) THEN -- WAITTAPERECALL, WAITFS, Make SubRequest Wait
      makeSubRequestWait(srId, dci);
      dci := 0;
+     rpath := '';
+     rDiskCopyId = '';
      close sources;
    ELSE
      -- create DiskCopy for Disk to Disk copy
@@ -227,11 +230,12 @@ END;
 /* PL/SQL method implementing putStart */
 CREATE OR REPLACE PROCEDURE putStart
         (srId IN INTEGER, fileSystemId IN INTEGER,
-         rclient OUT INTEGER) AS
-  dcId INTEGER;
+         rclient OUT INTEGER, rdcId OUT INTEGER,
+         rdcStatus OUT INTEGER, rdcPath OUT VARCHAR,
+         rdcDiskCopyId OUT VARCHAR) AS
 BEGIN
  -- Get IClient
- SELECT client, diskCopy INTO rclient, dcId FROM SubRequest,
+ SELECT client, diskCopy INTO rclient, rdcId FROM SubRequest,
       (SELECT client, id from StageGetRequest UNION
        SELECT client, id from StagePrepareToGetRequest UNION
        SELECT client, id from StageUpdateRequest UNION
@@ -240,7 +244,9 @@ BEGIN
  -- link DiskCopy and FileSystem and update DiskCopyStatus
  UPDATE DiskCopy SET status = 6, -- DISKCOPY_STAGEOUT
                      fileSystem = fileSystemId
-  WHERE id = dcId;
+  WHERE id = rdcId
+  RETURNING status, path, diskcopyId
+  INTO rdcStatus, rdcPath, rdcDiskCopyId;
 END;
 
 /* PL/SQL method implementing updateAndCheckSubRequest */

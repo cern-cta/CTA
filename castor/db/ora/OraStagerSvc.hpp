@@ -337,15 +337,19 @@ namespace castor {
          * the given FileSystem and updates the DiskCopy status
          * to DISKCOPY_STAGEOUT.
          * Returns the IClient object to use for the reply
-         * to the client.
+         * to the client and the DiskCopy to use for data access.
+         * Note that deallocation of the DiskCopy and IClient
+         * is the responsability of the caller.
          * @param subreq  the SubRequest to consider
          * @param fileSystem the selected FileSystem
+         * @param diskCopy the DiskCopy to use for the data access
          * @return the IClient object to use for client reply
          * @exception Exception in case of error
-         */
+         */      
         virtual castor::IClient* putStart
         (castor::stager::SubRequest* subreq,
-         castor::stager::FileSystem* fileSystem)
+         castor::stager::FileSystem* fileSystem,
+         castor::stager::DiskCopy** diskCopy)
           throw (castor::exception::Exception);
 
         /**
@@ -480,12 +484,15 @@ namespace castor {
         /**
          * Prepares a file for migration. This involves
          * creating the needed TapeCopies according to the
-         * FileClass of the castorFile.
+         * FileClass of the castorFile and updating the file
+         * size to the actual value.
          * @param subreq The SubRequest handling the file to prepare
+         * @param fileSize The actual size of the castor file
          * @exception Exception throws an Exception in case of error
          */
         virtual void prepareForMigration
-        (castor::stager::SubRequest* subreq)
+        (castor::stager::SubRequest* subreq,
+         u_signed64 fileSize)
           throw (castor::exception::Exception);
 
       private:

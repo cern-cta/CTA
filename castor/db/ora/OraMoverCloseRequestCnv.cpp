@@ -54,7 +54,7 @@ const castor::ICnvFactory& OraMoverCloseRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraMoverCloseRequestCnv::s_insertStatementString =
-"INSERT INTO MoverCloseRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, subReqId, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14)";
+"INSERT INTO MoverCloseRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, subReqId, fileSize, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraMoverCloseRequestCnv::s_deleteStatementString =
@@ -62,11 +62,11 @@ const std::string castor::db::ora::OraMoverCloseRequestCnv::s_deleteStatementStr
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraMoverCloseRequestCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, subReqId, id, svcClass, client FROM MoverCloseRequest WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, subReqId, fileSize, id, svcClass, client FROM MoverCloseRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraMoverCloseRequestCnv::s_updateStatementString =
-"UPDATE MoverCloseRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, subReqId = :11 WHERE id = :12";
+"UPDATE MoverCloseRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, subReqId = :11, fileSize = :12 WHERE id = :13";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraMoverCloseRequestCnv::s_storeTypeStatementString =
@@ -292,7 +292,7 @@ void castor::db::ora::OraMoverCloseRequestCnv::fillObjSvcClass(castor::stager::M
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = (u_signed64)rset->getDouble(13);
+  u_signed64 svcClassId = (u_signed64)rset->getDouble(14);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -330,7 +330,7 @@ void castor::db::ora::OraMoverCloseRequestCnv::fillObjIClient(castor::stager::Mo
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = (u_signed64)rset->getDouble(14);
+  u_signed64 clientId = (u_signed64)rset->getDouble(15);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -396,9 +396,10 @@ void castor::db::ora::OraMoverCloseRequestCnv::createRep(castor::IAddress* addre
     m_insertStatement->setString(9, obj->userTag());
     m_insertStatement->setString(10, obj->reqId());
     m_insertStatement->setDouble(11, obj->subReqId());
-    m_insertStatement->setDouble(12, obj->id());
-    m_insertStatement->setDouble(13, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setDouble(14, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setDouble(12, obj->fileSize());
+    m_insertStatement->setDouble(13, obj->id());
+    m_insertStatement->setDouble(14, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setDouble(15, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -432,6 +433,7 @@ void castor::db::ora::OraMoverCloseRequestCnv::createRep(castor::IAddress* addre
                     << "  userTag : " << obj->userTag() << std::endl
                     << "  reqId : " << obj->reqId() << std::endl
                     << "  subReqId : " << obj->subReqId() << std::endl
+                    << "  fileSize : " << obj->fileSize() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  svcClass : " << obj->svcClass() << std::endl
                     << "  client : " << obj->client() << std::endl;
@@ -467,7 +469,8 @@ void castor::db::ora::OraMoverCloseRequestCnv::updateRep(castor::IAddress* addre
     m_updateStatement->setString(9, obj->userTag());
     m_updateStatement->setString(10, obj->reqId());
     m_updateStatement->setDouble(11, obj->subReqId());
-    m_updateStatement->setDouble(12, obj->id());
+    m_updateStatement->setDouble(12, obj->fileSize());
+    m_updateStatement->setDouble(13, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -585,7 +588,8 @@ castor::IObject* castor::db::ora::OraMoverCloseRequestCnv::createObj(castor::IAd
     object->setUserTag(rset->getString(9));
     object->setReqId(rset->getString(10));
     object->setSubReqId((u_signed64)rset->getDouble(11));
-    object->setId((u_signed64)rset->getDouble(12));
+    object->setFileSize((u_signed64)rset->getDouble(12));
+    object->setId((u_signed64)rset->getDouble(13));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -642,7 +646,8 @@ void castor::db::ora::OraMoverCloseRequestCnv::updateObj(castor::IObject* obj)
     object->setUserTag(rset->getString(9));
     object->setReqId(rset->getString(10));
     object->setSubReqId((u_signed64)rset->getDouble(11));
-    object->setId((u_signed64)rset->getDouble(12));
+    object->setFileSize((u_signed64)rset->getDouble(12));
+    object->setId((u_signed64)rset->getDouble(13));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

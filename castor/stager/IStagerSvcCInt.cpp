@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2004/12/02 17:56:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2004/12/03 10:31:51 $ $Author: sponcec3 $
  *
  * 
  *
@@ -358,10 +358,12 @@ extern "C" {
   (struct Cstager_IStagerSvc_t* stgSvc,
    castor::stager::SubRequest* subreq,
    castor::stager::FileSystem* fileSystem,
-   castor::IClient** client) {
+   castor::IClient** client,
+   castor::stager::DiskCopy** diskCopy) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      *client = stgSvc->stgSvc->putStart(subreq, fileSystem);
+      *client =
+        stgSvc->stgSvc->putStart(subreq, fileSystem, diskCopy);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();
@@ -525,10 +527,11 @@ extern "C" {
   //-------------------------------------------------------------------------
   int Cstager_IStagerSvc_prepareForMigration
   (struct Cstager_IStagerSvc_t* stgSvc,
-   castor::stager::SubRequest* subreq) {
+   castor::stager::SubRequest* subreq,
+   u_signed64 fileSize) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      stgSvc->stgSvc->prepareForMigration(subreq);
+      stgSvc->stgSvc->prepareForMigration(subreq, fileSize);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

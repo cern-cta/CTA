@@ -31,9 +31,9 @@
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
-struct Crh_ClientResponse_t;
 struct Crh_GetUpdateStartResponse_t;
 struct Crh_Response_t;
+struct Crh_StartResponse_t;
 struct Cstager_DiskCopyForRecall_t;
 struct Cstager_DiskCopy_t;
 
@@ -54,14 +54,14 @@ int Crh_GetUpdateStartResponse_create(struct Crh_GetUpdateStartResponse_t** obj)
 int Crh_GetUpdateStartResponse_delete(struct Crh_GetUpdateStartResponse_t* obj);
 
 /**
- * Cast into ClientResponse
+ * Cast into StartResponse
  */
-struct Crh_ClientResponse_t* Crh_GetUpdateStartResponse_getClientResponse(struct Crh_GetUpdateStartResponse_t* obj);
+struct Crh_StartResponse_t* Crh_GetUpdateStartResponse_getStartResponse(struct Crh_GetUpdateStartResponse_t* obj);
 
 /**
- * Dynamic cast from ClientResponse
+ * Dynamic cast from StartResponse
  */
-struct Crh_GetUpdateStartResponse_t* Crh_GetUpdateStartResponse_fromClientResponse(struct Crh_ClientResponse_t* obj);
+struct Crh_GetUpdateStartResponse_t* Crh_GetUpdateStartResponse_fromStartResponse(struct Crh_StartResponse_t* obj);
 
 /**
  * Cast into Response
@@ -93,9 +93,9 @@ int Crh_GetUpdateStartResponse_print(struct Crh_GetUpdateStartResponse_t* instan
  */
 int Crh_GetUpdateStartResponse_TYPE(int* ret);
 
-/******************************************/
-/* Implementation of ClientResponse class */
-/******************************************/
+/*****************************************/
+/* Implementation of StartResponse class */
+/*****************************************/
 
 /**
  * Get the value of id
@@ -118,6 +118,16 @@ int Crh_GetUpdateStartResponse_client(struct Crh_GetUpdateStartResponse_t* insta
  * Set the value of client
  */
 int Crh_GetUpdateStartResponse_setClient(struct Crh_GetUpdateStartResponse_t* instance, struct C_IClient_t* new_var);
+
+/**
+ * Get the value of diskCopy
+ */
+int Crh_GetUpdateStartResponse_diskCopy(struct Crh_GetUpdateStartResponse_t* instance, struct Cstager_DiskCopy_t** var);
+
+/**
+ * Set the value of diskCopy
+ */
+int Crh_GetUpdateStartResponse_setDiskCopy(struct Crh_GetUpdateStartResponse_t* instance, struct Cstager_DiskCopy_t* new_var);
 
 /*********************************************/
 /* Implementation of Response abstract class */
@@ -174,16 +184,6 @@ int Crh_GetUpdateStartResponse_type(struct Crh_GetUpdateStartResponse_t* instanc
  */
 int Crh_GetUpdateStartResponse_clone(struct Crh_GetUpdateStartResponse_t* instance,
                                      struct C_IObject_t* ret);
-
-/**
- * Get the value of diskCopy
- */
-int Crh_GetUpdateStartResponse_diskCopy(struct Crh_GetUpdateStartResponse_t* instance, struct Cstager_DiskCopy_t** var);
-
-/**
- * Set the value of diskCopy
- */
-int Crh_GetUpdateStartResponse_setDiskCopy(struct Crh_GetUpdateStartResponse_t* instance, struct Cstager_DiskCopy_t* new_var);
 
 /**
  * Add a struct Cstager_DiskCopyForRecall_t* object to the sources list

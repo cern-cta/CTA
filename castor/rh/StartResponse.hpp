@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/rh/ClientResponse.hpp
+ *                      castor/rh/StartResponse.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ClientResponse.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/02 17:56:04 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_RH_CLIENTRESPONSE_HPP
-#define CASTOR_RH_CLIENTRESPONSE_HPP
+#ifndef CASTOR_RH_STARTRESPONSE_HPP
+#define CASTOR_RH_STARTRESPONSE_HPP
 
 // Include Files
 #include "castor/rh/Response.hpp"
@@ -40,25 +40,34 @@ namespace castor {
   class IObject;
   class IClient;
 
+  // Forward declarations
+  namespace stager {
+
+    // Forward declarations
+    class DiskCopy;
+
+  }; // end of namespace stager
+
   namespace rh {
 
     /**
-     * class ClientResponse
-     * A response dedicated to cases where an IClient is returned
+     * class StartResponse
+     * A response dedicated to cases where an IClient and a DiskCopy are returned. This
+     * is typically the case in the first call when a job starts
      */
-    class ClientResponse : public virtual Response {
+    class StartResponse : public virtual Response {
 
     public:
 
       /**
        * Empty Constructor
        */
-      ClientResponse() throw();
+      StartResponse() throw();
 
       /**
        * Empty Destructor
        */
-      virtual ~ClientResponse() throw();
+      virtual ~StartResponse() throw();
 
       /**
        * Outputs this object in a human readable format
@@ -131,6 +140,22 @@ namespace castor {
         m_client = new_var;
       }
 
+      /**
+       * Get the value of m_diskCopy
+       * @return the value of m_diskCopy
+       */
+      castor::stager::DiskCopy* diskCopy() const {
+        return m_diskCopy;
+      }
+
+      /**
+       * Set the value of m_diskCopy
+       * @param new_var the new value of m_diskCopy
+       */
+      void setDiskCopy(castor::stager::DiskCopy* new_var) {
+        m_diskCopy = new_var;
+      }
+
     private:
 
       /// The id of this object
@@ -138,10 +163,12 @@ namespace castor {
 
       castor::IClient* m_client;
 
-    }; // end of class ClientResponse
+      castor::stager::DiskCopy* m_diskCopy;
+
+    }; // end of class StartResponse
 
   }; // end of namespace rh
 
 }; // end of namespace castor
 
-#endif // CASTOR_RH_CLIENTRESPONSE_HPP
+#endif // CASTOR_RH_STARTRESPONSE_HPP

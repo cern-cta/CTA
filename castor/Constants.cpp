@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/12/02 17:56:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/12/03 10:31:49 $ $Author: sponcec3 $
  *
  *
  *
@@ -99,7 +99,7 @@ const char* castor::ObjectsIdStrings[69] = {
   "MoverCloseRequest",
   "StartRequest",
   "PutStartRequest",
-  "ClientResponse"
+  "StartResponse"
 };
 
 //=============================================================================

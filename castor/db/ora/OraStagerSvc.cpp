@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.68 $ $Release$ $Date: 2004/12/02 17:56:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.69 $ $Release$ $Date: 2004/12/03 10:31:49 $ $Author: sponcec3 $
  *
  *
  *
@@ -114,11 +114,11 @@ const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStateme
 
 /// SQL statement for getUpdateStart
 const std::string castor::db::ora::OraStagerSvc::s_getUpdateStartStatementString =
-  "BEGIN getUpdateStart(:1, :2, :3, :4, :5, :6 :7); END;";
+  "BEGIN getUpdateStart(:1, :2, :3, :4, :5, :6 :7 :8); END;";
 
 /// SQL statement for putStart
 const std::string castor::db::ora::OraStagerSvc::s_putStartStatementString =
-  "BEGIN putStart(:1, :2, :3); END;";
+  "BEGIN putStart(:1, :2, :3 :4 :5 :6 :7); END;";
 
 /// SQL statement for selectSvcClass
 const std::string castor::db::ora::OraStagerSvc::s_selectSvcClassStatementString =
@@ -154,7 +154,7 @@ const std::string castor::db::ora::OraStagerSvc::s_recreateCastorFileStatementSt
 
 /// SQL statement for prepareForMigration
 const std::string castor::db::ora::OraStagerSvc::s_prepareForMigrationStatementString =
-  "BEGIN prepareForMigration(:1); END;";
+  "BEGIN prepareForMigration(:1, :2); END;";
 
 // -----------------------------------------------------------------------
 // OraStagerSvc
@@ -321,11 +321,11 @@ castor::db::ora::OraStagerSvc::bestFileSystemForSegment
       m_bestFileSystemForSegmentStatement =
         createStatement(s_bestFileSystemForSegmentStatementString);
       m_bestFileSystemForSegmentStatement->registerOutParam
-        (2, oracle::occi::OCCISTRING, 255);
+        (2, oracle::occi::OCCISTRING, 2048);
       m_bestFileSystemForSegmentStatement->registerOutParam
-        (3, oracle::occi::OCCISTRING, 255);
+        (3, oracle::occi::OCCISTRING, 2048);
       m_bestFileSystemForSegmentStatement->registerOutParam
-        (4, oracle::occi::OCCISTRING, 255);
+        (4, oracle::occi::OCCISTRING, 2048);
       m_bestFileSystemForSegmentStatement->registerOutParam
         (5, oracle::occi::OCCIDOUBLE);
     }
@@ -421,11 +421,11 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
       m_bestTapeCopyForStreamStatement->setInt
         (4, castor::stager::STREAM_RUNNING);
       m_bestTapeCopyForStreamStatement->registerOutParam
-        (5, oracle::occi::OCCISTRING, 255);
+        (5, oracle::occi::OCCISTRING, 2048);
       m_bestTapeCopyForStreamStatement->registerOutParam
-        (6, oracle::occi::OCCISTRING, 255);
+        (6, oracle::occi::OCCISTRING, 2048);
       m_bestTapeCopyForStreamStatement->registerOutParam
-        (7, oracle::occi::OCCISTRING, 255);
+        (7, oracle::occi::OCCISTRING, 2048);
       m_bestTapeCopyForStreamStatement->registerOutParam
         (8, oracle::occi::OCCIDOUBLE);
       m_bestTapeCopyForStreamStatement->registerOutParam
@@ -433,7 +433,7 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
       m_bestTapeCopyForStreamStatement->registerOutParam
         (10, oracle::occi::OCCIDOUBLE);
       m_bestTapeCopyForStreamStatement->registerOutParam
-        (11, oracle::occi::OCCISTRING, 255);
+        (11, oracle::occi::OCCISTRING, 2048);
       m_bestTapeCopyForStreamStatement->registerOutParam
         (12, oracle::occi::OCCIDOUBLE);
       m_bestTapeCopyForStreamStatement->registerOutParam
@@ -774,9 +774,9 @@ castor::db::ora::OraStagerSvc::subRequestToDo
       m_subRequestToDoStatement->registerOutParam
         (2, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
-        (3, oracle::occi::OCCISTRING, 255);
+        (3, oracle::occi::OCCISTRING, 2048);
       m_subRequestToDoStatement->registerOutParam
-        (4, oracle::occi::OCCISTRING, 255);
+        (4, oracle::occi::OCCISTRING, 2048);
       m_subRequestToDoStatement->registerOutParam
         (5, oracle::occi::OCCIDOUBLE);
       m_subRequestToDoStatement->registerOutParam
@@ -941,13 +941,15 @@ castor::db::ora::OraStagerSvc::getUpdateStart
       m_getUpdateStartStatement->registerOutParam
         (3, oracle::occi::OCCIDOUBLE);
       m_getUpdateStartStatement->registerOutParam
-        (4, oracle::occi::OCCISTRING, 255);
+        (4, oracle::occi::OCCISTRING, 2048);
       m_getUpdateStartStatement->registerOutParam
         (5, oracle::occi::OCCIINT);
       m_getUpdateStartStatement->registerOutParam
         (6, oracle::occi::OCCICURSOR);
       m_getUpdateStartStatement->registerOutParam
         (7, oracle::occi::OCCIDOUBLE);
+      m_getUpdateStartStatement->registerOutParam
+        (8, oracle::occi::OCCISTRING);
     }
     // execute the statement and see whether we found something
     m_getUpdateStartStatement->setDouble(1, subreq->id());
@@ -1037,6 +1039,7 @@ castor::db::ora::OraStagerSvc::getUpdateStart
     (*diskCopy)->setPath(m_getUpdateStartStatement->getString(4));
     (*diskCopy)->setStatus
       ((enum castor::stager::DiskCopyStatusCodes) status);
+    (*diskCopy)->setDiskcopyId(m_getUpdateStartStatement->getString(8));
     if ((*diskCopy)->status() ==
         castor::stager::DISKCOPY_WAITDISK2DISKCOPY) {
       try {
@@ -1082,8 +1085,10 @@ castor::db::ora::OraStagerSvc::getUpdateStart
 castor::IClient*
 castor::db::ora::OraStagerSvc::putStart
 (castor::stager::SubRequest* subreq,
- castor::stager::FileSystem* fileSystem)
+ castor::stager::FileSystem* fileSystem,
+ castor::stager::DiskCopy** diskCopy)
   throw (castor::exception::Exception) {
+  castor::IObject *iobj = 0;
   try {
     // Check whether the statements are ok
     if (0 == m_putStartStatement) {
@@ -1091,6 +1096,14 @@ castor::db::ora::OraStagerSvc::putStart
         createStatement(s_putStartStatementString);
       m_putStartStatement->registerOutParam
         (3, oracle::occi::OCCIDOUBLE);
+      m_getUpdateStartStatement->registerOutParam
+        (4, oracle::occi::OCCIDOUBLE);
+      m_getUpdateStartStatement->registerOutParam
+        (5, oracle::occi::OCCIINT);
+      m_getUpdateStartStatement->registerOutParam
+        (6, oracle::occi::OCCISTRING, 2048);
+      m_getUpdateStartStatement->registerOutParam
+        (7, oracle::occi::OCCISTRING, 2048);
     }
     // execute the statement and see whether we found something
     m_putStartStatement->setDouble(1, subreq->id());
@@ -1113,7 +1126,7 @@ castor::db::ora::OraStagerSvc::putStart
       throw ex;
     }
     // Else get the client
-    castor::IObject *iobj = cnvSvc()->getObjFromId(id);
+    iobj = cnvSvc()->getObjFromId(id);
     if (0 == iobj) {
       castor::exception::Internal ex;
       ex.getMessage()
@@ -1131,10 +1144,23 @@ castor::db::ora::OraStagerSvc::putStart
         << castor::ObjectsIdStrings[id];
       throw ex;
     }
+    // Get the DiskCopy
+    *diskCopy = new castor::stager::DiskCopy();
+    (*diskCopy)->setId((u_signed64)m_putStartStatement->getDouble(4));
+    (*diskCopy)->setStatus
+      ((enum castor::stager::DiskCopyStatusCodes)
+       m_putStartStatement->getInt(5));
+    (*diskCopy)->setPath(m_putStartStatement->getString(6));
+    (*diskCopy)->setDiskcopyId(m_putStartStatement->getString(7));
     // return
     cnvSvc()->commit();
     return result;
   } catch (oracle::occi::SQLException e) {
+    if (0 != iobj) delete iobj;
+    if (0 != *diskCopy) {
+      delete *diskCopy;
+      *diskCopy = 0;
+    }
     rollback();
     castor::exception::Internal ex;
     ex.getMessage()
@@ -1678,7 +1704,8 @@ castor::stager::CastorFile *castorFile)
 // prepareForMigration
 // -----------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::prepareForMigration
-(castor::stager::SubRequest *subreq)
+(castor::stager::SubRequest *subreq,
+ u_signed64 fileSize)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -1689,6 +1716,7 @@ void castor::db::ora::OraStagerSvc::prepareForMigration
     }
     // execute the statement and see whether we found something
     m_prepareForMigrationStatement->setDouble(1, subreq->id());
+    m_prepareForMigrationStatement->setDouble(2, fileSize);
     m_prepareForMigrationStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     rollback();

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/12/02 17:56:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/12/03 10:31:51 $ $Author: sponcec3 $
  *
  *
  *
@@ -45,7 +45,7 @@
 #include "castor/stager/UpdateRepRequest.hpp"
 #include "castor/stager/MoverCloseRequest.hpp"
 #include "castor/rh/GetUpdateStartResponse.hpp"
-#include "castor/rh/ClientResponse.hpp"
+#include "castor/rh/StartResponse.hpp"
 #include "castor/exception/NotSupported.hpp"
 #include <list>
 
@@ -323,20 +323,24 @@ castor::stager::RemoteStagerSvc::getUpdateStart
  */
 class PutStartResponseHandler : public castor::client::IResponseHandler {
 public:
-  PutStartResponseHandler (castor::IClient** result) :
-    m_result(result) {}
+  PutStartResponseHandler (castor::IClient** result,
+                           castor::stager::DiskCopy** diskCopy) :
+    m_result(result), m_diskCopy(diskCopy) {}
 
   virtual void handleResponse(castor::rh::Response& r)
     throw (castor::exception::Exception) {
-    castor::rh::ClientResponse *resp =
-      dynamic_cast<castor::rh::ClientResponse*>(&r);
+    castor::rh::StartResponse *resp =
+      dynamic_cast<castor::rh::StartResponse*>(&r);
     *m_result = resp->client();
+    *m_diskCopy = resp->diskCopy();
   };
   virtual void terminate()
     throw (castor::exception::Exception) {};
 private:
   // where to store the result
   castor::IClient** m_result;
+  // where to store the diskCopy
+  castor::stager::DiskCopy** m_diskCopy;
 };
 
 // -----------------------------------------------------------------------
@@ -345,12 +349,13 @@ private:
 castor::IClient*
 castor::stager::RemoteStagerSvc::putStart
 (castor::stager::SubRequest* subreq,
- castor::stager::FileSystem* fileSystem)
+ castor::stager::FileSystem* fileSystem,
+ castor::stager::DiskCopy** diskCopy)
   throw (castor::exception::Exception) {
   // placeholders for the result
   castor::IClient* result;
   // Build a response Handler
-  PutStartResponseHandler rh(&result);
+  PutStartResponseHandler rh(&result, diskCopy);
   // Build the PutStartRequest
   castor::stager::PutStartRequest req;
   req.setSubreqId(subreq->id());
@@ -497,11 +502,13 @@ castor::stager::RemoteStagerSvc::recreateCastorFile
 // prepareForMigration
 // -----------------------------------------------------------------------
 void castor::stager::RemoteStagerSvc::prepareForMigration
-(castor::stager::SubRequest *subreq)
+(castor::stager::SubRequest *subreq,
+ u_signed64 fileSize)
   throw (castor::exception::Exception) {
   // Build the MoverCloseRequest
   castor::stager::MoverCloseRequest req;
   req.setSubReqId(subreq->id());
+  req.setFileSize(fileSize);
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request

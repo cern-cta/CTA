@@ -99,7 +99,7 @@ namespace castor {
     OBJ_MoverCloseRequest = 65,
     OBJ_StartRequest = 66,
     OBJ_PutStartRequest = 67,
-    OBJ_ClientResponse = 68
+    OBJ_StartResponse = 68
   };
     
   /**

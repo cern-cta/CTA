@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.63 $ $Release$ $Date: 2004/12/02 17:56:02 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.64 $ $Release$ $Date: 2004/12/03 10:31:49 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -113,7 +113,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamBaseAddressCnv.cpp \
               io/StreamCastorFileCnv.cpp \
               io/StreamClientCnv.cpp \
-              io/StreamClientResponseCnv.cpp \
+              io/StreamStartResponseCnv.cpp \
               io/StreamCnvSvc.cpp \
               io/StreamDiskCopyCnv.cpp \
               io/StreamEndResponseCnv.cpp \
@@ -160,8 +160,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               replier/RequestReplierCInt.cpp \
               rh/Client.cpp \
               rh/ClientCInt.cpp \
-              rh/ClientResponse.cpp \
-              rh/ClientResponseCInt.cpp \
+              rh/StartResponse.cpp \
+              rh/StartResponseCInt.cpp \
               rh/EndResponse.cpp \
               rh/EndResponseCInt.cpp \
               rh/FileResponse.cpp \

@@ -27,9 +27,9 @@
 // Include Files
 #include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
-#include "castor/rh/ClientResponse.hpp"
 #include "castor/rh/GetUpdateStartResponse.hpp"
 #include "castor/rh/Response.hpp"
+#include "castor/rh/StartResponse.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "osdep.h"
@@ -53,16 +53,16 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Crh_GetUpdateStartResponse_getClientResponse
+  // Crh_GetUpdateStartResponse_getStartResponse
   //----------------------------------------------------------------------------
-  castor::rh::ClientResponse* Crh_GetUpdateStartResponse_getClientResponse(castor::rh::GetUpdateStartResponse* obj) {
+  castor::rh::StartResponse* Crh_GetUpdateStartResponse_getStartResponse(castor::rh::GetUpdateStartResponse* obj) {
     return obj;
   }
 
   //----------------------------------------------------------------------------
-  // Crh_GetUpdateStartResponse_fromClientResponse
+  // Crh_GetUpdateStartResponse_fromStartResponse
   //----------------------------------------------------------------------------
-  castor::rh::GetUpdateStartResponse* Crh_GetUpdateStartResponse_fromClientResponse(castor::rh::ClientResponse* obj) {
+  castor::rh::GetUpdateStartResponse* Crh_GetUpdateStartResponse_fromStartResponse(castor::rh::StartResponse* obj) {
     return dynamic_cast<castor::rh::GetUpdateStartResponse*>(obj);
   }
 
@@ -143,6 +143,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_GetUpdateStartResponse_diskCopy
+  //----------------------------------------------------------------------------
+  int Crh_GetUpdateStartResponse_diskCopy(castor::rh::GetUpdateStartResponse* instance, castor::stager::DiskCopy** var) {
+    *var = instance->diskCopy();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_GetUpdateStartResponse_setDiskCopy
+  //----------------------------------------------------------------------------
+  int Crh_GetUpdateStartResponse_setDiskCopy(castor::rh::GetUpdateStartResponse* instance, castor::stager::DiskCopy* new_var) {
+    instance->setDiskCopy(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_GetUpdateStartResponse_errorCode
   //----------------------------------------------------------------------------
   int Crh_GetUpdateStartResponse_errorCode(castor::rh::GetUpdateStartResponse* instance, unsigned int* var) {
@@ -190,22 +206,6 @@ extern "C" {
   int Crh_GetUpdateStartResponse_clone(castor::rh::GetUpdateStartResponse* instance,
                                        castor::IObject** ret) {
     *ret = instance->clone();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_GetUpdateStartResponse_diskCopy
-  //----------------------------------------------------------------------------
-  int Crh_GetUpdateStartResponse_diskCopy(castor::rh::GetUpdateStartResponse* instance, castor::stager::DiskCopy** var) {
-    *var = instance->diskCopy();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_GetUpdateStartResponse_setDiskCopy
-  //----------------------------------------------------------------------------
-  int Crh_GetUpdateStartResponse_setDiskCopy(castor::rh::GetUpdateStartResponse* instance, castor::stager::DiskCopy* new_var) {
-    instance->setDiskCopy(new_var);
     return 0;
   }
 

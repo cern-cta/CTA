@@ -390,10 +390,13 @@ int Cstager_IStagerSvc_getUpdateStart
  * the given FileSystem and updates the DiskCopy status
  * to DISKCOPY_STAGEOUT.
  * Returns the IClient object to use for the reply
- * to the client.
+ * to the client. and the DiskCopy to use for data access.
+ * Note that deallocation of the DiskCopy and IClient
+ * is the responsability of the caller.
  * @param stgSvc the IStagerSvc used
  * @param subreq  the SubRequest to consider
  * @param fileSystem the selected FileSystem
+ * @param diskCopy the DiskCopy to use for the data access
  * @param client the IClient object to use for client reply
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
@@ -404,7 +407,8 @@ int Cstager_IStagerSvc_putStart
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_SubRequest_t* subreq,
  struct Cstager_FileSystem_t* fileSystem,
- struct C_IClient_t** client);
+ struct C_IClient_t** client,
+ struct Cstager_DiskCopy_t** diskCopy);
 
 /**
  * Returns the error message associated to the last error.
@@ -591,15 +595,19 @@ int Cstager_IStagerSvc_recreateCastorFile
 /**
  * Prepares a file for migration. This involves
  * creating the needed TapeCopies according to the
- * FileClass of the castorFile.
+ * FileClass of the castorFile and updating the file
+ * size to the actual value.
  * @param stgSvc the IStagerSvc used
  * @param subreq The SubRequest handling the file to prepare
+ * @param fileSize The actual size of the castor file
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
  * Cstager_IStagerSvc_errorMsg
  */
-void Cstager_IStagerSvc_prepareForMigration
-(struct Cstager_SubRequest_t* subreq);
+int Cstager_IStagerSvc_prepareForMigration
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_SubRequest_t* subreq,
+ u_signed64 fileSize);
 
 #endif // CASTOR_ISTAGERSVC_H

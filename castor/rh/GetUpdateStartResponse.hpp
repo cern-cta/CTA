@@ -28,7 +28,7 @@
 #define CASTOR_RH_GETUPDATESTARTRESPONSE_HPP
 
 // Include Files
-#include "castor/rh/ClientResponse.hpp"
+#include "castor/rh/StartResponse.hpp"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -44,7 +44,6 @@ namespace castor {
 
     // Forward declarations
     class DiskCopyForRecall;
-    class DiskCopy;
 
   }; // end of namespace stager
 
@@ -54,7 +53,7 @@ namespace castor {
      * class GetUpdateStartResponse
      * Adapted response to a GetUpdateStartRequest
      */
-    class GetUpdateStartResponse : public ClientResponse {
+    class GetUpdateStartResponse : public StartResponse {
 
     public:
 
@@ -106,22 +105,6 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
-       * Get the value of m_diskCopy
-       * @return the value of m_diskCopy
-       */
-      castor::stager::DiskCopy* diskCopy() const {
-        return m_diskCopy;
-      }
-
-      /**
-       * Set the value of m_diskCopy
-       * @param new_var the new value of m_diskCopy
-       */
-      void setDiskCopy(castor::stager::DiskCopy* new_var) {
-        m_diskCopy = new_var;
-      }
-
-      /**
        * Add a castor::stager::DiskCopyForRecall* object to the m_sourcesVector list
        */
       void addSources(castor::stager::DiskCopyForRecall* add_object) {
@@ -153,8 +136,6 @@ namespace castor {
       }
 
     private:
-
-      castor::stager::DiskCopy* m_diskCopy;
 
       std::vector<castor::stager::DiskCopyForRecall*> m_sourcesVector;
 

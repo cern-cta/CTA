@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/rh/ClientResponse.cpp
+ *                      castor/rh/StartResponse.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ClientResponse.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/02 17:56:04 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
@@ -29,8 +29,9 @@
 #include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/rh/ClientResponse.hpp"
 #include "castor/rh/Response.hpp"
+#include "castor/rh/StartResponse.hpp"
+#include "castor/stager/DiskCopy.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -38,25 +39,26 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::rh::ClientResponse::ClientResponse() throw() :
+castor::rh::StartResponse::StartResponse() throw() :
   Response(),
   m_id(0),
-  m_client(0) {
+  m_client(0),
+  m_diskCopy(0) {
 };
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::rh::ClientResponse::~ClientResponse() throw() {
+castor::rh::StartResponse::~StartResponse() throw() {
 };
 
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::rh::ClientResponse::print(std::ostream& stream,
-                                       std::string indent,
-                                       castor::ObjectSet& alreadyPrinted) const {
-  stream << indent << "[# ClientResponse #]" << std::endl;
+void castor::rh::StartResponse::print(std::ostream& stream,
+                                      std::string indent,
+                                      castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# StartResponse #]" << std::endl;
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
     stream << indent << "Back pointer, see above" << std::endl;
@@ -73,12 +75,18 @@ void castor::rh::ClientResponse::print(std::ostream& stream,
   } else {
     stream << indent << "  null" << std::endl;
   }
+  stream << indent << "DiskCopy : " << std::endl;
+  if (0 != m_diskCopy) {
+    m_diskCopy->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
 }
 
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::rh::ClientResponse::print() const {
+void castor::rh::StartResponse::print() const {
   ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
@@ -86,21 +94,21 @@ void castor::rh::ClientResponse::print() const {
 //------------------------------------------------------------------------------
 // TYPE
 //------------------------------------------------------------------------------
-int castor::rh::ClientResponse::TYPE() {
-  return OBJ_ClientResponse;
+int castor::rh::StartResponse::TYPE() {
+  return OBJ_StartResponse;
 }
 
 //------------------------------------------------------------------------------
 // type
 //------------------------------------------------------------------------------
-int castor::rh::ClientResponse::type() const {
+int castor::rh::StartResponse::type() const {
   return TYPE();
 }
 
 //------------------------------------------------------------------------------
 // clone
 //------------------------------------------------------------------------------
-castor::IObject* castor::rh::ClientResponse::clone() {
-  return new ClientResponse(*this);
+castor::IObject* castor::rh::StartResponse::clone() {
+  return new StartResponse(*this);
 }
 

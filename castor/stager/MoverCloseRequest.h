@@ -254,6 +254,18 @@ int Cstager_MoverCloseRequest_subReqId(struct Cstager_MoverCloseRequest_t* insta
 int Cstager_MoverCloseRequest_setSubReqId(struct Cstager_MoverCloseRequest_t* instance, u_signed64 new_var);
 
 /**
+ * Get the value of fileSize
+ * The actual file of the size, once it was closed
+ */
+int Cstager_MoverCloseRequest_fileSize(struct Cstager_MoverCloseRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of fileSize
+ * The actual file of the size, once it was closed
+ */
+int Cstager_MoverCloseRequest_setFileSize(struct Cstager_MoverCloseRequest_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

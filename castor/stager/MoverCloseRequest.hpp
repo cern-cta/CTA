@@ -117,6 +117,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_fileSize
+       * The actual file of the size, once it was closed
+       * @return the value of m_fileSize
+       */
+      u_signed64 fileSize() const {
+        return m_fileSize;
+      }
+
+      /**
+       * Set the value of m_fileSize
+       * The actual file of the size, once it was closed
+       * @param new_var the new value of m_fileSize
+       */
+      void setFileSize(u_signed64 new_var) {
+        m_fileSize = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -138,6 +156,9 @@ namespace castor {
 
       /// The id of the SubRequest for which the file closing took place
       u_signed64 m_subReqId;
+
+      /// The actual file of the size, once it was closed
+      u_signed64 m_fileSize;
 
       /// The id of this object
       u_signed64 m_id;

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/io/StreamClientResponseCnv.hpp
+ *                      castor/io/StreamStartResponseCnv.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,15 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamClientResponseCnv.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/02 17:56:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * 
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_IO_CLIENTRESPONSE_HPP
-#define CASTOR_IO_CLIENTRESPONSE_HPP
+#ifndef CASTOR_IO_STARTRESPONSE_HPP
+#define CASTOR_IO_STARTRESPONSE_HPP
 
 // Include Files
 #include "castor/Constants.hpp"
@@ -47,22 +47,22 @@ namespace castor {
     class StreamAddress;
 
     /**
-     * class StreamClientResponseCnv
-     * A converter for marshalling/unmarshalling ClientResponse into/from stl streams
+     * class StreamStartResponseCnv
+     * A converter for marshalling/unmarshalling StartResponse into/from stl streams
      */
-    class StreamClientResponseCnv : public StreamBaseCnv {
+    class StreamStartResponseCnv : public StreamBaseCnv {
 
     public:
 
       /**
        * Constructor
        */
-      StreamClientResponseCnv(castor::ICnvSvc* cnvSvc);
+      StreamStartResponseCnv(castor::ICnvSvc* cnvSvc);
 
       /**
        * Destructor
        */
-      virtual ~StreamClientResponseCnv() throw();
+      virtual ~StreamStartResponseCnv() throw();
 
       /**
        * Gets the object type.
@@ -134,10 +134,10 @@ namespace castor {
                                                castor::ObjectCatalog& newlyCreated)
         throw (castor::exception::Exception);
 
-    }; // end of class StreamClientResponseCnv
+    }; // end of class StreamStartResponseCnv
 
   }; // end of namespace io
 
 }; // end of namespace castor
 
-#endif // CASTOR_IO_CLIENTRESPONSE_HPP
+#endif // CASTOR_IO_STARTRESPONSE_HPP
