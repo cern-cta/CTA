@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/06/18 22:33:42 $ $Author: jdurand $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/06/21 16:25:20 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.10 $ $Date: 2004/06/18 22:33:42 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.11 $ $Date: 2004/06/21 16:25:20 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -231,8 +231,8 @@ static int updateOldStgCat(tape,file)
                             filereq->recordlength,
                             recfm,
                             newpath,
-							NULL,
-							-1);
+                            NULL,
+                            -1);
       save_serrno = serrno;
       if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_tppos(): %s\n",
@@ -532,6 +532,8 @@ static int getUpdates(
   unsigned char *blockid;
   ID_TYPE key;
 
+  rtcp_log(LOG_DEBUG,"getUpdates() check for updates in DB\n");
+
   CLIST_ITERATE_BEGIN(tpList,tpIterator) 
     {
       tape = tpIterator->tape;
@@ -539,7 +541,7 @@ static int getUpdates(
        * Create an update (from db) copy of this Tape+Segments
        */
       iObj = Cstager_Tape_getIObject(tpIterator->tp);
-      rc = getIAddr(tpIterator->tp,&iAddr);
+      rc = getIAddr(iObj,&iAddr);
       if ( rc != -1 ) {
         rc = C_Services_updateObj(svcs,iAddr,iObj);
         if ( rc == -1 ) LOG_FAILED_CALL("C_Services_updateObj()");
@@ -560,6 +562,8 @@ static int getUpdates(
       (void)rtcpcld_setTapeKey(key);
       tpOldStatus = tpIterator->oldStatus;
       Cstager_Tape_status(tpIterator->tp,&tpNewStatus);
+      rtcp_log(LOG_DEBUG,"getUpdates() tape status (old=%d, new=%d)\n",
+               tpOldStatus,tpNewStatus);
       if ( tpOldStatus != tpNewStatus ) {
         tpIterator->oldStatus = tpNewStatus;
         if ( tpNewStatus == TAPE_MOUNTED ) {
@@ -567,6 +571,30 @@ static int getUpdates(
           strcpy(tape->tapereq.server,"unknown");
         }
       }
+      if ( tpNewStatus == TAPE_FAILED ) {
+        Cstager_Tape_errorCode(tpIterator->tp,&tape->tapereq.err.errorcode);
+        Cstager_Tape_severity(tpIterator->tp,&tape->tapereq.err.severity);
+        Cstager_Tape_errMsgTxt(tpIterator->tp,(CONST char **)&errmsgtxt);
+        if ( errmsgtxt != NULL ) {
+          strncpy(
+                  tape->tapereq.err.errmsgtxt,
+                  errmsgtxt,
+                  sizeof(tape->tapereq.err.errmsgtxt)-1
+                  );
+        }
+        if ( tape->tapereq.err.errorcode == 0 )
+          tape->tapereq.err.errorcode = SEINTERNAL;
+        if ( tape->tapereq.err.severity == RTCP_OK )
+          tape->tapereq.err.severity = RTCP_FAILED | RTCP_UNERR;
+        if ( *tape->tapereq.err.errmsgtxt == '\0' ) 
+          strcpy(
+                 tape->tapereq.err.errmsgtxt,
+                 sstrerror(tape->tapereq.err.errorcode)
+                 );
+        tape->tapereq.tprc = -1;
+        return(-1);
+      }
+      
       CLIST_ITERATE_BEGIN(tpIterator->segments,segmIterator) 
         {
           /*
