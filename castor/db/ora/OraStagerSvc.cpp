@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2004/10/26 16:47:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2004/10/27 14:49:40 $ $Author: sponcec3 $
  *
  *
  *
@@ -33,6 +33,8 @@
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/SubRequest.hpp"
+#include "castor/stager/FileSystem.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/TapeCopyForMigration.hpp"
@@ -51,6 +53,7 @@
 #include "castor/db/DbAddress.hpp"
 #include "occi.h"
 #include <string>
+#include <sstream>
 #include <vector>
 
 // -----------------------------------------------------------------------
@@ -90,17 +93,13 @@ const std::string castor::db::ora::OraStagerSvc::s_bestFileSystemForSegmentState
 const std::string castor::db::ora::OraStagerSvc::s_fileRecalledStatementString =
   "BEGIN fileRecalled(:1, :2, :3); END;";
 
-/// SQL statement for subRequestToDo
-const std::string castor::db::ora::OraStagerSvc::s_subRequestToDoStatementString =
-  "SELECT id FROM rh_Stream WHERE status = :1";
-
-/// SQL statement for isDiskCopyToSchedule
-const std::string castor::db::ora::OraStagerSvc::s_isDiskCopyToScheduleStatementString =
-  "SELECT id FROM rh_Stream WHERE status = :1";
+/// SQL statement for isSubRequestToSchedule
+const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStatementString =
+  "BEGIN isSubRequestToSchedule(:1) END;";
 
 /// SQL statement for scheduleDiskCopy
 const std::string castor::db::ora::OraStagerSvc::s_scheduleDiskCopyStatementString =
-  "SELECT id FROM rh_Stream WHERE status = :1";
+  "BEGIN scheduleDiskCopy(:1, :2, :3, :4, :5) END;";
 
 // -----------------------------------------------------------------------
 // OraStagerSvc
@@ -254,17 +253,7 @@ castor::db::ora::OraStagerSvc::bestFileSystemForSegment
       // No data found error, this is ok
       return 0;
     }
-    try {
-      // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
-      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-        // We've obviously lost the ORACLE connection here
-        cnvSvc()->dropConnection();
-      }
-    } catch (oracle::occi::SQLException e) {
-      // rollback failed, let's drop the connection for security
-      cnvSvc()->dropConnection();
-    }
+    rollback();
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in bestFileSystemForSegment."
@@ -385,17 +374,7 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
-    try {
-      // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
-      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-        // We've obviously lost the ORACLE connection here
-        cnvSvc()->dropConnection();
-      }
-    } catch (oracle::occi::SQLException e) {
-      // rollback failed, let's drop the connection for security
-      cnvSvc()->dropConnection();
-    }
+    rollback();
     if (1403 == e.getErrorCode()) {
       // No Data Found exception
       castor::exception::NoEntry e;
@@ -426,6 +405,7 @@ void castor::db::ora::OraStagerSvc::fileRecalled
         (2, castor::stager::SUBREQUEST_RESTART);
       m_fileRecalledStatement->setInt
         (3, castor::stager::DISKCOPY_STAGED);
+      m_fileRecalledStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
     m_fileRecalledStatement->setDouble(1, tapeCopy->id());
@@ -437,20 +417,8 @@ void castor::db::ora::OraStagerSvc::fileRecalled
         << "fileRecalled : unable to update SubRequest and DiskCopy status.";
       throw ex;
     }
-    // commit
-    cnvSvc()->commit();
   } catch (oracle::occi::SQLException e) {
-    try {
-      // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
-      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-        // We've obviously lost the ORACLE connection here
-        cnvSvc()->dropConnection();
-      }
-    } catch (oracle::occi::SQLException e) {
-      // rollback failed, let's drop the connection for security
-      cnvSvc()->dropConnection();
-    }
+    rollback();
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in bestTapeCopyForStream."
@@ -467,29 +435,8 @@ castor::db::ora::OraStagerSvc::tapesToDo()
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_tapesToDoStatement) {
-    try {
-      m_tapesToDoStatement = cnvSvc()->getConnection()->createStatement();
-      m_tapesToDoStatement->setSQL(s_tapesToDoStatementString);
+      m_tapesToDoStatement = createStatement(s_tapesToDoStatementString);
       m_tapesToDoStatement->setInt(1, castor::stager::TAPE_PENDING);
-    } catch (oracle::occi::SQLException e) {
-      try {
-        // Always try to rollback
-        cnvSvc()->getConnection()->rollback();
-        if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-          // We've obviously lost the ORACLE connection here
-          cnvSvc()->dropConnection();
-        }
-      } catch (oracle::occi::SQLException e) {
-        // rollback failed, let's drop the connection for security
-        cnvSvc()->dropConnection();
-      }
-      m_tapesToDoStatement = 0;
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "Error in creating tapesToDo statement."
-        << std::endl << e.what();
-      throw ex;
-    }
   }
   std::vector<castor::stager::Tape*> result;
   try {
@@ -512,17 +459,7 @@ castor::db::ora::OraStagerSvc::tapesToDo()
     }
     m_tapesToDoStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
-    try {
-      // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
-      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-        // We've obviously lost the ORACLE connection here
-        cnvSvc()->dropConnection();
-      }
-    } catch (oracle::occi::SQLException e) {
-      // rollback failed, let's drop the connection for security
-      cnvSvc()->dropConnection();
-    }
+    rollback();
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error in tapesToDo while retrieving list of tapes."
@@ -543,29 +480,8 @@ castor::db::ora::OraStagerSvc::streamsToDo()
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_streamsToDoStatement) {
-    try {
-      m_streamsToDoStatement = cnvSvc()->getConnection()->createStatement();
-      m_streamsToDoStatement->setSQL(s_streamsToDoStatementString);
-      m_streamsToDoStatement->setInt(1, castor::stager::STREAM_PENDING);
-    } catch (oracle::occi::SQLException e) {
-      try {
-        // Always try to rollback
-        cnvSvc()->getConnection()->rollback();
-        if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-          // We've obviously lost the ORACLE connection here
-          cnvSvc()->dropConnection();
-        }
-      } catch (oracle::occi::SQLException e) {
-        // rollback failed, let's drop the connection for security
-        cnvSvc()->dropConnection();
-      }
-      m_streamsToDoStatement = 0;
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "Error in creating streamsToDo statement."
-        << std::endl << e.what();
-      throw ex;
-    }
+    m_streamsToDoStatement = createStatement(s_streamsToDoStatementString);
+    m_streamsToDoStatement->setInt(1, castor::stager::STREAM_PENDING);
   }
   std::vector<castor::stager::Stream*> result;
   try {
@@ -591,17 +507,7 @@ castor::db::ora::OraStagerSvc::streamsToDo()
     }
     m_streamsToDoStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
-    try {
-      // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
-      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-        // We've obviously lost the ORACLE connection here
-        cnvSvc()->dropConnection();
-      }
-    } catch (oracle::occi::SQLException e) {
-      // rollback failed, let's drop the connection for security
-      cnvSvc()->dropConnection();
-    }
+    rollback();
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error in streamsToDo while retrieving list of streams."
@@ -623,28 +529,7 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_selectTapeStatement) {
-    try {
-      m_selectTapeStatement = cnvSvc()->getConnection()->createStatement();
-      m_selectTapeStatement->setSQL(s_selectTapeStatementString);
-    } catch (oracle::occi::SQLException e) {
-      try {
-        // Always try to rollback
-        cnvSvc()->getConnection()->rollback();
-        if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-          // We've obviously lost the ORACLE connection here
-          cnvSvc()->dropConnection();
-        }
-      } catch (oracle::occi::SQLException e) {
-        // rollback failed, let's drop the connection for security
-        cnvSvc()->dropConnection();
-      }
-      m_selectTapeStatement = 0;
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "Error in creating selectTape statement."
-        << std::endl << e.what();
-      throw ex;
-    }
+    m_selectTapeStatement = createStatement(s_selectTapeStatementString);
   }
   // Execute statement and get result
   unsigned long id;
@@ -732,27 +617,155 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
 castor::stager::SubRequest*
 castor::db::ora::OraStagerSvc::subRequestToDo()
   throw (castor::exception::Exception) {
-  return 0;
+  try {
+    // Check whether the statements are ok
+    if (0 == m_subRequestToDoStatement) {
+      std::ostringstream stmtString;
+      stmtString << "UPDATE rh_SubRequest SET status = "
+                 << castor::stager::SUBREQUEST_WAITSCHED
+                 << " WHERE (status = "
+                 << castor::stager::SUBREQUEST_START
+                 << " OR status = "
+                 << castor::stager::SUBREQUEST_RESTART
+                 << " OR status = "
+                 << castor::stager::SUBREQUEST_RETRY
+                 << ") AND ROWNUM < 2 RETURNING id, retryCounter, fileName, protocol, poolName, xsize, priority, status INTO :1, :2, :3, :4, :5 ,:6 , :7, :8";
+      m_subRequestToDoStatement =
+        createStatement(stmtString.str());
+      m_subRequestToDoStatement->registerOutParam
+        (1, oracle::occi::OCCIDOUBLE);
+      m_subRequestToDoStatement->registerOutParam
+        (2, oracle::occi::OCCIINT);
+      m_subRequestToDoStatement->registerOutParam
+        (3, oracle::occi::OCCISTRING, 255);
+      m_subRequestToDoStatement->registerOutParam
+        (4, oracle::occi::OCCISTRING, 255);
+      m_subRequestToDoStatement->registerOutParam
+        (5, oracle::occi::OCCISTRING, 255);
+      m_subRequestToDoStatement->registerOutParam
+        (6, oracle::occi::OCCIDOUBLE);
+      m_subRequestToDoStatement->registerOutParam
+        (7, oracle::occi::OCCIINT);
+      m_subRequestToDoStatement->registerOutParam
+        (8, oracle::occi::OCCIINT);
+      m_subRequestToDoStatement->setAutoCommit(true);
+    }
+    // execute the statement and see whether we found something
+    unsigned int nb =
+      m_subRequestToDoStatement->executeUpdate();
+    if (0 == nb) {
+      // Found no SubRequest to handle
+      return 0;
+    }
+    // Create result
+    castor::stager::SubRequest* result =
+      new castor::stager::SubRequest();
+    result->setId((u_signed64)m_subRequestToDoStatement->getDouble(1));
+    result->setRetryCounter(m_subRequestToDoStatement->getInt(2));
+    result->setFileName(m_subRequestToDoStatement->getString(3));
+    result->setProtocol(m_subRequestToDoStatement->getString(4));
+    result->setPoolName(m_subRequestToDoStatement->getString(5));
+    result->setXsize((u_signed64)m_subRequestToDoStatement->getDouble(6));
+    result->setPriority(m_subRequestToDoStatement->getInt(7));
+    result->setStatus
+      ((enum castor::stager::SubRequestStatusCodes)
+       m_subRequestToDoStatement->getInt(8));
+    // return
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in subRequestToDo."
+      << std::endl << e.what();
+    throw ex;
+  }
 }
 
 // -----------------------------------------------------------------------
-// isDiskCopyToSchedule
+// isSubRequestToSchedule
 // -----------------------------------------------------------------------
-bool castor::db::ora::OraStagerSvc::isDiskCopyToSchedule
+bool castor::db::ora::OraStagerSvc::isSubRequestToSchedule
 (castor::stager::SubRequest* subreq)
   throw (castor::exception::Exception) {
-  return false;
+  try {
+    // Check whether the statements are ok
+    if (0 == m_isSubRequestToScheduleStatement) {
+      m_isSubRequestToScheduleStatement =
+        createStatement(s_isSubRequestToScheduleStatementString);
+      m_isSubRequestToScheduleStatement->registerOutParam
+        (1, oracle::occi::OCCIINT);
+    }
+    // execute the statement and see whether we found something
+    unsigned int nb =
+      m_isSubRequestToScheduleStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "isSubRequestToSchedule : unable to know whether SubRequest should be scheduled.";
+      throw ex;
+    }
+    // Get result and return
+    return 0 != m_isSubRequestToScheduleStatement->getInt(1);
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in isSubRequestToSchedule."
+      << std::endl << e.what();
+    throw ex;
+  }
 }
 
 // -----------------------------------------------------------------------
 // selectTape
 // -----------------------------------------------------------------------
 castor::stager::DiskCopy*
-castor::db::ora::OraStagerSvc::scheduleDiskCopy
+castor::db::ora::OraStagerSvc::scheduleSubRequest
 (castor::stager::SubRequest* subreq,
  castor::stager::FileSystem* fileSystem)
   throw (castor::exception::Exception) {
-  return 0;
+  try {
+    // Check whether the statements are ok
+    if (0 == m_scheduleSubRequestStatement) {
+      m_scheduleSubRequestStatement =
+        createStatement(s_scheduleSubRequestStatementString);
+      m_scheduleSubRequestStatement->registerOutParam
+        (3, oracle::occi::OCCIDOUBLE);
+      m_scheduleSubRequestStatement->registerOutParam
+        (4, oracle::occi::OCCISTRING, 255);
+      m_scheduleSubRequestStatement->registerOutParam
+        (5, oracle::occi::OCCIINT);
+    }
+    // execute the statement and see whether we found something
+    m_scheduleSubRequestStatement->setDouble(1, subreq->id());
+    m_scheduleSubRequestStatement->setDouble(2, fileSystem->id());
+    unsigned int nb =
+      m_scheduleSubRequestStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "scheduleSubRequest : unable to schedule SubRequest.";
+      throw ex;
+    }
+    // Create result
+    castor::stager::DiskCopy* result =
+      new castor::stager::DiskCopy();
+    result->setId((u_signed64)m_scheduleSubRequestStatement->getDouble(3));
+    result->setPath(m_scheduleSubRequestStatement->getString(4));
+    result->setStatus
+      ((enum castor::stager::DiskCopyStatusCodes)
+       m_scheduleSubRequestStatement->getInt(5));
+    // return
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in scheduleSubRequest."
+      << std::endl << e.what();
+    throw ex;
+  }
 }
 
 

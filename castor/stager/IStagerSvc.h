@@ -277,7 +277,7 @@ int Cstager_IStagerSvc_subRequestToDo(struct Cstager_IStagerSvc_t* stgSvc,
  * message can be retrieved by calling Cstager_IStagerSvc_errorMsg
  * @exception Exception in case of error
  */
-int Cstager_IStagerSvc_isDiskCopyToSchedule
+int Cstager_IStagerSvc_isSubRequestToSchedule
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_SubRequest_t* subreq);
 
@@ -312,7 +312,7 @@ int Cstager_IStagerSvc_isDiskCopyToSchedule
  * the corresponding error code and a detailed error
  * message can be retrieved by calling Cstager_IStagerSvc_errorMsg
  */
-int Cstager_IStagerSvc_scheduleDiskCopy
+int Cstager_IStagerSvc_scheduleSubRequest
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_SubRequest_t* subreq,
  struct Cstager_FileSystem_t* fileSystem,

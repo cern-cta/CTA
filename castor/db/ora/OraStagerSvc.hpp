@@ -30,6 +30,7 @@
 // Include Files
 #include "castor/BaseSvc.hpp"
 #include "castor/db/ora/OraBaseObj.hpp"
+#include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/stager/IStagerSvc.hpp"
 #include "occi.h"
 #include <vector>
@@ -260,7 +261,7 @@ namespace castor {
          * @return whether to schedule it
          * @exception Exception in case of error
          */
-        virtual bool isDiskCopyToSchedule
+        virtual bool isSubRequestToSchedule
         (castor::stager::SubRequest* subreq)
           throw (castor::exception::Exception);
 
@@ -291,10 +292,24 @@ namespace castor {
          * that was taken.
          * @exception Exception in case of error
          */
-        virtual castor::stager::DiskCopy* scheduleDiskCopy
+        virtual castor::stager::DiskCopy* scheduleSubRequest
         (castor::stager::SubRequest* subreq,
          castor::stager::FileSystem* fileSystem)
           throw (castor::exception::Exception);
+
+      private:
+
+        /*
+         * helper method to rollback
+         */
+        void rollback() {
+          try {
+            cnvSvc()->getConnection()->rollback();
+          } catch (castor::exception::Exception) {
+            // rollback failed, let's drop the connection for security
+            cnvSvc()->dropConnection();
+          }
+        }
 
       private:
 
@@ -340,23 +355,20 @@ namespace castor {
         /// SQL statement object for function fileRecalled
         oracle::occi::Statement *m_fileRecalledStatement;
 
-        /// SQL statement for function subRequestToDo
-        static const std::string s_subRequestToDoStatementString;
-        
         /// SQL statement object for function subRequestToDo
         oracle::occi::Statement *m_subRequestToDoStatement;
 
-        /// SQL statement for function isDiskCopyToSchedule
-        static const std::string s_isDiskCopyToScheduleStatementString;
+        /// SQL statement for function isSubRequestToSchedule
+        static const std::string s_isSubRequestToScheduleStatementString;
         
-        /// SQL statement object for function isDiskCopyToSchedule
-        oracle::occi::Statement *m_isDiskCopyToScheduleStatement;
+        /// SQL statement object for function isSubRequestToSchedule
+        oracle::occi::Statement *m_isSubRequestToScheduleStatement;
 
-        /// SQL statement for function scheduleDiskCopy
-        static const std::string s_scheduleDiskCopyStatementString;
+        /// SQL statement for function scheduleSubRequest
+        static const std::string s_scheduleSubRequestStatementString;
         
-        /// SQL statement object for function scheduleDiskCopy
-        oracle::occi::Statement *m_scheduleDiskCopyStatement;
+        /// SQL statement object for function scheduleSubRequest
+        oracle::occi::Statement *m_scheduleSubRequestStatement;
 
       }; // end of class OraStagerSvc
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/26 16:47:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/27 14:49:41 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -229,7 +229,7 @@ namespace castor {
        * @return whether to schedule it
        * @exception Exception in case of error
        */
-      virtual bool isDiskCopyToSchedule
+      virtual bool isSubRequestToSchedule
       (castor::stager::SubRequest* subreq)
         throw (castor::exception::Exception) = 0;
 
@@ -260,7 +260,7 @@ namespace castor {
        * that was taken.
        * @exception Exception in case of error
        */
-      virtual castor::stager::DiskCopy* scheduleDiskCopy
+      virtual castor::stager::DiskCopy* scheduleSubRequest
       (castor::stager::SubRequest* subreq,
        castor::stager::FileSystem* fileSystem)
         throw (castor::exception::Exception) = 0;

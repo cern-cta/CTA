@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/26 16:47:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/27 14:49:41 $ $Author: sponcec3 $
  *
  * 
  *
@@ -269,14 +269,14 @@ extern "C" {
   };
 
   //---------------------------------------------------------------------------
-  // Cstager_IStagerSvc_isDiskCopyToSchedule
+  // Cstager_IStagerSvc_isSubRequestToSchedule
   //---------------------------------------------------------------------------
-  int Cstager_IStagerSvc_isDiskCopyToSchedule
+  int Cstager_IStagerSvc_isSubRequestToSchedule
   (struct Cstager_IStagerSvc_t* stgSvc,
    castor::stager::SubRequest* subreq) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      if (stgSvc->stgSvc->isDiskCopyToSchedule(subreq)) {
+      if (stgSvc->stgSvc->isSubRequestToSchedule(subreq)) {
         return 1;
       }
     } catch (castor::exception::Exception e) {
@@ -288,16 +288,16 @@ extern "C" {
   }
 
   //---------------------------------------------------------------------------
-  // Cstager_IStagerSvc_scheduleDiskCopy
+  // Cstager_IStagerSvc_scheduleSubRequest
   //---------------------------------------------------------------------------
-  int Cstager_IStagerSvc_scheduleDiskCopy
+  int Cstager_IStagerSvc_scheduleSubRequest
   (struct Cstager_IStagerSvc_t* stgSvc,
    castor::stager::SubRequest* subreq,
    castor::stager::FileSystem* fileSystem,
    castor::stager::DiskCopy** diskCopy) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      *diskCopy = stgSvc->stgSvc->scheduleDiskCopy(subreq, fileSystem);
+      *diskCopy = stgSvc->stgSvc->scheduleSubRequest(subreq, fileSystem);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();
