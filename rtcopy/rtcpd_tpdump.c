@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.3 $ $Date: 2000/03/13 11:29:40 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.4 $ $Date: 2000/03/13 11:38:08 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -23,6 +23,7 @@ extern char *geterr();
 #include <netdb.h>                      /* Network "data base"          */
 #include <sys/socket.h>
 #include <netinet/in.h>                 /* Internet data types          */
+#include <sys/time.h>
 #endif /* _WIN32 */
 #include <errno.h>
 #include <stdarg.h>
