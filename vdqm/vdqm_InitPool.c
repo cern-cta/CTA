@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_InitPool.c,v $ $Revision: 1.6 $ $Date: 2000/02/28 17:59:01 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_InitPool.c,v $ $Revision: 1.7 $ $Date: 2000/03/08 16:51:52 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -15,6 +15,8 @@ static char sccsid[] = "@(#)$RCSfile: vdqm_InitPool.c,v $ $Revision: 1.6 $ $Date
 #include <winsock2.h>    /* Needed for SOCKET definition */
 #endif /* _WIN32 */
 
+#include <stdlib.h>
+#include <errno.h>
 #if defined(VDQMSERV)
 #if !defined(_WIN32)
 #include <regex.h>
@@ -23,8 +25,6 @@ typedef void * regex_t
 #endif /* _WIN32 */
 #endif /* VDQMSERV */
 
-#include <stdlib.h>
-#include <errno.h>
 #include <Castor_limits.h>
 #include <osdep.h>
 #include <net.h>
@@ -33,6 +33,7 @@ typedef void * regex_t
 #include <vdqm.h>
 #include <Cthread_api.h>
 #include <Cpool_api.h>
+
 
 int vdqm_InitPool(vdqmnw_t **nwtable) {
     extern char *getenv();

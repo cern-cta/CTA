@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_CloseConn.c,v $ $Revision: 1.8 $ $Date: 2000/02/28 17:58:58 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_CloseConn.c,v $ $Revision: 1.9 $ $Date: 2000/03/08 16:51:51 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 
@@ -50,6 +50,8 @@ int vdqm_CloseConn(vdqmnw_t *nw) {
     if ( nw == NULL ) return(-1);
     if ( (s = nw->accept_socket) == INVALID_SOCKET ) 
         s = nw->connect_socket;
+
+    log(LOG_DEBUG,"vdqm_CloseConn() called\n");
 
     if ( s == INVALID_SOCKET ) return(-1);
     status = shutdown(s,SD_BOTH);

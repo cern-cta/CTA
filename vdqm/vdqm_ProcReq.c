@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.9 $ $Date: 2000/02/28 17:56:28 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.10 $ $Date: 2000/03/08 16:51:54 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -34,7 +34,7 @@ typedef void * regex_t
 
 const int return_status = 0;
 static int error_key;
-static int hold = 0;
+int hold = 0;
 
 void *vdqm_ProcReq(void *arg) {
     vdqmVolReq_t volumeRequest;
@@ -44,12 +44,13 @@ void *vdqm_ProcReq(void *arg) {
     char dgn[CA_MAXDGNLEN+1];
     char server[CA_MAXHOSTNAMELEN+1];
     void *vol_place_holder,*drv_place_holder,*dgn_place_holder;
-    int reqtype,rc,i;
+    int reqtype, rc, i, save_serrno;
     char req_strings[][20] = VDQM_REQ_STRINGS;
     char *req_string;
     int req_values[] = VDQM_REQ_VALUES;
-    extern int vdqm_shutdown;
+    extern int vdqm_shutdown, vdqm_restart;
     
+    log(LOG_DEBUG,"vdqm_ProcReq() called with arg=0x%lx\n",(int)arg);
     client_connection = (vdqmnw_t *)arg;
     if ( client_connection == NULL ) return((void *)&return_status);
     
@@ -104,6 +105,28 @@ void *vdqm_ProcReq(void *arg) {
                 break;
             case VDQM_DEDICATE_DRV:
                 rc = vdqm_DedicateDrv(&driveRequest);
+                break;
+            case VDQM_REPLICA:
+                rc = vdqm_CheckReplicaHost(client_connection);
+                if ( rc == 0 ) rc = vdqm_LockAllQueues();
+                if ( rc == 0 ) rc = vdqm_DumpQueues(client_connection);
+                if ( rc == 0 )
+                    rc = vdqm_AddReplica(client_connection,&hdr);
+                save_serrno = serrno;
+                if ( rc == 0 ) 
+                    log(LOG_INFO,"vdqm_ProcReq(): replica client added\n");
+                else {
+                    log(LOG_ERR,"vdqm_ProcReq(): failed to add replica\n");
+                    if ( rc == 1 ) {
+                        log(LOG_INFO,"vdqm_ProcReq() re-enter replication mode\n");
+                        hold = 1;
+                        vdqm_restart = 1;
+                    }
+                    (void)vdqm_CloseConn(client_connection);
+                }
+                (void)vdqm_UnlockAllQueues();
+                (void)vdqm_ReturnPool(client_connection);
+                return((void *)&return_status);
                 break;
             case VDQM_GET_VOLQUEUE:
                 *dgn = '\0';

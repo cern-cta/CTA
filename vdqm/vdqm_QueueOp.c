@@ -29,14 +29,117 @@ typedef void * regex_t
 
 #define INVALID_DGN_CONTEXT (dgn_context == NULL)
 
-static dgn_element_t *dgn_queues = NULL;
-static int nb_dgn = 0;
+dgn_element_t *dgn_queues = NULL;
+int nb_dgn = 0;
+void *queue_lock;
 
-static int dgn_key;
 static int vdqm_maxtimediff = VDQM_MAXTIMEDIFF;
 static int vdqm_retrydrvtime = VDQM_RETRYDRVTIM;
 
 static int Rollback = 0;
+
+int vdqm_InitQueueLock() {
+    int save_serrno, rc;
+    rc = Cthread_mutex_lock(&nb_dgn);
+    save_serrno = serrno;
+    if ( rc == -1 ) {
+        log(LOG_ERR,"InitQueueLock() Cthread_mutex_lock(): %s\n",
+            sstrerror(save_serrno));
+        serrno = save_serrno;
+        return(-1);
+    }
+    rc = Cthread_mutex_unlock(&nb_dgn);
+    save_serrno = serrno;
+    if ( rc == -1 ) {
+        log(LOG_ERR,"InitQueueLock() Cthread_mutex_unlock(): %s\n",
+            sstrerror(save_serrno));
+        serrno = save_serrno;
+        return(-1);
+    }
+    queue_lock = Cthread_mutex_lock_addr(&nb_dgn);
+    save_serrno = serrno;
+    if ( queue_lock == NULL ) {
+        log(LOG_ERR,"InitQueueLock() Cthread_mutex_lock_addr(): %s\n",
+            sstrerror(save_serrno));
+        serrno = save_serrno;
+        return(-1);
+    }
+    return(0);
+}
+
+/*
+ * Lock access to queues. Note that these don't lock the queues
+ * themselves - threads which have already got a handle to a
+ * queue will still operate as usual until it releases the queue.
+ */
+static int LockQueues() {
+    return(Cthread_mutex_lock_ext(queue_lock));
+}
+
+static int UnlockQueues() {
+    return(Cthread_mutex_unlock_ext(queue_lock));
+}
+/*
+ * Init. locks on an individual DGN queue
+ */
+static int InitDgnQueue(dgn_element_t *dgn_context) {
+    int rc;
+    if ( dgn_context == NULL ) return(-1);
+    rc = Cthread_mutex_lock((void *)dgn_context);
+    if ( rc == -1 ) return(-1);
+    rc = Cthread_mutex_unlock((void *)dgn_context);
+    if ( rc == -1 ) return(-1);
+    dgn_context->lock = Cthread_mutex_lock_addr((void *)dgn_context);
+    if ( dgn_context->lock == NULL ) return(-1);
+    return(0);
+}
+/*
+ * Externalized interface (for vdqm_Replica.c)
+ */
+int vdqm_InitDgnQueue(dgn_element_t *dgn_context) {
+    return(InitDgnQueue(dgn_context));
+}
+
+/*
+ * Lock individual queues
+ */
+static int LockDgnQueue(dgn_element_t *dgn_context) {
+    if ( dgn_context == NULL ) return(-1);
+    return(Cthread_mutex_lock_ext(dgn_context->lock));
+}
+static int UnlockDgnQueue(dgn_element_t *dgn_context) {
+    if ( dgn_context == NULL ) return(-1);
+    return(Cthread_mutex_unlock_ext(dgn_context->lock));
+}
+
+/*
+ * Lock all queues. Externalized functions called by vdqm_ProcReq()
+ */
+int vdqm_LockAllQueues() {
+    int rc = 0;
+    dgn_element_t *tmp = NULL;
+
+    rc = LockQueues();
+    if ( rc == -1 ) return(-1);
+    CLIST_ITERATE_BEGIN(dgn_queues,tmp) {
+        rc = LockDgnQueue(tmp);
+        if ( rc == -1 ) break;
+    } CLIST_ITERATE_END(dgn_queues,tmp);
+    return(rc);
+}
+
+int vdqm_UnlockAllQueues() {
+    int rc = 0;
+    dgn_element_t *tmp = NULL;
+
+    CLIST_ITERATE_BEGIN(dgn_queues,tmp) {
+        rc = UnlockDgnQueue(tmp);
+        if ( rc == -1 ) break;
+    } CLIST_ITERATE_END(dgn_queues,tmp);
+    if ( rc == -1 ) (void)UnlockQueues();
+    else rc = UnlockQueues();
+    return(rc);
+}
 
 static int CheckDgn(char *dgn) {
     dgn_element_t *tmp = NULL;
@@ -47,8 +150,8 @@ static int CheckDgn(char *dgn) {
         return(-1);
     }
 
-    log(LOG_DEBUG,"CheckDgn(%s) lock mutex 0x%x\n",dgn,(long)&nb_dgn);
-    if ( (rc = Cthread_mutex_lock(&nb_dgn)) == -1 ) {
+    log(LOG_DEBUG,"CheckDgn(%s) lock queue access\n",dgn);
+    if ( (rc = LockQueues()) == -1 ) {
         vdqm_SetError(EVQSYERR);
         return(rc);
     }
@@ -59,8 +162,8 @@ static int CheckDgn(char *dgn) {
             break;
         }
     } CLIST_ITERATE_END(dgn_queues,tmp);
-    log(LOG_DEBUG,"CheckDgn(%s) unlock mutex 0x%x\n",dgn,(long)&nb_dgn);
-    Cthread_mutex_unlock(&nb_dgn);
+    log(LOG_DEBUG,"CheckDgn(%s) unlock queues access\n",dgn);
+    (void)UnlockQueues();
 
     return(found);
 }
@@ -74,8 +177,8 @@ static int SetDgnContext(dgn_element_t **dgn_context,const char *dgn) {
         return(-1);
     }
     
-    log(LOG_DEBUG,"SetDgnContext(%s) lock mutex 0x%x\n",dgn,(long)&nb_dgn);
-    if ( (rc = Cthread_mutex_lock(&nb_dgn)) == -1 ) {
+    log(LOG_DEBUG,"SetDgnContext(%s) lock queue access\n",dgn);
+    if ( (rc = LockQueues()) == -1 ) {
         vdqm_SetError(EVQSYERR);
         return(rc);
     }
@@ -89,8 +192,8 @@ static int SetDgnContext(dgn_element_t **dgn_context,const char *dgn) {
     if ( !found ) {
         tmp = (dgn_element_t *)malloc(sizeof(dgn_element_t));
         if ( tmp == NULL ) {
-            log(LOG_INFO,"SetDgnContext(%s) unlock mutex 0x%x\n",dgn,(long)&nb_dgn);
-            Cthread_mutex_unlock(&nb_dgn);
+            log(LOG_INFO,"SetDgnContext(%s) unlock queue access\n",dgn);
+            (void)UnlockQueues();
             vdqm_SetError(EVQSYERR);
             return(-1);
         }
@@ -100,19 +203,27 @@ static int SetDgnContext(dgn_element_t **dgn_context,const char *dgn) {
         tmp->drv_queue = NULL;
         tmp->vol_queue = NULL;
         CLIST_INSERT(dgn_queues,tmp);
+        rc = InitDgnQueue(tmp);
+        if ( rc == -1 ) {
+            log(LOG_ERR,"SetDgnContext(%s) InitDgnQueue(): %s\n",
+                dgn,sstrerror(serrno));
+            (void)UnlockQueues();
+            vdqm_SetError(EVQSYERR);
+            return(-1);
+        }
     }
 
     rc = 0;
     *dgn_context = tmp;
-    log(LOG_DEBUG,"SetDgnContext(%s) unlock mutex 0x%x\n",dgn,(long)&nb_dgn);
-    Cthread_mutex_unlock(&nb_dgn);
+    log(LOG_DEBUG,"SetDgnContext(%s) unlock queue access\n",dgn);
+    (void)UnlockQueues();
     if ( *dgn_context == NULL ) {
         log(LOG_ERR,"SetDgnContext(%s) internal error: cannot assign DGN context\n");
         vdqm_SetError(SEINTERNAL);
         rc = -1;
     } else {
         log(LOG_DEBUG,"SetDgnContext(%s) lock mutex 0x%x\n",dgn,(long)*dgn_context);
-        rc = Cthread_mutex_lock(*dgn_context);
+        rc = LockDgnQueue(*dgn_context);
     }
     return(rc);
 }
@@ -128,7 +239,7 @@ static int FreeDgnContext(dgn_element_t **dgn_context) {
     if ( rc == -1 ) {
         log(LOG_ERR,"FreeDgnContext() vdqm_UpdateReplica() returned error\n");
     }
-    Cthread_mutex_unlock(*dgn_context);
+    UnlockDgnQueue(*dgn_context);
     *dgn_context = NULL;
     return(0);
 }
@@ -141,8 +252,11 @@ static int NextDgnContext(dgn_element_t **dgn_context) {
         return(-1);
     }
     *tmpdgn = '\0';
-    log(LOG_DEBUG,"NextDgnContext() lock mutex 0x%x\n",(long)&nb_dgn);
-    Cthread_mutex_lock(&nb_dgn);
+    log(LOG_DEBUG,"NextDgnContext() lock queues access\n");
+    if ( LockQueues() == -1 ) {
+        log(LOG_ERR,"NextDgnContext() error locking queue access\n");
+        return(-1);
+    }
     if ( *dgn_context == NULL ) {
         if ( dgn_queues == NULL ) return(-1);
         strcpy(tmpdgn,dgn_queues->dgn);
@@ -150,8 +264,8 @@ static int NextDgnContext(dgn_element_t **dgn_context) {
         if ( (*dgn_context)->next != dgn_queues )
             strcpy(tmpdgn,(*dgn_context)->next->dgn);
     }
-    log(LOG_DEBUG,"NextDgnContext() unlock mutex 0x%x\n",(long)&nb_dgn);
-    Cthread_mutex_unlock(&nb_dgn);
+    log(LOG_DEBUG,"NextDgnContext() unlock queue access\n");
+    (void)UnlockQueues();
     if ( *dgn_context != NULL ) FreeDgnContext(dgn_context);
 
     if ( *tmpdgn != '\0' ) return(SetDgnContext(dgn_context,tmpdgn));
@@ -173,24 +287,36 @@ static int AnyVolRecForDgn(const dgn_element_t *dgn_context) {
     return(found);
 }
 
-static int NewVolReqID() {
+static int NewVolReqID(int *id) {
     static int reqID = 0;
     int rc;
     
     Cthread_mutex_lock(&reqID);
-    rc = ++reqID;
+    if ( id == NULL || *id < reqID ) rc = ++reqID;
+    else rc = reqID = *id;
     Cthread_mutex_unlock(&reqID);
     return(rc);
 }
 
-static int NewDrvReqID() {
+static int NewDrvReqID(int *id) {
     static int reqID = 0;
     int rc;
     
     Cthread_mutex_lock(&reqID);
-    rc = ++reqID;
+    if ( id == NULL || *id < reqID ) rc = ++reqID;
+    else rc = reqID = *id;
     Cthread_mutex_unlock(&reqID);
     return(rc);
+}
+/*
+ * Externalised interfaces (used in vdqm_Replica.c)
+ */
+int vdqm_NewVolReqID(int *id) {
+    return(NewVolReqID(id));
+}
+
+int vdqm_NewDrvReqID(int *id) {
+    return(NewDrvReqID(id));
 }
 
 static int AnyDrvFreeForDgn(const dgn_element_t *dgn_context) {
@@ -501,7 +627,7 @@ static int AddVolRecord(dgn_element_t *dgn_context,
     CLIST_ITERATE_BEGIN(dgn_context->vol_queue,vol) {
         if ( volrec == vol ) return(-1);
     } CLIST_ITERATE_END(dgn_context->vol_queue,vol); 
-    if ( volrec->vol.VolReqID <= 0 ) volrec->vol.VolReqID = NewVolReqID();
+    if ( volrec->vol.VolReqID <= 0 ) volrec->vol.VolReqID = NewVolReqID(NULL);
     CLIST_INSERT(dgn_context->vol_queue,volrec);
     return(0);
 }
@@ -531,7 +657,7 @@ static int AddDrvRecord(dgn_element_t *dgn_context,
         if ( drvrec == drv ) return(-1);
     } CLIST_ITERATE_END(dgn_context->drv_queue,drv);
 
-    if ( drvrec->drv.DrvReqID <= 0 ) drvrec->drv.DrvReqID = NewDrvReqID();
+    if ( drvrec->drv.DrvReqID <= 0 ) drvrec->drv.DrvReqID = NewDrvReqID(NULL);
     CLIST_INSERT(dgn_context->drv_queue,drvrec);
     return(0);
 }
@@ -670,30 +796,6 @@ static int GetVolRecord(const dgn_element_t *dgn_context,
     return(0);
 }
 
-static int FindDrvRecord(const dgn_element_t *dgn_context,
-                         vdqmVolReq_t *vol, vdqm_drvrec_t **drvrec) {
-    vdqm_drvrec_t *tmprec;
-    int found;
-
-    if ( drvrec == NULL || INVALID_DGN_CONTEXT ) return(-1);
-
-    found = 0;
-    CLIST_ITERATE_BEGIN(dgn_context->drv_queue,tmprec) {
-        if ( vol->VolReqID == tmprec->vol->vol.VolReqID ) {
-            found = 1;
-            break;
-        }
-    } CLIST_ITERATE_END(dgn_context->drv_queue,tmprec);
-    
-    if ( found ) *drvrec = tmprec;
-    else {
-        vdqm_SetError(EVQNOSVOL);
-        *drvrec = NULL;
-    }
-
-    return(0);
-}
-
 static int GetDrvRecord(const dgn_element_t *dgn_context,
                         vdqmDrvReq_t *drv, vdqm_drvrec_t **drvrec) {
     vdqm_drvrec_t *tmprec;
@@ -702,6 +804,10 @@ static int GetDrvRecord(const dgn_element_t *dgn_context,
     if ( drvrec == NULL || INVALID_DGN_CONTEXT ) return(-1);
     
     found = 0;
+    /*
+     * Cannot rely on DrvReqID here since the use of this function normally
+     * is to search for a specific drive name
+     */
     CLIST_ITERATE_BEGIN(dgn_context->drv_queue,tmprec) {
         if ( !strcmp(tmprec->drv.drive,drv->drive) &&
             !strcmp(tmprec->drv.server,drv->server) ) {
@@ -936,6 +1042,8 @@ int vdqm_DelVolReq(vdqmVolReq_t *VolReq) {
      */
     if ( (drvrec = volrec->drv) != NULL ) {
         drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+        drvrec->update = 1;
+        volrec->update = 0;
         vdqm_SetError(EVQREQASS);
         rc = -1;
     } else {
@@ -987,6 +1095,7 @@ int vdqm_DelDrvReq(vdqmDrvReq_t *DrvReq) {
      */
     if ( !(drvrec->drv.status & (VDQM_UNIT_UP | VDQM_UNIT_FREE)) &&
          !(drvrec->drv.status & VDQM_UNIT_DOWN) ) {
+        drvrec->update = 0;
         log(LOG_ERR,"vdqm_DelDrvReq() cannot remove drive record with assigned job\n");
         FreeDgnContext(&dgn_context);
         return(-1);
@@ -1087,14 +1196,7 @@ int vdqm_OnRollback() {
             } /* while (NextDgnContext() ...) */
        } /* if ( Rollback > 0 )  */
        Rollback = 0;
-       rc = Cthread_mutex_unlock(&Rollback);
-       if ( rc == -1 ) {
-           log(LOG_ERR,"vdqm_OnRollback() Cthread_mutex_unlock(): %s\n",
-               sstrerror(serrno));
-           return(-1);
-       }
    } /* for (;;) */
-   return(0);
 }
 /*
  * This routine is needed by vdqm_SendJobToRTCP() to
@@ -1140,6 +1242,7 @@ int vdqm_QueueOpRollback(vdqmVolReq_t *VolReq,vdqmDrvReq_t *DrvReq) {
     if ( volrec != NULL ) {
         volrec->vol.DrvReqID = 0;
         volrec->drv = NULL;
+        volrec->update = 1;
         AddVolRecord(dgn_context,volrec);
     }
     if ( drvrec != NULL ) {
@@ -1443,8 +1546,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
         if ( drvrec->drv.status & VDQM_UNIT_BUSY ) {
             volrec = drvrec->vol;
             if ( volrec != NULL ) {
-                log(LOG_INFO,"vdqm_NewDrvRequest(): Remove old volume record, id=%d\
-n",
+                log(LOG_INFO,"vdqm_NewDrvRequest(): Remove old volume record, id=%d\n",
                     volrec->vol.VolReqID);
                 volrec->drv = NULL;
                 DelVolRecord(dgn_context,volrec);
@@ -2169,5 +2271,3 @@ int vdqm_GetDrvQueue(char *dgn, vdqmDrvReq_t *DrvReq,
     }
     return(0);
 }
-
-
