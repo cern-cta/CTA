@@ -620,7 +620,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				goto reply;
 
 			} else {
-				if ((c = upd_stageout(req_type, argv_i, &subreqid, 1, NULL, 0, 1)) != 0) {
+				if ((c = upd_stageout(req_type, argv_i, &subreqid, 1, NULL, 0, 0)) != 0) {
 					if ((c != CLEARED) && (c != ESTCLEARED)) {
 						struct stgcat_entry *found_stcp;
 						int save_rpfd;
