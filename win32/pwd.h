@@ -7,6 +7,9 @@
  * All rights reserved
  */
 
+#ifndef __win32_pwd_h
+#define __win32_pwd_h
+
 #include <osdep.h>
 
 struct passwd
@@ -27,3 +30,4 @@ void           endpwent(void);
 struct passwd* getpwuid(uid_t user_Id);
 struct passwd* getpwnam(char* user_Name);
 
+#endif /* __win32_pwd_h */
