@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.20 $ $Date: 2000/05/29 13:34:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.21 $ $Date: 2000/07/05 05:36:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -170,7 +170,9 @@ unload_loop:
 			lddisplay (tapefd, dvn, 0x20, "", "", 1);
 		else if (strstr (devtype, "/VB"))	/* Vision Box */
 			lddisplay (tapefd, dvn, 0x80, "", "", 2);
-		if (chkdriveready (tapefd) > 0) {
+		if ((c = chkdriveready (tapefd)) < 0) {
+			configdown (drive);
+		} else if (c > 0) {
 			if (*loader != 'n')
 				if (unldtape (tapefd, dvn) < 0)
 					configdown (drive);
