@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.120 $ $Release$ $Date: 2005/02/19 09:16:55 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.121 $ $Release$ $Date: 2005/02/22 12:06:30 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.120 $ $Release$ $Date: 2005/02/19 09:16:55 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.121 $ $Release$ $Date: 2005/02/22 12:06:30 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -370,8 +370,9 @@ static int updateTapeFromDB(
                             );
     if ( rc == -1 ) {
       save_serrno = serrno;
-      LOG_DBCALL_ERR("C_Services_fillObj()",
-                     C_Services_errorMsg(*svcs));
+      LOG_DBCALLANDKEY_ERR("C_Services_fillObj()",
+                           C_Services_errorMsg(*svcs),
+                           key);
       C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
@@ -439,8 +440,9 @@ static int updateSegmentFromDB(
   rc = C_Services_updateObj(*svcs,iAddr,iObj);  
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("C_Services_updateObj()",
-                   C_Services_errorMsg(*svcs));
+    LOG_DBCALLANDKEY_ERR("C_Services_updateObj()",
+                         C_Services_errorMsg(*svcs),
+                         key);
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -755,6 +757,7 @@ int rtcpcld_getTapesToDo(
       tp = (struct Cstager_Tape_t *)tl->dbRef->row;
       Cstager_Stream_setTape(streamArray[i],tp);
       Cstager_Tape_setStream(tp,streamArray[i]);
+      Cstager_Stream_id(streamArray[i],&key);
       iObj = Cstager_Stream_getIObject(streamArray[i]);
       rc = C_Services_fillRep(
                               *dbSvc,
@@ -765,8 +768,9 @@ int rtcpcld_getTapesToDo(
                               );
       if ( rc == -1 ) {
         save_serrno = serrno;
-        LOG_DBCALL_ERR("C_Services_fillRep()",
-                       C_Services_errorMsg(*dbSvc));
+        LOG_DBCALLANDKEY_ERR("C_Services_fillRep()",
+                             C_Services_errorMsg(*dbSvc),
+                             key);
         (void)rtcpcld_updateTape(tl,NULL,1,0);
         if ( tl != NULL ) free(tl);
         continue;
@@ -1086,8 +1090,9 @@ static int procSegmentsForTape(
                                                           )));
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("Cstager_IStagerSvc_segmentsForSegment()",
-                   Cstager_IStagerSvc_errorMsg(*stgsvc));
+    LOG_DBCALLANDKEY_ERR("Cstager_IStagerSvc_segmentsForTape()",
+                         Cstager_IStagerSvc_errorMsg(*stgsvc),
+                         tape->dbRef->key);
     serrno = save_serrno;
     return(-1);
   }
@@ -1212,6 +1217,7 @@ static int procSegmentsForTape(
                              segmArray[i],
                              &(fl->filereq.offset)
                              );
+      Cstager_Segment_id(segmArray[i],&key);
       iObj = Cstager_Segment_getIObject(segmArray[i]);
       rc = C_Services_updateRep(
                                 *svcs,
@@ -1220,8 +1226,9 @@ static int procSegmentsForTape(
                                 0
                                 );
       if ( rc == -1 ) {
-        LOG_DBCALL_ERR("C_Services_updateRep()",
-                       C_Services_errorMsg(*svcs));
+        LOG_DBCALLANDKEY_ERR("C_Services_updateRep()",
+                             C_Services_errorMsg(*svcs),
+                             key);
       }
       doCommit = 1;
     }
@@ -1316,8 +1323,9 @@ static int nextSegmentToRecall(
                                                                    )));
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("Cstager_IStagerSvc_bestFileSystemForSegment()",
-                   Cstager_IStagerSvc_errorMsg(*stgsvc));
+    LOG_DBCALLANDKEY_ERR("Cstager_IStagerSvc_bestFileSystemForSegment()",
+                         Cstager_IStagerSvc_errorMsg(*stgsvc),
+                         fl->dbRef->key);
     filereq->err.errorcode = save_serrno;
     filereq->err.severity = RTCP_FAILED;
     strncpy(filereq->err.errmsgtxt,
@@ -1329,8 +1337,9 @@ static int nextSegmentToRecall(
   }
 
   if ( recallCandidate == NULL ) {
-    LOG_DBCALL_ERR("Cstager_IStagerSvc_bestFileSystemForSegment()",
-                   "Unexpected successful return without candidate");
+    LOG_DBCALLANDKEY_ERR("Cstager_IStagerSvc_bestFileSystemForSegment()",
+                         "Unexpected successful return without candidate",
+                         fl->dbRef->key);
     filereq->err.errorcode = ENOENT;
     filereq->err.severity = RTCP_FAILED;
     strcpy(filereq->err.errmsgtxt,
@@ -1456,6 +1465,7 @@ int nextSegmentToMigrate(
   file_list_t *fl = NULL;
   char *diskServer = NULL, *mountPoint = NULL, *relPath = NULL, *nsHost = NULL;
   int rc, save_serrno, nbDskCps = 0;
+  ID_TYPE key = 0;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_ENABLE) ) {
     serrno = EINVAL;
@@ -1498,6 +1508,7 @@ int nextSegmentToMigrate(
     return(-1);
   }
 
+  Cstager_Stream_id(stream,&key);
   LOG_CALL_TRACE((rc = Cstager_IStagerSvc_bestTapeCopyForStream(
                                                                 *stgsvc,
                                                                 stream,
@@ -1512,8 +1523,9 @@ int nextSegmentToMigrate(
       serrno = ENOENT;
       return(-1);
     } else {
-      LOG_DBCALL_ERR("Cstager_IStagerSvc_bestTapeCopyForStream()",
-                     Cstager_IStagerSvc_errorMsg(*stgsvc));
+      LOG_DBCALLANDKEY_ERR("Cstager_IStagerSvc_bestTapeCopyForStream()",
+                           Cstager_IStagerSvc_errorMsg(*stgsvc),
+                           key);
     }
     if ( strstr(_msg,"deadlock") != NULL ) {
       sleep((((int)getpid()) % 10) + 1);
@@ -1536,6 +1548,7 @@ int nextSegmentToMigrate(
    * associated with this TapeCopy. Let's get them so that
    * we don't risk to remove them at next updc.
    */
+  Cstager_TapeCopy_id(tapeCopy,&key);
   iObj = Cstager_TapeCopy_getIObject(tapeCopy);
   rc = C_Services_fillObj(
                           *svcs,
@@ -1545,8 +1558,9 @@ int nextSegmentToMigrate(
                           );
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("C_Services_fillObj()",
-                   C_Services_errorMsg(*svcs));
+    LOG_DBCALLANDKEY_ERR("C_Services_fillObj()",
+                         C_Services_errorMsg(*svcs),
+                         key);
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -1930,6 +1944,7 @@ int rtcpcld_anyReqsForTape(
   struct Cstager_Stream_t *stream;
   struct Cstager_IStagerSvc_t **stgsvc = NULL;
   int rc, nbItems, save_serrno;
+  ID_TYPE key = 0;
 
   if ( tape == NULL ) {
     serrno = EINVAL;
@@ -1946,17 +1961,20 @@ int rtcpcld_anyReqsForTape(
   
   tp = (struct Cstager_Tape_t *)tape->dbRef->row;
   if ( tape->tapereq.mode == WRITE_DISABLE ) {
+    Cstager_Tape_id(tp,&key);
     LOG_CALL_TRACE((rc = Cstager_IStagerSvc_anySegmentsForTape(*stgsvc,tp)));
   } else {
     Cstager_Tape_stream(tp,&stream);
+    Cstager_Stream_id(stream,&key);
     LOG_CALL_TRACE((rc = Cstager_IStagerSvc_anyTapeCopyForStream(*stgsvc,stream)));
   }
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR((tape->tapereq.mode == WRITE_DISABLE ?
-                    "Cstager_anySegmentsForTape()" :
-                    "Cstager_anyTapeCopiesForStream()"),
-                   Cstager_IStagerSvc_errorMsg(*stgsvc));
+    LOG_DBCALLANDKEY_ERR((tape->tapereq.mode == WRITE_DISABLE ?
+                          "Cstager_anySegmentsForTape()" :
+                          "Cstager_anyTapeCopiesForStream()"),
+                         Cstager_IStagerSvc_errorMsg(*stgsvc),
+                         key);
     serrno = save_serrno;
     return(-1);
   }
@@ -1998,6 +2016,7 @@ int deleteSegmentFromDB(
     return(-1);
   }
   iObj = Cstager_Segment_getIObject(segment);
+  Cstager_Segment_id(segment,&key);
   
   if ( tp == NULL ) {
     Cstager_Segment_tape(segment,&tmpTp);
@@ -2010,8 +2029,9 @@ int deleteSegmentFromDB(
                               );
       if ( rc == -1 ) {
         save_serrno = serrno;
-        LOG_DBCALL_ERR("C_Services_fillObj()",
-                       C_Services_errorMsg(*svcs));
+        LOG_DBCALLANDKEY_ERR("C_Services_fillObj()",
+                             C_Services_errorMsg(*svcs),
+                             key);
         C_IAddress_delete(iAddr);
         serrno = save_serrno;
         return(-1);
@@ -2034,8 +2054,9 @@ int deleteSegmentFromDB(
                               );
       if ( rc == -1 ) {
         save_serrno = serrno;
-        LOG_DBCALL_ERR("C_Services_fillObj()",
-                       C_Services_errorMsg(*svcs));
+        LOG_DBCALLANDKEY_ERR("C_Services_fillObj()",
+                             C_Services_errorMsg(*svcs),
+                             key);
         C_IAddress_delete(iAddr);
         serrno = save_serrno;
         return(-1);
@@ -2060,8 +2081,9 @@ int deleteSegmentFromDB(
                             );
     if ( rc == -1 ) {
       save_serrno = serrno;
-      LOG_DBCALL_ERR("C_Services_fillRep()",
-                     C_Services_errorMsg(*svcs));
+      LOG_DBCALLANDKEY_ERR("C_Services_fillRep()",
+                           C_Services_errorMsg(*svcs),
+                           key);
       C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
@@ -2078,8 +2100,9 @@ int deleteSegmentFromDB(
                             );
     if ( rc == -1 ) {
       save_serrno = serrno;
-      LOG_DBCALL_ERR("C_Services_fillRep()",
-                     C_Services_errorMsg(*svcs));
+      LOG_DBCALLANDKEY_ERR("C_Services_fillRep()",
+                           C_Services_errorMsg(*svcs),
+                           key);
       C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
@@ -2093,8 +2116,9 @@ int deleteSegmentFromDB(
                             );
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("C_Services_deleteRep()",
-                   C_Services_errorMsg(*svcs));
+    LOG_DBCALLANDKEY_ERR("C_Services_deleteRep()",
+                         C_Services_errorMsg(*svcs),
+                         key);
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -2146,8 +2170,9 @@ int detachTapeCopyFromStream(
                           );
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("C_Services_fillObj()",
-                   C_Services_errorMsg(*svcs));
+    LOG_DBCALLANDKEY_ERR("C_Services_fillObj()",
+                         C_Services_errorMsg(*svcs),
+                         key);
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -2185,8 +2210,9 @@ int detachTapeCopyFromStream(
                           );
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("C_Services_fillRep()",
-                   C_Services_errorMsg(*svcs));
+    LOG_DBCALLANDKEY_ERR("C_Services_fillRep()",
+                         C_Services_errorMsg(*svcs),
+                         key);
     C_IAddress_delete(iAddr);
     free(streamArray);
     serrno = save_serrno;
@@ -2202,8 +2228,9 @@ int detachTapeCopyFromStream(
                             );
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("C_Services_updateRep()",
-                   C_Services_errorMsg(*svcs));
+    LOG_DBCALLANDKEY_ERR("C_Services_updateRep()",
+                         C_Services_errorMsg(*svcs),
+                         key);
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -2251,8 +2278,9 @@ int deleteTapeCopyFromDB(
                           );
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("C_Services_fillObj()",
-                   C_Services_errorMsg(*svcs));
+    LOG_DBCALLANDKEY_ERR("C_Services_fillObj()",
+                         C_Services_errorMsg(*svcs),
+                         key);
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -2278,8 +2306,9 @@ int deleteTapeCopyFromDB(
                           );
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("C_Services_fillRep()",
-                   C_Services_errorMsg(*svcs));
+    LOG_DBCALLANDKEY_ERR("C_Services_fillRep()",
+                         C_Services_errorMsg(*svcs),
+                         key);
     C_IAddress_delete(iAddr);
     free(streamArray);
     serrno = save_serrno;
@@ -2298,8 +2327,9 @@ int deleteTapeCopyFromDB(
                           );
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("C_Services_fillRep()",
-                   C_Services_errorMsg(*svcs));
+    LOG_DBCALLANDKEY_ERR("C_Services_fillRep()",
+                         C_Services_errorMsg(*svcs),
+                         key);
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -2313,8 +2343,9 @@ int deleteTapeCopyFromDB(
                             );
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("C_Services_fillRep()",
-                   C_Services_errorMsg(*svcs));
+    LOG_DBCALLANDKEY_ERR("C_Services_fillRep()",
+                         C_Services_errorMsg(*svcs),
+                         key);
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -2360,6 +2391,7 @@ int rtcpcld_updcMigrFailed(
   rtcpFileRequest_t *filereq;
   struct Cns_fileid *fileid;
   int rc = 0, nbStreams, save_serrno, i;
+  ID_TYPE key = 0;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_ENABLE) ||
        (file == NULL) ) {
@@ -2447,6 +2479,7 @@ int rtcpcld_updcMigrFailed(
    * Update DB
    */
   iObj = Cstager_TapeCopy_getIObject(tapeCopy);
+  Cstager_TapeCopy_id(tapeCopy,&key);
   rc = C_Services_fillRep(
                           *svcs,
                           iAddr,
@@ -2465,8 +2498,9 @@ int rtcpcld_updcMigrFailed(
   }
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("C_Services_fillRep()",
-                   C_Services_errorMsg(*svcs));
+    LOG_DBCALLANDKEY_ERR("C_Services_fillRep()",
+                   C_Services_errorMsg(*svcs),
+                   key);
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -2477,6 +2511,7 @@ int rtcpcld_updcMigrFailed(
    * memory objects were linked in tapeCopiesForStream)
    */
   iObj = Cstager_Segment_getIObject(segment);
+  Cstager_Segment_id(segment,&key);
   rc = C_Services_fillRep(
                           *svcs,
                           iAddr,
@@ -2486,8 +2521,9 @@ int rtcpcld_updcMigrFailed(
                           );
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("C_Services_fillRep()",
-                   C_Services_errorMsg(*svcs));
+    LOG_DBCALLANDKEY_ERR("C_Services_fillRep()",
+                         C_Services_errorMsg(*svcs),
+                         key);
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -2531,6 +2567,7 @@ int rtcpcld_updcRecallFailed(
   rtcpFileRequest_t *filereq;
   struct Cns_fileid *fileid;
   int rc = 0, save_serrno;
+  ID_TYPE key = 0;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_DISABLE ) ||
        (file == NULL) || (file->dbRef == NULL) ) {
@@ -2598,6 +2635,7 @@ int rtcpcld_updcRecallFailed(
    * Update DB
    */
   iObj = Cstager_Segment_getIObject(segment);
+  Cstager_Segment_id(segment,&key);
   rc = C_Services_updateRep(
                             *svcs,
                             iAddr,
@@ -2606,8 +2644,9 @@ int rtcpcld_updcRecallFailed(
                             );
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("C_Services_updateRep()",
-                   C_Services_errorMsg(*svcs));
+    LOG_DBCALLANDKEY_ERR("C_Services_updateRep()",
+                         C_Services_errorMsg(*svcs),
+                         key);
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -2639,6 +2678,7 @@ int rtcpcld_updcFileRecalled(
   struct Cns_fileid *fileid;
   int rc = 0, nbSegments = 0, doUpdate = 1;
   int save_serrno, i;
+  ID_TYPE key = 0;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_DISABLE) ||
        (tape->dbRef == NULL) || (file == NULL) || (file->dbRef == NULL) ) {
@@ -2672,6 +2712,7 @@ int rtcpcld_updcFileRecalled(
   file->dbRef = NULL;
   if ( segment != NULL ) Cstager_Segment_copy(segment,&tapeCopy);
   if ( tapeCopy == NULL ) {
+    Cstager_Segment_id(segment,&key);
     iObj = Cstager_Segment_getIObject(segment);
     rc = C_Services_fillObj(
                             *svcs,
@@ -2681,8 +2722,9 @@ int rtcpcld_updcFileRecalled(
                             );
     if ( rc == -1 ) {
       save_serrno = serrno;
-      LOG_DBCALL_ERR("C_Services_fillObj()",
-                     C_Services_errorMsg(*svcs));
+      LOG_DBCALLANDKEY_ERR("C_Services_fillObj()",
+                           C_Services_errorMsg(*svcs),
+                           key);
       C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
@@ -2695,6 +2737,7 @@ int rtcpcld_updcFileRecalled(
 
   if ( castorFile == NULL ) {
     iObj = Cstager_TapeCopy_getIObject(tapeCopy);
+    Cstager_TapeCopy_id(tapeCopy,&key);
     rc = C_Services_fillObj(
                             *svcs,
                             iAddr,
@@ -2703,8 +2746,9 @@ int rtcpcld_updcFileRecalled(
                             );
     if ( rc == -1 ) {
       save_serrno = serrno;
-      LOG_DBCALL_ERR("C_Services_fillObj()",
-                     C_Services_errorMsg(*svcs));
+      LOG_DBCALLANDKEY_ERR("C_Services_fillObj()",
+                           C_Services_errorMsg(*svcs),
+                           key);
       C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
@@ -2737,6 +2781,7 @@ int rtcpcld_updcFileRecalled(
    * the catalogue
    */
   iObj = Cstager_TapeCopy_getIObject(tapeCopy);
+  Cstager_TapeCopy_id(tapeCopy,&key);
   rc = C_Services_fillObj(
                           *svcs,
                           iAddr,
@@ -2745,8 +2790,9 @@ int rtcpcld_updcFileRecalled(
                           );
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("C_Services_fillObj()",
-                   C_Services_errorMsg(*svcs));
+    LOG_DBCALLANDKEY_ERR("C_Services_fillObj()",
+                         C_Services_errorMsg(*svcs),
+                         key);
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
@@ -2790,6 +2836,7 @@ int rtcpcld_updcFileRecalled(
                               SEGMENT_FILECOPIED
                               );
     iObj = Cstager_Segment_getIObject(segment);
+    Cstager_Segment_id(segment,&key);
     rc = C_Services_updateRep(
                               *svcs,
                               iAddr,
@@ -2798,8 +2845,9 @@ int rtcpcld_updcFileRecalled(
                               );
     if ( rc == -1 ) {
       save_serrno = serrno;
-      LOG_DBCALL_ERR("C_Services_updateRep()",
-                     C_Services_errorMsg(*svcs));
+      LOG_DBCALLANDKEY_ERR("C_Services_updateRep()",
+                           C_Services_errorMsg(*svcs),
+                           key);
       C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
@@ -2814,14 +2862,16 @@ int rtcpcld_updcFileRecalled(
      */
     rc = getStgSvc(&stgSvc);
     if ( rc == -1 || stgSvc == NULL || *stgSvc == NULL ) return(-1);
+    Cstager_TapeCopy_id(tapeCopy,&key);
     LOG_CALL_TRACE((rc = Cstager_IStagerSvc_fileRecalled(
                                                          *stgSvc,
                                                          tapeCopy
                                                          )));
     if ( rc == -1 ) {
       save_serrno = serrno;
-      LOG_DBCALL_ERR("Cstager_IStagerSvc_fileRecalled()",
-                     Cstager_IStagerSvc_errorMsg(*stgSvc));
+      LOG_DBCALLANDKEY_ERR("Cstager_IStagerSvc_fileRecalled()",
+                           Cstager_IStagerSvc_errorMsg(*stgSvc),
+                           key);
       serrno = save_serrno;
       return(-1);
     }
@@ -2869,6 +2919,7 @@ int rtcpcld_updcFileMigrated(
   struct Cns_fileid *fileid = NULL;
   int rc = 0, nbTapeCopies, nbDiskCopies;
   int save_serrno, i;
+  ID_TYPE key = 0;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_ENABLE) ||
        (file == NULL) ) {
@@ -2935,6 +2986,7 @@ int rtcpcld_updcFileMigrated(
    * Get all disk and tape copies from DB
    */
   iObj = Cstager_CastorFile_getIObject(castorFile);
+  Cstager_CastorFile_id(castorFile,&key);
   rc = C_Services_fillObj(
                           *svcs,
                           iAddr,
@@ -2952,8 +3004,9 @@ int rtcpcld_updcFileMigrated(
     
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("C_Services_fillObj()",
-                   C_Services_errorMsg(*svcs));
+    LOG_DBCALLANDKEY_ERR("C_Services_fillObj()",
+                         C_Services_errorMsg(*svcs),
+                         key);
     C_IAddress_delete(iAddr);
     if ( fileid != NULL ) free(fileid);
     serrno = save_serrno;
@@ -2996,6 +3049,7 @@ int rtcpcld_updcFileMigrated(
        */
       if ( tapeCopyArray != NULL ) free(tapeCopyArray);
       iObj = Cstager_TapeCopy_getIObject(tapeCopy);
+      Cstager_TapeCopy_id(tapeCopy,&key);
       rc = C_Services_updateRep(
                                 *svcs,
                                 iAddr,
@@ -3004,8 +3058,9 @@ int rtcpcld_updcFileMigrated(
                                 );
       if ( rc == -1 ) {
         save_serrno = serrno;
-        LOG_DBCALL_ERR("C_Services_updateRep()",
-                       C_Services_errorMsg(*svcs));
+        LOG_DBCALLANDKEY_ERR("C_Services_updateRep()",
+                             C_Services_errorMsg(*svcs),
+                             key);
         C_IAddress_delete(iAddr);
         if ( fileid != NULL ) free(fileid);
         serrno = save_serrno;
@@ -3031,6 +3086,7 @@ int rtcpcld_updcFileMigrated(
     if ( diskCopyStatus == DISKCOPY_CANBEMIGR ) {
       Cstager_DiskCopy_setStatus(diskCopyArray[i],DISKCOPY_STAGED);
       iObj = Cstager_DiskCopy_getIObject(diskCopyArray[i]);
+      Cstager_DiskCopy_id(diskCopyArray[i],&key);
       rc = C_Services_updateRep(
                                 *svcs,
                                 iAddr,
@@ -3039,8 +3095,9 @@ int rtcpcld_updcFileMigrated(
                                 );
       if ( rc == -1 ) {
         save_serrno = serrno;
-        LOG_DBCALL_ERR("C_Services_updateRep()",
-                       C_Services_errorMsg(*svcs));
+        LOG_DBCALLANDKEY_ERR("C_Services_updateRep()",
+                             C_Services_errorMsg(*svcs),
+                             key);
         if ( diskCopyArray != NULL ) free(diskCopyArray);
         if ( tapeCopyArray != NULL ) free(tapeCopyArray);
         C_Services_rollback(*svcs,iAddr);
@@ -3116,6 +3173,7 @@ int rtcpcld_updateTapeStatus(
   struct Cstager_Tape_t *tapeItem = NULL;
   enum Cstager_TapeStatusCodes_t cmpStatus;  
   int rc = 0, save_serrno;
+  ID_TYPE key = 0;
 
   if ( tape == NULL ) {
     serrno = EINVAL;
@@ -3149,7 +3207,6 @@ int rtcpcld_updateTapeStatus(
   
   Cstager_Tape_status(tapeItem,&cmpStatus);
   if ( fromStatus == cmpStatus ) {
-    ID_TYPE _key = 0;
     rc = C_BaseAddress_create(&baseAddr);
     if ( rc == -1 ) return(-1);
 
@@ -3157,7 +3214,7 @@ int rtcpcld_updateTapeStatus(
     C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
     iAddr = C_BaseAddress_getIAddress(baseAddr);
     iObj = Cstager_Tape_getIObject(tapeItem);
-    Cstager_Tape_id(tapeItem,&_key);
+    Cstager_Tape_id(tapeItem,&key);
     Cstager_Tape_setStatus(tapeItem,toStatus);
     /*
      * Set error info, if TAPE_FAILED status is requested
@@ -3175,8 +3232,9 @@ int rtcpcld_updateTapeStatus(
     save_serrno = serrno;
     if ( rc == -1 ) {
       save_serrno = serrno;
-      LOG_DBCALL_ERR("C_Services_updateRep()",
-                     C_Services_errorMsg(*svcs));
+      LOG_DBCALLANDKEY_ERR("C_Services_updateRep()",
+                           C_Services_errorMsg(*svcs),
+                           key);
       C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
@@ -3269,8 +3327,9 @@ int rtcpcld_returnStream(
                                                         )));
     if ( rc == -1 ) {
       save_serrno = serrno;
-      LOG_DBCALL_ERR("Cstager_IStagerSvc_resetStream()",
-                     Cstager_IStagerSvc_errorMsg(*stgSvc));
+      LOG_DBCALLANDKEY_ERR("Cstager_IStagerSvc_resetStream()",
+                           Cstager_IStagerSvc_errorMsg(*stgSvc),
+                           key);
       serrno = save_serrno;
       return(-1);
     }
@@ -3302,6 +3361,7 @@ int rtcpcld_restoreSelectedTapeCopies(
   file_list_t *file;
   int rc, doCommit = 0;
   struct Cns_fileid *fileId = NULL;
+  ID_TYPE key = 0;
 
   /*
    * This routine is only for tape writes
@@ -3356,6 +3416,7 @@ int rtcpcld_restoreSelectedTapeCopies(
             Cstager_Segment_copy(segment,&tapeCopy);
             if ( tapeCopy != NULL ) {
               Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_WAITINSTREAMS);
+              Cstager_TapeCopy_id(tapeCopy,&key);
               iObj = Cstager_TapeCopy_getIObject(tapeCopy);
               rc = C_Services_updateRep(
                                         *svcs,
@@ -3364,17 +3425,21 @@ int rtcpcld_restoreSelectedTapeCopies(
                                         0
                                         );
               if ( rc == -1 ) {
-                LOG_DBCALL_ERR(
-                               "C_Services_updateRep()",
-                               C_Services_errorMsg(*svcs)
-                               );
+                LOG_DBCALLANDKEY_ERR(
+                                     "C_Services_updateRep()",
+                                     C_Services_errorMsg(*svcs),
+                                     key
+                                     );
               } else {
                 (void)rtcpcld_getFileId(file,&fileId);
                 (void)dlf_write(
                                 (inChild == 0 ? mainUuid : childUuid),
                                 RTCPCLD_LOG_MSG(RTCPCLD_MSG_RESTORETPCP),
                                 (struct Cns_fileid *)fileId,
-                                0
+                                1,
+                                "DBKEY",
+                                DLF_MSG_PARAM_INT64,
+                                key
                                 );
                 doCommit = 1;
               }
@@ -3431,6 +3496,7 @@ int rtcpcld_restoreSelectedSegments(
   enum Cstager_TapeStatusCodes_t tapeStatus;
   int msgNb = RTCPCLD_MSG_RESTORESEGS;
   int rc, i, nbSegments = 0, nbSegmentsRestored = 0, nbSegmentsFailed = 0;
+  ID_TYPE key = 0;
 
   /*
    * This routine is only for tape recalls
@@ -3454,6 +3520,7 @@ int rtcpcld_restoreSelectedSegments(
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
   iObj = Cstager_Tape_getIObject(tp);
+  Cstager_Tape_id(tp,&key);
   rc = C_Services_fillObj(
                           *svcs,
                           iAddr,
@@ -3461,10 +3528,11 @@ int rtcpcld_restoreSelectedSegments(
                           OBJ_Segment
                           );
   if ( rc == -1 ) {
-    LOG_DBCALL_ERR(
-                   "C_Services_fillObj(tape,OBJ_Segment)",
-                   C_Services_errorMsg(*svcs)
-                   );
+    LOG_DBCALLANDKEY_ERR(
+                         "C_Services_fillObj(tape,OBJ_Segment)",
+                         C_Services_errorMsg(*svcs),
+                         key
+                         );
     C_IAddress_delete(iAddr);
     return(-1);
   }
@@ -3476,6 +3544,7 @@ int rtcpcld_restoreSelectedSegments(
       if ( segmentStatus == SEGMENT_SELECTED ) {
         Cstager_Segment_setStatus(segmentArray[i],SEGMENT_UNPROCESSED);
         iObj = Cstager_Segment_getIObject(segmentArray[i]);
+        Cstager_Segment_id(segmentArray[i],&key);
         rc = C_Services_updateRep(
                                   *svcs,
                                   iAddr,
@@ -3483,10 +3552,11 @@ int rtcpcld_restoreSelectedSegments(
                                   0
                                   );
         if ( rc == -1 ) {
-          LOG_DBCALL_ERR(
-                         "C_Services_fillObj(tape,OBJ_Segment)",
-                         C_Services_errorMsg(*svcs)
-                         );
+          LOG_DBCALLANDKEY_ERR(
+                               "C_Services_fillObj(tape,OBJ_Segment)",
+                               C_Services_errorMsg(*svcs),
+                               key
+                               );
           break;
         }
         nbSegmentsRestored++;
@@ -3532,11 +3602,12 @@ int rtcpcld_restoreSelectedSegments(
       C_IAddress_delete(iAddr);
       return(-1);
     }
+    Cstager_Tape_id(tp,&key);
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
                     RTCPCLD_LOG_MSG(msgNb),
                     (struct Cns_fileid *)NULL,
-                    3,
+                    4,
                     "",
                     DLF_MSG_PARAM_TPVID,
                     tape->tapereq.vid,
@@ -3545,7 +3616,10 @@ int rtcpcld_restoreSelectedSegments(
                     nbSegmentsRestored,
                     "NBFAILED",
                     DLF_MSG_PARAM_INT,
-                    nbSegmentsFailed
+                    nbSegmentsFailed,
+                    "DBKEY",
+                    DLF_MSG_PARAM_INT64,
+                    key
                     );
   }
 
@@ -3573,7 +3647,7 @@ int rtcpcld_setVidWorkerAddress(
   struct Cstager_Tape_t *tp = NULL;
   char myHost[CA_MAXHOSTNAMELEN+1], vwAddress[CA_MAXHOSTNAMELEN+12];
   int rc = 0, save_serrno;
-  ID_TYPE _key = 0;
+  ID_TYPE key = 0;
 
   if ( tape == NULL || port < 0 ) {
     serrno = EINVAL;
@@ -3618,23 +3692,25 @@ int rtcpcld_setVidWorkerAddress(
   C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
   iObj = Cstager_Tape_getIObject(tp);
-  Cstager_Tape_id(tp,&_key);
+  Cstager_Tape_id(tp,&key);
   rc = C_Services_updateObj(*svcs,iAddr,iObj);
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("C_Services_updateObj()",
-                   C_Services_errorMsg(*svcs));
+    LOG_DBCALLANDKEY_ERR("C_Services_updateObj()",
+                         C_Services_errorMsg(*svcs),
+                         key);
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
   }
   Cstager_Tape_setVwAddress(tp,vwAddress);
-  Cstager_Tape_id(tp,&_key);
+  Cstager_Tape_id(tp,&key);
   rc = C_Services_updateRep(*svcs,iAddr,iObj,1);
   if ( rc == -1 ) {
     save_serrno = serrno;
-    LOG_DBCALL_ERR("C_Services_updateRep()",
-                   C_Services_errorMsg(*svcs));
+    LOG_DBCALLANDKEY_ERR("C_Services_updateRep()",
+                         C_Services_errorMsg(*svcs),
+                         key);
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
