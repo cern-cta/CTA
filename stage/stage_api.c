@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.35 2002/02/20 15:42:12 jdurand Exp $
+ * $Id: stage_api.c,v 1.36 2002/02/21 17:02:33 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -279,8 +279,17 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
     return(-1);
   }
 
-  if ((flags & STAGE_NORETRY) == STAGE_NORETRY) maxretry = 0;
-  
+  /* We check existence of an STG NORETRY from environment variable or configuration or flags */
+  if (
+	  (((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
+	  (((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0)) ||
+	  ((flags & STAGE_NORETRY) == STAGE_NORETRY)
+	  ) {
+	  /* Makes sure STAGE_NORETRY is anyway in the flags so that the server will log it */
+	  flags |= STAGE_NORETRY;
+	  maxretry = 0;
+  }
+
   if ((flags & STAGE_GRPUSER) == STAGE_GRPUSER) {  /* User want to overwrite euid under which request is processed by stgdaemon */
     if ((gr = Cgetgrgid(egid)) == NULL) { /* This is allowed only if its group exist */
       stage_errmsg(func, STG36, egid);
