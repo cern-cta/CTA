@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/29 13:31:58 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/11/01 10:45:04 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/29 13:31:58 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/11/01 10:45:04 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -486,14 +486,13 @@ int main(
      char **argv;
 {
   char *migratorFacility = MIGRATOR_FACILITY_NAME, cmdline[CA_MAXLINELEN+1];
-  SOCKET sock = 0;
   int rc, c, i, save_serrno;
 
   /*
    * If we are started by the rtcpclientd, the main accept socket has been
    * duplicated to file descriptor 0
    */
-  SOCKET origSocket = 0;
+  SOCKET sock = 0;
 
   /* Initializing the C++ log */
   /* Necessary at start of program and after any fork */
@@ -572,7 +571,7 @@ int main(
       } else {
         rc = rtcpcld_runWorker(
                                tape,
-                               &sock,
+                               (tape->tapereq.VolReqID <= 0 ? NULL : &sock),
                                rtcpcld_myDispatch,
                                migratorCallback
                                );
