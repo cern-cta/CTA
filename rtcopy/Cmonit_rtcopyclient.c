@@ -1,5 +1,4 @@
 /*
- * $id$
  * Copyright (C) 2002 by CERN/IT/DS/HSM
  * All rights reserved
  */
@@ -7,6 +6,11 @@
 /* 
  * Cmonit_rtcopyclient.c - Send monitoring info to Cmonitd
  */
+
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: Cmonit_rtcopyclient.c,v $ $Revision: 1.3 $ $Date: 2002/06/26 13:47:28 $ CERN IT-DS/HSM Ben Couturier";
+#endif /* not lint */
+
 
 #include <stddef.h>
 #include <errno.h>
@@ -164,6 +168,11 @@ int DLL_DECL Cmonit_send_transfer_info(int   jid,
   close(sd);
   return(0);
 }
+
+
+
+
+
 
 
 
