@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.59 $ $Date: 2001/09/19 06:32:53 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.60 $ $Date: 2002/04/08 14:50:52 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -575,7 +575,7 @@ int rtcpd_Position(tape_list_t *tape,
      */
     strcpy(tape_path,filereq->tape_path);
     while (do_retry) {
-        rtcp_log(LOG_DEBUG,"rtcpd_Position() Ctape_position(%s,0x%x,%d,%d,%d:%d:%d:%d,%d,%d,0x%x,%s,%s,%d,%d,%d,0x%x)\n",
+        rtcp_log(LOG_DEBUG,"rtcpd_Position() Ctape_position(%s,0x%x,%d,%d,%d:%d:%d:%d,%d,%d,0x%x,%s,%s,%s,%d,%d,%d,0x%x)\n",
                  filereq->tape_path,
                  filereq->position_method,
                  filereq->tape_fseq,
@@ -586,6 +586,7 @@ int rtcpd_Position(tape_list_t *tape,
                  tapereq->end_file,
                  filereq->check_fid,
                  filereq->fid,
+                 tapereq->vsn,
                  filereq->recfm,
                  filereq->blocksize,
                  filereq->recordlength,
@@ -601,6 +602,7 @@ int rtcpd_Position(tape_list_t *tape,
                             tapereq->end_file,
                             filereq->check_fid,
                             filereq->fid,
+                            tapereq->vsn,
                             filereq->recfm,
                             filereq->blocksize,
                             filereq->recordlength,
