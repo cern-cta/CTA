@@ -830,11 +830,12 @@ END;
 /* Build diskCopy path from fileId */
 CREATE OR REPLACE PROCEDURE buildPathFromFileId(fid IN INTEGER,
                                                 nsHost IN VARCHAR2,
+                                                dcid IN INTEGER,
                                                 path OUT VARCHAR2) AS
 BEGIN
-  path := CONCAT(CONCAT(CONCAT(TO_CHAR(MOD(fid,100),'FM09'), '/'),
+  path := CONCAT(CONCAT(CONCAT(CONCAT(TO_CHAR(MOD(fid,100),'FM09'), '/'),
                         CONCAT(TO_CHAR(fid), '@')),
-                 nsHost);
+                 nsHost), CONCAT('.', TO_CHAR(dcid)));
 END;
 
 /* PL/SQL method implementing getUpdateStart */
@@ -923,7 +924,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
                         lastModificationTime = getTime() -- WAITTAPERECALL
    WHERE id = srId RETURNING castorFile, diskCopy INTO cfid, dci;
   SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
-  buildPathFromFileId(fid, nh, rpath);
+  buildPathFromFileId(fid, nh, dci, rpath);
   INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime)
    VALUES (rpath, dci, fileSystemId, cfid, 2, getTime()); -- status WAITTAPERECALL
   INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
@@ -1024,10 +1025,10 @@ BEGIN
   WHERE castorFile = cfId AND status = 1; -- STAGED
  -- create new DiskCopy
  SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
- buildPathFromFileId(fid, nh, rpath);
+ SELECT ids_seq.nextval INTO dcId FROM DUAL;
+ buildPathFromFileId(fid, nh, dcId, rpath);
  INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime)
-  VALUES (rpath, ids_seq.nextval, 0, cfId, 5, getTime()) -- status WAITFS
-  RETURNING id INTO dcId;
+  VALUES (rpath, ids_seq.nextval, 0, cfId, 5, getTime()); -- status WAITFS
  INSERT INTO Id2Type (id, type) VALUES (dcId, 5); -- OBJ_DiskCopy
  COMMIT;
  -- link SubRequest and DiskCopy
