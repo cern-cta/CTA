@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SelfMonitor.c,v $ $Revision: 1.5 $ $Date: 2000/04/18 14:38:46 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SelfMonitor.c,v $ $Revision: 1.6 $ $Date: 2000/04/18 15:09:25 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -232,41 +232,5 @@ int rtcpd_StartMonitor(int pool_size) {
     if ( strcmp(p,"NO") == 0 ) return(0);
     if ( pool_size > 0 ) _pool_size = pool_size;
     return(Cthread_create_detached(rtcpd_MonitorThread,(void *)&_pool_size));
-}        
-
-#if !defined(_WIN32)
-void *rtcpd_SignalThread(void *arg) {
-    sigset_t s_set;
-    int rc, sig;
-    extern int AbortFlag;
-
-    sigemptyset(&s_set);
-    sigaddset(&s_set,SIGINT);
-    sigaddset(&s_set,SIGTERM);
-
-    rc = sigprocmask(SIG_SETMASK,&s_set,NULL);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcpd_SignalThread() sigprocmask(): %s\n",
-                 sstrerror(errno));
-        return(NULL);
-    }
-
-    rc = sigwait(&s_set,&sig);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcpd_SignalThread() sigwait(): %s\n",
-                 sstrerror(errno));
-        return(NULL);
-    }
-
-    rtcp_log(LOG_INFO,"rtcpd_SignalThread() request killed (%d) by operator\n",
-             sig);
-    AbortFlag = 2;
-    rtcpd_SetProcError(RTCP_FAILED);
-    return(NULL);
-}
-
-int rtcpd_StartSignalThread() {
-    return(Cthread_create_detached(rtcpd_SignalThread,(void *)NULL));
-}
-#endif /* !_WIN32 */
+} 
 

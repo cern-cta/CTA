@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.65 $ $Date: 2000/04/18 15:00:27 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.66 $ $Date: 2000/04/18 15:09:25 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1073,14 +1073,6 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
     return;
 }
 
-int rtcpd_AbortHandler(int sig) {
-    if ( sig == SIGTERM ) {
-        AbortFlag = 2;
-        proc_cntl.ProcError = RTCP_FAILED;
-    } else AbortFlag = 1;
-    return(0);
-}
-
 void rtcpd_BroadcastException() {
     int i;
 
@@ -1664,15 +1656,6 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         }
     }
 #endif /* !_WIN32 */
-    /*
-     * Set up signal handlers for killjid
-     */
-#if !defined(_WIN32) && !defined(hpux)
-    (void)rtcpd_StartSignalThread();
-#else /* _WIN32 */
-    signal(SIGPIPE,SIG_IGN);
-    signal(SIGTERM,(void (*)(int))rtcpd_AbortHandler);
-#endif /* _WIN32 */
 
     (void)rtcpd_PrintCmd(tape);
     if ( rc == -1 ) {
