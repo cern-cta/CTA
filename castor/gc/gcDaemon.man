@@ -1,0 +1,82 @@
+.lf 1 expertd.man
+.\" @(#)$RCSfile: gcDaemon.man,v $ $Revision: 1.1 $ $Date: 2005/03/29 13:17:39 $ CERN IT-ADC Viktor Jiltsov
+.\" Copyright (C) 2004 by CERN/IT/ADC
+.\" All rights reserved
+.\"
+.TH GCDAEMON 1 "$Date: 2005/03/29 13:17:39 $" CASTOR "Garbage Collector daemon"
+.SH NAME
+gcDaemon \- start the CASTOR Garbage Collector daemon
+.SH SYNOPSIS
+.B gcDaemon [-f]
+.SH DESCRIPTION
+.LP
+The
+.B gcDaemon
+command starts the Garbage Collector daemon.
+This command is usually executed at system startup time
+.RB ( /etc/rc.local ).
+This will start the 
+.B gcDaemon
+which will send a request to the stager
+periodically for the list of files which should be removed from the local
+filesystem to free up disk space, and reports back to the stager the file IDs 
+of the files removed.
+.
+.LP
+All 
+.B gcDaemon
+activity is logged using the Distributed Logging Facility (DLF). 
+Information being logged: total number of files to delete, number of files
+successfully deleted, number of files failed to delete, total ammount of disk 
+space freed, KB.
+.LP
+The 
+.B gcDaemon
+wakes up every predefined number of seconds to send the request
+to the stager, and if there are files to delete, it forks a child which is
+actually removing the files. The parent does not wait for the child to finish.
+The sleeping period can be defined in
+two ways:
+.RS
+.LP
+setting an environment variable GC_INTERVAL
+.RS
+.HP
+setenv GC_INTERVAL 120
+.RE
+.LP
+an entry in
+.B /etc/castor/castor.conf
+like:
+.RS
+.HP
+GC	INTERVAL	120
+.RE
+.RE
+.LP
+If none of these found, the default value 300 sec. (5 min.) is used.
+.LP
+Normally
+.B gcDaemon
+is running on each disk server, and is dealing with local files.
+.LP
+To clean up a global file sysem, start
+.B
+gcDaemon
+on a dedicated server with 
+.B /etc/castor/castor.conf
+containing line
+.RS
+.RS
+.HP
+GC      TARGET        localhost
+.RE
+.RE
+.LP
+.B gcDaemon -f
+starts
+.B gcDaemon 
+in foreground mode. Should not be used normally.  
+.LP
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
