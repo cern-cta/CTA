@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrlistdenmap.man,v $ $Revision: 1.4 $ $Date: 2003/10/29 07:48:59 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrlistdenmap.man,v $ $Revision: 1.5 $ $Date: 2003/11/24 06:59:49 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRLISTDENMAP 1 "$Date: 2003/10/29 07:48:59 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRLISTDENMAP 1 "$Date: 2003/11/24 06:59:49 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrlistdenmap \- list all existing quadruplets model/media_letter/density/capacity
 in the CASTOR Volume Manager
@@ -64,6 +64,8 @@ DAT90    DDSC       2.00G
 DVD      FMT        4.70G
 LTO1   L 100G     100.00G
 LTO1   L 100GC    100.00G
+LTO2   L 200G     200.00G
+LTO2   L 200GC    200.00G
 SD1M     RAW       43.00G
 SD1L     RAW       96.00G
 SD3S   A 10G       10.00G
