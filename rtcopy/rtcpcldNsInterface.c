@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/11/03 11:47:35 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/10 13:37:40 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/11/03 11:47:35 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/10 13:37:40 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -178,10 +178,12 @@ static int checkSegment(
 
 int rtcpcld_updateNsSegmentAttributes(
                                       tape,
-                                      file
+                                      file,
+                                      tapeCopyNb
                                       )
      tape_list_t *tape;
      file_list_t *file;
+     int tapeCopyNb;
 {
   rtcpTapeRequest_t *tapereq;
   rtcpFileRequest_t *filereq;
@@ -258,7 +260,7 @@ int rtcpcld_updateNsSegmentAttributes(
     return(-1);
   }
 
-  nsSegAttrs->copyno = 0;
+  nsSegAttrs->copyno = tapeCopyNb;
   nsSegAttrs->fsec = 1;
   nsSegAttrs->segsize = filereq->bytes_in;
   if ( filereq->bytes_out > 0 ) {
@@ -668,6 +670,58 @@ int rtcpcld_checkCastorFile(
   if ( castorFileId != NULL ) free(castorFileId);  
   return(rc);
 }
+
+int geNbCopies(
+               file,
+               fileClassId
+               )
+     file_list_t *file;
+{
+  int rc;
+  struct Cns_fileclass fileClass;
+  
+}
+
+
+/** assure that all copies are on different tapes
+ */
+int rtcpcld_checkDualCopies(
+                            file
+                            )
+     file_list_t *file;
+{
+  tape_list_t *tape;
+  int rc, i, nbSegs = 0;
+  struct Cns_segattrs *segArray = NULL;
+  struct Cns_fileid *fileId = NULL;
+  
+  if ( (file == NULL) || (tape = (file->tape == NULL)) ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  
+  rc = rtcpcld_getFileId(file,&fileId);
+  if ( fileId == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  rc = Cns_getsegattrs(NULL,fileId,&nbSegs,&segArray);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("Cns_getsegattrs()");
+    free(fileId);
+    return(-1);
+  }
+  
+  for ( i=0; i<nbSegs; i++ ) {
+    if ( strncmp(tape->tapereq.vid,segArray[i].vid,CA_MAXVIDLEN) == 0 ) {
+      serrno = EEXIST;
+      return(-1);
+    }
+  }
+  return(0);
+}
+
+                            
 
 int rtcpcld_setatime(
                      file
