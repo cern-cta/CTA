@@ -1,0 +1,146 @@
+COMM
+COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
+COMM  All rights reserved
+COMM
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 2004/10/18 21:46:45 $ CERN IT-ADC/CA Jean-Damien Durand
+
+COMM 	Make stager daemon programs.
+
+COMM #define STAGE_LINK_STATIC
+
+#include <Project.tmpl>
+
+SPOOL = StageSpool
+INCLUDES = FileName(..,h)
+INCLUDES_CPP = FileName(..,)
+
+COMM
+COMM Set this flag to -O for optimization, or -g for debug
+COMM
+#ifdef _WIN32
+CCOPTIM =
+#else
+CCOPTIM = -g
+#endif
+
+#ifdef StagerSuperUser
+STAGEUSER = StagerSuperUser
+#else
+STAGEUSER = stage
+#endif
+
+STAGEHOST=-DSTAGEHOST=\"OBSOLETE\"
+
+#ifdef StagerSuperGroup
+STAGEGROUP = StagerSuperGroup
+#else
+STAGEGROUP = st
+#endif
+
+STAGEFLAGS = -DSTAGEUSER=\"$(STAGEUSER)\" -DSTAGEGROUP=\"$(STAGEGROUP)\"
+THREADFLAGS = $(MTCCFLAGS)
+
+#if SOLARIS
+LDLIBS = -lsocket -lnsl
+#else
+#if _AIX
+#if defined(_IBMR2)
+LDLIBS = -lodm
+#endif
+#else
+#if linux
+LDLIBS = $(ADNSLIB) -lnsl
+#else
+#if _WIN32
+LDLIBS = wsock32.lib ws2_32.lib advapi32.lib
+#endif
+#endif
+#endif
+#endif
+
+CFLAGS = $(CCOPTIM) -I$(INCLUDES) -I$(INCLUDES_CPP) $(THREADFLAGS) $(STAGEFLAGS) $(STAGEHOST)
+#ifdef STAGE_LINK_STATIC
+DEPLIB = DepLibraryTargetName(lib,shift)
+GLOBLIB = -L../lib -lshift
+#else
+DEPLIB = DepSharedLibraryTargetName(shlib,shift)
+GLOBLIB = -L../shlib -lshift
+#endif
+
+PROGS_STAGER = ProgramTargetName(stager)
+IPROGS_STAGER = FileName($(BIN),ProgramTargetName(stager))
+EPROGS_STAGER = FileName($(EXPORTBIN),stager)
+MANPAGES_STAGER = FileName($(MANDIR),stager.$(MANSUFFIX))
+EMANPAGES_STAGER = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager.$(MANSUFFIX)))
+
+#ifdef STAGE_LINK_STATIC
+DEPLIB += DepLibraryTargetName(lib,castorCommonOra)
+GLOBLIB += -L../lib -lcastorCommonOra
+#else
+DEPLIB += DepSharedLibraryTargetName(shlib,castorCommonOra)
+GLOBLIB += -L../shlib -lcastorCommonOra
+#endif
+
+STAGER_OBJS = stager.Osuf
+OBSOLETE_OBJS = stage_updc.Osuf stage_errmsg.Osuf stage_util.Osuf stage_api.Osuf buildupath.Osuf send2stgd_api.Osuf send2stgd_compat.Osuf
+
+STAGERLIB_OBJS = stager_api.Osuf $(OBSOLETE_OBJS)
+
+all: LibraryTargetName(stager) $(PROGS_STAGER)
+
+NormalProgramTarget(stager,$(STAGER_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
+
+MakeDepLibrary(lib,shift)
+
+MakeDepSharedLibrary(shlib,shift)
+
+MakeDepLibrary(lib,castorCommonOra)
+
+MakeDepSharedLibrary(shlib,castorCommonOra)
+
+NormalLibraryTarget(stager,$(STAGERLIB_OBJS))
+
+install: $(BIN) $(IPROGS_STAGER) $(SPOOL)
+
+InstallProgram(stager,$(BIN),root,bin,0750)
+
+MakeDir($(BIN),root,bin,0755)
+MakeDir($(SPOOL),root,bin,0755)
+
+install.man: $(MANDIR) $(MANPAGES_STAGER)
+
+MakeDir($(MANDIR),root,bin,0755)
+
+IMANPAGE(stager,$(MANDIR),$(MANSUFFIX))
+
+export: $(EPROGS_STAGER)
+
+IEXPORT(stager,$(EXPORTBIN),755)
+
+exportman: $(EMANPAGES_STAGER)
+
+EMANPAGE(stager,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+
+COMM###################### CLEANING RULES #######################
+
+clean:
+	@echo cleaning in CurDir
+	-@RemoveFiles(FilesToClean)
+
+clobber:	clean
+	@echo clobbering in CurDir
+	-@RemoveFiles($(PROGS_STAGER) LibraryTargetName(stager))
+
+#if _WIN32
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend -Y$(INCLUDES) *.c 2> /dev/null
+#endif
+
+Makefiles:
+
+FORCE:
+
+COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
