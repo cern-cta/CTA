@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/10/27 08:00:03 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/10/27 14:10:02 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/10/27 08:00:03 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/10/27 14:10:02 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -732,7 +732,7 @@ int rtcpcld_runWorker(
   rtcpHdr_t hdr;
   tape_list_t *internalTapeList = NULL;
   file_list_t *placeHolderFile = NULL;
-  int rc, port = -1, reqId, save_serrno;
+  int rc, i, port = -1, reqId, save_serrno;
 
   if ( (tape == NULL) || (*tape->tapereq.vid == '\0') ||
        (myCallback == NULL) ) {
@@ -844,34 +844,38 @@ int rtcpcld_runWorker(
    * For migration requests we request the first file before submitting
    * to rtcpd. This assures that the request can immediately start to copy
    * data to the rtcpd memory buffers while waiting for the tape to be
-   * mounted
+   * mounted. We need to call it twice because of the way the morework
+   * callback works (the first for adding the new filereq and the
+   * second for telling that there are no more filereqs for the moment).
    */
   if ( tape->tapereq.mode == WRITE_ENABLE ) {
-    rc = myCallback(
-                    &(internalTapeList->tapereq),
-                    &(internalTapeList->file->filereq)
-                    );
-    if ( rc == -1 ) {
-      save_serrno = serrno;
-      (void)dlf_write(
-                      childUuid,
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_INTERNAL,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+1,
-                      "ERROR_STRING",
-                      DLF_MSG_PARAM_STR,
-                      "Internal callback error",
-                      RTCPCLD_LOG_WHERE
+    for ( i=0; i<2; i++ ) {
+      rc = myCallback(
+                      &(internalTapeList->tapereq),
+                      &(internalTapeList->file->prev->filereq)
                       );
-      serrno = save_serrno;
-      return(-1);
-    } else {
-      if ( internalTapeList->file->filereq.proc_status == RTCP_WAITING ) {
-        rc = addPlaceholderFile(internalTapeList);
-        if ( rc == -1 ) {
-          LOG_SYSCALL_ERR("Cthread_mutex_lock(currentTapeFseq)");
-          rc = -1;
+      if ( rc == -1 ) {
+        save_serrno = serrno;
+        (void)dlf_write(
+                        childUuid,
+                        DLF_LVL_ERROR,
+                        RTCPCLD_MSG_INTERNAL,
+                        (struct Cns_fileid *)NULL,
+                        RTCPCLD_NB_PARAMS+1,
+                        "ERROR_STRING",
+                        DLF_MSG_PARAM_STR,
+                        "Internal callback error",
+                        RTCPCLD_LOG_WHERE
+                        );
+        serrno = save_serrno;
+        return(-1);
+      } else {
+        if ( internalTapeList->file->filereq.proc_status == RTCP_WAITING ) {
+          rc = addPlaceholderFile(internalTapeList);
+          if ( rc == -1 ) {
+            LOG_SYSCALL_ERR("addPlaceholderFile");
+            rc = -1;
+          }
         }
       }
     }
