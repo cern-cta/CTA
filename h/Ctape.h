@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.13 1999/12/09 13:46:13 jdurand Exp $
+ * $Id: Ctape.h,v 1.14 1999/12/24 10:07:57 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.13 $ $Date: 1999/12/09 13:46:13 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.14 $ $Date: 1999/12/24 10:07:57 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -208,6 +208,7 @@
 #define	TP059	"TP059 - invalid reason\n"
 #define	TP060	"TP060 - invalid combination of method and filstat\n"
 #define	TP061	"TP061 - filstat value incompatible with read-only mode\n"
+#define	TP062	"TP062 - tape %s to be prelabelled %s%s, ok to continue\n"
 
 			/* tape daemon internal tables */
 
