@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.64 $ $Date: 2000/04/18 14:38:45 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.65 $ $Date: 2000/04/18 15:00:27 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1482,16 +1482,6 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     }
 
     /*
-     * Set up signal handlers for killjid
-     */
-#if !defined(_WIN32) && !defined(hpux)
-    (void)rtcpd_StartSignalThread();
-#else /* _WIN32 */
-    signal(SIGPIPE,SIG_IGN);
-    signal(SIGTERM,(void (*)(int))rtcpd_AbortHandler);
-#endif /* _WIN32 */
-
-    /*
      * Contact the client and get the request. First check if OK.
      */
     rc = rtcpd_CheckClient((int)client->uid,(int)client->gid,
@@ -1674,6 +1664,15 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         }
     }
 #endif /* !_WIN32 */
+    /*
+     * Set up signal handlers for killjid
+     */
+#if !defined(_WIN32) && !defined(hpux)
+    (void)rtcpd_StartSignalThread();
+#else /* _WIN32 */
+    signal(SIGPIPE,SIG_IGN);
+    signal(SIGTERM,(void (*)(int))rtcpd_AbortHandler);
+#endif /* _WIN32 */
 
     (void)rtcpd_PrintCmd(tape);
     if ( rc == -1 ) {
