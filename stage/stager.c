@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.145 2001/06/06 15:31:01 jdurand Exp $
+ * $Id: stager.c,v 1.146 2001/06/06 16:40:09 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.145 $ $Date: 2001/06/06 15:31:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.146 $ $Date: 2001/06/06 16:40:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -876,7 +876,10 @@ int hsmidx_vs_ipath(ipath)
 		path1[0] = '\0';
 	}
 	for (stcx = stcs, i = 0; stcx < stce; stcx++, i++) {
-		if ((hsm_flag[i] != 0) || (hsm_ignore[i] != 0)) continue;
+		/* if hsm_flag[] != 0 this mean it has already been transfered in a previous rtcpc() call */
+		/* if hsm_ignore[] != 0 this mean we have to ignore it */
+		/* if hsm_status[] != 0 this mean it has already been transfered in current rtcpc() call */
+		if ((hsm_flag[i] != 0) || (hsm_ignore[i] != 0) || (hsm_status[i] != 0)) continue;
 		strcpy(save_ipath,stcx->ipath);
 		(void) rfio_parseln (save_ipath, &host, &filename, NORDLINKS);
 		if (host != NULL) {
@@ -906,12 +909,16 @@ int hsmidx(stcp)
 	int i;
 
 	for (stcx = stcs, i = 0; stcx < stce; stcx++, i++) {
+		/* if hsm_flag[] != 0 this mean it has already been transfered in a previous rtcpc() call */
+		/* if hsm_ignore[] != 0 this mean we have to ignore it */
+		/* if hsm_status[] != 0 this mean it has already been transfered in current rtcpc() call */
+		if ((hsm_flag[i] != 0) || (hsm_ignore[i] != 0) || (hsm_status[i] != 0)) continue;
 		if (ncastor > 0) {
-			if ((strcmp(stcx->u1.h.xfile,stcp->u1.h.xfile) == 0) && (hsm_flag[i] == 0) && (hsm_ignore[i] == 0)) {
+			if (strcmp(stcx->u1.h.xfile,stcp->u1.h.xfile) == 0) {
 				return(i);
 			}
 		} else {
-			if ((strcmp(stcx->u1.m.xfile,stcp->u1.m.xfile) == 0) && (hsm_flag[i] == 0) && (hsm_ignore[i] == 0)) {
+			if (strcmp(stcx->u1.m.xfile,stcp->u1.m.xfile) == 0) {
 				return(i);
 			}
 		}
@@ -3835,6 +3842,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Wednesday 06 June, 2001 at 17:29:44 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Wednesday 06 June, 2001 at 18:37:16 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
