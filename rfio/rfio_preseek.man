@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_preseek.man,v 1.4 2002/11/19 15:42:27 bcouturi Exp $
+.\" $Id: rfio_preseek.man,v 1.5 2002/11/21 17:09:54 bcouturi Exp $
 .\"
-.\" @(#)$RCSfile: rfio_preseek.man,v $ $Revision: 1.4 $ $Date: 2002/11/19 15:42:27 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_preseek.man,v $ $Revision: 1.5 $ $Date: 2002/11/21 17:09:54 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_PRESEEK 3 "$Date: 2002/11/19 15:42:27 $" CASTOR "Rfio Library Functions"
+.TH RFIO_PRESEEK 3 "$Date: 2002/11/21 17:09:54 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_preseek \- prefetch chunks of data from a file
 .SH SYNOPSIS
@@ -17,9 +17,9 @@ rfio_preseek \- prefetch chunks of data from a file
 .sp
 Under Linux, for large files:
 .br
-.B #include <sys/types.h>
-.br
 .B #define _LARGEFILE64_SOURCE
+.br
+.B #include <sys/types.h>
 .br
 \fB#include "rfio_api.h"\fR
 .sp

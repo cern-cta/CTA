@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_fopen.man,v 1.6 2002/11/21 13:06:26 bcouturi Exp $
+.\" $Id: rfio_fopen.man,v 1.7 2002/11/21 17:09:54 bcouturi Exp $
 .\"
-.\" @(#)$RCSfile: rfio_fopen.man,v $ $Revision: 1.6 $ $Date: 2002/11/21 13:06:26 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_fopen.man,v $ $Revision: 1.7 $ $Date: 2002/11/21 17:09:54 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_FOPEN 3 "$Date: 2002/11/21 13:06:26 $" CASTOR "Rfio Library Functions"
+.TH RFIO_FOPEN 3 "$Date: 2002/11/21 17:09:54 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_fopen \- opens a file
 .SH SYNOPSIS
@@ -18,9 +18,9 @@ rfio_fopen \- opens a file
 .sp
 Under Linux, for large files:
 .br
-.B #include <sys/types.h>
-.br
 .B #define _LARGEFILE64_SOURCE
+.br
+.B #include <sys/types.h>
 .br
 \fB#include "rfio_api.h"\fR
 .sp
