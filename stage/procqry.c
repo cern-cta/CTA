@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.24 2000/06/09 10:58:59 jdurand Exp $
+ * $Id: procqry.c,v 1.25 2000/06/09 14:11:59 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.24 $ $Date: 2000/06/09 10:58:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.25 $ $Date: 2000/06/09 14:11:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -284,6 +284,7 @@ void procqryreq(req_data, clienthost)
 #endif
 			free (argv);
 			close (rpfd);
+			if (fseq_list != NULL) free(fseq_list);
 			return;
 		} else {
 			/* We are in the child : we open a new connection to the Database Server so that   */
@@ -574,6 +575,7 @@ void procqryreq(req_data, clienthost)
 	if (afile || mfile)
 		regfree (&preg);
 #endif
+	if (fseq_list != NULL) free(fseq_list);
 	free (argv);
 	sendrep (rpfd, STAGERC, STAGEQRY, c);
 	if (pid == 0) {	/* we are in the child */
