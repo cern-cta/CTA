@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.17 2001/03/09 10:58:26 jdurand Exp $
+ * $Id: sendrep.c,v 1.18 2001/07/12 11:02:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.17 $ $Date: 2001/03/09 10:58:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.18 $ $Date: 2001/07/12 11:02:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -50,7 +50,7 @@ int sendrep(va_alist) va_dcl
 	char *p;
 	char prtbuf[PRTBUFSZ];
 	char *q;
-	char *rbp;
+	char *rbp, *sav_rbp_magic;
 	int rc;
 	int rep_type;
 	int req_type;
@@ -60,6 +60,7 @@ int sendrep(va_alist) va_dcl
 	static char savebuf[256];
 	static int saveflag = 0;
 	u_signed64 uniqueid;
+	int api_magic;
 
 	va_start (args);
 	rpfd = va_arg (args, int);
@@ -72,6 +73,7 @@ int sendrep(va_alist) va_dcl
 
 	rep_type = va_arg (args, int);
 	rbp = (rep_type == API_STCP_OUT ? api_stcp_out : (rep_type == API_STPP_OUT ? api_stpp_out : repbuf));
+	sav_rbp_magic = rbp;
 	marshall_LONG (rbp, STGMAGIC);
 	marshall_LONG (rbp, rep_type);
 	switch (rep_type) {
@@ -148,10 +150,13 @@ int sendrep(va_alist) va_dcl
 		marshall_STRING (rbp, file1);
 		break;
 	case API_STCP_OUT:
-		api_stcp_out_status = 0;
+		/* There is another argument on the stack */
 		stcp = va_arg (args, struct stgcat_entry *);
+		api_magic = va_arg (args, int);
+		api_stcp_out_status = 0;
+		marshall_LONG (sav_rbp_magic, api_magic);
 		p = stcp_marshalled;
-		marshall_STAGE_CAT (STAGE_OUTPUT_MODE, api_stcp_out_status, p, stcp);
+		marshall_STAGE_CAT (api_magic, STAGE_OUTPUT_MODE, api_stcp_out_status, p, stcp);
 		marshall_LONG(rbp, p - stcp_marshalled);
 		marshall_OPAQUE(rbp, stcp_marshalled, p - stcp_marshalled);
  		break;
