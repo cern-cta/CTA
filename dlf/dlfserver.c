@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.4 $ $Date: 2003/09/16 05:15:23 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlfserver.c,v $ $Revision: 1.5 $ $Date: 2003/11/03 09:22:05 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -99,9 +99,9 @@ dlf_main(main_args)
       strlen (cfbuf) >= 5 && (p_u = strtok (cfbuf, "/\n"))) {
     strncpy (db_user, p_u, MAXSTRLENGTH-1);
     db_user[MAXSTRLENGTH-1] = 0;
-    // get the password, provided that it may be empty
+    /* get the password, provided that it may be empty */
     if (cfbuf[strlen(p_u)+1] == '@') {
-      // empty password
+      /*  empty password */
       *db_pwd = 0;
     } else {
       if ((p_p = strtok (NULL, "@\n")) != NULL) {
