@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 1999/10/22 12:14:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Date: 1999/10/22 12:55:40 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1999 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -48,3 +48,6 @@ depend:
  
 Makefiles:
  
+######################## DEPENDENCIES ##########################
+ 
+COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
