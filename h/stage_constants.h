@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.35 2004/03/02 09:10:06 jdurand Exp $
+ * $Id: stage_constants.h,v 1.36 2004/03/17 13:56:50 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -279,7 +279,7 @@
 #ifdef  CHECKSUMERR
 #undef  CHECKSUMERR
 #endif
-#define	CHECKSUMERR	  200	/* configuration error - serrno: ESTCONF */
+#define	CHECKSUMERR	  200	/* configuration error - serrno: SECHECKSUM */
 
 #ifdef SHIFT_ECUPVNACT
 #undef SHIFT_ECUPVNACT
