@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/01 15:33:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/07 15:54:42 $ $Author: sponcec3 $
  *
  *
  *
@@ -122,58 +122,69 @@ int castor::rh::Server::main () {
 // processRequest
 //------------------------------------------------------------------------------
 void *castor::rh::Server::processRequest(void *param) throw() {
+  MessageAck ack;
+  ack.setStatus(true);
+
   // get the incoming request
   castor::io::Socket* sock = (castor::io::Socket*) param;
-  castor::IObject* obj;
+  castor::rh::Request* fr = 0;
   try {
-    obj = sock->readObject();
-  } catch (castor::exception::Exception e) {
-    clog() << "Could not get incoming request : "
-           << sstrerror(e.code()) << std::endl
-           << e.getMessage().str() << std::endl;
-  }
-  castor::rh::Request* fr =
-    dynamic_cast<castor::rh::Request*>(obj);
-
-  clog() << " Processing request" << std::endl;
-
-  MessageAck ack;
-  try {
-    // Complete its client field
-    unsigned short port;
-    unsigned long ip;
-    try {
-      sock->getPeerIp(port, ip);
-    } catch(castor::exception::Exception e) {
-      clog() << "Exception :" << sstrerror(e.code())
-             << std::endl << e.getMessage() << std::endl;
+    castor::IObject* obj = sock->readObject();
+    fr = dynamic_cast<castor::rh::Request*>(obj);
+    if (0 == fr) {
+      delete obj;
+      clog() << "Client did not send a valid Request object."
+             << std::endl;
+      ack.setStatus(false);
+      ack.setErrorCode(EINVAL);
+      ack.setErrorMessage("Invalid Request object sent to server.");
     }
-
-    clog() << " Got request from client "
-           << castor::ip << ip << ":" << port << std::endl;
-    castor::rh::Client *client =
-      dynamic_cast<castor::rh::Client *>(fr->client());
-    if (0 == client) {
-      castor::exception::Internal e;
-      e.getMessage() << "Request arrived with no client object.";
-      throw e;
-    }
-    client->setIpAddress(ip);
-
-    // handle the request
-    handleRequest(fr);
-    ack.setStatus(true);
-
   } catch (castor::exception::Exception e) {
-    clog() << "Exception : " << sstrerror(e.code())
-           << std::endl << e.getMessage().str() << std::endl;
+    clog() << "Unable to read Request object from socket."
+           << std::endl;
     ack.setStatus(false);
-    ack.setErrorCode(1);
-    ack.setErrorMessage(e.getMessage().str());
+    ack.setErrorCode(EINVAL);
+    ack.setErrorMessage("Unable to read Request object from socket.");
+  }
+
+  if (ack.status()) {
+    clog() << " Processing request" << std::endl;
+    try {
+      // Complete its client field
+      unsigned short port;
+      unsigned long ip;
+      try {
+        sock->getPeerIp(port, ip);
+      } catch(castor::exception::Exception e) {
+        clog() << "Exception :" << sstrerror(e.code())
+               << std::endl << e.getMessage() << std::endl;
+      }
+      
+      clog() << " Got request from client "
+             << castor::ip << ip << ":" << port << std::endl;
+      castor::rh::Client *client =
+        dynamic_cast<castor::rh::Client *>(fr->client());
+      if (0 == client) {
+        castor::exception::Internal e;
+        e.getMessage() << "Request arrived with no client object.";
+        throw e;
+      }
+      client->setIpAddress(ip);
+      
+      // handle the request
+      handleRequest(fr);
+      ack.setStatus(true);
+      
+    } catch (castor::exception::Exception e) {
+      clog() << "Exception : " << sstrerror(e.code())
+             << std::endl << e.getMessage().str() << std::endl;
+      ack.setStatus(false);
+      ack.setErrorCode(1);
+      ack.setErrorMessage(e.getMessage().str());
+    }
   }
 
   clog() << "Sending reply to client !" << std::endl;
-
   try {
     sock->sendObject(ack);
   } catch (castor::exception::Exception e) {
@@ -181,7 +192,6 @@ void *castor::rh::Server::processRequest(void *param) throw() {
            << sstrerror(e.code()) << std::endl
            << e.getMessage().str() << std::endl;
   }
-
 
   delete sock;
   return 0;
