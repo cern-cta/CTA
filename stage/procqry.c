@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.67 2001/11/30 11:57:06 jdurand Exp $
+ * $Id: procqry.c,v 1.68 2001/12/05 10:05:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.67 $ $Date: 2001/11/30 11:57:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.68 $ $Date: 2001/12/05 10:05:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -16,24 +16,10 @@ static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.67 $ $Date: 200
 #undef USECDB
 #endif
 
-#ifdef SIXMONTHS
-#undef SIXMONTHS
-#endif
-#define SIXMONTHS (6*30*24*60*60)
-
-#if defined(_WIN32)
-static char strftime_format_sixmonthsold[] = "%b %d %Y";
-static char strftime_format[] = "%b %d %H:%M:%S";
-#else /* _WIN32 */
-static char strftime_format_sixmonthsold[] = "%b %e %Y";
-static char strftime_format[] = "%b %e %H:%M:%S";
-#endif /* _WIN32 */
-
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <grp.h>
 #include <math.h>
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 #include <regex.h>
@@ -2001,10 +1987,6 @@ int get_retenp(stcp,timestr)
 {
   signed64 this_retenp;
   time_t this_time = time(NULL);
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
-  struct tm tmstruc;
-#endif /* _REENTRANT || _THREAD_SAFE */
-  struct tm *tp;
   int ifileclass;
 
   /* Depending of the status of the stcp we will return the correct current retention period on disk */
@@ -2020,17 +2002,7 @@ int get_retenp(stcp,timestr)
         this_retenp += stcp->a_time;
         dummy_retenp = (time_t) this_retenp;
         /* Retention period not yet exhausted */
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
-        localtime_r(&(dummy_retenp),&tmstruc);
-        tp = &tmstruc;
-#else
-        tp = localtime(&(dummy_retenp));
-#endif /* _REENTRANT || _THREAD_SAFE */
-        if ((this_retenp - this_time) > SIXMONTHS) {
-          strftime(timestr,64,strftime_format_sixmonthsold,tp);
-        } else {
-          strftime(timestr,64,strftime_format,tp);
-        }
+        stage_util_time(dummy_retenp,timestr);
       }
     } else {
       strcpy(timestr,"INFINITE_LIFETIME");
@@ -2048,17 +2020,7 @@ int get_retenp(stcp,timestr)
         this_retenp += stcp->a_time;
         dummy_retenp = (time_t) this_retenp;
         /* Retention period not yet exhausted */
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
-        localtime_r(&(dummy_retenp),&tmstruc);
-        tp = &tmstruc;
-#else
-        tp = localtime(&(dummy_retenp));
-#endif /* _REENTRANT || _THREAD_SAFE */
-        if ((this_retenp - this_time) > SIXMONTHS) {
-          strftime(timestr,64,strftime_format_sixmonthsold,tp);
-        } else {
-          strftime(timestr,64,strftime_format,tp);
-        }
+        stage_util_time(dummy_retenp,timestr);
       }
     } else {
       return(-1);
@@ -2102,17 +2064,7 @@ int get_retenp(stcp,timestr)
           this_retenp += stcp->a_time;
           dummy_retenp = (time_t) this_retenp;
           /* Retention period not yet exhausted */
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
-          localtime_r(&(dummy_retenp),&tmstruc);
-          tp = &tmstruc;
-#else
-          tp = localtime(&(dummy_retenp));
-#endif /* _REENTRANT || _THREAD_SAFE */
-          if ((this_retenp - this_time) > SIXMONTHS) {
-            strftime(timestr,64,strftime_format_sixmonthsold,tp);
-          } else {
-            strftime(timestr,64,strftime_format,tp);
-          }
+          stage_util_time(dummy_retenp,timestr);
         }
         break;
       }
@@ -2133,10 +2085,6 @@ int get_mintime(stcp,timestr)
 {
   time_t this_mintime_beforemigr;
   time_t this_time = time(NULL);
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
-  struct tm tmstruc;
-#endif /* _REENTRANT || _THREAD_SAFE */
-  struct tm *tp;
   int ifileclass;
 
   if (stcp->t_or_d != 'h') return(-1);
@@ -2157,17 +2105,7 @@ int get_mintime(stcp,timestr)
       this_mintime_beforemigr += stcp->a_time;
       dummy_mintime_beforemigr = (time_t) this_mintime_beforemigr;
       /* Retention period not yet exhausted */
-#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
-      localtime_r(&(dummy_mintime_beforemigr),&tmstruc);
-      tp = &tmstruc;
-#else
-      tp = localtime(&(dummy_mintime_beforemigr));
-#endif /* _REENTRANT || _THREAD_SAFE */
-      if ((this_mintime_beforemigr - this_time) > SIXMONTHS) {
-        strftime(timestr,64,strftime_format_sixmonthsold,tp);
-      } else {
-        strftime(timestr,64,strftime_format,tp);
-      }
+      stage_util_time(dummy_mintime_beforemigr,timestr);
     }
     break;
   default:
@@ -2176,7 +2114,3 @@ int get_mintime(stcp,timestr)
   /* Okay */
   return(0);
 }
-
-/*
- * Last Update: "Tuesday 13 November, 2001 at 17:46:30 CET by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
- */
