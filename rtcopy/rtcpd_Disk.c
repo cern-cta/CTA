@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.91 $ $Date: 2000/10/25 09:30:26 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.92 $ $Date: 2000/12/04 09:02:19 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1391,7 +1391,10 @@ void *diskIOthread(void *arg) {
     DK_STATUS(RTCP_PS_NOBLOCKING);
     CHECK_PROC_ERR(file->tape,file,"rtcpd_WaitForPosition() error");
 
-    if ( (severity & RTCP_EOD) == 0 ) {
+    /*
+     * EOD on read is processed later (not always an error).
+     */
+    if ( (mode == WRITE_ENABLE) || ((severity & RTCP_EOD) == 0) ) {
         if ( mode == WRITE_DISABLE ) {
             DK_STATUS(RTCP_PS_STAGEUPDC);
             rc = rtcpd_stageupdc(tape,file);
@@ -1409,18 +1412,34 @@ void *diskIOthread(void *arg) {
 
         rc = DiskFileOpen(pool_index,tape,file);
         disk_fd = rc;
-        CHECK_PROC_ERR(file->tape,file,"DiskFileOpen() error");
+        rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
+        /*
+         * EOD on read is processed later (not always an error).
+         * Note: DiskFileOpen() cannot return non-error status in case of
+         * a RTCP_EOD severity. This can happen if the open is blocked
+         * because of synchronisation for append. Thus, we must check
+         * if RTCP_EOD severity before checking the return status to assure
+         * proper EOD processing (otherwise it will always be considered as an
+         * error).
+         */
+        if ( (mode == WRITE_ENABLE) || ((severity & RTCP_EOD) == 0) ) {
+            CHECK_PROC_ERR(file->tape,file,"DiskFileOpen() error");
 
-        if ( mode == WRITE_DISABLE ) {
-            rc = MemoryToDisk(disk_fd,pool_index,&indxp,&offset,
-                              &last_file,&end_of_tpfile,tape,file);
-            if ( rc == 0 ) disk_fd = -1;
-            CHECK_PROC_ERR(file->tape,file,"MemoryToDisk() error");
-        } else {
-            rc = DiskToMemory(disk_fd,pool_index,&indxp,&offset,
-                              &last_file,&end_of_tpfile,tape,file);
-            if ( rc == 0 ) disk_fd = -1;
-            CHECK_PROC_ERR(file->tape,file,"DiskToMemory() error");
+            /*
+             * Note that MemoryToDisk() and DiskToMemory() close the
+             * disk file descriptor if the transfer was successful.
+             */
+            if ( mode == WRITE_DISABLE ) {
+                rc = MemoryToDisk(disk_fd,pool_index,&indxp,&offset,
+                                  &last_file,&end_of_tpfile,tape,file);
+                if ( rc == 0 ) disk_fd = -1;
+                CHECK_PROC_ERR(file->tape,file,"MemoryToDisk() error");
+            } else {
+                rc = DiskToMemory(disk_fd,pool_index,&indxp,&offset,
+                                  &last_file,&end_of_tpfile,tape,file);
+                if ( rc == 0 ) disk_fd = -1;
+                CHECK_PROC_ERR(file->tape,file,"DiskToMemory() error");
+            }
         }
     }
 
