@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.15 $ $Date: 2000/02/14 15:08:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.16 $ $Date: 2000/03/06 07:47:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -94,6 +94,8 @@ char	**argv;
 	loader = argv[14];
 	mode = atoi (argv[15]);
 	den = atoi (argv[16]);
+
+	tplogit (func, "rls dvn=<%s>, vid=<%s>, rlsflags=%d\n", dvn, vid, rlsflags);
 #if SONYRAW
 	if (strcmp (devtype, "DIR1") == 0 && den == SRAW)
 		sonyraw = 1;
