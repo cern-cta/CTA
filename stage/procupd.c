@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.94 2002/01/30 10:24:54 jdurand Exp $
+ * $Id: procupd.c,v 1.95 2002/02/05 15:28:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.94 $ $Date: 2002/01/30 10:24:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.95 $ $Date: 2002/02/05 15:28:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.94 $ $Date: 200
 #include "Cgrp.h"
 
 void procupdreq _PROTO((int, int, char *, char *));
-void update_hsm_a_time _PROTO((struct stgcat_entry *));
+int update_hsm_a_time _PROTO((struct stgcat_entry *));
 
 extern char func[16];
 extern int reqid;
@@ -75,7 +75,7 @@ extern int sendrep _PROTO((int, int, ...));
 extern int sendrep _PROTO(());
 #endif
 extern int stglogit _PROTO(());
-extern int stglogflags _PROTO(());
+extern char *stglogflags _PROTO((char *, char *, u_signed64));
 extern int nextreqid _PROTO(());
 extern int savereqs _PROTO(());
 extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int));
@@ -228,7 +228,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		if ((flags & STAGE_FILE_WOPEN) == STAGE_FILE_ROPEN) Oflag = 1;
 		if ((flags & STAGE_FILE_WCLOSE) == STAGE_FILE_RCLOSE) Cflag = 1;
 		/* Print the flags */
-		stglogflags(func,flags);
+		stglogflags(func,LOGFILE,(u_signed64) flags);
 
 #if SACCT
 		stageacct (STGCMDR, uid, gid, clienthost, reqid, STAGE_UPDC, 0, 0, NULL, "", (char) 0);
@@ -1218,6 +1218,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 						struct stgcat_entry save_stcp_other_migrated;
 						struct stgcat_entry save_stcp_other_migration;
 						int save_status = stcp->status;
+						int force_delete = 0;
 
 						save_stcp_rdonly.reqid = 0;
 						save_stcp_other_migrated.reqid = 0;
@@ -1316,7 +1317,12 @@ procupdreq(req_type, magic, req_data, clienthost)
 							}
 							stcp_found->u1.h.tppool[0] = '\0'; /* We reset the poolname */
 							stcp_found->status |= STAGED;
-							update_hsm_a_time(stcp_found);
+							if (update_hsm_a_time(stcp_found) == ENOENT) {
+								/* Do not exist anymore in the CASTOR Name Server */
+								if ((wqp->flags & STAGE_HSM_ENOENT_OK) == STAGE_HSM_ENOENT_OK)
+									/* We force a delreq() or delfile() in such a case */
+									force_delete = 1;
+							}
 #ifdef USECDB
 							if (stgdb_upd_stgcat(&dbfd,stcp_found) != 0) {
 								stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -1367,10 +1373,22 @@ procupdreq(req_type, magic, req_data, clienthost)
 								}
 								if (! ((stcp_found == save_stcp) && (save_status & STAGEPUT) == STAGEPUT))
 									delreq(save_stcp,0);      /* Deletes the STAGEWRT */
-								if (continue_flag != 0) {
+								if (force_delete != 0) {      /* Precedence is given to forced deletion */
+									if ((continue_flag != 0) && (stcp_found->t_or_d == 'h')) {
+										char tmpbuf1[21];
+										/* We neverthless log to indicate that, regardless of continue_flag */
+										/* we decided anyway to force the deletion */
+										sendrep (rpfd, MSG_ERR, STG175,
+												 stcp_found->u1.h.xfile,
+												 u64tostr((u_signed64) stcp_found->u1.h.fileid, tmpbuf1, 0),
+												 stcp_found->u1.h.server,
+												 "forced deletion regardless of retention period : ENOENT + STAGE_HSM_ENOENT_OK flag");
+									}
+									goto delete_entry;
+								} else if (continue_flag != 0) { /* Then to forced continuation */
 									goto continue_entry;
 								} else {
-									goto delete_entry;
+									goto delete_entry;           /* Then to the default (deletion) */
 								}
 							} else {
 							delete_entry:
@@ -1675,12 +1693,13 @@ procupdreq(req_type, magic, req_data, clienthost)
 	}
 }
 
-void update_hsm_a_time(stcp)
+int update_hsm_a_time(stcp)
 	struct stgcat_entry *stcp;
 {
 	struct stat statbuf;
 	struct Cns_fileid Cnsfileid;
 	struct Cns_filestat Cstatbuf;
+	int rc = 0;
 
 	switch (stcp->t_or_d) {
 	case 'm':
@@ -1689,6 +1708,7 @@ void update_hsm_a_time(stcp)
 		if (rfio_stat(stcp->u1.m.xfile, &statbuf) == 0) {
 			stcp->a_time = statbuf.st_mtime;
 		} else {
+			rc = rfio_serrno();
 			stglogit (func, STG02, stcp->u1.m.xfile, "rfio_stat", rfio_serror());
 		}
 		break;
@@ -1699,10 +1719,12 @@ void update_hsm_a_time(stcp)
 		if (Cns_statx(stcp->u1.h.xfile, &Cnsfileid, &Cstatbuf) == 0) {
 			stcp->a_time = Cstatbuf.mtime;
 		} else {
+			rc = serrno;
 			stglogit (func, STG02, stcp->u1.h.xfile, "Cns_statx", sstrerror(serrno));
 		}
 		break;
 	default:
 		break;
 	}
+	return(rc);
 }
