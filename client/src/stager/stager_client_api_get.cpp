@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.10 2004/12/03 09:28:14 bcouturi Exp $
+ * $Id: stager_client_api_get.cpp,v 1.11 2004/12/03 17:20:04 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.10 $ $Date: 2004/12/03 09:28:14 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.11 $ $Date: 2004/12/03 17:20:04 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -19,6 +19,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.
 /* Local headers */
 /* ============= */
 #include "errno.h"
+#include "serrno.h"
 #include "stager_client_api.h"
 #include "stager_admin_api.h"
 #include "castor/BaseObject.hpp"
@@ -32,6 +33,9 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.
 #include "castor/rh/Response.hpp"
 #include "castor/rh/FileResponse.hpp"
 #include "castor/rh/IOResponse.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
+#include "castor/exception/Communication.hpp"
 
 /* ================= */
 /* External routines */
@@ -45,12 +49,12 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.
 
 
 EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
-					struct stage_prepareToGet_filereq *requests,
-					int nbreqs,
-					struct stage_prepareToGet_fileresp **responses,
-					int *nbresps,
-					char **requestId,
-					 struct stage_options* opts) {
+                                  struct stage_prepareToGet_filereq *requests,
+                                  int nbreqs,
+                                  struct stage_prepareToGet_fileresp **responses,
+                                  int *nbresps,
+                                  char **requestId,
+                                  struct stage_options* opts) {
 
  
   return 0;
@@ -73,6 +77,9 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
 				struct stage_options* opts) {
   
   char *func = "stage_get";
+  int rc = -1;
+  int saved_serrno = 0;
+  std::vector<castor::rh::Response *>respvec;
 
   if (0 == filename
       || 0 ==  response) {
@@ -97,12 +104,6 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
     if (protocol) {
       std::string sprotocol(protocol);
       subreq->setProtocol(sprotocol);
-    }    
-
-    if (!filename) {
-      serrno = EINVAL;
-      stage_errmsg(func, "filename is NULL");
-      return -1;
     }
 
     std::string sfilename(filename);
@@ -111,7 +112,6 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
     subreq->setRequest(&req);
 
     // Submitting the request
-    std::vector<castor::rh::Response *>respvec;    
     castor::client::VectorResponseHandler rh(&respvec);
     std::string reqid = client.sendRequest(&req, &rh);
     
@@ -124,10 +124,9 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
     int nbResponses =  respvec.size();
     
     if (nbResponses <= 0) {
-      // We got not replies, this is not normal !
-      serrno = SEINTERNAL;
-      stage_errmsg(func, "No responses received");
-      return -1;
+      castor::exception::Internal e;
+      e.getMessage() << "No responses received";
+      throw e;
     }
 
     // Creating the file response
@@ -136,9 +135,9 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
       malloc(sizeof(struct stage_io_fileresp));
     
     if (*response == NULL) {
-      serrno = ENOMEM;
-      stage_errmsg(func, "Could not allocate memory for responses");
-      return -1;
+      castor::exception::Exception e(ENOMEM);
+      e.getMessage() << "Could not allocate memory for response";
+      throw e;
     }
     
     // Casting the response into a FileResponse !
@@ -161,15 +160,26 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
       } else {
         (*response)->errorMessage=0;
       }
-      // The responses should be deallocated by the API !
-      delete respvec[0];
-
-  } catch (castor::exception::Exception e) {
-    serrno = e.code();
+      rc = 0;
+      
+  } catch (castor::exception::Communication e) {
     stage_errmsg(func, (char *)(e.getMessage().str().c_str()));
-    return -1;
+    if (requestId != NULL && e.getRequestId().length() > 0) {
+      *requestId = strdup(e.getRequestId().c_str());
+    }
+    rc = -1;
+    saved_serrno = e.code();
+  } catch (castor::exception::Exception e) {
+    stage_errmsg(func, (char *)(e.getMessage().str().c_str()));
+    rc = -1;
+    saved_serrno = e.code();
   }
   
-  return 0;
+  // The responses should be deallocated by the API !
+  // Only one entry has been put in the vector
+  if (respvec.size() > 0 && 0 != respvec[0]) delete respvec[0];
+  
+  serrno = saved_serrno;
+  return rc;
 
 }
