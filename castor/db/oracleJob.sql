@@ -30,12 +30,12 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER, tapeCopyS
                                                   nsHost OUT VARCHAR, fileSize OUT INTEGER,
                                                   tapeCopyId OUT INTEGER) AS
  fileSystemId INTEGER;
-BEGIN
- SELECT DiskServer.name, FileSystem.mountPoint, DiskCopy.path, DiskCopy.id, FileSystem.id,
+ deviation NUMBER;
+ fsDiskServer NUMBER;
+ CURSOR c1 IS SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.fsDeviation, FileSystem.diskserver, DiskCopy.path, DiskCopy.id, FileSystem.id,
    CastorFile.id, CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, TapeCopy.id
-  INTO diskServerName, mountPoint, path, dci, fileSystemId, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-  FROM DiskServer, FileSystem, DiskCopy, CastorFile, TapeCopy, Stream2TapeCopy
-  WHERE DiskServer.id = FileSystem.diskserver
+   FROM DiskServer, FileSystem, DiskCopy, CastorFile, TapeCopy, Stream2TapeCopy
+   WHERE DiskServer.id = FileSystem.diskserver
     AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
     AND FileSystem.id = DiskCopy.filesystem
     AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
@@ -44,11 +44,15 @@ BEGIN
     AND Stream2TapeCopy.child = TapeCopy.id
     AND Stream2TapeCopy.parent = streamId
     AND TapeCopy.status = tapeCopyStatus
-    AND ROWNUM < 2
-  ORDER by FileSystem.weight DESC;
+   ORDER by FileSystem.weight DESC;
+BEGIN
+ OPEN c1;
+ FETCH c1 INTO diskServerName, mountPoint, deviation, fsDiskServer, path, dci, fileSystemId, castorFileId, fileId, nsHost, fileSize, tapeCopyId;
+ CLOSE c1;
  UPDATE TapeCopy SET status = newTapeCopyStatus WHERE id = tapeCopyId;
  UPDATE Stream SET status = newStreamStatus WHERE id = streamId;
- UPDATE FileSystem SET weight = weight - fsDeviation WHERE id = fileSystemId;
+ UPDATE FileSystem SET weight = weight - deviation
+  WHERE diskServer = fsDiskServer;
 END;
 
 /* PL/SQL method implementing bestFileSystemForSegment */
@@ -56,10 +60,10 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskS
                                                      rmountPoint OUT VARCHAR, rpath OUT VARCHAR,
                                                      dci OUT INTEGER) AS
  fileSystemId NUMBER;
-BEGIN
-SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id, DiskCopy.path, DiskCopy.id
- INTO diskServerName, rmountPoint, fileSystemId, rpath, dci
- FROM DiskServer, FileSystem, DiskPool2SvcClass,
+ deviation NUMBER;
+ fsDiskServer NUMBER;
+ CURSOR c1 IS SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id, FileSystem.fsDeviation, FileSystem.diskserver, DiskCopy.path, DiskCopy.id
+   FROM DiskServer, FileSystem, DiskPool2SvcClass,
       (SELECT id, svcClass from StageGetRequest UNION
        SELECT id, svcClass from StagePrepareToGetRequest UNION
        SELECT id, svcClass from StageGetNextRequest UNION
@@ -67,22 +71,26 @@ SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id, DiskCopy.path, Dis
        SELECT id, svcClass from StagePrepareToUpdateRequest UNION
        SELECT id, svcClass from StageUpdateNextRequest) Request,
       SubRequest, TapeCopy, Segment, DiskCopy, CastorFile
-  WHERE Segment.id = segmentId
-    AND Segment.copy = TapeCopy.id
-    AND SubRequest.castorfile = TapeCopy.castorfile
-    AND DiskCopy.castorfile = TapeCopy.castorfile
-    AND Castorfile.id = TapeCopy.castorfile
-    AND Request.id = SubRequest.request
-    AND Request.svcclass = DiskPool2SvcClass.child
-    AND FileSystem.diskpool = DiskPool2SvcClass.parent
-    AND FileSystem.free > CastorFile.fileSize
-    AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
-    AND DiskServer.id = FileSystem.diskServer
-    AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
-    AND ROWNUM < 2
-  ORDER by FileSystem.weight DESC;
-UPDATE DiskCopy SET fileSystem = fileSystemId WHERE id = dci;
-UPDATE FileSystem SET weight = weight - fsDeviation WHERE id = fileSystemId;
+    WHERE Segment.id = segmentId
+     AND Segment.copy = TapeCopy.id
+     AND SubRequest.castorfile = TapeCopy.castorfile
+     AND DiskCopy.castorfile = TapeCopy.castorfile
+     AND Castorfile.id = TapeCopy.castorfile
+     AND Request.id = SubRequest.request
+     AND Request.svcclass = DiskPool2SvcClass.child
+     AND FileSystem.diskpool = DiskPool2SvcClass.parent
+     AND FileSystem.free > CastorFile.fileSize
+     AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
+     AND DiskServer.id = FileSystem.diskServer
+     AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
+   ORDER by FileSystem.weight DESC;
+BEGIN
+ OPEN c1;
+ FETCH c1 INTO diskServerName, rmountPoint, fileSystemId, deviation, fsDiskServer, rpath, dci;
+ CLOSE c1;
+ UPDATE DiskCopy SET fileSystem = fileSystemId WHERE id = dci;
+ UPDATE FileSystem SET weight = weight - deviation
+  WHERE diskserver = fsDiskServer;
 END;
 
 /* PL/SQL method implementing fileRecalled */
