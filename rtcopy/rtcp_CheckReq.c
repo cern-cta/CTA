@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.8 $ $Date: 2000/01/13 11:49:08 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.9 $ $Date: 2000/01/19 15:40:02 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -374,11 +374,22 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     } else {
         /*
          * Tape read:
+         * Only accept dot (".") if it is a stager + deferred request.
          * rfiod cannot get token to write to AFS based files -> check.
          * Should we check that disk file doesn't exist...? Wasnt'
          * done before so skip that for the time being. However,
          * if it exists we must check that it is not a directory!.
          */
+        if ( strcmp(filereq->file_path,".") == 0 ) {
+            if ( *filereq->stageID == '\0' ||
+                 filereq->def_alloc == 0 ) {
+                sprintf(errmsgtxt,"File = %s only valid for deferred stagein\n",
+                        filereq->file_path);
+                serrno = EINVAL;
+                SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
+                if ( rc == -1 ) return(rc);
+            }
+        }
         if ( strstr(filereq->file_path,":/afs") != NULL ) {
             sprintf(errmsgtxt,RT145,"CPTPDSK");
             serrno = EACCES;
