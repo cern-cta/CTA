@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.18 $ $Date: 2000/03/01 14:44:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.19 $ $Date: 2000/03/03 15:47:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpdump - analyse the content of a tape */
@@ -47,6 +47,7 @@ char	**argv;
 	int maxbyte = -1;
 	int maxfile = -1;
 	char *p;
+	char *tempnam();
 	int toblock = -1;
 	static char vid[CA_MAXVIDLEN+1] = "";
 	static char vsn[CA_MAXVSNLEN+1] = "";
