@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/29 15:49:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/30 14:34:07 $ $Author: sponcec3 $
  *
  *
  *
@@ -32,6 +32,7 @@
 #include "castor/SvcFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/client/IResponseHandler.hpp"
+#include "castor/client/BasicResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskServer.hpp"
@@ -40,6 +41,7 @@
 #include "castor/stager/RemoteStagerSvc.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/ScheduleSubReqRequest.hpp"
+#include "castor/stager/UpdateRepRequest.hpp"
 #include "castor/rh/ScheduleSubReqResponse.hpp"
 #include "castor/exception/NotSupported.hpp"
 #include <list>
@@ -408,9 +410,13 @@ bool castor::stager::RemoteStagerSvc::updateAndCheckSubRequest
 void castor::stager::RemoteStagerSvc::updateRep(IAddress* address,
                                                 IObject* object)
   throw (castor::exception::Exception) {
-  castor::exception::NotSupported ex;
-  ex.getMessage()
-    << "RemoteStagerSvc implementation does not "
-    << "supported the updateRep method.";
-  throw ex;
+  // Build the UpdateRepRequest
+  castor::stager::UpdateRepRequest req;
+  req.setObject(object);
+  req.setAddress(address);
+  // Build a response Handler
+  castor::client::BasicResponseHandler rh;
+  // Uses a BaseClient to handle the request
+  castor::client::BaseClient client;
+  client.sendRequest(&req, &rh);
 }
