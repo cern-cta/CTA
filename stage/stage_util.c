@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.12 2002/01/15 08:47:46 jdurand Exp $
+ * $Id: stage_util.c,v 1.13 2002/01/23 13:54:30 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -201,8 +201,24 @@ void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
 		DUMP_STRING(rpfd,stcp,u1.t.tapesrvr);
 		DUMP_CHAR(rpfd,stcp,u1.t.E_Tflags);
 		for (i = 0; i < MAXVSN; i++) {
-			DUMP_STRING(rpfd,stcp,u1.t.vid[i]);
-			DUMP_STRING(rpfd,stcp,u1.t.vsn[i]);
+			switch (i) {
+			case 0:
+				DUMP_STRING(rpfd,stcp,u1.t.vid[0]);
+				DUMP_STRING(rpfd,stcp,u1.t.vsn[0]);
+				break;
+			case 1:
+				DUMP_STRING(rpfd,stcp,u1.t.vid[1]);
+				DUMP_STRING(rpfd,stcp,u1.t.vsn[1]);
+				break;
+			case 2:
+				DUMP_STRING(rpfd,stcp,u1.t.vid[2]);
+				DUMP_STRING(rpfd,stcp,u1.t.vsn[2]);
+				break;
+			default:
+				DUMP_STRING(rpfd,stcp,u1.t.vid[i]);
+				DUMP_STRING(rpfd,stcp,u1.t.vsn[i]);
+				break;
+			}
 		}
 		break;
 	case 'd':
@@ -285,8 +301,24 @@ void DLL_DECL print_stcp(stcp)
 		PRINT_STRING(stcp,u1.t.tapesrvr);
 		PRINT_CHAR(stcp,u1.t.E_Tflags);
 		for (i = 0; i < MAXVSN; i++) {
-			PRINT_STRING(stcp,u1.t.vid[i]);
-			PRINT_STRING(stcp,u1.t.vsn[i]);
+			switch (i) {
+			case 0:
+				PRINT_STRING(stcp,u1.t.vid[0]);
+				PRINT_STRING(stcp,u1.t.vsn[0]);
+				break;
+			case 1:
+				PRINT_STRING(stcp,u1.t.vid[1]);
+				PRINT_STRING(stcp,u1.t.vsn[1]);
+				break;
+			case 2:
+				PRINT_STRING(stcp,u1.t.vid[2]);
+				PRINT_STRING(stcp,u1.t.vsn[2]);
+				break;
+			default:
+				PRINT_STRING(stcp,u1.t.vid[i]);
+				PRINT_STRING(stcp,u1.t.vsn[i]);
+				break;
+			}
 		}
 		break;
 	case 'd':
