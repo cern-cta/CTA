@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.48 2003/10/31 13:15:23 jdurand Exp $
+ * $Id: stagestat.c,v 1.49 2004/03/03 14:04:07 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.48 $ $Date: 2003/10/31 13:15:23 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.49 $ $Date: 2004/03/03 14:04:07 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -154,7 +154,7 @@ struct pool_inf *pool_last, *pool_list = NULL;
 int nb_req[17];			/* array to store START + num requests for each command - see stage_constants.h (STAGEIN,STAGEOUT,etc...) */	
 int nb_apireq[17];		/* array to store START + num requests for each API function - see stage_constants.h (STAGE_IN,STAGE_OUT,etc...) */	
 int nb_restart = 0;		/* number of times stager restarted */
-int rc[17][12];		/* array to store num of errors and warnings for each command - see stage_constants.h (see USERR,SYERR,etc...) */
+int rc[17][13];		/* array to store num of errors and warnings for each command - see stage_constants.h (see USERR,SYERR,etc...) */
 int num_in_remount_requests = 0;		/* number of tape files remounted during time period in stagein mode */
 int num_wrt_remount_requests = 0;		/* number of tape files remounted during time period in stagewrt/stageput mode */
 unsigned int num_frecs = 0;		/* total number of tape files */
@@ -820,6 +820,9 @@ int main(argc, argv)
 				nrecok++;
 			} else if (rp.exitcode == EBUSY) {
 				rc[rp.req_type][11]++;
+				nrecok++;
+			} else if (rp.exitcode == CHECKSUMERR || rp.exitcode == SECHECKSUM) {
+				rc[rp.req_type][12]++;
 				nrecok++;
 			} else {
 				rc[rp.req_type][3]++; /* 1==USERR, 2==SYERR, 3==(unknown), 4==CONFERR */
@@ -1635,22 +1638,22 @@ void print_globstat (starttime, endtime, num_multireqs)
 
 	printf ("\t%s Stager statistics", hostname);
 	print_time_interval (starttime, endtime);
-	printf ("\nCommand    No Reqs API(%%) Success Warning Userr Syserr Unerr Conferr Held Busy ENOSPC Cleared Killed\n\n");
-	printf ("stagein    %7d %6.2f %7d %7d %5d %6d %5d %7d %4d %4d %6d %7d %6d\n",
+	printf ("\nCommand    No Reqs API(%%) Success Warning Userr Syserr Unerr Conferr Held Busy ENOSPC Cleared Killed BadChecksum\n\n");
+	printf ("stagein    %7d %6.2f %7d %7d %5d %6d %5d %7d %4d %4d %6d %7d %6d %11d\n",
 			nb_req[1], nb_req[1] > 0 ? (float) (100 * nb_apireq[1])/nb_req[1] : 0, rc[1][0], rc[1][7], rc[1][1], rc[1][2], rc[1][3],
-			rc[1][4], rc[1][10], rc[1][11], rc[1][5], rc[1][6], rc[1][8]);
+			rc[1][4], rc[1][10], rc[1][11], rc[1][5], rc[1][6], rc[1][8], rc[1][12]);
 	printf ("stageout   %7d %6.2f %7d %7d %5d %6d %5d %7d %4d %4d %6d %7d %6d\n",
 			nb_req[2], nb_req[2] > 0 ? (float) (100 * nb_apireq[2])/nb_req[2] : 0, rc[2][0], rc[2][7], rc[2][1], rc[2][2], rc[2][3],
-			rc[2][4], rc[2][10], rc[2][11], rc[2][5], rc[2][6], rc[2][8]);
+			rc[2][4], rc[2][10], rc[2][11], rc[2][5], rc[2][6], rc[2][8], rc[2][12]);
 	printf ("stagewrt   %7d %6.2f %7d %7d %5d %6d %5d %7d %4d %4d %6d %7d %6d\n",
 			nb_req[3], nb_req[3] > 0 ? (float) (100 * nb_apireq[3])/nb_req[3] : 0, rc[3][0], rc[3][7], rc[3][1], rc[3][2], rc[3][3],
-			rc[3][4], rc[3][10], rc[3][11], rc[3][5], rc[3][6], rc[3][8]);
+			rc[3][4], rc[3][10], rc[3][11], rc[3][5], rc[3][6], rc[3][8], rc[3][12]);
 	printf ("stageput   %7d %6.2f %7d %7d %5d %6d %5d %7d %4d %4d %6d %7d %6d\n",
 			nb_req[4], nb_req[4] > 0 ? (float) (100 * nb_apireq[4])/nb_req[4] : 0, rc[4][0], rc[4][7], rc[4][1], rc[4][2], rc[4][3],
-			rc[4][4], rc[4][10], rc[4][11], rc[4][5], rc[4][6], rc[4][8]);
+			rc[4][4], rc[4][10], rc[4][11], rc[4][5], rc[4][6], rc[4][8], rc[4][12]);
 	printf ("stagealloc %7d %6.2f %7d %7d %5d %6d %5d %7d %4d %4d %6d %7d %6d\n",
 			nb_req[11], nb_req[11] > 0 ? (float) (100 * nb_apireq[11])/nb_req[11] : 0, rc[11][0], rc[11][7], rc[11][1], rc[11][2], rc[11][3],
-			rc[11][4], rc[11][10], rc[11][11], rc[11][5], rc[11][6], rc[11][8]);
+			rc[11][4], rc[11][10], rc[11][11], rc[11][5], rc[11][6], rc[11][8], rc[11][12]);
 
 	printf ("stageqry   %7d %6.2f\n", nb_req[5], nb_req[5] > 0 ? (float) (100 * nb_apireq[5])/nb_req[5] : 0);
 	printf ("stageclr   %7d %6.2f\n", nb_req[6], nb_req[6] > 0 ? (float) (100 * nb_apireq[6])/nb_req[6] : 0);
