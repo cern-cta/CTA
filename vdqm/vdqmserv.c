@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.6 $ $Date: 1999/12/17 14:05:34 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.7 $ $Date: 2000/01/18 09:09:44 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -32,8 +32,12 @@ int main() {
     int rc, poolID;
     extern int vdqm_shutdown;
 
+    (void) Cinitdaemon("vdqm",NULL);
     initlog("vdqm",LOG_INFO,VDQM_LOG_FILE);
-    log(LOG_INFO,"main:\n\n ******* VDQM SERVER START ******\n\n");
+#if defined(__DATE__) && defined (__TIME__)
+    log(LOG_INFO,"******* VDQM server generated at %s %s.\n",
+             __DATE__,__TIME__);
+#endif /* __DATE__ && __TIME__ */
     rc = vdqm_InitNW(&nw);
     if ( rc == -1 ) {
         log(LOG_ERR,"vdqm_InitNw(): %s\n",neterror());
