@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.144 2001/05/02 12:13:55 jdurand Exp $
+ * $Id: stager.c,v 1.145 2001/06/06 15:31:01 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.144 $ $Date: 2001/05/02 12:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.145 $ $Date: 2001/06/06 15:31:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -523,6 +523,16 @@ int main(argc, argv)
 #endif
 
 #ifdef STAGER_DEBUG
+	{
+		int i;
+
+		for (i = 0; i < nbcat_ent; i++) {
+			dump_stcp(rpfd, stcs + i, &sendrep);
+        }
+	}
+#endif
+
+#ifdef STAGER_DEBUG
 	SAVE_EID;
 	sendrep(rpfd, MSG_ERR, "[DEBUG] GO ON WITH gdb /usr/local/bin/stager %d, then break %d\n",getpid(),__LINE__ + 6);
 	sendrep(rpfd, MSG_ERR, "[DEBUG] sleep(%d)\n", SLEEP_DEBUG);
@@ -866,6 +876,7 @@ int hsmidx_vs_ipath(ipath)
 		path1[0] = '\0';
 	}
 	for (stcx = stcs, i = 0; stcx < stce; stcx++, i++) {
+		if ((hsm_flag[i] != 0) || (hsm_ignore[i] != 0)) continue;
 		strcpy(save_ipath,stcx->ipath);
 		(void) rfio_parseln (save_ipath, &host, &filename, NORDLINKS);
 		if (host != NULL) {
@@ -2168,6 +2179,44 @@ int stage_tape() {
 				sendrep (rpfd, MSG_ERR, "STG47 - %s\n", "Re-selecting another tape server\n");
 			}
 			RESTORE_EID;
+			if (concat_off_fseq > 0) {
+				/* In concat off mode we have to take care of what has been already done */
+				if (callback_nok > 0) {
+					if (callback_fseq >= atoi((stce-1)->u1.t.fseq)) {
+						/* And we were staging some tape sequence already beyond the last [-q <tape_fseq>-] entry */
+						/* Note: callback_fseq always contain the last STAGED tape sequence */
+						stcp_start = stce - 1;
+						concat_off_fseq = ++callback_fseq;
+						sprintf(stcp_start->u1.t.fseq, "%d", concat_off_fseq);
+						strcat(stcp_start->u1.t.fseq, "-");
+						/* We reset those entries : it will look like a new and independant tape request */
+						callback_nok = callback_fseq = 0;
+						/* We reset the number of effective entries */
+						nbcat_ent = 1;
+					}
+				}
+				/* Build the request */
+				if (rtcpcreqs != NULL) {
+					free_rtcpcreq(&rtcpcreqs);
+					rtcpcreqs = NULL;
+				}
+				if (build_rtcpcreq(&nrtcpcreqs, NULL, stcp_start, stcp_end, stcp_start, stcp_end) != 0) {
+					RETURN (USERR);
+				}
+				if (nrtcpcreqs <= 0) {
+					serrno = SEINTERNAL;
+					SAVE_EID;
+					sendrep (rpfd, MSG_ERR, STG02, "stage_tape", "Cannot determine number of tapes",sstrerror(serrno));
+					RESTORE_EID;
+					RETURN (USERR);
+				}
+				if (build_rtcpcreq(&nrtcpcreqs, &rtcpcreqs, stcp_start, stcp_end, stcp_start, stcp_end) != 0) {
+					SAVE_EID;
+					sendrep (rpfd, MSG_ERR, STG02, "", "build_rtcpcreq",sstrerror (serrno));
+					RESTORE_EID;
+				RETURN (SYERR);
+				}
+			}
 			goto reselect;
 		}
 
@@ -2198,8 +2247,6 @@ int filecopy(stcp, key, hostname)
 	char *host;
 	FILE *rf;
 	char stageid[CA_MAXSTGRIDLEN+1];
-	EXTERN_C int rfiosetopt _PROTO((int, int *, int));
-	EXTERN_C int rfio_pread _PROTO((char *, int, int, FILE *));
 
     SETTAPEEID(stcs->uid,stcs->gid);
 
@@ -3788,6 +3835,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Wednesday 02 May, 2001 at 14:11:44 CEST by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Wednesday 06 June, 2001 at 17:29:44 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
