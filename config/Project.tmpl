@@ -83,6 +83,10 @@ COPYTAPEDIR = copytape
 DBDIR = db
 #endif
 
+#if BuildRmClient || BuildRmMaster || BuildRmNode
+RESOURCEMONITORINGDIR = resourcemonitoring
+#endif
+
 #if BuildStageClient || BuildStageDaemon || BuildStageLibrary
 STAGEDIR = stager
 #if BuildStageClient || BuildStageLibrary
