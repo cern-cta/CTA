@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.13 2004/12/09 09:38:07 jdurand Exp $
+ * $Id: stager_macros.h,v 1.14 2005/01/27 11:49:34 jdurand Exp $
  */
 
 #ifndef __stager_macros_h
@@ -92,6 +92,7 @@
 #define STAGER_LOG_DEBUG(fileid,string)     { \
   if (stagerDebug) {STAGER_LOG(STAGER_MSG_DEBUG ,fileid,"STRING" ,string, NULL, NULL);} \
 }
+#define STAGER_LOG_VERBOSE(fileid,string)     { }
 
 #define CALLIT(args) { \
   STAGER_LOG_USAGE(NULL,#args); \
