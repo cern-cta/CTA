@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.21 $ $Date: 2001/06/22 05:01:24 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.22 $ $Date: 2001/06/22 05:21:47 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -214,6 +214,9 @@ struct rfiostat	{
 #if defined(ferror)
 #undef  ferror
 #endif /* ferror */
+#if defined(getc)
+#undef  getc
+#endif /* getc */
 #define feof            rfio_feof
 #define ferror          rfio_ferror
 #define fopen           rfio_fopen
