@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.44 $ $Date: 2001/08/31 14:25:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.45 $ $Date: 2001/09/04 10:48:56 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -953,7 +953,7 @@ static int SelectVolAndDrv(const dgn_element_t *dgn_context,
          * If a specific server (and maybe also drive) has been
          * specified, we check for that first
          */
-        log(LOG_INFO,"SelectVolAndDrv(): PopVolRecord() returned VolReqID: %d, VID: %s, server=%s\n",volrec->vol.VolReqID,volrec->vol.volid,volrec->vol.server);
+        log(LOG_DEBUG,"SelectVolAndDrv(): PopVolRecord() returned VolReqID: %d, VID: %s, server=%s\n",volrec->vol.VolReqID,volrec->vol.volid,volrec->vol.server);
         if ( *volrec->vol.server != '\0' ) {
             rc = AnyFreeDrvOnSrv(dgn_context,volrec,&drvrec);
             log(LOG_DEBUG,"SelectVolAndDrv()::DEBUG AnyFreeDrvOnSrv(%s) returned rc=%d\n",
@@ -984,10 +984,12 @@ static int SelectVolAndDrv(const dgn_element_t *dgn_context,
              */
             rc = PopDrvRecord(dgn_context,volrec,&drvrec);
             if ( rc == -1 || drvrec == NULL ) {
-                log(LOG_ERR,"SelectVolAndDrv(): PopDrvRecord() returned rc=%d, drvrec=0x%x\n",
-                    rc,drvrec);
                 if ( rc == 0 ) continue;
-                else return(-1);
+                else {
+                    log(LOG_ERR,"SelectVolAndDrv(): PopDrvRecord() returned rc=%d, drvrec=0x%x\n",
+                        rc,drvrec);
+                    return(-1);
+                }
             }
             /*
              * Reset update until we are sure
