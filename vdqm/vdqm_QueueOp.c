@@ -1332,10 +1332,16 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
     log(LOG_INFO,"vdqm_NewDrvReq() new %s request: %s@%s\n",
         DrvReq->dgn,DrvReq->drive,DrvReq->server);
     /*
-     * If it is an tape daemon startup status we should reset the UNKNOWN 
-     * status for all drives on that tape server.
+     * If it is an tape daemon startup status we delete all drives 
+     * on that tape server.
      */
     if ( DrvReq->status == VDQM_TPD_STARTED ) {
+        if ( strcmp(DrvReq->reqhost,DrvReq->server) != 0 ) {
+            log(LOG_ERR,"vdqm_NewDrvReq() unauthorized VDQM_TPD_STARTED for %s sent by %s\n",
+                DrvReq->server,DrvReq->reqhost);
+            vdqm_SetError(EPERM);
+            return(-1);
+        }
         while (NextDgnContext(&dgn_context) != -1 && dgn_context != NULL ) {
             log(LOG_INFO,"vdqm_NewDrvReq() dgn: %s, %s tape daemon startup\n",
                 dgn_context->dgn,DrvReq->reqhost);
