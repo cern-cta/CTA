@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.24 $ $Release$ $Date: 2004/07/29 14:23:28 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.25 $ $Release$ $Date: 2004/07/29 15:17:10 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.24 $ $Date: 2004/07/29 14:23:28 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.25 $ $Date: 2004/07/29 15:17:10 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -581,9 +581,9 @@ static int updateSegmentInDB(
     return(-1);
   }
   segmIObj = Cstager_Segment_getIObject(segment->segment);
-  rc = C_Services_updateRep(*dbSvc,iAddr,segmIObj,1);
+  rc = C_Services_updateRepNoRec(*dbSvc,iAddr,segmIObj,1);
   if ( rc != 0 ) {
-    LOG_FAILED_CALL("C_Services_updateRep()");
+    LOG_FAILED_CALL("C_Services_updateRepNoRec()");
     save_serrno = serrno;
     filereq->err.errorcode = serrno;
     strcpy(filereq->err.errmsgtxt,
@@ -1682,7 +1682,7 @@ int rtcpcldc(tape)
                           rtcpcldTp,
                           fl,
                           myNotificationAddr,
-						  NULL
+                          NULL
                           );
           if ( rc == -1 ) {
             LOG_FAILED_CALL("addSegment()");
