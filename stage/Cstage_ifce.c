@@ -1,5 +1,5 @@
 /*
- * $Id: Cstage_ifce.c,v 1.12 2001/12/19 17:18:02 jdurand Exp $
+ * $Id: Cstage_ifce.c,v 1.13 2002/01/24 10:42:01 jdurand Exp $
  */
 
 /*
@@ -19,7 +19,7 @@
 #include "Cstage_ifce.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.12 $ $Date: 2001/12/19 17:18:02 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.13 $ $Date: 2002/01/24 10:42:01 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -33,15 +33,17 @@ int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,castor,alloc)
 {
 	int i;
 
+	/*
 	if (stcp == NULL ||
 		tape == NULL || disk  == NULL  ||
 		hsm == NULL  || castor == NULL || alloc == NULL) {
 		return(-1);
 	}
-
+	*/
+	
 	switch (stcp->t_or_d) {
 	case 't':
-		memset(tape,0,sizeof(struct stgcat_tape));
+		/* memset(tape,0,sizeof(struct stgcat_tape)); */
 		tape->reqid       =   stcp->reqid;
 		tape->nread       =   stcp->nread;
 		tape->size        =   stcp->size;
@@ -80,7 +82,7 @@ int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,castor,alloc)
 		tape->E_Tflags   =    stcp->u1.t.E_Tflags;
 		break;
 	case 'd':
-		memset(disk,0,sizeof(struct stgcat_disk));
+		/* memset(disk,0,sizeof(struct stgcat_disk)); */
 		disk->reqid       =   stcp->reqid;
 		disk->nread       =   stcp->nread;
 		disk->size        =   stcp->size;
@@ -104,7 +106,7 @@ int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,castor,alloc)
 		strcpy(disk->Xparm,    stcp->u1.d.Xparm);
 		break;
 	case 'm':
-		memset(hsm,0,sizeof(struct stgcat_hpss));
+		/* memset(hsm,0,sizeof(struct stgcat_hpss)); */
 		hsm->reqid       =   stcp->reqid;
 		hsm->nread       =   stcp->nread;
 		hsm->size        =   stcp->size;
@@ -124,7 +126,7 @@ int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,castor,alloc)
 		strcpy(hsm->xfile,     stcp->u1.m.xfile);
 		break;
 	case 'h':
-		memset(castor,0,sizeof(struct stgcat_hsm));
+		/* memset(castor,0,sizeof(struct stgcat_hsm)); */
 		castor->reqid       =   stcp->reqid;
 		castor->nread       =   stcp->nread;
 		castor->size        =   stcp->size;
@@ -150,7 +152,7 @@ int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,castor,alloc)
 		castor->mintime_beforemigr =  stcp->u1.h.mintime_beforemigr;
 		break;
 	case 'a':
-		memset(alloc,0,sizeof(struct stgcat_alloc));
+		/* memset(alloc,0,sizeof(struct stgcat_alloc)); */
 		alloc->reqid       =   stcp->reqid;
 		alloc->nread       =   stcp->nread;
 		alloc->size        =   stcp->size;
@@ -183,11 +185,13 @@ int DLL_DECL stpp2Cdb(stpp,link)
 		 struct stgcat_link *link;
 		 
 {
+	/*
 	if (stpp == NULL || link == NULL) {
 		return(-1);
 	}
-
-	memset(link,0,sizeof(struct stgcat_link));
+	*/
+	
+	/* memset(link,0,sizeof(struct stgcat_link)); */
 	link->reqid       =   stpp->reqid;
 	strcpy(link->upath,   stpp->upath);
 
@@ -205,9 +209,11 @@ int DLL_DECL Cdb2stcp(stcp,tape,disk,hsm,castor,alloc)
 {
 	int i;
 
+	/*
 	if (stcp == NULL || (tape == NULL && disk == NULL && hsm == NULL && castor == NULL && alloc == NULL)) {
 		return(-1);
 	}
+	*/
 
 	if ((tape   != NULL && (disk != NULL ||  hsm  != NULL || castor != NULL || alloc != NULL)) ||
 		(disk   != NULL && (tape != NULL ||  hsm  != NULL || castor != NULL || alloc != NULL)) ||
@@ -357,10 +363,12 @@ int DLL_DECL Cdb2stpp(stpp,link)
 		 struct stgcat_link *link;
 		 
 {
+	/*
 	if (stpp == NULL || link == NULL) {
 		return(-1);
 	}
-
+	*/
+	
 	memset(stpp,0,sizeof(struct stgpath_entry));
 	stpp->reqid       =   link->reqid;
 	strcpy(stpp->upath,   link->upath);
