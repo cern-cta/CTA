@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_stat.man,v 1.5 2001/05/29 13:28:43 baud Exp $
+.\" $Id: rfio_stat.man,v 1.6 2001/05/31 06:34:31 baud Exp $
 .\"
-.\" @(#)$RCSfile: rfio_stat.man,v $ $Revision: 1.5 $ $Date: 2001/05/29 13:28:43 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_stat.man,v $ $Revision: 1.6 $ $Date: 2001/05/31 06:34:31 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_STAT 3 "$Date: 2001/05/29 13:28:43 $" CASTOR "Rfio Library Functions"
+.TH RFIO_STAT 3 "$Date: 2001/05/31 06:34:31 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_stat \- get information about a file or directory
 .SH SYNOPSIS
@@ -18,6 +18,10 @@ rfio_stat \- get information about a file or directory
 .BI "int rfio_fstat (int " s ", struct stat *" statbuf ");"
 .br
 .BI "int rfio_lstat (const char *" path ", struct stat *" statbuf ");"
+.br
+.BI "int rfio_mstat (const char *" path ", struct stat *" statbuf ");"
+.br
+.BI "int rfio_end ();"
 .SH DESCRIPTION
 .B rfio_stat
 gets information about a file or directory.
@@ -36,6 +40,15 @@ but works on the file descriptor
 returned by
 .BR rfio_open .
 .LP
+.B rfio_mstat
+is identical to
+.B rfio_stat
+but keeps the connection open to the server unless there are more than MAXMCON
+connections already opened. This is useful when issuing a series of stat calls.
+The last
+.B rfio_mstat
+call should be followed by a call to
+.BR rfio_end .
 .TP
 .I path
 specifies the logical pathname relative to the current directory or
