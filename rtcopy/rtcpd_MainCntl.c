@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.80 $ $Date: 2001/02/05 09:20:46 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)rtcpd_MainCntl.c,v 1.80 2001/02/05 09:20:46 CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -897,7 +897,7 @@ int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr,
 }
 
 
-static int rtcpd_FreeBuffers() {
+int rtcpd_FreeBuffers() {
     int i, *q;
     char *p;
 
@@ -1015,7 +1015,6 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
         free(*client);
         *client = NULL;
     }
-    (void)rtcpd_FreeBuffers();
     (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
     (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
     (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
@@ -1150,7 +1149,7 @@ void rtcpd_BroadcastException() {
      */
     if ( databufs != NULL ) {
         for (i=0;i<nb_bufs;i++) {
-            if ( databufs[i] != NULL ) {
+            if ( databufs != NULL && databufs[i] != NULL ) {
                 rtcp_log(LOG_DEBUG,
                     "rtcpd_BroadcastException() broadcast to databuf[%d]\n",i);
                 (void)Cthread_mutex_lock_ext(databufs[i]->lock);
@@ -1218,37 +1217,6 @@ void rtcpd_SetProcError(int code) {
 
 int rtcpd_CheckProcError() {
     return(rtcpd_ProcError(NULL));
-}
-
-int rtcpd_WaitProcStatus(int what) {
-    int rc;
-
-    rc = Cthread_mutex_lock_ext(proc_cntl.ProcError_lock);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcpd_WaitProcStatus(): Cthread_mutex_lock_ext(): %s\n",
-            sstrerror(serrno));
-        return(-1);
-    } 
-    rtcp_log(LOG_DEBUG,"rtcpd_WaitProcStatus() current: %d, waiting for %d\n",
-             proc_cntl.ProcError,what);
-    while ((proc_cntl.ProcError & (what|RTCP_FAILED|RTCP_RESELECT_SERV)) == 0) {
-        rc = Cthread_cond_wait_ext(proc_cntl.ProcError_lock);
-        if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"rtcpd_WaitProcStatus(): Cthread_wait_cond_ext(): %s\n",
-            sstrerror(serrno));
-            (void) Cthread_mutex_unlock_ext(proc_cntl.ProcError_lock);
-            return(-1);
-        }
-        rtcp_log(LOG_DEBUG,"rtcpd_WaitProcStatus() current: %d, waiting for %d\n",
-                 proc_cntl.ProcError,what);
-    }
-    rc = Cthread_mutex_unlock_ext(proc_cntl.ProcError_lock);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcpd_WaitProcStatus(): Cthread_mutex_unlock_ext(): %s\n",
-                 sstrerror(serrno));
-        return(-1);
-    }
-    return(0);
 }
 
 int rtcpd_WaitCompletion(tape_list_t *tape, file_list_t *file) {
@@ -1327,7 +1295,6 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
             if ( (severity & (RTCP_FAILED | RTCP_RESELECT_SERV | RTCP_USERR |
                               RTCP_SYERR | RTCP_UNERR | RTCP_SEERR)) != 0 ) {
                 tapereq->err.severity = tapereq->err.severity & ~RTCP_OK;
-                tapereq->err.severity = tapereq->err.severity & ~RTCP_RETRY_OK;
                 tapereq->err.severity = tapereq->err.severity & ~RTCP_LOCAL_RETRY;
                 tapereq->err.severity |= severity;
             } else { 
@@ -1344,7 +1311,6 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
             if ( (severity & (RTCP_FAILED | RTCP_RESELECT_SERV | RTCP_USERR | 
                               RTCP_SYERR | RTCP_UNERR | RTCP_SEERR)) != 0 ) {
                 filereq->err.severity = filereq->err.severity & ~RTCP_OK;
-                filereq->err.severity = filereq->err.severity & ~RTCP_RETRY_OK;
                 filereq->err.severity = filereq->err.severity & ~RTCP_LOCAL_RETRY;
                 filereq->err.severity |= severity;
                 fl = file;
@@ -1825,6 +1791,9 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      */
     rc = rtcpd_init_stgupdc(tape);
     if ( rc == -1 ) {
+        /*
+         * Not Fatal. Only means that stage logging initialisation failed.
+         */
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_init_stgupdc(): %s\n",
                  sstrerror(serrno));
     }
@@ -1847,7 +1816,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         return(-1);
     }
     /*
-     * Start up monitoring thread
+     * Start up self monitoring thread. Failure not fatal to the request.
      */
     rc = rtcpd_StartMonitor(thPoolSz);
     if ( rc == -1 ) {
@@ -1874,6 +1843,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
             (void)tellClient(client_socket,tape,NULL,-1);
             (void)rtcpd_Deassign(client->VolReqID,&tapereq,NULL);
             (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
+            rtcpd_SetProcError(RTCP_FAILED);
             break;
         }
 
@@ -1908,12 +1878,21 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         /*
          * do a local retry
          */
-        rtcpd_WaitProcStatus(RTCP_RETRY_OK);
         rtcpd_ResetRequest(tape);
         rtcpd_SetProcError(RTCP_OK);
         ENOSPC_occurred = FALSE;
     } /* for (;;) */
 
+    /*
+     * At this stage the drive is already freed (or about to be).
+     * This means that a new request may arrive and we must make sure
+     * to reduce our core so that the tape server doesn't run out of
+     * memory. Normally the buffers are freed just before the release of
+     * the drive. However, in some cases (e.g. drive reservation failed)
+     * it is still needed. The free should be 100% safe since no tape
+     * or disk IO can possibly be active at this stage.
+     */
+    (void)rtcpd_FreeBuffers();
     /*
      * Wait for the client listen thread to return.
      */
