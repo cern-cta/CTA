@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.74 $ $Date: 2000/06/23 14:05:21 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.75 $ $Date: 2000/08/01 13:02:16 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -245,7 +245,8 @@ static int rtcpd_PrintCmd(tape_list_t *tape) {
         if ( dumpreq->maxbyte >= 0 ) LOGLINE_APPEND(" -B %d",dumpreq->maxbyte);
         if ( dumpreq->blocksize >= 0 ) LOGLINE_APPEND(" -b %d",dumpreq->blocksize);
         if ( dumpreq->maxfile >= 0 ) LOGLINE_APPEND(" -F %d",dumpreq->maxfile);
-        if ( dumpreq->tp_err_action == IGNOREEOI ) 
+        if ( dumpreq->tp_err_action != -1 &&
+             (dumpreq->tp_err_action == IGNOREEOI) != 0 ) 
             LOGLINE_APPEND(" -E %s","ignoreeoi");
         if ( dumpreq->convert == EBCCONV ) LOGLINE_APPEND(" -C %s","ebcdic");
         if ( dumpreq->fromblock >= 0 && dumpreq->toblock >= 0 ) {
@@ -271,12 +272,18 @@ static int rtcpd_PrintCmd(tape_list_t *tape) {
         LOGLINE_APPEND(" -L %d",filereq->recordlength);
     if ( filereq->def_alloc > 0 )
         LOGLINE_APPEND(" -A %s","deferred");
-    if ( filereq->rtcp_err_action == SKIPBAD ) 
+    if ( filereq->rtcp_err_action != -1 &&
+         (filereq->rtcp_err_action & SKIPBAD) != 0 ) 
         LOGLINE_APPEND(" -E %s","skip");
-    if ( filereq->rtcp_err_action == KEEPFILE ) 
+    if ( filereq->rtcp_err_action != -1 &&
+         (filereq->rtcp_err_action & KEEPFILE) != 0 ) 
         LOGLINE_APPEND(" -E %s","keep");
-    if ( filereq->tp_err_action == IGNOREEOI ) 
+    if ( filereq->tp_err_action != -1 &&
+         (filereq->tp_err_action & IGNOREEOI) != 0 ) 
         LOGLINE_APPEND(" -E %s","ignoreeoi");
+    if ( filereq->tp_err_action != -1 &&
+         (filereq->tp_err_action & NOTRLCHK) != 0 )
+        LOGLINE_APPEND(" %s","-T");
     if ( filereq->check_fid == CHECK_FILE )
         LOGLINE_APPEND(" %s","-o");
     if ( filereq->check_fid == NEW_FILE )

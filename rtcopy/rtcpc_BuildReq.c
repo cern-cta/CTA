@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.29 $ $Date: 2000/07/28 15:29:41 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.30 $ $Date: 2000/08/01 13:02:14 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -146,7 +146,10 @@ int rtcpc_BuildReq(tape_list_t **tape, int argc, char *argv[]) {
     while ( (c = getopt(argc,argv,opts)) != EOF ) {
         if ( c == 'q' || c == 'i' || c == 'x' ) continue;
         if ( c == '?' ) return(-1);
-        if ( local_repeated[c-'A'] != 0 ) {
+        /*
+         * -E option is allowed to be repeated....
+         */
+        if ( local_repeated[c-'A'] != 0 && c != 'E' ) {
             rtcp_log(LOG_ERR,"REPEATED OPTION -%c NOT ALLOWED\n",c);
             serrno = EINVAL;
             return(-1);
@@ -510,28 +513,25 @@ static int rtcpc_E_opt(int mode,
         return(-1);
     }
     strcpy(local_value,value);
-    q = p = local_value;
 
     rc = 0;
     tl = *tape;
 
-
     tapereq = &tl->tapereq;
     
     CLIST_ITERATE_BEGIN(tl->file,fl) {
+        q = p = local_value;
         filereq = &fl->filereq;
         /*
         * Set option
         */
-        if ( filereq->rtcp_err_action == -1 &&
-            filereq->tp_err_action == -1 ) {
-            if ( (q = strstr(p,":")) != NULL ) *q = '\0';
+        while ( q != NULL ) {
+            if ( (q = strstr(p,",")) != NULL ) *q = '\0';
             if ( p != NULL ) {
                 i=0;
                 while ( *erropts[i] != '\0' && strcmp(p,erropts[i])) i++;
                 if ( *erropts[i] == '\0' ) {
-                    rtcp_log(LOG_ERR,"%s IS NOT A VALID OPTIN FOR -E\n",
-                        p);
+                    rtcp_log(LOG_ERR,"%s IS NOT A VALID OPTIN FOR -E\n",p);
                     serrno = EINVAL;
                     rc = -1;
                     break;
@@ -540,15 +540,20 @@ static int rtcpc_E_opt(int mode,
                 else tp_err_action = erropt_values[i];
             } else if ( rtcp_err_action == 0 ) 
                 rtcp_err_action = KEEPFILE;
-            
-            filereq->rtcp_err_action = rtcp_err_action;
-            filereq->tp_err_action = tp_err_action;
+            if ( filereq->rtcp_err_action == -1 &&
+                 rtcp_err_action > 0 ) filereq->rtcp_err_action = 0;
+            if ( filereq->tp_err_action == -1 && tp_err_action > 0 ) 
+                filereq->tp_err_action = 0;
+            filereq->rtcp_err_action |= rtcp_err_action;
+            filereq->tp_err_action |= tp_err_action;
             
             if ( q != NULL ) {
+                *q = ',';
                 p = q;
                 p++;
             }
         }
+        if ( rc == -1 ) break;
     } CLIST_ITERATE_END(tl->file,fl);
     free(local_value);
     return(rc);
@@ -1432,6 +1437,7 @@ static int rtcpc_T_opt(int mode,
         /*
         * Set switch
         */
+        if ( filereq->tp_err_action == -1 ) filereq->tp_err_action = 0;
         filereq->tp_err_action |= NOTRLCHK;
     } CLIST_ITERATE_END(tl->file,fl);
     return(rc);
