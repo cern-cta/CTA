@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcDaemon.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/03/18 08:30:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: GcDaemon.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/03/29 12:07:55 $ $Author: jiltsov $
  *
  * Garbage collector daemon handling the deletion of local
  * files on a filesystem. Makes remote calls to the stager
@@ -116,12 +116,24 @@ int castor::gc::GcDaemon::start()
     return -1;
   } 
   
+  char *p;
   //  Retrieve DiskServerName
-  char diskServerName[CA_MAXHOSTNAMELEN]; 
-  if (gethostname(diskServerName, CA_MAXHOSTNAMELEN) != 0) {
-     clog() << ERROR << "Cannot get local disk server name." << std::endl;
-     return (-1);
+  char diskServerName[CA_MAXHOSTNAMELEN];
+  char gcglobalFS[20] = "Global FileSystem";
+  char *gctarget;
+  // Get DiskServerName from /etc/castor/castor.conf: 
+  // example to serve global filesystem: "GC TARGET localhost" 
+  if ( (p = getenv ("GC_TARGET")) || (p = getconfent ("GC", "TARGET", 0)) ) {
+     gctarget = strcpy(diskServerName, p);
+     if ( (strcmp(gctarget, "localhost")) == 0) { gctarget = gcglobalFS; }
+  } else { // get real hostname
+     if (gethostname(diskServerName, CA_MAXHOSTNAMELEN) != 0) {
+        clog() << ERROR << "Cannot get disk server name." << std::endl;
+        return (-1);
+     }
+     gctarget = diskServerName;
   }
+
   int lhostlen = strlen( diskServerName );
   for (int i = 0; i < lhostlen; i++) {
      if (diskServerName[i] == '.') {diskServerName[i] = '\0'; break; }
@@ -131,7 +143,6 @@ int castor::gc::GcDaemon::start()
 
   // set GC sleep interval, sec.
   // /etc/castor/castor.conf example: "GC  INTERVAL  600"
-  char *p;
   char gcint[16];
   int  gcinterval;
   if ((p = getenv ("GC_INTERVAL")) || (p = getconfent ("GC", "INTERVAL", 0)))
@@ -140,7 +151,7 @@ int castor::gc::GcDaemon::start()
       gcinterval = GCINTERVAL;
 
   // Log to DLF
-  clog() << USAGE << "Garbage Collector started on " << diskServerName 
+  clog() << USAGE << "Garbage Collector started on " << gctarget
          << "; Sleep interval: " << gcinterval << " sec."
          << std::endl;
   
@@ -152,7 +163,9 @@ int castor::gc::GcDaemon::start()
 
   for (;;) {
     int cid;
-    clog() << DEBUG << " GC checking garbage on " << diskServerName << "... " << std::endl;
+    clog() << DEBUG 
+           << " GC checking garbage on " << diskServerName 
+           << "... " << std::endl;
 
     // Retrieve list of files to delete
     std::vector<castor::stager::GCLocalFile>* files2Delete = 0;
@@ -186,13 +199,13 @@ int castor::gc::GcDaemon::start()
        long   gcfilesfailed  = 0;
        long   gcfilesremoved = 0;
        for(std::vector<castor::stager::GCLocalFile>::iterator it =
-             files2Delete->begin();
-             it != files2Delete->end();
+           files2Delete->begin();
+           it != files2Delete->end();
            it++) 
        {
          // delete  file it->fileName()
-         std::string cfilename = it->fileName();
-         if(0 < strlen(&cfilename[0]) ) {
+         std::string gcfilename = it->fileName();
+         if(0 < strlen(&gcfilename[0]) ) {
             gcfilestotal++;
             if ( (gcfilesize = GCremoveFilePath(it->fileName())) < 0 ) {
                gcfilesfailed++;
@@ -213,10 +226,10 @@ int castor::gc::GcDaemon::start()
        // log to DLF
        if (0 < gcfilestotal) {
           gcremovedsize = gcremovedsize/1024;
-          clog() << USAGE << "Files removed: " << gcfilesremoved
+          clog() << USAGE << "Files removed: "  << gcfilesremoved
                           << "; Files failed: " << gcfilesfailed
-                          << "; Files toal: " << gcfilestotal
-                          << "; Space freed: " << gcremovedsize << " KB;"
+                          << "; Files total: "  << gcfilestotal
+                          << "; Space freed: "  << gcremovedsize << " KB;"
                           << std::endl;
        }
        // Inform stager of the deletion

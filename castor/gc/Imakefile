@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2005/03/15 23:24:32 $ $Author: bcouturi $
+# @(#)Imakefile,v 1.2 $Release$ 2005/03/15 23:24:32 bcouturi
 #
 # Make Castor GC daemon and hunter
 #
