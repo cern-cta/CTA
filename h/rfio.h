@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.12 $ $Date: 2000/09/01 07:58:42 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.13 $ $Date: 2000/09/03 07:37:15 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -76,8 +76,9 @@
 
 #endif /* RFIO_KERNEL */
 
+#ifndef _OSDEP_H_INCLUDED_
 #include <osdep.h>
-
+#endif
 #ifndef _RFIO_CONSTANTS_H_INCLUDED_
 #include <rfio_constants.h>
 #endif /* _RFIO_CONSTANTS_H_INCLUDED_ */
