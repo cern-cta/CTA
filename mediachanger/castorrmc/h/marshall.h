@@ -1,5 +1,5 @@
 /*
- * @(#)$RCSfile: marshall.h,v $ $Revision: 1.4 $ $Date: 1999/10/14 12:05:37 $ CERN IT-PDP/DM  Fabrizio Cane
+ * @(#)$RCSfile: marshall.h,v $ $Revision: 1.5 $ $Date: 1999/11/08 07:48:09 $ CERN IT-PDP/DM  Fabrizio Cane
  */
 
 /*
@@ -16,7 +16,7 @@
 #include <memory.h>             /* memory operations definition         */
 
 #define SHORT			WORD
-#define U_SHORT			U_WORD
+/* #define U_SHORT			U_WORD */
 #define SHORTSIZE		WORDSIZE
 #define SHORTADDR		WORDADDR
 
