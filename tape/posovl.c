@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.1 $ $Date: 1999/11/04 16:58:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)posovl.c,v 1.1 1999-11-04 17:58:11+01 CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -28,6 +28,7 @@ char func[16];
 char hostname[CA_MAXHOSTNAMELEN+1];
 int jid;
 char *path;
+fd_set readmask;
 int rpfd;
 int tapefd;
 main(argc, argv)
