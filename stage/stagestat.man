@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.13 $ $Date: 2002/09/29 08:29:43 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.14 $ $Date: 2002/09/30 12:35:39 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGESTAT l "$Date: 2002/09/29 08:29:43 $"
+.TH STAGESTAT l "$Date: 2002/09/30 12:35:39 $"
 .SH NAME
 stagestat \- gives global statistics on stager usage and detailed statistics on
 each file staged in 
@@ -19,7 +19,7 @@ each file staged in
 ] [
 .BI \-f " accounting_file"
 ] [
-.BI \-g " min,max,bins"
+.BI \-H " min,max,bins"
 ] [
 .BI \-h " hostname"
 ] [
@@ -68,7 +68,7 @@ Turns debugging mode on.
 .TP
 .BI \-D " diskfile"
 print records of disk type and matching
-.BI diskfile
+.I diskfile
 .TP
 .BI \-e " end_time"
 The date and time up to which information should be collated.  If not
@@ -86,7 +86,7 @@ The file from which information is to be read.  If not specified the
 default is the current 
 .B sacct
 file. If you also use the \-w option, the week number is appended to
-.I accouting_file
+.I accounting_file
 and then opened. For exampe
 .BI \-f " /tmp/sacct"
 used together with
@@ -94,33 +94,33 @@ used together with
 will attempt to open
 .I /tmp/sacct.0234
 .TP
-.BI \-g " min,max,bins"
+.BI \-H " min,max,bins"
 will produce an histogram of the average lifetime, with
 .I min
 and
 .I max
-for the minimum and maximum lifetimes, show using
-.bins
+for the minimum and maximum lifetimes, using
+.I bins
 entries.
 .TP
 .BI \-h " hostname"
-will analyse stage records from the accouting file belonging to 
+will analyse stage records from the accounting file belonging to 
 .I hostname
 stager.
 .TP
 .BI \-M " hsmfile"
 print records of HSM type and matching
-.BI hsmfile
+.I hsmfile
 .TP
 .BI \-n " nrecord_per_acctfile"
 will not read more than
 .I nrecord_per_acctfile
-stage records per accouting file.
+stage records per accounting file.
 .TP
 .BI \-N " ntotalrecord"
 will not read more than
 .I ntotalrecord
-stage records over all accouting files.
+stage records over all accounting files.
 .TP
 .BI \-p " pool_name"
 The name of the particular pool on which information is required.  If not 
@@ -155,13 +155,13 @@ else the command fails.
 .TP
 .BI \-T " vid"
 print records of tape type and matching
-.BI vid
+.I vid
 .TP
 .BI \-v
-shows accouting records with problem and a progress bar
+shows accounting records with problem and a progress bar
 .TP
 .BI \-w " week1[\-[week2]]"
-will append the week number to accouting filename, except for current week when the accouting filename is left unchanged.
+will append the week number to accounting filename, except for current week when the accounting filename is left unchanged.
 .I week1
 and
 .I week2
@@ -170,7 +170,7 @@ have the format yymm where yy are the year in current century (like 02 for year 
 .SH NOTES
 If, for a given
 .I hostname
-the accouting file is not found, this tool will try to open the archived castor file under
+the accounting file is not found, this tool will try to open the archived castor file under
 .I /castor/<domain>/c3/backup/sacct/<hostname>/sacct.yymm
 
 .SH EXAMPLES
@@ -179,7 +179,7 @@ To get information on pool wacdr sorted by lifetime type the following command :
 .nf
 .sp
 \s-2
-[] ~ > stagestat -h wacdr -p wacdr -g 170,260,30
+[] ~ > stagestat -h wacdr -p wacdr -H 170,260,30
 
 [INFO] Using default account file "wacdr:/usr/spool/sacct/sacct"
 

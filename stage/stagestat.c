@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.37 2002/09/29 20:54:42 jdurand Exp $
+ * $Id: stagestat.c,v 1.38 2002/09/30 12:35:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.37 $ $Date: 2002/09/29 20:54:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.38 $ $Date: 2002/09/30 12:35:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -49,6 +49,7 @@ int getacctrec _PROTO((int, struct accthdr *, char *, int *));
 int match_2_stgin _PROTO((struct acctstage2 *));
 time_t cvt_datime _PROTO((char *));
 void print_acct _PROTO((struct accthdr *, struct acctstage2 *));
+int normalize_week _PROTO((int));
 
 #define NBBINSMAX 1000
 
@@ -188,7 +189,7 @@ struct range_plot plot;
 char *Tflag = NULL;
 char *Dflag = NULL;
 char *Mflag = NULL;
-int gflag = 0;
+int Hflag = 0;
 int wflag = 0;		/* If set week number given */
 int fflag = 0;
 char *week1 = NULL;
@@ -253,7 +254,7 @@ int main(argc, argv)
 	
 	Coptind = 1;
 	Copterr = 1;
-	while ((c = Cgetopt (argc, argv, "adD:e:f:g:h:M:n:N:p:r:S:s:T:vw:")) != -1) {
+	while ((c = Cgetopt (argc, argv, "adD:e:f:H:h:M:n:N:p:r:S:s:T:vw:")) != -1) {
 		switch (c) {
 		case 'a':
 			all_stageclrs++;
@@ -277,8 +278,7 @@ int main(argc, argv)
 			strcpy (acctfile, Coptarg);
 			++fflag;
 			break;
-		case 'g':
-			gflag++;
+		case 'H':
 			if (((sep = strchr(Coptarg,',')) != NULL) && (sep > Coptarg)){
 				*sep = '\0';
 				param=++sep;
@@ -287,33 +287,33 @@ int main(argc, argv)
 					plot.nbbins = atoi (++sep);
 					plot.rangemax = atoi(param);
 				}  else {
-					fprintf(stderr,"-g option : incorrect parameters please check\n");
+					fprintf(stderr,"-H option : incorrect parameters please check\n");
 					errflg++;
 					break;
 				}
 				plot.rangemin = atoi(Coptarg);
 				plot.binsize = (float) ( ((float)(plot.rangemax-plot.rangemin))/(float)plot.nbbins);
 				if (plot.nbbins > NBBINSMAX){
-					fprintf(stderr,"-g option : the maximum number of bins must be <= %d\n", NBBINSMAX);
+					fprintf(stderr,"-H option : the maximum number of bins must be <= %d\n", NBBINSMAX);
 					errflg++;
 					break;
 				}
 				if (plot.nbbins<2){
-					fprintf(stderr,"-g option : the minimum number of bins must be 2\n");
+					fprintf(stderr,"-H option : the minimum number of bins must be 2\n");
 					errflg++;
 					break;
 				}			   		
 				if (plot.rangemin>plot.rangemax){
-					fprintf(stderr,"-g option : the maximum range should be bigger than the minimum range\n");
+					fprintf(stderr,"-H option : the maximum range should be bigger than the minimum range\n");
 					errflg++;
 					break;
 				}			   			    
 			} else {
-				fprintf(stderr,"-g option : incorrect parameters please check\n");
+				fprintf(stderr,"-H option : incorrect parameters please check\n");
 				errflg++;
 				break;
 			}
-			gflag++;
+			Hflag++;
 			break;
 		case 'h':
    			strncpy(hostname,Coptarg,CA_MAXHOSTNAMELEN);
@@ -407,58 +407,37 @@ int main(argc, argv)
 				errflg++;
 			}
 			if (! errflg) {
-				struct tm *infos;
-				time_t time_of_day;
-				int today;
-				int year;
-				int lastthursday;
-				int nonbi;
-				
-			   	/* Here is how is calculated the week number at CERN */
-			   	/*
-			   	  today=`date +%j`
-			   	  if [ $today -le 3 ]
-			   	  then
-			   	    # It's very early in the year, so work out what last year was...
-			   	    year=`TZ="MET+100";date +%y`
-			   	    # And what day number last Thursday was...
-			   	    nonbi=`expr $year - \( $year / 4 \) \* 4` 
-			   	    if [ $nonbi -eq 0 ]
-			   	    then
-			   	      lastthursday=`expr 366 + $today - 3`
-			   	    else
-			   	      lastthursday=`expr 365 + $today - 3`
-			   	    fi
-			   	  else
-			   	    year=`date +%y`
-			   	    lastthursday=`expr $today - 3`
-			   	  fi
-			   	  week=`expr \( $lastthursday + 6 \) / 7`
-				*/
-				time(&time_of_day); 
-				infos = localtime(&time_of_day);
-				today = infos->tm_yday + 1;
-				year = (infos->tm_year+1900) / 1000;
-				if (today < 3) {
-					int nonbi = year - (year / 4 * 4);
-					if (nonbi == 0) {
-						lastthursday = 366 + today - 3;
-					} else {
-						lastthursday = 365 + today - 3;
-					}
-				} else {
-					lastthursday = today - 3;
-				}
-				thisweek = year * 100 + (lastthursday + 6) / 7;
+				char timestr[5];
+				time_t this;
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+				struct tm tmstruc;
+#endif /* _REENTRANT || _THREAD_SAFE */
+				struct tm *tp;
+
+				/* Get this week */
+				this = time(NULL);
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+				localtime_r(&this,&tmstruc);
+				tp = &tmstruc;
+#else
+				tp = localtime(&this);
+#endif /* _REENTRANT || _THREAD_SAFE */
+				strftime(timestr,5,"%y%V",tp);
+				thisweek = atoi(timestr);
 				/* Per def we start with currentweek == atoi(week1) */
-				currentweek = atoi(week1);
+				currentweek = normalize_week(atoi(week1));
 				if (week2) {
-					maxweek = atoi(week2);
+					maxweek = normalize_week(atoi(week2));
 				} else {
 					maxweek = thisweek;
 				}
 				if (maxweek > thisweek) {
-					fprintf(stderr,"[WARNING] Your second week %04d seems higher than this week %04d\n", maxweek, thisweek);
+					fprintf(stderr,"### Your second week %04d seems higher than this week %04d\n", maxweek, thisweek);
+					errflg++;
+				}
+				if (currentweek > thisweek) {
+					fprintf(stderr,"### Your first week %04d seems higher than this week %04d\n", currentweek, thisweek);
+					errflg++;
 				}
 			}
 		  	wflag++;
@@ -539,11 +518,11 @@ int main(argc, argv)
 				strcat(acctfile3,acctfile2);
 				rfio_errno = serrno = 0;
 				if (wflag) {
-					fprintf(stderr,"\n[INFO] Using account file \"%s\" \n", acctfile3);
+					fprintf(stderr,"\n[INFO] Using account file \"%s\"\n", acctfile3);
 				} else {
 					fprintf(stderr,"\n[INFO] Using default account file \"%s\"\n", acctfile3);
 				}
-				if (rfio_access(acctfile3,R_OK) != 0) {
+				if (rfio_access(acctfile3,R_OK) != 0 && ! fflag) {
 					char *basename;
 					fprintf(stderr,"%s : %s\n", acctfile3, rfio_serror());
 					strcpy(acctfile3,NSROOT);
@@ -609,7 +588,7 @@ int main(argc, argv)
 			if (fd_acct > 0) rfio_close(fd_acct);
 			if (wflag && (currentweek < maxweek)) {
 				/* Next week to read is: currentweek+1 */
-				++currentweek;
+				currentweek = normalize_week(currentweek+1);
 				fd_acct = 0;
 				continue;
 			} else {
@@ -1725,7 +1704,7 @@ void sort_poolinf ()
 					dummy = dummy2 / frecord->num_periods_gc2;
 					pf->total_avg_life2 += dummy;
 					pf->total_avg_life22 += dummy * dummy;
-					if (gflag){
+					if (Hflag){
 						if ((dummy2 < plot.rangemax) && (dummy2 > plot.rangemin)){
 							k = (dummy2 - plot.rangemin) / plot.binsize;
 							pf->histo[(int) k]++;
@@ -1744,7 +1723,7 @@ void sort_poolinf ()
 					dummy = dummy2 / frecord->num_periods_uc2;
 					pf->total_avg_life2 += dummy;
 					pf->total_avg_life22 += dummy * dummy;
-					if (gflag){
+					if (Hflag){
 						if ((dummy2 < plot.rangemax) && (dummy2 > plot.rangemin)){
 							k=(dummy2 - plot.rangemin) / plot.binsize;
 							pf->histo[(int) k]++;
@@ -1801,7 +1780,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 	int comp2 ();
 	int range;
 	float variance;
-	int maxhist=0;                                  /*maximum lifetime for a pool used in the -g option*/
+	int maxhist=0;                                  /*maximum lifetime for a pool used in the -H option*/
 
 	/* If a sort criteria has been given then create the relevant array to store the */
 	/* data */
@@ -2084,7 +2063,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 			}
 		}
 		printf("\n"); 
-		if (gflag){
+		if (Hflag){
 			if (pf != NULL){
 				printf("\n\nHistogram of the lifetime of files garbage collected for the pool %s",pf->poolname);
 				for (i=0;i<plot.nbbins+1;i++){
@@ -2162,7 +2141,7 @@ void usage (cmd)
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr,
-			 "[-a][-d][-e end_time][-f accounting_file][-g  min,max,bins]\n"
+			 "[-a][-d][-e end_time][-f accounting_file][-H  min,max,bins]\n"
 			 "[-h hostname][-n number_records][-s start_time][-p pool_name][-S <a or t>][-v]\n"
 			 "[-D diskfile][-M hsmfile][-T vid]\n"
 			 "\n"
@@ -2171,7 +2150,7 @@ void usage (cmd)
 			 "      -D diskfile        is for searching and dumping accounting for DISK entries matching \"diskfile\"\n"
 			 "      -e end_time        Limits analysis up to mmddhhmm[yy]\n"
 			 "      -f accounting_file For using \"accounting_file\" (rfio syntax)\n"
-			 "      -g min,max,bins    Plots a histogram of the garbage collected file lifetimes. The syntax is min,max,nbins where min and max are the histogram range, and nbins is the number of bins with nbins (must be between 2 and 1000)\n"
+			 "      -H min,max,bins    Plots a histogram of the garbage collected file lifetimes. The syntax is min,max,nbins where min and max are the histogram range, and nbins is the number of bins with nbins (must be between 2 and 1000)\n"
 			 "      -h hostname        Read accouting records for hostname stager\n"
 			 "      -M hsmfile         is for searching and dumping accounting for HSM entries matching \"hsmfile\"\n"
 			 "      -n number_records  Allows to limit the number of records read within a single accounting file\n"
@@ -2491,5 +2470,35 @@ char *req_type_2_char(req_type)
 		break;
 	default:
 		return(unknown_req_type);
+	}
+}
+
+/* Takes a week in the format [y]yww and return its normalized value */
+int normalize_week(week)
+	int week;
+{
+	int thisyear;
+	int thisweek;
+	int lastweek;
+	char timestr[5];
+	struct tm thistm;
+
+	thisyear = week / 100;
+	thisweek = week - (thisyear * 100);
+
+	/* Get this week */
+	memset(&thistm,0,sizeof(struct tm));
+	thistm.tm_sec = 1;
+	thistm.tm_yday = 360; /* == 361 - 1, for sure it is in the last week of thisyear */
+	thistm.tm_year = thisyear + 100;
+	
+	strftime(timestr,5,"%V",&thistm);
+	lastweek = atoi(timestr);
+	if (thisweek > lastweek) {
+		/* We increment year number, set week to 1 */
+		return(normalize_week((thisyear+1) * 100 + 1));
+	} else {
+		/* This is ok - no overflow */
+		return(week);
 	}
 }
