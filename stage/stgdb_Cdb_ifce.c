@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.10 2000/01/06 11:27:37 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.11 2000/01/06 15:24:50 jdurand Exp $
  */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.10 $ $Date: 2000/01/06 11:27:37 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.11 $ $Date: 2000/01/06 15:24:50 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
@@ -195,7 +195,7 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
 
   /* We ask for a dump of tape table from Cdb */
   /* ---------------------------------------- */
-  if (Cdb_dump_start(&(dbfd->Cdb_db),"stgcat_tape","stgcat_tape_per_reqid") != 0) {
+  if (Cdb_dump_start(&(dbfd->Cdb_db),"stgcat_tape") != 0) {
     goto _stgdb_load_error;
   }
   while (Cdb_dump(&(dbfd->Cdb_db),"stgcat_tape",NULL,&tape) == 0) {
@@ -209,7 +209,7 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
       /* The calloced area is not enough */
       *stgcat_bufsz += BUFSIZ;
       if ((newstcs = (struct stgcat_entry *) realloc(*stcsp,*stgcat_bufsz)) == NULL) {
-        Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_tape","stgcat_tape_per_reqid");
+        Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_tape");
         goto _stgdb_load_error;
       }
       *stcsp = newstcs;
@@ -227,11 +227,11 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
     }
     *stcp++ = thisstcp;
   }
-  Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_tape","stgcat_tape_per_reqid");
+  Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_tape");
 
   /* We ask for a dump of disk table from Cdb */
   /* ---------------------------------------- */
-  if (Cdb_dump_start(&(dbfd->Cdb_db),"stgcat_disk","stgcat_disk_per_reqid") != 0) {
+  if (Cdb_dump_start(&(dbfd->Cdb_db),"stgcat_disk") != 0) {
     goto _stgdb_load_error;
   }
   while (Cdb_dump(&(dbfd->Cdb_db),"stgcat_disk",NULL,&disk) == 0) {
@@ -244,7 +244,7 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
       /* The calloced area is not enough */
       *stgcat_bufsz += BUFSIZ;
       if ((newstcs = (struct stgcat_entry *) realloc(*stcsp,*stgcat_bufsz)) == NULL) {
-        Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_disk","stgcat_disk_per_reqid");
+        Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_disk");
         goto _stgdb_load_error;
       }
       *stcsp = newstcs;
@@ -262,11 +262,11 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
     }
     *stcp++ = thisstcp;
   }
-  Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_disk","stgcat_disk_per_reqid");
+  Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_disk");
 
   /* We ask for a dump of hsm table from Cdb */
   /* --------------------------------------- */
-  if (Cdb_dump_start(&(dbfd->Cdb_db),"stgcat_hsm","stgcat_hsm_per_reqid") != 0) {
+  if (Cdb_dump_start(&(dbfd->Cdb_db),"stgcat_hsm") != 0) {
     goto _stgdb_load_error;
   }
   while (Cdb_dump(&(dbfd->Cdb_db),"stgcat_hsm",NULL,&hsm) == 0) {
@@ -279,7 +279,7 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
       /* The calloced area is not enough */
       *stgcat_bufsz += BUFSIZ;
       if ((newstcs = (struct stgcat_entry *) realloc(*stcsp,*stgcat_bufsz)) == NULL) {
-        Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_hsm","stgcat_hsm_per_reqid");
+        Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_hsm");
         goto _stgdb_load_error;
       }
       *stcsp = newstcs;
@@ -297,11 +297,11 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
     }
     *stcp++ = thisstcp;
   }
-  Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_hsm","stgcat_hsm_per_reqid");
+  Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_hsm");
 
   /* We ask for a dump of alloc table from Cdb */
   /* --------------------------------------- */
-  if (Cdb_dump_start(&(dbfd->Cdb_db),"stgcat_alloc","stgcat_alloc_per_reqid") != 0) {
+  if (Cdb_dump_start(&(dbfd->Cdb_db),"stgcat_alloc") != 0) {
     goto _stgdb_load_error;
   }
   while (Cdb_dump(&(dbfd->Cdb_db),"stgcat_alloc",NULL,&alloc) == 0) {
@@ -314,7 +314,7 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
       /* The calloced area is not enough */
       *stgcat_bufsz += BUFSIZ;
       if ((newstcs = (struct stgcat_entry *) realloc(*stcsp,*stgcat_bufsz)) == NULL) {
-        Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_alloc","stgcat_alloc_per_reqid");
+        Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_alloc");
         goto _stgdb_load_error;
       }
       *stcsp = newstcs;
@@ -332,11 +332,11 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
     }
     *stcp++ = thisstcp;
   }
-  Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_alloc","stgcat_alloc_per_reqid");
+  Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_alloc");
 
   /* We ask for a dump of link table from Cdb */
   /* --------------------------------------- */
-  if (Cdb_dump_start(&(dbfd->Cdb_db),"stgcat_link","stgcat_link_per_reqid") != 0) {
+  if (Cdb_dump_start(&(dbfd->Cdb_db),"stgcat_link") != 0) {
     goto _stgdb_load_error;
   }
   while (Cdb_dump(&(dbfd->Cdb_db),"stgcat_link",NULL,&link) == 0) {
@@ -349,7 +349,7 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
       /* The calloced area is not enough */
       *stgpath_bufsz += BUFSIZ;
       if ((newstps = (struct stgpath_entry *) realloc(*stpsp,*stgpath_bufsz)) == NULL) {
-        Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_link","stgcat_link_per_reqid");
+        Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_link");
         goto _stgdb_load_error;
       }
       *stpsp = newstps;
@@ -367,7 +367,7 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
     }
     *stpp++ = thisstpp;
   }
-  Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_link","stgcat_link_per_reqid");
+  Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_link");
 
   /*
   {

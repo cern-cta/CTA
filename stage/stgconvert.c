@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.7 2000/01/06 13:29:56 jdurand Exp $
+ * $Id: stgconvert.c,v 1.8 2000/01/06 15:24:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.7 $ $Date: 2000/01/06 13:29:56 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.8 $ $Date: 2000/01/06 15:24:49 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -660,7 +660,7 @@ int main(argc,argv)
 
     /* We ask for a dump of tape table from Cdb */
     /* ---------------------------------------- */
-      if (Cdb_dump_start(&Cdb_db,"stgcat_tape","stgcat_tape_per_reqid") != 0) {
+      if (Cdb_dump_start(&Cdb_db,"stgcat_tape") != 0) {
         printf("### Cdb_dump_start error on table \"stgcat_tape\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -688,7 +688,7 @@ int main(argc,argv)
 
       }
 
-      if (Cdb_dump_end(&Cdb_db,"stgcat_tape","stgcat_tape_per_reqid") != 0) {
+      if (Cdb_dump_end(&Cdb_db,"stgcat_tape") != 0) {
         printf("### Cdb_dump_end error on table \"stgcat_tape\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -706,7 +706,7 @@ int main(argc,argv)
 
       printf("\n*** DUMPING stgcat_disk TABLE ***\n\n");
 
-      if (Cdb_dump_start(&Cdb_db,"stgcat_disk","stgcat_disk_per_reqid") != 0) {
+      if (Cdb_dump_start(&Cdb_db,"stgcat_disk") != 0) {
         printf("### Cdb_dump_start error on table \"stgcat_disk\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -733,7 +733,7 @@ int main(argc,argv)
         }
       }
 
-      if (Cdb_dump_end(&Cdb_db,"stgcat_disk","stgcat_disk_per_reqid") != 0) {
+      if (Cdb_dump_end(&Cdb_db,"stgcat_disk") != 0) {
         printf("### Cdb_dump_end error on table \"stgcat_disk\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -751,7 +751,7 @@ int main(argc,argv)
 
       printf("\n*** DUMPING stgcat_hsm TABLE ***\n\n");
 
-      if (Cdb_dump_start(&Cdb_db,"stgcat_hsm","stgcat_hsm_per_reqid") != 0) {
+      if (Cdb_dump_start(&Cdb_db,"stgcat_hsm") != 0) {
         printf("### Cdb_dump_start error on table \"stgcat_hsm\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -778,7 +778,7 @@ int main(argc,argv)
         }
       }
 
-      if (Cdb_dump_end(&Cdb_db,"stgcat_hsm","stgcat_hsm_per_reqid") != 0) {
+      if (Cdb_dump_end(&Cdb_db,"stgcat_hsm") != 0) {
         printf("### Cdb_dump_end error on table \"stgcat_hsm\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -796,7 +796,7 @@ int main(argc,argv)
 
       printf("\n*** DUMPING stgcat_alloc TABLE ***\n\n");
 
-      if (Cdb_dump_start(&Cdb_db,"stgcat_alloc","stgcat_alloc_per_reqid") != 0) {
+      if (Cdb_dump_start(&Cdb_db,"stgcat_alloc") != 0) {
         printf("### Cdb_dump_start error on table \"stgcat_alloc\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -823,7 +823,7 @@ int main(argc,argv)
         }
       }
 
-      if (Cdb_dump_end(&Cdb_db,"stgcat_alloc","stgcat_alloc_per_reqid") != 0) {
+      if (Cdb_dump_end(&Cdb_db,"stgcat_alloc") != 0) {
         printf("### Cdb_dump_end error on table \"stgcat_alloc\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -884,7 +884,7 @@ int main(argc,argv)
       
       i = 0;
       
-      if (Cdb_dump_start(&Cdb_db,"stgcat_link","stgcat_link_per_reqid") != 0) {
+      if (Cdb_dump_start(&Cdb_db,"stgcat_link") != 0) {
         printf("### Cdb_dump_start error on table \"stgcat_link\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -915,7 +915,7 @@ int main(argc,argv)
         }
       }
 
-      if (Cdb_dump_end(&Cdb_db,"stgcat_link","stgcat_link_per_reqid") != 0) {
+      if (Cdb_dump_end(&Cdb_db,"stgcat_link") != 0) {
         printf("### Cdb_dump_end error on table \"stgcat_link\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -1039,7 +1039,7 @@ int main(argc,argv)
 
     /* We ask for a dump of tape table from Cdb */
     /* ---------------------------------------- */
-      if (Cdb_dump_start(&Cdb_db,"stgcat_tape","stgcat_tape_per_reqid") != 0) {
+      if (Cdb_dump_start(&Cdb_db,"stgcat_tape") != 0) {
         printf("### Cdb_dump_start error on table \"stgcat_tape\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -1088,7 +1088,7 @@ int main(argc,argv)
 
       }
 
-      if (Cdb_dump_end(&Cdb_db,"stgcat_tape","stgcat_tape_per_reqid") != 0) {
+      if (Cdb_dump_end(&Cdb_db,"stgcat_tape") != 0) {
         printf("### Cdb_dump_end error on table \"stgcat_tape\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -1105,7 +1105,7 @@ int main(argc,argv)
 
     /* We ask for a dump of disk table from Cdb */
     /* ---------------------------------------- */
-      if (Cdb_dump_start(&Cdb_db,"stgcat_disk","stgcat_disk_per_reqid") != 0) {
+      if (Cdb_dump_start(&Cdb_db,"stgcat_disk") != 0) {
         printf("### Cdb_dump_start error on table \"stgcat_disk\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -1151,7 +1151,7 @@ int main(argc,argv)
         }
       }
 
-      if (Cdb_dump_end(&Cdb_db,"stgcat_disk","stgcat_disk_per_reqid") != 0) {
+      if (Cdb_dump_end(&Cdb_db,"stgcat_disk") != 0) {
         printf("### Cdb_dump_end error on table \"stgcat_disk\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -1168,7 +1168,7 @@ int main(argc,argv)
 
     /* We ask for a dump of hsm table from Cdb */
     /* ---------------------------------------- */
-      if (Cdb_dump_start(&Cdb_db,"stgcat_hsm","stgcat_hsm_per_reqid") != 0) {
+      if (Cdb_dump_start(&Cdb_db,"stgcat_hsm") != 0) {
         printf("### Cdb_dump_start error on table \"stgcat_hsm\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -1214,7 +1214,7 @@ int main(argc,argv)
         }
       }
 
-      if (Cdb_dump_end(&Cdb_db,"stgcat_hsm","stgcat_hsm_per_reqid") != 0) {
+      if (Cdb_dump_end(&Cdb_db,"stgcat_hsm") != 0) {
         printf("### Cdb_dump_end error on table \"stgcat_hsm\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -1231,7 +1231,7 @@ int main(argc,argv)
 
     /* We ask for a dump of alloc table from Cdb */
     /* ---------------------------------------- */
-      if (Cdb_dump_start(&Cdb_db,"stgcat_alloc","stgcat_alloc_per_reqid") != 0) {
+      if (Cdb_dump_start(&Cdb_db,"stgcat_alloc") != 0) {
         printf("### Cdb_dump_start error on table \"stgcat_alloc\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -1277,7 +1277,7 @@ int main(argc,argv)
         }
       }
 
-      if (Cdb_dump_end(&Cdb_db,"stgcat_alloc","stgcat_alloc_per_reqid") != 0) {
+      if (Cdb_dump_end(&Cdb_db,"stgcat_alloc") != 0) {
         printf("### Cdb_dump_end error on table \"stgcat_alloc\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -1294,7 +1294,7 @@ int main(argc,argv)
 
       /* We ask for a dump of link table from Cdb */
       /* ---------------------------------------- */
-      if (Cdb_dump_start(&Cdb_db,"stgcat_link","stgcat_link_per_reqid") != 0) {
+      if (Cdb_dump_start(&Cdb_db,"stgcat_link") != 0) {
         printf("### Cdb_dump_start error on table \"stgcat_link\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
@@ -1343,7 +1343,7 @@ int main(argc,argv)
         }
       }
 
-      if (Cdb_dump_end(&Cdb_db,"stgcat_link","stgcat_link_per_reqid") != 0) {
+      if (Cdb_dump_end(&Cdb_db,"stgcat_link") != 0) {
         printf("### Cdb_dump_end error on table \"stgcat_link\" (%s)\n",sstrerror(serrno));
         if (Cdb_error(&Cdb_session,&error) == 0) {
           printf("--> more info:\n%s",error);
