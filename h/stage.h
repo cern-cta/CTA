@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.34 2000/12/22 13:15:43 jdurand Exp $
+ * $Id: stage.h,v 1.35 2001/01/31 19:07:33 jdurand Exp $
  */
 
 /*
@@ -20,7 +20,8 @@
 #endif
 
 #include "Castor_limits.h"
-#include <osdep.h>
+#include "Cns_api.h"
+#include "osdep.h"
 #include "serrno.h"     /* Contains ESTNACT etc... */
 
 /* This macro returns TRUE is the file is an hpss one */
@@ -31,15 +32,16 @@
 
 /* ISCASTORMIG macro returns TRUE if it is a CASTOR HSM file candidate for/beeing, migration/migrated */
 /* ISCASTORBEINGMIG macro returns TRUE if it is a CASTOR HSM file beeing migrated */
-/* This handles: STAGEOUT|CAN_BE_MIGR */
-/*               STAGEOUT|CAN_BE_MIGR|BEING_MIGR */
-/*               STAGEPUT|CAN_BE_MIGR */
-/*               STAGEWRT|CAN_BE_MIGR */
-/*               STAGEWRT|CAN_BE_MIGR|BEING_MIGR */
-/* This macro is used in particular in procqry.c to determine if we have to hardcoded a '*' instead of */
-/* allocated size */
+/* ISCASTORWAITINGMIG macro returns TRUE if it is a CASTOR HSM file candidate for migration and waiting for a migration request itself */
+/* ISCASTORCANBEMIG macro returns TRUE if it is a CASTOR HSM file candidate for migration */
+/* ISCASTORFREE4MIG macro returns TRUE if it is a CASTOR/HPSS HSM file candidate for explicit migration */
+/* ISCASTORWAITINGNS macro returns TRUE if it is a CASTOR HSM file waiting for creation in name server */
 #define ISCASTORMIG(stcp) ((stcp->t_or_d == 'h') && ((stcp->status & PUT_FAILED) != PUT_FAILED) && ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR))
 #define ISCASTORBEINGMIG(stcp) (ISCASTORMIG(stcp) && (((stcp->status & BEING_MIGR) == BEING_MIGR) || (stcp->status == (STAGEPUT|CAN_BE_MIGR))))
+#define ISCASTORWAITINGMIG(stcp) (ISCASTORMIG(stcp) && ((stcp->status & WAITING_MIGR) == WAITING_MIGR))
+#define ISCASTORWAITINGNS(stcp) ((stcp->t_or_d == 'h') && ((stcp->status & WAITING_NS) == WAITING_NS))
+#define ISCASTORCANBEMIG(stcp) (ISCASTORMIG(stcp) && (! (ISCASTORBEINGMIG(stcp) || ISCASTORWAITINGMIG(stcp))))
+#define ISCASTORFREE4MIG(stcp) ((stcp->status == STAGEOUT) || (stcp->status == (STAGEOUT|PUT_FAILED)) || (stcp->status == (STAGEOUT|CAN_BE_MIGR)) || (stcp->status == (STAGEOUT|CAN_BE_MIGR|PUT_FAILED)) || (stcp->status == (STAGEWRT|CAN_BE_MIGR|PUT_FAILED)))
 #define ISHPSSMIG(stcp) ((stcp->t_or_d == 'm') && ((stcp->status == STAGEPUT) || (stcp->status == STAGEWRT)))
 
 /* This macro returns TRUE is the file is a castor one */
@@ -111,6 +113,7 @@
 #define	STAGEGET	12
 #define	STAGEMIGPOOL	13
 #define STAGEFILCHG	14
+#define STAGESHUTDOWN	15
 
 			/* stage daemon reply types */
 
@@ -120,6 +123,9 @@
 #define	STAGERC		3
 #define	SYMLINK		4
 #define	RMSYMLINK	5
+#define API_STCP_OUT	6
+#define API_STPP_OUT	7
+#define UNIQUEID	8
 
 			/* -C, -E and -T options */
 
@@ -128,20 +134,22 @@
 
 			/* stage states */
 
-#define	NOTSTAGED	0
-#define	WAITING_SPC	0x10	/* waiting space */
-#define	WAITING_REQ	0x20	/* waiting on an other request */
-#define	STAGED		0x30	/* stage complete */
-#define	KILLED		0x40	/* stage killed */
-#define	STG_FAILED	0x50	/* stage failed */
-#define	PUT_FAILED	0x60	/* stageput failed */
-#define	STAGED_LSZ	0x100	/* stage limited by size */
-#define	STAGED_TPE	0x200	/* blocks with parity error have been skipped */
-#define	CAN_BE_MIGR	0x400	/* file can be migrated */
-#define	LAST_TPFILE	0x1000	/* last file on this tape */
-#define	BEING_MIGR	0x2000	/* file being migrated */
-#define ISSTAGEDBUSY 0x4000  /* Internal error while scanning catalog : matched twice in catalog and the one to delete is busy */
+#define	NOTSTAGED	  0
+#define	WAITING_SPC	  0x10	/* waiting space */
+#define	WAITING_REQ	  0x20	/* waiting on an other request */
+#define	STAGED		  0x30	/* stage complete */
+#define	KILLED		  0x40	/* stage killed */
+#define	STG_FAILED	  0x50	/* stage failed */
+#define	PUT_FAILED	  0x60	/* stageput failed */
+#define	STAGED_LSZ	  0x100	/* stage limited by size */
+#define	STAGED_TPE	  0x200	/* blocks with parity error have been skipped */
+#define	CAN_BE_MIGR	  0x400	/* file can be migrated */
+#define	LAST_TPFILE	  0x1000 /* last file on this tape */
+#define	BEING_MIGR	  0x2000 /* file being migrated */
+#define ISSTAGEDBUSY  0x4000  /* Internal error while scanning catalog : matched twice in catalog and the one to delete is busy */
 #define ISSTAGEDSYERR 0x10000 /* Internal error while scanning catalog : matched twice in catalog and cannot delete one of them */
+#define	WAITING_MIGR  0x20000 /* file being migrated and waiting confirmation (e.g. the real migration request) */
+#define	WAITING_NS    0x40000 /* file waiting for an entry in the HSM name server */
 
 			/* stage daemon messages */
 
@@ -204,6 +212,10 @@
 #define	STG54	"STG54 - HSM hostname not specified\n"
 #define	STG55	"STG55 - migrator name %s not defined\n"
 #define	STG56	"STG56 - migration policy of migrator %s is not defined\n"
+#define	STG57	"STG57 - Fileclass %s (classid %d) on name server %s (internal index %d) error : %s : %s\n"
+#define	STG58	"STG58 - another stageshutdown is pending\n"
+#define	STG59	"STG59 - Duplicate HSM file %s\n"
+#define	STG60	"STG60 - Duplicated file sequence %s reduced by one\n"
 #if defined(vms)
 #define	STG80	"STG80 - invalid GRPUSER entry (username missing) : %s\n"
 #define	STG81	"STG81 - invalid GRPUSER entry (uid missing) : %s\n"
@@ -227,6 +239,32 @@
 #define STG106  "STG106 - Internal error in %s for %s: %s\n"
 #define	STG107	"STG107 - %s:%s segment %d staged by (%s,%s), server %s  unit %s  ifce %s  size %s  wtim %d  ttim %d rc %d\n"
 #define	STG108	"STG108 - %s:%s staged using %d segments by (%s,%s), size %s rc %d\n"
+#define	STG109	"STG109 - New fileclass %s@%s (classid %d), internal index %d, tppools=%s\n"
+#define STG110  "STG110 - Internal error in %s for pool %s, class %s@%s: %s\n"
+#define STG111  "STG111 - Last used tape pool \"%s\" unknown to fileclass %s@%s (classid %d)\n"
+#define STG112  "STG112 - %s already have %d copies (its current fileclass specifies %d cop%s). Not migrated.\n"
+#define STG113  "STG113 - Cannot find next tape pool - use the first in the list\n"
+#define STG114  "STG114 - Found more files to migrate (%d) that what is known in advance (%d)\n"
+#define STG115  "STG115 - Reqid %d (%s) have no tape pool associated yet\n"
+#define STG116  "STG116 - Not all input records have a tape pool\n"
+#define STG117  "STG117 - Inputs No %d (%s) and %d (%s) differs vs. their tape pool (\"%s\" and \"%s\")\n"
+#define STG118  "STG118 - Warning, fileclasses %s and %s shared tape pool \"%s\" but have different %s values (%d and %d)\n"
+#define STG119  "STG119 - Missing file path argument for HSM files %s\n"
+#define STG120  "STG120 - %s already has a tppool assigned (\"%s\") - not expanded with respect to its class %s@%s (classid %d)\n"
+#define STG121  "STG121 - No tape pool\n"
+#define STG122  "STG122 - Bad tape pool \"%s\"\n"
+#define STG123  "STG123 - (Warning) tape %s mounted but no segment writen at expected fseq %d, tape flagged %s\n"
+#define STG124  "STG124 - Shutdown\n"
+#define STG125  "STG125 - Your account \"%s\" (%s=%d) does not have the correct %s id (should be %d) to migrate %s\n"
+#define STG126  "STG126 - Fileclass %s@%s (classid %d) have %d number of copies - Please contact your admin - rejected\n"
+#define STG127  "STG127 - Fileclass %s@%s (classid %d) claims %d tape pools while we found %d of them - Please contact your admin - updated\n"
+#define STG128  "STG128 - Fileclass %s@%s (classid %d) have duplicated tape pool %s - Please contact your admin  - duplicate removed\n"
+#define STG129  "STG129 - Fileclass %s@%s (classid %d) have its number of tape pools finally reduced from %d to %d\n"
+#define STG130  "STG130 - Fileclass %s@%s (classid %d) have %d number of copies v.s. %d tppools - copies possible reduced to %d\n"
+#define STG131  "STG131 - %s not removed - Retention period %d > %d seconds lifetime\n"
+#define STG132  "STG132 - %s fileclass : %s\n"
+#define STG133  "STG133 - %s : Fileclass %s@%s (classid %d) specified retention period %d > %d seconds lifetime\n"
+#define STG134  "STG134 - Tape %s is not accessible (%s status)\n"
 
 			/* stage daemon return codes */
 
@@ -304,6 +342,8 @@ struct stgcat_entry {		/* entry format in STGCAT table */
 		char	xfile[167];
 		char		server[CA_MAXHOSTNAMELEN+1];
 		u_signed64	fileid;
+		short	fileclass;
+		char tppool[CA_MAXPOOLNAMELEN+1];
 	    } h;
 	} u1;
 };
@@ -331,9 +371,11 @@ struct waitq {
 	uid_t	req_uid;		/* uid or Guid */
 	gid_t	req_gid;
 	char	rtcp_user[CA_MAXUSRNAMELEN+1];	/* running login name */
+	char	rtcp_group[CA_MAXGRPNAMELEN+1];	/* running group name */
 	uid_t	rtcp_uid;		/* uid or Guid */
 	gid_t	rtcp_gid;
 	int	clientpid;
+	u_signed64 uniqueid; /* Unique IDentifier when called from the API */
 	int	copytape;
 	int	Pflag;		/* stagealloc -P option */
 	int	Upluspath;
@@ -353,30 +395,25 @@ struct waitq {
 	int	status;
 	int	nretry;
 	int	Aflag; /* Deferred allocation (path returned to RTCOPY after tape position) */
-	int	StageIDflag; /* Determine if done under stage:st or not */
 	int	concat_off_fseq; /* 0 or fseq just before the '-', like: 1-9,11- => concat_off_fseq = 11 */
-	int	background; /* Determine if done in background or not */
+	int	api_out; /* Flag to tell if we have to send structure in output (API mode) */
+#if defined(vms) || defined(_WIN32)
+	int openmode;  /* Used only to remember the openmode in entries in STAGEOUT|WAITING_NS state */
+#else
+	mode_t	openmode;  /* Used only to remember the openmode in entries in STAGEOUT|WAITING_NS state */
+#endif
+	int	silent; /* Determine if done in silent mode or not */
 	int use_subreqid; /* Says if we allow RTCOPY to do asynchroneous callback */
 	int *save_subreqid; /* Array saying relation between subreqid and all wf at the beginning */
 	int save_nbsubreqid; /* Save original number of entries */
 };
 
-struct migpolicy {
-	u_signed64 data_mig_threshold;
-	int	freespace_threshold;
-	int	maxdrives;
-	int	seg_allowed;
-	int	time_interval;
-	char	name[CA_MAXMIGPNAMELEN+1];
-	int	tape_pool_index;
-	char	**tape_pool;		/* Tape poolnames */
-};
-	
 struct pool {
 	char	name[CA_MAXPOOLNAMELEN+1];
 	struct pool_element *elemp;
 	int	defsize;
-	int	minfree;
+	int	gc_start_thresh;
+	int	gc_stop_thresh;
 	char	gc[CA_MAXHOSTNAMELEN+MAXPATH+1];	/* garbage collector */
 	int	no_file_creation;	/* Do not create empty file on stagein/out (for Objectivity DB) */
 	int	nbelem;
@@ -387,24 +424,37 @@ struct pool {
 	time_t	cleanreqtime;
 	int	cleanstatus;	/* 0 = normal, 1 = just cleaned */
 	char	migr_name[CA_MAXMIGRNAMELEN+1];
-	struct migrator *migr;
+	struct migratorv2 *migrv2;
+	int	mig_start_thresh;
+	int	mig_stop_thresh;
+	u_signed64 mig_data_thresh;
 };
 
-struct migrator {
+struct predicates {
+  int nbfiles_canbemig;
+  u_signed64 space_canbemig;
+  int nbfiles_beingmig;
+  u_signed64 space_beingmig;
+};
+
+struct fileclass {
+	char server[CA_MAXHOSTNAMELEN+1];
+	struct Cns_fileclass Cnsfileclass;
+	char last_tppool_used[CA_MAXPOOLNAMELEN+1];
+	int  flag;                                      /* Flag preventing us to double count next member */
+	int  streams;                                   /* Number of streams using this fileclass while migrating */
+	int being_migr;                                 /* Number of files being migrated in this fileclass */
+};
+
+struct migratorv2 {
 	char name[CA_MAXMIGRNAMELEN+1];
-	/* Current Parameter of the migrator */
-	int	mig_pid;
-	time_t	migreqtime;
-	time_t	migreqtime_last_end;
-	int	nbfiles_canbemig;	/* number of files that can be migrated */
-	u_signed64	space_canbemig;		/* total amount of data that can be migrated */
-	int	nbfiles_beingmig;	/* number of files that is being migrated */
-	u_signed64	space_beingmig;		/* total amount of data that is being migrated */
-	/* Predefined policy parameters that decide if the migrator have to be launched */
-	char	migp_name[CA_MAXMIGPNAMELEN+1];
-	struct migpolicy *migp;
-	int	nbpool;
-	struct pool	**poolp;		/* poolnames */
+	int mig_pid;
+	time_t migreqtime;
+	time_t migreqtime_last_end;
+	int nfileclass;
+	struct fileclass **fileclass;
+	struct predicates *fileclass_predicates;
+	struct predicates global_predicates;
 };
 
 struct pool_element {
@@ -419,6 +469,7 @@ struct sorted_ent {
 	struct sorted_ent *prev;
 	struct stgcat_entry *stcp;
 	struct stgpath_entry *stpp;
+	int scanned;            /* Flag telling if we yet scanned this entry */
 	double	weight;
 };
 #endif
