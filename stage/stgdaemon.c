@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.142 2001/07/12 06:37:28 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.143 2001/07/12 10:58:36 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.142 $ $Date: 2001/07/12 06:37:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.143 $ $Date: 2001/07/12 10:58:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -210,8 +210,9 @@ void killallovl _PROTO((int));
 extern void killcleanovl _PROTO((int));
 extern void killmigovl _PROTO((int));
 int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
+extern int get_put_failed_retenp _PROTO((char *));
 
-struct stgcat_entry *newreq _PROTO(());
+struct stgcat_entry *newreq _PROTO((char));
 struct waitf *add2wf _PROTO((struct waitq *));
 int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct waitf *));
 extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
@@ -794,7 +795,7 @@ int main(argc,argv)
 				rbp = req_hdr;
 				unmarshall_LONG (rbp, magic);
 
-				if ((magic != STGMAGIC) && (magic != STGMAGIC2)) {
+				if ((magic != STGMAGIC) && (magic != STGMAGIC2) && (magic != STGMAGIC3)) {
 					stglogit(func, STG141, (unsigned long) magic);
 					close(rqfd);
 					goto endreq;
@@ -830,13 +831,13 @@ int main(argc,argv)
 							goto endreq;
 						}
 					}
-					if ((req_type == STAGE_UPDC) && (magic != STGMAGIC2)) {
+					if ((req_type == STAGE_UPDC) && (magic != STGMAGIC2) && (magic != STGMAGIC3)) {
 						/* The API of stage_updc only exist with magic number version >= 2 */
 						stglogit(func, STG141, (unsigned long) magic);
 						close(rqfd);
 						goto endreq;
 					}
-					if ((req_type == STAGE_CLR) && (magic != STGMAGIC2)) {
+					if ((req_type == STAGE_CLR) && (magic != STGMAGIC2) && (magic != STGMAGIC3)) {
 						/* The API of stage_clr only exist with magic number version >= 2 */
 						stglogit(func, STG141, (unsigned long) magic);
 						close(rqfd);
@@ -1258,7 +1259,7 @@ add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
 					wqp->nbdskf++;
 					wqp->nb_subreqs++;
 					wqp->nb_waiting_on_req++;
-					stcp_ok = newreq();
+					stcp_ok = newreq('t');
 					/* The memory may have been realloced, so we follow this eventual reallocation */
 					/* by reassigning stcp pointer using the found index */
 					stcp = &(stcs[index_found]);
@@ -1690,7 +1691,7 @@ void checkpoolstatus()
 								++have_found_spc;           /* Count the number of entries WAITING_SPC recovered */
 								if ((stcp->status == STAGEOUT) ||
 									(stcp->status == STAGEALLOC)) {
-									if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp);
+									if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
 									if (wqp->Pflag)
 										sendrep (rpfd, MSG_OUT,
 														 "%s\n", stcp->ipath);
@@ -1791,7 +1792,7 @@ void checkwaitingspc()
 						++have_found_spc;           /* Count the number of entries WAITING_SPC recovered */
 						if ((stcp->status == STAGEOUT) ||
 							(stcp->status == STAGEALLOC)) {
-							if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp);
+							if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
 							if (wqp->Pflag)
 								sendrep (rpfd, MSG_OUT,
 												 "%s\n", stcp->ipath);
@@ -1870,7 +1871,7 @@ check_waiting_on_req(subreqid, state)
 								 stcp->actual_size,
 								 (float)(stcp->actual_size)/(1024.*1024.),
 								 stcp->nbaccesses);
-				if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp);
+				if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
 				if (wqp->copytape)
 					sendinfo2cptape (rpfd, stcp);
 				if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
@@ -2259,7 +2260,7 @@ void checkwaitq()
 						stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 					}
 #endif
-					if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp);
+					if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
 				}
 			}
 			wqp1 = wqp;
@@ -2812,7 +2813,8 @@ newpath()
 }
 
 struct stgcat_entry *
-newreq()
+newreq(t_or_d)
+		char t_or_d;
 {
 	struct stgcat_entry *stcp;
 
@@ -2824,6 +2826,15 @@ newreq()
 		stce = stcs + (stgcat_bufsz/sizeof(struct stgcat_entry));
 	}
 	stcp = stcs + (nbcat_ent - 1);
+	switch (t_or_d) {
+	case 'h':
+		/* We know we have to initialize some sensible things that calloc does not properly do */
+		stcp->u1.h.retenp_on_disk = -1;
+		stcp->u1.h.mintime_beforemigr = -1;
+		break;
+	default:
+		break;
+	}
 	return (stcp);
 }
 
@@ -3347,5 +3358,5 @@ void check_upd_fileclasses() {
 }
 
 /*
- * Last Update: "Thursday 12 July, 2001 at 08:27:06 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Thursday 12 July, 2001 at 12:57:58 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
