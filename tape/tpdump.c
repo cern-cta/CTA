@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.19 $ $Date: 2000/03/03 15:47:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.20 $ $Date: 2000/03/06 07:49:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpdump - analyse the content of a tape */
@@ -277,7 +277,7 @@ int sig;
 		(void) Ctape_kill (infil);
 	else
 		Ctape_dmpend();
-	exit_prog (USERR);
+	exit (USERR);
 }
 
 dmp_usrmsg(va_alist) va_dcl

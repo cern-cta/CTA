@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.4 $ $Date: 2000/02/16 07:20:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.5 $ $Date: 2000/03/06 07:49:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tplabel - prelabel al and sl tapes, write 2 tape marks for nl tapes */
@@ -197,7 +197,7 @@ int sig;
 	signal (sig, SIG_IGN);
 
 	(void) Ctape_kill (path);
-	exit_prog (USERR);
+	exit (USERR);
 }
 
 exit_prog(exit_code)
