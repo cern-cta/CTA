@@ -3036,7 +3036,9 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
     int gotmutex   = 0;
     unsigned long timewaited = 0;
     unsigned long Timeout = 0;
+#if !(defined(IRIX5) || defined(IRIX6) || defined(IRIX64))
     struct timeval ts;
+#endif
 
     /* Convert timeout in milliseconds */
     Timeout = timeout * 1000;
@@ -3074,9 +3076,15 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
         /* Win32 Sleep is in milliseconds */
         Sleep(Timeout/20);
 #  else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
+#if (defined(IRIX5) || defined(IRIX6) || defined(IRIX64))
+        /* usleep is in micro-seconds, not milli seconds... */
+        usleep((Timeout * 1000)/20);
+#else
+        /* This method deadlocks on IRIX */
         ts.tv_sec = Timeout;
         ts.tv_usec = 0;
         select(0,NULL,NULL,NULL,&ts);
+#endif
 #  endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
       }
     }
@@ -3277,7 +3285,9 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
     int gotmutex   = 0;
     unsigned long timewaited = 0;
     unsigned long Timeout = 0;
+#if !(defined(IRIX5) || defined(IRIX6) || defined(IRIX64))
     struct timeval ts;
+#endif
 
     /* Convert timeout in milliseconds */
     Timeout = timeout * 1000;
@@ -3315,9 +3325,15 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
         /* Win32 Sleep is in milliseconds */
         Sleep(Timeout/20);
 #  else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
+#if (defined(IRIX5) || defined(IRIX6) || defined(IRIX64))
+        /* usleep is in micro-seconds, not milli seconds... */
+        usleep((Timeout * 1000)/20);
+#else
+        /* This method deadlocks on IRIX */
         ts.tv_sec = Timeout;
         ts.tv_usec = 0;
         select(0,NULL,NULL,NULL,&ts);
+#endif
 #  endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
       }
     }
