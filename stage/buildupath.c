@@ -1,5 +1,5 @@
 /*
- * $Id: buildupath.c,v 1.16 2001/12/05 12:28:46 jdurand Exp $
+ * $Id: buildupath.c,v 1.17 2002/04/11 10:01:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.16 $ $Date: 2001/12/05 12:28:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.17 $ $Date: 2002/04/11 10:01:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -25,6 +25,7 @@ static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.16 $ $Date: 
 #include "stage_constants.h"
 #include "stage_messages.h"
 #include "Cglobals.h"
+#include "serrno.h"
 
 #if !defined(linux)
 extern char *sys_errlist[];
@@ -64,7 +65,7 @@ static int init_cwd_hostname()
 	Cglobals_get (&initialized_key, (void **)&initialized, sizeof(int));
 	Cglobals_get (&nfsroot_key, (void **)&nfsroot, (size_t) (MAXPATH));
 
-	if ((cwd == NULL) || (hostname == NULL) || (initialized == NULL) || (nfsroot == NULL)) return(SYERR);
+	if ((cwd == NULL) || (hostname == NULL) || (initialized == NULL) || (nfsroot == NULL)) return(SESYSERR);
 
 	*initialized = 1;
 	p = getconfent ("RFIO", "NFS_ROOT", 0);
@@ -88,7 +89,7 @@ static int init_cwd_hostname()
 #endif
 	if (p == NULL) {
 		stage_errmsg(func, STG02, "", "getcwd", sys_errlist[errno]);
-		return (SYERR);
+		return (SESYSERR);
 	}
 	return (0);
 }
@@ -201,7 +202,7 @@ int DLL_DECL build_linkname(argvi, path, size, req_type)
 	Cglobals_get (&initialized_key, (void **)&initialized, sizeof(int));
 	Cglobals_get (&nfsroot_key, (void **)&nfsroot, (size_t) (MAXPATH));
 
-	if ((cwd == NULL) || (hostname == NULL) || (initialized == NULL) || (nfsroot == NULL)) return(SYERR);
+	if ((cwd == NULL) || (hostname == NULL) || (initialized == NULL) || (nfsroot == NULL)) return(SESYSERR);
 
 	if (! *initialized && (c = init_cwd_hostname())) return (c);
 	if (*argvi != '/' && strstr (argvi, ":/") == NULL) {
@@ -212,35 +213,35 @@ int DLL_DECL build_linkname(argvi, path, size, req_type)
 			if ((int) strlen (hostname) + (int) strlen (cwd) +
 					(int) strlen (argvi) + 3 > size) {
 				stage_errmsg(func, STG08, argvi);
-				return (USERR);
+				return (EINVAL);
 			} else
 				sprintf (path, "%s:%s/%s", hostname, cwd, argvi);
 		else
 			if ((int) strlen (cwd) + (int) strlen (argvi) + 2 > size) {
 				stage_errmsg(func, STG08, argvi);
-				return (USERR);
+				return (EINVAL);
 			} else
 				sprintf (path, "%s/%s", cwd, argvi);
 	} else {
 		if (strlen(argvi) > CA_MAXPATHLEN) {
 			stage_errmsg(func, STG08, argvi);
-			return (USERR);
+			return (EINVAL);
 		}
 		strcpy (buf, argvi);
 		if ((p = strrchr (buf, '/')) != NULL) {
 			*p = '\0';
 			if (resolvelinks (buf, path, size - strlen (p+1) - 1, req_type) < 0) {
 				stage_errmsg(func, STG08, argvi);
-				return (USERR);
+				return (EINVAL);
 			}
 			*p = '/';
 		} else {
 			stage_errmsg(func, STG08, argvi);
-			return (USERR);
+			return (EINVAL);
 		}
 		if (((int) strlen (path) + (int) strlen (p) + 1) > size) {
 			stage_errmsg(func, STG08, argvi);
-			return (USERR);
+			return (EINVAL);
 		}
 		strcat (path, p);
 	}
@@ -267,7 +268,7 @@ int DLL_DECL build_Upath(fun, path, size, req_type)
 	Cglobals_get (&initialized_key, (void **)&initialized, sizeof(int));
 	Cglobals_get (&nfsroot_key, (void **)&nfsroot, (size_t) (MAXPATH));
 
-	if ((cwd == NULL) || (hostname == NULL) || (initialized == NULL) || (nfsroot == NULL)) return(SYERR);
+	if ((cwd == NULL) || (hostname == NULL) || (initialized == NULL) || (nfsroot == NULL)) return(SESYSERR);
 
 	if (! *initialized && (c = init_cwd_hostname())) return (c);
 #if _IBMESA
@@ -286,13 +287,13 @@ int DLL_DECL build_Upath(fun, path, size, req_type)
 		if ((int) strlen (hostname) + (int) strlen (cwd) +
 				(int) strlen (buf) + 3 > size) {
 			stage_errmsg(func, STG08, buf);
-			return (USERR);
+			return (EINVAL);
 		} else
 			sprintf (path, "%s:%s/%s", hostname, cwd, buf);
 	else
 		if ((int) strlen (cwd) + (int) strlen (buf) + 2 > size) {
 			stage_errmsg(func, STG08, buf);
-			return (USERR);
+			return (EINVAL);
 		} else
 			sprintf (path, "%s/%s", cwd, buf);
 #endif
