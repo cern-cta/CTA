@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.84 2002/04/11 10:08:53 jdurand Exp $
+ * $Id: procqry.c,v 1.85 2002/04/11 16:40:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.84 $ $Date: 2002/04/11 10:08:53 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.85 $ $Date: 2002/04/11 16:40:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -1088,7 +1088,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					if (mintime_flag != 0) {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									 display_side_flag) ?
+									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n",
@@ -1142,7 +1142,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					} else {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									 display_side_flag) ?
+									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n",
