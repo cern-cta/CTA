@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2005/01/22 19:25:49 $ $Author: jdurand $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2005/01/24 11:17:44 $ $Author: sponcec3 $
  *
  *
  *
@@ -666,15 +666,9 @@ extern "C" {
    char** mountPoint, char** diskServer) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      std::vector<std::string> fss;
-      std::vector<std::string> ms;
-      for (unsigned int i = 0; i < fileSystemsNb; i++) {
-        fss.push_back(fileSystems[i]);
-        ms.push_back(machines[i]);
-      }
       std::string mp, ds;
       stgSvc->stgSvc->bestFileSystemForJob
-        (fss, ms, minFree, &mp, &ds);
+        (fileSystems, machines, fileSystemsNb, minFree, &mp, &ds);
       *mountPoint = strdup(mp.c_str());
       *diskServer = strdup(ds.c_str());
     } catch (castor::exception::Exception e) {

@@ -578,8 +578,9 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void bestFileSystemForJob
-        (const std::vector<std::string>& fileSystems,
-         const std::vector<std::string>& machines,
+        (char** fileSystems,
+         char** machines,
+         unsigned int fileSystemsNb,
          u_signed64 minFree,
          std::string* mountPoint,
          std::string* diskServer)

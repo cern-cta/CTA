@@ -4,7 +4,7 @@
 /* A small table used to cross check code and DB versions */
 DROP TABLE CastorVersion;
 CREATE TABLE CastorVersion (version VARCHAR(2048));
-INSERT INTO CastorVersion VALUES ('2.0.0.2');
+INSERT INTO CastorVersion VALUES ('2.0.0.3');
 
 /* Indexes related to CastorFiles */
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
@@ -200,8 +200,8 @@ END;
 CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR(2048), status NUMBER, fsWeight NUMBER, mountPoint VARCHAR(2048), diskServer VARCHAR(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
+  TYPE "strList" IS TABLE OF VARCHAR(2048) index by binary_integer;
 END castor;
-CREATE OR REPLACE TYPE "strList" IS TABLE OF VARCHAR(2048);
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
 /* PL/SQL method implementing isSubRequestToSchedule */
@@ -542,7 +542,7 @@ END;
 
 /* PL/SQL method implementing bestFileSystemForJob */
 CREATE OR REPLACE PROCEDURE bestFileSystemForJob
-(fileSystems IN strList, machines IN strList,
+(fileSystems IN castor."strList", machines IN castor."strList",
  minFree IN INTEGER, rMountPoint OUT VARCHAR,
  rDiskServer OUT VARCHAR) AS
  ds NUMBER;
