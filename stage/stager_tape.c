@@ -1,5 +1,5 @@
 /*
- * $Id: stager_tape.c,v 1.3 2001/12/20 11:40:34 jdurand Exp $
+ * $Id: stager_tape.c,v 1.4 2002/02/05 15:30:16 jdurand Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.3 $ $Date: 2001/12/20 11:40:34 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.4 $ $Date: 2002/02/05 15:30:16 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -70,6 +70,7 @@ extern int sendrep _PROTO((int, int, ...));
 extern int sendrep _PROTO(());
 #endif
 extern int stglogit _PROTO(());
+extern char *stglogflags _PROTO((char *, char *, u_signed64));
 
 int stage_tape _PROTO(());
 void cleanup _PROTO(());
@@ -86,6 +87,7 @@ int get_subreqid _PROTO((struct stgcat_entry *));
 char func[16];                      /* This executable name in logging */
 int Aflag;                          /* Allocation flag */
 int api_flag;                       /* Api flag, .e.g we will NOT re-arrange the file sequences in case of a tape request */
+int api_flags;                      /* Api flags themselves */
 int concat_off_fseq;                /* Fseq where begin concatenation off */
 int silent;                         /* Tells if we are running in silent mode or not */
 int use_subreqid;                   /* Tells if we allow asynchroneous callbacks from RTCOPY */
@@ -351,8 +353,12 @@ int main(argc,argv)
 #ifdef STAGER_DEBUG
 	sendrep(rpfd, MSG_ERR, "[DEBUG] api_flag = %d\n", api_flag);
 #endif
+	api_flags = strtou64(argv[11]);
+#ifdef STAGER_DEBUG
+	sendrep(rpfd, MSG_ERR, "[DEBUG] api_flags = %s\n", stglogflags(NULL,NULL,(u_signed64) api_flags));
+#endif
 #ifdef __INSURE__
-	tmpfile = argv[11];
+	tmpfile = argv[12];
 #ifdef STAGER_DEBUG
 	sendrep(rpfd, MSG_ERR, "[DEBUG] tmpfile = %s\n", tmpfile);
 #endif
