@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.53 2001/03/29 10:53:03 jdurand Exp $
+ * $Id: stage.h,v 1.54 2001/04/07 10:20:35 jdurand Exp $
  */
 
 /*
@@ -327,6 +327,7 @@ struct waitq {
 	char	waiting_pool[CA_MAXPOOLNAMELEN+1];	/* if waiting space */
 	int	clnreq_reqid;		/* disk full reported by rtcopy */
 	int	clnreq_rpfd;
+	int	clnreq_waitingreqid; /* Gives exact reqid of the stcp that is in WAITING_SPC stage */
 	int	status;
 	int	nretry;
 	int	Aflag; /* Deferred allocation (path returned to RTCOPY after tape position) */

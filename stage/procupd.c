@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.71 2001/03/30 09:45:20 jdurand Exp $
+ * $Id: procupd.c,v 1.72 2001/04/07 10:20:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.71 $ $Date: 2001/03/30 09:45:20 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.72 $ $Date: 2001/04/07 10:20:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -651,6 +651,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				sendrep (rpfd, MSG_ERR, "STG02 - build_ipath reaching out of space\n");
 				wqp->clnreq_reqid = upd_reqid;
 				wqp->clnreq_rpfd = rpfd;
+				wqp->clnreq_waitingreqid = stcp->reqid;
 				stcp->status |= WAITING_SPC;
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
@@ -857,6 +858,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		wqp->status = 0;
 		wqp->clnreq_reqid = upd_reqid;
 		wqp->clnreq_rpfd = rpfd;
+		wqp->clnreq_waitingreqid = stcp->reqid;
 		stcp->status |= WAITING_SPC;
 #ifdef USECDB
 		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {

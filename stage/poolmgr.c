@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.131 2001/03/30 10:42:06 jdurand Exp $
+ * $Id: poolmgr.c,v 1.132 2001/04/07 10:20:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.131 $ $Date: 2001/03/30 10:42:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.132 $ $Date: 2001/04/07 10:20:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1057,52 +1057,53 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 	for (wqp = waitqp, iwaitq = 1; wqp; wqp = wqp->next, iwaitq++) {
       struct stgcat_entry *stcp;
       sendrep (rpfd, MSG_OUT, "\n--------------------\nWaiting Queue No %d\n--------------------\n", iwaitq);
-      sendrep (rpfd, MSG_OUT, "pool_user            %s\n", wqp->pool_user);
-      sendrep (rpfd, MSG_OUT, "clienthost           %s\n", wqp->clienthost);
-      sendrep (rpfd, MSG_OUT, "req_user             %s\n", wqp->req_user);
-      sendrep (rpfd, MSG_OUT, "req_uid              %ld\n", (unsigned long) wqp->req_uid);
-      sendrep (rpfd, MSG_OUT, "req_gid              %ld\n", (unsigned long) wqp->req_gid);
-      sendrep (rpfd, MSG_OUT, "rtcp_user            %s\n", wqp->rtcp_user);
-      sendrep (rpfd, MSG_OUT, "rtcp_group           %s\n", wqp->rtcp_group);
-      sendrep (rpfd, MSG_OUT, "rtcp_uid             %ld\n", (unsigned long) wqp->rtcp_uid);
-      sendrep (rpfd, MSG_OUT, "rtcp_gid             %ld\n", (unsigned long) wqp->rtcp_gid);
-      sendrep (rpfd, MSG_OUT, "clientpid            %ld\n", (unsigned long) wqp->clientpid);
-      sendrep (rpfd, MSG_OUT, "uniqueid gives       Pid=0x%lx (%d) CthreadId+1=0x%lx (-> Tid=%d)\n",
+      sendrep (rpfd, MSG_OUT, "pool_user                %s\n", wqp->pool_user);
+      sendrep (rpfd, MSG_OUT, "clienthost               %s\n", wqp->clienthost);
+      sendrep (rpfd, MSG_OUT, "req_user                 %s\n", wqp->req_user);
+      sendrep (rpfd, MSG_OUT, "req_uid                  %ld\n", (unsigned long) wqp->req_uid);
+      sendrep (rpfd, MSG_OUT, "req_gid                  %ld\n", (unsigned long) wqp->req_gid);
+      sendrep (rpfd, MSG_OUT, "rtcp_user                %s\n", wqp->rtcp_user);
+      sendrep (rpfd, MSG_OUT, "rtcp_group               %s\n", wqp->rtcp_group);
+      sendrep (rpfd, MSG_OUT, "rtcp_uid                 %ld\n", (unsigned long) wqp->rtcp_uid);
+      sendrep (rpfd, MSG_OUT, "rtcp_gid                 %ld\n", (unsigned long) wqp->rtcp_gid);
+      sendrep (rpfd, MSG_OUT, "clientpid                %ld\n", (unsigned long) wqp->clientpid);
+      sendrep (rpfd, MSG_OUT, "uniqueid gives           Pid=0x%lx (%d) CthreadId+1=0x%lx (-> Tid=%d)\n",
                (unsigned long) (wqp->uniqueid / 0xFFFFFFFF),
                (int) (wqp->uniqueid / 0xFFFFFFFF),
                (unsigned long) (wqp->uniqueid - (wqp->uniqueid / 0xFFFFFFFF) * 0xFFFFFFFF),
                (int) (wqp->uniqueid - (wqp->uniqueid / 0xFFFFFFFF) * 0xFFFFFFFF) - 1
                );
-      sendrep (rpfd, MSG_OUT, "copytape             %d\n", wqp->copytape);
-      sendrep (rpfd, MSG_OUT, "Pflag                %d\n", wqp->Pflag);
-      sendrep (rpfd, MSG_OUT, "Upluspath            %d\n", wqp->Upluspath);
-      sendrep (rpfd, MSG_OUT, "reqid                %d\n", wqp->reqid);
-      sendrep (rpfd, MSG_OUT, "key                  %d\n", wqp->key);
-      sendrep (rpfd, MSG_OUT, "rpfd                 %d\n", wqp->rpfd);
-      sendrep (rpfd, MSG_OUT, "ovl_pid              %d\n", wqp->ovl_pid);
-      sendrep (rpfd, MSG_OUT, "nb_subreqs           %d\n", wqp->nb_subreqs);
-      sendrep (rpfd, MSG_OUT, "nbdskf               %d\n", wqp->nbdskf);
-      sendrep (rpfd, MSG_OUT, "nb_waiting_on_req    %d\n", wqp->nb_waiting_on_req);
-      sendrep (rpfd, MSG_OUT, "nb_clnreq            %d\n", wqp->nb_clnreq);
-      sendrep (rpfd, MSG_OUT, "waiting_pool         %d\n", wqp->waiting_pool);
-      sendrep (rpfd, MSG_OUT, "clnreq_reqid         %d\n", wqp->clnreq_reqid);
-      sendrep (rpfd, MSG_OUT, "clnreq_rpfd          %d\n", wqp->clnreq_rpfd);
-      sendrep (rpfd, MSG_OUT, "status               0x%lx\n", (unsigned long) wqp->status);
-      sendrep (rpfd, MSG_OUT, "nretry               %d\n", wqp->nretry);
-      sendrep (rpfd, MSG_OUT, "Aflag                %d\n", wqp->Aflag);
-      sendrep (rpfd, MSG_OUT, "concat_off_fseq      %d\n", wqp->concat_off_fseq);
-      sendrep (rpfd, MSG_OUT, "api_out              %d\n", wqp->api_out);
-      sendrep (rpfd, MSG_OUT, "openmode             %d\n", (int) wqp->openmode);
-      sendrep (rpfd, MSG_OUT, "openflags            0x%lx\n", (unsigned long) wqp->openflags);
-      sendrep (rpfd, MSG_OUT, "silent               %d\n", wqp->silent);
-      sendrep (rpfd, MSG_OUT, "use_subreqid         %d\n", wqp->use_subreqid);
-      sendrep (rpfd, MSG_OUT, "save_nbsubreqid      %d\n", wqp->save_nbsubreqid);
+      sendrep (rpfd, MSG_OUT, "copytape                 %d\n", wqp->copytape);
+      sendrep (rpfd, MSG_OUT, "Pflag                    %d\n", wqp->Pflag);
+      sendrep (rpfd, MSG_OUT, "Upluspath                %d\n", wqp->Upluspath);
+      sendrep (rpfd, MSG_OUT, "reqid                    %d\n", wqp->reqid);
+      sendrep (rpfd, MSG_OUT, "key                      %d\n", wqp->key);
+      sendrep (rpfd, MSG_OUT, "rpfd                     %d\n", wqp->rpfd);
+      sendrep (rpfd, MSG_OUT, "ovl_pid                  %d\n", wqp->ovl_pid);
+      sendrep (rpfd, MSG_OUT, "nb_subreqs               %d\n", wqp->nb_subreqs);
+      sendrep (rpfd, MSG_OUT, "nbdskf                   %d\n", wqp->nbdskf);
+      sendrep (rpfd, MSG_OUT, "nb_waiting_on_req        %d\n", wqp->nb_waiting_on_req);
+      sendrep (rpfd, MSG_OUT, "nb_clnreq                %d\n", wqp->nb_clnreq);
+      sendrep (rpfd, MSG_OUT, "waiting_pool             %d\n", wqp->waiting_pool);
+      sendrep (rpfd, MSG_OUT, "clnreq_reqid             %d\n", wqp->clnreq_reqid);
+      sendrep (rpfd, MSG_OUT, "clnreq_rpfd              %d\n", wqp->clnreq_rpfd);
+      sendrep (rpfd, MSG_OUT, "wqp->clnreq_waitingreqid %d\n", wqp->clnreq_waitingreqid);
+      sendrep (rpfd, MSG_OUT, "status                   0x%lx\n", (unsigned long) wqp->status);
+      sendrep (rpfd, MSG_OUT, "nretry                   %d\n", wqp->nretry);
+      sendrep (rpfd, MSG_OUT, "Aflag                    %d\n", wqp->Aflag);
+      sendrep (rpfd, MSG_OUT, "concat_off_fseq          %d\n", wqp->concat_off_fseq);
+      sendrep (rpfd, MSG_OUT, "api_out                  %d\n", wqp->api_out);
+      sendrep (rpfd, MSG_OUT, "openmode                 %d\n", (int) wqp->openmode);
+      sendrep (rpfd, MSG_OUT, "openflags                0x%lx\n", (unsigned long) wqp->openflags);
+      sendrep (rpfd, MSG_OUT, "silent                   %d\n", wqp->silent);
+      sendrep (rpfd, MSG_OUT, "use_subreqid             %d\n", wqp->use_subreqid);
+      sendrep (rpfd, MSG_OUT, "save_nbsubreqid          %d\n", wqp->save_nbsubreqid);
       if (wqp->save_subreqid != NULL) {
         for (i = 0, wfp = wqp->wf; i < wqp->save_nbsubreqid; i++, wfp++) {
           sendrep (rpfd, MSG_OUT, "\tsave_subreqid[%d] = %d\n", i, wqp->save_subreqid[i]);
         }
       }
-      sendrep (rpfd, MSG_OUT, "last_rwcounterfs_vs_R %d\n", wqp->last_rwcounterfs_vs_R);
+      sendrep (rpfd, MSG_OUT, "last_rwcounterfs_vs_R     %d\n", wqp->last_rwcounterfs_vs_R);
       for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
         for (stcp = stcs; stcp < stce; stcp++) {
           if (wfp->subreqid == stcp->reqid) {

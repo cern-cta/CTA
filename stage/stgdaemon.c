@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.129 2001/03/30 08:28:59 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.130 2001/04/07 10:20:42 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.129 $ $Date: 2001/03/30 08:28:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.130 $ $Date: 2001/04/07 10:20:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -2073,15 +2073,23 @@ void checkwaitq()
 			rpfd = wqp->clnreq_rpfd;
 			wqp->clnreq_reqid = 0;
 			wqp->clnreq_rpfd = 0;
+			/* wqp->clnreq_waitingreqid contains the reqid that is WAITING_SPC */
+			/*
 			for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++)
 				if (! wfp->waiting_on_req) break;
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (wfp->subreqid == stcp->reqid)
 					break;
 			}
+			*/
+			for (stcp = stcs; stcp < stce; stcp++) {
+				if (wqp->clnreq_waitingreqid == stcp->reqid)
+					break;
+			}
 			sendrep (rpfd, MSG_OUT, stcp->ipath);
 			sendrep (rpfd, STAGERC, STAGEUPDC, wqp->status);
 			wqp->status = 0;
+			wqp->clnreq_waitingreqid = 0;
 			wqp = wqp->next;
 		} else if (wqp->status) {
 			/* request failed */
