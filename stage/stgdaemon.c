@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.178 2002/03/05 14:44:04 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.179 2002/03/06 17:24:18 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.178 $ $Date: 2002/03/05 14:44:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.179 $ $Date: 2002/03/06 17:24:18 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -2406,6 +2406,10 @@ void checkwaitq()
 				/* process exits. In this case we are even not able to */
 				/* execute fork_exec_stager ... */
 				wqp->nretry++;
+				if (! (wqp->nretry < (wqp->noretry ? 0 : MAXRETRY))) {
+					/* Has reached the maximum number of retries : there is a system error in here... */
+					wqp->status = SYERR;
+				}
 			}
 			wqp = wqp->next;
 		} else if ((wqp->clnreq_reqid != 0) &&	/* space requested by rtcopy */
