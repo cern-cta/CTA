@@ -4,10 +4,10 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_enterdenmap.c,v $ $Revision: 1.1 $ $Date: 2000/03/06 13:54:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_enterdenmap.c,v $ $Revision: 1.2 $ $Date: 2000/03/06 14:32:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
-/*      vmgr_enterdenmap - enter a new model of cartridge */
+/*      vmgr_enterdenmap - enter a new triplet model/media_letter/density */
 
 #include <errno.h>
 #include <sys/types.h>
