@@ -37,7 +37,7 @@ struct C_IObject_t;
  * Note that the instance should be released by the caller.
  * @return A pointer to the RequestReplier instance
  */
-Creplier_RequestReplier_t *Creplier_RequestReplier_getInstance();
+struct Creplier_RequestReplier_t *Creplier_RequestReplier_getInstance();
 
 /**
  * Adds a client to the queue of clients waiting for a response.
@@ -51,16 +51,16 @@ Creplier_RequestReplier_t *Creplier_RequestReplier_getInstance();
  * A detailed error message can be retrieved by calling
  * Creplier_RequestReplier_errorMsg
  */
-int Creplier_RequestReplier_replyToClient(Creplier_RequestReplier_t *rr,
-                                          C_IClient_t *client,
-                                          C_IObject_t *response,
+int Creplier_RequestReplier_replyToClient(struct Creplier_RequestReplier_t *rr,
+                                          struct C_IClient_t *client,
+                                          struct C_IObject_t *response,
                                           int isLastResponse);
 
 /**
  * Releases an instance of the RequestReplier singleton
  * @param rr the request replier instance to release
  */
-void Creplier_RequestReplier_release(Creplier_RequestReplier_t *rr);
+void Creplier_RequestReplier_release(struct Creplier_RequestReplier_t *rr);
 
 /**
  * Returns the error message associated to the last error.
