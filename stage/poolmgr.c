@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.225 2002/10/01 09:23:38 jdurand Exp $
+ * $Id: poolmgr.c,v 1.226 2002/10/02 03:57:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.225 $ $Date: 2002/10/01 09:23:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.226 $ $Date: 2002/10/02 03:57:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -5764,17 +5764,24 @@ int pool_elements_cmp(p1,p2)
 
 				if (fp1->nbwriteaccess == fp2->nbwriteaccess) {
 
-				  pool_elements_cmp_vs_last_allocation:
-
-					/* We compare last known allocation timestamp */
-					if (fp1->last_allocation < fp2->last_allocation) {
-						/* filesystem fp1 had a successful space allocation that is older than filesystem fp2 */
-						/* so fp1 is our best candidate in order to simulate a successful turnaround */
+				  pool_elements_cmp_vs_free:
+					
+					/* We compare v.s. free space */
+					if (fp1->free > fp2->free) {
 						return(-1);
-					} else if (fp1->last_allocation > fp2->last_allocation) {
+					} else if (fp1->free < fp2->free) {
 						return(1);
 					} else {
-						return(0);
+						/* Low probability ... */
+						/* We compare last known allocation timestamp */
+						if (fp1->last_allocation < fp2->last_allocation) {
+							/* filesystem fp1 had a successful space allocation that is older than filesystem fp2 */
+							return(-1);
+						} else if (fp1->last_allocation > fp2->last_allocation) {
+							return(1);
+						} else {
+							return(0);
+						}
 					}
 
 				} else {
@@ -5791,7 +5798,7 @@ int pool_elements_cmp(p1,p2)
 
 				if ((fp1->nbwriteaccess - fp1->nbreadaccess) == (fp2->nbwriteaccess - fp2->nbreadaccess)) {
 
-					goto pool_elements_cmp_vs_last_allocation;
+					goto pool_elements_cmp_vs_free;
 
 				} else if ((fp1->nbwriteaccess - fp1->nbreadaccess) < (fp2->nbwriteaccess - fp2->nbreadaccess)) {
 
@@ -5806,7 +5813,7 @@ int pool_elements_cmp(p1,p2)
 
 				if ((fp1->nbwriteaccess + fp1->nbreadaccess) == (fp2->nbwriteaccess + fp2->nbreadaccess)) {
 
-					goto pool_elements_cmp_vs_last_allocation;
+					goto pool_elements_cmp_vs_free;
 
 				} else if ((fp1->nbwriteaccess + fp1->nbreadaccess) < (fp2->nbwriteaccess + fp2->nbreadaccess)) {
 
@@ -5827,7 +5834,7 @@ int pool_elements_cmp(p1,p2)
 
 				if (fp1->nbreadaccess == fp2->nbreadaccess) {
 
-					goto pool_elements_cmp_vs_last_allocation;
+					goto pool_elements_cmp_vs_free;
 
 				} else {
 
@@ -5843,7 +5850,7 @@ int pool_elements_cmp(p1,p2)
 
 				if ((fp1->nbreadaccess - fp1->nbwriteaccess) == (fp2->nbreadaccess - fp2->nbwriteaccess)) {
 
-					goto pool_elements_cmp_vs_last_allocation;
+					goto pool_elements_cmp_vs_free;
 
 				} else if ((fp1->nbreadaccess - fp1->nbwriteaccess) < (fp2->nbreadaccess - fp2->nbwriteaccess)) {
 
@@ -5858,7 +5865,7 @@ int pool_elements_cmp(p1,p2)
 
 				if ((fp1->nbreadaccess + fp1->nbwriteaccess) == (fp2->nbreadaccess + fp2->nbwriteaccess)) {
 
-					goto pool_elements_cmp_vs_last_allocation;
+					goto pool_elements_cmp_vs_free;
 
 				} else if ((fp1->nbreadaccess + fp1->nbwriteaccess) < (fp2->nbreadaccess + fp2->nbwriteaccess)) {
 
@@ -5879,7 +5886,7 @@ int pool_elements_cmp(p1,p2)
 
 		if ((fp1->nbreadserver + fp1->nbwriteserver) == (fp2->nbreadserver + fp2->nbwriteserver)) {
       
-			goto pool_elements_cmp_vs_last_allocation;
+			goto pool_elements_cmp_vs_free;
       
 		} else if ((fp1->nbreadserver + fp1->nbwriteserver) < (fp2->nbreadserver + fp2->nbwriteserver)) {
       
