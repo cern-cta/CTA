@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: osdep.h,v $ $Revision: 1.3 $ $Date: 1999/10/13 13:32:30 $ CERN IT-PDP/IP Frederic Hemmer
+ * @(#)$RCSfile: osdep.h,v $ $Revision: 1.4 $ $Date: 1999/10/13 14:10:33 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */
@@ -52,6 +52,7 @@ typedef __int64			signed64;
 typedef unsigned __int64	u_signed64;
 typedef long gid_t;
 typedef long uid_t;
+typedef int mode_t;
 #endif
 
 typedef signed64 HYPER;
