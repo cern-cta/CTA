@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.30 $ $Date: 2000/08/03 12:25:38 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.31 $ $Date: 2000/09/25 10:26:37 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -121,7 +121,7 @@ static int rtcp_CheckClientAuth(rtcpHdr_t *hdr, shift_client_t *req) {
         rtcp_log(LOG_DEBUG,"Check %s authorization in %s\n",
                  req->clienthost,AUTH_HOSTS);
         if ( (fs = fopen(AUTH_HOSTS,"r")) == NULL ) {
-            rtcp_log(LOG_DEBUG,"File %s does not exist. Any host is authorized\n");
+            rtcp_log(LOG_DEBUG,"File %s does not exist. Any host is authorized\n",AUTH_HOSTS);
             authorized = 1;
         } else {
             while( fscanf(fs, "%s%*[^\n]\n", buf) != EOF ) {
