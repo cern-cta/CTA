@@ -1,0 +1,125 @@
+.\" @(#)$RCSfile: rtcpclientd.man,v $ $Revision: 1.1 $ $Date: 2005/03/10 10:09:30 $ CERN CERN IT-PDP/DM Olof Barring
+.\" Copyright (C) 2000-2005 by CERN IT-ADC
+.\" All rights reserved
+.\"
+.nh
+.TH RTCPD 1 "$Date: 2005/03/10 10:09:30 $" CASTOR "RTCOPY client daemon"
+.SH NAME
+rtcpclientd \- CASTOR remote tape copy client daemon
+.SH SYNOPSIS
+.B rtcpclientd
+[
+.BI \-d
+] [
+.BI \-f " facility-name"
+] [
+.BI \-g " group-name"
+] [
+.BI \-p " port-number"
+] [
+.BI \-u " user-name"
+]
+.SH DESCRIPTION
+\fBrtcpclientd\fP is part of the CASTOR stager framework where it is the common
+VDQM, VMGR and tape mover client for all tape requests triggered by the stager.
+It runs as a central service interfacing the stager catalog database from which
+it periodically retrieves new tape requests to be processed. The \fBrtcpclientd\fP
+daemon forks a program called \fBmigrator\fP for all running tape migration requests
+and \fBrecaller\fP for all running tape recall requests. This means that there at
+most can be as many such child processes as there are available tape drives.
+.SH OPTIONS
+The \fBrtcpclientd\fP takes the following options (all optional)
+.TP
+.BI \-d
+switch to run the daemon in foreground debug mode
+.TP
+.BI \-f " facility-name"
+specifies the DLF facility name that the daemon should use for logging. The
+facility must have been previously created in DLF. The default facility name
+is
+.B rtcpcld
+.TP
+.BI \-g " group-name"
+the user group under which the daemon should run. The \fBrtcpclientd\fP daemon
+always run under a user/group different from root. The reason for this is
+that the tape mover by default does not accept tape requests from root. The
+default group name is
+.B st
+.TP
+.BI \-p " port-number"
+is the port number to used for the port number that the daemon will use
+when listening for connections from the tape movers. Default is to use
+the same port number (5003) as the tape mover uses for receiving requests from VDQM.
+The default is OK as long as \fBrtcpclientd\fP does not run on the same host
+as the tape mover.
+.TP
+.BI \-u " user-name"
+the user login name under which the daemon should run. The \fBrtcpclientd\fP daemon
+always run under a user/group different from root. The reason for this is
+that the tape mover by default does not accept tape requests from root. The
+default user login name is
+.B stage
+
+.SH ENVIRONMENT
+The following configuration variables in "/etc/castor/castor.conf" are relevant for
+the running of the \fBrtcpclientd\fP service:
+.PP
+.B OraCnvSvc user
+\- Oracle login name to be used when accessing the catalog conversion services
+.PP
+.B OraCnvSvc passwd
+\- Oracle password to be used when accessing the catalog conversion services
+.PP
+.B OraCnvSvc dbName
+\- Oracle (TNS) instance name to be used when accessing the catalog conversion services
+.PP
+.B OraStagerSvc user
+\- Oracle login name to be used when accessing the catalog stager service.
+This is usually the same as for the
+.B OraCnvSvc
+above.
+.PP
+.B OraStagerSvc passwd
+\- Oracle password to be used when accessing the catalog stager service
+This is usually the same as for the
+.B OraCnvSvc
+above.
+.PP
+.B OraStagerSvc dbName
+\- Oracle (TNS) instance name to be used when accessing the catalog stager service
+This is usually the same as for the
+.B OraCnvSvc
+above.
+.PP
+.B rtcpcld LOGDEBUG
+\- specifies the DLF log-destinations for debug messages
+.PP
+.B rtcpcld LOGUSAGE
+\- specifies the DLF log-destinations for usage (tracing) messages
+.PP
+.B rtcpcld LOGSYSTEM
+\- specifies the DLF log-destinations for normal system info messages
+.PP
+.B rtcpcld LOGERROR
+\- specifies the DLF log-destinations for warning messages
+.PP
+.B rtcpcld LOGERROR
+\- specifies the DLF log-destinations for error messages
+.PP
+.B rtcpcld LOGALERT
+\- specifies the DLF log-destinations for alert messages (fully or partially fatal for the service)
+.PP
+.B rtcpcld LOGSECURITY
+\- specifies the DLF log-destinations for failed authentications
+
+.SH FILES
+.TP 1.2i
+.B /etc/castor/castor.conf
+CASTOR configuration file
+
+.SH SEE ALSO
+.BI rtcpd(1castor),
+.BI dlf(1castor)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
