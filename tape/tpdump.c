@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.4 $ $Date: 1999/11/08 07:27:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.5 $ $Date: 1999/11/09 06:30:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpdump - analyse the content of a tape */
@@ -34,7 +34,7 @@ main(argc, argv)
 int	argc;
 char	**argv;
 {
-	char aden[CA_MAXDENLEN+1] = "";
+	static char aden[CA_MAXDENLEN+1] = "";
 	int avg_block_length;
 	int blksiz = -1;
 	char *buffer;
@@ -45,7 +45,7 @@ char	**argv;
 	int density;
 	int dev1tm = 0;	/* by default 2 tapemarks are written at EOI */
 	char devtype[CA_MAXDVTLEN+1];
-	char dgn[CA_MAXDGNLEN+1] = "";
+	static char dgn[CA_MAXDGNLEN+1] = "";
 	struct dgn_rsv dgn_rsv;
 	char *dp;
 	char drive[CA_MAXUNMLEN+1];
@@ -59,6 +59,7 @@ char	**argv;
 	int infd;
 	char infil[CA_MAXPATHLEN+1];
 	char label[81];
+	static char lbltype[4] = "";
 	int lcode;
 	int max_block_length;
 	int maxfile = -1;
@@ -73,8 +74,8 @@ char	**argv;
 	u_signed64 sum_block_length;
 	float tape_used;
 	int toblock = -1;
-	char vid[CA_MAXVIDLEN+1] = "";
-	char vsn[CA_MAXVIDLEN+1] = "";
+	static char vid[CA_MAXVIDLEN+1] = "";
+	static char vsn[CA_MAXVIDLEN+1] = "";
 
 	while ((c = getopt (argc, argv, "B:b:C:d:E:F:g:N:S:T:V:v:")) != EOF) {
 		switch (c) {
@@ -119,6 +120,13 @@ char	**argv;
 			break;
 		case 'd':
 			if (aden[0]) {
+				if (strlen (optarg) <= CA_MAXDENLEN) {
+					strcpy (aden, optarg);
+				} else {
+					fprintf (stderr, TP006, "-d");
+					errflg++;
+				}
+			} else {
 				fprintf (stderr, TP018, "-d");
 				errflg++;
 			}
@@ -144,10 +152,15 @@ char	**argv;
 			}
 			break;
 		case 'g':
-			if (strlen (optarg) <= CA_MAXDGNLEN) {
-				strcpy (dgn, optarg);
+			if (dgn[0]) {
+				if (strlen (optarg) <= CA_MAXDGNLEN) {
+					strcpy (dgn, optarg);
+				} else {
+					fprintf (stderr, TP006, "-g");
+					errflg++;
+				}
 			} else {
-				fprintf (stderr, TP006, "-g\n");
+				fprintf (stderr, TP018, "-g");
 				errflg++;
 			}
 			break;
@@ -204,22 +217,30 @@ char	**argv;
 			break;
 		}
 	}
-	if (vid[0] == '\0' && vsn[0] == '\0') {
+	if (*vid == '\0' && *vsn == '\0') {
 		fprintf (stderr, TP031);
 		errflg++;
 	}
 	if (errflg) {
 		usage (argv[0]);
-		exit (1);
+		exit (USERR);
 	}
 
-	/* Get device group from TMS (if installed) */
+	if (strcmp (dgn, "CT1") == 0) strcpy (dgn, "CART");
+
+	/* Get defaults from TMS (if installed) */
 
 #if TMS
-	if (dgn[0] == '\0' && getdgn (vid, dgn))
-		exit (1);
+	if (tmscheck (vid, vsn, dgn, aden, lbltype, WRITE_DISABLE, NULL))
+		exit (USERR);
+#else
+	if (*vsn == '\0')
+		strcpy (vsn, vid);
+	if (*dgn == '\0')
+		strcpy (dgn, DEFDGN);
+	if (strcmp (dgn, "TAPE") == 0 && *aden == '\0')
+		strcpy (aden, "6250");
 #endif
-	if (strcmp (dgn, "CT1") == 0) strcpy (dgn, "CART");
 
 #if defined(_AIX) && defined(_IBMR2)
 	if (getdvrnam (infil, driver_name) < 0)
@@ -239,7 +260,7 @@ char	**argv;
 
 	strcpy (infil, tempnam (NULL, "tp"));
 	if (c = Ctape_mount (infil, vid, 0, dgn, NULL, NULL, WRITE_DISABLE,
-	    NULL, NULL))
+	    NULL, "blp"))
 		exit (c);
 	if (c = Ctape_position (infil, TPPOSIT_FSEQ, 1, 1, 0, 0, 0, CHECK_FILE,
 	    NULL, NULL, 0, 0, 0, 0))
@@ -301,7 +322,7 @@ char	**argv;
 		break;
 	default:
 		fprintf (stderr, TP006, "-d");
-		errflg++;
+		exit (USERR);
 	}
 
 	if (blksiz < 0)
@@ -361,8 +382,9 @@ char	**argv;
 	/* open path */
 
 	if ((infd = open (infil, O_RDONLY)) < 0) {
-		fprintf (stderr, " DUMP ! OPEN ERROR %d ON INPUT FILE\n", errno);
-		exit (2);
+		fprintf (stderr, " DUMP ! ERROR OPENING TAPE FILE: %s\n",
+			sys_errlist[errno]);
+		exit (SYERR);
 	}
 
 	while (1) {
@@ -531,7 +553,7 @@ char	**argv;
 		printf (" DUMP - DUMP ABORTED\n");
 		close (infd);
 		(void) Ctape_rls (NULL, TPRLS_ALL);
-		exit (1);
+		exit (USERR);
 	}
 
 	if (den <= D6250) {
@@ -582,7 +604,7 @@ char	**argv;
 			fprintf (stderr, " DUMP ! UNABLE TO DETERMINE TAPE OCCUPANCY");
 			close (infd);
 			(void) Ctape_rls (NULL, TPRLS_ALL);
-			exit (2);
+			exit (SYERR);
 		}
 		tach = sense[25];
 		wrap = sense[53];
@@ -751,34 +773,6 @@ int n;
 
 	for (i = 0; i < n; i++)
 		*q++ = a2atab[*p++ & 0xff];
-}
-
-getdgn(vid, dgn)
-char *vid;
-char *dgn;
-{
-	int c, j;
-	int repsize;
-	int reqlen;
-	char tmsdgn[CA_MAXDGNLEN+1];
-	char tmrepbuf[132];
-	char tmsreq[80];
-
-	sprintf (tmsreq, "QVOL %s (GENERIC SHIFT MESSAGE", vid);
-	reqlen = strlen (tmsreq);
-	repsize = sizeof(tmrepbuf);
-	c = sysreq ("TMS", tmsreq, &reqlen, tmrepbuf, &repsize);
-	if (c) {
-		fprintf (stderr, "%s\n", tmrepbuf);
-		return (c);
-	}
-	strncpy (tmsdgn, tmrepbuf+ 25, 6);
-	tmsdgn[6] = '\0';
-	for  (j = 0; tmsdgn[j]; j++)
-		if (tmsdgn[j] == ' ') break;
-	tmsdgn[j] = '\0';
-	strcpy (dgn, tmsdgn);
-	return (0);
 }
 
 islabel(label)
