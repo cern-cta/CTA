@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.34 2000/10/16 11:11:16 jdurand Exp $
+ * $Id: procupd.c,v 1.35 2000/10/17 14:21:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.34 $ $Date: 2000/10/16 11:11:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.35 $ $Date: 2000/10/17 14:21:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -58,7 +58,10 @@ extern int check_waiting_on_req _PROTO((int, int));
 extern int check_coff_waiting_on_req _PROTO((int, int));
 extern struct stgcat_entry *newreq _PROTO(());
 extern void update_migpool _PROTO((struct stgcat_entry *, int));
-extern int updfreespace _PROTO((char *, char *, int));
+extern int updfreespace _PROTO((char *, char *, signed64));
+
+#define IS_RC_OK(rc) (rc == 0)
+#define IS_RC_WARNING(rc) (rc == LIMBYSZ || rc == BLKSKPD || rc == TPE_LSZ || (rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE)))
 
 void
 procupdreq(req_data, clienthost)
@@ -269,7 +272,8 @@ procupdreq(req_data, clienthost)
 	sendrep(rpfd, MSG_ERR, "[DEBUG] procupd : rc=%d, concat_off_fseq=%d, i=%d, nbdskf=%d\n", rc, wqp->concat_off_fseq, i, wqp->nbdskf);
 #endif
 
-	if (rc == 0 && wqp->concat_off_fseq > 0 && i == (wqp->nbdskf - 1) && stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] == '-') {
+	if ((IS_RC_OK(rc) || IS_RC_WARNING(rc)) &&
+		wqp->concat_off_fseq > 0 && i == (wqp->nbdskf - 1) && stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] == '-') {
 		struct stgcat_entry *stcp_ok;
 		int save_nextreqid;
 		struct waitf *wfp_ok;
@@ -462,10 +466,9 @@ procupdreq(req_data, clienthost)
 		goto reply;
 	}
 	p_cmd = s_cmd[stcp->status & 0xF];
-	if (rc == 0)
+	if (IS_RC_OK(rc))
 		p_stat = "succeeded";
-	else if (rc == LIMBYSZ || rc == BLKSKPD || rc == TPE_LSZ ||
-					 (rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE)))
+	else if (IS_RC_WARNING(rc))
 		p_stat = "warning";
 	else
 		p_stat = "failed";
@@ -606,7 +609,7 @@ procupdreq(req_data, clienthost)
 				strcmp (stcp->ipath, (wfp+1)->upath))
 			create_link (stcp, (wfp+1)->upath);
 		updfreespace (stcp->poolname, stcp->ipath,
-									stcp->size * ONE_MB - (int)stcp->actual_size);
+									(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) stcp->actual_size));
 		check_waiting_on_req (subreqid, STAGED);
 	}
 	savereqs  ();

@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.70 2000/10/09 07:06:57 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.71 2000/10/17 14:21:06 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.70 $ $Date: 2000/10/09 07:06:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.71 $ $Date: 2000/10/17 14:21:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -165,7 +165,7 @@ extern void update_migpool _PROTO((struct stgcat_entry *, int));
 extern int iscleanovl _PROTO((int, int));
 extern int ismigovl _PROTO((int, int));
 extern int selectfs _PROTO((char *, int *, char *));
-extern int updfreespace _PROTO((char *, char *, int));
+extern int updfreespace _PROTO((char *, char *, signed64));
 
 main(argc,argv)
 		 int argc;
@@ -473,7 +473,7 @@ main(argc,argv)
 #endif
 			}
 			updfreespace (stcp->poolname, stcp->ipath,
-										(int)stcp->actual_size - stcp->size * ONE_MB);
+										(signed64) ((signed64) stcp->actual_size - (signed64) stcp->size * (signed64) ONE_MB));
 			stcp++;
 		} else if (stcp->status == STAGEWRT) {
 			delreq (stcp,0);
@@ -534,7 +534,7 @@ main(argc,argv)
 #endif
 					}
 					updfreespace (stcp->poolname, stcp->ipath,
-							(int)stcp->actual_size - stcp->size * ONE_MB);
+							(signed64) ((signed64) stcp->actual_size - (signed64) stcp->size * (signed64) ONE_MB));
 				} else if (! c) {
 					if ((stcp->status & (STAGEOUT | CAN_BE_MIGR)) == (STAGEOUT | CAN_BE_MIGR)) {
 						/* This is a file for automatic migration */
@@ -1578,8 +1578,8 @@ delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
 				/* This is a file coming from (automatic or not) migration */
 				update_migpool(stcp,-1);
 			}
-			updfreespace (stcp->poolname, stcp->ipath, (freersv) ?
-										(stcp->size * ONE_MB) : actual_size);
+			updfreespace (stcp->poolname, stcp->ipath, (signed64) ((freersv) ?
+										((signed64) stcp->size * (signed64) ONE_MB) : ((signed64) actual_size)));
 		}
 	}
 	if (remove_hsm) {
@@ -2024,7 +2024,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 		if (rfio_stat (stcp->ipath, &st) == 0)
 			stcp->actual_size = st.st_size;
 		updfreespace (stcp->poolname, stcp->ipath,
-									stcp->size * ONE_MB - (int)stcp->actual_size);
+									(signed64) ((signed64) stcp->size * (signed64) ONE_MB - (signed64) stcp->actual_size));
 	}
 	if (req_type == STAGEPUT) {
 		stcp->status = STAGEPUT;

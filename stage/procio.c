@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.43 2000/10/09 07:58:27 jdurand Exp $
+ * $Id: procio.c,v 1.44 2000/10/17 14:21:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.43 $ $Date: 2000/10/09 07:58:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.44 $ $Date: 2000/10/17 14:21:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -78,7 +78,7 @@ extern int nextreqid _PROTO(());
 int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *));
 int maxfseq_per_vid _PROTO((struct stgcat_entry *, int, char *, char *));
 extern void update_migpool _PROTO((struct stgcat_entry *, int));
-extern int updfreespace _PROTO((char *, char *, int));
+extern int updfreespace _PROTO((char *, char *, signed64));
 
 #ifdef MIN
 #undef MIN
@@ -940,7 +940,7 @@ void procioreq(req_type, req_data, clienthost)
 						strcpy (wqp->waiting_pool, stcp->poolname);
 					} else if (c) {
 						updfreespace (stcp->poolname, stcp->ipath,
-													stcp->size * ONE_MB);
+													(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
 						delreq (stcp,1);
 						goto reply;
 					}
@@ -1019,7 +1019,7 @@ void procioreq(req_type, req_data, clienthost)
 				strcpy (wqp->waiting_pool, stcp->poolname);
 			} else if (c) {
 				updfreespace (stcp->poolname, stcp->ipath,
-							stcp->size * ONE_MB);
+							(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
 				delreq (stcp,1);
 				goto reply;
 			} else {
@@ -1228,7 +1228,7 @@ void procioreq(req_type, req_data, clienthost)
 			}
 			if (! wfp->waiting_on_req)
 				updfreespace (stcp->poolname, stcp->ipath,
-					stcp->size * ONE_MB);
+					(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
 			delreq (stcp,0);
 		}
 		rmfromwq (wqp);
@@ -1470,7 +1470,7 @@ void procputreq(req_data, clienthost)
 				if (rfio_stat (stcp->ipath, &st) == 0)
 					stcp->actual_size = st.st_size;
 				updfreespace (stcp->poolname, stcp->ipath,
-					stcp->size * ONE_MB - (int)stcp->actual_size);
+					(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) stcp->actual_size));
 			}
 			stcp->status = STAGEPUT;
 			stcp->a_time = time (0);
@@ -1527,7 +1527,7 @@ void procputreq(req_data, clienthost)
 				if (rfio_stat (stcp->ipath, &st) == 0)
 					stcp->actual_size = st.st_size;
 				updfreespace (stcp->poolname, stcp->ipath,
-					stcp->size * ONE_MB - (int)stcp->actual_size);
+					(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) stcp->actual_size));
 			}
 			stcp->status = STAGEPUT;
 			stcp->a_time = time (0);

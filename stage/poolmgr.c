@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.40 2000/10/11 06:47:57 jdurand Exp $
+ * $Id: poolmgr.c,v 1.41 2000/10/17 14:21:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.40 $ $Date: 2000/10/11 06:47:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.41 $ $Date: 2000/10/17 14:21:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -75,7 +75,6 @@ static struct pool *pools;
 struct sigaction sa_poolmgr;
 #endif
 
-void cvtdbl2str _PROTO((double, char *));
 void print_pool_utilization _PROTO((int, char *, char *));
 char *selecttapepool _PROTO((char *));
 void procmigpoolreq _PROTO((char *, char *));
@@ -90,7 +89,7 @@ void migpoolfiles_log_callback _PROTO((int, char *));
 int isuserlevel _PROTO((char *));
 void poolmgr_wait4child _PROTO(());
 int selectfs _PROTO((char *, int *, char *));
-int updfreespace _PROTO((char *, char *, int));
+int updfreespace _PROTO((char *, char *, signed64));
 
 getpoolconf(defpoolname)
 		 char *defpoolname;
@@ -597,14 +596,15 @@ getpoolconf(defpoolname)
 				stglogit (func, STG02, path, "rfio_statfs",
 					rfio_serror());
 			} else {
-				elemp->capacity = st.totblks;
-				elemp->free = st.freeblks;
-				elemp->bsize = st.bsize;
-				pool_p->capacity += (st.totblks * (st.bsize / 512));
-				pool_p->free += (st.freeblks * (st.bsize / 512));
+				char tmpbuf1[21];
+				char tmpbuf2[21];
+				elemp->capacity = (u_signed64) ((u_signed64) st.totblks * (u_signed64) st.bsize);
+				elemp->free = (u_signed64) ((u_signed64) st.freeblks * (u_signed64) st.bsize);
+				pool_p->capacity += elemp->capacity;
+				pool_p->free += elemp->free;
 				stglogit (func,
-					"... %s capacity=%ld, free=%ld, bsize=%d\n",
-					path, elemp->capacity, elemp->free, elemp->bsize);
+					"... %s capacity=%s, free=%s\n",
+					path, u64tostru(elemp->capacity, tmpbuf1, 0), u64tostru(elemp->free, tmpbuf2, 0));
 			}
 			elemp++;
 		}
@@ -716,7 +716,7 @@ enoughfreespace(poolname, minf)
 		minfree = minf;
 	else
 		minfree = pool_p->minfree;
-	return ((((double) pool_p->free * 100.) / (double) pool_p->capacity) > minfree);
+	return((pool_p->free * 100) > (pool_p->capacity * minfree));
 }
 
 char *
@@ -806,35 +806,6 @@ int isvalidpool(poolname)
 	return (i == nbpool ? 0 : 1);
 }
 
-void cvtdbl2str(dnum, buf)
-		 double dnum;
-		 char *buf;
-{
-	double absdnum;
-	float fnum;
-	int inum;
-	char unit;
-
-	absdnum = fabs (dnum);
-	if (absdnum > (1024. * 1024. * 1024.)) {
-		fnum = dnum / (1024. * 1024. * 1024.);
-		unit = 'G';
-	} else if (absdnum > (1024. * 1024.)) {
-		fnum = dnum / (1024. * 1024.);
-		unit = 'M';
-	} else if (absdnum > (1024.)) {
-		fnum = dnum / (1024.);
-		unit = 'k';
-	} else {
-		inum = (int)dnum;
-		unit = ' ';
-	}
-	if (unit != ' ')
-		sprintf (buf, "%6.2f%c", fnum, unit);
-	else
-		sprintf (buf, "%6d", inum);
-}
-
 poolalloc(pool_p, nbpool_ent)
 		 struct pool *pool_p;
 		 int nbpool_ent;
@@ -860,9 +831,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname)
 		 int rpfd;
 		 char *poolname, *defpoolname;
 {
-	char capacity_s[9];
 	struct pool_element *elemp;
-	char free_s[9];
 	int i, j;
 	int migr_newline = 1;
 	int migp_newline = 1;
@@ -877,6 +846,9 @@ void print_pool_utilization(rpfd, poolname, defpoolname)
 	struct tm tmstruc;
 #endif /* _REENTRANT || _THREAD_SAFE */
 	struct tm *tp;
+	char tmpbuf1[21];
+	char tmpbuf2[21];
+	u_signed64 before_fraction, after_fraction;
 
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
 		if (*poolname && strcmp (poolname, pool_p->name)) continue;
@@ -889,8 +861,6 @@ void print_pool_utilization(rpfd, poolname, defpoolname)
 			pool_p->migr_name[0] != '\0' ? " MIGRATOR " : "",
 			pool_p->migr_name[0] != '\0' ? pool_p->migr_name : ""
 			);
-			cvtdbl2str ((double) pool_p->capacity * (double) 512, capacity_s);
-			cvtdbl2str ((double) pool_p->free * (double) 512, free_s);
 		if (pool_p->cleanreqtime > 0) {
 #if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
 			localtime_r(&(pool_p->cleanreqtime),&tmstruc);
@@ -903,17 +873,27 @@ void print_pool_utilization(rpfd, poolname, defpoolname)
 		} else {
 			sendrep (rpfd, MSG_OUT, "\tLAST GARBAGE COLLECTION STARTED <none>\n");
 		}
-		sendrep (rpfd, MSG_OUT,
-			"                              CAPACITY %s FREE %s (%5.1f%%)\n",
-			capacity_s, free_s, pool_p->capacity ?
-			(((double) pool_p->free * 100.) / (double) pool_p->capacity) : 0);
+		before_fraction = pool_p->capacity ? (100 * pool_p->free) / pool_p->capacity : 0;
+		after_fraction = pool_p->capacity ?
+			(10 * (pool_p->free * 100 - pool_p->capacity * before_fraction)) / pool_p->capacity :
+			0;
+		sendrep (rpfd, MSG_OUT,"                              CAPACITY %s FREE %s (%d.%d%%)\n",
+			u64tostru(pool_p->capacity, tmpbuf1, 0),
+			u64tostru(pool_p->free, tmpbuf2, 0),
+			before_fraction,
+			after_fraction);
 		for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++) {
-			cvtdbl2str ((double) elemp->capacity * (double) elemp->bsize, capacity_s);
-			cvtdbl2str ((double) elemp->free * (double) elemp->bsize, free_s);
-			sendrep (rpfd, MSG_OUT, "  %s %s CAPACITY %s FREE %s (%5.1f%%)\n",
-				elemp->server, elemp->dirpath,
-				capacity_s, free_s, elemp->capacity ?
-				(((double) elemp->free * 100.) / (double) elemp->capacity) : 0);
+			before_fraction = elemp->capacity ? (100 * elemp->free) / elemp->capacity : 0;
+			after_fraction = elemp->capacity ?
+				(10 * (elemp->free * 100 - elemp->capacity * before_fraction)) / elemp->capacity :
+				0;
+			sendrep (rpfd, MSG_OUT, "  %s %s CAPACITY %s FREE %s (%d.%d%%)\n",
+				elemp->server,
+				elemp->dirpath,
+				u64tostru(elemp->capacity, tmpbuf1, 0),
+				u64tostru(elemp->free, tmpbuf2, 0),
+				before_fraction,
+				after_fraction);
 		}
 	}
 	if (*poolname == '\0') sendrep (rpfd, MSG_OUT, "DEFPOOL %s\n", defpoolname);
@@ -986,7 +966,8 @@ selectfs(poolname, size, path)
 	int i;
 	struct pool *pool_p;
 	long reqsize;
-	char tmpbuf[21];
+	char tmpbuf1[21];
+	char tmpbuf2[21];
 
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
 		if (strcmp (poolname, pool_p->name) == 0) break;
@@ -995,7 +976,7 @@ selectfs(poolname, size, path)
 	i = pool_p->next_pool_elem;
 	do {
 		elemp = pool_p->elemp + i;
-		if (elemp->bsize && (elemp->free >= reqsize / elemp->bsize)) {
+		if (elemp->free >= reqsize) {
 			found = 1;
 			break;
 		}
@@ -1006,16 +987,28 @@ selectfs(poolname, size, path)
 		return (-1);
 	pool_p->next_pool_elem = i + 1;
 	if (pool_p->next_pool_elem >= pool_p->nbelem) pool_p->next_pool_elem = 0;
-	pool_p->free -= reqsize / 512;
-	elemp->free -= reqsize / elemp->bsize;
+	pool_p->free -= reqsize;
+	elemp->free -= reqsize;
+	if (pool_p->free > pool_p->capacity) {
+		/* This is impossible. In theory it can happen only if reqsize > previous pool_p->free and */
+		/* if pool_p->capacity < max_u_signed64 */
+		stglogit ("selectfs", "### Warning, pool_p->free > pool_p->capacity. pool_p->free set to 0\n");
+		pool_p->free = 0;
+	}
+	if (elemp->free > elemp->capacity) {
+		/* This is impossible. In theory it can happen only if reqsize > previous elemp->free and */
+		/* if elemp->capacity < max_u_signed64 */
+		stglogit ("selectfs", "### Warning, elemp->free > elemp->capacity. elemp->free set to 0\n");
+		elemp->free = 0;
+	}
 	if ((nfsroot = getconfent ("RFIO", "NFS_ROOT", 0)) != NULL &&
 			strncmp (elemp->dirpath, nfsroot, strlen (nfsroot)) == 0 &&
 			*(elemp->dirpath + strlen(nfsroot)) == '/')	/* /shift syntax */
 		strcpy (path, elemp->dirpath);
 	else
 		sprintf (path, "%s:%s", elemp->server, elemp->dirpath);
-	stglogit ("selectfs", "%s reqsize=%ld, elemp->free=%ld, pool_p->free=%s\n",
-						path, reqsize, elemp->free, u64tostr((u_signed64) pool_p->free, tmpbuf, 0));
+	stglogit ("selectfs", "%s reqsize=%ld, elemp->free=%s, pool_p->free=%s\n",
+						path, reqsize, u64tostr(elemp->free, tmpbuf1, 0), u64tostr(pool_p->free, tmpbuf2, 0));
 	return (1);
 }
 
@@ -1023,7 +1016,7 @@ int
 updfreespace(poolname, ipath, incr)
 		 char *poolname;
 		 char *ipath;
-		 int incr;
+		 signed64 incr;
 {
 	struct pool_element *elemp;
 	int i, j;
@@ -1031,7 +1024,9 @@ updfreespace(poolname, ipath, incr)
 	char path[MAXPATH];
 	struct pool *pool_p;
 	char server[CA_MAXHOSTNAMELEN + 1];
-	char tmpbuf[21];
+	char tmpbuf1[21];
+	char tmpbuf2[21];
+	char tmpbuf3[21];
 
 	if (*poolname == '\0')
 		return (0);
@@ -1055,11 +1050,32 @@ updfreespace(poolname, ipath, incr)
 			strcpy (path, elemp->dirpath);
 			break;
 		}
-	if (j < pool_p->nbelem && elemp->bsize != 0) {
-		elemp->free += incr / elemp->bsize;
-		pool_p->free += incr / 512;
-		stglogit ("updfreespace", "%s incr=%d, elemp->free=%ld, pool_p->free=%s\n",
-					path, incr, elemp->free, u64tostr((u_signed64) pool_p->free, tmpbuf, 0));
+	if (j < pool_p->nbelem) {
+		elemp->free += incr;
+		pool_p->free += incr;
+		if (pool_p->free > pool_p->capacity) {
+			if (incr >= 0) {
+				stglogit ("selectfs", "### Warning, pool_p->free > pool_p->capacity. pool_p->free set to pool_p->capacity\n");
+				pool_p->free = pool_p->capacity;
+			} else {
+				stglogit ("selectfs", "### Warning, pool_p->free > pool_p->capacity. pool_p->free set to 0\n");
+				pool_p->free = 0;
+			}
+		}
+		if (elemp->free > elemp->capacity) {
+			if (incr >= 0) {
+				stglogit ("selectfs", "### Warning, elemp->free > elemp->capacity. elemp->free set to elemp->capacity\n");
+				elemp->free = elemp->capacity;
+			} else {
+				stglogit ("selectfs", "### Warning, elemp->free > elemp->capacity. elemp->free set to 0\n");
+				elemp->free = 0;
+			}
+		}
+		stglogit ("updfreespace", "%s incr=%s%s, elemp->free=%s, pool_p->free=%s\n",
+					path, (incr < 0 ? "-" : ""),
+					u64tostr((u_signed64) (incr < 0 ? -incr : incr), tmpbuf1, 0),
+					u64tostr(elemp->free, tmpbuf2, 0),
+					u64tostr(pool_p->free, tmpbuf3, 0));
 	}
 	return (0);
 }
@@ -1322,8 +1338,7 @@ void checkfile2mig()
 			continue;
 		if ((pool_p->migr->migp->data_mig_threshold &&
 			pool_p->migr->space_canbemig > pool_p->migr->migp->data_mig_threshold) ||
-			(((double) pool_p->free * 100.) / (double) pool_p->capacity <
-			pool_p->migr->migp->freespace_threshold) ||
+			(pool_p->free * 100) < (pool_p->capacity * pool_p->migr->migp->freespace_threshold) ||
 			((time(0) - pool_p->migr->migreqtime) > pool_p->migr->migp->time_interval))
 				migrate_files (pool_p->migr);
 	}
