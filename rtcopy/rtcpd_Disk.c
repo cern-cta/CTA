@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.14 $ $Date: 2000/01/09 10:04:11 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.15 $ $Date: 2000/01/10 10:21:36 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -273,8 +273,8 @@ static int DiskFileOpen(int pool_index,
      * concatenated we must serialize the access to it.
      */
     if ( (tapereq->mode == WRITE_DISABLE) && 
-         ((file->next->filereq.concat & CONCAT) != 0) ||
-         ((filereq->concat & (CONCAT | CONCAT_TO_EOD)) != 0) ) {
+         ( (file->next->filereq.concat & CONCAT) != 0 ||
+           (filereq->concat & (CONCAT | CONCAT_TO_EOD)) != 0 ) ) {
         log(LOG_DEBUG,"DiskFileOpen(%s) lock file for concatenation\n",
             filereq->file_path);
         rc = LockForAppend(1);
@@ -299,9 +299,16 @@ static int DiskFileOpen(int pool_index,
         if ( tapereq->mode == WRITE_DISABLE ) {
             if ( (filereq->concat & (CONCAT | CONCAT_TO_EOD)) != 0 ) {
                 /*
-                 * Appending to previous disk file. 
+                 * Appending to previous disk file. If concat to EOD we
+                 * must check if it is the first file in sequence so that
+                 * we don't append to an existing file....
                  */
-                flags = O_CREAT | O_WRONLY | O_APPEND | binmode;
+                if ( (filereq->concat & CONCAT_TO_EOD) != 0 &&
+                     ((file->prev->filereq.concat & CONCAT_TO_EOD) == 0 ||
+                      file == tape->file) )
+                    flags = O_CREAT | O_WRONLY | O_TRUNC | binmode;
+                else
+                    flags = O_CREAT | O_WRONLY | O_APPEND | binmode;
             } else {
                 /*
                  * New disk file
@@ -448,8 +455,8 @@ static int DiskFileClose(int disk_fd,
     }
 
     if ( (tape->tapereq.mode == WRITE_DISABLE) &&
-         ((file->next->filereq.concat & CONCAT) != 0) ||
-         ((filereq->concat & (CONCAT | CONCAT_TO_EOD)) != 0) ) {
+         ( (file->next->filereq.concat & CONCAT) != 0 ||
+           (filereq->concat & (CONCAT | CONCAT_TO_EOD)) != 0 ) ) {
         rtcp_log(LOG_DEBUG,"DiskFileClose(%s) unlock file for concatenation\n",
                  filereq->file_path);
         rc = LockForAppend(0);
@@ -717,6 +724,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                          rtcp_log(LOG_DEBUG,"MemoryToDisk(%s) ENOSPC detected\n",
                                   filereq->file_path);
                          if ( *filereq->stageID != '\0' ) {
+                             rtcp_log(LOG_DEBUG,"MemoryToDisk(%s) stageID=<%s>, request local retry\n",filereq->file_path,filereq->stageID);
                              rtcpd_SetReqStatus(NULL,file,save_serrno,
                                                 RTCP_LOCAL_RETRY);
                          } else {
@@ -1180,19 +1188,22 @@ static int DiskToMemory(int disk_fd, int pool_index,
                               &last_file,&end_of_tpfile,tape,file);
         }
         filereq->TEndTransferDisk = (int)time(NULL);
-        if ( (filereq->concat & CONCAT_TO_EOD) != 0 ) 
+        save_serrno = serrno;
+        if ( rc == -1 || (filereq->concat & CONCAT_TO_EOD) != 0 ) 
             rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
 
         if ( rc == -1 ) {
             rtcp_log(LOG_DEBUG,"diskIOthread(%s) rc=-1, serrno=%d\n",
                      filereq->file_path,save_serrno);
-            if ( (severity & RTCP_LOCAL_RETRY) != 0 ) {
+            if ( (severity & RTCP_LOCAL_RETRY) != 0  &&
+                 (filereq->err.max_cpretry >= 0) ) {
                 /*
                  * Probably an disk overflow. 
                  * Interrupt the whole current processing
                  * and tell main control thread to restart with this
                  * disk file
                  */
+                filereq->err.max_cpretry--;
                 rtcpd_SetProcError(RTCP_FAILED | RTCP_LOCAL_RETRY);
             } else if ( (severity & (RTCP_OK | RTCP_EOD)) == 0 ) {
                 /*

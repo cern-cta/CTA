@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.9 $ $Date: 2000/01/09 10:04:10 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.10 $ $Date: 2000/01/10 10:21:34 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -530,7 +530,7 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
     rtcpFileRequest_t *filereq = NULL;
     int rc;
 
-    rtcp_log(LOG_DEBUG,"rtcpd_SetReqStatus() called from status=%d, severity=%d\n",
+    rtcp_log(LOG_DEBUG,"rtcpd_SetReqStatus() status=%d, severity=%d\n",
              status,severity);
     if ( tape == NULL && file == NULL ) return;
     if ( tape != NULL ) tapereq = &tape->tapereq;
@@ -607,7 +607,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     rtcpClientInfo_t *client;
     tape_list_t *tape, *nexttape;
     file_list_t *nextfile;
-    int rc, reqtype, errmsglen,status, CLThId;
+    int rc, retry, reqtype, errmsglen,status, CLThId;
     char *errmsg;
     static int thPoolId = -1;
     static int thPoolSz = -1;
@@ -910,6 +910,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     /*
      * Local retry loop to break out from
      */
+    retry = 0;
     for (;;) {
         /*
          * Start tape control and I/O thread. From now on the
@@ -948,7 +949,10 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         }
         rtcp_log(LOG_INFO,"rtcpd_MainCntl() tape I/O thread returned status=%d\n",
             status);
-        if ( (rtcpd_CheckProcError() & RTCP_LOCAL_RETRY) == 0 ) break;
+        if ( (rtcpd_CheckProcError() & RTCP_LOCAL_RETRY) != 0 ) { 
+            retry++;
+            rtcp_log(LOG_INFO,"Automatic retry number %d\n",retry);
+        } else break;
         /*
          * do a local retry
          */
