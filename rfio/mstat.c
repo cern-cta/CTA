@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.30 2002/12/02 14:49:34 baud Exp $
+ * $Id: mstat.c,v 1.31 2002/12/19 14:42:48 baud Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.30 $ $Date: 2002/12/02 14:49:34 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.31 $ $Date: 2002/12/19 14:42:48 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -47,13 +47,13 @@ struct stat *statb;
 
 {
 #if (defined(__alpha) && defined(__osf__))
-   return (rfio_stat64(file,statb));
+   return (rfio_mstat64(file,statb));
 #else
    int       rc ;
 #if defined(IRIX64) || defined(__ia64__)
    struct stat64 statb64;
 
-   if ((rc = rfio_stat64(file,&statb64)) == 0)
+   if ((rc = rfio_mstat64(file,&statb64)) == 0)
 	(void) stat64tostat(&statb64, statb);
    return (rc);
 #else
@@ -226,8 +226,8 @@ int reqst ;
    rc = netread_timeout(s, buf, 8*LONGSIZE+5*WORDSIZE, RFIO_CTRL_TIMEOUT);
    if ( rc == 0 && (reqst == RQST_MSTAT_SEC || reqst == RQST_STAT_SEC ) ) {
       TRACE(2, "rfio", "rfio_stat: Server doesn't support secure stat()");
+      rfio_end_this(s,0);
       serrno = SEPROTONOTSUP;
-      rfio_end_this(s,1);
       END_TRACE();
       return(-1);
    }
@@ -328,6 +328,7 @@ static int rfio_end_this(s,flag)
 {
   int i,Tid, j=0 ;
   char buf[256];
+  int found = 0;
   char *p=buf ;
   int rc = 0;
 
@@ -343,6 +344,7 @@ static int rfio_end_this(s,flag)
   for (i = 0; i < MAXMCON; i++) {
     if (mstat_tab[i].Tid == Tid) {
       if ((mstat_tab[i].s == s) && (mstat_tab[i].host[0] != '\0')) {
+        found++;
         if (flag) {
           marshall_WORD(p, RFIO_MAGIC);
           marshall_WORD(p, RQST_END);
@@ -361,6 +363,7 @@ static int rfio_end_this(s,flag)
       }
     }
   }
+  if (! found) netclose(s);
    
   TRACE(3,"rfio","rfio_end: Unlock mstat_tab");
   if (Cmutex_unlock((void *) mstat_tab) != 0) {
@@ -504,6 +507,7 @@ struct stat64 *statb;
    int rt ,rc ,i ,fd, rfindex, Tid;
    char *host , *filename ;
    int         fitreqst;                     /*Fitted request           */
+   int savsec;
 
    INIT_TRACE("RFIO_TRACE");
 
@@ -535,12 +539,26 @@ struct stat64 *statb;
       rfindex = rfio_mstat_findentry(host,Tid);
       TRACE(2, "rfio", "rfio_mstat64: rfio_mstat_findentry(host=%s,Tid=%d) returns %d", host, Tid, rfindex);
       if (rfindex >= 0) {
-         if ( mstat_tab[rfindex].m64 == -1 && mstat_tab[rfindex].sec ) {
+         if ( mstat_tab[rfindex].m64 == -1 && mstat_tab[rfindex].sec >= 0) {
             /* Not yet used for 64 bits support                      */
+            savsec = mstat_tab[rfindex].sec;
             rc = rfio_smstat64( mstat_tab[rfindex].s, filename, statb, RQST_MSTAT64 ) ;
             if ( rc == 0 || serrno != SEPROTONOTSUP ) {
                if ( rc == 0 )
                   mstat_tab[rfindex].m64 = 1;
+               END_TRACE();
+               return (rc) ;
+            }
+            rfio_errno = 0;
+            fd = rfio_connect(host,&rt) ;
+            if ( fd < 0 ) {
+               END_TRACE();
+               return (-1) ;
+            }
+            rfindex = rfio_mstat_allocentry(host,Tid,fd, savsec);
+            TRACE(2, "rfio", "rfio_mstat64: rfio_mstat_allocentry(host=%s,Tid=%d,s=%d,sec=%d) returns %d", host, Tid, fd, savsec, rfindex);
+            if ( rfindex < 0 ) {
+               rc = rfio_smstat64( fd, filename, statb, savsec ? RQST_STAT_SEC : RQST_STAT ) ;
                END_TRACE();
                return (rc) ;
             }
@@ -572,7 +590,7 @@ struct stat64 *statb;
          /* The second pass can occur only if (rc == -1 && serrno == SEPROTONOTSUP) */
          /* In such a case rfio_smstat(fd) would have called rfio_end_this(fd,1) */
          /* itself calling netclose(fd) */
-		 rfio_errno = 0;
+         rfio_errno = 0;
          fd = rfio_connect(host,&rt) ;
          if ( fd < 0 ) {
             END_TRACE();
