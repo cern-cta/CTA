@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.29 2001/12/03 14:12:22 jdurand Exp $
+ * $Id: stage_api.c,v 1.30 2001/12/04 10:29:55 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -153,6 +153,8 @@ int DLL_DECL rc_castor2shift(rc)
     return(SYERR);
   case ESTKILLED:
     return(REQKILD);
+  case ESTCLEARED:
+    return(CLEARED);
   default:
     return(rc);
   }
@@ -586,9 +588,9 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, nstcp_output, stcp_output, NULL, NULL);
     if ((c == 0) ||
         (serrno == EINVAL)     || (serrno == ERTBLKSKPD) || (serrno == ERTTPE_LSZ) ||
-		(serrno == ERTMNYPARY) || (serrno == ERTLIMBYSZ) || (serrno == CLEARED)    ||
-		(serrno == ENOSPC) || (serrno == EBUSY)) break;
-    if (serrno == LNKNSUP) {	/* symbolic links not supported on that platform */
+		(serrno == ERTMNYPARY) || (serrno == ERTLIMBYSZ) || (serrno == ESTCLEARED) ||
+		(serrno == ESTKILLED)  || (serrno == ENOSPC) || (serrno == EBUSY)) break;
+    if (serrno == ESTLNKNSUP) {	/* symbolic links not supported on that platform */
       serrno = USERR;
       break;
     }
