@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.18 2001/07/12 11:02:46 jdurand Exp $
+ * $Id: sendrep.c,v 1.19 2001/09/18 21:08:10 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.18 $ $Date: 2001/07/12 11:02:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.19 $ $Date: 2001/09/18 21:08:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -134,7 +134,7 @@ int sendrep(va_alist) va_dcl
 		req_type = va_arg (args, int);
 		rc = va_arg (args, int);
 		marshall_LONG (rbp, rc);
-		if (req_type != STAGEQRY && req_type != STAGEUPDC)
+		if (req_type != STAGEQRY)
 			stglogit (func, STG99, rc);
 		break;
 	case SYMLINK:
