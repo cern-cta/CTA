@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.238 2003/01/13 12:19:41 jdurand Exp $
+ * $Id: poolmgr.c,v 1.239 2003/01/13 12:47:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.238 $ $Date: 2003/01/13 12:19:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.239 $ $Date: 2003/01/13 12:47:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -681,6 +681,12 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 						goto reply;
 					}
 					strcpy (pool_p->gc, p);
+					/* Check if GC exist and is executable */
+					if (rfio_access(pool_p->gc,X_OK) < 0) {
+						sendrep (&rpfd, MSG_ERR, STG02, pool_p->gc, "rfio_access (X_OK)", rfio_serror());
+						errflg++;
+						goto reply;
+					}
 				} else if (strcmp(p, "NO_FILE_CREATION") == 0) {
 					pool_p->no_file_creation = 1;
 				} else if (strcmp(p, "EXPORT_HSM") == 0) {
@@ -1030,7 +1036,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 				sprintf (path, "%s:%s", elemp->server, elemp->dirpath);
 			PRE_RFIO;
 			if (rfio_access (path, W_OK|F_OK|X_OK|R_OK) < 0) {
-				sendrep (&rpfd, MSG_ERR, STG02, path, "rfio_access", rfio_serror());
+				sendrep (&rpfd, MSG_ERR, STG02, path, "rfio_access (W_OK|F_OK|X_OK|R_OK)", rfio_serror());
 			  check_fs_yet_known:
 				if (rfio_serrno() == SETIMEDOUT) {
 					/* Check if we already know about that filesystem. If yes, we take */
