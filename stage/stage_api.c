@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.44 2002/04/30 13:02:11 jdurand Exp $
+ * $Id: stage_api.c,v 1.45 2002/05/03 04:47:17 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -1023,13 +1023,23 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 #endif
   char *func = "stage_qry";
   int maxretry = MAXRETRY;
+  struct stgcat_entry stcp_dummy;
 
-  /* It is not allowed to have anything else but one single entry in input */
-  if (nstcp_input != 1) {
+  /* It is not allowed to have anything else but one single entry in input, or none only if t_or_d == '\0' */
+  if (nstcp_input > 1) {
+	  /* 1 or 0 only */
+	  serrno = EINVAL;
+	  return(-1);
+  }
+  if (((nstcp_input == 1) && (t_or_d == '\0')) || ((nstcp_input == 0) && (t_or_d != '\0'))) {
     serrno = EINVAL;
     return(-1);
   }
-  if (stcp_input == NULL) {
+  if ((stcp_input != NULL) && (nstcp_input == 0)) {
+    serrno = EFAULT;
+    return(-1);
+  }
+  if ((nstcp_input != 0) && (stcp_input == NULL)) {
     serrno = EFAULT;
     return(-1);
   }
@@ -1075,6 +1085,11 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   }
 
   switch (t_or_d) {                     /* This method supports only */
+  case '\0':                            /* - Dummy flag */
+	  memset((void *) &stcp_dummy,0,sizeof(struct stgcat_entry));
+	  stcp_input = &stcp_dummy;
+	  nstcp_input = 1;
+	  t_or_d = 't';                     /* - Dummy value */
   case 't':                             /* - tape files */
   case 'd':                             /* - disk files */
   case 'm':                             /* - non-CASTOR HSM files */
