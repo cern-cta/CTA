@@ -782,8 +782,6 @@ int send2stgd_api_cmp(stcp1,stcp2)
 	struct stgcat_entry *stcp2;
 {
 	int i;
-	char tmpbuf1[21];
-	char tmpbuf2[21];
 	
 	/* stcp1 is the reference and we check if it matches stcp2 */
 	if (stcp1->blksize     != 0    && stcp1->blksize  != stcp2->blksize)  {
