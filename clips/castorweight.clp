@@ -1,3 +1,6 @@
+; $Id: castorweight.clp,v 1.7 2005/02/11 17:28:20 jdurand Exp $
+; (c) CASTOR CERN/IT/ADC/CA 2004 - Jean-Damien.Durand@cern.ch
+;
 ; ============================================
 ; PRIORITY FOR /ANY/ FILESYSTEM (default rule)
 ; ============================================
@@ -642,9 +645,6 @@
 				(* ?diskserverWeight ?thisFactor)
 			)
 		 )
-		(if (< ?thisWeight .1) then
-			(bind ?thisWeight .1)
-		)
 		(if (!= 0 ?*Debug*) then
 		  (printout t "[diskserverWeight] " ?diskserverName
 			    ":"
@@ -661,6 +661,17 @@
 		(bind ?thisReadWeight (* ?thisReadWeight ?readImportance))
 		(bind ?thisWriteWeight (* ?thisWriteWeight ?writeImportance))
 		(bind ?thisReadWriteWeight (* ?thisReadWriteWeight ?readWriteImportance))
+		; We force a minimum value if any
+		(if (< ?thisReadWeight ?*minReadWeight*) then
+			(bind ?thisReadWeight ?*minReadWeight*)
+		)
+		(if (< ?thisWriteWeight ?*minWriteWeight*) then
+			(bind ?thisWriteWeight ?*minWriteWeight*)
+		)
+		(if (< ?thisReadWriteWeight ?*minReadWriteWeight*) then
+			(bind ?thisReadWriteWeight ?*minReadWriteWeight*)
+		)
+
 		(if (!= 0 ?*Debug*) then
 		  (printout t "[diskserverWeight] " ?diskserverName
 			    ":"
