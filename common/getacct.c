@@ -1,13 +1,21 @@
 /*
- * Copyright (C) 1990-1997 by CERN CN-PDP/CS
+ * $Id: getacct.c,v 1.2 1999/07/21 16:25:41 obarring Exp $
+ * $Log: getacct.c,v $
+ * Revision 1.2  1999/07/21 16:25:41  obarring
+ * Make MT safe
+ *
+ */
+
+/*
+ * Copyright (C) 1990-1999 by CERN IT-PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)getacct.c	1.10 07/04/97 CERN CN-PDP/CS F. Hemmer";
+static char cvsId[] = "$Id: getacct.c,v 1.2 1999/07/21 16:25:41 obarring Exp $";
 #endif /* not lint */
 
-/*	getacct() - Getting the current account id	*/
+/*  getacct() - Getting the current account id  */
 
 /*
  * If the environment variable ACCOUNT is set
@@ -19,169 +27,88 @@ static char sccsid[] = "@(#)getacct.c	1.10 07/04/97 CERN CN-PDP/CS F. Hemmer";
  * The look-up policy is the same as for passwd.
  */
 
-#if !defined(vms) && !defined(CRAY)
-
 #include <stdio.h>
 #include <string.h>
 #include <pwd.h>
 #include <sys/types.h>
 #if !defined(_WIN32)
 #include <unistd.h>
+/*
+ * _WIN32 strtok() is already MT safe where as others wait
+ * for next POXIS release
+ */
+#define strtok(X,Y) strtok_r(X,Y,&last)
+#else
+extern uid_t getuid();
 #endif
 #include <stdlib.h>
 
+#include <Cglobals.h>
 #include "getacct.h"
 
-static char	resbuf[BUFSIZ];
-
-extern char	*getacctent();
+extern char *getacctent();
 
 
-char	*getacct() 
+char    *getacct_r(resbuf,resbufsiz) 
+char *resbuf;
+size_t resbufsiz;
+{ 
+    char      *account = NULL;    /* Pointer to the account env variable  */
+    struct passwd *pwd = NULL;        /* Pointer to the password entry    */
+    char      buf[BUFSIZ];
+    char      *cprv, *rv, *last;
 
-	{ char		*account = NULL;  	/* Pointer to the account env variable	*/
-	  struct passwd	*pwd = NULL;		/* Pointer to the password entry	*/
-	  char		buf[BUFSIZ];
-	  char		*cprv = NULL,
-			*rv = NULL;
+    cprv = rv = last = NULL;
 
-	  /*
-	   * Get environment variable.
-	   */
+    /*
+     * Get environment variable.
+     */
 
-	  account = getenv(ACCOUNT_VAR);
+    account = getenv(ACCOUNT_VAR);
 
-	  if (account != NULL)
-	    { if (strcmp(account, EMPTY_STR) == 0)
-	        account = NULL;
-	    }
+    if (account != NULL) {
+        if (strcmp(account, EMPTY_STR) == 0) account = NULL;
+    }
 
-	  /*
-	   * Get password entry.
-	   */
+    /*
+     * Get password entry.
+     */
 
-	  if ((pwd = getpwuid(getuid())) == NULL)
-	    return(NULL);
+    if ((pwd = getpwuid(getuid())) == NULL) return(NULL);
 
-	  /*
-	   * Get account file entry
-	   */
+    /*
+     * Get account file entry
+     */
 
-	  cprv = getacctent(pwd, account, buf, (int)sizeof(buf));
+    cprv = getacctent(pwd, account, buf, (int)sizeof(buf));
 
-	  /*
-	   * Extract account id
-	   */
+    /*
+     * Extract account id
+     */
 
-	  if (cprv != NULL)
-	    { if ((rv = strtok(cprv, COLON_STR)) != NULL)
-		if ((rv = strtok((char *)NULL, COLON_STR)) != NULL)
-		  { strcpy(resbuf, rv);
-
-		    return(resbuf);
-		  }
-	    }
-
-	  return(NULL);
-	}
-
-#endif	/* !vms && !CRAY */
-
-#if defined(vms)
-#include <ssdef.h>      /* System services definitions                  */
-#include <uaidef.h>     /* User authorization definitions               */
-#include <rmsdef.h>     /* Record Management definitions                */
-#include <stdio.h>      /* Standard Input/Output definitions            */
-#include <errno.h>      /* Standard error numbers                       */
-
-
-extern int	sys$getuai();	/* VMS get user account information 	*/
-
-static  char    account[9+1];   /* account string buffer                */
-static  int     accountl;       /* account string length                */
-
-typedef struct {                /* VMS Item desciptor                   */
-        short   bufl;
-        short   code;
-        char    *buf;
-        int     *retl;
-} Item;
-
-typedef struct  {               /* VMS generic descriptor               */
-        int     len;
-        char    *buf;
-} descrip;
-
-static struct   {               /* VMS Item list for $GETUAI            */
-        Item    items[57];
-        int     eol;
-} itemlist = {
-        {
-        9,      UAI$_ACCOUNT,           account,                &accountl
-        },
-        0
-};
-
-
-char * getacct() 
-{
-	descrip name_dsc;               /* username's descriptor        */
-	char    name[L_cuserid];        /* username buffer              */
-	char    *cp;                    /* character pointer            */
-	int     rc;                     /* syscall return code          */
-
-	cuserid(name);                  /* C env. must be initialized   */
-        name_dsc.len = strlen(name);
-        name_dsc.buf = name;
-        if ((rc = sys$getuai(0, 0, &name_dsc, &itemlist, 0, 0, 0))
-                        != SS$_NORMAL)       {
-                if (rc == RMS$_RNF)     {
-                        vaxc$errno = rc;
-                        errno = EVMSERR;
-			cp = NULL;
-                }
-                if (!(rc & 0x01))       {
-                        vaxc$errno = rc;
-                        errno = EVMSERR;
-			cp = NULL;
-                }
-                else    {
-                        account[accountl]='\0';
-			cp = account;
-                }
+    if (cprv != NULL) {
+        if ((rv = strtok(cprv, COLON_STR)) != NULL) {
+            if ((rv = strtok((char *)NULL, COLON_STR)) != NULL) {
+                strcpy(resbuf, rv);
+                return(resbuf);
+            }
         }
-        else    {
-                account[accountl]='\0';
-		cp = account;
-        }
-	return(cp);
+    }
+    return(NULL);    
 }
-#endif /* vms */
 
-#if defined(CRAY)
-#include <stdio.h>      /* Standard Input/Output definitions            */
+static int getacct_key = -1;
 
-char    *getacct()
+char *getacct()
 {
-	extern int	acctid();
-	extern char	*acid2nam();
-	int		aid;                    /* account id                   */
-	char		*cp;                    /* character pointer            */
+    char *resbuf = NULL;
 
-        aid = acctid(0, -1);
+    Cglobals_get(&getacct_key,(void **) &resbuf,BUFSIZ+1);
+    if ( resbuf == NULL ) return(NULL);
 
-        if ((aid = acctid(0, -1)) == -1)	{
-		cp = NULL;
-        }
-        else    {
-		if ((cp = acid2nam(aid)) == NULL)     {
-			cp = NULL;
-                }
-        }
-
-	return(cp);
+    return(getacct_r(resbuf,BUFSIZ+1));
 }
-#endif /* CRAY */
+
 
 /*
  * Fortran wrapper
