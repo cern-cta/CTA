@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_api.c,v 1.19 2001/05/31 13:52:27 jdurand Exp $
+ * send2stgd_api.c,v 1.19 2001/05/31 13:52:27 jdurand Exp
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.19 $ $Date: 2001/05/31 13:52:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)send2stgd_api.c,v 1.19 2001/05/31 13:52:27 CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -71,11 +71,15 @@ EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
 /* This macro cleans everything that can be cleaned because if it is called there is a error */
 /* Note that if _stcp_output != NULL or _stpp_output != NULL it clears and reset it so that */
 /* we are sure that the call to macro SEND2STGD_API_CLEAN() will not clear something yet done */
+/* Beware !!!! stcp_output is a ** that can contain _stcp_output, e.g. it is possible that */
+/* *stcp_output == _stcp_output. Same thing for stpp_output, it is possible that */
+/* *stpp_output == _stpp_output ... */
+
 #define SEND2STGD_API_ERROR(c) { \
 	if (nstcp_output != NULL) *nstcp_output = 0; \
-	if (stcp_output != NULL) { if (*stcp_output != NULL) free(*stcp_output) ; *stcp_output = NULL;} \
+	if (stcp_output != NULL) { if (*stcp_output != NULL) free(*stcp_output) ; if (*stcp_output == _stcp_output) _stcp_output = NULL; *stcp_output = NULL;} \
 	if (nstpp_output != NULL) *nstpp_output = 0; \
-	if (stpp_output != NULL) { if (*stpp_output != NULL) free(*stpp_output) ; *stpp_output = NULL;} \
+	if (stpp_output != NULL) { if (*stpp_output != NULL) free(*stpp_output) ; if (*stpp_output == _stpp_output) _stpp_output = NULL; *stpp_output = NULL;} \
 	if (_stcp_output != NULL) { free(_stcp_output) ; _stcp_output = NULL;} \
 	if (_stpp_output != NULL) { free(_stpp_output) ; _stpp_output = NULL;} \
 	SEND2STGD_API_RETURN(c); \
