@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.27 2000/05/29 15:55:28 jdurand Exp $
+ * $Id: procio.c,v 1.28 2000/05/30 15:55:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.27 $ $Date: 2000/05/29 15:55:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.28 $ $Date: 2000/05/30 15:55:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -684,7 +684,7 @@ void procioreq(req_type, req_data, clienthost)
 						goto reply;
 					}
 					goto notstaged;
-				} else if (stgreq.t_or_d == 'h' && hsmmtimes[ihsmfiles] > stcp->a_time) {
+				} else if (stgreq.t_or_d == 'h' && hsmmtimes[ihsmfiles] > stcp->m_time) {
 					/*
 					 * CASTOR HSM File exists but has a modified time higher than what
 					 * is known to the stager.
