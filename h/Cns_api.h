@@ -1,5 +1,5 @@
 /*
- * Cns_api.h,v 1.44 2004/03/03 08:50:30 bcouturi Exp
+ * $Id: Cns_api.h,v 1.2 2004/11/03 09:56:16 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)Cns_api.h,v 1.44 2004/03/03 08:50:30 CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.2 $ $Date: 2004/11/03 09:56:16 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_API_H
