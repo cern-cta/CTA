@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Release$ $Date: 2004/06/16 14:58:08 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Release$ $Date: 2004/06/22 15:40:48 $ $Author: jdurand $
 #
 # Make Castor DB libraries
 #
@@ -34,12 +34,12 @@ DEBUG  = -g
 #endif
 #endif
 
-DEPLIB = DepSharedLibraryTargetName(..,castorClient)
+DEPLIB = DepSharedLibraryTargetName(../../shlib,shift)
 
 INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,demo) -I FileName($(ORACLE_HOME)/rdbms,public) -I FileName(../../..,h) -I FileName(../../..,)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
-LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh -lcastorClient
+LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh -L FileName(../../..,shlib) -lshift
 
 ORALIB_SRCS = OraBaseCnv.cpp \
               OraCastorFileCnv.cpp \
