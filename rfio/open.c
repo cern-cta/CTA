@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.22 2003/10/31 07:20:03 jdurand Exp $
+ * $Id: open.c,v 1.23 2003/10/31 12:58:38 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.22 $ $Date: 2003/10/31 07:20:03 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.23 $ $Date: 2003/10/31 12:58:38 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */
@@ -446,8 +446,8 @@ char  	*vmstr ;
    TRACE(2,"rfio","rfio_open: sending %d bytes",RQSTSIZE+len) ;
    if (netwrite_timeout(rfp->s,rfio_buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
       TRACE(2,"rfio","rfio_open: write(): ERROR occured (errno=%d)", errno) ;
-      syslog(LOG_ALERT, "rfio: open: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netwrite(%d,0X%X,%d)",
-	     strerror(errno), errno, rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, rfio_buf, RQSTSIZE+len);
+      syslog(LOG_ALERT, "rfio: open: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netwrite(%d,0X%lX,%d)",
+	     strerror(errno), errno, rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, (unsigned long) rfio_buf, RQSTSIZE+len);
       rfio_cleanup(rfp->s) ;
       END_TRACE() ;
       return -1 ;
@@ -458,8 +458,8 @@ char  	*vmstr ;
    TRACE(1, "rfio", "rfio_open: reading %d bytes",rfp->_iobuf.hsize) ;
    if (netread_timeout(rfp->s,rfio_buf,rfp->_iobuf.hsize, RFIO_CTRL_TIMEOUT) != rfp->_iobuf.hsize ) {
       TRACE(2, "rfio", "rfio_open: read(): ERROR occured (errno=%d)", errno);
-      syslog(LOG_ALERT, "rfio: open: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netread(%d,0X%X,%d)",
-	     strerror(errno), errno, rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, rfio_buf, RQSTSIZE+len);
+      syslog(LOG_ALERT, "rfio: open: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netread(%d,0X%lX,%d)",
+	     strerror(errno), errno, rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, (unsigned long) rfio_buf, RQSTSIZE+len);
       rfio_cleanup(rfp->s);
       END_TRACE();
       return(-1);
