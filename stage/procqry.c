@@ -70,19 +70,16 @@ extern char *findpoolname _PROTO((char *));
 extern signed64 get_stageout_retenp_raw _PROTO((struct stgcat_entry *));
 extern signed64 get_stagealloc_retenp_raw _PROTO((struct stgcat_entry *));
 extern signed64 get_put_failed_retenp_raw _PROTO((struct stgcat_entry *));
+extern int ismetapool _PROTO((char *));
 int get_retenp _PROTO((struct stgcat_entry *, char *));
 int get_mintime _PROTO((struct stgcat_entry *, char *));
 
 extern int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
 extern int req2argv _PROTO((char *, char ***));
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int *, int, ...));
-#else
-extern int sendrep _PROTO(());
-#endif
 extern int isvalidpool _PROTO((char *));
 extern int havemetapool _PROTO((char *, char *));
-extern int stglogit _PROTO(());
+extern int stglogit _PROTO((char *, char *, ...));
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
 extern void print_pool_utilization _PROTO((int *, char *, char *, char *, char *, int, int, int, int));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
