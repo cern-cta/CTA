@@ -1,9 +1,9 @@
 /*
- * $Id: Cregexp.c,v 1.2 2002/09/11 13:19:03 jdurand Exp $
+ * $Id: Cregexp.c,v 1.3 2002/09/12 13:23:31 jdurand Exp $
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cregexp.c,v $ $Revision: 1.2 $ $Date: 2002/09/11 13:19:03 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cregexp.c,v $ $Revision: 1.3 $ $Date: 2002/09/12 13:23:31 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /*
@@ -337,8 +337,8 @@ int _Cregexp_gettsd(_Cregexp_parse,
 		Cglobals_get(&_Cregexp_dummy_key,  (void **) _Cregexp_dummy , sizeof(char   )) < 0 ||
 		Cglobals_get(&_Cregexp_code_key,   (void **) _Cregexp_code  , sizeof(char * )) < 0 ||
 		Cglobals_get(&_Cregexp_size_key,   (void **) _Cregexp_size  , sizeof(long   )) < 0 ||
-		Cglobals_get(&_Cregexp_input_key,  (void **) _Cregexp_input , sizeof(char   )) < 0 ||
-		Cglobals_get(&_Cregexp_bol_key,    (void **) _Cregexp_bol   , sizeof(char   )) < 0 ||
+		Cglobals_get(&_Cregexp_input_key,  (void **) _Cregexp_input , sizeof(char * )) < 0 ||
+		Cglobals_get(&_Cregexp_bol_key,    (void **) _Cregexp_bol   , sizeof(char * )) < 0 ||
 		Cglobals_get(&_Cregexp_startp_key, (void **) _Cregexp_startp, sizeof(char **)) < 0 ||
 		Cglobals_get(&_Cregexp_endp_key,   (void **) _Cregexp_endp  , sizeof(char **)) < 0) {
 		return(-1);
