@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.85 2000/08/15 09:40:06 baud Exp $
+ * $Id: stager.c,v 1.86 2000/09/01 13:30:16 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.85 $ $Date: 2000/08/15 09:40:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.86 $ $Date: 2000/09/01 13:30:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -51,8 +51,10 @@ static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.85 $ $Date: 2000
 
 #if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
 EXTERN_C void DLL_DECL stager_usrmsg _PROTO(());
+EXTERN_C void DLL_DECL stager_migmsg _PROTO(());
 #else
 EXTERN_C void DLL_DECL stager_usrmsg _PROTO((int, ...));
+EXTERN_C void DLL_DECL stager_migmsg _PROTO((int, ...));
 #endif
 EXTERN_C int sendrep _PROTO(());
 EXTERN_C int stglogit _PROTO(());
@@ -74,11 +76,14 @@ int stager_client_callback _PROTO((rtcpTapeRequest_t *, rtcpFileRequest_t *));
 extern int (*rtcpc_ClientCallback) _PROTO((rtcpTapeRequest_t *, rtcpFileRequest_t *));
 int isuserlevel _PROTO((char *));
 int getnamespace _PROTO((char *, char *));
-void init_nfsroot_and_hostname _PROTO(());
+void init_hostname _PROTO(());
 
 int Aflag;                          /* Allocation flag */
 int Migrationflag;                  /* Migration flag */
 int nbcat_ent = -1;                 /* Number of catalog entries in stdin */
+int nbcat_ent_current = -1;         /* Number of catalog entries currently processed - used in callback */
+int istart = -1;                    /* Index of first entry currently processed - used in callback */
+int iend = -1;                      /* Index of last entry currently processed - used in callback */
 char hostname[CA_MAXHOSTNAMELEN+1]; /* Current hostname */
 int reqid = 0;                      /* Request id */
 int key;                            /* Request id associated key */
@@ -97,7 +102,7 @@ char lbltype[3];                    /* Lbltype returned by vmgr_gettape or vmgr_
 int fseq = -1;                      /* Fseq returned by vmgr_gettape or vmgr_querytape */
 char tmpbuf[21];                    /* Printout of u_signed64 quantity temp. buffer */
 char *fid = NULL;                   /* File ID */
-int nrtcpcreqs;                     /* Number of rtcpcreq structures in circular list */
+int nrtcpcreqs = 0;                 /* Number of rtcpcreq structures in circular list */
 tape_list_t **rtcpcreqs = NULL;     /* rtcp request itself (circular list) */
 
 u_signed64 *hsm_totalsize = NULL;   /* Total size per hsm file */
@@ -115,10 +120,10 @@ int stagewrt_nomoreupdatetape = 0;  /* Tell if the last updatetape from callback
 struct passwd *stpasswd;            /* Generic uid/gid stage:st */
 int nuserlevel = 0;                 /* Number of user-level files */
 int nexplevel = 0;                  /* Number of experiment-level files */
-char nfsroot[MAXPATH];              /* Current RFIO's NFSROOT for shift-like path parsing */
 int callback_error = 0;             /* Flag to tell us that there was an error in the callback */
 int nhpss = 0;
 int ncastor = 0;
+int rtcpc_kill_cleanup = 0;         /* Flag to tell if we have to call rtcpc_kill() in the signal handler */
 
 #ifdef STAGER_DEBUG
 EXTERN_C int DLL_DECL dumpTapeReq _PROTO((tape_list_t *));
@@ -137,6 +142,18 @@ EXTERN_C int DLL_DECL dumpFileReq _PROTO((file_list_t *));
 	} while (rtcpreq != dumptl);                 \
 }
 #endif
+
+/* These declarations and macros will make sure that MSG_ERR messages will always */
+/* be logged via stglogit() in sendrep.c [especially for migrators] */
+int save_euid, save_egid;
+#define SAVE_EID {                               \
+	save_euid = geteuid();                       \
+	save_egid = getegid();                       \
+	SETEID(0,0);                                 \
+}
+#define RESTORE_EID {                            \
+	SETEID(save_euid,save_egid);                 \
+}
 
 /* This macro resumes all the sensible variables for rtcpc() */
 /* that needs to correctly initialized by the client.        */
@@ -322,73 +339,40 @@ int main(argc, argv)
 #endif
 
 #ifdef STAGER_DEBUG
-    sendrep(rpfd, MSG_ERR, "[DEBUG] GO ON WITH gdb /usr/local/bin/stager %d, then break %d\n",getpid(),__LINE__ + 6);
-    sendrep(rpfd, MSG_ERR, "[DEBUG] sleep(10)\n");
-    sleep(10);
+	SAVE_EID;
+	sendrep(rpfd, MSG_ERR, "[DEBUG] GO ON WITH gdb /usr/local/bin/stager %d, then break %d\n",getpid(),__LINE__ + 6);
+	sendrep(rpfd, MSG_ERR, "[DEBUG] sleep(10)\n");
+	sleep(10);
+	RESTORE_EID;
 #endif
 
-	/* Initialize RFIO's NFSROOT and hostname */
-	init_nfsroot_and_hostname();
+	/* Initialize hostname */
+	init_hostname();
 
-	/* Add hostname to all ipath'es if needed */
-	{
-		char *host;
-		char *filename;
-		int parseln_status;
-		char	ipath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
+	if (stcs->t_or_d == 'm' || stcs->t_or_d == 'h') {
+		/* We cannot mix HPSS and CASTOR files... */
 
 		for (stcp = stcs; stcp < stce; stcp++) {
-			switch ((parseln_status = rfio_parseln(stcp->ipath, &host, &filename, NORDLINKS))) {
-			case 0:
-				/* It is localhost */
-				host = hostname;
-			case 1:
-				if (filename == NULL) {
-					parseln_status = -1;
-					sendrep(rpfd, MSG_ERR, "rfio_parseln returns 1 (remote file) but filename == NULL. Internal error.\n");
-					break;
-				}
-				if (strlen(host) + 1 + strlen(filename) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
-					parseln_status = -1;
-					sendrep(rpfd, MSG_ERR, "length of %s:%s too big (max %d characters)\n",host,filename,CA_MAXHOSTNAMELEN+MAXPATH);
-					break;
-				}
-				strcpy(ipath,host);
-				strcat(ipath,":");
-				strcat(ipath,filename);
-				strcpy(stcp->ipath,ipath);
-				parseln_status = 0;
-				break;
-			default:
-				sendrep(rpfd, MSG_ERR, "rfio_parseln returns -1 (%s - %s)\n",strerror(errno),sstrerror(serrno));
-				break;
-			}
-			if (parseln_status != 0) {
-				sendrep(rpfd, MSG_ERR, "### Global status after rfio_parseln failure. Internal error.\n");
+			if (stcp->t_or_d == 'm') {
+				nhpss++;
+			} else if (stcp->t_or_d == 'h') {
+				ncastor++;
+			} else {
+				SAVE_EID;
+				sendrep(rpfd, MSG_ERR, "### HSM file is of unknown type ('%c')\n",stcp->t_or_d);
+				RESTORE_EID;
+				exit(SYERR);
 			}
 		}
+		if ((nhpss == 0 && ncastor == 0) ||
+			(nhpss  > 0 && ncastor  > 0)) {
+			SAVE_EID;
+			sendrep(rpfd, MSG_ERR, "### Recognized %d HPSS files, %d CASTOR files\n",nhpss,ncastor);
+			RESTORE_EID;
+			free(stcs);
+			exit(SYERR);
+		}
 	}
-
-    if (stcs->t_or_d == 'm' || stcs->t_or_d == 'h') {
-      /* We cannot mix HPSS and CASTOR files... */
-
-      for (stcp = stcs; stcp < stce; stcp++) {
-		if (stcp->t_or_d == 'm') {
-          nhpss++;
-        } else if (stcp->t_or_d == 'h') {
-          ncastor++;
-        } else {
-          sendrep(rpfd, MSG_ERR, "### HSM file is of unknown type ('%c')\n",stcp->t_or_d);
-          exit(SYERR);
-        }
-      }
-      if ((nhpss == 0 && ncastor == 0) ||
-          (nhpss  > 0 && ncastor  > 0)) {
-        sendrep(rpfd, MSG_ERR, "### Recognized %d HPSS files, %d CASTOR files\n",nhpss,ncastor);
-		free(stcs);
-        exit(SYERR);
-      }
-    }
 
 	if (Migrationflag) {
       struct stgcat_entry *stcp;
@@ -406,18 +390,24 @@ int main(argc, argv)
         }
         if (stcp == stcs) {
           if (getnamespace(previousnamespace,ncastor > 0 ? stcp->u1.h.xfile : stcp->u1.m.xfile) != 0) {
+			SAVE_EID;
             sendrep(rpfd, MSG_ERR, "### Cannot get namespace (3rd component) of %s\n",ncastor > 0 ? stcp->u1.h.xfile : stcp->u1.m.xfile);
+			RESTORE_EID;
 			free(stcs);
             exit(SYERR);
           }
         } else {
           if (getnamespace(currentnamespace,ncastor > 0 ? stcp->u1.h.xfile : stcp->u1.m.xfile) != 0) {
+			SAVE_EID;
             sendrep(rpfd, MSG_ERR, "### Cannot get namespace (3rd component) of %s\n",ncastor > 0 ? stcp->u1.h.xfile : stcp->u1.m.xfile);
+			RESTORE_EID;
 			free(stcs);
             exit(SYERR);
           }
           if (strcmp(previousnamespace,currentnamespace) != 0) {
+			SAVE_EID;
             sendrep(rpfd, MSG_ERR, "### Cannot mix namespaces (/%s/ and /%s/)\n",previousnamespace,currentnamespace);
+			RESTORE_EID;
 			free(stcs);
             exit(SYERR);
           }
@@ -426,14 +416,18 @@ int main(argc, argv)
       }
       if ((nuserlevel == 0 && nexplevel == 0) ||
           (nuserlevel  > 0 && nexplevel  > 0)) {
+		SAVE_EID;
         sendrep(rpfd, MSG_ERR, "### Found %d user-level files, %d experiment-level files\n",
                 nuserlevel,nexplevel);
+		RESTORE_EID;
 		free(stcs);
         exit(SYERR);
       }
       /* We get information on generic stage:st uid/gid */
       if ((stpasswd = getpwnam("stage")) == NULL) {
+		SAVE_EID;
         sendrep(rpfd, MSG_ERR, "### Cannot getpwnam(\"%s\") (%s)\n","stage",strerror(errno));
+		RESTORE_EID;
 		free(stcs);
         exit(SYERR);
       }
@@ -465,16 +459,18 @@ int main(argc, argv)
 	}
 
 	/* Redirect RTCOPY log message directly to user's console */
-	rtcp_log = (void (*) _PROTO((int, CONST char *, ...))) &stager_usrmsg;
+	rtcp_log = (void (*) _PROTO((int, CONST char *, ...))) (Migrationflag ? &stager_migmsg : &stager_usrmsg);
 
 	if (stcs->t_or_d == 't') {
 
       /* -------- TAPE TO TAPE ----------- */
 
 #ifdef STAGER_DEBUG
+		SAVE_EID;
 		sendrep(rpfd, MSG_ERR, "[DEBUG-STAGETAPE] GO ON WITH gdb /usr/local/bin/stager %d, then break stage_tape\n",getpid());
 		sendrep(rpfd, MSG_ERR, "[DEBUG-STAGETAPE] sleep(10)\n");
 		sleep(10);
+		RESTORE_EID;
 #endif
 		c = stage_tape ();
 	} else {
@@ -482,27 +478,35 @@ int main(argc, argv)
       /* -------- CASTOR MIGRATION ----------- */
 
 #ifdef STAGER_DEBUG
+		SAVE_EID;
 		sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN/WRT/PUT] Setting Cns_errbuf(), vmgr_errbuf() and stage_setlog()\n");
+		RESTORE_EID;
+#endif
 		if (Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0 ||
 			vmgr_seterrbuf(vmgr_error_buffer,sizeof(vmgr_error_buffer)) != 0 ||
 			stage_setlog((void (*) _PROTO((int, char *))) &stager_log_callback) != 0) {
+			SAVE_EID;
 			sendrep(rpfd, MSG_ERR, "### Cannot set Cns or Vmgr API error buffer(s) or stager API callback function (%s)\n",sstrerror(serrno));
+			RESTORE_EID;
 			free(stcs);
 			exit(SYERR);
 		}
-#endif
 		if (((stcs->status & STAGEWRT) == STAGEWRT) || ((stcs->status & STAGEPUT) == STAGEPUT)) {
 #ifdef STAGER_DEBUG
+				SAVE_EID;
 				sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] GO ON WITH gdb /usr/local/bin/stager %d, then break stagewrt_castor_hsm_file\n",getpid());
 				sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] sleep(10)\n");
 				sleep(10);
+				RESTORE_EID;
 #endif
 			c = stagewrt_castor_hsm_file ();
 		} else {
 #ifdef STAGER_DEBUG
+				SAVE_EID;
 				sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] GO ON WITH gdb /usr/local/bin/stager %d, then break stagein_castor_hsm_file\n",getpid());
 				sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] sleep(10)\n");
 				sleep(10);
+				RESTORE_EID;
 #endif
 			c = stagein_castor_hsm_file ();
 		}
@@ -642,7 +646,9 @@ char *hsmpath(stcp)
 			return(ncastor > 0 ? stcp->u1.h.xfile : stcp->u1.m.xfile);
 		} else {
 #ifdef STAGER_DEBUG
+		SAVE_EID;
 		sendrep(rpfd, MSG_ERR, "[DEBUG-XXX] Hsm Host %s is incompatible with a /castor file. Default CNS_HOST (from shift.conf) will apply\n",host_hsm);
+		RESTORE_EID;
 #endif
 		}
 		end_host_hsm[0] = save_char;
@@ -659,7 +665,6 @@ int stagein_castor_hsm_file() {
 	int i;
 	int new_tape;
 	struct stgcat_entry *stcp_tmp = NULL;
-	int nbcat_ent_tmp;
 #ifdef STAGER_DEBUG
 	char tmpbuf1[21];
 	char tmpbuf2[21];
@@ -678,7 +683,9 @@ int stagein_castor_hsm_file() {
 		(hsm_fseq = (int *) calloc(nbcat_ent,sizeof(int)))                           == NULL ||
 		(hsm_status = (int *) calloc(nbcat_ent,sizeof(int)))                         == NULL ||
 		(hsm_vid = (char **) calloc(nbcat_ent,sizeof(char *)))                       == NULL) {
+		SAVE_EID;
 		sendrep (rpfd, MSG_ERR, STG02, "stagein_castor_hsm_file", "malloc error",strerror(errno));
+		RESTORE_EID;
 		RETURN (USERR);
 	}
 
@@ -691,22 +698,28 @@ int stagein_castor_hsm_file() {
 
 		/* Search for castor a-la-unix path in the file to stagein */
 		if ((castor_hsm = hsmpath(stcp)) == NULL) {
+			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "hsmpath", sstrerror(serrno));
+			RESTORE_EID;
 			RETURN (SYERR);
 		}
 		/* check permissions in parent directory, get file size */
 		strcpy(Cnsfileid.server,stcp->u1.h.server);
 		Cnsfileid.fileid = stcp->u1.h.fileid;
 #ifdef STAGER_DEBUG
+		SAVE_EID;
 		sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] Calling Cns_statx(path=\"%s\",&Cnsfileid={server=\"%s\",fileid=%s},&statbuf)\n",
                 castor_hsm,
                 Cnsfileid.server,
                 u64tostr(Cnsfileid.fileid, tmpbuf1, 0));
+		RESTORE_EID;
 #endif
         SETEID(stcp->uid,stcp->gid);
 		if (Cns_statx (castor_hsm, &Cnsfileid, &statbuf) < 0) {
+			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_statx",
 							 sstrerror (serrno));
+			RESTORE_EID;
 			RETURN (SYERR);
 		}
 		/* check file permissions */
@@ -717,41 +730,65 @@ int stagein_castor_hsm_file() {
 				mode >>= 3;
 		}
 		if ((statbuf.filemode & mode) != mode) {
+			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_statx",
 							 sstrerror (EACCES));
+			RESTORE_EID;
 			RETURN (USERR);
 		}
         /* Get the segment attributes */
         if (Cns_getsegattrs(castor_hsm,&Cnsfileid,&(hsm_nsegments[i]),&(hsm_segments[i])) != 0) {
+			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_getsegattrs",
 							 sstrerror (serrno));
+			RESTORE_EID;
 			RETURN (SYERR);
-        }
-		hsm_totalsize[i]      = statbuf.filesize;
+		}
+		hsm_totalsize[i] = statbuf.filesize; /* Can be changed if -s option - see few lines below */
 		hsm_transferedsize[i] = 0;
 
-        /* Determine which valid copy to use */
-        hsm_oksegment[i] = -1;
-        for (isegments = 0; isegments < hsm_nsegments[i]; isegments++) {
-          if (hsm_segments[i][isegments].s_status != '-') {
-            /* This copy number is not available for recall */
-            continue;
-          } else {
-            hsm_oksegment[i] = isegments;
-            break;
-          }
-        }
-        if (hsm_oksegment[i] < 0) {
-          if (hsm_totalsize[i] > 0) {
-            /* This file is very probably BEEING migrated ! */
-			sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "File probably already beeing migrated",sstrerror (EBUSY));
-            RETURN (EBUSY);
-          } else {
-			sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Empty file (size == 0, no segment information)",sstrerror (USERR));
-            RETURN (USERR);
-          }
-        }
-    }
+		/* Determine which valid copy to use */
+		hsm_oksegment[i] = -1;
+		for (isegments = 0; isegments < hsm_nsegments[i]; isegments++) {
+			if (hsm_segments[i][isegments].s_status != '-') {
+				/* This copy number is not available for recall */
+				continue;
+			} else {
+				hsm_oksegment[i] = isegments;
+				break;
+			}
+		}
+		if (hsm_oksegment[i] < 0) {
+			if (hsm_totalsize[i] > 0) {
+				/* This file is very probably BEEING migrated ! */
+				SAVE_EID;
+				sendrep (rpfd, MSG_ERR, STG02, castor_hsm,
+						"File probably already beeing migrated",sstrerror (EBUSY));
+				RESTORE_EID;
+				RETURN (EBUSY);
+			} else {
+				SAVE_EID;
+				sendrep (rpfd, MSG_ERR, STG02, castor_hsm,
+						"Empty file (size == 0, no segment information)",sstrerror (USERR));
+				RESTORE_EID;
+				RETURN (USERR);
+			}
+		}
+
+		/* The test on the number of segments beeing done, we now correct the */
+		/* totalsize to transfer versus -s argument */
+		if (stcp->size > 0) {
+			u_signed64 new_totalsize;
+
+			new_totalsize = (u_signed64) ((u_signed64) stcp->size * ONE_MB);
+
+			/* If the maximum size to transfer does not exceed physical size then */
+			/* we change this field.                                              */
+			if (new_totalsize < hsm_totalsize[i]) {
+				hsm_totalsize[i] = new_totalsize;
+			}
+		}
+	}
 
  getseg:
 	/* We initalize current vid */
@@ -769,23 +806,29 @@ int stagein_castor_hsm_file() {
 
 		/* Search for castor a-la-unix path in the file to stagein */
 		if ((castor_hsm = hsmpath(stcp)) == NULL) {
+			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "hsmpath", sstrerror(serrno));
+			RESTORE_EID;
 			RETURN (SYERR);
 		}
 #ifdef STAGER_DEBUG
+		SAVE_EID;
 		sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] %s : totalsize=%s, transferedsize=%s\n",
                 castor_hsm,
                 u64tostr(hsm_totalsize[i], tmpbuf1, 0),
                 u64tostr(hsm_transferedsize[i], tmpbuf2, 0));
+		RESTORE_EID;
 #endif
-		if (hsm_totalsize[i] >  hsm_transferedsize[i]) {
+		if (hsm_totalsize[i] > hsm_transferedsize[i]) {
 			hsm_vid[i] = hsm_segments[hsm_oksegment[i]]->vid;
 			hsm_fseq[i] = hsm_segments[hsm_oksegment[i]]->fseq;
 			hsm_oksegment[i]++;
 #ifdef STAGER_DEBUG
+			SAVE_EID;
 			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] %s : Got vid.fseq=%s.%d, last_vid=%s\n",
 							castor_hsm,
 							hsm_vid[i],hsm_fseq[i],last_vid);
+			RESTORE_EID;
 #endif
 			
 			/* We check previous vid returned by Cns_getsegattrs if any */
@@ -821,7 +864,9 @@ int stagein_castor_hsm_file() {
 		while (1) {
 			/* Wait for the corresponding tape to be available */
 #ifdef STAGER_DEBUG
+			SAVE_EID;
 			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] %s : Calling vmgr_querytape(vid=\"%s\",vsn,dgn,aden,lbltype,model,NULL,NULL,NULL,NULL,NULL,NULL,NULL)\n",castor_hsm,last_vid);
+			RESTORE_EID;
 #endif
 			if (vmgr_querytape (last_vid, vsn, dgn, aden, lbltype, model, NULL, NULL,
 								NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL) == 0) {
@@ -829,9 +874,11 @@ int stagein_castor_hsm_file() {
 				break;
 			}
 			strcpy(vid,"");
+			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "vmgr_querytape",
 							 sstrerror (serrno));
 			sendrep (rpfd, MSG_ERR, "%s : Retrying Volume Manager request in %d seconds\n", castor_hsm, RETRYI);
+			RESTORE_EID;
 			sleep(RETRYI);
 		}
 		/* In any case we reinit last_vid variable to current vid */
@@ -842,18 +889,27 @@ int stagein_castor_hsm_file() {
 	}
 
 	/* Build the request from where we found vid (included) up to our next (excluded) */
-	nbcat_ent_tmp = 0;
+	nbcat_ent_current = 0;
+	istart = -1;
+	iend = -1;
 	for (stcp = stcs, i = 0; stcp < stce; stcp++, i++) {
 		if (hsm_vid[i] != NULL) {
-			++nbcat_ent_tmp;
+			++nbcat_ent_current;
+			if (istart < 0) {
+				istart = i;
+			} else {
+				iend = i;
+			}
 		}
 	}
 
-	/* nbcat_ent_tmp will be the number of entries that will use vid */
-	if (nbcat_ent_tmp == 0) {
+	/* nbcat_ent_current will be the number of entries that will use vid */
+	if (nbcat_ent_current == 0 || istart < 0 || iend < 0) {
 		serrno = SEINTERNAL;
-		sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "nbcat_ent_tmp == 0...",
+		SAVE_EID;
+		sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Internal error : nbcat_ent_current == 0 || istart < 0 || iend < 0",
 						 sstrerror (serrno));
+		RESTORE_EID;
 		RETURN (USERR);
 	}
 
@@ -862,12 +918,14 @@ int stagein_castor_hsm_file() {
 		free(stcp_start);
 		stcp_start = NULL;
 	}
-	if ((stcp_end = stcp_start = (struct stgcat_entry *) calloc(nbcat_ent_tmp,sizeof(struct stgcat_entry))) == NULL) {
+	if ((stcp_end = stcp_start = (struct stgcat_entry *) calloc(nbcat_ent_current,sizeof(struct stgcat_entry))) == NULL) {
+		SAVE_EID;
 		sendrep (rpfd, MSG_ERR, STG02, "stagein_castor_hsm_file", "malloc error",strerror(errno));
+		RESTORE_EID;
 		free(stcp_start);
 		RETURN (USERR);
 	}
-	stcp_end += nbcat_ent_tmp;
+	stcp_end += nbcat_ent_current;
 
 	/* we fill temporary window [stcp_start,stcp_end] */
 	for (stcp = stcs, i = 0, stcp_tmp = stcp_start; stcp < stce; stcp++, i++) {
@@ -878,44 +936,55 @@ int stagein_castor_hsm_file() {
 			stcp_tmp++;
 		}
 	}
-		
-	/* We "interrogate" for the total number of structures */
-	if (build_rtcpcreq(&nrtcpcreqs, NULL, stcp_start, stcp_end, stcp_start, stcp_end) != 0) {
-		RETURN (USERR);
-	}
-	if (nrtcpcreqs <= 0) {
-		serrno = SEINTERNAL;
-		sendrep (rpfd, MSG_ERR, STG02, "stagein_castor_hsm_file", "cannot determine number of hsm files",sstrerror(serrno));
-		RETURN (USERR);
-	}
-
-	/* We build the request */
-	if (rtcpcreqs != NULL) {
-		free_rtcpcreq(&rtcpcreqs);
-		rtcpcreqs = NULL;
-	}
-	if (build_rtcpcreq(&nrtcpcreqs, &rtcpcreqs, stcp_start, stcp_end, stcp_start, stcp_end) != 0) {
-		sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "build_rtcpcreq",sstrerror (serrno));
-		free(stcp_start);
-		RETURN (SYERR);
-	}
-
-	/* By construction, rtcpcreqs has only one indice: 0 */
 
 	Flags = 0;
 	while (1) {
+
+		/* We "interrogate" for the total number of structures */
+		if (build_rtcpcreq(&nrtcpcreqs, NULL, stcp_start, stcp_end, stcp_start, stcp_end) != 0) {
+			RETURN (USERR);
+		}
+		if (nrtcpcreqs <= 0) {
+			serrno = SEINTERNAL;
+			SAVE_EID;
+			sendrep (rpfd, MSG_ERR, STG02, "stagein_castor_hsm_file", "cannot determine number of hsm files",sstrerror(serrno));
+			RESTORE_EID;
+			RETURN (USERR);
+		}
+
+		/* We build the request */
+		if (rtcpcreqs != NULL) {
+			free_rtcpcreq(&rtcpcreqs);
+			rtcpcreqs = NULL;
+		}
+		if (build_rtcpcreq(&nrtcpcreqs, &rtcpcreqs, stcp_start, stcp_end, stcp_start, stcp_end) != 0) {
+			SAVE_EID;
+			sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "build_rtcpcreq",sstrerror (serrno));
+			RESTORE_EID;
+			free(stcp_start);
+			RETURN (SYERR);
+		}
+
+		/* By construction, rtcpcreqs has only one indice: 0 */
+
 #ifdef STAGER_DEBUG
+		SAVE_EID;
 		sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] Calling rtcpc()\n");
 		STAGER_RTCP_DUMP(rtcpcreqs[0]);
+		RESTORE_EID;
 #endif
+		rtcpc_kill_cleanup = 1;
 		rtcp_rc = rtcpc(rtcpcreqs[0]);
+		rtcpc_kill_cleanup = 0;
 		if (rtcp_rc < 0) {
 			int stagein_castor_hsm_file_retry = 0;
 
             if (callback_error != 0) {
               /* This is a callback error - considered as fatal */
+			SAVE_EID;
               sendrep (rpfd, MSG_ERR, STG02, "", "Callback Error - Fatal error",
                        sstrerror (serrno));
+			RESTORE_EID;
               free(stcp_start);
               RETURN (USERR);
             }
@@ -926,8 +995,10 @@ int stagein_castor_hsm_file() {
 					rtcpcreqs[0]->tapereq.err.errorcode == ETPARIT ||
 					rtcpcreqs[0]->tapereq.err.errorcode == ETUNREC) {
 					Flags |= DISABLED;
+					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc",sstrerror (serrno));
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Flaging tape to DISABLED");
+					RESTORE_EID;
 					free(stcp_start);
 					RETURN (SYERR);
 				} else if ((rtcpcreqs[0]->file[i].filereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV ||
@@ -938,8 +1009,10 @@ int stagein_castor_hsm_file() {
 					/* Reselect a server - we retry, though */
 					stagein_castor_hsm_file_retry = 1;
 				} else if (rtcpcreqs[0]->file[i].filereq.err.errorcode != ENOENT) {
+					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc",sstrerror(serrno));
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Exit");
+					RESTORE_EID;
 					free(stcp_start);
 					RETURN (SYERR);
 				}
@@ -951,7 +1024,9 @@ int stagein_castor_hsm_file() {
 				continue;
 			}
 		} else if (rtcp_rc > 0) {
+			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Unknown error code (>0)");
+			RESTORE_EID;
 			free(stcp_start);
 			RETURN (SYERR);
 		}
@@ -966,7 +1041,9 @@ int stagein_castor_hsm_file() {
 					/* Entry did not exist - We make the stager believe that this request was */
 					/* successful neverthless...                                              */
 					hsm_transferedsize[i] = hsm_totalsize[i];
+					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "hsmpath", strerror(ENOENT));
+					RESTORE_EID;
 				} else {
 					{
                       /* gcc compiler bug - fixed or forbidden register was spilled. */
@@ -980,23 +1057,17 @@ int stagein_castor_hsm_file() {
 					}
 				}
 				if ((castor_hsm = hsmpath(stcp)) == NULL) {
+					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "hsmpath", sstrerror(serrno));
+					RESTORE_EID;
 					RETURN (USERR);
 				}
 			}
 		}
 		for (stcp = stcs, i = 0; stcp < stce; stcp++, i++) {
-			if (stcp->size > 0) {
-				if (hsm_transferedsize[i] < hsm_totalsize[i] &&
-					hsm_transferedsize[i] < stcp->size * ONE_MB) {
-					/* Not finished */
-					goto getseg;
-				}
-			} else {
-				if (hsm_transferedsize[i] < hsm_totalsize[i]) {
-					/* Not finished */
-					goto getseg;
-				}
+			if (hsm_transferedsize[i] < hsm_totalsize[i]) {
+				/* Not finished */
+				goto getseg;
 			}
 		}
 		break;
@@ -1033,303 +1104,360 @@ int stagewrt_castor_hsm_file() {
 		(hsm_fseq = (int *) calloc(nbcat_ent,sizeof(int)))                           == NULL ||
 		(hsm_status = (int *) calloc(nbcat_ent,sizeof(int)))                         == NULL ||
 		(hsm_vid = (char **) calloc(nbcat_ent,sizeof(char *)))                       == NULL) {
-      sendrep (rpfd, MSG_ERR, STG02, "stagewrt_castor_hsm_file", "malloc error",strerror(errno));
-      RETURN (USERR);
+		SAVE_EID;
+		sendrep (rpfd, MSG_ERR, STG02, "stagewrt_castor_hsm_file", "malloc error",strerror(errno));
+		RESTORE_EID;
+		RETURN (USERR);
 	}
 
-    /* Set CallbackClient */
-    rtcpc_ClientCallback = &stager_client_callback;
+	/* Set CallbackClient */
+	rtcpc_ClientCallback = &stager_client_callback;
 
 	/* We initialize those size arrays */
 	i = 0;
 	for (stcp = stcs; stcp < stce; stcp++, i++) {
-      SETEID(stcp->uid,stcp->gid);
-      if (rfio_stat (stcp->ipath, &statbuf) < 0) {
-        sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_stat",
-                 rfio_serror());
-        RETURN (USERR);
-      }
-      if (statbuf.st_size == 0) {
-        sendrep (rpfd, MSG_ERR, "STG02 - %s is empty\n", stcp->ipath);
-        RETURN (USERR);
-      }
-
-      /* Search for castor a-la-unix path in the file to stagewrt */
-      if ((castor_hsm = hsmpath(stcp)) == NULL) {
-        sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "hsmpath", sstrerror(serrno));
-        RETURN (USERR);
-      }
-      
-      hsm_totalsize[i] = statbuf.st_size;
-      hsm_transferedsize[i] = 0;
-      hsm_fseq[i] = -1;
-      hsm_vid[i] = NULL;
-    }
-
-    while (1) {
-      u_signed64 totalsize_to_transfer;
-      u_signed64 estimated_free_space;
-      int istart, iend;
-      char tape_pool[CA_MAXPOOLNAMELEN + 1];
-      int vmgr_gettape_nretry;
-      int vmgr_gettape_iretry;
-
-      totalsize_to_transfer = 0;
-
-      for (i = 0; i < nbcat_ent; i++) {
-        totalsize_to_transfer += (hsm_totalsize[i] - hsm_transferedsize[i]);
-      }
-      
-      if (totalsize_to_transfer <= 0) {
-        /* Finished */
-        break;
-      }
-
-      /* We loop until everything is staged */
-	gettape:
-      Flags = 0;
-      
-      SETTAPEEID(stcs->uid,stcs->gid);
-
-      vmgr_gettape_nretry = 3;
-      vmgr_gettape_iretry = 0;
-
-      while (1) {
-        stagewrt_nomoreupdatetape = 0;
-
-        /* We select a tape (migration) pool */
-        if (stage_migpool(NULL,stcs->poolname,tape_pool) != 0) {
-          sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "stage_migpool",
-                   sstrerror (serrno));
-          RETURN (USERR);
-        }
-        
-#ifdef SKIP_TAPE_POOL_TURNAROUND
-        if (tape_pool_first[0] == '\0') {
-          /* First selected tape pool - We remember it */
-          strcpy(tape_pool_first,tape_pool);
-        } else {
-          /* Not the fisrt one - did we make a turnaround ? */
-          if (strcmp(tape_pool_first,tape_pool) == 0) {
-            /* Yes... Bad... Let's sleep a long while then */
-            sendrep (rpfd, MSG_ERR, "No migration pool currently available. Sleeping 1 hour\n");
-            sleep(3600);
-          }
-        }
-#endif
-
-#ifdef STAGER_DEBUG
-        sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] "
-                "Calling vmgr_gettape(tape_pool=\"%s\",size=%s,NULL,vid,vsn,dgn,aden,lbltype,model,&fseq,&estimated_free_space)\n",
-                tape_pool != NULL ? tape_pool : "NULL", u64tostr((u_signed64) statbuf.st_size, tmpbuf, 0));
-#endif
-        if (vmgr_gettape (
-                          tape_pool,              /* poolname  (input - can be NULL) */
-                          totalsize_to_transfer,  /* size      (input)        */
-                          NULL,                   /* condition (input - can be NULL) */
-                          vid,                    /* vid       (output)              */
-                          vsn,                    /* vsn       (output)              */
-                          dgn,                    /* dgn       (output)              */
-                          aden,                   /* density   (output)              */
-                          lbltype,                /* lbltype   (output)              */
-                          model,                  /* model     (output)              */
-                          &fseq,                  /* fseq      (output)              */
-                          &estimated_free_space   /* freespace (output)              */
-                          ) == 0) {
-          break;
-        }
-
-        /* Makes sure vid variable has not been overwritten... (to be checked with Jean-Philippe) */
-        strcpy(vid,"");
-        sendrep (rpfd, MSG_ERR, STG02, "", "vmgr_gettape",
-                 sstrerror (serrno));
-        if (++vmgr_gettape_iretry > vmgr_gettape_nretry) {
-          sendrep (rpfd, MSG_ERR, STG02, "", "Number of retries exceeded on vmgr_gettape. Exit.",
-                   sstrerror (serrno));
-          RETURN (SYERR);
-        }
-        sendrep (rpfd, MSG_ERR, "Trying on another migration pool (if any). Retry No %d/%d\n",
-                 vmgr_gettape_iretry, vmgr_gettape_nretry);
-        sleep(10);
-      }
-      /* From now on, "vid" is in status TAPE_BUSY */
-
-      /* We grab the optimal blocksize */
-      devinfo = Ctape_devinfo(model);
-      
-      /* We check which hsm files are concerned */
-      i = 0;
-      istart = -1;
-      iend = -1;
-      stcp_start = stcp_end = NULL;
-
-      for (stcp = stcs; stcp < stce; stcp++, i++) {
-        /* We always force the blocksize while migrating */
-        stcp->blksize = devinfo->defblksize;
-        if (hsm_transferedsize[i] >= hsm_totalsize[i]) {
-          /* Yet transfered */
-          continue;
-        }
-        /* This is the first of file to continue transfer with */
-        istart = i;
-        stcp_start = stcp;
-        /* We found the first of the files that is not yet totally transfered */
-        /* We now search up to which one we can go trying not to fragment     */
-        if (estimated_free_space >= (hsm_totalsize[i] - hsm_transferedsize[i]) && i != (nbcat_ent - 1)) {
-          /* New estimated free space available */
-          estimated_free_space -= (hsm_totalsize[i] - hsm_transferedsize[i]);
-          for (++stcp, ++i; stcp < stce; stcp++, i++) {
-            if (estimated_free_space >= (hsm_totalsize[i] - hsm_transferedsize[i])) {
-              estimated_free_space -= (hsm_totalsize[i] - hsm_transferedsize[i]);
-              continue;
-            } else {
-              /* Not enough room for next file */
-              iend = --i;
-              stcp_end = stcp;
-              break;
-           }
-          }
-          if (iend < 0) {
-            /* We reached the end of the list, and there is still enough free space */
-            /* This mean that we can build a full rtcpc() request.                  */
-            iend = nbcat_ent - 1;
-            stcp_end = stce;
-          }
-        } else {
-          /* Vmgr claims that there is not already enough room for the first file, or */
-          /* we know this is the last of the file.                                    */
-          /* We will, so, build a rtcpc() request only for this one. Others, if any,  */
-          /* will wait the next round.                                                */
-          iend = istart;
-          stcp_end = ++stcp;
-        }
-        break;
-      }
-      
-      if (istart < 0 || iend < 0) {
-        /* This cannot be */
-        serrno = SEINTERNAL;
-        sendrep (rpfd, MSG_ERR, STG02, "stagewrt_castor_hsm_file", "Cannot find where to begin",sstrerror(serrno));
-        Flags = 0;
-        RETURN (USERR);
-      }
-
-      /* From now on we know that stcp[istart,iend] fulfill a-priori the requirement */
-      for (i = istart; i <= iend; i++) {
-        hsm_vid[i] = vid;
-        hsm_fseq[i] = fseq++;
-      }
-
-#ifdef STAGER_DEBUG
-      sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] Use [vid,vsn,dgn,aden,lbltype,fseqs]=[%s,%s,%s,%s,%s,%d to %d]\n",
-              vid,vsn,dgn,aden,lbltype,hsm_fseq[istart],hsm_fseq[iend]);
-#endif
-      
-      /* We "interrogate" for the number of structures */
-      if (build_rtcpcreq(&nrtcpcreqs, NULL, stcp_start, stcp_end, stcp_start, stcp_end) != 0) {
-        Flags = 0;
-        RETURN (USERR);
-      }
-      
-      /* It has to be one exactly (one vid exactly !) */
-      if (nrtcpcreqs != 1) {
-        serrno = SEINTERNAL;
-        sendrep (rpfd, MSG_ERR, STG02, "stagewrt_castor_hsm_file", "Number of rtcpc structures different vs. deterministic value of 1",sstrerror(serrno));
-        Flags = 0;
-        RETURN (USERR);
-      }
-
-      /* Build the request from where we started (included) up to our next (excluded) */
-      if (rtcpcreqs != NULL) {
-        free_rtcpcreq(&rtcpcreqs);
-        rtcpcreqs = NULL;
-      }
-
-      if (build_rtcpcreq(&nrtcpcreqs, &rtcpcreqs, stcp_start, stcp_end, stcp_start, stcp_end) != 0) {
-        sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "build_rtcpcreq",sstrerror (serrno));
-        Flags = 0;
-        RETURN (SYERR);
-      }
-      
-#ifdef STAGER_DEBUG
-      sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] Calling rtcpc()\n");
-      STAGER_RTCP_DUMP(rtcpcreqs[0]);
-#endif
-      
-      Flags = 0;
-      rtcp_rc = rtcpc(rtcpcreqs[0]);
-      
-      if (rtcp_rc < 0) {
-        int j;
-
-        /* rtcpc failed */
-        sendrep (rpfd, MSG_ERR, STG02, vid, "rtcpc",
-                 sstrerror (serrno));
-
-        if (callback_error != 0) {
-          /* This is a callback error - considered as fatal */
-          sendrep (rpfd, MSG_ERR, STG02, "", "Callback Error - Fatal error",
-                   sstrerror (serrno));
-          RETURN (USERR);
-        }
-
-
-        i = 0;
-        for (j = istart; j <= iend; j++, i++) {
-          if (rtcpcreqs[0]->file[i].filereq.err.errorcode == ETPARIT ||
-              rtcpcreqs[0]->file[i].filereq.err.errorcode == ETUNREC ||
-              rtcpcreqs[0]->file[i].filereq.err.errorcode == ETLBL ||
-              rtcpcreqs[0]->tapereq.err.errorcode == ETPARIT ||
-              rtcpcreqs[0]->tapereq.err.errorcode == ETUNREC ||
-              rtcpcreqs[0]->tapereq.err.errorcode == ETLBL) {
-            sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Flaging tape to DISABLED");
-            Flags |= DISABLED;
-            break;
-          } else if ((rtcpcreqs[0]->file[i].filereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV ||
-                     (rtcpcreqs[0]->tapereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV) {
-            /* Reselect a server - we retry, though */
-            sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Retrying (Another Tape Server Required)");
-            break;
-          } else if (rtcpcreqs[0]->tapereq.err.errorcode == ETVBSY) {
-            /* Reselect also server */
-            sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Retrying (ETVBSY)");
-            break;
-          } else if (rtcpcreqs[0]->file->filereq.err.errorcode == ENOENT) {
-            /* Tape info very probably inconsistency with, for ex., TMS */
-            sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc",sstrerror(serrno));
-            sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Exit");
-            Flags = 0;
-            RETURN(USERR);
-          }
+		SETEID(stcp->uid,stcp->gid);
+		if (rfio_stat (stcp->ipath, &statbuf) < 0) {
+			SAVE_EID;
+			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_stat",rfio_serror());
+			RESTORE_EID;
+			RETURN (USERR);
 		}
-        if (Flags != TAPE_FULL && stagewrt_nomoreupdatetape == 0) {
-          /* If Flags is TAPE_FULL then it has already been set by the callback which called vms_updatetape */
-#ifdef STAGER_DEBUG
-          sendrep (rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] Calling vmgr_updatetape(vid=\"%s\",BytesWriten=0,CompressionFactor=0,FilesWriten=0,Flags=%d)\n",vid,Flags);
-#endif
-          if (vmgr_updatetape (vid, (u_signed64) 0, 0, 0, Flags) != 0) {
-            sendrep (rpfd, MSG_ERR, STG02, vid, "vmgr_updatetape",
-                     sstrerror (serrno));
-          }
-        }
-        sendrep (rpfd, MSG_ERR, "Retrying Volume Manager request in %d seconds\n", RETRYI);
-        sleep(RETRYI);
-        goto gettape;
-      } else {
-        if (Flags != TAPE_FULL && stagewrt_nomoreupdatetape == 0) {
-          /* If Flags is TAPE_FULL then it has already been set by the callback */
-#ifdef STAGER_DEBUG
-          sendrep (rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] Calling vmgr_updatetape(vid=\"%s\",ByteWriten=0,CompressionFactor=0,filesWriten0,Flags=0)\n",vid);
-#endif
-          if (vmgr_updatetape (vid, (u_signed64) 0, 0, 0, 0) != 0) {
-            sendrep (rpfd, MSG_ERR, STG02, vid, "vmgr_updatetape",
-                     sstrerror (serrno));
-          }
-        }
-      }
+		if (statbuf.st_size == 0) {
+			SAVE_EID;
+			sendrep (rpfd, MSG_ERR, "STG02 - %s is empty\n", stcp->ipath);
+			RESTORE_EID;
+			RETURN (USERR);
+		}
+
+		/* Search for castor a-la-unix path in the file to stagewrt */
+		if ((castor_hsm = hsmpath(stcp)) == NULL) {
+			SAVE_EID;
+			sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "hsmpath", sstrerror(serrno));
+			RESTORE_EID;
+			RETURN (USERR);
+		}
+
+		hsm_totalsize[i] = statbuf.st_size;
+		if (stcp->size > 0) {
+			u_signed64 new_totalsize;
+
+			new_totalsize = (u_signed64) ((u_signed64) stcp->size * ONE_MB);
+
+			/* If the amount of bytes to transfer is asked to be lower than the physical */
+			/* size of the file, we reflect this in the corresponding field.             */
+			if (new_totalsize < hsm_totalsize[i]) {
+				hsm_totalsize[i] = new_totalsize;
+			}
+
+		}
+		hsm_transferedsize[i] = 0;
+		hsm_fseq[i] = -1;
+		hsm_vid[i] = NULL;
 	}
-    Flags = 0;
-	RETURN (0);
+
+	while (1) {
+		u_signed64 totalsize_to_transfer;
+		u_signed64 estimated_free_space;
+		char tape_pool[CA_MAXPOOLNAMELEN + 1];
+		int vmgr_gettape_nretry;
+		int vmgr_gettape_iretry;
+
+		totalsize_to_transfer = 0;
+
+		for (i = 0; i < nbcat_ent; i++) {
+			totalsize_to_transfer += (hsm_totalsize[i] - hsm_transferedsize[i]);
+		}
+
+		if (totalsize_to_transfer <= 0) {
+			/* Finished */
+			break;
+		}
+
+		/* We loop until everything is staged */
+	gettape:
+		Flags = 0;
+
+		SETTAPEEID(stcs->uid,stcs->gid);
+
+		vmgr_gettape_nretry = 3;
+		vmgr_gettape_iretry = 0;
+
+		while (1) {
+			stagewrt_nomoreupdatetape = 0;
+
+			/* We select a tape (migration) pool */
+			if (stage_migpool(NULL,stcs->poolname,tape_pool) != 0) {
+				SAVE_EID;
+				sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "stage_migpool",sstrerror (serrno));
+				RESTORE_EID;
+				RETURN (USERR);
+			}
+
+#ifdef SKIP_TAPE_POOL_TURNAROUND
+			if (tape_pool_first[0] == '\0') {
+				/* First selected tape pool - We remember it */
+				strcpy(tape_pool_first,tape_pool);
+			} else {
+				/* Not the fisrt one - did we make a turnaround ? */
+				if (strcmp(tape_pool_first,tape_pool) == 0) {
+					/* Yes... Bad... Let's sleep a long while then */
+					SAVE_EID;
+					sendrep (rpfd, MSG_ERR, "No migration pool currently available. Sleeping 1 hour\n");
+					RESTORE_EID;
+					sleep(3600);
+				}
+			}
+#endif
+
+#ifdef STAGER_DEBUG
+			SAVE_EID;
+			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] "
+					"Calling vmgr_gettape(tape_pool=\"%s\",size=%s,NULL,vid,vsn,dgn,aden,lbltype,model,&fseq,&estimated_free_space)\n",
+					tape_pool != NULL ? tape_pool : "NULL", u64tostr((u_signed64) statbuf.st_size, tmpbuf, 0));
+			RESTORE_EID;
+#endif
+			if (vmgr_gettape (
+					tape_pool,              /* poolname  (input - can be NULL) */
+					totalsize_to_transfer,  /* size      (input)        */
+					NULL,                   /* condition (input - can be NULL) */
+					vid,                    /* vid       (output)              */
+					vsn,                    /* vsn       (output)              */
+					dgn,                    /* dgn       (output)              */
+					aden,                   /* density   (output)              */
+					lbltype,                /* lbltype   (output)              */
+					model,                  /* model     (output)              */
+					&fseq,                  /* fseq      (output)              */
+					&estimated_free_space   /* freespace (output)              */
+					) == 0) {
+					break;
+			}
+
+			/* Makes sure vid variable has not been overwritten... (to be checked with Jean-Philippe) */
+			strcpy(vid,"");
+			SAVE_EID;
+			sendrep (rpfd, MSG_ERR, STG02, "", "vmgr_gettape",sstrerror (serrno));
+			RESTORE_EID;
+			if (++vmgr_gettape_iretry > vmgr_gettape_nretry) {
+				SAVE_EID;
+				sendrep (rpfd, MSG_ERR, STG02, "", "Number of retries exceeded on vmgr_gettape. Exit.",sstrerror (serrno));
+				RESTORE_EID;
+				RETURN (SYERR);
+			}
+			SAVE_EID;
+			sendrep (rpfd, MSG_ERR, "Trying on another migration pool (if any). Retry No %d/%d\n",
+					vmgr_gettape_iretry, vmgr_gettape_nretry);
+			RESTORE_EID;
+			sleep(10);
+			}
+			/* From now on, "vid" is in status TAPE_BUSY */
+
+			/* We grab the optimal blocksize */
+			devinfo = Ctape_devinfo(model);
+
+			/* We check which hsm files are concerned */
+			i = 0;
+			istart = -1;
+			iend = -1;
+			stcp_start = stcp_end = NULL;
+
+			for (stcp = stcs; stcp < stce; stcp++, i++) {
+				/* We always force the blocksize while migrating */
+				stcp->blksize = devinfo->defblksize;
+				if (hsm_transferedsize[i] >= hsm_totalsize[i]) {
+					/* Yet transfered */
+					continue;
+				}
+				/* This is the first of file to continue transfer with */
+				istart = i;
+				stcp_start = stcp;
+				/* We found the first of the files that is not yet totally transfered */
+				/* We now search up to which one we can go trying not to fragment     */
+				if (estimated_free_space >= (hsm_totalsize[i] - hsm_transferedsize[i]) && i != (nbcat_ent - 1)) {
+					/* New estimated free space available */
+					estimated_free_space -= (hsm_totalsize[i] - hsm_transferedsize[i]);
+					for (++stcp, ++i; stcp < stce; stcp++, i++) {
+						if (estimated_free_space >= (hsm_totalsize[i] - hsm_transferedsize[i])) {
+							estimated_free_space -= (hsm_totalsize[i] - hsm_transferedsize[i]);
+							continue;
+						} else {
+							/* Not enough room for next file */
+							iend = --i;
+							stcp_end = stcp;
+							break;
+						}
+					}
+					if (iend < 0) {
+						/* We reached the end of the list, and there is still enough free space */
+						/* This mean that we can build a full rtcpc() request.                  */
+						iend = nbcat_ent - 1;
+						stcp_end = stce;
+					}
+				} else {
+					/* Vmgr claims that there is not already enough room for the first file, or */
+					/* we know this is the last of the file.                                    */
+					/* We will, so, build a rtcpc() request only for this one. Others, if any,  */
+					/* will wait the next round.                                                */
+					iend = istart;
+					stcp_end = ++stcp;
+				}
+				break;
+			}
+
+			if (istart < 0 || iend < 0) {
+				/* This cannot be */
+				serrno = SEINTERNAL;
+				SAVE_EID;
+				sendrep (rpfd, MSG_ERR, STG02, "stagewrt_castor_hsm_file", "Cannot find where to begin",sstrerror(serrno));
+				RESTORE_EID;
+				Flags = 0;
+				RETURN (USERR);
+			}
+
+			/* From now on we know that stcp[istart,iend] fulfill a-priori the requirement */
+			nbcat_ent_current = iend - istart + 1;
+			for (i = istart; i <= iend; i++) {
+				hsm_vid[i] = vid;
+				hsm_fseq[i] = fseq++;
+			}
+
+#ifdef STAGER_DEBUG
+			SAVE_EID;
+			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] Use [vid,vsn,dgn,aden,lbltype,fseqs]=[%s,%s,%s,%s,%s,%d to %d]\n",
+					vid,vsn,dgn,aden,lbltype,hsm_fseq[istart],hsm_fseq[iend]);
+			RESTORE_EID;
+#endif
+
+			/* We "interrogate" for the number of structures */
+			if (build_rtcpcreq(&nrtcpcreqs, NULL, stcp_start, stcp_end, stcp_start, stcp_end) != 0) {
+				Flags = 0;
+				RETURN (USERR);
+			}
+
+			/* It has to be one exactly (one vid exactly !) */
+			if (nrtcpcreqs != 1) {
+				serrno = SEINTERNAL;
+				SAVE_EID;
+				sendrep (rpfd, MSG_ERR, STG02, "stagewrt_castor_hsm_file", "Number of rtcpc structures different vs. deterministic value of 1",sstrerror(serrno));
+				RESTORE_EID;
+				Flags = 0;
+				RETURN (USERR);
+			}
+
+			/* Build the request from where we started (included) up to our next (excluded) */
+			if (rtcpcreqs != NULL) {
+				free_rtcpcreq(&rtcpcreqs);
+				rtcpcreqs = NULL;
+			}
+
+			if (build_rtcpcreq(&nrtcpcreqs, &rtcpcreqs, stcp_start, stcp_end, stcp_start, stcp_end) != 0) {
+				SAVE_EID;
+				sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "build_rtcpcreq",sstrerror (serrno));
+				RESTORE_EID;
+				Flags = 0;
+				RETURN (SYERR);
+			}
+
+#ifdef STAGER_DEBUG
+			SAVE_EID;
+			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] Calling rtcpc()\n");
+			STAGER_RTCP_DUMP(rtcpcreqs[0]);
+			RESTORE_EID;
+#endif
+
+			Flags = 0;
+			rtcpc_kill_cleanup = 1;
+			rtcp_rc = rtcpc(rtcpcreqs[0]);
+			rtcpc_kill_cleanup = 0;
+
+			if (rtcp_rc < 0) {
+				int j;
+
+				/* rtcpc failed */
+				SAVE_EID;
+				sendrep (rpfd, MSG_ERR, STG02, vid, "rtcpc",sstrerror (serrno));
+				RESTORE_EID;
+
+				if (callback_error != 0) {
+					/* This is a callback error - considered as fatal */
+					SAVE_EID;
+					sendrep (rpfd, MSG_ERR, STG02, "", "Callback Error - Fatal error",sstrerror (serrno));
+					RESTORE_EID;
+					RETURN (USERR);
+				}
+
+				i = 0;
+				for (j = istart; j <= iend; j++, i++) {
+					if (rtcpcreqs[0]->file[i].filereq.err.errorcode == ETPARIT ||
+						rtcpcreqs[0]->file[i].filereq.err.errorcode == ETUNREC ||
+						rtcpcreqs[0]->file[i].filereq.err.errorcode == ETLBL ||
+						rtcpcreqs[0]->tapereq.err.errorcode == ETPARIT ||
+						rtcpcreqs[0]->tapereq.err.errorcode == ETUNREC ||
+						rtcpcreqs[0]->tapereq.err.errorcode == ETLBL) {
+							SAVE_EID;
+							sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Flaging tape to DISABLED");
+							RESTORE_EID;
+							Flags |= DISABLED;
+							break;
+					} else if ((rtcpcreqs[0]->file[i].filereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV ||
+								(rtcpcreqs[0]->tapereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV) {
+						/* Reselect a server - we retry, though */
+						SAVE_EID;
+						sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Retrying (Another Tape Server Required)");
+						RESTORE_EID;
+						break;
+					} else if (rtcpcreqs[0]->tapereq.err.errorcode == ETVBSY) {
+						/* Reselect also server */
+						SAVE_EID;
+						sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Retrying (ETVBSY)");
+						RESTORE_EID;
+						break;
+					} else if (rtcpcreqs[0]->file->filereq.err.errorcode == ENOENT) {
+						/* Tape info very probably inconsistency with, for ex., TMS */
+						SAVE_EID;
+						sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc",sstrerror(serrno));
+						sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Exit");
+						RESTORE_EID;
+						Flags = 0;
+						RETURN(USERR);
+					}
+				}
+				if (Flags != TAPE_FULL && stagewrt_nomoreupdatetape == 0) {
+					/* If Flags is TAPE_FULL then it has already been set by the callback which called vmgr_updatetape */
+#ifdef STAGER_DEBUG
+					SAVE_EID;
+					sendrep (rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] Calling vmgr_updatetape(vid=\"%s\",BytesWriten=0,CompressionFactor=0,FilesWriten=0,Flags=%d)\n",vid,Flags);
+					RESTORE_EID;
+#endif
+				if (vmgr_updatetape (vid, (u_signed64) 0, 0, 0, Flags) != 0) {
+					SAVE_EID;
+					sendrep (rpfd, MSG_ERR, STG02, vid, "vmgr_updatetape",sstrerror (serrno));
+					RESTORE_EID;
+				}
+			}
+			SAVE_EID;
+			sendrep (rpfd, MSG_ERR, "Retrying Volume Manager request in %d seconds\n", RETRYI);
+			RESTORE_EID;
+			sleep(RETRYI);
+			goto gettape;
+		} else {
+			if (Flags != TAPE_FULL && stagewrt_nomoreupdatetape == 0) {
+				/* If Flags is TAPE_FULL then it has already been set by the callback */
+#ifdef STAGER_DEBUG
+				SAVE_EID;
+				sendrep (rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] Calling vmgr_updatetape(vid=\"%s\",ByteWriten=0,CompressionFactor=0,filesWriten0,Flags=0)\n",vid);
+				RESTORE_EID;
+#endif
+				if (vmgr_updatetape (vid, (u_signed64) 0, 0, 0, 0) != 0) {
+					SAVE_EID;
+					sendrep (rpfd, MSG_ERR, STG02, vid, "vmgr_updatetape",sstrerror (serrno));
+					RESTORE_EID;
+				}
+			}
+		}
+	}
+	Flags = 0;
+	RETURN(0);
 }
 
 int stage_tape() {
@@ -1342,13 +1470,18 @@ int stage_tape() {
 
     stcp_start = stcs;
     stcp_end = stce;
+	nbcat_ent_current = nbcat_ent;
+	istart = 0;
+	iend = nbcat_ent - 1;
 
 	if (build_rtcpcreq(&nrtcpcreqs, NULL, stcp_start, stcp_end, stcp_start, stcp_end) != 0) {
 		RETURN (USERR);
 	}
 	if (nrtcpcreqs <= 0) {
 		serrno = SEINTERNAL;
+		SAVE_EID;
 		sendrep (rpfd, MSG_ERR, STG02, "stage_tape", "cannot determine number of hsm files",sstrerror(serrno));
+		RESTORE_EID;
 		RETURN (USERR);
 	}
 
@@ -1358,22 +1491,30 @@ int stage_tape() {
 		rtcpcreqs = NULL;
 	}
 	if (build_rtcpcreq(&nrtcpcreqs, &rtcpcreqs, stcp_start, stcp_end, stcp_start, stcp_end) != 0) {
+		SAVE_EID;
 		sendrep (rpfd, MSG_ERR, STG02, "", "build_rtcpcreq",sstrerror (serrno));
+		RESTORE_EID;
 		RETURN (SYERR);
 	}
-			
-	
+
+
 #ifdef STAGER_DEBUG
+	SAVE_EID;
 	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGETAPE] Calling rtcpc()\n");
 	STAGER_RTCP_DUMP(rtcpcreqs[0]);
+	RESTORE_EID;
 #endif
 
+	rtcpc_kill_cleanup = 1;
 	rtcp_rc = rtcpc(rtcpcreqs[0]);
+	rtcpc_kill_cleanup = 0;
 
     if (callback_error != 0) {
       /* This is a callback error - considered as fatal */
+		SAVE_EID;
       sendrep (rpfd, MSG_ERR, STG02, "", "Callback Error - Fatal error",
                sstrerror (serrno));
+		RESTORE_EID;
       RETURN (USERR);
     }
 
@@ -1381,15 +1522,21 @@ int stage_tape() {
       int stage_tape_retry_flag = 0;
       int i;
 
+		SAVE_EID;
       sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc", sstrerror (serrno));
+		RESTORE_EID;
       switch (rtcpcreqs[0]->tapereq.err.errorcode) {
       case ETPARIT:
       case ETUNREC:
       case ETLBL:
+		SAVE_EID;
         sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc","Tape should be disabled - Contact responsibles");
+		RESTORE_EID;
         RETURN (SYERR);
       case ETVBSY:
+		SAVE_EID;
         sendrep(rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc", "Tape information inconsistency - Contact responsibles");
+		RESTORE_EID;
         RETURN (SYERR);
       default:
         break;
@@ -1399,7 +1546,9 @@ int stage_tape() {
         if (rtcpcreqs[0]->file[i].filereq.err.errorcode == ETPARIT || 
             rtcpcreqs[0]->file[i].filereq.err.errorcode == ETUNREC ||
             rtcpcreqs[0]->file[i].filereq.err.errorcode == ETLBL) {
+		SAVE_EID;
           sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc","Tape should be disabled - Contact responsibles");
+		RESTORE_EID;
           RETURN (SYERR);
         } else if ((rtcpcreqs[0]->file[i].filereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV ||
                    (rtcpcreqs[0]->tapereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV) {
@@ -1408,14 +1557,18 @@ int stage_tape() {
         }
       }
       if (stage_tape_retry_flag != 0) {
+		SAVE_EID;
         sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc","Internal retry as rtcpc suggests");
+		RESTORE_EID;
         goto stage_tape_retry;
       }
 
       RETURN (USERR);
 
     } else if (rtcp_rc > 0) {
+		SAVE_EID;
       sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc","Unknown error code (>0)");
+		RESTORE_EID;
       RETURN (SYERR);
     }
 
@@ -1448,16 +1601,20 @@ int filecopy(stcp, key, hostname)
 			if (! stcp->size) {
 				/* Without -s option */
 				if (rfio_stat (stcp->u1.m.xfile, &filemig_stat) < 0) {
+					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG02, stcp->u1.m.xfile,
 							 "rfio_stat", rfio_serror());
+					RESTORE_EID;
 					RETURN(USERR);
 				}
 				stcp->size = (int) ((filemig_stat.st_size/(ONE_MB)) + 1);
 			}
 		} else {
 			if (rfio_stat (stcp->u1.m.xfile, &filemig_stat) == 0) {
+				SAVE_EID;
 				sendrep (rpfd, MSG_ERR, STG02, stcp->u1.m.xfile,
 						 "rfio_stat", "file already exists");
+				RESTORE_EID;
 				RETURN(USERR);
 			}
 		}
@@ -1473,9 +1630,9 @@ int filecopy(stcp, key, hostname)
 		if (stage_updc_filcp (
 								stageid,                 /* Stage ID      */
 								0,                       /* subreqid      */
-								0,                       /* Copy rc       */
+								-1,                      /* Copy rc       */
 								NULL,                    /* Interface     */
-								(u_signed64) stcp->size, /* Size          */
+								0,                       /* Size          */
 								0,                       /* Waiting time  */
 								0,                       /* Transfer time */
 								0,                       /* block size    */
@@ -1486,11 +1643,17 @@ int filecopy(stcp, key, hostname)
 								NULL,                    /* recfm         */
 								stcp->ipath              /* path          */
 								) != 0) {
+			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG02, stageid, "stage_updc_filcp",
 							 sstrerror (serrno));
+			RESTORE_EID;
 			RETURN (USERR);
 		}
-		/* sendrep (rpfd, MSG_ERR, "filecopy : internal path setted to %s\n", stcp->ipath); */
+#ifdef STAGER_DEBUG
+	SAVE_EID;
+	sendrep (rpfd, MSG_ERR, "[DEBUG-FILECOPY] Internal path setted to %s\n", stcp->ipath);
+	RESTORE_EID;
+#endif
 	}
 
 	(void) rfio_parseln (stcp->ipath, &host, &filename, NORDLINKS);
@@ -1508,7 +1671,9 @@ int filecopy(stcp, key, hostname)
 
 	/* Writing file */
 	if (((stcp->status & STAGEWRT) == STAGEWRT) || ((stcp->status & STAGEPUT) == STAGEPUT)) {
-		sprintf (command+strlen(command), " -s %d",(int) stcp->actual_size);
+		if (stcp->size) {
+			sprintf (command+strlen(command), " -s %d",(int) stcp->size * ONE_MB);
+		}
 		sprintf (command+strlen(command), " %s", stcp->ipath);
 		if (stcp->t_or_d == 'm')
 			sprintf (command+strlen(command), " %s", stcp->u1.m.xfile);
@@ -1518,13 +1683,19 @@ int filecopy(stcp, key, hostname)
 		/* Reading file */
 		if (stcp->size)
 			sprintf (command+strlen(command), " -s %d",
-							 stcp->size * ONE_MB);
+							 (int) stcp->size * ONE_MB);
 		if (stcp->t_or_d == 'm')
 			sprintf (command+strlen(command), " %s", stcp->u1.m.xfile);
 		else
 			sprintf (command+strlen(command), " %s", stcp->u1.d.xfile);	    
 		sprintf (command+strlen(command), " %s", stcp->ipath);
 	}
+#ifdef STAGER_DEBUG
+	SAVE_EID;
+	sendrep(rpfd, MSG_ERR, "[DEBUG-FILECOPY] Execing %s\n",command);
+	RESTORE_EID;
+#endif
+
 	SETID(stcp->uid,stcp->gid);
 	rf = rfio_popen (command, "r");
 	if (rf == NULL) {
@@ -1533,7 +1704,9 @@ int filecopy(stcp, key, hostname)
 
 	while ((c = rfio_pread (buf, 1, sizeof(buf)-1, rf)) > 0) {
 		buf[c] = '\0';
+		SAVE_EID;
 		sendrep (rpfd, RTCOPY_OUT, "%s", buf);
+		RESTORE_EID;
 	}
 
 	c = rfio_pclose (rf);
@@ -1545,13 +1718,26 @@ void cleanup() {
 	if (((stcs->status & STAGEWRT) == STAGEWRT) || ((stcs->status & STAGEPUT) == STAGEPUT)) {
 		if (vid[0] != '\0') {
 #ifdef STAGER_DEBUG
+			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, "[DEBUG-CLEANUP] Calling vmgr_updatetape(vid=\"%s\",BytesWriten=0,CompressionFactor=0,Files0,Flags=0)\n",vid);
+			RESTORE_EID;
 #endif
 			if (vmgr_updatetape (vid, (u_signed64) 0, 0, 0, 0) != 0) {
+				SAVE_EID;
 				sendrep (rpfd, MSG_ERR, STG02, vid, "vmgr_updatetape",
 								 sstrerror (serrno));
+				RESTORE_EID;
 			}
 		}
+	}
+	if (rtcpc_kill_cleanup != 0) {
+		/* rtcpc() API cleanup */
+#ifdef STAGER_DEBUG
+		SAVE_EID;
+		sendrep (rpfd, MSG_ERR, "[DEBUG-CLEANUP] Calling rtcpc_kill()\n");
+		RESTORE_EID;
+#endif
+		rtcpc_kill();
 	}
 }
 
@@ -1591,7 +1777,9 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 
 	if (nrtcpcreqs_in == NULL || fixed_stcs == NULL || fixed_stce == NULL) {
 		serrno = SEINTERNAL;
+		SAVE_EID;
 		sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "Bad arguments to build_rtcpcreq",sstrerror(serrno));
+		RESTORE_EID;
 		return(-1);
 	}
 
@@ -1635,7 +1823,9 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 	
 	/* We allocate the array */
 	if ((*rtcpcreqs_in = (tape_list_t **) calloc(*nrtcpcreqs_in,sizeof(tape_list_t *))) == NULL) {
+		SAVE_EID;
 		sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "calloc",strerror(errno));
+		RESTORE_EID;
 		serrno = SEINTERNAL;
 		return(-1);
 	}
@@ -1643,7 +1833,9 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 	/* We allocate content of the array */
 	for (i = 0; i < *nrtcpcreqs_in; i++) {
 		if (((*rtcpcreqs_in)[i] = calloc(1,sizeof(tape_list_t))) == NULL) {
+			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "calloc",strerror(errno));
+			RESTORE_EID;
 			serrno = SEINTERNAL;
 			return(-1);
 		}
@@ -1775,7 +1967,9 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				*save_stcp_p = save_stcp;
 				nbfiles = (nbcat_ent > nbtpf) ? nbcat_ent : nbtpf;
 				if ((fl = (file_list_t *) calloc (nbfiles, sizeof(file_list_t))) == NULL) {
+					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "calloc",strerror(errno));
+					RESTORE_EID;
 					serrno = SEINTERNAL;
 					return(-1);
 				}
@@ -1920,7 +2114,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 #ifndef SKIP_FILEREQ_MAXSIZE
 					if (stcp->size > 0) {
 											/* filereq.maxsize is in bytes */
-						fl[j].filereq.maxsize = 1 + (u_signed64) ((u_signed64) stcp->size * ONE_MB);
+						fl[j].filereq.maxsize = (u_signed64) ((u_signed64) stcp->size * ONE_MB);
 					}
 #endif
 					if (stcp + 1 < fixed_stce) stcp++;
@@ -1939,22 +2133,30 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			/* This is an hsm request */
 			if (hsm_totalsize == NULL || hsm_transferedsize == NULL) {
 				serrno = SEINTERNAL;
+				SAVE_EID;
 				sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "No hsm_totalsize or hsm_transferedsize array (should be != NULL)",sstrerror(serrno));
+				RESTORE_EID;
 				return(-1);
 			}
 			if ((ihsm = hsmidx(stcp)) < 0) {
 				serrno = SEINTERNAL;
+				SAVE_EID;
 				sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "Cannot find valid hsm !\n",sstrerror(serrno));
+				RESTORE_EID;
 				return(-1);
 			}
 			if (hsm_totalsize[ihsm] == 0) {
 				serrno = SEINTERNAL;
+				SAVE_EID;
 				sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "Bad size parameter (should be > 0)",sstrerror(serrno));
+				RESTORE_EID;
 				return(-1);
 			}
 			if (hsm_transferedsize[ihsm] > hsm_totalsize[ihsm]) {
 				serrno = SEINTERNAL;
+				SAVE_EID;
 				sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "Yet transfered size claimed to be > Hsm total size...",sstrerror(serrno));
+				RESTORE_EID;
 				return(-1);
 			}
 			/* hsm mode : only one tape */
@@ -1980,7 +2182,9 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			if ((*rtcpcreqs_in)[i]->file == NULL) {
 				/* First file for this VID */
 				if (((*rtcpcreqs_in)[i]->file = (file_list_t *) calloc(1,sizeof(file_list_t))) == NULL) {
+					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "calloc",strerror(errno));
+					RESTORE_EID;
 					serrno = SEINTERNAL;
 					return(-1);
 				}
@@ -1993,7 +2197,9 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
                 int          i2;
 
 				if ((dummy = (file_list_t *) realloc((*rtcpcreqs_in)[i]->file,(nfile_list + 1) * sizeof(file_list_t))) == NULL) {
+					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "realloc",strerror(errno));
+					RESTORE_EID;
 					serrno = SEINTERNAL;
 					return(-1);
 				}
@@ -2042,11 +2248,15 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 
             /*
 			if ((castor_hsm = hsmpath(stcp)) == NULL) {
+				SAVE_EID;
 				sendrep (rpfd, MSG_ERR, STG02, stcp->u1.m.xfile, "hsmpath", sstrerror(serrno));
+				RESTORE_EID;
 				RETURN (USERR);
 			}
 			if ((fid = strrchr (castor_hsm, '/')) == NULL) {
+				SAVE_EID;
 				sendrep (rpfd, MSG_ERR, STG33, stcp->u1.m.xfile, "Invalid path");
+				RESTORE_EID;
 				return(-1);
 			}
 			fid++;
@@ -2065,7 +2275,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				dummysize = (u_signed64) stcp->size;
 				dummysize *= (u_signed64) ONE_MB;
 				dummysize -= (u_signed64) hsm_transferedsize[ihsm];
-				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.maxsize = 1 + dummysize;
+				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.maxsize = dummysize;
 				/* Default is NOT to specify maxsize if user did not */
 				/*
 			} else {
@@ -2073,7 +2283,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 
 				dummysize = (u_signed64) hsm_totalsize[ihsm];
 				dummysize -= (u_signed64) hsm_transferedsize[ihsm];
-				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.maxsize = 1 + dummysize;
+				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.maxsize = dummysize;
 				*/
 			}
 #endif
@@ -2128,7 +2338,9 @@ int unpackfseq(fseq, req_type, trailing, fseq_list)
 	*trailing = *(fseq + strlen (fseq) - 1);
 	if (*trailing == '-') {
 		if ((req_type & 0xF) != STAGEIN) {
+			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG18);
+			RESTORE_EID;
 			return (0);
 		}
 		*(fseq + strlen (fseq) - 1) = '\0';
@@ -2136,7 +2348,9 @@ int unpackfseq(fseq, req_type, trailing, fseq_list)
 	switch (*fseq) {
 	case 'n':
 		if ((req_type & 0xF) == STAGEIN) {
+			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG17, "-qn", "stagein");
+			RESTORE_EID;
 			return (0);
 		}
 	case 'u':
@@ -2145,7 +2359,9 @@ int unpackfseq(fseq, req_type, trailing, fseq_list)
 		} else {
 			nbtpf = strtol (fseq + 1, &dp, 10);
 			if (*dp != '\0') {
+				SAVE_EID;
 				sendrep (rpfd, MSG_ERR, STG06, "-q");
+				RESTORE_EID;
 				return (0);
 			}
 		}
@@ -2161,25 +2377,33 @@ int unpackfseq(fseq, req_type, trailing, fseq_list)
 				*q = '\0';
 				n2 = strtol (q + 1, &dp, 10);
 				if (*dp != '\0') {
+					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG06, "-q");
+					RESTORE_EID;
 					return (0);
 				}
 				n1 = strtol (p, &dp, 10);
 				if (*dp != '\0') {
+					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG06, "-q");
+					RESTORE_EID;
 					return (0);
 				}
 				*q = '-';
 			} else {
 				n1 = strtol (p, &dp, 10);
 				if (*dp != '\0') {
+					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG06, "-q");
+					RESTORE_EID;
 					return (0);
 				}
 				n2 = n1;
 			}
 			if (n1 <= 0 || n2 < n1) {
+				SAVE_EID;
 				sendrep (rpfd, MSG_ERR, STG06, "-q");
+				RESTORE_EID;
 				return (0);
 			}
 			nbtpf += n2 - n1 + 1;
@@ -2244,12 +2468,15 @@ void stager_log_callback(level,message)
      int level;
      char *message;
 {
+	SAVE_EID;
 #ifdef STAGER_DEBUG
-  /* In debug mode we always want to have all the messages in the stager log-file */
-  sendrep(rpfd,MSG_ERR,"%s",message);
+	/* In debug mode we always want to have all the messages in the stager log-file */
+	sendrep(rpfd,MSG_ERR,"%s",message);
 #else
-  sendrep(rpfd,(level == LOG_INFO) ? MSG_OUT : MSG_ERR,"%s",message);
+	/* In migration mode we want to make sure that everything is logged */
+	sendrep(rpfd, Migrationflag ? MSG_ERR : ((level == LOG_INFO) ? MSG_OUT : MSG_ERR),"%s",message);
 #endif
+	RESTORE_EID;
 }
 
 int stager_client_callback(tapereq,filereq)
@@ -2262,6 +2489,7 @@ int stager_client_callback(tapereq,filereq)
   char tmpbuf4[21];
   int compression_factor = 0;		/* times 100 */
   int stager_client_callback_i = -1;
+  int stager_client_true_i = -1;
   int i;
   struct stgcat_entry *stcp;
   char *castor_hsm;
@@ -2275,6 +2503,7 @@ int stager_client_callback(tapereq,filereq)
   }
 
 #ifdef STAGER_DEBUG
+	SAVE_EID;
   sendrep(rpfd, MSG_ERR, "[DEBUG-CALLBACK] Received Callback for VID.FSEQ=%s.%d, Disk File No %d, filereq->cprc = %d, filereq->proc_status = %d, filereq->err.severity = %d, serrno = %d\n",
           tapereq->vid,
           filereq->tape_fseq,
@@ -2283,33 +2512,18 @@ int stager_client_callback(tapereq,filereq)
           filereq->proc_status,
           filereq->err.severity,
           serrno);
+	RESTORE_EID;
 #endif
 
   stager_client_callback_i = filereq->disk_fseq - 1;
+  stager_client_true_i = stager_client_callback_i + istart;
   stcp = &(stcp_start[stager_client_callback_i]);
 
-  /*
-  for (stcp = stcs, i = 0; stcp < stce; stcp++, i++) {
-    if (hsm_status[i] != 0) {
-      continue;
-    }
-    if ((stcp->status & 0xF) == STAGEIN && Aflag) {
-      if (strcmp(filereq->file_path,".") == 0) {
-        stager_client_callback_i = i;
-        break;
-      }
-    } else {
-      if (strcmp(filereq->file_path,stcp->ipath) == 0) {
-        stager_client_callback_i = i;
-        break;
-      }
-    }
-  }
-  */
-
-  if (stager_client_callback_i < 0 || stager_client_callback_i >= nbcat_ent) {
+  if (stager_client_callback_i < 0 || stager_client_callback_i > iend || stager_client_true_i >= nbcat_ent) {
     serrno = SEINTERNAL;
+	SAVE_EID;
     sendrep (rpfd, MSG_ERR, STG02, filereq->file_path, "rtcpc() ClientCallback",strerror(errno));
+	RESTORE_EID;
     callback_error = 1;
     return(-1);
   }
@@ -2318,7 +2532,9 @@ int stager_client_callback(tapereq,filereq)
 
   /* Search for castor a-la-unix path in the file to stagewrt */
   if ((castor_hsm = hsmpath(stcp)) == NULL) {
+	SAVE_EID;
     sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "hsmpath", sstrerror(serrno));
+	RESTORE_EID;
     callback_error = 1;
     return(-1);
   }
@@ -2331,15 +2547,17 @@ int stager_client_callback(tapereq,filereq)
       ) {
 
 #ifdef STAGER_DEBUG
+	SAVE_EID;
     sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN/WRT/PUT-CALLBACK] bytes_in = %s, bytes_out = %s, host_bytes = %s\n",
             u64tostr(filereq->bytes_in, tmpbuf1, 0),
             u64tostr(filereq->bytes_out, tmpbuf2, 0),
             u64tostr(filereq->host_bytes, tmpbuf3, 0));
+	RESTORE_EID;
 #endif
       
 	if (((stcs->status & STAGEWRT) == STAGEWRT) || ((stcs->status & STAGEPUT) == STAGEPUT)) {
       /* This is the tpwrite callback */
-      int tape_flag = filereq->cprc < 0 ? TAPE_FULL : (stager_client_callback_i == nbcat_ent - 1 ? 0 : TAPE_BUSY);
+      int tape_flag = filereq->cprc < 0 ? TAPE_FULL : (stager_client_callback_i == iend ? 0 : TAPE_BUSY);
       
 
       {
@@ -2349,10 +2567,10 @@ int stager_client_callback(tapereq,filereq)
         u_signed64 dummyvalue;
         
         dummyvalue = filereq->bytes_in;
-        hsm_transferedsize[stager_client_callback_i] += dummyvalue;
+        hsm_transferedsize[stager_client_true_i] += dummyvalue;
       }
 
-      if (stager_client_callback_i == nbcat_ent - 1) {
+      if (stager_client_callback_i == iend) {
         stagewrt_nomoreupdatetape = 1;
       }
       if (filereq->host_bytes > 0 && filereq->bytes_out > 0) {
@@ -2360,12 +2578,14 @@ int stager_client_callback(tapereq,filereq)
       }
       Flags = tape_flag;
 #ifdef STAGER_DEBUG
+	SAVE_EID;
       sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] Calling vmgr_updatetape(vid=\"%s\",BytesWriten=%s,CompressionFactor=%d,FilesWriten=%d,Flags=%d)\n",
               tapereq->vid,
               u64tostr(filereq->bytes_in, tmpbuf1, 0),
               compression_factor,
               1,
               Flags);
+	RESTORE_EID;
 #endif
       if (vmgr_updatetape(tapereq->vid,
                           filereq->bytes_in,
@@ -2373,83 +2593,101 @@ int stager_client_callback(tapereq,filereq)
                           1,
                           Flags
                           ) != 0) {
+		SAVE_EID;
         sendrep (rpfd, MSG_ERR, STG02, vid, "vmgr_updatetape",
                  sstrerror (serrno));
+		RESTORE_EID;
         callback_error = 1;
         return(-1);
       }
 #ifdef STAGER_DEBUG
-      sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] stager_client_callback_i = %d\n",stager_client_callback_i);
-      sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_nsegments[%d] = %d\n",stager_client_callback_i,hsm_nsegments[stager_client_callback_i]);
+	SAVE_EID;
+      sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] istart = %d , iend = %d, stager_client_callback_i = %d -> stager_client_true_i = %d\n",istart, iend, stager_client_callback_i, stager_client_true_i);
+      sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_nsegments[%d] = %d\n",stager_client_true_i,hsm_nsegments[stager_client_true_i]);
+	RESTORE_EID;
 #endif
-      if (hsm_nsegments[stager_client_callback_i] == 0) {
+      if (hsm_nsegments[stager_client_true_i] == 0) {
         /* And this is the first of the segments */
-        if ((hsm_segments[stager_client_callback_i] = (struct Cns_segattrs *) malloc(sizeof(struct Cns_segattrs))) == NULL) {
+        if ((hsm_segments[stager_client_true_i] = (struct Cns_segattrs *) malloc(sizeof(struct Cns_segattrs))) == NULL) {
+			SAVE_EID;
           sendrep (rpfd, MSG_ERR, STG02, vid, "malloc", strerror(errno));
+			RESTORE_EID;
           serrno = SEINTERNAL;
           callback_error = 1;
           return(-1);
         }
 #ifdef STAGER_DEBUG
-        sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].fsec = %d\n",stager_client_callback_i,hsm_nsegments[stager_client_callback_i],1);
+		SAVE_EID;
+        sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].fsec = %d\n",stager_client_true_i,hsm_nsegments[stager_client_true_i],1);
+		RESTORE_EID;
 #endif
-        hsm_segments[stager_client_callback_i][hsm_nsegments[stager_client_callback_i]].fsec = 1;
+        hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].fsec = 1;
       } else {
         struct Cns_segattrs *dummy;
         
         
-        if ((dummy = (struct Cns_segattrs *) realloc(hsm_segments[stager_client_callback_i],
-                                                     (hsm_nsegments[stager_client_callback_i] + 1) *
+        if ((dummy = (struct Cns_segattrs *) realloc(hsm_segments[stager_client_true_i],
+                                                     (hsm_nsegments[stager_client_true_i] + 1) *
                                                      sizeof(struct Cns_segattrs))) == NULL) {
+			SAVE_EID;
           sendrep (rpfd, MSG_ERR, STG02, vid, "realloc", strerror(errno));
+			RESTORE_EID;
           serrno = SEINTERNAL;
           callback_error = 1;
           return(-1);
         }
-        hsm_segments[stager_client_callback_i] = dummy;
+        hsm_segments[stager_client_true_i] = dummy;
 #ifdef STAGER_DEBUG
-        sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].fsec = %d\n",stager_client_callback_i,hsm_nsegments[stager_client_callback_i],hsm_segments[stager_client_callback_i][hsm_nsegments[stager_client_callback_i] - 1].fsec + 1);
+		SAVE_EID;
+        sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].fsec = %d\n",stager_client_true_i,hsm_nsegments[stager_client_true_i],hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i] - 1].fsec + 1);
+		RESTORE_EID;
 #endif
-        hsm_segments[stager_client_callback_i][hsm_nsegments[stager_client_callback_i]].fsec =
-          hsm_segments[stager_client_callback_i][hsm_nsegments[stager_client_callback_i] - 1].fsec + 1;
+        hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].fsec =
+          hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i] - 1].fsec + 1;
       }
 #ifdef STAGER_DEBUG
-      sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].copyno = %d\n",stager_client_callback_i,hsm_nsegments[stager_client_callback_i],0);
-      sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].segsize = %d\n",stager_client_callback_i,hsm_nsegments[stager_client_callback_i],filereq->bytes_in);
-      sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].s_status = '-'\n",stager_client_callback_i,hsm_nsegments[stager_client_callback_i]);
-      sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].vid = \"%s\"\n",stager_client_callback_i,hsm_nsegments[stager_client_callback_i],tapereq->vid);
-      sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].fseq = %d\n",stager_client_callback_i,hsm_nsegments[stager_client_callback_i],filereq->tape_fseq);
+	SAVE_EID;
+      sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].copyno = %d\n",stager_client_true_i,hsm_nsegments[stager_client_true_i],0);
+      sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].segsize = %d\n",stager_client_true_i,hsm_nsegments[stager_client_true_i],filereq->bytes_in);
+      sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].s_status = '-'\n",stager_client_true_i,hsm_nsegments[stager_client_true_i]);
+      sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].vid = \"%s\"\n",stager_client_true_i,hsm_nsegments[stager_client_true_i],tapereq->vid);
+      sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].fseq = %d\n",stager_client_true_i,hsm_nsegments[stager_client_true_i],filereq->tape_fseq);
+	RESTORE_EID;
 #endif
-      hsm_segments[stager_client_callback_i][hsm_nsegments[stager_client_callback_i]].copyno = 0;
-      hsm_segments[stager_client_callback_i][hsm_nsegments[stager_client_callback_i]].segsize = filereq->bytes_in;
-      hsm_segments[stager_client_callback_i][hsm_nsegments[stager_client_callback_i]].s_status = '-';
-      strcpy(hsm_segments[stager_client_callback_i][hsm_nsegments[stager_client_callback_i]].vid,tapereq->vid);
-      memcpy(hsm_segments[stager_client_callback_i][hsm_nsegments[stager_client_callback_i]].blockid,filereq->blockid,sizeof(blockid));
-      hsm_segments[stager_client_callback_i][hsm_nsegments[stager_client_callback_i]].fseq = filereq->tape_fseq;
-      hsm_nsegments[stager_client_callback_i]++;
-      if (hsm_transferedsize[stager_client_callback_i] >= hsm_totalsize[stager_client_callback_i]) {
+      hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].copyno = 0;
+      hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].segsize = filereq->bytes_in;
+      hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].s_status = '-';
+      strcpy(hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].vid,tapereq->vid);
+      memcpy(hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].blockid,filereq->blockid,sizeof(blockid));
+      hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].fseq = filereq->tape_fseq;
+      hsm_nsegments[stager_client_true_i]++;
+      if (hsm_transferedsize[stager_client_true_i] >= hsm_totalsize[stager_client_true_i]) {
         /* tpwrite of this file is over */
         strcpy(Cnsfileid.server,stcp->u1.h.server);
         Cnsfileid.fileid = stcp->u1.h.fileid;
 #ifdef STAGER_DEBUG
+		SAVE_EID;
         sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] Calling Cns_setsegattrs(\"%s\",&Cnsfileid={server=\"%s\",fileid=%s},nbseg=%d,segments)\n",
                 castor_hsm,
                 Cnsfileid.server,
                 u64tostr(Cnsfileid.fileid,tmpbuf1,0),
-                hsm_nsegments[stager_client_callback_i]);
+                hsm_nsegments[stager_client_true_i]);
+		RESTORE_EID;
 #endif
         if (Cns_setsegattrs (castor_hsm,
                              &Cnsfileid,
-                             hsm_nsegments[stager_client_callback_i],
-                             hsm_segments[stager_client_callback_i]) < 0) {
+                             hsm_nsegments[stager_client_true_i],
+                             hsm_segments[stager_client_true_i]) < 0) {
+			SAVE_EID;
           sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setsegattrs",
                    sstrerror (serrno));
+			RESTORE_EID;
           callback_error = 1;
           return(-1);
         }
         /* If we reach this part of the code then we know undoubtly */
         /* that the transfer of this HSM file IS ok                 */
-        hsm_status[stager_client_callback_i] = 1;
+        hsm_status[stager_client_true_i] = 1;
       }
     } else {
 
@@ -2460,29 +2698,33 @@ int stager_client_callback(tapereq,filereq)
         u_signed64 dummyvalue;
         
         dummyvalue = filereq->bytes_out;
-        hsm_transferedsize[stager_client_callback_i] += dummyvalue;
+        hsm_transferedsize[stager_client_true_i] += dummyvalue;
       }
 
       /* This is the tpread callback */
-      if (hsm_transferedsize[stager_client_callback_i] >= hsm_totalsize[stager_client_callback_i]) {
+      if (hsm_transferedsize[stager_client_true_i] >= hsm_totalsize[stager_client_true_i]) {
         strcpy(Cnsfileid.server,stcp->u1.h.server);
         Cnsfileid.fileid = stcp->u1.h.fileid;
 #ifdef STAGER_DEBUG
+		SAVE_EID;
         sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN/CALLBACK] Calling Cns_setatime(%s,&Cnsfileid={server=\"%s\",fileid=%s})\n",
                 castor_hsm,
                 Cnsfileid.server,
                 u64tostr(Cnsfileid.fileid,tmpbuf1,0));
+		RESTORE_EID;
 #endif
         if (Cns_setatime (castor_hsm,
                           &Cnsfileid) < 0) {
+			SAVE_EID;
           sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setatime",
                    sstrerror (serrno));
+			RESTORE_EID;
           callback_error = 1;
           return(-1);
         }
         /* If we reach this part of the code then we know undoubly */
         /* that the transfer of this HSM file IS ok                */
-        hsm_status[stager_client_callback_i] = 1;
+        hsm_status[stager_client_true_i] = 1;
       }
     }
   }
@@ -2490,16 +2732,8 @@ int stager_client_callback(tapereq,filereq)
   return(0);
 }
 
-void init_nfsroot_and_hostname()
+void init_hostname()
 {
-	extern char *getconfent _PROTO((char *, char *, int));
-	int n = 0;
-	char *p;
-
-	if (p = getconfent ("RFIO", "NFS_ROOT", 0))
-		strcpy (nfsroot, p);
-	else
-		nfsroot[0] = '\0';
 	gethostname (hostname, CA_MAXHOSTNAMELEN + 1);
 }
 
