@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.132 $ $Release$ $Date: 2005/02/28 09:08:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.133 $ $Release$ $Date: 2005/02/28 14:23:17 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -825,7 +825,7 @@ castor::db::ora::OraStagerSvc::streamsToDo()
       }
       // Change stream status
       stream->setStatus(castor::stager::STREAM_WAITDRIVE);
-      cnvSvc()->updateRep(0, stream, false);
+      cnvSvc()->updateRep(0, stream, true);
       // Fill TapePool pointer
       castor::BaseAddress ad;
       ad.setCnvSvcName("OraCnvSvc");
