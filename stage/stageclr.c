@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.26 2002/01/20 12:03:41 jdurand Exp $
+ * $Id: stageclr.c,v 1.27 2002/03/04 11:12:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.26 $ $Date: 2002/01/20 12:03:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.27 $ $Date: 2002/03/04 11:12:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -135,6 +135,7 @@ int main(argc, argv)
 		case 'G':
 			Gflag++;
 			if ((gr = Cgetgrgid (gid)) == NULL) {
+				fprintf (stderr, STG33, "Cgetgrgid", strerror(errno));
 				fprintf (stderr, STG36, gid);
 #if defined(_WIN32)
 				WSACleanup();
@@ -146,6 +147,7 @@ int main(argc, argv)
 				errflg++;
 			} else {
 				if ((pw = Cgetpwnam (p)) == NULL) {
+					fprintf (stderr, STG33, "Cgetpwnam", strerror(errno));
 					fprintf (stderr, STG11, p);
 					errflg++;
 				} else
@@ -278,6 +280,7 @@ int main(argc, argv)
 
 	if ((pw = Cgetpwuid (uid)) == NULL) {
 		char uidstr[8];
+		fprintf (stderr, STG33, "Cgetpwuid", strerror(errno));
 		sprintf (uidstr, "%d", uid);
 		p = uidstr;
 		fprintf (stderr, STG11, p);

@@ -1,5 +1,5 @@
 /*
- * $Id: stageshutdown.c,v 1.7 2001/12/05 10:10:18 jdurand Exp $
+ * $Id: stageshutdown.c,v 1.8 2002/03/04 11:12:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageshutdown.c,v $ $Revision: 1.7 $ $Date: 2001/12/05 10:10:18 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageshutdown.c,v $ $Revision: 1.8 $ $Date: 2002/03/04 11:12:40 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -98,7 +98,14 @@ int main(argc, argv)
 
 	/* Build request body */
 
-	pw = Cgetpwuid (uid);
+	if ((pw = Cgetpwuid (uid)) == NULL) {
+		char uidstr[8], *p;
+		fprintf (stderr, STG33, "Cgetpwuid", strerror(errno));
+		sprintf (uidstr, "%d", uid);
+		p = uidstr;
+		fprintf (stderr, STG11, p);
+		exit (SYERR);
+	}
 	marshall_STRING (sbp, pw->pw_name);	/* login name */
 	marshall_WORD (sbp, gid);
 	marshall_WORD (sbp, argc);

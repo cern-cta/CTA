@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.29 2002/02/20 15:44:37 jdurand Exp $
+ * $Id: stageput.c,v 1.30 2002/03/04 11:12:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.29 $ $Date: 2002/02/20 15:44:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.30 $ $Date: 2002/03/04 11:12:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -117,6 +117,7 @@ int main(argc, argv)
 		case 'G':
 			Gflag++;
 			if ((gr = Cgetgrgid (gid)) == NULL) {
+				fprintf (stderr, STG33, "Cgetgrgid", strerror(errno));
 				fprintf (stderr, STG36, gid);
 				exit (SYERR);
 			}
@@ -126,6 +127,7 @@ int main(argc, argv)
 			} else {
 				strcpy (Gname, p);
 				if ((pw = Cgetpwnam (p)) == NULL) {
+					fprintf (stderr, STG33, "Cgetpwnam", strerror(errno));
 					fprintf (stderr, STG11, p);
 					errflg++;
 				} else
@@ -284,6 +286,7 @@ int main(argc, argv)
 
 	if ((pw = Cgetpwuid (uid)) == NULL) {
 		char uidstr[8];
+		fprintf (stderr, STG33, "Cgetpwuid", strerror(errno));
 		sprintf (uidstr, "%d", uid);
 		p = uidstr;
 		fprintf (stderr, STG11, p);
