@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.7 $ $Date: 2001/01/29 07:35:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.8 $ $Date: 2001/07/25 06:59:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tplabel - prelabel al and sl tapes, write 2 tape marks for nl tapes */
@@ -132,6 +132,8 @@ char	**argv;
 			if (! vsn[0]) {
 				if (strlen (optarg) <= CA_MAXVSNLEN) {
 					strcpy (vsn, optarg);
+					if (! vid[0])
+						strcpy (vid, optarg);
 				} else {
 					fprintf (stderr, TP006, "-v");
 					errflg++;
@@ -145,6 +147,10 @@ char	**argv;
 			errflg++;
 			break;
 		}
+	}
+	if (! vid[0]) {
+		fprintf (stderr, TP031);
+		errflg++;
 	}
 	if (errflg) {
 		usage (argv[0]);
@@ -215,7 +221,7 @@ usage(cmd)
 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
-	fprintf (stderr, "%s%s",
-		"[-D device_name] [-d density] [-g device_group_name]\n",
-		"[-H number_headers] [-l label_type] [-v volume_serial_number]\n");
+	fprintf (stderr, "%s%s%s",
+	    "[-D device_name] [-d density] [-g device_group_name]\n",
+	    "[-H number_headers] [-l label_type] [-T] [-V visual_identifier]\n",	    "[-v volume_serial_number]\n");
 }
