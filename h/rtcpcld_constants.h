@@ -34,5 +34,11 @@
 #define RTCPCLD_GETTAPE_RETRY_TIME (60)
 #define RTCPCLD_GETTAPE_ENOSPC_RETRY_TIME (3600)
 
+/*
+ * The segment copy number is a single digit number in the
+ * name server database table. Thus, allowed values are [0,9]
+ */
+#define VALID_COPYNB(X) (X>=0 && X<10)
+
 #endif /* RTCPCLD_CONSTANTS_H */
 
