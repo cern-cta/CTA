@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.205 2002/06/14 09:32:07 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.206 2002/06/19 06:59:26 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.205 $ $Date: 2002/06/14 09:32:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.206 $ $Date: 2002/06/19 06:59:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -265,7 +265,7 @@ int create_dir _PROTO(());
 int create_dir _PROTO((char *, uid_t, gid_t, mode_t));
 #endif
 #endif
-int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int));
+int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int, int, mode_t));
 int fork_exec_stager _PROTO((struct waitq *));
 int savepath _PROTO(());
 int upd_staged _PROTO((char *));
@@ -1899,17 +1899,26 @@ add2wf (wqp)
 	return(newwaitf);
 }
 
-int build_ipath(upath, stcp, pool_user, noallocation)
+int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 		 char *upath;
 		 struct stgcat_entry *stcp;
 		 char *pool_user;
 		 int noallocation;
+		 int api_out;
+		 mode_t openmode;
 {
 	int c;
 	int fd;
 	char *p;
 	char *p_f, *p_u;
 	struct passwd *pw;
+	mode_t okmode;
+
+	if ((api_out == 0) || (openmode == 0)) {
+		okmode = ( 0777 & ~ stcp->mask);
+	} else {
+		okmode = (07777 & (openmode & ~ stcp->mask));
+	}
 
 	if (*stcp->poolname == '\0' && upath != NULL) {
 		if (strlen(upath) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
@@ -2036,12 +2045,10 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 
 	/* try to create file */
 
-	(void) umask (stcp->mask);
 	PRE_RFIO;
 	STAGE_TIME_START("build_ipath : rfio_open");
-	fd = rfio_open (stcp->ipath, O_WRONLY | O_CREAT, 0777);
+	fd = rfio_open (stcp->ipath, O_WRONLY | O_CREAT, (int) okmode);
 	STAGE_TIME_END;
-	(void) umask (0);
 	if (fd < 0) {
 		if (errno != ENOENT && rfio_errno != ENOENT) {
 			/* If rfio_open fails, it can be a real open error or a client/or/server error */
@@ -2081,12 +2088,10 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 
 		/* try again to create file */
 
-		(void) umask (stcp->mask);
 		PRE_RFIO;
 		STAGE_TIME_START("build_ipath : rfio_open");
-		fd = rfio_open (stcp->ipath, O_WRONLY | O_CREAT, 0777);
+		fd = rfio_open (stcp->ipath, O_WRONLY | O_CREAT, (int) okmode);
 		STAGE_TIME_END;
-		(void) umask (0);
 		if (fd < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_open", rfio_serror());
 			stcp->ipath[0] = '\0';
@@ -2094,15 +2099,15 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 		}
 	}
 	PRE_RFIO;
-	STAGE_TIME_START("build_ipath : rfio_close");
-	if (rfio_close(fd) != 0) {
-		stglogit (func, STG02, stcp->ipath, "rfio_close", rfio_serror());
-	}
-	STAGE_TIME_END;
-	PRE_RFIO;
-	STAGE_TIME_START("build_ipath : rfio_chown");
-	if (rfio_chown (stcp->ipath, stcp->uid, stcp->gid) < 0) {
-		sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_chown", rfio_serror());
+	STAGE_TIME_START("build_ipath : rfio_fchown");
+	if (rfio_fchown (fd, (int) stcp->uid, (int) stcp->gid) < 0) {
+		sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_fchown", rfio_serror());
+		PRE_RFIO;
+		STAGE_TIME_START("build_ipath : rfio_close");
+		if (rfio_close(fd) != 0) {
+			stglogit (func, STG02, stcp->ipath, "rfio_close", rfio_serror());
+		}
+		STAGE_TIME_END;
 		/* Here file has been created but we cannot chown... We erase the file */
 		PRE_RFIO;
         if (RFIO_UNLINK(stcp->ipath) != 0 && (errno != ENOENT && rfio_errno != ENOENT)) {
@@ -2111,6 +2116,12 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 		stcp->ipath[0] = '\0';
 		return (SESYSERR);
 	}
+	PRE_RFIO;
+	STAGE_TIME_START("build_ipath : rfio_close");
+	if (rfio_close(fd) != 0) {
+		stglogit (func, STG02, stcp->ipath, "rfio_close", rfio_serror());
+	}
+	STAGE_TIME_END;
 	STAGE_TIME_END;
 	return (0);
 }
@@ -2304,7 +2315,7 @@ void checkpoolstatus()
 								stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] = '\0';
 							}
 						}
-						c = build_ipath (wfp->upath, stcp, wqp->pool_user, 0);
+						c = build_ipath (wfp->upath, stcp, wqp->pool_user, 0, wqp->api_out, wqp->openmode);
 						if (has_trailing != 0) {
 							/* We restore the trailing '-' */
 							strcat(stcp->u1.t.fseq,"-");
@@ -2439,7 +2450,7 @@ void checkwaitingspc()
 				stcp->u1.t.fseq[thislen] = '\0';
 			}
 		}
-		c = build_ipath (wfp->upath, stcp, wqp->pool_user, 0);
+		c = build_ipath (wfp->upath, stcp, wqp->pool_user, 0, wqp->api_out, wqp->openmode);
 		if (has_trailing != 0) {
 			/* We restore the trailing '-' */
 			strcat(stcp->u1.t.fseq,"-");
@@ -2606,7 +2617,7 @@ check_waiting_on_req(subreqid, state)
 					stcp->status &= 0xF;
 					if (! wqp->Aflag) {
                       /* Note that "-c off" request always have a Aflag */
-						if ((c = build_ipath (wfp->upath, stcp, wqp->pool_user, 0)) < 0) {
+						if ((c = build_ipath (wfp->upath, stcp, wqp->pool_user, 0, wqp->api_out, wqp->openmode)) < 0) {
 							stcp->status |= WAITING_SPC;
 #ifdef USECDB
 							if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
