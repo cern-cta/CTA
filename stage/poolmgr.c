@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.146 2001/07/12 11:17:19 jdurand Exp $
+ * $Id: poolmgr.c,v 1.147 2001/07/19 08:21:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.146 $ $Date: 2001/07/12 11:17:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.147 $ $Date: 2001/07/19 08:21:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -933,29 +933,70 @@ int ismigovl(pid, status)
      int pid;
      int status;
 {
-  int found;
+  int found, found2;
   int i;
   struct pool *pool_p;
+  struct pool *pool_p_ok;
   struct stgcat_entry *stcp;
   char *func = "ismigovl";
+  struct pool **pool_migovl;
+
   if (nbpool == 0) return (0);
+
+  /* Several pools can share the SAME migrator - so we have to find all the pools */
+  /* for which the migrator pid is the same */
+  if ((pool_migovl = (struct pool **) calloc(nbpool, sizeof(struct pool *))) == NULL) {
+    stglogit(func, "### calloc error (%s)\n",strerror(errno));
+    stglogit(func, "### processing will more CPU intensive\n");
+  }
+
   found = 0;
   for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
     if (pool_p->migr == NULL) continue;
     if (pool_p->migr->mig_pid == pid) {
-      found = 1;
-      break;
+      pool_p_ok = pool_p;
+      if (pool_migovl != NULL) {
+        pool_migovl[found++] = pool_p;
+      } else {
+        found++;
+      }
     }
   }
-  if (! found) return (0);
-  pool_p->migr->mig_pid = 0;
-  pool_p->migr->migreqtime = 0;
-  pool_p->migr->migreqtime_last_end = time(NULL);
+  if (! found) {
+    if (pool_migovl != NULL) free(pool_migovl);
+    return (0);
+  }
+
+  pool_p_ok->migr->mig_pid = 0;
+  pool_p_ok->migr->migreqtime = 0;
+  pool_p_ok->migr->migreqtime_last_end = time(NULL);
   /* We check if there are remaining entries in WAITING_MIG status in this pool */
   /* If so, this is the migrator that failed. */
   for (stcp = stcs; stcp < stce; stcp++) {
     if (stcp->reqid == 0) break;
-    if (strcmp(stcp->poolname, pool_p->name) != 0) continue;
+    found2 = 0;
+    if (pool_migovl != NULL) {
+      /* We look if the poolname of this stcp matches one of the pools that shares the same migrator (pid) */
+
+      for (i = 0; i < found; i++) {
+        if (strcmp(stcp->poolname, pool_migovl[i]->name) == 0) {
+          found2 = 1;
+          break;
+        }
+      }
+    } else {
+      /* We were not able to calloc() memory for searching in the pool structures - so we scan all */
+      /* pool structures, this is a very little bit more CPU intensive... */
+      found2 = 0;
+      for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+        if (pool_p->migr == NULL) continue;
+        if ((pool_p->migr->mig_pid == pid) && (strcmp(stcp->poolname, pool_p->name) == 0)) {
+          found2 = 1;
+          break;
+        }
+      }
+    }
+    if (! found2) continue;
     if ((stcp->status & WAITING_MIGR) == WAITING_MIGR) {
       /* This entry had a problem */
       stglogit(func, "STG02 - %s still in WAITING_MIGR, changed to PUT_FAILED\n", stcp->u1.h.xfile);
@@ -972,6 +1013,7 @@ int ismigovl(pid, status)
       savereqs ();
     }
   }
+  if (pool_migovl != NULL) free(pool_migovl);
   return (1);
 }
 
@@ -2994,15 +3036,7 @@ int migpoolfiles(pool_p)
         tppool_vs_stcp[found_tppool].euid = scc_found->stcp->uid; /* Put current uid */
       }
     }
-    if (verif_euid_egid(tppool_vs_stcp[found_tppool].euid,tppool_vs_stcp[found_tppool].egid, NULL, NULL) != 0) {
-      free(scs);
-      for (i = 0; i < ntppool_vs_stcp; i++) {
-        if (tppool_vs_stcp[i].stcp != NULL) free(tppool_vs_stcp[i].stcp);
-        if (tppool_vs_stcp[i].stpp != NULL) free(tppool_vs_stcp[i].stpp);
-      }
-      free(tppool_vs_stcp);
-      return(SYERR);
-    }
+    verif_euid_egid(tppool_vs_stcp[found_tppool].euid,tppool_vs_stcp[found_tppool].egid, NULL, NULL);
 
     /* We search all other entries sharing the same tape pool */
     j = -1;
