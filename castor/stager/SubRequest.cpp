@@ -45,6 +45,7 @@ castor::stager::SubRequest::SubRequest() throw() :
   m_poolName(""),
   m_xsize(),
   m_priority(0),
+  m_subreqId(""),
   m_id(),
   m_diskcopy(0),
   m_castorFile(0),
@@ -83,6 +84,7 @@ void castor::stager::SubRequest::print(std::ostream& stream,
   stream << indent << "poolName : " << m_poolName << std::endl;
   stream << indent << "xsize : " << m_xsize << std::endl;
   stream << indent << "priority : " << m_priority << std::endl;
+  stream << indent << "subreqId : " << m_subreqId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Diskcopy : " << std::endl;

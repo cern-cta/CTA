@@ -91,6 +91,7 @@ void castor::io::StreamDiskCopyCnv::createRep(castor::IAddress* address,
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->path();
+  ad->stream() << obj->diskcopyId();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -108,6 +109,9 @@ castor::IObject* castor::io::StreamDiskCopyCnv::createObj(castor::IAddress* addr
   std::string path;
   ad->stream() >> path;
   object->setPath(path);
+  std::string diskcopyId;
+  ad->stream() >> diskcopyId;
+  object->setDiskcopyId(diskcopyId);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

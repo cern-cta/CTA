@@ -212,6 +212,23 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_Request_reqId
+  //----------------------------------------------------------------------------
+  int Cstager_Request_reqId(castor::stager::Request* instance, const char** var) {
+    *var = instance->reqId().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Request_setReqId
+  //----------------------------------------------------------------------------
+  int Cstager_Request_setReqId(castor::stager::Request* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setReqId(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_Request_svcClass
   //----------------------------------------------------------------------------
   int Cstager_Request_svcClass(castor::stager::Request* instance, castor::stager::SvcClass** var) {

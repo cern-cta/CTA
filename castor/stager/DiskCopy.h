@@ -105,6 +105,18 @@ int Cstager_DiskCopy_path(struct Cstager_DiskCopy_t* instance, const char** var)
 int Cstager_DiskCopy_setPath(struct Cstager_DiskCopy_t* instance, const char* new_var);
 
 /**
+ * Get the value of diskcopyId
+ * The Cuuid identifying the DiskCopy, stored as a human readable string
+ */
+int Cstager_DiskCopy_diskcopyId(struct Cstager_DiskCopy_t* instance, const char** var);
+
+/**
+ * Set the value of diskcopyId
+ * The Cuuid identifying the DiskCopy, stored as a human readable string
+ */
+int Cstager_DiskCopy_setDiskcopyId(struct Cstager_DiskCopy_t* instance, const char* new_var);
+
+/**
  * Get the value of fileSystem
  */
 int Cstager_DiskCopy_fileSystem(struct Cstager_DiskCopy_t* instance, struct Cstager_FileSystem_t** var);

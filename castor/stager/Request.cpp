@@ -46,6 +46,7 @@ castor::stager::Request::Request() throw() :
   m_machine(""),
   m_svcClassName(""),
   m_userTag(""),
+  m_reqId(""),
   m_svcClass(0),
   m_client(0) {
 };
@@ -82,6 +83,7 @@ void castor::stager::Request::print(std::ostream& stream,
   stream << indent << "machine : " << m_machine << std::endl;
   stream << indent << "svcClassName : " << m_svcClassName << std::endl;
   stream << indent << "userTag : " << m_userTag << std::endl;
+  stream << indent << "reqId : " << m_reqId << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "SvcClass : " << std::endl;
   if (0 != m_svcClass) {

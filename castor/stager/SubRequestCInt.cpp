@@ -208,6 +208,23 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_SubRequest_subreqId
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_subreqId(castor::stager::SubRequest* instance, const char** var) {
+    *var = instance->subreqId().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setSubreqId
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setSubreqId(castor::stager::SubRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setSubreqId(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_SubRequest_diskcopy
   //----------------------------------------------------------------------------
   int Cstager_SubRequest_diskcopy(castor::stager::SubRequest* instance, castor::stager::DiskCopy** var) {

@@ -225,6 +225,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_subreqId
+       * The Cuuid identifying the SubRequest, stored as a human readable string
+       * @return the value of m_subreqId
+       */
+      std::string subreqId() const {
+        return m_subreqId;
+      }
+
+      /**
+       * Set the value of m_subreqId
+       * The Cuuid identifying the SubRequest, stored as a human readable string
+       * @param new_var the new value of m_subreqId
+       */
+      void setSubreqId(std::string new_var) {
+        m_subreqId = new_var;
+      }
+
+      /**
        * Get the value of m_diskcopy
        * @return the value of m_diskcopy
        */
@@ -356,6 +374,9 @@ namespace castor {
 
       /// The priority defines in which order the files will be processed by the user when calling stage_get_next. The files of the SubRequest of same priority are given in a random order and lower priority files come first.
       unsigned int m_priority;
+
+      /// The Cuuid identifying the SubRequest, stored as a human readable string
+      std::string m_subreqId;
 
       /// The id of this object
       u_signed64 m_id;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/09 17:20:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/11/10 09:38:38 $ $Author: sponcec3 $
  *
  * 
  *
@@ -58,7 +58,7 @@ const castor::ICnvFactory& OraStageUpdateFileStatusRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraStageUpdateFileStatusRequestCnv::s_insertStatementString =
-"INSERT INTO StageUpdateFileStatusRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12)";
+"INSERT INTO StageUpdateFileStatusRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraStageUpdateFileStatusRequestCnv::s_deleteStatementString =
@@ -66,11 +66,11 @@ const std::string castor::db::ora::OraStageUpdateFileStatusRequestCnv::s_deleteS
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraStageUpdateFileStatusRequestCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, id, svcClass, client FROM StageUpdateFileStatusRequest WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, svcClass, client FROM StageUpdateFileStatusRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraStageUpdateFileStatusRequestCnv::s_updateStatementString =
-"UPDATE StageUpdateFileStatusRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9 WHERE id = :10";
+"UPDATE StageUpdateFileStatusRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10 WHERE id = :11";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraStageUpdateFileStatusRequestCnv::s_storeTypeStatementString =
@@ -416,7 +416,7 @@ void castor::db::ora::OraStageUpdateFileStatusRequestCnv::fillObjSvcClass(castor
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = (u_signed64)rset->getDouble(11);
+  u_signed64 svcClassId = (u_signed64)rset->getDouble(12);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -455,7 +455,7 @@ void castor::db::ora::OraStageUpdateFileStatusRequestCnv::fillObjIClient(castor:
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = (u_signed64)rset->getDouble(12);
+  u_signed64 clientId = (u_signed64)rset->getDouble(13);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -518,9 +518,10 @@ void castor::db::ora::OraStageUpdateFileStatusRequestCnv::createRep(castor::IAdd
     m_insertStatement->setString(7, obj->machine());
     m_insertStatement->setString(8, obj->svcClassName());
     m_insertStatement->setString(9, obj->userTag());
-    m_insertStatement->setDouble(10, obj->id());
-    m_insertStatement->setDouble(11, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setDouble(12, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setString(10, obj->reqId());
+    m_insertStatement->setDouble(11, obj->id());
+    m_insertStatement->setDouble(12, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setDouble(13, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -552,6 +553,7 @@ void castor::db::ora::OraStageUpdateFileStatusRequestCnv::createRep(castor::IAdd
                     << "  machine : " << obj->machine() << std::endl
                     << "  svcClassName : " << obj->svcClassName() << std::endl
                     << "  userTag : " << obj->userTag() << std::endl
+                    << "  reqId : " << obj->reqId() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  svcClass : " << obj->svcClass() << std::endl
                     << "  client : " << obj->client() << std::endl;
@@ -585,7 +587,8 @@ void castor::db::ora::OraStageUpdateFileStatusRequestCnv::updateRep(castor::IAdd
     m_updateStatement->setString(7, obj->machine());
     m_updateStatement->setString(8, obj->svcClassName());
     m_updateStatement->setString(9, obj->userTag());
-    m_updateStatement->setDouble(10, obj->id());
+    m_updateStatement->setString(10, obj->reqId());
+    m_updateStatement->setDouble(11, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -706,7 +709,8 @@ castor::IObject* castor::db::ora::OraStageUpdateFileStatusRequestCnv::createObj(
     object->setMachine(rset->getString(7));
     object->setSvcClassName(rset->getString(8));
     object->setUserTag(rset->getString(9));
-    object->setId((u_signed64)rset->getDouble(10));
+    object->setReqId(rset->getString(10));
+    object->setId((u_signed64)rset->getDouble(11));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -761,7 +765,8 @@ void castor::db::ora::OraStageUpdateFileStatusRequestCnv::updateObj(castor::IObj
     object->setMachine(rset->getString(7));
     object->setSvcClassName(rset->getString(8));
     object->setUserTag(rset->getString(9));
-    object->setId((u_signed64)rset->getDouble(10));
+    object->setReqId(rset->getString(10));
+    object->setId((u_signed64)rset->getDouble(11));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

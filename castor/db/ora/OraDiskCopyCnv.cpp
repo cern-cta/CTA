@@ -56,7 +56,7 @@ const castor::ICnvFactory& OraDiskCopyCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraDiskCopyCnv::s_insertStatementString =
-"INSERT INTO DiskCopy (path, id, fileSystem, castorFile, status) VALUES (:1,:2,:3,:4,:5)";
+"INSERT INTO DiskCopy (path, diskcopyId, id, fileSystem, castorFile, status) VALUES (:1,:2,:3,:4,:5,:6)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraDiskCopyCnv::s_deleteStatementString =
@@ -64,11 +64,11 @@ const std::string castor::db::ora::OraDiskCopyCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraDiskCopyCnv::s_selectStatementString =
-"SELECT path, id, fileSystem, castorFile, status FROM DiskCopy WHERE id = :1";
+"SELECT path, diskcopyId, id, fileSystem, castorFile, status FROM DiskCopy WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraDiskCopyCnv::s_updateStatementString =
-"UPDATE DiskCopy SET path = :1, status = :2 WHERE id = :3";
+"UPDATE DiskCopy SET path = :1, diskcopyId = :2, status = :3 WHERE id = :4";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraDiskCopyCnv::s_storeTypeStatementString =
@@ -300,7 +300,7 @@ void castor::db::ora::OraDiskCopyCnv::fillObjFileSystem(castor::stager::DiskCopy
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 fileSystemId = (u_signed64)rset->getDouble(3);
+  u_signed64 fileSystemId = (u_signed64)rset->getDouble(4);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -339,7 +339,7 @@ void castor::db::ora::OraDiskCopyCnv::fillObjCastorFile(castor::stager::DiskCopy
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 castorFileId = (u_signed64)rset->getDouble(4);
+  u_signed64 castorFileId = (u_signed64)rset->getDouble(5);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -389,10 +389,11 @@ void castor::db::ora::OraDiskCopyCnv::createRep(castor::IAddress* address,
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
     m_insertStatement->setString(1, obj->path());
-    m_insertStatement->setDouble(2, obj->id());
-    m_insertStatement->setDouble(3, (type == OBJ_FileSystem && obj->fileSystem() != 0) ? obj->fileSystem()->id() : 0);
-    m_insertStatement->setDouble(4, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
-    m_insertStatement->setInt(5, (int)obj->status());
+    m_insertStatement->setString(2, obj->diskcopyId());
+    m_insertStatement->setDouble(3, obj->id());
+    m_insertStatement->setDouble(4, (type == OBJ_FileSystem && obj->fileSystem() != 0) ? obj->fileSystem()->id() : 0);
+    m_insertStatement->setDouble(5, (type == OBJ_CastorFile && obj->castorFile() != 0) ? obj->castorFile()->id() : 0);
+    m_insertStatement->setInt(6, (int)obj->status());
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -416,6 +417,7 @@ void castor::db::ora::OraDiskCopyCnv::createRep(castor::IAddress* address,
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
                     << "  path : " << obj->path() << std::endl
+                    << "  diskcopyId : " << obj->diskcopyId() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  fileSystem : " << obj->fileSystem() << std::endl
                     << "  castorFile : " << obj->castorFile() << std::endl
@@ -442,8 +444,9 @@ void castor::db::ora::OraDiskCopyCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setString(1, obj->path());
-    m_updateStatement->setInt(2, (int)obj->status());
-    m_updateStatement->setDouble(3, obj->id());
+    m_updateStatement->setString(2, obj->diskcopyId());
+    m_updateStatement->setInt(3, (int)obj->status());
+    m_updateStatement->setDouble(4, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -543,8 +546,9 @@ castor::IObject* castor::db::ora::OraDiskCopyCnv::createObj(castor::IAddress* ad
     castor::stager::DiskCopy* object = new castor::stager::DiskCopy();
     // Now retrieve and set members
     object->setPath(rset->getString(1));
-    object->setId((u_signed64)rset->getDouble(2));
-    object->setStatus((enum castor::stager::DiskCopyStatusCodes)rset->getInt(5));
+    object->setDiskcopyId(rset->getString(2));
+    object->setId((u_signed64)rset->getDouble(3));
+    object->setStatus((enum castor::stager::DiskCopyStatusCodes)rset->getInt(6));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -591,8 +595,9 @@ void castor::db::ora::OraDiskCopyCnv::updateObj(castor::IObject* obj)
     castor::stager::DiskCopy* object = 
       dynamic_cast<castor::stager::DiskCopy*>(obj);
     object->setPath(rset->getString(1));
-    object->setId((u_signed64)rset->getDouble(2));
-    object->setStatus((enum castor::stager::DiskCopyStatusCodes)rset->getInt(5));
+    object->setDiskcopyId(rset->getString(2));
+    object->setId((u_signed64)rset->getDouble(3));
+    object->setStatus((enum castor::stager::DiskCopyStatusCodes)rset->getInt(6));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

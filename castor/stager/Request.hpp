@@ -239,6 +239,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_reqId
+       * The Cuuid identifying the Request, stored as a human readable string
+       * @return the value of m_reqId
+       */
+      std::string reqId() const {
+        return m_reqId;
+      }
+
+      /**
+       * Set the value of m_reqId
+       * The Cuuid identifying the Request, stored as a human readable string
+       * @param new_var the new value of m_reqId
+       */
+      void setReqId(std::string new_var) {
+        m_reqId = new_var;
+      }
+
+      /**
        * Get the value of m_svcClass
        * @return the value of m_svcClass
        */
@@ -296,6 +314,9 @@ namespace castor {
 
       /// This is a string that the user is free to use. It can be useful to classify and select requests.
       std::string m_userTag;
+
+      /// The Cuuid identifying the Request, stored as a human readable string
+      std::string m_reqId;
 
       SvcClass* m_svcClass;
 

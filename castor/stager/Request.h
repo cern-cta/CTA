@@ -172,6 +172,18 @@ int Cstager_Request_userTag(struct Cstager_Request_t* instance, const char** var
 int Cstager_Request_setUserTag(struct Cstager_Request_t* instance, const char* new_var);
 
 /**
+ * Get the value of reqId
+ * The Cuuid identifying the Request, stored as a human readable string
+ */
+int Cstager_Request_reqId(struct Cstager_Request_t* instance, const char** var);
+
+/**
+ * Set the value of reqId
+ * The Cuuid identifying the Request, stored as a human readable string
+ */
+int Cstager_Request_setReqId(struct Cstager_Request_t* instance, const char* new_var);
+
+/**
  * Get the value of svcClass
  */
 int Cstager_Request_svcClass(struct Cstager_Request_t* instance, struct Cstager_SvcClass_t** var);

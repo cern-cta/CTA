@@ -125,6 +125,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_diskcopyId
+       * The Cuuid identifying the DiskCopy, stored as a human readable string
+       * @return the value of m_diskcopyId
+       */
+      std::string diskcopyId() const {
+        return m_diskcopyId;
+      }
+
+      /**
+       * Set the value of m_diskcopyId
+       * The Cuuid identifying the DiskCopy, stored as a human readable string
+       * @param new_var the new value of m_diskcopyId
+       */
+      void setDiskcopyId(std::string new_var) {
+        m_diskcopyId = new_var;
+      }
+
+      /**
        * Get the value of m_fileSystem
        * @return the value of m_fileSystem
        */
@@ -178,6 +196,9 @@ namespace castor {
 
       /// path of this copy in the filesystem
       std::string m_path;
+
+      /// The Cuuid identifying the DiskCopy, stored as a human readable string
+      std::string m_diskcopyId;
 
       /// The id of this object
       u_signed64 m_id;

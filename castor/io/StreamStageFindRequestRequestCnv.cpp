@@ -98,6 +98,7 @@ void castor::io::StreamStageFindRequestRequestCnv::createRep(castor::IAddress* a
   ad->stream() << obj->machine();
   ad->stream() << obj->svcClassName();
   ad->stream() << obj->userTag();
+  ad->stream() << obj->reqId();
   ad->stream() << obj->id();
 }
 
@@ -138,6 +139,9 @@ castor::IObject* castor::io::StreamStageFindRequestRequestCnv::createObj(castor:
   std::string userTag;
   ad->stream() >> userTag;
   object->setUserTag(userTag);
+  std::string reqId;
+  ad->stream() >> reqId;
+  object->setReqId(reqId);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

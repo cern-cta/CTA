@@ -174,6 +174,18 @@ int Cstager_SubRequest_priority(struct Cstager_SubRequest_t* instance, unsigned 
 int Cstager_SubRequest_setPriority(struct Cstager_SubRequest_t* instance, unsigned int new_var);
 
 /**
+ * Get the value of subreqId
+ * The Cuuid identifying the SubRequest, stored as a human readable string
+ */
+int Cstager_SubRequest_subreqId(struct Cstager_SubRequest_t* instance, const char** var);
+
+/**
+ * Set the value of subreqId
+ * The Cuuid identifying the SubRequest, stored as a human readable string
+ */
+int Cstager_SubRequest_setSubreqId(struct Cstager_SubRequest_t* instance, const char* new_var);
+
+/**
  * Get the value of diskcopy
  */
 int Cstager_SubRequest_diskcopy(struct Cstager_SubRequest_t* instance, struct Cstager_DiskCopy_t** var);
