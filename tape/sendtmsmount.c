@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendtmsmount.c,v $ $Revision: 1.2 $ $Date: 1999/11/18 07:45:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendtmsmount.c,v $ $Revision: 1.3 $ $Date: 1999/11/19 17:02:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*	sendtmsmount -  send a MOUNT request to TMS */
@@ -47,8 +47,8 @@ char *drive;
 	reqlen = strlen (tmsreq);
 	while (1) {
 		repsize = sizeof(tmrepbuf);
-		c = _sysreq ("root", acctname, "TMS", tmsreq, &reqlen, tmrepbuf,
-		    &repsize);
+		c = _sysreq ("root", acctname, "TMS", tmsreq, reqlen, tmrepbuf,
+		    &repsize, 0);
 		switch (c) {
 		case 0:
 		case 191:
