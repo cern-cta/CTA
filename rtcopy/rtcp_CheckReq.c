@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.41 $ $Date: 2000/08/29 14:28:18 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.42 $ $Date: 2000/09/06 07:30:47 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -121,7 +121,7 @@ static int rtcp_CheckTapeReq(tape_list_t *tape) {
      */
     if ( tape != tape->next ) {
         CLIST_ITERATE_BEGIN(tape,tl) {
-            if ( strcmp(tapereq->vid,tl->tapereq.vid) == 0 ) {
+            if ( tl != tape && strcmp(tapereq->vid,tl->tapereq.vid) == 0 ) {
                 serrno = EINVAL;
                 sprintf(errmsgtxt,"VID %s NOT UNIQUE IN VOLUME SPANNING\n",
                         tapereq->vid);
