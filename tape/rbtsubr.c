@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.1 $ $Date: 1999/09/20 06:26:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.2 $ $Date: 1999/11/27 14:34:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -117,7 +117,7 @@ char *loader;
 			sprintf (buf, "nsrjb -l -n -f %s %s 2>&1", dvn, vid);
 		else
 			sprintf (buf, "/dms/fbs/bin/dmscmv C%s %s 2>&1", vid, loader);
-		tplogit (func, "%s", buf);
+		tplogit (func, "%s\n", buf);
 		if ((f = popen (buf, "r")) == NULL) {
 			usrmsg (func, TP042, "", "popen", sys_errlist[errno]);
 			RETURN (-errno);
@@ -201,7 +201,7 @@ unsigned int force;
 			sprintf (buf, "nsrjb -u -f %s 2>&1", dvn);
 		else
 			sprintf (buf, "/dms/fbs/bin/dmscmv C%s 2>&1", vid);
-		tplogit (func, "%s", buf);
+		tplogit (func, "%s\n", buf);
 		if ((f = popen (buf, "r")) == NULL) {
 			usrmsg (func, TP042, "", "popen", sys_errlist[errno]);
 			RETURN (-errno);
@@ -351,13 +351,13 @@ int *status;
 		libcc2txt (libcc, &msgaddr);
 		if (libcc < 4) {
 			if (libcc)
-				tplogit (func, "TP041 - %s of %s on %s %s",
+				tplogit (func, "TP041 - %s of %s on %s %s\n",
 					action, cur_vid, cur_unm, msgaddr);
 			return (0);
 		} else {
 			sprintf (msg, "TP041 - %s of %s on %s %s",
 				action, cur_vid, cur_unm, msgaddr);
-			usrmsg (func, "%s", msg);
+			usrmsg (func, "%s\n", msg);
 			c =  liberr2act (0, libcc);
 			RETURN (c);
 		}
@@ -523,7 +523,7 @@ char sense_bytes[];
 		if (cc == MTCC_IO_FAILED) {
 			get_era_msg (number_sense, sense_bytes, &msgaddr);
 			sprintf (msg, TP041, action, cur_vid, cur_unm, msgaddr);
-			usrmsg (func, "%s", msg);
+			usrmsg (func, "%s\n", msg);
 			if (number_sense)
 				return (eracod2act (*action == 'm' ? 0 : 1, sense_bytes[3]));
 			else
@@ -532,7 +532,7 @@ char sense_bytes[];
 			libcc2txt (cc, &msgaddr);
 			sprintf (msg, "TP041 - %s of %s on %s %s",
 				action, cur_vid, cur_unm, msgaddr);
-			usrmsg (func, "%s", msg);
+			usrmsg (func, "%s\n", msg);
 			return (liberr2act (*action == 'm' ? 0 : 1, cc));
 		}
 	}
@@ -618,13 +618,13 @@ int ring;
 	drive_id.panel_id.lsm_id.lsm = atoi (strtok (NULL, ","));
 	drive_id.panel_id.panel = atoi (strtok (NULL, ","));
 	drive_id.drive = atoi (strtok (NULL, ","));
-	tplogit (func, "vol_id = %s drive_id = %d,%d,%d,%d", vol_id.external_label,
+	tplogit (func, "vol_id = %s drive_id = %d,%d,%d,%d\n", vol_id.external_label,
 	    drive_id.panel_id.lsm_id.acs, drive_id.panel_id.lsm_id.lsm,
 	    drive_id.panel_id.panel, drive_id.drive);
 	if (status = acs_mount (++myseqnum, NO_LOCK_ID, vol_id, drive_id,
 	    ring ? FALSE : TRUE, 0)) {
 		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
-		usrmsg (func, "%s", msg);
+		usrmsg (func, "%s\n", msg);
 		c = acserr2act (0, status);
 		RETURN (c);
 	}
@@ -654,12 +654,12 @@ unsigned int force;
 	drive_id.panel_id.lsm_id.lsm = atoi (strtok (NULL, ","));
 	drive_id.panel_id.panel = atoi (strtok (NULL, ","));
 	drive_id.drive = atoi (strtok (NULL, ","));
-	tplogit (func, "vol_id = %s drive_id = %d,%d,%d,%d %s", vol_id.external_label,
+	tplogit (func, "vol_id = %s drive_id = %d,%d,%d,%d %s\n", vol_id.external_label,
 	    drive_id.panel_id.lsm_id.acs, drive_id.panel_id.lsm_id.lsm,
 	    drive_id.panel_id.panel, drive_id.drive, force ? "force" : "");
 	if (status = acs_dismount (++myseqnum, NO_LOCK_ID, vol_id, drive_id, force)) {
 		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
-		usrmsg (func, "%s", msg);
+		usrmsg (func, "%s\n", msg);
 		c = acserr2act (1, status);
 		RETURN (c);
 	}
@@ -668,12 +668,12 @@ unsigned int force;
 		status = acs_response (UCHECKI, &s, &req_id, &rtype, rbuf);
 		if (rtype == RT_ACKNOWLEDGE) {
 			dismount_req_id = req_id;
-			tplogit (func, "ACSLS req_id = %d", dismount_req_id);
+			tplogit (func, "ACSLS req_id = %d\n", dismount_req_id);
 		}
 	} while (rtype != RT_FINAL);
 	if (status) {
 		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
-		usrmsg (func, "%s", msg);
+		usrmsg (func, "%s\n", msg);
 		c = acserr2act (1, status);
 		RETURN (c);
 	}
@@ -695,14 +695,14 @@ acsmountresp()
 		return (0);
 	if (rtype == RT_ACKNOWLEDGE) {
 		mount_req_id = req_id;
-		tplogit (func, "ACSLS req_id = %d", mount_req_id);
+		tplogit (func, "ACSLS req_id = %d\n", mount_req_id);
 		return (0);
 	}
 	/* final status */
 	mount_req_id = 0;
 	if (status) {
 		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
-		usrmsg (func, "%s", msg);
+		usrmsg (func, "%s\n", msg);
 		c = acserr2act (0, status);
 		RETURN (c);
 	}
@@ -724,14 +724,14 @@ wait4acsfinalresp()
 	do {
 		status = acs_response (UCHECKI, &s, &req_id, &rtype, rbuf);
 		if (rtype == RT_ACKNOWLEDGE) {
-			tplogit (func, "ACSLS req_id = %d", req_id);
+			tplogit (func, "ACSLS req_id = %d\n", req_id);
 		}
 	} while (rtype != RT_FINAL);
 	mount_req_id = 0;
 	dismount_req_id = 0;
 	if (status) {
 		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
-		usrmsg (func, "%s", msg);
+		usrmsg (func, "%s\n", msg);
 		c = acserr2act (*action == 'm' ? 0 : 1, status);
 		RETURN (c);
 	}
@@ -792,7 +792,7 @@ char *loader;
 	if (dmsthread (hostid, cassette, dirno) < 0) {
 		sprintf (msg, TP041, action, cur_vid, cur_unm,
 			fbsstrerror (fbs_errno, msgbuf));
-		usrmsg (func, "%s", msg);
+		usrmsg (func, "%s\n", msg);
 		c = fbserr2act (0, fbs_errno);
 		RETURN (c);
 	}
@@ -824,7 +824,7 @@ unsigned int force;
 	if (dmsuthread (hostid, cassette) < 0) {
 		sprintf (msg, TP041, action, cur_vid, cur_unm,
 			fbsstrerror (fbs_errno, msgbuf));
-		usrmsg (func, "%s", msg);
+		usrmsg (func, "%s\n", msg);
 		c = fbserr2act (1, fbs_errno);
 		RETURN (c);
 	}
@@ -882,7 +882,7 @@ char *loader;
 		while (p != NULL && (p=strtok(NULL,"\n")) != NULL ) last = p; 
 		if ( last != NULL && *last != '\0' ) {
 			sprintf(msg,TP041,action, cur_vid, cur_unm, last);
-			usrmsg(func,"%s",msg); 
+			usrmsg(func,"%s\n",msg); 
 		}
 	}
 	if ( rep.log_info != NULL && rep.log_info_l ) free(rep.log_info);
@@ -909,7 +909,7 @@ unsigned int force;
 	strcpy(req.loader,loader);
 	strcat(req.loader,",");
 	strcat(req.loader,unm);
-	tplogit(func,"vol_id = %s drive_id = %s %s",req.vid,req.loader,force ? "force" : "");
+	tplogit(func,"vol_id = %s drive_id = %s %s\n",req.vid,req.loader,force ? "force" : "");
 	rc = send2dmc(&s,&req);
 	if ( rc ) RETURN(rc);
 	rc = fromdmc(&s,&rep);
@@ -921,7 +921,7 @@ unsigned int force;
 		while (p != NULL && (p=strtok(NULL,"\n")) != NULL ) last = p; 
 		if ( last != NULL && *last != '\0' ) {
 			sprintf(msg, TP041, action, cur_vid, cur_unm, last);
-			usrmsg(func,"%s",msg);
+			usrmsg(func,"%s\n",msg);
 		}
 	}
 	if ( rep.log_info != NULL && rep.log_info_l ) free(rep.log_info);
@@ -960,7 +960,7 @@ DMCrequest_t *req;
 #if SERVICESDB
 	else {
 		if ( (sp = getservbyname(DMC_NAME,DMC_PROTO)) == NULL ) {
-			tplogit(func,"getservbyname: %s",sys_errlist[errno]);
+			tplogit(func,"getservbyname: %s\n",sys_errlist[errno]);
 			RETURN(RBT_FAST_RETRY);
 		}
 		dmc_port = ntohs(sp->s_port);
@@ -968,19 +968,19 @@ DMCrequest_t *req;
 #endif
 	sin.sin_family = AF_INET;
 	if ( (hp = gethostbyname(dmc_host)) == NULL ) {
-		tplogit(func,"gethostbyname: %s",sys_errlist[errno]);
+		tplogit(func,"gethostbyname: %s\n",sys_errlist[errno]);
 		free(dmc_host);
 		RETURN(RBT_FAST_RETRY);
 	}
 	sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
 	sin.sin_port = htons(dmc_port);
 	if ((s = socket(AF_INET,SOCK_STREAM,0)) == -1) {
-		tplogit(func,"socket: %s",sys_errlist[errno]);
+		tplogit(func,"socket: %s\n",sys_errlist[errno]);
 		free(dmc_host);
 		RETURN(RBT_FAST_RETRY);
 	}
 	if ( connect(s,(struct sockaddr *)&sin,sizeof(struct sockaddr_in)) == -1 ){
-		tplogit(func,"connect: %s",sys_errlist[errno]);
+		tplogit(func,"connect: %s\n",sys_errlist[errno]);
 		shutdown(s,2);
 		close(s);
 		free(dmc_host);
@@ -992,7 +992,7 @@ DMCrequest_t *req;
 	req->cartridge_side = htons(req->cartridge_side);
 	j = sizeof(DMCrequest_t);
 	if ( send(s,(char *)req,j,0) != j ) {
-		tplogit(func,"send: %s",sys_errlist[errno]);
+		tplogit(func,"send: %s\n",sys_errlist[errno]);
 		shutdown(s,2);
 		close(s);
 		free(dmc_host);
@@ -1013,7 +1013,7 @@ DMCreply_t *rep;
 
 	ENTRY(fromdmc);
 	if ( (j = recv(s,(char *)rep,sizeof(DMCreply_t),0)) != sizeof(DMCreply_t) ) {
-		tplogit(func,"recv: %s",sys_errlist[errno]);
+		tplogit(func,"recv: %s\n",sys_errlist[errno]);
 		shutdown(s,2);
 		close(s);
 		RETURN(RBT_FAST_RETRY);
@@ -1027,7 +1027,7 @@ DMCreply_t *rep;
 		ntot = 0;
 		do {
 			if ( (j = recv(s,(char *)&rep->log_info[ntot],rep->log_info_l-ntot,0)) < 0 ) {
-	tplogit(func,"recv: %s",sys_errlist[errno]);
+	tplogit(func,"recv: %s\n",sys_errlist[errno]);
 	free(rep->log_info);
 	shutdown(s,2);
 	close(s);
@@ -1039,7 +1039,7 @@ DMCreply_t *rep;
 	shutdown(s,2);
 	close(s);
 	if ( rep->magic != S_MAGIC ) {
-		tplogit(func,"Wrong magic number (0x%x) from DMC server. Should be 0x%x",rep->magic,S_MAGIC);
+		tplogit(func,"Wrong magic number (0x%x) from DMC server. Should be 0x%x\n",rep->magic,S_MAGIC);
 		if ( rep->log_info_l ) free(rep->log_info);
 		RETURN(RBT_NORETRY);
 	}
@@ -1094,7 +1094,7 @@ char *loader;
 		if (c = smc_get_geometry (smc_fd, smc_ldr, &robot_info)) {
 			c = smc_lasterror (&smc_status, &msgaddr);
 			if (smc_status.rc == -1 || smc_status.rc == -2)
-				usrmsg (func, "%s", msg);
+				usrmsg (func, "%s\n", msg);
 			else
 				usrmsg (func, TP042, smc_ldr, "get_geometry",
 					strrchr (msgaddr, ':') + 2);
@@ -1126,7 +1126,7 @@ char *loader;
 	if ((c = smc_find_cartridge (smc_fd, smc_ldr, vid, 0, 0, 1, &element_info)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		if (smc_status.rc == -1 || smc_status.rc == -2)
-			usrmsg (func, "%s", msg);
+			usrmsg (func, "%s\n", msg);
 		else
 			usrmsg (func, TP042, smc_ldr, "find_cartridge",
 				strrchr (msgaddr, ':') + 2);
@@ -1144,7 +1144,7 @@ char *loader;
 	    robot_info.device_start+drvord)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		if (smc_status.rc == -1 || smc_status.rc == -2)
-			usrmsg (func, "%s", msg);
+			usrmsg (func, "%s\n", msg);
 		else
 			usrmsg (func, TP041, "mount", vid, cur_unm,
 				strrchr (msgaddr, ':') + 2);
@@ -1171,7 +1171,7 @@ int force;
 	    robot_info.device_start+drvord, 1, &element_info)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		if (smc_status.rc == -1 || smc_status.rc == -2)
-			usrmsg (func, "%s", msg);
+			usrmsg (func, "%s\n", msg);
 		else
 			usrmsg (func, TP042, smc_ldr, "read_elem_status",
 				strrchr (msgaddr, ':') + 2);
@@ -1185,7 +1185,7 @@ int force;
 	    robot_info.device_start+drvord, element_info.source_address)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		if (smc_status.rc == -1 || smc_status.rc == -2)
-			usrmsg (func, "%s", msg);
+			usrmsg (func, "%s\n", msg);
 		else
 			usrmsg (func, TP041, "demount", vid, cur_unm,
 				strrchr (msgaddr, ':') + 2);
