@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.35 2000/10/17 14:21:06 jdurand Exp $
+ * $Id: procupd.c,v 1.36 2000/11/03 09:49:07 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.35 $ $Date: 2000/10/17 14:21:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.36 $ $Date: 2000/11/03 09:49:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -35,8 +35,11 @@ static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.35 $ $Date: 200
 #endif
 #include <serrno.h>
 #include "osdep.h"
+#include "rfio_api.h"
+#include "Cns_api.h"
 
 void procupdreq _PROTO((char *, char *));
+void update_hsm_a_time _PROTO((struct stgcat_entry *));
 
 extern char *optarg;
 extern int optind;
@@ -569,6 +572,7 @@ procupdreq(req_data, clienthost)
 									 "rfio_unlink", rfio_serror());
 					if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) stcp->status &= ~CAN_BE_MIGR;
 					stcp->status |= STAGED;
+					update_hsm_a_time(stcp);
 #ifdef USECDB
 					if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 						stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -581,6 +585,7 @@ procupdreq(req_data, clienthost)
 					update_migpool(stcp,-1);
 				}
 				stcp->status |= STAGED;
+				update_hsm_a_time(stcp);
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -637,4 +642,31 @@ procupdreq(req_data, clienthost)
 	reqid = upd_reqid;
 	rpfd = upd_rpfd;
 	sendrep (rpfd, STAGERC, STAGEUPDC, c);
+}
+
+void update_hsm_a_time(stcp)
+	struct stgcat_entry *stcp;
+{
+	struct stat statbuf;
+	struct Cns_fileid Cnsfileid;
+	struct Cns_filestat Cstatbuf;
+
+	switch (stcp->t_or_d) {
+	case 'm':
+		/* HPSS */
+		if (rfio_stat(stcp->u1.m.xfile, &statbuf) == 0) {
+			stcp->a_time = statbuf.st_mtime;
+		}
+		break;
+	case 'h':
+		/* CASTOR */
+		strcpy(Cnsfileid.server,stcp->u1.h.server);
+		Cnsfileid.fileid = stcp->u1.h.fileid;
+		if (Cns_statx(stcp->u1.h.xfile, &Cnsfileid, &Cstatbuf) == 0) {
+			stcp->a_time = Cstatbuf.mtime;
+		}
+		break;
+	default:
+		break;
+	}
 }
