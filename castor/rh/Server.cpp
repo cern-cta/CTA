@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/01 09:13:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/11/01 11:37:49 $ $Author: sponcec3 $
  *
  *
  *
@@ -140,11 +140,13 @@ void *castor::rh::Server::processRequest(void *param) throw() {
       ack.setErrorMessage("Invalid Request object sent to server.");
     }
   } catch (castor::exception::Exception e) {
-    clog() << ERROR << "Unable to read Request object from socket."
-           << std::endl;
+    std::ostringstream stst;
+    stst << "Unable to read Request object from socket."
+         << std::endl << e.getMessage().str();
+    clog() << ERROR << stst.str() << std::endl;
     ack.setStatus(false);
     ack.setErrorCode(EINVAL);
-    ack.setErrorMessage("Unable to read Request object from socket.");
+    ack.setErrorMessage(stst.str());
   }
 
   if (ack.status()) {
