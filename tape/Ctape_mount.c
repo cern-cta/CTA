@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.11 $ $Date: 2000/02/15 16:59:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.12 $ $Date: 2000/02/16 07:20:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_mount - send a request to the tape daemon to have a tape mounted
@@ -38,7 +38,7 @@ int vdqm_reqid;
 	char acctname[7];
 	char actual_den[6];
 	char actual_dgn[CA_MAXDGNLEN+1];
-	char actual_lbltype[4];
+	char actual_lbltype[CA_MAXLBLTYPLEN+1];
 	char actual_vid[CA_MAXVIDLEN+1];
 	char actual_vsn[CA_MAXVSNLEN+1];
 	int c, i, n;

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_status.man,v $ $Revision: 1.6 $ $Date: 2000/02/15 16:59:10 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_status.man,v $ $Revision: 1.7 $ $Date: 2000/02/16 07:20:34 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_STATUS 3 "$Date: 2000/02/15 16:59:10 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_STATUS 3 "$Date: 2000/02/16 07:20:34 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_status \- get the status of all tape drives
 .SH SYNOPSIS
@@ -37,7 +37,7 @@ struct drv_status {             /* tape status reply entry */
         time_t  asn_time;       /* timestamp of drive assignment */
         char    drive[CA_MAXUNMLEN+1];  /* drive name */
         int     mode;           /* WRITE_DISABLE or WRITE_ENABLE */
-        char    lbltype[4];     /* label type: al, nl, sl or blp */
+        char    lbltype[CA_MAXLBLTYPLEN+1];  /* label type: al,nl,sl or blp */
         int     tobemounted;    /* 1 means tape to be mounted */
         char    vid[CA_MAXVIDLEN+1];
         char    vsn[CA_MAXVSNLEN+1];

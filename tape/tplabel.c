@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.3 $ $Date: 2000/02/15 16:59:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.4 $ $Date: 2000/02/16 07:20:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tplabel - prelabel al and sl tapes, write 2 tape marks for nl tapes */
@@ -36,7 +36,7 @@ char	**argv;
 	static char drive[CA_MAXUNMLEN+1] = "";
 	int errflg = 0;
 	char *getacct();
-	static char lbltype[3] = "";
+	static char lbltype[CA_MAXLBLTYPLEN+1] = "";
 	int nbhdr = -1;
 	char *p;
 	int partition = 0;
@@ -100,7 +100,7 @@ char	**argv;
 			break;
 		case 'l':
 			if (! lbltype[0]) {
-				if (strlen (optarg) <= 2) {
+				if (strlen (optarg) <= CA_MAXLBLTYPLEN) {
 					strcpy (lbltype, optarg);
 				} else {
 					fprintf (stderr, TP006, "-l");
