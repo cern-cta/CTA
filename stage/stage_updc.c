@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.19 2001/12/05 10:10:17 jdurand Exp $
+ * $Id: stage_updc.c,v 1.20 2001/12/19 17:28:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.19 $ $Date: 2001/12/05 10:10:17 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.20 $ $Date: 2001/12/19 17:28:55 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -901,3 +901,296 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   free(sendbuf);
   return (c == 0 ? 0 : -1);
 }
+
+int DLL_DECL stage_updc_open(stageid, subreqid, mode)
+     char *stageid;
+     int subreqid;
+     mode_t mode;
+{
+  int c;
+  char *dp;
+  int errflg = 0;
+  gid_t egid;
+  int key;
+  int msglen;
+  int nargs;
+  int ntries = 0;
+  int nstg161 = 0;
+  char *p;
+  struct passwd *pw;
+  char *q, *q2;
+  char repbuf[CA_MAXPATHLEN+1];
+  int reqid;
+  char *sbp;
+  char *sendbuf;
+  size_t sendbuf_size;
+  char *stghost;
+  char tmpbuf[21];
+  uid_t euid;
+  char Zparm[CA_MAXSTGRIDLEN+1];
+  char *func = "stage_updc_open";
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+  char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
+
+  euid = geteuid();
+  egid = getegid();
+#if defined(_WIN32)
+  if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
+    serrno = SENOMAPFND;
+    return (-1);
+  }
+#endif
+  if (! stageid) {
+    serrno = EFAULT;
+    return (-1);
+  }
+  if (stageid[0] == '\0') {
+    serrno = EFAULT;
+    return (-1);
+  }
+
+  /* Init repbuf to null */
+  repbuf[0] = '\0';
+
+  /* check stager request id */
+
+  if (strlen (stageid) <= CA_MAXSTGRIDLEN) {
+    strcpy (Zparm, stageid);
+    if ((p = strtok (Zparm, ".")) != NULL) {
+      stage_strtoi(&reqid, p, &dp, 10);
+      if (*dp != '\0' || reqid <= 0 ||
+          (p = strtok (NULL, "@")) == NULL) {
+        errflg++;
+      } else {
+        stage_strtoi(&key, p, &dp, 10);
+        if (*dp != '\0' ||
+            (stghost = strtok (NULL, " ")) == NULL) {
+          errflg++;
+        }
+      }
+    } else {
+      errflg++;
+    }
+  } else
+    errflg++;
+  if (errflg) {
+    serrno = EINVAL;
+    return (-1);
+  }
+
+  if ((pw = Cgetpwuid (euid)) == NULL) {
+    serrno = SEUSERUNKN;
+    return (-1);
+  }
+
+  /* Check how many bytes we need */
+  sendbuf_size = 3 * LONGSIZE;                        /* Request header */
+  sendbuf_size += strlen(pw->pw_name) + 1;            /* Login name */
+  sendbuf_size += 3 * LONGSIZE;                       /* euid, egid, nargs */
+  sendbuf_size += strlen(func) + 1;                /* Func name */
+  sendbuf_size += strlen("-Z") + strlen(stageid) + 2; /* -Z option and value */
+  if (subreqid >= 0) {
+    sprintf (tmpbuf, "%d", subreqid);
+    sendbuf_size += strlen("-i") + strlen(tmpbuf) + 2; /* -i option and value */
+  }
+  sprintf (tmpbuf, "%d", (int) mode);
+  sendbuf_size += strlen("-o") + strlen(tmpbuf) + 2; /* -o option and value */
+  /* Allocate memory */
+  if ((sendbuf = (char *) malloc(sendbuf_size)) == NULL) {
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+
+  /* Build request header */
+
+  sbp = sendbuf;
+  marshall_LONG (sbp, STGMAGIC);
+  marshall_LONG (sbp, STAGEUPDC);
+  q = sbp;	/* save pointer. The next field will be updated */
+  msglen = 3 * LONGSIZE;
+  marshall_LONG (sbp, msglen);
+
+  /* Build request body */
+
+  marshall_STRING (sbp, pw->pw_name);	/* login name */
+  marshall_WORD (sbp, euid);
+  marshall_WORD (sbp, egid);
+  q2 = sbp;	/* save pointer. The next field will be updated */
+  nargs = 1;
+  marshall_WORD (sbp, nargs);
+  marshall_STRING (sbp, func);
+
+  marshall_STRING (sbp, "-Z");
+  marshall_STRING (sbp, stageid);
+  nargs += 2;
+  if (subreqid >= 0) {
+    sprintf (tmpbuf, "%d", subreqid);
+    marshall_STRING (sbp,"-i");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
+  sprintf (tmpbuf, "%d", (int) mode);
+  marshall_STRING (sbp,"-o");
+  marshall_STRING (sbp, tmpbuf);
+  nargs += 2;
+  marshall_WORD (q2, nargs);	/* update nargs */
+
+  msglen = sbp - sendbuf;
+  marshall_LONG (q, msglen);	/* update length field */
+
+  while (1) {
+    c = send2stgd_compat (stghost, sendbuf, msglen, 0, NULL, 0);
+    if ((c == 0) || (serrno == EINVAL)) break;
+	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
+    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
+    stage_sleep (RETRYI);
+  }
+  free(sendbuf);
+  return (c == 0 ? 0 : -1);
+}
+
+int DLL_DECL stage_updc_close(stageid, subreqid)
+     char *stageid;
+     int subreqid;
+{
+  int c;
+  char *dp;
+  int errflg = 0;
+  gid_t egid;
+  int key;
+  int msglen;
+  int nargs;
+  int ntries = 0;
+  int nstg161 = 0;
+  char *p;
+  struct passwd *pw;
+  char *q, *q2;
+  char repbuf[CA_MAXPATHLEN+1];
+  int reqid;
+  char *sbp;
+  char *sendbuf;
+  size_t sendbuf_size;
+  char *stghost;
+  char tmpbuf[21];
+  uid_t euid;
+  char Zparm[CA_MAXSTGRIDLEN+1];
+  char *func = "stage_updc_close";
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+  char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
+
+  euid = geteuid();
+  egid = getegid();
+#if defined(_WIN32)
+  if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
+    serrno = SENOMAPFND;
+    return (-1);
+  }
+#endif
+  if (! stageid) {
+    serrno = EFAULT;
+    return (-1);
+  }
+  if (stageid[0] == '\0') {
+    serrno = EFAULT;
+    return (-1);
+  }
+
+  /* Init repbuf to null */
+  repbuf[0] = '\0';
+
+  /* check stager request id */
+
+  if (strlen (stageid) <= CA_MAXSTGRIDLEN) {
+    strcpy (Zparm, stageid);
+    if ((p = strtok (Zparm, ".")) != NULL) {
+      stage_strtoi(&reqid, p, &dp, 10);
+      if (*dp != '\0' || reqid <= 0 ||
+          (p = strtok (NULL, "@")) == NULL) {
+        errflg++;
+      } else {
+        stage_strtoi(&key, p, &dp, 10);
+        if (*dp != '\0' ||
+            (stghost = strtok (NULL, " ")) == NULL) {
+          errflg++;
+        }
+      }
+    } else {
+      errflg++;
+    }
+  } else
+    errflg++;
+  if (errflg) {
+    serrno = EINVAL;
+    return (-1);
+  }
+
+  if ((pw = Cgetpwuid (euid)) == NULL) {
+    serrno = SEUSERUNKN;
+    return (-1);
+  }
+
+  /* Check how many bytes we need */
+  sendbuf_size = 3 * LONGSIZE;                        /* Request header */
+  sendbuf_size += strlen(pw->pw_name) + 1;            /* Login name */
+  sendbuf_size += 3 * LONGSIZE;                       /* euid, egid, nargs */
+  sendbuf_size += strlen(func) + 1;                /* Func name */
+  sendbuf_size += strlen("-Z") + strlen(stageid) + 2; /* -Z option and value */
+  if (subreqid >= 0) {
+    sprintf (tmpbuf, "%d", subreqid);
+    sendbuf_size += strlen("-i") + strlen(tmpbuf) + 2; /* -i option and value */
+  }
+  sendbuf_size += strlen("-c") + 1; /* -c option */
+  /* Allocate memory */
+  if ((sendbuf = (char *) malloc(sendbuf_size)) == NULL) {
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+
+  /* Build request header */
+
+  sbp = sendbuf;
+  marshall_LONG (sbp, STGMAGIC);
+  marshall_LONG (sbp, STAGEUPDC);
+  q = sbp;	/* save pointer. The next field will be updated */
+  msglen = 3 * LONGSIZE;
+  marshall_LONG (sbp, msglen);
+
+  /* Build request body */
+
+  marshall_STRING (sbp, pw->pw_name);	/* login name */
+  marshall_WORD (sbp, euid);
+  marshall_WORD (sbp, egid);
+  q2 = sbp;	/* save pointer. The next field will be updated */
+  nargs = 1;
+  marshall_WORD (sbp, nargs);
+  marshall_STRING (sbp, func);
+
+  marshall_STRING (sbp, "-Z");
+  marshall_STRING (sbp, stageid);
+  nargs += 2;
+  if (subreqid >= 0) {
+    sprintf (tmpbuf, "%d", subreqid);
+    marshall_STRING (sbp,"-i");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
+  marshall_STRING (sbp,"-c");
+  nargs += 1;
+  marshall_WORD (q2, nargs);	/* update nargs */
+
+  msglen = sbp - sendbuf;
+  marshall_LONG (q, msglen);	/* update length field */
+
+  while (1) {
+    c = send2stgd_compat (stghost, sendbuf, msglen, 0, NULL, 0);
+    if ((c == 0) || (serrno == EINVAL)) break;
+	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
+    if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
+    stage_sleep (RETRYI);
+  }
+  free(sendbuf);
+  return (c == 0 ? 0 : -1);
+}
+
