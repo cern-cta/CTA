@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlistmodel.c,v $ $Revision: 1.2 $ $Date: 2000/04/11 13:42:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlistmodel.c,v $ $Revision: 1.3 $ $Date: 2000/05/04 14:30:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      vmgrlistmodel - list cartridge model entries */
@@ -12,6 +12,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgrlistmodel.c,v $ $Revision: 1.2 $ $Date
 #include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include "Cgetopt.h"
 #include "serrno.h"

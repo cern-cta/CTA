@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlistpool.c,v $ $Revision: 1.4 $ $Date: 2000/04/11 05:46:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlistpool.c,v $ $Revision: 1.5 $ $Date: 2000/05/04 14:30:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlistpool - query a given pool or list all existing tape pools */
@@ -12,6 +12,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgrlistpool.c,v $ $Revision: 1.4 $ $Date:
 #include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include "serrno.h"
 #include "u64subr.h"
