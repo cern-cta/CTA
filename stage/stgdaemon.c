@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.198 2002/05/30 09:37:34 bcouturi Exp $
+ * $Id: stgdaemon.c,v 1.199 2002/05/30 14:03:48 bcouturi Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.198 $ $Date: 2002/05/30 09:37:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.199 $ $Date: 2002/05/30 14:03:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -102,9 +102,7 @@ struct winsize {
 #include "Cgetopt.h"
 #include "u64subr.h"
 #include "Castor_limits.h"
-#ifdef MONITOR
-#include "Cmonit_api.h"
-#endif
+
 #ifdef STAGE_CSETPROCNAME
 #define STAGE_CSETPROCNAME_FORMAT "%s PORT=%d NBCAT=%d NBPATH=%d QUEUED=%d FREE_FD=%d"
 #include "Csetprocname.h"
