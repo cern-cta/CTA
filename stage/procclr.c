@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.18 2000/11/24 14:04:24 jdurand Exp $
+ * $Id: procclr.c,v 1.19 2000/12/05 09:27:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.18 $ $Date: 2000/11/24 14:04:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.19 $ $Date: 2000/12/05 09:27:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -46,12 +46,15 @@ extern struct stgpath_entry *stpe;	/* end of stage path catalog */
 extern struct stgpath_entry *stps;	/* start of stage path catalog */
 extern struct waitq *waitqp;
 
+int check_delete _PROTO((struct stgcat_entry *, gid_t, uid_t, char *, char *, int, int));
+
 void procclrreq(req_data, clienthost)
 		 char *req_data;
 		 char *clienthost;
 {
 	char **argv;
 	int c, i, j;
+	int Fflag = 0;
 	int cflag = 0;
 	char *dp;
 	int errflg = 0;
@@ -101,10 +104,19 @@ void procclrreq(req_data, clienthost)
 #else
 	optind = 1;
 #endif
-	while ((c = getopt (nargs, argv, "cGh:I:iL:l:M:m:P:p:q:r:V:")) != EOF) {
+	while ((c = getopt (nargs, argv, "cFGh:I:iL:l:M:m:P:p:q:r:V:")) != EOF) {
 		switch (c) {
 		case 'c':
 			cflag++;
+			break;
+		case 'F':
+			if (uid != 0) {
+				/* The -F option is only valid from admin */
+				sendrep (rpfd, MSG_ERR, STG98, "-F option is only for admin");
+				errflg++;
+			} else {
+				Fflag++;
+			}
 			break;
 		case 'G':
 			break;
@@ -216,7 +228,7 @@ void procclrreq(req_data, clienthost)
 				c = EBUSY;
 				goto reply;
 			}
-			if ((i = check_delete (stcp, gid, uid, group, user, rflag)) > 0) {
+			if ((i = check_delete (stcp, gid, uid, group, user, rflag, Fflag)) > 0) {
 				c = i;
 				goto reply;
 			}
@@ -235,8 +247,7 @@ void procclrreq(req_data, clienthost)
 						c = EBUSY;
 						goto reply;
 					}
-					if ((i = check_delete (stcp, gid, uid,
-																 group, user, rflag)) > 0) {
+					if ((i = check_delete (stcp, gid, uid, group, user, rflag, Fflag)) > 0) {
 						c = i;
 						goto reply;
 					}
@@ -283,7 +294,7 @@ void procclrreq(req_data, clienthost)
 				c = ENOUGHF;
 				goto reply;
 			}
-			if ((i = check_delete (stcp, gid, uid, group, user, rflag)) > 0) {
+			if ((i = check_delete (stcp, gid, uid, group, user, rflag, Fflag)) > 0) {
 				c = i;
 				goto reply;
 			}
@@ -299,13 +310,14 @@ void procclrreq(req_data, clienthost)
 	sendrep (rpfd, STAGERC, STAGECLR, c);
 }
 
-check_delete(stcp, gid, uid, group, user, rflag)
+int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 		 struct stgcat_entry *stcp;
 		 gid_t gid;
 		 uid_t uid;
 		 char *group;
 		 char *user;
 		 int rflag; /* True if HSM source file has to be removed */
+		 int Fflag; /* Forces deletion of request in memory instead of internal error */
 {
 	int found;
 	int i;
@@ -349,7 +361,7 @@ check_delete(stcp, gid, uid, group, user, rflag)
 				reqid = wqp->reqid;
 				sendrep (wqp->rpfd, MSG_ERR, STG95, "request", user);
 				reqid = savereqid;
-				wqp->status =  CLEARED;
+				wqp->status = CLEARED;
 				/* is there an active stager overlay for this file? */
 				if (wqp->ovl_pid) {
 					stglogit (func, "killing process %d\n",
@@ -360,10 +372,22 @@ check_delete(stcp, gid, uid, group, user, rflag)
 				return (0);
 			}
 		}
-		sendrep (rpfd, MSG_ERR,
-						 "internal error: status=0x%x but req not in waitq\n",
-						 stcp->status);
-		return (USERR);
+		if (Fflag) {
+			sendrep (rpfd, MSG_ERR,
+					 "Status=0x%x but req not in waitq - Deleting reqid %d\n",
+					 stcp->status, stcp->reqid);
+			if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag) < 0) {
+				sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
+						 rfio_serror());
+				return (USERR);
+			}
+			return (0);
+		} else {
+			sendrep (rpfd, MSG_ERR,
+							 "STG98 - Internal error: status=0x%x but req not in waitq - Ask admin to try with -F option\n",
+							 stcp->status);
+			return (USERR);
+		}
 	}
 	return (-1);
 }

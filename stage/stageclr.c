@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.15 2000/10/27 14:04:33 jdurand Exp $
+ * $Id: stageclr.c,v 1.16 2000/12/05 09:27:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.15 $ $Date: 2000/10/27 14:04:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.16 $ $Date: 2000/12/05 09:27:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -42,6 +42,7 @@ int main(argc, argv)
 {
 	int c, i, n;
 	int errflg = 0;
+	int Fflag = 0;
 	int Gflag = 0;
 	uid_t Guid;
 	gid_t gid;
@@ -90,8 +91,11 @@ int main(argc, argv)
 		exit (SYERR);
 	}
 #endif
-	while ((c = getopt (argc, argv, "cGh:I:iL:l:M:m:P:p:q:r:V:")) != EOF) {
+	while ((c = getopt (argc, argv, "cFGh:I:iL:l:M:m:P:p:q:r:V:")) != EOF) {
 		switch (c) {
+		case 'F':
+			Fflag++;
+			break;
 		case 'G':
 			Gflag++;
 			if ((gr = Cgetgrgid (gid)) == NULL) {
@@ -345,7 +349,7 @@ void usage(cmd)
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "%s%s%s",
-					 "[-c] [-h stage_host] [-G] [-I external_filename] [-i] [-L link]\n",
+					 "[-c] [-h stage_host] [-F] [-G] [-I external_filename] [-i] [-L link]\n",
 					 "[-l label_type] [-M hsmfile] [-m minfree] [-P path] [-p pool]\n",
 					 "[-q file_sequence_number(s)] [-remove_from_hsm] [-V visual_identifier(s)]\n");
 }
