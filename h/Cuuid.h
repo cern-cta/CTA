@@ -1,12 +1,12 @@
 /*
- * $Id: Cuuid.h,v 1.4 2003/12/08 12:20:31 obarring Exp $
+ * $Id: Cuuid.h,v 1.5 2004/11/24 19:03:33 jdurand Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
  * Based on: http://www.webdav.org/specs/draft-leach-uuids-guids-01.txt
  *
- * $RCSfile: Cuuid.h,v $ $Revision: 1.4 $ $Date: 2003/12/08 12:20:31 $ CERN IT-PDP/DM Jean-Damien Durand
+ * $RCSfile: Cuuid.h,v $ $Revision: 1.5 $ $Date: 2004/11/24 19:03:33 $ CERN IT-PDP/DM Jean-Damien Durand
  */
 
 
@@ -22,7 +22,7 @@ typedef struct _Cuuid_t {
 	U_SHORT time_hi_and_version;
 	U_BYTE  clock_seq_hi_and_reserved;
 	U_BYTE  clock_seq_low;
-	BYTE    node[6];
+	U_BYTE  node[6];
 } Cuuid_t;
 
 EXTERN_C void DLL_DECL Cuuid_create _PROTO((Cuuid_t *));
@@ -31,6 +31,9 @@ EXTERN_C void DLL_DECL Cuuid_create_from_name _PROTO ((Cuuid_t *,
 EXTERN_C int  DLL_DECL Cuuid_compare _PROTO((Cuuid_t *, Cuuid_t *));
 EXTERN_C void DLL_DECL _marshall_UUID _PROTO((char**, Cuuid_t *));
 EXTERN_C void DLL_DECL _unmarshall_UUID _PROTO((char**, Cuuid_t *));
+
+EXTERN_C int DLL_DECL Cuuid2string _PROTO((char *, size_t, Cuuid_t *));
+EXTERN_C int DLL_DECL string2Cuuid _PROTO((Cuuid_t *, char *));
 
 #define  unmarshall_UUID(ptr,uuid)  _unmarshall_UUID(&(ptr), &(uuid))
 #define  marshall_UUID(ptr,uuid)  _marshall_UUID(&(ptr), &(uuid))
