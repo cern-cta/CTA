@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.191 2002/05/15 06:45:12 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.192 2002/05/15 08:18:09 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.191 $ $Date: 2002/05/15 06:45:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.192 $ $Date: 2002/05/15 08:18:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -404,6 +404,7 @@ int main(argc,argv)
 	stglogit (func, "==============================================\n");
 
 	/* Before getting system limit, change them right now - we do nothing if wanted value are below what system provide */
+#ifdef RLIMIT_NOFILE
 	/* RLIMIT_NOFILE */
 	if (getrlimit(RLIMIT_NOFILE,&rlim) != 0) {
 		stglogit(func, "... getrlimit(RLIMIT_NOFILE,&rlim) error : %s\n", strerror(errno));
@@ -429,6 +430,10 @@ int main(argc,argv)
  			stglogit(func, "==> Running with RLIMIT_NOFILE = { cur=%d, max=%d }\n", rlim.rlim_cur, rlim.rlim_max);
 		}
 	}
+#else
+	stglogit(func, "... RLIMIT_NOFILE undefined on this platform\n");
+#endif
+#ifdef RLIMIT_NPROC
 	/* RLIMIT_NPROC */
 	if (getrlimit(RLIMIT_NPROC,&rlim) != 0) {
 		stglogit(func, "... getrlimit(RLIMIT_NPROC,&rlim) error : %s\n", strerror(errno));
@@ -454,7 +459,9 @@ int main(argc,argv)
  			stglogit(func, "==> Running with RLIMIT_NPROC = { cur=%d, max=%d }\n", rlim.rlim_cur, rlim.rlim_max);
 		}
 	}
-	
+#else
+	stglogit(func, "... RLIMIT_NPROC undefined on this platform\n");
+#endif
 #if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(sgi)
 	maxfds = getdtablesize();
 #else
