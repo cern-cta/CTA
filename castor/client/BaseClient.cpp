@@ -113,31 +113,42 @@ void castor::client::BaseClient::sendRequest
   // Machine
   {
     // All this to get the hostname, thanks to C !
-    int len = 16;
+    int len = 64;
     char* hostname;
     hostname = (char*) calloc(len, 1);
     if (gethostname(hostname, len) < 0) {
-      clog() << "Unable to get hostname : "
-             << strerror(errno) << std::endl;
-      free(hostname);
-      return;
-    }
-    while (hostname[len - 1] != 0) {
-      len *= 2;
-      char *hostnameLonger = (char*) realloc(hostname, len);
-      if (0 == hostnameLonger) {
-        clog() << "Unable to allocate memory for hostname."
-               << std::endl;
-        free(hostname);
-        return;
-      }
-      hostname = hostnameLonger;
-      memset(hostname, 0, len);
-      if (gethostname(hostname, len) < 0) {
+      // Test whether error is due to a name too long
+      // The errno depends on the glibc version
+      if (EINVAL != errno &&
+          ENAMETOOLONG != errno) {
         clog() << "Unable to get hostname : "
                << strerror(errno) << std::endl;
         free(hostname);
         return;
+      }
+      // So the name was too long
+      while (hostname[len - 1] != 0) {
+        len *= 2;
+        char *hostnameLonger = (char*) realloc(hostname, len);
+        if (0 == hostnameLonger) {
+          clog() << "Unable to allocate memory for hostname."
+                 << std::endl;
+          free(hostname);
+          return;
+        }
+        hostname = hostnameLonger;
+        memset(hostname, 0, len);
+        if (gethostname(hostname, len) < 0) {
+          // Test whether error is due to a name too long
+          // The errno depends on the glibc version
+          if (EINVAL != errno &&
+              ENAMETOOLONG != errno) {
+            clog() << "Unable to get hostname : "
+                   << strerror(errno) << std::endl;
+            free(hostname);
+            return;
+          }
+        }
       }
     }
     req->setMachine(hostname);
