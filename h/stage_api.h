@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.10 2000/06/01 06:52:54 jdurand Exp $
+ * $Id: stage_api.h,v 1.11 2000/06/13 11:00:58 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -32,8 +32,8 @@ EXTERN_C int  DLL_DECL  stage_getoutbuf _PROTO((char **, int *));
 EXTERN_C int  DLL_DECL  stage_getlog    _PROTO((void (**)(int, char*)));
 EXTERN_C int  DLL_DECL  stage_errmsg _PROTO(());
 EXTERN_C int  DLL_DECL  stage_outmsg _PROTO(());
-EXTERN_C int  DLL_DECL  stage_updc_filcp _PROTO((char *, int, char *, u_signed64, int, int, int, char *, char *, int, int, char *, char *));
-EXTERN_C int  DLL_DECL  stage_updc_tppos _PROTO((char *, int, int, char *, char *, int, int, char *, char *));
+EXTERN_C int  DLL_DECL  stage_updc_filcp _PROTO((char *, int, int, char *, u_signed64, int, int, int, char *, char *, int, int, char *, char *));
+EXTERN_C int  DLL_DECL  stage_updc_tppos _PROTO((char *, int, int, int, char *, char *, int, int, char *, char *));
 EXTERN_C int  DLL_DECL  stage_updc_user _PROTO((char *, stage_hsm_t *));
 EXTERN_C int  DLL_DECL  stage_put_hsm _PROTO((char *, int, stage_hsm_t *));
 EXTERN_C int  DLL_DECL  stage_out_hsm _PROTO((char *, int, char *, stage_hsm_t *));
