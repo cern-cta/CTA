@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.15 $ $Date: 2000/01/04 08:39:24 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.16 $ $Date: 2000/01/11 17:36:01 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -668,7 +668,6 @@ static int SelectVolAndDrv(const dgn_element_t *dgn_context,
             drvrec->update = 0;
         }
     }
-    log(LOG_DEBUG,"SelectVolAndDrv()::DEBUG volrec=0x%x, drvrec=0x%x\n",volrec,drvrec);
     if ( drvrec == NULL ) {
         /*
          * Either the volrec asked for a specific server/drive
@@ -758,36 +757,28 @@ int vdqm_DelVolReq(vdqmVolReq_t *VolReq) {
     volrec = NULL;
     rc = GetVolRecord(dgn_context,VolReq,&volrec);
     if ( rc == -1 || volrec == NULL ) {
-        log(LOG_ERR,"vdqm_DelVolReq() volume record not in queue. Checking Drives.\n");
-        rc = FindDrvRecord(dgn_context,VolReq,&drvrec);
-        if ( drvrec == NULL ) {
-            log(LOG_ERR,"vdqm_DelVolRecord() volume record not found\n");
-            FreeDgnContext(&dgn_context);
-            return(-1);
-        }
-        /*
-         * We don't reset the drive status here. It is expected
-         * that the client also interrupts the tape job so that
-         * the tape daemon properly cleanup and tell VDQM when the
-         * drive is ready again. Still, we mark it as UNKNOWN until
-         * further notice.
-         */
-        volrec = drvrec->vol;
-        drvrec->vol = NULL;
-        drvrec->drv.VolReqID = 0;
-        drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+        log(LOG_ERR,"vdqm_DelVolReq() volume record not in queue.\n");
+        return(-1);
+    }
+    /*
+     * Can only remove request if not assigned to a drive. Otherwise
+     * it should be cleanup by resetting the drive status to RELEASE + FREE.
+     */
+    if ( (drvrec = volrec->drv) != NULL ) {
+        vdqm_SetError(EVQREQASS);
+        rc = -1;
     } else {
         /*
          * Delete the volume record from the queue.
          */
         rc = DelVolRecord(dgn_context,volrec);
+        /*
+         * Free it
+         */
+        free(volrec);
     }
-    /*
-     * Free it
-     */
-    free(volrec);
     FreeDgnContext(&dgn_context);
-    return(0);
+    return(rc);
 }
 
 int vdqm_DelDrvReq(vdqmDrvReq_t *DrvReq) {
