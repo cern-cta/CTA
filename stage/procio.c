@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.24 2000/05/12 13:18:52 jdurand Exp $
+ * $Id: procio.c,v 1.25 2000/05/18 14:20:08 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.24 $ $Date: 2000/05/12 13:18:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.25 $ $Date: 2000/05/18 14:20:08 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1311,7 +1311,11 @@ void procputreq(req_data, clienthost)
 				if (wfp->subreqid == stcp->reqid)
 					break;
 			}
-			stcp->status = STAGEOUT|PUT_FAILED;
+			if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+				stcp->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
+			} else {
+				stcp->status = STAGEOUT|PUT_FAILED;
+			}
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 				stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
