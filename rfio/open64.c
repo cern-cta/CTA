@@ -1,5 +1,5 @@
 /*
- * $Id: open64.c,v 1.4 2004/01/23 10:27:45 jdurand Exp $
+ * $Id: open64.c,v 1.5 2004/02/27 17:27:15 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open64.c,v $ $Revision: 1.4 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
+static char sccsid[] = "@(#)$RCSfile: open64.c,v $ $Revision: 1.5 $ $Date: 2004/02/27 17:27:15 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
 #endif /* not lint */
 
 /* open64.c       Remote File I/O - open file a file                      */
@@ -70,6 +70,7 @@ int	passwd;
    TRACE ( 2,"rfio","rfio_setup64_ext: owner s gid is %d",iop->gid);
    END_TRACE();
    (void) umask(iop->umask=umask(0));
+   iop->bufsize = 0;
    iop->ftype = FFTYPE_C;
    iop->binary = 0;                 /* no translation needed        */
    iop->eof = 0;
