@@ -1,10 +1,10 @@
-.\" $Id: stage_constants.man,v 1.2 2002/10/04 07:50:12 jdurand Exp $
+.\" $Id: stage_constants.man,v 1.3 2002/10/19 08:16:19 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_constants.man,v $ $Revision: 1.2 $ $Date: 2002/10/04 07:50:12 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_constants.man,v $ $Revision: 1.3 $ $Date: 2002/10/19 08:16:19 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_CONSTANTS "3" "$Date: 2002/10/04 07:50:12 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_CONSTANTS "3" "$Date: 2002/10/19 08:16:19 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage constants \- Constants for the stage package
 
@@ -396,6 +396,9 @@ Flag corresponding to \-\-hsmcreat (stagechng). Value is 0x2000000000000.
 .TP
 .B STAGE_FORMAT
 Flag corresponding to \-\-format (hint for stageqry processing into the stage daemon). Value is 0x4000000000000.
+.TP
+.B STAGE_KEEP
+Flag corresponding to \-K (stagewrt or stageout). Value is 0x8000000000000.
 .TP
 .B STAGE_00
 Constant used in the stage daemon to easily differentiate between a\-la\-SHIFT and a\-la\-CASTOR protocols. Value is 100.

@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.198 2002/10/18 08:48:43 jdurand Exp $
+ * $Id: procio.c,v 1.199 2002/10/19 08:16:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.198 $ $Date: 2002/10/18 08:48:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.199 $ $Date: 2002/10/19 08:16:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -179,6 +179,7 @@ static int tppool_flag = 0;
 static int volatile_tppool_flag = 0;
 static int noretry_flag = 0;
 static int nohsmcreat_flag = 0;
+static int keep_flag = 0;
 static int rdonly_flag = 0;
 static int side_flag = 0;
 static int nocopy_flag = 0;
@@ -429,6 +430,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	tppool_flag = 0;
 	volatile_tppool_flag = 0;
 	nohsmcreat_flag = 0;
+	keep_flag = 0;
 	rdonly_flag = 0;
 	this_tppool[0] = '\0';
 	side_flag = 0;
@@ -654,6 +656,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		if ((flags & STAGE_NORETRY)  == STAGE_NORETRY) noretry_flag = 1;
 		if ((flags & STAGE_NOWAIT)  == STAGE_NOWAIT) nowait_flag = 1;
 		if ((flags & STAGE_NOHSMCREAT)  == STAGE_NOHSMCREAT) nohsmcreat_flag = 1;
+		if ((flags & STAGE_KEEP)  == STAGE_KEEP) keep_flag = 1;
 		if ((flags & STAGE_VOLATILE_TPPOOL)  == STAGE_VOLATILE_TPPOOL) volatile_tppool_flag = 1;
 		if ((concat_off != 0) && (req_type != STAGE_IN)) {
 			sendrep (&rpfd, MSG_ERR, STG17, "-c off", "any request but stage_in");
@@ -694,6 +697,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 						sendrep (&rpfd, MSG_ERR, STG06, "-F");
 						errflg++;
 					}
+				}
+				if (((req_type == STAGE_WRT) || (req_type == STAGE_OUT)) && keep_flag) {
+					stcp_input[i].keep = 1;
 				}
 				if ((req_type == STAGE_IN) && Aflag && stcp_input[i].size <= 0) {
 					getdefsize(stcp_input[i].poolname,&(stcp_input[i].size));

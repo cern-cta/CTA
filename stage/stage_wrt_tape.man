@@ -1,10 +1,10 @@
-.\" $Id: stage_wrt_tape.man,v 1.1 2002/10/08 13:43:53 jdurand Exp $
+.\" $Id: stage_wrt_tape.man,v 1.2 2002/10/19 08:16:19 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_wrt_tape.man,v $ $Revision: 1.1 $ $Date: 2002/10/08 13:43:53 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_wrt_tape.man,v $ $Revision: 1.2 $ $Date: 2002/10/19 08:16:19 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_WRT_TAPE "3" "$Date: 2002/10/08 13:43:53 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_WRT_TAPE "3" "$Date: 2002/10/19 08:16:19 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_wrt_tape \- Asks for one or more tape files, present on disk, to be written to tape
 .SH SYNOPSIS
@@ -49,6 +49,9 @@ If data is to be read from tape, and there is a medium error, internal retries b
 .TP
 .I STAGE_NOWAIT
 If data is to be read from tape, this will be done in the background, and client will get an immediate return with ok status.
+.TP
+.I STAGE_KEEP
+Keeps file on disk. If this flag is absent, the disk file is removed as soon as the stagewrt operation is successful.
 .RE
 .TP
 .I openflags
