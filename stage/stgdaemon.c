@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.11 1999/12/14 14:51:52 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.12 1999/12/15 08:20:02 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.11 $ $Date: 1999/12/14 14:51:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.12 $ $Date: 1999/12/15 08:20:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -90,11 +90,11 @@ size_t stgpath_bufsz;
 struct stgpath_entry *stpe;	/* end of stage path catalog */
 struct stgpath_entry *stps;	/* start of stage path catalog */
 struct waitq *waitqp;
-char *Default_db_user = "CASTOR_Stager_Username";
-char *Default_db_pwd = "CASTOR_Stager_Password";
-char db_pwd[33];
-char db_user[33];
+char *Default_db_user = "Cstg_username";
+char *Default_db_pwd  = "Cstg_password";
 struct stgdb_fd dbfd;
+extern char *optarg;
+extern int optind;
 
 void prockilreq _PROTO((char *, char *));
 void procinireq _PROTO((char *, char *));
@@ -105,8 +105,11 @@ void dellink _PROTO((struct stgpath_entry *));
 void delreq _PROTO((struct stgcat_entry *, int));
 void rmfromwq _PROTO((struct waitq *));
 void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
+void stgdaemon_usage _PROTO(());
 
-main()
+main(argc,argv)
+     int argc;
+     char **argv;
 {
   int c, i, l;
   char *clienthost;
@@ -131,6 +134,40 @@ main()
   struct stgpath_entry *stpp;
   struct timeval timeval;
   void wait4child();
+  int foreground = 0;
+  int errflg = 0;
+
+#ifdef linux
+  optind = 0;
+#else
+  optind = 1;
+#endif
+  while ((c = getopt (argc, argv, "fhv")) != EOF) {
+    switch (c) {
+    case 'f':
+      foreground = 1;
+      break;
+    case 'h':
+      stgdaemon_usage();
+      exit(0);
+    case 'v':
+      printf("%s\n",sccsid);
+      exit(0);
+    case '?':
+      ++errflg;
+      break;
+    default:
+      ++errflg;
+      printf("?? getopt returned character code 0%o (octal) 0x%lx (hex) %d (int) '%c' (char) ?\n"
+          ,c,(unsigned long) c,c,(char) c);
+      break;
+    }
+  }
+
+  if (errflg != 0) {
+    printf("### getopt error\n");
+    exit(1);
+  }
 
 #if defined(ultrix) || (defined(sun) && (!defined(SOLARIS) || defined(SOLARIS25))) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(IRIX6)
   maxfds = getdtablesize();
@@ -138,22 +175,23 @@ main()
   maxfds = _NFILE;
 #endif
 #ifndef TEST
-  /* Background */
-  if ((c = fork()) < 0) {
-    fprintf (stderr, "stgdaemon: cannot fork\n");
-    exit (1);
-  } else
-    if (c > 0) exit (0);
+  if (foreground == 0) {
+    /* Background */
+    if ((c = fork()) < 0) {
+      fprintf (stderr, "stgdaemon: cannot fork\n");
+      exit (1);
+    } else
+      if (c > 0) exit (0);
 #if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(_IBMESA)
-  c = setpgrp(0, getpid());
+    c = setpgrp(0, getpid());
 #else
 #if (defined(__osf__) && defined(__alpha)) || defined(linux)
-  c = setsid();
+    c = setsid();
 #else
 #if HPUX10
-  c = setpgrp3();
+    c = setpgrp3();
 #else
-  c = setpgrp();
+    c = setpgrp();
 #endif
 #endif
 #endif
@@ -166,6 +204,7 @@ main()
     (void) close(c);
   }
 #endif
+  }
 #endif /* not TEST */
 #if defined(ultrix) || (defined(sun) && !defined(SOLARIS)) || (defined(_AIX) && defined(_IBMESA))
   signal (SIGCHLD, wait4child);
@@ -246,13 +285,18 @@ main()
       }
       fclose(configfd);
     }
-    strcpy (db_user, p_u);
-    strcpy (db_pwd, p_p);
-  }
 
-  /* Remember it for the future */
-  dbfd.username = db_user;
-  dbfd.password = db_pwd;
+    if (strlen(p_u) > CA_MAXUSRNAMELEN || strlen(p_p) > CA_MAXUSRNAMELEN) {
+      stglogit("func", 
+               "Database username and/or password exceeds maximum length of %d characters !\n",
+               CA_MAXUSRNAMELEN);
+      exit (CONFERR);
+    }
+
+    /* Remember it for the future */
+    strcpy(dbfd.username,p_u);
+    strcpy(dbfd.password,p_p);
+  }
 
   /* Log to the database server */
   if (stgdb_login(&dbfd) != 0) {
@@ -1521,3 +1565,13 @@ void wait4child()
 #endif
 }
 #endif
+
+void stgdaemon_usage() {
+  printf("\nUsage : stgdaemon [options]\n"
+         "  where options can be\n"
+         "  -f      Foreground\n"
+         "  -h      This help\n"
+         "  -v      Print version\n"
+         "\n"
+         );
+}
