@@ -1,5 +1,5 @@
 /*
- * $Id: rtcp_Listen.c,v 1.1 2004/08/03 15:41:38 motiakov Exp $
+ * $Id: rtcp_Listen.c,v 1.2 2004/08/05 09:10:42 motiakov Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -10,7 +10,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_Listen.c,v $ $Revision: 1.1 $ $Date: 2004/08/03 15:41:38 $ CERN IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_Listen.c,v $ $Revision: 1.2 $ $Date: 2004/08/05 09:10:42 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 
@@ -77,6 +77,8 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout) {
      * Loop on select over all listen sockets. Break on valid
      * connection or true error.
      */
+    rtcp_log(LOG_INFO,"rtcp_Listen() called with s=%d, ns=%d, tout=%d\n",
+	     s, ns, timeout);
     for (;;) {
         if ( ns != NULL ) *ns = INVALID_SOCKET;
         rfds_copy = rfds;
@@ -114,6 +116,7 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout) {
                     /*
                      * A valid connection has been found.
                      */
+		    rtcp_log(LOG_INFO,"rtcp_Listen() connection accepted\n");
 
 #ifdef CSEC
 		    /*
