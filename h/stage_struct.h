@@ -1,5 +1,5 @@
 /*
- * $Id: stage_struct.h,v 1.2 2001/02/02 13:01:05 jdurand Exp $
+ * $Id: stage_struct.h,v 1.3 2001/06/20 14:00:16 jdurand Exp $
  */
 
 #ifndef __stage_struct_h
@@ -48,31 +48,31 @@ struct stgcat_entry {		/* entry format in STGCAT table */
 	int	nbaccesses;
 	union {
 	    struct {			/* tape specific info */
-		char	den[CA_MAXDENLEN+1];	/* density */
-		char	dgn[CA_MAXDGNLEN+1];	/* device group */
-		char	fid[CA_MAXFIDLEN+1];	/* file id */
-		char	filstat;	/* file status: new = 'n', old = 'o' */
-		char	fseq[CA_MAXFSEQLEN+1];	/* file sequence number requested by user */
-		char	lbl[CA_MAXLBLTYPLEN+1];	/* label type: al, nl, sl or blp */
-		int	retentd;	/* retention period in days */
-		char	tapesrvr[CA_MAXHOSTNAMELEN+1];	/* tape server */
-		char	E_Tflags;	/* SKIPBAD, KEEPFILE, NOTRLCHK */
-		char	vid[MAXVSN][CA_MAXVIDLEN+1];
-		char	vsn[MAXVSN][CA_MAXVSNLEN+1];
+			char	den[CA_MAXDENLEN+1];	/* density */
+			char	dgn[CA_MAXDGNLEN+1];	/* device group */
+			char	fid[CA_MAXFIDLEN+1];	/* file id */
+			char	filstat;	/* file status: new = 'n', old = 'o' */
+			char	fseq[CA_MAXFSEQLEN+1];	/* file sequence number requested by user */
+			char	lbl[CA_MAXLBLTYPLEN+1];	/* label type: al, nl, sl or blp */
+			int	retentd;	/* retention period in days */
+			char	tapesrvr[CA_MAXHOSTNAMELEN+1];	/* tape server */
+			char	E_Tflags;	/* SKIPBAD, KEEPFILE, NOTRLCHK */
+			char	vid[MAXVSN][CA_MAXVIDLEN+1];
+			char	vsn[MAXVSN][CA_MAXVSNLEN+1];
 	    } t;
 	    struct {			/* info for disk file stageing */
-		char	xfile[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
-		char	Xparm[23];
+			char	xfile[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
+			char	Xparm[23];
 	    } d;
       struct {			/* Migrated files (non-CASTOR) */
-		char	xfile[167];
+			char	xfile[167];
 	    } m;
 	    struct {			/* HSM files (CASTOR) */
-		char	xfile[167];
-		char		server[CA_MAXHOSTNAMELEN+1];
-		u_signed64	fileid;
-		short	fileclass;
-		char tppool[CA_MAXPOOLNAMELEN+1];
+			char	xfile[167];
+			char		server[CA_MAXHOSTNAMELEN+1];
+			u_signed64	fileid;
+			short	fileclass;
+			char tppool[CA_MAXPOOLNAMELEN+1];
 	    } h;
 	} u1;
 };
