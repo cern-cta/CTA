@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.32 2000/02/17 17:36:10 jdurand Exp $
+ * $Id: Cthread.c,v 1.33 2000/03/10 15:54:30 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.32 $ $Date: 2000/02/17 17:36:10 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.33 $ $Date: 2000/03/10 15:54:30 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cthread_api.h>
@@ -1032,6 +1032,18 @@ int DLL_DECL Cthread_Create(file, line, startroutine, arg)
     serrno = SECTHREADERR;
     return(-1);
   }
+#if defined(__osf__) && defined(__alpha)
+  /*
+   * Need to increase the thread stack on DUNIX
+   */
+  n = 256*1024;
+  if ( (n = pthread_attr_setstacksize(&attr,n)) ) {
+      pthread_attr_destroy(&attr);
+      free(starter);
+      serrno = SECTHREADERR;
+      return(-1);
+  }
+#endif /* __osf__ && __alpha */
   if ((n = pthread_create(&pid,&attr,_Cthread_start_pthread, (void *) starter)) != 0) {
     pthread_attr_destroy(&attr);
     free(starter);
@@ -1054,6 +1066,18 @@ int DLL_DECL Cthread_Create(file, line, startroutine, arg)
     free(starter);
     return(-1);
   }
+#if defined(__osf__) && defined(__alpha)
+  /*
+   * Need to increase the thread stack on DUNIX
+   */
+  n = 256*1024;
+  if ( (n = pthread_attr_setstacksize(&attr,n)) ) {
+      pthread_attr_destroy(&attr);
+      free(starter);
+      serrno = SECTHREADERR;
+      return(-1);
+  }
+#endif /* __osf__ && __alpha */
   if (pthread_create(&pid,attr,_Cthread_start_pthread, (void *) starter) != 0) {
     serrno = SECTHREADERR;
     pthread_attr_delete(&attr);
