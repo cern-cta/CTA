@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_InitPool.c,v $ $Revision: 1.8 $ $Date: 2000/03/13 11:17:43 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_InitPool.c,v $ $Revision: 1.9 $ $Date: 2002/10/25 12:55:08 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -17,11 +17,6 @@ static char sccsid[] = "@(#)$RCSfile: vdqm_InitPool.c,v $ $Revision: 1.8 $ $Date
 
 #include <stdlib.h>
 #include <errno.h>
-#if defined(VDQMSERV)
-#if !defined(_WIN32)
-#include <regex.h>
-#endif /* _WIN32 */
-#endif /* VDQMSERV */
 
 #include <Castor_limits.h>
 #include <osdep.h>
@@ -31,7 +26,6 @@ static char sccsid[] = "@(#)$RCSfile: vdqm_InitPool.c,v $ $Revision: 1.8 $ $Date
 #include <vdqm.h>
 #include <Cthread_api.h>
 #include <Cpool_api.h>
-
 
 int vdqm_InitPool(vdqmnw_t **nwtable) {
     extern char *getenv();
