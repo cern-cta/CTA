@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tpconfig.man,v $ $Revision: 1.1 $ $Date: 1999/10/19 05:15:26 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: tpconfig.man,v $ $Revision: 1.2 $ $Date: 1999/10/19 07:33:34 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TPCONFIG l "$Date: 1999/10/19 05:15:26 $"
+.TH TPCONFIG l "$Date: 1999/10/19 07:33:34 $"
 .SH NAME
 tpconfig \- configure tape drive up/down
 .SH SYNOPSIS
@@ -29,7 +29,51 @@ or
 .BR down .
 .TP
 .I reason
-is an optional alphanumeric string.
+is an optional alphanumeric string:
+.LP
+When
+.I drive_status
+is
+.BR down ,
+.I reason
+may be one of the following:
+.RS
+.TP
+.B cleaning
+.TP
+.B test
+.TP
+.B failure
+.TP
+.B system
+.TP
+.B suspect
+.TP
+.B upgrade
+.TP
+.B ops
+.RE
+.LP
+When
+.I drive_status
+is
+.BR up ,
+.I reason
+may be one of the following:
+.RS
+.TP
+.B cleaned
+.TP
+.B replaced
+.TP
+.B repaired
+.TP
+.B preventive
+.TP
+.B upgraded
+.TP
+.B ops
+.RE
 
 .SH EXAMPLE
 .nf
