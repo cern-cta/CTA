@@ -74,9 +74,10 @@ struct Csec_api_thread_info {
 
 #define CA_MAXSERVICENAMELEN 512
 
-#define CSEC_SERVICE_TYPE_CENTRAL 0
-#define CSEC_SERVICE_TYPE_DISK    1
-#define CSEC_SERVICE_TYPE_TAPE    2
+#define CSEC_SERVICE_TYPE_HOST    0
+#define CSEC_SERVICE_TYPE_CENTRAL 1
+#define CSEC_SERVICE_TYPE_DISK    2
+#define CSEC_SERVICE_TYPE_TAPE    3
 
 #define PROT_STAT_INITIAL       0x0
 #define PROT_STAT_REQ_SENT      0x1
@@ -96,7 +97,7 @@ typedef struct Csec_context {
   /* char protid[PROTID_SIZE+1]; */    /* Protocol for which the context has been initialized */
   void *shhandle; /* Handle to the shared library */
   void *credentials; /*     gss_cred_id_t credentials; */
-  void *context;     /*     gss_ctx_id_t context; */
+  void *connection_context;     /*     gss_ctx_id_t context; */
 
   /* Variables containing ths status of the security protocol negociation
      between client and server */
@@ -112,13 +113,16 @@ typedef struct Csec_context {
   char peer_name[CA_MAXCSECNAMELEN+1]; /*  Requested server name (in the Csec client) */
   char effective_peer_name[CA_MAXCSECNAMELEN+1]; /* Name returned by the GSI layer */
   unsigned long context_flags; /* Context flags from the GSS API */
+  char peer_username[CA_MAXCSECNAMELEN+1];
+  int peer_uid;
+  int peer_gid;
 
   /* Used on the server only ! */
   int server_service_type;
 
   int (*Csec_init_context)(struct Csec_context *);
   int (*Csec_reinit_context)(struct Csec_context *);
-  int (*Csec_delete_context)(struct Csec_context *);
+  int (*Csec_delete_connection_context)(struct Csec_context *);
   int (*Csec_delete_creds)(struct Csec_context *);
   int (*Csec_server_acquire_creds)(struct Csec_context *, char *);
   int (*Csec_server_establish_context)(struct Csec_context *, int);
@@ -134,8 +138,9 @@ typedef struct Csec_context {
 #define CSEC_CTX_CONTEXT_ESTABLISHED  0x00000004L
 #define CSEC_CTX_SERVICE_TYPE_SET     0x00000008L
 #define CSEC_CTX_PROTOCOL_LOADED      0x00000010L
-#define CSEC_CTX_SHLIB_LOADED         0x00000010L
-#define CSEC_CTX_SERVICE_NAME_SET     0x00000020L
+#define CSEC_CTX_SHLIB_LOADED         0x00000020L
+#define CSEC_CTX_SERVICE_NAME_SET     0x00000040L
+#define CSEC_CTX_USER_MAPPED          0x00000080L
 
 int DLL_DECL check_ctx _PROTO ((Csec_context *, char *));
 void DLL_DECL *Csec_get_shlib _PROTO ((Csec_context *)); 

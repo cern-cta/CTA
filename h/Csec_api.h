@@ -4,28 +4,34 @@
 #include <sys/types.h>
 #include <Csec_common.h>
 
-int DLL_DECL  Csec_init_context_client _PROTO ((Csec_context *ctx));
-int DLL_DECL  Csec_init_context_server _PROTO ((Csec_context *ctx));
-int DLL_DECL  Csec_reinit_context_server _PROTO ((Csec_context *ctx));
-int DLL_DECL  Csec_clear_context _PROTO((Csec_context *ctx));
-int DLL_DECL  Csec_delete_context _PROTO ((Csec_context *));
+int DLL_DECL  Csec_client_init_context _PROTO ((Csec_context *));
+int DLL_DECL  Csec_server_init_context _PROTO ((Csec_context *));
+int DLL_DECL  Csec_server_reinit_context  _PROTO ((Csec_context *));
+int DLL_DECL  Csec_clear_context _PROTO ((Csec_context *));
+int DLL_DECL  Csec_delete_connection_context _PROTO ((Csec_context *));
 int DLL_DECL  Csec_delete_creds _PROTO ((Csec_context *));
-int DLL_DECL  Csec_server_acquire_creds _PROTO ((Csec_context *ctx,
-                                                 char *service_name));
-int DLL_DECL  Csec_server_establish_context _PROTO ((Csec_context *ctx,
-                                                     int s));
-int DLL_DECL Csec_client_set_service_name _PROTO ((Csec_context *ctx, 
-						   int s, 
-						   int service_type));
-char DLL_DECL *Csec_client_get_service_name _PROTO((Csec_context *ctx));
-int DLL_DECL Csec_server_set_service_type _PROTO ((Csec_context *ctx, 
-						   int service_type));
-int DLL_DECL Csec_server_set_service_name _PROTO ((Csec_context *ctx, 
-						   int s));
-char DLL_DECL *Csec_server_get_service_name _PROTO((Csec_context *ctx));
 
-int DLL_DECL  Csec_client_establish_context _PROTO ((Csec_context *ctx,
+
+int DLL_DECL  Csec_server_acquire_creds _PROTO ((Csec_context *,
+                                                 char *));
+int DLL_DECL  Csec_server_establish_context _PROTO ((Csec_context *,
                                                      int s));
+int DLL_DECL Csec_client_set_service_name _PROTO ((Csec_context *, 
+						   int, 
+						   int));
+char DLL_DECL *Csec_client_get_service_name _PROTO((Csec_context *));
+
+int DLL_DECL Csec_server_set_service_type _PROTO ((Csec_context *, 
+						   int));
+int DLL_DECL Csec_server_set_service_name _PROTO ((Csec_context *, 
+						   int s));
+char DLL_DECL *Csec_server_get_service_name _PROTO((Csec_context *));
+
+int DLL_DECL  Csec_client_establish_context _PROTO ((Csec_context *,
+                                                     int s));
+char DLL_DECL *Csec_server_get_client_username _PROTO ((Csec_context *,
+							int *,
+							int *));
 
 /* INTERNAL CALLS */
 
