@@ -5,7 +5,7 @@
 
 
 /*
- * $RCSfile: rtcp_api.h,v $ $Revision: 1.13 $ $Date: 2004/02/18 11:59:23 $ CERN IT/ADC Olof Barring
+ * $RCSfile: rtcp_api.h,v $ $Revision: 1.14 $ $Date: 2004/03/05 08:41:06 $ CERN IT/ADC Olof Barring
  */
 
 /*
@@ -111,6 +111,9 @@ EXTERN_C int DLL_DECL rtcpc_CheckRetry _PROTO((
 EXTERN_C int DLL_DECL rtcpc_kill _PROTO((
                                          void
                                          ));
+EXTERN_C int DLL_DECL rtcpc_validCksumAlg _PROTO((
+                                                 char *
+                                                 ));
 
 #endif /* RTCP_API_H */
 
