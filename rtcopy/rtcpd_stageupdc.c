@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.7 $ $Date: 2000/01/19 17:18:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.8 $ $Date: 2000/01/20 14:24:17 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -25,6 +25,7 @@ extern char *geterr();
 #include <netinet/in.h>                 /* Internet data types          */
 #endif /* _WIN32 */
 
+#include <signal.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <stdarg.h>
@@ -148,10 +149,18 @@ int rtcpd_stageupdc(tape_list_t *tape,
         }
     }
     rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() cmd=%s\n",stageupdc_cmd);
+    /*
+     * Must change SIGCHLD disposition since pclose() needs to wait
+     * for child. This is all rather hazardous in a threaded env.
+     * but normally we should use the stager API rather than then
+     * stageupdc command.....
+     */
+    signal(SIGCHLD,SIG_DFL);
     stgupdc_fd = POPEN(stageupdc_cmd,"r");
     if ( stgupdc_fd == NULL ) {
         rtcp_log(LOG_ERR,"rtcpd_stageupdc() popen(%s): %s\n",
             stageupdc_cmd,sstrerror(errno));
+        signal(SIGCHLD,SIG_IGN);
         return(-1);
     }
     while ( !feof(stgupdc_fd) ) {
@@ -161,6 +170,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
         }
     }
     rc = PCLOSE(stgupdc_fd);
+    signal(SIGCHLD,SIG_IGN);
     if ( rc == 0 &&  *newpath != '\0' && strcmp(newpath,filereq->file_path) ) {
         rtcp_log(LOG_INFO,"New path obtained from stager: %s\n",
             newpath);
