@@ -15,12 +15,18 @@
 #ifndef RTCPCLD_CONSTANTS_H
 #define RTCPCLD_CONSTANTS_H
 
-#define RTCPCLD_UID         (22665)    /* UID to use for all tape requests */
-#define RTCPCLD_GID         (1028)     /* GID to use for all tape requests */
-#define RTCPCLD_NOTIFY_PORT (5050)     /* rtcpclientd notification (UDP) port */
 #define RTCPCLD_CATPOLL_TIMEOUT (30)   /* Timeout between two polls on the catalogue */
 #define RTCPCLD_VDQMPOLL_TIMEOUT (600) /* Timeout between two polls on a VDQM request */
 #define RTCPCLD_VIDWORKER_CMD "VidWorker"
 
+#ifndef RTCPCLD_NOTIFY_PORT
+#define RTCPCLD_NOTIFY_PORT (5050)     /* rtcpclientd notification (UDP) port */
+#endif /* RTCPCLD_NOTIFY_PORT */
+
+#ifndef RTCPCLD_NOTIFY_HOST
+#define RTCPCLD_NOTIFY_HOST "lxshare003d" /* rtcpclientd host */
+#endif /* RTCPCLD_NOTIFY_HOST */
+
 #define RTCPCLD_NOTIFYTIMEOUT (30)
 #endif /* RTCPCLD_CONSTANTS_H */
+
