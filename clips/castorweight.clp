@@ -10,12 +10,15 @@
 ; fProc    = diskserverAvailProc * diskserverProcFactor  / Max(diskserverAvailProc* diskserverProcFactor)
 ; fLoad    = diskserverLoad      * diskserverLoadFactor  / Max(diskserverLoad     * diskserverLoadFactor)
 ; fIo      = diskserverIo        * diskserverIoFactor    / Max(diskserverIo       * diskserverIoFactor)
-; fDiskserver =       ramSign  * fRam   * diskserverRamImportance  +
-;                     memSign  * fMem   * diskserverMemImportance  +
-;                     swapSign * fSwap  * diskserverSwapImportance +
-;                     procSign * fProc  * diskserverProcImportance +
-;                     loadSign * fLoad  * diskserverLoadImportance +
-;                     ioSign   * fIo    * diskserverIoImportance   +
+; fStream  = diskserverNbTot
+
+; fDiskserver =       ramSign    * fRam   * diskserverRamImportance  +
+;                     memSign    * fMem   * diskserverMemImportance  +
+;                     swapSign   * fSwap  * diskserverSwapImportance +
+;                     procSign   * fProc  * diskserverProcImportance +
+;                     loadSign   * fLoad  * diskserverLoadImportance +
+;                     ioSign     * fIo    * diskserverIoImportance   +
+;                     streamSign * fStream * diskserverStreamImportance   +
 ;                     1
 ; where diskserverIo is the sum of all filesystemWeightedIo defining a diskserver
 ; weighted per filesystem
@@ -488,6 +491,7 @@
 				(diskserverProcImportance ?diskserverProcImportance)
 				(diskserverLoadImportance ?diskserverLoadImportance)
 				(diskserverIoImportance ?diskserverIoImportance)
+				(diskserverStreamImportance ?diskserverStreamImportance)
 				(readImportance ?readImportance)
 				(writeImportance ?writeImportance)
 				(readWriteImportance ?readWriteImportance)
@@ -572,6 +576,22 @@
 	(if (!= 0 ?*Debug*) then
 	  (printout t "[diskserverWeight] " ?diskserverName ": fIo is " ?fIo crlf)
 	)
+	; ++++++++++ fStream
+	; Count the total number of streams on that diskserver
+	(bind ?diskserverNbTot 0)
+	(loop-for-count (?index 1 ?diskserverNfs)
+		(bind ?diskserverNbTot (+
+						?diskserverNbTot
+						(nth$ ?index ?filesystemNbRdonly)
+						(nth$ ?index ?filesystemNbWronly)
+						(nth$ ?index ?filesystemNbReadWrite)
+					)
+		)
+	)
+	(bind ?fStream ?diskserverNbTot)
+	(if (!= 0 ?*Debug*) then
+	  (printout t "[diskserverWeight] " ?diskserverName ": fStream is " ?fStream crlf)
+	)
 
 	(bind ?newfRam  (* ?fRam  ?diskserverRamImportance))
 	(if (!= 0 ?*Debug*) then
@@ -597,29 +617,24 @@
 	(if (!= 0 ?*Debug*) then
 	  (printout t "[diskserverWeight] " ?diskserverName ": newfIo is " ?newfIo crlf)
 	)
+	(bind ?newfStream (* ?fStream  ?diskserverStreamImportance))
+	(if (!= 0 ?*Debug*) then
+	  (printout t "[diskserverWeight] " ?diskserverName ": newfStream is " ?newfStream crlf)
+	)
 	; Total weight is the sum of newFxx...
 	(bind ?diskserverWeight (+ (* ?*ramSign* ?newfRam)
 				   (* ?*memSign* ?newfMem)
 				   (* ?*swapSign* ?newfSwap)
 				   (* ?*procSign* ?newfProc)
 				   (* ?*loadSign* ?newfLoad)
-				   (* ?*ioSign* ?newfIo))
+				   (* ?*ioSign* ?newfIo)
+				   (* ?*streamSign* ?newfStream)
+				)
 	)
 	(if (!= 0 ?*Debug*) then
 	  (printout t "[diskserverWeight] " ?diskserverName ": diskserverWeight is " ?diskserverWeight crlf)
 	)
 
-	; Count the total number of streams on that diskserver
-	(bind ?diskserverNbTot 0)
-	(loop-for-count (?index 1 ?diskserverNfs)
-		(bind ?diskserverNbTot (+
-						?diskserverNbTot
-						(nth$ ?index ?filesystemNbRdonly)
-						(nth$ ?index ?filesystemNbWronly)
-						(nth$ ?index ?filesystemNbReadWrite)
-					)
-		)
-	)
 	; Protection
 	(if (= 0 ?diskserverNbTot) then
 		(bind ?diskserverNbTot 1)
