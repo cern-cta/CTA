@@ -1,5 +1,5 @@
 /*
- * $Id: stage_put.c,v 1.11 2001/09/18 21:10:16 jdurand Exp $
+ * $Id: stage_put.c,v 1.12 2001/11/30 12:07:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.11 $ $Date: 2001/09/18 21:10:16 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.12 $ $Date: 2001/11/30 12:07:21 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -26,10 +26,9 @@ static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.11 $ $Date: 2
 #endif
 #include "marshall.h"
 #include "serrno.h"
-#include "stage_api.h"
-#include "stage.h"
 #include "Cpwd.h"
 #include "Castor_limits.h"
+#include "stage_api.h"
 
 extern char *getconfent();
 
@@ -53,7 +52,7 @@ int DLL_DECL stage_put_hsm(stghost,migratorflag,hsmstruct)
 	int pid;
 	char repbuf[CA_MAXPATHLEN+1];
 	stage_hsm_t *hsm;
-	char *command = "stage_put_hsm";
+	char *func = "stage_put_hsm";
 
 	euid = geteuid();
 	egid = getegid();
@@ -89,7 +88,7 @@ int DLL_DECL stage_put_hsm(stghost,migratorflag,hsmstruct)
 	sendbuf_size += WORDSIZE;                      /* Gid */
 	sendbuf_size += WORDSIZE;                      /* Pid */
 	sendbuf_size += WORDSIZE;                      /* Narg */
-	sendbuf_size += strlen(command) + 1;           /* Command */
+	sendbuf_size += strlen(func) + 1;              /* func */
 	if (migratorflag != 0) {
 		sendbuf_size += strlen("-m") + 1;            /* Migrator flag */
 	}
@@ -129,7 +128,7 @@ int DLL_DECL stage_put_hsm(stghost,migratorflag,hsmstruct)
 	q2 = sbp;	/* save pointer. The next field will be updated */
 	nargs = 1;
 	marshall_WORD (sbp, nargs);
-	marshall_STRING (sbp, command);
+	marshall_STRING (sbp, func);
 
 	if (migratorflag != 0) {
 		marshall_STRING (sbp,"-m");
@@ -155,6 +154,7 @@ int DLL_DECL stage_put_hsm(stghost,migratorflag,hsmstruct)
 	while (1) {
 		c = send2stgd_compat (stghost_ok, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
 		if ((c == 0) || (serrno == EINVAL) || (serrno == ERTLIMBYSZ) || (serrno == CLEARED) || (serrno == ENOSPC)) break;
+		if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		stage_sleep (RETRYI);
 	}
