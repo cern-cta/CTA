@@ -1,12 +1,12 @@
 /*
- * $Id: vdqmapi.c,v 1.2 2004/07/30 12:54:09 motiakov Exp $
+ * $Id: vdqmapi.c,v 1.3 2004/08/12 16:11:25 motiakov Exp $
  *
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqmapi.c,v $ $Revision: 1.2 $ $Date: 2004/07/30 12:54:09 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqmapi.c,v $ $Revision: 1.3 $ $Date: 2004/08/12 16:11:25 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -69,6 +69,7 @@ int DLL_DECL vdqm_Connect(vdqmnw_t **nw) {
     int rc;
 #ifdef CSEC
     int n;
+    int secure_connection = 0;
 #endif
 
     VDQM_API_ENTER(vdqm_Connect);
@@ -118,18 +119,36 @@ int DLL_DECL vdqm_Connect(vdqmnw_t **nw) {
     vdqm_primary = p;
     p = strtok(NULL,", \t");
     vdqm_replica = p;
-
-    if ( (p = getenv("VDQM_PORT")) != (char *)NULL ) {
+#ifdef CSEC
+    if (getenv("SECURE_CASTOR") != NULL) secure_connection++;
+    if (secure_connection) {
+      if ( (p = getenv("SVDQM_PORT")) != (char *)NULL ) {
         vdqm_port = atoi(p);
-    } else if ( (p = getconfent("VDQM","PORT",0)) != (char *)NULL ) {
+      } else if ( (p = getconfent("SVDQM","PORT",0)) != (char *)NULL ) {
         vdqm_port = atoi(p);
-    } else if ( (sp = getservbyname("vdqm","tcp")) != (struct servent *)NULL ) {
+      } else if ( (sp = getservbyname("svdqm","tcp")) != (struct servent *)NULL ) {
         vdqm_port = (int)ntohs(sp->s_port);
+      } else {
+#if defined(SVDQM_PORT)
+        vdqm_port = SVDQM_PORT;
+#endif /* SVDQM_PORT */
+      }
     } else {
+#endif
+      if ( (p = getenv("VDQM_PORT")) != (char *)NULL ) {
+        vdqm_port = atoi(p);
+      } else if ( (p = getconfent("VDQM","PORT",0)) != (char *)NULL ) {
+        vdqm_port = atoi(p);
+      } else if ( (sp = getservbyname("vdqm","tcp")) != (struct servent *)NULL ) {
+        vdqm_port = (int)ntohs(sp->s_port);
+      } else {
 #if defined(VDQM_PORT)
         vdqm_port = VDQM_PORT;
 #endif /* VDQM_PORT */
+      }
+#ifdef CSEC
     }
+#endif
     if ( vdqm_port < 0 ) {
         TRACE(1,"vdqm","vdqm_Connnect() vdqm_port = %d",vdqm_port);
         serrno = SENOSSERV;
@@ -198,28 +217,29 @@ int DLL_DECL vdqm_Connect(vdqmnw_t **nw) {
     } /* for (;;) */
     TRACE(1,"vdqm","vdqm_Connect() successful");
 #ifdef CSEC
-
-    if (Csec_client_init_context(&((*nw)->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
-      TRACE (1, "vdqm_CSEC", "Could not init context\n");
-      closesocket((*nw)->connect_socket);
-      free(*nw);
-      serrno = ESEC_CTX_NOT_INITIALIZED;
-      VDQM_API_RETURN(-1);
-    }
+    if (secure_connection) {
+      if (Csec_client_init_context(&((*nw)->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
+	TRACE (1, "vdqm_CSEC", "Could not init context\n");
+	closesocket((*nw)->connect_socket);
+	free(*nw);
+	serrno = ESEC_CTX_NOT_INITIALIZED;
+	VDQM_API_RETURN(-1);
+      }
 	
-    if(Csec_client_establish_context(&((*nw)->sec_ctx), (*nw)->connect_socket)< 0) {
-      TRACE (1, "vdqm_CSEC", "Could not establish context\n");
-      closesocket((*nw)->connect_socket);
-      free(*nw);
-      serrno = ESEC_NO_CONTEXT;
-      return -1;
-    }
+      if(Csec_client_establish_context(&((*nw)->sec_ctx), (*nw)->connect_socket)< 0) {
+	TRACE (1, "vdqm_CSEC", "Could not establish context\n");
+	closesocket((*nw)->connect_socket);
+	free(*nw);
+	serrno = ESEC_NO_CONTEXT;
+	return -1;
+      }
 	
-    p = Csec_client_get_service_name(&((*nw)->sec_ctx));
-    n = Csec_client_get_service_type(&((*nw)->sec_ctx));
-    Csec_trace ("vdqm_Connect", "Service name = %s, type = %d\n",p, n);
+      p = Csec_client_get_service_name(&((*nw)->sec_ctx));
+      n = Csec_client_get_service_type(&((*nw)->sec_ctx));
+      Csec_trace ("vdqm_Connect", "Service name = %s, type = %d\n",p, n);
     
-    Csec_clear_context(&((*nw)->sec_ctx));
+      Csec_clear_context(&((*nw)->sec_ctx));
+    }
 #endif
 
     VDQM_API_RETURN(0);
