@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.211 2002/07/18 11:14:41 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.212 2002/07/25 16:40:12 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.211 $ $Date: 2002/07/18 11:14:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.212 $ $Date: 2002/07/25 16:40:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -3126,6 +3126,10 @@ void create_link(stcp, upath)
 	stpp->reqid = stcp->reqid;
 	PRE_RFIO;
 	if ((c = rfio_readlink (upath, lpath, sizeof(lpath))) > 0) {
+		if (c > (CA_MAXHOSTNAMELEN + MAXPATH)) {
+			stglogit (func, "### rfio_readlink returned %d\n", c);
+			c = CA_MAXHOSTNAMELEN + MAXPATH;
+		}
 		lpath[c] = '\0';
 		if (strcmp (lpath, stcp->ipath) == 0) goto create_link_return;
 	}
