@@ -8,6 +8,8 @@ COMM    Make CASTOR Security package
 
 COMM######################### FLAGS ##############################
 
+#include <Project.tmpl>
+
 INCLUDES = FileName(..,h)
 #if _AIX
 LIBS = -L../lib -lshift
