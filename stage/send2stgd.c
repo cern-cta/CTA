@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd.c,v 1.20 2000/05/30 11:07:23 jdurand Exp $
+ * $Id: send2stgd.c,v 1.21 2000/09/11 15:25:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.20 $ $Date: 2000/05/30 11:07:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.21 $ $Date: 2000/09/11 15:25:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -22,12 +22,11 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.20 $ $Date: 2
 #include <netinet/in.h>
 #include <sys/socket.h>
 #endif
-#if !defined(_WIN32)
-#include <sys/stat.h>
+#ifndef _WIN32
 #include <signal.h>
 #include <sys/wait.h>
-#include <dirent.h>
 #endif
+#include <sys/stat.h>
 #include "marshall.h"
 #include "rfio_api.h"
 #include "net.h"
