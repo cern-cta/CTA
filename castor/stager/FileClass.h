@@ -107,25 +107,25 @@ int Cstager_FileClass_setName(struct Cstager_FileClass_t* instance, const char* 
  * Get the value of minFileSize
  * The minimum size of a file in this FileClass
  */
-int Cstager_FileClass_minFileSize(struct Cstager_FileClass_t* instance, unsigned int* var);
+int Cstager_FileClass_minFileSize(struct Cstager_FileClass_t* instance, u_signed64* var);
 
 /**
  * Set the value of minFileSize
  * The minimum size of a file in this FileClass
  */
-int Cstager_FileClass_setMinFileSize(struct Cstager_FileClass_t* instance, unsigned int new_var);
+int Cstager_FileClass_setMinFileSize(struct Cstager_FileClass_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of maxFileSize
  * The maximum size of a file in this FileClass
  */
-int Cstager_FileClass_maxFileSize(struct Cstager_FileClass_t* instance, unsigned int* var);
+int Cstager_FileClass_maxFileSize(struct Cstager_FileClass_t* instance, u_signed64* var);
 
 /**
  * Set the value of maxFileSize
  * The maximum size of a file in this FileClass
  */
-int Cstager_FileClass_setMaxFileSize(struct Cstager_FileClass_t* instance, unsigned int new_var);
+int Cstager_FileClass_setMaxFileSize(struct Cstager_FileClass_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of nbCopies

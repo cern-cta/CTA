@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/18 13:16:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2004/11/22 14:33:24 $ $Author: sponcec3 $
  *
  * 
  *
@@ -342,6 +342,23 @@ extern "C" {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       *svcClass = stgSvc->stgSvc->selectSvcClass(name);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //---------------------------------------------------------------------------
+  // Cstager_IStagerSvc_selectFileClass
+  //---------------------------------------------------------------------------
+  int Cstager_IStagerSvc_selectFileClass(struct Cstager_IStagerSvc_t* stgSvc,
+                                         castor::stager::FileClass** fileClass,
+                                         const char* name) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      *fileClass = stgSvc->stgSvc->selectFileClass(name);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

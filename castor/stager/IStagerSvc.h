@@ -375,6 +375,21 @@ int Cstager_IStagerSvc_selectSvcClass(struct Cstager_IStagerSvc_t* stgSvc,
                                       const char* name);
 
 /**
+ * Retrieves a FileClass from the database based on its name.
+ * Caller is in charge of the deletion of the allocated object
+ * @param stgSvc the IStagerSvc used
+ * @param fileClass the FileClass object returned, or 0 if none found
+ * @param name the name of the FileClass
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_selectFileClass(struct Cstager_IStagerSvc_t* stgSvc,
+                                       struct Cstager_FileClass_t** fileClass,
+                                       const char* name);
+
+/**
  * Retrieves a CastorFile from the database based on its fileId.
  * Caller is in charge of the deletion of the allocated object
  * @param stgSvc the IStagerSvc used

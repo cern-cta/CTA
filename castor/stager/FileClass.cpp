@@ -37,8 +37,8 @@
 //------------------------------------------------------------------------------
 castor::stager::FileClass::FileClass() throw() :
   m_name(""),
-  m_minFileSize(0),
-  m_maxFileSize(0),
+  m_minFileSize(),
+  m_maxFileSize(),
   m_nbCopies(0),
   m_id() {
 };

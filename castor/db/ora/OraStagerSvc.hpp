@@ -330,6 +330,16 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Retrieves a FileClass from the database based on its name.
+         * Caller is in charge of the deletion of the allocated object
+         * @param name the name of the FileClass
+         * @return the FileClass, or 0 if none found
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::FileClass* selectFileClass(const std::string name)
+          throw (castor::exception::Exception);
+
+        /**
          * Retrieves a CastorFile from the database based on its fileId.
          * Caller is in charge of the deletion of the allocated object
          * @param fileId the fileId of the CastorFile
@@ -434,6 +444,12 @@ namespace castor {
 
         /// SQL statement object for function selectSvcClass
         oracle::occi::Statement *m_selectSvcClassStatement;
+
+        /// SQL statement for function selectFileClass
+        static const std::string s_selectFileClassStatementString;
+
+        /// SQL statement object for function selectFileClass
+        oracle::occi::Statement *m_selectFileClassStatement;
 
         /// SQL statement for function selectCastorFile
         static const std::string s_selectCastorFileStatementString;

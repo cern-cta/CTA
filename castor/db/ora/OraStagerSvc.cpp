@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2004/11/19 21:41:33 $ $Author: bcouturi $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2004/11/22 14:33:24 $ $Author: sponcec3 $
  *
  *
  *
@@ -34,6 +34,7 @@
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/SvcClass.hpp"
+#include "castor/stager/FileClass.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/FileSystem.hpp"
@@ -107,6 +108,10 @@ const std::string castor::db::ora::OraStagerSvc::s_scheduleSubRequestStatementSt
 const std::string castor::db::ora::OraStagerSvc::s_selectSvcClassStatementString =
   "SELECT id, policy, nbDrives FROM SvcClass WHERE name = :1";
 
+/// SQL statement for selectFileClass
+const std::string castor::db::ora::OraStagerSvc::s_selectFileClassStatementString =
+  "SELECT id, minFileSize, maxFileSize, nbCopies FROM FileClass WHERE name = :1";
+
 /// SQL statement for selectCastorFile
 const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementString =
   "SELECT id, fileSize FROM CastorFile WHERE fileId = :1 AND nsHost = :2";
@@ -125,8 +130,8 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_bestTapeCopyForStreamStatement(0),
   m_bestFileSystemForSegmentStatement(0),
   m_fileRecalledStatement(0), m_subRequestToDoStatement(0),
-  m_selectSvcClassStatement(0), m_selectCastorFileStatement(0),
-  m_updateAndCheckSubRequestStatement(0) {
+  m_selectSvcClassStatement(0), m_selectSvcClassStatement(0),
+  m_selectCastorFileStatement(0), m_updateAndCheckSubRequestStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -166,6 +171,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_fileRecalledStatement);
     deleteStatement(m_subRequestToDoStatement);
     deleteStatement(m_selectSvcClassStatement);
+    deleteStatement(m_selectFileClassStatement);
     deleteStatement(m_selectCastorFileStatement);
     deleteStatement(m_updateAndCheckSubRequestStatement);
   } catch (oracle::occi::SQLException e) {};
@@ -179,6 +185,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_fileRecalledStatement = 0;
   m_subRequestToDoStatement = 0;
   m_selectSvcClassStatement = 0;
+  m_selectFileClassStatement = 0;
   m_selectCastorFileStatement = 0;
   m_updateAndCheckSubRequestStatement = 0;
 }
@@ -856,6 +863,46 @@ castor::db::ora::OraStagerSvc::selectSvcClass
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select SvcClass by name :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// selectFileClass
+// -----------------------------------------------------------------------
+castor::stager::FileClass*
+castor::db::ora::OraStagerSvc::selectFileClass
+(const std::string name)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_selectFileClassStatement) {
+    m_selectFileClassStatement = createStatement(s_selectFileClassStatementString);
+  }
+  // Execute statement and get result
+  unsigned long id;
+  try {
+    m_selectFileClassStatement->setString(1, name);
+    oracle::occi::ResultSet *rset = m_selectFileClassStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      // Nothing found, return 0
+      m_selectFileClassStatement->closeResultSet(rset);
+      return 0;
+    }
+    // Found the FileClass, so create it in memory
+    castor::stager::FileClass* result =
+      new castor::stager::FileClass();
+    result->setId((u_signed64)rset->getDouble(1));
+    result->setMinFileSize((u_signed64)rset->getDouble(2));
+    result->setMaxFileSize((u_signed64)rset->getDouble(3));
+    result->setNbCopies(rset->getInt(4));
+    result->setName(name);
+    m_selectFileClassStatement->closeResultSet(rset);
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select FileClass by name :"
       << std::endl << e.getMessage();
     throw ex;
   }

@@ -172,7 +172,7 @@ CREATE INDEX I_Stream2TapeCopy_Parent on Stream2TapeCopy (parent);
 
 /* SQL statements for type FileClass */
 DROP TABLE FileClass;
-CREATE TABLE FileClass (name VARCHAR(2048), minFileSize NUMBER, maxFileSize NUMBER, nbCopies NUMBER, id INTEGER PRIMARY KEY);
+CREATE TABLE FileClass (name VARCHAR(2048), minFileSize INTEGER, maxFileSize INTEGER, nbCopies NUMBER, id INTEGER PRIMARY KEY);
 
 /* SQL statements for type DiskServer */
 DROP TABLE DiskServer;

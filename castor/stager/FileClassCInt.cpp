@@ -123,7 +123,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cstager_FileClass_minFileSize
   //----------------------------------------------------------------------------
-  int Cstager_FileClass_minFileSize(castor::stager::FileClass* instance, unsigned int* var) {
+  int Cstager_FileClass_minFileSize(castor::stager::FileClass* instance, u_signed64* var) {
     *var = instance->minFileSize();
     return 0;
   }
@@ -131,7 +131,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cstager_FileClass_setMinFileSize
   //----------------------------------------------------------------------------
-  int Cstager_FileClass_setMinFileSize(castor::stager::FileClass* instance, unsigned int new_var) {
+  int Cstager_FileClass_setMinFileSize(castor::stager::FileClass* instance, u_signed64 new_var) {
     instance->setMinFileSize(new_var);
     return 0;
   }
@@ -139,7 +139,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cstager_FileClass_maxFileSize
   //----------------------------------------------------------------------------
-  int Cstager_FileClass_maxFileSize(castor::stager::FileClass* instance, unsigned int* var) {
+  int Cstager_FileClass_maxFileSize(castor::stager::FileClass* instance, u_signed64* var) {
     *var = instance->maxFileSize();
     return 0;
   }
@@ -147,7 +147,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cstager_FileClass_setMaxFileSize
   //----------------------------------------------------------------------------
-  int Cstager_FileClass_setMaxFileSize(castor::stager::FileClass* instance, unsigned int new_var) {
+  int Cstager_FileClass_setMaxFileSize(castor::stager::FileClass* instance, u_signed64 new_var) {
     instance->setMaxFileSize(new_var);
     return 0;
   }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/11/18 13:16:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/22 14:33:24 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -302,6 +302,16 @@ namespace castor {
        * @exception Exception in case of error
        */
       virtual castor::stager::SvcClass* selectSvcClass(const std::string name)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Retrieves a FileClass from the database based on its name.
+       * Caller is in charge of the deletion of the allocated object
+       * @param name the name of the FileClass
+       * @return the FileClass, or 0 if none found
+       * @exception Exception in case of error
+       */
+      virtual castor::stager::FileClass* selectFileClass(const std::string name)
         throw (castor::exception::Exception) = 0;
 
       /**

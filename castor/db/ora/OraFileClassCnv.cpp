@@ -206,8 +206,8 @@ void castor::db::ora::OraFileClassCnv::createRep(castor::IAddress* address,
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
     m_insertStatement->setString(1, obj->name());
-    m_insertStatement->setInt(2, obj->minFileSize());
-    m_insertStatement->setInt(3, obj->maxFileSize());
+    m_insertStatement->setDouble(2, obj->minFileSize());
+    m_insertStatement->setDouble(3, obj->maxFileSize());
     m_insertStatement->setInt(4, obj->nbCopies());
     m_insertStatement->setDouble(5, obj->id());
     m_insertStatement->executeUpdate();
@@ -259,8 +259,8 @@ void castor::db::ora::OraFileClassCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setString(1, obj->name());
-    m_updateStatement->setInt(2, obj->minFileSize());
-    m_updateStatement->setInt(3, obj->maxFileSize());
+    m_updateStatement->setDouble(2, obj->minFileSize());
+    m_updateStatement->setDouble(3, obj->maxFileSize());
     m_updateStatement->setInt(4, obj->nbCopies());
     m_updateStatement->setDouble(5, obj->id());
     m_updateStatement->executeUpdate();
@@ -362,8 +362,8 @@ castor::IObject* castor::db::ora::OraFileClassCnv::createObj(castor::IAddress* a
     castor::stager::FileClass* object = new castor::stager::FileClass();
     // Now retrieve and set members
     object->setName(rset->getString(1));
-    object->setMinFileSize(rset->getInt(2));
-    object->setMaxFileSize(rset->getInt(3));
+    object->setMinFileSize((u_signed64)rset->getDouble(2));
+    object->setMaxFileSize((u_signed64)rset->getDouble(3));
     object->setNbCopies(rset->getInt(4));
     object->setId((u_signed64)rset->getDouble(5));
     m_selectStatement->closeResultSet(rset);
@@ -412,8 +412,8 @@ void castor::db::ora::OraFileClassCnv::updateObj(castor::IObject* obj)
     castor::stager::FileClass* object = 
       dynamic_cast<castor::stager::FileClass*>(obj);
     object->setName(rset->getString(1));
-    object->setMinFileSize(rset->getInt(2));
-    object->setMaxFileSize(rset->getInt(3));
+    object->setMinFileSize((u_signed64)rset->getDouble(2));
+    object->setMaxFileSize((u_signed64)rset->getDouble(3));
     object->setNbCopies(rset->getInt(4));
     object->setId((u_signed64)rset->getDouble(5));
     m_selectStatement->closeResultSet(rset);
