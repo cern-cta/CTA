@@ -1,10 +1,10 @@
-.\" $Id: stage_macros.man,v 1.1 2002/09/09 16:44:00 jdurand Exp $
+.\" $Id: stage_macros.man,v 1.2 2002/09/14 05:57:27 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_macros.man,v $ $Revision: 1.1 $ $Date: 2002/09/09 16:44:00 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_macros.man,v $ $Revision: 1.2 $ $Date: 2002/09/14 05:57:27 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_MACROS "3" "$Date: 2002/09/09 16:44:00 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_MACROS "3" "$Date: 2002/09/14 05:57:27 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage macros \- Utilities to extract information from stage structures
 .SH SYNOPSIS
@@ -41,9 +41,9 @@ struct stgcat_entry *stcp;
 .BI "ISCASTORWAITINGMIG(" stcp ")"
 
 .SH DESCRIPTION
-The \fBstage macros\fP are utilities to determine in which state is given
+The \fBstage macros\fP are utilities to determine in which state is a given
 .BI stcp
-recotd.
+record.
 
 .SH PARAMETERS
 .TP 2.0i
