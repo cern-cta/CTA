@@ -1,9 +1,9 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.16 $ $Date: 2001/05/19 06:59:39 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.17 $ $Date: 2001/05/21 11:07:18 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
@@ -22,10 +22,14 @@
 #if !defined(_WIN32)
 #include <unistd.h>		/* Standardized definitions		*/
 #else /* _WIN32 */
+#ifndef STATBITS_H
 #include <statbits.h>           /* File access macros for WIN32         */
+#endif
 #endif /* _WIN32 */
 
+#ifndef _DIRENT_WIN32_H
 #include <dirent.h>             /* standard directory definitions       */
+#endif
 
 /*
  * Common includes needed by internal (kernel) routines.

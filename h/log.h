@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2000 by CERN CN-PDP/CS
+ * Copyright (C) 1990-2001 by CERN CN-PDP/CS
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: log.h,v $ $Revision: 1.9 $ $Date: 2000/09/03 07:28:50 $ CERN CN-PDP/CS F. Hemmer
+ * @(#)$RCSfile: log.h,v $ $Revision: 1.10 $ $Date: 2001/05/21 11:07:18 $ CERN CN-PDP/CS F. Hemmer
  */
 
 /* log.h        generalized logging facilities                          */
@@ -28,7 +28,9 @@ EXTERN_C int DLL_DECL getloglv _PROTO((void));
 #endif
 #define log (*logfunc)          /* logging function name                */
 
+#ifndef _SYSLOG_WIN32_H
 #include <syslog.h>             /* system logger definitions            */
+#endif
 #define LOG_EMERG       0       /* system is unusable                   */
 #define LOG_ALERT       1       /* action must be taken immediately     */
 #define LOG_CRIT        2       /* critical conditions                  */

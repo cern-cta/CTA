@@ -1,13 +1,13 @@
 /*
- * $Id: shift.h,v 1.3 2000/09/03 07:43:49 baud Exp $
+ * $Id: shift.h,v 1.4 2001/05/21 11:07:18 baud Exp $
  */
 
 /*
- * @(#)$RCSfile: shift.h,v $ $Revision: 1.3 $ $Date: 2000/09/03 07:43:49 $ CERN IT-PDP/DC Frederic Hemmer
+ * @(#)$RCSfile: shift.h,v $ $Revision: 1.4 $ $Date: 2001/05/21 11:07:18 $ CERN IT-PDP/DC Frederic Hemmer
  */
 
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DC
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DC
  * All rights reserved
  */
 
@@ -19,6 +19,11 @@
 #include <shift/patchlevel.h>   /* Current version number               */
 #include <shift/osdep.h>        /* Operating System dependencies        */
 #include <shift/serrno.h>       /* SHIFT error numbers and codes        */
+#ifdef _WIN32
+#include <shift/dirent.h>
+#include <shift/statbits.h>
+#include <shift/syslog.h>
+#endif
 #include <shift/log.h>          /* Logging facilities                   */
 #include <shift/trace.h>        /* Tracing facilities                   */
 #include <shift/rfio_constants.h>

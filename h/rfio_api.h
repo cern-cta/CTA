@@ -1,9 +1,9 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.26 $ $Date: 2001/03/22 10:56:31 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.27 $ $Date: 2001/05/21 11:07:19 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
- * Copyright (C) 2000 by CERN IT-PDP/DM
+ * Copyright (C) 2000-2001 by CERN IT-PDP/DM
  * All rights reserved
  */
 
@@ -30,7 +30,9 @@ struct rfstatfs {
         long freenods ;      /* Number of free inodes        */
 } ;
 #include <stdio.h>
+#ifndef _DIRENT_WIN32_H
 #include <dirent.h>
+#endif
 #include <sys/stat.h>
 #if !defined(RFIO_KERNEL)
 #if defined(_WIN32)
