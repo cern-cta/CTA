@@ -1,0 +1,95 @@
+.\" $Id: stage_getcallback.man,v 1.1 2002/10/04 13:26:07 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_getcallback.man,v $ $Revision: 1.1 $ $Date: 2002/10/04 13:26:07 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_GETCALLBACK "3" "$Date: 2002/10/04 13:26:07 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_getcallback \- Queries the address of the user routine used for callback
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_getcallback (void (**function)(struct stgcat_entry *" stcp ", struct stgpath_entry *" stpp "));"
+
+.SH DESCRIPTION
+The \fBstage_getcallback\fP API method allows the user application to query its current callback routine, used for notification each time there is a successful processing of part of the user's requests.
+
+.SH PARAMETERS
+.TP 1.5i
+.I function
+Pointer to a function pointer, that returns void, with two parameters that are a pointer to an
+.I stgcat_entry
+structure
+.IR ( stcp )
+and a pointer to an
+.I stgpath_entry
+structure
+.IR ( stpp )
+, respectively.
+
+.SH EXAMPLE
+.ft CW
+.nf
+.sp
+\s-2
+#include <stdio.h>
+#include <stdlib.h>
+#include "stage_api.h"
+#include "serrno.h"
+
+void record_callback _PROTO((struct stgcat_entry *, struct stgpath_entry *));
+
+int main(argc,argv)
+	int argc;
+	char **argv;
+{
+	void (*verif_callback) _PROTO((struct stgcat_entry *, struct stgpath_entry *));
+
+	if (stage_setcallback(&record_callback) != 0) {
+		fprintf(stderr,"stage_setcallback error: %s\\n", sstrerror(serrno));
+		/* Utility function that converts stage serrno to a program exit code */
+		exit(rc_castor2shift(serrno));
+	}
+
+	if (stage_getcallback(&verif_callback) != 0) {
+		fprintf(stderr,"stage_getcallback error: %s\\n", sstrerror(serrno));
+		exit(rc_castor2shift(serrno));
+	}
+
+	if (verif_callback != record_callback) {
+		fprintf(stderr,"stage_getcallback internal error !?\\n");
+		exit(1);
+	}
+	
+	exit(0);
+}
+
+void record_callback(stcp,stpp)
+	struct stgcat_entry *stcp;
+	struct stgpath_entry *stpp;
+{
+	/* Let's print a dump of the structures */
+	if (stcp != NULL) print_stcp(stcp);
+	if (stpp != NULL) print_stpp(stpp);
+}
+\s+2
+.ft
+.LP
+.fi
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SEINTERNAL
+Internal error
+
+.SH SEE ALSO
+\fBprint_stcp\fP(3), \fBprint_stpp\fP(3), \fBstage_struct\fP(3), \fBstage_macros\fP(3), \fBstage_constants\fP(3), \fBrc_castor2shift\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
