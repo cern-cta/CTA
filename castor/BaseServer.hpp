@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/28 09:41:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/07 15:53:37 $ $Author: sponcec3 $
  *
  * 
  *
@@ -55,7 +55,7 @@ namespace castor {
     /*
      * destructor
      */
-    virtual ~BaseServer() {}
+    virtual ~BaseServer() throw() {}
 
     /**
      * User main function.
