@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_rfilefdt.c,v 1.3 2000/11/20 14:59:33 jdurand Exp $
+ * $Id: rfio_rfilefdt.c,v 1.4 2000/11/24 10:19:09 jdurand Exp $
  */
 
 /*
@@ -154,7 +154,6 @@ int DLL_DECL rfio_rfilefdt_findptr(ptr,scanflag)
     for (i = 0; i < MAXRFD; i++) {
       if (rfilefdt[i] == ptr) {
         return(i);
-        break;
       }
     }
     return(-1);
