@@ -1,11 +1,11 @@
 .\"
-.\" $Id: stagechng.man,v 1.1 2000/06/17 07:59:39 jdurand Exp $
+.\" $Id: stagechng.man,v 1.2 2000/06/17 08:08:01 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.1 $ $Date: 2000/06/17 07:59:39 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stagechng.man,v $ $Revision: 1.2 $ $Date: 2000/06/17 08:08:01 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECHNG l "$Date: 2000/06/17 07:59:39 $"
+.TH STAGECHNG l "$Date: 2000/06/17 08:08:01 $"
 .SH NAME
 stagechng \- change status in the stager catalog
 .SH SYNOPSIS
@@ -22,6 +22,12 @@ The file must be in state STAGED.
 may be a local path, the combination
 .I machine:fullpath
 (NFS syntax) or a full path starting with the NFS_ROOT, i.e. /shift.
+.SH OPTIONS
+.TP
+.BI \-h " host"
+Sends the request to the stager on
+.IR host .
+This may also be specified thru the environment variable STAGE_HOST.
 .SH RETURN CODES
 \
 .br
