@@ -6,7 +6,7 @@
 */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.11 $ $Date: 2004/06/09 14:55:35 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.12 $ $Date: 2004/07/05 10:04:56 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -1303,7 +1303,8 @@ const char *par_name;
 const char *par_string;
 {
 	dlf_msg_param_t* param_p;
-	
+	char *p;
+
 	param_p = (dlf_msg_param_t*)new_dlf_param();
 	if (param_p == NULL) {
 		serrno = ENOMEM;
@@ -1316,6 +1317,10 @@ const char *par_string;
 	}
 	strcpy (param_p->name, par_name);
 	strcpy (param_p->strval, par_string);
+	/* Replace all occurrencies of new lines with spaces */
+	for (p = param_p->strval; *p != 0; p++) {
+	  if (*p == '\n') *p = ' ';
+	}
 	param_p->type = DLF_MSG_PARAM_STR;
 	dlf_add_to_param_list(&log_message->param_list, param_p);
 	return (0);
