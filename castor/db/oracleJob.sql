@@ -87,7 +87,7 @@ END;
 
 /* PL/SQL method implementing fileRecalled */
 CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER, SubRequestStatus IN NUMBER,
-                                         DiskCopyStatus IN NUMBER) AS
+                                         dskCopyStatus IN NUMBER) AS
  SubRequestId NUMBER;
  DiskCopyId NUMBER;
 BEGIN

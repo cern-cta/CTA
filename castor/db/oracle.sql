@@ -40,6 +40,10 @@ END;
 DROP TABLE Client;
 CREATE TABLE Client (ipAddress NUMBER, port NUMBER, id INTEGER PRIMARY KEY, request INTEGER);
 
+/* SQL statements for type UpdateRepRequest */
+DROP TABLE UpdateRepRequest;
+CREATE TABLE UpdateRepRequest (flags INTEGER, userName VARCHAR(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER, object INTEGER, address INTEGER);
+
 /* SQL statements for type ScheduleSubReqRequest */
 DROP TABLE ScheduleSubReqRequest;
 CREATE TABLE ScheduleSubReqRequest (flags INTEGER, userName VARCHAR(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), subreqId INTEGER, diskServer VARCHAR(2048), fileSystem VARCHAR(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
@@ -271,7 +275,7 @@ END;
 
 /* PL/SQL method implementing fileRecalled */
 CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER, SubRequestStatus IN NUMBER,
-                                         DiskCopyStatus IN NUMBER) AS
+                                         dskCopyStatus IN NUMBER) AS
  SubRequestId NUMBER;
  DiskCopyId NUMBER;
 BEGIN
