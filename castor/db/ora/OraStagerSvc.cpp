@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.142 $ $Release$ $Date: 2005/03/23 11:18:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.143 $ $Release$ $Date: 2005/03/30 10:00:46 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -2325,7 +2325,7 @@ castor::db::ora::OraStagerSvc::selectFiles2Delete
       new std::vector<castor::stager::GCLocalFile>;
     // Run through the cursor
     oracle::occi::ResultSet *rs =
-      m_segmentsForTapeStatement->getCursor(2);
+      m_selectFiles2DeleteStatement->getCursor(2);
     oracle::occi::ResultSet::Status status = rs->next();
     while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
       // Fill result
