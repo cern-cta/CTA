@@ -1,0 +1,81 @@
+.\" $Id: stage_getoutbuf.man,v 1.1 2002/09/08 07:37:42 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_getoutbuf.man,v $ $Revision: 1.1 $ $Date: 2002/09/08 07:37:42 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_GETOUTBUF "3" "$Date: 2002/09/08 07:37:42 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_getoutbuf \- Get output buffer
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_getoutbuf(char **" buffer ", int *" buflen ");"
+
+.SH DESCRIPTION
+The \fBstage_getoutbuf\fP API method queries the output buffer of stage API. This is meaningful only if you setted explicitely yourself the output buffer using \fBstage_setoutbuf\fP method.
+
+.SH PARAMETERS
+.BI buffer
+will contain at return is the pointer to a buffer message and
+.BI buflen
+will contain the length of this buffer.
+
+.SH EXAMPLE
+.ft CW
+.nf
+.sp
+#include <stdlib.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <stage_api.h>
+#include <serrno.h>
+
+char mybuf[1024]; /* Not thread-safe */
+
+int main(argc,argv)
+     int argc;
+     char **argv;
+{
+  char *verifbuf;
+  int veriflength;
+
+  if (stage_setoutbuf(mybuf,1024) != 0) {
+    fprintf(stderr,"### stage_setoutbuf error (%s)\\n", sstrerror(serrno));
+    exit(EXIT_FAILURE);
+  }
+  if (stage_getoutbuf(&verifbuf,&veriflength) != 0) {
+    fprintf(stderr,"### stage_getoutbuf error (%s)\\n", sstrerror(serrno));
+    exit(EXIT_FAILURE);
+  }
+  if (verifbuf != mybuf || veriflength != 1024) {
+    fprintf(stderr,"### stage_getoutbuf returns something wrong\\n");
+    exit(EXIT_FAILURE);
+  }
+  exit(0);
+}
+.ft
+.LP
+.fi
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SEINTERNAL
+Internal error
+.TP
+.B SECTHREADERR
+Thread interface call error
+.TP
+.B SECTHREADINIT
+Cthread initialization error
+
+.SH SEE ALSO
+\fBstage_setoutbuf\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
