@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.15 2000/01/09 10:26:10 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.16 2000/01/14 16:54:50 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.15 $ $Date: 2000/01/09 10:26:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.16 $ $Date: 2000/01/14 16:54:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -29,6 +29,36 @@ static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.15 $ $Date: 2
 #include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#if ((defined(IRIX5) || defined(IRIX6)) && ! (defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN) && defined(PDP_ENDIAN)))
+#ifdef LITTLE_ENDIAN
+#undef LITTLE_ENDIAN
+#endif
+#define LITTLE_ENDIAN   1234
+#ifdef BIG_ENDIAN
+#undef BIG_ENDIAN
+#endif
+#define BIG_ENDIAN      4321
+#ifdef PDP_ENDIAN
+#undef PDP_ENDIAN
+#endif
+#define PDP_ENDIAN      3412
+#endif
+#if (defined(IRIX5) || defined(IRIX6))
+/* IRIX windowsize definition is deleted because of POSIX */
+#if ! (_NO_POSIX && _NO_XOPEN4)
+#include <sys/ioccom.h>
+/* Windowing structure to support JWINSIZE/TIOCSWINSZ/TIOCGWINSZ */
+struct winsize {
+        unsigned short ws_row;       /* rows, in characters*/
+        unsigned short ws_col;       /* columns, in character */
+        unsigned short ws_xpixel;    /* horizontal size, pixels */
+        unsigned short ws_ypixel;    /* vertical size, pixels */
+};
+#define TIOC    ('T'<<8)
+#define TIOCGWINSZ      _IOR('t', 104, struct winsize)  /* get window size */
+#define TIOCNOTTY (TIOC|113)            /* disconnect from tty & pgrp */
+#endif
+#endif
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <signal.h>
