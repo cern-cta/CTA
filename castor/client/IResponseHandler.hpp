@@ -27,6 +27,9 @@
 #ifndef CLIENT_IRESPONSEHANDLER_HPP 
 #define CLIENT_IRESPONSEHANDLER_HPP 1
 
+// Include Files
+#include "castor/exception/Exception.hpp"
+
 namespace castor {
   
   namespace rh {

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.h,v $ $Revision: 1.6 $ $Release$ $Date: 2004/07/13 13:34:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logstream.h,v $ $Revision: 1.7 $ $Release$ $Date: 2004/07/20 08:12:18 $ $Author: sponcec3 $
  *
  * A generic logstream for castor, handling IP addresses
  * and timestamps
@@ -126,6 +126,7 @@ namespace castor {
     logstream& operator<< (IObject& obj) {
       ObjectSet set;
       obj.print(*this, "", set);
+      return *this;
     }
 
     /**
