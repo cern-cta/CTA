@@ -1,17 +1,18 @@
 /*
- * $Id: wsacct.c,v 1.3 1999/12/09 13:39:50 jdurand Exp $
+ * $Id: wsacct.c,v 1.4 2000/05/05 14:24:54 baud Exp $
  */
 
 /*
- * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1994-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: wsacct.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:39:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: wsacct.c,v $ $Revision: 1.4 $ $Date: 2000/05/05 14:24:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include "../h/sacct.h"
