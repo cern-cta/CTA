@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.15 $ $Date: 2000/02/29 15:16:08 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.16 $ $Date: 2000/03/04 13:46:12 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -51,6 +51,13 @@ extern char *geterr();
 #include <rtcp_api.h>
 #include <Ctape_api.h>
 #include <serrno.h>
+
+#if defined(sgi)
+/*
+ * Workaround for SGI flags in grp.h
+ */
+extern struct group *getgrent();
+#endif /* IRIX */
 
 /*
  * Special unmarshall_STRING macro to avoid unnecessary copies.
@@ -129,6 +136,11 @@ static int rtcpd_ChkNewAcct(shift_client_t *req,struct passwd *pwd,gid_t gid) {
 }
 
 
+/*
+ * This routine is inherently thread-unsafe because of getgrent()
+ * However, this doesn't matter since we are guaranteed to be the
+ * only thread calling it.
+ */
 static int rtcp_CheckClientAuth(rtcpHdr_t *hdr, shift_client_t *req) {
     struct passwd *pw;
     struct group *gr;
