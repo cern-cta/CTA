@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.20 2000/05/23 12:32:26 jdurand Exp $
+ * $Id: stage.h,v 1.21 2000/05/29 07:56:22 jdurand Exp $
  */
 
 /*
@@ -173,6 +173,7 @@
 #define	STG98	"STG98 - %s\n"
 #define	STG99	"STG99 - stage returns %d\n"
 #define STG100  "STG100 - Database %s error (%s) at %s:%d\n"
+#define STG101  "STG101 - HSM File %s previously staged under name %s. Catalog updated.\n"
 
 			/* stage daemon return codes */
 
@@ -243,9 +244,14 @@ struct stgcat_entry {		/* entry format in STGCAT table */
 		char	xfile[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
 		char	Xparm[23];
 	    } d;
-	    struct {			/* migrated files (HSM) */
+      struct {			/* Migrated files (non-CASTOR) */
 		char	xfile[167];
 	    } m;
+	    struct {			/* HSM files (CASTOR) */
+		char	xfile[167];
+		char		server[CA_MAXHOSTNAMELEN+1];
+		u_signed64	fileid;
+	    } h;
 	} u1;
 };
 

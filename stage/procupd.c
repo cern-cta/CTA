@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.19 2000/05/18 16:51:14 jdurand Exp $
+ * $Id: procupd.c,v 1.20 2000/05/29 07:56:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.19 $ $Date: 2000/05/18 16:51:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.20 $ $Date: 2000/05/29 07:56:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -357,6 +357,8 @@ procupdreq(req_data, clienthost)
 		sendrep (wqp->rpfd, MSG_ERR, STG42, p_cmd, p_stat, stcp->u1.d.xfile, rc);
 	else if (stcp->t_or_d == 'm')
 		sendrep (wqp->rpfd, MSG_ERR, STG42, p_cmd, p_stat, stcp->u1.m.xfile, rc);
+	else if (stcp->t_or_d == 'h')
+		sendrep (wqp->rpfd, MSG_ERR, STG42, p_cmd, p_stat, stcp->u1.h.xfile, rc);
 	if ((rc != 0 && rc != LIMBYSZ &&
 			 rc != BLKSKPD && rc != TPE_LSZ && rc != MNYPARI) ||
 			(rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE) == 0)) {
@@ -384,7 +386,7 @@ procupdreq(req_data, clienthost)
 		if (c = cleanpool (stcp->poolname)) goto reply;
 		return;
 	}
-	if (stcp->t_or_d != 'm') {
+	if (stcp->t_or_d != 'm' && stcp->t_or_d != 'h') {
 		int has_been_updated = 0;
 
 		if (blksize > 0) {

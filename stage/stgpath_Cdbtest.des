@@ -1,4 +1,4 @@
-/* $Id: stgpath_Cdbtest.des,v 1.1 2000/05/10 16:57:25 jdurand Exp $ */
+/* $Id: stgpath_Cdbtest.des,v 1.2 2000/05/29 07:56:31 jdurand Exp $ */
 
 /* ======================================================= */
 /* CASTOR STAGER Database Description File - Cdb Interface */
@@ -82,7 +82,7 @@ database stage {         /* STAGE Database Description */
       reqid;
     };
   };
-  table stgcat_hsm {
+  table stgcat_hpss {
     int reqid;           /* Request (unique) ID */
     int  nread;          /* Number of blocks/records to be copied */
     int  size;           /* Size in MB of data to be staged */
@@ -100,7 +100,7 @@ database stage {         /* STAGE Database Description */
     char user[CA_MAXUSRNAMELEN+1]; /* login name */
     char keep;           /* Keep data on disk after successful stagewrt */
     char xfile[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+2];
-    unique key stgcat_hsm_per_reqid {
+    unique key stgcat_hpss_per_reqid {
       order ascending;
       reqid;
     };

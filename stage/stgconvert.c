@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.23 2000/05/11 20:03:48 jdurand Exp $
+ * $Id: stgconvert.c,v 1.24 2000/05/29 07:56:28 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.23 $ $Date: 2000/05/11 20:03:48 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.24 $ $Date: 2000/05/29 07:56:28 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -222,9 +222,10 @@ int main(argc,argv)
 	struct stgpath_entry *stpe = NULL; /* end of stage path catalog pointer */
 	struct stgcat_tape tape;
 	struct stgcat_disk disk;
-	struct stgcat_hsm hsm;
+	struct stgcat_hpss hsm;
 	struct stgcat_link link;
 	struct stgcat_alloc alloc;
+	struct stgcat_hsm castor;
 	Cdb_off_t Cdb_offset;
 	char t_or_d = '\0';
 	char tmpbuf[21];
@@ -576,7 +577,7 @@ int main(argc,argv)
 				if (maxstcp >= 0 && i > maxstcp) {
 					break;
 				}
-				if (stcp2Cdb(stcp,&tape,&disk,&hsm,&alloc) != 0) {
+				if (stcp2Cdb(stcp,&tape,&disk,&hsm,&castor,&alloc) != 0) {
 					printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",stcp->reqid);
 				}
 
@@ -613,14 +614,27 @@ int main(argc,argv)
 					}
 					break;
 				case 'm':
-					if (Cdb_api_insert(&Cdb_db,"stgcat_hsm",NULL,&hsm,&Cdb_offset) != 0) {
-						printf("### Cannot insert entry with reqid = %d in Cdb's table \"stgcat_hsm\" (%s)\n"
+					if (Cdb_api_insert(&Cdb_db,"stgcat_hpss",NULL,&hsm,&Cdb_offset) != 0) {
+						printf("### Cannot insert entry with reqid = %d in Cdb's table \"stgcat_hpss\" (%s)\n"
 									 ,hsm.reqid
 									 ,sstrerror(serrno));
 					} else {
 						if (i == 1 || i % frequency == 0 || i == nstcp) {
-							printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_hsm\" [c_time=0x%lx,xfile=%s] at offset %s\n",
+							printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_hpss\" [c_time=0x%lx,xfile=%s] at offset %s\n",
 										 i,nstcp,hsm.reqid,(unsigned long) hsm.c_time,hsm.xfile,
+										 u64tostr((u_signed64) Cdb_offset, tmpbuf, 0));
+						}
+					}
+					break;
+				case 'h':
+					if (Cdb_api_insert(&Cdb_db,"stgcat_hsm",NULL,&castor,&Cdb_offset) != 0) {
+						printf("### Cannot insert entry with reqid = %d in Cdb's table \"stgcat_hsm\" (%s)\n"
+									 ,castor.reqid
+									 ,sstrerror(serrno));
+					} else {
+						if (i == 1 || i % frequency == 0 || i == nstcp) {
+							printf("--> (%6d/%6d) reqid = %d inserted in \"stgcat_hsm\" [c_time=0x%lx,xfile=%s] at offset %s\n",
+										 i,nstcp,castor.reqid,(unsigned long) castor.c_time,castor.xfile,
 										 u64tostr((u_signed64) Cdb_offset, tmpbuf, 0));
 						}
 					}
@@ -754,7 +768,7 @@ int main(argc,argv)
 						}
 					}
 					
-					if (Cdb2stcp(&thisstcp,&tape,NULL,NULL,NULL) != 0) {
+					if (Cdb2stcp(&thisstcp,&tape,NULL,NULL,NULL,NULL) != 0) {
 						printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",tape.reqid);
 						continue;
 					}
@@ -785,7 +799,7 @@ int main(argc,argv)
 					while(1) {
 						struct stgcat_entry thisstcp;
 
-						if (Cdb2stcp(&thisstcp,&tape,NULL,NULL,NULL) != 0) {
+						if (Cdb2stcp(&thisstcp,&tape,NULL,NULL,NULL,NULL) != 0) {
 							printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",tape.reqid);
 						} else {
 							if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
@@ -900,7 +914,7 @@ int main(argc,argv)
 							break;
 						}
 					}
-					if (Cdb2stcp(&thisstcp,NULL,&disk,NULL,NULL) != 0) {
+					if (Cdb2stcp(&thisstcp,NULL,&disk,NULL,NULL,NULL) != 0) {
 						printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",disk.reqid);
 						continue;
 					}
@@ -931,7 +945,7 @@ int main(argc,argv)
 					while(1) {
 						struct stgcat_entry thisstcp;
 
-						if (Cdb2stcp(&thisstcp,NULL,&disk,NULL,NULL) != 0) {
+						if (Cdb2stcp(&thisstcp,NULL,&disk,NULL,NULL,NULL) != 0) {
 							printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",disk.reqid);
 						} else {
 							if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
@@ -1011,6 +1025,153 @@ int main(argc,argv)
 			/* We ask for a dump of hsm table from Cdb */
 			/* --------------------------------------- */
 
+			printf("\n*** DUMPING stgcat_hpss TABLE ***\n\n");
+
+			if (nodump == 0 || local_access != 0) {
+				if (local_access == 0) {
+					if (Cdb_api_dump_start(&Cdb_db,"stgcat_hpss") != 0) {
+						printf("### Cdb_dump_start error on table \"stgcat_hpss\" (%s)\n",sstrerror(serrno));
+						if (Cdb_api_error(&Cdb_session,&error) == 0) {
+							printf("--> more info:\n%s",error);
+						}
+						rc = EXIT_FAILURE;
+						goto stgconvert_return;
+					}
+				} else {
+					if (Cdb_hash_dump_start(Cdb_hash_session,"stage","stgcat_hpss") != 0) {
+						printf("### Cdb_dump_start error on table \"stgcat_hpss\" (%s)\n",sstrerror(serrno));
+						rc = EXIT_FAILURE;
+						goto stgconvert_return;
+					}
+				}
+				while (1) {
+					struct stgcat_entry thisstcp;
+					
+					if (local_access == 0) {
+						if (Cdb_api_dump(&Cdb_db,"stgcat_hpss",&Cdb_offset,&hsm) != 0) {
+							break;
+						}
+					} else {
+						if (Cdb_hash_dump(Cdb_hash_session,"stage","stgcat_hpss",&newoffset,&output,&output_size) != 0) {
+							break;
+						}
+						if (Cdb_stage_interface("stgcat_hpss",NULL,1,&hsm,output,&output_size) != 0) {
+							printf("### Cdb_stage_interface error on table \"stgcat_hpss\" (%s)\n",sstrerror(serrno));
+							break;
+						}
+					}
+
+					if (Cdb2stcp(&thisstcp,NULL,NULL,&hsm,NULL,NULL) != 0) {
+						printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",hsm.reqid);
+						continue;
+					}
+					
+					if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+						printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+					} else {
+						++i;
+						if (i == 1 || i % frequency == 0) {
+							last_reqid = thisstcp.reqid;
+							printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+						}
+					}
+				}
+			} else {
+				ntoclean = 0;
+				if (Cdb_api_firstrow(&Cdb_db,"stgcat_hpss","r",&Cdb_offset,&hsm) != 0) {
+					if (serrno != EDB_D_LISTEND) {
+						printf("### Cdb_firstrow error on table \"stgcat_hpss\" (%s)\n",sstrerror(serrno));
+						if (Cdb_api_error(&Cdb_session,&error) == 0) {
+							printf("--> more info:\n%s",error);
+						}
+						rc = EXIT_FAILURE;
+						goto stgconvert_return;
+					}
+				} else {
+					remember_before[ntoclean++] = Cdb_offset;
+					while(1) {
+						struct stgcat_entry thisstcp;
+
+						if (Cdb2stcp(&thisstcp,NULL,NULL,&hsm,NULL,NULL) != 0) {
+							printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",hsm.reqid);
+						} else {
+							if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
+								printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
+							} else {
+								++i;
+								if (i == 1 || i % frequency == 0) {
+									last_reqid = thisstcp.reqid;
+									printf("--> (%6d) reqid = %d OK\n",i,thisstcp.reqid);
+								}
+							}
+							if (ntoclean >= 2) {
+								if (Cdb_api_unlock(&Cdb_db,"stgcat_hpss",&(remember_before[0])) != 0) {
+									/* non-fatal (?) error */
+									printf("### Cdb_unlock error on table \"stgcat_hpss\" (%s)\n",sstrerror(serrno));
+									if (Cdb_api_error(&Cdb_session,&error) == 0) {
+										printf("--> more info:\n%s",error);
+									}
+								}
+								remember_before[0] = remember_before[1];
+								ntoclean = 1;
+							}
+							if (Cdb_api_nextrow(&Cdb_db,"stgcat_hpss","r",&Cdb_offset,&hsm) != 0) {
+								break;
+							}
+							remember_before[ntoclean++] = Cdb_offset;
+						}
+					}
+					if (serrno != EDB_D_LISTEND) {
+						printf("### Cdb_nextrow end but unexpected serrno (%d) error on table \"stgcat_hpss\" (%s)\n",serrno,sstrerror(serrno));
+					}
+					/* nextrow error (normal serrno is EDB_D_LISTEND) */         
+					if (ntoclean >= 2) {
+						if (Cdb_api_unlock(&Cdb_db,"stgcat_hpss",&(remember_before[0])) != 0) {
+							printf("### Cdb_unlock error on table \"stgcat_hpss\" (%s)\n",sstrerror(serrno));
+							if (Cdb_api_error(&Cdb_session,&error) == 0) {
+								printf("--> more info:\n%s",error);
+							}
+						}
+					}
+					if (ntoclean >= 1) {
+						if (Cdb_api_unlock(&Cdb_db,"stgcat_hpss",&(remember_before[1])) != 0) {
+							printf("### Cdb_unlock error on table \"stgcat_hpss\" (%s)\n",sstrerror(serrno));
+							if (Cdb_api_error(&Cdb_session,&error) == 0) {
+								printf("--> more info:\n%s",error);
+							}
+						}
+					}
+				}
+			}
+
+			if (! (i == 1 || i % frequency == 0)) {
+				printf("--> (%6d) reqid = %d OK\n",i,last_reqid);
+			}
+
+			if (nodump == 0 || local_access != 0) {
+				if (local_access == 0) {
+					if (Cdb_api_dump_end(&Cdb_db,"stgcat_hpss") != 0) {
+						printf("### Cdb_dump_end error on table \"stgcat_hpss\" (%s)\n",sstrerror(serrno));
+						if (Cdb_api_error(&Cdb_session,&error) == 0) {
+							printf("--> more info:\n%s",error);
+						}
+					}
+				} else {
+					if (Cdb_hash_dump_end(Cdb_hash_session,"stage","stgcat_hpss") != 0) {
+						printf("### Cdb_dump_end error on table \"stgcat_hpss\" (%s)\n",sstrerror(serrno));
+					}
+				}
+			}
+
+		no_migrated_dump:
+
+			if (t_or_d != '\0' && t_or_d != 'h') {
+				goto no_castor_dump;
+			}
+
+			/* We ask for a dump of castor table from Cdb */
+			/* ------------------------------------------ */
+
 			printf("\n*** DUMPING stgcat_hsm TABLE ***\n\n");
 
 			if (nodump == 0 || local_access != 0) {
@@ -1034,21 +1195,21 @@ int main(argc,argv)
 					struct stgcat_entry thisstcp;
 					
 					if (local_access == 0) {
-						if (Cdb_api_dump(&Cdb_db,"stgcat_hsm",&Cdb_offset,&hsm) != 0) {
+						if (Cdb_api_dump(&Cdb_db,"stgcat_hsm",&Cdb_offset,&castor) != 0) {
 							break;
 						}
 					} else {
 						if (Cdb_hash_dump(Cdb_hash_session,"stage","stgcat_hsm",&newoffset,&output,&output_size) != 0) {
 							break;
 						}
-						if (Cdb_stage_interface("stgcat_hsm",NULL,1,&hsm,output,&output_size) != 0) {
+						if (Cdb_stage_interface("stgcat_hsm",NULL,1,&castor,output,&output_size) != 0) {
 							printf("### Cdb_stage_interface error on table \"stgcat_hsm\" (%s)\n",sstrerror(serrno));
 							break;
 						}
 					}
 
-					if (Cdb2stcp(&thisstcp,NULL,NULL,&hsm,NULL) != 0) {
-						printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",hsm.reqid);
+					if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,&castor,NULL) != 0) {
+						printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",castor.reqid);
 						continue;
 					}
 					
@@ -1064,7 +1225,7 @@ int main(argc,argv)
 				}
 			} else {
 				ntoclean = 0;
-				if (Cdb_api_firstrow(&Cdb_db,"stgcat_hsm","r",&Cdb_offset,&hsm) != 0) {
+				if (Cdb_api_firstrow(&Cdb_db,"stgcat_hsm","r",&Cdb_offset,&castor) != 0) {
 					if (serrno != EDB_D_LISTEND) {
 						printf("### Cdb_firstrow error on table \"stgcat_hsm\" (%s)\n",sstrerror(serrno));
 						if (Cdb_api_error(&Cdb_session,&error) == 0) {
@@ -1078,8 +1239,8 @@ int main(argc,argv)
 					while(1) {
 						struct stgcat_entry thisstcp;
 
-						if (Cdb2stcp(&thisstcp,NULL,NULL,&hsm,NULL) != 0) {
-							printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",hsm.reqid);
+						if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,&castor,NULL) != 0) {
+							printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",castor.reqid);
 						} else {
 							if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
 								printf("### write() error on %s (%s)\n",stgcat,strerror(errno));
@@ -1101,7 +1262,7 @@ int main(argc,argv)
 								remember_before[0] = remember_before[1];
 								ntoclean = 1;
 							}
-							if (Cdb_api_nextrow(&Cdb_db,"stgcat_hsm","r",&Cdb_offset,&hsm) != 0) {
+							if (Cdb_api_nextrow(&Cdb_db,"stgcat_hsm","r",&Cdb_offset,&castor) != 0) {
 								break;
 							}
 							remember_before[ntoclean++] = Cdb_offset;
@@ -1149,7 +1310,7 @@ int main(argc,argv)
 				}
 			}
 
-		no_migrated_dump:
+		no_castor_dump:
 
 			if (t_or_d != '\0' && t_or_d != 'a') {
 				goto no_alloced_dump;
@@ -1195,7 +1356,7 @@ int main(argc,argv)
 						}
 					}
 
-					if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,&alloc) != 0) {
+					if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,NULL,&alloc) != 0) {
 						printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",alloc.reqid);
 						continue;
 					}
@@ -1226,7 +1387,7 @@ int main(argc,argv)
 					while(1) {
 						struct stgcat_entry thisstcp;
 
-						if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,&alloc) != 0) {
+						if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,NULL,&alloc) != 0) {
 							printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",alloc.reqid);
 						} else {
 							if (write(stgcat_fd,&thisstcp,sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
@@ -1623,7 +1784,7 @@ int main(argc,argv)
 				struct stgcat_entry thisstcp;
 				int cmp_status = -2;
 
-				if (Cdb2stcp(&thisstcp,&tape,NULL,NULL,NULL) != 0) {
+				if (Cdb2stcp(&thisstcp,&tape,NULL,NULL,NULL,NULL) != 0) {
 					printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",tape.reqid);
 					continue;
 				}
@@ -1688,7 +1849,7 @@ int main(argc,argv)
 			while (Cdb_api_dump(&Cdb_db,"stgcat_disk",&Cdb_offset,&disk) == 0) {
 				struct stgcat_entry thisstcp;
 				int cmp_status = -2;
-				if (Cdb2stcp(&thisstcp,NULL,&disk,NULL,NULL) != 0) {
+				if (Cdb2stcp(&thisstcp,NULL,&disk,NULL,NULL,NULL) != 0) {
 					printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",disk.reqid);
 					continue;
 				}
@@ -1735,10 +1896,73 @@ int main(argc,argv)
 				goto no_migrated_cmp;
 			}
 
-			printf("\n*** DUMPING stgcat_hsm TABLE ***\n\n");
+			printf("\n*** DUMPING stgcat_hpss TABLE ***\n\n");
 
 			/* We ask for a dump of hsm table from Cdb */
 			/* ---------------------------------------- */
+			if (Cdb_api_dump_start(&Cdb_db,"stgcat_hpss") != 0) {
+				printf("### Cdb_dump_start error on table \"stgcat_hpss\" (%s)\n",sstrerror(serrno));
+				if (Cdb_api_error(&Cdb_session,&error) == 0) {
+					printf("--> more info:\n%s",error);
+				}
+				rc = EXIT_FAILURE;
+				goto stgconvert_return;
+			}
+
+			while (Cdb_api_dump(&Cdb_db,"stgcat_hpss",&Cdb_offset,&hsm) == 0) {
+				struct stgcat_entry thisstcp;
+				int cmp_status = -2;
+				if (Cdb2stcp(&thisstcp,NULL,NULL,&hsm,NULL,NULL) != 0) {
+					printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",hsm.reqid);
+					continue;
+				}
+
+				for (stcp = stcs; stcp < stce; stcp++) {
+					if (stcp->reqid == 0) {
+						break;
+					}
+					if (stcp->reqid == thisstcp.reqid) {
+						cmp_status = stcpcmp(stcp,&thisstcp,bindiff);
+						/* We put reqid to its minus version so that we will know */
+						/* that this value has been previously scanned... */
+						stcp->reqid *= -1;
+						break;
+					}
+				}
+				++i;
+				if (cmp_status == -2) {
+					printf("### (%6d/%6d) reqid = %d is NOT IN %s\n",i,nstcp,thisstcp.reqid,stgcat);
+					global_stgcat_cmp_status = -1;
+				} else if (cmp_status == 0) {
+					if (i == 1 || i % frequency == 0) {
+						printf("... (%6d/%6d) reqid = %d Comparison OK\n",i,nstcp,thisstcp.reqid);
+					}
+				} else {
+					printf("### (%6d/%6d) reqid = %d is NOT THE SAME\n",i,nstcp,thisstcp.reqid);
+					stcp->reqid *= -1;
+					stcpprint(stcp,&thisstcp);
+					stcp->reqid *= -1;
+					global_stgcat_cmp_status = -1;
+				}
+			}
+
+			if (Cdb_api_dump_end(&Cdb_db,"stgcat_hpss") != 0) {
+				printf("### Cdb_dump_end error on table \"stgcat_hpss\" (%s)\n",sstrerror(serrno));
+				if (Cdb_api_error(&Cdb_session,&error) == 0) {
+					printf("--> more info:\n%s",error);
+				}
+			}
+
+		no_migrated_cmp:
+
+			if (t_or_d != '\0' && t_or_d != 'h') {
+				goto no_castor_cmp;
+			}
+
+			printf("\n*** DUMPING stgcat_hsm TABLE ***\n\n");
+
+			/* We ask for a dump of castor table from Cdb */
+			/* ------------------------------------------ */
 			if (Cdb_api_dump_start(&Cdb_db,"stgcat_hsm") != 0) {
 				printf("### Cdb_dump_start error on table \"stgcat_hsm\" (%s)\n",sstrerror(serrno));
 				if (Cdb_api_error(&Cdb_session,&error) == 0) {
@@ -1748,11 +1972,11 @@ int main(argc,argv)
 				goto stgconvert_return;
 			}
 
-			while (Cdb_api_dump(&Cdb_db,"stgcat_hsm",&Cdb_offset,&hsm) == 0) {
+			while (Cdb_api_dump(&Cdb_db,"stgcat_hsm",&Cdb_offset,&castor) == 0) {
 				struct stgcat_entry thisstcp;
 				int cmp_status = -2;
-				if (Cdb2stcp(&thisstcp,NULL,NULL,&hsm,NULL) != 0) {
-					printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",hsm.reqid);
+				if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,&castor,NULL) != 0) {
+					printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",castor.reqid);
 					continue;
 				}
 
@@ -1792,7 +2016,7 @@ int main(argc,argv)
 				}
 			}
 
-		no_migrated_cmp:
+		no_castor_cmp:
 
 			if (t_or_d != '\0' && t_or_d != 'a') {
 				goto no_alloced_cmp;
@@ -1814,7 +2038,7 @@ int main(argc,argv)
 			while (Cdb_api_dump(&Cdb_db,"stgcat_alloc",&Cdb_offset,&alloc) == 0) {
 				struct stgcat_entry thisstcp;
 				int cmp_status = -2;
-				if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,&alloc) != 0) {
+				if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,NULL,&alloc) != 0) {
 					printf("### stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d\n",alloc.reqid);
 					continue;
 				}
@@ -2027,19 +2251,19 @@ void stgconvert_usage() {
 				 "\n"
 				 "       I recall you that the SHIFT and CASTOR catalogs inside structures might be different,\n"
 				 "       and that you must use the tools:\n"
-				 "       stgshift_to_castor ./stgcat_shift ./stgpath_shift ./stgcat_castor ./stgpath_castor\n"
+				 "       stgshift_to_castor ./stgcat_shift ./stgpath_shift ./stgcat_hsm ./stgpath_castor\n"
 				 "       and\n"
-				 "       stgcastor_to_shift ./stgcat_castor ./stgpath_castor ./stgcat_shift ./stgpath_shift\n"
+				 "       stgcastor_to_shift ./stgcat_hsm ./stgpath_castor ./stgcat_shift ./stgpath_shift\n"
 				 "       to convert from SHIFT to CASTOR, and from CASTOR to SHIFT catalogs, respectively.\n"
 				 "\n"
 				 " Example of CASTOR/DISK  ->  CASTOR/CDB convertion:\n"
-				 "  stgconvert -q -g %2d /usr/spool/stage/stgcat_castor /usr/spool/stage/stgpath_castor\n"
+				 "  stgconvert -q -g %2d /usr/spool/stage/stgcat.new /usr/spool/stage/stgpath.new\n"
 				 "\n"
 				 " Example of CASTOR/CDB  vs. CASTOR/DISK comparison:\n"
-				 "  stgconvert -g %2d /usr/spool/stage/stgcat_castor /usr/spool/stage/stgpath_castor\n"
+				 "  stgconvert -g %2d /usr/spool/stage/stgcat.old /usr/spool/stage/stgpath.old\n"
 				 "\n"
 				 " Example of CASTOR/CDB ->  CASTOR/DISK convertion:\n"
-				 "  stgconvert -g %2d /usr/spool/stage/stgcat_castor /usr/spool/stage/stgpath_castor\n"
+				 "  stgconvert -g %2d /usr/spool/stage/stgcat_castor.bak /usr/spool/stage/stgpath_castor.bak\n"
 				 "\n"
 				 "Comments to castor-support@listbox.cern.ch\n"
 				 "\n",
@@ -2131,6 +2355,14 @@ int stcpcmp(stcp1,stcp2,bindiff)
 			return(-1);
 		}
 		break;
+	case 'h':
+		if (strcmp(stcp1->u1.h.xfile,stcp2->u1.h.xfile) != 0 ||
+            strcmp(stcp1->u1.h.server,stcp2->u1.h.server) != 0 ||
+            stcp1->u1.h.fileid != stcp2->u1.h.fileid) {
+			printf("### ... HSM part differs\n");
+			return(-1);
+		}
+		break;
 	default:
 		printf("### Unknown t_or_d = '%c' type\n",stcp1->t_or_d);
 		return(-1);
@@ -2200,6 +2432,11 @@ void stcpprint(stcp1,stcp2)
 			break;
 		case 'm':
 			STCCMP_STRING(u1.m.xfile);
+			break;
+		case 'h':
+			STCCMP_STRING(u1.h.xfile);
+			STCCMP_STRING(u1.h.server);
+			STCCMP_VAL(u1.h.fileid);
 			break;
 		}
 	}

@@ -1,5 +1,5 @@
 /*
-	$Id: check_Cdbentry.c,v 1.6 2000/05/03 16:27:35 jdurand Exp $
+	$Id: check_Cdbentry.c,v 1.7 2000/05/29 07:56:24 jdurand Exp $
 */
 
 #include "Cstage_db.h"
@@ -48,6 +48,12 @@
 				 (int) st->member);				\
 }
 
+#define DUMP_U64(st,member) {					\
+    char tmpbuf[21];                            \
+	printf("%10s : %10s\n", NAMEOFVAR(member) ,	\
+				 u64tostr((u_signed64) st->member, tmpbuf,0));	\
+}
+
 #define DUMP_CHAR(st,member) {										\
 	printf("%10s : %10c\n", NAMEOFVAR(member) ,						\
 				 st->member != '\0' ? st->member : ' ');			\
@@ -90,6 +96,7 @@ int main(argc,argv)
 	char *db[] = {
 		"stgcat_tape",
 		"stgcat_disk",
+		"stgcat_hpss",
 		"stgcat_hsm",
 		"stgcat_alloc",
 		"stgcat_link",
@@ -97,15 +104,17 @@ int main(argc,argv)
 	char *key[] = {
 		"stgcat_tape_per_reqid",
 		"stgcat_disk_per_reqid",
+		"stgcat_hpss_per_reqid",
 		"stgcat_hsm_per_reqid",
 		"stgcat_alloc_per_reqid",
 		"stgcat_link_per_reqid",
 	};
-	int ndb = 5;
+	int ndb = 6;
 	int idb;
 	struct stgcat_tape tape;
 	struct stgcat_disk disk;
-	struct stgcat_hsm hsm;
+	struct stgcat_hpss hsm;
+	struct stgcat_hsm castor;
 	struct stgcat_alloc alloc;
 	struct stgcat_link link;
 	struct stgcat_entry stcp;
@@ -238,7 +247,7 @@ int main(argc,argv)
 				memset(&tape,0,sizeof(struct stgcat_tape));
 				tape.reqid = reqid;
 				if ((find_status = Cdb_keyfind_fetch(&Cdb_db,db[idb],key[idb],NULL,&tape,&found_offset,&tape)) == 0) {
-					Cdb2stcp(&stcp,&tape,NULL,NULL,NULL);
+					Cdb2stcp(&stcp,&tape,NULL,NULL,NULL,NULL);
 					++global_find_status;
 					printf("--> Reqid %d found at offset %s in database \"%s\":\n",
 								 reqid, u64tostr((u_signed64) found_offset, tmpbuf, 0),
@@ -253,7 +262,7 @@ int main(argc,argv)
 				memset(&disk,0,sizeof(struct stgcat_disk));
 				disk.reqid = reqid;
 				if ((find_status = Cdb_keyfind_fetch(&Cdb_db,db[idb],key[idb],NULL,&disk,&found_offset,&disk)) == 0) {
-					Cdb2stcp(&stcp,NULL,&disk,NULL,NULL);
+					Cdb2stcp(&stcp,NULL,&disk,NULL,NULL,NULL);
 					++global_find_status;
 					printf("--> Reqid %d found at offset %s in database \"%s\":\n",
 								 reqid, u64tostr((u_signed64) found_offset, tmpbuf, 0),
@@ -265,10 +274,10 @@ int main(argc,argv)
 				if (stgpath_mode != 0) {
 					break;
 				}
-				memset(&hsm,0,sizeof(struct stgcat_hsm));
+				memset(&hsm,0,sizeof(struct stgcat_hpss));
 				hsm.reqid = reqid;
 				if ((find_status = Cdb_keyfind_fetch(&Cdb_db,db[idb],key[idb],NULL,&hsm,&found_offset,&hsm)) == 0) {
-					Cdb2stcp(&stcp,NULL,NULL,&hsm,NULL);
+					Cdb2stcp(&stcp,NULL,NULL,&hsm,NULL,NULL);
 					++global_find_status;
 					printf("--> Reqid %d found at offset %s in database \"%s\":\n",
 								 reqid, u64tostr((u_signed64) found_offset, tmpbuf, 0),
@@ -280,10 +289,10 @@ int main(argc,argv)
 				if (stgpath_mode != 0) {
 					break;
 				}
-				memset(&alloc,0,sizeof(struct stgcat_alloc));
-				alloc.reqid = reqid;
-				if ((find_status = Cdb_keyfind_fetch(&Cdb_db,db[idb],key[idb],NULL,&alloc,&found_offset,&alloc)) == 0) {
-					Cdb2stcp(&stcp,NULL,NULL,NULL,&alloc);
+				memset(&castor,0,sizeof(struct stgcat_hsm));
+				castor.reqid = reqid;
+				if ((find_status = Cdb_keyfind_fetch(&Cdb_db,db[idb],key[idb],NULL,&castor,&found_offset,&castor)) == 0) {
+					Cdb2stcp(&stcp,NULL,NULL,NULL,&castor,NULL);
 					++global_find_status;
 					printf("--> Reqid %d found at offset %s in database \"%s\":\n",
 								 reqid, u64tostr((u_signed64) found_offset, tmpbuf, 0),
@@ -292,6 +301,21 @@ int main(argc,argv)
 				}
 				break;
 			case 4:
+				if (stgpath_mode != 0) {
+					break;
+				}
+				memset(&alloc,0,sizeof(struct stgcat_alloc));
+				alloc.reqid = reqid;
+				if ((find_status = Cdb_keyfind_fetch(&Cdb_db,db[idb],key[idb],NULL,&alloc,&found_offset,&alloc)) == 0) {
+					Cdb2stcp(&stcp,NULL,NULL,NULL,NULL,&alloc);
+					++global_find_status;
+					printf("--> Reqid %d found at offset %s in database \"%s\":\n",
+								 reqid, u64tostr((u_signed64) found_offset, tmpbuf, 0),
+								 db[idb]);
+					stcpprint(&stcp);
+				}
+				break;
+			case 5:
 				memset(&link,0,sizeof(struct stgcat_link));
 				if (stgpath_mode != 0) {
 					forced_exit = 1;
@@ -415,7 +439,7 @@ void stcpprint(stcp)
 	DUMP_VAL(stcp,nread);
 	DUMP_STRING(stcp,poolname);
 	DUMP_STRING(stcp,recfm);
-	DUMP_VAL(stcp,size);
+	DUMP_U64(stcp,size);
 	DUMP_STRING(stcp,ipath);
 	DUMP_CHAR(stcp,t_or_d);
 	DUMP_STRING(stcp,group);
@@ -425,9 +449,9 @@ void stcpprint(stcp)
 	DUMP_VAL(stcp,mask);
 	DUMP_VAL(stcp,reqid);
 	DUMP_VAL(stcp,status);
-	DUMP_VAL(stcp,actual_size);
-	DUMP_VAL(stcp,c_time);
-	DUMP_VAL(stcp,a_time);
+	DUMP_U64(stcp,actual_size);
+	DUMP_U64(stcp,c_time);
+	DUMP_U64(stcp,a_time);
 	DUMP_VAL(stcp,nbaccesses);
 	switch (stcp->t_or_d) {
 	case 't':
@@ -452,6 +476,11 @@ void stcpprint(stcp)
 		break;
 	case 'm':
 		DUMP_STRING(stcp,u1.m.xfile);
+		break;
+	case 'h':
+		DUMP_STRING(stcp,u1.h.xfile);
+		DUMP_STRING(stcp,u1.h.server);
+		DUMP_U64(stcp,u1.h.fileid);
 		break;
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: Cstage_ifce.c,v 1.7 2000/03/23 01:40:38 jdurand Exp $
+ * $Id: Cstage_ifce.c,v 1.8 2000/05/29 07:56:24 jdurand Exp $
  */
 
 /*
@@ -19,22 +19,23 @@
 #include "stage.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.7 $ $Date: 2000/03/23 01:40:38 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.8 $ $Date: 2000/05/29 07:56:24 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
-int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,alloc)
+int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,castor,alloc)
 		 struct stgcat_entry *stcp;
 		 struct stgcat_tape  *tape;
 		 struct stgcat_disk *disk;
-		 struct stgcat_hsm *hsm;
+		 struct stgcat_hpss *hsm;
+		 struct stgcat_hsm *castor;
 		 struct stgcat_alloc *alloc;
 {
 	int i;
 
 	if (stcp == NULL ||
-			tape == NULL || disk  == NULL ||
-			hsm == NULL  || alloc == NULL) {
+		tape == NULL || disk  == NULL  ||
+		hsm == NULL  || castor == NULL || alloc == NULL) {
 		return(-1);
 	}
 
@@ -100,7 +101,7 @@ int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,alloc)
 		strcpy(disk->Xparm,    stcp->u1.d.Xparm);
 		break;
 	case 'm':
-		memset(hsm,0,sizeof(struct stgcat_hsm));
+		memset(hsm,0,sizeof(struct stgcat_hpss));
 		hsm->reqid       =   stcp->reqid;
 		hsm->nread       =   stcp->nread;
 		hsm->size        =   stcp->size;
@@ -118,6 +119,28 @@ int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,alloc)
 		strcpy(hsm->user,    stcp->user);
 		hsm->keep        =   stcp->keep;
 		strcpy(hsm->xfile,     stcp->u1.m.xfile);
+		break;
+	case 'h':
+		memset(hsm,0,sizeof(struct stgcat_hsm));
+		castor->reqid       =   stcp->reqid;
+		castor->nread       =   stcp->nread;
+		castor->size        =   stcp->size;
+		castor->nbaccesses  =   stcp->nbaccesses;
+		castor->status      =   stcp->status;
+		castor->uid         =   stcp->uid;
+		castor->gid         =   stcp->gid;
+		castor->mask        =   stcp->mask;
+		castor->actual_size =   stcp->actual_size;
+		castor->c_time      =   stcp->c_time;
+		castor->a_time      =   stcp->a_time;
+		strcpy(castor->poolname,stcp->poolname);
+		strcpy(castor->ipath,   stcp->ipath);
+		strcpy(castor->group,   stcp->group);
+		strcpy(castor->user,    stcp->user);
+		castor->keep        =   stcp->keep;
+		strcpy(castor->xfile,     stcp->u1.h.xfile);
+		strcpy(castor->server,    stcp->u1.h.server);
+		castor->fileid      =   stcp->u1.h.fileid;
 		break;
 	case 'a':
 		memset(alloc,0,sizeof(struct stgcat_alloc));
@@ -165,23 +188,25 @@ int DLL_DECL stpp2Cdb(stpp,link)
 	return(0);
 }
 
-int DLL_DECL Cdb2stcp(stcp,tape,disk,hsm,alloc)
+int DLL_DECL Cdb2stcp(stcp,tape,disk,hsm,castor,alloc)
 		 struct stgcat_entry *stcp;
 		 struct stgcat_tape  *tape;
 		 struct stgcat_disk *disk;
-		 struct stgcat_hsm *hsm;
+		 struct stgcat_hpss *hsm;
+		 struct stgcat_hsm *castor;
 		 struct stgcat_alloc *alloc;
 {
 	int i;
 
-	if (stcp == NULL || (tape == NULL && disk == NULL && hsm == NULL && alloc == NULL)) {
+	if (stcp == NULL || (tape == NULL && disk == NULL && hsm == NULL && castor == NULL && alloc == NULL)) {
 		return(-1);
 	}
 
-	if ((tape  != NULL && (disk != NULL ||  hsm  != NULL || alloc != NULL)) ||
-			(disk  != NULL && (tape != NULL ||  hsm  != NULL || alloc != NULL)) ||
-			(hsm   != NULL && (tape != NULL ||  disk != NULL || alloc != NULL)) ||
-			(alloc != NULL && (tape != NULL ||  disk != NULL || hsm   != NULL))) {
+	if ((tape   != NULL && (disk != NULL ||  hsm  != NULL || castor != NULL || alloc != NULL)) ||
+		(disk   != NULL && (tape != NULL ||  hsm  != NULL || castor != NULL || alloc != NULL)) ||
+		(hsm    != NULL && (tape != NULL ||  disk != NULL || castor != NULL || alloc != NULL)) ||
+		(castor != NULL && (tape != NULL ||  disk != NULL || hsm    != NULL || alloc != NULL)) ||
+		(alloc  != NULL && (tape != NULL ||  disk != NULL || castor != NULL || hsm   != NULL))) {
 		return(-1);
 	}
 
@@ -272,6 +297,32 @@ int DLL_DECL Cdb2stcp(stcp,tape,disk,hsm,alloc)
 		stcp->a_time      =      hsm->a_time;
 		stcp->nbaccesses  =      hsm->nbaccesses;
 		strcpy(stcp->u1.m.xfile, hsm->xfile);
+	} else if (castor != NULL) {
+		/* No blksize member in castor database */
+		/* No filler member in castor database */
+		/* No charconv member in castor database */
+		stcp->keep        =      castor->keep;
+		/* No lrecl member in castor database */
+		stcp->nread       =      castor->nread;
+		strcpy(stcp->poolname,   castor->poolname);
+		/* No recfm member in castor database */
+		stcp->size        =      castor->size;
+		strcpy(stcp->ipath,      castor->ipath);
+		stcp->t_or_d      =      'h';
+		strcpy(stcp->group,      castor->group);
+		strcpy(stcp->user,       castor->user);
+		stcp->uid         =      castor->uid;
+		stcp->gid         =      castor->gid;
+		stcp->mask        =      castor->mask;
+		stcp->reqid       =      castor->reqid;
+		stcp->status      =      castor->status;
+		stcp->actual_size =      castor->actual_size;
+		stcp->c_time      =      castor->c_time;
+		stcp->a_time      =      castor->a_time;
+		stcp->nbaccesses  =      castor->nbaccesses;
+		strcpy(stcp->u1.h.xfile, castor->xfile);
+		strcpy(stcp->u1.h.server, castor->server);
+		stcp->u1.h.fileid =      castor->fileid;
 	} else if (alloc != NULL) {
 		/* No blksize member in alloc database */
 		/* No filler member in alloc database */

@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.17 2000/05/11 11:59:31 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.18 2000/05/29 07:56:30 jdurand Exp $
  */
 
 /*
@@ -18,7 +18,7 @@
 #include "Cstage_ifce.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.17 $ $Date: 2000/05/11 11:59:31 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.18 $ $Date: 2000/05/29 07:56:30 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
@@ -186,7 +186,8 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
 	struct stgpath_entry *stpp;
 	struct stgcat_tape tape;
 	struct stgcat_disk disk;
-	struct stgcat_hsm hsm;
+	struct stgcat_hpss hsm;
+	struct stgcat_hsm castor;
 	struct stgcat_link link;
 	struct stgcat_alloc alloc;
 
@@ -236,7 +237,7 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
 	while (Cdb_dump(&(dbfd->Cdb_db),"stgcat_tape",NULL,&tape) == 0) {
 		struct stgcat_entry thisstcp;
 
-		if (Cdb2stcp(&thisstcp,&tape,NULL,NULL,NULL) != 0) {
+		if (Cdb2stcp(&thisstcp,&tape,NULL,NULL,NULL,NULL) != 0) {
 			continue;
 		}
 		if (stcp == *stcep) {
@@ -271,7 +272,7 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
 	}
 	while (Cdb_dump(&(dbfd->Cdb_db),"stgcat_disk",NULL,&disk) == 0) {
 		struct stgcat_entry thisstcp;
-		if (Cdb2stcp(&thisstcp,NULL,&disk,NULL,NULL) != 0) {
+		if (Cdb2stcp(&thisstcp,NULL,&disk,NULL,NULL,NULL) != 0) {
 			continue;
 		}
 		if (stcp == *stcep) {
@@ -301,12 +302,47 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
 
 	/* We ask for a dump of hsm table from Cdb */
 	/* --------------------------------------- */
+	if (Cdb_dump_start(&(dbfd->Cdb_db),"stgcat_hpss") != 0) {
+		goto _stgdb_load_error;
+	}
+	while (Cdb_dump(&(dbfd->Cdb_db),"stgcat_hpss",NULL,&hsm) == 0) {
+		struct stgcat_entry thisstcp;
+		if (Cdb2stcp(&thisstcp,NULL,NULL,&hsm,NULL,NULL) != 0) {
+			continue;
+		}
+		if (stcp == *stcep) {
+			struct stgcat_entry *newstcs;
+			/* The calloced area is not enough */
+			*stgcat_bufsz += BUFSIZ;
+			if ((newstcs = (struct stgcat_entry *) realloc(*stcsp,*stgcat_bufsz)) == NULL) {
+				Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_hpss");
+				goto _stgdb_load_error;
+			}
+			*stcsp = newstcs;
+			*stcep = *stcsp + (*stgcat_bufsz/sizeof(struct stgcat_entry));
+
+			/* We makes sure that critical variable, stcp->reqid, is initalized */
+			for (stcp = *stcsp + ((*stgcat_bufsz - BUFSIZ)/sizeof(struct stgcat_entry));
+					 stcp < *stcep; stcp++) {
+				stcp->reqid = 0;
+			}
+
+			/* We say where to continue */
+			stcp = *stcsp + ((*stgcat_bufsz - BUFSIZ)/sizeof(struct stgcat_entry));
+
+		}
+		*stcp++ = thisstcp;
+	}
+	Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_hpss");
+
+	/* We ask for a dump of castor table from Cdb */
+	/* ------------------------------------------ */
 	if (Cdb_dump_start(&(dbfd->Cdb_db),"stgcat_hsm") != 0) {
 		goto _stgdb_load_error;
 	}
-	while (Cdb_dump(&(dbfd->Cdb_db),"stgcat_hsm",NULL,&hsm) == 0) {
+	while (Cdb_dump(&(dbfd->Cdb_db),"stgcat_hsm",NULL,&castor) == 0) {
 		struct stgcat_entry thisstcp;
-		if (Cdb2stcp(&thisstcp,NULL,NULL,&hsm,NULL) != 0) {
+		if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,&castor,NULL) != 0) {
 			continue;
 		}
 		if (stcp == *stcep) {
@@ -341,7 +377,7 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
 	}
 	while (Cdb_dump(&(dbfd->Cdb_db),"stgcat_alloc",NULL,&alloc) == 0) {
 		struct stgcat_entry thisstcp;
-		if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,&alloc) != 0) {
+		if (Cdb2stcp(&thisstcp,NULL,NULL,NULL,NULL,&alloc) != 0) {
 			continue;
 		}
 		if (stcp == *stcep) {
@@ -526,14 +562,15 @@ int DLL_DECL Stgdb_upd_stgcat(dbfd,stcp,file,line)
 	Cdb_off_t Cdb_offset;
 	struct stgcat_tape tape;
 	struct stgcat_disk disk;
-	struct stgcat_hsm hsm;
+	struct stgcat_hpss hsm;
+	struct stgcat_hsm castor;
 	struct stgcat_alloc alloc;
 
 	PING;
 
 	/* stglogit(func, "In stgdb_upd_stgcat called at %s:%d\n",file,line); */
 
-	if (stcp2Cdb(stcp,&tape,&disk,&hsm,&alloc) != 0) {
+	if (stcp2Cdb(stcp,&tape,&disk,&hsm,&castor,&alloc) != 0) {
 		stglogit("stgdb_upd_stgcat",
 						 "### Warning[%s:%d] : stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d called at %s:%d\n",
 						 __FILE__,__LINE__,stcp->reqid,file,line);
@@ -553,8 +590,13 @@ int DLL_DECL Stgdb_upd_stgcat(dbfd,stcp,file,line)
 		break;
 	case 'm':
 		find_status = Cdb_keyfind(&(dbfd->Cdb_db),
-															"stgcat_hsm","stgcat_hsm_per_reqid","w",
+															"stgcat_hpss","stgcat_hpss_per_reqid","w",
 															(void *) &hsm,&Cdb_offset);
+		break;
+	case 'h':
+		find_status = Cdb_keyfind(&(dbfd->Cdb_db),
+															"stgcat_hsm","stgcat_hsm_per_reqid","w",
+															(void *) &castor,&Cdb_offset);
 		break;
 	case 'a':
 		find_status = Cdb_keyfind(&(dbfd->Cdb_db),
@@ -591,8 +633,12 @@ int DLL_DECL Stgdb_upd_stgcat(dbfd,stcp,file,line)
 															 (void *) &disk,&Cdb_offset,&Cdb_offset);
 		break;
 	case 'm':
-		update_status = Cdb_update(&(dbfd->Cdb_db),"stgcat_hsm",
+		update_status = Cdb_update(&(dbfd->Cdb_db),"stgcat_hpss",
 															 (void *) &hsm,&Cdb_offset,&Cdb_offset);
+		break;
+	case 'h':
+		update_status = Cdb_update(&(dbfd->Cdb_db),"stgcat_hsm",
+															 (void *) &castor,&Cdb_offset,&Cdb_offset);
 		break;
 	case 'a':
 		update_status = Cdb_update(&(dbfd->Cdb_db),"stgcat_alloc",
@@ -622,6 +668,13 @@ int DLL_DECL Stgdb_upd_stgcat(dbfd,stcp,file,line)
 		}
 		break;
 	case 'm':
+		if (Cdb_unlock(&(dbfd->Cdb_db),"stgcat_hpss",&Cdb_offset) != 0) {
+			stglogit("stgdb_upd_stgcat",
+							 "### Warning[%s:%d] : Cdb_unlock error for reqid %d called at %s:%d\n",
+							 __FILE__,__LINE__,(int) stcp->reqid,file,line);
+		}
+		break;
+	case 'h':
 		if (Cdb_unlock(&(dbfd->Cdb_db),"stgcat_hsm",&Cdb_offset) != 0) {
 			stglogit("stgdb_upd_stgcat",
 							 "### Warning[%s:%d] : Cdb_unlock error for reqid %d called at %s:%d\n",
@@ -709,14 +762,15 @@ int DLL_DECL Stgdb_del_stgcat(dbfd,stcp,file,line)
 	Cdb_off_t Cdb_offset;
 	struct stgcat_tape tape;
 	struct stgcat_disk disk;
-	struct stgcat_hsm hsm;
+	struct stgcat_hpss hsm;
+	struct stgcat_hsm castor;
 	struct stgcat_alloc alloc;
 
 	PING;
 
 	/* stglogit(func, "In stgdb_del_stgcat called at %s:%d\n",file,line); */
 
-	if (stcp2Cdb(stcp,&tape,&disk,&hsm,&alloc) != 0) {
+	if (stcp2Cdb(stcp,&tape,&disk,&hsm,&castor,&alloc) != 0) {
 		stglogit("stgdb_del_stgcat",
 						 "### Warning[%s:%d] : stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d called at %s:%d\n",
 						 __FILE__,__LINE__,stcp->reqid,file,line);
@@ -736,8 +790,13 @@ int DLL_DECL Stgdb_del_stgcat(dbfd,stcp,file,line)
 		break;
 	case 'm':
 		find_status = Cdb_keyfind(&(dbfd->Cdb_db),
-															"stgcat_hsm","stgcat_hsm_per_reqid","w",
+															"stgcat_hpss","stgcat_hpss_per_reqid","w",
 															(void *) &hsm,&Cdb_offset);
+		break;
+	case 'h':
+		find_status = Cdb_keyfind(&(dbfd->Cdb_db),
+															"stgcat_hsm","stgcat_hsm_per_reqid","w",
+															(void *) &castor,&Cdb_offset);
 		break;
 	case 'a':
 		find_status = Cdb_keyfind(&(dbfd->Cdb_db),
@@ -766,6 +825,9 @@ int DLL_DECL Stgdb_del_stgcat(dbfd,stcp,file,line)
 		delete_status = Cdb_delete(&(dbfd->Cdb_db),"stgcat_disk",&Cdb_offset);
 		break;
 	case 'm':
+		delete_status = Cdb_delete(&(dbfd->Cdb_db),"stgcat_hpss",&Cdb_offset);
+		break;
+	case 'h':
 		delete_status = Cdb_delete(&(dbfd->Cdb_db),"stgcat_hsm",&Cdb_offset);
 		break;
 	case 'a':
@@ -795,6 +857,13 @@ int DLL_DECL Stgdb_del_stgcat(dbfd,stcp,file,line)
 		}
 		break;
 	case 'm':
+		if (Cdb_unlock(&(dbfd->Cdb_db),"stgcat_hpss",&Cdb_offset) != 0) {
+			stglogit("stgdb_del_stgcat",
+							 "### Warning[%s:%d] : Cdb_unlock error for reqid %d called at %s:%d\n",
+							 __FILE__,__LINE__,(int) stcp->reqid,file,line);
+		}
+		break;
+	case 'h':
 		if (Cdb_unlock(&(dbfd->Cdb_db),"stgcat_hsm",&Cdb_offset) != 0) {
 			stglogit("stgdb_del_stgcat",
 							 "### Warning[%s:%d] : Cdb_unlock error for reqid %d called at %s:%d\n",
@@ -873,14 +942,15 @@ int DLL_DECL Stgdb_ins_stgcat(dbfd,stcp,file,line)
 	int insert_status;
 	struct stgcat_tape tape;
 	struct stgcat_disk disk;
-	struct stgcat_hsm hsm;
+	struct stgcat_hpss hsm;
+	struct stgcat_hsm castor;
 	struct stgcat_alloc alloc;
 
 	PING;
 
 	/* stglogit(func, "In stgdb_ins_stgcat called at %s:%d\n",file,line); */
 
-	if (stcp2Cdb(stcp,&tape,&disk,&hsm,&alloc) != 0) {
+	if (stcp2Cdb(stcp,&tape,&disk,&hsm,&castor,&alloc) != 0) {
 		stglogit("stgdb_ins_stgcat",
 						 "### Warning[%s:%d] : stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d called at %s:%d\n",
 						 __FILE__,__LINE__,stcp->reqid,file,line);
@@ -895,7 +965,10 @@ int DLL_DECL Stgdb_ins_stgcat(dbfd,stcp,file,line)
 		insert_status = Cdb_insert(&(dbfd->Cdb_db),"stgcat_disk",NULL,(void *) &disk,NULL);
 		break;
 	case 'm':
-		insert_status = Cdb_insert(&(dbfd->Cdb_db),"stgcat_hsm",NULL,(void *) &hsm,NULL);
+		insert_status = Cdb_insert(&(dbfd->Cdb_db),"stgcat_hpss",NULL,(void *) &hsm,NULL);
+		break;
+	case 'h':
+		insert_status = Cdb_insert(&(dbfd->Cdb_db),"stgcat_hsm",NULL,(void *) &castor,NULL);
 		break;
 	case 'a':
 		insert_status = Cdb_insert(&(dbfd->Cdb_db),"stgcat_alloc",NULL,(void *) &alloc,NULL);

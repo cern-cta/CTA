@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.71 2000/05/23 09:14:59 jdurand Exp $
+ * $Id: stager.c,v 1.72 2000/05/29 07:56:27 jdurand Exp $
  */
 
 /*
@@ -14,7 +14,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.71 $ $Date: 2000/05/23 09:14:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.72 $ $Date: 2000/05/29 07:56:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -106,6 +106,7 @@ struct passwd *stpasswd;            /* Generic uid/gid stage:st */
 int nuserlevel = 0;                 /* Number of user-level files */
 int nexplevel = 0;                  /* Number of experiment-level files */
 char nfsroot[MAXPATH];              /* Current RFIO's NFSROOT for shift-like path parsing */
+int callback_error = 0;             /* Flag to tell us that there was an error in the callback */
 
 #ifdef STAGER_DEBUG
 EXTERN_C int DLL_DECL dumpTapeReq _PROTO((tape_list_t *));
@@ -316,15 +317,15 @@ int main(argc, argv)
 		}
 	}
 
-    if (stcs->t_or_d == 'm') {
+    if (stcs->t_or_d == 'm' || stcs->t_or_d == 'h') {
       /* We cannot mix HPSS and CASTOR files... */
       int nhpss = 0;
       int ncastor = 0;
 
       for (stcp = stcs; stcp < stce; stcp++) {
-		if (ISHPSS(stcp->u1.m.xfile)) {
+		if (stcp->t_or_d == 'm') {
           nhpss++;
-        } else if (ISCASTOR(stcp->u1.m.xfile)) {
+        } else if (stcp->t_or_d == 'h') {
           ncastor++;
         } else {
           sendrep(rpfd, MSG_ERR, "### HSM file %s is of unknown type\n",stcp->u1.m.xfile);
@@ -401,8 +402,7 @@ int main(argc, argv)
 
     /* -------- DISK TO DISK OR HPSS MIGRATION ----------- */
 
-	if (stcs->t_or_d == 'd' ||
-			(stcs->t_or_d == 'm' && ISHPSS(stcs->u1.m.xfile))) {
+	if (stcs->t_or_d == 'd' || stcs->t_or_d == 'm') {
 		int exit_code;
 
         for (stcp = stcs; stcp < stce; stcp++) {
@@ -628,18 +628,22 @@ int stagein_castor_hsm_file() {
 
 	/* We initialize those size arrays */
 	for (stcp = stcs, i = 0; stcp < stce; stcp++, i++) {
+		struct Cns_fileid Cnsfileid;
+
 		/* Search for castor a-la-unix path in the file to stagein */
 		if ((castor_hsm = hsmpath(stcp)) == NULL) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->u1.m.xfile, "hsmpath", sstrerror(serrno));
-			RETURN (USERR);
+			RETURN (SYERR);
 		}
 		/* check permissions in parent directory, get file size */
 #ifdef STAGER_DEBUG
-		sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] Calling Cns_stat(%s,&statbuf)\n",castor_hsm);
+		sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] Calling Cns_statx(%s,&statbuf,&Cnsfileid)\n",castor_hsm);
 #endif
         SETEID(stcp->uid,stcp->gid);
-		if (Cns_stat (castor_hsm, &statbuf) < 0) {
-			sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_stat",
+		strcpy(Cnsfileid.server,stcp->u1.h.server);
+		Cnsfileid.fileid = stcp->u1.h.fileid;
+		if (Cns_statx (castor_hsm, &statbuf, &Cnsfileid) < 0) {
+			sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_statx (with invariants)",
 							 sstrerror (serrno));
 			RETURN (USERR);
 		}
@@ -651,7 +655,7 @@ int stagein_castor_hsm_file() {
 				mode >>= 3;
 		}
 		if ((statbuf.filemode & mode) != mode) {
-			sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_stat",
+			sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_statx (with invariants)",
 							 sstrerror (EACCES));
 			RETURN (USERR);
 		}
@@ -673,10 +677,12 @@ int stagein_castor_hsm_file() {
 	/* We loop on all the requests, choosing those that requires the same tape */
 	new_tape = 0;
 	for (stcp = stcs, i = 0; stcp < stce; stcp++, i++) {
+		struct Cns_fileid Cnsfileid;
+
 		/* Search for castor a-la-unix path in the file to stagein */
 		if ((castor_hsm = hsmpath(stcp)) == NULL) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->u1.m.xfile, "hsmpath", sstrerror(serrno));
-			RETURN (USERR);
+			RETURN (SYERR);
 		}
 #ifdef STAGER_DEBUG
 		sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] %s : totalsize=%s, transferedsize=%s\n",
@@ -684,12 +690,15 @@ int stagein_castor_hsm_file() {
 #endif
 		if (hsm_totalsize[i] >  hsm_transferedsize[i]) {
 #ifdef STAGER_DEBUG
-			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] Calling Cns_getsegattrs(%s,copyrc=1,1+hsm_fseg[%d]=%d,&(hsm_fsegsize[%d]),vid,&(hsm_fseq[%d]),blockid)\n",
+			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] Calling Cns_getsegattrs(%s,&Cnsfileid,copyrc=1,1+hsm_fseg[%d]=%d,&(hsm_fsegsize[%d]),vid,&(hsm_fseq[%d]),blockid)\n",
 							castor_hsm,i,1+hsm_fseg[i],i,i);
 #endif
 				
 			SETEID(stcp->uid,stcp->gid);
+			strcpy(Cnsfileid.server,stcp->u1.h.server);
+			Cnsfileid.fileid = stcp->u1.h.fileid;
 			if (Cns_getsegattrs (castor_hsm,        /* hsm path */
+								&Cnsfileid,         /* Cns invariants */
 								1,                  /* copy number */
 								++(hsm_fseg[i]),    /* file segment */
 								&(hsm_fsegsize[i]), /* segment size */
@@ -699,9 +708,9 @@ int stagein_castor_hsm_file() {
 								&fseg_status        /* segment status */
 								)) {
 				strcpy(vid,"");
-				sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_getsegattrs",
+				sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_getsegattrs (with invariants)",
 								 sstrerror (serrno));
-				RETURN (USERR);
+				RETURN (SYERR);
 			}
 			
 			hsm_vid[i] = vid;
@@ -829,6 +838,15 @@ int stagein_castor_hsm_file() {
 		rtcp_rc = rtcpc(rtcpcreqs[0]);
 		if (rtcp_rc < 0) {
 			int stagein_castor_hsm_file_retry = 0;
+
+            if (callback_error != 0) {
+              /* This is a callback error - considered as fatal */
+              sendrep (rpfd, MSG_ERR, STG02, "", "Callback Error - Fatal error",
+                       sstrerror (serrno));
+              free(stcs_tmp);
+              RETURN (USERR);
+            }
+
 			for (stcp_tmp = stcs_tmp, i = 0; stcp_tmp < stce_tmp; stcp_tmp++, i++) {
 				if (rtcpcreqs[0]->file[i].filereq.err.errorcode == ETPARIT ||
 					rtcpcreqs[0]->file[i].filereq.err.errorcode == ETUNREC ||
@@ -868,6 +886,8 @@ int stagein_castor_hsm_file() {
 		stcs_tmp = NULL;
 		/* We checked if there is pending things to stagein */
 		for (stcp = stcs, i = 0; stcp < stce; stcp++, i++) {
+			struct Cns_fileid Cnsfileid;
+
 			if (hsm_vid[i] != NULL) {
 				if (rtcpcreqs[0]->file[i].filereq.err.errorcode == ENOENT) {
 					/* Entry did not exist - We make the stager believe that this request was */
@@ -898,7 +918,12 @@ int stagein_castor_hsm_file() {
 				sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] Calling Cns_setatime(%s)\n",castor_hsm);
 #endif
 				SETEID(stcp->uid,stcp->gid);
-				Cns_setatime (castor_hsm);
+				strcpy(Cnsfileid.server,stcp->u1.h.server);
+				Cnsfileid.fileid = stcp->u1.h.fileid;
+				if (Cns_setatime (castor_hsm, &Cnsfileid) != 0) {
+                  sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setatime (with invariants)",
+                           sstrerror (serrno));
+                }
 			}
 		}
 		for (stcp = stcs, i = 0; stcp < stce; stcp++, i++) {
@@ -978,24 +1003,22 @@ int stagewrt_castor_hsm_file() {
       
       /* We do not want to overwrite an existing file, except it its size is zero */
       if (((stcp->status & STAGEWRT) == STAGEWRT) || ((stcp->status & STAGEPUT) == STAGEPUT)) {
+		struct Cns_fileid Cnsfileid;
+
 #ifdef STAGER_DEBUG
-        sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] Calling Cns_stat(%s,&statbuf_check)\n",castor_hsm);
+        sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] Calling Cns_statx(%s,&statbuf_check,&Cnsfileid)\n",castor_hsm);
 #endif
-        if (Cns_stat (castor_hsm, &statbuf_check) == 0) {
-          if (statbuf_check.filesize > 0) {
-            sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_stat",
+        SETEID(stcp->uid,stcp->gid);
+		strcpy(Cnsfileid.server,stcp->u1.h.server);
+		Cnsfileid.fileid = stcp->u1.h.fileid;
+        if (Cns_statx(castor_hsm, &statbuf_check, &Cnsfileid) != 0) {
+            sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_statx (with invariants)",
                      "file already exists and is non-zero size");
             RETURN (USERR);
-          }
         } else {
-#ifdef STAGER_DEBUG
-          sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] Calling Cns_creat(%s,mode=0x%x)\n",
-                  castor_hsm,(int) statbuf.st_mode);
-#endif
-          /* Create the file */
-          if (Cns_creat (castor_hsm, statbuf.st_mode) < 0) {
-            sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_creat",
-                     sstrerror (serrno));
+          if (statbuf_check.filesize > 0) {
+            sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_statx (with invariants)",
+                     "file already exists and is non-zero size");
             RETURN (USERR);
           }
         }
@@ -1203,6 +1226,15 @@ int stagewrt_castor_hsm_file() {
         /* rtcpc failed */
         sendrep (rpfd, MSG_ERR, STG02, vid, "rtcpc",
                  sstrerror (serrno));
+
+        if (callback_error != 0) {
+          /* This is a callback error - considered as fatal */
+          sendrep (rpfd, MSG_ERR, STG02, "", "Callback Error - Fatal error",
+                   sstrerror (serrno));
+          RETURN (USERR);
+        }
+
+
         i = 0;
         for (j = istart; j <= iend; j++, i++) {
           if (rtcpcreqs[0]->file[i].filereq.err.errorcode == ETPARIT ||
@@ -1295,6 +1327,13 @@ int stage_tape() {
 
 	rtcp_rc = rtcpc(rtcpcreqs[0]);
 
+    if (callback_error != 0) {
+      /* This is a callback error - considered as fatal */
+      sendrep (rpfd, MSG_ERR, STG02, "", "Callback Error - Fatal error",
+               sstrerror (serrno));
+      RETURN (USERR);
+    }
+
 	if (rtcp_rc < 0) {
       int stage_tape_retry_flag = 0;
       int i;
@@ -1357,7 +1396,7 @@ int filecopy(stcp, key, hostname)
 
     SETTAPEEID(stcs->uid,stcs->gid);
 
-	if (stcp->t_or_d == 'm' && ISHPSS(stcp->u1.m.xfile)) {
+	if (stcp->t_or_d == 'm') {
 		/* filecopy of an HPSS file */
 		struct stat filemig_stat;
 
@@ -2172,9 +2211,11 @@ int stager_client_callback(tapereq,filereq)
   struct stgcat_entry *stcp;
   char *castor_hsm;
   unsigned char blockid[4];
+  struct Cns_fileid Cnsfileid;
 
   if (tapereq == NULL || filereq == NULL) {
     serrno = EINVAL;
+    callback_error = 1;
     return(-1);
   }
 
@@ -2199,6 +2240,7 @@ int stager_client_callback(tapereq,filereq)
   if (stager_client_callback_i < 0 || stager_client_callback_i >= nbcat_ent) {
     serrno = SEINTERNAL;
     sendrep (rpfd, MSG_ERR, STG02, filereq->file_path, "rtcpc() ClientCallback",strerror(errno));
+    callback_error = 1;
     return(-1);
   }
 
@@ -2207,6 +2249,7 @@ int stager_client_callback(tapereq,filereq)
   /* Search for castor a-la-unix path in the file to stagewrt */
   if ((castor_hsm = hsmpath(stcp)) == NULL) {
     sendrep (rpfd, MSG_ERR, STG02, stcp->u1.m.xfile, "hsmpath", sstrerror(serrno));
+    callback_error = 1;
     return(-1);
   }
       
@@ -2257,10 +2300,11 @@ int stager_client_callback(tapereq,filereq)
                         ) != 0) {
       sendrep (rpfd, MSG_ERR, STG02, vid, "vmgr_updatetape",
                sstrerror (serrno));
+      callback_error = 1;
       return(-1);
     }
 #ifdef STAGER_DEBUG
-    sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] Calling Cns_setsegattrs(%s,copyrc=1,hsm_fseg[%d]=%d,hsm_fsegsize[%d]=%s,vid=%s,fseq=%d,blockid)\n",
+    sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] Calling Cns_setsegattrs(%s,&Cnsfileid,copyrc=1,hsm_fseg[%d]=%d,hsm_fsegsize[%d]=%s,vid=%s,fseq=%d,blockid)\n",
             castor_hsm,
             stager_client_callback_i,
             hsm_fseg[stager_client_callback_i],
@@ -2271,26 +2315,33 @@ int stager_client_callback(tapereq,filereq)
 #endif
     /* For the moment blockid is NOT used */
     memset(blockid,0,sizeof(blockid));
+	strcpy(Cnsfileid.server,stcp->u1.h.server);
+	Cnsfileid.fileid = stcp->u1.h.fileid;
     if (Cns_setsegattrs (castor_hsm,
+                         &Cnsfileid,         /* Cns invariants */
                          1,
                          hsm_fseg[stager_client_callback_i],
                          hsm_fsegsize[stager_client_callback_i],
                          hsm_vid[stager_client_callback_i],
                          hsm_fseq[stager_client_callback_i],
                          blockid) != 0) {
-      sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setsegattrs",
+      sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setsegattrs (with invariants)",
                sstrerror (serrno));
+      callback_error = 1;
       return(-1);
     }
     if (hsm_transferedsize[stager_client_callback_i] >= hsm_totalsize[stager_client_callback_i]) {
 #ifdef STAGER_DEBUG
-      sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] Calling Cns_setfsize(%s,size=%s)\n",
+      sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] Calling Cns_setfsize(%s,&Cnsfileid,size=%s)\n",
               castor_hsm,
               u64tostr(hsm_totalsize[stager_client_callback_i], tmpbuf1, 0));
 #endif
-      if (Cns_setfsize(castor_hsm, hsm_totalsize[stager_client_callback_i]) != 0) {
-        sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setfsize",
+      if (Cns_setfsize(castor_hsm,
+                       &Cnsfileid,         /* Cns invariants */
+                       hsm_totalsize[stager_client_callback_i]) != 0) {
+        sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setfsize (with invariants)",
                  sstrerror (serrno));
+        callback_error = 1;
         return(-1);
       }
     } else {

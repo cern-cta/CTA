@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.13 2000/03/23 01:41:13 jdurand Exp $
+ * $Id: procclr.c,v 1.14 2000/05/29 07:56:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.13 $ $Date: 2000/03/23 01:41:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.14 $ $Date: 2000/05/29 07:56:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -273,8 +273,9 @@ void procclrreq(req_data, clienthost)
 				if (strcmp (xfile, stcp->u1.d.xfile)) continue;
 			}
 			if (mfile) {
-				if (stcp->t_or_d != 'm') continue;
-				if (strcmp (mfile, stcp->u1.m.xfile)) continue;
+				if (stcp->t_or_d != 'm' && stcp->t_or_d != 'h') continue;
+				if (stcp->t_or_d == 'm' && strcmp (mfile, stcp->u1.m.xfile)) continue;
+				if (stcp->t_or_d == 'h' && strcmp (mfile, stcp->u1.h.xfile)) continue;
 			}
 			found = 1;
 			if (cflag && stcp->poolname[0] &&
@@ -322,13 +323,13 @@ check_delete(stcp, gid, uid, group, user, rflag)
 		return (USERR);
 	}
 	if ((stcp->status & 0xF0) == STAGED ||
-			stcp->status == (STAGEOUT | PUT_FAILED)) {
+			(stcp->status & (STAGEOUT | PUT_FAILED)) == (STAGEOUT | PUT_FAILED)) {
 		if (delfile (stcp, 0, 1, 1, user, uid, gid, rflag) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
 							 rfio_serror());
 			return (USERR);
 		}
-	} else if (stcp->status == STAGEOUT || stcp->status == STAGEALLOC) {
+	} else if ((stcp->status & STAGEOUT) == STAGEOUT || (stcp->status & STAGEALLOC) == STAGEALLOC) {
 		if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
 							 rfio_serror());

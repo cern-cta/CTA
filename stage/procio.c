@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.25 2000/05/18 14:20:08 jdurand Exp $
+ * $Id: procio.c,v 1.26 2000/05/29 07:56:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.25 $ $Date: 2000/05/18 14:20:08 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.26 $ $Date: 2000/05/29 07:56:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -39,6 +39,13 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.25 $ $Date: 2000
 #endif
 #include <serrno.h>
 #include "osdep.h"
+#include "Cns_api.h"
+#if hpux
+/* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
+/* calls to setresuid().                                                */
+#define seteuid(euid) setresuid(-1,euid,-1)
+#define setegid(egid) setresgid(-1,egid,-1)
+#endif
 
 extern char *optarg;
 extern int optind;
@@ -115,6 +122,8 @@ void procioreq(req_type, req_data, clienthost)
 	struct waitf *wfp;
 	struct waitq *wqp = NULL;
 	char **hsmfiles = NULL;
+	struct Cns_fileid *hsmfileids = NULL;
+	time_t *hsmmtimes = NULL;
 	int nhsmfiles = 0;
 	int ihsmfiles;
 	int jhsmfiles;
@@ -269,17 +278,26 @@ void procioreq(req_type, req_data, clienthost)
 		case 'M':
 			stgreq.t_or_d = 'm';
 			if (nhsmfiles == 0) {
-				if ((hsmfiles = (char **) malloc(sizeof(char *))) == NULL) {
+				if ((hsmfiles   = (char **)             malloc(sizeof(char *))) == NULL ||
+				    (hsmfileids = (struct Cns_fileid *) malloc(sizeof(struct Cns_fileid))) == NULL ||
+				    (hsmmtimes  = (time_t *)            malloc(sizeof(time_t))) == NULL) {
 					c = SYERR;
 					goto reply;
 				}
 			} else {
 				char **dummy = hsmfiles;
-				if ((dummy = (char **) realloc(hsmfiles,(nhsmfiles+1) * sizeof(char *))) == NULL) {
+				struct Cns_fileid *dummy2 = hsmfileids;
+				time_t *dummy3 = hsmmtimes;
+
+				if ((dummy  = (char **)             realloc(hsmfiles,(nhsmfiles+1) * sizeof(char *))) == NULL ||
+				    (dummy2 = (struct Cns_fileid *) realloc(hsmfileids,(nhsmfiles+1) * sizeof(struct Cns_fileid))) == NULL ||
+				    (dummy3 = (time_t *)            realloc(hsmmtimes,(nhsmfiles+1) * sizeof(time_t))) == NULL) {
 					c = SYERR;
 					goto reply;
 				}
 				hsmfiles = dummy;
+				hsmfileids = dummy2;
+				hsmmtimes = dummy3;
 			}
 			hsmfiles[nhsmfiles++] = optarg;
 			break;
@@ -470,7 +488,7 @@ void procioreq(req_type, req_data, clienthost)
 				}
 			}
 		}
-				/* We check that user do not mix different hsm types (hpss and castor) */
+		/* We check that user do not mix different hsm types (hpss and castor) */
 		for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
 			if (ISHPSS(hsmfiles[ihsmfiles])) {
 				++nhpssfiles;
@@ -490,12 +508,54 @@ void procioreq(req_type, req_data, clienthost)
 			sendrep (rpfd, MSG_ERR, "HPSS (%d occurence%s) and CASTOR (%d occurence%s) files on the same command-line is not allowed\n",nhpssfiles,nhpssfiles > 1 ? "s" : "",ncastorfiles,ncastorfiles > 1 ? "s" : "");
 			c = USERR;
 			goto reply;
-		}
-		/* More than one HPSS not supported for the moment */
-		if (nhpssfiles > 1) {
+		} else if (ncastorfiles > 0) {
+			/* It is a CASTOR request, so stgreq.t_or_d is set to 'h' */
+			stgreq.t_or_d = 'h';
+		} else if (nhpssfiles > 1) {
+			/* More than one HPSS not supported for the moment */
 			sendrep (rpfd, MSG_ERR, "More than one HPSS (%d occurence%s) files on the same command-line is not allowed\n",nhpssfiles,nhpssfiles > 1 ? "s" : "");
 			c = USERR;
 			goto reply;
+		}
+		if (ncastorfiles > 0) {
+			/* Depending in req_type we contact NameServer accordingly */
+			for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
+				struct Cns_filestat Cnsfilestat;
+
+				switch (req_type) {
+				case STAGEIN:
+					setegid(stgreq.gid);
+					seteuid(stgreq.uid);
+					if (Cns_statx(hsmfiles[ihsmfiles], &Cnsfilestat, &(hsmfileids[ihsmfiles])) != 0) {
+						sendrep (rpfd, MSG_ERR, "STG02 - %s : %s\n", hsmfiles[ihsmfiles], sstrerror(serrno));
+						c = USERR;
+						setegid(0);
+						seteuid(0);
+						goto reply;
+					}
+					setegid(0);
+					seteuid(0);
+					hsmmtimes[ihsmfiles] = Cnsfilestat.mtime;
+					break;
+				case STAGEWRT:
+				case STAGEOUT:
+					setegid(stgreq.gid);
+					seteuid(stgreq.uid);
+					if (Cns_creatx(hsmfiles[ihsmfiles], S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP, &(hsmfileids[ihsmfiles])) != 0) {
+						sendrep (rpfd, MSG_ERR, "STG02 - %s : %s\n", hsmfiles[ihsmfiles], sstrerror(serrno));
+						c = USERR;
+						setegid(0);
+						seteuid(0);
+						goto reply;
+					}
+					setegid(0);
+					seteuid(0);
+					hsmmtimes[ihsmfiles] = time(0);
+					break;
+				default:
+					break;
+				}
+			}
 		}
 	} else {
 		if ((req_type == STAGEIN &&
@@ -519,8 +579,9 @@ void procioreq(req_type, req_data, clienthost)
 
 	/* building catalog entries */
 
-	ihsmfiles = 0;
+	ihsmfiles = -1;
 	for (i = 0; i < nbdskf; i++) {
+		ihsmfiles++;
 		if (Uflag && i > 0) break;
 		if (stgreq.t_or_d == 't') {
 			if (fid) {
@@ -540,7 +601,11 @@ void procioreq(req_type, req_data, clienthost)
 				goto reply;
 			}
 		} else if (stgreq.t_or_d == 'm') {
-			strcpy(stgreq.u1.m.xfile,hsmfiles[ihsmfiles++]);
+			strcpy(stgreq.u1.m.xfile,hsmfiles[ihsmfiles]);
+		} else if (stgreq.t_or_d == 'h') {
+			strcpy(stgreq.u1.h.xfile,hsmfiles[ihsmfiles]);
+			strcpy(stgreq.u1.h.server,hsmfileids[ihsmfiles].server);
+			stgreq.u1.h.fileid = hsmfileids[ihsmfiles].fileid;
 		}
 		if (nread) {
 			if ((p = strchr (nread, ':')) != NULL) *p = '\0';
@@ -614,6 +679,19 @@ void procioreq(req_type, req_data, clienthost)
 					stglogit (func, STG02, stcp->ipath, "stat", rfio_serror());
 					if (delfile (stcp, 0, 1, 1, "not on disk", 0, 0, 0) < 0) {
 						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
+										 "rfio_unlink", rfio_serror());
+						c = SYERR;
+						goto reply;
+					}
+					goto notstaged;
+				} else if (stgreq.t_or_d == 'h' && hsmmtimes[ihsmfiles] > stcp->a_time) {
+					/*
+					 * CASTOR HSM File exists but has a modified time higher than what
+					 * is known to the stager.
+					 */
+					if (delfile (stcp, 0, 1, 1, "larger req", stgreq.uid, stgreq.gid, 0) < 0) {
+						sendrep (rpfd, MSG_ERR,
+										 STG02, stcp->ipath,
 										 "rfio_unlink", rfio_serror());
 						c = SYERR;
 						goto reply;
@@ -922,11 +1000,13 @@ void procioreq(req_type, req_data, clienthost)
 	} else if (wqp->nb_subreqs > wqp->nb_waiting_on_req)
 		fork_exec_stager (wqp);
 	if (hsmfiles != NULL) free(hsmfiles);
+	if (hsmfileids != NULL) free(hsmfileids);
 	return;
  reply:
 	if (fseq_list) free (fseq_list);
 	free (argv);
 	if (hsmfiles != NULL) free(hsmfiles);
+	if (hsmfileids != NULL) free(hsmfileids);
 #if SACCT
 	stageacct (STGCMDC, stgreq.uid, stgreq.gid, clienthost,
 						 reqid, req_type, 0, c, NULL, "");
@@ -987,6 +1067,8 @@ void procputreq(req_data, clienthost)
 	int nhsmfiles = 0;
 	int ihsmfiles;
 	int jhsmfiles;
+	int nhpssfiles = 0;
+	int ncastorfiles = 0;
 
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);  /* login name */
@@ -1101,8 +1183,6 @@ void procputreq(req_data, clienthost)
 	/* In case of hsm request verify the exact mapping between number of hsm files */
 	/* and number of disk files.                                                   */
 	if (nhsmfiles > 0) {
-		int nhpssfiles = 0;
-		int ncastorfiles = 0;
 
 		/* We also check that there is NO redundant hsm files (multiple equivalent ones) */
 		for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
@@ -1134,9 +1214,8 @@ void procputreq(req_data, clienthost)
 			sendrep (rpfd, MSG_ERR, "HPSS (%d occurence%s) and CASTOR (%d occurence%s) files on the same command-line is not allowed\n",nhpssfiles,nhpssfiles > 1 ? "s" : "",ncastorfiles,ncastorfiles > 1 ? "s" : "");
 			c = USERR;
 			goto reply;
-		}
-		/* More than one HPSS not supported for the moment */
-		if (nhpssfiles > 1) {
+		} else if (nhpssfiles > 1) {
+			/* More than one HPSS not supported for the moment */
 			sendrep (rpfd, MSG_ERR, "More than one HPSS (%d occurence%s) files on the same command-line is not allowed\n",nhpssfiles,nhpssfiles > 1 ? "s" : "");
 			c = USERR;
 			goto reply;
@@ -1191,9 +1270,11 @@ void procputreq(req_data, clienthost)
 		for (stcp = stcs; stcp < stce; stcp++) {
 			if (stcp->reqid == 0) break;
 			if (Mflag) {
-				if (stcp->t_or_d != 'm') continue;
+				if (stcp->t_or_d != 'm' && stcp->t_or_d != 'h') continue;
+				if (stcp->t_or_d != 'm' && nhpssfiles > 0) continue;
+				if (stcp->t_or_d != 'h' && ncastorfiles > 0) continue;
 				for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
-					if (strcmp (stcp->u1.m.xfile, hsmfiles[ihsmfiles]) != 0) continue;
+					if (strcmp (stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile, hsmfiles[ihsmfiles]) != 0) continue;
 					hsmfilesstcp[found++] = stcp;
 					break;
 				}
@@ -1369,6 +1450,19 @@ isstaged(cur, p, poolflag, poolname)
 			}
 		} else if (cur->t_or_d == 'm') {
 			if (strcmp (cur->u1.m.xfile, stcp->u1.m.xfile)) continue;
+		} else if (cur->t_or_d == 'h') {
+			if (strcmp (cur->u1.h.server, stcp->u1.h.server) != 0 || cur->u1.h.fileid != stcp->u1.h.fileid) continue;
+			/* Invariants alreaydy exist and the same - was this file renamed ? */
+			if (strcmp (cur->u1.h.xfile, stcp->u1.h.xfile)) {
+				sendrep(rpfd, MSG_ERR, STG101, cur->u1.h.xfile, stcp->u1.h.xfile);
+				strcpy(stcp->u1.h.xfile,cur->u1.h.xfile);
+#ifdef USECDB
+				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
+#endif
+				savereqs ();
+			}
 		} else {
 			if (strcmp (cur->u1.d.xfile, stcp->u1.d.xfile)) continue;
 		}

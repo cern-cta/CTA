@@ -1,4 +1,4 @@
-/* $Id: Cstage_db.des,v 1.10 2000/05/19 14:21:16 jdurand Exp $ */
+/* $Id: Cstage_db.des,v 1.11 2000/05/29 07:56:30 jdurand Exp $ */
 
 /* ======================================================= */
 /* CASTOR STAGER Database Description File - Cdb Interface */
@@ -82,6 +82,29 @@ database stage {         /* STAGE Database Description */
       reqid;
     };
   };
+  table stgcat_hpss {
+    int reqid;           /* Request (unique) ID */
+    int  nread;          /* Number of blocks/records to be copied */
+    int  size;           /* Size in MB of data to be staged */
+    int nbaccesses;      /* Number of accesses */
+    int status;          /* Current status */
+    uid_t uid;           /* User uid */
+    gid_t gid;           /* Used gid */
+    mode_t mask;         /* Creation mask */
+    off_t actual_size;   /* Current size */
+    time_t c_time;       /* Creation time */
+    time_t a_time;       /* Access time */
+    char poolname[CA_MAXPOOLNAMELEN+1];
+    char ipath[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+2];
+    char group[CA_MAXGRPNAMELEN+1]; /* group name */
+    char user[CA_MAXUSRNAMELEN+1]; /* login name */
+    char keep;           /* Keep data on disk after successful stagewrt */
+    char xfile[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+2];
+    unique key stgcat_hpss_per_reqid {
+      order none;
+      reqid;
+    };
+  };
   table stgcat_hsm {
     int reqid;           /* Request (unique) ID */
     int  nread;          /* Number of blocks/records to be copied */
@@ -100,6 +123,8 @@ database stage {         /* STAGE Database Description */
     char user[CA_MAXUSRNAMELEN+1]; /* login name */
     char keep;           /* Keep data on disk after successful stagewrt */
     char xfile[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+2];
+    char server[(CA_MAXHOSTNAMELEN+1)];
+    u_signed64 fileid;
     unique key stgcat_hsm_per_reqid {
       order none;
       reqid;

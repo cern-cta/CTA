@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.22 2000/05/12 12:47:49 jdurand Exp $
+ * $Id: procqry.c,v 1.23 2000/05/29 07:56:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.22 $ $Date: 2000/05/12 12:47:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.23 $ $Date: 2000/05/29 07:56:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -359,8 +359,8 @@ void procqryreq(req_data, clienthost)
 #endif
 		}
 		if (mfile) {
-			if (stcp->t_or_d != 'm') continue;
-			p = stcp->u1.m.xfile;
+			if (stcp->t_or_d != 'm' && stcp->t_or_d != 'h') continue;
+			p = stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile;
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 			if (regexec (&preg, p, 1, &pmatch, 0)) continue;
 #else
@@ -481,9 +481,9 @@ void procqryreq(req_data, clienthost)
 					goto reply;
 				}
 			}
-		} else {	/* stcp->t_or_d == 'm' */
-			if ((q = strrchr (stcp->u1.m.xfile, '/')) == NULL)
-				q = stcp->u1.m.xfile;
+		} else {	/* stcp->t_or_d == 'm' or stcp->t_or_d == 'h'*/
+			if ((q = strrchr (stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile, '/')) == NULL)
+				q = stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile;
 			else
 				q++;
 			if (xflag) {
@@ -516,6 +516,12 @@ void procqryreq(req_data, clienthost)
 			} else if (stcp->t_or_d == 'm') {
 				if (sendrep (rpfd, MSG_OUT, " %s\n",
 										 stcp->u1.m.xfile) < 0) {
+					c = SYERR;
+					goto reply;
+				}
+			} else if (stcp->t_or_d == 'h') {
+				if (sendrep (rpfd, MSG_OUT, " %s\n",
+										 stcp->u1.h.xfile) < 0) {
 					c = SYERR;
 					goto reply;
 				}
@@ -625,8 +631,8 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, xfi
 #endif
 		}
 		if (mfile) {
-			if (stcp->t_or_d != 'm') continue;
-			p = stcp->u1.m.xfile;
+			if (stcp->t_or_d != 'm' && stcp->t_or_d != 'h') continue;
+			p = stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile;
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 			if (regexec (&preg, p, 1, &pmatch, 0)) continue;
 #else
@@ -708,8 +714,8 @@ print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, xfile,
 #endif
 		}
 		if (mfile) {
-			if (stcp->t_or_d != 'm') continue;
-			p = stcp->u1.m.xfile;
+			if (stcp->t_or_d != 'm' && stcp->t_or_d != 'h') continue;
+			p = stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile;
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 			if (regexec (&preg, p, 1, &pmatch, 0)) continue;
 #else

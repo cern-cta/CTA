@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.23 2000/05/23 10:40:55 jdurand Exp $
+ * $Id: poolmgr.c,v 1.24 2000/05/29 07:56:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.23 $ $Date: 2000/05/23 10:40:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.24 $ $Date: 2000/05/29 07:56:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1349,9 +1349,11 @@ int migpoolfiles(migr_p)
     }
 
     /* We limit the number of files per request to 50 so that we should not overload the buffer */
+    /*
     if (nfiles_per_request > 50) {
       nfiles_per_request = 50;
     }
+    */
 
     if ((files = (stage_hsm_t *) calloc(nfiles_per_request,sizeof(stage_hsm_t))) == NULL) {
       stglogit(func, "### calloc error (%s)\n", strerror(errno));
@@ -1372,15 +1374,15 @@ int migpoolfiles(migr_p)
           switch (iclass) {
           case 0:
             /* Not an HSM */
-            nextloop = (ISHPSS(scc->stcp->u1.m.xfile) || ISCASTOR(scc->stcp->u1.m.xfile));
+            nextloop = (scc->stcp->t_or_d == 'm' || scc->stcp->t_or_d == 'h');
             break;
           case 1:
             /* HPSS */
-            nextloop = (! ISHPSS(scc->stcp->u1.m.xfile));
+            nextloop = (scc->stcp->t_or_d != 'm');
             break;
           case 2:
             /* CASTOR */
-            nextloop = (! ISCASTOR(scc->stcp->u1.m.xfile));
+            nextloop = (scc->stcp->t_or_d != 'h');
             break;
           }
           if (nextloop) continue;
@@ -1391,17 +1393,17 @@ int migpoolfiles(migr_p)
             switch (itype) {
             case 0:
               /* User level */
-              nextloop = (! isuserlevel(scc->stcp->u1.m.xfile));
+              nextloop = (! isuserlevel(scc->stcp->t_or_d == 'm' ? scc->stcp->u1.m.xfile : scc->stcp->u1.h.xfile));
               break;
             case 1:
               /* Exp. level */
-              nextloop = isuserlevel(scc->stcp->u1.m.xfile);
+              nextloop = isuserlevel(scc->stcp->t_or_d == 'm' ? scc->stcp->u1.m.xfile : scc->stcp->u1.h.xfile);
               break;
             }
             if (nextloop) continue;
           }
 
-          files[nfiles].xfile = scc->stcp->u1.m.xfile;
+          files[nfiles].xfile = (scc->stcp->t_or_d == 'm' ? scc->stcp->u1.m.xfile : scc->stcp->u1.h.xfile);
           if (nfiles > 0) {
             files[nfiles - 1].next = &(files[nfiles]);
           }
