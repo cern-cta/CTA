@@ -10,6 +10,7 @@ COMM  Default rules for Make          Linux
 #define linux 1
 #define HasRanlib	YES
 CC += -fPIC -D_LARGEFILE64_SOURCE
+CXX += -fPIC -D_LARGEFILE64_SOURCE
 MTCCFLAGS = -pthread -DCTHREAD_LINUX -D_THREAD_SAFE -D_REENTRANT
 MTLDLIBS =
 MTLDFLAGS = -pthread
