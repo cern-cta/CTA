@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: regression_tests.c,v $ $Revision: 1.1 $ $Date: 2004/03/01 16:18:20 $ CERN IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: regression_tests.c,v $ $Revision: 1.2 $ $Date: 2004/03/17 14:45:52 $ CERN IT/ADC Olof Barring";
 #endif /* lint */
 
 
@@ -139,8 +139,8 @@ int main(int argc, char *argv[]) {
   }
   seed = 1;
   n = 128;
-  initstate(seed,state1,n);
-  setstate(state1);
+  initstate(seed,(char *)state1,n);
+  setstate((char *)state1);
 
   
   DO(2) {
