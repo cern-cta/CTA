@@ -1,8 +1,11 @@
 /*
- * $Id: rfio.h,v 1.4 1999/12/09 13:46:19 jdurand Exp $
+ * $Id: rfio.h,v 1.5 1999/12/14 14:35:06 jdurand Exp $
  *
  * $Log: rfio.h,v $
- * Revision 1.4  1999/12/09 13:46:19  jdurand
+ * Revision 1.5  1999/12/14 14:35:06  jdurand
+ * Added IRIX5 in the negative test to know if struct iovec is to be defined
+ *
+ * Revision 1.4  1999-12-09 14:46:19+01  jdurand
  * Fixed copyright and sccsid
  *
  * Revision 1.3  1999-12-09 10:49:47+01  baran
@@ -435,7 +438,7 @@ struct rfiostat	{
 /*
  * Define structure for preseek requests.
  */
-#if !defined(SOLARIS) && !(defined(__osf__) && defined(__alpha)) && !defined(HPUX1010) && !defined(IRIX6) && !defined(linux) && !defined(AIX42)
+#if !defined(SOLARIS) && !(defined(__osf__) && defined(__alpha)) && !defined(HPUX1010) && !defined(IRIX6) && !defined(linux) && !defined(AIX42) && !defined(IRIX5)
 struct iovec {
 	int iov_base ;
 	int iov_len ; 
