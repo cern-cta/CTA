@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.56 $ $Date: 2000/03/16 13:46:16 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.57 $ $Date: 2000/03/16 14:30:02 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -268,7 +268,7 @@ static int LockForAppend(const int lock) {
         /*
          * There cannot be more waiters than the number of disk IO threads.
          */
-        wait_list = (int *)calloc(1,proc_stat.nb_diskIO);
+        wait_list = (int *)calloc(proc_stat.nb_diskIO,sizeof(int));
         if ( wait_list == NULL ) {
             proc_cntl.DiskFileAppend = lock;
             (void)Cthread_cond_broadcast_ext(proc_cntl.DiskFileAppend_lock);
