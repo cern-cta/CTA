@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2004/11/18 15:42:03 $ $Author: bcouturi $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2004/11/19 21:41:33 $ $Author: bcouturi $
  *
  *
  *
@@ -113,7 +113,7 @@ const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementStri
 
 /// SQL statement for scheduleSubRequest
 const std::string castor::db::ora::OraStagerSvc::s_updateAndCheckSubRequestStatementString =
-  "BEGIN updateAndCheckSubRequest(:1, :2, :3) END;";
+  "BEGIN updateAndCheckSubRequest(:1, :2, :3); END;";
 
 // -----------------------------------------------------------------------
 // OraStagerSvc
