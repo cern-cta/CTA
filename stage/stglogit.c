@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.42 2002/10/19 08:16:19 jdurand Exp $
+ * $Id: stglogit.c,v 1.43 2003/09/08 13:08:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.42 $ $Date: 2002/10/19 08:16:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.43 $ $Date: 2003/09/08 13:08:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -18,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.42 $ $Date: 20
 #include <fcntl.h>
 #include <string.h>
 #include <time.h>
-#include <varargs.h>
+#include <stdarg.h>
 #ifndef _WIN32
 #include <unistd.h>
 #endif
@@ -34,11 +34,8 @@ struct flag2name {
 	char *name;
 };
 
-int stglogit(va_alist) va_dcl
-{
+int stglogit(char *func, char *msg, ...) {
 	va_list args;
-	char *func;
-	char *msg;
 	char prtbuf[PRTBUFSZ];
 	struct tm *tm;
 	time_t current_time;
@@ -46,9 +43,7 @@ int stglogit(va_alist) va_dcl
 	int save_errno;
 
 	save_errno = errno;
-	va_start (args);
-	func = va_arg (args, char *);
-	msg = va_arg (args, char *);
+	va_start(args, msg);
 	time (&current_time);		/* Get current time */
 	tm = localtime (&current_time);
 #if (defined(__osf__) && defined(__alpha))
@@ -317,11 +312,8 @@ int stglogopenflags(func,flags)
 	return(0);
 }
 
-int stgmiglogit(va_alist) va_dcl
-{
+int stgmiglogit(char *func, char *msg, ...) {
 	va_list args;
-	char *func;
-	char *msg;
 	char prtbuf[PRTBUFSZ];
 	struct tm *tm;
 	time_t current_time;
@@ -329,9 +321,7 @@ int stgmiglogit(va_alist) va_dcl
 	int save_errno;
 
 	save_errno = errno;
-	va_start (args);
-	func = va_arg (args, char *);
-	msg = va_arg (args, char *);
+	va_start(args, msg);
 	time (&current_time);		/* Get current time */
 	tm = localtime (&current_time);
 #if (defined(__osf__) && defined(__alpha))

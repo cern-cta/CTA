@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.30 2003/04/28 10:01:56 jdurand Exp $
+ * $Id: sendrep.c,v 1.31 2003/09/08 13:08:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.30 $ $Date: 2003/04/28 10:01:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.31 $ $Date: 2003/09/08 13:08:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -21,7 +21,7 @@ static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.30 $ $Date: 200
 #include <unistd.h>
 #include <netinet/in.h>
 #endif
-#include <varargs.h>
+#include <stdarg.h>
 #include "marshall.h"
 #include "net.h"
 #include "osdep.h"
@@ -30,11 +30,10 @@ static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.30 $ $Date: 200
 extern char *sys_errlist[];
 #endif
 int iserrmsg _PROTO((char *));
-int sendrep _PROTO(());
-extern int stglogit _PROTO(());
+int sendrep _PROTO((int *, int, ...));
+extern int stglogit _PROTO((char *, char *, ...));
 
-int sendrep(va_alist) va_dcl
-{
+int sendrep(int *rpfd, int rep_type, ...) {
 #define PROTOBUG 2 /* BUG IN THE PROTOCOL when t_or_d == 'm' , for STGMAGIC <= 2 : need more space */
 	va_list args;
 	char *file1, *file2;
@@ -55,11 +54,9 @@ int sendrep(va_alist) va_dcl
 	char *q;
 	char *rbp, *sav_rbp_magic;
 	int rc;
-	int rep_type;
 	int req_type;
 	char repbuf[REPBUFSZ];
 	int repsize;
-	int *rpfd;
 	static char savebuf[256];
 	static int saveflag = 0;
 	u_signed64 uniqueid;
@@ -67,8 +64,7 @@ int sendrep(va_alist) va_dcl
 	int save_serrno = serrno;
 	int save_errno = errno;
 
-	va_start (args);
-	rpfd = va_arg (args, int *);
+	va_start(args, rep_type);
 
 	if (*rpfd > 0) {
 		func = func_sendrep;
@@ -76,7 +72,6 @@ int sendrep(va_alist) va_dcl
 		func = func_stgdaemon;
 	}
 
-	rep_type = va_arg (args, int);
 	rbp = (rep_type == API_STCP_OUT ? api_stcp_out : (rep_type == API_STPP_OUT ? api_stpp_out : repbuf));
 	sav_rbp_magic = rbp;
 	marshall_LONG (rbp, STGMAGIC);
