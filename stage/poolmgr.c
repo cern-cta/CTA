@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.208 2002/06/06 17:11:14 jdurand Exp $
+ * $Id: poolmgr.c,v 1.209 2002/06/13 05:41:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.208 $ $Date: 2002/06/06 17:11:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.209 $ $Date: 2002/06/13 05:41:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1520,6 +1520,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 						sendrep(rpfd, MSG_OUT, "\t\twaiting_on_req=%d\n", wfp->waiting_on_req);
 						sendrep(rpfd, MSG_OUT, "\t\tupath=%s\n", wfp->upath);
 						sendrep(rpfd, MSG_OUT, "\t\tsize_to_recall=%s\n", u64tostr(wfp->size_to_recall, tmpbuf1, 0));
+						sendrep(rpfd, MSG_OUT, "\t\thsmsize=%s\n", u64tostr(wfp->hsmsize, tmpbuf1, 0));
 						sendrep(rpfd, MSG_OUT, "\t\tnb_segments=%d\n", wfp->nb_segments);
 						sendrep(rpfd, MSG_OUT, "\t\tsize_yet_recalled=%s\n", u64tostr(wfp->size_yet_recalled, tmpbuf2, 0));
 

@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.181 2002/05/31 10:08:57 jdurand Exp $
+ * $Id: procio.c,v 1.182 2002/06/13 05:41:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.181 $ $Date: 2002/05/31 10:08:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.182 $ $Date: 2002/06/13 05:41:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1764,6 +1764,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			  wfp->waiting_on_req = savereqid;
 			  strcpy (wfp->upath, upath);
 			  wfp->size_to_recall = size_to_recall;      /* Can be zero */
+			  wfp->hsmsize = hsmsize;                    /* Can be zero */
 			  wfp->size_yet_recalled = 0;
 			  strcpy (wqp->pool_user, pool_user);
 			  wqp->nb_waiting_on_req++;
@@ -1860,6 +1861,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					save_subreqid++;
 				}
 				wfp->size_to_recall = size_to_recall;   /* Can be zero */
+				wfp->hsmsize = hsmsize;                 /* Can be zero */
 				wfp->size_yet_recalled = 0;
 				strcpy (wfp->upath, upath);
 				strcpy (wqp->pool_user, pool_user);
@@ -2074,6 +2076,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					  save_subreqid++;
 				  }
 				  wfp->size_to_recall = size_to_recall;   /* Can be zero */
+				  wfp->hsmsize = hsmsize;                 /* Can be zero */
 				  wfp->size_yet_recalled = 0;
 				  strcpy (wfp->upath, upath);
 				  strcpy (wqp->pool_user, pool_user);

@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.109 2002/06/11 07:41:16 jdurand Exp $
+ * $Id: procupd.c,v 1.110 2002/06/13 05:41:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.109 $ $Date: 2002/06/11 07:41:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.110 $ $Date: 2002/06/13 05:41:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1048,6 +1048,14 @@ procupdreq(req_type, magic, req_data, clienthost)
 	if (wfp->size_yet_recalled >= wfp->size_to_recall) {
 		/* Note : wfp->size_to_recall is zero if it not a recall of CASTOR file(s) */
 		/* (always the case it it is not a recall of CASTOR file) */
+		/* Case of CASTOR files : if size recalled is exactly size (uncompress) on tape we have LIMBYSZ because */
+		/* the mover do no readahead, e.g. the mover do not know it is the end of the file - only us do know about */
+		/* that */
+		/* Note that wfp->hsmsize is set only for recall of HSM files, CASTOR in particular */
+		if ((wfp->hsmsize) > 0 && (wfp->size_yet_recalled >= wfp->hsmsize) && (rc == LIMBYSZ)) {
+			stglogit(func, "Forcing rc=0\n");
+			rc = 0;
+		}
 		p_cmd = s_cmd[stcp->status & 0xF];
 		if (IS_RC_OK(rc))
 			p_stat = "succeeded";
