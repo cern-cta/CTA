@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/07/29 15:08:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/07/30 06:58:36 $ $Author: sponcec3 $
  *
  *
  *
@@ -104,13 +104,14 @@ void castor::BaseCnvSvc::createRep(castor::IAddress* address,
                                    bool autocommit)
   throw (castor::exception::Exception) {
   // If no object, nothing to create
-  if (0 == object) return;
-  // Look for an adapted converter
-  // The converter is always valid if no exception is thrown
-  IConverter* conv = converter(object->type());
-  // convert
-  return conv->createRep(address, object,
-                         alreadyDone, autocommit);
+  if (0 != object) {
+    // Look for an adapted converter
+    // The converter is always valid if no exception is thrown
+    IConverter* conv = converter(object->type());
+    // convert
+    conv->createRep(address, object,
+                    alreadyDone, autocommit);
+  }
 }
 
 // -----------------------------------------------------------------------
@@ -123,13 +124,14 @@ void castor::BaseCnvSvc::updateRep(castor::IAddress* address,
                                    bool recursive)
   throw (castor::exception::Exception) {
   // If no object, nothing to update
-  if (0 == object) return;
-  // Look for an adapted converter
-  // The converter is always valid if no exception is thrown
-  IConverter* conv = converter(object->type());
-  // convert
-  return conv->updateRep(address, object,
-                         alreadyDone, autocommit, recursive);
+  if (0 != object) {
+    // Look for an adapted converter
+    // The converter is always valid if no exception is thrown
+    IConverter* conv = converter(object->type());
+    // convert
+    conv->updateRep(address, object,
+                    alreadyDone, autocommit, recursive);
+  }
 }
 
 // -----------------------------------------------------------------------
