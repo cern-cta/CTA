@@ -1,5 +1,5 @@
 /*
- * $Id: buildupath.c,v 1.15 2001/11/30 11:26:18 jdurand Exp $
+ * $Id: buildupath.c,v 1.16 2001/12/05 12:28:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.15 $ $Date: 2001/11/30 11:26:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.16 $ $Date: 2001/12/05 12:28:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -24,15 +24,23 @@ static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.15 $ $Date: 
 #include "Castor_limits.h"
 #include "stage_constants.h"
 #include "stage_messages.h"
+#include "Cglobals.h"
 
 #if !defined(linux)
 extern char *sys_errlist[];
 #endif
 
+static int cwd_key = -1;
+static int hostname_key = -1;
+static int initialized_key = -1;
+static int nfsroot_key = -1;
+
+/*
 static char cwd[256];
 static char hostname[CA_MAXHOSTNAMELEN + 1];
 static int initialized = 0;
 static char nfsroot[MAXPATH];
+*/
 
 int  DLL_DECL  build_linkname _PROTO((char *, char *, int, int));
 int  DLL_DECL  build_Upath _PROTO((int, char *, int, int));
@@ -46,8 +54,19 @@ static int init_cwd_hostname()
 	int n = 0;
 	char *p;
 	char *func = "init_cwd_hostname";
+	char *cwd = NULL;
+	char *hostname = NULL;
+	int *initialized = NULL;
+	char *nfsroot = NULL;
 
-	initialized = 1;
+	Cglobals_get (&cwd_key, (void **)&cwd, (size_t) 256);
+	Cglobals_get (&hostname_key, (void **)&hostname, (size_t) (CA_MAXHOSTNAMELEN + 1));
+	Cglobals_get (&initialized_key, (void **)&initialized, sizeof(int));
+	Cglobals_get (&nfsroot_key, (void **)&nfsroot, (size_t) (MAXPATH));
+
+	if ((cwd == NULL) || (hostname == NULL) || (initialized == NULL) || (nfsroot == NULL)) return(SYERR);
+
+	*initialized = 1;
 	p = getconfent ("RFIO", "NFS_ROOT", 0);
 #ifdef NFSROOT
 	if (p == NULL) p = NFSROOT;
@@ -59,9 +78,9 @@ static int init_cwd_hostname()
 		nfsroot[0] = '\0';
 	gethostname (hostname, CA_MAXHOSTNAMELEN + 1);
 #if defined(_WIN32)
-	p = getcwd (cwd, sizeof(cwd));
+	p = getcwd (cwd, (size_t) 256);
 #else
-	while ((p = getcwd (cwd, sizeof(cwd))) == NULL && errno == ETIMEDOUT) {
+	while ((p = getcwd (cwd, (size_t) 256)) == NULL && errno == ETIMEDOUT) {
 		if (n++ == 0)
 			stage_errmsg(func, STG02, "", "getcwd", sys_errlist[errno]);
 		stage_sleep (RETRYI);
@@ -86,6 +105,15 @@ static int resolvelinks(argvi, buf, buflen, req_type)
 	char linkbuf[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	char *p, *q;
 	char *func = "resolvelinks";
+	char *cwd = NULL;
+	char *hostname = NULL;
+	char *nfsroot = NULL;
+
+	Cglobals_get (&cwd_key, (void **)&cwd, (size_t) 256);
+	Cglobals_get (&hostname_key, (void **)&hostname, (size_t) (CA_MAXHOSTNAMELEN + 1));
+	Cglobals_get (&nfsroot_key, (void **)&nfsroot, (size_t) (MAXPATH));
+
+	if ((cwd == NULL) || (hostname == NULL) || (nfsroot == NULL)) return(-1);
 
 	if ((p = strstr (argvi, ":/")) != NULL) {
 		strncpy (dsksrvr, argvi, p - argvi);
@@ -163,8 +191,19 @@ int DLL_DECL build_linkname(argvi, path, size, req_type)
 	int c;
 	char *p;
 	char *func = "build_linkname";
+	char *cwd = NULL;
+	char *hostname = NULL;
+	int *initialized = NULL;
+	char *nfsroot = NULL;
 
-	if (! initialized && (c = init_cwd_hostname())) return (c);
+	Cglobals_get (&cwd_key, (void **)&cwd, (size_t) 256);
+	Cglobals_get (&hostname_key, (void **)&hostname, (size_t) (CA_MAXHOSTNAMELEN + 1));
+	Cglobals_get (&initialized_key, (void **)&initialized, sizeof(int));
+	Cglobals_get (&nfsroot_key, (void **)&nfsroot, (size_t) (MAXPATH));
+
+	if ((cwd == NULL) || (hostname == NULL) || (initialized == NULL) || (nfsroot == NULL)) return(SYERR);
+
+	if (! *initialized && (c = init_cwd_hostname())) return (c);
 	if (*argvi != '/' && strstr (argvi, ":/") == NULL) {
 		if ((! *nfsroot ||
 				 strncmp (cwd, nfsroot, strlen (nfsroot)) ||
@@ -218,8 +257,19 @@ int DLL_DECL build_Upath(fun, path, size, req_type)
 	char buf[16];
 	int c;
 	char *func = "build_Upath";
+	char *cwd = NULL;
+	char *hostname = NULL;
+	int *initialized = NULL;
+	char *nfsroot = NULL;
 
-	if (! initialized && (c = init_cwd_hostname())) return (c);
+	Cglobals_get (&cwd_key, (void **)&cwd, (size_t) 256);
+	Cglobals_get (&hostname_key, (void **)&hostname, (size_t) (CA_MAXHOSTNAMELEN + 1));
+	Cglobals_get (&initialized_key, (void **)&initialized, sizeof(int));
+	Cglobals_get (&nfsroot_key, (void **)&nfsroot, (size_t) (MAXPATH));
+
+	if ((cwd == NULL) || (hostname == NULL) || (initialized == NULL) || (nfsroot == NULL)) return(SYERR);
+
+	if (! *initialized && (c = init_cwd_hostname())) return (c);
 #if _IBMESA
 	sprintf (buf, "FILE.FT%d.F01", fun);
 #else
