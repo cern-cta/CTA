@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.166 2002/01/28 18:30:10 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.167 2002/01/30 10:25:09 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.166 $ $Date: 2002/01/28 18:30:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.167 $ $Date: 2002/01/30 10:25:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -254,7 +254,7 @@ extern void checkpoolspace _PROTO(());
 extern int cleanpool _PROTO((char *));
 extern int get_create_file_option _PROTO((char *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
-extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int));
+extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int));
 extern int upd_fileclasses _PROTO(());
 extern char *getconfent();
 extern void check_delaymig _PROTO(());
@@ -730,7 +730,7 @@ int main(argc,argv)
 			}
 		}
 		if (stcp->t_or_d == 'h') {
-			upd_fileclass(NULL,stcp,0);
+			upd_fileclass(NULL,stcp,0,0);
 		}
 		if ((((stcp->status & 0xF) == STAGEIN) &&
 				 ((stcp->status & 0xF0) != STAGED)) ||

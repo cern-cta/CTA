@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.22 2002/01/27 08:52:51 jdurand Exp $
+ * $Id: procfilchg.c,v 1.23 2002/01/30 10:24:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.22 $ $Date: 2002/01/27 08:52:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.23 $ $Date: 2002/01/30 10:24:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -76,7 +76,7 @@ extern int retenp_on_disk _PROTO((int));
 extern int max_setretenp _PROTO((char *));
 extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *, int));
 extern int savereqs _PROTO(());
-extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int));
+extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int));
 extern void redomigpool _PROTO(());
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern u_signed64 findblocksize _PROTO((char *));
@@ -389,7 +389,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 				if (stcp->poolname[0]) continue;
 			} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
 			if (strcmp(stcp->u1.h.xfile, hsmfile) != 0) continue; /* -M */
-			if ((ifileclass = upd_fileclass(NULL,stcp,ISSTAGED(stcp))) < 0) {
+			if ((ifileclass = upd_fileclass(NULL,stcp,ISSTAGED(stcp),0)) < 0) {
 				c = USERR;
 				goto reply;
 			}

@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.93 2002/01/27 08:52:51 jdurand Exp $
+ * $Id: procupd.c,v 1.94 2002/01/30 10:24:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.93 $ $Date: 2002/01/27 08:52:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.94 $ $Date: 2002/01/30 10:24:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -86,7 +86,7 @@ extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 extern void create_link _PROTO((struct stgcat_entry *, char *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern int retenp_on_disk _PROTO((int));
-extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int));
+extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
 extern char *findpoolname _PROTO((char *));
@@ -1191,7 +1191,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				int ifileclass;
 
 				if (stcp->t_or_d == 'h')
-					ifileclass = upd_fileclass(NULL,stcp,0);
+					ifileclass = upd_fileclass(NULL,stcp,0,0);
 				else
 					ifileclass = -1;
 				/*
