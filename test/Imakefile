@@ -42,7 +42,14 @@ Makefiles:
 
 depend:
 	for i in $(SUBDIRS) ;\
-	do (echo " test/$$i:" ; cd $$i ;\
-		$(MAKE) $(MFLAGS) $@ \
-	) ; done ;
+	do (if [ -d $$i ] ;\
+	    then \
+	      (echo " test/$$i:" ; cd $$i ;\
+	      $(MAKE) $(MFLAGS) $@) ;\
+	    else \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;\
+	    fi )\
+	done ;
+
 #endif
