@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.39 2002/10/03 09:48:12 jdurand Exp $
+ * $Id: stagestat.c,v 1.40 2002/10/03 09:49:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.39 $ $Date: 2002/10/03 09:48:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.40 $ $Date: 2002/10/03 09:49:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -725,6 +725,8 @@ int main(argc, argv)
 				/* Explicit non-CASTOR HSM read request */
  				num_fork_exec_stager2++;
 				num_fork_exec_stager_hsm[1]++;
+				break;
+			default:
 				break;
 			}
 			nrecok++;
