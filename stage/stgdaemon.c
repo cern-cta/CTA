@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.204 2002/06/10 15:03:44 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.205 2002/06/14 09:32:07 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.204 $ $Date: 2002/06/10 15:03:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.205 $ $Date: 2002/06/14 09:32:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -359,7 +359,8 @@ int main(argc,argv)
 #endif
 {
 	int c, l;
-	char *clienthost;
+	char *clienthostptr;
+	char clienthost[CA_MAXHOSTNAMELEN+1];
 	int errflg = 0;
 	int foreground = 0;
 	int backlog = 5;
@@ -1167,9 +1168,16 @@ int main(argc,argv)
 			}
 			hp = Cgethostbyaddr((char *)(&from.sin_addr),sizeof(struct in_addr),from.sin_family);
 			if (hp == NULL)
-				clienthost = inet_ntoa (from.sin_addr);
+				clienthostptr = inet_ntoa (from.sin_addr);
 			else
-				clienthost = hp->h_name ;
+				clienthostptr = hp->h_name ;
+
+			if (clienthostptr != NULL) {
+				strncpy(clienthost,clienthostptr,CA_MAXHOSTNAMELEN);
+				clienthost[CA_MAXHOSTNAMELEN] = '\0';
+			} else {
+				strcpy(clienthost,"");
+			}
 			reqid = nextreqid();
 			l = netread_timeout (rqfd, req_hdr, sizeof(req_hdr), STGTIMEOUT);
 			if (l == sizeof(req_hdr)) {
