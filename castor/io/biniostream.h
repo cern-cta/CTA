@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: biniostream.h,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: biniostream.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/01 13:11:48 $ $Author: sponcec3 $
  *
  *
  *
@@ -78,12 +78,12 @@ namespace castor {
       }
 
       biniostream& operator<< (long l) {
-        write((char*)&l, sizeof(long));
+        write((char*)&l, LONGSIZE);
         return *this;
       }
 
       biniostream& operator<< (unsigned long l) {
-        write((char*)&l, sizeof(unsigned long));
+        write((char*)&l, LONGSIZE);
         return *this;
       }
 
@@ -160,12 +160,12 @@ namespace castor {
       }
 
       biniostream& operator>> (long& l) {
-        read((char*)&l, sizeof(long));
+        read((char*)&l, LONGSIZE);
         return *this;
       }
 
       biniostream& operator>> (unsigned long& l) {
-        read((char*)&l, sizeof(unsigned long));
+        read((char*)&l, LONGSIZE);
         return *this;
       }
 
