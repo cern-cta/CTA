@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_updatetape.c,v $ $Revision: 1.1 $ $Date: 1999/12/15 11:26:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_updatetape.c,v $ $Revision: 1.2 $ $Date: 1999/12/17 14:41:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_updatetape - update tape volume content information */
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_updatetape.c,v $ $Revision: 1.1 $ $Da
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_updatetape(int TransactionId, u_signed64 BytesWritten, int CompressionFactor, int FilesWritten, int Flags)
+vmgr_updatetape(const char *vid, u_signed64 BytesWritten, int CompressionFactor, int FilesWritten, int Flags)
 {
 	int c;
 	char func[16];
@@ -60,7 +60,7 @@ vmgr_updatetape(int TransactionId, u_signed64 BytesWritten, int CompressionFacto
  
 	marshall_LONG (sbp, uid);
 	marshall_LONG (sbp, gid);
-	marshall_LONG (sbp, TransactionId);
+	marshall_STRING (sbp, vid);
 	marshall_HYPER (sbp, BytesWritten);
 	marshall_WORD (sbp, CompressionFactor);
 	marshall_WORD (sbp, FilesWritten);
