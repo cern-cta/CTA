@@ -1,5 +1,5 @@
 /*
- * $Id: procping.c,v 1.11 2002/05/21 08:06:42 jdurand Exp $
+ * $Id: procping.c,v 1.12 2002/05/29 13:19:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.11 $ $Date: 2002/05/21 08:06:42 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.12 $ $Date: 2002/05/29 13:19:54 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -169,6 +169,7 @@ void procpingreq(req_type, magic, req_data, clienthost)
 #endif
 	}
 	reply:
+	if (argv != NULL) free (argv);
 	sendrep (rpfd, STAGERC, STAGEPING, magic, rc);
 	return;
 }
