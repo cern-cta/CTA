@@ -1,5 +1,5 @@
 /*
- * $Id: rtcp_SendRecv.c,v 1.3 2004/08/06 15:03:07 motiakov Exp $
+ * $Id: rtcp_SendRecv.c,v 1.4 2005/01/14 10:49:22 obarring Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -10,7 +10,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_SendRecv.c,v $ $Revision: 1.3 $ $Date: 2004/08/06 15:03:07 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_SendRecv.c,v $ $Revision: 1.4 $ $Date: 2005/01/14 10:49:22 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -598,10 +598,11 @@ int rtcp_Connect(
                  SOCKET *connect_socket,
                  char *client_host,
                  int *client_port,
-		 int whereto        /* Indicates whether we are connecting to the server or to the client */
+                 int whereto        /* Indicates whether we are connecting to the server or to the client */
                  ) {
   struct hostent *hp = NULL;
   struct sockaddr_in sin ; /* Internet address */
+  int keepalive=1;
 
 #ifdef CSEC
   uid_t Csec_uid;
@@ -656,6 +657,13 @@ int rtcp_Connect(
     serrno = SECOMERR;
     return(-1);
   }
+  (void)setsockopt(
+                   *connect_socket,
+                   SOL_SOCKET,
+                   SO_KEEPALIVE,
+                   (char *)&keepalive,
+                   sizeof(int)
+                   );
 
 #ifdef CSEC
   if (whereto == RTCP_CONNECT_TO_CLIENT) { /* We are the server */
@@ -677,20 +685,20 @@ int rtcp_Connect(
     }
     else {
       if (Csec_server_get_client_username(&sec_ctx, &Csec_uid, &Csec_gid) != NULL) {
-	rtcp_log(LOG_ERR,"rtcp_Connect(): CSEC: Client is %s (%d/%d)\n",
-		 Csec_server_get_client_username(&sec_ctx, NULL, NULL),
-		 Csec_uid,
-		 Csec_gid);
-	Csec_service_type = -1;
+        rtcp_log(LOG_ERR,"rtcp_Connect(): CSEC: Client is %s (%d/%d)\n",
+                 Csec_server_get_client_username(&sec_ctx, NULL, NULL),
+                 Csec_uid,
+                 Csec_gid);
+        Csec_service_type = -1;
       }
       else {
-	closesocket(*connect_socket);
-	*connect_socket = INVALID_SOCKET;
-	serrno = SECOMERR;
-	return(-1);
+        closesocket(*connect_socket);
+        *connect_socket = INVALID_SOCKET;
+        serrno = SECOMERR;
+        return(-1);
       }
     }
-
+    
   } else { /* We are the client */
     if (Csec_client_init_context(&sec_ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
       rtcp_log(LOG_ERR, "rtcp_Connect() Could not init context\n");
@@ -699,7 +707,7 @@ int rtcp_Connect(
       serrno = ESEC_CTX_NOT_INITIALIZED;
       return(-1);
     }
-			
+    
     if(Csec_client_establish_context(&sec_ctx, *connect_socket)< 0) {
       rtcp_log(LOG_ERR, "rtcp_Connect() Could not establish context\n");
       closesocket(*connect_socket);
@@ -707,11 +715,11 @@ int rtcp_Connect(
       serrno = ESEC_NO_CONTEXT;
       return(-1);
     }
-
+    
     p = Csec_client_get_service_name(&sec_ctx);
     n = Csec_client_get_service_type(&sec_ctx);
     Csec_trace ("rtcp_Connect", "Service name = %s, type = %d\n",p, n);
-  
+    
     Csec_clear_context(&sec_ctx);
   }
 #endif
