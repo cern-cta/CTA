@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.30 2001/03/05 13:34:40 jdurand Exp $
+ * $Id: stagein.c,v 1.31 2001/03/05 13:36:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.30 $ $Date: 2001/03/05 13:34:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.31 $ $Date: 2001/03/05 13:36:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -924,7 +924,7 @@ int tmscheck(vid, vsn, dgn, den, lbl, fseq1, fseq2)
       *fseq1 = (int) strtol(tmpfseq, &dp, 10);
       if ((*fseq1 == LONG_MIN) || (*fseq1 == LONG_MAX) || (*dp != '\0')) {
         *fseq1 = -1;
-		fprintf (stderr, STG02, tmpfseq, strtol, strerror(errno));
+		fprintf (stderr, STG02, tmpfseq, "strtol", strerror(errno));
 		errflg++;
       }
       memcpy(tmpfseq, tmrepbuf + 84, 5);
@@ -932,7 +932,7 @@ int tmscheck(vid, vsn, dgn, den, lbl, fseq1, fseq2)
       *fseq2 = (int) strtol(tmpfseq, &dp, 10);
       if ((*fseq2 == LONG_MIN) || (*fseq2 == LONG_MAX) || (*dp != '\0')) {
         *fseq2 = -1;
-		fprintf (stderr, STG02, tmpfseq, strtol, strerror(errno));
+		fprintf (stderr, STG02, tmpfseq, "strtol", strerror(errno));
 		errflg++;
       }
     }
