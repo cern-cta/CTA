@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.89 2000/09/20 15:40:26 jdurand Exp $
+ * $Id: stager.c,v 1.90 2000/09/27 08:13:13 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.89 $ $Date: 2000/09/20 15:40:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.90 $ $Date: 2000/09/27 08:13:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -80,7 +80,7 @@ int CheckRetry _PROTO((tape_list_t *));
 
 char func[16];                      /* This executable name in logging */
 int Aflag;                          /* Allocation flag */
-int Migrationflag;                  /* Migration flag */
+int StageIDflag;                    /* Forced Stager uid:gid, if > 0 this is automatic migration, < 0 explicit migration */
 int concat_off_fseq;                /* Fseq where begin concatenation off */
 int nbcat_ent = -1;                 /* Number of catalog entries in stdin */
 int nbcat_ent_current = -1;         /* Number of catalog entries currently processed - used in callback */
@@ -198,7 +198,7 @@ int save_euid, save_egid;
 #define SETTAPEEID(thiseuid,thisegid) {          \
 	setegid(0);                                  \
 	seteuid(0);                                  \
-	if (Migrationflag) {                         \
+	if (StageIDflag != 0) {                      \
 		setegid(stpasswd->pw_gid);               \
 		seteuid(stpasswd->pw_uid);               \
 	} else {                                     \
@@ -210,7 +210,7 @@ int save_euid, save_egid;
 #define SETTAPEID(thisuid,thisgid) {             \
 	setegid(0);                                  \
 	seteuid(0);                                  \
-	if (Migrationflag) {                         \
+	if (StageIDflag != 0) {                      \
 		setgid(stpasswd->pw_gid);                \
 		setuid(stpasswd->pw_uid);                \
 	} else {                                     \
@@ -359,9 +359,9 @@ int main(argc, argv)
 #ifdef STAGER_DEBUG
 	sendrep(rpfd, MSG_ERR, "[DEBUG] Aflag = %d\n", Aflag);
 #endif
-	Migrationflag = atoi (argv[7]);
+	StageIDflag = atoi (argv[7]);
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] Migrationflag = %d\n", Migrationflag);
+	sendrep(rpfd, MSG_ERR, "[DEBUG] StageIDflag = %d\n", StageIDflag);
 #endif
 	concat_off_fseq = atoi (argv[8]);
 #ifdef STAGER_DEBUG
@@ -438,7 +438,7 @@ int main(argc, argv)
 		}
 	}
 
-	if (Migrationflag) {
+	if (StageIDflag != 0) {
       struct stgcat_entry *stcp;
       char currentnamespace[CA_MAXPATHLEN+1];
       char previousnamespace[CA_MAXPATHLEN+1];
@@ -542,7 +542,7 @@ int main(argc, argv)
 	}
 
 	/* Redirect RTCOPY log message directly to user's console */
-	rtcp_log = (void (*) _PROTO((int, CONST char *, ...))) (Migrationflag ? &stager_migmsg : &stager_usrmsg);
+	rtcp_log = (void (*) _PROTO((int, CONST char *, ...))) (StageIDflag > 0 ? &stager_migmsg : &stager_usrmsg);
 
 	if (stcs->t_or_d == 't') {
 
@@ -2646,7 +2646,7 @@ void stager_log_callback(level,message)
 	sendrep(rpfd,MSG_ERR,"%s",message);
 #else
 	/* In migration mode we want to make sure that everything is logged */
-	sendrep(rpfd, Migrationflag ? MSG_ERR : ((level == LOG_INFO) ? MSG_OUT : MSG_ERR),"%s",message);
+	sendrep(rpfd, StageIDflag > 0 ? MSG_ERR : ((level == LOG_INFO) ? MSG_OUT : MSG_ERR),"%s",message);
 #endif
 	RESTORE_EID;
 }
