@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpconfig.c,v $ $Revision: 1.5 $ $Date: 2002/09/30 14:52:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpconfig.c,v $ $Revision: 1.6 $ $Date: 2002/12/16 16:01:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpconfig - configure tape drive up/down */
@@ -13,9 +13,9 @@ static char sccsid[] = "@(#)$RCSfile: tpconfig.c,v $ $Revision: 1.5 $ $Date: 200
 #include <sys/types.h>
 #include "Ctape.h"
 #include "Ctape_api.h"
+#include "sacct.h"
 #include "serrno.h"
 #if SACCT
-#include "sacct.h"
 struct confrsn {
 	char *text;
 	int code;
