@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.19 $ $Date: 2004/06/30 17:42:15 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.20 $ $Date: 2004/07/05 14:23:56 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -19,10 +19,10 @@ SYMTABNAM = __.SYMDEF
 
 COMM Libraries to include in SharedLibraryTargetName(shift)
 LIBRARIES0 = $(COMMONLIB) $(RFIOLIB) $(SYSREQLIB) $(HPSSLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHCLIENTLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB) $(EXPERTLIB)
-LIBRARIES2 = $(RHORALIB)
-SHLIBREQLIBS2 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L . -lshift
-LIBRARIES3 = $(RHPROTOLIB)
-SHLIBREQLIBS3 = $(SHLIBREQLIBS)
+LIBRARIES1 = $(RHORALIB)
+SHLIBREQLIBS1 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L . -lshift
+LIBRARIES2 = $(RHPROTOLIB)
+SHLIBREQLIBS2 = $(SHLIBREQLIBS) -L. -lshift
 
 ALL0=SharedLibraryTargetName(shift)
 #if BuildOraCpp
@@ -67,7 +67,16 @@ libshift.sl libshift.so:     $(LIBRARIES0)
 	@(cd tmp; $(CXX) $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS))
 	@-rm -rf tmp
 
-libcastorCommonOra.so: $(LIBRARIES2)
+libcastorCommonOra.so: $(LIBRARIES1)
+	@echo " making $@ in `pwd`"
+	@-rm -rf tmp
+	@mkdir tmp
+	@for i in $(LIBRARIES1) ;\
+	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
+	@(cd tmp; $(CXX) $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS1))
+	@-rm -rf tmp
+
+libcastorProto.so: $(LIBRARIES2)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
@@ -76,20 +85,11 @@ libcastorCommonOra.so: $(LIBRARIES2)
 	@(cd tmp; $(CXX) $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS2))
 	@-rm -rf tmp
 
-libcastorProto.so: $(LIBRARIES3)
-	@echo " making $@ in `pwd`"
-	@-rm -rf tmp
-	@mkdir tmp
-	@for i in $(LIBRARIES3) ;\
-	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	@(cd tmp; $(CXX) $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS3))
-	@-rm -rf tmp
-
 shift.dll:	$(LIBRARIES0)
 	@echo  making $@ in CurDir
 	link /dll /noentry /nologo /out:$@ $**
 
-libcastorCommonOra.dll:	$(LIBRARIES2)
+libcastorCommonOra.dll:	$(LIBRARIES1)
 	@echo  making $@ in CurDir
 	link /dll /noentry /nologo /out:$@ $**
 
