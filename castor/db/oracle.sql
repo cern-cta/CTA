@@ -297,9 +297,7 @@ BEGIN
   FROM DiskCopy, SubRequest
   WHERE SubRequest.id = rsubreqId
    AND SubRequest.castorfile = DiskCopy.castorfile
-   AND DiskCopy.status != 3 -- DISKCCOPY_DELETED
-   AND DiskCopy.status != 4 -- DISKCCOPY_FAILED
-   AND DiskCopy.status != 7 -- DISKCCOPY_INVALID
+   AND DiskCopy.status IN (0, 1, 2, 5, 6) -- STAGED, WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT
    AND ROWNUM < 2;
  IF 2 = stat -- DISKCCOPY_WAITTAPERECALL
  THEN
@@ -360,7 +358,7 @@ BEGIN
     AND DiskCopy.filesystem = fileSystemId
     AND DiskCopy.status IN (0, 1, 2, 5, 6); -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
  -- If found local one, check whether to wait on it
- IF rstatus IN (2, 5) THEN -- WAITTAPERECALL, WAITFS, Make SubRequest Wait
+ IF rstatus IN (1, 2, 5) THEN -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, Make SubRequest Wait
    makeSubRequestWait(srId, dci);
    dci := 0;
    rpath := '';
@@ -509,7 +507,7 @@ BEGIN
  DELETE from TapeCopy WHERE castorFile = cfId;
  -- set DiskCopies to INVALID
  UPDATE DiskCopy SET status = 7 -- INVALID
-  WHERE castorFile = cfId AND status NOT IN (3, 4, 7); -- FAILED, DELETED, INVALID
+  WHERE castorFile = cfId AND status = 1; -- STAGED
  -- create new DiskCopy
  SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
  buildPathFromFileId(fid, nh, rpath);

@@ -305,20 +305,17 @@ namespace castor {
          * a DiskCopy is created with status DISKCOPY_WAIDISK2DISKCOPY.
          * This diskCopy is returned and the emptyFile content is
          * set to true.
-         *  - one DiskCopy in DISKCOPY_WAITTAPERECALL status :
+         *  - one DiskCopy in DISKCOPY_WAITTAPERECALL, DISKCOPY_WAITFS
+         * or DISKCOPY_WAITDISK2DISKCOPY status :
          * the SubRequest is linked to the one recalling and
          * put in SUBREQUEST_WAITSUBREQ status. Null pointer is
          * returned.
-         *  - no DiskCopy on the selected FileSystem but some
-         * in status DISKCOPY_STAGEOUT or DISKCOPY_STAGED on other
-         * FileSystems : a new DiskCopy is created with status
-         * DISKCOPY_WAITDISK2DISKCOPY. It is returned and the
-         * sources parameter is filed with the DiskCopies found
-         * on the non selected FileSystems.
-         *  - one DiskCopy on the selected FileSystem in
-         * DISKCOPY_WAITDISKTODISKCOPY status : the SubRequest
-         * has to wait until the end of the copy.
-         * The DiskCopy found is returned, sources remains empty.
+         *  - no valid (STAGE*, WAIT*) DiskCopy on the selected
+         * FileSystem but some in status DISKCOPY_STAGEOUT or
+         * DISKCOPY_STAGED on other FileSystems : a new DiskCopy
+         * is created with status DISKCOPY_WAITDISK2DISKCOPY.
+         * It is returned and the sources parameter is filed
+         * with the DiskCopies found on the non selected FileSystems.
          *  - one DiskCopy on the selected FileSystem in
          * DISKCOPY_STAGEOUT or DISKCOPY_STAGED status :
          * the SubRequest is ready, the DiskCopy is returned and
@@ -331,15 +328,13 @@ namespace castor {
          * of a non null pointer, the data access will have to
          * wait for a disk to disk copy if the returned DiskCopy
          * is in DISKCOPY_WAITDISKTODISKCOPY status. This
-         * disk to disk copy is the responsability of the caller
-         * if sources is not empty.
+         * disk to disk copy is the responsability of the caller.
          * @param sources this is a list of DiskCopies that
-         * can be used as source of a Disk to Disk copy. If
-         * this list is not empty, the Disk to Disk copy must
-         * be performed. If it is empty, the copy is performed
-         * by someone else and the caller should just wait
-         * for its end. Note that the DiskCopies returned in
-         * sources must be deallocated by the caller.
+         * can be used as source of a Disk to Disk copy. This
+         * list is never empty when diskCopy has status
+         * DISKCOPY_DISK2DISKCOPY and always empty otherwise.
+         * Note that the DiskCopies returned in sources must be
+         * deallocated by the caller.
          * @param emptyFile whether the resulting diskCopy
          * deals with the recall of an empty file
          * @return the IClient object to use for client reply
