@@ -69,7 +69,7 @@ depend:
 	makedepend $(INCLUDES) $(RHBIN_SRCS) 2> /dev/null
 #endif
 
-install: FileName($(BIN),rhserver)
+install: FileName($(BIN),gcDaemon)
 
 InstallProgram(gcDaemon,$(BIN),root,bin,755)
 
