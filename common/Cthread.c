@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.35 2000/04/11 07:45:55 jdurand Exp $
+ * $Id: Cthread.c,v 1.36 2000/04/11 07:48:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.35 $ $Date: 2000/04/11 07:45:55 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.36 $ $Date: 2000/04/11 07:48:25 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cthread_api.h>
@@ -1036,7 +1036,14 @@ int DLL_DECL Cthread_Create(file, line, startroutine, arg)
   /*
    * Need to increase the thread stack on DUNIX and IRIX
    */
+#if (defined(__osf__) && defined(__alpha))
+  n = 256*1024;
+#elif (defined(IRIX5) || defined(IRIX6) || defined(IRIX64))
   n = 512*1024;
+#else
+  /* Any default that can the #define's did not catched ? */
+  n = 256*1024;
+#endif
   if ((n = pthread_attr_setstacksize(&attr,n)) != 0) {
       pthread_attr_destroy(&attr);
       free(starter);
