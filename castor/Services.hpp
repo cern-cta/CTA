@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/08/19 10:12:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/08/19 13:28:40 $ $Author: sponcec3 $
  *
  *
  *
@@ -79,7 +79,7 @@ namespace castor {
     /**
      * create foreign representation from a C++ Object.
      * Does not touch the objects it refers to. An exception
-     * will be send if ana object that is needed (because
+     * will be send if an object that is needed (because
      * refered) is not present in the database
      * @param address where to store the representation of
      * the object
@@ -89,8 +89,8 @@ namespace castor {
      * @exception Exception throws an Exception in case of error
      */
     void createRepNoRec(IAddress* address,
-                   IObject* object,
-                   bool autocommit = true)
+                        IObject* object,
+                        bool autocommit = true)
       throw (castor::exception::Exception);
 
     /**

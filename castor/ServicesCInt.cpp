@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/08/18 16:02:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2004/08/19 13:28:39 $ $Author: sponcec3 $
  *
  *
  *
@@ -76,6 +76,28 @@ extern "C" {
     if (0 == *svc) {
       serrno = SEINTERNAL;
       svcs->errorMsg = "Unable to locate/create service";
+      return -1;
+    }
+    return 0;
+  }
+
+  //------------------------------------------------------------------------------
+  // C_Services_createRepNoRec
+  //------------------------------------------------------------------------------
+  int C_Services_createRepNoRec(C_Services_t* svcs,
+                                castor::IAddress* address,
+                                castor::IObject* object,
+                                char autocommit = 1) {
+    if (0 == svcs->svcs) {
+      errno = EINVAL;
+      svcs->errorMsg = "Empty context";
+      return -1;
+    }
+    try {
+      svcs->svcs->createRepNoRec(address, object, autocommit);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      svcs->errorMsg = e.getMessage().str();
       return -1;
     }
     return 0;
