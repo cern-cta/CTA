@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.5 $ $Date: 1999/12/13 13:42:51 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.6 $ $Date: 1999/12/17 12:47:34 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -135,6 +135,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
          * Wait until it is full
          */
         while (databufs[i]->flag == BUFFER_EMPTY) {
+            databufs[i]->nb_waiters++;
             TP_STATUS(RTCP_PS_WAITCOND);
             rc = Cthread_cond_wait_ext(databufs[i]->lock);
             TP_STATUS(RTCP_PS_NOBLOCKING);
@@ -147,6 +148,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                 }
                 return(-1);
             }
+            databufs[i]->nb_waiters--;
             if ( rtcpd_CheckProcError() & RTCP_FAILED ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
@@ -354,15 +356,17 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
         /*
          * Release lock on this buffer
          */
-        rc = Cthread_cond_broadcast_ext(databufs[i]->lock);
-        if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"MemoryToTape() Cthread_cond_broadcast_ext(): %s\n",
-                sstrerror(serrno));
-            if ( (convert & FIXVAR) != 0 ) {
-                if ( convert_buffer != NULL ) free(convert_buffer);
-                if ( convert_context != NULL ) free(convert_context);
+        if ( databufs[i]->nb_waiters > 0 ) {
+            rc = Cthread_cond_broadcast_ext(databufs[i]->lock);
+            if ( rc == -1 ) {
+                rtcp_log(LOG_ERR,"MemoryToTape() Cthread_cond_broadcast_ext(): %s\n",
+                    sstrerror(serrno));
+                if ( (convert & FIXVAR) != 0 ) {
+                    if ( convert_buffer != NULL ) free(convert_buffer);
+                    if ( convert_context != NULL ) free(convert_context);
+                }
+                return(-1);
             }
-            return(-1);
         }
         rc = Cthread_mutex_unlock_ext(databufs[i]->lock);
         if ( rc == -1 ) {
@@ -394,15 +398,17 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
             /*
              * Signal to main thread that we changed cntl info
              */
-            rc = Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
-            if ( rc == -1 ) {
-                rtcp_log(LOG_ERR,"MemoryToTape() Cthread_cond_broadcast_ext(proc_cntl): %s\n",
-                    sstrerror(serrno));
-                if ( (convert & FIXVAR) != 0 ) {
-                    if ( convert_buffer != NULL ) free(convert_buffer);
-                    if ( convert_context != NULL ) free(convert_context);
+            if ( proc_cntl.nb_reserved_bufs < nb_bufs ) {
+                rc = Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
+                if ( rc == -1 ) {
+                    rtcp_log(LOG_ERR,"MemoryToTape() Cthread_cond_broadcast_ext(proc_cntl): %s\n",
+                        sstrerror(serrno));
+                    if ( (convert & FIXVAR) != 0 ) {
+                        if ( convert_buffer != NULL ) free(convert_buffer);
+                        if ( convert_context != NULL ) free(convert_context);
+                    }
+                    return(-1);
                 }
-                return(-1);
             }
 
             rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
@@ -548,6 +554,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
         while (databufs[i]->flag == BUFFER_FULL) {
             DEBUG_PRINT((LOG_DEBUG,"TapeToMemory() wait on buffer[%d]->flag=%d\n",
                 i,databufs[i]->flag));
+            databufs[i]->nb_waiters++;
             TP_STATUS(RTCP_PS_WAITCOND);
             rc = Cthread_cond_wait_ext(databufs[i]->lock);
             TP_STATUS(RTCP_PS_NOBLOCKING);
@@ -556,6 +563,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                     sstrerror(serrno));
                 return(-1);
             }
+            databufs[i]->nb_waiters--;
             if ( rtcpd_CheckProcError() & RTCP_FAILED ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
@@ -796,11 +804,13 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
         }
         if ( databufs[i]->flag == BUFFER_FULL ) 
             DEBUG_PRINT((LOG_DEBUG,"TapeToMemory() flag buffer %d full\n",i);
-        rc = Cthread_cond_broadcast_ext(databufs[i]->lock));
-        if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"TapeToMemory() Cthread_cond_broadcast_ext(): %s\n",
-                sstrerror(serrno));
-            return(-1);
+        if ( databufs[i]->nb_waiters > 0 ) {
+            rc = Cthread_cond_broadcast_ext(databufs[i]->lock));
+            if ( rc == -1 ) {
+                rtcp_log(LOG_ERR,"TapeToMemory() Cthread_cond_broadcast_ext(): %s\n",
+                    sstrerror(serrno));
+                return(-1);
+            }
         }
         rc = Cthread_mutex_unlock_ext(databufs[i]->lock);
         if ( rc == -1 ) {

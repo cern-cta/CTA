@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.9 $ $Date: 1999/12/15 07:31:22 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.10 $ $Date: 1999/12/17 12:47:28 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -457,6 +457,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
         while ( databufs[i]->flag == BUFFER_EMPTY ) {
             DEBUG_PRINT((LOG_DEBUG,"MemoryToDisk() wait on buffer[%d]->flag=%d\n",
                     i,databufs[i]->flag));
+            databufs[i]->nb_waiters++;
             DK_STATUS(RTCP_PS_WAITCOND);
             rc = Cthread_cond_wait_ext(databufs[i]->lock);
             DK_STATUS(RTCP_PS_NOBLOCKING);
@@ -467,6 +468,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                 if ( f77conv_context != NULL ) free(f77conv_context);
                 return(-1);
             }
+            databufs[i]->nb_waiters--;
             if ( rtcpd_CheckProcError() & RTCP_FAILED ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
@@ -639,13 +641,15 @@ static int MemoryToDisk(int disk_fd, int pool_index,
         /*
          * Signal and release this buffer
          */
-        rc = Cthread_cond_broadcast_ext(databufs[i]->lock);
-        if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"MemoryToDisk() Cthread_cond_broadcast_ext(): %s\n",
-                sstrerror(serrno));
-            if ( convert_buffer != NULL ) free(convert_buffer);
-            if ( f77conv_context != NULL ) free(f77conv_context);
-            return(-1);
+        if ( databufs[i]->nb_waiters > 0 ) {
+            rc = Cthread_cond_broadcast_ext(databufs[i]->lock);
+            if ( rc == -1 ) {
+                rtcp_log(LOG_ERR,"MemoryToDisk() Cthread_cond_broadcast_ext(): %s\n",
+                    sstrerror(serrno));
+                if ( convert_buffer != NULL ) free(convert_buffer);
+                if ( f77conv_context != NULL ) free(f77conv_context);
+                return(-1);
+            }
         }
         rc = Cthread_mutex_unlock_ext(databufs[i]->lock);
         if ( rc == -1 ) {
@@ -765,6 +769,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
          * Wait until it is empty. 
          */
         while ( databufs[i]->flag == BUFFER_FULL) {
+            databufs[i]->nb_waiters++;
             DK_STATUS(RTCP_PS_WAITCOND);
             rc = Cthread_cond_wait_ext(databufs[i]->lock);
             DK_STATUS(RTCP_PS_NOBLOCKING);
@@ -773,6 +778,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
                     sstrerror(serrno));
                 return(-1);
             }
+            databufs[i]->nb_waiters--;
             if ( rtcpd_CheckProcError() & RTCP_FAILED ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
@@ -919,11 +925,13 @@ static int DiskToMemory(int disk_fd, int pool_index,
         /*
          * Signal and release this buffer
          */
-        rc = Cthread_cond_broadcast_ext(databufs[i]->lock);
-        if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"DiskToMemory() Cthread_cond_broadcast_ext(): %s\n",
-                sstrerror(serrno));
-            return(-1);
+        if ( databufs[i]->nb_waiters > 0 ) {
+            rc = Cthread_cond_broadcast_ext(databufs[i]->lock);
+            if ( rc == -1 ) {
+                rtcp_log(LOG_ERR,"DiskToMemory() Cthread_cond_broadcast_ext(): %s\n",
+                    sstrerror(serrno));
+                return(-1);
+            }
         }
 
         rc = Cthread_mutex_unlock_ext(databufs[i]->lock);
