@@ -1336,8 +1336,10 @@ int     flags;
  /*BC First parse the node name to check whether it contains the port*/
    {
      int rc;
+     int tmpport;
+     
 
-     rc = rfio_nodeHasPort(node, tmphost, &port);
+     rc = rfio_nodeHasPort(node, tmphost, &tmpport);
      if (rc == 1) {
        TRACE(2, "rfio", "data_rfio_connect: Hostname includes port(%s, %s, %d)",
              node, tmphost, port);
