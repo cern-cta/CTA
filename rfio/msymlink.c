@@ -1,5 +1,5 @@
 /*
- * $Id: msymlink.c,v 1.8 2002/02/26 08:02:25 jdurand Exp $
+ * $Id: msymlink.c,v 1.9 2002/03/06 10:25:35 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.8 $ $Date: 2002/02/26 08:02:25 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.9 $ $Date: 2002/03/06 10:25:35 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -64,7 +64,7 @@ int DLL_DECL rfio_msymlink(n1,file2)
 #if ! defined(_WIN32)
       rc = symlink(n1,filename) ;
 #else
-    { serrno = SEOPNOTSUP; status = -1;}
+    { serrno = SEOPNOTSUP; rc = -1;}
 #endif
     rfio_errno = 0;
     END_TRACE();
