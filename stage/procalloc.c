@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.20 2000/10/27 14:04:31 jdurand Exp $
+ * $Id: procalloc.c,v 1.21 2000/12/12 14:34:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.20 $ $Date: 2000/10/27 14:04:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.21 $ $Date: 2000/12/12 14:34:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -35,16 +35,15 @@ static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.20 $ $Date: 2
 #include <serrno.h>
 #include "osdep.h"
 #include "Cgrp.h"
+#include "Cgetopt.h"
 
-extern char *optarg;
-extern int optind;
 extern char defpoolname[CA_MAXPOOLNAMELEN + 1];
 extern char func[16];
 extern int reqid;
 extern int rpfd;
 extern struct stgcat_entry *stce;	/* end of stage catalog */
 extern struct stgcat_entry *stcs;	/* start of stage catalog */
-extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, char *, char *));
+extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, char *, char *));
 extern struct stgcat_entry *newreq _PROTO(());
 #ifdef USECDB
 extern struct stgdb_fd dbfd;
@@ -102,12 +101,9 @@ void procallocreq(req_data, clienthost)
 		goto reply;
 	}
 	strcpy (stgreq.group, gr->gr_name);
-#ifdef linux
-	optind = 0;
-#else
-	optind = 1;
-#endif
-	while ((c = getopt (nargs, argv, "Gh:Pp:s:U:u:")) != EOF) {
+	Coptind = 1;
+	Copterr = 0;
+	while ((c = Cgetopt (nargs, argv, "Gh:Pp:s:U:u:")) != -1) {
 		switch (c) {
 		case 'G':
 			break;
@@ -117,22 +113,22 @@ void procallocreq(req_data, clienthost)
 			Pflag++;
 			break;
 		case 'p':
-			if (isvalidpool (optarg)) {
-				strcpy (stgreq.poolname, optarg);
+			if (isvalidpool (Coptarg)) {
+				strcpy (stgreq.poolname, Coptarg);
 			} else {
-				sendrep (rpfd, MSG_ERR, STG32, optarg);
+				sendrep (rpfd, MSG_ERR, STG32, Coptarg);
 				errflg++;
 			}
 			break;
 		case 's':
-			stgreq.size = strtol (optarg, &dp, 10);
+			stgreq.size = strtol (Coptarg, &dp, 10);
 			if (*dp != '\0' || stgreq.size > 2047 || stgreq.size <= 0) {
 				sendrep (rpfd, MSG_ERR, STG06, "-s");
 				errflg++;
 			}
 			break;
 		case 'u':
-			pool_user = optarg;
+			pool_user = Coptarg;
 			break;
 		case 'U':
 			Uflag++;
@@ -151,15 +147,15 @@ void procallocreq(req_data, clienthost)
 	if (pool_user == NULL)
 		pool_user = "stage";
 
-	nbdskf = nargs - optind;
+	nbdskf = nargs - Coptind;
 	if (Uflag && nbdskf == 2)
 		Upluspath = 1;
 
 	/* building catalog entry */
 
 	stgreq.t_or_d = 'a';
-	strcpy (stgreq.u1.d.xfile, argv[optind]);
-	strcpy (upath, argv[optind]);
+	strcpy (stgreq.u1.d.xfile, argv[Coptind]);
+	strcpy (upath, argv[Coptind]);
 	stcp = newreq ();
 	memcpy (stcp, &stgreq, sizeof(stgreq));
 	stcp->reqid = reqid;
@@ -169,8 +165,10 @@ void procallocreq(req_data, clienthost)
 	stcp->nbaccesses++;
 	if ((c = build_ipath (upath, stcp, pool_user)) < 0) {
 		stcp->status |= WAITING_SPC;
-		if (!wqp) wqp = add2wq (clienthost, user,
-								stcp->uid, stcp->gid, clientpid,
+		if (!wqp) wqp = add2wq (clienthost,
+								user, stcp->uid, stcp->gid,
+								user, stcp->uid, stcp->gid,
+								clientpid,
 								Upluspath, reqid, STAGEALLOC, nbdskf, &wfp, NULL, NULL);
 		wqp->Pflag = Pflag;
 		wfp->subreqid = stcp->reqid;
@@ -179,7 +177,7 @@ void procallocreq(req_data, clienthost)
 		wfp++;
 		if (Upluspath) {
 			wfp->subreqid = stcp->reqid;
-			strcpy (wfp->upath, argv[optind+1]);
+			strcpy (wfp->upath, argv[Coptind+1]);
 		}
 		strcpy (wqp->pool_user, pool_user);
 		strcpy (wqp->waiting_pool, stcp->poolname);
@@ -196,8 +194,8 @@ void procallocreq(req_data, clienthost)
 		if (*upath && strcmp (stcp->ipath, upath))
 			create_link (stcp, upath);
 		if (Upluspath &&
-				strcmp (stcp->ipath, argv[optind+1]))
-			create_link (stcp, argv[optind+1]);
+				strcmp (stcp->ipath, argv[Coptind+1]))
+			create_link (stcp, argv[Coptind+1]);
 	}
 #ifdef USECDB
 	if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
@@ -274,12 +272,9 @@ void procgetreq(req_data, clienthost)
 		c = SYERR;
 		goto reply;
 	}
-#ifdef linux
-	optind = 0;
-#else
-	optind = 1;
-#endif
-	while ((c = getopt (nargs, argv, "Gh:Pp:U:u:")) != EOF) {
+	Coptind = 1;
+	Copterr = 0;
+	while ((c = Cgetopt (nargs, argv, "Gh:Pp:U:u:")) != -1) {
 		switch (c) {
 		case 'G':
 			break;
@@ -289,10 +284,10 @@ void procgetreq(req_data, clienthost)
 			Pflag++;
 			break;
 		case 'p':
-			if (isvalidpool (optarg)) {
-				strcpy (poolname, optarg);
+			if (isvalidpool (Coptarg)) {
+				strcpy (poolname, Coptarg);
 			} else {
-				sendrep (rpfd, MSG_ERR, STG32, optarg);
+				sendrep (rpfd, MSG_ERR, STG32, Coptarg);
 				errflg++;
 			}
 			break;
@@ -300,7 +295,7 @@ void procgetreq(req_data, clienthost)
 			Uflag++;
 			break;
 		case 'u':
-			pool_user = optarg;
+			pool_user = Coptarg;
 			break;
 		}
 	}
@@ -314,10 +309,10 @@ void procgetreq(req_data, clienthost)
 	if (pool_user == NULL)
 		pool_user = "stage";
 
-	nbdskf = nargs - optind;
+	nbdskf = nargs - Coptind;
 	if (Uflag && nbdskf == 2)
 		Upluspath = 1;
-	strcpy (upath, argv[optind]);
+	strcpy (upath, argv[Coptind]);
 	if ((basename = strrchr (upath, '/')) == NULL)
 		basename = upath;
 	else
@@ -362,8 +357,8 @@ void procgetreq(req_data, clienthost)
 	if (*upath && strcmp (stcp->ipath, upath))
 		create_link (stcp, upath);
 	if (Upluspath &&
-			strcmp (stcp->ipath, argv[optind+1]))
-		create_link (stcp, argv[optind+1]);
+			strcmp (stcp->ipath, argv[Coptind+1]))
+		create_link (stcp, argv[Coptind+1]);
 	savereqs ();
 	c = 0;
  reply:
