@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.39 $ $Release$ $Date: 2004/08/06 12:44:41 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.40 $ $Release$ $Date: 2004/08/09 08:46:46 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.39 $ $Date: 2004/08/06 12:44:41 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.40 $ $Date: 2004/08/09 08:46:46 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -198,6 +198,15 @@ static int updateOldStgCat(tape,file)
   if ( (filereq->convert & NOF77CW) != 0 ) {
     if ( *filereq->recfm == 'U' ) strcat(recfm,",bin");
     else if ( *filereq->recfm == 'F' ) strcat(recfm,",-f77");
+  }
+
+  /*
+   * Don't do any stage_updc when tpwrite hit EOT (avoid PUT_FAILED)
+   */
+  if ( (tapereq->mode == WRITE_ENABLE) &&
+       (filereq->cprc == -1) && (filereq->err.errorcode == ENOSPC) ) {
+    rtcp_log(LOG_DEBUG,"updateOldStgCat() prevent stage_updc_filcp() for EOT on write\n");
+    return(0);
   }
   
   rtcp_log(LOG_DEBUG,"updateOldStgCat(): fseq=%d, status=%d, concat=%d, err=%d\n",
