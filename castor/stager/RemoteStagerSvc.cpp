@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/26 10:16:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/29 15:49:39 $ $Author: sponcec3 $
  *
  *
  *
@@ -25,6 +25,8 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/IAddress.hpp"
+#include "castor/IObject.hpp"
 #include "castor/IService.hpp"
 #include "castor/IFactory.hpp"
 #include "castor/SvcFactory.hpp"
@@ -45,8 +47,10 @@
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
-static castor::SvcFactory<castor::stager::RemoteStagerSvc> s_factoryRemoteStagerSvc;
-const castor::IFactory<castor::IService>& RemoteStagerSvcFactory = s_factoryRemoteStagerSvc;
+static castor::SvcFactory<castor::stager::RemoteStagerSvc>
+s_factoryRemoteStagerSvc;
+const castor::IFactory<castor::IService>&
+RemoteStagerSvcFactory = s_factoryRemoteStagerSvc;
 
 // -----------------------------------------------------------------------
 // RemoteStagerSvc
@@ -395,5 +399,18 @@ bool castor::stager::RemoteStagerSvc::updateAndCheckSubRequest
   ex.getMessage()
     << "RemoteStagerSvc implementation is not complete"
     << std::endl << "This method is not supported.";
+  throw ex;
+}
+
+// -----------------------------------------------------------------------
+// updateRep
+// -----------------------------------------------------------------------
+void castor::stager::RemoteStagerSvc::updateRep(IAddress* address,
+                                                IObject* object)
+  throw (castor::exception::Exception) {
+  castor::exception::NotSupported ex;
+  ex.getMessage()
+    << "RemoteStagerSvc implementation does not "
+    << "supported the updateRep method.";
   throw ex;
 }

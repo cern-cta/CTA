@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.22 $ $Release$ $Date: 2004/11/26 10:16:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.23 $ $Release$ $Date: 2004/11/29 15:49:39 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -37,6 +37,10 @@
 #include <list>
 
 namespace castor {
+
+  // Forward declaration
+  class IObject;
+  class IAddress;
 
   namespace stager {
 
@@ -266,6 +270,8 @@ namespace castor {
       /**
        * Schedules a SubRequest on a given FileSystem and
        * return the DiskCopy to use for data access.
+       * Note that deallocation of the DiskCopy is the
+       * responsability of the caller.
        * Depending on the available DiskCopies for the file
        * the SubRequest deals with, we have different cases :
        *  - no DiskCopy at all : a DiskCopy is created with
@@ -295,7 +301,8 @@ namespace castor {
        * this list is not empty, the Disk to Disk copy must
        * be performed. If it is empty, the copy is performed
        * by someone else and the caller should just wait
-       * for its end.
+       * for its end. Note that the DiskCopies returned in
+       * sources must be deallocated by the caller.
        * @return The DiskCopy to use for the data access or
        * a null pointer if the data access will have to wait
        * and there is nothing more to be done. Even in case
@@ -400,6 +407,18 @@ namespace castor {
       (castor::stager::SubRequest *subreq)
         throw (castor::exception::Exception) = 0;
 
+      /**
+       * Updates foreign representation from a C++ Object and
+       * commits the changes.
+       * @param address where the representation of
+       * the object is stored
+       * @param object the object to deal with
+       * @exception Exception throws an Exception in case of error
+       */
+      virtual void updateRep(castor::IAddress* address,
+                             castor::IObject* object)
+        throw (castor::exception::Exception) = 0;
+      
     }; // end of class IStagerSvc
 
   } // end of namespace stager

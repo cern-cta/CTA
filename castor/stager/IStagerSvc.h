@@ -32,6 +32,8 @@
 
 /// Forward declarations for the C world
 struct C_IService_t;
+struct C_IObject_t;
+struct C_IAddress_t;
 struct Cstager_IStagerSvc_t;
 struct Cstager_Tape_t;
 struct Cstager_Stream_t;
@@ -505,5 +507,22 @@ int Cstager_IStagerSvc_updateAndCheckSubRequest
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_SubRequest_t* subreq,
  int* result);
+
+/**
+ * Updates foreign representation from a C++ Object and
+ * commits the changes.
+ * @param stgSvc the IStagerSvc used
+ * @param address where the representation of
+ * the object is stored
+ * @param object the object to deal with
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_updateRep
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct C_IAddress_t* address,
+ struct C_IObject_t* object);
 
 #endif // CASTOR_ISTAGERSVC_H

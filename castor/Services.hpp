@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2004/10/12 14:44:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/29 15:49:38 $ $Author: sponcec3 $
  *
  *
  *
@@ -91,8 +91,7 @@ namespace castor {
       throw (castor::exception::Exception);
 
     /**
-     * Updates foreign representation from a C++ Object
-     * as well as all the objects it refers to and recursively.
+     * Updates foreign representation from a C++ Object.
      * @param address where the representation of
      * the object is stored
      * @param object the object to deal with

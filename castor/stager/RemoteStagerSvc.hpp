@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/26 10:16:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/29 15:49:39 $ $Author: sponcec3 $
  *
  *
  *
@@ -265,7 +265,11 @@ namespace castor {
 
       /**
        * Schedules a SubRequest on a given FileSystem and
-       * return the DiskCopy to use for data access.
+       * return the DiskCopy to use for data access, linked
+       * to the corresponding SubRequest.
+       * Note that deallocation of both the DiskCopy and the
+       * associated SubRequest are the responsability of the
+       * caller.
        * Depending on the available DiskCopies for the file
        * the SubRequest deals with, we have different cases :
        *  - no DiskCopy at all : a DiskCopy is created with
@@ -295,7 +299,8 @@ namespace castor {
        * this list is not empty, the Disk to Disk copy must
        * be performed. If it is empty, the copy is performed
        * by someone else and the caller should just wait
-       * for its end.
+       * for its end. Note that the DiskCopies returned in
+       * sources must be deallocated by the caller.
        * @return The DiskCopy to use for the data access or
        * a null pointer if the data access will have to wait
        * and there is nothing more to be done. Even in case
@@ -303,7 +308,7 @@ namespace castor {
        * wait for a disk to disk copy if the returned DiskCopy
        * is in DISKCOPY_WAITDISKTODISKCOPY status. This
        * disk to disk copy is the responsability of the caller
-       * if sources is not empty.
+       * if sources is not empty. Note that the Disk
        * @exception Exception in case of error
        */
       virtual castor::stager::DiskCopy* scheduleSubRequest
@@ -396,6 +401,18 @@ namespace castor {
        */
       virtual bool updateAndCheckSubRequest
       (castor::stager::SubRequest *subreq)
+        throw (castor::exception::Exception);
+
+      /**
+       * Updates foreign representation from a C++ Object and
+       * commits the changes.
+       * @param address where the representation of
+       * the object is stored
+       * @param object the object to deal with
+       * @exception Exception throws an Exception in case of error
+       */
+      virtual void updateRep(castor::IAddress* address,
+                             castor::IObject* object)
         throw (castor::exception::Exception);
 
     }; // end of class RemoteStagerSvc

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.58 $ $Release$ $Date: 2004/11/29 08:47:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.59 $ $Release$ $Date: 2004/11/29 15:49:38 $ $Author: sponcec3 $
  *
  *
  *
@@ -25,7 +25,8 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/IService.hpp"
+#include "castor/IAddress.hpp"
+#include "castor/IObject.hpp"
 #include "castor/IFactory.hpp"
 #include "castor/SvcFactory.hpp"
 #include "castor/Constants.hpp"
@@ -49,6 +50,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NoEntry.hpp"
+#include "castor/exception/NotSupported.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 #include "castor/stager/TapeCopyStatusCodes.hpp"
 #include "castor/stager/StreamStatusCodes.hpp"
@@ -66,7 +68,8 @@
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
 static castor::SvcFactory<castor::db::ora::OraStagerSvc> s_factoryOraStagerSvc;
-const castor::IFactory<castor::IService>& OraStagerSvcFactory = s_factoryOraStagerSvc;
+const castor::IFactory<castor::IService>&
+OraStagerSvcFactory = s_factoryOraStagerSvc;
 
 //------------------------------------------------------------------------------
 // Static constants initialization
@@ -298,7 +301,8 @@ castor::db::ora::OraStagerSvc::bestFileSystemForSegment
     result->setDiskServer(m_bestFileSystemForSegmentStatement->getString(2));
     result->setMountPoint(m_bestFileSystemForSegmentStatement->getString(3));
     result->setPath(m_bestFileSystemForSegmentStatement->getString(4));
-    result->setId((u_signed64)m_bestFileSystemForSegmentStatement->getDouble(5));
+    result->setId
+      ((u_signed64)m_bestFileSystemForSegmentStatement->getDouble(5));
     // Fill result for CastorFile
     castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
     cnvSvc()->fillObj(&ad, result, OBJ_CastorFile);
@@ -335,7 +339,7 @@ bool castor::db::ora::OraStagerSvc::anyTapeCopyForStream
     m_anyTapeCopyForStreamStatement->setInt(1, searchItem->id());
     oracle::occi::ResultSet *rset =
       m_anyTapeCopyForStreamStatement->executeQuery();
-    bool result = 
+    bool result =
       oracle::occi::ResultSet::END_OF_FETCH == rset->next();
     m_anyTapeCopyForStreamStatement->closeResultSet(rset);
     if (result) {
@@ -410,10 +414,13 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
     diskCopy->setId((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(8));
     castor::stager::CastorFile* castorFile =
       new castor::stager::CastorFile();
-    castorFile->setId((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(9));
-    castorFile->setFileId((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(10));
+    castorFile->setId
+      ((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(9));
+    castorFile->setFileId
+      ((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(10));
     castorFile->setNsHost(m_bestTapeCopyForStreamStatement->getString(11));
-    castorFile->setFileSize((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(12));
+    castorFile->setFileSize
+      ((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(12));
     result->setId((u_signed64)m_bestTapeCopyForStreamStatement->getDouble(13));
     diskCopy->setCastorFile(castorFile);
     castorFile->addDiskCopies(diskCopy);
@@ -495,8 +502,8 @@ castor::db::ora::OraStagerSvc::tapesToDo()
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_tapesToDoStatement) {
-      m_tapesToDoStatement = createStatement(s_tapesToDoStatementString);
-      m_tapesToDoStatement->setInt(1, castor::stager::TAPE_PENDING);
+    m_tapesToDoStatement = createStatement(s_tapesToDoStatementString);
+    m_tapesToDoStatement->setInt(1, castor::stager::TAPE_PENDING);
   }
   std::vector<castor::stager::Tape*> result;
   try {
@@ -622,7 +629,8 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
             m_selectTapeStatement->closeResultSet(rset);
             castor::exception::Internal ex;
             ex.getMessage()
-              << "Unable to select tape while inserting violated unique constraint :"
+              << "Unable to select tape while inserting "
+              << "violated unique constraint :"
               << std::endl << e.getMessage();
             throw ex;
           }
@@ -701,7 +709,8 @@ castor::db::ora::OraStagerSvc::subRequestToDo
         stmtString << *it;
       }
       stmtString
-        << ") RETURNING id, retryCounter, fileName, protocol, xsize, priority, status"
+        << ") RETURNING id, retryCounter, fileName, "
+        << "protocol, xsize, priority, status"
         << " INTO :1, :2, :3, :4, :5 ,:6 , :7";
 
       m_subRequestToDoStatement =
@@ -798,7 +807,7 @@ castor::db::ora::OraStagerSvc::requestToDo
         << "requestToDo : could not retrieve object for id "
         << id;
       throw ex;
-    } 
+    }
     castor::stager::Request* result =
       dynamic_cast<castor::stager::Request*>(obj);
     if (0 == result) {
@@ -810,7 +819,7 @@ castor::db::ora::OraStagerSvc::requestToDo
         << " while a Request was expected.";
       delete obj;
       throw ex;
-    }    
+    }
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
@@ -844,7 +853,8 @@ bool castor::db::ora::OraStagerSvc::isSubRequestToSchedule
     if (0 == nb) {
       castor::exception::Internal ex;
       ex.getMessage()
-        << "isSubRequestToSchedule : unable to know whether SubRequest should be scheduled.";
+        << "isSubRequestToSchedule : "
+        << "unable to know whether SubRequest should be scheduled.";
       throw ex;
     }
     // Get result and return
@@ -902,28 +912,28 @@ castor::db::ora::OraStagerSvc::scheduleSubRequest
       ((enum castor::stager::DiskCopyStatusCodes)
        m_scheduleSubRequestStatement->getInt(5));
     if (result->status() ==
-	castor::stager::DISKCOPY_WAITDISK2DISKCOPY) {
+        castor::stager::DISKCOPY_WAITDISK2DISKCOPY) {
       try {
-	oracle::occi::ResultSet *rs =
-	  m_scheduleSubRequestStatement->getCursor(6);
-	// We don't fetch the first time since it's done
-	// in the PL/SQL code
-	oracle::occi::ResultSet::Status status = rs->status();
-	while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-	  castor::stager::DiskCopyForRecall* item =
-	    new castor::stager::DiskCopyForRecall();
-	  item->setId((u_signed64) rs->getDouble(1));
-	  item->setPath(rs->getString(2));
-	  item->setStatus((castor::stager::DiskCopyStatusCodes)rs->getInt(3));
-	  sources.push_back(item);
-	  status = rs->next();
-	}
+        oracle::occi::ResultSet *rs =
+          m_scheduleSubRequestStatement->getCursor(6);
+        // We don't fetch the first time since it's done
+        // in the PL/SQL code
+        oracle::occi::ResultSet::Status status = rs->status();
+        while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+          castor::stager::DiskCopyForRecall* item =
+            new castor::stager::DiskCopyForRecall();
+          item->setId((u_signed64) rs->getDouble(1));
+          item->setPath(rs->getString(2));
+          item->setStatus((castor::stager::DiskCopyStatusCodes)rs->getInt(3));
+          sources.push_back(item);
+          status = rs->next();
+        }
       } catch (oracle::occi::SQLException e) {
-	if (e.getErrorCode() != 24338) {
-	  // if not "statement handle not executed"
-	  // it's really wrong, else, it's normal
-	  throw e;
-	}
+        if (e.getErrorCode() != 24338) {
+          // if not "statement handle not executed"
+          // it's really wrong, else, it's normal
+          throw e;
+        }
       }
     }
     // return
@@ -947,7 +957,8 @@ castor::db::ora::OraStagerSvc::selectSvcClass
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_selectSvcClassStatement) {
-    m_selectSvcClassStatement = createStatement(s_selectSvcClassStatementString);
+    m_selectSvcClassStatement =
+      createStatement(s_selectSvcClassStatementString);
   }
   // Execute statement and get result
   unsigned long id;
@@ -986,7 +997,8 @@ castor::db::ora::OraStagerSvc::selectFileClass
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_selectFileClassStatement) {
-    m_selectFileClassStatement = createStatement(s_selectFileClassStatementString);
+    m_selectFileClassStatement =
+      createStatement(s_selectFileClassStatementString);
   }
   // Execute statement and get result
   unsigned long id;
@@ -1027,7 +1039,8 @@ castor::db::ora::OraStagerSvc::selectCastorFile
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_selectCastorFileStatement) {
-    m_selectCastorFileStatement = createStatement(s_selectCastorFileStatementString);
+    m_selectCastorFileStatement =
+      createStatement(s_selectCastorFileStatementString);
   }
   // Execute statement and get result
   unsigned long id;
@@ -1068,7 +1081,8 @@ castor::db::ora::OraStagerSvc::selectFileSystem
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_selectFileSystemStatement) {
-    m_selectFileSystemStatement = createStatement(s_selectFileSystemStatementString);
+    m_selectFileSystemStatement =
+      createStatement(s_selectFileSystemStatementString);
   }
   // Execute statement and get result
   unsigned long id;
@@ -1120,7 +1134,8 @@ castor::db::ora::OraStagerSvc::selectDiskPool
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_selectDiskPoolStatement) {
-    m_selectDiskPoolStatement = createStatement(s_selectDiskPoolStatementString);
+    m_selectDiskPoolStatement =
+      createStatement(s_selectDiskPoolStatementString);
   }
   // Execute statement and get result
   unsigned long id;
@@ -1156,7 +1171,8 @@ castor::db::ora::OraStagerSvc::selectDiskServer
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
   if (0 == m_selectDiskServerStatement) {
-    m_selectDiskServerStatement = createStatement(s_selectDiskServerStatementString);
+    m_selectDiskServerStatement =
+      createStatement(s_selectDiskServerStatementString);
   }
   // Execute statement and get result
   unsigned long id;
@@ -1223,3 +1239,14 @@ bool castor::db::ora::OraStagerSvc::updateAndCheckSubRequest
   }
 }
 
+// -----------------------------------------------------------------------
+// updateRep
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::updateRep(IAddress* address,
+                                              IObject* object)
+  throw (castor::exception::Exception) {
+  castor::exception::NotSupported ex;
+  ex.getMessage()
+    << "OraStagerSvc implementation does not supported the updateRep method.";
+  throw ex;
+}

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2004/11/26 10:16:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2004/11/29 15:49:39 $ $Author: sponcec3 $
  *
  * 
  *
@@ -36,9 +36,9 @@ extern "C" {
   #include "castor/ServicesCInt.hpp"
   #include "castor/stager/IStagerSvcCInt.hpp"
 
-  //------------------------------------------------------------------------------
+  //----------------------------------------------------------------------------
   // checkIStagerSvc
-  //------------------------------------------------------------------------------
+  //----------------------------------------------------------------------------
   bool checkIStagerSvc(Cstager_IStagerSvc_t* stgSvc) {
     if (0 == stgSvc || 0 == stgSvc->stgSvc) {
       errno = EINVAL;
@@ -47,9 +47,9 @@ extern "C" {
     return true;
   }
 
-  //------------------------------------------------------------------------------
+  //----------------------------------------------------------------------------
   // Cstager_IStagerSvc_fromIService
-  //------------------------------------------------------------------------------
+  //----------------------------------------------------------------------------
   Cstager_IStagerSvc_t*
   Cstager_IStagerSvc_fromIService(castor::IService* obj) {
     Cstager_IStagerSvc_t* stgSvc = new Cstager_IStagerSvc_t();
@@ -58,9 +58,9 @@ extern "C" {
     return stgSvc;
   }
 
-  //------------------------------------------------------------------------------
+  //----------------------------------------------------------------------------
   // Cstager_IStagerSvc_delete
-  //------------------------------------------------------------------------------
+  //----------------------------------------------------------------------------
   int Cstager_IStagerSvc_delete(Cstager_IStagerSvc_t* stgSvc) {
     try {
       if (0 == stgSvc) return 0;
@@ -74,9 +74,9 @@ extern "C" {
     return 0;
   }
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_anySegmentsForTape
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   int Cstager_IStagerSvc_anySegmentsForTape(Cstager_IStagerSvc_t* stgSvc,
                                             castor::stager::Tape* searchItem) {
     if (!checkIStagerSvc(stgSvc)) return -1;
@@ -89,13 +89,14 @@ extern "C" {
     }
   }
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_segmentsForTape
-  //---------------------------------------------------------------------------
-  int Cstager_IStagerSvc_segmentsForTape(Cstager_IStagerSvc_t* stgSvc,
-                                         castor::stager::Tape* searchItem,
-                                         castor::stager::Segment*** segmentArray,
-                                         int* nbItems) {
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_segmentsForTape
+  (Cstager_IStagerSvc_t* stgSvc,
+   castor::stager::Tape* searchItem,
+   castor::stager::Segment*** segmentArray,
+   int* nbItems) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       std::vector<castor::stager::Segment*> result =
@@ -114,9 +115,9 @@ extern "C" {
     return 0;
   }
   
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_bestFileSystemForSegment
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   int Cstager_IStagerSvc_bestFileSystemForSegment
   (Cstager_IStagerSvc_t* stgSvc,
    castor::stager::Segment* segment,
@@ -132,11 +133,12 @@ extern "C" {
     return 0;
   }
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_anyTapeCopyForStream
-  //---------------------------------------------------------------------------
-  int Cstager_IStagerSvc_anyTapeCopyForStream(Cstager_IStagerSvc_t* stgSvc,
-                                              castor::stager::Stream* searchItem) {
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_anyTapeCopyForStream
+  (Cstager_IStagerSvc_t* stgSvc,
+   castor::stager::Stream* searchItem) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       if (stgSvc->stgSvc->anyTapeCopyForStream(searchItem)) {
@@ -151,9 +153,9 @@ extern "C" {
     }
   }
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_bestTapeCopyForStream
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   int Cstager_IStagerSvc_bestTapeCopyForStream
   (Cstager_IStagerSvc_t* stgSvc,
    castor::stager::Stream* searchItem,
@@ -169,9 +171,9 @@ extern "C" {
     return 0;
   }
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_fileRecalled
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   int Cstager_IStagerSvc_fileRecalled(Cstager_IStagerSvc_t* stgSvc,
                                       castor::stager::TapeCopy* tapeCopy) {
     if (!checkIStagerSvc(stgSvc)) return -1;
@@ -185,9 +187,9 @@ extern "C" {
     }
   }
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_tapesToDo
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   int Cstager_IStagerSvc_tapesToDo(Cstager_IStagerSvc_t* stgSvc,
                                    castor::stager::Tape*** tapeArray,
                                    int *nbItems) {
@@ -209,9 +211,9 @@ extern "C" {
     return 0;
   }
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_streamsToDo
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   int Cstager_IStagerSvc_streamsToDo(Cstager_IStagerSvc_t* stgSvc,
                                      castor::stager::Stream*** streamArray,
                                      int *nbItems) {
@@ -233,9 +235,9 @@ extern "C" {
     return 0;
   }
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_selectTape
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   int Cstager_IStagerSvc_selectTape(struct Cstager_IStagerSvc_t* stgSvc,
                                     castor::stager::Tape** tape,
                                     const char* vid,
@@ -252,9 +254,9 @@ extern "C" {
     return 0;
   }
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_subRequestToDo
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   int Cstager_IStagerSvc_subRequestToDo(struct Cstager_IStagerSvc_t* stgSvc,
                                         enum castor::ObjectsIds* types,
                                         unsigned int nbTypes,
@@ -274,9 +276,9 @@ extern "C" {
     return 0;
   };
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_requestToDo
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   int Cstager_IStagerSvc_requestToDo(struct Cstager_IStagerSvc_t* stgSvc,
                                      enum castor::ObjectsIds* types,
                                      unsigned int nbTypes,
@@ -296,9 +298,9 @@ extern "C" {
     return 0;
   };
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_isSubRequestToSchedule
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   int Cstager_IStagerSvc_isSubRequestToSchedule
   (struct Cstager_IStagerSvc_t* stgSvc,
    castor::stager::SubRequest* subreq) {
@@ -315,9 +317,9 @@ extern "C" {
     return 0;
   }
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_scheduleSubRequest
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   int Cstager_IStagerSvc_scheduleSubRequest
   (struct Cstager_IStagerSvc_t* stgSvc,
    castor::stager::SubRequest* subreq,
@@ -348,16 +350,16 @@ extern "C" {
     return 0;
   }
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_errorMsg
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   const char* Cstager_IStagerSvc_errorMsg(Cstager_IStagerSvc_t* stgSvc) {
     return stgSvc->errorMsg.c_str();
   }
   
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_selectSvcClass
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   int Cstager_IStagerSvc_selectSvcClass(struct Cstager_IStagerSvc_t* stgSvc,
                                         castor::stager::SvcClass** svcClass,
                                         const char* name) {
@@ -372,9 +374,9 @@ extern "C" {
     return 0;
   }
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_selectFileClass
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   int Cstager_IStagerSvc_selectFileClass(struct Cstager_IStagerSvc_t* stgSvc,
                                          castor::stager::FileClass** fileClass,
                                          const char* name) {
@@ -389,13 +391,14 @@ extern "C" {
     return 0;
   }
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_selectCastorFile
-  //---------------------------------------------------------------------------
-  int Cstager_IStagerSvc_selectCastorFile(struct Cstager_IStagerSvc_t* stgSvc,
-                                          castor::stager::CastorFile** castorFile,
-                                          const u_signed64 fileId,
-                                          const char* nsHost) {
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_selectCastorFile
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   castor::stager::CastorFile** castorFile,
+   const u_signed64 fileId,
+   const char* nsHost) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       *castorFile = stgSvc->stgSvc->selectCastorFile(fileId, nsHost);
@@ -407,13 +410,14 @@ extern "C" {
     return 0;
   }
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_selectFileSystem
-  //---------------------------------------------------------------------------
-  int Cstager_IStagerSvc_selectFileSystem(struct Cstager_IStagerSvc_t* stgSvc,
-                                          castor::stager::FileSystem** fileSystem,
-                                          const char* mountPoint,
-                                          const char* diskServer) {
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_selectFileSystem
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   castor::stager::FileSystem** fileSystem,
+   const char* mountPoint,
+   const char* diskServer) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       *fileSystem = stgSvc->stgSvc->selectFileSystem(mountPoint, diskServer);
@@ -425,9 +429,9 @@ extern "C" {
     return 0;
   }
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_selectDiskPool
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   int Cstager_IStagerSvc_selectDiskPool(struct Cstager_IStagerSvc_t* stgSvc,
                                         castor::stager::DiskPool** diskPool,
                                         const char* name) {
@@ -442,12 +446,13 @@ extern "C" {
     return 0;
   }
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_selectDiskServer
-  //---------------------------------------------------------------------------
-  int Cstager_IStagerSvc_selectDiskServer(struct Cstager_IStagerSvc_t* stgSvc,
-                                          castor::stager::DiskServer** diskServer,
-                                          const char* name) {
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_selectDiskServer
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   castor::stager::DiskServer** diskServer,
+   const char* name) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       *diskServer = stgSvc->stgSvc->selectDiskServer(name);
@@ -459,12 +464,13 @@ extern "C" {
     return 0;
   }
 
-  //---------------------------------------------------------------------------
+  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_updateAndCheckSubRequest
-  //---------------------------------------------------------------------------
-  int Cstager_IStagerSvc_updateAndCheckSubRequest(struct Cstager_IStagerSvc_t* stgSvc,
-                                                  castor::stager::SubRequest* subreq,
-                                                  int* result) {
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_updateAndCheckSubRequest
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   castor::stager::SubRequest* subreq,
+   int* result) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       *result =
@@ -477,4 +483,21 @@ extern "C" {
     return 0;
   }
 
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_updateRep
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_updateRep(struct Cstager_IStagerSvc_t* stgSvc,
+                                   castor::IAddress* address,
+                                   castor::IObject* object) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      stgSvc->stgSvc->updateRep(address, object);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;    
+  }
+  
 }
