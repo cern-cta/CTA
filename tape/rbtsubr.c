@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1993-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.6 $ $Date: 2001/11/13 16:43:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.7 $ $Date: 2002/03/07 12:53:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -575,7 +575,7 @@ int cc;		/* error returned by the mount/dismount routine */
 	  STATUS_VOLUME_IN_USE, RBT_FAST_RETRY, RBT_FAST_RETRY,	/* volume in transit */
 	  STATUS_NI_FAILURE, RBT_OMSGR, RBT_OMSGR,		/* contact with ACSLS lost */
 	  STATUS_INVALID_MEDIA_TYPE, RBT_OMSG_NORTRY, RBT_OMSG_NORTRY,
-	  STATUS_INCOMPATIBLE_MEDIA_TYPE, RBT_OMSGR, RBT_NORTRY,
+	  STATUS_INCOMPATIBLE_MEDIA_TYPE, RBT_OMSGR, RBT_NORETRY,
 	};
 	int i;
 
