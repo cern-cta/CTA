@@ -1,6 +1,10 @@
 /*
- * $Id: Cglobals.h,v 1.5 2000/03/14 09:49:06 jdurand Exp $
+ * $Id: Cglobals.h,v 1.6 2000/06/14 13:59:17 jdurand Exp $
  * $Log: Cglobals.h,v $
+ * Revision 1.6  2000/06/14 13:59:17  jdurand
+ * Added void in parameter list of third parameter of Cglobals_init() to be
+ * compliant with the declaration in Cglobals.c
+ *
  * Revision 1.5  2000/03/14 09:49:06  jdurand
  * Fixes for _WIN32 compilation
  *
@@ -27,7 +31,7 @@
 
 EXTERN_C void DLL_DECL Cglobals_init _PROTO((int (*) _PROTO((int *, void **)),
                                              int (*) _PROTO((int *, void *)),
-                                             int (*) _PROTO(())));
+                                             int (*) _PROTO((void))));
 EXTERN_C void DLL_DECL Cglobals_get _PROTO((int *, void **, size_t size));
 EXTERN_C void DLL_DECL Cglobals_getTid _PROTO((int *));
 
