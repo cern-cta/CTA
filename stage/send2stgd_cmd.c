@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_cmd.c,v 1.9 2002/04/11 10:11:30 jdurand Exp $
+ * $Id: send2stgd_cmd.c,v 1.10 2002/04/30 12:41:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_cmd.c,v $ $Revision: 1.9 $ $Date: 2002/04/11 10:11:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_cmd.c,v $ $Revision: 1.10 $ $Date: 2002/04/30 12:41:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -38,6 +38,7 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd_cmd.c,v $ $Revision: 1.9 $ $Date
 #include "stage_struct.h"
 #include "stage_messages.h"
 #include "socket_timeout.h"
+#include "stage_api.h"
 
 int nb_ovl;
 #ifndef _WIN32
