@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.7 $ $Date: 1999/12/14 11:45:34 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.8 $ $Date: 1999/12/14 11:53:24 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -145,15 +145,19 @@ COMPRESSION_STATS *comp_stats;
 			case 0x1:
 				kbytes_from_host =
 				    *(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7);
+				break;
 			case 0x3:
 				kbytes_to_host =
 				    *(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7);
+				break;
 			case 0x5:
 				kbytes_to_tape =
 				    *(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7);
+				break;
 			case 0x7:
 				kbytes_from_tape =
 				    *(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7);
+				break;
 			}
 			p += *(p+3) + 4;
 		}
