@@ -21,13 +21,15 @@ static char sccsid[] = "@(#)Csec_plugin_GSS_mapper.c,v 1.1 2004/01/12 10:31:40 C
 
 
 char KRB5_service_prefix[][20] = { "host",
-                                   "host",
-                                   "host",
+                                   "castor-central",
+                                   "castor-disk",
+                                   "castor-tape",
                                    "" };
 
 char GSI_service_prefix[][20] = { "host",
-                                  "host",
-                                  "host",
+                                  "castor-central",
+                                  "castor-disk",
+                                  "castor-tape",
                                   "" };
 
 char *GSI_DN_header = "";
@@ -143,11 +145,19 @@ int Csec_get_service_name_impl(Csec_context_t *ctx, int service_type, char *host
     }
 #else
 #ifdef GSI
-    rc = snprintf(service_name, service_namelen, "%s/CN=%s/%s%s",
-                  GSI_DN_header,
-                  KRB5_service_prefix[service_type],
-                  host,
-                  domain);
+    if (domain[0] == '.') {
+      rc = snprintf(service_name, service_namelen, "%s/CN=%s/%s%s",
+		    GSI_DN_header,
+		    GSI_service_prefix[service_type],
+		    host,
+		    domain);
+    } else {
+      rc = snprintf(service_name, service_namelen, "%s/CN=%s/%s.%s",
+		    GSI_DN_header,
+		    GSI_service_prefix[service_type],
+		    host,
+		    domain);
+    }
 #endif
 #endif
 
