@@ -837,10 +837,28 @@ int stagewrt_castor_hsm_file() {
         }
         /* Makes sure vid variable has not been overwritten... (to be checked with Jean-Philippe) */
         strcpy(vid,"");
+#ifdef ALICETEST
+        /* We try on the other tape pool immediately */
+        if (vmgr_gettape (
+                          tape_pool == tape_pool_odd ? tape_pool_even : tape_pool_odd, /* poolname  (input - can be NULL) */
+                          totalsize_to_transfer,  /* size      (input)        */
+                          NULL,                   /* condition (input - can be NULL) */
+                          vid,                    /* vid       (output)              */
+                          vsn,                    /* vsn       (output)              */
+                          dgn,                    /* dgn       (output)              */
+                          aden,                   /* density   (output)              */
+                          lbltype,                /* lbltype   (output)              */
+                          &fseq,                  /* fseq      (output)              */
+                          &estimated_free_space   /* freespace (output)              */
+                          ) == 0) {
+          break;
+        }        
+#else
         sendrep (rpfd, MSG_ERR, STG02, "", "vmgr_gettape",
                  sstrerror (serrno));
         sendrep (rpfd, MSG_OUT, "Retrying Volume Manager request in %d seconds\n", RETRYI);
         sleep(RETRYI);
+#endif
       }
       /* From now on, "vid" is in status TAPE_BUSY */
       
