@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.64 2000/05/16 15:38:27 jdurand Exp $
+ * $Id: stager.c,v 1.65 2000/05/16 16:24:26 jdurand Exp $
  */
 
 /*
@@ -10,9 +10,11 @@
 /* When filereq.maxsize will work removed, remove the define below and in the code below again */
 /* #define SKIP_FILEREQ_MAXSIZE */
 
+/* If you don't want a turnaround on tape pools, via stage_migpool() call, remove the define below */
+/* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.64 $ $Date: 2000/05/16 15:38:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.65 $ $Date: 2000/05/16 16:24:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <grp.h>
@@ -891,9 +893,13 @@ int stagewrt_castor_hsm_file() {
 	char tmpbuf[21];
 	extern char* poolname2tapepool _PROTO((char *));
 	unsigned char blockid[4];
+#ifdef SKIP_TAPE_POOL_TURNAROUND
     char tape_pool_first[CA_MAXPOOLNAMELEN + 1];
+#endif
 
+#ifdef SKIP_TAPE_POOL_TURNAROUND
     tape_pool_first[0] = '\0';
+#endif
 
 	/* We allocate as many size arrays */
 	if ((hsm_totalsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64)))            == NULL ||
@@ -996,6 +1002,7 @@ int stagewrt_castor_hsm_file() {
           RETURN (USERR);
         }
         
+#ifdef SKIP_TAPE_POOL_TURNAROUND
         if (tape_pool_first[0] == '\0') {
           /* First selected tape pool - We remember it */
           strcpy(tape_pool_first,tape_pool);
@@ -1007,6 +1014,7 @@ int stagewrt_castor_hsm_file() {
             sleep(3600);
           }
         }
+#endif
 
 #ifdef STAGER_DEBUG
         sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT] "
