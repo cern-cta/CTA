@@ -1,10 +1,10 @@
-.\" $Id: stageqry_Hsm.man,v 1.4 2002/09/08 07:01:44 jdurand Exp $
+.\" $Id: stageqry_Hsm.man,v 1.5 2002/09/08 07:42:54 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageqry_Hsm.man,v $ $Revision: 1.4 $ $Date: 2002/09/08 07:01:44 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stageqry_Hsm.man,v $ $Revision: 1.5 $ $Date: 2002/09/08 07:42:54 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEQRY_HSM "3" "$Date: 2002/09/08 07:01:44 $" "CASTOR" "Stage Library Functions"
+.TH STAGEQRY_HSM "3" "$Date: 2002/09/08 07:42:54 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stageqry_Hsm \- Query the stager catalog about an HSM file
 .SH SYNOPSIS
@@ -67,6 +67,9 @@ Gives current retention period on disk. This period will be showed in terms of e
 .TP
 .I STAGE_MINTIME
 Gives current minimum time before migration. This concerns only entries that are in the CAN_BE_MIGR state.
+.TP
+.I STAGE_NORETRY
+Prevent retry in case of communication failure with the stager daemon. Can be set using environment variable $STAGE_NORETRY with a non-wero value, or an entry 'STG NORETRY' with a non-null value in /etc/shift.conf.
 .TP
 .BI "char *" hostname
 Gives explicitely the hostname where is the stager daemon. If it NULL, default value apply: either the environment variable STAGE_HOST, an entry 'STG HOST' in /etc/shift.conf file, or the default "stagepublic".
