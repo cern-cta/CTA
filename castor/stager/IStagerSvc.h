@@ -536,6 +536,23 @@ int Cstager_IStagerSvc_selectDiskPool
  const char* name);
 
 /**
+ * Retrieves a TapePool from the database based on name.
+ * Caller is in charge of the deletion of the allocated
+ * memory.
+ * @param stgSvc the IStagerSvc used
+ * @param tapePool the TapePool object returned, or 0 if none found
+ * @param name the name of the TapePool
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_selectTapePool
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_TapePool_t** tapePool,
+ const char* name);
+
+/**
  * Retrieves a DiskServer from the database based on name.
  * Caller is in charge of the deletion of the allocated
  * memory.

@@ -440,6 +440,18 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Retrieves a TapePool from the database based on name.
+         * Caller is in charge of the deletion of the allocated
+         * memory.
+         * @param name the name of the tape pool
+         * @return the TapePool object or 0 if none found
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::TapePool* selectTapePool
+        (const std::string name)
+          throw (castor::exception::Exception);
+
+        /**
          * Retrieves a DiskServer from the database based on name.
          * Caller is in charge of the deletion of the allocated
          * memory.
@@ -708,6 +720,12 @@ namespace castor {
 
         /// SQL statement object for function selectDiskPool
         oracle::occi::Statement *m_selectDiskPoolStatement;
+
+        /// SQL statement for function selectTapePool
+        static const std::string s_selectTapePoolStatementString;
+
+        /// SQL statement object for function selectTapePool
+        oracle::occi::Statement *m_selectTapePoolStatement;
 
         /// SQL statement for function selectDiskServer
         static const std::string s_selectDiskServerStatementString;

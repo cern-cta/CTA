@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2005/01/20 14:52:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.19 $ $Release$ $Date: 2005/01/21 12:47:49 $ $Author: sponcec3 $
  *
  *
  *
@@ -421,6 +421,18 @@ namespace castor {
        * @exception Exception in case of error
        */
       virtual castor::stager::DiskPool* selectDiskPool
+      (const std::string name)
+        throw (castor::exception::Exception);
+
+      /**
+       * Retrieves a TapePool from the database based on name.
+       * Caller is in charge of the deletion of the allocated
+       * memory.
+       * @param name the name of the tape pool
+       * @return the TapePool object or 0 if none found
+       * @exception Exception in case of error
+       */
+      virtual castor::stager::TapePool* selectTapePool
       (const std::string name)
         throw (castor::exception::Exception);
 

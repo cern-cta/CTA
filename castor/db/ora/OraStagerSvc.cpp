@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.109 $ $Release$ $Date: 2005/01/21 10:02:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.110 $ $Release$ $Date: 2005/01/21 12:47:48 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -146,6 +146,10 @@ const std::string castor::db::ora::OraStagerSvc::s_selectFileSystemStatementStri
 const std::string castor::db::ora::OraStagerSvc::s_selectDiskPoolStatementString =
   "SELECT id FROM DiskPool WHERE name = :1";
 
+/// SQL statement for selectTapePool
+const std::string castor::db::ora::OraStagerSvc::s_selectTapePoolStatementString =
+  "SELECT id FROM TapePool WHERE name = :1";
+
 /// SQL statement for selectDiskServer
 const std::string castor::db::ora::OraStagerSvc::s_selectDiskServerStatementString =
   "SELECT id, status FROM DiskServer WHERE name = :1";
@@ -201,6 +205,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_selectCastorFileStatement(0),
   m_selectFileSystemStatement(0),
   m_selectDiskPoolStatement(0),
+  m_selectTapePoolStatement(0),
   m_selectDiskServerStatement(0),
   m_selectTapeCopiesForMigrationStatement(0),
   m_updateAndCheckSubRequestStatement(0),
@@ -257,6 +262,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_selectFileSystemStatement);
     deleteStatement(m_selectCastorFileStatement);
     deleteStatement(m_selectDiskPoolStatement);
+    deleteStatement(m_selectTapePoolStatement);
     deleteStatement(m_selectDiskServerStatement);
     deleteStatement(m_selectTapeCopiesForMigrationStatement);
     deleteStatement(m_updateAndCheckSubRequestStatement);
@@ -285,6 +291,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_selectFileSystemStatement = 0;
   m_selectCastorFileStatement = 0;
   m_selectDiskPoolStatement = 0;
+  m_selectTapePoolStatement = 0;
   m_selectDiskServerStatement = 0;
   m_selectTapeCopiesForMigrationStatement = 0;
   m_updateAndCheckSubRequestStatement = 0;
@@ -1481,6 +1488,43 @@ castor::db::ora::OraStagerSvc::selectDiskPool
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select DiskPool by name :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// selectTapePool
+// -----------------------------------------------------------------------
+castor::stager::TapePool*
+castor::db::ora::OraStagerSvc::selectTapePool
+(const std::string name)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_selectTapePoolStatement) {
+    m_selectTapePoolStatement =
+      createStatement(s_selectTapePoolStatementString);
+  }
+  // Execute statement and get result
+  unsigned long id;
+  try {
+    m_selectTapePoolStatement->setString(1, name);
+    oracle::occi::ResultSet *rset = m_selectTapePoolStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      // Nothing found, return 0
+      m_selectTapePoolStatement->closeResultSet(rset);
+      return 0;
+    }
+    // Found the TapePool, so create it in memory
+    castor::stager::TapePool* result =
+      new castor::stager::TapePool();
+    result->setId((u_signed64)rset->getDouble(1));
+    m_selectTapePoolStatement->closeResultSet(rset);
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select TapePool by name :"
       << std::endl << e.getMessage();
     throw ex;
   }

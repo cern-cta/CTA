@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2005/01/20 14:52:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2005/01/21 12:47:49 $ $Author: sponcec3 $
  *
  *
  *
@@ -454,6 +454,20 @@ castor::stager::RemoteStagerSvc::selectFileSystem
 // -----------------------------------------------------------------------
 castor::stager::DiskPool*
 castor::stager::RemoteStagerSvc::selectDiskPool
+(const std::string name)
+  throw (castor::exception::Exception) {
+  castor::exception::NotSupported ex;
+  ex.getMessage()
+    << "RemoteStagerSvc implementation is not complete"
+    << std::endl << "This method is not supported.";
+  throw ex;
+}
+
+// -----------------------------------------------------------------------
+// selectTapePool
+// -----------------------------------------------------------------------
+castor::stager::TapePool*
+castor::stager::RemoteStagerSvc::selectTapePool
 (const std::string name)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
