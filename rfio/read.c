@@ -1,14 +1,14 @@
 /*
- * $Id: read.c,v 1.5 1999/12/10 19:46:57 baran Exp $
+ * $Id: read.c,v 1.6 2000/05/02 06:13:43 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:46:57 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.6 $ $Date: 2000/05/02 06:13:43 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* read.c       Remote File I/O - read  a file                          */
@@ -100,6 +100,7 @@ int     s, size;
    if ( !socset ) {
       char * ifce, *p ;
       int bufsize ;
+      extern char * getifnam() ;
 		
       socset ++ ;
       ifce = ( char * ) getifnam(s) ;
