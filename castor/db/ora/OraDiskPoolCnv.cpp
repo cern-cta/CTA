@@ -233,10 +233,10 @@ void castor::db::ora::OraDiskPoolCnv::fillRepFileSystem(castor::stager::DiskPool
   for (std::vector<castor::stager::FileSystem*>::iterator it = obj->fileSystems().begin();
        it != obj->fileSystems().end();
        it++) {
-    std::set<int>::iterator item;
-    if ((item = fileSystemsList.find((*it)->id())) == fileSystemsList.end()) {
+    if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false, OBJ_DiskPool);
     } else {
+      std::set<int>::iterator item = fileSystemsList.find((*it)->id());
       // Check remote update statement
       if (0 == m_remoteUpdateFileSystemStatement) {
         m_remoteUpdateFileSystemStatement = createStatement(s_remoteUpdateFileSystemStatementString);
@@ -281,8 +281,7 @@ void castor::db::ora::OraDiskPoolCnv::fillRepSvcClass(castor::stager::DiskPool* 
   for (std::vector<castor::stager::SvcClass*>::iterator it = obj->svcClasses().begin();
        it != obj->svcClasses().end();
        it++) {
-    std::set<int>::iterator item;
-    if ((item = svcClassesList.find((*it)->id())) == svcClassesList.end()) {
+    if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false);
       if (0 == m_insertSvcClassStatement) {
         m_insertSvcClassStatement = createStatement(s_insertSvcClassStatementString);
@@ -291,6 +290,7 @@ void castor::db::ora::OraDiskPoolCnv::fillRepSvcClass(castor::stager::DiskPool* 
       m_insertSvcClassStatement->setDouble(2, (*it)->id());
       m_insertSvcClassStatement->executeUpdate();
     } else {
+      std::set<int>::iterator item = svcClassesList.find((*it)->id());
       svcClassesList.erase(item);
     }
   }

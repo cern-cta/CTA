@@ -252,10 +252,10 @@ void castor::db::ora::OraStageGetRequestCnv::fillRepSubRequest(castor::stager::S
   for (std::vector<castor::stager::SubRequest*>::iterator it = obj->subRequests().begin();
        it != obj->subRequests().end();
        it++) {
-    std::set<int>::iterator item;
-    if ((item = subRequestsList.find((*it)->id())) == subRequestsList.end()) {
+    if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false, OBJ_FileRequest);
     } else {
+      std::set<int>::iterator item = subRequestsList.find((*it)->id());
       // Check remote update statement
       if (0 == m_remoteUpdateSubRequestStatement) {
         m_remoteUpdateSubRequestStatement = createStatement(s_remoteUpdateSubRequestStatementString);

@@ -233,8 +233,7 @@ void castor::db::ora::OraSvcClassCnv::fillRepTapePool(castor::stager::SvcClass* 
   for (std::vector<castor::stager::TapePool*>::iterator it = obj->tapePools().begin();
        it != obj->tapePools().end();
        it++) {
-    std::set<int>::iterator item;
-    if ((item = tapePoolsList.find((*it)->id())) == tapePoolsList.end()) {
+    if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false);
       if (0 == m_insertTapePoolStatement) {
         m_insertTapePoolStatement = createStatement(s_insertTapePoolStatementString);
@@ -243,6 +242,7 @@ void castor::db::ora::OraSvcClassCnv::fillRepTapePool(castor::stager::SvcClass* 
       m_insertTapePoolStatement->setDouble(2, (*it)->id());
       m_insertTapePoolStatement->executeUpdate();
     } else {
+      std::set<int>::iterator item = tapePoolsList.find((*it)->id());
       tapePoolsList.erase(item);
     }
   }
@@ -280,8 +280,7 @@ void castor::db::ora::OraSvcClassCnv::fillRepDiskPool(castor::stager::SvcClass* 
   for (std::vector<castor::stager::DiskPool*>::iterator it = obj->diskPools().begin();
        it != obj->diskPools().end();
        it++) {
-    std::set<int>::iterator item;
-    if ((item = diskPoolsList.find((*it)->id())) == diskPoolsList.end()) {
+    if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false);
       if (0 == m_insertDiskPoolStatement) {
         m_insertDiskPoolStatement = createStatement(s_insertDiskPoolStatementString);
@@ -290,6 +289,7 @@ void castor::db::ora::OraSvcClassCnv::fillRepDiskPool(castor::stager::SvcClass* 
       m_insertDiskPoolStatement->setDouble(2, (*it)->id());
       m_insertDiskPoolStatement->executeUpdate();
     } else {
+      std::set<int>::iterator item = diskPoolsList.find((*it)->id());
       diskPoolsList.erase(item);
     }
   }

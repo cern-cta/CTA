@@ -267,8 +267,7 @@ void castor::db::ora::OraStreamCnv::fillRepTapeCopy(castor::stager::Stream* obj)
   for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->tapeCopy().begin();
        it != obj->tapeCopy().end();
        it++) {
-    std::set<int>::iterator item;
-    if ((item = tapeCopyList.find((*it)->id())) == tapeCopyList.end()) {
+    if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false);
       if (0 == m_insertTapeCopyStatement) {
         m_insertTapeCopyStatement = createStatement(s_insertTapeCopyStatementString);
@@ -277,6 +276,7 @@ void castor::db::ora::OraStreamCnv::fillRepTapeCopy(castor::stager::Stream* obj)
       m_insertTapeCopyStatement->setDouble(2, (*it)->id());
       m_insertTapeCopyStatement->executeUpdate();
     } else {
+      std::set<int>::iterator item = tapeCopyList.find((*it)->id());
       tapeCopyList.erase(item);
     }
   }

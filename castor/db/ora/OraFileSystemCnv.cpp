@@ -275,10 +275,10 @@ void castor::db::ora::OraFileSystemCnv::fillRepDiskCopy(castor::stager::FileSyst
   for (std::vector<castor::stager::DiskCopy*>::iterator it = obj->copies().begin();
        it != obj->copies().end();
        it++) {
-    std::set<int>::iterator item;
-    if ((item = copiesList.find((*it)->id())) == copiesList.end()) {
+    if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false, OBJ_FileSystem);
     } else {
+      std::set<int>::iterator item = copiesList.find((*it)->id());
       // Check remote update statement
       if (0 == m_remoteUpdateDiskCopyStatement) {
         m_remoteUpdateDiskCopyStatement = createStatement(s_remoteUpdateDiskCopyStatementString);

@@ -209,10 +209,10 @@ void castor::db::ora::OraDiskServerCnv::fillRepFileSystem(castor::stager::DiskSe
   for (std::vector<castor::stager::FileSystem*>::iterator it = obj->fileSystems().begin();
        it != obj->fileSystems().end();
        it++) {
-    std::set<int>::iterator item;
-    if ((item = fileSystemsList.find((*it)->id())) == fileSystemsList.end()) {
+    if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false, OBJ_DiskServer);
     } else {
+      std::set<int>::iterator item = fileSystemsList.find((*it)->id());
       // Check remote update statement
       if (0 == m_remoteUpdateFileSystemStatement) {
         m_remoteUpdateFileSystemStatement = createStatement(s_remoteUpdateFileSystemStatementString);

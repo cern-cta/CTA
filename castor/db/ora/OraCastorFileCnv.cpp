@@ -330,10 +330,10 @@ void castor::db::ora::OraCastorFileCnv::fillRepDiskCopy(castor::stager::CastorFi
   for (std::vector<castor::stager::DiskCopy*>::iterator it = obj->diskCopies().begin();
        it != obj->diskCopies().end();
        it++) {
-    std::set<int>::iterator item;
-    if ((item = diskCopiesList.find((*it)->id())) == diskCopiesList.end()) {
+    if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false, OBJ_CastorFile);
     } else {
+      std::set<int>::iterator item = diskCopiesList.find((*it)->id());
       // Check remote update statement
       if (0 == m_remoteUpdateDiskCopyStatement) {
         m_remoteUpdateDiskCopyStatement = createStatement(s_remoteUpdateDiskCopyStatementString);
@@ -378,10 +378,10 @@ void castor::db::ora::OraCastorFileCnv::fillRepTapeCopy(castor::stager::CastorFi
   for (std::vector<castor::stager::TapeCopy*>::iterator it = obj->tapeCopies().begin();
        it != obj->tapeCopies().end();
        it++) {
-    std::set<int>::iterator item;
-    if ((item = tapeCopiesList.find((*it)->id())) == tapeCopiesList.end()) {
+    if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false, OBJ_CastorFile);
     } else {
+      std::set<int>::iterator item = tapeCopiesList.find((*it)->id());
       // Check remote update statement
       if (0 == m_remoteUpdateTapeCopyStatement) {
         m_remoteUpdateTapeCopyStatement = createStatement(s_remoteUpdateTapeCopyStatementString);

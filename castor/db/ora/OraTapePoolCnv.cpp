@@ -233,8 +233,7 @@ void castor::db::ora::OraTapePoolCnv::fillRepSvcClass(castor::stager::TapePool* 
   for (std::vector<castor::stager::SvcClass*>::iterator it = obj->svcClasses().begin();
        it != obj->svcClasses().end();
        it++) {
-    std::set<int>::iterator item;
-    if ((item = svcClassesList.find((*it)->id())) == svcClassesList.end()) {
+    if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false);
       if (0 == m_insertSvcClassStatement) {
         m_insertSvcClassStatement = createStatement(s_insertSvcClassStatementString);
@@ -243,6 +242,7 @@ void castor::db::ora::OraTapePoolCnv::fillRepSvcClass(castor::stager::TapePool* 
       m_insertSvcClassStatement->setDouble(2, (*it)->id());
       m_insertSvcClassStatement->executeUpdate();
     } else {
+      std::set<int>::iterator item = svcClassesList.find((*it)->id());
       svcClassesList.erase(item);
     }
   }
@@ -280,10 +280,10 @@ void castor::db::ora::OraTapePoolCnv::fillRepStream(castor::stager::TapePool* ob
   for (std::vector<castor::stager::Stream*>::iterator it = obj->streams().begin();
        it != obj->streams().end();
        it++) {
-    std::set<int>::iterator item;
-    if ((item = streamsList.find((*it)->id())) == streamsList.end()) {
+    if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false, OBJ_TapePool);
     } else {
+      std::set<int>::iterator item = streamsList.find((*it)->id());
       // Check remote update statement
       if (0 == m_remoteUpdateStreamStatement) {
         m_remoteUpdateStreamStatement = createStatement(s_remoteUpdateStreamStatementString);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/11/19 09:50:32 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/11/23 14:21:27 $ $Author: sponcec3 $
  *
  * 
  *
@@ -252,10 +252,10 @@ void castor::db::ora::OraStageUpdateFileStatusRequestCnv::fillRepSubRequest(cast
   for (std::vector<castor::stager::SubRequest*>::iterator it = obj->subRequests().begin();
        it != obj->subRequests().end();
        it++) {
-    std::set<int>::iterator item;
-    if ((item = subRequestsList.find((*it)->id())) == subRequestsList.end()) {
+    if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false, OBJ_FileRequest);
     } else {
+      std::set<int>::iterator item = subRequestsList.find((*it)->id());
       // Check remote update statement
       if (0 == m_remoteUpdateSubRequestStatement) {
         m_remoteUpdateSubRequestStatement = createStatement(s_remoteUpdateSubRequestStatementString);

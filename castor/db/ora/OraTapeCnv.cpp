@@ -309,10 +309,10 @@ void castor::db::ora::OraTapeCnv::fillRepSegment(castor::stager::Tape* obj)
   for (std::vector<castor::stager::Segment*>::iterator it = obj->segments().begin();
        it != obj->segments().end();
        it++) {
-    std::set<int>::iterator item;
-    if ((item = segmentsList.find((*it)->id())) == segmentsList.end()) {
+    if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false, OBJ_Tape);
     } else {
+      std::set<int>::iterator item = segmentsList.find((*it)->id());
       // Check remote update statement
       if (0 == m_remoteUpdateSegmentStatement) {
         m_remoteUpdateSegmentStatement = createStatement(s_remoteUpdateSegmentStatementString);
