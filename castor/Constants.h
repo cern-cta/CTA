@@ -27,7 +27,9 @@
 #ifndef CASTOR_CONSTANTS_H 
 #define CASTOR_CONSTANTS_H 1
 
-#define Constants C_Constants
+#define ObjectsIds C_ObjectsIds
+#define ServicesIds C_ServicesIds
+#define RepresentationsIds C_RepresentationsIds
 
 #include "Constants.hpp"
 
