@@ -100,14 +100,14 @@ UPDATE SubRequest SET status = 1 WHERE parent = SubRequestId; -- SUBREQUEST_REST
 END;
 
 /* PL/SQL method implementing isSubRequestToSchedule */
-CREATE OR REPLACE PROCEDURE isSubRequestToSchedule(subreqId IN INTEGER, result OUT INTEGER) AS
+CREATE OR REPLACE PROCEDURE isSubRequestToSchedule(rsubreqId IN INTEGER, result OUT INTEGER) AS
   stat INTEGER;
   dci INTEGER;
 BEGIN
  SELECT DiskCopy.status, DiskCopy.id
   INTO stat, dci
   FROM DiskCopy, SubRequest
-  WHERE SubRequest.id = subreqId
+  WHERE SubRequest.id = rsubreqId
    AND SubRequest.castorfile = DiskCopy.castorfile
    AND DiskCopy.status != 3 -- DISKCCOPY_DELETED
    AND DiskCopy.status != 4 -- DISKCCOPY_FAILED
@@ -116,7 +116,7 @@ BEGIN
  IF 2 = stat -- DISKCCOPY_WAITTAPERECALL
  THEN
   -- Only DiskCopy, make SubRequest wait on the recalling one and do not schedule
-  update SubRequest SET parent = (SELECT id FROM SubRequest where diskCopy = dci) WHERE id = subreqId;
+  update SubRequest SET parent = (SELECT id FROM SubRequest where diskCopy = dci) WHERE id = rsubreqId;
   result := 0;
  ELSE
   -- DiskCopies exist that are already recalled, thus schedule for access
