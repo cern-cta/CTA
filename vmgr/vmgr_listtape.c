@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_listtape.c,v $ $Revision: 1.2 $ $Date: 2000/09/10 18:11:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_listtape.c,v $ $Revision: 1.3 $ $Date: 2001/01/03 08:28:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_listtape - list all existing tapes */
@@ -24,7 +24,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_listtape.c,v $ $Revision: 1.2 $ $Date
 #include "vmgr.h"
 
 struct vmgr_tape_info *
-vmgr_listtape(int flags, vmgr_list *listp)
+vmgr_listtape(char *pool_name, int flags, vmgr_list *listp)
 {
 	int bol = 0;
 	int c;
@@ -94,6 +94,11 @@ vmgr_listtape(int flags, vmgr_list *listp)
 		marshall_LONG (sbp, uid);
 		marshall_LONG (sbp, gid);
 		marshall_WORD (sbp, listentsz);
+		if (pool_name) {
+			marshall_STRING (sbp, pool_name);
+		} else {
+			marshall_STRING (sbp, "");
+		}
 		marshall_WORD (sbp, bol);
 	 
 		msglen = sbp - sendbuf;

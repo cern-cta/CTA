@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.7 $ $Date: 2000/08/22 13:13:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.8 $ $Date: 2001/01/03 08:28:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlisttape - query a given volume or list all existing tapes */
@@ -53,19 +53,10 @@ char **argv;
 #endif
 	int xflag = 0;
 
-	dgn[0]= '\0';
 	pool_name[0]= '\0';
 	vid[0]= '\0';
-        while ((c = getopt (argc, argv, "g:P:V:x")) != EOF) {
+        while ((c = getopt (argc, argv, "P:V:x")) != EOF) {
                 switch (c) {
-		case 'g':
-			if (strlen (optarg) <= CA_MAXDGNLEN)
-				strcpy (dgn, optarg);
-			else {
-				fprintf (stderr, "%s\n", strerror(EINVAL));
-				errflg++;
-			}
-                        break;
 		case 'P':
 			if (strlen (optarg) <= CA_MAXPOOLNAMELEN)
 				strcpy (pool_name, optarg);
@@ -97,7 +88,7 @@ char **argv;
         }
         if (errflg) {
                 fprintf (stderr, "usage: %s %s", argv[0],
-		    "[-g dgn] [-P pool_name] [-V vid] [-x]\n");
+		    "[-P pool_name] [-V vid] [-x]\n");
                 exit (USERR);
         }
  
@@ -123,7 +114,7 @@ char **argv;
 		    nbfiles, rcount, wcount, rtime, wtime, status, xflag);
 	} else {
 		flags = VMGR_LIST_BEGIN;
-		while ((lp = vmgr_listtape (flags, &list)) != NULL) {
+		while ((lp = vmgr_listtape (pool_name, flags, &list)) != NULL) {
 			listentry (lp->vid, lp->vsn, lp->dgn, lp->density,
 			    lp->lbltype, lp->model, lp->media_letter,
 			    lp->manufacturer, lp->sn, lp->poolname,
@@ -131,7 +122,7 @@ char **argv;
 			    lp->wcount, lp->rtime, lp->wtime, lp->status, xflag);
 			flags = VMGR_LIST_CONTINUE;
 		}
-		(void) vmgr_listtape (VMGR_LIST_END, &list);
+		(void) vmgr_listtape (pool_name, VMGR_LIST_END, &list);
 	}
 #if defined(_WIN32)
 	WSACleanup();
