@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.17 2000/05/16 12:29:30 jdurand Exp $
+ * $Id: poolmgr.c,v 1.18 2000/05/17 16:28:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.17 $ $Date: 2000/05/16 12:29:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.18 $ $Date: 2000/05/17 16:28:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -52,7 +52,9 @@ extern int sendrep (int, int, ...);
 extern char *sys_errlist[];
 #endif
 static struct migpolicy *migpolicies;
+static struct migrator *migrators;
 static int nbmigpolicy;
+static int nbmigrator;
 static int nbpool;
 static char *nfsroot;
 static char **poolc;
@@ -67,8 +69,8 @@ char *selecttapepool _PROTO((char *));
 void procmigpoolreq _PROTO((char *, char *));
 void update_migpool _PROTO((struct stgcat_entry *, int));
 void checkfile2mig _PROTO(());
-int migrate_files _PROTO((struct pool *));
-int migpoolfiles _PROTO((struct pool *));
+int migrate_files _PROTO((struct migrator *));
+int migpoolfiles _PROTO((struct migrator *));
 int iscleanovl _PROTO((int, int));
 int ismigovl _PROTO((int, int));
 int isvalidpool _PROTO((char *));
@@ -88,7 +90,8 @@ getpoolconf(defpoolname)
 	FILE *fopen(), *s;
 	char func[16];
 	int i, j;
-	struct migpolicy *mig_p;
+	struct migpolicy *migp_p;
+	struct migrator *migr_p;
 	int nbpool_ent;
 	int nbtape_pools;
 	char *p;
@@ -109,6 +112,8 @@ getpoolconf(defpoolname)
 
 	migpolicies = NULL;
 	nbmigpolicy = 0;
+	migrators = NULL;
+	nbmigrator = 0;
 	nbpool = 0;
 	*defpoolname = '\0';
 	defsize = 0;
@@ -116,6 +121,7 @@ getpoolconf(defpoolname)
 		if ((p = strtok (buf, " \t\n")) == NULL) continue; 
 		if (strcmp (p, "POOL") == 0) nbpool++;
 		else if (strcmp (p, "MIGPOLICY") == 0) nbmigpolicy++;
+		else if (strcmp (p, "MIGRATOR") == 0) nbmigrator++;
 	}
 	if (nbpool == 0) {
 		stglogit (func, STG29);
@@ -126,12 +132,16 @@ getpoolconf(defpoolname)
 	if (nbmigpolicy)
 		migpolicies = (struct migpolicy *)
 			calloc (nbmigpolicy, sizeof(struct migpolicy));
+	if (nbmigrator)
+		migrators = (struct migrator *)
+			calloc (nbmigrator, sizeof(struct migrator));
 
 	/* 2nd pass: count number of members in each pool and
-	   store migration policies */
+	   store migration policies parameters */
 
 	rewind (s);
-	mig_p = migpolicies - 1;
+	migp_p = migpolicies - 1;
+	migr_p = migrators - 1;
 	nbpool_ent = -1;
 	pool_p = pools - 1;
 	while (fgets (buf, sizeof(buf), s) != NULL) {
@@ -190,18 +200,18 @@ getpoolconf(defpoolname)
 					strcpy (pool_p->gc, p);
 				} else if (strcmp(p, "NO_FILE_CREATION") == 0) {
 					pool_p->no_file_creation = 1;
-				} else if (strcmp (p, "MIGPOLICY") == 0) {
+				} else if (strcmp (p, "MIGRATOR") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
-						stglogit (func, STG25, "pool");	/* name missing */
+						stglogit (func, STG25, "migrator");	/* name missing */
 						errflg++;
 						goto reply;
 					}
-					if ((int) strlen (p) > CA_MAXMIGPNAMELEN) {
-						stglogit (func, STG27, "pool", pool_p->name);
+					if ((int) strlen (p) > CA_MAXMIGRNAMELEN) {
+						stglogit (func, STG27, "migrator", pool_p->name);
 						errflg++;
 						goto reply;
 					}
-					strcpy (pool_p->migp_name, p);
+					strcpy (pool_p->migr_name, p);
 				} else {
 					stglogit (func, STG26, "pool", pool_p->name);
 					errflg++;
@@ -243,7 +253,7 @@ getpoolconf(defpoolname)
 				goto reply;
 			}
 		} else if (strcmp (p, "MIGPOLICY") == 0) {
-			mig_p++;
+			migp_p++;
 			if ((p = strtok (NULL, " \t\n")) == NULL) {
 				stglogit (func, STG25, "migration policy");	/* name missing */
 				errflg++;
@@ -254,24 +264,24 @@ getpoolconf(defpoolname)
 				errflg++;
 				goto reply;
 			}
-			strcpy (mig_p->name, p);
+			strcpy (migp_p->name, p);
 			while ((p = strtok (NULL, " \t\n")) != NULL) {
 				if (strcmp (p, "DATATHRESHOLD") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
 						stglogit (func, STG26,
-						    "migration policy", mig_p->name);
+						    "migration policy", migp_p->name);
 						errflg++;
 						goto reply;
 					}
-					mig_p->data_mig_threshold = strutou64 (p);
+					migp_p->data_mig_threshold = strutou64 (p);
 				} else if (strcmp (p, "PERCFREE") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
 						stglogit (func, STG26,
-						    "migration policy", mig_p->name);
+						    "migration policy", migp_p->name);
 						errflg++;
 						goto reply;
 					}
-					mig_p->freespace_threshold = strtol (p, &dp, 10);
+					migp_p->freespace_threshold = strtol (p, &dp, 10);
 					if (*dp != '\0') {
 						stglogit (func, STG26,
 						    "migration policy", pool_p->name);
@@ -281,11 +291,11 @@ getpoolconf(defpoolname)
 				} else if (strcmp (p, "TIMEINTERVAL") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
 						stglogit (func, STG26,
-						    "migration policy", mig_p->name);
+						    "migration policy", migp_p->name);
 						errflg++;
 						goto reply;
 					}
-					mig_p->time_interval = strtol (p, &dp, 10);
+					migp_p->time_interval = strtol (p, &dp, 10);
 					if (*dp != '\0') {
 						stglogit (func, STG26,
 						    "migration policy", pool_p->name);
@@ -295,35 +305,35 @@ getpoolconf(defpoolname)
 				} else if (strcmp (p, "MAXDRIVES") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
 						stglogit (func, STG26,
-						    "migration policy", mig_p->name);
+						    "migration policy", migp_p->name);
 						errflg++;
 						goto reply;
 					}
-					mig_p->maxdrives = strtol (p, &dp, 10);
+					migp_p->maxdrives = strtol (p, &dp, 10);
 					if (*dp != '\0') {
 						stglogit (func, STG26,
-						    "migration policy", mig_p->name);
+						    "migration policy", migp_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp (p, "SEGALLOWED") == 0) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
 						stglogit (func, STG26,
-						    "migration policy", mig_p->name);
+						    "migration policy", migp_p->name);
 						errflg++;
 						goto reply;
 					}
-					mig_p->seg_allowed = (strtol (p, &dp, 10) != 0);
+					migp_p->seg_allowed = (strtol (p, &dp, 10) != 0);
 					if (*dp != '\0') {
 						stglogit (func, STG26,
-						    "migration policy", mig_p->name);
+						    "migration policy", migp_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp (p, "TAPE_POOL") == 0) {
 					if ((tape_pool_str = strtok (NULL, " \t\n")) == NULL) {
 						stglogit (func, STG26,
-						    "migration policy", mig_p->name);
+						    "migration policy", migp_p->name);
 						errflg++;
 						goto reply;
 					}
@@ -335,7 +345,7 @@ getpoolconf(defpoolname)
 						if (*p == '\0' ||
 						    strlen (p) > CA_MAXPOOLNAMELEN) {
 							stglogit (func, STG26,
-							    "migration policy", mig_p->name);
+							    "migration policy", migp_p->name);
 							errflg++;
 							goto reply;
 						}
@@ -344,18 +354,52 @@ getpoolconf(defpoolname)
 						*q = ':';
 						p = q + 1;
 					}
-					mig_p->tape_pool = (char **)
+					migp_p->tape_pool = (char **)
 						calloc (nbtape_pools + 1, sizeof(char *));
-					mig_p->tape_pool[0] = strdup (tape_pool_str);
-					p = mig_p->tape_pool[0];
+					migp_p->tape_pool[0] = strdup (tape_pool_str);
+					p = migp_p->tape_pool[0];
 					nbtape_pools = 1;
 					while (p = strchr (p, ':')) {
 						*p = '\0';
-						mig_p->tape_pool[nbtape_pools++] = ++p;
+						migp_p->tape_pool[nbtape_pools++] = ++p;
 					}
 				} else {
 					stglogit (func, STG26,
 					    "migration policy", pool_p->name);
+					errflg++;
+					goto reply;
+				}
+			}
+		} else if (strcmp (p, "MIGRATOR") == 0) {
+			migr_p++;
+			if ((p = strtok (NULL, " \t\n")) == NULL) {
+				stglogit (func, STG25, "migrator name");	/* name missing */
+				errflg++;
+				goto reply;
+			}
+			if ((int) strlen (p) > CA_MAXMIGRNAMELEN) {
+				stglogit (func, STG27, "migrator name", p);
+				errflg++;
+				goto reply;
+			}
+			strcpy (migr_p->name, p);
+			while ((p = strtok (NULL, " \t\n")) != NULL) {
+				if (strcmp (p, "MIGPOLICY") == 0) {
+					if ((p = strtok (NULL, " \t\n")) == NULL) {
+						stglogit (func, STG26,
+						    "migrator's migration policy", migp_p->name);
+						errflg++;
+						goto reply;
+					}
+					if ((int) strlen (p) > CA_MAXMIGRNAMELEN) {
+						stglogit (func, STG27, "migrator's migration policy", p);
+						errflg++;
+						goto reply;
+					}
+					strcpy (migr_p->migp_name, p);
+				} else {
+					stglogit (func, STG26,
+					    "migrator's migration policy", pool_p->name);
 					errflg++;
 					goto reply;
 				}
@@ -389,24 +433,57 @@ getpoolconf(defpoolname)
 		}
 	}
 
-	/* associate pools with policies */
+	/* associate migrators with migration policies */
 
-	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
-		if (! *pool_p->migp_name) continue;
-		for (j = 0, mig_p = migpolicies; j < nbmigpolicy; j++)
-			if (strcmp (pool_p->migp_name, mig_p->name) == 0) break;
+	for (i = 0, migr_p = migrators; i < nbmigrator; i++, migr_p++) {
+		if (! *migr_p->migp_name) continue;
+		for (j = 0, migp_p = migpolicies; j < nbmigpolicy; j++)
+			if (strcmp (migr_p->migp_name, migp_p->name) == 0) break;
 		if (nbmigpolicy == 0 || j >= nbmigpolicy) {
-			stglogit (func, STG55, pool_p->migp_name);
+			stglogit (func, STG56, migr_p->migp_name);
 			errflg++;
 			goto reply;
 		}
-		pool_p->migp = mig_p;
+		migr_p->migp = migp_p;
+	}
+
+	/* associate pools with migrators */
+
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+		if (! *pool_p->migr_name) continue;
+		for (j = 0, migr_p = migrators; j < nbmigrator; j++)
+			if (strcmp (pool_p->migr_name, migr_p->name) == 0) break;
+		if (nbmigrator == 0 || j >= nbmigrator) {
+			stglogit (func, STG55, pool_p->migr_name);
+			errflg++;
+			goto reply;
+		}
+		pool_p->migr = migr_p;
+		if (pool_p->migr->nbpool == 0) {
+			if ((pool_p->migr->poolp = (struct pool **) malloc(sizeof(char *))) == NULL) {
+				stglogit (func, "### malloc error (%s)\n", strerror(errno));
+				errflg++;
+				goto reply;
+			}
+			pool_p->migr->poolp[0] = pool_p;
+			pool_p->migr->nbpool++;
+		} else {
+			struct pool **dummy;
+			if ((dummy = (struct pool **) realloc(pool_p->migr->poolp,(pool_p->migr->nbpool + 1) * sizeof(char *))) == NULL) {
+				stglogit (func, "### realloc error (%s)\n", strerror(errno));
+				errflg++;
+				goto reply;
+			}
+			pool_p->migr->poolp[pool_p->migr->nbpool++] = pool_p;
+		}
 	}
 
 	/* 3rd pass: store pool elements */
 
 	rewind (s);
 	pool_p = pools - 1;
+	migr_p = migrators - 1;
+	migp_p = migpolicies - 1;
 	while (fgets (buf, sizeof(buf), s) != NULL) {
 		if (buf[0] == '#') continue;    /* comment line */
 		if ((p = strtok (buf, " \t\n")) == NULL) continue;
@@ -420,40 +497,60 @@ getpoolconf(defpoolname)
 				*(pool_p->gc) != '\0' ? pool_p->gc : "<none>");
 			stglogit (func,".... NO_FILE_CREATION %d\n",
 				pool_p->no_file_creation);
-			stglogit (func,".... MIGPOLICY %s\n",
-				*(pool_p->migp_name) != '\0' ? pool_p->migp_name : "<none>");
-			if (*(pool_p->migp_name) != '\0') {
-              int thisindex = 0;
-				if (pool_p->migp == NULL) {
-					stglogit (func,"### INTERNAL ERROR : MIGPOLICY %s defined but pool migration structure pointer == NULL\n",pool_p->migp_name);
-                    errflg++;
-                    goto reply;
-                }
-				if (pool_p->migp->tape_pool == NULL) {
-					stglogit (func,"### INTERNAL ERROR : MIGPOLICY %s defined without TAPE_POOL\n",pool_p->migp_name);
-                    errflg++;
-                    goto reply;
-                }
-                stglogit (func,".... .... DATATHRESHOLD %s%s\n",
-                          u64tostr(pool_p->migp->data_mig_threshold, tmpbuf, 0),
-                          pool_p->migp->data_mig_threshold == 0 ? " (DISABLED)" : "");
-                stglogit (func,".... .... PERCFREE      %d%s\n",
-                          pool_p->migp->freespace_threshold,
-                          pool_p->migp->freespace_threshold == 0 ? " (DISABLED)" : "");
-                stglogit (func,".... .... MAXDRIVES     %d%s\n",
-                          pool_p->migp->maxdrives,
-                          pool_p->migp->maxdrives == 0 ? " (will default to 1)" : "");
-                stglogit (func,".... .... SEGALLOWED    %s\n",pool_p->migp->seg_allowed ? "YES" : "NO");
-                stglogit (func,".... .... TIMEINTERVAL  %s\n",u64tostr((u_signed64) pool_p->migp->time_interval, tmpbuf, 0));
-                while (pool_p->migp->tape_pool[thisindex] != NULL) {
-                  stglogit (func,".... .... TAPE_POOL No %d : %s\n",thisindex,pool_p->migp->tape_pool[thisindex]);
-                  thisindex++;
-                }
-			}
+			stglogit (func,".... MIGRATOR %s\n",
+				*(pool_p->migr_name) != '\0' ? pool_p->migr_name : "<none>");
 		} else if (strcmp (p, "DEFPOOL") == 0) continue;
 		else if (strcmp (p, "DEFSIZE") == 0) continue;
-		else if (strcmp (p, "MIGPOLICY") == 0) continue;
-		else {
+		else if (strcmp (p, "MIGPOLICY") == 0) {
+			int thisindex = 0;
+			migp_p++;
+			stglogit (func,"MIGPOLICY %s\n",
+				*(migp_p->name) != '\0' ? migp_p->name : "<none>");
+			if (migp_p->name == NULL) {
+				stglogit (func,"### INTERNAL ERROR : MIGPOLICY with no name\n");
+				errflg++;
+				goto reply;
+			}
+			stglogit (func,".... DATATHRESHOLD %s%s\n",
+				u64tostr(migp_p->data_mig_threshold, tmpbuf, 0),
+				migp_p->data_mig_threshold == 0 ? " (DISABLED)" : "");
+			stglogit (func,".... PERCFREE      %d%s\n",
+				migp_p->freespace_threshold,
+				migp_p->freespace_threshold == 0 ? " (DISABLED)" : "");
+			stglogit (func,".... MAXDRIVES     %d%s\n",
+				migp_p->maxdrives,
+				migp_p->maxdrives == 0 ? " (will default to 1)" : "");
+			stglogit (func,".... SEGALLOWED    %s\n",migp_p->seg_allowed ? "YES" : "NO");
+			stglogit (func,".... TIMEINTERVAL  %s\n",u64tostr((u_signed64) migp_p->time_interval, tmpbuf, 0));
+			while (migp_p->tape_pool[thisindex] != NULL) {
+				stglogit (func,".... TAPE_POOL No %d : %s\n",thisindex,migp_p->tape_pool[thisindex]);
+				thisindex++;
+			}
+		} else if (strcmp (p, "MIGRATOR") == 0) {
+			int thisindex = 0;
+			migr_p++;
+			stglogit (func,"MIGRATOR %s\n",
+				*(migr_p->name) != '\0' ? migr_p->name : "<none>");
+			if (migr_p->name == NULL) {
+				stglogit (func,"### INTERNAL ERROR : MIGRATOR with no name\n");
+				errflg++;
+				goto reply;
+			}
+			if (migr_p->migp_name == NULL) {
+				stglogit (func,"### INTERNAL ERROR : MIGRATOR %s with no MIGPOLICY name\n",migr_p->name);
+				errflg++;
+				goto reply;
+			}
+			if (migr_p->migp == NULL) {
+				stglogit (func,"### INTERNAL ERROR : MIGRATOR %s with MIGPOLICY %s but migpolicy pointer NULL !\n",migr_p->name, migr_p->migp_name);
+				errflg++;
+				goto reply;
+			}
+			stglogit (func,".... MIGPOLICY %s\n",migr_p->migp_name);
+			for (thisindex = 0; thisindex < migr_p->nbpool; thisindex++) {
+				stglogit (func,".... DISK_POOL No %d : %s\n",thisindex,migr_p->poolp[thisindex]);
+			}
+		} else {
 			if ((int) strlen (p) > CA_MAXHOSTNAMELEN) {
 				stglogit (func, STG26, pool_p->name);
 				errflg++;
@@ -487,7 +584,7 @@ getpoolconf(defpoolname)
 				pool_p->capacity += (st.totblks * (st.bsize / 512));
 				pool_p->free += (st.freeblks * (st.bsize / 512));
 				stglogit (func,
-					"%s capacity=%ld, free=%ld, bsize=%d\n",
+					"... %s capacity=%ld, free=%ld, bsize=%d\n",
 					path, elemp->capacity, elemp->free, elemp->bsize);
 			}
 			elemp++;
@@ -501,13 +598,14 @@ reply:
 				if (elemp) free (elemp);
 		}
 		free (pools);
-		for (i = 0, mig_p = migpolicies; i < nbmigpolicy; i++, mig_p++) {
-			if (mig_p->tape_pool != NULL) {
-				if (mig_p->tape_pool[0]) free (mig_p->tape_pool[0]);
-				free (mig_p->tape_pool);
+		for (i = 0, migp_p = migpolicies; i < nbmigpolicy; i++, migp_p++) {
+			if (migp_p->tape_pool != NULL) {
+				if (migp_p->tape_pool[0]) free (migp_p->tape_pool[0]);
+				free (migp_p->tape_pool);
 			}
 		}
 		if (migpolicies) free (migpolicies);
+		if (migrators) free (migrators);
 		return (CONFERR);
 	} else {
 		poolc = (char **) calloc (nbpool, sizeof(char *));
@@ -665,15 +763,15 @@ int ismigovl(pid, status)
 	if (nbpool == 0) return (0);
 	found = 0;
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
-		if (pool_p->migp == NULL) continue;
-		if (pool_p->mig_pid == pid) {
+		if (pool_p->migr == NULL) continue;
+		if (pool_p->migr->mig_pid == pid) {
 			found = 1;
 			break;
 		}
 	}
 	if (! found) return (0);
-	pool_p->mig_pid = 0;
-	pool_p->migreqtime = 0;
+	pool_p->migr->mig_pid = 0;
+	pool_p->migr->migreqtime = 0;
 	return (1);
 }
 
@@ -871,11 +969,14 @@ updpoolconf(defpoolname)
 {
 	int c, i, j;
 	struct pool_element *elemp;
-	struct migpolicy *mig_p;
+	struct migpolicy *migp_p;
+	struct migrator *migr_p;
 	struct pool *pool_n, *pool_p;
 	char sav_defpoolname[CA_MAXPOOLNAMELEN + 1];
 	struct migpolicy *sav_migpol;
+	struct migrator *sav_migrator;
 	int sav_nbmigpol;
+	int sav_nbmigrator;
 	int sav_nbpool;
 	char **sav_poolc;
 	struct pool *sav_pools;
@@ -883,7 +984,9 @@ updpoolconf(defpoolname)
 	/* save the current configuration */
 	strcpy (sav_defpoolname, defpoolname);
 	sav_migpol = migpolicies;
+	sav_migrator = migrators;
 	sav_nbmigpol = nbmigpolicy;
+	sav_nbmigrator = nbmigrator;
 	sav_nbpool = nbpool;
 	sav_poolc = poolc;
 	sav_pools = pools;
@@ -892,18 +995,20 @@ updpoolconf(defpoolname)
 		/* restore the previous configuration */
 		strcpy (defpoolname, sav_defpoolname);
 		migpolicies = sav_migpol;
+		migrators = sav_migrator;
 		nbmigpolicy = sav_nbmigpol;
+		nbmigrator = sav_nbmigrator;
 		nbpool = sav_nbpool;
 		pools = sav_pools;
 	} else {			/* free the old configuration */
 		/* but keep pids of cleaner/migrator if any */
 		free (sav_poolc);
 		for (i = 0, pool_p = sav_pools; i < sav_nbpool; i++, pool_p++) {
-			if (pool_p->ovl_pid || pool_p->mig_pid) {
+			if (pool_p->ovl_pid || (pool_p->migr != NULL && pool_p->migr->mig_pid)) {
 				for (j = 0, pool_n = pools; j < nbpool; j++, pool_n++) {
 					if (strcmp (pool_n->name, pool_p->name) == 0) {
 						pool_n->ovl_pid = pool_p->ovl_pid;
-						pool_n->mig_pid = pool_p->mig_pid;
+						if (pool_n->migr != NULL) pool_n->migr->mig_pid = pool_p->migr->mig_pid;
 						break;
 					}
 				}
@@ -911,13 +1016,14 @@ updpoolconf(defpoolname)
 			free (pool_p->elemp);
 		}
 		free (sav_pools);
-		for (i = 0, mig_p = sav_migpol; i < sav_nbmigpol; i++, mig_p++) {
-			if (mig_p->tape_pool != NULL) {
-				if (mig_p->tape_pool[0]) free (mig_p->tape_pool[0]);
-				if (mig_p->tape_pool) free (mig_p->tape_pool);
+		for (i = 0, migp_p = sav_migpol; i < sav_nbmigpol; i++, migp_p++) {
+			if (migp_p->tape_pool != NULL) {
+				if (migp_p->tape_pool[0]) free (migp_p->tape_pool[0]);
+				if (migp_p->tape_pool) free (migp_p->tape_pool);
 			}
 		}
 		if (sav_migpol) free (sav_migpol);
+		if (sav_migrator) free (sav_migrator);
 	}
 	return (c);
 }
@@ -944,10 +1050,14 @@ char *selecttapepool(poolname)
 	if (nbpool == 0 || poolname == NULL) return (NULL);
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
 		if (strcmp (poolname, pool_p->name) == 0) {
-			if (pool_p->migp->tape_pool != NULL) {
-   				if (pool_p->migp->tape_pool[pool_p->migp->tape_pool_index] == NULL)
-					pool_p->migp->tape_pool_index = 0;
-				return(pool_p->migp->tape_pool[pool_p->migp->tape_pool_index++]);
+			if (pool_p->migr != NULL) {
+				if (pool_p->migr->migp != NULL) {
+					if (pool_p->migr->migp->tape_pool != NULL) {
+		   				if (pool_p->migr->migp->tape_pool[pool_p->migr->migp->tape_pool_index] == NULL)
+							pool_p->migr->migp->tape_pool_index = 0;
+						return(pool_p->migr->migp->tape_pool[pool_p->migr->migp->tape_pool_index++]);
+					}
+				}
 			}
 		}
 	return (NULL);
@@ -994,17 +1104,22 @@ void procmigpoolreq(req_data, clienthost)
 		sendrep (rpfd, STAGERC, STAGEMIGPOOL, USERR);
 	} else {
 		/* We check that this pool have a migration policy */
-		if (pool_p->migp == NULL) {
-			sendrep (rpfd, MSG_ERR, "STG55 - pool %s have no migration policy\n", argv[1]);
+		if (pool_p->migr == NULL) {
+			sendrep (rpfd, MSG_ERR, "STG55 - pool %s have no associated migrator\n", argv[1]);
 			sendrep (rpfd, STAGERC, STAGEMIGPOOL, USERR);
 		} else {
-			/* We select tape pool */
-			if ((tapepoolname = selecttapepool(poolname)) == NULL) {
-				sendrep (rpfd, MSG_ERR, "STG55 - cannot select a tape pool for disk pool %s\n", argv[1]);
+			if (pool_p->migr->migp == NULL) {
+				sendrep (rpfd, MSG_ERR, "STG55 - pool %s have no associated migration policy with migrator %s\n", argv[1],*(pool_p->migr->name) != '\0' ? pool_p->migr->name : "<none>");
 				sendrep (rpfd, STAGERC, STAGEMIGPOOL, USERR);
 			} else {
-				sendrep (rpfd, MSG_OUT, "%s", tapepoolname);
-				sendrep (rpfd, STAGERC, STAGEMIGPOOL, 0);
+				/* We select tape pool */
+				if ((tapepoolname = selecttapepool(poolname)) == NULL) {
+					sendrep (rpfd, MSG_ERR, "STG55 - cannot select a tape pool for disk pool %s\n", argv[1]);
+					sendrep (rpfd, STAGERC, STAGEMIGPOOL, USERR);
+				} else {
+					sendrep (rpfd, MSG_OUT, "%s", tapepoolname);
+					sendrep (rpfd, STAGERC, STAGEMIGPOOL, 0);
+				}
 			}
 		}
 	}
@@ -1029,32 +1144,32 @@ void update_migpool(stcp,flag)
 	if (ipool < 0) {
 		sendrep (rpfd, MSG_ERR, STG32, stcp->poolname); /* Not in the list of pools */
 	} else {
-		/* We check that this pool have a migration policy */
-		if (pool_p->migp != NULL) {
-			if (pool_p->nbfiles_canbemig < 0) {
+		/* We check that this pool have a migrator */
+		if (pool_p->migr != NULL) {
+			if (pool_p->migr->nbfiles_canbemig < 0) {
 				sendrep (rpfd, MSG_ERR, "Internal error for pool %s, nbfiles_canbemig < 0 (resetted to 0)\n",
 						stcp->poolname);
 				/* This should never happen but who knows */
-				pool_p->nbfiles_canbemig = 0;
+				pool_p->migr->nbfiles_canbemig = 0;
 			}
 			if (flag < 0) {
 				/* This is from a return of automatic migration */
-				if (pool_p->nbfiles_canbemig-- < 0) {
+				if (pool_p->migr->nbfiles_canbemig-- < 0) {
 					sendrep (rpfd, MSG_ERR, "Internal error for pool %s, nbfiles_canbemig < 0 after migration OK (resetted to 0)\n",
 							stcp->poolname);
-					pool_p->nbfiles_canbemig = 0;
+					pool_p->migr->nbfiles_canbemig = 0;
 				}
-				if (pool_p->space_canbemig < stcp->size) {
+				if (pool_p->migr->space_canbemig < stcp->size) {
 					sendrep (rpfd, MSG_ERR, "Internal error for pool %s, space_canbemig < stcp->size after migration OK (resetted to 0)\n",
 							stcp->poolname);
-					pool_p->space_canbemig = 0;
+					pool_p->migr->space_canbemig = 0;
 				} else {
-					pool_p->space_canbemig -= stcp->size;
+					pool_p->migr->space_canbemig -= stcp->size;
 				}
 			} else if (flag > 0) {
 				/* This is to add an entry for a next automatic migration */
-				pool_p->nbfiles_canbemig++;
-				pool_p->space_canbemig += stcp->size;
+				pool_p->migr->nbfiles_canbemig++;
+				pool_p->migr->space_canbemig += stcp->size;
 			}
 		}
 	}
@@ -1076,22 +1191,25 @@ void checkfile2mig()
 	 */
 
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
-		if (! pool_p->migp)	/* migration not wanted in this pool */
+		if (pool_p->migr == NULL)	/* migration not wanted in this pool */
 			continue;
-		if (pool_p->mig_pid)	/* migration already running */
+		if (pool_p->migr->mig_pid != 0)	/* migration already running */
 			continue;
-		if ((pool_p->migp->data_mig_threshold &&
-			pool_p->space_canbemig > pool_p->migp->data_mig_threshold) ||
+		if (pool_p->migr->migp == NULL)	/* Internal error */
+			continue;
+		if (pool_p->migr->nbfiles_canbemig <= 0)	/* No point anyway */
+			continue;
+		if ((pool_p->migr->migp->data_mig_threshold &&
+			pool_p->migr->space_canbemig > pool_p->migr->migp->data_mig_threshold) ||
 			(((double) pool_p->free * 100.) / (double) pool_p->capacity <
-			pool_p->migp->freespace_threshold) ||
-			((time(0) - pool_p->migreqtime) > pool_p->migp->time_interval &&
-			pool_p->nbfiles_canbemig > 0))
-				migrate_files (pool_p);
+			pool_p->migr->migp->freespace_threshold) ||
+			((time(0) - pool_p->migr->migreqtime) > pool_p->migr->migp->time_interval))
+				migrate_files (pool_p->migr);
 	}
 }
 
-int migrate_files(pool_p)
-		 struct pool *pool_p;
+int migrate_files(migr_p)
+		 struct migrator *migr_p;
 {
 	char func[16];
 	char *p;
@@ -1100,23 +1218,23 @@ int migrate_files(pool_p)
     int pid;
 
 	strcpy (func, "migrate_files");
-	pool_p->mig_pid = fork ();
-	pid = pool_p->mig_pid;
+	migr_p->mig_pid = fork ();
+	pid = migr_p->mig_pid;
 	if (pid < 0) {
 		stglogit (func, STG02, "", "fork", sys_errlist[errno]);
-        pool_p->mig_pid = 0;
+        migr_p->mig_pid = 0;
 		return (SYERR);
 	} else if (pid == 0) {  /* we are in the child */
-      exit(migpoolfiles(pool_p));
+      exit(migpoolfiles(migr_p));
 	} else {  /* we are in the parent */
-      stglogit (func, "execing migration process on pool %s, pid=%d\n",pool_p->name,pid);
-      pool_p->migreqtime = time (0);
+      stglogit (func, "execing migrator %s, pid=%d\n",migr_p->name,pid);
+      migr_p->migreqtime = time (0);
 	}
     return (0);
 }
 
-int migpoolfiles(pool_p)
-		 struct pool *pool_p;
+int migpoolfiles(migr_p)
+		 struct migrator *migr_p;
 {
 	/* We use the weight algorithm defined by Fabrizio Cane for DPM */
 
@@ -1137,6 +1255,8 @@ int migpoolfiles(pool_p)
     int iprocess;
     int pid;
     int npidwait;
+    int okpoolname;
+    int ipoolname;
 
 	strcpy (func, "migpoolfiles");
 
@@ -1169,7 +1289,7 @@ int migpoolfiles(pool_p)
 
 	/* build a sorted list of stage catalog entries for the specified pool */
 	scf = NULL;
-	if ((scs = (struct sorted_ent *) calloc (pool_p->nbfiles_canbemig, sizeof(struct sorted_ent))) == NULL) {
+	if ((scs = (struct sorted_ent *) calloc (migr_p->nbfiles_canbemig, sizeof(struct sorted_ent))) == NULL) {
       stglogit(func, "### calloc error (%s)\n",strerror(errno));
       return(SYERR);
     }
@@ -1178,7 +1298,13 @@ int migpoolfiles(pool_p)
 		if (stcp->reqid == 0) break;
 		if ((stcp->status & CAN_BE_MIGR) != CAN_BE_MIGR) continue;
 		if ((stcp->status & PUT_FAILED) == PUT_FAILED) continue;
-		if (strcmp (pool_p->name, stcp->poolname)) continue;
+		okpoolname = 0;
+		/* Does it belong to a pool managed by this migrator ? */
+		for (ipoolname = 0; ipoolname < migr_p->nbpool; ipoolname++) {
+			if (strcmp (migr_p->poolp[ipoolname]->name, stcp->poolname)) continue;
+			okpoolname = 1;
+		}
+		if (okpoolname == 0) continue;
 		sci->weight = (double)stcp->a_time;
 		if (stcp->actual_size > 1024)
 			sci->weight -=
@@ -1201,7 +1327,7 @@ int migpoolfiles(pool_p)
 			}
 		}
 		sci->stcp = stcp;
-		if (++found_nbfiles >= pool_p->nbfiles_canbemig) {
+		if (++found_nbfiles >= migr_p->nbfiles_canbemig) {
           /* Oupss... We reach the max of entries CAN_BE_MIGR that are known to pool ? */
           break;
         }
@@ -1209,15 +1335,15 @@ int migpoolfiles(pool_p)
 	}
 
 	/* build the stageput request(s)            */
-    /* parameters are: pool_p->migp->maxdrives  */
-    /*                 pool_p->nbfiles_canbemig */
+    /* parameters are: migr_p->migp->maxdrives  */
+    /*                 migr_p->nbfiles_canbemig */
 
-    if (pool_p->migp->maxdrives > 0) {
-      if ((nfiles_per_request = (found_nbfiles / pool_p->migp->maxdrives)) <= 0) {
+    if (migr_p->migp->maxdrives > 0) {
+      if ((nfiles_per_request = (found_nbfiles / migr_p->migp->maxdrives)) <= 0) {
         /* Strange configuration but that's it : there is more maxdrives than files to migrate */
         nfiles_per_request = 1;
       } else {
-        if (nfiles_per_request * pool_p->migp->maxdrives < found_nbfiles) {
+        if (nfiles_per_request * migr_p->migp->maxdrives < found_nbfiles) {
           /* Will occur if the result is fractionnal */
           nfiles_per_request++;
         }
