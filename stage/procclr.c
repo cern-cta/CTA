@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.35 2001/09/18 20:36:07 jdurand Exp $
+ * $Id: procclr.c,v 1.36 2001/09/21 05:43:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.35 $ $Date: 2001/09/18 20:36:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.36 $ $Date: 2001/09/21 05:43:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -83,7 +83,7 @@ int check_delete _PROTO((struct stgcat_entry *, gid_t, uid_t, char *, char *, in
 
 extern u_signed64 stage_uniqueid;
 
-int nbtpf;
+static int nbtpf;
 
 void procclrreq(req_type, magic, req_data, clienthost)
 		 int req_type;
@@ -650,3 +650,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 	}
 	return (-1);
 }
+
+/*
+ * Last Update: "Friday 21 September, 2001 at 07:41:58 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ */

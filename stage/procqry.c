@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.63 2001/09/18 21:02:49 jdurand Exp $
+ * $Id: procqry.c,v 1.64 2001/09/21 05:43:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.63 $ $Date: 2001/09/18 21:02:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.64 $ $Date: 2001/09/21 05:43:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -116,7 +116,7 @@ struct stgdb_fd *dbfd_query;
 extern u_signed64 stage_uniqueid;
 extern struct fileclass *fileclasses;
 
-int nbtpf;
+static int nbtpf;
 static int noregexp_flag;
 static int reqid_flag;
 static int dump_flag;
@@ -1920,5 +1920,5 @@ void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 }
 
 /*
- * Last Update: "Thursday 13 September, 2001 at 16:30:02 CEST by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Friday 21 September, 2001 at 06:47:04 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
