@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.11 $ $Date: 1999/11/26 15:56:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.12 $ $Date: 1999/12/10 10:52:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -215,7 +215,7 @@ char	**argv;
 	tapeacct (TPPOSIT, uid, gid, jid, dgn, drive, vid, cfseq, 0);
 #endif
 	if (lblcode == AL || lblcode == SL) {
-		if (filstat != NEW_FILE) {
+		if (filstat != NEW_FILE) {	/* set defaults from label */
 			if (fid[0] == '\0') {
 				strncpy (tpfid, hdr1 + 4, 17);
 				tpfid [17] = '\0';
@@ -243,26 +243,29 @@ char	**argv;
 				UPPER (p);
 				strcpy (fid, p);
 			}
-			if (recfm[0] == '\0')
-				strcpy (recfm, "U");
-			if (blksize == 0)
-				if (strcmp (devtype, "SD3")) {
-					if (lrecl == 0)
-						blksize = 32760;
-					else
-						blksize = lrecl;
-				} else {
-					if (lrecl == 0)
-						blksize = 262144;
-					else if (strcmp (recfm, "F") == 0) {
-						blksize = (262144 / lrecl) * lrecl;
-						strcpy (recfm, "FB");
-					} else
-						blksize = lrecl;
-				}
-			if (lrecl == 0 && strcmp (recfm, "U")) lrecl = blksize;
 		}
 	}
+
+	/* set default values to the fields which have not been set yet */
+
+	if (recfm[0] == '\0')
+		strcpy (recfm, "U");
+	if (blksize == 0)
+		if (strcmp (devtype, "SD3")) {
+			if (lrecl == 0)
+				blksize = 32760;
+			else
+				blksize = lrecl;
+		} else {
+			if (lrecl == 0)
+				blksize = 262144;
+			else if (strcmp (recfm, "F") == 0) {
+				blksize = (262144 / lrecl) * lrecl;
+				strcpy (recfm, "FB");
+			} else
+				blksize = lrecl;
+		}
+	if (lrecl == 0 && strcmp (recfm, "U")) lrecl = blksize;
 
 	/* Build UPDFIL request header */
 
