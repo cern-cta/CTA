@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Date: 2004/11/06 08:41:40 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Date: 2004/11/08 10:56:35 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -88,7 +88,7 @@ SECURITYFLAG=-DCSEC
 GLOBLIB += -ldl
 #endif
 
-STAGER_OBJS = stager.Osuf stager_messages.Osuf stager_db_service.Osuf stager_query_service.Osuf stager_update_service.Osuf stager_getnext_service.Osuf stager_service_run.Osuf stager_catalogInterface.Osuf
+STAGER_OBJS = stager.Osuf stager_messages.Osuf stager_db_service.Osuf stager_query_service.Osuf stager_update_service.Osuf stager_getnext_service.Osuf stager_service_run.Osuf stager_catalogInterface.Osuf stager_uuid.Osuf
 STAGERADMIN_OBJS = stageradmin.Osuf
 OBSOLETE_OBJS = stage_updc.Osuf stage_errmsg.Osuf stage_util.Osuf stage_api.Osuf buildupath.Osuf send2stgd_api.Osuf send2stgd_compat.Osuf
 
