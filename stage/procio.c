@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.209 2003/05/12 12:40:26 jdurand Exp $
+ * $Id: procio.c,v 1.210 2003/06/30 11:13:24 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.209 $ $Date: 2003/05/12 12:40:26 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.210 $ $Date: 2003/06/30 11:13:24 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2196,7 +2196,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 				  poolname_exclusion = stgreq.poolname;
 				  goto stagein_isstaged_retry;
 			  }
-			  if (trailing == '-' && last_tape_file &&
+			  /* If last_tape_file is set, then it is a 't' request, then trailing is set */
+			  if (last_tape_file && trailing == '-' &&
 				  atoi (stgreq.u1.t.fseq) > last_tape_file) {
 				  /* requested file is not on tape */
 				  stglogit (func, "requested file is not on tape\n");
