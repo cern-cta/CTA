@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.97 2001/03/06 09:39:12 jdurand Exp $
+ * $Id: procio.c,v 1.98 2001/03/06 11:18:16 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.97 $ $Date: 2001/03/06 09:39:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.98 $ $Date: 2001/03/06 11:18:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1153,11 +1153,15 @@ void procioreq(req_type, magic, req_data, clienthost)
 		if (api_out != 0) {
 			memcpy(&stgreq,&(stcp_input[i < nstcp_input ? i : nstcp_input - 1]),sizeof(struct stgcat_entry));
 			stgreq.t_or_d = stcp_input[0].t_or_d; /* Might have been overwriten ('m' -> 'h') */
-			stgreq.uid = save_uid;
-			stgreq.gid = save_gid;
-			stgreq.mask = save_mask;
-			strcpy(stgreq.user,save_user);
-			strcpy(stgreq.group,save_group);
+			if (req_type != STAGEWRT) {
+				/* If it is a migration request, we respect the uid, gid, mask, user, group of each single entry */
+				/* ... This is needed for the eventual call to Cns_creatx */
+				stgreq.uid = save_uid;
+				stgreq.gid = save_gid;
+				stgreq.mask = save_mask;
+				strcpy(stgreq.user,save_user);
+				strcpy(stgreq.group,save_group);
+			}
 		}
 
 		forced_Cns_creatx = forced_rfio_stat = 0;
