@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: rtcp.h,v $ $Revision: 1.20 $ $Date: 2004/04/01 09:11:05 $ CERN IT/ADC Olof Barring
+ * @(#)$RCSfile: rtcp.h,v $ $Revision: 1.21 $ $Date: 2004/10/07 13:21:59 $ CERN IT/ADC Olof Barring
  */
 
 /*
@@ -246,6 +246,7 @@ typedef struct tape_list {
                                       * local retry. This is needed
                                       * to prevent Ctape_reserve() from
                                       * being called twice. */
+    u_signed64 dbKey;                /* Catalogue DB Tape key used in the new stager */
     rtcpTapeRequest_t tapereq;        
     rtcpDumpTapeRequest_t dumpreq;   /* Only used if file == NULL */
     struct file_list *file;          /* List of files for this tape */
