@@ -2229,7 +2229,7 @@ int DLL_DECL Cpool_assign(poolnb,startroutine,arg,timeout)
 }
 
 /* ============================================ */
-/* Routine  : Cpool_next_index                  */
+/* Routine  : Cpool_next_index_timeout          */
 /* Arguments: pool number                       */
 /*            timeout (<= 0 means no timeout)   */
 /* -------------------------------------------- */
