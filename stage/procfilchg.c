@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.32 2002/09/20 12:22:50 jdurand Exp $
+ * $Id: procfilchg.c,v 1.33 2002/09/23 11:10:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.32 $ $Date: 2002/09/20 12:22:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.33 $ $Date: 2002/09/23 11:10:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -406,8 +406,10 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			if (donereqid && stcp->reqid != thisreqid) continue; /* --reqid */
 			if (stcp->t_or_d != 'h') continue; /* Only CASTOR HSM filename supported */
 			if (donestatus)
-				/* Should be a complete record if user want to change status */
-				if ((stcp->u1.h.server[0] == '\0') || (stcp->u1.h.fileid == 0)) continue;
+				/* Should be a complete record if user want to change status unless hsmcreat is allowed  */
+				if (hsmcreat_flag == 0) {
+					if ((stcp->u1.h.server[0] == '\0') || (stcp->u1.h.fileid == 0)) continue;
+				}
 			/* Grab the fileclass */
 			if (poolflag < 0) { /* -p NOPOOL */
 				if (stcp->poolname[0]) continue;
@@ -415,29 +417,40 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			if (hsmfile)
 				if (strcmp(stcp->u1.h.xfile, hsmfile) != 0) continue; /* -M */
 			if ((ifileclass = upd_fileclass(NULL,stcp,5,0,0)) < 0) {
-				sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "stagechng", sstrerror(serrno));
-				c = serrno;
-				goto reply;
-			}
-			/* We check if the name of this file in the name server is really the one we have in input */
-			if (Cns_getpath(stcp->u1.h.server, stcp->u1.h.fileid, checkpath) == 0) {
-				if (strcmp(checkpath, stcp->u1.h.xfile) != 0) {
-					sendrep (&rpfd, MSG_ERR, STG157, stcp->u1.h.xfile, checkpath, u64tostr((u_signed64) stcp->u1.h.fileid, tmpbuf1, 0), stcp->u1.h.server);
-					strncpy(stcp->u1.h.xfile, checkpath, (CA_MAXHOSTNAMELEN+MAXPATH));
-					stcp->u1.h.xfile[(CA_MAXHOSTNAMELEN+MAXPATH)] = '\0';
-#ifdef USECDB
-					if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-						stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				if (serrno == ENOENT) {
+					if (hsmcreat_flag == 0) {
+						sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_statx", sstrerror(serrno));
+						c = serrno;
+						goto reply;
+					} else {
+						nocheck_hsmsize = 1;
 					}
+				} else {
+					sendrep (&rpfd, MSG_ERR, STG02, hsmfile, "Cns_statx", sstrerror(serrno));
+					c = serrno;
+					goto reply;
+				}
+			} else {
+				/* We check if the name of this file in the name server is really the one we have in input */
+				if (Cns_getpath(stcp->u1.h.server, stcp->u1.h.fileid, checkpath) == 0) {
+					if (strcmp(checkpath, stcp->u1.h.xfile) != 0) {
+						sendrep (&rpfd, MSG_ERR, STG157, stcp->u1.h.xfile, checkpath, u64tostr((u_signed64) stcp->u1.h.fileid, tmpbuf1, 0), stcp->u1.h.server);
+						strncpy(stcp->u1.h.xfile, checkpath, (CA_MAXHOSTNAMELEN+MAXPATH));
+						stcp->u1.h.xfile[(CA_MAXHOSTNAMELEN+MAXPATH)] = '\0';
+#ifdef USECDB
+						if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+							stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+						}
 #endif
-					savereqs();
-					if (hsmfile) {
-						/* So, by definition, stcp->u1.h.xfile and hsmfile do not match anymore */
-						continue;
+						savereqs();
+						if (hsmfile) {
+							/* So, by definition, stcp->u1.h.xfile and hsmfile do not match anymore */
+							continue;
+						}
 					}
 				}
 			}
-
+			
 			found++;
 
 			if (! hsmfile) {
