@@ -1,10 +1,10 @@
-.\" $Id: stageout.man,v 1.15 2002/10/27 23:30:13 jdurand Exp $
+.\" $Id: stageout.man,v 1.16 2002/10/28 15:34:03 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageout.man,v $ $Revision: 1.15 $ $Date: 2002/10/27 23:30:13 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageout.man,v $ $Revision: 1.16 $ $Date: 2002/10/28 15:34:03 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEOUT "1" "$Date: 2002/10/27 23:30:13 $" "CASTOR" "Stage User Commands"
+.TH STAGEOUT "1" "$Date: 2002/10/28 15:34:03 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageout \- allocate space and store the option values in the stgdaemon catalog
 for use by stageput later.
@@ -41,6 +41,7 @@ or absent.
 Sends the request to the stager on
 .IR host .
 This may also be specified thru the environment variable STAGE_HOST.
+.TP
 .BI \-K
 Keeps file on disk.
 If this option is absent, the disk file is removed as soon as the
