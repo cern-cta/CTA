@@ -1,10 +1,12 @@
 /*
+ * $Id: vmgr_main.c,v 1.4 2004/08/12 13:40:52 motiakov Exp $
+ *
  * Copyright (C) 1999-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: vmgr_main.c,v $ $Revision: 1.3 $ $Date: 2004/08/11 15:31:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: vmgr_main.c,v $ $Revision: 1.4 $ $Date: 2004/08/12 13:40:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -135,6 +137,15 @@ struct main_args *main_args;
 	}
 	memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
 	sin.sin_family = AF_INET ;
+#ifdef CSEC
+	if ((p = getenv ("SVMGR_PORT")) || (p = getconfent ("SVMGR", "PORT", 0))) {
+		sin.sin_port = htons ((unsigned short)atoi (p));
+	} else if (sp = getservbyname ("svmgr", "tcp")) {
+		sin.sin_port = sp->s_port;
+	} else {
+		sin.sin_port = htons ((unsigned short)SVMGR_PORT);
+	}
+#else
 	if ((p = getenv ("VMGR_PORT")) || (p = getconfent ("VMGR", "PORT", 0))) {
 		sin.sin_port = htons ((unsigned short)atoi (p));
 	} else if (sp = getservbyname ("vmgr", "tcp")) {
@@ -142,6 +153,7 @@ struct main_args *main_args;
 	} else {
 		sin.sin_port = htons ((unsigned short)VMGR_PORT);
 	}
+#endif
 	sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
 		vmgrlogit (func, VMG02, "setsockopt", neterror());
