@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.15 2000/05/15 09:20:55 jdurand Exp $
+ * $Id: poolmgr.c,v 1.16 2000/05/16 09:58:29 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.15 $ $Date: 2000/05/15 09:20:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.16 $ $Date: 2000/05/16 09:58:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -75,6 +75,7 @@ int isvalidpool _PROTO((char *));
 void migpoolfiles_log_callback _PROTO((int, char *));
 int isuserlevel _PROTO((char *));
 void poolmgr_wait4child _PROTO(());
+int selectfs _PROTO((char *, int *, char *, char));
 
 getpoolconf(defpoolname)
 		 char *defpoolname;
@@ -770,21 +771,31 @@ void print_pool_utilization(rpfd, poolname, defpoolname)
 	if (*poolname == '\0') sendrep (rpfd, MSG_OUT, "DEFPOOL %s\n", defpoolname);
 }
 
-selectfs(poolname, size, path)
+int
+selectfs(poolname, size, path, t_or_d)
 		 char *poolname;
 		 int *size;
 		 char *path;
+		 char t_or_d;
 {
 	struct pool_element *elemp;
 	int found = 0;
 	int i;
 	struct pool *pool_p;
 	long reqsize;
+	int size_to_use;
 
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
 		if (strcmp (poolname, pool_p->name) == 0) break;
-	if (*size == 0) *size = pool_p->defsize;
-	reqsize = *size * 1024 * 1024;	/* size in bytes */
+	if (*size == 0) {
+		if (t_or_d != 'm') {
+			*size = pool_p->defsize;
+		}
+		size_to_use = pool_p->defsize;
+	} else {
+		size_to_use = *size;
+	}
+	reqsize = size_to_use * 1024 * 1024;	/* size in bytes */
 	i = pool_p->next_pool_elem;
 	do {
 		elemp = pool_p->elemp + i;

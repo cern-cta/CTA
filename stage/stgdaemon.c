@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.28 2000/05/12 13:52:37 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.29 2000/05/16 09:58:30 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.28 $ $Date: 2000/05/12 13:52:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.29 $ $Date: 2000/05/16 09:58:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -150,6 +150,7 @@ extern void procmigpoolreq _PROTO((char *, char *));
 extern void update_migpool _PROTO((struct stgcat_entry *, int));
 extern int iscleanovl _PROTO((int, int));
 extern int ismigovl _PROTO((int, int));
+extern int selectfs _PROTO((char *, int *, char *, char));
 
 main(argc,argv)
 		 int argc;
@@ -739,7 +740,7 @@ build_ipath(upath, stcp, pool_user)
 
 	/* allocate space */
 
-	if (selectfs (stcp->poolname, &stcp->size, stcp->ipath) < 0)
+	if (selectfs (stcp->poolname, &stcp->size, stcp->ipath, stcp->t_or_d) < 0)
 		return (-1);	/* not enough space */
 
 	/* build full internal path name */
