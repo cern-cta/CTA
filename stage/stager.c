@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.73 2000/05/29 15:55:28 jdurand Exp $
+ * $Id: stager.c,v 1.74 2000/05/31 07:32:38 jdurand Exp $
  */
 
 /*
@@ -14,11 +14,14 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.73 $ $Date: 2000/05/29 15:55:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.74 $ $Date: 2000/05/31 07:32:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
 #include <unistd.h>                 /* For getcwd() etc... */
+#include <sys/stat.h>
+#include <sys/uio.h>
+#include <dirent.h>
 #endif
 #include <grp.h>
 #include <pwd.h>
@@ -33,8 +36,7 @@ static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.73 $ $Date: 2000
 #include <time.h>
 #include "Cns_api.h"
 #include "log.h"
-#define RFIO_KERNEL
-#include "rfio.h"
+#include "rfio_api.h"
 #include "rtcp_api.h"
 #include "serrno.h"
 #include "stage.h"
@@ -1389,10 +1391,10 @@ int filecopy(stcp, key, hostname)
 	char command[2*(CA_MAXHOSTNAMELEN+1+MAXPATH)+CA_MAXHOSTNAMELEN+1+196];
 	char *filename;
 	char *host;
-	RFILE *rf;
+	FILE *rf;
 	char stageid[CA_MAXSTGRIDLEN+1];
 	EXTERN_C int rfiosetopt _PROTO((int, int *, int));
-	EXTERN_C int rfio_pread _PROTO((char *, int, int, RFILE *));
+	EXTERN_C int rfio_pread _PROTO((char *, int, int, FILE *));
 
     SETTAPEEID(stcs->uid,stcs->gid);
 
