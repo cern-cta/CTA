@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.99 2001/03/04 07:40:25 jdurand Exp $
+ * $Id: poolmgr.c,v 1.100 2001/03/04 19:55:11 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.99 $ $Date: 2001/03/04 07:40:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.100 $ $Date: 2001/03/04 19:55:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1097,7 +1097,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
                       wfp->upath,
                       u64tostr(wfp->size_to_recall, tmpbuf1, 0),
                       wfp->nb_segments,
-                      u64tostr(wfp->size_to_recall, tmpbuf2, 0)
+                      u64tostr(wfp->size_yet_recalled, tmpbuf2, 0)
                       );
               break;
             case 'd':
@@ -1118,7 +1118,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
                       wfp->upath,
                       u64tostr(wfp->size_to_recall, tmpbuf1, 0),
                       wfp->nb_segments,
-                      u64tostr(wfp->size_to_recall, tmpbuf2, 0)
+                      u64tostr(wfp->size_yet_recalled, tmpbuf2, 0)
                       );
               break;
             case 'm':
@@ -1138,7 +1138,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
                       wfp->upath,
                       u64tostr(wfp->size_to_recall, tmpbuf1, 0),
                       wfp->nb_segments,
-                      u64tostr(wfp->size_to_recall, tmpbuf2, 0)
+                      u64tostr(wfp->size_yet_recalled, tmpbuf2, 0)
                       );
               break;
             case 'h':
@@ -1158,7 +1158,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
                       wfp->upath,
                       u64tostr(wfp->size_to_recall, tmpbuf1, 0),
                       wfp->nb_segments,
-                      u64tostr(wfp->size_to_recall, tmpbuf2, 0)
+                      u64tostr(wfp->size_yet_recalled, tmpbuf2, 0)
                       );
               break;
             default:
@@ -1177,7 +1177,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
                       wfp->upath,
                       u64tostr(wfp->size_to_recall, tmpbuf1, 0),
                       wfp->nb_segments,
-                      u64tostr(wfp->size_to_recall, tmpbuf2, 0)
+                      u64tostr(wfp->size_yet_recalled, tmpbuf2, 0)
                       );
               break;
             }
