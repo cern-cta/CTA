@@ -1,0 +1,224 @@
+.\"
+.\" @(#)$RCSfile: vdqm_SendVolReq.man,v $ $Revision: 1.1 $ $Date: 2000/06/26 12:49:20 $ CERN IT-PDP/DM O.Barring
+.\"
+.\" Copyright (C) 1999 by CERN/IT/PDP/DM
+.\"
+.TH VDQM_SENDVOLREQ l "$Date: 2000/06/26 12:49:20 $" "CASTOR" "VDQM Library Functions"
+.SH NAME
+.PP
+vdqm_SendVolReq \- queue a volume request in VDQM
+.SH SYNOPSIS
+.br
+\fB#include "Castor_limits.h"\fR
+.br
+\fB#include "osdep.h"\fR
+.br
+\fB#include "net.h"\fR
+.br
+\fB#include "vdqm_api.h"\fR
+.sp
+.BI "int vdqm_SendVolReq ("
+.br
+.BI "                const vdqmnw_t *" nw ,
+.br
+.BI "                int *" reqID ,
+.br
+.BI "                char *" VID ,
+.br
+.BI "                const char *" dgn ,
+.br
+.BI "                const char *" server,
+.br
+.BI "                const char *" unit ,
+.br
+.BI "                int " mode ,
+.br
+.BI "                int " port );
+.SH PARAMETERS
+.I nw
+\- points to a structure containing internal VDQM API network information returned
+by a prior call to 
+.B vdqm_Connect(l).
+If this parameter is NULL, which is the recommended usage,
+.B vdqm_SendVolReq
+will internally call 
+.B vdqm_Connect(l)
+and
+.B vdqm_Disconnect(l)
+to open and close the connection with the VDQM server.
+.PP
+.I reqID
+\- points to an integer location that receives the volume request queue ID 
+returned by VDQM. This is the key used by the rtcopy server when contacting
+the client. 
+.I VID
+\- character string specifying the volume visual identifier.
+.PP
+.I dgn
+\- character string specifying the device group name associated with the unit.
+.PP
+.I server
+\- character string specifying the tape server. 
+If NULL the first available tape server will be choosen.
+.PP
+.I unit
+\- character string specifying the drive unit name.
+If NULL the first available drive unit will be choosen.
+.PP
+.I mode
+\- integer value specifying the access mode. This parameter can only take
+the two values WRITE_DISABLE and WRITE_ENABLE defined in the "Ctape_constants.h"
+header file. Any other value will result in an error.
+.PP
+.I port
+\- integer value specifying a network listen port opened and bound by
+the client application. The rtcopy server will use this port when contacting
+the client at job startup. The port value should be given in host order.
+.PP
+.SH DESCRIPTION
+.B vdqm_SendVolReq
+sends a volume request to the VDQM server. When successful the volume
+request is queued and a volume request identifier is returned to the
+client in the 
+.I reqID
+integer location. When the request is due to run the VDQM server assigns 
+a free drive and contacts the rtcopy server on the node hosting the
+assigned drive. The rtcopy server receives the client host name and port
+number passed in the
+.I port
+parameter and contacts the client to receive the mount request.
+When contacting the client the rtcopy server checks that the volume request
+identifier is correct and rejects the request if not.
+
+.SH EXAMPLE
+Here follows an example showing how a client opens a network listen
+socket, sends a volume request to VDQM and finally waits for a connection
+from a rtcopy server.
+.P
+.nf
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <Castor_limits.h>
+#include <serrno.h>
+#include <osdep.h>
+#include <net.h>
+#include <Ctape_constants.h>
+#include <Ctape_api.h>
+#include <vdqm_api.h>
+
+int main(int argc, char *argv) {
+    int rc, len, sock, port, VolReqID;
+    char *dgn, *VID;
+    struct sockaddr_in sin ; /* Internet address */
+
+    if ( argc < 2 ) {
+        fprintf(stderr,"Usage: %s dgn vid\\n",argv[0]);
+        exit(2);
+    }
+    dgn = argv[1];
+    VID = argv[2];
+
+    sock = socket(AF_INET,SOCK_STREAM,0);
+    if ( sock == -1 ) {
+        fprintf(stderr,"socket(): %s\n",strerror(errno));
+        exit(1);
+    }
+    
+    /*
+     * Bind to an arbitrary port
+     */
+    port = 0;
+    sin.sin_addr.s_addr = htonl(INADDR_ANY);
+    sin.sin_family = AF_INET;
+    sin.sin_port = htons((u_short)port);
+    rc = bind(sock, (struct sockaddr *)&sin, sizeof(sin));
+    if ( rc == -1 ) {
+        fprintf(stderr,"bind(): %s\n",strerror(errno));
+        exit(1);
+    }
+
+    rc = listen(sock,100);
+    if ( rc == -1 ) {
+        fprintf(stderr,"listen(): %s\n",strerror(errno));
+        exit(1);
+    }
+    /*
+     * Get the port number
+     */
+    len = sizeof(sin);
+    rc = getsockname(sock,(struct sockaddr *)&sin,&len);
+    if ( rc == -1 ) {
+        fprintf(stderr,"getsockname(): %s\n",sstrerror(errno));
+        exit(1);
+    }
+    port = ntohs(sin.sin_port);
+
+    /*
+     * Send the request to read DLT tape ZZ0001
+     */
+    rc = \fBvdqm_SendVolReq\fP(NULL,&VolReqID,"ZZ0001","DLT",
+                               NULL,NULL,WRITE_DISABLE,port);
+    if ( rc == -1 ) {
+        fprintf(stderr,"vdqm_SendVolReq(): %s\n",sstrerror(serrno));
+        exit(1);
+    }
+    /*
+     * Wait for connection from a tape server
+     */
+    len = sizeof(sin);
+    rc = accept(sock,(struct sockaddr *)&sin,&len);
+    /*
+     * Start the tape request ...
+     */
+    exit(0);
+}
+.fi
+
+.SH RETURN VALUES
+.PP
+On successful completion, the
+.B vdqm_SendVolReq
+function returns 0. Otherwise, a value of \-1 is returned and
+.B serrno
+is set to indicate the error.
+.SH ERRORS
+.PP
+If the
+.B vdqm_SendVolReq
+function fails,
+.B serrno
+may be set to one of the following values:
+.TP
+.B SEINTERNAL
+Unexpected internal error 
+.TP
+.B SENOSSERV
+VDQM service unknown.
+.TP
+.B SENOSHOST
+VDQM host unknown.
+.TP
+.B SECOMERR
+A network library call failed when trying to establish the connection
+with the VDQM server.
+.TP
+.B EINVAL
+A parameter or combination of parameters is invalid. For instance if
+any of the required parameters device group name (dgn) or vid
+is a NULL pointer or if the port argument is a invalid ( <0 ).
+.TP
+.B EVQSYERR
+A fatal system call (e.g. calloc()) failure in VDQM server.
+.TP
+.B EVQHOLD
+The server is in HOLD status. This is normally a temporary error due
+to VDQM server maintenance. Client should retry after a short delay.
+
+
+.SH SEE ALSO
+vdqm_Connect(l), vdqm_Disconnect(l)
+
