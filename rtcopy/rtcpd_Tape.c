@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.24 $ $Date: 2000/02/07 17:47:41 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.25 $ $Date: 2000/02/08 13:07:38 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -87,22 +87,19 @@ int rtcpd_SignalFilePositioned(tape_list_t *tape, file_list_t *file) {
          *file->filereq.stageID == '\0' ) return(0);
     rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
     if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_mutex_lock_ext(p
-roc_cntl): %s\n",
+        rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_mutex_lock_ext(proc_cntl): %s\n",
             sstrerror(serrno));
         return(-1);
     }
     rc = Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
     if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_cond_broadcast_e
-xt(proc_cntl): %s\n",
+        rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_cond_broadcast_ext(proc_cntl): %s\n",
             sstrerror(serrno));
         return(-1);
     }
     rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
     if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_mutex_unlock_ext
-(proc_cntl): %s\n",
+        rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_mutex_unlock_ext(proc_cntl): %s\n",
                  sstrerror(serrno));
         return(-1);
     }
