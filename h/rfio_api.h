@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.36 $ $Date: 2002/03/27 12:26:46 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.37 $ $Date: 2002/08/28 05:32:06 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -75,6 +75,7 @@ EXTERN_C int DLL_DECL rfio_close_v3 _PROTO((int));
 EXTERN_C int DLL_DECL rfio_end _PROTO((void));  /* Close connections opened by rfio_mstat() */
 EXTERN_C int DLL_DECL rfio_symend _PROTO((void)); /* Close connections opened by rfio_msymlink() */
 EXTERN_C int DLL_DECL rfio_unend _PROTO((void)); /* Close connections opened by rfio_munlink() */
+EXTERN_C int DLL_DECL rfio_fchown _PROTO((int, int, int));
 EXTERN_C int DLL_DECL rfio_fstat _PROTO((int, struct stat *));
 EXTERN_C char DLL_DECL *rfio_getcwd _PROTO((char *, int));
 EXTERN_C int DLL_DECL rfio_lockf _PROTO((int, int, long));
