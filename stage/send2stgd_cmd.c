@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_cmd.c,v 1.8 2002/02/13 12:45:41 jdurand Exp $
+ * $Id: send2stgd_cmd.c,v 1.9 2002/04/11 10:11:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_cmd.c,v $ $Revision: 1.8 $ $Date: 2002/02/13 12:45:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_cmd.c,v $ $Revision: 1.9 $ $Date: 2002/04/11 10:11:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -49,7 +49,7 @@ extern void dounlink _PROTO((char *));
 #ifndef _WIN32
 void wait4child _PROTO(());
 #endif
-extern int rc_shift2castor _PROTO((int));
+extern int rc_shift2castor _PROTO((int,int));
 
 int DLL_DECL send2stgd_cmd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_len)
 		 char *host;
@@ -195,7 +195,7 @@ int DLL_DECL send2stgd_cmd(host, reqp, reql, want_reply, user_repbuf, user_repbu
 		if (rep_type == STAGERC) {
 			(void) netclose (stg_s);
 			if (c) {
-				serrno = rc_shift2castor(c);
+				serrno = rc_shift2castor(magic,c);
 				c = -1;
 			}
 			break;
