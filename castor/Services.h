@@ -61,6 +61,7 @@ int C_Services_service(struct C_Services_t* svcs,
 
 /**
  * create foreign representation from a C++ Object
+ * @param svcs the services object to use
  * @param address where to store the representation of
  * the object
  * @param object the object to deal with
@@ -77,6 +78,7 @@ int C_Services_createRep(struct C_Services_t* svcs,
 
 /**
  * Updates foreign representation from a C++ Object.
+ * @param svcs the services object to use
  * @param address where the representation of
  * the object is stored
  * @param object the object to deal with
@@ -93,6 +95,7 @@ int C_Services_updateRep(struct C_Services_t* svcs,
 
 /**
  * deletes foreign representation of a C++ Object
+ * @param svcs the services object to use
  * @param address where the representation of
  * the object is stored
  * @param object the object to deal with
@@ -109,6 +112,7 @@ int C_Services_deleteRep(struct C_Services_t* svcs,
 
 /**
  * create C++ object from foreign representation
+ * @param svcs the services object to use
  * @param address the place where to find the foreign
  * representation
  * @return the C++ object created from its reprensentation
@@ -121,6 +125,19 @@ int C_Services_deleteRep(struct C_Services_t* svcs,
 int C_Services_createObj(struct C_Services_t* svcs,
                          struct C_IAddress_t* address,
                          struct C_IObject_t** object);
+
+/**
+ * Updates C++ object from its foreign representation.
+ * @param svcs the services object to use
+ * @param address where to find the object
+ * @param object the object to deal with
+ * @return -1 in case of error, 0 if successful
+ * A detailed error message can be retrieved by calling
+ * C_Services_errorMsg
+ */
+int C_Services_updateObj(struct C_Services_t* svcs,
+                         struct C_IAddress_t* address,
+                         struct C_IObject_t* object);
 
 /**
  * Returns the error message associated to the last error.

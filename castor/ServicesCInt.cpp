@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/05/26 15:44:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/06/03 16:41:45 $ $Author: sponcec3 $
  *
  *
  *
@@ -157,6 +157,27 @@ extern "C" {
     }
     try {
       *object = svcs->svcs->createObj(address);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      svcs->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //------------------------------------------------------------------------------
+  // C_Services_updateObj
+  //------------------------------------------------------------------------------
+  int C_Services_updateObj(C_Services_t* svcs,
+                           castor::IAddress* address,
+                           castor::IObject* object) {
+    if (0 == svcs->svcs) {
+      errno = EINVAL;
+      svcs->errorMsg = "Empty context";
+      return -1;
+    }
+    try {
+      svcs->svcs->updateObj(address, object);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       svcs->errorMsg = e.getMessage().str();
