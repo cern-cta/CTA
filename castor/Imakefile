@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Release$ $Date: 2004/05/25 15:30:52 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Release$ $Date: 2004/05/26 15:46:25 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -125,6 +125,7 @@ STGLIB_OBJS = IAddressCInt.Osuf \
               rh/RequestCInt.Osuf \
               rh/StageInRequest.Osuf \
               rh/StageInRequestCInt.Osuf \
+              stager/IStagerSvcCInt.Osuf \
               stager/CastorFile.Osuf \
               stager/CastorFileCInt.Osuf \
               stager/Cuuid.Osuf \

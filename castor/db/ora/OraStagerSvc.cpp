@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/26 10:11:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/26 15:46:25 $ $Author: sponcec3 $
  *
  *
  *
@@ -118,7 +118,7 @@ castor::db::ora::OraStagerSvc::segmentsForTape
 // -----------------------------------------------------------------------
 // anySegmentsForTape
 // -----------------------------------------------------------------------
-bool castor::db::ora::OraStagerSvc::anySegmentsForTape
+int castor::db::ora::OraStagerSvc::anySegmentsForTape
 (castor::stager::Tape* searchItem)
   throw (castor::exception::Exception) {
   // XXX This is a first version. Has to be improved from
@@ -129,9 +129,8 @@ bool castor::db::ora::OraStagerSvc::anySegmentsForTape
     searchItem->setStatus(castor::stager::TAPE_WAITMOUNT);
     castor::ObjectSet alreadyDone;
     updateRep(0, searchItem, alreadyDone, true);
-    return true;
   }
-  return false;
+  return result.size();
 }
 
 // -----------------------------------------------------------------------

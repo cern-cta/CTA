@@ -101,10 +101,10 @@ namespace castor {
          * copies should be cancelled unless there are outstanding requests
          * for other files that reside on that tape.
          * @param searchItem the tape information used for the search
-         * @return whether waiting segments exist
+         * @return >0 : number of waiting requests found. 0 : no requests found
          * @exception in case of error
          */
-        virtual bool anySegmentsForTape(castor::stager::Tape* searchItem)
+        virtual int anySegmentsForTape(castor::stager::Tape* searchItem)
           throw (castor::exception::Exception);
 
         /**

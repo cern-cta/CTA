@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/26 10:11:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/26 15:46:25 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -57,11 +57,7 @@ namespace castor {
        * following status values: SEGMENT_UNPROCESSED,
        * SEGMENT_WAITFSEQ, SEGMENT_WAITPATH or SEGMENT_WAITCOPY.
        * Before return this function atomically updates the
-       * matching catalog entries Tape status to TAPE_MOUNTED
-       * and Segment status to:
-       * SEGMENT_WAITFSEQ - if no tape fseq or blockid has been decided yet
-       * SEGMENT_WAITPATH - if physical disk path has not been decided yet
-       * SEGMENT_WAITCOPY - if both tape fseq (or blockid) and path are defined
+       * matching catalog entries Tape status to TAPE_MOUNTED.
        * @param searchItem the tape information used for the search
        * @return vector with all waiting segments
        * @exception in case of error
@@ -84,10 +80,10 @@ namespace castor {
        * copies should be cancelled unless there are outstanding requests
        * for other files that reside on that tape.
        * @param searchItem the tape information used for the search
-       * @return whether waiting segments exist
+       * @return >0 : number of waiting requests found. 0 : no requests found
        * @exception in case of error
        */
-      virtual bool anySegmentsForTape(castor::stager::Tape* searchItem)
+      virtual int anySegmentsForTape(castor::stager::Tape* searchItem)
         throw (castor::exception::Exception) = 0;
 
       /**
