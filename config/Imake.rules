@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.5 $ $Date: 2005/01/18 16:14:56 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.6 $ $Date: 2005/01/18 17:06:58 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #define NullParameter
@@ -202,19 +202,23 @@ InstallTarget(ProgramTargetName(program),owner,group,mode,dest)
 
 #if linux
 #ifndef InstallSharedLibrary
-#define InstallSharedLibrary(libname,rev,dest)		@@\
+#define InstallSharedLibrary(libname,maj,min,dest)		@@\
 dest/SharedLibraryTargetName(libname): SharedLibraryTargetName(libname)	@@\
-	install $? $@.rev				@@\
+	install $? $@.maj.min				@@\
+	RemoveFile($@.maj)					@@\
+	ln -s $?.maj.min $@.maj					@@\
 	RemoveFile($@)					@@\
-	ln -s $?.rev $@
+	ln -s $?.maj $@
 #endif
 #else
 #ifndef InstallSharedLibrary
-#define InstallSharedLibrary(libname,rev,dest)		@@\
+#define InstallSharedLibrary(libname,maj,min,dest)		@@\
 dest/SharedLibraryTargetName(libname): SharedLibraryTargetName(libname)	@@\
-	cp $? $@.rev					@@\
+	cp $? $@.maj.min				@@\
+	RemoveFile($@.maj)				@@\
+	ln -s $?.maj.min $@.maj				@@\
 	RemoveFile($@)					@@\
-	ln -s $?.rev $@
+	ln -s $?.maj $@
 #endif
 #endif
 
