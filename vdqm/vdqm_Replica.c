@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.21 $ $Date: 2003/02/18 14:01:19 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.22 $ $Date: 2003/12/10 15:25:45 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1019,7 +1019,8 @@ int vdqm_StartReplicaThread() {
     char *primary_host = NULL;
     char *secondary_host = NULL;
     char *last = NULL;
-
+    int replica_thread_started = 0;
+    
     /*
      * Determine whether we are a primary server or not.
      */
@@ -1084,6 +1085,7 @@ int vdqm_StartReplicaThread() {
                     sstrerror(serrno));
                 return(-1);
             }
+            replica_thread_started = 1;
             return(0);
         }
     } 
@@ -1101,8 +1103,17 @@ int vdqm_StartReplicaThread() {
         retry_replication = hold = 1;
         rc_p = (int *)vdqm_ReplicaListenThread((void *)secondary_host);
         if ( rc_p == NULL || *rc_p == failure ) continue;
+        replica_thread_started = 1;
         break;
     }
+
+    /* BC: At this point we are on the primary server
+       We load the queues if no replica listen thread has been started,
+       as normally, the vdqm_load_queue is done from vdqm_ReplicaListenThread */
+    if (!replica_thread_started) {
+        vdqm_load_queue();
+    }
+    
     hold = 0;
     retry_replication = VDQM_REPLICA_RETRIES;
     free(secondary_host);
