@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.78 2000/11/21 12:03:23 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.79 2000/11/25 11:22:53 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.78 $ $Date: 2000/11/21 12:03:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.79 $ $Date: 2000/11/25 11:22:53 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -376,6 +376,9 @@ main(argc,argv)
 		exit(SYERR);
 	}
 
+	/* Temporarly patch because of rfio_serror() behaviour : we reset serrno */
+	serrno = 0;
+
 	/* We compute the number of entries as well as the last used reqid */
 	nbcat_ent = 0;
 	for (stcp = stcs; stcp < stce; stcp++) {
@@ -487,6 +490,8 @@ main(argc,argv)
 			stcp++;
 		} else if (stcp->status == STAGEWRT) {
 			delreq (stcp,0);
+		} else if ((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR)) {
+			delreq (stcp,0);
 		} else if (stcp->status == STAGEPUT) {
 			stcp->status = STAGEOUT|PUT_FAILED;
 #ifdef USECDB
@@ -495,7 +500,7 @@ main(argc,argv)
 			}
 #endif
 			stcp++;
-		} else if (stcp->status == (STAGEPUT | CAN_BE_MIGR)) {
+		} else if (stcp->status == (STAGEPUT|CAN_BE_MIGR)) {
 			stcp->status = STAGEOUT|CAN_BE_MIGR;
 			/* This is a file for automatic migration */
 			update_migpool(stcp,1);
@@ -826,7 +831,13 @@ add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
 				/* We change this "-c off" waiting request only if the found index */
 				/* is the very last one in the queue. */
 				if (wfp != &(wqp->wf[wqp->nbdskf - 1])) {
-					goto add2otherwf_return;
+					/* This is not the last one in this queue but it neverthless waits  */
+					/* This handles the case : a "-q 3- -c off" has been splitted onto  */
+					/* "-q 2" + "-q 3- -c off" because there has been a "-q 2" before.  */
+					/* Then, here, all the wfp's are all waiting on an original "-q 1-" */
+					/* From logical point of view this is equivalent to a normal request */
+					/* waiting on another "-c off" one.                                  */
+					goto normal_waiting_on_c_off;
 				}
 				/* If the file sequence of this "-c off" callback is higher or equal to the one */
 				/* we are waiting for, then we extended the structure. */
@@ -885,6 +896,7 @@ add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
 #endif
 				}
 			} else {
+	normal_waiting_on_c_off:
 				/* This request is NOT a "-c off" one, but is neverthless waiting on another "-c off" one */
 				/* We will simply update the wfp->waiting_on_req to wfp_new->subreqid, only if the fseq */
 				/* given on the command is NOT what we are waiting for. */
@@ -1257,7 +1269,24 @@ check_waiting_on_req(subreqid, state)
 		for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (wfp->subreqid == stcp->reqid) {
-					sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+					switch (stcp->t_or_d) {
+					case 't':
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						break;
+					case 'd':
+					case 'a':
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : u1.d.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.d.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						break;
+					case 'm':
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : u1.m.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.m.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						break;
+					case 'h':
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : u1.h.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.h.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						break;
+					default:
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : <unknown to_or_d=%c>\n",i,stcp->t_or_d);
+						break;
+                    }
 					break;
 				}
 			}
@@ -1328,7 +1357,24 @@ check_coff_waiting_on_req(subreqid, state)
 		for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (wfp->subreqid == stcp->reqid) {
-					sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_coff_waiting_on_req : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+					switch (stcp->t_or_d) {
+					case 't':
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_coff_waiting_on_req : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						break;
+					case 'd':
+					case 'a':
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_coff_waiting_on_req : No %3d    : u1.d.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.d.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						break;
+					case 'm':
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_coff_waiting_on_req : No %3d    : u1.m.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.m.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						break;
+					case 'h':
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_coff_waiting_on_req : No %3d    : u1.h.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.h.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						break;
+					default:
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waiting_on_req : No %3d    : <unknown to_or_d=%c>\n",i,stcp->t_or_d);
+						break;
+                    }
 					break;
 				}
 			}
@@ -1419,8 +1465,13 @@ void checkwaitq()
 					check_waiting_on_req (wfp->subreqid,
 							(wqp->status == REQKILD) ? KILLED : STG_FAILED);
 					break;
-				case STAGEOUT:
 				case STAGEWRT:
+					if ((stcp->status & (CAN_BE_MIGR)) == CAN_BE_MIGR) {
+						/* This is a file coming from (being migrated or not) migration */
+						update_migpool(stcp,-1);
+					}
+					/* There is intentionnaly no 'break' here */
+				case STAGEOUT:
 				case STAGEALLOC:
 					delreq (stcp,0);
 					break;
@@ -1451,7 +1502,24 @@ void checkwaitq()
 		for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (wfp->subreqid == stcp->reqid) {
-					sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waitq : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+					switch (stcp->t_or_d) {
+					case 't':
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waitq : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						break;
+					case 'd':
+					case 'a':
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waitq : No %3d    : u1.d.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.d.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						break;
+					case 'm':
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waitq : No %3d    : u1.m.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.m.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						break;
+					case 'h':
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waitq : No %3d    : u1.h.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.h.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						break;
+					default:
+						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] check_waitq : No %3d    : <unknown to_or_d=%c>\n",i,stcp->t_or_d);
+						break;
+					}
 					break;
 				}
 			}
@@ -1568,13 +1636,14 @@ delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
 			/* it's the last entry;
 				 we can remove the file and release the space */
 			if (! freersv) {
-				if ((stcp->status & 0xF0) != STAGED)
+				if ((stcp->status & 0xF0) != STAGED) {
 					if (rfio_stat (stcp->ipath, &st) == 0)
 						actual_size = st.st_size;
 					else
 						stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
-				else
+				} else {
 					actual_size = stcp->actual_size;
+				}
 			}
 			if (rfio_unlink (stcp->ipath) == 0) {
 #if SACCT
@@ -1589,8 +1658,8 @@ delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
 					stglogit (func, STG02, stcp->ipath, "rfio_unlink",
 										rfio_serror());
 			}
-			if ((stcp->status & (STAGEPUT | CAN_BE_MIGR)) == (STAGEPUT | CAN_BE_MIGR) &&
-			    (stcp->status & PUT_FAILED) != PUT_FAILED) {
+			if (((stcp->status & (STAGEPUT|CAN_BE_MIGR)) == (STAGEPUT|CAN_BE_MIGR) && (stcp->status & PUT_FAILED) != PUT_FAILED) ||
+				((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR))) {
 				/* This is a file coming from (automatic or not) migration */
 				update_migpool(stcp,-1);
 			}
