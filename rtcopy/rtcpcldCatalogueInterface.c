@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.30 $ $Release$ $Date: 2004/08/11 12:01:02 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.31 $ $Release$ $Date: 2004/08/11 12:19:53 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.30 $ $Release$ $Date: 2004/08/11 12:01:02 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.31 $ $Release$ $Date: 2004/08/11 12:19:53 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1216,7 +1216,7 @@ static int procReqsForVID(
   unsigned char *blockid;
   struct Cns_fileid fileid;
   int rc, i, nbItems = 0, save_serrno, fseq, updated = 0, segmUpdated;
-  int newFileReqs = 0, incompleteSegments = 0;
+  int newFileReqs = 0, incompleteSegments = 0, prevFseq = -1;
 
   if ( tape == NULL ) {
     serrno = EINVAL;
@@ -1300,6 +1300,28 @@ static int procReqsForVID(
                              segmArray[i],
                              &fseq
                              );
+        if ( (tape->tapereq.mode == WRITE_ENABLE) &&
+             (prevFseq > 0) &&
+             (fseq != prevFseq+1) ) {
+          if ( dontLog == 0 ) {
+            (void)dlf_write(
+                            (inChild == 0 ? mainUuid : childUuid),
+                            DLF_LVL_SYSTEM,
+                            RTCPCLD_MSG_OUTOFSEQ,
+                            (struct Cns_fileid *)NULL,
+                            2,
+                            "FSEQ",
+                            DLF_MSG_PARAM_INT,
+                            fseq,
+                            "PREV_FSEQ",
+                            DLF_MSG_PARAM_INT,
+                            prevFseq
+                            );
+          }
+          break;
+        }
+        prevFseq = fseq;
+        
         Cstager_Segment_diskPath(
                                  segmArray[i],
                                  (CONST char **)&diskPath
@@ -1407,8 +1429,6 @@ static int procReqsForVID(
           Cstager_Segment_setStatus(segmArray[i],SEGMENT_WAITCOPY);
         }
       } else if ( validPosition(segmArray[i]) == 1 ) {
-        rtcp_log(LOG_DEBUG,"procReqsForVID() current segment status=%d, set SEGMENT_WAITPATH (%d)\n",
-                 cmpStatus,SEGMENT_WAITPATH);
         incompleteSegments = 1;
         if ( cmpStatus != SEGMENT_WAITPATH ) {
           updated = 1;
@@ -1416,8 +1436,6 @@ static int procReqsForVID(
           Cstager_Segment_setStatus(segmArray[i],SEGMENT_WAITPATH);
         }
       } else {
-        rtcp_log(LOG_DEBUG,"procReqsForVID() current segment status=%d, set SEGMENT_WAITFSEQ (%d)\n",
-                 cmpStatus,SEGMENT_WAITFSEQ);
         incompleteSegments = 1;
         if ( cmpStatus != SEGMENT_WAITFSEQ ) {
           updated = 1;
@@ -1433,7 +1451,6 @@ static int procReqsForVID(
         rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,1);
         if ( rc == -1 ) {
           save_serrno = serrno;
-          C_IAddress_delete(iAddr);
           if ( dontLog == 0 ) {
             (void)dlf_write(
                             (inChild == 0 ? mainUuid : childUuid),
@@ -1456,6 +1473,7 @@ static int procReqsForVID(
                             RTCPCLD_LOG_WHERE
                             );
           }
+          C_IAddress_delete(iAddr);
           if ( segmArray != NULL ) free(segmArray);
           serrno = save_serrno;
           return(-1);
