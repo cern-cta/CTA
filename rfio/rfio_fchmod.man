@@ -1,0 +1,2 @@
+.so ./rfio_chmod.man
+.\" @(#)$RCSfile: rfio_fchmod.man,v $ $Revision: 1.1 $ $Date: 2003/01/16 06:55:58 $ CERN IT-DS/HSM Jean-Philippe Baud
