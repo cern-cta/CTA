@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.60 2001/07/12 10:56:57 jdurand Exp $
+ * $Id: procqry.c,v 1.61 2001/07/12 15:24:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.60 $ $Date: 2001/07/12 10:56:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.61 $ $Date: 2001/07/12 15:24:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -873,9 +873,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				sprintf (p_size, "%d", stcp->size);
 		else
 			strcpy (p_size, "*");
-		if (stcp->status & 0xF0)
-			strcpy (p_stat, x_stat[(stcp->status & 0xF0) >> 4]);
-		else if (stcp->status & 0xF00)
+		if (stcp->status & 0xF00)
 			if (ISCASTORBEINGMIG(stcp))
 				strcpy( p_stat, "BEING_MIGR");
 			else if (ISCASTORWAITINGMIG(stcp))
@@ -884,6 +882,8 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				strcpy (p_stat, "DELAY_MIGR");
 			else
 				strcpy (p_stat, l_stat[(stcp->status & 0xF00) >> 8]);
+		else if (stcp->status & 0xF0)
+			strcpy (p_stat, x_stat[(stcp->status & 0xF0) >> 4]);
 		else if (stcp->status == STAGEALLOC)
 			strcpy (p_stat, "STAGEALLOC");
 		else if (ISCASTORWAITINGNS(stcp))
@@ -1913,5 +1913,5 @@ void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 }
 
 /*
- * Last Update: "Friday 22 June, 2001 at 13:21:48 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Thursday 12 July, 2001 at 16:00:23 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
