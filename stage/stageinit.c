@@ -1,5 +1,5 @@
 /*
- * $Id: stageinit.c,v 1.10 2000/08/15 11:06:15 baud Exp $
+ * $Id: stageinit.c,v 1.11 2000/10/27 14:04:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.10 $ $Date: 2000/08/15 11:06:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.11 $ $Date: 2000/10/27 14:04:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -23,6 +23,7 @@ static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.10 $ $Date: 2
 #include <errno.h>
 #include "marshall.h"
 #include "stage.h"
+#include "Cpwd.h"
 extern	char	*optarg;
 extern	int	optind;
 
@@ -81,7 +82,7 @@ int main(argc, argv)
 
 	/* Build request body */
 
-	pw = getpwuid (uid);
+	pw = Cgetpwuid (uid);
 	marshall_STRING (sbp, pw->pw_name);	/* login name */
 	marshall_WORD (sbp, gid);
 	marshall_WORD (sbp, argc);

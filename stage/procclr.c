@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.16 2000/10/03 11:00:18 jdurand Exp $
+ * $Id: procclr.c,v 1.17 2000/10/27 14:04:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.16 $ $Date: 2000/10/03 11:00:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.17 $ $Date: 2000/10/27 14:04:32 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -30,6 +30,7 @@ static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.16 $ $Date: 200
 #include "../h/sacct.h"
 #endif
 #include "osdep.h"
+#include "Cgrp.h"
 
 void procclrreq _PROTO((char *, char *));
 
@@ -90,7 +91,7 @@ void procclrreq(req_data, clienthost)
 						 reqid, STAGECLR, 0, 0, NULL, "");
 #endif
 
-	if ((gr = getgrgid (gid)) == NULL) {
+	if ((gr = Cgetgrgid (gid)) == NULL) {
 		sendrep (rpfd, MSG_ERR, STG36, gid);
 		c = SYERR;
 		goto reply;

@@ -1,5 +1,5 @@
 /*
- * $Id: stagealloc.c,v 1.14 2000/09/11 15:26:30 jdurand Exp $
+ * $Id: stagealloc.c,v 1.15 2000/10/27 14:04:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.14 $ $Date: 2000/09/11 15:26:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.15 $ $Date: 2000/10/27 14:04:32 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -27,6 +27,8 @@ static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.14 $ $Date: 
 #include "marshall.h"
 #include "rfio_api.h"
 #include "stage.h"
+#include "Cpwd.h"
+#include "Cgrp.h"
 extern	char	*getenv();
 extern	char	*getconfent();
 extern	int	optind;
@@ -86,7 +88,7 @@ int main(argc, argv)
 		switch (c) {
 		case 'G':
 			Gflag++;
-			if ((gr = getgrgid (gid)) == NULL) {
+			if ((gr = Cgetgrgid (gid)) == NULL) {
 				fprintf (stderr, STG36, gid);
 				exit (SYERR);
 			}
@@ -95,7 +97,7 @@ int main(argc, argv)
 				errflg++;
 			} else {
 				strcpy (Gname, p);
-				if ((pw = getpwnam (p)) == NULL) {
+				if ((pw = Cgetpwnam (p)) == NULL) {
 					fprintf (stderr, STG11, p);
 					errflg++;
 				} else
@@ -146,7 +148,7 @@ int main(argc, argv)
 			(pool_user = getenv ("STAGE_USER")) != NULL)
 		nargs += 2;
 	if (pool_user &&
-			((pw = getpwnam (pool_user)) == NULL || pw->pw_gid != gid)) {
+			((pw = Cgetpwnam (pool_user)) == NULL || pw->pw_gid != gid)) {
 		fprintf (stderr, STG11, pool_user);
 		errflg++;
 	}
@@ -162,7 +164,7 @@ int main(argc, argv)
 
 	/* Build request body */
 
-	if ((pw = getpwuid (uid)) == NULL) {
+	if ((pw = Cgetpwuid (uid)) == NULL) {
 		char uidstr[8];
 		sprintf (uidstr, "%d", uid);
 		fprintf (stderr, STG11, uidstr);

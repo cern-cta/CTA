@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.71 2000/10/17 14:21:06 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.72 2000/10/27 14:04:34 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.71 $ $Date: 2000/10/17 14:21:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.72 $ $Date: 2000/10/27 14:04:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -91,6 +91,7 @@ struct winsize {
 #include "osdep.h"
 #include "Cnetdb.h"
 #include "Cns_api.h"
+#include "Cpwd.h"
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
 /* calls to setresuid().                                                */
@@ -272,8 +273,8 @@ main(argc,argv)
 #endif
 
 	/* We get information on generic stage:st uid/gid */
-	if ((stpasswd = getpwnam("stage")) == NULL) {
-		stglogit(func, "### Cannot getpwnam(\"%s\") (%s)\n","stage",strerror(errno));
+	if ((stpasswd = Cgetpwnam("stage")) == NULL) {
+		stglogit(func, "### Cannot Cgetpwnam(\"%s\") (%s)\n","stage",strerror(errno));
  		exit (SYERR);
 	}
 
@@ -978,7 +979,7 @@ build_ipath(upath, stcp, pool_user)
 		if (c) {
 			return (c);
 		}
-		if ((pw = getpwnam (pool_user)) == NULL) {
+		if ((pw = Cgetpwnam (pool_user)) == NULL) {
 			sendrep (rpfd, MSG_ERR, STG11, pool_user);
 			return (SYERR);
 		}

@@ -1,5 +1,5 @@
 /*
- * $Id: stagechng.c,v 1.2 2000/06/17 07:53:42 jdurand Exp $
+ * $Id: stagechng.c,v 1.3 2000/10/27 14:04:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.2 $ $Date: 2000/06/17 07:53:42 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.3 $ $Date: 2000/10/27 14:04:32 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -25,6 +25,7 @@ static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.2 $ $Date: 20
 #endif
 #include "marshall.h"
 #include "stage.h"
+#include "Cpwd.h"
 extern	int	optind;
 extern	char	*optarg;
 #if !defined(linux)
@@ -103,7 +104,7 @@ int main(argc, argv)
 
 	/* Build request body */
 
-	if ((pw = getpwuid (uid)) == NULL) {
+	if ((pw = Cgetpwuid (uid)) == NULL) {
 		char uidstr[8];
 		sprintf (uidstr, "%d", uid);
 		fprintf (stderr, STG11, uidstr);

@@ -1,5 +1,5 @@
 /*
- * $Id: stage_migpool.c,v 1.2 2000/05/26 08:38:13 jdurand Exp $
+ * $Id: stage_migpool.c,v 1.3 2000/10/27 14:04:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stage_migpool.c,v $ $Revision: 1.2 $ $Date: 2000/05/26 08:38:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stage_migpool.c,v $ $Revision: 1.3 $ $Date: 2000/10/27 14:04:32 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -28,6 +28,7 @@ static char sccsid[] = "$RCSfile: stage_migpool.c,v $ $Revision: 1.2 $ $Date: 20
 #include "serrno.h"
 #include "stage_api.h"
 #include "stage.h"
+#include "Cpwd.h"
 
 int DLL_DECL stage_migpool(stghost,diskpool,migpool)
 		 char *stghost;
@@ -77,7 +78,7 @@ int DLL_DECL stage_migpool(stghost,diskpool,migpool)
       diskpoolok = diskpooldefault;
     }
 
-	if ((pw = getpwuid (uid)) == NULL) {
+	if ((pw = Cgetpwuid (uid)) == NULL) {
 		serrno = SENOMAPFND;
 		return (-1);
 	}

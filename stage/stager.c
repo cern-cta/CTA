@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.94 2000/10/24 09:25:50 jdurand Exp $
+ * $Id: stager.c,v 1.95 2000/10/27 14:04:33 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.94 $ $Date: 2000/10/24 09:25:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.95 $ $Date: 2000/10/27 14:04:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -46,6 +46,7 @@ static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.94 $ $Date: 2000
 #include "Castor_limits.h"
 #include "u64subr.h"
 #include "osdep.h"
+#include "Cpwd.h"
 
 #if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
 EXTERN_C void DLL_DECL stager_usrmsg _PROTO(());
@@ -488,9 +489,9 @@ int main(argc, argv)
         exit(SYERR);
       }
       /* We get information on generic stage:st uid/gid */
-      if ((stpasswd = getpwnam("stage")) == NULL) {
+      if ((stpasswd = Cgetpwnam("stage")) == NULL) {
 		SAVE_EID;
-        sendrep(rpfd, MSG_ERR, "STG02 - Cannot getpwnam(\"%s\") (%s)\n","stage",strerror(errno));
+        sendrep(rpfd, MSG_ERR, "STG02 - Cannot Cgetpwnam(\"%s\") (%s)\n","stage",strerror(errno));
 		RESTORE_EID;
 		free(stcs);
         exit(SYERR);
@@ -3284,5 +3285,5 @@ int rtcpd_PrintCmd(tape)
 #endif /* STAGER_DEBUG */
 
 /*
- * Last Update: "Tuesday 24 October, 2000 at 11:22:01 CEST by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Friday 27 October, 2000 at 13:50:45 CEST by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */

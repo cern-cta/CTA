@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.11 2000/06/29 09:00:11 jdurand Exp $
+ * $Id: stagestat.c,v 1.12 2000/10/27 14:04:34 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.11 $ $Date: 2000/06/29 09:00:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.12 $ $Date: 2000/10/27 14:04:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -24,6 +24,8 @@ static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.11 $ $Date: 2
 #include "../h/sacct.h"
 #include <time.h>
 #include <osdep.h>
+#include "Cpwd.h"
+#include "Cgrp.h"
 
 /* Macro to swap byte order */
 
@@ -573,8 +575,8 @@ void print_fdetails (frecord)
 
 	/* get the password and group name for each record */
 
-	pwd = getpwuid (frecord->uid);  
-	grp = getgrgid (frecord->gid);
+	pwd = Cgetpwuid (frecord->uid);  
+	grp = Cgetgrgid (frecord->gid);
 
 	/* Calculate the average life time of the file. If the file has been garbage */
 	/* collected then average life is calculated using the garbage collected info */
@@ -685,8 +687,8 @@ void print_xdetails (frecord)
 
 	/* get the password and group name for each record */
 	
-	pwd = getpwuid (frecord->uid);
-	grp = getgrgid (frecord->gid);
+	pwd = Cgetpwuid (frecord->uid);
+	grp = Cgetgrgid (frecord->gid);
 
 	/* Calculate the average life time of the file. If the file has been garbage */
 	/* collected then average life is calculated using the garbage collected info */

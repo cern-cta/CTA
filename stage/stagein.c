@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.19 2000/09/20 11:30:46 jdurand Exp $
+ * $Id: stagein.c,v 1.20 2000/10/27 14:04:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.19 $ $Date: 2000/09/20 11:30:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.20 $ $Date: 2000/10/27 14:04:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -34,6 +34,8 @@ static char sccsid[] = "@(#)RCSfile$ $Revision: 1.19 $ $Date: 2000/09/20 11:30:4
 #include "marshall.h"
 #include "rfio_api.h"
 #include "stage.h"
+#include "Cpwd.h"
+#include "Cgrp.h"
 extern	char	*getenv();
 extern	char	*getconfent();
 extern	int	optind;
@@ -158,7 +160,7 @@ int main(argc, argv)
 			break;
 		case 'G':
 			Gflag++;
-			if ((gr = getgrgid (gid)) == NULL) {
+			if ((gr = Cgetgrgid (gid)) == NULL) {
 				fprintf (stderr, STG36, gid);
 				exit (SYERR);
 			}
@@ -167,7 +169,7 @@ int main(argc, argv)
 				errflg++;
 			} else {
 				strcpy (Gname, p);
-				if ((pw = getpwnam (p)) == NULL) {
+				if ((pw = Cgetpwnam (p)) == NULL) {
 					fprintf (stderr, STG11, p);
 					errflg++;
 				} else
@@ -369,7 +371,7 @@ int main(argc, argv)
 	c = RFIO_NONET;
 	rfiosetopt (RFIO_NETOPT, &c, 4);
 
-	if ((pw = getpwuid (uid)) == NULL) {
+	if ((pw = Cgetpwuid (uid)) == NULL) {
 		char uidstr[8];
 		sprintf (uidstr, "%d", uid);
 		p = uidstr;
@@ -437,7 +439,7 @@ int main(argc, argv)
 			(pool_user = getenv ("STAGE_USER")) != NULL)
 		nargs += 2;
 	if (pool_user &&
-			((pw = getpwnam (pool_user)) == NULL || pw->pw_gid != gid)) {
+			((pw = Cgetpwnam (pool_user)) == NULL || pw->pw_gid != gid)) {
 		fprintf (stderr, STG11, pool_user);
 		errflg++;
 	}

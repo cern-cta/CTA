@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.46 2000/10/24 07:50:50 jdurand Exp $
+ * $Id: procio.c,v 1.47 2000/10/27 14:04:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.46 $ $Date: 2000/10/24 07:50:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.47 $ $Date: 2000/10/27 14:04:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -40,6 +40,8 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.46 $ $Date: 2000
 #include <serrno.h>
 #include "osdep.h"
 #include "Cns_api.h"
+#include "Cpwd.h"
+#include "Cgrp.h"
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
 /* calls to setresuid().                                                */
@@ -166,14 +168,14 @@ void procioreq(req_type, req_data, clienthost)
 #endif
 
 	nargs = req2argv (rbp, &argv);
-	if (getpwuid (stgreq.uid) == NULL) {
+	if (Cgetpwuid (stgreq.uid) == NULL) {
 		char uidstr[8];
 		sprintf (uidstr, "%d", stgreq.uid);
 		sendrep (rpfd, MSG_ERR, STG11, uidstr);
 		c = SYERR;
 		goto reply;
 	}
-	if ((gr = getgrgid (stgreq.gid)) == NULL) {
+	if ((gr = Cgetgrgid (stgreq.gid)) == NULL) {
 		sendrep (rpfd, MSG_ERR, STG36, stgreq.gid);
 		c = SYERR;
 		goto reply;
@@ -1298,7 +1300,7 @@ void procputreq(req_data, clienthost)
 #endif
 
 	wqp = NULL;
-	if ((gr = getgrgid (gid)) == NULL) {
+	if ((gr = Cgetgrgid (gid)) == NULL) {
 		sendrep (rpfd, MSG_ERR, STG36, gid);
 		c = SYERR;
 		goto reply;

@@ -1,5 +1,5 @@
 /*
- * $Id: stageget.c,v 1.11 2000/06/29 09:00:10 jdurand Exp $
+ * $Id: stageget.c,v 1.12 2000/10/27 14:04:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.11 $ $Date: 2000/06/29 09:00:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.12 $ $Date: 2000/10/27 14:04:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -26,6 +26,7 @@ static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.11 $ $Date: 20
 #endif
 #include "marshall.h"
 #include "stage.h"
+#include "Cpwd.h"
 extern	char	*getenv();
 extern	char	*getconfent();
 extern	int	optind;
@@ -109,7 +110,7 @@ int main(argc, argv)
 
 	/* Build request body */
 
-	pw = getpwuid (uid);
+	pw = Cgetpwuid (uid);
 	marshall_STRING (sbp, pw->pw_name);	/* login name */
 	marshall_WORD (sbp, uid);
 	marshall_WORD (sbp, gid);
