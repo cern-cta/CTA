@@ -2,6 +2,7 @@
 #include <qstring.h>
 #include <qvaluelist.h>
 #include <../class.h>
+#include <../interface.h>
 
 // local
 #include "cppcppclasswriter.h"
@@ -458,14 +459,15 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
     switch (multiB) {
     case MULT_ONE:
       {
+        UMLInterface* in = dynamic_cast<UMLInterface*>(a->getObjectB());
         UMLClass* cl = dynamic_cast<UMLClass*>(a->getObjectB());
-        if (0 == cl || cl->isEnumeration()) {
-          writeSimplePrint (obj->getIndent(), a->getRoleNameB(), stream);
-        } else {
+        if (in != 0 || (cl != 0 && ! cl->isEnumeration())) {
           writeAssoc1Print (a->getRoleNameB(),
                             a->getObjectB()->getName(),
                             obj,
                             stream);
+        } else {
+          writeSimplePrint (obj->getIndent(), a->getRoleNameB(), stream);
         }
       }
       break;
@@ -483,14 +485,15 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
     switch (multiA) {
     case MULT_ONE:
       {
+        UMLInterface* in = dynamic_cast<UMLInterface*>(a->getObjectA());
         UMLClass* cl = dynamic_cast<UMLClass*>(a->getObjectA());
-        if (0 == cl || cl->isEnumeration()) {
-          writeSimplePrint (obj->getIndent(), a->getRoleNameA(), stream);
-        } else {
+        if (in != 0 || (cl != 0 && ! cl->isEnumeration())) {
           writeAssoc1Print (a->getRoleNameA(),
                             a->getObjectA()->getName(),
                             obj,
                             stream);
+        } else {
+          writeSimplePrint (obj->getIndent(), a->getRoleNameA(), stream);
         }
       }
       break;
