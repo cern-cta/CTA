@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.123 $ $Release$ $Date: 2005/02/24 14:51:36 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.124 $ $Release$ $Date: 2005/02/24 14:56:52 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.123 $ $Release$ $Date: 2005/02/24 14:51:36 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.124 $ $Release$ $Date: 2005/02/24 14:56:52 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1702,6 +1702,8 @@ int nextSegmentToMigrate(
    * (revision 1.94) has been deployed on all tape servers
    */
   fl->filereq.blocksize = 32760;
+  if ( strcmp(tape->tapereq.devtype,"3592") == 0 ) 
+    fl->filereq.blocksize = 256*1024;
 
   if ( diskServer != NULL ) {
     sprintf(filereq->file_path,"%s:%s/%s",diskServer,mountPoint,relPath);
