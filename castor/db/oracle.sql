@@ -315,7 +315,7 @@ BEGIN
   END LOOP;
 END;
 
-/* Used to delte rows IN NbTapeCopiesInFS whenever a
+/* Used to delete rows IN NbTapeCopiesInFS whenever a
    Stream is deleted */
 CREATE OR REPLACE TRIGGER tr_Stream_Delete
 BEFORE DELETE ON Stream
@@ -542,6 +542,24 @@ END;
 DROP TABLE LockTable;
 CREATE TABLE LockTable (DiskServerId NUMBER PRIMARY KEY, TheLock NUMBER);
 INSERT INTO LockTable SELECT id, id FROM DiskServer;
+
+/* Used to create a row INTO LockTable whenever a new
+   DiskServer is created */
+CREATE OR REPLACE TRIGGER tr_DiskServer_Insert
+BEFORE INSERT ON DiskServer
+FOR EACH ROW
+BEGIN
+  INSERT INTO LockTable (DiskServerId, TheLock) VALUES (:new.id, 0);
+END;
+
+/* Used to delete rows IN LockTable whenever a
+   DiskServer is deleted */
+CREATE OR REPLACE TRIGGER tr_DiskServer_Delete
+BEFORE DELETE ON DiskServer
+FOR EACH ROW
+BEGIN
+  DELETE FROM LockTable WHERE DiskServerId = :old.id;
+END;
 
 /* PL/SQL method implementing updateFileSystemForJob */
 CREATE OR REPLACE PROCEDURE updateFileSystemForJob
