@@ -1,8 +1,10 @@
-.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.14 $ $Date: 2002/09/30 12:35:39 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
+.\" $Id: stagestat.man,v 1.15 2002/10/03 14:01:18 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.15 $ $Date: 2002/10/03 14:01:18 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
+.\" Copyright (C) 1995-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGESTAT l "$Date: 2002/09/30 12:35:39 $"
+.TH STAGESTAT l "$Date: 2002/10/03 14:01:18 $"
 .SH NAME
 stagestat \- gives global statistics on stager usage and detailed statistics on
 each file staged in 

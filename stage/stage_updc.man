@@ -1,10 +1,10 @@
-.\" $Id: stage_updc.man,v 1.7 2001/09/26 09:13:54 jdurand Exp $
+.\" $Id: stage_updc.man,v 1.8 2002/10/03 13:56:51 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_updc.man,v $ $Revision: 1.7 $ $Date: 2001/09/26 09:13:54 $ CERN IT-PDP/DM Jean-Damien Durand
-.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: stage_updc.man,v $ $Revision: 1.8 $ $Date: 2002/10/03 13:56:51 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" Copyright (C) 2000-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_UPDC "3" "$Date: 2001/09/26 09:13:54 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_UPDC "3" "$Date: 2002/10/03 13:56:51 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_updc \- update the stager catalog
 .SH SYNOPSIS

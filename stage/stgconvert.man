@@ -1,8 +1,10 @@
-.\" @(#)$RCSfile: stgconvert.man,v $ $Revision: 1.4 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Damien Durand
-.\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+.\" $Id: stgconvert.man,v 1.5 2002/10/03 14:03:39 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stgconvert.man,v $ $Revision: 1.5 $ $Date: 2002/10/03 14:03:39 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STGCONVERT l "$Date: 2002/01/30 08:12:54 $"
+.TH STGCONVERT l "$Date: 2002/10/03 14:03:39 $"
 .SH NAME
 stgconvert \- Convert CASTOR stager catalogs in Cdb to and from disk
 .SH SYNOPSIS
