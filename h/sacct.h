@@ -1,5 +1,5 @@
 /*
- * $Id: sacct.h,v 1.14 2002/11/19 09:04:57 baud Exp $
+ * $Id: sacct.h,v 1.15 2002/11/22 08:53:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: sacct.h,v $ $Revision: 1.14 $ $Date: 2002/11/19 09:04:57 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: sacct.h,v $ $Revision: 1.15 $ $Date: 2002/11/22 08:53:26 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Include file for CASTOR software accounting */
 
@@ -32,6 +32,7 @@ struct accthdr {	/* header for accounting record */
 #define	ACCTNQS		5
 #define ACCTRTCPTIM     6
 #define	ACCTSTAGE2	7
+#define	ACCTSTAGE64	8
 #define	ACCTRFIO64	11
 
 struct  acctsystem      {
@@ -114,8 +115,8 @@ struct acctrfio64 {       /* accounting record for rfio64 software */
         int     nb_seek;
         int     nb_preseek;
         int     padding;
-        off64_t read_size;
-        off64_t write_size;
+        signed64 read_size;
+        signed64 write_size;
         int     remote_addr;
         int     local_addr;
         int     status;
@@ -315,6 +316,50 @@ struct acctstage2 {	/* accounting record for stage software */
 			char t_or_d;
 			off_t actual_size;
 			time_t c_time;
+			int nbaccesses;
+			union {
+				struct {		/* tape specific info */
+					int  side;
+					char dgn[CA_MAXDGNLEN+1];
+					char fseq[CA_MAXFSEQLEN+1];
+					char vid[CA_MAXVIDLEN+1];
+					char tapesrvr[CA_MAXHOSTNAMELEN+1];
+				} t;
+				struct {		/* info for disk file stageing */
+					char xfile[CA_MAXHOSTNAMELEN+MAXPATH+1];
+				} d;
+				struct {		/* info for disk file stageing */
+					char xfile[STAGE_MAX_HSMLENGTH+1];
+				} m;
+				struct {		/* info for disk file stageing */
+					char xfile[STAGE_MAX_HSMLENGTH+1];
+					u_signed64 fileid;
+				} h;
+			} u1;
+	    } s;
+	} u2;
+};
+
+struct acctstage64 {	/* accounting record for stage 64BITS software */
+	int	subtype;
+#if defined(_WIN32)
+	int     uid;
+	int     gid;
+#else
+	uid_t	uid;
+	gid_t	gid;
+#endif /* _WIN32 */
+	int	reqid;
+	int	req_type;
+	int	retryn;		/* retry number */
+	int	exitcode;
+	union {
+		char clienthost[CA_MAXHOSTNAMELEN+1];
+		struct {
+			char poolname[CA_MAXPOOLNAMELEN+1];
+			char t_or_d;
+			u_signed64 actual_size;
+			TIME_T c_time;
 			int nbaccesses;
 			union {
 				struct {		/* tape specific info */
