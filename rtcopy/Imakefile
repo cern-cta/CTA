@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.6 $ $Date: 2004/06/10 07:49:48 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.7 $ $Date: 2004/06/10 09:59:05 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -299,6 +299,9 @@ NormalLibraryTarget(rtcpapi,$(RTCPLIB_OBJS))
 
 MakeDepLibrary(lib,shift)
 
+MakeDepSharedLibrary(castor,castorClient)
+
+MakeDepSharedLibrary(castor/db/ora,castorCommonOra)
 
 #if BuildRtcopyServer
 install: $(BIN) $(ERRLISTDIR) $(IPROGS_C) $(IPROGS_D) $(RTCOPYWORKDIR) $(SPOOL) $(SACCTDIR)

@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.5 $ $Date: 2004/06/09 15:21:13 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.6 $ $Date: 2004/06/10 09:59:05 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #if BuildCopytapeServer
@@ -157,6 +157,10 @@ RFIOLIB = DepLibraryTargetName(rfio,rfio)
 #undef BuildStageLibrary
 #define BuildStageLibrary	YES
 #endif
+#endif
+
+#if BuildStageLibrary
+STGLIB = DepLibraryTargetName(stage,stage)
 #endif
 
 #if BuildMsgClient
