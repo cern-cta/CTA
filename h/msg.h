@@ -1,13 +1,13 @@
 /*
- * $Id: msg.h,v 1.1 2000/08/21 14:52:01 baud Exp $
+ * $Id: msg.h,v 1.2 2001/04/29 16:04:04 baud Exp $
  */
 
 /*
- * @(#)$RCSfile: msg.h,v $ $Revision: 1.1 $ $Date: 2000/08/21 14:52:01 $ CERN IT-PDP/DC Antoine Trannoy
+ * @(#)$RCSfile: msg.h,v $ $Revision: 1.2 $ $Date: 2001/04/29 16:04:04 $ CERN IT-PDP/DC Antoine Trannoy
  */
 
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DC
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DC
  * All rights reserved
  */
 
@@ -20,9 +20,10 @@
  * Key number for communications with message daemon.
  */
 #define MSG_MAGIC	0x0333
+#define MSG_PORT	5004
 
 /*
- * Maximun message size.
+ * Maximum message size.
  */
 #define MSGSIZ		256
 
