@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.12 $ $Release$ $Date: 2004/12/01 14:55:34 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.13 $ $Release$ $Date: 2004/12/10 08:47:01 $ $Author: bcouturi $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.12 $
- * @date $Date: 2004/12/01 14:55:34 $
+ * @version $Revision: 1.13 $
+ * @date $Date: 2004/12/10 08:47:01 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.12 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.13 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -458,6 +458,7 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate _PROTO((const char *userTag,
  * @param filename   The CASTOR filename
  * @param create     If set to one, the file will be created if it does not exist
  * @param mode       The mode bits for the file when created
+ * @param size       The expected final size of the file, or 0 if not known
  * @param response   fileresponse structure
  * @param requestId  Reference number to be used by the client to look
  *                   up his request in the castor stager.
@@ -472,6 +473,7 @@ EXTERN_C int DLL_DECL stage_update _PROTO ((const char *userTag,
                                             const char *filename,
                                             int    create,
                                             mode_t mode,
+					    u_signed64 size,
                                             struct stage_io_fileresp **response,
                                             char **requestId,
                                             struct stage_options* opts));
@@ -589,6 +591,9 @@ EXTERN_C int DLL_DECL stage_prepareToPut _PROTO ((const char *userTag,
  * @param protocol   The protocol requested to access the file
  * @param filename   The CASTOR filename
  * @param mode       The mode in which the file is to be opened
+ * @param size       The expected filesize of the file that is going to be
+ *                   writen (or 0, in which case the stager will take
+ *                   its default)
  * @param response   fileresponse structure
  * @param requestId  Reference number to be used by the client to look
  *                   up his request in the castor stager.
@@ -602,7 +607,8 @@ EXTERN_C int DLL_DECL stage_put _PROTO((const char *userTag,
                                         const char *protocol,
                                         const char *filename,
                                         mode_t mode,
-                                        struct stage_io_fileresp **response,
+					u_signed64 size,
+					struct stage_io_fileresp **response,
                                         char **requestId,
                                         struct stage_options* opts));
 
@@ -1101,7 +1107,7 @@ EXTERN_C int DLL_DECL stage_open _PROTO ((const char *userTag,
  * Parses the stage_io_response to return the URL accordingly
  * \ingroup Functions
  * 
- * @param response   pointer to io response structure
+ * @param io   pointer to io response structure
  *
  * @returns The alloced URL, NULL otherwise
  */

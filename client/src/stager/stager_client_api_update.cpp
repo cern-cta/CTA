@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_update.cpp,v 1.1 2004/12/01 15:14:08 bcouturi Exp $
+ * $Id: stager_client_api_update.cpp,v 1.2 2004/12/10 08:47:01 bcouturi Exp $
  */
 
 /*
@@ -8,13 +8,14 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_update.cpp,v $ $Revision: 1.1 $ $Date: 2004/12/01 15:14:08 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_update.cpp,v $ $Revision: 1.2 $ $Date: 2004/12/10 08:47:01 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
 /* System headers */
 /* ============== */
 #include <sys/types.h>
+#include <fcntl.h>
 
 /* ============= */
 /* Local headers */
@@ -164,6 +165,7 @@ EXTERN_C int DLL_DECL stage_update(const char *userTag,
                                    const char *filename,
                                    int create,
                                    mode_t mode,
+				   u_signed64 size,
                                    struct stage_io_fileresp ** response,
                                    char **requestId,
                                    struct stage_options* opts) {
@@ -197,6 +199,11 @@ EXTERN_C int DLL_DECL stage_update(const char *userTag,
     subreq->setFileName(filename);
     req.addSubRequests(subreq);
     subreq->setRequest(&req);
+    subreq->setXsize(size);
+    subreq->setModeBits(mode);
+    if (create) {
+      subreq->setFlags(O_CREAT );
+    }
 
     // Submitting the request
     std::vector<castor::rh::Response *>respvec;    

@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.11 2004/12/09 14:48:28 bcouturi Exp $
+ * $Id: stager_client_api_put.cpp,v 1.12 2004/12/10 08:47:01 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.11 $ $Date: 2004/12/09 14:48:28 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.12 $ $Date: 2004/12/10 08:47:01 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -166,6 +166,7 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
 				const char *protocol,
 				const char *filename,
 				mode_t mode,
+				u_signed64 size,
 				struct stage_io_fileresp ** response,
 				char **requestId,
 				struct stage_options* opts) {
@@ -197,6 +198,8 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
     }
 
     subreq->setFileName(filename);
+    subreq->setXsize(size);
+    subreq->setModeBits(mode);
     req.addSubRequests(subreq);
     subreq->setRequest(&req);
 
