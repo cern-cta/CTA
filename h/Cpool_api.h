@@ -1,17 +1,11 @@
 /*
  * Cpool_api.h,v 1.4 1999-10-20 21:07:45+02 jdurand Exp
  *
- * Cpool_api.h,v
- * Revision 1.4  1999-10-20 21:07:45+02  jdurand
- * Removed the unnecessary <osdep.h> header inclusion
- *
- * Revision 1.3  1999/10/14 12:04:28  jdurand
- * Introduced _PROTO macro
- *
- * Revision 1.2  1999-07-20 10:51:11+02  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Added missing Id and Log CVS's directives
- *
+ */
+
+/*
+ * Copyright (C) 1999-2002 by CERN/IT/DS/HSM
+ * All rights reserved
  */
 
 #ifndef __cpool_api_h
