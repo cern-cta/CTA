@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: usrlbl.man,v $ $Revision: 1.5 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: usrlbl.man,v $ $Revision: 1.6 $ $Date: 2003/11/12 14:55:15 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH USRLBL 3 "$Date: 2001/09/26 09:13:56 $" CASTOR "Ctape Library Functions"
+.TH USRLBL 3 "$Date: 2003/11/12 14:55:15 $" CASTOR "Ctape Library Functions"
 .SH NAME
 .B checkeofeov, wrthdrlbl, wrttrllbl, deltpfil
 \- user callable routines to check/write tape labels
@@ -95,6 +95,9 @@ not found.
 .TP
 .B EIO
 I/O error.
+.TP
+.B EBADF
+Bad file number.
 .TP
 .B ENOSPC
 Tape full.

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: readlbl.man,v $ $Revision: 1.1 $ $Date: 2002/10/01 11:03:31 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: readlbl.man,v $ $Revision: 1.2 $ $Date: 2003/11/12 14:55:14 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH READLBL 3 "$Date: 2002/10/01 11:03:31 $" CASTOR "Ctape Library Functions"
+.TH READLBL 3 "$Date: 2003/11/12 14:55:14 $" CASTOR "Ctape Library Functions"
 .SH NAME
 readlbl \- read one block from a tape and check block length
 .SH SYNOPSIS
@@ -38,6 +38,9 @@ is set appropriately.
 .TP 1.2i
 .B EIO
 I/O error.
+.TP
+.B EBADF
+Bad file number.
 .TP
 .B ETCOMPA
 Drive/cartridge compatibility problem.
