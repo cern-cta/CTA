@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.140 2001/09/22 07:49:15 jdurand Exp $
+ * $Id: procio.c,v 1.141 2001/09/24 12:52:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.140 $ $Date: 2001/09/22 07:49:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.141 $ $Date: 2001/09/24 12:52:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1708,7 +1708,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				if ((nhsmfiles > 0) && (hsmsize == 0)) {
 					int ifileclass;
 
-					if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) {
+					if ((ncastorfiles > 0) && ((ifileclass = upd_fileclass(NULL,stcp)) < 0)) {
 						int save_serrno = serrno;
 						sendrep (rpfd, MSG_ERR, STG132, stcp->u1.h.xfile, sstrerror(serrno));
 						c = (api_out != 0) ? save_serrno : USERR;
