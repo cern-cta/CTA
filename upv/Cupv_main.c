@@ -1,12 +1,12 @@
 /*
- * $Id: Cupv_main.c,v 1.3 2004/08/12 14:24:34 motiakov Exp $
+ * $Id: Cupv_main.c,v 1.4 2005/03/15 23:16:27 bcouturi Exp $
  *
  * Copyright (C) 1999-2002 by CERN IT-DS/HSM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: Cupv_main.c,v $ $Revision: 1.3 $ $Date: 2004/08/12 14:24:34 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "$RCSfile: Cupv_main.c,v $ $Revision: 1.4 $ $Date: 2005/03/15 23:16:27 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -258,22 +258,23 @@ void *arg;
 	int req_type = 0;
 	struct Cupv_srv_thread_info *thip = (struct Cupv_srv_thread_info *) arg;
 #ifdef CSEC
-	Csec_server_reinit_context(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
-	if (Csec_server_establish_context(&(thip->sec_ctx),thip->s) < 0) {
+	Csec_server_reinitContext(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
+	if (Csec_server_establishContext(&(thip->sec_ctx),thip->s) < 0) {
 	  Cupvlogit(func, "Could not establish context: %s !\n", Csec_geterrmsg());
 	  netclose (thip->s);
 	  thip->s = -1;
 	  return (NULL);
 	}
 	/* Connection could be done from another castor service */
-	if ((c = Csec_server_is_castor_service(&(thip->sec_ctx))) >= 0) {
+	if ((c = Csec_server_isClientAService(&(thip->sec_ctx))) >= 0) {
 	  Cupvlogit(func, "CSEC: Client is castor service type: %d\n", c);
 	  thip->Csec_service_type = c;
 	}
 	else {
-	  if (Csec_server_get_client_username(&(thip->sec_ctx), &(thip->Csec_uid), &(thip->Csec_gid)) != NULL) {
+	  char *username;
+	  if (Csec_server_mapClientToLocalUser(&(thip->sec_ctx), &username, &(thip->Csec_uid), &(thip->Csec_gid)) == 0) {
 	    Cupvlogit(func, "CSEC: Client is %s (%d/%d)\n",
-		      Csec_server_get_client_username(&(thip->sec_ctx), NULL, NULL),
+		      username,
 		      thip->Csec_uid,
 		      thip->Csec_gid);
 	    thip->Csec_service_type = -1;

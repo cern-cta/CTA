@@ -1,12 +1,12 @@
 /*
- * $Id: send2Cupv.c,v 1.3 2004/08/12 14:25:49 motiakov Exp $
+ * $Id: send2Cupv.c,v 1.4 2005/03/15 23:16:27 bcouturi Exp $
  *
  * Copyright (C) 1999-2002 by CERN/IT-DS/HSM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2Cupv.c,v $ $Revision: 1.3 $ $Date: 2004/08/12 14:25:49 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: send2Cupv.c,v $ $Revision: 1.4 $ $Date: 2005/03/15 23:16:27 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -132,14 +132,14 @@ int user_repbuf_len;
 		}
 #ifdef CSEC
 			if (secure_connection) {
-			  if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
+			  if (Csec_client_initContext(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
 			    Cupv_errmsg (func, CUP02, "send", "Could not init context");
 			    (void) netclose (s);
 			    serrno = ESEC_CTX_NOT_INITIALIZED;
 			    return -1;
 			  }
 			
-			  if(Csec_client_establish_context(&ctx, s)< 0) {
+			  if(Csec_client_establishContext(&ctx, s)< 0) {
 			    Cupv_errmsg (func, "%s: %s\n",
 					 "send",
 					 "Could not establish context");
@@ -148,7 +148,7 @@ int user_repbuf_len;
 			    return -1;
 			  }
 
-			  Csec_clear_context(&ctx);
+			  Csec_clearContext(&ctx);
 			}
 #endif
 		if (socketp)
