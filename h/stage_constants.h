@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.27 2002/05/31 08:19:53 jdurand Exp $
+ * $Id: stage_constants.h,v 1.28 2002/07/27 06:42:19 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -363,6 +363,11 @@
 #undef ONE_SECOND
 #endif
 #define ONE_SECOND 1
+
+#ifdef ONE_MINUTE
+#undef ONE_MINUTE
+#endif
+#define ONE_MINUTE 60
 
 #ifdef ONE_HOUR
 #undef ONE_HOUR
