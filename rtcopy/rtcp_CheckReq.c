@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.20 $ $Date: 2000/03/02 12:03:47 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.21 $ $Date: 2000/03/03 11:59:07 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -60,6 +60,7 @@ extern char *getconfent(char *, char *, int);
 
 static int rtcp_CheckTapeReq(tape_list_t *tape) {
     file_list_t *file = NULL;
+    tape_list_t *tl;
     int rc = 0;
     rtcpTapeRequest_t *tapereq;
     rtcpDumpTapeRequest_t *dumpreq = NULL;
@@ -97,6 +98,21 @@ static int rtcp_CheckTapeReq(tape_list_t *tape) {
         if ( rc == -1 ) return(rc);
     }
     if ( *tapereq->vid == '\0' ) strcpy(tapereq->vid,tapereq->vsn);
+
+    /*
+     * Volume spanning? Make sure VID is unique.
+     */
+    if ( tape != tape->next ) {
+        CLIST_ITERATE_BEGIN(tape,tl) {
+            if ( strcmp(tapereq->vid,tl->tapereq.vid) == 0 ) {
+                serrno = EINVAL;
+                sprintf(errmsgtxt,"VID %s NOT UNIQUE IN VOLUME SPANNING\n",
+                        tapereq->vid);
+                SET_REQUEST_ERR(tapereq,RTCP_USERR | RTCP_FAILED);
+                if ( rc == -1 ) return(rc);
+            }
+        } CLIST_ITERATE_END(tape,tl);
+    }
 
     /*
      * Dumptape ? 
@@ -332,7 +348,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     if ( filereq->blocksize > 0 && filereq->recordlength > 0 ) {
         if ( filereq->recordlength > filereq->blocksize ) {
             serrno = EINVAL;
-            sprintf(errmsgtxt,"record length (%d) can't be greater than block size (%d)",
+            sprintf(errmsgtxt,"record length (%d) can't be greater than block size (%d)\n",
                 filereq->recordlength,filereq->blocksize);
             SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
             if ( rc == -1 ) return(rc);
@@ -391,7 +407,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
          * Is it a director?
          */
         if ( ((st.st_mode) & S_IFMT) == S_IFDIR ) {
-            sprintf(errmsgtxt,"File %s is a directory !",filereq->file_path);
+            sprintf(errmsgtxt,"File %s is a directory !\n",filereq->file_path);
             serrno = EISDIR;
             SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         }
@@ -399,7 +415,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
          * Zero size?
          */
         if ( st.st_size == 0 ) {
-            sprintf(errmsgtxt,"File %s is empty !",filereq->file_path);
+            sprintf(errmsgtxt,"File %s is empty !\n",filereq->file_path);
             serrno = EINVAL;
             SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         }
@@ -456,7 +472,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
             rfio_errno = serrno = 0;
             rc = rfio_mstat(filereq->file_path,&st);
             if ( rc != -1 && (((st.st_mode) & S_IFMT) == S_IFDIR) ) {
-                sprintf(errmsgtxt,"File %s is a directory !",filereq->file_path);
+                sprintf(errmsgtxt,"File %s is a directory !\n",filereq->file_path);
                 serrno = EISDIR;
                 SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
             }
@@ -475,7 +491,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                 if ( rc == -1 ) {
                     if ( rfio_errno != 0 ) serrno = rfio_errno;
                     else if ( serrno == 0 ) serrno = errno;
-                    sprintf(errmsgtxt,"%s: %s",filereq->file_path,
+                    sprintf(errmsgtxt,"%s: %s\n",filereq->file_path,
                             sstrerror(serrno));
                     if ( p != NULL ) *p = dir_delim;
                     SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
@@ -485,7 +501,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                  * Couldn't find S_ISDIR() macro under NT. 
                  */
                 if ( !(((st.st_mode) & S_IFMT) == S_IFDIR) ) {
-                    sprintf(errmsgtxt,"directory %s does not exist",
+                    sprintf(errmsgtxt,"directory %s does not exist\n",
                         filereq->file_path);
                     if ( p != NULL ) *p = dir_delim;
                     serrno = ENOTDIR;
