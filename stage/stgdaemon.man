@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.7 $ $Date: 2001/04/29 09:41:05 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.8 $ $Date: 2001/06/21 10:51:38 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STGDAEMON 1 "$Date: 2001/04/29 09:41:05 $" CASTOR "stage Administrator Commands"
+.TH STGDAEMON 1 "$Date: 2001/06/21 10:51:38 $" CASTOR "stage Administrator Commands"
 .SH NAME
 stgdaemon \- starts the stage daemon
 .SH SYNOPSIS
@@ -306,3 +306,5 @@ Here is a small log:
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .B Cdbserver(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
