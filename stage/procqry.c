@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.39 2000/12/21 13:55:06 jdurand Exp $
+ * $Id: procqry.c,v 1.40 2000/12/21 15:18:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.39 $ $Date: 2000/12/21 13:55:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.40 $ $Date: 2000/12/21 15:18:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -426,10 +426,10 @@ void procqryreq(req_data, clienthost)
 		else
 			strcpy (p_size, "*");
 		if (stcp->status & 0xF00)
-			if ((stcp->status & 0xF0) && ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR))
+			if (stcp->status & 0xF0)
 				strcpy (p_stat, x_stat[(stcp->status & 0xF0) >> 4]);
 			else
-				strcpy (p_stat, ISCASTORMIG(stcp) ? "BEING_MIGR" : l_stat[(stcp->status & 0xF00) >> 8]);
+				strcpy (p_stat, ISCASTORBEINGMIG(stcp) ? "BEING_MIGR" : l_stat[(stcp->status & 0xF00) >> 8]);
 		else if (stcp->status & 0xF0)
 			strcpy (p_stat, x_stat[(stcp->status & 0xF0) >> 4]);
 		else if (stcp->status == STAGEALLOC)
