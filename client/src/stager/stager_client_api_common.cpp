@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.1 2004/11/04 19:07:28 bcouturi Exp $
+ * $Id: stager_client_api_common.cpp,v 1.2 2004/11/19 18:31:31 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.1 $ $Date: 2004/11/04 19:07:28 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.2 $ $Date: 2004/11/19 18:31:31 $ CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
@@ -79,7 +79,7 @@ int _free_filereq (struct stage_filereq  *ptr){
 
 int _free_fileresp (struct stage_fileresp  *ptr){ 
   if (ptr->filename != NULL) free (ptr->filename);
-  if (ptr->errstring != NULL) free (ptr->errstring);
+  if (ptr->errorMessage != NULL) free (ptr->errorMessage);
   free(ptr);
   return 0; 
 }

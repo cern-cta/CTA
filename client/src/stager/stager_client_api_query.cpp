@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.2 2004/11/08 17:29:40 bcouturi Exp $
+ * $Id: stager_client_api_query.cpp,v 1.3 2004/11/19 18:31:32 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.2 $ $Date: 2004/11/08 17:29:40 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.3 $ $Date: 2004/11/19 18:31:32 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -25,6 +25,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 
 #include "castor/client/IResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
 #include "castor/stager/StageFileQueryRequest.hpp"
+#include "castor/stager/StageRequestQueryRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 
 /* ================= */
@@ -73,7 +74,8 @@ class FileQueryResponseHandler : public castor::client::IResponseHandler {
 EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
 				      int nbreqs,
 				      struct stage_filequery_resp **responses,
-				      int *nbresps){
+				      int *nbresps,
+				      struct stage_options* opts){
 
   castor::BaseObject::initLog("", castor::SVC_NOMSG);
   
@@ -112,7 +114,34 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
 					 struct stage_requestquery_resp **responses,
 					 int *nbresps,
 					 struct stage_subrequestquery_resp **subresponses,
-					 int *nbsubresps) {
+					 int *nbsubresps,
+					 struct stage_options* opts) {
+
+
+  castor::BaseObject::initLog("", castor::SVC_NOMSG);
+  
+  char *func = "stage_requestquery";
+
+  try {
+    castor::BaseObject::initLog("", castor::SVC_NOMSG);
+    
+    FileQueryResponseHandler rh;
+
+    // Uses a BaseClient to handle the request
+    castor::client::BaseClient client;
+    castor::stager::StageRequestQueryRequest req;
+
+    client.sendRequest(&req, &rh);
+
+  } catch (castor::exception::Exception e) {
+    serrno = e.code();
+    stage_errmsg(func, (char *)(e.getMessage().str().c_str()));
+    return -1;
+  }
+  
+  return 0;
+
+
 
 }
 
@@ -126,7 +155,8 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
 EXTERN_C int DLL_DECL stage_findrequest(struct stage_query_req *requests,
 					int nbreqs,
 					struct stage_findrequest_resp **responses,
-					int *nbresps){
+					int *nbresps,
+					struct stage_options* opts){
 
 }
 
