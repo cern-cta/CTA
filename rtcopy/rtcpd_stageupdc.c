@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.8 $ $Date: 2000/01/20 14:24:17 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.9 $ $Date: 2000/01/21 11:44:34 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -171,7 +171,8 @@ int rtcpd_stageupdc(tape_list_t *tape,
     }
     rc = PCLOSE(stgupdc_fd);
     signal(SIGCHLD,SIG_IGN);
-    if ( rc == 0 &&  *newpath != '\0' && strcmp(newpath,filereq->file_path) ) {
+    if ( rc == 0 &&  tapereq->mode == WRITE_DISABLE && *newpath != '\0' && 
+         strcmp(newpath,filereq->file_path) ) {
         rtcp_log(LOG_INFO,"New path obtained from stager: %s\n",
             newpath);
         strcpy(filereq->file_path,newpath);
@@ -179,7 +180,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
     }
     rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() stageupdc returns %d, %s\n",
              rc,newpath);
-    if ( *newpath == '\0' || rc != 0 ) {
+    if ( (*newpath == '\0' && tapereq->mode == WRITE_DISABLE) || rc != 0 ) {
         rtcp_log(LOG_ERR,"rtcpd_stageupdc() stageupdc failed, rc=%d, path=%s\n",
                  rc,newpath);
         rtcpd_AppendClientMsg(NULL,file,"stageupdc failed, rc=%d, path=%s\n",
