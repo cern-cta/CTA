@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.34 2000/04/05 11:18:01 jdurand Exp $
+ * $Id: stager.c,v 1.35 2000/04/06 09:51:36 jdurand Exp $
  */
 
 /*
@@ -11,7 +11,7 @@
 /* #define SKIP_FILEREQ_MAXSIZE */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.34 $ $Date: 2000/04/05 11:18:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.35 $ $Date: 2000/04/06 09:51:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -447,8 +447,8 @@ int stagein_castor_hsm_file() {
 #endif
 		if (hsm_totalsize[i] >  hsm_transferedsize[i]) {
 #ifdef STAGER_DEBUG
-			sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEIN] Calling Cns_getsegattrs(%s,copyrc=1,hsm_fseg[%d]=%d,&(hsm_fsegsize[%d]),vid,&(hsm_fseq[%d]),blockid)\n",
-							castor_hsm,i,hsm_fseg[i],i,i);
+			sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEIN] Calling Cns_getsegattrs(%s,copyrc=1,1+hsm_fseg[%d]=%d,&(hsm_fsegsize[%d]),vid,&(hsm_fseq[%d]),blockid)\n",
+							castor_hsm,i,1+hsm_fseg[i],i,i);
 #endif
 				
 			if (Cns_getsegattrs (castor_hsm,        /* hsm path */
@@ -851,7 +851,7 @@ int stagewrt_castor_hsm_file() {
 			/* rtcpc failed */
 			sendrep (rpfd, MSG_ERR, STG02, vid, "rtcpc",
 					 sstrerror (serrno));
-			if (rtcpcreqs[0]->file->filereq.err.errorcode == ENOSPC) {
+			if (rtcpcreqs[0]->file->filereq.err.errorcode == ETEOV) {
 				sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Flaging tape to TAPE_FULL");
 				Flags |= TAPE_FULL;
 			} else if (rtcpcreqs[0]->file->filereq.err.errorcode == ETPARIT ||
@@ -881,6 +881,16 @@ int stagewrt_castor_hsm_file() {
 			}
 			if (rtcpcreqs[0]->file->filereq.bytes_in > 0) {
 				hsm_fsegsize[i] = rtcpcreqs[0]->file->filereq.bytes_in;
+				{
+                  /* gcc compiler bug - fixed or forbidden register was spilled. */
+                  /* This may be due to a compiler bug or to impossible asm      */
+                  /* statements or clauses.                                      */
+                  u_signed64 dummyvalue;
+
+                  dummyvalue = hsm_fsegsize[i];
+                  hsm_transferedsize[i] += dummyvalue;
+
+                }
 			}
 			if (rtcpcreqs[0]->file->filereq.bytes_in > 0 && rtcpcreqs[0]->file->filereq.bytes_out > 0) {
 				compression_factor = rtcpcreqs[0]->file->filereq.bytes_in * 100 /
@@ -1667,7 +1677,12 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			case STAGEWRT:
 			case STAGEPUT:
 				/* This is an hsm write request */
+				if (stcp->u1.t.filstat == 'o') {
+					(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.check_fid = CHECK_FILE;
+				}
 				(*rtcpcreqs_in)[i]->tapereq.mode            = WRITE_ENABLE;
+				/* ALICE TEST - FORCE BLOCKSIZE */
+				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.blocksize = 256 * ONE_KB;
 				break;
 			default:
 				/* This is an hsm read request */
