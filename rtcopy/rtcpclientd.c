@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.25 $ $Release$ $Date: 2005/02/16 14:22:09 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.26 $ $Release$ $Date: 2005/02/17 07:55:24 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.25 $ $Release$ $Date: 2005/02/16 14:22:09 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.26 $ $Release$ $Date: 2005/02/17 07:55:24 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1154,6 +1154,7 @@ int rtcpcld_main(
                                tape,
                                pid
                                );
+        sleep(2); /* Avoid starting all migrators concurrently, it may cause DB lock contention */
         continue; /* Parent */
       }
 
