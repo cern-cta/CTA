@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.153 2001/12/04 10:34:28 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.154 2001/12/04 10:55:06 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.153 $ $Date: 2001/12/04 10:34:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.154 $ $Date: 2001/12/04 10:55:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -2359,12 +2359,9 @@ void checkwaitq()
 				sendrep (wqp->rpfd, STAGERC, wqp->req_type,
 								 wqp->status);
 			} else {
-				if (wqp->api_out) {
-					/* We close cleanly the connection */
-					sendrep (wqp->rpfd, STAGERC, 0, ESTKILLED);
-				} else {
-					close (wqp->rpfd);
-				}
+				/* We close cleanly the connection */
+				sendrep (wqp->rpfd, MSG_ERR, STG98, "request killed");
+				sendrep (wqp->rpfd, STAGERC, 0, ESTKILLED);
 			}
 			for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
 				for (stcp = stcs; stcp < stce; stcp++) {
@@ -3607,5 +3604,5 @@ void check_upd_fileclasses() {
 }
 
 /*
- * Last Update: "Monday 03 December, 2001 at 18:12:21 CET by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Tuesday 04 December, 2001 at 11:51:52 CET by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
