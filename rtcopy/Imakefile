@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.19 $ $Date: 2005/03/10 10:53:38 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.20 $ $Date: 2005/03/11 09:46:50 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -203,9 +203,9 @@ EMANPAGES_C = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tpread.$(MANSUFFIX)
 #if BuildRtcopyServer
 DEPLIB += DepLibraryTargetName(tape,tape)
 GLOBLIB += -L../tape -ltape
-PROGS_D += ProgramTargetName(rtcpd) \
+PROGS_D = ProgramTargetName(rtcpd) \
 	   ProgramTargetName(killjid)
-IPROGS_D += FileName($(BIN),ProgramTargetName(rtcpd)) \
+IPROGS_D = FileName($(BIN),ProgramTargetName(rtcpd)) \
 	    FileName($(BIN),ProgramTargetName(killjid))
 EPROGS_S =
 MANPAGES_S = FileName($(MANDIR),rtcpd.$(MANSUFFIX)) \
@@ -217,9 +217,9 @@ EMANPAGES_S =FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpd.$(MANSUFFIX)))
 #if BuildRtcpclientd
 DEPLIB += DepSharedLibraryTargetName(shlib,castorCommonOra)
 DBLIB = -L../shlib -lcastorCommonOra
-PROGS_C = ProgramTargetName(rtcpcldCleanupDB) \
+PROGS_C += ProgramTargetName(rtcpcldCleanupDB) \
 	  ProgramTargetName(MigHunter)
-IPROGS_C = FileName($(BIN),ProgramTargetName(rtcpcldCleanupDB)) \
+IPROGS_C += FileName($(BIN),ProgramTargetName(rtcpcldCleanupDB)) \
 	   FileName($(BIN),ProgramTargetName(MigHunter))
 PROGS_D += ProgramTargetName(rtcpclientd) \
 	   ProgramTargetName(recaller) \
@@ -227,13 +227,13 @@ PROGS_D += ProgramTargetName(rtcpclientd) \
 IPROGS_D += FileName($(BIN),ProgramTargetName(rtcpclientd)) \
 	    FileName($(BIN),ProgramTargetName(recaller)) \
 	    FileName($(BIN),ProgramTargetName(migrator))
-EPROGS_C = FileName($(EXPORTBIN),rtcpcldCleanupDB) \
+EPROGS_C += FileName($(EXPORTBIN),rtcpcldCleanupDB) \
 	   FileName($(EXPORTBIN),MigHunter) \
 	   FileName($(EXPORTBIN),rtcpclientd) \
 	   FileName($(EXPORTBIN),recaller) \
 	   FileName($(EXPORTBIN),migrator)
-MANPAGES_C = FileName($(MANDIR),rtcpclientd.$(MANSUFFIX))
-EMANPAGES_C = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpclientd.$(MANSUFFIX)))
+MANPAGES_C += FileName($(MANDIR),rtcpclientd.$(MANSUFFIX))
+EMANPAGES_C += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpclientd.$(MANSUFFIX)))
 #endif
 
 #if BuildMonitorLibrary
