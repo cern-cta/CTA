@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smc.c,v $ $Revision: 1.2 $ $Date: 2002/04/08 13:50:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smc.c,v $ $Revision: 1.3 $ $Date: 2002/07/24 07:25:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -260,7 +260,7 @@ char *vid;
 		return (USERR);
 	}
 	if ((c = smc_move_medium (fd, loader, robot_info->device_start+drvord,
-	    element_info.source_address)) < 0) {
+	    element_info.source_address, (element_info.flags & 0x40) ? 1 : 0)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		fprintf (stderr, SR018, "demount", vid, drvord, msgaddr);
 		return (c);
@@ -441,7 +441,7 @@ int invert;
 		return (RBT_OMSG_SLOW_R);
 	}
 	if ((c = smc_move_medium (fd, loader, element_info.element_address,
-	    robot_info->device_start+drvord), invert) < 0) {
+	    robot_info->device_start+drvord, invert)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		fprintf (stderr, SR018, "mount", vid, drvord, msgaddr);
 		return (c);

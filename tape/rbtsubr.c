@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.8 $ $Date: 2002/04/08 13:48:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.9 $ $Date: 2002/07/24 07:25:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -1153,7 +1153,7 @@ char *loader;
 		RETURN (RBT_OMSG_SLOW_R);
 	}
 	if ((c = smc_move_medium (smc_fd, smc_ldr, element_info.element_address,
-	    robot_info.device_start+drvord), side) < 0) {
+	    robot_info.device_start+drvord, side)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		if (smc_status.rc == -1 || smc_status.rc == -2)
 			usrmsg (func, "%s\n", msgaddr);
@@ -1196,7 +1196,8 @@ int force;
 		RETURN (RBT_DMNT_FORCE);
 	}
 	if ((c = smc_move_medium (smc_fd, smc_ldr,
-	    robot_info.device_start+drvord, element_info.source_address)) < 0) {
+	    robot_info.device_start+drvord, element_info.source_address,
+	    (element_info.flags & 0x40) ? 1 : 0)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		if (smc_status.rc == -1 || smc_status.rc == -2)
 			usrmsg (func, "%s\n", msgaddr);
