@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/30 15:09:52 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/30 15:25:39 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.2 $ $Date: 2004/06/30 15:09:52 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.3 $ $Date: 2004/06/30 15:25:39 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
             sstrerror(serrno),
             C_Services_errorMsg(*dbSvc));
   } else {
-    (void)C_Services_rollback(*dbSvc,iaddr);
+    (void)C_Services_rollback(*dbSvc,iAddr);
   }
 
   C_IAddress_delete(iAddr);
