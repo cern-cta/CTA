@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.24 $ $Date: 2000/03/31 14:43:05 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.25 $ $Date: 2000/04/05 11:18:27 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -209,6 +209,7 @@ static int newFileList(tape_list_t **tape, file_list_t **newfile,
     filereq = &fl->filereq;
     filereq->VolReqID = -1;
     filereq->jobID = -1;
+    filereq->stageSubreqID = -1;
     filereq->position_method = -1;
     filereq->tape_fseq = -1;
     filereq->disk_fseq = -1;
