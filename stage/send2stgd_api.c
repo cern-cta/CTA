@@ -281,7 +281,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 
 	if (host == NULL) {
 		if ((p = getenv ("STAGE_HOST")) == NULL &&
-				(p = getconfent("STG", "HOST",0)) == NULL) {
+			(p = getconfent("STG", "HOST",0)) == NULL) {
 			strcpy (stghost, stagehost);
 		} else {
 			strcpy (stghost, p);
@@ -319,11 +319,11 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 	if (connect (stg_s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 		if (
 #if defined(_WIN32)
-				WSAGetLastError() == WSAECONNREFUSED
+			WSAGetLastError() == WSAECONNREFUSED
 #else
-				errno == ECONNREFUSED
+			errno == ECONNREFUSED
 #endif
-				) {
+			) {
 			stage_errmsg (func, STG00, stghost, neterror());
 			(void) netclose (stg_s);
 			serrno = ESTNACT;
@@ -571,15 +571,15 @@ int dosymlink (file1, file2)
 	remote = rfio_parseln (file2, &host, &filename, NORDLINKS);
 	PRE_RFIO;
 	if (rfio_symlink (file1, file2) &&
-			((!remote && errno != EEXIST) || (remote && rfio_errno != EEXIST))) {
+		((!remote && errno != EEXIST) || (remote && rfio_errno != EEXIST))) {
 		stage_errmsg (func, STG02, file1, "symlink", rfio_serror());
 		if (serrno == SEOPNOTSUP) {
 			serrno = ESTLNKNSUP;
 			return (-1);
 		}
 		if ((remote &&
-				 (rfio_errno == EACCES || rfio_errno == ENOENT)) ||
-				(remote == 0 && (errno == EACCES || errno == ENOENT))) {
+			 (rfio_errno == EACCES || rfio_errno == ENOENT)) ||
+			(remote == 0 && (errno == EACCES || errno == ENOENT))) {
 			serrno = ESTLNKNCR;
 			return (-1);
 		} else {
@@ -606,11 +606,11 @@ void dounlink (path)
 	PRE_RFIO;
 	if (rfio_unlink (path)) {
 		if ((remote && rfio_errno == ENOENT) ||
-				(remote == 0 && errno == ENOENT)) return;
+			(remote == 0 && errno == ENOENT)) return;
 #if !defined(_WIN32)
 		if (getuid() || (remote && rfio_errno != EACCES) ||
-				(remote == 0 && errno != EACCES) ||
-				strncmp (filename, "/afs/", 5) == 0) {
+			(remote == 0 && errno != EACCES) ||
+			strncmp (filename, "/afs/", 5) == 0) {
 #endif
 			stage_errmsg (func, STG02, path, "unlink", rfio_serror());
 			return;
@@ -640,269 +640,272 @@ int send2stgd_sort_stcp(req_type,flags,nstcp_input,stcp_input,nstcp_output,stcp_
 	int *nstcp_output;
 	struct stgcat_entry **stcp_output;
 {
-  int *seen;
-  int i, j, k, nseen;
-  int status;
-  int nstcp_output_duplicate_found;
+	int *seen;
+	int i, j, k, nseen;
+	int status;
+	int nstcp_output_duplicate_found;
 
-  /* No input/output structures ? */
-  if (stcp_input == NULL || nstcp_input <= 0 ||
-      stcp_output == NULL || nstcp_output == NULL || *nstcp_output <= 0) return(0);
+	/* No input/output structures ? */
+	if (stcp_input == NULL || nstcp_input <= 0 ||
+		stcp_output == NULL || nstcp_output == NULL || *nstcp_output <= 0) return(0);
 
-  /* No sort needed ? */
-  /*
-    STAGE_QRY and STAGE_UPDC are not yet supported
-  */
-  /*
-  if (req_type == STAGE_QRY ||
+	/* No sort needed ? */
+	/*
+	  STAGE_QRY and STAGE_UPDC are not yet supported
+	*/
+	/*
+	  if (req_type == STAGE_QRY ||
       req_type == STAGE_UPDC) {
-    return(0);
-  }
-  */
+	  return(0);
+	  }
+	*/
 
-  if ((req_type == STAGE_IN) && ((flags & STAGE_COFF) == STAGE_COFF)) {
-    /* In the case "stagein -c off", the output is known to be sorted by fseq */
-    qsort((void *) *stcp_output, *nstcp_output, sizeof(struct stgcat_entry), &send2stgd_sort_by_fseq);
-    return(0);
-  }
+	if ((req_type == STAGE_IN) && ((flags & STAGE_COFF) == STAGE_COFF)) {
+		/* In the case "stagein -c off", the output is known to be sorted by fseq */
+		qsort((void *) *stcp_output, *nstcp_output, sizeof(struct stgcat_entry), &send2stgd_sort_by_fseq);
+		return(0);
+	}
 
-  /* In all other cases we order by making correspondance with initial request, except for requests than can  */
-  /* receive in output more entries than in input, in particular: STAGE_QRY */
-  if (req_type == STAGE_QRY) {
-    return(0);
-  }
+	/* In all other cases we order by making correspondance with initial request, except for requests than can  */
+	/* receive in output more entries than in input, in particular: STAGE_QRY */
+	if (req_type == STAGE_QRY) {
+		return(0);
+	}
 
-  if ((seen = (int *) malloc(*nstcp_output * sizeof(int))) == NULL) {
-    serrno = SEINTERNAL;
-    return(-1);
-  }
-  nseen = 0;
-  for (i = 0; i < *nstcp_output; i++) {
-    seen[i] = -1;
-    status = -1;
-    for (j = 0; j < nstcp_input; j++) {
-      if (send2stgd_api_cmp(&(stcp_input[j]),&((*stcp_output)[i])) == 0) {
-        /* We believe the output No i corresponds to input No j */
-        status = 0;
-        seen[i] = j;
-        nseen++;
-        break;
-      }
-    }
-    if (status != 0) {
-      /* Not found !?? */
-      serrno = SEINTERNAL;
-      free(seen);
-      return(-1);
-    }
-  }
+	if ((seen = (int *) malloc(*nstcp_output * sizeof(int))) == NULL) {
+		serrno = SEINTERNAL;
+		return(-1);
+	}
+	nseen = 0;
+	for (i = 0; i < *nstcp_output; i++) {
+		seen[i] = -1;
+		status = -1;
+		for (j = 0; j < nstcp_input; j++) {
+			if (send2stgd_api_cmp(&(stcp_input[j]),&((*stcp_output)[i])) == 0) {
+				/* We believe the output No i corresponds to input No j */
+				status = 0;
+				seen[i] = j;
+				nseen++;
+				break;
+			}
+		}
+		if (status != 0) {
+			/* Not found !?? */
+			serrno = SEINTERNAL;
+			free(seen);
+			return(-1);
+		}
+	}
 
-  /* All output structures has been recognized ? */
-  if (nseen != *nstcp_output) {
-    free(seen);
-    return(-1);
-  }
+	/* All output structures has been recognized ? */
+	if (nseen != *nstcp_output) {
+		free(seen);
+		return(-1);
+	}
 
-  /* We possibliy shrunk output structures to handle the special case when there was an */
-  /* internal retry by the stgdaemon - that assigned another catalog entry but for the */
-  /* same input entry - typically in case of ENOSPC entries successful after a retry */
-  /* for example */
-  /* This is visible from the API by the fact that multiple seen[] can reference the same */
-  /* input index, for example seen[i1] == seen[i2] == j */
-  /* Per construction, if two seen[] values are equal the latest one is always the correct */
-  /* one */
-  nstcp_output_duplicate_found = 1;      /* This statement just forces the while() to start... */
-  while (nstcp_output_duplicate_found != 0) {
-    nstcp_output_duplicate_found = 0;
-    for (i = 0; i < *nstcp_output; i++) {
-      for (j = i + 1; j < *nstcp_output; j++) {
-        if (seen[j] == seen[i]) {
-          /* Here is a case when entry No j (j > i per construction) refers to the same input */
-          /* This means that (*stcp_output)[i] is to be replaced by (*stcp_output)[j] and the */
-          /* total number of output entries decremented */
-          /* Finally all output entries with index > j have to be shifted as well */
-          (*stcp_output)[i] = (*stcp_output)[j];
-          for (k = j + 1; k < *nstcp_output; k++) {
-            (*stcp_output)[k - 1] = (*stcp_output)[k];
-            seen[k - 1] = seen[k];
-          }
-          nstcp_output_duplicate_found = 1;
-          *nstcp_output = *nstcp_output - 1;
-          break;
-        }
-      }
-      if (nstcp_output_duplicate_found != 0) {
-        /* We found a duplicate for Entry No i and it had already been overwriten */
-        /* With this break we force a new check on all the entries so that all */
-        /* duplicates must have been removed */
-        break;
-      }
-    }
-  }
+	/* We possibliy shrunk output structures to handle the special case when there was an */
+	/* internal retry by the stgdaemon - that assigned another catalog entry but for the */
+	/* same input entry - typically in case of ENOSPC entries successful after a retry */
+	/* for example */
+	/* This is visible from the API by the fact that multiple seen[] can reference the same */
+	/* input index, for example seen[i1] == seen[i2] == j */
+	/* Per construction, if two seen[] values are equal the latest one is always the correct */
+	/* one */
+	nstcp_output_duplicate_found = 1;      /* This statement just forces the while() to start... */
+	while (nstcp_output_duplicate_found != 0) {
+		nstcp_output_duplicate_found = 0;
+		for (i = 0; i < *nstcp_output; i++) {
+			for (j = i + 1; j < *nstcp_output; j++) {
+				if (seen[j] == seen[i]) {
+					/* Here is a case when entry No j (j > i per construction) refers to the same input */
+					/* This means that (*stcp_output)[i] is to be replaced by (*stcp_output)[j] and the */
+					/* total number of output entries decremented */
+					/* Finally all output entries with index > j have to be shifted as well */
+					(*stcp_output)[i] = (*stcp_output)[j];
+					for (k = j + 1; k < *nstcp_output; k++) {
+						(*stcp_output)[k - 1] = (*stcp_output)[k];
+						seen[k - 1] = seen[k];
+					}
+					nstcp_output_duplicate_found = 1;
+					*nstcp_output = *nstcp_output - 1;
+					break;
+				}
+			}
+			if (nstcp_output_duplicate_found != 0) {
+				/* We found a duplicate for Entry No i and it had already been overwriten */
+				/* With this break we force a new check on all the entries so that all */
+				/* duplicates must have been removed */
+				break;
+			}
+		}
+	}
 
-  /* We reorder output structures to match input structures original order */
-  for (i = 0; i < nstcp_input; i++) {
-    struct stgcat_entry dummy;
+	/* We reorder output structures to match input structures original order */
+	for (i = 0; i < nstcp_input; i++) {
+		struct stgcat_entry dummy;
 
-    if (seen[i] != i) {
-      /* Output structure No i is to be switched with output structure No seen[i] */
-      dummy = (*stcp_output)[i];
-      (*stcp_output)[i] = (*stcp_output)[seen[i]];
-      (*stcp_output)[seen[i]] = dummy;
-    }
-  }
-  free(seen);
+		if (seen[i] != i) {
+			/* Output structure No i is to be switched with output structure No seen[i] */
+			dummy = (*stcp_output)[i];
+			(*stcp_output)[i] = (*stcp_output)[seen[i]];
+			(*stcp_output)[seen[i]] = dummy;
+		}
+	}
+	free(seen);
 
-  /* OK */
-  return(0);
+	/* OK */
+	return(0);
 }
 
 int send2stgd_sort_by_fseq(p1,p2)
-     CONST void *p1;
-     CONST void *p2;
+	CONST void *p1;
+	CONST void *p2;
 {
-  struct stgcat_entry *stcp1 = (struct stgcat_entry *) p1;
-  struct stgcat_entry *stcp2 = (struct stgcat_entry *) p2;
-  int fseq1, fseq2;
+	struct stgcat_entry *stcp1 = (struct stgcat_entry *) p1;
+	struct stgcat_entry *stcp2 = (struct stgcat_entry *) p2;
+	int fseq1, fseq2;
 
-  fseq1 = atoi(stcp1->u1.t.fseq);
-  fseq2 = atoi(stcp2->u1.t.fseq);
+	fseq1 = atoi(stcp1->u1.t.fseq);
+	fseq2 = atoi(stcp2->u1.t.fseq);
 
-  if (fseq1 < fseq2) {
-    return(-1);
-  } else if (fseq1 > fseq2) {
-    return(1);
-  } else {
-    return(0);
-  }
+	if (fseq1 < fseq2) {
+		return(-1);
+	} else if (fseq1 > fseq2) {
+		return(1);
+	} else {
+		return(0);
+	}
 }
 
 int send2stgd_api_cmp(stcp1,stcp2)
-     struct stgcat_entry *stcp1;
-     struct stgcat_entry *stcp2;
+	struct stgcat_entry *stcp1;
+	struct stgcat_entry *stcp2;
 {
-  int i;
-  char tmpbuf1[21];                                                        \
-  char tmpbuf2[21];                                                        \
+	int i;
+	char tmpbuf1[21];
+	char tmpbuf2[21];
+	
+	/* stcp1 is the reference and we check if it matches stcp2 */
+	if (stcp1->blksize     != 0    && stcp1->blksize  != stcp2->blksize)  {
+		return(-1);
+	}
+	if (stcp1->charconv    != '\0' && stcp1->charconv != stcp2->charconv) {
+		return(-1);
+	}
+	if (stcp1->keep        != '\0' && stcp1->keep     != stcp2->keep) {
+		return(-1);
+	}
+	if (stcp1->lrecl       != 0    && stcp1->lrecl    != stcp2->lrecl)  {
+		return(-1);
+	}
+	if (stcp1->nread       != 0    && stcp1->nread    != stcp2->nread)  {
+		return(-1);
+	}
+	if (stcp1->poolname[0] != '\0' && strcmp(stcp1->poolname,stcp2->poolname) != 0) {
+		return(-1);
+	}
+	if (stcp1->recfm[0]    != '\0' && strcmp(stcp1->recfm,stcp2->recfm) != 0) {
+		return(-1);
+	}
+	/*
+	  if (stcp1->size        != 0    && stcp1->size     != stcp2->size)  {
+	  return(-1);
+	  }
+	*/
+	if (stcp1->t_or_d == '\0') {
+		stage_errmsg(NULL, "### stcp1->t_or_d is empty !?\n");
+		return(-1);
+	}
+	if (stcp1->t_or_d   != stcp2->t_or_d) {
+		/* This is accepted only if input was 'h' or 'm' and output was 'm' or 'h' */
+		if ((stcp1->t_or_d == 'h' && stcp2->t_or_d != 'm') ||
+			(stcp1->t_or_d == 'm' && stcp2->t_or_d != 'h')) {
+			return(-1);
+		}
+	}
 
-  /* stcp1 is the reference and we check if it matches stcp2 */
-  if (stcp1->blksize     != 0    && stcp1->blksize  != stcp2->blksize)  {
-    return(-1);
-  }
-  if (stcp1->charconv    != '\0' && stcp1->charconv != stcp2->charconv) {
-    return(-1);
-  }
-  if (stcp1->keep        != '\0' && stcp1->keep     != stcp2->keep) {
-    return(-1);
-  }
-  if (stcp1->lrecl       != 0    && stcp1->lrecl    != stcp2->lrecl)  {
-    return(-1);
-  }
-  if (stcp1->nread       != 0    && stcp1->nread    != stcp2->nread)  {
-    return(-1);
-  }
-  if (stcp1->poolname[0] != '\0' && strcmp(stcp1->poolname,stcp2->poolname) != 0) {
-    return(-1);
-  }
-  if (stcp1->recfm[0]    != '\0' && strcmp(stcp1->recfm,stcp2->recfm) != 0) {
-    return(-1);
-  }
-  /*
-  if (stcp1->size        != 0    && stcp1->size     != stcp2->size)  {
-    return(-1);
-  }
-  */
-  if (stcp1->t_or_d == '\0') {
-    stage_errmsg(NULL, "### stcp1->t_or_d is empty !?\n");
-    return(-1);
-  }
-  if (stcp1->t_or_d   != stcp2->t_or_d) {
-    /* This is accepted only if input was 'h' or 'm' and output was 'm' or 'h' */
-    if ((stcp1->t_or_d == 'h' && stcp2->t_or_d != 'm') ||
-        (stcp1->t_or_d == 'm' && stcp2->t_or_d != 'h')) {
-      return(-1);
-    }
-  }
+	switch (stcp2->t_or_d) { /* We use stcp2 because it might be 'm' or 'h' when input is 'm' */
+	case 't':
+		if (stcp1->u1.t.den[0]      != '\0' && strcmp(stcp1->u1.t.den,stcp2->u1.t.den) != 0) {
+			return(-1);
+		}
+		if (stcp1->u1.t.dgn[0]      != '\0' && strcmp(stcp1->u1.t.dgn,stcp2->u1.t.dgn) != 0) {
+			return(-1);
+		}
+		if (stcp1->u1.t.fid[0]      != '\0' && strcmp(stcp1->u1.t.fid,stcp2->u1.t.fid) != 0) {
+			return(-1);
+		}
+		if (stcp1->u1.t.filstat     != '\0' && stcp1->u1.t.filstat != stcp2->u1.t.filstat) {
+			return(-1);
+		}
+		if (stcp1->u1.t.fseq[0]     != '\0' && strcmp(stcp1->u1.t.fseq,stcp2->u1.t.fseq) != 0) {
+			return(-1);
+		}
+		if (stcp1->u1.t.lbl[0]      != '\0' && strcmp(stcp1->u1.t.lbl,stcp2->u1.t.lbl) != 0) {
+			return(-1);
+		}
+		if (stcp1->u1.t.retentd     != 0    && stcp1->u1.t.retentd != stcp2->u1.t.retentd) {
+			return(-1);
+		}
+		if (stcp1->u1.t.tapesrvr[0] != '\0' && strcmp(stcp1->u1.t.tapesrvr,stcp2->u1.t.tapesrvr) != 0) {
+			return(-1);
+		}
+		if (stcp1->u1.t.E_Tflags    != 0    && stcp1->u1.t.E_Tflags != stcp2->u1.t.E_Tflags) {
+			return(-1);
+		}
+		for (i = 0; i < MAXVSN; i++) {
+			if (stcp1->u1.t.vid[i][0] != '\0' && strcmp(stcp1->u1.t.vid[i],stcp2->u1.t.vid[i]) != 0) {
+				return(-1);
+			}
+			if (stcp1->u1.t.vsn[i][0] != '\0' && strcmp(stcp1->u1.t.vsn[i],stcp2->u1.t.vsn[i]) != 0) {
+				return(-1);
+			}
+		}
+		break;
+	case 'd':
+		if (stcp1->u1.d.xfile[0] != '\0' && strcmp(stcp1->u1.d.xfile,stcp2->u1.d.xfile) != 0) {
+			return(-1);
+		}
+		if (stcp1->u1.d.Xparm[0] != '\0' && strcmp(stcp1->u1.d.Xparm,stcp2->u1.d.Xparm) != 0) {
+			return(-1);
+		}
+		break;
+	case 'a':
+		if (stcp1->u1.d.xfile[0] != '\0' && strcmp(stcp1->u1.d.xfile,stcp2->u1.d.xfile) != 0) {
+			return(-1);
+		}
+		break;
+	case 'm':
+		if (stcp1->u1.m.xfile[0] != '\0' && strcmp(stcp1->u1.m.xfile,stcp2->u1.m.xfile) != 0) {
+			return(-1);
+		}
+		break;
+	case 'h':
+		/* HSM name is volatile */
+		/*
+		if (stcp1->u1.h.xfile[0]       != '\0' && strcmp(stcp1->u1.h.xfile,stcp2->u1.h.xfile) != 0) {
+			return(-1);
+		}
+		*/
+		if (stcp1->u1.h.server[0]      != '\0' && strcmp(stcp1->u1.h.server,stcp2->u1.h.server) != 0) {
+			return(-1);
+		}
+		if (stcp1->u1.h.fileid         != 0    && stcp1->u1.h.fileid != stcp2->u1.h.fileid) {
+			return(-1);
+		}
+		if (stcp1->u1.h.fileclass      != 0    && stcp1->u1.h.fileclass != stcp2->u1.h.fileid) {
+			return(-1);
+		}
+		if (stcp1->u1.h.tppool[0]      != '\0' && strcmp(stcp1->u1.h.tppool,stcp2->u1.h.tppool) != 0) return(-1);
+		/* These are 'volative' values */
+		/*
+		  if (stcp1->u1.h.retenp_on_disk != 0     && stcp1->u1.h.retenp_on_disk != stcp2->u1.h.retenp_on_disk) return(-1);
+		  if (stcp1->u1.h.mintime_beforemigr != 0 && stcp1->u1.h.mintime_beforemigr != stcp2->u1.h.mintime_beforemigr) return(-1);
+		*/
+		break;
+	}
 
-  switch (stcp2->t_or_d) { /* We use stcp2 because it might be 'm' or 'h' when input is 'm' */
-  case 't':
-    if (stcp1->u1.t.den[0]      != '\0' && strcmp(stcp1->u1.t.den,stcp2->u1.t.den) != 0) {
-      return(-1);
-    }
-    if (stcp1->u1.t.dgn[0]      != '\0' && strcmp(stcp1->u1.t.dgn,stcp2->u1.t.dgn) != 0) {
-      return(-1);
-    }
-    if (stcp1->u1.t.fid[0]      != '\0' && strcmp(stcp1->u1.t.fid,stcp2->u1.t.fid) != 0) {
-      return(-1);
-    }
-    if (stcp1->u1.t.filstat     != '\0' && stcp1->u1.t.filstat != stcp2->u1.t.filstat) {
-      return(-1);
-    }
-    if (stcp1->u1.t.fseq[0]     != '\0' && strcmp(stcp1->u1.t.fseq,stcp2->u1.t.fseq) != 0) {
-      return(-1);
-    }
-    if (stcp1->u1.t.lbl[0]      != '\0' && strcmp(stcp1->u1.t.lbl,stcp2->u1.t.lbl) != 0) {
-      return(-1);
-    }
-    if (stcp1->u1.t.retentd     != 0    && stcp1->u1.t.retentd != stcp2->u1.t.retentd) {
-      return(-1);
-    }
-    if (stcp1->u1.t.tapesrvr[0] != '\0' && strcmp(stcp1->u1.t.tapesrvr,stcp2->u1.t.tapesrvr) != 0) {
-      return(-1);
-    }
-    if (stcp1->u1.t.E_Tflags    != 0    && stcp1->u1.t.E_Tflags != stcp2->u1.t.E_Tflags) {
-      return(-1);
-    }
-    for (i = 0; i < MAXVSN; i++) {
-      if (stcp1->u1.t.vid[i][0] != '\0' && strcmp(stcp1->u1.t.vid[i],stcp2->u1.t.vid[i]) != 0) {
-        return(-1);
-      }
-      if (stcp1->u1.t.vsn[i][0] != '\0' && strcmp(stcp1->u1.t.vsn[i],stcp2->u1.t.vsn[i]) != 0) {
-        return(-1);
-      }
-    }
-    break;
-  case 'd':
-    if (stcp1->u1.d.xfile[0] != '\0' && strcmp(stcp1->u1.d.xfile,stcp2->u1.d.xfile) != 0) {
-      return(-1);
-    }
-    if (stcp1->u1.d.Xparm[0] != '\0' && strcmp(stcp1->u1.d.Xparm,stcp2->u1.d.Xparm) != 0) {
-      return(-1);
-    }
-    break;
-  case 'a':
-    if (stcp1->u1.d.xfile[0] != '\0' && strcmp(stcp1->u1.d.xfile,stcp2->u1.d.xfile) != 0) {
-      return(-1);
-    }
-    break;
-  case 'm':
-    if (stcp1->u1.m.xfile[0] != '\0' && strcmp(stcp1->u1.m.xfile,stcp2->u1.m.xfile) != 0) {
-      return(-1);
-    }
-    break;
-  case 'h':
-    if (stcp1->u1.h.xfile[0]       != '\0' && strcmp(stcp1->u1.h.xfile,stcp2->u1.h.xfile) != 0) {
-      return(-1);
-    }
-    if (stcp1->u1.h.server[0]      != '\0' && strcmp(stcp1->u1.h.server,stcp2->u1.h.server) != 0) {
-      return(-1);
-    }
-    if (stcp1->u1.h.fileid         != 0    && stcp1->u1.h.fileid != stcp2->u1.h.fileid) {
-      return(-1);
-    }
-    if (stcp1->u1.h.fileclass      != 0    && stcp1->u1.h.fileclass != stcp2->u1.h.fileid) {
-      return(-1);
-    }
-    if (stcp1->u1.h.tppool[0]      != '\0' && strcmp(stcp1->u1.h.tppool,stcp2->u1.h.tppool) != 0) return(-1);
-    /* These are 'volative' values */
-    /*
-      if (stcp1->u1.h.retenp_on_disk != 0     && stcp1->u1.h.retenp_on_disk != stcp2->u1.h.retenp_on_disk) return(-1);
-      if (stcp1->u1.h.mintime_beforemigr != 0 && stcp1->u1.h.mintime_beforemigr != stcp2->u1.h.mintime_beforemigr) return(-1);
-    */
-    break;
-  }
-
-  /* OK */
-  return(0);
+	/* OK */
+	return(0);
 }
 
