@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.80 $ $Release$ $Date: 2004/11/25 13:16:22 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.81 $ $Release$ $Date: 2004/11/25 13:29:10 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.80 $ $Release$ $Date: 2004/11/25 13:16:22 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.81 $ $Release$ $Date: 2004/11/25 13:29:10 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1112,9 +1112,6 @@ static int nextSegmentToRecall(
      file_list_t **file;
 {
   struct Cstager_IStagerSvc_t **stgsvc = NULL;
-  struct C_Services_t **svcs = NULL;
-  struct C_BaseAddress_t *baseAddr = NULL;
-  struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj;
   struct Cstager_Segment_t *segment = NULL;
   struct Cstager_DiskCopyForRecall_t *recallCandidate = NULL;
@@ -1165,14 +1162,6 @@ static int nextSegmentToRecall(
   rc = getStgSvc(&stgsvc);
   if ( rc == -1 || stgsvc == NULL || *stgsvc == NULL ) return(-1);
   
-  rc = getDbSvc(&svcs);
-  if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
-  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-  if ( rc == -1 ) {
-    return(-1);
-  }
-  iAddr = C_BaseAddress_getIAddress(baseAddr);
-
   recallCandidate = NULL;
   rc = Cstager_IStagerSvc_bestFileSystemForSegment(
                                                    *stgsvc,
@@ -1183,10 +1172,17 @@ static int nextSegmentToRecall(
     save_serrno = serrno;
     LOG_DBCALL_ERR("Cstager_IStagerSvc_bestFileSystemForSegment()",
                    Cstager_IStagerSvc_errorMsg(*stgsvc));
-    C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
   }
+
+  if ( recallCandidate == NULL ) {
+    LOG_DBCALL_ERR("Cstager_IStagerSvc_bestFileSystemForSegment()",
+                   "Unexpected successful return without candidate");
+    serrno = ENOENT;
+    return(-1);
+  }
+  
   Cstager_DiskCopyForRecall_getDiskCopy(
                                         recallCandidate,
                                         &diskCopy
