@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.83 $ $Date: 2002/05/30 12:52:47 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.84 $ $Date: 2002/06/26 13:49:29 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -461,12 +461,20 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
             }
 
 #ifdef MONITOR  /* Monitoring Code */
+	    
+	    rtcp_log(LOG_DEBUG, "MONITOR - Before WTT transfer info sent\n");
 	    {
 	      int forceSend;
-
-	      forceSend = (file->tapebytes_sofar == 0) || (file->tapebytes_sofar ==  filereq->bytes_in);
-	      rtcpd_sendMonitoring(file->tapebytes_sofar, filereq->bytes_in, forceSend);
+	      
+	      if (file == NULL || filereq == NULL) {
+		rtcp_log(LOG_ERR, "MONITOR - file or filereq is NULL\n");
+	      } else {
+		forceSend = (file->tapebytes_sofar == 0) || (file->tapebytes_sofar ==  filereq->bytes_in);
+		rtcpd_sendMonitoring(file->tapebytes_sofar, filereq->bytes_in, forceSend);
+	      }
 	    }
+	    rtcp_log(LOG_DEBUG, "MONITOR - After WTT transfer info sent\n");
+
 #endif /* End Monitoring Code */
       
 
@@ -885,13 +893,20 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                 }
 
 #ifdef MONITOR	/* Monitoring Code */
+		rtcp_log(LOG_DEBUG, "MONITOR - Before RFT transfer info sent\n");
 		{
 		  int forceSend;
-
-		  forceSend = (file->tapebytes_sofar == 0) || 
-		    (file->tapebytes_sofar ==  filereq->bytes_in);
+		  
+		  if (file == NULL || filereq == NULL) {
+		    rtcp_log(LOG_ERR, "MONITOR - file or filereq is NULL\n");
+		  } else {
+		    forceSend = (file->tapebytes_sofar == 0) || 
+		      (file->tapebytes_sofar ==  filereq->bytes_in);
 		    rtcpd_sendMonitoring(file->tapebytes_sofar, filereq->bytes_in, forceSend);
+		  }
 		}
+		rtcp_log(LOG_DEBUG, "MONITOR - After RFT transfer info sent\n");
+
 #endif		/* End of Monitoring Code */
 
                 TP_SIZE(rc);
@@ -1295,12 +1310,17 @@ void *tapeIOthread(void *arg) {
         }
 	
 #ifdef MONITOR /* Monitoring - Loop to count the number of files in the request */
+	rtcp_log(LOG_DEBUG, "MONITOR - Before Loop to count files in REQ\n");
+	
 	nb_files = 0;
 	last_qty_sent = 0;
 	CLIST_ITERATE_BEGIN(nexttape->file,nextfile) {
 	  nb_files++;
 	} CLIST_ITERATE_END(nexttape->file,nextfile);
 	current_file = 0;
+	
+	rtcp_log(LOG_DEBUG, "MONITOR - After Loop to count files in REQ\n");
+	
 #endif /* End Monitoring */
 
         CLIST_ITERATE_BEGIN(nexttape->file,nextfile) {
@@ -1823,10 +1843,16 @@ int rtcpd_sendMonitoring(u_signed64 transfered, u_signed64 total, int forceSend)
     pid = getpid();
 #endif
 
-    Cmonit_send_transfer_info(pid, transfered, total, (transfered - last_qty_sent) * clktck
-			      / (tm - lasttime_monitor_msg_sent), current_file, nb_files);
-    /*   rtcp_log(LOG_ERR,">>>>>>>>>>> Sent time: %d rate:%d\n", tm - lasttime_monitor_msg_sent,  
-	 (transfered - last_qty_sent) * CLOCKS_PER_SEC / (tm - lasttime_monitor_msg_sent) ); */
+    if ((tm - lasttime_monitor_msg_sent) != 0) {
+
+      Cmonit_send_transfer_info(pid, transfered, total, (transfered - last_qty_sent) * clktck
+				/ (tm - lasttime_monitor_msg_sent), current_file, nb_files);
+    } else {
+ 
+      rtcp_log(LOG_DEBUG, "MONITOR - Denominator is 0, no message sent\n");
+
+    }
+
     lasttime_monitor_msg_sent = tm;
     last_qty_sent = transfered;
   }
