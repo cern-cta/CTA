@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.22 2001/06/21 10:34:34 jdurand Exp $
+ * $Id: stageput.c,v 1.23 2001/07/23 09:10:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.22 $ $Date: 2001/06/21 10:34:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.23 $ $Date: 2001/07/23 09:10:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -170,8 +170,10 @@ int main(argc, argv)
 						/* We prepend HSM_HOST only for non CASTOR-like files */
 						if ((dummy = strchr(Coptarg,':')) == NULL || (dummy != Coptarg && strrchr(dummy,'/') == NULL)) {
 							if ((hsm_host = getenv("HSM_HOST")) != NULL) {
-								strcpy (hsm_path, hsm_host);
-								strcat (hsm_path, ":");
+								if (hsm_host[0] != '\0') {
+									strcpy (hsm_path, hsm_host);
+									strcat (hsm_path, ":");
+								}
 								strcat (hsm_path, Coptarg);
 								if ((hsmfiles[nhsmfiles] = (char *) malloc((attached != 0 ? 2 : 0) + strlen(hsm_path) + 1)) == NULL) {
 									fprintf(stderr,"malloc error (%s)\n",strerror(errno));
@@ -185,8 +187,10 @@ int main(argc, argv)
 									}
 								}
 							} else if ((hsm_host = getconfent("STG", "HSM_HOST",0)) != NULL) {
-								strcpy (hsm_path, hsm_host);
-								strcat (hsm_path, ":");
+								if (hsm_host[0] != '\0') {
+									strcpy (hsm_path, hsm_host);
+									strcat (hsm_path, ":");
+								}
 								strcat (hsm_path, Coptarg);
 								if ((hsmfiles[nhsmfiles] = (char *) malloc((attached != 0 ? 2 : 0) + strlen(hsm_path) + 1)) == NULL) {
 									fprintf(stderr,"malloc error (%s)\n",strerror(errno));

@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.24 2001/07/12 11:12:19 jdurand Exp $
+ * $Id: stage_api.c,v 1.25 2001/07/23 09:10:05 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -418,12 +418,16 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
         /* We prepend HSM_HOST only for non CASTOR-like files */
         if (((dummy = strchr(optarg,':')) == NULL) || (dummy != optarg && strrchr(dummy,'/') == NULL)) {
           if ((hsm_host = getenv("HSM_HOST")) != NULL) {
-            strcpy (hsm_path, hsm_host);
-            strcat (hsm_path, ":");
+            if (hsm_host[0] != '\0') {
+              strcpy (hsm_path, hsm_host);
+              strcat (hsm_path, ":");
+            }
             strcat (hsm_path, optarg);
           } else if ((hsm_host = getconfent("STG", "HSM_HOST",0)) != NULL) {
-            strcpy (hsm_path, hsm_host);
-            strcat (hsm_path, ":");
+            if (hsm_host[0] != '\0') {
+              strcpy (hsm_path, hsm_host);
+              strcat (hsm_path, ":");
+            }
             strcat (hsm_path, optarg);
           } else {
             stage_errmsg(func, STG54);
@@ -1660,12 +1664,16 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
         /* We prepend HSM_HOST only for non CASTOR-like files */
         if (((dummy = strchr(optarg,':')) == NULL) || (dummy != optarg && strrchr(dummy,'/') == NULL)) {
           if ((hsm_host = getenv("HSM_HOST")) != NULL) {
-            strcpy (hsm_path, hsm_host);
-            strcat (hsm_path, ":");
+            if (hsm_host[0] != '\0') {
+              strcpy (hsm_path, hsm_host);
+              strcat (hsm_path, ":");
+            }
             strcat (hsm_path, optarg);
           } else if ((hsm_host = getconfent("STG", "HSM_HOST",0)) != NULL) {
-            strcpy (hsm_path, hsm_host);
-            strcat (hsm_path, ":");
+            if (hsm_host[0] != '\0') {
+              strcpy (hsm_path, hsm_host);
+              strcat (hsm_path, ":");
+            }
             strcat (hsm_path, optarg);
           } else {
             stage_errmsg(func, STG54);

@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.20 2001/03/02 18:12:23 jdurand Exp $
+ * $Id: stageclr.c,v 1.21 2001/07/23 09:10:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.20 $ $Date: 2001/03/02 18:12:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.21 $ $Date: 2001/07/23 09:10:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -155,23 +155,27 @@ int main(argc, argv)
 				/* We prepend HSM_HOST only for non CASTOR-like files */
 				if ((dummy = strchr(Coptarg,':')) == NULL || (dummy != Coptarg && strrchr(dummy,'/') == NULL)) {
 					if ((hsm_host = getenv("HSM_HOST")) != NULL) {
-						if (attached != 0) {
-							strcpy (hsm_path, "-M");
-							strcat (hsm_path, hsm_host);
-						} else {
-							strcpy (hsm_path, hsm_host);
+						if (hsm_host[0] != '\0') {
+							if (attached != 0) {
+								strcpy (hsm_path, "-M");
+								strcat (hsm_path, hsm_host);
+							} else {
+								strcpy (hsm_path, hsm_host);
+							}
+							strcat (hsm_path, ":");
 						}
-						strcat (hsm_path, ":");
 						strcat (hsm_path, Coptarg);
 						argv[Coptind - 1] = hsm_path;
 					} else if ((hsm_host = getconfent("STG", "HSM_HOST",0)) != NULL) {
-						if (attached != 0) {
-							strcpy (hsm_path, "-M");
-							strcat (hsm_path, hsm_host);
-						} else {
-							strcpy (hsm_path, hsm_host);
+						if (hsm_host[0] != '\0') {
+							if (attached != 0) {
+								strcpy (hsm_path, "-M");
+								strcat (hsm_path, hsm_host);
+							} else {
+								strcpy (hsm_path, hsm_host);
+							}
+							strcat (hsm_path, ":");
 						}
-						strcat (hsm_path, ":");
 						strcat (hsm_path, Coptarg);
 						argv[Coptind - 1] = hsm_path;
 					} else {
