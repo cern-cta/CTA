@@ -1,5 +1,5 @@
 /*
- * $Id: stgdump.c,v 1.6 2003/01/15 16:58:59 jdurand Exp $
+ * $Id: stgdump.c,v 1.7 2003/01/16 13:13:24 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdump.c,v $ $Revision: 1.6 $ $Date: 2003/01/15 16:58:59 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdump.c,v $ $Revision: 1.7 $ $Date: 2003/01/16 13:13:24 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -26,6 +26,7 @@ static char sccsid[] = "@(#)$RCSfile: stgdump.c,v $ $Revision: 1.6 $ $Date: 2003
 #include "Cgetopt.h"
 #include "serrno.h"
 #include "rfio_api.h"
+#include "u64subr.h"
 
 void log_callback _PROTO((int, char *));
 void qry_callback _PROTO((struct stgcat_entry *, struct stgpath_entry *));
@@ -152,6 +153,7 @@ int main(argc,argv)
 	/* Open output files */
 	if (stcp_output != NULL) {
 		PRE_RFIO;
+		fprintf(stdout, "... Opening %s\n", stcp_output);
 		if ((fd_stcp = rfio_open64(stcp_output, O_CREAT|O_WRONLY|O_TRUNC, 0644)) < 0) {
 			stage_errmsg(func,"%s rfio_open64 error : %s\n", stcp_output, rfio_serror());
 			exit(EXIT_FAILURE);
@@ -159,6 +161,7 @@ int main(argc,argv)
 	}
 	if (stpp_output != NULL) {
 		PRE_RFIO;
+		fprintf(stdout, "... Opening %s\n", stpp_output);
 		if ((fd_stpp = rfio_open64(stpp_output, O_CREAT|O_WRONLY|O_TRUNC, 0644)) < 0) {
 			stage_errmsg(func,"%s rfio_open64 error : %s\n", stpp_output, rfio_serror());
 			rfio_close(fd_stcp);
@@ -181,6 +184,7 @@ int main(argc,argv)
 			}
 		}
 
+		fprintf(stdout,"\n... Querying   stgcat (main catalog)\n");
 		if ((rc = stage_qry('t',                    /* t_or_d */
 							(u_signed64) STAGE_ALL, /* Flags */
 							stghost,                /* Hostname */
@@ -191,9 +195,15 @@ int main(argc,argv)
 							&nstpp_output,          /* nstpp_output */
 							NULL                    /* stpp_output */
 			)) < 0) {
-			stage_errmsg(func,"stage_qry error : %s\n", sstrerror(serrno));
+			if (serrno == ENOENT) {
+				/* Okay, that means the list is empty */
+				goto stgcat_ok;
+			} else {
+				stage_errmsg(func,"stgcat stage_qry error : %s\n", sstrerror(serrno));
+			}
 		} else {
-			fprintf(stdout,"==> Got %d stcp\n", nstcp_output);
+		  stgcat_ok:
+			fprintf(stdout,"==> Got %6d stgcat (main catalog) entr%s\n", nstcp_output, (nstcp_output <= 1) ? "y" : "ies");
 		}
 	}
 	if (stpp_output != NULL) {
@@ -205,6 +215,7 @@ int main(argc,argv)
 				stage_errmsg(func,"Cannot putenv(\"%s\"), %s\n", myenv, strerror(errno));
 			}
 		}
+		fprintf(stdout,"\n... Querying   stgpath (link catalog)\n");
 		if ((rc = stage_qry('t',                    /* t_or_d */
 							(u_signed64) STAGE_ALL|STAGE_LINKNAME, /* Flags */
 							stghost,                /* Hostname */
@@ -215,9 +226,15 @@ int main(argc,argv)
 							&nstpp_output,          /* nstpp_output */
 							NULL                    /* stpp_output */
 			)) < 0) {
-			stage_errmsg(func,"stage_qry error : %s\n", sstrerror(serrno));
+			if (serrno == ENOENT) {
+				/* Okay, that means the list is empty */
+				goto stgpath_ok;
+			} else {
+				stage_errmsg(func,"stgpath stage_qry error : %s\n", sstrerror(serrno));
+			}
 		} else {
-			fprintf(stdout,"==> Got %d stpp\n", nstpp_output);
+		  stgpath_ok:
+			fprintf(stdout,"==> Got %6d stgpath (link catalog) entr%s\n", nstpp_output, (nstpp_output <= 1) ? "y" : "ies");
 		}
 	}
 
@@ -232,14 +249,35 @@ int main(argc,argv)
 
 	if (stcp_output != NULL) {
 		PRE_RFIO;
+		fprintf(stdout, "\n... Closing %s ", stcp_output);
 		if ((rc = rfio_close(fd_stcp)) < 0) {
-			stage_errmsg(func,"%s close error : %s\n", stcp_output, rfio_serror());
+			stage_errmsg(func,"%s rfio_close error : %s\n", stcp_output, rfio_serror());
+		} else {
+			struct stat64 statbuf;
+			if (rfio_stat64(stcp_output,&statbuf) != 0) {
+				stage_errmsg(func,"%s rfio_stat error : %s\n", stcp_output, rfio_serror());
+			} else {
+				char tmpbuf[21];
+				fprintf(stdout,"(%s byte%s)\n", u64tostr((u_signed64) statbuf.st_size, tmpbuf, 0), (statbuf.st_size > 1) ? "s" : "");
+			}
 		}
 	}
 	if (stpp_output != NULL) {
 		PRE_RFIO;
+		if (stcp_output == NULL) {
+			fprintf(stdout,"\n");
+		}
+		fprintf(stdout, "... Closing %s ", stpp_output);
 		if ((rc = rfio_close(fd_stpp)) < 0) {
-			stage_errmsg(func,"%s close error : %s\n", stpp_output, rfio_serror());
+			stage_errmsg(func,"%s rfio_close error : %s\n", stpp_output, rfio_serror());
+		} else {
+			struct stat64 statbuf;
+			if (rfio_stat64(stpp_output,&statbuf) != 0) {
+				stage_errmsg(func,"%s rfio_stat error : %s\n", stpp_output, rfio_serror());
+			} else {
+				char tmpbuf[21];
+				fprintf(stdout,"(%s byte%s)\n", u64tostr((u_signed64) statbuf.st_size, tmpbuf, 0), (statbuf.st_size > 1) ? "s" : "");
+			}
 		}
 	}
 
@@ -270,10 +308,10 @@ void qry_callback(stcp,stpp)
 		/* stcp record */
 		PRE_RFIO;
 		if (rfio_write(fd_stcp, stcp, (int) sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
-			stage_errmsg(func,"write of stcp error : %s\n", rfio_serror());
+			stage_errmsg(func,"rfio_write of stcp error : %s\n", rfio_serror());
 			exit(EXIT_FAILURE);
 		} else {
-			if (++istcp_output % 1000 == 0) fprintf(stdout,"... Got %d stcp\n", istcp_output);
+			if (++istcp_output % 1000 == 0) fprintf(stdout,"...     %6d\n", istcp_output);
 		}
 		
 	}
@@ -281,10 +319,10 @@ void qry_callback(stcp,stpp)
 		/* stpp record */
 		PRE_RFIO;
 		if (rfio_write(fd_stpp, stpp, (int) sizeof(struct stgpath_entry)) != sizeof(struct stgpath_entry)) {
-			stage_errmsg(func,"write of stpp error : %s\n", rfio_serror());
+			stage_errmsg(func,"rfio_write of stpp error : %s\n", rfio_serror());
 			exit(EXIT_FAILURE);
 		} else {
-			if (++istpp_output % 1000 == 0) fprintf(stdout,"... Got %d stcp\n", istpp_output);
+			if (++istpp_output % 1000 == 0) fprintf(stdout,"...     %6d\n", istpp_output);
 		}
 		
 	}
