@@ -15,6 +15,7 @@
 
 // Local includes
 #include "cppwriter.h"
+#include "codegenerationpolicy.h"
 #include "chclasswriter.h"
 #include "ccclasswriter.h"
 #include "cpphclasswriter.h"
@@ -65,13 +66,10 @@ CppWriter::~CppWriter() {
 }
 
 void CppWriter::configGenerator(CppBaseWriter *cg) {
-  cg->setForceDoc(forceDoc());
-  cg->setForceSections(forceSections());
-  cg->setIncludeHeadings(includeHeadings());
-  cg->setHeadingFileDir(headingFileDir());
-  cg->setModifyNamePolicy(modifyNamePolicy());
-  cg->setOutputDirectory(outputDirectory());
-  cg->setOverwritePolicy(CodeGenerationPolicy::Ok);
+  CodeGenerationPolicy *parentPolicy = getPolicy();
+  CodeGenerationPolicy *childPolicy = cg->getPolicy();
+  childPolicy->setHeadingFileDir(parentPolicy->getHeadingFileDir());
+  childPolicy->setOutputDirectory(parentPolicy->getOutputDirectory());
 }
 
 void CppWriter::runGenerator(CppBaseWriter *cg,
@@ -222,21 +220,22 @@ void CppWriter::writeClass(UMLClassifier *c) {
           const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
           if (classInfo->allImplementedAbstracts.contains(concept)) {
             // check existence of the directory
-            QDir packageDir(m_outputDirectory.absPath() + "/castor/db");
+            QDir outputDirectory = getPolicy()->getOutputDirectory();
+            QDir packageDir(getPolicy()->getOutputDirectory().absPath() + "/castor/db");
             if (! (packageDir.exists() || packageDir.mkdir(packageDir.absPath()) ) ) {
               std::cerr << "Cannot create the package folder "
                         << packageDir.absPath().ascii()
                         << "\nPlease check the access rights" << std::endl;
               return;
             }
-            QDir packageDirOra(m_outputDirectory.absPath() + "/castor/db/ora");
+            QDir packageDirOra(getPolicy()->getOutputDirectory().absPath() + "/castor/db/ora");
             if (! (packageDirOra.exists() || packageDirOra.mkdir(packageDirOra.absPath()) ) ) {
               std::cerr << "Cannot create the package folder "
                         << packageDirOra.absPath().ascii()
                         << "\nPlease check the access rights" << std::endl;
               return;
             }
-            //           QDir packageDirOdbc(m_outputDirectory.absPath() + "/castor/db/odbc");
+            //           QDir packageDirOdbc(getPolicy()->getOutputDirectory().absPath() + "/castor/db/odbc");
             //           if (! (packageDirOdbc.exists() || packageDirOdbc.mkdir(packageDirOdbc.absPath()) ) ) {
             //             std::cerr << "Cannot create the package folder "
             //                       << packageDirOdbc.absPath().ascii()
@@ -257,7 +256,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
         const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
         if (classInfo->allImplementedAbstracts.contains(concept)) {
           // check existence of the directory
-          QDir packageDir(m_outputDirectory.absPath() + "/castor/io");
+          QDir packageDir(getPolicy()->getOutputDirectory().absPath() + "/castor/io");
           if (! (packageDir.exists() || packageDir.mkdir(packageDir.absPath()) ) ) {
             std::cerr << "Cannot create the package folder "
                       << packageDir.absPath().ascii()

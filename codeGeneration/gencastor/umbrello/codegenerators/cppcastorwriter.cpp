@@ -89,7 +89,7 @@ QString CppCastorWriter::computeFileName(UMLClassifier* concept, QString ext) {
   
   // if a package name exists check the existence of the package directory
   if (!package.isEmpty()) {
-    QDir packageDir(m_outputDirectory.absPath() + package);
+    QDir packageDir(getPolicy()->getOutputDirectory().absPath() + package);
     if (! (packageDir.exists() || packageDir.mkdir(packageDir.absPath()) ) ) {
       KMessageBox::error(0, i18n("Cannot create the package folder:\n") +
                          packageDir.absPath() + i18n("\nPlease check the access rights"),

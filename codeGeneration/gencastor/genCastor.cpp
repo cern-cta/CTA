@@ -13,11 +13,13 @@
 #include <kcmdlineargs.h>
 #include <kconfig.h>
 #include "codegenerator.h"
+#include "codegenerationpolicy.h"
 #include "classifier.h"
 #include "umldoc.h"
 #include <iostream>
 
 static KCmdLineOptions options[] = {
+  { "o <dir>", I18N_NOOP("output directory"), 0 },
   { "+File", I18N_NOOP("file to open"), 0 },
   { "!+[classes]", I18N_NOOP("Classes to generate"), 0 },
   KCmdLineLastOption
@@ -43,6 +45,19 @@ int main(int argc, char *argv[]) {
     uml->openDocumentFile(args->url(0));
     CodeGenerator* gen = uml->getGenerator();
     if (gen) {
+      // retrieve policy
+      CodeGenerationPolicy *policy = gen->getPolicy();
+      // take headers from /etc/castor/gencastor
+      policy->setHeadingFileDir("/etc/castor/gencastor");
+      // generate code into the right directory
+      if (args->isSet("o")) {
+        QDir outputDir(args->getOption("o"));
+        if (!outputDir.exists()) {
+          outputDir.mkdir(outputDir.absPath());
+        }
+        policy->setOutputDirectory(QDir(args->getOption("o")));
+      }
+      // Now generate code
       if (1 == args->count()) {
         gen->writeCodeToFile();
       } else {

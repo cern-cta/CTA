@@ -25,12 +25,15 @@ LINKDEPS=-lfl -lkdeprint -lkio
 MACROS=-g -O0 -Wnon-virtual-dtor -Wno-long-long -Wundef -ansi -D_XOPEN_SOURCE=500 -D_BSD_SOURCE -Wcast-align -Wconversion -Wchar-subscripts -Wall -W -Wpointer-arith -Wwrite-strings -DNDEBUG -DNO_DEBUG -Wformat-security -Wmissing-format-attribute -fno-exceptions -fno-check-new -fno-common -DQT_CLEAN_NAMESPACE -DQT_NO_ASCII_CAST -DQT_NO_STL -DQT_NO_COMPAT -DQT_NO_TRANSLATION
 
 
-all : gencastor
+all : gencastor.bin
 
-install : gencastor
+install : gencastor.bin
 	@echo Installing gencastor
 	@install gencastor $(DESTDIR)/usr/bin
+	@install gencastor.bin $(DESTDIR)/usr/bin
 	@install gencastor.1 $(DESTDIR)/usr/share/man/man1
+	@install -D headers/heading.cpp $(DESTDIR)/etc/castor/gencastor/heading.cpp
+	@install -D headers/heading.h $(DESTDIR)/etc/castor/gencastor/heading.h
 
 %.lo :: %.cpp
 	@echo Compiling $<
@@ -43,15 +46,15 @@ $(DEV)/libcodegenerator.la : $(OWNGENOBJS)
 	@echo Linking libcodegenerator
 	@libtool $(LINKFLAGS) $(MACROS) -o libcodegenerator.la  -L/usr/X11R6/lib -L/usr/share/qt3/lib -L/usr/lib $(OWNGENOBJS)
 
-gencastor : genCastor.o $(MOCOBJS) $(DEV)/libcodegenerator.la
+gencastor.bin : genCastor.o $(MOCOBJS) $(DEV)/libcodegenerator.la
 	@echo Linking executable
-	@libtool --mode=link $(LINKFLAGS) -o gencastor $(OBJS) $(UMBRELLOLIBS) libcodegenerator.la genCastor.o $(LINKDEPS)
+	@libtool --mode=link $(LINKFLAGS) -o $@ $(OBJS) $(UMBRELLOLIBS) libcodegenerator.la genCastor.o $(LINKDEPS)
 # -all-static 
 
 genCastor.o : genCastor.cpp
 	@echo Compiling $<
-	@gcc -c $(INCLUDES) $(MACROS) -o genCastor.o genCastor.cpp
+	@gcc -c $(INCLUDES) $(MACROS) -o $@ $<
 
 clean :
 	@echo Cleaning
-	@-rm -rf genCastor.o gencastor $(OWNGENOBJS) $(OWNGENRAWOBJS) libcodegenerator.la  $(MOCOBJS) .libs umbrello/.libs umbrello/codegenerators/.libs
+	@-rm -rf genCastor.o gencastor.bin $(OWNGENOBJS) $(OWNGENRAWOBJS) libcodegenerator.la  $(MOCOBJS) .libs umbrello/.libs umbrello/codegenerators/.libs
