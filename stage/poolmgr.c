@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.178 2002/01/30 10:23:42 jdurand Exp $
+ * $Id: poolmgr.c,v 1.179 2002/02/05 15:24:37 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.178 $ $Date: 2002/01/30 10:23:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.179 $ $Date: 2002/02/05 15:24:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -83,6 +83,7 @@ extern struct stgpath_entry *stps;	/* start of stage path catalog */
 extern int maxfds;
 extern int reqid;
 extern int stglogit _PROTO(());
+extern char *stglogflags _PROTO((char *, char *, u_signed64));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int, int, ...));
 #else
@@ -1398,6 +1399,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
       sendrep (rpfd, MSG_OUT, "silent                   %d\n", wqp->silent);
       sendrep (rpfd, MSG_OUT, "use_subreqid             %d\n", wqp->use_subreqid);
       sendrep (rpfd, MSG_OUT, "save_nbsubreqid          %d\n", wqp->save_nbsubreqid);
+      sendrep (rpfd, MSG_OUT, "(API) flags              %s\n", stglogflags(NULL,NULL,(u_signed64) wqp->flags));
       if (wqp->save_subreqid != NULL) {
         for (i = 0, wfp = wqp->wf; i < wqp->save_nbsubreqid; i++, wfp++) {
           sendrep (rpfd, MSG_OUT, "\tsave_subreqid[%d] = %d\n", i, wqp->save_subreqid[i]);
@@ -3547,7 +3549,7 @@ int migpoolfiles(pool_p)
           } else {
             nb_in_this_request = tppool_vs_stcp[j].nstcp - nb_done_request;
           }
-          if ((rc = stagewrt_hsm((u_signed64) STAGE_SILENT|STAGE_NOHSMCREAT|STAGE_REQID, /* Flags */
+          if ((rc = stagewrt_hsm((u_signed64) STAGE_SILENT|STAGE_NOHSMCREAT|STAGE_REQID|STAGE_HSM_ENOENT_OK, /* Flags */
                                  0,                            /* open flags - disabled */
                                  localhost,                    /* Hostname */
                                  NULL,                         /* Pooluser */
