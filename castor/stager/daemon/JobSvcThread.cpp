@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.6 2004/12/08 14:44:30 jdurand Exp $
+ * $Id: JobSvcThread.cpp,v 1.7 2004/12/08 14:47:46 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.6 $ $Date: 2004/12/08 14:44:30 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.7 $ $Date: 2004/12/08 14:47:46 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -393,6 +393,9 @@ namespace castor {
         /* ---------------------------------- */
         STAGER_LOG_DEBUG(NULL, "Invoking prepareForMigration");
         stgSvc->prepareForMigration(subreq, mcReq->fileSize());
+
+        // Cleaning
+        delete obj;
 
       } catch (castor::exception::Exception e) {
         serrno = e.code();
