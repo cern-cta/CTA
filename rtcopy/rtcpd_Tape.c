@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.1 $ $Date: 1999/11/29 11:22:04 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.2 $ $Date: 1999/12/01 15:32:10 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -46,11 +46,14 @@ extern char *geterr();
 
 #define TP_STATUS(X) (proc_stat.tapeIOstatus.current_activity = (X))
 #define TP_SIZE(X)   (proc_stat.tapeIOstatus.nbbytes += (u_signed64)(X))
+#define DEBUG_PRINT(X) {if ( debug == TRUE ) rtcp_log X ;}
 
 typedef struct thread_arg {
     SOCKET client_socket;
     tape_list_t *tape;
 } thread_arg_t;
+
+extern int Debug;
 
 extern int nb_bufs;
 
@@ -77,6 +80,8 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                         file_list_t *file) {
     int nb_bytes, rc, i, j, last_sz, blksiz, lrecl;
     int end_of_tpfile, buf_done;
+    register int Uformat;
+    register int debug = Debug;
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
 
@@ -94,7 +99,10 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
 
     blksiz = filereq->blocksize;
     lrecl = filereq->recordlength;
-    if ( lrecl <= 0 ) lrecl = blksiz;
+    Uformat = (*filereq->recfm == 'U' ? TRUE : FALSE);
+    if ( (lrecl <= 0) && (Uformat == FALSE) ) lrecl = blksiz;
+    else lrecl = 0;
+
     /*
      * Write loop to break out of
      */
@@ -131,7 +139,7 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                 return(-1);
             }
         }
-        rtcp_log(LOG_DEBUG,"MemoryToTape() buffer %d full\n",i);
+        DEBUG_PRINT((LOG_DEBUG,"MemoryToTape() buffer %d full\n",i));
 
         /*
          * Verify that actual buffer size matches block size
@@ -147,31 +155,44 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
          */
         end_of_tpfile = databufs[i]->end_of_tpfile;
         if ( end_of_tpfile == TRUE ) 
-            rtcp_log(LOG_DEBUG,"MemoryToTape() end of tape file in buffer %d\n",i);
+            DEBUG_PRINT((LOG_DEBUG,"MemoryToTape() end of tape file in buffer %d\n",i));
         /*
          * Copy the data to tape
          */
         last_sz = 0;
-        if ( lrecl > 0 && filereq->maxnbrec > 0 ) {
+        if ( filereq->maxnbrec > 0 ) {
             /*
              * Check if we reached the number of records limit
              * and, if so, reduce the data_length accordingly.
              */
-            if ( filereq->nbrecs + databufs[i]->data_length/lrecl >
-                filereq->maxnbrec ) {
-                databufs[i]->data_length = (int)(filereq->maxnbrec -
-                    filereq->nbrecs) * lrecl;
-                rtcpd_SetReqStatus(NULL,file,EFBIG,RTCP_OK | RTCP_LIMBYSZ);
-           }
+            if ( Uformat == FALSE ) {
+                if ( filereq->nbrecs + databufs[i]->data_length/lrecl >
+                    filereq->maxnbrec ) {
+                    databufs[i]->data_length = (int)(filereq->maxnbrec -
+                        filereq->nbrecs) * lrecl;
+                    rtcpd_SetReqStatus(NULL,file,EFBIG,RTCP_OK | RTCP_LIMBYSZ);
+                }
+            } else {
+                if ( filereq->nbrecs + databufs[i]->nbrecs > 
+                    filereq->maxnbrec ) {
+                    databufs[i]->nbrecs = (int)(filereq->maxnbrec -
+                        filereq->nbrecs);
+                    rtcpd_SetReqStatus(NULL,file,EFBIG,RTCP_OK | RTCP_LIMBYSZ);
+                }
+            }
         }
-        rtcp_log(LOG_DEBUG,"MemoryToTape() write %d bytes to tape\n",
-            databufs[i]->data_length);
+        DEBUG_PRINT((LOG_DEBUG,"MemoryToTape() write %d bytes to tape\n",
+            databufs[i]->data_length));
         for (j=*firstblk; j*blksiz < databufs[i]->data_length; j++) {
             /*
              * Last block of file may be partial
              */
-            nb_bytes = databufs[i]->data_length - j*blksiz;
-            if ( nb_bytes > blksiz ) nb_bytes = blksiz;
+            if ( Uformat == FALSE ) {
+                nb_bytes = databufs[i]->data_length - j*blksiz;
+                if ( nb_bytes > blksiz ) nb_bytes = blksiz;
+            } else {
+                nb_bytes = databufs[i]->lrecl_table[j];
+            }
 
             /*
              * >>>>>>>>>>> write to tape <<<<<<<<<<<<<
@@ -199,16 +220,12 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
             }
             last_sz += rc;
             file->tapebytes_sofar += rc;
+            filereq->nbrecs++;
             TP_SIZE(rc);
         } /* End of for (j=...) */
-        rtcp_log(LOG_DEBUG,"MemoryToTape() wrote %d bytes to tape\n",
-            last_sz);
+        DEBUG_PRINT((LOG_DEBUG,"MemoryToTape() wrote %d bytes to tape\n",
+            last_sz));
         databufs[i]->data_length -= last_sz;
-
-        if ( lrecl > 0 ) {
-            filereq->nbrecs += last_sz / lrecl;
-            if ( (last_sz % lrecl) != 0 ) filereq->nbrecs++;
-        }
 
         /*
          * Reset the buffer semaphore only if the
@@ -220,13 +237,14 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
              */
             last_block_done = databufs[i]->last_buffer;
             if ( last_block_done != 0 )
-                rtcp_log(LOG_DEBUG,"MemoryToTape() last block done = %d\n",
-                    last_block_done);
+                DEBUG_PRINT((LOG_DEBUG,"MemoryToTape() last block done = %d\n",
+                    last_block_done));
             /*
              * Reset all switches so that the buffer can be reused
              */
             databufs[i]->bufendp = 0;
             databufs[i]->data_length = 0;
+            databufs[i]->nbrecs = 0;
             databufs[i]->end_of_tpfile = FALSE;
             databufs[i]->last_buffer = FALSE;
             databufs[i]->flag = BUFFER_EMPTY;
@@ -321,6 +339,8 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
     int nb_bytes, rc, i, j, last_sz, blksiz, current_bufsz;
     int lrecl, end_of_tpfile, break_and_return, severity;
     int nb_skipped_blks = 0;
+    register int Uformat;
+    register int debug = Debug;
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
 
@@ -348,7 +368,9 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
     file->tapebytes_sofar = filereq->startsize;
     blksiz = filereq->blocksize;
     lrecl = filereq->recordlength;
-    if ( lrecl <= 0 ) lrecl = blksiz;
+    Uformat = (*filereq->recfm == 'U' ? TRUE : FALSE);
+    if ( (lrecl <= 0) && (Uformat == FALSE) ) lrecl = blksiz;
+    else lrecl = 0;
 
     /*
      * Calculate new actual buffer length
@@ -385,8 +407,8 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
          * Wait until it is empty.
          */
         while (databufs[i]->flag == BUFFER_FULL) {
-            rtcp_log(LOG_DEBUG,"TapeToMemory() wait on buffer[%d]->flag=%d\n",
-                i,databufs[i]->flag);
+            DEBUG_PRINT((LOG_DEBUG,"TapeToMemory() wait on buffer[%d]->flag=%d\n",
+                i,databufs[i]->flag));
             TP_STATUS(RTCP_PS_WAITCOND);
             rc = Cthread_cond_wait_ext(databufs[i]->lock);
             TP_STATUS(RTCP_PS_NOBLOCKING);
@@ -401,7 +423,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                 return(-1);
             }
         }
-        rtcp_log(LOG_DEBUG,"TapeToMemory() buffer %d empty\n",i);
+        DEBUG_PRINT((LOG_DEBUG,"TapeToMemory() buffer %d empty\n",i));
         if ( end_of_tpfile == FALSE ) {
             /*
              * Set the actual buffer size to match current block size
@@ -416,6 +438,12 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
              * Copy the data from tape
              */
             last_sz = 0;
+            databufs[i]->nbrecs = 0;
+            /*
+             * If U-format, re-allocate the lrecl_table[] if needed.
+             */
+            if ( Uformat == TRUE ) rc = rtcpd_AdmUformatInfo(file,i);
+
             for (j=*firstblk; j*blksiz < databufs[i]->length; j++) {
                 /*
                  * Max size may have been exceeded even before we
@@ -483,6 +511,11 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                 }
                 last_sz += rc;
                 file->tapebytes_sofar += rc;
+                filereq->nbrecs++;
+                if ( Uformat == TRUE ) {
+                    databufs[i]->lrecl_table[j] = rc;
+                    databufs[i]->nbrecs++;
+                }
                 TP_SIZE(rc);
             } /* End of for (j=...) */
             /*  
@@ -492,25 +525,30 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
              */
             databufs[i]->data_length += last_sz;
             databufs[i]->bufendp = last_sz;
-            if ( lrecl > 0 ) {
-                filereq->nbrecs += last_sz / lrecl;
-                if ( (last_sz % lrecl) != 0 ) filereq->nbrecs++;
-                /*
-                 * Check if we already reached max number of
-                 * records. If so we substract buffer sizes accordingly
-                 * and signal end of file with this buffer
-                 */
-                if ( (filereq->maxnbrec > 0) &&
-                     (filereq->nbrecs > filereq->maxnbrec) ) {
+
+            /*
+             * Check if we already reached max number of
+             * records. If so we substract buffer sizes accordingly
+             * and signal end of file with this buffer
+             */
+            if ( (filereq->maxnbrec > 0) &&
+                 (filereq->nbrecs > filereq->maxnbrec) ) {
+                if ( Uformat == FALSE && lrecl > 0 ) {
                     databufs[i]->data_length = databufs[i]->data_length -
                         (int)(filereq->nbrecs - filereq->maxnbrec)*lrecl;
                     file->tapebytes_sofar -= 
                         (filereq->nbrecs - filereq->maxnbrec)*lrecl;
-                    filereq->nbrecs = filereq->maxnbrec;
-                    end_of_tpfile = TRUE;
-                    severity = RTCP_OK | RTCP_LIMBYSZ;
-                    rtcpd_SetReqStatus(NULL,file,EFBIG,severity);
+                } else if ( Uformat == TRUE ) {
+                    databufs[i]->nbrecs = (int)(filereq->nbrecs - filereq->maxnbrec);
+                    databufs[i]->data_length = 0;
+                    for (j=0;j<databufs[i]->nbrecs;j++)
+                        databufs[i]->data_length +=databufs[i]->lrecl_table[j];
+                    file->tapebytes_sofar -= databufs[i]->data_length;
                 }
+                filereq->nbrecs = filereq->maxnbrec;
+                end_of_tpfile = TRUE;
+                severity = RTCP_OK | RTCP_LIMBYSZ;
+                rtcpd_SetReqStatus(NULL,file,EFBIG,severity);
             }
             /*
              * Check if maxsize has been reached for this file
@@ -612,8 +650,8 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
              break_and_return = TRUE;
         }
         if ( databufs[i]->flag == BUFFER_FULL ) 
-            rtcp_log(LOG_DEBUG,"TapeToMemory() flag buffer %d full\n",i);
-        rc = Cthread_cond_broadcast_ext(databufs[i]->lock);
+            DEBUG_PRINT((LOG_DEBUG,"TapeToMemory() flag buffer %d full\n",i);
+        rc = Cthread_cond_broadcast_ext(databufs[i]->lock));
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"TapeToMemory() Cthread_cond_broadcast_ext(): %s\n",
                 sstrerror(serrno));
@@ -683,7 +721,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
             rtcp_log(LOG_ERR,"tapeIOthread() %s\n",Z); \
             rtcpd_SetProcError(RTCP_FAILED); \
         }\
-        if ( tape_fd != -1 ) tcloserr(tape_fd,X,Y); \
+        if ( tape_fd != -1 ) tcloserr(tape_fd,nexttape,nextfile); \
         if ( (rtcpd_CheckProcError() & RTCP_LOCAL_RETRY) == 0 ) \
             (void)rtcpd_Release((X),NULL); \
         rtcp_CloseConnection(&client_socket); \
@@ -731,6 +769,17 @@ void *tapeIOthread(void *arg) {
         if ( rc == -1 ) {
             CHECK_PROC_ERR(tape,NULL,"rtcpd_CtapeInit() error");
         }
+#if defined(CTAPE_DUMMIES)
+        /*
+         * If we run with dummy Ctape we need to assign the
+         * drive here
+         */
+        rc = rtcpd_Assign(tape);
+        if ( rc == -1 ) {
+            (void)rtcpd_Deassign(-1,&tape->tapereq);
+        }
+        CHECK_PROC_ERR(tape,NULL,"rtcpd_Reserv() error");
+#endif /* CTAPE_DUMMIES */
         /*
          * Reserve the unit (client should have made sure that all
          * requested volumes are in same dgn).

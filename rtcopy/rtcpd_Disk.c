@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.1 $ $Date: 1999/11/29 11:21:55 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.2 $ $Date: 1999/12/01 15:32:07 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -52,7 +52,9 @@ extern char *geterr();
 
 #define DK_STATUS(X) (diskIOstatus->current_activity = (X))
 #define DK_SIZE(X)   (diskIOstatus->nbbytes = (X))
+#define DEBUG_PRINT(X) {if ( debug == TRUE ) rtcp_log X ;}
 
+extern char *getifnam _PROTO((SOCKET));
 
 typedef struct thread_arg {
     SOCKET client_socket;
@@ -66,6 +68,8 @@ typedef struct thread_arg {
     file_list_t *file;
 } thread_arg_t;
 
+extern int Debug;
+
 extern int nb_bufs;
 
 extern int bufsz;
@@ -77,6 +81,8 @@ extern processing_status_t proc_stat;
 extern buffer_table_t **databufs;
 
 extern rtcpClientInfo_t *client;
+
+static int FortranUnitTable[NB_FORTRAN_UNITS];  /* Table of Fortran units */
 
 int success = 0;
 int failure = -1;
@@ -110,14 +116,291 @@ static int DiskIOstarted() {
     return(0);
 }
 
+/*
+ * Disk I/O wrappers
+ */
+static int GetNewFortranUnit(int pool_index, file_list_t *file) {
+    rtcpFileRequest_t *filereq;
+    int AssignedUnit, i, rc;
+    diskIOstatus_t *diskIOstatus = NULL;
 
+    if ( file == NULL ) return(-1);
+    diskIOstatus = &proc_stat.diskIOstatus[pool_index];
+    filereq = &file->filereq;
+    /*
+     * Lock the Fortran Unit table and assign a new number.
+     * Note that we use the proc_cntl lock in order to not
+     * have too many differnt locks. The overhead should be
+     * minimal since this routine is normally not called very 
+     * frequently
+     */
+    DK_STATUS(RTCP_PS_WAITMTX);
+    rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+    DK_STATUS(RTCP_PS_NOBLOCKING);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"GetNewFortranUnit(): Cthread_mutex_lock_ext(proc_cntl): %s\n",
+            sstrerror(serrno));
+        rtcpd_SetProcError(RTCP_FAILED);
+        return(-1);
+    }
+    AssignedUnit = -1;
+    for (i=0;i<NB_FORTRAN_UNITS;i++) {
+        if ( FortranUnitTable[i] == FALSE ) {
+            /*
+             * Unit not is use. Grab it.
+             */
+            AssignedUnit = i;
+            FortranUnitTable[i] = TRUE;
+            break;
+        }
+    }
+    rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"GetNewFortranUnit(): Cthread_mutex_unlock_ext(proc_cntl): %s\n",
+            sstrerror(serrno));
+        rtcpd_SetProcError(RTCP_FAILED);
+        return(-1);
+    }
 
+    if ( AssignedUnit == -1 ) {
+        file->FortranUnit = AssignedUnit;
+        return(-1);
+    } else {
+        file->FortranUnit = FORTRAN_UNIT_OFFSET + AssignedUnit;
+        return(0);
+    }
+}
+
+static int ReturnFortranUnit(int pool_index, file_list_t *file) {
+    rtcpFileRequest_t *filereq;
+    int rc;
+    diskIOstatus_t *diskIOstatus = NULL;
+
+    if ( file == NULL ) return(-1);
+    diskIOstatus = &proc_stat.diskIOstatus[pool_index];
+    filereq = &file->filereq;
+    if ( !VALID_FORTRAN_UNIT(file->FortranUnit) ) return(0);
+    /*
+     * Lock the Fortran Unit table and return the unit.
+     * Note that we use the proc_cntl lock in order to not
+     * have too many differnt locks. The overhead should be
+     * minimal since this routine is normally not called very 
+     * frequently
+     */
+    DK_STATUS(RTCP_PS_WAITMTX);
+    rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+    DK_STATUS(RTCP_PS_NOBLOCKING);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"ReturnFortranUnit(): Cthread_mutex_lock_ext(proc_cntl): %s\n",
+            sstrerror(serrno));
+        rtcpd_SetProcError(RTCP_FAILED);
+        return(-1);
+    }
+    FortranUnitTable[file->FortranUnit] = FALSE;
+    rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"ReturnFortranUnit(): Cthread_mutex_unlock_ext(proc_cntl): %s\n",
+            sstrerror(serrno));
+        rtcpd_SetProcError(RTCP_FAILED);
+        return(-1);
+    }
+    file->FortranUnit = -1;
+    return(0);
+}
+    
+
+static int DiskFileOpen(int pool_index, 
+                        tape_list_t *tape,
+                        file_list_t *file) {
+    rtcpTapeRequest_t *tapereq;
+    rtcpFileRequest_t *filereq;
+    int rc, irc, save_serrno, disk_fd, flags, use_rfioV3;
+    diskIOstatus_t *diskIOstatus = NULL;
+    char *ifce;
+    SOCKET s;
+    char Uformat_flags[8];
+    register int debug = Debug;
+#if defined(_WIN32)
+    int binmode = O_BINARY;
+#else /* _WIN32 */
+    int binmode = 0;
+#endif /* _WIN32 */
+
+    rc = irc = 0;
+    disk_fd = -1;
+    if ( tape == NULL || file == NULL ) return(-1);
+
+    diskIOstatus = &proc_stat.diskIOstatus[pool_index];
+    tapereq = &tape->tapereq;
+    filereq = &file->filereq;
+
+    /*
+     * Open the disk file
+     */
+    if ( *filereq->recfm == 'F' ) {
+        /*
+         * Normal Formatted file option. 
+         * Open the disk file
+         */
+        flags = O_RDONLY | binmode;
+        if ( tapereq->mode == WRITE_DISABLE ) {
+            if ( (filereq->concat & (CONCAT | CONCAT_TO_EOD)) ) {
+                /*
+                 * Appending to previous disk file. 
+                 */
+                flags = O_WRONLY | O_APPEND | binmode;
+            } else {
+                /*
+                 * New disk file
+                 */
+                flags = O_CREAT | O_WRONLY | O_TRUNC | binmode;
+            }
+        }
+        /* Activate new transfer mode for source file */
+        use_rfioV3 = RFIO_STREAM;
+        rfiosetopt(RFIO_READOPT,&use_rfioV3,4); 
+        
+        serrno = 0;
+        rfio_errno = 0;
+        DEBUG_PRINT((LOG_DEBUG,"DiskFileOpen() open(%s,0x%x\n",filereq->file_path,
+            flags));
+        DK_STATUS(RTCP_PS_OPEN);
+        rc = rfio_open(filereq->file_path,flags,0666);
+        DK_STATUS(RTCP_PS_NOBLOCKING);
+        if ( rc == -1 ) {
+            save_serrno = rfio_errno;
+            rtcp_log(LOG_ERR,
+                "DiskFileOpen() rfio_open(%s,0x%x): errno = %d, serrno = %d, rfio_errno = %d\n",
+                filereq->file_path,flags,errno,serrno,rfio_errno);
+        } else {
+            disk_fd = rc;
+            rc = 0;
+        }
+        DEBUG_PRINT((LOG_DEBUG,"DiskFileOpen() rfio_open() returned fd=%d\n",
+            disk_fd));
+    } else if ( *filereq->recfm == 'U' ) {
+        rc = GetNewFortranUnit(pool_index,file);
+        if ( rc == -1 ) {
+            rtcp_log(LOG_ERR,"DiskFileOpen() GetNewFortranUnit() failed\n");
+            serrno = SEINTERNAL;
+            if ( tapereq->mode == WRITE_ENABLE ) 
+                rtcpd_AppendClientMsg(NULL, file,RT110,"CPDSKTP",
+                                      sstrerror(serrno));
+            else
+                rtcpd_AppendClientMsg(NULL, file,RT110,"CPTPDSK",
+                                      sstrerror(serrno));
+            return(-1);
+        }
+        strcpy(Uformat_flags,"US");
+        if ( tapereq->mode == WRITE_DISABLE ) {
+            if ( (filereq->concat & (CONCAT | CONCAT_TO_EOD)) ) {
+                /*
+                 * Appending to previous disk file. 
+                 */
+                strcat(Uformat_flags,"EA");
+            } else {
+                /*
+                 * New disk file
+                 */
+                strcat(Uformat_flags,"E");
+            }
+        }
+        DK_STATUS(RTCP_PS_OPEN);
+        rc = rfio_xyopen(filereq->file_path," ",file->FortranUnit,0,
+                         Uformat_flags,&irc);
+        DK_STATUS(RTCP_PS_NOBLOCKING);
+        if ( rc != 0 || irc != 0 ) {
+            save_serrno = (rc != 0 ? rc : irc);
+            rtcp_log(LOG_ERR,
+                "DiskFileOpen() rfio_open(%s,%d): errno = %d, serrno = %d, rfio_errno = %d\n",
+                filereq->file_path,Uformat_flags,errno,serrno,rfio_errno);
+        } else {
+            disk_fd = file->FortranUnit;
+        }
+    } else {
+        rtcp_log(LOG_ERR,"DiskFileOpen() unknown recfm %s\n",
+            filereq->recfm);
+        serrno = EINVAL;
+        return(-1);
+    }
+    if ( rc != 0 || irc != 0 ) {
+        if ( tapereq->mode == WRITE_ENABLE ) 
+            rtcpd_AppendClientMsg(NULL, file,RT110,"CPDSKTP",
+                                  rfio_serror());
+        else
+            rtcpd_AppendClientMsg(NULL, file,RT110,"CPTPDSK",
+                                  rfio_serror());
+        switch (save_serrno) {
+        case ENOENT:
+        case EISDIR:
+        case EPERM:
+        case EACCES:
+            filereq->err.errorcode = save_serrno;
+            rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_USERR | RTCP_FAILED);
+            rtcpd_SetProcError(RTCP_USERR | RTCP_FAILED);
+            break;
+        default:
+            rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_UNERR | RTCP_FAILED);
+            if (errno = EBADF && rfio_errno == 0 && serrno == 0)
+                rtcpd_SetProcError(RTCP_RESELECT_SERV | RTCP_FAILED | RTCP_UNERR);
+            else
+                rtcpd_SetProcError(RTCP_FAILED | RTCP_UNERR);
+            break;
+        }
+        return(-1);
+    }
+    if ( disk_fd != -1 ) {
+        /*
+         * Note: this works as long as rfio_open() returns a socket.
+         * If we implement internal file descriptor tables in RFIO
+         * client we must change this to call a routine to
+         * return the socket.
+         */
+        s = (SOCKET)disk_fd;
+        if ( *filereq->recfm == 'U' ) s = (SOCKET)rfio_xysock(disk_fd);
+        ifce = getifnam(s);
+        if ( ifce == NULL )
+            strcpy(filereq->ifce,"???");
+        else
+            strcpy(filereq->ifce,ifce);
+    }
+
+    return(disk_fd);
+}
+
+static int DiskFileClose(int disk_fd,
+                         int pool_index,
+                         tape_list_t *tape,
+                         file_list_t *file) {
+    rtcpFileRequest_t *filereq;
+    int rc, irc;
+    diskIOstatus_t *diskIOstatus = NULL;
+
+    if ( file == NULL ) return(-1);
+    diskIOstatus = &proc_stat.diskIOstatus[pool_index];
+    filereq = &file->filereq;
+
+    if ( *filereq->recfm == 'F' ) {
+        rc = rfio_close(disk_fd);
+    } else if ( *filereq->recfm == 'U' ) {
+        rc = rfio_xyclose(file->FortranUnit," ",&irc);
+        (void)ReturnFortranUnit(pool_index,file);
+    }
+    return(rc);
+}
+
+/*
+ * Copy routines
+ */
 static int MemoryToDisk(int disk_fd, int pool_index,
                         int *indxp, int *offset,
                         int *last_file, int *end_of_tpfile,
                         tape_list_t *tape,
                         file_list_t *file) {
-    int rc, i, blksiz, lrecl, save_serrno, buf_done, nb_bytes;
+    int rc, irc, status, i, j, blksiz, lrecl, save_serrno;
+    int buf_done, nb_bytes;
+    register int Uformat;
+    register int debug = Debug;
     u_signed64 totsz;
     diskIOstatus_t *diskIOstatus = NULL;
     char *bufp;
@@ -136,6 +419,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
     diskIOstatus = &proc_stat.diskIOstatus[pool_index];
     diskIOstatus->disk_fseq = filereq->disk_fseq;
     blksiz = lrecl = -1;
+    Uformat = (*filereq->recfm == 'U' ? TRUE : FALSE);
 
     /*
      * Main write loop. End with EOF on tape file or error condition
@@ -162,8 +446,8 @@ static int MemoryToDisk(int disk_fd, int pool_index,
          * Wait until it is full
          */
         while ( databufs[i]->flag == BUFFER_EMPTY ) {
-            rtcp_log(LOG_DEBUG,"MemoryToDisk() wait on buffer[%d]->flag=%d\n",
-                i,databufs[i]->flag);
+            DEBUG_PRINT((LOG_DEBUG,"MemoryToDisk() wait on buffer[%d]->flag=%d\n",
+                    i,databufs[i]->flag));
             DK_STATUS(RTCP_PS_WAITCOND);
             rc = Cthread_cond_wait_ext(databufs[i]->lock);
             DK_STATUS(RTCP_PS_NOBLOCKING);
@@ -188,11 +472,12 @@ static int MemoryToDisk(int disk_fd, int pool_index,
             if ( blksiz < 0 ) {
                 blksiz = filereq->blocksize;
                 lrecl = filereq->recordlength;
-                if ( lrecl <= 0 ) lrecl = blksiz;
+                if ( (lrecl <= 0) && (Uformat == FALSE) ) lrecl = blksiz;
+                else lrecl = 0;
                 filereq->TStartTransferDisk = (int)time(NULL);
             }
         }
-        rtcp_log(LOG_DEBUG,"MemoryToDisk() buffer %d full\n",i);
+        DEBUG_PRINT((LOG_DEBUG,"MemoryToDisk() buffer %d full\n",i));
         /*
          * Verify that actual buffer size matches block size
          */
@@ -216,7 +501,6 @@ static int MemoryToDisk(int disk_fd, int pool_index,
          * begin with a new buffer.
          */
         if ( databufs[i]->data_length > 0 && save_serrno != ENOSPC ) {
-            bufp = databufs[i]->buffer;
             nb_bytes = databufs[i]->data_length;
             /*
              * Check that the total size does not exceed maxsize specified
@@ -232,10 +516,31 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                 /*
                  * >>>>>>>>>>> write to disk <<<<<<<<<<<<<
                  */
-                DK_STATUS(RTCP_PS_WRITE);
-                rc = rfio_write(disk_fd,bufp,nb_bytes);
-                DK_STATUS(RTCP_PS_NOBLOCKING);
-                save_serrno = rfio_errno;
+                if ( Uformat == FALSE ) {
+                    bufp = databufs[i]->buffer;
+                    DK_STATUS(RTCP_PS_WRITE);
+                    rc = rfio_write(disk_fd,bufp,nb_bytes);
+                    DK_STATUS(RTCP_PS_NOBLOCKING);
+                    save_serrno = rfio_errno;
+                } else {
+                    rc = 0;
+                    for (j=0; j*blksiz < nb_bytes; j++) {
+                        lrecl = databufs[i]->lrecl_table[j];
+                        bufp = databufs[i]->buffer + j*blksiz;
+                        DK_STATUS(RTCP_PS_READ);
+                        status = rfio_xywrite(file->FortranUnit,bufp,0,
+                                         lrecl," ",&irc);
+                        DK_STATUS(RTCP_PS_NOBLOCKING);
+                        if ( status != 0 || irc != 0 ) {
+                            if ( status == ENOSPC || irc == ENOSPC )
+                                save_serrno = ENOSPC;
+                            else save_serrno = rfio_errno;
+                            rc = -1;
+                            break;
+                        } else rc += lrecl;
+                    }
+                    lrecl = 0;
+                }
                 if ( rc != nb_bytes ) {
                     rtcp_log(LOG_ERR,"MemoryToDisk() rfio_write(): %s\n",
                         rfio_serror());
@@ -276,6 +581,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
         if ( databufs[i]->data_length == 0 ) {
             databufs[i]->bufendp = 0;
             databufs[i]->data_length = 0;
+            databufs[i]->nbrecs = 0;
             databufs[i]->end_of_tpfile = FALSE;
             databufs[i]->last_buffer = FALSE;
             databufs[i]->flag = BUFFER_EMPTY;
@@ -298,23 +604,21 @@ static int MemoryToDisk(int disk_fd, int pool_index,
             return(-1);
         }
 
-        if ( *end_of_tpfile == TRUE ) {
+        if ( *end_of_tpfile == TRUE || save_serrno == ENOSPC ) {
             /*
              * End of tape file reached. Close disk file and tell the
              * main control thread that we exit
              */
             if ( save_serrno == ENOSPC ) {
-                (void)rfio_close(disk_fd);
+                (void)DiskFileClose(disk_fd,pool_index,tape,file);
                 serrno = save_serrno;
             } else {
-                rtcp_log(LOG_DEBUG,"MemoryToDisk() close disk file fd=%d\n",
-                    disk_fd);
-                DK_STATUS(RTCP_PS_CLOSE);
-                rc = rfio_close(disk_fd);
-                DK_STATUS(RTCP_PS_NOBLOCKING);
+                DEBUG_PRINT((LOG_DEBUG,"MemoryToDisk() close disk file fd=%d\n",
+                    disk_fd));
+                rc = DiskFileClose(disk_fd,pool_index,tape,file);
                 save_serrno = rfio_errno;
                 if ( rc == -1 ) {
-                    rtcp_log(LOG_ERR,"MemoryToDisk() rfio_close(%d): %s\n",
+                    rtcp_log(LOG_ERR,"MemoryToDisk() DiskFileClose(%d): %s\n",
                         disk_fd,rfio_serror());
                     /*
                      * In case of ENOSPC we will have to return
@@ -348,8 +652,10 @@ static int DiskToMemory(int disk_fd, int pool_index,
                         int *last_file, int *end_of_tpfile,
                         tape_list_t *tape,
                         file_list_t *file) {
-    int rc, i, blksiz, lrecl, end_of_dkfile, current_bufsz;
-    int nb_bytes, SendStartSignal;
+    int rc, irc, i, j, blksiz, lrecl, end_of_dkfile, current_bufsz;
+    int status, nb_bytes, SendStartSignal, save_serrno;
+    register int Uformat;
+    register int debug = Debug;
     u_signed64 totsz;
     diskIOstatus_t *diskIOstatus = NULL;
     char *bufp;
@@ -368,7 +674,9 @@ static int DiskToMemory(int disk_fd, int pool_index,
 
     blksiz = filereq->blocksize;
     lrecl = filereq->recordlength;
-    if ( lrecl <= 0 ) lrecl = blksiz;
+    Uformat = (*filereq->recfm == 'U' ? TRUE : FALSE);
+    if ( (lrecl <= 0) && (Uformat == FALSE) ) lrecl = blksiz;
+    else lrecl = 0;
     
     /*
      * Calculate new actual buffer length
@@ -416,7 +724,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
                 return(-1);
             }
         }
-        rtcp_log(LOG_DEBUG,"DiskToMemory() buffer %d empty\n",i);
+        DEBUG_PRINT((LOG_DEBUG,"DiskToMemory() buffer %d empty\n",i));
         if ( SendStartSignal == TRUE ) {
             /*
              * Signal to StartDiskIO() that we are starting to fill the
@@ -439,7 +747,6 @@ static int DiskToMemory(int disk_fd, int pool_index,
         /*
          * Copy the data from disk to memory
          */
-        bufp = databufs[i]->buffer + *offset;
         nb_bytes = databufs[i]->length-*offset;
         /*
          * Check that the total size does not exceed maxsize specified
@@ -451,34 +758,71 @@ static int DiskToMemory(int disk_fd, int pool_index,
             end_of_dkfile = TRUE;
             rtcpd_SetReqStatus(NULL,file,EFBIG,RTCP_OK | RTCP_LIMBYSZ);
         }
+        /*
+         * If U-format, re-allocate the lrecl_table[] if needed.
+         */
+        if ( Uformat == TRUE ) rc = rtcpd_AdmUformatInfo(file,i);
 
         /*
          * >>>>>>>>>>> read from disk <<<<<<<<<<<<<
          */
-        rtcp_log(LOG_DEBUG,"DiskToMemory() read %d bytes from %s\n",
-            nb_bytes,filereq->file_path);
-        DK_STATUS(RTCP_PS_READ);
-        rc = rfio_read(disk_fd,bufp,nb_bytes);
-        DK_STATUS(RTCP_PS_NOBLOCKING);
+        DEBUG_PRINT((LOG_DEBUG,"DiskToMemory() read %d bytes from %s\n",
+            nb_bytes,filereq->file_path));
+        if ( Uformat == FALSE ) {
+            bufp = databufs[i]->buffer + *offset;
+            DK_STATUS(RTCP_PS_READ);
+            rc = rfio_read(disk_fd,bufp,nb_bytes);
+            DK_STATUS(RTCP_PS_NOBLOCKING);
+            save_serrno = rfio_errno;
+        } else {
+            rc = irc = 0;
+            databufs[i]->nbrecs = 0;
+            for (j=0; j*blksiz < nb_bytes; j++) {
+                bufp = databufs[i]->buffer + j*blksiz;
+                DK_STATUS(RTCP_PS_READ);
+                status = rfio_xyread(file->FortranUnit,bufp,0,blksiz,
+                                     &lrecl,"U",&irc);
+                DK_STATUS(RTCP_PS_NOBLOCKING);
+                save_serrno = rfio_errno;
+                if ( irc == 2 ) break;
+                else if ( irc == SEBADFFORM ) {
+                    (void)rtcpd_AppendClientMsg(NULL,file,RT106,"CPDSKTP");
+                    rc = -1;
+                    break;
+                } else if ( irc == -1 && status == -1 ) {
+                    (void)rtcpd_AppendClientMsg(NULL,file,RT123,"CPDSKTP",blksiz);
+                    break;
+                } else if ( irc !=0 || status != 0 ) {
+                    rc = -1;
+                    break;
+                }
+                databufs[i]->lrecl_table[j] = lrecl;
+                databufs[i]->nbrecs++;
+                rc += lrecl;
+            }
+            lrecl = 0;
+        }
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"DiskToMemory() rfio_read(): %s\n",
                 rfio_serror());
             rtcpd_AppendClientMsg(NULL, file,RT112,"CPDSKTP",
                 rfio_serror());
-            rtcpd_SetReqStatus(NULL,file,rfio_errno,RTCP_FAILED);
+            rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED);
             (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
             (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
             return(-1);
         }
-        rtcp_log(LOG_DEBUG,"DiskToMemory() got %d bytes from %s\n",
-            rc,filereq->file_path);
+        DEBUG_PRINT((LOG_DEBUG,"DiskToMemory() got %d bytes from %s\n",
+            rc,filereq->file_path));
         databufs[i]->data_length += rc;
         totsz += (u_signed64)rc;
         DK_SIZE(totsz);
 
-        if ( (rc < nb_bytes) || (end_of_dkfile == TRUE) ) {
-            rtcp_log(LOG_DEBUG,"DiskToMemory() End of file %s reached in buffer %d\n",
-                filereq->file_path,i);
+        if ( (end_of_dkfile == TRUE) ||
+             ((rc < nb_bytes) && (Uformat == FALSE)) ||
+             ((irc == 2) && (Uformat == TRUE)) ) {
+            DEBUG_PRINT((LOG_DEBUG,"DiskToMemory() End of file %s reached in buffer %d\n",
+                filereq->file_path,i));
             databufs[i]->end_of_tpfile = *end_of_tpfile;
             databufs[i]->last_buffer = *last_file;
             if ( *offset + rc > databufs[i]->bufendp )
@@ -503,11 +847,17 @@ static int DiskToMemory(int disk_fd, int pool_index,
          * buffer. This can typically happen when concatenating
          * very small disk files that all fit into a single
          * memory buffer.
+         * 
+         * For U-format files we always start new files with a
+         * new buffer.
          */
-        if ( (databufs[i]->data_length == databufs[i]->length) ||
+        if ( (Uformat == FALSE) &&
+            ((databufs[i]->data_length == databufs[i]->length) ||
             ((databufs[i]->data_length == databufs[i]->bufendp) &&
              (databufs[i]->end_of_tpfile == TRUE ||
-              databufs[i]->last_buffer == TRUE)) ) {
+              databufs[i]->last_buffer == TRUE))) ) {
+            databufs[i]->flag = BUFFER_FULL;
+        } else if ( Uformat == TRUE ) {
             databufs[i]->flag = BUFFER_FULL;
         }
         /*
@@ -531,13 +881,11 @@ static int DiskToMemory(int disk_fd, int pool_index,
             /*
              * End of disk file reached. Close it and return to pool.
              */
-            rtcp_log(LOG_DEBUG,"DiskToMemory() close disk file fd=%d\n",
-                disk_fd);
-            DK_STATUS(RTCP_PS_CLOSE);
-            rc = rfio_close(disk_fd);
-            DK_STATUS(RTCP_PS_NOBLOCKING);
+            DEBUG_PRINT((LOG_DEBUG,"DiskToMemory() close disk file fd=%d\n",
+                disk_fd));
+            rc = DiskFileClose(disk_fd,pool_index,tape,file);
             if ( rc == -1 ) {
-                rtcp_log(LOG_ERR,"DiskToMemory() rfio_close(%d), file=%s: %s\n",
+                rtcp_log(LOG_ERR,"DiskToMemory() DiskFileClose(%d), file=%s: %s\n",
                     disk_fd,filereq->file_path,rfio_serror());
                 rtcpd_AppendClientMsg(NULL, file,RT108,"CPDSKTP",
                         rfio_serror());
@@ -566,19 +914,14 @@ static int DiskToMemory(int disk_fd, int pool_index,
     diskIOstatus_t *diskIOstatus = NULL;
     u_signed64 nbbytes;
     char *p, u64buf[22];
-    int use_rfioV3;
+    int pool_index = -1;
     int indxp = 0;
     int offset = 0;
     int disk_fd = -1;
     int last_file = FALSE;
     int end_of_tpfile = FALSE;
     int rc, mode, severity, save_errno,save_serrno;
-    int rc, flags, save_serrno;
-#if defined(_WIN32)
-    int binmode = O_BINARY;
-#else /* _WIN32 */
-    int binmode = 0;
-#endif /* _WIN32 */
+    int rc, save_serrno;
     rtcp_log(LOG_DEBUG,"diskIOthread() started\n");
         rtcp_log(LOG_ERR,"diskIOthread() received NULL argument\n");
         rtcpd_SetProcError(RTCP_FAILED);
@@ -606,53 +949,14 @@ static int DiskToMemory(int disk_fd, int pool_index,
     mode = tapereq->mode;
     /*
      * Open the disk file given the specified record format (U/F).
-     * Open the disk file
+     */
     rc = 0;
-    flags = O_RDONLY | binmode;
-    if ( tapereq->mode == WRITE_DISABLE ) {
-        if ( (filereq->concat & (CONCAT | CONCAT_TO_EOD)) ) {
-            /*
-             * Appending to previous disk file. 
-             */
-            flags = O_WRONLY | O_APPEND | binmode;
-        } else {
-            /*
-             * New disk file
-             */
-            flags = O_CREAT | O_WRONLY | O_TRUNC | binmode;
-        }
-    }
-	/* Activate new transfer mode for source file */
-	use_rfioV3 = RFIO_STREAM;
-	rfiosetopt(RFIO_READOPT,&use_rfioV3,4); 
-
-    serrno = 0;
-    rfio_errno = 0;
-    rtcp_log(LOG_DEBUG,"diskIOthread() open(%s,0x%x\n",filereq->file_path,
-        flags);
-    DK_STATUS(RTCP_PS_OPEN);
-    disk_fd = rfio_open(filereq->file_path,flags,0666);
-    DK_STATUS(RTCP_PS_NOBLOCKING);
+    disk_fd = DiskFileOpen(pool_index,tape,file);
     if ( disk_fd == -1 ) {
-        rtcp_log(LOG_ERR,"diskIOthread() rfio_open(%s,0x%x): %s\n",
-            filereq->file_path,flags,rfio_serror());
-
-        if (errno = EBADF && rfio_errno == 0 && serrno == 0)
-            rtcpd_SetProcError(RTCP_RESELECT_SERV | RTCP_FAILED);
-        else
-            rtcpd_SetProcError(RTCP_FAILED);
-        if ( (flags & O_RDONLY) != 0 ) 
-            rtcpd_AppendClientMsg(NULL, file,RT110,"CPDSKTP",
-                            rfio_serror());
-        else
-            rtcpd_AppendClientMsg(NULL, file,RT110,"CPTPDSK",
-                            rfio_serror());
         tellClient(&client_socket,NULL,file,rc);
         rtcp_CloseConnection(&client_socket);
         return((void *)&failure);
     }
-    rtcp_log(LOG_DEBUG,"diskIOthread() rfio_open() returned fd=%d\n",
-        disk_fd);
     
     if ( tapereq->mode == WRITE_DISABLE ) {
         rc = MemoryToDisk(disk_fd,pool_index,&indxp,&offset,
@@ -681,6 +985,11 @@ static int DiskToMemory(int disk_fd, int pool_index,
             rtcpd_SetProcError(RTCP_FAILED);
         }
         rtcp_CloseConnection(&client_socket);
+        /*
+         * In case of copy failure, we don't close the file
+         * in MemoryToDisk() or DiskToMemory)().
+         */
+        (void)DiskFileClose(disk_fd,pool_index,tape,file);
         return((void *)&failure);
 
     if ( mode == WRITE_ENABLE && (filereq->concat & VOLUME_SPANNING) != 0 ) {
@@ -698,9 +1007,9 @@ static int DiskToMemory(int disk_fd, int pool_index,
         (void)rtcpd_stageupdc(tape,file);
         DK_STATUS(RTCP_PS_NOBLOCKING);
 
-        rtcp_log(LOG_DEBUG,"diskIOthread() fseq %d <-> %s copied %d bytes, rc=%d\n",
+        DEBUG_PRINT((LOG_DEBUG,"diskIOthread() fseq %d <-> %s copied %d bytes, rc=%d\n",
             file->filereq.tape_fseq,file->filereq.file_path,
-            (unsigned long)file->filereq.bytes_out,file->filereq.cprc);
+            (unsigned long)file->filereq.bytes_out,file->filereq.cprc));
         tellClient(&client_socket,NULL,file,rc);
     }
 
@@ -770,6 +1079,8 @@ int rtcpd_CleanUpDiskIO(int poolID) {
     thread_arg_t *tharg;
     int rc, indxp, offset, last_file,end_of_tpfile;
     int prev_bufsz, next_nb_bufs, next_bufsz, thIndex;
+    register int convert;
+
     if ( client == NULL || tape == NULL || file == NULL ||
         poolsize <= 0 ) {
         serrno = EINVAL;
@@ -777,7 +1088,7 @@ int rtcpd_CleanUpDiskIO(int poolID) {
     }
 
     rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() called\n");
-    rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() called\n");
+    DEBUG_PRINT((LOG_DEBUG,"rtcpd_StartDiskIO() called\n"));
      * Reserve a thread argument table
      */
     thargs = (thread_arg_t *)malloc(poolsize * sizeof(thread_arg_t));
@@ -807,6 +1118,7 @@ int rtcpd_CleanUpDiskIO(int poolID) {
         CLIST_ITERATE_BEGIN(nexttape->file,nextfile) {
             end_of_tpfile = FALSE;
             filereq = &nextfile->filereq;
+            Uformat = (*filereq->recfm == 'U' ? TRUE : FALSE);
             if ( nexttape->next == tape && 
                  nextfile->next == nexttape->file ) last_file = TRUE;
             if ( filereq->tape_fseq != nextfile->next->filereq.tape_fseq )
@@ -905,12 +1217,12 @@ int rtcpd_CleanUpDiskIO(int poolID) {
                      */
                     next_nb_bufs = nb_bufs + 1;
                 }
-                rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() number of reserved buffs %d + %d\n",
-                    proc_cntl.nb_reserved_bufs,next_nb_bufs);
+                DEBUG_PRINT((LOG_DEBUG,"rtcpd_StartDiskIO() number of reserved buffs %d + %d\n",
+                    proc_cntl.nb_reserved_bufs,next_nb_bufs));
             proc_cntl.nb_reserved_bufs += next_nb_bufs;
                 proc_cntl.nb_reserved_bufs += next_nb_bufs;
-                rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() new number of reserved buffs %d\n",
-                    proc_cntl.nb_reserved_bufs);
+                DEBUG_PRINT((LOG_DEBUG,"rtcpd_StartDiskIO() new number of reserved buffs %d\n",
+                    proc_cntl.nb_reserved_bufs));
             rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
                 rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
                 if ( rc == -1 ) {
@@ -938,12 +1250,12 @@ int rtcpd_CleanUpDiskIO(int poolID) {
                         prev_filesz = prevfile->filereq.bytes_in;
                     else
                         prev_filesz = prevfile->filereq.bytes_out;
-                    rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() prev. file size %d, buffer sz %d, indxp %d\n",
-                        (int)prev_filesz,prev_bufsz,indxp);
+                    DEBUG_PRINT((LOG_DEBUG,"rtcpd_StartDiskIO() prev. file size %d, buffer sz %d, indxp %d\n",
+                        (int)prev_filesz,prev_bufsz,indxp));
                     indxp = (indxp + (int)(((u_signed64)offset + prev_filesz) /
                         ((u_signed64)prev_bufsz)));
-                    rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() new indxp %d\n",
-                        indxp);
+                    DEBUG_PRINT((LOG_DEBUG,"rtcpd_StartDiskIO() new indxp %d\n",
+                        indxp));
                     if ( tapereq->mode == WRITE_DISABLE ) {
                          * Not concatenating on tape. Start next file
                          * On tape read we need to check if the tape mark 
@@ -951,13 +1263,13 @@ int rtcpd_CleanUpDiskIO(int poolID) {
                          * This can happen if the last block of file ended 
                          * up as the last block of a buffer.
                         rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO(): no concatenate (%d != %d), indxp %d\n",
-                        rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() prev sz %d, prev. bufsz %d, spill %d, blksiz %d, indxp %d\n",
+                        DEBUG_PRINT((LOG_DEBUG,"rtcpd_StartDiskIO() prev sz %d, prev. bufsz %d, spill %d, blksiz %d, indxp %d\n",
                             (int)prev_filesz,prev_bufsz,(prev_bufsz - (int)(prev_filesz % (u_signed64)prev_bufsz)),
-                            prevfile->filereq.blocksize,indxp);
+                            prevfile->filereq.blocksize,indxp));
 
                         if ( (prev_bufsz - (int)(prev_filesz % (u_signed64)prev_bufsz)) <
                              prevfile->filereq.blocksize ) indxp++;
-                        rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() New indxp %d\n",indxp);
+                        DEBUG_PRINT((LOG_DEBUG,"rtcpd_StartDiskIO() New indxp %d\n",indxp));
                          * On tape write we need offset if we are
                          * On tape read we always start with a brand
                          * new buffer except if previous file was empty
@@ -967,14 +1279,18 @@ int rtcpd_CleanUpDiskIO(int poolID) {
                     }
                     indxp = indxp % nb_bufs;
                     if ( tapereq->mode == WRITE_ENABLE ) {
-                        if ( filereq->concat == NOCONCAT ) {
+                        if ( (filereq->concat == NOCONCAT) ||
+                             (Uformat == TRUE) ) {
                             /*
                              * Not concatenating on tape. Start next file
                              * with a brand new buffer except if previous
                              * file was empty we re-use the previous buffer.
+                             * Also U-format files start with new buffer
+                             * since since in this case concatenation does 
+                             * not imply any problems with partial blocks.
                              */
-                            rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO(): no concatenate (%d != %d), indxp %d\n",
-                                nextfile->filereq.tape_fseq,prevfile->filereq.tape_fseq,indxp);
+                            DEBUG_PRINT((LOG_DEBUG,"rtcpd_StartDiskIO(): no concatenate (%d != %d), indxp %d\n",
+                                nextfile->filereq.tape_fseq,prevfile->filereq.tape_fseq,indxp));
 
                             if ( prev_filesz != 0 ) 
                                 indxp = (indxp + 1) % nb_bufs;
@@ -984,8 +1300,8 @@ int rtcpd_CleanUpDiskIO(int poolID) {
                              * On tape write we need offset if we are
                              * concatenating on tape
                              */
-                            rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO(): concatenate (%d == %d)\n",
-                                nextfile->filereq.tape_fseq,prevfile->filereq.tape_fseq);
+                            DEBUG_PRINT((LOG_DEBUG,"rtcpd_StartDiskIO(): concatenate (%d == %d)\n",
+                                nextfile->filereq.tape_fseq,prevfile->filereq.tape_fseq));
                             offset = (int)(((u_signed64)offset + prev_filesz) %
                                 ((u_signed64)prev_bufsz));
                         }
@@ -1038,8 +1354,8 @@ int rtcpd_CleanUpDiskIO(int poolID) {
                 /*
                  * Assign next thread and start the request
                  */
-                rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO(thIndex=%d,arg=0x%lx) start with indxp=%d, offset=%d\n",
-                    thIndex,tharg,indxp,offset);
+                DEBUG_PRINT((LOG_DEBUG,"rtcpd_StartDiskIO(thIndex=%d,arg=0x%lx) start with indxp=%d, offset=%d\n",
+                    thIndex,tharg,indxp,offset));
                 rc = Cpool_assign(poolID,diskIOthread,(void *)tharg,-1);
 
             } /* if ( ... ) */
