@@ -1,16 +1,10 @@
 /*
- * $Id: getcompstat.c,v 1.2 1999/07/21 13:10:01 jdurand Exp $
- *
- * $Lod$
- */
-
-/*
  * Copyright (C) 1996-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "%W% %G% CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.3 $ $Date: 1999/09/21 05:52:56 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -205,8 +199,7 @@ char *devtype;
 	unsigned char *endpage;
 	unsigned char *p;
 #if defined(ADSTAR)
-    /* error directive do not exist everywhere */
-!!! error Not implemented !!!
+#error Not implemented ???
 #else
 	unsigned char cdb[10];
 	char *msgaddr;
