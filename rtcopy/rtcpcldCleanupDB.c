@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/11/02 11:29:45 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/11/30 15:49:52 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.7 $ $Date: 2004/11/02 11:29:45 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.8 $ $Date: 2004/11/30 15:49:52 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -45,10 +45,11 @@ static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.7 $ $D
 #include <castor/stager/Segment.h>
 #include <castor/stager/TapeStatusCodes.h>
 #include <castor/stager/SegmentStatusCodes.h>
+#include <castor/stager/FileClass.h>
 #include <castor/stager/IStagerSvc.h>
 #include <castor/Services.h>
+#include <castor/BaseObject.h>
 #include <castor/BaseAddress.h>
-#include <castor/db/DbAddress.h>
 #include <castor/IAddress.h>
 #include <castor/IObject.h>
 #include <castor/IClient.h>
@@ -147,33 +148,33 @@ int main(int argc, char *argv[])
               Cstager_IStagerSvc_errorMsg(*stgSvc));
       return(1);
     }
-  
-    rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
-    if ( rc == -1 ) {
-      fprintf(stderr,"C_BaseAddress_create(): %s",sstrerror(serrno));
-      return(1);
-    }
   } else {
-    rc = Cdb_DbAddress_create(key,"OraCnvSvc",SVC_ORACNV,&dbAddr);
-    if ( rc == -1 ) {
-      fprintf(stderr,"Cdb_DbAddress_create(%lu): %s\n",key,sstrerror(serrno));
-      return(1);
-    }
-    baseAddr = Cdb_DbAddress_getBaseAddress(dbAddr);
+    Cstager_Tape_create(&tp);
+    Cstager_Tape_setId(tp,key);
+  }
+  
+  rc = C_BaseAddress_create(&baseAddr);
+  if ( rc == -1 ) {
+    fprintf(stderr,"C_BaseAddress_create(): %s",sstrerror(serrno));
+    return(1);
   }
 
+  C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
+  C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
+  iObj = Cstager_Tape_getIObject(tp);
 
   if ( key != 0 ) {
-    rc = C_Services_createObj(*dbSvc,iAddr,&iObj);
+    rc = C_Services_updateObj(*dbSvc,iAddr,iObj);
     if ( rc == -1 ) {
-      fprintf(stderr,"C_Services_createObj(%lu): %s, DB_ERROR=%s\n",
-              key,
+      fprintf(stderr,"C_Services_updateObj(key=%lu): %s, DB_ERROR=%s\n",
+              (unsigned long)key,
               sstrerror(serrno),
               C_Services_errorMsg(*dbSvc));
       return(1);
     }
-  } else iObj = Cstager_Tape_getIObject(tp);
+  }
+
   rc = C_Services_deleteRep(*dbSvc,iAddr,iObj,1);
   if ( rc != 0 ) {
     fprintf(stderr,"C_Services_deleteRep(): %s, DB_ERROR=%s\n",
