@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.98 2001/03/03 07:45:33 jdurand Exp $
+ * $Id: poolmgr.c,v 1.99 2001/03/04 07:40:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.98 $ $Date: 2001/03/03 07:45:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.99 $ $Date: 2001/03/04 07:40:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -250,7 +250,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
   if (nbmigrator > 0)
     migrators = (struct migrator *)
       calloc (nbmigrator, sizeof(struct migrator));
-  /* Although this is no pid for any migration yet, the element migreqtime */
+  /* Although there is no pid for any migration yet, the element migreqtime */
   /* has to be initialized to current time... */
   thistime = time(NULL);
   for (i = 0; i < nbmigrator; i++) {
