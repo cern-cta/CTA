@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.14 2000/05/29 07:56:25 jdurand Exp $
+ * $Id: procclr.c,v 1.15 2000/09/20 11:21:08 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.14 $ $Date: 2000/05/29 07:56:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.15 $ $Date: 2000/09/20 11:21:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -290,7 +290,7 @@ void procclrreq(req_data, clienthost)
 			stcp += i;
 		}
 		if (! found) {
-			sendrep (rpfd, MSG_ERR, STG33, "", "file not found");
+			sendrep (rpfd, MSG_ERR, STG33, (mfile ? mfile : (xfile ? xfile : "")), "file not found");
 			c = USERR;
 		}
 	}
