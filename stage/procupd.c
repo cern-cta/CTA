@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.29 2000/10/03 12:02:25 jdurand Exp $
+ * $Id: procupd.c,v 1.30 2000/10/03 12:03:24 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.29 $ $Date: 2000/10/03 12:02:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.30 $ $Date: 2000/10/03 12:03:24 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -297,10 +297,8 @@ procupdreq(req_data, clienthost)
         stcp = &(stcs[index_found]);
 		save_nextreqid = nextreqid();
 		memcpy(stcp_ok,stcp,sizeof(struct stgcat_entry));
-        // memcpy(stcp_ok,stcp,sizeof(struct stgcat_entry));
 		stcp_ok->reqid = save_nextreqid;
 		/* Current stcp is "<X>-", new one is a "<X+1>- -c off" */
-		// stcp_ok->u1.t.fseq[0] = '\0';
 		sprintf(stcp_ok->u1.t.fseq,"%d",atoi(fseq) + 1);
 		stcp_ok->filler[0] = 'c';
 		strcat(stcp_ok->u1.t.fseq,"-");
@@ -310,7 +308,6 @@ procupdreq(req_data, clienthost)
 		memset((char *) wfp_ok,0,sizeof(struct waitf));
 		wfp_ok->subreqid = stcp_ok->reqid;
 		/* Current stcp become "<X>" */
-		// stcp->u1.t.fseq[0] = '\0';
 		sprintf(stcp->u1.t.fseq,"%d",atoi(fseq));
 #ifdef USECDB
 		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
