@@ -1,9 +1,8 @@
 /*
-	$Id: check_Cdbentry.c,v 1.13 2001/11/30 11:27:50 jdurand Exp $
+	$Id: check_Cdbentry.c,v 1.14 2001/12/19 17:18:32 jdurand Exp $
 */
 
 #include "Cstage_db.h"
-#include "stage.h"
 
 /* ============== */
 /* System headers */
@@ -451,6 +450,9 @@ void stcpprint(stcp)
 		DUMP_STRING(stcp,u1.t.fseq);
 		DUMP_STRING(stcp,u1.t.lbl);
 		DUMP_VAL(stcp,u1.t.retentd);
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+		DUMP_VAL(stcp,u1.t.side);
+#endif
 		DUMP_STRING(stcp,u1.t.tapesrvr);
 		DUMP_CHAR(stcp,u1.t.E_Tflags);
 		for (i = 0; i < MAXVSN; i++) {
