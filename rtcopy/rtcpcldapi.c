@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.16 $ $Release$ $Date: 2004/06/28 15:00:54 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/06/29 17:34:49 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.16 $ $Date: 2004/06/28 15:00:54 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.17 $ $Date: 2004/06/29 17:34:49 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -45,6 +45,7 @@ static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.16 $ $Date: 
 #include <castor/stager/Segment.h>
 #include <castor/stager/TapeStatusCodes.h>
 #include <castor/stager/SegmentStatusCodes.h>
+#include <castor/stager/IStagerSvc.h>
 #include <castor/Services.h>
 #include <castor/BaseAddress.h>
 #include <castor/db/DbAddress.h>
@@ -1086,19 +1087,20 @@ static int getUpdates(
   return(0);
 }
 
-int rtcpcld_findTpReqMap(tape,tpList)
+static int findTpReqMap(tape,tpList,killed)
      tape_list_t *tape;
      RtcpcldTapeList_t **tpList;
+     int *killed;
 {
   int rc;
   TpReqMap_t *iterator = NULL;
 
-  if ( tape == NULL || tpList == NULL ) {
+  if ( tape == NULL ) {
     serrno = EINVAL;
     return(-1);
   }
   
-  *tpList = NULL;
+  if ( tpList != NULL ) *tpList = NULL;
   rc = Cmutex_lock(&runningReqsMap,-1);
   if ( rc == -1 ) {
     LOG_FAILED_CALL("Cmutex_lock()");
@@ -1109,7 +1111,11 @@ int rtcpcld_findTpReqMap(tape,tpList)
   CLIST_ITERATE_BEGIN(runningReqsMap,iterator) 
     {
       if ( iterator->tape == tape ) {
-        *tpList = iterator->tpList;
+        if ( tpList != NULL ) *tpList = iterator->tpList;
+        if ( killed != NULL ) {
+          if ( *killed > 0 ) iterator->killed = *killed;
+          *killed = iterator->killed;
+        }
         rc = 1;
         break;
       }
@@ -1117,6 +1123,34 @@ int rtcpcld_findTpReqMap(tape,tpList)
   CLIST_ITERATE_END(runningReqsMap,iterator);
   (void)Cmutex_unlock(&runningReqsMap);
   return(rc);
+}
+
+int rtcpcld_findTpReqMap(tape,tpList)
+     tape_list_t *tape;
+     RtcpcldTapeList_t **tpList;
+{
+  return(findTpReqMap(tape,tpList,NULL));
+}
+
+int rtcpcld_killed(tape)
+     tape_list_t *tape;
+{
+  int killed = 0, rc;
+
+  rc = findTpReqMap(tape,NULL,&killed);
+  if ( rc == -1 ) return(-1);
+  if ( killed > 0 ) return(1);
+  return(0);
+}
+
+int rtcpcld_setKilled(tape)
+     tape_list_t *tape;
+{
+  int killed = 1, rc;
+
+  rc = findTpReqMap(tape,NULL,&killed);
+  if ( rc == -1 ) return(-1);
+  return(0);
 }
 
 int rtcpcld_addTpReqMap(tape,tpList)
@@ -1355,6 +1389,8 @@ int rtcpcldc_kill(
     LOG_FAILED_CALL("Cmutex_lock()");
     noLock = 1;
   }
+
+  (void)rtcpcld_setKilled(tape);
   
   rc = rtcpcld_findTpReqMap(tape,&tpList);
   if ( rc == -1 ) {
@@ -1411,6 +1447,7 @@ int rtcpcldc_kill(
     serrno = save_serrno;
     return(-1);
   }
+  if ( noLock == 0 ) (void)Cmutex_unlock(tape);
   (void)rtcp_CloseConnection(&abortSocket);
   return(0);
 }
@@ -1539,10 +1576,17 @@ int rtcpcldc(tape)
                                          tl->tapereq.side,
                                          tl->tapereq.mode
                                          );
-      if ( rtcpcldTp->tp == NULL ) {
+      if ( rc == -1 ) {
         LOG_FAILED_CALL("Cstager_IStagerSvc_selectTape()");
         if ( serrno == 0 ) serrno = errno;
         save_serrno = serrno;
+        rtcp_log(LOG_ERR,"Cstager_IStagerSvc_selectTape() DB error: %s\n",
+                 Cstager_IStagerSvc_errorMsg(stgSvc));
+        strncpy(tl->tapereq.err.errmsgtxt,
+                Cstager_IStagerSvc_errorMsg(stgSvc),
+                sizeof(tl->tapereq.err.errmsgtxt)-1);
+        tl->tapereq.err.errorcode = save_serrno;
+        tl->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
         (void)Cmutex_unlock(tape);
         serrno = save_serrno;
         return(-1);
@@ -1602,6 +1646,11 @@ int rtcpcldc(tape)
     if ( serrno == 0 ) save_serrno = errno;
     C_Services_delete(*dbSvc);
     *dbSvc = NULL;
+    strncpy(tape->tapereq.err.errmsgtxt,
+            sstrerror(save_serrno),
+            sizeof(tape->tapereq.err.errmsgtxt)-1);
+    tape->tapereq.err.errorcode = save_serrno;
+    tape->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
     (void)Cmutex_unlock(tape);
     serrno = save_serrno;
     return(-1);
@@ -1615,6 +1664,11 @@ int rtcpcldc(tape)
     save_serrno = serrno;
     LOG_FAILED_CALL("rtcpcld_getDbSvc()");
     *dbSvc = NULL;
+    strncpy(tape->tapereq.err.errmsgtxt,
+            sstrerror(save_serrno),
+            sizeof(tape->tapereq.err.errmsgtxt)-1);
+    tape->tapereq.err.errorcode = save_serrno;
+    tape->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
     (void)Cmutex_unlock(tape);
     serrno = save_serrno;
     return(-1);
@@ -1628,8 +1682,9 @@ int rtcpcldc(tape)
         LOG_FAILED_CALL("C_Services_updateRep()");
         save_serrno = serrno;
         rtcpcldTp->tape->tapereq.err.errorcode = serrno;
-        strcpy(rtcpcldTp->tape->tapereq.err.errmsgtxt,
-               C_Services_errorMsg(*dbSvc));
+        strncpy(rtcpcldTp->tape->tapereq.err.errmsgtxt,
+               C_Services_errorMsg(*dbSvc),
+               sizeof(rtcpcldTp->tape->tapereq.err.errmsgtxt)-1);
         rtcpcldTp->tape->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
         C_IAddress_delete(iAddr);
         C_Services_delete(*dbSvc);
@@ -1660,6 +1715,12 @@ int rtcpcldc(tape)
     errno = 0;
     rc = select(maxfd,&rd_setcp,NULL,NULL,&timeout);
     if ( rc >= 0 ) {
+      if ( rtcpcld_killed(tape) == 1 ) {
+        rc = -1;
+        save_serrno = ERTUSINTR;
+        break;
+      }
+      
       if ( rc > 0 ) (void)rtcpcld_getNotify(*notificationSocket);
       rc = Cmutex_lock(tape,-1);
       if ( rc == -1 ) {
