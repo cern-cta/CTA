@@ -253,8 +253,7 @@ void *arg;
 	struct Cns_srv_thread_info *thip = (struct Cns_srv_thread_info *) arg;
 
 	
-	Csec_server_reinit_context(&(thip->sec_ctx));
-	Csec_server_set_service_type(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL);
+	Csec_server_reinit_context(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
 	if (Csec_server_establish_context(&(thip->sec_ctx),thip->s) < 0) {
 	  nslogit(func, "Could not establish context: %s !\n", Csec_geterrmsg());
 	  return -1;

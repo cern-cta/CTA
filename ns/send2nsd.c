@@ -113,14 +113,11 @@ int user_repbuf_len;
 #ifdef CSEC
 
 
-			if (Csec_client_init_context(&ctx) <0) {
+			if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
 			  Cns_errmsg (func, NS002, "send", "Could not init context");
 			  serrno = SECOMERR;
 			  return -1;
 			}
-			
-			Csec_client_set_service_name(&ctx, s, CSEC_SERVICE_TYPE_CENTRAL);
-			
 			
 			if(Csec_client_establish_context(&ctx, s)< 0) {
 			  Cns_errmsg (func, "%s: %s\n",
