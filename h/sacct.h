@@ -1,5 +1,5 @@
 /*
- * $Id: sacct.h,v 1.6 2000/04/05 12:09:30 obarring Exp $
+ * $Id: sacct.h,v 1.7 2000/04/13 10:13:52 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: sacct.h,v $ $Revision: 1.6 $ $Date: 2000/04/05 12:09:30 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: sacct.h,v $ $Revision: 1.7 $ $Date: 2000/04/13 10:13:52 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Include file for CASTOR software accounting */
 
@@ -170,6 +170,23 @@ struct acctrtcp {	/* accounting record for rtcopy software */
         int     fseq;           /* Tape file sequence number */
 	char    errmsgtxt[CA_MAXLINELEN+1];
 };
+
+struct acctrtcp_timing {
+    int jid;
+    int TStartPosition;                /* Start time for position to this file */
+    int TEndPosition;                  /* End time for position to this file */
+    int TStartTransferDisk;            /* Start time for transfer to/from disk */
+    int TEndTransferDisk;              /* End time for transfer to/from disk */
+    int TStartTransferTape;            /* Start time for tranfser to/from tape */
+    int TEndTransferTape;              /* End time for tranfser to/from tape */
+    int TStartRequest;                  /* Start time of request (set by client) */
+    int TStartRtcpd;                    /* Time when request is received by rtcpd server */
+    int TStartMount;                    /* Time when mount request is sent to Ctape */
+    int TEndMount;                      /* Time when mount request returns */
+    int TStartUnmount;                  /* Time when unmount request is sent to Ctape */
+    int TEndUnmount;                    /* Time when unmount request returns */
+};
+
 
 			/* subtypes for rtcopy accounting records */
 
