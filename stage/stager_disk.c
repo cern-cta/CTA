@@ -1,5 +1,5 @@
 /*
- * $Id: stager_disk.c,v 1.6 2002/02/20 10:45:37 jdurand Exp $
+ * $Id: stager_disk.c,v 1.7 2002/04/04 15:10:16 jdurand Exp $
  */
 
 /*
@@ -15,7 +15,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.6 $ $Date: 2002/02/20 10:45:37 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.7 $ $Date: 2002/04/04 15:10:16 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -517,7 +517,7 @@ int filecopy(stcp, key, hostname)
 	PRE_RFIO;
 	c = rfio_pclose (rf);
 	if (c != 0) {
-		sendrep(rpfd, MSG_ERR, "STG02 - %s : %s error : exiting with status 0x%x (%s)\n", "filecopy", "rfio_pclose", c, sstrerror((c >> 8) & 0xFF));
+		sendrep(rpfd, MSG_ERR, "STG02 - %s : error reported at %s time : status 0x%x (%s)\n", "filecopy", "rfio_pclose", c, sstrerror((c >> 8) & 0xFF));
 	}
 	return(c); /* This is the output of rfio_pclose, e.g. status in the higher byte */
 }
