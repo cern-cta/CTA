@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.35 $ $Date: 2000/06/13 15:39:14 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.36 $ $Date: 2000/06/23 12:34:22 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -216,6 +216,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
      * Record conversion
      */
     if ( filereq->convert == -1 ) filereq->convert = ASCCONV;
+    if ( (filereq->convert & EBCCONV) == 0 ) filereq->convert |= ASCCONV;
     if ( !VALID_CONVERT(filereq) ) {
         serrno = EINVAL;
         sprintf(errmsgtxt,"INVALID CONVERSION SPECIFIED\n");
