@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.32 2000/12/12 12:37:53 baud Exp $
+ * $Id: Ctape.h,v 1.33 2001/01/23 15:13:34 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.32 $ $Date: 2000/12/12 12:37:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.33 $ $Date: 2001/01/23 15:13:34 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -107,7 +107,10 @@
 #endif
 #define RETURN(x) \
 	{ \
-	tplogit (func, "returns %d\n", (x)); \
+	if ((x) >= 0) \
+		tplogit (func, "returns %d\n", (x)); \
+	else \
+		tplogit (func, "returns %d, serrno = %d\n", (x), serrno); \
 	return ((x)); \
 	}
 #endif
