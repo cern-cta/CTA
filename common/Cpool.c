@@ -1,5 +1,5 @@
 /*
- * $Id: Cpool.c,v 1.11 1999/10/20 18:34:32 jdurand Exp $
+ * $Id: Cpool.c,v 1.12 1999/11/04 18:50:00 jdurand Exp $
  */
 
 #include <Cpool_api.h>
@@ -35,7 +35,7 @@ int Cpool_debug = 0;
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.11 $ $Date: 1999/10/20 18:34:32 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.12 $ $Date: 1999/11/04 18:50:00 $ CERN IT-PDP/DM Jean-Damien Durand";
 
 /* ------------------------------------ */
 /* Mutex static variables a-la-Cthread  */
@@ -188,6 +188,9 @@ int DLL_DECL Cpool_create(nbreq,nbget)
   /* If CTHREAD_TRUE_THREAD */
   void                   *cpool_arg = NULL;
 
+  /* We makes sure that Cthread pakage is initalized */
+  Cthread_init();
+  
 #ifdef CPOOL_DEBUG
   /* Cthread_mutex_lock(&lock_cpool_debug); */
   if (Cpool_debug != 0)
@@ -201,9 +204,6 @@ int DLL_DECL Cpool_create(nbreq,nbget)
     return(-1);
   }
 
-  /* We makes sure that Cthread pakage is initalized */
-  Cthread_init();
-  
   /* We search the last available pool */
   if (Cthread_mutex_lock(&Cpool) != 0) {
     return(-1);
@@ -1524,6 +1524,9 @@ int DLL_DECL Cpool_assign(poolnb,startroutine,arg,timeout)
      int timeout;
 {
 
+  /* We makes sure that Cthread pakage is initalized */
+  Cthread_init();
+  
 #ifdef CPOOL_DEBUG
   /* Cthread_mutex_lock(&lock_cpool_debug); */
   if (Cpool_debug != 0)
@@ -2209,6 +2212,9 @@ int DLL_DECL Cpool_next_index(poolnb)
      int poolnb;
 {
 
+  /* We makes sure that Cthread pakage is initalized */
+  Cthread_init();
+  
 #ifdef CPOOL_DEBUG
   /* Cthread_mutex_lock(&lock_cpool_debug); */
   if (Cpool_debug != 0)
@@ -2633,6 +2639,9 @@ int DLL_DECL _Cpool_self() {
      mutex lock/unlock on variable lock_cpool_debug
   */
 
+  /* We makes sure that Cthread pakage is initalized */
+  Cthread_init();
+  
   /* We get current Cthread ID */
   if ((cid = _Cthread_self()) < 0) {
     return(-1);
