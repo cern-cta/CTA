@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.12 $ $Release$ $Date: 2005/02/17 17:45:42 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.13 $ $Release$ $Date: 2005/02/18 16:23:01 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.12 $ $Release$ $Date: 2005/02/17 17:45:42 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.13 $ $Release$ $Date: 2005/02/18 16:23:01 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -254,16 +254,19 @@ int getSvcClass(
 }
 
 int getStreamsFromDB(
-                     tapePool
+                     tapePool,
+                     nbStreams
                      )
      struct Cstager_TapePool_t *tapePool;
+     int *nbStreams;
 {
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
-  int rc;
+  struct Cstager_Stream_t **streamArray = NULL;
+  int rc, _nbStreams = 0;
 
   if ( tapePool == NULL ) {
     if ( runAsDaemon == 0 ) {
@@ -294,6 +297,9 @@ int getStreamsFromDB(
                      Cstager_IStagerSvc_errorMsg(stgSvc));
     }
   }
+  Cstager_TapePool_streams(tapePool,&streamArray,&_nbStreams);
+  if ( nbStreams != NULL ) *nbStreams = _nbStreams;
+  if ( streamArray != NULL ) free(streamArray);
 
   C_IAddress_delete(iAddr);
   return(rc);
@@ -436,12 +442,14 @@ int tapePoolCreator(
 }
 
 int getStreamsForSvcClass(
-                          svcClass
+                          svcClass,
+                          nbStreams
                           )
      struct Cstager_SvcClass_t *svcClass;
+     int *nbStreams;
 {
   struct Cstager_TapePool_t **tapePoolArray = NULL;
-  int rc, i, nbTapePools;
+  int rc, i, nbTapePools, _nbStreams, totNbStreams = 0;
 
   Cstager_SvcClass_tapePools(svcClass,&tapePoolArray,&nbTapePools);
   if ( (nbTapePools <= 0) || (tapePoolArray == NULL) ){
@@ -453,7 +461,8 @@ int getStreamsForSvcClass(
   }
 
   for ( i=0; i<nbTapePools; i++ ) {
-    rc = getStreamsFromDB(tapePoolArray[i]);
+    _nbStreams = 0;
+    rc = getStreamsFromDB(tapePoolArray[i],&_nbStreams);
     if ( rc == -1 ) {
       if ( runAsDaemon == 0 ) {
         fprintf(stderr,"getStreamsFromDB(): %s\n",sstrerror(serrno));
@@ -463,28 +472,123 @@ int getStreamsForSvcClass(
       free(tapePoolArray);
       return(-1);
     }
+    totNbStreams += _nbStreams;
   }
   if ( tapePoolArray != NULL ) free(tapePoolArray);
+  if ( nbStreams != NULL ) *nbStreams = totNbStreams;
+  return(0);
+}
+
+/*
+ * Add all old migration candidates from an existing to a new stream
+ */
+int cloneStream(
+                oldStream,
+                newStream
+                )
+     struct Cstager_Stream_t *oldStream, *newStream;
+{
+  struct C_IObject_t *iObj = NULL;
+  struct C_Services_t *dbSvc;
+  struct C_BaseAddress_t *baseAddr;
+  struct C_IAddress_t *iAddr = NULL;
+  struct Cstager_IStagerSvc_t *stgSvc = NULL;
+  struct Cstager_TapeCopy_t **tapeCopyArray = NULL;
+  int rc, i, nbTapeCopies = 0;
+
+  if ( oldStream == NULL || newStream == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  
+  rc = prepareForDBAccess(&dbSvc,&stgSvc,&iAddr);
+  if ( rc == -1 ) {
+    if ( runAsDaemon == 0 ) {
+      fprintf(stderr,"closeStream(): prepareForDBAccess(): %s\n",
+              sstrerror(serrno));
+    } else {
+      LOG_SYSCALL_ERR("prepareForDBAccess()");
+    }
+    return(-1);
+  }
+
+  iObj = Cstager_Stream_getIObject(oldStream);
+  LOG_CALL_TRACE((rc = C_Services_fillObj(
+                                          dbSvc,
+                                          iAddr,
+                                          iObj,
+                                          OBJ_TapeCopy
+                                          )));
+  if ( rc == -1 ) {
+    if ( runAsDaemon == 0 ) {
+      fprintf(stderr,"C_Services_fillObj(stream,OBJ_TapeCopy): %s, %s\n",
+              sstrerror(serrno),
+              C_Services_errorMsg(dbSvc));
+    } else {
+      LOG_DBCALL_ERR("C_Services_fillObj(stream,OBJ_TapeCopy)",
+                     C_Services_errorMsg(dbSvc));
+    }
+    C_IAddress_delete(iAddr);
+    return(-1);
+  }
+
+  Cstager_Stream_tapeCopy(oldStream,&tapeCopyArray,&nbTapeCopies);
+  if ( runAsDaemon == 0 ) {
+    fprintf(stdout,"cloneStream() copy %d TapeCopies to new stream\n",
+            nbTapeCopies);
+  }
+
+  if ( tapeCopyArray != NULL ) {
+    for ( i=0; i<nbTapeCopies; i++ ) {
+      Cstager_Stream_addTapeCopy(newStream,tapeCopyArray[i]);
+      Cstager_TapeCopy_addStream(tapeCopyArray[i],newStream);
+    }
+  }
+  iObj = Cstager_Stream_getIObject(newStream);
+  LOG_CALL_TRACE((rc = C_Services_fillRep(
+                                          dbSvc,
+                                          iAddr,
+                                          iObj,
+                                          OBJ_TapeCopy,
+                                          0
+                                          )));
+  if ( rc == -1 ) {
+    if ( runAsDaemon == 0 ) {
+      fprintf(stderr,"C_Services_fillRep(stream,OBJ_TapeCopy): %s, %s\n",
+              sstrerror(serrno),
+              C_Services_errorMsg(dbSvc));
+    } else {
+      LOG_DBCALL_ERR("C_Services_fillRep(stream,OBJ_TapeCopy)",
+                     C_Services_errorMsg(dbSvc));
+    }
+    C_IAddress_delete(iAddr);
+    return(-1);
+  }
+  if ( iAddr != NULL ) C_IAddress_delete(iAddr);
+  if ( tapeCopyArray != NULL ) free(tapeCopyArray);
   return(0);
 }
 
 int streamCreator(
                   svcClass,
-                  initialSizeToTransfer
+                  initialSizeToTransfer,
+                  nbNewStreams
                   )
      struct Cstager_SvcClass_t *svcClass;
      u_signed64 initialSizeToTransfer;
+     int *nbNewStreams;
 {
   struct Cstager_TapePool_t **tapePoolArray = NULL;
-  struct Cstager_Stream_t *newStream, **streamArray = NULL;
+  struct Cstager_Stream_t *newStream, **streamArray = NULL, **streamsToClone = NULL;
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
   int rc, nbTapePools, nbStreams, nbStreamsTotal, nbDrives, i, j;
-  int *streamsPerTapePool = NULL;
-  
+  int *streamsPerTapePool = NULL, _nbNewStreams = 0;
+
+  if ( nbNewStreams != NULL ) *nbNewStreams = 0;
   if ( svcClass == NULL ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"streamCreator() called without SvcClass\n");
@@ -514,7 +618,21 @@ int streamCreator(
     serrno = SESYSERR;
     return(-1);
   }
-  
+
+  streamsToClone = (struct Cstager_Stream_t **)calloc(
+                                                      nbTapePools,
+                                                      sizeof(struct Cstager_stream_t *)
+                                                      );
+  if ( streamsToClone == NULL ) {
+    if ( runAsDaemon == 0 ) {
+      fprintf(stderr,"calloc(): %s\n",strerror(errno));
+    } else {
+      LOG_SYSCALL_ERR("calloc()");
+    }
+    serrno = SESYSERR;
+    return(-1);
+  }
+    
   nbStreamsTotal = 0;
   for ( i=0; i<nbTapePools; i++ ) {
     streamArray = NULL;
@@ -522,6 +640,7 @@ int streamCreator(
     if ( (nbStreams > 0) && (streamArray != NULL) ) {
       nbStreamsTotal += nbStreams;
       streamsPerTapePool[i] = nbStreams;
+      streamsToClone[i] = streamArray[0];
       free(streamArray);
     }
   }
@@ -555,11 +674,9 @@ int streamCreator(
       newStream = NULL;
       Cstager_Stream_create(&newStream);
       /*
-       * Set state to STREAM_WAITSPACE just to block it from being
+       * Set state to STREAM_CREATED to block it from being
        * immediately swallowed by streamsToDo() before we had
-       * a chance to throw TapeCopies into it. Later a more proper
-       * status like STREAM_CREATED should be used but for the moment
-       * that status does not exist.
+       * a chance to throw TapeCopies into it.
        */
       Cstager_Stream_setStatus(newStream,STREAM_CREATED);
       Cstager_Stream_setInitialSizeToTransfer(newStream,initialSizeToTransfer);
@@ -587,10 +704,15 @@ int streamCreator(
         C_IAddress_delete(iAddr);
         return(-1);
       }
+      rc = cloneStream(streamsToClone[j],newStream);
+      if ( rc == -1 ) return(-1);
+      _nbNewStreams++;
     }
   }
 
   if ( iAddr != NULL ) C_IAddress_delete(iAddr);
+  if ( streamsPerTapePool != NULL ) free(streamsPerTapePool);
+  if ( nbNewStreams != NULL ) *nbNewStreams = _nbNewStreams;
   return(0);
 }
 
@@ -1039,7 +1161,7 @@ int main(int argc, char *argv[])
   char *migHunterFacilityName = "MigHunter";
   u_signed64 initialSizeToTransfer;
   char buf[32];
-  int c, rc, i, nbMigrCandidates = 0;
+  int c, rc, i, nbMigrCandidates = 0, nbOldStreams = 0, nbNewStreams = 0;
   time_t sleepTime = 0;
 
   if ( argc <= 1 ) {
@@ -1130,52 +1252,54 @@ int main(int argc, char *argv[])
       if ( runAsDaemon == 0 ) {
         fprintf(stdout,"Found %d candidates for %s\n",nbMigrCandidates,argv[i]);
       }
-      if ( nbMigrCandidates > 0 ) {
-        if ( runAsDaemon == 0 ) {
-          fprintf(stdout,"Create new tape pools for %s if necessary\n",argv[i]);
-        }
-        if ( legacyMode == 1 ) {
-          rc = tapePoolCreator(
-                               svcClass,
-                               migrCandidates,
-                               nsFileClassArray,
-                               nbMigrCandidates
-                               );
-          if ( rc == -1 ) {
-            if ( runAsDaemon == 0 ) {
-              fprintf(stderr,"tapePoolCreator(%s): %s\n",
-                      argv[i],sstrerror(serrno));
-            } else {
-              LOG_SYSCALL_ERR("tapePoolCreator()");
-            }
-            continue;
-          }
-        }
-        if ( runAsDaemon == 0 ) {
-          fprintf(stdout,"Initial size to transfer: %s\n",
-                  u64tostr(initialSizeToTransfer,buf,-sizeof(buf)));
-          fprintf(stdout,"Get existing streams for %s\n",argv[i]);
-        }
-
-        /*
-         * This one takes a lock on all Streams associated
-         * with the SvcClass
-         */
-        rc = getStreamsForSvcClass(svcClass);
+      if ( runAsDaemon == 0 ) {
+        fprintf(stdout,"Create new tape pools for %s if necessary\n",argv[i]);
+      }
+      if ( legacyMode == 1 ) {
+        rc = tapePoolCreator(
+                             svcClass,
+                             migrCandidates,
+                             nsFileClassArray,
+                             nbMigrCandidates
+                             );
         if ( rc == -1 ) {
           if ( runAsDaemon == 0 ) {
-            fprintf(stderr,"getStreamsForSvcClass(%s): %s\n",
+            fprintf(stderr,"tapePoolCreator(%s): %s\n",
                     argv[i],sstrerror(serrno));
           } else {
-            LOG_SYSCALL_ERR("getStreamsForSvcClass()");
+            LOG_SYSCALL_ERR("tapePoolCreator()");
           }
           continue;
         }
-        
+      }
+      if ( runAsDaemon == 0 ) {
+        fprintf(stdout,"Initial size to transfer: %s\n",
+                u64tostr(initialSizeToTransfer,buf,-sizeof(buf)));
+        fprintf(stdout,"Get existing streams for %s\n",argv[i]);
+      }
+      
+      /*
+       * This one takes a lock on all Streams associated
+       * with the SvcClass
+       */
+      nbOldStreams = nbNewStreams = 0;
+      rc = getStreamsForSvcClass(svcClass,&nbOldStreams);
+      if ( rc == -1 ) {
         if ( runAsDaemon == 0 ) {
-          fprintf(stdout,"Create new streams for %s if necessary\n",argv[i]);
+          fprintf(stderr,"getStreamsForSvcClass(%s): %s\n",
+                  argv[i],sstrerror(serrno));
+        } else {
+          LOG_SYSCALL_ERR("getStreamsForSvcClass()");
         }
-        rc = streamCreator(svcClass,initialSizeToTransfer);
+        continue;
+      }
+      
+      if ( nbOldStreams > 0 ) {
+        if ( runAsDaemon == 0 ) {
+          fprintf(stdout,"Found %d streams for %s. Create new streams if necessary\n",
+                  nbOldStreams,argv[i]);
+        }
+        rc = streamCreator(svcClass,initialSizeToTransfer,&nbNewStreams);
         if ( rc == -1 ) {
           if ( runAsDaemon == 0 ) {
             fprintf(stderr,"streamCreator(%s): %s\n",
@@ -1186,18 +1310,23 @@ int main(int argc, char *argv[])
           (void)C_Services_rollback(dbSvc,iAddr);
           continue;
         }
-        /*
-         * Release the lock on streams
-         */
-        rc = C_Services_commit(dbSvc,iAddr);
-        if ( rc == -1 ) {
-          if ( runAsDaemon == 0 ) {
-            fprintf(stderr,"C_Services_commit(): %s\n",
-                    sstrerror(serrno));
-          } else {
-            LOG_SYSCALL_ERR("C_Services_commit()");
-          }
+        if ( runAsDaemon == 0 ) {
+          fprintf(stdout,"%d new streams created for %s\n",nbNewStreams,argv[i]);
         }
+      }
+      /*
+       * Release the lock on streams
+       */
+      rc = C_Services_commit(dbSvc,iAddr);
+      if ( rc == -1 ) {
+        if ( runAsDaemon == 0 ) {
+          fprintf(stderr,"C_Services_commit(): %s\n",
+                  sstrerror(serrno));
+        } else {
+          LOG_SYSCALL_ERR("C_Services_commit()");
+        }
+      }
+      if ( nbMigrCandidates > 0 ) {
         if ( runAsDaemon == 0 ) {
           fprintf(stdout,"Add migration candidates to streams for %s\n",
                   argv[i]);
@@ -1221,6 +1350,8 @@ int main(int argc, char *argv[])
         if ( runAsDaemon == 0 ) {
           fprintf(stdout,"Start the streams for %s\n",argv[i]);
         }
+      }
+      if ( nbNewStreams > 0 ) {
         rc = startStreams(svcClass);
         if ( rc == -1 ) {
           if ( runAsDaemon == 0 ) {
@@ -1232,14 +1363,14 @@ int main(int argc, char *argv[])
           (void)C_Services_rollback(dbSvc,iAddr);
           continue;
         }
-        rc = C_Services_commit(dbSvc,iAddr);
-        if ( rc == -1 ) {
-          if ( runAsDaemon == 0 ) {
-            fprintf(stderr,"C_Services_commit(): %s\n",
-                    sstrerror(serrno));
-          } else {
-            LOG_SYSCALL_ERR("C_Services_commit()");
-          }
+      }
+      rc = C_Services_commit(dbSvc,iAddr);
+      if ( rc == -1 ) {
+        if ( runAsDaemon == 0 ) {
+          fprintf(stderr,"C_Services_commit(): %s\n",
+                  sstrerror(serrno));
+        } else {
+          LOG_SYSCALL_ERR("C_Services_commit()");
         }
       }
     }
