@@ -1,5 +1,5 @@
 /*
- * $Id: rfrm.c,v 1.9 2000/12/06 11:52:17 obarring Exp $
+ * $Id: rfrm.c,v 1.10 2001/02/12 14:17:23 jdurand Exp $
  */
 
 /*
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.9 $ $Date: 2000/12/06 11:52:17 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.10 $ $Date: 2001/02/12 14:17:23 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -83,6 +83,8 @@ char *argv[];
       /*
        * remove all files
        */
+      rfio_errno = 0;
+      serrno = 0;
       status = rm_recursive(root_path,&ask_yesno);
       if ( status == -1 ) {
          rfio_perror(root_path);
@@ -92,8 +94,16 @@ char *argv[];
        * remove all directories. ENOENT can happen if the directory
        * was empty and removed already in previous call.
        */
+      rfio_errno = 0;
+      serrno = 0;
       status = rm_recursive(root_path,&ask_yesno);
-      if ( status == -1 && rfio_errno != ENOENT ) {
+      if ( (status == -1) &&
+           (((rfio_errno != 0) && (rfio_errno != ENOENT)) ||
+            ((rfio_errno == 0) &&
+             (serrno     != 0) && (serrno     != ENOENT)) ||
+            ((rfio_errno == 0) && (serrno     ==      0) &&
+             (errno !=      0) && (errno != ENOENT)))
+           ) {
          rfio_perror(root_path);
          exit(2);
       }
