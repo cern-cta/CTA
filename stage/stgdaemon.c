@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.217 2002/08/27 08:41:39 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.218 2002/08/29 06:16:46 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.217 $ $Date: 2002/08/27 08:41:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.218 $ $Date: 2002/08/29 06:16:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -3198,7 +3198,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 		 int allow_one_stagein;
 		 int nodisk_flag;
 {
-	int actual_size = 0;
+	u_signed64 actual_size = 0;
 	struct stat st;
 	struct stgpath_entry *stpp;
 	int found = 0;
@@ -3255,7 +3255,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 				if (! freersv) {
 					PRE_RFIO;
 					if (RFIO_STAT(stcp->ipath, &st) == 0) {
-						actual_size = st.st_size;
+						actual_size = (u_signed64) st.st_size;
 						if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < actual_size) {
 							actual_size_block = actual_size;
 						}
