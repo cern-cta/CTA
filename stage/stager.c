@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.136 2001/03/22 11:02:36 jdurand Exp $
+ * $Id: stager.c,v 1.137 2001/03/22 11:18:34 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.136 $ $Date: 2001/03/22 11:02:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.137 $ $Date: 2001/03/22 11:18:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -3527,7 +3527,6 @@ int stager_hsm_callback(tapereq,filereq)
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setatime", sstrerror(serrno));
 					RESTORE_EID;
 					callback_error = 1;
-					SET_HSM_IGNORE(stager_client_true_i,serrno);
 					return(-1);
 				}
 				/* If we reach this part of the code then we know undoubly */
@@ -3772,6 +3771,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Thursday 22 March, 2001 at 11:54:03 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Thursday 22 March, 2001 at 12:17:36 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
