@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.71 2001/01/31 18:59:51 jdurand Exp $
+ * $Id: procio.c,v 1.72 2001/02/01 07:47:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.71 $ $Date: 2001/01/31 18:59:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.72 $ $Date: 2001/02/01 07:47:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1723,9 +1723,9 @@ void procioreq(req_type, req_data, clienthost)
 					mode_t okmode;
 
 					if ((api_out == 0) || (openmode == 0)) {
-						okmode = (0777 & ~ stgreq.mask);
+						okmode = (07777 & ~ stgreq.mask);
 					} else {
-						okmode = (0777 & (openmode & ~ stgreq.mask));
+						okmode = (07777 & (openmode & ~ stgreq.mask));
 					}
 					if (Cns_creatx(hsmfiles[ihsmfiles], okmode, &Cnsfileid) != 0) {
 						setegid(start_passwd.pw_gid);
@@ -3268,9 +3268,9 @@ int create_hsm_entry(rpfd,stcp,api_out,openmode,immediate_delete)
 	setegid(stcp->gid);
 	seteuid(stcp->uid);
 	if ((api_out == 0) || (openmode == 0)) {
-		okmode = (0777 & ~ stcp->mask);
+		okmode = (07777 & ~ stcp->mask);
 	} else {
-		okmode = (0777 & (openmode & ~ stcp->mask));
+		okmode = (07777 & (openmode & ~ stcp->mask));
 	}
 	if (Cns_creatx(stcp->u1.h.xfile, okmode, &Cnsfileid) != 0) {
 		setegid(start_passwd.pw_gid);
