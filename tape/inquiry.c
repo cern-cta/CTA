@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: inquiry.c,v $ $Revision: 1.4 $ $Date: 2002/04/08 08:04:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: inquiry.c,v $ $Revision: 1.5 $ $Date: 2002/08/19 11:49:32 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      inquiry - get information about the type of a drive */
@@ -15,6 +15,7 @@ static char sccsid[] = "@(#)$RCSfile: inquiry.c,v $ $Revision: 1.4 $ $Date: 2002
 #include <string.h>
 #if defined(ADSTAR)
 #include <sys/Atape.h>
+#include <sys/scsi.h>
 #else
 #include "scsictl.h"
 #endif
