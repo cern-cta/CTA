@@ -1,6 +1,9 @@
 /*
- * $Id: vdqm_InitPool.c,v 1.1 1999/07/27 09:20:16 obarring Exp $
+ * $Id: vdqm_InitPool.c,v 1.2 1999/07/29 09:33:51 obarring Exp $
  * $Log: vdqm_InitPool.c,v $
+ * Revision 1.2  1999/07/29 09:33:51  obarring
+ * Replace TABs with SPACEs
+ *
  * Revision 1.1  1999/07/27 09:20:16  obarring
  * First version
  *
@@ -39,27 +42,27 @@ extern char *sys_errlist[];
 #endif /* linux */
 
 int vdqm_InitPool(vdqmnw_t **nwtable) {
-  extern char *getenv();
-  extern char *getconfent();
-  char *p;
-  int poolsize,rc;
-  
-  if ( (p = getenv("VDQM_THREAD_POOL")) != (char *)NULL ) {
-	poolsize = atoi(p);
-  } else if ( ( p = getconfent("VDQM","THREAD_POOL",0)) != (char *)NULL ) {
-	poolsize = atoi(p);
-  } else {
+    extern char *getenv();
+    extern char *getconfent();
+    char *p;
+    int poolsize,rc;
+    
+    if ( (p = getenv("VDQM_THREAD_POOL")) != (char *)NULL ) {
+        poolsize = atoi(p);
+    } else if ( ( p = getconfent("VDQM","THREAD_POOL",0)) != (char *)NULL ) {
+        poolsize = atoi(p);
+    } else {
 #if defined(VDQM_THREAD_POOL)
-    poolsize = VDQM_THREAD_POOL;
+        poolsize = VDQM_THREAD_POOL;
 #else /* VDQM_THREAD_POOL */
-	poolsize = 10;            /* Set some reasonable default */
+        poolsize = 10;         /* Set some reasonable default */
 #endif /* VDQM_TRHEAD_POOL */
-  }
-
-  rc = Cpool_create(poolsize,&poolsize);
-  log(LOG_INFO,"vdqm_InitPool() thread pool (id=%d): pool size = %d\n",
-	rc,poolsize);
-  *nwtable = (vdqmnw_t *)malloc(poolsize * sizeof(vdqmnw_t));
-  if ( *nwtable == NULL ) return(-1);
-  return(rc);
+    }
+    
+    rc = Cpool_create(poolsize,&poolsize);
+    log(LOG_INFO,"vdqm_InitPool() thread pool (id=%d): pool size = %d\n",
+        rc,poolsize);
+    *nwtable = (vdqmnw_t *)malloc(poolsize * sizeof(vdqmnw_t));
+    if ( *nwtable == NULL ) return(-1);
+    return(rc);
 }
