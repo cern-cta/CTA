@@ -54,10 +54,6 @@ Cregexp_t *expstruct = NULL;		/* Regular expression structure */
     swab((char *)&a, (char *)&__a, sizeof(a)); \
 a = (unsigned int)__a<<16 | ((unsigned int)__a>>16); }
 
-#ifndef linux
-extern char *sys_errlist[];
-#endif /* linux */
-
 int allgroups;
 struct stats {                  /* Structure to store the statistics info */
     int dev_succ;               /* number of successful developers requests */
@@ -1958,7 +1954,7 @@ int *swapped;
     if (c != sizeof (struct accthdr)) {
         if (c == 0) return (0);
         if (c > 0) fprintf (stderr, "read returns %d\n", c);
-        else fprintf (stderr, "read error : %s\n", sys_errlist[errno]);
+        else fprintf (stderr, "read error : %s\n", strerror(errno));
         exit (2);
     }
     
@@ -1988,7 +1984,7 @@ int *swapped;
     
     if ( c != accthdr->len) {
         if (c >= 0) fprintf (stderr, "read returns %d\n", c);
-        else fprintf (stderr, "read error : %s\n", sys_errlist[errno]);
+        else fprintf (stderr, "read error : %s\n", strerror(errno));
         if (c == 0) return (0);
         exit (2);
     }

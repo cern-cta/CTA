@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.15 $ $Date: 2002/11/26 15:02:32 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.16 $ $Date: 2003/09/15 06:55:28 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -45,10 +45,6 @@ extern char *geterr();
 
 #define SAVE_ERRNO int save_errno, save_serrno; save_errno = errno; save_serrno = serrno;
 #define RESTORE_ERRNO {serrno = save_serrno; errno = save_errno;}
-
-#if !defined(linux)
-extern char *sys_errlist[];
-#endif /* linux */
 
 static int errmsg_key = -1;
 static int out_key = -1;
@@ -133,6 +129,11 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
 #if defined(RTCP_SERVER)
     if ( out == NULL && err == NULL ) {
         initlog("rtcopyd",loglevel,RTCOPY_LOGFILE);
+        /*
+         * Must set world write because RTCOPY must run with real uid/gid
+         * which is required by Ctape
+         */
+	setlogbits(0666);
         if ( msgbuf == NULL && client_socket == NULL ) {
             rtcp_log = (void (*)(int, const char *, ...))log;
             RESTORE_ERRNO;
