@@ -1899,6 +1899,11 @@ int cleanpath(output,input)
 {
 	char *dup, *p;
 
+	/* BC 2005-01-05 */
+	/* Disabling this function as it clashes with the TURL parsing: rfio://.... */
+	return 0;
+
+
 	if (input == NULL) {
 		serrno = EINVAL;
 		return(-1);
