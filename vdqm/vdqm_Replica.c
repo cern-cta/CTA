@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.14 $ $Date: 2000/08/22 14:05:27 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.15 $ $Date: 2001/02/05 10:46:54 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -42,6 +42,12 @@ extern dgn_element_t *dgn_queues;
 extern int nb_dgn;
 extern int hold;
 extern char *getconfent _PROTO((char *, char *, int));
+/*
+ * Function pointer set in vdqm_Broadcast for special replication
+ * broadcast servers.
+ */
+int DLL_DECL (*vdqm_broadcast_upd) _PROTO((vdqmHdr_t *, vdqmVolReq_t *, vdqmDrvReq_t *)) = NULL;
+
 /*
  * Only allow access to dgn queues if server is held. Otherwise
  * we risk to have concurrent access with QueueOps. As soon as
@@ -822,6 +828,7 @@ void *vdqm_ReplicaListenThread(void *arg) {
             }
             log(LOG_DEBUG,"vdqm_ReplicaListenThread() received 0x%x request\n",
                 hdr.reqtype);
+            if ( vdqm_broadcast_upd != NULL ) vdqm_LockAllQueues();
             if ( hdr.reqtype == VDQM_VOL_REQ || 
                  hdr.reqtype == VDQM_DEL_VOLREQ ) {
                 rc = vdqm_ReplVolReq(&hdr,&volreq);
@@ -841,6 +848,11 @@ void *vdqm_ReplicaListenThread(void *arg) {
                     (void)vdqm_CloseConn(nw);
                     break;
                 }
+            }
+            if ( vdqm_broadcast_upd != NULL ) {
+                vdqm_UnlockAllQueues();
+                rc = vdqm_broadcast_upd(&hdr,&volreq,&drvreq);
+                if ( rc == -1 ) exit(1);
             }
         } /* for (;;) */
         retry_replication--;
