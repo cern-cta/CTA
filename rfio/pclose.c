@@ -1,5 +1,5 @@
 /*
- * $Id: pclose.c,v 1.9 2000/11/20 15:01:18 jdurand Exp $
+ * $Id: pclose.c,v 1.10 2001/11/16 14:16:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.9 $ $Date: 2000/11/20 15:01:18 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.10 $ $Date: 2001/11/16 14:16:27 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* pclose.c      Remote command I/O - close a popened command 		*/
@@ -48,6 +48,7 @@ RFILE 	*fs ;
 #else		
       status= pclose(fs->fp_save);
 #endif	
+      free((char *)fs);
       END_TRACE() ; 
       rfio_errno = 0;
       return status ;
@@ -83,7 +84,11 @@ RFILE 	*fs ;
     */
    p = buf ;
    if ( netread_timeout( fs->s , buf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != 2*LONGSIZE)  {
+      fss = fs->s;
       TRACE(2,"rfio", "pclose: write(): %s", sys_errlist[errno]);
+      (void) free((char *)fs) ;
+      (void)close(fss) ;
+      END_TRACE() ;
       return -1 ;
    }
    unmarshall_LONG(p, status) ;
@@ -94,6 +99,6 @@ RFILE 	*fs ;
     */
    fss = fs->s;
    (void) free((char *)fs) ;
-   (void) close(fs->s) ;
+   (void) close(fss) ;
    return status ;
 }

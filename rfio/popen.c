@@ -1,5 +1,5 @@
 /*
- * $Id: popen.c,v 1.7 2000/10/02 08:02:31 jdurand Exp $
+ * $Id: popen.c,v 1.8 2001/11/16 14:16:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: popen.c,v $ $Revision: 1.7 $ $Date: 2000/10/02 08:02:31 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: popen.c,v $ $Revision: 1.8 $ $Date: 2001/11/16 14:16:27 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* popen.c       Remote pipe I/O - open file a file                      */
@@ -89,7 +89,10 @@ char *type 	;
       pcom =  cp + 1 ;
    }
    if ( gethostname(localhost, MAXHOSTNAMELEN) < 0) {
-      TRACE(1,"rfio","gethostname() failed");
+      TRACE(2,"rfio","gethostname() failed");
+      TRACE(2,"rfio","freeing RFIO descriptor at 0X%X", rfp);
+      (void) free((char *)rfp);
+      END_TRACE();
       return NULL;
    }
 
@@ -113,6 +116,9 @@ char *type 	;
       rfio_errno = 0;
       if ( file == NULL ) {
 	 TRACE(1,"rfio","popen() failed ,error %d", errno) ;
+      TRACE(2,"rfio","freeing RFIO descriptor at 0X%X", rfp);
+      (void) free((char *)rfp);
+      END_TRACE();
 	 return (NULL) ;
       }
       rfp->fp_save = file;
