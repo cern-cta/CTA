@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.4 $ $Date: 2000/06/11 07:05:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.5 $ $Date: 2000/08/04 13:36:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -36,6 +36,7 @@ static struct {
 	int fromblock;
 	int toblock;
 	int maxbyte;
+	int fromfile;
 	int maxfile;
 	int code;
 	int flags;
@@ -44,7 +45,7 @@ static float gap;	/* inter record gap for 3420/3480/3490 */
 static int infd = -1;
 static int irec;
 
-Ctape_dmpinit(path, vid, aden, drive, devtype, maxblksize, fromblock, toblock, maxbyte, maxfile, code, flags)
+Ctape_dmpinit(path, vid, aden, drive, devtype, maxblksize, fromblock, toblock, maxbyte, fromfile, maxfile, code, flags)
 char *path;
 char *vid;
 char *aden;
@@ -54,6 +55,7 @@ int maxblksize;
 int fromblock;
 int toblock;
 int maxbyte;
+int fromfile;
 int maxfile;
 int code;
 int flags;
@@ -194,6 +196,7 @@ int flags;
 	dmpparm.fromblock = fromblock;
 	dmpparm.toblock = toblock;
 	dmpparm.maxbyte = maxbyte;
+	dmpparm.fromfile = fromfile;
 	dmpparm.maxfile = maxfile;
 	dmpparm.code = code;
 	dmpparm.flags = flags;

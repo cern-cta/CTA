@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.20 $ $Date: 2000/03/06 07:49:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.21 $ $Date: 2000/08/04 13:36:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpdump - analyse the content of a tape */
@@ -42,6 +42,7 @@ char	**argv;
 	int errflg = 0;
 	int flags = 0;
 	int fromblock = -1;
+	int fromfile = -1;
 	static char lbltype[CA_MAXLBLTYPLEN+1] = "";
 	int maxblksize = -1;
 	int maxbyte = -1;
@@ -52,7 +53,7 @@ char	**argv;
 	static char vid[CA_MAXVIDLEN+1] = "";
 	static char vsn[CA_MAXVSNLEN+1] = "";
 
-	while ((c = getopt (argc, argv, "B:b:C:d:E:F:g:N:S:T:V:v:")) != EOF) {
+	while ((c = getopt (argc, argv, "B:b:C:d:E:F:g:N:q:S:T:V:v:")) != EOF) {
 		switch (c) {
 		case 'B':
 			if (maxbyte < 0) {
@@ -159,6 +160,18 @@ char	**argv;
 				}
 			}
 			break;
+		case 'q':
+			if (fromfile < 0) {
+				fromfile = strtol (optarg, &dp, 10);
+				if (*dp != '\0') {
+					fprintf (stderr, TP006, "-q");
+					errflg++;
+				}
+			} else {
+				fprintf (stderr, TP018, "-q");
+				errflg++;
+			}
+			break;
 		case 'S':
 			break;
 		case 'V':
@@ -260,7 +273,7 @@ char	**argv;
 		exit_prog (SYERR);
 
 	if (Ctape_dmpinit (infil, vid, aden, drive, devtype, maxblksize,
-	    fromblock, toblock, maxbyte, maxfile, code, flags))
+	    fromblock, toblock, maxbyte, fromfile, maxfile, code, flags))
 		exit_prog (SYERR);
 
 	while ((c = Ctape_dmpfil (infil, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -313,5 +326,5 @@ char *cmd;
 	fprintf (stderr, "%s%s%s",
 	    "[-B maxbyte] [-b max_block_size] [-C {ebcdic|ascii}]\n",
 	    "[-d density] [-E ignoreeoi] [-F maxfile] [-g device_group_name]\n",
-	    "[-N [fromblock,]toblock] [-v vsn] -V vid\n");
+	    "[-N [fromblock,]toblock] [-q fromfile] [-v vsn] -V vid\n");
 }
