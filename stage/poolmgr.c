@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.77 2001/02/04 22:02:54 jdurand Exp $
+ * $Id: poolmgr.c,v 1.78 2001/02/05 12:36:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.77 $ $Date: 2001/02/04 22:02:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.78 $ $Date: 2001/02/05 12:36:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1250,6 +1250,29 @@ int update_migpool(stcp,flag,immediate)
     goto update_migpool_return;
   }
 
+  /* If this fileclass specifies nbcopies == 0 or nbtppools == 0 (in practice, both) */
+  /* [it is protected to restrict to this - see routine upd_fileclass() in this source] */
+  /* this stcp cannot be a candidate for migration - we put it is STAGED status */
+  /* immediately */
+  if ((pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbcopies == 0) || 
+      (pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbtppools == 0)) {
+    sendrep(rpfd, MSG_ERR, STG139,
+            stcp->u1.h.xfile, 
+            pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
+            pool_p->migr->fileclass[ifileclass]->server,
+            pool_p->migr->fileclass[ifileclass]->Cnsfileclass.classid,
+            pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbcopies,
+            pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbtppools);
+    /* We mark it as staged */
+    stcp->status |= STAGED;
+    if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+      /* And not as a migration candidate */
+      stcp->status &= ~CAN_BE_MIGR;
+    }
+    /* But we still returns ok... */
+    return(0);
+  }
+
   switch (flag) {
   case -1:
     if ((stcp->status & CAN_BE_MIGR) != CAN_BE_MIGR) {
@@ -2309,14 +2332,26 @@ int upd_fileclass(pool_p,stcp)
     }
 
     /* We check that this fileclass does not contain values that we cannot sustain */
-    if ((sav_nbcopies = Cnsfileclass.nbcopies) <= 0) {
+    if ((sav_nbcopies = Cnsfileclass.nbcopies) < 0) {
       sendrep (rpfd, MSG_ERR, STG126, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, Cnsfileclass.nbcopies);
       return(-1);
     }
     /* We check that the number of tape pools is valid */
-    if (Cnsfileclass.nbtppools <= 0) {
-      sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_queryclass", "returns no tape pool - invalid fileclass - Please contact your admin");
+    if (Cnsfileclass.nbtppools < 0) {
+      sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_queryclass", "returns invalid number of tape pool - invalid fileclass - Please contact your admin");
       return(-1);
+    }
+
+    /* We allow (nbcopies == 0 && nbtppool == 0) only */
+    if ((sav_nbcopies == 0) || (Cnsfileclass.nbtppools == 0)) {
+      if ((sav_nbcopies > 0) || (Cnsfileclass.nbtppools > 0)) {
+        sendrep (rpfd, MSG_ERR, STG138, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, sav_nbcopies, Cnsfileclass.nbtppools);
+        return(-1);
+      }
+      /* Here we are sure that both nbcopies and nbtpools are equal to zero */
+      /* There is no need to check anything - we immediately add this fileclass */
+      /* into the main array */
+      goto upd_fileclass_add;
     }
 
     pi = Cnsfileclass.tppools;
@@ -2373,6 +2408,7 @@ int upd_fileclass(pool_p,stcp)
       Cnsfileclass.nbcopies = new_nbtppools;
     }
 
+  upd_fileclass_add:
     /* We add this fileclass to the list of known fileclasses */
     if (nbfileclasses <= 0) {
       if ((fileclasses = (struct fileclass *) malloc(sizeof(struct fileclass))) == NULL) {
@@ -2393,7 +2429,7 @@ int upd_fileclass(pool_p,stcp)
       memcpy(dummy, fileclasses, nbfileclasses * sizeof(struct fileclass));
       /* The realloc has been successful but fileclasses may have been moved - so we update all */
       /* references to previous indexes within fileclasses to indexes within dummy */
-      /* This douns simpler for me rather than playing with deltas in the memory */
+      /* This is simpler for me rather than playing with deltas in the memory */
       for (j = 0, pool_n = pools; j < nbpool; j++, pool_n++) {
         if (pool_n->migr == NULL) continue;
         for (i = 0; i < pool_n->migr->nfileclass; i++) {
