@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.12 2000/02/01 11:47:45 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.13 2000/02/02 10:01:43 jdurand Exp $
  */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.12 $ $Date: 2000/02/01 11:47:45 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.13 $ $Date: 2000/02/02 10:01:43 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
@@ -41,40 +41,84 @@ extern char func[];
 #endif
 #define STGDB_CONRETRYINT 10
 
+#ifdef PING
+#undef PING
+#endif
+
+#define PING {                                                                          \
+  if (Cdb_ping(&(dbfd->Cdb_sess)) != 0) {                                               \
+    if (serrno == EDB_A_ESESSION || serrno == SECOMERR || serrno == SECONNDROP) {       \
+      int retry_status;                                                                 \
+      stgdb_logout(dbfd);                                                               \
+      RECONNECT(retry_status);                                                          \
+      if (retry_status != 0) {                                                          \
+        stglogit("stgdb_Cdb_ifce","### Error at %s:%d: Cannot reconnect to Cdb.\n",     \
+                 __FILE__,__LINE__);                                                    \
+        return(-1);                                                                     \
+      }                                                                                 \
+      if (stgdb_open(dbfd,"stage") != 0) {                                              \
+        stglogit("stgdb_Cdb_ifce","### Error at %s:%d: Cannot reopen database.\n",      \
+                 __FILE__,__LINE__);                                                    \
+        stgdb_logout(dbfd);                                                             \
+        return(-1);                                                                     \
+      }                                                                                 \
+      stglogit("stgdb_Cdb_ifce","--> Reconnected to Database\n");                       \
+    } else {                                                                            \
+      stglogit("stgdb_Cdb_ifce","### Non-recoverable ping error at %s:%d: %s\n",        \
+                 __FILE__,__LINE__,sstrerror(serrno));                                  \
+    }                                                                                   \
+  }                                                                                     \
+}
+
+#ifdef RECONNECT
+#undef RECONNECT
+#endif
+
+#define RECONNECT(retry_status) {                                                       \
+  int iretry;                                                                           \
+  stglogit("stgdb_Cdb_ifce","### Warning at %s:%d: Connection with Cdb is lost. "       \
+           "Retry to connect %d times (%d seconds between each retry).\n",              \
+           __FILE__,__LINE__,STGDB_CONRETRY,STGDB_CONRETRYINT);                         \
+  retry_status = -1;                                                                    \
+  for (iretry = 0; iretry < STGDB_CONRETRY; iretry++) {                                 \
+    if (stgdb_login(dbfd) == 0) {                                                       \
+      retry_status = 0;                                                                 \
+      break;                                                                            \
+    }                                                                                   \
+    stglogit("stgdb_Cdb_ifce","### Warning at %s:%d: Cannot reconnect to Cdb at retry " \
+             "No %d\n",                                                                 \
+             __FILE__,__LINE__,iretry);                                                 \
+  }                                                                                     \
+}
+
 #ifdef RETURN
 #undef RETURN
 #endif
 
-#define RETURN(a) {                                                                         \
-  if (a != 0) {                                                                             \
-    if (serrno == EDB_A_ESESSION || serrno == SECOMERR || serrno == SECONNDROP) {           \
-      int iretry;                                                                           \
-      int retry_status;                                                                     \
-      stglogit("stgdb_Cdb_ifce","### Warning : Connection with Cdb is lost. "               \
-               "Retry to connect %d times (%d seconds between each retry).\n",              \
-               STGDB_CONRETRY,STGDB_CONRETRYINT);                                           \
-      retry_status = -1;                                                                    \
-      for (iretry = 0; iretry < STGDB_CONRETRY; iretry++) {                                 \
-        if (stgdb_login(dbfd) == 0) {                                                       \
-          retry_status = 0;                                                                 \
-          break;                                                                            \
-        }                                                                                   \
-        stglogit("stgdb_Cdb_ifce","### Warning : Cannot reconnect to Cdb at retry No %d\n", \
-                 iretry);                                                                   \
-      }                                                                                     \
-      if (retry_status != 0) {                                                              \
-        stglogit("stgdb_Cdb_ifce","### Error : Cannot reconnect to Cdb.\n");                \
-        return(a);                                                                          \
-      }                                                                                     \
-      if (stgdb_open(dbfd,"stage") != 0) {                                                  \
-        stglogit("stgdb_Cdb_ifce","### Error : Cannot reopen \"stage\" database.\n");       \
-        stgdb_logout(dbfd);                                                                 \
-        return(a);                                                                          \
-      }                                                                                     \
-      stglogit("stgdb_Cdb_ifce","--> Reconnected to Cdb\n");                                \
-    }                                                                                       \
-  }                                                                                         \
-  return(a);                                                                                \
+#define RETURN(a) {                                                                     \
+  if (a != 0) {                                                                         \
+    if (serrno == EDB_A_ESESSION || serrno == SECOMERR || serrno == SECONNDROP) {       \
+      int retry_status;                                                                 \
+      stgdb_logout(dbfd);                                                               \
+      RECONNECT(retry_status);                                                          \
+      if (retry_status != 0) {                                                          \
+        stglogit("stgdb_Cdb_ifce","### Error at %s:%d: Cannot reconnect to Cdb.\n",     \
+                 __FILE__,__LINE__);                                                    \
+        return(a);                                                                      \
+      }                                                                                 \
+      if (stgdb_open(dbfd,"stage") != 0) {                                              \
+        stglogit("stgdb_Cdb_ifce","### Error at %s:%d: Cannot reopen database.\n",      \
+                 __FILE__,__LINE__);                                                    \
+        stgdb_logout(dbfd);                                                             \
+        return(a);                                                                      \
+      }                                                                                 \
+      stglogit("stgdb_Cdb_ifce","--> Reconnected to Database\n");                       \
+    } else {                                                                            \
+      stglogit("stgdb_Cdb_ifce","### Non-recoverable dial error at %s:%d: %s\n",        \
+                 __FILE__,__LINE__,sstrerror(serrno));                                  \
+    }                                                                                   \
+  }                                                                                     \
+  return(a);                                                                            \
 }
 
 int DLL_DECL Stgdb_login(dbfd,file,line)
@@ -158,6 +202,8 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
   struct stgcat_alloc alloc;
 
   /* stglogit(func, "In stgdb_load called at %s:%d\n",file,line); */
+
+  PING;
 
   /* We init the variable */
   *stcsp = NULL;
@@ -490,10 +536,12 @@ int DLL_DECL Stgdb_upd_stgcat(dbfd,stcp,file,line)
   struct stgcat_hsm hsm;
   struct stgcat_alloc alloc;
 
+  PING;
+
   /* stglogit(func, "In stgdb_upd_stgcat called at %s:%d\n",file,line); */
 
   if (stcp2Cdb(stcp,&tape,&disk,&hsm,&alloc) != 0) {
-    stglogit("stgdb_upd_stgpath",
+    stglogit("stgdb_upd_stgcat",
              "### Warning[%s:%d] : stcp2Cdb (eg. stgcat -> Cdb on-the-fly) conversion error for reqid = %d called at %s:%d\n",
              __FILE__,__LINE__,stcp->reqid,file,line);
     return(-1);
@@ -531,6 +579,12 @@ int DLL_DECL Stgdb_upd_stgcat(dbfd,stcp,file,line)
     stglogit("stgdb_upd_stgcat",
              "### Warning[%s:%d] : unknown record to update for reqid %d called at %s:%d\n",
              __FILE__,__LINE__,(int) stcp->reqid,file,line);
+    if (serrno == EDB_D_ENOENT) {
+      stglogit("stgdb_upd_stgcat",
+               "### Warning[%s:%d] : Try to insert, instead of update, reqid %d called at %s:%d\n",
+               __FILE__,__LINE__,(int) stcp->reqid,file,line);
+      return(stgdb_ins_stgcat(dbfd,stcp));
+    }
     RETURN(-1);
   }
 
@@ -607,6 +661,8 @@ int DLL_DECL Stgdb_upd_stgpath(dbfd,stpp,file,line)
   int update_status;
   struct stgcat_link link;
 
+  PING;
+
   /* stglogit(func, "In stgdb_upd_stgpath called at %s:%d\n",file,line); */
 
   if (stpp2Cdb(stpp,&link) != 0) {
@@ -620,7 +676,13 @@ int DLL_DECL Stgdb_upd_stgpath(dbfd,stpp,file,line)
     stglogit("stgdb_upd_stgpath",
              "### Warning[%s:%d] : unknown record to update for reqid %d (%s) called at %s:%d\n",
              __FILE__,__LINE__,(int) stpp->reqid,sstrerror(serrno),file,line);
-    return(-1);
+    if (serrno == EDB_D_ENOENT) {
+      stglogit("stgdb_upd_stgpath",
+               "### Warning[%s:%d] : Try to insert, instead of update, reqid %d called at %s:%d\n",
+               __FILE__,__LINE__,(int) stpp->reqid,file,line);
+      return(stgdb_ins_stgpath(dbfd,stpp));
+    }
+    RETURN(-1);
   }
 
   if ((update_status = Cdb_update(&(dbfd->Cdb_db), "stgcat_link",
@@ -657,6 +719,7 @@ int DLL_DECL Stgdb_del_stgcat(dbfd,stcp,file,line)
   struct stgcat_hsm hsm;
   struct stgcat_alloc alloc;
 
+  PING;
 
   /* stglogit(func, "In stgdb_del_stgcat called at %s:%d\n",file,line); */
 
@@ -699,7 +762,7 @@ int DLL_DECL Stgdb_del_stgcat(dbfd,stcp,file,line)
     stglogit("stgdb_del_stgcat",
              "### Warning[%s:%d] : unknown record to delete for reqid %d (%s) called at %s:%d\n",
              __FILE__,__LINE__,(int) stcp->reqid,sstrerror(serrno),file,line);
-    return(-1);
+    RETURN(-1);
   }
 
   switch (stcp->t_or_d) {
@@ -771,6 +834,8 @@ int DLL_DECL Stgdb_del_stgpath(dbfd,stpp,file,line)
   int delete_status;
   struct stgcat_link link;
 
+  PING;
+
   /* stglogit(func, "In stgdb_del_stgpath called at %s:%d\n",file,line); */
 
   if (stpp2Cdb(stpp,&link) != 0) {
@@ -784,7 +849,7 @@ int DLL_DECL Stgdb_del_stgpath(dbfd,stpp,file,line)
     stglogit("stgdb_del_stgpath",
              "### Warning[%s:%d] : unknown record to delete for reqid %d called at %s:%d\n",
              __FILE__,__LINE__,(int) stpp->reqid,file,line);
-    return(-1);
+    RETURN(-1);
   }
 
   if ((delete_status = Cdb_delete(&(dbfd->Cdb_db),"stgcat_link",&Cdb_offset)) != 0) {
@@ -817,6 +882,8 @@ int DLL_DECL Stgdb_ins_stgcat(dbfd,stcp,file,line)
   struct stgcat_disk disk;
   struct stgcat_hsm hsm;
   struct stgcat_alloc alloc;
+
+  PING;
 
   /* stglogit(func, "In stgdb_ins_stgcat called at %s:%d\n",file,line); */
 
@@ -867,6 +934,8 @@ int DLL_DECL Stgdb_ins_stgpath(dbfd,stpp,file,line)
   int insert_status;
   struct stgcat_link link;
 
+  PING;
+
   /* stglogit(func, "In stgdb_ins_stgpath called at %s:%d\n",file,line); */
 
   if (stpp2Cdb(stpp,&link) != 0) {
@@ -878,14 +947,10 @@ int DLL_DECL Stgdb_ins_stgpath(dbfd,stpp,file,line)
   insert_status = Cdb_insert(&(dbfd->Cdb_db),"stgcat_link",NULL,(void *) &link,NULL);
   
   if (insert_status != 0) {
-    if (serrno == EDB_D_UNIQUE) {
-      return(stgdb_upd_stgpath(dbfd,stpp));
-    } else {
-      stglogit("stgdb_ins_stgpath",
-               "### Warning[%s:%d] : cannot insert record for reqid %d called at %s:%d\n",
-               __FILE__,__LINE__,(int) stpp->reqid,file,line);
-      RETURN(-1);
-    }
+    stglogit("stgdb_ins_stgpath",
+             "### Warning[%s:%d] : cannot insert record for reqid %d called at %s:%d\n",
+             __FILE__,__LINE__,(int) stpp->reqid,file,line);
+    RETURN(-1);
   }
   return(0);
 #else
