@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.24 2000/09/05 11:17:25 baud Exp $
+ * $Id: stage.h,v 1.25 2000/09/20 11:38:50 jdurand Exp $
  */
 
 /*
@@ -12,6 +12,13 @@
 #ifndef __stage_h
 #define __stage_h
 
+/* ==================== */
+/* Malloc Debug Library */
+/* ==================== */
+#ifdef USE_DMALLOC
+#include <dmalloc.h>
+#endif
+
 #include "Castor_limits.h"
 #include <osdep.h>
 #include "serrno.h"     /* Contains ESTNACT etc... */
@@ -22,11 +29,27 @@
 /* This macro returns TRUE is the host is an hpss one */
 #define ISHPSSHOST(xfile) (strstr(xfile,"hpss") == xfile )
 
-/* This macro returns TRUE is the file is an castor one */
-#define ISCASTOR(xfile) (strncmp (xfile, "/castor/", 8) == 0 || strstr (xfile, ":/castor/") != NULL)
+/* This macro returns TRUE is the file is a castor one */
+#ifdef NSROOT
+#define ISCASTOR(xfile) (strncmp (xfile, NSROOT "/", strlen(NSROOT) + 1) == 0 || strstr (xfile, ":" NSROOT "/") != NULL)
+#else
+#define ISCASTOR(xfile) 0
+#endif
 
-/* This macro returns TRUE is the host is an castor one */
-#define ISCASTORHOST(xfile) (strstr(xfile,"castor") == xfile || strstr(xfile,"cns") == xfile )
+/* This macro returns TRUE is the host is a castor one */
+#if (defined(NSHOST) && defined(NSHOSTPFX))
+#define ISCASTORHOST(xfile) (strstr(xfile,NSHOST) == xfile || strstr(xfile,NSHOSTPFX) == xfile)
+#else
+#ifdef NSHOST
+#define ISCASTORHOST(xfile) (strstr(xfile,NSHOST) == xfile)
+#else
+#ifdef NSHOSTPFX
+#define ISCASTORHOST(xfile) (strstr(xfile,NSHOSTPFX) == xfile)
+#else
+#define ISCASTORHOST(xfile) 0
+#endif
+#endif
+#endif
 
 /* This macro returns the hpss file pointer, without hostname */
 #define HPSSFILE(xfile)   strstr(xfile,"/hpss/")
@@ -197,6 +220,7 @@
 #define	REQKILD	196	/* request killed by user */
 #define	LIMBYSZ	197	/* limited by size */
 #define	ENOUGHF	199	/* enough free space */
+#define COFFOK  200 /* successful stager exit code for -c off mode */
 
 			/* stage daemon internal tables */
 
@@ -301,8 +325,9 @@ struct waitq {
 	int	clnreq_rpfd;
 	int	status;
 	int	nretry;
-	int	Aflag;
-	int	Migrationflag;
+	int	Aflag; /* Deferred allocation (path returned to RTCOPY after tape position) */
+	int	Migrationflag; /* Determine if done under stage:st or not */
+	int	concat_off_fseq; /* 0 or fseq just before the '-', like: 1-9,11- => concat_off_fseq = 11 */
 };
 
 struct migpolicy {
@@ -340,6 +365,7 @@ struct migrator {
 	int	mig_pid;
 	time_t	migreqtime;
 	int	nbfiles_canbemig;	/* number of files that can be migrated */
+	int	nbfiles_beingmig;	/* number of files being migrated */
 	u_signed64	space_canbemig;		/* total amount of data that can be migrated */
 	/* Predefined policy parameters that decide if the migrator have to be launched */
 	char	migp_name[CA_MAXMIGPNAMELEN+1];
