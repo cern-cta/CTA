@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/06/29 21:58:46 $ $Author: jdurand $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/06/30 10:27:13 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.19 $ $Date: 2004/06/29 21:58:46 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.20 $ $Date: 2004/06/30 10:27:13 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1561,6 +1561,7 @@ int rtcpcldc(tape)
       rtcpcldTp = (RtcpcldTapeList_t *)calloc(1,sizeof(RtcpcldTapeList_t));
       if ( rtcpcldTp == NULL ) {
         LOG_FAILED_CALL("calloc()");
+        (void)Cmutex_unlock(tape);
         serrno = SESYSERR;
         return(-1);
       }
