@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.10 $ $Date: 2000/05/30 10:39:36 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.11 $ $Date: 2000/05/30 10:48:47 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -78,6 +78,7 @@ EXTERN_C int DLL_DECL rfio_rmdir _PROTO((char *));
 EXTERN_C int DLL_DECL rfio_rename _PROTO((char *, char *));
 EXTERN_C int DLL_DECL rfio_lockf _PROTO((int, int, long));
 EXTERN_C int DLL_DECL rfio_chmod _PROTO((char *, int));
+EXTERN_C int DLL_DECL rfiosetopt _PROTO((int, int *, int));
 
 /*
  * RFIO library routines with different internal and external prototypes
@@ -94,8 +95,9 @@ EXTERN_C int DLL_DECL rfio_fread _PROTO((char *, int, int, RFILE *));
 EXTERN_C int DLL_DECL rfio_fseek _PROTO((RFILE *, long int, int));
 EXTERN_C RFILE DLL_DECL *rfio_popen _PROTO((char *, char *));
 EXTERN_C int DLL_DECL rfio_pclose _PROTO((RFILE *));
+EXTERN_C int DLL_DECL rfio_pread _PROTO((char *, int, int, RFILE *));
+EXTERN_C int DLL_DECL rfio_pwrite _PROTO((char *, int, int, RFILE *));
 #if !defined(_WIN32)
-EXTERN_C struct dirent DLL_DECL *rfio_readdir _PROTO((RDIR *));
 EXTERN_C int DLL_DECL rfio_rewinddir _PROTO((RDIR *));
 EXTERN_C int DLL_DECL rfio_closedir _PROTO((RDIR *));
 EXTERN_C RDIR DLL_DECL *rfio_opendir _PROTO((char *));
@@ -112,6 +114,8 @@ EXTERN_C int DLL_DECL rfio_fread _PROTO((char *, int, int, FILE *));
 EXTERN_C int DLL_DECL rfio_fseek _PROTO((FILE *, long int, int));
 EXTERN_C FILE DLL_DECL *rfio_popen _PROTO((char *, char *));
 EXTERN_C int DLL_DECL rfio_pclose _PROTO((FILE *));
+EXTERN_C int DLL_DECL rfio_pread _PROTO((char *, int, int, FILE *));
+EXTERN_C int DLL_DECL rfio_pwrite _PROTO((char *, int, int, FILE *));
 #if !defined(_WIN32) && !(defined(__hpux) && !defined(_INCLUDE_POSIX_SOURCE))
 EXTERN_C struct dirent DLL_DECL *rfio_readdir _PROTO((DIR *));
 EXTERN_C int DLL_DECL rfio_rewinddir _PROTO((DIR *));
