@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.20 $ $Date: 2003/11/04 13:24:36 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.21 $ $Date: 2004/05/27 10:14:22 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -61,6 +61,7 @@ void shq_build_id_str(uid_t uid, gid_t gid, char *buf, int buf_size);
 void shq_parse_dedication(char *dedication, char *reduced_dedication, int buf_size);
 
 
+char server[CA_MAXHOSTNAMELEN+1];
 
 int main(int argc, char *argv[]) {
     int rc, c, last_id;
@@ -74,7 +75,6 @@ int main(int argc, char *argv[]) {
     char drv_status[10];
     vdqmnw_t *nw = NULL;
     char dgn[CA_MAXDGNLEN+1];
-    char server[CA_MAXHOSTNAMELEN+1];
     extern char * optarg ; 
     extern int    optind ;
     int std = 0;
@@ -261,11 +261,9 @@ void shq_display_standard(struct vdqm_reqlist *reqlist, int give_jid) {
     struct tm *tp;
     char timestr[64] ;   /* Time in its ASCII format */
     char drv_status[10];
-    char server[CA_MAXHOSTNAMELEN+1];
 
     (void)time(&now);
 
-    server[0] = '\0';
     CLIST_ITERATE_BEGIN(reqlist,tmp1) {
         if ( tmp1->drvreq.VolReqID > 0) {
             char buf[BUF_SIZE];
