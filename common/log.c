@@ -1,5 +1,5 @@
 /*
- * $Id: log.c,v 1.5 2000/02/01 13:13:03 obarring Exp $
+ * $Id: log.c,v 1.6 2000/02/01 13:26:49 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.5 $ $Date: 2000/02/01 13:13:03 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.6 $ $Date: 2000/02/01 13:26:49 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* log.c        - generalized logging routines                          */
@@ -155,7 +155,7 @@ void logit(int level, ...)
             (void) sprintf(line,"%s %s[%d]: ",timestr,logname,pid) ;
         } else {
 #if defined(linux)
-            pid = getppid();
+            pid = getpgrp();
 #else /* linux */
             pid = getpid();
 #endif /* linux */
