@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: rtstat.man,v $ $Revision: 1.3 $ $Date: 2001/10/04 15:26:16 $ IT-PDP/DM Claire Redmond, C. Grosnickel, O. Barring
-.\" Copyright (C) 1995-2001 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: rtstat.man,v $ $Revision: 1.4 $ $Date: 2002/11/18 06:31:53 $ IT-PDP/DM Claire Redmond, C. Grosnickel, O. Barring
+.\" Copyright (C) 1995-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RTSTAT 1 "$Date: 2001/10/04 15:26:16 $" CASTOR "RTCOPY User Commands"
+.TH RTSTAT 1 "$Date: 2002/11/18 06:31:53 $" CASTOR "RTCOPY User Commands"
 
 .SH NAME
 rtstat \- gives local or global statistics on rtcopy requests, the number which are successful 
@@ -12,6 +12,8 @@ details of specifically tape errors are provided
 .B rtstat 
 [
 .BI --acctdir " accounting_dir"
+] [
+.B --allgroups
 ] [
 .BI -c
 ] [
@@ -55,6 +57,10 @@ The statistics can be requested for specific servers, or device groups, or given
 .BI \-\-acctdir " accounting_dir"
 The central directory from which information is to be read.  If not specified
 the default is /usr/spool/sacct on each tape server.
+.TP
+.B \-\-allgroups
+Do not filter out the requests sent by groups c3 and ct which are normally
+considered as requests done by the development team.
 .TP
 .BI \-c
 Use the local
@@ -161,16 +167,16 @@ STG02 -  : connect error : Connection timed out  ->  2.44 % - 1
 UNKNOWN ERRORS FOUND
 shd05   :: TMS02 -  Volume in use on this system: XZ0128  ->  2.44 % - 1
 
-DETAILS OF TAPE ERRORS - SORTED BY VID
-Req Time             Server  VID     UNM       No.Occ  Error Message
-01/07/1996 13:23:07  shd05   AX0553  exab05         2  I/O ERROR WRITING ON TAPE: No sense
-01/07/1996 18:41:32          AX0553  exab05            I/O ERROR WRITING ON TAPE: No sense
-02/07/1996 11:00:01  shd05   AX0554  exab05         1  I/O ERROR WRITING ON TAPE: No sense
 .cs R
 .fi
 .bp
 .nf
 .cs R 18
+DETAILS OF TAPE ERRORS - SORTED BY VID
+Req Time             Server  VID     UNM       No.Occ  Error Message
+01/07/1996 13:23:07  shd05   AX0553  exab05         2  I/O ERROR WRITING ON TAPE: No sense
+01/07/1996 18:41:32          AX0553  exab05            I/O ERROR WRITING ON TAPE: No sense
+02/07/1996 11:00:01  shd05   AX0554  exab05         1  I/O ERROR WRITING ON TAPE: No sense
 02/07/1996 14:17:40  shd05   AX0554  exab06         1  I/O ERROR WRITING ON TAPE: Medium error
 03/07/1996 09:02:02  shd05   AX0554  exab07         2  I/O ERROR WRITING ON TAPE: Medium error
 03/07/1996 09:26:36          AX0554  exab07            I/O ERROR WRITING ON TAPE: Medium error
@@ -227,17 +233,17 @@ USER ERRORS (DETAIL)
 ERROR OPENING DISK FILE: Permission denied  ->  0.22 % - 1
 INCORRECT OR MISSING TRAILER LABEL ON TAPE  ->  1.30 % - 6
 TP024 - file  ->  0.43 % - 2
+.cs R
+.fi
+.bp
+.nf
+.cs R 18
 
 TAPE ERRORS (DETAIL)
 Block ID Sequence Error  ->  0.43 % - 2
 
 OTHER ERRORS (DETAIL)
 TP023 - mount cancelled by operator  ->  0.43 % - 2
-.cs R
-.fi
-.bp
-.nf
-.cs R 18
 
 DETAILS OF TAPE ERRORS - SORTED BY VID
 Req Time             Server  VID     UNM       No.Occ  Error Message
