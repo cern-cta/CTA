@@ -29,6 +29,7 @@
 #include "castor/IObject.hpp"
 #include "castor/stager/QryRequest.hpp"
 #include "castor/stager/Request.hpp"
+#include "castor/stager/RequestQueryType.hpp"
 #include "castor/stager/StageRequestQueryRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
@@ -338,6 +339,39 @@ extern "C" {
   int Cstager_StageRequestQueryRequest_clone(castor::stager::StageRequestQueryRequest* instance,
                                              castor::IObject** ret) {
     *ret = instance->clone();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageRequestQueryRequest_parameter
+  //----------------------------------------------------------------------------
+  int Cstager_StageRequestQueryRequest_parameter(castor::stager::StageRequestQueryRequest* instance, const char** var) {
+    *var = instance->parameter().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageRequestQueryRequest_setParameter
+  //----------------------------------------------------------------------------
+  int Cstager_StageRequestQueryRequest_setParameter(castor::stager::StageRequestQueryRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setParameter(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageRequestQueryRequest_status
+  //----------------------------------------------------------------------------
+  int Cstager_StageRequestQueryRequest_status(castor::stager::StageRequestQueryRequest* instance, castor::stager::RequestQueryType* var) {
+    *var = instance->status();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageRequestQueryRequest_setStatus
+  //----------------------------------------------------------------------------
+  int Cstager_StageRequestQueryRequest_setStatus(castor::stager::StageRequestQueryRequest* instance, castor::stager::RequestQueryType new_var) {
+    instance->setStatus(new_var);
     return 0;
   }
 

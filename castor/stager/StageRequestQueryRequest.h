@@ -28,6 +28,7 @@
 #define CASTOR_STAGER_STAGEREQUESTQUERYREQUEST_H
 
 // Include Files and Forward declarations for the C world
+#include "castor/stager/RequestQueryType.h"
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -39,7 +40,7 @@ struct Cstager_SvcClass_t;
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
 // class StageRequestQueryRequest
-// 
+// A query related request.
 //------------------------------------------------------------------------------
 
 /**
@@ -261,5 +262,29 @@ int Cstager_StageRequestQueryRequest_type(struct Cstager_StageRequestQueryReques
  */
 int Cstager_StageRequestQueryRequest_clone(struct Cstager_StageRequestQueryRequest_t* instance,
                                            struct C_IObject_t* ret);
+
+/**
+ * Get the value of parameter
+ * The parameter of this query. Depending on its type, it may contain different
+ * things, e.g. a filename, a reqid, a usertag or a fileid
+ */
+int Cstager_StageRequestQueryRequest_parameter(struct Cstager_StageRequestQueryRequest_t* instance, const char** var);
+
+/**
+ * Set the value of parameter
+ * The parameter of this query. Depending on its type, it may contain different
+ * things, e.g. a filename, a reqid, a usertag or a fileid
+ */
+int Cstager_StageRequestQueryRequest_setParameter(struct Cstager_StageRequestQueryRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of status
+ */
+int Cstager_StageRequestQueryRequest_status(struct Cstager_StageRequestQueryRequest_t* instance, enum Cstager_RequestQueryType_t* var);
+
+/**
+ * Set the value of status
+ */
+int Cstager_StageRequestQueryRequest_setStatus(struct Cstager_StageRequestQueryRequest_t* instance, enum Cstager_RequestQueryType_t new_var);
 
 #endif // CASTOR_STAGER_STAGEREQUESTQUERYREQUEST_H

@@ -38,6 +38,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
+#include "castor/stager/RequestQueryType.hpp"
 #include "castor/stager/StageRequestQueryRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
@@ -99,7 +100,9 @@ void castor::io::StreamStageRequestQueryRequestCnv::createRep(castor::IAddress* 
   ad->stream() << obj->svcClassName();
   ad->stream() << obj->userTag();
   ad->stream() << obj->reqId();
+  ad->stream() << obj->parameter();
   ad->stream() << obj->id();
+  ad->stream() << obj->status();
 }
 
 //------------------------------------------------------------------------------
@@ -142,9 +145,15 @@ castor::IObject* castor::io::StreamStageRequestQueryRequestCnv::createObj(castor
   std::string reqId;
   ad->stream() >> reqId;
   object->setReqId(reqId);
+  std::string parameter;
+  ad->stream() >> parameter;
+  object->setParameter(parameter);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
+  int status;
+  ad->stream() >> status;
+  object->setStatus((castor::stager::RequestQueryType)status);
   return object;
 }
 

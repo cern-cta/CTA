@@ -39,7 +39,9 @@
 //------------------------------------------------------------------------------
 castor::stager::StageRequestQueryRequest::StageRequestQueryRequest() throw() :
   QryRequest(),
-  m_id() {
+  m_parameter(""),
+  m_id(),
+  m_status(RequestQueryType(0)) {
 };
 
 //------------------------------------------------------------------------------
@@ -63,8 +65,10 @@ void castor::stager::StageRequestQueryRequest::print(std::ostream& stream,
   // Call print on the parent class(es)
   this->QryRequest::print(stream, indent, alreadyPrinted);
   // Output of all members
+  stream << indent << "parameter : " << m_parameter << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "status : " << RequestQueryTypeStrings[m_status] << std::endl;
 }
 
 //------------------------------------------------------------------------------

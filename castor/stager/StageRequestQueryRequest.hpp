@@ -29,6 +29,7 @@
 
 // Include Files
 #include "castor/stager/QryRequest.hpp"
+#include "castor/stager/RequestQueryType.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -43,7 +44,7 @@ namespace castor {
 
     /**
      * class StageRequestQueryRequest
-     * 
+     * A query related request.
      */
     class StageRequestQueryRequest : public virtual QryRequest {
 
@@ -107,12 +108,53 @@ namespace castor {
       /*********************************/
       /* End of IObject abstract class */
       /*********************************/
+      /**
+       * Get the value of m_parameter
+       * The parameter of this query. Depending on its type, it may contain different
+       * things, e.g. a filename, a reqid, a usertag or a fileid
+       * @return the value of m_parameter
+       */
+      std::string parameter() const {
+        return m_parameter;
+      }
+
+      /**
+       * Set the value of m_parameter
+       * The parameter of this query. Depending on its type, it may contain different
+       * things, e.g. a filename, a reqid, a usertag or a fileid
+       * @param new_var the new value of m_parameter
+       */
+      void setParameter(std::string new_var) {
+        m_parameter = new_var;
+      }
+
+      /**
+       * Get the value of m_status
+       * @return the value of m_status
+       */
+      RequestQueryType status() const {
+        return m_status;
+      }
+
+      /**
+       * Set the value of m_status
+       * @param new_var the new value of m_status
+       */
+      void setStatus(RequestQueryType new_var) {
+        m_status = new_var;
+      }
+
     private:
 
     private:
+
+      /// The parameter of this query. Depending on its type, it may contain different things, e.g. a filename, a reqid, a usertag or a fileid
+      std::string m_parameter;
 
       /// The id of this object
       u_signed64 m_id;
+
+      RequestQueryType m_status;
 
     }; // end of class StageRequestQueryRequest
 

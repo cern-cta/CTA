@@ -82,7 +82,7 @@ CREATE TABLE StageFileQueryRequest (flags INTEGER, userName VARCHAR(2048), euid 
 
 /* SQL statements for type StageRequestQueryRequest */
 DROP TABLE StageRequestQueryRequest;
-CREATE TABLE StageRequestQueryRequest (flags INTEGER, userName VARCHAR(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE StageRequestQueryRequest (flags INTEGER, userName VARCHAR(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), parameter VARCHAR(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER, status INTEGER);
 
 /* SQL statements for type StageFindRequestRequest */
 DROP TABLE StageFindRequestRequest;
