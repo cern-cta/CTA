@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.30 $ $Date: 2001/01/29 07:35:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.31 $ $Date: 2001/01/30 06:18:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -41,7 +41,9 @@ static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.30 $ $Date: 2
 #if !defined(linux)
 extern char *sys_errlist[];
 #endif
+char *acctname;
 char *devtype;
+char *drive;
 char *dvrname;
 char errbuf[512];
 char func[16];
@@ -50,25 +52,27 @@ char hostname[CA_MAXHOSTNAMELEN+1];
 int jid;
 char *loader;
 int maxfds;
+int mode;
 char msg[OPRMSGSZ];
 int msg_num;
+char name[CA_MAXUSRNAMELEN+1];
 char orepbuf[OPRMSGSZ];
 char *path;
 fd_set readmask;
 int rpfd;
 int tapefd;
 uid_t uid;
+int updvsn_done = -1;
+char *vid;
 main(argc, argv)
 int	argc;
 char	**argv;
 {
-	char *acctname;
 	int c;
 	unsigned int demountforce;
 	int den;
 	struct devinfo *devinfo;
 	char *dgn;
-	char *drive;
 	char *dvn;
 	int get_reply;
 	char hdr1[81];
@@ -76,7 +80,6 @@ char	**argv;
 	int i;
 	static char labels[5][4] = {"", "al", "nl", "sl", "blp"};
 	int lblcode;
-	int mode;
 #if DUXV4
 	char *msgaddr;
 #endif
@@ -85,7 +88,6 @@ char	**argv;
 	struct mtop mtop;
 #endif
 	int n;
-	char name[CA_MAXUSRNAMELEN+1];
 	int needrbtmnt;
 	char *p;
 	int prelabel;
@@ -108,7 +110,6 @@ char	**argv;
 	int vdqm_rc;
 	int vdqm_reqid;
 	int vdqm_status;
-	char *vid;
 	char *vsn;
 	char vol1[LBLBUFSZ];
 	int vsnretry = 0;
@@ -186,6 +187,7 @@ char	**argv;
 		vdqm_rc ? sstrerror(serrno) : "ok");
 #endif
 
+	updvsn_done = 0;
 #ifdef TMS
 	vbsyretry = 0;
 	while ((c = sendtmsmount (mode, "PE", vid, jid, name, acctname, drive)) == ETVBSY) {
@@ -238,6 +240,7 @@ reselect_loop:
 
 	if (c = Ctape_updvsn (uid, gid, jid, ux, vid, vsn, 1, lblcode, mode))
 		goto reply;
+	updvsn_done = 1;
 
 #if SACCT
 	tapeacct (TP2MOUNT, uid, gid, jid, dgn, drive, vid, 0, why4a);
@@ -829,6 +832,10 @@ void cleanup()
 	char sendbuf[REQBUFSZ];
 
 	tplogit (func, "cleanup started\n");
+#ifdef TMS
+	if (updvsn_done == 0)
+		(void) sendtmsmount (mode, "CA", vid, jid, name, acctname, drive);
+#endif
 	if (tapefd >= 0)
 		close (tapefd);
 #if defined(_AIX) && defined(_IBMR2) && (defined(RS6000PCTA) || defined(ADSTAR))
