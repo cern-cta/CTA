@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.12 2004/11/30 15:44:32 jdurand Exp $
+ * $Id: stager_macros.h,v 1.13 2004/12/09 09:38:07 jdurand Exp $
  */
 
 #ifndef __stager_macros_h
@@ -7,18 +7,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
-#include <string.h>
+#include "stager_util.h"
 #include "dlf_api.h"
 #include "Cns_api.h"
 #include "stager_messages.h"
 #include "serrno.h"
-#include "osdep.h"
 #include "Cuuid.h"
-#include "u64subr.h"
 #include "stager_extern_globals.h"
 #include "stager_uuid.h"
-#include "log.h"
 
 /* --------------------------- */
 /* Macros for logging with DLF */
@@ -37,96 +33,8 @@
               DLF_LVL_DEBUG                         Debug level
 */
 
-/* Gcc does not like statement like: xxxx ? 1 : "" */
-/* It will issue a warning about type mismatch... */
-/* So I convert the integers to string */
-#define STAGER_LOG(what,fileid,message,value,message2,value2) { \
-  char tmpbuf1[21], tmpbuf2[21]; \
-  int _save_serrno = serrno; \
-  if (message != NULL) { \
-    if (message2 != NULL) { \
-      if (! stagerNoDlf) dlf_write( \
-	        stagerUuid, \
-	        stagerMessages[what].defaultSeverity, \
-	        what, \
-	        (struct Cns_fileid *)fileid, \
-	        STAGER_NB_PARAMS+3, \
-	        stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func, \
-	        message,((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) ? DLF_MSG_PARAM_STR : DLF_MSG_PARAM_INT,value, \
-	        message2,((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) ? DLF_MSG_PARAM_STR : DLF_MSG_PARAM_INT,value2, \
-	        STAGER_LOG_WHERE \
-	        ); \
-      if ((stagerLog != NULL) && (stagerLog[0] != '\0')) { \
-        if ((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) { \
-	  if ((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) { \
-	    log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %s : %s (errno=%d [%s], serrno=%d[%s])\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value, value2, errno, errno ? strerror(errno) : "", serrno, serrno ? sstrerror(serrno) : ""); \
-	  } else { \
-	    log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %s : %d (errno=%d [%s], serrno=%d[%s])\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value, value2, errno, errno ? strerror(errno) : "", serrno, serrno ? sstrerror(serrno) : ""); \
-	  } \
-	} else { \
-	  if ((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) { \
-	    log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %d : %s (errno=%d [%s], serrno=%d[%s])\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value, value2, errno, errno ? strerror(errno) : "", serrno, serrno ? sstrerror(serrno) : ""); \
-	  } else { \
-	    log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %d : %d (errno=%d [%s], serrno=%d[%s])\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value, value2, errno, errno ? strerror(errno) : "", serrno, serrno ? sstrerror(serrno) : ""); \
-	  } \
-	} \
-      }	\
-    } else { \
-      if (! stagerNoDlf) dlf_write( \
-	        stagerUuid, \
-	        stagerMessages[what].defaultSeverity, \
-	        what, \
-	        (struct Cns_fileid *)fileid, \
-	        STAGER_NB_PARAMS+2, \
-	        stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func, \
-	        message,((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) ? DLF_MSG_PARAM_STR : DLF_MSG_PARAM_INT,value, \
-	        STAGER_LOG_WHERE \
-	        ); \
-      if ((stagerLog != NULL) && (stagerLog[0] != '\0')) { \
-	if ((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) { \
-	  log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %s (errno=%d [%s], serrno=%d[%s])\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value, errno, errno ? strerror(errno) : "", serrno, serrno ? sstrerror(serrno) : ""); \
-	} else { \
-	  log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %d (errno=%d [%s], serrno=%d[%s])\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value, errno, errno ? strerror(errno) : "", serrno, serrno ? sstrerror(serrno) : ""); \
-	} \
-      } \
-    } \
-  } else { \
-    if (message2 != NULL) { \
-      if (! stagerNoDlf) dlf_write( \
-		stagerUuid, \
-		stagerMessages[what].defaultSeverity, \
-		what, \
-		(struct Cns_fileid *)fileid, \
-		STAGER_NB_PARAMS+2, \
-		stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func, \
-	        message2,((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) ? DLF_MSG_PARAM_STR : DLF_MSG_PARAM_INT,value2, \
-		STAGER_LOG_WHERE \
-		); \
-      if ((stagerLog != NULL) && (stagerLog[0] != '\0')) { \
-	if ((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) { \
-	  log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %s\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value2); \
-	} else { \
-	  log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %d\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value2); \
-	} \
-      } \
-    } else { \
-      if (! stagerNoDlf) dlf_write( \
-		stagerUuid, \
-		stagerMessages[what].defaultSeverity, \
-		what, \
-		(struct Cns_fileid *)fileid, \
-		STAGER_NB_PARAMS+1, \
-		stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func, \
-		STAGER_LOG_WHERE \
-		); \
-      if ((stagerLog != NULL) && (stagerLog != '\0')) { \
-	log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt); \
-      } \
-    } \
-  } \
-  serrno = _save_serrno; \
-}
-
+/* Possible messages saying this is a string are: "STRING", "SIGNAL NAME" - everything else is an integer */
+#define STAGER_LOG(what,fileid,message,value,message2,value2) stager_log(func,__FILE__,__LINE__,what,fileid,message,value,message2,value2);
 #define STAGER_LOG_EMERGENCY(fileid,string)   STAGER_LOG(STAGER_MSG_EMERGENCY,fileid, "STRING", string, NULL, NULL)
 #define STAGER_LOG_ALERT(fileid,string)       STAGER_LOG(STAGER_MSG_ALERT    ,fileid, "STRING", string, NULL, NULL)
 #define STAGER_LOG_ERROR(fileid,string)       STAGER_LOG(STAGER_MSG_ERROR    ,fileid, "STRING", string, NULL, NULL)
