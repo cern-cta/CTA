@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.112 $ $Release$ $Date: 2005/01/25 08:42:32 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.113 $ $Release$ $Date: 2005/01/25 09:56:07 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1853,7 +1853,6 @@ void castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     segment->setFseq(nsSegmentAttrs[i].fseq);
     segment->setOffset(totalSize);
     segment->setStatus(castor::stager::SEGMENT_UNPROCESSED);
-    segment->setBytes_in(nsSegmentAttrs[i].segsize);
     totalSize += nsSegmentAttrs[i].segsize;
     // get tape for this segment
     castor::stager::Tape *tape =
