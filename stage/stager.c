@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.15 2000/03/23 16:41:12 jdurand Exp $
+ * $Id: stager.c,v 1.16 2000/03/24 09:28:42 jdurand Exp $
  */
 
 /*
@@ -11,7 +11,7 @@
 #define SKIP_FILEREQ_MAXSIZE
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.15 $ $Date: 2000/03/23 16:41:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.16 $ $Date: 2000/03/24 09:28:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,6 +87,8 @@ char **hsm_vid = NULL;                   /* Current vid pointer or NULL if not i
 char putenv_string[CA_MAXHOSTNAMELEN + 10]; /* "CNS_HOST=%s" where %s max length is CA_MAXHOSTNAMELEN */
 char cns_error_buffer[512];
 char vmgr_error_buffer[512];
+char stager_error_buffer[512];
+char stager_output_buffer[512];
 
 #ifdef STAGER_DEBUG
 EXTERN_C int DLL_DECL dumpTapeReq _PROTO((tape_list_t *));
@@ -252,8 +254,9 @@ int main(argc, argv)
 #ifdef STAGER_DEBUG
 		sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] Setting Cns_errbuf and vmgr_errbuf\n");
 		if (Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0 ||
-			vmgr_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0) {
-			sendrep(rpfd, MSG_ERR, "### Cannot set API error buffer(s) (%s)\n",sstrerror(serrno));
+			vmgr_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0 ||
+			stage_setlog((void (*) _PROTO((int, CONST char *, ...))) &stager_usrmsg) != 0) {
+			sendrep(rpfd, MSG_ERR, "### Cannot set Cns or Vmgr API error buffer(s) or stager API callback function (%s)\n",sstrerror(serrno));
 			exit(SYERR);
 		}
 #endif
