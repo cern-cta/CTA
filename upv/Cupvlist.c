@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupvlist.c,v $ $Revision: 1.5 $ $Date: 2002/06/12 08:17:11 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)Cupvlist.c,v 1.5 2002/06/12 08:17:11 CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 /*      Cupvlist - list privilege entries */

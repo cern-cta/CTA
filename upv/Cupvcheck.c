@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupvcheck.c,v $ $Revision: 1.5 $ $Date: 2002/06/12 08:17:11 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)Cupvcheck.c,v 1.5 2002/06/12 08:17:11 CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -136,14 +136,14 @@ char **argv;
 #endif
   if (Cupv_check (uid, gid, src, tgt, priv) < 0) {
     fprintf (stderr, "Cupvcheck: %s\n", sstrerror(serrno));
-    #if defined(_WIN32)
+#if defined(_WIN32)
       WSACleanup();
-    #endif
+#endif
     exit (USERR);
   }
-  #if defined(_WIN32)
+#if defined(_WIN32)
     WSACleanup();
-  #endif
+#endif
   exit (0);
 }
 

@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupvdelete.c,v $ $Revision: 1.5 $ $Date: 2002/06/12 08:17:11 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)Cupvdelete.c,v 1.5 2002/06/12 08:17:11 CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -40,9 +40,9 @@ main(argc, argv)
   char tgt[CA_MAXREGEXPLEN + 1]; 
   char usr[CA_MAXUSRNAMELEN + 1];
   char grp[MAXGRPNAMELEN + 1];
-  #if defined(_WIN32)
+#if defined(_WIN32)
     WSADATA wsadata;
-  #endif
+#endif
 
   usr[0] = 0;
   grp[0] = 0;
@@ -125,7 +125,7 @@ main(argc, argv)
       exit(USERR);
     }
   }
- #if defined(_WIN32)
+#if defined(_WIN32)
   if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
     fprintf (stderr, CUP52);
     exit (SYERR);
@@ -133,14 +133,14 @@ main(argc, argv)
 #endif
   if (Cupv_delete (uid, gid, src, tgt) < 0) {
     fprintf (stderr, "Cupvdelete: %s\n", sstrerror(serrno));
-    #if defined(_WIN32)
+#if defined(_WIN32)
       WSACleanup();
-    #endif
+#endif
     exit (USERR);
   }
-  #if defined(_WIN32)
+#if defined(_WIN32)
     WSACleanup();
-  #endif
+#endif
   exit (0);
 }
 

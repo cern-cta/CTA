@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupvshutdown.c,v $ $Revision: 1.2 $ $Date: 2002/06/12 08:17:11 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)Cupvshutdown.c,v 1.2 2002/06/12 08:17:11 CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 /*	Cupvshutdown - shutdown the UPV */
@@ -24,9 +24,9 @@ main(argc, argv)
 int argc;
 char **argv;
 {
-    #if defined(_WIN32)
+#if defined(_WIN32)
       WSADATA wsadata;
-    #endif
+#endif
 	int c;
 	int errflg = 0;
 	int force = 0;
@@ -84,23 +84,23 @@ char **argv;
 	marshall_LONG (q, msglen);      /* update length field */
 
 
-	#if defined(_WIN32)
+#if defined(_WIN32)
     if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
       fprintf (stderr, CUP52);
       exit (SYERR);
 	}
-    #endif
+#endif
 
 	if (send2Cupv (NULL, sendbuf, msglen, NULL, 0) < 0) {
 		fprintf (stderr, "Cupvshutdown: %s\n", sstrerror(serrno));
-		 #if defined(_WIN32)
+#if defined(_WIN32)
            WSACleanup();
-         #endif
+#endif
 		 exit (USERR);
 	}
-	#if defined(_WIN32)
+#if defined(_WIN32)
       WSACleanup();
-    #endif
+#endif
 	exit (0);
 }
 

@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupvadd.c,v $ $Revision: 1.5 $ $Date: 2002/06/12 08:21:34 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)Cupvadd.c,v 1.5 2002/06/12 08:21:34 CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -46,9 +46,9 @@ char **argv;
   char usr[CA_MAXUSRNAMELEN + 1];
   char grp[MAXGRPNAMELEN + 1];
   int priv = -1;
-  #if defined(_WIN32)
+#if defined(_WIN32)
     WSADATA wsadata;
-  #endif
+#endif
 
   src[0]=0;
   tgt[0]=0;
@@ -144,15 +144,15 @@ char **argv;
   /* Adding a line */
   if (Cupv_add (uid, gid, src, tgt, priv) < 0) {
     fprintf (stderr, "%s: %s\n", argv[0], sstrerror(serrno));
-    #if defined(_WIN32)
-      WSACleanup();
-    #endif
+#if defined(_WIN32)
+    WSACleanup();
+#endif
     exit (USERR);
   }
   
-  #if defined(_WIN32)
-    WSACleanup();
-  #endif
+#if defined(_WIN32)
+  WSACleanup();
+#endif
   exit (0);
 }
 
