@@ -1207,15 +1207,7 @@ Sigfunc *_Cpool_signal(signo,func)
     act.sa_flags |= SA_RESTART;		/* SVR4, 44BSD */
 #endif
   }
-#ifdef __INSURE__
-  /* Insure don't like the value I give to sigaction... */
-  _Insure_set_option("runtime","off");
-#endif
   n = sigaction(signo, &act, &oact);
-#ifdef __INSURE__
-  /* Restore runtime checking */
-  _Insure_set_option("runtime","on");
-#endif
   if (n < 0) {
     return(SIG_ERR);
   }
@@ -1279,26 +1271,14 @@ void DLL_DECL *Cpool_calloc(file,line,nmemb,size)
 
   /* If there is no entry yet, then previous will be equal to &Cmalloc */
 
-#ifdef __INSURE__
-  /* Insure don't like when malloc result is stored in a dereferenced variable */
-  _Insure_set_option("runtime","off");
-#endif
   /* We create an element */
   if ((previous->next = malloc(sizeof(struct Cmalloc_t))) == NULL) {
-#ifdef __INSURE__
-  /* Restore runtime checking */
-    _Insure_set_option("runtime","on");
-#endif
     return(NULL);
   }
   /* We create the requested memory */
   if ((previous->next->start = calloc(nmemb,size)) == NULL) {
     free(previous->next);
     previous->next = NULL;
-#ifdef __INSURE__
-  /* Restore runtime checking */
-    _Insure_set_option("runtime","on");
-#endif
     return(NULL);
   }
   /* Unfortunately "current->end += (nmemb * size)" is not ANSI-C and */
@@ -1309,10 +1289,6 @@ void DLL_DECL *Cpool_calloc(file,line,nmemb,size)
   previous->next->next  = NULL;
 
   /* We return the result of _calloc */
-#ifdef __INSURE__
-  /* Restore runtime checking */
-    _Insure_set_option("runtime","on");
-#endif
   return(previous->next->start);
 }
 
@@ -1361,26 +1337,14 @@ void DLL_DECL *Cpool_malloc(file,line,size)
 
   /* If there is no entry yet, then previous will be equal to &Cmalloc */
 
-#ifdef __INSURE__
-  /* Insure don't like when malloc result is stored in a dereferenced variable */
-  _Insure_set_option("runtime","off");
-#endif
   /* We create an element */
   if ((previous->next = malloc(sizeof(struct Cmalloc_t))) == NULL) {
-#ifdef __INSURE__
-  /* Restore runtime checking */
-    _Insure_set_option("runtime","on");
-#endif
     return(NULL);
   }
   /* We create the requested memory */
   if ((previous->next->start = malloc(size)) == NULL) {
     free(previous->next);
     previous->next = NULL;
-#ifdef __INSURE__
-  /* Restore runtime checking */
-    _Insure_set_option("runtime","on");
-#endif
     return(NULL);
   }
   /* Unfortunately "current->end += (nmemb * size)" is not ANSI-C and */
@@ -1391,10 +1355,6 @@ void DLL_DECL *Cpool_malloc(file,line,size)
   previous->next->next = NULL;
 
   /* We return the result of _malloc */
-#ifdef __INSURE__
-  /* Restore runtime checking */
-    _Insure_set_option("runtime","on");
-#endif
   return(previous->next->start);
 }
 

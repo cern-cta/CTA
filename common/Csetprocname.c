@@ -1,5 +1,5 @@
 /*
- * $Id: Csetprocname.c,v 1.1 2001/11/20 09:47:35 jdurand Exp $
+ * $Id: Csetprocname.c,v 1.2 2003/04/17 07:39:36 jdurand Exp $
  */
 
 /*
@@ -217,13 +217,6 @@ int DLL_DECL Cinitsetprocname(argc, argv, envp)
   extern char **environ;
   char **thisenviron;
 
-#ifdef __INSURE__
-  /* This routine is declared UNSAFE - In particular Insure will detect
-   * overflow when argv[0] is reused
-   */
-  _Insure_set_option("runtime","off");
-#endif
-
   /*
   **  Move the environment so setprocname can use the space at
   **  the top of memory.
@@ -234,10 +227,6 @@ int DLL_DECL Cinitsetprocname(argc, argv, envp)
   if ((thisenviron = (char **) malloc(sizeof (char *) * (i + 1))) == NULL) {
     Argv = NULL;
     serrno = SEINTERNAL;
-#ifdef __INSURE__
-  /* Restore runtime checking */
-    _Insure_set_option("runtime","on");
-#endif
     return(-1);
   }
   
@@ -252,10 +241,6 @@ int DLL_DECL Cinitsetprocname(argc, argv, envp)
       free(thisenviron);
       Argv = NULL;
       serrno = SEINTERNAL;
-#ifdef __INSURE__
-      /* Restore runtime checking */
-      _Insure_set_option("runtime","on");
-#endif
       return(-1);
     }
     thisenviron[i] = strcpy(p, envp[i]);
@@ -284,10 +269,6 @@ int DLL_DECL Cinitsetprocname(argc, argv, envp)
       if (LastArgv + 1 == envp[i])
         LastArgv = envp[i] + strlen(envp[i]);
 	}
-#ifdef __INSURE__
-  /* Restore runtime checking */
-  _Insure_set_option("runtime","on");
-#endif
   return(0);
 }
 
@@ -320,13 +301,6 @@ __Csetprocname(CONST char *fmt, ...)
   struct user u;
 #  endif /* SPT_TYPE == SPT_SCO */
 
-#  ifdef __INSURE__
-  /* This routine is declared UNSAFE - In particular Insure will detect
-   * overflow when argv[0] is reused
-   */
-  _Insure_set_option("runtime","off");
-#  endif
-
   p = buf;
   
   /* print the argument string */
@@ -347,10 +321,6 @@ __Csetprocname(CONST char *fmt, ...)
 
   if (i < 0) {
     serrno = SEINTERNAL;
-#  ifdef __INSURE__
-    /* Restore runtime checking */
-    _Insure_set_option("runtime","on");
-#  endif
     return(-1);
   }
 
@@ -358,10 +328,6 @@ __Csetprocname(CONST char *fmt, ...)
   pst.pst_command = buf;
   if (pstat(PSTAT_SETCMD, pst, i, 0, 0) < 0) {
     serrno = SEINTERNAL;
-#  ifdef __INSURE__
-    /* Restore runtime checking */
-    _Insure_set_option("runtime","on");
-#  endif
     return(-1);
   }
 #  endif /* SPT_TYPE == SPT_PSTAT */
@@ -380,10 +346,6 @@ __Csetprocname(CONST char *fmt, ...)
       kmem = open(_PATH_KMEM, O_RDWR, 0);
       if (kmem < 0) {
         serrno = SEINTERNAL;
-#  ifdef __INSURE__
-        /* Restore runtime checking */
-        _Insure_set_option("runtime","on");
-#  endif
         return(-1);
       }
       if ((j = fcntl(kmem, F_GETFD, 0)) < 0 ||
@@ -392,10 +354,6 @@ __Csetprocname(CONST char *fmt, ...)
           (void) close(kmem);
           kmem = -1;
           serrno = SEINTERNAL;
-#  ifdef __INSURE__
-          /* Restore runtime checking */
-          _Insure_set_option("runtime","on");
-#  endif
           return(-1);
 		}
       kmempid = CurrentPid;
@@ -408,10 +366,6 @@ __Csetprocname(CONST char *fmt, ...)
 #  if SPT_TYPE == SPT_REUSEARGV
   if (LastArgv == NULL) {
     serrno = SEINTERNAL;
-#  ifdef __INSURE__
-    /* Restore runtime checking */
-    _Insure_set_option("runtime","on");
-#  endif
     return(-1);
   }
   
@@ -431,10 +385,6 @@ __Csetprocname(CONST char *fmt, ...)
   Argv[0] = buf;
   Argv[1] = 0;
 #  endif /* SPT_TYPE == SPT_CHANGEARGV */
-#  ifdef __INSURE__
-  /* Restore runtime checking */
-  _Insure_set_option("runtime","on");
-#  endif
 # endif /* SPT_TYPE != SPT_NONE */
   return(0);
 }
