@@ -1,5 +1,5 @@
 /*
- * $Id: stager_disk.c,v 1.1 2001/11/30 12:25:44 jdurand Exp $
+ * $Id: stager_disk.c,v 1.2 2001/12/20 11:42:13 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.1 $ $Date: 2001/11/30 12:25:44 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.2 $ $Date: 2001/12/20 11:42:13 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -366,12 +366,13 @@ int main(argc,argv)
 			stglogit(func, "### Csetprocname error, errno=%d (%s), serrno=%d (%s)\n", errno, strerror(errno), serrno, sstrerror(serrno));
 		}
 #endif
-		if ((exit_code = filecopy(stcp, key, hostname)) & 0xFF) {
-			exit (SYERR);
+		if ((exit_code = filecopy(stcp, key, hostname)) != 0) {
+			free(stcs);
+			exit((exit_code >> 8) & 0xFF);
 		}
 	}
 	free(stcs);
-	exit((exit_code >> 8) & 0xFF);
+	exit(0);
 }
 
 int filecopy(stcp, key, hostname)
@@ -387,7 +388,7 @@ int filecopy(stcp, key, hostname)
 	FILE *rf;
 	char stageid[CA_MAXSTGRIDLEN+1];
 
-    SETTAPEEID(stcs->uid,stcs->gid);
+	SETTAPEEID(stcs->uid,stcs->gid);
 
 	/*
 	 * @@@ TO BE MOVED TO cpdskdsk.sh @@@
@@ -398,7 +399,7 @@ int filecopy(stcp, key, hostname)
 		sprintf (stageid, "%d.%d@%s", reqid, key, hostname);
 #ifdef STAGER_DEBUG
 		SAVE_EID;
-		sendrep (rpfd, MSG_ERR, "Calling stage_updc_filcp(stageid=%s,...)\n",stageid);
+		sendrep (rpfd, MSG_ERR, "Calling stage_updc_tppos(stageid=%s,...)\n",stageid);
 		RESTORE_EID;
 #endif
 #ifdef STAGE_CSETPROCNAME
@@ -410,15 +411,11 @@ int filecopy(stcp, key, hostname)
 			stglogit(func, "### Csetprocname error, errno=%d (%s), serrno=%d (%s)\n", errno, strerror(errno), serrno, sstrerror(serrno));
 		}
 #endif
-		if (stage_updc_filcp (
+		if (stage_updc_tppos (
 								stageid,                 /* Stage ID      */
 								use_subreqid != 0 ? get_subreqid(stcp) : -1, /* subreqid      */
 								-1,                      /* Copy rc       */
-								NULL,                    /* Interface     */
-								0,                       /* Size          */
-								0,                       /* Waiting time  */
-								0,                       /* Transfer time */
-								0,                       /* block size    */
+								-1,                      /* Blocksize     */
 								NULL,                    /* drive         */
 								NULL,                    /* fid           */
 								0,                       /* fseq          */
@@ -428,9 +425,9 @@ int filecopy(stcp, key, hostname)
 								) != 0) {
 			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG02, stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.d.xfile,
-					"stage_updc_filcp", sstrerror (serrno));
+					"stage_updc_tppos", sstrerror (serrno));
 			RESTORE_EID;
-			return(USERR);
+			return(serrno << 8); /* We simulate the output from rfio_pclose() */
 		}
 #ifdef STAGER_DEBUG
 		SAVE_EID;
@@ -497,7 +494,7 @@ int filecopy(stcp, key, hostname)
 	if (rf == NULL) {
 		/* This way we will sure that it will be logged... */
 		sendrep(rpfd, MSG_ERR, "STG02 - %s : %s\n", command, rfio_serror());
-		return(SYERR);
+		return(rfio_serrno() << 8); /* We simulate the output from rfio_pclose() */
 	}
 
 	while (1) {
@@ -512,9 +509,9 @@ int filecopy(stcp, key, hostname)
 	PRE_RFIO;
 	c = rfio_pclose (rf);
 	if (c != 0) {
-		sendrep(rpfd, MSG_ERR, "STG02 - %s : %s error : exiting with status 0x%x\n", "filecopy", "rfio_pclose", c);
+		sendrep(rpfd, MSG_ERR, "STG02 - %s : %s error : exiting with status 0x%x (%s)\n", "filecopy", "rfio_pclose", c, sstrerror((c >> 8) & 0xFF));
 	}
-	return(c);
+	return(c); /* This is the output of rfio_pclose, e.g. status in the higher byte */
 }
 
 void cleanup() {
