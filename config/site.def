@@ -255,31 +255,40 @@
 
 #if BuildSecurity
 
+
+
 #if UseKRB5
+#define KRB5Mech KRB5
 #define SecAuthMechKRB5       -DKRB5
 #define SecIncludeDirKRB5 -I/usr/kerberos/include
 #define SecLibsDirKRB5 -L/usr/kerberos/lib
 #define SecLibsKRB5 -lgssapi_krb5 -lkrb5 -lk5crypto -lcom_err  -lresolv
-/*
-        #define CSEC_CENTRAL_NAME_KRB5 "castor/central"
-        #define CSEC_DISK_NAME_KRB5 "castor/disk"
-        #define CSEC_TAPE_NAME_KRB5 "castor/tape"
-*/
+#else
+#define KRB5Mech
 #endif
 
 #if UseGSI
+#define GSIMech GSI
 #define SecAuthMechGSI       -DGSI 
 #define SecIncludeDirGSI -I/opt/globus/include/gcc32dbg
 #define SecLibsDirGSI -L/opt/globus/lib
 #define SecLibsGSI -lglobus_gssapi_gsi_gcc32dbg -lglobus_gss_assist_gcc32dbg
+#else
+#define GSIMech
 #endif
 
 #if UseKRB4
+#define KRB4Mech KRB4
 #define SecIncludeDirKRB4 -I/usr/kerberos4/include
 #define SecLibsDirKRB4 -L/usr/kerberos4/lib
 #define SecLibsKRB4 -lkrb -lroken -lresolv -lcrypto
+#else
+#define KRB4Mech
 #endif
 
+#define IDMech ID
+
+#define CSEC_Mechlist \"KRB5Mech GSIMech KRB4Mech IDMech\"
 
 
 #endif /* BuildSecurity */
