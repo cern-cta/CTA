@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.34 2002/11/19 08:59:53 jdurand Exp $
+ * $Id: procfilchg.c,v 1.35 2002/12/16 08:56:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.34 $ $Date: 2002/11/19 08:59:53 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.35 $ $Date: 2002/12/16 08:56:02 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -604,9 +604,9 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 								actual_size_block = stcp->actual_size;
 							}
 						} else {
-							stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
-							/* No block information - assume mismatch with actual_size will be acceptable */
-							actual_size_block = stcp->actual_size;
+							sendrep(&rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
+							c = rfio_serrno();
+							goto reply;			
 						}
 						/* We grabbed the size in the name server before. We verify consistency */
 						if (nocheck_hsmsize == 0) {
@@ -690,7 +690,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			if (loop_break) break;
 		}
 		if (! found) {
-			sendrep (&rpfd, MSG_ERR, STG153, hsmfile ? hsmfile : "", "file not found", poolname);
+			sendrep (&rpfd, MSG_ERR, STG153, hsmfile ? hsmfile : "", "disk file not found", poolname);
 			c = ENOENT;
 			goto reply;
 		} else {

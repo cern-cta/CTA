@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.202 2002/12/11 08:38:28 jdurand Exp $
+ * $Id: procio.c,v 1.203 2002/12/16 08:56:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.202 $ $Date: 2002/12/11 08:38:28 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.203 $ $Date: 2002/12/16 08:56:02 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2505,9 +2505,14 @@ void procioreq(req_type, magic, req_data, clienthost)
 						actual_size_block = stcp->actual_size;
 					}
 				} else {
-					stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
-					/* No block information - assume mismatch with actual_size will be acceptable */
-					actual_size_block = stcp->actual_size;
+					sendrep(&rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
+					global_c_stagewrt++;
+					c = rfio_serrno();
+					if (stgreq.t_or_d == 'h') {
+						goto stagewrt_continue_loop;
+					} else {
+						goto reply;
+					}
 				}
 
 				/* We force the tape pool if any (implying no extension of this record for eventual other copy)  */
@@ -3527,9 +3532,9 @@ void procputreq(req_type, magic, req_data, clienthost)
 						actual_size_block = stcp->actual_size;
 					}
 				} else {
-					stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
-					/* No block information - assume mismatch with actual_size will be acceptable */
-					actual_size_block = stcp->actual_size;
+					sendrep(&rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
+					c = rfio_serrno();
+					goto reply;
 				}
 				updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
 							  (signed64) (((signed64) stcp->size) - (signed64) actual_size_block));
@@ -3667,9 +3672,9 @@ void procputreq(req_type, magic, req_data, clienthost)
 						actual_size_block = stcp->actual_size;
 					}
 				} else {
-					stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
-					/* No block information - assume mismatch with actual_size will be acceptable */
-					actual_size_block = stcp->actual_size;
+					sendrep(&rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
+					c = rfio_serrno();
+					goto reply;
 				}
 				updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
 							  (signed64) (((signed64) stcp->size) - (signed64) actual_size_block));

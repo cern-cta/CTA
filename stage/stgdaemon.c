@@ -3334,9 +3334,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 							actual_size_block = actual_size;
 						}
 					} else {
-						stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
-						/* No block information - assume mismatch with actual_size will be acceptable */
-						actual_size_block = actual_size;
+						return(-1);
 					}
 				}
 				PRE_RFIO;
@@ -4210,9 +4208,8 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 				actual_size_block = stcp->actual_size;
 			}
 		} else {
-			stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
-			/* No block information - assume mismatch with actual_size will be acceptable */
-			actual_size_block = stcp->actual_size;
+			sendrep(&rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
+			return(rfio_serrno());
 		}
 		updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
 						(signed64) ((signed64) stcp->size - (signed64) actual_size_block));
@@ -4338,9 +4335,8 @@ int upd_staged(upath)
 			actual_size_block = stcp->actual_size;
 		}
 	} else {
-		stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
-		/* No block information - assume mismatch with actual_size will be acceptable */
-		actual_size_block = stcp->actual_size;
+		sendrep(&rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
+		return(rfio_serrno());
     }
 #ifdef USECDB
 	if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {

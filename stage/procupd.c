@@ -151,6 +151,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 	char *recfm = NULL;
 	static char s_cmd[5][9] = {"", "stagein", "stageout", "stagewrt", "stageput"};
 	u_signed64 size = 0;
+	int have_size_option = 0;
 	struct stat64 st;
 	struct stgcat_entry *stcp;
 	int subreqid;
@@ -334,6 +335,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				} else {
 					size = strutou64(Coptarg); /* Default unit is byte there */
 				}
+				have_size_option = 1;
 				break;
 			case 'T':
 				stage_strtoi(&transfer_time, Coptarg, &dp, 10);
@@ -1007,6 +1009,16 @@ procupdreq(req_type, magic, req_data, clienthost)
 					setegid(start_passwd.pw_gid);
 					seteuid(start_passwd.pw_uid);
 					stglogit (func, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
+				}
+				/* We continue only if user specified -s option */
+				/* and then we trust him - this call is in 99.9% cases */
+				/* used only by the mover, so -s information is always */
+				/* correct. Nevertheless we check. */
+				if (! have_size_option) {
+					c = rfio_serrno();
+					sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_STAT64_FUNC(stcp->ipath), rfio_serror());
+					sendrep (&rpfd, MSG_ERR, "STG02 - %s : No -s option value - Giving up\n", stcp->ipath);
+					goto reply;
 				}
 				stglogit (func, "STG02 - %s : Incrementing actual_size with -s option value\n", stcp->ipath);
 				/* No block information - assume mismatch with actual_size will be acceptable */
@@ -1810,7 +1822,7 @@ int update_hsm_a_time(stcp)
 			stcp->a_time = statbuf.st_mtime;
 		} else {
 			rc = rfio_serrno();
-			stglogit (func, STG02, stcp->u1.m.xfile, "rfio_stat64", rfio_serror());
+			sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.m.xfile, "rfio_stat64", rfio_serror());
 		}
 		break;
 	case 'h':
@@ -1826,7 +1838,7 @@ int update_hsm_a_time(stcp)
 			stcp->a_time = Cstatbuf.mtime;
 		} else {
 			rc = serrno;
-			stglogit (func, STG02, stcp->u1.h.xfile, "Cns_statx", sstrerror(serrno));
+			sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_statx", sstrerror(serrno));
 		}
 		break;
 	default:
