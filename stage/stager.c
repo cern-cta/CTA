@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.153 2001/09/18 21:22:15 jdurand Exp $
+ * $Id: stager.c,v 1.154 2001/09/25 08:23:39 jdurand Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.153 $ $Date: 2001/09/18 21:22:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.154 $ $Date: 2001/09/25 08:23:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -3845,7 +3845,11 @@ int stager_hsm_callback(tapereq,filereq)
 			/* that will prevent RTCOPY to send another callback to the stgdaemon itself, allowing us to */
 			/* continue with another rtcpc() request */
 			callback_error = 1;
-			SET_HSM_IGNORE(stager_client_true_i,filereq->err.errorcode);
+			if (error_already_processed == 0) {
+				/* We did not recognized the error as a tape error */
+				/* so we say that we will not retry transfer of this file */
+				SET_HSM_IGNORE(stager_client_true_i,filereq->err.errorcode);
+			}
 			serrno = filereq->err.errorcode; /* Can be unset at this step */
 			return(-1);
 		}
@@ -4075,6 +4079,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Monday 17 September, 2001 at 18:43:03 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Tuesday 25 September, 2001 at 10:22:49 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
