@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.21 2000/05/22 12:39:32 jdurand Exp $
+ * $Id: poolmgr.c,v 1.22 2000/05/23 09:13:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.21 $ $Date: 2000/05/22 12:39:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.22 $ $Date: 2000/05/23 09:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1250,12 +1250,12 @@ int migpoolfiles(migr_p)
     int itype;
 	struct passwd *stpasswd;             /* Generic uid/gid stage:st */
     int *processes = NULL;
-    int nprocesses = 0;
-    int iprocess;
     int pid;
     int npidwait;
     int okpoolname;
     int ipoolname;
+    int term_status;
+    pid_t child_pid;
 
 	strcpy (func, "migpoolfiles");
 
@@ -1281,10 +1281,7 @@ int migpoolfiles(migr_p)
 		close (c);
 
 #ifndef _WIN32
-	sa_poolmgr.sa_handler = poolmgr_wait4child;
-	sa_poolmgr.sa_flags = SA_RESTART;
-	sigaction (SIGCHLD, &sa_poolmgr, NULL);
-	sigaction (SIGALRM, &sa_poolmgr, NULL); /* because of sleep */
+    signal(SIGCHLD, poolmgr_wait4child);
 #endif
 
 	/* build a sorted list of stage catalog entries for the specified pool */
@@ -1425,19 +1422,6 @@ int migpoolfiles(migr_p)
               free (scs);
               exit(rc != 0 ? SYERR : 0);
             } else {
-              /* We remember the pid of this process - it will be a zombie until we wait for it */
-              if (nprocesses == 0) {
-                if ((processes = (int *) malloc(sizeof(int))) != NULL) {
-                  processes[nprocesses++] = fork_pid;
-                }
-              } else {
-                int *dummy;
-
-                if ((dummy = (int *) realloc(processes,sizeof(int))) != NULL) {
-                  processes = dummy;
-                  processes[nprocesses++] = fork_pid;
-                }
-              }
               /* Next round */
               memset((void *) files, 0, nfiles_per_request * sizeof(stage_hsm_t));
               nfiles = 0;
@@ -1447,21 +1431,27 @@ int migpoolfiles(migr_p)
       }
     }
 
-    npidwait = nprocesses;
-    /* We wait for all child(s) to terminate */
-    while (npidwait > 0) {
-      if ((pid = waitpid (-1, NULL, WNOHANG)) > 0) {
-        /* Got one child terminated */
-        for (iprocess = 0; iprocess < nprocesses; iprocess++) {
-          if (processes[iprocess] == pid) {
-            processes[iprocess] = -1;
-            npidwait--;
-            break;
-          }
+    /* Wait for all child to exit */
+    while (1) {
+      if ((child_pid = waitpid(-1, &term_status, WNOHANG)) < 0) {
+        break;
+      }
+      if (child_pid > 0) {
+        stglogit("migpoolfile","Migration child pid %d stopped or exited\n", child_pid); 
+        if (WIFEXITED(term_status)) {
+          stglogit("migpoolfiles","Migration child pid %d exited or returned from main with a status of %d\n",
+                   child_pid, WEXITSTATUS(term_status));
+        } else if (WIFSIGNALED(term_status)) {
+          stglogit("migpoolfiles","Migration child pid %d exited due to uncaught signal %d\n",
+                   child_pid, WTERMSIG(term_status));
+        } else {
+          stglogit("migpoolfiles","Migration child pid %d was stopped\n",
+                   child_pid);
         }
       }
       sleep(1);
     }
+    stglogit("migpoolfiles","waitpid : %s\n",strerror(errno));
 
     free(files);
 	free (scs);
@@ -1515,8 +1505,9 @@ int isuserlevel(path)
   return(rc);
 }
 
-#if ! defined(_WIN32)
-void poolmgr_wait4child()
+#ifndef _WIN32
+void poolmgr_wait4child(signo)
+     int signo;
 {
 }
 #endif
