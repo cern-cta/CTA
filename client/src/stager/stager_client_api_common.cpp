@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.3 2004/11/22 22:00:59 bcouturi Exp $
+ * $Id: stager_client_api_common.cpp,v 1.4 2004/11/25 13:23:18 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.3 $ $Date: 2004/11/22 22:00:59 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.4 $ $Date: 2004/11/25 13:23:18 $ CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
@@ -20,6 +20,8 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision:
 /* Local headers */
 /* ============= */
 #include "stager_client_api.h"
+#include "castor/stager/SubRequest.hpp"
+
 
 /* ================= */
 /* Internal routines */
@@ -157,3 +159,11 @@ FREE_STRUCT_LIST(filequery_resp)
 FREE_STRUCT_LIST(requestquery_resp)
 FREE_STRUCT_LIST(subrequestquery_resp)
 FREE_STRUCT_LIST(findrequest_resp)
+
+
+
+
+char *stage_statusName(int statusCode) 
+{
+  return (char *)castor::stager::SubRequestStatusCodesStrings[statusCode];
+}
