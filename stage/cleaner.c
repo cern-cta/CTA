@@ -1,5 +1,5 @@
 /*
- * $Id: cleaner.c,v 1.14 2001/03/14 11:46:19 jdurand Exp $
+ * $Id: cleaner.c,v 1.15 2001/11/30 11:29:01 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: cleaner.c,v $ $Revision: 1.14 $ $Date: 2001/03/14 11:46:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: cleaner.c,v $ $Revision: 1.15 $ $Date: 2001/11/30 11:29:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -16,7 +16,10 @@ static char sccsid[] = "@(#)$RCSfile: cleaner.c,v $ $Revision: 1.14 $ $Date: 200
 #include <stdio.h>
 #include <string.h>
 #include "rfio_api.h"
-#include "stage.h"
+#include "serrno.h"
+#include "Castor_limits.h"
+#include "stage_constants.h"
+#include "stage_macros.h"
 
 extern int stglogit _PROTO(());
 
@@ -49,6 +52,7 @@ int main(argc, argv)
 	c = RFIO_NONET;
 	rfiosetopt (RFIO_NETOPT, &c, 4);
 	sprintf (command, "%s %s %s", gc, poolname, hostname);
+	PRE_RFIO;
 	rf = rfio_popen (command, "r");
 	if (rf == NULL) {
 		stglogit (func, "garbage collector %s failed to start on pool %s@%s\n",
@@ -57,7 +61,9 @@ int main(argc, argv)
 	}
 	stglogit (func, "garbage collector %s started on pool %s@%s\n",
 						gc, poolname, hostname);
-	while ((c = rfio_pread (buf, 1, sizeof(buf)-1, rf)) > 0) {
+	while (1) {
+		PRE_RFIO;
+        if ((c = rfio_pread (buf, 1, sizeof(buf)-1, rf)) <= 0) break;
 		buf[c] = 0;
 		p = buf;
 		if (saveflag) {
@@ -83,6 +89,7 @@ int main(argc, argv)
 	}
 	if (saveflag)
 		stglogit (func, "%s\n", savebuf);
+	PRE_RFIO;
 	c = rfio_pclose (rf);
 	c = (c & 0xFF) ? SYERR : ((c >> 8) & 0xFF);
 	if (c) {
