@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_mover_api.h,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/28 12:52:29 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_mover_api.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/29 13:31:07 $ $Author: bcouturi $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_mover_api.h,v $
- * @version $Revision: 1.1 $
- * @date $Date: 2004/10/28 12:52:29 $
+ * @version $Revision: 1.2 $
+ * @date $Date: 2004/10/29 13:31:07 $
  */
 /** @mainpage CASTOR Disk Mover Interface
- * $RCSfile: stager_mover_api.h,v $ $Revision: 1.1 $
+ * $RCSfile: stager_mover_api.h,v $ $Revision: 1.2 $
  *
  * @section intro Introduction
  * In the new CASTOR stager, it is foreseen to use other movers than RFIO, that
@@ -73,27 +73,28 @@
 		       
 /**
  * stage_mover_open
- * Allows the mover to translate a logical filename into a
+ * Allows the mover to translate a site filename into a
  * physical filename. Also checks with the stager that the user
  * is allowed to open that that file.
  *
  * \ingroup ServerAPI
  * 
- * @param lfn        The logical filename of the file the mover wants to open
- * @param userid     The identity of the user requesting access to the file 
- * @param requestId  Reference number of the request
- * @param mode       The mode in which the user wants to open the file
- * @param pfn        The physical filemame of the file on the local disk
+ * @param sfn            The site filename of the file the mover wants to open
+ * @param mode           The mode in which the user wants to open the file
+ * @param userid         The identity of the user requesting access to the file 
+ * @param pfn            The physical filemame of the file on the local disk
+ * @param stagerContext  An opaque structure, used by the stager match the 
+ *                       different calls for the same request.
  *
  * @returns 0 in case of success, -1 otherwise
  * @note the pfn is allocated by the call, and therefore
  *       should be freed by the mover.
  */
-EXTERN_C int DLL_DECL stage_mover_open _PROTO ((const char *lfn,
-						const char *userId,
-						const void *requestId,
+EXTERN_C int DLL_DECL stage_mover_open _PROTO ((const char *sfn,
 						int mode,
-						char **pfn));
+						const char *userId,
+						char **pfn,
+						void **stagerContext));
 
 
 
@@ -111,15 +112,11 @@ EXTERN_C int DLL_DECL stage_mover_open _PROTO ((const char *lfn,
  * 
  * \ingroup ServerAPI
  * 
- * @param lfn        The logical filename of the file the mover wants to open
- * @param userid     The identity of the user requesting access to the file 
- * @param requestId  Reference number of the request
+ * @param stagerContext  The stager context
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int DLL_DECL stage_mover_write _PROTO ((const char *lfn,
-						 const char *userId,
-						 const char *requestId));
+EXTERN_C int DLL_DECL stage_mover_write _PROTO ((void *stagerContext));
 
 
 
@@ -136,15 +133,11 @@ EXTERN_C int DLL_DECL stage_mover_write _PROTO ((const char *lfn,
  * 
  * \ingroup ServerAPI
  * 
- * @param lfn        The logical filename of the file the mover wants to open
- * @param userid     The identity of the user requesting access to the file 
- * @param requestId  Reference number of the request
+ * @param stagerContext  The stager context
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int DLL_DECL stage_mover_close _PROTO ((const char *lfn,
-						 const char *userId,
-						 const char *requestId));
+EXTERN_C int DLL_DECL stage_mover_close _PROTO ((void *stagerContext));
 
 
 ////////////////////////////////////////////////////////////
@@ -160,17 +153,13 @@ EXTERN_C int DLL_DECL stage_mover_close _PROTO ((const char *lfn,
  * 
  * \ingroup ServerAPI
  * 
- * @param lfn        The logical filename of the file the mover wants to open
- * @param userid     The identity of the user requesting access to the file 
- * @param requestId  Reference number of the request
+ * @param stagerContext  The stager context for this request
  * @param errorCode  The code for the errors
  * @param errorSting Description of the problem 
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int DLL_DECL stage_mover_close _PROTO ((const char *lfn,
-						 const char *userId,
-						 const char *requestId,
+EXTERN_C int DLL_DECL stage_mover_error _PROTO ((void *stagerContext,
 						 const int  errorCode,
 						 const char *errorString));
 
