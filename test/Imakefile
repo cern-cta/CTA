@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 1999/10/22 09:54:25 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Date: 1999/12/15 14:19:49 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1999 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -10,7 +10,7 @@ COMM		Make CASTOR tests
 
 SUBDIRS = $(COMMONDIR) $(DBDIR) $(MSGDIR) $(NSDIR) $(RFIODIR) \
 	  $(SYSREQDIR) $(RTCOPYDIR) $(STAGEDIR) $(TAPEDIR) $(VDQMDIR) \
-	  $(COPYTAPEDIR)
+	  $(VMGRDIR) $(COPYTAPEDIR)
 
 MakeSubdirs(all,$(SUBDIRS))
 MakeSubdirs(clean,$(SUBDIRS))
