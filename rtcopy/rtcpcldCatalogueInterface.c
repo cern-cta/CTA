@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.64 $ $Release$ $Date: 2004/10/29 13:31:58 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.65 $ $Release$ $Date: 2004/10/29 15:20:38 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.64 $ $Release$ $Date: 2004/10/29 13:31:58 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.65 $ $Release$ $Date: 2004/10/29 15:20:38 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1457,6 +1457,11 @@ int procTapeCopiesForStream(
     return(-1);
   }
 
+  if ( (tape->dbRef == NULL) || (tape->dbRef->row == NULL) ) {
+    serrno = SEINTERNAL;
+    return(-1);
+  }  
+
   rc = getStgSvc(&stgsvc);
   if ( rc != -1 ) getDbSvc(&svcs);
   if ( rc == -1 || stgsvc == NULL || *stgsvc == NULL ||
@@ -1468,11 +1473,6 @@ int procTapeCopiesForStream(
   }
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
-  if ( (tape->dbRef == NULL) || (tape->dbRef->row == NULL) ) {
-    serrno = SEINTERNAL;
-    return(-1);
-  }
-  
   tp = (struct Cstager_Tape_t *)tape->dbRef->row;
   Cstager_Tape_stream(tp,&stream);
 
@@ -1488,6 +1488,7 @@ int procTapeCopiesForStream(
                     "No stream found for tape",
                     RTCPCLD_LOG_WHERE
                     );
+    C_IAddress_delete(iAddr);
     serrno = SEINTERNAL;
     return(-1);
   }
@@ -1543,6 +1544,7 @@ int procTapeCopiesForStream(
     if ( serrno != 0 ) save_serrno = serrno;
     else save_serrno = errno;
     LOG_SYSCALL_ERR("rtcp_NewFileList()");
+    C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
   }
@@ -1609,6 +1611,7 @@ int procTapeCopiesForStream(
   Cstager_Segment_create(&segment);
   if ( segment == NULL ) {
     LOG_SYSCALL_ERR("Cstager_Segment_create()");
+    C_IAddress_delete(iAddr);
     serrno = SESYSERR;
     return(-1);
   }
@@ -1619,6 +1622,7 @@ int procTapeCopiesForStream(
   file->dbRef = (RtcpDBRef_t *)calloc(1,sizeof(RtcpDBRef_t));
   if ( file->dbRef == NULL ) {
     LOG_SYSCALL_ERR("calloc()");
+    C_IAddress_delete(iAddr);
     serrno = SESYSERR;
     return(-1);
   }
@@ -1645,6 +1649,7 @@ int procTapeCopiesForStream(
                     "No mountpoint set for selected migration candidate",
                     RTCPCLD_LOG_WHERE
                     );
+    C_IAddress_delete(iAddr);
     serrno = SEINTERNAL;
     return(-1);
   }
@@ -1670,6 +1675,7 @@ int procTapeCopiesForStream(
                     "No disk copy set for selected migration candidate",
                     RTCPCLD_LOG_WHERE
                     );
+    C_IAddress_delete(iAddr);
     serrno = SEINTERNAL;
     return(-1);
   }
@@ -1691,11 +1697,13 @@ int procTapeCopiesForStream(
                     "No path set for selected migration candidate",
                     RTCPCLD_LOG_WHERE
                     );
+    C_IAddress_delete(iAddr);
     serrno = SEINTERNAL;
     return(-1);
   }
   if ( (strlen(diskServer)+strlen(mountPoint)+strlen(relPath)+2) > 
        (sizeof(filereq->file_path)-1) ) {
+    C_IAddress_delete(iAddr);
     serrno = E2BIG;
     return(-1);
   }
@@ -1713,6 +1721,7 @@ int procTapeCopiesForStream(
 
   if ( nsHost != NULL ) {
     if ( strlen(nsHost) > sizeof(filereq->castorSegAttr.nameServerHostName)-1 ) {
+      C_IAddress_delete(iAddr);
       serrno = E2BIG;
       return(-1);
     }
@@ -1731,6 +1740,7 @@ int procTapeCopiesForStream(
                     filereq->fid,
                     -sizeof(filereq->fid)
                     );
+  C_IAddress_delete(iAddr);
   return(0);
 }
 
@@ -1912,6 +1922,7 @@ int rtcpcld_updcMigrFailed(
                      "No tape copy found for filereq" ),
                     RTCPCLD_LOG_WHERE
                     );
+    C_IAddress_delete(iAddr);
     serrno = SEINTERNAL;
     return(-1);    
   }
@@ -1996,6 +2007,7 @@ int rtcpcld_updcMigrFailed(
                     RTCPCLD_LOG_WHERE
                     );
     if ( _dbErr != NULL ) free(_dbErr);
+    C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
   }
@@ -2037,10 +2049,12 @@ int rtcpcld_updcMigrFailed(
                     RTCPCLD_LOG_WHERE
                     );
     if ( _dbErr != NULL ) free(_dbErr);
+    C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
   }
-  
+
+  C_IAddress_delete(iAddr);
   return(0);
 }
 
@@ -2138,6 +2152,7 @@ int rtcpcld_updcFileMigrated(
                       "No castor file found for filereq")),
                     RTCPCLD_LOG_WHERE
                     );
+    C_IAddress_delete(iAddr);
     serrno = SEINTERNAL;
     return(-1);    
   }
@@ -2186,6 +2201,7 @@ int rtcpcld_updcFileMigrated(
                     RTCPCLD_LOG_WHERE
                     );
     if ( _dbErr != NULL ) free(_dbErr);
+    C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
   }
@@ -2221,6 +2237,7 @@ int rtcpcld_updcFileMigrated(
                       0
                       );
       if ( tapeCopyArray != NULL ) free(tapeCopyArray);
+      C_IAddress_delete(iAddr);
       return(0);
     }
   }
@@ -2276,6 +2293,7 @@ int rtcpcld_updcFileMigrated(
         if ( diskCopyArray != NULL ) free(diskCopyArray);
         if ( tapeCopyArray != NULL ) free(tapeCopyArray);
         C_Services_rollback(*svcs,iAddr);
+        C_IAddress_delete(iAddr);
         serrno = save_serrno;
         return(-1);
       }
@@ -2323,6 +2341,7 @@ int rtcpcld_updcFileMigrated(
       if ( _dbErr != NULL ) free(_dbErr);
       if ( tapeCopyArray != NULL ) free(tapeCopyArray);
       C_Services_rollback(*svcs,iAddr);
+      C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
     }
@@ -2382,6 +2401,7 @@ int rtcpcld_updcFileMigrated(
                       );
       if ( _dbErr != NULL ) free(_dbErr);
       if ( tapeCopyArray != NULL ) free(tapeCopyArray);
+      C_IAddress_delete(iAddr);
       C_Services_rollback(*svcs,iAddr);
       serrno = save_serrno;
       return(-1);
@@ -2412,6 +2432,7 @@ int rtcpcld_updcFileMigrated(
                     RTCPCLD_LOG_WHERE
                     );
     if ( _dbErr != NULL ) free(_dbErr);
+    C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
   }
@@ -2530,6 +2551,7 @@ int rtcpcld_updateTapeStatus(
                       RTCPCLD_LOG_WHERE
                       );
       if ( _dbErr != NULL ) free(_dbErr);
+      C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
     }
@@ -2661,6 +2683,7 @@ int rtcpcld_returnStream(
                       RTCPCLD_LOG_WHERE
                       );
       if ( _dbErr != NULL ) free(_dbErr);
+      C_IAddress_delete(iAddr);
       serrno = save_serrno;
       return(-1);
     }
@@ -2761,6 +2784,7 @@ int rtcpcld_setVidWorkerAddress(
                     RTCPCLD_LOG_WHERE
                     );
     if ( _dbErr != NULL ) free(_dbErr);
+    C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
   }
@@ -2792,6 +2816,7 @@ int rtcpcld_setVidWorkerAddress(
                     RTCPCLD_LOG_WHERE
                     );
     if ( _dbErr != NULL ) free(_dbErr);
+    C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
   }
