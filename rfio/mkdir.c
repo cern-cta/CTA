@@ -1,14 +1,14 @@
 /*
- * $Id: mkdir.c,v 1.7 2000/05/29 16:42:02 obarring Exp $
+ * $Id: mkdir.c,v 1.8 2002/02/13 16:50:02 baud Exp $
  */
 
 /*
- * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1994-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mkdir.c,v $ $Revision: 1.7 $ $Date: 2000/05/29 16:42:02 $ CERN/IT/PDP/DM Antony Simmins";
+static char sccsid[] = "@(#)$RCSfile: mkdir.c,v $ $Revision: 1.8 $ $Date: 2002/02/13 16:50:02 $ CERN/IT/PDP/DM Antony Simmins";
 #endif /* not lint */
 
 /* mkdir.c       Remote File I/O - make a directory file                */
@@ -25,11 +25,12 @@ int		mode;              /* remote directory mode             */
    register int    s;              /* socket descriptor            */
    int             status;         /* remote mkdir() status        */
    int     	len;
-   char    	*host,
-      *filename;
+   char    	*host;
+   char    	*filename;
    char    	*p=buf;
    int 		rt ;
    int 		rcode ;
+   mode_t	curmask;
 
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_mkdir(%s, %o)", dirpath, mode);
@@ -54,6 +55,11 @@ int		mode;              /* remote directory mode             */
       return(mkdir(filename,mode));
    }
 
+   /* Applies the umask to the mode                     */
+   curmask = umask(0);          /* get the mode         */
+   umask(curmask);              /* restore it           */
+   mode &= ~curmask;            /* and apply it to mode */
+  
    s = rfio_connect(host,&rt);
    if (s < 0)      {
       END_TRACE();
