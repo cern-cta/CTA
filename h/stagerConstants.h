@@ -1,9 +1,11 @@
 /*
- * $Id: stagerConstants.h,v 1.3 2004/10/22 20:09:47 jdurand Exp $
+ * $Id: stagerConstants.h,v 1.4 2004/10/24 22:17:57 jdurand Exp $
  */
 
 #ifndef __stagerConstants_h
 #define __stagerConstants_h
+
+#include "osdep.h"
 
 #define STAGER_DEFAULT_TIMEOUT      20                   /* Default send/recv timeout */
 #define STAGER_DEFAULT_SECURE_PORT 5515                  /* Default secure port number */
@@ -14,6 +16,7 @@
 #define STAGER_DEFAULT_USER_NBTHREAD 5                   /* Default number of user threads */
 #define STAGER_DEFAULT_FACILITY   "stager"               /* Default Facility name */
 #define STAGER_DEFAULT_IGNORECOMMANDLINE   0             /* Default ignore-comamnd-line mode (!= 0 means yes) */
+#define STAGER_DEFAULT_HOST       "localhost"            /* Default stager host */
 
 #define STAGER_CLASS              "STAGER"               /* Label in config file (1st column) */
 
@@ -26,6 +29,7 @@
 #define STAGER_CLASS_USER_NBTHREAD "USER_NBTHREAD"       /* Sub-label in config file for user_nbthread */
 #define STAGER_CLASS_FACILITY     "FACILITY"             /* Sub-label in config file for facility */
 #define STAGER_CLASS_IGNORECOMMANDLINE  "IGNORECOMMANDLINE" /* Sub-label in config file for ignore-command-line */
+#define STAGER_CLASS_HOST         "HOST"                 /* Sub-label in config file for host */
 
 #define STAGER_ENV_TIMEOUT        "STAGER_TIMEOUT"       /* Environment variable for timeout */
 #define STAGER_ENV_SECURE_PORT    "STAGER_SPORT"         /* Environment variable for secure port */
@@ -40,5 +44,19 @@
 #define STAGER_MUTEX_TIMEOUT      10                     /* Timeout on getting a mutex */
 #define STAGER_COND_TIMEOUT       1                      /* Timeout on waiting on a condition variable */
 #define STAGER_MUTEX_EMERGENCYTIMEOUT      60            /* Timeout on getting a mutex in the signal handler */
+#define STAGER_REPBUFSZ           1024                   /* Socket reply buffer size */
+#define STAGER_MAGIC              0x24140701             /* Stager magic number */
+
+#define STAGER_RC                 0                      /* Stager RC type */
+#define STAGER_MSG_ERR            1                      /* Stager MSG_ERR type */
+#define STAGER_MSG_OUT            2                      /* Stager MSG_OUT type */
+
+#define STAGE_SERVICE_NAME        "stage"                /* Name in /etc/services if any */
+#define STAGE_SECURE_SERVICE_NAME "sstage"               /* Name force sure service in /etc/services if any */
+#define STAGE_SERVICE_PROTO       "tcp"                  /* Proto in /etc/services if any */
+
+#define STAGE_OPTION_ECHO     CONSTLL(0x00000000000001)  /* --echo */
+
+#define STAGER_PRTBUFSZ           4096                   /* Buffer size in the client for printout */
 
 #endif /* __stagerConstants_h */
