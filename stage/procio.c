@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.116 2001/03/21 17:32:29 jdurand Exp $
+ * $Id: procio.c,v 1.117 2001/03/22 11:00:20 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.116 $ $Date: 2001/03/21 17:32:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.117 $ $Date: 2001/03/22 11:00:20 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -139,6 +139,7 @@ static char one[2] = "1";
 int tppool_flag = 0;
 int silent_flag = 0;
 int nowait_flag = 0;
+int nohsmcreat_flag = 0;
 extern struct fileclass *fileclasses;
 
 void procioreq _PROTO((int, int, char *, char *));
@@ -227,7 +228,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	int actual_poolflag;
 	char actual_poolname[CA_MAXPOOLNAMELEN + 1];
 	char **argv = NULL;
-	int c, i, j;
+	int c, i, j, iokstagewrt;
 	int concat_off = 0;
 	int concat_off_fseq = 0;
 	int clientpid;
@@ -334,6 +335,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		{"vsn",                REQUIRED_ARGUMENT,  NULL,      'v'},
 		{"copytape",           NO_ARGUMENT,        NULL,      'z'},
 		{"silent",             NO_ARGUMENT,  &silent_flag,      1},
+		{"nohsmcreat",         NO_ARGUMENT,  &nohsmcreat_flag,  1},
 		{"nowait",             NO_ARGUMENT,  &nowait_flag,      1},
 		{"tppool",             REQUIRED_ARGUMENT, &tppool_flag, 1},
 		{NULL,                 0,                  NULL,        0}
@@ -349,6 +351,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	tppool_flag = 0;
 	silent_flag = 0;
 	nowait_flag = 0;
+	nohsmcreat_flag = 0;
 
 	local_unmarshall_STRING (rbp, name);
 	if (req_type > STAGE_00) {
@@ -541,6 +544,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 		if ((flags & STAGE_UFUN)  == STAGE_UFUN) Uflag = 1;
 		if ((flags & STAGE_INFO)  == STAGE_INFO) copytape = 1;
 		if ((flags & STAGE_SILENT)  == STAGE_SILENT) silent_flag = 1;
+		if ((flags & STAGE_NOWAIT)  == STAGE_NOWAIT) nowait_flag = 1;
+		if ((flags & STAGE_NOHSMCREAT)  == STAGE_NOHSMCREAT) nohsmcreat_flag = 1;
 		if ((concat_off != 0) && (req_type != STAGE_IN)) {
 			sendrep (rpfd, MSG_ERR, STG17, "-c off", "any request but stage_in");
 			errflg++;
@@ -1213,6 +1218,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		nbdskf = nhsmfiles;
 	}
 
+	iokstagewrt = -1;
 	for (i = 0; i < nbdskf; i++) {
 		time_t hsmmtime;
 		int forced_Cns_creatx;
@@ -1984,6 +1990,13 @@ void procioreq(req_type, magic, req_data, clienthost)
 					/*
 					}
 					*/
+				} else if (nohsmcreat_flag != 0) {
+					setegid(start_passwd.pw_gid);
+					seteuid(start_passwd.pw_uid);
+					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_statx", sstrerror(serrno));
+					global_c_stagewrt++;
+					c = USERR;
+					goto stagewrt_continue_loop;
 				} else {
 					/* It is not point to try to migrated something of zero size */
 					if (rfio_stat((api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, &filemig_stat) < 0) {
@@ -2114,6 +2127,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
+			iokstagewrt++;
 			if (stcp->t_or_d == 'h') {
 				int ifileclass;
 
@@ -2136,7 +2150,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 						/* stcx is a dummy req which inherits the uid/gid of the caller. */
 						/* We use it at the first round to check that requestor's uid/gid is compatible */
 						/* the uid/gid under which migration will effectively run might be different (case of stage:st) */
-						if (euid_egid(&euid,&egid,stcp->u1.h.tppool,NULL,stcp,(i == 0) ? &stcx : NULL,NULL,0) != 0) {
+						if (euid_egid(&euid,&egid,stcp->u1.h.tppool,NULL,stcp,(iokstagewrt == 0) ? &stcx : NULL,NULL,0) != 0) {
 							global_c_stagewrt++;
 							c = USERR;
 							delreq(stcp,0);
@@ -2172,7 +2186,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 							/* stcx is a dummy req which inherits the uid/gid of the caller. */
 							/* We use it at the first round to check that requestor's uid/gid is compatible */
 							/* the uid/gid under which migration will effectively run might be different (case of stage:st) */
-							if (euid_egid(&euid,&egid,tppool,NULL,stcp,(i == 0) ? &stcx : NULL,&tppool,0) != 0) {
+							if (euid_egid(&euid,&egid,tppool,NULL,stcp,(iokstagewrt == 0) ? &stcx : NULL,&tppool,0) != 0) {
 								global_c_stagewrt++;
 								c = USERR;
 								delreq(stcp,0);
@@ -2197,9 +2211,12 @@ void procioreq(req_type, magic, req_data, clienthost)
 									user, stcp->uid, stcp->gid,
 									user_waitq, group_waitq, uid_waitq, gid_waitq,
 									clientpid, Upluspath, reqid, req_type,
-									nbdskf, &wfp, NULL, 
-									stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq, 0);
+									nbdskf, &wfp, (nohsmcreat_flag != 0) ? &save_subreqid : NULL, 
+									stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq,
+									(nohsmcreat_flag != 0) ? 1 : 0);
 					wqp->copytape = copytape;
+					wqp->api_out = api_out;
+					wqp->uniqueid = stage_uniqueid;
 					wqp->silent = silent_flag;
 					if (nowait_flag != 0) {
 						/* User said nowait - we force silent flag anyway and reset rpfd to N/A */
@@ -2208,6 +2225,10 @@ void procioreq(req_type, magic, req_data, clienthost)
 					}
 				}
 				wfp->subreqid = stcp->reqid;
+				if (save_subreqid != NULL) {
+					*save_subreqid = stcp->reqid;
+					save_subreqid++;
+				}
 				wqp->nbdskf++;
 				if (i < nbtpf || nhsmfiles > 0)
 					wqp->nb_subreqs++;
