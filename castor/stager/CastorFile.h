@@ -118,16 +118,16 @@ int Cstager_CastorFile_nsHost(struct Cstager_CastorFile_t* instance, const char*
 int Cstager_CastorFile_setNsHost(struct Cstager_CastorFile_t* instance, const char* new_var);
 
 /**
- * Get the value of size
+ * Get the value of fileSize
  * Size of the file
  */
-int Cstager_CastorFile_size(struct Cstager_CastorFile_t* instance, u_signed64* var);
+int Cstager_CastorFile_fileSize(struct Cstager_CastorFile_t* instance, u_signed64* var);
 
 /**
- * Set the value of size
+ * Set the value of fileSize
  * Size of the file
  */
-int Cstager_CastorFile_setSize(struct Cstager_CastorFile_t* instance, u_signed64 new_var);
+int Cstager_CastorFile_setFileSize(struct Cstager_CastorFile_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of svcClass

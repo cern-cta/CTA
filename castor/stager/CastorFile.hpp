@@ -145,21 +145,21 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_size
+       * Get the value of m_fileSize
        * Size of the file
-       * @return the value of m_size
+       * @return the value of m_fileSize
        */
-      u_signed64 size() const {
-        return m_size;
+      u_signed64 fileSize() const {
+        return m_fileSize;
       }
 
       /**
-       * Set the value of m_size
+       * Set the value of m_fileSize
        * Size of the file
-       * @param new_var the new value of m_size
+       * @param new_var the new value of m_fileSize
        */
-      void setSize(u_signed64 new_var) {
-        m_size = new_var;
+      void setFileSize(u_signed64 new_var) {
+        m_fileSize = new_var;
       }
 
       /**
@@ -263,7 +263,7 @@ namespace castor {
       std::string m_nsHost;
 
       /// Size of the file
-      u_signed64 m_size;
+      u_signed64 m_fileSize;
 
       /// The id of this object
       u_signed64 m_id;

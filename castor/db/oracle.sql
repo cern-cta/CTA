@@ -77,7 +77,7 @@ CREATE TABLE rh_TapeCopy (id INTEGER PRIMARY KEY, castorFile INTEGER, status INT
 
 /* SQL statements for type CastorFile */
 DROP TABLE rh_CastorFile;
-CREATE TABLE rh_CastorFile (fileId INTEGER, nsHost VARCHAR(255), size INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, fileClass INTEGER);
+CREATE TABLE rh_CastorFile (fileId INTEGER, nsHost VARCHAR(255), fileSize INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, fileClass INTEGER);
 
 /* SQL statements for type DiskCopy */
 DROP TABLE rh_DiskCopy;

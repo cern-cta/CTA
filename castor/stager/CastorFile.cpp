@@ -43,7 +43,7 @@
 castor::stager::CastorFile::CastorFile() throw() :
   m_fileId(),
   m_nsHost(""),
-  m_size(),
+  m_fileSize(),
   m_id(),
   m_svcClass(0),
   m_fileClass(0) {
@@ -78,7 +78,7 @@ void castor::stager::CastorFile::print(std::ostream& stream,
   // Output of all members
   stream << indent << "fileId : " << m_fileId << std::endl;
   stream << indent << "nsHost : " << m_nsHost << std::endl;
-  stream << indent << "size : " << m_size << std::endl;
+  stream << indent << "fileSize : " << m_fileSize << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "SvcClass : " << std::endl;
