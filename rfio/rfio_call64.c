@@ -73,9 +73,6 @@ static char sccsid[] = "@(#)rfio_call64.c,v 1.3 2004/03/22 12:34:03 CERN/IT/PDP/
 #include <nfs/nfsio.h>
 #endif
 
-/* Context for the open/firstwrite/close handlers */
-extern void *handler_context;
-
 #include <fcntl.h>
 
 extern int forced_umask;
@@ -205,6 +202,8 @@ extern struct thData {
   int byte_read_from_network;
   struct rfiostat myinfo;
   char  from_host[MAXHOSTNAMELEN];
+/* Context for the open/firstwrite/close handlers */
+  void *handler_context;
 } *td;
 
 #define rqstbuf td->rqstbuf
@@ -219,6 +218,7 @@ extern struct thData {
 #define byte_read_from_network td->byte_read_from_network
 #define is_remote td->_is_remote
 #define myinfo td->myinfo
+#define handler_context td->handler_context
 
 #else    /* WIN32 */
 /*
@@ -250,6 +250,8 @@ static int first_write;
 static int first_read;
 static off64_t          byte_read_from_network;
 static struct rfiostat  myinfo;
+/* Context for the open/firstwrite/close handlers */
+static void *handler_context;
 #endif   /* WIN32 */
 #endif   /* HPSS */
 

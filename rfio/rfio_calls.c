@@ -83,10 +83,6 @@ extern int peer_uid;
 extern int peer_gid;
 #endif
 
-/* Context for the open/firstwrite/close handlers */
-void *handler_context;
-
-
 #include <fcntl.h>
 
 #if (defined(IRIX5) || defined(IRIX6))
@@ -217,6 +213,8 @@ extern struct thData {
   int byte_read_from_network;
   struct rfiostat myinfo;
   char   from_host[MAXHOSTNAMELEN];
+/* Context for the open/firstwrite/close handlers */
+  void *handler_context;
 } *td;
 
 #define rqstbuf td->rqstbuf
@@ -231,6 +229,7 @@ extern struct thData {
 #define byte_read_from_network td->byte_read_from_network
 #define is_remote td->_is_remote
 #define myinfo td->myinfo
+#define handler_context td->handler_context
 
 #else /* if defined(_WIN32) */
 /*
@@ -268,6 +267,8 @@ static int first_write;
 static int first_read;
 static int byte_read_from_network;
 static struct rfiostat myinfo;
+/* Context for the open/firstwrite/close handlers */
+static void *handler_context;
 #endif   /* WIN32 */
 #endif /* HPSS */
 
