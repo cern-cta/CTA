@@ -271,6 +271,17 @@
 
 #if BuildSecurity
 
+#define SecMakeStaticLibrary	NO
+
+#define BuildSecureTape		YES
+#define BuildSecureVmgr		YES
+#define BuildSecureCupv		YES
+#define	BuildSecureVdqm		YES
+#define	BuildSecureRfio		YES
+#define BuildSecureRtcopy	YES
+#define BuildSecureCns		YES
+#define BuildSecureStage	YES
+
 #if UseHeimdalKrb5
 #define KRB5CONFIG /usr/heimdal/bin/krb5-config
 #else
