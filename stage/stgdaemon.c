@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.250 $ $Date: 2004/03/02 09:19:48 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.251 $ $Date: 2004/11/02 17:47:13 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1289,6 +1289,11 @@ int main(argc,argv)
 										strerror(errno));
 				goto select_continue;
 			}
+#if (defined(SOL_SOCKET) && defined(SO_KEEPALIVE))
+			/* Set socket option */
+			setsockopt(rqfd,SOL_SOCKET,SO_KEEPALIVE,(char *) &on,sizeof(on));
+#endif
+
 			/* We check that what returned accept() is not a pending file descriptor */
 			/* that we keep in our waiting queue and that could be invalid because of */
 			/* any connection broken in the TCP/IP layer. If we find any fd in the waitq */

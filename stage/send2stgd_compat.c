@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_compat.c,v 1.11 2002/10/21 14:52:29 jdurand Exp $
+ * $Id: send2stgd_compat.c,v 1.12 2004/11/02 17:47:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.11 $ $Date: 2002/10/21 14:52:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.12 $ $Date: 2004/11/02 17:47:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -74,6 +74,7 @@ int DLL_DECL send2stgd_compat(host, reqp, reql, want_reply, user_repbuf, user_re
 	int connect_timeout;
 	int connect_rc;
 	int save_serrno;
+	int on = 1;
 
 	strcpy (func, "send2stgd");
 	link_rc = 0;
@@ -132,6 +133,11 @@ int DLL_DECL send2stgd_compat(host, reqp, reql, want_reply, user_repbuf, user_re
 		serrno = SECOMERR;
 		return (-1);
 	}
+
+#if (defined(SOL_SOCKET) && defined(SO_KEEPALIVE))
+	/* Set socket option */
+	setsockopt(stg_s,SOL_SOCKET,SO_KEEPALIVE,(char *) &on,sizeof(on));
+#endif
 
 	c = RFIO_NONET;
 	rfiosetopt (RFIO_NETOPT, &c, 4);
