@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.17 $ $Date: 2000/02/15 16:59:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.18 $ $Date: 2000/02/29 07:49:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -67,6 +67,7 @@ char	**argv;
 	char *dgn;
 	char *drive;
 	char *dvn;
+	char errbuf[512];
 	int get_reply;
 	char hdr1[81];
 	char hdr2[81];
@@ -489,6 +490,7 @@ unload_loop1:
 #if defined(ADSTAR)
 #endif
 #if linux
+		(void) setdens (tapefd, path, devtype, den);
 #endif
 
 		/* check VOL1 label if not blp */
@@ -583,6 +585,12 @@ unload_loop1:
 	if (c = Ctape_updvsn (uid, gid, jid, ux, vid, vsn, 0, lblcode, mode))
 		goto reply;
 
+	(void) vmgr_seterrbuf (errbuf, sizeof(errbuf));
+	if (vmgr_tpmounted (vid, mode) && serrno != ENOENT) {
+		usrmsg (func, "%s", errbuf);
+		c = serrno;
+		goto reply;
+	}
 #ifdef TMS
 	if (c = sendtmsmount (mode, "CO", vid, jid, name, acctname, drive))
 		goto reply;
