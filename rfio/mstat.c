@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.11 2001/07/12 06:14:52 jdurand Exp $
+ * $Id: mstat.c,v 1.12 2001/07/12 06:19:29 jdurand Exp $
  */
 
 
@@ -9,10 +9,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.11 $ $Date: 2001/07/12 06:14:52 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.12 $ $Date: 2001/07/12 06:19:29 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
+#include "Cmutex.h"
+#include "Castor_limits.h"
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -30,7 +32,7 @@ static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.11 $ $Date: 2001/
 #include <Cpwd.h>
 
 typedef struct socks {
-  char host[MAXHOSTNAMELEN];
+  char host[CA_MAXHOSTNAMELEN+1];
   int s ;
   int sec;
   int Tid;
@@ -46,9 +48,8 @@ int DLL_DECL rfio_mstat(file,statb)
      struct stat *statb;
 
 {
-  int rt ,rc ,i ,fd ,retry, rfindex, Tid;
+  int rt ,rc ,i ,fd, rfindex, Tid;
   char *host , *filename ;
-  char     buf[256];
 
   INIT_TRACE("RFIO_TRACE");
 
@@ -313,7 +314,8 @@ static int rfio_tab_allocentry(hostname,Tid,s,sec)
   for (i = 0; i < MAXMCON; i++) {
     if (tab[i].host[0] == '\0') {
       rc = i;
-      strcpy(tab[i].host,hostname);
+      strncpy(tab[i].host,hostname,CA_MAXHOSTNAMELEN);
+      tab[i].host[CA_MAXHOSTNAMELEN] = '\0';
       tab[i].Tid = Tid;
       tab[i].s = s;
       tab[i].sec = sec;
