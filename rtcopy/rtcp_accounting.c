@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.6 $ $Date: 2000/03/30 06:39:20 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.7 $ $Date: 2000/04/05 12:10:33 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -33,6 +33,7 @@ int rtcp_wacct(int   subtype,
                int   exitcode,
                char  *clienthost,
                char  *dsksrvr,
+               int   fseq,
                char  *errmsgtxt) {
     int acctreclen;
     struct acctrtcp acctrtcp;
@@ -53,6 +54,7 @@ int rtcp_wacct(int   subtype,
     acctrtcp.size = size;
     acctrtcp.retryn = retryn;
     acctrtcp.exitcode = exitcode;
+    acctrtcp.fseq = fseq;
     if ( clienthost != NULL ) strcpy (acctrtcp.clienthost, clienthost);
     if ( dsksrvr != NULL )  strcpy (acctrtcp.dsksrvr, dsksrvr);
     if ( errmsgtxt != NULL ) strcpy (acctrtcp.errmsgtxt, errmsgtxt);
@@ -74,7 +76,7 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
     int KBytes = 0;
     int retry_nb = 0;
     int mode = WRITE_DISABLE;
-    int rc, severity, exitcode;
+    int rc, severity, exitcode, fseq;
     char charcom, *p, stageID[CA_MAXSTGRIDLEN+1];
     char *disksrv = NULL;
     char *errmsgtxt = NULL;
@@ -111,6 +113,7 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
             else KBytes = (int)(filereq->bytes_out/1024);
         } 
         ifce = filereq->ifce;
+        fseq = filereq->tape_fseq;
 
         if ( subtype == RTCPCMDC ) rc = rtcp_RetvalSHIFT(tape,NULL,&exitcode);
         else rc = rtcp_RetvalSHIFT(tape,file,&exitcode);
@@ -141,7 +144,7 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
     rc = rtcp_wacct(subtype,(uid_t)client->uid,(gid_t)client->gid,jobID,
                     stager_reqID,charcom,ifce,tapereq->vid,
                     KBytes,retry_nb,exitcode,client->clienthost,disksrv,
-                    errmsgtxt);
+                    fseq,errmsgtxt);
 #endif /* ACCTON */
     return(0);
 }
