@@ -7,7 +7,7 @@
 /* For the what command                 */
 /* ------------------------------------ */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.37 $ $Date: 2004/03/18 10:16:01 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.38 $ $Date: 2004/03/18 10:42:27 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cpool_api.h>
@@ -2052,7 +2052,6 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 								_Cpool_self(),_Cthread_self());
 						}
 #endif
-						
 						/* ... We reset any call to Cpool_next_index */
 						current->forceid = -1;
 						
@@ -2139,6 +2138,31 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 		  
 				Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
 				return(0);
+			} else {
+				/* This is an error if a there was a previous call to Cpool_next_index(): then Cpool_assign() did try to */
+				/* assign the current->forceid and only to it. Suppose that user gave a timeout of zero: it is possible */
+				/* that Cpool_assign() tried to get lock on current->state_cthread_structure[] before the child putted */
+				/* itself in condition wait. Then error is EBUSY. A safe way to work is to call: */
+				/* Cpool_next_index() with a timeout */
+				/* Cpool_assign() with no timeout (or a timeout large enough (?)) */
+				if (current->forceid != -1) {
+#ifdef CPOOL_DEBUG
+					if (Cpool_debug != 0) {
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Set current->forceid to -1\n",
+							_Cpool_self(),_Cthread_self());
+					}
+#endif
+					current->forceid = -1;
+#ifdef CPOOL_DEBUG
+					if (Cpool_debug != 0) {
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on lock_parent_cthread_structure\n",
+							_Cpool_self(),_Cthread_self());
+					}
+#endif
+		  
+					Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
+					return(-1);
+				}
 			}
 		  
 			/* We did not found one thread available */
@@ -2147,6 +2171,13 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 			if (timeout == 0) {
 				/* No thread immediately available, and timeout == 0 */
 				/* So we exit immediately                            */
+#ifdef CPOOL_DEBUG
+				if (Cpool_debug != 0) {
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Set current->forceid to -1\n",
+						_Cpool_self(),_Cthread_self());
+				}
+#endif
+				current->forceid = -1;
 #ifdef CPOOL_DEBUG
 				if (Cpool_debug != 0) {
 					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on lock_parent_cthread_structure and setting SEWOULDBLOCK\n",
@@ -2199,6 +2230,12 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 					  
 						Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
 					  
+#ifdef CPOOL_DEBUG
+						if (Cpool_debug != 0) {
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Set current->forceid to -1\n",
+								_Cpool_self(),_Cthread_self());
+						}
+#endif
 						/* ... We reset any call to Cpool_next_index */
 						current->forceid = -1;
 					  
@@ -2226,16 +2263,21 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 					  
 #ifdef CPOOL_DEBUG
 						if (Cpool_debug != 0) {
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Set current->forceid to -1\n",
+								_Cpool_self(),_Cthread_self());
+						}
+#endif
+						/* ... We reset any call to Cpool_next_index */
+						current->forceid = -1;
+#ifdef CPOOL_DEBUG
+						if (Cpool_debug != 0) {
 							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on lock_parent_cthread_structure\n",
 								_Cpool_self(),_Cthread_self());
 						}
 #endif
 					  
 						Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
-					  
-						/* ... We reset any call to Cpool_next_index */
-						current->forceid = -1;
-					  
+					  					  
 						return(-1);
 					}
 				}
@@ -2253,43 +2295,6 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 			}
 #endif
 		  
-			/* We check vs. any previous call to Cpool_next_index */
-			if (current->forceid != -1) {
-				if (current->flag != current->forceid) {
-#ifdef CPOOL_DEBUG
-					if (Cpool_debug != 0) {
-						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Waiting condition okay, but current->flag=%d != current->forceid=%d\n",
-							_Cpool_self(),_Cthread_self(),current->flag,current->forceid);
-					}
-#endif
-				  
-#ifdef CPOOL_DEBUG
-					if (Cpool_debug != 0) {
-						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Reset current->flag to -2 (parent not waiting)\n",
-							_Cpool_self(),_Cthread_self());
-					}
-#endif
-					current->flag = -2;
-				  
-#ifdef CPOOL_DEBUG
-					if (Cpool_debug != 0) {
-						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on lock_parent_cthread_structure\n",
-							_Cpool_self(),_Cthread_self());
-					}
-#endif
-				  
-				  
-					Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
-				  
-					/* ... We reset any call to Cpool_next_index */
-					current->forceid = -1;
-
-					serrno = SEINTERNAL;
-					
-					return(-1);
-				}
-			}
-		  
 #ifdef CPOOL_DEBUG
 			if (Cpool_debug != 0) {
 				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : lock on current->state_cthread_structure[%d]\n",
@@ -2297,6 +2302,9 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 			}
 #endif
 		  
+			/* Shall we use timeout again here !? The problem is that timeout (user parameter) has already */
+			/* been used in the condition wait. In theory, now, the procedure must not fail, but it is possible */
+			/* that we take some real time do do the following, time for the child to put itself on cond-wait */
 			if (Cthread_mutex_lock_ext(current->state_cthread_structure[current->flag]) != 0) {
 #ifdef CPOOL_DEBUG
 				if (Cpool_debug != 0) {
@@ -2304,6 +2312,20 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 						_Cpool_self(),_Cthread_self(), current->flag, strerror(errno));
 				}
 #endif
+#ifdef CPOOL_DEBUG
+				if (Cpool_debug != 0) {
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Reset current->flag to -2 (parent not waiting)\n",
+						_Cpool_self(),_Cthread_self());
+				}
+#endif
+				current->flag = -2;
+#ifdef CPOOL_DEBUG
+				if (Cpool_debug != 0) {
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Set current->forceid to -1\n",
+						_Cpool_self(),_Cthread_self());
+				}
+#endif
+				current->forceid = -1;
 #ifdef CPOOL_DEBUG
 				if (Cpool_debug != 0) {
 					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on lock_parent_cthread_structure\n",
@@ -2369,7 +2391,12 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 #endif
 				current->flag = -2;
 				  
-				/* ... We reset any call to Cpool_next_index */
+#ifdef CPOOL_DEBUG
+				if (Cpool_debug != 0) {
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Set current->forceid to -1\n",
+						_Cpool_self(),_Cthread_self());
+				}
+#endif
 				current->forceid = -1;
 
 #ifdef CPOOL_DEBUG
@@ -2398,8 +2425,14 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 					_Cpool_self(),_Cthread_self());
 			}
 #endif
-		  
 			current->flag = -2;
+#ifdef CPOOL_DEBUG
+			if (Cpool_debug != 0) {
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Set current->forceid to -1\n",
+					_Cpool_self(),_Cthread_self());
+			}
+#endif
+			current->forceid = -1;
 		  
 #ifdef CPOOL_DEBUG
 			if (Cpool_debug != 0) {
@@ -2407,7 +2440,6 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 					_Cpool_self(),_Cthread_self());
 			}
 #endif
-		  
 			Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
 			return(0);
 		}
