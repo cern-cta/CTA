@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Date: 2004/06/22 14:55:47 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Date: 2004/06/22 15:08:38 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -18,14 +18,15 @@ SYMTABNAM = __.SYMDEF
 #endif
 
 COMM Libraries to include in SharedLibraryTargetName(shift)
-LIBRARIES = $(COMMONLIB) $(RFIOLIB) $(SYSREQLIB) $(HPSSLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHPROTOLIB) $(RHCLIENTLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB)
+LIBRARIES = $(COMMONLIB) $(RFIOLIB) $(SYSREQLIB) $(HPSSLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHCLIENTLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB)
 LIBRARIES2 = $(RHORALIB)
+LIBRARIES3 = $(RHPROTOLIB)
 
-all:    SharedLibraryTargetName(shift) SharedLibraryTargetName(castorCommonOra)
+all:    SharedLibraryTargetName(shift) SharedLibraryTargetName(castorCommonOra) SharedLibraryTargetName(castorProto)
 
-install: $(LIB) FileName($(LIB),SharedLibraryTargetName(shift)) FileName($(LIB),SharedLibraryTargetName(castorCommonOra))
+install: $(LIB) FileName($(LIB),SharedLibraryTargetName(shift)) FileName($(LIB),SharedLibraryTargetName(castorCommonOra)) FileName($(LIB),SharedLibraryTargetName(castorProto))
 
-export: $(EXPORTLIB)/SharedLibraryTargetName(shift) $(EXPORTLIB)/SharedLibraryTargetName(castorCommonOra)
+export: $(EXPORTLIB)/SharedLibraryTargetName(shift) $(EXPORTLIB)/SharedLibraryTargetName(castorCommonOra) $(EXPORTLIB)/SharedLibraryTargetName(castorProto)
 
 exportman: 
 
@@ -49,11 +50,24 @@ libcastorCommonOra.so: $(LIBRARIES2)
 	@(cd tmp; ld $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS))
 	@-rm -rf tmp
 
+libcastorProto.so: $(LIBRARIES2)
+	@echo " making $@ in `pwd`"
+	@-rm -rf tmp
+	@mkdir tmp
+	@for i in $? ;\
+	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
+	@(cd tmp; ld $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS))
+	@-rm -rf tmp
+
 shift.dll:	$(LIBRARIES)
 	@echo  making $@ in CurDir
 	link /dll /noentry /nologo /out:$@ $**
 
 libcastorCommonOra.dll:	$(LIBRARIES2)
+	@echo  making $@ in CurDir
+	link /dll /noentry /nologo /out:$@ $**
+
+libcastorProto.dll:	$(LIBRARIES2)
 	@echo  making $@ in CurDir
 	link /dll /noentry /nologo /out:$@ $**
 
