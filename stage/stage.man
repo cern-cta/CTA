@@ -1,12 +1,12 @@
-.\" $Id: stage.man,v 1.9 2002/10/03 13:56:13 jdurand Exp $
+.\" $Id: stage.man,v 1.10 2002/10/08 14:55:11 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage.man,v $ $Revision: 1.9 $ $Date: 2002/10/03 13:56:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
+.\" @(#)$RCSfile: stage.man,v $ $Revision: 1.10 $ $Date: 2002/10/08 14:55:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
 .\" Copyright (C) 1996-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE "1" "$Date: 2002/10/03 13:56:13 $" "CASTOR" "Stage User and Admin Commands"
+.TH STAGE "1" "$Date: 2002/10/08 14:55:11 $" "CASTOR" "Stage User and Admin Commands"
 .SH DESCRIPTION
-The staging facilities offer fast access to tape data via copies in a disk pool.
+The staging facilities offer fast access to data via copies in a disk pool.
 A stage daemon manages the pool space and keeps a catalog of staged files.
 A disk pool consists in a number of file systems distributed over different
 machines.
