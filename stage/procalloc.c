@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.54 2003/05/12 12:35:30 jdurand Exp $
+ * $Id: procalloc.c,v 1.55 2003/09/08 15:50:03 jdurand Exp $
  */
 
 /*
@@ -8,16 +8,16 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.54 $ $Date: 2003/05/12 12:35:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.55 $ $Date: 2003/09/08 15:50:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <string.h>
+#include <time.h>
 #if defined(_WIN32)
 #include <winsock2.h>
-#include <time.h>
 #else
 #include <netinet/in.h>
 #include <sys/time.h>
@@ -56,12 +56,8 @@ void procallocreq _PROTO((int, int, char *, char *));
 void procgetreq _PROTO((int, int, char *, char *));
 extern int updfreespace _PROTO((char *, char *, int, u_signed64 *, signed64));
 extern int req2argv _PROTO((char *, char ***));
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int *, int, ...));
-#else
-extern int sendrep _PROTO(());
-#endif
-extern int stglogit _PROTO(());
+extern int stglogit _PROTO((char *, char *, ...));
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
 extern int isvalidpool _PROTO((char *));
 extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int, int, mode_t));

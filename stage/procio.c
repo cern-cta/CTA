@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.210 2003/06/30 11:13:24 jdurand Exp $
+ * $Id: procio.c,v 1.211 2003/09/08 15:47:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.210 $ $Date: 2003/06/30 11:13:24 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.211 $ $Date: 2003/09/08 15:47:43 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -17,9 +17,9 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.210 $ $Date: 200
 #include <grp.h>
 #include <pwd.h>
 #include <string.h>
+#include <time.h>
 #if defined(_WIN32)
 #include <winsock2.h>
-#include <time.h>
 #else
 #include <netinet/in.h>
 #include <sys/time.h>
@@ -208,16 +208,12 @@ int create_hsm_entry _PROTO(());
 int create_hsm_entry _PROTO((int *, struct stgcat_entry *, int, mode_t, int));
 #endif
 int checkpath _PROTO((char *, char *));
-extern int stglogit _PROTO(());
+extern int stglogit _PROTO((char *, char *, ...));
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
 extern int stglogopenflags _PROTO((char *, u_signed64));
 extern int stglogtppool _PROTO((char *, char *));
 extern int req2argv _PROTO((char *, char ***));
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int *, int, ...));
-#else
-extern int sendrep _PROTO(());
-#endif
 extern int isvalidpool _PROTO((char *));
 extern int ismetapool _PROTO((char *));
 extern int packfseq _PROTO((fseq_elem *, int, int, int, char, char *, int));

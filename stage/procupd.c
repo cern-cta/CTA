@@ -15,6 +15,7 @@ static char sccsid[] = "@(#)procupd.c,v 1.121 2002/10/30 16:26:10 CERN IT-PDP/DM
 #include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <time.h>
 #ifndef _WIN32
 #include <unistd.h>
 #endif
@@ -72,12 +73,8 @@ extern struct stgcat_entry *newreq _PROTO((int));
 extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
 extern int updfreespace _PROTO((char *, char *, int, u_signed64 *, signed64));
 extern int req2argv _PROTO((char *, char ***));
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int *, int, ...));
-#else
-extern int sendrep _PROTO(());
-#endif
-extern int stglogit _PROTO(());
+extern int stglogit _PROTO((char *, char *, ...));
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
 extern int nextreqid _PROTO(());
 extern int savereqs _PROTO(());

@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.36 2003/05/12 12:37:44 jdurand Exp $
+ * $Id: procfilchg.c,v 1.37 2003/09/08 15:48:59 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.36 $ $Date: 2003/05/12 12:37:44 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.37 $ $Date: 2003/09/08 15:48:59 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -16,6 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.36 $ $Date: 
 #include <stdio.h>
 #include <sys/types.h>
 #include <string.h>
+#include <time.h>
 #ifndef _WIN32
 #include <unistd.h>
 #endif
@@ -50,13 +51,9 @@ extern int reqid;
 extern int rpfd;
 extern int req2argv _PROTO((char *, char ***));
 extern int upd_staged _PROTO((char *));
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int *, int, ...));
-#else
-extern int sendrep _PROTO(());
-#endif
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
-extern int stglogit _PROTO(());
+extern int stglogit _PROTO((char *, char *, ...));
 #ifdef USECDB
 extern struct stgdb_fd dbfd;
 #endif
