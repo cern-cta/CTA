@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrmodifytape.man,v $ $Revision: 1.2 $ $Date: 2000/12/15 16:34:39 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrmodifytape.man,v $ $Revision: 1.3 $ $Date: 2001/01/30 08:20:56 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRMODIFYTAPE 1 "$Date: 2000/12/15 16:34:39 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRMODIFYTAPE 1 "$Date: 2001/01/30 08:20:56 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrmodifytape \- modify an existing tape volume entry in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -95,6 +95,7 @@ The cartridge serial number is an alphanumeric field CA_MAXSNLEN bytes long.
 .I status
 can be set to a combination of
 .BR TAPE_FULL ,
+.BR ARCHIVED ,
 .BR DISABLED ,
 .BR EXPORTED
 and

@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.9 $ $Date: 2001/01/19 11:21:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.10 $ $Date: 2001/01/30 08:21:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlisttape - query a given volume or list all existing tapes */
@@ -163,6 +163,7 @@ int xflag;
 	else if (status & TAPE_RDONLY) strcpy (p_stat, "RDONLY");
 	else if (status & EXPORTED) strcpy (p_stat, "EXPORTED");
 	else if (status & DISABLED) strcpy (p_stat, "DISABLED");
+	else if (status & ARCHIVED) strcpy (p_stat, "ARCHIVED");
 	else strcpy (p_stat, "?");
 	u64 = ((u_signed64) free_space) * 1024;
 	printf ("%-6s %-6s %-6s %-8s %-2s %-15s %-7sB ",

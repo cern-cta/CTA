@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_querytape.man,v $ $Revision: 1.8 $ $Date: 2000/09/11 06:04:23 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_querytape.man,v $ $Revision: 1.9 $ $Date: 2001/01/30 08:20:56 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_QUERYTAPE 3 "$Date: 2000/09/11 06:04:23 $" CASTOR "vmgr Library Functions"
+.TH VMGR_QUERYTAPE 3 "$Date: 2001/01/30 08:20:56 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_querytape \- query the CASTOR Volume Manager about a tape
 .SH SYNOPSIS
@@ -93,6 +93,7 @@ indicates the last time the volume was mounted for write.
 .TP
 .I status
 will be returned as a combination of
+.BR ARCHIVED ,
 .BR DISABLED ,
 .BR EXPORTED ,
 .BR TAPE_BUSY ,

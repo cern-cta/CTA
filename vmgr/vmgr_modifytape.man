@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_modifytape.man,v $ $Revision: 1.6 $ $Date: 2000/09/03 16:25:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_modifytape.man,v $ $Revision: 1.7 $ $Date: 2001/01/30 08:20:55 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_MODIFYTAPE 3 "$Date: 2000/09/03 16:25:11 $" CASTOR "vmgr Library Functions"
+.TH VMGR_MODIFYTAPE 3 "$Date: 2001/01/30 08:20:55 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_modifytape \- modify an existing tape in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -86,6 +86,7 @@ is the tape pool name. It must be at most CA_MAXPOOLNAMELEN characters long.
 .I status
 can be set to a combination of
 .BR TAPE_FULL ,
+.BR ARCHIVED ,
 .BR DISABLED ,
 .BR EXPORTED
 and
