@@ -60,6 +60,11 @@
 #define FilManSuffix    4
 #define HsmToolsSpool	/usr/spool/hsmtools
 #if defined(_WIN32)
+#define InstallConfigDir	\\cern.ch\dfs\Applications\CERN\CASTOR\sysconfig
+#else
+#define InstallConfigDir	/etc/sysconfig
+#endif
+#if defined(_WIN32)
 #define InstallBinDir	\\cern.ch\dfs\Applications\CERN\CASTOR\bin
 #else
 #define InstallBinDir	/usr/local/bin
