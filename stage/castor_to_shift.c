@@ -1,5 +1,5 @@
 /*
- * $Id: castor_to_shift.c,v 1.6 2000/12/12 14:13:39 jdurand Exp $
+ * $Id: castor_to_shift.c,v 1.7 2001/11/30 11:27:20 jdurand Exp $
  */
 
 /* ============== */
@@ -18,7 +18,7 @@
 /* Local headers */
 /* ============= */
 #include "osdep.h"            /* For _PROTO */
-#include "stage.h"
+#include "stage_api.h"
 #include "stage_shift.h"
 #include "u64subr.h"
 #include "Cgetopt.h"
