@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.87 $ $Release$ $Date: 2004/11/26 14:33:35 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.88 $ $Release$ $Date: 2004/11/29 08:12:27 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.87 $ $Release$ $Date: 2004/11/26 14:33:35 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.88 $ $Release$ $Date: 2004/11/29 08:12:27 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1043,6 +1043,7 @@ static int procSegmentsForTape(
   tl = tape;
   for ( i=0; i<nbItems; i++ ) {
     Cstager_Segment_status(segmArray[i],&cmpStatus);
+    blockid = NULL;
     if ( (cmpStatus == SEGMENT_UNPROCESSED) &&
          (alreadySelected(tape,segmArray[i]) == 0) ) {
       Cstager_Segment_blockid(
@@ -1098,36 +1099,37 @@ static int procSegmentsForTape(
       fl->dbRef->row = segmArray[i];
       Cstager_Segment_id(segmArray[i],&key);
       fl->dbRef->key = key;
-    }
-    if ( blockid != NULL ) {
-      memcpy(fl->filereq.blockid,blockid,sizeof(fl->filereq.blockid));
-    }
-    if ( memcmp(fl->filereq.blockid,nullblkid,sizeof(nullblkid)) == 0 ) 
-      fl->filereq.position_method = TPPOSIT_FSEQ;
-    else fl->filereq.position_method = TPPOSIT_BLKID;
-    fl->filereq.proc_status = RTCP_WAITING;
-    /*
-     * Temporary hack until rtcpd_MainCntl.c fix has been deployed
-     */
-    fl->filereq.blocksize = 32760;
+      if ( blockid != NULL ) {
+        memcpy(fl->filereq.blockid,blockid,sizeof(fl->filereq.blockid));
+      }
     
-    /*
-     * Path is set when this segment is ready for processing.
-     */
-    strcpy(fl->filereq.file_path,".");
-    
-    Cstager_Segment_bytes_in(
+      if ( memcmp(fl->filereq.blockid,nullblkid,sizeof(nullblkid)) == 0 ) 
+        fl->filereq.position_method = TPPOSIT_FSEQ;
+      else fl->filereq.position_method = TPPOSIT_BLKID;
+      fl->filereq.proc_status = RTCP_WAITING;
+      /*
+       * Temporary hack until rtcpd_MainCntl.c fix has been deployed
+       */
+      fl->filereq.blocksize = 32760;
+      
+      /*
+       * Path is set when this segment is ready for processing.
+       */
+      strcpy(fl->filereq.file_path,".");
+      
+      Cstager_Segment_bytes_in(
+                               segmArray[i],
+                               &(fl->filereq.bytes_in)
+                               );
+      Cstager_Segment_bytes_out(
+                                segmArray[i],
+                                &(fl->filereq.bytes_out)
+                                );
+      Cstager_Segment_offset(
                              segmArray[i],
-                             &(fl->filereq.bytes_in)
+                             &(fl->filereq.offset)
                              );
-    Cstager_Segment_bytes_out(
-                              segmArray[i],
-                              &(fl->filereq.bytes_out)
-                              );
-    Cstager_Segment_offset(
-                           segmArray[i],
-                           &(fl->filereq.offset)
-                           );
+    }
   }
 
   if ( segmArray != NULL ) free(segmArray);
@@ -2184,7 +2186,7 @@ int rtcpcld_updcRecallFailed(
   int rc = 0, nbTapeCopies, nbStreams, save_serrno, i, j;
   ID_TYPE key;
 
-  if ( (tape == NULL) || (tape->tapereq.mode != WRITE_ENABLE) ||
+  if ( (tape == NULL) || (tape->tapereq.mode != WRITE_DISABLE ) ||
        (file == NULL) ) {
     serrno = EINVAL;
     return(-1);
@@ -2276,12 +2278,12 @@ int rtcpcld_updcFileRecalled(
      tape_list_t *tape;
      file_list_t *file;
 {
-  struct Cstager_TapeCopy_t *tapeCopy, **tapeCopyArray;
+  struct Cstager_TapeCopy_t *tapeCopy = NULL, **tapeCopyArray = NULL;
   enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
-  struct Cstager_CastorFile_t *castorFile;
-  struct Cstager_DiskCopy_t **diskCopyArray, *diskCopy;
+  struct Cstager_CastorFile_t *castorFile = NULL;
+  struct Cstager_DiskCopy_t **diskCopyArray = NULL, *diskCopy = NULL;
   enum Cstager_DiskCopyStatusCodes_t diskCopyStatus;
-  struct Cstager_Segment_t **segmentArray, *segment;
+  struct Cstager_Segment_t **segmentArray = NULL, *segment = NULL;
   enum Cstager_SegmentStatusCodes_t segmentStatus;
   struct Cstager_Tape_t *tp;
   struct Cstager_Stream_t **streamArray;
@@ -2297,7 +2299,7 @@ int rtcpcld_updcFileRecalled(
   ID_TYPE key;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_DISABLE) ||
-       (file == NULL) ) {
+       (tape->dbRef == NULL) || (file == NULL) || (file->dbRef == NULL) ) {
     serrno = EINVAL;
     return(-1);
   }
@@ -2326,7 +2328,47 @@ int rtcpcld_updcFileRecalled(
   free(file->dbRef);
   file->dbRef = NULL;
   if ( segment != NULL ) Cstager_Segment_copy(segment,&tapeCopy);
-  if ( tapeCopy != NULL ) Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
+  if ( tapeCopy == NULL ) {
+    iObj = Cstager_Segment_getIObject(segment);
+    rc = C_Services_fillObj(
+                            *svcs,
+                            iAddr,
+                            iObj,
+                            OBJ_TapeCopy
+                            );
+    if ( rc == -1 ) {
+      save_serrno = serrno;
+      LOG_DBCALL_ERR("C_Services_fillObj()",
+                     C_Services_errorMsg(*svcs));
+      C_IAddress_delete(iAddr);
+      serrno = save_serrno;
+      return(-1);
+    }
+    Cstager_Segment_copy(segment,&tapeCopy);
+  }
+  if ( tapeCopy != NULL ) {
+    Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
+  }
+
+  if ( castorFile == NULL ) {
+    iObj = Cstager_TapeCopy_getIObject(tapeCopy);
+    rc = C_Services_fillObj(
+                            *svcs,
+                            iAddr,
+                            iObj,
+                            OBJ_CastorFile
+                            );
+    if ( rc == -1 ) {
+      save_serrno = serrno;
+      LOG_DBCALL_ERR("C_Services_fillObj()",
+                     C_Services_errorMsg(*svcs));
+      C_IAddress_delete(iAddr);
+      serrno = save_serrno;
+      return(-1);
+    }
+    Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
+  }
+  
   if ( (segment == NULL) || (tapeCopy == NULL) || (castorFile == NULL) ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
@@ -2574,6 +2616,9 @@ int rtcpcld_updcFileMigrated(
    * would always fail since in DB the status of this tape copy 
    * is still TAPECOPY_SELECTED)
    */
+  /**
+   * TODO: take into account TAPECOPY_INVALID !
+   */
   Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_STAGED);
 
   for ( i=0; i<nbTapeCopies; i++ ) {
@@ -2588,6 +2633,9 @@ int rtcpcld_updcFileMigrated(
                       (struct Cns_fileid *)fileid,
                       0
                       );
+      /**
+       * TODO: update my tape copy in DB
+       */
       if ( tapeCopyArray != NULL ) free(tapeCopyArray);
       C_IAddress_delete(iAddr);
       return(0);
