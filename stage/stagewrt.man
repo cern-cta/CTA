@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stagewrt.man,v $ $Revision: 1.16 $ $Date: 2002/02/20 15:47:33 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagewrt.man,v $ $Revision: 1.17 $ $Date: 2002/03/05 14:21:31 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEWRT l "$Date: 2002/02/20 15:47:33 $"
+.TH STAGEWRT l "$Date: 2002/03/05 14:21:31 $"
 .SH NAME
 stagewrt \- copy existing files from disk to tape, from disk to disk or from
 disk to a Hierarchical Storage Management System.
@@ -335,12 +335,12 @@ to
 inclusive.
 .TP
 .B n 
-Append one file to the tape.
+Append one file to the tape. See \fBNOTES\fP section below.
 .TP 
 .BI n x 
 Append 
 .I x 
-files to the tape.
+files to the tape. See \fBNOTES\fP section below.
 .TP
 .B u
 Position the tape by fid.
@@ -428,6 +428,8 @@ To write into CASTOR
 .RS
 stagewrt \-M /castor/cern.ch/... diskfile
 .RE
+.SH NOTES
+\fBstagewrt\fP do not support concatenation of files.
 .SH RETURN CODES
 \
 .br
