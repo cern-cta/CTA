@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_label.c,v $ $Revision: 1.21 $ $Date: 2002/04/08 08:00:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_label.c,v $ $Revision: 1.22 $ $Date: 2002/07/30 05:40:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_label - send a request to the tape daemon to have a tape mounted
@@ -140,6 +140,7 @@ int vdqm_reqid;
 		if (c != ETVUNKN)
 #endif
 		{
+			Ctape_errmsg ("vmgrcheck", "%s\n", sstrerror(c));
 			serrno = c;
 			return (-1);
 		}
