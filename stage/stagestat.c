@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.35 2002/07/26 12:24:39 jdurand Exp $
+ * $Id: stagestat.c,v 1.36 2002/09/29 08:13:10 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.35 $ $Date: 2002/07/26 12:24:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.36 $ $Date: 2002/09/29 08:13:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -38,17 +38,23 @@ static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.35 $ $Date: 2
 #include "Castor_limits.h"
 #include "rfio_api.h"
 #include "u64subr.h"
+#include "Cnetdb.h"
+#include <ctype.h>
 
 /* Macro to swap byte order */
 
-#define swap_it(a) swab((char *)&a,(char *)&a,sizeof(a));\
-									 a=((unsigned int)a<<16)|((unsigned int)a>>16);
+#define swap_it(a) { swab((char *)&a,(char *)&a,sizeof(a)); a=((unsigned int)a<<16)|((unsigned int)a>>16); }
+
 int getacctrec _PROTO((int, struct accthdr *, char *, int *));
 int match_2_stgin _PROTO((struct acctstage2 *));
 time_t cvt_datime _PROTO((char *));
 void print_acct _PROTO((struct accthdr *, struct acctstage2 *));
 
+#define NBBINSMAX 1000
+
 EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
+EXTERN_C char DLL_DECL *getconfent _PROTO(());
+EXTERN_C int DLL_DECL Cdomainname _PROTO((char *, int));
 
 struct file_inf{
 	int uid;				/* user id number */	
@@ -107,6 +113,13 @@ struct frec_avg{
 	char poolname[CA_MAXPOOLNAMELEN + 1];	/* pool name */
 };
 
+struct range_plot {
+	int rangemin;                          /* range min give by the user */
+	int rangemax;                          /* range max give by the user */
+	int nbbins;                            /* nb of bins give by the user */
+	float binsize;                         /* bins size (rangemax-rangemin)/nbbins */
+};
+
 struct pool_inf{
 	char poolname[CA_MAXPOOLNAMELEN + 1];	/* pool name */
 	float num_files;			/* total number of files requested by pool */
@@ -123,6 +136,11 @@ struct pool_inf{
 	float total_accesses;   /* total num of file accesses for pool */
 	float total_avg_life;   /* total avg life of files clrd by garbage collector using last access time */
 	float total_avg_life2;  /* total avg life of files clrd by garbage collector using creation time */
+	float total_avg_life22;  /* total avg life squared of files clrd by garbage collector using creation time */
+	float total_life;         /* total life of files clrd by garbage collector using creation time */
+	int histo[NBBINSMAX];
+	int overflow;                          /*nb of overflw value*/
+	int underflow;                         /*nb of underflow value*/
 	struct pool_inf *next;
 };
 struct pool_inf *pool_last, *pool_list = NULL;
@@ -165,12 +183,26 @@ void show_progress _PROTO(());
 char *req_type_2_char _PROTO((int));
 char *subtype_2_char _PROTO((int));
 
+struct range_plot plot;
+
 char *Tflag = NULL;
 char *Dflag = NULL;
 char *Mflag = NULL;
-char *Hflag = NULL;
-int use_c_time = 0;
+int gflag = 0;
+int wflag = 0;		/* If set week number given */
+int fflag = 0;
+char *week1 = NULL;
+char *week2 = NULL;
 int all_stageclrs = 0;
+int currentweek = 0;
+int thisweek = 0;
+int maxweek = 0;
+int nbrecordwished_per_acct = 0;
+int nbrecordwished_total = 0;
+#ifndef CA_MAXDOMAINNAMELEN
+#define CA_MAXDOMAINNAMELEN CA_MAXHOSTNAMELEN
+#endif
+char localdomain[CA_MAXDOMAINNAMELEN+1];  /* Local domain */
 
 int main(argc, argv)
 	int argc;
@@ -187,8 +219,10 @@ int main(argc, argv)
 	time_t starttime = 0;		/* time from which to obtain information */
 	
 	int c;				
+	int k_per_acct;         /* number of read records */
+	int k_total;            /* number of total read records */
 	int errflg = 0;			/* error flag */
-	int fd_acct;				/* file identifier */
+	int fd_acct = 0;		/* file identifier */
 	int nrec = 0;			/* number of records read */
 	int nrecnotst = 0;			/* number of records refused because not STAGE ones */
 	int nrecerror = 0;			/* number of records refused */
@@ -200,24 +234,29 @@ int main(argc, argv)
 	int tflag = 0;			/* sort on lifetime */
 	int aflag = 0;			/* sort on num accesses */	
 	int rflag = 0;            /* Select a reqid */
+	int getacctrec_status;
 	struct stat mystat;
 #if defined(_WIN32)
 	WSADATA 	wsadata;
 	int 	rcode;
 #endif
+	char *sep, *param;
   
+	if (Cdomainname(localdomain,CA_MAXDOMAINNAMELEN) != 0) {
+		fprintf(stderr, "Cannot get local domain (%s) - forcing \"localdomain\"\n", strerror(errno));
+		strcpy(localdomain,"localdomain");
+	}
+	
 	acctfile[0] = '\0';
 	poolname[0] = '\0';
-
+	hostname[0] = '\0';
+	
 	Coptind = 1;
 	Copterr = 1;
-	while ((c = Cgetopt (argc, argv, "acdD:e:f:hH:M:p:r:S:s:T:v")) != -1) {
+	while ((c = Cgetopt (argc, argv, "adD:e:f:g:h:M:n:N:p:r:S:s:T:vw:")) != -1) {
 		switch (c) {
 		case 'a':
 			all_stageclrs++;
-			break;
-		case 'c':
-			use_c_time++;
 			break;
 		case 'd':
 			debug++;
@@ -236,16 +275,66 @@ int main(argc, argv)
 				fprintf(stderr,"%s : too long (max %d characters)\n", Coptarg, CA_MAXPATHLEN);
 			}
 			strcpy (acctfile, Coptarg);
+			++fflag;
+			break;
+		case 'g':
+			gflag++;
+			if (((sep = strchr(Coptarg,',')) != NULL) && (sep > Coptarg)){
+				*sep = '\0';
+				param=++sep;
+				if ((sep = strchr(param,',')) != NULL){
+					*sep='\0';
+					plot.nbbins = atoi (++sep);
+					plot.rangemax = atoi(param);
+				}  else {
+					fprintf(stderr,"-g option : incorrect parameters please check\n");
+					errflg++;
+					break;
+				}
+				plot.rangemin = atoi(Coptarg);
+				plot.binsize = (float) ( ((float)(plot.rangemax-plot.rangemin))/(float)plot.nbbins);
+				if (plot.nbbins > NBBINSMAX){
+					fprintf(stderr,"-g option : the maximum number of bins must be <= %d\n", NBBINSMAX);
+					errflg++;
+					break;
+				}
+				if (plot.nbbins<2){
+					fprintf(stderr,"-g option : the minimum number of bins must be 2\n");
+					errflg++;
+					break;
+				}			   		
+				if (plot.rangemin>plot.rangemax){
+					fprintf(stderr,"-g option : the maximum range should be bigger than the minimum range\n");
+					errflg++;
+					break;
+				}			   			    
+			} else {
+				fprintf(stderr,"-g option : incorrect parameters please check\n");
+				errflg++;
+				break;
+			}
+			gflag++;
 			break;
 		case 'h':
-			usage (argv[0]);
-			exit (0);
-			break;
-		case 'H':
- 			Hflag = Coptarg;
-			break;
+   			strncpy(hostname,Coptarg,CA_MAXHOSTNAMELEN);
+			hostname[CA_MAXHOSTNAMELEN] = '\0';
+			break; 
 		case 'M':
  			Mflag = Coptarg;
+			break;
+		case 'n':
+			nbrecordwished_per_acct = atoi(Coptarg);
+			if (nbrecordwished_per_acct <= 0){
+				fprintf(stderr,"-n option : The number of record should be >0\n");
+				errflg++;
+			}
+			break;
+		case 'N':
+			nbrecordwished_total = atoi(Coptarg);
+			if (nbrecordwished_total <= 0){
+				fprintf(stderr,"-N option : The number of record should be >0\n");
+				errflg++;
+			}
 			break;
 		case 'p':
 			pflag++;
@@ -278,6 +367,103 @@ int main(argc, argv)
 		case 'v':
 			verbose++;
 			break;
+		case 'w':
+		{
+			char *sep;
+			long thislong;
+			char *endptr;
+			if ((sep = strchr(Coptarg,'-')) != NULL) {
+				/* It must be in the form xxxx-yyyy where xxxx and yyyy are digits */
+				*sep = '\0';
+				week1 = Coptarg;
+				week2 = ++sep;
+				if (*week2 == '\0') week2 = NULL; /* Case week1- */
+			} else {
+				week1 = week2 = Coptarg;
+			}
+			/* Check week1 value */
+			errno = 0;
+			thislong = strtol (week1, &endptr, 10);
+			if ((*endptr != '\0') || (((thislong == LONG_MIN) || (thislong == LONG_MAX)) && (errno == ERANGE))) {
+				fprintf(stderr,"### %s : %s\n", week1, (errno != 0 ? strerror(errno) : strerror(EINVAL)));
+				errflg++;
+			}
+			if (week2 != NULL) {
+				/* Check week2 value */
+				errno = 0;
+				thislong = strtol (week2, &endptr, 10);
+				if ((*endptr != '\0') || (((thislong == LONG_MIN) || (thislong == LONG_MAX)) && (errno == ERANGE))) {
+					fprintf(stderr,"### %s : %s\n", week2, (errno != 0 ? strerror(errno) : strerror(EINVAL)));
+					errflg++;
+				}
+			}
+			/* check that length are 4 for each and that week2 > week1 */
+			if ((strlen(week1) != 4) || ((week2 != NULL) && (strlen(week2) != 4)) || ((week2 != NULL) && (atoi(week2) < atoi(week1)))) {
+				if (week1 && week2) {
+ 					fprintf(stderr,"### %s-%s : %s\n", week1, week2, strerror(EINVAL));
+				} else {
+ 					fprintf(stderr,"### %s : %s\n", Coptarg, strerror(EINVAL));
+				}
+				errflg++;
+			}
+			if (! errflg) {
+				struct tm *infos;
+				time_t time_of_day;
+				int today;
+				int year;
+				int lastthursday;
+				int nonbi;
+				
+			   	/* Here is how is calculated the week number at CERN */
+			   	/*
+			   	  today=`date +%j`
+			   	  if [ $today -le 3 ]
+			   	  then
+			   	    # It's very early in the year, so work out what last year was...
+			   	    year=`TZ="MET+100";date +%y`
+			   	    # And what day number last Thursday was...
+			   	    nonbi=`expr $year - \( $year / 4 \) \* 4` 
+			   	    if [ $nonbi -eq 0 ]
+			   	    then
+			   	      lastthursday=`expr 366 + $today - 3`
+			   	    else
+			   	      lastthursday=`expr 365 + $today - 3`
+			   	    fi
+			   	  else
+			   	    year=`date +%y`
+			   	    lastthursday=`expr $today - 3`
+			   	  fi
+			   	  week=`expr \( $lastthursday + 6 \) / 7`
+				*/
+				time(&time_of_day); 
+				infos = localtime(&time_of_day);
+				today = infos->tm_yday + 1;
+				year = (infos->tm_year+1900) / 1000;
+				if (today < 3) {
+					int nonbi = year - (year / 4 * 4);
+					if (nonbi == 0) {
+						lastthursday = 366 + today - 3;
+					} else {
+						lastthursday = 365 + today - 3;
+					}
+				} else {
+					lastthursday = today - 3;
+				}
+				thisweek = year * 100 + (lastthursday + 6) / 7;
+				/* Per def we start with currentweek == atoi(week1) */
+				currentweek = atoi(week1);
+				if (week2) {
+					maxweek = atoi(week2);
+				} else {
+					maxweek = thisweek;
+				}
+				if (maxweek > thisweek) {
+					fprintf(stderr,"[WARNING] Your second week %04d seems higher than this week %04d\n", maxweek, thisweek);
+				}
+			}
+		  	wflag++;
+		}
+		break;
 		case '?':
 			errflg++;
 			break;
@@ -286,18 +472,10 @@ int main(argc, argv)
 			break;
 		}
 	}
+
 	if (errflg) {
 		usage (argv[0]);
 		exit (USERR);
-	}
-
-	if (acctfile[0] == '\0') {
-		fprintf(stderr,"[INFO] Using default account file \"%s\"\n", ACCTFILE);
-		if (strlen(ACCTFILE) > CA_MAXPATHLEN) {
-			fprintf(stderr,"%s : too long (max %d characters)\n", ACCTFILE, CA_MAXPATHLEN);
-			exit(USERR);
-		}
-		strcpy (acctfile, ACCTFILE);
 	}
 
 #if defined(_WIN32)
@@ -308,46 +486,136 @@ int main(argc, argv)
 	}
 #endif /* if WIN32 */
 
-	{
-		char *host = NULL;
-		char *filename = NULL;
-		char save_acctfile[CA_MAXPATHLEN+1];
-
-		strcpy(save_acctfile,acctfile);
-		(void) rfio_parseln (save_acctfile, &host, &filename, NORDLINKS);
-		if (host != NULL) {
-			strncpy(hostname,host,CA_MAXHOSTNAMELEN);
-			hostname[CA_MAXHOSTNAMELEN] = '\0';
+	if (*hostname == '\0') {
+		if ((param = getenv ("STAGE_HOST")) == NULL && (param = getconfent("STG", "HOST",0)) == NULL) {
+			strncpy(hostname, STAGEHOST, CA_MAXHOSTNAMELEN);
 		} else {
-#ifndef _WIN32
-			gethostname (hostname, CA_MAXHOSTNAMELEN + 1);
-#else
-			strcpy(hostname,"localhost");
-#endif
+			strncpy(hostname, param, CA_MAXHOSTNAMELEN);
+		} 
+		hostname[CA_MAXHOSTNAMELEN] = '\0';
+	}
+
+	printf ("\nYou have requested accounting data for the stager %s\n", hostname);
+
+	k_per_acct = k_total = 0;
+
+	while (1) {
+		char acctfile2[CA_MAXHOSTNAMELEN+1+CA_MAXPATHLEN+1+5];			/* accounting file name with eventual digits */
+		char acctfile3[CA_MAXHOSTNAMELEN+1+CA_MAXPATHLEN+1+5];			/* accounting file name with eventual digits */
+		
+		++k_per_acct;
+		++k_total;
+		if ((nbrecordwished_total > 0) && (k_total > nbrecordwished_total)) {
+			/* Close current accouting file */
+			if (fd_acct > 0) rfio_close(fd_acct);
+			break;
 		}
-	}
+		if ((nbrecordwished_per_acct > 0) && (k_per_acct > nbrecordwished_per_acct)) {
+			k_per_acct = 0;
+			goto next_file;
+		}
+		
+		if (fd_acct <= 0) {
+			/* For the first of the time we enter in the loop: open of first file */
+			if (acctfile[0] == '\0') {
+				if (strlen(ACCTFILE) > CA_MAXPATHLEN) {
+					fprintf(stderr,"%s : too long (max %d characters)\n", ACCTFILE, CA_MAXPATHLEN);
+					exit(USERR);
+				}
+				strcpy (acctfile2, ACCTFILE);
+			  have_fflag:
+				if (wflag) {
+					if (currentweek != thisweek) {
+						sprintf(&(acctfile2[strlen(acctfile2)]),".%04d", currentweek);
+					}
+				}
+				/* Check existence in stgpool's disks */
+				if (! fflag) {
+					strcpy(acctfile3,hostname);
+					strcat(acctfile3,":");
+				} else {
+					acctfile3[0] = '\0';
+				}
+				strcat(acctfile3,acctfile2);
+				rfio_errno = serrno = 0;
+				if (wflag) {
+					fprintf(stderr,"\n[INFO] Using account file \"%s\" \n", acctfile3);
+				} else {
+					fprintf(stderr,"\n[INFO] Using default account file \"%s\"\n", acctfile3);
+				}
+				if (rfio_access(acctfile3,R_OK) != 0) {
+					char *basename;
+					fprintf(stderr,"%s : %s\n", acctfile3, rfio_serror());
+					strcpy(acctfile3,NSROOT);
+					strcat(acctfile3,"/");
+					strcat(acctfile3,localdomain);
+					strcat(acctfile3,"/c3/backup/sacct/");
+					strcat(acctfile3,hostname);
+					if ((basename = strrchr(acctfile2,'/')) == NULL) {
+						basename = acctfile2;
+					} else {
+						++basename;
+					}
+					/* Append the basename of acctfile2 */
+					strcat(acctfile3,"/");
+					strcat(acctfile3,basename);
+					fprintf(stderr,"Trying with %s\n", acctfile3);
+					strcpy(acctfile2,acctfile3);
+				}
+				strcpy(acctfile2,acctfile3);
+			} else {
+				strcpy(acctfile2,acctfile);
+				if (wflag) {
+					/* User gave both -f and -w : use -f option value as basename for account files */
+					goto have_fflag;
+				}
+				fprintf(stderr,"\n[INFO] Using account file \"%s\"\n", acctfile);
+			}
 
-	rfio_errno = serrno = 0;
-	if ((fd_acct = rfio_open (acctfile, O_RDONLY)) < 0) {
-		fprintf (stderr, "%s : rfio_open error : %s\n", acctfile, rfio_serror());
+			rfio_errno = serrno = 0;
+
+			if ((fd_acct = rfio_open (acctfile2, O_RDONLY)) < 0) {
+				fprintf (stderr, "%s : rfio_open error : %s\n", acctfile2, rfio_serror());
+				if (! wflag) {
 #if defined(_WIN32)
-		WSACleanup();
+					WSACleanup();
 #endif     
-		exit (USERR);
-	}
+					exit (USERR);
+				} else {
+					goto next_file;
+				}
+			}
 
-	if (rfio_stat(acctfile, &mystat) < 0) {
-		fprintf (stderr, "%s : rfio_stat error : %s\n", acctfile, rfio_serror());
+			if (rfio_stat(acctfile2, &mystat) < 0) {
+				fprintf (stderr, "%s : rfio_stat error : %s\n", acctfile, rfio_serror());
+				if (! wflag) {
 #if defined(_WIN32)
-		WSACleanup();
+					WSACleanup();
 #endif     
-		exit (USERR);
-	}
-	size_total = mystat.st_size;
-	size_read = 0;
+					exit (USERR);
+				} else {
+					goto next_file;
+				}
+			} else {
+				size_total = mystat.st_size;
+				size_read = 0;
+			}
+		}
 
-	memset(&rp, 0, sizeof(struct acctstage));
-	while (getacctrec (fd_acct, &accthdr, (char *) &rp, &swapped) > 0) {
+		memset(&rp, 0, sizeof(struct acctstage));
+		if ((getacctrec_status = getacctrec (fd_acct, &accthdr, (char *) &rp, &swapped)) <= 0) {
+		  next_file:
+			/* Close current accouting file */
+			if (fd_acct > 0) rfio_close(fd_acct);
+			if (wflag && (currentweek < maxweek)) {
+				/* Next week to read is: currentweek+1 */
+				++currentweek;
+				fd_acct = 0;
+				continue;
+			} else {
+				break;
+			}
+		}
 		if (verbose || debug) {
 			show_progress();
 		}
@@ -372,12 +640,12 @@ int main(argc, argv)
 					break;
 				case 'd':
 					if (Dflag && strstr(rp.u2.s.u1.d.xfile,Dflag)) print_acct(&accthdr, &rp);
-				break;
+					break;
 				case 'm':
 					if (Mflag && strstr(rp.u2.s.u1.m.xfile,Mflag)) print_acct(&accthdr, &rp);
 					break;
 				case 'h':
-					if (Hflag && strstr(rp.u2.s.u1.h.xfile,Hflag)) print_acct(&accthdr, &rp);
+					if (Mflag && strstr(rp.u2.s.u1.h.xfile,Mflag)) print_acct(&accthdr, &rp);
 					break;
 				default:
 					break;
@@ -422,7 +690,7 @@ int main(argc, argv)
 			nb_req[rp.req_type]++;
 			if (rp.req_type == 1) create_stglist (&rp);
 			nrecok++;
-	    } else if (rp.subtype == STGCMDS) {
+		} else if (rp.subtype == STGCMDS) {
 			num_fork_exec_stager++;
 			nrecok++;
 		} else if (rp.subtype == STGCMDS) { /* stager started */
@@ -505,15 +773,14 @@ int main(argc, argv)
 		memset(&rp, 0, sizeof(struct acctstage));
 	}
 	if (!endtime && nrec) endtime = accthdr.timestamp;
-	close (fd_acct);
 	
 	if (pflag && pool_list == NULL){
 		printf ("\nNo records found for Pool : %s\n", poolname);
 		pflag = 0;
 	}
-
+		
 	/* read through stg_inf list and determine number of multifile requests */
-
+	
 	srecord = stage_list;
 	while (srecord != NULL) {
 		if (srecord->num_files > 1) num_multireqs++;
@@ -742,9 +1009,9 @@ void enter_filc_details (rp, accthdr)
 			}
 		}
 		frecord->stage_status = 0;
-	} else if ((use_c_time) && (rp->u2.s.c_time > 0)) {
-		/* Record not staged in during relevant time period but use_c_time */
-		/* is in action and we have the creation_time information */
+	} else if (rp->u2.s.c_time > 0) {
+		/* Record not staged in during relevant time period but */
+		/* we have the creation_time information */
 		/* This mean we can simulate a sucessful stagein by creation the frecord */
 		create_filelist (&file_in_list, &file_in_last, rp);
 		enter_pool_details (rp);
@@ -829,7 +1096,7 @@ void enter_fils_details (rp, accthdr)
 		 (rp->exitcode == 197)
 			)
 		) {
-		frecord->last_stgin = (use_c_time && rp->u2.s.c_time > 0) ? rp->u2.s.c_time : accthdr.timestamp;
+		frecord->last_stgin = (rp->u2.s.c_time > 0) ? rp->u2.s.c_time : accthdr.timestamp;
 	}
 
 	if (rp->retryn == 0) {
@@ -1141,43 +1408,22 @@ void print_fdetails (frecord)
 	if (all_stageclrs && frecord->num_periods_uc2 > 0)
 		avg2 += (frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2;
 
-	if (use_c_time) {
-		if ((frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0) ||
-			(frecord->total_stgin_uc2 > 0 && frecord->num_periods_uc2 > 0))
-			printf ("\n%8s %8s    %8.2f  %8d %12s %8s", frecord->u1.t.vid,
-					frecord->u1.t.fseq, avg2, frecord->num_accesses, pwd->pw_name, 
-					grp->gr_name);
-		else if (frecord->stage_status == 1)
-			printf ("\n%8s %8s    %8s  %8d %12s %8s", frecord->u1.t.vid,
-					frecord->u1.t.fseq,"      nc", frecord->num_accesses, 
-					pwd->pw_name, grp->gr_name);
-		else if (frecord->last_stgin == 0)
-			printf ("\n%8s %8s    %8s  %8d %12s %8s", frecord->u1.t.vid,
-					frecord->u1.t.fseq,"      ac", frecord->num_accesses, 
-					pwd->pw_name, grp->gr_name);
-		else printf ("\n%8s %8s    %8.2f  %8d %12s %8s", frecord->u1.t.vid,
-					 frecord->u1.t.fseq, 0., frecord->num_accesses, pwd->pw_name, 
-					 grp->gr_name);
-
-	} else {
-		if ((frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0) ||
-			(frecord->total_stgin_uc > 0 && frecord->num_periods_uc > 0))
-			printf ("\n%8s %8s    %8.2f  %8d %12s %8s", frecord->u1.t.vid,
-					frecord->u1.t.fseq, avg, frecord->num_accesses, pwd->pw_name, 
-					grp->gr_name);
-		else if (frecord->stage_status == 1)
-			printf ("\n%8s %8s    %8s  %8d %12s %8s", frecord->u1.t.vid,
-					frecord->u1.t.fseq,"      nc", frecord->num_accesses, 
-					pwd->pw_name, grp->gr_name);
-		else if (frecord->last_stgin == 0)
-			printf ("\n%8s %8s    %8s  %8d %12s %8s", frecord->u1.t.vid,
-					frecord->u1.t.fseq,"      ac", frecord->num_accesses, 
-					pwd->pw_name, grp->gr_name);
-		else printf ("\n%8s %8s    %8.2f  %8d %12s %8s", frecord->u1.t.vid,
-					 frecord->u1.t.fseq, 0., frecord->num_accesses, pwd->pw_name, 
-					 grp->gr_name);
-
-	}
+	if ((frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0) ||
+		(frecord->total_stgin_uc2 > 0 && frecord->num_periods_uc2 > 0))
+		printf ("\n%8s %8s    %8.2f  %8d %12s %8s", frecord->u1.t.vid,
+				frecord->u1.t.fseq, avg2, frecord->num_accesses, pwd->pw_name, 
+				grp->gr_name);
+	else if (frecord->stage_status == 1)
+		printf ("\n%8s %8s    %8s  %8d %12s %8s", frecord->u1.t.vid,
+				frecord->u1.t.fseq,"      nc", frecord->num_accesses, 
+				pwd->pw_name, grp->gr_name);
+	else if (frecord->last_stgin == 0)
+		printf ("\n%8s %8s    %8s  %8d %12s %8s", frecord->u1.t.vid,
+				frecord->u1.t.fseq,"      ac", frecord->num_accesses, 
+				pwd->pw_name, grp->gr_name);
+	else printf ("\n%8s %8s    %8.2f  %8d %12s %8s", frecord->u1.t.vid,
+				 frecord->u1.t.fseq, 0., frecord->num_accesses, pwd->pw_name, 
+				 grp->gr_name);
 }
 
 /* Function to print out global statistics */
@@ -1301,33 +1547,18 @@ void print_ddetails (frecord)
 	if (all_stageclrs && frecord->num_periods_uc2 > 0)
 		avg2 += (frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2;
 
-	if (use_c_time) {
-		if ((frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0) ||
-			(frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2 > 0))
-			printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.d.xfile,
-					avg2, frecord->num_accesses, pwd->pw_name, grp->gr_name);
-		else if (frecord->stage_status == 1)
-			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.d.xfile,
-					"      nc", frecord->num_accesses, pwd->pw_name, grp->gr_name);
-		else if (frecord->last_stgin == 0)
-			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.d.xfile,
-					"      ac", frecord->num_accesses, pwd->pw_name, grp->gr_name);
-		else printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.d.xfile,
-					 0., frecord->num_accesses, pwd->pw_name, grp->gr_name);
-	} else {
-		if ((frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0) ||
-			(frecord->num_periods_uc > 0 && frecord->total_stgin_uc > 0))
-			printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.d.xfile,
-					avg, frecord->num_accesses, pwd->pw_name, grp->gr_name);
-		else if (frecord->stage_status == 1)
-			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.d.xfile,
-					"      nc", frecord->num_accesses, pwd->pw_name, grp->gr_name);
-		else if (frecord->last_stgin == 0)
-			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.d.xfile,
-					"      ac", frecord->num_accesses, pwd->pw_name, grp->gr_name);
-		else printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.d.xfile,
-					 0., frecord->num_accesses, pwd->pw_name, grp->gr_name);
-	}
+	if ((frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0) ||
+		(frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2 > 0))
+		printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.d.xfile,
+				avg2, frecord->num_accesses, pwd->pw_name, grp->gr_name);
+	else if (frecord->stage_status == 1)
+		printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.d.xfile,
+				"      nc", frecord->num_accesses, pwd->pw_name, grp->gr_name);
+	else if (frecord->last_stgin == 0)
+		printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.d.xfile,
+				"      ac", frecord->num_accesses, pwd->pw_name, grp->gr_name);
+	else printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.d.xfile,
+				 0., frecord->num_accesses, pwd->pw_name, grp->gr_name);
 }
 
 /*Function to print out a Hsm record*/
@@ -1383,33 +1614,18 @@ void print_mdetails (frecord)
 	if (all_stageclrs && frecord->num_periods_uc2 > 0)
 		avg2 += (frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2;
 
-	if (use_c_time) {
-		if ((frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0) ||
-			(frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2 > 0))
-			printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.m.xfile,
-					avg2, frecord->num_accesses, pwd->pw_name, grp->gr_name);
-		else if (frecord->stage_status == 1)
-			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.m.xfile,
-					"      nc", frecord->num_accesses, pwd->pw_name, grp->gr_name);
-		else if (frecord->last_stgin == 0)
-			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.m.xfile,
-					"      ac", frecord->num_accesses, pwd->pw_name, grp->gr_name);
-		else printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.m.xfile,
-					 0., frecord->num_accesses, pwd->pw_name, grp->gr_name);
-	} else {
-		if ((frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0) ||
-			(frecord->num_periods_uc > 0 && frecord->total_stgin_uc > 0))
-			printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.m.xfile,
-					avg, frecord->num_accesses, pwd->pw_name, grp->gr_name);
-		else if (frecord->stage_status == 1)
-			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.m.xfile,
-					"      nc", frecord->num_accesses, pwd->pw_name, grp->gr_name);
-		else if (frecord->last_stgin == 0)
-			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.m.xfile,
-					"      ac", frecord->num_accesses, pwd->pw_name, grp->gr_name);
-		else printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.m.xfile,
-					 0., frecord->num_accesses, pwd->pw_name, grp->gr_name);
-	}
+	if ((frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0) ||
+		(frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2 > 0))
+		printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.m.xfile,
+				avg2, frecord->num_accesses, pwd->pw_name, grp->gr_name);
+	else if (frecord->stage_status == 1)
+		printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.m.xfile,
+				"      nc", frecord->num_accesses, pwd->pw_name, grp->gr_name);
+	else if (frecord->last_stgin == 0)
+		printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.m.xfile,
+				"      ac", frecord->num_accesses, pwd->pw_name, grp->gr_name);
+	else printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.m.xfile,
+				 0., frecord->num_accesses, pwd->pw_name, grp->gr_name);
 }
 
 /*Function to print out a CASTOR record*/
@@ -1464,33 +1680,18 @@ void print_hdetails (frecord)
 	if (all_stageclrs && frecord->num_periods_uc2 > 0)
 		avg2 += (frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2;
 
-	if (use_c_time) {
-		if ((frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0) ||
-			(frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2 > 0))
-			printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.h.xfile,
-					avg2, frecord->num_accesses, pwd->pw_name, grp->gr_name);
-		else if (frecord->stage_status == 1)
-			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.h.xfile,
-					"      nc", frecord->num_accesses, pwd->pw_name, grp->gr_name);
-		else if (frecord->last_stgin == 0)
-			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.h.xfile,
-					"      ac", frecord->num_accesses, pwd->pw_name, grp->gr_name);
-		else printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.h.xfile,
-					 0., frecord->num_accesses, pwd->pw_name, grp->gr_name);
-	} else {
-		if ((frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0) ||
-			(frecord->num_periods_uc > 0 && frecord->total_stgin_uc > 0))
-			printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.h.xfile,
-					avg, frecord->num_accesses, pwd->pw_name, grp->gr_name);
-		else if (frecord->stage_status == 1)
-			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.h.xfile,
-					"      nc", frecord->num_accesses, pwd->pw_name, grp->gr_name);
-		else if (frecord->last_stgin == 0)
-			printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.h.xfile,
-					"      ac", frecord->num_accesses, pwd->pw_name, grp->gr_name);
-		else printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.h.xfile,
-					 0., frecord->num_accesses, pwd->pw_name, grp->gr_name);
-	}
+	if ((frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0) ||
+		(frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2 > 0))
+		printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.h.xfile,
+				avg2, frecord->num_accesses, pwd->pw_name, grp->gr_name);
+	else if (frecord->stage_status == 1)
+		printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.h.xfile,
+				"      nc", frecord->num_accesses, pwd->pw_name, grp->gr_name);
+	else if (frecord->last_stgin == 0)
+		printf ("\n%-35s %8s  %8d   %15s %15s", frecord->u1.h.xfile,
+				"      ac", frecord->num_accesses, pwd->pw_name, grp->gr_name);
+	else printf ("\n%-35s %8.2f  %8d   %15s %15s", frecord->u1.h.xfile,
+				 0., frecord->num_accesses, pwd->pw_name, grp->gr_name);
 }
 
 
@@ -1500,6 +1701,7 @@ void sort_poolinf ()
 {
 	struct pool_inf *pf;				/* pointer to pool_inf record */
 	struct file_inf *frecord;			/* pointer to file_inf record */
+	float k;
 
 	/* for each record, match to its pool and set the relevant variables in the pool */
 	/* structure  */
@@ -1516,23 +1718,43 @@ void sort_poolinf ()
 					pf->stg_acc_clrd++; 
 				else if (frecord->stage_status == 0 && frecord->last_stgin == 0)
 					pf->acc_clrd++;
-				if (use_c_time) {
-					if (frecord->num_periods_gc2>0 && frecord->total_stgin_gc2 > 0) {
-						pf->total_stged_files2++;
-						pf->total_avg_life2 += ((frecord->total_stgin_gc2 / 3600.0) / frecord->num_periods_gc2);
-					}
-					if ((all_stageclrs) && (frecord->num_periods_uc2>0 && frecord->total_stgin_uc2 > 0)) {
-						pf->total_stged_files2++;
-						pf->total_avg_life2 += ((frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2);
-					}
-				} else {
-					if (frecord->num_periods_gc>0 && frecord->total_stgin_gc > 0) {
-						pf->total_stged_files++;
-						pf->total_avg_life += ((frecord->total_stgin_gc / 3600.0) / frecord->num_periods_gc);
-					}
-					if ((all_stageclrs) && (frecord->num_periods_uc>0 && frecord->total_stgin_uc > 0)) {
-						pf->total_stged_files++;
-						pf->total_avg_life += ((frecord->total_stgin_uc / 3600.0) / frecord->num_periods_uc);
+				if (frecord->num_periods_gc2>0 && frecord->total_stgin_gc2 > 0) {
+					float dummy, dummy2;
+					pf->total_stged_files2++;
+					dummy2 = frecord->total_stgin_gc2 / 3600.0;
+					dummy = dummy2 / frecord->num_periods_gc2;
+					pf->total_avg_life2 += dummy;
+					pf->total_avg_life22 += dummy * dummy;
+					if (gflag){
+						if ((dummy2 < plot.rangemax) && (dummy2 > plot.rangemin)){
+							k = (dummy2 - plot.rangemin) / plot.binsize;
+							pf->histo[(int) k]++;
+						} else {
+							if (dummy2 > plot.rangemax)
+								pf->overflow++;
+							else
+								pf->underflow++;
+						}
+					} 
+				}
+				if ((all_stageclrs) && (frecord->num_periods_uc2>0 && frecord->total_stgin_uc2 > 0)) {
+					float dummy, dummy2;
+					pf->total_stged_files2++;
+					dummy2 = frecord->total_stgin_uc2 / 3600.0;
+					dummy = dummy2 / frecord->num_periods_uc2;
+					pf->total_avg_life2 += dummy;
+					pf->total_avg_life22 += dummy * dummy;
+					if (gflag){
+						if ((dummy2 < plot.rangemax) && (dummy2 > plot.rangemin)){
+							k=(dummy2 - plot.rangemin) / plot.binsize;
+							pf->histo[(int) k]++;
+						}
+						else{    
+							if (dummy2 > plot.rangemax)
+								pf->overflow++;
+							else
+								pf->underflow++;
+						}
 					}
 				}
 				if (frecord->t_or_d == 't') pf->num_frecs++;
@@ -1559,6 +1781,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 	char poolname[CA_MAXPOOLNAMELEN + 1];
 {
 	int i; 						/* counter */ 
+	float j;                                        /* counter */ 
 	int fi = 0; 					/* counter for tape files */
 	int di = 0;					/* counter for disk files */
 	int mi = 0;					/* counter for non-CASTOR-HSM files */
@@ -1576,6 +1799,9 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 	struct file_inf *frecord;			/* pointer to file_inf record */
 	int comp ();
 	int comp2 ();
+	int range;
+	float variance;
+	int maxhist=0;                                  /*maximum lifetime for a pool used in the -g option*/
 
 	/* If a sort criteria has been given then create the relevant array to store the */
 	/* data */
@@ -1614,23 +1840,13 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 				} else if (tflag) {
 					favg[fi].rec = frecord;
 					strcpy (favg[fi].poolname, frecord->poolname);
-					if (use_c_time) {
-						if (frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0)
-							favg[fi].avg_life2 = (frecord->total_stgin_gc2 / 3600.0)
-								/ frecord->num_periods_gc2;
-						if (all_stageclrs && frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
-								 > 0)
-							favg[fi].avg_life2 += (frecord->total_stgin_uc2 / 3600.0)
-								/ frecord->num_periods_uc2;
-					} else {
-						if (frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0)
-							favg[fi].avg_life = (frecord->total_stgin_gc / 3600.0)
-								/ frecord->num_periods_gc;
-						if (all_stageclrs && frecord->num_periods_uc > 0 && frecord->total_stgin_uc
-								 > 0)
-							favg[fi].avg_life += (frecord->total_stgin_uc / 3600.0)
-								/ frecord->num_periods_uc;
-					}
+					if (frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0)
+						favg[fi].avg_life2 = (frecord->total_stgin_gc2 / 3600.0)
+							/ frecord->num_periods_gc2;
+					if (all_stageclrs && frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
+						> 0)
+						favg[fi].avg_life2 += (frecord->total_stgin_uc2 / 3600.0)
+							/ frecord->num_periods_uc2;
 				}
 				fi++;
 			}
@@ -1642,23 +1858,13 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 				} else if (tflag) {
 					davg[di].rec = frecord;
 					strcpy (davg[di].poolname, frecord->poolname);
-					if (use_c_time) {
-						if (frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0)
-							davg[di].avg_life2 = (frecord->total_stgin_gc2 / 3600.0)
-								/ frecord->num_periods_gc2;
-						if (all_stageclrs && frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
-								 > 0)
-							davg[di].avg_life2 += (frecord->total_stgin_uc2 / 3600.0)
-								/ frecord->num_periods_uc2;
-					} else {
-						if (frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0)
-							davg[di].avg_life = (frecord->total_stgin_gc / 3600.0)
-								/ frecord->num_periods_gc;
-						if (all_stageclrs && frecord->num_periods_uc > 0 && frecord->total_stgin_uc
-								 > 0)
-							davg[di].avg_life += (frecord->total_stgin_uc / 3600.0)
-								/ frecord->num_periods_uc;
-					}
+					if (frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0)
+						davg[di].avg_life2 = (frecord->total_stgin_gc2 / 3600.0)
+							/ frecord->num_periods_gc2;
+					if (all_stageclrs && frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
+						> 0)
+						davg[di].avg_life2 += (frecord->total_stgin_uc2 / 3600.0)
+							/ frecord->num_periods_uc2;
 				}
 				di++;
 			}
@@ -1670,23 +1876,13 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 				} else if (tflag) {
 					mavg[mi].rec = frecord;
 					strcpy (mavg[mi].poolname, frecord->poolname);
-					if (use_c_time) {
-						if (frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0)
-							mavg[mi].avg_life2 = (frecord->total_stgin_gc2 / 3600.0)
-								/ frecord->num_periods_gc2;
-						if (all_stageclrs && frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
-								 > 0)
-							mavg[mi].avg_life2 += (frecord->total_stgin_uc2 / 3600.0)
-								/ frecord->num_periods_uc2;
-					} else {
-						if (frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0)
-							mavg[mi].avg_life = (frecord->total_stgin_gc / 3600.0)
-								/ frecord->num_periods_gc;
-						if (all_stageclrs && frecord->num_periods_uc > 0 && frecord->total_stgin_uc
-								 > 0)
-							mavg[mi].avg_life += (frecord->total_stgin_uc / 3600.0)
-								/ frecord->num_periods_uc;
-					}
+					if (frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0)
+						mavg[mi].avg_life2 = (frecord->total_stgin_gc2 / 3600.0)
+							/ frecord->num_periods_gc2;
+					if (all_stageclrs && frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
+						> 0)
+						mavg[mi].avg_life2 += (frecord->total_stgin_uc2 / 3600.0)
+							/ frecord->num_periods_uc2;
 				}
 				mi++;
 			}
@@ -1698,23 +1894,13 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 				} else if (tflag) {
 					havg[hi].rec = frecord;
 					strcpy (havg[hi].poolname, frecord->poolname);
-					if (use_c_time) {
-						if (frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0)
-							havg[hi].avg_life2 = (frecord->total_stgin_gc2 / 3600.0)
-								/ frecord->num_periods_gc2;
-						if (all_stageclrs && frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
-								 > 0)
-							havg[hi].avg_life2 += (frecord->total_stgin_uc2 / 3600.0)
-								/ frecord->num_periods_uc2;
-					} else {
-						if (frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0)
-							havg[hi].avg_life = (frecord->total_stgin_gc / 3600.0)
-								/ frecord->num_periods_gc;
-						if (all_stageclrs && frecord->num_periods_uc > 0 && frecord->total_stgin_uc
-								 > 0)
-							havg[hi].avg_life += (frecord->total_stgin_uc / 3600.0)
-								/ frecord->num_periods_uc;
-					}
+					if (frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0)
+						havg[hi].avg_life2 = (frecord->total_stgin_gc2 / 3600.0)
+							/ frecord->num_periods_gc2;
+					if (all_stageclrs && frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
+						> 0)
+						havg[hi].avg_life2 += (frecord->total_stgin_uc2 / 3600.0)
+							/ frecord->num_periods_uc2;
 				}
 				hi++;
 			}
@@ -1754,7 +1940,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 	while (pf != NULL) {
 		strcpy (current_pool, pf->poolname);
 		if (pflag && strcmp (current_pool,poolname) != 0) continue;
-		printf ("\f\nFile Request Details for Pool : %10s\n\n", current_pool);
+		printf ("\nFile Request Details for Pool : %10s\n\n", current_pool);
 		printf ("Number of requests started before time period began\t\t\t%d\n",
 				pf->acc_clrd + pf->acc);
 		printf ("Out of these:\tNumber accessed before being cleared\t\t\t%d\n",
@@ -1770,17 +1956,28 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 		if (pf->num_files > 0)
 			printf ("\nAverage number of file accesses \t:\t %8.2f",
 					pf->total_accesses/pf->num_files);
-		if (use_c_time) {
-			if (pf->total_avg_life2 > 0.0 && pf->total_stged_files2 > 0)
-				printf ("\n Average lifetime of staged and then garbaged%s file using creation time \t:\t %8.2f hours\n",
-						(all_stageclrs ? " or cleared_by_user" : ""),
-						(float) (pf->total_avg_life2/pf->total_stged_files2));
+
+		range= pf->total_stged_files2;
+		if (pf->total_avg_life2 > 0.0 && pf->total_stged_files2 > 0) {
+			printf("\n");
+			printf("Average lifetime of staged and then garbaged%s file using creation time\t:\t%8.2f hours\n",
+					(all_stageclrs ? " or cleared_by_user" : ""), (float) (pf->total_avg_life2/pf->total_stged_files2));
+			printf("Number of files used in this calculation                               \t:\t%8d\n",pf->total_stged_files2);
+			if (pf->total_stged_files2 > 1) {
+				variance = (pf->total_avg_life22 - (pf->total_avg_life2 * pf->total_avg_life2) / pf->total_stged_files2) / (pf->total_stged_files2 - 1);
+				if (variance >= 0) {
+					printf("Standard deviation of lifetime                                      \t:\t%8.2f hours\n",sqrt(variance));
+				} else {
+					/* Should never happen */
+					printf("Problem computing the standard deviation for lifetime\n");
+				}
+			} else {
+				printf("No standard deviation for lifetime\n");
+			}
 		} else {
-			if (pf->total_avg_life > 0.0 && pf->total_stged_files > 0)
-				printf ("\n Average lifetime of a staged and then deleted file using last access time \t:\t %8.2f hours\n",
-						(float) (pf->total_avg_life/pf->total_stged_files));
+			printf("\nNo files garbage collected in this time period; no lifetime collected");
 		}
-		
+
 		/* if sort criteria given print out file details */
 
 		if (aflag && pf->num_frecs > 0) {
@@ -1879,14 +2076,44 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 			printf ("\n File Name                          Avg Life   Number");        
 			printf ("        Login Name      Group ID ");
 			printf ("\n                                       (hrs)  Accesses");
-			for(i=0; i< num_mrecs; i++) {
-				if ((frecord = mavg[i].rec) == NULL) continue;
+			for(i=0; i< num_hrecs; i++) {
+				if ((frecord = havg[i].rec) == NULL) continue;
 				if ((strcmp (frecord->poolname, current_pool) == 0) &&
 					(frecord->total_stgin_gc > 0 || frecord->total_stgin_uc > 0 || frecord->total_stgin_gc2 > 0 || frecord->total_stgin_uc2 > 0))
-					print_mdetails (frecord);
+					print_hdetails (frecord);
 			}
 		}
 		printf("\n"); 
+		if (gflag){
+			if (pf != NULL){
+				printf("\n\nHistogram of the lifetime of files garbage collected for the pool %s",pf->poolname);
+				for (i=0;i<plot.nbbins+1;i++){
+					if (pf->histo[i]>maxhist){
+						maxhist=pf->histo[i];
+					}
+				}
+				printf("\nThe number of entries for this  histogram is: %d", (pf->total_stged_files2-pf->underflow-pf->overflow));
+	      
+				if(pf->total_avg_life2 > 0.0 && pf->total_stged_files2 > 0){
+					printf( "\n\nThe number of underflows is:   %d \t the number of overflows is:  %d", pf->underflow, pf->overflow);
+					printf("\n");
+					if (maxhist>0){
+						for (i=0;i<plot.nbbins+1;i++){ 
+							printf("\nfor %8.2f<lifetime<%8.2f %d \t",  
+								   (float)plot.rangemin+((float)i*plot.binsize),(float)plot.rangemin+((1+(float)i)*plot.binsize), pf->histo[i]); 
+							for (j=0;j<((pf->histo[i]*(50)/maxhist));j++){ 
+								printf("*"); 
+							} 
+						}
+					}
+				}
+				else 
+					printf ("\nNo statistics available because no files were garbage collected");
+			}
+			printf("\n");
+			printf("\n");
+		}
+
 		pf = pf->next;
 	}
 }
@@ -1911,17 +2138,10 @@ int comp2 (a, b)
 {
 	int c = 0;
 
-	if (use_c_time) {
-		if ((c = strcmp(a->poolname, b->poolname)) != 0) return (c);
-		else if (a->avg_life2 < b->avg_life2) return (1);
-		else if (a->avg_life2 == b->avg_life2) return (0);
-		else return (-1);
-	} else {
-		if ((c = strcmp(a->poolname, b->poolname)) != 0) return (c);
-		else if (a->avg_life < b->avg_life) return (1);
-		else if (a->avg_life == b->avg_life) return (0);
-		else return (-1);
-	}
+	if ((c = strcmp(a->poolname, b->poolname)) != 0) return (c);
+	else if (a->avg_life2 < b->avg_life2) return (1);
+	else if (a->avg_life2 == b->avg_life2) return (0);
+	else return (-1);
 }
 
 void swap_fields (rp)
@@ -1941,25 +2161,31 @@ void usage (cmd)
 	char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
-	fprintf (stderr, "%s",
-			 "[-a][-c][-d][-e end_time][-f accounting_file][-h][-s start_time][-p pool_name][-S <a or t>][-v]\n"
-			 "[-D diskfile][-H castorfile][-M noncastorfile][-T vid]\n"
+	fprintf (stderr,
+			 "[-a][-d][-e end_time][-f accounting_file][-g  min,max,bins]\n"
+			 "[-h hostname][-n number_records][-s start_time][-p pool_name][-S <a or t>][-v]\n"
+			 "[-D diskfile][-M hsmfile][-T vid]\n"
 			 "\n"
 			 "where -a                 Use files deleted by user and admin for lifetime analysis - Default to admin (== garbage collector) only\n"
-			 "      -c                 Use creation time for doing lifetime analysis\n"
 			 "      -d                 Debug mode\n"
 			 "      -D diskfile        is for searching and dumping accounting for DISK entries matching \"diskfile\"\n"
 			 "      -e end_time        Limits analysis up to mmddhhmm[yy]\n"
 			 "      -f accounting_file For using \"accounting_file\" (rfio syntax)\n"
-			 "      -h accounting_file This help\n"
-			 "      -H castorfile      is for searching and dumping accounting for CASTOR entries matching \"castorfile\"\n"
-			 "      -M hsmfile         is for searching and dumping accounting for HSM and NON-CASTOR entries matching \"hsmfile\"\n"
+			 "      -g min,max,bins    Plots a histogram of the garbage collected file lifetimes. The syntax is min,max,nbins where min and max are the histogram range, and nbins is the number of bins with nbins (must be between 2 and 1000)\n"
+			 "      -h hostname        Read accouting records for hostname stager\n"
+			 "      -M hsmfile         is for searching and dumping accounting for HSM entries matching \"hsmfile\"\n"
+			 "      -n number_records  Allows to limit the number of records read within a single accounting file\n"
+			 "      -N number_records  Allows to limit the total number of records read. Same syntax as -n.\n"
 			 "      -p pool_name       Limits analysis to pool \"pool_name\"\n"
 			 "      -r reqid           is for searching and dumping accounting for this \"reqid\"\n"
 			 "      -s start_time      Limits analysis from mmddhhmm[yy]\n"
 			 "      -S <a or t>        Sorting criteria (\"a\" per access number, \"t\" per lifetime)\n"
 			 "      -T vid             is for searching and dumping accounting for TAPE entries matching \"vid\"\n"
 			 "      -v                 Verbose mode\n"
+			 "      -w                 Week number, give stats for a specify week yyww (y=year w=week ex:0227) or for a range of weeks yyww1-yyww2; if yyww2 blank takes up to current week. The -f option can be used to force the accouting file name. Except for the current week, this tool will then try to open files <-f option value>.yyww. For example '-f /tmp/sacct -w 0230-0232' will attempt to open /tmp/sacct.0230, /tmp/sacct.0231 and /tmp/sacct.0232\n"
+			 "\n"
+			 "Note: If this tool cannot open the disk file it will always try to access the archived version that should be at %s/%s/c3/backup/sacct/<hostname>/sacct.yyww\n",
+			 NSROOT, localdomain
 		);
 }
 
