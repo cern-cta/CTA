@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.36 2002/09/29 08:13:10 jdurand Exp $
+ * $Id: stagestat.c,v 1.37 2002/09/29 20:54:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.36 $ $Date: 2002/09/29 08:13:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.37 $ $Date: 2002/09/29 20:54:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -2099,7 +2099,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 					printf("\n");
 					if (maxhist>0){
 						for (i=0;i<plot.nbbins+1;i++){ 
-							printf("\nfor %8.2f<lifetime<%8.2f %d \t",  
+							printf("\nfor %8.2f<lifetime<%8.2f %5d \t",  
 								   (float)plot.rangemin+((float)i*plot.binsize),(float)plot.rangemin+((1+(float)i)*plot.binsize), pf->histo[i]); 
 							for (j=0;j<((pf->histo[i]*(50)/maxhist));j++){ 
 								printf("*"); 
