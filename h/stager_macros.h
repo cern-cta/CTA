@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.14 2005/01/27 11:49:34 jdurand Exp $
+ * $Id: stager_macros.h,v 1.15 2005/01/27 12:25:59 jdurand Exp $
  */
 
 #ifndef __stager_macros_h
@@ -46,18 +46,10 @@
 #define STAGER_LOG_USAGE(fileid,string)       STAGER_LOG(STAGER_MSG_USAGE    ,fileid, "STRING", string, NULL, NULL)
 #define STAGER_LOG_SIGNAL(fileid,value)       STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "SIGNAL NUMBER" ,  value, NULL, NULL)
 #define STAGER_LOG_SIGNAL_NAME(fileid,string) STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "SIGNAL NAME", string, NULL, NULL)
-#define STAGER_LOG_ENTER()                  { \
-  if (stagerTrace) {STAGER_LOG(STAGER_MSG_ENTER ,NULL  ,NULL     ,NULL  , NULL, NULL);} \
-}
-#define STAGER_LOG_LEAVE()                  { \
-  if (stagerTrace) {STAGER_LOG(STAGER_MSG_LEAVE ,NULL  ,NULL     ,NULL  , NULL, NULL);} return; \
-}
-#define STAGER_LOG_RETURN(value)            { \
-  if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"RC"     ,value , NULL, NULL);} return(value); \
-}
-#define STAGER_LOG_RETURN_NULL()  { \
-  if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"STRING" ,"NULL" , NULL, NULL);} return(NULL); \
-}
+#define STAGER_LOG_ENTER() {}
+#define STAGER_LOG_LEAVE() {}
+#define STAGER_LOG_RETURN(value) {}
+#define STAGER_LOG_RETURN_NULL() {}
 #define STAGER_LOG_SYSTEM(fileid,string)    STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "STRING", string, NULL, NULL)
 #define STAGER_LOG_STARTUP() { \
   int _save_serrno = serrno; \
