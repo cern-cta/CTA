@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_mount.man,v $ $Revision: 1.17 $ $Date: 2002/04/08 14:53:30 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: Ctape_mount.man,v $ $Revision: 1.18 $ $Date: 2003/10/14 07:17:16 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_MOUNT 3 "$Date: 2002/04/08 14:53:30 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_MOUNT 3 "$Date: 2003/10/14 07:17:16 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_mount \- send a request to the tape daemon to have a tape mounted
 .SH SYNOPSIS
@@ -95,7 +95,7 @@ for IBM 3590 cartridges,
 .B 40G
 or
 .B 40GC
-for IBM 3590K cartridges,
+for IBM 3590E cartridges,
 .BR 10G ,
 .BR 10GC ,
 .BR 25G ,

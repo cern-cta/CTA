@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tapetohsm.man,v $ $Revision: 1.4 $ $Date: 2002/03/08 06:48:42 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 2001-2002 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: tapetohsm.man,v $ $Revision: 1.5 $ $Date: 2003/10/14 07:17:05 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2001-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TAPETOHSM 1 "$Date: 2002/03/08 06:48:42 $" CASTOR "vmgr Administrator Commands"
+.TH TAPETOHSM 1 "$Date: 2003/10/14 07:17:05 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 tapetohsm \- catalog in the CASTOR Name Server files from a non HSM tape
 .SH SYNOPSIS
@@ -38,6 +38,8 @@ tapetohsm \- catalog in the CASTOR Name Server files from a non HSM tape
 .SH DESCRIPTION
 .B tapetohsm
 catalogs in the CASTOR Name Server files from a non HSM tape.
+.LP
+This command requires ADMIN privilege in the Cupv database.
 .TP
 .I density
 The list of supported alphanumeric densities can be obtained with
@@ -56,7 +58,7 @@ for IBM 3590 cartridges,
 .B 40G
 or
 .B 40GC
-for IBM 3590K cartridges,
+for IBM 3590E cartridges,
 .B 20G
 or
 .B 20GC

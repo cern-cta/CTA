@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_dmpfil.man,v $ $Revision: 1.4 $ $Date: 2002/04/08 16:00:33 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: Ctape_dmpfil.man,v $ $Revision: 1.5 $ $Date: 2003/10/14 07:17:16 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_DMPFIL 3 "$Date: 2002/04/08 16:00:33 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_DMPFIL 3 "$Date: 2003/10/14 07:17:16 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_dmpfil \- analyze the content of a tape
 .SH SYNOPSIS
@@ -105,7 +105,7 @@ for IBM 3590 cartridges,
 .B 40G
 or
 .B 40GC
-for IBM 3590K cartridges,
+for IBM 3590E cartridges,
 .BR 10G ,
 .BR 10GC ,
 .BR 25G ,
