@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stagecat.man,v $ $Revision: 1.11 $ $Date: 2002/09/12 07:04:38 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagecat.man,v $ $Revision: 1.12 $ $Date: 2002/09/13 13:42:11 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECAT l "$Date: 2002/09/12 07:04:38 $"
+.TH STAGECAT l "$Date: 2002/09/13 13:42:11 $"
 .SH NAME
 stagecat \- put an entry in the stage daemon catalog for an existing file
 .SH SYNOPSIS
@@ -232,6 +232,9 @@ no label
 standard 
 .SM IBM
 label
+.TP
+.B aul
+ANSI user label
 .LP
 It must match the label type specified in TMS (if installed).
 If this parameter is missing, the value is taken from TMS or

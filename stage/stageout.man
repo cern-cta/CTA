@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageout.man,v $ $Revision: 1.11 $ $Date: 2002/05/02 07:49:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageout.man,v $ $Revision: 1.12 $ $Date: 2002/09/13 13:42:11 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEOUT l "$Date: 2002/05/02 07:49:11 $"
+.TH STAGEOUT l "$Date: 2002/09/13 13:42:11 $"
 .SH NAME
 stageout \- allocate space and store the option values in the stgdaemon catalog
 for use by stageput later.
@@ -289,6 +289,9 @@ no label
 standard 
 .SM IBM
 label
+.TP
+.B aul
+ANSI user label
 .LP
 It must match the label type specified in TMS (if installed).
 If this parameter is missing, the value is taken from TMS or

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stagein.man,v $ $Revision: 1.22 $ $Date: 2002/05/31 08:15:00 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagein.man,v $ $Revision: 1.23 $ $Date: 2002/09/13 13:42:11 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEIN l "$Date: 2002/05/31 08:15:00 $"
+.TH STAGEIN l "$Date: 2002/09/13 13:42:11 $"
 .SH NAME
 stagein \- allocate space in a disk pool and copy files from tape to disk or
 from disk to disk
@@ -356,6 +356,9 @@ no label
 standard 
 .SM IBM
 label
+.TP
+.B aul
+ANSI user label
 .LP
 It must match the label type specified in TMS (if installed).
 If this parameter is missing, the value is taken from TMS or
