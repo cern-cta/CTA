@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.53 2000/11/06 06:40:19 jdurand Exp $
+ * $Id: procio.c,v 1.54 2000/11/06 07:29:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.53 $ $Date: 2000/11/06 06:40:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.54 $ $Date: 2000/11/06 07:29:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1699,7 +1699,7 @@ void procputreq(req_data, clienthost)
 		/* else                                 */
 		/*   if ('t') then                      */
 		/*     tape_to_tape                     */
-		/*   else             -- then it is 'm' */
+		/*   else             -- then it is 'h' */
 		/*     castor_migration                 */
 		/*   endif                              */
 		/* endif                                */
