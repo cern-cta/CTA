@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.42 $ $Date: 2000/06/23 14:10:48 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.43 $ $Date: 2000/07/31 07:32:55 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -141,8 +141,8 @@ int rtcpd_stageupdc(tape_list_t *tape,
 
             if ( retry == 0 && filereq->stageSubreqID == -1 &&
                  (rtcpd_LockForTpPos(1) == -1) ) {
-                rtcp_log(LOG_ERR,"rtcpd_stageupdc() rtcpd_LockForTpPos(1): %s\n",
-                         sstrerror(serrno));
+                rtcp_log(LOG_ERR,"rtcpd_stageupdc() rtcpd_LockForTpPos(1): returned without lock (serrno=%d, errno=%d)\n",
+                         serrno,errno);
                 return(-1);
             }
             if ( ENOSPC_occurred == TRUE ) {
@@ -293,8 +293,8 @@ int rtcpd_stageupdc(tape_list_t *tape,
             if ( rc == 0 && (filereq->concat & CONCAT_TO_EOD) == 0 &&
                  filereq->stageSubreqID == -1 && 
                  (rtcpd_LockForTpPos(0) == -1) ) {
-                rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() rtcpd_LockForTpPos(0): %s\n",
-                         sstrerror(serrno));
+                rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() rtcpd_LockForTpPos(0): error releasing lock (serrno=%d, errno=%d)\n",
+                         serrno,errno);
                 return(-1); 
             }   
 
