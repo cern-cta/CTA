@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.35 $ $Date: 2000/04/03 13:02:47 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.36 $ $Date: 2000/04/12 16:59:39 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -65,6 +65,16 @@ extern processing_cntl_t proc_cntl;
 #define STGCMD "stageupdc"
 #endif /* STGCMD */
 #endif /* USE_STAGECMD */
+
+/*
+ * Global variable needed to flag that an ENOSPC has been sent to the
+ * stager and thus no further stageupdc calls should take place until
+ * next retry with a new file. This flag is reset in MainCntl after
+ * having waited for completion of all subrequests up to the ENOSPC
+ * failure. This total synchronisation is needed for SHIFT stagers since
+ * they expect all stageupdc in sequence.
+ */
+extern int ENOSPC_occurred; 
 
 void rtcp_stglog(int type, char *msg) {
     if ( type == MSG_ERR ) rtcp_log(LOG_ERR,msg);
@@ -141,6 +151,10 @@ int rtcpd_stageupdc(tape_list_t *tape,
             if ( retry == 0 && (rtcpd_LockForTpPos(1) == -1) ) {
                 rtcp_log(LOG_ERR,"rtcpd_stageupdc() rtcpd_LockForTpPos(1): %s\n",
                          sstrerror(serrno));
+            }
+            if ( ENOSPC_occurred == TRUE ) {
+                (void)rtcpd_LockForTpPos(0);
+                return(0);
             }
             rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() stage_updc_tppos(%s,%d,%d,%s,%s,%d,%d,%s,%s)\n",
                      filereq->stageID,
@@ -225,8 +239,10 @@ int rtcpd_stageupdc(tape_list_t *tape,
              */
             retval = 0;
             if ( filereq->err.errorcode == ENOSPC &&
-                 tapereq->mode == WRITE_DISABLE ) retval = ENOSPC;
-            else rc = rtcp_RetvalCASTOR(tape,file,&retval);
+                 tapereq->mode == WRITE_DISABLE ) {
+                retval = ENOSPC;
+                ENOSPC_occurred = TRUE;
+            } else rc = rtcp_RetvalCASTOR(tape,file,&retval);
 
             if ( (filereq->concat & CONCAT_TO_EOD) != 0 ) {
                 filereq = &file->prev->filereq;
