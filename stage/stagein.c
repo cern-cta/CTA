@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.51 2002/10/16 22:58:55 jdurand Exp $
+ * $Id: stagein.c,v 1.52 2002/10/30 15:53:00 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.51 $ $Date: 2002/10/16 22:58:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.52 $ $Date: 2002/10/30 15:53:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -83,6 +83,8 @@ int stagein_chkdirw _PROTO((char *));
 void cleanup _PROTO((int));
 void usage _PROTO((char *));
 void freehsmfiles _PROTO((int, char **));
+
+int in_send2stgd = 0;
 
 int main(argc, argv)
 		 int	argc;
@@ -849,7 +851,9 @@ int main(argc, argv)
 	signal (SIGTERM, cleanup);
 	
 	while (1) {
+		in_send2stgd = 1;
 		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
+		in_send2stgd = 0;
 		if ((req_type == STAGE_OUT) && (serrno == ENOSPC) && (enospc_retry > 0) && (enospc_retryint > 0)) {
 			if (++enospc_ntries > enospc_retry) break;
 			sleep(enospc_retryint);
@@ -1095,18 +1099,20 @@ void cleanup(sig)
 
 	signal (sig, SIG_IGN);
 	
-	sbp = sendbuf;
-	marshall_LONG (sbp, STGMAGIC);
-	marshall_LONG (sbp, STAGEKILL);
-	q = sbp;	/* save pointer. The next field will be updated */
-	msglen = 3 * LONGSIZE;
-	marshall_LONG (sbp, msglen);
-	marshall_STRING (sbp, user);	/* login name */
-	marshall_WORD (sbp, gid);
-	marshall_WORD (sbp, pid);
-	msglen = sbp - sendbuf;
-	marshall_LONG (q, msglen);	/* update length field */
-	c = send2stgd_cmd (stghost, sendbuf, msglen, 0, NULL, 0);
+	if (in_send2stgd != 0) {
+		sbp = sendbuf;
+		marshall_LONG (sbp, STGMAGIC);
+		marshall_LONG (sbp, STAGEKILL);
+		q = sbp;	/* save pointer. The next field will be updated */
+		msglen = 3 * LONGSIZE;
+		marshall_LONG (sbp, msglen);
+		marshall_STRING (sbp, user);	/* login name */
+		marshall_WORD (sbp, gid);
+		marshall_WORD (sbp, pid);
+		msglen = sbp - sendbuf;
+		marshall_LONG (q, msglen);	/* update length field */
+		c = send2stgd_cmd (stghost, sendbuf, msglen, 0, NULL, 0);
+	}
 #if defined(_WIN32)
 	WSACleanup();
 #endif
