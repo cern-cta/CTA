@@ -1,0 +1,74 @@
+.\" @(#)$RCSfile: vmgr_modifymodel.man,v $ $Revision: 1.1 $ $Date: 2000/01/10 10:40:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGR_MODIFYMODEL l "$Date: 2000/01/10 10:40:11 $"
+.SH NAME
+vmgr_modifymodel \- modify an existing model of cartridge in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "vmgr_api.h"\fR
+.sp
+.BI "int vmgr_modifymodel (const char *" model ,
+.BI "char *" media_letter ,
+.BI "int " native_capacity ,
+.BI "int " media_cost )
+.SH DESCRIPTION
+.B vmgr_modifymodel
+modifies an existing model of cartridge in the CASTOR Volume Manager.
+.TP
+.I model
+is the model of cartridge.
+It must be at most six characters long.
+.TP
+.I media_letter
+is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood
+),
+"J" for IBM 3590, "R" for STK 9840.
+.TP
+.I native_capacity
+in Mbytes.
+.TP
+.I media_cost
+in Swiss Francs.
+.LP
+Only
+.I model
+is mandatory. When a pointer to an alphanumeric field is NULL or a numeric field
+value is negative or zero, the field is not modified.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named model does not exist.
+.TP
+.B EFAULT
+.I model
+is a NULL pointer.
+.TP
+.B EINVAL
+The length of
+.I model
+exceeds
+.BR CA_MAXMODELLEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B EVMGRNACT
+Volume manager is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(l) ,
+.BR vmgr_deletemodel(l) ,
+.B vmgr_entermodel(l)
