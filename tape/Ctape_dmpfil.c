@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.13 $ $Date: 2001/07/30 12:20:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.14 $ $Date: 2001/07/30 12:51:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -156,7 +156,7 @@ int flags;
 #endif
 	if (maxbyte < 0) maxbyte = 320;
 	if (maxfile < 0)
-		if ((den & 0xF) <= D38000 || (den & 0xF) == D38KD)
+		if ((den & 0xFF) <= D38000 || (den & 0xFF) == D38KD)
 			maxfile = 0;
 		else
 			maxfile = 1;
