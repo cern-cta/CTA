@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.1 $ $Date: 1999/11/29 11:21:53 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.2 $ $Date: 1999/12/03 08:53:48 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -49,7 +49,6 @@ extern char *geterr();
 
 static int Ctape_key = -1;
 static char Unkn_errorstr[] = "unknown error";
-extern void (*rtcp_log)(int, char *, ...);
 extern int AbortFlag;
 
 extern char *getconfent(char *, char *, int);
@@ -84,7 +83,7 @@ int rtcpd_CtapeFree() {
 }
 
 int rtcpd_Assign(tape_list_t *tape) {
-    int rc, status, value;
+    int rc, status, value, jobID;
     rtcpTapeRequest_t *tapereq;
 
     if ( tape == NULL ) {
@@ -93,16 +92,18 @@ int rtcpd_Assign(tape_list_t *tape) {
     }
     tapereq = &tape->tapereq;
 
-    rtcp_log(LOG_DEBUG,"rtcpd_Assign() VolReqID=%d, dgn=%s, unit=%s\n",
-        tapereq->VolReqID,tapereq->dgn,tapereq->unit);
     /*
      * Assign the drive to current job
      */
     status = VDQM_UNIT_ASSIGN;
     value = tapereq->VolReqID;
+    jobID = getpid();
+
+    rtcp_log(LOG_DEBUG,"rtcpd_Assign() VolReqID=%d, dgn=%s, unit=%s, jobID=%d\n",
+        tapereq->VolReqID,tapereq->dgn,tapereq->unit,jobID);
 
     rc = vdqm_UnitStatus(NULL,NULL,tapereq->dgn,NULL,tapereq->unit,
-        &status,&value,0);
+        &status,&value,jobID);
 
     tapereq->tprc = rc;
     if ( rc == -1 ) {
