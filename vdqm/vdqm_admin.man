@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vdqm_admin.man,v $ $Revision: 1.1 $ $Date: 2000/06/15 16:23:46 $ CERN IT-PDP/DM Olof Barring
+.\" @(#)$RCSfile: vdqm_admin.man,v $ $Revision: 1.2 $ $Date: 2000/06/15 17:02:28 $ CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VDQM_ADMIN 1 "$Date: 2000/06/15 16:23:46 $" CASTOR "VDQM Administrator Commands"
+.TH VDQM_ADMIN 1 "$Date: 2000/06/15 17:02:28 $" CASTOR "VDQM Administrator Commands"
 .SH NAME
 vdqm_admin \- administrate VDQM server
 .SH SYNOPSIS
@@ -109,12 +109,12 @@ ALIVE
 % vdqm_admin -ping
 HOLD
 % vdqm_admin -release
-% showqueues SD3R
+% showqueues -g SD3R
 drv1@test (1220 MB) status FREE vid:  last update Jun 15 17:22:09
 drv2@test (14525 MB) status FREE vid:  last update Jun 15 17:22:09
 % vdqm_admin -dedicate -dgn SD3R -server test -drive drv1 -match 'gid=1160,host=test[0-5]'
 % vdqm_admin -deldrv -dgn SD3R -server test -drive drv2
-% showqueues SD3R
+% showqueues -g SD3R
 drv1@test (1220 MB) status FREE vid:  last update Jun 15 17:22:09
 .ft
 .fi
