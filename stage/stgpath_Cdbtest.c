@@ -1,5 +1,5 @@
 /*
- * $Id: stgpath_Cdbtest.c,v 1.6 2000/12/12 14:13:42 jdurand Exp $
+ * $Id: stgpath_Cdbtest.c,v 1.7 2000/12/21 14:37:05 jdurand Exp $
  */
 
 /* ============== */
@@ -41,6 +41,7 @@
 /* ========== */
 /* Prototypes */
 /* ========== */
+extern int stglogit _PROTO(());
 int _logfile_readline _PROTO((FILE *, char **, size_t *));
 
 /* ================ */
