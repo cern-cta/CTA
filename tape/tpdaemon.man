@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tpdaemon.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: tpdaemon.man,v $ $Revision: 1.7 $ $Date: 2002/03/11 15:47:19 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TPDAEMON 1 "$Date: 2001/09/26 09:13:56 $" CASTOR "Ctape Administrator Commands"
+.TH TPDAEMON 1 "$Date: 2002/03/11 15:47:19 $" CASTOR "Ctape Administrator Commands"
 .SH NAME
 tpdaemon \- starts the tape daemon
 .SH SYNOPSIS
@@ -58,17 +58,89 @@ There must be one entry in the configuration file per tape drive giving:
 .TP 1.2i
 drive name
 as seen by the operators in the mount messages.
-The name cannot exceed 8 characters.
+The name cannot exceed
+.B CA_MAXUNMLEN
+characters.
 .TP
 device group
-must be a member of an installation defined set of "device groups"
+must be a member of an installation defined set of "device groups".
+It cannot exceed
+.B CA_MAXDGNLEN
+characters.
 .TP
 device name
 as defined in /dev.
 The device must not rewind on close and have a Berkeley behaviour.
+The name cannot exceed
+.B CA_MAXDVNLEN
+characters.
 .TP
 density
-corresponding to the entry in /dev
+corresponding to the entry in /dev.
+The supported alphanumeric densities are:
+.br
+.B 1600
+or
+.B 6250
+for round (IBM 3420) tapes,
+.B 38000
+for standard IBM 3480 cartridges,
+.B 38KC
+for 3480 cartridges with compaction (IDRC),
+.B 38KD
+for double density IBM 3490 cartridges,
+.B 38KDC
+for 3490 cartridges with compaction (IDRC),
+.BR 8200 ,
+.BR 8200C ,
+.B 8500
+or
+.B 8500C
+for Exabytes,
+.B DDS
+or
+.B DDSC
+for DAT cartridges,
+.BR 2G ,
+.BR 6G ,
+.BR 10G ,
+.BR 10GC ,
+.BR 20G ,
+.BR 20GC ,
+.BR 35G ,
+.BR 35GC ,
+.B 40G
+or
+.B 40GC
+for DLT cartridges,
+.B 10G
+or
+.B 10GC
+for IBM 3590 cartridges,
+.B 40G
+or
+.B 40GC
+for IBM 3590K cartridges,
+.BR 10G ,
+.BR 10GC ,
+.BR 25G ,
+.BR 25GC ,
+.B 50G
+or
+.B 50GC
+for Redwood cartridges,
+.B 20G
+or
+.B 20GC
+for STK 9840 cassettes,
+.B 60G
+or
+.B 60GC
+for STK 9940 cartridges,
+.B 100G
+or
+.B 100GC
+for LTO cartridges.
 .TP
 initial status
 .B up
@@ -101,16 +173,20 @@ compatible drives, IBM
 STK
 .B SD3
 (Redwood), STK
-.B 9840
+.BR 9840 ,
+STK
+.B 9940
 or drives equipped with Vision Boxes from Peripheral Vision
 .RB ( /VB ) ,
 the drive LED display will show
 the vid requested or mounted or error messages like "wrong ring" or "wrong vsn".
 For
 .BR DLT s,
+.BR LTO s,
 .BR SD3 s
-and
 .BR 9840 s
+and
+.BR 9940 s
 connected to DEC alpha or Linux systems or IBM
 .BR 3590 s
 connected to AIX or Linux platforms, fast tape positionning is used.
@@ -162,6 +238,7 @@ exab0     8500		/dev/nrmt9	8500		up	manual	8500/VB
 .ft
 .fi
 .SH SEE ALSO
+.BR Castor_limits(4) ,
 .BR msgd(1) ,
 .BR msgdaemon(1) ,
 .BR oper(1) ,
