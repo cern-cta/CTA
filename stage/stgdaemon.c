@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.215 2002/08/16 06:41:21 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.216 2002/08/16 06:49:47 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.215 $ $Date: 2002/08/16 06:41:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.216 $ $Date: 2002/08/16 06:49:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1392,7 +1392,7 @@ int main(argc,argv)
 		memcpy (&readfd, &readmask, sizeof(readmask));
 		timeval.tv_sec = CHECKI;	/* must set each time for linux */
 		timeval.tv_usec = 0;
-		if (select (maxfds, &readfd, (fd_set *) NULL, (fd_set *) NULL, &timeval) < 0) {
+		if (select (stg_s + 1, &readfd, (fd_set *) NULL, (fd_set *) NULL, &timeval) < 0) {
 			FD_ZERO (&readfd);
 		}
 #ifdef STAGE_CSETPROCNAME
