@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_modifytape.man,v $ $Revision: 1.10 $ $Date: 2001/09/26 09:13:57 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr_modifytape.man,v $ $Revision: 1.11 $ $Date: 2002/02/07 06:39:51 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_MODIFYTAPE 3 "$Date: 2001/09/26 09:13:57 $" CASTOR "vmgr Library Functions"
+.TH VMGR_MODIFYTAPE 3 "$Date: 2002/02/07 06:39:51 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_modifytape \- modify an existing tape in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -12,7 +12,7 @@ vmgr_modifytape \- modify an existing tape in the CASTOR Volume Manager
 .sp
 .BI "int vmgr_modifytape (const char *" vid ,
 .BI "char *" vsn ,
-.BI "char *" dgn ,
+.BI "char *" library ,
 .BI "char *" density ,
 .BI "char *" lbltype ,
 .BI "char *" manufacturer ,
@@ -31,33 +31,47 @@ It must be at most CA_MAXVIDLEN characters long.
 specifies the magnetically recorded volume serial number of the tape.
 It must be at most six characters long.
 .TP
-.I dgn
-The device group name must be a member of an installation defined set of
-"device groups".
+.I library
+is the name of the library.
+It must be at most CA_MAXTAPELIBLEN characters long.
+The list of libraries can be obtained with
+.BR vmgrlistlibrary .
 .TP
 .I density
-The supported alphanumeric densities are:
-.br
+The list of supported alphanumeric densities can be obtained with
+.BR vmgrlistdenmap .
+They are for example:
+.BR 35G ,
+.BR 35GC ,
+.B 40G
+or
+.B 40GC
+for DLT cartridges,
 .B 10G
 or
 .B 10GC
 for IBM 3590 cartridges,
-.BR 10G ,
-.BR 10GC ,
-.BR 25G ,
-.BR 25GC ,
-.B 50G
+.B 40G
 or
-.B 50GC
-for Redwood cartridges,
+.B 40GC
+for IBM 3590K cartridges,
 .B 20G
 or
 .B 20GC
-for STK 9840 cassettes.
+for STK 9840 cassettes,
+.B 60G
+or
+.B 60GC
+for STK 9940 cartridges,
+.B 100G
+or
+.B 100GC
+for LTO cartridges.
 .TP
 .I lbltype
 may be
 .BR al ,
+.BR aul ,
 .B nl
 or
 .BR sl .
@@ -70,6 +84,8 @@ The cartridge serial number is an alphanumeric field CA_MAXSNLEN bytes long.
 .TP
 .I poolname
 is the tape pool name. It must be at most CA_MAXPOOLNAMELEN characters long.
+The list of pools can be obtained with
+.BR vmgrlistpool .
 .TP
 .I status
 can be set to a combination of
@@ -92,7 +108,7 @@ is set appropriately.
 .SH ERRORS
 .TP 1.3i
 .B ENOENT
-The named volume or pool does not exist.
+The named volume does not exist.
 .TP
 .B EACCES
 The requestor is not super-user.
@@ -105,7 +121,8 @@ is a NULL pointer.
 The length of
 .I vid
 exceeds
-.BR CA_MAXVIDLEN .
+.B CA_MAXVIDLEN
+or the library/density/poolname does not exist.
 .TP
 .B SENOSHOST
 Host unknown.
