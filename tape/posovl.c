@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.16 $ $Date: 2000/01/09 17:57:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.17 $ $Date: 2000/03/31 15:07:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -47,8 +47,9 @@ int	argc;
 char	**argv;
 {
 	char actual_hdr1[81];
+	unsigned char arg_blockid[9];
 	int blksize;
-	unsigned int blockid;
+	unsigned char blockid[4];
 	int c;
 	int cfseq;
 	int den;
@@ -62,6 +63,7 @@ char	**argv;
 	char hdr1[LBLBUFSZ];
 	char hdr2[LBLBUFSZ];
 	int i;
+	int j;
 	int lblcode;
 	int lrecl;
 	int method;
@@ -105,7 +107,9 @@ char	**argv;
 	lblcode = atoi (argv[12]);
 	vsn = argv[13];
 
-	blockid = atoi (argv[14]);
+	strcpy (arg_blockid, argv[14]);
+	for (i = 0, j = 0; i < 4; i++)
+		blockid[i] = arg_blockid[j++] << 4 | arg_blockid[j++];
 	cfseq = atoi (argv[15]);
 	strcpy (fid, argv[16]);
 	filstat = atoi (argv[17]);
@@ -162,8 +166,9 @@ char	**argv;
 			c = ETNRDY;
 			goto reply;
 		}
-		if (blockid < 600) blockid = 7000;
-		if (c = locate_sony (tapefd, path, blockid)) goto reply;
+		if (fseq < 600) fseq = 7000;
+		if (c = locate_sony (tapefd, path, fseq)) goto reply;
+		cfseq = fseq;
 	} else {
 #endif
 #ifndef SOLARIS
@@ -281,7 +286,7 @@ char	**argv;
 	marshall_LONG (sbp, jid);
 	marshall_WORD (sbp, ux);
 	marshall_LONG (sbp, blksize);
-	marshall_LONG (sbp, blockid);
+	marshall_OPAQUE (sbp, blockid, 4);
 	marshall_LONG (sbp, cfseq);
 	marshall_STRING (sbp, fid);
 	marshall_LONG (sbp, lrecl);

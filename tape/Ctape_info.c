@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_info.c,v $ $Revision: 1.7 $ $Date: 1999/11/17 10:54:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_info.c,v $ $Revision: 1.8 $ $Date: 2000/03/31 15:07:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_info - get tape file information */
@@ -25,7 +25,7 @@ extern char *sys_errlist[];
 Ctape_info(path, blksize, blockid, density, devtype, drive, fid, fseq, lrecl, recfm)
 char *path;
 int *blksize;
-unsigned int *blockid;
+unsigned char *blockid;
 char *density;
 char *devtype;
 char *drive;
@@ -112,9 +112,9 @@ char *recfm;
 		unmarshall_LONG (rbp, n);
 		if (blksize)
 			*blksize = n;
-		unmarshall_LONG (rbp, n);
+		unmarshall_OPAQUE (rbp, tmpbuf, 4);
 		if (blockid)
-			*blockid = n;
+			memcpy (blockid, tmpbuf, 4);
 		unmarshall_STRING (rbp, tmpbuf);
 		if (density)
 			strcpy (density, tmpbuf);
