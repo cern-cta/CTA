@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.20 2002/06/11 21:09:10 jdurand Exp $
+ * $Id: stager_castor.c,v 1.21 2002/06/12 05:45:13 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.20 $ $Date: 2002/06/11 21:09:10 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.21 $ $Date: 2002/06/12 05:45:13 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -985,7 +985,7 @@ int stagein_castor_hsm_file() {
 			}
 			RESTORE_EID;
 
-			/* The test on the number of segments beeing done, we now correct the */
+			/* The test on the number of segments being done, we now correct the */
 			/* totalsize to transfer versus -s argument */
 			if (stcp->size > 0) {
 				u_signed64 new_totalsize;
@@ -1168,10 +1168,10 @@ int stagein_castor_hsm_file() {
 			if (hsm_totalsize[i] > 0) {
 				/* But file is not of zero-size !? */
 				if (hsm_nsegments[i] <= 0) {
-					/* This file is very probably BEEING migrated ! Then it is normal */
+					/* This file is very probably BEING migrated ! Then it is normal */
 					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm,
-							 "stagein", "File probably currently beeing migrated");
+							 "stagein", "File probably currently being migrated");
 					RESTORE_EID;
 					RETURN (EBUSY);
 				} else {
@@ -1191,7 +1191,7 @@ int stagein_castor_hsm_file() {
 			}
 		}
 
-		/* The test on the number of segments beeing done, we now correct the */
+		/* The test on the number of segments being done, we now correct the */
 		/* totalsize to transfer versus -s argument */
 		if (stcp->size > 0) {
 			u_signed64 new_totalsize;
