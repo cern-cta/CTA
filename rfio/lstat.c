@@ -1,5 +1,5 @@
 /*
- * $Id: lstat.c,v 1.11 2002/11/19 12:55:33 baud Exp $
+ * $Id: lstat.c,v 1.12 2002/12/18 13:05:49 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lstat.c,v $ $Revision: 1.11 $ $Date: 2002/11/19 12:55:33 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: lstat.c,v $ $Revision: 1.12 $ $Date: 2002/12/18 13:05:49 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* lstat.c       Remote File I/O - get file status   */
@@ -28,13 +28,13 @@ char    *filepath;              	/* remote file path  		*/
 struct stat *statbuf;           	/* status buffer 		*/
 {
 #if (defined(__alpha) && defined(__osf__))
-   return (rfio_stat64(filepath,statbuf));
+   return (rfio_lstat64(filepath,statbuf));
 #else
    int      lstatus;		/* remote lstat() status    	*/
 #if defined(IRIX64) || defined(__ia64__)
    struct stat64 statb64;
 
-   if ((lstatus = rfio_stat64(filepath,&statb64)) == 0)
+   if ((lstatus = rfio_lstat64(filepath,&statb64)) == 0)
 	(void) stat64tostat(&statb64, statbuf);
    return (lstatus);
 #else
