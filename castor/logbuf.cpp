@@ -1,0 +1,54 @@
+/******************************************************************************
+ *                      logbuf.cpp
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * @(#)$RCSfile: logbuf.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/28 09:40:26 $ $Author: sponcec3 $
+ *
+ * 
+ *
+ * @author Sebastien Ponce
+ *****************************************************************************/
+
+// Include Files
+#include "castor/logbuf.h"
+#include <time.h>
+#include <sstream>
+#include <iomanip>
+#include <Cthread_api.h>
+
+//-----------------------------------------------------------------------------
+// getTimeStamp
+//-----------------------------------------------------------------------------
+std::string castor::logbuf::getTimeStamp() {
+  struct tm tmstruc, *tm;
+  time_t current_time;
+  
+  (void) time (&current_time);
+  (void) localtime_r (&current_time, &tmstruc);
+  tm = &tmstruc;
+
+  std::ostringstream buf;
+
+  buf << std::setw(2) << tm->tm_mon+1
+      << "/" << tm->tm_mday
+      << " " << tm->tm_hour
+      << ":" << tm->tm_min
+      << ":" << tm->tm_sec
+      << " " << Cthread_self() << " ";
+  return buf.str();
+}

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.h,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logstream.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/28 09:40:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -29,8 +29,9 @@
 
 // Include Files
 #include <string>
-#include <fstream>
+#include <ostream>
 #include "osdep.h"
+#include "castor/logbuf.h"
 
 #define OPERATOR(T)                             \
   logstream& operator<< (T var) {               \
@@ -47,7 +48,7 @@
         m_isIP = false;                         \
         printIP(var);                           \
       } else {                                  \
-        this->std::ofstream::operator<<(var);   \
+        this->std::ostream::operator<<(var);    \
       }                                         \
     }                                           \
     return *this;                               \
@@ -56,11 +57,11 @@
 #define MANIPULATOR(T) castor::logstream& T(castor::logstream& s);
 
 namespace castor {
-
-  class logstream : virtual public std::ofstream {
-
+  
+  class logstream : virtual public std::ostream {
+    
   public:
-
+    
     /**
      * The different possible level of output
      */
@@ -77,14 +78,33 @@ namespace castor {
     } Level;
 
   public:
-
+    
     /**
      * constructor
      */
     explicit logstream(const char* p, Level l = INFO) :
-      std::ofstream(p, std::ios::app), m_minLevel(l),
-      m_curLevel(INFO), m_isIP(false) {
-      printf("logstream name : %s\n", p);
+      std::ostream(0),
+      m_logbuf(),
+      m_minLevel(l),
+      m_curLevel(INFO),
+      m_isIP(false) {
+      // Deal with the buffer
+      this->init(&m_logbuf);
+      if (!m_logbuf.open(p, std::ios::app | std::ios_base::out)) {
+        this->setstate(ios_base::failbit);
+      }
+    }
+ 
+    /**
+     *  @brief  Close the file.
+     *
+     *  Calls @c std::basic_filebuf::close().  If that function
+     *  fails, @c failbit is set in the stream's error state.
+     */
+    void close() {
+      if (!m_logbuf.close()) {
+        this->setstate(ios_base::failbit);
+      }
     }
 
   public:
@@ -120,6 +140,8 @@ namespace castor {
      * castor::logstream
      */
     logstream& operator<< (std::ostream& (&f)(std::ostream&)) {
+      if (&f == (std::ostream& (&)(std::ostream&))std::endl)
+        m_logbuf.setNewLine();
       f(*this);
       return *this;
     }
@@ -148,6 +170,12 @@ namespace castor {
     }
 
   private:
+
+    /**
+     * The log buffer used on top of the file buffer for
+     * prefixing the logs with timestamps
+     */
+    castor::logbuf m_logbuf;
 
     /**
      * The current minimum level of output for the stream
