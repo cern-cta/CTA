@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_closedir.man,v 1.3 2000/07/07 14:28:27 jdurand Exp $
+.\" $Id: rfio_closedir.man,v 1.4 2001/05/28 13:59:44 baud Exp $
 .\"
-.\" @(#)$RCSfile: rfio_closedir.man,v $ $Revision: 1.3 $ $Date: 2000/07/07 14:28:27 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: rfio_closedir.man,v $ $Revision: 1.4 $ $Date: 2001/05/28 13:59:44 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_CLOSEDIR 3 "$Date: 2000/07/07 14:28:27 $" CASTOR "Rfio Library Functions"
+.TH RFIO_CLOSEDIR 3 "$Date: 2001/05/28 13:59:44 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_closedir \- close directory opened by
 .B rfio_opendir
@@ -17,9 +17,9 @@ rfio_closedir \- close directory opened by
 .BI "int rfio_closedir (RDIR *" dirp ");"
 .SH DESCRIPTION
 .B rfio_closedir
-closes the CASTOR directory opened by
+closes the directory opened by
 .B rfio_opendir
-references by the
+and associated with the
 .B RDIR
 structure pointed by
 .IR dirp .
@@ -42,6 +42,12 @@ Host unknown.
 .TP
 .B SENOSSERV
 Service unknown.
+.TP
+.B SETIMEDOUT
+Timed out.
+.TP
+.B SEBADVERSION
+Version ID mismatch.
 .TP
 .B SECOMERR
 Communication error.

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_close.man,v 1.4 2000/07/07 14:28:27 jdurand Exp $
+.\" $Id: rfio_close.man,v 1.5 2001/05/28 13:59:43 baud Exp $
 .\"
-.\" @(#)$RCSfile: rfio_close.man,v $ $Revision: 1.4 $ $Date: 2000/07/07 14:28:27 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: rfio_close.man,v $ $Revision: 1.5 $ $Date: 2001/05/28 13:59:43 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_CLOSE 3 "$Date: 2000/07/07 14:28:27 $" CASTOR "Rfio Library Functions"
+.TH RFIO_CLOSE 3 "$Date: 2001/05/28 13:59:43 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_close \- closes a file
 .SH SYNOPSIS
@@ -13,10 +13,10 @@ rfio_close \- closes a file
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "int rfio_close (const int " s ");"
+.BI "int rfio_close (int " s ");"
 .SH DESCRIPTION
 .B rfio_close
-closes the file whose descriptor \fBfd\fP is the one returned by
+closes the file whose descriptor \fBs\fP is the one returned by
 .B rfio_open.
 .SH RETURN VALUE
 This routine returns 0 if successful, -1 if the operation failed and
@@ -24,34 +24,12 @@ This routine returns 0 if successful, -1 if the operation failed and
 is set appropriately.
 .SH ERRORS
 .TP 1.3i
-.B ENOENT
-The named file/directory does not exist or is a null pathname.
+.B EBADF
+.I s
+is not a valid file descriptor.
 .TP
-.B EACCES
-Search permission is denied on a component of the
-.I path
-prefix.
-.TP
-.B EFAULT
-.I path
-or
-.I statbuf
-is a NULL pointer.
-.TP
-.B ENOTDIR
-A component of
-.I path
-prefix is not a directory.
-.TP
-.B ENAMETOOLONG
-The length of
-.I path
-exceeds
-.B CA_MAXPATHLEN
-or the length of a
-.I path
-component exceeds
-.BR CA_MAXNAMELEN .
+.B ENOSPC
+File system full when writing last blocks (V3 only).
 .TP
 .B SENOSHOST
 Host unknown.
@@ -59,10 +37,21 @@ Host unknown.
 .B SENOSSERV
 Service unknown.
 .TP
+.B SETIMEDOUT
+Timed out.
+.TP
+.B SEBADVERSION
+Version ID mismatch.
+.TP
+.B SEINTERNAL
+Internal error.
+.TP
+.B SECONNDROP
+Connection closed by remote end.
+.TP
 .B SECOMERR
 Communication error.
 .SH SEE ALSO
-.BR Castor_limits(4) ,
 .BR rfio_open(3)
 .SH AUTHOR
 Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland

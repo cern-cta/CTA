@@ -1,14 +1,14 @@
 .\"
-.\" $Id: rfio_rewinddir.man,v 1.4 2001/05/13 07:40:02 jdurand Exp $
+.\" $Id: rfio_rewinddir.man,v 1.5 2001/05/28 13:59:45 baud Exp $
 .\"
-.\" @(#)$RCSfile: rfio_rewinddir.man,v $ $Revision: 1.4 $ $Date: 2001/05/13 07:40:02 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: rfio_rewinddir.man,v $ $Revision: 1.5 $ $Date: 2001/05/28 13:59:45 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_REWINDDIR 3 "$Date: 2001/05/13 07:40:02 $" CASTOR "Rfio Library Functions"
+.TH RFIO_REWINDDIR 3 "$Date: 2001/05/28 13:59:45 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_rewinddir \- reset position to the beginning of a directory opened by
-.B Cns_opendir
+.B rfio_opendir
 .SH SYNOPSIS
 .B #include <sys/types.h>
 .br
@@ -18,8 +18,7 @@ rfio_rewinddir \- reset position to the beginning of a directory opened by
 .SH DESCRIPTION
 .B rfio_rewinddir
 resets the position to the beginning of a directory opened by
-.B rfio_opendir
-.
+.BR rfio_opendir .
 .TP
 .I dirp
 specifies the pointer value returned by

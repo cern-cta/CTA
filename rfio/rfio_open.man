@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_open.man,v 1.4 2000/07/07 14:28:27 jdurand Exp $
+.\" $Id: rfio_open.man,v 1.5 2001/05/28 13:59:44 baud Exp $
 .\"
-.\" @(#)$RCSfile: rfio_open.man,v $ $Revision: 1.4 $ $Date: 2000/07/07 14:28:27 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: rfio_open.man,v $ $Revision: 1.5 $ $Date: 2001/05/28 13:59:44 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_OPEN 3 "$Date: 2000/07/07 14:28:27 $" CASTOR "Rfio Library Functions"
+.TH RFIO_OPEN 3 "$Date: 2001/05/28 13:59:44 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_open \- opens a file
 .SH SYNOPSIS
@@ -13,7 +13,7 @@ rfio_open \- opens a file
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "int rfio_open (const char *" path ", const int " flags ", const int " mode ");"
+.BI "int rfio_open (const char *" path ", int " flags ", int " mode ");"
 .SH DESCRIPTION
 .B rfio_open
 opens the file whose name is the string pointed to by
@@ -58,8 +58,6 @@ prefix.
 .TP
 .B EFAULT
 .I path
-or
-.I statbuf
 is a NULL pointer.
 .TP
 .B ENOTDIR

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_opendir.man,v 1.4 2001/05/13 07:40:02 jdurand Exp $
+.\" $Id: rfio_opendir.man,v 1.5 2001/05/28 13:59:45 baud Exp $
 .\"
-.\" @(#)$RCSfile: rfio_opendir.man,v $ $Revision: 1.4 $ $Date: 2001/05/13 07:40:02 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: rfio_opendir.man,v $ $Revision: 1.5 $ $Date: 2001/05/28 13:59:45 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_OPENDIR 3 "$Date: 2001/05/13 07:40:02 $" CASTOR "Rfio Library Functions"
+.TH RFIO_OPENDIR 3 "$Date: 2001/05/28 13:59:45 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_opendir \- open a directory
 .SH SYNOPSIS
@@ -79,7 +79,6 @@ Service unknown.
 Communication error.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
-.BR rfio_chdir(3) ,
 .BR rfio_closedir(3) ,
 .BR rfio_readdir(3) ,
 .BR rfio_rewinddir(3)
