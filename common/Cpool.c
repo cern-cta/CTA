@@ -7,7 +7,7 @@
 /* For the what command                 */
 /* ------------------------------------ */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.33 $ $Date: 2004/03/18 09:14:00 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.34 $ $Date: 2004/03/18 10:04:51 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cpool_api.h>
@@ -480,7 +480,7 @@ int DLL_DECL Cpool_create_ext(nbreq,nbget,pooladdr)
 	current->next = NULL;
 	if (Cthread_environment() != CTHREAD_MULTI_PROCESS) {
 		/* We tell that there is no dispatch at this time */
-		current->flag = 0;
+		current->flag = -2;
 	}
     
 	nbcreated = j = k = 0;
@@ -1971,12 +1971,12 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 		  
 #ifdef CPOOL_DEBUG
 			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Setting current->flag to 0 (parent not waiting)\n",
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Setting current->flag to -2 (parent not waiting)\n",
 					_Cpool_self(),_Cthread_self());
 			}
 #endif
-		  
-			current->flag = 0;
+
+			current->flag = -2;
 		  
 			/* We check if there is one thread available */
 			found = 0;
@@ -2179,6 +2179,13 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 				return(-1);
 			}
 		  
+#ifdef CPOOL_DEBUG
+			if (Cpool_debug != 0) {
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Setting current->flag to -1 (parent waiting)\n",
+					_Cpool_self(),_Cthread_self());
+			}
+#endif
+		  
 			current->flag = -1;
 		  
 			/* And we wait on our predicate          */
@@ -2196,12 +2203,12 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 					  
 #ifdef CPOOL_DEBUG
 						if (Cpool_debug != 0) {
-							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Waiting condition failed, reset current->flag to zero\n",
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Waiting condition failed, reset current->flag to -2 (parent not waiting)\n",
 								_Cpool_self(),_Cthread_self());
 						}
 #endif
 					  
-						current->flag = 0;
+						current->flag = -2;
 					  
 #ifdef CPOOL_DEBUG
 						if (Cpool_debug != 0) {
@@ -2230,12 +2237,12 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 					  
 #ifdef CPOOL_DEBUG
 						if (Cpool_debug != 0) {
-							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Waiting condition failed, reset current->flag to zero\n",
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Waiting condition failed, reset current->flag to -2 (parent not waiting)\n",
 								_Cpool_self(),_Cthread_self());
 						}
 #endif
 					  
-						current->flag = 0;
+						current->flag = -2;
 					  
 #ifdef CPOOL_DEBUG
 						if (Cpool_debug != 0) {
@@ -2276,7 +2283,13 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 					}
 #endif
 				  
-					current->flag = 0;
+#ifdef CPOOL_DEBUG
+					if (Cpool_debug != 0) {
+						log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Reset current->flag to -2 (parent not waiting)\n",
+							_Cpool_self(),_Cthread_self());
+					}
+#endif
+					current->flag = -2;
 				  
 #ifdef CPOOL_DEBUG
 					if (Cpool_debug != 0) {
@@ -2290,7 +2303,9 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 				  
 					/* ... We reset any call to Cpool_next_index */
 					current->forceid = -1;
-				  
+
+					serrno = SEINTERNAL;
+					
 					return(-1);
 				}
 			}
@@ -2343,15 +2358,6 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 			current->start[current->flag] = (void *(*) _PROTO((void *))) startroutine;
 			current->arg[current->flag] = (void *) arg;
 		  
-#ifdef CPOOL_DEBUG
-			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : reset current->flag\n",
-					_Cpool_self(),_Cthread_self());
-			}
-#endif
-		  
-			current->flag = 0;
-		  
 			/* We signal the child       */
 		  
 #ifdef CPOOL_DEBUG
@@ -2377,6 +2383,17 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 				Cthread_mutex_unlock_ext(current->state_cthread_structure[current->flag]);
 #ifdef CPOOL_DEBUG
 				if (Cpool_debug != 0) {
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Reset current->flag to -2 (parent not waiting)\n",
+						_Cpool_self(),_Cthread_self());
+				}
+#endif
+				current->flag = -2;
+				  
+				/* ... We reset any call to Cpool_next_index */
+				current->forceid = -1;
+
+#ifdef CPOOL_DEBUG
+				if (Cpool_debug != 0) {
 					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on lock_parent_cthread_structure\n",
 						_Cpool_self(),_Cthread_self());
 				}
@@ -2394,6 +2411,15 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 #endif
 		  
 			Cthread_mutex_unlock_ext(current->state_cthread_structure[current->flag]);
+		  
+#ifdef CPOOL_DEBUG
+			if (Cpool_debug != 0) {
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Set current->flag to -2 (parent not waiting)\n",
+					_Cpool_self(),_Cthread_self());
+			}
+#endif
+		  
+			current->flag = -2;
 		  
 #ifdef CPOOL_DEBUG
 			if (Cpool_debug != 0) {
