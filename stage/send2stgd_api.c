@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_api.c,v 1.15 2001/03/02 18:16:47 jdurand Exp $
+ * $Id: send2stgd_api.c,v 1.16 2001/03/28 18:04:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.15 $ $Date: 2001/03/02 18:16:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.16 $ $Date: 2001/03/28 18:04:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -666,7 +666,15 @@ int send2stgd_api_cmp(stcp1,stcp2)
   if (stcp1->nread       != 0    && stcp1->nread    != stcp2->nread)  return(-1);
   if (stcp1->poolname[0] != '\0' && strcmp(stcp1->poolname,stcp2->poolname) != 0) return(-1);
   if (stcp1->recfm[0]    != '\0' && strcmp(stcp1->recfm,stcp2->recfm) != 0) return(-1);
-  if (stcp1->size        != 0    && stcp1->size     != stcp2->size)  return(-1);
+  if (stcp1->size        != 0    && stcp1->size     != stcp2->size)  {
+    /* Is it ok to have stcp1->size != stcp2->size in case of a STAGEIN and only if */
+    /* stcp2->size >= stcp1->size (file was already staged but with a larger req) */
+    if (! ISSTAGEIN(stcp2)) {
+      return(-1);
+    } else if (stcp2->size < stcp1->size) {
+      return(-1);
+    }
+  }
   if (stcp1->t_or_d == '\0') return(-1);
   if (stcp1->t_or_d   != stcp2->t_or_d) {
     /* This is accepted only if input was 'h' or 'm' and output was 'm' or 'h' */
