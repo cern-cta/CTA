@@ -1,5 +1,5 @@
 /*
-	$Id: check_Cdbentry.c,v 1.15 2002/01/24 10:42:41 jdurand Exp $
+	$Id: check_Cdbentry.c,v 1.16 2002/04/30 12:24:34 jdurand Exp $
 */
 
 #include "Cstage_db.h"
@@ -124,7 +124,7 @@ int main(argc,argv)
 	Cdb_off_t found_offset;
 	char tmpbuf[21];
 	char *error = NULL;
-	int rc;
+	int rc = 0;
 	int iargv;
 	int stgpath_mode = 0;
 
@@ -224,7 +224,7 @@ int main(argc,argv)
 	/* Loop on the arguments */
 	for (iargv = Coptind; iargv < argc; iargv++) {
 		int global_find_status = 0;
-        char *upath;
+        char *upath = NULL;
 
         if (stgpath_mode == 0) {
           reqid = atoi(argv[iargv]);
