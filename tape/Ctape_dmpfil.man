@@ -1,0 +1,199 @@
+.\" @(#)$RCSfile: Ctape_dmpfil.man,v $ $Revision: 1.1 $ $Date: 2001/08/14 06:17:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CTAPE_DMPFIL 3 "$Date: 2001/08/14 06:17:53 $" CASTOR "Ctape Library Functions"
+.SH NAME
+Ctape_dmpfil \- analyze the content of a tape
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Ctape_api.h"\fR
+.sp
+.BI "int Ctape_dmpinit (char *" path ,
+.BI "char *" vid ,
+.BI "char *" density ,
+.BI "char *" drive ,
+.BI "char *" devtype ,
+.BI "int " maxblksize ,
+.BI "int " fromblock ,
+.BI "int " toblock ,
+.BI "int " maxbyte ,
+.BI "int " fromfile ,
+.BI "int " maxfile ,
+.BI "int " code ,
+.BI "int " flags );
+.sp
+.BI "int Ctape_dmpfil (char *" path ,
+.BI "char *" lbltype ,
+.BI "int *" blksize,
+.BI "char *" fid,
+.BI "int *" fsec,
+.BI "int *" fseq,
+.BI "int *" lrecl,
+.BI "char *" recfm,
+.BI "u_signed64 *" Size );
+.sp
+.BI "int Ctape_dmpend ();
+.SH DESCRIPTION
+.B Ctape_dmpfil
+analyzes the content of a tape. Each call analyzes one file and
+gives summary information like label type, record format, actual block size
+and file size. Detailed information and actual block content is reported using
+the
+.B Ctape_dmpmsg
+routine.
+The application should call
+.B Ctape_mount
+to mount the tape,
+.B Ctape_dmpinit
+to initialize the dump routine, loop on
+.B Ctape_dmpfil
+and finally call
+.BR Ctape_dmpend .
+.TP
+.I path
+specifies the pathname relative to the current directory or the full pathname
+used in
+.BR Ctape_mount .
+.TP
+.I vid
+is the volume visual identifier.
+It must be at most six characters long and is converted to upper case.
+.TP
+.I density
+The supported alphanumeric densities are:
+.br
+.B 1600
+or
+.B 6250
+for round (IBM 3420) tapes,
+.B 38000
+for standard IBM 3480 cartridges,
+.B 38KC
+for 3480 cartridges with compaction (IDRC),
+.B 38KD
+for double density IBM 3490 cartridges,
+.B 38KDC
+for 3490 cartridges with compaction (IDRC),
+.BR 8200 ,
+.B 8500
+or
+.B 8500C
+for Exabytes,
+.B DDS
+or
+.B DDSC
+for DAT cartridges,
+.BR 2G ,
+.BR 6G ,
+.BR 10G ,
+.BR 10GC ,
+.BR 20G ,
+.BR 20GC ,
+.BR 35G ,
+.BR 35GC ,
+.B 40G
+or
+.B 40GC
+for DLT cartridges,
+.B 10G
+or
+.B 10GC
+for IBM 3590 cartridges,
+.BR 10G ,
+.BR 10GC ,
+.BR 25G ,
+.BR 25GC ,
+.B 50G
+or
+.B 50GC
+for Redwood cartridges,
+.B 20G
+or
+.B 20GC
+for STK 9840 cassettes,
+.B 60G
+or
+.B 60GC
+for STK 9940 cartridges,
+.TP
+.I drive
+specifies the drive name.
+.TP
+.I maxblksize
+specifies the maximum block size. Default is 65536.
+.TP
+.I fromblock
+Block number of the first block to be analyzed in each file.
+Default is 1.
+.TP
+.I toblock
+Block number of the last block to be analyzed in each file.
+Default is
+.IR fromblock .
+.TP
+.I maxbyte
+Number of bytes per block to be dumped (0 means all bytes).
+Default is 320.
+.TP
+.I fromfile
+specifies that the content of the tape should be analyzed starting at this
+file number. Default 1.
+.TP
+.I maxfile
+Number of files to be dumped (0 means all files; this the default
+for 3420/3480/3490).
+The default value for long media (Exabytes, DLTs, IBM3590) is one data file.
+.TP
+.I code
+Character code for data interpretation.
+It can be set to
+.B DMP_ASC
+or
+.BR DMP_EBC .
+.TP
+.I flags
+If set to
+.BR IGNOREEOI ,
+Ctape_dmpfil will not take two consecutive tapemarks as End Of Information.
+If
+.I maxfile
+is zero,
+the dump will terminate only when encountering blank tape or too many parity
+errors (on IBM3420, the reel would wind off).
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.2i
+.B EIO
+I/O error.
+.TP
+.B ENXIO
+Drive not operational.
+.TP
+.B EINVAL
+Bad parameter value.
+.TP
+.B ETBLANK
+Blank tape.
+.TP
+.B ETCOMPA
+Drive/cartridge compatibility problem.
+.TP
+.B ETHWERR
+Device malfunction.
+.TP
+.B ETPARIT
+Parity error.
+.TP
+.B ETUNREC
+Unrecoverable media error.
+.TP
+.B ETNOSNS
+No sense data available.
+.SH SEE ALSO
+.BR Ctape_mount(3)
