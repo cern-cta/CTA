@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.14 2000/01/03 09:47:12 jdurand Exp $
+ * $Id: procqry.c,v 1.15 2000/01/09 10:26:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.14 $ $Date: 2000/01/03 09:47:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.15 $ $Date: 2000/01/09 10:26:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -57,7 +57,7 @@ extern int sendrep (int, int, ...);
 #if !defined(linux)
 extern char *sys_errlist[];
 #endif
-extern char defpoolname[MAXPOOLNAMELEN];
+extern char defpoolname[CA_MAXPOOLNAMELEN + 1];
 extern char func[16];
 extern int nbcat_ent;
 extern int reqid;
@@ -90,7 +90,7 @@ char *clienthost;
 	int fflag = 0;
 	char *fseq = NULL;
 	gid_t gid;
-	char group[MAXGRPNAMELEN];
+	char group[CA_MAXGRPNAMELEN + 1];
 	struct group *gr;
 	int hdrprinted = 0;
 	int Lflag = 0;
@@ -107,7 +107,7 @@ char *clienthost;
 	int Pflag = 0;
 	int pid = -1;
 	int poolflag = 0;
-	char poolname[MAXPOOLNAMELEN];
+	char poolname[CA_MAXPOOLNAMELEN + 1];
 	char *q;
 	static char s_stat[5][9] = {"", "STAGEIN", "STAGEOUT", "STAGEWRT", "STAGEWRT"};
 	char *rbp;

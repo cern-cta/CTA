@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.11 2000/01/03 09:47:11 jdurand Exp $
+ * $Id: procio.c,v 1.12 2000/01/09 10:26:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.11 $ $Date: 2000/01/03 09:47:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.12 $ $Date: 2000/01/09 10:26:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -44,7 +44,7 @@ extern char *rfio_serror();
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep (int, int, ...);
 #endif
-extern char defpoolname[MAXPOOLNAMELEN];
+extern char defpoolname[CA_MAXPOOLNAMELEN + 1];
 extern char func[16];
 extern int reqid;
 extern int rpfd;
@@ -67,7 +67,7 @@ char *clienthost;
 {
 	int Aflag = 0;
 	int actual_poolflag;
-	char actual_poolname[MAXPOOLNAMELEN];
+	char actual_poolname[CA_MAXPOOLNAMELEN + 1];
 	char **argv;
 	int c, i, j;
 	int concat_off = 0;
@@ -102,7 +102,7 @@ char *clienthost;
 	char trailing;
 	int Uflag = 0;
 	int Upluspath = 0;
-	char upath[MAXHOSTNAMELEN + MAXPATH];
+	char upath[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	char *user;
 	struct waitf *wfp;
 	struct waitq *wqp = NULL;
@@ -481,7 +481,7 @@ char *clienthost;
 			}
 
 			if (packfseq (fseq_list, i, nbdskf, nbtpf, trailing,
-			    stgreq.u1.t.fseq, MAXFSEQ)) {
+			    stgreq.u1.t.fseq, CA_MAXFSEQLEN + 1)) {
 				sendrep (rpfd, MSG_ERR, STG21);
 				c = USERR;
 				goto reply;
@@ -901,7 +901,7 @@ char *clienthost;
 	int errflg = 0;
 	char *externfile;
 	int found;
-	char fseq[MAXFSEQ];
+	char fseq[CA_MAXFSEQLEN + 1];
 	gid_t gid;
 	struct group *gr;
 	char *hsmfile;
@@ -920,7 +920,7 @@ char *clienthost;
 	int subreqid;
 	int Upluspath = 0;
 	uid_t uid;
-	char upath[MAXHOSTNAMELEN + MAXPATH];
+	char upath[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	char *user;
 	char vid[7];
 	struct waitf *wfp;

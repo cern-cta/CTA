@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.7 1999/12/14 14:51:36 jdurand Exp $
+ * $Id: poolmgr.c,v 1.8 2000/01/09 10:26:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.7 $ $Date: 1999/12/14 14:51:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.8 $ $Date: 2000/01/09 10:26:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -97,7 +97,7 @@ char *defpoolname;
 				errflg++;
 				goto reply;
 			}
-			if ((int) strlen (p) >= MAXPOOLNAMELEN) {
+			if ((int) strlen (p) >= (CA_MAXPOOLNAMELEN + 1)) {
 				stglogit (func, STG27, p);
 				errflg++;
 				goto reply;
@@ -155,7 +155,7 @@ char *defpoolname;
 				errflg++;
 				goto reply;
 			}
-			if ((int) strlen (p) >= MAXPOOLNAMELEN) {
+			if ((int) strlen (p) >= (CA_MAXPOOLNAMELEN + 1)) {
 				stglogit (func, STG27, p);
 				errflg++;
 				goto reply;
@@ -221,7 +221,7 @@ char *defpoolname;
 		} else if (strcmp (p, "DEFPOOL") == 0) continue;
 		  else if (strcmp (p, "DEFSIZE") == 0) continue;
 		  else {
-			if ((int) strlen (p) >= MAXHOSTNAMELEN) {
+			if ((int) strlen (p) >= (CA_MAXHOSTNAMELEN + 1)) {
 				stglogit (func, STG26, pool_p->name);
 				errflg++;
 				goto reply;
@@ -321,7 +321,7 @@ char *poolname;
 	int pid;
 	struct pool *pool_p;
 	char progfullpath[MAXPATH];
-	char hostname[MAXHOSTNAMELEN];
+	char hostname[CA_MAXHOSTNAMELEN + 1];
 
 	strcpy (func, "cleanpool");
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
@@ -333,7 +333,7 @@ char *poolname;
 		stglogit (func, STG02, "", "fork", sys_errlist[errno]);
 		return (SYERR);
 	} else if (pid == 0) {  /* we are in the child */
-		gethostname (hostname, MAXHOSTNAMELEN);
+		gethostname (hostname, CA_MAXHOSTNAMELEN + 1);
 		sprintf (progfullpath, "%s/cleaner", BIN);
 		stglogit (func, "execing cleaner, pid=%d\n", getpid());
 		execl (progfullpath, "cleaner", pool_p->gc, poolname, hostname, 0);
@@ -370,7 +370,7 @@ char *path;
 	int i, j;
 	char *p;
 	struct pool *pool_p;
-	char server[MAXHOSTNAMELEN];
+	char server[CA_MAXHOSTNAMELEN + 1];
 
         if (p = strchr (path, ':')) {
                 strncpy (server, path, p - path);
@@ -561,7 +561,7 @@ int incr;
 	char *p;
 	char path[MAXPATH];
 	struct pool *pool_p;
-	char server[MAXHOSTNAMELEN];
+	char server[CA_MAXHOSTNAMELEN + 1];
 
 	if (*poolname == '\0')
 		return (0);
@@ -600,7 +600,7 @@ char *defpoolname;
 	int c, i, j;
 	struct pool_element *elemp;
 	struct pool *pool_n, *pool_p;
-	char sav_defpoolname[MAXPOOLNAMELEN];
+	char sav_defpoolname[CA_MAXPOOLNAMELEN + 1];
 	int sav_nbpool;
 	char **sav_poolc;
 	struct pool *sav_pools;

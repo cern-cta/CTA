@@ -1,4 +1,4 @@
-/* $Id: Cstage_db.des,v 1.6 2000/01/07 12:18:38 jdurand Exp $ */
+/* $Id: Cstage_db.des,v 1.7 2000/01/09 10:26:02 jdurand Exp $ */
 
 /* ======================================================= */
 /* CASTOR STAGER Database Description File - Cdb Interface */
@@ -13,9 +13,6 @@
 /* Macros */
 /* ====== */
 #define	MAXVSN 3         /* Maximum number of vsns/vids on a stage command */
-#define	STG_MAXDENLEN       5	/* maximum length for a alphanumeric density */
-#define	STG_MAXDGNLEN       8	/* maximum length for a device group name */
-
 
 /* =========== */
 /* Description */
@@ -41,12 +38,12 @@ database stage {         /* STAGE Database Description */
     char group[CA_MAXGRPNAMELEN+1]; /* group name */
     char user[CA_MAXUSRNAMELEN+1]; /* login name */
     char keep;           /* Keep data on disk after successful stagewrt */
-    char lbl[CA_MAXLBL+1]; /* Label type : al, nl, sl, blp */
+    char lbl[CA_MAXLBLTYPLEN+1]; /* Label type : al, nl, sl, blp */
     char recfm[CA_MAXRECFMLEN+1]; /* Record format */
-    char den[STG_MAXDENLEN+1]; /* Density */
-    char dgn[STG_MAXDGNLEN+1]; /* Device group */
+    char den[CA_MAXDENLEN+1]; /* Density */
+    char dgn[CA_MAXDGNLEN+1]; /* Device group */
     char fid[CA_MAXFIDLEN+1]; /* File id */
-    char fseq[CA_MAXFSEQ+1];  /* File sequence number */
+    char fseq[CA_MAXFSEQLEN+1];  /* File sequence number */
     char tapesrvr[CA_MAXHOSTNAMELEN+1]; /* Tape server */
     char vid[MAXVSN][CA_MAXVIDLEN+1]; /* Vid (up to MAXVSN : max number per request) */
     char vsn[MAXVSN][CA_MAXVIDLEN+1]; /* Vsn (up to MAXVSN : max number per request) */

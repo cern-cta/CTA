@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd.c,v 1.11 1999/12/27 13:23:04 baud Exp $
+ * $Id: send2stgd.c,v 1.12 2000/01/09 10:26:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.11 $ $Date: 1999/12/27 13:23:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.12 $ $Date: 2000/01/09 10:26:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -48,7 +48,7 @@ int reql;
 int want_reply;
 {
 	int c;
-	char file2[MAXHOSTNAMELEN+MAXPATH];
+	char file2[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	char *getconfent();
 	char *getenv();
 	struct hostent *hp;

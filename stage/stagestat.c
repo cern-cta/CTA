@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.8 1999/12/14 14:51:47 jdurand Exp $
+ * $Id: stagestat.c,v 1.9 2000/01/09 10:26:09 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.8 $ $Date: 1999/12/14 14:51:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.9 $ $Date: 2000/01/09 10:26:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -39,17 +39,17 @@ extern char *sys_errlist[];
 struct file_inf{
    int uid;				/* user id number */	
    int gid;				/* group id number */
-   char poolname[MAXPOOLNAMELEN];	/* pool name */
+   char poolname[CA_MAXPOOLNAMELEN + 1];	/* pool name */
    time_t last_stgin;			/* time file was last staged in */
    time_t total_stgin_gc;	/* total stagein time if clrd by garbage collector */
    time_t total_stgin_uc;	/* total stagein time if clrd by use */	
    union{
         struct{				/* tape files */
 		char vid[7];		/* volume id */
-		char fseq[MAXFSEQ];	/* file sequence number */
+		char fseq[CA_MAXFSEQLEN + 1];	/* file sequence number */
 	}t;
 	struct{				/* disk files */
-		char xfile[MAXHOSTNAMELEN+MAXPATH];	/* filename and path */
+		char xfile[CA_MAXHOSTNAMELEN + 1 + MAXPATH];	/* filename and path */
 	}d;
    }u1;
    int stage_status;			/* current stage status */
@@ -71,17 +71,17 @@ struct stg_inf *stg_last, *srec_match, *stage_list = NULL;
 struct frec_nbaccs{
    struct file_inf *rec;		/* pointer to a file_inf record */
    int nbaccesses;			/* number of accesses */
-   char poolname[MAXPOOLNAMELEN];	/* pool name */
+   char poolname[CA_MAXPOOLNAMELEN + 1];	/* pool name */
 };
 
 struct frec_avg{
    struct file_inf *rec;		/* pointer to a file_inf record */
    float avg_life;			/* total average life for the file */
-   char poolname[MAXPOOLNAMELEN];	/* pool name */
+   char poolname[CA_MAXPOOLNAMELEN + 1];	/* pool name */
 };
 
 struct pool_inf{
-   char poolname[MAXPOOLNAMELEN];	/* pool name */
+   char poolname[CA_MAXPOOLNAMELEN + 1];	/* pool name */
    float num_files;			/* total number of files requested by pool */
    int num_frecs;			/* total num tape files requested */
    int num_xrecs;			/* total num disk files requested */
@@ -125,7 +125,7 @@ char **argv;
 {
    char acctfile[80];			/* accounting file name */
    char buf[256];
-   char poolname[MAXPOOLNAMELEN];	/* pool name */
+   char poolname[CA_MAXPOOLNAMELEN + 1];	/* pool name */
  
    struct accthdr accthdr;		/* accthdr record */
    struct acctstage *rp;		/* pointer to accstage record */
@@ -613,10 +613,10 @@ time_t endtime;
 int num_mounts;
 int num_multireqs;
 {
-   char hostname[MAXHOSTNAMELEN];
+   char hostname[CA_MAXHOSTNAMELEN + 1];
    int num_mounts_avoided = 0;
 
-   gethostname (hostname, MAXHOSTNAMELEN);
+   gethostname (hostname, CA_MAXHOSTNAMELEN + 1);
    printf ("\t%s Stager statistics", hostname);
    print_time_interval (starttime, endtime);
    printf ("\nCommand    No Reqs Success Warning Userr Syserr Unerr Conferr ");
@@ -756,7 +756,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 int tflag;
 int aflag;
 int pflag;
-char poolname[MAXPOOLNAMELEN];
+char poolname[CA_MAXPOOLNAMELEN + 1];
 {
 int i; 						/* counter */ 
 int fi = 0; 					/* counter for tape files */
@@ -764,7 +764,7 @@ int xi = 0;					/* counter for disk files */
 struct frec_nbaccs *faccs;		/* arrays to store address of each record */
 struct frec_nbaccs *xaccs;		/* along with either the average life or the */ struct frec_avg *favg;			/* number of accesses and poolname.  These */
 struct frec_avg *xavg;			/* arrays are used to sort the data */
-char current_pool[MAXPOOLNAMELEN];		/* current pool name */
+char current_pool[CA_MAXPOOLNAMELEN + 1];		/* current pool name */
 struct pool_inf *pf;				/* pointer to pool_inf record */
 struct file_inf *frecord;			/* pointer to file_inf record */
 int comp ();

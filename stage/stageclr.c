@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.7 1999/12/14 14:51:42 jdurand Exp $
+ * $Id: stageclr.c,v 1.8 2000/01/09 10:26:07 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.7 $ $Date: 1999/12/14 14:51:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.8 $ $Date: 2000/01/09 10:26:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -42,7 +42,7 @@ char	**argv;
 	gid_t gid;
 	struct group *gr;
 	int Iflag = 0;
-	char ibuf[MAXHOSTNAMELEN + MAXPATH];
+	char ibuf[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	int iflag = 0;
 	int Lflag = 0;
         int Mflag = 0;
@@ -51,7 +51,7 @@ char	**argv;
 	int numvid;
 	int Pflag = 0;
 	char *p;
-	char path[MAXHOSTNAMELEN + MAXPATH];
+	char path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	struct passwd *pw;
 	char *q;
 	char *sbp;

@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.7 1999/12/14 14:51:46 jdurand Exp $
+ * $Id: stager.c,v 1.8 2000/01/09 10:26:08 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.7 $ $Date: 1999/12/14 14:51:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.8 $ $Date: 2000/01/09 10:26:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -60,14 +60,14 @@ char **argv;
 	char arg_lrecl[7], arg_retentd[5];
 	char *arg_nread = NULL;
 	char *arg_size = NULL;
-	char arg_Z[14+MAXHOSTNAMELEN], arg_vid[MAXVSN*7], arg_vsn[MAXVSN*7];
+	char arg_Z[14+CA_MAXHOSTNAMELEN + 1], arg_vid[MAXVSN*7], arg_vsn[MAXVSN*7];
 	char buf[REPBUFSZ-12];
 	int i, l;
 	int cmdargc;
 	char **cmdargv;
 	char cmdname[9];
 	fseq_elem *fseq_list;
-	char hostname[MAXHOSTNAMELEN];
+	char hostname[CA_MAXHOSTNAMELEN + 1];
 	int key;
 	int n1, n2;
 	int nbtpf;
@@ -113,7 +113,7 @@ char **argv;
 	signal (SIGINT, stagekilled);
 	if (nretry) sleep (RETRYI);
 
-	gethostname (hostname, MAXHOSTNAMELEN);
+	gethostname (hostname, CA_MAXHOSTNAMELEN + 1);
 
 	if ((stcs->t_or_d == 'm') || (stcs->t_or_d == 'd')) {
 		int exit_code;
@@ -442,7 +442,7 @@ char *hostname;
 {
 	char buf[256];
 	int c;
-	char command[2*(MAXHOSTNAMELEN+MAXPATH)+MAXHOSTNAMELEN+196];
+	char command[2*(CA_MAXHOSTNAMELEN + 1 + MAXPATH) + CA_MAXHOSTNAMELEN + 1 + 196];
 	char *filename;
 	char *host;
 	char *p, *q;

@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.7 1999/12/14 14:51:44 jdurand Exp $
+ * $Id: stageput.c,v 1.8 2000/01/09 10:26:08 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.7 $ $Date: 1999/12/14 14:51:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.8 $ $Date: 2000/01/09 10:26:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -57,7 +57,7 @@ char	**argv;
 	int ntries = 0;
 	int numvid;
 	char *p, *q;
-	char path[MAXHOSTNAMELEN + MAXPATH];
+	char path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	char *sbp;
 	char sendbuf[REQBUFSZ];
 	uid_t uid;

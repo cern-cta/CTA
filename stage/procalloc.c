@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.11 2000/01/03 09:47:10 jdurand Exp $
+ * $Id: procalloc.c,v 1.12 2000/01/09 10:26:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.11 $ $Date: 2000/01/03 09:47:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.12 $ $Date: 2000/01/09 10:26:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -37,7 +37,7 @@ static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.11 $ $Date: 2
 
 extern char *optarg;
 extern int optind;
-extern char defpoolname[MAXPOOLNAMELEN];
+extern char defpoolname[CA_MAXPOOLNAMELEN + 1];
 extern char func[16];
 extern int reqid;
 extern int rpfd;
@@ -72,7 +72,7 @@ char *clienthost;
 	struct stgcat_entry stgreq;
 	int Uflag = 0;
 	int Upluspath = 0;
-	char upath[MAXHOSTNAMELEN + MAXPATH];
+	char upath[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	char *user;
 	struct waitf *wfp;
 	struct waitq *wqp;
@@ -246,13 +246,13 @@ char *clienthost;
 	int Pflag = 0;
 	char *p, *q;
 	char *pool_user = NULL;
-	char poolname[MAXPOOLNAMELEN];
+	char poolname[CA_MAXPOOLNAMELEN + 1];
 	char *rbp;
 	struct stgcat_entry *stcp;
 	int Uflag = 0;
 	int Upluspath = 0;
 	uid_t uid;
-	char upath[MAXHOSTNAMELEN + MAXPATH];
+	char upath[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	char *user;
 
 	poolname[0] = '\0';

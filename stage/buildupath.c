@@ -1,5 +1,5 @@
 /*
- * $Id: buildupath.c,v 1.6 1999/12/09 13:47:25 jdurand Exp $
+ * $Id: buildupath.c,v 1.7 2000/01/09 10:26:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:47:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.7 $ $Date: 2000/01/09 10:26:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #if !defined(vms)
@@ -25,7 +25,7 @@ extern char *sys_errlist[];
 #endif
 
 static char cwd[256];
-static char hostname[MAXHOSTNAMELEN];
+static char hostname[CA_MAXHOSTNAMELEN + 1];
 static int initialized = 0;
 static char nfsroot[MAXPATH];
 
@@ -41,7 +41,7 @@ init_cwd_hostname()
 		strcpy (nfsroot, p);
 	else
 		nfsroot[0] = '\0';
-	gethostname (hostname, MAXHOSTNAMELEN);
+	gethostname (hostname, CA_MAXHOSTNAMELEN + 1);
 #if defined(_WIN32)
 	p = getcwd (cwd, sizeof(cwd));
 #else
@@ -65,9 +65,9 @@ int buflen;
 int req_type;
 {
 	char *dir;
-	char dsksrvr[MAXHOSTNAMELEN];
+	char dsksrvr[CA_MAXHOSTNAMELEN + 1];
 	char *getcwd();
-	char linkbuf[MAXHOSTNAMELEN+MAXPATH];
+	char linkbuf[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	char *p, *q;
 
 	if (p = strstr (argvi, ":/")) {

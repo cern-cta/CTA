@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.10 1999/12/14 14:51:38 jdurand Exp $
+ * $Id: procclr.c,v 1.11 2000/01/09 10:26:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.10 $ $Date: 1999/12/14 14:51:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.11 $ $Date: 2000/01/09 10:26:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -58,7 +58,7 @@ char *clienthost;
 	int found;
 	char *fseq = NULL;
 	gid_t gid;
-	char group[MAXGRPNAMELEN];
+	char group[CA_MAXGRPNAMELEN + 1];
 	struct group *gr;
 	char *lbl = NULL;
 	char *linkname = NULL;
@@ -68,7 +68,7 @@ char *clienthost;
 	int numvid = 0;
 	char *path = NULL;
 	int poolflag = 0;
-	char poolname[MAXPOOLNAMELEN];
+	char poolname[CA_MAXPOOLNAMELEN + 1];
 	char *q;
 	char *rbp;
 	int rflag = 0;

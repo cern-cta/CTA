@@ -1,5 +1,5 @@
 /*
- * $Id: stageupdc.c,v 1.7 1999/12/14 14:51:49 jdurand Exp $
+ * $Id: stageupdc.c,v 1.8 2000/01/09 10:26:09 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.7 $ $Date: 1999/12/14 14:51:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.8 $ $Date: 2000/01/09 10:26:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -46,7 +46,7 @@ char	**argv;
 	int nargs;
 	int ntries = 0;
 	char *p;
-	char path[MAXHOSTNAMELEN + MAXPATH];
+	char path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	struct passwd *pw;
 	char *q;
 	int reqid = 0;
@@ -57,7 +57,7 @@ char	**argv;
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
-	char Zparm[MAXHOSTNAMELEN+14];
+	char Zparm[CA_MAXHOSTNAMELEN + 1 + 14];
 
 	nargs = argc;
 	uid = getuid();

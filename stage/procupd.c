@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.11 2000/01/03 09:47:12 jdurand Exp $
+ * $Id: procupd.c,v 1.12 2000/01/09 10:26:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.11 $ $Date: 2000/01/03 09:47:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.12 $ $Date: 2000/01/09 10:26:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -59,7 +59,7 @@ char *clienthost;
 	int c, i, n;
 	struct stgcat_entry *cur;
 	char *dp;
-	char dsksrvr[MAXHOSTNAMELEN];
+	char dsksrvr[CA_MAXHOSTNAMELEN + 1];
 	char *dvn;
 	int errflg = 0;
 	char *fid = NULL;
@@ -74,7 +74,7 @@ char *clienthost;
 	char *p_cmd;
 	char *p_stat;
 	char *p, *q;
-	char prevfseq[MAXFSEQ];
+	char prevfseq[CA_MAXFSEQLEN + 1];
 	char *rbp;
 	int rc = -1;
 	char *recfm = NULL;

@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.14 2000/01/03 09:47:13 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.15 2000/01/09 10:26:10 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.14 $ $Date: 2000/01/03 09:47:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.15 $ $Date: 2000/01/09 10:26:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -69,7 +69,7 @@ extern int sendrep (int, int, ...);
 #if !defined(linux)
 extern char *sys_errlist[];
 #endif
-char defpoolname[MAXPOOLNAMELEN];
+char defpoolname[CA_MAXPOOLNAMELEN + 1];
 int force_init;
 char func[16];
 int initreq_reqid;
@@ -1127,7 +1127,7 @@ void create_link(stcp, upath)
 {
   int c;
   int found;
-  char lpath[MAXHOSTNAMELEN+MAXPATH];
+  char lpath[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
   struct stgpath_entry *newpath();
   struct stgpath_entry *stpp;
 
@@ -1388,7 +1388,7 @@ nextreqid()
 
   while (1) {
     found = 0;
-    if (++last_reqid > MAXREQID) last_reqid = 1;
+    if (++last_reqid > CA_MAXSTGREQID) last_reqid = 1;
     for (stcp = stcs; stcp < stce; stcp++) {
       if (stcp->reqid == 0) break;
       if (stcp->reqid == last_reqid) {

@@ -1,5 +1,5 @@
 /*
- * $Id: packfseq.c,v 1.7 1999/12/10 18:32:49 jdurand Exp $
+ * $Id: packfseq.c,v 1.8 2000/01/09 10:26:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: packfseq.c,v $ $Revision: 1.7 $ $Date: 1999/12/10 18:32:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: packfseq.c,v $ $Revision: 1.8 $ $Date: 2000/01/09 10:26:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -25,7 +25,7 @@ char *fseq;
 int fseqsz;
 {
 	char *dp;
-	char fseq_tmp[MAXFSEQ];
+	char fseq_tmp[CA_MAXFSEQLEN + 1];
 	int j;
 	int n1, n2;
 	int prev;

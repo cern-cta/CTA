@@ -1,5 +1,5 @@
 /*
- * $Id: cleaner.c,v 1.6 1999/12/09 13:47:25 jdurand Exp $
+ * $Id: cleaner.c,v 1.7 2000/01/09 10:26:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: cleaner.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:47:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: cleaner.c,v $ $Revision: 1.7 $ $Date: 2000/01/09 10:26:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -25,7 +25,7 @@ char **argv;
 {
 	char buf[256];
 	int c;
-	char command[MAXPATH+MAXPOOLNAMELEN+2];
+	char command[MAXPATH+CA_MAXPOOLNAMELEN + 1 + 2];
 	char *gc;
 	char *p;
 	char *poolname;
