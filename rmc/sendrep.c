@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2001-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 2001-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.2 $ $Date: 2003/09/08 17:10:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.3 $ $Date: 2003/09/09 06:20:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -30,16 +30,13 @@ sendrep(int rpfd, int rep_type, ...)
 	char *q;
 	char *rbp;
 	int rc;
-	int rep_type;
-	int req_type;
 	char repbuf[REPBUFSZ];
 	int repsize;
-	int rpfd;
 
 	strcpy (func, "sendrep");
 	rbp = repbuf;
 	marshall_LONG (rbp, RMC_MAGIC);
-	va_start (args, msg);
+	va_start (args, rep_type);
 	marshall_LONG (rbp, rep_type);
 	switch (rep_type) {
 	case MSG_ERR:
