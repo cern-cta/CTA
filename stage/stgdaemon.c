@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.108 2001/02/13 18:14:06 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.109 2001/03/01 12:32:32 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.108 $ $Date: 2001/02/13 18:14:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.109 $ $Date: 2001/03/01 12:32:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -784,10 +784,10 @@ int main(argc,argv)
 				}
 				if ((read_size = netread_timeout (rqfd, req_data, l, STGTIMEOUT))) {
 					if (req_type == STAGEIN   || req_type == STAGEOUT  || req_type == STAGEALLOC  ||
-						req_type == STAGEWRT  || req_type == STAGEPUT  || req_type == STAGEQRY    ||
+						req_type == STAGEWRT  || req_type == STAGEPUT  ||
 
 						req_type == STAGE_IN  || req_type == STAGE_OUT || req_type == STAGE_ALLOC ||
-						req_type == STAGE_WRT || req_type == STAGE_PUT || req_type == STAGE_QRY) {
+						req_type == STAGE_WRT || req_type == STAGE_PUT) {
 						if ((initreq_reqid != 0) || (shutdownreq_reqid != 0) || (stat (NOMORESTAGE, &st) == 0)) {
 							sendrep (rpfd, STAGERC, req_type,
 											 SHIFT_ESTNACT);
