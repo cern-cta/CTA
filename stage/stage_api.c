@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.23 2001/07/12 11:02:04 jdurand Exp $
+ * $Id: stage_api.c,v 1.24 2001/07/12 11:12:19 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -918,7 +918,6 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   gid_t egid;                   /* Current effective gid */
   int status;                   /* Variable overwritten by macros in header */
   int c;                        /* Output of build_linkname() */
-  char *func = "stage_qry";
   int nstcp_output_internal = 0;
   struct stgcat_entry *stcp_output_internal = NULL;
   int nstpp_output_internal = 0;
@@ -1019,7 +1018,6 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   sendbuf_size += LONGSIZE;                /* Number of catalog structures */
   sendbuf_size += HYPERSIZE;               /* Our uniqueid */
   for (istcp = 0; istcp < nstcp_input; istcp++) {
-    int i, numvid, numvsn;
 
     thiscat = &(stcp_input[istcp]);              /* Current catalog structure */
 
