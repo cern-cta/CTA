@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.99 2001/02/08 17:46:18 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.100 2001/02/10 18:42:14 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.99 $ $Date: 2001/02/08 17:46:18 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.100 $ $Date: 2001/02/10 18:42:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 200000
@@ -105,6 +105,18 @@ struct winsize {
 /* calls to setresuid().                                                */
 #define seteuid(euid) setresuid(-1,euid,-1)
 #define setegid(egid) setresgid(-1,egid,-1)
+#endif
+
+#ifdef HAVE_SENSIBLE_STCP
+#undef HAVE_SENSIBLE_STCP
+#endif
+/* This macro will check sensible part of the CASTOR HSM union */
+#define HAVE_SENSIBLE_STCP(stcp) (((stcp)->u1.h.xfile[0] != '\0') && ((stcp)->u1.h.server[0] != '\0') && ((stcp)->u1.h.fileid != 0) && ((stcp)->u1.h.fileclass != 0))
+
+/* offset can be undef sometimes */
+#ifndef offsetof
+#define offsetof(s_name, s_member) \
+        ((size_t)((char *)&((s_name *)NULL)->s_member - (char *)NULL))
 #endif
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
@@ -1926,6 +1938,9 @@ void checkwaitq()
 	struct stgcat_entry *stcp;
 	struct waitf *wfp;
 	struct waitq *wqp, *wqp1;
+	size_t u1h_sizeof;
+
+	u1h_sizeof = sizeof(struct stgcat_entry) - offsetof(struct stgcat_entry,u1.h.xfile);
 
 	wqp = waitqp;
 	while (wqp) {
@@ -2018,8 +2033,32 @@ void checkwaitq()
 					break;
 				case STAGEWRT:
 					if ((stcp->status & (CAN_BE_MIGR)) == CAN_BE_MIGR) {
-						/* This is a file coming from (being migrated or not) migration */
-						update_migpool(stcp,-1,0);
+						/* This is a file coming from migration */
+						if (HAVE_SENSIBLE_STCP(stcp)) {
+							struct stgcat_entry *stcp_search, *stcp_found;
+							struct stgcat_entry *save_stcp = stcp;
+							int save_status = stcp->status;
+
+							stcp_found = NULL;
+							for (stcp_search = stcs; stcp_search < stce; stcp_search++) {
+								if (stcp_search->reqid == 0) break;
+								if (! ISCASTORBEINGMIG(stcp_search)) continue;
+								if (memcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile,u1h_sizeof) == 0) {
+									if (stcp_found == NULL) {
+										stcp_found = stcp_search;
+										break;
+									}
+								}
+							}
+							if (stcp_found != NULL) {
+								update_migpool(stcp_found,-1,0);
+								stcp_found->status &= ~CAN_BE_MIGR;
+								stcp_found->status = STAGEOUT | PUT_FAILED | CAN_BE_MIGR;
+							} else {
+								update_migpool(stcp,-1,0);
+								stglogit(func, "STG02 - Could not find corresponding original request - decrementing anyway beingmigr counters\n");
+							}
+						}
 					}
 					/* There is intentionnaly no 'break' here */
 				case STAGEOUT:
