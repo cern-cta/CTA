@@ -1,8 +1,8 @@
-.\" %W% %G% CERN IT-PDP/DM Jean-Philippe Baud
+.\" $Id: Ctape_label.man,v 1.2 1999/09/02 14:11:54 baud Exp $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_LABEL l "%G%"
+.TH CTAPE_LABEL l "$Date: 1999/09/02 14:11:54 $"
 .SH NAME
 Ctape_label \- send a request to the tape daemon to have a tape mounted,
 the existing label checked and a new label written
@@ -28,6 +28,7 @@ by the tape daemon or specified by
 .IR drive ,
 checks the vsn
 in VOL1 if the tape is labelled and writes the new label.
+In case of failure the drive is freed.
 .TP
 .I vid
 is the volume visual identifier.
@@ -41,7 +42,7 @@ The device group name must be a member of an installation defined set of
 "device groups". It must match the device group specified in TMS (if installed).
 If this pointer is NULL, the value is taken from TMS or defaults to CART.
 .TP
-.I den
+.I density
 The supported alphanumeric densities are:
 .br
 .B 1600
@@ -92,6 +93,10 @@ or
 .B 20GC
 for STK 9840 cassettes.
 .TP
+.I drive
+specifies the drive name. If this pointer is NULL, a drive is selected by the
+tape daemon.
+.TP
 .I vsn
 specifies the magnetically recorded volume serial number of the tape.
 It must be at most six characters long and is converted to upper case.
@@ -124,18 +129,24 @@ failed. In the latter case,
 .B serrno
 is set appropriately.
 .SH ERRORS
+.TP 1.2i
+.B EIO
+I/O error.
 .TP
-.B SYERR
-System error.
+.B ENXIO
+Drive not operational. The drive is automatically configured down.
 .TP
-.B COMERR
-Communication error.
+.B EACCES
+Operator cancel, access denied by TMS.
+.TP
+.B SENOSHOST
+Host unknown.
 .TP
 .B SENOSSERV
 Service unknown.
 .TP
-.B SENOSHOST
-Host unknown.
+.B SECOMERR
+Communication error.
 .TP
 .B ETDNP
 Tape daemon is not running.
@@ -175,11 +186,3 @@ No sense data available.
 .TP
 .B ETRSLT
 Reselect server requested by operator.
-.br
-5	I/O error.
-.br
-6	Unit not operational.
-.br
-13	Operator cancel, access denied by TMS, wrong label type or file not expired.
-.br
-212	Interrupted by user.
