@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.16 2004/12/17 17:54:30 jdurand Exp $
+ * $Id: JobSvcThread.cpp,v 1.17 2005/01/27 11:20:38 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.16 $ $Date: 2004/12/17 17:54:30 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.17 $ $Date: 2005/01/27 11:20:38 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -114,16 +114,17 @@ EXTERN_C int DLL_DECL stager_job_select(void **output) {
       serrno = ENOENT;
       rc = -1;
     } else {
-      STAGER_LOG_DEBUG(NULL,"req FOUND");
-      *output = req;
-      rc = 0;
-
       /* Set uuid for the log */
       /* -------------------- */
       Cuuid_t request_uuid;
       if (string2Cuuid(&request_uuid,(char *) req->reqId().c_str()) == 0) {
-	stager_request_uuid = request_uuid;
+        stager_request_uuid = request_uuid;
       }
+      std::stringstream msg;
+      msg << "Found request " << req->id();
+      STAGER_LOG_DEBUG(NULL,msg.str().c_str());
+      *output = req;
+      rc = 0;
 
     }
 
