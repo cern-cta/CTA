@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.7 2000/05/29 16:42:04 obarring Exp $
+ * $Id: read.c,v 1.8 2000/05/31 07:32:30 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.7 $ $Date: 2000/05/29 16:42:04 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.8 $ $Date: 2000/05/31 07:32:30 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* read.c       Remote File I/O - read  a file                          */
@@ -34,7 +34,7 @@ static int rfio_preread();
  * Remote file read
  */
 int DLL_DECL rfio_read(s, ptr, size)
-char    *ptr;
+void    *ptr;
 int     s, size;
 {
    /* Remote file ? */
@@ -43,13 +43,13 @@ int     s, size;
       if (rfilefdt[s]->version3 == 1)
       {
 	 /* New V3 stream protocol for sequential transfers */
-	 return(rfio_read_v3(s,ptr,size));
+	 return(rfio_read_v3(s,(char *)ptr,size));
       }
       else
-	 return(rfio_read_v2(s,ptr,size));
+	 return(rfio_read_v2(s,(char *)ptr,size));
    }
    else
-      return(rfio_read_v2(s,ptr,size));
+      return(rfio_read_v2(s,(char *)ptr,size));
 }
 
 int rfio_read_v2(s, ptr, size)     
