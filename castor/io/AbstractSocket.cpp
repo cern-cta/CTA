@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AbstractSocket.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/07/19 10:22:24 $ $Author: bcouturi $
+ * @(#)$RCSfile: AbstractSocket.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/08/19 14:44:08 $ $Author: sponcec3 $
  *
  *
  *
@@ -54,7 +54,7 @@
 // getPortIp
 //------------------------------------------------------------------------------
 void castor::io::AbstractSocket::getPortIp(unsigned short& port,
-                                   unsigned long& ip) const
+                                           unsigned long& ip) const
   throw (castor::exception::Exception) {
   // get address
   unsigned int soutlen = sizeof(struct sockaddr_in);
@@ -74,19 +74,19 @@ void castor::io::AbstractSocket::getPortIp(unsigned short& port,
 // getPeerIp
 //------------------------------------------------------------------------------
 void castor::io::AbstractSocket::getPeerIp(unsigned short& port,
-                                   unsigned long& ip) const
-    throw (castor::exception::Exception) {
-    // get address
-    unsigned int soutlen = sizeof(struct sockaddr_in);
-    struct sockaddr_in sout;
-    if (getpeername(m_socket, (struct sockaddr*)&sout, &soutlen) < 0) {
-      castor::exception::Exception ex(errno);
-        ex.getMessage() << "Unable to get peer name";
-        throw ex;
-    }
-    // extract port and ip
-    port = ntohs(sout.sin_port);
-    ip = ntohl(sout.sin_addr.s_addr);
+                                           unsigned long& ip) const
+  throw (castor::exception::Exception) {
+  // get address
+  unsigned int soutlen = sizeof(struct sockaddr_in);
+  struct sockaddr_in sout;
+  if (getpeername(m_socket, (struct sockaddr*)&sout, &soutlen) < 0) {
+    castor::exception::Exception ex(errno);
+    ex.getMessage() << "Unable to get peer name";
+    throw ex;
+  }
+  // extract port and ip
+  port = ntohs(sout.sin_port);
+  ip = ntohl(sout.sin_addr.s_addr);
 }
 
 
@@ -163,7 +163,7 @@ sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port)
 // buildAddress
 //------------------------------------------------------------------------------
 sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port,
-                                             const std::string host)
+                                                     const std::string host)
   throw (castor::exception::Exception) {
   // get host information
   struct hostent *hp;
@@ -185,7 +185,7 @@ sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port,
 // buildAddress
 //------------------------------------------------------------------------------
 sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port,
-                                             const unsigned long ip)
+                                                     const unsigned long ip)
   throw (castor::exception::Exception) {
   // Builds the address
   struct sockaddr_in saddr;
@@ -200,8 +200,8 @@ sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port,
 // sendBuffer
 //------------------------------------------------------------------------------
 void castor::io::AbstractSocket::sendBuffer(const unsigned int magic,
-                                    const char* buf,
-                                    const int n)
+                                            const char* buf,
+                                            const int n)
   throw (castor::exception::Exception) {
   // Sends the buffer with a header (magic number + size)
   if (netwrite(m_socket,
@@ -221,17 +221,30 @@ void castor::io::AbstractSocket::sendBuffer(const unsigned int magic,
 // readBuffer
 //------------------------------------------------------------------------------
 void castor::io::AbstractSocket::readBuffer(const unsigned int magic,
-                                    char** buf,
-                                    int& n)
+                                            char** buf,
+                                            int& n)
   throw (castor::exception::Exception) {
   // First read the header
   unsigned int header[2];
-  int ret;
-  ret = netread(m_socket, (char*)&header, 2*sizeof(unsigned int));
+  int ret = netread(m_socket,
+                    (char*)&header,
+                    2*sizeof(unsigned int));
   if (ret != 2*sizeof(unsigned int)) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage() << "Unable to receive header";
-    throw ex;
+    if (0 == ret) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Unable to receive header\n"
+                      << "The connection was closed by remote end";
+      throw ex;
+    } else if (-1 == ret) {
+      castor::exception::Exception ex(serrno);
+      ex.getMessage() << "Unable to receive header";
+      throw ex;
+    } else {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Received header is too short : only "
+                      << ret << " bytes";
+      throw ex;
+    }
   }
   if (header[0] != magic) {
     castor::exception::Internal ex;
@@ -249,4 +262,3 @@ void castor::io::AbstractSocket::readBuffer(const unsigned int magic,
     throw ex;
   }
 }
-
