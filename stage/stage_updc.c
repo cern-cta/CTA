@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.26 2003/04/28 10:03:13 jdurand Exp $
+ * $Id: stage_updc.c,v 1.27 2003/04/30 10:31:24 jdurand Exp $
  */
 
 /*
@@ -8,13 +8,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.26 $ $Date: 2003/04/28 10:03:13 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.27 $ $Date: 2003/04/30 10:31:24 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <string.h>
@@ -912,10 +913,10 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   return (c == 0 ? 0 : -1);
 }
 
-int DLL_DECL stage_updc_open(stageid, subreqid, mode)
+int DLL_DECL stage_updc_open(stageid, subreqid, flags)
      char *stageid;
      int subreqid;
-     mode_t mode;
+     int flags;
 {
   int c;
   char *dp;
@@ -1005,8 +1006,7 @@ int DLL_DECL stage_updc_open(stageid, subreqid, mode)
     sprintf (tmpbuf, "%d", subreqid);
     sendbuf_size += strlen("-i") + strlen(tmpbuf) + 2; /* -i option and value */
   }
-  sprintf (tmpbuf, "%d", (int) mode);
-  sendbuf_size += strlen("-o") + strlen(tmpbuf) + 2; /* -o option and value */
+  sendbuf_size += strlen("-o") + 1; /* -o  or -O option */
   /* Allocate memory */
   if ((sendbuf = (char *) malloc(sendbuf_size)) == NULL) {
     serrno = SEINTERNAL;
@@ -1041,10 +1041,12 @@ int DLL_DECL stage_updc_open(stageid, subreqid, mode)
     marshall_STRING (sbp, tmpbuf);
     nargs += 2;
   }
-  sprintf (tmpbuf, "%d", (int) mode);
-  marshall_STRING (sbp,"-o");
-  marshall_STRING (sbp, tmpbuf);
-  nargs += 2;
+  if (flags == O_RDONLY) {
+	  marshall_STRING (sbp,"-o");
+  } else {
+	  marshall_STRING (sbp,"-O");
+  }
+  nargs += 1;
   marshall_WORD (q2, nargs);	/* update nargs */
 
   msglen = sbp - sendbuf;
@@ -1062,9 +1064,10 @@ int DLL_DECL stage_updc_open(stageid, subreqid, mode)
   return (c == 0 ? 0 : -1);
 }
 
-int DLL_DECL stage_updc_close(stageid, subreqid)
+int DLL_DECL stage_updc_close(stageid, subreqid, flags)
      char *stageid;
      int subreqid;
+	 int flags;
 {
   int c;
   char *dp;
@@ -1154,7 +1157,7 @@ int DLL_DECL stage_updc_close(stageid, subreqid)
     sprintf (tmpbuf, "%d", subreqid);
     sendbuf_size += strlen("-i") + strlen(tmpbuf) + 2; /* -i option and value */
   }
-  sendbuf_size += strlen("-c") + 1; /* -c option */
+  sendbuf_size += strlen("-c") + 1; /* -c or -C option */
   /* Allocate memory */
   if ((sendbuf = (char *) malloc(sendbuf_size)) == NULL) {
     serrno = SEINTERNAL;
@@ -1189,7 +1192,11 @@ int DLL_DECL stage_updc_close(stageid, subreqid)
     marshall_STRING (sbp, tmpbuf);
     nargs += 2;
   }
-  marshall_STRING (sbp,"-c");
+  if (flags == O_RDONLY) {
+	  marshall_STRING (sbp,"-c");
+  } else {
+	  marshall_STRING (sbp,"-C");
+  }
   nargs += 1;
   marshall_WORD (q2, nargs);	/* update nargs */
 
