@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.17 2000/05/08 10:54:12 jdurand Exp $
+ * $Id: procupd.c,v 1.18 2000/05/15 17:38:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.17 $ $Date: 2000/05/08 10:54:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.18 $ $Date: 2000/05/15 17:38:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -443,7 +443,7 @@ procupdreq(req_data, clienthost)
 				else if (delfile (stcp, 0, 1, 1, stcp->status == STAGEWRT ? "stagewrt ok" : (((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) ? "migration stageput ok" : "stageput ok"), uid, gid, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 									 "rfio_unlink", rfio_serror());
-					if (stcp->status & CAN_BE_MIGR == CAN_BE_MIGR) stcp->status &= ~CAN_BE_MIGR;
+					if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) stcp->status &= ~CAN_BE_MIGR;
 					stcp->status |= STAGED;
 #ifdef USECDB
 					if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
@@ -452,7 +452,7 @@ procupdreq(req_data, clienthost)
 #endif
 				}
 			} else {
-				if (stcp->status & CAN_BE_MIGR == CAN_BE_MIGR) stcp->status &= ~CAN_BE_MIGR;
+				if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) stcp->status &= ~CAN_BE_MIGR;
 				stcp->status |= STAGED;
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
