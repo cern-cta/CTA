@@ -228,7 +228,7 @@ void castor::db::ora::OraFileSystemCnv::fillRepDiskPool(castor::stager::FileSyst
     m_updateDiskPoolStatement = createStatement(s_updateDiskPoolStatementString);
   }
   // Update local object
-  m_updateDiskPoolStatement->setDouble(1, obj->diskPool()->id());
+  m_updateDiskPoolStatement->setDouble(1, 0 == obj->diskPool() ? 0 : obj->diskPool()->id());
   m_updateDiskPoolStatement->setDouble(2, obj->id());
   m_updateDiskPoolStatement->executeUpdate();
 }
@@ -312,7 +312,7 @@ void castor::db::ora::OraFileSystemCnv::fillRepDiskServer(castor::stager::FileSy
     m_updateDiskServerStatement = createStatement(s_updateDiskServerStatementString);
   }
   // Update local object
-  m_updateDiskServerStatement->setDouble(1, obj->diskserver()->id());
+  m_updateDiskServerStatement->setDouble(1, 0 == obj->diskserver() ? 0 : obj->diskserver()->id());
   m_updateDiskServerStatement->setDouble(2, obj->id());
   m_updateDiskServerStatement->executeUpdate();
 }

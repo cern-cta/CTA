@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdcRequestCnv.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/10/14 16:34:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdcRequestCnv.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/10/18 15:53:37 $ $Author: sponcec3 $
  *
  * 
  *
@@ -291,7 +291,7 @@ void castor::db::ora::OraStageUpdcRequestCnv::fillRepSvcClass(castor::stager::St
     m_updateSvcClassStatement = createStatement(s_updateSvcClassStatementString);
   }
   // Update local object
-  m_updateSvcClassStatement->setDouble(1, obj->svcClass()->id());
+  m_updateSvcClassStatement->setDouble(1, 0 == obj->svcClass() ? 0 : obj->svcClass()->id());
   m_updateSvcClassStatement->setDouble(2, obj->id());
   m_updateSvcClassStatement->executeUpdate();
 }
@@ -375,7 +375,7 @@ void castor::db::ora::OraStageUpdcRequestCnv::fillRepIClient(castor::stager::Sta
     m_updateIClientStatement = createStatement(s_updateIClientStatementString);
   }
   // Update local object
-  m_updateIClientStatement->setDouble(1, obj->client()->id());
+  m_updateIClientStatement->setDouble(1, 0 == obj->client() ? 0 : obj->client()->id());
   m_updateIClientStatement->setDouble(2, obj->id());
   m_updateIClientStatement->executeUpdate();
 }

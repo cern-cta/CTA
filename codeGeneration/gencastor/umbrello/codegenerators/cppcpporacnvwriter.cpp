@@ -1005,7 +1005,9 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
             << "// Update local object"
             << endl << getIndent()
             << "m_update" << as->remotePart.typeName
-            << "Statement->setDouble(1, obj->"
+            << "Statement->setDouble(1, 0 == obj->"
+            << as->remotePart.name
+            << "() ? 0 : obj->"
             << as->remotePart.name
             << "()->id());"
             << endl << getIndent()

@@ -237,7 +237,7 @@ void castor::db::ora::OraSubRequestCnv::fillRepDiskCopy(castor::stager::SubReque
     m_updateDiskCopyStatement = createStatement(s_updateDiskCopyStatementString);
   }
   // Update local object
-  m_updateDiskCopyStatement->setDouble(1, obj->diskcopy()->id());
+  m_updateDiskCopyStatement->setDouble(1, 0 == obj->diskcopy() ? 0 : obj->diskcopy()->id());
   m_updateDiskCopyStatement->setDouble(2, obj->id());
   m_updateDiskCopyStatement->executeUpdate();
 }
@@ -283,7 +283,7 @@ void castor::db::ora::OraSubRequestCnv::fillRepCastorFile(castor::stager::SubReq
     m_updateCastorFileStatement = createStatement(s_updateCastorFileStatementString);
   }
   // Update local object
-  m_updateCastorFileStatement->setDouble(1, obj->castorFile()->id());
+  m_updateCastorFileStatement->setDouble(1, 0 == obj->castorFile() ? 0 : obj->castorFile()->id());
   m_updateCastorFileStatement->setDouble(2, obj->id());
   m_updateCastorFileStatement->executeUpdate();
 }
@@ -329,7 +329,7 @@ void castor::db::ora::OraSubRequestCnv::fillRepSubRequest(castor::stager::SubReq
     m_updateSubRequestStatement = createStatement(s_updateSubRequestStatementString);
   }
   // Update local object
-  m_updateSubRequestStatement->setDouble(1, obj->parent()->id());
+  m_updateSubRequestStatement->setDouble(1, 0 == obj->parent() ? 0 : obj->parent()->id());
   m_updateSubRequestStatement->setDouble(2, obj->id());
   m_updateSubRequestStatement->executeUpdate();
 }
@@ -375,7 +375,7 @@ void castor::db::ora::OraSubRequestCnv::fillRepRequest(castor::stager::SubReques
     m_updateRequestStatement = createStatement(s_updateRequestStatementString);
   }
   // Update local object
-  m_updateRequestStatement->setDouble(1, obj->request()->id());
+  m_updateRequestStatement->setDouble(1, 0 == obj->request() ? 0 : obj->request()->id());
   m_updateRequestStatement->setDouble(2, obj->id());
   m_updateRequestStatement->executeUpdate();
 }

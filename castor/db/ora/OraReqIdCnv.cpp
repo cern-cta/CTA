@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/14 16:34:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/10/18 15:53:37 $ $Author: sponcec3 $
  *
  * 
  *
@@ -204,7 +204,7 @@ void castor::db::ora::OraReqIdCnv::fillRepReqIdRequest(castor::stager::ReqId* ob
     m_updateReqIdRequestStatement = createStatement(s_updateReqIdRequestStatementString);
   }
   // Update local object
-  m_updateReqIdRequestStatement->setDouble(1, obj->request()->id());
+  m_updateReqIdRequestStatement->setDouble(1, 0 == obj->request() ? 0 : obj->request()->id());
   m_updateReqIdRequestStatement->setDouble(2, obj->id());
   m_updateReqIdRequestStatement->executeUpdate();
 }

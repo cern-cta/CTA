@@ -246,7 +246,7 @@ void castor::db::ora::OraCastorFileCnv::fillRepSvcClass(castor::stager::CastorFi
     m_updateSvcClassStatement = createStatement(s_updateSvcClassStatementString);
   }
   // Update local object
-  m_updateSvcClassStatement->setDouble(1, obj->svcClass()->id());
+  m_updateSvcClassStatement->setDouble(1, 0 == obj->svcClass() ? 0 : obj->svcClass()->id());
   m_updateSvcClassStatement->setDouble(2, obj->id());
   m_updateSvcClassStatement->executeUpdate();
 }
@@ -292,7 +292,7 @@ void castor::db::ora::OraCastorFileCnv::fillRepFileClass(castor::stager::CastorF
     m_updateFileClassStatement = createStatement(s_updateFileClassStatementString);
   }
   // Update local object
-  m_updateFileClassStatement->setDouble(1, obj->fileClass()->id());
+  m_updateFileClassStatement->setDouble(1, 0 == obj->fileClass() ? 0 : obj->fileClass()->id());
   m_updateFileClassStatement->setDouble(2, obj->id());
   m_updateFileClassStatement->executeUpdate();
 }

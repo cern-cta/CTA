@@ -331,7 +331,7 @@ void castor::db::ora::OraTapeCopyCnv::fillRepCastorFile(castor::stager::TapeCopy
     m_updateCastorFileStatement = createStatement(s_updateCastorFileStatementString);
   }
   // Update local object
-  m_updateCastorFileStatement->setDouble(1, obj->castorFile()->id());
+  m_updateCastorFileStatement->setDouble(1, 0 == obj->castorFile() ? 0 : obj->castorFile()->id());
   m_updateCastorFileStatement->setDouble(2, obj->id());
   m_updateCastorFileStatement->executeUpdate();
 }

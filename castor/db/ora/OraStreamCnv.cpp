@@ -293,7 +293,7 @@ void castor::db::ora::OraStreamCnv::fillRepTape(castor::stager::Stream* obj)
     m_updateTapeStatement = createStatement(s_updateTapeStatementString);
   }
   // Update local object
-  m_updateTapeStatement->setDouble(1, obj->tape()->id());
+  m_updateTapeStatement->setDouble(1, 0 == obj->tape() ? 0 : obj->tape()->id());
   m_updateTapeStatement->setDouble(2, obj->id());
   m_updateTapeStatement->executeUpdate();
 }
@@ -339,7 +339,7 @@ void castor::db::ora::OraStreamCnv::fillRepTapePool(castor::stager::Stream* obj)
     m_updateTapePoolStatement = createStatement(s_updateTapePoolStatementString);
   }
   // Update local object
-  m_updateTapePoolStatement->setDouble(1, obj->tapePool()->id());
+  m_updateTapePoolStatement->setDouble(1, 0 == obj->tapePool() ? 0 : obj->tapePool()->id());
   m_updateTapePoolStatement->setDouble(2, obj->id());
   m_updateTapePoolStatement->executeUpdate();
 }

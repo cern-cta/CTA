@@ -217,7 +217,7 @@ void castor::db::ora::OraSegmentCnv::fillRepTape(castor::stager::Segment* obj)
     m_updateTapeStatement = createStatement(s_updateTapeStatementString);
   }
   // Update local object
-  m_updateTapeStatement->setDouble(1, obj->tape()->id());
+  m_updateTapeStatement->setDouble(1, 0 == obj->tape() ? 0 : obj->tape()->id());
   m_updateTapeStatement->setDouble(2, obj->id());
   m_updateTapeStatement->executeUpdate();
 }
@@ -263,7 +263,7 @@ void castor::db::ora::OraSegmentCnv::fillRepTapeCopy(castor::stager::Segment* ob
     m_updateTapeCopyStatement = createStatement(s_updateTapeCopyStatementString);
   }
   // Update local object
-  m_updateTapeCopyStatement->setDouble(1, obj->copy()->id());
+  m_updateTapeCopyStatement->setDouble(1, 0 == obj->copy() ? 0 : obj->copy()->id());
   m_updateTapeCopyStatement->setDouble(2, obj->id());
   m_updateTapeCopyStatement->executeUpdate();
 }

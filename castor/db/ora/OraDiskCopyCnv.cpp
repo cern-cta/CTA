@@ -223,7 +223,7 @@ void castor::db::ora::OraDiskCopyCnv::fillRepFileSystem(castor::stager::DiskCopy
     m_updateFileSystemStatement = createStatement(s_updateFileSystemStatementString);
   }
   // Update local object
-  m_updateFileSystemStatement->setDouble(1, obj->fileSystem()->id());
+  m_updateFileSystemStatement->setDouble(1, 0 == obj->fileSystem() ? 0 : obj->fileSystem()->id());
   m_updateFileSystemStatement->setDouble(2, obj->id());
   m_updateFileSystemStatement->executeUpdate();
 }
@@ -269,7 +269,7 @@ void castor::db::ora::OraDiskCopyCnv::fillRepCastorFile(castor::stager::DiskCopy
     m_updateCastorFileStatement = createStatement(s_updateCastorFileStatementString);
   }
   // Update local object
-  m_updateCastorFileStatement->setDouble(1, obj->castorFile()->id());
+  m_updateCastorFileStatement->setDouble(1, 0 == obj->castorFile() ? 0 : obj->castorFile()->id());
   m_updateCastorFileStatement->setDouble(2, obj->id());
   m_updateCastorFileStatement->executeUpdate();
 }

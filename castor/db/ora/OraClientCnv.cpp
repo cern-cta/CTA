@@ -204,7 +204,7 @@ void castor::db::ora::OraClientCnv::fillRepRequest(castor::rh::Client* obj)
     m_updateRequestStatement = createStatement(s_updateRequestStatementString);
   }
   // Update local object
-  m_updateRequestStatement->setDouble(1, obj->request()->id());
+  m_updateRequestStatement->setDouble(1, 0 == obj->request() ? 0 : obj->request()->id());
   m_updateRequestStatement->setDouble(2, obj->id());
   m_updateRequestStatement->executeUpdate();
 }
