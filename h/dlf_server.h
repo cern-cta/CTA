@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: dlf_server.h,v $ $Revision: 1.1 $ $Date: 2003/08/20 13:43:50 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: dlf_server.h,v $ $Revision: 1.2 $ $Date: 2004/07/08 11:18:43 $ CERN IT-ADC Vitaly Motyakov
  */
  
 #ifndef _DLF_SERVER_H
@@ -96,7 +96,7 @@ struct dlf_srv_thread_info {
 	int		s;		/* socket for communication with client */
 	int		db_open_done;
 	struct dlf_dbfd dbfd;
-	char		errbuf[PRTBUFSZ];
+	char		errbuf[DLF_PRTBUFSZ];
 };
 
 
