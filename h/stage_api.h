@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.22 2001/02/01 08:39:22 jdurand Exp $
+ * $Id: stage_api.h,v 1.23 2001/02/01 10:37:21 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -245,7 +245,8 @@ typedef struct stage_hsm stage_hsm_t;
 EXTERN_C int DLL_DECL stage_iowc _PROTO((int,                       /* req_type */
                                          char,                      /* t_or_d */
                                          u_signed64,                /* flags */
-                                         mode_t,                    /* mode */
+                                         int,                       /* openflags */
+                                         mode_t,                    /* openmode */
                                          char *,                    /* hostname */
                                          char *,                    /* pooluser */
                                          int,                       /* nstcp_input */
@@ -254,30 +255,30 @@ EXTERN_C int DLL_DECL stage_iowc _PROTO((int,                       /* req_type 
                                          struct stgcat_entry **,    /* stcp_output */
                                          int,                       /* nstpp_input */
                                          struct stgpath_entry *));  /* stpp_input */
-#define stagein_tape(flags,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
-  stage_iowc(STAGE_IN, 't',flags,0,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
-#define stagein_disk(flags,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
-  stage_iowc(STAGE_IN, 'd',flags,0,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
-#define stagein_hsm(flags,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
-  stage_iowc(STAGE_IN, 'm',flags,0,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
-#define stageout_tape(flags,mode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
-  stage_iowc(STAGE_OUT,'t',flags,mode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
-#define stageout_disk(flags,mode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
-  stage_iowc(STAGE_OUT,'d',flags,mode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
-#define stageout_hsm(flags,mode,hostname,poolname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
-  stage_iowc(STAGE_OUT,'m',flags,mode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
-#define stagewrt_tape(flags,mode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
-  stage_iowc(STAGE_WRT,'t',flags,mode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
-#define stagewrt_disk(flags,mode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
-  stage_iowc(STAGE_WRT,'d',flags,mode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
-#define stagewrt_hsm(flags,mode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
-  stage_iowc(STAGE_WRT,'m',flags,mode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
+#define stagein_tape(flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
+  stage_iowc(STAGE_IN, 't',flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
+#define stagein_disk(flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
+  stage_iowc(STAGE_IN, 'd',flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
+#define stagein_hsm(flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
+  stage_iowc(STAGE_IN, 'm',flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
+#define stageout_tape(flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
+  stage_iowc(STAGE_OUT,'t',flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
+#define stageout_disk(flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
+  stage_iowc(STAGE_OUT,'d',flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
+#define stageout_hsm(flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
+  stage_iowc(STAGE_OUT,'m',flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
+#define stagewrt_tape(flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
+  stage_iowc(STAGE_WRT,'t',flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
+#define stagewrt_disk(flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
+  stage_iowc(STAGE_WRT,'d',flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
+#define stagewrt_hsm(flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
+  stage_iowc(STAGE_WRT,'m',flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
 #define stagecat_tape(flags,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
-  stage_iowc(STAGE_CAT,'t',flags,0,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
+  stage_iowc(STAGE_CAT,'t',flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
 #define stagecat_disk(flags,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
-  stage_iowc(STAGE_CAT,'d',flags,0,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
+  stage_iowc(STAGE_CAT,'d',flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
 #define stagecat_hsm(flags,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
-  stage_iowc(STAGE_CAT,'m',flags,0,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
+  stage_iowc(STAGE_CAT,'m',flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
 
 /* ---------------------------- */
 /* Generic STAGE_KILL interface */
