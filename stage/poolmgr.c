@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.55 2000/12/19 15:20:56 jdurand Exp $
+ * $Id: poolmgr.c,v 1.56 2000/12/19 15:39:52 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.55 $ $Date: 2000/12/19 15:20:56 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.56 $ $Date: 2000/12/19 15:39:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1194,6 +1194,7 @@ void redomigpool()
 
 	for (stcp = stcs; stcp < stce; stcp++) {
 		if ((stcp->status & CAN_BE_MIGR) != CAN_BE_MIGR) continue;
+		if ((stcp->status & PUT_FAILED) == PUT_FAILED) continue;
 		insert_in_migpool(stcp);
 	}
 }
@@ -1400,14 +1401,7 @@ int insert_in_migpool(stcp)
 	}
 	/* We check that this pool have a migrator */
 	if (pool_p->migr == NULL) {
-		if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-			stglogit(func, STG33, stcp->ipath, "New configuration makes it orphan of migrator");
-		}
-		return(0);
-	}
-
-	if ((stcp->status & CAN_BE_MIGR) != CAN_BE_MIGR) {
-      /* This has never been a candidate for automatic migration */
+		stglogit(func, STG33, stcp->ipath, "New configuration makes it orphan of migrator");
 		return(0);
 	}
 	pool_p->migr->nbfiles_canbemig++;
