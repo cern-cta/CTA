@@ -1,4 +1,10 @@
 /*
+ * $Id: getcompstat.c,v 1.2 1999/07/21 13:10:01 jdurand Exp $
+ *
+ * $Lod$
+ */
+
+/*
  * Copyright (C) 1996-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
@@ -199,7 +205,8 @@ char *devtype;
 	unsigned char *endpage;
 	unsigned char *p;
 #if defined(ADSTAR)
-#error Not implemented ???
+    /* error directive do not exist everywhere */
+!!! error Not implemented !!!
 #else
 	unsigned char cdb[10];
 	char *msgaddr;
