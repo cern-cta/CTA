@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.34 2000/11/20 17:40:15 jdurand Exp $
+ * $Id: procqry.c,v 1.35 2000/11/20 17:44:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.34 $ $Date: 2000/11/20 17:40:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.35 $ $Date: 2000/11/20 17:44:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -776,30 +776,32 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 			if (step (p, expbuf) == 0) continue;
 #endif
 		}
-		if (stcp->ipath[0] != '\0' && rfio_mstat(stcp->ipath, &st) == 0) {
-			int has_been_updated = 0;
+		if (stcp->ipath[0] != '\0') {
+			if (rfio_mstat(stcp->ipath, &st) == 0) {
+				int has_been_updated = 0;
 
-			if (st.st_size > stcp->actual_size) {
-				stcp->actual_size = st.st_size;
-				has_been_updated = 1;
-			}
-			if (st.st_atime > stcp->a_time) {
-				stcp->a_time = st.st_atime;
-				has_been_updated = 1;
-			}
-			if (st.st_mtime > stcp->a_time) {
-				stcp->a_time = st.st_mtime;
-				has_been_updated = 1;
-			}
-			if (has_been_updated != 0) {
-#ifdef USECDB
-				if (stgdb_upd_stgcat(dbfd_query,stcp) != 0) {
-					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				if (st.st_size > stcp->actual_size) {
+					stcp->actual_size = st.st_size;
+					has_been_updated = 1;
 				}
+				if (st.st_atime > stcp->a_time) {
+					stcp->a_time = st.st_atime;
+					has_been_updated = 1;
+				}
+				if (st.st_mtime > stcp->a_time) {
+					stcp->a_time = st.st_mtime;
+					has_been_updated = 1;
+				}
+				if (has_been_updated != 0) {
+#ifdef USECDB
+					if (stgdb_upd_stgcat(dbfd_query,stcp) != 0) {
+						stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					}
 #endif
+				}
+			} else {
+				stglogit (func, STG02, stcp->ipath, "rfio_mstat", rfio_serror());
 			}
-		} else {
-			stglogit (func, STG02, stcp->ipath, "rfio_mstat", rfio_serror());
 		}
 		sci->weight = (double)stcp->a_time;
 		if (stcp->actual_size > 1024)
