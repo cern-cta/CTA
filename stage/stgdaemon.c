@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.213 2002/07/27 07:04:47 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.214 2002/07/27 07:31:54 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.213 $ $Date: 2002/07/27 07:04:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.214 $ $Date: 2002/07/27 07:31:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -246,7 +246,7 @@ void delreqid _PROTO((int, int));
 void rmfromwq _PROTO((struct waitq *));
 void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 void stgdaemon_usage _PROTO(());
-void stgdaemon_wait4child _PROTO(());
+void stgdaemon_wait4child _PROTO((int));
 int req2argv _PROTO((char *, char ***));
 int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *, int));
 int ask_stageout _PROTO((int, char *, struct stgcat_entry **));
@@ -4225,8 +4225,10 @@ int upd_staged(upath)
 }
 
 #if ! defined(_WIN32)
-void stgdaemon_wait4child()
+void stgdaemon_wait4child(signo)
+	int signo;
 {
+	return;
 }
 
 void check_child_exit()
