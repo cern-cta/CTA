@@ -182,6 +182,8 @@ int rc_shift2castor(magic,rc)
 		return(ESTNACT);
 	case SHIFT_ECUPVNACT:
 		return(ECUPVNACT);
+	case CHECKSUMERR:
+		return(SECHECKSUM);
 	case REQKILD:
 		return(ESTKILLED);
 	case CLEARED:
