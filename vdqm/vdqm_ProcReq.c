@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.7 $ $Date: 1999/12/17 14:04:01 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.8 $ $Date: 1999/12/20 15:45:40 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -155,6 +155,7 @@ void *vdqm_ProcReq(void *arg) {
         if ( rc == -1 ) {
             log(LOG_ERR,"vdqm_ProcReq(): request processing error\n");
             (void)vdqm_AcknRollback(client_connection);
+            rc = 0;
         } else {
             rc = vdqm_AcknCommit(client_connection);
             if ( rc != -1 ) {
