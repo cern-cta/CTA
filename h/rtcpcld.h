@@ -292,9 +292,6 @@ int rtcpcld_checkSegment _PROTO((
                                  file_list_t *
                                  ));
 
-int rtcpcld_setatime _PROTO((
-                             file_list_t *
-                             ));
 int rtcpcld_checkDualCopies _PROTO((
                                     file_list_t *
                                     ));
