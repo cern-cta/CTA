@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2000 by CERN/IT/PDP/DM
+ * Copyright (C) 2000-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrdeletetape.c,v $ $Revision: 1.6 $ $Date: 2001/01/09 11:28:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrdeletetape.c,v $ $Revision: 1.7 $ $Date: 2001/11/30 11:56:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrdeletetape - delete a tape volume */
@@ -35,7 +35,7 @@ char **argv;
                         break;
                 }
         }
-        if (optind < argc) {
+        if (optind < argc || vid == NULL) {
                 errflg++;
         }
         if (errflg) {
