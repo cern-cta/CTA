@@ -1,14 +1,14 @@
 /*
- * $Id: syslog.h,v 1.2 1999/12/09 13:47:56 jdurand Exp $
+ * $Id: syslog.h,v 1.3 2001/05/20 06:47:25 baud Exp $
  */
 
 /*
- * Copyright (C) 1997 by CERN/IT/PDP/IP
+ * Copyright (C) 1997-2001 by CERN/IT/PDP/IP
  * All rights reserved
  */
  
 /*
- * @(#)syslog.h	1.2 11/14/97 CERN IT-PDP/IP Christoph von Praun
+ * @(#)$RCSfile: syslog.h,v $ $Revision: 1.3 $ $Date: 2001/05/20 06:47:25 $ CERN IT-PDP/IP Christoph von Praun
  */
 
 #ifndef SysLog_h
@@ -45,8 +45,8 @@
 #define	LOG_PERROR	0x20	/* log to stderr as well */
 
 /* 
- * Facility codes 
- */	
+ * Facility codes
+ */
 
 #define	LOG_KERN	(0<<3)	    /* kernel messages */
 #define	LOG_USER	(1<<3)	    /* random user-level messages */
