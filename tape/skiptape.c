@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.8 $ $Date: 2002/04/09 05:07:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.9 $ $Date: 2003/10/28 12:05:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -30,7 +30,7 @@ static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.8 $ $Date: 200
 #endif
 #include "Ctape.h"
 #include "serrno.h"
-#if (defined(__alpha) && defined(__osf__)) || defined(ADSTAR) || defined(IRIX64) || defined(linux)
+#if (defined(__alpha) && defined(__osf__)) || defined(ADSTAR) || defined(IRIX64) || defined(linux) || defined(hpux)
 extern int mt_rescnt;
 extern char *sys_errlist[];
 skiptpfff(tapefd, path, n)

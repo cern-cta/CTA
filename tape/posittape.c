@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.13 $ $Date: 2002/04/09 15:30:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.14 $ $Date: 2003/10/28 12:05:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -295,12 +295,12 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 				if (tmr == 0 && (c = skiptpff (tapefd, path, 1)))
 					goto reply;
 		}
-#if defined(ADSTAR) || (defined(__osf__) && defined(__alpha)) || defined(IRIX64) || defined(linux)
+#if defined(ADSTAR) || (defined(__osf__) && defined(__alpha)) || defined(IRIX64) || defined(linux) || defined(hpux)
 #if defined(ADSTAR)
 		if (strcmp (dvrname, "Atape") == 0 &&
 		    strcmp (devtype, "3590") == 0 &&
 #endif
-#if (defined(__osf__) && defined(__alpha)) || defined(IRIX64) || defined(linux)
+#if (defined(__osf__) && defined(__alpha)) || defined(IRIX64) || defined(linux) || defined(hpux)
 		if (devinfo->fastpos &&
 #endif
 		    (fseq > *cfseq + 1 || fseq == -1 ||
