@@ -37,12 +37,18 @@
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <arpa/inet.h>
 #include <net.h>
 #include <netdb.h>
 #include <errno.h>
 
 #include <cstring>
 #include <string>
+#include <sstream>
+#include <iomanip>
+
+#define WD 30
+#define SETW std::setw(WD) << std::left <<
 
 //-----------------------------------------------------------------------------
 // constructors
@@ -53,17 +59,37 @@ castor::replier::NoMoreMessagesException::NoMoreMessagesException() : castor::ex
 castor::replier::EndConnectionException::EndConnectionException() : castor::exception::Exception(SEINTERNAL) {}
 
 castor::replier::ClientConnection::ClientConnection() throw() :
-  BaseObject(), m_client(), m_responses(), m_fd(-1),
-  m_lastEventDate(time(0)), m_status(INACTIVE), m_terminate(false) {};
-
-castor::replier::ClientConnection::ClientConnection(ClientResponse cr) throw() :
-  BaseObject(), m_client(cr.client), m_responses(), m_fd(-1),
-  m_lastEventDate(time(0)), m_status(INACTIVE), m_terminate(false) {
-    m_responses.push(cr.response);
+  BaseObject(), m_client(), m_messages(), m_fd(-1),
+  m_lastEventDate(time(0)), m_status(INACTIVE), m_terminate(false),
+  m_nextMessageId(1) {
+    char *func = "cc::ClientConnection ";
+    m_clientStr = buildClientStr(m_client);
+    clog() << SYSTEM << SETW func  << this->toString() << " created" << std::endl;
 };
 
-void castor::replier::ClientConnection::addResponse(ClientResponse cr) throw() {
-  m_responses.push(cr.response);
+castor::replier::ClientConnection::ClientConnection(ClientResponse cr) throw() :
+  BaseObject(), m_client(cr.client), m_messages(), m_fd(-1),
+  m_lastEventDate(time(0)), m_status(INACTIVE), m_terminate(false),
+  m_nextMessageId(1)  {
+    char *func = "cc::ClientConnection ";
+    m_clientStr = buildClientStr(m_client);
+    cr.messageId = m_nextMessageId;
+    m_nextMessageId++;
+    m_messages.push(cr);
+    clog() << SYSTEM << SETW func  << this->toString() << " created and added msg:" 
+	   << cr.messageId
+	   << std::endl;
+};
+
+void castor::replier::ClientConnection::addMessage(ClientResponse cr) throw() {
+  char *func = "cc::addMessage ";
+  cr.messageId = m_nextMessageId;
+  m_nextMessageId++;
+  m_messages.push(cr);
+  clog() << SYSTEM << SETW func  << this->toString() << " added msg:" 
+	 << cr.messageId << " (terminate:" 
+	 << (cr.isLast?1:0) << ")"
+	 << std::endl;
   if (cr.isLast) {
     m_terminate = true;
   }
@@ -72,7 +98,6 @@ void castor::replier::ClientConnection::addResponse(ClientResponse cr) throw() {
 castor::replier::RCStatus  castor::replier::ClientConnection::getStatus() throw() {
   return m_status;
 }
-
 
 
 std::string castor::replier::ClientConnection::getStatusStr()
@@ -111,30 +136,63 @@ std::string castor::replier::ClientConnection::getStatusStr()
 
 void castor::replier::ClientConnection::close() throw() {
 
-  char *func = "ClientConnection::close ";
+  char *func = "cc::close ";
   ::close(m_fd);
-  while (!m_responses.empty()) {
-    clog() << DEBUG << func << "Deleting response" << std::endl;
-    castor::io::biniostream *response = m_responses.front();
-    delete response;
-    m_responses.pop();
+  clog() << SYSTEM << SETW func  << this->toString() << " Deleting while "
+	 << m_messages.size() << " messages are left"
+	 << std::endl;
+  while (!m_messages.empty()) {
+    ClientResponse message = m_messages.front();
+    clog() << DEBUG << SETW func  << this->toString() << " Deleting msg "
+	   << message.messageId
+	   << std::endl;
+    delete message.response;
+    m_messages.pop();
   }
 }
 
 
-castor::rh::Client castor::replier::ClientConnection::getClient()  throw() {
+castor::rh::Client castor::replier::ClientConnection::client()  throw() {
   return m_client;
+}
+
+bool castor::replier::ClientConnection::terminate()  throw() {
+  return m_terminate;
+}
+
+int castor::replier::ClientConnection::lastEventDate()  throw() {
+  return m_lastEventDate;
+}
+
+int castor::replier::ClientConnection::fd()  throw() {
+  return m_fd;
+}
+
+std::string castor::replier::ClientConnection::errorMessage()  throw() {
+  return m_errorMessage;
+}
+
+void castor::replier::ClientConnection::setErrorMessage(std::string msg) throw () {
+  m_errorMessage = msg;
+}
+
+std::queue<castor::replier::ClientResponse> 
+castor::replier::ClientConnection::messages() throw() {
+  return m_messages;
+}
+
+bool castor::replier::ClientConnection::hasMessagesToSend() throw() {
+  return  (m_messages.size() > 0);
 }
 
 void castor::replier::ClientConnection::setStatus(enum RCStatus stat)
   throw() {
-  char *func = "ClientConnection::setStatus ";
+  char *func = "cc::setStatus ";
   m_status = stat;
   m_lastEventDate = time(0);
-  clog() << DEBUG << func << "<" << m_fd << "> Setting status to "
+  clog() << SYSTEM << SETW func  << this->toString() << " Setting status to "
          << getStatusStr() << std::endl;
 }
-
 
 void castor::replier::ClientConnection::createSocket()
   throw(castor::exception::Exception) {
@@ -176,7 +234,7 @@ void castor::replier::ClientConnection::createSocket()
 void castor::replier::ClientConnection::connect()
   throw(castor::exception::Exception) {
 
-  char *func = "ClientConnection::connect ";
+  char *func = "cc::connect ";
 
   // Preparing the client address
   struct sockaddr_in saddr;
@@ -194,40 +252,49 @@ void castor::replier::ClientConnection::connect()
     ::close(m_fd);
     throw ex;
   }
-  clog() << USAGE << func << "Connected back to "
-         << castor::ip << m_client.ipAddress()
-         << " successfully." << std::endl;   
+  clog() << USAGE << SETW func  << this->toString() 
+	 <<" connect syscall ok"
+         << std::endl;   
   setStatus(CONNECTING);  
 }
 
-void castor::replier::ClientConnection::pop()  throw(castor::exception::Exception) {
-  if (!m_responses.empty()) {
-    castor::io::biniostream *response = m_responses.front();
-    delete response;
-    m_responses.pop();
+void castor::replier::ClientConnection::deleteNextMessage()  throw(castor::exception::Exception) {
+  char *func = "cc::deleteNextMessage ";
+  if (!m_messages.empty()) {
+    ClientResponse message = m_messages.front();
+    clog() << DEBUG << SETW func  << this->toString() << " Deleting msg "
+	   << message.messageId
+	   << std::endl;
+    delete message.response;
+    m_messages.pop();
   }
 }
 
-void castor::replier::ClientConnection::sendData()  throw(castor::exception::Exception) {
-
-  char *func = "ClientConnection::sendData ";
-  if (m_responses.empty()) {
-     clog() << DEBUG << func << "sendData: No more messages in queue!" << std::endl;
+void castor::replier::ClientConnection::sendNextMessage()  throw(castor::exception::Exception) {
+  char *func = "cc::sendNextMessage ";
+  if (m_messages.empty()) {
+    clog() << DEBUG << SETW func  << this->toString() 
+	   << "No more messages in queue!" << std::endl;
      NoMoreMessagesException nme;
     throw nme;
   }
-  clog() << DEBUG << func << "sendData: Sending Next Message !" << std::endl;
   send();
 }
 
+
+
+
+// Internal send method
 void castor::replier::ClientConnection::send()
   throw(castor::exception::Exception) {
 
-  char *func = "ClientConnection::send ";
+  char *func = "cc::send ";
   castor::io::biniostream *response;
+  ClientResponse message;
 
-  if (!m_responses.empty()) {
-    response = m_responses.front();
+  if (!m_messages.empty()) {
+    message = m_messages.front();
+    response = message.response;
   } else {
     return;
   }
@@ -247,16 +314,17 @@ void castor::replier::ClientConnection::send()
   char *pc = (char *)buf;
 
   int rc = write(m_fd, (char *)(buf), buflen);
-  clog() << DEBUG << func << "Write syscall returned " << rc
-         <<  " (len:" << buflen << ")"
-         << std::endl;
+  
   if (rc == -1) {
     if (errno == EAGAIN) {
       setStatus(RESEND);
     } else {
       delete[] buf;
-      clog() << ERROR << func << "WRITE FAILURE"
-             << strerror(errno)
+      clog() << ERROR << SETW func  << this->toString() << " msg:" << message.messageId
+	     << " WRITE FAILURE (isLast:"
+	     << ((message.isLast)?1:0)
+	     << ")rc:" << rc
+	     <<  " (len:" << buflen << ") error: " << strerror(errno)
              << std::endl;
       setStatus(DONE_FAILURE);
       m_errorMessage = std::string("Error while sending: ") 
@@ -267,10 +335,16 @@ void castor::replier::ClientConnection::send()
     }
   } else {
     m_lastEventDate = time(0);
-    clog() << DEBUG << func << "Data sent back to "
-           << castor::ip << m_client.ipAddress()
+ 
+    clog() << SYSTEM << SETW func  << this->toString() 
+	   << " msg:" << message.messageId 
+	   << " Send successful (isLast:"
+	   << ((message.isLast)?1:0)
+	   << ") rc:" << rc 
+	   <<  " (len:" << buflen << ")"
            << std::endl;   
-    pop();
+    /* XXX Should this be done here ? */
+    this->deleteNextMessage();
   }
 
   delete[] buf;
@@ -278,6 +352,18 @@ void castor::replier::ClientConnection::send()
 }
 
 
+std::string castor::replier::ClientConnection::toString() throw() {
+   std::ostringstream sst;
+   sst << m_clientStr 
+       << "(" << this->fd() <<  "," << this->getStatusStr() << ")";
+  return sst.str();
+}
 
 
-
+std::string castor::replier::ClientConnection::buildClientStr(castor::rh::Client client) {
+  struct in_addr cad;
+  cad.s_addr = client.ipAddress();
+  std::ostringstream sst;
+  sst << inet_ntoa(cad) << ":" << client.port();
+  return  sst.str();
+}

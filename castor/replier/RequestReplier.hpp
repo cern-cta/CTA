@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/02/03 18:09:05 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplier.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/02/04 16:09:55 $ $Author: bcouturi $
  *
  *
  *
@@ -155,6 +155,11 @@ namespace castor {
        * Cleans old entry from the connections map
        */
       void garbageCollect() throw();
+
+      /**
+       * String display of POLL returns codes
+       */
+      std::string pollStr(int val);
 
       /**
        * Singleton instance of the RequestReplier
