@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_deletemodel.c,v $ $Revision: 1.2 $ $Date: 2000/01/03 09:59:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_deletemodel.c,v $ $Revision: 1.3 $ $Date: 2000/01/10 07:31:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_deletemodel - delete a model of cartridge */
@@ -51,6 +51,12 @@ vmgr_deletemodel(const char *model, char *media_letter)
 		serrno = EFAULT;
 		return (-1);
 	}
+
+	if (strlen (model) > CA_MAXMODELLEN ||
+	    (media_letter && strlen (media_letter) > 1)) {
+		serrno = EINVAL;
+		return (-1);
+	}
  
 	/* Build request header */
 
@@ -66,7 +72,11 @@ vmgr_deletemodel(const char *model, char *media_letter)
 	marshall_LONG (sbp, uid);
 	marshall_LONG (sbp, gid);
 	marshall_STRING (sbp, model);
-	marshall_STRING (sbp, media_letter);
+	if (media_letter) {
+		marshall_STRING (sbp, media_letter);
+	} else {
+		marshall_STRING (sbp, "");
+	}
  
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
