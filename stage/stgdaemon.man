@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.11 $ $Date: 2002/02/20 14:17:00 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.12 $ $Date: 2002/05/09 17:11:02 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STGDAEMON 1 "$Date: 2002/02/20 14:17:00 $" CASTOR "stage Administrator Commands"
+.TH STGDAEMON 1 "$Date: 2002/05/09 17:11:02 $" CASTOR "stage Administrator Commands"
 .SH NAME
 stgdaemon \- starts the stage daemon
 .SH SYNOPSIS
@@ -13,6 +13,10 @@ stgdaemon \- starts the stage daemon
 .BI \-h
 ] [
 .BI \-L " backlog"
+] [
+.BI \-\-rlimit_nproc " nproc"
+] [
+.BI \-\-rlimit_nofile " nofile"
 ]
 .SH DESCRIPTION
 .LP
@@ -43,16 +47,17 @@ keeps the catalog in a database managed by
 .BR Cdb .
 On all client hosts and on the stager host the following default ports and protocol are used:
 .RS
-.HP
-rfio             5001/tcp                        # Remote File Access System
-.HP
-rtcopy         5003/tcp                        # Remote Tape Access
-.HP
-stage           5007/tcp                        # CASTOR stager
-.HP
-cns             5010/tcp                        # CASTOR name server
-.HP
-vmgr           5013/tcp                        # CASTOR volume manager
+.ft CW
+.nf
+.sp
+rfio    5001/tcp       # Remote File Access System
+rtcopy  5003/tcp       # Remote Tape Access
+stage   5007/tcp       # CASTOR stager
+cns     5010/tcp       # CASTOR name server
+vmgr    5013/tcp       # CASTOR volume manager
+.ft
+.LP
+.fi
 .RE
 There should be entries in 
 .B /etc/services
@@ -247,6 +252,12 @@ Print help
 .TP
 .BI \-L " backlog"
 Sets listening backlog. Default value is 5.
+.TP
+.BI \-\-rlimit_nproc " nproc"
+Sets maximum number of processes. Default value is 512, and is applied if necessary.
+.TP
+.BI \-\-rlimit_nofile " nofile"
+Sets maximum number of open files. Default value is 2048, and is applied if necessary.
 .SH FILES
 .TP 1.5i
 .B /etc/STGCONFIG
