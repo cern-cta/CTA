@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.8 $ $Date: 2000/08/29 14:52:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.9 $ $Date: 2000/10/30 13:54:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -132,6 +132,10 @@ int flags;
 	case D40GC:
 	case D50G:
 	case D50GC:
+	case D60G:
+	case D60GC:
+	case D100G:
+	case D100GC:
 	case DDS:
 	case DDSC:
 		break;
@@ -557,7 +561,7 @@ u_signed64 *Size;
 			perc);
 	    } else if (strcmp (dmpparm.devtype, "9840") == 0) {
 		perc = tape_used / 200000000;
-		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A STK 9840 CARTRIDGE (20GB) *****\n",
+		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN STK 9840 CARTRIDGE (20GB) *****\n",
 			perc);
 	    }
 	} else if (den == D25G || den == D25GC) {
@@ -571,6 +575,14 @@ u_signed64 *Size;
 	} else if (den == D50G || den == D50GC) {
 		perc = tape_used / 500000000;
 		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A Redwood CARTRIDGE (50GB) *****\n",
+			perc);
+	} else if (den == D60G || den == D60GC) {
+		perc = tape_used / 600000000;
+		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN STK 9940 CARTRIDGE (60GB) *****\n",
+			perc);
+	} else if (den == D100G || den == D100GC) {
+		perc = tape_used / 1000000000;
+		dmp_usrmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN LTO CARTRIDGE (100GB) *****\n",
 			perc);
 	} else if (den == DDS || den == DDSC) {
 		perc = tape_used / 40000000;
