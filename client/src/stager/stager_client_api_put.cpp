@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.5 2004/11/22 22:09:31 bcouturi Exp $
+ * $Id: stager_client_api_put.cpp,v 1.6 2004/11/23 13:59:09 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.5 $ $Date: 2004/11/22 22:09:31 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.6 $ $Date: 2004/11/23 13:59:09 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -169,6 +169,14 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
   
   char *func = "stage_put";
 
+  if (0 == filename
+      || 0 ==  response) {
+    serrno = EINVAL;
+    stage_errmsg(func, "Invalid input parameter");
+    return -1;
+  }
+  
+
   try {
     castor::BaseObject::initLog("", castor::SVC_NOMSG);
 
@@ -177,13 +185,15 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
     castor::stager::StagePutRequest req;
     castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
 
-    std::string suserTag(userTag);
-    std::string sprotocol(protocol);
-    std::string sfilename(filename);
+    if (0 != userTag) {
+      req.setUserTag(std::string(userTag));
+    }
 
-    req.setUserTag(suserTag);
-    subreq->setProtocol(sprotocol);
-    subreq->setFileName(sfilename);
+    if (0 != protocol) {
+      subreq->setProtocol(protocol);
+    }
+
+    subreq->setFileName(filename);
     req.addSubRequests(subreq);
     subreq->setRequest(&req);
 
@@ -204,7 +214,7 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
     }
     
 
-    // Creating the array of file responses
+    // Creating the file response
     // Same size as requests as we only do files for the moment
     *response = (struct stage_put_fileresp *) 
       malloc(sizeof(struct stage_put_fileresp));
