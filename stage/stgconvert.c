@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.8 2000/01/06 15:24:49 jdurand Exp $
+ * $Id: stgconvert.c,v 1.9 2000/01/09 10:27:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.8 $ $Date: 2000/01/06 15:24:49 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.9 $ $Date: 2000/01/09 10:27:32 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -170,7 +170,7 @@ int main(argc,argv)
   /* For options */
   extern char *optarg;
   extern int optind, opterr, optopt;
-  int errflg;
+  int errflg = 0;
   int c;
   int convert_direction = 0;         /* 1 : SHIFT -> CASTOR, -1 : CASTOR -> SHIFT */
   int help = 0;                      /* 1 : help wanted */
@@ -634,7 +634,7 @@ int main(argc,argv)
     if (no_stgcat == 0) {
       /* We truncate the files */
       if (ftruncate(stgcat_fd, (size_t) 0) != 0) {
-        printf("### stat on %s error, %s\n"
+        printf("### ftruncate on %s error, %s\n"
                ,stgcat
                ,strerror(errno));
         rc = EXIT_FAILURE;
@@ -643,7 +643,7 @@ int main(argc,argv)
     }
     if (no_stgpath == 0) {
       if (ftruncate(stgpath_fd, (size_t) 0) != 0) {
-        printf("### stat on %s error, %s\n"
+        printf("### ftruncate on %s error, %s\n"
                ,stgpath
                ,strerror(errno));
         rc = EXIT_FAILURE;
