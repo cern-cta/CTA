@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.54 $ $Date: 2000/04/04 15:11:05 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.55 $ $Date: 2000/04/05 17:27:53 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -277,7 +277,10 @@ static int rtcpd_PrintCmd(tape_list_t *tape) {
 
     if ( filereq->position_method == TPPOSIT_EOI ||
          filereq->position_method == TPPOSIT_FID ) {
-        fseq = tape->file->prev->filereq.disk_fseq;
+        fseq = 0;
+        CLIST_ITERATE_BEGIN(tape->file,fl) {
+            if ( (fl->filereq.concat & CONCAT) == 0 ) fseq++;
+        } CLIST_ITERATE_END(tape->file,fl);
         LOGLINE_APPEND(" -q %s",
             (filereq->position_method == TPPOSIT_EOI ? "n" : "u"));
         if ( fseq > 1 ) LOGLINE_APPEND("%d",fseq);
@@ -300,20 +303,41 @@ static int rtcpd_PrintCmd(tape_list_t *tape) {
                         rtcp_log(LOG_INFO,"%s, \\\n",logline);
                     *logline = '\0';
                 }
-                if ( filereq->tape_fseq == fseq + 1 &&
-                     (filereq->concat & (NOCONCAT_TO_EOD|CONCAT_TO_EOD))==0 ) {
-                    if ( *logline!='\0' && logline[strlen(logline)-1] != '-' ){
-                        LOGLINE_APPEND("%s","-");
-                    } else if ( *logline == '\0' ) {
+                if ( (filereq->concat & (NOCONCAT_TO_EOD|CONCAT_TO_EOD))==0 ) {
+                    if ( filereq->tape_fseq == fseq + 1 ) {
+                        if ( *logline!='\0' && 
+                             logline[strlen(logline)-1] != '-' &&
+                             (fl->next->filereq.concat & 
+                              (NOCONCAT_TO_EOD|CONCAT_TO_EOD)) == 0 &&
+                             (fl->next->next->filereq.concat & 
+                              NOCONCAT_TO_EOD)  == 0 ) {
+                            LOGLINE_APPEND("%s","-");
+                        } else if ( *logline == '\0' ||
+                            (logline[strlen(logline)-1] == '-' && 
+                             ((fl->next->filereq.concat & CONCAT_TO_EOD) != 0 ||
+                              (fl->next->next->filereq.concat & 
+                               NOCONCAT_TO_EOD) != 0)) ) {
+                            LOGLINE_APPEND("%d",filereq->tape_fseq);
+                        }
+                    } else {
+                        if ( *logline!='\0' && 
+                             logline[strlen(logline)-1] != '-' ) {
+                            LOGLINE_APPEND("%s",",");
+                        } else if ( *logline != '\0' && fseq > 0 ) {
+                            LOGLINE_APPEND("%d,",fseq);
+                        }
                         LOGLINE_APPEND("%d",filereq->tape_fseq);
                     }
                 } else {
-                    if ( *logline!='\0' && logline[strlen(logline)-1] != '-' ) {
-                        LOGLINE_APPEND("%s",",");
-                    } else if ( *logline != '\0' && fseq > 0 ) {
-                        LOGLINE_APPEND("%d,",fseq);
+                    if ( fl != tape->file && 
+                         (fl->prev->filereq.concat & (NOCONCAT_TO_EOD|CONCAT_TO_EOD))==0 ) {
+                        if ( *logline!='\0' ) LOGLINE_APPEND("%s",",");
+                        if ( (filereq->concat & NOCONCAT_TO_EOD) != 0 ) 
+                            LOGLINE_APPEND("%d",fseq);
+                        else LOGLINE_APPEND("%d",filereq->tape_fseq);
                     }
-                    LOGLINE_APPEND("%d",filereq->tape_fseq);
+                    if ( logline[strlen(logline)-1] != '-' )
+                        LOGLINE_APPEND("%s","-");
                 }
                 fseq = filereq->tape_fseq;
             }
@@ -324,12 +348,12 @@ static int rtcpd_PrintCmd(tape_list_t *tape) {
                 if ( strlen(logline) + 11 >= CA_MAXLINELEN ) 
                     rtcp_log(LOG_INFO,"%s%d \\\n",logline,fseq);
                 else LOGLINE_APPEND("%d",fseq);
-            } else if ( (tape->file->prev->filereq.concat & 
-                     (CONCAT_TO_EOD|NOCONCAT_TO_EOD)) != 0 ) {
-                if ( strlen(logline) + 4 >= CA_MAXLINELEN )
-                    rtcp_log(LOG_INFO,"%s- \\\n",logline);
-                else LOGLINE_APPEND("%s","-");
             }
+        } else if ( (tape->file->prev->filereq.concat &
+                     (CONCAT_TO_EOD|NOCONCAT_TO_EOD)) != 0 ) {
+            if ( strlen(logline) + 4 >= CA_MAXLINELEN )
+                 rtcp_log(LOG_INFO,"%s- \\\n",logline);
+            else LOGLINE_APPEND("%s","-");
         }
     }
 
