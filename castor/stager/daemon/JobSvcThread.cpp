@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.10 2004/12/13 15:08:43 jdurand Exp $
+ * $Id: JobSvcThread.cpp,v 1.11 2004/12/13 15:13:14 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.10 $ $Date: 2004/12/13 15:08:43 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.11 $ $Date: 2004/12/13 15:13:14 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -313,6 +313,11 @@ namespace castor {
         /* -------------------- */
         // cannot return 0 since we check the type before calling this method
         uReq = dynamic_cast<castor::stager::UpdateRepRequest*> (req);
+
+        /* Fill Request */
+        /* ------------ */
+	svcs->fillObj(&ad, req, OBJ_IAddress);
+	svcs->fillObj(&ad, req, OBJ_IObject);	
 
         /* Invoking the method                */
         /* ---------------------------------- */
