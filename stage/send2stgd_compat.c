@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_compat.c,v 1.6 2001/11/30 12:04:12 jdurand Exp $
+ * $Id: send2stgd_compat.c,v 1.7 2001/12/05 10:07:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.6 $ $Date: 2001/11/30 12:04:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.7 $ $Date: 2001/12/05 10:07:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -115,6 +115,7 @@ int DLL_DECL send2stgd_compat(host, reqp, reql, want_reply, user_repbuf, user_re
 	c = RFIO_NONET;
 	rfiosetopt (RFIO_NETOPT, &c, 4);
 
+	serrno = 0;
 	if (connect (stg_s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 		if (
 #if defined(_WIN32)
@@ -123,12 +124,12 @@ int DLL_DECL send2stgd_compat(host, reqp, reql, want_reply, user_repbuf, user_re
 				errno == ECONNREFUSED
 #endif
 				) {
-			stage_errmsg (func, STG00, stghost);
+			stage_errmsg (func, STG00, stghost, neterror());
 			(void) netclose (stg_s);
 			serrno = ESTNACT;
 			return (-1);
 		} else {
-			stage_errmsg (func, STG02, "", "connect", neterror());
+			stage_errmsg (func, STG02, stghost, "connect", neterror());
 			(void) netclose (stg_s);
 			serrno = SECOMERR;
 			return (-1);
@@ -206,6 +207,9 @@ int DLL_DECL send2stgd_compat(host, reqp, reql, want_reply, user_repbuf, user_re
 			break;
 		case RMSYMLINK:
 			dounlink (prtbuf);
+			break;
+		default:
+			break;
 		}
 	}
 	return (c ? c : link_rc);

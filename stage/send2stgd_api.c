@@ -296,6 +296,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 	c = RFIO_NONET;
 	rfiosetopt (RFIO_NETOPT, &c, 4);
 
+	serrno = 0;
 	if (connect (stg_s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 		if (
 #if defined(_WIN32)
@@ -304,12 +305,12 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 				errno == ECONNREFUSED
 #endif
 				) {
-			stage_errmsg (func, STG00, stghost);
+			stage_errmsg (func, STG00, stghost, neterror());
 			(void) netclose (stg_s);
 			serrno = ESTNACT;
 			SEND2STGD_API_ERROR(-1);
 		} else {
-			stage_errmsg (func, STG02, "", "connect", neterror());
+			stage_errmsg (func, STG02, stghost, "connect", neterror());
 			(void) netclose (stg_s);
 			serrno = SECOMERR;
 			SEND2STGD_API_ERROR(-1);
@@ -511,6 +512,9 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 			break;
 		case RMSYMLINK:
 			dounlink (prtbuf);
+			break;
+		default:
+			break;
 		}
 	}
 	if (send2stgd_sort_stcp(req_type,flags,nstcp_input,stcp_input,nstcp_output,stcp_output) != 0) {

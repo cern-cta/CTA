@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_cmd.c,v 1.6 2001/11/30 12:03:43 jdurand Exp $
+ * $Id: send2stgd_cmd.c,v 1.7 2001/12/05 10:07:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_cmd.c,v $ $Revision: 1.6 $ $Date: 2001/11/30 12:03:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_cmd.c,v $ $Revision: 1.7 $ $Date: 2001/12/05 10:07:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -131,6 +131,7 @@ int DLL_DECL send2stgd_cmd(host, reqp, reql, want_reply, user_repbuf, user_repbu
 	c = RFIO_NONET;
 	rfiosetopt (RFIO_NETOPT, &c, 4);
 
+	serrno = 0;
 	if (connect (stg_s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 		if (
 #if defined(_WIN32)
@@ -139,12 +140,12 @@ int DLL_DECL send2stgd_cmd(host, reqp, reql, want_reply, user_repbuf, user_repbu
 				errno == ECONNREFUSED
 #endif
 				) {
-			stage_errmsg (func, STG00, stghost);
+			stage_errmsg (func, STG00, stghost, neterror());
 			(void) netclose (stg_s);
 			serrno = ESTNACT;
 			return (-1);
 		} else {
-			stage_errmsg (func, STG02, "", "connect", neterror());
+			stage_errmsg (func, STG02, stghost, "connect", neterror());
 			(void) netclose (stg_s);
 			serrno = SECOMERR;
 			return (-1);
@@ -152,9 +153,9 @@ int DLL_DECL send2stgd_cmd(host, reqp, reql, want_reply, user_repbuf, user_repbu
 	}
 	if ((n = netwrite_timeout (stg_s, reqp, reql, STGTIMEOUT)) != reql) {
 		if (n == 0)
-			stage_errmsg (func, STG02, "", "send", sys_serrlist[SERRNO]);
+			stage_errmsg (func, STG02, stghost, "send", sys_serrlist[SERRNO]);
 		else
-			stage_errmsg (func, STG02, "", "send", neterror());
+			stage_errmsg (func, STG02, stghost, "send", neterror());
 		(void) netclose (stg_s);
 		serrno = SECOMERR;
 		return (-1);
@@ -167,9 +168,9 @@ int DLL_DECL send2stgd_cmd(host, reqp, reql, want_reply, user_repbuf, user_repbu
 	while (1) {
 		if ((n = netread(stg_s, repbuf, 3 * LONGSIZE)) != (3 * LONGSIZE)) {
 			if (n == 0)
-				stage_errmsg (func, STG02, "", "recv", sys_serrlist[SERRNO]);
+				stage_errmsg (func, STG02, stghost, "recv", sys_serrlist[SERRNO]);
 			else
-				stage_errmsg (func, STG02, "", "recv", neterror());
+				stage_errmsg (func, STG02, stghost, "recv", neterror());
 			(void) netclose (stg_s);
 			serrno = SECOMERR;
 			return (-1);
@@ -188,9 +189,9 @@ int DLL_DECL send2stgd_cmd(host, reqp, reql, want_reply, user_repbuf, user_repbu
 		}
 		if ((n = netread(stg_s, repbuf, c)) != c) {
 			if (n == 0)
-				stage_errmsg (func, STG02, "", "recv", sys_serrlist[SERRNO]);
+				stage_errmsg (func, STG02, stghost, "recv", sys_serrlist[SERRNO]);
 			else
-				stage_errmsg (func, STG02, "", "recv", neterror());
+				stage_errmsg (func, STG02, stghost, "recv", neterror());
 			(void) netclose (stg_s);
 			serrno = SECOMERR;
 			return (-1);
@@ -222,6 +223,9 @@ int DLL_DECL send2stgd_cmd(host, reqp, reql, want_reply, user_repbuf, user_repbu
 			break;
 		case RMSYMLINK:
 			dounlink (prtbuf);
+			break;
+		default:
+			break;
 		}
 	}
 #if !defined(_WIN32)
