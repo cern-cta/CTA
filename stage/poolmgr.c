@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.72 2001/02/01 18:34:17 jdurand Exp $
+ * $Id: poolmgr.c,v 1.73 2001/02/02 12:30:31 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.72 $ $Date: 2001/02/01 18:34:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.73 $ $Date: 2001/02/02 12:30:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -829,11 +829,11 @@ int poolalloc(pool_p, nbpool_ent)
   return (0);
 }
 
-void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpoolname_out, migrator_flag, fileclass_flag)
+void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpoolname_out, migrator_flag, class_flag)
      int rpfd;
      char *poolname, *defpoolname, *defpoolname_in, *defpoolname_out;
      int migrator_flag;
-     int fileclass_flag;
+     int class_flag;
 {
   struct pool_element *elemp;
   int i, j;
@@ -940,7 +940,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
       }
     }
   }
-  if ((fileclass_flag != 0) && (fileclasses != NULL)) {
+  if ((class_flag != 0) && (fileclasses != NULL)) {
     sendrep (rpfd, MSG_OUT, "\n");
     for (i = 0; i < nbfileclasses; i++) {
       printfileclass(rpfd, &(fileclasses[i]));

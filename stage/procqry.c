@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.44 2001/02/01 15:45:26 jdurand Exp $
+ * $Id: procqry.c,v 1.45 2001/02/02 12:30:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.44 $ $Date: 2001/02/01 15:45:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.45 $ $Date: 2001/02/02 12:30:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -115,7 +115,7 @@ int noregexp_flag;
 int reqid_flag;
 int dump_flag;
 int migrator_flag;
-int fileclass_flag;
+int class_flag;
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
@@ -227,7 +227,7 @@ void procqryreq(req_type, req_data, clienthost)
 		{"reqid",              REQUIRED_ARGUMENT,  &reqid_flag, 1},
 		{"dump",               NO_ARGUMENT,  &dump_flag,        1},
 		{"migrator",           NO_ARGUMENT,  &migrator_flag,    1},
-		{"fileclass",          NO_ARGUMENT,  &fileclass_flag,   1},
+		{"class",              NO_ARGUMENT,  &class_flag,       1},
 		{NULL,                 0,                  NULL,        0}
 	};
 
@@ -235,7 +235,7 @@ void procqryreq(req_type, req_data, clienthost)
 	reqid_flag = 0;
 	dump_flag = 0;
 	migrator_flag = 0;
-	fileclass_flag = 0;
+	class_flag = 0;
 	poolname[0] = '\0';
 	rbp = req_data;
 	local_unmarshall_STRING (rbp, user);	/* login name */
@@ -431,8 +431,8 @@ void procqryreq(req_type, req_data, clienthost)
 		if ((flags & STAGE_MIGRULES) == STAGE_MIGRULES) {
 			migrator_flag++;
 		}
-		if ((flags & STAGE_FILECLASS) == STAGE_FILECLASS) {
-			fileclass_flag++;
+		if ((flags & STAGE_CLASS) == STAGE_CLASS) {
+			class_flag++;
 		}
 		/* Print the flags */
 		stglogflags("stage_qry",flags);
@@ -623,7 +623,7 @@ void procqryreq(req_type, req_data, clienthost)
 		goto reply;
 	}
 	if (sflag) {
-		print_pool_utilization (rpfd, poolname, defpoolname, defpoolname_in, defpoolname_out, migrator_flag, fileclass_flag);
+		print_pool_utilization (rpfd, poolname, defpoolname, defpoolname_in, defpoolname_out, migrator_flag, class_flag);
 		goto reply;
 	}
 	if (Sflag) {

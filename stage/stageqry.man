@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.9 $ $Date: 2001/02/01 15:47:52 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.10 $ $Date: 2001/02/02 12:30:33 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEQRY l "$Date: 2001/02/01 15:47:52 $"
+.TH STAGEQRY l "$Date: 2001/02/02 12:30:33 $"
 .SH NAME
 stageqry \- give the status of all staged tapes
 .SH SYNOPSIS
@@ -140,7 +140,7 @@ stageqry \- give the status of all staged tapes
 ] [
 .BI --migrator
 ] [
-.BI --fileclass
+.BI --class
 ]
 .SH DESCRIPTION
 .B stageqry
@@ -282,8 +282,8 @@ pathname.
 .BI \--migrator
 gives statistics on migration rules. Used only if -s option is set.
 .TP
-.BI \--fileclass
-gives fileclasses specifications. Please note that the fileclasses specifications listed will only be those that were concerned by any file that was or is beeing migrated. In particular if a given entry is already STAGED when the stager daemon starts up and no new file, belonging to the same fileclass, appears to be or have be a candidate for migration up to when you run this stageqry command, such a fileclass will not be listed. Used only if -s option is set.
+.BI \--class
+gives CASTOR's file classes specifications. Please note that the fileclasses specifications listed will only be those that were concerned by any file that was or is beeing migrated. In particular if a given entry is already STAGED when the stager daemon starts up and no new file, belonging to the same fileclass, appears to be or have be a candidate for migration up to when you run this stageqry command, such a fileclass will not be listed. Used only if -s option is set.
 .TP
 .BI \--reqid " reqid "
 outputs only entries that have this given reqid.
