@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/06/25 15:35:56 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/06/28 10:05:09 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.14 $ $Date: 2004/06/25 15:35:56 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.15 $ $Date: 2004/06/28 10:05:09 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -96,8 +96,7 @@ int (*rtcpcld_ClientCallback) _PROTO((
                                       rtcpFileRequest_t *
                                       )) = NULL;
 int (*rtcpcld_MoreInfoCallback) _PROTO((
-                                        rtcpTapeRequest_t *,
-                                        rtcpFileRequest_t *
+                                        tape_list_t *
                                         )) = NULL;
 static int getIAddr(
                     object,
@@ -409,29 +408,24 @@ static int updateCaller(tape,file)
   return(0);
 }
 
-static int getMoreInfo(tape,file)
+static int getMoreInfo(tape)
      tape_list_t *tape;
-     file_list_t *file;
 {
   int rc;
 
-  if ( tape == NULL || file == NULL ) {
+  if ( tape == NULL ) {
     serrno = EINVAL;
     return(-1);
   }
 
-  rtcp_log(LOG_DEBUG,"getMoreInfo() for fseq=%d, blockid=%.2d%.2d%.2d%.2d, path=%s\n",
-           file->filereq.tape_fseq,
-           (int)file->filereq.blockid[0],
-           (int)file->filereq.blockid[1],
-           (int)file->filereq.blockid[2],
-           (int)file->filereq.blockid[3],
-           file->filereq.file_path
+  rtcp_log(LOG_DEBUG,"getMoreInfo() for tape VID=%s, side=%d, mode=%d\n",
+           tape->tapereq.vid,
+           tape->tapereq.side,
+           tape->tapereq.mode
            );
   
-  if ( rtcpcld_MoreInfoCallback != (int (*) _PROTO((rtcpTapeRequest_t *,
-                                                    rtcpFileRequest_t *)))NULL ) {
-    rc = rtcpcld_MoreInfoCallback(&(tape->tapereq),&(file->filereq));
+  if ( rtcpcld_MoreInfoCallback != (int (*) _PROTO((tape_list_t *)))NULL ) {
+    rc = rtcpcld_MoreInfoCallback(tape);
     if ( rc == -1 ) {
       LOG_FAILED_CALL("rtcpcld_MoreInfoCallback()");
       return(-1);
@@ -441,9 +435,99 @@ static int getMoreInfo(tape,file)
   return(0);
 }
 
-static int updateSegment(
-                         segment
-                         )
+static int newOrUpdatedSegment(
+                               tapereq,
+                               filereq,
+                               tpList,
+                               foundSegment
+                               )
+     rtcpTapeRequest_t *tapereq;
+     rtcpFileRequest_t *filereq;
+     RtcpcldTapeList_t *tpList;
+     RtcpcldSegmentList_t **foundSegment;
+{
+  RtcpcldTapeList_t *tpIterator;
+  RtcpcldSegmentList_t *segmIterator;
+  struct Cstager_Segment_t *segm;
+  unsigned char *blockid;
+  unsigned char nullblkid[4] = { '\0', '\0', '\0', '\0' };
+  char *diskPath, *vid;
+  char nullDiskPath[1] = {'\0'};
+  char nullVID[1] = {'\0'};
+  int side, mode, found = 0, newSegment = 0, updatedSegment = 0, fseq;
+  
+  if ( tapereq == NULL || filereq == NULL || tpList == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  
+  CLIST_ITERATE_BEGIN(tpList,tpIterator) 
+    {
+      Cstager_Tape_vid(tpIterator->tp,(CONST char **)&vid);
+      Cstager_Tape_tpmode(tpIterator->tp,&mode);
+      Cstager_Tape_side(tpIterator->tp,&side);
+      if ( vid == NULL ) vid = nullVID;
+      if ( (strcmp(tapereq->vid,vid) == 0) &&
+           (tapereq->side == side) &&
+           (tapereq->mode == mode) ) {
+        CLIST_ITERATE_BEGIN(tpIterator->segments,segmIterator) 
+          {
+            segm = segmIterator->segment;
+            Cstager_Segment_fseq(segm,&fseq);
+            Cstager_Segment_blockid(segm,(CONST unsigned char **)&blockid);
+            Cstager_Segment_diskPath(segm,(CONST char **)&diskPath);
+            if ( blockid == NULL ) blockid = nullblkid;
+            if ( diskPath == NULL ) diskPath = nullDiskPath;
+            if ( (fseq > 0) ||
+                 ((memcmp(blockid,nullblkid,4) != 0)) ||
+                 ((*diskPath != '\0') && (strcmp(diskPath,".") != 0)) ) {
+              /*
+               * Either the tape position MUST correspond ...
+               */
+              if ( ((fseq > 0) && 
+                    (fseq == filereq->tape_fseq)) ||
+                   ((memcmp(blockid,nullblkid,4) != 0) &&
+                    (memcmp(blockid,filereq->blockid,4) == 0)) ) {
+                found = 1;
+                break;
+              } else if ( (fseq <= 0) &&
+                          ((memcmp(blockid,nullblkid,4) == 0)) &&
+                          ((strcmp(diskPath,filereq->file_path) == 0)) ) {
+                /*
+                 * ... or, the tape position is not known and the disk file paths match
+                 */
+                found = 1;
+                break;
+              }
+            }
+            if ( found == 1 ) break;
+          }
+        CLIST_ITERATE_END(tpIterator->segments,segmIterator);
+      }
+      if ( found == 1 ) break;
+    }
+  CLIST_ITERATE_END(tpList,tpIterator);
+  if ( found == 0 ) {
+    newSegment = 1;
+  } else {
+    newSegment = 0;
+    if ( (fseq == filereq->tape_fseq) &&
+         (memcmp(blockid,filereq->blockid,sizeof(filereq->blockid)) == 0) &&
+         (strcmp(diskPath,filereq->file_path) == 0) ) {
+      updatedSegment = 0;
+    } else {
+      segmIterator->file->filereq = *filereq;
+      if ( foundSegment != NULL ) *foundSegment = segmIterator;
+      updatedSegment = 1;
+    }
+  }
+  
+  return(newSegment + (updatedSegment*2));
+}
+
+static int updateSegmentInDB(
+                             segment
+                             )
      RtcpcldSegmentList_t *segment;
 {
   struct C_Services_t **dbSvc = NULL;
@@ -512,6 +596,257 @@ static int updateSegment(
     return(-1);
   }
   return(0);
+}
+
+static int addSegment(
+                      tpList,
+                      file,
+                      myNotificationAddr,
+                      newSegm)
+     RtcpcldTapeList_t *tpList;
+     file_list_t *file;
+     char *myNotificationAddr;
+     RtcpcldSegmentList_t **newSegm;
+{
+  int rc;
+  char *notificationAddr = NULL;
+  RtcpcldSegmentList_t *rtcpcldSegm = NULL;
+  enum SegmentStatusCodes segmentStatus;
+  
+  if ( tpList == NULL || file == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
+  rtcp_log(
+           LOG_DEBUG,
+           "Add segment: fseq=%d, blockid=%.2d%.2d%.2d%.2d, diskPath=%s\n",
+           file->filereq.tape_fseq,
+           (int)file->filereq.blockid[0],
+           (int)file->filereq.blockid[1],
+           (int)file->filereq.blockid[2],
+           (int)file->filereq.blockid[3],
+           file->filereq.file_path
+           );
+           
+  notificationAddr = myNotificationAddr;
+  
+  rtcpcldSegm = (RtcpcldSegmentList_t *)
+    calloc(1,sizeof(RtcpcldSegmentList_t));
+  if ( rtcpcldSegm == NULL ) {
+    LOG_FAILED_CALL("calloc()");
+    serrno = SESYSERR;
+    return(-1);
+  }
+  rtcpcldSegm->file = file;
+  rtcpcldSegm->tp = tpList;
+  serrno = 0;
+  rc = Cstager_Segment_create(&rtcpcldSegm->segment);
+  if ( rc == -1 ) {
+    LOG_FAILED_CALL("Cstager_Segment_create()");
+    if ( serrno == 0 ) serrno = errno;
+    return(-1);
+  }
+  CLIST_INSERT(tpList->segments, rtcpcldSegm);
+  Cstager_Segment_setFseq(
+                          rtcpcldSegm->segment,
+                          file->filereq.tape_fseq
+                          );
+  Cstager_Segment_setDiskPath(
+                              rtcpcldSegm->segment,
+                              file->filereq.file_path
+                              );
+  Cstager_Segment_setCastorNsHost(
+                                  rtcpcldSegm->segment,
+                                  file->filereq.castorSegAttr.nameServerHostName
+                                  );
+  Cstager_Segment_setCastorFileId(
+                                  rtcpcldSegm->segment,
+                                  file->filereq.castorSegAttr.castorFileId
+                                  );
+  Cstager_Segment_setOffset(
+                            rtcpcldSegm->segment,
+                            file->filereq.offset
+                            );
+  Cstager_Segment_setBlockid(
+                             rtcpcldSegm->segment,
+                             file->filereq.blockid
+                             );
+  Cstager_Segment_setSegmCksumAlgorithm(
+                                        rtcpcldSegm->segment,
+                                        file->filereq.castorSegAttr.segmCksumAlgorithm
+                                        );
+  Cstager_Segment_setStgReqId(
+                              rtcpcldSegm->segment,
+                              file->filereq.stgReqId
+                              );
+  if ( file->filereq.proc_status == RTCP_WAITING ||
+       file->filereq.proc_status == RTCP_POSITIONED ) {
+    segmentStatus = SEGMENT_UNPROCESSED;
+  } else if ( file->filereq.proc_status == RTCP_FINISHED ) {
+    segmentStatus = SEGMENT_FILECOPIED;
+  } else {
+    segmentStatus = SEGMENT_UNKNOWN;
+  }
+  Cstager_Segment_setStatus(
+                            rtcpcldSegm->segment,
+                            segmentStatus
+                            );
+  rtcpcldSegm->oldStatus = segmentStatus;
+  if ( notificationAddr == NULL ) {
+    Cstager_Segment_clientAddress(
+                                  rtcpcldSegm->prev->segment,
+                                  (const char **)&notificationAddr
+                                  );
+  }
+  
+  if ( notificationAddr != NULL ) {
+    Cstager_Segment_setClientAddress(
+                                     rtcpcldSegm->segment,
+                                     notificationAddr
+                                     );
+  }
+
+  Cstager_Segment_setTape(
+                          rtcpcldSegm->segment,
+                          tpList->tp
+                          );
+  Cstager_Tape_addSegments(
+                           tpList->tp,
+                           rtcpcldSegm->segment
+                           );
+
+  if ( newSegm != NULL ) *newSegm = rtcpcldSegm;
+  return(0);
+}
+
+static int addSegmentToDB(
+                          filereq,
+                          segment
+                          )
+     rtcpFileRequest_t *filereq;
+     RtcpcldSegmentList_t *segment;
+{
+  struct C_Services_t **dbSvc = NULL;
+  struct C_BaseAddress_t *baseAddr;
+  struct C_IAddress_t *iAddr;
+  struct C_IObject_t *segmIObj;
+  int rc, save_serrno;
+  
+  if ( segment == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  serrno = 0;
+  rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
+  if ( rc == -1 ) {
+    LOG_FAILED_CALL("C_BaseAddress_create()");
+    save_serrno = serrno;
+    if ( serrno == 0 ) save_serrno = errno;
+    C_Services_delete(*dbSvc);
+    *dbSvc = NULL;
+    serrno = save_serrno;
+    return(-1);
+  }
+
+  iAddr = C_BaseAddress_getIAddress(baseAddr);
+
+  dbSvc = NULL;
+  rc = rtcpcld_getDbSvc(&dbSvc);
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    LOG_FAILED_CALL("C_Services_create()");
+    serrno = save_serrno;
+    return(-1);
+  }
+  segmIObj = Cstager_Segment_getIObject(segment->segment);
+  rc = C_Services_createRep(*dbSvc,iAddr,segmIObj,1);
+  if ( rc != 0 ) {
+    LOG_FAILED_CALL("C_Services_createRep()");
+    save_serrno = serrno;
+    strcpy(filereq->err.errmsgtxt,
+           C_Services_errorMsg(*dbSvc));
+    filereq->err.severity = RTCP_FAILED|RTCP_SYERR;
+    C_IAddress_delete(iAddr);
+    C_Services_delete(*dbSvc);
+    *dbSvc = NULL;
+    rtcp_log(LOG_ERR,"DB error: %s\n",filereq->err.errmsgtxt);
+    serrno = save_serrno;
+    return(-1);
+  }
+  C_IAddress_delete(iAddr);
+  return(0);
+}
+
+static int doFullUpdate(
+                        tpList,
+                        tape
+                        )
+     RtcpcldTapeList_t *tpList;
+     tape_list_t *tape;
+{
+  tape_list_t *tl;
+  file_list_t *fl;
+  RtcpcldSegmentList_t *segm = NULL;
+  int rc = 0;
+  
+  CLIST_ITERATE_BEGIN(tape,tl) 
+    {
+      CLIST_ITERATE_BEGIN(tl->file,fl) 
+        {
+          segm = NULL;
+          rc = newOrUpdatedSegment(
+                                   &tl->tapereq,
+                                   &fl->filereq,
+                                   tpList,
+                                   &segm
+                                   );
+          if ( rc == -1 ) {
+            break;
+          } else if ( rc == 1 ) {
+            rtcp_log(LOG_DEBUG,
+                     "doFullUpdate(): %s/%d(%s) new segment fseq=%d, blockid=%.2d%.2d%.2d%.2d, %s\n",
+                     tl->tapereq.vid,
+                     tl->tapereq.side,
+                     (tl->tapereq.mode == WRITE_DISABLE ? "r" : "w"),
+                     fl->filereq.tape_fseq,
+                     fl->filereq.blockid,
+                     fl->filereq.file_path
+                     );
+            rc = addSegment(
+                            tpList,
+                            fl,
+                            NULL,
+                            &segm
+                            );
+            if ( rc == -1 ) break;
+            if ( segm != NULL ) {
+              rc = addSegmentToDB(
+                                  &fl->filereq,
+                                  segm
+                                  );
+              if ( rc == -1 ) break;
+            }
+          } else if ( (rc == 2) && (segm != NULL) ) {
+            rtcp_log(LOG_DEBUG,
+                     "doFullUpdate(): %s/%d(%s) update segment fseq=%d, blockid=%.2d%.2d%.2d%.2d, %s\n",
+                     tl->tapereq.vid,
+                     tl->tapereq.side,
+                     (tl->tapereq.mode == WRITE_DISABLE ? "r" : "w"),
+                     fl->filereq.tape_fseq,
+                     fl->filereq.blockid,
+                     fl->filereq.file_path
+                     );
+            rc = updateSegmentInDB(segm);
+            if ( rc == -1 ) break;
+          }
+        }
+      CLIST_ITERATE_END(tl->file,fl);
+      if ( rc == -1 ) break;
+    }
+  CLIST_ITERATE_END(tape,tl);
+  
+  return(rc);
 }
 
 static int getUpdates(
@@ -715,11 +1050,15 @@ static int getUpdates(
                 break;
               case SEGMENT_WAITFSEQ:
               case SEGMENT_WAITPATH:
-                rc = getMoreInfo(tape,file);
-                if ( rc != -1 ) {
-                  rc = updateSegment(segmIterator);
+                rc = getMoreInfo(tape);
+                if ( rc == -1 ) {
+                  save_serrno = serrno;
+                } else {
+                  rc = doFullUpdate(tpIterator,tape);
+                  if ( rc == -1 ) save_serrno = serrno;
                 }
-                if ( rc == -1 ) save_serrno = serrno;
+                if ( rc == -1 ) serrno = save_serrno;
+                return(rc);
                 break;
               case SEGMENT_UNKNOWN:
                 rtcp_log(
@@ -744,122 +1083,6 @@ static int getUpdates(
       CLIST_ITERATE_END(tpIterator->segments,segmIterator);
     }
   CLIST_ITERATE_END(tpList,tpIterator);
-  return(0);
-}
-
-static int addSegment(tpList,file,myNotificationAddr)
-     RtcpcldTapeList_t *tpList;
-     file_list_t *file;
-     char *myNotificationAddr;
-{
-  int rc;
-  char *notificationAddr = NULL;
-  RtcpcldSegmentList_t *rtcpcldSegm = NULL;
-  enum SegmentStatusCodes segmentStatus;
-  
-  if ( tpList == NULL || file == NULL ) {
-    serrno = EINVAL;
-    return(-1);
-  }
-
-  rtcp_log(
-           LOG_DEBUG,
-           "Add segment: fseq=%d, blockid=%.2d%.2d%.2d%.2d, diskPath=%s\n",
-           file->filereq.tape_fseq,
-           (int)file->filereq.blockid[0],
-           (int)file->filereq.blockid[1],
-           (int)file->filereq.blockid[2],
-           (int)file->filereq.blockid[3],
-           file->filereq.file_path
-           );
-           
-  notificationAddr = myNotificationAddr;
-  
-  rtcpcldSegm = (RtcpcldSegmentList_t *)
-    calloc(1,sizeof(RtcpcldSegmentList_t));
-  if ( rtcpcldSegm == NULL ) {
-    LOG_FAILED_CALL("calloc()");
-    serrno = SESYSERR;
-    return(-1);
-  }
-  rtcpcldSegm->file = file;
-  rtcpcldSegm->tp = tpList;
-  serrno = 0;
-  rc = Cstager_Segment_create(&rtcpcldSegm->segment);
-  if ( rc == -1 ) {
-    LOG_FAILED_CALL("Cstager_Segment_create()");
-    if ( serrno == 0 ) serrno = errno;
-    return(-1);
-  }
-  CLIST_INSERT(tpList->segments, rtcpcldSegm);
-  Cstager_Segment_setFseq(
-                          rtcpcldSegm->segment,
-                          file->filereq.tape_fseq
-                          );
-  Cstager_Segment_setDiskPath(
-                              rtcpcldSegm->segment,
-                              file->filereq.file_path
-                              );
-  Cstager_Segment_setCastorNsHost(
-                                  rtcpcldSegm->segment,
-                                  file->filereq.castorSegAttr.nameServerHostName
-                                  );
-  Cstager_Segment_setCastorFileId(
-                                  rtcpcldSegm->segment,
-                                  file->filereq.castorSegAttr.castorFileId
-                                  );
-  Cstager_Segment_setOffset(
-                            rtcpcldSegm->segment,
-                            file->filereq.offset
-                            );
-  Cstager_Segment_setBlockid(
-                             rtcpcldSegm->segment,
-                             file->filereq.blockid
-                             );
-  Cstager_Segment_setSegmCksumAlgorithm(
-                                        rtcpcldSegm->segment,
-                                        file->filereq.castorSegAttr.segmCksumAlgorithm
-                                        );
-  Cstager_Segment_setStgReqId(
-                              rtcpcldSegm->segment,
-                              file->filereq.stgReqId
-                              );
-  if ( file->filereq.proc_status == RTCP_WAITING ||
-       file->filereq.proc_status == RTCP_POSITIONED ) {
-    segmentStatus = SEGMENT_UNPROCESSED;
-  } else if ( file->filereq.proc_status == RTCP_FINISHED ) {
-    segmentStatus = SEGMENT_FILECOPIED;
-  } else {
-    segmentStatus = SEGMENT_UNKNOWN;
-  }
-  Cstager_Segment_setStatus(
-                            rtcpcldSegm->segment,
-                            segmentStatus
-                            );
-  rtcpcldSegm->oldStatus = segmentStatus;
-  if ( notificationAddr == NULL ) {
-    Cstager_Segment_clientAddress(
-                                  rtcpcldSegm->prev->segment,
-                                  (const char **)&notificationAddr
-                                  );
-  }
-  
-  if ( notificationAddr != NULL ) {
-    Cstager_Segment_setClientAddress(
-                                     rtcpcldSegm->segment,
-                                     notificationAddr
-                                     );
-  }
-
-  Cstager_Segment_setTape(
-                          rtcpcldSegm->segment,
-                          tpList->tp
-                          );
-  Cstager_Tape_addSegments(
-                           tpList->tp,
-                           rtcpcldSegm->segment
-                           );
-
   return(0);
 }
 
@@ -941,7 +1164,7 @@ int rtcpcldc_appendFileReqs(tape,file)
      tape_list_t *tape;
      file_list_t *file;
 {
-  int rc, save_serrno, autocommit;
+  int rc, save_serrno;
   file_list_t *fl, *flCp;
   RtcpcldTapeList_t *tpList = NULL;
   RtcpcldSegmentList_t *rtcpcldSegm = NULL;
@@ -1031,14 +1254,11 @@ int rtcpcldc_appendFileReqs(tape,file)
    * rather than updating the whole tape + all segments.
    */
   fl = file;
-  autocommit = 0;
-  CLIST_ITERATE_BEGIN(tpList->segments,rtcpcldSegm) 
+   CLIST_ITERATE_BEGIN(tpList->segments,rtcpcldSegm) 
     {
       if ( rtcpcldSegm->file == fl ) {
         segmIObj = Cstager_Segment_getIObject(rtcpcldSegm->segment);
-        /* Group together all transactions in one commit */
-        if ( fl == tpList->segments->file->prev ) autocommit = 1;
-        rc = C_Services_createRep(*dbSvc,iAddr,segmIObj,autocommit);
+        rc = C_Services_createRep(*dbSvc,iAddr,segmIObj,1);
         if ( rc != 0 ) {
           LOG_FAILED_CALL("C_Services_createRep()");
           save_serrno = serrno;
@@ -1054,9 +1274,9 @@ int rtcpcldc_appendFileReqs(tape,file)
           serrno = save_serrno;
           return(-1);
         }
-        fl = fl->next;
         /* Make sure to not go beyond the first file */
-        if ( autocommit == 1 ) break;
+        if ( fl == tpList->segments->file->prev ) break;
+        fl = fl->next;
       }
     }
   CLIST_ITERATE_END(tpList->segments,rtcpcldSegm);
