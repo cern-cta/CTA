@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.101 $ $Release$ $Date: 2005/01/06 18:06:21 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.102 $ $Release$ $Date: 2005/01/07 13:00:22 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -128,7 +128,7 @@ const std::string castor::db::ora::OraStagerSvc::s_putStartStatementString =
 
 /// SQL statement for selectSvcClass
 const std::string castor::db::ora::OraStagerSvc::s_selectSvcClassStatementString =
-  "SELECT id, policy, nbDrives FROM SvcClass WHERE name = :1";
+  "SELECT id, nbDrives, maxReplicaNb, replicationPolicy, gcPolicy, migratorPolicy, recallerPolicy FROM SvcClass WHERE name = :1";
 
 /// SQL statement for selectFileClass
 const std::string castor::db::ora::OraStagerSvc::s_selectFileClassStatementString =
@@ -1299,8 +1299,12 @@ castor::db::ora::OraStagerSvc::selectSvcClass
     castor::stager::SvcClass* result =
       new castor::stager::SvcClass();
     result->setId((u_signed64)rset->getDouble(1));
-    result->setPolicy(rset->getString(2));
-    result->setNbDrives(rset->getInt(3));
+    result->setNbDrives(rset->getInt(2));
+    result->setMaxReplicaNb(rset->getInt(3));
+    result->setReplicationPolicy(rset->getString(4));
+    result->setGcPolicy(rset->getString(5));
+    result->setMigratorPolicy(rset->getString(6));
+    result->setRecallerPolicy(rset->getString(7));
     result->setName(name);
     m_selectSvcClassStatement->closeResultSet(rset);
     return result;
