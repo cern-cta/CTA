@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.4 $ $Date: 1999/12/17 13:13:24 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.5 $ $Date: 1999/12/17 13:59:24 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1431,7 +1431,6 @@ static int rtcpc_v_opt(int mode,
                      tape_list_t **tape) {
     int rc;
     tape_list_t *tl;
-    file_list_t *fl;
     rtcpTapeRequest_t *tapereq;
     char *local_value, *p, *q;
 
@@ -1480,7 +1479,7 @@ static int rtcpc_v_opt(int mode,
                 if ( q != NULL ) {
                     p = q;
                     p++;
-                    if ( fl->next == tl->file &&
+                    if ( tl->file->next == tl->file &&
                         tl->next == *tape ) {
                         rc = newTapeList(tape,NULL,mode);
                         if ( rc == -1 ) break;
@@ -1499,7 +1498,6 @@ static int rtcpc_V_opt(int mode,
                      tape_list_t **tape) {
     int rc;
     tape_list_t *tl;
-    file_list_t *fl;
     rtcpTapeRequest_t *tapereq;
     char *local_value, *p, *q;
 
@@ -1554,7 +1552,7 @@ static int rtcpc_V_opt(int mode,
                 if ( q != NULL ) {
                     p = q;
                     p++;
-                    if ( fl->next == tl->file &&
+                    if ( tl->file->next == tl->file &&
                         tl->next == *tape ) {
                         rc = newTapeList(tape,NULL,mode);
                         if ( rc == -1 ) break;
