@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_check.c,v $ $Revision: 1.7 $ $Date: 2003/11/04 14:24:42 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_check.c,v $ $Revision: 1.8 $ $Date: 2003/11/04 15:04:15 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
  
 
@@ -83,7 +83,7 @@ Cupv_check(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt, int
 	  }
 	} /* In other cases, a message is sent to the server for validation */
 
-#ifndef HAVE_CUPV_DAEMON
+#ifndef USE_CUPV
 	serrno = EPERM;
 	return(-1);
 #else

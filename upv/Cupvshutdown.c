@@ -65,7 +65,7 @@ char **argv;
                 exit (USERR);
         }
  
-#ifndef HAVE_CUPV_DAEMON
+#ifndef USE_CUPV
 	fprintf(stderr,"Permission denied\n");
 	exit(USERR);
 #else
