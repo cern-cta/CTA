@@ -1,5 +1,5 @@
 /*
- * $Id: stageget.c,v 1.15 2001/02/01 18:09:29 jdurand Exp $
+ * $Id: stageget.c,v 1.16 2001/03/02 18:13:00 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.15 $ $Date: 2001/02/01 18:09:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.16 $ $Date: 2001/03/02 18:13:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -171,7 +171,7 @@ int main(argc, argv)
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
 	}
-	exit (c == 0 ? 0 : serrno);
+	exit (c == 0 ? 0 : rc_castor2shift(serrno));
 }
 
 void cleanup(sig)

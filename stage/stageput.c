@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.20 2001/02/02 14:18:02 jdurand Exp $
+ * $Id: stageput.c,v 1.21 2001/03/02 18:11:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.20 $ $Date: 2001/02/02 14:18:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.21 $ $Date: 2001/03/02 18:11:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -369,7 +369,7 @@ int main(argc, argv)
 	WSACleanup();
 #endif
     freehsmfiles(nhsmfiles, hsmfiles);
-	exit (c == 0 ? 0 : serrno);
+	exit (c == 0 ? 0 : rc_castor2shift(serrno));
 }
 
 void freehsmfiles(nhsmfiles,hsmfiles)

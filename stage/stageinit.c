@@ -1,5 +1,5 @@
 /*
- * $Id: stageinit.c,v 1.14 2001/01/31 19:00:05 jdurand Exp $
+ * $Id: stageinit.c,v 1.15 2001/03/02 18:11:48 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.14 $ $Date: 2001/01/31 19:00:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.15 $ $Date: 2001/03/02 18:11:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -26,13 +26,13 @@ static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.14 $ $Date: 2
 #include <errno.h>
 #include "marshall.h"
 #include "stage.h"
+#include "stage_api.h"
 #include "Cpwd.h"
 #include "Cgetopt.h"
 
 EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
 void cleanup _PROTO((int));
 void usage _PROTO((char *));
-extern int send2stgd _PROTO((char *, char *, int, int, char *, int));
 
 int main(argc, argv)
 		 int	argc;
@@ -113,7 +113,7 @@ int main(argc, argv)
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
 	}
-	exit (c == 0 ? 0 : serrno);
+	exit (c == 0 ? 0 : rc_castor2shift(serrno));
 }
 
 void cleanup(sig)

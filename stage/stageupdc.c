@@ -1,5 +1,5 @@
 /*
- * $Id: stageupdc.c,v 1.17 2001/02/05 20:54:54 jdurand Exp $
+ * $Id: stageupdc.c,v 1.18 2001/03/02 18:10:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.17 $ $Date: 2001/02/05 20:54:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.18 $ $Date: 2001/03/02 18:10:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -231,7 +231,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 	WSACleanup();
 #endif
-	exit (c == 0 ? 0 : serrno);
+	exit (c == 0 ? 0 : rc_castor2shift(serrno));
 }
 
 void cleanup(sig)
