@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.34 $ $Date: 2000/09/15 16:50:23 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.35 $ $Date: 2000/12/12 12:57:55 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -826,7 +826,8 @@ static int rtcpc_i_opt(int mode,
                      * Merge tape lists
                      */
                     tmp_tapereq = &tmp_tape->tapereq;
-                    tapereq = &(*tape)->tapereq;
+                    if ( tape != NULL ) tapereq = &(*tape)->tapereq;
+                    else tapereq = tmp_tapereq;
                     if (strcmp(tmp_tapereq->vid,tapereq->vid) != 0 &&
                         *tmp_tapereq->vid != '\0' && *tapereq->vid != '\0') {
                         rtcp_log(LOG_ERR,"Specify new VID (%s) in input option file is not allowed\n",
