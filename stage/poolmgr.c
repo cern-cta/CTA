@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.54 2000/12/14 15:23:22 jdurand Exp $
+ * $Id: poolmgr.c,v 1.55 2000/12/19 15:20:56 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.54 $ $Date: 2000/12/14 15:23:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.55 $ $Date: 2000/12/19 15:20:56 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -80,6 +80,7 @@ void print_pool_utilization _PROTO((int, char *, char *));
 char *selecttapepool _PROTO((char *));
 void procmigpoolreq _PROTO((char *, char *));
 int update_migpool _PROTO((struct stgcat_entry *, int));
+int insert_in_migpool _PROTO((struct stgcat_entry *));
 void checkfile2mig _PROTO(());
 int migrate_files _PROTO((struct migrator *));
 int migpoolfiles _PROTO((struct migrator *));
@@ -92,6 +93,7 @@ void poolmgr_wait4child _PROTO(());
 int selectfs _PROTO((char *, int *, char *));
 void getdefsize _PROTO((char *, int *));
 int updfreespace _PROTO((char *, char *, signed64));
+void redomigpool _PROTO(());
 
 getpoolconf(defpoolname)
 		 char *defpoolname;
@@ -1172,8 +1174,30 @@ updpoolconf(defpoolname)
 		if (sav_migpol) free (sav_migpol);
 		if (sav_migrator) free (sav_migrator);
 	}
+	/* Update the migrators */
+	for (j = 0, pool_n = pools; j < nbpool; j++, pool_n++) {
+		if (pool_n->migr != NULL) {
+			pool_n->migr->nbfiles_canbemig = 0;
+			pool_n->migr->space_canbemig = 0;
+			pool_n->migr->nbfiles_beingmig = 0;
+			pool_n->migr->space_beingmig = 0;
+		}
+	}
+	redomigpool();
 	return (c);
 }
+
+void redomigpool()
+{
+	int i;
+	struct stgcat_entry *stcp;
+
+	for (stcp = stcs; stcp < stce; stcp++) {
+		if ((stcp->status & CAN_BE_MIGR) != CAN_BE_MIGR) continue;
+		insert_in_migpool(stcp);
+	}
+}
+
 
 int get_create_file_option(poolname)
 		 char *poolname;
@@ -1349,6 +1373,48 @@ int update_migpool(stcp,flag)
 		sendrep(rpfd, MSG_ERR, STG105, "update_migpool", "flag != 1 && flag != -1");
 		serrno = EINVAL;
 		return(-1);
+	}
+	return(0);
+}
+
+/* Returns: 0 (OK) or -1 (NOT OK) */
+int insert_in_migpool(stcp)
+	struct stgcat_entry *stcp;
+{
+	int i, ipool;
+	struct pool *pool_p;
+	char *func = "insert_in_migpool";
+
+	/* We check that this poolname exist */
+	ipool = -1;
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+      if (strcmp(pool_p->name,stcp->poolname) == 0) {
+		ipool = i;
+        break;
+      }
+	}
+	if (ipool < 0) {
+		stglogit(func, STG32, stcp->poolname); /* Not in the list of pools */
+		serrno = EINVAL;
+		return(-1);
+	}
+	/* We check that this pool have a migrator */
+	if (pool_p->migr == NULL) {
+		if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+			stglogit(func, STG33, stcp->ipath, "New configuration makes it orphan of migrator");
+		}
+		return(0);
+	}
+
+	if ((stcp->status & CAN_BE_MIGR) != CAN_BE_MIGR) {
+      /* This has never been a candidate for automatic migration */
+		return(0);
+	}
+	pool_p->migr->nbfiles_canbemig++;
+	pool_p->migr->space_canbemig += stcp->actual_size;
+	if ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR)) {
+		pool_p->migr->nbfiles_beingmig++;
+		pool_p->migr->space_beingmig += stcp->actual_size;
 	}
 	return(0);
 }
