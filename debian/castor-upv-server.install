@@ -1,2 +1,4 @@
+etc/castor/CUPVCONFIG
+etc/sysconfig/Cupvdaemon
 usr/bin/Cupvdaemon
 usr/bin/Cupvshutdown

@@ -1,2 +1,4 @@
+etc/castor/VMGRCONFIG
+etc/sysconfig/vmgrdaemon
 usr/bin/vmgrdaemon
 usr/bin/vmgrshutdown

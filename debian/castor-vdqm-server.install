@@ -1,3 +1,4 @@
+etc/sysconfig/vdqmserv
 usr/bin/vdqm_admin
 usr/bin/vdqmbc_serv
 usr/bin/vdqmserv

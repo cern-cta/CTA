@@ -1,3 +1,5 @@
+etc/castor/TPCONFIG
+etc/sysconfig/tpdaemon
 usr/bin/confdrive
 usr/bin/mounttape
 usr/bin/posovl

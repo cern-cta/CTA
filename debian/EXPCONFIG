@@ -1,0 +1,12 @@
+# Possible keywords are:
+# EXP_RQ_FILESYSTEM
+# EXP_RQ_MIGRATOR
+# EXP_RQ_RECALLER
+# EXP_RQ_GC
+# EXP_RQ_REPLICATION
+#
+# Then you give the working directory, and the full command.
+# Other arguments are sent into the command's stdin
+#
+#EXP_RQ_FILESYSTEM	/etc/expert/	/usr/bin/clips -f bestfs.clp
+#EXP_RQ_REPLICATION	/etc/expert/	/usr/bin/perl replica.pl

@@ -1,2 +1,3 @@
+etc/sysconfig/rtcpd
 usr/bin/killjid
 usr/bin/rtcpd

@@ -1,2 +1,4 @@
+etc/castor/NSCONFIG
+etc/sysconfig/nsdaemon
 usr/bin/nsdaemon
 usr/bin/nsshutdown

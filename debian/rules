@@ -66,6 +66,28 @@ install: build
 	mkdir -p $(CURDIR)/debian/castor/usr/share/man/man4
 	$(MAKE) exportman DESTDIR=$(CURDIR)/debian/castor EXPORTMAN=$(CURDIR)/debian/castor/usr/share/man
 	(cd clips; ../imake/imake -I../config DESTDIR=$(CURDIR)/debian/castor; make install DESTDIR=$(CURDIR)/debian/castor)
+	mkdir -p $(CURDIR)/debian/castor/etc/castor
+	install -o root -g bin -m 600 $(CURDIR)/debian/CUPVCONFIG $(CURDIR)/debian/castor/etc/castor
+	install -o root -g bin -m 600 $(CURDIR)/debian/DLFCONFIG $(CURDIR)/debian/castor/etc/castor
+	install -o root -g bin -m 600 $(CURDIR)/debian/EXPCONFIG $(CURDIR)/debian/castor/etc/castor
+	install -o root -g bin -m 600 $(CURDIR)/debian/NSCONFIG $(CURDIR)/debian/castor/etc/castor
+	install -o root -g bin -m 600 $(CURDIR)/debian/RMNODECONFIG $(CURDIR)/debian/castor/etc/castor
+	install -o root -g bin -m 600 $(CURDIR)/debian/TPCONFIG $(CURDIR)/debian/castor/etc/castor
+	install -o root -g bin -m 600 $(CURDIR)/debian/VMGRCONFIG $(CURDIR)/debian/castor/etc/castor
+	mkdir -p $(CURDIR)/debian/castor/etc/sysconfig
+	install -o root -g bin -m 600 $(CURDIR)/castor/rh/rhserver.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/rhserver
+	install -o root -g bin -m 600 $(CURDIR)/expert/expertd.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/expertd
+	install -o root -g bin -m 600 $(CURDIR)/ns/nsdaemon.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/nsdaemon
+	install -o root -g bin -m 600 $(CURDIR)/resourcemonitoring/rmmaster.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/rmmaster
+	install -o root -g bin -m 600 $(CURDIR)/resourcemonitoring/rmnode.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/rmnode
+	install -o root -g bin -m 600 $(CURDIR)/rfio/rfiod.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/rfiod
+	install -o root -g bin -m 600 $(CURDIR)/rmc/rmcdaemon.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/rmcdaemon
+	install -o root -g bin -m 600 $(CURDIR)/rtcopy/rtcpd.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/rtcpd
+	install -o root -g bin -m 600 $(CURDIR)/stager/stager.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/stager
+	install -o root -g bin -m 600 $(CURDIR)/tape/tpdaemon.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/tpdaemon
+	install -o root -g bin -m 600 $(CURDIR)/upv/Cupvdaemon.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/Cupvdaemon
+	install -o root -g bin -m 600 $(CURDIR)/vdqm/vdqmserv.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/vdqmserv
+	install -o root -g bin -m 600 $(CURDIR)/vmgr/vmgrdaemon.sysconfig $(CURDIR)/debian/castor/etc/sysconfig/vmgrdaemon
 
 # Build architecture-independent files here.
 binary-indep: build install

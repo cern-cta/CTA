@@ -1,0 +1,35 @@
+# Example of an rmnode configuration file
+#RMMASTER_HOST	where_runs_rmmaster
+#RMMASTER_PORT	port_of_rmmaster
+#RMSTAGER_HOST	alternate_rmmaster
+#RMSTAGER_PORT	port_of_alternate_rmmaster
+#OSFREQUENCY	frequency_of_OS_check_in_second_unit
+#ARCHFREQUENCY	frequency_of_ARCHitecture_check_in_second_unit
+#RAMFREQUENCY	frequency_of_RAM_check_in_second_unit
+#MEMFREQUENCY	frequency_of_MEM_check_in_second_unit
+#SWAPFREQUENCY	frequency_of_SWAP_check_in_second_unit
+#PROCFREQUENCY	frequency_of_PROCessors_check_in_second_unit
+#LOADFREQUENCY	frequency_of_LOAD_check_in_second_unit
+#IFCEFREQUENCY	frequency_of_network_InterFaCEs_check_in_second_unit
+#
+## The list of filesystems to survey
+#
+# Please replace and uncomment the following
+# After every filesystem you can say PARTITION=<partition>
+# in case rmnode appears to fail finding the partition
+# associated to the filesystem. This partition is used
+# to get I/O statistics on the filesystem. That's why
+# there is a special PARTITION=xfs stanza in case your
+# filesystem is of type xfs (xfs maintains I/O statistics
+# in /proc/fs/xfs/stat)
+#
+# Other stanzas are:
+# LOCALACCESS		Say to rmmaster that clients accessing this filesystem
+#			should be local
+# SPACEFREQUENCY	frequency_of_space_check_in_second_unit
+# IORATEFREQUENCY	frequency_of_io_check_in_second_unit
+# NICKNAME		forces nickname (last component)
+#
+#/data01
+#/data02	PARTITION=xfs
+#/data03	SPACEFREQUENCY=30

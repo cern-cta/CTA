@@ -1,2 +1,3 @@
+etc/sysconfig/stager
 usr/bin/stager
 usr/bin/stageradmin
