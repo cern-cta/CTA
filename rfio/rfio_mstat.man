@@ -1,0 +1,2 @@
+.so ./rfio_stat.man
+.\" @(#)$RCSfile: rfio_mstat.man,v $ $Revision: 1.1 $ $Date: 2001/05/31 06:33:42 $ CERN IT-PDP/DM Jean-Philippe Baud
