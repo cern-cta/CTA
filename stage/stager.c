@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.13 2000/03/23 11:38:41 jdurand Exp $
+ * $Id: stager.c,v 1.14 2000/03/23 13:22:18 jdurand Exp $
  */
 
 /*
@@ -11,7 +11,7 @@
 #define SKIP_FILEREQ_MAXSIZE
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.13 $ $Date: 2000/03/23 11:38:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.14 $ $Date: 2000/03/23 13:22:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -342,13 +342,13 @@ int stagein_castor_hsm_file() {
 #endif
 
 	/* We allocate as many size arrays */
-	if ((hsm_totalsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64))) == NULL ||
-			(hsm_transferedsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64))) == NULL ||
-			(hsm_fseg = (int *) calloc(nbcat_ent,sizeof(int))) == NULL ||
-			(hsm_fsegsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64))) == NULL ||
-			(hsm_fseq = (int *) calloc(nbcat_ent,sizeof(int))) == NULL ||
-			(hsm_blockid = (unsigned int *) calloc(nbcat_ent,sizeof(unsigned int))) == NULL ||
-			(hsm_vid = (char **) calloc(nbcat_ent,sizeof(char *))) == NULL) {
+	if ((hsm_totalsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64)))      == NULL ||
+		(hsm_transferedsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64))) == NULL ||
+		(hsm_fseg = (int *) calloc(nbcat_ent,sizeof(int)))                         == NULL ||
+		(hsm_fsegsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64)))       == NULL ||
+		(hsm_fseq = (int *) calloc(nbcat_ent,sizeof(int)))                         == NULL ||
+		(hsm_blockid = (unsigned int *) calloc(nbcat_ent,sizeof(unsigned int)))    == NULL ||
+		(hsm_vid = (char **) calloc(nbcat_ent,sizeof(char *)))                     == NULL) {
 		sendrep (rpfd, MSG_ERR, STG02, "stagein_castor_hsm_file", "malloc error",strerror(errno));
 		RETURN (USERR);
 	}
@@ -549,42 +549,47 @@ int stagein_castor_hsm_file() {
 		STAGER_RTCP_DUMP(rtcpcreqs[0]);
 #endif
 		rtcp_rc = rtcpc(rtcpcreqs[0]);
-
 		if (rtcp_rc < 0) {
+			int stagein_castor_hsm_file_retry = 0;
 			for (stcp_tmp = stcs_tmp, i = 0; stcp_tmp < stce_tmp; stcp_tmp++, i++) {
 				if (rtcpcreqs[0]->file[i].filereq.err.errorcode == ETPARIT ||
-										rtcpcreqs[0]->file[i].filereq.err.errorcode == ETUNREC ||
-										rtcpcreqs[0]->tapereq.err.errorcode == ETPARIT ||
-										rtcpcreqs[0]->tapereq.err.errorcode == ETUNREC) {
+					rtcpcreqs[0]->file[i].filereq.err.errorcode == ETUNREC ||
+					rtcpcreqs[0]->tapereq.err.errorcode == ETPARIT ||
+					rtcpcreqs[0]->tapereq.err.errorcode == ETUNREC) {
 					Flags |= DISABLED;
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc",sstrerror (serrno));
-										sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Flaging tape to DISABLED");
+					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Flaging tape to DISABLED");
 					free(stcs_tmp);
 					RETURN (SYERR);
 				} else if (rtcpcreqs[0]->tapereq.err.errorcode == ETVBSY) {
 					/* This is *serious* error, most probably tape info inconsistency with, for ex., TMS */
 					Flags |= DISABLED;
 					sendrep(rpfd, MSG_ERR, STG02, vid, "rtcpc", "Tape information inconsistency - Contact responsibles");
-										sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Flaging tape to DISABLED");
+					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Flaging tape to DISABLED");
 					free(stcs_tmp);
 					RETURN (SYERR);
 				} else if ((rtcpcreqs[0]->file[i].filereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV) {
 					/* Reselect a server - we retry, though */
-					continue;
+					stagein_castor_hsm_file_retry = 1;
 				} else if (rtcpcreqs[0]->file[i].filereq.err.errorcode != ENOENT) {
 					Flags |= DISABLED;
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc",sstrerror (serrno));
-										sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Flaging tape to DISABLED");
+					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Flaging tape to DISABLED");
 					free(stcs_tmp);
 					RETURN (SYERR);
 				}
+				if (stagein_castor_hsm_file_retry > 0) {
+					break;
+				}
+			}
+			if (stagein_castor_hsm_file_retry > 0) {
+				continue;
 			}
 		} else if (rtcp_rc > 0) {
 			sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Unknown error code (>0)");
 			free(stcs_tmp);
 			RETURN (SYERR);
 		}
-
 		free(stcs_tmp);
 		stcs_tmp = NULL;
 		/* We checked if there is pending things to stagein */
@@ -596,7 +601,16 @@ int stagein_castor_hsm_file() {
 					hsm_transferedsize[i] = hsm_totalsize[i];
 					sendrep (rpfd, MSG_ERR, STG02, stcp->u1.m.xfile, "hsmpath", strerror(ENOENT));
 				} else {
-					hsm_transferedsize[i] += rtcpcreqs[0]->file[i].filereq.bytes_out;
+					{
+                      /* gcc compiler bug - fixed or forbidden register was spilled. */
+                      /* This may be due to a compiler bug or to impossible asm      */
+                      /* statements or clauses.                                      */
+                      u_signed64 dummyvalue;
+
+                      dummyvalue = rtcpcreqs[0]->file[i].filereq.bytes_out;
+                      hsm_transferedsize[i] += dummyvalue;
+
+					}
 					waiting_time += rtcpcreqs[0]->file[i].filereq.TEndPosition -
 									rtcpcreqs[0]->tapereq.TStartRequest;
 					transfer_time += rtcpcreqs[0]->file[i].filereq.TEndTransferDisk -
@@ -612,7 +626,6 @@ int stagein_castor_hsm_file() {
 				Cns_setatime (castor_hsm);
 			}
 		}
-
 		for (stcp = stcs, i = 0; stcp < stce; stcp++, i++) {
 			if (stcp->size > 0) {
 				if (hsm_transferedsize[i] < hsm_totalsize[i] &&
@@ -627,11 +640,8 @@ int stagein_castor_hsm_file() {
 				}
 			}
 		}
-
-		/* Finished */
 		break;
 	}
-
 	RETURN(0);
 }
 
@@ -835,10 +845,10 @@ int stagewrt_castor_hsm_file() {
 				transfer_time += rtcpcreqs[0]->file->filereq.TEndTransferTape -
 					rtcpcreqs[0]->file->filereq.TEndPosition;
 			}
-			if (rtcpcreqs[0]->file->filereq.bytes_in >= 0) {
+			if (rtcpcreqs[0]->file->filereq.bytes_in > 0) {
 				hsm_fsegsize[i] = rtcpcreqs[0]->file->filereq.bytes_in;
 			}
-			if (rtcpcreqs[0]->file->filereq.bytes_in >= 0 && rtcpcreqs[0]->file->filereq.bytes_out > 0) {
+			if (rtcpcreqs[0]->file->filereq.bytes_in > 0 && rtcpcreqs[0]->file->filereq.bytes_out > 0) {
 				compression_factor = rtcpcreqs[0]->file->filereq.bytes_in * 100 /
 					rtcpcreqs[0]->file->filereq.bytes_out;
 			}
