@@ -1,5 +1,5 @@
 /*
- * $Id: md5.h,v 1.1 1999/10/08 14:58:12 jdurand Exp $
+ * $Id: md5.h,v 1.2 1999/10/14 12:06:23 jdurand Exp $
  */
 
 /*
@@ -43,7 +43,7 @@
 
 #include <sys/types.h>
 #include "marshall.h"
-#include "Cdb_extern.h"
+#include "osdep.h"
 
 /* typedef a 32-bit type */
 typedef U_LONG UINT4;
@@ -54,20 +54,13 @@ typedef struct {
   UINT4 buf[4];                                    /* scratch buffer */
   unsigned char in[64];                              /* input buffer */
   unsigned char digest[16];     /* actual digest after MD5Final call */
-  char hex[33];                 /* hexadecimal form + 1 for the null character */
-  
+  char hex[33];       /* hexadecimal form + 1 for the null character */
 } MD5_CTX;
 
-#ifdef __STDC__
-EXTERN_C int DLL_DECL MD5Init(MD5_CTX *);
-EXTERN_C int DLL_DECL MD5Update(MD5_CTX *, unsigned char *, unsigned int );
-EXTERN_C int DLL_DECL MD5Final(MD5_CTX *);
-#else
-EXTERN_C int DLL_DECL MD5Init();
-EXTERN_C int DLL_DECL MD5Update();
-EXTERN_C int DLL_DECL MD5Final();
-#endif
+EXTERN_C int DLL_DECL MD5Init _PROTO((MD5_CTX *));
+EXTERN_C int DLL_DECL MD5Update _PROTO((MD5_CTX *, unsigned char *, unsigned int));
+EXTERN_C int DLL_DECL MD5Final _PROTO((MD5_CTX *));
 
 /*
- * Last Update: "Wednesday 29 September, 1999 at 14:36:16 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Wednesday 13 October, 1999 at 13:29:01 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */

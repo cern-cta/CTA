@@ -1,5 +1,5 @@
 /*
- * $Id: Cpool.c,v 1.8 1999/10/12 16:48:04 jdurand Exp $
+ * $Id: Cpool.c,v 1.9 1999/10/14 12:01:35 jdurand Exp $
  */
 
 #include <Cpool_api.h>
@@ -28,12 +28,14 @@
 #include <log.h>
 #endif
 
+#include <osdep.h>
+
 int Cpool_debug = 0;
 
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.8 $ $Date: 1999/10/12 16:48:04 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.9 $ $Date: 1999/10/14 12:01:35 $ CERN IT-PDP/DM Jean-Damien Durand";
 
 /* ------------------------------------ */
 /* Mutex static variables a-la-Cthread  */
@@ -77,11 +79,7 @@ struct Cpool_t {
                                     /*                        (1=RUNNING) */
                                     /*                       (-1=STARTED) */
   int                     flag;     /* Parent flag (-1=WAITING)           */
-#if defined(__STDC__)
-  void                  *(**start)(void *); /* Start routines             */
-#else
-  void                  *(**start)();       /* Start routines             */
-#endif
+  void                  *(**start) _PROTO((void *)); /* Start routines             */
   void                  **arg;
 
   struct Cpool_t         *next;     /* Next pool                          */
@@ -116,11 +114,7 @@ static int  tubes[5];
 /* ------------------------------------ */
 /* Typedefs                             */
 /* ------------------------------------ */
-#if defined(__STDC__)
-typedef void    Sigfunc(int);
-#else
-typedef void    Sigfunc();
-#endif
+typedef void    Sigfunc _PROTO((int));
 
 #endif /* _WIN32 */
 #if (defined(hpux) || defined(_INCLUDE_HPUX_SOURCE) || defined(_HPUX_SOURCE))
@@ -134,34 +128,21 @@ typedef fd_set _cpool_fd_set;
 /* ------------------------------------ */
 /* Prototypes                           */
 /* ------------------------------------ */
-#if defined(__STDC__)
-void     *_Cpool_starter(void *);
+void     *_Cpool_starter _PROTO((void *));
 #ifndef _WIN32
-size_t   _Cpool_writen(int, void *, size_t);
-size_t   _Cpool_readn(int, void *, size_t);
+size_t   _Cpool_writen _PROTO((int, void *, size_t));
+size_t   _Cpool_readn _PROTO((int, void *, size_t));
 #ifdef CPOOL_DEBUG
-size_t   _Cpool_writen_timeout(char *, int, int, void *, size_t, int);
-size_t   _Cpool_readn_timeout(char *, int, int, void *, size_t, int);
+size_t   _Cpool_writen_timeout _PROTO((char *, int, int, void *, size_t, int));
+size_t   _Cpool_readn_timeout _PROTO((char *, int, int, void *, size_t, int));
 #else
-size_t   _Cpool_writen_timeout(int, void *, size_t, int);
-size_t   _Cpool_readn_timeout(int, void *, size_t, int);
+size_t   _Cpool_writen_timeout _PROTO((int, void *, size_t, int));
+size_t   _Cpool_readn_timeout _PROTO((int, void *, size_t, int));
 #endif
-void     _Cpool_alarm(int);
-Sigfunc *_Cpool_signal(int, Sigfunc *);
+void     _Cpool_alarm _PROTO((int));
+Sigfunc *_Cpool_signal _PROTO((int, Sigfunc *));
 #endif /* _WIN32 */
 int      _Cpool_self();
-#else /* __STDC__ */
-void    *_Cpool_starter();
-#ifndef _WIN32
-size_t   _Cpool_writen();
-size_t   _Cpool_readn();
-size_t   _Cpool_writen_timeout();
-size_t   _Cpool_readn_timeout();
-void     _Cpool_alarm();
-Sigfunc *_Cpool_signal();
-#endif /* _WIN32 */
-int      _Cpool_self();
-#endif /* __STDC__ */
 
 #ifndef _WIN32
 /* ------------------------------------ */
@@ -187,7 +168,7 @@ static void *_cpool_sleep_flag = (void *) _CPOOL_SLEEP_FLAG;
 /* 17-MAY-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-CTHREAD_DECL Cpool_create(nbreq,nbget)
+int DLL_DECL Cpool_create(nbreq,nbget)
      int nbreq;
      int *nbget;
 {
@@ -489,11 +470,7 @@ void *_Cpool_starter(arg)
     void       *thisarg;
     int         ready = 1;
     size_t      thislength;
-#if defined(__STDC__)
-    void     *(*routine)(void *);
-#else
-    void     *(*routine)();
-#endif
+    void     *(*routine) _PROTO((void *));
     int         sleep_flag;
     
     /* We get the argument */
@@ -613,17 +590,10 @@ void *_Cpool_starter(arg)
             return(NULL);
           }
         } else {
-#if defined(__STDC__)
-          if (routine == (void *(*)(void *)) _CPOOL_SLEEP_FLAG) {
+          if (routine == (void *(*) _PROTO((void *))) _CPOOL_SLEEP_FLAG) {
             /* We just had a hit from Cpool_next_index, that sent us the sleep flag */
             sleep_flag = 1;
           }
-#else
-          if (routine == (void *(*)()) _CPOOL_SLEEP_FLAG) {
-            /* We just had a hit from Cpool_next_index, that sent us the sleep flag */
-            sleep_flag = 1;
-          }
-#endif
           break;
         }
       }
@@ -679,11 +649,7 @@ void *_Cpool_starter(arg)
     struct Cpool_t *current;
     int             index;
     char           *dummy;
-#if defined(__STDC__)
-    void          *(*start)(void *);
-#else
-    void          *(*start)();
-#endif
+    void          *(*start) _PROTO((void *));
     void           *startarg;
 
     /* We receive in the argument the address of the pool structure */
@@ -835,11 +801,7 @@ void *_Cpool_starter(arg)
       /* We are waked up: the routine and its arguments */
       /* address are put in current->start[index] and   */
       /* current->arg[index]                            */
-#if defined(__STDC__)
-      start    = (void *(*)(void *)) current->start[index];
-#else
-      start    = (void *(*)())       current->start[index];
-#endif
+      start    = (void *(*) _PROTO((void *))) current->start[index];
       startarg = (void *)            current->arg[index];
       
 #ifdef CPOOL_DEBUG
@@ -1538,13 +1500,9 @@ void *Cpool_realloc(file,line,ptr,size)
 /* 17-MAY-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-CTHREAD_DECL Cpool_assign(poolnb,startroutine,arg,timeout)
+int DLL_DECL Cpool_assign(poolnb,startroutine,arg,timeout)
      int poolnb;
-#if defined(__STDC__)
-     void *(*startroutine)(void *);
-#else
-     void *(*startroutine)();
-#endif
+     void *(*startroutine) _PROTO((void *));
      void *arg;
      int timeout;
 {
@@ -1892,9 +1850,7 @@ CTHREAD_DECL Cpool_assign(poolnb,startroutine,arg,timeout)
         current->state[i] = 1;
         /* We put the routine and its    */
         /* arguments                     */
-#if defined(__STDC__)
-        current->start[i] = (void *(*)(void *)) startroutine;
-#else
+        current->start[i] = (void *(*) _PROTO((void *))) startroutine;
 #ifdef CPOOL_DEBUG
         /* Cthread_mutex_lock(&lock_cpool_debug); */
         if (Cpool_debug != 0)
@@ -1903,8 +1859,6 @@ CTHREAD_DECL Cpool_assign(poolnb,startroutine,arg,timeout)
                 (unsigned long) current->start,i,
                 (unsigned long) (current->start + (i * sizeof(void *))));
         /* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
-        current->start[i] = (void *(*)())       startroutine;
 #endif
         current->arg[i] = (void *) arg;
         /* We signal the thread          */
@@ -2137,11 +2091,7 @@ CTHREAD_DECL Cpool_assign(poolnb,startroutine,arg,timeout)
     
     /* We put the routine and its    */
     /* arguments                     */
-#if defined(__STDC__)
-    current->start[current->flag] = (void *(*)(void *)) startroutine;
-#else
-    current->start[current->flag] = (void *(*)())       startroutine;
-#endif
+    current->start[current->flag] = (void *(*) _PROTO((void *))) startroutine;
     current->arg[current->flag] = (void *) arg;
     
 #ifdef CPOOL_DEBUG
@@ -2206,7 +2156,7 @@ CTHREAD_DECL Cpool_assign(poolnb,startroutine,arg,timeout)
 /* 08-JUN-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-CTHREAD_DECL Cpool_next_index(poolnb)
+int DLL_DECL Cpool_next_index(poolnb)
      int poolnb;
 {
 
@@ -2603,7 +2553,7 @@ CTHREAD_DECL Cpool_next_index(poolnb)
 /* 12-JUL-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-CTHREAD_DECL _Cpool_self() {
+int DLL_DECL _Cpool_self() {
   struct Cpool_t *current = NULL;
   int             i;
   int             cid;
