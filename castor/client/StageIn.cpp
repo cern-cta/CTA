@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageIn.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/01 16:31:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageIn.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/06/02 08:00:37 $ $Author: sponcec3 $
  *
  *
  *
@@ -217,13 +217,4 @@ void castor::client::StageIn::usage(std::string error) throw() {
   std::cout << "usage : stagein [-A alloc_mode] [-h rh_host] [-p pool] [-s size] "
             << "[--noretry] [--nowait] [--silent] [--rdonly]"
             << " hsmfile..." << std::endl;
-}
-
-//------------------------------------------------------------------------------
-// main
-//------------------------------------------------------------------------------
-int main(int argc, char** argv) {
-  castor::client::StageIn req;
-  req.run(argc, argv);
-  return 0;
 }
