@@ -1,22 +1,5 @@
 /*
- * $Id: Cglobals.h,v 1.6 2000/06/14 13:59:17 jdurand Exp $
- * $Log: Cglobals.h,v $
- * Revision 1.6  2000/06/14 13:59:17  jdurand
- * Added void in parameter list of third parameter of Cglobals_init() to be
- * compliant with the declaration in Cglobals.c
- *
- * Revision 1.5  2000/03/14 09:49:06  jdurand
- * Fixes for _WIN32 compilation
- *
- * Revision 1.4  1999-11-21 15:19:51+01  obarring
- * Include osdep.h to get DLL_DECL/EXPORT_C/_PROTO macros
- *
- * Revision 1.3  1999/07/30 16:00:12  obarring
- * Correct the copyright notice ....
- *
- * Revision 1.2  1999/07/30 15:59:10  obarring
- * Add copyright notice
- *
+ * $Id: Cglobals.h,v 1.7 2000/07/07 10:56:27 jdurand Exp $
  */
 
 /*
