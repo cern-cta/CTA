@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.12 2001/02/08 15:48:04 jdurand Exp $
+ * $Id: stage_api.c,v 1.13 2001/02/08 16:27:04 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -1092,7 +1092,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
       /* Inconsistency */
       serrno = SEINTERNAL;
       rc = -1;
-    } else if ((nstcp_output_internal == 0) || (nstpp_output_internal == 0)) {
+    } else if ((nstcp_output_internal == 0) && (nstpp_output_internal == 0)) {
       /* Nothing found */
       serrno = ENOENT;
       rc = -1;
