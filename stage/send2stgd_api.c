@@ -658,6 +658,7 @@ int send2stgd_sort_stcp(req_type,flags,nstcp_input,stcp_input,nstcp_output,stcp_
 	int i, j, k, nseen;
 	int status;
 	int nstcp_output_duplicate_found;
+	struct stgcat_entry *new_stcp_output;
 
 	/* No input/output structures ? */
 	if (stcp_input == NULL || nstcp_input <= 0 ||
@@ -788,16 +789,28 @@ int send2stgd_sort_stcp(req_type,flags,nstcp_input,stcp_input,nstcp_output,stcp_
 	}
 
 	/* We reorder output structures to match input structures original order */
-	for (i = 0; i < *nstcp_output; i++) {
-		struct stgcat_entry dummy;
 
-		if (seen[i] != i) {
-			/* Output structure No i is to be switched with output structure No seen[i] */
-			dummy = (*stcp_output)[i];
-			(*stcp_output)[i] = (*stcp_output)[seen[i]];
-			(*stcp_output)[seen[i]] = dummy;
+	/* [Bug #1854] stage_in_tape does not reorder correctly structures in output */
+	/* It is an error to do permutations. We must only do what we prepared the code */
+	/* for: refill an array with the correct indices - that's all */
+	if ((new_stcp_output = (struct stgcat_output *) malloc(*nstcp_output * sizeof(struct stgcat_entry))) == NULL) {
+		serrno = ENOMEM;
+		free(seen);
+		return(-1);
+	}
+
+	for (i = 0; i < *nstcp_output; i++) {
+		for (j = 0; j < *nstcp_output; j++) {
+			/* We search which entry should be at position i */
+			if (seen[j] == i) {
+				new_stcp_output[i] = (*stcp_output)[j];
+				/* Please note that we made sure (see upper) that all entries are in seen[] array */
+				break;
+			}
 		}
 	}
+	free(*stcp_output);
+	*stcp_output = new_stcp_output;
 	free(seen);
 
 	/* OK */
