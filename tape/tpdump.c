@@ -4,10 +4,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.1 $ $Date: 1999/11/07 17:06:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.2 $ $Date: 1999/11/08 06:32:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
-/*	dmpfil - analyse the content of a tape */
+/*	tpdump - analyse the content of a tape */
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,20 +25,10 @@ extern	char	*optarg;
 #if !defined(linux)
 extern	char	*sys_errlist[];
 #endif
-int blksiz = -1;
 int code;
-int den;
-char devtype[CA_MAXDVTLEN+1];
 char *dvrname;
-int fromblock = -1;
-int goodrec;
-int ignoreeoi;
-char infil[CA_MAXPATHLEN+1];
 int irec;
 int maxbyte = -1;
-int maxfile = -1;
-int toblock = -1;
-char vid[CA_MAXVIDLEN+1];
 
 main(argc, argv)
 int	argc;
@@ -46,12 +36,15 @@ char	**argv;
 {
 	char aden[CA_MAXDENLEN+1] = "";
 	int avg_block_length;
+	int blksiz = -1;
 	char *buffer;
 	int c;
 	static char codes[4][7] = {"", "ASCII", "", "EBCDIC"};
 	int count;
+	int den;
 	int density;
 	int dev1tm = 0;	/* by default 2 tapemarks are written at EOI */
+	char devtype[CA_MAXDVTLEN+1];
 	char dgn[CA_MAXDGNLEN+1] = "";
 	struct dgn_rsv dgn_rsv;
 	char *dp;
@@ -59,11 +52,16 @@ char	**argv;
 	char driver_name[7];
 	int errcat = 0;
 	int errflg = 0;
+	int fromblock = -1;
 	float gap;
+	int goodrec;
+	int ignoreeoi = 0;
 	int infd;
+	char infil[CA_MAXPATHLEN+1];
 	char label[81];
 	int lcode;
 	int max_block_length;
+	int maxfile = -1;
 	int min_block_length;
 	char *msgaddr;
 	int nbytes;
@@ -74,6 +72,8 @@ char	**argv;
 	int qbov, qlab;
 	u_signed64 sum_block_length;
 	float tape_used;
+	int toblock = -1;
+	char vid[CA_MAXVIDLEN+1] = "";
 	char vsn[CA_MAXVIDLEN+1] = "";
 
 	while ((c = getopt (argc, argv, "B:b:C:d:E:F:g:N:S:T:V:v:")) != EOF) {
@@ -213,28 +213,18 @@ char	**argv;
 		exit (1);
 	}
 
-	/* Set default values */
+	/* Get device group from TMS (if installed) */
 
+#if TMS
 	if (dgn[0] == '\0' && getdgn (vid, dgn))
 		exit (1);
+#endif
 	if (strcmp (dgn, "CT1") == 0) strcpy (dgn, "CART");
-	if (blksiz < 0) blksiz = 65536;
-	if (maxbyte < 0) maxbyte = 320;
-	if (maxfile < 0)
-		if ((den & 0xF) <= D38000 || (den & 0xF) == D38KD)
-			maxfile = 0;
-		else
-			maxfile = 1;
-	if (fromblock < 0) fromblock = 1;
-	if (toblock < 0) toblock = 1;
 
 #if defined(_AIX) && defined(_IBMR2)
 	if (getdvrnam (infil, driver_name) < 0)
 		strcpy (driver_name, "tape");
 	dvrname = driver_name;
-#endif
-#if defined(_AIX) && (defined(_IBMESA) || defined(RS6000PCTA))
-	if (blksiz > 65535) blksiz = 65535;
 #endif
 
 	/* reserve resources */
@@ -258,7 +248,22 @@ char	**argv;
 	    NULL, NULL, NULL))
 		exit (c);
 
-	printf ("DUMP - TAPE MOUNTED ON DRIVE %s\n", drive);
+	printf (" DUMP - TAPE MOUNTED ON DRIVE %s\n", drive);
+
+	/* Set default values */
+
+	if (blksiz < 0) blksiz = 65536;
+#if defined(_AIX) && (defined(_IBMESA) || defined(RS6000PCTA))
+	if (blksiz > 65535) blksiz = 65535;
+#endif
+	if (maxbyte < 0) maxbyte = 320;
+	if (maxfile < 0)
+		if ((den & 0xF) <= D38000 || (den & 0xF) == D38KD)
+			maxfile = 0;
+		else
+			maxfile = 1;
+	if (fromblock < 0) fromblock = 1;
+	if (toblock < 0) toblock = 1;
 
 	den = cvtden (aden);
 	switch (den) {
@@ -489,7 +494,7 @@ char	**argv;
 			if (errno == EIO)
 				errcat = gettperror (infd, &msgaddr);
 			else
-#if sgi || ultrix || (__alpha && __osf__)
+#if sgi || (__alpha && __osf__)
 				if (errno == ENOSPC) {
 					msgaddr = "Blank check";
 					errcat = ETBLANK;
@@ -841,9 +846,8 @@ usage(cmd)
 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
-	fprintf (stderr, "%s%s%s%s",
+	fprintf (stderr, "%s%s%s",
 	    "[-B maxbyte] [-b max_block_size] [-C {ebcdic|ascii}]\n",
-	    "[-d {800|1600|6250|38000|8200|8500|38KD|2G|6G|10G|DDS|20G|25G|35G|50G}]\n",
-	    "[-E ignoreeoi] [-F maxfile] [-g device_group_name] [-N [fromblock,]toblock]\n",
-	    "[-v vsn] -V vid\n");
+	    "[-d density] [-E ignoreeoi] [-F maxfile] [-g device_group_name]\n",
+	    "[-N [fromblock,]toblock] [-v vsn] -V vid\n");
 }
