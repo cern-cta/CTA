@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.7 2000/01/06 11:26:08 jdurand Exp $
+ * $Id: stage.h,v 1.8 2000/01/07 12:18:34 jdurand Exp $
  */
 
 /*
@@ -45,6 +45,9 @@
 #define	RETRYI	60
 #define STGMAGIC    0x13140701
 #define STG	"stage"	/* service name in /etc/services */
+
+#define	STG_MAXDENLEN       5	/* maximum length for a alphanumeric density */
+#define	STG_MAXDGNLEN       8	/* maximum length for a device group name */
 
 #define UPPER(s) \
 	{ \
@@ -240,8 +243,8 @@ struct stgcat_entry {		/* entry format in STGCAT table */
 	int	nbaccesses;
 	union {
 	    struct {			/* tape specific info */
-		char	den[CA_MAXDENLEN+1];	/* density */
-		char	dgn[CA_MAXDGNLEN+1];	/* device group */
+		char	den[STG_MAXDENLEN+1];	/* density */
+		char	dgn[STG_MAXDGNLEN+1];	/* device group */
 		char	fid[CA_MAXFIDLEN+1];	/* file id */
 		char	filstat;	/* file status: new = 'n', old = 'o' */
 		char	fseq[CA_MAXFSEQ+1];	/* file sequence number requested by user */
