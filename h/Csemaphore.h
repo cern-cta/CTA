@@ -6,25 +6,25 @@
 #include <stdio.h>
 #include <Cthread_api.h>
 
-#ifndef SEMAPHORES
-#define SEMAPHORES
+#ifndef CSEMAPHORES
+#define CSEMAPHORES
 
-typedef struct Semaphore
+typedef struct CSemaphore
 {
     int         v;
 }
-Semaphore;
+CSemaphore;
 
 
-int         semaphore_down (Semaphore * s);
-int         semaphore_up (Semaphore * s);
-void        semaphore_destroy (Semaphore * s);
-void        semaphore_init (Semaphore * s,int v);
-int         semaphore_value (Semaphore * s);
+int         Csemaphore_down (CSemaphore * s);
+int         Csemaphore_up (CSemaphore * s);
+void        Csemaphore_destroy (CSemaphore * s);
+void        Csemaphore_init (CSemaphore * s,int v);
+int         Csemaphore_value (CSemaphore * s);
 int         tw_pthread_cond_signal (void * c);
 int         tw_pthread_cond_wait (void * c);
 int         tw_pthread_mutex_unlock (void * m);
 int         tw_pthread_mutex_lock (void * m);
 void        do_error (char *msg);
 
-#endif
+#endif /* CSEMAPHORES */
