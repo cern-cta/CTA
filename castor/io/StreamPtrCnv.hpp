@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamPtrCnv.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/19 16:37:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamPtrCnv.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/25 16:31:16 $ $Author: sponcec3 $
  *
  *
  *
@@ -142,6 +142,17 @@ namespace castor {
        */
       virtual castor::IObject* createObj(castor::IAddress* address,
                                          castor::ObjectCatalog& newlyCreated)
+        throw (castor::exception::Exception);
+
+      /**
+       * Updates C++ object from its foreign representation.
+       * @param object the object to deal with
+       * @param alreadyDone the set of objects already updated.
+       * This is needed to avoid looping in case of circular dependencies
+       * @exception Exception throws an Exception in cas of error
+       */
+      virtual void updateObj(castor::IObject* object,
+                             castor::ObjectCatalog& alreadyDone)
         throw (castor::exception::Exception);
 
     }; // end of class StreamFileCnv

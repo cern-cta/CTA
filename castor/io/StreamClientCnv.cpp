@@ -149,3 +149,15 @@ castor::IObject* castor::io::StreamClientCnv::createObj(castor::IAddress* addres
   return object;
 }
 
+//------------------------------------------------------------------------------
+// updateObj
+//------------------------------------------------------------------------------
+void castor::io::StreamClientCnv::updateObj(castor::IObject* obj,
+                                            castor::ObjectCatalog& alreadyDone)
+  throw (castor::exception::Exception) {
+  castor::exception::Internal ex;
+  ex.getMessage() << "Cannot update object in case of streaming."
+                  << std::endl;
+  throw ex;
+}
+
