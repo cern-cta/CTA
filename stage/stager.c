@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.88 2000/09/20 11:32:55 jdurand Exp $
+ * $Id: stager.c,v 1.89 2000/09/20 15:40:26 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.88 $ $Date: 2000/09/20 11:32:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.89 $ $Date: 2000/09/20 15:40:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -2832,6 +2832,8 @@ int stager_hsm_callback(tapereq,filereq)
 				stager_client_true_i,hsm_nsegments[stager_client_true_i],0);
 			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].segsize = %d\n",
 				stager_client_true_i,hsm_nsegments[stager_client_true_i],filereq->bytes_in);
+			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].compression = %d\n",
+				stager_client_true_i,hsm_nsegments[stager_client_true_i],compression_factor);
 			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].s_status = '-'\n",
 				stager_client_true_i,hsm_nsegments[stager_client_true_i]);
 			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] hsm_segments[%d][%d].vid = \"%s\"\n",
@@ -2842,6 +2844,7 @@ int stager_hsm_callback(tapereq,filereq)
 #endif
 			hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].copyno = 0;
 			hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].segsize = filereq->bytes_in;
+			hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].compression = compression_factor;
 			hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].s_status = '-';
 			strcpy(hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].vid,tapereq->vid);
 			memcpy(hsm_segments[stager_client_true_i][hsm_nsegments[stager_client_true_i]].blockid,filereq->blockid,sizeof(blockid));
