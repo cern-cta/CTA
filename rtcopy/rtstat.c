@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.11 $ $Date: 2002/09/30 09:52:18 $ CERN IT-PDP/DM Claire Redmond";
+static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.12 $ $Date: 2002/10/09 07:13:26 $ CERN IT-PDP/DM Claire Redmond";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -51,6 +51,7 @@ static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.11 $ $Date: 2002
 extern char *sys_errlist[];
 #endif /* linux */
 
+int allgroups;
 struct stats {                  /* Structure to store the statistics info */
   int dev_succ;               /* number of successful developers requests */
   int dev_unsucc;             /* number unsuccessful */
@@ -333,6 +334,7 @@ main (argc, argv)
   int i;			/* counter */
   static struct Coptions longopts[] = {
         {"acctdir", REQUIRED_ARGUMENT, 0, 'A'},
+        {"allgroups", NO_ARGUMENT, &allgroups, 1},
         {0, 0, 0, 0}
   };
   int nrec = 0;		/* number of records read */
@@ -1742,7 +1744,7 @@ get_statcode (rq)
 {
   int code;		/* code for exit status */
 
-  if (strcmp (rq->gid, "c3") == 0 || strcmp (rq->gid, "ct") == 0) 
+  if (!allgroups && (strcmp (rq->gid, "c3") == 0 || strcmp (rq->gid, "ct") == 0)) 
     {
       if (rq->exitcode == 0 || rq->exitcode == 193 || rq->exitcode == 194
           || rq->exitcode == 195 || rq->exitcode == 197)
@@ -2858,7 +2860,7 @@ read_errmsg(request, serv)
   rq = request;
   message = rq->errmsg;
 
-  if (strcmp (rq->gid, "c3") == 0 || strcmp (rq->gid, "ct") == 0) 
+  if (!allgroups && (strcmp (rq->gid, "c3") == 0 || strcmp (rq->gid, "ct") == 0)) 
     {
       rq->exitcode = 1; 
       return;
@@ -3420,7 +3422,7 @@ usage (cmd)
      char *cmd;
 {
   fprintf (stderr, "usage: %s ", cmd);
-  fprintf (stderr, "%s%s%s", "[--acctdir accounting_dir][-e end_time]\n",
+  fprintf (stderr, "%s%s%s", "[--acctdir accounting_dir][--allgroups][-e end_time]\n",
     "\t[-f accounting_file][-g device_group][-S server_name][-s start_time]\n",
     "\t[-v][-w week_number]\n");
 }		
