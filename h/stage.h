@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.23 2000/06/29 08:59:56 jdurand Exp $
+ * $Id: stage.h,v 1.24 2000/09/05 11:17:25 baud Exp $
  */
 
 /*
@@ -246,7 +246,7 @@ struct stgcat_entry {		/* entry format in STGCAT table */
 		char	tapesrvr[CA_MAXHOSTNAMELEN+1];	/* tape server */
 		char	E_Tflags;	/* SKIPBAD, KEEPFILE, NOTRLCHK */
 		char	vid[MAXVSN][CA_MAXVIDLEN+1];
-		char	vsn[MAXVSN][CA_MAXVIDLEN+1];
+		char	vsn[MAXVSN][CA_MAXVSNLEN+1];
 	    } t;
 	    struct {			/* info for disk file stageing */
 		char	xfile[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
