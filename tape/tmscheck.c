@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tmscheck.c,v $ $Revision: 1.3 $ $Date: 1999/11/22 14:53:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tmscheck.c,v $ $Revision: 1.4 $ $Date: 2000/01/13 11:00:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
@@ -58,20 +58,16 @@ char *acctname;
 		case 312:
 		case 315:
 			Ctape_errmsg (func, "%s\n", tmrepbuf);
-			errflg++;
-			break;
+			return (EINVAL);
 		case 12:
-			Ctape_errmsg (func, TP055, vid);
-			errflg++;
-			break;
+			Ctape_errmsg (func, "%s\n", tmrepbuf);
+			return (EACCES);
 		default:
 			sleep (60);
 			continue;
 		}
 		break;
 	}
-	if (errflg)
-		return (EINVAL);
 	strncpy (tmsvsn, tmrepbuf, 6);
 	tmsvsn[6] = '\0';
 	for  (j = 0; tmsvsn[j]; j++)
@@ -126,6 +122,6 @@ char *acctname;
 	} else {
 		strcpy (lbl, tmslbl);
 	}
-	return (errflg);
+	return (errflg ? EINVAL : 0);
 }
 #endif
