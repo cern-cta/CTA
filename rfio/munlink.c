@@ -1,5 +1,5 @@
 /*
- * $Id: munlink.c,v 1.1 2001/11/07 11:53:07 jdurand Exp $
+ * $Id: munlink.c,v 1.2 2001/11/13 17:34:29 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.1 $ $Date: 2001/11/07 11:53:07 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.2 $ $Date: 2001/11/13 17:34:29 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -22,11 +22,21 @@ static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.1 $ $Date: 2001
 #include "rfio.h"
 #include <Cglobals.h>
 #include <Cpwd.h>
+#ifdef _WIN32
+#include <process.h>
+#else
+#include <unistd.h>
+#endif
 
 typedef struct socks {
   char host[CA_MAXHOSTNAMELEN+1];
   int s ;
   int Tid;
+#ifdef _WIN32
+  int pid;
+#else
+  pid_t pid;
+#endif
 } munlink_connects ;
 static munlink_connects munlink_tab[MAXMCON]; /* UP TO MAXMCON connections simultaneously */
 
@@ -54,11 +64,13 @@ int DLL_DECL rfio_munlink(file)
        */
       rfio_errno = 0;
       rc = rfio_HsmIf_unlink(filename);
+      END_TRACE();
       return(rc);
     }
     /* The file is local */
     rc = unlink(filename) ;
     rfio_errno = 0;
+    END_TRACE();
     return (rc) ;
   } else {
     /* Look if already in */
@@ -67,11 +79,13 @@ int DLL_DECL rfio_munlink(file)
     TRACE(2, "rfio", "rfio_munlink: rfio_munlink_findentry(host=%s,Tid=%d) returns %d", host, Tid, rfindex);
     if (rfindex >= 0) {
       rc = rfio_smunlink(munlink_tab[rfindex].s,filename) ;
+      END_TRACE();
       return ( rc) ;
     }
     rc = 0;
     fd=rfio_connect(host,&rt) ;
     if ( fd < 0 ) {
+      END_TRACE();
       return (-1) ;
     }
     rfindex = rfio_munlink_allocentry(host,Tid,fd);
@@ -128,7 +142,7 @@ static int rfio_smunlink(s,filename)
       TRACE(2, "rfio" ,"rfio_smunlink: Cgetpwuid(): ERROR occured (errno=%d)",errno);
       END_TRACE();
       rfio_unend_this(s,1);
-      return -1 ;
+      return(-1) ;
     }	
     memcpy(pw, pw_tmp, sizeof(struct passwd));
     *old_uid = uid;
@@ -207,6 +221,11 @@ int DLL_DECL rfio_unend()
   char buf[256];
   char *p=buf ;
   int rc = 0;
+#ifdef _WIN32
+  int pid = getpid();
+#else
+  pid_t pid = getpid();
+#endif
 
   INIT_TRACE("RFIO_TRACE");
 
@@ -216,11 +235,20 @@ int DLL_DECL rfio_unend()
 
 
   if (Cmutex_lock((void *) munlink_tab,-1) != 0) {
-    TRACE(3,"rfio","rfio_uend : Cmutex_lock(munlink_tab,-1) error No %d (%s)", errno, strerror(errno));
+    TRACE(3,"rfio","rfio_unend : Cmutex_lock(munlink_tab,-1) error No %d (%s)", errno, strerror(errno));
+    END_TRACE();
     return(-1);
   }
   for (i = 0; i < MAXMCON; i++) {
     /* TRACE(3,"rfio","munlink_tab[i]={host=\"%s\", s=%d, Tid=%d}", munlink_tab[i].host, munlink_tab[i].s, munlink_tab[i].Tid); */
+    if ((munlink_tab[i].pid > 0) && (munlink_tab[i].pid != pid)) {
+      TRACE(3,"rfio","rfio_unend: munlink_tab[%d].s=%d : Found different pid=%d (current pid is %d) - Cleaning this entry", i, munlink_tab[i].s, munlink_tab[i].pid, pid);
+      munlink_tab[i].s = -1;
+      munlink_tab[i].host[0] = '\0';
+      munlink_tab[i].Tid = -1;
+      munlink_tab[i].pid = 0;
+      continue;
+    }
     if (munlink_tab[i].Tid == Tid) {
       if ((munlink_tab[i].s >= 0) && (munlink_tab[i].host[0] != '\0')) {
         marshall_WORD(p, RFIO_MAGIC);
@@ -236,6 +264,7 @@ int DLL_DECL rfio_unend()
       munlink_tab[i].s = -1;
       munlink_tab[i].host[0] = '\0';
       munlink_tab[i].Tid = -1;
+      munlink_tab[i].pid = 0;
     }
   }
    
@@ -258,6 +287,11 @@ static int rfio_unend_this(s,flag)
   char buf[256];
   char *p=buf ;
   int rc = 0;
+#ifdef _WIN32
+  int pid = getpid();
+#else
+  pid_t pid = getpid();
+#endif
 
   INIT_TRACE("RFIO_TRACE");
 
@@ -267,10 +301,19 @@ static int rfio_unend_this(s,flag)
 
   if (Cmutex_lock((void *) munlink_tab,-1) != 0) {
     TRACE(3,"rfio","rfio_unend_this : Cmutex_lock(munlink_tab,-1) error No %d (%s)", errno, strerror(errno));
+    END_TRACE();
     return(-1);
   }
   for (i = 0; i < MAXMCON; i++) {
     /* TRACE(3,"rfio","munlink_tab[i]={host=\"%s\", s=%d, sec=%d, Tid=%d}", munlink_tab[i].host, munlink_tab[i].s, munlink_tab[i].sec, munlink_tab[i].Tid); */
+    if ((munlink_tab[i].pid > 0) && (munlink_tab[i].pid != pid)) {
+      TRACE(3,"rfio","rfio_unend_this: munlink_tab[%d].s=%d : Found different pid=%d (current pid is %d) - Cleaning this entry", i, munlink_tab[i].s, munlink_tab[i].pid, pid);
+      munlink_tab[i].s = -1;
+      munlink_tab[i].host[0] = '\0';
+      munlink_tab[i].Tid = -1;
+      munlink_tab[i].pid = 0;
+      continue;
+    }
     if (munlink_tab[i].Tid == Tid) {
       if ((munlink_tab[i].s == s) && (munlink_tab[i].host[0] != '\0')) {
         if (flag) {
@@ -286,6 +329,7 @@ static int rfio_unend_this(s,flag)
         munlink_tab[i].s = -1;
         munlink_tab[i].host[0] = '\0';
         munlink_tab[i].Tid = -1;
+        munlink_tab[i].pid = 0;
       }
     }
   }
@@ -309,20 +353,37 @@ static int rfio_munlink_allocentry(hostname,Tid,s)
 {
   int i;
   int rc;
+#ifdef _WIN32
+  int pid = getpid();
+#else
+  pid_t pid = getpid();
+#endif
+
+  INIT_TRACE("RFIO_TRACE");
 
   if (Cmutex_lock((void *) munlink_tab,-1) != 0) {
     TRACE(3,"rfio","rfio_munlink_allocentry : Cmutex_lock(munlink_tab,-1) error No %d (%s)", errno, strerror(errno));
+    END_TRACE();
     return(-1);
   }
   /* Scan it */
 
   for (i = 0; i < MAXMCON; i++) {
+    if ((munlink_tab[i].pid > 0) && (munlink_tab[i].pid != pid)) {
+      TRACE(3,"rfio","rfio_munlink_allocentry: munlink_tab[%d].s=%d : Found different pid=%d (current pid is %d) - Cleaning this entry", i, munlink_tab[i].s, munlink_tab[i].pid, pid);
+      munlink_tab[i].s = -1;
+      munlink_tab[i].host[0] = '\0';
+      munlink_tab[i].Tid = -1;
+      munlink_tab[i].pid = 0;
+      continue;
+    }
     if (munlink_tab[i].host[0] == '\0') {
       rc = i;
       strncpy(munlink_tab[i].host,hostname,CA_MAXHOSTNAMELEN);
       munlink_tab[i].host[CA_MAXHOSTNAMELEN] = '\0';
       munlink_tab[i].Tid = Tid;
       munlink_tab[i].s = s;
+      munlink_tab[i].pid = pid;
       goto _rfio_munlink_allocentry_return;
     }
   }
@@ -333,8 +394,10 @@ static int rfio_munlink_allocentry(hostname,Tid,s)
  _rfio_munlink_allocentry_return:
   if (Cmutex_unlock((void *) munlink_tab) != 0) {
     TRACE(3,"rfio","rfio_munlink_allocentry : Cmutex_unlock(munlink_tab) error No %d (%s)", errno, strerror(errno));
+    END_TRACE();
     return(-1);
   }
+  END_TRACE();
   return(rc);
 }
 
@@ -347,14 +410,30 @@ static int rfio_munlink_findentry(hostname,Tid)
 {
   int i;
   int rc;
+#ifdef _WIN32
+  int pid = getpid();
+#else
+  pid_t pid = getpid();
+#endif
+
+  INIT_TRACE("RFIO_TRACE");
 
   if (Cmutex_lock((void *) munlink_tab,-1) != 0) {
     TRACE(3,"rfio","rfio_munlink_findentry : Cmutex_lock(munlink_tab,-1) error No %d (%s)", errno, strerror(errno));
+    END_TRACE();
     return(-1);
   }
   /* Scan it */
 
   for (i = 0; i < MAXMCON; i++) {
+    if ((munlink_tab[i].pid > 0) && (munlink_tab[i].pid != pid)) {
+      TRACE(3,"rfio","rfio_munlink_findentry: munlink_tab[%d].s=%d : Found different pid=%d (current pid is %d) - Cleaning this entry", i, munlink_tab[i].s, munlink_tab[i].pid, pid);
+      munlink_tab[i].s = -1;
+      munlink_tab[i].host[0] = '\0';
+      munlink_tab[i].Tid = -1;
+      munlink_tab[i].pid = 0;
+      continue;
+    }
     if ((strcmp(munlink_tab[i].host,hostname) == 0) && (munlink_tab[i].Tid == Tid)) {
       rc = i;
       goto _rfio_munlink_findentry_return;
@@ -367,7 +446,9 @@ static int rfio_munlink_findentry(hostname,Tid)
  _rfio_munlink_findentry_return:
   if (Cmutex_unlock((void *) munlink_tab) != 0) {
     TRACE(3,"rfio","rfio_munlink_findentry : Cmutex_unlock(munlink_tab) error No %d (%s)", errno, strerror(errno));
+    END_TRACE();
     return(-1);
   }
+  END_TRACE();
   return(rc);
 }

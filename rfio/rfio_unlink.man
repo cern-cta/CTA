@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_unlink.man,v 1.5 2001/09/26 09:13:54 jdurand Exp $
+.\" $Id: rfio_unlink.man,v 1.6 2001/11/13 17:34:29 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_unlink.man,v $ $Revision: 1.5 $ $Date: 2001/09/26 09:13:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_unlink.man,v $ $Revision: 1.6 $ $Date: 2001/11/13 17:34:29 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_UNLINK 3 "$Date: 2001/09/26 09:13:54 $" CASTOR "Rfio Library Functions"
+.TH RFIO_UNLINK 3 "$Date: 2001/11/13 17:34:29 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_unlink \- remove a file entry
 .SH SYNOPSIS
@@ -14,6 +14,11 @@ rfio_unlink \- remove a file entry
 \fB#include "rfio_api.h"\fR
 .sp
 .BI "int rfio_unlink (const char *" path ");"
+.br
+.BI "int rfio_munlink (const char *" path ");"
+.br
+.BI "int rfio_unend ();"
+.br
 .SH DESCRIPTION
 .B rfio_unlink
 removes a file entry.
@@ -21,11 +26,24 @@ removes a file entry.
 .I path
 specifies the logical pathname relative to the current directory or
 the full pathname.
+.LP
+.B rfio_munlink
+is identical to
+.B rfio_unlink
+but keeps the connection open to the server unless there are more than MAXMCON
+connections already opened. This is useful when issuing a series of unlink calls.
+The last
+.B rfio_munlink
+call should be followed by a call to
+.BR rfio_unend .
+See NOTES section below.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
 .B serrno
 is set appropriately.
+.SH NOTES
+Multiple connections using rfio_munlink are thread-safe and process-wide, therefore a forked child cannot share file descriptors opened with rfio_munlink by its parent.
 .SH ERRORS
 .TP 1.3i
 .B EPERM
