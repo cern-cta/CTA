@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.22 2000/03/06 07:57:28 baud Exp $
+ * $Id: Ctape.h,v 1.23 2000/03/08 06:44:22 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.22 $ $Date: 2000/03/06 07:57:28 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.23 $ $Date: 2000/03/08 06:44:22 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -213,6 +213,11 @@
 
 			/* tape daemon internal tables */
 
+struct child_exit_q {	/* list of children having exited */
+	struct child_exit_q *next;
+	int	ovly_pid;
+	int	status;
+};
 struct confq {		/* config queue */
 	struct confq *next;
 	struct confq *prev;
