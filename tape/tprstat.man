@@ -1,12 +1,13 @@
-.\" @(#)$RCSfile: tprstat.man,v $ $Revision: 1.1 $ $Date: 2000/10/10 09:40:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: tprstat.man,v $ $Revision: 1.2 $ $Date: 2000/10/10 10:01:12 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TPRSTAT 1 "$Date: 2000/10/10 09:40:11 $" CASTOR "Ctape User Commands"
+.TH TPRSTAT 1 "$Date: 2000/10/10 10:01:12 $" CASTOR "Ctape User Commands"
 .SH NAME
 tprstat \- give the device group reservations for all tape users on a given server
 .SH SYNOPSIS
 .B tprstat
+.RB [ hostname ]
 .SH DESCRIPTION
 .B tprstat
 gives the device group reservations for all tape users on a given server in
