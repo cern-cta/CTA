@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 2004/05/24 14:06:31 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.2 $ $Date: 2004/05/24 14:12:05 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -312,6 +312,9 @@ MakeDir($(RTCOPYWORKDIR),root,bin,777)
 MakeDir($(ERRLISTDIR),root,bin,755)
 MakeDir($(SACCTDIR),root,bin,0777)
 #endif
+
+api-doc:	../h/rtcpcldapi.h
+	-@doxygen rtcpcldapi.doxygen
 
 install.man: $(MANDIR) $(MANPAGES_C) $(MANPAGES_S)
 
