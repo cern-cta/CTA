@@ -1,25 +1,9 @@
 .\"
-.\" $Id: vdqm_UnitStatus.man,v 1.5 1999/09/02 15:18:21 obarring Exp $
-.\" $Log: vdqm_UnitStatus.man,v $
-.\" Revision 1.5  1999/09/02 15:18:21  obarring
-.\" Add osdep.h (because of u_signed64 declaration in vdqm.h)
-.\"
-.\" Revision 1.4  1999/09/02 15:13:15  obarring
-.\" Add missing qoutes ""
-.\"
-.\" Revision 1.3  1999/09/02 15:12:03  obarring
-.\" Replace Id by date in header
-.\"
-.\" Revision 1.2  1999/09/02 15:10:56  obarring
-.\" Add new status constants.
-.\"
-.\" Revision 1.1  1999/07/31 15:27:01  obarring
-.\" First version. EXAMPLE section still missing.
-.\"
+.\" @(#)$RCSfile: vdqm_UnitStatus.man,v $ $Revision: 1.6 $ $Date: 1999/11/18 10:00:35 $ CERN IT-PDP/DM O.Barring
 .\"
 .\" Copyright (C) 1999 by CERN/IT/PDP/DM
 .\"
-.TH VDQM_UNITSTATUS l "$Date: 1999/09/02 15:18:21 $"
+.TH VDQM_UNITSTATUS l "$Date: 1999/11/18 10:00:35 $"
 .SH NAME
 .PP
 vdqm_UnitStatus \- update volume drive unit status in VDQM
@@ -69,11 +53,11 @@ all status values except VDQM_VOL_MOUNT and VDQM_VOL_UNMOUNT.
 \- character string specifying the device group name associated with the unit.
 .PP
 .I server
-\- character string specifying the hostname of the server. This parameter may be
-left NULL if the server is the same as the local host.
+\- character string specifying the hostname of the tape server. This parameter 
+may be left NULL if the server is the same as the local host.
 .PP
 .I unit
-\- chararcter string specifying the drive unit name.
+\- character string specifying the drive unit name.
 .PP
 .I status
 \- points to an integer which is constructed by a bitwise-inclusive-OR of unit
