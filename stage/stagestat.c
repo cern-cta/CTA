@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.32 2002/06/20 07:48:52 jdurand Exp $
+ * $Id: stagestat.c,v 1.33 2002/06/20 12:05:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.32 $ $Date: 2002/06/20 07:48:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.33 $ $Date: 2002/06/20 12:05:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1223,7 +1223,7 @@ void print_globstat (starttime, endtime, num_fork_exec_stager, num_multireqs)
 	printf ("\tNumber of tape remount requests (read  mode)\t\t\t%d\n", num_in_remount_requests);
 	num_pos_requests_avoided = rc[1][0] - num_fork_exec_stager;
 	if (num_pos_requests_avoided < 0 ) num_pos_requests_avoided = 0;
-	printf ("\tNumber of tape positionning requests avoided by stager (read mode)\t%d\n", num_pos_requests_avoided);
+	printf ("\tNumber of tape requests avoided by stager (read mode)\t%d\n", num_pos_requests_avoided);
 	printf ("\tNumber of multifile requests\t\t%d\n", num_multireqs);
 }
 
