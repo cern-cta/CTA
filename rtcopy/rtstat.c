@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.3 $ $Date: 2000/12/06 08:41:43 $ CERN IT-PDP/DM Claire Redmond";
+static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.4 $ $Date: 2000/12/06 08:49:29 $ CERN IT-PDP/DM Claire Redmond";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1574,16 +1574,20 @@ int repair_rec(fd_acct, accthdr, prev_timestamp, swapped)
 {
     char buf[1024];
     char c;
-    int i, j, rc;
+    int i, j, rc, skipped;
     time_t now;
 
     time(&now);
-    fprintf(stderr,"Trying to repair corrupted accounting data....\n");
+    fprintf(stderr,"Trying to skip over corrupted accounting data....\n");
     i=0;
+    skipped = sizeof(struct accthdr);
     memcpy(&buf[i],accthdr,sizeof(struct accthdr));
     j = 1;
     while ( i == 0 || (rc = rfio_read(fd_acct,&c,1)) == 1 ) {
-        if ( i > 0 ) buf[j] = c;
+        if ( i > 0 ) {
+            skipped++;
+            buf[j] = c;
+        }
         memcpy(accthdr,&buf[i],sizeof(struct accthdr));
         if ( *swapped ) {
             swap_it(accthdr->package);
@@ -1607,8 +1611,8 @@ int repair_rec(fd_acct, accthdr, prev_timestamp, swapped)
             break;
         }
     }
-    if ( rc == 0 ) fprintf(stderr,"repair successful\n");
-    else  fprintf(stderr,"repair failed: rc=%d\n",rc);
+    if ( rc == 0 ) fprintf(stderr,"skip of corrupted data successful. %d bytes skipped\n",skipped);
+    else  fprintf(stderr,"skip of corrupted data failed after %d bytes: rc=%d\n",skipped,rc);
 
     return(rc);
 }
