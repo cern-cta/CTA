@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.98 2000/11/24 18:08:50 jdurand Exp $
+ * $Id: stager.c,v 1.99 2000/11/26 10:08:45 jdurand Exp $
  */
 
 /*
@@ -19,7 +19,7 @@
 /* -DTAPESRVR=\"your_tape_server_hostname\" */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.98 $ $Date: 2000/11/24 18:08:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.99 $ $Date: 2000/11/26 10:08:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -138,6 +138,10 @@ int callback_nok = 0;               /* Number of fseq transfered OK and seen in 
 int dont_change_srv = 0;            /* If != 0 means that we will not change tape_server if rtcpc() retry - Only stage_tape() */
 
 #ifdef STAGER_DEBUG
+#ifdef RETRYI
+#undef RETRYI
+#endif
+#define RETRYI 5
 EXTERN_C int DLL_DECL dumpTapeReq _PROTO((tape_list_t *));
 EXTERN_C int DLL_DECL dumpFileReq _PROTO((file_list_t *));
 int rtcpd_PrintCmd _PROTO((tape_list_t *));
@@ -3311,5 +3315,5 @@ int rtcpd_PrintCmd(tape)
 #endif /* STAGER_DEBUG */
 
 /*
- * Last Update: "Friday 24 November, 2000 at 19:07:29 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Sunday 26 November, 2000 at 09:49:08 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
