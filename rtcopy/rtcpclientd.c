@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.19 $ $Release$ $Date: 2005/01/08 07:04:35 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.20 $ $Release$ $Date: 2005/01/11 13:02:07 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.19 $ $Release$ $Date: 2005/01/08 07:04:35 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.20 $ $Release$ $Date: 2005/01/11 13:02:07 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -505,16 +505,15 @@ void checkWorkerExit()
                                  1,
                                  0
                                  );
+        /*
+         * Reset the stream or delete it in case it has finished
+         */
+        if ( rtcpcld_returnStream(item->tape) == -1 ) {
+          LOG_SYSCALL_ERR("rtcpcld_returnStream()");
+        }
       }
       if ( value != 0 ) {
         (void)rtcpcld_setVIDFailedStatus(item->tape);
-        /*
-         * If migrator was kill by signal we must reset the stream
-         */
-        if ( (item->tape->tapereq.mode == WRITE_ENABLE) &&
-             (rtcpcld_returnStream(item->tape) == -1) ) {
-          LOG_SYSCALL_ERR("rtcpcld_returnStream()");
-        }
       }
       CLIST_DELETE(requestList,item);
       (void)rtcpcld_cleanupTape(item->tape);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/01/05 13:47:08 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.30 $ $Release$ $Date: 2005/01/11 13:02:07 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/01/05 13:47:08 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.30 $ $Release$ $Date: 2005/01/11 13:02:07 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -710,14 +710,6 @@ int main(
       rc = -1;
     }
     LOG_SYSCALL_ERR("rtcpcld_restoreSelectedTapeCopies()");
-  }
-
-  if ( rtcpcld_returnStream(tape) == -1 ) {
-    if ( rc == 0 ) {
-      save_serrno = serrno;
-      rc = -1;
-    }
-    LOG_SYSCALL_ERR("rtcpcld_returnStream()");
   }
 
   rc = rtcpcld_workerFinished(
