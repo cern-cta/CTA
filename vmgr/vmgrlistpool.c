@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlistpool.c,v $ $Revision: 1.9 $ $Date: 2001/02/01 08:53:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlistpool.c,v $ $Revision: 1.10 $ $Date: 2001/02/12 07:17:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlistpool - query a given pool or list all existing tape pools */
@@ -100,6 +100,8 @@ gid_t pool_gid;
 u_signed64 capacity;
 u_signed64 tot_free_space;
 {
+	signed64 c64;
+	signed64 f64;
 	struct group *gr;
 	struct passwd *pw;
 	static gid_t sav_gid = -1;
@@ -127,9 +129,11 @@ u_signed64 tot_free_space;
 		else
 			sprintf (sav_gidstr, "%-6u", sav_gid);
 	}
+	c64 = capacity;		/* because C compiler on Windows/NT */
+	f64 = tot_free_space;	/* cannot cast u_signed64 to double */
 	printf ("%-15s %-8.8s %-6.6s CAPACITY %sB FREE %sB (%5.1f%%)\n",
 	    pool_name, sav_uidstr, sav_gidstr,
 	    u64tostru (capacity, tmpbuf, 8),
 	    u64tostru (tot_free_space, tmpbuf2, 8), capacity ?
-	    (double)tot_free_space * 100. / (double)capacity : 0);
+	    (double)f64 * 100. / (double)c64 : 0);
 }
