@@ -1,5 +1,5 @@
 /*
- * $Id: stageping.c,v 1.6 2002/10/19 14:33:53 jdurand Exp $
+ * $Id: stageping.c,v 1.7 2002/10/20 08:41:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageping.c,v $ $Revision: 1.6 $ $Date: 2002/10/19 14:33:53 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageping.c,v $ $Revision: 1.7 $ $Date: 2002/10/20 08:41:27 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -25,14 +25,10 @@ static char sccsid[] = "@(#)$RCSfile: stageping.c,v $ $Revision: 1.6 $ $Date: 20
 #include <unistd.h>
 #include <netinet/in.h>
 #endif
-#include "marshall.h"
 #include "stage_api.h"
 #include "Cgetopt.h"
 #include "serrno.h"
 
-EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
-extern	char	*getenv();
-extern	char	*getconfent();
 void usage _PROTO((char *));
 void cleanup _PROTO((int));
 
@@ -42,23 +38,13 @@ int main(argc, argv)
 		 int	argc;
 		 char	**argv;
 {
-	int c, i;
+	int c;
 	int errflg = 0;
-	gid_t gid;
-	int msglen;
-	int ntries = 0;
-	int nstg161 = 0;
-	char *p;
-	struct passwd *pw;
-	char *q;
-	char *sbp;
-	char sendbuf[REQBUFSZ];
 	char *stghost = NULL;
-	uid_t uid;
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
-	int maxretry = MAXRETRY;
+	u_signed64 flags = 0;
 	static struct Coptions longopts[] =
 	{
 		{"host",               REQUIRED_ARGUMENT,  NULL,      'h'},
@@ -67,14 +53,6 @@ int main(argc, argv)
 		{NULL,                 0,                  NULL,        0}
 	};
 
-	uid = getuid();
-	gid = getgid();
-#if defined(_WIN32)
-	if ((uid < 0) || (uid >= CA_MAXUID) || (gid < 0) || (gid >= CA_MAXGID)) {
-		fprintf (stderr, STG52);
-		exit (USERR);
-	}
-#endif
 	Coptind = 1;
 	Copterr = 1;
 	while ((c = Cgetopt_long (argc, argv, "h:v", longopts, NULL)) != -1) {
@@ -83,6 +61,7 @@ int main(argc, argv)
 			stghost = Coptarg;
 			break;
 		case 'v':
+			flags |= STAGE_VERBOSE;
 			break;
 		case 0:
 			/* Here are the long options */
@@ -106,51 +85,8 @@ int main(argc, argv)
 		exit (USERR);
 	}
 
-	if (! noretry_flag) {
-		if (
-			(((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
-			(((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0))
-			) {
-			noretry_flag = 1;
-		}
-	}
-	if (noretry_flag != 0) maxretry = 0;
+	if (noretry_flag) flags |= STAGE_NORETRY;
 
-	/* Build request header */
-
-	sbp = sendbuf;
-	marshall_LONG (sbp, STGMAGIC);
-	marshall_LONG (sbp, STAGEPING);
-	q = sbp;	/* save pointer. The next field will be updated */
-	msglen = 3 * LONGSIZE;
-	marshall_LONG (sbp, msglen);
-
-	/* Build request body */
-
-	if ((pw = Cgetpwuid (uid)) == NULL) {
-		char uidstr[8];
-		if (errno != ENOENT) fprintf (stderr, STG33, "Cgetpwuid", strerror(errno));
-		sprintf (uidstr, "%d", uid);
-		p = uidstr;
-		fprintf (stderr, STG11, p);
-		exit (SYERR);
-	}
-	marshall_STRING (sbp, pw->pw_name);	/* login name */
-	marshall_WORD (sbp, gid);
-	marshall_WORD (sbp, argc);
-	for (i = 0; i < argc; i++)
-		marshall_STRING (sbp, argv[i]);
-	
-	msglen = sbp - sendbuf;
-	marshall_LONG (q, msglen);	/* update length field */
-	
-#if defined(_WIN32)
-	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-		fprintf (stderr, STG51);
-		exit (SYERR);
-	}
-#endif
-	
 #if !defined(_WIN32)
 	signal (SIGHUP, cleanup);
 #endif
@@ -160,17 +96,8 @@ int main(argc, argv)
 #endif
 	signal (SIGTERM, cleanup);
 	
-	while (1) {
-		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
-		if (c == 0 || serrno == EINVAL) break;
-		if (serrno == ESTNACT && nstg161++ == 0) fprintf(stderr, STG161);
-		if (serrno != ESTNACT && ntries++ > maxretry) break;
-		if (noretry_flag != 0) break; /* To be sure we always break if --noretry is in action */
-		sleep (RETRYI);
-	}
-#if defined(_WIN32)
-	WSACleanup();
-#endif
+	c = stage_ping(flags,stghost);
+
 	exit (c == 0 ? 0 : rc_castor2shift(serrno));
 }
 
