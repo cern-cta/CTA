@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.222 2002/09/21 05:41:56 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.223 2002/09/23 11:16:14 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.222 $ $Date: 2002/09/21 05:41:56 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.223 $ $Date: 2002/09/23 11:16:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1087,7 +1087,9 @@ int main(argc,argv)
 			}
 			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
 						(signed64) ((signed64) actual_size_block - (signed64) stcp->size));
+			last_upd_fileclasses = time(NULL); /* To make rwcountersfs() accept the update */
 			rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
+			last_upd_fileclasses = 0;
 			stcp++;
 		} else if (stcp->status == (STAGEIN|STAGED|STAGE_RDONLY)) {
 			delreq (stcp,0);
@@ -4152,7 +4154,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 		if ((stcp->status == STAGEOUT) && ((stcp->t_or_d == 'm') || (stcp->t_or_d == 'h'))) {
 			if (stcp->actual_size <= 0) {
 				/* We cannot put a to-be-migrated file in status CAN_BE_MIGR if its size is zero */
-				sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath, "size", "zero-length file - removed from disk");
+				sendrep (&rpfd, MSG_ERR, STG02, (stcp->t_or_d == 'm') ? stcp->u1.m.xfile : stcp->u1.h.xfile, "size", "zero-length file on disk - removed");
 				if (delfile(stcp, 0, 1, 1,
 							"upd_stageout update on zero-length to-be-migrated file ok",
 							stcp->uid, stcp->gid, 0, 0, 0) < 0) {
@@ -4165,6 +4167,13 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 					int thisrc;
 					int yetdone_Cns_statx_flag = 0;
 					struct Cns_filestat Cnsfilestat;
+
+					if (last_upd_fileclasses == 0) {
+					  /* This routine is executed at startup on STAGEOUT CASTOR files only, and we know */
+					  /* by construction that it is because file is ENOENT in the Name Server */
+					  /* No need to call stageput_check_hsm */
+					  return(ENOENT);
+					}
 
 					/* This is a CASTOR HSM file */
 					if ((thisrc = stageput_check_hsm(stcp,stcp->uid,stcp->gid,was_put_failed,&yetdone_Cns_statx_flag,&Cnsfilestat,nohsmcreat_flag)) != 0) {
