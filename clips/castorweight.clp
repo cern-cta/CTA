@@ -26,16 +26,17 @@
 ; ----------------------
 ; The Read and Write factors reflects the configuration of the disk
 ; (RAIDx for example)
-; fFsIoRead      = fDiskserver * (filesystemNbRdonly / filesystemNbTot) * filesystemReadImportance
-; fFsIoWronly    = fDiskserver * (filesystemNbWronly / filesystemNbTot) * filesystemWriteImportance
-; fFsIoReadWrite = fDiskserver * (filesystemNbReadWrite / filesystemNbTot) * filesystemReadWriteImportance
-; (where filesystemNbRdonly is forced to 1 is none, idem for the others - filesystemNbTot is then the new grant total)
+; fFs            = fDiskserver * ((filesystemNbTot / diskserverNbTot) + (filesystemIoTot / diskserverIoTot))
 ;
-; Fs deviation is fFsIoRead, fFsIoWronly or fFsIoReadWrite depending on the access mode:
-; fs_weight[mode] = abs(fFsIoRead), abs(fFsIoWronly) or abs(fFsIoReadWrite)
+; Unless you get new monitoring info, we suggest that we you select a filesystem, you update the fFs of all
+; filesystems on the same machine by the one that you have just selected, except that for this one, indeed,
+; you take the original multiplied by 2, e.g.:
+; newfFs = fFs * 2
+; for all (fs) {
+;   if (fs != selectedFs) fFs += selectedfFs
+; }
+; selectfFs = newfFs
 ;
-; Fs weight when we want to compare all fs over all disk servers:
-; Node_weight * (1 + fs_weight[mode])
 
 ; +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ; Compute free corrected memory over all diskserver instances
@@ -463,7 +464,7 @@
 (defrule diskserverWeight
 	?diskserver <- (object (is-a DISKSERVER)
 				(diskserverName ?diskserverName)
-			    (diskserverCorrectedFreeMemMax ?diskserverCorrectedFreeMemMax)
+				(diskserverCorrectedFreeMemMax ?diskserverCorrectedFreeMemMax)
 				(diskserverCorrectedFreeRamMax ?diskserverCorrectedFreeRamMax)
 				(diskserverCorrectedFreeSwapMax ?diskserverCorrectedFreeSwapMax)
 				(diskserverCorrectedAvailProcMax ?diskserverCorrectedAvailProcMax)
@@ -495,7 +496,6 @@
 				(filesystemNbReadWrite $?filesystemNbReadWrite)
 				(filesystemName $?filesystemName)
 				(filesystemCorrectedIo $?filesystemCorrectedIo)
-
 				(diskserverTotalMem ?diskserverTotalMem)
 				(diskserverTotalRam ?diskserverTotalRam)
 				(diskserverTotalSwap ?diskserverTotalSwap)
@@ -505,7 +505,6 @@
 				(filesystemWriteRate $?filesystemWriteRate)
 				(filesystemStatus $?filesystemStatus)
 				(diskserverFlag ?diskserverFlag)
-
 				(diskserverClassFlag ?diskserverClassFlag)
 			)
 	; diskserver not yet weighted
@@ -611,69 +610,79 @@
 	)
 
 	; Count the total number of streams on that diskserver
-    (bind ?filesystemReadWeight (create$ ))
-    (bind ?filesystemWriteWeight (create$ ))
-    (bind ?filesystemReadWriteWeight (create$ ))
-    (loop-for-count (?index 1 ?diskserverNfs)
+	(bind ?diskserverNbTot 0)
+	(loop-for-count (?index 1 ?diskserverNfs)
+		(bind ?diskserverNbTot (+
+						?diskserverNbTot
+						(nth$ ?index ?filesystemNbRdonly)
+						(nth$ ?index ?filesystemNbWronly)
+						(nth$ ?index ?filesystemNbReadWrite)
+					)
+		)
+	)
+	; Protection
+	(if (= 0 ?diskserverNbTot) then
+		(bind ?diskserverNbTot 1)
+	)
+	(if (= 0 ?diskserverIo) then
+		(bind ?diskserverIo 1)
+	)
+	; Compute relative weight of that filesystem : (N(fs)/Ntot + IO(fs)/IOtot)
+	; Note: historically we were distinguishing r/w/rw, but we moved to a model
+	; where there weight does not depend on the stream direction.
+ 	(bind ?filesystemReadWeight (create$ ))
+	(bind ?filesystemWriteWeight (create$ ))
+	(bind ?filesystemReadWriteWeight (create$ ))
+	(loop-for-count (?index 1 ?diskserverNfs)
 		(bind ?thisFilesystemNbRdonly (nth$ ?index ?filesystemNbRdonly))
 		(bind ?thisFilesystemNbWronly (nth$ ?index ?filesystemNbWronly))
 		(bind ?thisFilesystemNbReadWrite (nth$ ?index ?filesystemNbReadWrite))
-		(if (< ?thisFilesystemNbRdonly 1) then
-		    (if (!= 0 ?*Debug*) then
-		      (printout t "[diskserverWeight] " ?diskserverName ": Warning, filesystemNbRdonly < 1, forcing 1" crlf)
-		      )
-		    (bind ?thisFilesystemNbRdonly 1)
-		)
-		(if (< ?thisFilesystemNbWronly 1) then
-		    (if (!= 0 ?*Debug*) then
-		      (printout t "[diskserverWeight] " ?diskserverName ": Warning, filesystemNbWronly < 1, forcing 1" crlf)
-		      )
-		    (bind ?thisFilesystemNbWronly 1)
-		)
-		(if (< ?thisFilesystemNbReadWrite 1) then
-		    (if (!= 0 ?*Debug*) then
-		      (printout t "[diskserverWeight] " ?diskserverName ": Warning, filesystemNbReadWrite < 1, forcing 1" crlf)
-		      )
-		    (bind ?thisFilesystemNbReadWrite 1)
-		)
-		(bind ?filesystemNbTot
+		(bind ?thisFilesystemReadRate (nth$ ?index ?filesystemReadRate))
+		(bind ?thisFilesystemWriteRate (nth$ ?index ?filesystemWriteRate))
+		(bind ?thisFilesystemNbTot
 		      (+ ?thisFilesystemNbRdonly
 			 ?thisFilesystemNbWronly
 			 ?thisFilesystemNbReadWrite)
+		)
+		(bind ?thisFilesystemIoTot
+		      (+ ?thisFilesystemReadRate
+			 ?thisFilesystemWriteRate)
 		)
 		(if (!= 0 ?*Debug*) then
 		  (printout t "[diskserverWeight] " ?diskserverName
 			    ":"
 			    (nth$ ?index ?filesystemName)
-			    " Rdonly/Wronly/ReadWrite nb streams is "
+			    " Rdonly/Wronly/ReadWrite/IoRead/IoWrite -> NStreams/Io is "
 			    ?thisFilesystemNbRdonly
 			    "/"
 			    ?thisFilesystemNbWronly
 			    "/"
 			    ?thisFilesystemNbReadWrite
-			    ", newfIo is "
-			    ?newfIo
+			    "/"
+			    ?thisFilesystemReadRate
+			    "/"
+			    ?thisFilesystemWriteRate
+			    " -> "
+			    ?thisFilesystemNbTot
+			    "/"
+			    ?thisFilesystemIoTot
 			    crlf
 		   )
 		)
-	    (bind ?thisReadWeight
+		(bind ?thisWeight
 			(* ?diskserverWeight
-				 (/ ?thisFilesystemNbRdonly
-				    ?filesystemNbTot )
+				(+
+					(/ ?thisFilesystemNbTot ?diskserverNbTot )
+					(/ ?thisFilesystemIoTot ?diskserverIo    )
+				)
 			)
 		 )
-		(bind ?thisWriteWeight
-			(* ?newfIo
-				 (/ ?thisFilesystemNbWronly
-				    ?filesystemNbTot )
-			)
-        )
-		(bind ?thisReadWriteWeight
-			(* ?newfIo
-				 (/ ?thisFilesystemNbReadWrite
-				    ?filesystemNbTot )
-			)
+		(if (< ?thisWeight 0.1) then
+			(bind ?thisWeight 0.1)
 		)
+		(bind ?thisReadWeight ?thisWeight)
+		(bind ?thisWriteWeight ?thisWeight)
+		(bind ?thisReadWriteWeight ?thisWeight)
 		(if (!= 0 ?*Debug*) then
 		  (printout t "[diskserverWeight] " ?diskserverName
 			    ":"
@@ -684,8 +693,6 @@
 			    ?thisWriteWeight
 			    "/"
 			    ?thisReadWriteWeight
-			    ", newfIo is "
-			    ?newfIo
 			    crlf
 		   )
 		)
@@ -719,7 +726,6 @@
 			(bind ?filesystemReadWriteWeight (insert$ ?filesystemReadWriteWeight (+ 1 (length ?filesystemReadWriteWeight)) ?thisReadWeight))
 		)
 	)
-	; Compute the total number of streams on that diskserver
 	(if (!= 0 ?*Debug*) then
 	    (printout t "[diskserverWeight] " ?diskserverName
 			    ": Weight of read streams is "
@@ -747,7 +753,8 @@
 			(break)
 		)
 	)
-	(send ?diskserver put-diskserverWeight (+ 1. ?diskserverWeight))
+	; (send ?diskserver put-diskserverWeight (+ 1. ?diskserverWeight))
+	(send ?diskserver put-diskserverWeight ?diskserverWeight)
 	(if (= ?Ntodo 0) then
 		; We use this instance to fire the rule on the files...
 		(send ?diskserver put-diskserverClassFlag 1)
