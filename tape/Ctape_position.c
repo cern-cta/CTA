@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.3 $ $Date: 1999/09/20 15:24:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.4 $ $Date: 1999/10/13 14:22:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_position - send a request to the tape daemon to get the tape
@@ -12,10 +12,10 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.3 $ $Dat
  */
 #include <errno.h>
 #include <sys/types.h>
-#include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
+#include <unistd.h>
 #include <netinet/in.h>
 #endif
 #include "Ctape.h"
@@ -63,7 +63,7 @@ int flags;
 #if defined(_WIN32)
 	if (uid < 0 || gid < 0) {
 		Ctape_errmsg (func, TP053);
-		return (USERR);
+		return (SENOMAPFND);
 	}
 #endif
 	jid = findpgrp();

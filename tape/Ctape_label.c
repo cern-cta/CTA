@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_label.c,v $ $Revision: 1.3 $ $Date: 1999/09/20 15:19:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_label.c,v $ $Revision: 1.4 $ $Date: 1999/10/13 14:22:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_label - send a request to the tape daemon to have a tape mounted
@@ -12,10 +12,10 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_label.c,v $ $Revision: 1.3 $ $Date: 
  */
 #include <errno.h>
 #include <sys/types.h>
-#include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
+#include <unistd.h>
 #include <netinet/in.h>
 #endif
 #include "Ctape.h"
@@ -65,7 +65,7 @@ int nbhdr;
 #if defined(_WIN32)
 	if (uid < 0 || gid < 0) {
 		Ctape_errmsg (func, TP053);
-		return (USERR);
+		return (SENOMAPFND);
 	}
 #endif
 	jid = findpgrp();
@@ -73,7 +73,7 @@ int nbhdr;
 	p = getacct();
 	if (p == NULL) {
 		Ctape_errmsg (func, TP027);
-		return (USERR);
+		return (SENOMAPFND);
 	}
 	strcpy (acctname, p);
 #else

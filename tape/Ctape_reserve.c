@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_reserve.c,v $ $Revision: 1.3 $ $Date: 1999/09/20 15:26:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_reserve.c,v $ $Revision: 1.4 $ $Date: 1999/10/13 14:22:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_reserve - reserve tape resources */
@@ -41,7 +41,7 @@ struct dgn_rsv dgn_rsv[];
 #if defined(_WIN32)
 	if (uid < 0 || gid < 0) {
 		Ctape_errmsg (func, TP053);
-		return (USERR);
+		return (SENOMAPFND);
 	}
 #endif
 	jid = findpgrp();
