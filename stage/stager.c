@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.149 2001/06/07 13:32:34 jdurand Exp $
+ * $Id: stager.c,v 1.150 2001/06/18 18:54:15 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.149 $ $Date: 2001/06/07 13:32:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.150 $ $Date: 2001/06/18 18:54:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -3459,27 +3459,29 @@ int stager_hsm_callback(tapereq,filereq)
 				compression_factor = filereq->host_bytes * 100 / filereq->bytes_out;
 			}
 			Flags = tape_flag;
+			if (filereq->bytes_in > 0) {
 #ifdef STAGER_DEBUG
-			SAVE_EID;
-			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] Calling vmgr_updatetape(vid=\"%s\",BytesWriten=%s,CompressionFactor=%d,FilesWriten=%d,Flags=%d)\n",
-				tapereq->vid,
-				u64tostr(filereq->bytes_in, tmpbuf1, 0),
-				compression_factor,
-				1,
-				Flags);
-			RESTORE_EID;
-#endif
-			if (vmgr_updatetape(tapereq->vid,
-								filereq->bytes_in,
-								compression_factor,
-								1,
-								Flags
-				) != 0) {
 				SAVE_EID;
-				sendrep (rpfd, MSG_ERR, STG02, vid, "vmgr_updatetape", sstrerror(serrno));
+				sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] Calling vmgr_updatetape(vid=\"%s\",BytesWriten=%s,CompressionFactor=%d,FilesWriten=%d,Flags=%d)\n",
+					tapereq->vid,
+					u64tostr(filereq->bytes_in, tmpbuf1, 0),
+					compression_factor,
+					1,
+					Flags);
 				RESTORE_EID;
-				fatal_callback_error = callback_error = 1;
-				return(-1);
+#endif
+				if (vmgr_updatetape(tapereq->vid,
+									filereq->bytes_in,
+									compression_factor,
+									1,
+									Flags
+					) != 0) {
+					SAVE_EID;
+					sendrep (rpfd, MSG_ERR, STG02, vid, "vmgr_updatetape", sstrerror(serrno));
+					RESTORE_EID;
+					fatal_callback_error = callback_error = 1;
+					return(-1);
+				}
 			}
 
 			if (filereq->bytes_in <= 0) {
@@ -3865,6 +3867,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Thursday 07 June, 2001 at 15:30:39 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Monday 18 June, 2001 at 20:51:00 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
