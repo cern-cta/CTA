@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd.c,v 1.12 2000/01/09 10:26:06 jdurand Exp $
+ * $Id: send2stgd.c,v 1.13 2000/01/19 08:43:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.12 $ $Date: 2000/01/09 10:26:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.13 $ $Date: 2000/01/19 08:43:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -141,7 +141,7 @@ int want_reply;
 	}
 
 	while (1) {
-		if ((n = netread_timeout (stg_s, repbuf, 3 * LONGSIZE, STGTIMEOUT)) != (3 * LONGSIZE)) {
+		if ((n = netread(stg_s, repbuf, 3 * LONGSIZE)) != (3 * LONGSIZE)) {
 			if (n == 0)
 				fprintf (stderr, STG02, "", "recv", sys_serrlist[SERRNO]);
 			else
@@ -160,7 +160,7 @@ int want_reply;
 			(void) netclose (stg_s);
 			break;
 		}
-		if ((n = netread_timeout (stg_s, repbuf, c, STGTIMEOUT)) != c) {
+		if ((n = netread(stg_s, repbuf, c)) != c) {
 			if (n == 0)
 				fprintf (stderr, STG02, "", "recv", sys_serrlist[SERRNO]);
 			else
