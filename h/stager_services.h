@@ -1,5 +1,5 @@
 /*
- * $Id: stager_services.h,v 1.4 2005/03/17 15:01:19 jdurand Exp $*
+ * $Id: stager_services.h,v 1.5 2005/03/22 17:45:02 jdurand Exp $*
  */
 
 #ifndef __stager_services_h
@@ -7,7 +7,6 @@
 
 #include "stager_db_service.h"
 #include "stager_query_service.h"
-#include "stager_update_service.h"
 #include "stager_getnext_service.h"
 #include "stager_job_service.h"
 #include "stager_fs_service.h"
