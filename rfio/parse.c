@@ -1,3 +1,4 @@
+
 /*
  * parse.c,v 1.17 2004/03/02 09:17:40 obarring Exp
  */
@@ -18,13 +19,24 @@ static char sccsid[] = "@(#)parse.c,v 1.17 2004/03/02 09:17:40 CERN/IT/PDP/DM Fr
 #if !defined(_WIN32)
 #include <sys/param.h>		/* system dependent parameters		*/
 #endif
+#include <stdlib.h>
 #include <string.h>
 #include <Castor_limits.h>
+#ifndef CA_MAXDOMAINNAMELEN
+#define CA_MAXDOMAINNAMELEN CA_MAXHOSTNAMELEN
+#endif
+#include "osdep.h"
+#include "Cns_api.h"
 #include "rfio.h"               /* remote file I/O definitions          */
 #include <Cglobals.h>
 #include <RfioTURL.h>
 
 extern char *getconfent();
+#if defined(CNS_ROOT)
+extern int rfio_HsmIf_IsCnsFile _PROTO((char *));
+#endif
+EXTERN_C int DLL_DECL Cdomainname _PROTO((char *, int));
+static int rfio_parseln_old _PROTO((char *, char **, char **,int));
 
 static int name1_key = -1;
 static int buffer_key = -1;
@@ -53,7 +65,7 @@ int   	ln ; 	/* solve links or not ? */
     if (turl.rfioPort > 0) {
       int hostlen, portlen;
       hostlen = strlen(turl.rfioHostName);
-      snprintf(buf, CA_MAXHOSTNAMELEN, ":%d", turl.rfioPort);
+      snprintf(buf, CA_MAXHOSTNAMELEN, ":%lx", turl.rfioPort);
       buf[CA_MAXHOSTNAMELEN] = '\0';
       portlen = strlen(buf);
       *host =(char *)malloc(hostlen + portlen + 1);
@@ -91,7 +103,7 @@ int   	ln ; 	/* solve links or not ? */
 
 
 
-int DLL_DECL rfio_parseln_old(name, host, path, ln) /* parse name to host and path  */
+static int rfio_parseln_old(name, host, path, ln) /* parse name to host and path  */
 char    *name;
 char    **host;
 char    **path;
@@ -100,6 +112,7 @@ int   	ln ; 	/* solve links or not ? */
    char    *cp1, *cp2, *cp3;
    register int i;
    char	localhost[CA_MAXHOSTNAMELEN+1];
+   char localdomain[CA_MAXDOMAINNAMELEN+1];  /* Local domain */
    int 	n = 0;
    char 	*name_1 = NULL;
    char  	*buffer = NULL;    /* To hold temporary strings */
@@ -111,6 +124,11 @@ int   	ln ; 	/* solve links or not ? */
  * where prefix is defined in /etc/shift.conf :
  *      RFIO  NFS_ROOT          /.....
  */
+
+   /* Get local domain */
+   if (Cdomainname(localdomain,CA_MAXDOMAINNAMELEN) != 0) {
+     strcpy(localdomain,"localdomain");
+   }
 
    if ( rfioreadopt(RFIO_CONNECTOPT) == RFIO_FORCELOCAL )  {
       TRACE (2,"rfio","rfio_parseln(): Forcing local calls");
@@ -277,32 +295,58 @@ int   	ln ; 	/* solve links or not ? */
       if (strcmp(localhost, buffer) == 0 || strcmp("localhost",buffer) == 0)  {
 	 *host = NULL;
 	 return(0);
-      }
-      else    {
-	 return(1);
-      }
-   }
-   else    {
-      /* first check if the path is in DOS format, e.g. hostname:x:/path/name */
-      if( ((cp2 = strchr(name_1, ':')) != NULL) && (cp1 == cp2+2))  {
-	 strncpy(buffer, name_1, cp2-name_1);
-	 buffer[cp2-name_1] = '\0';
-	 *host = buffer;
-	 *path = cp2+1;
-      }  else  {
-	 strncpy(buffer,name_1,cp1-name_1);
-	 buffer[cp1-name_1] = '\0';
-	 *host = buffer;
-	 *path = cp1+1;
-      }
-	 /* is it localhost ? */
-	 if (strcmp(localhost, buffer) == 0 || strcmp("localhost", buffer) == 0)  {
+      } else {
+	char *p;
+
+	/* Perhaps localhost is a FQDN and buffer is not ? */
+	if ((strchr(buffer,'.') == NULL) &&                       /* buffer is not a FDQN */
+	    ((p = strstr(localhost,localdomain)) != NULL) &&        /* but localhost is because */
+	    (p > localhost) &&                                    /* we are sure it ends in the form */
+	    (*(p-1) == '.') &&                                    /* .localdomain\0 */
+	    (p[strlen(localdomain)] == '\0')) {
+	  *(p-1) = '\0';
+	  if (strcmp(buffer,localhost) == 0) {
 	    *host = NULL;
 	    return(0);
-	 }
-	 else    {
-	    return(1);
-	 }
+	  }
+	  
+	}
+	return(1);
+      }
+   } else {
+     /* first check if the path is in DOS format, e.g. hostname:x:/path/name */
+     if( ((cp2 = strchr(name_1, ':')) != NULL) && (cp1 == cp2+2))  {
+       strncpy(buffer, name_1, cp2-name_1);
+       buffer[cp2-name_1] = '\0';
+       *host = buffer;
+       *path = cp2+1;
+     }  else  {
+       strncpy(buffer,name_1,cp1-name_1);
+       buffer[cp1-name_1] = '\0';
+       *host = buffer;
+       *path = cp1+1;
+     }
+     /* is it localhost ? */
+     if (strcmp(localhost, buffer) == 0 || strcmp("localhost", buffer) == 0)  {
+       *host = NULL;
+       return(0);
+     } else {
+       char *p;
+	
+       /* Perhaps localhost is a FQDN and buffer is not ? */
+       if ((strchr(buffer,'.') == NULL) &&                       /* buffer is not a FDQN */
+	   ((p = strstr(localhost,localdomain)) != NULL) &&        /* but localhost is because */
+	   (p > localhost) &&                                    /* we are sure it ends in the form */
+	   (*(p-1) == '.') &&                                    /* .localdomain\0 */
+	   (p[strlen(localdomain)] == '\0')) {
+	 *(p-1) = '\0';
+	 if (strcmp(buffer,localhost) == 0) {
+	   *host = NULL;
+	   return(0);
+	 } 
+       }
+       return(1);
+     }
    }
 }
 
