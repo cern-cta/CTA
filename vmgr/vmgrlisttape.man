@@ -1,13 +1,15 @@
-.\" @(#)$RCSfile: vmgrlisttape.man,v $ $Revision: 1.1 $ $Date: 2000/03/20 13:39:59 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrlisttape.man,v $ $Revision: 1.2 $ $Date: 2001/01/08 07:02:20 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRLISTTAPE 1 "$Date: 2000/03/20 13:39:59 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRLISTTAPE 1 "$Date: 2001/01/08 07:02:20 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrlisttape \- query the CASTOR Volume Manager about a tape or list all existing tapes
 .SH SYNOPSIS
 .B vmgrlisttape
 [
+.BI -P " pool_name"
+] [
 .BI -V " vid"
 ] [
 .B -x
@@ -59,6 +61,9 @@ or
 .BR DISABLED .
 .SH OPTIONS
 .TP
+.BI \-P " pool_name"
+restricts the list to the tapes belonging to this pool.
+.TP
 .BI \-V " vid"
 restricts the list to the tape having this volume visual identifier.
 It must be at most CA_MAXVIDLEN characters long.
@@ -85,4 +90,5 @@ failed.
 .BR Castor_limits(4) ,
 .BR vmgr_entertape(3) ,
 .BR vmgrentertape(1) ,
+.B vmgr_listtape(3) ,
 .B vmgr_querytape(3)
