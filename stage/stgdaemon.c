@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.173 2002/02/20 14:16:47 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.174 2002/02/20 15:45:44 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.173 $ $Date: 2002/02/20 14:16:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.174 $ $Date: 2002/02/20 15:45:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -2385,7 +2385,7 @@ void checkwaitq()
 							 ! wqp->ovl_pid &&
 							 ! *(wqp->waiting_pool) && wqp->status != ENOSPC &&
 							 wqp->status != USERR && wqp->status != CLEARED &&
-							 wqp->status != REQKILD && wqp->nretry < MAXRETRY) {
+							 wqp->status != REQKILD && wqp->nretry < (wqp->noretry ? 0 : MAXRETRY)) {
 			if (wqp->nretry)
 				sendrep (wqp->rpfd, MSG_ERR, STG43, wqp->nretry);
 			if (wqp->save_subreqid != NULL) {
