@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.55 $ $Date: 2004/06/01 16:02:26 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.56 $ $Date: 2004/06/07 08:55:02 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1105,6 +1105,7 @@ int vdqm_DelVolReq(vdqmVolReq_t *VolReq) {
      */
     if ( (drvrec = volrec->drv) != NULL ) {
         drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
+        volrec->vol.recvtime = time(NULL);
         drvrec->update = 1;
         volrec->update = 0;
         vdqm_SetError(EVQREQASS);
