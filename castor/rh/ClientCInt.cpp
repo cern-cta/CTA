@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/IClient.hpp"
+#include "castor/IObject.hpp"
 #include "castor/rh/Client.hpp"
 #include "castor/stager/Request.hpp"
 #include "osdep.h"
@@ -58,6 +59,20 @@ extern "C" {
   // Crh_Client_fromIClient
   //----------------------------------------------------------------------------
   castor::rh::Client* Crh_Client_fromIClient(castor::IClient* obj) {
+    return dynamic_cast<castor::rh::Client*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_Client_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Crh_Client_getIObject(castor::rh::Client* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_Client_fromIObject
+  //----------------------------------------------------------------------------
+  castor::rh::Client* Crh_Client_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::rh::Client*>(obj);
   }
 

@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/IObject.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/TapeCopyForMigration.hpp"
 
@@ -56,6 +57,20 @@ extern "C" {
   // Cstager_TapeCopyForMigration_fromTapeCopy
   //----------------------------------------------------------------------------
   castor::stager::TapeCopyForMigration* Cstager_TapeCopyForMigration_fromTapeCopy(castor::stager::TapeCopy* obj) {
+    return dynamic_cast<castor::stager::TapeCopyForMigration*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Cstager_TapeCopyForMigration_getIObject(castor::stager::TapeCopyForMigration* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_fromIObject
+  //----------------------------------------------------------------------------
+  castor::stager::TapeCopyForMigration* Cstager_TapeCopyForMigration_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::stager::TapeCopyForMigration*>(obj);
   }
 

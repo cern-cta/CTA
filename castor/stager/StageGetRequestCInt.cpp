@@ -26,7 +26,9 @@
 
 // Include Files
 #include "castor/IClient.hpp"
+#include "castor/IObject.hpp"
 #include "castor/stager/FileRequest.hpp"
+#include "castor/stager/Request.hpp"
 #include "castor/stager/StageGetRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
@@ -61,6 +63,34 @@ extern "C" {
   // Cstager_StageGetRequest_fromFileRequest
   //----------------------------------------------------------------------------
   castor::stager::StageGetRequest* Cstager_StageGetRequest_fromFileRequest(castor::stager::FileRequest* obj) {
+    return dynamic_cast<castor::stager::StageGetRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageGetRequest_getRequest
+  //----------------------------------------------------------------------------
+  castor::stager::Request* Cstager_StageGetRequest_getRequest(castor::stager::StageGetRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageGetRequest_fromRequest
+  //----------------------------------------------------------------------------
+  castor::stager::StageGetRequest* Cstager_StageGetRequest_fromRequest(castor::stager::Request* obj) {
+    return dynamic_cast<castor::stager::StageGetRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageGetRequest_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Cstager_StageGetRequest_getIObject(castor::stager::StageGetRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageGetRequest_fromIObject
+  //----------------------------------------------------------------------------
+  castor::stager::StageGetRequest* Cstager_StageGetRequest_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::stager::StageGetRequest*>(obj);
   }
 

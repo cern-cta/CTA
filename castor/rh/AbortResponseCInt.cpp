@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/IObject.hpp"
 #include "castor/rh/AbortResponse.hpp"
 #include "castor/rh/Response.hpp"
 #include "osdep.h"
@@ -57,6 +58,20 @@ extern "C" {
   // Crh_AbortResponse_fromResponse
   //----------------------------------------------------------------------------
   castor::rh::AbortResponse* Crh_AbortResponse_fromResponse(castor::rh::Response* obj) {
+    return dynamic_cast<castor::rh::AbortResponse*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_AbortResponse_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Crh_AbortResponse_getIObject(castor::rh::AbortResponse* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_AbortResponse_fromIObject
+  //----------------------------------------------------------------------------
+  castor::rh::AbortResponse* Crh_AbortResponse_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::rh::AbortResponse*>(obj);
   }
 

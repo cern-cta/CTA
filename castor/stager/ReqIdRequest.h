@@ -30,6 +30,7 @@
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
 struct C_IClient_t;
+struct C_IObject_t;
 struct Cstager_FileRequest_t;
 struct Cstager_ReqIdRequest_t;
 struct Cstager_Request_t;
@@ -60,6 +61,16 @@ struct Cstager_Request_t* Cstager_ReqIdRequest_getRequest(struct Cstager_ReqIdRe
  * Dynamic cast from Request
  */
 struct Cstager_ReqIdRequest_t* Cstager_ReqIdRequest_fromRequest(struct Cstager_Request_t* obj);
+
+/**
+ * Cast into IObject
+ */
+struct C_IObject_t* Cstager_ReqIdRequest_getIObject(struct Cstager_ReqIdRequest_t* obj);
+
+/**
+ * Dynamic cast from IObject
+ */
+struct Cstager_ReqIdRequest_t* Cstager_ReqIdRequest_fromIObject(struct C_IObject_t* obj);
 
 /**
  * Outputs this object in a human readable format

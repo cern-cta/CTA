@@ -30,6 +30,7 @@
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
 struct C_IClient_t;
+struct C_IObject_t;
 struct Crh_Client_t;
 struct Cstager_Request_t;
 
@@ -59,6 +60,16 @@ struct C_IClient_t* Crh_Client_getIClient(struct Crh_Client_t* obj);
  * Dynamic cast from IClient
  */
 struct Crh_Client_t* Crh_Client_fromIClient(struct C_IClient_t* obj);
+
+/**
+ * Cast into IObject
+ */
+struct C_IObject_t* Crh_Client_getIObject(struct Crh_Client_t* obj);
+
+/**
+ * Dynamic cast from IObject
+ */
+struct Crh_Client_t* Crh_Client_fromIObject(struct C_IObject_t* obj);
 
 /**
  * Outputs this object in a human readable format

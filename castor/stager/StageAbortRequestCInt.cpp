@@ -26,7 +26,9 @@
 
 // Include Files
 #include "castor/IClient.hpp"
+#include "castor/IObject.hpp"
 #include "castor/stager/FileRequest.hpp"
+#include "castor/stager/Request.hpp"
 #include "castor/stager/StageAbortRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
@@ -61,6 +63,34 @@ extern "C" {
   // Cstager_StageAbortRequest_fromFileRequest
   //----------------------------------------------------------------------------
   castor::stager::StageAbortRequest* Cstager_StageAbortRequest_fromFileRequest(castor::stager::FileRequest* obj) {
+    return dynamic_cast<castor::stager::StageAbortRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageAbortRequest_getRequest
+  //----------------------------------------------------------------------------
+  castor::stager::Request* Cstager_StageAbortRequest_getRequest(castor::stager::StageAbortRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageAbortRequest_fromRequest
+  //----------------------------------------------------------------------------
+  castor::stager::StageAbortRequest* Cstager_StageAbortRequest_fromRequest(castor::stager::Request* obj) {
+    return dynamic_cast<castor::stager::StageAbortRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageAbortRequest_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Cstager_StageAbortRequest_getIObject(castor::stager::StageAbortRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageAbortRequest_fromIObject
+  //----------------------------------------------------------------------------
+  castor::stager::StageAbortRequest* Cstager_StageAbortRequest_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::stager::StageAbortRequest*>(obj);
   }
 

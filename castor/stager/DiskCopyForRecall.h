@@ -28,6 +28,7 @@
 #define CASTOR_STAGER_DISKCOPYFORRECALL_H
 
 // Include Files and Forward declarations for the C world
+struct C_IObject_t;
 struct Cstager_DiskCopyForRecall_t;
 struct Cstager_DiskCopy_t;
 
@@ -56,6 +57,16 @@ struct Cstager_DiskCopy_t* Cstager_DiskCopyForRecall_getDiskCopy(struct Cstager_
  * Dynamic cast from DiskCopy
  */
 struct Cstager_DiskCopyForRecall_t* Cstager_DiskCopyForRecall_fromDiskCopy(struct Cstager_DiskCopy_t* obj);
+
+/**
+ * Cast into IObject
+ */
+struct C_IObject_t* Cstager_DiskCopyForRecall_getIObject(struct Cstager_DiskCopyForRecall_t* obj);
+
+/**
+ * Dynamic cast from IObject
+ */
+struct Cstager_DiskCopyForRecall_t* Cstager_DiskCopyForRecall_fromIObject(struct C_IObject_t* obj);
 
 /**
  * Outputs this object in a human readable format

@@ -26,8 +26,10 @@
 
 // Include Files
 #include "castor/IClient.hpp"
+#include "castor/IObject.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/ReqIdRequest.hpp"
+#include "castor/stager/Request.hpp"
 #include "castor/stager/StagePutNextRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
@@ -60,6 +62,34 @@ extern "C" {
   // Cstager_StagePutNextRequest_fromReqIdRequest
   //----------------------------------------------------------------------------
   castor::stager::StagePutNextRequest* Cstager_StagePutNextRequest_fromReqIdRequest(castor::stager::ReqIdRequest* obj) {
+    return dynamic_cast<castor::stager::StagePutNextRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_getRequest
+  //----------------------------------------------------------------------------
+  castor::stager::Request* Cstager_StagePutNextRequest_getRequest(castor::stager::StagePutNextRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_fromRequest
+  //----------------------------------------------------------------------------
+  castor::stager::StagePutNextRequest* Cstager_StagePutNextRequest_fromRequest(castor::stager::Request* obj) {
+    return dynamic_cast<castor::stager::StagePutNextRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Cstager_StagePutNextRequest_getIObject(castor::stager::StagePutNextRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutNextRequest_fromIObject
+  //----------------------------------------------------------------------------
+  castor::stager::StagePutNextRequest* Cstager_StagePutNextRequest_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::stager::StagePutNextRequest*>(obj);
   }
 

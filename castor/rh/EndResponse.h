@@ -29,6 +29,7 @@
 
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
+struct C_IObject_t;
 struct Crh_EndResponse_t;
 struct Crh_Response_t;
 
@@ -58,6 +59,16 @@ struct Crh_Response_t* Crh_EndResponse_getResponse(struct Crh_EndResponse_t* obj
  * Dynamic cast from Response
  */
 struct Crh_EndResponse_t* Crh_EndResponse_fromResponse(struct Crh_Response_t* obj);
+
+/**
+ * Cast into IObject
+ */
+struct C_IObject_t* Crh_EndResponse_getIObject(struct Crh_EndResponse_t* obj);
+
+/**
+ * Dynamic cast from IObject
+ */
+struct Crh_EndResponse_t* Crh_EndResponse_fromIObject(struct C_IObject_t* obj);
 
 /**
  * Outputs this object in a human readable format

@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/IClient.hpp"
+#include "castor/IObject.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/ReqIdRequest.hpp"
 #include "castor/stager/Request.hpp"
@@ -53,6 +54,20 @@ extern "C" {
   // Cstager_ReqIdRequest_fromRequest
   //----------------------------------------------------------------------------
   castor::stager::ReqIdRequest* Cstager_ReqIdRequest_fromRequest(castor::stager::Request* obj) {
+    return dynamic_cast<castor::stager::ReqIdRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Cstager_ReqIdRequest_getIObject(castor::stager::ReqIdRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_fromIObject
+  //----------------------------------------------------------------------------
+  castor::stager::ReqIdRequest* Cstager_ReqIdRequest_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::stager::ReqIdRequest*>(obj);
   }
 

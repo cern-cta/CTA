@@ -26,7 +26,9 @@
 
 // Include Files
 #include "castor/IClient.hpp"
+#include "castor/IObject.hpp"
 #include "castor/stager/QryRequest.hpp"
+#include "castor/stager/Request.hpp"
 #include "castor/stager/StageFileQueryRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
@@ -59,6 +61,34 @@ extern "C" {
   // Cstager_StageFileQueryRequest_fromQryRequest
   //----------------------------------------------------------------------------
   castor::stager::StageFileQueryRequest* Cstager_StageFileQueryRequest_fromQryRequest(castor::stager::QryRequest* obj) {
+    return dynamic_cast<castor::stager::StageFileQueryRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFileQueryRequest_getRequest
+  //----------------------------------------------------------------------------
+  castor::stager::Request* Cstager_StageFileQueryRequest_getRequest(castor::stager::StageFileQueryRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFileQueryRequest_fromRequest
+  //----------------------------------------------------------------------------
+  castor::stager::StageFileQueryRequest* Cstager_StageFileQueryRequest_fromRequest(castor::stager::Request* obj) {
+    return dynamic_cast<castor::stager::StageFileQueryRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFileQueryRequest_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Cstager_StageFileQueryRequest_getIObject(castor::stager::StageFileQueryRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFileQueryRequest_fromIObject
+  //----------------------------------------------------------------------------
+  castor::stager::StageFileQueryRequest* Cstager_StageFileQueryRequest_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::stager::StageFileQueryRequest*>(obj);
   }
 

@@ -26,7 +26,9 @@
 
 // Include Files
 #include "castor/IClient.hpp"
+#include "castor/IObject.hpp"
 #include "castor/stager/FileRequest.hpp"
+#include "castor/stager/Request.hpp"
 #include "castor/stager/StagePrepareToGetRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
@@ -61,6 +63,34 @@ extern "C" {
   // Cstager_StagePrepareToGetRequest_fromFileRequest
   //----------------------------------------------------------------------------
   castor::stager::StagePrepareToGetRequest* Cstager_StagePrepareToGetRequest_fromFileRequest(castor::stager::FileRequest* obj) {
+    return dynamic_cast<castor::stager::StagePrepareToGetRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePrepareToGetRequest_getRequest
+  //----------------------------------------------------------------------------
+  castor::stager::Request* Cstager_StagePrepareToGetRequest_getRequest(castor::stager::StagePrepareToGetRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePrepareToGetRequest_fromRequest
+  //----------------------------------------------------------------------------
+  castor::stager::StagePrepareToGetRequest* Cstager_StagePrepareToGetRequest_fromRequest(castor::stager::Request* obj) {
+    return dynamic_cast<castor::stager::StagePrepareToGetRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePrepareToGetRequest_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Cstager_StagePrepareToGetRequest_getIObject(castor::stager::StagePrepareToGetRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePrepareToGetRequest_fromIObject
+  //----------------------------------------------------------------------------
+  castor::stager::StagePrepareToGetRequest* Cstager_StagePrepareToGetRequest_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::stager::StagePrepareToGetRequest*>(obj);
   }
 

@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/IClient.hpp"
+#include "castor/IObject.hpp"
 #include "castor/stager/QryRequest.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/SvcClass.hpp"
@@ -52,6 +53,20 @@ extern "C" {
   // Cstager_QryRequest_fromRequest
   //----------------------------------------------------------------------------
   castor::stager::QryRequest* Cstager_QryRequest_fromRequest(castor::stager::Request* obj) {
+    return dynamic_cast<castor::stager::QryRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Cstager_QryRequest_getIObject(castor::stager::QryRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_fromIObject
+  //----------------------------------------------------------------------------
+  castor::stager::QryRequest* Cstager_QryRequest_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::stager::QryRequest*>(obj);
   }
 

@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/IObject.hpp"
 #include "castor/rh/FindReqResponse.hpp"
 #include "castor/rh/Response.hpp"
 #include "osdep.h"
@@ -57,6 +58,20 @@ extern "C" {
   // Crh_FindReqResponse_fromResponse
   //----------------------------------------------------------------------------
   castor::rh::FindReqResponse* Crh_FindReqResponse_fromResponse(castor::rh::Response* obj) {
+    return dynamic_cast<castor::rh::FindReqResponse*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FindReqResponse_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Crh_FindReqResponse_getIObject(castor::rh::FindReqResponse* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FindReqResponse_fromIObject
+  //----------------------------------------------------------------------------
+  castor::rh::FindReqResponse* Crh_FindReqResponse_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::rh::FindReqResponse*>(obj);
   }
 

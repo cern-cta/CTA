@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/18 09:19:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/19 11:15:27 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -177,19 +177,13 @@ void CHClassWriter::writeConstructorDecls(QTextStream &stream) {
 // writeCastsDecls
 //=============================================================================
 void CHClassWriter::writeCastsDecls(QTextStream &stream) {
-  for (UMLClassifier *superClass = m_classInfo->superclasses.first();
+  for (UMLClassifier *superClass = m_classInfo->allSuperclasses.first();
        0 != superClass;
-       superClass = m_classInfo->superclasses.next()) {
-    writeCastDecl(stream, superClass->getName());
-  }
-  for (UMLClassifier *superInterface = m_classInfo->superInterfaces.first();
-       0 != superInterface;
-       superInterface = m_classInfo->superInterfaces.next()) {
-    if (m_ignoreClasses.find(superInterface->getName()) !=
+       superClass = m_classInfo->allSuperclasses.next()) {
+    if (m_ignoreClasses.find(superClass->getName()) ==
         m_ignoreClasses.end()) {
-      continue;
+      writeCastDecl(stream, superClass->getName());
     }
-    writeCastDecl(stream, superInterface->getName());
   }
 }
 

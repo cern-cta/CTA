@@ -28,6 +28,7 @@
 #define CASTOR_STAGER_TAPECOPYFORMIGRATION_H
 
 // Include Files and Forward declarations for the C world
+struct C_IObject_t;
 struct Cstager_TapeCopyForMigration_t;
 struct Cstager_TapeCopy_t;
 
@@ -57,6 +58,16 @@ struct Cstager_TapeCopy_t* Cstager_TapeCopyForMigration_getTapeCopy(struct Cstag
  * Dynamic cast from TapeCopy
  */
 struct Cstager_TapeCopyForMigration_t* Cstager_TapeCopyForMigration_fromTapeCopy(struct Cstager_TapeCopy_t* obj);
+
+/**
+ * Cast into IObject
+ */
+struct C_IObject_t* Cstager_TapeCopyForMigration_getIObject(struct Cstager_TapeCopyForMigration_t* obj);
+
+/**
+ * Dynamic cast from IObject
+ */
+struct Cstager_TapeCopyForMigration_t* Cstager_TapeCopyForMigration_fromIObject(struct C_IObject_t* obj);
 
 /**
  * Outputs this object in a human readable format

@@ -28,8 +28,10 @@
 #define CASTOR_RH_IORESPONSE_H
 
 // Include Files and Forward declarations for the C world
+struct C_IObject_t;
 struct Crh_FileResponse_t;
 struct Crh_IOResponse_t;
+struct Crh_Response_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -56,6 +58,26 @@ struct Crh_FileResponse_t* Crh_IOResponse_getFileResponse(struct Crh_IOResponse_
  * Dynamic cast from FileResponse
  */
 struct Crh_IOResponse_t* Crh_IOResponse_fromFileResponse(struct Crh_FileResponse_t* obj);
+
+/**
+ * Cast into Response
+ */
+struct Crh_Response_t* Crh_IOResponse_getResponse(struct Crh_IOResponse_t* obj);
+
+/**
+ * Dynamic cast from Response
+ */
+struct Crh_IOResponse_t* Crh_IOResponse_fromResponse(struct Crh_Response_t* obj);
+
+/**
+ * Cast into IObject
+ */
+struct C_IObject_t* Crh_IOResponse_getIObject(struct Crh_IOResponse_t* obj);
+
+/**
+ * Dynamic cast from IObject
+ */
+struct Crh_IOResponse_t* Crh_IOResponse_fromIObject(struct C_IObject_t* obj);
 
 /**
  * Outputs this object in a human readable format

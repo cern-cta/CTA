@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequest.h,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/10 18:17:00 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequest.h,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/19 11:15:27 $ $Author: sponcec3 $
  *
  * 
  *
@@ -30,7 +30,9 @@
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
 struct C_IClient_t;
+struct C_IObject_t;
 struct Cstager_FileRequest_t;
+struct Cstager_Request_t;
 struct Cstager_StageUpdateFileStatusRequest_t;
 struct Cstager_SubRequest_t;
 struct Cstager_SvcClass_t;
@@ -60,6 +62,26 @@ struct Cstager_FileRequest_t* Cstager_StageUpdateFileStatusRequest_getFileReques
  * Dynamic cast from FileRequest
  */
 struct Cstager_StageUpdateFileStatusRequest_t* Cstager_StageUpdateFileStatusRequest_fromFileRequest(struct Cstager_FileRequest_t* obj);
+
+/**
+ * Cast into Request
+ */
+struct Cstager_Request_t* Cstager_StageUpdateFileStatusRequest_getRequest(struct Cstager_StageUpdateFileStatusRequest_t* obj);
+
+/**
+ * Dynamic cast from Request
+ */
+struct Cstager_StageUpdateFileStatusRequest_t* Cstager_StageUpdateFileStatusRequest_fromRequest(struct Cstager_Request_t* obj);
+
+/**
+ * Cast into IObject
+ */
+struct C_IObject_t* Cstager_StageUpdateFileStatusRequest_getIObject(struct Cstager_StageUpdateFileStatusRequest_t* obj);
+
+/**
+ * Dynamic cast from IObject
+ */
+struct Cstager_StageUpdateFileStatusRequest_t* Cstager_StageUpdateFileStatusRequest_fromIObject(struct C_IObject_t* obj);
 
 /**
  * Outputs this object in a human readable format

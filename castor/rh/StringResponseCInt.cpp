@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/IObject.hpp"
 #include "castor/rh/Response.hpp"
 #include "castor/rh/StringResponse.hpp"
 #include "osdep.h"
@@ -57,6 +58,20 @@ extern "C" {
   // Crh_StringResponse_fromResponse
   //----------------------------------------------------------------------------
   castor::rh::StringResponse* Crh_StringResponse_fromResponse(castor::rh::Response* obj) {
+    return dynamic_cast<castor::rh::StringResponse*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_StringResponse_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Crh_StringResponse_getIObject(castor::rh::StringResponse* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_StringResponse_fromIObject
+  //----------------------------------------------------------------------------
+  castor::rh::StringResponse* Crh_StringResponse_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::rh::StringResponse*>(obj);
   }
 

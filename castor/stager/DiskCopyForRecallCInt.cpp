@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/IObject.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
 
@@ -56,6 +57,20 @@ extern "C" {
   // Cstager_DiskCopyForRecall_fromDiskCopy
   //----------------------------------------------------------------------------
   castor::stager::DiskCopyForRecall* Cstager_DiskCopyForRecall_fromDiskCopy(castor::stager::DiskCopy* obj) {
+    return dynamic_cast<castor::stager::DiskCopyForRecall*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Cstager_DiskCopyForRecall_getIObject(castor::stager::DiskCopyForRecall* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_fromIObject
+  //----------------------------------------------------------------------------
+  castor::stager::DiskCopyForRecall* Cstager_DiskCopyForRecall_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::stager::DiskCopyForRecall*>(obj);
   }
 

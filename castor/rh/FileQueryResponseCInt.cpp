@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/IObject.hpp"
 #include "castor/rh/FileQueryResponse.hpp"
 #include "castor/rh/Response.hpp"
 #include "osdep.h"
@@ -57,6 +58,20 @@ extern "C" {
   // Crh_FileQueryResponse_fromResponse
   //----------------------------------------------------------------------------
   castor::rh::FileQueryResponse* Crh_FileQueryResponse_fromResponse(castor::rh::Response* obj) {
+    return dynamic_cast<castor::rh::FileQueryResponse*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Crh_FileQueryResponse_getIObject(castor::rh::FileQueryResponse* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_FileQueryResponse_fromIObject
+  //----------------------------------------------------------------------------
+  castor::rh::FileQueryResponse* Crh_FileQueryResponse_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::rh::FileQueryResponse*>(obj);
   }
 

@@ -26,7 +26,9 @@
 
 // Include Files
 #include "castor/IClient.hpp"
+#include "castor/IObject.hpp"
 #include "castor/stager/FileRequest.hpp"
+#include "castor/stager/Request.hpp"
 #include "castor/stager/StagePutDoneRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
@@ -61,6 +63,34 @@ extern "C" {
   // Cstager_StagePutDoneRequest_fromFileRequest
   //----------------------------------------------------------------------------
   castor::stager::StagePutDoneRequest* Cstager_StagePutDoneRequest_fromFileRequest(castor::stager::FileRequest* obj) {
+    return dynamic_cast<castor::stager::StagePutDoneRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutDoneRequest_getRequest
+  //----------------------------------------------------------------------------
+  castor::stager::Request* Cstager_StagePutDoneRequest_getRequest(castor::stager::StagePutDoneRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutDoneRequest_fromRequest
+  //----------------------------------------------------------------------------
+  castor::stager::StagePutDoneRequest* Cstager_StagePutDoneRequest_fromRequest(castor::stager::Request* obj) {
+    return dynamic_cast<castor::stager::StagePutDoneRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutDoneRequest_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Cstager_StagePutDoneRequest_getIObject(castor::stager::StagePutDoneRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutDoneRequest_fromIObject
+  //----------------------------------------------------------------------------
+  castor::stager::StagePutDoneRequest* Cstager_StagePutDoneRequest_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::stager::StagePutDoneRequest*>(obj);
   }
 

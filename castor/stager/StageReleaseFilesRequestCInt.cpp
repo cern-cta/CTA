@@ -26,7 +26,9 @@
 
 // Include Files
 #include "castor/IClient.hpp"
+#include "castor/IObject.hpp"
 #include "castor/stager/FileRequest.hpp"
+#include "castor/stager/Request.hpp"
 #include "castor/stager/StageReleaseFilesRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
@@ -61,6 +63,34 @@ extern "C" {
   // Cstager_StageReleaseFilesRequest_fromFileRequest
   //----------------------------------------------------------------------------
   castor::stager::StageReleaseFilesRequest* Cstager_StageReleaseFilesRequest_fromFileRequest(castor::stager::FileRequest* obj) {
+    return dynamic_cast<castor::stager::StageReleaseFilesRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageReleaseFilesRequest_getRequest
+  //----------------------------------------------------------------------------
+  castor::stager::Request* Cstager_StageReleaseFilesRequest_getRequest(castor::stager::StageReleaseFilesRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageReleaseFilesRequest_fromRequest
+  //----------------------------------------------------------------------------
+  castor::stager::StageReleaseFilesRequest* Cstager_StageReleaseFilesRequest_fromRequest(castor::stager::Request* obj) {
+    return dynamic_cast<castor::stager::StageReleaseFilesRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageReleaseFilesRequest_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Cstager_StageReleaseFilesRequest_getIObject(castor::stager::StageReleaseFilesRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageReleaseFilesRequest_fromIObject
+  //----------------------------------------------------------------------------
+  castor::stager::StageReleaseFilesRequest* Cstager_StageReleaseFilesRequest_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::stager::StageReleaseFilesRequest*>(obj);
   }
 

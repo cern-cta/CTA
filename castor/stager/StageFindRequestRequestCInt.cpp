@@ -26,7 +26,9 @@
 
 // Include Files
 #include "castor/IClient.hpp"
+#include "castor/IObject.hpp"
 #include "castor/stager/QryRequest.hpp"
+#include "castor/stager/Request.hpp"
 #include "castor/stager/StageFindRequestRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
@@ -59,6 +61,34 @@ extern "C" {
   // Cstager_StageFindRequestRequest_fromQryRequest
   //----------------------------------------------------------------------------
   castor::stager::StageFindRequestRequest* Cstager_StageFindRequestRequest_fromQryRequest(castor::stager::QryRequest* obj) {
+    return dynamic_cast<castor::stager::StageFindRequestRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_getRequest
+  //----------------------------------------------------------------------------
+  castor::stager::Request* Cstager_StageFindRequestRequest_getRequest(castor::stager::StageFindRequestRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_fromRequest
+  //----------------------------------------------------------------------------
+  castor::stager::StageFindRequestRequest* Cstager_StageFindRequestRequest_fromRequest(castor::stager::Request* obj) {
+    return dynamic_cast<castor::stager::StageFindRequestRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Cstager_StageFindRequestRequest_getIObject(castor::stager::StageFindRequestRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageFindRequestRequest_fromIObject
+  //----------------------------------------------------------------------------
+  castor::stager::StageFindRequestRequest* Cstager_StageFindRequestRequest_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::stager::StageFindRequestRequest*>(obj);
   }
 

@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/IObject.hpp"
 #include "castor/rh/EndResponse.hpp"
 #include "castor/rh/Response.hpp"
 #include "osdep.h"
@@ -57,6 +58,20 @@ extern "C" {
   // Crh_EndResponse_fromResponse
   //----------------------------------------------------------------------------
   castor::rh::EndResponse* Crh_EndResponse_fromResponse(castor::rh::Response* obj) {
+    return dynamic_cast<castor::rh::EndResponse*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_EndResponse_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Crh_EndResponse_getIObject(castor::rh::EndResponse* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_EndResponse_fromIObject
+  //----------------------------------------------------------------------------
+  castor::rh::EndResponse* Crh_EndResponse_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::rh::EndResponse*>(obj);
   }
 

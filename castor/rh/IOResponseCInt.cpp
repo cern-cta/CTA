@@ -25,8 +25,10 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/IObject.hpp"
 #include "castor/rh/FileResponse.hpp"
 #include "castor/rh/IOResponse.hpp"
+#include "castor/rh/Response.hpp"
 
 extern "C" {
 
@@ -56,6 +58,34 @@ extern "C" {
   // Crh_IOResponse_fromFileResponse
   //----------------------------------------------------------------------------
   castor::rh::IOResponse* Crh_IOResponse_fromFileResponse(castor::rh::FileResponse* obj) {
+    return dynamic_cast<castor::rh::IOResponse*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_getResponse
+  //----------------------------------------------------------------------------
+  castor::rh::Response* Crh_IOResponse_getResponse(castor::rh::IOResponse* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_fromResponse
+  //----------------------------------------------------------------------------
+  castor::rh::IOResponse* Crh_IOResponse_fromResponse(castor::rh::Response* obj) {
+    return dynamic_cast<castor::rh::IOResponse*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Crh_IOResponse_getIObject(castor::rh::IOResponse* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_fromIObject
+  //----------------------------------------------------------------------------
+  castor::rh::IOResponse* Crh_IOResponse_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::rh::IOResponse*>(obj);
   }
 

@@ -30,7 +30,9 @@
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
 struct C_IClient_t;
+struct C_IObject_t;
 struct Cstager_QryRequest_t;
+struct Cstager_Request_t;
 struct Cstager_StageFileQueryRequest_t;
 struct Cstager_SvcClass_t;
 
@@ -59,6 +61,26 @@ struct Cstager_QryRequest_t* Cstager_StageFileQueryRequest_getQryRequest(struct 
  * Dynamic cast from QryRequest
  */
 struct Cstager_StageFileQueryRequest_t* Cstager_StageFileQueryRequest_fromQryRequest(struct Cstager_QryRequest_t* obj);
+
+/**
+ * Cast into Request
+ */
+struct Cstager_Request_t* Cstager_StageFileQueryRequest_getRequest(struct Cstager_StageFileQueryRequest_t* obj);
+
+/**
+ * Dynamic cast from Request
+ */
+struct Cstager_StageFileQueryRequest_t* Cstager_StageFileQueryRequest_fromRequest(struct Cstager_Request_t* obj);
+
+/**
+ * Cast into IObject
+ */
+struct C_IObject_t* Cstager_StageFileQueryRequest_getIObject(struct Cstager_StageFileQueryRequest_t* obj);
+
+/**
+ * Dynamic cast from IObject
+ */
+struct Cstager_StageFileQueryRequest_t* Cstager_StageFileQueryRequest_fromIObject(struct C_IObject_t* obj);
 
 /**
  * Outputs this object in a human readable format

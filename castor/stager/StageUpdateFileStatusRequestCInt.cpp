@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequestCInt.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/10 18:17:00 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequestCInt.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/19 11:15:27 $ $Author: sponcec3 $
  *
  * 
  *
@@ -26,7 +26,9 @@
 
 // Include Files
 #include "castor/IClient.hpp"
+#include "castor/IObject.hpp"
 #include "castor/stager/FileRequest.hpp"
+#include "castor/stager/Request.hpp"
 #include "castor/stager/StageUpdateFileStatusRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
@@ -61,6 +63,34 @@ extern "C" {
   // Cstager_StageUpdateFileStatusRequest_fromFileRequest
   //----------------------------------------------------------------------------
   castor::stager::StageUpdateFileStatusRequest* Cstager_StageUpdateFileStatusRequest_fromFileRequest(castor::stager::FileRequest* obj) {
+    return dynamic_cast<castor::stager::StageUpdateFileStatusRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_getRequest
+  //----------------------------------------------------------------------------
+  castor::stager::Request* Cstager_StageUpdateFileStatusRequest_getRequest(castor::stager::StageUpdateFileStatusRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_fromRequest
+  //----------------------------------------------------------------------------
+  castor::stager::StageUpdateFileStatusRequest* Cstager_StageUpdateFileStatusRequest_fromRequest(castor::stager::Request* obj) {
+    return dynamic_cast<castor::stager::StageUpdateFileStatusRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* Cstager_StageUpdateFileStatusRequest_getIObject(castor::stager::StageUpdateFileStatusRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_fromIObject
+  //----------------------------------------------------------------------------
+  castor::stager::StageUpdateFileStatusRequest* Cstager_StageUpdateFileStatusRequest_fromIObject(castor::IObject* obj) {
     return dynamic_cast<castor::stager::StageUpdateFileStatusRequest*>(obj);
   }
 
