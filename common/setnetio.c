@@ -22,6 +22,7 @@ static char sccsid[] = "@(#)setnetio.c	1.7 05/05/98 CERN IT-PDP/SC Frederic Hemm
 #include <serrno.h>                     /* SHIFT error codes            */
 #include <log.h>                        /* Genralized error logger      */
 #include <trace.h>                      /* tracing definitions          */
+#include <Cnetdb.h>                     /* reentrant netdb funct.       */
 
 #if !defined(linux)
 extern char     *sys_errlist[];         /* External error list          */
@@ -71,7 +72,7 @@ int     s;
 		return(-1);
 	}
 
-	if ((hp = gethostbyaddr(&(from.sin_addr), sizeof(struct in_addr), from.sin_family)) == NULL){
+	if ((hp = Cgethostbyaddr(&(from.sin_addr), sizeof(struct in_addr), from.sin_family)) == NULL){
 		log(LOG_INFO, "unable to get host name for %s\n", inet_ntoa(from.sin_addr));
 		TRACE(1, "setnetio", "unable to get host name for %s\n", inet_ntoa(from.sin_addr));
 		END_TRACE();
