@@ -1,0 +1,45 @@
+.\"
+.\" $Id: rfio_ferror.man,v 1.1 2001/05/29 13:29:21 baud Exp $
+.\"
+.\" @(#)$RCSfile: rfio_ferror.man,v $ $Revision: 1.1 $ $Date: 2001/05/29 13:29:21 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RFIO_FERROR 3 "$Date: 2001/05/29 13:29:21 $" CASTOR "Rfio Library Functions"
+.SH NAME
+rfio_ferror, rfio_eof \- checks file status
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "int rfio_ferror (RFILE *" fp ");"
+.br
+.BI "int rfio_feof (RFILE *" fp ");"
+.SH DESCRIPTION
+.B rfio_ferror
+tests the error indicator for the file whose descriptor \fBfp\fP is the one
+returned by
+.B rfio_fopen.
+.LP
+.B rfio_feof
+tests the end-of-file indicator for the file whose descriptor \fBfp\fP is the
+one returned by
+.B rfio_fopen.
+.SH RETURN VALUE
+This routine returns >0 if set, 0 if not set, -1 if the operation failed and
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EBADF
+.I fp
+is not a valid file descriptor.
+.TP
+.B SEBADVERSION
+Version ID mismatch.
+.SH SEE ALSO
+.BR rfio_fopen(3)
+.SH AUTHOR
+Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
+(olof.barring@cern.ch)

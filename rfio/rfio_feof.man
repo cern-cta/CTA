@@ -1,0 +1,2 @@
+.so ./rfio_ferror.man
+.\" @(#)$RCSfile: rfio_feof.man,v $ $Revision: 1.1 $ $Date: 2001/05/29 13:27:17 $ CERN IT-PDP/DM Jean-Philippe Baud
