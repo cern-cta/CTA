@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.49 $ $Date: 2002/04/08 14:49:31 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)rtcp_CheckReq.c,v 1.49 2002/04/08 14:49:31 CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -173,7 +173,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     const u_signed64 defmaxsize = (u_signed64)2 * (u_signed64)(1024*1024*1024) - 1;
     char *p;
     char dir_delim;
-    struct stat st;
+    struct stat64 st;
     rtcpFileRequest_t *filereq;
     char errmsgtxt[CA_MAXLINELEN+1];
 
@@ -490,7 +490,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
          * Check and signal eventual truncation.
          */
         rfio_errno = serrno = 0;
-        rc = rfio_mstat(filereq->file_path,&st);
+        rc = rfio_mstat64(filereq->file_path,&st);
         if ( rc == -1 ) {
             if ( rfio_errno != 0 ) serrno = rfio_errno;
             else if ( serrno == 0 ) serrno = errno;
@@ -575,7 +575,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                 if ( rc == -1 ) return(rc);
             }
             rfio_errno = serrno = 0;
-            rc = rfio_mstat(filereq->file_path,&st);
+            rc = rfio_mstat64(filereq->file_path,&st);
             if ( rc != -1 && (((st.st_mode) & S_IFMT) == S_IFDIR) ) {
                 serrno = EISDIR;
                 sprintf(errmsgtxt,RT110,CMD(mode),sstrerror(serrno));
@@ -593,7 +593,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                     dir_delim = *p;
                     *p = '\0';
                 }
-                rc = rfio_mstat(filereq->file_path,&st);
+                rc = rfio_mstat64(filereq->file_path,&st);
                 if ( rc == -1 ) {
                     if ( rfio_errno != 0 ) serrno = rfio_errno;
                     else if ( serrno == 0 ) serrno = errno;

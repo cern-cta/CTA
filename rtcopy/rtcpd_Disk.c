@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.103 $ $Date: 2002/01/10 11:38:25 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)rtcpd_Disk.c,v 1.103 2002/01/10 11:38:25 CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -52,6 +52,7 @@ extern char *geterr();
 #include <rtcp.h>
 #include <rtcp_server.h>
 #include <serrno.h>
+#include <u64subr.h>
 
 #define DK_STATUS(X) (diskIOstatus->current_activity = (X))
 #define DK_SIZE(X)   (diskIOstatus->nbbytes = (X))
@@ -367,14 +368,14 @@ static int DiskFileOpen(int pool_index,
         rtcp_log(LOG_DEBUG,"DiskFileOpen() open(%s,0x%x)\n",filereq->file_path,
             flags);
         DK_STATUS(RTCP_PS_OPEN);
-        rc = rfio_open(filereq->file_path,flags,0666);
+        rc = rfio_open64(filereq->file_path,flags,0666);
         DK_STATUS(RTCP_PS_NOBLOCKING);
         if ( rc == -1 ) {
             save_errno = errno;
             save_serrno = serrno;
             save_rfio_errno = rfio_errno;
             rtcp_log(LOG_ERR,
-                "DiskFileOpen() rfio_open(%s,0x%x): errno = %d, serrno = %d, rfio_errno = %d\n",
+                "DiskFileOpen() rfio_open64(%s,0x%x): errno = %d, serrno = %d, rfio_errno = %d\n",
                 filereq->file_path,flags,errno,serrno,rfio_errno);
         } else {
             disk_fd = rc;
@@ -383,25 +384,29 @@ static int DiskFileOpen(int pool_index,
         rtcp_log(LOG_DEBUG,"DiskFileOpen() rfio_open() returned fd=%d\n",
             disk_fd);
         if ( rc == 0 && filereq->offset > 0 ) {
-            rtcp_log(LOG_DEBUG,"DiskFileOpen() attempt to set offset %d\n",
-                     (int)filereq->offset);
+			char tmpbuf[21];
+			char tmpbuf2[21];
+			off64_t rc64;
+            rtcp_log(LOG_DEBUG,"DiskFileOpen() attempt to set offset %s\n",
+                     u64tostr((u_signed64) filereq->offset, tmpbuf, 0));
             rfio_errno = 0;
             serrno = 0;
             errno = 0;
-            rc = rfio_lseek(disk_fd,(int)filereq->offset,SEEK_SET);
-            if ( rc == -1 ) {
+            rc64 = rfio_lseek64(disk_fd,(off64_t)filereq->offset,SEEK_SET);
+            if ( rc64 == -1 ) {
                 save_errno = errno;
                 save_serrno = serrno;
                 save_rfio_errno = rfio_errno;
                 rtcp_log(LOG_ERR,
-                 "DiskFileOpen() rfio_lseek(%d,%d,0x%x): errno = %d, serrno = %d, rfio_errno = %d\n",
-                 disk_fd,(int)filereq->offset,SEEK_SET,errno,serrno,rfio_errno);
-            } else if ( rc != (int)filereq->offset ) {
+                 "DiskFileOpen() rfio_lseek64(%d,%s,0x%x): errno = %d, serrno = %d, rfio_errno = %d\n",
+                 disk_fd,u64tostr((u_signed64)filereq->offset,tmpbuf,0),SEEK_SET,errno,serrno,rfio_errno);
+				rc = -1;
+            } else if ( rc64 != (off64_t)filereq->offset ) {
                 save_errno = errno;
                 save_serrno = serrno;
                 save_rfio_errno = rfio_errno;
-                rtcp_log(LOG_ERR,"rfio_lseek(%d,%d,%d) returned %d\n",
-                         disk_fd,(int)filereq->offset,SEEK_SET,rc);
+                rtcp_log(LOG_ERR,"rfio_lseek64(%d,%s,%d) returned %s\n",
+                         disk_fd,u64tostr((u_signed64)filereq->offset,tmpbuf,0),SEEK_SET,u64tostr((u_signed64)rc64,tmpbuf2,0));
                 if ( save_rfio_errno == 0 && save_serrno == 0 &&
                      save_errno == 0 ) save_rfio_errno = SEINTERNAL;
                 rc = -1;
@@ -452,7 +457,7 @@ static int DiskFileOpen(int pool_index,
             save_serrno = serrno;
             save_rfio_errno = (rc != 0 ? rc : irc);
             rtcp_log(LOG_ERR,
-                "DiskFileOpen() rfio_open(%s,%d): errno = %d, serrno = %d, rfio_errno = %d\n",
+                "DiskFileOpen() rfio_xyopen(%s,%d): errno = %d, serrno = %d, rfio_errno = %d\n",
                 filereq->file_path,Uformat_flags,errno,serrno,rfio_errno);
         } else {
             disk_fd = file->FortranUnit;
