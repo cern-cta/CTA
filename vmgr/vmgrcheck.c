@@ -4,23 +4,16 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrcheck.c,v $ $Revision: 1.2 $ $Date: 2002/03/06 06:20:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrcheck.c,v $ $Revision: 1.3 $ $Date: 2002/03/06 06:30:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
 #include "serrno.h"
+#include "vmgr.h"
 #include "vmgr_api.h"
-vmgrcheck(vid, vsn, dgn, den, lbl, mode, uid, gid)
-char *vid;
-char *vsn;
-char *dgn;
-char *den;
-char *lbl;
-int mode;
-uid_t uid;
-gid_t gid;
+vmgrcheck(char *vid, char *vsn, char *dgn, char *den, char *lbl, int mode, uid_t uid, gid_t gid)
 {
 	int errflg = 0;
 	char func[16];
@@ -36,7 +29,7 @@ gid_t gid;
 		sleep (60);
 	}
 	if (tape_info.status & TAPE_RDONLY) {
-		if (mode == WRITE_ENABLE)
+		if (mode)	/* WRITE_ENABLE */
 			return (ETWPROT);
 	} else if (tape_info.status & EXPORTED)
 		return (ETABSENT);
@@ -44,7 +37,7 @@ gid_t gid;
 		return (ETHELD);
 	else if (tape_info.status & ARCHIVED)
 		return (ETARCH);
-	if (mode == WRITE_ENABLE) {
+	if (mode) {	/* WRITE_ENABLE */
 		while (vmgr_querypool (tape_info.poolname, &pool_uid, &pool_gid,
 		    NULL, NULL) < 0) {
 			if (serrno == ENOENT)
