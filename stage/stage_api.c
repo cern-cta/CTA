@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.13 2001/02/08 16:27:04 jdurand Exp $
+ * $Id: stage_api.c,v 1.14 2001/02/19 17:11:06 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -189,8 +189,13 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   char stgpool_forced[CA_MAXPOOLNAMELEN + 1];
 
   /* It is not allowed to have no input */
-  if ((nstcp_input <= 0) || (stcp_input == NULL)) {
+  if (nstcp_input <= 0) {
     serrno = EINVAL;
+    return(-1);
+  }
+
+  if (stcp_input == NULL) {
+    serrno = EFAULT;
     return(-1);
   }
 
@@ -249,7 +254,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 
   /* It is not allowed to have stcp_output != NULL and nstcp_output == NULL */
   if ((stcp_output != NULL) && (nstcp_output == NULL)) {
-    serrno = EINVAL;
+    serrno = EFAULT;
     return(-1);
   }
 
@@ -878,8 +883,12 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 #endif
 
   /* It is not allowed to have anything else but one single entry in input */
-  if ((nstcp_input != 1) || (stcp_input == NULL)) {
+  if (nstcp_input != 1) {
     serrno = EINVAL;
+    return(-1);
+  }
+  if (stcp_input == NULL) {
+    serrno = EFAULT;
     return(-1);
   }
 
@@ -894,13 +903,13 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 
   /* It is not allowed to have stcp_output != NULL and nstcp_output == NULL */
   if ((stcp_output != NULL) && (nstcp_output == NULL)) {
-    serrno = EINVAL;
+    serrno = EFAULT;
     return(-1);
   }
 
   /* It is not allowed to have stpp_output != NULL and nstpp_output == NULL */
   if ((stpp_output != NULL) && (nstpp_output == NULL)) {
-    serrno = EINVAL;
+    serrno = EFAULT;
     return(-1);
   }
 
@@ -1135,14 +1144,14 @@ int DLL_DECL stageqry_Tape(flags,hostname,poolname,tape,fseq,nstcp_output,stcp_o
 
   /* Check tape in input */
   if (tape == NULL) {
-    serrno = EINVAL;
+    serrno = EFAULT;
     return(-1);
   }
   /* Check tape length and poolname validity */
   if (((*tape == '\0') || (strlen(tape)        > CA_MAXVIDLEN      )) ||
       ((fseq  != NULL) && (strlen(fseq)        > CA_MAXFSEQLEN     )) ||
       ((poolname != NULL) && (strlen(poolname) > CA_MAXPOOLNAMELEN))) {
-    serrno = ENAMETOOLONG;
+    serrno = EINVAL;
     return(-1);
   }
 
@@ -1168,13 +1177,13 @@ int DLL_DECL stageqry_Hsm(flags,hostname,poolname,hsmname,nstcp_output,stcp_outp
 
   /* Check hsmname in input */
   if (hsmname == NULL) {
-    serrno = EINVAL;
+    serrno = EFAULT;
     return(-1);
   }
   /* Check hsmname length and poolname validity */
   if (((*hsmname == '\0') || (strlen(hsmname)  > 166              )) ||
       ((poolname != NULL) && (strlen(poolname) > CA_MAXPOOLNAMELEN))) {
-    serrno = ENAMETOOLONG;
+    serrno = EINVAL;
     return(-1);
   }
 
@@ -1200,13 +1209,13 @@ int DLL_DECL stageqry_Disk(flags,hostname,poolname,diskname,nstcp_output,stcp_ou
 
   /* Check diskname in input */
   if (diskname == NULL) {
-    serrno = EINVAL;
+    serrno = EFAULT;
     return(-1);
   }
   /* Check diskname length and poolname validity */
   if (((*diskname == '\0') || (strlen(diskname)  > (CA_MAXHOSTNAMELEN+MAXPATH))) ||
       ((poolname  != NULL) && (strlen(poolname)  > CA_MAXPOOLNAMELEN         ))) {
-    serrno = ENAMETOOLONG;
+    serrno = EINVAL;
     return(-1);
   }
 
