@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.3 $ $Date: 2005/01/18 12:58:47 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.4 $ $Date: 2005/01/18 16:05:06 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #define NullParameter
@@ -157,6 +157,13 @@ name:: cond						@@\
 #define RemoveFiles(files) $(RM) -f files
 #endif
 
+#if linux
+#ifndef InstallTarget
+#define InstallTarget(file,owner,group,mode,dest)	@@\
+dest/file: file						@@\
+	install -o owner -g group -m mode $? dest
+#endif
+#else
 #ifndef InstallTarget
 #define InstallTarget(file,owner,group,mode,dest)	@@\
 dest/file: file						@@\
@@ -166,7 +173,15 @@ dest/file: file						@@\
 	chgrp group $@					@@\
 	chmod mode $@
 #endif
+#endif
 
+#if linux
+#ifndef InstallLibrary
+#define InstallLibrary(libname,dest,owner,group,mode)	@@\
+dest/LibraryTargetName(libname): LibraryTargetName(libname)	@@\
+	install -o owner -g group -m mode $? dest
+#endif
+#else
 #ifndef InstallLibrary
 #define InstallLibrary(libname,dest,owner,group,mode)	@@\
 dest/LibraryTargetName(libname): LibraryTargetName(libname)	@@\
@@ -177,6 +192,7 @@ dest/LibraryTargetName(libname): LibraryTargetName(libname)	@@\
 	chgrp group $@					@@\
 	chmod mode $@
 #endif
+#endif
 
 #define InstallNonExecFile(file,dest,owner,group,mode)	@@\
 InstallTarget(file,owner,group,mode,dest)
@@ -184,14 +200,31 @@ InstallTarget(file,owner,group,mode,dest)
 #define InstallProgram(program,dest,owner,group,mode)	@@\
 InstallTarget(ProgramTargetName(program),owner,group,mode,dest)
 
+#if linux
+#ifndef InstallSharedLibrary
+#define InstallSharedLibrary(libname,rev,dest)		@@\
+dest/SharedLibraryTargetName(libname): SharedLibraryTargetName(libname)	@@\
+	install $? $@.rev				@@\
+	RemoveFile($@)					@@\
+	ln -s $?.rev $@
+#endif
+#else
 #ifndef InstallSharedLibrary
 #define InstallSharedLibrary(libname,rev,dest)		@@\
 dest/SharedLibraryTargetName(libname): SharedLibraryTargetName(libname)	@@\
 	cp $? $@.rev					@@\
-	-rm $@						@@\
+	RemoveFile($@)					@@\
 	ln -s $?.rev $@
 #endif
+#endif
 
+#if linux
+#ifndef MakeDir
+#define MakeDir(dirname,owner,group,mode)		@@\
+dirname:						@@\
+	install -d dirname -o owner -g group -m mode
+#endif
+#else
 #ifndef MakeDir
 #define MakeDir(dirname,owner,group,mode)		@@\
 dirname:						@@\
@@ -199,4 +232,5 @@ dirname:						@@\
 	chown owner $@					@@\
 	chgrp group $@					@@\
 	chmod mode $@
+#endif
 #endif
