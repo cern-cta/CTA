@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.47 $ $Release$ $Date: 2004/08/11 09:34:47 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.48 $ $Release$ $Date: 2004/08/13 08:22:36 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.47 $ $Date: 2004/08/11 09:34:47 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.48 $ $Date: 2004/08/13 08:22:36 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1892,8 +1892,8 @@ void rtcpcldc_cleanup(tape)
   int rc;
   
   if ( tape == NULL ) return;
-  rc = rtcpcld_findTpReqMap(tape,&tpList);
   (void)Cmutex_lock(tape,-1);
+  rc = rtcpcld_findTpReqMap(tape,&tpList);
   if ( rc == 1 ) {
     while ( (tpItem = tpList) != NULL ) {
       while ( (segmItem = tpItem->segments) != NULL ) {
@@ -1907,6 +1907,7 @@ void rtcpcldc_cleanup(tape)
       tpItem->tp = NULL;
       (void)rtcpcld_delTpReqMap(tape,tpItem);
       free(tpItem);
+      tpItem = NULL;
     }
   }
 
