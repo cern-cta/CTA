@@ -4,11 +4,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.1 $ $Date: 1999/11/29 11:22:06 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.2 $ $Date: 1999/12/01 15:38:29 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
- * rtcpd_TapeIO.c - Tape I/O routines                   */
+ * rtcpd_TapeIO.c - Tape I/O routines 
  */
 
 #include <stdlib.h>
@@ -61,8 +61,10 @@ static int read_sony();
 static int write_sony();
 #endif /* __STDC__ */
 
-static char drive_name[7];
-char *drvname;
+#if defined(_AIX) && defined(_IBMR2)
+static char driver_name[7];
+char *dvrname;
+#endif /* _AIX && _IBMR2 */
 
 static char labelid[2][4] = {"EOF","EOV"} ;
 
@@ -390,7 +392,7 @@ int topen(tape_list_t *tape, file_list_t *file) {
      * This call is currently necessary because drive error reporting
      * on IBM is different depending on the drive type (see 
      * gettperror() in Ctape software). It is thread unsafe since it
-     * depends on the drvname global but this is OK here since we 
+     * depends on the dvrname global but this is OK here since we 
      * only have one mover process with one tapeIO thread per tape unit.
      */
     if (getdvrnam (filereq->tape_path, driver_name) < 0)
@@ -437,7 +439,7 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
                  file->trec) < 0 ) {
                 rc = -1;
 #if defined(_IBMR2)
-                if ( errno == ENOSPC  || errno = ENXIO ) 
+                if ( (errno == ENOSPC) || (errno == ENXIO) ) 
                     serrno = ENOSPC;
 #else /* _IBMR2 */
                 if ( errno == ENOSPC ) 
@@ -588,7 +590,7 @@ int twrite(int fd,char *ptr,int len,
 
             if ( ioctl(fd,MTIOCGET,&mt_info) == -1 ) {
                 rtcpd_SetReqStatus(NULL,file,errno,RTCP_FAILED | RTCP_SYERR);
-                rtcpd_AppendClientMsg(file, RT109, "CPDSKTP", 
+                rtcpd_AppendClientMsg(NULL,file, RT109, "CPDSKTP", 
                     sstrerror(errno));
                 return(-1);
             }
@@ -599,7 +601,7 @@ int twrite(int fd,char *ptr,int len,
 #endif  /* sun */
                 file->eovflag= 1; /* tape volume overflow */
             } else {
-                rtcpd_AppendClientMsg(file, RT117, "CPDSKTP", 
+                rtcpd_AppendClientMsg(NULL,file, RT117, "CPDSKTP", 
                                 mt_info.mt_erreg, file->trec+1);
 #if defined(sun)
                 rtcpd_SetReqStatus(NULL,file,EINVAL,
@@ -676,7 +678,7 @@ int tread(int fd,char *ptr,int len,
                 if (file->trec && filereq->rtcp_err_action == KEEPFILE ) {
                     rtcpd_SetReqStatus(NULL,file,ETBLANK,    
                         RTCP_RESELECT_SERV | RTCP_OK);
-                    filereq->err.max_cpretyr--;
+                    filereq->err.max_cpretry--;
                 } else
                     rtcpd_SetReqStatus(NULL,file,ETBLANK,    
                         RTCP_FAILED | RTCP_USERR);
