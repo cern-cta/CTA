@@ -1,14 +1,14 @@
 /*
- * $Id: fopen.c,v 1.5 2000/10/02 08:02:30 jdurand Exp $
+ * $Id: fopen.c,v 1.6 2002/02/12 08:29:05 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fopen.c,v $ $Revision: 1.5 $ $Date: 2000/10/02 08:02:30 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fopen.c,v $ $Revision: 1.6 $ $Date: 2002/02/12 08:29:05 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fopen.c      Remote File I/O - open a binary file                    */
@@ -35,7 +35,10 @@ RFILE DLL_DECL *rfio_fopen(file, mode)
 	INIT_TRACE("RFIO_TRACE") ;
 	TRACE(1, "rfio", "rfio_fopen(%s, %s)", file, mode) ;
 
-	rw= ( mode[1] == '+' ) ; 
+	if (mode[1] == 'b')
+		rw= ( mode[2] == '+' ) ; 
+	else
+		rw= ( mode[1] == '+' ) ; 
 	switch(*mode) {
 		case 'a':
 			oflags= O_APPEND | O_CREAT | ( rw ? O_RDWR : O_WRONLY ) ;
