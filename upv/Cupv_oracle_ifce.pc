@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_oracle_ifce.pc,v $ $Revision: 1.6 $ $Date: 2002/07/27 10:08:24 $ CERN IT-PDP/DM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_oracle_ifce.pc,v $ $Revision: 1.7 $ $Date: 2002/08/05 07:50:19 $ CERN IT-PDP/DM Ben Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -23,64 +23,64 @@ static sql_context ctx[CUPV_NBTHREADS];
 
 Cupv_init_dbpkg()
 {
-	int i;
+  int i;
 
-	EXEC SQL ENABLE THREADS;
-	for (i = 0; i < CUPV_NBTHREADS; i++) {
-		EXEC SQL CONTEXT ALLOCATE :ctx[i];
-	}
-	return (0);
+  EXEC SQL ENABLE THREADS;
+  for (i = 0; i < CUPV_NBTHREADS; i++) {
+    EXEC SQL CONTEXT ALLOCATE :ctx[i];
+  }
+  return (0);
 }
 
 EXEC SQL CONTEXT USE :ctx[dbfd->idx]; 
 
 Cupv_abort_tr(dbfd)
-struct Cupv_dbfd *dbfd;
+     struct Cupv_dbfd *dbfd;
 {
-	EXEC SQL ROLLBACK WORK;
-	dbfd->tr_started = 0;
-	return (0);
+  EXEC SQL ROLLBACK WORK;
+  dbfd->tr_started = 0;
+  return (0);
 }
 
 Cupv_opendb(db_srvr, db_user, db_pwd, dbfd)
-char *db_srvr;
-char *db_user;
-char *db_pwd;
-struct Cupv_dbfd *dbfd;
+     char *db_srvr;
+     char *db_user;
+     char *db_pwd;
+     struct Cupv_dbfd *dbfd;
 {
-	int c;
-	char func[16];
-	int ntries;
-	struct sqlca sqlca;
+  int c;
+  char func[16];
+  int ntries;
+  struct sqlca sqlca;
 
-	strcpy (func, "Cupv_opendb");
-	ntries = 0;
-	while (1) {
-		EXEC SQL CONNECT :db_user IDENTIFIED BY :db_pwd;
-		if (sqlca.sqlcode == 0) {
-		  return (0);
-		}
-		if (sqlca.sqlcode != -1014 && sqlca.sqlcode != -1033 &&
-		    sqlca.sqlcode != -1034) break;
-		if (ntries++ >= MAXRETRY) break;
-		sleep (RETRYI);
-	}
-	Cupvlogit (func, "CONNECT error: %.*s\n", sqlca.sqlerrm.sqlerrml,
-	    sqlca.sqlerrm.sqlerrmc);
-	serrno = SEINTERNAL;
-	return (-1);
+  strcpy (func, "Cupv_opendb");
+  ntries = 0;
+  while (1) {
+    EXEC SQL CONNECT :db_user IDENTIFIED BY :db_pwd;
+    if (sqlca.sqlcode == 0) {
+      return (0);
+    }
+    if (sqlca.sqlcode != -1014 && sqlca.sqlcode != -1033 &&
+	sqlca.sqlcode != -1034) break;
+    if (ntries++ >= MAXRETRY) break;
+    sleep (RETRYI);
+  }
+  Cupvlogit (func, "CONNECT error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+	     sqlca.sqlerrm.sqlerrmc);
+  serrno = SEINTERNAL;
+  return (-1);
 }
 
 Cupv_closedb(dbfd)
-struct Cupv_dbfd *dbfd;
+     struct Cupv_dbfd *dbfd;
 {
-	EXEC SQL CONTEXT FREE :ctx[dbfd->idx];
-	return (0);
+  EXEC SQL CONTEXT FREE :ctx[dbfd->idx];
+  return (0);
 }
 
 Cupv_start_tr(s, dbfd)
-int s;
-struct Cupv_dbfd *dbfd;
+     int s;
+     struct Cupv_dbfd *dbfd;
 {
   dbfd->tr_started = 1;
   return (0);
@@ -95,10 +95,10 @@ Cupv_end_tr(dbfd)
 }
 
 Cupv_get_privilege_entry(dbfd, priv_entry,  lock, rec_addr)
-struct Cupv_dbfd *dbfd;
-struct Cupv_userpriv *priv_entry;
-int lock;
-Cupv_dbrec_addr *rec_addr;
+     struct Cupv_dbfd *dbfd;
+     struct Cupv_userpriv *priv_entry;
+     int lock;
+     Cupv_dbrec_addr *rec_addr;
 {
   char func[21];
   char rowid_value[19];
@@ -171,8 +171,8 @@ Cupv_dbrec_addr *rec_addr;
 }
 
 Cupv_delete_privilege_entry(dbfd, rec_addr)
-struct Cupv_dbfd *dbfd;
-Cupv_dbrec_addr *rec_addr;
+     struct Cupv_dbfd *dbfd;
+     Cupv_dbrec_addr *rec_addr;
 {
   char func[24];
   char rowid_value[19];
@@ -229,9 +229,9 @@ Cupv_insert_privilege_entry(dbfd, priv_entry)
 }
 
 Cupv_update_privilege_entry(dbfd, rec_addr, priv_entry)
-struct Cupv_dbfd *dbfd;
-Cupv_dbrec_addr *rec_addr;
-struct Cupv_userpriv *priv_entry;
+     struct Cupv_dbfd *dbfd;
+     Cupv_dbrec_addr *rec_addr;
+     struct Cupv_userpriv *priv_entry;
 {
   char func[24];
   char rowid_value[19];
@@ -296,8 +296,8 @@ struct Cupv_userpriv *priv_entry;
   default:
     Cupvlogit (func, "MODIFY error: %.*s\n", sqlca.sqlerrm.sqlerrml,
 	       sqlca.sqlerrm.sqlerrmc);
-     serrno = SEINTERNAL;
-     break;;
+    serrno = SEINTERNAL;
+    break;;
   }
   
   return(-1);
@@ -305,12 +305,12 @@ struct Cupv_userpriv *priv_entry;
 
 
 Cupv_list_privilege_entry(dbfd, bol, priv_entry, filter, endlist, dblistptr)
-struct Cupv_dbfd *dbfd;
-int bol;
-struct Cupv_userpriv *priv_entry;
-struct Cupv_userpriv *filter;
-int endlist;
-DBLISTPTR *dblistptr;
+     struct Cupv_dbfd *dbfd;
+     int bol;
+     struct Cupv_userpriv *priv_entry;
+     struct Cupv_userpriv *filter;
+     int endlist;
+     DBLISTPTR *dblistptr;
 {
   char func[22];
   struct sqlca sqlca;
@@ -318,8 +318,8 @@ DBLISTPTR *dblistptr;
 
   strcpy(func, "list_priv");
 
-/*    Cupvlogit(func,"FILTER: <%d> <%d> <%s> <%s> <%d>\n", filter->uid, filter->gid, */
-/*  	    filter->srchost, filter->tgthost, filter->privcat); */
+  /*    Cupvlogit(func,"FILTER: <%d> <%d> <%s> <%s> <%d>\n", filter->uid, filter->gid, */
+  /*  	    filter->srchost, filter->tgthost, filter->privcat); */
 
   lensrc = strlen(filter->srchost);
   lentgt = strlen(filter->tgthost);
@@ -404,52 +404,52 @@ Cupv_delete_privilege_deprecated(dbfd, uid, gid, src, tgt)
 }
 
 Cupv_add_privilege_deprecated(dbfd, uid, gid, srcHost, tgtHost, priv)
-struct Cupv_dbfd *dbfd;
-int uid;
-int gid;
-char *srcHost;
-char *tgtHost;
-int priv;
+     struct Cupv_dbfd *dbfd;
+     int uid;
+     int gid;
+     char *srcHost;
+     char *tgtHost;
+     int priv;
 {
-	char func[24];
-	struct sqlca sqlca;
+  char func[24];
+  struct sqlca sqlca;
 
-	strcpy (func, "Cupv_add_privilege");
+  strcpy (func, "Cupv_add_privilege");
 
-	EXEC SQL INSERT INTO USER_PRIVILEGE
-		(U_ID, G_ID, SRC_HOST, TGT_HOST, PRIV_CAT)
-		VALUES
-		(:uid, :gid,
-		 :srcHost, :tgtHost, :priv);
+  EXEC SQL INSERT INTO USER_PRIVILEGE
+    (U_ID, G_ID, SRC_HOST, TGT_HOST, PRIV_CAT)
+    VALUES
+    (:uid, :gid,
+     :srcHost, :tgtHost, :priv);
 
-	switch (sqlca.sqlcode) {
-	case 0:
-		return (0);
-	case -1:
-		serrno = SEENTRYEXISTS;
-		break;
-	case -1631:
-	case -1632:
-	case -1654:
-		serrno = ENOSPC;
-		break;
-	default:
-		Cupvlogit (func, "INSERT error: %.*s\n", sqlca.sqlerrm.sqlerrml,
-		    sqlca.sqlerrm.sqlerrmc);
-		serrno = SEINTERNAL;
-	}
-	return (-1);
+  switch (sqlca.sqlcode) {
+  case 0:
+    return (0);
+  case -1:
+    serrno = SEENTRYEXISTS;
+    break;
+  case -1631:
+  case -1632:
+  case -1654:
+    serrno = ENOSPC;
+    break;
+  default:
+    Cupvlogit (func, "INSERT error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+	       sqlca.sqlerrm.sqlerrmc);
+    serrno = SEINTERNAL;
+  }
+  return (-1);
 }
 
 Cupv_modify_privilege_deprecated(dbfd, uid, gid, srcHost, tgtHost, newsrcHost, newtgtHost,  priv)
-struct Cupv_dbfd *dbfd;
-int uid;
-int gid;
-char *srcHost;
-char *tgtHost;
-char *newsrcHost;
-char *newtgtHost;
-int priv;
+     struct Cupv_dbfd *dbfd;
+     int uid;
+     int gid;
+     char *srcHost;
+     char *tgtHost;
+     char *newsrcHost;
+     char *newtgtHost;
+     int priv;
 {
   char func[24];
   struct sqlca sqlca;
@@ -497,27 +497,27 @@ int priv;
 
   Cupvlogit(func, sqlstatement);
 
-   EXEC SQL EXECUTE IMMEDIATE :sqlstatement;
+  EXEC SQL EXECUTE IMMEDIATE :sqlstatement;
     
-   switch (sqlca.sqlcode) {
-   case 0:
-     return(0);
-   case -1631:
-   case -1632:
-   case -1654:
-     serrno = ENOSPC;
-     break;
-   case 1403:
-     serrno = SEENTRYNFND;
-     break;
-   default:
-     Cupvlogit (func, "MODIFY error: %.*s\n", sqlca.sqlerrm.sqlerrml,
-		sqlca.sqlerrm.sqlerrmc);
-     serrno = SEINTERNAL;
-     break;;
-   }
+  switch (sqlca.sqlcode) {
+  case 0:
+    return(0);
+  case -1631:
+  case -1632:
+  case -1654:
+    serrno = ENOSPC;
+    break;
+  case 1403:
+    serrno = SEENTRYNFND;
+    break;
+  default:
+    Cupvlogit (func, "MODIFY error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+	       sqlca.sqlerrm.sqlerrmc);
+    serrno = SEINTERNAL;
+    break;;
+  }
 
-   return(-1);
+  return(-1);
 
 }
 
@@ -563,14 +563,14 @@ Cupv_list_privilege_deprecated(dbfd, bol, priv_entry)
     } 
   } 
 
-/*    Cupvlogit(func, "CURSOR opened\n"); */
+  /*    Cupvlogit(func, "CURSOR opened\n"); */
 
   EXEC SQL FETCH list_cursor INTO 
     :priv_entry->uid, :priv_entry->gid, 
     :priv_entry->srchost, :priv_entry->tgthost, :priv_entry->privcat; 
   
   
-/*    Cupvlogit(func, "Fetch done\n"); */
+  /*    Cupvlogit(func, "Fetch done\n"); */
 
 
   switch (sqlca.sqlcode) { 
@@ -592,8 +592,3 @@ Cupv_list_privilege_deprecated(dbfd, bol, priv_entry)
 
 /* END - DEPRECATED METHODS                                               */
 /* ====================================================================== */
-
-
-
-
-
