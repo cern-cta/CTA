@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 1996-2000 by CERN/IT/PDP
+ * Copyright (C) 1996-2001 by CERN/IT/PDP
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.13 $ $Date: 2001/01/24 08:38:49 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.14 $ $Date: 2001/03/08 09:14:50 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -47,7 +48,7 @@ COMPRESSION_STATS *comp_stats;
 	if (strcmp (devtype, "3590") == 0) {
 		memset (&log_sense_page, 0, sizeof(log_sense_page));
 		log_sense_page.page_code = 0x38;
-		if (ioctl (tapefd, SIOC_LOG_SENSE_PAGE, &log_sense_page)) < 0) {
+		if (ioctl (tapefd, SIOC_LOG_SENSE_PAGE, &log_sense_page) < 0) {
 			serrno = errno;
 			return (-1);
 		}
