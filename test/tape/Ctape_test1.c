@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "%W% %G% CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_test1.c,v $ $Revision: 1.2 $ $Date: 1999/11/08 06:39:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_test1 - test program 1: copy one tape to another */
@@ -228,7 +228,7 @@ char *dgn;
 	int c, j;
 	int repsize;
 	int reqlen;
-	char tmsdgn[7];
+	char tmsdgn[CA_MAXDGNLEN+1];
 	char tmrepbuf[132];
 	char tmsreq[80];
 
