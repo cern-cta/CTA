@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.32 2002/09/27 06:21:00 jdurand Exp $
+ * $Id: stageqry.c,v 1.33 2002/10/07 09:05:10 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.32 $ $Date: 2002/09/27 06:21:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.33 $ $Date: 2002/10/07 09:05:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -40,6 +40,10 @@ static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.32 $ $Date: 20
 #define THEMAX(a,b) ((a) > (b) ? (a) : (b))
 
 extern int getlist_of_vid _PROTO((char *, char[MAXVSN][7], int *));
+#if (defined(IRIX5) || defined(IRIX6) || defined(IRIX64))
+/* Surpringly, on Silicon Graphics, strdup declaration depends on non-obvious macros */
+extern char *strdup _PROTO((CONST char *));
+#endif
 
 void usage _PROTO((char *));
 void log_callback _PROTO((int, char *));
