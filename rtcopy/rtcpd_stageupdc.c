@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.37 $ $Date: 2000/04/18 09:49:13 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.38 $ $Date: 2000/05/26 10:16:50 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -50,22 +50,6 @@ extern char *geterr();
 
 extern processing_cntl_t proc_cntl;
 
-#if defined(USE_STAGECMD)
-#define ADD_COPT(X,Y,Z) {if (Z!=NULL && *Z!='\0') sprintf(&X[strlen(X)],Y,Z);}
-#define ADD_NOPT(X,Y,Z) {if (Z>0) sprintf(&X[strlen(X)],Y,Z);}
-#define ADD_SWITCH(X,Y,Z) {if (Z>0) sprintf(&X[strlen(X)],Y);}
-#if defined(_WIN32)
-#define POPEN(X,Y) _popen(X,Y)
-#define PCLOSE(X) _pclose(X)
-#else /* _WIN32 */
-#define POPEN(X,Y) popen(X,Y)
-#define PCLOSE(X) pclose(X)
-#endif /* _WIN32 */
-#if !defined(STGCMD)
-#define STGCMD "stageupdc"
-#endif /* STGCMD */
-#endif /* USE_STAGECMD */
-
 /*
  * Global variable needed to flag that an ENOSPC has been sent to the
  * stager and thus no further stageupdc calls should take place until
@@ -87,9 +71,7 @@ int rtcpd_init_stgupdc(tape_list_t *tape) {
     if ( tape == NULL || tape->file == NULL ||
          *tape->file->filereq.stageID == '\0' ) return(0);
 
-#if !defined(USE_STAGECMD)
     rc = stage_setlog(rtcp_stglog);
-#endif /* !USE_STAGECMD */
     return(rc); 
 }
 
@@ -112,13 +94,8 @@ int rtcpd_stageupdc(tape_list_t *tape,
     rtcpFileRequest_t *filereq;
     rtcpTapeRequest_t *tapereq;
     char newpath[CA_MAXPATHLEN+1];
-#if defined(USE_STAGECMD)
-    char stageupdc_cmd[CA_MAXLINELEN+1];
-    FILE *stgupdc_fd;
-#else  /* USE_STAGECMD */
     u_signed64 nb_bytes;
     int retry = 0;
-#endif /* USE_STAGECMD */
 
     if ( tape == NULL || file == NULL ) {
         serrno = EINVAL;
@@ -141,7 +118,6 @@ int rtcpd_stageupdc(tape_list_t *tape,
     rtcp_log(LOG_DEBUG,"rtcpd_stageupdc(): fseq=%d, status=%d, concat=%d, err=%d\n",
              filereq->tape_fseq,filereq->proc_status,filereq->concat,filereq->err.errorcode);
 
-#if !defined(USE_STAGECMD)
     for ( retry=0; retry<RTCP_STGUPDC_RETRIES; retry++ ) {
         status = filereq->err.errorcode;
         if ( filereq->proc_status == RTCP_POSITIONED && status == 0 ||
@@ -331,73 +307,6 @@ int rtcpd_stageupdc(tape_list_t *tape,
         }
         return(-1);
     }
-#else /* !USE_STAGECMD */
-    sprintf(stageupdc_cmd,"%s/%s -Z %s ",BIN,STGCMD,filereq->stageID);
-    if ( filereq->cprc < 0 && 
-        (filereq->err.severity & (RTCP_FAILED | RTCP_EOD)) ) {
-            /*
-             * SHIFT tpmnt error 211 == CASTOR ETFSQ
-             * stageupdc stageID -R 211
-             */
-            ADD_NOPT(stageupdc_cmd," -R %d ",211);
-    } else {
-        /*
-         * stageupdc stageID -I ifce -W lastw -T lastt -R cprc \
-         *                   -s lastnbt -b ... 
-         */
-        if ( filereq->proc_status == RTCP_FINISHED ||
-             filereq->cprc != 0 ) {
-            if ( filereq->proc_status == RTCP_FINISHED ) {
-                /*
-                 * This file request has finished
-                 */
-                ADD_NOPT(stageupdc_cmd," -W %d ",WaitTime);
-                ADD_NOPT(stageupdc_cmd," -T %d ",TransferTime);
-            }
-            /*
-             * Always give the return code
-             */
-            retval = 0;
-            rc = rtcp_RetvalSHIFT(tape,file,&retval);
-            sprintf(&stageupdc_cmd[strlen(stageupdc_cmd)]," -R %d ",retval);
-            ADD_NOPT(stageupdc_cmd," -s %d ",(int)filereq->bytes_out);
-        }
-        if ( (filereq->err.severity & RTCP_SYERR) == 0 ) {
-            ADD_COPT(stageupdc_cmd," -I %s ",filereq->ifce);
-            ADD_NOPT(stageupdc_cmd," -b %d ",filereq->blocksize);
-            ADD_NOPT(stageupdc_cmd," -L %d ",filereq->recordlength);
-            ADD_NOPT(stageupdc_cmd," -q %d ",filereq->tape_fseq);
-            ADD_COPT(stageupdc_cmd," -F %s ",filereq->recfm);
-            ADD_COPT(stageupdc_cmd," -f %s ",filereq->fid);
-            ADD_COPT(stageupdc_cmd," -D %s ",tapereq->unit);
-        }
-    }
-    rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() cmd=%s\n",stageupdc_cmd);
-    /*
-     * Must change SIGCHLD disposition since pclose() needs to wait
-     * for child. This is all rather hazardous in a threaded env.
-     * but normally we should use the stager API rather than then
-     * stageupdc command.....
-     */
-    signal(SIGCHLD,SIG_DFL);
-    stgupdc_fd = POPEN(stageupdc_cmd,"r");
-    if ( stgupdc_fd == NULL ) {
-        rtcp_log(LOG_ERR,"rtcpd_stageupdc() popen(%s): %s\n",
-            stageupdc_cmd,sstrerror(errno));
-        signal(SIGCHLD,SIG_IGN);
-        return(-1);
-    }
-    while ( !feof(stgupdc_fd) ) {
-        if ( fgets(newpath,CA_MAXPATHLEN+1,stgupdc_fd) == NULL ) {
-            if ( errno > 0 ) 
-                rtcp_log(LOG_ERR,"rtcpd_stageupdc() fgets(): %s\n",
-                         sstrerror(errno));
-        }
-    }
-    rc = PCLOSE(stgupdc_fd);
-    signal(SIGCHLD,SIG_IGN);
-    save_serrno = rc;
-#endif /* !USE_STAGECMD */
 
     filereq->err.errorcode = 0;
 
@@ -411,21 +320,24 @@ int rtcpd_stageupdc(tape_list_t *tape,
     rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() stageupdc returns %d, %s\n",
              rc,newpath);
     if ( (*newpath == '\0' && tapereq->mode == WRITE_DISABLE) || rc != 0 ) {
-        if ( rc == -1 ) rtcp_log(LOG_ERR,"rtcpd_stageupdc() stageupdc returned, rc=%d, path=%s, serrno=%d\n",
-                 rc,newpath,save_serrno);
         if ( rc != 0 ) {
             rtcpd_AppendClientMsg(NULL,file,
                            "stageupdc failed, rc=%d, path=%s\n",rc,newpath);
-            if ( save_serrno != ENOSPC ) rtcpd_SetReqStatus(NULL,file,rc,
-                                                   RTCP_FAILED | RTCP_SYERR);
-            else rtcpd_SetReqStatus(NULL,file,rc,RTCP_FAILED | RTCP_USERR);
+            if ( save_serrno != ENOSPC ) rtcpd_SetReqStatus(NULL,file,
+                                         save_serrno,RTCP_FAILED | RTCP_SYERR);
+            else rtcpd_SetReqStatus(NULL,file,save_serrno,
+                                    RTCP_FAILED | RTCP_USERR);
+            serrno = save_serrno;
             return(-1);
         }
         if ( *newpath == '\0' && tapereq->mode == WRITE_DISABLE &&
              filereq->proc_status == RTCP_POSITIONED &&
              strcmp(filereq->file_path,".") == 0 ) {
-            rtcp_log(LOG_ERR,
-                    "rtcpd_stageupdc() deferred allocation and no new path received\n");
+            if ( save_serrno == 0 ) save_serrno = SEINTERNAL;
+            rtcpd_AppendClientMsg(NULL,file,
+                                  "stageupdc failed, no path returned\n");
+            rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED | RTCP_SYERR);
+            serrno = save_serrno;
             return(-1);
         }
     }
