@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.57 2002/05/25 08:50:51 jdurand Exp $
+ * $Id: procclr.c,v 1.58 2002/05/31 08:07:28 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.57 $ $Date: 2002/05/25 08:50:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.58 $ $Date: 2002/05/31 08:07:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -39,6 +39,7 @@ static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.57 $ $Date: 200
 #include "Cgetopt.h"
 #include "Cns_api.h"
 #include "rfio_api.h"
+#include "Cupv_api.h"
 #include "serrno.h"
 #ifdef STAGER_DEBUG
 #ifndef _WIN32
@@ -111,7 +112,7 @@ extern char *stglogflags _PROTO((char *, char *, u_signed64));
 extern int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
 extern char *findpoolname _PROTO((char *));
 
-int check_delete _PROTO((struct stgcat_entry *, gid_t, uid_t, char *, char *, int, int, int));
+int check_delete _PROTO((struct stgcat_entry *, gid_t, uid_t, char *, char *, int, int, int, char *));
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
@@ -480,10 +481,12 @@ void procclrreq(req_type, magic, req_data, clienthost)
 		c = EINVAL;
 		goto reply;
 	}
+
 	c = 0;
 	if (strcmp (poolname, "NOPOOL") == 0)
 		poolflag = -1;
 	found = 0;
+
 	if (linkname) {
 		for (stpp = stps; stpp < stpe; stpp++) {
 			if (stpp->reqid == 0) break;
@@ -525,7 +528,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				goto reply;
 			}
 			STAGE_TIME_START("check_delete");
-			i = check_delete (stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag);
+			i = check_delete (stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag, clienthost);
 			STAGE_TIME_END;
 			if (i > 0) {
 				c = i;
@@ -548,7 +551,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 						goto reply;
 					}
 					STAGE_TIME_START("check_delete");
-					i = check_delete (stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag);
+					i = check_delete (stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag, clienthost);
 					STAGE_TIME_END;
 					if (i > 0) {
 						c = i;
@@ -628,7 +631,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				goto reply;
 			}
  			STAGE_TIME_START("check_delete");
-			i = check_delete (stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag);
+			i = check_delete (stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag, clienthost);
  			STAGE_TIME_END;
 			if (i > 0) {
 				c = i;
@@ -674,7 +677,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 	sendrep (rpfd, STAGERC, STAGECLR, magic, c);
 }
 
-int check_delete(stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag)
+int check_delete(stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag, clienthost)
 	struct stgcat_entry *stcp;
 	gid_t gid;
 	uid_t uid;
@@ -683,25 +686,48 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag)
 	int rflag; /* True if HSM source file has to be removed */
 	int Fflag; /* Forces deletion of request in memory instead of internal error */
 	int nodisk_flag; /* No disk access - pure catalog removal */
+	char *clienthost;
 {
 	int found;
 	int i;
 	int savereqid;
 	struct waitf *wfp;
 	struct waitq *wqp;
+	int isadmin; /* Case of granted privilege */
 
 	/*	return	<0	request deleted
 	 *		 0	running request (status set to CLEARED and req signalled)
 	 *		>0	in case of error
 	 */
 
+	/* We determine in advance if the caller have an admin privilege from stager point of view */
+	/* RFIO TRUSTs will do the rest */
+	if (ISROOT(uid,gid)) {
+		isadmin = 1;
+	} else {
+		/* Request not coming from an admin account */
+		/* In case group differs we check it this (uid,gid) have admin privilege */
+		if (strcmp (group, stcp->group) != 0) {
+			switch (Cupv_check(uid, gid, clienthost, NULL, P_ADMIN)) {
+			case 0:
+				/* Yes */
+				isadmin = 1;
+				break;
+			default:
+				/* No */
+				isadmin = 0;
+				break;
+			}
+		}
+	}
+
     /* Special case of intermediate state or CASTOR-migration state (original record + stream) */
-	if ((ISCASTORWAITINGMIG(stcp) || ISCASTORBEINGMIG(stcp) || ((stcp->t_or_d == 'h') && (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) && (! ISSTAGED(stcp)))) && (! ISROOT(uid,gid))) {
+	if ((ISCASTORWAITINGMIG(stcp) || ISCASTORBEINGMIG(stcp) || ((stcp->t_or_d == 'h') && (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) && (! ISSTAGED(stcp)))) && (! isadmin)) {
 		sendrep (rpfd, MSG_ERR, STG33, stcp->u1.h.xfile, strerror(EBUSY));
 		return (EBUSY);
 	}
 
-	if ((strcmp (group, STGGRP) != 0) && (strcmp (group, stcp->group) != 0) && (! ISROOT(uid,gid))) {
+	if ((strcmp (group, STGGRP) != 0) && (strcmp (group, stcp->group) != 0) && (! isadmin)) {
 		sendrep (rpfd, MSG_ERR, STG33, "", "permission denied");
 		return (EACCES);
 	}
@@ -709,14 +735,13 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag)
 	if (((stcp->status & 0xF0) == STAGED) ||
 		((stcp->status & (STAGEOUT|PUT_FAILED)) == (STAGEOUT|PUT_FAILED)) ||
 		(stcp->status == (STAGEOUT|CAN_BE_MIGR))) {
-		/* Note: The STAGEOUT|CAN_BE_MIGR|PUT_FAILED case is handle by the second test */
 		if (delfile (stcp, 0, 1, 1, user, uid, gid, rflag, 1, nodisk_flag) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
 					 rfio_serror());
 			return (rfio_serrno() > 0 ? rfio_serrno() : SESYSERR);
 		}
 	} else if (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp)) {
-		if ((ISSTAGEOUT(stcp) && (! ISCASTORMIG(stcp))) || (ISSTAGEALLOC(stcp) && ((stcp->status | STAGED) != STAGED))) {
+		if ((stcp->status == STAGEOUT) || (stcp->status == STAGEALLOC)) {
 			rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
 		}
 		if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag, 1, nodisk_flag) < 0) {
@@ -749,7 +774,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag)
 				return (0);
 			}
 		}
-		if (Fflag && ISROOT(uid,gid)) {
+		if (Fflag && isadmin) {
 			sendrep (rpfd, MSG_ERR,
 					 "Status=0x%x but req not in waitq - Deleting reqid %d\n",
 					 stcp->status, stcp->reqid);
