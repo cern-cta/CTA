@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.86 2000/09/01 13:30:16 jdurand Exp $
+ * $Id: stager.c,v 1.87 2000/09/02 06:28:21 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.86 $ $Date: 2000/09/01 13:30:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.87 $ $Date: 2000/09/02 06:28:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -903,6 +903,19 @@ int stagein_castor_hsm_file() {
 		}
 	}
 
+	if (istart >= 0 && iend < 0) {
+		/* This means that was only one entry */
+		if (nbcat_ent_current != 1) {
+			serrno = SEINTERNAL;
+			SAVE_EID;
+			sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Internal error : istart >= 0 && iend < 0 && nbcat_ent_current != 1",
+							 sstrerror (serrno));
+			RESTORE_EID;
+			RETURN (USERR);
+		}
+		iend = 0;
+	}
+
 	/* nbcat_ent_current will be the number of entries that will use vid */
 	if (nbcat_ent_current == 0 || istart < 0 || iend < 0) {
 		serrno = SEINTERNAL;
@@ -1608,14 +1621,6 @@ int filecopy(stcp, key, hostname)
 					RETURN(USERR);
 				}
 				stcp->size = (int) ((filemig_stat.st_size/(ONE_MB)) + 1);
-			}
-		} else {
-			if (rfio_stat (stcp->u1.m.xfile, &filemig_stat) == 0) {
-				SAVE_EID;
-				sendrep (rpfd, MSG_ERR, STG02, stcp->u1.m.xfile,
-						 "rfio_stat", "file already exists");
-				RESTORE_EID;
-				RETURN(USERR);
 			}
 		}
 	}
