@@ -187,7 +187,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #if defined(_WIN32)
 #define LsfInstallDir %%SystemRoot%%\\system32
 #else
-#define LsfInstallDir /usr/local/lsf/lib
+#define LsfInstallDir /usr/local/lsf
 #endif
 
 #define BuildCommands		NO
