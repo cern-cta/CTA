@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: exp_procreq.c,v $ $Revision: 1.1 $ $Date: 2004/06/30 16:18:36 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: exp_procreq.c,v $ $Revision: 1.2 $ $Date: 2004/07/01 14:44:16 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -28,7 +28,6 @@ static char sccsid[] = "@(#)$RCSfile: exp_procreq.c,v $ $Revision: 1.1 $ $Date: 
 #include "Cupv_api.h"
 #include "marshall.h"
 #include "serrno.h"
-#include "u64subr.h"
 #include "expert.h"
 #include "expert_daemon.h"
 
@@ -119,7 +118,7 @@ int s;
 	c = exp_get_from_conf (req_type, wdir, args);
 	if (c < 0) {
 	  explogit (func, EXP98, "error reading the configration file\n");
-	  sendrep (s, EXP_RP_STATUS, EXP_ST_ERROR, SEEXPERRCONF); /* Send error status */
+	  sendrep (s, EXP_RP_STATUS, EXP_ST_ERROR, serrno); /* Send error status */
 	  RETURN (0);
 	}
 
@@ -127,7 +126,7 @@ int s;
 	c = chdir (wdir); /* Change to working directory */
 	if (c < 0) {
 	  explogit (func, EXP98, "can't change directory\n");
-	  sendrep (s, EXP_RP_STATUS, EXP_ST_ERROR, SEEXPCDWDIR); /* Send error status */
+	  sendrep (s, EXP_RP_STATUS, EXP_ST_ERROR, EEXPCDWDIR); /* Send error status */
 	  RETURN (0);
 	}
 
@@ -191,6 +190,8 @@ char *args;
   char req_name[32];
   char del;
   char func[32];
+  int err;
+  int found;
 
   strcpy(func, "exp_get_from_conf");
 
@@ -201,12 +202,12 @@ char *args;
 #if defined (EXPERT_CONFIG)
     strncpy (filename, EXPERT_CONFIG, CA_MAXPATHLEN);
 #else
-    serrno = SENOCONFIG;
+    serrno = EEXPNOCONFIG;
     return (-1);
 #endif
   }
   if ((fp = fopen(filename,"r")) == NULL) {
-    serrno = SENOCONFIG;
+    serrno = EEXPNOCONFIG;
     return (-1);
   }
   /* Convert req_type to the string */
@@ -216,28 +217,48 @@ char *args;
       break;
   }
   if (exp_requests[i].req_type == 0) { /* Not found in the table */
+    fclose (fp);
     serrno = SEINTERNAL;
     return (-1);
   }
   rq_name = exp_requests[i].req_name;
 
+  err = 0;
+  found = 0;
   while (fgets (buf, sizeof(buf), fp) != NULL) {
     p = exp_get_token (buf, " \t", &del, req_name, sizeof(req_name));
-    if (p == NULL) break;
+    if (p == NULL || req_name[0] == '#') continue; /* End of line or comment */
     if (strcmp(req_name, rq_name) != 0) continue;
     /* Record found */
+    found++;
+    /* Try to get working directory */
     p = exp_get_token (p, " \t", &del, wdir, 256);
-    if (p == NULL) break;
+    if (p == NULL) {
+      err++;    /* line format error */
+      break;
+    }
     /* Fill arglist */
     for (i=0; i < 80; i++) {
       p = exp_get_token (p, " \t", &del, args + i*80, 80);
       if (p == NULL) {
 	*(args + i*80) = '\0';
+	if (i <= 0) err++; /* line format error - there must be at least command name */
 	break;
       }
     }
+    if (found || err) break;
   }
-  return (0);
+  fclose (fp);
+  if (err) {
+    serrno = EEXPCONFERR;
+    return (-1);
+  }
+  if (found)
+    return (0);
+  else {
+    serrno = EEXPRQNOTFOUND;
+    return (-1);
+  }
 }
 
 char DLL_DECL * exp_get_token (ptr, delim, del, buf, buf_size)
