@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.148 2001/12/10 16:18:49 jdurand Exp $
+ * $Id: procio.c,v 1.149 2001/12/19 17:25:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.148 $ $Date: 2001/12/10 16:18:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.149 $ $Date: 2001/12/19 17:25:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -138,6 +138,10 @@ static int nowait_flag = 0;
 static int tppool_flag = 0;
 static int nohsmcreat_flag = 0;
 static int rdonly_flag = 0;
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+static int side_flag = 0;
+#endif
+static int nocopy_flag = 0;
 extern struct fileclass *fileclasses;
 
 void procioreq _PROTO((int, int, char *, char *));
@@ -148,7 +152,7 @@ extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *, 
 extern int ask_stageout _PROTO((int, char *, struct stgcat_entry **));
 extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
 extern int nextreqid _PROTO(());
-int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *, int));
+int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *, int, char *));
 int maxfseq_per_vid _PROTO((struct stgcat_entry *, int, char *, char *));
 extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
@@ -191,6 +195,8 @@ extern char *next_tppool _PROTO((struct fileclass *));
 extern void bestnextpool_out _PROTO((char *, int));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 int stageput_check_hsm _PROTO((struct stgcat_entry *, uid_t, gid_t, int));
+extern int export_hsm_option _PROTO((char *));
+extern int have_another_pool_with_export_hsm_option _PROTO((char *));
 
 #ifdef MIN
 #undef MIN
@@ -259,6 +265,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	int numvid, numvsn;
 	char *p, *q;
 	char *pool_user = NULL;
+	char *poolname_exclusion;
 	int poolflag;
 	char *rbp;
 	int savereqid;
@@ -299,6 +306,10 @@ void procioreq(req_type, magic, req_data, clienthost)
 	extern struct passwd stage_passwd;             /* Generic uid/gid stage:st */
 	int have_tppool = 0;
 	char *tppool = NULL;
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+	int side = 0; /* Default value */
+	int have_parsed_side = 0;
+#endif
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 	char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
@@ -336,6 +347,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 		{"poolname",           REQUIRED_ARGUMENT,  NULL,      'p'},
 		{"file_sequence",      REQUIRED_ARGUMENT,  NULL,      'q'},
 		{"tape_server",        REQUIRED_ARGUMENT,  NULL,      'S'},
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+		{"side",               REQUIRED_ARGUMENT,  &side_flag,  1},
+#endif
 		{"size",               REQUIRED_ARGUMENT,  NULL,      's'},
 		{"trailer_label_off",  NO_ARGUMENT,        NULL,      'T'},
 		{"retention_period",   REQUIRED_ARGUMENT,  NULL,      't'},
@@ -347,6 +361,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		{"copytape",           NO_ARGUMENT,        NULL,      'z'},
 		{"silent",             NO_ARGUMENT,  &silent_flag,      1},
 		{"nowait",             NO_ARGUMENT,  &nowait_flag,      1},
+		{"nocopy",             NO_ARGUMENT,  &nocopy_flag,      1},
 		{"tppool",             REQUIRED_ARGUMENT, &tppool_flag, 1},
 		{"nohsmcreat",         NO_ARGUMENT,  &nohsmcreat_flag,  1},
 		{"rdonly",             NO_ARGUMENT,  &rdonly_flag,      1},
@@ -362,9 +377,13 @@ void procioreq(req_type, magic, req_data, clienthost)
 
 	silent_flag = 0;
 	nowait_flag = 0;
+	nocopy_flag = 0;
 	tppool_flag = 0;
 	nohsmcreat_flag = 0;
 	rdonly_flag = 0;
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+	side_flag = 0;
+#endif
 
 	local_unmarshall_STRING (rbp, name);
 	if (req_type > STAGE_00) {
@@ -964,9 +983,19 @@ void procioreq(req_type, magic, req_data, clienthost)
 				break;
 			case 0:
 				/* Long option without short option correspondance */
-				if ((tppool_flag != 0) && (tppool == NULL)) {
+				if ((tppool_flag != 0) && (tppool == NULL)) { /* Not yet done */
 					tppool = Coptarg;
 				}
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+				if ((side_flag != 0) && (! have_parsed_side)) {  /* Not yet done */
+					stage_strtoi(&side, Coptarg, &dp, 10);
+					if ((*dp != '\0') || (side < 0)) {
+						sendrep (rpfd, MSG_ERR, STG06, "--side");
+						errflg++;
+					}
+					have_parsed_side = 1;
+				}
+#endif
 				break;
 			case '?':
 				errflg++;
@@ -1005,6 +1034,22 @@ void procioreq(req_type, magic, req_data, clienthost)
 		Coptind = nstcp_input;
 		if (concat_off != 0 && stcp_input[0].u1.t.fseq[0] != '\0') fseq = stcp_input[0].u1.t.fseq;
 	}
+
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+	if (side_flag) {
+		if (stgreq.t_or_d != 't') {
+			/* We reject side argument in the request is not a pure tape request */
+			sendrep (rpfd, MSG_ERR, STG17, "--side", "any request but stage of explicit tape files");
+			c = USERR;
+			goto reply;
+		}
+		if (api_out == 0) {
+			/* This is not yet in the default stgreq (command-line mode) */
+			/* Btw note that this is natively inside the input structures (API-mode) */
+			stgreq.u1.t.side = side;
+		}
+	}
+#endif
 
 	/* We reset the rdonly_flag if it is set and if it is not a STAGEIN because it has serious implications */
 	/* onto the crucial routine isstaged() */
@@ -1475,9 +1520,12 @@ void procioreq(req_type, magic, req_data, clienthost)
 			}
 		}
 
+		poolname_exclusion = NULL;
+
 		switch (req_type) {
 		case STAGEIN:
-			switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname, rdonly_flag)) {
+		stagein_isstaged_retry:
+			switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname, rdonly_flag, poolname_exclusion)) {
 			case ISSTAGEDBUSY:
 				c = EBUSY;
 				goto reply;
@@ -1486,6 +1534,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 				goto reply;
 			case STAGEIN:	/* stage in progress */
 			case STAGEIN|WAITING_SPC:	/* waiting space */
+				if (poolname_exclusion != NULL) {
+					/* We do not generated WAITING_REQ entries when a record is found in another poolname */
+					/* than what the user requested */
+					goto notstaged;
+				}
 				stcp->nbaccesses++;
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
@@ -1587,6 +1640,84 @@ void procioreq(req_type, magic, req_data, clienthost)
 			case STAGEWRT|CAN_BE_MIGR:
 			case STAGEOUT|CAN_BE_MIGR:
 			forced_yet_staged_branch:
+				if (poolname_exclusion != NULL) {
+					char sav_ipath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
+					char sav_poolname[CA_MAXPOOLNAMELEN+1];
+
+					/* We have to generate a copy between pools */
+					/* Note that by definition this apply only to */
+					/* a single CASTOR HSM file request */
+					strcpy(sav_ipath,stcp->ipath);
+					strcpy(sav_poolname,stcp->poolname);
+					stcp = newreq((int) stgreq.t_or_d);
+					memcpy (stcp, &stgreq, sizeof(stgreq));
+					if (i > 0)
+						stcp->reqid = nextreqid();
+					else
+						stcp->reqid = reqid;
+					stcp->status = STAGEIN;
+					stcp->c_time = stcp->a_time = time(NULL);
+					stcp->nbaccesses++;
+					if (!wqp) {
+						wqp = add2wq (clienthost,
+										user, stcp->uid, stcp->gid,
+										user, save_group, stcp->uid, stcp->gid,
+										clientpid, Upluspath, reqid, req_type, nbdskf, &wfp, &save_subreqid,
+										NULL, fseq,
+										1);
+						/* Please note that we explicitely disabled async callbacks if */
+						/* option -c off is in action */
+						wqp->Aflag = Aflag;
+						wqp->copytape = copytape;
+						wqp->concat_off_fseq = concat_off_fseq;
+						wqp->api_out = api_out;
+						wqp->magic = magic;
+						wqp->uniqueid = stage_uniqueid;
+						wqp->silent = silent_flag;
+						if (nowait_flag != 0) {
+							/* User said nowait - we force silent flag anyway and reset rpfd to N/A */
+							wqp->silent = 1;
+							wqp->rpfd = -1;
+						}
+					}
+					wfp->subreqid = stcp->reqid;
+					/* Nota : save_subreqid is != NULL only if no '-c off' request */
+					if (save_subreqid != NULL) {
+						*save_subreqid = stcp->reqid;
+						save_subreqid++;
+					}
+					wfp->size_to_recall = size_to_recall;   /* Can be zero */
+					wfp->size_yet_recalled = 0;
+					strcpy (wfp->upath, upath);
+					strcpy (wqp->pool_user, pool_user);
+					if (! Aflag) {
+						if ((c = build_ipath (upath, stcp, pool_user, 0)) < 0) {
+							stcp->status |= WAITING_SPC;
+							strcpy (wqp->waiting_pool, stcp->poolname);
+						} else if (c) {
+							updfreespace (stcp->poolname, stcp->ipath,
+														(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
+							delreq(stcp,1);
+							goto reply;
+						}
+					}
+#ifdef USECDB
+					if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
+						stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+					}
+#endif
+					wqp->nbdskf++;
+					wqp->nb_subreqs++;
+					/* We lie to the system filling this ipath member of waitf */
+					stglogit (func, "%s : Found in pool %s at %s\n", stgreq.u1.h.xfile, sav_poolname, sav_ipath);
+					strcpy(wfp->ipath, sav_ipath);
+					wfp++;
+					if (Upluspath) {
+						wfp->subreqid = stcp->reqid;
+						strcpy (wfp->upath, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath);
+					}
+					break;
+				}
 				if (stcp->t_or_d == 'h') {
 					/* update access time in Cns */
 					struct Cns_fileid Cnsfileid;
@@ -1665,6 +1796,27 @@ void procioreq(req_type, magic, req_data, clienthost)
                 }
 			notstaged:
 			default:
+				if ((poolname_exclusion == NULL) &&
+					(! nocopy_flag) &&
+					(poolflag > 0) &&
+					(rdonly_flag) &&
+					(stgreq.t_or_d == 'h') &&
+					(have_another_pool_with_export_hsm_option(stgreq.poolname)) &&
+					(hsmsize > 0)
+					) {
+					/* Unless user said he does not want to have internal copy between disk pools */
+					/* And if user did specified explicitely a pool (if not we would already have */
+					/* searched within all of them !) and if there is at least one pool other than */
+					/* the one he specified that have the export_hsm flag, then we have to look to */
+					/* other poolnames*/
+					/* This apply only on CASTOR-HSM files accessed in O_RDONLY mode */
+					/* The test on poolname_exclusion == NULL ensure that we do a second pass to isstaged() only once */
+
+					/* We do NOT apply this mechanism if hsmsize if == 0 */
+					/* stglogit (func, "%s : Searching in any other pool except %s\n", stgreq.u1.h.xfile, stgreq.poolname); */
+					poolname_exclusion = stgreq.poolname;
+					goto stagein_isstaged_retry;
+				}
 				if (trailing == '-' && last_tape_file &&
 						atoi (stgreq.u1.t.fseq) > last_tape_file) {
 					/* requested file is not on tape */
@@ -1780,7 +1932,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					stgreq.u1.h.fileclass = Cnsfilestat.fileclass;
 				}
 			}
-			switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname, rdonly_flag)) {
+			switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname, rdonly_flag, poolname_exclusion)) {
 			case ISSTAGEDBUSY:
 				c = EBUSY;
 				goto reply;
@@ -1946,7 +2098,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				actual_poolname[0] = '\0';
 			}
 			stage_wrt_migration = 0;
-			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname, rdonly_flag)) {
+			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname, rdonly_flag, poolname_exclusion)) {
 			case ISSTAGEDBUSY:
 				global_c_stagewrt++;
 				c = EBUSY;
@@ -2433,7 +2585,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				actual_poolflag = -1;
 				actual_poolname[0] = '\0';
 			}
-			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname, rdonly_flag)) {
+			switch (isstaged (&stgreq, &stcp, actual_poolflag, actual_poolname, rdonly_flag, poolname_exclusion)) {
 			case ISSTAGEDBUSY:
 				c = EBUSY;
 				goto reply;
@@ -3351,12 +3503,13 @@ void procputreq(req_type, req_data, clienthost)
 }
 
 int
-isstaged(cur, p, poolflag, poolname, rdonly)
+isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion)
 		 struct stgcat_entry *cur;
 		 struct stgcat_entry **p;
 		 int poolflag;
 		 char *poolname;
 		 int rdonly;
+		 char *poolname_exclusion;
 {
 	int found = 0;
 	int found_regardless_of_rdonly = 0;
@@ -3390,17 +3543,27 @@ isstaged(cur, p, poolflag, poolname, rdonly)
 		/* API calls may have set explicitely a reqid */
 		if ((cur->reqid > 0) && (stcp->reqid != cur->reqid)) continue;
 		if (cur->t_or_d != stcp->t_or_d) continue;
+		/* If poolname_exclusion is set this mean that we want to check in ANY pool */
+		/* except the one whose is poolname_exclusion and only if it have the */
+		/* export_hsm flag */
 		/* if no pool specified, the file may reside in any pool */
-		if (poolflag == 0) {
-			if (stcp->poolname[0] == '\0') continue;
+		/* By definition the caller made sure that poolflag is > 0 (e.g. original request want a specific poolname) */
+		if (poolname_exclusion != NULL) {
+			if (strcmp(poolname,stcp->poolname) == 0) continue;
+			/* Does current poolname have export_hsm option ? */
+			if (! export_hsm_option(stcp->poolname)) continue;
 		} else {
-			/* if a specific pool was requested, the file must be there */
-			if (poolflag > 0) {
-				if (strcmp (poolname, stcp->poolname)) continue;
+			if (poolflag == 0) {
+				if (stcp->poolname[0] == '\0') continue;
 			} else {
-				/* if -p NOPOOL, the file should not reside in a pool */
-				if (poolflag < 0) {
-					if (stcp->poolname[0]) continue;
+				/* if a specific pool was requested, the file must be there */
+				if (poolflag > 0) {
+					if (strcmp (poolname, stcp->poolname)) continue;
+				} else {
+					/* if -p NOPOOL, the file should not reside in a pool */
+					if (poolflag < 0) {
+						if (stcp->poolname[0]) continue;
+					}
 				}
 			}
 		}
@@ -3412,6 +3575,9 @@ isstaged(cur, p, poolflag, poolname, rdonly)
 				if (strcmp (cur->u1.t.vsn[i], stcp->u1.t.vsn[i])) break;
 			if (i < MAXVSN) continue;
 			if (strcmp (cur->u1.t.lbl, stcp->u1.t.lbl)) continue;
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+			if (cur->u1.t.side != stcp->u1.t.side) continue;
+#endif
 			if (cur->u1.t.fseq[0] != 'u') {
 				if ((stcp->status & 0xF000) == LAST_TPFILE)
 					last_tape_file = atoi (stcp->u1.t.fseq);
@@ -3458,17 +3624,22 @@ isstaged(cur, p, poolflag, poolname, rdonly)
 							if (stclp->reqid == 0) break;
 							if (stclp->t_or_d != 'h') continue; /* Not CASTOR file */
 							if (stclp->reqid == stcp->reqid) continue; /* Yet done */
-							/* if no pool specified, the file may reside in any pool */
-							if (poolflag == 0) {
-								if (stclp->poolname[0] == '\0') continue;
+							if (poolname_exclusion != NULL) {
+								/* We know by definition that stcp that triggered this action is within pool stcp->poolname */
+								if (strcmp(stclp->poolname,stcp->poolname) != 0) continue;
 							} else {
-								/* if a specific pool was requested, the file must be there */
-								if (poolflag > 0) {
-									if (strcmp (poolname, stclp->poolname)) continue;
+								/* if no pool specified, the file may reside in any pool */
+								if (poolflag == 0) {
+									if (stclp->poolname[0] == '\0') continue;
 								} else {
-									/* if -p NOPOOL, the file should not reside in a pool */
-									if (poolflag < 0) {
-										if (stclp->poolname[0]) continue;
+									/* if a specific pool was requested, the file must be there */
+									if (poolflag > 0) {
+										if (strcmp (poolname, stclp->poolname)) continue;
+									} else {
+										/* if -p NOPOOL, the file should not reside in a pool */
+										if (poolflag < 0) {
+											if (stclp->poolname[0]) continue;
+										}
 									}
 								}
 							}
@@ -3590,17 +3761,22 @@ isstaged(cur, p, poolflag, poolname, rdonly)
 							for (stclp = stcp_castor_invariants + 1; stclp < stce; stclp++) {
 								if (stclp->reqid == 0) break;
 								if (stclp->t_or_d != 'h') continue; /* Not CASTOR file */
-								/* if no pool specified, the file may reside in any pool */
-								if (poolflag == 0) {
-									if (stclp->poolname[0] == '\0') continue;
+								if (poolname_exclusion != NULL) {
+									/* We know by definition that stcp that triggered this action is within pool stcp->poolname */
+									if (strcmp(stclp->poolname,stcp->poolname) != 0) continue;
 								} else {
-									/* if a specific pool was requested, the file must be there */
-									if (poolflag > 0) {
-										if (strcmp (poolname, stclp->poolname)) continue;
+									/* if no pool specified, the file may reside in any pool */
+									if (poolflag == 0) {
+										if (stclp->poolname[0] == '\0') continue;
 									} else {
-										/* if -p NOPOOL, the file should not reside in a pool */
-										if (poolflag < 0) {
-											if (stclp->poolname[0]) continue;
+										/* if a specific pool was requested, the file must be there */
+										if (poolflag > 0) {
+											if (strcmp (poolname, stclp->poolname)) continue;
+										} else {
+											/* if -p NOPOOL, the file should not reside in a pool */
+											if (poolflag < 0) {
+												if (stclp->poolname[0]) continue;
+											}
 										}
 									}
 								}
