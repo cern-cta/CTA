@@ -1,5 +1,5 @@
 /*
- * $Id: write.c,v 1.4 1999/12/09 13:47:21 jdurand Exp $
+ * $Id: write.c,v 1.5 1999/12/17 19:09:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:47:21 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.5 $ $Date: 1999/12/17 19:09:39 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* write.c      Remote File I/O - write a file                          */
@@ -18,6 +18,8 @@ static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.4 $ $Date: 1999/1
  */
 #define RFIO_KERNEL     1  
 #include "rfio.h"  
+
+#include <stdlib.h>            /* malloc prototype */
 
 /*
  * Remote file write

@@ -1,5 +1,5 @@
 /*
- * $Id: symlink.c,v 1.5 1999/12/10 19:48:14 baran Exp $
+ * $Id: symlink.c,v 1.6 1999/12/17 19:09:38 jdurand Exp $
  */
 
 
@@ -9,13 +9,15 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: symlink.c,v $ $Revision: 1.5 $ $Date: 1999/12/10 19:48:14 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: symlink.c,v $ $Revision: 1.6 $ $Date: 1999/12/17 19:09:38 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #define RFIO_KERNEL     1
 #include <pwd.h>
 #include "rfio.h"
 #include <Cpwd.h>
+
+#include <stdlib.h>            /* malloc prototype */
 
 #ifndef linux
 extern char *sys_errlist[];     /* system error list */

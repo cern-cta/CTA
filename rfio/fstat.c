@@ -1,5 +1,5 @@
 /*
- * $Id: fstat.c,v 1.4 1999/12/09 13:46:46 jdurand Exp $
+ * $Id: fstat.c,v 1.5 1999/12/17 19:09:37 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fstat.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:46:46 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fstat.c,v $ $Revision: 1.5 $ $Date: 1999/12/17 19:09:37 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fstat.c      Remote File I/O - get file status                       */
@@ -18,6 +18,8 @@ static char sccsid[] = "@(#)$RCSfile: fstat.c,v $ $Revision: 1.4 $ $Date: 1999/1
  */
 #define RFIO_KERNEL     1   
 #include "rfio.h"          
+
+#include <stdlib.h>            /* malloc prototype */
 
 /*
  * Remote file stat

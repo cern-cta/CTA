@@ -1,5 +1,5 @@
 /*
- * $Id: preseek.c,v 1.4 1999/12/09 13:47:02 jdurand Exp $
+ * $Id: preseek.c,v 1.5 1999/12/17 19:09:38 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: preseek.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:47:02 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: preseek.c,v $ $Revision: 1.5 $ $Date: 1999/12/17 19:09:38 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* preseek.c      Remote File I/O - preseeking.		*/
@@ -21,6 +21,8 @@ static char sccsid[] = "@(#)$RCSfile: preseek.c,v $ $Revision: 1.4 $ $Date: 1999
 #include <sys/uio.h>
 #endif
 #include "rfio.h"     
+
+#include <stdlib.h>            /* malloc prototype */
 
 #ifndef min
 #define min(a,b)	(((a)<(b)) ? (a):(b))
