@@ -229,7 +229,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 	char *getenv();
 	struct hostent *hp;
 	int link_rc;
-	int magic;
+	int magic_server;
 	int n;
 	char *p;
 	char prtbuf[PRTBUFSZ];
@@ -249,6 +249,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 	u_signed64 uniqueid = 0;
 	u_signed64 current_uniqueid = 0;
 	int save_serrno, orig_serrno;
+	int magic_client = stage_stgmagic();
 
 	strcpy (func, "send2stgd");
 	orig_serrno = serrno;
@@ -384,14 +385,14 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 			SEND2STGD_API_ERROR(-1);
 		}
 		p = repbuf;
-		unmarshall_LONG (p, magic) ;
+		unmarshall_LONG (p, magic_server) ;
 		unmarshall_LONG (p, rep_type) ;
 		unmarshall_LONG (p, c) ;
 
 		if (rep_type == STAGERC) {
 			(void) netclose (stg_s);
 			if (c) {
-				serrno = rc_shift2castor(magic,c);
+				serrno = rc_shift2castor(magic_server,c);
 				c = -1;
 			}
 			break;
@@ -440,7 +441,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 			}
 			p = msgbuf_out;
 			unmarshall_status = 0;
-			unmarshall_STAGE_CAT(magic,STAGE_OUTPUT_MODE,unmarshall_status,p,&(_stcp_output[_nstcp_output - 1]));
+			unmarshall_STAGE_CAT(magic_server,magic_client,STAGE_OUTPUT_MODE,unmarshall_status,p,&(_stcp_output[_nstcp_output - 1]));
 			free(msgbuf_out);
 			if (unmarshall_status == 0) stage_callback(&(_stcp_output[_nstcp_output - 1]),NULL);
 			if (stcp_output != NULL) *stcp_output = _stcp_output;
@@ -491,7 +492,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 			}
 			p = msgbuf_out;
 			unmarshall_status = 0;
-			unmarshall_STAGE_PATH(magic, STAGE_OUTPUT_MODE,unmarshall_status,p,&(_stpp_output[_nstpp_output - 1]));
+			unmarshall_STAGE_PATH(magic_server,magic_client,STAGE_OUTPUT_MODE,unmarshall_status,p,&(_stpp_output[_nstpp_output - 1]));
 			free(msgbuf_out);
 			if (unmarshall_status == 0) stage_callback(NULL,&(_stpp_output[_nstpp_output - 1]));
 			if (stpp_output != NULL) *stpp_output = _stpp_output;

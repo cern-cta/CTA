@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.23 2002/05/03 04:46:36 jdurand Exp $
+ * $Id: sendrep.c,v 1.24 2002/05/06 17:17:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.23 $ $Date: 2002/05/03 04:46:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.24 $ $Date: 2002/05/06 17:17:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -173,7 +173,7 @@ int sendrep(va_alist) va_dcl
 		api_stcp_out_status = 0;
 		marshall_LONG (sav_rbp_magic, magic);
 		p = stcp_marshalled;
-		marshall_STAGE_CAT (magic, STAGE_OUTPUT_MODE, api_stcp_out_status, p, stcp);
+		marshall_STAGE_CAT (STGDAEMON_LEVEL, magic, STAGE_OUTPUT_MODE, api_stcp_out_status, p, stcp);
 		marshall_LONG(rbp, p - stcp_marshalled);
 		marshall_OPAQUE(rbp, stcp_marshalled, p - stcp_marshalled);
  		break;
@@ -184,7 +184,7 @@ int sendrep(va_alist) va_dcl
 		api_stpp_out_status = 0;
 		marshall_LONG (sav_rbp_magic, magic);
 		p = stpp_marshalled;
-		marshall_STAGE_PATH (magic, STAGE_OUTPUT_MODE, api_stpp_out_status, p, stpp);
+		marshall_STAGE_PATH (STGDAEMON_LEVEL, magic, STAGE_OUTPUT_MODE, api_stpp_out_status, p, stpp);
 		marshall_LONG(rbp, p - stpp_marshalled);
 		marshall_OPAQUE(rbp, stpp_marshalled, p - stpp_marshalled);
  		break;

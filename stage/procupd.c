@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.103 2002/05/02 07:46:15 jdurand Exp $
+ * $Id: procupd.c,v 1.104 2002/05/06 17:17:16 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.103 $ $Date: 2002/05/02 07:46:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.104 $ $Date: 2002/05/06 17:17:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -217,7 +217,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			goto reply;
 		}
 		path_status = 0;
-		unmarshall_STAGE_PATH(magic, STAGE_INPUT_MODE, path_status, rbp, &(stpp_input[0]));
+		unmarshall_STAGE_PATH(magic, STGDAEMON_LEVEL, STAGE_INPUT_MODE, path_status, rbp, &(stpp_input[0]));
 		if ((path_status != 0) || (stpp_input[0].upath[0] == '\0')) {
 			sendrep(rpfd, MSG_ERR, "STG02 - Bad input (path input structure\n");
 			c = EINVAL;

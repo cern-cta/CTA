@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.45 2002/05/03 04:47:17 jdurand Exp $
+ * $Id: stage_api.c,v 1.46 2002/05/06 17:17:17 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -228,7 +228,8 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   int Tid = 0;
   u_signed64 uniqueid = 0;
   int maxretry = MAXRETRY;
-  
+  int magic = stage_stgmagic();
+
   /* It is not allowed to have no input */
   if (nstcp_input <= 0) {
     serrno = EINVAL;
@@ -598,7 +599,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 
   /* Build request header */
   sbp = sendbuf;
-  marshall_LONG (sbp, stage_stgmagic());
+  marshall_LONG (sbp, magic);
   marshall_LONG (sbp, req_type);
   q = sbp;	/* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;
@@ -628,7 +629,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   for (istcp = 0; istcp < nstcp_input; istcp++) {
     thiscat = &(stcp_input[istcp]);               /* Current catalog structure */
     status = 0;
-    marshall_STAGE_CAT(stage_stgmagic(),STAGE_INPUT_MODE,status,sbp,thiscat); /* Structures */
+    marshall_STAGE_CAT(magic,magic,STAGE_INPUT_MODE,status,sbp,thiscat); /* Structures */
     if (status != 0) {
       serrno = EINVAL;
 #if defined(_WIN32)
@@ -640,7 +641,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   for (istpp = 0; istpp < nstpp_input; istpp++) {
     thispath = &(stpp_input[istpp]);                           /* Current path structure */
     status = 0;
-    marshall_STAGE_PATH(stage_stgmagic(),STAGE_INPUT_MODE,status,sbp,thispath); /* Structures */
+    marshall_STAGE_PATH(magic,magic,STAGE_INPUT_MODE,status,sbp,thispath); /* Structures */
     if (status != 0) {
       serrno = EINVAL;
 #if defined(_WIN32)
@@ -947,6 +948,8 @@ int DLL_DECL stage_admin_kill(hostname,uniqueid)
   struct passwd *pw;            /* Password entry */
   uid_t euid;                   /* Current effective uid */
   gid_t egid;                   /* Current effective gid */
+  int magic = stage_stgmagic();
+
   euid = geteuid();             /* Get current effective uid */
   egid = getegid();             /* Get current effective gid */
   pw = Cgetpwuid(euid);
@@ -966,7 +969,7 @@ int DLL_DECL stage_admin_kill(hostname,uniqueid)
     this_uniqueid = *uniqueid;
   }
   sbp = sendbuf;
-  marshall_LONG (sbp, stage_stgmagic());
+  marshall_LONG (sbp, magic);
   marshall_LONG (sbp, STAGE_KILL);
   q = sbp;	/* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;
@@ -1024,6 +1027,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   char *func = "stage_qry";
   int maxretry = MAXRETRY;
   struct stgcat_entry stcp_dummy;
+  int magic = stage_stgmagic();
 
   /* It is not allowed to have anything else but one single entry in input, or none only if t_or_d == '\0' */
   if (nstcp_input > 1) {
@@ -1170,7 +1174,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 
   /* Build request header */
   sbp = sendbuf;
-  marshall_LONG (sbp, stage_stgmagic());
+  marshall_LONG (sbp, magic);
   marshall_LONG (sbp, req_type);
   q = sbp;	/* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;
@@ -1186,7 +1190,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   for (istcp = 0; istcp < nstcp_input; istcp++) {
     thiscat = &(stcp_input[istcp]);               /* Current catalog structure */
     status = 0;
-    marshall_STAGE_CAT(stage_stgmagic(),STAGE_INPUT_MODE,status,sbp,thiscat); /* Structures */
+    marshall_STAGE_CAT(magic,magic,STAGE_INPUT_MODE,status,sbp,thiscat); /* Structures */
     if (status != 0) {
       serrno = EINVAL;
 #if defined(_WIN32)
@@ -1392,6 +1396,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   u_signed64 uniqueid = 0;
   char tmpbuf[21];
   int maxretry = MAXRETRY;
+  int magic = stage_stgmagic();
 
   /* It is not allowed to have no input */
   if (nstpp_input <= 0) {
@@ -1577,7 +1582,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
 
   /* Build request header */
   sbp = sendbuf;
-  marshall_LONG (sbp, stage_stgmagic());
+  marshall_LONG (sbp, magic);
   marshall_LONG (sbp, req_type);
   q = sbp;	/* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;
@@ -1610,7 +1615,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   for (istpp = 0; istpp < nstpp_input; istpp++) {
     thispath = &(stpp_input[istpp]);                           /* Current path structure */
     status = 0;
-    marshall_STAGE_PATH(stage_stgmagic(),STAGE_INPUT_MODE,status,sbp,thispath); /* Structures */
+    marshall_STAGE_PATH(magic,magic,STAGE_INPUT_MODE,status,sbp,thispath); /* Structures */
     if (status != 0) {
       serrno = EINVAL;
 #if defined(_WIN32)
@@ -1682,6 +1687,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   u_signed64 uniqueid = 0;
   u_signed64 flagsok = flags;
   int maxretry = MAXRETRY;
+  int magic = stage_stgmagic();
 
   /* It is not allowed to have no input */
   if ((nstcp_input <= 0) && (nstpp_input <= 0)) {
@@ -1939,7 +1945,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
 
   /* Build request header */
   sbp = sendbuf;
-  marshall_LONG (sbp, stage_stgmagic());
+  marshall_LONG (sbp, magic);
   marshall_LONG (sbp, req_type);
   q = sbp;	/* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;
@@ -1961,7 +1967,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   for (istcp = 0; istcp < nstcp_input; istcp++) {
     thiscat = &(stcp_input[istcp]);               /* Current catalog structure */
     status = 0;
-    marshall_STAGE_CAT(stage_stgmagic(),STAGE_INPUT_MODE,status,sbp,thiscat); /* Structures */
+    marshall_STAGE_CAT(magic,magic,STAGE_INPUT_MODE,status,sbp,thiscat); /* Structures */
     if (status != 0) {
       serrno = EINVAL;
 #if defined(_WIN32)
@@ -1973,7 +1979,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   for (istpp = 0; istpp < nstpp_input; istpp++) {
     thispath = &(stpp_input[istpp]);                           /* Current path structure */
     status = 0;
-    marshall_STAGE_PATH(stage_stgmagic(),STAGE_INPUT_MODE,status,sbp,thispath); /* Structures */
+    marshall_STAGE_PATH(magic,magic,STAGE_INPUT_MODE,status,sbp,thispath); /* Structures */
     if (status != 0) {
       serrno = EINVAL;
 #if defined(_WIN32)
@@ -2152,6 +2158,7 @@ int DLL_DECL stage_ping(flags,hostname)
 #endif
   char *func = "stage_ping";
   int maxretry = MAXRETRY;
+  int magic = stage_stgmagic();
 
   euid = geteuid();             /* Get current effective uid */
   egid = getegid();             /* Get current effective gid */
@@ -2229,7 +2236,7 @@ int DLL_DECL stage_ping(flags,hostname)
 
   /* Build request header */
   sbp = sendbuf;
-  marshall_LONG (sbp, stage_stgmagic());
+  marshall_LONG (sbp, magic);
   marshall_LONG (sbp, req_type);
   q = sbp;	/* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;

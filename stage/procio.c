@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.177 2002/04/30 12:37:07 jdurand Exp $
+ * $Id: procio.c,v 1.178 2002/05/06 17:17:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.177 $ $Date: 2002/04/30 12:37:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.178 $ $Date: 2002/05/06 17:17:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -530,7 +530,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			char logit[BUFSIZ + 1];
 
 			struct_status = 0;
-			unmarshall_STAGE_CAT(magic,STAGE_INPUT_MODE, struct_status, rbp, &(stcp_input[i]));
+			unmarshall_STAGE_CAT(magic,STGDAEMON_LEVEL,STAGE_INPUT_MODE, struct_status, rbp, &(stcp_input[i]));
 			if (struct_status != 0) {
 				sendrep(rpfd, MSG_ERR, "STG02 - Bad input (catalog input structure No %d/%d)\n", ++i, nstcp_input);
 				c = SEINTERNAL;
@@ -590,7 +590,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		}
 		for (i = 0; i < nstpp_input; i++) {
 			path_status = 0;
-			unmarshall_STAGE_PATH(magic, STAGE_INPUT_MODE, path_status, rbp, &(stpp_input[i]));
+			unmarshall_STAGE_PATH(magic, STGDAEMON_LEVEL,STAGE_INPUT_MODE, path_status, rbp, &(stpp_input[i]));
 			if (path_status != 0) {
 				sendrep(rpfd, MSG_ERR, "STG02 - Bad input (path input structure No %d/%d)\n", ++i, nstpp_input);
 				c = SEINTERNAL;

@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.53 2002/04/30 12:31:56 jdurand Exp $
+ * $Id: procclr.c,v 1.54 2002/05/06 17:17:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.53 $ $Date: 2002/04/30 12:31:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.54 $ $Date: 2002/05/06 17:17:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -227,7 +227,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				int struct_status = 0;
 
 				stcp_input.reqid = -1;
-				unmarshall_STAGE_CAT(magic, STAGE_INPUT_MODE, struct_status, rbp, &(stcp_input));
+				unmarshall_STAGE_CAT(magic, STGDAEMON_LEVEL, STAGE_INPUT_MODE, struct_status, rbp, &(stcp_input));
 				if (struct_status != 0) {
 					sendrep(rpfd, MSG_ERR, "STG02 - Bad catalog entry input\n");
 					c = SEINTERNAL;
@@ -290,7 +290,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			}
 		} else {
 			int path_status = 0;
-			unmarshall_STAGE_PATH(magic, STAGE_INPUT_MODE, path_status, rbp, &(stpp_input));
+			unmarshall_STAGE_PATH(magic, STGDAEMON_LEVEL, STAGE_INPUT_MODE, path_status, rbp, &(stpp_input));
 			if (path_status != 0) {
 				sendrep(rpfd, MSG_ERR, "STG02 - Bad input (path input structure)\n");
 				c = EINVAL;
