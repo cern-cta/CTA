@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.3 2004/11/19 18:31:32 bcouturi Exp $
+ * $Id: stager_client_api_put.cpp,v 1.4 2004/11/20 12:27:06 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.3 $ $Date: 2004/11/19 18:31:32 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.4 $ $Date: 2004/11/20 12:27:06 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -163,14 +163,18 @@ class PutDoneResponseHandler : public castor::client::IResponseHandler {
       e.getMessage() << "Response array should already have been allocated";
       throw e;
     }
+    m_expectedNbResps = *m_nbResps; 
   }
 
   virtual void handleResponse(castor::rh::Response& r)
     throw (castor::exception::Exception) {
 
     m_currentNbResps++;
+    *m_nbResps = m_currentNbResps;
 
-    if (m_currentNbResps > *m_nbResps) {
+    std::cout << "Received Response " << m_currentNbResps << std::endl
+;
+    if (m_currentNbResps > m_expectedNbResps) {
       castor::exception::Exception e(SEINTERNAL);
       e.getMessage() << "Receiving more responses than requests were sent";
       throw e;
@@ -208,6 +212,7 @@ class PutDoneResponseHandler : public castor::client::IResponseHandler {
 
   int *m_nbResps;
   int m_currentNbResps;
+  int m_expectedNbResps;
   struct stage_fileresp *m_resps;
 };
 
