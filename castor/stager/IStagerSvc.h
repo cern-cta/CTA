@@ -712,10 +712,13 @@ int Cstager_IStagerSvc_resetStream
  * machines are given by parameter machines
  * @param machines the machines on which the filesystems
  * in parameter fileSystems reside
- * @param fileSystemsNb the length of the arrays fileSystems
- * and machines
- * @param minFree the minimum free space that the fileSystem
- * selected should have
+ * @param minFree the minimum free space needed on each
+ * filesystem to be selected. This is filesystem dependent
+ * due to possible reservations of the scheduler.
+ * This array must have at least one item, even if the
+ * number of filesystems is 0 (meaning all)
+ * @param fileSystemsNb the length of the arrays
+ * fileSystems, machines and minFree (if > 0 for minFree)
  * @mountPoint the selected fileSystem's mountPoint
  * @diskServer the diskServer on which the selected
  * fileSystem resides.
@@ -727,7 +730,7 @@ int Cstager_IStagerSvc_resetStream
 int Cstager_IStagerSvc_bestFileSystemForJob
 (struct Cstager_IStagerSvc_t* stgSvc,
  char** fileSystems, char** machines,
- unsigned int fileSystemsNb, u_signed64 minFree,
+ u_signed64* minFree, unsigned int fileSystemsNb,
  char** mountPoint, char** diskServer);
 
 /**

@@ -324,6 +324,7 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
   TYPE Segment_Cur IS REF CURSOR RETURN Segment%ROWTYPE;
   TYPE "strList" IS TABLE OF VARCHAR2(2048) index by binary_integer;
+  TYPE "numList" IS TABLE OF INTEGER index by binary_integer;
 END castor;
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
@@ -688,7 +689,7 @@ END;
 /* PL/SQL method implementing bestFileSystemForJob */
 CREATE OR REPLACE PROCEDURE bestFileSystemForJob
 (fileSystems IN castor."strList", machines IN castor."strList",
- minFree IN INTEGER, rMountPoint OUT VARCHAR2,
+ minFree IN castor."numList", rMountPoint OUT VARCHAR2,
  rDiskServer OUT VARCHAR2) AS
  ds NUMBER;
  fs NUMBER;
@@ -702,24 +703,30 @@ BEGIN
  IF fileSystems.COUNT > 0 THEN
   DECLARE
    fsIds "numList" := "numList"();
+   nextIndex NUMBER := 1;
   BEGIN
    fsIds.EXTEND(fileSystems.COUNT);
    FOR i in fileSystems.FIRST .. fileSystems.LAST LOOP
-    SELECT FileSystem.id INTO fsIds(i)
-      FROM FileSystem, DiskServer
-     WHERE FileSystem.mountPoint = fileSystems(i)
-       AND DiskServer.name = machines(i)
-       AND FileSystem.diskServer = DiskServer.id;
+    BEGIN
+      SELECT FileSystem.id INTO fsIds(nextIndex)
+        FROM FileSystem, DiskServer
+       WHERE FileSystem.mountPoint = fileSystems(i)
+         AND DiskServer.name = machines(i)
+         AND FileSystem.diskServer = DiskServer.id
+         AND minFree(i) <= FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace
+         AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
+         AND FileSystem.status IN (0, 1); -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+      nextIndex := nextIndex + 1;
+    EXCEPTION  WHEN NO_DATA_FOUND THEN
+      NULL;
+    END;  
    END LOOP;
    OPEN c1 FOR
     SELECT FileSystem.mountPoint, Diskserver.name,
            DiskServer.id, FileSystem.id, FileSystem.fsDeviation
     FROM FileSystem, DiskServer
     WHERE FileSystem.diskserver = DiskServer.id
-     AND FileSystem.id MEMBER OF fsIds
-     AND FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace >= minFree
-     AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
-     AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+      AND FileSystem.id MEMBER OF fsIds
     ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
              FileSystem.fsDeviation ASC;
   END;
@@ -729,7 +736,7 @@ BEGIN
           DiskServer.id, FileSystem.id, FileSystem.fsDeviation
    FROM FileSystem, DiskServer
    WHERE FileSystem.diskserver = DiskServer.id
-    AND FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace >= minFree
+    AND FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace >= minFree(0)
     AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
     AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
    ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.130 $ $Release$ $Date: 2005/02/11 16:42:17 $ $Author: jdurand $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.131 $ $Release$ $Date: 2005/02/23 16:05:43 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -2139,8 +2139,8 @@ void castor::db::ora::OraStagerSvc::resetStream
 void castor::db::ora::OraStagerSvc::bestFileSystemForJob
 (char** fileSystems,
  char** machines,
+ u_signed64* minFree,
  unsigned int fileSystemsNb,
- u_signed64 minFree,
  std::string* mountPoint,
  std::string* diskServer)
   throw (castor::exception::Exception) {
@@ -2155,8 +2155,10 @@ void castor::db::ora::OraStagerSvc::bestFileSystemForJob
       m_bestFileSystemForJobStatement->registerOutParam
         (5, oracle::occi::OCCISTRING, 2048);
     }
+    // actual length of minFree
+    unsigned int fsNbFree = fileSystemsNb > 0 ? fileSystemsNb : 1;
     // Find max length of the input parameters
-    ub2 lensFS[fileSystemsNb], lensM[fileSystemsNb];
+    ub2 lensFS[fileSystemsNb], lensM[fileSystemsNb], lensMF[fsNbFree];
     unsigned int maxFS = 0;
     unsigned int maxM = 0;
     for (int i = 0; i < fileSystemsNb; i++) {
@@ -2164,24 +2166,32 @@ void castor::db::ora::OraStagerSvc::bestFileSystemForJob
       if (lensFS[i] > maxFS) maxFS = lensFS[i];
       lensM[i] = strlen(machines[i]);
       if (lensM[i] > maxM) maxM = lensM[i];
+      lensMF[i] = sizeof(u_signed64);
     }
+    lensMF[0] = sizeof(u_signed64); // usefull if fileSystemsNb is 0
     // Allocate buffer for giving the parameters to ORACLE
     char bufferFS[fileSystemsNb][maxFS];
     char bufferM[fileSystemsNb][maxM];
+    double bufferMF[fsNbFree];
     // Copy inputs into the buffer
     for (int i = 0; i < fileSystemsNb; i++) {
       strncpy(bufferFS[i], fileSystems[i], lensFS[i]);
       strncpy(bufferM[i], machines[i], lensM[i]);
+      bufferMF[i] = (double)minFree[i];
     }
+    bufferMF[0] = (double)minFree[0];
     // execute the statement and see whether we found something
     ub4 unused = fileSystemsNb;    
+    ub4 unused2 = fileSystemsNb > 0 ? fileSystemsNb : 1;    
     m_bestFileSystemForJobStatement->setDataBufferArray
       (1, bufferFS, oracle::occi::OCCI_SQLT_CHR,
        fileSystemsNb, &unused, maxFS, lensFS);
     m_bestFileSystemForJobStatement->setDataBufferArray
       (2, bufferM, oracle::occi::OCCI_SQLT_CHR,
        fileSystemsNb, &unused, maxM, lensM);
-    m_bestFileSystemForJobStatement->setDouble(3, minFree);
+    m_bestFileSystemForJobStatement->setDataBufferArray
+      (3, bufferMF, oracle::occi::OCCIBDOUBLE,
+       fsNbFree, &unused2, sizeof(u_signed64), lensMF);
     unsigned int nb = m_bestFileSystemForJobStatement->executeUpdate();
     if (0 == nb) {
       castor::exception::Internal ex;

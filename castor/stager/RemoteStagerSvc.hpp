@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.26 $ $Release$ $Date: 2005/02/11 10:30:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.27 $ $Release$ $Date: 2005/02/23 16:05:43 $ $Author: sponcec3 $
  *
  *
  *
@@ -563,10 +563,13 @@ namespace castor {
        * according to job requirements (given by id). This
        * is the fileSystems' mountPoint, the corresponding
        * machines are given by parameter machines
-       * @param machines the machines on which the filesystems
-       * in parameter fileSystems reside
-       * @param minFree the minimum free space that the fileSystem
-       * selected should have
+       * @param minFree the minimum free space needed on each
+       * filesystem to be selected. This is filesystem dependent
+       * due to possible reservations of the scheduler.
+       * This array must have at least one item, even if the
+       * number of filesystems is 0 (meaning all)
+       * @param fileSystemsNb the length of the arrays
+       * fileSystems, machines and minFree (if > 0 for minFree)
        * @mountPoint the selected fileSystem's mountPoint
        * @diskServer the diskServer on which the selected
        * fileSystem resides.
@@ -575,8 +578,8 @@ namespace castor {
       virtual void bestFileSystemForJob
       (char** fileSystems,
        char** machines,
+       u_signed64* minFree,
        unsigned int fileSystemsNb,
-       u_signed64 minFree,
        std::string* mountPoint,
        std::string* diskServer)
         throw (castor::exception::Exception);

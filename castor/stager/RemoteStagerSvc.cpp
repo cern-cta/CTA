@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2005/02/11 10:30:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2005/02/23 16:05:43 $ $Author: sponcec3 $
  *
  *
  *
@@ -605,8 +605,8 @@ void castor::stager::RemoteStagerSvc::resetStream
 void castor::stager::RemoteStagerSvc::bestFileSystemForJob
 (char** fileSystems,
  char** machines,
+ u_signed64* minFree,
  unsigned int fileSystemsNb,
- u_signed64 minFree,
  std::string* mountPoint,
  std::string* diskServer)
   throw (castor::exception::Exception) {
