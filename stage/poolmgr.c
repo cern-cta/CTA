@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.88 2001/02/13 07:55:28 jdurand Exp $
+ * $Id: poolmgr.c,v 1.89 2001/02/13 08:55:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.88 $ $Date: 2001/02/13 07:55:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.89 $ $Date: 2001/02/13 08:55:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2085,15 +2085,12 @@ int migpoolfiles(pool_p)
               /* There is right now, or already, material to have a new stream */
               /* We continue the loop up to when we have splitted the original stream almost equally */
               if ((virtual_old_size < ideal_minsize) || (virtual_old_size <= 0)) {
-                /* We have scanned a bit too much - we cares only if we have emptied the old stream */
-                if (virtual_old_size <= 0) {
-                  virtual_old_size += tppool_vs_stcp[j].stcp[k].actual_size;
-                  if ((virtual_new_size -= tppool_vs_stcp[j].stcp[k].actual_size) > 0) {
-                    can_create_new_stream = k;
-                    nstcp_to_move--;
-                  }
-                  break;
+                virtual_old_size += tppool_vs_stcp[j].stcp[k].actual_size;
+                if ((virtual_new_size -= tppool_vs_stcp[j].stcp[k].actual_size) > 0) {
+                  can_create_new_stream = k;
+                  nstcp_to_move--;
                 }
+                break;
               }
               /* Streams are meant to be approximatively of the same size */
               if (virtual_new_size > virtual_old_size) {
