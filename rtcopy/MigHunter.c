@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.10 $ $Release$ $Date: 2005/01/14 16:03:22 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.11 $ $Release$ $Date: 2005/01/24 16:58:05 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.10 $ $Release$ $Date: 2005/01/14 16:03:22 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.11 $ $Release$ $Date: 2005/01/24 16:58:05 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -714,6 +714,17 @@ int addTapeCopyToStreams(
   return(addedToStream);
 }
 
+int callExpert(
+               migratorPolicy,
+               castorFileName,
+               statbuf
+               )
+     char *migratorPolicy, *castorFileName;
+     struct Cns_filestat *statbuf;
+{
+  return(1);
+}    
+
 int getMigrCandidates(
                       svcClass,
                       migrCandidates,
@@ -735,6 +746,7 @@ int getMigrCandidates(
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
   char *nsHost, *tapePoolName, castorFileName[CA_MAXPATHLEN+1];
+  char *migratorPolicy = NULL;
   struct Cns_fileid fileId;
   struct Cns_fileclass fileClass, **fileClassArray = NULL;
   struct Cns_filestat statbuf;
@@ -783,6 +795,10 @@ int getMigrCandidates(
     fileClassArray = (struct Cns_fileclass **)calloc(nbTapeCopies,
                                                      sizeof(struct Cns_fileclass *));
   }
+  Cstager_SvcClass_migratorPolicy(
+                                  svcClass,
+                                  (CONST char **)&migratorPolicy
+                                  );
   for ( i=0; i<nbTapeCopies; i++ ) {
     iObj = Cstager_TapeCopy_getIObject(tapeCopyArray[i]);
     rc = C_Services_fillObj(
@@ -814,7 +830,7 @@ int getMigrCandidates(
     }
     Cstager_CastorFile_fileSize(castorFile,&sz);
     *initialSizeToTransfer += sz;
-    if ( legacyMode == 1 ) {
+    if ( (legacyMode == 1) || (migratorPolicy != NULL) ) {
       rc = Cns_statx(castorFileName,&fileId,&statbuf);
       if ( rc == -1 ) {
         if ( runAsDaemon == 0 ) {
@@ -824,27 +840,43 @@ int getMigrCandidates(
         }
         continue;
       }
-      memset(&fileClass,'\0',sizeof(fileClass));
-      rc = Cns_queryclass(
-                          fileId.server,
-                          statbuf.fileclass,
-                          NULL,
-                          &fileClass
-                          );
-      if ( rc == -1 ) {
-        if ( runAsDaemon == 0 ) {
-          fprintf(stderr,"Cns_queryclass(%d): %s\n",
-                  statbuf.fileclass,sstrerror(serrno));
-        } else {
-          LOG_SYSCALL_ERR("Cns_Queryclass()");
+      if ( legacyMode == 1 ) {
+        memset(&fileClass,'\0',sizeof(fileClass));
+        rc = Cns_queryclass(
+                            fileId.server,
+                            statbuf.fileclass,
+                            NULL,
+                            &fileClass
+                            );
+        if ( rc == -1 ) {
+          if ( runAsDaemon == 0 ) {
+            fprintf(stderr,"Cns_queryclass(%d): %s\n",
+                    statbuf.fileclass,sstrerror(serrno));
+          } else {
+            LOG_SYSCALL_ERR("Cns_Queryclass()");
+          }
+          continue;
         }
-        continue;
+        fileClassArray[i] = (struct Cns_fileclass *)calloc(1,sizeof(struct Cns_fileclass));
+        memcpy(fileClassArray[i],&fileClass,sizeof(struct Cns_fileclass));
       }
-      fileClassArray[i] = (struct Cns_fileclass *)calloc(1,sizeof(struct Cns_fileclass));
-      memcpy(fileClassArray[i],&fileClass,sizeof(struct Cns_fileclass));
+      if ( migratorPolicy != NULL ) {
+        rc = callExpert(
+                        migratorPolicy,
+                        castorFileName,
+                        &statbuf
+                        );
+        if ( rc != 1 ) {
+          /*
+           * Not selected
+           * Push it back in waiting for migration
+           */
+          Cstager_TapeCopy_setStatus(tapeCopyArray[i],TAPECOPY_TOBEMIGRATED);
+        }
+      }
     }
-    *nsFileClassArray = fileClassArray;
   }
+  *nsFileClassArray = fileClassArray;
   *migrCandidates = tapeCopyArray;
   *nbMigrCandidates = nbTapeCopies;
   C_IAddress_delete(iAddr);
@@ -935,7 +967,7 @@ int addMigrationCandidatesToStreams(
                               iAddr,
                               iObj,
                               OBJ_Stream,
-                              0
+                              1
                               );
       if ( rc == -1 ) {
         if ( runAsDaemon == 0 ) {
@@ -963,7 +995,7 @@ int addMigrationCandidatesToStreams(
                                 dbSvc,
                                 iAddr,
                                 iObj,
-                                0
+                                1
                                 );
       if ( rc == -1 ) {
         if ( runAsDaemon == 0 ) {
@@ -1153,6 +1185,18 @@ int main(int argc, char *argv[])
           }
           (void)C_Services_rollback(dbSvc,iAddr);
           continue;
+        }
+        /*
+         * Release the lock on streams
+         */
+        rc = C_Services_commit(dbSvc,iAddr);
+        if ( rc == -1 ) {
+          if ( runAsDaemon == 0 ) {
+            fprintf(stderr,"C_Services_commit(): %s\n",
+                    sstrerror(serrno));
+          } else {
+            LOG_SYSCALL_ERR("C_Services_commit()");
+          }
         }
         if ( runAsDaemon == 0 ) {
           fprintf(stdout,"Add migration candidates to streams for %s\n",
