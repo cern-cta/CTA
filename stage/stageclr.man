@@ -1,10 +1,10 @@
-.\" $Id: stageclr.man,v 1.19 2004/11/17 13:05:57 jdurand Exp $
+.\" $Id: stageclr.man,v 1.20 2004/11/17 13:15:15 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.19 $ $Date: 2004/11/17 13:05:57 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.20 $ $Date: 2004/11/17 13:15:15 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGECLR "1" "$Date: 2004/11/17 13:05:57 $" "CASTOR" "Stage User Commands"
+.TH STAGECLR "1" "$Date: 2004/11/17 13:15:15 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageclr \- remove staged files
 .SH SYNOPSIS
@@ -38,8 +38,6 @@ stageclr \- remove staged files
 ] [
 .BI \-m " minfree"
 ] [
-.BI \-\-dounlink
-] [
 .BI \-\-nodisk
 ] [
 .BI \-\-reqid " reqid"
@@ -69,8 +67,6 @@ stageclr \- remove staged files
 .BI \-h " host"
 ] [
 .BI \-F
-] [
-.BI \-\-dounlink
 ] [
 .BI \-\-nodisk
 ] [
