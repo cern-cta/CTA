@@ -1,0 +1,105 @@
+.\" $Id: stage_macros.man,v 1.1 2002/09/09 16:44:00 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_macros.man,v $ $Revision: 1.1 $ $Date: 2002/09/09 16:44:00 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_MACROS "3" "$Date: 2002/09/09 16:44:00 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage macros \- Utilities to extract information from stage structures
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+struct stgcat_entry *stcp;
+.sp
+.BI "ISSTAGED(" stcp ")"
+.br
+.BI "ISPUT_FAILED(" stcp ")"
+.br
+.BI "ISSTAGEIN(" stcp ")"
+.br
+.BI "ISSTAGEOUT(" stcp ")"
+.br
+.BI "ISSTAGEWRT(" stcp ")"
+.br
+.BI "ISSTAGEPUT(" stcp ")"
+.br
+.BI "ISSTAGEALLOC(" stcp ")"
+.br
+.BI "ISWAITING(" stcp ")"
+.br
+.BI "ISCASTOR(" stcp ")"
+.br
+.BI "ISCASTORMIG(" stcp ")"
+.br
+.BI "ISCASTORBEINGMIG(" stcp ")"
+.br
+.BI "ISCASTORCANBEMIG(" stcp ")"
+.br
+.BI "ISCASTORWAITINGNS(" stcp ")"
+.br
+.BI "ISCASTORWAITINGMIG(" stcp ")"
+
+.SH DESCRIPTION
+The \fBstage macros\fP are utilities to determine in which state is given
+.BI stcp
+recotd.
+
+.SH PARAMETERS
+.TP 2.0i
+.BI stcp
+Pointer to a stcp_entry structure
+
+.SH MACROS
+.TP 2.0i
+.I ISSTAGED
+Will return true if the file is on disk and staged (e.g. successfully recalled or successfully migrated)
+.TP
+.I ISPUT_FAILED
+Will return true if the migration of this file failed
+.TP
+.I ISSTAGEIN
+Will return true if the file is being staged on disk
+.TP
+.I ISSTAGEOUT
+Will return true if the disk file is being writen to
+.TP
+.I ISSTAGEWRT
+Will return true if the file is being migrated. This is typical with internal migrator in case of CASTOR files.
+.TP
+.I ISSTAGEPUT
+Will return true if the file is being explicitely migrated. This reflect a mode that is discouraged (stagewrt is preferred)
+.TP
+.I ISSTAGEALLOC
+Will return true if the file was allocated on disk, possibly filled by its owner.
+.TP
+.I ISWAITING
+Will return true if the file is waiting for space (allocation problem), or on another request (case of two stageins on the same file), waiting to be migrated or waiting to be created in the name server (only for CASTOR files - the lifetime of this state is usually very short)
+.TP
+.I ISCASTOR
+Will return true if the file of CASTOR HSM type
+.TP
+.I ISCASTORMIG
+Will return true if the file is a CASTOR HSM one, candidate for migration, waiting for migration or being migrated
+.TP
+.I ISCASTORBEINGMIG
+Will return true if the file is a CASTOR HSM one, being migrated (via the internal migrator or explicitely)
+.TP
+.I ISCASTORCANBEMIG
+Will return true if the file is a CASTOR HSM one, candidate for migration, but only this.
+.TP
+.I ISCASTORWAITINGNS
+Will return true if the file is a CASTOR HSM one, waiting to be created in the CASTOR Name Server (this state usually is not visible, its existence might reveal a problem)
+.TP
+.I ISCASTORWAITINGMIG
+Will return true if the file is a CASTOR HSM one, waiting to be migrated (this state is possible only when the internal migrator is in action, but in an intermediate state)
+
+.SH RETURN VALUE
+All the macros return true on success.
+
+.SH SEE ALSO
+\fBstageqry\fP(1), \fBstageqry_Tape\fP(3), \fBstageqry_Disk\fP(3), \fBstageqry_Hsm\fP(3), \fBstage_struct\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
