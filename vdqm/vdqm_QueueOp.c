@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.49 $ $Date: 2003/02/18 14:01:18 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.50 $ $Date: 2003/08/26 14:10:57 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -2564,15 +2564,15 @@ int vdqm_save_queue() {
     }
     
     log(LOG_DEBUG,"vdqm_save_queue: SAVING DRIVES TO FILE: %s\n", drives_filename);
+
+    if(vdqm_LockAllQueues() != 0) {
+        log(LOG_ERR,"vdqm_save_queue: Could not lock all queues\n");
+        return -1;
+    }
     
     fd = open(drives_filename, O_WRONLY | O_CREAT | O_TRUNC, 00666);
     if (fd < 0) {
         log(LOG_ERR,"vdqm_save_queue: Could not open: %s\n", drives_filename);
-        return -1;
-    }
-
-    if(vdqm_LockAllQueues() != 0) {
-        log(LOG_ERR,"vdqm_save_queue: Could not lock all queues\n");
         return -1;
     }
     
