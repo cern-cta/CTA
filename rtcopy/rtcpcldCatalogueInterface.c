@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.27 $ $Release$ $Date: 2004/08/02 16:25:31 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.28 $ $Release$ $Date: 2004/08/03 11:04:04 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.27 $ $Release$ $Date: 2004/08/02 16:25:31 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.28 $ $Release$ $Date: 2004/08/03 11:04:04 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -555,7 +555,7 @@ static int notifyTape(
   char *notifyAddr = NULL;
   struct Cstager_Segment_t **segments = NULL, *segm;
   int moreToDo = 1, rc, i, nbItems;
-  int *notified;
+  int *notified, save_serrno;
 
   rc = getStgSvc(&stgsvc);
   if ( rc == -1 || stgsvc == NULL ) return(-1);
@@ -586,6 +586,7 @@ static int notifyTape(
                                       );
         if ( currentNotifyAddr == NULL && notifyAddr != NULL ) {
           currentNotifyAddr = notifyAddr;
+          save_serrno = serrno;
           rc = rtcpcld_sendNotify(notifyAddr);
           if ( rc == -1 ) {
             /* Notification failed: not fatal but must be logged */
@@ -609,6 +610,7 @@ static int notifyTape(
                               );
             }
           }
+          serrno = save_serrno;
           rtcp_log(LOG_DEBUG,"notifyTape(): notified client %s\n",notifyAddr);
           notified[i] = 1;
         } else if ( (notifyAddr != NULL) &&
@@ -636,7 +638,7 @@ static int notifySegment(
      struct Cstager_Segment_t *segm;
 {
   char *notifyAddr = NULL;
-  int rc;
+  int rc, save_serrno;
 
   if ( segm == NULL ) {
     serrno = EINVAL;
@@ -646,6 +648,7 @@ static int notifySegment(
                                 segm,
                                 (CONST char **)&notifyAddr
                                 );
+  save_serrno = serrno;
   rc = rtcpcld_sendNotify(notifyAddr);
   if ( rc == -1 ) {
     /* Notification failed: not fatal but must be logged */
@@ -669,6 +672,7 @@ static int notifySegment(
                       );
     }
   }
+  serrno = save_serrno;
 
   return(0);
 }
@@ -1974,10 +1978,12 @@ int rtcpcld_updateVIDFileStatus(
  */
 int rtcpcld_setFileStatus(
                           filereq, 
-                          newStatus
+                          newStatus,
+                          notify
                           )
      rtcpFileRequest_t *filereq;
      enum Cstager_SegmentStatusCodes_t newStatus;
+     int notify;
 {
   struct C_Services_t **svcs = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -2164,7 +2170,7 @@ int rtcpcld_setFileStatus(
       return(-1);
     }
     C_IAddress_delete(iAddr);
-    (void)notifySegment(segmItem);
+    if ( notify == 1 ) (void)notifySegment(segmItem);
   }
 
   return(0);
