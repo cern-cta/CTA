@@ -1,5 +1,5 @@
 /*
- * $Id: stagechng.c,v 1.15 2002/03/04 11:12:10 jdurand Exp $
+ * $Id: stagechng.c,v 1.16 2002/03/04 17:13:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.15 $ $Date: 2002/03/04 11:12:10 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.16 $ $Date: 2002/03/04 17:13:49 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -295,7 +295,7 @@ void usage(cmd)
 	fprintf (stderr,
 				"usage: %s [-h stagehost] pathname(s)\n"
 				"\nor\n\n"
-				"%s [-h stagehost] [-p poolname] -M filename"
+				"%s [-h stagehost] [-p poolname] -M filename\n"
 				"[--mintime_beforemigr mintime_before_migration[unit]]\n"
 				"[--reqid request_id]\n"
 				"[--retenp_on_disk retention_period[unit]]\n"
