@@ -787,13 +787,35 @@ char tmpbuf[21], tmpbuf2[21];
          log(LOG_INFO, "sropen64: Any DIRECT rfio request from out of site is authorized\n");
      }
      if ( !status ) {
+       int rc;
+       char *pfn;
+       int need_user_check;
+
        log(LOG_DEBUG, "sropen64: uid %d gid %d mask %o ftype %d flags 0%o mode 0%o\n",
            uid, gid, mask, ftype, flags, mode);
        log(LOG_DEBUG, "sropen64: account: %s\n", account);
        log(LOG_INFO, "sropen64: (%s,0%o,0%o) for (%d,%d)\n",
            CORRECT_FILENAME(filename), flags, mode, uid, gid);
        (void) umask((mode_t) CORRECT_UMASK(mask)) ;
-       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
+
+       rc = rfio_handle_open(CORRECT_FILENAME(filename),
+			     ntohopnflg(flags),
+			     mode,
+			     uid,
+			     gid,
+			     &pfn,
+			     &handler_context,
+			     &need_user_check);
+       if (rc < 0) {
+	 char alarmbuf[1024];
+	 sprintf(alarmbuf,"sropen64(): %s",CORRECT_FILENAME(filename)) ;
+	 log(LOG_DEBUG, "sropen64: rfio_handler_open refused open: %s\n", sstrerror(serrno)) ;
+	 rcode = serrno;
+	 rfio_alrm(rcode,alarmbuf) ;
+       }
+       
+
+       if (need_user_check &&  ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
             ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
          if (status == -2)
            log(LOG_ERR, "sropen64: uid %d not allowed to open64()\n", uid);
@@ -803,22 +825,6 @@ char tmpbuf[21], tmpbuf2[21];
        }
        else
        {
-	 int rc;
-	 char *pfn;
-	 rc = rfio_handle_open(CORRECT_FILENAME(filename),
-			       ntohopnflg(flags),
-			       mode,
-			       uid,
-			       gid,
-			       &pfn,
-			       &handler_context);
-	 if (rc < 0) {
-	   char alarmbuf[1024];
-	   sprintf(alarmbuf,"sropen64(): %s",CORRECT_FILENAME(filename)) ;
-	   log(LOG_DEBUG, "sropen64: rfio_handler_open refused open: %s\n", sstrerror(serrno)) ;
-	   rcode = serrno;
-           rfio_alrm(rcode,alarmbuf) ;
-	 }
 
          errno = 0;
          fd = open64(pfn, ntohopnflg(flags), mode) ;
@@ -2300,6 +2306,8 @@ struct rfiostat *infop;
    int         rcode;
    char        *p;
    char        tmpbuf[21], tmpbuf2[21];
+   struct stat filestat;
+   int rc;
 
 #if defined(_WIN32)
    struct thData *td;
@@ -2313,7 +2321,10 @@ struct rfiostat *infop;
    log(LOG_INFO,"rclose64_v3(%d, %d): %s bytes read and %s bytes written\n",
       s, fd, u64tostr(myinfo.rnbr,tmpbuf,0), u64tostr(myinfo.wnbr,tmpbuf2,0)) ;
 
-   rfio_handle_close(handler_context);
+   /* Stat the file to be able to provide that information
+      to the close handler */
+   memset(&filestat,0,sizeof(struct stat));
+   rc = fstat(fd, &filestat);
 
    /* Close the local file                                    */
 #if defined(HPSS)
@@ -2322,6 +2333,8 @@ struct rfiostat *infop;
    status = close(fd) ;
 #endif   /* else HPSS */
    rcode = ( status < 0 ) ? errno : 0 ;
+
+   rfio_handle_close(handler_context, &filestat, rcode);
    
    /* Close the data socket */
    if (data_sock >= 0) {

@@ -1650,7 +1650,8 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
 #if defined(HPSS)
    extern char *rtuser;
 #endif /* HPSS */
-
+   int rc;
+   char *pfn;
 #if defined(_WIN32)
    struct thData *td;
    td = (struct thData*)TlsGetValue(tls_i);
@@ -1806,37 +1807,40 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
          log(LOG_INFO ,"Any DIRECT rfio request from out of site is authorized\n");
      }
      if ( !status ) {
+       int need_user_check = 1;
+
        log(LOG_DEBUG, "ropen: uid %d gid %d mask %o ftype %d flags %d mode %d\n",uid, gid, mask, ftype, flags, mode);
        log(LOG_DEBUG, "ropen: account: %s\n", account);
        log(LOG_DEBUG, "ropen: filename: %s\n", CORRECT_FILENAME(filename));
        log(LOG_INFO, "ropen(%s,0X%X,0X%X) for (%d,%d)\n",CORRECT_FILENAME(filename),flags,mode,uid,gid);
        (void) umask((mode_t) CORRECT_UMASK(mask)) ;
-       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
-            ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
-         if (status == -2)
-            log(LOG_ERR,"ropen(): uid %d not allowed to open()\n",uid);
-         else
-            log(LOG_ERR,"ropen(): failed at check_user_perm(), rcode %d\n",rcode);
-         status = -1 ;
+
+       rc = rfio_handle_open(CORRECT_FILENAME(filename),
+			     ntohopnflg(flags),
+			     mode,
+			     uid,
+			     gid,
+			     &pfn,
+			     &handler_context,
+			     &need_user_check);
+       if (rc < 0) {
+	 char alarmbuf[1024];
+	 sprintf(alarmbuf,"sropen(): %s",CORRECT_FILENAME(filename)) ;
+	 log(LOG_DEBUG, "sropen: rfio_handler_open refused open: %s\n", sstrerror(serrno)) ;
+	 rcode = serrno;
+	 rfio_alrm(rcode,alarmbuf) ;
        }
+
+       if (need_user_check && ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
+	      ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
+	   if (status == -2)
+	     log(LOG_ERR,"ropen(): uid %d not allowed to open()\n",uid);
+	   else
+	     log(LOG_ERR,"ropen(): failed at check_user_perm(), rcode %d\n",rcode);
+	   status = -1 ;
+	 }
       else
       {
-	 int rc;
-	 char *pfn;
-	 rc = rfio_handle_open(CORRECT_FILENAME(filename),
-			       ntohopnflg(flags),
-			       mode,
-			       uid,
-			       gid,
-			       &pfn,
-			       &handler_context);
-	 if (rc < 0) {
-	   char alarmbuf[1024];
-	   sprintf(alarmbuf,"sropen(): %s",CORRECT_FILENAME(filename)) ;
-	   log(LOG_DEBUG, "sropen: rfio_handler_open refused open: %s\n", sstrerror(serrno)) ;
-	   rcode = serrno;
-           rfio_alrm(rcode,alarmbuf) ;
-	 }
          fd = open(CORRECT_FILENAME(filename), ntohopnflg(flags), mode) ;
          log(LOG_DEBUG, "ropen: open(%s,%d,%d) returned %x (hex)\n", CORRECT_FILENAME(filename), flags, mode, fd);
          if (fd < 0) {
@@ -1849,17 +1853,18 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
            rfio_alrm(rcode,alarmbuf) ;
          }
          else {
-	   if(pfn != NULL) free (pfn);
-           /*
+	   /*
             * Getting current offset
             */
            status= lseek(fd,0L,SEEK_CUR) ;
            log(LOG_DEBUG,"ropen: lseek(%d,0,SEEK_CUR) returned %x (hex)\n",fd,status) ; 
            if ( status < 0 ) rcode= errno ;
          }
-       }
+      }
      }
    }
+
+   if(pfn != NULL) free (pfn);
 
    /*
     * Sending back status.
@@ -2332,7 +2337,8 @@ struct rfiostat * infop ;
    int  rcode ;
    char   * p ;
    char tmpbuf[21], tmpbuf2[21];
-
+   struct stat filestat;
+   int rc;
 #if defined(_WIN32)
    struct thData *td;
    td = (struct thData*)TlsGetValue(tls_i);
@@ -2343,10 +2349,12 @@ struct rfiostat * infop ;
       infop->seekop, infop->presop) ;
    log(LOG_INFO,"rclose(%d,%d): %s bytes read and %s bytes written\n",
       s, fd, u64tostr(infop->rnbr,tmpbuf,0), u64tostr(infop->wnbr,tmpbuf2,0)) ;
-
-   rfio_handle_close(handler_context);
    
-
+   /* Stat the file to be able to provide that information
+      to the close handler */
+   memset(&filestat,0,sizeof(struct stat));
+   rc = fstat(fd, &filestat);
+   
 #if defined(HPSS)
    status = rhpss_close(fd,s,0,0);
 #else /* HPSS */
@@ -2355,11 +2363,12 @@ struct rfiostat * infop ;
    rcode = ( status < 0 ) ? errno : 0 ;
 #if !defined(HPSS)
    if (iobufsiz > 0)       {
-      log(LOG_DEBUG,"rclose(): freeing %x\n",iobuffer) ;
+      log(LOG_DEBUG,"rclose(): freeing %x\n",iobuffer);
       (void) free(iobuffer);
    }
    iobufsiz= 0 ;
 #endif /* HPSS */
+   rfio_handle_close(handler_context, &filestat, rcode);
    p= rqstbuf ; 
    marshall_WORD(p,RQST_CLOSE) ;
    marshall_LONG(p,status) ;
@@ -3535,6 +3544,7 @@ char *permstr;          /* permission string for the request */
     *gid = peer_gid;
   }
 #endif
+
   return(ignore_uid_gid != 0 ? 0 : chsuser(*uid,*gid,hostname,ptrcode,permstr));
 }
 
@@ -3928,14 +3938,37 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
          log(LOG_INFO ,"Any DIRECT rfio request from out of site is authorized\n");
      }
      if ( !status ) {
+        int need_user_check = 1;
+	int rc;
+	char *pfn;
 
        log(LOG_DEBUG, "ropen_v3: uid %d gid %d mask %o ftype %d flags %d mode %d\n",uid, gid, mask, ftype, flags, mode);
        log(LOG_DEBUG, "ropen_v3: account: %s\n", account);
        log(LOG_DEBUG, "ropen_v3: filename: %s\n", CORRECT_FILENAME(filename));
        log(LOG_INFO, "ropen_v3(%s,0X%X,0X%X) for (%d,%d)\n",CORRECT_FILENAME(filename),flags,mode,uid,gid);
        (void) umask((mode_t) CORRECT_UMASK(mask)) ;
+
+       rc = rfio_handle_open(CORRECT_FILENAME(filename),
+			     ntohopnflg(flags),
+			     mode,
+			     uid,
+			     gid,
+			     &pfn,
+			     &handler_context,
+			     &need_user_check);
+       
+	 if (rc < 0) {
+	   char alarmbuf[1024];
+	   sprintf(alarmbuf,"sropen_v3(): %s",CORRECT_FILENAME(filename)) ;
+	   log(LOG_DEBUG, "ropen_v3: rfio_handler_open refused open: %s\n", sstrerror(serrno)) ;
+	   rcode = serrno;
+           rfio_alrm(rcode,alarmbuf) ;
+	 }
+
+
+
 #if !defined(_WIN32)  
-       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
+       if (need_user_check && ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
             ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
          if (status == -2)
            log(LOG_ERR,"ropen_v3: uid %d not allowed to open()\n",uid);
@@ -3945,22 +3978,6 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
        }  else
 #endif
        {
-	 int rc;
-	 char *pfn;
-	 rc = rfio_handle_open(CORRECT_FILENAME(filename),
-			       ntohopnflg(flags),
-			       mode,
-			       uid,
-			       gid,
-			       &pfn,
-			       &handler_context);
-	 if (rc < 0) {
-	   char alarmbuf[1024];
-	   sprintf(alarmbuf,"sropen_v3(): %s",CORRECT_FILENAME(filename)) ;
-	   log(LOG_DEBUG, "ropen_v3: rfio_handler_open refused open: %s\n", sstrerror(serrno)) ;
-	   rcode = serrno;
-           rfio_alrm(rcode,alarmbuf) ;
-	 }
          fd = open(CORRECT_FILENAME(filename), ntohopnflg(flags), mode);
 #if defined(_WIN32)
          _setmode( fd, _O_BINARY );        /* default is text mode  */
@@ -4241,6 +4258,8 @@ struct rfiostat *infop;
    int  rcode;
    char *p;
    char tmpbuf[21], tmpbuf2[21];
+   struct stat filestat;
+   int rc;
 
 #if defined(_WIN32)
    struct thData *td;
@@ -4254,7 +4273,11 @@ struct rfiostat *infop;
       u64tostr(myinfo.rnbr,tmpbuf,0), u64tostr(myinfo.wnbr,tmpbuf2,0)) ;
    log(LOG_INFO, "rclose_v3(%d, %d)\n",s, fd) ;
 
-   rfio_handle_close(handler_context);
+   /* Stat the file to be able to provide that information
+      to the close handler */
+   memset(&filestat,0,sizeof(struct stat));
+   rc = fstat(fd, &filestat);
+
 
 #if defined(HPSS)
    status = rhpss_close(fd,s,0,0);
@@ -4262,6 +4285,8 @@ struct rfiostat *infop;
    status = close(fd) ;
 #endif /* HPSS */
    rcode = ( status < 0 ) ? errno : 0 ;
+
+   rfio_handle_close(handler_context, &filestat, rcode);
 
 #if !defined(HPSS)
    /* Close data socket */
@@ -4277,6 +4302,8 @@ struct rfiostat *infop;
    else
       log(LOG_DEBUG, "rclose_v3 : closing data socket fildesc=%d\n", data_sock) ;
 #endif /* HPSS */
+
+
    p= rqstbuf; 
    marshall_WORD(p, RQST_CLOSE_V3);
    marshall_LONG(p, status);
