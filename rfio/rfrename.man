@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfrename.man,v 1.5 2002/02/12 16:08:11 baud Exp $
+.\" $Id: rfrename.man,v 1.6 2002/02/13 11:01:43 baud Exp $
 .\"
-.\" @(#)$RCSfile: rfrename.man,v $ $Revision: 1.5 $ $Date: 2002/02/12 16:08:11 $ CERN IT-PDP/DM Olof Barring
+.\" @(#)$RCSfile: rfrename.man,v $ $Revision: 1.6 $ $Date: 2002/02/13 11:01:43 $ CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 1998 by CERN/IT/PDP
 .\" All rights reserved
 .\"
-.TH RFRENAME l "$Date: 2002/02/12 16:08:11 $" CASTOR "Rfio User Commands"
+.TH RFRENAME 1 "$Date: 2002/02/13 11:01:43 $" CASTOR "Rfio User Commands"
 .SH NAME
 rfrename \- rename remote file
 .SH SYNOPSIS
@@ -27,12 +27,12 @@ argument is either a remote file name of the form:
 or a local file name (not containing the :/ character combination).
 .SH "SEE ALSO"
 .BR rename(2),
-.BR rfiod(l)
+.BR rfiod(1)
 .SH "NOTES"
 .B rfrename
 can only be used to rename files on the same remote system. It cannot
 be used to move files from one host to another. Use the
-.BR (rfcp(l))
+.BR (rfcp(1))
 program for copying files between different remote hosts.
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
