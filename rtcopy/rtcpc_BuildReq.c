@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.27 $ $Date: 2000/06/23 12:08:48 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.28 $ $Date: 2000/06/26 11:01:12 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -594,6 +594,7 @@ static int rtcpc_f_opt(int mode,
         */
         if ( *filereq->fid == '\0' ) {
             if ( (q = strstr(p,":")) != NULL ) *q = '\0';
+            if ( strlen(p) > CA_MAXFIDLEN ) p += strlen(p) - CA_MAXFIDLEN;
             if ( p != NULL ) strcpy(fid,p);
             strcpy(filereq->fid,fid);
             if ( q != NULL ) {
