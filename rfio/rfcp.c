@@ -1364,6 +1364,12 @@ void copyfile_stgcleanup(sig)
 {
 	TRACE(2,"rfio","copyfile_stgcleanup: Received signal No %d", sig);
 	TRACE(2,"rfio","copyfile_stgcleanup: Sending stage_kill(%d)", sig);
+	if (getenv(OLD_STAGE_API)== NULL) {
+	  /* BC 2005-03-14 */
+	  /* Disabling this function for the new stager as stage_rm is not implemented yet */
+	  return;
+	}
+	
 	stage_kill(sig);
 	if (copyfile_stgcleanup_instruction != CLEANER_NOOP) {
 		if ((copyfile_stgcleanup_instruction & CLEANER_CLR) == CLEANER_CLR) {
