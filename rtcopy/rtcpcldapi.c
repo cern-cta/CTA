@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/06/30 10:27:13 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/06/30 15:09:52 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.20 $ $Date: 2004/06/30 10:27:13 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.21 $ $Date: 2004/06/30 15:09:52 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1489,6 +1489,8 @@ void rtcpcldc_cleanup(tape)
       free(tpItem);
     }
   }
+  C_Services_delete(*dbSvc);
+  *dbSvc = NULL;
   return;
 }
 
@@ -1546,11 +1548,46 @@ int rtcpcldc(tape)
 
   (void)initOldStgUpdc(tape);
 
+  dbSvc = NULL;
+  rc = rtcpcld_getDbSvc(&dbSvc);
+  if ( rc == -1 || dbSvc == NULL || *dbSvc == NULL ) {
+    save_serrno = serrno;
+    LOG_FAILED_CALL("rtcpcld_getDbSvc()");
+    *dbSvc = NULL;
+    strncpy(tape->tapereq.err.errmsgtxt,
+            sstrerror(save_serrno),
+            sizeof(tape->tapereq.err.errmsgtxt)-1);
+    tape->tapereq.err.errorcode = save_serrno;
+    tape->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
+    (void)Cmutex_unlock(tape);
+    serrno = save_serrno;
+    return(-1);
+  }
+
+  rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
+  if ( rc == -1 ) {
+    LOG_FAILED_CALL("C_BaseAddress_create()");
+    save_serrno = serrno;
+    strncpy(tape->tapereq.err.errmsgtxt,
+            sstrerror(save_serrno),
+            sizeof(tape->tapereq.err.errmsgtxt)-1);
+    tape->tapereq.err.errorcode = save_serrno;
+    tape->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
+    rtcpcldc_cleanup(tape);
+    (void)Cmutex_unlock(tape);
+    serrno = save_serrno;
+    return(-1);
+  }
+
+  iAddr = C_BaseAddress_getIAddress(baseAddr);
+
   rc = rtcpcld_getStgDbSvc(&stgSvc);
   if ( rc == -1 || stgSvc == NULL ) {
     save_serrno = serrno;
     LOG_FAILED_CALL("rtcpcld_getStgDbSvc()");
     stgSvc = NULL;
+    C_IAddress_delete(iAddr);
+    rtcpcldc_cleanup(tape);
     (void)Cmutex_unlock(tape);
     serrno = save_serrno;
     return(-1);
@@ -1561,6 +1598,9 @@ int rtcpcldc(tape)
       rtcpcldTp = (RtcpcldTapeList_t *)calloc(1,sizeof(RtcpcldTapeList_t));
       if ( rtcpcldTp == NULL ) {
         LOG_FAILED_CALL("calloc()");
+        C_IAddress_delete(iAddr);
+        (void)C_Services_rollback(*dbSvc,iAddr);
+        rtcpcldc_cleanup(tape);
         (void)Cmutex_unlock(tape);
         serrno = SESYSERR;
         return(-1);
@@ -1569,6 +1609,9 @@ int rtcpcldc(tape)
       if ( rc == -1 ) {
         LOG_FAILED_CALL("rtcpcld_addTpReqMap()");
         save_serrno = serrno;
+        (void)C_Services_rollback(*dbSvc,iAddr);
+        C_IAddress_delete(iAddr);
+        rtcpcldc_cleanup(tape);
         (void)Cmutex_unlock(tape);
         serrno = save_serrno;
         return(-1);
@@ -1594,6 +1637,9 @@ int rtcpcldc(tape)
                 sizeof(tl->tapereq.err.errmsgtxt)-1);
         tl->tapereq.err.errorcode = save_serrno;
         tl->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
+        (void)C_Services_rollback(*dbSvc,iAddr);
+        C_IAddress_delete(iAddr);
+        rtcpcldc_cleanup(tape);
         (void)Cmutex_unlock(tape);
         serrno = save_serrno;
         return(-1);
@@ -1636,6 +1682,9 @@ int rtcpcldc(tape)
           if ( rc == -1 ) {
             LOG_FAILED_CALL("addSegment()");
             save_serrno = serrno;
+            (void)C_Services_rollback(*dbSvc,iAddr);
+            C_IAddress_delete(iAddr);
+            rtcpcldc_cleanup(tape);
             (void)Cmutex_unlock(tape);
             serrno = save_serrno;
             return(-1);
@@ -1644,42 +1693,6 @@ int rtcpcldc(tape)
       CLIST_ITERATE_END(tl->file,fl);
     }
   CLIST_ITERATE_END(tape,tl);
-
-  serrno = 0;
-  rc = C_BaseAddress_create("OraCnvSvc", SVC_ORACNV, &baseAddr);
-  if ( rc == -1 ) {
-    LOG_FAILED_CALL("C_BaseAddress_create()");
-    save_serrno = serrno;
-    if ( serrno == 0 ) save_serrno = errno;
-    C_Services_delete(*dbSvc);
-    *dbSvc = NULL;
-    strncpy(tape->tapereq.err.errmsgtxt,
-            sstrerror(save_serrno),
-            sizeof(tape->tapereq.err.errmsgtxt)-1);
-    tape->tapereq.err.errorcode = save_serrno;
-    tape->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
-    (void)Cmutex_unlock(tape);
-    serrno = save_serrno;
-    return(-1);
-  }
-
-  iAddr = C_BaseAddress_getIAddress(baseAddr);
-
-  dbSvc = NULL;
-  rc = rtcpcld_getDbSvc(&dbSvc);
-  if ( rc == -1 || dbSvc == NULL || *dbSvc == NULL ) {
-    save_serrno = serrno;
-    LOG_FAILED_CALL("rtcpcld_getDbSvc()");
-    *dbSvc = NULL;
-    strncpy(tape->tapereq.err.errmsgtxt,
-            sstrerror(save_serrno),
-            sizeof(tape->tapereq.err.errmsgtxt)-1);
-    tape->tapereq.err.errorcode = save_serrno;
-    tape->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
-    (void)Cmutex_unlock(tape);
-    serrno = save_serrno;
-    return(-1);
-  }
   
   CLIST_ITERATE_BEGIN(rtcpcldTpList,rtcpcldTp) 
     {
@@ -1688,14 +1701,14 @@ int rtcpcldc(tape)
       if ( rc != 0 ) {
         LOG_FAILED_CALL("C_Services_updateRep()");
         save_serrno = serrno;
-        rtcpcldTp->tape->tapereq.err.errorcode = serrno;
+        (void)C_Services_rollback(*dbSvc,iAddr);
+        rtcpcldTp->tape->tapereq.err.errorcode = save_serrno;
         strncpy(rtcpcldTp->tape->tapereq.err.errmsgtxt,
                C_Services_errorMsg(*dbSvc),
                sizeof(rtcpcldTp->tape->tapereq.err.errmsgtxt)-1);
         rtcpcldTp->tape->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
         C_IAddress_delete(iAddr);
-        C_Services_delete(*dbSvc);
-        *dbSvc = NULL;
+        rtcpcldc_cleanup(tape);
         (void)Cmutex_unlock(tape);
         rtcp_log(LOG_ERR,"DB error: %s\n",
                  rtcpcldTp->tape->tapereq.err.errmsgtxt);

@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/06/30 14:04:46 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/30 15:09:52 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.1 $ $Date: 2004/06/30 14:04:46 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.2 $ $Date: 2004/06/30 15:09:52 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -116,6 +116,13 @@ int main(int argc, char *argv[])
     return(2);
   }
 
+  dbSvc = NULL;
+  rc = rtcpcld_getDbSvc(&dbSvc);
+  if ( rc == -1 || dbSvc == NULL || *dbSvc == NULL ) {
+    fprintf(stderr,"rtcpcld_getDbSvc()",sstrerror(serrno));
+    return(-1);
+  }
+
   if ( key == 0 ) {
     rc = rtcpcld_getStgDbSvc(&stgSvc);
     if ( rc == -1 || stgSvc == NULL ) {
@@ -153,12 +160,6 @@ int main(int argc, char *argv[])
 
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
-  dbSvc = NULL;
-  rc = rtcpcld_getDbSvc(&dbSvc);
-  if ( rc == -1 || dbSvc == NULL || *dbSvc == NULL ) {
-    fprintf(stderr,"rtcpcld_getDbSvc()",sstrerror(serrno));
-    return(-1);
-  }
 
   iObj = Cstager_Tape_getIObject(tp);
   rc = C_Services_deleteRep(*dbSvc,iAddr,iObj,1);
@@ -166,7 +167,10 @@ int main(int argc, char *argv[])
     fprintf(stderr,"C_Services_deleteRep(): %s, DB_ERROR=%s\n",
             sstrerror(serrno),
             C_Services_errorMsg(*dbSvc));
+  } else {
+    (void)C_Services_rollback(*dbSvc,iaddr);
   }
+
   C_IAddress_delete(iAddr);
   C_Services_delete(*dbSvc);
   if ( rc != 0 ) return(1);
