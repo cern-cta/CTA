@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.58 $ $Release$ $Date: 2004/10/27 14:49:54 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.59 $ $Release$ $Date: 2004/10/27 16:50:28 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.58 $ $Release$ $Date: 2004/10/27 14:49:54 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.59 $ $Release$ $Date: 2004/10/27 16:50:28 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1476,6 +1476,8 @@ int procTapeCopiesForStream(
   filereq = &(file->filereq);
   filereq->concat = NOCONCAT;
   filereq->convert = ASCCONV;
+  filereq->position_method = TPPOSIT_FSEQ;
+  filereq->VolReqID = tape->tapereq.VolReqID;
   strcpy(filereq->recfm,"F");
   filereq->def_alloc = 0;
   filereq->proc_status = RTCP_WAITING;
@@ -1634,7 +1636,7 @@ int procTapeCopiesForStream(
   (void)u64tohexstr(
                     filereq->castorSegAttr.castorFileId,
                     filereq->fid,
-                    sizeof(filereq->fid)
+                    -sizeof(filereq->fid)
                     );
   return(0);
 }
