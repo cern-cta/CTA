@@ -869,6 +869,7 @@ SOCKET   s;
 int      s;
 #endif
 struct sockaddr_in *fromp;
+int mode;
 {
    int      request, status;        /* Request Id  number               */
    int      fd = -1;                /* Local fd      -> -1              */
