@@ -182,6 +182,10 @@
 #undef BuildRfioLibrary
 #define BuildRfioLibrary YES
 #endif
+#if !BuildRmLibrary
+#undef BuildRmLibrary
+#define BuildRmLibrary YES
+#endif
 #endif
 
 /* ------ */
