@@ -1,5 +1,5 @@
 /*
- * $Id: stage_server_struct.h,v 1.4 2002/02/05 16:14:40 jdurand Exp $
+ * $Id: stage_server_struct.h,v 1.5 2002/02/20 15:40:49 jdurand Exp $
  */
 
 #ifndef __stage_server_struct_h
@@ -61,6 +61,7 @@ struct waitq {
 	int	clnreq_waitingreqid; /* Gives exact reqid of the stcp that is in WAITING_SPC stage */
 	int	status;
 	int	nretry;
+	int	noretry; /* Propagation of --noretry or STAGE_NORETRY flag */
 	int	Aflag; /* Deferred allocation (path returned to RTCOPY after tape position) */
 	int	concat_off_fseq; /* 0 or fseq just before the '-', like: 1-9,11- => concat_off_fseq = 11 */
 	int	magic; /* Flag to tell which magic number in case of API output */
