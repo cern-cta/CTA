@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.24 $ $Release$ $Date: 2005/02/04 13:02:40 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.25 $ $Release$ $Date: 2005/02/16 14:22:09 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.24 $ $Release$ $Date: 2005/02/04 13:02:40 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.25 $ $Release$ $Date: 2005/02/16 14:22:09 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1021,24 +1021,25 @@ int rtcpcld_main(
     if ( rc < 0 ) {
       /*
        * Error, probably a child exit. If so, ignore and continue, otherwise
-       * log the error and continue.
+       * log the error and loop.
        */
-      if ( save_errno == EINTR ) continue;
-      errno = save_errno;
-      (void)dlf_write(
-                      mainUuid,
-                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+2,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "select()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      strerror(errno),
-                      RTCPCLD_LOG_WHERE
-                      );
-      continue;
+      if ( save_errno != EINTR ) {
+        errno = save_errno;
+        (void)dlf_write(
+                        mainUuid,
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
+                        (struct Cns_fileid *)NULL,
+                        RTCPCLD_NB_PARAMS+2,
+                        "SYSCALL",
+                        DLF_MSG_PARAM_STR,
+                        "select()",
+                        "ERROR_STR",
+                        DLF_MSG_PARAM_STR,
+                        strerror(errno),
+                        RTCPCLD_LOG_WHERE
+                        );
+        continue;
+      }
     } else if ( (rc > 0) && FD_ISSET(*rtcpdSocket,&rd_setcp) ) {
       /*
        * Got a connection from a tape server (rtcpd). Start the
@@ -1184,93 +1185,91 @@ int rtcpcld_main(
        * break out from for(;;), cleanup and exit
        */
       break;    
-    } else {
+    }
+    /*
+     * Always check the catalogue for new stuff to do (Tape or Stream).
+     */
+    if ( (rc > 0) && FD_ISSET(*notificationSocket, &rd_setcp) ) {
       /*
-       * Notification or poll timeout. In either case, we check the catalogue
-       * for new stuff to do (Tape or Stream).
+       * We got notified. Message is not important since we will
+       * check with the catalogue to find out what to do.
        */
-      if ( rc > 0 && FD_ISSET(*notificationSocket, &rd_setcp) ) {
-        /*
-         * We got notified. Message is not important since we will
-         * check with the catalogue to find out what to do.
-         */
-        (void)rtcpcld_getNotify(*notificationSocket);
-      }
-      tapeArray = NULL;
-      cnt = 0;
-      rc = rtcpcld_getTapesToDo(&tapeArray,&cnt);
-      if ( rc == -1 ) {
-        (void)dlf_write(
-                        mainUuid,
-                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_CATALOGUE),
-                        (struct Cns_fileid *)NULL,
-                        RTCPCLD_NB_PARAMS+1,
-                        "ERROR_STR",
-                        DLF_MSG_PARAM_STR,
-                        sstrerror(serrno),
-                        RTCPCLD_LOG_WHERE
+      (void)rtcpcld_getNotify(*notificationSocket);
+    }
+    tapeArray = NULL;
+    cnt = 0;
+    rc = rtcpcld_getTapesToDo(&tapeArray,&cnt);
+    if ( rc == -1 ) {
+      (void)dlf_write(
+                      mainUuid,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_CATALOGUE),
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+1,
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(serrno),
+                      RTCPCLD_LOG_WHERE
                         );
-        continue;
-      }
-      for ( i=0; i<cnt; i++ ) {
-        tape = tapeArray[i];
-        tape->tapereq.TStartRequest = (int)time(NULL);
+      continue;
+    }
+    for ( i=0; i<cnt; i++ ) {
+      tape = tapeArray[i];
+      tape->tapereq.TStartRequest = (int)time(NULL);
+      /*
+       * Add tape to internal list. This will automatically check
+       * if the request is already there and if so, prevent that
+       * the same tape+mode is submitted twice to VDQM.
+       */
+      rc = updateRequestList(
+                             tape,
+                             -1
+                             );
+      if ( rc == 0 ) {
         /*
-         * Add tape to internal list. This will automatically check
-         * if the request is already there and if so, prevent that
-         * the same tape+mode is submitted twice to VDQM.
+         * Request wasn't found --> new request. Send it to VDQM
          */
-        rc = updateRequestList(
-                               tape,
-                               -1
-                               );
-        if ( rc == 0 ) {
-          /*
-           * Request wasn't found --> new request. Send it to VDQM
-           */
-          rc = vdqm_SendVolReq(
-                               NULL,
-                               &(tape->tapereq.VolReqID),
-                               tape->tapereq.vid,
-                               tape->tapereq.dgn,
-                               NULL,
-                               NULL,
-                               tape->tapereq.mode,
-                               port
-                               );
-          if ( rc == -1 ) {
-            (void)dlf_write(
-                            mainUuid,
-                            RTCPCLD_LOG_MSG(RTCPCLD_MSG_VDQM),
-                            (struct Cns_fileid *)NULL,
-                            RTCPCLD_NB_PARAMS+1,
-                            "ERROR_STR", 
-                            DLF_MSG_PARAM_STR,
-                            sstrerror(serrno),
-                            RTCPCLD_LOG_WHERE
-                            );
-            continue;
-          } else {
-            (void)dlf_write(
-                            mainUuid,
-                            RTCPCLD_LOG_MSG(RTCPCLD_MSG_VDQMINFO),
-                            (struct Cns_fileid *)NULL,
-                            3,
-                            "VID",
-                            DLF_MSG_PARAM_STR,
-                            tape->tapereq.vid,
-                            "MODE",
-                            DLF_MSG_PARAM_INT,
-                            tape->tapereq.mode,
-                            "VDQMRQID",
-                            DLF_MSG_PARAM_INT,
-                            tape->tapereq.VolReqID
-                            );
-          }
+        rc = vdqm_SendVolReq(
+                             NULL,
+                             &(tape->tapereq.VolReqID),
+                             tape->tapereq.vid,
+                             tape->tapereq.dgn,
+                             NULL,
+                             NULL,
+                             tape->tapereq.mode,
+                             port
+                             );
+        if ( rc == -1 ) {
+          (void)dlf_write(
+                          mainUuid,
+                          RTCPCLD_LOG_MSG(RTCPCLD_MSG_VDQM),
+                          (struct Cns_fileid *)NULL,
+                          RTCPCLD_NB_PARAMS+1,
+                          "ERROR_STR", 
+                          DLF_MSG_PARAM_STR,
+                          sstrerror(serrno),
+                          RTCPCLD_LOG_WHERE
+                          );
+          continue;
+        } else {
+          (void)dlf_write(
+                          mainUuid,
+                          RTCPCLD_LOG_MSG(RTCPCLD_MSG_VDQMINFO),
+                          (struct Cns_fileid *)NULL,
+                          3,
+                          "VID",
+                          DLF_MSG_PARAM_STR,
+                          tape->tapereq.vid,
+                          "MODE",
+                          DLF_MSG_PARAM_INT,
+                          tape->tapereq.mode,
+                          "VDQMRQID",
+                          DLF_MSG_PARAM_INT,
+                          tape->tapereq.VolReqID
+                          );
         }
       }
-      if ( tapeArray != NULL ) free(tapeArray);
     }
+    if ( tapeArray != NULL ) free(tapeArray);
     (void)checkVdqmReqs();
   }
   (void)rtcp_CleanUp(&rtcpdSocket,rc);
