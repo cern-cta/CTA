@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.19 $ $Release$ $Date: 2004/11/24 11:52:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.20 $ $Release$ $Date: 2004/11/24 13:33:04 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -43,6 +43,7 @@ namespace castor {
     // Forward declaration
     class Tape;
     class Stream;
+    class Request;
     class Segment;
     class TapeCopy;
     class DiskCopy;
@@ -222,6 +223,20 @@ namespace castor {
        * @exception Exception in case of error
        */
       virtual castor::stager::SubRequest* subRequestToDo
+      (std::vector<ObjectsIds> &types)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Selects the next request the stager should deal with.
+       * Selects a Request in START status and move its status
+       * PROCESSED to avoid double processing.
+       * The selection is restricted to Request of a given set
+       * of types.
+       * @param types the list of accepted types for the request
+       * @return the Request to process
+       * @exception Exception in case of error
+       */
+      virtual castor::stager::Request* requestToDo
       (std::vector<ObjectsIds> &types)
         throw (castor::exception::Exception) = 0;
 

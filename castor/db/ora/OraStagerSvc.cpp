@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.50 $ $Release$ $Date: 2004/11/24 11:52:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.51 $ $Release$ $Date: 2004/11/24 13:33:04 $ $Author: sponcec3 $
  *
  *
  *
@@ -31,6 +31,7 @@
 #include "castor/Constants.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/Stream.hpp"
+#include "castor/stager/Request.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskServer.hpp"
@@ -135,6 +136,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_bestTapeCopyForStreamStatement(0),
   m_bestFileSystemForSegmentStatement(0),
   m_fileRecalledStatement(0), m_subRequestToDoStatement(0),
+  m_requestToDoStatement(0),
   m_selectSvcClassStatement(0), m_selectFileClassStatement(0),
   m_selectCastorFileStatement(0), m_selectFileSystemStatement(0),
   m_updateAndCheckSubRequestStatement(0) {
@@ -176,6 +178,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_bestFileSystemForSegmentStatement);
     deleteStatement(m_fileRecalledStatement);
     deleteStatement(m_subRequestToDoStatement);
+    deleteStatement(m_requestToDoStatement);
     deleteStatement(m_selectSvcClassStatement);
     deleteStatement(m_selectFileClassStatement);
     deleteStatement(m_selectFileSystemStatement);
@@ -191,6 +194,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_bestFileSystemForSegmentStatement = 0;
   m_fileRecalledStatement = 0;
   m_subRequestToDoStatement = 0;
+  m_requestToDoStatement = 0;
   m_selectSvcClassStatement = 0;
   m_selectFileClassStatement = 0;
   m_selectFileSystemStatement = 0;
@@ -725,10 +729,80 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
-    rollback();
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in subRequestToDo."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// requestToDo
+// -----------------------------------------------------------------------
+castor::stager::Request*
+castor::db::ora::OraStagerSvc::requestToDo
+(std::vector<ObjectsIds> &types)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_requestToDoStatement) {
+      std::ostringstream stmtString;
+      stmtString
+        << "UPDATE RequestsStatus SET status = 'PROCESSED'"
+        << " WHERE status = 'NEW' AND ROWNUM < 2 AND "
+        << "(SELECT type FROM Id2Type WHERE Id2Typeid = RequestStatus.id)"
+        << " IN (";
+      for (std::vector<ObjectsIds>::const_iterator it = types.begin();
+           it!= types.end();
+           it++) {
+        if (types.begin() != it) stmtString << ", ";
+        stmtString << *it;
+      }
+      stmtString
+        << ") RETURNING id INTO :1";
+      m_requestToDoStatement =
+        createStatement(stmtString.str());
+      m_requestToDoStatement->registerOutParam
+        (1, oracle::occi::OCCIDOUBLE);
+      m_requestToDoStatement->setAutoCommit(true);
+    }
+    // execute the statement and see whether we found something
+    unsigned int nb =
+      m_requestToDoStatement->executeUpdate();
+    if (0 == nb) {
+      // Found no Request to handle
+      return 0;
+    }
+    // Create result
+    u_signed64 id = (u_signed64)m_requestToDoStatement->getDouble(1);
+    IObject* obj = cnvSvc()->getObjFromId(id);
+    if (0 == obj) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "requestToDo : could not retrieve object for id "
+        << id;
+      throw ex;
+    } 
+    castor::stager::Request* result =
+      dynamic_cast<castor::stager::Request*>(obj);
+    if (0 == result) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "requestToDo : object retrieved for id "
+        << id << " was a "
+        << castor::ObjectsIdStrings[obj->type()]
+        << " while a Request was expected.";
+      delete obj;
+      throw ex;
+    }    
+    // return
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in requestToDo."
       << std::endl << e.what();
     throw ex;
   }

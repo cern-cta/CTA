@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2004/11/22 14:33:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2004/11/24 13:33:04 $ $Author: sponcec3 $
  *
  * 
  *
@@ -266,6 +266,28 @@ extern "C" {
         cppTypes.push_back(types[i]);
       }
       *subreq = stgSvc->stgSvc->subRequestToDo(cppTypes);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  };
+
+  //---------------------------------------------------------------------------
+  // Cstager_IStagerSvc_requestToDo
+  //---------------------------------------------------------------------------
+  int Cstager_IStagerSvc_requestToDo(struct Cstager_IStagerSvc_t* stgSvc,
+                                     enum castor::ObjectsIds* types,
+                                     unsigned int nbTypes,
+                                     castor::stager::Request** request) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      std::vector<enum castor::ObjectsIds> cppTypes;
+      for (unsigned int i = 0; i < nbTypes; i++) {
+        cppTypes.push_back(types[i]);
+      }
+      *request = stgSvc->stgSvc->requestToDo(cppTypes);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

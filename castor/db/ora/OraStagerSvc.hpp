@@ -250,6 +250,20 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Selects the next request the stager should deal with.
+         * Selects a Request in START status and move its status
+         * PROCESSED to avoid double processing.
+         * The selection is restricted to Request of a given set
+         * of types.
+         * @param types the list of accepted types for the request
+         * @return the Request to process
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::Request* requestToDo
+        (std::vector<ObjectsIds> &types)
+          throw (castor::exception::Exception);
+
+        /**
          * Decides whether a SubRequest should be scheduled.
          * Looks at all diskCopies for the file a SubRequest
          * deals with and depending on them, decides whether
@@ -441,6 +455,9 @@ namespace castor {
 
         /// SQL statement object for function subRequestToDo
         oracle::occi::Statement *m_subRequestToDoStatement;
+
+        /// SQL statement object for function requestToDo
+        oracle::occi::Statement *m_requestToDoStatement;
 
         /// SQL statement for function isSubRequestToSchedule
         static const std::string s_isSubRequestToScheduleStatementString;

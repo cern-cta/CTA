@@ -35,6 +35,7 @@ struct C_IService_t;
 struct Cstager_IStagerSvc_t;
 struct Cstager_Tape_t;
 struct Cstager_Stream_t;
+struct Cstager_Request_t;
 struct Cstager_Segment_t;
 struct Cstager_DiskCopy_t;
 struct Cstager_SvcClass_t;
@@ -270,6 +271,27 @@ int Cstager_IStagerSvc_subRequestToDo
  struct Cstager_SubRequest_t** subreq);
 
 /**
+ * Selects the next request the stager should deal with.
+ * Selects a Request in START status and move its status
+ * PROCESSED to avoid double processing.
+ * The selection is restricted to Request of a given set
+ * of types.
+ * @param stgSvc the IStagerSvc used
+ * @param types the list of accepted types for the request
+ * @param nbTypes the number of types in the list
+ * @param request the request to process 
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_requestToDo
+(struct Cstager_IStagerSvc_t* stgSvc,
+ enum C_ObjectsIds* types,
+ unsigned int nbTypes,
+ struct Cstager_Request_t** request);
+
+/**
  * Decides whether a SubRequest should be scheduled.
  * Looks at all diskCopies for the file a SubRequest
  * deals with and depending on them, decides whether
@@ -423,8 +445,9 @@ int Cstager_IStagerSvc_selectCastorFile
  * A detailed error message can be retrieved by calling
  * Cstager_IStagerSvc_errorMsg
  */
-int Cstager_IStagerSvc_updateAndCheckSubRequest(struct Cstager_IStagerSvc_t* stgSvc,
-						struct Cstager_SubRequest_t* subreq,
-						int* result);
+int Cstager_IStagerSvc_updateAndCheckSubRequest
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_SubRequest_t* subreq,
+ int* result);
 
 #endif // CASTOR_ISTAGERSVC_H
