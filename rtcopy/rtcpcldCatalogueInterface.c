@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.95 $ $Release$ $Date: 2004/12/03 10:58:30 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.96 $ $Release$ $Date: 2004/12/03 11:45:51 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.95 $ $Release$ $Date: 2004/12/03 10:58:30 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.96 $ $Release$ $Date: 2004/12/03 11:45:51 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1613,7 +1613,7 @@ int nextSegmentToMigrate(
       save_serrno = serrno;
       /*
        * Disk file is zero size or has some other problem.
-       * Not fatal but we can mark the the tape copy INVALID
+       * Not fatal but we mark the candidate failed
        */
       (void)rtcpcld_getFileId(fl,&castorFileId);
       if ( rc == -1 ) {
@@ -1677,7 +1677,7 @@ int nextSegmentToMigrate(
     } else  if ( save_serrno == ENOENT ) {
       /*
        * CASTOR file removed. Not fatal but we can mark the
-       * the tape copy INVALID
+       * the tape copy failed
        */
       (void)rtcpcld_getFileId(fl,&castorFileId);
       (void)dlf_write(
@@ -2722,9 +2722,7 @@ int rtcpcld_updcFileMigrated(
    * is still TAPECOPY_SELECTED)
    */
   Cstager_TapeCopy_status(tapeCopy,&tapeCopyStatus);
-  if ( tapeCopyStatus != TAPECOPY_INVALID ) {
-    Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_STAGED);
-  }
+  Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_STAGED);
 
   for ( i=0; i<nbTapeCopies; i++ ) {
     Cstager_TapeCopy_status(
