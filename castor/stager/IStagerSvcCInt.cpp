@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/16 16:22:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/18 13:16:27 $ $Author: sponcec3 $
  *
  * 
  *
@@ -256,10 +256,16 @@ extern "C" {
   // Cstager_IStagerSvc_subRequestToDo
   //---------------------------------------------------------------------------
   int Cstager_IStagerSvc_subRequestToDo(struct Cstager_IStagerSvc_t* stgSvc,
+                                        enum castor::ObjectsIds* types,
+                                        unsigned int nbTypes,
                                         castor::stager::SubRequest** subreq) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      *subreq = stgSvc->stgSvc->subRequestToDo();
+      std::vector<enum castor::ObjectsIds> cppTypes;
+      for (unsigned int i = 0; i < nbTypes; i++) {
+        cppTypes.push_back(types[i]);
+      }
+      *subreq = stgSvc->stgSvc->subRequestToDo(cppTypes);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

@@ -238,10 +238,15 @@ namespace castor {
          * Selects a SubRequest in START, RESTART or RETRY status
          * and move its status to SUBREQUEST_WAITSCHED to avoid
          * double processing.
+         * The selection is restricted to SubRequest associated to
+         * requests of a given set of types.
+         * @param types the list of accepted types for the request
+         * associated to the returned subrequest
          * @return the SubRequest to process
          * @exception Exception in case of error
          */
-        virtual castor::stager::SubRequest* subRequestToDo()
+        virtual castor::stager::SubRequest* subRequestToDo
+        (std::vector<ObjectsIds> &types)
           throw (castor::exception::Exception);
 
         /**

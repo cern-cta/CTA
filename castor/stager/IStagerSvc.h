@@ -248,15 +248,23 @@ int Cstager_IStagerSvc_selectTape(struct Cstager_IStagerSvc_t* stgSvc,
  * Selects a SubRequest in START, RESTART or RETRY status
  * and move its status to SUBREQUEST_WAITSCHED to avoid
  * double processing.
+ * The selection is restricted to SubRequest associated to
+ * requests of a given set of types.
  * @param stgSvc the IStagerSvc used
+ * @param types the list of accepted types for the request
+ * associated to the returned subrequest
+ * @param nbTypes the number of types in the list
  * @param subreq the SubRequest to process 
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
  * Cstager_IStagerSvc_errorMsg
  */
-int Cstager_IStagerSvc_subRequestToDo(struct Cstager_IStagerSvc_t* stgSvc,
-                                      struct Cstager_SubRequest_t** subreq);
+int Cstager_IStagerSvc_subRequestToDo
+(struct Cstager_IStagerSvc_t* stgSvc,
+ enum C_ObjectsIds* types,
+ unsigned int nbTypes,
+ struct Cstager_SubRequest_t** subreq);
 
 /**
  * Decides whether a SubRequest should be scheduled.

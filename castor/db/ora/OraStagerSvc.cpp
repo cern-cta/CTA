@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2004/11/16 16:22:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2004/11/18 13:16:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -641,21 +641,34 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
 // subRequestToDo
 // -----------------------------------------------------------------------
 castor::stager::SubRequest*
-castor::db::ora::OraStagerSvc::subRequestToDo()
+castor::db::ora::OraStagerSvc::subRequestToDo
+(std::vector<ObjectsIds> &types)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
     if (0 == m_subRequestToDoStatement) {
       std::ostringstream stmtString;
-      stmtString << "UPDATE SubRequest SET status = "
-                 << castor::stager::SUBREQUEST_WAITSCHED
-                 << " WHERE (status = "
-                 << castor::stager::SUBREQUEST_START
-                 << " OR status = "
-                 << castor::stager::SUBREQUEST_RESTART
-                 << " OR status = "
-                 << castor::stager::SUBREQUEST_RETRY
-                 << ") AND ROWNUM < 2 RETURNING id, retryCounter, fileName, protocol, xsize, priority, status INTO :1, :2, :3, :4, :5 ,:6 , :7, :8";
+      stmtString
+        << "UPDATE SubRequest SET status = "
+        << castor::stager::SUBREQUEST_WAITSCHED
+        << " WHERE (status = "
+        << castor::stager::SUBREQUEST_START
+        << " OR status = "
+        << castor::stager::SUBREQUEST_RESTART
+        << " OR status = "
+        << castor::stager::SUBREQUEST_RETRY
+        << ") AND ROWNUM < 2 AND "
+        << "(SELECT type FROM Id2Type WHERE id = SubRequest.id)"
+        << " IN (";
+      for (std::vector<ObjectsIds>::const_iterator it = types.begin();
+           it!= types.end();
+           it++) {
+        if (types.begin() != it) stmtString << ", ";
+        stmtString << *it;
+      }
+      stmtString
+        << ") RETURNING id, retryCounter, fileName, protocol, xsize, priority, status"
+        << " INTO :1, :2, :3, :4, :5 ,:6 , :7, :8";
       m_subRequestToDoStatement =
         createStatement(stmtString.str());
       m_subRequestToDoStatement->registerOutParam

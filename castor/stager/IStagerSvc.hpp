@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/11/16 16:22:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/11/18 13:16:27 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -29,6 +29,7 @@
 #define STAGER_ISTAGERSVC_HPP 1
 
 // Include Files
+#include "castor/Constants.hpp"
 #include "castor/IService.hpp"
 #include "castor/exception/Exception.hpp"
 #include <vector>
@@ -212,10 +213,15 @@ namespace castor {
        * Selects a SubRequest in START, RESTART or RETRY status
        * and move its status to SUBREQUEST_WAITSCHED to avoid
        * double processing.
+       * The selection is restricted to SubRequest associated to
+       * requests of a given set of types.
+       * @param types the list of accepted types for the request
+       * associated to the returned subrequest
        * @return the SubRequest to process
        * @exception Exception in case of error
        */
-      virtual castor::stager::SubRequest* subRequestToDo()
+      virtual castor::stager::SubRequest* subRequestToDo
+      (std::vector<ObjectsIds> &types)
         throw (castor::exception::Exception) = 0;
 
       /**
