@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.23 $ $Release$ $Date: 2004/07/30 17:01:10 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.24 $ $Release$ $Date: 2004/08/02 12:36:26 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.23 $ $Release$ $Date: 2004/07/30 17:01:10 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.24 $ $Release$ $Date: 2004/08/02 12:36:26 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1237,12 +1237,12 @@ static int procReqsForVID(
     serrno = save_serrno;
     return(-1);
   }
+  rtcp_log(LOG_DEBUG,"procReqsForVID() %d segments to check\n",nbItems);
 
   if ( nbItems == 0 ) {
     serrno = ENOENT;
     return(-1);
   }
-  rtcp_log(LOG_DEBUG,"procReqsForVID() %d segments to check\n",nbItems);
 
   qsort(
         (void *)segmArray,
@@ -1582,6 +1582,7 @@ int rtcpcld_updateVIDStatus(
   } else if ( rc == 1 ) {
     rc = updateTapeFromDB(tapeItem);
     if ( rc == -1 ) return(-1);
+    else rc = 1;
   }
 
   if ( rc != 1 || tapeItem == NULL ) {
