@@ -1,32 +1,15 @@
 /*
- * $Id: vdqm_ProcReq.c,v 1.4 1999/09/03 14:49:58 obarring Exp $
- * $Log: vdqm_ProcReq.c,v $
- * Revision 1.4  1999/09/03 14:49:58  obarring
- * Include osdep.h because of use of u_signed64 in vdqm.h
- *
- * Revision 1.3  1999/09/01 15:10:29  obarring
- * Fix sccsid string
- *
- * Revision 1.2  1999/07/31 14:50:18  obarring
- * Add vdqm_SetError(), vdqm_GetError()
- *
- * Revision 1.1  1999/07/27 09:21:04  obarring
- * First version
- *
- */
-
-/*
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
  */
 
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.5 $ $Date: 1999/09/27 15:25:58 $ CERN IT-PDP/DM Olof Barring";
+#endif /* not lint */
+
 /*
  * vdqm_ProcReq.c - Receive and process VDQM client request (server only).
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$Id: vdqm_ProcReq.c,v 1.4 1999/09/03 14:49:58 obarring Exp $";
-#endif /* not lint */
 
 #include <stdlib.h>
 #if defined(_WIN32)
