@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.8 $ $Date: 2000/04/12 16:56:30 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.9 $ $Date: 2000/04/13 10:51:45 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -65,6 +65,54 @@ int rtcp_wacct(int   subtype,
     return(0);
 }
 
+int rtcp_AccountTiming(tape_list_t *tape, file_list_t *file) {
+    struct acctrtcp_timing rtcptiming;
+    rtcpTapeRequest_t *tapereq = NULL;
+    rtcpFileRequest_t *filereq = NULL;
+    int acctreclen;
+
+    if ( file == NULL ) return(-1);
+    filereq = &file->filereq;
+    if ( tape != NULL ) tapereq = &tape->tapereq;
+    else tapereq = &file->tape->tapereq;
+
+    rtcptiming.jid = filereq->jobID;
+    if ( rtcptiming.jid <= 0 ) rtcptiming.jid = getpgrp();
+
+    /*
+     * File sizes
+     */
+    if ( tapereq->mode == WRITE_DISABLE ) {
+        rtcptiming.disk_KB = (int)(filereq->bytes_out/1024);
+        rtcptiming.tape_KB = (int)(filereq->bytes_in/1024);
+    } else {
+        rtcptiming.tape_KB = (int)(filereq->bytes_out/1024);
+        rtcptiming.disk_KB = (int)(filereq->bytes_in/1024);
+    }
+    rtcptiming.host_KB = (int)(filereq->host_bytes/1024);
+
+    /*
+     * Timing info.
+     */
+    rtcptiming.TStartPosition = filereq->TStartPosition;
+    rtcptiming.TEndPosition = filereq->TEndPosition;
+    rtcptiming.TStartTransferDisk = filereq->TStartTransferDisk;
+    rtcptiming.TEndTransferDisk = filereq->TEndTransferDisk;
+    rtcptiming.TStartTransferTape = filereq->TStartTransferTape;
+    rtcptiming.TEndTransferTape = filereq->TEndTransferTape;
+    rtcptiming.TStartRequest = tapereq->TStartRequest;
+    rtcptiming.TStartRtcpd = tapereq->TStartRtcpd;
+    rtcptiming.TStartMount = tapereq->TStartMount;
+    rtcptiming.TEndMount = tapereq->TEndMount;
+    rtcptiming.TStartUnmount = tapereq->TStartUnmount;
+    rtcptiming.TEndUnmount = tapereq->TEndUnmount;
+
+    acctreclen = sizeof(rtcptiming);
+
+    wsacct (ACCTRTCPTIM, &rtcptiming, acctreclen);
+    return(0);
+}
+
 int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
                             tape_list_t *tape,
                             file_list_t *file,
@@ -113,6 +161,7 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
         if ( subtype == RTCPPRC || subtype == RTCPPRR ) {
             if ( mode == WRITE_ENABLE ) KBytes = (int)(filereq->bytes_in/1024);
             else KBytes = (int)(filereq->bytes_out/1024);
+            
         } 
         ifce = filereq->ifce;
         fseq = filereq->tape_fseq;
@@ -150,6 +199,8 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
                     stager_reqID,charcom,ifce,tapereq->vid,
                     KBytes,retry_nb,exitcode,client->clienthost,disksrv,
                     fseq,errmsgtxt);
+    if ( subtype == RTCPPRC || subtype == RTCPPRR ) 
+        rc = rtcp_AccountTiming(tape,file);
 #endif /* ACCTON */
     return(0);
 }
