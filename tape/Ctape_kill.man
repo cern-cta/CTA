@@ -1,8 +1,8 @@
-.\" %W% %G% CERN IT-PDP/DM Jean-Philippe Baud
+.\" $Id: Ctape_kill.man,v 1.2 1999/09/02 14:53:48 baud Exp $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_KILL l "%G%"
+.TH CTAPE_KILL l "$Date: 1999/09/02 14:53:48 $"
 .SH NAME
 Ctape_kill \- cancel a running Ctape_mount or Ctape_position request.
 .SH SYNOPSIS
@@ -27,18 +27,15 @@ failed. In the latter case,
 .B serrno
 is set appropriately.
 .SH ERRORS
-.TP
-.B SYERR
-System error.
-.TP
-.B COMERR
-Communication error.
+.TP 1.2i
+.B SENOSHOST
+Host unknown.
 .TP
 .B SENOSSERV
 Service unknown.
 .TP
-.B SENOSHOST
-Host unknown.
+.B SECOMERR
+Communication error.
 .TP
 .B ETDNP
 Tape daemon is not running.

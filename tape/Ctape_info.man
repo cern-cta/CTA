@@ -1,8 +1,8 @@
-.\" %W% %G% CERN IT-PDP/DM Jean-Philippe Baud
+.\" $Id: Ctape_info.man,v 1.2 1999/09/02 14:49:01 baud Exp $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_INFO l "%G%"
+.TH CTAPE_INFO l "$Date: 1999/09/02 14:49:01 $"
 .SH NAME
 Ctape_info \- get tape file information from header labels and mount requests;
 get also information about the tape drive used.
@@ -43,18 +43,15 @@ failed. In the latter case,
 .B serrno
 is set appropriately.
 .SH ERRORS
-.TP
-.B SYERR
-System error.
-.TP
-.B COMERR
-Communication error.
+.TP 1.2i
+.B SENOSHOST
+Host unknown.
 .TP
 .B SENOSSERV
 Service unknown.
 .TP
-.B SENOSHOST
-Host unknown.
+.B SECOMERR
+Communication error.
 .TP
 .B ETDNP
 Tape daemon is not running.
