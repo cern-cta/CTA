@@ -2,12 +2,14 @@
 /* and is inserted at the end of the generated code           */
 
 /* Indexes realted to CastorFiles */
-drop index I_rh_DiskCopyCastorfileIndex;
-drop index I_rh_TapeCopyCastorfileIndex;
-drop index I_rh_SubRequestCastorfileIndex;
-create index I_rh_DiskCopyCastorfileIndex on rh_DiskCopy (castorFile);
-create index I_rh_TapeCopyCastorfileIndex on rh_TapeCopy (castorFile);
-create index I_rh_SubRequestCastorfileIndex on rh_SubRequest (castorFile);
+DROP INDEX I_rh_DiskCopy_Castorfile;
+DROP INDEX I_rh_TapeCopy_Castorfile;
+DROP INDEX I_rh_SubRequest_Castorfile;
+DROP INDEX I_rh_FileSystem_DiskPool;
+CREATE INDEX I_rh_DiskCopy_Castorfile on rh_DiskCopy (castorFile);
+CREATE INDEX I_rh_TapeCopy_Castorfile on rh_TapeCopy (castorFile);
+CREATE INDEX I_rh_SubRequest_Castorfile on rh_SubRequest (castorFile);
+CREATE INDEX I_rh_FileSystem_DiskPool on rh_FileSystem (diskPool);
 
 /* PL/SQL method implementing bestTapeCopyForStream */
 CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER, tapeCopyStatus IN NUMBER,
@@ -54,6 +56,7 @@ SELECT rh_DiskServer.name, rh_FileSystem.mountPoint, rh_DiskCopy.path, rh_DiskCo
     AND rh_StageInRequest.svcclass = rh_DiskPool2SvcClass.child
     AND rh_FileSystem.diskpool = rh_DiskPool2SvcClass.parent
     AND rh_FileSystem.free > rh_CastorFile.fileSize
+    AND rh_DiskServer.id = rh_FileSystem.diskServer
     AND ROWNUM < 2
   ORDER by rh_FileSystem.weight DESC;
 UPDATE rh_DiskCopy SET fileSystem = fileSystemId WHERE id = diskCopyId;

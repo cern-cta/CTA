@@ -516,6 +516,38 @@ void CppCppOraCnvWriter::writeSqlStatements() {
                << "2"
                << capitalizeFirstLetter(secondMember->typeName)
                << " (Parent INTEGER, Child INTEGER);"
+               << endl << getIndent()
+               << "DROP INDEX I_rh"
+               << capitalizeFirstLetter(firstMember->typeName)
+               << "2"
+               << capitalizeFirstLetter(secondMember->typeName)
+               << "Child;"
+               << endl << getIndent()
+               << "DROP INDEX I_rh"
+               << capitalizeFirstLetter(firstMember->typeName)
+               << "2"
+               << capitalizeFirstLetter(secondMember->typeName)
+               << "Parent;"
+               << endl << getIndent()
+               << "CREATE INDEX I_rh"
+               << capitalizeFirstLetter(firstMember->typeName)
+               << "2"
+               << capitalizeFirstLetter(secondMember->typeName)
+               << "Child on rh_"
+               << capitalizeFirstLetter(firstMember->typeName)
+               << "2"
+               << capitalizeFirstLetter(secondMember->typeName)
+               << " (child);"
+               << endl << getIndent()
+               << "CREATE INDEX I_rh"
+               << capitalizeFirstLetter(firstMember->typeName)
+               << "2"
+               << capitalizeFirstLetter(secondMember->typeName)
+               << "Parent on rh_"
+               << capitalizeFirstLetter(firstMember->typeName)
+               << "2"
+               << capitalizeFirstLetter(secondMember->typeName)
+               << " (parent);"
                << endl;
       }
     }

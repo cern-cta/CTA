@@ -96,18 +96,30 @@ DROP TABLE rh_SvcClass;
 CREATE TABLE rh_SvcClass (policy VARCHAR(255), nbDrives NUMBER, name VARCHAR(255), id INTEGER PRIMARY KEY);
 DROP TABLE rh_SvcClass2TapePool;
 CREATE TABLE rh_SvcClass2TapePool (Parent INTEGER, Child INTEGER);
+DROP INDEX I_rhSvcClass2TapePoolChild;
+DROP INDEX I_rhSvcClass2TapePoolParent;
+CREATE INDEX I_rhSvcClass2TapePoolChild on SvcClass2TapePool (child);
+CREATE INDEX I_rhSvcClass2TapePoolParent on SvcClass2TapePool (parent);
 
 /* SQL statements for type DiskPool */
 DROP TABLE rh_DiskPool;
 CREATE TABLE rh_DiskPool (name VARCHAR(255), id INTEGER PRIMARY KEY);
 DROP TABLE rh_DiskPool2SvcClass;
 CREATE TABLE rh_DiskPool2SvcClass (Parent INTEGER, Child INTEGER);
+DROP INDEX I_rhDiskPool2SvcClassChild;
+DROP INDEX I_rhDiskPool2SvcClassParent;
+CREATE INDEX I_rhDiskPool2SvcClassChild on DiskPool2SvcClass (child);
+CREATE INDEX I_rhDiskPool2SvcClassParent on DiskPool2SvcClass (parent);
 
 /* SQL statements for type Stream */
 DROP TABLE rh_Stream;
 CREATE TABLE rh_Stream (initialSizeToTransfer INTEGER, id INTEGER PRIMARY KEY, tape INTEGER, tapePool INTEGER, status INTEGER);
 DROP TABLE rh_Stream2TapeCopy;
 CREATE TABLE rh_Stream2TapeCopy (Parent INTEGER, Child INTEGER);
+DROP INDEX I_rhStream2TapeCopyChild;
+DROP INDEX I_rhStream2TapeCopyParent;
+CREATE INDEX I_rhStream2TapeCopyChild on Stream2TapeCopy (child);
+CREATE INDEX I_rhStream2TapeCopyParent on Stream2TapeCopy (parent);
 
 /* SQL statements for type FileClass */
 DROP TABLE rh_FileClass;
@@ -121,12 +133,14 @@ CREATE TABLE rh_DiskServer (name VARCHAR(255), id INTEGER PRIMARY KEY, status IN
 /* and is inserted at the end of the generated code           */
 
 /* Indexes realted to CastorFiles */
-drop index rh_DiskCopyCastorfileIndex;
-drop index rh_TapeCopyCastorfileIndex;
-drop index rh_SubRequestCastorfileIndex;
-create index rh_DiskCopyCastorfileIndex on rh_DiskCopy (castorFile);
-create index rh_TapeCopyCastorfileIndex on rh_TapeCopy (castorFile);
-create index rh_SubRequestCastorfileIndex on rh_SubRequest (castorFile);
+DROP INDEX I_rh_DiskCopy_Castorfile;
+DROP INDEX I_rh_TapeCopy_Castorfile;
+DROP INDEX I_rh_SubRequest_Castorfile;
+DROP INDEX I_rh_FileSystem_DiskPool;
+CREATE INDEX I_rh_DiskCopy_Castorfile on rh_DiskCopy (castorFile);
+CREATE INDEX I_rh_TapeCopy_Castorfile on rh_TapeCopy (castorFile);
+CREATE INDEX I_rh_SubRequest_Castorfile on rh_SubRequest (castorFile);
+CREATE INDEX I_rh_FileSystem_DiskPool on rh_FileSystem (diskPool);
 
 /* PL/SQL method implementing bestTapeCopyForStream */
 CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER, tapeCopyStatus IN NUMBER,
@@ -173,6 +187,7 @@ SELECT rh_DiskServer.name, rh_FileSystem.mountPoint, rh_DiskCopy.path, rh_DiskCo
     AND rh_StageInRequest.svcclass = rh_DiskPool2SvcClass.child
     AND rh_FileSystem.diskpool = rh_DiskPool2SvcClass.parent
     AND rh_FileSystem.free > rh_CastorFile.fileSize
+    AND rh_DiskServer.id = rh_FileSystem.diskServer
     AND ROWNUM < 2
   ORDER by rh_FileSystem.weight DESC;
 UPDATE rh_DiskCopy SET fileSystem = fileSystemId WHERE id = diskCopyId;
