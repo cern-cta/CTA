@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.4 2004/12/06 16:01:39 jdurand Exp $
+ * $Id: JobSvcThread.cpp,v 1.5 2004/12/06 17:46:04 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.4 $ $Date: 2004/12/06 16:01:39 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.5 $ $Date: 2004/12/06 17:46:04 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -102,6 +102,9 @@ EXTERN_C int DLL_DECL stager_job_select(void **output) {
     STAGER_LOG_DEBUG(NULL,"Getting any request to do");
     std::vector<castor::ObjectsIds> types;
     types.push_back(castor::OBJ_GetUpdateStartRequest);
+    types.push_back(castor::OBJ_PutStartRequest);
+    types.push_back(castor::OBJ_MoverCloseRequest);
+    types.push_back(castor::OBJ_UpdateRepRequest);
     castor::stager::Request* req = stgSvc->requestToDo(types);
 
     if (0 == req) {
