@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.20 2002/04/05 13:36:54 jdurand Exp $
+ * $Id: stagestat.c,v 1.21 2002/04/11 10:39:48 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.20 $ $Date: 2002/04/05 13:36:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.21 $ $Date: 2002/04/11 10:39:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -417,7 +417,7 @@ int main(argc, argv)
 			nrecok++;
 		} else if (rp.subtype == STGCMDC) {  /* command completed */
 			if (rp.exitcode < 5) {
-				rc[rp.req_type][rp.exitcode]++; /* 1==USERR, 2==SYERR, 3==UNERR, 4==CONFERR */
+				rc[rp.req_type][rp.exitcode]++; /* 1==USERR, 2==SYERR, 3==(unknown), 4==CONFERR */
 				nrecok++;
 			} else if (rp.exitcode == SEUSERUNKN || /* User unknown */
 					   rp.exitcode == ESTGROUP   || /* Group unknown */
@@ -459,9 +459,8 @@ int main(argc, argv)
 				rc[rp.req_type][11]++;
 				nrecok++;
 			} else {
-				fprintf(stderr,"[WARNING] rp.exitcode=%d !?\n", rp.exitcode);
-				nrecerror++;
-				if (verbose) print_acct(&accthdr, &rp);
+				rc[rp.req_type][3]++; /* 1==USERR, 2==SYERR, 3==(unknown), 4==CONFERR */
+				nrecok++;
 			}
 		} else {
 			fprintf(stderr,"[WARNING] rp.subtype=%d (rp.req_type=%d, rp.u2.s.t_or_d=%c)!?\n", rp.subtype, rp.req_type, rp.u2.s.t_or_d != 0 ? rp.u2.s.t_or_d : ' ');
