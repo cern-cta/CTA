@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.99 2002/09/26 14:40:31 jdurand Exp $
+ * $Id: procqry.c,v 1.100 2002/09/26 17:10:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.99 $ $Date: 2002/09/26 14:40:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.100 $ $Date: 2002/09/26 17:10:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -362,7 +362,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			char logit[BUFSIZ + 1];
 
 			struct_status = 0;
-			stcp_input.reqid = -1;
+			if ((flags & STAGE_REQID) != STAGE_REQID) stcp_input.reqid = -1;
 			unmarshall_STAGE_CAT(magic,STGDAEMON_LEVEL,STAGE_INPUT_MODE, struct_status, rbp, &(stcp_input));
 			if (struct_status != 0) {
 				sendrep(&rpfd, MSG_ERR, "STG02 - Bad catalog entry input\n");
