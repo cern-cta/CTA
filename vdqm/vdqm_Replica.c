@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.10 $ $Date: 2000/03/13 11:17:47 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.11 $ $Date: 2000/04/28 11:41:23 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -302,7 +302,7 @@ int vdqm_ReplDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *drv) {
 
     rc = R_GetDrvRecord(dgn_context, drv, &drvrec);
     if ( rc == -1 ) return(-1);
-    if ( hdr->reqtype == VDQM_DEL_VOLREQ ) {
+    if ( hdr->reqtype == VDQM_DEL_DRVREQ ) {
         if ( drvrec == NULL ) {
             log(LOG_ERR,"vdqm_ReplDrvReq() attempt to delete non-existing request (DrvReqID: %d)\n",
                 drv->DrvReqID);
@@ -639,7 +639,6 @@ static int PipeRequest(int vol_action, vdqm_volrec_t *vol,
     if ( ReplicationPipe.nb_piped  >= VDQM_REPLICA_PIPELEN ) {
         log(LOG_ERR,"PipeRequest() Replication failure! pipe is full\n");
         vdqm_SetError(EVQPIPEFULL);
-        (void)Cthread_mutex_unlock_ext(ReplicationPipe.lock);
         return(-1);
     }
     i = ReplicationPipe.nb_piped;
@@ -794,6 +793,8 @@ void *vdqm_ReplicaListenThread(void *arg) {
         primary_host);
 
     while ( retry_replication > 0 ) {
+        log(LOG_INFO,"vdqm_ReplicaListenThread() trying to connect to %s\n",
+            primary_host);
         rc = vdqm_ConnectToVDQM(&nw,primary_host);
         if ( rc == -1 ) {
             log(LOG_ERR,"vdqm_ReplicaListenThread() cannot connect to primary VDQM\n");
@@ -856,6 +857,8 @@ void *vdqm_ReplicaListenThread(void *arg) {
         } /* for (;;) */
         retry_replication--;
         if ( retry_replication > 0 ) sleep(retry_time);
+        log(LOG_INFO,"vdqm_ReplicaListenThread() retry nb %d\n",
+            VDQM_REPLICA_RETRIES-retry_replication);
     } /* while ( retry_replication > 0 ) */
     if ( nw != NULL ) free(nw);
     replication_ON = 0;
