@@ -1,0 +1,19 @@
+#
+## $Id: PACKAGING.howto,v 1.1 2005/01/30 12:11:43 jdurand Exp $
+#
+## Example of packaging of version 10.9.8.7
+#
+cd somewhere
+rm -rf WORKDIR/PROTO2 CVS
+mkdir -p WORKDIR/PROTO2
+mkdir CVS
+cd CVS
+cvs -d/afs/cern.ch/project/castor/CASTOR_MASTER/cvsroot co CASTOR
+cvs -d:kserver:isscvs.cern.ch:2000/local/reps/castor co PROTO2
+cd ../WORKDIR/PROTO2
+lndir -withrevinfo ../../CVS/PROTO2 .
+lndir -withrevinfo ../../CVS/CASTOR
+export MAJOR_CASTOR_VERSION=10.9
+export MINOR_CASTOR_VERSION=8.7
+./makedeb.sh
+./makerpm.sh
