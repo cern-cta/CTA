@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.31 2002/03/05 14:44:04 jdurand Exp $
+ * $Id: stageput.c,v 1.32 2002/04/11 10:36:09 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.31 $ $Date: 2002/03/05 14:44:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.32 $ $Date: 2002/04/11 10:36:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -316,7 +316,7 @@ int main(argc, argv)
 	}
 #endif
 	for (i = Coptind; i < argc; i++) {
-		if ((c = build_linkname (argv[i], path, sizeof(path), STAGEPUT)) == SYERR) {
+		if ((c = build_linkname (argv[i], path, sizeof(path), STAGEPUT)) == SESYSERR) {
 #if defined(_WIN32)
 			WSACleanup();
 #endif
@@ -335,7 +335,7 @@ int main(argc, argv)
 		}
 	}
 	if (fun) {
-		if ((c = build_Upath (fun, path, sizeof(path), STAGEPUT)) == SYERR) {
+		if ((c = build_Upath (fun, path, sizeof(path), STAGEPUT)) == SESYSERR) {
 #if defined(_WIN32)
 			WSACleanup();
 #endif

@@ -1,5 +1,5 @@
 /*
- * $Id: stageupdc.c,v 1.23 2002/03/05 14:44:04 jdurand Exp $
+ * $Id: stageupdc.c,v 1.24 2002/04/11 10:40:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.23 $ $Date: 2002/03/05 14:44:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.24 $ $Date: 2002/04/11 10:40:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -172,7 +172,7 @@ int main(argc, argv)
 	}
 #endif
 	for (i = Coptind; i < argc; i++) {
-		if ((c = build_linkname (argv[i], path, sizeof(path), STAGEUPDC)) == SYERR) {
+		if ((c = build_linkname (argv[i], path, sizeof(path), STAGEUPDC)) == SESYSERR) {
 #if defined(_WIN32)
 			WSACleanup();
 #endif
@@ -190,7 +190,7 @@ int main(argc, argv)
 		}
 	}
 	if (fun) {
-		if ((c = build_Upath (fun, path, sizeof(path), STAGEUPDC)) == SYERR) {
+		if ((c = build_Upath (fun, path, sizeof(path), STAGEUPDC)) == SESYSERR) {
 #if defined(_WIN32)
 			WSACleanup();
 #endif
