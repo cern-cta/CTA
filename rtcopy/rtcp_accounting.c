@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.7 $ $Date: 2000/04/05 12:10:33 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.8 $ $Date: 2000/04/12 16:56:30 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -76,7 +76,9 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
     int KBytes = 0;
     int retry_nb = 0;
     int mode = WRITE_DISABLE;
-    int rc, severity, exitcode, fseq;
+    int exitcode = 0;
+    int fseq = 0;
+    int rc, severity;
     char charcom, *p, stageID[CA_MAXSTGRIDLEN+1];
     char *disksrv = NULL;
     char *errmsgtxt = NULL;
@@ -138,7 +140,10 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
         if ( AbortFlag == 0 ) {
             rtcp_log(LOG_ERR,"rtcp_WriteAccountRecord(RTCPEMSG) without msg txt\n");
             return(-1);
-        } else sprintf(errmsgtxt,"request aborted by user\n");
+        } else {
+            if ( AbortFlag == 1 ) sprintf(errmsgtxt,"request aborted by user\n");
+            if ( AbortFlag == 2 ) sprintf(errmsgtxt,"request aborted by operator\n");
+        }
     }
 
     rc = rtcp_wacct(subtype,(uid_t)client->uid,(gid_t)client->gid,jobID,

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.58 $ $Date: 2000/04/12 14:18:31 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.59 $ $Date: 2000/04/12 16:56:33 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -82,7 +82,18 @@ extern int AbortFlag;
 int AbortFlag = 0;
 
 extern int SHIFTclient;
-int SHIFTclient = 0;
+int SHIFTclient = FALSE;
+
+/*
+ * Global variable needed to flag that an ENOSPC has been sent to the
+ * stager and thus no further stageupdc calls should take place until
+ * next retry with a new file. This flag is reset in MainCntl after
+ * having waited for completion of all subrequests up to the ENOSPC
+ * failure. This total synchronisation is needed for SHIFT stagers since
+ * they expect all stageupdc in sequence.
+ */
+extern int ENOSPC_occurred;
+int ENOSPC_occurred = FALSE;
 
 /*
  * Set Debug flag if requested
@@ -1058,7 +1069,7 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
 }
 
 int rtcpd_AbortHandler(int sig) {
-    if ( sig == SIGTERM ) {
+    if ( sig == SIGTERM || sig == SIGINT ) {
         AbortFlag = 2;
         proc_cntl.ProcError = RTCP_FAILED;
     } else AbortFlag = 1;
@@ -1108,7 +1119,7 @@ static int rtcpd_ProcError(int *code) {
 
     if ( AbortFlag != 0 ) {
         if ( AbortFlag == 2 ) 
-            rtcp_log(LOG_DEBUG,"rtcpd_ProcError() REQUEST killed by operator\n");
+            rtcp_log(LOG_DEBUG,"request aborted by operator\n");
         return(proc_cntl.ProcError);
     }
     rc = Cthread_mutex_lock_ext(proc_cntl.ProcError_lock);
@@ -1398,9 +1409,11 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      */
     sigact.sa_handler = (void (*)(int))rtcpd_AbortHandler;
     sigaction(SIGTERM,&sigact,NULL);
+    sigaction(SIGINT,&sigact,NULL);
 #else /* _WIN32 */
     signal(SIGPIPE,SIG_IGN);
     signal(SIGTERM,(void (*)(int))rtcpd_AbortHandler);
+    signal(SIGINT,(void (*)(int))rtcpd_AbortHandler);
 #endif /* _WIN32 */
     rtcp_log(LOG_DEBUG,"rtcpd_MainCntl() called\n");
     rtcpd_SetDebug();
@@ -1444,7 +1457,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         /*
          * This is an old client
          */
-        SHIFTclient = 1;
+        SHIFTclient = TRUE;
         rtcp_log(LOG_INFO,"Running old (SHIFT) client request\n");
         rc = rtcp_RunOld(accept_socket,&hdr);
 
@@ -1839,6 +1852,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         rtcpd_WaitProcStatus(RTCP_RETRY_OK);
         rtcpd_ResetRequest(tape);
         rtcpd_SetProcError(RTCP_OK);
+        ENOSPC_occurred = FALSE;
     } /* for (;;) */
 
     /*
