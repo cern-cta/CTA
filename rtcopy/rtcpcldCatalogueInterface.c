@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/06/29 17:36:23 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/06/30 12:50:55 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/06/29 17:36:23 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/06/30 12:50:55 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1143,7 +1143,31 @@ static int validSegment(
   } else {
     return(0);
   }
-}  
+}
+
+static int compareSegments(
+                           arg1,
+                           arg2
+                           )
+     CONST void *arg1, *arg2;
+{
+  struct Cstager_Segment_t **segm1, **segm2;
+  int fseq1, fseq2, rc;
+  
+  segm1 = (struct Cstager_Segment_t **)arg1;
+  segm2 = (struct Cstager_Segment_t **)arg2;
+  if ( segm1 == NULL || segm2 == NULL ||
+       *segm1 == NULL || *segm2 == NULL ) return(0);
+  Cstager_Segment_fseq(*segm1,&fseq1);
+  Cstager_Segment_fseq(*segm2,&fseq2);
+  rc = 0;
+  if ( fseq1 < fseq2 ) rc = -1;
+  if ( fseq1 > fseq2 ) rc = 1;
+
+  rtcp_log(LOG_DEBUG,"compareSegments(): fseq1=%d, fseq2=%d, rc=%d\n",
+           fseq1,fseq2,rc);
+  return(rc);
+}
 
 /**
  * This method is only called from methods used by the VidWorker childs.
@@ -1219,6 +1243,13 @@ static int procReqsForVID(
     serrno = ENOENT;
     return(-1);
   }
+
+  qsort(
+        (void *)segmArray,
+        (size_t)nbItems,
+        sizeof(struct Cstager_Segment_t *),
+        compareSegments
+        );
 
   rc = getDbSvc(&svcs);
   if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
