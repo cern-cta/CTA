@@ -180,6 +180,8 @@ int rc_shift2castor(rc)
 		return(ESTNACT);
 	case REQKILD:
 		return(ESTKILLED);
+	case CLEARED:
+		return(ESTCLEARED);
 	default:
 		return(rc);
 	}
