@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.94 2001/02/23 10:15:01 jdurand Exp $
+ * $Id: procio.c,v 1.95 2001/03/02 18:16:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.94 $ $Date: 2001/02/23 10:15:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.95 $ $Date: 2001/03/02 18:16:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -73,7 +73,7 @@ int silent_flag = 0;
 int nowait_flag = 0;
 extern struct fileclass *fileclasses;
 
-void procioreq _PROTO((int, char *, char *));
+void procioreq _PROTO((int, int, char *, char *));
 void procputreq _PROTO((int, char *, char *));
 extern int isuserlevel _PROTO((char *));
 int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
@@ -96,6 +96,7 @@ int create_hsm_entry _PROTO((int, struct stgcat_entry *, int, mode_t, int));
 #endif
 extern int stglogit _PROTO(());
 extern int stglogflags _PROTO(());
+extern int stglogtppool _PROTO(());
 extern int req2argv _PROTO((char *, char ***));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int, int, ...));
@@ -119,6 +120,8 @@ extern int euid_egid _PROTO((uid_t *, gid_t *, char *, struct migrator *, struct
 extern int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 extern char *next_tppool _PROTO((struct fileclass *));
+extern void bestnextpool_out _PROTO((char *, int));
+extern void rwcountersfs _PROTO((char *, char *, int, int));
 
 #ifdef MIN
 #undef MIN
@@ -145,8 +148,9 @@ extern char *next_tppool _PROTO((struct fileclass *));
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
 
-void procioreq(req_type, req_data, clienthost)
+void procioreq(req_type, magic, req_data, clienthost)
 		 int req_type;
+		 int magic;
 		 char *req_data;
 		 char *clienthost;
 {
@@ -221,7 +225,6 @@ void procioreq(req_type, req_data, clienthost)
 	int api_out = 0;
 	char save_group[CA_MAXGRPNAMELEN+1];
 	char save_user[CA_MAXUSRNAMELEN+1];
-	extern struct passwd stage_passwd;             /* Generic uid/gid stage:st */
 	extern struct passwd start_passwd;             /* Start uid/gid stage:st */
 	int have_tppool = 0;
 	char *tppool = NULL;
@@ -277,10 +280,20 @@ void procioreq(req_type, req_data, clienthost)
 
 	local_unmarshall_STRING (rbp, name);
 	if (req_type > STAGE_00) {
-		unmarshall_LONG (rbp, stgreq.uid);
-		unmarshall_LONG (rbp, stgreq.gid);
-		unmarshall_LONG (rbp, stgreq.mask);
-		unmarshall_LONG (rbp, clientpid);
+		if (magic == STGMAGIC) {
+			/* First version of the API */
+			unmarshall_LONG (rbp, stgreq.uid);
+			unmarshall_LONG (rbp, stgreq.gid);
+			unmarshall_LONG (rbp, stgreq.mask);
+			unmarshall_LONG (rbp, clientpid);
+		} else if (magic == STGMAGIC2) {
+			/* Second version of the API */
+			unmarshall_LONG (rbp, stgreq.uid);
+			unmarshall_LONG (rbp, stgreq.gid);
+			unmarshall_LONG (rbp, stgreq.mask);
+			unmarshall_LONG (rbp, clientpid);
+			unmarshall_HYPER (rbp, stage_uniqueid);
+		}
 	} else {
 		unmarshall_WORD (rbp, stgreq.uid);
 		unmarshall_WORD (rbp, stgreq.gid);
@@ -377,7 +390,7 @@ void procioreq(req_type, req_data, clienthost)
 				}
 			}
 			logit[0] = '\0';
-			if (stage_stcp2buf(logit,BUFSIZ,flags,&(stcp_input[i])) == 0 || serrno == SEUMSG2LONG) {
+			if (stage_stcp2buf(logit,BUFSIZ,&(stcp_input[i])) == 0 || serrno == SEUMSG2LONG) {
 				logit[BUFSIZ] = '\0';
 				stglogit(func,"stcp[%d/%d] :%s\n",i+1,nstcp_input,logit);
  			}
@@ -386,9 +399,11 @@ void procioreq(req_type, req_data, clienthost)
 				switch (req_type) {
 				case STAGE_IN:
 					strcpy(stcp_input[i].poolname,defpoolname_in);
+					strcpy(stgreq.poolname,stcp_input[i].poolname);
 					break;
 				case STAGE_OUT:
-					strcpy(stcp_input[i].poolname,defpoolname_out);
+					bestnextpool_out(stcp_input[i].poolname,WRITE_MODE);
+					strcpy(stgreq.poolname,stcp_input[i].poolname);
 					break;
 				default:
 					break;
@@ -458,7 +473,7 @@ void procioreq(req_type, req_data, clienthost)
 			sendrep (rpfd, MSG_ERR, STG17, "-c off", "any request but stage_in");
 			errflg++;
  		}
-		if ((Aflag != 0) && (req_type != STAGE_IN) && (req_type != STAGE_OUT)) {
+		if ((Aflag != 0) && (req_type != STAGE_IN) && (req_type != STAGE_WRT)) {
 			sendrep (rpfd, MSG_ERR, STG17, "-A deferred", "any request but stage_in or stage_wrt");
 			errflg++;
  		}
@@ -962,9 +977,14 @@ void procioreq(req_type, req_data, clienthost)
 		}
 	}
 
-	if ((have_tppool != 0) && (req_type != STAGEWRT) && (req_type != STAGEOUT)) {
-		sendrep (rpfd, MSG_ERR, STG17, "--tppool", (req_type == STAGEIN) ? "stagein" : "stagecat");
-		errflg++;
+	if ((have_tppool != 0) || (tppool_flag != 0)) {
+		if ((req_type != STAGEWRT) && (req_type != STAGEOUT)) {
+			sendrep (rpfd, MSG_ERR, STG17, "--tppool", (req_type == STAGEIN) ? "stagein" : "stagecat");
+			errflg++;
+		} else {
+			/* Print the flags */
+			stglogtppool(func,tppool);
+		}
 	}
 
 	if (errflg != 0) {
@@ -987,7 +1007,7 @@ void procioreq(req_type, req_data, clienthost)
 				strcpy(stgreq.poolname,defpoolname_in);
 				break;
 			case STAGEOUT:
-				strcpy(stgreq.poolname,defpoolname_out);
+				bestnextpool_out(stgreq.poolname,WRITE_MODE);
 				break;
 			default:
 				break;
@@ -1406,7 +1426,7 @@ void procioreq(req_type, req_data, clienthost)
 				stageacct (STGFILS, stgreq.uid, stgreq.gid,
 									 clienthost, reqid, req_type, 0, 0, stcp, "");
 #endif
-				sendrep (rpfd, MSG_ERR, STG96,
+				sendrep (rpfd, RTCOPY_OUT, STG96,
 								 strrchr (stcp->ipath, '/')+1,
 								 stcp->actual_size,
 								 (float)(stcp->actual_size)/(1024.*1024.),
@@ -1639,6 +1659,7 @@ void procioreq(req_type, req_data, clienthost)
 				if (Upluspath && ((api_out == 0) ? (argv[Coptind+1][0] != '\0') : (stpp_input[1].upath[0] != '\0')) &&
 						strcmp (stcp->ipath, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath))
 					create_link (stcp, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath);
+				rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT);
 			}
 #ifdef USECDB
 			if (stcp->t_or_d != 'h') {
@@ -2175,7 +2196,6 @@ void procputreq(req_type, req_data, clienthost)
 	int ndiskfiles = 0;
 	int nuserlevel = 0;
 	int nexplevel = 0;
-	extern struct passwd stage_passwd;             /* Generic uid/gid stage:st */
 	uid_t euid = 0;
 	gid_t egid = 0;
 	uid_t uid_waitq;
@@ -3333,10 +3353,16 @@ int create_hsm_entry(rpfd,stcp,api_out,openmode,immediate_delete)
 		okmode = (07777 & (openmode & ~ stcp->mask));
 	}
 	if (Cns_creatx(stcp->u1.h.xfile, okmode, &Cnsfileid) != 0) {
+		int save_serrno = serrno;
 		setegid(start_passwd.pw_gid);
 		seteuid(start_passwd.pw_uid);
 		sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_creatx", sstrerror(serrno));
-		if (immediate_delete != 0) delreq(stcp,0);
+		if (immediate_delete != 0) {
+		  if (delfile (stcp, 1, 1, 1, stcp->user, stcp->uid, stcp->gid, 0) < 0) {
+		    sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink", rfio_serror());
+		  }
+		}
+		serrno = save_serrno;
 		if ((serrno == SENOSHOST) || (serrno == SENOSSERV) || (serrno == SECOMERR) || (serrno == ENSNACT)) {
 			return(SYERR);
 		}

@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.14 2001/02/19 17:11:06 jdurand Exp $
+ * $Id: stage_api.c,v 1.15 2001/03/02 18:16:48 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -14,7 +14,8 @@
 #include "Cpwd.h"              /* For CASTOR password functions */
 #include "Cgrp.h"              /* For CASTOR group functions */
 #include "rfio_api.h"          /* RFIO API */
-#include "u64subr.h"           /* u_signed64 conversion routines */
+#include "u64subr.h"           /* u_signed 64 conversion routines */
+#include "Cglobals.h"          /* To get CthreadId */
 
 #include <errno.h>             /* For EINVAL */
 #if defined(_WIN32)
@@ -37,7 +38,7 @@ int stage_api_chkdirw _PROTO((char *));
 #if TMS
 int stage_api_tmscheck _PROTO((char *, char *, char *, char *, char *));
 #endif
-int copyrc_shift2castor _PROTO((int));
+int rc_shift2castor _PROTO((int));
 
 #define STVAL2BUF(stcp,member,option,buf,bufsize) {                                       \
   char tmpbuf1[21 + 4];                                                                   \
@@ -115,12 +116,12 @@ int copyrc_shift2castor _PROTO((int));
 #endif /* _REENTRANT || _THREAD_SAFE */
 #endif /* _WIN32 */
 
-int DLL_DECL copyrc_castor2shift(copyrc)
-     int copyrc;
+int DLL_DECL rc_castor2shift(rc)
+     int rc;
 {
   /* Input  is a CASTOR return code */
   /* Output is a SHIFT  return code */
-  switch (copyrc) {
+  switch (rc) {
   case ERTBLKSKPD:
     return(BLKSKPD);
   case ERTTPE_LSZ:
@@ -130,8 +131,12 @@ int DLL_DECL copyrc_castor2shift(copyrc)
     return(MNYPARI);
   case ERTLIMBYSZ:
     return(LIMBYSZ);
+  case EINVAL:
+    return(USERR);
+  case SESYSERR:
+    return(SYERR);
   default:
-    return(copyrc);
+    return(rc);
   }
 }
 
@@ -183,10 +188,9 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
-  int enospc_retry = -1;
-  int enospc_retryint = -1;
-  int enospc_ntries = 0;
   char stgpool_forced[CA_MAXPOOLNAMELEN + 1];
+  int Tid = 0;
+  u_signed64 uniqueid = 0;
 
   /* It is not allowed to have no input */
   if (nstcp_input <= 0) {
@@ -213,24 +217,6 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
     break;
   case STAGE_OUT:                       /* - stageout */
     func = cmdnames_api[2];
-    /* Grab the ENOSPC_RETRY configuration */
-    if (((p = getenv("STAGE_ENOSPC_RETRY")) != NULL) || ((p = getconfent("STG","ENOSPC_RETRY")) != NULL)) {
-      enospc_retry = atoi(p);
-    }
-    if (enospc_retry < 0) {
-      /* Invalid value */
-      enospc_retry = MAXRETRY;
-      /* stage_errmsg(func, "ENOSPC_RETRY value set to %d\n", enospc_retry); */
-    }
-    /* Grab the ENOSPC_RETRYINT configuration */
-    if (((p = getenv("STAGE_ENOSPC_RETRYINT")) != NULL) || ((p = getconfent("STG","ENOSPC_RETRYINT")) != NULL)) {
-      enospc_retryint = atoi(p);
-    }
-    if (enospc_retryint < 0) {
-      /* Invalid value */
-      enospc_retryint = RETRYI;
-      /* stage_errmsg(func, "ENOSPC_RETRYINT value set to %d\n", enospc_retryint); */
-    }
     break;
   case STAGE_WRT:                       /* - stagewrt */
     func = cmdnames_api[3];
@@ -320,6 +306,19 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
     return (-1);
   }
 
+  /* Our uniqueid is a combinaison of our pid and our threadid */
+  pid = getpid();
+  Cglobals_getTid(&Tid); /* Get CthreadId  - can be -1 */
+  Tid++;
+  uniqueid = (((u_signed64) pid) * ((u_signed64) 0xFFFFFFFF)) + Tid;
+
+  if (stage_setuniqueid((u_signed64) uniqueid) != 0) {
+#if defined(_WIN32)
+    WSACleanup();
+#endif
+    return (-1);
+  }
+
   /* How many bytes do we need ? */
   sendbuf_size = 3 * LONGSIZE;             /* Request header (magic number + req_type + msg length) */
   sendbuf_size += strlen(pw->pw_name) + 1; /* Login name */
@@ -332,6 +331,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   sendbuf_size += LONGSIZE;                /* Gid */
   sendbuf_size += LONGSIZE;                /* Mask */
   sendbuf_size += LONGSIZE;                /* Pid */
+  sendbuf_size += HYPERSIZE;               /* Our uniqueid  */
   sendbuf_size += strlen(User) + 1;        /* User for internal path (default to "stage" in stgdaemon) */
   sendbuf_size += HYPERSIZE;               /* Flags */
   sendbuf_size += LONGSIZE;                /* openflags */
@@ -465,7 +465,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 
   /* Build request header */
   sbp = sendbuf;
-  marshall_LONG (sbp, STGMAGIC);
+  marshall_LONG (sbp, STGMAGIC2);
   marshall_LONG (sbp, req_type);
   q = sbp;	/* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;
@@ -483,8 +483,8 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   marshall_LONG (sbp, egid);                 /* gid */
   umask (mask = umask(0));
   marshall_LONG (sbp, mask);                 /* umask */
-  pid = getpid();
   marshall_LONG (sbp, pid);                  /* pid */
+  marshall_HYPER (sbp, uniqueid);            /* Our uniqueid */
   marshall_STRING (sbp, User);               /* User internal path (default to "stage" in stgdaemon) */
   marshall_HYPER (sbp, flags);               /* Flags */
   marshall_LONG (sbp, openflags);            /* openflags */
@@ -524,11 +524,13 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   /* Dial with the daemon */
   while (1) {
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, nstcp_output, stcp_output, NULL, NULL);
-    if (c == 0) break;
-    if ((req_type == STAGE_OUT) && (serrno == ENOSPC)) {
-      if (++enospc_ntries > enospc_retry) break;
-      stage_sleep(enospc_retryint);
-      continue;
+    if ((c == 0) ||
+        (serrno == EINVAL)     || (serrno == ERTBLKSKPD) || (serrno == ERTTPE_LSZ) ||
+		(serrno == ERTMNYPARY) || (serrno == ERTLIMBYSZ) || (serrno == CLEARED)    ||
+		(serrno == ENOSPC) || (serrno == EBUSY)) break;
+    if (serrno == LNKNSUP) {	/* symbolic links not supported on that platform */
+      serrno = USERR;
+      break;
     }
     if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
@@ -676,10 +678,9 @@ int stage_api_chkdirw(path)
   return (rc);
 }
 
-int DLL_DECL stage_stcp2buf(buf,bufsize,flags,stcp)
+int DLL_DECL stage_stcp2buf(buf,bufsize,stcp)
      char *buf;
      size_t bufsize;
-     u_signed64 flags;
      struct stgcat_entry *stcp;
 {
   int i;
@@ -689,13 +690,6 @@ int DLL_DECL stage_stcp2buf(buf,bufsize,flags,stcp)
     return(-1);
   }
 
-  STFLAG2BUF_V2(flags,STAGE_SILENT,"--silent",buf,bufsize);
-  STFLAG2BUF_V2(flags,STAGE_NOWAIT,"--nowait",buf,bufsize);
-  STFLAG2BUF(flags,STAGE_GRPUSER,'G',buf,bufsize);
-  STFLAGVAL2BUF(flags,STAGE_DEFERRED,'A',"deferred",buf,bufsize);
-  STFLAGVAL2BUF(flags,STAGE_COFF,'c',"off",buf,bufsize);
-  STFLAG2BUF(flags,STAGE_UFUN,'U',buf,bufsize);
-  STFLAG2BUF(flags,STAGE_INFO,'z',buf,bufsize);
   STCHR2BUF(stcp,keep,'K',buf,bufsize);
   STSTR2BUF(stcp,poolname,'p',buf,bufsize);
   STVAL2BUF(stcp,size,'s',buf,bufsize);
@@ -766,7 +760,6 @@ int DLL_DECL stage_stcp2buf(buf,bufsize,flags,stcp)
     STSTR2BUF(stcp,u1.h.xfile,'M',buf,bufsize);
     STVAL2BUF_V2(stcp,u1.h.fileid,"--fileid",buf,bufsize)
     STVAL2BUF_V2(stcp,u1.h.fileclass,"--fileclass",buf,bufsize)
-    STSTR2BUF_V2(stcp,u1.h.tppool,"--tppool",buf,bufsize);
     break;
   default:
     serrno = EFAULT;
@@ -829,7 +822,7 @@ int DLL_DECL stage_admin_kill(hostname,uniqueid)
     this_uniqueid = *uniqueid;
   }
   sbp = sendbuf;
-  marshall_LONG (sbp, STGMAGIC);
+  marshall_LONG (sbp, STGMAGIC2);
   marshall_LONG (sbp, STAGE_KILL);
   q = sbp;	/* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;
@@ -878,6 +871,9 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   struct stgpath_entry *stpp_output_internal = NULL;
   int rc;
   char stgpool_forced[CA_MAXPOOLNAMELEN + 1];
+  int pid = 0;
+  int Tid = 0;
+  u_signed64 uniqueid = 0;
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
@@ -947,6 +943,19 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
     return (-1);
   }
 
+  /* Our uniqueid is a combinaison of our pid and our threadid */
+  pid = getpid();
+  Cglobals_getTid(&Tid); /* Get CthreadId  - can be -1 */
+  Tid++;
+  uniqueid = (((u_signed64) pid) * ((u_signed64) 0xFFFFFFFF)) + Tid;
+
+  if (stage_setuniqueid((u_signed64) uniqueid) != 0) {
+#if defined(_WIN32)
+    WSACleanup();
+#endif
+    return (-1);
+  }
+
   /* How many bytes do we need ? */
   sendbuf_size = 3 * LONGSIZE;             /* Request header (magic number + req_type + msg length) */
   sendbuf_size += strlen(pw->pw_name) + 1; /* Login name */
@@ -954,6 +963,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   sendbuf_size += HYPERSIZE;               /* Flags */
   sendbuf_size += BYTESIZE;                /* t_or_d */
   sendbuf_size += LONGSIZE;                /* Number of catalog structures */
+  sendbuf_size += HYPERSIZE;               /* Our uniqueid */
   for (istcp = 0; istcp < nstcp_input; istcp++) {
     int i, numvid, numvsn;
 
@@ -1053,7 +1063,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 
   /* Build request header */
   sbp = sendbuf;
-  marshall_LONG (sbp, STGMAGIC);
+  marshall_LONG (sbp, STGMAGIC2);
   marshall_LONG (sbp, req_type);
   q = sbp;	/* save pointer. The next field will be updated */
   msglen = 3 * LONGSIZE;
@@ -1065,6 +1075,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   marshall_HYPER (sbp, flags);               /* Flags */
   marshall_BYTE (sbp, t_or_d);               /* Type of request (you cannot merge Tape/Disk/Allocation/Hsm) */
   marshall_LONG (sbp, nstcp_input);          /* Number of input stgcat_entry structures */
+  marshall_HYPER (sbp, uniqueid);            /* Our uniqueid */
   for (istcp = 0; istcp < nstcp_input; istcp++) {
     thiscat = &(stcp_input[istcp]);               /* Current catalog structure */
     status = 0;
@@ -1084,7 +1095,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   /* Dial with the daemon */
   while (1) {
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, &nstcp_output_internal, &stcp_output_internal, &nstpp_output_internal, &stpp_output_internal);
-    if (c == 0) break;
+    if ((c == 0) || (serrno == EINVAL)) break;
     if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }

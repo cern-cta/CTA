@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.48 2001/02/08 15:41:46 jdurand Exp $
+ * $Id: procqry.c,v 1.49 2001/03/02 18:16:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.48 $ $Date: 2001/02/08 15:41:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.49 $ $Date: 2001/03/02 18:16:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -57,7 +57,7 @@ static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.48 $ $Date: 200
 #include "Cgetopt.h"
 #include "u64subr.h"
 
-void procqryreq _PROTO((int, char *, char *));
+void procqryreq _PROTO((int, int, char *, char *));
 void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int));
 int print_sorted_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int));
 void print_tape_info _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, int, int));
@@ -74,10 +74,9 @@ extern int sendrep _PROTO(());
 extern int isvalidpool _PROTO((char *));
 extern int stglogit _PROTO(());
 extern int stglogflags _PROTO(());
-extern void print_pool_utilization _PROTO((int, char *, char *, char *, char *, int, int));
+extern void print_pool_utilization _PROTO((int, char *, char *, char *, char *, int, int, int));
 extern int nextreqid _PROTO(());
 extern int savereqs _PROTO(());
-extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *));
 extern int cleanpool _PROTO((char *));
 extern void delreq _PROTO((struct stgcat_entry *, int));
 extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int));
@@ -87,9 +86,9 @@ extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, str
 #if !defined(linux)
 extern char *sys_errlist[];
 #endif
-extern char defpoolname[CA_MAXPOOLNAMELEN + 1];
-extern char defpoolname_in[CA_MAXPOOLNAMELEN + 1];
-extern char defpoolname_out[CA_MAXPOOLNAMELEN + 1];
+extern char defpoolname[];
+extern char defpoolname_in[];
+extern char defpoolname_out[];
 extern char func[16];
 extern int nbcat_ent;
 extern int reqid;
@@ -109,6 +108,7 @@ extern struct stgdb_fd dbfd;
 struct stgdb_fd dbfd_in_fork;
 struct stgdb_fd *dbfd_query;
 #endif
+extern u_signed64 stage_uniqueid;
 
 int nbtpf;
 int noregexp_flag;
@@ -116,6 +116,7 @@ int reqid_flag;
 int dump_flag;
 int migrator_flag;
 int class_flag;
+int queue_flag;
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
@@ -128,6 +129,7 @@ int class_flag;
 #endif
 
 #define DUMP_VAL(rpfd,st,member) sendrep(rpfd, MSG_OUT, "%-14s : %20d\n", NAMEOFVAR(member) , (int) st->member)
+#define DUMP_VALHEX(rpfd,st,member) sendrep(rpfd, MSG_OUT, "%-14s : 0x%lx\n", NAMEOFVAR(member) , (unsigned long) st->member)
 #define DUMP_U64(rpfd,st,member) {                                          \
     char tmpbuf[21];                                                        \
 	sendrep(rpfd, MSG_OUT, "%-14s : %20s\n", NAMEOFVAR(member) ,	            \
@@ -138,8 +140,9 @@ int class_flag;
 
 #define DUMP_STRING(rpfd,st,member) sendrep(rpfd, MSG_OUT, "%-14s : %20s\n", NAMEOFVAR(member) , st->member)
 
-void procqryreq(req_type, req_data, clienthost)
+void procqryreq(req_type, magic, req_data, clienthost)
 		 int req_type;
+		 int magic;
 		 char *req_data;
 		 char *clienthost;
 {
@@ -228,6 +231,7 @@ void procqryreq(req_type, req_data, clienthost)
 		{"dump",               NO_ARGUMENT,  &dump_flag,        1},
 		{"migrator",           NO_ARGUMENT,  &migrator_flag,    1},
 		{"class",              NO_ARGUMENT,  &class_flag,       1},
+		{"queue",              NO_ARGUMENT,  &queue_flag,       1},
 		{NULL,                 0,                  NULL,        0}
 	};
 
@@ -236,15 +240,25 @@ void procqryreq(req_type, req_data, clienthost)
 	dump_flag = 0;
 	migrator_flag = 0;
 	class_flag = 0;
+	queue_flag = 0;
 	poolname[0] = '\0';
 	rbp = req_data;
 	local_unmarshall_STRING (rbp, user);	/* login name */
 	if (req_type > STAGE_00) {
-		/* This is coming from the API */
-		unmarshall_LONG (rbp, gid);
-		unmarshall_HYPER (rbp, flags);
-		unmarshall_BYTE (rbp, t_or_d);
-		unmarshall_LONG(rbp, nstcp_input);
+		if (magic == STGMAGIC) {
+			/* This is coming from the API */
+			unmarshall_LONG (rbp, gid);
+			unmarshall_HYPER (rbp, flags);
+			unmarshall_BYTE (rbp, t_or_d);
+			unmarshall_LONG(rbp, nstcp_input);
+		} else if (magic == STGMAGIC2) {
+			/* This is coming from the API */
+			unmarshall_LONG (rbp, gid);
+			unmarshall_HYPER (rbp, flags);
+			unmarshall_BYTE (rbp, t_or_d);
+			unmarshall_LONG(rbp, nstcp_input);
+			unmarshall_HYPER (rbp, stage_uniqueid);
+		}
     } else {
 		unmarshall_WORD (rbp, gid);
 		nargs = req2argv (rbp, &argv);
@@ -284,7 +298,7 @@ void procqryreq(req_type, req_data, clienthost)
 			}
 			logit[0] = '\0';
 			stcp_input.t_or_d = t_or_d;
-			if (stage_stcp2buf(logit,BUFSIZ,flags,&(stcp_input)) == 0 || serrno == SEUMSG2LONG) {
+			if (stage_stcp2buf(logit,BUFSIZ,&(stcp_input)) == 0 || serrno == SEUMSG2LONG) {
 				logit[BUFSIZ] = '\0';
 				stglogit("stage_qry","stcp : %s\n",logit);
  			}
@@ -433,6 +447,9 @@ void procqryreq(req_type, req_data, clienthost)
 		}
 		if ((flags & STAGE_CLASS) == STAGE_CLASS) {
 			class_flag++;
+		}
+		if ((flags & STAGE_QUEUE) == STAGE_QUEUE) {
+			queue_flag++;
 		}
 		/* Print the flags */
 		stglogflags("stage_qry",flags);
@@ -624,7 +641,7 @@ void procqryreq(req_type, req_data, clienthost)
 		goto reply;
 	}
 	if (sflag) {
-		print_pool_utilization (rpfd, poolname, defpoolname, defpoolname_in, defpoolname_out, migrator_flag, class_flag);
+		print_pool_utilization (rpfd, poolname, defpoolname, defpoolname_in, defpoolname_out, migrator_flag, class_flag, queue_flag);
 		goto reply;
 	}
 	if (Sflag) {
@@ -1298,7 +1315,7 @@ void dump_stcp(rpfd, stcp)
 	DUMP_VAL(rpfd,stcp,uid);
 	DUMP_VAL(rpfd,stcp,gid);
 	DUMP_VAL(rpfd,stcp,mask);
-	DUMP_VAL(rpfd,stcp,status);
+	DUMP_VALHEX(rpfd,stcp,status);
 	DUMP_U64(rpfd,stcp,actual_size);
 	DUMP_U64(rpfd,stcp,c_time);
 	DUMP_U64(rpfd,stcp,a_time);

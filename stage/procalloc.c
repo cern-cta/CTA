@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.27 2001/01/31 18:59:50 jdurand Exp $
+ * $Id: procalloc.c,v 1.28 2001/03/02 18:16:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.27 $ $Date: 2001/01/31 18:59:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.28 $ $Date: 2001/03/02 18:16:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -69,6 +69,8 @@ extern int savepath _PROTO(());
 extern int savereqs _PROTO(());
 extern void rmfromwq _PROTO((struct waitq *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
+extern void bestnextpool_out _PROTO((char *, int));
+extern void rwcountersfs _PROTO((char *, char *, int, int));
 
 void procallocreq _PROTO((char *, char *));
 
@@ -162,7 +164,7 @@ void procallocreq(req_data, clienthost)
 	/* setting defaults */
 
 	if (*stgreq.poolname == '\0')
-		strcpy (stgreq.poolname, defpoolname);
+		bestnextpool_out(stgreq.poolname,WRITE_MODE);
 	if (pool_user == NULL)
 		pool_user = "stage";
 
@@ -215,6 +217,7 @@ void procallocreq(req_data, clienthost)
 		if (Upluspath && (argv[Coptind+1][0] != '\0') && 
 				strcmp (stcp->ipath, argv[Coptind+1]))
 			create_link (stcp, argv[Coptind+1]);
+		rwcountersfs(stcp->poolname, stcp->ipath, STAGEALLOC, STAGEALLOC);
 	}
 #ifdef USECDB
 	if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {

@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.24 2001/01/31 18:59:50 jdurand Exp $
+ * $Id: procclr.c,v 1.25 2001/03/02 18:16:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.24 $ $Date: 2001/01/31 18:59:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.25 $ $Date: 2001/03/02 18:16:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -60,6 +60,7 @@ extern int checklastaccess _PROTO((char *, time_t));
 extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int));
 extern int savepath _PROTO(());
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
+extern void rwcountersfs _PROTO((char *, char *, int, int));
 
 int check_delete _PROTO((struct stgcat_entry *, gid_t, uid_t, char *, char *, int, int));
 
@@ -354,13 +355,16 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 		return (USERR);
 	}
 	if ((stcp->status & 0xF0) == STAGED ||
-			(stcp->status & (STAGEOUT | PUT_FAILED)) == (STAGEOUT | PUT_FAILED)) {
+		(stcp->status & (STAGEOUT | PUT_FAILED)) == (STAGEOUT | PUT_FAILED)) {
 		if (delfile (stcp, 0, 1, 1, user, uid, gid, rflag) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
 							 rfio_serror());
 			return (USERR);
 		}
-	} else if ((stcp->status & STAGEOUT) == STAGEOUT || (stcp->status & STAGEALLOC) == STAGEALLOC) {
+	} else if ((stcp->status & 0xF) == STAGEOUT || (stcp->status & 0xF) == STAGEALLOC) {
+		if ((ISSTAGEOUT(stcp) && (! ISCASTORMIG(stcp))) || (ISSTAGEALLOC(stcp) && ((stcp->status | STAGED) != STAGED))) {
+			rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
+		}
 		if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
 							 rfio_serror());
@@ -395,6 +399,11 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 			sendrep (rpfd, MSG_ERR,
 					 "Status=0x%x but req not in waitq - Deleting reqid %d\n",
 					 stcp->status, stcp->reqid);
+			if ((stcp->status & 0xF) == STAGEOUT || (stcp->status & 0xF) == STAGEALLOC) {
+				if ((ISSTAGEOUT(stcp) && (! ISCASTORMIG(stcp))) || (ISSTAGEALLOC(stcp) && ((stcp->status | STAGED) != STAGED))) {
+					rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
+				}
+			}
 			if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag) < 0) {
 				sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
 						 rfio_serror());

@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.13 2001/01/31 19:00:03 jdurand Exp $
+ * $Id: stage_updc.c,v 1.14 2001/03/02 18:16:48 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.13 $ $Date: 2001/01/31 19:00:03 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.14 $ $Date: 2001/03/02 18:16:48 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -30,8 +30,6 @@ static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.13 $ $Date: 
 #include "stage.h"
 #include "u64subr.h"
 #include "Cpwd.h"
-
-extern int copyrc_shift2castor _PROTO((int));
 
 #ifndef _WIN32
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
@@ -175,7 +173,7 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
     sendbuf_size += strlen("-s") + strlen(tmpbuf) + 2; /* -s option and value */
   }
   if (copyrc >= 0) {
-    sprintf (tmpbuf, "%d", copyrc_castor2shift(copyrc));
+    sprintf (tmpbuf, "%d", rc_castor2shift(copyrc));
     sendbuf_size += strlen("-R") + strlen(tmpbuf) + 2; /* -R option and value */
   }
   if (transfer_time > 0) {
@@ -271,7 +269,7 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
     nargs += 2;
   }
   if (copyrc >= 0) {
-    sprintf (tmpbuf, "%d", copyrc_castor2shift(copyrc));
+    sprintf (tmpbuf, "%d", rc_castor2shift(copyrc));
     marshall_STRING (sbp, "-R");
     marshall_STRING (sbp, tmpbuf);
     nargs += 2;
@@ -301,7 +299,7 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
 
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
-    if (c == 0) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
     if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
@@ -533,7 +531,7 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
 
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
-    if (c == 0) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
     if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
@@ -648,7 +646,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
 
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
-    if (c == 0) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
     if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
@@ -762,7 +760,7 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
 
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
-    if (c == 0) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
     if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }

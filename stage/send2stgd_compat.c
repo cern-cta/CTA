@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_compat.c,v 1.2 2001/02/01 18:09:28 jdurand Exp $
+ * $Id: send2stgd_compat.c,v 1.3 2001/03/02 18:16:48 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.2 $ $Date: 2001/02/01 18:09:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.3 $ $Date: 2001/03/02 18:16:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -181,6 +181,7 @@ int DLL_DECL send2stgd_compat(host, reqp, reql, want_reply, user_repbuf, user_re
 		unmarshall_STRING (p, prtbuf);
 		switch (rep_type) {
 		case MSG_OUT:
+		case RTCOPY_OUT:
 			if (user_repbuf != NULL) {
 				if (actual_replen + c <= user_repbuf_len)
 					n = c;
@@ -194,7 +195,6 @@ int DLL_DECL send2stgd_compat(host, reqp, reql, want_reply, user_repbuf, user_re
 				stage_outmsg (NULL, "%s", prtbuf);
 			break;
 		case MSG_ERR:
-		case RTCOPY_OUT:
 			stage_errmsg (NULL, "%s", prtbuf);
 			break;
 		case SYMLINK:

@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.94 2001/02/16 14:12:52 jdurand Exp $
+ * $Id: poolmgr.c,v 1.95 2001/03/02 18:16:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.94 $ $Date: 2001/02/16 14:12:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.95 $ $Date: 2001/03/02 18:16:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -59,6 +59,9 @@ extern char *strdup _PROTO((CONST char *));
 
 extern char *getconfent();
 extern char defpoolname[];
+extern char defpoolname_in[];
+extern char defpoolname_out[];
+extern char currentpool_out[];
 extern int rpfd;
 extern int req2argv _PROTO((char *, char ***));
 extern struct stgcat_entry *stce;	/* end of stage catalog */
@@ -104,8 +107,23 @@ struct files_per_stream {
   uid_t euid;
   gid_t egid;
   char tppool[CA_MAXPOOLNAMELEN+1];
+  int nb_substreams;
 };
-void print_pool_utilization _PROTO((int, char *, char *, char *, char *, int, int));
+
+/* This structure is used for the qsort on pool elements */
+struct pool_element_ext {
+  u_signed64 free;
+  int nbreadaccess;
+  int nbwriteaccess;
+  int mode;
+  int nbreadserver;
+  int nbwriteserver;
+  int poolmigrating;
+  char server[CA_MAXHOSTNAMELEN+1];
+  char dirpath[MAXPATH];
+};
+
+void print_pool_utilization _PROTO((int, char *, char *, char *, char *, int, int, int));
 int update_migpool _PROTO((struct stgcat_entry *, int, int));
 int insert_in_migpool _PROTO((struct stgcat_entry *));
 void checkfile2mig _PROTO(());
@@ -119,7 +137,8 @@ int isvalidpool _PROTO((char *));
 void migpoolfiles_log_callback _PROTO((int, char *));
 int isuserlevel _PROTO((char *));
 void poolmgr_wait4child _PROTO(());
-int selectfs _PROTO((char *, int *, char *));
+int selectfs _PROTO((char *, int *, char *, int));
+void rwcountersfs _PROTO((char *, char *, int, int));
 void getdefsize _PROTO((char *, int *));
 int updfreespace _PROTO((char *, char *, signed64));
 void redomigpool _PROTO(());
@@ -142,7 +161,13 @@ void stglogfileclass _PROTO((struct Cns_fileclass *));
 void printfileclass _PROTO((int, struct fileclass *));
 int retenp_on_disk _PROTO((int));
 void check_retenp_on_disk _PROTO(());
-int tppool_vs_stcp_cmp_vs_size _PROTO((CONST void *, CONST void *));
+int ispool_out _PROTO((char *));
+void nextpool_out _PROTO((char *));
+void bestnextpool_out _PROTO((char *, int));
+int ispoolmigrating _PROTO((char *));
+struct pool_element *betterfs_vs_pool _PROTO((char *, int, u_signed64, int *));
+int pool_elements_cmp _PROTO((CONST void *, CONST void *));
+void get_global_stream_count _PROTO((char *, int *, int *));
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -414,12 +439,13 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
         errflg++;
         goto reply;
       }
-      if ((int) strlen (p) > CA_MAXPOOLNAMELEN) {
+      if ((int) strlen (p) > ((10*(CA_MAXPOOLNAMELEN + 1)) - 1)) {
         stglogit (func, STG27, "pool", p);
         errflg++;
         goto reply;
       }
       strcpy (defpoolname_out, p);
+      /* Please note that defpoolname_out can contain multiple entries, separated with a ':' */
     } else if (strcmp (p, "DEFSIZE") == 0) {
       if (poolalloc (pool_p, nbpool_ent) < 0) {
         errflg++;
@@ -477,11 +503,21 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
   if (*defpoolname_out == '\0') {
       strcpy (defpoolname_out, defpoolname);
   } else {
-    if (! isvalidpool (defpoolname_out)) {
-      stglogit (func, STG32, defpoolname_out);
-      errflg++;
-      goto reply;
+    /* We loop all entried separated by the ':' to verify poolnames validity */
+    char savdefpoolname_out[10*(CA_MAXPOOLNAMELEN + 1)];
+    strcpy(savdefpoolname_out, defpoolname_out);
+    if ((p = strtok(defpoolname_out, ":")) != NULL) {
+      while (1) {
+        if (! isvalidpool (p)) {
+          stglogit (func, STG32, p);
+          errflg++;
+          strcpy(defpoolname_out, savdefpoolname_out);
+          goto reply;
+        }
+        if ((p = strtok(NULL, ":")) == NULL) break;
+      }
     }
+    strcpy(defpoolname_out, savdefpoolname_out);
   }
 
   /* Reduce number of migrator in case of pools sharing the same one */
@@ -538,6 +574,8 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
                   pool_p->mig_stop_thresh, pool_p->mig_start_thresh);
       }
     } else if (strcmp (p, "DEFPOOL") == 0) continue;
+    else if (strcmp (p, "DEFPOOL_IN") == 0) continue;
+    else if (strcmp (p, "DEFPOOL_OUT") == 0) continue;
     else if (strcmp (p, "DEFSIZE") == 0) continue;
     else {
       if ((int) strlen (p) > CA_MAXHOSTNAMELEN) {
@@ -645,9 +683,9 @@ void checkpoolspace()
   extern int shutdownreq_reqid;
 
   for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
-    if (pool_p->ovl_pid != 0) continue;           /* Already has a cleaner running */
     if ((pool_p->free * 100) < (pool_p->capacity * pool_p->gc_start_thresh)) {
       /* Not enough minimum space */
+      /* Note that cleanpool() not launch a cleaner if another is already running */
       if (shutdownreq_reqid == 0) cleanpool(pool_p->name);
     }
   }
@@ -843,11 +881,12 @@ int poolalloc(pool_p, nbpool_ent)
   return (0);
 }
 
-void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpoolname_out, migrator_flag, class_flag)
+void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpoolname_out, migrator_flag, class_flag, queue_flag)
      int rpfd;
      char *poolname, *defpoolname, *defpoolname_in, *defpoolname_out;
      int migrator_flag;
      int class_flag;
+     int queue_flag;
 {
   struct pool_element *elemp;
   int i, j;
@@ -865,7 +904,10 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
   char tmpbuf2[21];
   char tmpbuf3[21];
   char tmpbuf4[21];
+  char tmpbuf5[21];
+  char tmpbuf6[21];
   u_signed64 before_fraction, after_fraction;
+  int is_poolout;
 
   for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
     if (*poolname && strcmp (poolname, pool_p->name)) continue;
@@ -907,18 +949,26 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
              u64tostru(pool_p->free, tmpbuf2, 0),
              u64tostr(before_fraction, tmpbuf3, 0),
              u64tostr(after_fraction, tmpbuf4, 0));
+    is_poolout = (ispool_out(pool_p->name) == 0) ? 1 : 0;
     for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++) {
       before_fraction = elemp->capacity ? (100 * elemp->free) / elemp->capacity : 0;
       after_fraction = elemp->capacity ?
         (10 * (elemp->free * 100 - elemp->capacity * before_fraction)) / elemp->capacity :
         0;
-      sendrep (rpfd, MSG_OUT, "  %s %s CAPACITY %s FREE %s (%s.%s%%)\n",
+      sendrep (rpfd, MSG_OUT, "  %s %s CAPACITY %s FREE %s (%s.%s%%)%s%s%4s%s%s%4s\n",
                elemp->server,
                elemp->dirpath,
                u64tostru(elemp->capacity, tmpbuf1, 0),
                u64tostru(elemp->free, tmpbuf2, 0),
                u64tostr(before_fraction, tmpbuf3, 0),
-               u64tostr(after_fraction, tmpbuf4, 0));
+               u64tostr(after_fraction, tmpbuf4, 0),
+               is_poolout ?       " " : "",
+               is_poolout ?  "nread " : "",
+               is_poolout ? u64tostr((u_signed64) elemp->nbreadaccess, tmpbuf5, 0) : "",
+               is_poolout ?       " " : "",
+               is_poolout ? "nwrite " : "",
+               is_poolout ? u64tostr((u_signed64) elemp->nbwriteaccess, tmpbuf6, 0) : ""
+               );
     }
   }
   if (*poolname == '\0') {
@@ -968,13 +1018,183 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
       printfileclass(rpfd, &(fileclasses[i]));
     }
   }
+  if (queue_flag != 0) {
+	struct waitq *wqp = NULL;
+	struct waitf *wfp;
+    extern struct waitq *waitqp;
+    int iwaitq;
+
+	for (wqp = waitqp, iwaitq = 1; wqp; wqp = wqp->next, iwaitq++) {
+      struct stgcat_entry *stcp;
+      sendrep (rpfd, MSG_OUT, "\n--------------------\nWaiting Queue No %d\n--------------------\n", iwaitq);
+      sendrep (rpfd, MSG_OUT, "pool_user            %s\n", wqp->pool_user);
+      sendrep (rpfd, MSG_OUT, "clienthost           %s\n", wqp->clienthost);
+      sendrep (rpfd, MSG_OUT, "req_user             %s\n", wqp->req_user);
+      sendrep (rpfd, MSG_OUT, "req_uid              %ld\n", (unsigned long) wqp->req_uid);
+      sendrep (rpfd, MSG_OUT, "req_gid              %ld\n", (unsigned long) wqp->req_gid);
+      sendrep (rpfd, MSG_OUT, "rtcp_user            %s\n", wqp->rtcp_user);
+      sendrep (rpfd, MSG_OUT, "rtcp_group           %s\n", wqp->rtcp_group);
+      sendrep (rpfd, MSG_OUT, "rtcp_uid             %ld\n", (unsigned long) wqp->rtcp_uid);
+      sendrep (rpfd, MSG_OUT, "rtcp_gid             %ld\n", (unsigned long) wqp->rtcp_gid);
+      sendrep (rpfd, MSG_OUT, "clientpid            %ld\n", (unsigned long) wqp->clientpid);
+      sendrep (rpfd, MSG_OUT, "uniqueid gives       Pid=0x%lx (%d) CthreadId+1=0x%lx (-> Tid=%d)\n",
+               (unsigned long) (wqp->uniqueid / 0xFFFFFFFF),
+               (int) (wqp->uniqueid / 0xFFFFFFFF),
+               (unsigned long) (wqp->uniqueid - (wqp->uniqueid / 0xFFFFFFFF) * 0xFFFFFFFF),
+               (int) (wqp->uniqueid - (wqp->uniqueid / 0xFFFFFFFF) * 0xFFFFFFFF) - 1
+               );
+      sendrep (rpfd, MSG_OUT, "copytape             %d\n", wqp->copytape);
+      sendrep (rpfd, MSG_OUT, "Pflag                %d\n", wqp->Pflag);
+      sendrep (rpfd, MSG_OUT, "Upluspath            %d\n", wqp->Upluspath);
+      sendrep (rpfd, MSG_OUT, "reqid                %d\n", wqp->reqid);
+      sendrep (rpfd, MSG_OUT, "key                  %d\n", wqp->key);
+      sendrep (rpfd, MSG_OUT, "rpfd                 %d\n", wqp->rpfd);
+      sendrep (rpfd, MSG_OUT, "ovl_pid              %d\n", wqp->ovl_pid);
+      sendrep (rpfd, MSG_OUT, "nb_subreqs           %d\n", wqp->nb_subreqs);
+      sendrep (rpfd, MSG_OUT, "nbdskf               %d\n", wqp->nbdskf);
+      sendrep (rpfd, MSG_OUT, "nb_waiting_on_req    %d\n", wqp->nb_waiting_on_req);
+      sendrep (rpfd, MSG_OUT, "nb_clnreq            %d\n", wqp->nb_clnreq);
+      sendrep (rpfd, MSG_OUT, "waiting_pool         %d\n", wqp->waiting_pool);
+      sendrep (rpfd, MSG_OUT, "clnreq_reqid         %d\n", wqp->clnreq_reqid);
+      sendrep (rpfd, MSG_OUT, "clnreq_rpfd          %d\n", wqp->clnreq_rpfd);
+      sendrep (rpfd, MSG_OUT, "status               0x%lx\n", (unsigned long) wqp->status);
+      sendrep (rpfd, MSG_OUT, "nretry               %d\n", wqp->nretry);
+      sendrep (rpfd, MSG_OUT, "Aflag                %d\n", wqp->Aflag);
+      sendrep (rpfd, MSG_OUT, "concat_off_fseq      %d\n", wqp->concat_off_fseq);
+      sendrep (rpfd, MSG_OUT, "api_out              %d\n", wqp->api_out);
+      sendrep (rpfd, MSG_OUT, "openmode             %d\n", (int) wqp->openmode);
+      sendrep (rpfd, MSG_OUT, "openflags            0x%lx\n", (unsigned long) wqp->openflags);
+      sendrep (rpfd, MSG_OUT, "silent               %d\n", wqp->silent);
+      sendrep (rpfd, MSG_OUT, "use_subreqid         %d\n", wqp->use_subreqid);
+      sendrep (rpfd, MSG_OUT, "save_nbsubreqid      %d\n", wqp->save_nbsubreqid);
+      if (wqp->save_subreqid != NULL) {
+        for (i = 0, wfp = wqp->wf; i < wqp->save_nbsubreqid; i++, wfp++) {
+          sendrep (rpfd, MSG_OUT, "\tsave_subreqid[%d] = %d\n", i, wqp->save_subreqid[i]);
+        }
+      }
+      sendrep (rpfd, MSG_OUT, "last_rwcounterfs_vs_R %d\n", wqp->last_rwcounterfs_vs_R);
+      for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
+        for (stcp = stcs; stcp < stce; stcp++) {
+          if (wfp->subreqid == stcp->reqid) {
+            char tmpbuf1[21];
+            char tmpbuf2[22];
+            switch (stcp->t_or_d) {
+            case 't':
+              sendrep(rpfd, MSG_OUT,
+                      "\tWaiting File No %3d\n"
+                      "\t\tVID.FSEQ=%s.%s\n"
+                      "\t\tsubreqid=%d\n"
+                      "\t\twaiting_on_req=%d\n"
+                      "\t\tupath=%s\n"
+                      "\t\tsize_to_recall=%s\n"
+                      "\t\tnb_segments=%d\n"
+                      "\t\tsize_yet_recalled=%s\n",
+                      i,
+                      stcp->u1.t.vid[0],
+                      stcp->u1.t.fseq,
+                      wfp->subreqid,
+                      wfp->waiting_on_req,
+                      wfp->upath,
+                      u64tostr(wfp->size_to_recall, tmpbuf1, 0),
+                      wfp->nb_segments,
+                      u64tostr(wfp->size_to_recall, tmpbuf2, 0)
+                      );
+              break;
+            case 'd':
+            case 'a':
+              sendrep(rpfd, MSG_OUT,
+                      "\tWaiting File No %3d\n"
+                      "\t\tu1.d.xfile=%s\n"
+                      "\t\tsubreqid=%d\n"
+                      "\t\twaiting_on_req=%d\n"
+                      "\t\tupath=%s\n"
+                      "\t\tsize_to_recall=%s\n"
+                      "\t\tnb_segments=%d\n"
+                      "\t\tsize_yet_recalled=%s\n",
+                      i,
+                      stcp->u1.d.xfile,
+                      wfp->subreqid,
+                      wfp->waiting_on_req,
+                      wfp->upath,
+                      u64tostr(wfp->size_to_recall, tmpbuf1, 0),
+                      wfp->nb_segments,
+                      u64tostr(wfp->size_to_recall, tmpbuf2, 0)
+                      );
+              break;
+            case 'm':
+              sendrep(rpfd, MSG_OUT,
+                      "\tWaiting File No %3d\n"
+                      "\t\tu1.m.xfile=%s\n"
+                      "\t\tsubreqid=%d\n"
+                      "\t\twaiting_on_req=%d\n"
+                      "\t\tupath=%s\n"
+                      "\t\tsize_to_recall=%s\n"
+                      "\t\tnb_segments=%d\n"
+                      "\t\tsize_yet_recalled=%s\n",
+                      i,
+                      stcp->u1.m.xfile,
+                      wfp->subreqid,
+                      wfp->waiting_on_req,
+                      wfp->upath,
+                      u64tostr(wfp->size_to_recall, tmpbuf1, 0),
+                      wfp->nb_segments,
+                      u64tostr(wfp->size_to_recall, tmpbuf2, 0)
+                      );
+              break;
+            case 'h':
+              sendrep(rpfd, MSG_OUT,
+                      "\tWaiting File No %3d\n"
+                      "\t\tu1.h.xfile=%s\n"
+                      "\t\tsubreqid=%d\n"
+                      "\t\twaiting_on_req=%d\n"
+                      "\t\tupath=%s\n"
+                      "\t\tsize_to_recall=%s\n"
+                      "\t\tnb_segments=%d\n"
+                      "\t\tsize_yet_recalled=%s\n",
+                      i,
+                      stcp->u1.h.xfile,
+                      wfp->subreqid,
+                      wfp->waiting_on_req,
+                      wfp->upath,
+                      u64tostr(wfp->size_to_recall, tmpbuf1, 0),
+                      wfp->nb_segments,
+                      u64tostr(wfp->size_to_recall, tmpbuf2, 0)
+                      );
+              break;
+            default:
+              sendrep(rpfd, MSG_OUT,
+                      "\tWaiting File No %3d\n"
+                      "\t\t<unknown_type>\n"
+                      "\t\tsubreqid=%d\n"
+                      "\t\twaiting_on_req=%d\n"
+                      "\t\tupath=%s\n"
+                      "\t\tsize_to_recall=%s\n"
+                      "\t\tnb_segments=%d\n"
+                      "\t\tsize_yet_recalled=%s\n",
+                      i,
+                      wfp->subreqid,
+                      wfp->waiting_on_req,
+                      wfp->upath,
+                      u64tostr(wfp->size_to_recall, tmpbuf1, 0),
+                      wfp->nb_segments,
+                      u64tostr(wfp->size_to_recall, tmpbuf2, 0)
+                      );
+              break;
+            }
+            break;
+          }
+        }
+      }
+    }
+  }
 }
 
 int
-selectfs(poolname, size, path)
+selectfs(poolname, size, path, status)
      char *poolname;
      int *size;
      char *path;
+     int status;
 {
   struct pool_element *elemp;
   int found = 0;
@@ -984,23 +1204,47 @@ selectfs(poolname, size, path)
   char tmpbuf0[21];
   char tmpbuf1[21];
   char tmpbuf2[21];
+  struct pool_element *this_element;
+  struct stgcat_entry stcx;
+  struct stgcat_entry *stcp;
+
+  stcx.status = status;
+  stcp = &stcx;
 
   for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
     if (strcmp (poolname, pool_p->name) == 0) break;
   if (*size == 0) *size = pool_p->defsize;
   reqsize = (u_signed64) ((u_signed64) *size * (u_signed64) ONE_MB);	/* size in bytes */
+
   i = pool_p->next_pool_elem;
   do {
     elemp = pool_p->elemp + i;
     if (elemp->free >= reqsize) {
       found = 1;
       break;
+    } else if (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp)) {
+      /* We do not dare to do a simple turnaround when allocating space. */
+      /* It can happens that the qsort() was ALREADY called just before but */
+      /* the best fs selected does not have enough space neverthless */
+      /* This sounds a bit redundant but until I find a better solution I do again */
+      /* a qsort() here, excluding the fs'es that do not have enough space! */
+      if ((this_element = betterfs_vs_pool(poolname,WRITE_MODE,reqsize,&i)) == NULL) {
+        /* Oups... Tant-pis, return what will provocate the ENOENT */
+        break;
+      } else {
+        elemp = this_element;
+        found = 1;
+        break;
+      }
     }
     i++;
     if (i >= pool_p->nbelem) i = 0;
   } while (i != pool_p->next_pool_elem);
+
+  /* We can already reply now if we have found NO candidate ! */
   if (!found)
     return (-1);
+
   pool_p->next_pool_elem = i + 1;
   if (pool_p->next_pool_elem >= pool_p->nbelem) pool_p->next_pool_elem = 0;
   pool_p->free -= reqsize;
@@ -1030,6 +1274,125 @@ selectfs(poolname, size, path)
   stglogit ("selectfs", "%s reqsize=%s, elemp->free=%s, pool_p->free=%s\n",
             path, u64tostr(reqsize, tmpbuf0, 0), u64tostr(elemp->free, tmpbuf1, 0), u64tostr(pool_p->free, tmpbuf2, 0));
   return (1);
+}
+
+void
+rwcountersfs(poolname, ipath, status, req_type)
+     char *poolname;
+     char *ipath;
+     int status;
+     int req_type;
+{
+  struct pool_element *elemp;
+  int i, j;
+  char *p;
+  char path[MAXPATH];
+  struct pool *pool_p;
+  char server[CA_MAXHOSTNAMELEN + 1];
+  int read_incr = 0;
+  int write_incr = 0;
+
+  if ((poolname == NULL) || (*poolname == '\0') || (ipath == NULL) || (*ipath == '\0')) {
+    return;
+  }
+
+  /* Not supported on pool other but defpoolname_out */
+  if (ispool_out(poolname) != 0) {
+    return;
+  }
+
+  switch (req_type) {
+  case STAGEOUT:
+  case STAGEALLOC:
+    write_incr = 1;
+    break;
+  case STAGEWRT:
+  case STAGEPUT:
+    read_incr = 1;
+    break;
+  case STAGEUPDC:
+    if (((status & 0xF) == STAGEOUT) ||
+        ((status & 0xF) == STAGEALLOC)) {
+      write_incr = -1;
+    } else if (((status & 0xF) == STAGEWRT) ||
+               ((status & 0xf) == STAGEPUT)) {
+      read_incr = -1;
+    } else if (((status & 0xF) == STAGEIN)) {
+      /* Not supported for the moment */
+      /* write_incr = -1; */
+    } else {
+      stglogit ("rwcountersfs", "### Warning, called in STAGEUPDC mode for an unsupported stcp->status = 0x%lx\n", (unsigned long) status);
+      return;      
+    }
+    break;
+  default:
+    /*
+    stglogit ("rwcountersfs", "### Warning, called in unsupported mode %d (%s)\n", req_type,
+              req_type == STAGEIN ? "STAGEIN" :
+              (req_type == STAGEQRY ? "STAGEQRY" :
+               (req_type == STAGECLR ? "STAGECLR" :
+                (req_type == STAGEKILL ? "STAGEKILL" :
+                 (req_type == STAGEINIT ? "STAGEINIT" :
+                  (req_type == STAGECAT ? "STAGECAT" :
+                   (req_type == STAGEGET ? "STAGEGET" :
+                    (req_type == STAGEMIGPOOL ? "STAGEMIGPOOL" :
+                     (req_type == STAGEFILCHG ? "STAGEFILCHG" :
+                      (req_type == STAGESHUTDOWN ? "STAGESHUTDOWN" : "<unknown>"
+                       )
+                      )
+                     )
+                    )
+                   )
+                  )
+                 )
+                )
+               )
+              );
+    */
+    return;      
+  }
+  if ((p = strchr (ipath, ':')) != NULL) {
+    strncpy (server, ipath, p - ipath);
+    *(server + (p - ipath)) = '\0';
+  }
+  for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+    if (strcmp (poolname, pool_p->name) == 0) break;
+  if (i == nbpool) return;	/* old entry; pool does not exist */
+  for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++)
+    if (p) {
+      if (strcmp (server, elemp->server) ||
+          strncmp (p + 1, elemp->dirpath, strlen (elemp->dirpath)) ||
+          *(p + 1 + strlen (elemp->dirpath)) != '/') continue;
+      sprintf (path, "%s:%s", elemp->server, elemp->dirpath);
+      break;
+    } else {
+      if (strncmp (ipath, elemp->dirpath, strlen (elemp->dirpath)) ||
+          *(ipath + strlen (elemp->dirpath)) != '/') continue;
+      strcpy (path, elemp->dirpath);
+      break;
+    }
+  if (j < pool_p->nbelem) {
+    if ((write_incr < 0) && (elemp->nbwriteaccess <= 0)) {
+      stglogit ("rwcountersfs", "### %s Warning, write_incr=-1 on nbwriteaccess <= 0. All reseted to 0.\n", path);
+      write_incr = 0;
+      elemp->nbwriteaccess = 0;
+    }
+    if ((read_incr < 0) && (elemp->nbreadaccess <= 0)) {
+      stglogit ("rwcountersfs", "### %s Warning, read_incr=-1 on nbreadaccess <= 0. All reseted to 0.\n", path);
+      read_incr = 0;
+      elemp->nbreadaccess = 0;
+    }
+    elemp->nbreadaccess += read_incr;
+    elemp->nbwriteaccess += write_incr;
+    stglogit ("rwcountersfs", "%s read[%s%d]/write[%s%d]=%2d/%2d\n",
+              path,
+              read_incr >= 0 ? "+" : "-",
+              read_incr >= 0 ? read_incr : -read_incr,
+              write_incr >= 0 ? "+" : "-",
+              write_incr >= 0 ? write_incr : -write_incr,
+              elemp->nbreadaccess,
+              elemp->nbwriteaccess);
+  }
 }
 
 void
@@ -1121,13 +1484,14 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
   struct pool *pool_n, *pool_p;
   char sav_defpoolname[CA_MAXPOOLNAMELEN + 1];
   char sav_defpoolname_in[CA_MAXPOOLNAMELEN + 1];
-  char sav_defpoolname_out[CA_MAXPOOLNAMELEN + 1];
+  char sav_defpoolname_out[10 * (CA_MAXPOOLNAMELEN + 1)];
   struct migrator *sav_migrator;
   int sav_nbmigrator;
   int sav_nbpool;
   char **sav_poolc;
   struct pool *sav_pools;
   extern int migr_init;
+  struct stgcat_entry *stcp;
 
   /* save the current configuration */
   strcpy (sav_defpoolname, defpoolname);
@@ -1138,6 +1502,34 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
   sav_nbpool = nbpool;
   sav_poolc = poolc;
   sav_pools = pools;
+
+  if (migr_init == 0) {
+    /* We check if we have to force migr_init value or not */
+    /* If there is any MIGR counter different than zero, so we do */
+    for (j = 0, pool_n = pools; j < nbpool; j++, pool_n++) {
+      if (pool_n->migr != NULL) {
+        int k;
+
+        if ((pool_n->migr->global_predicates.nbfiles_canbemig != 0) ||
+            (pool_n->migr->global_predicates.space_canbemig   != 0) ||
+            (pool_n->migr->global_predicates.nbfiles_beingmig != 0) ||
+            (pool_n->migr->global_predicates.space_beingmig   != 0)) {
+          migr_init = 1;
+          break;
+        }
+        for (k = 0; k < pool_n->migr->nfileclass; k++) {
+          if ((pool_n->migr->fileclass_predicates[k].nbfiles_canbemig != 0) ||
+              (pool_n->migr->fileclass_predicates[k].space_canbemig   != 0) ||
+              (pool_n->migr->fileclass_predicates[k].nbfiles_beingmig != 0) ||
+              (pool_n->migr->fileclass_predicates[k].space_beingmig   != 0)) {
+            migr_init = 1;
+            break;
+          }
+        }
+        if (migr_init != 0) break;
+      }
+    }
+  }
 
   if ((c = getpoolconf (defpoolname,defpoolname_in,defpoolname_out))) {	/* new configuration is incorrect */
     /* restore the previous configuration */
@@ -1170,6 +1562,13 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
     }
     free (sav_pools);
     if (sav_migrator) free (sav_migrator);
+    /* And restore rw counters */
+    for (stcp = stcs; stcp < stce; stcp++) {
+      if (stcp->reqid == 0) break;
+      if (ISSTAGEOUT(stcp) || ISSTAGEOUT(stcp)) {
+        rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
+      }
+    }
   }
   if (migr_init != 0) {
     /* Update the fileclasses */
@@ -1551,17 +1950,16 @@ void checkfile2mig()
     /* (Note that because of explicit migration there can be files in BEING_MIGR without going through this routine) */
 
     /* We check global predicates that are the sum of every fileclasses predicates */
-    if ((pool_p->mig_data_thresh > 0) && ((pool_p->migr->global_predicates.space_canbemig - pool_p->migr->global_predicates.space_beingmig) < pool_p->mig_data_thresh))
-      continue;
-    if ((pool_p->mig_start_thresh > 0) && ((pool_p->free * 100) > (pool_p->capacity * pool_p->mig_start_thresh)))
-      continue;
-    {
+    if (((pool_p->mig_data_thresh > 0) && ((pool_p->migr->global_predicates.space_canbemig - pool_p->migr->global_predicates.space_beingmig) >= pool_p->mig_data_thresh)) ||
+        ((pool_p->mig_start_thresh > 0) && ((pool_p->free * 100) <= (pool_p->capacity * pool_p->mig_start_thresh)))) {
+      global_or = 1;
+    }
+    if (global_or != 0) {
       char tmpbuf1[21];
       char tmpbuf2[21];
       char tmpbuf3[21];
       char tmpbuf4[21];
 
-      global_or = 1;
       stglogit("checkfile2mig", "STG98 - Migrator %s@%s - Global Predicate returns true:\n",
                pool_p->migr->name,
                pool_p->name);
@@ -1588,17 +1986,16 @@ void checkfile2mig()
       for (j = 0; j < pool_p->migr->nfileclass; j++) {
         if ((pool_p->migr->fileclass_predicates[j].nbfiles_canbemig - pool_p->migr->fileclass_predicates[j].nbfiles_beingmig) <= 0)	/* No point anyway */
           continue;
-        if ((pool_p->mig_data_thresh > 0) && ((pool_p->migr->fileclass_predicates[j].space_canbemig - pool_p->migr->fileclass_predicates[j].space_beingmig) < pool_p->mig_data_thresh))
-          continue;
-        if ((pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval > 0) && ((time(NULL) - pool_p->migr->migreqtime_last_end) < pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval))
-          continue;
-        {
+        if (((pool_p->mig_data_thresh > 0) && ((pool_p->migr->fileclass_predicates[j].space_canbemig - pool_p->migr->fileclass_predicates[j].space_beingmig) >= pool_p->mig_data_thresh)) ||
+            ((pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval > 0) && ((time(NULL) - pool_p->migr->migreqtime_last_end) >= pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval))) {
+          global_or = 1;
+        }
+        if (global_or != 0) {
           char tmpbuf1[21];
           char tmpbuf2[21];
           char tmpbuf3[21];
           char tmpbuf4[21];
 
-          global_or = 1;
           stglogit("checkfile2mig", "STG98 - Migrator %s@%s - Fileclass %s@%s (classid %d) - %d cop%s - Predicates returns true:\n",
                    pool_p->migr->name,
                    pool_p->name,
@@ -1618,9 +2015,10 @@ void checkfile2mig()
                    pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval > 0 ? "ON" : "OFF",
                    (int) (time(NULL) - pool_p->migr->migreqtime_last_end),
                    pool_p->migr->fileclass[j]->Cnsfileclass.migr_time_interval);
+          break;
         }
       }
-    }        
+    }
     if (global_or != 0) {
       migrate_files(pool_p);
       return;
@@ -1639,6 +2037,7 @@ int migrate_files(pool_p)
   strcpy (func, "migrate_files");
   pool_p->migr->mig_pid = fork ();
   pid = pool_p->migr->mig_pid;
+
   if (pid < 0) {
     stglogit (func, STG02, "", "fork", sys_errlist[errno]);
     pool_p->migr->mig_pid = 0;
@@ -1744,11 +2143,11 @@ int migpoolfiles(pool_p)
   int ipoolname;
   int term_status;
   pid_t child_pid;
-  int i, j, k, l, m, nfiles_per_tppool;
+  int i, j, k, l, nfiles_per_tppool;
   struct pool *pool_n;
   int found_not_scanned = -1;
   int fork_pid;
-  extern struct passwd start_passwd;         /* Generic uid/gid stage:st */
+  extern struct passwd start_passwd;         /* Generic uid/gid at startup (admin) */
   extern struct passwd stage_passwd;             /* Generic uid/gid stage:st */
   char *minsize_per_stream;
   u_signed64 minsize;
@@ -1760,6 +2159,8 @@ int migpoolfiles(pool_p)
   u_signed64 ideal_minsize;
   int nideal_minsize;
   int itppool, found_tppool;
+  int npoolname_out;
+  int original_nb_of_stream;
 
   /* We get the minimum size to be transfered */
   minsize = defminsize;
@@ -1935,6 +2336,7 @@ int migpoolfiles(pool_p)
       tppool_vs_stcp[ntppool_vs_stcp - 1].size = 0;       /* In BYTES - not MBytes */
       tppool_vs_stcp[ntppool_vs_stcp - 1].euid = 0;
       tppool_vs_stcp[ntppool_vs_stcp - 1].egid = 0;
+      tppool_vs_stcp[ntppool_vs_stcp - 1].nb_substreams = 0;
       strcpy(tppool_vs_stcp[ntppool_vs_stcp - 1].tppool,scc_found->stcp->u1.h.tppool);
     }
 
@@ -1958,7 +2360,7 @@ int migpoolfiles(pool_p)
       }
     } else {
       if (tppool_vs_stcp[found_tppool].euid == 0) {   /* No uid filter */
-        tppool_vs_stcp[found_tppool].euid = scc_found->stcp->uid; /* Put current gid */
+        tppool_vs_stcp[found_tppool].euid = scc_found->stcp->uid; /* Put current uid */
       }
     }
     if (verif_euid_egid(tppool_vs_stcp[found_tppool].euid,tppool_vs_stcp[found_tppool].egid, NULL, NULL) != 0) {
@@ -1974,7 +2376,7 @@ int migpoolfiles(pool_p)
     /* We search all other entries sharing the same tape pool */
     j = -1;
     nfiles_per_tppool = 0;
-    /* We reset internal flag to not do double count */
+    /* We reset internal flags to not do double count */
     for (i = 0; i < pool_p->migr->nfileclass; i++) {
       pool_p->migr->fileclass[i]->flag = 0;
     }
@@ -2019,6 +2421,8 @@ int migpoolfiles(pool_p)
         (stcp+j)->keep = 0;
         /* We also makes sure that the -s parameter is disabled as well */
         (stcp+j)->size = 0;
+        /* We remove the poolname argument that we will sent via stagewrt_hsm */
+        (stcp+j)->poolname[0] = '\0';
         /* Please note that the (stcp+j)->ipath will be our user path (stpp) */
         strcpy((stpp+j)->upath, (stcp+j)->ipath);
         scc->scanned = 1;
@@ -2054,202 +2458,263 @@ int migpoolfiles(pool_p)
   /* At first found we do not want to remember about previous tape pool because, per definition, */
   /* there is exactly one stream per tape pool */
   remember_tppool[0] = '\0';
+  {
+    /* We count the number of stageout pools */
+    char savdefpoolname_out[10*(CA_MAXPOOLNAMELEN + 1)];
+    char *p;
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+    char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
 
-  /* We want to know if we can expand some of the streams to another one, depending on fileclasses policies */
-  for (i = 0; i < pool_p->migr->nfileclass; i++) {
-    u_signed64 virtual_new_size;
-    u_signed64 virtual_old_size;
-    int can_create_new_stream;
-    int nstcp_to_move;
-
-
-  retry_for_this_fileclass:
-    can_create_new_stream = -1;
-    nstcp_to_move = 0;
-    if (pool_p->migr->fileclass[i]->streams <= 0) continue;
-    if (pool_p->migr->fileclass[i]->streams < pool_p->migr->fileclass[i]->Cnsfileclass.maxdrives) {
-      /* We are using less streams than what this fileclass allows us to do */
-      /* We check within this fileclass what is the stream that is migrating the most data and if it is */
-      /* possible, then relevant, to grab some entries from any stcp from the same fileclass using this tape pool */
-
-      /* In order to reduce as much as possible streams of different sizes, we always chose the */
-      /* ones with the highest size first. */
-      /* qsort((void *) tppool_vs_stcp, ntppool_vs_stcp, sizeof(struct files_per_stream), &tppool_vs_stcp_cmp_vs_size); */
-
-      /* We calculate the ideal mean of all those streams */
-      ideal_minsize = 0;
-      nideal_minsize = 0;
-      for (j = 0; j < ntppool_vs_stcp; j++) {
-        if (tppool_vs_stcp[j].size > minsize) {
-          ideal_minsize += (tppool_vs_stcp[j].size - minsize);
-          nideal_minsize++;
-        }
+    strcpy(savdefpoolname_out, defpoolname_out);
+    npoolname_out = 0;
+    if ((p = strtok(defpoolname_out, ":")) != NULL) {
+      while (1) {
+        npoolname_out++;
+        if ((p = strtok(NULL, ":")) == NULL) break;
       }
-      ideal_minsize /= ++nideal_minsize;
+    }
+    strcpy(defpoolname_out, savdefpoolname_out);
+  }
 
-      for (j = 0; j < ntppool_vs_stcp; j++) {
-        if (tppool_vs_stcp[j].size > ideal_minsize) {
-          virtual_new_size = 0;
-          virtual_old_size = tppool_vs_stcp[j].size;
+  if (npoolname_out <= 0) {
+    stglogit(func, "### Warning - npoolname_out <= 0 - Forced to be 1\n");
+    npoolname_out = 1;
+  }
 
-          /* This stream has, from size point of view, largely enough, but is it possible to shift it by few entries ? */
-          if (tppool_vs_stcp[j].nstcp <= 1) continue;
-          /* There is for sure more than one entry in this stream - we can try the loop below, in reverse order */
-          for (k = tppool_vs_stcp[j].nstcp - 1; k >= 0; k--) {
-            /* If we are trying to expand more than once a given tape pool we check that this one matches */
-            /* the old one */
-            if ((remember_tppool[0] != '\0') && (strcmp(tppool_vs_stcp[j].tppool,remember_tppool) != 0)) break;
+  /* For all tape pools we determine up to how many streams it can be expanded */
+  original_nb_of_stream = ntppool_vs_stcp;
+  for (j = 0; j < original_nb_of_stream; j++) {
+    int max_nfree_stream;
+    int sav_ntppool_vs_stcp;
+    int nstcp;
+    int found_nideal_minsize;
+    int created_new_streams;
 
-            if (i != upd_fileclass(pool_p,&(tppool_vs_stcp[j].stcp[k]))) continue;
-            /* This stcp shares the same fileclass as i's */
-            if ((virtual_old_size -= tppool_vs_stcp[j].stcp[k].actual_size) <= 0) {
-              /* We have scanned this whole stream ! */
-              break;
-            }
-            virtual_new_size += tppool_vs_stcp[j].stcp[k].actual_size;
-            nstcp_to_move++;
-            if (virtual_new_size >= minsize) {
-              /* There is right now, or already, material to have a new stream */
-              /* We continue the loop up to when we have splitted the original stream almost equally */
-              if ((virtual_old_size < ideal_minsize) || (virtual_old_size <= 0)) {
-                virtual_old_size += tppool_vs_stcp[j].stcp[k].actual_size;
-                if ((virtual_new_size -= tppool_vs_stcp[j].stcp[k].actual_size) > 0) {
-                  can_create_new_stream = k;
-                  nstcp_to_move--;
-                }
-                break;
-              }
-              /* Streams are meant to be approximatively of the same size */
-              if (virtual_new_size > virtual_old_size) {
-                virtual_old_size += tppool_vs_stcp[j].stcp[k].actual_size;
-                if ((virtual_new_size -= tppool_vs_stcp[j].stcp[k].actual_size) > 0) {
-                  can_create_new_stream = k;
-                  nstcp_to_move--;
-                }
-                break;
-              }
+    /* This stream has already been subject to expansion */
+    if (tppool_vs_stcp[j].nb_substreams > 0) continue;
+
+    /* We loop on all the fileclasses to determine which ones are concerned by this stream and up to */
+    /* how many streams it allows it to be expanded */
+    ideal_minsize = 0;
+    nideal_minsize = 0;
+    nstcp = 0;
+    max_nfree_stream = 0;
+    for (i = 0; i < pool_p->migr->nfileclass; i++) {
+      int nfree_stream;
+      int has_fileclass_i;
+      
+      if (pool_p->migr->fileclass[i]->streams <= 0) continue; /* This fileclass is not concerned */
+
+      /* We start with a number of virtual stream equal to the real number of streams */
+      pool_p->migr->fileclass[i]->nfree_stream = 0;
+
+      /* We adapt the number of streams available v.s. number of stageout pools and current number of streams */
+      if ((nfree_stream = (pool_p->migr->fileclass[i]->Cnsfileclass.maxdrives - pool_p->migr->fileclass[i]->streams)) <= 0) {
+        nfree_stream = 1;
+      } else {
+        nfree_stream++;             /* Because we will expand one of them - we count it also */
+        if ((nfree_stream /= npoolname_out) <= 0) {
+          nfree_stream = 1;
+        } else {
+          if ((nfree_stream * npoolname_out) != (pool_p->migr->fileclass[i]->Cnsfileclass.maxdrives - pool_p->migr->fileclass[i]->streams + 1)) {
+            if ((pool_p->migr->fileclass[i]->streams + nfree_stream) < pool_p->migr->fileclass[i]->Cnsfileclass.maxdrives) {
+              nfree_stream++;
             }
           }
         }
       }
-      if (can_create_new_stream >= 0) {
-        struct files_per_stream *dummy;
+
+      if (nfree_stream <= 1) continue;       /* Cannot create any stream ? */
+
+      /* We check if stream No j references the class No i */
+      has_fileclass_i = 0;
+      for (k = 0; k < tppool_vs_stcp[j].nstcp; k++) {
+        if ((strcmp(tppool_vs_stcp[j].stcp[k].u1.h.server,pool_p->migr->fileclass[i]->server) == 0) &&
+            (tppool_vs_stcp[j].stcp[k].u1.h.fileclass == pool_p->migr->fileclass[i]->Cnsfileclass.classid)) {
+          has_fileclass_i = 1;
+          break;
+        }
+      }
+      if (has_fileclass_i == 0) continue;        /* No reference to fileclass No i in this stream */
+
+      /* We keep in mind the grand total size of this stream and the number of entries in it */
+      if (tppool_vs_stcp[j].size > minsize) {
+        ideal_minsize += tppool_vs_stcp[j].size;
+      } else {
+        ideal_minsize += minsize;
+      }
+      nstcp += tppool_vs_stcp[j].nstcp;
+
+      if (nfree_stream > max_nfree_stream) max_nfree_stream = nfree_stream;
+
+      pool_p->migr->fileclass[i]->nfree_stream = nfree_stream;
+
+    }
+
+    if (ideal_minsize <= 0) continue;        /* No expansion for stream No j */
+
+    /* We determine how many streams can be done by estimating the ideal_minsize */
+    found_nideal_minsize = 0;
+    for (nideal_minsize = 1; nideal_minsize <= max_nfree_stream; nideal_minsize++) {
+      if ((ideal_minsize / nideal_minsize) < minsize) {
+        found_nideal_minsize = --nideal_minsize;
+        break;
+      }
+    }
+
+    if (nideal_minsize == (max_nfree_stream + 1)) {
+      /* We've done the whole for() loop upper */
+      --nideal_minsize;
+    }
+
+    if (nideal_minsize <= 1) continue; /* No point to create another stream */
+
+    if ((ideal_minsize /= nideal_minsize) < minsize) {
+      ideal_minsize = minsize;
+    }
+
+    stglogit(func, STG33, "ideal minsize per stream for tape pool is %s, splitted in %d streams",
+             u64tostr((u_signed64) minsize, tmpbuf, 0),
+             tppool_vs_stcp[j].tppool,
+             nideal_minsize
+             );
+
+    /* We know that we can create up to nideal_minsize streams        */
+    /* We create room for them, assuming that memory is not a pb here */
+    /* Please note that, by construction here, we have already */
+    /* ntppool_vs_stcp streams, the nideal_minsize ones that we are */
+    /* going to create are going to the end */
+    created_new_streams = 1;
+    sav_ntppool_vs_stcp = ntppool_vs_stcp;
+    {
+      struct files_per_stream *dummy;
         
-        if ((dummy = (struct files_per_stream *) realloc(tppool_vs_stcp,(ntppool_vs_stcp + 1) * sizeof(struct files_per_stream))) == NULL) {
-          stglogit(func, "### realloc error (%s)\n",strerror(errno));
-          /* But this is NOT fatal in the sense that we already have working streams - we just log this */
-          /* and we do as if we found no need to create another stream... */
-          can_create_new_stream = -1;
-          remember_tppool[0] = '\0';
-        } else {
-          tppool_vs_stcp = dummy;
-          ntppool_vs_stcp++;
-          tppool_vs_stcp[ntppool_vs_stcp - 1].stcp = NULL;
-          tppool_vs_stcp[ntppool_vs_stcp - 1].stpp = NULL;
-          tppool_vs_stcp[ntppool_vs_stcp - 1].nstcp = 0;
-          tppool_vs_stcp[ntppool_vs_stcp - 1].size = 0;
-          tppool_vs_stcp[ntppool_vs_stcp - 1].euid = 0;
-          tppool_vs_stcp[ntppool_vs_stcp - 1].egid = 0;
-          stcp = NULL;
-          stpp = NULL;
+      if ((dummy = (struct files_per_stream *) realloc(tppool_vs_stcp,(ntppool_vs_stcp + nideal_minsize) * sizeof(struct files_per_stream))) == NULL) {
+        stglogit(func, "### realloc error (%s)\n",strerror(errno));
+        /* But this is NOT fatal in the sense that we already have working streams - we just log this */
+        /* and we do as if we found no need to create another stream... */
+        created_new_streams = 0;
+      } else {
+        tppool_vs_stcp = dummy;
+        for (k = 0; k < nideal_minsize; k++) {
+          tppool_vs_stcp[sav_ntppool_vs_stcp + k].stcp = NULL;
+          tppool_vs_stcp[sav_ntppool_vs_stcp + k].stpp = NULL;
+          tppool_vs_stcp[sav_ntppool_vs_stcp + k].tppool[0] = '\0';
+          tppool_vs_stcp[sav_ntppool_vs_stcp + k].nstcp = 0;
+          tppool_vs_stcp[sav_ntppool_vs_stcp + k].size = 0;
+          tppool_vs_stcp[sav_ntppool_vs_stcp + k].euid = tppool_vs_stcp[j].euid;
+          tppool_vs_stcp[sav_ntppool_vs_stcp + k].egid = tppool_vs_stcp[j].egid;
           /* We know try to create enough room for our new stream */
-          if (((stcp = tppool_vs_stcp[ntppool_vs_stcp - 1].stcp = (struct stgcat_entry *) calloc(nstcp_to_move,sizeof(struct stgcat_entry))) == NULL) ||
-              ((stpp = tppool_vs_stcp[ntppool_vs_stcp - 1].stpp = (struct stgpath_entry *) calloc(nstcp_to_move,sizeof(struct stgpath_entry))) == NULL)) {
+          if (((stcp = tppool_vs_stcp[sav_ntppool_vs_stcp + k].stcp = (struct stgcat_entry *) calloc(nstcp,sizeof(struct stgcat_entry))) == NULL) ||
+              ((stpp = tppool_vs_stcp[sav_ntppool_vs_stcp + k].stpp = (struct stgpath_entry *) calloc(nstcp,sizeof(struct stgpath_entry))) == NULL)) {
             stglogit(func, "### calloc error (%s)\n",strerror(errno));
             /* But this is NOT fatal in the sense that we already have working streams - we just log this */
             if (stcp != NULL) free(stcp);
             if (stpp != NULL) free(stpp);
-            ntppool_vs_stcp--;
-            /* We also do as if we found no need to create another stream... */
-            can_create_new_stream = -1;
-            remember_tppool[0] = '\0';
+            /* We left here nideal_minsize streams that will not be used - tant pis */
+            created_new_streams = 0;
+            break;
           } else {
-            int nstcp_being_moved = 0;
-
-            /* We move some entries to this new stream - We know that "can_create_new_stream" contains */
-            /* the index where we stopped the scanning */
-            /* We also make sure that we don't take into account the new created stream in the loop below */
-
-            /* We also know in advance that this new streams will be of size virtual_new_size and */
-            /* will contain nstcp_to_move entries */
-
-            /* We copy in advance the uid/gid that we yet found for the previous tape pool that we are going */
-            /* to duplicate */
-            
-            for (j = 0; j < (ntppool_vs_stcp - 1); j++) {
-              if (tppool_vs_stcp[j].size > ideal_minsize) {
-                int save_nstcp = tppool_vs_stcp[j].nstcp;
-
-                if (tppool_vs_stcp[j].nstcp <= 1) continue;
-                /* This stream have more than one entry - let's scan it, still in reverse order */
-                /* (for consistency, we have to use the algorithm as done upper) */
-                for (k = save_nstcp - 1; k >= can_create_new_stream; k--) {
-                  /* If we are trying to expand more than once a given tape pool we check that this one matches */
-                  /* the old one */
-                  if ((remember_tppool[0] != '\0') && (strcmp(tppool_vs_stcp[j].stcp[k].u1.h.tppool,remember_tppool) != 0)) break;
-                  /* For the moment, this algorithm can create new stream only for stcp's of the same fileclass */
-                  if (i != upd_fileclass(pool_p,&(tppool_vs_stcp[j].stcp[k]))) continue;
-                  /* We can move this stcp from tppool No j to tppool No (ntppool_vs_stcp - 1) */
-
-                  /* We check the number of stcp that we move */
-                  if (++nstcp_being_moved > nstcp_to_move) {
-                    /* We have reached the quota of nstcp_to_move entries... */
-                    break;
-                  }
-
-                  /* First we move the stcp */
-                  *stcp++ = tppool_vs_stcp[j].stcp[k];
-                  /* Then we move the stcpp */
-                  strcpy(stpp->upath,tppool_vs_stcp[j].stcp[k].ipath);
-                  stpp++;
-                  /* We increment new stream number of entries */
-                  tppool_vs_stcp[ntppool_vs_stcp - 1].nstcp++;
-                  /* We increment new stream total size to migrate */
-                  tppool_vs_stcp[ntppool_vs_stcp - 1].size += tppool_vs_stcp[j].stcp[k].actual_size;
-                  /* We decrement old stream total size to migrate */
-                  tppool_vs_stcp[j].size -= tppool_vs_stcp[j].stcp[k].actual_size;
-
-                  if (tppool_vs_stcp[ntppool_vs_stcp - 1].euid == 0) {
-                    tppool_vs_stcp[ntppool_vs_stcp - 1].euid = tppool_vs_stcp[j].euid;
-                  }
-                  if (tppool_vs_stcp[ntppool_vs_stcp - 1].egid == 0) {
-                    tppool_vs_stcp[ntppool_vs_stcp - 1].egid = tppool_vs_stcp[j].egid;
-                  }
-
-                  /* We have moved entry No k from tape pool No j - we shift all remaining entries */
-                  m = 0;
-                  for (l = k + 1; l < tppool_vs_stcp[j].nstcp - 1; l++) {
-                    tppool_vs_stcp[j].stcp[k+m] = tppool_vs_stcp[j].stcp[l];
-                    strcpy(tppool_vs_stcp[j].stpp[k+m].upath, tppool_vs_stcp[j].stpp[l].upath);
-                    m++;
-                  }
-
-                  /* We decrement old stream number of entries */
-                  tppool_vs_stcp[j].nstcp--;
-                }
-              }
-            }
-            stglogit(func, STG135,
-                     pool_p->migr->fileclass[i]->Cnsfileclass.name,
-                     pool_p->migr->fileclass[i]->server,
-                     pool_p->migr->fileclass[i]->Cnsfileclass.classid,
-                     pool_p->migr->fileclass[i]->Cnsfileclass.maxdrives,
-                     u64tostr(tppool_vs_stcp[ntppool_vs_stcp - 1].size, tmpbuf, 0),
-                     tppool_vs_stcp[ntppool_vs_stcp - 1].stcp[0].u1.h.tppool);
-            strcpy(remember_tppool,tppool_vs_stcp[ntppool_vs_stcp - 1].stcp[0].u1.h.tppool);
-            pool_p->migr->fileclass[i]->streams++;
+            ntppool_vs_stcp++;
           }
         }
       }
     }
-    if (can_create_new_stream >= 0) {
-      /* We created a new stream because of this fileclass - can we create again another one ? */
-      goto retry_for_this_fileclass;
+
+    if (created_new_streams == 0) continue;       /* Could not create the streams ! */
+
+    /* We fill the streams with respect to fileclass */
+    /* We have a sort of conceptual problem here when multiple fileclasses are present in stream No j */
+    /* but when they said that they do not have equal number of free streams */
+
+    /* We reset internal indexes */
+    for (i = 0; i < nbfileclasses; i++) {
+      /* Will range from 0 to (pool_p->migr->fileclass[i]->nfree_stream - 1) */
+      pool_p->migr->fileclass[i]->ifree_stream = 0;
+    }
+    /* l variable will loop in range [sav_ntppool_vs_stcp,ntppool_vs_stcp] */
+    for (k = 0; k < tppool_vs_stcp[j].nstcp; k++) {
+      struct stgcat_entry *stcp;
+      struct stgpath_entry *stpp;
+      int ifileclass;
+
+      if ((ifileclass = upd_fileclass(pool_p,&(tppool_vs_stcp[j].stcp[k]))) < 0) {
+        stglogit(func, "### cannot determine fileclass of %s\n", tppool_vs_stcp[j].stcp[k].u1.h.xfile);
+        /* Should never happen - by convention we put this stcp in first stream */
+        l = 0;
+      } else {
+        if ((l = pool_p->migr->fileclass[ifileclass]->ifree_stream++) > (pool_p->migr->fileclass[ifileclass]->nfree_stream - 1)) {
+          l = 0;
+          pool_p->migr->fileclass[ifileclass]->ifree_stream = 1; /* So that next round l will be set to 1 */
+        }
+      }
+
+      if (tppool_vs_stcp[sav_ntppool_vs_stcp + l].size > ideal_minsize) {
+        int sav_l = l;
+        /* We look if there is another stream that have enough room for us */
+
+        while (1) {
+          if ((ifileclass = upd_fileclass(pool_p,&(tppool_vs_stcp[j].stcp[k]))) < 0) {
+            stglogit(func, "### cannot determine fileclass of %s\n", tppool_vs_stcp[j].stcp[k].u1.h.xfile);
+            /* Should never happen - by convention we put this stcp in first stream */
+            l = 0;
+          } else {
+            if ((l = pool_p->migr->fileclass[ifileclass]->ifree_stream++) > (pool_p->migr->fileclass[ifileclass]->nfree_stream - 1)) {
+              l = 0;
+              pool_p->migr->fileclass[ifileclass]->ifree_stream = 1; /* So that next round l will be set to 1 */
+            }
+          }
+          if (l == sav_l) break;       /* We made a turnaround */
+          if (tppool_vs_stcp[sav_ntppool_vs_stcp + l].size > ideal_minsize) continue; /* Not a good candidate */
+        }
+      }
+
+      /* We copy entry No k of stream No j into entry No tppool_vs_stcp[sav_ntppool_vs_stcp + l].nstcp */
+      /* of pool No l */
+      stcp = tppool_vs_stcp[sav_ntppool_vs_stcp + l].stcp;
+      stcp += tppool_vs_stcp[sav_ntppool_vs_stcp + l].nstcp;
+      stpp = tppool_vs_stcp[sav_ntppool_vs_stcp + l].stpp;
+      stpp += tppool_vs_stcp[sav_ntppool_vs_stcp + l].nstcp;
+      *stcp = tppool_vs_stcp[j].stcp[k];
+      strcpy(stpp->upath,tppool_vs_stcp[j].stpp[k].upath);
+      tppool_vs_stcp[sav_ntppool_vs_stcp + l].size += tppool_vs_stcp[j].stcp[k].actual_size;
+      tppool_vs_stcp[sav_ntppool_vs_stcp + l].nstcp++;
+    }
+
+    /* By definition stream No j have been completely emptied */
+    tppool_vs_stcp[j].size = 0;
+    tppool_vs_stcp[j].nstcp = 0;
+
+    /* We flag it so */
+    tppool_vs_stcp[j].nb_substreams = nideal_minsize;
+
+    /* And we flag also the new streams */
+    for (l = sav_ntppool_vs_stcp; l < (sav_ntppool_vs_stcp + nideal_minsize); l++) {
+      tppool_vs_stcp[l].nb_substreams = nideal_minsize;
+    }
+  }
+
+
+  /* Streams are created - By construction if a stream have nb_substreams > 0 but size == 0, this means */
+  /* that it has been expanded */
+
+  {
+    int iprint = 0;
+
+    for (j = 0; j < ntppool_vs_stcp; j++) {
+      if ((tppool_vs_stcp[j].nb_substreams > 0) && (tppool_vs_stcp[j].size <= 0)) continue;
+      stglogit(func, STG135,
+               ++iprint,
+               tppool_vs_stcp[j].nstcp,
+               u64tostr(tppool_vs_stcp[j].size, tmpbuf, 0),
+               tppool_vs_stcp[j].stcp[0].u1.h.tppool);
     }
   }
 
   /* We fork and execute the stagewrt request(s) */
   for (j = 0; j < ntppool_vs_stcp; j++) {
+    if ((tppool_vs_stcp[j].nb_substreams > 0) && (tppool_vs_stcp[j].size <= 0)) continue;
     if ((fork_pid= fork()) < 0) {
       stglogit(func, "### Cannot fork (%s)\n",strerror(errno));
       free(scs);
@@ -2281,15 +2746,17 @@ int migpoolfiles(pool_p)
                              localhost,                    /* Hostname */
                              NULL,                         /* Pooluser */
                              tppool_vs_stcp[j].nstcp,      /* nstcp_input */
-                             tppool_vs_stcp[j].stcp,       /* records... */
-                             0,                            /* nstcp_output */
-                             NULL,                         /* stcp_output */
+                             tppool_vs_stcp[j].stcp,       /* records */
+                             0,                            /* nstcp_output - none wanted */
+                             NULL,                         /* stcp_output - none wanted */
                              tppool_vs_stcp[j].nstcp,      /* nstpp_input */
                              tppool_vs_stcp[j].stpp        /* stpp_input */
                              )) != 0) {
         stglogit(func, "### stagewrt_hsm request error No %d (%s)\n", serrno, sstrerror(serrno));
         if ((serrno == SECOMERR) || (serrno == SECONNDROP)) {
           /* There was a communication error */
+          stglogit(func, "### retrying in 1 second\n");
+          stage_sleep(1);
           goto stagewrt_hsm_retry;
         }
       }
@@ -2450,6 +2917,10 @@ int upd_fileclass(pool_p,stcp)
       sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_queryclass", sstrerror(serrno));
       return(-1);
     }
+
+    /* @@@@ EXCEPTIONNAL @@@@ */
+    /* Cnsfileclass.migr_time_interval = 0; */
+    /* @@@@ END OF EXCEPTIONNAL @@@@ */
 
     /* We check that this fileclass does not contain values that we cannot sustain */
     if ((sav_nbcopies = Cnsfileclass.nbcopies) < 0) {
@@ -2747,12 +3218,14 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr)
   int found_fileclass;
   uid_t last_fileclass_euid = 0;
   gid_t last_fileclass_egid = 0;
+  extern struct passwd start_passwd;             /* Start uid/gid at startup (admin) */
+  extern struct passwd stage_passwd;             /* Generic uid/gid stage:st */
 
   /* At first call - application have to set them to zero - default is then "stage" uid/gid */
   if (*euid != (uid_t) 0) {
     last_fileclass_euid = *euid;  /* We simulate a virtual previous explicit filter */
   }
-  if (*egid != (uid_t) 0) {
+  if (*egid != (gid_t) 0) {
     last_fileclass_egid = *egid;  /* We simulate a virtual previous explicit filter */
   }
 
@@ -2871,46 +3344,47 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr)
     /* We check the found group id in priority */
     if (last_fileclass_egid != 0) {
       /* There is an explicit filter on group id - current's stcp_check->gid have to match it */
-      if (*egid != stcp_check->gid) {
+      if ((*egid != stcp_check->gid) && (stcp_check->gid != start_passwd.pw_gid)) {
         sendrep(rpfd, MSG_ERR, STG125, stcp_check->user, "gid", stcp_check->gid, "group", *egid, stcp_check->u1.h.xfile);
         return(-1);
       }
       /* We check compatibility of uid */
       if (last_fileclass_euid != 0) {
         /* There is an explicit filter on user id - current's stcp_check->uid have to match it */
-        if (*euid != stcp_check->uid) {
+        if ((*euid != stcp_check->uid) && (stcp_check->uid != start_passwd.pw_uid)) {
           sendrep(rpfd, MSG_ERR, STG125, stcp_check->user, "uid", stcp_check->uid, "user", *euid, stcp_check->u1.h.xfile);
           return(-1);
         } else {
           /* Current's stcp_check's uid is matching ok */
-          *euid = stcp_check->uid;
+          *euid = (stcp_check->uid != start_passwd.pw_uid) ? stcp_check->uid : (last_fileclass_euid != 0 ? last_fileclass_euid : stcp_check->uid);
           /* And it is also matching gid per def in this branch */
-          *egid = stcp_check->gid;
+          *egid = (stcp_check->gid != start_passwd.pw_gid) ? stcp_check->gid : (last_fileclass_egid != 0 ? last_fileclass_egid : stcp_check->gid);
         }
       } else {
         /* Current's stcp_check's uid is matching since there is no filter on this */
-        *euid = stcp_check->uid;
+        *euid = (stcp_check->uid != start_passwd.pw_uid) ? stcp_check->uid : (last_fileclass_euid != 0 ? last_fileclass_euid : stcp_check->uid);
         /* And it is also matching gid per def in this branch */
-        *egid = stcp_check->gid;
+        *egid = (stcp_check->gid != start_passwd.pw_gid) ? stcp_check->gid : (last_fileclass_egid != 0 ? last_fileclass_egid : stcp_check->gid);
       }
     } else {
       /* There is no explicit filter on group id - Is there explicit filter on user id ? */
       if (last_fileclass_euid != 0) {
         /* There is an explicit filter on user id - current's stcp_check->uid have to match it */
-        if (*euid != stcp_check->uid) {
+        if ((*euid != stcp_check->uid) && (stcp_check->uid != start_passwd.pw_uid)) {
           sendrep(rpfd, MSG_ERR, STG125, stcp_check->user, "uid", stcp_check->uid, "user", *euid, stcp_check->u1.h.xfile);
           return(-1);
         } else {
           /* Current's stcp_check's uid is matching ok */
-          *euid = stcp_check->uid;
+          *euid = (stcp_check->uid != start_passwd.pw_uid) ? stcp_check->uid : (last_fileclass_euid != 0 ? last_fileclass_euid : stcp_check->uid);
           /* Current's stcp_check's gid is matching since there is no filter on this */
-          *egid = stcp_check->gid;
+          *egid = (stcp_check->gid != start_passwd.pw_gid) ? stcp_check->gid : (last_fileclass_egid != 0 ? last_fileclass_egid : stcp_check->gid);
         }
       } else {
+        /* There is no filter at all so the default is "stage" account */
         /* Current's stcp_check's uid is matching since there is no filter on this */
-        *euid = stcp_check->uid;
+        *euid = stage_passwd.pw_uid;
         /* Current's stcp_check's gid is matching since there is no filter on this */
-        *egid = stcp_check->gid;
+        *egid = stage_passwd.pw_gid;
       }
     }
   }
@@ -3074,7 +3548,7 @@ void check_retenp_on_disk() {
 	struct stgcat_entry *stcp;
 	char *func = "check_retenp_on_disk";
 	extern struct fileclass *fileclasses;
-	extern struct passwd start_passwd;             /* Start uid/gid stage:st */
+	extern struct passwd start_passwd;             /* Start uid/gid at startup (admin) */
 
 	for (stcp = stcs; stcp < stce; stcp++) {
 		int ifileclass;
@@ -3094,20 +3568,588 @@ void check_retenp_on_disk() {
 	}
 }
 
-int tppool_vs_stcp_cmp_vs_size(p1,p2)
-		 CONST void *p1;
-		 CONST void *p2;
+int ispool_out(poolname)
+     char *poolname;
 {
-  struct files_per_stream *fp1 = (struct files_per_stream *) p1;
-  struct files_per_stream *fp2 = (struct files_per_stream *) p2;
-  
-  /* We sort with reverse order v.s. size */
-  
-  if (fp1->size < fp2->size) {
-    return(1);
-  } else if (fp1->size > fp2->size) {
+  char *p;
+
+  if (poolname[0] == '\0') {
+    /* No point */
     return(-1);
+  }
+
+  /* defpoolname_out could countain more than one entry, all separated with a ':' */
+  /* We search poolname */
+  if ((p = strstr(defpoolname_out, poolname)) == NULL) {
+    return(-1);
+  }
+
+  /* We accept it only if it is: */
+  /* - at the start of defpoolname_out and ends with an ':' or an '\0' */
+  /* - not at the start and is preceded with an ':' and ends with an ':' or an '\0' */
+  if ((p == defpoolname_out) && ((p[strlen(p)] == ':') || (p[strlen(p)] == '\0'))) return(0);
+  if ((p != defpoolname_out) && (*(p - 1) == ':') && ((p[strlen(p)] == ':') || (p[strlen(p)] == '\0'))) return(0);
+
+  /* No... */
+  return(-1);
+}
+
+/* We return with this routine the best stageout pool we could select v.s. migration activity or not */
+/* and v.s. estimated contention */
+/* mode is READ_MODE for reading, WRITE_MODE for writing */
+
+void bestnextpool_out(nextout,mode)
+     char *nextout;
+     int mode;
+{
+  char firstpool_out[CA_MAXPOOLNAMELEN+1];
+  char thispool_out[CA_MAXPOOLNAMELEN+1];
+  struct pool_element *this_element;
+  struct pool_element_ext *best_elements = NULL;
+  struct pool_element_ext *this_best_element;
+  struct pool_element *found_element = NULL;
+  int nbest_elements = 0;
+  int i, j;
+  struct pool *pool_p;
+  struct pool_element *elemp;
+  int qsort_all_poolout = 0;
+  char *func = "bestnextpool_out";
+  char tmpbuf[21];
+
+  /* Do we support qsort v.s. multiples poolout ? */
+  if (getconfent ("STG", "QSORT_ALL_POOLOUT", 0) != NULL) {
+    /* Yes */
+    qsort_all_poolout = 1;
+  } else {
+    /* We FORCE qsort on multiples poolouts only in one case : the very beginning */
+    if (currentpool_out[0] == '\0') {
+      stglogit(func, "First stageout round - forcing qsort on all outpools candidates\n");
+      qsort_all_poolout = 1;
+    }
+  }
+
+  /* We loop until we find a poolout that have no migrator, the bigger space available, the less */
+  /* contention possible */
+
+  nextpool_out(firstpool_out);
+  strcpy(thispool_out, firstpool_out);
+
+  while (1) {
+    if ((this_element = betterfs_vs_pool(thispool_out,mode,0,NULL)) == NULL) {
+      /* Oups... Tant-pis, return current pool */
+      if (best_elements != NULL) free(best_elements);
+      strcpy(nextout, thispool_out);
+      return;
+    }
+
+    if (nbest_elements == 0) {
+      if ((this_best_element = best_elements = (struct pool_element_ext *) malloc(sizeof(struct pool_element))) == NULL) {
+        /* Oups... Tant-pis, return current pool */
+        strcpy(nextout, thispool_out);
+        return;
+      }
+    } else {
+      struct pool_element_ext *dummy;
+
+      if ((dummy = (struct pool_element_ext *) realloc(best_elements, (nbest_elements + 1) * sizeof(struct pool_element))) == NULL) {
+        /* Oups... Tant-pis, return current pool */
+        free(best_elements);
+        strcpy(nextout, thispool_out);
+        return;
+      }
+      best_elements = dummy;
+      this_best_element = best_elements;
+      this_best_element += nbest_elements;
+    }
+    this_best_element->free = this_element->free;
+    this_best_element->nbreadaccess = this_element->nbreadaccess;
+    this_best_element->nbwriteaccess = this_element->nbwriteaccess;
+    this_best_element->mode = mode;
+    this_best_element->nbreadserver = 0;
+    this_best_element->nbwriteserver = 0;
+    this_best_element->poolmigrating = ispoolmigrating(currentpool_out);
+    this_best_element->server[0] = '\0';
+    strcpy(this_best_element->server,this_element->server);
+    this_best_element->dirpath[0] = '\0';
+    strcpy(this_best_element->dirpath,this_element->dirpath);
+    nbest_elements++;
+    /* Do we support qsort v.s. multiples poolout ? */
+    if (qsort_all_poolout == 0) {
+      /* No */
+      goto bestnextpool_out_getit;
+    }
+
+    /* Go to the next pool unless round about */
+
+    nextpool_out(thispool_out);
+    if (strcmp(thispool_out, firstpool_out) == 0) {
+      stglogit(func, "Turnaround reached at outpool %s\n", thispool_out);
+      break;
+    }
+  }
+
+  if (nbest_elements > 1) {
+    /* We are doing again the qsort using the best fs v.s. all poolouts */
+
+    /* We fill the global number of streams per server, used in the qsort to optimize server location */
+    for (i = 0, this_best_element = best_elements; i < nbest_elements; i++, this_best_element++) {
+      get_global_stream_count(this_best_element->server, &(this_best_element->nbreadserver), &(this_best_element->nbwriteserver));
+    }
+    
+    /* Sort them */
+    qsort((void *) best_elements, nbest_elements, sizeof(struct pool_element_ext), &pool_elements_cmp);
+
+    for (j = 0, this_best_element = best_elements; j < nbest_elements; j++, this_best_element++) {
+      stglogit(func, "rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s\n",
+               j,
+               this_best_element->server,
+               this_best_element->dirpath,
+               this_best_element->nbreadaccess,
+               this_best_element->nbwriteaccess,
+               this_best_element->nbreadserver,
+               this_best_element->nbwriteserver,
+               this_best_element->poolmigrating,
+               u64tostru(this_best_element->free, tmpbuf, 0)
+               );
+    }
+  } else {
+
+    stglogit(func, "only one element: %10s %30s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s\n",
+             this_best_element->server,
+             this_best_element->dirpath,
+             this_best_element->nbreadaccess,
+             this_best_element->nbwriteaccess,
+             this_best_element->nbreadserver,
+             this_best_element->nbwriteserver,
+             this_best_element->poolmigrating,
+             u64tostru(this_best_element->free, tmpbuf, 0)
+             );
+  }
+
+ bestnextpool_out_getit:
+  /* So we have found here the best fs */
+  /* We anticipate the coming call to selectfs() with the following trick: */
+  /* - we know that selectfs() takes poolname as first argument and pool_p->next_pool_elem */
+  /* as the fs to start the scanning with */
+  /* We thus ly to pool_p->next_pool_elem, simply */
+
+  /* Grab the result - this is the one on the top of the list */
+  this_best_element = best_elements;
+  for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+    for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++) {
+      if ((strcmp(this_best_element->server ,elemp->server) == 0) &&
+          (strcmp(this_best_element->dirpath,elemp->dirpath) == 0)) {
+        found_element = elemp;
+        /* Here is the trick */
+        strcpy(nextout, pool_p->name);
+        pool_p->next_pool_elem = j;
+        break;
+      }
+    }
+  }
+
+  if (found_element == NULL) {
+    /* Something fishy has happened ? */
+    stglogit(func, "something fishy happened - using %s\n", thispool_out);
+    strcpy(nextout, thispool_out);
+  } else {
+    stglogit(func, "selected element: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s\n",
+             this_best_element->server,
+             this_best_element->dirpath,
+             this_best_element->nbreadaccess,
+             this_best_element->nbwriteaccess,
+             this_best_element->nbreadserver,
+             this_best_element->nbwriteserver,
+             this_best_element->poolmigrating,
+             u64tostru(this_best_element->free, tmpbuf, 0)
+             );
+  }
+
+  if (best_elements != NULL) free(best_elements);
+}
+
+void nextpool_out(nextout)
+     char *nextout;
+{
+  char *p;
+  int first_time = 0;
+
+  /* We check if current pool out belongs to the poolout list */
+  if (ispool_out(currentpool_out) != 0) {
+    /* Either very first call, either list of poolout has changed and current poolout from */
+    /* last call does not anymore belong to this list */
+    currentpool_out[0] = '\0';
+  }
+
+  if (currentpool_out[0] == '\0') {
+    first_time = 1;
+  first_nextpool:
+    /* We return the first one in the list up to first possible ':' delimiter */
+    if ((p = strchr(defpoolname_out, ':')) != NULL) {
+      *p = '\0';
+      strcpy(nextout, defpoolname_out);
+      *p = ':';
+    } else {
+      strcpy(nextout, defpoolname_out);
+    }
+    strcpy (currentpool_out, nextout);
+    return;
+  } else {
+    char *p2;
+
+    /* If curent pool is not migrating, we still return it */
+    if (ispoolmigrating(currentpool_out) == 0) {
+      strcpy(nextout, currentpool_out);
+      return;
+    }
+    /* We return the next one in the list */
+    if ((p = strstr(defpoolname_out, currentpool_out)) == NULL) {
+      /* Current pool not in the list ? This should not happen because of ispool_out() call before */
+      stglogit("nextpool_out", STG32, currentpool_out);
+      goto first_nextpool;
+    }
+    /* We check if there is another one after */
+    p += strlen(currentpool_out);
+    if (p[0] == '\0') {
+      /* We are the end - we go back to the first one */
+      goto first_nextpool;
+    }
+    if ((p2 = strchr(++p, ':')) != NULL) {
+      /* We are not at the end */
+      *p2 = '\0';
+      strcpy(nextout, p);
+      strcpy (currentpool_out, nextout);
+      *p2 = ':';
+    } else {
+      /* We are at the end... */
+      strcpy(nextout, p);
+      strcpy (currentpool_out, nextout);
+    }
+  }
+  return;
+}
+
+int ispoolmigrating(poolname)
+     char *poolname;
+{
+  int i;
+  int found;
+  struct pool *pool_p;
+
+  found = 0;
+  for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+    if (strcmp (poolname, pool_p->name) == 0) {
+      found = 1;
+      break;
+    }
+  
+  if ((found != 0) && (pool_p->migr != NULL)) {
+    return(pool_p->migr->mig_pid != 0 ? 1 : 0);       /* Will be != 0 if there is a migrator running */
   } else {
     return(0);
   }
 }
+
+/* mode is READ_MODE for reading, WRITE_MODE for writing, if req_size is specified (like in a selectfs() retry) */
+/* it used as a threshold filter */
+
+struct pool_element *betterfs_vs_pool(poolname,mode,reqsize,index)
+     char *poolname;
+     int mode;
+     u_signed64 reqsize;
+     int *index;
+{
+  int i, j, jfound;
+  int found;
+  struct pool *pool_p;
+  struct pool_element *rc = NULL;
+  struct pool_element_ext *elements;
+  char *func = "betterfs_vs_pool";
+  char tmpbuf[21];
+  char tmpbufreqsize[21];
+
+  found = 0;
+  for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+    if (strcmp (poolname, pool_p->name) == 0) {
+      found = 1;
+      break;
+    }
+
+  if (found == 0) {
+    /* Hmmm... Pool not found! */
+    stglogit(func, STG32, poolname);
+    return(NULL);
+  }
+
+  /* We prepare the coming qsort */
+  if ((elements = (struct pool_element_ext *) malloc(pool_p->nbelem * sizeof(struct pool_element_ext))) == NULL) {
+    stglogit(func, STG02, poolname, "malloc", strerror(errno));
+    return(NULL);
+  }
+
+  for (i = 0; i < pool_p->nbelem; i++) {
+    elements[i].free = pool_p->elemp[i].free;
+    elements[i].nbreadaccess = pool_p->elemp[i].nbreadaccess;
+    elements[i].nbwriteaccess = pool_p->elemp[i].nbwriteaccess;
+    elements[i].mode = mode;
+    elements[i].nbreadserver = 0;
+    elements[i].nbwriteserver = 0;
+    elements[i].poolmigrating = ispoolmigrating(poolname); /* Not usefull in this sort, but pretty for output */
+    strcpy(elements[i].server,pool_p->elemp[i].server);
+    strcpy(elements[i].dirpath,pool_p->elemp[i].dirpath);
+  }
+
+  /* We fill the global number of streams per server, used in the qsort to optimize server location */
+  for (i = 0; i < pool_p->nbelem; i++) {
+    get_global_stream_count(elements[i].server, &(elements[i].nbreadserver), &(elements[i].nbwriteserver));
+  }
+    
+  /* Sort them */
+  qsort((void *) elements, pool_p->nbelem, sizeof(struct pool_element_ext), &pool_elements_cmp);
+
+  jfound = -1;
+  for (j = 0; j < pool_p->nbelem; j++) {
+    if (reqsize <= 0) {
+      stglogit(func, "rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s\n",
+               j,
+               elements[j].server,
+               elements[j].dirpath,
+               elements[j].nbreadaccess,
+               elements[j].nbwriteaccess,
+               elements[j].nbreadserver,
+               elements[j].nbwriteserver,
+               elements[j].poolmigrating,
+               u64tostru(elements[j].free, tmpbuf, 0)
+               );
+      if (jfound < 0) jfound = j;
+    } else {
+      if (elements[j].free < reqsize) {
+        stglogit(func, "[reqsize=%s => rejected] rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s\n",
+                 u64tostru(reqsize, tmpbufreqsize, 0),
+                 j,
+                 elements[j].server,
+                 elements[j].dirpath,
+                 elements[j].nbreadaccess,
+                 elements[j].nbwriteaccess,
+                 elements[j].nbreadserver,
+                 elements[j].nbwriteserver,
+                 elements[j].poolmigrating,
+                 u64tostru(elements[j].free, tmpbuf, 0)
+                 );
+      } else {
+        stglogit(func, "[reqsize=%s => accepted] rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s\n",
+                 u64tostru(reqsize, tmpbufreqsize, 0),
+                 j,
+                 elements[j].server,
+                 elements[j].dirpath,
+                 elements[j].nbreadaccess,
+                 elements[j].nbwriteaccess,
+                 elements[j].nbreadserver,
+                 elements[j].nbwriteserver,
+                 elements[j].poolmigrating,
+                 u64tostru(elements[j].free, tmpbuf, 0)
+                 );
+        if (jfound < 0) jfound = j;
+      }
+    }
+  }
+
+  if (jfound >= 0) {
+    /* Grab the result */
+    for (i = 0; i < pool_p->nbelem; i++) {
+      if ((strcmp(elements[jfound].server ,pool_p->elemp[i].server) == 0) &&
+          (strcmp(elements[jfound].dirpath,pool_p->elemp[i].dirpath) == 0)) {
+        rc = &(pool_p->elemp[i]);
+        if (index != NULL) {
+          *index = i;
+        }
+        break;
+      }
+    }
+  }
+
+  /* Free space */
+  free(elements);
+
+  /* And return the element address */
+  return(rc);
+}
+
+int pool_elements_cmp(p1,p2)
+     CONST void *p1;
+     CONST void *p2;
+{
+  struct pool_element_ext *fp1 = (struct pool_element_ext *) p1;
+  struct pool_element_ext *fp2 = (struct pool_element_ext *) p2;
+
+  /* Versus mode, we first compare nbreadaccess and nbwriteaccess */
+  /* We sort with reverse order v.s. size */
+  /* mode is READ_MODE for reading, WRITE_MODE for writing */
+  /* Note that by construction all the elements shares the same mode in the qsort() */
+
+  /* If one has a associated migration (where it is accessed or not) and not the other, no doubt */
+  if (fp1->poolmigrating != fp2->poolmigrating) {
+    if (fp2->poolmigrating != 0) {
+      return(-1);
+    } else {
+      return(1);
+    }
+  }
+
+  if ((strcmp(fp1->server,fp2->server) == 0) ||
+      ((fp1->nbreadserver + fp1->nbwriteserver) == (fp2->nbreadserver + fp2->nbwriteserver))) {
+
+    if (fp1->mode == WRITE_MODE) {
+
+      /* Write mode */
+
+      if ((fp1->nbreadaccess == 0) && (fp2->nbreadaccess == 0)) {
+
+        if (fp1->nbwriteaccess == fp2->nbwriteaccess) {
+
+        pool_elements_cmp_vs_free:
+          if (fp1->free > fp2->free) {
+            return(-1);
+          } else if (fp1->free < fp2->free) {
+            return(1);
+          } else {
+            return(0);
+          }
+
+        } else {
+
+          if (fp1->nbwriteaccess < fp2->nbwriteaccess) {
+            return(-1);
+          } else {
+            return(1);
+          }
+
+        }
+
+      } else if (fp1->nbreadaccess == fp2->nbreadaccess) {
+
+        if ((fp1->nbwriteaccess - fp1->nbreadaccess) == (fp2->nbwriteaccess - fp2->nbreadaccess)) {
+
+          goto pool_elements_cmp_vs_free;
+
+        } else if ((fp1->nbwriteaccess - fp1->nbreadaccess) < (fp2->nbwriteaccess - fp2->nbreadaccess)) {
+
+          return(-1);
+
+        } else {
+
+          return(1);
+        }
+
+      } else {
+
+        if ((fp1->nbwriteaccess + fp1->nbreadaccess) == (fp2->nbwriteaccess + fp2->nbreadaccess)) {
+
+          goto pool_elements_cmp_vs_free;
+
+        } else if ((fp1->nbwriteaccess + fp1->nbreadaccess) < (fp2->nbwriteaccess + fp2->nbreadaccess)) {
+
+          return(-1);
+
+        } else {
+
+          return(1);
+        }
+
+      }
+
+    } else {
+
+      /* Read mode */
+
+      if ((fp1->nbwriteaccess == 0) && (fp2->nbwriteaccess == 0)) {
+
+        if (fp1->nbreadaccess == fp2->nbreadaccess) {
+
+          goto pool_elements_cmp_vs_free;
+
+        } else {
+
+          if (fp1->nbreadaccess < fp2->nbreadaccess) {
+            return(-1);
+          } else {
+            return(1);
+          }
+
+        }
+
+      } else if (fp1->nbwriteaccess == fp2->nbwriteaccess) {
+
+        if ((fp1->nbreadaccess - fp1->nbwriteaccess) == (fp2->nbreadaccess - fp2->nbwriteaccess)) {
+
+          goto pool_elements_cmp_vs_free;
+
+        } else if ((fp1->nbreadaccess - fp1->nbwriteaccess) < (fp2->nbreadaccess - fp2->nbwriteaccess)) {
+
+          return(-1);
+
+        } else {
+
+          return(1);
+        }
+
+      } else {
+
+        if ((fp1->nbreadaccess + fp1->nbwriteaccess) == (fp2->nbreadaccess + fp2->nbwriteaccess)) {
+
+          goto pool_elements_cmp_vs_free;
+
+        } else if ((fp1->nbreadaccess + fp1->nbwriteaccess) < (fp2->nbreadaccess + fp2->nbwriteaccess)) {
+
+          return(-1);
+
+        } else {
+
+          return(1);
+        }
+
+      }
+
+    }
+
+  } else {
+
+    /* Not the same host */
+
+    if ((fp1->nbreadserver + fp1->nbwriteserver) == (fp2->nbreadserver + fp2->nbwriteserver)) {
+      
+      goto pool_elements_cmp_vs_free;
+      
+    } else if ((fp1->nbreadserver + fp1->nbwriteserver) < (fp2->nbreadserver + fp2->nbwriteserver)) {
+      
+      return(-1);
+      
+    } else {
+      
+      return(1);
+    }
+
+  }
+
+}
+
+void get_global_stream_count(server,nbreadserver,nbwriteserver)
+     char *server;
+     int *nbreadserver;
+     int *nbwriteserver;
+{
+  struct pool_element *elemp;
+  struct pool *pool_p;
+  int i, j;
+
+  *nbreadserver = 0;
+  *nbwriteserver = 0;
+  for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+    for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++) {
+      if (strcmp(elemp->server, server) != 0) continue;
+      *nbreadserver += elemp->nbreadaccess;
+      *nbwriteserver += elemp->nbwriteaccess;
+    }
+  }
+}
+

@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.57 2001/02/21 15:51:11 jdurand Exp $
+ * $Id: procupd.c,v 1.58 2001/03/02 18:16:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.57 $ $Date: 2001/02/21 15:51:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.58 $ $Date: 2001/03/02 18:16:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -40,6 +40,7 @@ static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.57 $ $Date: 200
 #include "Cns_api.h"
 #include "Cgetopt.h"
 #include "u64subr.h"
+#include "Cgrp.h"
 
 void procupdreq _PROTO((char *, char *));
 void update_hsm_a_time _PROTO((struct stgcat_entry *));
@@ -54,6 +55,7 @@ extern struct waitq *waitqp;
 extern struct stgdb_fd dbfd;
 #endif
 extern struct fileclass *fileclasses;
+extern u_signed64 stage_uniqueid;
 
 extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *));
 extern struct waitf *add2wf _PROTO((struct waitq *));
@@ -82,6 +84,8 @@ extern void create_link _PROTO((struct stgcat_entry *, char *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
 extern int retenp_on_disk _PROTO((int));
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
+extern void rwcountersfs _PROTO((char *, char *, int, int));
+extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
 
 #define IS_RC_OK(rc) (rc == 0)
 #define IS_RC_WARNING(rc) (rc == LIMBYSZ || rc == BLKSKPD || rc == TPE_LSZ || (rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE)))
@@ -161,8 +165,7 @@ procupdreq(req_data, clienthost)
 	unmarshall_WORD (rbp, gid);
 	nargs = req2argv (rbp, &argv);
 #if SACCT
-	stageacct (STGCMDR, uid, gid, clienthost,
-						 reqid, STAGEUPDC, 0, 0, NULL, "");
+	stageacct (STGCMDR, uid, gid, clienthost, reqid, STAGEUPDC, 0, 0, NULL, "");
 #endif
 
 	dvn = unknown;
@@ -258,7 +261,7 @@ procupdreq(req_data, clienthost)
 		goto reply;
 	}
 	if (nargs > Coptind) {
-		for  (i = Coptind; i < nargs; i++)
+		for  (i = Coptind; i < nargs; i++) {
 			if ((c = upd_stageout(STAGEUPDC, argv[i], &subreqid, 1, NULL)) != 0) {
 				if (c != CLEARED) {
 					goto reply;
@@ -267,6 +270,7 @@ procupdreq(req_data, clienthost)
 					c = 0;
 				}
 			}
+		}
 		goto reply;
 	}
 	found = 0;
@@ -419,7 +423,7 @@ procupdreq(req_data, clienthost)
 	if ( rc < 0) {	/* -R not specified, i.e. tape mounted and positionned */
 		int has_been_modified = 0;
 
-		/* deferred allocation */
+		/* deferred allocation (STAGEIN) */
 		if (stcp->ipath[0] == '\0') {
 			int has_trailing = 0;
 			if (wqp->concat_off_fseq > 0 && i == (wqp->nbdskf - 1)) {
@@ -475,7 +479,21 @@ procupdreq(req_data, clienthost)
 #endif
 		}
 		sendrep (rpfd, MSG_OUT, "%s", stcp->ipath);
+		if (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) {
+			if (wqp->last_rwcounterfs_vs_R != LAST_RWCOUNTERSFS_TPPOS) {
+				/* Should be either 0 (from initialization) or LAST_RWCOUNTERSFS_FILCP */
+				rwcountersfs(stcp->poolname, stcp->ipath, STAGEWRT, STAGEWRT); /* Could be STAGEPUT */
+				wqp->last_rwcounterfs_vs_R = LAST_RWCOUNTERSFS_TPPOS;
+			}
+		}
 		goto reply;
+	}
+	if (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) {
+		if (wqp->last_rwcounterfs_vs_R == LAST_RWCOUNTERSFS_TPPOS) {
+			/* Should be LAST_RWCOUNTERSFS_TPPOS */
+			rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
+			wqp->last_rwcounterfs_vs_R = LAST_RWCOUNTERSFS_FILCP;
+		}
 	}
 	if (stcp->ipath[0] != '\0') {
 		if ((p = strchr (stcp->ipath, ':')) != NULL) {
@@ -602,14 +620,14 @@ procupdreq(req_data, clienthost)
 		else
 			p_stat = "failed";
 		if (stcp->t_or_d == 't')
-			sendrep (wqp->rpfd, MSG_ERR, STG41, p_cmd, p_stat,
+			sendrep (wqp->rpfd, RTCOPY_OUT, STG41, p_cmd, p_stat,
 							 fseq ? fseq : stcp->u1.t.fseq, stcp->u1.t.vid[0], rc);
 		else if (stcp->t_or_d == 'd')
-			sendrep (wqp->rpfd, MSG_ERR, STG42, p_cmd, p_stat, stcp->u1.d.xfile, rc);
+			sendrep (wqp->rpfd, RTCOPY_OUT, STG42, p_cmd, p_stat, stcp->u1.d.xfile, rc);
 		else if (stcp->t_or_d == 'm')
-			sendrep (wqp->rpfd, MSG_ERR, STG42, p_cmd, p_stat, stcp->u1.m.xfile, rc);
+			sendrep (wqp->rpfd, RTCOPY_OUT, STG42, p_cmd, p_stat, stcp->u1.m.xfile, rc);
 		else if (stcp->t_or_d == 'h')
-			sendrep (wqp->rpfd, MSG_ERR, STG42, p_cmd, p_stat, stcp->u1.h.xfile, rc);
+			sendrep (wqp->rpfd, RTCOPY_OUT, STG42, p_cmd, p_stat, stcp->u1.h.xfile, rc);
 	}
 	if (((rc != 0) && (rc != LIMBYSZ) &&
 			 (rc != BLKSKPD) && (rc != TPE_LSZ) && (rc != MNYPARI)) ||

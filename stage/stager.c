@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.129 2001/03/01 18:59:36 jdurand Exp $
+ * $Id: stager.c,v 1.130 2001/03/02 18:16:49 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.129 $ $Date: 2001/03/01 18:59:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.130 $ $Date: 2001/03/02 18:16:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -86,6 +86,7 @@ void stager_log_callback _PROTO((int, char *));
 int stager_hsm_callback _PROTO((rtcpTapeRequest_t *, rtcpFileRequest_t *));
 int stager_tape_callback _PROTO((rtcpTapeRequest_t *, rtcpFileRequest_t *));
 void stager_hsm_or_tape_log_callback _PROTO((rtcpTapeRequest_t *, rtcpFileRequest_t *));
+void stager_process_error _PROTO((rtcpTapeRequest_t *, rtcpFileRequest_t *, char *));
 extern int (*rtcpc_ClientCallback) _PROTO((rtcpTapeRequest_t *, rtcpFileRequest_t *));
 int isuserlevel _PROTO((char *));
 int getnamespace _PROTO((char *, char *));
@@ -140,6 +141,7 @@ char cns_error_buffer[512];         /* Cns error buffer */
 char vmgr_error_buffer[512];        /* Vmgr error buffer */
 int Flags = 0;                      /* Tape flag for vmgr_updatetape */
 int stagewrt_nomoreupdatetape = 0;  /* Tell if the last updatetape from callback already did the job */
+int error_already_processed = 0;    /* Set by the callback if it processes error */
 struct passwd start_passwd;
 int nuserlevel = 0;                 /* Number of user-level files */
 int nexplevel = 0;                  /* Number of experiment-level files */
@@ -1465,6 +1467,7 @@ int stagein_castor_hsm_file() {
 #endif
 	Flags = 0;
 	rtcpc_kill_cleanup = 1;
+	error_already_processed = 0;
 
 	/* We reset all the hsm_flag[] values that are candidates for callback search */
 	for (i = 0; i < nbcat_ent; i++) {
@@ -1511,28 +1514,13 @@ int stagein_castor_hsm_file() {
 			/* Rtcopy bits suggest to stop */
 			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG02, "", "rtcpc",sstrerror(save_serrno));
-			/* We reset all the hsm_flag[] values */
-			for (i = 0; i < nbcat_ent; i++) {
-				if (hsm_totalsize[i] > hsm_transferedsize[i]) {
-					hsm_flag[i] = 0;            /* This one will be a candidate while searching */
-				} else {
-					hsm_flag[i] = 1;            /* We will certainly NOT return again this file while searching */
-				}
-			}
-
 			for (stcp_tmp = stcp_start, i = 0; stcp_tmp < stcp_end; stcp_tmp++, i++) {
-				/* Note that if there is a medium error it it catched in the callback */
-				if (rtcpcreqs[0]->file[i].filereq.err.errorcode == ENOENT) {
-					/* We check if the failure was because of a missing file ? */
-					int ihsm;
-
-					if (((ihsm = hsmidx_vs_ipath(stcp_tmp->ipath)) < 0) || ((ihsm = hsmidx(stcp_tmp)) < 0)) {
-						serrno = SEINTERNAL;
-						sendrep (rpfd, MSG_ERR, STG02, stcp_tmp->u1.h.xfile, "Cannot find internal hsm index",sstrerror(serrno));
-						forced_exit = 1;
-						break;
-					} else {
-						/* Entry did not exist */
+				if (error_already_processed != 0) break;
+				stager_process_error(&(rtcpcreqs[0]->tapereq),&(rtcpcreqs[0]->file[i].filereq),stcp_tmp->u1.h.xfile);
+				if (error_already_processed == 0) {
+					/* No medium error was processed */
+					if (rtcpcreqs[0]->file[i].filereq.err.errorcode == ENOENT) {
+						/* We check if the failure was because of a missing file ? */
 						serrno = ENOENT;
 						sendrep (rpfd, MSG_ERR, STG02, stcp_tmp->u1.h.xfile, "Empty file",sstrerror(serrno));
 						forced_exit = 1;
@@ -1864,6 +1852,7 @@ int stagewrt_castor_hsm_file() {
 	reselect:
 			Flags = 0;
 			rtcpc_kill_cleanup = 1;
+			error_already_processed = 0;
 
 			/* We reset all the hsm_flag[] values that are candidates for callback search */
 			for (i = 0; i < nbcat_ent; i++) {
@@ -1914,14 +1903,17 @@ int stagewrt_castor_hsm_file() {
 
 				i = 0;
 				for (j = istart; j <= iend; j++, i++) {
-					/* Note that if there is a medium error it is catched in the callback */
-					if (rtcpcreqs[0]->file->filereq.err.errorcode == ENOENT) {
-						/* Tape info very probably inconsistency with, for ex., TMS */
-						SAVE_EID;
-						sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc",sstrerror(serrno));
-						RESTORE_EID;
-						Flags = 0;
-						RETURN(USERR);
+					if (error_already_processed != 0) break;
+					stager_process_error(&(rtcpcreqs[0]->tapereq),&(rtcpcreqs[0]->file[i].filereq),NULL);
+					if (error_already_processed == 0) {
+						if (rtcpcreqs[0]->file[i].filereq.err.errorcode == ENOENT) {
+							/* Tape info very probably inconsistency with, for ex., TMS */
+							SAVE_EID;
+							sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->file[i].filereq.file_path, "rtcpc",sstrerror(serrno));
+							RESTORE_EID;
+							Flags = 0;
+							RETURN(USERR);
+						}
 					}
 				}
 				if (Flags != TAPE_FULL && stagewrt_nomoreupdatetape == 0) {
@@ -2016,6 +2008,7 @@ int stage_tape() {
 
  reselect:
 	rtcpc_kill_cleanup = 1;
+	error_already_processed = 0; /* Not used in stager_tape_callback() */
 	rtcp_rc = rtcpc(rtcpcreqs[0]);
 	save_serrno = serrno;
 	rtcpc_kill_cleanup = 0;
@@ -3422,95 +3415,7 @@ int stager_hsm_callback(tapereq,filereq)
 			}
 		}
 	} else if (filereq->cprc != 0) {
-		char *THIS_DISABLED = "DISABLED";
-		char *THIS_EXPORTED = "EXPORTED";
-		char *THIS_TAPE_RDONLY = "TAPE_RDONLY";
-		char *THIS_ARCHIVED = "ARCHIVED";
-		int this_flag = 0;
-		int is_this_flag = 0;
-		char *this_string = NULL;
-
-		switch (serrno) {
-		case ETWLBL:                          /* Wrong label type */
-		case ETWVSN:                          /* Wrong vsn */
-		case ETHELD:                          /* Volume held (TMS) */
-		case ETVUNKN:                         /* Volume unknown or absent (TMS) */
-		case ETOPAB:                          /* Operator cancel */
-			this_flag = DISABLED;
-			this_string = THIS_DISABLED;
-			is_this_flag = 1;
-			break;
-		case ETABSENT:                        /* Volume absent (TMS) */
-			this_flag = EXPORTED;
-			this_string = THIS_EXPORTED;
-			is_this_flag = 1;
-			break;
-		case ETNXPD:                          /* File not expired */
-		case ETWPROT:                         /* Cartridge physically write protected or tape read-only (TMS) */
-			this_flag = TAPE_RDONLY;
-			this_string = THIS_TAPE_RDONLY;
-			is_this_flag = 1;
-			break;
-		case ETARCH:                          /* Volume in inactive library */
-			this_flag = ARCHIVED;
-			this_string = THIS_ARCHIVED;
-			is_this_flag = 1;
-			break;
-		case EACCES:                          /* Volume protected (12 in TMS) - do nothing ? */
-			break;
-		default:
-			/* what shall we do here ? */
-			break;
-		}
-		if (is_this_flag == 0) {
-			if (filereq->err.errorcode == ETPARIT ||
-				filereq->err.errorcode == ETUNREC ||
-				filereq->err.errorcode == ETLBL ||
-				tapereq->err.errorcode == ETPARIT ||
-				tapereq->err.errorcode == ETLBL ||
-				tapereq->err.errorcode == ETUNREC) {
-				/* serrno was not of any help but we can anyway detect there was something serious with this tape */
-				SAVE_EID;
- 				if (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)) {
-					sendrep(rpfd, MSG_ERR, "### [%s] For tape %s, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) and filereq->err.errorcode=%d (0x%lx) - Safety action is to flag the tape as read-only\n",
-						castor_hsm,
-						tapereq->vid,
-						serrno,
-						(int) tapereq->err.errorcode,
-						(unsigned long) tapereq->err.errorcode,
-						(int) filereq->err.errorcode,
-						(unsigned long) filereq->err.errorcode);
-					this_flag = TAPE_RDONLY;
-					this_string = THIS_TAPE_RDONLY;
-				} else {
-					sendrep(rpfd, MSG_ERR, "### [%s] For tape %s, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) and filereq->err.errorcode=%d (0x%lx) - Safety action is to disable the tape \n",
-						castor_hsm,
-						tapereq->vid,
-						serrno,
-						(int) tapereq->err.errorcode,
-						(unsigned long) tapereq->err.errorcode,
-						(int) filereq->err.errorcode,
-						(unsigned long) filereq->err.errorcode);
-					this_flag = DISABLED;
-					this_string = THIS_DISABLED;
-				}
-				RESTORE_EID;
-				is_this_flag = 1;
-			}
-		}
-		if (is_this_flag != 0) {
-			SAVE_EID;
-			sendrep(rpfd, MSG_ERR, "### [%s] Setting tape %s to %s state\n", castor_hsm, tapereq->vid, this_string);
-			if (vmgr_updatetape(tapereq->vid, 0, 0, 0, this_flag) != 0) {
-				sendrep (rpfd, MSG_ERR, STG02, tapereq->vid, "vmgr_updatetape", sstrerror(serrno));
-				RESTORE_EID;
-				callback_error = 1;
-				return(-1);
-			}
-			RESTORE_EID;
-			/* By resetting this variable we makes sure that our decision is not overwriten by the cleanup() */
-			vid[0] = '\0';
-		}
+		stager_process_error(tapereq,filereq,castor_hsm);
 	}
 
 	return(0);
@@ -3637,7 +3542,106 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 	RESTORE_EID;
 }
 
+void stager_process_error(tapereq,filereq,castor_hsm)
+	rtcpTapeRequest_t *tapereq;
+	rtcpFileRequest_t *filereq;
+	char *castor_hsm;
+{
+	char *THIS_DISABLED = "DISABLED";
+	char *THIS_EXPORTED = "EXPORTED";
+	char *THIS_TAPE_RDONLY = "TAPE_RDONLY";
+	char *THIS_ARCHIVED = "ARCHIVED";
+	int this_flag = 0;
+	int is_this_flag = 0;
+	char *this_string = NULL;
+
+	if ((tapereq == NULL) || (filereq == NULL)) return;
+
+	switch (serrno) {
+	case ETWLBL:                          /* Wrong label type */
+	case ETWVSN:                          /* Wrong vsn */
+	case ETHELD:                          /* Volume held (TMS) */
+	case ETVUNKN:                         /* Volume unknown or absent (TMS) */
+	case ETOPAB:                          /* Operator cancel */
+		this_flag = DISABLED;
+		this_string = THIS_DISABLED;
+		is_this_flag = 1;
+		break;
+	case ETABSENT:                        /* Volume absent (TMS) */
+		this_flag = EXPORTED;
+		this_string = THIS_EXPORTED;
+		is_this_flag = 1;
+		break;
+	case ETNXPD:                          /* File not expired */
+	case ETWPROT:                         /* Cartridge physically write protected or tape read-only (TMS) */
+		this_flag = TAPE_RDONLY;
+		this_string = THIS_TAPE_RDONLY;
+		is_this_flag = 1;
+		break;
+	case ETARCH:                          /* Volume in inactive library */
+		this_flag = ARCHIVED;
+		this_string = THIS_ARCHIVED;
+		is_this_flag = 1;
+		break;
+	case EACCES:                          /* Volume protected (12 in TMS) - do nothing ? */
+		break;
+	default:
+		/* what shall we do here ? */
+		break;
+	}
+	if (is_this_flag == 0) {
+		if (((filereq->err.errorcode == ETPARIT) || (filereq->err.errorcode == ETUNREC) || (filereq->err.errorcode == ETLBL))
+			||
+			((tapereq->err.errorcode == ETPARIT) || (tapereq->err.errorcode == ETUNREC) || (tapereq->err.errorcode == ETLBL))
+			) {
+				/* serrno was not of any help but we can anyway detect there was something serious with this tape */
+			SAVE_EID;
+ 			if (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)) {
+				sendrep(rpfd, MSG_ERR, "### [%s] For tape %s, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) and filereq->err.errorcode=%d (0x%lx) - Safety action is to flag the tape as read-only\n",
+					(castor_hsm != NULL) ? castor_hsm : "...",
+					tapereq->vid,
+					serrno,
+					(int) tapereq->err.errorcode,
+					(unsigned long) tapereq->err.errorcode,
+					(int) filereq->err.errorcode,
+					(unsigned long) filereq->err.errorcode);
+				this_flag = TAPE_RDONLY;
+				this_string = THIS_TAPE_RDONLY;
+			} else {
+				sendrep(rpfd, MSG_ERR, "### [%s] For tape %s, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) and filereq->err.errorcode=%d (0x%lx) - Safety action is to disable the tape \n",
+					(castor_hsm != NULL) ? castor_hsm : "...",
+					tapereq->vid,
+					serrno,
+					(int) tapereq->err.errorcode,
+					(unsigned long) tapereq->err.errorcode,
+					(int) filereq->err.errorcode,
+					(unsigned long) filereq->err.errorcode);
+				this_flag = DISABLED;
+				this_string = THIS_DISABLED;
+			}
+			RESTORE_EID;
+			is_this_flag = 1;
+		}
+	}
+	if (is_this_flag != 0) {
+		SAVE_EID;
+		sendrep(rpfd, MSG_ERR, "### [%s] Setting tape %s to %s state\n", (castor_hsm != NULL) ? castor_hsm : "...", tapereq->vid, this_string);
+		if (vmgr_updatetape(tapereq->vid, 0, 0, 0, this_flag) != 0) {
+			sendrep (rpfd, MSG_ERR, STG02, tapereq->vid, "vmgr_updatetape", sstrerror(serrno));
+			RESTORE_EID;
+			callback_error = 1;
+			return;
+		}
+		RESTORE_EID;
+		/* By resetting this variable we makes sure that our decision is not overwriten by the cleanup() */
+		vid[0] = '\0';
+		/* We say to the remaining process that we already took action for error processing */
+		error_already_processed = 1;
+	}
+}
+
+
 /*
- * Last Update: "Thursday 01 March, 2001 at 19:53:45 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Thursday 01 March, 2001 at 20:03:57 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 

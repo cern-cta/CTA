@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_api.c,v 1.14 2001/02/01 18:09:28 jdurand Exp $
+ * $Id: send2stgd_api.c,v 1.15 2001/03/02 18:16:47 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.14 $ $Date: 2001/02/01 18:09:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.15 $ $Date: 2001/03/02 18:16:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -190,6 +190,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 	int _nstpp_output = 0;
 	struct stgpath_entry *_stpp_output = NULL;
 	u_signed64 uniqueid = 0;
+	u_signed64 current_uniqueid = 0;
 
 	strcpy (func, "send2stgd");
 
@@ -198,6 +199,12 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 	if (stcp_output != NULL) *stcp_output = NULL;
 	if (nstpp_output != NULL) *nstpp_output = 0;
 	if (stpp_output != NULL) *stpp_output = NULL;
+
+	/* We remind current uniqueid value */
+	if (stage_getuniqueid(&current_uniqueid) != 0) {
+		stage_errmsg(func, STG02, func, "stage_getuniqueid", sstrerror(serrno));
+		return (-1);
+	}
 
     /* We always reset our uniqueid value */
     if (stage_setuniqueid(uniqueid) != 0) {
@@ -282,7 +289,14 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 		SEND2STGD_API_RETURN(0);
 	}
 	
-    /* Connect and netwrite suceeded : this is the latest stghost contacted in this thread */
+    /* We restore our uniqueid value */
+    if (stage_setuniqueid(current_uniqueid) != 0) {
+		stage_errmsg(func, STG02, func, "stage_setuniqueid", sstrerror(serrno));
+		(void) netclose (stg_s);
+		SEND2STGD_API_RETURN(-1);
+    }
+
+    /* Connect and netwrite suceeded : Let's remind the latest stghost contacted in this thread */
     stage_setlaststghost(stghost);
 
 	while (1) {
@@ -441,10 +455,10 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 		unmarshall_STRING (p, prtbuf);
 		switch (rep_type) {
 		case MSG_OUT:
+		case RTCOPY_OUT:
 			stage_outmsg (NULL, "%s", prtbuf);
 			break;
 		case MSG_ERR:
-		case RTCOPY_OUT:
 			stage_errmsg (NULL, "%s", prtbuf);
 			break;
 		case SYMLINK:
