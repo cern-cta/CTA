@@ -1,10 +1,14 @@
 /*
+ * $Id: rtcp_CheckReq.c,v 1.51 2002/11/19 16:09:48 jdurand Exp $
+ */
+
+/*
  * Copyright (C) 1999-2001 by CERN IT-PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)rtcp_CheckReq.c,v 1.49 2002/04/08 14:49:31 CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.51 $ $Date: 2002/11/19 16:09:48 $ CERN IT-DS/HSM Olof Barring";
 #endif /* not lint */
 
 /*
