@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.11 $ $Date: 2000/01/19 17:27:15 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.12 $ $Date: 2000/01/20 14:25:47 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -91,7 +91,7 @@ static int rtcp_CheckTapeReq(tape_list_t *tape) {
      */
     if ( *tapereq->vid == '\0' && *tapereq->vsn == '\0' ) {
         serrno = EINVAL;
-        strcpy(errmsgtxt,"vsn or vid must be specified");
+        sprintf(errmsgtxt,"vsn or vid must be specified\n");
         SET_REQUEST_ERR(tapereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
@@ -143,7 +143,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     if ( filereq->def_alloc == -1 ) filereq->def_alloc = 0;
     if ( filereq->def_alloc != 0 && *filereq->stageID == '\0' ) {
         serrno = EINVAL;
-        strcpy(errmsgtxt,"The 'A' option set to DEFERRED is valid with the stager only !");
+        sprintf(errmsgtxt,"The 'A' option set to DEFERRED is valid with the stager only !\n");
         SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
@@ -159,7 +159,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
 
     if ( !VALID_ERRACT(filereq) ) {
         serrno = EINVAL;
-        strcpy(errmsgtxt,"INVALID ERROR ACTION SPECIFIED");
+        sprintf(errmsgtxt,"INVALID ERROR ACTION SPECIFIED\n");
         SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
@@ -170,7 +170,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     if ( filereq->convert == -1 ) filereq->convert = ASCCONV;
     if ( !VALID_CONVERT(filereq) ) {
         serrno = EINVAL;
-        strcpy(errmsgtxt,"INVALID CONVERSION SPECIFIED");
+        sprintf(errmsgtxt,"INVALID CONVERSION SPECIFIED\n");
         SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
@@ -180,7 +180,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
      * try to set it...
      */
     if ( filereq->concat == -1 ) {
-        rtcp_log(LOG_INFO,"Concatenation switch not set. Trying to set it\n");
+        rtcp_log(LOG_DEBUG,"Concatenation switch not set. Trying to set it\n");
         if ( mode == WRITE_DISABLE && file->prev != file ) {
             /*
              * Tape read
@@ -212,7 +212,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         tmpfile = (file_list_t *)calloc(1,sizeof(file_list_t));
         if ( tmpfile == NULL ) {
             serrno = errno;
-            strcpy(errmsgtxt,"calloc() failed");
+            sprintf(errmsgtxt,"calloc() failed\n");
             SET_REQUEST_ERR(filereq,RTCP_SYERR | RTCP_FAILED);
             if ( rc == -1 ) return(rc);
         }
@@ -225,7 +225,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
 
     if ( !VALID_CONCAT(filereq) ) {
         serrno = EINVAL;
-        strcpy(errmsgtxt,"INVALID SETTING FOR CONCATENATION");
+        sprintf(errmsgtxt,"INVALID SETTING FOR CONCATENATION\n");
         SET_REQUEST_ERR(filereq, RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
@@ -240,7 +240,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
          strcmp(filereq->recfm,"FS") != 0 &&
          strcmp(filereq->recfm,"U") != 0 ) {
         serrno = EINVAL;
-        strcpy(errmsgtxt,"INVALID FORMAT SPECIFIED");
+        sprintf(errmsgtxt,"INVALID FORMAT SPECIFIED\n");
         SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
@@ -251,7 +251,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     if ( (mode == WRITE_ENABLE) && (*filereq->recfm == 'F') && 
          ((filereq->convert & NOF77CW) != 0) ) {
         serrno = EINVAL;
-        strcpy(errmsgtxt,"NOF77CW for F format is not valid for tape write");
+        sprintf(errmsgtxt,"NOF77CW for F format is not valid for tape write\n");
         SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     } 
@@ -262,7 +262,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
      */
     if ( filereq->blocksize == 0 ) {
         serrno = EINVAL;
-        strcpy(errmsgtxt,"Block size cannot be equal to zero");
+        sprintf(errmsgtxt,"Block size cannot be equal to zero\n");
         SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
@@ -297,9 +297,9 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     if ( *filereq->file_path == '\0' ) {
         serrno = EINVAL;
         if ( *file->prev->filereq.file_path == '\0' )
-            strcpy(errmsgtxt,"disk file pathnames must be specified\n");
+            sprintf(errmsgtxt,"disk file pathnames must be specified\n");
         else
-            strcpy(errmsgtxt,"incorrect number of filenames specified\n");
+            sprintf(errmsgtxt,"incorrect number of filenames specified\n");
         SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
@@ -326,7 +326,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         if ( rc == -1 ) {
             if ( rfio_errno != 0 ) serrno = rfio_errno;
             else if ( serrno == 0 ) serrno = errno;
-            strcpy(errmsgtxt,sstrerror(serrno));
+            sprintf(errmsgtxt,"%s: %s\n",filereq->file_path,sstrerror(serrno));
             SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
             if ( rc == -1 ) return(rc);
         }
