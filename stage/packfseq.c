@@ -1,5 +1,5 @@
 /*
- * $Id: packfseq.c,v 1.11 2000/12/21 13:55:04 jdurand Exp $
+ * $Id: packfseq.c,v 1.12 2001/02/02 12:14:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: packfseq.c,v $ $Revision: 1.11 $ $Date: 2000/12/21 13:55:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: packfseq.c,v $ $Revision: 1.12 $ $Date: 2001/02/02 12:14:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -18,7 +18,12 @@ static char sccsid[] = "@(#)$RCSfile: packfseq.c,v $ $Revision: 1.11 $ $Date: 20
 #include "osdep.h"
 #include <stdlib.h>
 
+#ifdef hpux
+/* What the hell does hpux does not like this prototype ??? */
+int packfseq _PROTO(());
+#else
 int packfseq _PROTO((fseq_elem *, int, int, int, char, char *, int));
+#endif
 
 int packfseq(fseq_list, i, nbdskf, nbtpf, trailing, fseq, fseqsz)
 		 fseq_elem *fseq_list;
