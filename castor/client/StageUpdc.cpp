@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/13 13:36:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/29 12:17:05 $ $Author: sponcec3 $
  *
  *
  *
@@ -26,14 +26,11 @@
 
 // Include Files
 #include <iostream>
-#include <cstdlib>
 #include <vector>
 #include "castor/rh/File.hpp"
 #include "castor/rh/StageUpdcRequest.hpp"
 #include "castor/exception/Exception.hpp"
 #include "stage_constants.h"
-#include "common.h"
-#include "stage_api.h"
 
 // Local Files
 #include "StageUpdc.hpp"
@@ -43,58 +40,8 @@
 //------------------------------------------------------------------------------
 castor::rh::Request* castor::client::StageUpdc::buildRequest()
   throw (castor::exception::Exception) {
-  {
-    // RH server host. Can be passed in the -h option
-    // or given through the RH_HOST environment variable
-    // or given in the castor.conf file as a RH/HOST entry
-    char* host;
-    if (m_inputFlags.find("h") != m_inputFlags.end()) {
-      m_rhHost = m_inputFlags["h"];
-    } else if ((host = getenv ("RH_HOST")) != 0 ||
-               (host = getconfent("RH","HOST",0)) != 0) {
-      m_rhHost = host;
-    } else {
-      castor::exception::Exception e(ETPRM);
-      e.getMessage()
-        << "Unable to deduce the name of the RH server.\n"
-        << "No -h option was given, RH_HOST is not set and "
-        << "your castor.conf file does not contain a RH/HOST entry."
-        << std::endl;
-      throw e;
-    }
-  }
-  {
-    char* port;
-    // RH server port. Can be given through the environment
-    // variable RH_PORT or in the castor.conf file as a
-    // RH/PORT entry
-    if ((port = getenv ("RH_PORT")) != 0 ||
-        (port = getconfent("RH","PORT",0)) != 0) {
-      int iport;
-      char* dp;
-      if (stage_strtoi(&iport, port, &dp, 0) != 0) {
-        castor::exception::Exception e(errno);
-        e.getMessage() << "Bad port value." << std::endl;
-        throw e;
-      }
-      if (iport < 0) {
-        castor::exception::Exception e(errno);
-        e.getMessage()
-          << "Invalid port value : " << iport
-          << ". Must be > 0." << std::endl;
-        throw e;        
-      }
-      m_rhPort = iport;
-    } else {
-      castor::exception::Exception e(ETPRM);
-      e.getMessage()
-        << "Unable to deduce the RH server port.\n"
-        << "RH_PORT is not set and your castor.conf file "
-        << "does not contain a RH/PORT entry."
-        << std::endl;
-      throw e;
-    }
-  }
+  setRhHost();
+  setRhPort();
   if (m_inputFlags.find("p") != m_inputFlags.end()) {
     castor::exception::Exception e(ETPRM);
     e.getMessage()

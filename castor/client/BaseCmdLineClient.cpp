@@ -32,12 +32,19 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/client/CmdLineResponseHandler.hpp"
+#include "stage_api.h"
 extern "C" {
 #include <Cgetopt.h>
 }
+#include "u64subr.h"
 
 // Local includes
 #include "BaseCmdLineClient.hpp"
+
+// XXX To be removed. Extern should not be used but the
+// XXX include common.h leads to other problems we don't
+// XXX want to fix now
+EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
 
 //------------------------------------------------------------------------------
 // constructor
@@ -147,4 +154,114 @@ bool castor::client::BaseCmdLineClient::parseInput(int argc, char** argv)
   }
   // Successful completion
   return true;
+}
+
+//------------------------------------------------------------------------------
+// setRhPort
+//------------------------------------------------------------------------------
+void castor::client::BaseCmdLineClient::setRhPort()
+  throw (castor::exception::Exception) {
+  char* port;
+  // RH server port. Can be given through the environment
+  // variable RH_PORT or in the castor.conf file as a
+  // RH/PORT entry. If none is given, default is used
+  if ((port = getenv ("RH_PORT")) != 0 ||
+      (port = getconfent("RH","PORT",0)) != 0) {
+    int iport;
+    char* dp;
+    if (stage_strtoi(&iport, port, &dp, 0) != 0) {
+      castor::exception::Exception e(errno);
+      e.getMessage() << "Bad port value." << std::endl;
+      throw e;
+    }
+    if (iport < 0) {
+      castor::exception::Exception e(errno);
+      e.getMessage()
+        << "Invalid port value : " << iport
+        << ". Must be > 0." << std::endl;
+      throw e;        
+    }
+    m_rhPort = iport;
+  } else {
+    clog() << "Contacting RH server on default port ("
+           << CSP_RHSERVER_PORT << ")." << std::endl;
+    m_rhPort = CSP_RHSERVER_PORT;
+  }
+}
+
+//------------------------------------------------------------------------------
+// setRhHost
+//------------------------------------------------------------------------------
+void castor::client::BaseCmdLineClient::setRhHost()
+  throw (castor::exception::Exception) {
+  // RH server host. Can be passed in the -h option
+  // or given through the RH_HOST environment variable
+  // or given in the castor.conf file as a RH/HOST entry
+  char* host;
+  if (m_inputFlags.find("h") != m_inputFlags.end()) {
+    m_rhHost = m_inputFlags["h"];
+  } else if ((host = getenv ("RH_HOST")) != 0 ||
+             (host = getconfent("RH","HOST",0)) != 0) {
+    m_rhHost = host;
+  } else {
+    castor::exception::Exception e(ETPRM);
+    e.getMessage()
+      << "Unable to deduce the name of the RH server.\n"
+      << "No -h option was given, RH_HOST is not set and "
+      << "your castor.conf file does not contain a RH/HOST entry."
+      << std::endl;
+    throw e;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getPoolName
+//------------------------------------------------------------------------------
+std::string castor::client::BaseCmdLineClient::getPoolName()
+  throw (castor::exception::Exception) {
+  char* pool;
+  // Pool name. Can be given by the -p option
+  // or through the environment variable STAGE_POOL
+  if (m_inputFlags.find("p") != m_inputFlags.end()) {
+    return m_inputFlags["p"];
+  } else if ((pool = getenv ("STAGE_POOL")) != 0) {
+    return pool;
+  } else {
+    castor::exception::Exception e(ETPRM);
+    e.getMessage()
+      << "Unable to deduce the name of the stage pool.\n"
+      << "No -p option was given and STAGE_POOL is not set."
+      << std::endl;
+    throw e;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getSizes
+//------------------------------------------------------------------------------
+std::vector<u_signed64> castor::client::BaseCmdLineClient::getSizes()
+  throw (castor::exception::Exception) {
+  std::vector<u_signed64> sizes;
+  if (m_inputFlags.find("s") != m_inputFlags.end()) {
+    std::string ssize = m_inputFlags["s"];
+    char* size = (char*) malloc(ssize.length()+1);
+    strncpy(size, ssize.c_str(), ssize.length());
+    size[ssize.length()] = 0;
+    char* p = strtok (size, ":");
+    while (p != 0) {
+      u_signed64 size;
+      if (stage_util_check_for_strutou64(p) < 0 ||
+          (size = strutou64(p)) <= 0) {
+        castor::exception::Exception e(ETPRM);
+        e.getMessage()
+          << "Invalid syntax in -s option."
+          << std::endl;
+        throw e;
+      }
+      sizes.push_back(size);
+      p = strtok(0, ":");
+    }
+    free(size);
+  }
+  return sizes;
 }

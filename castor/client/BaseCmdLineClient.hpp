@@ -36,6 +36,8 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/client/BaseClient.hpp"
 
+#define CSP_RHSERVER_PORT 9002
+
 namespace castor {
 
   namespace rh {
@@ -65,6 +67,8 @@ namespace castor {
        */
       void run(int argc, char** argv) throw();
 
+    protected:
+
       /**
        * parses the input arguments and store them
        * @return whether it was successful or not
@@ -88,6 +92,33 @@ namespace castor {
        * Has to be reimplemented in each client.
        */
       virtual void usage(std::string message) throw () = 0;
+
+      // here are some usefull methods to get the values
+      // of some very common parameters
+
+      /**
+       * gets the request handler port to use and put it
+       * into m_rhPort
+       */
+      void setRhPort() throw (castor::exception::Exception);
+
+      /**
+       * gets the request handler host to use and put it
+       * into m_rhHost
+       */
+      void setRhHost() throw (castor::exception::Exception);
+
+      /**
+       * returns the pool name to use
+       */
+      std::string getPoolName() throw (castor::exception::Exception);
+
+      /**
+       * parses the sizes option if existing and returns
+       * a vector of sizes
+       */
+      std::vector<u_signed64> getSizes()
+        throw (castor::exception::Exception);
 
     protected:
 

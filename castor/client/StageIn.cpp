@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageIn.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/07/13 13:36:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageIn.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/07/29 12:17:05 $ $Author: sponcec3 $
  *
  *
  *
@@ -26,14 +26,11 @@
 
 // Include Files
 #include <iostream>
-#include <cstdlib>
 #include <vector>
 #include "castor/rh/File.hpp"
 #include "castor/rh/StageInRequest.hpp"
 #include "castor/exception/Exception.hpp"
 #include "stage_constants.h"
-#include "common.h"
-#include "stage_api.h"
 
 // Local Files
 #include "StageIn.hpp"
@@ -45,76 +42,9 @@ castor::rh::Request* castor::client::StageIn::buildRequest()
   throw (castor::exception::Exception) {
   u_signed64 flags = 0;
   int openflags = 0;
-  {
-    // RH server host. Can be passed in the -h option
-    // or given through the RH_HOST environment variable
-    // or given in the castor.conf file as a RH/HOST entry
-    char* host;
-    if (m_inputFlags.find("h") != m_inputFlags.end()) {
-      m_rhHost = m_inputFlags["h"];
-    } else if ((host = getenv ("RH_HOST")) != 0 ||
-               (host = getconfent("RH","HOST",0)) != 0) {
-      m_rhHost = host;
-    } else {
-      castor::exception::Exception e(ETPRM);
-      e.getMessage()
-        << "Unable to deduce the name of the RH server.\n"
-        << "No -h option was given, RH_HOST is not set and "
-        << "your castor.conf file does not contain a RH/HOST entry."
-        << std::endl;
-      throw e;
-    }
-  }
-  {
-    char* port;
-    // RH server port. Can be given through the environment
-    // variable RH_PORT or in the castor.conf file as a
-    // RH/PORT entry
-    if ((port = getenv ("RH_PORT")) != 0 ||
-        (port = getconfent("RH","PORT",0)) != 0) {
-      int iport;
-      char* dp;
-      if (stage_strtoi(&iport, port, &dp, 0) != 0) {
-        castor::exception::Exception e(errno);
-        e.getMessage() << "Bad port value." << std::endl;
-        throw e;
-      }
-      if (iport < 0) {
-        castor::exception::Exception e(errno);
-        e.getMessage()
-          << "Invalid port value : " << iport
-          << ". Must be > 0." << std::endl;
-        throw e;        
-      }
-      m_rhPort = iport;
-    } else {
-      castor::exception::Exception e(ETPRM);
-      e.getMessage()
-        << "Unable to deduce the RH server port.\n"
-        << "RH_PORT is not set and your castor.conf file "
-        << "does not contain a RH/PORT entry."
-        << std::endl;
-      throw e;
-    }
-  }
-  std::string poolName;
-  {
-    char* pool;
-    // Pool name. Can be given by the -p option
-    // or through the environment variable STAGE_POOL
-    if (m_inputFlags.find("p") != m_inputFlags.end()) {
-      poolName = m_inputFlags["p"];
-    } else if ((pool = getenv ("STAGE_POOL")) != 0) {
-      poolName = pool;
-    } else {
-      castor::exception::Exception e(ETPRM);
-      e.getMessage()
-        << "Unable to deduce the name of the stage pool.\n"
-        << "No -p option was given and STAGE_POOL is not set."
-        << std::endl;
-      throw e;
-    }
-  }
+  setRhHost();
+  setRhPort();
+  std::string poolName = getPoolName();
   // -K option (parsed by BaseClient)
   if (m_inputFlags.find("K") != m_inputFlags.end()) {
     castor::exception::Exception e(ETPRM);
@@ -137,28 +67,7 @@ castor::rh::Request* castor::client::StageIn::buildRequest()
     }
   }
   // Size
-  std::vector<u_signed64> sizes;
-  if (m_inputFlags.find("s") != m_inputFlags.end()) {
-    std::string ssize = m_inputFlags["s"];
-    char* size = (char*) malloc(ssize.length()+1);
-    strncpy(size, ssize.c_str(), ssize.length());
-    size[ssize.length()] = 0;
-    char* p = strtok (size, ":");
-    while (p != 0) {
-      u_signed64 size;
-      if (stage_util_check_for_strutou64(p) < 0 ||
-          (size = strutou64(p)) <= 0) {
-        castor::exception::Exception e(ETPRM);
-        e.getMessage()
-          << "Invalid syntax in -s option."
-          << std::endl;
-        throw e;
-      }
-      sizes.push_back(size);
-      p = strtok(0, ":");
-    }
-    free(size);
-  }
+  std::vector<u_signed64> sizes = getSizes();
   // Silent
   if (m_inputFlags.find("silent") != m_inputFlags.end()) {
     flags |= STAGE_SILENT;
