@@ -3,13 +3,15 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: dlf_api.h,v $ $Revision: 1.8 $ $Date: 2004/07/30 12:26:56 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: dlf_api.h,v $ $Revision: 1.9 $ $Date: 2005/02/04 08:26:48 $ CERN IT-ADC Vitaly Motyakov
  */
 
 #ifndef _DLFAPI_H_
 #define _DLFAPI_H_
 
 #include "dlf_struct.h"
+
+#define DLF_PRTBUF_LEN 4094
 
 #define DLF_DST_FILE 1
 #define DLF_DST_TCPHOST 2
