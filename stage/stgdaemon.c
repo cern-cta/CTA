@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.168 2002/02/05 16:11:53 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.169 2002/02/11 07:37:40 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.168 $ $Date: 2002/02/05 16:11:53 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.169 $ $Date: 2002/02/11 07:37:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -560,8 +560,8 @@ int main(argc,argv)
 #endif /* _REENTRANT || _THREAD_SAFE */
 
 		if ((configfd = fopen(STGDBCONFIG,"r")) == NULL) {
-			stglogit (func, "Cannot open Db Configuration file %s\n", STGDBCONFIG);
-			stglogit (func, "Using default Db Username/Password = \"%s\"/\"<not printed>\"\n",Default_db_user);
+			stglogit (func, "[harmless] Cannot open Db Configuration file %s\n", STGDBCONFIG);
+			stglogit (func, "[info] Using default Db Username/Password = \"%s\"/\"<not printed>\"\n",Default_db_user);
 			p_u = Default_db_user;
 			p_p  = Default_db_pwd;
 		} else {
