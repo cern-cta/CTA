@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.10 $ $Date: 2004/03/05 10:58:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.11 $ $Date: 2004/03/08 17:14:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      repack - copy the active segments from a set of volumes to another set */
@@ -662,6 +662,8 @@ char *pool_name;
 	u_signed64 requested_space;
 	struct stgcat_entry *stcp;
 	tape_list_t *tl = NULL;
+	int save_serrno;
+
 	rtcp_log = (void (*) _PROTO((int, CONST char *, ...))) &repack_rtcplog;
 
 	/* build the tape list for rtcopy */
@@ -720,9 +722,13 @@ char *pool_name;
 	rtcpc_kill_needed = 1;
 	c = rtcpc (tl);
 	rtcpc_kill_needed = 0;
+	save_serrno = serrno;
 
 	if (c) {
 		switch (serrno) {
+		case SECHECKSUM: /* Bad checksum */
+			fprintf (stderr,"Repack failure, %s\n", sstrerror(serrno));
+			break;
 		case ETWLBL:	/* Wrong label type */
 		case ETWVSN:	/* Wrong vsn */
 		case ETHELD:	/* Volume held or disabled */
@@ -772,6 +778,7 @@ char *pool_name;
 				}
 				fl = fl->next;
 			} while (fl != tl->file);
+			break;
 		}
 		c = (serrno == ENOSPC) ? 0 : usr_errflg ? USERR : SYERR;
 		if (vmgr_updatetape (tl->tapereq.vid, tl->tapereq.side,
@@ -780,6 +787,8 @@ char *pool_name;
 			    sstrerror(serrno));
 			if (c == 0)
 				c = (serrno == EACCES) ? USERR : SYERR;
+		} else {
+			serrno = save_serrno;
 		}
 	}
 	out_vid = NULL;
