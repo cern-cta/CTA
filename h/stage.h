@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.63 2001/07/12 10:54:28 jdurand Exp $
+ * $Id: stage.h,v 1.64 2001/09/18 20:12:24 jdurand Exp $
  */
 
 /*
@@ -23,6 +23,9 @@
 #include "Cns_api.h"
 #include "osdep.h"
 #include "serrno.h"     /* Contains ESTNACT etc... */
+
+/* Maximum request size */
+#define MAX_NETDATA_SIZE 1000000
 
 /* Limit under which we consider requestor is root */
 #define ROOTUIDLIMIT 100
@@ -49,12 +52,14 @@
 /* ISSTAGEWRT   macro returns TRUE if it is a STAGEWRT   request */
 /* ISSTAGEPUT   macro returns TRUE if it is a STAGEPUT   request */
 /* ISSTAGEALLOC macro returns TRUE if it is a STAGEALLOC request */
+/* ISWAITING    macro returns TRUE if it is a request waiting on anything */
 
 #define ISSTAGEIN(stcp)    ((stcp->status & 0xF) == STAGEIN)
 #define ISSTAGEOUT(stcp)   ((stcp->status & 0xF) == STAGEOUT)
 #define ISSTAGEWRT(stcp)   ((stcp->status & 0xF) == STAGEWRT)
 #define ISSTAGEPUT(stcp)   ((stcp->status & 0xF) == STAGEPUT)
 #define ISSTAGEALLOC(stcp) ((stcp->status & 0xF) == STAGEALLOC)
+#define ISWAITING(stcp)    ((stcp->status & (WAITING_SPC|WAITING_REQ|WAITING_MIGR|WAITING_NS)) != 0)
 
 /* ISCASTORMIG macro returns TRUE if it is a CASTOR HSM file candidate for/beeing, migration/migrated */
 /* ISCASTORBEINGMIG macro returns TRUE if it is a CASTOR HSM file beeing migrated */
@@ -292,6 +297,7 @@
 #define STG155  "STG155 - HSM File %s, pool %s, fileid %s@%s moved from DELAY_MIGR to CAN_BE_MIGR\n"
 #define STG156  "STG156 - Requests from (uid,gid) smaller than (%d,%d) are rejected\n"
 #define STG157  "STG157 - HSM File %s was renamed to %s (fileid %s@%s), input updated\n"
+#define STG158  "STG158 - %s : Fileclass %s@%s (classid %d) retention period %d is overwriten to %d v.s. %d seconds lifetime\n"
 
 			/* stage daemon stream modes */
 
@@ -361,6 +367,8 @@ struct waitq {
 	int *save_subreqid; /* Array saying relation between subreqid and all wf at the beginning */
 	int save_nbsubreqid; /* Save original number of entries */
 	int last_rwcounterfs_vs_R; /* Last -R option value that triggered the rwcountersfs call */
+	int nb_waiting_spc; /* See routine checkwaitingspc() in stgdaemon.c */
+	int nb_found_spc; /* See routine checkwaitingspc() in stgdaemon.c */
 };
 
 struct pool {
@@ -415,6 +423,7 @@ struct migrator {
 	char name[CA_MAXMIGRNAMELEN+1];
 	int mig_pid;
 	time_t migreqtime;
+	time_t migreqtime_last_start;
 	time_t migreqtime_last_end;
 	int nfileclass;
 	struct fileclass **fileclass;
