@@ -1,5 +1,5 @@
 /*
- * $Id: stager_disk.c,v 1.4 2002/02/07 18:07:08 jdurand Exp $
+ * $Id: stager_disk.c,v 1.5 2002/02/14 18:36:09 jdurand Exp $
  */
 
 /*
@@ -15,7 +15,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.4 $ $Date: 2002/02/07 18:07:08 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.5 $ $Date: 2002/02/14 18:36:09 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -455,7 +455,9 @@ int filecopy(stcp, key, hostname)
 
 	/* Writing file */
 	if (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) {
-		sprintf (command+strlen(command), " -s %d",(int) stcp->actual_size);
+		char tmpbuf[21];
+		u64tostr((u_signed64) stcp->actual_size, tmpbuf, 0);
+		sprintf (command+strlen(command), " -s %s",tmpbuf);
 		sprintf (command+strlen(command), " %s", stcp->ipath);
 		if (stcp->t_or_d == 'm')
 			sprintf (command+strlen(command), " %s", stcp->u1.m.xfile);
@@ -463,9 +465,11 @@ int filecopy(stcp, key, hostname)
 			sprintf (command+strlen(command), " %s", stcp->u1.d.xfile);
 	} else {
 		/* Reading file */
-		if (stcp->size)
-			sprintf (command+strlen(command), " -s %d",
-							 (int) stcp->size * ONE_MB);
+		if (stcp->size) {
+			char tmpbuf[21];
+			u64tostr((u_signed64) ((u_signed64) stcp->size) * ((u_signed64) ONE_MB), tmpbuf, 0);
+			sprintf (command+strlen(command), " -s %s", tmpbuf);
+		}
 		if (stcp->t_or_d == 'm')
 			sprintf (command+strlen(command), " %s", stcp->u1.m.xfile);
 		else
