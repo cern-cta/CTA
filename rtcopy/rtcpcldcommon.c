@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/06/29 15:37:33 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/08/03 11:01:54 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/06/29 15:37:33 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/08/03 11:01:54 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -359,7 +359,7 @@ int rtcpcld_sendNotify(
   int toPort = -1;
   char toHost[CA_MAXHOSTNAMELEN+1], *p;
 
-  if ( toAddrStr == NULL ) {
+  if ( (toAddrStr == NULL) || (*toAddrStr == '\0') ) {
     serrno = EINVAL;
     return(-1);
   }
