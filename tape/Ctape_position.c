@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.2 $ $Date: 1999/09/17 06:37:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.3 $ $Date: 1999/09/20 15:24:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_position - send a request to the tape daemon to get the tape
@@ -15,6 +15,8 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.2 $ $Dat
 #include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
+#else
+#include <netinet/in.h>
 #endif
 #include "Ctape.h"
 #include "marshall.h"
