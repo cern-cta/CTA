@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlfbuf.h,v $ $Revision: 1.7 $ $Release$ $Date: 2005/01/24 16:26:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: dlfbuf.h,v $ $Revision: 1.8 $ $Release$ $Date: 2005/02/17 10:56:44 $ $Author: sponcec3 $
  *
  * A string buffer for logging into dlf
  *
@@ -152,7 +152,7 @@ namespace castor {
       // XXX For the time being, we ignore completely
       // XXX errors of dlf_write. Shall we syslog them ?
       //int rc =
-      dlf_write (m_uuid, level(), 0, &m_fileId, 1,
+      dlf_write (m_uuid, level(), 0, m_fileId, 1,
                  name, DLF_MSG_PARAM_STR, msg);
       //if (0 != rc) {
       //  castor::exception::Internal e;

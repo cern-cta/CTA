@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logbuf.h,v $ $Revision: 1.8 $ $Release$ $Date: 2005/01/26 08:16:47 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logbuf.h,v $ $Revision: 1.9 $ $Release$ $Date: 2005/02/17 10:56:44 $ $Author: sponcec3 $
  *
  * An abstract string buffer for the log that is able
  * to handle levels of output
@@ -51,9 +51,8 @@ namespace castor {
      * Constructor
      */
     logbuf() throw() : std::stringbuf(std::ios_base::out),
-      m_curLevel(DLF_LVL_USAGE) {
+      m_curLevel(DLF_LVL_USAGE), m_fileId(0) {
       memset(&m_uuid, 0, sizeof(Cuuid_t));
-      memset(&m_fileId, 0, sizeof(Cns_fileid));
     }
 
     /**
@@ -76,8 +75,18 @@ namespace castor {
     /**
      * setFileId
      */
-    void setFileId(Cns_fileid val) {
-      m_fileId = val;
+    void setFileId(Cns_fileid* val) {
+      if (0 == val) {
+        if (0 != m_fileId) {
+          free(m_fileId);
+          m_fileId = 0;
+        }
+      } else {
+        if (0 == m_fileId) {
+          m_fileId = (Cns_fileid*) malloc(sizeof(Cns_fileid));
+        }
+        *m_fileId = *val;
+      }
     }
 
   public:
@@ -103,7 +112,7 @@ namespace castor {
     /**
      * Current fileId if any
      */
-    Cns_fileid m_fileId;
+    Cns_fileid* m_fileId;
 
   };
 
