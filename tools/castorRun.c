@@ -1,5 +1,5 @@
 /*
- * $Id: castorRun.c,v 1.1 2005/03/23 17:58:12 jdurand Exp $
+ * $Id: castorRun.c,v 1.2 2005/03/24 14:24:27 jdurand Exp $
  */
 
 /* cc -Wall -fPIC -D_LARGEFILE64_SOURCE -g -I../h -I../  -pthread -DCTHREAD_POSIX -D_THREAD_SAFE -D_REENTRANT -o castorRun castorRun.c -L../shlib -lshift */
@@ -80,12 +80,18 @@ int main(argc,argv)
     } else {
       fprintf(stderr,"stage_put error: %s\n", strerror(SEINTERNAL));
     }
+    if (requestId != NULL) {
+      free(requestId);
+    }
     exit(EXIT_FAILURE);
   }
 
   if (response == NULL) {
     /* Ahem */
     fprintf(stderr,"stage_put returned ok but no i/o response: %s\n", sstrerror(SEINTERNAL));
+    if (requestId != NULL) {
+      free(requestId);
+    }
     exit(EXIT_FAILURE);
   }
 
@@ -98,6 +104,9 @@ int main(argc,argv)
 				   strlen(response->filename) + 1)) == NULL) {
     perror("malloc");
     free(response);
+    if (requestId != NULL) {
+      free(requestId);
+    }
     exit(EXIT_FAILURE);
   }
   sprintf(rfio_path,"rfio://%s:%d/%s",response->server,response->port,response->filename);
@@ -120,6 +129,9 @@ int main(argc,argv)
   if (fd < 0) {
     rfio_perror(castorPath);
     free(response);
+    if (requestId != NULL) {
+      free(requestId);
+    }
     exit(EXIT_FAILURE);
   }
 
@@ -133,6 +145,9 @@ int main(argc,argv)
       rfio_perror(castorPath);
     }
     free(response);
+    if (requestId != NULL) {
+      free(requestId);
+    }
     exit(EXIT_FAILURE);
   }
   sprintf(castor_filename,"CASTOR_LOCALFILENAME=%s",response->filename);
@@ -143,6 +158,9 @@ int main(argc,argv)
       rfio_perror(castorPath);
     }
     free(response);
+    if (requestId != NULL) {
+      free(requestId);
+    }
     exit(EXIT_FAILURE);
   }
 
@@ -153,6 +171,9 @@ int main(argc,argv)
       rfio_perror(castorPath);
     }
     free(response);
+    if (requestId != NULL) {
+      free(requestId);
+    }
     exit(EXIT_FAILURE);
   } else if (pid == 0) {
     /* We are in the child : */
@@ -188,10 +209,16 @@ int main(argc,argv)
   if (rfio_close(fd) < 0) {
     rfio_perror(castorPath);
     free(response);
+    if (requestId != NULL) {
+      free(requestId);
+    }
     exit(EXIT_FAILURE);
   }
 
   free(response);
+  if (requestId != NULL) {
+    free(requestId);
+  }
   exit(EXIT_SUCCESS);
 }
 
