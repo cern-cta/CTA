@@ -103,7 +103,15 @@ namespace castor {
     OBJ_IObject = 69,
     OBJ_IAddress = 70,
     OBJ_QueryParameter = 71,
-    OBJ_DiskCopyInfo = 72
+    OBJ_DiskCopyInfo = 72,
+    OBJ_Files2Delete = 73,
+    OBJ_FilesDeleted = 74,
+    OBJ_GCFilesResponse = 75,
+    OBJ_GCLocalFile = 76,
+    OBJ_GCRemovedFile = 77,
+    OBJ_GetUpdateDone = 78,
+    OBJ_GetUpdateFailed = 79,
+    OBJ_PutFailed = 80
   };
     
   /**
@@ -147,7 +155,7 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[73];
+  extern const char* ObjectsIdStrings[81];
 
   /**
    * Names of the differents Services, used to display

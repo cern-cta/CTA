@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.24 $ $Release$ $Date: 2005/01/31 15:10:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.25 $ $Release$ $Date: 2005/02/09 17:05:48 $ $Author: sponcec3 $
  *
  *
  *
@@ -581,6 +581,61 @@ namespace castor {
        std::string* diskServer)
         throw (castor::exception::Exception);
 
+      /**
+       * List files to be deleted on a given diskServer.
+       * These are the files corresponding to DiskCopies
+       * in GCCANDIDATE status. This status is changed
+       * to BEINGDELETED atomically.
+       * @param diskServer the name of the DiskServer
+       * involved
+       * @return a list of files. The id of the DiskCopy
+       * is given as well as the local path on the server.
+       * Note that the returned vector should be deallocated
+       * by the caller
+       */
+      virtual std::vector<castor::stager::GCLocalFile>*
+      selectFiles2Delete(std::string diskServer)
+        throw (castor::exception::Exception);
+
+      /**
+       * Informs the stager of files effectively deleted.
+       * The DiskCopy id is geiven. The corresponding
+       * DiskCopies will be deleted from the catalog
+       * as well as the CastorFile if there is no other
+       * copy.
+       * @param diskCopyIds the list of diskcopies deleted
+       * given by their id
+       */
+      virtual void filesDeleted
+      (std::vector<u_signed64*>& diskCopyIds)
+        throw (castor::exception::Exception);
+
+      /**
+       * Informs the stager the a Get or Update SubRequest
+       * (without write) was finished successfully.
+       * The SubRequest and potentially the corresponding
+       * Request will thus be removed from the DataBase
+       * @param subReqId the id of the finished SubRequest
+       */
+      virtual void getUpdateDone(u_signed64 subReqId)
+        throw (castor::exception::Exception);
+
+      /**
+       * Informs the stager the a Get or Update SubRequest
+       * (without write) failed.
+       * The SubRequest's status will thus be set to FAILED
+       * @param subReqId the id of the failing SubRequest
+       */
+      virtual void getUpdateFailed(u_signed64 subReqId)
+        throw (castor::exception::Exception);
+
+      /**
+       * Informs the stager the a Put SubRequest failed.
+       * The SubRequest's status will thus be set to FAILED
+       * @param subReqId the id of the failing SubRequest
+       */
+      virtual void putFailed(u_signed64 subReqId)
+        throw (castor::exception::Exception);
 
     protected:
       

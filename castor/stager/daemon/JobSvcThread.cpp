@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.21 2005/02/03 10:10:42 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.22 2005/02/09 17:05:36 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.21 $ $Date: 2005/02/03 10:10:42 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.22 $ $Date: 2005/02/09 17:05:36 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -43,14 +43,17 @@ static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.21 $ $Dat
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/FileSystem.hpp"
 #include "castor/stager/GetUpdateStartRequest.hpp"
+#include "castor/stager/GetUpdateDone.hpp"
+#include "castor/stager/GetUpdateFailed.hpp"
+#include "castor/stager/PutFailed.hpp"
 #include "castor/stager/PutStartRequest.hpp"
 #include "castor/stager/Disk2DiskCopyDoneRequest.hpp"
 #include "castor/stager/MoverCloseRequest.hpp"
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/rh/GetUpdateStartResponse.hpp"
-#include "castor/replier/RequestReplier.hpp"
 #undef logfunc
 
+#include "stager_service_helper.hpp"
 #include "stager_job_service.h"
 #include "stager_macros.h"
 #include "serrno.h"
@@ -106,6 +109,9 @@ EXTERN_C int DLL_DECL stager_job_select(void **output) {
     types.push_back(castor::OBJ_PutStartRequest);
     types.push_back(castor::OBJ_MoverCloseRequest);
     types.push_back(castor::OBJ_Disk2DiskCopyDoneRequest);
+    types.push_back(castor::OBJ_GetUpdateDone);
+    types.push_back(castor::OBJ_GetUpdateFailed);
+    types.push_back(castor::OBJ_PutFailed);
     castor::stager::Request* req = stgSvc->requestToDo(types);
 
     if (0 == req) {
@@ -147,28 +153,6 @@ EXTERN_C int DLL_DECL stager_job_select(void **output) {
 namespace castor {
 
   namespace stager {
-
-    /**
-     * Sends a Response to a client
-     * In case of error, on writes a message to the log
-     * @param client the client where to send the response
-     * @param res the response to send
-     */
-    void replyToClient(castor::IClient* client,
-                       castor::rh::Response* res) {
-      char *func =  "castor::stager::replyToClient";
-      try {
-        STAGER_LOG_DEBUG(NULL, "Sending Response");
-        castor::replier::RequestReplier *rr =
-          castor::replier::RequestReplier::getInstance();
-        rr->sendResponse(client, res);
-        rr->sendEndResponse(client);
-      } catch (castor::exception::Exception e) {
-        serrno = e.code();
-        STAGER_LOG_DB_ERROR(NULL, func,
-                            e.getMessage().str().c_str());
-      }
-    }
 
     /**
      * Handles a StartRequest and replies to client.
@@ -441,6 +425,162 @@ namespace castor {
 
     }
 
+    /**
+     * Handles a GetUpdateDone request and replies to client.
+     * @param req the request to handle
+     * @param client the client where to send the response
+     * @param svcs the Services object to use
+     * @param stgSvc the stager service to use
+     * @param ad the address where to load/store objects in the DB
+     */
+    void handle_getUpdateDoneRequest(castor::stager::Request* req,
+                                     castor::IClient *client,
+                                     castor::Services* svcs,
+                                     castor::stager::IStagerSvc* stgSvc,
+                                     castor::BaseAddress &ad) {
+      // Usefull Variables
+      char *func =  "castor::stager::getUpdateDone";
+      std::string error;
+      castor::stager::GetUpdateDone *uReq;
+
+      try {
+
+        /* get the GetUpdateDoneRequest */
+        /* ---------------------------- */
+        // cannot return 0 since we check the type before calling this method
+        uReq = dynamic_cast<castor::stager::GetUpdateDone*> (req);
+
+        /* Invoking the method                */
+        /* ---------------------------------- */
+        STAGER_LOG_DEBUG(NULL, "Invoking getUpdateDone");
+        stgSvc->getUpdateDone(uReq->subReqId());
+
+      } catch (castor::exception::Exception e) {
+        serrno = e.code();
+        error = e.getMessage().str();
+        STAGER_LOG_DB_ERROR(NULL, func,
+                            e.getMessage().str().c_str());
+      }
+
+      /* Build the response             */
+      /* ------------------------------ */
+      STAGER_LOG_DEBUG(NULL, "Building Response");
+      castor::rh::BasicResponse res;
+      if (0 != serrno) {
+        res.setErrorCode(serrno);
+        res.setErrorMessage(error);
+      }
+
+      /* Reply To Client                */
+      /* ------------------------------ */
+      replyToClient(client, &res);
+
+    }
+
+    /**
+     * Handles a GetUpdateFailed request and replies to client.
+     * @param req the request to handle
+     * @param client the client where to send the response
+     * @param svcs the Services object to use
+     * @param stgSvc the stager service to use
+     * @param ad the address where to load/store objects in the DB
+     */
+    void handle_getUpdateFailedRequest(castor::stager::Request* req,
+                                       castor::IClient *client,
+                                       castor::Services* svcs,
+                                       castor::stager::IStagerSvc* stgSvc,
+                                       castor::BaseAddress &ad) {
+      // Usefull Variables
+      char *func =  "castor::stager::getUpdateFailed";
+      std::string error;
+      castor::stager::GetUpdateFailed *uReq;
+
+      try {
+
+        /* get the GetUpdateFailedRequest */
+        /* ------------------------------ */
+        // cannot return 0 since we check the type before calling this method
+        uReq = dynamic_cast<castor::stager::GetUpdateFailed*> (req);
+
+        /* Invoking the method                */
+        /* ---------------------------------- */
+        STAGER_LOG_DEBUG(NULL, "Invoking getUpdateFailed");
+        stgSvc->getUpdateFailed(uReq->subReqId());
+
+      } catch (castor::exception::Exception e) {
+        serrno = e.code();
+        error = e.getMessage().str();
+        STAGER_LOG_DB_ERROR(NULL, func,
+                            e.getMessage().str().c_str());
+      }
+
+      /* Build the response             */
+      /* ------------------------------ */
+      STAGER_LOG_DEBUG(NULL, "Building Response");
+      castor::rh::BasicResponse res;
+      if (0 != serrno) {
+        res.setErrorCode(serrno);
+        res.setErrorMessage(error);
+      }
+
+      /* Reply To Client                */
+      /* ------------------------------ */
+      replyToClient(client, &res);
+
+    }
+
+    /**
+     * Handles a PutFailed request and replies to client.
+     * @param req the request to handle
+     * @param client the client where to send the response
+     * @param svcs the Services object to use
+     * @param stgSvc the stager service to use
+     * @param ad the address where to load/store objects in the DB
+     */
+    void handle_putFailedRequest(castor::stager::Request* req,
+                                 castor::IClient *client,
+                                 castor::Services* svcs,
+                                 castor::stager::IStagerSvc* stgSvc,
+                                 castor::BaseAddress &ad) {
+      // Usefull Variables
+      char *func =  "castor::stager::PutFailed";
+      std::string error;
+      castor::stager::PutFailed *uReq;
+
+      try {
+
+        /* get the GetUpdateDoneRequest */
+        /* ---------------------------- */
+        // cannot return 0 since we check the type before calling this method
+        uReq = dynamic_cast<castor::stager::PutFailed*> (req);
+
+        /* Invoking the method                */
+        /* ---------------------------------- */
+        STAGER_LOG_DEBUG(NULL, "Invoking putFailed");
+        stgSvc->putFailed(uReq->subReqId());
+
+      } catch (castor::exception::Exception e) {
+        serrno = e.code();
+        error = e.getMessage().str();
+        STAGER_LOG_DB_ERROR(NULL, func,
+                            e.getMessage().str().c_str());
+      }
+
+      /* Build the response             */
+      /* ------------------------------ */
+      STAGER_LOG_DEBUG(NULL, "Building Response");
+      castor::rh::BasicResponse res;
+      if (0 != serrno) {
+        res.setErrorCode(serrno);
+        res.setErrorMessage(error);
+      }
+
+      /* Reply To Client                */
+      /* ------------------------------ */
+      replyToClient(client, &res);
+
+    }
+
   } // End of namespace stager
 
 } // End of namespace castor
@@ -548,6 +688,21 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
 
   case castor::OBJ_MoverCloseRequest:
     castor::stager::handle_moverCloseRequest
+      (req, client, svcs, stgSvc, ad);
+    break;
+
+  case castor::OBJ_GetUpdateDone:
+    castor::stager::handle_getUpdateDoneRequest
+      (req, client, svcs, stgSvc, ad);
+    break;
+
+  case castor::OBJ_GetUpdateFailed:
+    castor::stager::handle_getUpdateFailedRequest
+      (req, client, svcs, stgSvc, ad);
+    break;
+
+  case castor::OBJ_PutFailed:
+    castor::stager::handle_putFailedRequest
       (req, client, svcs, stgSvc, ad);
     break;
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.127 $ $Release$ $Date: 2005/02/04 13:29:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.128 $ $Release$ $Date: 2005/02/09 17:05:38 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -46,6 +46,13 @@
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/FileSystem.hpp"
 #include "castor/stager/CastorFile.hpp"
+#include "castor/stager/Files2Delete.hpp"
+#include "castor/stager/FilesDeleted.hpp"
+#include "castor/stager/GetUpdateDone.hpp"
+#include "castor/stager/GetUpdateFailed.hpp"
+#include "castor/stager/PutFailed.hpp"
+#include "castor/stager/GCLocalFile.hpp"
+#include "castor/stager/GCRemovedFile.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/TapeCopyForMigration.hpp"
 #include "castor/db/ora/OraStagerSvc.hpp"
@@ -190,6 +197,26 @@ const std::string castor::db::ora::OraStagerSvc::s_segmentsForTapeStatementStrin
 const std::string castor::db::ora::OraStagerSvc::s_anySegmentsForTapeStatementString =
   "BEGIN anySegmentsForTape(:1, :2); END;";
 
+/// SQL statement for selectFiles2Delete
+const std::string castor::db::ora::OraStagerSvc::s_selectFiles2DeleteStatementString =
+  "BEGIN selectFiles2Delete(:1, :2); END;";
+
+/// SQL statement for filesDeleted
+const std::string castor::db::ora::OraStagerSvc::s_filesDeletedStatementString =
+  "BEGIN filesDeleted(:1); END;";
+
+/// SQL statement for getUpdateDone
+const std::string castor::db::ora::OraStagerSvc::s_getUpdateDoneStatementString =
+  "BEGIN getUpdateDone(:1); END;";
+
+/// SQL statement for getUpdateFailed
+const std::string castor::db::ora::OraStagerSvc::s_getUpdateFailedStatementString =
+  "BEGIN getUpdateFailed(:1); END;";
+
+/// SQL statement for putFailed
+const std::string castor::db::ora::OraStagerSvc::s_putFailedStatementString =
+  "BEGIN putFailed(:1); END;";
+
 // -----------------------------------------------------------------------
 // OraStagerSvc
 // -----------------------------------------------------------------------
@@ -223,7 +250,12 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_resetStreamStatement(0),
   m_bestFileSystemForJobStatement(0),
   m_segmentsForTapeStatement(0),
-  m_anySegmentsForTapeStatement(0) {
+  m_anySegmentsForTapeStatement(0),
+  m_selectFiles2DeleteStatement(0),
+  m_filesDeletedStatement(0),
+  m_getUpdateDoneStatement(0),
+  m_getUpdateFailedStatement(0),
+  m_putFailedStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -283,6 +315,11 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_bestFileSystemForJobStatement);
     deleteStatement(m_segmentsForTapeStatement);
     deleteStatement(m_anySegmentsForTapeStatement);
+    deleteStatement(m_selectFiles2DeleteStatement);
+    deleteStatement(m_filesDeletedStatement);
+    deleteStatement(m_getUpdateDoneStatement);
+    deleteStatement(m_getUpdateFailedStatement);
+    deleteStatement(m_putFailedStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;
@@ -314,6 +351,11 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_bestFileSystemForJobStatement = 0;
   m_segmentsForTapeStatement = 0;
   m_anySegmentsForTapeStatement = 0;
+  m_selectFiles2DeleteStatement = 0;
+  m_filesDeletedStatement = 0;
+  m_getUpdateDoneStatement = 0;
+  m_getUpdateFailedStatement = 0;
+  m_putFailedStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -2151,4 +2193,156 @@ void castor::db::ora::OraStagerSvc::bestFileSystemForJob
   }
 }
 
-  
+// -----------------------------------------------------------------------
+// selectFiles2Delete
+// -----------------------------------------------------------------------
+std::vector<castor::stager::GCLocalFile>*
+castor::db::ora::OraStagerSvc::selectFiles2Delete
+(std::string diskServer)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_selectFiles2DeleteStatement) {
+    m_selectFiles2DeleteStatement =
+      createStatement(s_selectFiles2DeleteStatementString);
+    m_selectFiles2DeleteStatement->registerOutParam
+      (2, oracle::occi::OCCICURSOR);
+    m_selectFiles2DeleteStatement->setAutoCommit(true);
+  }
+  // Execute statement and get result
+  unsigned long id;
+  try {
+    m_selectFiles2DeleteStatement->setString(1, diskServer);
+    unsigned int nb = m_selectFiles2DeleteStatement->executeUpdate();
+    if (0 == nb) {
+      rollback();
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "selectFiles2Delete : Unable to select files to delete.";
+      throw ex;
+    }
+    // create result
+    std::vector<castor::stager::GCLocalFile>* result =
+      new std::vector<castor::stager::GCLocalFile>;
+    // Run through the cursor
+    oracle::occi::ResultSet *rs =
+      m_segmentsForTapeStatement->getCursor(2);
+    oracle::occi::ResultSet::Status status = rs->next();
+    while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      // Fill result
+      castor::stager::GCLocalFile f;
+      f.setFileName(rs->getString(1));
+      f.setDiskCopyId((u_signed64)rs->getDouble(2));
+      result->push_back(f);
+      status = rs->next();
+    }
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select files to delete :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// filesDeleted
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::filesDeleted
+(std::vector<u_signed64*>& diskCopyIds)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_filesDeletedStatement) {
+    m_filesDeletedStatement =
+      createStatement(s_filesDeletedStatementString);
+    m_filesDeletedStatement->setAutoCommit(true);
+  }
+  // Execute statement and get result
+  unsigned long id;
+  try {
+    oracle::occi::setVector
+      (m_filesDeletedStatement, 1, diskCopyIds,
+       "numList");
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to remove deleted files :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// getUpdateDone
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::getUpdateDone
+(u_signed64 subReqId)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_getUpdateDoneStatement) {
+    m_getUpdateDoneStatement =
+      createStatement(s_getUpdateDoneStatementString);
+    m_getUpdateDoneStatement->setAutoCommit(true);
+  }
+  // Execute statement and get result
+  unsigned long id;
+  try {
+    m_getUpdateDoneStatement->setDouble(1, subReqId);
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to clean Get/Update subRequest :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// getUpdateFailed
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::getUpdateFailed
+(u_signed64 subReqId)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_getUpdateFailedStatement) {
+    m_getUpdateFailedStatement =
+      createStatement(s_getUpdateFailedStatementString);
+    m_getUpdateFailedStatement->setAutoCommit(true);
+  }
+  // Execute statement and get result
+  unsigned long id;
+  try {
+    m_getUpdateFailedStatement->setDouble(1, subReqId);
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to clean Get/Update subRequest :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// putFailed
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::putFailed
+(u_signed64 subReqId)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_putFailedStatement) {
+    m_putFailedStatement =
+      createStatement(s_putFailedStatementString);
+    m_putFailedStatement->setAutoCommit(true);
+  }
+  // Execute statement and get result
+  unsigned long id;
+  try {
+    m_putFailedStatement->setDouble(1, subReqId);
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to clean Get/Update subRequest :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+}

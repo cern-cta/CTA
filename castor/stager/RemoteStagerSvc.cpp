@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2005/01/31 15:10:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2005/02/09 17:05:48 $ $Author: sponcec3 $
  *
  *
  *
@@ -38,6 +38,13 @@
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/FileSystem.hpp"
+#include "castor/stager/Files2Delete.hpp"
+#include "castor/stager/FilesDeleted.hpp"
+#include "castor/stager/GetUpdateDone.hpp"
+#include "castor/stager/GetUpdateFailed.hpp"
+#include "castor/stager/PutFailed.hpp"
+#include "castor/stager/GCLocalFile.hpp"
+#include "castor/stager/GCRemovedFile.hpp"
 #include "castor/stager/RemoteStagerSvc.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/GetUpdateStartRequest.hpp"
@@ -45,6 +52,7 @@
 #include "castor/stager/Disk2DiskCopyDoneRequest.hpp"
 #include "castor/stager/MoverCloseRequest.hpp"
 #include "castor/rh/GetUpdateStartResponse.hpp"
+#include "castor/rh/GCFilesResponse.hpp"
 #include "castor/rh/StartResponse.hpp"
 #include "castor/exception/NotSupported.hpp"
 #include <list>
@@ -631,4 +639,136 @@ int castor::stager::RemoteStagerSvc::getRemoteStagerClientTimeout() {
   }
 
   return ret_timeout;
+}
+
+// -----------------------------------------------------------------------
+// Files2DeleteResponseHandler
+// -----------------------------------------------------------------------
+/**
+ * A dedicated little response handler for the Files2Delete
+ * requests
+ */
+class Files2DeleteResponseHandler : public castor::client::IResponseHandler {
+public:
+  Files2DeleteResponseHandler
+  (std::vector<castor::stager::GCLocalFile>* result) :
+    m_result(result) {}
+
+  virtual void handleResponse(castor::rh::Response& r)
+    throw (castor::exception::Exception) {
+    castor::rh::GCFilesResponse *resp =
+      dynamic_cast<castor::rh::GCFilesResponse*>(&r);
+    if (0 != resp->errorCode()) {
+      castor::exception::Exception e(resp->errorCode());
+      e.getMessage() << resp->errorMessage();
+      throw e;
+    }
+    for (std::vector<castor::stager::GCLocalFile*>::iterator
+           it = resp->files().begin();
+         it != resp->files().end();
+         it++) {
+      m_result->push_back(**it);
+    }
+  };
+  virtual void terminate()
+    throw (castor::exception::Exception) {};
+private:
+  // where to store the diskCopy
+  std::vector<castor::stager::GCLocalFile>* m_result;
+};
+
+// -----------------------------------------------------------------------
+// selectFiles2Delete
+// -----------------------------------------------------------------------
+std::vector<castor::stager::GCLocalFile>*
+castor::stager::RemoteStagerSvc::selectFiles2Delete
+(std::string diskServer)
+  throw (castor::exception::Exception) {
+  // Build the Files2DeleteRequest
+  castor::stager::Files2Delete req;
+  req.setDiskServer(diskServer);
+  // Prepare a result vector
+  std::vector<castor::stager::GCLocalFile>* result =
+      new std::vector<castor::stager::GCLocalFile>;
+  // Build a response Handler
+  Files2DeleteResponseHandler rh(result);
+  // Uses a BaseClient to handle the request
+  castor::client::BaseClient client(getRemoteStagerClientTimeout());
+  client.sendRequest(&req, &rh);
+  return result;
+}
+
+// -----------------------------------------------------------------------
+// filesDeleted
+// -----------------------------------------------------------------------
+void castor::stager::RemoteStagerSvc::filesDeleted
+(std::vector<u_signed64*>& diskCopyIds)
+  throw (castor::exception::Exception) {
+  // Build the FilesDeletedRequest
+  castor::stager::FilesDeleted req;
+  castor::stager::GCRemovedFile* files =
+    new castor::stager::GCRemovedFile[diskCopyIds.size()];
+  int i = 0;
+  for (std::vector<u_signed64*>::iterator it = diskCopyIds.begin();
+       it != diskCopyIds.end();
+       it++) {
+    files[i].setDiskCopyId(**it);
+    req.files().push_back(&(files[i]));
+    i++;
+  }
+  // Build a response Handler
+  castor::client::BasicResponseHandler rh;
+  // Uses a BaseClient to handle the request
+  castor::client::BaseClient client(getRemoteStagerClientTimeout());
+  client.sendRequest(&req, &rh);
+  // cleanup
+  delete[](files);
+}
+
+// -----------------------------------------------------------------------
+// getUpdateDone
+// -----------------------------------------------------------------------
+void castor::stager::RemoteStagerSvc::getUpdateDone
+(u_signed64 subReqId)
+  throw (castor::exception::Exception) {
+  // Build the GetUpdateDoneRequest
+  castor::stager::GetUpdateDone req;
+  req.setSubReqId(subReqId);
+  // Build a response Handler
+  castor::client::BasicResponseHandler rh;
+  // Uses a BaseClient to handle the request
+  castor::client::BaseClient client(getRemoteStagerClientTimeout());
+  client.sendRequest(&req, &rh);
+}
+
+// -----------------------------------------------------------------------
+// getUpdateFailed
+// -----------------------------------------------------------------------
+void castor::stager::RemoteStagerSvc::getUpdateFailed
+(u_signed64 subReqId)
+  throw (castor::exception::Exception) {
+  // Build the GetUpdateFailedRequest
+  castor::stager::GetUpdateFailed req;
+  req.setSubReqId(subReqId);
+  // Build a response Handler
+  castor::client::BasicResponseHandler rh;
+  // Uses a BaseClient to handle the request
+  castor::client::BaseClient client(getRemoteStagerClientTimeout());
+  client.sendRequest(&req, &rh);
+}
+
+// -----------------------------------------------------------------------
+// putFailed
+// -----------------------------------------------------------------------
+void castor::stager::RemoteStagerSvc::putFailed
+(u_signed64 subReqId)
+  throw (castor::exception::Exception) {
+  // Build the PutFailedRequest
+  castor::stager::PutFailed req;
+  req.setSubReqId(subReqId);
+  // Build a response Handler
+  castor::client::BasicResponseHandler rh;
+  // Uses a BaseClient to handle the request
+  castor::client::BaseClient client(getRemoteStagerClientTimeout());
+  client.sendRequest(&req, &rh);
 }

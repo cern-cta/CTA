@@ -968,3 +968,84 @@ BEGIN
   OPEN segments FOR SELECT * FROM Segment 
                      where id MEMBER OF segs;
 END;
+
+/* PL/SQL method implementing selectFiles2Delete */
+CREATE OR REPLACE PROCEDURE selectFiles2Delete
+(DiskServerId IN NUMBER,
+ GCLocalFiles OUT castor.GCLocalFiles_Cur) AS
+  files "numList";
+BEGIN
+  
+  SELECT DiskCopy.id BULK COLLECT INTO files
+    FROM DiskCopy, FileSystem, DiskServer
+   WHERE DiskCopy.fileSystem = FileSystem.id
+     AND FileSystem.DiskServer = DiskServer.id
+     AND DiskServer.name = DiskServer
+     AND DiskCopy.status = 8 -- GC_CANDIDATE
+     FOR UPDATE;
+  IF files.COUNT > 0 THEN
+    UPDATE DiskCopy set status = 9 -- BEING_DELETED
+     WHERE id MEMBER OF files;
+  END IF;
+  OPEN GCLocalFiles FOR
+    SELECT FileSystem.mountPoint||DiskCopy.path, DiskCopy.id 
+      FROM DiskCopy, FileSystem
+     WHERE DiskCopy.fileSystem = FileSystem.id
+       AND DiskCopy.id MEMBER OF files;
+END;
+
+/* PL/SQL method implementing filesDeleted */
+CREATE OR REPLACE PROCEDURE filesDeleted
+("numlist" IN fileIds) AS
+  cfId NUMBER;
+  nb NUMBER;
+BEGIN
+  -- Loop over the deleted files
+  FOR dcid IN fileIds LOOP
+    -- delete the DiskCopy
+    DELETE FROM DiskCopy WHERE id = dcid
+      RETURNING castorFile INTO cfId;
+    -- Lock the Castor File
+    SELECT * FROM CastorFile where id = cfID FOR UPDATE;
+    -- See whether the castorfile has no other DiskCopy
+    SELECT count(*) INTO nb FROM DiskCopy
+      WHERE castorFile = cfId;
+    -- If any DiskCopy, give up
+    IF nb > 0 THEN CONTINUE; END IF;
+    -- See whether the castorfile has any TapeCopy
+    SELECT count(*) INTO nb FROM TapeCopy
+      WHERE castorFile = cfId;
+    -- If any TapeCopy, give up
+    IF nb > 0 THEN CONTINUE; END IF;
+    -- See whether the castorfile has any SubRequest
+    SELECT count(*) INTO nb FROM SubRequest
+      WHERE castorFile = cfId;
+    -- If any SubRequest, give up
+    IF nb > 0 THEN CONTINUE; END IF;
+    -- Delete the CastorFile
+    DELETE FROM CastorFile WHERE id = cfId;
+  END LOOP;
+END;
+
+/* PL/SQL method implementing getUpdateDone */
+CREATE OR REPLACE PROCEDURE getUpdateDone
+(subReqId IN NUMBER) AS
+BEGIN
+  archiveSubReq(subReqId);
+END;
+
+/* PL/SQL method implementing getUpdateFailed */
+CREATE OR REPLACE PROCEDURE getUpdateFailed
+(subReqId IN NUMBER) AS
+BEGIN
+  UPDATE SubRequest SET status = 7 -- FAILED
+   WHERE id = subReqId;
+END;
+
+/* PL/SQL method implementing segmentsForTape */
+CREATE OR REPLACE PROCEDURE putFailed
+(subReqId IN NUMBER) AS
+BEGIN
+  UPDATE SubRequest SET status = 7 -- FAILED
+   WHERE id = subReqId;
+END;

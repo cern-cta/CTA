@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.79 $ $Release$ $Date: 2005/02/03 12:34:29 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.80 $ $Release$ $Date: 2005/02/09 17:05:37 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -124,11 +124,18 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamEndResponseCnv.cpp \
               io/StreamFileResponseCnv.cpp \
               io/StreamFileSystemCnv.cpp \
+              io/StreamFiles2DeleteCnv.cpp \
+              io/StreamFilesDeletedCnv.cpp \
               io/StreamGetUpdateStartRequestCnv.cpp \
               io/StreamGetUpdateStartResponseCnv.cpp \
+              io/StreamGCFilesResponseCnv.cpp \
+              io/StreamGCRemovedFileCnv.cpp \
+              io/StreamGetUpdateDoneCnv.cpp \
+              io/StreamGetUpdateFailedCnv.cpp \
               io/StreamMessageAckCnv.cpp \
               io/StreamMoverCloseRequestCnv.cpp \
               io/StreamPtrCnv.cpp \
+              io/StreamPutFailedCnv.cpp \
               io/StreamPutStartRequestCnv.cpp \
               io/StreamQueryParameterCnv.cpp \
               io/StreamDisk2DiskCopyDoneRequestCnv.cpp \
@@ -176,6 +183,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               rh/FileResponseCInt.cpp \
               rh/GetUpdateStartResponse.cpp \
               rh/GetUpdateStartResponseCInt.cpp \
+              rh/GCFilesResponse.cpp \
+              rh/GCFilesResponseCInt.cpp \
               rh/Response.cpp \
               rh/ResponseCInt.cpp \
               rh/StringResponse.cpp \
@@ -217,8 +226,20 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/FileSystem.cpp \
               stager/FileSystemCInt.cpp \
               stager/FileSystemStatusCodes.cpp \
+              stager/Files2Delete.cpp \
+              stager/Files2DeleteCInt.cpp \
+              stager/FilesDeleted.cpp \
+              stager/FilesDeletedCInt.cpp \
+              stager/GetUpdateDone.cpp \
+              stager/GetUpdateDoneCInt.cpp \
+              stager/GetUpdateFailed.cpp \
+              stager/GetUpdateFailedCInt.cpp \
               stager/GetUpdateStartRequest.cpp \
               stager/GetUpdateStartRequestCInt.cpp \
+              stager/GCLocalFile.cpp \
+              stager/GCLocalFileCInt.cpp \
+              stager/GCRemovedFile.cpp \
+              stager/GCRemovedFileCInt.cpp \
               stager/IStagerSvcCInt.cpp \
               stager/MoverCloseRequest.cpp \
               stager/MoverCloseRequestCInt.cpp \
@@ -226,6 +247,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/PutStartRequestCInt.cpp \
               stager/QryRequest.cpp \
               stager/QryRequestCInt.cpp \
+              stager/PutFailed.cpp \
+              stager/PutFailedCInt.cpp \
               stager/ReqIdRequest.cpp \
               stager/ReqIdRequestCInt.cpp \
               stager/Request.cpp \
