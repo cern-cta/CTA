@@ -4,28 +4,28 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.5 $ $Date: 2001/10/04 13:42:29 $ CERN CN-PDP/DM Claire Redmond/Andrew Askew/Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.6 $ $Date: 2002/09/19 06:54:52 $ CERN CN-PDP/DM Claire Redmond/Andrew Askew/Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
-#include <pwd.h>
-#if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-#include <regex.h>
-#else
+#ifdef _WIN32
+#include <winsock2.h>
+#endif
+#include "Cpwd.h"
+#if ! (defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux))
 #define INIT       register char *sp = instring;
 #define GETC()     (*sp++)
 #define PEEKC()    (*sp)
 #define UNGETC(c)  (--sp)
 #define RETURN(c)  return(c)
-#define ERROR(c)   return(0)
-#include <regexp.h>
 #endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include "Cregexp.h"
 #include <time.h>
 #include <Cgetopt.h>
 #include <osdep.h>
@@ -60,9 +60,12 @@ extern char *loc1, *loc2;	/* Regular expression character position vars */
 
 int total_mounts[MAXDGP];	/* Total number of mounts made */
 int total_requests[MAXDGP];	/* Total number of requests made */
+int total_user_requests[MAXDGP];
+int total_user_mounts[MAXDGP];
 int stdin_flag = 0;		/* Standard input flag */
 int server_failed = 0;	        /* Flag set if an open or read has failed */
 int max_acctreclen = 0;
+int count=0;			/* Counter */ 
 
 static char devgrps[MAXDGP][CA_MAXDGNLEN+1]; /* Array storing device group names */
 
@@ -102,6 +105,16 @@ struct grpstats {		/* Structure to store group statistics */
 };
 struct grpstats *grp_mounts = NULL;
 struct grpstats *grp_requests = NULL;
+
+struct userstats{		/* Structure to store user statistics */
+  uid_t uid;			/* ID of the user */
+  gid_t gid;			/* Group id */
+  int nb[MAXDGP];		/* Number of mounts */
+  struct userstats *next;	/* Pointer to next record */
+  struct userstats *prev;	/* Pointer to previous record */
+};
+struct userstats *users_mounts=NULL;
+struct userstats *users_requests=NULL;
 
 struct job_ids {		/* Structure to store list of job ids */
   int jid;			/* Job id */
@@ -231,16 +244,12 @@ char **argv;
   int swappeds[MAXSERVS];	/* If set to 1 then byte order swapped */
   int Tflag = 0;		/* Time to mount request */
   char reqserv_list[MAXSERVS][9]; /* List of servers to be accessed */
+  int uflag = 0;		/* Informations on the most active user wanted*/
   int Vflag = 0;		/* Set if list of specific volume requested */
   int vflag = 0;		/* Open and processing messages wanted */
-#if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-  regex_t expstruct;		/* Regular expression structure */
-#else
-  char expbuf[257];		/* Regular expression buffer */
-#endif
+  Cregexp_t *expstruct = NULL;		/* Regular expression structure */
   int wflag = 0;		/* If set week number given */
   int Yflag = 0;		/* Summary information requested */
-
 
 /* Set acctfile = NULL and create list of valid device groups */
 
@@ -269,7 +278,7 @@ char **argv;
   if ( argc > 1 ) printf("Run specifications: ");
   Copterr = 1;
   Coptind = 1;
-  while ((c = Cgetopt_long(argc, argv, "De:f:g:LMmQS:s:TV:vw:Y", longopts, NULL)) != EOF) {
+  while ((c = Cgetopt_long(argc, argv, "De:f:g:LMmQS:s:TuV:vw:Y", longopts, NULL)) != EOF) {
     switch (c) {
       case 'A':			/* Accounting directory */
                  strcpy(acctdir, Coptarg);
@@ -351,12 +360,11 @@ char **argv;
                  Tflag++;
                  printf("Device statistics");
                  break;
+      case 'u':			/* Details of the most active user for each tape */      
+                 uflag++;
+                 break;		 
       case 'V':			/* List of specific volume details */
-#if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
                  if ((chk_vol(Coptarg, &expstruct)) == 0)
-#else
-                 if ((chk_vol(Coptarg, expbuf, sizeof(expbuf))) == 0)
-#endif
                    errflg++;
                  else {
                    Vflag++;
@@ -401,7 +409,7 @@ char **argv;
 
 /* If no options are given, default a Y flag */
 
-  if (!Dflag && !Lflag && !Mflag && !mflag && !Qflag && !Tflag && !Vflag && !Yflag) {
+  if (!Dflag && !Lflag && !Mflag && !mflag && !Qflag && !Tflag && !uflag && !Vflag && !Yflag) {
     Yflag++;
     printf(" Summary information\n");
   } else printf("\n");
@@ -412,6 +420,7 @@ char **argv;
 
   if (errflg) {
     usage(argv[0]);
+    if (expstruct != NULL) free(expstruct);
     exit(1);
   }
 
@@ -458,7 +467,7 @@ char **argv;
 /* continue. */
 
   if (!starttime || !endtime || Mflag || mflag || Yflag || Tflag || Lflag
-                                      || Vflag || (Dflag && stdin_flag)) {
+                             || uflag || Vflag || (Dflag && stdin_flag)) {
     for (i = 0; i < numservs; i++) {
       server_failed = 0;
       if (!stdin_flag) {
@@ -487,7 +496,7 @@ char **argv;
         if ((fd_acct = rfio_open(acctfile, O_RDONLY)) < 0) {
           fprintf(stderr, "%s: open error: %s\n", acctfile, rfio_serror());
           server_failed = 1;
-          if (Mflag || mflag || Yflag || Tflag || Lflag || Vflag) {
+          if (Mflag || mflag || Yflag || Tflag || uflag || Lflag || Vflag) {
             strcpy (server_errors[num_serv_errors], reqserv_list[i]);
             num_serv_errors++;
           }
@@ -535,12 +544,12 @@ char **argv;
           }
           rp = (struct accttape *)buf;
           if (((Dflag && stdin_flag) || Tflag || Mflag || mflag || Yflag
-                                              || Vflag || Lflag) && swapped) {
+                                     || uflag || Vflag || Lflag) && swapped) {
             swap_fields(rp);
             swapped = 0;
           }
 
-          if (Mflag && rp->subtype == TP2MOUNT) {
+          if ((Mflag || uflag) && rp->subtype == TP2MOUNT) {
             if (addtpmnt(rp, num_devs)) {
               errflg++;
             }
@@ -569,11 +578,7 @@ char **argv;
             }
           }
           if ((Lflag || Vflag) && (rp->subtype == TPMOUNTED)) {
-#if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-            print_tpentry(rp, accthdr.timestamp, devgroup, Lflag, &expstruct,reqserv_list[i]);
-#else
-            print_tpentry(rp, accthdr.timestamp, devgroup, Lflag, expbuf,reqserv_list[i]);
-#endif
+            print_tpentry(rp, accthdr.timestamp, devgroup, Lflag, expstruct,reqserv_list[i]);
           }
         }
 	if ( server_failed ) {
@@ -745,6 +750,9 @@ char **argv;
   if (Tflag) {
     print_time_details(starttime, endtime);
   }
+  if (uflag) {
+    print_mountdetails(starttime, endtime, num_devs, 'u', devgroup);
+  }
   if (Yflag) {
     print_summary(starttime, endtime, num_devs, sumstats, devgroup);
   }
@@ -754,6 +762,7 @@ char **argv;
       printf("Server %s failed, no information read\n", server_errors[i]);
     }
   }
+  if (expstruct != NULL) free(expstruct);
   if (errflg) {
     exit (2);
   }
@@ -1127,14 +1136,13 @@ struct summary *sumstats;
   else {
     sumstats->mounts[i]++;
   }
-
   return (0);
 }
 
 /* ************************************************************************** */
 
 
-/* Function to enter group mount information */
+/* Function to enter group and user mount information */
 
 int addtpmnt(rp, num_devs)
 struct accttape *rp;
@@ -1144,9 +1152,61 @@ int num_devs;
   int found = 0;			/* Set if matching record found */
   struct grpstats *gp = NULL;		/* Pointer to grpstats record */
   struct grpstats *prev = NULL;		/* Pointer to grpstats record */
+  struct userstats *usr = NULL;		/* Pointer to userstats record */
+  struct userstats *previous = NULL;	/* Pointer to userstats record */
 
+/* ******************************************************************************************** */
 
 /* Find matching record or create a new one */
+
+  if (rp->subtype == TP2MOUNT) {
+    usr = users_requests;
+  }
+  else if (rp->subtype == TPMOUNTED) {
+    usr = users_mounts;
+  }
+
+  while (usr) {
+    if (rp->uid == usr->uid && rp->gid == usr->gid) {
+      found = 1;
+      break;
+    }
+    previous = usr;
+    usr = usr->next;
+  }
+
+  if (!found) {
+    usr = (struct userstats *)calloc(1, sizeof(struct userstats));
+    if (rp->subtype == TP2MOUNT) {
+      if (users_requests == NULL) {
+        users_requests = usr;
+        users_requests->next = NULL;
+        users_requests->prev = NULL;
+      }
+      else {
+        usr->next = NULL;
+        usr->prev = previous;
+        previous->next = usr;
+      }
+    }
+    else if (rp->subtype == TPMOUNTED) {
+      if (users_mounts == NULL) {
+        users_mounts = usr;
+        users_mounts->next = NULL;
+      }
+      else {
+        usr->next = NULL;
+        previous->next = usr;
+      }
+    }
+
+    usr->gid = rp->gid;
+    usr->uid = rp->uid;
+  }
+/* ******************************************************************************************** */
+/* Find matching record or create a new one */
+
+  found=0;
 
   if (rp->subtype == TP2MOUNT) {
     gp = grp_requests;
@@ -1197,13 +1257,13 @@ int num_devs;
       break;
     }
   }
-
   if (i == num_devs) {
     fprintf(stderr, "Invalid dgn: %s\n", rp->dgn);
     return(1);
   } 
   else {
     gp->nb[i]++;
+    usr->nb[i]++;
     if (rp->subtype == TP2MOUNT) {
       total_requests[i]++;
     }
@@ -1215,8 +1275,131 @@ int num_devs;
 }
 
 /* ************************************************************************** */
+/* Function to sort users from the most active to the less*/ 
 
 
+
+sort_usrstats(num_devs,device_group_counter)
+{
+  struct userstats *usr = NULL;		    /* Pointer to userstats record */
+  struct group *gr = NULL;				/* Pointer to group record */
+  struct passwd *pw = NULL;
+  struct userstats *current_max = NULL;
+  int finished_sorting = 0;
+  struct userstats *sortedlist_start = NULL;
+  struct userstats *sortedlist = NULL;
+  int element_count;
+
+
+  usr = users_requests;                 
+  if (usr == NULL) {
+    fprintf(stderr, "User list empty\n");
+    return(1);
+  }
+
+  usr = users_requests;
+  printf("\n");
+  while (usr != NULL) {
+    element_count++;
+    usr = usr->next;
+}
+
+  while (!finished_sorting) {
+    usr = users_requests;
+    current_max = NULL;
+
+    /* Finding the max in the list */
+    while (usr != NULL) {
+      if (current_max == NULL) {
+        current_max = usr;
+      } else {
+        if (usr->nb[device_group_counter]>current_max->nb[device_group_counter]) {
+          current_max = usr;
+        }
+      }
+      usr = usr->next;
+    }
+    if (current_max == NULL) {
+      break;
+    }
+
+    /* Removing the element from the first list */
+    if (current_max->next == NULL) {
+      if (current_max->prev == NULL) {
+        /* One element list */
+        users_requests = NULL;
+        finished_sorting = 1;
+      } else {
+        /* Max is last element in list */
+        current_max->prev->next = NULL;
+      }
+    } else {
+      /* In this case, the max is NOT the last element in list */
+      if (current_max->prev == NULL) {
+        /* First element of the list */
+        users_requests = current_max->next;
+        current_max->next->prev = NULL;
+      } else {
+        /* Max is a normal element in list */
+        current_max->prev->next = current_max->next;
+        current_max->next->prev = current_max->prev;
+      }		
+    }
+    
+    /* Now adding the element to the new list */
+    if (sortedlist == NULL) {
+      sortedlist = current_max;
+      sortedlist_start = current_max;
+      current_max->next = NULL;
+      current_max->prev = NULL;	
+    } else {
+      sortedlist->next = current_max;
+      current_max->next = NULL;
+      current_max->prev = sortedlist;
+      sortedlist = sortedlist->next;			
+    }
+  } 
+  printsorted_list(sortedlist_start,device_group_counter);
+
+  /* Now resetting users_requests */
+  users_requests = sortedlist_start;
+
+  return(0);
+}
+
+ /* ********************************************************************* */  
+/* Function to print the result of the sorted list*/
+  
+printsorted_list(sortedlist_start,device_group_counter)
+     struct userstats *sortedlist_start;
+{
+  
+  struct group *gr = NULL;				
+  struct passwd *pw = NULL;
+  struct userstats *sortedlist;
+  int i=0;
+  sortedlist = sortedlist_start;
+  {
+    while (i<20 && sortedlist!=NULL && sortedlist->nb[device_group_counter]){
+      
+      if (pw = getpwuid(sortedlist->uid)) {
+        printf("%-10s ", pw->pw_name);
+      } else {
+        printf("%-10d ", sortedlist->uid);
+      }
+      if (gr = getgrgid(sortedlist->gid)) {
+        printf("%-8s ", gr->gr_name);
+      } else  {
+        printf("%-8d ", sortedlist->gid);
+      }
+      printf(" %d \n", sortedlist->nb[device_group_counter]);
+      sortedlist=sortedlist->next;
+      i++;
+    }
+    return (0);
+  }
+}	
+/* *************************************************************************** */
 /* Function to validate device group */
 
 int chk_devgrp(arg, num_devs)
@@ -1269,24 +1452,13 @@ int numservs;
 
 /* Function to validate volume vid */
 
-#if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 int chk_vol(arg, expstruct)
 char *arg;
-regex_t *expstruct;
-#else
-int chk_vol(arg, expbuf, expbufsize)
-char *arg;
-char *expbuf;
-int expbufsize;
-#endif
+Cregexp_t **expstruct;
 {
   int ok = 1;			/* Flag unset if not valid */
 
-#if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-  if ((regcomp(expstruct, arg, REG_EXTENDED|REG_ICASE)) != 0) {
-#else
-  if ((compile(arg, expbuf, expbuf + expbufsize, '\0')) == 0) {
-#endif
+  if ((*expstruct = Cregexp_comp(arg)) == NULL) {
     fprintf(stderr, "Volume vid %s not parsed by regular expression function\n", arg);
     ok = 0;
   }
@@ -1345,7 +1517,6 @@ char devgrps[MAXDGP][CA_MAXDGNLEN+1];
   char *d = NULL;		/* Token pointer */
   FILE *fp = NULL;		/* File pointer */
   int num_devs = 0;		/* Count of number of devices found */
-  char buf[128];		/* Input buffer */
   char *server_list = NULL;	/* Pointer to matching entry */
   char *current_server = NULL;	/* Pointer to token */
   struct servlist *currentserv = NULL; /* Pointer to next server name entry */
@@ -1398,11 +1569,8 @@ create_serverlist(list, num_devs)
 char list[MAXSERVS][9];
 int num_devs;
 {
-  char *server_list = NULL;	/* Pointer to matching entry */
   char *current_server = NULL;	/* Pointer to token */
-  int i = 0;			/* Counter */
   int j = 0;			/* Counter */
-  int k = 0;			/* Counter */
   int server_found = 0;		/* Flag set if server found */
   int numservs = 0;		/* Number of servers */
 #if defined(VDQM)
@@ -1446,7 +1614,7 @@ int num_devs;
   char *server_list = NULL;	/* Pointer to matching entry */
   char *current_server = NULL;	/* Pointer to token */
   int numservs = 0;		/* Number of servers to be read */
-  int i = 0;
+
 #if defined(VDQM)
   DrvList_t *tmpdrv = NULL;
 #endif /* VDQM */
@@ -1787,7 +1955,6 @@ int *div;
 
 /* ************************************************************************** */
 
-
 /* Function to print out device usage statistics */
 
 int print_devusage (starttime, endtime, divisions, stdin_flag)
@@ -1838,7 +2005,9 @@ int stdin_flag;
 /* Calculate total period of time in seconds */
 
   period = endtime - starttime;
+ 
 
+/* ************************************************** */
 
 /* Print out device usage for each time division */
 
@@ -1908,6 +2077,7 @@ char devgroup[CA_MAXDGNLEN+1];
 {
   struct grpstats *gp = NULL;	/* Pointer to grpstats record */
   struct group *gr = NULL;	/* Pointer to group record */
+  struct userstats *usr;	/*pointer to userstats record */ 
   int i = 0;			/* Counter */
   int devgroupnum = -1;		/* Index of devgroup in devgrps */
 
@@ -1932,64 +2102,82 @@ char devgroup[CA_MAXDGNLEN+1];
 /* requests for that group only. */
 
   if (option == 'M') {
-    printf("\nNumber of tape mount requests");
+    int device_group_counter;
+    usr = users_requests;
+    if (usr == NULL) {
+      fprintf(stderr, "User list empty\n");
+      return(1);
+    }
   }
   else if (option == 'm') {
     printf("\nNumber of physical tape mounts");
   }
+  else if (option == 'u'){
+    int device_group_counter;
+    printf("\n\n**************************************");
+    printf("\n** Most active users by device group **");
+    printf("\n**************************************");
+
+    for(device_group_counter=0; device_group_counter<num_devs; device_group_counter++) {
+      printf("\n\nDevice group name: %-8s\n",devgrps[device_group_counter]);
+      sort_usrstats(num_devs,device_group_counter);
+    }
+  }
 
   print_time_interval(starttime, endtime);
-  printf("\n\nGroup    ");
-  if (devgroupnum == -1) {
-    for (i = 0; i < num_devs; i++) {
-      printf ("%-8s", devgrps[i]);
-    }
-  }
-  else {
-    printf ("%-8s", devgrps[devgroupnum]);
-  }
-  printf ("\n");
-
-  if (option == 'M') {
-    gp = grp_requests;
-  }
-  else if (option == 'm') {
-    gp = grp_mounts;
-  }
-
-  while (gp) {
-    if ( (gr = getgrgid(gp->gid)) == NULL ) {
-      printf("\n%-8d",gp->gid);
-    } else {
-      printf("\n%-8s", gr->gr_name);
-    }
+  if (option != 'u'){
+    printf("\n\nGroup    ");
     if (devgroupnum == -1) {
       for (i = 0; i < num_devs; i++) {
-        printf("%5d   ", gp->nb[i]);
+        printf ("%-8s", devgrps[i]);
       }
     }
     else {
-      printf("%5d   ", gp->nb[devgroupnum]);
+      printf ("%-8s", devgrps[devgroupnum]);
     }
-    gp = gp->next;
-  }
-  printf("\nTotal   ");
-  if (devgroupnum == -1) {
-    for (i = 0; i < num_devs; i++) {
-      if (option == 'M') {
-        printf("%5d   ", total_requests[i]);
-      }
-      else if (option == 'm') {
-        printf("%5d   ", total_mounts[i]);
-      }
-    }
-  }
-  else {
+    printf ("\n");
+
     if (option == 'M') {
-      printf("%5d   ", total_requests[devgroupnum]);
+      gp = grp_requests;
     }
     else if (option == 'm') {
-      printf("%5d   ", total_mounts[devgroupnum]);
+      gp = grp_mounts;
+    }
+    
+    while (gp) {
+      if ( (gr = getgrgid(gp->gid)) == NULL ) {
+        printf("\n%-8d",gp->gid);
+      } else {
+        printf("\n%-8s", gr->gr_name);
+      }
+      if (devgroupnum == -1) {
+        for (i = 0; i < num_devs; i++) {
+          printf("%5d   ", gp->nb[i]);
+        }
+      }
+      else {
+        printf("%5d   ", gp->nb[devgroupnum]);
+      }
+      gp = gp->next;
+    }
+    printf("\nTotal   ");
+    if (devgroupnum == -1) {
+      for (i = 0; i < num_devs; i++) {
+        if (option == 'M') {
+          printf("%5d   ", total_requests[i]);
+        }
+        else if (option == 'm') {
+          printf("%5d   ", total_mounts[i]);
+        }
+      }
+    }
+    else {
+      if (option == 'M') {
+        printf("%5d   ", total_requests[devgroupnum]);
+      }
+      else if (option == 'm') {
+        printf("%5d   ", total_mounts[devgroupnum]);
+      }
     }
   }
   printf("\n");
@@ -2017,6 +2205,7 @@ int num_devs;
   time_t pr_time = 0;		/* Division time value */
   int notprinted_dev[MAXDGP];	/* Boolean values used if queue exists */
   struct servlist *currentserv = NULL; /* Pointer to servlist record */
+
 
   for (i = 0; i < num_devs; i++) {
     notprinted_dev[i] = 1;
@@ -2109,11 +2298,12 @@ char devgroup[CA_MAXDGNLEN+1];
   int t_requests = 0;
   int t_mounts = 0;
   int devgroupnum = -1;		/* Index of devgroup in devgrps */
+  struct userstats *usr = NULL;	/* Pointer to userstats */
+  usr= (struct userstats *)calloc(1, sizeof(struct userstats));
 
+  /* Set devgroupnum according to the devgroup name on the command line.  If no */
+  /* devgroup name was set then leave devgroupnum at -1. */
 
-/* Set devgroupnum according to the devgroup name on the command line.  If no */
-/* devgroup name was set then leave devgroupnum at -1. */
- 
   if (devgroup[0] != '\0') {
     for (i = 0; i < num_devs; i++) {
       if ((strcmp(devgrps[i], devgroup)) == 0) {
@@ -2128,8 +2318,8 @@ char devgroup[CA_MAXDGNLEN+1];
 
   printf("\nNumber of tape mount requests");
   print_time_interval(starttime, endtime);
-
   printf("\n\nReason\t\t\t");
+
   if (devgroupnum == -1) {
     for (i = 0; i< num_devs; i++) {
       printf("%-8s", devgrps[i]);
@@ -2315,53 +2505,25 @@ time_t endtime;
 
 /* Function to print out detailed list of mounted volumes */
 
-#if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 int print_tpentry(rp, timestamp, devgroup, Lflag, expstruct,servname)
 struct accttape *rp;
 time_t timestamp;
 char devgroup[CA_MAXDGNLEN+1];
 int Lflag;
-regex_t *expstruct;
+Cregexp_t *expstruct;
 char *servname;
-#else
-int print_tpentry(rp, timestamp, devgroup, Lflag, expbuf,servname)
-struct accttape *rp;
-time_t timestamp;
-char devgroup[CA_MAXDGNLEN+1];
-int Lflag;
-char *expbuf;
-char *servname;
-#endif
 {
   char strtime[27];
   struct passwd *pw = NULL;
   struct group *gr = NULL;
   char user[20];
   char group[20];
-  int i = 0;
-#if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-  regmatch_t *expmatch = NULL;
-  expmatch = (regmatch_t *)calloc(1, sizeof(regmatch_t));
-#endif
 
   if (!Lflag) {
-#if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-    if ((regexec(expstruct, &(rp->vid[0]), 1, expmatch, 0)) == 0) {
-/*    if ((expmatch[0].rm_so == 0) && (expmatch[0].rm_eo == ((strlen (rp->vid) + 1) * sizeof (char)))) { */
-        Lflag++;
-/*    } */
+    if (Cregexp_exec(expstruct, &(rp->vid[0])) == 0) {
+      Lflag++;
     }
-#else
-    if ((step(rp->vid, expbuf)) != 0) {
-/*    if ((&loc1 == &(rp->vid[0])) && (&loc2 == (&(rp->vid[0]) + (strlen (rp->vid) + 1)))) { */
-        Lflag++;
-/*    } */
-    }
-#endif
   }
-#if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-  free(expmatch);
-#endif
 
   if (Lflag) {
     if ((devgroup[0] == '\0') || (strcmp(rp->dgn, devgroup) == 0)) {
@@ -2496,6 +2658,6 @@ char *cmd;
   fprintf(stderr, "Usage: %s ", cmd);
   fprintf(stderr, "%s%s%s", "[--acctdir accounting_dir][-D][-e end_time]\n",
     "\t[-f accounting_file][-g device_group][-L][-M][-m][-Q][-S server name]\n",
-    "\t[-s start_time][-T][-V volume_label][-v][-w week_number][-Y]\n");
+    "\t[-s start_time][-T][-u][-V volume_label][-v][-w week_number][-Y]\n");
   return(0);
 }
