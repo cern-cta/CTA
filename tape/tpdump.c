@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.2 $ $Date: 1999/11/08 06:32:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.3 $ $Date: 1999/11/08 06:51:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpdump - analyse the content of a tape */
@@ -252,8 +252,12 @@ char	**argv;
 
 	/* Set default values */
 
-	if (blksiz < 0) blksiz = 65536;
-#if defined(_AIX) && (defined(_IBMESA) || defined(RS6000PCTA))
+	if (blksiz < 0)
+		if (strcmp (devtype, "SD3") == 0)
+			blksiz = 262144;
+		else
+			blksiz = 65536;
+#if defined(_AIX) && defined(RS6000PCTA)
 	if (blksiz > 65535) blksiz = 65535;
 #endif
 	if (maxbyte < 0) maxbyte = 320;
