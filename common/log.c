@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/ADC/CA
  * All rights reserved
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)log.c,v 1.9 2000/05/31 10:33:53 CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.12 $ $Date: 2003/03/11 12:26:38 $ CERN IT/ADC/CA Jean-Damien Durand";
 #endif /* not lint */
 
 /* log.c        - generalized logging routines                          */
