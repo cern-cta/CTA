@@ -6,7 +6,7 @@
 */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.15 $ $Date: 2004/08/05 14:29:33 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.16 $ $Date: 2004/08/05 14:42:56 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -978,8 +978,10 @@ dlf_log_message_t *msg;
 	        fl_struct.l_len = 0;
 	        fl_struct.l_pid = 0;
 	
-	        if (fcntl(fd, F_SETLKW64, &fl_struct) < 0)
+	        if (fcntl(fd, F_SETLKW64, &fl_struct) < 0) {
+		     close(fd);
 		     return (-1);
+		}
 	}
 #endif
 	n = Csnprintf
