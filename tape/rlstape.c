@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.17 $ $Date: 2000/04/06 08:42:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.18 $ $Date: 2000/04/07 13:09:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -133,7 +133,7 @@ char	**argv;
 	}
 #endif
 	if (*vid == '\0')	/* mount req failed or killed */
-		goto freedrv;	/* before volume was requested on drive */
+		goto vol_unmount;	/* before volume was requested on drive */
 	if (rlsflags & TPRLS_NOUNLOAD)
 		goto freevol;
 
@@ -210,6 +210,7 @@ unload_loop:
 #ifdef TMS
 	c = sendtmsmount (mode, "CA", vid, jid, name, acctname, drive);
 #endif
+vol_unmount:
 #if VDQM
 	vdqm_status = VDQM_VOL_UNMOUNT;
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_VOL_UNMOUNT)\n");
