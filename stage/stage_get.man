@@ -1,0 +1,222 @@
+.\" $Id: stage_get.man,v 1.1 2002/10/04 12:54:21 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_get.man,v $ $Revision: 1.1 $ $Date: 2002/10/04 12:54:21 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_GET "3" "$Date: 2002/10/04 12:54:21 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_get \- Find file allocated in a disk pool with stage_alloc
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_get(u_signed64 " flags ,
+.BI "char *" hostname ,
+.BI "char *" pooluser ,
+.BI "char *" filename ,
+.BI "int *" nstcp_output ,
+.BI "struct stgcat_entry **" stcp_output ");"
+
+.SH DESCRIPTION
+The \fBstage_get\fP API method asks the stager about a previously allocated entry that have been closed, e.g. in STAGED status.
+
+.SH PARAMETERS
+.TP 1.5i
+.I flags
+Can be zero or a bit-wise of the following values:
+.RS
+.TP
+.I STAGE_NORETRY
+Prevents client to keep retrying. Can be set with environment variable $STAGE_NORETRY to a non\-zero value.
+.TP
+.I STAGE_PATHNAME
+If found, stager daemon will return to client's output buffer the full internal path of the disk file corresponding to this request. The same string will be present in
+.I u1.d.xfile
+member of the 
+.I stcp_output
+structure, in case 
+.I stcp_output
+is not NULL.
+.RE
+.TP
+.I hostname
+Gives explicitely the hostname where is the stager daemon. If it NULL, default value apply: either the environment variable $STAGE_HOST, an entry 'STG HOST' in /etc/shift.conf file, or the default "stagepublic".
+.TP
+.I pooluser
+The file will be searched in a subdirectory
+.I pooluser.
+This may also be specified thru the environment variable $STAGE_USER. The default subdirectory name is "stage". 
+.I pooluser
+must be a valid user name and belong to the same group as the requestor.
+.TP
+.I filename
+External filename associated with this entry. Creates this a file as a symbolic link to the internal disk file.
+.TP
+.I nstcp_output
+Filled with the number of found entries at return. Should be one. If you are not interested by this output, set a NULL value for this parameter.
+.TP
+.I stcp_output
+Filled with the address of an array containg the found entries at return. Up to the user to free it if necessary. If you are not interested by this output, set a NULL value for this parameter.
+
+.SH EXAMPLE
+.ft CW
+.nf
+.sp
+\s-2
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <signal.h>
+#include <rfio_api.h>
+#include <rfio_errno.h>
+#include "stage_api.h"
+#include "serrno.h"
+#include "osdep.h"
+
+struct stgcat_entry *stcp_output;
+int nstcp_output;
+
+void log_callback _PROTO((int, char *));
+
+int main(argc,argv)
+	int argc;
+	char **argv;
+{
+	int rc;
+	int i;
+
+
+	if (argc != 2) {
+		fprintf(stderr,"Usage: %s file\\n", argv[0]);
+		exit(1);
+	}
+
+	stage_setlog((void (*) _PROTO((int, char *))) &log_callback);
+
+	if ((rc = stage_alloc((u_signed64) STAGE_PATHNAME, /* flags */
+						  600, /* openmode */
+						  NULL, /* hostname */
+						  NULL, /* pooluser */
+						  argv[1],  /* filename */
+						  1024, /* filesize */
+						  &nstcp_output, /* nstcp_output */
+						  &stcp_output /* stcp_output */
+						  )) != 0) {
+		fprintf(stderr,"stage_alloc: %s\\n", sstrerror(serrno));
+	} else {
+		/* Fill the file */
+		FILE *fd;
+		char dummy[1024];
+
+		for (i = 0; i < nstcp_output; i++) {
+			print_stcp(stcp_output+i);
+		}
+		serrno = rfio_errno = 0;
+		if ((fd = rfio_fopen(stcp_output[0].ipath,"w")) < 0) {
+			rfio_perror("rfio_open");
+			rc = rfio_serrno();
+		} else {
+			struct stage_hsm hsmfile;
+			memset(&hsmfile,0,sizeof(hsmfile));
+			hsmfile.upath = stcp_output[0].ipath;
+
+			rfio_fwrite(dummy,sizeof(dummy),1,fd);
+			rfio_fclose(fd);
+			/* Say the stager it is closed */
+			if ((rc = stage_updc_user(NULL,&hsmfile)) != 0) {
+				fprintf(stderr,"stage_updc_user: %s\\n", sstrerror(serrno));
+				if (stcp_output != NULL) free(stcp_output);
+				nstcp_output = 0;
+
+			} else {
+				if (stcp_output != NULL) free(stcp_output);
+				nstcp_output = 0;
+				/* Get filename with stage_get */
+				if ((rc = stage_get((u_signed64) STAGE_PATHNAME,
+									NULL,
+									NULL,
+									argv[1],
+									&nstcp_output,
+									&stcp_output
+					)) != 0) {
+					fprintf(stderr,"stage_get: %s\\n", sstrerror(serrno));
+				}
+			}
+		}
+	}
+	
+	if (stcp_output != NULL) free(stcp_output);
+	nstcp_output = 0;
+
+	exit(rc != 0 ? rc_castor2shift(serrno) : 0);
+	
+}
+
+void log_callback(level,message)
+	int level;
+	char *message;
+{
+	fprintf(level == MSG_ERR ? stderr : stdout,"<== %s ==> %s",level == MSG_ERR ? "MSG_ERR" : "MSG_OUT", message);
+	return;
+}
+\s+2
+.ft
+.LP
+.fi
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SENOMAPFND
+Can't open mapping database (Windows only)
+.TP
+.B EFAULT
+Bad address
+.TP
+.B EINVAL
+Invalid argument
+.TP
+.B ESTGROUP
+Invalid group
+.TP
+.B SECONNDROP
+Connection closed by remote end
+.TP
+.B SECOMERR
+Communication error
+.TP
+.B SEINTERNAL
+Internal error
+.TP
+.B SEUSERUNKN
+User unknown
+.TP
+.B SENAMETOOLONG
+Filename too long
+.TP
+.B SEOPNOTSUP
+Operation not supported (if stager daemon version is not uptodate)
+.TP
+.B ENOENT
+No such file or directory
+.TP
+.B ESTNACT
+Stager not active (if you specify the STAGE_NORETRY flag - default is to retry forever)
+.TP
+.B SENOSHOST
+Host not known
+
+.SH NOTES
+A poolname other than the default can be specified either with environment variable $STAGE_POOL, or an entry 'STG POOL' in /etc/shift.conf
+
+.SH SEE ALSO
+\fBstageget\fP(1), \fBstagealloc\fP(1), \fBstage_alloc\fP(3), \fBCastor_limits\fP(3), \fBstage_setlog\fP(3), \fBstage_setcallback\fP(3), \fBstageclr_link\fP(3), \fBrc_castor2shift\fP(3), \fBumask\fP(2), \fBopen\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
