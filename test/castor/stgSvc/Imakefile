@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/19 10:04:58 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/25 14:18:50 $ $Author: sponcec3 $
 #
 # Make Castor DB example
 #
@@ -40,6 +40,7 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 LIBS = -lshift -lcastorCommonOra
 
 TEST_OBJ = teststgsvc.Osuf
+TEST2_OBJ = testRemStgSvc.Osuf
 
 DEPLIB = DepSharedLibraryTargetName(../../shlib,shift) \
          DepSharedLibraryTargetName(../../shlib,castorCommonOra)
@@ -47,9 +48,10 @@ DEPLIB = DepSharedLibraryTargetName(../../shlib,shift) \
 LDFLAGS = -L ../../../shlib
 LD = g++
 
-all: ProgramTargetName(teststgsvc)
+all: ProgramTargetName(teststgsvc) ProgramTargetName(testRemStgSvc)
 
 NormalProgramTarget(teststgsvc,$(TEST_OBJ),$(DEPLIB),$(LIBS))
+NormalProgramTarget(testRemStgSvc,$(TEST2_OBJ),$(DEPLIB),$(LIBS))
 
 Makefiles:
 
