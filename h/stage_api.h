@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.31 2001/02/05 10:50:03 jdurand Exp $
+ * $Id: stage_api.h,v 1.32 2001/02/05 11:22:52 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -17,7 +17,6 @@
 #endif
 #include "Castor_limits.h"     /* Get all hardcoded CASTOR constants */
 #include "stage_struct.h"      /* To get the stager structures definitions */
-#include "stage_states.h"      /* To get the stager status bits - otherwise stageqry API might look useless... */
 #include "osdep.h"             /* For OS-dependencies */
 #include "marshall.h"          /* For marshalling macros */
 

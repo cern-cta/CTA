@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.43 2001/02/05 10:49:02 jdurand Exp $
+ * $Id: stage.h,v 1.44 2001/02/05 11:22:52 jdurand Exp $
  */
 
 /*
@@ -128,10 +128,6 @@
 #include "Ctape_constants.h"
 #include "rtcp_constants.h"
 
-			/* stage states */
-
-#include "stage_states.h"
-
 			/* stage daemon messages */
 
 #define STG00	"STG00 - stage daemon not available on %s\n"
@@ -249,7 +245,7 @@
 #define STG138  "STG138 - Fileclass %s@%s (classid %d) : specifies %d nbcopies and %d nbtppools - only both zero or both non-zero is legal - invalid fileclass - Please contact your admin\n"
 #define STG139  "STG139 - %s : fileclass %s@%s (classid %d) specifies %d nbcopies and %d nbtppools - this file will not be migrated\n"
 
-			/* stage daemon return codes */
+			/* stage daemon return codes and states */
 
 #define	USERR	  1	/* user error */
 #define	SYERR 	  2	/* system error */
