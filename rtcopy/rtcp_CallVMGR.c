@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CallVMGR.c,v $ $Revision: 1.3 $ $Date: 2002/05/09 17:40:38 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CallVMGR.c,v $ $Revision: 1.4 $ $Date: 2002/06/19 13:08:25 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /*
@@ -32,8 +32,8 @@ static char sccsid[] = "@(#)$RCSfile: rtcp_CallVMGR.c,v $ $Revision: 1.3 $ $Date
 #include "serrno.h"
 
 #if defined(_WIN32)
-extern uid_t getuid();
-extern gid_t getgid();
+extern uid_t geteuid();
+extern gid_t getegid();
 #endif /* _WIN32 */
 
 #define LOWERCASE(X) {char *__c; \
@@ -47,8 +47,8 @@ int rtcp_CallVMGR(tape_list_t *tape, char *realVID) {
     tape_list_t *tl;
     rtcpTapeRequest_t *tapereq;
     char *p, *firstVID;
-    uid_t uid;
-    gid_t gid;
+    uid_t euid;
+    gid_t egid;
 
     if ( tape == NULL ) {
         serrno = EINVAL;
@@ -61,11 +61,11 @@ int rtcp_CallVMGR(tape_list_t *tape, char *realVID) {
 		return(-1);
     }
 
-    /* We need to know exact current uid/gid */
-    uid = getuid();
-    gid = getgid();
+    /* We need to know exact current euid/egid */
+    euid = geteuid();
+    egid = getegid();
 #if defined(_WIN32)
-    if (uid < 0 || gid < 0) {
+    if (euid < 0 || egid < 0) {
 		serrno = SEUSERUNKN;
 		return(-1);
     }
@@ -95,8 +95,8 @@ int rtcp_CallVMGR(tape_list_t *tape, char *realVID) {
 								tapereq->density,
 								tapereq->label,
 								tapereq->mode,
-								uid,
-								gid)) != 0) {
+								euid,
+								egid)) != 0) {
 	      
 				if (vmgr_error_buffer[0] != '\0') {
 #if defined(RTCP_SERVER)
