@@ -1,5 +1,5 @@
 /*
- * $Id: connect.c,v 1.10 2004/12/08 10:24:35 bcouturi Exp $
+ * $Id: connect.c,v 1.11 2005/01/19 16:22:13 obarring Exp $
  */
 
 /*
@@ -28,6 +28,7 @@ static char sccsid[] = "@(#)connect.c,v 1.2 2003/10/30 11:00:34 CERN/IT/ADC/CA F
 #include "Csec_api.h"
 #endif
 #include "Castor_limits.h"
+#define strtok(X,Y) strtok_r(X,Y,&last)
 
 extern char     *getconfent();
 extern char     *getenv();      /* get environmental variable value     */
@@ -95,6 +96,7 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
    char    nomorebuf1[BUFSIZ], nomorebuf2[BUFSIZ]; /* NOMORERFIO buffers */
    char *last_host = NULL;
    int   last_host_len = 256;
+   char *last = NULL;
    int timeout;
 #ifdef CSEC
    int secure_connection = 0;
