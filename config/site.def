@@ -267,9 +267,8 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define UseVmgr			YES
 #define UseLsf			NO
 #define UseScheduler	YES
-/* Scheduler options: Supported LSF versions are: 5.1, 6.1 */
+/* Scheduler options: Supported LSF versions are: 6.1 */
 /* Default is defined in config files */
-#define UseLsfVersion	6
 #define UseExpert		YES
 #define UseMaui			YES
 #define UseStorageTank		NO
