@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: teststgsvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/19 10:10:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: teststgsvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/25 13:30:48 $ $Author: sponcec3 $
  *
  * 
  *
@@ -44,48 +44,49 @@ void processTapes(castor::stager::IStagerSvc* stgSvc)
 
 int main (int argc, char** argv) {
   // initalizes log
-  castor::BaseObject::initLog("", castor::SVC_STDMSG);
+  castor::BaseObject::initLog("LogSvc", castor::SVC_STDMSG);
 
   // Prepare 2 tapes and some segments with different status
   castor::stager::Tape* t1 = new castor::stager::Tape();
-  t1->setVid("1234");
+  t1->setVid("TestTape 1");
   t1->setStatus(castor::stager::TAPE_PENDING);
   
   castor::stager::Segment* s11 = new castor::stager::Segment();
-  s11->setCastorPath("/tape1/segment1");
+  s11->setErrMsgTxt("Seg 11");
   s11->setStatus(castor::stager::SEGMENT_UNPROCESSED);
   s11->setTape(t1);
   t1->addSegments(s11);
   
   castor::stager::Segment* s12 = new castor::stager::Segment();
-  s12->setCastorPath("/tape1/segment2");
-  s12->setStatus(castor::stager::SEGMENT_WAITFSEQ);
+  s12->setErrMsgTxt("Seg 12");
+  s12->setStatus(castor::stager::SEGMENT_FILECOPIED);
   s12->setTape(t1);
   t1->addSegments(s12);
 
   castor::stager::Segment* s13 = new castor::stager::Segment();
-  s13->setCastorPath("/tape1/segment3");
-  s13->setStatus(castor::stager::SEGMENT_COPYRUNNING);
+  s13->setErrMsgTxt("Seg 13");
+  s13->setStatus(castor::stager::SEGMENT_FAILED);
   s13->setTape(t1);
   t1->addSegments(s13);
 
   castor::stager::Segment* s14 = new castor::stager::Segment();
-  s14->setCastorPath("/tape1/segment4");
-  s14->setStatus(castor::stager::SEGMENT_WAITPATH);
+  s14->setErrMsgTxt("Seg 14");
+  s14->setStatus(castor::stager::SEGMENT_FAILED);
   s14->setTape(t1);
   t1->addSegments(s14);
 
   castor::stager::Tape* t2 = new castor::stager::Tape();
-  t2->setVid("4567");
+  t2->setVid("TestTape 2");
   t2->setStatus(castor::stager::TAPE_PENDING);
   
   // Get a Services instance
-  castor::Services* svcs = new castor::Services();
+  castor::Services* svcs = castor::BaseObject::services();
 
   // Stores the tapes
   castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
   try {
     svcs->createRep(&ad, t1, false);
+    svcs->fillRep(&ad, t1, castor::OBJ_Segment, false);
     svcs->createRep(&ad, t2, true);
   } catch (castor::exception::Exception e) {
     std::cout << "Error caught in createRep : "
@@ -180,7 +181,7 @@ void processTapes(castor::stager::IStagerSvc* stgSvc)
       for (std::vector<castor::stager::Segment*>::iterator it2 = segs.begin();
            it2 != segs.end();
            it2++) {
-        std::cout << "  " << (*it2)->castorPath();
+        std::cout << "  " << (*it2)->errMsgTxt();
       }
       std::cout << std::endl;
     } else {
