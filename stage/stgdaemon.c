@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.66 2000/10/03 15:40:19 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.67 2000/10/03 19:21:03 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.66 $ $Date: 2000/10/03 15:40:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.67 $ $Date: 2000/10/03 19:21:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1230,25 +1230,9 @@ check_waiting_on_req(subreqid, state)
 						}
 #endif
 					}
-					if (wqp->concat_off_fseq > 0) {
-						/* If this waiting request is a "-c off" */
-						/* one then it does not have to stop  */
-						/* Instead we remove the dependency to */
-						/* the stagein on this fseq that failed */
-						delreq (stcp,0);
-						wqp->nb_waiting_on_req--;
-						wqp->nb_subreqs--;
-						wqp->nbdskf--;
-						for ( ; i < wqp->nb_subreqs; i++, wfp++) {
-							wfp->subreqid = (wfp+1)->subreqid;
-							wfp->waiting_on_req = (wfp+1)->waiting_on_req;
-							strcpy (wfp->upath, (wfp+1)->upath);
-						}
-					} else {
-						wqp->nb_waiting_on_req--;
-						wfp->waiting_on_req = -1;
-						firstreqid = wfp->subreqid;
-					}
+			   		wqp->nb_waiting_on_req--;
+				   	wfp->waiting_on_req = -1;
+				   	firstreqid = wfp->subreqid;
 				} else {
 					wfp->waiting_on_req = firstreqid;
 				}
