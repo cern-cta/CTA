@@ -467,6 +467,9 @@ END;
 CREATE OR REPLACE PROCEDURE recreateCastorFile(cfId IN INTEGER,
                                                srId IN INTEGER,
                                                dcId OUT INTEGER) AS
+  rpath VARCHAR(2048);
+  fid INTEGER;
+  nh VARCHAR(2048);
 BEGIN
  -- Lock the access to the TapeCopies and DiskCopies
  LOCK TABLE TapeCopy in share mode;
@@ -503,8 +506,10 @@ BEGIN
   WHERE castorFile = cfId AND status NOT IN (3, 4, 7); -- FAILED, DELETED, INVALID
  -- create new DiskCopy
  getId(1, dcId);
+ SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
+ buildPathFromFileId(fid, nh, rpath);
  INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
-  VALUES ('', dcId, 0, cfId, 5); -- status WAITFS
+  VALUES (rpath, dcId, 0, cfId, 5); -- status WAITFS
  -- link SubRequest and DiskCopy
  UPDATE SubRequest SET diskCopy = dcId WHERE id = srId;
  COMMIT;
