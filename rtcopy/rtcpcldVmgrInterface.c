@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.19 $ $Release$ $Date: 2005/02/03 11:30:38 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.20 $ $Release$ $Date: 2005/02/03 11:43:53 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.19 $ $Release$ $Date: 2005/02/03 11:30:38 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.20 $ $Release$ $Date: 2005/02/03 11:43:53 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -718,9 +718,7 @@ int rtcpcld_updateTape(
            * status is FULL.
            *
            */
-          if ( freeSpace > filereq->bytes_in) {
-            bytesWritten = - filereq->bytes_in;
-          }
+          bytesWritten = - filereq->bytes_out;
           filesWritten = 0;
           /*
            * Another hack, anything else than 100 would result in TBs free on tape..
