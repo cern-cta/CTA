@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.18 2002/05/06 11:31:37 jdurand Exp $
+ * $Id: stager_castor.c,v 1.19 2002/05/26 07:20:45 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.18 $ $Date: 2002/05/06 11:31:37 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.19 $ $Date: 2002/05/26 07:20:45 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -94,7 +94,11 @@ void stager_process_error _PROTO((int, rtcpTapeRequest_t *, rtcpFileRequest_t *,
 extern int (*rtcpc_ClientCallback) _PROTO((rtcpTapeRequest_t *, rtcpFileRequest_t *));
 void init_hostname _PROTO(());
 int get_subreqid _PROTO((struct stgcat_entry *));
+#ifdef hpux
+int stage_copyfile _PROTO(());
+#else
 int stage_copyfile _PROTO((char *, char *, mode_t, int, u_signed64));
+#endif
 int copyfile _PROTO((int, int, char *, char *, u_signed64, u_signed64 *));
 
 char func[16];                      /* This executable name in logging */
