@@ -1,0 +1,195 @@
+.\"
+.\" $Id: vdqm_UnitStatus.man,v 1.1 1999/07/31 15:27:01 obarring Exp $
+.\" $Log: vdqm_UnitStatus.man,v $
+.\" Revision 1.1  1999/07/31 15:27:01  obarring
+.\" First version. EXAMPLE section still missing.
+.\"
+.\"
+.\" Copyright (C) 1999 by CERN/IT/PDP/DM
+.\"
+.TH VDQM_UNITSTATUS l
+.SH NAME
+.PP
+vdqm_UnitStatus \- update volume drive unit status in VDQM
+.SH SYNOPSIS
+.br
+\fB#include "Castor_limits.h"\fR
+.br
+\fB#include "net.h"\fR
+.br
+\fB#include "vdqm_api.h"\fR
+.sp
+.BI "int vdqm_UnitStatus ("
+.br
+.BI "                const vdqmnw_t *" nw ,
+.br
+.BI "                char *" VID ,
+.br
+.BI "                const char *" dgn ,
+.br
+.BI "                const char *" server,
+.br
+.BI "                const char *" unit ,
+.br
+.BI "                int *" status ,
+.br
+.BI "                int *" value );
+.SH PARAMETERS
+.I nw
+\- points to a structure containing internal VDQM API network information returned
+by a prior call to 
+.B vdqm_Connect(l).
+If this parameter is NULL, which is the recommended usage,
+.B vdqm_UnitStatus
+will internally call 
+.B vdqm_Connect(l)
+and
+.B vdqm_Disconnect(l)
+to open and close the connection with the VDQM server.
+.PP
+.I VID
+\- character string specifying the volume identifier. This parameter is ignored for
+all status values except VDQM_VOL_MOUNT and VDQM_VOL_UNMOUNT.
+.PP
+.I dgn
+\- character string specifying the device group name associated with the unit.
+.PP
+.I server
+\- character string specifying the hostname of the server. This parameter may be
+left NULL if the server is the same as the local host.
+.PP
+.I unit
+\- chararcter string specifying the drive unit name.
+.PP
+.I status
+\- points to an integer which is constructed by a bitwise-inclusive-OR of unit
+status flags. These flags are defined in the "vdqm_constants.h" header file and are
+described below. This parameter may be changed on output to specify some action
+recommended by the VDQM server (currently only VDQM_VOL_UNMOUNT).
+.PP
+.I value
+\- points to an integer which contains a value associated with the status parameter.
+.PP
+.SH DESCRIPTION
+.B vdqm_UnitStatus
+updates the status of a server/unit pair in the Volume and Drive Queue
+Manager (VDQM) server database. If the server/unit pair was not known in
+the VDQM server database prior to calling this routine, it will be automatically
+declared. Thus,
+.B vdqm_UnitStatus
+is the only VDQM API call needed by the process responsible for the server/unit
+although it is recommended to use
+.B vdqm_DelUnit(l)
+if the server/unit is permanently removed from service.
+.SS "Unit status flags"
+The unit status flags are defined as follows:
+.PP
+.B VDQM_UNIT_UP
+\- the unit is configured up. Note that the VDQM_UNIT_FREE flag must also 
+be set before the VDQM server will dispatch work to this unit.
+.PP
+.B VDQM_UNIT_DOWN
+\- the unit is configured down. If there was a running job present on the
+unit, it will be replaced on top of the volume request queue.
+.PP
+.B VDQM_UNIT_FREE
+\- the unit is free and ready to receive a new request.
+.PP
+.B VDQM_UNIT_ASSIGN
+\- the unit is assigned. The
+.I value
+parameter specifies the VDQM client volume request identifier on input and the local 
+job identifier (process ID of calling process) on output. The VDQM_UNIT_ASSIGN 
+flag should therefore be set by the process group leader (normally the RTCOPY child 
+process).
+.PP
+.B VDQM_UNIT_RELEASE
+\- the unit is released and de-assigned from previous job ID. On input the
+.I value
+parameter specifies the local job ID of the job currently associated with the unit.
+On output the
+.I status
+parameter may have changed to have the VDQM_VOL_UNMOUNT flag set. This is a
+recommendation from the VDQM server to unmount the volume from unit.
+.PP
+.B VDQM_VOL_MOUNT
+\- the volume idenfier specified with the
+.I VID
+parameter has been mounted on the unit. On input the
+.I value 
+parameter specifies the local job ID of the job currently associated with the unit.
+.PP
+.B VDQM_VOL_UNMOUNT
+\- the volume previously mounted on unit has been unmounted. Optionally the
+.I VID
+parameter may contain the volume identifier of the unmounted volume. VDQM will then
+cross-check this value with its internal table and return an error if the volume
+identifiers do not correspond.
+.PP
+In addition to the listed status flags the VDQM server maintains the following
+two internal unit status flags. Attempt to set these flags with
+.B vdqm_UnitStatus
+will result in an error.
+.PP
+.B VDQM_UNIT_BUSY
+\- the unit has been assigned a volume request but the VDQM_UNIT_ASSIGN status has
+not yet been received.
+.PP
+.B VDQM_UNIT_UNKNOWN
+\- an attempt failed to send a volume request to the unit. This status will be
+reset after a configurable time limit or upon reception of a unit status request.
+
+.SH RETURN VALUES
+.PP
+On successful completion, the
+.B vdqm_UnitStatus
+function returns 0. Otherwise, a value of \-1 is returned and
+.B serrno
+is set to indicate the error.
+.SH ERRORS
+.PP
+If the
+.B vdqm_UnitStatus
+function fails,
+.B serrno
+may be set to one of the following values:
+.TP
+.B SEINTERNAL
+Unexpected internal error 
+.TP
+.B SENOSSERV
+VDQM service unknown.
+.TP
+.B SENOSHOST
+VDQM host unknown.
+.TP
+.B EVQSYERR
+A fatal system call (e.g. calloc())failure in VDQM server.
+.TP
+.B EVQUNNOTUP 
+A unit status request (different from VDQM_UNIT_UP) on unit which
+is not up.
+.TP
+.B EVQBADSTAT
+Requested unit status is inconsistent with current status. The specific
+cases are:
+.br
+ 1) VDQM_UNIT_FREE attempted on unit with assigned job. 
+.br
+ 2) VDQM_UNIT_FREE attempted on unit with mounted volume. 
+.TP
+.B EVQBADID
+A unit status request was issued with either a wrong VolReqID (if
+VDQM_UNIT_ASSIGN) or jobID (any other request).
+.TP
+.B EVQNOTASS
+A VDQM_UNIT_MOUNT unit status to mount a volume was requested on a unit
+which has not yet been assigned.
+.TP
+.B EVQBADVOLID
+A VDQM_UNIT_MOUNT unit status to mount a volume was requested with a
+different VOLID than specified in assinged volume request.
+
+.SH SEE ALSO
+.BR vdqm_Connect(l), vdqm_Disconnect(l), vdqm_SendVolReq(l)
+
