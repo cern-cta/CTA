@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "%W% %G% CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_label.c,v $ $Revision: 1.2 $ $Date: 1999/09/17 06:25:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_label - send a request to the tape daemon to have a tape mounted
@@ -95,7 +95,7 @@ int nbhdr;
 	}
 
 	if (errflg)
-		return (ETPRM);
+		return (EINVAL);
 
 	/* Set default values */
 
@@ -130,7 +130,7 @@ int nbhdr;
 		strcpy (actual_lbltype, "sl");
 #endif
 	if (errflg)
-		return (ETPRM);
+		return (EINVAL);
  
         /* Build request header */
  
@@ -145,7 +145,7 @@ int nbhdr;
  
 	marshall_WORD (sbp, uid);
 	marshall_WORD (sbp, gid);
-	marshall_WORD (sbp, jid);
+	marshall_LONG (sbp, jid);
 	marshall_STRING (sbp, acctname);
 	marshall_STRING (sbp, path);
 	marshall_STRING (sbp, vid);
