@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.28 2000/09/28 14:15:10 jdurand Exp $
+ * $Id: procupd.c,v 1.29 2000/10/03 12:02:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.28 $ $Date: 2000/09/28 14:15:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.29 $ $Date: 2000/10/03 12:02:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -72,7 +72,7 @@ procupdreq(req_data, clienthost)
 	char *dvn;
 	int errflg = 0;
 	char *fid = NULL;
-	int found;
+	int found, index_found;
 	char *fseq = NULL;
 	gid_t gid;
 	char *ifce;
@@ -249,13 +249,14 @@ procupdreq(req_data, clienthost)
 		if (! wfp->waiting_on_req) break;
 	subreqid = wfp->subreqid;
 
-	found = 0;
+	found = index_found = 0;
 	for (stcp = stcs; stcp < stce; stcp++) {
 		if (stcp->reqid == 0) break;
 		if (stcp->reqid == subreqid) {
 			found = 1;
 			break;
 		}
+		index_found++;
 	}
 	if (! found) {
 		sendrep (rpfd, MSG_ERR, STG22);
@@ -263,7 +264,7 @@ procupdreq(req_data, clienthost)
 		goto reply;
 	}
 #ifdef STAGER_DEBUG
-    sendrep(rpfd, MSG_ERR, "[DEBUG] procupd : rc=%d, concat_off_fseq=%d, i=%d, nbdskf=%d\n", rc, wqp->concat_off_fseq, i, wqp->nbdskf);
+	sendrep(rpfd, MSG_ERR, "[DEBUG] procupd : rc=%d, concat_off_fseq=%d, i=%d, nbdskf=%d\n", rc, wqp->concat_off_fseq, i, wqp->nbdskf);
 #endif
 	/* If it has the filler[0] == 'c' and is a "-c off" request, we remove this hidden flag */
 	if (wqp->concat_off_fseq > 0 && stcp->filler[0] != '\0') stcp->filler[0] = '\0';
@@ -291,10 +292,15 @@ procupdreq(req_data, clienthost)
 		}
 		wfp = &(wqp->wf[i]); /* We restore the correct found wf (mem has been realloced) */
 		stcp_ok = newreq();
+        /* The memory may have been realloced, so we follow this eventual reallocation */
+        /* by reassigning stcp pointer using the found index */
+        stcp = &(stcs[index_found]);
 		save_nextreqid = nextreqid();
 		memcpy(stcp_ok,stcp,sizeof(struct stgcat_entry));
+        // memcpy(stcp_ok,stcp,sizeof(struct stgcat_entry));
 		stcp_ok->reqid = save_nextreqid;
 		/* Current stcp is "<X>-", new one is a "<X+1>- -c off" */
+		// stcp_ok->u1.t.fseq[0] = '\0';
 		sprintf(stcp_ok->u1.t.fseq,"%d",atoi(fseq) + 1);
 		stcp_ok->filler[0] = 'c';
 		strcat(stcp_ok->u1.t.fseq,"-");
@@ -304,6 +310,7 @@ procupdreq(req_data, clienthost)
 		memset((char *) wfp_ok,0,sizeof(struct waitf));
 		wfp_ok->subreqid = stcp_ok->reqid;
 		/* Current stcp become "<X>" */
+		// stcp->u1.t.fseq[0] = '\0';
 		sprintf(stcp->u1.t.fseq,"%d",atoi(fseq));
 #ifdef USECDB
 		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
