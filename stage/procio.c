@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.110 2001/03/19 13:44:39 jdurand Exp $
+ * $Id: procio.c,v 1.111 2001/03/19 15:13:29 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.110 $ $Date: 2001/03/19 13:44:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.111 $ $Date: 2001/03/19 15:13:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1896,6 +1896,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 						goto stagewrt_continue_loop;
 					}
 					/* If mtime of disk file is < mtime in nameserver : this is an obsolete version - no migration */
+					/*
 					if (filemig_stat.st_mtime < Cnsfilestat.mtime) {
 						char tmpbuf1[21];
 						char tmpbuf2[21];
@@ -1913,6 +1914,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 						c = USERR;
 						goto stagewrt_continue_loop;
 					} else {
+					*/
 						correct_size = (u_signed64) filemig_stat.st_size;
 						if (stgreq.size && ((u_signed64) (stgreq.size * ONE_MB) < correct_size)) {
 							/* If user specified a maxsize of bytes to transfer and if this */
@@ -1971,7 +1973,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 						/*
 						}
 						*/
+					/*
 					}
+					*/
 				} else {
 					/* It is not point to try to migrated something of zero size */
 					if (rfio_stat((api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, &filemig_stat) < 0) {
