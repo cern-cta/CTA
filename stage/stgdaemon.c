@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.209 2002/06/19 13:39:11 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.210 2002/07/03 12:09:23 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.209 $ $Date: 2002/06/19 13:39:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.210 $ $Date: 2002/07/03 12:09:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -646,6 +646,14 @@ int main(argc,argv)
 				strcpy(localhost,thislocalhost);
 				strcat(localhost,".");
 				strcat(localhost,localdomain);
+			}
+		} else {
+			/* Malloc area */
+			if ((localhost = (char *) malloc(strlen(thislocalhost) + 1)) == NULL) {
+				stglogit(func, "Cannot malloc (%s) - forcing \"localhost.localdomain\"\n", strerror(errno));
+				localhost = deflocalhost;
+			} else {
+				strcpy(localhost,thislocalhost);
 			}
 		}
 	}
