@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_close.man,v 1.3 2000/07/07 14:24:14 jdurand Exp $
+.\" $Id: rfio_close.man,v 1.4 2000/07/07 14:28:27 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_close.man,v $ $Revision: 1.3 $ $Date: 2000/07/07 14:24:14 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_close.man,v $ $Revision: 1.4 $ $Date: 2000/07/07 14:28:27 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_CLOSE 3 "$Date: 2000/07/07 14:24:14 $" CASTOR "Rfio Library Functions"
+.TH RFIO_CLOSE 3 "$Date: 2000/07/07 14:28:27 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_close \- closes a file
 .SH SYNOPSIS
@@ -64,3 +64,6 @@ Communication error.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .BR rfio_open(3)
+.SH AUTHOR
+Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
+(olof.barring@cern.ch)

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_read.man,v 1.1 2000/07/07 14:11:26 jdurand Exp $
+.\" $Id: rfio_read.man,v 1.2 2000/07/07 14:28:27 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_read.man,v $ $Revision: 1.1 $ $Date: 2000/07/07 14:11:26 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_read.man,v $ $Revision: 1.2 $ $Date: 2000/07/07 14:28:27 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_READ 3 "$Date: 2000/07/07 14:11:26 $" CASTOR "Rfio Library Functions"
+.TH RFIO_READ 3 "$Date: 2000/07/07 14:28:27 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_read \- reads in a file
 .SH SYNOPSIS
@@ -71,3 +71,6 @@ Communication error.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .BR rfio_open(3)
+.SH AUTHOR
+Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
+(olof.barring@cern.ch)

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_write.man,v 1.2 2000/07/07 14:20:04 jdurand Exp $
+.\" $Id: rfio_write.man,v 1.3 2000/07/07 14:28:28 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_write.man,v $ $Revision: 1.2 $ $Date: 2000/07/07 14:20:04 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_write.man,v $ $Revision: 1.3 $ $Date: 2000/07/07 14:28:28 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_WRITE 3 "$Date: 2000/07/07 14:20:04 $" CASTOR "Rfio Library Functions"
+.TH RFIO_WRITE 3 "$Date: 2000/07/07 14:28:28 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_write \- writes to a file
 .SH SYNOPSIS
@@ -71,3 +71,6 @@ Communication error.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .BR rfio_open(3)
+.SH AUTHOR
+Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
+(olof.barring@cern.ch)

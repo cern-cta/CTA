@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_rewinddir.man,v 1.2 2000/07/07 14:24:15 jdurand Exp $
+.\" $Id: rfio_rewinddir.man,v 1.3 2000/07/07 14:28:27 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_rewinddir.man,v $ $Revision: 1.2 $ $Date: 2000/07/07 14:24:15 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_rewinddir.man,v $ $Revision: 1.3 $ $Date: 2000/07/07 14:28:27 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_REWINDDIR 3 "$Date: 2000/07/07 14:24:15 $" CASTOR "Rfio Library Functions"
+.TH RFIO_REWINDDIR 3 "$Date: 2000/07/07 14:28:27 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_rewinddir \- reset position to the beginning of a directory opened by
 .B Cns_opendir
@@ -28,3 +28,6 @@ specifies the pointer value returned by
 .BR rfio_closedir(3) ,
 .BR rfio_opendir(3) ,
 .BR rfio_readdir(3)
+.SH AUTHOR
+Olof Barring, CERN-IT Division CH-1211 Geneva 23, Switzerland
+(olof.barring@cern.ch)
