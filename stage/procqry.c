@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.91 2002/06/20 14:24:46 jdurand Exp $
+ * $Id: procqry.c,v 1.92 2002/07/18 11:12:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.91 $ $Date: 2002/06/20 14:24:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.92 $ $Date: 2002/07/18 11:12:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -88,7 +88,7 @@ extern void delreq _PROTO((struct stgcat_entry *, int));
 extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern int retenp_on_disk _PROTO((int));
-extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int));
+extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int, int));
 extern int mintime_beforemigr _PROTO((int));
 extern int get_mintime _PROTO((struct stgcat_entry *, char *));
 extern char *findpoolname _PROTO((char *));
@@ -913,7 +913,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		}
 		if ((stcp->t_or_d == 'h') && (! ISWAITING(stcp))) {
 			if (class_flag) {
-				if ((ifileclass = upd_fileclass(NULL,stcp,0,1)) >= 0) {
+				if ((ifileclass = upd_fileclass(NULL,stcp,0,1,1)) >= 0) {
 					if ((thismintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0) {
 						thismintime_beforemigr = mintime_beforemigr(ifileclass);
 					}
@@ -1888,7 +1888,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 
 			save_rpfd = rpfd;
 			rpfd = -1;             /* To make sure nothing does on the terminal here */
-			if (ISWAITING(stcp) || ((ifileclass = upd_fileclass(NULL,stcp,0,1)) < 0)) {
+			if (ISWAITING(stcp) || ((ifileclass = upd_fileclass(NULL,stcp,0,1,1)) < 0)) {
 				rpfd = save_rpfd;
 				continue; /* Unknown fileclass */
 			}
@@ -1970,7 +1970,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 		ifileclass = -1;
 		save_rpfd = rpfd;
 		rpfd = -1;             /* To make sure nothing does on the terminal here */
-		if ((class_flag != 0) && (scc->stcp->t_or_d == 'h')) ifileclass = upd_fileclass(NULL,scc->stcp,0,1);
+		if ((class_flag != 0) && (scc->stcp->t_or_d == 'h')) ifileclass = upd_fileclass(NULL,scc->stcp,0,1,1);
 		rpfd = save_rpfd;
 		if (ifileclass >= 0) {
 			if (sendrep (rpfd, MSG_OUT,
@@ -2151,7 +2151,7 @@ int get_retenp(stcp,timestr)
 		switch (stcp->t_or_d) {
 		case 'h':
 			/* CASTOR entry */
-			if ((ifileclass = upd_fileclass(NULL,stcp,0,1)) < 0) {
+			if ((ifileclass = upd_fileclass(NULL,stcp,0,1,1)) < 0) {
 				return(-1);
 			}
 			/* If no explicit value for retention period we take the default */
@@ -2206,7 +2206,7 @@ int get_mintime(stcp,timestr)
 	switch (stcp->status) {
 	case STAGEOUT|CAN_BE_MIGR:
 		/* CASTOR entry */
-		if ((ifileclass = upd_fileclass(NULL,stcp,0,1)) < 0) {
+		if ((ifileclass = upd_fileclass(NULL,stcp,0,1,1)) < 0) {
 			return(-1);
 		}
 		if ((this_mintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0) /* No explicit value */
