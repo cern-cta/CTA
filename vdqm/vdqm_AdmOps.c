@@ -37,7 +37,7 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 
     DrvReq = &drv->drv;
 #if DEBUG
-    log(LOG_INFO,"vdqm_SetDedicate() compile regexp %s\n",DrvReq->dedicate);
+    log(LOG_DEBUG,"vdqm_SetDedicate() compile regexp %s\n",DrvReq->dedicate);
 #endif
     drv->expbuf = Cregexp_comp(DrvReq->dedicate);
     if ( drv->expbuf == NULL ) {
@@ -62,13 +62,13 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 				if (strcmp(p,".*") == 0) {
 					DrvReq->no_uid = 1;
 #if DEBUG
-					log(LOG_INFO,"vdqm_SetDedicate() : will skip uid in regexp\n");
+					log(LOG_DEBUG,"vdqm_SetDedicate() : will skip uid in regexp\n");
 #endif
 				} else if (strspn(p,"0123456789") == strlen(p)) {
 					/* Yes */
 					DrvReq->is_uid = 1;
 					DrvReq->uid = (uid_t) atoi(p);
-					log(LOG_INFO,"vdqm_SetDedicate() : will use binary match on uid=%d\n",(int) DrvReq->uid);
+					log(LOG_DEBUG,"vdqm_SetDedicate() : will use binary match on uid=%d\n",(int) DrvReq->uid);
 					if (DrvReq->newdedicate[0] != '\0') strcat(DrvReq->newdedicate,",");
 					strcat(DrvReq->newdedicate,r);
 				} else {
@@ -86,13 +86,13 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 						if (strcmp(p,".*") == 0) {
 							DrvReq->no_gid = 1;
 #if DEBUG
-							log(LOG_INFO,"vdqm_SetDedicate() : will skip gid in regexp\n");
+							log(LOG_DEBUG,"vdqm_SetDedicate() : will skip gid in regexp\n");
 #endif
 						} else if (strspn(p,"0123456789") == strlen(p)) {
 							/* Yes */
 							DrvReq->is_gid = 1;
 							DrvReq->gid = (gid_t) atoi(p);
-							log(LOG_INFO,"vdqm_SetDedicate() : will use binary match on gid=%d\n",(int) DrvReq->gid);
+							log(LOG_DEBUG,"vdqm_SetDedicate() : will use binary match on gid=%d\n",(int) DrvReq->gid);
 							if (DrvReq->newdedicate[0] != '\0') strcat(DrvReq->newdedicate,",");
 							strcat(DrvReq->newdedicate,r);
 						} else {
@@ -110,14 +110,14 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 								if (strcmp(p,".*") == 0) {
 									DrvReq->no_name = 1;
 #if DEBUG
-									log(LOG_INFO,"vdqm_SetDedicate() : will skip name in regexp\n");
+									log(LOG_DEBUG,"vdqm_SetDedicate() : will skip name in regexp\n");
 #endif
 								} else if (Cgetpwnam(p) != NULL) {
 									/* Yes */
 									if (strlen(p) <= CA_MAXUSRNAMELEN) {
 										DrvReq->is_name = 1;
 										strcpy(DrvReq->name,p);
-										log(LOG_INFO,"vdqm_SetDedicate() : will use string match on name=%s\n",DrvReq->name);
+										log(LOG_DEBUG,"vdqm_SetDedicate() : will use string match on name=%s\n",DrvReq->name);
 									}
 									if (DrvReq->newdedicate[0] != '\0') strcat(DrvReq->newdedicate,",");
 									strcat(DrvReq->newdedicate,r);
@@ -136,12 +136,12 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 										/* The input says: 'host=.*' */
 										DrvReq->no_host=1;
 #if DEBUG
-										log(LOG_INFO,"vdqm_SetDedicate() : will skip host in regexp\n");
+										log(LOG_DEBUG,"vdqm_SetDedicate() : will skip host in regexp\n");
 #endif
 										p = q + strlen(".*");
 									} else {
 										if ((p = strstr(p,",vid=")) == NULL) {
-											log(LOG_INFO,"vdqm_SetDedicate() : missing \",vid=\" string\n");
+											log(LOG_DEBUG,"vdqm_SetDedicate() : missing \",vid=\" string\n");
 											goto no_optim;
 										}
 										*p = '\0';
@@ -150,7 +150,7 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 										*p = ',';
 									}
 									if (*p == '\0') {
-										log(LOG_INFO,"vdqm_SetDedicate() : missing \",vid=\" string\n");
+										log(LOG_DEBUG,"vdqm_SetDedicate() : missing \",vid=\" string\n");
 										goto no_optim;
 									}
 									
@@ -159,12 +159,12 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 										/* The input says: 'vid=.*' */
 										DrvReq->no_vid=1;
 #if DEBUG
-										log(LOG_INFO,"vdqm_SetDedicate() : will skip vid in regexp\n");
+										log(LOG_DEBUG,"vdqm_SetDedicate() : will skip vid in regexp\n");
 #endif
 										p = q + strlen(",vid=.*");
 									} else {
 										if ((p = strstr(p,",mode=")) == NULL) {
-											log(LOG_INFO,"vdqm_SetDedicate() : missing \",mode=\" string\n");
+											log(LOG_DEBUG,"vdqm_SetDedicate() : missing \",mode=\" string\n");
 											goto no_optim;
 										}
 										*p = '\0';
@@ -173,7 +173,7 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 										*p = ',';
 									}
 									if (*p == '\0') {
-										log(LOG_INFO,"vdqm_SetDedicate() : missing \",mode=\" string\n");
+										log(LOG_DEBUG,"vdqm_SetDedicate() : missing \",mode=\" string\n");
 										goto no_optim;
 									}
 									
@@ -182,12 +182,12 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 										/* The input says: 'mode=.*' */
 										DrvReq->no_mode=1;
 #if DEBUG
-										log(LOG_INFO,"vdqm_SetDedicate() : will skip mode in regexp\n");
+										log(LOG_DEBUG,"vdqm_SetDedicate() : will skip mode in regexp\n");
 #endif
 										p = q + strlen(",mode=.*");
 									} else {
 										if ((p = strstr(p,",datestr=")) == NULL) {
-											log(LOG_INFO,"vdqm_SetDedicate() : missing \",datestr=\" string\n");
+											log(LOG_DEBUG,"vdqm_SetDedicate() : missing \",datestr=\" string\n");
 											goto no_optim;
 										}
 										*p = '\0';
@@ -196,7 +196,7 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 										*p = ',';
 									}
 									if (*p == '\0') {
-										log(LOG_INFO,"vdqm_SetDedicate() : missing \",datestr=\" string\n");
+										log(LOG_DEBUG,"vdqm_SetDedicate() : missing \",datestr=\" string\n");
 										goto no_optim;
 									}
 									
@@ -205,12 +205,12 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 										/* The input says: 'datestr=.*' */
 										DrvReq->no_date=1;
 #if DEBUG
-										log(LOG_INFO,"vdqm_SetDedicate() : will skip date in regexp\n");
+										log(LOG_DEBUG,"vdqm_SetDedicate() : will skip date in regexp\n");
 #endif
 										p = q + strlen(",datestr=.*");
 									} else {
 										if ((p = strstr(p,",timestr=")) == NULL) {
-											log(LOG_INFO,"vdqm_SetDedicate() : missing \",timestr=\" string\n");
+											log(LOG_DEBUG,"vdqm_SetDedicate() : missing \",timestr=\" string\n");
 											goto no_optim;
 										}
 										*p = '\0';
@@ -219,7 +219,7 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 										*p = ',';
 									}
 									if (*p == '\0') {
-										log(LOG_INFO,"vdqm_SetDedicate() : missing \",timestr=\" string\n");
+										log(LOG_DEBUG,"vdqm_SetDedicate() : missing \",timestr=\" string\n");
 										goto no_optim;
 									}
 									
@@ -228,12 +228,12 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 										/* The input says: 'timestr=.*' */
 										DrvReq->no_time=1;
 #if DEBUG
-										log(LOG_INFO,"vdqm_SetDedicate() : will skip time in regexp\n");
+										log(LOG_DEBUG,"vdqm_SetDedicate() : will skip time in regexp\n");
 #endif
 										p = q + strlen(",timestr=.*");
 									} else {
 										if ((p = strstr(p,",age=")) == NULL) {
-											log(LOG_INFO,"vdqm_SetDedicate() : missing \",age=\" string\n");
+											log(LOG_DEBUG,"vdqm_SetDedicate() : missing \",age=\" string\n");
 											goto no_optim;
 										}
 										*p = '\0';
@@ -242,7 +242,7 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 										*p = ',';
 									}
 									if (*p == '\0') {
-										log(LOG_INFO,"vdqm_SetDedicate() : missing \",age=\" string\n");
+										log(LOG_DEBUG,"vdqm_SetDedicate() : missing \",age=\" string\n");
 										goto no_optim;
 									}
 									
@@ -251,7 +251,7 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 										/* The input says: 'age=.*' */
 										DrvReq->no_age=1;
 #if DEBUG
-										log(LOG_INFO,"vdqm_SetDedicate() : will skip age in regexp\n");
+										log(LOG_DEBUG,"vdqm_SetDedicate() : will skip age in regexp\n");
 #endif
 									} else {
 										*p = '\0';
@@ -287,13 +287,13 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 		/* Reset dedication */
 		if (DrvReq->newdedicate[0] == '\0') {
 			/* reduced to empty string !? */
-			log(LOG_INFO,"vdqm_SetDedicate() : regexp reduced to \"\" (!?) - Will use full regexp\n");
+			log(LOG_DEBUG,"vdqm_SetDedicate() : regexp reduced to \"\" (!?) - Will use full regexp\n");
 			goto no_optim;
 		} else {
-			log(LOG_INFO,"vdqm_SetDedicate() : regexp reduced to \"%s\"\n", DrvReq->newdedicate);
+			log(LOG_DEBUG,"vdqm_SetDedicate() : regexp reduced to \"%s\"\n", DrvReq->newdedicate);
 			/* Evaluate new regexp */
 #if DEBUG
-			log(LOG_INFO,"vdqm_SetDedicate() compile regexp %s\n",DrvReq->newdedicate);
+			log(LOG_DEBUG,"vdqm_SetDedicate() compile regexp %s\n",DrvReq->newdedicate);
 #endif
 			drv->newexpbuf = Cregexp_comp(DrvReq->newdedicate);
 			if ( drv->newexpbuf == NULL ) {
@@ -303,12 +303,12 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 		}
 	}
 #if DEBUG
-	log(LOG_INFO,"vdqm_SetDedicate() is_uid=%d, uid=%d, is_gid=%d, gid=%d, is_name=%d, name=%s\n", DrvReq->is_uid, DrvReq->uid, DrvReq->is_gid, DrvReq->gid, DrvReq->is_name, DrvReq->name);
+	log(LOG_DEBUG,"vdqm_SetDedicate() is_uid=%d, uid=%d, is_gid=%d, gid=%d, is_name=%d, name=%s\n", DrvReq->is_uid, DrvReq->uid, DrvReq->is_gid, DrvReq->gid, DrvReq->is_name, DrvReq->name);
 #endif
     return(0);
   no_optim:
 	DrvReq->is_uid = DrvReq->is_gid = DrvReq->is_name = DrvReq->no_uid = DrvReq->no_gid = DrvReq->no_name = DrvReq->no_host = DrvReq->no_vid = DrvReq->no_mode = DrvReq->no_date = DrvReq->no_time = DrvReq->no_age = 0;
-	log(LOG_INFO,"vdqm_SetDedicate() : %s : regexp optim skipped\n", DrvReq->dedicate);
+	log(LOG_DEBUG,"vdqm_SetDedicate() : %s : regexp optim skipped\n", DrvReq->dedicate);
     return(0);
 }
 
@@ -324,7 +324,7 @@ int vdqm_ResetDedicate(vdqm_drvrec_t *drv) {
 
     if ( *DrvReq->dedicate != '\0' ) {
 #if DEBUG
-		log(LOG_INFO,"vdqm_ResetDedicate() : %s@%s : Reset dedication \"%s\"\n", drv->drv.drive, drv->drv.server, DrvReq->dedicate);
+		log(LOG_DEBUG,"vdqm_ResetDedicate() : %s@%s : Reset dedication \"%s\"\n", drv->drv.drive, drv->drv.server, DrvReq->dedicate);
 #endif
         if (drv->expbuf != NULL) free(drv->expbuf);
 		drv->expbuf = NULL;
@@ -332,7 +332,7 @@ int vdqm_ResetDedicate(vdqm_drvrec_t *drv) {
     }
     if ( *DrvReq->newdedicate != '\0' ) {
 #if DEBUG
-		log(LOG_INFO,"vdqm_ResetDedicate() : %s@%s : Reset reduced dedication \"%s\"\n", drv->drv.drive, drv->drv.server, DrvReq->newdedicate);
+		log(LOG_DEBUG,"vdqm_ResetDedicate() : %s@%s : Reset reduced dedication \"%s\"\n", drv->drv.drive, drv->drv.server, DrvReq->newdedicate);
 #endif
         if (drv->newexpbuf != NULL) free(drv->newexpbuf);
 		drv->newexpbuf = NULL;
@@ -364,7 +364,7 @@ int vdqm_DrvMatch(vdqm_volrec_t *vol, vdqm_drvrec_t *drv) {
     if ( *drv->drv.dedicate == '\0' ) {
 #if DEBUG
 		/* Call of log, even if logging nothing, takes some cycles */
-		log(LOG_INFO,"vdqm_SetDedicate() : %s@%s : No dedication\n", drv->drv.drive, drv->drv.server);
+		log(LOG_DEBUG,"vdqm_SetDedicate() : %s@%s : No dedication\n", drv->drv.drive, drv->drv.server);
 #endif
 		return(1);
 	}
@@ -372,13 +372,13 @@ int vdqm_DrvMatch(vdqm_volrec_t *vol, vdqm_drvrec_t *drv) {
     if ( drv->drv.is_uid) {
 #if DEBUG
 		/* Call of log, even if logging nothing, takes some cycles */
-		log(LOG_INFO,"vdqm_SetDedicate() : %s@%s : is_uid=%d : Binary match %d v.s. %d ?\n", drv->drv.drive, drv->drv.server, drv->drv.is_uid, VolReq->clientUID, drv->drv.uid);
+		log(LOG_DEBUG,"vdqm_SetDedicate() : %s@%s : is_uid=%d : Binary match %d v.s. %d ?\n", drv->drv.drive, drv->drv.server, drv->drv.is_uid, VolReq->clientUID, drv->drv.uid);
 #endif
 		if (VolReq->clientUID !=  drv->drv.uid) return(0);
 	}
     if ( drv->drv.is_gid) {
 #if DEBUG
-		log(LOG_INFO,"vdqm_SetDedicate() : %s@%s : Binary match %d v.s. %d ?\n", drv->drv.drive, drv->drv.server, VolReq->clientGID, drv->drv.gid);
+		log(LOG_DEBUG,"vdqm_SetDedicate() : %s@%s : Binary match %d v.s. %d ?\n", drv->drv.drive, drv->drv.server, VolReq->clientGID, drv->drv.gid);
 #endif
 		if (VolReq->clientGID !=  drv->drv.gid) return(0);
 	}
@@ -391,7 +391,7 @@ int vdqm_DrvMatch(vdqm_volrec_t *vol, vdqm_drvrec_t *drv) {
 			name = pw->pw_name;
 		}
 #if DEBUG
-		log(LOG_INFO,"vdqm_SetDedicate() : %s@%s : String match \"%s\" v.s. \"%s\" ?\n", drv->drv.drive, drv->drv.server, name, drv->drv.name);
+		log(LOG_DEBUG,"vdqm_SetDedicate() : %s@%s : String match \"%s\" v.s. \"%s\" ?\n", drv->drv.drive, drv->drv.server, name, drv->drv.name);
 #endif
 		if (strcmp(name,drv->drv.name) != 0) return(0);
 	}
@@ -495,21 +495,21 @@ int vdqm_DrvMatch(vdqm_volrec_t *vol, vdqm_drvrec_t *drv) {
 
 	if (drv->newexpbuf != NULL) {
 #if DEBUG
-		log(LOG_INFO,"vdqm_DrvMatch(): %s@%s : Reduced Regexp match \"%s\" v.s. \"%s\" ?\n",drv->drv.drive, drv->drv.server, match_item,drv->drv.newdedicate);
+		log(LOG_DEBUG,"vdqm_DrvMatch(): %s@%s : Reduced Regexp match \"%s\" v.s. \"%s\" ?\n",drv->drv.drive, drv->drv.server, match_item,drv->drv.newdedicate);
 #endif
 		if (Cregexp_exec(drv->newexpbuf, match_item) == 0) {
 #if DEBUG
-			log(LOG_INFO,"vdqm_DrvMatch() %s@%s : matched!\n", drv->drv.drive, drv->drv.server);
+			log(LOG_DEBUG,"vdqm_DrvMatch() %s@%s : matched!\n", drv->drv.drive, drv->drv.server);
 #endif
 			return(1);
 		}
 	} else {
 #if DEBUG
-		log(LOG_INFO,"vdqm_DrvMatch(): %s@%s : Regexp match \"%s\" v.s. \"%s\" ?\n",drv->drv.drive, drv->drv.server, match_item,drv->drv.dedicate);
+		log(LOG_DEBUG,"vdqm_DrvMatch(): %s@%s : Regexp match \"%s\" v.s. \"%s\" ?\n",drv->drv.drive, drv->drv.server, match_item,drv->drv.dedicate);
 #endif
 		if (Cregexp_exec(drv->expbuf, match_item) == 0) {
 #if DEBUG
-			log(LOG_INFO,"vdqm_DrvMatch() %s@%s : matched!\n", drv->drv.drive, drv->drv.server);
+			log(LOG_DEBUG,"vdqm_DrvMatch() %s@%s : matched!\n", drv->drv.drive, drv->drv.server);
 #endif
 			return(1);
 		}
