@@ -10,6 +10,8 @@
 #define RTCPCLDMESSAGES_H_INCLUDED
 
 #define RTCPCLIENTD_FACILITY_NAME "rtcpcld"
+#define RECALLER_FACILITY_NAME "recaller"
+#define MIGRATOR_FACILITY_NAME "migrator"
 
 #define RTCPCLD_NB_PARAMS (4)
 #define RTCPCLD_LOG_WHERE "File",DLF_MSG_PARAM_STR,__FILE__,"Line",DLF_MSG_PARAM_INT,__LINE__,"errno", \
@@ -28,14 +30,16 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_CALLBACK_CP, 
     RTCPCLD_MSG_CATALOGUE, 
     RTCPCLD_MSG_VDQM,
-    RTCPCLD_MSG_VWFAILED,
-    RTCPCLD_MSG_VIDWORKER_STARTED,
+    RTCPCLD_MSG_WFAILED,
+    RTCPCLD_MSG_RECALLER_STARTED,
+    RTCPCLD_MSG_MIGRATOR_STARTED,
     RTCPCLD_MSG_EXTINFO,
     RTCPCLD_MSG_EXTERR,
     RTCPCLD_MSG_VDQMINFO,
     RTCPCLD_MSG_NOREQS,
     RTCPCLD_MSG_CALLBACK_GETW,
-    RTCPCLD_MSG_VIDWORKER_ENDED,
+    RTCPCLD_MSG_RECALLER_ENDED,
+    RTCPCLD_MSG_MIGRATOR_ENDED,
     RTCPCLD_MSG_DBSVC,
     RTCPCLD_MSG_WRONG_TAPE,
     RTCPCLD_MSG_FILEREQ,
@@ -62,12 +66,20 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_NOTAPE,
     RTCPCLD_MSG_WRONGMODE,
     RTCPCLD_MSG_ADDSEGM,
-    RTCPCLD_MSG_RESERVED45,
-    RTCPCLD_MSG_RESERVED46,
-    RTCPCLD_MSG_RESERVED47,
-    RTCPCLD_MSG_RESERVED48,
-    RTCPCLD_MSG_RESERVED49,
-    RTCPCLD_MSG_RESERVED50
+    RTCPCLD_MSG_WRONGCKSUM,
+    RTCPCLD_MSG_CKSUMOK,
+    RTCPCLD_MSG_NSSEGNOTFOUND,
+    RTCPCLD_MSG_UPDCKSUM,
+    RTCPCLD_MSG_WRONGALG,
+    RTCPCLD_MSG_NOTAPEPOOL,
+    RTCPCLD_MSG_RESERVED53,
+    RTCPCLD_MSG_RESERVED54,
+    RTCPCLD_MSG_RESERVED55,
+    RTCPCLD_MSG_RESERVED56,
+    RTCPCLD_MSG_RESERVED57,
+    RTCPCLD_MSG_RESERVED58,
+    RTCPCLD_MSG_RESERVED59,
+    RTCPCLD_MSG_RESERVED60
 };
 
 struct RtcpcldMessages {
@@ -82,21 +94,23 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_LISTEN, DLF_LVL_ERROR, "rtcp_Listen() failed"},
     { RTCPCLD_MSG_SYSCALL, DLF_LVL_ERROR, "failed system call"},
     { RTCPCLD_MSG_NOVOLREQID, DLF_LVL_ERROR, "rtcpd did not return VDQM VolReqID"},
-    { RTCPCLD_MSG_REQSTARTED, DLF_LVL_SYSTEM, "starting VidWorker  request for VDQM VolReqID"},
+    { RTCPCLD_MSG_REQSTARTED, DLF_LVL_SYSTEM, "starting worker request for VDQM VolReqID"},
     { RTCPCLD_MSG_PWUID, DLF_LVL_ERROR, "rtcopy client daemon UID/GID configuration error"},
     { RTCPCLD_MSG_INTERNAL, DLF_LVL_ERROR, "rtcopy client daemon internal error"},
     { RTCPCLD_MSG_CALLBACK_POS, DLF_LVL_SYSTEM, "rtcopy client daemon callback: file position"},
     { RTCPCLD_MSG_CALLBACK_CP, DLF_LVL_SYSTEM, "rtcopy client daemon callback: file copy"},
     { RTCPCLD_MSG_CATALOGUE, DLF_LVL_ERROR, "catalogue lookup error"},
     { RTCPCLD_MSG_VDQM, DLF_LVL_ERROR, "VDQM call failed"},
-    { RTCPCLD_MSG_VWFAILED, DLF_LVL_ERROR, "Failed to start VidWorker"},
-    { RTCPCLD_MSG_VIDWORKER_STARTED, DLF_LVL_SYSTEM, "VidWorker started"},
+    { RTCPCLD_MSG_WFAILED, DLF_LVL_ERROR, "Failed to start worker"},
+    { RTCPCLD_MSG_RECALLER_STARTED, DLF_LVL_SYSTEM, "recaller started"},
+    { RTCPCLD_MSG_MIGRATOR_STARTED, DLF_LVL_SYSTEM, "migrator started"},
     { RTCPCLD_MSG_EXTINFO, DLF_LVL_DEBUG, "External logger info/debug message"},
     { RTCPCLD_MSG_EXTERR, DLF_LVL_ERROR, "External logger error message"},
     { RTCPCLD_MSG_VDQMINFO, DLF_LVL_SYSTEM, "Request successfully submitted to VDQM"},
     { RTCPCLD_MSG_NOREQS, DLF_LVL_SYSTEM, "Nothing left to do for this VID"},
     { RTCPCLD_MSG_CALLBACK_GETW, DLF_LVL_DEBUG, "rtcopy client daemon callback: get more work"},
-    { RTCPCLD_MSG_VIDWORKER_ENDED, DLF_LVL_SYSTEM, "VidWorker ended"},
+    { RTCPCLD_MSG_RECALLER_ENDED, DLF_LVL_SYSTEM, "recaller ended"},
+    { RTCPCLD_MSG_MIGRATOR_ENDED, DLF_LVL_SYSTEM, "migrator ended"},
     { RTCPCLD_MSG_DBSVC, DLF_LVL_ERROR, "Database service error"},
     { RTCPCLD_MSG_WRONG_TAPE, DLF_LVL_ALERT, "Retrieved inconsistent tape request"},
     { RTCPCLD_MSG_FILEREQ, DLF_LVL_SYSTEM, "New file request"},
@@ -123,12 +137,20 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_NOTAPE, DLF_LVL_ERROR,"No tape associated with segment"},
     { RTCPCLD_MSG_WRONGMODE, DLF_LVL_ERROR,"Unexpected tape access mode detected"},
     { RTCPCLD_MSG_ADDSEGM, DLF_LVL_DEBUG,"Adding segment to castor file"},
-    { RTCPCLD_MSG_RESERVED45, DLF_LVL_DEBUG,""},
-    { RTCPCLD_MSG_RESERVED46, DLF_LVL_DEBUG,""},
-    { RTCPCLD_MSG_RESERVED47, DLF_LVL_DEBUG,""},
-    { RTCPCLD_MSG_RESERVED48, DLF_LVL_DEBUG,""},
-    { RTCPCLD_MSG_RESERVED49, DLF_LVL_DEBUG,""},
-    { RTCPCLD_MSG_RESERVED50, DLF_LVL_DEBUG,""}
+    { RTCPCLD_MSG_WRONGCKSUM, DLF_LVL_ERROR,"Wrong checksum"},
+    { RTCPCLD_MSG_CKSUMOK, DLF_LVL_SYSTEM,"Checksum is OK"},
+    { RTCPCLD_MSG_NSSEGNOTFOUND, DLF_LVL_ERROR,"Name server segment not found"},
+    { RTCPCLD_MSG_UPDCKSUM, DLF_LVL_SYSTEM,"Update checksum in Cns segattrs"},
+    { RTCPCLD_MSG_WRONGALG, DLF_LVL_SYSTEM,"Wrong checksum algorithm detected but not changed"},
+    { RTCPCLD_MSG_NOTAPEPOOL, DLF_LVL_ERROR,"No tape pool found for stream"},
+    { RTCPCLD_MSG_RESERVED53, DLF_LVL_DEBUG,""},
+    { RTCPCLD_MSG_RESERVED54, DLF_LVL_DEBUG,""},
+    { RTCPCLD_MSG_RESERVED55, DLF_LVL_DEBUG,""},
+    { RTCPCLD_MSG_RESERVED56, DLF_LVL_DEBUG,""},
+    { RTCPCLD_MSG_RESERVED57, DLF_LVL_DEBUG,""},
+    { RTCPCLD_MSG_RESERVED58, DLF_LVL_DEBUG,""},
+    { RTCPCLD_MSG_RESERVED59, DLF_LVL_DEBUG,""},
+    { RTCPCLD_MSG_RESERVED60, DLF_LVL_DEBUG,""}
 };
 #else /* RTCPCLD_COMMON */
 extern struct RtcpcldMessages rtcpcldMessages;
