@@ -206,10 +206,10 @@ CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
 CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
 
 /* PL/SQL method to make a SubRequest wait on another one, linked to the given DiskCopy */
-CREATE OR REPLACE PROCEDURE makeSubRequestWait(subreqId IN INTEGER, diskCopyId IN INTEGER) AS
+CREATE OR REPLACE PROCEDURE makeSubRequestWait(subreqId IN INTEGER, dci IN INTEGER) AS
 BEGIN
  UPDATE SubRequest
-  SET parent = (SELECT id FROM SubRequest WHERE diskCopy = diskCopyId), status = 5 -- WAITSUBREQ
+  SET parent = (SELECT id FROM SubRequest WHERE diskCopy = dci), status = 5 -- WAITSUBREQ
   WHERE SubRequest.id = subreqId;
 END;
 
@@ -217,7 +217,7 @@ END;
 CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER, tapeCopyStatus IN NUMBER,
                                                   newTapeCopyStatus IN NUMBER, newStreamStatus IN NUMBER,
                                                   diskServerName OUT VARCHAR, mountPoint OUT VARCHAR,
-                                                  path OUT VARCHAR, diskCopyId OUT INTEGER,
+                                                  path OUT VARCHAR, dci OUT INTEGER,
                                                   castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                   nsHost OUT VARCHAR, fileSize OUT INTEGER,
                                                   tapeCopyId OUT INTEGER) AS
@@ -225,7 +225,7 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER, tapeCopyS
 BEGIN
  SELECT DiskServer.name, FileSystem.mountPoint, DiskCopy.path, DiskCopy.id, FileSystem.id,
    CastorFile.id, CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, TapeCopy.id
-  INTO diskServerName, mountPoint, path, diskCopyId, fileSystemId, castorFileId, fileId, nsHost, fileSize, tapeCopyId
+  INTO diskServerName, mountPoint, path, dci, fileSystemId, castorFileId, fileId, nsHost, fileSize, tapeCopyId
   FROM DiskServer, FileSystem, DiskCopy, CastorFile, TapeCopy, Stream2TapeCopy
   WHERE DiskServer.id = FileSystem.diskserver
     AND FileSystem.id = DiskCopy.filesystem
@@ -244,11 +244,11 @@ END;
 /* PL/SQL method implementing bestFileSystemForSegment */
 CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskServerName OUT VARCHAR,
                                                      mountPoint OUT VARCHAR, path OUT VARCHAR,
-                                                     diskCopyId OUT INTEGER) AS
+                                                     dci OUT INTEGER) AS
  fileSystemId NUMBER;
 BEGIN
 SELECT DiskServer.name, FileSystem.mountPoint, DiskCopy.path, DiskCopy.id
- INTO diskServerName, mountPoint, path, diskCopyId
+ INTO diskServerName, mountPoint, path, dci
  FROM DiskServer, FileSystem, DiskPool2SvcClass,
       (SELECT id, svcClass from StageGetRequest UNION
        SELECT id, svcClass from StagePrepareToGetRequest UNION
@@ -269,23 +269,23 @@ SELECT DiskServer.name, FileSystem.mountPoint, DiskCopy.path, DiskCopy.id
     AND DiskServer.id = FileSystem.diskServer
     AND ROWNUM < 2
   ORDER by FileSystem.weight DESC;
-UPDATE DiskCopy SET fileSystem = fileSystemId WHERE id = diskCopyId;
+UPDATE DiskCopy SET fileSystem = fileSystemId WHERE id = dci;
 UPDATE FileSystem SET weight = weight - fsDeviation WHERE id = fileSystemId;
 END;
 
 /* PL/SQL method implementing fileRecalled */
 CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER, SubRequestStatus IN NUMBER,
-                                         dskCopyStatus IN NUMBER) AS
+                                         diskCopyStatus IN NUMBER) AS
  SubRequestId NUMBER;
- DiskCopyId NUMBER;
+ dci NUMBER;
 BEGIN
 SELECT SubRequest.id, DiskCopy.id
- INTO SubRequestId, DiskCopyId
+ INTO SubRequestId, dci
  FROM TapeCopy, SubRequest, DiskCopy
  WHERE TapeCopy.id = tapecopyId
   AND DiskCopy.castorFile = TapeCopy.castorFile
   AND SubRequest.diskcopy = DiskCopy.id;
-UPDATE DiskCopy SET status = diskCopyStatus WHERE id = DiskCopyId;
+UPDATE DiskCopy SET status = diskCopyStatus WHERE id = dci;
 UPDATE SubRequest SET status = SubRequestStatus WHERE id = SubRequestId;
 UPDATE SubRequest SET status = SubRequestStatus WHERE parent = SubRequestId;
 END;
@@ -293,10 +293,10 @@ END;
 /* PL/SQL method implementing isSubRequestToSchedule */
 CREATE OR REPLACE PROCEDURE isSubRequestToSchedule(subreqId IN INTEGER, result OUT INTEGER) AS
   stat INTEGER;
-  diskCopyId INTEGER;
+  dci INTEGER;
 BEGIN
  SELECT DiskCopy.status, DiskCopy.id
-  INTO stat, diskCopyId
+  INTO stat, dci
   FROM DiskCopy, SubRequest
   WHERE SubRequest.id = subreqId
    AND SubRequest.castorfile = DiskCopy.castorfile
@@ -307,7 +307,7 @@ BEGIN
  IF 2 = stat -- DISKCCOPY_WAITTAPERECALL
  THEN
   -- Only DiskCopy, make SubRequest wait on the recalling one and do not schedule
-  update SubRequest SET parent = (SELECT id FROM SubRequest where diskCopy = diskCopyId) WHERE id = subreqId;
+  update SubRequest SET parent = (SELECT id FROM SubRequest where diskCopy = dci) WHERE id = subreqId;
   result := 0;
  ELSE
   -- DiskCopies exist that are already recalled, thus schedule for access
@@ -331,22 +331,22 @@ END castor;
 
 /* PL/SQL method implementing scheduleSubRequest */
 CREATE OR REPLACE PROCEDURE scheduleSubRequest(srId IN INTEGER, fileSystemId IN INTEGER,
-                                               diskCopyId OUT INTEGER, path OUT VARCHAR,
+                                               dci OUT INTEGER, path OUT VARCHAR,
                                                status OUT NUMBER, sources OUT castor.DiskCopy_Cur) AS
   castorFileId INTEGER;
   unusedPATH VARCHAR(2048);
 BEGIN
- diskCopyId := 0;
+ dci := 0;
  SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
-  INTO diskCopyId, path, status
+  INTO dci, path, status
   FROM DiskCopy, SubRequest
   WHERE SubRequest.id = srId
     AND SubRequest.castorfile = DiskCopy.castorfile
     AND DiskCopy.filesystem = fileSystemId
     AND DiskCopy.status IN (0, 1, 2, 5, 6); -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
  IF status IN (2, 5) THEN -- WAITTAPERECALL, WAITFS, Make SubRequest Wait
-   makeSubRequestWait(srId, diskCopyId);
-   diskCopyId := 0;
+   makeSubRequestWait(srId, dci);
+   dci := 0;
    path := '';
  END IF;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, look in others
@@ -356,26 +356,26 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
    AND SubRequest.castorfile = DiskCopy.castorfile
    AND DiskCopy.status IN (0, 1, 2, 5, 6); -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
  IF sources%NOTFOUND THEN -- create DiskCopy for recall
-   getId(1, diskCopyId);
-   UPDATE SubRequest SET diskCopy = diskCopyId, status = 4 -- WAITTAPERECALL
+   getId(1, dci);
+   UPDATE SubRequest SET diskCopy = dci, status = 4 -- WAITTAPERECALL
     WHERE id = srId RETURNING castorFile INTO castorFileId;
    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
-    VALUES ('', diskCopyId, 0, castorFileId, 2); -- status WAITTAPERECALL
-   diskCopyId := 0;
+    VALUES ('', dci, 0, castorFileId, 2); -- status WAITTAPERECALL
+   dci := 0;
    status := 2; -- WAITTAPERECALL
    close sources;
  ELSE
-   FETCH sources INTO diskCopyId, unusedPath, status;
+   FETCH sources INTO dci, unusedPath, status;
    IF status IN (2,5) THEN -- WAITTAPERECALL, WAITFS, Make SubRequest Wait
-     makeSubRequestWait(srId, diskCopyId);
-     diskCopyId := 0;
+     makeSubRequestWait(srId, dci);
+     dci := 0;
      close sources;
    ELSE -- create DiskCopy for Disk to Disk copy
-     getId(1, diskCopyId);
-     UPDATE SubRequest SET diskCopy = diskCopyId WHERE id = srId
+     getId(1, dci);
+     UPDATE SubRequest SET diskCopy = dci WHERE id = srId
       RETURNING castorFile INTO castorFileId;
      INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
-      VALUES ('', diskCopyId, 0, castorFileId, 1); -- status WAITDISK2DISKCOPY
+      VALUES ('', dci, 0, castorFileId, 1); -- status WAITDISK2DISKCOPY
      status := 1; -- status WAITDISK2DISKCOPY
    END IF;
  END IF;
