@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: dlf_api.h,v $ $Revision: 1.9 $ $Date: 2005/02/04 08:26:48 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: dlf_api.h,v $ $Revision: 1.10 $ $Date: 2005/02/11 09:47:09 $ CERN IT-ADC Vitaly Motyakov
  */
 
 #ifndef _DLFAPI_H_
@@ -63,7 +63,7 @@ EXTERN_C int DLL_DECL dlf_gettexts_from_file _PROTO((const char*, unsigned int*,
 EXTERN_C int DLL_DECL dlf_add_to_text_list _PROTO((int, const char*, dlf_msg_text_slist_t*));
 EXTERN_C char DLL_DECL * dlf_format_str _PROTO((char*, int, const char*, ...));
 EXTERN_C int DLL_DECL dlf_write _PROTO((Cuuid_t, int, int, struct Cns_fileid*, int, ...));
-EXTERN_C char DLL_DECL * dlf_uuid2hex _PROTO((const Cuuid_t, char*, int));
+EXTERN_C char DLL_DECL * dlf_uuid2hex _PROTO((Cuuid_t, char*, int));
 EXTERN_C int DLL_DECL dlf_write_to_file _PROTO((dlf_log_dst_t*, dlf_log_message_t*));
 EXTERN_C int DLL_DECL dlf_calc_msg_size _PROTO((dlf_log_message_t*));
 EXTERN_C int DLL_DECL dlf_send_to_host _PROTO((dlf_log_dst_t*, dlf_log_message_t*, int, int));
