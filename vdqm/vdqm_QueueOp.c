@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.10 $ $Date: 1999/11/18 15:36:04 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.11 $ $Date: 1999/11/22 15:27:19 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1214,10 +1214,14 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
             /*
              * Prevent operations on a free unit. A job must have been
              * started and unit marked busy before it can be used.
+             * 22/11/1999: we change this so that a free unit can be
+             *             assigned. The reason is that a local job may
+             *             running on the tape server (e.g. tplabel) may
+             *             want to run without starting a rtcopy job.
              */
             if ( !(DrvReq->status & VDQM_UNIT_BUSY) &&
                 (drvrec->drv.status & VDQM_UNIT_FREE) &&
-                (DrvReq->status & (VDQM_UNIT_ASSIGN | VDQM_UNIT_RELEASE |
+                (DrvReq->status & (VDQM_UNIT_RELEASE |
                 VDQM_VOL_MOUNT | VDQM_VOL_UNMOUNT)) ) {
                 log(LOG_ERR,"vdqm_NewDrvReq(): status 0x%x requested on FREE drive\n",
                     DrvReq->status);
@@ -1342,6 +1346,13 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
              * we tell the drive to unmount twice
              */
             DrvReq->status = DrvReq->status & ~VDQM_VOL_UNMOUNT;
+            /*
+             * Set status to FREE if there is no job assigned to the unit
+             */
+            if ( drvrec->vol == NULL ) {
+                drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_BUSY;
+                drvrec->drv.status = drvrec->drv.status | VDQM_UNIT_FREE;
+            }
         }
         if ((DrvReq->status & VDQM_UNIT_RELEASE) &&
             !(DrvReq->status & VDQM_UNIT_FREE) ) { 
@@ -1364,7 +1375,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
             }
             drvrec->vol = NULL;
 
-            if ((*DrvReq->volid != '\0' || *drvrec->drv.volid != '\0' ) ) {
+            if ( *drvrec->drv.volid != '\0' ) {
                 /*
                  * Consistency check: if input request contains a volid it
                  * should correspond to the one in the drive record. This
@@ -1400,6 +1411,15 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                     drvrec->drv.VolReqID = volrec->vol.VolReqID;
                     drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_RELEASE;
                 }
+            } else {
+                /*
+                 * There is no volume on unit. Since a RELEASE has
+                 * been requested the unit is FREE (no job and no volume
+                 * assigned to it. Update status accordingly.
+                 */
+                drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_BUSY;
+                drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_RELEASE;
+                drvrec->drv.status = drvrec->drv.status | VDQM_UNIT_FREE;
             }
         } 
         /*
