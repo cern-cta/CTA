@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/05 14:23:55 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/08 09:57:49 $ $Author: bcouturi $
  *
  *
  *
@@ -127,13 +127,15 @@ castor::replier::RequestReplier::start() throw() {
 void *
 castor::replier::RequestReplier::staticReplierThread(void *arg) throw() {
   if (0 == arg) {
-    clog() << ERROR << "Please specify an argument to staticReplierThread" << std::endl;
+    // XXX Commented out because clog no longer a static method !
+    //clog() << ERROR << "Please specify an argument to staticReplierThread" << std::endl;
     return 0;
   }
 
   castor::replier::RequestReplier *s_rr = static_cast<castor::replier::RequestReplier *>(arg);
   if (0 == s_rr) {
-    clog() << ERROR << "Error in dynamic cast" << std::endl;
+    // XXX Commented out because clog no longer a static method !
+    // clog() << ERROR << "Error in dynamic cast" << std::endl;
     return 0;
   }
 
