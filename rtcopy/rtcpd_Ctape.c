@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.26 $ $Date: 2000/03/31 16:11:24 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.27 $ $Date: 2000/04/07 11:35:03 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -222,7 +222,6 @@ int rtcpd_Reserve(tape_list_t *tape) {
 
 int rtcpd_Mount(tape_list_t *tape) {
     int rc, j, save_serrno,severity, jobID;
-    int retry = 0;
     char *p, confparam[16];
     struct stat st;
     rtcpTapeRequest_t *tapereq;
@@ -244,145 +243,129 @@ int rtcpd_Mount(tape_list_t *tape) {
         sprintf(filereq->tape_path,"PATH%d.%d",jobID,++j);
     }
 
+    rtcp_log(LOG_DEBUG,"Ctape_mount(%s,%s,%d,%s,%s,%s,%d,%s,%s,%d)\n",
+             filereq->tape_path,
+             tapereq->vid,
+             tapereq->partition,
+             tapereq->dgn,
+             tapereq->density,
+             tapereq->unit,
+             tapereq->mode,
+             tapereq->vsn,
+             tapereq->label,
+             tapereq->VolReqID);
+
+    severity = RTCP_OK;
+
+    serrno = errno = 0;
     /*
-     * Retry loop on ETVBSY. Is not needed when all clients use
-     * VDQM but allows us to share tapes between SHIFT and CASTOR.
+     * We need to save tape_path for Ctape_kill() in case there is 
+     * an ABORT. The reason is that main control thread may have 
+     * free'd the tape and file request structures while aborting 
+     * and the tape_path information gone lost.
      */
-    for (;;) {
-        rtcp_log(LOG_DEBUG,"Ctape_mount(%s,%s,%d,%s,%s,%s,%d,%s,%s,%d)\n",
-                 filereq->tape_path,
-                 tapereq->vid,
-                 tapereq->partition,
-                 tapereq->dgn,
-                 tapereq->density,
-                 tapereq->unit,
-                 tapereq->mode,
-                 tapereq->vsn,
-                 tapereq->label,
-                 tapereq->VolReqID);
-
-        severity = RTCP_OK;
-
-        serrno = errno = 0;
-        /*
-         * We need to save tape_path for Ctape_kill() in case there is 
-         * an ABORT. The reason is that main control thread may have 
-         * free'd the tape and file request structures while aborting 
-         * and the tape_path information gone lost.
-         */
-        strcpy(tape_path,filereq->tape_path);
-        rtcpd_ResetCtapeError();
-        tapereq->TStartMount = (int)time(NULL);
-        rc = Ctape_mount(filereq->tape_path,
-                         tapereq->vid,
-                         tapereq->partition,
-                         tapereq->dgn,
-                         tapereq->density,
-                         tapereq->unit,
-                         tapereq->mode,
-                         tapereq->vsn,
-                         tapereq->label,
-                         tapereq->VolReqID);
+    strcpy(tape_path,filereq->tape_path);
+    rtcpd_ResetCtapeError();
+    tapereq->TStartMount = (int)time(NULL);
+    rc = Ctape_mount(filereq->tape_path,
+                     tapereq->vid,
+                     tapereq->partition,
+                     tapereq->dgn,
+                     tapereq->density,
+                     tapereq->unit,
+                     tapereq->mode,
+                     tapereq->vsn,
+                     tapereq->label,
+                     tapereq->VolReqID);
     
-        tapereq->tprc = rc;
-        tape_path[0] = '\0';
-        save_serrno = (serrno != 0 ? serrno : errno);
-        tapereq->TEndMount = (int)time(NULL);
-        if ( AbortFlag == 1 ) {
-            rtcp_log(LOG_ERR,"rtcpd_Mount() ABORTING!\n");
-            severity = RTCP_FAILED | RTCP_USERR;
-            rtcpd_SetReqStatus(tape,NULL,save_serrno,severity);
-            return(-1);
-        }
-        if ( rc == -1 ) {
-            /*
-             * If there is an error (including medium errors) on
-             * MOUNT the Ctape_mount() routine will always free
-             * or even "down" the unit. Therefore we should not 
-             * retry on this drive but rather tell the client to
-             * call VDQM for a new drive
-             */
-            rtcp_log(LOG_ERR,"rtcpd_Mount() Ctape_mount() %s\n",
-                     CTP_ERRTXT);
-            if ( save_serrno != ETVBSY ) 
-                rtcpd_AppendClientMsg(tape, NULL, "%s\n",CTP_ERRTXT);
+    tapereq->tprc = rc;
+    tape_path[0] = '\0';
+    save_serrno = (serrno != 0 ? serrno : errno);
+    tapereq->TEndMount = (int)time(NULL);
+    if ( AbortFlag == 1 ) {
+        rtcp_log(LOG_ERR,"rtcpd_Mount() ABORTING!\n");
+        severity = RTCP_FAILED | RTCP_USERR;
+        rtcpd_SetReqStatus(tape,NULL,save_serrno,severity);
+        return(-1);
+    }
+    if ( rc == -1 ) {
+        /*
+         * If there is an error (including medium errors) on
+         * MOUNT the Ctape_mount() routine will always free
+         * or even "down" the unit. Therefore we should not 
+         * retry on this drive but rather tell the client to
+         * call VDQM for a new drive
+         */
+        rtcp_log(LOG_ERR,"rtcpd_Mount() Ctape_mount() %s\n",
+                 CTP_ERRTXT);
+        if ( save_serrno != ETVBSY ) 
+            rtcpd_AppendClientMsg(tape, NULL, "%s\n",CTP_ERRTXT);
 
-            severity = 0;
-            switch ( save_serrno ) {
-            case EIO:
-            case ETPARIT:
-                /*
-                 * Check if there is any configured error action
-                 * for this medium errors (like sending a mail to
-                 * operator or raising an alarm).
-                 */
-                sprintf(confparam,"%s_ERRACTION",tapereq->dgn);
-                if ( (p = getconfent("RTCOPYD",confparam,0)) != NULL ) {
-                    j = atoi(p);
-                    severity = j;
-                }
-            case ETHWERR:
-            case ETNOSNS:
-                if ( severity & RTCP_NORETRY ) {
-                    tapereq->err.max_tpretry = -1;
-                } else {
-                    tapereq->err.max_tpretry--;
-                    severity |= RTCP_RESELECT_SERV;
-                }
-                break;
-            case EEXIST:
-                /*
-                 * This should not happen...
-                 */
-            case ENXIO:
-            case ETRSLT:
-                severity = RTCP_RESELECT_SERV;
-                break;
-            case SYERR:
-            case SECOMERR:
-            case SENOSSERV:
-            case SENOSHOST:
-            case ETDNP:
-            case ETIDN:
-                severity = RTCP_FAILED | RTCP_SYERR;
-                break;
-            case ETVBSY:
-                /*
-                 * Should never happen in a CASTOR-only installation.
-                 * However, a retry allows us to share tapes with SHIFT.
-                 */
-                rtcp_log(LOG_DEBUG,"rtcpd_Mount(): retry %d on busy volume %s\n",
-                         retry,tapereq->vid);
-                retry++;
-                break;
-            case EINVAL: /* Wrong parameter...*/
-            case EACCES: /* TMS denied access */
-            case ETINTR:
-            case ETBLANK:
-            case ETCOMPA:
-            case ETUNREC:
-                severity = RTCP_FAILED | RTCP_USERR;
-                break;
-            case ETNDV:
-                severity = RTCP_RESELECT_SERV;
-                break;
-            case ETIDG:
-            case ETNRS:
-                severity = RTCP_FAILED | RTCP_SEERR;
-                break;
-            case EINTR:
-                severity = RTCP_FAILED | RTCP_USERR;
-                break;
-            default:
-                severity = RTCP_FAILED | RTCP_UNERR;
-                break;
+        severity = 0;
+        switch ( save_serrno ) {
+        case EIO:
+        case ETPARIT:
+            /*
+             * Check if there is any configured error action
+             * for this medium errors (like sending a mail to
+             * operator or raising an alarm).
+             */
+            sprintf(confparam,"%s_ERRACTION",tapereq->dgn);
+            if ( (p = getconfent("RTCOPYD",confparam,0)) != NULL ) {
+                j = atoi(p);
+                severity = j;
             }
-            if ( save_serrno != ETVBSY )
-                rtcpd_SetReqStatus(tape,NULL,save_serrno,severity);
-        } /* if ( rc == -1 ) */
-        if ( save_serrno != ETVBSY ) break;
-        else sleep(VOLBSYRI);   /* Retry on volume busy */
-    } /* for (;;) */
+        case ETHWERR:
+        case ETNOSNS:
+            if ( severity & RTCP_NORETRY ) {
+                tapereq->err.max_tpretry = -1;
+            } else {
+                tapereq->err.max_tpretry--;
+                severity |= RTCP_RESELECT_SERV;
+            }
+            break;
+        case EEXIST:
+            /*
+             * This should not happen...
+             */
+        case ENXIO:
+        case ETRSLT:
+        case ETVBSY:
+            severity = RTCP_RESELECT_SERV;
+            break;
+        case SYERR:
+        case SECOMERR:
+        case SENOSSERV:
+        case SENOSHOST:
+        case ETDNP:
+        case ETIDN:
+            severity = RTCP_FAILED | RTCP_SYERR;
+            break;
+        case EINVAL: /* Wrong parameter...*/
+        case EACCES: /* TMS denied access */
+        case ETINTR:
+        case ETBLANK:
+        case ETCOMPA:
+        case ETUNREC:
+            severity = RTCP_FAILED | RTCP_USERR;
+            break;
+        case ETNDV:
+            severity = RTCP_RESELECT_SERV;
+            break;
+        case ETIDG:
+        case ETNRS:
+            severity = RTCP_FAILED | RTCP_SEERR;
+            break;
+        case EINTR:
+            severity = RTCP_FAILED | RTCP_USERR;
+            break;
+        default:
+            severity = RTCP_FAILED | RTCP_UNERR;
+            break;
+        }
+        if ( save_serrno != ETVBSY )
+            rtcpd_SetReqStatus(tape,NULL,save_serrno,severity);
+    } /* if ( rc == -1 ) */
     if ( rc == 0 ) 
         rtcp_log(LOG_DEBUG,"rtcpd_Mount() Ctape_mount() successful\n");
 
