@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.90 $ $Date: 2000/09/20 09:39:07 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.91 $ $Date: 2000/10/25 09:30:26 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -567,7 +567,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                         tape_list_t *tape,
                         file_list_t *file) {
     int rc, irc, status, i, j, blksiz, lrecl, save_serrno;
-    int buf_done, nb_bytes, proc_err, severity, last_errno;
+    int buf_done, nb_bytes, proc_err, severity, last_errno, SendStartSignal;
     register int Uformat;
     register int debug = Debug;
     register int convert, concat;
@@ -603,6 +603,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
     DK_SIZE(file->diskbytes_sofar);
     save_serrno = 0;
     proc_err = 0;
+    SendStartSignal = TRUE;
     for (;;) {
         i = *indxp;
         buf_done = FALSE;
@@ -683,6 +684,22 @@ static int MemoryToDisk(int disk_fd, int pool_index,
         }
         if ( proc_err != 0 ) break;
         DEBUG_PRINT((LOG_DEBUG,"MemoryToDisk() buffer %d full\n",i));
+        if ( SendStartSignal == TRUE ) {
+            /*
+             * Signal to StartDiskIO() that we are starting to empty the
+             * first buffer.
+             */
+            DK_STATUS(RTCP_PS_WAITMTX);
+            rc = DiskIOstarted();
+            DK_STATUS(RTCP_PS_NOBLOCKING);
+            if ( rc == -1 ) {
+                (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
+                (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
+                return(-1);
+            }
+            SendStartSignal = FALSE;
+        }
+
         /*
          * Should never happen unless there is a bug.
          */
@@ -1691,12 +1708,11 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
             }
 
             /*
-             * Wait while buffers are overallocated. For tape write
-             * there are two additional conditions:
-             * 1) we must make sure that the previously dispatched
-             *    thread has started (i.e. it has locked its first
-             *    buffer).
-             * 2) we must check if we need to wait for the 
+             * Wait while buffers are overallocated. We also
+             * have to make sure that the previously dispatched thread
+             * started and locked its first buffer. For tape write
+             * there are one additional conditions:
+             * 1) we must check if we need to wait for the 
              *    Ctape_info() for more info. (i.e. blocksize)
              *    before starting the disk -> memory copy.
              * For tape read we must also check if the tapeIO has
@@ -1707,16 +1723,17 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                     proc_cntl.nb_reserved_bufs,nb_bufs,tapereq->mode,
                     proc_cntl.diskIOstarted,proc_cntl.tapeIOfinished,
                     filereq->blocksize);
-            while ( (proc_cntl.nb_reserved_bufs >= nb_bufs && 
+            while ( (proc_cntl.diskIOstarted == 0) ||
+                    (proc_cntl.nb_reserved_bufs >= nb_bufs &&
                      (tapereq->mode == WRITE_ENABLE || 
                       (tapereq->mode == WRITE_DISABLE &&
                        proc_cntl.tapeIOfinished == 0 &&
                        prevfile != NULL &&
                        prevfile->end_index < 0))) ||
-                   ((tapereq->mode == WRITE_ENABLE) &&
-                   ((proc_cntl.diskIOstarted == 0) ||
-                     (filereq->blocksize <= 0))) ) {
-                rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() waiting... (nb_reserved_bufs=%d\n",proc_cntl.nb_reserved_bufs);
+                    ((tapereq->mode == WRITE_ENABLE) &&
+                     (filereq->blocksize <= 0)) ) {
+                rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() waiting... (nb_reserved_bufs=%d, diskIOstarted=%d\n",
+                         proc_cntl.nb_reserved_bufs,proc_cntl.diskIOstarted);
                 rc = Cthread_cond_wait_ext(proc_cntl.cntl_lock);
                 if ( rc == -1 ) {
                     save_serrno = serrno;
