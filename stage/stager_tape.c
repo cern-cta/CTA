@@ -1,5 +1,5 @@
 /*
- * $Id: stager_tape.c,v 1.2 2001/12/05 18:20:41 jdurand Exp $
+ * $Id: stager_tape.c,v 1.3 2001/12/20 11:40:34 jdurand Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.2 $ $Date: 2001/12/05 18:20:41 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.3 $ $Date: 2001/12/20 11:40:34 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -884,6 +884,9 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 #else
 		strcpy((*rtcpcreqs_in)[i]->tapereq.server   , stcs->u1.t.tapesrvr );
 #endif /* TAPESRVR */
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+		(*rtcpcreqs_in)[i]->tapereq.side = stcs->u1.t.side;
+#endif
 		switch (stcs->status & 0xF) {
 		case STAGEWRT:
 		case STAGEPUT:

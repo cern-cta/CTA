@@ -1,5 +1,5 @@
 /*
- * $Id: stageacct.c,v 1.10 2001/12/10 16:20:47 jdurand Exp $
+ * $Id: stageacct.c,v 1.11 2001/12/20 11:44:20 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.10 $ $Date: 2001/12/10 16:20:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.11 $ $Date: 2001/12/20 11:44:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -59,6 +59,9 @@ stageacct(subtype, uid, gid, clienthost, reqid, req_type, retryn, exitcode, stcp
     acctstage.u2.s.nbaccesses = stcp->nbaccesses;
     switch (stcp->t_or_d) {
     case 't':
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+      acctstage.u2.s.u1.t.side = stcp->u1.t.side;
+#endif
       strcpy (acctstage.u2.s.u1.t.dgn, stcp->u1.t.dgn);
       strcpy (acctstage.u2.s.u1.t.fseq, stcp->u1.t.fseq);
       strcpy (acctstage.u2.s.u1.t.vid, stcp->u1.t.vid[0]);
