@@ -4,22 +4,22 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: getuser.c,v $ $Revision: 1.5 $ $Date: 1999/10/14 14:54:47 $ CERN IT-PDP/DC Felix Hassine";
+static char cvsId[] = "@(#)$RCSfile: getuser.c,v $ $Revision: 1.6 $ $Date: 1999/11/23 08:47:02 $ CERN IT-PDP/DC Felix Hassine";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/types.h>
 #include <pwd.h>
 #include <Castor_limits.h>
+#include <Cglobals.h>
+#include <Cpwd.h>
 #include <serrno.h>
 #include <log.h>
 
 #if defined(_WIN32)
 char *getenv();
-#endif
-#if !defined(linux)
-extern char     *sys_errlist[] ;        /* System error list  */
 #endif
 
 #ifndef MAPPING_FILE
@@ -135,8 +135,8 @@ int *to_gid ;
 
         log( LOG_DEBUG,"Found a possible entry: %s\n",to_user);
 
-        if ( (pw = getpwnam(to_user))==NULL) {
-            log(LOG_INFO,"getpwnam(): %s\n",sys_errlist[errno]);
+        if ( (pw = Cgetpwnam(to_user))==NULL) {
+            log(LOG_INFO,"Cgetpwnam(): %s\n",sstrerror(serrno));
             continue ;
         } else {
             *to_uid = pw->pw_uid;
