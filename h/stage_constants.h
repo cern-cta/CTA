@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.28 2002/07/27 06:42:19 jdurand Exp $
+ * $Id: stage_constants.h,v 1.29 2002/09/17 15:35:43 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -498,8 +498,8 @@
 #define	STAGE_UPDC       108
 #define	STAGE_INIT       109
 #define	STAGE_CAT        110
-#define	STAGE_ALLOC      111           /* Not yet supported */
-#define	STAGE_GET        112           /* Not yet supported */
+#define	STAGE_ALLOC      111
+#define	STAGE_GET        112
 #define STAGE_FILCHG     114           /* Not yet supported */
 #define	STAGE_SHUTDOWN   115
 #define	STAGE_PING       116
