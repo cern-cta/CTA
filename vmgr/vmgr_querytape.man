@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_querytape.man,v $ $Revision: 1.1 $ $Date: 1999/12/17 10:35:05 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr_querytape.man,v $ $Revision: 1.2 $ $Date: 2000/02/03 16:14:07 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_QUERYTAPE l "$Date: 1999/12/17 10:35:05 $"
+.TH VMGR_QUERYTAPE 3 "$Date: 2000/02/03 16:14:07 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_querytape \- query the CASTOR Volume Manager about a tape
 .SH SYNOPSIS
@@ -105,5 +105,5 @@ Communication error.
 .B EVMGRNACT
 Volume manager is not running or is being shutdown.
 .SH SEE ALSO
-.BR Castor_limits(l) ,
-.B vmgr_entertape(l)
+.BR Castor_limits(4) ,
+.B vmgr_entertape(3)

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_entertape.man,v $ $Revision: 1.3 $ $Date: 1999/12/17 13:55:04 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr_entertape.man,v $ $Revision: 1.4 $ $Date: 2000/02/03 16:14:03 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_ENTERTAPE l "$Date: 1999/12/17 13:55:04 $"
+.TH VMGR_ENTERTAPE 3 "$Date: 2000/02/03 16:14:03 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_entertape \- enter a new tape in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -116,6 +116,6 @@ Communication error.
 .B EVMGRNACT
 Volume manager is not running or is being shutdown.
 .SH SEE ALSO
-.BR Castor_limits(l) ,
-.BR vmgr_deletetape(l) ,
-.B vmgr_modifytape(l)
+.BR Castor_limits(4) ,
+.BR vmgr_deletetape(3) ,
+.B vmgr_modifytape(3)

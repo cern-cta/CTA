@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_deletetape.man,v $ $Revision: 1.1 $ $Date: 1999/12/17 07:06:15 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr_deletetape.man,v $ $Revision: 1.2 $ $Date: 2000/02/03 16:14:02 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_DELETETAPE l "$Date: 1999/12/17 07:06:15 $"
+.TH VMGR_DELETETAPE 3 "$Date: 2000/02/03 16:14:02 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_deletetape \- remove a tape from the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -54,5 +54,5 @@ Communication error.
 .B EVMGRNACT
 Volume manager is not running or is being shutdown.
 .SH SEE ALSO
-.BR Castor_limits(l) ,
-.B vmgr_entertape(l)
+.BR Castor_limits(4) ,
+.B vmgr_entertape(3)

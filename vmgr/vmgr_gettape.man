@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_gettape.man,v $ $Revision: 1.1 $ $Date: 1999/12/17 14:33:08 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999 by CERN/IT/PDP/DM
+.\" @(#)@(#)$RCSfile: vmgr_gettape.man,v $ $Revision: 1.2 $ $Date: 2000/02/03 16:14:04 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_GETTAPE l "$Date: 1999/12/17 14:33:08 $"
+.TH VMGR_GETTAPE 3 "$Date: 2000/02/03 16:14:04 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_gettape \- get a tape volume to store a given amount of data
 .SH SYNOPSIS
@@ -101,5 +101,5 @@ Communication error.
 .B EVMGRNACT
 Volume manager is not running or is being shutdown.
 .SH SEE ALSO
-.BR Castor_limits(l) ,
-.B vmgr_updatetape(l)
+.BR Castor_limits(4) ,
+.B vmgr_updatetape(3)

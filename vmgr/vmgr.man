@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr.man,v $ $Revision: 1.1 $ $Date: 2000/02/01 07:42:40 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr.man,v $ $Revision: 1.2 $ $Date: 2000/02/03 16:13:59 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR l "$Date: 2000/02/01 07:42:40 $"
+.TH VMGR 1 "$Date: 2000/02/03 16:13:59 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgr \- start the volume manager
 .SH SYNOPSIS
@@ -108,4 +108,4 @@ Here is a small log:
 01/27 14:58:24  2237,0 vmgr_srv_modifytape: returns 0
 .fi
 .SH SEE ALSO
-.B vmgrshutdown(l)
+.B vmgrshutdown(1)

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_modifypool.man,v $ $Revision: 1.1 $ $Date: 2000/01/31 16:07:32 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr_modifypool.man,v $ $Revision: 1.2 $ $Date: 2000/02/03 16:14:05 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_MODIFYPOOL l "$Date: 2000/01/31 16:07:32 $"
+.TH VMGR_MODIFYPOOL 3 "$Date: 2000/02/03 16:14:05 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_modifypool \- modify the definition of an existing tape pool in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -62,5 +62,5 @@ Communication error.
 .B EVMGRNACT
 Volume manager is not running or is being shutdown.
 .SH SEE ALSO
-.BR Castor_limits(l) ,
-.B vmgr_enterpool(l)
+.BR Castor_limits(4) ,
+.B vmgr_enterpool(3)

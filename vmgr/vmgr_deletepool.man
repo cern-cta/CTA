@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_deletepool.man,v $ $Revision: 1.1 $ $Date: 2000/01/31 16:07:30 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr_deletepool.man,v $ $Revision: 1.2 $ $Date: 2000/02/03 16:14:01 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_DELETEPOOL l "$Date: 2000/01/31 16:07:30 $"
+.TH VMGR_DELETEPOOL 3 "$Date: 2000/02/03 16:14:01 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_deletepool \- remove the definition of a pool of tapes from the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -49,5 +49,5 @@ Communication error.
 .B EVMGRNACT
 Volume manager is not running or is being shutdown.
 .SH SEE ALSO
-.BR Castor_limits(l) ,
-.B vmgr_enterpool(l)
+.BR Castor_limits(4) ,
+.B vmgr_enterpool(3)
