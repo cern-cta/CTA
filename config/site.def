@@ -198,6 +198,7 @@
 #define BuildRfioServer		YES
 #define BuildRmcClient		YES
 #define BuildRmcServer		NO
+#define BuildJob		YES
 #define BuildRtcopyClient	YES
 #define BuildRtcopyServer	NO
 #define BuildRtstat		NO
