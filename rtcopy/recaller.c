@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.19 $ $Release$ $Date: 2005/01/27 11:22:58 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.20 $ $Release$ $Date: 2005/01/28 20:38:54 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.19 $ $Release$ $Date: 2005/01/27 11:22:58 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.20 $ $Release$ $Date: 2005/01/28 20:38:54 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -811,7 +811,7 @@ int main(
             (tape->file->filereq.err.errorcode > 0) ||
             (*tape->file->filereq.err.errmsgtxt != '\0') ||
             ((tape->file->filereq.err.severity & RTCP_FAILED) != 0)) ) {
-        (void)recallerCallbackFileCopies(
+        (void)recallerCallbackFileCopied(
                                          &(tape->tapereq),
                                          &(tape->file->filereq)
                                          );
