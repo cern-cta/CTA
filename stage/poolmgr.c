@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.251 2003/11/04 14:37:45 jdurand Exp $
+ * $Id: poolmgr.c,v 1.252 2003/11/17 13:20:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.251 $ $Date: 2003/11/04 14:37:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.252 $ $Date: 2003/11/17 13:20:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1760,7 +1760,7 @@ int ismetapool(metapool)
 	int i;
 	struct pool *pool_p;
 	
-	if (nbpool == 0) return (0);
+	if ((nbpool == 0) || (metapool[0] == '\0')) return (0);
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
 		if (strcmp (metapool, pool_p->metapool) == 0) break;
 	}
