@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/24 15:14:24 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/06/29 15:37:33 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/24 15:14:24 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/06/29 15:37:33 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -401,6 +401,9 @@ int rtcpcld_setVIDFailedStatus(
                                TAPE_FAILED) == -1 ) failed++;
   if ( rtcpcld_updateVIDStatus(tape,
                                TAPE_WAITMOUNT,
+                               TAPE_FAILED) == -1 ) failed++;
+  if ( rtcpcld_updateVIDStatus(tape,
+                               TAPE_MOUNTED,
                                TAPE_FAILED) == -1 ) failed++;
   if ( rtcpcld_updateVIDFileStatus(tape,
                                    SEGMENT_WAITFSEQ,
