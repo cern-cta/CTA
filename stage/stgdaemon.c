@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.206 2002/06/19 06:59:26 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.207 2002/06/19 13:15:36 bcouturi Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.206 $ $Date: 2002/06/19 06:59:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.207 $ $Date: 2002/06/19 13:15:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1047,9 +1047,10 @@ int main(argc,argv)
 	last_upd_fileclasses = time(NULL);
 
 	/* Initializing Last Init time */
+#ifdef MONITOR
+
 	last_init_time = last_upd_fileclasses;
 
-#ifdef MONITOR
 	{
 	  char buf[CA_MAXHOSTNAMELEN + 10]; 
 	  Cmonit_get_monitor_address(buf);
@@ -1124,7 +1125,9 @@ int main(argc,argv)
 				/* @@@@@@@@@@@@@@@@@@@@@@@ */
 				/* RESET MONITOR KNOWLEDGE */
 				/* @@@@@@@@@@@@@@@@@@@@@@@ */
+#ifdef MONITOR
 			  last_init_time = time(NULL);
+#endif
 			  stglogit(func, "Working with %d free file descriptors (system max: %d)\n", (int) FREE_FD, (int) sysconf(_SC_OPEN_MAX));
 			}
 			sendrep (rpfd, STAGERC, initreq_req_type, STGMAGIC, c);
