@@ -272,7 +272,7 @@ void castor::db::ora::OraStreamCnv::fillRepTapePool(castor::stager::Stream* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapePoolId = (u_signed64)rset->getDouble(2);
+  u_signed64 tapePoolId = (u_signed64)rset->getDouble(3);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(tapePoolId, " ", 0);

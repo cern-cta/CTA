@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdcRequestCnv.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/13 09:01:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdcRequestCnv.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/14 09:40:16 $ $Author: sponcec3 $
  *
  * 
  *
@@ -311,7 +311,7 @@ void castor::db::ora::OraStageUpdcRequestCnv::fillRepSvcClass(castor::stager::St
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = (u_signed64)rset->getDouble(9);
+  u_signed64 svcClassId = (u_signed64)rset->getDouble(10);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(svcClassId, " ", 0);
@@ -399,7 +399,7 @@ void castor::db::ora::OraStageUpdcRequestCnv::fillRepIClient(castor::stager::Sta
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = (u_signed64)rset->getDouble(10);
+  u_signed64 clientId = (u_signed64)rset->getDouble(11);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(clientId, " ", 0);
@@ -527,7 +527,7 @@ void castor::db::ora::OraStageUpdcRequestCnv::fillObjSvcClass(castor::stager::St
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = (u_signed64)rset->getDouble(8);
+  u_signed64 svcClassId = (u_signed64)rset->getDouble(10);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -613,7 +613,7 @@ void castor::db::ora::OraStageUpdcRequestCnv::fillObjIClient(castor::stager::Sta
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = (u_signed64)rset->getDouble(9);
+  u_signed64 clientId = (u_signed64)rset->getDouble(11);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted

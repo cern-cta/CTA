@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/10/12 14:44:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/10/14 09:40:15 $ $Author: sponcec3 $
  *
  *
  *
@@ -194,7 +194,7 @@ void castor::BaseCnvSvc::fillObj(castor::IAddress* address,
 }
 
 // -----------------------------------------------------------------------
-// deleteRepById
+// deleteRepByAddress
 // -----------------------------------------------------------------------
 void castor::BaseCnvSvc::deleteRepByAddress (castor::IAddress* address,
                                              bool autocommit)

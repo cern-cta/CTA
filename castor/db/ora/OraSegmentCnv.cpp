@@ -227,7 +227,7 @@ void castor::db::ora::OraSegmentCnv::fillRepTape(castor::stager::Segment* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeId = (u_signed64)rset->getDouble(12);
+  u_signed64 tapeId = (u_signed64)rset->getDouble(13);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(tapeId, " ", 0);
@@ -277,7 +277,7 @@ void castor::db::ora::OraSegmentCnv::fillRepTapeCopy(castor::stager::Segment* ob
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 copyId = (u_signed64)rset->getDouble(13);
+  u_signed64 copyId = (u_signed64)rset->getDouble(14);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(copyId, " ", 0);
@@ -352,7 +352,7 @@ void castor::db::ora::OraSegmentCnv::fillObjTape(castor::stager::Segment* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeId = (u_signed64)rset->getDouble(11);
+  u_signed64 tapeId = (u_signed64)rset->getDouble(13);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -391,7 +391,7 @@ void castor::db::ora::OraSegmentCnv::fillObjTapeCopy(castor::stager::Segment* ob
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 copyId = (u_signed64)rset->getDouble(12);
+  u_signed64 copyId = (u_signed64)rset->getDouble(14);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted

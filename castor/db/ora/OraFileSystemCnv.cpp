@@ -217,7 +217,7 @@ void castor::db::ora::OraFileSystemCnv::fillRepDiskPool(castor::stager::FileSyst
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 diskPoolId = (u_signed64)rset->getDouble(6);
+  u_signed64 diskPoolId = (u_signed64)rset->getDouble(7);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(diskPoolId, " ", 0);
@@ -305,7 +305,7 @@ void castor::db::ora::OraFileSystemCnv::fillRepDiskServer(castor::stager::FileSy
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 diskserverId = (u_signed64)rset->getDouble(7);
+  u_signed64 diskserverId = (u_signed64)rset->getDouble(8);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(diskserverId, " ", 0);
@@ -383,7 +383,7 @@ void castor::db::ora::OraFileSystemCnv::fillObjDiskPool(castor::stager::FileSyst
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 diskPoolId = (u_signed64)rset->getDouble(5);
+  u_signed64 diskPoolId = (u_signed64)rset->getDouble(7);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -469,7 +469,7 @@ void castor::db::ora::OraFileSystemCnv::fillObjDiskServer(castor::stager::FileSy
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 diskserverId = (u_signed64)rset->getDouble(6);
+  u_signed64 diskserverId = (u_signed64)rset->getDouble(8);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted

@@ -241,7 +241,7 @@ void castor::db::ora::OraSubRequestCnv::fillRepDiskCopy(castor::stager::SubReque
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 diskcopyId = (u_signed64)rset->getDouble(6);
+  u_signed64 diskcopyId = (u_signed64)rset->getDouble(7);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(diskcopyId, " ", 0);
@@ -279,7 +279,7 @@ void castor::db::ora::OraSubRequestCnv::fillRepCastorFile(castor::stager::SubReq
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 castorFileId = (u_signed64)rset->getDouble(7);
+  u_signed64 castorFileId = (u_signed64)rset->getDouble(8);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(castorFileId, " ", 0);
@@ -355,7 +355,7 @@ void castor::db::ora::OraSubRequestCnv::fillRepRequest(castor::stager::SubReques
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 requestId = (u_signed64)rset->getDouble(8);
+  u_signed64 requestId = (u_signed64)rset->getDouble(9);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(requestId, " ", 0);
@@ -436,7 +436,7 @@ void castor::db::ora::OraSubRequestCnv::fillObjDiskCopy(castor::stager::SubReque
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 diskcopyId = (u_signed64)rset->getDouble(5);
+  u_signed64 diskcopyId = (u_signed64)rset->getDouble(7);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -475,7 +475,7 @@ void castor::db::ora::OraSubRequestCnv::fillObjCastorFile(castor::stager::SubReq
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 castorFileId = (u_signed64)rset->getDouble(6);
+  u_signed64 castorFileId = (u_signed64)rset->getDouble(8);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -561,7 +561,7 @@ void castor::db::ora::OraSubRequestCnv::fillObjRequest(castor::stager::SubReques
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 requestId = (u_signed64)rset->getDouble(7);
+  u_signed64 requestId = (u_signed64)rset->getDouble(9);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted

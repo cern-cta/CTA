@@ -187,7 +187,7 @@ void castor::db::ora::OraClientCnv::fillRepRequest(castor::rh::Client* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 requestId = (u_signed64)rset->getDouble(3);
+  u_signed64 requestId = (u_signed64)rset->getDouble(4);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(requestId, " ", 0);
@@ -259,7 +259,7 @@ void castor::db::ora::OraClientCnv::fillObjRequest(castor::rh::Client* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 requestId = (u_signed64)rset->getDouble(2);
+  u_signed64 requestId = (u_signed64)rset->getDouble(4);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted

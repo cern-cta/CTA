@@ -227,7 +227,7 @@ void castor::db::ora::OraCastorFileCnv::fillRepSvcClass(castor::stager::CastorFi
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = (u_signed64)rset->getDouble(4);
+  u_signed64 svcClassId = (u_signed64)rset->getDouble(5);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(svcClassId, " ", 0);
@@ -265,7 +265,7 @@ void castor::db::ora::OraCastorFileCnv::fillRepFileClass(castor::stager::CastorF
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 fileClassId = (u_signed64)rset->getDouble(5);
+  u_signed64 fileClassId = (u_signed64)rset->getDouble(6);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(fileClassId, " ", 0);
@@ -434,7 +434,7 @@ void castor::db::ora::OraCastorFileCnv::fillObjSvcClass(castor::stager::CastorFi
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = (u_signed64)rset->getDouble(3);
+  u_signed64 svcClassId = (u_signed64)rset->getDouble(5);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -473,7 +473,7 @@ void castor::db::ora::OraCastorFileCnv::fillObjFileClass(castor::stager::CastorF
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 fileClassId = (u_signed64)rset->getDouble(4);
+  u_signed64 fileClassId = (u_signed64)rset->getDouble(6);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
