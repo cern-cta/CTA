@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.7 $ $Date: 1999/12/08 15:57:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.8 $ $Date: 1999/12/09 09:11:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -131,7 +131,7 @@ int want_reply;
 			return (SYERR);
 		}
 	}
-	if ((n = netwrite (stg_s, reqp, reql)) <= 0) {
+	if ((n = netwrite_timeout (stg_s, reqp, reql, STGTIMEOUT)) != reql) {
 		if (n == 0)
 			fprintf (stderr, STG02, "", "send", sys_serrlist[SERRNO]);
 		else
@@ -149,7 +149,7 @@ int want_reply;
 	}
 
 	while (1) {
-		if ((n = netread (stg_s, repbuf, 3 * LONGSIZE)) <= 0) {
+		if ((n = netread_timeout (stg_s, repbuf, 3 * LONGSIZE, STGTIMEOUT)) != (3 * LONGSIZE)) {
 			if (n == 0)
 				fprintf (stderr, STG02, "", "recv", sys_serrlist[SERRNO]);
 			else
@@ -172,7 +172,7 @@ int want_reply;
 			(void) netclose (stg_s);
 			break;
 		}
-		if ((n = netread (stg_s, repbuf, c)) <= 0) {
+		if ((n = netread_timeout (stg_s, repbuf, c, STGTIMEOUT)) != c) {
 			if (n == 0)
 				fprintf (stderr, STG02, "", "recv", sys_serrlist[SERRNO]);
 			else

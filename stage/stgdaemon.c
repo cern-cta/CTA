@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.6 $ $Date: 1999/12/08 15:57:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.7 $ $Date: 1999/12/09 09:11:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -329,68 +329,75 @@ main()
     if (FD_ISSET (stg_s, &readfd)) {
       rqfd = accept (stg_s, (struct sockaddr *) &from, &fromlen);
       reqid = nextreqid();
-      l = netread (rqfd, req_hdr, sizeof(req_hdr));
+      l = netread_timeout (rqfd, req_hdr, sizeof(req_hdr), STGTIMEOUT);
       if (l == sizeof(req_hdr)) {
+        size_t read_size;
+
         rbp = req_hdr;
         unmarshall_LONG (rbp, magic);
         unmarshall_LONG (rbp, req_type);
         unmarshall_LONG (rbp, msglen);
         rpfd = rqfd;
         l = msglen - sizeof(req_hdr);
-        netread (rqfd, req_data, l);
-        if (req_type == STAGEIN || req_type == STAGEOUT || req_type == STAGEALLOC ||
-            req_type == STAGEWRT || req_type == STAGEPUT)
-          if (initreq_reqid ||
-              stat (NOMORESTAGE, &st) == 0) {
-            sendrep (rpfd, STAGERC, req_type,
-                     ESTNACT);
-            goto endreq;
+        if ((read_size = netread_timeout (rqfd, req_data, l, STGTIMEOUT))) {
+          if (req_type == STAGEIN || req_type == STAGEOUT || req_type == STAGEALLOC ||
+              req_type == STAGEWRT || req_type == STAGEPUT)
+            if (initreq_reqid ||
+                stat (NOMORESTAGE, &st) == 0) {
+              sendrep (rpfd, STAGERC, req_type,
+                       ESTNACT);
+              goto endreq;
+            }
+          if (getpeername (rqfd, (struct sockaddr*)&from,
+                           &fromlen) < 0) {
+            stglogit (func, STG02, "", "getpeername",
+                      sys_errlist[errno]);
           }
-        if (getpeername (rqfd, (struct sockaddr*)&from,
-                         &fromlen) < 0) {
-          stglogit (func, STG02, "", "getpeername",
-                    sys_errlist[errno]);
-        }
-        hp = gethostbyaddr ((char *)(&from.sin_addr),
-                            sizeof(struct in_addr),from.sin_family);
-        if (hp == NULL)
-          clienthost = inet_ntoa (from.sin_addr);
-        else
-          clienthost = hp->h_name ;
-        switch (req_type) {
-        case STAGEIN:
-        case STAGEOUT:
-        case STAGEWRT:
-        case STAGECAT:
-          procioreq (req_type, req_data, clienthost);
-          break;
-        case STAGEPUT:
-          procputreq (req_data, clienthost);
-          break;
-        case STAGEQRY:
-          procqryreq (req_data, clienthost);
-          break;
-        case STAGECLR:
-          procclrreq (req_data, clienthost);
-          break;
-        case STAGEKILL:
-          prockilreq (req_data, clienthost);
-          break;
-        case STAGEUPDC:
-          procupdreq (req_data, clienthost);
-          break;
-        case STAGEINIT:
-          procinireq (req_data, clienthost);
-          break;
-        case STAGEALLOC:
-          procallocreq (req_data, clienthost);
-          break;
-        case STAGEGET:
-          procgetreq (req_data, clienthost);
-          break;
-        default:
-          sendrep (rpfd, MSG_ERR, STG03, req_type);
+          hp = gethostbyaddr ((char *)(&from.sin_addr),
+                              sizeof(struct in_addr),from.sin_family);
+          if (hp == NULL)
+            clienthost = inet_ntoa (from.sin_addr);
+          else
+            clienthost = hp->h_name ;
+          switch (req_type) {
+          case STAGEIN:
+          case STAGEOUT:
+          case STAGEWRT:
+          case STAGECAT:
+            procioreq (req_type, req_data, clienthost);
+            break;
+          case STAGEPUT:
+            procputreq (req_data, clienthost);
+            break;
+          case STAGEQRY:
+            procqryreq (req_data, clienthost);
+            break;
+          case STAGECLR:
+            procclrreq (req_data, clienthost);
+            break;
+          case STAGEKILL:
+            prockilreq (req_data, clienthost);
+            break;
+          case STAGEUPDC:
+            procupdreq (req_data, clienthost);
+            break;
+          case STAGEINIT:
+            procinireq (req_data, clienthost);
+            break;
+          case STAGEALLOC:
+            procallocreq (req_data, clienthost);
+            break;
+          case STAGEGET:
+            procgetreq (req_data, clienthost);
+            break;
+          default:
+            sendrep (rpfd, MSG_ERR, STG03, req_type);
           sendrep (rpfd, STAGERC, req_type, USERR);
+          }
+        } else {
+          close (rqfd);
+          if (l != 0)
+            stglogit (func, "Network read error\n");
         }
       } else {
         close (rqfd);

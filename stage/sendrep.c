@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.6 $ $Date: 1999/12/08 15:57:32 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.7 $ $Date: 1999/12/09 09:11:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -114,7 +114,7 @@ sendrep(va_alist) va_dcl
 sndmsg:
 	va_end (args);
 	repsize = rbp - repbuf;
-	if (netwrite (rpfd, repbuf, repsize) != repsize) {
+	if (netwrite_timeout (rpfd, repbuf, repsize, STGTIMEOUT) != repsize) {
 		stglogit (func, STG02, "", "write", sys_errlist[errno]);
 		if (rep_type == STAGERC)
 			close (rpfd);
