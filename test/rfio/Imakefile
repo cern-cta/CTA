@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Date: 2002/11/19 09:28:30 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Date: 2004/03/02 16:09:09 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand
 COMM
 COMM  Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -29,7 +29,7 @@ LIBS = -L../../lib -lshift
 PROGSUNIX = ProgramTargetName(mstat_test_fork)
 #endif
 
-PROGS = ProgramTargetName(tpreseek)  ProgramTargetName(tpreseek64) ProgramTargetName(mstat_test_thread) $(PROGSUNIX) ProgramTargetName(munlink_test) ProgramTargetName(mstat_test_sequential) ProgramTargetName(msymlink_test) ProgramTargetName(stat_test) ProgramTargetName(mstat_test) ProgramTargetName(unlink_test) ProgramTargetName(symlink_test) ProgramTargetName(fxxx_test) ProgramTargetName(xxx_test)
+PROGS = ProgramTargetName(tpreseek)  ProgramTargetName(tpreseek64) ProgramTargetName(mstat_test_thread) $(PROGSUNIX) ProgramTargetName(munlink_test) ProgramTargetName(mstat_test_sequential) ProgramTargetName(msymlink_test) ProgramTargetName(stat_test) ProgramTargetName(mstat_test) ProgramTargetName(unlink_test) ProgramTargetName(symlink_test) ProgramTargetName(fxxx_test) ProgramTargetName(xxx_test) ProgramTargetName(regression_tests) ProgramTargetName(test_longpaths)
 
 CFLAGS = -I$(INCLUDES) $(MTCCFLAGS)
 LDFLAGS = $(MTLDFLAGS)
@@ -53,6 +53,8 @@ NormalProgramTarget(unlink_test,unlink_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
 NormalProgramTarget(symlink_test,symlink_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
 NormalProgramTarget(fxxx_test,fxxx_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
 NormalProgramTarget(xxx_test,xxx_test.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
+NormalProgramTarget(regression_tests,regression_tests.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
+NormalProgramTarget(test_longpaths,test_longpaths.Osuf,$(GLOBLIB),$(LIBS) $(MTLDLIBS))
 
 MakeDepLibrary(FileName(..,lib),shift)
 
