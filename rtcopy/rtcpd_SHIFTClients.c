@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.27 $ $Date: 2000/06/13 16:42:37 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.28 $ $Date: 2000/06/14 10:13:19 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -464,6 +464,10 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
             /*
              * Infinite retry loop while volume is busy.
              */
+            *req->tape->tapereq.err.errmsgtxt = '\0';
+            req->tape->tapereq.err.errorcode = 0;
+            req->tape->tapereq.err.severity = RTCP_OK;
+            req->tape->tapereq.tprc = 0; 
             sleep(60);
         } else if ( rc == -1 && req->tape->file != NULL && 
                     *req->tape->file->filereq.stageID != '\0' &&
