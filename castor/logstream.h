@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.h,v $ $Revision: 1.7 $ $Release$ $Date: 2004/07/20 08:12:18 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logstream.h,v $ $Revision: 1.8 $ $Release$ $Date: 2004/07/29 16:57:42 $ $Author: sponcec3 $
  *
  * A generic logstream for castor, handling IP addresses
  * and timestamps
@@ -143,8 +143,12 @@ namespace castor {
      */
     logstream& operator<< (std::ostream& (&f)(std::ostream&)) {
       if (0 != m_logbuf) {
-        if (&f == (std::ostream& (&)(std::ostream&))std::endl)
+        if (&f == (std::ostream& (&)(std::ostream&))std::endl) {
+          *((std::ostream*)this) << '\n';
           m_logbuf->sync();
+        } else if (&f == (std::ostream& (&)(std::ostream&))std::flush) {
+          m_logbuf->sync();          
+        }
       }
       return *this;
     }

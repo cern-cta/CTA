@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stdbuf.h,v $ $Revision: 1.1 $ $Release$ $Date: 2004/07/12 14:19:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stdbuf.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/29 16:57:43 $ $Author: sponcec3 $
  *
  * A string buffer for logging into standard output
  *
@@ -45,7 +45,8 @@ namespace castor {
       if (0 == str().size()) return 0;
       // Write current message to stdout
       Cthread_mutex_lock(&s_lock);
-      printf("%s\n", str().c_str());
+      printf("%s", str().c_str());
+      fflush(stdout);
       Cthread_mutex_unlock(&s_lock);
       // Erase buffer
       str("");
