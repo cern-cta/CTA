@@ -129,7 +129,7 @@ END;
 
 /* PL/SQL method implementing castor package */
 CREATE OR REPLACE PACKAGE castor AS
-  TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR(2048), status NUMBER, diskCopyId VARCHAR(2048), fsWeight NUMBER);
+  TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR(2048), status NUMBER, diskCopyId VARCHAR(2048), fsWeight NUMBER, mountPoint VARCHAR(2048), diskServer VARCHAR(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
 END castor;
 
@@ -200,12 +200,14 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
   ELSE
     OPEN sources
     FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-               DiskCopy.diskcopyId, FileSystem.weight
-    FROM DiskCopy, SubRequest, FileSystem
+               DiskCopy.diskcopyId, FileSystem.weight,
+               FileSystem.mountPoint, DiskServer.name
+    FROM DiskCopy, SubRequest, FileSystem, DiskServer
     WHERE SubRequest.id = srId
       AND SubRequest.castorfile = DiskCopy.castorfile
       AND DiskCopy.status IN (0, 1, 2, 5, 6) -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
-      AND FileSystem.id = DiskCopy.fileSystem;
+      AND FileSystem.id = DiskCopy.fileSystem
+      AND DiskServer.id = FileSystem.diskServer;
     -- create DiskCopy for Disk to Disk copy
     getId(1, dci);
     dci := dci - 1;
