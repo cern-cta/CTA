@@ -1,0 +1,566 @@
+.\" @(#)$RCSfile: tpread.man,v $ $Revision: 1.1 $ $Date: 2000/04/25 14:03:27 $ CERN CERN IT-PDP/DM A. Trannoy, F. Hassine
+.\" Copyright (C) 1990-2000 by CERN IT-PDP/DM
+.\" All rights reserved
+.\"
+.nh
+.TH TPREAD,TPWRITE 1 "$Date: 2000/04/25 14:03:27 $" CASTOR "RTCOPY User Commands"
+.SH NAME
+tpread, tpwrite \- schedule the copying of data from tape to disk, or from disk to tape
+.SH SYNOPSIS
+.B tpread  
+[
+.BI \-b " blocksize"
+] [
+.BI \-C " charconv"
+] [
+.BI \-d " density"
+] 
+.if n .ti +0.5i
+[
+.BI \-E " keyword"
+] [
+.BI \-f " fileid"
+] [ 
+.BI \-F " format" 
+] 
+.if n .ti +0.5i
+[
+.BI \-g " device"
+] [ 
+.B \-G 
+] [ 
+.BI \-I 
+] [ 
+.BI \-l " label"
+] 
+.if n .ti +0.5i
+[
+.BI \-L " length"
+] [ 
+.BI \-N " nread"
+] [
+.BI \-o
+] [
+.BI \-q " sequence"
+]
+.if n .ti +0.5i
+[
+.BI \-R " site"
+] [ 
+.BI \-s " size"
+] [
+.BI \-S " server"
+]
+.if n .ti +0.5i
+[
+.BI \-t " retention"
+] [
+.BI \-T
+] [
+.BI \-v " vsn"
+] [ 
+.BI \-V " vid"
+] [
+.BI \-x
+]
+.if n .ti +0.5i
+.IR filename ".\|.\|."
+.LP
+.B tpwrite  
+[
+.BI \-b " blocksize"
+] [
+.BI \-C " charconv"
+] [
+.BI \-d " density"
+] 
+.if n .ti +0.5i
+[
+.BI \-f " fileid"
+] [ 
+.BI \-F " format" 
+] [
+.BI \-g " device"
+] 
+.if n .ti +0.5i
+[
+.B \-G 
+] [ 
+.BI \-I 
+] [ 
+.BI \-l " label"
+] [ 
+.BI \-L " length"
+] [
+.BI \-n
+] 
+.if n .ti +0.5i
+[
+.BI \-N " nread"
+] [ 
+.BI \-o
+] [
+.BI \-q " sequence"
+] [
+.BI \-R " site"
+]
+.if n .ti +0.5i
+[
+.BI \-s " size"
+] [
+.BI \-S " server"
+] [
+.BI \-t " retention"
+]
+.if n .ti +0.5i
+[
+.BI \-v " vsn"
+] [ 
+.BI \-V " vid"
+] [
+.BI \-x
+]
+.IR filename ".\|.\|."
+.SH DESCRIPTION
+.IX  "tpread command"  ""  "\fLtpread\fP \(em copy files from tape to disk"
+.IX  "tpwrite command"  ""  "\fLtpwrite\fP \(em copy files from disk to tape"
+These commands provide an interface to the 
+.B shift 
+tape copy scheduler. They are executed by users on a 
+.B shift 
+cpu server, and normally result in the scheduling of a tape copy operation, using the 
+.B cptpdsk 
+and
+.B cpdsktp
+commands, which will execute on a 
+.B shift
+tape server, copying data to or from a disk file on a 
+.B shift 
+disk server.
+.LP
+If the tape is labelled, the record format options supplied on a 
+.B tpwrite 
+command will be written to the tape label. 
+These options may be used to override the label data when using 
+.B tpread.
+.SH OPTIONS
+At least one 
+.I vsn, vid
+must be specified.
+Options may appear in any order, but they all must appear before the first 
+filename.
+.TP
+.BI \-b " blocksize"
+Specifies the maximum block length in bytes.
+If not given and the tape is labelled and -o is also specified for tpwrite,
+the block size is taken from the header label when the field is not zero;
+otherwise: for all drive types except Redwoods the default is 32760 if
+.I lrecl
+is not specified,
+.I lrecl
+otherwise. On Redwoods, the default is 262144 if
+.I lrecl
+is not specified or the largest multiple of
+.I lrecl
+below 262144.
+.TP
+.BI \-C " ebcdic | ascii "
+If 
+.IR ebcdic 
+is specified with the tpread command, then the data read from tape is converted from 
+ebcdic to ascii before the data is transfered to disk. If it is invoked in a
+tpwrite command, the data fetched from disk is translated to ebcdic before beeing 
+actually written to tape. The default value for this option is ascii (no conversion).
+The option value may also be
+.IR block .
+If specified on a tpread, the trailing blanks are stripped off and a newline is
+appended to each record.
+If specified on a tpwrite, the new line will be removed from each record and
+padding with blanks will be done if necessary.
+Option values may be combined; they are separated by comma in this case.
+.br
+For example:
+.br
+	-C ebcdic,block
+.TP
+.BI \-d " density"
+Specifies the density of the tape volume, which may be
+.B 1600
+or
+.B 6250
+for round (IBM 3420) tapes,
+.B 38000
+for standard IBM 3480 cartridges,
+.B 38KC
+for 3480 cartridges with compaction (IDRC),
+.B 38KD
+for double density IBM 3490 cartridges,
+.B 38KDC
+for 3490 cartridges with compaction (IDRC),
+.BR 8200 ,
+.B 8500
+or
+.B 8500C
+for Exabytes,
+.B DDS
+or
+.B DDSC
+for DAT cartridges,
+.BR 2G ,
+.BR 6G ,
+.BR 10G ,
+.BR 10GC ,
+.BR 20G ,
+.BR 20GC ,
+.B 35G
+or
+.B 35GC
+for DLT cartridges,
+.B 10G
+or
+.B 10GC
+for IBM 3590 cartridges,
+.BR 10G ,
+.BR 10GC ,
+.BR 25G ,
+.BR 25GC ,
+.B 50G
+or
+.B 50GC
+for Redwood cartridges.
+.TP
+.B \-E
+This option is specifying the behaviour to adopt when an error reading a tape
+is encountered. The
+.RB keyword
+is one of the following : 
+.RS
+.TP
+.B "skip" 
+to make the skip to the next readable block
+on tape when an error occured (such as a PARITY error). tpread will then indicate
+in a 1 line message the block number which was skipped.
+.TP
+.B "keep"
+this option is interpreted by tpread to leave the file up to the record
+where there error occured. It is the default value when -E is not specified to tpread.
+.TP
+.B "ignoreeoi"
+Do not take two consecutive tapemarks as End Of Information.
+This option is only valid for label type
+.B nl
+or
+.B blp
+and should be avoided on IBM 3420 drives (the reel could wind off).
+.br
+.RE
+.TP
+.BI \-f " fileid"
+Specifies the file identifier for the tape label. It will be stored in 
+labels which are written, and checked against label which are read. It can be 
+specified in lowercase or uppercase letters, however, the system automatically
+converts lowercase letters to uppercase letters (
+.SM ANSI
+requirement ). Trailing blanks are removed. If the result is longer than 17 
+characters, the last 17 characters are used. If, after any trailing blanks are
+removed, the result is less than 17 characters, it is padded with blanks. In 
+the case of multiple files, a series of file identifiers may be given, separated by 
+":"s. These apply to the tape files in the specified order. If there are more 
+files than identifiers, the last one will be used for all excess files. Thus,
+a single file identifier may be given which applies to all files on the tape.
+.TP
+.I filenames
+The filenames parameter specifies one or more nfs_pathnames.
+Multiple filenames are used for multifile tape copying. Each file must exist.
+Normally the user will have previously used sfget to locate an existing file 
+or create a new one.
+.TP
+.BI \-F " format"
+Specifies the record format of the data on the tape. It may be one of the 
+following:
+.RS
+.TP
+.B U,\|f77
+Blocks may be of variable length. A single logical record on disk corresponds
+to one tape block. The disk copy of the file is formatted according to the 
+convention for sequential 
+.SM FORTRAN 
+unformatted I/O.
+.TP
+.B U
+is an alias for 
+.BR U,\|f77 .
+.TP
+.B U,\|bin
+Blocks may be of unknown length. The data is transferred as a byte stream.
+This format is suitable for use with direct access Fortran unformatted I/O
+or C I/O.
+.TP
+.B F
+On output
+.RB ( tpwrite )
+each tape block created is exactly
+.IR  blocksize
+bytes long (See the \-b option) with the exception of the last block
+which may be shorter. The record length must be specified ( -L option )
+and if both the block size 
+.I blocksize
+and the record length are provided, they should be equal.
+.br
+On input
+.RB ( tpread )
+data is copied from tape to disk as a continuous data stream.
+This format is suitable for use with direct access Fortran unformatted I/O.
+.TP
+.B FB
+This allows to group several records of 
+.I length
+bytes into tape blocks of 
+.I blocksize
+bytes . 
+.I length 
+must be specified with the -L option and  
+.I blocksize
+can be specified with the -b option. If both 
+.I blocksize and 
+.I length
+are provided,  
+.I blocksize 
+must be a multiple of 
+.I length.
+.TP
+.B F,\|-f77
+.RB ( tpread 
+only) the tape file is known to be formatted according to the convention 
+for sequential 
+.SM FORTRAN 
+unformatted I/O. The control words are stripped off so that the disk file
+is suitable for use with direct access 
+.SM FORTRAN
+unformatted I/O or C I/O.
+The logical record length on the tape file must correspond to the record 
+length specified either with the -L option or, if the -L option is not 
+specified, the record length given in the label.
+.RE
+.TP 
+.BI \-g " device"
+Requests a device from an installation defined set of "device groups".
+.TP
+.B \-G
+Specifies that the tape copy operations should be issued on the tape server by
+the 'group user'. A 'group user' may be defined for each group in 
+.B /etc/shift.conf.
+.br
+\ \ 
+.br
+.B Example: 
+"GRPUSER ws	opalprod"
+.TP
+.BI \-I
+just information display. It tells which tape server would have been chosen
+and shows the queues and capacities of all tape server related to the specified
+device type. The request is stopped after the information is displayed and no
+tape is staged.
+.TP
+.BI \-l " label"
+Specifies the type of label which should be checked or generated. The following
+label types are supported:
+.br
+.B al\ \ \ 
+.SM ANSI 
+label
+.br
+.B blp\ \ 
+bypass label processing (input only)
+.br
+.B nl\ \ \ 
+no label
+.br
+.B sl\ \ \ 
+standard 
+.SM IBM
+label
+.TP
+.BI \-L " length"
+Specifies the record length for fixed length record format files.
+.TP
+.BI \-n
+.RB ( tpwrite
+only) Implies new fileid. The existing fileid is not checked but if the new 
+file would overwrite an existing one, the old file expiry date is checked.
+.TP
+.BI \-N " nread"
+If specified, only 
+.I nread 
+records will be copied.
+In the case of multiple files, a series of nread values may be given,
+separated by ":"s. These apply to the tape files in the specified order.
+If there are more files than nread values, the last one will be used for all
+remaining files. Thus,
+a single nread value may be given which applies to all files on the tape.
+.TP
+.BI \-o
+Implies old fileid. The existing fileid is checked if the option
+.B -f
+is also specified.
+If the new file would overwrite an existing one
+.RB ( tpwrite ),
+the old file expiry date is checked.
+.TP
+.BI \-q " sequence"
+Specifies the file sequence number(s) of the tape file(s) to be copied or
+created. This may be specified as the letter
+.B n,
+implying the file after the current end of tape (i.e. append the file to the
+tape). Multiple files may be specified using the following syntax:
+.RS 
+.TP 1.5i 
+.I f1\-f2 
+Files 
+.I f1
+to 
+.I f2 
+inclusive.
+.TP
+.I f1\- 
+Files 
+.I f1
+to the last file on the tape.
+.TP
+.I f1\-f2,\|f4,\|f6- 
+A series of non\-consecutive ranges of files.
+.TP
+.B n 
+Append one file to the tape.
+.TP 
+.BI n x 
+Append 
+.I x 
+files to the tape.
+.TP
+.BI u
+Position the tape by fid (file id)
+.TP
+.BI u x
+Position the tape by fid on x different files (input only). range of file ids
+should be specified by using the -f option.
+.RE
+.TP
+.BI \-R " site"
+Specifies that the tpread is targetting a tape server in the specified site, that is outside the current site. 
+.TP
+.BI \-s " size"
+If specified, only
+.I size
+Mbytes will be copied.
+The value must be smaller than 2048 (2 Gbytes).
+In the case of multiple files, a series of size values may be given,
+separated by ":"s. These apply to the tape files in the specified order.
+If there are more files than size values, the last one will be used for all
+remaining files. Thus,
+a single size value may be given which applies to all files on the tape.
+.TP
+.BI \-S " server"
+Specifies that the tape copy operation has to be issued on the tape server 
+.IR server. 
+.TP
+.BI \-T
+Does not check trailer labels.
+.TP
+.BI \-v " vsn"
+Specifies the volume serial number of the tape. In the case of a multi-volume
+file a series of 
+.IR vsn s
+may be given, separated by ":"s, in the order in which the tapes are to be used.
+.TP
+.BI \-V " vid"
+Specified the tape 
+.SM VID
+if different from the 
+.SM VSN .
+In the case of multi\-volume files a series of 
+.IR vid s
+may be given, separated by ":"s, in the order in which the tapes are to be used.
+When \-v and \-V are both used, each
+.IR vsn
+must be matched by a
+.IR vid
+in the same order.
+.TP
+.BI \-x
+means "Debugging mode". Then, tpread and tpwrite verbose information.
+.br
+.SH "RETURN CODES:"
+.br
+.RS
+.TP
+.B 0
+Ok.
+.RE
+.br
+.RS
+.TP
+.B 1
+Command failed because of a user error.
+.RE
+.br
+.RS
+.TP
+.B 2
+Command failed because of a system or network error.
+.br
+.RE 
+.RS
+.TP
+.B 3
+Command failed because of an undetermined reason.
+.br
+.RE
+.RS
+.TP
+.B 4
+Command failed because of an internal error.
+.br
+.RE
+.RS
+.TP
+.B 205
+Command was sent back by the selected tape server since too many tapes were already in queue. This triggers automatic retries. If it does not, the tpread/tpwrite commands should be upgraded to the latest version.
+.br
+.RE
+.RS
+.TP
+.B 193
+Option -E was set and command partially succeeded, as some blocks could not be read from tape and were skipped.
+.br
+.RE
+.RS
+.TP
+.B 194
+Option -E was set and command partially succeeded, but tape was not read to the end because option -s 
+is set and limits the amount of data to be transfered
+.br
+.RE
+.RS 
+.TP
+.B 195
+Option -E was set and command partially succeeded, but tape was not read 
+to the end as too many PARITY errrors were encountered. 
+.br
+.RE
+.RS 
+.TP
+.B 197
+The amount of staged data was limited to the value given by the option -s.
+.RE
+.br
+.SH FILES
+.B /etc/shift.conf
+.SH SEE ALSO
+.BR rtcopyd(l)
+.SH "AUTHOR"
+Antoine Trannoy, CERN-CN Division,  CH-1211 Geneva 23, Switzerland
+(trannoy@cernvm.cern.ch)
+.TP
+Felix Hassine, CERN-CN Division, CH-1211 Geneva 23, Switzerland
+(acher@sun2.cern.ch)

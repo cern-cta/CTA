@@ -1,0 +1,52 @@
+.\" @(#)$RCSfile: killjid.man,v $ $Revision: 1.1 $ $Date: 2000/04/25 14:03:28 $ CERN IT-PDP/DM Olof Barring
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH KILLJID 1 "$Date: 2000/04/25 14:03:28 $" CASTOR "RTCOPY Operator Commands"
+.SH NAME
+killjid \- kill RTCOPY job running on local host
+.SH SYNOPSIS
+.B killjid
+[
+.BI -r
+] [
+.BI jobID
+]
+.SH DESCRIPTION
+.B killjid
+attempts to kill the job specified with the
+.B jobID
+parameter. The
+.B jobID
+is the PID of a running RTCOPY process. On linux, becuase threads are
+implemented as kernel processs, the
+.B jobID
+is normally the process group ID. If the job has a tape mounted (or
+issued a request to mount a tape) the
+.B jobID
+can be found using the
+.B tpstat
+program.
+
+Use the
+.B -r
+switch to tell client to re-select another tape server.
+
+.SH EXAMPLE
+# tpstat
+.nf
+.ft CW
+userid     jid  dgn        stat dvn                 rl  vsn    vid
+                9840R3     idle 98403193@shd79                       
+obarring 8244   9840R3     assn 98403194@shd79      oa*R01206 R01206 15:07:31
+                9840R3     idle 98403195@shd79                       
+.ft
+.fi
+# killjid -r 8244
+
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+
+.SH SEE ALSO
+.B tpstat(1)
