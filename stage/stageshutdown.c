@@ -1,5 +1,5 @@
 /*
- * $Id: stageshutdown.c,v 1.1 2001/01/31 19:03:46 jdurand Exp $
+ * $Id: stageshutdown.c,v 1.2 2001/02/01 11:51:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageshutdown.c,v $ $Revision: 1.1 $ $Date: 2001/01/31 19:03:46 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageshutdown.c,v $ $Revision: 1.2 $ $Date: 2001/02/01 11:51:41 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -56,7 +56,7 @@ int main(argc, argv)
 	gid = getgid();
 	Coptind = 1;
 	Copterr = 1;
-	while ((c = Cgetopt (argc, argv, "Fh")) != -1) {
+	while ((c = Cgetopt (argc, argv, "Fh:")) != -1) {
 		switch (c) {
 		case 'h':
 			stghost = Coptarg;
