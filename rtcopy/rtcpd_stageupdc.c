@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.4 $ $Date: 2000/01/19 15:23:59 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.5 $ $Date: 2000/01/19 15:40:56 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -157,16 +157,21 @@ int rtcpd_stageupdc(tape_list_t *tape,
         if ( fgets(newpath,CA_MAXPATHLEN+1,stgupdc_fd) == NULL ) {
             rtcp_log(LOG_ERR,"rtcpd_stageupdc() fgets(): %s\n",
                 sstrerror(errno));
-            PCLOSE(stgupdc_fd);
-            return(-1);
         }
     }
-    PCLOSE(stgupdc_fd);
-    if ( *newpath != '\0' && !strcmp(newpath,filereq->file_path) ) {
+    rc = PCLOSE(stgupdc_fd);
+    if ( rc == 0 &&  *newpath != '\0' && !strcmp(newpath,filereq->file_path) ) {
         rtcp_log(LOG_INFO,"New path obtained from stager: %s\n",
             newpath);
         strcpy(filereq->file_path,newpath);
         return(NEWPATH);
+    }
+    if ( *newpath == '\0' || rc != 0 ) {
+        rtcp_log(LOG_ERR,"rtcpd_stageupdc() stageupdc failed, rc=%d, path=%s\n",
+                 rc,newpath);
+        if ( rc != ENOSPC ) rtcpd_SetProcError(RTCP_FAILED | RTCP_SYERR);
+        else rtcpd_SetProcError(RTCP_FAILED | RTCP_USERR);
+        return(-1);
     }
 #endif /* !USE_STAGEAPI */
     return(0);
