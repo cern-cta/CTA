@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcDaemon.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/03/30 12:05:15 $ $Author: jiltsov $
+ * @(#)$RCSfile: GcDaemon.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2005/03/30 12:25:04 $ $Author: jiltsov $
  *
  * Garbage collector daemon handling the deletion of local
  * files on a filesystem. Makes remote calls to the stager
@@ -90,6 +90,8 @@ castor::gc::GcDaemon::~GcDaemon() throw() {
 int castor::gc::GcDaemon::start()
   throw (castor::exception::Exception) {
 
+  
+  clog() << USAGE << " +++ Starting Garbage Collector Daemon... " << std::endl;
   // Switch to daemon mode
   int rc;
   if (!m_foreground) {
