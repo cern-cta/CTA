@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.56 2001/04/29 09:34:43 jdurand Exp $
+ * $Id: stage.h,v 1.57 2001/05/31 12:08:36 jdurand Exp $
  */
 
 /*
@@ -261,21 +261,6 @@
 #define STG142  "STG142 - %s not removed - Retention period is %s\n"
 #define STG143  "STG143 - %s : stageout lifetime on disk exceeds %d seconds\n"
 #define	STG148	"STG148 - Configuration warning: %s %s %d\n"
-
-			/* stage daemon return codes and states */
-
-#define	USERR	  1	/* user error */
-#define	SYERR 	  2	/* system error */
-#define	UNERR	  3	/* undefined error */
-#define	CONFERR	  4	/* configuration error */
-#define	LNKNSUP	189	/* symbolic links not supported on that platform */
-#define	CLEARED	192	/* aborted by stageclr */
-#define	BLKSKPD	193	/* blocks were skipped */
-#define	TPE_LSZ	194	/* blocks were skipped, stageing limited by size */
-#define	MNYPARI	195	/* stagein stopped: too many tape errors, but -E keep */
-#define	REQKILD	196	/* request killed by user */
-#define	LIMBYSZ	197	/* limited by size */
-#define	ENOUGHF	199	/* enough free space */
 
 			/* stage daemon stream modes */
 
