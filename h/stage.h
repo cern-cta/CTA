@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.51 2001/03/24 00:22:20 jdurand Exp $
+ * $Id: stage.h,v 1.52 2001/03/27 08:37:30 jdurand Exp $
  */
 
 /*
@@ -260,6 +260,7 @@
 #define	STG140	"STG140 - %s : could not find corresponding entry in catalog\n"
 #define	STG141	"STG141 - Invalid magic number 0x%lx\n"
 #define STG142  "STG142 - %s not removed - Retention period is %s\n"
+#define STG143  "STG143 - %s : stageout lifetime on disk exceeds %d seconds\n"
 
 			/* stage daemon return codes and states */
 
