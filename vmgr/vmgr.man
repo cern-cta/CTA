@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr.man,v $ $Revision: 1.7 $ $Date: 2003/11/24 06:42:14 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR 1 "$Date: 2001/09/26 09:13:56 $" CASTOR "vmgr Commands"
+.TH VMGR 1 "$Date: 2003/11/24 06:42:14 $" CASTOR "vmgr Commands"
 .SH DESCRIPTION
 A vmgr daemon manages the tape pool space.
 A tape pool consists in a set of cartridges.
@@ -16,6 +16,8 @@ remove the definition of a pool of tapes from the CASTOR Volume Manager Database
 .TP
 vmgrdeletetape
 remove a tape from the CASTOR Volume Manager Database (admin only)
+vmgrdeltag
+delete the tag associated with a tape volume in the CASTOR Volume Manager
 .TP
 vmgrenterdenmap
 enter a new triplet model/media_letter/density in the CASTOR Volume Manager Database (admin only)
@@ -34,6 +36,9 @@ define a new tape pool (admin only)
 .TP
 vmgrentertape
 enter a new tape in the CASTOR Volume Manager Database (admin or operator only)
+.TP
+vmgrgettag
+get the tag associated with a tape volume in the CASTOR Volume Manager
 .TP
 vmgrlistdenmap
 list all existing triplets model/media_letter/density
@@ -61,6 +66,9 @@ modify the definition of an existing tape pool in the CASTOR Volume Manager (adm
 .TP
 vmgrmodifytape
 modify an existing tape volume entry in the CASTOR Volume Manager (admin or operator only)
+.TP
+vmgrsettag
+add/replace a tag associated with a tape volume in the CASTOR Volume Manager
 .TP
 vmgrshutdown
 shutdown the CASTOR Volume Manager (admin only)
