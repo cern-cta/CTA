@@ -815,8 +815,7 @@ BEGIN
    AND FileSystem.status = 0 -- PRODUCTION
    AND FileSystem.diskserver = DiskServer.id
    AND DiskServer.status = 0 -- PRODUCTION
-   AND DiskCopy.status IN (0, 1, 2, 5, 6, 10) -- STAGED, WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, CANBEMIGR
-   AND ROWNUM < 2;
+   AND DiskCopy.status IN (0, 1, 2, 5, 6, 10); -- STAGED, WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, CANBEMIGR
  IF stat.COUNT > 0 THEN
    IF 0 MEMBER OF stat OR -- STAGED
       6 MEMBER OF stat OR -- STAGEOUT
