@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Release$ $Date: 2004/06/09 16:30:29 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Release$ $Date: 2004/06/16 14:58:08 $ $Author: sponcec3 $
 #
 # Make Castor DB libraries
 #
@@ -65,13 +65,14 @@ ORALIB_SRCS = OraBaseCnv.cpp \
 
 ORALIB_OBJS = $(ORALIB_SRCS:.cpp=.Osuf)
 
-COMMONLIB = SharedLibraryTargetName(castorCommonOra)
+COMMONLIB = LibraryTargetName(castorCommonOra) SharedLibraryTargetName(castorCommonOra)
 LDFLAGS = -L ../..
 LD = g++
 
 all: $(COMMONLIB)
 
 SharedLibraryTarget(castorCommonOra,$(ORALIB_OBJS),$(DEPLIB),$(LIBS))
+NormalLibraryTarget(castorCommonOra,$(ORALIB_OBJS))
 
 Makefiles:
 
