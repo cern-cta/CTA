@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.62 2000/12/22 13:27:19 jdurand Exp $
+ * $Id: poolmgr.c,v 1.63 2000/12/22 13:39:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.62 $ $Date: 2000/12/22 13:27:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.63 $ $Date: 2000/12/22 13:39:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1453,9 +1453,9 @@ void checkfile2mig()
           char tmpbuf2[21];
           char tmpbuf3[21];
           stglogit("checkfile2mig", "STG98 - Predicates (OR of the following) returns true:\n");
-          stglogit("checkfile2mig", "STG98 - 1) (%s) space_canbemig=%s > data_mig_threshold=%s ?", pool_p->migr->migp->data_mig_threshold > 0 ? "ON" : "OFF", u64tostru(pool_p->migr->space_canbemig, tmpbuf1, 0), u64tostru(pool_p->migr->migp->data_mig_threshold, tmpbuf2, 0));
+          stglogit("checkfile2mig", "STG98 - 1) (%s) space_canbemig=%s > data_mig_threshold=%s ?\n", pool_p->migr->migp->data_mig_threshold > 0 ? "ON" : "OFF", u64tostru(pool_p->migr->space_canbemig, tmpbuf1, 0), u64tostru(pool_p->migr->migp->data_mig_threshold, tmpbuf2, 0));
           stglogit("checkfile2mig", "STG98 - 2) (%s) free=%s < (capacity=%s * freespace_threshold=%d)=%s ?\n", pool_p->migr->migp->freespace_threshold > 0 ? "ON" : "OFF", u64tostru(pool_p->free, tmpbuf3, 0), u64tostru(pool_p->capacity, tmpbuf1, 0), pool_p->migr->migp->freespace_threshold, u64tostru(pool_p->capacity * pool_p->migr->migp->freespace_threshold, tmpbuf2, 0));
-          stglogit("checkfile2mig", "STG98 - 1) (%s) last migrator older than %d seconds\n", pool_p->migr->migp->time_interval > 0 ? "ON" : "OFF", pool_p->migr->migp->time_interval);
+          stglogit("checkfile2mig", "STG98 - 3) (%s) last migrator older than %d seconds\n", pool_p->migr->migp->time_interval > 0 ? "ON" : "OFF", pool_p->migr->migp->time_interval);
 				migrate_files (pool_p->migr);
 		}
 	}
