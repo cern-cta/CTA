@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.5 $ $Date: 2000/02/02 08:27:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.6 $ $Date: 2000/02/18 09:57:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -228,14 +228,14 @@ vmgr_dbrec_addr *rec_addr;
 		SELECT
 		 VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
 		 MANUFACTURER, SN, POOLNAME, ESTIMATED_FREE_SPACE,
-		 NBFILES, STATUS
+		 NBFILES, RCOUNT, WCOUNT, RTIME, WTIME, STATUS
 		FROM vmgr_tape_info
 		WHERE vid = :vid;
 	EXEC SQL DECLARE tape_vid_cursor4upd CURSOR FOR
 		SELECT ROWID,
 		 VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
 		 MANUFACTURER, SN, POOLNAME, ESTIMATED_FREE_SPACE,
-		 NBFILES, STATUS
+		 NBFILES, RCOUNT, WCOUNT, RTIME, WTIME, STATUS
 		FROM vmgr_tape_info
 		WHERE vid = :vid
 		FOR UPDATE;
@@ -250,7 +250,8 @@ vmgr_dbrec_addr *rec_addr;
 		 :tape_entry->media_letter:ml_ind, :tape_entry->manufacturer:mf_ind,
 		 :tape_entry->sn:sn_ind, :tape_entry->poolname,
 		 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
-		 :tape_entry->status;
+		 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rtime,
+		 :tape_entry->wtime, :tape_entry->status;
 	} else {
 		EXEC SQL OPEN tape_vid_cursor;
 		EXEC SQL FETCH tape_vid_cursor INTO
@@ -259,7 +260,8 @@ vmgr_dbrec_addr *rec_addr;
 		 :tape_entry->media_letter:ml_ind, :tape_entry->manufacturer:mf_ind,
 		 :tape_entry->sn:sn_ind, :tape_entry->poolname,
 		 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
-		 :tape_entry->status;
+		 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rtime,
+		 :tape_entry->wtime, :tape_entry->status;
 	}
 	switch (sqlca.sqlcode) {
 	case 0:
@@ -400,14 +402,15 @@ struct vmgr_tape_info *tape_entry;
 	EXEC SQL INSERT INTO vmgr_tape_info
 		(VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
 		 MANUFACTURER, SN, POOLNAME, ESTIMATED_FREE_SPACE,
-		 NBFILES, STATUS)
+		 NBFILES, RCOUNT, WCOUNT, RTIME, WTIME, STATUS)
 		VALUES
 		(:tape_entry->vid, :tape_entry->vsn, :tape_entry->dgn,
 		 :tape_entry->density, :tape_entry->lbltype, :tape_entry->model,
 		 :tape_entry->media_letter, :tape_entry->manufacturer,
 		 :tape_entry->sn, :tape_entry->poolname,
 		 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
-		 :tape_entry->status);
+		 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rtime,
+		 :tape_entry->wtime, :tape_entry->status);
 	switch (sqlca.sqlcode) {
 	case 0:
 		return (0);
@@ -528,6 +531,10 @@ struct vmgr_tape_info *tape_entry;
 		POOLNAME = :tape_entry->poolname,
 		ESTIMATED_FREE_SPACE = :tape_entry->estimated_free_space,
 		NBFILES = :tape_entry->nbfiles,
+		RCOUNT = :tape_entry->rcount,
+		WCOUNT = :tape_entry->wcount,
+		RTIME = :tape_entry->rtime,
+		WTIME = :tape_entry->wtime,
 		STATUS = :tape_entry->status
 		WHERE ROWID = :rowid_value;
 	if (sqlca.sqlcode) {
