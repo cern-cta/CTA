@@ -1,10 +1,10 @@
-.\" $Id: print_stpp.man,v 1.1 2002/10/07 08:44:34 jdurand Exp $
+.\" $Id: print_stpp.man,v 1.2 2002/10/08 13:45:50 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: print_stpp.man,v $ $Revision: 1.1 $ $Date: 2002/10/07 08:44:34 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: print_stpp.man,v $ $Revision: 1.2 $ $Date: 2002/10/08 13:45:50 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH PRINT_STPP "3" "$Date: 2002/10/07 08:44:34 $" "CASTOR" "Stage Library Functions"
+.TH PRINT_STPP "3" "$Date: 2002/10/08 13:45:50 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 print_stpp \- Dumps an stgpath_entry to stdout
 .SH SYNOPSIS
@@ -21,10 +21,10 @@ The \fBprint_stpp\fP API method prints to standard output the content of an stgp
 Pointer to an stgpath_entry structure.
 
 .SH EXAMPLE
-See \fBstageqry_Hsm\fP(3).
+See \fBstage_qry_Hsm\fP(3).
 
 .SH SEE ALSO
-\fBstage_struct\fP(3), \fBstageqry_Hsm\fP(3)
+\fBstage_struct\fP(3), \fBstage_qry_Hsm\fP(3)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.55 2002/10/01 07:37:12 jdurand Exp $
+ * $Id: stage_api.c,v 1.56 2002/10/08 13:45:51 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -35,7 +35,7 @@
 #include "net.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.55 $ $Date: 2002/10/01 07:37:12 $ CERN IT/DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.56 $ $Date: 2002/10/08 13:45:51 $ CERN IT/DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifdef hpux
@@ -1421,7 +1421,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   return (rc);
 }
 
-int DLL_DECL stageqry_Tape(flags,hostname,poolname,tape,fseq,nstcp_output,stcp_output,nstpp_output,stpp_output)
+int DLL_DECL stage_qry_Tape(flags,hostname,poolname,tape,fseq,nstcp_output,stcp_output,nstpp_output,stpp_output)
      u_signed64 flags;
      char *hostname;
      char *poolname;
@@ -1452,10 +1452,10 @@ int DLL_DECL stageqry_Tape(flags,hostname,poolname,tape,fseq,nstcp_output,stcp_o
   if (poolname != NULL) strcpy(stcp_input.poolname,poolname); /* Can be zero-length */
   strcpy(stcp_input.u1.t.vid[0],tape); /* Cannot be zero-length */
   if (fseq != NULL) strcpy(stcp_input.u1.t.fseq,fseq); /* Can be zero-length */
-  return(stageqry_tape(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
+  return(stage_qry_tape(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
 }
 
-int DLL_DECL stageqry_Hsm(flags,hostname,poolname,hsmname,nstcp_output,stcp_output,nstpp_output,stpp_output)
+int DLL_DECL stage_qry_Hsm(flags,hostname,poolname,hsmname,nstcp_output,stcp_output,nstpp_output,stpp_output)
      u_signed64 flags;
      char *hostname;
      char *poolname;
@@ -1483,11 +1483,11 @@ int DLL_DECL stageqry_Hsm(flags,hostname,poolname,hsmname,nstcp_output,stcp_outp
   memset(&stcp_input, 0, sizeof(struct stgcat_entry));
   if (poolname != NULL) strcpy(stcp_input.poolname,poolname); /* Can be zero-length */
   strcpy(stcp_input.u1.h.xfile,hsmname); /* Cannot be zero-length */
-  return(stageqry_hsm(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
+  return(stage_qry_hsm(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
 }
 
 
-int DLL_DECL stageqry_Disk(flags,hostname,poolname,diskname,nstcp_output,stcp_output,nstpp_output,stpp_output)
+int DLL_DECL stage_qry_Disk(flags,hostname,poolname,diskname,nstcp_output,stcp_output,nstpp_output,stpp_output)
      u_signed64 flags;
      char *hostname;
      char *poolname;
@@ -1515,11 +1515,11 @@ int DLL_DECL stageqry_Disk(flags,hostname,poolname,diskname,nstcp_output,stcp_ou
   memset(&stcp_input, 0, sizeof(struct stgcat_entry));
   if (poolname != NULL) strcpy(stcp_input.poolname,poolname); /* Can be zero-length */
   strcpy(stcp_input.u1.d.xfile,diskname); /* Cannot be zero-length */
-  return(stageqry_disk(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
+  return(stage_qry_disk(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
 }
 
 
-int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output,nstpp_input,stpp_input)
+int DLL_DECL stage_updc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output,nstpp_input,stpp_input)
      u_signed64 flags;
      char *hostname;
      char *pooluser;
@@ -1570,7 +1570,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   /* We suppose first that server is at the same level as the client from protocol point of view */
   magic_client = magic_server = stage_stgmagic();
   
-  _stageupdc_retry:
+  _stage_updc_retry:
   ntries = nstg161 = Tid = 0;
   uniqueid = 0;
 
@@ -1823,13 +1823,13 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
 #if defined(_WIN32)
 			WSACleanup();
 #endif
-			goto _stageupdc_retry;
+			goto _stage_updc_retry;
 		case STGMAGIC3:
 			magic_server = STGMAGIC2;
 #if defined(_WIN32)
 			WSACleanup();
 #endif
-			goto _stageupdc_retry;
+			goto _stage_updc_retry;
 		default:
 			stage_errmsg(func, "Server do not support any satisfactory client's protocol (%s)\n", neterror());
 			serrno = SEOPNOTSUP;
@@ -2285,7 +2285,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   return (c == 0 ? 0 : -1);
 }
 
-int DLL_DECL stageclr_Tape(flags,hostname,tape,fseq)
+int DLL_DECL stage_clr_Tape(flags,hostname,tape,fseq)
      u_signed64 flags;
      char *hostname;
      char *tape;
@@ -2309,10 +2309,10 @@ int DLL_DECL stageclr_Tape(flags,hostname,tape,fseq)
   memset(&stcp_input, 0, sizeof(struct stgcat_entry));
   strcpy(stcp_input.u1.t.vid[0],tape); /* Cannot be zero-length */
   if (fseq != NULL) strcpy(stcp_input.u1.t.fseq,fseq); /* Can be zero-length */
-  return(stageclr_tape(flags,hostname,1,&stcp_input));
+  return(stage_clr_tape(flags,hostname,1,&stcp_input));
 }
 
-int DLL_DECL stageclr_Hsm(flags,hostname,hsmname)
+int DLL_DECL stage_clr_Hsm(flags,hostname,hsmname)
      u_signed64 flags;
      char *hostname;
      char *hsmname;
@@ -2333,11 +2333,11 @@ int DLL_DECL stageclr_Hsm(flags,hostname,hsmname)
   /* We build the full stageclr API request */
   memset(&stcp_input, 0, sizeof(struct stgcat_entry));
   strcpy(stcp_input.u1.h.xfile,hsmname); /* Cannot be zero-length */
-  return(stageclr_hsm(flags,hostname,1,&stcp_input));
+  return(stage_clr_hsm(flags,hostname,1,&stcp_input));
 }
 
 
-int DLL_DECL stageclr_Disk(flags,hostname,diskname)
+int DLL_DECL stage_clr_Disk(flags,hostname,diskname)
      u_signed64 flags;
      char *hostname;
      char *diskname;
@@ -2358,10 +2358,10 @@ int DLL_DECL stageclr_Disk(flags,hostname,diskname)
   /* We build the full stageclr API request */
   memset(&stcp_input, 0, sizeof(struct stgcat_entry));
   strcpy(stcp_input.u1.d.xfile,diskname); /* Cannot be zero-length */
-  return(stageclr_disk(flags,hostname,1,&stcp_input));
+  return(stage_clr_disk(flags,hostname,1,&stcp_input));
 }
 
-int DLL_DECL stageclr_Path(flags,hostname,pathname)
+int DLL_DECL stage_clr_Path(flags,hostname,pathname)
      u_signed64 flags;
      char *hostname;
      char *pathname;
@@ -2382,10 +2382,10 @@ int DLL_DECL stageclr_Path(flags,hostname,pathname)
   /* We build the full stageclr API request */
   memset(&stpp_input, 0, sizeof(struct stgpath_entry));
   strcpy(stpp_input.upath,pathname); /* Cannot be zero-length */
-  return(stageclr_path(flags,hostname,1,&stpp_input));
+  return(stage_clr_path(flags,hostname,1,&stpp_input));
 }
 
-int DLL_DECL stageclr_Link(flags,hostname,linkname)
+int DLL_DECL stage_clr_Link(flags,hostname,linkname)
      u_signed64 flags;
      char *hostname;
      char *linkname;
@@ -2406,7 +2406,7 @@ int DLL_DECL stageclr_Link(flags,hostname,linkname)
   /* We build the full stageclr API request */
   memset(&stpp_input, 0, sizeof(struct stgpath_entry));
   strcpy(stpp_input.upath,linkname); /* Cannot be zero-length */
-  return(stageclr_link(flags,hostname,1,&stpp_input));
+  return(stage_clr_link(flags,hostname,1,&stpp_input));
 }
 
 int DLL_DECL stage_ping(flags,hostname)

@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.227 2002/10/02 04:04:34 jdurand Exp $
+ * $Id: poolmgr.c,v 1.228 2002/10/08 13:45:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.227 $ $Date: 2002/10/02 04:04:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.228 $ $Date: 2002/10/08 13:45:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3649,7 +3649,7 @@ int migpoolfiles(pool_p)
 				(stcp+j)->keep = 0;
 				/* We also makes sure that the -s parameter is disabled as well */
 				(stcp+j)->size = 0;
-				/* We remove the poolname argument that we will sent via stagewrt_hsm */
+				/* We remove the poolname argument that we will sent via stage_wrt_hsm */
 				(stcp+j)->poolname[0] = '\0';
 				/* We remove other arguments - not needed - will be logged for nothing */
 				/* (stcp+j)->u1.h.fileclass = 0; */
@@ -4006,7 +4006,7 @@ int migpoolfiles(pool_p)
 			}
 
 #ifdef STAGER_DEBUG
-			stglogit(func, "### stagewrt_hsm request : Please gdb /usr/local/bin/stgdaemon %d, then break %d\n",getpid(),__LINE__+2);
+			stglogit(func, "### stage_wrt_hsm request : Please gdb /usr/local/bin/stgdaemon %d, then break %d\n",getpid(),__LINE__+2);
 			sleep(9);
 			sleep(1);
 #endif
@@ -4042,8 +4042,8 @@ int migpoolfiles(pool_p)
 					if (nb_consecutive_stream > nb_per_request) nb_consecutive_stream = nb_per_request;
 					setegid(start_passwd.pw_gid);                   /* Move to admin (who knows) */
 					seteuid(start_passwd.pw_uid);
-					stglogit(func, "### stagewrt_hsm request socket buffer size (approx %s) predicted to be too big, or at the limit (which is %s)\n",u64tostr((u_signed64) estimated_total_reqsize, tmpbuf1, 0),u64tostr((u_signed64) MAX_NETDATA_SIZE, tmpbuf2, 0));
-					stglogit(func, "### stagewrt_hsm splitted into %d consecutive requests\n", nb_consecutive_stream);
+					stglogit(func, "### stage_wrt_hsm request socket buffer size (approx %s) predicted to be too big, or at the limit (which is %s)\n",u64tostr((u_signed64) estimated_total_reqsize, tmpbuf1, 0),u64tostr((u_signed64) MAX_NETDATA_SIZE, tmpbuf2, 0));
+					stglogit(func, "### stage_wrt_hsm splitted into %d consecutive requests\n", nb_consecutive_stream);
 					setegid(tppool_vs_stcp[j].egid);                /* Move to requestor (from fileclasses) */
 					seteuid(tppool_vs_stcp[j].euid);
 					nb_per_request /= nb_consecutive_stream;
@@ -4058,7 +4058,7 @@ int migpoolfiles(pool_p)
 				while (nb_done_request < tppool_vs_stcp[j].nstcp) {
 					int nb_in_this_request;
 					int istart_for_this_request;
-				  stagewrt_hsm_retry:
+				  stage_wrt_hsm_retry:
 
 					istart_for_this_request = nb_done_request;
 					if ((nb_done_request + nb_per_request) < tppool_vs_stcp[j].nstcp) {
@@ -4068,20 +4068,20 @@ int migpoolfiles(pool_p)
 					} else {
 						nb_in_this_request = tppool_vs_stcp[j].nstcp - nb_done_request;
 					}
-					if ((rc = stagewrt_hsm((u_signed64) STAGE_SILENT|STAGE_NOHSMCREAT|STAGE_REQID|STAGE_HSM_ENOENT_OK|STAGE_NOLINKCHECK|STAGE_VOLATILE_TPPOOL|STAGE_MIGLOG, /* Flags */
-										   0,                            /* open flags - disabled */
-										   localhost,                    /* Hostname */
-										   NULL,                         /* Pooluser */
-										   nb_in_this_request,           /* nstcp_input */
-										   tppool_vs_stcp[j].stcp + istart_for_this_request, /* stcp_input */
-										   0,                            /* nstcp_output - none wanted */
-										   NULL,                         /* stcp_output - none wanted */
-										   nb_in_this_request,           /* nstpp_input */
-										   tppool_vs_stcp[j].stpp + istart_for_this_request  /* stpp_input */
+					if ((rc = stage_wrt_hsm((u_signed64) STAGE_SILENT|STAGE_NOHSMCREAT|STAGE_REQID|STAGE_HSM_ENOENT_OK|STAGE_NOLINKCHECK|STAGE_VOLATILE_TPPOOL|STAGE_MIGLOG, /* Flags */
+											0,                            /* open flags - disabled */
+											localhost,                    /* Hostname */
+											NULL,                         /* Pooluser */
+											nb_in_this_request,           /* nstcp_input */
+											tppool_vs_stcp[j].stcp + istart_for_this_request, /* stcp_input */
+											0,                            /* nstcp_output - none wanted */
+											NULL,                         /* stcp_output - none wanted */
+											nb_in_this_request,           /* nstpp_input */
+											tppool_vs_stcp[j].stpp + istart_for_this_request  /* stpp_input */
 						)) != 0) {
 						setegid(start_passwd.pw_gid);                   /* Move to admin (who knows) */
 						seteuid(start_passwd.pw_uid);
-						stglogit(func, "### stagewrt_hsm request error No %d (%s)\n", serrno, sstrerror(serrno));
+						stglogit(func, "### stage_wrt_hsm request error No %d (%s)\n", serrno, sstrerror(serrno));
 						setegid(tppool_vs_stcp[j].egid);                /* Move to requestor (from fileclasses) */
 						seteuid(tppool_vs_stcp[j].euid);
 						if ((serrno == SECOMERR) || (serrno == SECONNDROP)) {
@@ -4092,7 +4092,7 @@ int migpoolfiles(pool_p)
 							setegid(tppool_vs_stcp[j].egid);                /* Move to requestor (from fileclasses) */
 							seteuid(tppool_vs_stcp[j].euid);
 							stage_sleep(1);
-							goto stagewrt_hsm_retry;
+							goto stage_wrt_hsm_retry;
 						} else if ((serrno == SEINTERNAL) ||
 								   (serrno == EINVAL)     ||
 								   (serrno == ESTKILLED)  ||
@@ -4120,13 +4120,13 @@ int migpoolfiles(pool_p)
 			setegid(start_passwd.pw_gid);                   /* Go back to admin */
 			seteuid(start_passwd.pw_uid);
 #ifdef STAGER_DEBUG
-			stglogit(func, "### stagewrt_hsm request exiting with status %d\n", rc);
+			stglogit(func, "### stage_wrt_hsm request exiting with status %d\n", rc);
 			if (rc != 0) {
 				stglogit(func, "### ... serrno=%d (%s), errno=%d (%s)\n", serrno, sstrerror(serrno), errno, strerror(errno));
 			}
 #else
 			if (rc != 0) {
-				stglogit(func, "### stagewrt_hsm request exiting with status %d\n", rc);
+				stglogit(func, "### stage_wrt_hsm request exiting with status %d\n", rc);
 				stglogit(func, "### ... serrno=%d (%s), errno=%d (%s)\n", serrno, sstrerror(serrno), errno, strerror(errno));
 			}
 #endif
@@ -5256,7 +5256,7 @@ void check_expired() {
 				exit(SYERR);
 			}
 
-			if (stageclr_Path((u_signed64) STAGE_NOLINKCHECK, NULL, thisstcp.ipath) != 0) {
+			if (stage_clr_Path((u_signed64) STAGE_NOLINKCHECK, NULL, thisstcp.ipath) != 0) {
 				exit(rc_castor2shift(serrno));
 			}
 			exit(0);

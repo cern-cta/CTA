@@ -1,10 +1,10 @@
-.\" $Id: stage_put_hsm.man,v 1.3 2002/10/08 11:45:56 baud Exp $
+.\" $Id: stage_put_hsm.man,v 1.4 2002/10/08 13:45:51 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_put_hsm.man,v $ $Revision: 1.3 $ $Date: 2002/10/08 11:45:56 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_put_hsm.man,v $ $Revision: 1.4 $ $Date: 2002/10/08 13:45:51 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_PUT_HSM "3" "$Date: 2002/10/08 11:45:56 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_PUT_HSM "3" "$Date: 2002/10/08 13:45:51 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_put_hsm \- copy disk files to Hierarchical Storage Management System.
 .SH SYNOPSIS
@@ -19,7 +19,7 @@ copies disk files to a Hierarchical Storage Management System. It can only be us
 .B stageout
 command, or a
 .B stage_out_hsm
-API call. The HSM file must be in state STAGEOUT or PUT_FAILED. This command is deprecated and new applications should use \fBstagewrt_hsm\fP instead.
+API call. The HSM file must be in state STAGEOUT or PUT_FAILED. This command is deprecated and new applications should use \fBstage_wrt_hsm\fP instead.
 
 .SH PARAMETERS
 .B stghost
