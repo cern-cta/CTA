@@ -7,7 +7,7 @@
 /* For the what command                 */
 /* ------------------------------------ */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.25 $ $Date: 2004/03/16 16:02:11 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.26 $ $Date: 2004/03/16 16:34:21 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cpool_api.h>
@@ -1946,24 +1946,13 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 #ifdef CPOOL_DEBUG
 			/* Cthread_mutex_lock(&lock_cpool_debug); */
 			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Setting current->flag to -1\n",
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : Setting current->flag to 0 (parent not waiting)\n",
 					_Cpool_self(),_Cthread_self());
 			}
 			/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 		  
 			current->flag = 0;
-		  
-#ifdef CPOOL_DEBUG
-			/* Cthread_mutex_lock(&lock_cpool_debug); */
-			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on lock_parent_cthread_structure\n",
-					_Cpool_self(),_Cthread_self());
-			}
-			/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
-		  
-			Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
 		  
 			/* We check if there is one thread available */
 			found = 0;
@@ -1978,6 +1967,7 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 #endif
 		  
 			if (Cthread_mutex_lock_ext(lock_child_cthread_structure) != 0) {
+				Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
 				return(-1);
 			}
 			for (i = 0; i < current->nbelem; i++) {
@@ -2055,6 +2045,7 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 						/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 						Cthread_mutex_unlock_ext(lock_child_cthread_structure);
+						Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
 						return(-1);
 					}
 				  
@@ -2079,31 +2070,39 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 		  
 			if (found != 0) {
 				/* We found at least one thread available: */
+#ifdef CPOOL_DEBUG
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0) {
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on lock_parent_cthread_structure\n",
+						_Cpool_self(),_Cthread_self());
+				}
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+		  
+				Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
 				return(0);
 			}
 		  
 			/* We did not found one thread available */
 			/* We say that we are waiting            */
 		  
-#ifdef CPOOL_DEBUG
-			/* Cthread_mutex_lock(&lock_cpool_debug); */
-			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : lock on lock_parent_cthread_structure\n",
-					_Cpool_self(),_Cthread_self());
-			}
-			/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
-		  
 			if (timeout == 0) {
 				/* No thread immediately available, and timeout == 0 */
 				/* So we exit immediately                            */
+#ifdef CPOOL_DEBUG
+				/* Cthread_mutex_lock(&lock_cpool_debug); */
+				if (Cpool_debug != 0) {
+					log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : un-lock on lock_parent_cthread_structure and setting SEWOULDBLOCK\n",
+						_Cpool_self(),_Cthread_self());
+				}
+				/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+				
+				Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
 				serrno = SEWOULDBLOCK;
 				return(-1);
 			}
 		  
-			if (Cthread_mutex_lock_ext(lock_parent_cthread_structure) != 0) {
-				return(-1);
-			}
 			current->flag = -1;
 		  
 			/* And we wait on our predicate          */
@@ -2582,6 +2581,20 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 #ifdef CPOOL_DEBUG
 			/* Cthread_mutex_lock(&lock_cpool_debug); */
 			if (Cpool_debug != 0) {
+				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_assign : lock on lock_parent_cthread_structure\n",
+					_Cpool_self(),_Cthread_self());
+			}
+			/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+		  
+			/* We assume that we will not have to wait   */
+			if (Cthread_mutex_lock_ext(lock_parent_cthread_structure) != 0) {
+				return(-1);
+			}
+		  
+#ifdef CPOOL_DEBUG
+			/* Cthread_mutex_lock(&lock_cpool_debug); */
+			if (Cpool_debug != 0) {
 				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : lock on lock_child_cthread_structure\n",
 					_Cpool_self(),_Cthread_self(),poolnb);
 			}
@@ -2589,6 +2602,7 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 #endif
 		  
 			if (Cthread_mutex_lock_ext(lock_child_cthread_structure) != 0) {
+				Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
 				return(-1);
 			}
 			for (i = 0; i < current->nbelem; i++) {
@@ -2615,6 +2629,7 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 #endif
 							Cthread_mutex_unlock_ext(lock_child_cthread_structure);
 							current->forceid = i;
+							Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
 							return(i);
 						} else {
 							/* We should have find the same ! */
@@ -2627,6 +2642,7 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 							/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 							Cthread_mutex_unlock_ext(lock_child_cthread_structure);
+							Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
 							serrno = SEINTERNAL;
 							return(-1);
 						}
@@ -2642,6 +2658,16 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 						}
 						/* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
+#ifdef CPOOL_DEBUG
+						/* Cthread_mutex_lock(&lock_cpool_debug); */
+						if (Cpool_debug != 0) {
+							log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : un-lock on lock_parent_cthread_structure\n",
+								_Cpool_self(),_Cthread_self(), poolnb);
+						}
+						/* Cthread_mutex_unlock(&lock_cpool_debug); */
+#endif
+						
+						Cthread_mutex_unlock_ext(lock_parent_cthread_structure);
 						return(i);
 					}
 				}
@@ -2660,19 +2686,6 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 		  
 			/* We did not found one thread available */
 			/* We say that we are waiting            */
-		  
-#ifdef CPOOL_DEBUG
-			/* Cthread_mutex_lock(&lock_cpool_debug); */
-			if (Cpool_debug != 0) {
-				log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d) : lock on lock_parent_cthread_structure\n",
-					_Cpool_self(),_Cthread_self(),poolnb);
-			}
-			/* Cthread_mutex_unlock(&lock_cpool_debug); */
-#endif
-		  
-			if (Cthread_mutex_lock_ext(lock_parent_cthread_structure) != 0) {
-				return(-1);
-			}
 		  
 			while (1) {
 				current->flag = -1;
