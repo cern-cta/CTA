@@ -27,6 +27,30 @@ typedef struct RtcpcldVIDChild {
     struct RtcpcldVIDChild *prev;
 } RtcpcldVIDChild_t;
 
+#if defined(CASTOR_STAGER_TAPE_H) && defined(CASTOR_STAGER_SEGMENT_H)
+#define ID_TYPE unsigned long
+
+typedef struct RtcpcldTapeList 
+{
+  tape_list_t *tape;
+  struct Cstager_Tape_t *tp;
+  struct RtcpcldSegmentList *segments;
+  struct RtcpcldTapeList *next;
+  struct RtcpcldTapeList *prev;
+}
+RtcpcldTapeList_t;
+
+typedef struct RtcpcldSegmentList 
+{
+  file_list_t *file;
+  struct Cstager_Segment_t *segment;
+  struct RtcpcldTapeList *tp;
+  struct RtcpcldSegmentList *next;
+  struct RtcpcldSegmentList *prev;
+}
+RtcpcldSegmentList_t;
+#endif /* CASTOR_STAGER_TAPE_H && CASTOR_STAGER_SEGMENT_H */
+
 int rtcpcld_InitNW  _PROTO((
                             SOCKET **
                             ));
@@ -79,15 +103,19 @@ int rtcpcld_getReqsForVID _PROTO((
 int rtcpcld_anyReqsForVID _PROTO((
                                   tape_list_t *
                                   ));
+
+#if defined(CASTOR_STAGER_TAPE_H) && defined(CASTOR_STAGER_SEGMENT_H)
 int rtcpcld_updateVIDStatus _PROTO((
                                     tape_list_t *, 
-                                    enum TpInfoStatusCodes,
-                                    enum TpInfoStatusCodes
+                                    enum Cstager_TapeStatusCodes_t,
+                                    enum Cstager_TapeStatusCodes_t
                                     ));
 int rtcpcld_setFileStatus _PROTO((
                                   rtcpFileRequest_t *,
-                                  enum TpFileInfoStatusCodes
+                                  enum Cstager_SegmentStatusCodes_t
                                   ));
+#endif /* CASTOR_STAGER_TAPE_H) && CASTOR_STAGER_SEGMENT_H */
+
 int rtcpcld_getPhysicalPath _PROTO((
                                     rtcpTapeRequest_t *,
                                     rtcpFileRequest_t *
