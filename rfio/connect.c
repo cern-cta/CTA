@@ -1,5 +1,5 @@
 /*
- * $Id: connect.c,v 1.7 2004/12/01 18:16:01 bcouturi Exp $
+ * $Id: connect.c,v 1.8 2004/12/06 20:33:50 bcouturi Exp $
  */
 
 /*
@@ -109,8 +109,8 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
      
      rc = nodeHasPort(node, tmphost, &port);
      if (rc == 1) {
-       TRACE(2, "srfio", "rfio_connect: Hostname includes port(%s)",
-             node);
+       TRACE(2, "rfio", "rfio_connect: Hostname includes port(%s, %s, %d)",
+             node, tmphost, port);
        node = tmphost;
      }  
    }
