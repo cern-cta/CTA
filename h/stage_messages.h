@@ -1,15 +1,15 @@
 /*
- * $Id: stage_messages.h,v 1.1 2001/11/30 10:50:40 jdurand Exp $
+ * $Id: stage_messages.h,v 1.2 2001/12/05 10:00:46 jdurand Exp $
  */
 
 #ifndef __stage_messages_h
 #define __stage_messages_h
 
-#define STG00	"STG00 - stage daemon not available on %s\n"
+#define STG00	"STG00 - stage daemon not available on %s (%s)\n"
 #define STG01	"STG01 - no response from stage daemon\n"
 #define STG02	"STG02 - %s : %s error : %s\n"
 #define STG03   "STG03 - illegal function %d\n"
-#define STG04   "STG04 - error reading request header, read = %d from %s (%s - %s)\n"
+#define STG04   "STG04 - error reading request %s, read %d bytes but expected %d ones from %s (errno=%d [%s] - serrno=%d [%s])\n"
 #define STG05	"STG05 - cannot get memory\n"
 #define STG06	"STG06 - invalid value for option %s\n"
 #define	STG07	"STG07 - pathname is mandatory\n"
