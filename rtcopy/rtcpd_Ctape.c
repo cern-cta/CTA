@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.4 $ $Date: 1999/12/28 15:51:11 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.5 $ $Date: 2000/01/09 10:05:14 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -405,7 +405,7 @@ int rtcpd_Position(tape_list_t *tape,
 
 
     filstat = filereq->check_fid;
-    if ( prevreq != NULL ) {
+    if ( tapereq->mode == WRITE_ENABLE && prevreq != NULL ) {
         /*
          * If we are writing to same file as last request
          * it is an append. Note that normally a tape file append
@@ -445,8 +445,9 @@ int rtcpd_Position(tape_list_t *tape,
                             filereq->recordlength,
                             filereq->retention,
                             flags);
-        save_serrno = (serrno != 0 ? serrno : errno);
+        save_serrno = (serrno > 0 ? serrno : errno);
         filereq->TEndPosition = (int)time(NULL);
+        filereq->cprc = rc;
         if ( AbortFlag == 1 ) {
             rtcp_log(LOG_ERR,"rtcpd_Position() ABORTING! Calling Ctape_kill(%s)\n",
                 tape_path);
@@ -458,8 +459,8 @@ int rtcpd_Position(tape_list_t *tape,
             return(-1);
         }
         if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"rtcpd_Position() Ctape_position() %s\n",
-                CTP_ERRTXT);
+            rtcp_log(LOG_ERR,"rtcpd_Position() Ctape_position() serrno=%d, %s\n",
+                save_serrno,CTP_ERRTXT);
             rtcpd_AppendClientMsg(NULL, file, "%s\n",CTP_ERRTXT);
             severity = 0;
 
@@ -494,6 +495,7 @@ int rtcpd_Position(tape_list_t *tape,
                     severity = RTCP_OK | RTCP_EOD;
                     rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
                     (void)rtcpd_stageupdc(tape,file);
+                    rc = 0;
                     break;
                 } else if ( filereq->concat == NOCONCAT_TO_EOD ) {
                     /*
@@ -571,7 +573,7 @@ int rtcpd_Position(tape_list_t *tape,
                 rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
                 break;
             }
-            if ( (severity & RTCP_NORETRY) ) {
+            if ( (severity & RTCP_NORETRY) != 0 ) {
                 /*
                  * If configured error action says noretry we
                  * reset max_tpretry so that the client won't retry
@@ -589,7 +591,6 @@ int rtcpd_Position(tape_list_t *tape,
             }
         } else do_retry = 0;
     } /* end while (do_retry) */
-    tapereq->tprc = rc;
     if ( rc == 0 ) 
         rtcp_log(LOG_DEBUG,"rtcpd_Position() Ctape_position() successful\n");
     *tape_path = '\0';
@@ -624,7 +625,7 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
                     &filereq->tape_fseq,
                     &filereq->recordlength,
                      filereq->recfm);
-    tapereq->tprc = rc;
+    filereq->cprc = rc;
     save_serrno = serrno;
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_Info() Ctape_info() %s\n",    
@@ -687,7 +688,7 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
     }
     if ( tape != NULL ) tapereq = &tape->tapereq;
 
-    rtcp_log(LOG_DEBUG,"rtcp_Release() called with path=%s\n",
+    rtcp_log(LOG_DEBUG,"rtcpd_Release() called with path=%s\n",
         (path == NULL ? "(nil)" : path));
 
     if ( tapereq != NULL ) tapereq->TStartUnmount = (int)time(NULL);
@@ -697,7 +698,7 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
 
     if ( tapereq != NULL ) tapereq->TEndUnmount = (int)time(NULL);
     if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcp_Release() Ctape_rls() %s\n",
+        rtcp_log(LOG_ERR,"rtcpd_Release() Ctape_rls() %s\n",
             CTP_ERRTXT);
         if ( file != NULL ) {
             rtcpd_AppendClientMsg(NULL, file, "%s\n",CTP_ERRTXT);
@@ -708,8 +709,12 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
         case EINVAL:
             path = NULL;
             flags = TPRLS_ALL;
-            log(LOG_ERR,"rtcp_Release() retry with TPRLS_ALL\n");
+            log(LOG_ERR,"rtcpd_Release() retry with TPRLS_ALL\n");
             (void)Ctape_rls(path,flags);
+            break;
+        case ETFSQ:      /* Bad file sequence number */
+            if ( (filereq->concat & (CONCAT_TO_EOD | NOCONCAT_TO_EOD)) != 0 )
+                rc = 0;
             break;
         case EINTR:
             if ( filereq != NULL ) {
@@ -720,10 +725,10 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
         default:
             break;
         }
-        if ( file != NULL ) 
+        if ( file != NULL && rc == -1 ) 
             rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
     } else
-        rtcp_log(LOG_DEBUG,"rtcp_Release() Ctape_rls() successful\n");
+        rtcp_log(LOG_DEBUG,"rtcpd_Release() Ctape_rls() successful\n");
 
     serrno = save_serrno;
     return(rc);
