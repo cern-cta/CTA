@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.7 $ $Date: 2000/05/03 06:46:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.8 $ $Date: 2000/06/09 06:53:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	readlbl - read one possible label record */
@@ -65,7 +65,7 @@ char *lblbuf;
 #if defined(sun) || defined(RS6000PCTA) || defined(ADSTAR) || defined(hpux) || defined(linux)
 				if (errcat == ETBLANK) RETURN (3);
 #endif
-				rc = errcat;
+				rc = (errcat > 0) ? errcat : EIO;
 			} else {
 				msgaddr = sys_errlist[errno];
 				rc = errno;
