@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/12 08:36:01 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/12 16:04:53 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/12 08:36:01 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/12 16:04:53 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -480,7 +480,8 @@ int rtcpcld_tapeOK(
   }
 
   tapereq = &(tape->tapereq);
-  (void)rtcpcld_getVmgrErrBuf(&vmgrErrMsg);
+
+  (void)getVmgrErrBuf(&vmgrErrMsg);
   for (;;) {
     if ( vmgrErrMsg != NULL ) *vmgrErrMsg = '\0';
     serrno = 0;
@@ -684,7 +685,7 @@ int rtcpcld_updateTape(
 
   statusStr = rtcpcld_tapeStatusStr(flags);
 
-  (void)rtcpcld_getVmgrErrBuf(&vmgrErrMsg);
+  (void)getVmgrErrBuf(&vmgrErrMsg);
   rc = vmgr_updatetape(
                        tapereq->vid,
                        tapereq->side,
