@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.13 $ $Date: 2000/02/23 15:56:48 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.14 $ $Date: 2000/02/28 07:41:04 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -88,10 +88,9 @@ int rtcpd_stageupdc(tape_list_t *tape,
      */
     if ( *filereq->stageID == '\0' ) return(0);
     WaitTime = filereq->TEndPosition - tapereq->TStartRequest;
-    TransferTime = min((time_t)filereq->TStartTransferDisk,
-                       (time_t)filereq->TStartTransferTape);
     TransferTime = max((time_t)filereq->TEndTransferDisk,
-                       (time_t)filereq->TEndTransferTape) - TransferTime;
+                       (time_t)filereq->TEndTransferTape) -
+                       (time_t)filereq->TEndPosition;
 
 
 #if defined(USE_STAGEAPI)
