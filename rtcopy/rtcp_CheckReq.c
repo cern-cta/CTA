@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.31 $ $Date: 2000/04/13 15:44:18 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.32 $ $Date: 2000/04/20 08:26:16 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -436,7 +436,13 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         }
 
         filereq->bytes_in = (u_signed64)st.st_size;
-        if ( filereq->offset > 0 ) filereq->bytes_in -= filereq->offset;
+        if ( filereq->offset > 0 ) {
+             if ( filereq->bytes_in <= filereq->offset ) {
+                 sprintf(errmsgtxt,RT121,CMD(mode));
+                 serrno = EINVAL;
+                 SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
+             } else filereq->bytes_in -= filereq->offset;
+        }
         if ( filereq->maxsize > 0 ) {
             /*
              * Calculate start size if we are concatenating
