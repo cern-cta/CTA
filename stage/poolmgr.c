@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.60 2000/12/21 15:36:35 jdurand Exp $
+ * $Id: poolmgr.c,v 1.61 2000/12/22 13:15:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.60 $ $Date: 2000/12/21 15:36:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.61 $ $Date: 2000/12/22 13:15:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -809,6 +809,7 @@ int ismigovl(pid, status)
 	if (! found) return (0);
 	pool_p->migr->mig_pid = 0;
 	pool_p->migr->migreqtime = 0;
+	pool_p->migr->migreqtime_last_end = time(0);
 	return (1);
 }
 
@@ -1165,6 +1166,7 @@ int updpoolconf(defpoolname)
 						if (pool_n->migr != NULL && pool_p->migr != NULL) {
 							pool_n->migr->mig_pid = pool_p->migr->mig_pid;
 							pool_n->migr->migreqtime = pool_p->migr->migreqtime;
+							pool_n->migr->migreqtime_last_end = pool_p->migr->migreqtime_last_end;
 						}
 						break;
 					}
@@ -1444,11 +1446,11 @@ void checkfile2mig()
 			continue;
 		if (pool_p->migr->nbfiles_canbemig <= 0)	/* No point anyway */
 			continue;
-		if ((pool_p->migr->migp->data_mig_threshold &&
-			pool_p->migr->space_canbemig > pool_p->migr->migp->data_mig_threshold) ||
-			(pool_p->free * 100) < (pool_p->capacity * pool_p->migr->migp->freespace_threshold) ||
-			((time(0) - pool_p->migr->migreqtime) > pool_p->migr->migp->time_interval))
+		if (((pool_p->migr->migp->data_mig_threshold > 0) && (pool_p->migr->space_canbemig > pool_p->migr->migp->data_mig_threshold)) ||
+			((pool_p->migr->migp->freespace_threshold > 0) && ((pool_p->free * 100) < (pool_p->capacity * pool_p->migr->migp->freespace_threshold))) ||
+			((pool_p->migr->migp->time_interval > 0) && ((time(0) - pool_p->migr->migreqtime_last_end) > pool_p->migr->migp->time_interval))) {
 				migrate_files (pool_p->migr);
+		}
 	}
 }
 
@@ -1496,7 +1498,19 @@ int migrate_files(migr_p)
                 pid);
       migr_p->migreqtime = time (0);
       if ((migr_p->nbfiles_beingmig == 0) || (migr_p->space_beingmig == 0)) {
+        int j;
+        struct pool *pool_n;
+
         stglogit (func, "### Executing recovery procedure - migrator should not have been executed\n");
+        /* Update the migrators */
+        for (j = 0, pool_n = pools; j < nbpool; j++, pool_n++) {
+          if (pool_n->migr != NULL) {
+			pool_n->migr->nbfiles_canbemig = 0;
+			pool_n->migr->space_canbemig = 0;
+			pool_n->migr->nbfiles_beingmig = 0;
+			pool_n->migr->space_beingmig = 0;
+          }
+        }
         redomigpool();
       }
 	}

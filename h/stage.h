@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.33 2000/12/21 15:20:49 jdurand Exp $
+ * $Id: stage.h,v 1.34 2000/12/22 13:15:43 jdurand Exp $
  */
 
 /*
@@ -395,6 +395,7 @@ struct migrator {
 	/* Current Parameter of the migrator */
 	int	mig_pid;
 	time_t	migreqtime;
+	time_t	migreqtime_last_end;
 	int	nbfiles_canbemig;	/* number of files that can be migrated */
 	u_signed64	space_canbemig;		/* total amount of data that can be migrated */
 	int	nbfiles_beingmig;	/* number of files that is being migrated */
