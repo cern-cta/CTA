@@ -63,7 +63,8 @@ namespace castor {
     OBJ_TpFileCopy,
     OBJ_StringResponse,
     OBJ_EndResponse,
-    OBJ_FileResponse
+    OBJ_FileResponse,
+    OBJ_StageFilChgRequest
   };
     
   /**
