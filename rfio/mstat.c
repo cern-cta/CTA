@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.20 2002/02/18 09:34:13 jdurand Exp $
+ * $Id: mstat.c,v 1.21 2002/02/18 09:47:11 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.20 $ $Date: 2002/02/18 09:34:13 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.21 $ $Date: 2002/02/18 09:47:11 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -94,6 +94,9 @@ int DLL_DECL rfio_mstat(file,statb)
      * stat() and then, if it failed, go back to the old one.
      */
     for ( i=0; i<2; i++ ) {
+      /* The second pass can occur only if (rc == -1 && serrno == SEPROTONOTSUP) */
+      /* In such a case rfio_smstat(fd) would have called rfio_end_this(fd,1) */
+      /* itself calling netclose(fd) */
       fd=rfio_connect(host,&rt) ;
       if ( fd < 0 ) {
         END_TRACE();
