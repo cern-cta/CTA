@@ -1,0 +1,112 @@
+.\" @(#)$RCSfile: vdqmserv.man,v $ $Revision: 1.1 $ $Date: 2001/12/03 10:52:49 $ CERN IT-ADC Olof Barring
+.\" Copyright (C) 2001 by CERN/IT/ADC
+.\" All rights reserved
+.\"
+.TH VDQMSERV 1 "$Date: 2001/12/03 10:52:49 $" CASTOR "VDQM server daemon"
+.SH NAME
+vdqmserv \- Volume and Drive Queue Manager (VDQM) server
+.SH SYNOPSIS
+.BI "vdqmserv"
+
+.SH DESCRIPTION
+.B vdqmserv
+is the central CASTOR server handling all tape volume and drive queues.
+It runs as a daemon on a host, which must be known to all clients and
+tape servers. The host name is normally configured in the clients at
+compile time through the \fBVdqmHost\fP
+macro in the "config/site.def" file in the CASTOR build directory.
+The host name can also be set through an entry \fBVDQM HOST\fP
+in the "/etc/shift.conf" file
+(that entry is mandatory on the server hosts when configuring a 
+VDQM replica, see below).
+Finally, it can be configured by setting the environment variable
+\fBVDQM_HOST\fP. The \fBvdqmserv\fP
+listens to a well-known port number configured through the \fBvdqm\fP
+service (tcp) in the "/etc/services" file
+on all client and server hosts.
+.PP
+Because of its high importance for the functioning of the CASTOR tape
+services the
+.B vdqmserv
+service must be highly available. To reduce the impact of a crash of the
+central server node, VDQM therefore provides an inherent replication
+mechanism of the service. A VDQM
+.I replica
+is an instance of the
+.B vdqmserv
+running on a different host. There might be several replica instances.
+A VDQM replica is configured by adding the name of the host where the
+replica runs to the VDQM host configuration (see example below). The
+first host name in the list of hosts is always the primary server. 
+When configuring a VDQM replica the \fBVDQM HOST\fP entry in the
+"/etc/shift.conf" file (see above)
+.I must
+be added on both the primary server and replica hosts. Thus, when
+configuring a VDQM replica it is not enough to just set the
+\fBVdqmHost\fP macro when compiling the \fBvdqmserv\fP daemon.
+However, this is only the case for the VDQM server hosts while
+the VDQM clients (all hosts except the primary and replica hosts)
+can be configured at compile time.
+
+.PP
+The clients will always first try to
+contact the primary server and if it is not responding they will try
+the VDQM replicas in the order they appear in the VDQM host list.
+While the primary server is up and running all VDQM replica servers
+are automatically running in "held" mode (not processing any requests).
+Note that all VDQM replicas will enter service mode if the primary
+server goes down. It is therefore recommended that only one replica
+is running otherwise a client may get inconsistent results in case
+of, for instance, a network "glitch".
+
+.PP
+The \fBvdqmserv\fP responds to requests from the \fBvdqm_admin(1)\fP
+utility.
+
+.SH ENVIRONMENT
+The \fBvdqmserv\fP daemon does not take any arguments. Apart from the
+VDQM host list the \fBvdqmserv\fP daemon does not need any special 
+configuration. CASTOR tape server software uses the VDQM client API routine
+\fBvdqm_UnitStatus(3)\fP to publish existence of tape drives and their 
+status and CASTOR RTCOPY clients publish their requests through the
+VDQM client API \fBvdqm_SendVolReq(3)\fP.
+.PP
+In case of problems with running
+.B vdqmserv
+it can be started with debug logging level by setting the environment
+variable \fBLOG_PRIORITY\fP to \fB7\fP. This will cause intensive logging
+(producing huge log-files).
+
+.SH FILES
+.TB 1.5i
+.B /etc/shift.conf
+CASTOR configuration file
+.TP
+.B /usr/spool/vdqm/vdqm.log
+VDQM server log file
+
+.SH EXAMPLE
+.nf
+.ft CW
+Configure a VDQM client to use primary server on the host "castor" and 
+a replica on the host "castor-replica" through editing the file
+"config/site.def" in the CASTOR build directory. The result should be:
+% grep VdqmHost config/site.def
+#define VdqmHost	"castor castor-replica"
+% make
+Configure a VDQM primary server on the host "castor" and a replica
+on the host "castor-replica" through editing the file "/etc/shift.conf"
+on the two server hosts ("castor" and "castor-replica").
+The result should be:
+%grep 'VDQM.*HOST' /etc/shift.conf
+VDQM	HOST	castor castor-replica
+%
+.ft
+.fi
+
+.SH SEE ALSO
+.BR vdqm_admin(1) ,
+.BR vdqm_SendVolReq(3) ,
+.BR vdqm_UnitStatus(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
