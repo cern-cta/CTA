@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.79 $ $Release$ $Date: 2004/11/23 18:11:12 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.80 $ $Release$ $Date: 2004/11/25 13:16:22 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.79 $ $Release$ $Date: 2004/11/23 18:11:12 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.80 $ $Release$ $Date: 2004/11/25 13:16:22 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -957,15 +957,12 @@ static int procSegmentsForTape(
 {
   struct Cstager_Tape_t *tp = NULL;
   struct Cstager_IStagerSvc_t **stgsvc = NULL;
-  struct C_Services_t **svcs = NULL;
-  struct C_BaseAddress_t *baseAddr = NULL;
-  struct C_IAddress_t *iAddr;
-  struct C_IObject_t *iObj;
   struct Cstager_Segment_t **segmArray = NULL;
   enum Cstager_SegmentStatusCodes_t cmpStatus;
   file_list_t *fl = NULL;
   tape_list_t *tl = NULL;
   unsigned char *blockid;
+  ID_TYPE key;
   int rc, i, nbItems = 0, save_serrno, fseq, newFileReqs = 0;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_DISABLE) ) {
@@ -975,14 +972,6 @@ static int procSegmentsForTape(
 
   rc = getStgSvc(&stgsvc);
   if ( rc == -1 || stgsvc == NULL || *stgsvc == NULL ) return(-1);
-
-  rc = getDbSvc(&svcs);
-  if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
-  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-  if ( rc == -1 ) {
-    return(-1);
-  }
-  iAddr = C_BaseAddress_getIAddress(baseAddr);
 
   tp = (struct Cstager_Tape_t *)tape->dbRef->row;
 
@@ -996,13 +985,11 @@ static int procSegmentsForTape(
     save_serrno = serrno;
     LOG_DBCALL_ERR("Cstager_IStagerSvc_segmentsForSegment()",
                    Cstager_IStagerSvc_errorMsg(*stgsvc));
-    C_IAddress_delete(iAddr);
     serrno = save_serrno;
     return(-1);
   }
 
   if ( nbItems == 0 ) {
-    C_IAddress_delete(iAddr);
     serrno = ENOENT;
     return(-1);
   }
@@ -1049,9 +1036,7 @@ static int procSegmentsForTape(
                         sstrerror(save_serrno),
                         RTCPCLD_LOG_WHERE
                         );
-        rc = C_Services_rollback(*svcs,iAddr);
-        C_IAddress_delete(iAddr);
-         serrno = save_serrno;
+        serrno = save_serrno;
         return(-1);
       }
       (void)dlf_write(
@@ -1070,6 +1055,15 @@ static int procSegmentsForTape(
       fl->filereq.tape_fseq = fseq;
       fl->filereq.def_alloc = 0;
       fl->filereq.disk_fseq = ++(fl->prev->filereq.disk_fseq);
+      fl->dbRef = (RtcpDBRef_t *)calloc(1,sizeof(RtcpDBRef_t));
+      if ( fl->dbRef == NULL ) {
+        LOG_SYSCALL_ERR("calloc()");
+        serrno = SESYSERR;
+        return(-1);
+      }
+      fl->dbRef->row = segmArray[i];
+      Cstager_Segment_id(segmArray[i],&key);
+      fl->dbRef->key = key;
     }
     memcpy(fl->filereq.blockid,blockid,sizeof(fl->filereq.blockid));
     if ( memcmp(fl->filereq.blockid,nullblkid,sizeof(nullblkid)) == 0 ) 
