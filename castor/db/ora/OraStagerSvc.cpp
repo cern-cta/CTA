@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.74 $ $Release$ $Date: 2004/12/06 13:46:13 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.75 $ $Release$ $Date: 2004/12/06 15:32:11 $ $Author: jdurand $
  *
  *
  *
@@ -963,7 +963,7 @@ castor::db::ora::OraStagerSvc::getUpdateStart
       m_getUpdateStartStatement->registerOutParam
         (7, oracle::occi::OCCIDOUBLE);
       m_getUpdateStartStatement->registerOutParam
-        (8, oracle::occi::OCCISTRING);
+        (8, oracle::occi::OCCISTRING, 2048);
     }
     // execute the statement and see whether we found something
     m_getUpdateStartStatement->setDouble(1, subreq->id());
