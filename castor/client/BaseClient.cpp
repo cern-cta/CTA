@@ -300,7 +300,7 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
 castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
   throw (castor::exception::Exception) {
 
-  int rc, nonblocking;
+  int rc, nonblocking=1;
 
   rc = ioctl(m_callbackSocket->socket(),FIONBIO,&nonblocking);
   if (rc == SOCKET_ERROR) {
