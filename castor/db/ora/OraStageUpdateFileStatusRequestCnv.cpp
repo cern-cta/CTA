@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/11/15 10:05:20 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/11/19 09:50:32 $ $Author: sponcec3 $
  *
  * 
  *
@@ -94,11 +94,11 @@ const std::string castor::db::ora::OraStageUpdateFileStatusRequestCnv::s_selectS
 
 /// SQL delete statement for member subRequests
 const std::string castor::db::ora::OraStageUpdateFileStatusRequestCnv::s_deleteSubRequestStatementString =
-"UPDATE SubRequest SET request = 0 WHERE request = :1";
+"UPDATE SubRequest SET request = 0 WHERE id = :1";
 
 /// SQL remote update statement for member subRequests
 const std::string castor::db::ora::OraStageUpdateFileStatusRequestCnv::s_remoteUpdateSubRequestStatementString =
-"UPDATE SubRequest SET request = : 1 WHERE id = :2";
+"UPDATE SubRequest SET request = :1 WHERE id = :2";
 
 /// SQL existence statement for member svcClass
 const std::string castor::db::ora::OraStageUpdateFileStatusRequestCnv::s_checkSvcClassExistStatementString =
@@ -274,7 +274,7 @@ void castor::db::ora::OraStageUpdateFileStatusRequestCnv::fillRepSubRequest(cast
     if (0 == m_deleteSubRequestStatement) {
       m_deleteSubRequestStatement = createStatement(s_deleteSubRequestStatementString);
     }
-    m_deleteSubRequestStatement->setDouble(1, obj->id());
+    m_deleteSubRequestStatement->setDouble(1, *it);
     m_deleteSubRequestStatement->executeUpdate();
   }
 }

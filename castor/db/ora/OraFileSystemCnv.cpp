@@ -94,11 +94,11 @@ const std::string castor::db::ora::OraFileSystemCnv::s_selectDiskCopyStatementSt
 
 /// SQL delete statement for member copies
 const std::string castor::db::ora::OraFileSystemCnv::s_deleteDiskCopyStatementString =
-"UPDATE DiskCopy SET fileSystem = 0 WHERE fileSystem = :1";
+"UPDATE DiskCopy SET fileSystem = 0 WHERE id = :1";
 
 /// SQL remote update statement for member copies
 const std::string castor::db::ora::OraFileSystemCnv::s_remoteUpdateDiskCopyStatementString =
-"UPDATE DiskCopy SET fileSystem = : 1 WHERE id = :2";
+"UPDATE DiskCopy SET fileSystem = :1 WHERE id = :2";
 
 /// SQL existence statement for member diskserver
 const std::string castor::db::ora::OraFileSystemCnv::s_checkDiskServerExistStatementString =
@@ -297,7 +297,7 @@ void castor::db::ora::OraFileSystemCnv::fillRepDiskCopy(castor::stager::FileSyst
     if (0 == m_deleteDiskCopyStatement) {
       m_deleteDiskCopyStatement = createStatement(s_deleteDiskCopyStatementString);
     }
-    m_deleteDiskCopyStatement->setDouble(1, obj->id());
+    m_deleteDiskCopyStatement->setDouble(1, *it);
     m_deleteDiskCopyStatement->executeUpdate();
   }
 }

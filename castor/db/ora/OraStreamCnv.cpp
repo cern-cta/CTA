@@ -99,11 +99,11 @@ const std::string castor::db::ora::OraStreamCnv::s_selectTapeStatementString =
 
 /// SQL delete statement for member tape
 const std::string castor::db::ora::OraStreamCnv::s_deleteTapeStatementString =
-"UPDATE Tape SET stream = 0 WHERE stream = :1";
+"UPDATE Tape SET stream = 0 WHERE id = :1";
 
 /// SQL remote update statement for member tape
 const std::string castor::db::ora::OraStreamCnv::s_remoteUpdateTapeStatementString =
-"UPDATE Tape SET stream = : 1 WHERE id = :2";
+"UPDATE Tape SET stream = :1 WHERE id = :2";
 
 /// SQL existence statement for member tape
 const std::string castor::db::ora::OraStreamCnv::s_checkTapeExistStatementString =
@@ -313,7 +313,7 @@ void castor::db::ora::OraStreamCnv::fillRepTape(castor::stager::Stream* obj)
       if (0 == m_deleteTapeStatement) {
         m_deleteTapeStatement = createStatement(s_deleteTapeStatementString);
       }
-      m_deleteTapeStatement->setDouble(1, obj->id());
+      m_deleteTapeStatement->setDouble(1, obj->tape()->id());
       m_deleteTapeStatement->executeUpdate();
     }
   }

@@ -99,11 +99,11 @@ const std::string castor::db::ora::OraTapeCopyCnv::s_selectSegmentStatementStrin
 
 /// SQL delete statement for member segments
 const std::string castor::db::ora::OraTapeCopyCnv::s_deleteSegmentStatementString =
-"UPDATE Segment SET copy = 0 WHERE copy = :1";
+"UPDATE Segment SET copy = 0 WHERE id = :1";
 
 /// SQL remote update statement for member segments
 const std::string castor::db::ora::OraTapeCopyCnv::s_remoteUpdateSegmentStatementString =
-"UPDATE Segment SET copy = : 1 WHERE id = :2";
+"UPDATE Segment SET copy = :1 WHERE id = :2";
 
 /// SQL existence statement for member castorFile
 const std::string castor::db::ora::OraTapeCopyCnv::s_checkCastorFileExistStatementString =
@@ -322,7 +322,7 @@ void castor::db::ora::OraTapeCopyCnv::fillRepSegment(castor::stager::TapeCopy* o
     if (0 == m_deleteSegmentStatement) {
       m_deleteSegmentStatement = createStatement(s_deleteSegmentStatementString);
     }
-    m_deleteSegmentStatement->setDouble(1, obj->id());
+    m_deleteSegmentStatement->setDouble(1, *it);
     m_deleteSegmentStatement->executeUpdate();
   }
 }

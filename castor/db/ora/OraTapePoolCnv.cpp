@@ -96,11 +96,11 @@ const std::string castor::db::ora::OraTapePoolCnv::s_selectStreamStatementString
 
 /// SQL delete statement for member streams
 const std::string castor::db::ora::OraTapePoolCnv::s_deleteStreamStatementString =
-"UPDATE Stream SET tapePool = 0 WHERE tapePool = :1";
+"UPDATE Stream SET tapePool = 0 WHERE id = :1";
 
 /// SQL remote update statement for member streams
 const std::string castor::db::ora::OraTapePoolCnv::s_remoteUpdateStreamStatementString =
-"UPDATE Stream SET tapePool = : 1 WHERE id = :2";
+"UPDATE Stream SET tapePool = :1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -302,7 +302,7 @@ void castor::db::ora::OraTapePoolCnv::fillRepStream(castor::stager::TapePool* ob
     if (0 == m_deleteStreamStatement) {
       m_deleteStreamStatement = createStatement(s_deleteStreamStatementString);
     }
-    m_deleteStreamStatement->setDouble(1, obj->id());
+    m_deleteStreamStatement->setDouble(1, *it);
     m_deleteStreamStatement->executeUpdate();
   }
 }

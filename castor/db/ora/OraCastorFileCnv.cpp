@@ -103,11 +103,11 @@ const std::string castor::db::ora::OraCastorFileCnv::s_selectDiskCopyStatementSt
 
 /// SQL delete statement for member diskCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_deleteDiskCopyStatementString =
-"UPDATE DiskCopy SET castorFile = 0 WHERE castorFile = :1";
+"UPDATE DiskCopy SET castorFile = 0 WHERE id = :1";
 
 /// SQL remote update statement for member diskCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_remoteUpdateDiskCopyStatementString =
-"UPDATE DiskCopy SET castorFile = : 1 WHERE id = :2";
+"UPDATE DiskCopy SET castorFile = :1 WHERE id = :2";
 
 /// SQL select statement for member tapeCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_selectTapeCopyStatementString =
@@ -115,11 +115,11 @@ const std::string castor::db::ora::OraCastorFileCnv::s_selectTapeCopyStatementSt
 
 /// SQL delete statement for member tapeCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_deleteTapeCopyStatementString =
-"UPDATE TapeCopy SET castorFile = 0 WHERE castorFile = :1";
+"UPDATE TapeCopy SET castorFile = 0 WHERE id = :1";
 
 /// SQL remote update statement for member tapeCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_remoteUpdateTapeCopyStatementString =
-"UPDATE TapeCopy SET castorFile = : 1 WHERE id = :2";
+"UPDATE TapeCopy SET castorFile = :1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -352,7 +352,7 @@ void castor::db::ora::OraCastorFileCnv::fillRepDiskCopy(castor::stager::CastorFi
     if (0 == m_deleteDiskCopyStatement) {
       m_deleteDiskCopyStatement = createStatement(s_deleteDiskCopyStatementString);
     }
-    m_deleteDiskCopyStatement->setDouble(1, obj->id());
+    m_deleteDiskCopyStatement->setDouble(1, *it);
     m_deleteDiskCopyStatement->executeUpdate();
   }
 }
@@ -400,7 +400,7 @@ void castor::db::ora::OraCastorFileCnv::fillRepTapeCopy(castor::stager::CastorFi
     if (0 == m_deleteTapeCopyStatement) {
       m_deleteTapeCopyStatement = createStatement(s_deleteTapeCopyStatementString);
     }
-    m_deleteTapeCopyStatement->setDouble(1, obj->id());
+    m_deleteTapeCopyStatement->setDouble(1, *it);
     m_deleteTapeCopyStatement->executeUpdate();
   }
 }

@@ -83,11 +83,11 @@ const std::string castor::db::ora::OraFileClassCnv::s_selectCastorFileStatementS
 
 /// SQL delete statement for member 
 const std::string castor::db::ora::OraFileClassCnv::s_deleteCastorFileStatementString =
-"UPDATE CastorFile SET fileClass = 0 WHERE fileClass = :1";
+"UPDATE CastorFile SET fileClass = 0 WHERE id = :1";
 
 /// SQL remote update statement for member 
 const std::string castor::db::ora::OraFileClassCnv::s_remoteUpdateCastorFileStatementString =
-"UPDATE CastorFile SET fileClass = : 1 WHERE id = :2";
+"UPDATE CastorFile SET fileClass = :1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -230,7 +230,7 @@ void castor::db::ora::OraFileClassCnv::fillRepCastorFile(castor::stager::FileCla
     if (0 == m_deleteCastorFileStatement) {
       m_deleteCastorFileStatement = createStatement(s_deleteCastorFileStatementString);
     }
-    m_deleteCastorFileStatement->setDouble(1, obj->id());
+    m_deleteCastorFileStatement->setDouble(1, *it);
     m_deleteCastorFileStatement->executeUpdate();
   }
 }

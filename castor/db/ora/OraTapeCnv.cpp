@@ -86,11 +86,11 @@ const std::string castor::db::ora::OraTapeCnv::s_selectStreamStatementString =
 
 /// SQL delete statement for member stream
 const std::string castor::db::ora::OraTapeCnv::s_deleteStreamStatementString =
-"UPDATE Stream SET tape = 0 WHERE tape = :1";
+"UPDATE Stream SET tape = 0 WHERE id = :1";
 
 /// SQL remote update statement for member stream
 const std::string castor::db::ora::OraTapeCnv::s_remoteUpdateStreamStatementString =
-"UPDATE Stream SET tape = : 1 WHERE id = :2";
+"UPDATE Stream SET tape = :1 WHERE id = :2";
 
 /// SQL existence statement for member stream
 const std::string castor::db::ora::OraTapeCnv::s_checkStreamExistStatementString =
@@ -106,11 +106,11 @@ const std::string castor::db::ora::OraTapeCnv::s_selectSegmentStatementString =
 
 /// SQL delete statement for member segments
 const std::string castor::db::ora::OraTapeCnv::s_deleteSegmentStatementString =
-"UPDATE Segment SET tape = 0 WHERE tape = :1";
+"UPDATE Segment SET tape = 0 WHERE id = :1";
 
 /// SQL remote update statement for member segments
 const std::string castor::db::ora::OraTapeCnv::s_remoteUpdateSegmentStatementString =
-"UPDATE Segment SET tape = : 1 WHERE id = :2";
+"UPDATE Segment SET tape = :1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -248,7 +248,7 @@ void castor::db::ora::OraTapeCnv::fillRepStream(castor::stager::Tape* obj)
       if (0 == m_deleteStreamStatement) {
         m_deleteStreamStatement = createStatement(s_deleteStreamStatementString);
       }
-      m_deleteStreamStatement->setDouble(1, obj->id());
+      m_deleteStreamStatement->setDouble(1, obj->stream()->id());
       m_deleteStreamStatement->executeUpdate();
     }
   }
@@ -331,7 +331,7 @@ void castor::db::ora::OraTapeCnv::fillRepSegment(castor::stager::Tape* obj)
     if (0 == m_deleteSegmentStatement) {
       m_deleteSegmentStatement = createStatement(s_deleteSegmentStatementString);
     }
-    m_deleteSegmentStatement->setDouble(1, obj->id());
+    m_deleteSegmentStatement->setDouble(1, *it);
     m_deleteSegmentStatement->executeUpdate();
   }
 }

@@ -84,11 +84,11 @@ const std::string castor::db::ora::OraDiskServerCnv::s_selectFileSystemStatement
 
 /// SQL delete statement for member fileSystems
 const std::string castor::db::ora::OraDiskServerCnv::s_deleteFileSystemStatementString =
-"UPDATE FileSystem SET diskserver = 0 WHERE diskserver = :1";
+"UPDATE FileSystem SET diskserver = 0 WHERE id = :1";
 
 /// SQL remote update statement for member fileSystems
 const std::string castor::db::ora::OraDiskServerCnv::s_remoteUpdateFileSystemStatementString =
-"UPDATE FileSystem SET diskserver = : 1 WHERE id = :2";
+"UPDATE FileSystem SET diskserver = :1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -231,7 +231,7 @@ void castor::db::ora::OraDiskServerCnv::fillRepFileSystem(castor::stager::DiskSe
     if (0 == m_deleteFileSystemStatement) {
       m_deleteFileSystemStatement = createStatement(s_deleteFileSystemStatementString);
     }
-    m_deleteFileSystemStatement->setDouble(1, obj->id());
+    m_deleteFileSystemStatement->setDouble(1, *it);
     m_deleteFileSystemStatement->executeUpdate();
   }
 }

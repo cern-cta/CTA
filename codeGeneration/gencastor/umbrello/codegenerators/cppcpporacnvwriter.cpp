@@ -421,8 +421,7 @@ void CppCppOraCnvWriter::writeConstants() {
                   << "\"UPDATE "
                   << as->remotePart.typeName
                   << " SET " << as->localPart.name
-                  << " = 0 WHERE " << as->localPart.name
-                  << " = :1\";" << endl << endl
+                  << " = 0 WHERE id = :1\";" << endl << endl
                   << getIndent()
                   << "/// SQL remote update statement for member "
                   << as->remotePart.name
@@ -436,7 +435,7 @@ void CppCppOraCnvWriter::writeConstants() {
                   << "\"UPDATE "
                   << as->remotePart.typeName
                   << " SET " << as->localPart.name
-                  << " = : 1 WHERE id = :2\";" << endl << endl;
+                  << " = :1 WHERE id = :2\";" << endl << endl;
       }
       if (as->type.multiRemote == MULT_ONE) {
         // * to 1
@@ -1126,7 +1125,8 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as) {
     *m_stream << getIndent() << "}" << endl << getIndent()
               << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setDouble(1, obj->id());"
+              << "Statement->setDouble(1, obj->"
+              << as->remotePart.name << "()->id());"
               << endl << getIndent() << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
               << "Statement->executeUpdate();"
@@ -1636,7 +1636,7 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
     *m_stream << getIndent() << "}" << endl << getIndent()
               << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setDouble(1, obj->id());"
+              << "Statement->setDouble(1, *it);"
               << endl << getIndent() << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
               << "Statement->executeUpdate();"

@@ -94,11 +94,11 @@ const std::string castor::db::ora::OraStageGetRequestCnv::s_selectSubRequestStat
 
 /// SQL delete statement for member subRequests
 const std::string castor::db::ora::OraStageGetRequestCnv::s_deleteSubRequestStatementString =
-"UPDATE SubRequest SET request = 0 WHERE request = :1";
+"UPDATE SubRequest SET request = 0 WHERE id = :1";
 
 /// SQL remote update statement for member subRequests
 const std::string castor::db::ora::OraStageGetRequestCnv::s_remoteUpdateSubRequestStatementString =
-"UPDATE SubRequest SET request = : 1 WHERE id = :2";
+"UPDATE SubRequest SET request = :1 WHERE id = :2";
 
 /// SQL existence statement for member svcClass
 const std::string castor::db::ora::OraStageGetRequestCnv::s_checkSvcClassExistStatementString =
@@ -274,7 +274,7 @@ void castor::db::ora::OraStageGetRequestCnv::fillRepSubRequest(castor::stager::S
     if (0 == m_deleteSubRequestStatement) {
       m_deleteSubRequestStatement = createStatement(s_deleteSubRequestStatementString);
     }
-    m_deleteSubRequestStatement->setDouble(1, obj->id());
+    m_deleteSubRequestStatement->setDouble(1, *it);
     m_deleteSubRequestStatement->executeUpdate();
   }
 }

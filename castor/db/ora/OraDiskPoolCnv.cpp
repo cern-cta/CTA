@@ -84,11 +84,11 @@ const std::string castor::db::ora::OraDiskPoolCnv::s_selectFileSystemStatementSt
 
 /// SQL delete statement for member fileSystems
 const std::string castor::db::ora::OraDiskPoolCnv::s_deleteFileSystemStatementString =
-"UPDATE FileSystem SET diskPool = 0 WHERE diskPool = :1";
+"UPDATE FileSystem SET diskPool = 0 WHERE id = :1";
 
 /// SQL remote update statement for member fileSystems
 const std::string castor::db::ora::OraDiskPoolCnv::s_remoteUpdateFileSystemStatementString =
-"UPDATE FileSystem SET diskPool = : 1 WHERE id = :2";
+"UPDATE FileSystem SET diskPool = :1 WHERE id = :2";
 
 /// SQL insert statement for member svcClasses
 const std::string castor::db::ora::OraDiskPoolCnv::s_insertSvcClassStatementString =
@@ -255,7 +255,7 @@ void castor::db::ora::OraDiskPoolCnv::fillRepFileSystem(castor::stager::DiskPool
     if (0 == m_deleteFileSystemStatement) {
       m_deleteFileSystemStatement = createStatement(s_deleteFileSystemStatementString);
     }
-    m_deleteFileSystemStatement->setDouble(1, obj->id());
+    m_deleteFileSystemStatement->setDouble(1, *it);
     m_deleteFileSystemStatement->executeUpdate();
   }
 }
