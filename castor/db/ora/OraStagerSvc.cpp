@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.131 $ $Release$ $Date: 2005/02/23 16:05:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.132 $ $Release$ $Date: 2005/02/28 09:08:02 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -957,15 +957,12 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     if (0 == m_subRequestToDoStatement) {
       std::ostringstream stmtString;
       stmtString
-        << "UPDATE SubRequest SET status = "
-        << castor::stager::SUBREQUEST_WAITSCHED
-        << " WHERE (status = "
-        << castor::stager::SUBREQUEST_START
-        << " OR status = "
-        << castor::stager::SUBREQUEST_RESTART
-        << " OR status = "
-        << castor::stager::SUBREQUEST_RETRY
-        << ") AND ROWNUM < 2 AND "
+        << "UPDATE SubRequest SET status = 3 " // SUBREQUEST_WAITSCHED
+        // Here use I_SubRequest_status index to retrieve SubRequests
+        // in START, RESTART and RETRY status
+        << " WHERE (CASE status WHEN 0 THEN status"
+        << " WHEN 1 THEN status WHEN 2 THEN status ELSE NULL end) < 3"
+        << " AND ROWNUM < 2 AND "
         << "(SELECT type FROM Id2Type WHERE id = SubRequest.request)"
         << " IN (";
       for (std::vector<ObjectsIds>::const_iterator it = types.begin();
@@ -1001,6 +998,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo
         (9, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->setAutoCommit(true);
     }
+    // build the list of
     // execute the statement and see whether we found something
     unsigned int nb =
       m_subRequestToDoStatement->executeUpdate();

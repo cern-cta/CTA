@@ -248,6 +248,10 @@ CREATE INDEX I_SubRequest_Castorfile on SubRequest (castorFile);
 CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
 CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
 
+/* A little function base index to speed up subrequestToDo */
+CREATE INDEX I_SubRequest_Status on SubRequest
+  (CASE status WHEN 0 THEN status WHEN 1 THEN status WHEN 2 THEN status ELSE NULL end);
+
 /* Constraint on FileClass name */
 ALTER TABLE FileClass ADD UNIQUE (name); 
 
