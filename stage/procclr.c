@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.66 2002/10/17 22:33:52 jdurand Exp $
+ * $Id: procclr.c,v 1.67 2003/04/29 15:39:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.66 $ $Date: 2002/10/17 22:33:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.67 $ $Date: 2003/04/29 15:39:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -792,7 +792,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag, clienth
 			check_waiting_on_req(save_reqid,ESTKILLED);
 		} else {
 			sendrep (&rpfd, MSG_ERR, STG104, stcp->status);
-			return (rfio_serrno() > 0 ? rfio_serrno() : SESYSERR);
+			return (EINVAL);
 		}
 	}
 	return (-1);
