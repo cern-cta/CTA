@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.5 $ $Date: 1999/12/08 11:58:09 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:33:43 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -41,6 +41,7 @@ extern char *geterr();
 #include <osdep.h>
 #include <net.h>
 #include <rfio.h>
+#include <rfio_errno.h>
 #include <Cthread_api.h>
 #include <Cpool_api.h>
 #include <vdqm_api.h>
