@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.7 1999/12/15 08:18:55 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.8 1999/12/16 12:42:13 jdurand Exp $
  */
 
 /*
@@ -23,12 +23,12 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.7 $ $Date: 1999/12/15 08:18:55 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.8 $ $Date: 1999/12/16 12:42:13 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
 int stgdb_stppcmp _PROTO((CONST void *, CONST void *));
-extern stglogit();
+extern int stglogit();
 extern char func[];
 
 #ifdef STGDB_CONRETRY
@@ -39,7 +39,7 @@ extern char func[];
 #ifdef STGDB_CONRETRYINT
 #undef STGDB_CONRETRYINT
 #endif
-#define STGDB_CONRETRYINT 6
+#define STGDB_CONRETRYINT 10
 
 #ifdef RETURN
 #undef RETURN
@@ -47,27 +47,34 @@ extern char func[];
 
 #define RETURN(a) {                                                                         \
   if (a != 0) {                                                                             \
-    if (serrno == EDB_A_SESSION || serrno == SECOMERR || serrno == SECONNDROP) {            \
+    if (serrno == EDB_A_ESESSION || serrno == SECOMERR || serrno == SECONNDROP) {           \
       int iretry;                                                                           \
+      int retry_status;                                                                     \
       stglogit("stgdb_Cdb_ifce","### Warning : Connection with Cdb is lost. "               \
                "Retry to connect %d times (%d seconds between each retry).\n",              \
                STGDB_CONRETRY,STGDB_CONRETRYINT);                                           \
+      retry_status = -1;                                                                    \
       for (iretry = 0; iretry < STGDB_CONRETRY; iretry++) {                                 \
         if (stgdb_login(dbfd) == 0) {                                                       \
-          goto retry_ok;                                                                    \
+          retry_status = 0;                                                                 \
+          break;                                                                            \
         }                                                                                   \
         stglogit("stgdb_Cdb_ifce","### Warning : Cannot reconnect to Cdb at retry No %d\n", \
                  iretry);                                                                   \
       }                                                                                     \
-      stglogit("stgdb_Cdb_ifce","### Error : Cannot reconnect to Cdb. Exit.\n");            \
-      exit(1);                                                                              \
-    retry_ok:                                                                               \
-      if (stgdb_open(dbfd,"stage") != 0) {                                                  \
-        stglogit("stgdb_Cdb_ifce","### Error : Cannot reopen \"stage\" database. Exit.\n"); \
-        exit(1);                                                                            \
+      if (retry_status != 0) {                                                              \
+        stglogit("stgdb_Cdb_ifce","### Error : Cannot reconnect to Cdb.\n");                \
+        return(a);                                                                          \
       }                                                                                     \
+      if (stgdb_open(dbfd,"stage") != 0) {                                                  \
+        stglogit("stgdb_Cdb_ifce","### Error : Cannot reopen \"stage\" database.\n");       \
+        stgdb_logout(dbfd);                                                                 \
+        return(a);                                                                          \
+      }                                                                                     \
+      stglogit("stgdb_Cdb_ifce","--> Reconnected to Cdb\n");                                \
     }                                                                                       \
   }                                                                                         \
+  return(a);                                                                                \
 }
 
 int DLL_DECL Stgdb_login(dbfd,file,line)
@@ -160,15 +167,31 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
   *stgcat_bufsz = BUFSIZ;
   *stgpath_bufsz = BUFSIZ;
 
-  if ((*stcsp = stcp = (struct stgcat_entry *) calloc(1, *stgcat_bufsz)) == NULL) {
+  if ((*stcsp = (struct stgcat_entry *) malloc(*stgcat_bufsz)) == NULL) {
     goto _stgdb_load_error;
   }
   *stcep = *stcsp + (*stgcat_bufsz/sizeof(struct stgcat_entry));
 
-  if ((*stpsp = stpp = (struct stgpath_entry *) calloc(1, *stgpath_bufsz)) == NULL) {
+  /* We makes sure that the critical variable, stcp->reqid, is initalized */
+  for (stcp = *stcsp; stcp < *stcep; stcp++) {
+    stcp->reqid = 0;
+  }
+
+  /* We say where to start */
+  stcp = *stcsp;
+
+  if ((*stpsp = (struct stgpath_entry *) calloc(1, *stgpath_bufsz)) == NULL) {
     goto _stgdb_load_error;
   }
   *stpep = *stpsp + (*stgpath_bufsz/sizeof(struct stgpath_entry));
+
+  /* We makes sure that the critical variable, stpp->reqid, is initalized */
+  for (stpp = *stpsp; stpp < *stpep; stpp++) {
+    stpp->reqid = 0;
+  }
+
+  /* We say where to start */
+  stcp = *stcsp;
 
   /* We ask for a dump of tape table from Cdb */
   /* ---------------------------------------- */
@@ -189,10 +212,18 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
         Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_tape","stgcat_tape_per_reqid");
         goto _stgdb_load_error;
       }
-      memset(*stcep, 0,
-             ((*stgcat_bufsz - BUFSIZ)/sizeof(struct stgcat_entry)));
       *stcsp = newstcs;
       *stcep = *stcsp + (*stgcat_bufsz/sizeof(struct stgcat_entry));
+
+      /* We makes sure that critical variable, stcp->reqid, is initalized */
+      for (stcp = *stcsp + ((*stgcat_bufsz - BUFSIZ)/sizeof(struct stgcat_entry));
+           stcp < *stcep; stcp++) {
+        stcp->reqid = 0;
+      }
+
+      /* We say where to continue */
+      stcp = *stcsp + ((*stgcat_bufsz - BUFSIZ)/sizeof(struct stgcat_entry));
+
     }
     *stcp++ = thisstcp;
   }
@@ -216,10 +247,18 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
         Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_disk","stgcat_disk_per_reqid");
         goto _stgdb_load_error;
       }
-      memset(*stcep, 0,
-             ((*stgcat_bufsz - BUFSIZ)/sizeof(struct stgcat_entry)));
       *stcsp = newstcs;
       *stcep = *stcsp + (*stgcat_bufsz/sizeof(struct stgcat_entry));
+
+      /* We makes sure that critical variable, stcp->reqid, is initalized */
+      for (stcp = *stcsp + ((*stgcat_bufsz - BUFSIZ)/sizeof(struct stgcat_entry));
+           stcp < *stcep; stcp++) {
+        stcp->reqid = 0;
+      }
+
+      /* We say where to continue */
+      stcp = *stcsp + ((*stgcat_bufsz - BUFSIZ)/sizeof(struct stgcat_entry));
+
     }
     *stcp++ = thisstcp;
   }
@@ -243,10 +282,18 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
         Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_hsm","stgcat_hsm_per_reqid");
         goto _stgdb_load_error;
       }
-      memset(*stcep, 0,
-             ((*stgcat_bufsz - BUFSIZ)/sizeof(struct stgcat_entry)));
       *stcsp = newstcs;
       *stcep = *stcsp + (*stgcat_bufsz/sizeof(struct stgcat_entry));
+
+      /* We makes sure that critical variable, stcp->reqid, is initalized */
+      for (stcp = *stcsp + ((*stgcat_bufsz - BUFSIZ)/sizeof(struct stgcat_entry));
+           stcp < *stcep; stcp++) {
+        stcp->reqid = 0;
+      }
+
+      /* We say where to continue */
+      stcp = *stcsp + ((*stgcat_bufsz - BUFSIZ)/sizeof(struct stgcat_entry));
+
     }
     *stcp++ = thisstcp;
   }
@@ -270,10 +317,18 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
         Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_alloc","stgcat_alloc_per_reqid");
         goto _stgdb_load_error;
       }
-      memset(*stcep, 0,
-             ((*stgcat_bufsz - BUFSIZ)/sizeof(struct stgcat_entry)));
       *stcsp = newstcs;
       *stcep = *stcsp + (*stgcat_bufsz/sizeof(struct stgcat_entry));
+
+      /* We makes sure that critical variable, stcp->reqid, is initalized */
+      for (stcp = *stcsp + ((*stgcat_bufsz - BUFSIZ)/sizeof(struct stgcat_entry));
+           stcp < *stcep; stcp++) {
+        stcp->reqid = 0;
+      }
+
+      /* We say where to continue */
+      stcp = *stcsp + ((*stgcat_bufsz - BUFSIZ)/sizeof(struct stgcat_entry));
+
     }
     *stcp++ = thisstcp;
   }
@@ -297,10 +352,18 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
         Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_link","stgcat_link_per_reqid");
         goto _stgdb_load_error;
       }
-      memset(*stpep, 0,
-             ((*stgpath_bufsz - BUFSIZ)/sizeof(struct stgpath_entry)));
       *stpsp = newstps;
       *stpep = *stpsp + (*stgpath_bufsz/sizeof(struct stgpath_entry));
+
+      /* We makes sure that critical variable, stpp->reqid, is initalized */
+      for (stpp = *stpsp + ((*stgpath_bufsz - BUFSIZ)/sizeof(struct stgpath_entry));
+           stpp < *stpep; stpp++) {
+        stpp->reqid = 0;
+      }
+
+      /* We say where to continue */
+      stpp = *stpsp + ((*stgpath_bufsz - BUFSIZ)/sizeof(struct stgpath_entry));
+
     }
     *stpp++ = thisstpp;
   }
@@ -461,7 +524,7 @@ int DLL_DECL Stgdb_upd_stgcat(dbfd,stcp,file,line)
     stglogit("stgdb_upd_stgcat",
              "### Warning[%s:%d] : unknown record to update for reqid %d called at %s:%d\n",
              __FILE__,__LINE__,(int) stcp->reqid,file,line);
-    return(-1);
+    RETURN(-1);
   }
 
   switch (stcp->t_or_d) {
@@ -520,7 +583,7 @@ int DLL_DECL Stgdb_upd_stgcat(dbfd,stcp,file,line)
     break;
   }
 
-  return(update_status);
+  RETURN(update_status);
 #else
   return(0);
 #endif
@@ -566,7 +629,7 @@ int DLL_DECL Stgdb_upd_stgpath(dbfd,stpp,file,line)
              __FILE__,__LINE__,(int) stpp->reqid,file,line);
   }
 
-  return(update_status);
+  RETURN(update_status);
 #else
   return(0);
 #endif
@@ -684,7 +747,7 @@ int DLL_DECL Stgdb_del_stgcat(dbfd,stcp,file,line)
     break;
   }
 
-  return(delete_status);
+  RETURN(delete_status);
 #else
   return(0);
 #endif
@@ -729,7 +792,7 @@ int DLL_DECL Stgdb_del_stgpath(dbfd,stpp,file,line)
              __FILE__,__LINE__,(int) stpp->reqid,file,line);
   }
 
-  return(delete_status);
+  RETURN(delete_status);
 #else
   return(0);
 #endif
@@ -781,13 +844,10 @@ int DLL_DECL Stgdb_ins_stgcat(dbfd,stcp,file,line)
     stglogit("stgdb_ins_stgcat",
              "### Warning[%s:%d] : cannot insert record for reqid %d called at %s:%d\n",
              __FILE__,__LINE__,(int) stcp->reqid,file,line);
-    return(-1);
+    RETURN(-1);
   }
-
-  return(insert_status);
-#else
-  return(0);
 #endif
+  return(0);
 }
 
 int DLL_DECL Stgdb_ins_stgpath(dbfd,stpp,file,line)
@@ -817,7 +877,7 @@ int DLL_DECL Stgdb_ins_stgpath(dbfd,stpp,file,line)
       stglogit("stgdb_ins_stgpath",
                "### Warning[%s:%d] : cannot insert record for reqid %d called at %s:%d\n",
                __FILE__,__LINE__,(int) stpp->reqid,file,line);
-      return(-1);
+      RETURN(-1);
     }
   }
   return(0);
