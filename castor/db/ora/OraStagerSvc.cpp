@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.129 $ $Release$ $Date: 2005/02/11 10:30:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.130 $ $Release$ $Date: 2005/02/11 16:42:17 $ $Author: jdurand $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -58,6 +58,7 @@
 #include "castor/db/ora/OraStagerSvc.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/NotSupported.hpp"
@@ -76,6 +77,7 @@
 #include <Cns_api.h>
 #include <vmgr_api.h>
 #include <Ctape_api.h>
+#include <serrno.h>
 
 #define NS_SEGMENT_NOTOK (' ')
 
@@ -2076,20 +2078,20 @@ void castor::db::ora::OraStagerSvc::prepareForMigration
     // Update name server
     char cns_error_buffer[512];  /* Cns error buffer */
     if (Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex(serrno);
       ex.getMessage()
         << "prepareForMigration : Cns_seterrbuf failed.";
       throw ex;
     }
     if (Cns_setid(euid,egid) != 0) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex(serrno);
       ex.getMessage()
         << "prepareForMigration : Cns_setid failed :"
         << std::endl << cns_error_buffer;
       throw ex;
     }
     if (Cns_setfsize(0, &fileid, fileSize) != 0) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex(serrno);
       ex.getMessage()
         << "prepareForMigration : Cns_setfsize failed :"
         << std::endl << cns_error_buffer;
