@@ -202,7 +202,8 @@ int Cstager_Tape_addSegments(struct Cstager_Tape_t* instance, struct Cstager_Seg
 int Cstager_Tape_removeSegments(struct Cstager_Tape_t* instance, struct Cstager_Segment_t* obj);
 
 /**
- * Get the list of struct Cstager_Segment_t* objects held by segments
+ * Get the list of struct Cstager_Segment_t* objects held by segments. Note that the
+ * caller is responsible for the deletion of the returned vector.
  */
 int Cstager_Tape_segments(struct Cstager_Tape_t* instance, struct Cstager_Segment_t*** var, int* len);
 

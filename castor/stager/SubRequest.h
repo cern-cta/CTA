@@ -267,7 +267,8 @@ int Cstager_SubRequest_addChild(struct Cstager_SubRequest_t* instance, struct Cs
 int Cstager_SubRequest_removeChild(struct Cstager_SubRequest_t* instance, struct Cstager_SubRequest_t* obj);
 
 /**
- * Get the list of struct Cstager_SubRequest_t* objects held by child
+ * Get the list of struct Cstager_SubRequest_t* objects held by child. Note that the
+ * caller is responsible for the deletion of the returned vector.
  */
 int Cstager_SubRequest_child(struct Cstager_SubRequest_t* instance, struct Cstager_SubRequest_t*** var, int* len);
 

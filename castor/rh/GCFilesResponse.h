@@ -147,7 +147,8 @@ int Crh_GCFilesResponse_addFiles(struct Crh_GCFilesResponse_t* instance, struct 
 int Crh_GCFilesResponse_removeFiles(struct Crh_GCFilesResponse_t* instance, struct Cstager_GCLocalFile_t* obj);
 
 /**
- * Get the list of struct Cstager_GCLocalFile_t* objects held by files
+ * Get the list of struct Cstager_GCLocalFile_t* objects held by files. Note that
+ * the caller is responsible for the deletion of the returned vector.
  */
 int Crh_GCFilesResponse_files(struct Crh_GCFilesResponse_t* instance, struct Cstager_GCLocalFile_t*** var, int* len);
 

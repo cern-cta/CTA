@@ -258,7 +258,8 @@ int Cstager_FileRequest_addSubRequests(struct Cstager_FileRequest_t* instance, s
 int Cstager_FileRequest_removeSubRequests(struct Cstager_FileRequest_t* instance, struct Cstager_SubRequest_t* obj);
 
 /**
- * Get the list of struct Cstager_SubRequest_t* objects held by subRequests
+ * Get the list of struct Cstager_SubRequest_t* objects held by subRequests. Note
+ * that the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_FileRequest_subRequests(struct Cstager_FileRequest_t* instance, struct Cstager_SubRequest_t*** var, int* len);
 

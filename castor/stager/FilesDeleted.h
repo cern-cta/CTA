@@ -288,7 +288,8 @@ int Cstager_FilesDeleted_addFiles(struct Cstager_FilesDeleted_t* instance, struc
 int Cstager_FilesDeleted_removeFiles(struct Cstager_FilesDeleted_t* instance, struct Cstager_GCRemovedFile_t* obj);
 
 /**
- * Get the list of struct Cstager_GCRemovedFile_t* objects held by files
+ * Get the list of struct Cstager_GCRemovedFile_t* objects held by files. Note that
+ * the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_FilesDeleted_files(struct Cstager_FilesDeleted_t* instance, struct Cstager_GCRemovedFile_t*** var, int* len);
 

@@ -108,7 +108,8 @@ int Cstager_StageRequestQueryRequest_addParameters(struct Cstager_StageRequestQu
 int Cstager_StageRequestQueryRequest_removeParameters(struct Cstager_StageRequestQueryRequest_t* instance, struct Cstager_QueryParameter_t* obj);
 
 /**
- * Get the list of struct Cstager_QueryParameter_t* objects held by parameters
+ * Get the list of struct Cstager_QueryParameter_t* objects held by parameters. Note
+ * that the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_StageRequestQueryRequest_parameters(struct Cstager_StageRequestQueryRequest_t* instance, struct Cstager_QueryParameter_t*** var, int* len);
 

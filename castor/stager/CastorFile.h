@@ -203,7 +203,8 @@ int Cstager_CastorFile_addDiskCopies(struct Cstager_CastorFile_t* instance, stru
 int Cstager_CastorFile_removeDiskCopies(struct Cstager_CastorFile_t* instance, struct Cstager_DiskCopy_t* obj);
 
 /**
- * Get the list of struct Cstager_DiskCopy_t* objects held by diskCopies
+ * Get the list of struct Cstager_DiskCopy_t* objects held by diskCopies. Note that
+ * the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_CastorFile_diskCopies(struct Cstager_CastorFile_t* instance, struct Cstager_DiskCopy_t*** var, int* len);
 
@@ -218,7 +219,8 @@ int Cstager_CastorFile_addTapeCopies(struct Cstager_CastorFile_t* instance, stru
 int Cstager_CastorFile_removeTapeCopies(struct Cstager_CastorFile_t* instance, struct Cstager_TapeCopy_t* obj);
 
 /**
- * Get the list of struct Cstager_TapeCopy_t* objects held by tapeCopies
+ * Get the list of struct Cstager_TapeCopy_t* objects held by tapeCopies. Note that
+ * the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_CastorFile_tapeCopies(struct Cstager_CastorFile_t* instance, struct Cstager_TapeCopy_t*** var, int* len);
 

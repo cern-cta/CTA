@@ -123,7 +123,8 @@ int Cstager_TapeCopy_addStream(struct Cstager_TapeCopy_t* instance, struct Cstag
 int Cstager_TapeCopy_removeStream(struct Cstager_TapeCopy_t* instance, struct Cstager_Stream_t* obj);
 
 /**
- * Get the list of struct Cstager_Stream_t* objects held by stream
+ * Get the list of struct Cstager_Stream_t* objects held by stream. Note that the
+ * caller is responsible for the deletion of the returned vector.
  */
 int Cstager_TapeCopy_stream(struct Cstager_TapeCopy_t* instance, struct Cstager_Stream_t*** var, int* len);
 
@@ -138,7 +139,8 @@ int Cstager_TapeCopy_addSegments(struct Cstager_TapeCopy_t* instance, struct Cst
 int Cstager_TapeCopy_removeSegments(struct Cstager_TapeCopy_t* instance, struct Cstager_Segment_t* obj);
 
 /**
- * Get the list of struct Cstager_Segment_t* objects held by segments
+ * Get the list of struct Cstager_Segment_t* objects held by segments. Note that the
+ * caller is responsible for the deletion of the returned vector.
  */
 int Cstager_TapeCopy_segments(struct Cstager_TapeCopy_t* instance, struct Cstager_Segment_t*** var, int* len);
 

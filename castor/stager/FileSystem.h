@@ -203,7 +203,8 @@ int Cstager_FileSystem_addCopies(struct Cstager_FileSystem_t* instance, struct C
 int Cstager_FileSystem_removeCopies(struct Cstager_FileSystem_t* instance, struct Cstager_DiskCopy_t* obj);
 
 /**
- * Get the list of struct Cstager_DiskCopy_t* objects held by copies
+ * Get the list of struct Cstager_DiskCopy_t* objects held by copies. Note that the
+ * caller is responsible for the deletion of the returned vector.
  */
 int Cstager_FileSystem_copies(struct Cstager_FileSystem_t* instance, struct Cstager_DiskCopy_t*** var, int* len);
 

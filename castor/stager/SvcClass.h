@@ -216,7 +216,8 @@ int Cstager_SvcClass_addTapePools(struct Cstager_SvcClass_t* instance, struct Cs
 int Cstager_SvcClass_removeTapePools(struct Cstager_SvcClass_t* instance, struct Cstager_TapePool_t* obj);
 
 /**
- * Get the list of struct Cstager_TapePool_t* objects held by tapePools
+ * Get the list of struct Cstager_TapePool_t* objects held by tapePools. Note that
+ * the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_SvcClass_tapePools(struct Cstager_SvcClass_t* instance, struct Cstager_TapePool_t*** var, int* len);
 
@@ -231,7 +232,8 @@ int Cstager_SvcClass_addDiskPools(struct Cstager_SvcClass_t* instance, struct Cs
 int Cstager_SvcClass_removeDiskPools(struct Cstager_SvcClass_t* instance, struct Cstager_DiskPool_t* obj);
 
 /**
- * Get the list of struct Cstager_DiskPool_t* objects held by diskPools
+ * Get the list of struct Cstager_DiskPool_t* objects held by diskPools. Note that
+ * the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_SvcClass_diskPools(struct Cstager_SvcClass_t* instance, struct Cstager_DiskPool_t*** var, int* len);
 

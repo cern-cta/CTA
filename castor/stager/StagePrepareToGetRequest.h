@@ -108,7 +108,8 @@ int Cstager_StagePrepareToGetRequest_addSubRequests(struct Cstager_StagePrepareT
 int Cstager_StagePrepareToGetRequest_removeSubRequests(struct Cstager_StagePrepareToGetRequest_t* instance, struct Cstager_SubRequest_t* obj);
 
 /**
- * Get the list of struct Cstager_SubRequest_t* objects held by subRequests
+ * Get the list of struct Cstager_SubRequest_t* objects held by subRequests. Note
+ * that the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_StagePrepareToGetRequest_subRequests(struct Cstager_StagePrepareToGetRequest_t* instance, struct Cstager_SubRequest_t*** var, int* len);
 
