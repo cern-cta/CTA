@@ -1,5 +1,5 @@
 /*
-	$Id: check_Cdbentry.c,v 1.2 2000/03/23 01:40:55 jdurand Exp $
+	$Id: check_Cdbentry.c,v 1.3 2000/03/23 17:14:58 jdurand Exp $
 */
 
 #include "Cstage_db.h"
@@ -37,19 +37,25 @@
 #define CDB_USERNAME "Cdb_Stage_User"
 #define CDB_PASSWORD "Cdb_Stage_Password"
 
-#define DUMP_VAL(st,member) {			\
-	printf("%10s : %10d\n", #member ,	\
-				 (int) st->member);		\
+#ifdef __STDC__
+#define NAMEOFVAR(x) #x
+#else
+#define NAMEOFVAR(x) "x"
+#endif
+
+#define DUMP_VAL(st,member) {					\
+	printf("%10s : %10d\n", NAMEOFVAR(member) ,	\
+				 (int) st->member);				\
 }
 
-#define DUMP_CHAR(st,member) {								\
-	printf("%10s : %10c\n", #member ,						\
-				 st->member != '\0' ? st->member : ' ');	\
+#define DUMP_CHAR(st,member) {										\
+	printf("%10s : %10c\n", NAMEOFVAR(member) ,						\
+				 st->member != '\0' ? st->member : ' ');			\
 }
 
-#define DUMP_STRING(st,member) {		\
-	printf("%10s : %10s\n", #member ,	\
-				 st->member);			\
+#define DUMP_STRING(st,member) {				\
+	printf("%10s : %10s\n", NAMEOFVAR(member) ,	\
+				 st->member);					\
 }
 
 

@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.20 2000/03/23 01:41:54 jdurand Exp $
+ * $Id: stgconvert.c,v 1.21 2000/03/23 17:15:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.20 $ $Date: 2000/03/23 01:41:54 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.21 $ $Date: 2000/03/23 17:15:02 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -77,86 +77,92 @@ int CallerLine = 0;
 #define CDB_PASSWORD "Cdb_Stage_Password"
 #define FREQUENCY 1000
 
+#ifdef __STDC__
+#define NAMEOFVAR(x) #x
+#else
+#define NAMEOFVAR(x) "x"
+#endif
+
 #define STCCMP_VAL(member) {																						\
-	printf("%10s : %10d ... %10d ... %10s ... %10s\n", #member ,													\
+	printf("%10s : %10d ... %10d ... %10s ... %10s\n", NAMEOFVAR(member) ,											\
 				 (int) stcp1->member,(int) stcp2->member,															\
 				 stcp1->member == stcp2->member ? "OK" : "NOT OK",													\
 				 memcmp(&(stcp1->member),&(stcp2->member),sizeof(stcp1->member)) == 0 ?								\
 				 "OK" : "NOT OK");																					\
 	if (stcp1->member != stcp2->member || memcmp(&(stcp1->member),&(stcp2->member),sizeof(stcp1->member)) != 0) {	\
-		printf("... Dump of %s entry in catalog:\n", #member );														\
+		printf("... Dump of %s entry in catalog:\n", NAMEOFVAR(member) );											\
 		stgconvert_dump((char *) &(stcp1->member),sizeof(stcp1->member));											\
-		printf("... Dump of %s entry in Cdb:\n", #member );															\
+		printf("... Dump of %s entry in Cdb:\n", NAMEOFVAR(member) );												\
 		stgconvert_dump((char *) &(stcp2->member),sizeof(stcp2->member));											\
 	}																												\
 }
 
 #define STCCMP_CHAR(member) {																						\
-	printf("%10s : %10c ... %10c ... %10s ... %10s\n", #member ,													\
+	printf("%10s : %10c ... %10c ... %10s ... %10s\n", NAMEOFVAR(member) ,											\
 				 stcp1->member != '\0' ? stcp1->member : ' ',stcp2->member != '\0' ? stcp2->member : ' ',			\
 				 stcp1->member == stcp2->member ? "OK" : "NOT OK",													\
 				 memcmp(&(stcp1->member),&(stcp2->member),sizeof(stcp1->member)) == 0 ?								\
 				 "OK" : "NOT OK");																					\
 	if (stcp1->member != stcp2->member || memcmp(&(stcp1->member),&(stcp2->member),sizeof(stcp1->member)) != 0) {	\
-		printf("... Dump of %s entry in catalog:\n", #member );														\
+		printf("... Dump of %s entry in catalog:\n", NAMEOFVAR(member) );											\
 		stgconvert_dump(&(stcp1->member),sizeof(stcp1->member));													\
-		printf("... Dump of %s entry in Cdb:\n", #member );															\
+		printf("... Dump of %s entry in Cdb:\n", NAMEOFVAR(member) );												\
 		stgconvert_dump(&(stcp2->member),sizeof(stcp2->member));													\
 	}																												\
 }
 
 #define STCCMP_STRING(member) {																							\
-	printf("%10s : %10s ... %10s ... %10s ... %10s\n", #member ,														\
+	printf("%10s : %10s ... %10s ... %10s ... %10s\n", NAMEOFVAR(member) ,												\
 				 stcp1->member,stcp2->member,																			\
 				 strcmp(stcp1->member,stcp2->member) == 0 ? "OK" : "NOT OK",											\
 				 memcmp(stcp1->member,stcp2->member,sizeof(stcp1->member)) == 0 ?										\
 				 "OK" : "NOT OK");																						\
 	if (strcmp(stcp1->member,stcp2->member) != 0 || memcmp(stcp1->member,stcp2->member,sizeof(stcp1->member)) != 0) {	\
-		printf("... Dump of %s entry in catalog:\n", #member );															\
+		printf("... Dump of %s entry in catalog:\n", NAMEOFVAR(member) );												\
 		stgconvert_dump(stcp1->member,sizeof(stcp1->member));															\
-		printf("... Dump of %s entry in Cdb:\n", #member );																\
+		printf("... Dump of %s entry in Cdb:\n", NAMEOFVAR(member) );													\
 		stgconvert_dump(stcp2->member,sizeof(stcp2->member));															\
 	}																													\
 }
 
 #define STPCMP_VAL(member) {																						\
-	printf("%10s : %10d ... %10d ... %10s ... %10s\n", #member ,													\
+	printf("%10s : %10d ... %10d ... %10s ... %10s\n", NAMEOFVAR(member) ,											\
 				 (int) stpp1->member,(int) stpp2->member,															\
 				 stpp1->member == stpp2->member ? "OK" : "NOT OK",													\
 				 memcmp(&(stpp1->member),&(stpp2->member),sizeof(stpp1->member)) == 0 ?								\
 				 "OK" : "NOT OK");																					\
 	if (stpp1->member != stpp2->member || memcmp(&(stpp1->member),&(stpp2->member),sizeof(stpp1->member)) != 0) {	\
-		printf("... Dump of %s entry in catalog:\n", #member );														\
+		printf("... Dump of %s entry in catalog:\n", NAMEOFVAR(member) );											\
 		stgconvert_dump((char *) &(stpp1->member),sizeof(stpp1->member));											\
-		printf("... Dump of %s entry in Cdb:\n", #member );															\
+		printf("... Dump of %s entry in Cdb:\n", NAMEOFVAR(member) );												\
 		stgconvert_dump((char *) &(stpp2->member),sizeof(stpp2->member));											\
 	}																												\
 }
 
 #define STPCMP_CHAR(member) {																						\
-	printf("%10s : %10c ... %10c ... %10s ... %10s\n", #member ,													\
+	printf("%10s : %10c ... %10c ... %10s ... %10s\n", NAMEOFVAR(member) ,											\
 				 stpp1->member != '\0' ? stpp1->member : ' ',stpp2->member != '\0' ? stpp2->member : ' ',			\
 				 stpp1->member == stpp2->member ? "OK" : "NOT OK",													\
 				 memcmp(&(stpp1->member),&(stpp2->member),sizeof(stpp1->member)) == 0 ?								\
 				 "OK" : "NOT OK");																					\
 	if (stpp1->member != stpp2->member || memcmp(&(stpp1->member),&(stpp2->member),sizeof(stpp1->member)) != 0) {	\
-		printf("... Dump of %s entry in catalog:\n", #member );														\
+		printf("... Dump of %s entry in catalog:\n", NAMEOFVAR(member) );											\
 		stgconvert_dump(&(stpp1->member),sizeof(stpp1->member));													\
-		printf("... Dump of %s entry in Cdb:\n", #member );															\
+		printf("... Dump of %s entry in Cdb:\n", NAMEOFVAR(member) );												\
 		stgconvert_dump(&(stpp2->member),sizeof(stpp2->member));													\
 	}																												\
 }
 
 #define STPCMP_STRING(member) {																							\
-	printf("%10s : %10s ... %10s ... %10s ... %10s\n", #member ,														\
+	printf("%10s : %10s ... %10s ... %10s ... %10s\n", NAMEOFVAR(member) ,												\
 				 stpp1->member,stpp2->member,																			\
 				 strcmp(stpp1->member,stpp2->member) == 0 ? "OK" : "NOT OK",											\
 				 memcmp(stpp1->member,stpp2->member,sizeof(stpp1->member)) == 0 ?										\
 				 "OK" : "NOT OK");																						\
 	if (strcmp(stpp1->member,stpp2->member) != 0 || memcmp(stpp1->member,stpp2->member,sizeof(stpp1->member)) != 0) {	\
-		printf("... Dump of %s entry in catalog:\n", #member );															\
+		printf("... Dump of %s entry in catalog:\n", NAMEOFVAR(member) );												\
 		stgconvert_dump(stpp1->member,sizeof(stpp1->member));															\
-		printf("... Dump of %s entry in Cdb:\n", #member );																\
+		printf("... Dump of %s entry in Cdb:\n", NAMEOFVAR(member) );													\
 		stgconvert_dump(stpp2->member,sizeof(stpp2->member));															\
 	}																													\
 }

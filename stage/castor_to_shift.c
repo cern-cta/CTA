@@ -1,5 +1,5 @@
 /*
- * $Id: castor_to_shift.c,v 1.4 2000/03/23 01:40:51 jdurand Exp $
+ * $Id: castor_to_shift.c,v 1.5 2000/03/23 17:14:57 jdurand Exp $
  */
 
 /* ============== */
@@ -37,13 +37,19 @@
 #endif
 #define FREQUENCY 1000
 
+#ifdef __STDC__
+#define NAMEOFVAR(x) #x
+#else
+#define NAMEOFVAR(x) "x"
+#endif
+
 #define CHECK_RAW_SIZE(member) {												\
 	if (sizeof(stcp_castor.member) > sizeof(stcp_old.member)) {					\
 		int this_answer;														\
 		printf("### Warning : data may be lost in %s at reqid = %d\n"			\
 					 "... (Castor's sizeof (%d) > Shift's sizeof (%d))\n"		\
 					 "... Do you really wish to convert this entry ? (y/n)\n",	\
-					 #member,stcp_old.reqid,									\
+					 NAMEOFVAR(member),stcp_old.reqid,							\
 					 sizeof(stcp_castor.member),sizeof(stcp_old.member));		\
 		this_answer = getchar();												\
 		fflush(stdin);															\
@@ -61,7 +67,7 @@
 		printf("### Warning : data may be lost in %s at reqid = %d\n"			\
 					 "... (Castor's sizeof (%d) > Shift's tot length (%d))\n"	\
 					 "... Do you wish to convert this entry ? (y/n)\n",			\
-						#member,stcp_old.reqid,									\
+						NAMEOFVAR(member),stcp_old.reqid,						\
 					 sizeof(stcp_castor.member),strlen(stcp_old.member) + 1);	\
 		this_answer = getchar();												\
 		fflush(stdin);															\

@@ -1,5 +1,5 @@
 /*
- * $Id: shift_cmp_shift.c,v 1.4 2000/03/23 01:41:28 jdurand Exp $
+ * $Id: shift_cmp_shift.c,v 1.5 2000/03/23 17:14:58 jdurand Exp $
  */
 
 /* ============== */
@@ -41,86 +41,92 @@
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 #endif
 
+#ifdef __STDC__
+#define NAMEOFVAR(x) #x
+#else
+#define NAMEOFVAR(x) "x"
+#endif
+
 #define STCCMP_VAL(member) {																						\
-	printf("%10s : %10d ... %10d ... %10s ... %10s\n", #member ,													\
+	printf("%10s : %10d ... %10d ... %10s ... %10s\n", NAMEOFVAR(member) ,											\
 				 (int) stcp1->member,(int) stcp2->member,                               							\
 				 stcp1->member == stcp2->member ? "OK" : "NOT OK",                      							\
 				 memcmp(&(stcp1->member),&(stcp2->member),sizeof(stcp1->member)) == 0 ?								\
 				 "OK" : "NOT OK");																					\
 	if (stcp1->member != stcp2->member || memcmp(&(stcp1->member),&(stcp2->member),sizeof(stcp1->member)) != 0) {	\
-		printf("... Dump of %s entry in catalog1:\n", #member );													\
+		printf("... Dump of %s entry in catalog1:\n", NAMEOFVAR(member) );											\
 		shift_cmp_shift_dump((char *) &(stcp1->member),sizeof(stcp1->member));										\
-		printf("... Dump of %s entry in catalog2:\n", #member );													\
+		printf("... Dump of %s entry in catalog2:\n", NAMEOFVAR(member) );											\
 		shift_cmp_shift_dump((char *) &(stcp2->member),sizeof(stcp2->member));										\
 	}																												\
 }
 
 #define STCCMP_CHAR(member) {																						\
-	printf("%10s : %10c ... %10c ... %10s ... %10s\n", #member ,													\
+	printf("%10s : %10c ... %10c ... %10s ... %10s\n", NAMEOFVAR(member) ,											\
 				 stcp1->member != '\0' ? stcp1->member : ' ',stcp2->member != '\0' ? stcp2->member : ' ',			\
 				 stcp1->member == stcp2->member ? "OK" : "NOT OK",													\
 				 memcmp(&(stcp1->member),&(stcp2->member),sizeof(stcp1->member)) == 0 ?								\
 				 "OK" : "NOT OK");																					\
 	if (stcp1->member != stcp2->member || memcmp(&(stcp1->member),&(stcp2->member),sizeof(stcp1->member)) != 0) {	\
-		printf("... Dump of %s entry in catalog1:\n", #member );													\
+		printf("... Dump of %s entry in catalog1:\n", NAMEOFVAR(member) );											\
 		shift_cmp_shift_dump(&(stcp1->member),sizeof(stcp1->member));												\
-		printf("... Dump of %s entry in catalog2:\n", #member );													\
+		printf("... Dump of %s entry in catalog2:\n", NAMEOFVAR(member) );											\
 		shift_cmp_shift_dump(&(stcp2->member),sizeof(stcp2->member));												\
 	}																												\
 }
 
 #define STCCMP_STRING(member) {																							\
-	printf("%10s : %10s ... %10s ... %10s ... %10s\n", #member ,														\
+	printf("%10s : %10s ... %10s ... %10s ... %10s\n", NAMEOFVAR(member) ,												\
 				 stcp1->member,stcp2->member,																			\
 				 strcmp(stcp1->member,stcp2->member) == 0 ? "OK" : "NOT OK",											\
 				 memcmp(stcp1->member,stcp2->member,sizeof(stcp1->member)) == 0 ?										\
 				 "OK" : "NOT OK");																						\
 	if (strcmp(stcp1->member,stcp2->member) != 0 || memcmp(stcp1->member,stcp2->member,sizeof(stcp1->member)) != 0) {	\
-		printf("... Dump of %s entry in catalog1:\n", #member );														\
+		printf("... Dump of %s entry in catalog1:\n", NAMEOFVAR(member) );												\
 		shift_cmp_shift_dump(stcp1->member,sizeof(stcp1->member));														\
-		printf("... Dump of %s entry in catalog2:\n", #member );														\
+		printf("... Dump of %s entry in catalog2:\n", NAMEOFVAR(member) );												\
 		shift_cmp_shift_dump(stcp2->member,sizeof(stcp2->member));														\
 	}																													\
 }
 
 #define STPCMP_VAL(member) {																						\
-	printf("%10s : %10d ... %10d ... %10s ... %10s\n", #member ,													\
+	printf("%10s : %10d ... %10d ... %10s ... %10s\n", NAMEOFVAR(member) ,											\
 				 (int) stpp1->member,(int) stpp2->member,															\
 				 stpp1->member == stpp2->member ? "OK" : "NOT OK",													\
 				 memcmp(&(stpp1->member),&(stpp2->member),sizeof(stpp1->member)) == 0 ?								\
 				 "OK" : "NOT OK");																					\
 	if (stpp1->member != stpp2->member || memcmp(&(stpp1->member),&(stpp2->member),sizeof(stpp1->member)) != 0) {	\
-		printf("... Dump of %s entry in catalog1:\n", #member );													\
+		printf("... Dump of %s entry in catalog1:\n", NAMEOFVAR(member) );											\
 		shift_cmp_shift_dump((char *) &(stpp1->member),sizeof(stpp1->member));										\
-		printf("... Dump of %s entry in catalog2:\n", #member );													\
+		printf("... Dump of %s entry in catalog2:\n", NAMEOFVAR(member) );											\
 		shift_cmp_shift_dump((char *) &(stpp2->member),sizeof(stpp2->member));										\
 	}																												\
 }
 
 #define STPCMP_CHAR(member) {																						\
-	printf("%10s : %10c ... %10c ... %10s ... %10s\n", #member ,													\
+	printf("%10s : %10c ... %10c ... %10s ... %10s\n", NAMEOFVAR(member) ,											\
 				 stpp1->member != '\0' ? stpp1->member : ' ',stpp2->member != '\0' ? stpp2->member : ' ',			\
 				 stpp1->member == stpp2->member ? "OK" : "NOT OK",													\
 				 memcmp(&(stpp1->member),&(stpp2->member),sizeof(stpp1->member)) == 0 ?								\
 				 "OK" : "NOT OK");																					\
 	if (stpp1->member != stpp2->member || memcmp(&(stpp1->member),&(stpp2->member),sizeof(stpp1->member)) != 0) {	\
-		printf("... Dump of %s entry in catalog1:\n", #member );													\
+		printf("... Dump of %s entry in catalog1:\n", NAMEOFVAR(member) );											\
 		shift_cmp_shift_dump(&(stpp1->member),sizeof(stpp1->member));												\
-		printf("... Dump of %s entry in catalog2:\n", #member );													\
+		printf("... Dump of %s entry in catalog2:\n", NAMEOFVAR(member) );											\
 		shift_cmp_shift_dump(&(stpp2->member),sizeof(stpp2->member));												\
 	}																												\
 }
 
 #define STPCMP_STRING(member) {																							\
-	printf("%10s : %10s ... %10s ... %10s ... %10s\n", #member ,														\
+	printf("%10s : %10s ... %10s ... %10s ... %10s\n", NAMEOFVAR(member) ,												\
 				 stpp1->member,stpp2->member,																			\
 				 strcmp(stpp1->member,stpp2->member) == 0 ? "OK" : "NOT OK",											\
 				 memcmp(stpp1->member,stpp2->member,sizeof(stpp1->member)) == 0 ?										\
 				 "OK" : "NOT OK");																						\
 	if (strcmp(stpp1->member,stpp2->member) != 0 || memcmp(stpp1->member,stpp2->member,sizeof(stpp1->member)) != 0) {	\
-		printf("... Dump of %s entry in catalog1:\n", #member );														\
+		printf("... Dump of %s entry in catalog1:\n", NAMEOFVAR(member) );												\
 		shift_cmp_shift_dump(stpp1->member,sizeof(stpp1->member));														\
-		printf("... Dump of %s entry in catalog2:\n", #member );														\
+		printf("... Dump of %s entry in catalog2:\n", NAMEOFVAR(member) );												\
 		shift_cmp_shift_dump(stpp2->member,sizeof(stpp2->member));														\
 	}																													\
 }
