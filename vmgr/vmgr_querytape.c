@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_querytape.c,v $ $Revision: 1.6 $ $Date: 2000/09/10 18:11:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_querytape.c,v $ $Revision: 1.7 $ $Date: 2001/01/19 11:20:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_querytape - query about a tape volume */
@@ -31,7 +31,7 @@ vmgr_querytape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
 	int n;
 	char *q;
 	char *rbp;
-	char repbuf[125];
+	char repbuf[126];
 	char *sbp;
 	char sendbuf[REQBUFSZ];
 	time_t t1;

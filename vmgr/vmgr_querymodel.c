@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_querymodel.c,v $ $Revision: 1.6 $ $Date: 2000/07/07 06:08:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_querymodel.c,v $ $Revision: 1.7 $ $Date: 2001/01/19 11:20:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_querymodel - query about a model of cartridge */
@@ -31,7 +31,7 @@ vmgr_querymodel(const char *model, char *media_letter, int *native_capacity, int
 	int n;
 	char *q;
 	char *rbp;
-	char repbuf[10];
+	char repbuf[11];
 	char *sbp;
 	char sendbuf[REQBUFSZ];
 	struct vmgr_api_thread_info *thip;
