@@ -103,7 +103,7 @@ STAGEDIR = stage
 #undef BuildCupvClient
 #define BuildCupvClient	YES
 #endif
-#if BuildNameServerClient != YES && BuildNameServerLibrary != YES
+#if BuildNameServerLibrary != YES
 #undef BuildNameServerLibrary
 #define BuildNameServerLibrary YES
 #endif
@@ -212,7 +212,7 @@ RFIODIR = rfio
 #define BuildCommon	YES
 #endif
 #if BuildRfioClient
-#if BuildNameServerClient != YES && BuildNameServerLibrary != YES
+#if BuildNameServerLibrary != YES
 #undef BuildNameServerLibrary
 #define BuildNameServerLibrary	YES
 #endif

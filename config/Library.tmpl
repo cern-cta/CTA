@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.12 $ $Date: 2004/07/09 14:42:26 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.13 $ $Date: 2004/09/15 17:18:29 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #if BuildCopytapeServer
@@ -168,7 +168,7 @@ RFIOLIB = DepLibraryTargetName(rfio,rfio)
 #undef BuildCommon
 #define BuildCommon	YES
 #endif
-#if BuildNameServerClient != YES && BuildNameServerLibrary != YES
+#if BuildNameServerLibrary != YES
 #undef BuildNameServerLibrary
 #define BuildNameServerLibrary	YES
 #endif
