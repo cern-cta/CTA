@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_fopen.man,v 1.4 2001/09/26 09:13:53 jdurand Exp $
+.\" $Id: rfio_fopen.man,v 1.5 2002/11/19 15:42:26 bcouturi Exp $
 .\"
-.\" @(#)$RCSfile: rfio_fopen.man,v $ $Revision: 1.4 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_fopen.man,v $ $Revision: 1.5 $ $Date: 2002/11/19 15:42:26 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_FOPEN 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
+.TH RFIO_FOPEN 3 "$Date: 2002/11/19 15:42:26 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_fopen \- opens a file
 .SH SYNOPSIS
@@ -14,6 +14,25 @@ rfio_fopen \- opens a file
 \fB#include "rfio_api.h"\fR
 .sp
 .BI "RFILE *rfio_fopen (char *" path ", char *" mode ");"
+.br
+.sp
+Under Linux, for large files:
+.br
+.B #include <sys/types.h>
+.br
+.B #define _LARGEFILE64_SOURCE
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "RFILE *rfio_fopen64 (char *" path ", char " *mode ");"
+.sp
+For large files, under other systems:
+.br
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "RFILE *rfio_fopen64 (char *" path ", char " *mode ");"
 .SH DESCRIPTION
 .B rfio_fopen
 opens the file whose name is the string pointed to by
@@ -22,6 +41,9 @@ opens the file whose name is the string pointed to by
 .P
 .BI mode
 is an access mode indicator. One of the characters "r" or "w".
+.sp
+.B rfio_fopen64
+allows to open large files (see NOTES).
 .SH RETURN VALUE
 This routine returns NULL if the operation failed or a non-NULL pointer to a RFILE structure if the operation was successful. If it fails, \fBserrno\fP variable is set appropriately.
 .SH ERRORS
@@ -80,7 +102,8 @@ Host did not return error number
 .TP
 .B SEHOSTREFUSED
 Host is not on local network and no mapping found
-
+.SH NOTES
+On Irix, Tru64 and IA64 the 64 bit mode is the default one, rfio_fopen and rfio_fopen64 are identical.
 .SH SEE ALSO
 .BR fopen(3) ,
 .BR rfio_serror(3) ,

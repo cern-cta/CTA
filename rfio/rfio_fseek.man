@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_fseek.man,v 1.2 2001/09/26 09:13:53 jdurand Exp $
+.\" $Id: rfio_fseek.man,v 1.3 2002/11/19 15:42:26 bcouturi Exp $
 .\"
-.\" @(#)$RCSfile: rfio_fseek.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: rfio_fseek.man,v $ $Revision: 1.3 $ $Date: 2002/11/19 15:42:26 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_FSEEK 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
+.TH RFIO_FSEEK 3 "$Date: 2002/11/19 15:42:26 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_fseek \- positions/repositions a file
 .SH SYNOPSIS
@@ -14,6 +14,25 @@ rfio_fseek \- positions/repositions a file
 \fB#include "rfio_api.h"\fR
 .sp
 .BI "int rfio_fseek (RFILE *" fp ", long " offset ", int " whence ");"
+.sp
+Under Linux, for large files:
+.br
+.B #include <sys/types.h>
+.br
+.B #define _LARGEFILE64_SOURCE
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "int rfio_fseeko64 (RFILE *" fp ", off64_t " offset ", int " whence ");"
+.br
+.sp
+For large files, under other systems:
+.br
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "int rfio_fseeko64 (RFILE *" fp ", off64_t " offset ", int " whence ");"
 .SH DESCRIPTION
 .B rfio_fseek
 positions/repositions to
@@ -37,6 +56,8 @@ The offset is added to current position.
 .B SEEK_END
 The offset is added to current file size.
 .RE
+.B rfio_fseeko64
+can be used with large files and allows to use a 64 bit offset rather than a long.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_stat.man,v 1.10 2002/02/18 09:34:13 jdurand Exp $
+.\" $Id: rfio_stat.man,v 1.11 2002/11/19 15:42:27 bcouturi Exp $
 .\"
-.\" @(#)$RCSfile: rfio_stat.man,v $ $Revision: 1.10 $ $Date: 2002/02/18 09:34:13 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: rfio_stat.man,v $ $Revision: 1.11 $ $Date: 2002/11/19 15:42:27 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_STAT 3 "$Date: 2002/02/18 09:34:13 $" CASTOR "Rfio Library Functions"
+.TH RFIO_STAT 3 "$Date: 2002/11/19 15:42:27 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_stat \- get information about a file or directory
 .SH SYNOPSIS
@@ -24,6 +24,38 @@ rfio_stat \- get information about a file or directory
 .BI "int rfio_mstat_reset ();"
 .br
 .BI "int rfio_end ();"
+.br
+.br
+.sp
+Under Linux, for large files:
+.br
+.B #include <sys/types.h>
+.br
+.B #define _LARGEFILE64_SOURCE
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "int rfio_stat64 (const char *" path ", struct stat64 *" statbuf ");"
+.br
+.BI "int rfio_fstat64 (int " s ", struct stat64 *" statbuf ");"
+.br
+.BI "int rfio_lstat64 (const char *" path ", struct stat64 *" statbuf ");"
+.br
+.BI "int rfio_mstat64 (const char *" path ", struct stat64 *" statbuf ");"
+.sp
+For large files, under other systems:
+.br
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "int rfio_stat64 (const char *" path ", struct stat64 *" statbuf ");"
+.br
+.BI "int rfio_fstat64 (int " s ", struct stat64 *" statbuf ");"
+.br
+.BI "int rfio_lstat64 (const char *" path ", struct stat64 *" statbuf ");"
+.br
+.BI "int rfio_mstat64 (const char *" path ", struct stat64 *" statbuf ");"
 .SH DESCRIPTION
 .B rfio_stat
 gets information about a file or directory.
@@ -57,8 +89,8 @@ is to be used when your program is forking. In such a case the permanent connect
 .B rfio_mstat
 become shared between the parent and the child. Use
 .B rfio_mstat_reset
-to perform the necessary reset and close of the socket file descriptor in the parent or the child in order to be sure that only of them will receice an answer from the RFIO daemon.
-.P
+to perform the necessary reset and close of the socket file descriptor in the parent or the child in order to be sure that only of them will receice an answer from the RFIO daemon. 
+.LP
 See NOTES section below.
 .TP
 .I path
@@ -69,6 +101,10 @@ the full pathname.
 is a pointer to a
 .B stat
 structure, receiving result of your query.
+.P
+The 64 bits functions must be used for large files. They have the same syntax as the normal stat functions except that they use a 
+.B stat64
+structure. 
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,

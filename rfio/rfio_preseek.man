@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_preseek.man,v 1.3 2002/09/03 07:45:25 baud Exp $
+.\" $Id: rfio_preseek.man,v 1.4 2002/11/19 15:42:27 bcouturi Exp $
 .\"
-.\" @(#)$RCSfile: rfio_preseek.man,v $ $Revision: 1.3 $ $Date: 2002/09/03 07:45:25 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_preseek.man,v $ $Revision: 1.4 $ $Date: 2002/11/19 15:42:27 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_PRESEEK 3 "$Date: 2002/09/03 07:45:25 $" CASTOR "Rfio Library Functions"
+.TH RFIO_PRESEEK 3 "$Date: 2002/11/19 15:42:27 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_preseek \- prefetch chunks of data from a file
 .SH SYNOPSIS
@@ -14,6 +14,25 @@ rfio_preseek \- prefetch chunks of data from a file
 \fB#include "rfio_api.h"\fR
 .sp
 .BI "int rfio_preseek (int " s ", const struct iovec *" iov ", int " iovnb ");"
+.sp
+Under Linux, for large files:
+.br
+.B #include <sys/types.h>
+.br
+.B #define _LARGEFILE64_SOURCE
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "int rfio_preseek64 (int " s ", const struct iovec64 *" iov ", int " iovnb ");"
+.br
+.sp
+For large files, under other systems:
+.br
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "int rfio_preseek64 (int " s ", const struct iovec64 *" iov ", int " iovnb ");"
 .SH DESCRIPTION
 .B rfio_preseek
 prefetches chunks of data at given offsets into an internal buffer (on
@@ -25,6 +44,12 @@ The actual offset values and the lengths are given in the array of structures
 .BR iov .
 The number of chunks is specified by
 .BR iovnb .
+.LP
+.B rfio_preseek64
+does the prefetch for large files, using an array of structures of type
+.BR iovec64 
+rather than an array of 
+.BR iovec .
 .LP
 .B RFIO_READOPT
 must be set to RFIO_READBUF, which is the default.

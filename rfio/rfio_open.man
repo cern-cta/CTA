@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_open.man,v 1.7 2001/09/26 09:13:53 jdurand Exp $
+.\" $Id: rfio_open.man,v 1.8 2002/11/19 15:42:27 bcouturi Exp $
 .\"
-.\" @(#)$RCSfile: rfio_open.man,v $ $Revision: 1.7 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: rfio_open.man,v $ $Revision: 1.8 $ $Date: 2002/11/19 15:42:27 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_OPEN 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
+.TH RFIO_OPEN 3 "$Date: 2002/11/19 15:42:27 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_open \- opens a file
 .SH SYNOPSIS
@@ -14,6 +14,25 @@ rfio_open \- opens a file
 \fB#include "rfio_api.h"\fR
 .sp
 .BI "int rfio_open (const char *" path ", int " flags ", int " mode ");"
+.br
+.sp
+Under Linux, for large files:
+.br
+.B #include <sys/types.h>
+.br
+.B #define _LARGEFILE64_SOURCE
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "int rfio_open64 (const char *" path ", int " flags ", int " mode ");"
+.sp
+For large files, under other systems:
+.br
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "int rfio_open64 (const char *" path ", int " flags ", int " mode ");"
 .SH DESCRIPTION
 .B rfio_open
 opens the file whose name is the string pointed to by
@@ -33,6 +52,8 @@ are formed by ORing the following values:
         O_CREAT         Create file if it does not exist
         O_TRUNC         Truncate size to 0
         O_EXCL          Error if create and file exists
+        O_LARGEFILE     When size can be superior to 2GB\-1. 
+                        See NOTES
 .ft
 .LP
 .fi
@@ -41,7 +62,7 @@ are formed by ORing the following values:
 .BI mode
 specifies the permission bits to be set if the file is created.
 .P
-Opening a file with O_APPEND set causes each write on the file to be appended to the end.  If O_TRUNC is specified and the file exists, the file is truncated to zero length.  If O_EXCL is set with O_CREAT, then if the file already exists, the open returns an error.  This can be used to implement a simple exclusive access locking mechanism.  If O_EXCL is set and the last component of the pathname is a symbolic link, the open will succeed even if the symbolic link points to an existing name.  If the O_NDELAY flag is specified and the open call would result in the process being blocked for some reason (for example waiting for a carrier on a dial-up line), the open returns immediately. The first time the process attempts to perform \IO\ on the open file, it will block (not currently implemented).
+Opening a file with O_APPEND set causes each write on the file to be appended to the end.  If O_TRUNC is specified and the file exists, the file is truncated to zero length.  If O_EXCL is set with O_CREAT, then if the file already exists, the open returns an error.  This can be used to implement a simple exclusive access locking mechanism.  If O_EXCL is set and the last component of the pathname is a symbolic link, the open will succeed even if the symbolic link points to an existing name.  If the O_NDELAY flag is specified and the open call would result in the process being blocked for some reason (for example waiting for a carrier on a dial-up line), the open returns immediately. The first time the process attempts to perform \IO\ on the open file, it will block (not currently implemented). On systems that support the Large Files, O_LARGEFILE in rfio_open allows files whose sizes cannot be represented in 31 bits to be opened.
 
 .SH RETURN VALUE
 If successful, returns a non-negative integer which may be used to refer to the
@@ -86,6 +107,12 @@ Service unknown.
 .B SECOMERR
 Communication error.
 .SH SEE ALSO
-.BR Castor_limits(4)
+.BR Castor_limits(4) , rfio_write(3) , rfio_read(3) , rfio_close(3)
+.SH NOTES
+On Irix, Tru64 and IA64 the 64 bit mode is the default one, open and open64 are identical. The 
+.I flag 
+O_LARGEFILE is accepted on Irix and IA64 (where it has no effect) but not on Tru64.
+On all other platforms, rfio_open with O_LARGEFILE is equivalent to a call to rfio_open64.
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
+
