@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.16 2002/02/26 09:03:32 baud Exp $
+ * $Id: read.c,v 1.17 2002/02/26 09:08:33 baud Exp $
  */
 
 /*
@@ -8,15 +8,13 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.16 $ $Date: 2002/02/26 09:03:32 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.17 $ $Date: 2002/02/26 09:08:33 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* read.c       Remote File I/O - read  a file                          */
 
 
 #include <syslog.h>             /* system logger 			*/
-#include <sys/types.h>
-#include <Cglobals.h>
 #ifndef linux
 extern char *sys_errlist[];     /* system error list                    */
 #endif
