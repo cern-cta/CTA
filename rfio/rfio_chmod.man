@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_chmod.man,v 1.1 2000/07/07 13:44:41 jdurand Exp $
+.\" $Id: rfio_chmod.man,v 1.2 2000/07/07 14:24:14 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_chmod.man,v $ $Revision: 1.1 $ $Date: 2000/07/07 13:44:41 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_chmod.man,v $ $Revision: 1.2 $ $Date: 2000/07/07 14:24:14 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_CHMOD 3 "$Date: 2000/07/07 13:44:41 $" CASTOR "Rfio Library Functions"
+.TH RFIO_CHMOD 3 "$Date: 2000/07/07 14:24:14 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_chmod \- change access mode of a directory/file
 .SH SYNOPSIS
@@ -13,8 +13,7 @@ rfio_chmod \- change access mode of a directory/file
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "int rfio_chmod (const char *" path ,
-.BI "mode_t " mode )
+.BI "int rfio_chmod (const char *" path ", mode_t " mode ");"
 .SH DESCRIPTION
 .B rfio_chmod
 sets the access permission portion of the mode of a directory/file to the bit pattern in

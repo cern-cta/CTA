@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_readdir.man,v 1.1 2000/07/07 14:12:50 jdurand Exp $
+.\" $Id: rfio_readdir.man,v 1.2 2000/07/07 14:24:15 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_readdir.man,v $ $Revision: 1.1 $ $Date: 2000/07/07 14:12:50 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_readdir.man,v $ $Revision: 1.2 $ $Date: 2000/07/07 14:24:15 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_READDIR 3 "$Date: 2000/07/07 14:12:50 $" CASTOR "Rfio Library Functions"
+.TH RFIO_READDIR 3 "$Date: 2000/07/07 14:24:15 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_readdir \- read directory opened by
 .B rfio_opendir
@@ -16,7 +16,7 @@ rfio_readdir \- read directory opened by
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "struct dirent *rfio_readdir (RDIR *" dirp ")"
+.BI "struct dirent *rfio_readdir (RDIR *" dirp ");"
 .SH DESCRIPTION
 .B rfio_readdir
 reads the directory opened by

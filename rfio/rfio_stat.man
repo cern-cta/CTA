@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_stat.man,v 1.1 2000/07/07 14:17:23 jdurand Exp $
+.\" $Id: rfio_stat.man,v 1.2 2000/07/07 14:24:15 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_stat.man,v $ $Revision: 1.1 $ $Date: 2000/07/07 14:17:23 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_stat.man,v $ $Revision: 1.2 $ $Date: 2000/07/07 14:24:15 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_STAT 3 "$Date: 2000/07/07 14:17:23 $" CASTOR "Rfio Library Functions"
+.TH RFIO_STAT 3 "$Date: 2000/07/07 14:24:15 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_stat \- get information about a file or directory
 .SH SYNOPSIS
@@ -13,7 +13,7 @@ rfio_stat \- get information about a file or directory
 .br
 \fB#include "rfio_api.h"\fR
 .sp
-.BI "int rfio_stat (const char *" path ", struct stat *" statbuf ")"
+.BI "int rfio_stat (const char *" path ", struct stat *" statbuf ");"
 .SH DESCRIPTION
 .B rfio_stat
 gets information about a file or directory.
