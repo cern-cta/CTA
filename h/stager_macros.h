@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.8 2004/11/09 18:11:25 jdurand Exp $
+ * $Id: stager_macros.h,v 1.9 2004/11/28 20:16:32 jdurand Exp $
  */
 
 #ifndef __stager_macros_h
@@ -144,13 +144,13 @@
   extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_ENTER ,NULL  ,NULL     ,NULL  , NULL, NULL);} \
 }
 #define STAGER_LOG_LEAVE()                  { \
-  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_LEAVE ,NULL  ,NULL     ,NULL  , NULL, NULL); return; } \
+  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_LEAVE ,NULL  ,NULL     ,NULL  , NULL, NULL);} return; \
 }
 #define STAGER_LOG_RETURN(value)            { \
-  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"RC"     ,value , NULL, NULL); return(value);} \
+  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"RC"     ,value , NULL, NULL);} return(value); \
 }
 #define STAGER_LOG_RETURN_NULL()  { \
-  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"STRING" ,"NULL" , NULL, NULL); return(NULL);} \
+  extern int stagerTrace; if (stagerTrace) {STAGER_LOG(STAGER_MSG_RETURN,NULL  ,"STRING" ,"NULL" , NULL, NULL);} return(NULL); \
 }
 #define STAGER_LOG_SYSTEM(fileid,string)    STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "STRING", string, NULL, NULL)
 #define STAGER_LOG_STARTUP() { \
