@@ -1,5 +1,5 @@
 /*
- * $Id: stager_tape.c,v 1.17 2003/09/08 15:53:14 jdurand Exp $
+ * $Id: stager_tape.c,v 1.18 2003/09/08 16:56:23 jdurand Exp $
  */
 
 /*
@@ -25,7 +25,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.17 $ $Date: 2003/09/08 15:53:14 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.18 $ $Date: 2003/09/08 16:56:23 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -51,11 +51,7 @@ static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.17 $ $Date:
 #include "Cpwd.h"
 #include "Cgrp.h"
 
-#if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
-EXTERN_C void DLL_DECL stager_usrmsg _PROTO(());
-#else
-EXTERN_C void DLL_DECL stager_usrmsg _PROTO((int, ...));
-#endif
+EXTERN_C void DLL_DECL stager_usrmsg _PROTO((int, char *, ...));
 extern int sendrep _PROTO((int *, int, ...));
 extern int stglogit _PROTO((char *, char *, ...));
 extern char *stglogflags _PROTO((char *, char *, u_signed64));

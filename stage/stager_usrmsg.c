@@ -1,5 +1,5 @@
 /*
- * $Id: stager_usrmsg.c,v 1.19 2003/09/08 15:53:15 jdurand Exp $
+ * $Id: stager_usrmsg.c,v 1.20 2003/09/08 16:56:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.19 $ $Date: 2003/09/08 15:53:15 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.20 $ $Date: 2003/09/08 16:56:23 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /* stager_usrmsg.c - callback rtcp routine */
@@ -25,11 +25,7 @@ static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.19 $ $Dat
 #include <stdlib.h>
 #include <stdio.h>              /* standard input/output definitions    */
 #include <string.h>
-#if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
-#include <varargs.h>            /* variable argument list definitions   */
-#else
 #include <stdarg.h>             /* variable argument list definitions   */
-#endif /* IRIX5 || __Lynx__ */
 #include <log.h>                /* logging options and definitions      */
 #include "stage_api.h"          /* For seteuid/setegid macro on hpux */
 #include "osdep.h"
@@ -59,26 +55,12 @@ extern struct passwd start_passwd;
  * stager_usrmsg(LOG_LEVEL,format[,value,...]) ;
  */
 
-#if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
-void stager_usrmsg(va_alist)     va_dcl
-#else
-void stager_usrmsg(int level, ...)
-#endif
-{
+void stager_usrmsg(int level, char *format, ...) {
 	va_list args ;          /* Variable argument list               */
-	char    *format;        /* Format of the log message            */
 	char    line[BUFSIZ] ;  /* Formatted log message                */
-#if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
-	int     level;          /* Level of the message                 */
 
-	va_start(args);         /* initialize to beginning of list      */
-	level = va_arg(args, int);
-#else
+	va_start(args, format);
 
-	va_start(args, level);
-#endif /* IRIX5 || __Lynx__ */
-
-	format = va_arg(args, char *);
 #if (defined(__osf__) && defined(__alpha))
 	vsprintf(line,format,args);
 #else
