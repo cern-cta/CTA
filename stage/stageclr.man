@@ -1,10 +1,10 @@
-.\" $Id: stageclr.man,v 1.17 2002/12/13 15:31:25 jdurand Exp $
+.\" $Id: stageclr.man,v 1.18 2003/06/30 11:31:05 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.17 $ $Date: 2002/12/13 15:31:25 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.18 $ $Date: 2003/06/30 11:31:05 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGECLR "1" "$Date: 2002/12/13 15:31:25 $" "CASTOR" "Stage User Commands"
+.TH STAGECLR "1" "$Date: 2003/06/30 11:31:05 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageclr \- remove staged files
 .SH SYNOPSIS
@@ -126,7 +126,7 @@ either full internal name or user link name.
 restricts the action to a given pool.
 .TP
 .BI \-\-nodisk
-Prevent stager daemon to do disk access. The entry is removed from the catalog, but stager do not attempt to remove it physically. Thus space knowledge of the corresponding filesystem is unchanged.
+Prevent stager daemon to do disk access. The entry is removed from the main catalog in case of a file in stager filesystems, and from the link catalog in a case of a link name (\-L option). Stager will not try to remove physically the file. In case of an entry in stager filesystem, space knowledge of the corresponding filesystem is unchanged.
 .TP
 .BI \-remove_from_hsm
 to remove the file from the Hierarchical Storage Management System as well.
