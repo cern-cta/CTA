@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.93 2001/02/16 09:38:15 jdurand Exp $
+ * $Id: poolmgr.c,v 1.94 2001/02/16 14:12:52 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.93 $ $Date: 2001/02/16 09:38:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.94 $ $Date: 2001/02/16 14:12:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1201,6 +1201,7 @@ void redomigpool()
   struct stgcat_entry *stcp;
 
   for (stcp = stcs; stcp < stce; stcp++) {
+    if (stcp->reqid == 0) break;
     if ((stcp->status & CAN_BE_MIGR) != CAN_BE_MIGR) continue;
     if ((stcp->status & PUT_FAILED) == PUT_FAILED) continue;
     insert_in_migpool(stcp);
