@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.19 $ $Date: 2002/05/14 14:35:37 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.20 $ $Date: 2002/10/25 12:37:37 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -14,10 +14,6 @@ static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.19 $ $Date
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
-#if !defined(_WIN32)
-#include <regex.h>
-#endif /* _WIN32 */
 
 #include <osdep.h>
 #include <net.h>
@@ -331,6 +327,9 @@ int vdqm_ReplDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *drv) {
     if ( rc == -1 ) return(-1);
 
     rc = R_GetDrvRecord(dgn_context, drv, &drvrec);
+#if DEBUG
+	if (drvrec != NULL) log(LOG_INFO,"vdqm_ReplDrvReq() Got drive %s@%s\n", drvrec->drv.drive, drvrec->drv.server);
+#endif
     if ( rc == -1 ) return(-1);
     if ( hdr->reqtype == VDQM_DEL_DRVREQ ) {
         if ( drvrec == NULL ) {
@@ -350,7 +349,8 @@ int vdqm_ReplDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *drv) {
             drvrec->vol->drv = NULL;
             drvrec->vol = NULL;
         }
-        free(drvrec);
+		vdqm_ResetDedicate(drvrec); /* If any */
+		free(drvrec);
         return(0);
     }
 
@@ -367,6 +367,14 @@ int vdqm_ReplDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *drv) {
     } else log(LOG_DEBUG,"vdqm_ReplDrvReq() Update existing drive record (DrvReqID: %d)\n",
                drv->DrvReqID);
 
+#if DEBUG
+	log(LOG_INFO,"vdqm_ReplDrvReq() [Debug Before [1]] %s@%s : is_uid=%d, uid=%d, is_gid=%d, gid=%d, is_name=%d\n", drvrec->drv.drive, drvrec->drv.server, drvrec->drv.is_uid, drvrec->drv.uid, drvrec->drv.is_gid, drvrec->drv.gid, drvrec->drv.is_name);
+	log(LOG_INFO,"vdqm_ReplDrvReq() [Debug Before [2]] %s@%s : is_uid=%d, uid=%d, is_gid=%d, gid=%d, is_name=%d\n", drv->drive, drv->server, drv->is_uid, drv->uid, drv->is_gid, drv->gid, drv->is_name);
+#endif
+	vdqm_ResetDedicate(drvrec);
+    drvrec->drv = *drv;
+	vdqm_SetDedicate(drvrec);
+	/*
     if ( strcmp(drv->dedicate,drvrec->drv.dedicate) != 0 ) {
         if ( drv->dedicate == '\0' ) {
             rc = vdqm_ResetDedicate(drvrec);
@@ -374,10 +382,17 @@ int vdqm_ReplDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *drv) {
             strcpy(drvrec->drv.dedicate,drv->dedicate);
             rc = vdqm_SetDedicate(drvrec);
         }
-    }
-
+	}
     drvrec->drv = *drv;
-    /*
+	*/
+
+#if DEBUG
+	log(LOG_INFO,"vdqm_ReplDrvReq() [Debug After [1]] %s@%s : is_uid=%d, uid=%d, is_gid=%d, gid=%d, is_name=%d\n", drvrec->drv.drive, drvrec->drv.server, drvrec->drv.is_uid, drvrec->drv.uid, drvrec->drv.is_gid, drvrec->drv.gid, drvrec->drv.is_name);
+	log(LOG_INFO,"vdqm_ReplDrvReq() [Debug After [2]] %s@%s : is_uid=%d, uid=%d, is_gid=%d, gid=%d, is_name=%d\n", drv->drive, drv->server, drv->is_uid, drv->uid, drv->is_gid, drv->gid, drv->is_name);
+#endif
+
+
+	/*
      * Check if there is (already) an attached volume request. This can
      * happen if the replication updates arrive out of sequence.
      */
@@ -899,6 +914,8 @@ void *vdqm_ReplicaListenThread(void *arg) {
                 (void)vdqm_CloseConn(nw);
                 break;
             }
+			memset(&volreq,'\0',sizeof(volreq));
+			memset(&drvreq,'\0',sizeof(drvreq));
             rc = vdqm_RecvReq(nw,&hdr,&volreq,&drvreq);
             if ( rc == -1 ) {
                 log(LOG_ERR,"vdqm_ReplicaListenThread() vdqm_RecvReq(): %s\n",
