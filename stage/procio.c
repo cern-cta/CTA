@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.85 2001/02/05 10:12:48 jdurand Exp $
+ * $Id: procio.c,v 1.86 2001/02/05 11:02:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.85 $ $Date: 2001/02/05 10:12:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.86 $ $Date: 2001/02/05 11:02:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -368,11 +368,13 @@ void procioreq(req_type, req_data, clienthost)
 				c = USERR;
 				goto reply;
 			}
-			/* Note - per construction u1.m.xfile and u1.h.xfile points to same area... */
-			if (check_hsm_type_light(stcp_input[i].u1.m.xfile,&(stcp_input[i].t_or_d)) != 0) {
-				sendrep(rpfd, MSG_ERR, "STG02 - Bad input (catalog input structure No %d/%d)\n", ++i, nstcp_input);
-				c = USERR;
-				goto reply;
+			if ((t_or_d == 'm') || (t_or_d == 'h')) {
+				/* Note - per construction u1.m.xfile and u1.h.xfile points to same area... */
+				if (check_hsm_type_light(stcp_input[i].u1.m.xfile,&(stcp_input[i].t_or_d)) != 0) {
+					sendrep(rpfd, MSG_ERR, "STG02 - Bad input (catalog input structure No %d/%d)\n", ++i, nstcp_input);
+					c = USERR;
+					goto reply;
+				}
 			}
 			logit[0] = '\0';
 			if (stage_stcp2buf(logit,BUFSIZ,flags,&(stcp_input[i])) == 0 || serrno == SEUMSG2LONG) {
