@@ -1,8 +1,12 @@
 /*
- * $Id: Cthread_flags.h,v 1.4 2000/01/10 10:11:21 jdurand Exp $
+ * $Id: Cthread_flags.h,v 1.5 2000/01/10 10:21:06 jdurand Exp $
  *
  * $Log: Cthread_flags.h,v $
- * Revision 1.4  2000/01/10 10:11:21  jdurand
+ * Revision 1.5  2000/01/10 10:21:06  jdurand
+ * Makes sure CTHREAD and NOCTHREAD are defined in conjunction with
+ * _CTHREAD and _NOCTHREAD
+ *
+ * Revision 1.4  2000-01-10 11:11:21+01  jdurand
  * Force CTHREAD if (defined(_REENTRANT) || defined(_THREAD_SAFE)) on UNIX
  * (Previous test was on _REENTRANT only)
  *
@@ -99,8 +103,10 @@
 /* -------------------------------------------- */
 #ifndef CTHREAD
 #if (defined(_REENTRANT) || defined(_THREAD_SAFE))
+#define CTHREAD
 #define _CTHREAD
 #else
+#define NOCTHREAD
 #define _NOCTHREAD
 #endif
 #else
