@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.29 2000/11/06 14:46:06 jdurand Exp $
+ * $Id: stage.h,v 1.30 2000/12/06 11:28:57 jdurand Exp $
  */
 
 /*
@@ -206,6 +206,10 @@
 #define STG100  "STG100 - Database %s error (%s) at %s:%d\n"
 #define STG101  "STG101 - HSM File %s previously staged under name %s. Catalog updated.\n"
 #define STG102  "STG102 - Mixed %s HSM host with %s HSM filename: %s\n"
+#define STG103  "STG103 - -F option is only for admin\n"
+#define STG104  "STG104 - Internal error: status=0x%x but req not in waitq - Ask admin to try with -F option\n"
+#define STG105  "STG105 - Internal error in %s : %s\n"
+#define STG106  "STG106 - Internal error in %s for %s: %s\n"
 
 			/* stage daemon return codes */
 

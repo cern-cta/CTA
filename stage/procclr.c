@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.19 2000/12/05 09:27:54 jdurand Exp $
+ * $Id: procclr.c,v 1.20 2000/12/06 11:29:01 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.19 $ $Date: 2000/12/05 09:27:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.20 $ $Date: 2000/12/06 11:29:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -112,7 +112,7 @@ void procclrreq(req_data, clienthost)
 		case 'F':
 			if (uid != 0) {
 				/* The -F option is only valid from admin */
-				sendrep (rpfd, MSG_ERR, STG98, "-F option is only for admin");
+				sendrep (rpfd, MSG_ERR, STG103);
 				errflg++;
 			} else {
 				Fflag++;
@@ -383,9 +383,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 			}
 			return (0);
 		} else {
-			sendrep (rpfd, MSG_ERR,
-							 "STG98 - Internal error: status=0x%x but req not in waitq - Ask admin to try with -F option\n",
-							 stcp->status);
+			sendrep (rpfd, MSG_ERR, STG104, stcp->status);
 			return (USERR);
 		}
 	}
