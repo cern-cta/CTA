@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.22 $ $Date: 2000/09/05 14:41:01 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.23 $ $Date: 2000/12/13 09:52:44 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -182,6 +182,8 @@ EXTERN_C void DLL_DECL rfio_HsmIf_rewinddir _PROTO((DIR *));
 EXTERN_C int DLL_DECL rfio_HsmIf_rmdir _PROTO((const char *));
 EXTERN_C int DLL_DECL rfio_HsmIf_stat _PROTO((const char *, struct stat *));
 EXTERN_C int DLL_DECL rfio_HsmIf_unlink _PROTO((const char *));
+EXTERN_C int DLL_DECL rfio_HsmIf_FindPhysicalPath _PROTO((char *, char **));
+
 #endif /* RFIO_KERNEL */
 
 #endif /* _RFIO_API_H_INCLUDED_ */
