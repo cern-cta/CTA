@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1994-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.6 $ $Date: 2000/01/09 17:57:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.7 $ $Date: 2000/05/08 14:08:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      gettperror - get drive status after I/O error and
@@ -448,8 +448,10 @@ char **msgaddr;
 				sk_codmsg[key].text, asc, ascq);
 			*msgaddr = tp_err_msgbuf;
 		}
-		if (devtype && strcmp (devtype, "SD3") == 0 &&
-		    key == 3 && asc == 0x30 && ascq == 0x01)
+		if ((devtype && strcmp (devtype, "SD3") == 0 &&
+		    key == 3 && asc == 0x30 && ascq == 0x01) ||
+		    (devtype && strcmp (devtype, "3590") == 0 &&
+		    key == 3 && asc == 0x30 && ascq == 0x02))
 			rc = ETBLANK;
 		else
 			rc = sk_codmsg[key].errcat;
