@@ -1,7 +1,10 @@
 /*
- * $Id: Cpool_api.h,v 1.3 1999/10/14 12:04:28 jdurand Exp $
+ * $Id: Cpool_api.h,v 1.4 1999/10/20 19:07:45 jdurand Exp $
  *
  * $Log: Cpool_api.h,v $
+ * Revision 1.4  1999/10/20 19:07:45  jdurand
+ * Removed the unnecessary <osdep.h> header inclusion
+ *
  * Revision 1.3  1999/10/14 12:04:28  jdurand
  * Introduced _PROTO macro
  *
@@ -14,7 +17,6 @@
 #ifndef __cpool_api_h
 #define __cpool_api_h
 
-#include <osdep.h>
 #include <Cthread_api.h>
 /* Memory allocation wrappers - JUST used in case of         */
 /* Cthread_environment() returning CTHREAD_MULTI_PROCESS     */
