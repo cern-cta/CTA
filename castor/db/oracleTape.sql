@@ -142,7 +142,7 @@ CREATE OR REPLACE PACKAGE castor AS
 END castor;
 
 /* PL/SQL method implementing scheduleSubRequest */
-CREATE OR REPLACE PROCEDURE scheduleSubRequest(subreqId IN INTEGER, fileSystemId IN INTEGER,
+CREATE OR REPLACE PROCEDURE scheduleSubRequest(srId IN INTEGER, fileSystemId IN INTEGER,
                                                diskCopyId OUT INTEGER, path OUT VARCHAR,
                                                status OUT NUMBER, sources OUT castor.DiskCopy_Cur) AS
   castorFileId INTEGER;
@@ -152,40 +152,39 @@ BEGIN
  SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
   INTO diskCopyId, path, status
   FROM DiskCopy, SubRequest
-  WHERE SubRequest.id = subreqId
+  WHERE SubRequest.id = srId
     AND SubRequest.castorfile = DiskCopy.castorfile
     AND DiskCopy.filesystem = fileSystemId
     AND DiskCopy.status IN (0, 1, 2, 5, 6); -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
  IF status IN (2, 5) THEN -- WAITTAPERECALL, WAITFS, Make SubRequest Wait
-   dbms_output.put_line('Make SubRequest Wait');
-   makeSubRequestWait(subreqId, diskCopyId);
+   makeSubRequestWait(srId, diskCopyId);
    diskCopyId := 0;
    path := '';
  END IF;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, look in others
  OPEN sources FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
  FROM DiskCopy, SubRequest
- WHERE SubRequest.id = subreqId
+ WHERE SubRequest.id = srId
    AND SubRequest.castorfile = DiskCopy.castorfile
    AND DiskCopy.status IN (0, 1, 2, 5, 6); -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT
  IF sources%NOTFOUND THEN -- create DiskCopy for recall
    getId(1, diskCopyId);
    UPDATE SubRequest SET diskCopy = diskCopyId, status = 4 -- WAITTAPERECALL
-    WHERE id = subreqId RETURNING castorFile INTO castorFileId;
+    WHERE id = srId RETURNING castorFile INTO castorFileId;
    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
     VALUES ('', diskCopyId, 0, castorFileId, 2); -- status WAITTAPERECALL
    diskCopyId := 0;
+   status := 2; -- WAITTAPERECALL
    close sources;
  ELSE
    FETCH sources INTO diskCopyId, unusedPath, status;
    IF status IN (2,5) THEN -- WAITTAPERECALL, WAITFS, Make SubRequest Wait
-     dbms_output.put_line('We will have to wait');
-     makeSubRequestWait(subreqId, diskCopyId);
+     makeSubRequestWait(srId, diskCopyId);
      diskCopyId := 0;
      close sources;
    ELSE -- create DiskCopy for Disk to Disk copy
      getId(1, diskCopyId);
-     UPDATE SubRequest SET diskCopy = diskCopyId WHERE id = subreqId
+     UPDATE SubRequest SET diskCopy = diskCopyId WHERE id = srId
       RETURNING castorFile INTO castorFileId;
      INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
       VALUES ('', diskCopyId, 0, castorFileId, 1); -- status WAITDISK2DISKCOPY

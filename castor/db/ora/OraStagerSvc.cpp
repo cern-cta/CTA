@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.56 $ $Release$ $Date: 2004/11/26 10:16:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.57 $ $Release$ $Date: 2004/11/26 15:44:06 $ $Author: sponcec3 $
  *
  *
  *
@@ -901,20 +901,30 @@ castor::db::ora::OraStagerSvc::scheduleSubRequest
     result->setStatus
       ((enum castor::stager::DiskCopyStatusCodes)
        m_scheduleSubRequestStatement->getInt(5));
-    oracle::occi::ResultSet *rs =
-      m_scheduleSubRequestStatement->getCursor(6);
-    oracle::occi::ResultSet::Status status = rs->status(); 
-    
-
-    status = rs->next();
-    while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      castor::stager::DiskCopyForRecall* item =
-        new castor::stager::DiskCopyForRecall();
-      item->setId((u_signed64) rs->getDouble(1));
-      item->setPath(rs->getString(2));
-      item->setStatus((castor::stager::DiskCopyStatusCodes)rs->getInt(3));
-      sources.push_back(item);
-      status = rs->next();
+    if (result->status() ==
+	castor::stager::DISKCOPY_WAITDISK2DISKCOPY) {
+      try {
+	oracle::occi::ResultSet *rs =
+	  m_scheduleSubRequestStatement->getCursor(6);
+	// We don't fetch the first time since it's done
+	// in the PL/SQL code
+	oracle::occi::ResultSet::Status status = rs->status();
+	while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+	  castor::stager::DiskCopyForRecall* item =
+	    new castor::stager::DiskCopyForRecall();
+	  item->setId((u_signed64) rs->getDouble(1));
+	  item->setPath(rs->getString(2));
+	  item->setStatus((castor::stager::DiskCopyStatusCodes)rs->getInt(3));
+	  sources.push_back(item);
+	  status = rs->next();
+	}
+      } catch (oracle::occi::SQLException e) {
+	if (e.getErrorCode() != 24338) {
+	  // if not "statement handle not executed"
+	  // it's really wrong, else, it's normal
+	  throw e;
+	}
+      }
     }
     // return
     return result;
