@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_rfilefdt.c,v 1.4 2000/11/24 10:19:09 jdurand Exp $
+ * $Id: rfio_rfilefdt.c,v 1.5 2001/05/12 07:23:25 jdurand Exp $
  */
 
 /*
@@ -178,7 +178,7 @@ int DLL_DECL rfio_rfilefdt_freeentry(s)
     return(-1);
   }
   if (rfilefdt[s] != NULL) {
-    free(rfilefdt[s]);
+    if (rfilefdt[s] != dummyrfile) free(rfilefdt[s]);
     rfilefdt[s] = NULL;
   }
   if (Cmutex_unlock((void *) rfilefdt) != 0) {
@@ -186,7 +186,7 @@ int DLL_DECL rfio_rfilefdt_freeentry(s)
   }
 #else /* _WIN32 */
   if ((s >= 0) && (s < MAXRFD) && (rfilefdt[s] != NULL)) {
-    free((char *)rfilefdt[s]);
+    if (rfilefdt[s] != dummyrfile) free((char *)rfilefdt[s]);
     rfilefdt[s] = NULL;
   }
 #endif /* _WIN32 */
