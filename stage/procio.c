@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.131 2001/06/21 12:23:09 jdurand Exp $
+ * $Id: procio.c,v 1.132 2001/06/22 16:39:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.131 $ $Date: 2001/06/21 12:23:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.132 $ $Date: 2001/06/22 16:39:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -484,8 +484,13 @@ void procioreq(req_type, magic, req_data, clienthost)
 				/* poolname was not specified explicitely for this structure */
 				switch (req_type) {
 				case STAGE_IN:
-					strcpy(stcp_input[i].poolname,defpoolname_in);
-					strcpy(stgreq.poolname,stcp_input[i].poolname);
+					if (((openflags & O_RDWR) == O_RDWR) || ((openflag & O_WRONLY) == O_WRONLY)) {
+						bestnextpool_out(stcp_input[i].poolname,WRITE_MODE);
+						strcpy(stgreq.poolname,stcp_input[i].poolname);
+					} else {
+						strcpy(stcp_input[i].poolname,defpoolname_in);
+						strcpy(stgreq.poolname,stcp_input[i].poolname);
+					}
 					break;
 				case STAGE_OUT:
 					bestnextpool_out(stcp_input[i].poolname,WRITE_MODE);
@@ -1293,7 +1298,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 				if (req_type != STAGEWRT && req_type != STAGECAT) {
 					switch (req_type) {
 					case STAGEIN:
-						strcpy(stgreq.poolname,defpoolname_in);
+						if (((openflags & O_RDWR) == O_RDWR) || ((openflag & O_WRONLY) == O_WRONLY)) {
+							bestnextpool_out(stgreq.poolname,WRITE_MODE);
+						} else {
+							strcpy(stgreq.poolname,defpoolname_in);
+						}
 						break;
 					case STAGEOUT:
 						bestnextpool_out(stgreq.poolname,WRITE_MODE);
