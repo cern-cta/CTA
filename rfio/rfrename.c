@@ -1,14 +1,14 @@
 /*
- * $Id: rfrename.c,v 1.5 2000/09/01 08:01:27 obarring Exp $
+ * $Id: rfrename.c,v 1.6 2002/02/11 12:40:05 baud Exp $
  */
 
 /*
- * Copyright (C) 1998-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1998-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrename.c,v $ $Revision: 1.5 $ $Date: 2000/09/01 08:01:27 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrename.c,v $ $Revision: 1.6 $ $Date: 2002/02/11 12:40:05 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
@@ -20,7 +20,7 @@ static char sccsid[] = "@(#)$RCSfile: rfrename.c,v $ $Revision: 1.5 $ $Date: 200
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif /* _WIN32 */
-#include <rfio.h>
+#include <rfio_api.h>
 static char *ckpath();
 char *getconfent();
 
