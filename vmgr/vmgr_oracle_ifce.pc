@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.22 $ $Date: 2001/08/26 08:23:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.23 $ $Date: 2001/10/01 05:57:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -99,7 +99,7 @@ vmgr_dbrec_addr *rec_addr;
 
 	strcpy (func, "vmgr_delete_library_entry");
 	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
-	EXEC SQL DELETE FROM vmgr_model_info WHERE ROWID = :rowid_value;
+	EXEC SQL DELETE FROM vmgr_tape_library WHERE ROWID = :rowid_value;
 	if (sqlca.sqlcode) {
 		vmgrlogit (func, "DELETE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
 		    sqlca.sqlerrm.sqlerrmc);
@@ -601,7 +601,7 @@ vmgr_dbrec_addr *rec_addr;
 		SELECT ROWID,
 		 VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
 		 MANUFACTURER, SN, POOLNAME, ESTIMATED_FREE_SPACE,
-		 NBFILES, STATUS
+		 NBFILES, RCOUNT, WCOUNT, RTIME, WTIME, STATUS
 		FROM vmgr_tape_info
 		WHERE estimated_free_space =
 			(SELECT min(estimated_free_space)
@@ -615,7 +615,7 @@ vmgr_dbrec_addr *rec_addr;
 		SELECT ROWID,
 		 VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
 		 MANUFACTURER, SN, POOLNAME, ESTIMATED_FREE_SPACE,
-		 NBFILES, STATUS
+		 NBFILES, RCOUNT, WCOUNT, RTIME, WTIME, STATUS
 		FROM vmgr_tape_info
 		WHERE estimated_free_space =
 			(SELECT max(estimated_free_space)
@@ -640,7 +640,8 @@ vmgr_dbrec_addr *rec_addr;
 	 :tape_entry->media_letter, :tape_entry->manufacturer:mf_ind,
 	 :tape_entry->sn:sn_ind, :tape_entry->poolname,
 	 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
-	 :tape_entry->status;
+	 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rtime,
+	 :tape_entry->wtime, :tape_entry->status;
 	if (sqlca.sqlcode == 1403) {
 		EXEC SQL OPEN tape_maxsize_cursor4upd;
 		if (sqlca.sqlcode) {
@@ -656,7 +657,8 @@ vmgr_dbrec_addr *rec_addr;
 		 :tape_entry->media_letter, :tape_entry->manufacturer:mf_ind,
 		 :tape_entry->sn:sn_ind, :tape_entry->poolname,
 		 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
-		 :tape_entry->status;
+		 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rtime,
+		 :tape_entry->wtime, :tape_entry->status;
 	}
 	switch (sqlca.sqlcode) {
 	case 0:
