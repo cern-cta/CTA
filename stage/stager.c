@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.28 2000/03/31 08:32:01 jdurand Exp $
+ * $Id: stager.c,v 1.29 2000/03/31 08:44:10 jdurand Exp $
  */
 
 /*
@@ -11,7 +11,7 @@
 /* #define SKIP_FILEREQ_MAXSIZE */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.28 $ $Date: 2000/03/31 08:32:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.29 $ $Date: 2000/03/31 08:44:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1356,7 +1356,6 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				int stcp_inbtpf = 0;
 				struct stgcat_entry save_stcp;
 				struct stgcat_entry *save_stcp_p;
-				int isconcat = 0;
 
 				n = -1;
 
@@ -1381,9 +1380,6 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 						nbtpf = fixed_stce - fixed_stcs - 1;
 					} else {
 						nbtpf = 0;
-					}
-					if ((fixed_stce - 1)->u1.t.fseq[strlen((fixed_stce - 1)->u1.t.fseq) - 1] == '-') {
-						isconcat = 1;
 					}
 					p = strtok ((fixed_stce-1)->u1.t.fseq, ",");
 					while (p != NULL) {
@@ -1525,24 +1521,16 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 						break;
 					}
 					if (trailing2 == '-') {
-						if ((nbcat_ent >= nbtpf) && (j == nbcat_ent - 1)) {
-							fl[j].filereq.concat = CONCAT_TO_EOD;
+						if (j >= nbtpf) {
+							fl[j].filereq.concat = (nbcat_ent >= nbtpf ? CONCAT_TO_EOD : NOCONCAT_TO_EOD);
 						} else {
-							fl[j].filereq.concat = NOCONCAT_TO_EOD;
+							fl[j].filereq.concat = (nbcat_ent >= nbtpf ? CONCAT        : NOCONCAT       );
 						}
 					} else {
 						if (fixed_stcs->status == STAGEWRT || fixed_stcs->status == STAGEPUT) {
-							if (j >= nbtpf) {
-								fl[j].filereq.concat = (isconcat != 0 ? CONCAT_TO_EOD : CONCAT);
-							} else {
-								fl[j].filereq.concat = (isconcat != 0 ? NOCONCAT_TO_EOD : NOCONCAT);
-							}
+							fl[j].filereq.concat = (j >= nbtpf ? CONCAT : NOCONCAT);
 						} else {
-							if (j >= nbcat_ent) {
-								fl[j].filereq.concat = (isconcat != 0 ? CONCAT_TO_EOD : CONCAT);
-							} else {
-								fl[j].filereq.concat = (isconcat != 0 ? NOCONCAT_TO_EOD : NOCONCAT);
-							}
+							fl[j].filereq.concat = (j >= nbcat_ent ? CONCAT : NOCONCAT);
 						}
 					}
 					if (last_disk_fseq > nbcat_ent) {
