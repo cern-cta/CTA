@@ -1,5 +1,5 @@
 /*
- * $Id: shift_to_castor.c,v 1.7 2000/03/23 17:14:59 jdurand Exp $
+ * $Id: shift_to_castor.c,v 1.8 2000/06/29 12:04:56 jdurand Exp $
  */
 
 /* ============== */
@@ -21,6 +21,7 @@
 #include "stage.h"
 #include "stage_shift.h"
 #include "u64subr.h"
+#include "Cns_api.h"
 
 /* ====== */
 /* Macros */
@@ -295,6 +296,10 @@ int convert_stgcat() {
 	/* We convert all the entries */
 	imax = stgcat_in_statbuff.st_size / sizeof(struct stgcat_entry_old) - 1;
 	for (i = 0; i <= imax; i++) {
+		int status;
+
+		status = 0;
+
 		if (read(stgcat_in_fd, &stcp_old, sizeof(struct stgcat_entry_old)) != 
 				sizeof(struct stgcat_entry_old)) {
 			printf("### read error on %s (%s) at %s:%d\n",stgcat_in,
@@ -385,18 +390,54 @@ int convert_stgcat() {
 			strcpy(stcp_castor.u1.d.Xparm,      stcp_old.u1.d.Xparm);
 			break;
 		case 'm':
-			CHECK_STRING_SIZE(u1.m.xfile);
-			strcpy(stcp_castor.u1.m.xfile,      stcp_old.u1.m.xfile);
+			if (ISCASTOR(stcp_old.u1.m.xfile)) {
+				struct Cns_fileid Cnsfileid;
+				struct Cns_filestat statbuf;
+
+				memset(&Cnsfileid, 0, sizeof(struct Cns_fileid));
+
+				stcp_old.t_or_d = stcp_castor.t_or_d = 'h';
+
+				if (ISCASTORHOST(stcp_old.u1.m.xfile)) {
+					if (Cns_statx(stcp_old.u1.m.xfile,&Cnsfileid,&statbuf) != 0) {
+						printf("### Cns_statx on %s : %s\n",stcp_old.u1.m.xfile,sstrerror(serrno));
+						status = 1;
+					} else {
+						/* Note that u1.h.xfile and u1.m.xfile starts are the same address by definition */
+						strcpy(stcp_castor.u1.h.server,Cnsfileid.server);
+						stcp_castor.u1.h.fileid = Cnsfileid.fileid;
+					}
+				} else if (! ISHPSSHOST(stcp_old.u1.m.xfile)) {
+					/* Try neverthless to stat */
+					if (Cns_statx(stcp_old.u1.m.xfile,&Cnsfileid,&statbuf) != 0) {
+						printf("### Cns_statx on %s : %s\n",stcp_old.u1.m.xfile,sstrerror(serrno));
+						status = 1;
+					} else {
+						/* Note that u1.h.xfile and u1.m.xfile starts are the same address by definition */
+						strcpy(stcp_castor.u1.h.server,Cnsfileid.server);
+						stcp_castor.u1.h.fileid = Cnsfileid.fileid;
+					}
+				} else {
+					printf("### %s : not a CASTOR host\n",stcp_old.u1.m.xfile);
+					status = 1;
+				}
+			} else {
+				CHECK_STRING_SIZE(u1.m.xfile);
+				strcpy(stcp_castor.u1.m.xfile,      stcp_old.u1.m.xfile);
+			}
 			break;
 		default:
 			printf("### Unknown t_or_d type at reqid = %d\n",stcp_castor.reqid);
+			status = 1;
 			break;
 		}
-		if (write(stgcat_out_fd, &stcp_castor, sizeof(struct stgcat_entry)) != 
-				sizeof(struct stgcat_entry)) {
-			printf("### write error on %s (%s) at %s:%d\n",stgcat_out,
-						 strerror(errno),__FILE__,__LINE__);
-			return(-1);
+		if (status != 1) {
+			if (write(stgcat_out_fd, &stcp_castor, sizeof(struct stgcat_entry)) != 
+					sizeof(struct stgcat_entry)) {
+				printf("### write error on %s (%s) at %s:%d\n",stgcat_out,
+							 strerror(errno),__FILE__,__LINE__);
+				return(-1);
+			}
 		}
 	}
 	return(0);
