@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.96 2002/02/06 11:47:02 jdurand Exp $
+ * $Id: procupd.c,v 1.97 2002/03/04 11:08:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.96 $ $Date: 2002/02/06 11:47:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.97 $ $Date: 2002/03/04 11:08:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -362,6 +362,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 	}
 
 	if ((gr = Cgetgrgid (gid)) == NULL) {
+		sendrep (rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
 		sendrep (rpfd, MSG_ERR, STG36, gid);
 		c = SYERR;
 		goto reply;
@@ -605,7 +606,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				goto reply;
 
 			} else {
-				if ((c = upd_stageout(STAGEUPDC, argv_i, &subreqid, 1, NULL, 0)) != 0) {
+				if ((c = upd_stageout(req_type, argv_i, &subreqid, 1, NULL, 0)) != 0) {
 					if (c != CLEARED) {
 						goto reply;
 					} else {
