@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.80 2000/11/27 17:01:52 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.81 2000/12/05 09:59:42 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.80 $ $Date: 2000/11/27 17:01:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.81 $ $Date: 2000/12/05 09:59:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -2023,15 +2023,23 @@ void sendinfo2cptape(rpfd, stcp)
 		 int rpfd;
 		 struct stgcat_entry *stcp;
 {
-	char buf[256];
+	char buf[PRTBUFSZ];
 
-	if (strcmp (stcp->u1.t.lbl, "sl") == 0 || strcmp (stcp->u1.t.lbl, "al") == 0)
-		sprintf (buf, "-P %s -q %s -b %d -F %s -f %s -L %d",
-						 stcp->ipath, stcp->u1.t.fseq, stcp->blksize,
-						 stcp->recfm, stcp->u1.t.fid, stcp->lrecl);
-	else
-		sprintf (buf, "-P %s -q %s", stcp->ipath, stcp->u1.t.fseq);
-	sendrep (rpfd, MSG_ERR, STG47, buf);
+	switch (stcp->t_or_d) {
+	case 't':
+		if (strcmp(stcp->u1.t.lbl, "sl") == 0 || strcmp(stcp->u1.t.lbl, "al") == 0) {
+			sprintf(buf, "-P %s -q %s -b %d -F %s -f %s -L %d",
+							 stcp->ipath, stcp->u1.t.fseq, stcp->blksize,
+							 stcp->recfm, stcp->u1.t.fid, stcp->lrecl);
+		} else {
+			sprintf(buf, "-P %s -q %s", stcp->ipath, stcp->u1.t.fseq);
+		}
+		break;
+	default:
+		sprintf(buf, "-P %s", stcp->ipath);
+		break;
+	}
+	sendrep(rpfd, MSG_ERR, STG47, buf);
 }
 
 int ask_stageout(req_type, upath, found_stcp)
