@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.32 $ $Release$ $Date: 2005/03/31 15:06:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.33 $ $Release$ $Date: 2005/04/05 08:19:58 $ $Author: sponcec3 $
  *
  *
  *
@@ -576,14 +576,21 @@ namespace castor {
        * @param fileSystems the list of allowed filesystems
        * according to job requirements (given by id). This
        * is the fileSystems' mountPoint, the corresponding
-       * machines are given by parameter machines
+       * machines are given by parameter machines. 
+       * A null array means that any filesystem is eligible
+       * @param machines the machines on which the filesystems
+       * in parameter fileSystems reside.
+       * A null array means that any machine is eligible. in such
+       * a case, fileSystems has to be null.
        * @param minFree the minimum free space needed on each
        * filesystem to be selected. This is filesystem dependent
-       * due to possible reservations of the scheduler.
-       * This array must have at least one item, even if the
-       * number of filesystems is 0 (meaning all)
+       * if filesystems are given (due to possible reservations
+       * of the scheduler).
+       * If no filesystem are given, this array must have
+       * exactely one item, used for all filesystems.
        * @param fileSystemsNb the length of the arrays
-       * fileSystems, machines and minFree (if > 0 for minFree)
+       * fileSystems, machines and minFree when they are not
+       * null (and if filesystems are given for minFree)
        * @mountPoint the selected fileSystem's mountPoint
        * @diskServer the diskServer on which the selected
        * fileSystem resides.

@@ -1202,6 +1202,7 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForJob
  c1 AnyCursor;
 BEGIN
  IF fileSystems.COUNT > 0 THEN
+  -- here machines AND filesystems should be given
   DECLARE
    fsIds "numList" := "numList"();
    nextIndex NUMBER := 1;
@@ -1232,16 +1233,47 @@ BEGIN
              FileSystem.fsDeviation ASC;
   END;
  ELSE
-  OPEN c1 FOR
-   SELECT FileSystem.mountPoint, Diskserver.name,
-          DiskServer.id, FileSystem.id, FileSystem.fsDeviation
-   FROM FileSystem, DiskServer
-   WHERE FileSystem.diskserver = DiskServer.id
-    AND FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace >= minFree(1)
-    AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
-    AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
-   ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
-            FileSystem.fsDeviation ASC;
+  -- No fileSystems given, there may still be machines given
+  IF machines.COUNT > 0 THEN
+   DECLARE
+    mIds "numList" := "numList"();
+    nextIndex NUMBER := 1;
+   BEGIN
+    mIds.EXTEND(machines.COUNT);
+    FOR i in machines.FIRST .. machines.LAST LOOP
+     BEGIN
+      SELECT DiskServer.id INTO mIds(nextIndex)
+        FROM DiskServer
+       WHERE DiskServer.name = machines(i)
+         AND DiskServer.status IN (0, 1); -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
+      nextIndex := nextIndex + 1;
+     EXCEPTION  WHEN NO_DATA_FOUND THEN
+      NULL;
+     END;  
+    END LOOP;
+    OPEN c1 FOR
+     SELECT FileSystem.mountPoint, Diskserver.name,
+            DiskServer.id, FileSystem.id, FileSystem.fsDeviation
+     FROM FileSystem, DiskServer
+     WHERE FileSystem.diskserver = DiskServer.id
+       AND DiskServer.id MEMBER OF mIds
+       AND FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace >= minFree(1)
+       AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+     ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
+              FileSystem.fsDeviation ASC;
+   END;
+  ELSE
+   OPEN c1 FOR
+    SELECT FileSystem.mountPoint, Diskserver.name,
+           DiskServer.id, FileSystem.id, FileSystem.fsDeviation
+    FROM FileSystem, DiskServer
+    WHERE FileSystem.diskserver = DiskServer.id
+     AND FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace >= minFree(1)
+     AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
+     AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+    ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
+             FileSystem.fsDeviation ASC;
+  END IF;
  END IF;
  FETCH c1 INTO rMountPoint, rDiskServer, ds, fs, dev;
  CLOSE c1;
