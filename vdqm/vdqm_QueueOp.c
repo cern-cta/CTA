@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.45 $ $Date: 2001/09/04 10:48:56 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.46 $ $Date: 2001/09/21 10:37:19 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -798,6 +798,11 @@ static int VolRecQueuePos(const dgn_element_t *dgn_context,
     
     if ( volrec == NULL || INVALID_DGN_CONTEXT ) return(-1);
     
+    /*
+     * If request already running its queue position is 0
+     */
+    if ( volrec->drv != NULL ) return(0);
+
     pos = 0;
     CLIST_ITERATE_BEGIN(dgn_context->vol_queue,tmprec) {
         if ( tmprec->vol.VolReqID != volrec->vol.VolReqID ) {
