@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.31 $ $Release$ $Date: 2005/01/12 11:27:46 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.32 $ $Release$ $Date: 2005/01/13 17:23:15 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.31 $ $Release$ $Date: 2005/01/12 11:27:46 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.32 $ $Release$ $Date: 2005/01/13 17:23:15 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -337,6 +337,13 @@ int migratorCallbackMoreWork(
      * is ready to receive next file.
      */
     moreWorkDone = 0;
+    /*
+     * Set blocksize to avoid that disk IO waits until the previous
+     * file has been written to tape. In old CASTOR the blocksize<0
+     * implied that it should be read from the tape label (or the
+     * media default).
+     */
+    filereq->blocksize = 32760;
     return(0);
   }
 
