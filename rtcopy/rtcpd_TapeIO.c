@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.9 $ $Date: 2000/01/13 11:49:11 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.10 $ $Date: 2000/01/13 14:58:40 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -411,8 +411,10 @@ int topen(tape_list_t *tape, file_list_t *file) {
 int tclose(int fd, tape_list_t *tape, file_list_t *file) {
     int rc = 0;
     int comp_rc = 0;
+    int save_serrno = 0;
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
+    char *errstr = NULL;
 #if !defined(_WIN32) && !(defined(_AIX) && !defined(ADSTAR))
     COMPRESSION_STATS compstats;
 #endif /* !_WIN32 && !(_AIX && !ADSTAR) */
@@ -433,17 +435,29 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
                 fd,filereq->tape_path,labelid[file->eovflag],file->trec);
             if ( wrttrllbl(fd,filereq->tape_path,labelid[file->eovflag],
                  file->trec) < 0 ) {
+                save_serrno = serrno;
                 rc = -1;
 #if defined(_IBMR2)
                 if ( (errno == ENOSPC) || (errno == ENXIO) ) 
-                    serrno = ENOSPC;
+                    save_serrno = ENOSPC;
 #else /* _IBMR2 */
                 if ( errno == ENOSPC ) 
-                    serrno = ENOSPC;
+                    save_serrno = ENOSPC;
 #endif /* _IBMR2 */
-                else twerror(fd,tape,file);
+                else {
+                    errstr = rtcpd_CtapeErrMsg();
+                    if ( errstr != NULL && *errstr != '\0' ) {
+                        (void)rtcpd_AppendClientMsg(NULL, file, errstr);
+                        if ( save_serrno > 0 )
+                            rtcpd_SetReqStat(NULL,file,save_serrno,
+                                             RTCP_FAILED | RTCP_SYERR);
+                        rtcp_log(LOG_ERR,"tclose(%d) wrttrlbl(%s): %s\n",
+                                 fd,filereq->tape_path,errstr);
+                    }
+                } 
                 rtcp_log(LOG_ERR,"tclose(%d) wrttrllbl(%s): %s\n",fd,
-                    filereq->tape_path,sstrerror(serrno));
+                    filereq->tape_path,sstrerror(save_serrno));
+                serrno = save_serrno;
             }
         }
     }
@@ -701,7 +715,7 @@ int tread(int fd,char *ptr,int len,
         } else
             return(rc);
     } else {
-      return (read_sony(fd, ptr, len));
+        return (read_sony(fd, ptr, len));
     }
 }
 
