@@ -1,14 +1,14 @@
 /*
- * $Id: getc.c,v 1.1 2001/06/20 09:41:19 baud Exp $
+ * $Id: getc.c,v 1.2 2002/08/28 14:01:13 baud Exp $
  */
 
 /*
- * Copyright (C) 2001 by CERN/IT/PDP/DM
+ * Copyright (C) 2001-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getc.c,v $ $Revision: 1.1 $ $Date: 2001/06/20 09:41:19 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getc.c,v $ $Revision: 1.2 $ $Date: 2002/08/28 14:01:13 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /* get.c        Remote File I/O - input of one character                */
@@ -39,7 +39,7 @@ int DLL_DECL rfio_getc(fp)
 		errno = EBADF ;
 		TRACE(2,"rfio","rfio_getc() : FILE ptr is NULL ") ;
 		END_TRACE() ;
-		return 0 ;
+		return EOF ;
 	}
 
 	if (rfio_rfilefdt_findptr(fp,FINDRFILE_WITH_SCAN) == -1) {
@@ -62,7 +62,7 @@ int DLL_DECL rfio_getc(fp)
 		free((char *)fp);
 		(void) close(fps) ;
 		END_TRACE();
-		return 0 ;
+		return EOF ;
 	}
 
 	/*
