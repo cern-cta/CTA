@@ -1,5 +1,5 @@
 /*
- * $Id: GcSvcThread.cpp,v 1.2 2005/03/31 15:10:49 sponcec3 Exp $
+ * $Id: GcSvcThread.cpp,v 1.3 2005/03/31 15:13:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.2 $ $Date: 2005/03/31 15:10:49 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.3 $ $Date: 2005/03/31 15:13:35 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -250,7 +250,7 @@ namespace castor {
         res.setErrorCode(serrno);
         res.setErrorMessage(error);
       } else {
-        for(std::vector<castor::stager::GCLocalFile>::iterator it =
+        for(std::vector<castor::stager::GCLocalFile *>::iterator it =
               result->begin();
             it != result->end();
             it++) {
