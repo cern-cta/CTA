@@ -611,7 +611,7 @@ void dounlink (path)
 	char func[16];
 	char *host;
 #if !defined(_WIN32)
-	struct stat st;
+	struct stat64 st;
 #endif
 	int remote;
 	
@@ -631,8 +631,8 @@ void dounlink (path)
 		}
 #if !defined(_WIN32)
 		PRE_RFIO;
-		if (rfio_lstat (path, &st) != 0) {
-			stage_errmsg (func, STG02, path, "unlink(lstat)", rfio_serror());
+		if (rfio_lstat64 (path, &st) != 0) {
+			stage_errmsg (func, STG02, path, "unlink(lstat64)", rfio_serror());
 			return;
 		}
 		setgid (st.st_gid);
