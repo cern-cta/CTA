@@ -1,0 +1,36 @@
+.\"
+.\" $Id: rfio_fileno.man,v 1.1 2002/12/02 06:35:44 baud Exp $
+.\"
+.\" @(#)$RCSfile: rfio_fileno.man,v $ $Revision: 1.1 $ $Date: 2002/12/02 06:35:44 $ CERN IT-DS/HSM Jean-Philippe Baud
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH RFIO_FILENO 3 "$Date: 2002/12/02 06:35:44 $" CASTOR "Rfio Library Functions"
+.SH NAME
+rfio_fileno \- maps stream pointer to file descriptor
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "int rfio_fileno (FILE *" fp ");"
+.SH DESCRIPTION
+.B rfio_fileno
+returns the integer file descriptor associated with the stream pointed to by 
+.IR fp .
+.SH RETURN VALUE
+Upon successful completion,
+.B rfio_fileno()
+returns the integer value of the file descriptor associated with the stream
+parameter.  Otherwise, the value -1 is returned and
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B EBADF
+.I fp
+is not a valid file descriptor.
+.SH SEE ALSO
+.BR rfio_fopen(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
