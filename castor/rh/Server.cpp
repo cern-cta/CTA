@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2005/01/26 12:32:33 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2005/03/01 15:00:49 $ $Author: sponcec3 $
  *
  *
  *
@@ -192,7 +192,7 @@ void *castor::rh::Server::processRequest(void *param) throw() {
       Cuuid_create(&cuuid);
       char uuid[CUUID_STRING_LEN+1];
       uuid[CUUID_STRING_LEN] = 0;
-      Cuuid2string(uuid, CUUID_STRING_LEN, &cuuid);
+      Cuuid2string(uuid, CUUID_STRING_LEN+1, &cuuid);
       fr->setReqId(uuid);
       clog() << cuuid;
 
