@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.16 2000/02/11 11:06:52 jdurand Exp $
+ * $Id: procqry.c,v 1.17 2000/02/11 14:28:48 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.16 $ $Date: 2000/02/11 11:06:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.17 $ $Date: 2000/02/11 14:28:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -145,7 +145,10 @@ char *clienthost;
 		c = SYERR;
 		goto reply;
 	}
-	strcpy (group, gr->gr_name);
+	strncpy (group, gr->gr_name, CA_MAXGRPNAMELEN);
+    /* Makes sure null terminates */
+    group[CA_MAXGRPNAMELEN] = '\0';
+
 #ifdef linux
 	optind = 0;
 #else
