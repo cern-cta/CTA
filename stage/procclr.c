@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.28 2001/03/28 14:02:57 jdurand Exp $
+ * $Id: procclr.c,v 1.29 2001/03/29 15:33:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.28 $ $Date: 2001/03/28 14:02:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.29 $ $Date: 2001/03/29 15:33:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -500,7 +500,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 	}
 	if ((stcp->status & 0xF0) == STAGED ||
 		(stcp->status & (STAGEOUT | PUT_FAILED)) == (STAGEOUT | PUT_FAILED)) {
-		if (delfile (stcp, 0, 1, 1, user, uid, gid, rflag, 0) < 0) {
+		if (delfile (stcp, 0, 1, 1, user, uid, gid, rflag, 1) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
 							 rfio_serror());
 			return (USERR);
@@ -509,7 +509,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 		if ((ISSTAGEOUT(stcp) && (! ISCASTORMIG(stcp))) || (ISSTAGEALLOC(stcp) && ((stcp->status | STAGED) != STAGED))) {
 			rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
 		}
-		if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag, 0) < 0) {
+		if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag, 1) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
 							 rfio_serror());
 			return (USERR);
@@ -548,7 +548,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 					rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
 				}
 			}
-			if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag, 0) < 0) {
+			if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag, 1) < 0) {
 				sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink",
 						 rfio_serror());
 				return (USERR);
