@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.68 2000/05/22 06:00:31 jdurand Exp $
+ * $Id: stager.c,v 1.69 2000/05/22 12:25:49 jdurand Exp $
  */
 
 /*
@@ -14,7 +14,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.68 $ $Date: 2000/05/22 06:00:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.69 $ $Date: 2000/05/22 12:25:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1031,7 +1031,7 @@ int stagewrt_castor_hsm_file() {
 	gettape:
       Flags = 0;
       
-      SETTAPEEID(stcp->uid,stcp->gid);
+      SETTAPEEID(stcs->uid,stcs->gid);
 
       while (1) {
         stagewrt_nomoreupdatetape = 0;
