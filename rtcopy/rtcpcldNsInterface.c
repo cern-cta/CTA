@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/12/09 12:27:53 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/12/09 15:39:59 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/12/09 12:27:53 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/12/09 15:39:59 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -96,6 +96,27 @@ int inChild;
 Cuuid_t childUuid, mainUuid;
 
 static int use_checksum = 1, change_checksum_name = 0;
+
+static int getNsErrBuf(
+                       nsErrBuf
+                       )
+     char **nsErrBuf;
+{
+  static int nsErrBufKey = -1;
+  void *tmpBuf = NULL;
+  int rc;
+  
+  rc = Cglobals_get(
+                    &nsErrBufKey,
+                    &tmpBuf,
+                    512
+                    );
+  if ( rc == -1 ) return(-1);
+  rc = Cns_seterrbuf(tmpBuf,512);
+  if ( rc == -1 ) return(-1);
+  if ( nsErrBuf != NULL ) *nsErrBuf = (char *)tmpBuf;
+  return(0);
+}
 
 int rtcpcld_initNsInterface() 
 {
@@ -179,7 +200,7 @@ int rtcpcld_updateNsSegmentAttributes(
   int rc, save_serrno, nbSegms = 0, compressionFactor;
   struct Cns_fileid castorFileId;
   struct Cns_segattrs *nsSegAttrs = NULL;
-  char *blkid = NULL;
+  char *blkid = NULL, *nsErrMsg = NULL;
 
   if ( (tape == NULL) || (file == NULL) ) {
     serrno = EINVAL;
@@ -188,7 +209,8 @@ int rtcpcld_updateNsSegmentAttributes(
 
   tapereq = &(tape->tapereq);
   filereq = &(file->filereq);
-
+  (void)getNsErrBuf(&nsErrMsg);
+  
   memset(&castorFileId,'\0',sizeof(castorFileId));
   strncpy(
           castorFileId.server,
@@ -400,7 +422,7 @@ int rtcpcld_checkNsSegment(
   struct Cns_fileid *castorFileId = NULL;
   rtcpTapeRequest_t *tapereq;
   rtcpFileRequest_t *filereq;
-  char *blkid = NULL;
+  char *blkid = NULL, *nsErrMsg = NULL;
   
   if ( (tape == NULL) || (file == NULL) ) {
     serrno = EINVAL;
@@ -408,6 +430,7 @@ int rtcpcld_checkNsSegment(
   }
   tapereq = &(tape->tapereq);
   filereq = &(file->filereq);
+  (void)getNsErrBuf(&nsErrMsg);
 
   rc = rtcpcld_getFileId(file,&castorFileId);
   if ( (rc == -1) || (castorFileId == NULL) ) {
@@ -665,12 +688,13 @@ int rtcpcld_checkDualCopies(
   struct Cns_fileid *fileId = NULL;
   struct Cns_filestat statbuf;
   struct Cns_fileclass fileClass;
-  char castorFileName[CA_MAXPATHLEN+1];
+  char castorFileName[CA_MAXPATHLEN+1], *nsErrMsg = NULL;
   
   if ( (file == NULL) || ((tape = file->tape) == NULL) ) {
     serrno = EINVAL;
     return(-1);
   }
+  (void)getNsErrBuf(&nsErrMsg);
   
   rc = rtcpcld_getFileId(file,&fileId);
   if ( fileId == NULL ) {
@@ -728,12 +752,14 @@ int rtcpcld_setatime(
 {
   int rc;
   struct Cns_fileid *castorFileId = NULL;
+  char *nsErrMsg = NULL;
 
   if ( file == NULL ) {
     serrno = EINVAL;
     return(-1);
   }
 
+  (void)getNsErrBuf(&nsErrMsg);
   rc = rtcpcld_getFileId(file,&castorFileId);
   if ( rc < 0 ){
     LOG_SYSCALL_ERR("Cns_statx()");
@@ -759,6 +785,7 @@ int rtcpcld_getFileId(
      struct Cns_fileid **fileId;
 {
   rtcpFileRequest_t *filereq;
+
   if ( (file == NULL) || (fileId == NULL) ) {
     serrno = EINVAL;
     return(-1);
