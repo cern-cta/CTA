@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/10/12 08:37:34 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/10/25 15:20:32 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/10/12 08:37:34 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.15 $ $Release$ $Date: 2004/10/25 15:20:32 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -422,15 +422,15 @@ int rtcpcld_setVIDFailedStatus(
 {
   int failed = 0;
 
-  if ( rtcpcld_updateVIDStatus(tape,
-                               TAPE_WAITDRIVE,
-                               TAPE_FAILED) == -1 ) failed++;
-  if ( rtcpcld_updateVIDStatus(tape,
-                               TAPE_WAITMOUNT,
-                               TAPE_FAILED) == -1 ) failed++;
-  if ( rtcpcld_updateVIDStatus(tape,
-                               TAPE_MOUNTED,
-                               TAPE_FAILED) == -1 ) failed++;
+  if ( rtcpcld_updateTapeStatus(tape,
+                                TAPE_WAITDRIVE,
+                                TAPE_FAILED) == -1 ) failed++;
+  if ( rtcpcld_updateTapeStatus(tape,
+                                TAPE_WAITMOUNT,
+                                TAPE_FAILED) == -1 ) failed++;
+  if ( rtcpcld_updateTapeStatus(tape,
+                                TAPE_MOUNTED,
+                                TAPE_FAILED) == -1 ) failed++;
   if ( failed > 0 ) return(-1);
   else return(0);
 }
@@ -753,9 +753,9 @@ int rtcpcld_runWorker(
    * Check that there still are any requests for the VID
    */
   errno = serrno = 0;
-  rc = rtcpcld_anyReqsForVID(
-                             tape
-                             );
+  rc = rtcpcld_anyReqsForTape(
+                              tape
+                              );
   if ( rc == -1 ) {
     save_serrno = serrno;
     (void)dlf_write(
@@ -766,7 +766,7 @@ int rtcpcld_runWorker(
                     RTCPCLD_NB_PARAMS+2,
                     "SYSCALL",
                     DLF_MSG_PARAM_STR,
-                    "rtcpcld_anyReqsForVID()",
+                    "rtcpcld_anyReqsForTape()",
                     "ERROR_STR",
                     DLF_MSG_PARAM_STR,
                     sstrerror(save_serrno),
@@ -1355,7 +1355,17 @@ int rtcpcld_workerFinished(
      int workerRC, workerErrorCode;
 {
   char *shiftMsg = NULL;
-  int retval;
+  int retval, rc;
+
+  rc = rtcpcld_updateTape(
+                          tape,
+                          NULL,
+                          1,
+                          workerErrorCode
+                          );
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("rtcpcld_updateTape()");
+  }
 
   if ( workerRC == -1 ) {
     (void)rtcp_RetvalSHIFT(tape,NULL,&retval);
@@ -1415,26 +1425,21 @@ int rtcpcld_workerFinished(
     setErrorInfo(tape,workerErrorCode,shiftMsg);
     (void)rtcpcld_setVIDFailedStatus(tape);
   } else {
-    (void)rtcpcld_updateVIDStatus(
-                                  tape,
-                                  TAPE_PENDING,
-                                  TAPE_FINISHED
-                                  );
-    (void)rtcpcld_updateVIDStatus(
-                                  tape,
-                                  TAPE_WAITDRIVE,
-                                  TAPE_FINISHED
-                                  );
-    (void)rtcpcld_updateVIDStatus(
-                                  tape,
-                                  TAPE_WAITMOUNT,
-                                  TAPE_FINISHED
-                                  );
-    (void)rtcpcld_updateVIDStatus(
-                                  tape,
-                                  TAPE_MOUNTED,
-                                  TAPE_FINISHED
-                                  );
+    (void)rtcpcld_updateTapeStatus(
+                                   tape,
+                                   TAPE_WAITDRIVE,
+                                   TAPE_UNUSED
+                                   );
+    (void)rtcpcld_updateTapeStatus(
+                                   tape,
+                                   TAPE_WAITMOUNT,
+                                   TAPE_UNUSED
+                                   );
+    (void)rtcpcld_updateTapeStatus(
+                                   tape,
+                                   TAPE_MOUNTED,
+                                   TAPE_UNUSED
+                                   );
   }
   if ( shiftMsg != NULL ) free(shiftMsg);
   return(retval);

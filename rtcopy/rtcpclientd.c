@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/10/18 06:53:44 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/10/25 15:22:33 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/10/18 06:53:44 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/10/25 15:22:33 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -506,6 +506,18 @@ void checkWorkerExit()
                       value
                       );
       if ( value != 0 ) {
+        /*
+         * Reset BUSY status in case child terminated
+         * without cleanup
+         */
+        if ( item->tape->tapereq.mode == WRITE_ENABLE ) {
+          (void)rtcpcld_updateTape(
+                                   item->tape,
+                                   NULL,
+                                   1,
+                                   0
+                                   );
+        }
         (void)rtcpcld_setVIDFailedStatus(item->tape);
       }
       CLIST_DELETE(requestList,item);
@@ -1003,7 +1015,7 @@ int rtcpcld_main(
                         sstrerror(serrno),
                         RTCPCLD_LOG_WHERE
                         );
-        rc = rtcpcld_updateVIDStatus(tape, TAPE_WAITDRIVE, TAPE_FAILED);
+        rc = rtcpcld_updateTapeStatus(tape, TAPE_WAITDRIVE, TAPE_FAILED);
       }
       /*
        * break out from for(;;), cleanup and exit
@@ -1023,7 +1035,7 @@ int rtcpcld_main(
       }
       tapeArray = NULL;
       cnt = 0;
-      rc = rtcpcld_getVIDsToDo(&tapeArray,&cnt);
+      rc = rtcpcld_getTapesToDo(&tapeArray,&cnt);
       if ( rc == -1 ) {
         (void)dlf_write(
                         mainUuid,
