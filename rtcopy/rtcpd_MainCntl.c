@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.14 $ $Date: 2000/01/19 18:15:54 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.15 $ $Date: 2000/01/20 15:48:21 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -183,20 +183,27 @@ static int rtcpd_AllocBuffers() {
             return(-1);
         }
     }
+
+    return(0);
+}
+
+static int rtcpd_InitProcCntl() {
+    int rc;
+
     /*
      * Initialize global processing control variables
      */
     rc = Cthread_mutex_lock(&proc_cntl);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,
-            "rtcpd_AllocBuffers() Cthread_mutex_lock(proc_cntl): %s\n",
-            sstrerror(serrno));    
+            "rtcpd_InitProcCntl() Cthread_mutex_lock(proc_cntl): %s\n",
+            sstrerror(serrno));
         return(-1);
     }
     rc = Cthread_mutex_unlock(&proc_cntl);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,
-            "rtcpd_AllocBuffers() Cthread_mutex_unlock(proc_cntl): %s\n",
+            "rtcpd_InitProcCntl() Cthread_mutex_unlock(proc_cntl): %s\n",
             sstrerror(serrno));
         return(-1);
     }
@@ -207,7 +214,7 @@ static int rtcpd_AllocBuffers() {
     proc_cntl.cntl_lock = Cthread_mutex_lock_addr(&proc_cntl);
     if ( proc_cntl.cntl_lock == NULL ) {
         rtcp_log(LOG_ERR,
-            "rtcpd_AllocBuffers() Cthread_mutex_lock_addr(proc_cntl): %s\n",
+            "rtcpd_InitProcCntl() Cthread_mutex_lock_addr(proc_cntl): %s\n",
             sstrerror(serrno));
         return(-1);
     }
@@ -218,14 +225,14 @@ static int rtcpd_AllocBuffers() {
     rc = Cthread_mutex_lock(&proc_cntl.ProcError);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,
-            "rtcpd_AllocBuffers() Cthread_mutex_lock(ProcError): %s\n",
+            "rtcpd_InitProcCntl() Cthread_mutex_lock(ProcError): %s\n",
             sstrerror(serrno));    
         return(-1);
     }
     rc = Cthread_mutex_unlock(&proc_cntl.ProcError);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,
-            "rtcpd_AllocBuffers() Cthread_mutex_unlock(ProcError): %s\n",
+            "rtcpd_InitProcCntl() Cthread_mutex_unlock(ProcError): %s\n",
             sstrerror(serrno));
         return(-1);
     }
@@ -236,7 +243,7 @@ static int rtcpd_AllocBuffers() {
     proc_cntl.ProcError_lock = Cthread_mutex_lock_addr(&proc_cntl.ProcError);
     if ( proc_cntl.ProcError_lock == NULL ) {
         rtcp_log(LOG_ERR,
-            "rtcpd_AllocBuffers() Cthread_mutex_lock_addr(ProcError): %s\n",
+            "rtcpd_InitProcCntl() Cthread_mutex_lock_addr(ProcError): %s\n",
             sstrerror(serrno));
         return(-1);
     }
@@ -247,14 +254,14 @@ static int rtcpd_AllocBuffers() {
     rc = Cthread_mutex_lock(&proc_cntl.ReqStatus);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,
-            "rtcpd_AllocBuffers() Cthread_mutex_lock(ReqStatus): %s\n",
+            "rtcpd_InitProcCntl() Cthread_mutex_lock(ReqStatus): %s\n",
             sstrerror(serrno));    
         return(-1);
     }
     rc = Cthread_mutex_unlock(&proc_cntl.ReqStatus);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,
-            "rtcpd_AllocBuffers() Cthread_mutex_unlock(ReqStatus): %s\n",
+            "rtcpd_InitProcCntl() Cthread_mutex_unlock(ReqStatus): %s\n",
             sstrerror(serrno));
         return(-1);
     }
@@ -265,7 +272,7 @@ static int rtcpd_AllocBuffers() {
     proc_cntl.ReqStatus_lock = Cthread_mutex_lock_addr(&proc_cntl.ReqStatus);
     if ( proc_cntl.ReqStatus_lock == NULL ) {
         rtcp_log(LOG_ERR,
-            "rtcpd_AllocBuffers() Cthread_mutex_lock_addr(ReqStatus): %s\n",
+            "rtcpd_InitProcCntl() Cthread_mutex_lock_addr(ReqStatus): %s\n",
             sstrerror(serrno));
         return(-1);
     }
@@ -276,14 +283,14 @@ static int rtcpd_AllocBuffers() {
     rc = Cthread_mutex_lock(&proc_cntl.DiskFileAppend); 
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,
-            "rtcpd_AllocBuffers() Cthread_mutex_lock(DiskFileAppend): %s\n",
+            "rtcpd_InitProcCntl() Cthread_mutex_lock(DiskFileAppend): %s\n",
             sstrerror(serrno));
         return(-1);
     }
     rc = Cthread_mutex_unlock(&proc_cntl.DiskFileAppend);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,
-            "rtcpd_AllocBuffers() Cthread_mutex_unlock(DiskFileAppend): %s\n",
+            "rtcpd_InitProcCntl() Cthread_mutex_unlock(DiskFileAppend): %s\n",
             sstrerror(serrno));
         return(-1);
     }
@@ -294,7 +301,7 @@ static int rtcpd_AllocBuffers() {
     proc_cntl.DiskFileAppend_lock = Cthread_mutex_lock_addr(&proc_cntl.DiskFileAppend);
     if ( proc_cntl.DiskFileAppend_lock == NULL ) {
         rtcp_log(LOG_ERR,
-            "rtcpd_AllocBuffers() Cthread_mutex_lock_addr(DiskFileAppend_lock): %s\n",
+            "rtcpd_InitProcCntl() Cthread_mutex_lock_addr(DiskFileAppend_lock): %s\n",
             sstrerror(serrno));
         return(-1);
     }
@@ -751,6 +758,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
         return(-1);
     }
+    rc = rtcpd_InitProcCntl();
 
     /*
      * Loop to get the full request
