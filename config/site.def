@@ -33,7 +33,7 @@
 #define CupvConfigFile	/etc/castor/CUPVCONFIG
 #endif
 #define CupvHost	"castorcupv"
-#define PolicySpool	/etc/castor/expert
+#define PolicySpool	$(DESTDIR)/etc/castor/expert
 #define CupvSpool	/var/spool/upv
 #define RmMasterSpool	/var/spool/rmmaster
 #if defined(_WIN32)
