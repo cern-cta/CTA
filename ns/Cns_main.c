@@ -34,9 +34,6 @@ static char sccsid[] = "@(#)Cns_main.c,v 1.35 2004/03/03 08:51:30 CERN IT-PDP/DM
 #ifdef CSEC
 #include "Csec_api.h"
 #endif
-#if !defined(linux)
-extern char *sys_errlist[];
-#endif
 
 int being_shutdown;
 char db_pwd[33];
@@ -232,8 +229,8 @@ struct main_args *main_args;
 main()
 {
 #if ! defined(_WIN32)
- /* 	if ((maxfds = Cinitdaemon ("nsdaemon", NULL)) < 0)  */
-/*  		exit (SYERR);  */ 
+  	if ((maxfds = Cinitdaemon ("nsdaemon", NULL)) < 0)  
+  		exit (SYERR);   
 	exit (Cns_main (NULL));
 #else
 	if (Cinitservice ("cns", &Cns_main))
@@ -256,7 +253,7 @@ void *arg;
 	Csec_server_reinit_context(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
 	if (Csec_server_establish_context(&(thip->sec_ctx),thip->s) < 0) {
 	  nslogit(func, "Could not establish context: %s !\n", Csec_geterrmsg());
-	  return -1;
+	  return NULL;
 	}
 	Csec_server_get_client_username(&(thip->sec_ctx), &(thip->Csec_uid), &(thip->Csec_gid));
 	nslogit(func, "CSEC: Client is %s (%d/%d)\n",
@@ -325,7 +322,7 @@ char **clienthost;
 		if (l > 0)
 			nslogit (func, NS004, l);
 		else if (l < 0)
-			nslogit (func, NS002, "netread", sys_errlist[errno]);
+			nslogit (func, NS002, "netread", strerror(errno));
 		return (SEINTERNAL);
 	}
 }
