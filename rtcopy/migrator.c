@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.34 $ $Release$ $Date: 2005/01/16 13:27:34 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.35 $ $Release$ $Date: 2005/01/17 13:58:54 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.34 $ $Release$ $Date: 2005/01/16 13:27:34 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.35 $ $Release$ $Date: 2005/01/17 13:58:54 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -255,10 +255,19 @@ int migratorCallbackFileCopied(
                       childUuid,
                       RTCPCLD_LOG_MSG(RTCPCLD_MSG_STAGED),
                       castorFileId,
-                      6,
+                      9,
                       "",
                       DLF_MSG_PARAM_TPVID,
                       tapereq->vid,
+                      "TPSERV",
+                      DLF_MSG_PARAM_STR,
+                      tapereq->server,
+                      "TPDRIVE",
+                      DLF_MSG_PARAM_STR,
+                      tapereq->unit,
+                      "",
+                      DLF_MSG_PARAM_UUID,
+                      tapereq->rtcpReqId,
                       "FSEQ",
                       DLF_MSG_PARAM_INT,
                       filereq->tape_fseq,
@@ -508,6 +517,9 @@ int migratorCallback(
                                     filereq
                                     );
     }
+    if ( filereq->proc_status == RTCP_REQUEST_MORE_WORK ) {
+      msgNo = RTCPCLD_MSG_CALLBACK_ADDGETW;
+    }
     break;
   default:
     msgNo = RTCPCLD_MSG_INTERNAL;
@@ -530,7 +542,7 @@ int migratorCallback(
                       childUuid,
                       RTCPCLD_LOG_MSG(msgNo),
                       castorFileId,
-                      9,
+                      8,
                       "",
                       DLF_MSG_PARAM_TPVID,
                       tapereq->vid,
@@ -543,9 +555,6 @@ int migratorCallback(
                       "",
                       DLF_MSG_PARAM_UUID,
                       tapereq->rtcpReqId,
-                      "",
-                      DLF_MSG_PARAM_UUID,
-                      filereq->stgReqId,
                       "FSEQ",
                       DLF_MSG_PARAM_INT,
                       filereq->tape_fseq,
@@ -573,7 +582,7 @@ int migratorCallback(
                       childUuid,
                       RTCPCLD_LOG_MSG(msgNo),
                       castorFileId,
-                      13,
+                      12,
                       "",
                       DLF_MSG_PARAM_TPVID,
                       tapereq->vid,
@@ -586,9 +595,6 @@ int migratorCallback(
                       "",
                       DLF_MSG_PARAM_UUID,
                       tapereq->rtcpReqId,
-                      "",
-                      DLF_MSG_PARAM_UUID,
-                      filereq->stgReqId,
                       "FSEQ",
                       DLF_MSG_PARAM_INT,
                       filereq->tape_fseq,

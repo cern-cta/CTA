@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.17 $ $Release$ $Date: 2005/01/05 13:47:08 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.18 $ $Release$ $Date: 2005/01/17 13:58:54 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.17 $ $Release$ $Date: 2005/01/05 13:47:08 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.18 $ $Release$ $Date: 2005/01/17 13:58:54 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -279,6 +279,10 @@ int recallerCallbackFileCopied(
     if ( rc == -1 ) {
       save_serrno = serrno;
       LOG_SYSCALL_ERR("rtcpcld_checkNsSegment()");
+      (void)rtcpcld_updcRecallFailed(
+                                     tape,
+                                     file
+                                     );
       (void)rtcpcld_unlockTape();
       (void)updateSegmCount(0,0,1);
       serrno = save_serrno;
@@ -292,6 +296,10 @@ int recallerCallbackFileCopied(
     if ( rc == -1 ) {
       save_serrno = serrno;
       LOG_SYSCALL_ERR("rtcpcld_updcFileRecalled()");
+      (void)rtcpcld_updcRecallFailed(
+                                     tape,
+                                     file
+                                     );
       (void)rtcpcld_unlockTape();
       (void)updateSegmCount(0,0,1);
       serrno = save_serrno;
@@ -303,10 +311,19 @@ int recallerCallbackFileCopied(
                     childUuid,
                     RTCPCLD_LOG_MSG(RTCPCLD_MSG_STAGED),
                     castorFileId,
-                    6,
+                    9,
                     "",
                     DLF_MSG_PARAM_TPVID,
                     tapereq->vid,
+                    "TPSERV",
+                    DLF_MSG_PARAM_STR,
+                    tapereq->server,
+                    "TPDRIVE",
+                    DLF_MSG_PARAM_STR,
+                    tapereq->unit,
+                    "",
+                    DLF_MSG_PARAM_UUID,
+                    tapereq->rtcpReqId,
                     "FSEQ",
                     DLF_MSG_PARAM_INT,
                     filereq->tape_fseq,
@@ -567,6 +584,9 @@ int recallerCallback(
     } else {
       (void)updateSegmCount(0,0,1);
     }
+    if ( filereq->proc_status == RTCP_REQUEST_MORE_WORK ) {
+      msgNo = RTCPCLD_MSG_CALLBACK_ADDGETW;
+    }
     break;
   default:
     msgNo = RTCPCLD_MSG_INTERNAL;
@@ -591,7 +611,7 @@ int recallerCallback(
                       childUuid,
                       RTCPCLD_LOG_MSG(msgNo),
                       castorFileId,
-                      9,
+                      8,
                       "",
                       DLF_MSG_PARAM_TPVID,
                       tapereq->vid,
@@ -604,9 +624,6 @@ int recallerCallback(
                       "",
                       DLF_MSG_PARAM_UUID,
                       tapereq->rtcpReqId,
-                      "",
-                      DLF_MSG_PARAM_UUID,
-                      filereq->stgReqId,
                       "FSEQ",
                       DLF_MSG_PARAM_INT,
                       filereq->tape_fseq,
@@ -634,7 +651,7 @@ int recallerCallback(
                       childUuid,
                       RTCPCLD_LOG_MSG(msgNo),
                       castorFileId,
-                      13,
+                      12,
                       "",
                       DLF_MSG_PARAM_TPVID,
                       tapereq->vid,
@@ -647,9 +664,6 @@ int recallerCallback(
                       "",
                       DLF_MSG_PARAM_UUID,
                       tapereq->rtcpReqId,
-                      "",
-                      DLF_MSG_PARAM_UUID,
-                      filereq->stgReqId,
                       "FSEQ",
                       DLF_MSG_PARAM_INT,
                       filereq->tape_fseq,
