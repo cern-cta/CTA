@@ -1,6 +1,6 @@
-.\"   $Id: Cthread.man,v 1.7 2000/07/03 07:44:10 jdurand Exp $
+.\"   $Id: Cthread.man,v 1.8 2001/06/12 06:37:20 jdurand Exp $
 .\"
-.TH CTHREAD "3" "$Date: 2000/07/03 07:44:10 $" "CASTOR" "Common Library Functions"
+.TH CTHREAD "3" "$Date: 2001/06/12 06:37:20 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCthread\fP \- \fBCASTOR\fP \fBThread\fP inferface
 .SH SYNOPSIS
@@ -210,7 +210,8 @@ Return value is 0 on success, or -1 on error.
 that he have previously allocated, with the
 .I global_key
 address. If he tries to do so without calling previously \fBCthread_getspecific\fP, then such a call will be done internally.
-
+.P
+Return value is 0 on success, or -1 on error.
 .SH EXAMPLES
 .B Here is an example with thread-specific data
 .P
@@ -310,8 +311,4 @@ For these two last functions, \fBCthread\fP will garbage itself its eventual lis
 \fBpthread\fP, \fBDCE\fP, \fBLinuxThreads\fP, \fBWin32\fP
 
 .SH AUTHOR
-\fBJean-Damien Durand\fP (Jean-Damien.Durand@cern.ch)
-.br
-\fBOlof Barring\fP (Olof.Barring@cern.ch)
-
-
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
