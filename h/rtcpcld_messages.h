@@ -46,8 +46,13 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_WAITSEGMS,
     RTCPCLD_MSG_NOMORESEGMS,
     RTCPCLD_MSG_UNEXPECTED_NEWSEGM,
-    RTCPCLD_MSG_RESERVED29,
-    RTCPCLD_MSG_RESERVED30
+    RTCPCLD_MSG_WAITNEWSEGMS,
+    RTCPCLD_MSG_WAITTIMEOUT,
+    RTCPCLD_MSG_RESERVED31,
+    RTCPCLD_MSG_RESERVED32,
+    RTCPCLD_MSG_RESERVED33,
+    RTCPCLD_MSG_RESERVED34,
+    RTCPCLD_MSG_RESERVED35
 };
 
 struct RtcpcldMessages {
@@ -87,8 +92,13 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_WAITSEGMS, DLF_LVL_SYSTEM, "Incomplete segments found. Wait for completion update"},
     { RTCPCLD_MSG_NOMORESEGMS, DLF_LVL_SYSTEM, "No more segments to process"},
     { RTCPCLD_MSG_UNEXPECTED_NEWSEGM, DLF_LVL_ERROR, "Unexpected new segment not updated"},
-    { RTCPCLD_MSG_RESERVED29, DLF_LVL_DEBUG, ""},
-    { RTCPCLD_MSG_RESERVED30, DLF_LVL_DEBUG, ""}
+    { RTCPCLD_MSG_WAITNEWSEGMS, DLF_LVL_SYSTEM, "Wait for new segments"},
+    { RTCPCLD_MSG_WAITTIMEOUT, DLF_LVL_SYSTEM, "Waiting for new/incomplete segments timeout"},
+    { RTCPCLD_MSG_RESERVED31, DLF_LVL_DEBUG,""},
+    { RTCPCLD_MSG_RESERVED32, DLF_LVL_DEBUG,""},
+    { RTCPCLD_MSG_RESERVED33, DLF_LVL_DEBUG,""},
+    { RTCPCLD_MSG_RESERVED34, DLF_LVL_DEBUG,""},
+    { RTCPCLD_MSG_RESERVED35, DLF_LVL_DEBUG,""}
 };
 #else /* RTCPCLD_COMMON */
 extern struct RtcpcldMessages rtcpcldMessages;
