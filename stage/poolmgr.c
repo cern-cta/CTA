@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.125 2001/03/27 09:08:44 jdurand Exp $
+ * $Id: poolmgr.c,v 1.126 2001/03/27 15:06:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.125 $ $Date: 2001/03/27 09:08:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.126 $ $Date: 2001/03/27 15:06:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -113,6 +113,7 @@ struct files_per_stream {
 /* This structure is used for the qsort on pool elements */
 struct pool_element_ext {
   u_signed64 free;
+  u_signed64 capacity;
   int nbreadaccess;
   int nbwriteaccess;
   int mode;
@@ -3767,6 +3768,7 @@ void bestnextpool_out(nextout,mode)
   struct pool_element *elemp;
   char *func = "bestnextpool_out";
   char tmpbuf[21];
+  char tmpbuf2[21];
 
   /* We loop until we find a poolout that have no migrator, the bigger space available, the less */
   /* contention possible */
@@ -3804,6 +3806,7 @@ void bestnextpool_out(nextout,mode)
       this_best_element += nbest_elements;
     }
     this_best_element->free = this_element->free;
+    this_best_element->capacity = this_element->capacity;
     this_best_element->nbreadaccess = this_element->nbreadaccess;
     this_best_element->nbwriteaccess = this_element->nbwriteaccess;
     this_best_element->mode = mode;
@@ -3837,7 +3840,7 @@ void bestnextpool_out(nextout,mode)
 
 #ifdef STAGER_DEBUG
     for (j = 0, this_best_element = best_elements; j < nbest_elements; j++, this_best_element++) {
-      stglogit(func, "rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s\n",
+      stglogit(func, "rank %2d: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s capacity=%s\n",
                j,
                this_best_element->server,
                this_best_element->dirpath,
@@ -3847,12 +3850,13 @@ void bestnextpool_out(nextout,mode)
                this_best_element->nbwriteserver,
                this_best_element->poolmigrating,
                u64tostru(this_best_element->free, tmpbuf, 0)
+               u64tostru(this_best_element->capacity, tmpbuf2, 0)
                );
     }
 #endif
   } else {
 #ifdef STAGER_DEBUG
-    stglogit(func, "only one element: %10s %30s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s\n",
+    stglogit(func, "only one element: %10s %30s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s capacity=%s\n",
              this_best_element->server,
              this_best_element->dirpath,
              this_best_element->nbreadaccess,
@@ -3861,6 +3865,7 @@ void bestnextpool_out(nextout,mode)
              this_best_element->nbwriteserver,
              this_best_element->poolmigrating,
              u64tostru(this_best_element->free, tmpbuf, 0)
+             u64tostru(this_best_element->capacity, tmpbuf, 0)
              );
 #endif
   }
@@ -3892,7 +3897,7 @@ void bestnextpool_out(nextout,mode)
     stglogit(func, "something fishy happened - using %s\n", thispool_out);
     strcpy(nextout, thispool_out);
   } else {
-    stglogit(func, "selected element: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s\n",
+    stglogit(func, "selected element: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s capacity=%s\n",
              this_best_element->server,
              this_best_element->dirpath,
              this_best_element->nbreadaccess,
@@ -3900,7 +3905,8 @@ void bestnextpool_out(nextout,mode)
              this_best_element->nbreadserver,
              this_best_element->nbwriteserver,
              this_best_element->poolmigrating,
-             u64tostru(this_best_element->free, tmpbuf, 0)
+             u64tostru(this_best_element->free, tmpbuf, 0),
+             u64tostru(this_best_element->capacity, tmpbuf2, 0)
              );
   }
 
@@ -4153,14 +4159,30 @@ int pool_elements_cmp(p1,p2)
       if ((fp1->nbreadaccess == 0) && (fp2->nbreadaccess == 0)) {
 
         if (fp1->nbwriteaccess == fp2->nbwriteaccess) {
+          u_signed64 fp1_before_fraction, fp1_after_fraction;
+          u_signed64 fp2_before_fraction, fp2_after_fraction;
 
         pool_elements_cmp_vs_free:
-          if (fp1->free > fp2->free) {
+          fp1_before_fraction = fp1->capacity ? (100 * fp1->free) / fp1->capacity : 0;
+          fp1_after_fraction = fp1->capacity ?
+            (10 * (fp1->free * 100 - fp1->capacity * fp1_before_fraction)) / fp1->capacity :
+            0;
+          fp2_before_fraction = fp2->capacity ? (100 * fp2->free) / fp2->capacity : 0;
+          fp2_after_fraction = fp2->capacity ?
+            (10 * (fp2->free * 100 - fp2->capacity * fp2_before_fraction)) / fp2->capacity :
+            0;
+          if (fp1_before_fraction > fp2_before_fraction) {
             return(-1);
-          } else if (fp1->free < fp2->free) {
+          } else if (fp1_before_fraction < fp2_before_fraction) {
             return(1);
           } else {
-            return(0);
+            if (fp1_after_fraction > fp2_after_fraction) {
+              return(-1);
+            } else if (fp1_after_fraction < fp2_after_fraction) {
+              return(1);
+            } else {
+              return(0);
+            }
           }
 
         } else {
