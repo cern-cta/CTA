@@ -117,7 +117,7 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 									if (strlen(p) <= CA_MAXUSRNAMELEN) {
 										DrvReq->is_name = 1;
 										strcpy(DrvReq->name,p);
-										log(LOG_INFO,"vdqm_SetDedicate() : will use string match on name=%d\n",(int) DrvReq->name);
+										log(LOG_INFO,"vdqm_SetDedicate() : will use string match on name=%s\n",DrvReq->name);
 									}
 									if (DrvReq->newdedicate[0] != '\0') strcat(DrvReq->newdedicate,",");
 									strcat(DrvReq->newdedicate,r);
