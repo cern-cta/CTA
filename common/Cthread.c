@@ -18,6 +18,7 @@ static char sccsid[] = "@(#)Cthread.c,v 1.43 2000/08/23 13:59:12 CERN IT-PDP/DM 
 #include <serrno.h>
 #include <errno.h>
 #include <osdep.h>
+#include <signal.h>
 
 #ifdef DEBUG
 #ifndef CTHREAD_DEBUG
@@ -4938,3 +4939,158 @@ int DLL_DECL _Cthread_self() {
 void DLL_DECL Cthread_unprotect() {
   _Cthread_unprotect = 1;
 }
+
+/* ============================================ */
+/* Routine  : Cthread_Kill                      */
+/* Arguments: caller source file                */
+/*            caller source line                */
+/*            Cthread ID                        */
+/*            signal number                     */
+/* -------------------------------------------- */
+/* Output   : integer  0 - OK                   */
+/*                   < 0 - Error                */
+/* -------------------------------------------- */
+/* History:                                     */
+/* 27-NOV-2001       First implementation       */
+/*                   Jean-Damien.Durand@cern.ch */
+/* ============================================ */
+int DLL_DECL Cthread_Kill(file, line, cid, signo)
+     char *file;
+     int line;
+     int cid;
+     int signo;
+{
+  struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
+  int                   n;                /* Status           */
+
+#ifdef CTHREAD_DEBUG
+  if (file != NULL) {
+    if (Cthread_debug != 0)
+      log(LOG_INFO,
+          "[Cthread    [%2d]] In Cthread_kill(%d,%d) called at/behind %s:%d\n",
+          _Cthread_self(),
+          cid, signo,
+          file, line);
+  }
+#endif
+
+  /* Make sure initialization is/was done */
+  if ( _Cthread_once_status && _Cthread_init() ) return(-1);
+
+  /* We check that this cid correspond to a known */
+  /* process                                      */
+  if (_Cthread_obtain_mtx(file,line,&(Cthread.mtx),-1))
+    return(-1);
+
+  n = 1;
+  while (current->next != NULL) {
+    current = current->next;
+    if (current->cid == cid) {
+      n = 0;
+      break;
+    }
+  }
+  _Cthread_release_mtx(file,line,&(Cthread.mtx));
+
+  if (n) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
+#ifdef _NOCTHREAD
+  n = kill(current->pid,signo);
+  if (n != 0)
+    serrno = SEINTERNAL;
+  return(n != 0 ? -1 : 0);
+#else /* ifdef _NOCTHREAD */
+#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
+  if (TerminateThread((HANDLE)current->pid,(DWORD)signo) == 0) { /* Failure */
+    return(-1);
+  }
+  /* Memory Leak/Unpredictable behaviour possible from now on - cross your finger */
+  /* No other safe AND simple method to kill another thread with _WIN32 ? */
+  return(0);
+#else /* _CTHREAD_PROTO_WIN32 */
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+  if ((n = pthread_kill(current->pid,signo))) {
+    errno = n;
+    serrno = SECTHREADERR;
+    return(-1);
+  }
+  return(0);
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+  serrno = SEOPNOTSUP; /* Does not exist on DCE */
+  return(-1);
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+  if ((n = pthread_kill(current->pid,signo))) {
+    errno = n;
+    serrno = SECTHREADERR;
+    return(-1);
+  }
+  return(0);
+#  else
+  serrno = SEOPNOTSUP;
+  return(-1);
+#  endif
+#endif /* _CTHREAD_PROTO_WIN32 */
+#endif /* ifdef _NOCTHREAD */
+}
+
+/* ============================================ */
+/* Routine  : Cthread_Exit                      */
+/* Arguments: caller source file                */
+/*            caller source line                */
+/*            status                            */
+/* -------------------------------------------- */
+/* Note: WE ASSUME status is an int * in non-   */
+/* multithreaded applications and on _WIN32     */
+/* -------------------------------------------- */
+/* Output   : integer  0 - OK                   */
+/*                   < 0 - Error                */
+/* -------------------------------------------- */
+/* History:                                     */
+/* 27-NOV-2001       First implementation       */
+/*                   Jean-Damien.Durand@cern.ch */
+/* ============================================ */
+void DLL_DECL Cthread_Exit(file, line, status)
+     char *file;
+     int line;
+     void *status;
+{
+
+#ifdef CTHREAD_DEBUG
+  if (file != NULL) {
+    if (Cthread_debug != 0)
+      log(LOG_INFO,
+          "[Cthread    [%2d]] In Cthread_exit(0x%lx) called at/behind %s:%d\n",
+          _Cthread_self(),
+          (unsigned long) status,
+          file, line);
+  }
+#endif
+
+  /* Make sure initialization is/was done */
+  if ( _Cthread_once_status && _Cthread_init() ) return;
+
+#ifdef _NOCTHREAD
+  exit(status != NULL ? (int) * (int *) status : 0);
+#else /* ifdef _NOCTHREAD */
+#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
+  _endthreadex(status != NULL ? (unsigned) * (int *) status : 0); /* Assume an int *, changed to unsigned afterwards */
+  serrno = SEOPNOTSUP; /* Don't know how to do it yet */
+  return;
+#else /* _CTHREAD_PROTO_WIN32 */
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+  pthread_exit(status);
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+  pthread_exit(status);
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+  pthread_exit(status);
+#  else
+  serrno = SEOPNOTSUP;
+  return;
+#  endif
+#endif /* _CTHREAD_PROTO_WIN32 */
+#endif /* ifdef _NOCTHREAD */
+}
+

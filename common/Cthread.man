@@ -1,6 +1,6 @@
-.\"   $Id: Cthread.man,v 1.9 2001/09/26 09:13:48 jdurand Exp $
+.\"   $Id: Cthread.man,v 1.10 2001/11/30 11:18:05 jdurand Exp $
 .\"
-.TH CTHREAD "3" "$Date: 2001/09/26 09:13:48 $" "CASTOR" "Common Library Functions"
+.TH CTHREAD "3" "$Date: 2001/11/30 11:18:05 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCthread\fP \- \fBCASTOR\fP \fBThread\fP inferface
 .SH SYNOPSIS
@@ -31,6 +31,10 @@
 .BI "int Cthread_cond_broadcast(void *" addr ");"
 .P
 .BI "int Cthread_detach(int " cid ");"
+.P
+.BI "int Cthread_kill(int " cid ", int " signo ");"
+.P
+.BI "int Cthread_exit(void *" status ");"
 .P
 .BI "int Cthread_self(void);"
 .P
@@ -111,6 +115,20 @@ You have to remind that creating a detachable thread do not work immediately at 
 Return value is the \fBCthread\fP identifier
 .I "cid"
 , greater or equal to zero, or -1 on error.
+.P
+\fBCthread_exit\fP makes current thread exiting. If
+.BI status
+isn't NULL, it is assumed to point to an integer whose value if the status that a \fBCthread_join\fP would received, in case the thread is joinable. Please note that \fBCthread_exit\fP is dangerous and non-recommended on Windows platform.
+.P
+Return value is 0 on success, or -1 on error.
+.P
+\fBCthread_kill\fP sends
+.BI signo
+signal number to the thread
+.BI cid.
+This affect the status that a \fBCthread_join\fP would received, in case the thread to be killed is joinable. Please note that \fBCthread_kill\fP is not supported on DCE threads.
+.P
+Return value is 0 on success, or -1 on error.
 .P
 \fBCthread_join\fP suspends the calling thread until the one identified with the \fBCthread\fP identifier
 .I "cid"
