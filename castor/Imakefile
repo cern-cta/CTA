@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.16 $ $Release$ $Date: 2004/06/04 09:44:22 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.17 $ $Release$ $Date: 2004/06/04 13:49:24 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -26,8 +26,8 @@
 
 #include <Project.tmpl>
 
-SUBDIRS = $(DBCPPDIR) $(RHCPPDIR) $(DSTAGECPPDIR)
-DEPENDDIRS = $(DBCPPDIR) $(RHCPPDIR) $(DSTAGECPPDIR)
+SUBDIRS = $(DBCPPDIR) $(RHCPPDIR) $(DSTAGECPPDIR) $(PROTOCPPDIR)
+DEPENDDIRS = $(DBCPPDIR) $(RHCPPDIR) $(DSTAGECPPDIR) $(PROTOCPPDIR)
 
 #if _AIX
 LIBS = -L../lib -lshift
@@ -114,6 +114,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamTapeCnv.cpp \
               io/StreamTapePoolCnv.cpp \
               io/StreamTapeRequestCnv.cpp \
+              io/StreamStringResponseCnv.cpp \
               rh/Client.cpp \
               rh/ClientCInt.cpp \
               rh/File.cpp \
@@ -130,6 +131,10 @@ STGLIB_SRCS = IAddressCInt.cpp \
               rh/StageUpdcRequestCInt.cpp \
               rh/StageQryRequest.cpp \
               rh/StageQryRequestCInt.cpp \
+              rh/Response.cpp \
+              rh/ResponseCInt.cpp \
+              rh/StringResponse.cpp \
+              rh/StringResponseCInt.cpp \
               stager/IStagerSvcCInt.cpp \
               stager/CastorFile.cpp \
               stager/CastorFileCInt.cpp \

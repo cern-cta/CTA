@@ -344,6 +344,14 @@ DBCPPDIR = db
 ORACPPDIR = ora
 #endif
 
+#if BuildProtoCppStager
+#if BuildClientCpp != YES
+#undef BuildClientCpp
+#define BuildClientCpp YES
+#endif
+PROTOCPPDIR = proto
+#endif
+
 #if BuildClientCpp
 COMMONCPPDIR = castor
 #endif

@@ -206,6 +206,7 @@
 #define BuildRHCpp              NO
 #define BuildOraCpp             NO
 #define BuildCppTest	        NO
+#define BuildProtoCppStager     NO
 
 #define Accounting		YES
 #define ClientLogging           NO
