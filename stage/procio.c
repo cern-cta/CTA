@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.134 2001/06/25 08:58:58 jdurand Exp $
+ * $Id: procio.c,v 1.135 2001/07/04 12:20:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.134 $ $Date: 2001/06/25 08:58:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.135 $ $Date: 2001/07/04 12:20:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3520,100 +3520,103 @@ isstaged(cur, p, poolflag, poolname, rdonly)
 				}
 			}
 
-			if (stcp_castor_name != NULL) {
-				if ((stcp_castor_name == stcp_castor_invariants) || ((cur->u1.h.server[0] == '\0') || (cur->u1.h.fileid == 0))) {
-					/* If we matched totally name + invariants, with same stcp, we got it */
-					/* If we matched totally name and there is no valid invariant pair in input, we also got it */
+			/* If this stcp has matched - do some work with it */
+			if ((stcp_castor_name == stcp) || (stcp_castor_invariants == stcp)) {
+				if (stcp_castor_name != NULL) {
+					if ((stcp_castor_name == stcp_castor_invariants) || ((cur->u1.h.server[0] == '\0') || (cur->u1.h.fileid == 0))) {
+						/* If we matched totally name + invariants, with same stcp, we got it */
+						/* If we matched totally name and there is no valid invariant pair in input, we also got it */
+	
+						/* By construction, here, either stcp_castor_name == stcp_castor_invariants, either */
+						/* stcp_castor_invariants == NULL and will remain like this forever because no invariants supplied */
 
-					/* By construction, here, either stcp_castor_name == stcp_castor_invariants, either */
-					/* stcp_castor_invariants == NULL and will remain like this forever because no invariants supplied */
-
-					if (! rdonly) {
-						/* We are not obliged to scan the whole catalog - we can break right now */
-						found = 1;
-						break;
-					} else {
-						/* We are obliged to check if there is a STAGEIN|STAGED|STAGE_RDONLY entry anywhere else */
-						if (stcp_castor_name->status == (STAGEIN|STAGED|STAGE_RDONLY)) {
-							/* If by chance we get it right now, that's perfect */
+						if (! rdonly) {
+							/* We are not obliged to scan the whole catalog - we can break right now */
 							found = 1;
-							stcp_rdonly = stcp;
 							break;
 						} else {
-							found_regardless_of_rdonly = 1;
-							if (stcp_regardless_of_rdonly == NULL) {
-								/* First time we execute this branch : no stcp_regardless_of_rdonly yet */
-								stcp_regardless_of_rdonly = stcp;
+							/* We are obliged to check if there is a STAGEIN|STAGED|STAGE_RDONLY entry anywhere else */
+							if (stcp_castor_name->status == (STAGEIN|STAGED|STAGE_RDONLY)) {
+								/* If by chance we get it right now, that's perfect */
+								found = 1;
+								stcp_rdonly = stcp;
+								break;
 							} else {
-								/* We are in a readonly mode - this mean that preference is always given to an */
-								/* entry not matching STAGEWRT or STAGEPUT or not PUT_FAILED */
-								if (
-									(
-										(
-											ISSTAGEWRT(stcp_regardless_of_rdonly) ||
-											ISSTAGEPUT(stcp_regardless_of_rdonly)
-										) &&
-										ISCASTORMIG(stcp)
-									) ||
-									(
-										(
-											((stcp->status & STAGED) == STAGED) && 
-											((stcp_regardless_of_rdonly->status & STAGED) != STAGED)
-										)
-									)
-								   ) {
+								found_regardless_of_rdonly = 1;
+								if (stcp_regardless_of_rdonly == NULL) {
+									/* First time we execute this branch : no stcp_regardless_of_rdonly yet */
 									stcp_regardless_of_rdonly = stcp;
-								}
-							}
-						}
-						/* Otherwise we will continue to scan the catalog anyway */
-					}
-				} else if (stcp_castor_invariants != NULL) {
-					/* If we matched totally name + invariants, with not same stcp, we neverthless get out */
-					/* unless we match other entries with same invariants, we are in read-only mode and current */
-					/* found invariant does NOT have this read-only mode. In any case we will exit the loop */
-					/* at the end of this else branch */
-					/* The stcp_castor_name pointer will be deleted because of wrong invariants */
-					if (rdonly && (stcp_castor_invariants->status != (STAGEIN|STAGED|STAGE_RDONLY))) {
-						struct stgcat_entry *stclp;
-						for (stclp = stcp_castor_invariants + 1; stclp < stce; stclp++) {
-							if (stclp->reqid == 0) break;
-							if (stclp->t_or_d != 'h') continue; /* Not CASTOR file */
-							/* if no pool specified, the file may reside in any pool */
-							if (poolflag == 0) {
-								if (stclp->poolname[0] == '\0') continue;
-							} else {
-								/* if a specific pool was requested, the file must be there */
-								if (poolflag > 0) {
-									if (strcmp (poolname, stclp->poolname)) continue;
 								} else {
-									/* if -p NOPOOL, the file should not reside in a pool */
-									if (poolflag < 0) {
-										if (stclp->poolname[0]) continue;
+									/* We are in a readonly mode - this mean that preference is always given to an */
+									/* entry not matching STAGEWRT or STAGEPUT or not PUT_FAILED */
+									if (
+										(
+											(
+												ISSTAGEWRT(stcp_regardless_of_rdonly) ||
+												ISSTAGEPUT(stcp_regardless_of_rdonly)
+											) &&
+											ISCASTORMIG(stcp)
+										) ||
+										(
+											(
+												((stcp->status & STAGED) == STAGED) && 
+												((stcp_regardless_of_rdonly->status & STAGED) != STAGED)
+											)
+										)
+									   ) {
+										stcp_regardless_of_rdonly = stcp;
 									}
 								}
 							}
-							if ((stclp->u1.h.fileid == stcp_castor_invariants->u1.h.fileid) &&
-								(strcmp(stclp->u1.h.server,stcp_castor_invariants->u1.h.server) == 0)) {
-								/* Who knows */
-								if (strcmp(stclp->u1.h.xfile,stcp_castor_invariants->u1.h.xfile) != 0) {
-									sendrep (rpfd, MSG_ERR, STG154, stclp->u1.h.xfile, stcp_castor_invariants->u1.h.xfile, u64tostr((u_signed64) stclp->u1.h.fileid, tmpbuf, 0), stclp->u1.h.server, stclp->reqid);
-									strcpy(stclp->u1.h.xfile, stcp_castor_invariants->u1.h.xfile);
-#ifdef USECDB
-									if (stgdb_upd_stgcat(&dbfd,stclp) != 0) {
-										stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+							/* Otherwise we will continue to scan the catalog anyway */
+						}
+					} else if (stcp_castor_invariants != NULL) {
+						/* If we matched totally name + invariants, with not same stcp, we neverthless get out */
+						/* unless we match other entries with same invariants, we are in read-only mode and current */
+						/* found invariant does NOT have this read-only mode. In any case we will exit the loop */
+						/* at the end of this else branch */
+						/* The stcp_castor_name pointer will be deleted because of wrong invariants */
+						if (rdonly && (stcp_castor_invariants->status != (STAGEIN|STAGED|STAGE_RDONLY))) {
+							struct stgcat_entry *stclp;
+							for (stclp = stcp_castor_invariants + 1; stclp < stce; stclp++) {
+								if (stclp->reqid == 0) break;
+								if (stclp->t_or_d != 'h') continue; /* Not CASTOR file */
+								/* if no pool specified, the file may reside in any pool */
+								if (poolflag == 0) {
+									if (stclp->poolname[0] == '\0') continue;
+								} else {
+									/* if a specific pool was requested, the file must be there */
+									if (poolflag > 0) {
+										if (strcmp (poolname, stclp->poolname)) continue;
+									} else {
+										/* if -p NOPOOL, the file should not reside in a pool */
+										if (poolflag < 0) {
+											if (stclp->poolname[0]) continue;
+										}
 									}
-#endif
-									savereqs ();
 								}
-								if (stclp->status == (STAGEIN|STAGED|STAGE_RDONLY)) {
-									stcp_castor_invariants = stclp;
-									break;
+								if ((stclp->u1.h.fileid == stcp_castor_invariants->u1.h.fileid) &&
+									(strcmp(stclp->u1.h.server,stcp_castor_invariants->u1.h.server) == 0)) {
+									/* Who knows */
+									if (strcmp(stclp->u1.h.xfile,stcp_castor_invariants->u1.h.xfile) != 0) {
+										sendrep (rpfd, MSG_ERR, STG154, stclp->u1.h.xfile, stcp_castor_invariants->u1.h.xfile, u64tostr((u_signed64) stclp->u1.h.fileid, tmpbuf, 0), stclp->u1.h.server, stclp->reqid);
+										strcpy(stclp->u1.h.xfile, stcp_castor_invariants->u1.h.xfile);
+#ifdef USECDB
+										if (stgdb_upd_stgcat(&dbfd,stclp) != 0) {
+											stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+										}
+#endif
+										savereqs ();
+									}
+									if (stclp->status == (STAGEIN|STAGED|STAGE_RDONLY)) {
+										stcp_castor_invariants = stclp;
+										break;
+									}
 								}
 							}
 						}
+						break;
 					}
-					break;
 				}
 			}
 			/* We did not match name nor invariant */
