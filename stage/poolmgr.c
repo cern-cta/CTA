@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.159 2001/11/30 11:45:43 jdurand Exp $
+ * $Id: poolmgr.c,v 1.160 2001/12/04 10:26:29 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.159 $ $Date: 2001/11/30 11:45:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.160 $ $Date: 2001/12/04 10:26:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -94,6 +94,7 @@ static struct migrator *migrators;
 struct fileclass *fileclasses;
 static int nbmigrator;
 int nbpool;
+int nbhost;
 static char *nfsroot;
 static char **poolc;
 struct pool *pools;
@@ -242,6 +243,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
   nbmigrator_real = 0;
   nbmigrator = 0;
   nbpool = 0;
+  nbhost = 0;
   *defpoolname = '\0';
   *defpoolname_in = '\0';
   *defpoolname_out = '\0';
@@ -768,6 +770,30 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
   } else {
     /* This pointer will maintain a list of pools on which a gc have finished since last call */
     poolc = (char **) calloc (nbpool, sizeof(char *));
+    /* Count the number of different machines between all the pools */
+    for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
+      struct pool_element *elemp;
+      for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++) {
+        /* elemp->flag is always zero there because it is result of a calloc() */
+        if (elemp->flag == 0) {
+          int i2, j2;
+          struct pool *pool_p2;
+          struct pool_element *elemp2;
+          
+          elemp->flag = 1;
+          nbhost++;
+          /* Remove all elemps that share the same host [does not work if you refer same machine with different names...] */
+          for (i2 = 0, pool_p2 = pools; i2 < nbpool; i2++, pool_p2++) {
+            for (j2 = 0, elemp2 = pool_p2->elemp; j2 < pool_p2->nbelem; j2++, elemp2++) {
+              if ((elemp2->flag == 0) && (strcmp(elemp->server,elemp2->server) == 0)) {
+                elemp2->flag = 1;
+              }
+            }
+          }
+        }
+      }
+    }
+    stglogit (func, "... Detected %d different machine name(s) spreaded over %d pool(s)\n", nbhost, nbpool);
     return (0);
   }
 }
@@ -1591,6 +1617,7 @@ rwcountersfs(poolname, ipath, status, req_type)
     }
     break;
   default:
+    /*
     stglogit ("rwcountersfs", "### Warning, called in unsupported mode %d (%s)\n", req_type,
               req_type == STAGEIN ? "STAGEIN" :
               (req_type == STAGEQRY ? "STAGEQRY" :
@@ -1610,6 +1637,7 @@ rwcountersfs(poolname, ipath, status, req_type)
                 )
                )
               );
+    */
     return;      
   }
   if ((p = strchr (ipath, ':')) != NULL) {
@@ -1749,6 +1777,7 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
   struct migrator *sav_migrators;
   int sav_nbmigrator;
   int sav_nbpool;
+  int sav_nbhost;
   char **sav_poolc;
   struct pool *sav_pools;
   extern int migr_init;
@@ -1764,6 +1793,7 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
   sav_migrators = migrators;
   sav_nbmigrator = nbmigrator;
   sav_nbpool = nbpool;
+  sav_nbhost = nbhost;
   sav_poolc = poolc;
   sav_pools = pools;
 
@@ -1807,6 +1837,7 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
     migrators = sav_migrators;
     nbmigrator = sav_nbmigrator;
     nbpool = sav_nbpool;
+    nbhost = sav_nbhost;
     pools = sav_pools;
   } else {			/* free the old configuration */
     /* but keep pids of cleaner/migrator as well as started time if any */
@@ -3416,6 +3447,8 @@ int migpoolfiles(pool_p)
               goto stagewrt_hsm_retry;
             } else if ((serrno == SEINTERNAL) ||
                        (serrno == EINVAL)     ||
+                       (serrno == ESTKILLED)  ||
+                       (serrno == ESTCLEARED) ||
                        ISTAPESERRNO(serrno)   ||
                        ISVDQMSERRNO(serrno)
                        ) {
