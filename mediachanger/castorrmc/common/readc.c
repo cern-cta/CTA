@@ -1,10 +1,14 @@
 /*
- * Copyright (C) 1990-1997 by CERN/CN/SW/DC
+ * $Id: readc.c,v 1.2 1999/12/09 13:39:42 jdurand Exp $
+ */
+
+/*
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)readc.c	1.7 12/13/97 CERN CN-SW/DC Antoine Trannoy";
+static char sccsid[] = "@(#)$RCSfile: readc.c,v $ $Revision: 1.2 $ $Date: 1999/12/09 13:39:42 $ CERN/IT/PDP/DM Antoine Trannoy";
 #endif /* not lint */
 
 /* readc.c              Fortran callable C I/O functions                */

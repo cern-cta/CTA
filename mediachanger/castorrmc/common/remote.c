@@ -1,15 +1,5 @@
 /*
- * $Id: remote.c,v 1.4 1999/07/30 15:38:57 obarring Exp $
- * $Log: remote.c,v $
- * Revision 1.4  1999/07/30 15:38:57  obarring
- * Replace gethostbyname with Cgethostbyname (from Cnetdb.c)
- *
- * Revision 1.3  1999/07/28 16:16:19  obarring
- * Fix aggregate initialization for HPUX
- *
- * Revision 1.2  1999/07/26 12:24:15  obarring
- * Make MT safe
- *
+ * $Id: remote.c,v 1.5 1999/12/09 13:39:42 jdurand Exp $
  */
 
 /*
@@ -18,7 +8,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: remote.c,v 1.4 1999/07/30 15:38:57 obarring Exp $";
+static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.5 $ $Date: 1999/12/09 13:39:42 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdio.h>

@@ -1,30 +1,15 @@
 /*
- * $Id: socket_timeout.c,v 1.7 1999/10/26 11:52:19 jdurand Exp $
- *
- * $Log: socket_timeout.c,v $
- * Revision 1.7  1999/10/26 11:52:19  jdurand
- * Removed unused _netalarm(signo) function
- *
- * Revision 1.6  1999-10-20 20:41:48+02  jdurand
- * Removed the signal handling if compiled under Windows
- * Changed one errno setting to its serrno equivalent
- *
- * Revision 1.5  1999/10/15 14:49:06  jdurand
- * Wrapped sigaction aroung __INSURE__ #define because insure++ do not like at
- * all the parameters we give to sigaction - another side effect of insure++ ?
- *
- * Revision 1.4  1999-10-12 18:48:07+02  jdurand
- * *** empty log message ***
- *
- * Revision 1.3  1999-07-21 15:59:23+02  jdurand
- * For old AIX systems, fd_set is now known by including <sys/time.h>. So I put
- * it as an additional flag in Imakefile, used in Cpool.c and socket_timeout.c
- *
- * Revision 1.2  1999/07/20 08:49:22  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Added missing Id and Log CVS's directives
- *
+ * $Id: socket_timeout.c,v 1.8 1999/12/09 13:39:48 jdurand Exp $
  */
+
+/*
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.8 $ $Date: 1999/12/09 13:39:48 $ CERN IT-PDP/DM Jean-Damien Durand";
+#endif /* not lint */
 
 #include <stdlib.h>
 #include <errno.h>
