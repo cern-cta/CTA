@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.33 2000/04/04 13:43:39 jdurand Exp $
+ * $Id: stager.c,v 1.34 2000/04/05 11:18:01 jdurand Exp $
  */
 
 /*
@@ -11,7 +11,7 @@
 /* #define SKIP_FILEREQ_MAXSIZE */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.33 $ $Date: 2000/04/04 13:43:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.34 $ $Date: 2000/04/05 11:18:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -125,6 +125,7 @@ EXTERN_C int DLL_DECL dumpFileReq _PROTO((file_list_t *));
 	filereq.check_fid = NEW_FILE;                \
 	filereq.concat = NOCONCAT;                   \
 	filereq.maxsize = 0;                         \
+	filereq.stageSubreqID = -1;                  \
 	filereq.err.max_tpretry = -1;                \
 	filereq.err.max_cpretry = -1;                \
 	filereq.err.severity = RTCP_OK;              \
