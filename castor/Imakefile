@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.52 $ $Release$ $Date: 2004/11/22 16:27:35 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.53 $ $Release$ $Date: 2004/11/22 21:59:02 $ $Author: bcouturi $
 #
 # Make Castor libraries and executables
 #
@@ -103,6 +103,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               logbuf.cpp \
               stdbuf.cpp \
               client/BaseClient.cpp \
+              client/VectorResponseHandler.cpp \
               io/AbstractSocket.cpp \
               io/ClientSocket.cpp \
               io/ServerSocket.cpp \
