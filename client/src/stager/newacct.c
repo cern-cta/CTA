@@ -1,7 +1,10 @@
 /*
- * $Id: newacct.c,v 1.2 1999/07/21 16:25:00 jdurand Exp $
+ * $Id: newacct.c,v 1.3 1999/07/21 20:07:38 jdurand Exp $
  *
  * $Log: newacct.c,v $
+ * Revision 1.3  1999/07/21 20:07:38  jdurand
+ * *** empty log message ***
+ *
  * Revision 1.2  1999/07/21 16:25:00  jdurand
  * Declare external optarg and optind
  *
@@ -32,7 +35,7 @@ static char sccsid[] = "@(#)newacct.c	1.4 03/04/99  CERN CN-SW/DC Antoine Tranno
 #include <grp.h>
 #include <pwd.h>
 
-extern char * getacctent() ; 
+extern char * getacctent_r() ; 
 extern struct group * getgrnam() ; 
 
 static void setacct(pwd,account,shell_opt)
@@ -139,7 +142,7 @@ main(argc,argv)
 		exit(1) ; 
 	} 
 
-	if ( (cp= getacctent(pwd,account,buffer,sizeof(buffer))) == NULL ) {
+	if ( (cp= getacctent_r(pwd,account,buffer,sizeof(buffer))) == NULL ) {
 		if ( account )
 			(void) fprintf(stderr,"newacct: invalid account id specified\n") ;
 		else

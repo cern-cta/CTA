@@ -1,6 +1,9 @@
 /*
- * $Id: getacct.c,v 1.2 1999/07/21 16:25:41 obarring Exp $
+ * $Id: getacct.c,v 1.3 1999/07/21 20:07:46 jdurand Exp $
  * $Log: getacct.c,v $
+ * Revision 1.3  1999/07/21 20:07:46  jdurand
+ * *** empty log message ***
+ *
  * Revision 1.2  1999/07/21 16:25:41  obarring
  * Make MT safe
  *
@@ -12,7 +15,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: getacct.c,v 1.2 1999/07/21 16:25:41 obarring Exp $";
+static char cvsId[] = "$Id: getacct.c,v 1.3 1999/07/21 20:07:46 jdurand Exp $";
 #endif /* not lint */
 
 /*  getacct() - Getting the current account id  */
@@ -37,7 +40,9 @@ static char cvsId[] = "$Id: getacct.c,v 1.2 1999/07/21 16:25:41 obarring Exp $";
  * _WIN32 strtok() is already MT safe where as others wait
  * for next POXIS release
  */
+#if defined(_REENTRANT)
 #define strtok(X,Y) strtok_r(X,Y,&last)
+#endif
 #else
 extern uid_t getuid();
 #endif
@@ -46,7 +51,7 @@ extern uid_t getuid();
 #include <Cglobals.h>
 #include "getacct.h"
 
-extern char *getacctent();
+extern char *getacctent_r();
 
 
 char    *getacct_r(resbuf,resbufsiz) 
@@ -80,7 +85,7 @@ size_t resbufsiz;
      * Get account file entry
      */
 
-    cprv = getacctent(pwd, account, buf, (int)sizeof(buf));
+    cprv = getacctent_r(pwd, account, buf, (int)sizeof(buf));
 
     /*
      * Extract account id
