@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 1994-1998 by CERN/CN/PDP/DH
+ * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * @(#)sacct.h	1.10 11/30/98  CERN CN-PDP/DH   Jean-Philippe Baud
+ * @(#)$RCSfile: sacct.h,v $ $Revision: 1.2 $ $Date: 1999/09/20 12:25:46 $ CERN CN-PDP/DH   Jean-Philippe Baud
  */
-/* Include file for SHIFT software accounting */
+/* Include file for CASTOR software accounting */
 
+#include "Castor_limits.h"
 struct accthdr {	/* header for accounting record */
 	time_t	timestamp;
 	int	package;
@@ -74,19 +75,19 @@ struct acctrfio {       /* accounting record for rfio software */
 
 struct accttape {	/* accounting record for tape software */
 	int	subtype;
-#if (defined(sun) && !defined(SOLARIS)) || defined(_WIN32)
+#if defined(_WIN32)
 	int     uid;
 	int     gid;
 #else
 	uid_t	uid;
 	gid_t	gid;
-#endif /* (sun && !SOLARIS) || _WIN32 */
+#endif /* _WIN32 */
 	int	jid;
-	char	nqsid[16];
-	char	dgn[9];		/* CART, 8500, SMCF... */
-	char	unm[9];		/* unit name */
-	char	vid[7];
-	int	fseq;		/* file seq if TPPOSIT, queue size if TPDGQ */
+	char	filler[16];
+	char	dgn[CA_MAXDGNLEN+1];	/* CART, 8500, SMCF... */
+	char	drive[CA_MAXUNMLEN+1];	/* drive name */
+	char	vid[CA_MAXVIDLEN+1];
+	int	fseq;
 	int	reason;
 };
 
@@ -98,14 +99,14 @@ struct accttape {	/* accounting record for tape software */
 			/* subtypes for tape accounting records */
 
 #define	TPDSTART	0	/* tpdaemon started */
-#define	TPASSIGN	1	/* unit assigned */
+#define	TPASSIGN	1	/* drive assigned */
 #define	TP2MOUNT	2	/* tape to be mounted */
 #define	TPMOUNTED	3	/* tape mounted */
 #define	TPPOSIT		4	/* tape positionned to requested file */
 #define	TPUNLOAD	5	/* tape is unloading */
-#define	TPFREE		6	/* unit freed */
-#define	TPCONFUP	7	/* unit configured up */
-#define	TPCONFDN	8	/* unit configured down */
+#define	TPFREE		6	/* drive freed */
+#define	TPCONFUP	7	/* drive configured up */
+#define	TPCONFDN	8	/* drive configured down */
 #define	TPDGQ		9	/* device group queue */
 
 			/* tape remount reasons */
@@ -115,29 +116,53 @@ struct accttape {	/* accounting record for tape software */
 #define	TPM_WNGV	2	/* wrong vsn */
 #define	TPM_RSLT	3	/* reselect */
 
-#ifndef MAXHOSTNAMELEN
-#define MAXHOSTNAMELEN  64
-#endif
+			/* tape unload reason */
+
+#define	TPU_NORM	0	/* normal unload */
+#define	TPU_WNGR	1	/* wrong ring */
+#define	TPU_WNGV	2	/* wrong vsn */
+#define	TPU_RSLT	3	/* reselect */
+
+			/* tpconfig down reason */
+
+#define	TPCD_START	0	/* startup */
+#define	TPCD_CLN	1	/* cleaning */
+#define	TPCD_TST	2	/* test */
+#define	TPCD_HWF	3	/* HW failure */
+#define	TPCD_SYS	4	/* by system */
+#define	TPCD_SUS	5	/* drive suspect */
+#define	TPCD_UPG	6	/* drive upgrade */
+#define	TPCD_OPS	7	/* operational reason */
+
+			/* tpconfig up reason */
+
+#define	TPCU_START	0	/* startup */
+#define	TPCU_CLN	1	/* cleaned */
+#define	TPCU_RPL	2	/* replaced */
+#define	TPCU_RPR	3	/* repaired */
+#define	TPCU_PRV	4	/* preventive */
+#define	TPCU_UPG	5	/* drive upgraded */
+#define	TPCU_OPS	6	/* operational reason */
 
 struct acctrtcp {	/* accounting record for rtcopy software */
 	int	subtype;
-#if (defined(sun) && !defined(SOLARIS)) || defined(_WIN32)
+#if defined(_WIN32)
 	int     uid;
 	int     gid;
 #else
 	uid_t	uid;
 	gid_t	gid;
-#endif /* (sun && !SOLARIS) || _WIN32 */
+#endif /* _WIN32 */
 	int	jid;
 	int	stgreqid;	/* stager request id */
 	char	reqtype;	/* R -> tpread, W -> tpwrite, D -> dumptape */
 	char	ifce[5];	/* network interface used for data transfer */
-	char	vid[7];
+	char	vid[CA_MAXVIDLEN+1];
 	int	size;
 	int	retryn;		/* retry number */
 	int	exitcode;
-	char	clienthost[MAXHOSTNAMELEN];
-	char	dsksrvr[MAXHOSTNAMELEN];
+	char	clienthost[CA_MAXHOSTNAMELEN+1];
+	char	dsksrvr[CA_MAXHOSTNAMELEN+1];
 };
 
 			/* subtypes for rtcopy accounting records */
@@ -152,27 +177,24 @@ struct acctrtcp {	/* accounting record for rtcopy software */
 #ifndef MAXFSEQ
 #define MAXFSEQ 15
 #endif
-#ifndef MAXPOOLNAMELEN
-#define MAXPOOLNAMELEN  16
-#endif
 
 struct acctstage {	/* accounting record for stage software */
 	int	subtype;
-#if (defined(sun) && !defined(SOLARIS)) || defined(_WIN32)
+#if defined(_WIN32)
 	int     uid;
 	int     gid;
 #else
 	uid_t	uid;
 	gid_t	gid;
-#endif /* (sun && !SOLARIS) || _WIN32 */
+#endif /* _WIN32 */
 	int	reqid;
 	int	req_type;
 	int	retryn;		/* retry number */
 	int	exitcode;
 	union {
-	    char	clienthost[MAXHOSTNAMELEN];
+	    char	clienthost[CA_MAXHOSTNAMELEN+1];
 	    struct {
-		char	poolname[MAXPOOLNAMELEN];
+		char	poolname[CA_MAXPOOLNAMELEN+1];
 		char	t_or_d;
 		off_t	actual_size;
 		int	nbaccesses;
@@ -181,10 +203,10 @@ struct acctstage {	/* accounting record for stage software */
 			char	dgn[9];
 			char	fseq[MAXFSEQ];
 			char	vid[7];
-			char	tapesrvr[MAXHOSTNAMELEN];
+			char	tapesrvr[CA_MAXHOSTNAMELEN+1];
 		    } t;
 		    struct {		/* info for disk file stageing */
-			char    xfile[MAXHOSTNAMELEN+MAXPATH];
+			char    xfile[CA_MAXHOSTNAMELEN+MAXPATH+1];
 		    } d;
 		} u1;
 	    } s;
