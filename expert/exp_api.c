@@ -6,7 +6,7 @@
 */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: exp_api.c,v $ $Revision: 1.1 $ $Date: 2004/06/30 16:18:35 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: exp_api.c,v $ $Revision: 1.2 $ $Date: 2004/06/30 17:34:54 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -119,7 +119,7 @@ int request;
 
 	/* Get reply status */
 
-	if (getrep (*exp_socket, &status, &errcode, &rep_type) < 0)
+	if (getexpertrep (*exp_socket, &status, &errcode, &rep_type) < 0)
 	  return (-1); /* Error getting reply */
 
 	/************************************************************************************/

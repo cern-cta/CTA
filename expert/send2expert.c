@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2expert.c,v $ $Revision: 1.1 $ $Date: 2004/06/30 16:18:36 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: send2expert.c,v $ $Revision: 1.2 $ $Date: 2004/06/30 17:34:55 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -126,7 +126,7 @@ int reql;
 
 /* get reply from the expert daemon */
 
-getrep (socket, rep_status, errcode, reply_type)
+getexpertrep (socket, rep_status, errcode, reply_type)
 int socket;
 int* rep_status;
 int* errcode;
@@ -142,7 +142,7 @@ int* reply_type;
 	char *p;
 	char func[32];
 
-	strcpy(func, "getrep");
+	strcpy(func, "getexpertrep");
 	/* get reply */
         s = socket;
 	/* read status */
