@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IQuerySvc.h,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/17 14:27:36 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IQuerySvc.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/12/17 15:25:12 $ $Author: sponcec3 $
  *
  * 
  *
@@ -44,7 +44,9 @@ Cquery_IQuerySvc_fromIService(struct C_IService_t* obj);
 int Cquery_IQuerySvc_delete(struct Cquery_IQuerySvc_t* svcs);
 
 /**
- * Gets all DiskCopies for a given file
+ * Gets all DiskCopies for a given file.
+ * The caller is responsible for the deallocation of
+ * the returned objects
  * @param qrySvc the IQuerySvc used
  * @param fileId the fileId identifying the file
  * @param nsHost the name server host for this file

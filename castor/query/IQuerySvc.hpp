@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/12/17 14:27:36 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/12/17 15:25:12 $ $Author: sponcec3 $
  *
  * 
  *
@@ -54,7 +54,9 @@ namespace castor {
     public:
 
       /**
-       * Gets all DiskCopies for a given file
+       * Gets all DiskCopies for a given file.
+       * The caller is responsible for the deallocation of
+       * the returned objects
        * @param fileId the fileId identifying the file
        * @param nsHost the name server host for this file
        * @return the list of DiskCopies available
