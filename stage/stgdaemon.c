@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.94 2001/02/01 18:40:20 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.95 2001/02/02 09:49:26 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.94 $ $Date: 2001/02/01 18:40:20 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.95 $ $Date: 2001/02/02 09:49:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 20000
@@ -1438,6 +1438,7 @@ killallovl(sig)
 {
 	struct waitq *wqp;
 	char *func = "killallovl";
+	int c = 0;
 
     /* kill the "stager"s */
 	wqp = waitqp;
@@ -1511,7 +1512,7 @@ killallovl(sig)
 	kill(0,SIGINT);
 
 	/* We reply shutdown is ok */
-	sendrep (shutdownreq_rpfd, STAGERC, STAGESHUTDOWN, 0);
+	sendrep (shutdownreq_rpfd, STAGERC, STAGESHUTDOWN, c);
 
 	/* Global exit */
 	exit(0);
