@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_PoolOp.c,v $ $Revision: 1.6 $ $Date: 1999/09/27 15:23:47 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_PoolOp.c,v $ $Revision: 1.7 $ $Date: 1999/09/27 15:29:29 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -43,7 +43,7 @@ int vdqm_GetPool(int poolID, vdqmnw_t *nw, vdqmnw_t nwtable[]) {
         rc,tmpnw);
     rc = Cpool_assign(poolID,vdqm_ProcReq,(void *)tmpnw,-1);
     if ( rc == -1 ) {
-      log(LOG_ERR,"vdqm_GetPool() Cpool_assign(): %s\n",ssterror(serrno));
+      log(LOG_ERR,"vdqm_GetPool() Cpool_assign(): %s\n",sstrerror(serrno));
     }
     return(rc);
 }
