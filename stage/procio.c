@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.118 2001/03/22 11:26:50 jdurand Exp $
+ * $Id: procio.c,v 1.119 2001/03/28 14:05:53 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.118 $ $Date: 2001/03/22 11:26:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.119 $ $Date: 2001/03/28 14:05:53 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1340,7 +1340,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				stgreq.size = (int) ((hsmsize > ONE_MB) ? (((hsmsize - ((hsmsize / ONE_MB) * ONE_MB)) == 0) ? (hsmsize / ONE_MB) : ((hsmsize / ONE_MB) + 1)) : 1);
 				if (ncastorfiles > 0) size_to_recall = hsmsize;
 			} else {
-				goto get_size_from_user;
+				if (size != NULL) goto get_size_from_user;
 			}
 		} else if (size) {
 		get_size_from_user:
