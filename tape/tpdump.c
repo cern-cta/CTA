@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.8 $ $Date: 1999/11/17 13:59:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.9 $ $Date: 1999/11/19 17:05:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpdump - analyse the content of a tape */
@@ -275,7 +275,7 @@ char	**argv;
 
 	Ctape_kill_needed = 1;
 	if (Ctape_mount (infil, vid, 0, dgn, NULL, NULL, WRITE_DISABLE,
-	    NULL, "blp"))
+	    NULL, "blp", 0))
 		exit_prog ((serrno == EACCES || serrno == EINVAL) ? USERR : SYERR);
 	if (Ctape_position (infil, TPPOSIT_FSEQ, 1, 1, 0, 0, 0, CHECK_FILE,
 	    NULL, "U", 0, 0, 0, 0))
