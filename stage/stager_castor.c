@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.36 2002/12/19 08:16:04 jdurand Exp $
+ * $Id: stager_castor.c,v 1.37 2003/01/09 09:09:30 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.36 $ $Date: 2002/12/19 08:16:04 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.37 $ $Date: 2003/01/09 09:09:30 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1247,7 +1247,7 @@ int stagein_castor_hsm_file() {
 				} else {
 					/* But here, we found no valid segment - are they all STGSEGMENT_NOTOK */
 					SAVE_EID;
-					sendrep (&rpfd, MSG_ERR, STG02, castor_hsm, "stagein", "Required segments are not all accessible");
+					sendrep (&rpfd, MSG_ERR, STG02, castor_hsm, "stagein", "Required tape segments are not all accessible");
 					RESTORE_EID;
 					RETURN (USERR);
 				}
