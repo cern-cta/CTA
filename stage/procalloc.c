@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.16 2000/09/11 15:23:19 jdurand Exp $
+ * $Id: procalloc.c,v 1.17 2000/09/20 11:19:07 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.16 $ $Date: 2000/09/11 15:23:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.17 $ $Date: 2000/09/20 11:19:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -43,7 +43,8 @@ extern int reqid;
 extern int rpfd;
 extern struct stgcat_entry *stce;	/* end of stage catalog */
 extern struct stgcat_entry *stcs;	/* start of stage catalog */
-struct waitq *add2wq();
+extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, char *, char *));
+extern struct stgcat_entry *newreq _PROTO(());
 #ifdef USECDB
 extern struct stgdb_fd dbfd;
 #endif
@@ -64,7 +65,6 @@ void procallocreq(req_data, clienthost)
 	char *name;
 	int nargs;
 	int nbdskf;
-	struct stgcat_entry *newreq();
 	int Pflag = 0;
 	char *pool_user = NULL;
 	char *rbp;
@@ -168,8 +168,8 @@ void procallocreq(req_data, clienthost)
 	if ((c = build_ipath (upath, stcp, pool_user)) < 0) {
 		stcp->status |= WAITING_SPC;
 		if (!wqp) wqp = add2wq (clienthost, user,
-														stcp->uid, stcp->gid, clientpid,
-														Upluspath, reqid, STAGEALLOC, nbdskf, &wfp);
+								stcp->uid, stcp->gid, clientpid,
+								Upluspath, reqid, STAGEALLOC, nbdskf, &wfp, NULL, NULL);
 		wqp->Pflag = Pflag;
 		wfp->subreqid = stcp->reqid;
 		strcpy (wfp->upath, upath);
