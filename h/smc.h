@@ -1,5 +1,5 @@
 /*
- * $Id: smc.h,v 1.5 2002/07/24 07:18:43 baud Exp $
+ * $Id: smc.h,v 1.6 2002/11/07 08:22:35 baud Exp $
  */
 
 /*
@@ -8,8 +8,11 @@
  */
 
 /*
- * @(#)$RCSfile: smc.h,v $ $Revision: 1.5 $ $Date: 2002/07/24 07:18:43 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: smc.h,v $ $Revision: 1.6 $ $Date: 2002/11/07 08:22:35 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
+
+#ifndef _SMC_H
+#define _SMC_H
 
 struct robot_info {
 	char inquiry[32];
@@ -42,3 +45,4 @@ struct smc_status {
 	unsigned char sensekey;
 	int skvalid;	/* sense key is valid */
 };
+#endif
