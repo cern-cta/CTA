@@ -1,8 +1,8 @@
-.\" $Id: serrno.man,v 1.2 2004/07/20 10:39:16 motiakov Exp $
+.\" $Id: serrno.man,v 1.3 2004/12/03 10:19:30 obarring Exp $
 .\"
 .\" Man page for the CASTOR's error variable serrno
 .\"
-.TH SERRNO "3" "$Date: 2004/07/20 10:39:16 $" "CASTOR" "Castor Library Functions"
+.TH SERRNO "3" "$Date: 2004/12/03 10:19:30 $" "CASTOR" "Castor Library Functions"
 .SH NAME
 \fBserrno\fP \- CASTOR internal error variable
 
@@ -487,6 +487,10 @@ The following error values are returned only by the remote tape copy package:
 .TP
 .B ERTBADREQ
 (1609) Bad request structure
+.B ERTDBERR
+(1610) Catalogue DB error
+.B ERTZEROSIZE
+(1611) Zero sized file
 
 .SH STAGE ERRORS
 The following error values are returned only by the stager package:
