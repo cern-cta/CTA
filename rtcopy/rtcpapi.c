@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpapi.c,v $ $Revision: 1.5 $ $Date: 2005/01/10 20:46:34 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpapi.c,v $ $Revision: 1.6 $ $Date: 2005/01/14 13:40:58 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -2162,7 +2162,7 @@ int rtcpc_runReq_ext(
               if ( save_serrno <= 0 ) save_serrno = thr->th_serrno;
             }
             i = thr->index;
-            *((*socks)->proc_socket[i]) = thr->s;
+            if ( i>=0 ) *((*socks)->proc_socket[i]) = thr->s;
             CLIST_DELETE(activeThreads,thr);
             free(thr);
             break;
