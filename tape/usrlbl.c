@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.10 $ $Date: 2001/07/02 13:11:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.11 $ $Date: 2002/04/08 13:40:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	usrlbl - user callable routines to read/write header and trailer labels */
@@ -77,7 +77,7 @@ char	*path;
 	struct devlblinfo  *dlip;
 	int fsec;
 	char hdr1[80], hdr2[80];
-	char vol1[80];
+	char uhl1[80], vol1[80];
 
 	if (getlabelinfo (path, &dlip) < 0)
 		return (-1);
@@ -99,6 +99,10 @@ char	*path;
 	memcpy (hdr2, dlip->hdr2, 80);
 	if (dlip->lblcode == SL) asc2ebc (hdr2, 80);
 	if ((c = writelbl (tapefd, path, hdr2)) < 0) return (c);
+	if (dlip->lblcode == AUL) {
+		memcpy (uhl1, dlip->uhl1, 80);
+		if ((c = writelbl (tapefd, path, uhl1)) < 0) return (c);
+	}
 	return (wrttpmrk (tapefd, path, 1));
 }
 
@@ -120,6 +124,7 @@ int	nblocks;
 #if defined(__alpha) && defined(__osf__)
 	struct mtop mtop;
 #endif
+	char uhl1[80];
 
 	if (getlabelinfo (path, &dlip) < 0)
 		return (-1);
@@ -128,7 +133,7 @@ int	nblocks;
 
 	memcpy (hdr1, dlip->hdr1, 80);
 	memcpy (hdr1, labelid, 3);
-	sprintf (buf, "%.6d", nblocks);
+	sprintf (buf, "%.6d", nblocks % 1000000);
 	memcpy (hdr1 + 54, buf, 6);
 	memcpy (hdr2, dlip->hdr2, 80);
 	memcpy (hdr2, labelid, 3);
@@ -174,6 +179,30 @@ int	nblocks;
 	if (c == 0)	/* 1st try for EOV2 on Desktop SPARC & SPARC System 600 */
 		if ((c = writelbl (tapefd, path, hdr2)) < 0) return (c);
 #endif
+	if (dlip->lblcode == AUL) {
+		memcpy (uhl1, dlip->uhl1, 80);
+		uhl1[1] = 'T';
+#if defined(hpux)
+		if (labelid[2] == 'V')	/* must clear EOT condition */
+			c = ioctl (tapefd, MTIOCGET, &mt_info);
+#endif
+#if defined(linux)
+		/* must clear EOT condition */
+		c = ioctl (tapefd, MTIOCGET, &mt_info);
+#endif
+#if defined(__alpha) && defined(__osf__)
+		if (labelid[2] == 'V') {
+			mtop.mt_op = MTCSE;     /* Clears serious exception */
+			mtop.mt_count = 1;
+			c = ioctl (tapefd, MTIOCTOP, &mtop);
+		}
+#endif
+		if ((c = writelbl (tapefd, path, uhl1)) < 0) return (c);
+#if sun
+		if (c == 0)	/* 1st try for UHL1 on Desktop SPARC & SPARC System 600 */
+			if ((c = writelbl (tapefd, path, uhl1)) < 0) return (c);
+#endif
+	}
 	return (wrteotmrk (tapefd, path));
 }
 
