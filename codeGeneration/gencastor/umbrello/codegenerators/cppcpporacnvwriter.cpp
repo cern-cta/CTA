@@ -969,7 +969,6 @@ void CppCppOraCnvWriter::writeFillRep() {
   *m_stream << getIndent() << "}" << endl << endl;
 
   // Now write the dedicated fillRep Methods
-  MemberList members = createMembersList();
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
