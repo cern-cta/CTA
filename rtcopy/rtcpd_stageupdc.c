@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.10 $ $Date: 2000/01/21 13:29:16 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.11 $ $Date: 2000/01/25 11:23:00 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -66,10 +66,12 @@ int rtcpd_stageupdc(tape_list_t *tape,
     int rc, retval, save_serrno, WaitTime, TransferTime;
     rtcpFileRequest_t *filereq;
     rtcpTapeRequest_t *tapereq;
+    char newpath[CA_MAXPATHLEN+1];
 #if !defined(USE_STAGEAPI)
     char stageupdc_cmd[CA_MAXLINELEN+1];
-    char newpath[CA_MAXPATHLEN+1];
     FILE *stgupdc_fd;
+#else  /* !USE_STAGEAPI */
+    u_signed64 nb_bytes;
 #endif /* !USE_STAGEAPI */
 
     if ( tape == NULL || file == NULL ) {
@@ -84,10 +86,16 @@ int rtcpd_stageupdc(tape_list_t *tape,
      * Check if this is a stage request
      */
     if ( *filereq->stageID == '\0' ) return(0);
+    WaitTime = filereq->TEndPosition - tapereq->TStartRequest;
+    TransferTime = min((time_t)filereq->TStartTransferDisk,
+                       (time_t)filereq->TStartTransferTape);
+    TransferTime = max((time_t)filereq->TEndTransferDisk,
+                       (time_t)filereq->TEndTransferTape) - TransferTime;
+
 
 #if defined(USE_STAGEAPI)
+    status = filereq->err.errorcode;
     if ( filereq->proc_status == RTCP_POSITIONED ) {
-        status = filereq->err.errorcode;
         if ( status != ETFSQ ) status = 0;
         rc = stage_updc_tppos(filereq->stageID,
                               status,
@@ -103,7 +111,34 @@ int rtcpd_stageupdc(tape_list_t *tape,
                      sstrerror(serrno));
             return(-1);
         }
-    } else if ( filereq->proc_status == RTCP_FINISHED ) {
+    } else if ( filereq->cprc != 0 || filereq->proc_status == RTCP_FINISHED ) {
+        /*
+         * Always give the return code
+         */
+        retval = 0;
+        rc = rtcp_RetvalSHIFT(tape,file,&retval);
+        if ( tapereq->mode == WRITE_ENABLE ) nb_bytes = filereq->bytes_in;
+        else nb_bytes = filereq->bytes_out;
+
+        rc = stage_updc_filcp(filereq->stageID,
+                              retval,
+                              filereq->ifce,
+                              nb_bytes,
+                              WaitTime,
+                              TransferTime,
+                              filereq->blocksize,
+                              tapereq->unit,
+                              filereq->fid,
+                              filereq->tape_fseq,
+                              filereq->recordlength,
+                              filereq->recfm,
+                              filereq->file_path);
+        if ( rc == -1 ) {
+            rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_filcp(): %s\n",
+                     sstrerror(serrno));
+            return(-1);
+        }
+
     }
 #else /* USE_STAGEAPI */
     sprintf(stageupdc_cmd,"%s/%s -Z %s ",BIN,STGCMD,filereq->stageID);
@@ -119,17 +154,15 @@ int rtcpd_stageupdc(tape_list_t *tape,
          * stageupdc stageID -I ifce -W lastw -T lastt -R cprc \
          *                   -s lastnbt -b ... 
          */
-        if ( filereq->proc_status == RTCP_FINISHED ) {
-            /*
-             * This file request has finished
-             */
-            WaitTime = filereq->TEndPosition - tapereq->TStartRequest;
-            TransferTime = min((time_t)filereq->TStartTransferDisk,
-                (time_t)filereq->TStartTransferTape);
-            TransferTime = max((time_t)filereq->TEndTransferDisk,
-                (time_t)filereq->TEndTransferTape) - TransferTime;
-            ADD_NOPT(stageupdc_cmd," -W %d ",WaitTime);
-            ADD_NOPT(stageupdc_cmd," -T %d ",TransferTime);
+        if ( filereq->proc_status == RTCP_FINISHED ||
+             filereq->cprc != 0 ) {
+            if ( filereq->proc_status == RTCP_FINISHED ) {
+                /*
+                 * This file request has finished
+                 */
+                ADD_NOPT(stageupdc_cmd," -W %d ",WaitTime);
+                ADD_NOPT(stageupdc_cmd," -T %d ",TransferTime);
+            }
             /*
              * Always give the return code
              */
@@ -138,7 +171,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
             sprintf(&stageupdc_cmd[strlen(stageupdc_cmd)]," -R %d ",retval);
             ADD_NOPT(stageupdc_cmd," -s %d ",(int)filereq->bytes_out);
         }
-        if ( filereq->cprc != RTCP_SYERR ) {
+        if ( (filereq->err.severity & RTCP_SYERR) == 0 ) {
             ADD_COPT(stageupdc_cmd," -I %s ",filereq->ifce);
             ADD_NOPT(stageupdc_cmd," -b %d ",filereq->blocksize);
             ADD_NOPT(stageupdc_cmd," -L %d ",filereq->recordlength);
@@ -182,13 +215,22 @@ int rtcpd_stageupdc(tape_list_t *tape,
     rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() stageupdc returns %d, %s\n",
              rc,newpath);
     if ( (*newpath == '\0' && tapereq->mode == WRITE_DISABLE) || rc != 0 ) {
-        rtcp_log(LOG_ERR,"rtcpd_stageupdc() stageupdc failed, rc=%d, path=%s\n",
+        rtcp_log(LOG_ERR,"rtcpd_stageupdc() stageupdc returned, rc=%d, path=%s\n",
                  rc,newpath);
-        rtcpd_AppendClientMsg(NULL,file,"stageupdc failed, rc=%d, path=%s\n",
-                              rc,newpath);
-        if ( rc != ENOSPC ) rtcpd_SetProcError(RTCP_FAILED | RTCP_SYERR);
-        else rtcpd_SetProcError(RTCP_FAILED | RTCP_USERR);
-        return(-1);
+        if ( rc != 0 ) {
+            rtcpd_AppendClientMsg(NULL,file,
+                           "stageupdc failed, rc=%d, path=%s\n",rc,newpath);
+            if ( rc != ENOSPC ) rtcpd_SetReqStatus(NULL,file,rc,
+                                                   RTCP_FAILED | RTCP_SYERR);
+            else rtcpd_SetReqStatus(NULL,file,rc,RTCP_FAILED | RTCP_USERR);
+            return(-1);
+        }
+        if ( *newpath == '\0' && tapereq->mode == WRITE_DISABLE &&
+             filereq->proc_status == RTCP_POSITIONED &&
+             strcmp(filereq->file_path,".") == 0 ) {
+            rtcp_log(LOG_ERR,"rtcpd_stageupdc() no new path received\n");
+            return(-1);
+        }
     }
 #endif /* !USE_STAGEAPI */
     return(0);
