@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageput.man,v $ $Revision: 1.4 $ $Date: 1999/12/04 09:47:18 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageput.man,v $ $Revision: 1.5 $ $Date: 2000/09/27 08:11:39 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEPUT l "$Date: 1999/12/04 09:47:18 $"
+.TH STAGEPUT l "$Date: 2000/09/27 08:11:39 $"
 .SH NAME
 stageput \- copy disk files to tape, to an external disk file or to a
 Hierarchical Storage Management System.
@@ -44,7 +44,9 @@ Hierarchical Storage Management System.
 .BI -h " host"
 ] [
 .BI -M " hsmfile"
-]
+[
+.BI -M ...
+] ]
 .SH DESCRIPTION
 .B stageput
 copies disk files to tape, to an external disk file or to a
@@ -81,7 +83,7 @@ Gives the name of an external disk file. In this case,
 is used to copy the file from the staging pool to that external file.
 .TP
 .BI \-M " hsmfile"
-Gives the name of a Hierarchical Storage Manager (HSM) file. In this case,
+Gives the name(s) of Hierarchical Storage Manager (HSM) file(s). In this case,
 .B rfcp
 is used to copy the file from the staging pool to that HSM file.
 .TP
