@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.14 2002/01/22 07:36:24 jdurand Exp $
+ * $Id: stage_constants.h,v 1.15 2002/01/28 12:22:29 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -470,8 +470,8 @@
 #define STAGE_RETENP            0x00040000000LL  /* --retenp     [stage_qry]            */
 #define STAGE_MINTIME           0x00100000000LL  /* --mintime    [stage_qry]            */
 #define STAGE_VERBOSE           0x00200000000LL  /* --verbose    [stage_ping]           */
-#define STAGE_FORCE_SIDE_FORMAT 0x00400000000LL  /* --force_side_format [stage_qry]     */
-#define STAGE_SIDE              0x00800000000LL  /* --side       [stage_qry]            */
+#define STAGE_DISPLAY_SIDE      0x00400000000LL  /* --display_side [stage_qry]          */
+#define STAGE_SIDE              0x00800000000LL  /* --side       [stage_qry,stage_iowc] */
 #define STAGE_FILE_ROPEN        0x01000000000LL  /* -o           [stage_updc]           */
 #define STAGE_FILE_RCLOSE       0x02000000000LL  /* -c           [stage_updc]           */
 #define STAGE_FILE_WOPEN        0x04000000000LL  /* -O           [stage_updc]           */
