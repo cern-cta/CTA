@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2005/03/22 17:48:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2005/03/23 10:06:18 $ $Author: sponcec3 $
  *
  *
  *
@@ -558,6 +558,25 @@ extern "C" {
       for (int i = 0; i < *nbItems; i++) {
         (*tapeCopyArray)[i] = result[i];
       }
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_updateAndCheckSubRequest
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_updateAndCheckSubRequest
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   castor::stager::SubRequest* subreq,
+   int* result) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      *result =
+        stgSvc->stgSvc->updateAndCheckSubRequest(subreq) ? 1 : 0;
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.140 $ $Release$ $Date: 2005/03/22 17:48:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.141 $ $Release$ $Date: 2005/03/23 10:06:18 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -167,6 +167,10 @@ const std::string castor::db::ora::OraStagerSvc::s_selectDiskServerStatementStri
 const std::string castor::db::ora::OraStagerSvc::s_selectTapeCopiesForMigrationStatementString =
   "SELECT TapeCopy.id FROM TapeCopy, CastorFile WHERE TapeCopy.castorFile = CastorFile.id AND CastorFile.svcClass = :1 AND TapeCopy.status IN (0, 1)";
 
+/// SQL statement for updateAndCheckSubRequest
+const std::string castor::db::ora::OraStagerSvc::s_updateAndCheckSubRequestStatementString =
+  "BEGIN updateAndCheckSubRequest(:1, :2, :3); END;";
+
 /// SQL statement for disk2DiskCopyDone
 const std::string castor::db::ora::OraStagerSvc::s_disk2DiskCopyDoneStatementString =
   "BEGIN disk2DiskCopyDone(:1, :2); END;";
@@ -253,6 +257,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_selectTapePoolStatement(0),
   m_selectDiskServerStatement(0),
   m_selectTapeCopiesForMigrationStatement(0),
+  m_updateAndCheckSubRequestStatement(0),
   m_disk2DiskCopyDoneStatement(0),
   m_recreateCastorFileStatement(0),
   m_prepareForMigrationStatement(0),
@@ -319,6 +324,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_selectTapePoolStatement);
     deleteStatement(m_selectDiskServerStatement);
     deleteStatement(m_selectTapeCopiesForMigrationStatement);
+    deleteStatement(m_updateAndCheckSubRequestStatement);
     deleteStatement(m_disk2DiskCopyDoneStatement);
     deleteStatement(m_recreateCastorFileStatement);
     deleteStatement(m_prepareForMigrationStatement);
@@ -357,6 +363,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_selectTapePoolStatement = 0;
   m_selectDiskServerStatement = 0;
   m_selectTapeCopiesForMigrationStatement = 0;
+  m_updateAndCheckSubRequestStatement = 0;
   m_disk2DiskCopyDoneStatement = 0;
   m_recreateCastorFileStatement = 0;
   m_prepareForMigrationStatement = 0;
@@ -1717,6 +1724,43 @@ castor::db::ora::OraStagerSvc::selectTapeCopiesForMigration
     ex.getMessage()
       << "Unable to select TapeCopies for migration :"
       << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// updateAndCheckSubRequest
+// -----------------------------------------------------------------------
+bool castor::db::ora::OraStagerSvc::updateAndCheckSubRequest
+(castor::stager::SubRequest* subreq)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_updateAndCheckSubRequestStatement) {
+      m_updateAndCheckSubRequestStatement =
+        createStatement(s_updateAndCheckSubRequestStatementString);
+      m_updateAndCheckSubRequestStatement->registerOutParam
+        (3, oracle::occi::OCCIDOUBLE);
+      m_updateAndCheckSubRequestStatement->setAutoCommit(true);
+    }
+    // execute the statement and see whether we found something
+    m_updateAndCheckSubRequestStatement->setDouble(1, subreq->id());
+    m_updateAndCheckSubRequestStatement->setInt(2, subreq->status());
+    unsigned int nb = m_updateAndCheckSubRequestStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "updateAndCheckSubRequest did not return any result.";
+      throw ex;
+    }
+    // return
+    return m_updateAndCheckSubRequestStatement->getDouble(3) != 0;
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in updateAndCheckSubRequest."
+      << std::endl << e.what();
     throw ex;
   }
 }

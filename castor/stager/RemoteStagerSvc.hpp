@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.30 $ $Release$ $Date: 2005/03/22 17:48:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.31 $ $Release$ $Date: 2005/03/23 10:06:18 $ $Author: sponcec3 $
  *
  *
  *
@@ -469,6 +469,21 @@ namespace castor {
       virtual std::vector<castor::stager::TapeCopy*>
       selectTapeCopiesForMigration
       (castor::stager::SvcClass *svcClass)
+        throw (castor::exception::Exception);
+
+      /**
+       * Updates a SubRequest status in the DB and tells
+       * whether the request to which it belongs still
+       * has some SubRequests in SUBREQUEST_START status.
+       * The two operations are executed atomically.
+       * The update is commited before returning.
+       * @param subreq the SubRequest to update
+       * @return whether there are still SubRequests in
+       * SUBREQUEST_START status within the same request
+       * @exception Exception in case of error
+       */
+      virtual bool updateAndCheckSubRequest
+      (castor::stager::SubRequest *subreq)
         throw (castor::exception::Exception);
 
       /**

@@ -960,6 +960,28 @@ BEGIN
   INTO rdcStatus, rdcPath;
 END;
 
+/* PL/SQL method implementing updateAndCheckSubRequest */
+CREATE OR REPLACE PROCEDURE updateAndCheckSubRequest(srId IN INTEGER, newStatus IN INTEGER, result OUT INTEGER) AS
+  reqId INTEGER;
+BEGIN
+ -- Lock the access to the Request
+ SELECT Id2Type.id INTO reqId
+  FROM SubRequest, Id2Type
+  WHERE SubRequest.id = srId
+  AND Id2Type.id = SubRequest.request
+  FOR UPDATE;
+ -- Update Status
+ UPDATE SubRequest SET status = newStatus,
+                       lastModificationTime = getTime() WHERE id = srId;
+ -- Check whether it was the last subrequest in the request
+ SELECT id INTO result FROM SubRequest
+  WHERE request = reqId
+    AND status NOT IN (6, 7) -- SUBREQUEST_READY, SUBREQUEST_FAILED
+    AND ROWNUM < 2;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
+  result := 0;
+END;
+
 /* PL/SQL method implementing disk2DiskCopyDone */
 CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
 (dcId IN INTEGER, dcStatus IN INTEGER) AS

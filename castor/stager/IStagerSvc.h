@@ -592,6 +592,27 @@ int Cstager_IStagerSvc_selectTapeCopiesForMigration
  int *nbItems);
 
 /**
+ * Updates a SubRequest status in the DB and tells
+ * whether the request to which it belongs still
+ * has some SubRequests in SUBREQUEST_START status.
+ * The two operations are executed atomically.
+ * The update is commited before returning.
+ * @param stgSvc the IStagerSvc used
+ * @param subreq the SubRequest to update
+ * @param result 1 is there are still SubRequests in
+ * SUBREQUEST_START status within the same request, 0 if
+ * there are none
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_updateAndCheckSubRequest
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_SubRequest_t* subreq,
+ int* result);
+
+/**
  * Updates database after successful completion of a
  * disk to disk copy. This includes setting the DiskCopy
  * status to DISKCOPY_STAGED and setting the SubRequest
