@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.85 $ $Date: 2001/09/21 08:28:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.86 $ $Date: 2002/04/08 14:51:20 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -225,6 +225,7 @@ static int rtcpd_PrintCmd(tape_list_t *tape) {
     file_list_t *fl;
     char *vid;
     char *vsn;
+    char *label;
     char logline[CA_MAXLINELEN+1], common_fid[CA_MAXFIDLEN+1];
     int mode,fseq;
     u_signed64 common_sz;
@@ -235,10 +236,11 @@ static int rtcpd_PrintCmd(tape_list_t *tape) {
     tapereq = &tape->tapereq;
     vid = tapereq->vid;
     vsn = tapereq->vsn;
+    label = tapereq->label;
     mode = tapereq->mode;
     if ( tape->file != NULL ) 
-        sprintf(logline,"%s %s %s",(mode == WRITE_ENABLE ? "tpwrite" : "tpread"),
-                (*vid != '\0' ? "-V" : "-v"),(*vid != '\0' ? vid : vsn));
+        sprintf(logline,"%s %s %s%s%s",(mode == WRITE_ENABLE ? "tpwrite" : "tpread"),
+                (*vid != '\0' ? "-V" : "-v"),(*vid != '\0' ? vid : vsn),(*label != '\0' ? " -l " : ""),(*label != '\0' ? label : ""));
     else
         sprintf(logline,"dumptape %s %s",(*vid != '\0' ? "-V" : "-v"),
                                          (*vid != '\0' ? vid : vsn));
