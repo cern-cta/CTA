@@ -232,6 +232,70 @@ namespace castor {
                                          const int tpmode)
           throw (castor::exception::Exception);
 
+        /**
+         * Selects the next SubRequest the stager should deal with.
+         * Selects a SubRequest in START, RESTART or RETRY status
+         * and move its status to SUBREQUEST_WAITSCHED to avoid
+         * double processing.
+         * @return the SubRequest to process
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::SubRequest* subRequestToDo()
+          throw (castor::exception::Exception);
+        
+        /**
+         * Decides whether a SubRequest should be scheduled.
+         * Looks at all diskCopies for the file a SubRequest
+         * deals with and depending on them, decides whether
+         * to schedule the SubRequest.
+         * If no diskCopy is found or some are found and none
+         * is in status DISKCOPY_WAITTAPERECALL, we schedule
+         * (for tape recall in the first case, for access in
+         * the second case).
+         * Else (case where a diskCopy is in DISKCOPY_WAITTAPERECALL
+         * status), we don't schedule, we link the SubRequest
+         * to the recalling SubRequest and we set its status to
+         * SUBREQUEST_WAITSUBREQ.
+         * @param subreq the SubRequest to consider
+         * @return whether to schedule it
+         * @exception Exception in case of error
+         */
+        virtual bool isDiskCopyToSchedule
+        (castor::stager::SubRequest* subreq)
+          throw (castor::exception::Exception);
+
+        /**
+         * Schedules a SubRequest on a given FileSystem.
+         * Depending on the available DiskCopies for the file
+         * the SubRequest deals with, decides what to do.
+         * The different cases are :
+         *  - no DiskCopy at all : a DiskCopy is created with
+         * status DISKCOPY_WAITTAPERECALL.
+         *  - one DiskCopy in DISKCOPY_WAITTAPERECALL status :
+         * the SubRequest is linked to the one recalling and
+         * put in SUBREQUEST_WAITSUBREQ status.
+         *  - no DiskCopy on the selected FileSystem but some
+         * in status DISKCOPY_STAGOUT or DISKCOPY_STAGED on other
+         * FileSystems : a new DiskCopy is created with status
+         * DISKCOPY_WAITDISK2DISKCOPY.
+         *  - one DiskCopy on the selected FileSystem in
+         * DISKCOPY_WAITDISKTODISKCOPY status : the SubRequest
+         * has to wait until the end of the copy
+         *  - one DiskCopy on the selected FileSystem in
+         * DISKCOPY_STAGOUT or DISKCOPY_STAGED status :
+         * the SubRequest is ready
+         * @param subreq  the SubRequest to consider
+         * @param fileSystem the selected FileSystem
+         * @return the diskCopy to work on. The DiskCopy and
+         * SubRequest status gives the result of the decision
+         * that was taken.
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::DiskCopy* scheduleDiskCopy
+        (castor::stager::SubRequest* subreq,
+         castor::stager::FileSystem* fileSystem)
+          throw (castor::exception::Exception);
+
       private:
 
         /// SQL statement for function tapesToDo
@@ -275,6 +339,24 @@ namespace castor {
         
         /// SQL statement object for function fileRecalled
         oracle::occi::Statement *m_fileRecalledStatement;
+
+        /// SQL statement for function subRequestToDo
+        static const std::string s_subRequestToDoStatementString;
+        
+        /// SQL statement object for function subRequestToDo
+        oracle::occi::Statement *m_subRequestToDoStatement;
+
+        /// SQL statement for function isDiskCopyToSchedule
+        static const std::string s_isDiskCopyToScheduleStatementString;
+        
+        /// SQL statement object for function isDiskCopyToSchedule
+        oracle::occi::Statement *m_isDiskCopyToScheduleStatement;
+
+        /// SQL statement for function scheduleDiskCopy
+        static const std::string s_scheduleDiskCopyStatementString;
+        
+        /// SQL statement object for function scheduleDiskCopy
+        oracle::occi::Statement *m_scheduleDiskCopyStatement;
 
       }; // end of class OraStagerSvc
 

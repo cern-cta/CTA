@@ -33,6 +33,9 @@ struct Cstager_IStagerSvc_t;
 struct Cstager_Tape_t;
 struct Cstager_Stream_t;
 struct Cstager_Segment_t;
+struct Cstager_DiskCopy_t;
+struct Cstager_SubRequest_t;
+struct Cstager_FileSystem_t;
 struct Cstager_TapeCopyForMigration_t;
 struct Cstager_DiskCopyForRecall_t;
 
@@ -113,7 +116,7 @@ int Cstager_IStagerSvc_segmentsForTape
  * A detailed error message can be retrieved by calling
  * Cstager_IStagerSvc_errorMsg
  */
-int bestFileSystemForSegment
+int Cstager_IStagerSvc_bestFileSystemForSegment
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_Segment_t* segment,
  struct Cstager_DiskCopyForRecall_t** diskCopy);
@@ -131,8 +134,9 @@ int bestFileSystemForSegment
  * A detailed error message can be retrieved by calling
  * Cstager_IStagerSvc_errorMsg
  */
-int Cstager_IStagerSvc_anyTapeCopyForStream(struct Cstager_IStagerSvc_t* stgSvc,
-                                            struct Cstager_Stream_t* searchItem);
+int Cstager_IStagerSvc_anyTapeCopyForStream
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_Stream_t* searchItem);
 
 /*
  * Get the best TapeCopy currently waiting for a given Stream.
@@ -236,6 +240,83 @@ int Cstager_IStagerSvc_selectTape(struct Cstager_IStagerSvc_t* stgSvc,
                                   const char* vid,
                                   const int side,
                                   const int tpmode);
+
+/**
+ * Selects the next SubRequest the stager should deal with.
+ * Selects a SubRequest in START, RESTART or RETRY status
+ * and move its status to SUBREQUEST_WAITSCHED to avoid
+ * double processing.
+ * @param stgSvc the IStagerSvc used
+ * @param subreq the SubRequest to process 
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_subRequestToDo(struct Cstager_IStagerSvc_t* stgSvc,
+                                      struct Cstager_SubRequest_t** subreq);
+
+/**
+ * Decides whether a SubRequest should be scheduled.
+ * Looks at all diskCopies for the file a SubRequest
+ * deals with and depending on them, decides whether
+ * to schedule the SubRequest.
+ * If no diskCopy is found or some are found and none
+ * is in status DISKCOPY_WAITTAPERECALL, we schedule
+ * (for tape recall in the first case, for access in
+ * the second case).
+ * Else (case where a diskCopy is in DISKCOPY_WAITTAPERECALL
+ * status), we don't schedule, we link the SubRequest
+ * to the recalling SubRequest and we set its status to
+ * SUBREQUEST_WAITSUBREQ.
+ * @param stgSvc the IStagerSvc used
+ * @param subreq the SubRequest to consider
+ * @return whether to schedule it. 1 for YES, 0 for NO,
+ * -1 for an error. In the later case serrno is set to
+ * the corresponding error code and a detailed error
+ * message can be retrieved by calling Cstager_IStagerSvc_errorMsg
+ * @exception Exception in case of error
+ */
+int Cstager_IStagerSvc_isDiskCopyToSchedule
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_SubRequest_t* subreq);
+
+/**
+ * Schedules a SubRequest on a given FileSystem.
+ * Depending on the available DiskCopies for the file
+ * the SubRequest deals with, decides what to do.
+ * The different cases are :
+ *  - no DiskCopy at all : a DiskCopy is created with
+ * status DISKCOPY_WAITTAPERECALL.
+ *  - one DiskCopy in DISKCOPY_WAITTAPERECALL status :
+ * the SubRequest is linked to the one recalling and
+ * put in SUBREQUEST_WAITSUBREQ status.
+ *  - no DiskCopy on the selected FileSystem but some
+ * in status DISKCOPY_STAGOUT or DISKCOPY_STAGED on other
+ * FileSystems : a new DiskCopy is created with status
+ * DISKCOPY_WAITDISK2DISKCOPY.
+ *  - one DiskCopy on the selected FileSystem in
+ * DISKCOPY_WAITDISKTODISKCOPY status : the SubRequest
+ * has to wait until the end of the copy
+ *  - one DiskCopy on the selected FileSystem in
+ * DISKCOPY_STAGOUT or DISKCOPY_STAGED status :
+ * the SubRequest is ready
+ * @param stgSvc the IStagerSvc used
+ * @param subreq  the SubRequest to consider
+ * @param fileSystem the selected FileSystem
+ * @param diskCopy the diskCopy to work on. The DiskCopy and
+ * SubRequest status gives the result of the decision
+ * that was taken.
+ * @return whether to schedule it. 1 for YES, 0 for NO,
+ * -1 for an error. In the later case serrno is set to
+ * the corresponding error code and a detailed error
+ * message can be retrieved by calling Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_scheduleDiskCopy
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_SubRequest_t* subreq,
+ struct Cstager_FileSystem_t* fileSystem,
+ struct Cstager_DiskCopy_t** diskCopy);
 
 /**
  * Returns the error message associated to the last error.

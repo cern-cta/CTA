@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2004/10/25 12:13:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2004/10/26 16:47:48 $ $Author: sponcec3 $
  *
  *
  *
@@ -89,6 +89,18 @@ const std::string castor::db::ora::OraStagerSvc::s_bestFileSystemForSegmentState
 /// SQL statement for fileRecalled
 const std::string castor::db::ora::OraStagerSvc::s_fileRecalledStatementString =
   "BEGIN fileRecalled(:1, :2, :3); END;";
+
+/// SQL statement for subRequestToDo
+const std::string castor::db::ora::OraStagerSvc::s_subRequestToDoStatementString =
+  "SELECT id FROM rh_Stream WHERE status = :1";
+
+/// SQL statement for isDiskCopyToSchedule
+const std::string castor::db::ora::OraStagerSvc::s_isDiskCopyToScheduleStatementString =
+  "SELECT id FROM rh_Stream WHERE status = :1";
+
+/// SQL statement for scheduleDiskCopy
+const std::string castor::db::ora::OraStagerSvc::s_scheduleDiskCopyStatementString =
+  "SELECT id FROM rh_Stream WHERE status = :1";
 
 // -----------------------------------------------------------------------
 // OraStagerSvc
@@ -713,3 +725,34 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
   }
   // We should never reach this point
 }
+
+// -----------------------------------------------------------------------
+// subRequestToDo
+// -----------------------------------------------------------------------
+castor::stager::SubRequest*
+castor::db::ora::OraStagerSvc::subRequestToDo()
+  throw (castor::exception::Exception) {
+  return 0;
+}
+
+// -----------------------------------------------------------------------
+// isDiskCopyToSchedule
+// -----------------------------------------------------------------------
+bool castor::db::ora::OraStagerSvc::isDiskCopyToSchedule
+(castor::stager::SubRequest* subreq)
+  throw (castor::exception::Exception) {
+  return false;
+}
+
+// -----------------------------------------------------------------------
+// selectTape
+// -----------------------------------------------------------------------
+castor::stager::DiskCopy*
+castor::db::ora::OraStagerSvc::scheduleDiskCopy
+(castor::stager::SubRequest* subreq,
+ castor::stager::FileSystem* fileSystem)
+  throw (castor::exception::Exception) {
+  return 0;
+}
+
+

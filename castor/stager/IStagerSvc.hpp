@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/25 12:13:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/26 16:47:48 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -42,6 +42,9 @@ namespace castor {
     class Stream;
     class Segment;
     class TapeCopy;
+    class DiskCopy;
+    class FileSystem;
+    class SubRequest;
     class TapeCopyForMigration;
     class DiskCopyForRecall;
 
@@ -196,6 +199,70 @@ namespace castor {
       virtual castor::stager::Tape* selectTape(const std::string vid,
                                                const int side,
                                                const int tpmode)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Selects the next SubRequest the stager should deal with.
+       * Selects a SubRequest in START, RESTART or RETRY status
+       * and move its status to SUBREQUEST_WAITSCHED to avoid
+       * double processing.
+       * @return the SubRequest to process
+       * @exception Exception in case of error
+       */
+      virtual castor::stager::SubRequest* subRequestToDo()
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Decides whether a SubRequest should be scheduled.
+       * Looks at all diskCopies for the file a SubRequest
+       * deals with and depending on them, decides whether
+       * to schedule the SubRequest.
+       * If no diskCopy is found or some are found and none
+       * is in status DISKCOPY_WAITTAPERECALL, we schedule
+       * (for tape recall in the first case, for access in
+       * the second case).
+       * Else (case where a diskCopy is in DISKCOPY_WAITTAPERECALL
+       * status), we don't schedule, we link the SubRequest
+       * to the recalling SubRequest and we set its status to
+       * SUBREQUEST_WAITSUBREQ.
+       * @param subreq the SubRequest to consider
+       * @return whether to schedule it
+       * @exception Exception in case of error
+       */
+      virtual bool isDiskCopyToSchedule
+      (castor::stager::SubRequest* subreq)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Schedules a SubRequest on a given FileSystem.
+       * Depending on the available DiskCopies for the file
+       * the SubRequest deals with, decides what to do.
+       * The different cases are :
+       *  - no DiskCopy at all : a DiskCopy is created with
+       * status DISKCOPY_WAITTAPERECALL.
+       *  - one DiskCopy in DISKCOPY_WAITTAPERECALL status :
+       * the SubRequest is linked to the one recalling and
+       * put in SUBREQUEST_WAITSUBREQ status.
+       *  - no DiskCopy on the selected FileSystem but some
+       * in status DISKCOPY_STAGOUT or DISKCOPY_STAGED on other
+       * FileSystems : a new DiskCopy is created with status
+       * DISKCOPY_WAITDISK2DISKCOPY.
+       *  - one DiskCopy on the selected FileSystem in
+       * DISKCOPY_WAITDISKTODISKCOPY status : the SubRequest
+       * has to wait until the end of the copy
+       *  - one DiskCopy on the selected FileSystem in
+       * DISKCOPY_STAGOUT or DISKCOPY_STAGED status :
+       * the SubRequest is ready
+       * @param subreq  the SubRequest to consider
+       * @param fileSystem the selected FileSystem
+       * @return the diskCopy to work on. The DiskCopy and
+       * SubRequest status gives the result of the decision
+       * that was taken.
+       * @exception Exception in case of error
+       */
+      virtual castor::stager::DiskCopy* scheduleDiskCopy
+      (castor::stager::SubRequest* subreq,
+       castor::stager::FileSystem* fileSystem)
         throw (castor::exception::Exception) = 0;
 
     }; // end of class IStagerSvc

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/25 12:13:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/26 16:47:48 $ $Author: sponcec3 $
  *
  * 
  *
@@ -35,6 +35,17 @@ extern "C" {
   // C include files
   #include "castor/ServicesCInt.hpp"
   #include "castor/stager/IStagerSvcCInt.hpp"
+
+  //------------------------------------------------------------------------------
+  // checkIStagerSvc
+  //------------------------------------------------------------------------------
+  bool checkIStagerSvc(Cstager_IStagerSvc_t* stgSvc) {
+    if (0 == stgSvc || 0 == stgSvc->stgSvc) {
+      errno = EINVAL;
+      return false;
+    }
+    return true;
+  }
 
   //------------------------------------------------------------------------------
   // Cstager_IStagerSvc_fromIService
@@ -68,11 +79,7 @@ extern "C" {
   //---------------------------------------------------------------------------
   int Cstager_IStagerSvc_anySegmentsForTape(Cstager_IStagerSvc_t* stgSvc,
                                             castor::stager::Tape* searchItem) {
-    if (0 == stgSvc || 0 == stgSvc->stgSvc) {
-      errno = EINVAL;
-      stgSvc->errorMsg = "Empty context";
-      return -1;
-    }
+    if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       return stgSvc->stgSvc->anySegmentsForTape(searchItem);
     } catch (castor::exception::Exception e) {
@@ -89,11 +96,7 @@ extern "C" {
                                          castor::stager::Tape* searchItem,
                                          castor::stager::Segment*** segmentArray,
                                          int* nbItems) {
-    if (0 == stgSvc || 0 == stgSvc->stgSvc) {
-      errno = EINVAL;
-      stgSvc->errorMsg = "Empty context";
-      return -1;
-    }
+    if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       std::vector<castor::stager::Segment*> result =
         stgSvc->stgSvc->segmentsForTape(searchItem);
@@ -118,11 +121,7 @@ extern "C" {
   (Cstager_IStagerSvc_t* stgSvc,
    castor::stager::Segment* segment,
    castor::stager::DiskCopyForRecall** diskcopy) {
-    if (0 == stgSvc || 0 == stgSvc->stgSvc) {
-      errno = EINVAL;
-      stgSvc->errorMsg = "Empty context";
-      return -1;
-    }
+    if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       *diskcopy = stgSvc->stgSvc->bestFileSystemForSegment(segment);
     } catch (castor::exception::Exception e) {
@@ -138,11 +137,7 @@ extern "C" {
   //---------------------------------------------------------------------------
   int Cstager_IStagerSvc_anyTapeCopyForStream(Cstager_IStagerSvc_t* stgSvc,
                                               castor::stager::Stream* searchItem) {
-    if (0 == stgSvc || 0 == stgSvc->stgSvc) {
-      errno = EINVAL;
-      stgSvc->errorMsg = "Empty context";
-      return -1;
-    }
+    if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       if (stgSvc->stgSvc->anyTapeCopyForStream(searchItem)) {
         return 1;
@@ -163,11 +158,7 @@ extern "C" {
   (Cstager_IStagerSvc_t* stgSvc,
    castor::stager::Stream* searchItem,
    castor::stager::TapeCopyForMigration** tapecopy) {
-    if (0 == stgSvc || 0 == stgSvc->stgSvc) {
-      errno = EINVAL;
-      stgSvc->errorMsg = "Empty context";
-      return -1;
-    }
+    if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       *tapecopy = stgSvc->stgSvc->bestTapeCopyForStream(searchItem);
     } catch (castor::exception::Exception e) {
@@ -183,11 +174,7 @@ extern "C" {
   //---------------------------------------------------------------------------
   int Cstager_IStagerSvc_fileRecalled(Cstager_IStagerSvc_t* stgSvc,
                                       castor::stager::TapeCopy* tapeCopy) {
-    if (0 == stgSvc || 0 == stgSvc->stgSvc) {
-      errno = EINVAL;
-      stgSvc->errorMsg = "Empty context";
-      return -1;
-    }
+    if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       stgSvc->stgSvc->fileRecalled(tapeCopy);
       return 0;
@@ -204,11 +191,7 @@ extern "C" {
   int Cstager_IStagerSvc_tapesToDo(Cstager_IStagerSvc_t* stgSvc,
                                    castor::stager::Tape*** tapeArray,
                                    int *nbItems) {
-    if (0 == stgSvc || 0 == stgSvc->stgSvc) {
-      errno = EINVAL;
-      stgSvc->errorMsg = "Empty context";
-      return -1;
-    }
+    if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       std::vector<castor::stager::Tape*> result =
         stgSvc->stgSvc->tapesToDo();
@@ -232,11 +215,7 @@ extern "C" {
   int Cstager_IStagerSvc_streamsToDo(Cstager_IStagerSvc_t* stgSvc,
                                      castor::stager::Stream*** streamArray,
                                      int *nbItems) {
-    if (0 == stgSvc || 0 == stgSvc->stgSvc) {
-      errno = EINVAL;
-      stgSvc->errorMsg = "Empty context";
-      return -1;
-    }
+    if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       std::vector<castor::stager::Stream*> result =
         stgSvc->stgSvc->streamsToDo();
@@ -262,13 +241,63 @@ extern "C" {
                                     const char* vid,
                                     const int side,
                                     const int tpmode) {
-    if (0 == stgSvc || 0 == stgSvc->stgSvc) {
-      errno = EINVAL;
-      stgSvc->errorMsg = "Empty context";
-      return -1;
-    }
+    if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       *tape = stgSvc->stgSvc->selectTape(vid, side, tpmode);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //---------------------------------------------------------------------------
+  // Cstager_IStagerSvc_subRequestToDo
+  //---------------------------------------------------------------------------
+  int Cstager_IStagerSvc_subRequestToDo(struct Cstager_IStagerSvc_t* stgSvc,
+                                        castor::stager::SubRequest** subreq) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      *subreq = stgSvc->stgSvc->subRequestToDo();
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  };
+
+  //---------------------------------------------------------------------------
+  // Cstager_IStagerSvc_isDiskCopyToSchedule
+  //---------------------------------------------------------------------------
+  int Cstager_IStagerSvc_isDiskCopyToSchedule
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   castor::stager::SubRequest* subreq) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      if (stgSvc->stgSvc->isDiskCopyToSchedule(subreq)) {
+        return 1;
+      }
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //---------------------------------------------------------------------------
+  // Cstager_IStagerSvc_scheduleDiskCopy
+  //---------------------------------------------------------------------------
+  int Cstager_IStagerSvc_scheduleDiskCopy
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   castor::stager::SubRequest* subreq,
+   castor::stager::FileSystem* fileSystem,
+   castor::stager::DiskCopy** diskCopy) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      *diskCopy = stgSvc->stgSvc->scheduleDiskCopy(subreq, fileSystem);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();
