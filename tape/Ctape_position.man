@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_position.man,v $ $Revision: 1.9 $ $Date: 2000/03/31 15:07:56 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_position.man,v $ $Revision: 1.10 $ $Date: 2000/11/02 06:59:19 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_POSITION 3 "$Date: 2000/03/31 15:07:56 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_POSITION 3 "$Date: 2000/11/02 06:59:19 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_position \- send a request to the tape daemon to get the tape
 positionned to a given file and the HDR labels checked
@@ -171,7 +171,8 @@ may be a combination of the following values:
 .RS
 .TP
 .B NOPOS
-do not reposition tapes when writing two consecutive files.
+do not reposition tapes when writing two consecutive files (labelled and
+unlabelled tapes) or when reading two consecutive files on unlabelled tapes.
 This flag should only be set when the requestor knows that the tape is already
 positionned correctly.
 .I filstat
