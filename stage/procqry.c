@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.64 2001/09/21 05:43:54 jdurand Exp $
+ * $Id: procqry.c,v 1.65 2001/09/23 07:12:52 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.64 $ $Date: 2001/09/21 05:43:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.65 $ $Date: 2001/09/23 07:12:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -846,7 +846,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 						else
 							sendrep (rpfd, MSG_OUT, title);
 		}
-		if (stcp->t_or_d == 'h') {
+		if ((stcp->t_or_d == 'h') && (! ISWAITING(stcp))) {
 			if ((ifileclass = upd_fileclass(NULL,stcp)) >= 0) {
 				if ((thismintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0) {
 					thismintime_beforemigr = mintime_beforemigr(ifileclass);
@@ -1750,7 +1750,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 
 			save_rpfd = rpfd;
 			rpfd = -1;             /* To make sure nothing does on the terminal here */
-			if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) {
+			if (ISWAITING(stcp) || ((ifileclass = upd_fileclass(NULL,stcp)) < 0)) {
 				rpfd = save_rpfd;
 				continue; /* Unknown fileclass */
 			}
@@ -1920,5 +1920,5 @@ void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 }
 
 /*
- * Last Update: "Friday 21 September, 2001 at 06:47:04 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Sunday 23 September, 2001 at 09:01:56 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
