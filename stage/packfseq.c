@@ -1,5 +1,5 @@
 /*
- * $Id: packfseq.c,v 1.14 2001/11/30 11:30:02 jdurand Exp $
+ * $Id: packfseq.c,v 1.15 2002/04/30 12:25:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: packfseq.c,v $ $Revision: 1.14 $ $Date: 2001/11/30 11:30:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: packfseq.c,v $ $Revision: 1.15 $ $Date: 2002/04/30 12:25:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -24,6 +24,8 @@ int packfseq _PROTO(());
 #else
 int packfseq _PROTO((fseq_elem *, int, int, int, char, char *, int));
 #endif
+
+EXTERN_C int  DLL_DECL stage_strtoi _PROTO((int *,char *,char **, int));
 
 int packfseq(fseq_list, i, nbdskf, nbtpf, trailing, fseq, fseqsz)
 		 fseq_elem *fseq_list;
