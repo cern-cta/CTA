@@ -1,9 +1,9 @@
-.\" @(#)$RCSfile: rtcpd.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:54 $ CERN CERN IT-PDP/DM Olof Barring
+.\" @(#)$RCSfile: rtcpd.man,v $ $Revision: 1.3 $ $Date: 2003/01/23 14:59:43 $ CERN CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 2000 by CERN IT-PDP/DM
 .\" All rights reserved
 .\"
 .nh
-.TH RTCPD 1 "$Date: 2001/09/26 09:13:54 $" CASTOR "RTCOPY daemon"
+.TH RTCPD 1 "$Date: 2003/01/23 14:59:43 $" CASTOR "RTCOPY daemon"
 .SH NAME
 rtcpd \- CASTOR remote tape copy daemon
 .SH SYNOPSIS
@@ -29,7 +29,9 @@ the \fBrtcpd\fP child process will also start to fill the memory buffers
 with input disk file data, while it is waiting for the tape to be mounted and
 positioned. \fBrtcpd\fP is highly multi-threaded and able to process 
 disk+network I/O in parallel with the tape I/O.
-
+.PP
+To access the tapes \fBrtcpd\fP uses the character devices created by the tape daemon in the /var/tmp/RTCOPY directory. This directory is created by \fBrtcpd\fP at startup time, and must not be removed.
+ 
 .SH ENVIRONMENT
 The \fBrtcpd\fP daemon does not take any arguments. A set of configuration
 variables can be used to change default settings of \fBrtcpd\fP run parameters.
@@ -131,6 +133,17 @@ number representing a combination of RTCOPY severity flags, see \fBrtcpc(3)\fP.
 As an example: \fBRTCOPYD SD3R_ERRACTION 2056\fP forces a immediate
 failure with \fBRTCP_NORETRY\fP severity in case of tape media errors
 (2056 == \fBRTCP_FAILED|RTCP_NORETRY\fP).
+
+.SH FILES
+.TP 1.2i
+.B /etc/shift.conf
+CASTOR configuration file
+.TP
+.B /var/tmp/RTCOPY
+Directory where the tape daemon creates the character devices
+.TP
+.B /usr/spool/rtcopy/rtcopyd.log
+RTCOPY server log file
 
 .SH SEE ALSO
 .BI rtcpc(3)
