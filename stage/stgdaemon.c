@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.207 2002/06/19 13:15:36 bcouturi Exp $
+ * $Id: stgdaemon.c,v 1.208 2002/06/19 13:29:51 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.207 $ $Date: 2002/06/19 13:15:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.208 $ $Date: 2002/06/19 13:29:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -435,12 +435,14 @@ int main(argc,argv)
 			}
 			break;
 		case 'F':
+			rlimit_nofile_flag = 1;
 			if ((rlimit_nofile = atoi(Coptarg)) <= 0) {
 				fprintf(stderr,"RLIMIT_NOFILE (-F/--rlimit_nofile option) value '%s' : must be > 0\n",Coptarg);
 				++errflg;
 			}
 			break;
 		case 'P':
+			rlimit_nproc_flag = 1;
 			if ((rlimit_nproc = atoi(Coptarg)) <= 0) {
 				fprintf(stderr,"RLIMIT_NPROC (-P/--rlimit_nproc option) value '%s' : must be > 0\n",Coptarg);
 				++errflg;
@@ -489,58 +491,74 @@ int main(argc,argv)
 
 	/* Before getting system limit, change them right now - we do nothing if wanted value are below what system provide */
 #ifdef RLIMIT_NOFILE
-	/* RLIMIT_NOFILE */
-	if (getrlimit(RLIMIT_NOFILE,&rlim) != 0) {
-		stglogit(func, "... getrlimit(RLIMIT_NOFILE,&rlim) error : %s\n", strerror(errno));
-	} else {
-		if (rlim.rlim_cur > rlimit_nofile) {
-			stglogit(func, "... RLIMIT_NOFILE says current limit is %d. Unchanged.\n", rlim.rlim_max);
+	if (rlimit_nofile_flag != 0) {
+		/* RLIMIT_NOFILE */
+		if (getrlimit(RLIMIT_NOFILE,&rlim) != 0) {
+			stglogit(func, "... getrlimit(RLIMIT_NOFILE,&rlim) error : %s\n", strerror(errno));
 		} else {
-			rlim.rlim_cur = rlimit_nofile;
-			if (rlim.rlim_max < rlim.rlim_cur) {
-				stglogit(func, "... RLIMIT_NOFILE says h/w limit is %d, setting h/w and current limits to %d \n", rlim.rlim_max, rlimit_nofile);
-				rlim.rlim_max = rlim.rlim_cur;
+			if (rlim.rlim_cur > rlimit_nofile) {
+				stglogit(func, "... RLIMIT_NOFILE says current limit is %d. Unchanged.\n", rlim.rlim_max);
 			} else {
-				stglogit(func, "... RLIMIT_NOFILE says h/w limit is %d, setting only current limit to %d \n", rlim.rlim_max, rlimit_nofile);
+				rlim.rlim_cur = rlimit_nofile;
+				if (rlim.rlim_max < rlim.rlim_cur) {
+					stglogit(func, "... RLIMIT_NOFILE says h/w limit is %d, setting h/w and current limits to %d \n", rlim.rlim_max, rlimit_nofile);
+					rlim.rlim_max = rlim.rlim_cur;
+				} else {
+					stglogit(func, "... RLIMIT_NOFILE says h/w limit is %d, setting only current limit to %d \n", rlim.rlim_max, rlimit_nofile);
+				}
+				if (setrlimit(RLIMIT_NOFILE,&rlim) != 0) {
+					stglogit(func, "... setrlimit(RLIMIT_NOFILE,&rlim) error : %s\n", strerror(errno));
+				}
 			}
-			if (setrlimit(RLIMIT_NOFILE,&rlim) != 0) {
-				stglogit(func, "... setrlimit(RLIMIT_NOFILE,&rlim) error : %s\n", strerror(errno));
+			/* Verify */
+			if (getrlimit(RLIMIT_NOFILE,&rlim) != 0) {
+				stglogit(func, "... getrlimit(RLIMIT_NOFILE,&rlim) error : %s\n", strerror(errno));
+			} else {
+				stglogit(func, "==> Running with RLIMIT_NOFILE = { cur=%d, max=%d }\n", rlim.rlim_cur, rlim.rlim_max);
 			}
 		}
-		/* Verify */
+	} else {
 		if (getrlimit(RLIMIT_NOFILE,&rlim) != 0) {
- 			stglogit(func, "... getrlimit(RLIMIT_NOFILE,&rlim) error : %s\n", strerror(errno));
+			stglogit(func, "... getrlimit(RLIMIT_NOFILE,&rlim) error : %s\n", strerror(errno));
 		} else {
- 			stglogit(func, "==> Running with RLIMIT_NOFILE = { cur=%d, max=%d }\n", rlim.rlim_cur, rlim.rlim_max);
+			stglogit(func, "==> Running with RLIMIT_NOFILE = { cur=%d, max=%d }\n", rlim.rlim_cur, rlim.rlim_max);
 		}
 	}
 #else
 	stglogit(func, "... RLIMIT_NOFILE undefined on this platform\n");
 #endif
 #ifdef RLIMIT_NPROC
-	/* RLIMIT_NPROC */
-	if (getrlimit(RLIMIT_NPROC,&rlim) != 0) {
-		stglogit(func, "... getrlimit(RLIMIT_NPROC,&rlim) error : %s\n", strerror(errno));
-	} else {
-		if (rlim.rlim_cur > rlimit_nproc) {
-			stglogit(func, "... RLIMIT_NPROC says current limit is %d. Unchanged.\n", rlim.rlim_max);
+	if (rlimit_nproc_flag != 0) {
+		/* RLIMIT_NPROC */
+		if (getrlimit(RLIMIT_NPROC,&rlim) != 0) {
+			stglogit(func, "... getrlimit(RLIMIT_NPROC,&rlim) error : %s\n", strerror(errno));
 		} else {
-			rlim.rlim_cur = rlimit_nproc;
-			if (rlim.rlim_max < rlim.rlim_cur) {
-				stglogit(func, "... RLIMIT_NPROC says h/w limit is %d, setting h/w and current limits to %d\n", rlim.rlim_max, rlimit_nproc);
-				rlim.rlim_max = rlim.rlim_cur;
+			if (rlim.rlim_cur > rlimit_nproc) {
+				stglogit(func, "... RLIMIT_NPROC says current limit is %d. Unchanged.\n", rlim.rlim_max);
 			} else {
-				stglogit(func, "... RLIMIT_NPROC says h/w limit is %d, setting only current limit to %d \n", rlim.rlim_max, rlimit_nofile);
+				rlim.rlim_cur = rlimit_nproc;
+				if (rlim.rlim_max < rlim.rlim_cur) {
+					stglogit(func, "... RLIMIT_NPROC says h/w limit is %d, setting h/w and current limits to %d\n", rlim.rlim_max, rlimit_nproc);
+					rlim.rlim_max = rlim.rlim_cur;
+				} else {
+					stglogit(func, "... RLIMIT_NPROC says h/w limit is %d, setting only current limit to %d \n", rlim.rlim_max, rlimit_nofile);
+				}
+				if (setrlimit(RLIMIT_NPROC,&rlim) != 0) {
+					stglogit(func, "... setrlimit(RLIMIT_NPROC,&rlim) error : %s\n", strerror(errno));
+				}
 			}
-			if (setrlimit(RLIMIT_NPROC,&rlim) != 0) {
-				stglogit(func, "... setrlimit(RLIMIT_NPROC,&rlim) error : %s\n", strerror(errno));
+			/* Verify */
+			if (getrlimit(RLIMIT_NPROC,&rlim) != 0) {
+				stglogit(func, "... getrlimit(RLIMIT_NPROC,&rlim) error : %s\n", strerror(errno));
+			} else {
+				stglogit(func, "==> Running with RLIMIT_NPROC = { cur=%d, max=%d }\n", rlim.rlim_cur, rlim.rlim_max);
 			}
 		}
-		/* Verify */
+	} else {
 		if (getrlimit(RLIMIT_NPROC,&rlim) != 0) {
- 			stglogit(func, "... getrlimit(RLIMIT_NPROC,&rlim) error : %s\n", strerror(errno));
+			stglogit(func, "... getrlimit(RLIMIT_NPROC,&rlim) error : %s\n", strerror(errno));
 		} else {
- 			stglogit(func, "==> Running with RLIMIT_NPROC = { cur=%d, max=%d }\n", rlim.rlim_cur, rlim.rlim_max);
+			stglogit(func, "==> Running with RLIMIT_NPROC = { cur=%d, max=%d }\n", rlim.rlim_cur, rlim.rlim_max);
 		}
 	}
 #else
