@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.27 $ $Release$ $Date: 2005/04/01 15:54:02 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.28 $ $Release$ $Date: 2005/04/01 16:10:23 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.27 $ $Release$ $Date: 2005/04/01 15:54:02 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.28 $ $Release$ $Date: 2005/04/01 16:10:23 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1126,6 +1126,12 @@ int rtcpcld_main(
   maxfd++;
 #endif /* _WIN32 */
   rc = 0;
+
+  /*
+   * Fork a tape error handler to retry possible failed segments 
+   * from last shutdown
+   */
+  startTapeErrorHandler();
   /*
    * Main infinite processing loop. Wake-up on either notify (UDP)
    * or catalogue poll timeout (RTCPCLD_CATPOLL_TIMEOUT), or
