@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.21 $ $Date: 2000/02/01 16:31:18 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.22 $ $Date: 2000/02/02 09:50:38 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -225,7 +225,8 @@ static int VolInUse(const dgn_element_t *dgn_context,
               *drv->vol->vol.volid != '\0' && 
               !strcmp(drv->vol->vol.volid,volid)) ||
              (!strcmp(drv->drv.volid,volid) && 
-              (drv->drv.status & (VDQM_UNIT_UNKNOWN | VDQM_UNIT_ERROR))) ) {
+              (drv->drv.status & (VDQM_UNIT_UNKNOWN | VDQM_UNIT_ERROR |
+                                  VDQM_FORCE_UNMOUNT))) ) {
             found = 1;
             break;
         }
@@ -1561,6 +1562,11 @@ n",
              */
             drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_ERROR;
             /*
+             * If the client forced an unmount with the release we can
+             * reset the FORCE_UNMOUNT here.
+             */
+            drvrec->drv.status = drvrec->drv.status & ~VDQM_FORCE_UNMOUNT;
+            /*
              * We should also reset UNMOUNT status in the request so that
              * we tell the drive to unmount twice
              */
@@ -1614,18 +1620,27 @@ n",
                 /*
                  * If a volume is mounted but current job ended: check if there
                  * are any other valid request for the same volume. The volume
-                 * can only be re-used on this unit if the modes are the same.
+                 * can only be re-used on this unit if the modes (R/W) are the 
+                 * same. If client indicated an error or forced unmount the
+                 * will remain with that state until a VOL_UNMOUNT is received
+                 * and both drive and volume cannot be reused until then.
                  * If the drive status was UNKNOWN at entry we must force an
-                 * unmount in all cases.
+                 * unmount in all cases. This normally happens when a RTCOPY
+                 * client has aborted and sent VDQM_DEL_VOLREQ to delete his
+                 * volume request before the RTCOPY server has released the
+                 * job. 
                  */
                 rc = 0;
-                if (!unknown && !(drvrec->drv.status & VDQM_UNIT_ERROR))
+                if (!unknown && !(drvrec->drv.status & (VDQM_UNIT_ERROR |
+                                                        VDQM_FORCE_UNMOUNT)))
                     rc = AnyVolRecForMountedVol(dgn_context,drvrec,&volrec);
                 if ( (drvrec->drv.status & VDQM_UNIT_ERROR) ||
                      unknown || rc == -1 || volrec == NULL || 
                      volrec->vol.mode != drvrec->drv.mode ) {
                     if ( drvrec->drv.status & VDQM_UNIT_ERROR ) 
                         log(LOG_ERR,"vdqm_NewDrvReq(): unit in error status. Force unmount!\n");
+                    if ( drvrec->drv.status & VDQM_FORCE_UNMOUNT )
+                        log(LOG_ERR,"vdqm_NewDrvReq(): client requests forced unmount\n");
                     if ( rc == -1 ) 
                         log(LOG_ERR,"vdqm_NewDrvReq(): AnyVolRecForVolid() returned error\n");
                     if ( unknown )
