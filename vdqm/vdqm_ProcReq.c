@@ -1,6 +1,9 @@
 /*
- * $Id: vdqm_ProcReq.c,v 1.1 1999/07/27 09:21:04 obarring Exp $
+ * $Id: vdqm_ProcReq.c,v 1.2 1999/07/31 14:50:18 obarring Exp $
  * $Log: vdqm_ProcReq.c,v $
+ * Revision 1.2  1999/07/31 14:50:18  obarring
+ * Add vdqm_SetError(), vdqm_GetError()
+ *
  * Revision 1.1  1999/07/27 09:21:04  obarring
  * First version
  *
@@ -31,13 +34,15 @@ extern char *geterr();
 #endif /* _WIN32 */
 #include <log.h>
 #include <net.h>
+#include <serrno.h>
 #include <Castor_limits.h>
 #include <Cthread_api.h>
 #include <vdqm_constants.h>
 #include <vdqm.h>
-const int return_status = 0;
-static int hold = 0;
 
+const int return_status = 0;
+static int error_key;
+static int hold = 0;
 
 void *vdqm_ProcReq(void *arg) {
     vdqmVolReq_t volumeRequest;
@@ -170,5 +175,30 @@ void *vdqm_ProcReq(void *arg) {
         thID,reqtype);
     vdqm_ReturnPool(client_connection);
     return((void *)&return_status);
+}
+static int vdqm_Error(int eval) {
+    int *ts_eval;
+    int rc;
+
+    rc = Cthread_getspecific(&error_key,(void **)&ts_eval);
+    if ( rc == -1 || ts_eval == NULL ) {
+        ts_eval = (int *)calloc(1,sizeof(int));
+        rc = Cthread_setspecific(&error_key,(void *)ts_eval);
+    }
+    if ( rc == -1 || ts_eval == NULL ) return(-1);
+    rc = *ts_eval;
+    if ( eval >= 0 ) *ts_eval = eval;
+    return(rc);
+}
+
+int vdqm_GetError() {
+    int rc;
+    rc = vdqm_Error(-1);
+    if ( rc == -1 ) return(SEINTERNAL);
+    else return(rc);
+}
+
+int vdqm_SetError(int eval) {
+    return(vdqm_Error(eval));
 }
 
