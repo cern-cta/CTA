@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.172 2002/01/21 18:10:10 jdurand Exp $
+ * $Id: poolmgr.c,v 1.173 2002/01/24 17:44:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.172 $ $Date: 2002/01/21 18:10:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.173 $ $Date: 2002/01/24 17:44:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -391,7 +391,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
           if (pool_p->put_failed_retenp < 0) pool_p->put_failed_retenp = -1;
           if (*dp != '\0' || pool_p->put_failed_retenp == 0) {
             if (*dp == '\0' && pool_p->put_failed_retenp == 0)
-              stglogit (func, STG26, "option", "pool_p->put_failed_retenp (should be <0 xor >0)");
+              stglogit (func, STG26, "option", "pool_p->put_failed_retenp (should be <0 or >0)");
             stglogit (func, STG26, "pool", pool_p->name);
             errflg++;
             goto reply;
@@ -1906,25 +1906,6 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
     }
   }
   if (migr_init != 0) {
-    /* Update the fileclasses */
-    upd_fileclasses();
-    /* Update the migrators */
-    for (j = 0, pool_n = pools; j < nbpool; j++, pool_n++) {
-      if (pool_n->migr != NULL) {
-        int k;
-
-        pool_n->migr->global_predicates.nbfiles_canbemig = 0;
-        pool_n->migr->global_predicates.space_canbemig = 0;
-        pool_n->migr->global_predicates.nbfiles_beingmig = 0;
-        pool_n->migr->global_predicates.space_beingmig = 0;
-        for (k = 0; k < pool_n->migr->nfileclass; k++) {
-          pool_n->migr->fileclass_predicates[k].nbfiles_canbemig = 0;
-          pool_n->migr->fileclass_predicates[k].space_canbemig = 0;
-          pool_n->migr->fileclass_predicates[k].nbfiles_beingmig = 0;
-          pool_n->migr->fileclass_predicates[k].space_beingmig = 0;
-        }
-      }
-    }
     redomigpool();
   }
   /* Reset the permanent RFIO connections */
@@ -1937,6 +1918,29 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 void redomigpool()
 {
   struct stgcat_entry *stcp;
+  int j;
+  struct pool *pool_n;
+  
+  /* Update the fileclasses */
+  upd_fileclasses();
+
+  /* Update the migrators */
+  for (j = 0, pool_n = pools; j < nbpool; j++, pool_n++) {
+      if (pool_n->migr != NULL) {
+		  int k;
+		  
+		  pool_n->migr->global_predicates.nbfiles_canbemig = 0;
+		  pool_n->migr->global_predicates.space_canbemig = 0;
+		  pool_n->migr->global_predicates.nbfiles_beingmig = 0;
+		  pool_n->migr->global_predicates.space_beingmig = 0;
+		  for (k = 0; k < pool_n->migr->nfileclass; k++) {
+			  pool_n->migr->fileclass_predicates[k].nbfiles_canbemig = 0;
+			  pool_n->migr->fileclass_predicates[k].space_canbemig = 0;
+			  pool_n->migr->fileclass_predicates[k].nbfiles_beingmig = 0;
+			  pool_n->migr->fileclass_predicates[k].space_beingmig = 0;
+		  }
+      }
+  }
 
   for (stcp = stcs; stcp < stce; stcp++) {
     if (stcp->reqid == 0) break;
@@ -2822,26 +2826,7 @@ int migrate_files(pool_p)
     pool_p->migr->migreqtime = pool_p->migr->migreqtime_last_start = time(NULL);
     if ((pool_p->migr->global_predicates.nbfiles_beingmig == 0) ||
         (pool_p->migr->global_predicates.space_beingmig == 0)) {
-      int j;
-      struct pool *pool_n;
-
       stglogit (func, "### Executing recovery procedure - migrator should not have been executed\n");
-      /* Update the migrators */
-      for (j = 0, pool_n = pools; j < nbpool; j++, pool_n++) {
-        if (pool_n->migr != NULL) {
-          int k;
-          pool_n->migr->global_predicates.nbfiles_canbemig = 0;
-          pool_n->migr->global_predicates.space_canbemig = 0;
-          pool_n->migr->global_predicates.nbfiles_beingmig = 0;
-          pool_n->migr->global_predicates.space_beingmig = 0;
-          for (k = 0; k < pool_n->migr->nfileclass; k++) {
-            pool_n->migr->fileclass_predicates[k].nbfiles_canbemig = 0;
-            pool_n->migr->fileclass_predicates[k].space_canbemig = 0;
-            pool_n->migr->fileclass_predicates[k].nbfiles_beingmig = 0;
-            pool_n->migr->fileclass_predicates[k].space_beingmig = 0;
-          }
-        }
-      }
       redomigpool();
     }
   }
@@ -3538,7 +3523,7 @@ int migpoolfiles(pool_p)
           } else {
             nb_in_this_request = tppool_vs_stcp[j].nstcp - nb_done_request;
           }
-          if ((rc = stagewrt_hsm((u_signed64) STAGE_SILENT|STAGE_NOHSMCREAT, /* Flags */
+          if ((rc = stagewrt_hsm((u_signed64) STAGE_SILENT|STAGE_NOHSMCREAT|STAGE_REQID, /* Flags */
                                  0,                            /* open flags - disabled */
                                  localhost,                    /* Hostname */
                                  NULL,                         /* Pooluser */
