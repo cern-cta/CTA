@@ -77,7 +77,7 @@ Csec_api_loader.Osuf: Csec_api_loader.c
 #if UseGSI
 SharedLibraryTargetName(Csec_plugin_GSI): $(SECLIB_UTIL_OBJS) Csec_plugin_GSI.Osuf Csec_plugin_GSI_mapper.Osuf
 	ld  $(SHLIBLDFLAGS) -o $@ $?  SecLibsDirGSI SecLibsGSI -lshift
-	mv SharedLibraryTargetName(Csec_plugin_GSI) ../shlib
+	$(CP) SharedLibraryTargetName(Csec_plugin_GSI) ../shlib
 
 Csec_plugin_GSI.Osuf: Csec_plugin_GSS.c
 	$(CC) $(CFLAGS) SecAuthMechGSI SecIncludeDirGSI	-o $@ -c Csec_plugin_GSS.c
@@ -89,7 +89,7 @@ Csec_plugin_GSI_mapper.Osuf:  Csec_plugin_GSS_mapper.c
 #if UseKRB5
 SharedLibraryTargetName(Csec_plugin_KRB5): $(SECLIB_UTIL_OBJS) Csec_plugin_KRB5.Osuf Csec_plugin_KRB5_mapper.Osuf
 	ld  $(SHLIBLDFLAGS) -o $@ $? SecLibsDirKRB5 SecLibsKRB5 -lshift
-	mv SharedLibraryTargetName(Csec_plugin_KRB5) ../shlib
+	$(CP) SharedLibraryTargetName(Csec_plugin_KRB5) ../shlib
 
 Csec_plugin_KRB5.Osuf: Csec_plugin_GSS.c
 	$(CC) $(CFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5	-o $@ -c Csec_plugin_GSS.c
@@ -101,7 +101,7 @@ Csec_plugin_KRB5_mapper.Osuf:  Csec_plugin_GSS_mapper.c
 #if UseKRB4
 SharedLibraryTargetName(Csec_plugin_KRB4): $(SECLIB_UTIL_OBJS) Csec_plugin_KRB4.Osuf 
 	ld  $(SHLIBLDFLAGS) -o $@ $? SecLibsDirKRB4 SecLibsKRB4 -lshift
-	mv SharedLibraryTargetName(Csec_plugin_KRB4) ../shlib
+	$(CP) SharedLibraryTargetName(Csec_plugin_KRB4) ../shlib
 
 Csec_plugin_KRB4.Osuf: Csec_plugin_KRB4.c 
 	$(CC) $(CFLAGS) SecIncludeDirKRB4	-o $@ -c Csec_plugin_KRB4.c
@@ -110,7 +110,7 @@ Csec_plugin_KRB4.Osuf: Csec_plugin_KRB4.c
 
 SharedLibraryTargetName(Csec_plugin_ID): $(SECLIB_UTIL_OBJS) Csec_plugin_ID.Osuf
 	ld  $(SHLIBLDFLAGS) -o $@ $?  -lshift	
-	mv SharedLibraryTargetName(Csec_plugin_ID) ../shlib
+	$(CP) SharedLibraryTargetName(Csec_plugin_ID) ../shlib
 
 Csec_plugin_ID.Osuf: Csec_plugin_ID.c
 	$(CC) $(CFLAGS) -o $@ -c Csec_plugin_ID.c
