@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.65 $ $Date: 2000/03/31 15:31:07 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.66 $ $Date: 2000/04/03 15:39:20 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1629,7 +1629,8 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                      (tapereq->mode == WRITE_ENABLE || 
                       (tapereq->mode == WRITE_DISABLE &&
                        proc_cntl.tapeIOfinished == 0 &&
-                       proc_cntl.tapeIOfinished == 0))) ||
+                       proc_cntl.tapeIOfinished == 0 && 
+                       nextfile->end_index < 0))) ||
                    ((proc_cntl.diskIOstarted == 0) ||
                      (filereq->blocksize <= 0))) ) {
                 rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() waiting... (nb_reserved_bufs=%d\n",proc_cntl.nb_reserved_bufs);
