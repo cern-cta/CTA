@@ -1,5 +1,5 @@
 /*
- * $Id: fstat64.c,v 1.1 2002/11/19 10:51:22 baud Exp $
+ * $Id: fstat64.c,v 1.2 2002/11/27 10:34:58 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fstat64.c,v $ $Revision: 1.1 $ $Date: 2002/11/19 10:51:22 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, P. Gaillardon";
+static char sccsid[] = "@(#)$RCSfile: fstat64.c,v $ $Revision: 1.2 $ $Date: 2002/11/27 10:34:58 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, P. Gaillardon";
 #endif /* not lint */
 
 /* fstat64.c      Remote File I/O - get file status                       */
@@ -102,7 +102,7 @@ struct stat64  *statbuf;
    unmarshall_LONG(p, rcode) ; 
    unmarshall_LONG(p,msgsiz) ;
    switch(req) {
-      case RQST_FSTAT:
+      case RQST_FSTAT64:
          TRACE(2, "rfio", "rfio_fstat64: reading %d bytes",msgsiz);
          if (netread_timeout(s,rfio_buf,msgsiz,RFIO_DATA_TIMEOUT) != msgsiz ) {
             TRACE(2,"rfio","rfio_fstat64: read(): ERROR occured (errno=%d)",errno) ;
