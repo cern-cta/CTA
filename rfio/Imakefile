@@ -143,7 +143,9 @@ RFIOLIB = -L. -lrfio
 #endif
 LIBS = $(OPTLIBS)
 
-.PRECIOUS: LibraryTargetName(rfio)
+#if BuildRfioLibrary
+RFIOLIBTARGET=LibraryTargetName(rfio)
+#endif
 
 MANPAGES = FileName($(MANDIR),rfiod.$(MANSUFFIX)) \
 	   FileName($(MANDIR),rfcat.$(MANSUFFIX)) \
@@ -274,8 +276,7 @@ EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rfiod.$(MANSUFFI
 	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rfiosetopt.$(LIBMANSUFFIX)))
 
 #if BuildRfioClient
-CLIENT = LibraryTargetName(rfio) \
-	 ProgramTargetName(rfcat) ProgramTargetName(rfchmod) \
+CLIENT = ProgramTargetName(rfcat) ProgramTargetName(rfchmod) \
 	 ProgramTargetName(rfcp) ProgramTargetName(rfdir) \
 	 ProgramTargetName(rfmkdir) ProgramTargetName(rfrename) \
 	 ProgramTargetName(rfrm) ProgramTargetName(rfstat)
@@ -325,7 +326,7 @@ RFIOLIB_OBJS = access.Osuf alrm.Osuf chdir.Osuf checkkey.Osuf chmod.Osuf \
 		lockf64.Osuf lseek64.Osuf open64.Osuf \
 		preseek64.Osuf read64.Osuf stream64.Osuf write64.Osuf RfioTURL.Osuf
 
-all:    $(CLIENT) $(SERVER) $(DUMPLOG)
+all:    $(RFIOLIBTARGET) $(CLIENT) $(SERVER) $(DUMPLOG)
 
 #if BuildRfioServer
 install: $(BIN) $(IPROGC) $(IPROGS) $(SPOOL) $(DUMPINSTALL)
