@@ -1,6 +1,9 @@
 /*
- * $Id: getifnam.c,v 1.2 1999/07/22 16:07:04 obarring Exp $
+ * $Id: getifnam.c,v 1.3 1999/07/26 10:55:57 obarring Exp $
  * $Log: getifnam.c,v $
+ * Revision 1.3  1999/07/26 10:55:57  obarring
+ * Add missing closing parenthesis
+ *
  * Revision 1.2  1999/07/22 16:07:04  obarring
  * Make MT safe
  *
@@ -12,7 +15,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: getifnam.c,v 1.2 1999/07/22 16:07:04 obarring Exp $";
+static char cvsId[] = "$Id: getifnam.c,v 1.3 1999/07/26 10:55:57 obarring Exp $";
 #endif /* not lint */
 
 /* getifnam.c   Get connected socket interface name                     */
@@ -111,7 +114,7 @@ size_t  ifnamelen;
         while ((char *) sp < endp) {
             if ((sp->sin_family == AF_INET) &&
                 (binaddr == sp->sin_addr.s_addr)) {
-                if ( ifnamelen > strlen(ifr->ifr_name )
+                if ( ifnamelen > strlen(ifr->ifr_name) )
                     strcpy(ifname, ifr->ifr_name);
                 else
                     strncpy(ifname,ifr->ifr_name,ifnamelen);
