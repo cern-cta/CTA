@@ -1,5 +1,5 @@
 /*
- * $Id: osdep.h,v 1.16 2002/11/19 09:04:52 baud Exp $
+ * $Id: osdep.h,v 1.17 2003/09/24 03:31:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: osdep.h,v $ $Revision: 1.16 $ $Date: 2002/11/19 09:04:52 $ CERN IT-PDP/IP Frederic Hemmer
+ * @(#)$RCSfile: osdep.h,v $ $Revision: 1.17 $ $Date: 2003/09/24 03:31:05 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */
@@ -94,7 +94,7 @@ typedef U_HYPER TIME_T;
 #ifdef _PROTO
 #undef _PROTO
 #endif
-#if (defined(__STDC__) || defined(_WIN32))
+#if (defined(__STDC__) || defined(__cplusplus) || defined(_WIN32))
 /* On Win32, compiler is STDC compliant but the */
 /* __STDC__ definition itself is not a default. */
 #define CONST const
