@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.51 2001/02/01 18:09:27 jdurand Exp $
+ * $Id: procupd.c,v 1.52 2001/02/08 22:13:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.51 $ $Date: 2001/02/01 18:09:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.52 $ $Date: 2001/02/08 22:13:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -756,9 +756,9 @@ procupdreq(req_data, clienthost)
 							if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp_found);
 						}
 						if (stcp_found != NULL) {
-							if (stcp_found != save_stcp) {
-								int continue_flag = 0;;
-								/* The found element is not the STAGEWRT or STAGEPUT itself */
+							if ((stcp_found != save_stcp) || ((stcp_found == save_stcp) && (save_status & STAGEPUT) == STAGEPUT)) {
+								int continue_flag = 0;
+								/* The found element is not the STAGEWRT itself, or is the STAGEPUT */
 								/* this means it was a migration request */
 								if (ifileclass >= 0) {
 									time_t thistime = time(NULL);
@@ -773,7 +773,7 @@ procupdreq(req_data, clienthost)
 								if ((save_stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 									update_migpool(save_stcp,-1,0);
 								}
-								delreq(save_stcp,0);
+								if (! ((stcp_found == save_stcp) && (save_status & STAGEPUT) == STAGEPUT)) delreq(save_stcp,0);
 								if (continue_flag != 0) {
 									continue;
 								} else {
