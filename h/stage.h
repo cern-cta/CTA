@@ -1,9 +1,9 @@
 /*
- * $Id: stage.h,v 1.5 1999/12/22 07:22:52 jdurand Exp $
+ * $Id: stage.h,v 1.6 1999/12/27 14:12:38 baud Exp $
  */
 
 /*
- * Copyright (C) 1993-1998 by CERN/CN/PDP/DH
+ * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
@@ -12,6 +12,7 @@
 #ifndef __stage_h
 #define __stage_h
 
+#include "Castor_limits.h"
 #include <osdep.h>
 
 /* ==================== */
@@ -76,17 +77,10 @@
 #define	SYMLINK		4
 #define	RMSYMLINK	5
 
-			/* -C options */
+			/* -C, -E and -T options */
 
-#define	EBCCONV		1	/* ebcdic <--> ascii conversion */
-#define	FIXVAR		2	/* fixed records <--> variable records */
-
-			/* -E and -T options */
-
-#define	SKIPBAD		1	/* skip bad block */
-#define	KEEPFILE	2	/* stop at first bad block, but keep file */
-#define	NOTRLCHK	4	/* do not check trailer labels */
-#define	IGNOREEOI	8	/* do not take 2 consecutive TMs as EOI */
+#include "Ctape_constants.h"
+#include "rtcp_constants.h"
 
 			/* stage states */
 
@@ -233,7 +227,7 @@ struct stgcat_entry {		/* entry format in STGCAT table */
 	char	user[15];	/* login name */
 	uid_t	uid;		/* uid or Guid */
 	gid_t	gid;
-#if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(vms) || defined(_WIN32)
+#if defined(vms) || defined(_WIN32)
 	int mask;
 #else
 	mode_t	mask;
@@ -247,16 +241,16 @@ struct stgcat_entry {		/* entry format in STGCAT table */
 	union {
 	    struct {			/* tape specific info */
 		char	den[6];		/* density */
-		char	dgn[9];		/* device group */
-		char	fid[18];	/* file id */
+		char	dgn[CA_MAXDGNLEN+1];	/* device group */
+		char	fid[CA_MAXFIDLEN+1];	/* file id */
 		char	filstat;	/* file status: new = 'n', old = 'o' */
 		char	fseq[MAXFSEQ];	/* file sequence number requested by user */
 		char	lbl[4];		/* label type: al, nl, sl or blp */
 		int	retentd;	/* retention period in days */
 		char	tapesrvr[MAXHOSTNAMELEN];	/* tape server */
 		char	E_Tflags;	/* SKIPBAD, KEEPFILE, NOTRLCHK */
-		char	vid[MAXVSN][7];
-		char	vsn[MAXVSN][7];
+		char	vid[MAXVSN][CA_MAXVIDLEN+1];
+		char	vsn[MAXVSN][CA_MAXVIDLEN+1];
 	    } t;
 	    struct {			/* info for disk file stageing */
 		char	xfile[MAXHOSTNAMELEN+MAXPATH];
