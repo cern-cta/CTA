@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.42 2001/02/05 10:04:44 jdurand Exp $
+ * $Id: stage.h,v 1.43 2001/02/05 10:49:02 jdurand Exp $
  */
 
 /*
@@ -88,7 +88,7 @@
 #define UPPER(s) \
 	{ \
 	char *q; \
-	if (*q != '\0') \
+	if (((s) != NULL) && (*(s) != '\0')) \
 		for (q = s; *q; q++) \
 			if (*q >= 'a' && *q <= 'z') *q = *q + ('A' - 'a'); \
 	}
@@ -246,6 +246,8 @@
 #define STG135  "STG135 - Fileclass %s@%s (classid %d) : specifies up to %d stream - Created a new one of size %s on tape pool %s\n"
 #define STG136  "STG136 - %s (copy number No %d) claims that start segment No %d is ok, while its segment No %d (same copy number) is NOT - Please contact your admin - copy number No %d declared non valid for recall\n"
 #define STG137  "STG137 - %s (copy number No %d) : segment No %d not taken into account because of segment No %d - Please contact your admin\n"
+#define STG138  "STG138 - Fileclass %s@%s (classid %d) : specifies %d nbcopies and %d nbtppools - only both zero or both non-zero is legal - invalid fileclass - Please contact your admin\n"
+#define STG139  "STG139 - %s : fileclass %s@%s (classid %d) specifies %d nbcopies and %d nbtppools - this file will not be migrated\n"
 
 			/* stage daemon return codes */
 
