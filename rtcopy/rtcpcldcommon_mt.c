@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/12 08:37:03 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/18 06:55:40 $ $Author: obarring $
  *
  * 
  *
@@ -30,7 +30,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/12 08:37:03 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/18 06:55:40 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -74,7 +74,6 @@ WSADATA wsadata;
 #include <rtcp_api.h>
 #include <rtcpcld_constants.h>
 #include <rtcpcld.h>
-#define RTCPCLD_COMMON
 #include <rtcpcld_messages.h>
 extern char *getconfent _PROTO((char *, char *, int));
 
@@ -94,6 +93,9 @@ static void *currentTapeFseqLock = NULL;
  */
 static void *runningSegmentLock = NULL;
 
+/** migrator/recaller threadpool id
+ */
+static int callbackThreadPool = -1;
 
 int rtcpcld_initLocks(
                       tape
@@ -222,5 +224,69 @@ int rtcpcld_unlockTape()
     LOG_SYSCALL_ERR("Cthread_mutex_unlock_ext()");
     return(-1);
   }
+  return(0);
+}
+
+/** rtcpcld_myDispatch() - FILE request dispatch function to be used by RTCOPY API
+ *
+ * @param func - function to be dispatched
+ * @param arg - pointer to opaque function argument
+ *
+ * rtcpcld_myDispatch() creates a thread for dispatching the processing of FILE request
+ * callbacks in the extended RTCOPY API. This allows for handling weakly
+ * blocking callbacks like tppos to not be serialized with potentially strongly
+ * blocking callbascks like filcp or request for more work.
+ * 
+ * Note that the Cthread_create_detached() API cannot be passed directly in
+ * the RTCOPY API because it is a macro and not a proper function prototype.
+ *
+ * @return -1 = error otherwise the Cthread id (>=0)
+ */
+int rtcpcld_myDispatch(
+                       func,
+                       arg
+                       )
+     void *(*func)(void *);
+     void *arg;
+{
+  return(Cpool_assign(
+                      callbackThreadPool,
+                      func,
+                      arg,
+                      -1
+                      ));  
+}
+
+int rtcpcld_initThreadPool(
+                           mode
+                           )
+     int mode;
+{
+  int poolsize = -1;
+  char *p;
+
+  if ( mode == WRITE_ENABLE ) {
+    if ( (p = getenv("MIGRATOR_THREAD_POOL")) != (char *)NULL ) {
+      poolsize = atoi(p);
+    } else if ( ( p = getconfent("MIGRATOR","THREAD_POOL",0)) != (char *)NULL ) {
+      poolsize = atoi(p);
+    }
+  } else {
+    if ( (p = getenv("RECALLER_THREAD_POOL")) != (char *)NULL ) {
+      poolsize = atoi(p);
+    } else if ( ( p = getconfent("RECALLER","THREAD_POOL",0)) != (char *)NULL ) {
+      poolsize = atoi(p);
+    }
+  }
+  if ( poolsize < 0 ) {
+#if defined(RTCPD_THREAD_POOL)
+    poolsize = RTCPD_THREAD_POOL;
+#else /* RTCPD_THREAD_POOL */
+    poolsize = 3;         /* Set some reasonable default */
+#endif /* RTCPD_TRHEAD_POOL */
+  }
+  
+  callbackThreadPool = Cpool_create(poolsize,&poolsize);
+  if ( (callbackThreadPool == -1) || (poolsize <= 0) ) return(-1);
   return(0);
 }
