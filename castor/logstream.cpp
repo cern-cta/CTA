@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.cpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logstream.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/08 08:48:48 $ $Author: sponcec3 $
  *
  *
  *
@@ -43,5 +43,10 @@ MANIPULATORIMPL(ALWAYS);
 
 castor::logstream& castor::ip(castor::logstream& s) {
   s.setIsIP(true);
+  return s;
+}
+
+castor::logstream& castor::timeStamp(castor::logstream& s) {
+  s.setIsTimeStamp(true);
   return s;
 }

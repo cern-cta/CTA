@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/28 09:40:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logstream.h,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/08 08:48:48 $ $Author: sponcec3 $
  *
  *
  *
@@ -28,8 +28,10 @@
 #define CASTOR_LOGSTREAM_H 1
 
 // Include Files
+#include <time.h>
 #include <string>
 #include <ostream>
+#include <iomanip>
 #include "osdep.h"
 #include "castor/logbuf.h"
 
@@ -47,6 +49,9 @@
       if (m_isIP) {                             \
         m_isIP = false;                         \
         printIP(var);                           \
+      } else if (m_isTimeStamp) {               \
+        m_isTimeStamp = false;                  \
+        printTimeStamp(var);                    \
       } else {                                  \
         this->std::ostream::operator<<(var);    \
       }                                         \
@@ -87,7 +92,8 @@ namespace castor {
       m_logbuf(),
       m_minLevel(l),
       m_curLevel(INFO),
-      m_isIP(false) {
+      m_isIP(false),
+      m_isTimeStamp(false) {
       // Deal with the buffer
       this->init(&m_logbuf);
       if (!m_logbuf.open(p, std::ios::app | std::ios_base::out)) {
@@ -156,6 +162,11 @@ namespace castor {
      */
     void setIsIP(bool i) { m_isIP = i; }
 
+    /**
+     * set isTimeStamp
+     */
+    void setIsTimeStamp(bool i) { m_isTimeStamp = i; }
+
   private:
 
     /**
@@ -167,6 +178,20 @@ namespace castor {
         << ((ip & 0x00FF0000) >> 16) << "."
         << ((ip & 0x0000FF00) >> 8) << "."
         << ((ip & 0x000000FF));
+    }
+
+    /**
+     * prints a timeStamp to the stream
+     */
+    void printTimeStamp(time_t t) {
+      struct tm tmstruc;
+      localtime_r (&t, &tmstruc);
+      *((std::ostream*)this)
+        << std::setw(2) << tmstruc.tm_mon+1
+        << "/" << tmstruc.tm_mday
+        << " " << tmstruc.tm_hour
+        << ":" << tmstruc.tm_min
+        << ":" << tmstruc.tm_sec;
     }
 
   private:
@@ -190,9 +215,14 @@ namespace castor {
     Level m_curLevel;
 
     /**
-     * Whether int should be printed as IP addresses
+     * Whether next int should be printed as IP addresses
      */
     bool m_isIP;
+
+    /**
+     * Whether next int should be printed as a timestamp
+     */
+    bool m_isTimeStamp;
 
   };
 
@@ -208,6 +238,7 @@ namespace castor {
   MANIPULATOR(FATAL);
   MANIPULATOR(ALWAYS);
   MANIPULATOR(ip);
+  MANIPULATOR(timeStamp);
 
 } // End of namespace Castor
 
