@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.48 2002/05/15 06:44:21 jdurand Exp $
+ * $Id: stagein.c,v 1.49 2002/05/30 12:31:11 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.48 $ $Date: 2002/05/15 06:44:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.49 $ $Date: 2002/05/30 12:31:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -476,6 +476,14 @@ int main(argc, argv)
 			Coptind >= argc && fun == 0) {
 		fprintf (stderr, STG07);
 		errflg++;
+	}
+	if (! noretry_flag) {
+		if (
+			(((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
+			(((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0))
+			) {
+			noretry_flag = 1;
+		}
 	}
 	if (noretry_flag != 0) maxretry = 0;
 	if ((tppool_flag != 0) && (req_type != STAGEWRT) && (req_type != STAGEOUT)) {
