@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/07/29 09:39:18 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/07/29 12:47:45 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/07/29 09:39:18 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/07/29 12:47:45 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1389,6 +1389,7 @@ static int procReqsForVID(
           Cstager_Segment_setStatus(segmArray[i],SEGMENT_WAITFSEQ);
         }
       }
+      /*
       if ( segmUpdated == 1 ) {
         iObj = Cstager_Segment_getIObject(segmArray[i]);
         rc = C_Services_updateRep(*svcs,iAddr,iObj,1);
@@ -1419,8 +1420,44 @@ static int procReqsForVID(
           return(-1);
         }
       }
+      */
     }
   }
+  /*
+   * Needed until a non-recursive version of updateRep() exists for
+   * updating the segments individually
+   */
+  if ( updated == 1 ) {
+    iObj = Cstager_Tape_getIObject(currentTape);
+    rc = C_Services_updateRep(*svcs,iAddr,iObj,1);
+    if ( rc == -1 ) {
+      save_serrno = serrno;
+      C_IAddress_delete(iAddr);
+      if ( dontLog == 0 ) {
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        DLF_LVL_ERROR,
+                        RTCPCLD_MSG_DBSVC,
+                        (struct Cns_fileid *)NULL,
+                        RTCPCLD_NB_PARAMS+3,
+                        "DBSVCCALL",
+                        DLF_MSG_PARAM_STR,
+                        "C_Services_updateObj()",
+                        "ERROR_STR",
+                        DLF_MSG_PARAM_STR,
+                        sstrerror(serrno),
+                        "DB_ERROR",
+                        DLF_MSG_PARAM_STR,
+                        C_Services_errorMsg(*svcs),
+                        RTCPCLD_LOG_WHERE
+                        );
+      }
+      if ( segmArray != NULL ) free(segmArray);
+      serrno = save_serrno;
+      return(-1);
+    }
+  }
+  
   if ( segmArray != NULL ) free(segmArray);
   C_IAddress_delete(iAddr);
   rtcp_log(LOG_DEBUG,"procReqsForVID() updated=%d, newFileReqs=%d, segmUpdated=%d\n",
