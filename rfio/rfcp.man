@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfcp.man,v 1.9 2002/04/05 06:21:51 jdurand Exp $
+.\" $Id: rfcp.man,v 1.10 2003/04/28 10:18:00 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfcp.man,v $ $Revision: 1.9 $ $Date: 2002/04/05 06:21:51 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand
+.\" @(#)$RCSfile: rfcp.man,v $ $Revision: 1.10 $ $Date: 2003/04/28 10:18:00 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand
 .\" Copyright (C) 1998-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFCP 1 "$Date: 2002/04/05 06:21:51 $" CASTOR "Rfio User Commands"
+.TH RFCP 1 "$Date: 2003/04/28 10:18:00 $" CASTOR "Rfio User Commands"
 .SH NAME
 rfcp \- Remote file copy
 .SH SYNOPSIS
@@ -85,6 +85,9 @@ If specified, forces the RFIO V.2 protocol.
 28	No space left on device.
 .br
 196	Request killed.
+.br
+198	Stager not active
+
 .SH SEE ALSO
 .BR rcp(1), 
 .BR rfiod(1)
