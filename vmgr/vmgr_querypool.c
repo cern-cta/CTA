@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_querypool.c,v $ $Revision: 1.3 $ $Date: 2000/04/03 12:40:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_querypool.c,v $ $Revision: 1.4 $ $Date: 2001/01/30 06:29:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_querypool - query about a tape pool */
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_querypool.c,v $ $Revision: 1.3 $ $Dat
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_querypool(const char *pool_name, uid_t *pool_user, gid_t *pool_group, u_signed64 *tot_free_space)
+vmgr_querypool(const char *pool_name, uid_t *pool_user, gid_t *pool_group, u_signed64 *capacity, u_signed64 *tot_free_space)
 {
 	int c;
 	char func[15];
@@ -31,7 +31,7 @@ vmgr_querypool(const char *pool_name, uid_t *pool_user, gid_t *pool_group, u_sig
 	int n;
 	char *q;
 	char *rbp;
-	char repbuf[16];
+	char repbuf[24];
 	char *sbp;
 	char sendbuf[REQBUFSZ];
 	struct vmgr_api_thread_info *thip;
@@ -90,6 +90,9 @@ vmgr_querypool(const char *pool_name, uid_t *pool_user, gid_t *pool_group, u_sig
 		unmarshall_LONG (rbp, n);
 		if (pool_group)
 			*pool_group = n;
+		unmarshall_HYPER (rbp, u64);
+		if (capacity)
+			*capacity = u64;
 		unmarshall_HYPER (rbp, u64);
 		if (tot_free_space)
 			*tot_free_space = u64;

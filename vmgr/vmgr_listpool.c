@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_listpool.c,v $ $Revision: 1.2 $ $Date: 2000/09/10 18:11:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_listpool.c,v $ $Revision: 1.3 $ $Date: 2001/01/30 06:29:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_listpool - list tape pool entries */
@@ -122,6 +122,7 @@ vmgr_listpool(int flags, vmgr_list *listp)
 			unmarshall_STRING (rbp, lp->name);
 			unmarshall_LONG (rbp, lp->uid);
 			unmarshall_LONG (rbp, lp->gid);
+			unmarshall_HYPER (rbp, lp->capacity);
 			unmarshall_HYPER (rbp, lp->tot_free_space);
 			lp++;
 		}
