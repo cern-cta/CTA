@@ -300,8 +300,8 @@ void castor::db::ora::OraSvcClassCnv::fillRepDiskPool(castor::stager::SvcClass* 
     if (0 == m_deleteDiskPoolStatement) {
       m_deleteDiskPoolStatement = createStatement(s_deleteDiskPoolStatementString);
     }
-    m_deleteDiskPoolStatement->setDouble(1, *it);
-    m_deleteDiskPoolStatement->setDouble(2, obj->id());
+    m_deleteDiskPoolStatement->setDouble(1, obj->id());
+    m_deleteDiskPoolStatement->setDouble(2, *it);
     m_deleteDiskPoolStatement->executeUpdate();
   }
 }

@@ -273,8 +273,8 @@ void castor::db::ora::OraTapeCopyCnv::fillRepStream(castor::stager::TapeCopy* ob
     if (0 == m_deleteStreamStatement) {
       m_deleteStreamStatement = createStatement(s_deleteStreamStatementString);
     }
-    m_deleteStreamStatement->setDouble(1, *it);
-    m_deleteStreamStatement->setDouble(2, obj->id());
+    m_deleteStreamStatement->setDouble(1, obj->id());
+    m_deleteStreamStatement->setDouble(2, *it);
     m_deleteStreamStatement->executeUpdate();
   }
 }

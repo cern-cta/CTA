@@ -253,8 +253,8 @@ void castor::db::ora::OraTapePoolCnv::fillRepSvcClass(castor::stager::TapePool* 
     if (0 == m_deleteSvcClassStatement) {
       m_deleteSvcClassStatement = createStatement(s_deleteSvcClassStatementString);
     }
-    m_deleteSvcClassStatement->setDouble(1, *it);
-    m_deleteSvcClassStatement->setDouble(2, obj->id());
+    m_deleteSvcClassStatement->setDouble(1, obj->id());
+    m_deleteSvcClassStatement->setDouble(2, *it);
     m_deleteSvcClassStatement->executeUpdate();
   }
 }
