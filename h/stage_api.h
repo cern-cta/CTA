@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.39 2001/06/20 13:53:33 jdurand Exp $
+ * $Id: stage_api.h,v 1.40 2001/06/20 13:57:14 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -457,6 +457,17 @@ EXTERN_C int  DLL_DECL  send2stgd _PROTO((char *, int, u_signed64, char *, int, 
 /* Compatibility mode */
 EXTERN_C int  DLL_DECL  send2stgd_compat _PROTO((char *, char *, int, int, char *, int)); /* Old version without forking */
 EXTERN_C void DLL_DECL stage_sleep _PROTO((int)); /* Sleep thread-safe */
+#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
+EXTERN_C void DLL_DECL dump_stpp _PROTO((int, struct stgpath_entry *, int (*) _PROTO((int, int, ...))));
+EXTERN_C void DLL_DECL dump_stcp _PROTO((int, struct stgcat_entry *, int (*) _PROTO((int, int, ...))));
+EXTERN_C void DLL_DECL print_stpp _PROTO((struct stgpath_entry *));
+EXTERN_C void DLL_DECL print_stcp _PROTO((struct stgcat_entry *));
+#else
+EXTERN_C void DLL_DECL dump_stpp _PROTO((int, struct stgpath_entry *, int (*) _PROTO(())));
+EXTERN_C void DLL_DECL dump_stcp _PROTO((int, struct stgcat_entry *, int (*) _PROTO(())));
+EXTERN_C void DLL_DECL print_stpp _PROTO((struct stgpath_entry *));
+EXTERN_C void DLL_DECL print_stcp _PROTO((struct stgcat_entry *));
+#endif
 
 /* ------------------------------------------- */
 /* Utilities used by the API (stage_usrmsg.c)  */
