@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.31 2002/11/19 09:09:36 jdurand Exp $
+ * $Id: stager_castor.c,v 1.32 2002/11/20 16:40:49 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.31 $ $Date: 2002/11/19 09:09:36 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.32 $ $Date: 2002/11/20 16:40:49 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -2148,6 +2148,8 @@ int stagewrt_castor_hsm_file() {
 				/* New estimated free space available */
 				estimated_free_space -= (hsm_totalsize[i] - hsm_transferedsize[i]);
 				for (++stcp, ++i; stcp < stce; stcp++, i++) {
+					/* We always force the blocksize while migrating */
+					stcp->blksize = devinfo->defblksize;
 					if (hsm_ignore[i] != 0) {
 						/* To be skipped */
 						continue;
