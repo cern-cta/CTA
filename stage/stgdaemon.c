@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.155 2001/12/05 10:12:36 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.156 2001/12/10 16:20:32 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.155 $ $Date: 2001/12/05 10:12:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.156 $ $Date: 2001/12/10 16:20:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -171,6 +171,7 @@ time_t upd_fileclasses_int_default = 3600 * 24; /* Default update time for all C
 time_t upd_fileclasses_int;
 time_t last_upd_fileclasses = 0;
 time_t started_time;
+char cns_error_buffer[512];         /* Cns error buffer */
 
 void prockilreq _PROTO((int, char *, char *));
 void procinireq _PROTO((int, unsigned long, char *, char *));
@@ -245,7 +246,7 @@ extern int checkpoolcleaned _PROTO((char ***));
 extern void checkpoolspace _PROTO(());
 extern int cleanpool _PROTO((char *));
 extern int get_create_file_option _PROTO((char *));
-extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
+extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 extern int upd_fileclasses _PROTO(());
 extern char *getconfent();
@@ -401,7 +402,7 @@ int main(argc,argv)
 	stglogit (func, "started\n");
 	started_time = time(NULL);
 #if SACCT
-	stageacct (STGSTART, 0, 0, "", 0, 0, 0, 0, NULL, "");
+	stageacct (STGSTART, 0, 0, "", 0, 0, 0, 0, NULL, "", (char) 0);
 #endif
 
 	/* Get localhostname */
@@ -484,6 +485,13 @@ int main(argc,argv)
 				stglogit(func, "### Warning : You, \"%s\" (uid=%d,gid=%d), are NOT running under \"root\" (uid=%d,gid=%d) account. Functionnality might very well be extremely limited.\n", start_passwd.pw_name, start_passwd.pw_uid, start_passwd.pw_gid, root_passwd.pw_uid, root_passwd.pw_gid);
 			}
 		}
+	}
+
+
+	/* Set Cns error buffer */
+	if (Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0) {
+		stglogit(func, "### Cns_seterrbuf error (%s)\n", sstrerror(serrno));
+ 		exit (SYERR);
 	}
 
 
@@ -676,6 +684,43 @@ int main(argc,argv)
 	for (stcp = stcs; stcp < stce; ) {
 		if (stcp->reqid == 0) {
 			break;
+		}
+		if (stcp->poolname[0] != '\0') {
+			char *p;
+
+			/* Check that poolname from catalog match current startup configuration */
+			p = findpoolname(stcp->ipath);
+			if ((p != NULL) && (strcmp(p, stcp->poolname) != 0)) {
+				stglogit (func, STG164, stcp->ipath, stcp->poolname, p);
+				strcpy(stcp->poolname, p);
+#ifdef USECDB
+				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
+#endif
+			} else if (p == NULL) {
+				stglogit (func, STG164, stcp->ipath, stcp->poolname, "");
+				stcp->poolname[0] = '\0';
+#ifdef USECDB
+				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
+#endif
+			}
+		} else {
+			char *p;
+
+			/* Would it possible that this filesystem is 'back' to stager configuration ? */
+			p = findpoolname(stcp->ipath);
+			if (p != NULL) {
+				stglogit (func, STG164, stcp->ipath, stcp->poolname, p);
+				strcpy(stcp->poolname, p);
+#ifdef USECDB
+				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
+#endif
+			}
 		}
 		if (stcp->t_or_d == 'h') {
 			upd_fileclass(NULL,stcp);
@@ -1126,7 +1171,7 @@ void procinireq(req_type, ipaddr, req_data, clienthost)
 	nargs = req2argv (rbp, &argv);
 #if SACCT
 	stageacct (STGCMDR, -1, gid, clienthost,
-						 reqid, STAGEINIT, 0, 0, NULL, "");
+						 reqid, STAGEINIT, 0, 0, NULL, "", (char) 0);
 #endif
 	if (initreq_reqid != 0) {
 		free (argv);
@@ -1212,7 +1257,7 @@ void procshutdownreq(req_data, clienthost)
 	nargs = req2argv (rbp, &argv);
 #if SACCT
 	stageacct (STGCMDR, -1, gid, clienthost,
-						 reqid, STAGESHUTDOWN, 0, 0, NULL, "");
+						 reqid, STAGESHUTDOWN, 0, 0, NULL, "", (char) 0);
 #endif
 	if (shutdownreq_reqid != 0) {
 		free (argv);
@@ -2035,7 +2080,7 @@ check_waiting_on_req(subreqid, state)
 				}
 #if SACCT
 				stageacct (STGFILS, wqp->req_uid, wqp->req_gid, wqp->clienthost,
-									 wqp->reqid, wqp->req_type, 0, 0, stcp, "");
+									 wqp->reqid, wqp->req_type, 0, 0, stcp, "", (char) 0);
 #endif
 				sendrep (rpfd, RTCOPY_OUT, STG96,
 								 strrchr (stcp->ipath, '/')+1,
@@ -2287,7 +2332,7 @@ void checkwaitq()
 #if SACCT
 			stageacct (STGCMDC, wqp->req_uid, wqp->req_gid, wqp->clienthost,
 								 reqid, wqp->req_type, wqp->nretry, wqp->status,
-								 NULL, "");
+								 NULL, "", (char) 0);
 #endif
 			sendrep (wqp->rpfd, STAGERC, wqp->req_type, wqp->status);
 			wqp1 = wqp;
@@ -2342,7 +2387,7 @@ void checkwaitq()
 #if SACCT
 			stageacct (STGCMDC, wqp->req_uid, wqp->req_gid, wqp->clienthost,
 								 reqid, wqp->req_type, wqp->nretry, wqp->status,
-								 NULL, "");
+								 NULL, "", (char) 0);
 #endif
 			if (wqp->status != REQKILD) {
 				sendrep (wqp->rpfd, STAGERC, wqp->req_type,
@@ -2646,7 +2691,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 			if (RFIO_UNLINK(stcp->ipath) == 0) {
 #if SACCT
 				stageacct (STGFILC, byuid, bygid, "",
-									 reqid, 0, 0, 0, stcp, "");
+									 reqid, 0, 0, 0, stcp, "", (char) 0);
 #endif
 				stglogit (func, STG95, stcp->ipath, by);
 			} else if (errno != ENOENT && rfio_errno != ENOENT) {
@@ -2981,7 +3026,7 @@ int fork_exec_stager(wqp)
 #if SACCT
 		stageacct (STGCMDS, wqp->req_uid, wqp->req_gid, wqp->clienthost,
 							 wqp->reqid, wqp->req_type, wqp->nretry, wqp->status,
-							 NULL, "");
+							 NULL, "", t_or_d);
 #endif
 		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
 			char save_user[CA_MAXUSRNAMELEN+1];
