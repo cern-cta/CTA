@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2004/12/14 10:57:10 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2004/12/17 11:18:59 $ $Author: sponcec3 $
  *
  *
  *
@@ -40,6 +40,7 @@
 
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"
+#include "castor/stager/QryRequest.hpp"
 #include "castor/rh/Client.hpp"
 
 #include "castor/io/biniostream.h"
@@ -248,6 +249,11 @@ void castor::rh::Server::handleRequest(castor::IObject* fr)
     if (0 != req) {
       svcs()->createRep(&ad, req->client(), false);
       svcs()->fillRep(&ad, fr, OBJ_IClient, false);
+    }
+    castor::stager::QryRequest* qryReq =
+      dynamic_cast<castor::stager::QryRequest*>(fr);
+    if (0 != qryReq) {
+      svcs()->fillRep(&ad, qryReq, OBJ_QueryParameter, false);
     }
     svcs()->commit(&ad);
     clog() << "request stored in Oracle, id "
