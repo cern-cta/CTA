@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.32 2000/06/29 09:00:09 jdurand Exp $
+ * $Id: poolmgr.c,v 1.33 2000/07/03 10:21:48 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.32 $ $Date: 2000/06/29 09:00:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.33 $ $Date: 2000/07/03 10:21:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -525,7 +525,7 @@ getpoolconf(defpoolname)
 				goto reply;
 			}
 			stglogit (func,".... DATATHRESHOLD %s%s\n",
-				u64tostr(migp_p->data_mig_threshold, tmpbuf, 0),
+				u64tostru(migp_p->data_mig_threshold, tmpbuf, 0),
 				migp_p->data_mig_threshold == 0 ? " (DISABLED)" : "");
 			stglogit (func,".... PERCFREE      %d%s\n",
 				migp_p->freespace_threshold,
@@ -911,7 +911,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname)
 		for (i = 0, migr_p = migrators; i < nbmigrator; i++, migr_p++) {
 			sendrep (rpfd, MSG_OUT, "MIGRATOR %s MIGPOLICY %s\n",migr_p->name,migr_p->migp->name);
 			sendrep (rpfd, MSG_OUT, "\tNBFILES_CAN_BE_MIGR    %d\n", migr_p->nbfiles_canbemig);
-			sendrep (rpfd, MSG_OUT, "\tSPACE_CAN_BE_MIGR      %s BYTES\n", u64tostr(migr_p->space_canbemig, tmpbuf, 0));
+			sendrep (rpfd, MSG_OUT, "\tSPACE_CAN_BE_MIGR      %s\n", u64tostru(migr_p->space_canbemig, tmpbuf, 0));
 			if (migr_p->migreqtime > 0) {
 #if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
 				localtime_r(&(migr_p->migreqtime),&tmstruc);
@@ -931,7 +931,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname)
 		for (i = 0, migp_p = migpolicies; i < nbmigpolicy; i++, migp_p++) {
 			sendrep (rpfd, MSG_OUT, "MIGPOLICY %s\n",migp_p->name);
 			if (migp_p->data_mig_threshold > 0) {
-				sendrep (rpfd, MSG_OUT, "\tDATATHRESHOLD %s BYTES\n", u64tostr(migp_p->data_mig_threshold, tmpbuf, 0));
+				sendrep (rpfd, MSG_OUT, "\tDATATHRESHOLD %s\n", u64tostru(migp_p->data_mig_threshold, tmpbuf, 0));
 			}
 			if (migp_p->freespace_threshold > 0) {
 				sendrep (rpfd, MSG_OUT, "\tPERCFREE      %d%%\n", migp_p->freespace_threshold);
