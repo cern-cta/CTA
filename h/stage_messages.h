@@ -1,5 +1,5 @@
 /*
- * $Id: stage_messages.h,v 1.11 2002/01/30 10:25:43 jdurand Exp $
+ * $Id: stage_messages.h,v 1.12 2002/02/04 17:54:52 jdurand Exp $
  */
 
 #ifndef __stage_messages_h
@@ -153,5 +153,6 @@
 #define STG171  "STG171 - %s : size in name server (%s) != size on disk (%s)\n"
 #define	STG172  "STG172 - Duplicate HSM file %s skipped because same invariants (fileid=%s@%s)\n"
 #define STG173  "STG173 - %s : Fileclass changed from %d to %d (fileid %s@%s), catalog updated for reqid=%d\n"
+#define	STG174  "STG174 - %s (fileid=%s@%s) %s : %s error : %s\n"
 
 #endif /* __stage_messages_h */
