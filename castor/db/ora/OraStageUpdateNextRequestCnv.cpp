@@ -78,12 +78,8 @@ const std::string castor::db::ora::OraStageUpdateNextRequestCnv::s_deleteTypeSta
 "DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL statement for request status insertion
-const std::string castor::db::ora::OraStageUpdateNextRequestCnv::s_insertStatusStatementString =
-"INSERT INTO requestsStatus (id, status, creation, lastChange) VALUES (:1, 'NEW', SYSDATE, SYSDATE)";
-
-/// SQL statement for request status deletion
-const std::string castor::db::ora::OraStageUpdateNextRequestCnv::s_deleteStatusStatementString =
-"DELETE FROM requestsStatus WHERE id = :1";
+const std::string castor::db::ora::OraStageUpdateNextRequestCnv::s_insertNewReqStatementString =
+"INSERT INTO newRequests (id, type, creation) VALUES (:1, :2, SYSDATE)";
 
 /// SQL update statement for member parent
 const std::string castor::db::ora::OraStageUpdateNextRequestCnv::s_updateFileRequestStatementString =
@@ -110,8 +106,7 @@ castor::db::ora::OraStageUpdateNextRequestCnv::OraStageUpdateNextRequestCnv(cast
   m_deleteStatement(0),
   m_selectStatement(0),
   m_updateStatement(0),
-  m_insertStatusStatement(0),
-  m_deleteStatusStatement(0),
+  m_insertNewReqStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
   m_updateFileRequestStatement(0),
@@ -137,8 +132,7 @@ void castor::db::ora::OraStageUpdateNextRequestCnv::reset() throw() {
     deleteStatement(m_deleteStatement);
     deleteStatement(m_selectStatement);
     deleteStatement(m_updateStatement);
-    deleteStatement(m_insertStatusStatement);
-    deleteStatement(m_deleteStatusStatement);
+    deleteStatement(m_insertNewReqStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
     deleteStatement(m_updateFileRequestStatement);
@@ -151,8 +145,7 @@ void castor::db::ora::OraStageUpdateNextRequestCnv::reset() throw() {
   m_deleteStatement = 0;
   m_selectStatement = 0;
   m_updateStatement = 0;
-  m_insertStatusStatement = 0;
-  m_deleteStatusStatement = 0;
+  m_insertNewReqStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
   m_updateFileRequestStatement = 0;
@@ -437,8 +430,8 @@ void castor::db::ora::OraStageUpdateNextRequestCnv::createRep(castor::IAddress* 
       m_insertStatement = createStatement(s_insertStatementString);
       m_insertStatement->registerOutParam(17, oracle::occi::OCCIDOUBLE);
     }
-    if (0 == m_insertStatusStatement) {
-      m_insertStatusStatement = createStatement(s_insertStatusStatementString);
+    if (0 == m_insertNewReqStatement) {
+      m_insertNewReqStatement = createStatement(s_insertNewReqStatementString);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -465,8 +458,9 @@ void castor::db::ora::OraStageUpdateNextRequestCnv::createRep(castor::IAddress* 
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
-    m_insertStatusStatement->setDouble(1, obj->id());
-    m_insertStatusStatement->executeUpdate();
+    m_insertNewReqStatement->setDouble(1, obj->id());
+    m_insertNewReqStatement->setInt(2, obj->type());
+    m_insertNewReqStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }
@@ -581,9 +575,6 @@ void castor::db::ora::OraStageUpdateNextRequestCnv::deleteRep(castor::IAddress* 
     if (0 == m_deleteStatement) {
       m_deleteStatement = createStatement(s_deleteStatementString);
     }
-    if (0 == m_deleteStatusStatement) {
-      m_deleteStatusStatement = createStatement(s_deleteStatusStatementString);
-    }
     if (0 == m_deleteTypeStatement) {
       m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
     }
@@ -592,8 +583,6 @@ void castor::db::ora::OraStageUpdateNextRequestCnv::deleteRep(castor::IAddress* 
     m_deleteTypeStatement->executeUpdate();
     m_deleteStatement->setDouble(1, obj->id());
     m_deleteStatement->executeUpdate();
-    m_deleteStatusStatement->setDouble(1, obj->id());
-    m_deleteStatusStatement->executeUpdate();
     if (obj->client() != 0) {
       cnvSvc()->deleteRep(0, obj->client(), false);
     }

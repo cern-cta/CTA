@@ -14,15 +14,7 @@ DROP SEQUENCE ids_seq;
 CREATE SEQUENCE ids_seq;
 
 /* SQL statements for requests status */
-DROP INDEX I_REQUESTSSTATUS_FULL;
-DROP TABLE REQUESTSSTATUS;
-CREATE TABLE REQUESTSSTATUS (id INTEGER PRIMARY KEY, status CHAR(20), creation DATE, lastChange DATE);
-CREATE INDEX I_REQUESTSSTATUS_FULL on REQUESTSSTATUS (id, status);
-
-/* PL/SQL procedure for getting the next request to handle */
-CREATE OR REPLACE PROCEDURE getNRStatement(reqid OUT INTEGER) AS
-BEGIN
-  SELECT ID INTO reqid FROM requestsStatus WHERE status = 'NEW' AND rownum <=1;
-  UPDATE requestsStatus SET status = 'RUNNING', lastChange = SYSDATE WHERE ID = reqid;
-END;
-
+DROP INDEX I_newRequests_type;
+DROP TABLE newRequests;
+CREATE TABLE newRequests (id INTEGER PRIMARY KEY, type INTEGER, creation DATE);
+CREATE INDEX I_newRequests_type on newRequests (type);

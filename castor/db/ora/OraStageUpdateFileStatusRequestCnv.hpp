@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/09 13:04:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/02/03 12:34:31 $ $Author: sponcec3 $
  *
  * 
  *
@@ -254,17 +254,11 @@ namespace castor {
         /// SQL statement object for request update
         oracle::occi::Statement *m_updateStatement;
 
-        /// SQL statement for request status insertion
-        static const std::string s_insertStatusStatementString;
+        /// SQL statement for new request insertion
+        static const std::string s_insertNewReqStatementString;
 
         /// SQL statement object for request status insertion
-        oracle::occi::Statement *m_insertStatusStatement;
-
-        /// SQL statement for status deletion
-        static const std::string s_deleteStatusStatementString;
-
-        /// SQL statement object for request status deletion
-        oracle::occi::Statement *m_deleteStatusStatement;
+        oracle::occi::Statement *m_insertNewReqStatement;
 
         /// SQL statement for type storage 
         static const std::string s_storeTypeStatementString;

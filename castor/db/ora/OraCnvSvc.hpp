@@ -50,7 +50,7 @@ namespace castor {
       /**
        * Conversion service for Oracle Database
        */
-      class OraCnvSvc : public BaseCnvSvc, public IRequestHandler {
+      class OraCnvSvc : public BaseCnvSvc {
 
       public:
 
@@ -126,27 +126,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * returns an address to the next request to handle.
-         * Note that the caller is responsible for the deallocation
-         * of the address.
-         * Also Note that the database transaction is not commited
-         * after this call. The caller is responsible for the commit
-         * once it is sure that no request can be lost.
-         * @exception Exception throws an Exception in case of error
-         * @return the address to the next request to handle or 0
-         * if no request is left
-         */
-        virtual IAddress* nextRequestAddress()
-          throw (castor::exception::Exception);
-
-        /**
-         * returns the number of requests handle in the database.
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual unsigned int nbRequestsToProcess()
-          throw (castor::exception::Exception);
-
-        /**
          * Get an object from its id.
          * Essentially a wrapper around createObj that
          * don't call it if the object is in the newlyCreated
@@ -210,18 +189,6 @@ namespace castor {
 
         /// SQL statement object for type retrieval
         oracle::occi::Statement *m_getTypeStatement;
-
-        /// SQL statement for next request retrieval
-        static const std::string s_getNRStatementString;
-
-        /// SQL statement object for next request retrieval
-        oracle::occi::Statement *m_getNRStatement;
-
-        /// SQL statement for number of request retrieval
-        static const std::string s_getNBRStatementString;
-
-        /// SQL statement object for number of request retrieval
-        oracle::occi::Statement *m_getNBRStatement;
 
       };
 

@@ -62,14 +62,6 @@ const castor::IFactory<castor::IService>& OraCnvSvcFactory = s_factoryOraCnvSvc;
 const std::string castor::db::ora::OraCnvSvc::s_getTypeStatementString =
   "SELECT type FROM Id2Type WHERE id = :1";
 
-/// SQL statement for selecting next request to be processed
-const std::string castor::db::ora::OraCnvSvc::s_getNRStatementString =
-  "BEGIN getNRStatement(:1); END;";
-
-/// SQL statement for getting index of next request to be processed
-const std::string castor::db::ora::OraCnvSvc::s_getNBRStatementString =
-  "SELECT count(*) FROM requestsStatus WHERE status = 'NEW'";
-
 // -----------------------------------------------------------------------
 // OraCnvSvc
 // -----------------------------------------------------------------------
@@ -80,9 +72,7 @@ castor::db::ora::OraCnvSvc::OraCnvSvc(const std::string name) :
   m_dbName(""),
   m_environment(0),
   m_connection(0),
-  m_getTypeStatement(0),
-  m_getNRStatement(0),
-  m_getNBRStatement(0) {
+  m_getTypeStatement(0) {
   char* cuser = getconfent(name.c_str(), "user", 0);
   if (0 != cuser) m_user = std::string(cuser);
   char* cpasswd = getconfent(name.c_str(), "passwd", 0);
@@ -206,10 +196,6 @@ void castor::db::ora::OraCnvSvc::dropConnection () throw() {
     if (0 != m_connection) {
       if (0 != m_getTypeStatement)
         m_connection->terminateStatement(m_getTypeStatement);
-      if (0 != m_getNRStatement)
-        m_connection->terminateStatement(m_getNRStatement);
-      if (0 != m_getNBRStatement)
-          m_connection->terminateStatement(m_getNBRStatement);
       if (0 != m_environment) {
         //oracle::occi::Statement* stmt = m_connection->createStatement
         //  ("alter session set events '10046 trace name context off'");
@@ -223,8 +209,6 @@ void castor::db::ora::OraCnvSvc::dropConnection () throw() {
   // reset all whatever the state is
   m_connection = 0;
   m_getTypeStatement = 0;
-  m_getNRStatement = 0;
-  m_getNBRStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -276,108 +260,6 @@ void castor::db::ora::OraCnvSvc::rollback()
                     << std::endl << e.what();
     throw ex;
   }
-}
-
-// -----------------------------------------------------------------------
-// nextRequestAddress
-// -----------------------------------------------------------------------
-castor::IAddress* castor::db::ora::OraCnvSvc::nextRequestAddress()
-  throw (castor::exception::Exception) {
-  // Prepare statement
-  if (0 == m_getNRStatement) {
-    try {
-      m_getNRStatement =
-        getConnection()->createStatement(s_getNRStatementString);
-      m_getNRStatement->setAutoCommit(true);
-      m_getNRStatement->registerOutParam(1, oracle::occi::OCCIINT, sizeof(int));
-    } catch (oracle::occi::SQLException e) {
-      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-        // We've obviously lost the ORACLE connection here
-        dropConnection();
-      }
-      m_getNRStatement = 0;
-      castor::exception::Internal ex;
-      ex.getMessage() << "Error in creating next request statement."
-                      << std::endl << e.what();
-      throw ex;
-    }
-  }
-  try {
-    //clog() << VERBOSE << "Trying to find new requests" << std::endl;
-    int nb = m_getNRStatement->executeUpdate();
-    if (nb > 0) {
-      clog() << VERBOSE << "Found a new requests : "
-             << m_getNRStatement->getInt(1) << std::endl;
-      castor::BaseAddress* ret = new castor::BaseAddress();
-      ret->setCnvSvcName("OraCnvSvc");
-      ret->setCnvSvcType(castor::SVC_ORACNV);
-      ret->setTarget(m_getNRStatement->getInt(1));
-      return ret;
-    }
-  } catch (oracle::occi::SQLException e) {
-    if (1403 == e.getErrorCode()) {
-      //clog() << VERBOSE << "Found no requests." << std::endl;
-      return 0;
-    }
-    if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-      // We've obviously lost the ORACLE connection here
-      dropConnection();
-    }
-    castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE error
-    ex.getMessage() << "Error in getting next request id."
-                    << std::endl << e.what();
-    throw ex;
-  }
-  //clog() << VERBOSE << "Found no new requests." << std::endl;
-  return 0;
-}
-
-// -----------------------------------------------------------------------
-// nbRequestsToProcess
-// -----------------------------------------------------------------------
-unsigned int castor::db::ora::OraCnvSvc::nbRequestsToProcess()
-  throw (castor::exception::Exception) {
-  oracle::occi::ResultSet *rset = 0;
-  try {
-    // Prepare statements
-    if (0 == m_getNBRStatement) {
-      m_getNBRStatement =
-        getConnection()->createStatement(s_getNBRStatementString);
-    }
-    // Get the id
-    rset = m_getNBRStatement->executeQuery();
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      m_getNBRStatement->closeResultSet(rset);
-      return 0;
-    } else {
-      unsigned int res = rset->getInt(1);
-      m_getNBRStatement->closeResultSet(rset);
-      return res;
-    }
-  } catch (oracle::occi::SQLException e) {
-    // let's try to close the result set
-    try {
-      if (0 != m_getNBRStatement && 0 != rset) {
-        m_getNBRStatement->closeResultSet(rset);
-      }
-    } catch (oracle::occi::SQLException e2) {}
-    try {
-      getConnection()->rollback();
-      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-        // We've obviously lost the ORACLE connection here
-        dropConnection();
-      }
-    } catch (oracle::occi::SQLException e2) {
-      // rollback failed, let's drop the connection for security
-      dropConnection();
-    }
-    castor::exception::InvalidArgument ex; // XXX fix it depending on ORACLE error
-    ex.getMessage() << "Error in getting number of request to process."
-                    << std::endl << e.what();
-    throw ex;
-  }
-  // never reached
-  return 0;
 }
 
 // -----------------------------------------------------------------------
