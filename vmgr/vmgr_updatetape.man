@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_updatetape.man,v $ $Revision: 1.4 $ $Date: 2000/09/11 06:04:23 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr_updatetape.man,v $ $Revision: 1.5 $ $Date: 2001/03/16 06:06:17 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_UPDATETAPE 3 "$Date: 2000/09/11 06:04:23 $" CASTOR "vmgr Library Functions"
+.TH VMGR_UPDATETAPE 3 "$Date: 2001/03/16 06:06:17 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_updatetape \- update tape volume content information in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -43,6 +43,12 @@ tape still being used for other files in the same migration request
 .B TAPE_FULL
 file incompletely written to tape because of a tape full condition
 .RE
+.LP
+The new file status is constructed by resetting the
+.B TAPE_BUSY
+bit in the current status and OR'ing the
+.I Flags
+value with it.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
 failed. In the latter case,
