@@ -34,7 +34,6 @@
 #define EMONBASEOFF     2300            /* Monitoring Error base offset */
 #define EUPBASEOFF      2400            /* UPV error base offset        */
 #define EDLFBASEOFF     2500            /* DLF error base offset        */
-#define ERHBASEOFF      2600            /* RH error base offset         */
 #define ESECBASEOFF     2700            /* Security error base offset */
 
 #define SENOERR         SEBASEOFF       /* No error                     */
@@ -345,19 +344,6 @@
 #define EDLFNOTFOUND    EDLFBASEOFF+4   /* Row was not found in the database */
 #define EDLFLOGFORMAT   EDLFBASEOFF+5   /* Log file format error */
 #define EDLFMAXERR      EDLFBASEOFF+5
-
-/*
- *------------------------------------------------------------------------
- * RH (Request Handler) errors
- *------------------------------------------------------------------------
- */
-#define ERHCONFERR     ERHBASEOFF+1   /* Error during Configuration */
-#define ERHDBINTERNAL  ERHBASEOFF+2   /* Database error */
-#define ERHNET         ERHBASEOFF+3   /* Network error */
-#define ERHBADREQID    ERHBASEOFF+4   /* Received callback with bad request id */
-#define ERHBADMAGIC    ERHBASEOFF+5   /* Bad magic number */
-#define ERHNOREQUEST   ERHBASEOFF+6   /* No moe request in database */
-#define ERHMAXERR      ERHBASEOFF+6
 
 /*
  *------------------------------------------------------------------------
