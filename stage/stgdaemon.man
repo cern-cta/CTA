@@ -1,10 +1,10 @@
-.\" $Id: stgdaemon.man,v 1.19 2002/10/21 14:26:37 jdurand Exp $
+.\" $Id: stgdaemon.man,v 1.20 2002/10/27 07:49:43 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.19 $ $Date: 2002/10/21 14:26:37 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.20 $ $Date: 2002/10/27 07:49:43 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STGDAEMON 1 "$Date: 2002/10/21 14:26:37 $" CASTOR "Stage Administrator Commands"
+.TH STGDAEMON 1 "$Date: 2002/10/27 07:49:43 $" CASTOR "Stage Administrator Commands"
 .SH NAME
 stgdaemon \- starts the stage daemon
 .SH SYNOPSIS
@@ -104,53 +104,84 @@ RFIOD   WTRUST     shd02
 .HP
 There must be one entry in the configuration file per pool giving:
 .RS
-.HP
-POOL name	this will be used as
+.TP
+.BI POOL " name"
+Name of the pool. this will be used as
 .B \-p
-parameter in user commands
-.HP
-DEFSIZE	maximum filesize if the
+parameter in user commands. This parameter is mandatory.
+.I name
+is limited to CA_MAXPOOLNAME characters.
+.TP
+.BI DEFSIZE " size"
+is the maximum filesize if the
 .B \-s
-option is not specified on user commands. Default unit is MB, but can be specified with 'b','k','M','G','T' or 'P' for byte, kilobyte, megabyte, gigabyte, terabyte or petabyte respectively.
-.HP
-MAX_SETRETENP sets the maximum retention period a user can give for a CASTOR file. Default unit is second, but can be specified with 's' or 'S','m' or 'M','h' or 'H','d' or 'D','y' or 'Y' for second, minute, hour, day, year respectively.
-.HP
-PUT_FAILED_RETENP sets the retention period for a PUT_FAILED file. Default unit is second, but can be specified with 's' or 'S','m' or 'M','h' or 'H','d' or 'D','y' or 'Y' for second, minute, hour, day, year respectively. When retention is expired a file in PUT_FAILED can be a candidate for garbage collection.
-.HP
-STAGEOUT_RETENP sets the retention period for a STAGEOUT file. Default unit is second, but can be specified with 's' or 'S','m' or 'M','h' or 'H','d' or 'D','y' or 'Y' for second, minute, hour, day, year respectively. When retention is expired a file in STAGEOUT is removed.
-.HP
-STAGEALLOC_RETENP sets the retention period for a STAGEOUT file. Default unit is second, but can be specified with 's' or 'S','m' or 'M','h' or 'H','d' or 'D','y' or 'Y' for second, minute, hour, day, year respectively. When retention is expired a file in STAGEALLOC is removed.
-.HP
-GC_START_THRESH when the percentage of free space in the pool gets below this
-value the garbage collector is started.
-.HP
-GC_STOP_THRESH when the percentage of free space in the pool gets above this
-value the garbage collector is stopped.
-For backward compatibility with SHIFT, the keyword MINFREE can be used instead.
-For example,
+option is not specified on user commands. Default unit of
+.I size
+is MB, but can be specified with 'b','k','M','G','T' or 'P' for byte, kilobyte, megabyte, gigabyte, terabyte or petabyte respectively. This parameter is mandatory.
+.TP
+.BI MAX_SETRETENP " period"
+sets the maximum retention period a user can give for a CASTOR file. Default unit for
+.I period
+is second, but can be specified with 's' or 'S','m' or 'M','h' or 'H','d' or 'D','y' or 'Y' for second, minute, hour, day, year respectively. Default value is \-1, e.g. it is not allowed to set retention period.
+.TP
+.BI PUT_FAILED_RETENP " period"
+sets the retention period for a PUT_FAILED file. Default unit of 
+.I period
+is second, but can be specified with 's' or 'S','m' or 'M','h' or 'H','d' or 'D','y' or 'Y' for second, minute, hour, day, year respectively. When retention is expired a file in PUT_FAILED can be a candidate for garbage collection. Default value is \-1, e.g. illimited lifetime for PUT_FAILED files.
+.TP
+.BI STAGEOUT_RETENP " period"
+sets the retention period for a STAGEOUT file. Default unit of
+.I period
+is second, but can be specified with 's' or 'S','m' or 'M','h' or 'H','d' or 'D','y' or 'Y' for second, minute, hour, day, year respectively. When retention is expired a file in STAGEOUT is removed. Default value is \-1, e.g. illimited lifetime for STAGEOUT files.
+.TP
+.BI STAGEALLOC_RETENP " period"
+sets the retention period for a STAGEOUT file. Default unit of
+.I period
+is second, but can be specified with 's' or 'S','m' or 'M','h' or 'H','d' or 'D','y' or 'Y' for second, minute, hour, day, year respectively. When retention is expired a file in STAGEALLOC is removed. Default value is \-1, e.g. illimited lifetime for STAGEALLOC files.
+.TP
+.BI GC_START_THRESH " perc"
+is the percentage of free space in the pool gets below which
+the garbage collector is started. Default value of
+.I perc
+is 0, e.g. the garbage collector is started only if stager is notified of a space problem.
+.TP
+.BI GC_STOP_THRESH " perc"
+is the percentage of free space in the pool above which the garbage collector is stopped. For backward compatibility with SHIFT, the keyword MINFREE can be used instead.For example,
 .B MINFREE 10
-corresponds to 10% of free space.
-.HP
-GC	full path name of the garbage collector program (NFS syntax).
-.HP
-NO_FILE_CREATION suppress the creation of an empty file (stageout only).
-.HP
-EXPORT_HSM allows one pool to export its CASTOR files to another one, e.g. an internal disk to disk copy, instead of doing an explicit tape request when a CASTOR file does not exist in the destination pool. Works only if the user requests a CASTOR file in an explicit read\-only (O_RDONLY) mode, the file is not accessible in a pool, but already exists in another pool with the STAGED status. It is not recommended if the application can modify both disk versions of the file.
-.HP
-MIGRATOR name
-.HP
-MIG_START_THRESH when the percentage of free space in the pool gets below this
-value the migrator is started.
-.HP
-MIG_STOP_THRESH when the percentage of free space in the pool gets above this
-value the migrator is stopped.
-.HP
-MIG_DATA_THRESH when the amount of data ready to be migrated exceeds this value
-the migrator is started. Default unit is MB, but can be specified with 'b','k','M','G','T' or 'P' for byte, kilobyte, megabyte, gigabyte, terabyte or petabyte respectively.
+corresponds to 10% of free space. Default value is 0, e.g no file is deleted if garbage collector starts.
+.TP
+.BI GC " fullpath"
+is the name of the garbage collector program (RFIO syntax). It can be up to CA_MAXHOSTNAMELEN+MAXPATH characters. Default is to have no garbage collector.
+.TP
+.BI NO_FILE_CREATION
+suppress the creation of an empty file (stageout only). Default is to create files.
+.TP
+.BI EXPORT_HSM
+allows one pool to export its CASTOR files to another one, e.g. an internal disk to disk copy, instead of doing an explicit tape request when a CASTOR file does not exist in the destination pool. Works only if the user requests a CASTOR file in an explicit read\-only (O_RDONLY) mode, the file is not accessible in a pool, but already exists in another pool with the STAGED status. It is not recommended if the application can modify both disk versions of the file. Default is not to export hsm files across disk pools.
+.TP
+.BI MIGRATOR " name"
+is a generic name of a migrator. Migrator name can be shared between several disk pools. Can have up to CA_MAXMIGRNAMELEN characters. Default is to have no migrator.
+.TP
+.BI MIG_START_THRESH " perc"
+is the percentage of free space in the pool below which a migrator is started. Default is 0, e.g. obey to fileclass rules only.
+.TP
+.BI MIG_STOP_THRESH " perc"
+is the percentage of free space in the pool above which migrator should stop. \fBNot yet supported\fP.
+.TP
+.BI MIG_DATA_THRESH " size"
+is the amount of data ready to be migrated above which a migrator is started. Default unit is MB, but can be specified with 'b','k','M','G','T' or 'P' for byte, kilobyte, megabyte, gigabyte, terabyte or petabyte respectively.
 For example,
 .B MIG_DATA_THRESH 800G
 specifies a 800 GB threshold.
-.RE
+.TP
+.BI DEFPOOL " poolname"
+is the default pool name for all requests. This parameter is mandatory.
+.TP
+.BI DEFPOOL_IN " poolin"
+is the default pool name for stagein requests (if none, defaults to DEFPOOL value)
+.TP
+.BI DEFPOOL_OUT " poolout"
+is the default pool name for stageout requests (if none, defaults to DEFPOOL value)
 .TP
 There must be also one entry per pool element giving:
 .RS
@@ -158,16 +189,6 @@ There must be also one entry per pool element giving:
 server		full path of the stage directory
 .RE
 .TP
-If several pools are configured, a default pool must be defined by an entry
-.RS
-.HP
-DEFPOOL        default pool name for all requests
-.HP
-DEFPOOL_IN     default pool name for stagein requests (if none, defaults to DEFPOOL value)
-.HP
-DEFPOOL_OUT    default pool name for stageout requests (if none, defaults to DEFPOOL value)
-.RE
-.HP
 The stage catalog is split into sub-catalogs, one for each type of entry:
 tape, disk, alloc, HSM. Each entry consists of 2 parts: non-specific and
 specific.
@@ -387,6 +408,7 @@ ytes=1024
 .LP
 .fi
 .SH SEE ALSO
+.BR stage_constants(3)
 .BR Castor_limits(4) ,
 .BR Cdbserver(1) ,
 .BR stageinit(1) ,
