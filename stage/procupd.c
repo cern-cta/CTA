@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.120 2002/10/30 10:29:36 jdurand Exp $
+ * $Id: procupd.c,v 1.121 2002/10/30 16:26:10 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.120 $ $Date: 2002/10/30 10:29:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.121 $ $Date: 2002/10/30 16:26:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -85,7 +85,7 @@ extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int, int, 
 extern int cleanpool _PROTO((char *));
 extern void delreq _PROTO((struct stgcat_entry *, int));
 extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int, int));
-extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
+extern void sendinfo2cptape _PROTO((int *, struct stgcat_entry *));
 extern void create_link _PROTO((struct stgcat_entry *, char *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern int retenp_on_disk _PROTO((int));
@@ -1297,7 +1297,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					if (stcp->reqid == wfp->subreqid) break;
 				*/
 				if (wqp->copytape)
-					sendinfo2cptape (rpfd, stcp);
+					sendinfo2cptape (&(wqp->rpfd), stcp);
 				if (! stcp->keep && stcp->nbaccesses <= 1) {
 					/* No -K option and only one access */
 					struct stgcat_entry *stcp_search, *stcp_found;
@@ -1398,7 +1398,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 								/* This is acceptable only if the request is an explicit STAGEPUT */
 								/*
 								if (stcp->status != STAGEPUT) {
-									sendrep (&rpfd, MSG_ERR, STG22);
+									sendrep (&(wqp->rpfd), MSG_ERR, STG22);
 									continue;
 								} else {
 									stcp_found = stcp;
@@ -1473,7 +1473,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 										char tmpbuf1[21];
 										/* We neverthless log to indicate that, regardless of continue_flag */
 										/* we decided anyway to force the deletion */
-										sendrep (&rpfd, MSG_ERR, STG175,
+										sendrep (&(wqp->rpfd), MSG_ERR, STG175,
 												 stcp_found->u1.h.xfile,
 												 u64tostr((u_signed64) stcp_found->u1.h.fileid, tmpbuf1, 0),
 												 stcp_found->u1.h.server,
@@ -1494,7 +1494,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 								} else {
 									/* We can delete this entry */
 									if (delfile (stcp_found, 0, 1, 1, ((save_status & 0xF) == STAGEWRT) ? "stagewrt ok" : "stageput ok", uid, gid, 0, ((save_status & 0xF) == STAGEWRT) ? 1 : 0, 0) < 0) {
-										sendrep (&rpfd, MSG_ERR, STG02, stcp_found->ipath,
+										sendrep (&(wqp->rpfd), MSG_ERR, STG02, stcp_found->ipath,
 													 RFIO_UNLINK_FUNC(stcp_found->ipath), rfio_serror());
 									}
 								}
@@ -1722,7 +1722,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 #endif
 			if (wqp->api_out) sendrep(&(wqp->rpfd), API_STCP_OUT, stcp, wqp->magic);
 			if (wqp->copytape)
-				sendinfo2cptape (rpfd, stcp);
+				sendinfo2cptape (&(wqp->rpfd), stcp);
 			if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
 				create_link (stcp, wfp->upath);
 			if (wqp->Upluspath && *((wfp+1)->upath) &&
