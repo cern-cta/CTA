@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.5 $ $Date: 1999/12/15 14:50:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.6 $ $Date: 1999/12/23 09:13:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -67,10 +67,10 @@ sendrep(va_alist) va_dcl
 	if (netwrite (rpfd, repbuf, repsize) != repsize) {
 		tplogit (func, TP002, "send", neterror());
 		if (rep_type == TAPERC)
-			close (rpfd);
+			netclose (rpfd);
 		return (-1);
 	}
 	if (rep_type == TAPERC)
-		close (rpfd);
+		netclose (rpfd);
 	return (0);
 }
