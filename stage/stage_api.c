@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.11 2001/02/05 13:03:06 jdurand Exp $
+ * $Id: stage_api.c,v 1.12 2001/02/08 15:48:04 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -1148,9 +1148,9 @@ int DLL_DECL stageqry_Tape(flags,hostname,poolname,tape,fseq,nstcp_output,stcp_o
 
   /* We build the full stageqry API request */
   memset(&stcp_input, 0, sizeof(struct stgcat_entry));
-  strcpy(stcp_input.poolname,poolname); /* Can be zero-length */
+  if (poolname != NULL) strcpy(stcp_input.poolname,poolname); /* Can be zero-length */
   strcpy(stcp_input.u1.t.vid[0],tape); /* Cannot be zero-length */
-  strcpy(stcp_input.u1.t.fseq,fseq); /* Can be zero-length */
+  if (fseq != NULL) strcpy(stcp_input.u1.t.fseq,fseq); /* Can be zero-length */
   return(stageqry_tape(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
 }
 
@@ -1180,7 +1180,7 @@ int DLL_DECL stageqry_Hsm(flags,hostname,poolname,hsmname,nstcp_output,stcp_outp
 
   /* We build the full stageqry API request */
   memset(&stcp_input, 0, sizeof(struct stgcat_entry));
-  strcpy(stcp_input.poolname,poolname); /* Can be zero-length */
+  if (poolname != NULL) strcpy(stcp_input.poolname,poolname); /* Can be zero-length */
   strcpy(stcp_input.u1.h.xfile,hsmname); /* Cannot be zero-length */
   return(stageqry_hsm(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
 }
@@ -1212,7 +1212,7 @@ int DLL_DECL stageqry_Disk(flags,hostname,poolname,diskname,nstcp_output,stcp_ou
 
   /* We build the full stageqry API request */
   memset(&stcp_input, 0, sizeof(struct stgcat_entry));
-  strcpy(stcp_input.poolname,poolname); /* Can be zero-length */
+  if (poolname != NULL) strcpy(stcp_input.poolname,poolname); /* Can be zero-length */
   strcpy(stcp_input.u1.d.xfile,diskname); /* Cannot be zero-length */
   return(stageqry_disk(flags,hostname,1,&stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output));
 }
