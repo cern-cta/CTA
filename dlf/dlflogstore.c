@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlflogstore.c,v $ $Revision: 1.5 $ $Date: 2003/12/28 12:01:59 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlflogstore.c,v $ $Revision: 1.6 $ $Date: 2004/06/07 16:28:58 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -16,6 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: dlflogstore.c,v $ $Revision: 1.5 $ $Date: 
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <ctype.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
