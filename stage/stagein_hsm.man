@@ -1,10 +1,10 @@
-.\" $Id: stagein_hsm.man,v 1.6 2002/10/03 16:35:33 jdurand Exp $
+.\" $Id: stagein_hsm.man,v 1.7 2002/10/04 07:46:32 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagein_hsm.man,v $ $Revision: 1.6 $ $Date: 2002/10/03 16:35:33 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stagein_hsm.man,v $ $Revision: 1.7 $ $Date: 2002/10/04 07:46:32 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEIN_HSM "3" "$Date: 2002/10/03 16:35:33 $" "CASTOR" "Stage Library Functions"
+.TH STAGEIN_HSM "3" "$Date: 2002/10/04 07:46:32 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stagein_hsm \- Asks for one or more HSM files to be staged on disk
 .SH SYNOPSIS
@@ -22,7 +22,7 @@ stagein_hsm \- Asks for one or more HSM files to be staged on disk
 .BI "struct stgpath_entry *" stpp_input ");"
 
 .SH DESCRIPTION
-The \fBstagein_hsm\fP API method queries the stager catalog for one or more HSM files.
+The \fBstagein_hsm\fP API method asks the stager catalog for one or more HSM files to be staged on disk.
 There are two ouputs: the default ttys (unless you use \fBstage_setlog\fP, see in the example below) and the output parameters, that are allocated on the fly (e.g. the user will have to free them if necessary/wanted).
 
 .SH PARAMETERS
@@ -34,54 +34,49 @@ Flags that are driving the search in the stager catalog. It can be zero or a bit
 .I STAGE_REQID
 The member reqid of all 
 .I stcp_input
-structures given in input must match a known record having exactly this request id.
+structures given in input must match a known record having exactly this request id. Otherwise, even it is set in the input structures, the reqid member will be ignored when processing the request.
 .TP
 .I STAGE_DEFERRED
 If data is to be recalled from tape, allocation will be differed, e.g. done only when the tape will be positionned.
 .TP
 .I STAGE_SILENT
-Print nothing (not in the log callback)
+Print nothing (the log callback will never be notified neither).
 .TP
 .I STAGE_NORETRY
-If data is to be recalled from tape, and there is a medium error, internal retries by the I/O process doing the recall will be skipped. It does not prevent stager daemon to decide to do a retry, neverthless. This flag also prevents client to keep retrying in any case. Can be set with environment variable $STAGE_NORETRY to a non\-zero value.
+If data is to be recalled from tape, and there is a medium error, internal retries by the I/O process doing the recall will be skipped. It does not prevent stager daemon to decide to do a retry, nevertheless. This flag also prevents client to keep retrying in any case. Can be set with environment variable $STAGE_NORETRY to a non\-zero value.
 .TP
 .I STAGE_NOWAIT
 If data is to be recalled from tape, this will be done in the background, and client will get an immediate return with ok status.
-.TP
-.I STAGE_VOLATILE_TPPOOL
-Not Gives more details for each file: the login name, the group name of the user who requested the initial stage operation, the creation and the date of last access.
-.TP
-.I STAGE_GRPUSER
-Specifies that the operations should be issued under the 'group  user'. A 'group user' may be defined for each group in /etc/shift.conf.
-Specifies that I/O operation are done under a 'group' user, same group as your login.
 .RE
 .TP
 .I openflags
 If it contains O_RDWR or O_WRONLY the file is considered to be opened by an application that want to modify it.
 .TP
 .I hostname
-Gives explicitely the hostname where is the stager daemon. If it NULL, default value apply: either the environment variable STAGE_HOST, an entry 'STG HOST' in /etc/shift.conf file, or the default "stagepublic".
+Gives explicitely the hostname where is the stager daemon. If it NULL, default value apply: either the environment variable $STAGE_HOST, an entry 'STG HOST' in /etc/shift.conf file, or the default "stagepublic".
 .TP
 .I poolname
-Restrict search to a given poolname. Can be NULL.
+Restrict to a given poolname. Can be NULL. Precedence is given to environment variable $STAGE_POOL if it exists, entry 'STG POOL' in  /etc/shift.conf, and then the parameter.
 .TP
 .I nstcp_input
-Number of stcp_input records.
+Number of stcp_input entries.
 .TP
 .I stcp_input
-Records describing the files you want to be staged. Only the member xfile of the structures is mandatory. Others members should all be setted to zero in order to avoid your request to possibly misbehave. See example below.
+Entries describing the files you want to be staged. Only the member xfile of the structures is mandatory. Others members should all be setted to zero in order to avoid your request to possibly misbehave. See example below.
 .TP
 .I nstcp_output
-Filled with the number of staged records.
+Filled with the number of staged entries at return.
 .TP
 .I stcp_output
-Filled with the address of an array containg the staged records. Up to the user to free it if necessary.
+Filled with the address of an array containg the staged entries at return. Up to the user to free it if necessary.
 .TP
 .I nstpp_input
-Filled with the number of stpp_input records. If this number is positive it must match the number of stcp_input records.
+Filled with the number of stpp_input entries. If this number is positive it must match the number of stcp_input entries. Otherwise it should be zero.
 .TP
 .I stpp_input
-Array giving the list of link files that will be created each time one of the files desbcribed in stcp_input records is found to be staged on disk.
+Array giving the list of link files that will be created each time one of the files described in stcp_input entries is staged on disk. Must be NULL or pointing to 
+.I nstpp_input
+entries.
 
 .SH EXAMPLE
 .ft CW
@@ -106,6 +101,11 @@ void log_callback _PROTO((int, char *));
 void cleanup _PROTO((int));
 void record_callback _PROTO((struct stgcat_entry *, struct stgpath_entry *));
 
+/* Here because of the cleanup */
+int nstpp_input = 0;
+struct stgpath_entry *stpp_input = NULL;
+int cleanup_mode = 0;
+
 int main(argc,argv)
 	int argc;
 	char **argv;
@@ -115,8 +115,6 @@ int main(argc,argv)
   struct stgcat_entry *stcp_input;
   int nstcp_output;
   struct stgcat_entry *stcp_output = NULL; /* Important */
-  int nstpp_input;
-  struct stgpath_entry *stpp_input;
   int i;
   char *p;
 
@@ -185,18 +183,35 @@ int main(argc,argv)
   }
 
 	/* Call the method */
-  if (stagein_hsm(flags, /* Preferred allocation mode - make sure it is an u_signed64 on the stack */
-				  O_RDONLY, /* we really just want to read them */
-				  NULL, /* default stager hostname */
-				  NULL, /* default stager poolname */
-				  nstcp_input, /* Number of HSM files */
-				  stcp_input, /* and the records giving the names */
-				  &nstcp_output, /* we are interested to have all records back, with daemon modifications */
+  if (stagein_hsm(/* Preferred allocation mode - make sure it is u_signed64 on the stack */
+				  flags,
+				  /* We really just want to read them */
+				  O_RDONLY,
+				  /* Default stager hostname */
+				  NULL,
+				  /* Default stager poolname */
+				  NULL,
+				  /* Number of HSM files */
+				  nstcp_input,
+				  /* and the records giving the names */
+				  stcp_input,
+				  /* We are interested to have all records back */
+				  /* with daemon modifications */
+				  &nstcp_output,
 				  &stcp_output,
-				  nstpp_input, /* And we ask for links */
-				  stpp_input /* described here */
+				  /* And we ask for links */
+				  nstpp_input,
+				  /* described here */
+				  stpp_input
 	  ) != 0) {
 	  fprintf(stderr,"stagein_hsm error: %s\\n", sstrerror(serrno));
+	  /* Avoid unnecessary messaged from the stageclr_link */
+	  cleanup_mode = 1;
+	  /* Let's be kind and remove the links */
+	  /* Stager will otherwise remind them for a long time */
+	  for (i = 0; i < nstpp_input; i++) {
+		  stageclr_link((u_signed64) 0, NULL, 1, &(stpp_input[i]));
+	  }
 	  free(stcp_input);
 	  free(stpp_input);
 	  if (stcp_output != NULL) free(stcp_output); /* Should not be */
@@ -209,7 +224,8 @@ int main(argc,argv)
   /* The recommend way to open the file is now rfio_open() on argv[] */
   
   /* We are done */
-  /* Let's be kind and remove the links - Stager will otherwise remind them for a long time */
+  /* Let's be kind and remove the links */
+  /* Stager will otherwise remind them for a long time */
   for (i = 0; i < nstpp_input; i++) {
 	  if (stageclr_link((u_signed64) 0, NULL, 1, &(stpp_input[i])) != 0) {
 		  fprintf(stderr,"stageclr_link error: %s\\n", sstrerror(serrno));
@@ -226,9 +242,19 @@ int main(argc,argv)
 void cleanup(sig)
 	int sig;
 {
-	/* Say to stager daemon we have been interrupted - the eventual I/O process */
-	/* will then be signalled on the hostname where is running the dameon */
+	int i;
+
+	/* Say to stager daemon we have been interrupted - the eventual */
+	/* I/O process will then be signalled on the hostname where is */
+	/* running the dameon */
 	stage_kill(sig);
+	/* Avoid unnecessary messaged from the stageclr_link */
+	cleanup_mode = 1;
+	/* Let's be kind and remove the links */
+	/* Stager will otherwise remind them for a long time */
+	for (i = 0; i < nstpp_input; i++) {
+		stageclr_link((u_signed64) 0, NULL, 1, &(stpp_input[i]));
+	}
 	exit(EXIT_FAILURE);
 }
 
@@ -236,6 +262,8 @@ void log_callback(level,message)
 	int level;
 	char *message;
 {
+	if (cleanup_mode) return;
+
 	if (level == MSG_ERR) {
 		fprintf(stderr,"MSG_ERR ==> %s",message);
 	} else {
@@ -273,7 +301,7 @@ Bad address
 Invalid argument
 .TP
 .B ESTGROUP
-Invalid group!vi        !
+Invalid group
 .TP
 .B SECONNDROP
 Connection closed by remote end
@@ -327,10 +355,10 @@ Stager not active (if you specify the STAGE_NORETRY flag - default is to retry f
 Host not known
 
 .SH NOTES
-It is highly recommended to use the RFIO interface, POSIXly compliant, if you want to open one single file. RFIO interface will internally call the stagein_hsm interface.
+It is highly recommended to use the RFIO interface, POSIX compliant, if you want to open one single file. RFIO interface will internally call the stagein_hsm interface.
 
 .SH SEE ALSO
-\fBstagein\fP(1), \fBstage_setlog\fP(3), \fBprint_stcp\fP(3), \fBprint_stpp\fP(3), \fBstage_struct\fP(3), \fBstage_macros\fP(3)
+\fBstagein\fP(1), \fBstage_limits\fP(3), \fBCastor_limits\fP(3), \fBstage_setlog\fP(3), \fBstage_setcallback\fP(3), \fBstageclr_link\fP(3), \fBrc_castor2shift\fP(3), \fBstage_kill\fP(3), \fBprint_stcp\fP(3), \fBprint_stpp\fP(3), \fBstage_struct\fP(3), \fBstage_macros\fP(3), \fBstage_constants\fP(3)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
