@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.57 $ $Date: 2000/04/04 07:47:05 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.58 $ $Date: 2000/04/04 10:04:28 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -107,6 +107,29 @@ int rtcpd_SignalFilePositioned(tape_list_t *tape, file_list_t *file) {
     }
     rtcp_log(LOG_DEBUG,"rtcpd_SignalFilePositioned() returns\n");
     return(0);
+}
+
+static int WaitDiskIO() {
+    int rc;
+
+    rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+    if ( rc == -1 ) return(-1);
+
+    rtcp_log(LOG_DEBUG,"WaitDiskIO(): diskIOfinished=%d, nb_diskIOactive=%d\n",
+             proc_cntl.diskIOfinished,proc_cntl.nb_diskIOactive);
+    while ( proc_cntl.diskIOfinished == 0 || proc_cntl.nb_diskIOactive > 0 ) {
+        if ( (rtcpd_CheckProcError() &
+              (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) {
+            (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+            return(0);
+        }
+        rc = Cthread_cond_wait_ext(proc_cntl.cntl_lock);
+        if ( rc == -1 ) return(-1);
+        rtcp_log(LOG_DEBUG,"WaitDiskIO(): diskIOfinished=%d, nb_diskIOactive=%d\n",
+                 proc_cntl.diskIOfinished,proc_cntl.nb_diskIOactive);
+    }
+    rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+    return(rc);
 }
 
 static void TapeIOstarted() {
@@ -1564,6 +1587,12 @@ void *tapeIOthread(void *arg) {
         }
     } CLIST_ITERATE_END(tape,nexttape);
 
+    /*
+     * Wait for disk IO to finish before releasing the drive. This is to
+     * prevent slow disk IO from piling up with too many large rtcopy 
+     * on a single server.
+     */
+    (void)WaitDiskIO();
     TP_STATUS(RTCP_PS_RELEASE);
     rtcpd_Release(nexttape->prev,NULL);
     TP_STATUS(RTCP_PS_NOBLOCKING);

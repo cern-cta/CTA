@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.66 $ $Date: 2000/04/03 15:39:20 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.67 $ $Date: 2000/04/04 10:04:24 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -103,7 +103,6 @@ static int DiskIOstarted() {
         return(-1);
     }
     proc_cntl.diskIOstarted = 1;
-    proc_cntl.nb_diskIOactive++;
     rtcp_log(LOG_DEBUG,"DiskIOstarted() nb active disk IO threads=%d\n",
              proc_cntl.nb_diskIOactive);
     rc = Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
@@ -614,6 +613,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                 break;
             }
         } /* while (databufs[i]->flag == BUFFER_EMPTY) */
+
         /*
          * At this point we know that the tape->memory has
          * started. Thus it is now safe to take the blocksize and
@@ -1527,7 +1527,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
     diskIOstatus_t *diskIOstatus;
     thread_arg_t *tharg;
     int rc, save_serrno, indxp, offset, last_file,end_of_tpfile, spill;
-    int rc, indxp, offset, last_file,end_of_tpfile, spill;
+    int prev_bufsz, next_nb_bufs, severity, next_bufsz, thIndex;
     register int Uformat;
     register int convert;
     register int debug = Debug;
@@ -1545,9 +1545,11 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
     thargs = (thread_arg_t *)malloc(poolsize * sizeof(thread_arg_t));
     if ( thargs == NULL ) {
         save_serrno = errno;
+        rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() malloc(): %s\n",
             sstrerror(errno));
         serrno = save_serrno;
-        rtcpd_SetProcError(RTCP_FAILED);
+        return(-1);
+    }
 
     /*
      * Loop over all file requests
@@ -1588,12 +1590,14 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
             rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
             if ( rc == -1 ) {
                 save_serrno = serrno;
+                rtcpd_AppendClientMsg(NULL, nextfile, "Cannot lock mutex: %s\n",
                     sstrerror(save_serrno));
-                    sstrerror(serrno));
-                rtcpd_SetReqStatus(NULL,nextfile,serrno,
+                rtcpd_SetReqStatus(NULL,nextfile,save_serrno,
+                                   RTCP_RESELECT_SERV | RTCP_SYERR);
                 rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cthread_mutex_lock_ext(): %s\n",
                     sstrerror(save_serrno));
-                    sstrerror(serrno));
+                serrno = save_serrno;
+                return(-1);
             }
             if ( tapereq->mode == WRITE_ENABLE ) 
                 filereq->err.severity = filereq->err.severity & ~RTCP_LOCAL_RETRY;
@@ -1637,13 +1641,15 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 rc = Cthread_cond_wait_ext(proc_cntl.cntl_lock);
                 if ( rc == -1 ) {
                     save_serrno = serrno;
+                    rtcpd_AppendClientMsg(NULL, nextfile, "Error on condition wait: %s\n",
                         sstrerror(save_serrno));
-                        sstrerror(serrno));
-                    rtcpd_SetReqStatus(NULL,nextfile,serrno,
+                    rtcpd_SetReqStatus(NULL,nextfile,save_serrno,
+                                      RTCP_SYERR | RTCP_RESELECT_SERV);
                     rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cthread_cond_wait_ext(proc_cntl): %s\n",
                         sstrerror(save_serrno));
-                        sstrerror(serrno));
+                    (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
                     serrno = save_serrno;
+                    return(-1);
                 }
                 /*
                  * Check if we need to exit due to processing error
@@ -1657,7 +1663,12 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 }
             }
 
+            /*
+             * We're going to start a new diskIO thread. 
+             */
+            proc_cntl.diskIOstarted = 0;
             proc_cntl.nb_diskIOactive++;
+            /*
              * Calculate nb buffers to be used for the next file.
              */
             if ( tapereq->mode == WRITE_ENABLE ) {
@@ -1696,6 +1707,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
             rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
             if ( rc == -1 ) {
                 save_serrno = serrno;
+                rtcpd_AppendClientMsg(NULL,nextfile,
                       "Cannot unlock CNTL mutex: %s\n",sstrerror(serrno));
                 rtcpd_SetReqStatus(NULL,nextfile,serrno,
                                    RTCP_SYERR | RTCP_RESELECT_SERV);
@@ -1703,6 +1715,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                          "rtcpd_StartDiskIO() Cthread_mutex_unlock_ext(): %s\n",
                          sstrerror(serrno));
                 serrno = save_serrno;
+                return(-1);
             }
 
             /* 
@@ -1766,12 +1779,14 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
             thIndex = Cpool_next_index(poolID);
             if ( thIndex == -1 ) {
                 save_serrno = serrno;
+                rtcpd_AppendClientMsg(NULL, nextfile, "Error assigning thread: %s\n",
                     sstrerror(save_serrno));
-                    sstrerror(serrno));
-                rtcpd_SetReqStatus(NULL,nextfile,serrno,
+                rtcpd_SetReqStatus(NULL,nextfile,save_serrno,
+                                   RTCP_SYERR | RTCP_RESELECT_SERV);
                 rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cpool_next_index(): %s\n",
                          sstrerror(save_serrno));
-                         sstrerror(serrno));
+                serrno = save_serrno;
+                return(-1);
             }
             tharg = &thargs[thIndex];
             /*
@@ -1784,8 +1799,10 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                                        &client->clientport);
             if ( rc == -1 ) {
                 save_serrno = serrno;
+                rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() rtcp_ConnectToClient(%s,%d): %s\n",
                     client->clienthost,client->clientport,sstrerror(serrno));
                 serrno = save_serrno;
+                return(-1);
             }
 
             tharg->tape = nexttape;
@@ -1809,7 +1826,13 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 thIndex,tharg,indxp,offset,end_of_tpfile);
             rc = Cpool_assign(poolID,diskIOthread,(void *)tharg,-1);
             if ( rc == -1 ) {
-
+                save_serrno = serrno;
+                rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cpool_assign(%d): %s\n",
+                         poolID,sstrerror(serrno));
+                serrno = save_serrno;
+                return(-1);
+            }
+        } else { /* if ( ... ) */
             rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() skipping finished request (%d,%d,%s,concat:%d\n",
                      nextfile->filereq.tape_fseq,nextfile->filereq.disk_fseq,
                      nextfile->filereq.file_path,nextfile->filereq.concat);
@@ -1819,10 +1842,31 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
      * Tell the others that we've finished
      */
     rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
-    (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+    if ( rc == -1 ) {
+        save_serrno = serrno;
+        rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cthread_mutex_lock_ext(): %s\n",
+                 sstrerror(serrno));
+        serrno = save_serrno;
+        return(-1);
+    }
+    proc_cntl.diskIOfinished = 1;
     rc = Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
-    (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
-    (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+    if ( rc == -1 ) {
+        save_serrno = serrno;
+        rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cthread_cond_broadcast_ext(): %s\n",
+                 sstrerror(serrno));
+        serrno = save_serrno;
+        return(-1);
+    }
+    rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+    if ( rc == -1 ) {
+        save_serrno = serrno;
+        rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cthread_mutex_unlock_ext(): %s\n",
+                 sstrerror(serrno));
+        serrno = save_serrno;
+        return(-1);
+    }
+
     return(0);
 }
 
