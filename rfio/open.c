@@ -1,14 +1,14 @@
 /*
- * $Id: open.c,v 1.14 2001/09/18 19:58:15 jdurand Exp $
+ * $Id: open.c,v 1.15 2002/02/26 08:29:50 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.14 $ $Date: 2001/09/18 19:58:15 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.15 $ $Date: 2002/02/26 08:29:50 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */
@@ -72,9 +72,7 @@ int	passwd;
    END_TRACE();
    (void) umask(iop->umask=umask(0));
    iop->ftype = FFTYPE_C;
-#if !defined(VM) && !defined(MVS)
    iop->binary = 0;                 /* no translation needed        */
-#endif /* VM */
    iop->eof = 0;
    iop->unit = 0;
    iop->access = 0;
@@ -83,6 +81,7 @@ int	passwd;
    iop->blank = 0;
    iop->opnopt = 0;
    iop->offset= 0 ; 
+   iop->socset = 0 ;
    iop->_iobuf.base = NULL;
    iop->_iobuf.ptr = NULL;
    iop->_iobuf.count = 0;
