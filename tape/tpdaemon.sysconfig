@@ -1,0 +1,19 @@
+#
+# $Id: tpdaemon.sysconfig,v 1.1 2004/08/06 14:50:51 motiakov Exp $
+#
+# @(#)$RCSfile: tpdaemon.sysconfig,v $ $Revision: 1.1 $ $Date: 2004/08/06 14:50:51 $ CERN/IT/ADC/CA Jean-Damien Durand
+#
+# should tpdaemon run?
+# any string but "yes" will equivalent to "NO"
+#
+RUN_TPDAEMON="yes"
+#
+# should we run with another limit on the number of file descriptors than the default?
+# any string will be passed to ulimit -n
+#ULIMIT_N=4096
+
+if [ -f /etc/sysconfig/castor_security ]; then
+        . /etc/sysconfig/castor_security TAPE
+        export CSEC_TRACE=1
+        export CSEC_TRACEFILE=/usr/spool/tape/tpdaemon_trace
+fi

@@ -1,0 +1,19 @@
+#
+# $Id: Cupvdaemon.sysconfig,v 1.1 2004/08/06 14:52:43 motiakov Exp $
+#
+# @(#)$RCSfile: Cupvdaemon.sysconfig,v $ $Revision: 1.1 $ $Date: 2004/08/06 14:52:43 $ CERN/IT/ADC/CA Jean-Damien Durand
+#
+# should Cupvdaemon run?
+# any string but "yes" will equivalent to "NO"
+#
+RUN_CUPVDAEMON="yes"
+#
+# should we run with another limit on the number of file descriptors than the default?
+# any string will be passed to ulimit -n
+#ULIMIT_N=4096
+
+if [ -f /etc/sysconfig/castor_security ]; then
+        . /etc/sysconfig/castor_security CENTRAL
+        export CSEC_TRACE=1
+        export CSEC_TRACEFILE=/usr/spool/upv/cupv_trace
+fi
