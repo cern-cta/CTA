@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_modify.c,v $ $Revision: 1.3 $ $Date: 2002/06/10 13:04:09 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_modify.c,v $ $Revision: 1.4 $ $Date: 2002/06/10 16:42:35 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
  
 
@@ -26,7 +26,7 @@ Cupv_modify(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt,
 	    const char *newsrc, const char *newtgt, int priv)
 {
 	int c;
-	char func[16];
+	char func[16]; 
 	gid_t gid;
 	int msglen;
 	char *q;
@@ -49,20 +49,49 @@ Cupv_modify(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt,
         }
 #endif
 
+	if (priv_uid < 0 || priv_gid < 0) {
+	  serrno = EINVAL;
+	  return(-1);
+	} 
 
-	lensrc = strlen(src);
-	lentgt = strlen(tgt);
-	lennewsrc = strlen(newsrc);
-	lennewtgt = strlen(newtgt);
+	/* Checking the stings passed ... */
 
-	if (src == NULL || tgt == NULL
-	    || lensrc == 0 || lentgt == 0 || lennewsrc == 0 || lennewtgt == 0
+	if (src != NULL) {
+	  lensrc = strlen(src);
+	} else {
+	  lensrc = 0;
+	}
+	
+	if (tgt != NULL) {
+	  lentgt = strlen(tgt);
+	} else { 
+	  lentgt = 0;
+	}
+	if (newsrc != NULL) {
+	  lennewsrc = strlen(newsrc);
+	} else {
+	  lennewsrc = 0;
+	}
+	
+	if (newtgt != NULL) {
+	  lennewtgt = strlen(newtgt);
+	} else { 
+	  lennewtgt = 0;
+	}
+
+	if (lensrc == 0 || lentgt == 0 
 	    || lensrc > CA_MAXREGEXPLEN || lentgt > CA_MAXREGEXPLEN
 	    || lennewsrc > CA_MAXREGEXPLEN || lennewtgt > CA_MAXREGEXPLEN) {
 		serrno = EINVAL;
 		return (-1);
 	}
  
+	/* At least one of priv, srchost and tgthost should be non null */
+	if (lennewsrc == 0 && lennewtgt == 0 && priv == -1) {
+	  serrno = EINVAL;
+	  return(-1);
+	}
+	
 
 	/* Build request header */
 	sbp = sendbuf;
@@ -78,8 +107,16 @@ Cupv_modify(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt,
 	marshall_LONG (sbp, priv_gid);
 	marshall_STRING (sbp, src);
 	marshall_STRING (sbp, tgt);
-	marshall_STRING (sbp, newsrc);
-	marshall_STRING (sbp, newtgt);
+	if (newsrc != NULL) {
+	  marshall_STRING (sbp, newsrc);
+	} else {
+	  marshall_STRING (sbp, "");
+	}
+	if (newtgt != NULL) {
+	  marshall_STRING (sbp, newtgt);
+	} else {
+	  marshall_STRING (sbp, "");
+	}
 	marshall_LONG (sbp, priv);
  
 	msglen = sbp - sendbuf;

@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_add.c,v $ $Revision: 1.4 $ $Date: 2002/06/10 13:04:09 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_add.c,v $ $Revision: 1.5 $ $Date: 2002/06/10 16:42:34 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
  
 
@@ -53,11 +53,15 @@ Cupv_add(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt, int p
 	  return (-1);
 	}
 
+	if (src == NULL || tgt == NULL) {
+	  serrno = EINVAL;
+	  return(-1);
+	}
+
 	lensrc = strlen(src);
 	lentgt = strlen(tgt);
 
-	if (src == NULL || tgt == NULL 
-	    || lensrc == 0 || lentgt == 0
+	if (lensrc == 0 || lentgt == 0
 	    || lensrc > CA_MAXREGEXPLEN || lentgt > CA_MAXREGEXPLEN) {
 		serrno = EINVAL;
 		return (-1);

@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_check.c,v $ $Revision: 1.5 $ $Date: 2002/06/10 13:04:09 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_check.c,v $ $Revision: 1.6 $ $Date: 2002/06/10 16:42:35 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
  
 
@@ -33,6 +33,7 @@ Cupv_check(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt, int
 	char sendbuf[REQBUFSZ];
 	struct Cupv_api_thread_info *thip;
 	uid_t uid;
+	int lensrc, lentgt;
 
         strcpy (func, "Cupv_check");
         if (Cupv_apiinit (&thip))
@@ -52,7 +53,19 @@ Cupv_check(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt, int
 	  return (-1);
 	}
 
-	if (strlen(src) > CA_MAXREGEXPLEN || strlen(tgt) > CA_MAXREGEXPLEN) {
+	if (src == NULL) {
+	  lensrc = 0;
+	} else {
+	  lensrc = strlen(src);
+	}
+
+	if (tgt == NULL) {
+	  lentgt = 0;
+	} else {
+	  lentgt = strlen(tgt);
+	}
+
+	if (lensrc > CA_MAXREGEXPLEN || lentgt > CA_MAXREGEXPLEN) {
 	  serrno = EINVAL;
 	  return(-1);
 	}
@@ -95,7 +108,7 @@ Cupv_check(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt, int
 	  marshall_STRING(sbp, tgt);
 	}
 
-	marshall_LONG (sbp, priv);
+	marshall_LONG (sbp, priv); 
  
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
