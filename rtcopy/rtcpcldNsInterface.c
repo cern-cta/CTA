@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/10 14:10:22 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/11/15 07:33:07 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/10 14:10:22 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/11/15 07:33:07 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -698,7 +698,7 @@ int rtcpcld_checkDualCopies(
   struct Cns_segattrs *segArray = NULL;
   struct Cns_fileid *fileId = NULL;
   
-  if ( (file == NULL) || (tape = (file->tape == NULL)) ) {
+  if ( (file == NULL) || ((tape = file->tape) == NULL) ) {
     serrno = EINVAL;
     return(-1);
   }
