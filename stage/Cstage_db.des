@@ -1,4 +1,4 @@
-/* $Id: Cstage_db.des,v 1.1 1999/11/29 15:27:43 jdurand Exp $ */
+/* $Id: Cstage_db.des,v 1.2 1999/12/02 14:38:41 jdurand Exp $ */
 
 /* ======================================================= */
 /* CASTOR STAGER Database Description File - Cdb Interface */
@@ -7,7 +7,7 @@
 /* ======== */
 /* Includes */
 /* ======== */
-#include "../h/Castor_limits.h"
+#include "/afs/cern.ch/project/castor/CASTOR/h/Castor_limits.h"
 
 /* ====== */
 /* Macros */
@@ -18,13 +18,16 @@
 /* =========== */
 /* Description */
 /* =========== */
-database Cstage {         /* STAGE Database Description */
-  table Cstgcat_common {  /* Stgcat catalog - common section */
+database stage {         /* STAGE Database Description */
+  table stgcat_tape {
     int reqid;           /* Request (unique) ID */
     int  nread;          /* Number of blocks/records to be copied */
     int  size;           /* Size in MB of data to be staged */
     int nbaccesses;      /* Number of accesses */
     int status;          /* Current status */
+    int blksize;         /* Maximum block size */
+    int  retentd;        /* Retention period in days */
+    int  lrecl;          /* Record length */
     uid_t uid;           /* User uid */
     gid_t gid;           /* Used gid */
     mode_t mask;         /* Creation mask */
@@ -36,22 +39,7 @@ database Cstage {         /* STAGE Database Description */
     char ipath[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+1];
     char group[CA_MAXGRPNAMELEN+1]; /* group name */
     char user[CA_MAXUSRNAMELEN+1]; /* login name */
-    char t_or_d;         /* 't' for tape/disk, 'd' to disk/disk */
     char keep;           /* Keep data on disk after successful stagewrt */
-    key stgcat_common_per_reqid {
-      order ascending;
-      reqid;
-    };
-    key stgcat_common_per_c_time {
-      order ascending;
-      c_time;
-    };
-  };
-  table Cstgcat_tape {
-    int reqid;           /* Request (unique) ID */
-    int blksize;         /* Maximum block size */
-    int  retentd;        /* Retention period in days */
-    int  lrecl;          /* Record length */
     char lbl[4];         /* Label type : al, nl, sl, blp */
     char recfm[CA_MAXRECFMLEN+1]; /* Record format */
     char den[CA_MAXDENLEN+1]; /* Density */
@@ -68,50 +56,88 @@ database Cstage {         /* STAGE Database Description */
       order ascending;
       reqid;
     };
-    key stgcat_tape_per_vid {
-      order ascending;
-      vid;
-    };
   };
-  table Cstgcat_disk {
+  table stgcat_disk {
     int reqid;           /* Request (unique) ID */
+    int  nread;          /* Number of blocks/records to be copied */
+    int  size;           /* Size in MB of data to be staged */
+    int nbaccesses;      /* Number of accesses */
+    int status;          /* Current status */
+    uid_t uid;           /* User uid */
+    gid_t gid;           /* Used gid */
+    mode_t mask;         /* Creation mask */
+    off_t actual_size;   /* Current size */
+    time_t c_time;       /* Creation time */
+    time_t a_time;       /* Access time */
+    char filler[2];
+    char poolname[CA_MAXPOOLNAMELEN+1];
+    char ipath[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+1];
+    char group[CA_MAXGRPNAMELEN+1]; /* group name */
+    char user[CA_MAXUSRNAMELEN+1]; /* login name */
+    char keep;           /* Keep data on disk after successful stagewrt */
     char xfile[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+1];
     char Xparm[23];
     key stgcat_disk_per_reqid {
       order ascending;
       reqid;
     };
-    key stgcat_disk_per_xfile {
-      order ascending;
-      xfile;
-    };
   };
-  table Cstgcat_hsm {
+  table stgcat_hsm {
     int reqid;           /* Request (unique) ID */
+    int  nread;          /* Number of blocks/records to be copied */
+    int  size;           /* Size in MB of data to be staged */
+    int nbaccesses;      /* Number of accesses */
+    int status;          /* Current status */
+    uid_t uid;           /* User uid */
+    gid_t gid;           /* Used gid */
+    mode_t mask;         /* Creation mask */
+    off_t actual_size;   /* Current size */
+    time_t c_time;       /* Creation time */
+    time_t a_time;       /* Access time */
+    char filler[2];
+    char poolname[CA_MAXPOOLNAMELEN+1];
+    char ipath[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+1];
+    char group[CA_MAXGRPNAMELEN+1]; /* group name */
+    char user[CA_MAXUSRNAMELEN+1]; /* login name */
+    char keep;           /* Keep data on disk after successful stagewrt */
     char xfile[CA_MAXPATHLEN+1];
     key stgcat_hsm_per_reqid {
       order ascending;
       reqid;
     };
-    key stgcat_hsm_per_xfile {
+  };
+  table stgcat_alloc {
+    int reqid;           /* Request (unique) ID */
+    int  nread;          /* Number of blocks/records to be copied */
+    int  size;           /* Size in MB of data to be staged */
+    int nbaccesses;      /* Number of accesses */
+    int status;          /* Current status */
+    uid_t uid;           /* User uid */
+    gid_t gid;           /* Used gid */
+    mode_t mask;         /* Creation mask */
+    off_t actual_size;   /* Current size */
+    time_t c_time;       /* Creation time */
+    time_t a_time;       /* Access time */
+    char filler[2];
+    char poolname[CA_MAXPOOLNAMELEN+1];
+    char ipath[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+1];
+    char group[CA_MAXGRPNAMELEN+1]; /* group name */
+    char user[CA_MAXUSRNAMELEN+1]; /* login name */
+    char keep;           /* Keep data on disk after successful stagewrt */
+    char xfile[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+1];
+    char Xparm[23];
+    key stgcat_alloc_per_reqid {
       order ascending;
-      xfile;
+      reqid;
     };
   };
-  table Cstgcat_link {
+  table stgcat_link {
     int reqid;          /* Request (unique) ID */
     char upath[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+1];
     key stgcat_link_per_reqid {
       order ascending;
       reqid;
     };
-    key stgcat_link_per_upath {
-      order ascending;
-      upath;
-    };
   };
 };
-
-
-
 
