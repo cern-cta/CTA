@@ -1,10 +1,10 @@
-.\" $Id: stgconvert.man,v 1.6 2002/10/03 14:07:51 jdurand Exp $
+.\" $Id: stgconvert.man,v 1.7 2002/10/13 11:48:58 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stgconvert.man,v $ $Revision: 1.6 $ $Date: 2002/10/03 14:07:51 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stgconvert.man,v $ $Revision: 1.7 $ $Date: 2002/10/13 11:48:58 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STGCONVERT "1" "$Date: 2002/10/03 14:07:51 $" "CASTOR" "Stage Administrator Commands"
+.TH STGCONVERT "1" "$Date: 2002/10/13 11:48:58 $" "CASTOR" "Stage Administrator Commands"
 .SH NAME
 stgconvert \- Convert CASTOR stager catalogs in Cdb to and from disk
 .SH SYNOPSIS
@@ -131,7 +131,7 @@ stgconvert \-g \-1 /usr/spool/stage/stgcat_castor.bak /usr/spool/stage/stgpath_c
 .RE
 
 .SH SEE ALSO
-\fBstgshift_to_castor\fP(1), \fBstgcastor_to_shift\fP(1), \fBstgshift_cmp_shift\fP(1)
+\fBstgdump\fP(1)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
