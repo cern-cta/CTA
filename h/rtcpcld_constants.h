@@ -28,6 +28,35 @@
 #define RTCPCLD_NOTIFY_HOST "lxshare003d" /* rtcpclientd host */
 #endif /* RTCPCLD_NOTIFY_HOST */
 
+
+#ifndef RTCPCLD_FACILITY
+#define RTCPCLD_FACILITY "rtcpcld"
+#endif /* RTCPCLD_FACILITY */
+
+#ifndef MIGRATOR_FACILITY
+#define MIGRATOR_FACILITY "migrator"
+#endif /* MIGRATOR_FACILITY */
+
+#ifndef RECALLER_FACILITY
+#define RECALLER_FACILITY "recaller"
+#endif /* RECALLER_FACILITY */
+
+#ifndef MIGHUNTER_FACILITY
+#define MIGHUNTER_FACILITY "MigHunter"
+#endif /* MIGHUNTER_FACILITY */
+
+#ifndef TAPEERRORHANDLER_FACILITY
+#define TAPEERRORHANDLER_FACILITY "TapeErrorHandler"
+#endif /* TAPEERRORHANDLER_FACILITY */
+
+#ifndef MIGRATOR_RETRY_POLICY_NAME
+#define MIGRATOR_RETRY_POLICY_NAME "migratorRetryPolicy.pl"
+#endif /* MIGRATOR_RETRY_POLICY_NAME */
+
+#ifndef RECALLER_RETRY_POLICY_NAME
+#define RECALLER_RETRY_POLICY_NAME "recallerRetryPolicy.pl"
+#endif /* RECALLER_RETRY_POLICY_NAME */
+
 #define RTCPCLD_NOTIFYTIMEOUT (30)
 
 #define RTCPCLD_GETTAPE_RETRIES (3)

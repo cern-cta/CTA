@@ -89,6 +89,10 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_RESTORESEGS,
     RTCPCLD_MSG_TPNOTRETRIED,
     RTCPCLD_MSG_CALL_TRACE,
+    RTCPCLD_MSG_POSTPONERETRY,
+    RTCPCLD_MSG_PUTFAILED,
+    RTCPCLD_MSG_GETFAILED,
+    RTCPCLD_MSG_INVALSEGM,
     RTCPCLD_MSG_RESERVED0,
     RTCPCLD_MSG_RESERVED1
 };
@@ -167,6 +171,10 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_RESTORESEGS, DLF_LVL_SYSTEM,"Re-enable tape+segments for selection"},
     { RTCPCLD_MSG_TPNOTRETRIED, DLF_LVL_ALERT,"Tape request failed without failed segments"},
     { RTCPCLD_MSG_CALL_TRACE, DLF_LVL_USAGE,"Tracing statement"},
+    { RTCPCLD_MSG_POSTPONERETRY, DLF_LVL_WARNING,"Tape Error retry postponed"},
+    { RTCPCLD_MSG_PUTFAILED, DLF_LVL_ALERT,"Migration retry rejected by policy"},
+    { RTCPCLD_MSG_GETFAILED, DLF_LVL_WARNING,"Recall retry rejected by policy"},
+    { RTCPCLD_MSG_INVALSEGM, DLF_LVL_ERROR,"Name server segment no longer valid"},
     { RTCPCLD_MSG_RESERVED0, DLF_LVL_DEBUG,""},
     { RTCPCLD_MSG_RESERVED1, DLF_LVL_DEBUG,""}
 };
