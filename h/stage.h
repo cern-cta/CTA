@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.12 2000/03/13 10:46:32 baud Exp $
+ * $Id: stage.h,v 1.13 2000/03/14 09:49:08 jdurand Exp $
  */
 
 /*
@@ -14,6 +14,7 @@
 
 #include "Castor_limits.h"
 #include <osdep.h>
+#include "serrno.h"     /* Contains ESTNACT etc... */
 
 #define STGTIMEOUT 10   /* Stager network timeout (seconds) */
 #define DEFDGN "CART"	/* default device group name */
@@ -193,12 +194,6 @@ typedef char fseq_elem[7];
 typedef long gid_t;
 typedef long uid_t;
 #endif
-
-struct child_exit_q {   /* list of children having exited */
-  struct child_exit_q *next;
-  int     ovly_pid;
-  int     status;
-};
 
 #if ! defined(vms)
 struct stgcat_entry {		/* entry format in STGCAT table */

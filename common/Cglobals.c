@@ -1,5 +1,5 @@
 /*
- * $Id: Cglobals.c,v 1.11 2000/02/28 12:53:08 jdurand Exp $
+ * $Id: Cglobals.c,v 1.12 2000/03/14 09:48:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: Cglobals.c,v $ $Revision: 1.11 $ $Date: 2000/02/28 12:53:08 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: Cglobals.c,v $ $Revision: 1.12 $ $Date: 2000/03/14 09:48:40 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* lint */
 /*
  * Castor_globals.c - central entry to maintain all Castor globals
@@ -133,15 +133,9 @@ int *__h_errno();
  * thread-specific to calling thread (normally the main thread).
  */
 void Cglobals_init(getspec,setspec,getTid)
-#ifdef __STDC__
-     int (*getspec)(int *, void **);
-     int (*setspec)(int *, void *);
-     int (*getTid)(void);
-#else
-     int (*getspec)();
-     int (*setspec)();
-     int (*getTid)();
-#endif
+	int (*getspec) _PROTO((int *, void **));
+    int (*setspec) _PROTO((int *, void *));
+    int (*getTid) _PROTO(());
 {
     int i,rc;
     int *key;

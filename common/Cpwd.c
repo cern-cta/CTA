@@ -6,7 +6,7 @@
 
 
 #ifndef lint
-static char cvsId[] = "$RCSfile: Cpwd.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 11:49:56 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "$RCSfile: Cpwd.c,v $ $Revision: 1.4 $ $Date: 2000/03/14 09:48:40 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -20,10 +20,10 @@ static char cvsId[] = "$RCSfile: Cpwd.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 1
 #include <Cglobals.h>
 #include <serrno.h>
 #include <Cpwd.h>
-
+#include <osdep.h>
 
 struct passwd *Cgetpwnam(name)
-const char *name;
+CONST char *name;
 {
 #if (!defined(_REENTRANT) && !defined(_THREAD_SAFE))
     /*

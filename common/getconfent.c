@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.9 $ $Date: 1999/12/09 13:39:37 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.10 $ $Date: 2000/03/14 09:48:41 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -20,7 +20,7 @@ static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.9 $ $Date: 19
 #endif
 #endif /* PATH_CONFIG */
 
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
 

@@ -1,5 +1,5 @@
 /*
- * $Id: log.c,v 1.6 2000/02/01 13:26:49 obarring Exp $
+ * $Id: log.c,v 1.7 2000/03/14 09:48:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.6 $ $Date: 2000/02/01 13:26:49 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.7 $ $Date: 2000/03/14 09:48:41 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* log.c        - generalized logging routines                          */
@@ -139,7 +139,7 @@ void logit(int level, ...)
     if (loglevel >= level)  {
         format = va_arg(args, char *);
         (void) time(&clock);
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
         (void)localtime_r(&clock,&tmstruc);
         tp = &tmstruc;
 #else

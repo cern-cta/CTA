@@ -1,5 +1,5 @@
 /*
- * $Id: Cpwd.h,v 1.2 1999/12/09 13:46:12 jdurand Exp $
+ * $Id: Cpwd.h,v 1.3 2000/03/14 09:49:07 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * $RCSfile: Cpwd.h,v $ $Revision: 1.2 $ $Date: 1999/12/09 13:46:12 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: Cpwd.h,v $ $Revision: 1.3 $ $Date: 2000/03/14 09:49:07 $ CERN IT-PDP/DM Olof Barring
  */
 
 
@@ -16,8 +16,9 @@
 #define _CPWD_H
 
 #include <osdep.h>
+#include <pwd.h>
 
-EXTERN_C struct passwd DLL_DECL *Cgetpwnam _PROTO((const char *));
+EXTERN_C struct passwd DLL_DECL *Cgetpwnam _PROTO((CONST char *));
 EXTERN_C struct passwd DLL_DECL *Cgetpwuid _PROTO((uid_t));
 
 #endif /* _CPWD_H */
