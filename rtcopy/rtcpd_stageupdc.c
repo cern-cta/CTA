@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.5 $ $Date: 2000/01/19 15:40:56 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.6 $ $Date: 2000/01/19 16:08:21 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -169,6 +169,8 @@ int rtcpd_stageupdc(tape_list_t *tape,
     if ( *newpath == '\0' || rc != 0 ) {
         rtcp_log(LOG_ERR,"rtcpd_stageupdc() stageupdc failed, rc=%d, path=%s\n",
                  rc,newpath);
+        rtcpd_AppendClientMsg(NULL,file,"stageupdc failed, rc=%d, path=%s\n",
+                              rc,newpath);
         if ( rc != ENOSPC ) rtcpd_SetProcError(RTCP_FAILED | RTCP_SYERR);
         else rtcpd_SetProcError(RTCP_FAILED | RTCP_USERR);
         return(-1);

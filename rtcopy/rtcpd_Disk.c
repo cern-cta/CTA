@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.20 $ $Date: 2000/01/19 12:02:44 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.21 $ $Date: 2000/01/19 16:08:23 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1172,7 +1172,10 @@ static int DiskToMemory(int disk_fd, int pool_index,
     disk_fd = -1;
     severity = RTCP_OK;
     /*
-    rc = DiskFileOpen(pool_index,tape,file);
+    DK_STATUS(RTCP_PS_STAGEUPDC);
+    (void)rtcpd_stageupdc(tape,file);
+    CHECK_PROC_ERR(file->tape,file,"rtcpd_WaitForPosition() error");
+    if ( rc == 0 ) rc = DiskFileOpen(pool_index,tape,file);
     if ( (severity & RTCP_EOD) == 0 ) {
     if ( rc == -1 ) {
         rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
