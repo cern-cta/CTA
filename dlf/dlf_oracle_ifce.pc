@@ -1,0 +1,669 @@
+/*
+ * 
+ * Copyright (C) 2003 by CERN/IT/ADC
+ * All rights reserved
+ *
+ */
+
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: dlf_oracle_ifce.pc,v $ $Revision: 1.1 $ $Date: 2003/08/20 12:59:18 $ CERN IT-ADC/CA Vitaly Motyakov";
+#endif /* not lint */
+
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sqlca.h>
+#ifndef USE_ORACLE
+#define USE_ORACLE
+#endif
+#include "serrno.h"
+#include "u64subr.h"
+#include "dlf.h"
+#include "dlf_server.h"
+#include "dlf_api.h"
+
+static sql_context ctx[DLF_NBTHREADS];
+
+dlf_init_dbpkg()
+{
+	int i;
+
+	EXEC SQL ENABLE THREADS;
+	for (i = 0; i < DLF_NBTHREADS; i++) {
+		EXEC SQL CONTEXT ALLOCATE :ctx[i];
+	}
+	return (0);
+}
+
+EXEC SQL CONTEXT USE :ctx[dbfd->idx];
+
+dlf_abort_tr(dbfd)
+struct dlf_dbfd *dbfd;
+{
+	EXEC SQL ROLLBACK WORK;
+	dbfd->tr_started = 0;
+	return (0);
+}
+
+dlf_closedb(dbfd)
+struct dlf_dbfd *dbfd;
+{
+	EXEC SQL CONTEXT FREE :ctx[dbfd->idx];
+	return (0);
+}
+
+dlf_end_tr(dbfd)
+struct dlf_dbfd *dbfd;
+{
+	EXEC SQL COMMIT WORK;
+	dbfd->tr_started = 0;
+	return (0);
+}
+
+
+dlf_opendb(db_srvr, db_user, db_pwd, dbfd)
+char *db_srvr;
+char *db_user;
+char *db_pwd;
+struct dlf_dbfd *dbfd;
+{
+	int c;
+	char func[16];
+	int ntries;
+	struct sqlca sqlca;
+
+	strcpy (func, "dlf_opendb");
+	ntries = 0;
+	while (1) {
+		EXEC SQL CONNECT :db_user IDENTIFIED BY :db_pwd;
+		if (sqlca.sqlcode == 0) return (0);
+		if (sqlca.sqlcode != -1014 && sqlca.sqlcode != -1033 &&
+		    sqlca.sqlcode != -1034) break;
+		if (ntries++ >= MAXRETRY) break;
+		sleep (RETRYI);
+	}
+	dlflogit (func, "CONNECT error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+	    sqlca.sqlerrm.sqlerrmc);
+	serrno = SEINTERNAL;
+	return (-1);
+}
+
+dlf_start_tr(s, dbfd)
+int s;
+struct dlf_dbfd *dbfd;
+{
+	dbfd->tr_started = 1;
+	return (0);
+}
+
+dlf_delete_facility_entry (dbfd, fac_name)
+struct dlf_dbfd* dbfd;
+const char* fac_name;
+{
+	char func[32];
+	struct sqlca sqlca;
+	
+	strcpy (func, "dlf_delete_facility_entry");
+	EXEC SQL DELETE FROM dlf_facilities WHERE fac_name = :fac_name;
+
+        switch (sqlca.sqlcode) {
+        case 0:
+                return (0);
+        case -2292:
+                serrno =  EDLFREFEXIST;
+                break;
+	case 1403:
+		serrno =  EDLFNOTFOUND;
+		break;
+	default:
+		dlflogit ( func, "DELETE error: %.*s\n",
+			 sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		break;
+	}
+	return (-1);
+}
+
+dlf_delete_text_entry (dbfd, fac_name, txt_no)
+struct dlf_dbfd* dbfd;
+const char* fac_name;
+int txt_no;
+{
+	char func[25];
+	struct sqlca sqlca;
+
+	strcpy(func, "dlf_delete_text_entry");
+	EXEC SQL DELETE FROM dlf_msg_texts WHERE fac_no =
+		(SELECT fac_no FROM dlf_facilities WHERE fac_name = :fac_name)
+		AND msg_no = :txt_no;	
+
+        switch (sqlca.sqlcode) {
+        case 0:
+                return (0);
+        case 1403:
+                serrno =  EDLFNOTFOUND;
+                break;
+        default:
+		dlflogit ( func, "DELETE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+			sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		break;
+	}
+	return (-1);
+}
+
+dlf_insert_facility_entry (dbfd, fac_no, fac_name)
+struct dlf_dbfd* dbfd;
+int fac_no;
+const char* fac_name;
+{
+	char func[32];
+	struct sqlca sqlca;
+
+	strcpy(func, "dlf_insert_facility_entry");
+	EXEC SQL INSERT INTO dlf_facilities
+		(fac_no, fac_name) VALUES (:fac_no, :fac_name);
+	switch (sqlca.sqlcode) {
+	case 0:
+		return (0);
+	case -1:
+		serrno = EEXIST;
+		break;
+	case -1631:
+	case -1632:
+	case -1654:
+		serrno = ENOSPC;
+		break;
+	default:
+		dlflogit (func, "INSERT error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+			sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+	}
+	return (-1);
+}
+
+dlf_insert_text_entry (dbfd, fac_name, msg_no, msg_txt)
+struct dlf_dbfd* dbfd;
+const char* fac_name;
+int msg_no;
+const char* msg_txt;
+{
+	char func[32];
+	struct sqlca sqlca;
+	DBLISTPTR dblistptr;
+	int fac_no;
+
+	strcpy(func, "dlf_insert_text_entry");
+
+	if (dlf_get_facility_no (dbfd, fac_name, &fac_no, &dblistptr) < 0)
+		return (-1);
+
+	EXEC SQL INSERT INTO dlf_msg_texts (fac_no, msg_no, msg_text)
+		VALUES (:fac_no, :msg_no, :msg_txt);
+
+	switch (sqlca.sqlcode) {
+	case 0:
+		return (0);
+	case -1:
+		serrno = EEXIST;
+		break;
+	case -1631:
+	case -1632:
+	case -1654:
+		serrno = ENOSPC;
+		break;
+	default:
+		dlflogit (func, "INSERT error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+			sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+	}
+	return (-1);
+}
+
+dlf_get_facility_entry (dbfd, bol, fac_no, fac_name, endlist, dblistptr)
+struct dlf_dbfd* dbfd;
+int bol;
+int* fac_no;
+char* fac_name;
+int endlist;
+DBLISTPTR* dblistptr;
+{
+
+	char func[32];
+	struct sqlca sqlca;
+	char fname[DLF_MAXFACNAMELEN + 1];
+
+	EXEC SQL DECLARE l_fac_cursor CURSOR FOR
+		SELECT fac_no, fac_name
+		FROM dlf_facilities
+		ORDER BY fac_no;
+
+
+	strcpy(func, "dlf_get_facility_entry");
+	if (endlist) {
+		return (1);
+	}
+	if (bol) {
+		EXEC SQL OPEN l_fac_cursor;
+		if (sqlca.sqlcode) {
+			dlflogit (func, "OPEN CURSOR error: %.*s\n",
+				sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+			serrno = SEINTERNAL;
+			return (-1);
+		}
+	}
+	EXEC SQL FETCH l_fac_cursor INTO
+		:*fac_no, :fname;
+	switch (sqlca.sqlcode) {
+	case 0:
+		strcpy (fac_name, fname);
+		return(0);
+	case 1403:
+		return(1);
+	default:
+		dlflogit(func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+			sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		return(-1);
+	}
+}
+
+dlf_get_text_entry (dbfd, bol, fac_no, msg_no, msg_text, endlist, dblistptr)
+struct dlf_dbfd* dbfd;
+int bol;
+int fac_no;
+int* msg_no;
+char* msg_text;
+int endlist;
+DBLISTPTR* dblistptr;
+{
+
+	char func[23];
+	struct sqlca sqlca;
+	char mtext[DLF_MAXSTRVALLEN + 1];
+
+	EXEC SQL DECLARE l_text_cursor CURSOR FOR
+		SELECT msg_no, msg_text
+		FROM dlf_msg_texts
+		WHERE fac_no = :fac_no
+		ORDER BY msg_no;
+	strcpy(func, "dlf_get_text_entry");
+
+	if (endlist) {
+		return (1);
+	}
+	if (bol) {
+		EXEC SQL OPEN l_text_cursor;
+		if (sqlca.sqlcode) {
+			dlflogit (func, "OPEN CURSOR error: %.*s\n",
+				sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+			serrno = SEINTERNAL;
+			return (-1);
+		}
+	}
+	EXEC SQL FETCH l_text_cursor INTO
+		:*msg_no, :mtext;
+	switch (sqlca.sqlcode) {
+	case 0:
+		strcpy (msg_text, mtext);
+		return(0);
+	case 1403:
+		return(1);
+	default:
+		dlflogit(func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+			sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		return(-1);
+	}
+}
+
+dlf_modify_facility_entry (dbfd, fac_name, fac_no)
+struct dlf_dbfd* dbfd;
+const char* fac_name;
+int fac_no;
+{
+
+	char func[32];
+	struct sqlca sqlca;
+	
+	strcpy (func, "dlf_modify_facility_entry");
+	EXEC SQL UPDATE dlf_facilities SET
+		fac_name = :fac_name WHERE fac_no = :fac_no;
+        switch (sqlca.sqlcode) {
+        case 0:
+                return (0);
+        case -2292:
+                serrno =  EDLFREFEXIST;
+                break;
+        case 1403:
+                serrno =  EDLFNOTFOUND;
+                break;
+        default:
+		dlflogit (func, "UPDATE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+			sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		break;
+	}
+	return (-1);
+}
+
+dlf_modify_text_entry (dbfd, fac_name, msg_no, msg_txt)
+struct dlf_dbfd* dbfd;
+const char* fac_name;
+int msg_no;
+const char* msg_txt;
+{
+
+	char func[32];
+	struct sqlca sqlca;
+
+	strcpy(func, "dlf_modify_text_entry");
+	EXEC SQL UPDATE dlf_msg_texts SET
+		msg_text = :msg_txt WHERE fac_no = 
+		(SELECT fac_no FROM dlf_facilities WHERE fac_name = :fac_name)
+		AND msg_no = :msg_no;
+
+	switch (sqlca.sqlcode) {
+	case 0:
+		return (0);
+	case 1403:
+		serrno =  EDLFNOTFOUND;
+		break;
+	default:
+		dlflogit (func, "UPDATE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+			sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		break;
+	}
+	return (-1);
+}
+
+dlf_get_facility_no (dbfd, facname, fac_no, dblistptr)
+struct dlf_dbfd* dbfd;
+const char* facname;
+int* fac_no;
+DBLISTPTR* dblistptr;
+{
+	char func[23];
+	struct sqlca sqlca;
+	EXEC SQL DECLARE l_facno_cursor CURSOR FOR
+		SELECT fac_no
+		FROM dlf_facilities
+		WHERE fac_name = :facname;
+
+	strcpy(func, "dlf_get_facility_no");
+	EXEC SQL OPEN l_facno_cursor;
+	if (sqlca.sqlcode) {
+		dlflogit (func, "OPEN CURSOR error: %.*s\n",
+			sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		return (-1);
+	}
+
+	EXEC SQL FETCH l_facno_cursor INTO :*fac_no;
+	switch (sqlca.sqlcode) {
+	case 0:
+		return(0);
+	case 1403:
+		serrno = EDLFNOFAC;
+		return(1);
+	default:
+		dlflogit(func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+			sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		return(-1);
+	}
+
+}
+
+dlf_get_host_id (dbfd, hostname, host_id, dblistptr)
+struct dlf_dbfd* dbfd;
+const char* hostname;
+int* host_id;
+DBLISTPTR* dblistptr;
+{
+
+	char func[23];
+        struct sqlca sqlca;
+        EXEC SQL DECLARE l_hostid_cursor CURSOR FOR
+                SELECT host_id
+                FROM dlf_host_map
+                WHERE host_name = :hostname;
+
+	strcpy(func, "dlf_get_host_id");
+
+        EXEC SQL OPEN l_hostid_cursor;
+        if (sqlca.sqlcode) {
+                dlflogit (func, "OPEN CURSOR error: %.*s\n",
+                        sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+                serrno = SEINTERNAL;
+                return (-1);
+        }
+
+        EXEC SQL FETCH l_hostid_cursor INTO :*host_id;
+        switch (sqlca.sqlcode) {
+        case 0:
+                return(0);
+        case 1403:
+                return(1);
+        default:
+                dlflogit(func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+                        sqlca.sqlerrm.sqlerrmc);
+                serrno = SEINTERNAL;
+                return(-1);
+        }
+}
+
+dlf_get_curr_host_sequence(dbfd, seq_no)
+struct dlf_dbfd *dbfd;
+int *seq_no;
+{
+        char func[32];
+        struct sqlca sqlca;
+        EXEC SQL DECLARE l_hostseq_cursor CURSOR FOR
+                SELECT host_seq.currval
+                FROM dual;
+
+        strcpy(func, "dlf_get_curr_host_sequence");
+
+        EXEC SQL OPEN l_hostseq_cursor;
+        if (sqlca.sqlcode) {
+                dlflogit (func, "OPEN CURSOR error: %.*s\n",
+                        sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+                serrno = SEINTERNAL;
+                return(-1);
+        }
+
+        EXEC SQL FETCH l_hostseq_cursor INTO :*seq_no;
+        switch (sqlca.sqlcode) {
+        case 0:
+                return(0);
+        case 1403:
+                return(1);
+        default:
+                dlflogit(func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+                        sqlca.sqlerrm.sqlerrmc);
+                serrno = SEINTERNAL;
+                return(-1);
+        }
+}
+
+dlf_insert_message_entry(dbfd, log_message)
+struct dlf_dbfd *dbfd;
+dlf_log_message_t *log_message;
+{
+
+	int rv;
+	int host_id;
+	char func[32];
+	char rq_id_str[33];
+	char subrq_id_str[33];
+	char *suuid;
+	dlf_msg_param_t *param;
+	DBLISTPTR dblistptr;
+	int sev;
+	int fac;
+	int msn;
+	char nsi_str[23];
+	char par_str[23];
+	struct tm tmres;
+	char time_str[32];
+	int n;
+	struct sqlca sqlca;
+
+	strcpy (func, "dlf_insert_message_entry");
+
+	/* Try to obtain the host id from the database */
+	rv =  dlf_get_host_id (dbfd, log_message->hostname, &host_id, &dblistptr);
+
+	if (rv < 0)
+	  return (-1);
+	if (rv == 1) { /* Not found in the table */
+
+	    /* Try to insert new host in the table */
+
+	    EXEC SQL LOCK dlf_host_map IN EXCLUSIVE MODE;
+	    EXEC SQL INSERT INTO dlf_host_map (host_id, host_name)
+                VALUES (host_seq.nextval, :log_message->hostname);
+	    serrno = 0;
+	    if (sqlca.sqlcode) {
+		switch (sqlca.sqlcode)
+		{
+	    	    case -1:
+			serrno = EEXIST;
+			break;
+		    case -1631:
+		    case -1632:
+		    case -1654:
+			serrno = ENOSPC;
+			break;
+	    	    default:
+			dlflogit (func, "INSERT host error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+			sqlca.sqlerrm.sqlerrmc);
+			serrno = SEINTERNAL;
+	    	}
+	    	if (serrno != EEXIST) return (-1);
+	    }
+	    /* Obtain host id */
+	    if (serrno == EEXIST) {
+		rv =  dlf_get_host_id (dbfd, log_message->hostname, &host_id, &dblistptr);
+	    }
+	    else {
+	        rv = dlf_get_curr_host_sequence(dbfd, &host_id);
+	    }
+ 	    if (rv != 0) {
+		dlflogit (func, "Get HOST ID Error.\n");
+		return (-1);
+	    }
+	}
+	/* Convert uuid to hex string */
+	suuid = dlf_uuid2hex(log_message->request_id, rq_id_str, sizeof(rq_id_str));
+	if (suuid == NULL) {
+	    serrno = SEINTERNAL;
+	    return (-1);
+	}
+	/* Insert message into database */
+
+	msn = log_message->message_no;
+	fac = log_message->facility_no;
+	sev = log_message->severity;
+	(void) u64tostr (log_message->ns_invariant, nsi_str, -1);
+
+	EXEC SQL INSERT INTO dlf_messages 
+	   (msg_seq_no, time, time_usec, req_id, host_id, facility,
+	   severity, msg_no, pid, thread_id, ns_invariant)
+	   VALUES
+	   (message_seq.nextval, TO_DATE(:log_message->time, 'YYYYMMDDHH24MISS'),
+	   :log_message->time_usec, :rq_id_str, :host_id,
+	   :fac, :sev, :msn,
+	   :log_message->pid, :log_message->cid,
+           TO_NUMBER(:nsi_str));
+
+	if (sqlca.sqlcode) {
+		switch (sqlca.sqlcode)
+		{
+	    	    case -1:
+			serrno = EEXIST;
+			break;
+		    case -1631:
+		    case -1632:
+		    case -1654:
+			serrno = ENOSPC;
+			break;
+	    	    default:
+			dlflogit (func, "INSERT message error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+			sqlca.sqlerrm.sqlerrmc);
+			serrno = SEINTERNAL;
+	    	}
+	    	return (-1);
+	}
+	/* Insert parameters into the database */
+	for (param = log_message->param_list.head; param != NULL; param = param->next) {
+	    switch (param->type) {
+	      case DLF_MSG_PARAM_STR:
+		EXEC SQL INSERT INTO dlf_str_param_values
+		(msg_seq_no, par_name, value)
+		VALUES
+		(message_seq.currval, :param->name, :param->strval);
+		break;
+	      case DLF_MSG_PARAM_TPVID:
+		EXEC SQL INSERT INTO dlf_tape_ids
+		(msg_seq_no, tape_vid)
+		VALUES
+		(message_seq.currval, :param->strval);
+		break;
+	      case DLF_MSG_PARAM_INT64:
+		(void) u64tostr (param->numval, par_str, -1);
+		EXEC SQL INSERT INTO dlf_num_param_values
+		(msg_seq_no, par_name, value)
+		VALUES
+		(message_seq.currval, :param->name, TO_NUMBER(:par_str));
+		break;
+	      case DLF_MSG_PARAM_DOUBLE:
+		EXEC SQL INSERT INTO dlf_num_param_values
+		(msg_seq_no, par_name, value)
+		VALUES
+		(message_seq.currval, :param->name, TO_NUMBER(:param->strval));
+		break;
+	      case DLF_MSG_PARAM_UUID:
+		suuid = dlf_uuid2hex(param->strval, subrq_id_str, sizeof(subrq_id_str));
+		if (suuid == NULL) {
+		    serrno = SEINTERNAL;
+		    return (-1);
+		}
+
+		EXEC SQL INSERT INTO dlf_rq_ids_map
+		(msg_seq_no, req_id, subreq_id)
+		VALUES
+		(message_seq.currval, :rq_id_str, :subrq_id_str);
+		break;
+	      default:
+		dlflogit (func, "%s\n", "INSERT error: unrecognized parameter type");
+		serrno = SEINTERNAL;
+		return (-1);
+	    }
+	    if (sqlca.sqlcode) {
+                switch (sqlca.sqlcode)
+                {
+                    case -1:
+                        serrno = EEXIST;
+                        break;
+                    case -1631:
+                    case -1632:
+                    case -1654:
+                        serrno = ENOSPC;
+                        break;
+                    default:
+                        dlflogit (func, "INSERT parameter error: %.*s\n",
+				sqlca.sqlerrm.sqlerrml,
+                        	sqlca.sqlerrm.sqlerrmc);
+                        serrno = SEINTERNAL;
+                }
+                return (-1);
+            }
+	}
+	return (0);
+}
+
+
+

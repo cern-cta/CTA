@@ -1,0 +1,60 @@
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 2003/08/20 13:11:34 $ CERN IT-ADC Vitaly Motyakov
+COMM
+COMM  Copyright (C) 2003 by CERN/IT/ADC
+COMM  All rights reserved
+COMM
+
+COMM		Make CASTOR tests for "dlf" directory
+
+INCLUDES = FileName(FileName(..,..),h)
+#if linux
+LIBS = -L../../dlf -ldlf -L../../common -lcommon -luuid $(ADNSLIB) -lnsl
+#else
+#if SOLARIS
+LIBS = -L../../dlf -ldlf -L../../common -lcommon -luuid -lsocket -lnsl
+#else
+#if _WIN32
+LIBS = ..\..\dlf\dlf.lib ..\..\common\common.lib wsock32.lib advapi32.lib
+#else
+LIBS = -L../../dlf -ldlf -L../../common -lcommon -luuid
+#endif
+#endif
+#endif
+
+PROGS = ProgramTargetName(dlftest)
+
+CFLAGS         = -I$(INCLUDES)
+LDFLAGS        = $(MTLDFLAGS)
+
+
+DEPLIBS = DepLibraryTargetName(FileName(..,dlf),dlf) \
+	  DepLibraryTargetName(FileName(..,common),common)
+
+all: $(PROGS)
+
+NormalProgramTarget(dlftest,dlftest.Osuf,$(DEPLIBS),$(DEPLIBS) $(LIBS) $(MTLDLIBS))
+
+MakeDepLibrary(FileName(..,common),common)
+MakeDepLibrary(FileName(..,dlf),dlf)
+
+clean:
+	-@RemoveFiles(FilesToClean)
+ 
+clobber:        clean
+	-@RemoveFiles($(PROGS))
+ 
+#if _WIN32
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend -Y$(INCLUDES) *.c 2> /dev/null
+#endif
+
+Makefiles:
+ 
+FORCE:
+
+COMM###################### DEPENDENCIES ##########################
+
+COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
