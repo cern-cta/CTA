@@ -56,6 +56,7 @@
 #define	CA_MAXVSNLEN       6	/* maximum length for a VSN */
 #define CA_MAXCKSUMNAMELEN 15    /* maximum length for a checksum algorithm name */
 #define CA_MAXDMPROTNAMELEN 15    /* maximum length for Disk Mover protocol name */
+#define CA_MAXJOBIDLEN     36   /* Maximum length for the representation of the Cuuid */
 
 /* Max allowed uid/gif */
 #define CA_MAXUID    0x7FFFFFFF /* Maximum uid */
