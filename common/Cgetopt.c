@@ -1,8 +1,4 @@
 /*
- * $Id: Cgetopt.c,v 1.1 2000/02/28 12:51:51 jdurand Exp $
- */
-
-/*
  * Copyright (c) 1987, 1993, 1994, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -34,6 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: Cgetopt.c,v $ $Revision: 1.2 $ $Date: 2000/05/31 10:33:52 $ CERN IT-PDP/DM Jean-Damien Durand";
+#endif /* lint */
 
 /* ============== */
 /* System headers */
@@ -151,7 +150,7 @@ _Cgetopt_internal(nargc, nargv, ostr)
  * getopt --
  *	Parse argc/argv argument vector.
  */
-int
+int DLL_DECL 
 Cgetopt(nargc, nargv, ostr)
      int nargc;
      char * CONST *nargv;

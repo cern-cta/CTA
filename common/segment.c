@@ -1,14 +1,10 @@
 /*
- * $Id: segment.c,v 1.2 1999/12/09 13:39:43 jdurand Exp $
- */
-
-/*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: segment.c,v $ $Revision: 1.2 $ $Date: 1999/12/09 13:39:43 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: segment.c,v $ $Revision: 1.3 $ $Date: 2000/05/31 10:33:53 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* header.c     Streams headers for Ultranet BUG                        */
@@ -38,7 +34,7 @@ static  char ibuffer[MINBLOCKSIZE];     /* Internal buffer              */
 static  char    *rbp=0;                 /* Receive buffer pointer       */
 static  int     rbs=0;                  /* Receive buffer size          */
 
-int
+int DLL_DECL 
 seg_send (s, buf, nbytes)
 int     s;
 char    *buf;
@@ -97,7 +93,7 @@ int     nbytes;
 	}
 }
 
-int
+int DLL_DECL
 seg_recv (s, buf, nbytes)
 int     s;
 char    *buf;

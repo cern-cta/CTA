@@ -1,14 +1,10 @@
 /*
- * $Id: getacctent.c,v 1.5 1999/12/09 13:39:36 jdurand Exp $
- */
-
-/*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getacctent.c,v $ $Revision: 1.5 $ $Date: 1999/12/09 13:39:36 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: getacctent.c,v $ $Revision: 1.6 $ $Date: 2000/05/31 10:33:53 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 
@@ -29,11 +25,11 @@ static char sccsid[] = "@(#)$RCSfile: getacctent.c,v $ $Revision: 1.5 $ $Date: 1
 #endif /* !_WIN32 */
 
 
-#include "getacctent.h"
+#include <osdep.h>
+#include <getacctent.h>
+#include <ypgetacctent.h>
 
-extern char *ypgetacctent();
-
-char    *getacctent(pwd, acct, buf, buflen)
+char DLL_DECL *getacctent(pwd, acct, buf, buflen)
     struct passwd   *pwd;       /* Pointer to the password entry */
     char        *acct;      /* optional non-default acct     */
     char        *buf;

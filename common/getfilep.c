@@ -1,14 +1,10 @@
 /*
- * $Id: getfilep.c,v 1.2 1999/12/09 13:39:38 jdurand Exp $
- */
-
-/*
- * Copyright (C) 1991-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1991-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getfilep.c,v $ $Revision: 1.2 $ $Date: 1999/12/09 13:39:38 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: getfilep.c,v $ $Revision: 1.3 $ $Date: 2000/05/31 10:33:53 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* getfilep.c   Fortran I/O to C mapper                                 */
@@ -28,13 +24,14 @@ static char sccsid[] = "@(#)$RCSfile: getfilep.c,v $ $Revision: 1.2 $ $Date: 199
 #if defined(sgi) || (defined(mips) && defined(ultrix))
 #include <stdio.h>              /* Standard Input/Output                */
 #include <cmplrs/fio.h>
+#include <osdep.h>
 
 #define DEBUG   0
 
 extern unit *f77units;
 unit *uinc;
 
-FILE *getfilep_(lun)            /* Get file pointer associated to lun.  */
+FILE DLL_DECL *getfilep_(lun)   /* Get file pointer associated to lun.  */
 int     *lun;
 {
 	register int    i;      /* F77 unit array index                 */
@@ -66,7 +63,7 @@ int     *lun;
 #include <sys/limits.h>
 #include <sys/stat.h>
 
-FILE           *
+FILE DLL_DECL  *
 #if defined(_IBMESA)
 getfilep_(filename)
 #else

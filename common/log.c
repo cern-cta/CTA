@@ -1,14 +1,10 @@
 /*
- * $Id: log.c,v 1.8 2000/03/14 14:32:18 baud Exp $
- */
-
-/*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.8 $ $Date: 2000/03/14 14:32:18 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.9 $ $Date: 2000/05/31 10:33:53 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* log.c        - generalized logging routines                          */
@@ -58,18 +54,13 @@ extern char *getenv();
 uid_t getpid();
 #endif /* _WIN32 */
 
-#if !defined(IRIX5) && !defined(__Lynx__)
-void     logit();
-#else
-void     logit(int level, ...);
-#endif /* IRIX5 || __Lynx__ */
-void (*logfunc)()=(void (*)())logit;
+void DLL_DECL (*logfunc) _PROTO((int, ...))=(void (*)(int, ...))logit;
 
 /*
  * Opening log file.
  * Storing the process pid.
  */
-void initlog(name, level, output)
+void DLL_DECL initlog(name, level, output)
 char    *name;                  /* facility name                        */
 int     level;                  /* logging level                        */
 char    *output;                /* output specifier                     */
@@ -95,9 +86,9 @@ char    *output;                /* output specifier                     */
      * to either syslog or logit.
      */
     if (!strcmp(output,"syslog"))   {
-        logfunc=(void (*)())syslog;
+        logfunc=(void (*) _PROTO((int, ...)))syslog;
     } else {
-        logfunc=(void (*)())logit;
+        logfunc=(void (*) _PROTO((int, ...)))logit;
         if (strlen(output) == 0) {
             logfd= fileno(stderr) ; /* standard error       */
         } else {
@@ -111,9 +102,9 @@ char    *output;                /* output specifier                     */
  * logit(LOG_LEVEL,format[,value,...]) ;
  */
 #if !defined(IRIX5) && !defined(__Lynx__) && !defined(_WIN32)
-void logit(va_alist)     va_dcl
+void DLL_DECL logit(va_alist)     va_dcl
 #else
-void logit(int level, ...)
+void DLL_DECL logit(int level, ...)
 #endif
 {
     va_list args ;          /* Variable argument list               */
@@ -184,7 +175,7 @@ void logit(int level, ...)
     va_end(args);
 }
         
-int getloglv()
+int DLL_DECL getloglv()
 {
     return(loglevel);
 }

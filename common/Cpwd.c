@@ -6,7 +6,7 @@
 
 
 #ifndef lint
-static char cvsId[] = "$RCSfile: Cpwd.c,v $ $Revision: 1.4 $ $Date: 2000/03/14 09:48:40 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Cpwd.c,v $ $Revision: 1.5 $ $Date: 2000/05/31 10:33:52 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -22,7 +22,7 @@ static char cvsId[] = "$RCSfile: Cpwd.c,v $ $Revision: 1.4 $ $Date: 2000/03/14 0
 #include <Cpwd.h>
 #include <osdep.h>
 
-struct passwd *Cgetpwnam(name)
+struct passwd DLL_DECL *Cgetpwnam(name)
 CONST char *name;
 {
 #if (!defined(_REENTRANT) && !defined(_THREAD_SAFE))
@@ -97,7 +97,7 @@ CONST char *name;
 #endif
 }
 
-struct passwd *Cgetpwuid(uid)
+struct passwd DLL_DECL *Cgetpwuid(uid)
 uid_t uid;
 {
 #if (!defined(_REENTRANT) && !defined(_THREAD_SAFE))

@@ -1,14 +1,10 @@
 /*
- * $Id: getifnam.c,v 1.7 1999/12/09 13:39:39 jdurand Exp $
- */
-
-/*
- * Copyright (C) 1991-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1991-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getifnam.c,v $ $Revision: 1.7 $ $Date: 1999/12/09 13:39:39 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: getifnam.c,v $ $Revision: 1.8 $ $Date: 2000/05/31 10:33:53 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* getifnam.c   Get connected socket interface name                     */
@@ -53,7 +49,7 @@ static int ifname_key = -1;             /* Key to interface name global */
  *       it failed. With a new socket creation it works however.
  */
 
-char    *getifnam_r(s,ifname,ifnamelen)
+char DLL_DECL  *getifnam_r(s,ifname,ifnamelen)
 SOCKET     s;
 char    *ifname;
 size_t  ifnamelen;
@@ -150,7 +146,7 @@ size_t  ifnamelen;
 #endif /* _WIN32 */
 }
 
-char *getifnam(s)
+char DLL_DECL *getifnam(s)
 SOCKET s;
 {
     char *ifname = NULL;

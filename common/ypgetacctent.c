@@ -1,14 +1,10 @@
 /*
- * $Id: ypgetacctent.c,v 1.4 1999/12/09 13:39:51 jdurand Exp $
- */
-
-/*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: ypgetacctent.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:39:51 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: ypgetacctent.c,v $ $Revision: 1.5 $ $Date: 2000/05/31 10:33:54 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*  ypgetacctent() - Get account id in YP   */
@@ -25,7 +21,7 @@ static char cvsId[] = "@(#)$RCSfile: ypgetacctent.c,v $ $Revision: 1.4 $ $Date: 
 #include <pwd.h>
 #include <rpcsvc/ypclnt.h>
 
-#include "ypgetacctent.h"
+#include <ypgetacctent.h>
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
@@ -106,7 +102,7 @@ static int ypcall(instatus, inkey, inkeylen, inval, invallen, indata)
 #undef account
 #undef first
 
-char    *ypgetacctent(pwd, account, buffer, bufferlen)
+char DLL_DECL *ypgetacctent(pwd, account, buffer, bufferlen)
     struct passwd   *pwd; 
     char        *account;
     char        *buffer;

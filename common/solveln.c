@@ -1,14 +1,10 @@
 /*
- * $Id: solveln.c,v 1.2 1999/12/09 13:39:48 jdurand Exp $
- */
-
-/*
- * Copyright (C) 1993-1999 by CERN/ID/PDP/DM
+ * Copyright (C) 1993-2000 by CERN/ID/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: solveln.c,v $ $Revision: 1.2 $ $Date: 1999/12/09 13:39:48 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: solveln.c,v $ $Revision: 1.3 $ $Date: 2000/05/31 10:33:54 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -32,6 +28,7 @@ static char sccsid[] = "@(#)$RCSfile: solveln.c,v $ $Revision: 1.2 $ $Date: 1999
 #if defined(SOLARIS)
 #include <netdb.h>
 #endif /* SOLARIS */
+#include <osdep.h>
 #define MAXFILENAMSIZE 1024     /* Maximum length of a file path name   */
 
 /*
@@ -50,7 +47,7 @@ extern char * getcwd() ;
 #endif
 
 extern char *getconfent() ;
-solveln(path, buffer, size)
+int DLL_DECL solveln(path, buffer, size)
 char *path ;
 char * buffer ;
 int size ;
@@ -163,7 +160,7 @@ int size ;
  * return -1 if path has not been modified, 
  * a positive number otherwise.
  */
-int seelink ( path, buff, size) 
+int DLL_DECL seelink ( path, buff, size) 
 char * path ;
 char * buff ;
 int size    ;

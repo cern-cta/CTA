@@ -1,14 +1,10 @@
 /*
- * $Id: remote.c,v 1.7 2000/03/10 18:46:32 obarring Exp $
- */
-
-/*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.7 $ $Date: 2000/03/10 18:46:32 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.8 $ $Date: 2000/05/31 10:33:53 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -69,7 +65,7 @@ extern char *sys_errlist[];
  *                   1 if requestor is out of site
  *          -1 in case of an error
  */
-int     isremote(from_host, host_name)
+int DLL_DECL isremote(from_host, host_name)
 struct in_addr from_host;
 char *host_name ;
 {
@@ -299,8 +295,3 @@ char *host_name ;
     return 1;
 }
 
-
-
-
-
-   

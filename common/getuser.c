@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1994-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: getuser.c,v $ $Revision: 1.7 $ $Date: 1999/12/09 13:39:40 $ CERN/IT/PDP/DM Felix Hassine";
+static char cvsId[] = "@(#)$RCSfile: getuser.c,v $ $Revision: 1.8 $ $Date: 2000/05/31 10:33:53 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -53,7 +53,7 @@ static char *infile = MAPPING_FILE;
  *         -1 if entry was not found
  */
 
-int get_user(from_node,from_user,from_uid,from_gid,to_user,to_uid,to_gid)
+int DLL_DECL get_user(from_node,from_user,from_uid,from_gid,to_user,to_uid,to_gid)
 char *from_node;
 char *from_user;
 int from_uid;

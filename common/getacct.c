@@ -1,11 +1,11 @@
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char cvsId[] = "$RCSfile: getacct.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:39:33 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: getacct.c,v $ $Revision: 1.7 $ $Date: 2000/05/31 10:33:53 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*  getacct() - Getting the current account id  */
@@ -42,10 +42,10 @@ extern uid_t getuid();
 #include <Cpwd.h>
 #include "getacct.h"
 
-extern char *getacctent();
+EXTERN_C char DLL_DECL *getacctent();
 
 
-char    *getacct_r(resbuf,resbufsiz) 
+char DLL_DECL *getacct_r(resbuf,resbufsiz) 
 char *resbuf;
 size_t resbufsiz;
 { 
@@ -98,7 +98,7 @@ size_t resbufsiz;
 
 static int getacct_key = -1;
 
-char *getacct()
+char DLL_DECL *getacct()
 {
     char *resbuf = NULL;
 

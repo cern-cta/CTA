@@ -1,8 +1,4 @@
 /*
- * Cpool.c,v 1.16 1999-12-09 14:39:26+01 jdurand Exp
- */
-
-/*
  * Copyright (C) 1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
@@ -1248,7 +1244,7 @@ Sigfunc *_Cpool_signal(signo,func)
 /* Notes:                                       */
 /* This routine is a wrapper around calloc      */
 /* ============================================ */
-void *Cpool_calloc(file,line,nmemb,size)
+void DLL_DECL *Cpool_calloc(file,line,nmemb,size)
      char *file;
      int line;
      size_t nmemb;
@@ -1331,7 +1327,7 @@ void *Cpool_calloc(file,line,nmemb,size)
 /* Notes:                                       */
 /* This routine is a wrapper around malloc      */
 /* ============================================ */
-void *Cpool_malloc(file,line,size)
+void DLL_DECL *Cpool_malloc(file,line,size)
      char *file;
      int line;
      size_t size;
@@ -1413,7 +1409,7 @@ void *Cpool_malloc(file,line,size)
 /* Notes:                                       */
 /* This routine is a wrapper around free        */
 /* ============================================ */
-void Cpool_free(file,line,ptr)
+void DLL_DECL Cpool_free(file,line,ptr)
      char *file;
      int line;
      void *ptr;
@@ -1479,7 +1475,7 @@ void Cpool_free(file,line,ptr)
 /* Notes:                                       */
 /* This routine is a wrapper around realloc     */
 /* ============================================ */
-void *Cpool_realloc(file,line,ptr,size)
+void DLL_DECL *Cpool_realloc(file,line,ptr,size)
      char *file;
      int line;
      void *ptr;

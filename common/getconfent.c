@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.10 $ $Date: 2000/03/14 09:48:41 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.11 $ $Date: 2000/05/31 10:33:53 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -25,7 +25,7 @@ static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.10 $ $Date: 2
 #endif /* _REENTRANT || _THREAD_SAFE */
 
 
-char *getconfent_r(category, name, flags, buffer, bufsiz)
+char DLL_DECL *getconfent_r(category, name, flags, buffer, bufsiz)
      char *category;
      char *name;
      int flags;
@@ -97,7 +97,7 @@ char *getconfent_r(category, name, flags, buffer, bufsiz)
 
 static int value_key = -1;
 
-char *getconfent(category, name, flags)
+char DLL_DECL *getconfent(category, name, flags)
      char *category;
      char *name;
      int flags;

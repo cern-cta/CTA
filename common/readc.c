@@ -1,14 +1,10 @@
 /*
- * $Id: readc.c,v 1.2 1999/12/09 13:39:42 jdurand Exp $
- */
-
-/*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readc.c,v $ $Revision: 1.2 $ $Date: 1999/12/09 13:39:42 $ CERN/IT/PDP/DM Antoine Trannoy";
+static char sccsid[] = "@(#)$RCSfile: readc.c,v $ $Revision: 1.3 $ $Date: 2000/05/31 10:33:53 $ CERN/IT/PDP/DM Antoine Trannoy";
 #endif /* not lint */
 
 /* readc.c              Fortran callable C I/O functions                */
@@ -31,14 +27,15 @@ static char sccsid[] = "@(#)$RCSfile: readc.c,v $ $Revision: 1.2 $ $Date: 1999/1
 #if !defined(CRAY)
 #include <stdio.h>
 #include <sys/types.h>
+#include <osdep.h>
 
 #if defined(hpux) || (defined(_AIX) && defined(_IBMR2))
-void read_s(stream,buff,count,status)
+void DLL_DECL read_s(stream,buff,count,status)
 #else
 #if defined(_WIN32)
-void _stdcall READ_S(stream,buff,count,status)
+void DLL_DECL _stdcall READ_S(stream,buff,count,status)
 #else
-void read_s_(stream,buff,count,status)
+void DLL_DECL read_s_(stream,buff,count,status)
 #endif
 #endif	/* hpux	|| AIX */
 
@@ -159,12 +156,12 @@ void read_s_(stream,buff,count,status)
 }
 
 #if defined(hpux) || (defined(_AIX) && defined(_IBMR2))
-void read_d(stream,buff,count,status)
+void DLL_DECL read_d(stream,buff,count,status)
 #else
 #if defined(_WIN32)
-void _stdcall READ_D(stream,buff,count,status)
+void DLL_DECL _stdcall READ_D(stream,buff,count,status)
 #else
-void read_d_(stream,buff,count,status)
+void DLL_DECL read_d_(stream,buff,count,status)
 #endif
 #endif	/* hpux	|| AIX */
 

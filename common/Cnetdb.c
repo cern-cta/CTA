@@ -6,7 +6,7 @@
 
 
 #ifndef lint
-static char cvsId[] = "$RCSfile: Cnetdb.c,v $ $Revision: 1.6 $ $Date: 1999/12/15 06:14:29 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Cnetdb.c,v $ $Revision: 1.7 $ $Date: 2000/05/31 10:33:52 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -26,14 +26,14 @@ static char cvsId[] = "$RCSfile: Cnetdb.c,v $ $Revision: 1.6 $ $Date: 1999/12/15
 #include <Cnetdb.h>
 
 #if (defined(IRIX5) || defined(IRIX6) || defined(IRIX64))
-extern struct hostent *gethostbyname_r(const char *, struct hostent *, char *, int, int *);
-extern struct hostent *gethostbyaddr_r(const void *, size_t, int, struct hostent *, char *, int, int *);
-extern struct servent   *getservbyname_r(const char *, const char *,
+EXTERN_C struct hostent *gethostbyname_r(const char *, struct hostent *, char *, int, int *);
+EXTERN_C struct hostent *gethostbyaddr_r(const void *, size_t, int, struct hostent *, char *, int, int *);
+EXTERN_C struct servent   *getservbyname_r(const char *, const char *,
                                          struct servent *, char *, int);
 #endif
 
-struct hostent *Cgethostbyname(name)
-const char *name;
+struct hostent DLL_DECL *Cgethostbyname(name)
+CONST char *name;
 {
 #if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(__osf__) && defined(__alpha) || defined(_WIN32)
     /*
@@ -109,8 +109,8 @@ const char *name;
 #endif
 }
 
-struct hostent *Cgethostbyaddr(addr,len,type)
-const void *addr;
+struct hostent DLL_DECL *Cgethostbyaddr(addr,len,type)
+CONST void *addr;
 size_t len;
 int type;
 {
@@ -188,9 +188,9 @@ int type;
 #endif
 }
 
-struct servent *Cgetservbyname(name,proto)
-const char *name;
-const char *proto;
+struct servent DLL_DECL *Cgetservbyname(name,proto)
+CONST char *name;
+CONST char *proto;
 {
 #if (!defined(_REENTRANT) && !defined(_THREAD_SAFE)) || defined(__osf__) && defined(__alpha) || defined(_WIN32)
     /*

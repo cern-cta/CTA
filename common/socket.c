@@ -1,14 +1,10 @@
 /*
- * $Id: socket.c,v 1.6 2000/05/05 14:26:10 baud Exp $
- */
-
-/*
  * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #if !defined(lint)
-static char cvsId[] =  "@(#)$RCSfile: socket.c,v $ $Revision: 1.6 $ $Date: 2000/05/05 14:26:10 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] =  "@(#)$RCSfile: socket.c,v $ $Revision: 1.7 $ $Date: 2000/05/31 10:33:54 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* lint */
 
 /* socket.c     Generalized network interface                           */
@@ -167,7 +163,7 @@ int    nbytes;
 #endif
 }
 
-int
+int DLL_DECL
 s_recv (s, buf, nbytes)
 SOCKET s;
 char    *buf;
@@ -239,7 +235,7 @@ int     nbytes;
     return (nbytes);
 }
  
-int
+int DLL_DECL
 s_send (s, buf, nbytes)
 SOCKET  s;
 char    *buf;
@@ -290,14 +286,14 @@ int     nbytes;
     return (nbytes);
 }
 
-int
+int DLL_DECL
 s_close(s)
 SOCKET     s;
 {
     return(CLOSE(s));
 }
 
-char *
+char DLL_DECL *
 s_errmsg()                              /* return last error message    */
 {
 #if !defined(_WIN32)
@@ -317,7 +313,7 @@ s_errmsg()                              /* return last error message    */
 #define s_ioctl sol_s_ioctl
 #endif /* SOLARIS */
 
-int
+int DLL_DECL 
 s_ioctl(s, request, arg)                /* issue an ioctl(2) call       */
 SOCKET s;
 int     request;
@@ -326,7 +322,7 @@ int     arg;
     return(IOCTL(s, request, arg));
 }
 
-int s_nrecv(s, buf, nbytes)     /* Non blocking read                    */
+int DLL_DECL s_nrecv(s, buf, nbytes)     /* Non blocking read           */
 SOCKET s;
 char    *buf;
 int    nbytes;
@@ -338,7 +334,7 @@ int    nbytes;
 #endif /* BLOCKSIZE */
 }
 
-int     setrtimo(val)
+int DLL_DECL setrtimo(val)
 int     val;
 {
 

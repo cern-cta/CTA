@@ -1,14 +1,10 @@
 /*
- * $Id: setnetio.c,v 1.4 1999/12/09 13:39:46 jdurand Exp $
- */
-
-/*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: setnetio.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:39:46 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: setnetio.c,v $ $Revision: 1.5 $ $Date: 2000/05/31 10:33:54 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* setnetio.c   Set network input/output characteristics                */
@@ -44,7 +40,7 @@ extern int seg_recv();          /*         Segmented recv()             */
 extern int seg_send();          /*         Segmented send()             */
 #endif /* MINBLOCKSIZE */
 
-int     setnetio(s)
+int DLL_DECL setnetio(s)
 int     s;
 {
 

@@ -1,14 +1,10 @@
 /*
- * $Id: Cthread.c,v 1.36 2000/04/11 07:48:25 jdurand Exp $
- */
-
-/*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.36 $ $Date: 2000/04/11 07:48:25 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.37 $ $Date: 2000/05/31 10:33:52 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cthread_api.h>
@@ -371,8 +367,8 @@ int   _Cthread_release_mtx _PROTO((char *, int, Cth_mtx_t *));
 /* internal tables and linked lists             */
 /* This is useful only in thread environment    */
 static int _Cthread_once_status = -1;
-void  _Cthread_once _PROTO(());
-int   _Cthread_init _PROTO(());
+void  _Cthread_once _PROTO((void));
+int   _Cthread_init _PROTO((void));
 /* Release of a thread-specific variable        */
 void  _Cthread_keydestructor _PROTO((void *));
 /* Release of a thread                          */
@@ -402,7 +398,7 @@ struct Cspec_element_t *_Cthread_findglobalkey _PROTO((char *, int, int *));
 /* Cthread-ID (as a Thread-Specific variable) destructor */
 void _Cthread_cid_destructor _PROTO((void *));
 /* Cthread-ID once for all... */
-void _Cthread_cid_once _PROTO(());
+void _Cthread_cid_once _PROTO((void));
 
 
 /* ============================================ */
