@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.17 2001/09/18 21:10:54 jdurand Exp $
+ * $Id: stage_updc.c,v 1.18 2001/11/30 12:08:12 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.17 $ $Date: 2001/09/18 21:10:54 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.18 $ $Date: 2001/11/30 12:08:12 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -26,10 +26,9 @@ static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.17 $ $Date: 
 #endif
 #include "marshall.h"
 #include "serrno.h"
-#include "stage_api.h"
-#include "stage.h"
 #include "u64subr.h"
 #include "Cpwd.h"
+#include "stage_api.h"
 
 #ifndef _WIN32
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
@@ -74,7 +73,7 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
   char tmpbuf[21];
   uid_t euid;
   char Zparm[CA_MAXSTGRIDLEN+1];
-  char *command = "stage_updc_filcp";
+  char *func = "stage_updc_filcp";
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
   char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
@@ -134,7 +133,7 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
   sendbuf_size = 3 * LONGSIZE;                       /* Request header */
   sendbuf_size += strlen(pw->pw_name) + 1;           /* Login name */
   sendbuf_size += 3 * WORDSIZE;                      /* euid, egid, nargs */
-  sendbuf_size += strlen(command) + 1;               /* Command name */
+  sendbuf_size += strlen(func) + 1;               /* Func name */
   sendbuf_size += strlen("-Z") + strlen(stageid) + 2; /* -Z option and value */
   if (subreqid >= 0) {
     sprintf (tmpbuf, "%d", subreqid);
@@ -211,7 +210,7 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
   q2 = sbp;	/* save pointer. The next field will be updated */
   nargs = 1;
   marshall_WORD (sbp, nargs);
-  marshall_STRING (sbp, command);
+  marshall_STRING (sbp, func);
 
   marshall_STRING (sbp, "-Z");
   marshall_STRING (sbp, stageid);
@@ -300,6 +299,7 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
+	if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
@@ -345,7 +345,7 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
   char tmpbuf[21];
   uid_t euid;
   char Zparm[CA_MAXSTGRIDLEN+1];
-  char *command = "stage_updc_tppos";
+  char *func = "stage_updc_tppos";
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
   char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
@@ -405,7 +405,7 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
   sendbuf_size = 3 * LONGSIZE;                        /* Request header */
   sendbuf_size += strlen(pw->pw_name) + 1;            /* Login name */
   sendbuf_size += 3 * LONGSIZE;                       /* euid, egid, nargs */
-  sendbuf_size += strlen(command) + 1;                /* Command name */
+  sendbuf_size += strlen(func) + 1;                /* Func name */
   sendbuf_size += strlen("-Z") + strlen(stageid) + 2; /* -Z option and value */
   if (subreqid >= 0) {
     sprintf (tmpbuf, "%d", subreqid);
@@ -467,7 +467,7 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
   q2 = sbp;	/* save pointer. The next field will be updated */
   nargs = 1;
   marshall_WORD (sbp, nargs);
-  marshall_STRING (sbp, command);
+  marshall_STRING (sbp, func);
 
   marshall_STRING (sbp, "-Z");
   marshall_STRING (sbp, stageid);
@@ -532,6 +532,7 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
+	if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
@@ -560,7 +561,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   size_t sendbuf_size;
   uid_t euid;
   stage_hsm_t *hsm;
-  char *command = "stage_updc_user";
+  char *func = "stage_updc_user";
   int nupath;
 
   if (hsmstruct == NULL) {
@@ -589,7 +590,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   sendbuf_size = 3 * LONGSIZE;                     /* Request header */
   sendbuf_size += strlen(pw->pw_name) + 1;         /* Login name */
   sendbuf_size += 3 * WORDSIZE;                    /* euid, egid and nargs */
-  sendbuf_size += strlen(command) + 1;                /* Command name */
+  sendbuf_size += strlen(func) + 1;                /* Func name */
 
   /* Count the number of link files */
   hsm = hsmstruct;
@@ -630,7 +631,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   q2 = sbp;	/* save pointer. The next field will be updated */
   nargs = 1;
   marshall_WORD (sbp, nargs);
-  marshall_STRING (sbp, command);
+  marshall_STRING (sbp, func);
 
   hsm = hsmstruct;
   while (hsm != NULL) {
@@ -647,6 +648,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
+	if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
@@ -672,7 +674,7 @@ int DLL_DECL stage_updc_error(stghost,copyrc,hsmstruct)
   size_t sendbuf_size;
   uid_t euid;
   stage_hsm_t *hsm;
-  char *command = "stage_updc_error";
+  char *func = "stage_updc_error";
   int nupath;
   char tmpbuf[21];
 
@@ -702,7 +704,7 @@ int DLL_DECL stage_updc_error(stghost,copyrc,hsmstruct)
   sendbuf_size = 3 * LONGSIZE;                     /* Request header */
   sendbuf_size += strlen(pw->pw_name) + 1;         /* Login name */
   sendbuf_size += 3 * WORDSIZE;                    /* euid, egid and nargs */
-  sendbuf_size += strlen(command) + 1;                /* Command name */
+  sendbuf_size += strlen(func) + 1;                /* Func name */
 
   if (copyrc >= 0) {
     sprintf (tmpbuf, "%d", rc_castor2shift(copyrc));
@@ -748,7 +750,7 @@ int DLL_DECL stage_updc_error(stghost,copyrc,hsmstruct)
   q2 = sbp;	/* save pointer. The next field will be updated */
   nargs = 1;
   marshall_WORD (sbp, nargs);
-  marshall_STRING (sbp, command);
+  marshall_STRING (sbp, func);
 
   if (copyrc >= 0) {
     sprintf (tmpbuf, "%d", rc_castor2shift(copyrc));
@@ -772,6 +774,7 @@ int DLL_DECL stage_updc_error(stghost,copyrc,hsmstruct)
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
+	if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
@@ -796,7 +799,7 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   size_t sendbuf_size;
   uid_t euid;
   stage_hsm_t *hsm;
-  char *command = "stage_updc_filchg";
+  char *func = "stage_updc_filchg";
   int pid;
   int nupath;
 
@@ -826,7 +829,7 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   sendbuf_size = 3 * LONGSIZE;                     /* Request header */
   sendbuf_size += strlen(pw->pw_name) + 1;         /* Login name */
   sendbuf_size += 4 * WORDSIZE;                    /* euid, egid, pid and nargs */
-  sendbuf_size += strlen(command) + 1;                /* Command name */
+  sendbuf_size += strlen(func) + 1;                /* Func name */
 
   /* Count the number of link files */
   hsm = hsmstruct;
@@ -869,7 +872,7 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   q2 = sbp;	/* save pointer. The next field will be updated */
   nargs = 1;
   marshall_WORD (sbp, nargs);
-  marshall_STRING (sbp, command);
+  marshall_STRING (sbp, func);
 
   hsm = hsmstruct;
   while (hsm != NULL) {
@@ -886,6 +889,7 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
+	if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
