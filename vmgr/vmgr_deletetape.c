@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_deletetape.c,v $ $Revision: 1.2 $ $Date: 1999/12/17 07:13:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_deletetape.c,v $ $Revision: 1.3 $ $Date: 2000/04/03 12:38:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_deletetape - delete a tape volume */
@@ -76,6 +76,8 @@ vmgr_deletetape(const char *vid)
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	c = send2vmgr (NULL, sendbuf, msglen, NULL, 0);
+	while ((c = send2vmgr (NULL, sendbuf, msglen, NULL, 0)) &&
+	    serrno == EVMGRNACT)
+		sleep (RETRYI);
 	return (c);
 }

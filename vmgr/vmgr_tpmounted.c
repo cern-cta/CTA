@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_tpmounted.c,v $ $Revision: 1.1 $ $Date: 2000/02/19 08:01:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_tpmounted.c,v $ $Revision: 1.2 $ $Date: 2000/04/03 12:40:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_tpmounted - update tape volume access time/count */
@@ -66,6 +66,8 @@ vmgr_tpmounted(const char *vid, int mode)
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	c = send2vmgr (NULL, sendbuf, msglen, NULL, 0);
+	while ((c = send2vmgr (NULL, sendbuf, msglen, NULL, 0)) &&
+	    serrno == EVMGRNACT)
+		sleep (RETRYI);
 	return (c);
 }

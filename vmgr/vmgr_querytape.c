@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_querytape.c,v $ $Revision: 1.4 $ $Date: 2000/02/18 14:01:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_querytape.c,v $ $Revision: 1.5 $ $Date: 2000/04/03 12:40:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_querytape - query about a tape volume */
@@ -74,7 +74,9 @@ vmgr_querytape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	c = send2vmgr (NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
+	while ((c = send2vmgr (NULL, sendbuf, msglen, repbuf, sizeof(repbuf))) &&
+	    serrno == EVMGRNACT)
+		sleep (RETRYI);
 	if (c == 0) {
 		rbp = repbuf;
 		unmarshall_STRING (rbp, tmpbuf);

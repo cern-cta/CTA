@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_entertape.c,v $ $Revision: 1.5 $ $Date: 2000/03/06 12:39:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_entertape.c,v $ $Revision: 1.6 $ $Date: 2000/04/03 12:38:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_entertape - enter a new tape volume */
@@ -108,6 +108,8 @@ vmgr_entertape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	c = send2vmgr (NULL, sendbuf, msglen, NULL, 0);
+	while ((c = send2vmgr (NULL, sendbuf, msglen, NULL, 0)) &&
+	    serrno == EVMGRNACT)
+		sleep (RETRYI);
 	return (c);
 }

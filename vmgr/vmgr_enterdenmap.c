@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_enterdenmap.c,v $ $Revision: 1.2 $ $Date: 2000/03/06 14:32:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_enterdenmap.c,v $ $Revision: 1.3 $ $Date: 2000/04/03 12:38:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_enterdenmap - enter a new triplet model/media_letter/density */
@@ -83,6 +83,8 @@ vmgr_enterdenmap(const char *model, char *media_letter, char *density)
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	c = send2vmgr (NULL, sendbuf, msglen, NULL, 0);
+	while ((c = send2vmgr (NULL, sendbuf, msglen, NULL, 0)) &&
+	    serrno == EVMGRNACT)
+		sleep (RETRYI);
 	return (c);
 }

@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_modifypool.c,v $ $Revision: 1.2 $ $Date: 2000/02/16 09:01:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_modifypool.c,v $ $Revision: 1.3 $ $Date: 2000/04/03 12:40:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_modifypool - modify an existing tape pool definition */
@@ -77,6 +77,8 @@ vmgr_modifypool(const char *pool_name, uid_t pool_user, gid_t pool_group)
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	c = send2vmgr (NULL, sendbuf, msglen, NULL, 0);
+	while ((c = send2vmgr (NULL, sendbuf, msglen, NULL, 0)) &&
+	    serrno == EVMGRNACT)
+		sleep (RETRYI);
 	return (c);
 }

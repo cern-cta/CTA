@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_gettape.c,v $ $Revision: 1.6 $ $Date: 2000/03/31 13:23:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_gettape.c,v $ $Revision: 1.7 $ $Date: 2000/04/03 12:40:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_gettape - get a tape volume to store a given amount of data */
@@ -88,7 +88,9 @@ vmgr_gettape(const char *poolname, u_signed64 Size, const char *Condition, char 
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	c = send2vmgr (NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
+	while ((c = send2vmgr (NULL, sendbuf, msglen, repbuf, sizeof(repbuf))) &&
+	    serrno == EVMGRNACT)
+		sleep (RETRYI);
 	if (c == 0) {
 		rbp = repbuf;
 		unmarshall_STRING (rbp, vid);

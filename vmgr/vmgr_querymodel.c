@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_querymodel.c,v $ $Revision: 1.3 $ $Date: 2000/03/10 10:48:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_querymodel.c,v $ $Revision: 1.4 $ $Date: 2000/04/03 12:40:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_querymodel - query about a model of cartridge */
@@ -85,7 +85,9 @@ vmgr_querymodel(const char *model, char *media_letter, int *native_capacity, int
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	c = send2vmgr (NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
+	while ((c = send2vmgr (NULL, sendbuf, msglen, repbuf, sizeof(repbuf))) &&
+	    serrno == EVMGRNACT)
+		sleep (RETRYI);
 	if (c == 0) {
 		rbp = repbuf;
 		unmarshall_STRING (rbp, tmpbuf);

@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_entermodel.c,v $ $Revision: 1.3 $ $Date: 2000/03/06 12:39:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_entermodel.c,v $ $Revision: 1.4 $ $Date: 2000/04/03 12:38:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_entermodel - enter a new model of cartridge */
@@ -83,6 +83,8 @@ vmgr_entermodel(const char *model, char *media_letter, int native_capacity, int 
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	c = send2vmgr (NULL, sendbuf, msglen, NULL, 0);
+	while ((c = send2vmgr (NULL, sendbuf, msglen, NULL, 0)) &&
+	    serrno == EVMGRNACT)
+		sleep (RETRYI);
 	return (c);
 }

@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_modifymodel.c,v $ $Revision: 1.2 $ $Date: 2000/01/10 14:39:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_modifymodel.c,v $ $Revision: 1.3 $ $Date: 2000/04/03 12:40:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_modifymodel - modify an existing model of cartridge */
@@ -83,6 +83,8 @@ vmgr_modifymodel(const char *model, char *media_letter, int native_capacity, int
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	c = send2vmgr (NULL, sendbuf, msglen, NULL, 0);
+	while ((c = send2vmgr (NULL, sendbuf, msglen, NULL, 0)) &&
+	    serrno == EVMGRNACT)
+		sleep (RETRYI);
 	return (c);
 }

@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_updatetape.c,v $ $Revision: 1.2 $ $Date: 1999/12/17 14:41:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_updatetape.c,v $ $Revision: 1.3 $ $Date: 2000/04/03 12:40:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_updatetape - update tape volume content information */
@@ -69,6 +69,8 @@ vmgr_updatetape(const char *vid, u_signed64 BytesWritten, int CompressionFactor,
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	c = send2vmgr (NULL, sendbuf, msglen, NULL, 0);
+	while ((c = send2vmgr (NULL, sendbuf, msglen, NULL, 0)) &&
+	    serrno == EVMGRNACT)
+		sleep (RETRYI);
 	return (c);
 }
