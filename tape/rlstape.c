@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.26 $ $Date: 2003/08/26 14:17:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.27 $ $Date: 2003/09/15 08:41:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -31,9 +31,6 @@ static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.26 $ $Date: 200
 #if VDQM
 #include "net.h"
 #include "vdqm_api.h"
-#endif
-#if !defined(linux)
-extern char *sys_errlist[];
 #endif
 char *devtype;
 char *dvrname;
@@ -191,7 +188,7 @@ unload_loop:
 #if defined(_IBMR2)
 		if (strcmp (dvrname, "tape") || (errno != EIO && errno != ENOTREADY))
 #endif
-			tplogit (func, TP042, dvn, "open", sys_errlist[errno]);
+			tplogit (func, TP042, dvn, "open", strerror(errno));
 	}
 #if SONYRAW
     } else {
@@ -207,7 +204,7 @@ unload_loop:
 		}
 		close (tapefd);
 	} else
-		tplogit (func, TP042, dvn, "open", sys_errlist[errno]);
+		tplogit (func, TP042, dvn, "open", strerror(errno));
     }
 #endif
 	c = 0;
