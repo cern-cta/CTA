@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.25 $ $Date: 2005/01/17 10:42:27 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.26 $ $Date: 2005/01/19 10:49:56 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -166,6 +166,7 @@ install: $(BIN) $(IPROGS_STAGER) $(IPROGS_STAGERCLIENT) $(SPOOL)
 
 InstallProgram(stager,$(BIN),root,bin,0750)
 InstallProgram(stageradmin,$(BIN),root,bin,0750)
+InstallProgram(stagein,$(BIN),root,bin,0755)
 
 install.man: $(MANDIR) $(MANPAGES_STAGER)
 
@@ -176,6 +177,7 @@ export: $(EPROGS_STAGER) $(EPROGS_STAGERCLIENT)
 
 IEXPORT(stager,$(EXPORTBIN),755)
 IEXPORT(stageradmin,$(EXPORTBIN),755)
+IEXPORT(stagein,$(EXPORTBIN),755)
 
 exportman: $(EMANPAGES_STAGER)
 

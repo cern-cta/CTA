@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_update.cpp,v 1.3 2005/01/17 10:42:27 bcouturi Exp $
+ * $Id: stager_client_api_update.cpp,v 1.4 2005/01/19 10:49:56 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_update.cpp,v $ $Revision: 1.3 $ $Date: 2005/01/17 10:42:27 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_update.cpp,v $ $Revision: 1.4 $ $Date: 2005/01/19 10:49:56 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -27,6 +27,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_update.cpp,v $ $Revision:
 #include "castor/Constants.hpp"
 #include "castor/client/VectorResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
+#include "castor/stager/RequestHelper.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/StagePrepareToUpdateRequest.hpp"
 #include "castor/stager/StageUpdateRequest.hpp"
@@ -74,10 +75,8 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate(const char *userTag,
     castor::client::BaseClient client;
     castor::stager::StagePrepareToUpdateRequest req;
 
-    // Setting the service class
-    if (0 != opts && opts->service_class != 0) {
-      req.setSvcClassName(std::string(opts->service_class));
-    }
+    castor::stager::RequestHelper reqh(&req);
+    reqh.setOptions(opts);
 
    if (0 != userTag) {
       req.setUserTag(std::string(userTag));
@@ -198,10 +197,8 @@ EXTERN_C int DLL_DECL stage_update(const char *userTag,
       req.setUserTag(std::string(userTag));
     }
 
-    // Setting the service class
-    if (0 != opts && opts->service_class != 0) {
-      req.setSvcClassName(std::string(opts->service_class));
-    }
+    castor::stager::RequestHelper reqh(&req);
+    reqh.setOptions(opts);
 
     if (0 != protocol) {
       subreq->setProtocol(protocol);

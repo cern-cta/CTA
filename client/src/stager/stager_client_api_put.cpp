@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.14 2005/01/17 10:42:27 bcouturi Exp $
+ * $Id: stager_client_api_put.cpp,v 1.15 2005/01/19 10:49:56 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.14 $ $Date: 2005/01/17 10:42:27 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.15 $ $Date: 2005/01/19 10:49:56 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -27,6 +27,7 @@ static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.
 #include "castor/Constants.hpp"
 #include "castor/client/VectorResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
+#include "castor/stager/RequestHelper.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/StagePrepareToPutRequest.hpp"
 #include "castor/stager/StagePutRequest.hpp"
@@ -77,10 +78,8 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
     castor::client::BaseClient client;
     castor::stager::StagePrepareToPutRequest req;
 
-    // Setting the service class
-    if (0 != opts && opts->service_class != 0) {
-      req.setSvcClassName(std::string(opts->service_class));
-    }
+    castor::stager::RequestHelper reqh(&req);
+    reqh.setOptions(opts);
 
     if (0 != userTag) {
       req.setUserTag(std::string(userTag));
@@ -199,10 +198,8 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
     castor::stager::StagePutRequest req;
     castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
 
-    // Setting the service class
-    if (0 != opts && opts->service_class != 0) {
-      req.setSvcClassName(std::string(opts->service_class));
-    }
+    castor::stager::RequestHelper reqh(&req);
+    reqh.setOptions(opts);
 
     if (0 != userTag) {
       req.setUserTag(std::string(userTag));
@@ -320,10 +317,8 @@ EXTERN_C int DLL_DECL stage_putDone(struct stage_filereq *requests,
     castor::client::BaseClient client;
     castor::stager::StagePutDoneRequest req;
 
-    // Setting the service class
-    if (0 != opts && opts->service_class != 0) {
-      req.setSvcClassName(std::string(opts->service_class));
-    }
+    castor::stager::RequestHelper reqh(&req);
+    reqh.setOptions(opts);
 
     // Setting the mask on the request
     mode_t mask;
