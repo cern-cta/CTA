@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.47 2002/04/30 13:07:43 jdurand Exp $
+ * $Id: stagein.c,v 1.48 2002/05/15 06:44:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.47 $ $Date: 2002/04/30 13:07:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.48 $ $Date: 2002/05/15 06:44:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -63,6 +63,7 @@ char *stghost;
 char user[15];	/* login name */
 int nowait_flag = 0;
 int tppool_flag = 0;
+int volatile_tppool_flag = 0;
 int nohsmcreat_flag = 0;
 int noretry_flag = 0;
 int rdonly_flag = 0;
@@ -186,6 +187,7 @@ int main(argc, argv)
 		{"nocopy",             NO_ARGUMENT,  &nocopy_flag   ,   1},
 		{"nowait",             NO_ARGUMENT,  &nowait_flag,      1},
 		{"tppool",             REQUIRED_ARGUMENT, &tppool_flag, 1},
+		{"volatile_tppool",    NO_ARGUMENT,  &volatile_tppool_flag, 1},
 		{"nohsmcreat",         NO_ARGUMENT,  &nohsmcreat_flag,  1},
 		{"noretry",           NO_ARGUMENT,  &noretry_flag,  1},
 		{"rdonly",            NO_ARGUMENT,  &rdonly_flag,       1},
@@ -1113,6 +1115,7 @@ void usage(cmd)
 					 "[-q file_sequence_number] [-S tape_server] [-s size] [-T] [-t retention_period]\n",
 					 "[-U fun] [-u user] [-V visual_identifier(s)] [-v volume_serial_number(s)]\n",
 					 "[-X xparm]\n",
-					 "[--nohsmcreat] [--nocopy] [--noretry] [--nowait] [--side sidenumber] [--silent] [--tppool tapepool] [--rdonly]\n",
+					 "[--nohsmcreat] [--nocopy] [--noretry] [--nowait] [--side sidenumber] [--silent]\n"
+			         "[--tppool tapepool] [--rdonly] [--volatile_tppool]\n",
 					 "pathname(s)\n");
 }
