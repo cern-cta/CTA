@@ -389,7 +389,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 			}
 			p = msgbuf_out;
 			unmarshall_status = 0;
-			unmarshall_STAGE_CAT(STAGE_OUTPUT_MODE,unmarshall_status,p,&(_stcp_output[_nstcp_output - 1]));
+			unmarshall_STAGE_CAT(magic,STAGE_OUTPUT_MODE,unmarshall_status,p,&(_stcp_output[_nstcp_output - 1]));
 			free(msgbuf_out);
 			if (unmarshall_status == 0) stage_callback(&(_stcp_output[_nstcp_output - 1]),NULL);
 			if (stcp_output != NULL) *stcp_output = _stcp_output;
@@ -439,7 +439,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 			}
 			p = msgbuf_out;
 			unmarshall_status = 0;
-			unmarshall_STAGE_PATH(STAGE_OUTPUT_MODE,unmarshall_status,p,&(_stpp_output[_nstpp_output - 1]));
+			unmarshall_STAGE_PATH(magic, STAGE_OUTPUT_MODE,unmarshall_status,p,&(_stpp_output[_nstpp_output - 1]));
 			free(msgbuf_out);
 			if (unmarshall_status == 0) stage_callback(NULL,&(_stpp_output[_nstpp_output - 1]));
 			if (stpp_output != NULL) *stpp_output = _stpp_output;
@@ -782,6 +782,11 @@ int send2stgd_api_cmp(stcp1,stcp2)
     if (stcp1->u1.h.fileid         != 0    && stcp1->u1.h.fileid != stcp2->u1.h.fileid) return(-1);
     if (stcp1->u1.h.fileclass      != 0    && stcp1->u1.h.fileclass != stcp2->u1.h.fileid) return(-1);
     if (stcp1->u1.h.tppool[0]      != '\0' && strcmp(stcp1->u1.h.tppool,stcp2->u1.h.tppool) != 0) return(-1);
+    /* These are 'volative' values */
+    /*
+      if (stcp1->u1.h.retenp_on_disk != 0     && stcp1->u1.h.retenp_on_disk != stcp2->u1.h.retenp_on_disk) return(-1);
+      if (stcp1->u1.h.mintime_beforemigr != 0 && stcp1->u1.h.mintime_beforemigr != stcp2->u1.h.mintime_beforemigr) return(-1);
+    */
     break;
   }
 
