@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.59 2001/06/20 13:28:34 jdurand Exp $
+ * $Id: stage.h,v 1.60 2001/06/21 07:54:15 jdurand Exp $
  */
 
 /*
@@ -273,8 +273,9 @@
 #define	STG140	"STG140 - %s : could not find corresponding entry in catalog\n"
 #define	STG141	"STG141 - Invalid magic number 0x%lx\n"
 #define STG142  "STG142 - %s not removed - Retention period is %s\n"
-#define STG143  "STG143 - %s : stageout lifetime on disk exceeds %d seconds\n"
+#define STG143  "STG143 - %s : %s lifetime on disk exceeds %d second%s - %s\n"
 #define	STG148	"STG148 - Configuration warning: %s %s %d\n"
+#define STG149  "STG149 - %s : will not be migrated until pool %s have an associated migrator\n"
 #define STG156  "STG156 - Requests from (uid,gid) smaller than (%d,%d) are rejected\n"
 
 			/* stage daemon stream modes */
