@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.205 2003/01/30 09:14:15 jdurand Exp $
+ * $Id: procio.c,v 1.206 2003/03/11 15:54:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.205 $ $Date: 2003/01/30 09:14:15 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.206 $ $Date: 2003/03/11 15:54:04 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -185,6 +185,7 @@ static int side_flag = 0;
 static int nocopy_flag = 0;
 extern struct fileclass *fileclasses;
 
+int stage_access _PROTO((uid_t, gid_t, int, struct stat64 *));
 void procioreq _PROTO((int, int, char *, char *));
 void procputreq _PROTO((int, int, char *, char *));
 extern int isuserlevel _PROTO((char *));
@@ -295,6 +296,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 	struct group *gr;
 	struct passwd *pw;
 	char **hsmfiles = NULL;
+#ifndef NON_WORD_READABLE_SUPPORT
+	struct stat64 *hsmstat = NULL;
+#endif
 	int *hsmpoolflags = NULL;
 	int ihsmfiles;
 	int jhsmfiles;
@@ -789,14 +793,32 @@ void procioreq(req_type, magic, req_data, clienthost)
 						c = (api_out != 0) ? SEINTERNAL : SESYSERR;
 						goto reply;
 					}
+#ifndef NON_WORD_READABLE_SUPPORT
+					if ((hsmstat   = (struct stat64 *)        malloc(sizeof(struct stat64))) == NULL) {
+						sendrep (&rpfd, MSG_ERR, STG33, "malloc", strerror(errno));
+						c = (api_out != 0) ? SEINTERNAL : SESYSERR;
+						goto reply;
+					}
+#endif
 				} else {
 					char **dummy = hsmfiles;
+#ifndef NON_WORD_READABLE_SUPPORT
+					struct stat64 *dummy2 = hsmstat;
+#endif
 					if ((dummy  = (char **)             realloc(hsmfiles,(nhsmfiles+1) * sizeof(char *))) == NULL) {
 						sendrep (&rpfd, MSG_ERR, STG33, "realloc", strerror(errno));
 						c = (api_out != 0) ? SEINTERNAL : SESYSERR;
 						goto reply;
 					}
 					hsmfiles = dummy;
+#ifndef NON_WORD_READABLE_SUPPORT
+					if ((dummy2  = (struct stat64 *)    realloc(hsmstat,(nhsmfiles+1) * sizeof(struct stat64))) == NULL) {
+						sendrep (&rpfd, MSG_ERR, STG33, "realloc", strerror(errno));
+						c = (api_out != 0) ? SEINTERNAL : SESYSERR;
+						goto reply;
+					}
+					hsmstat = dummy2;
+#endif
 				}
                 /*
 				  if (Aflag && (stcp_input[i].size != 0) && (req_type == STAGE_IN)) {
@@ -804,7 +826,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 				  errflg++;
 				  }
                 */
-				hsmfiles[nhsmfiles++] = (t_or_d == 'm' ? stcp_input[i].u1.m.xfile : stcp_input[i].u1.h.xfile);
+				hsmfiles[nhsmfiles] = (t_or_d == 'm' ? stcp_input[i].u1.m.xfile : stcp_input[i].u1.h.xfile);
+#ifndef NON_WORD_READABLE_SUPPORT
+				memset(&hsmstat[nhsmfiles],0,sizeof(struct stat64));
+#endif
+				nhsmfiles++;
 				if ((c = check_hsm_type(hsmfiles[nhsmfiles - 1],&nhpssfiles,&ncastorfiles,&nuserlevel,&nexplevel,&t_or_d)) != 0) {
 					errflg++;
 				}
@@ -942,16 +968,38 @@ void procioreq(req_type, magic, req_data, clienthost)
 						c = (api_out != 0) ? SEINTERNAL : SESYSERR;
 						goto reply;
 					}
+#ifndef NON_WORD_READABLE_SUPPORT
+					if ((hsmstat   = (struct stat64 *)      malloc(sizeof(struct stat64))) == NULL) {
+						sendrep (&rpfd, MSG_ERR, STG33, "malloc", strerror(errno));
+						c = (api_out != 0) ? SEINTERNAL : SESYSERR;
+						goto reply;
+					}
+#endif
 				} else {
 					char **dummy = hsmfiles;
+#ifndef NON_WORD_READABLE_SUPPORT
+					struct stat64 *dummy2 = hsmstat;
+#endif
 					if ((dummy  = (char **)             realloc(hsmfiles,(nhsmfiles+1) * sizeof(char *))) == NULL) {
 						sendrep (&rpfd, MSG_ERR, STG33, "realloc", strerror(errno));
 						c = (api_out != 0) ? SEINTERNAL : SESYSERR;
 						goto reply;
 					}
 					hsmfiles = dummy;
+#ifndef NON_WORD_READABLE_SUPPORT
+					if ((dummy2  = (struct stat64 *)    realloc(hsmstat,(nhsmfiles+1) * sizeof(struct stat64))) == NULL) {
+						sendrep (&rpfd, MSG_ERR, STG33, "realloc", strerror(errno));
+						c = (api_out != 0) ? SEINTERNAL : SESYSERR;
+						goto reply;
+					}
+					hsmstat = dummy2;
+#endif
 				}
-				hsmfiles[nhsmfiles++] = Coptarg;
+				hsmfiles[nhsmfiles] = Coptarg;
+#ifndef NON_WORD_READABLE_SUPPORT
+				memset(&hsmstat[nhsmfiles],0,sizeof(struct stat64));
+#endif
+				nhsmfiles++;
 				if ((c = check_hsm_type(Coptarg,&nhpssfiles,&ncastorfiles,&nuserlevel,&nexplevel,&(stgreq.t_or_d))) != 0) {
 					goto reply;
 				}
@@ -2878,7 +2926,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 				stcp->reqid = reqid;
 			stcp->status = (Aflag ? (STAGEOUT|CAN_BE_MIGR) : STAGEWRT);
 			strcpy (stcp->poolname, actual_poolname);
-			if (stgreq.t_or_d == 'h') stcp->actual_size = correct_size;
+			if (stgreq.t_or_d == 'h') {
+				stcp->actual_size = correct_size;
+			}
 			{
 				int rfio_stat_rc;
 					
@@ -2890,7 +2940,15 @@ void procioreq(req_type, magic, req_data, clienthost)
 					rfio_stat_rc = RFIO_STAT64(upath, &st);
 				}
 				if (rfio_stat_rc == 0) {
-					if (stgreq.t_or_d != 'h') stcp->actual_size = st.st_size;
+					if (stgreq.t_or_d != 'h') {
+						stcp->actual_size = st.st_size;
+					}
+#ifndef NON_WORD_READABLE_SUPPORT
+					else {
+						/* Note: we made sure this is executed only for CASTOR files (t_or_d == 'h') */
+						hsmstat[ihsmfiles] = st;
+					}
+#endif
 					stcp->c_time = st.st_mtime;
 				} else {
 					/* This must have fail because of RFIO */
@@ -2918,9 +2976,13 @@ void procioreq(req_type, magic, req_data, clienthost)
 						delreq(stcp,1);
 						goto stagewrt_continue_loop;
 					}
-					if (! Aflag) strcpy(stcp->u1.h.tppool,(this_tppool[0] != '\0') ? this_tppool : next_tppool(&(fileclasses[ifileclass])));
+					if (! Aflag) {
+						strcpy(stcp->u1.h.tppool,(this_tppool[0] != '\0') ? this_tppool : next_tppool(&(fileclasses[ifileclass])));
+					}
 					/* Remember this for eventual next iteration */
-					if (this_tppool[0] == '\0') strcpy(this_tppool,stcp->u1.h.tppool);
+					if (this_tppool[0] == '\0') {
+						strcpy(this_tppool,stcp->u1.h.tppool);
+					}
 				} else {
 					if (Aflag) {        /* If Aflag is not set - check is done a little bit after */
 						/* User specified a tape pool - We check the permission to access it */
@@ -3009,6 +3071,18 @@ void procioreq(req_type, magic, req_data, clienthost)
 					}
 					uid_waitq = euid;
 					gid_waitq = egid;
+#ifndef NON_WORD_READABLE_SUPPORT
+					if (stcp->t_or_d == 'h') {
+						/* We check if (euid,egid) will be able to open that file */
+						if (stage_access(euid,egid,R_OK,&hsmstat[ihsmfiles]) != 0) {
+							sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "migrator access", sstrerror(serrno));
+							global_c_stagewrt++;
+							c = (api_out != 0) ? serrno : EINVAL;
+							delreq(stcp,1);
+							goto stagewrt_continue_loop;
+						}
+					}
+#endif
 					wqp = add2wq (clienthost,
 								  user, stcp->uid, stcp->gid,
 								  user_waitq, group_waitq, uid_waitq, gid_waitq,
@@ -3193,6 +3267,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 		rpfd = -1;
 	}
 	if (hsmfiles != NULL) free(hsmfiles);
+#ifndef NON_WORD_READABLE_SUPPORT
+	if (hsmstat != NULL) free(hsmstat);
+#endif
 	if (hsmpoolflags != NULL) free(hsmpoolflags);
 	if (stcp_input != NULL) free(stcp_input);
 	if (stpp_input != NULL) free(stpp_input);
@@ -3203,6 +3280,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 	if (fseq_list != NULL) free (fseq_list);
 	if (argv != NULL) free (argv);
 	if (hsmfiles != NULL) free(hsmfiles);
+#ifndef NON_WORD_READABLE_SUPPORT
+	if (hsmstat != NULL) free(hsmstat);
+#endif
 	if (hsmpoolflags != NULL) free(hsmpoolflags);
 	if (stcp_input != NULL) free(stcp_input);
 	if (stpp_input != NULL) free(stpp_input);
@@ -5238,4 +5318,26 @@ int stageput_check_hsm(stcp,uid,gid,was_put_failed,yetdone_Cns_statx_flag,yetdon
 		savereqs();
 	}
 	return(0);
+}
+
+/* Simple a-la-access() routine (no check for F_OK) */
+int stage_access(uid,gid,amode,st)
+	uid_t uid;
+	gid_t gid;
+	int amode;
+	struct stat64 *st;
+{
+	int mode = (amode & (R_OK|W_OK|X_OK)) << 6;
+	if (st->st_uid != uid) {
+		mode >>= 3;
+		if (st->st_gid != gid) {
+			mode >>= 3;
+		}
+	}
+	if ((st->st_mode & mode) != mode) {
+		serrno = EACCES;
+		return (-1);
+	} else {
+		return (0);
+	}
 }
