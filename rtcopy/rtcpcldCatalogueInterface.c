@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.25 $ $Release$ $Date: 2004/08/02 14:28:50 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.26 $ $Release$ $Date: 2004/08/02 15:13:50 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.25 $ $Release$ $Date: 2004/08/02 14:28:50 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.26 $ $Release$ $Date: 2004/08/02 15:13:50 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -476,6 +476,7 @@ static int updateTapeFromDB(
     serrno = save_serrno;
     return(-1);
   }
+  C_IAddress_delete(iAddr);
   if ( tp == NULL ) currentTape = Cstager_Tape_fromIObject(iObj);
   return(0);
 }
@@ -509,8 +510,8 @@ static int updateSegmentFromDB(
 
   iAddr = C_BaseAddress_getIAddress(baseAddr);
   iObj = Cstager_Segment_getIObject(segm);
-  rc = C_Services_updateObj(*svcs,iAddr,iObj);
-  
+
+  rc = C_Services_updateObj(*svcs,iAddr,iObj);  
   if ( rc == -1 ) {
     save_serrno = serrno;
     C_IAddress_delete(iAddr);
@@ -536,6 +537,7 @@ static int updateSegmentFromDB(
     serrno = save_serrno;
     return(-1);
   }
+  C_IAddress_delete(iAddr);
   return(0);
 }
 /**
@@ -1642,9 +1644,9 @@ int rtcpcld_updateVIDStatus(
       serrno = save_serrno;
       return(-1);
     }
+    C_IAddress_delete(iAddr);
     (void)notifyTape(tapeItem);
   }
-  C_IAddress_delete(iAddr);
   return(0);
 }
 
@@ -1960,8 +1962,8 @@ int rtcpcld_updateVIDFileStatus(
       return(-1);
     }
     (void)notifyTape(tapeItem);
+    C_IAddress_delete(iAddr);
   }
-  C_IAddress_delete(iAddr);
   return(0);
 }
 
