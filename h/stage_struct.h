@@ -1,5 +1,5 @@
 /*
- * $Id: stage_struct.h,v 1.1 2001/02/01 16:29:22 jdurand Exp $
+ * $Id: stage_struct.h,v 1.2 2001/02/02 13:01:05 jdurand Exp $
  */
 
 #ifndef __stage_struct_h
@@ -14,7 +14,6 @@
 #include <time.h>               /* For time_t */
 #endif
 #include "Castor_limits.h"      /* For CASTOR limits */
-#include "Cns_api.h"            /* For Cns_fileclass */
 #include "osdep.h"              /* For u_signed64 */
 #include "stage_constants.h"
 
