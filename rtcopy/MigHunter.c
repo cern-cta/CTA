@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.13 $ $Release$ $Date: 2005/02/18 16:23:01 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.14 $ $Release$ $Date: 2005/02/18 16:31:28 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.13 $ $Release$ $Date: 2005/02/18 16:23:01 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.14 $ $Release$ $Date: 2005/02/18 16:31:28 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -550,7 +550,7 @@ int cloneStream(
                                           iAddr,
                                           iObj,
                                           OBJ_TapeCopy,
-                                          0
+                                          1
                                           )));
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
@@ -690,7 +690,7 @@ int streamCreator(
                               iAddr,
                               iObj,
                               OBJ_Stream,
-                              0
+                              1
                               );
       if ( rc == -1 ) {
         if ( runAsDaemon == 0 ) {
