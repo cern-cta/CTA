@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/08/19 12:56:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logstream.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/01/24 16:26:27 $ $Author: sponcec3 $
  *
  * A generic logstream for castor, handling IP addresses
  * and timestamps
@@ -31,17 +31,26 @@
 
 #define MANIPULATORIMPL(T)                              \
   castor::logstream& castor::T(castor::logstream& s) {  \
-    s.setLevel(castor::logbuf::T);                      \
+    s.setLevel(DLF_LVL_##T);                            \
     return s;                                           \
   }
 
-MANIPULATORIMPL(VERBOSE);
-MANIPULATORIMPL(DEBUG);
-MANIPULATORIMPL(INFO);
-MANIPULATORIMPL(WARNING);
+MANIPULATORIMPL(EMERGENCY);
+MANIPULATORIMPL(ALERT);
 MANIPULATORIMPL(ERROR);
-MANIPULATORIMPL(FATAL);
-MANIPULATORIMPL(ALWAYS);
+MANIPULATORIMPL(WARNING);
+MANIPULATORIMPL(AUTH);
+MANIPULATORIMPL(SECURITY);
+MANIPULATORIMPL(USAGE);
+MANIPULATORIMPL(SYSTEM);
+MANIPULATORIMPL(IMPORTANT);
+MANIPULATORIMPL(DEBUG);
+
+// Added VERBOSE manually in case DLF supports it in the future
+castor::logstream& castor::VERBOSE(castor::logstream& s) {
+  s.setLevel(DLF_LVL_DEBUG);
+  return s;
+}
 
 castor::logstream& castor::ip(castor::logstream& s) {
   s.setIsIP(true);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/12/08 16:32:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2005/01/24 16:26:27 $ $Author: sponcec3 $
  *
  *
  *
@@ -83,7 +83,7 @@ castor::replier::RequestReplier::getInstance() throw() {
   // XXX lock ?
   if (0 == s_rr) {
     s_rr = new castor::replier::RequestReplier();
-    s_rr->clog() << ALWAYS << func << "Created new request replier" << std::endl;
+    s_rr->clog() << IMPORTANT << func << "Created new request replier" << std::endl;
   }
   return s_rr;
 }
@@ -121,7 +121,7 @@ void
 castor::replier::RequestReplier::start() throw() {
   char *func = "RequestReplier::start ";
   if ((m_threadId = Cthread_create(&(staticReplierThread), this))<0) {
-    clog() << FATAL << func << "Could not create thread !" << std::endl;
+    clog() << ALERT << func << "Could not create thread !" << std::endl;
   }
   clog() << DEBUG << func << "Request Replier thread ID is: " << m_threadId << std::endl;
 
@@ -177,11 +177,11 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
     if (terminate) {
       if(m_connections->size() == 0
          && m_clientQueue->size() == 0) {
-        clog() << ALWAYS << func << "Finished processing - Terminating"
+        clog() << IMPORTANT << func << "Finished processing - Terminating"
                << std::endl;
         break;
       } else {
-        clog() << ALWAYS << func << "Waiting to terminate - ConnQ:"
+        clog() << IMPORTANT << func << "Waiting to terminate - ConnQ:"
                << m_connections->size()
                << " ClientQ:"
                << m_clientQueue->size()
@@ -589,7 +589,7 @@ castor::replier::RequestReplier::terminate()
 
   char *func = "RequestReplier::terminate ";
 
-  clog() << ALWAYS << func << "Requesting RequestReplier termination"
+  clog() << IMPORTANT << func << "Requesting RequestReplier termination"
          << std::endl;
 
   // Setting the end processing flag to 1

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2005/01/24 14:48:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2005/01/24 16:26:27 $ $Author: sponcec3 $
  *
  *
  *
@@ -168,7 +168,7 @@ void *castor::rh::Server::processRequest(void *param) throw() {
   }
 
   if (ack.status()) {
-    clog() << INFO << "Processing request" << std::endl;
+    clog() << USAGE << "Processing request" << std::endl;
     try {
       // gives a Cuuid to the request
       // XXX Interface to Cuuid has to be improved !
@@ -192,7 +192,7 @@ void *castor::rh::Server::processRequest(void *param) throw() {
                << std::endl << e.getMessage() << std::endl;
       }
       
-      clog() << INFO << "Got request from client "
+      clog() << USAGE << "Got request from client "
              << castor::ip << ip << ":" << port << std::endl;
       castor::rh::Client *client =
         dynamic_cast<castor::rh::Client *>(fr->client());
@@ -218,7 +218,7 @@ void *castor::rh::Server::processRequest(void *param) throw() {
     }
   }
 
-  clog() << INFO << "Sending reply to client !" << std::endl;
+  clog() << USAGE << "Sending reply to client !" << std::endl;
   try {
     sock->sendObject(ack);
   } catch (castor::exception::Exception e) {
@@ -263,7 +263,7 @@ void castor::rh::Server::handleRequest(castor::IObject* fr)
       svcs()->fillRep(&ad, qryReq, OBJ_QueryParameter, false);
     }
     svcs()->commit(&ad);
-    clog() << INFO << "request stored in Oracle, id "
+    clog() << USAGE << "request stored in Oracle, id "
            << fr->id() << std::endl;
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);

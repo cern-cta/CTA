@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.h,v $ $Revision: 1.13 $ $Release$ $Date: 2005/01/24 14:48:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logstream.h,v $ $Revision: 1.14 $ $Release$ $Date: 2005/01/24 16:26:27 $ $Author: sponcec3 $
  *
  * A generic logstream for castor, handling IP addresses
  * and timestamps
@@ -35,6 +35,7 @@
 #include <iomanip>
 #include "Cuuid.h"
 #include "osdep.h"
+#include "dlf_api.h"
 #include "castor/ObjectSet.hpp"
 #include "castor/logbuf.h"
 
@@ -231,15 +232,20 @@ namespace castor {
 
   /**
    * Manipulators that allow to set the priority
-   * of the next messages given to a logstream to VERBOSE
+   * of the next messages given to a logstream
    */
-  MANIPULATOR(VERBOSE);
-  MANIPULATOR(DEBUG);
-  MANIPULATOR(INFO);
-  MANIPULATOR(WARNING);
+  MANIPULATOR(EMERGENCY);
+  MANIPULATOR(ALERT);
   MANIPULATOR(ERROR);
-  MANIPULATOR(FATAL);
-  MANIPULATOR(ALWAYS);
+  MANIPULATOR(WARNING);
+  MANIPULATOR(AUTH);
+  MANIPULATOR(SECURITY);
+  MANIPULATOR(USAGE);
+  MANIPULATOR(SYSTEM);
+  MANIPULATOR(IMPORTANT);
+  MANIPULATOR(DEBUG);
+  MANIPULATOR(VERBOSE);
+
   MANIPULATOR(ip);
   MANIPULATOR(trace);
   MANIPULATOR(timeStamp);

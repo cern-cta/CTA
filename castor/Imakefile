@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.76 $ $Release$ $Date: 2005/01/20 17:42:45 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.77 $ $Release$ $Date: 2005/01/24 16:26:27 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -352,7 +352,7 @@ Makefiles:
 	done ;
 
 depend:
-	makedepend $(INCLUDES) $(STGLIB_SRCS) 2> /dev/null
+	makedepend -- $(INCLUDES) -- $(STGLIB_SRCS) 2> /dev/null; \
 	for i in $(DEPENDDIRS) ;\
 	do (if [ -d $$i ] ;\
 	    then \

@@ -194,7 +194,7 @@ void castor::replier::ClientConnection::connect()
     ::close(m_fd);
     throw ex;
   }
-  clog() << INFO << func << "Connected back to "
+  clog() << USAGE << func << "Connected back to "
          << castor::ip << m_client.ipAddress()
          << " successfully." << std::endl;   
   setStatus(CONNECTING);  

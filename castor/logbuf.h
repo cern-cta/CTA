@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logbuf.h,v $ $Revision: 1.6 $ $Release$ $Date: 2005/01/24 14:48:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logbuf.h,v $ $Revision: 1.7 $ $Release$ $Date: 2005/01/24 16:26:27 $ $Author: sponcec3 $
  *
  * An abstract string buffer for the log that is able
  * to handle levels of output
@@ -32,6 +32,7 @@
 #include <sstream>
 #include "Cuuid.h"
 #include "Cns_api.h"
+#include "dlf_api.h"
 
 namespace castor {
 
@@ -42,17 +43,7 @@ namespace castor {
     /**
      * The different possible levels of output
      */
-    typedef enum _Level_ {
-      NIL = 0,
-      VERBOSE,
-      DEBUG,
-      INFO,
-      WARNING,
-      ERROR,
-      FATAL,
-      ALWAYS,
-      NUM_LEVELS
-    } Level;
+    typedef int Level;
 
   public:
 
@@ -60,7 +51,7 @@ namespace castor {
      * Constructor
      */
     logbuf() throw() : std::stringbuf(std::ios_base::out),
-      m_curLevel(INFO) {}
+      m_curLevel(DLF_LVL_USAGE) {}
 
     /**
      * Sets current output level
