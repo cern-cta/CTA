@@ -1,7 +1,10 @@
 /*
- * $Id: rfio.h,v 1.5 1999/12/14 14:35:06 jdurand Exp $
+ * $Id: rfio.h,v 1.6 2000/02/15 15:29:30 fabien Exp $
  *
  * $Log: rfio.h,v $
+ * Revision 1.6  2000/02/15 15:29:30  fabien
+ * Added support for initial lseek in RFIO version 3 protocol
+ *
  * Revision 1.5  1999/12/14 14:35:06  jdurand
  * Added IRIX5 in the negative test to know if struct iovec is to be defined
  *
@@ -404,6 +407,7 @@ extern RDIR *   rfio_opendir(); /* RFIO's opendir()                     */
 #define RQST_CLOSE_V3   0x5004
 #define RQST_READ_V3    0x5005
 #define RQST_WRITE_V3   0x5006
+#define RQST_LSEEK_V3   0x5007
 #define RQST_OPENDIR    0x500a		/* request for opendir()	*/
 #define RQST_READDIR    0x500b		/* request for readdir()	*/
 #define RQST_CLOSEDIR   0x500c		/* request for closedir()	*/

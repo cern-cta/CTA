@@ -1,5 +1,5 @@
 /*
- * $Id: lseek.c,v 1.5 1999/12/17 19:09:38 jdurand Exp $
+ * $Id: lseek.c,v 1.6 2000/02/15 15:28:20 fabien Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lseek.c,v $ $Revision: 1.5 $ $Date: 1999/12/17 19:09:38 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: lseek.c,v $ $Revision: 1.6 $ $Date: 2000/02/15 15:28:20 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* lseek.c      Remote File I/O - move read/write file mark.	*/
@@ -50,7 +50,7 @@ int    how ;
     * The file is local
     */
    if ( s >= MAXRFD || rfilefdt[s] == NULL ) {
-      TRACE(2, "rfio", "rfio_lseek: using local lseek(%d, %d, %x)",s) ;
+      TRACE(2, "rfio", "rfio_lseek: using local lseek(%d, %d, %d)",s,offset,how) ;
       status= lseek(s,offset,how) ; 
       rfio_errno = 0;
       END_TRACE() ;
@@ -75,6 +75,11 @@ int    how ;
       END_TRACE();
       return -1 ;
    }
+
+   /* If RFIO version 3 enabled, then call the corresponding procedure */
+   if (rfilefdt[s]->version3 == 1)
+     return(rfio_lseek_v3(s,offset,how));
+
    /*
     * Changing SEEK_CUR in SEEK_SET.
     * WARNING !!! Should not be removed.
