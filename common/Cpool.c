@@ -1,5 +1,5 @@
 /*
- * $Id: Cpool.c,v 1.13 1999/11/09 15:23:09 jdurand Exp $
+ * $Id: Cpool.c,v 1.14 1999/11/21 14:00:49 obarring Exp $
  */
 
 #include <Cpool_api.h>
@@ -35,7 +35,7 @@ int Cpool_debug = 0;
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.13 $ $Date: 1999/11/09 15:23:09 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.14 $ $Date: 1999/11/21 14:00:49 $ CERN IT-PDP/DM Jean-Damien Durand";
 
 /* ------------------------------------ */
 /* Mutex static variables a-la-Cthread  */
@@ -128,7 +128,7 @@ typedef fd_set _cpool_fd_set;
 /* ------------------------------------ */
 /* Prototypes                           */
 /* ------------------------------------ */
-void     *_Cpool_starter _PROTO((void *));
+void   DLL_DECL  *_Cpool_starter _PROTO((void *));
 #ifndef _WIN32
 size_t   _Cpool_writen _PROTO((int, void *, size_t));
 size_t   _Cpool_readn _PROTO((int, void *, size_t));
@@ -142,7 +142,7 @@ size_t   _Cpool_readn_timeout _PROTO((int, void *, size_t, int));
 void     _Cpool_alarm _PROTO((int));
 Sigfunc *_Cpool_signal _PROTO((int, Sigfunc *));
 #endif /* _WIN32 */
-int      _Cpool_self();
+int    DLL_DECL  _Cpool_self();
 
 #ifndef _WIN32
 /* ------------------------------------ */
