@@ -1,8 +1,8 @@
-.\" Ctape_position.man,v 1.2 1999-09-02 16:59:02+02 baud Exp CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_position.man,v $ $Revision: 1.4 $ $Date: 1999/09/08 12:16:33 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_POSITION l "1999-09-02 16:59:02+02"
+.TH CTAPE_POSITION l "$Date: 1999/09/08 12:16:33 $"
 .SH NAME
 Ctape_position \- send a request to the tape daemon to get the tape
 positionned to a given file and the HDR labels checked
