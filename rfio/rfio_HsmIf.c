@@ -9,7 +9,7 @@ static char sccsid[] = "@(#)rfio_HsmIf.c,v 1.58 2004/02/10 15:05:17 CERN/IT/PDP/
 
 /* rfio_HsmIf.c       Remote File I/O - generic HSM client interface         */
 
-#define NEW_STAGER_SUPPORT 1
+#define OLD_STAGE_API "USE_OLD_STAGE_API"
 
 #include "Cmutex.h"
 #include <stdlib.h>
@@ -33,28 +33,12 @@ static char sccsid[] = "@(#)rfio_HsmIf.c,v 1.58 2004/02/10 15:05:17 CERN/IT/PDP/
 #include "Cns_api.h"
 #include "serrno.h"
 /*BC Added include for new stager */
-#ifdef NEW_STAGER_SUPPORT
 #include "stager_api.h"
 #define MAXPATH 1024
-#else
 #include "stage_api.h"
-#endif
-/*BC End include for new stager */
 #include "rfio.h"
 #include "osdep.h"
 
-#ifdef NEW_STAGER_SUPPORT
-/*BC DEFINED TO KEEP COMPATIBILITY IN THE METHOD SIGNATURES */
-/* Compatibility definition */
-struct stage_hsm {
-  char *xfile;         /* Recommended size: (CA_MAXHOSTNAMELEN+MAXPATH)+1 */
-  char *upath;         /* Recommended size: (CA_MAXHOSTNAMELEN+MAXPATH)+1 */
-  u_signed64 size;
-  struct stage_hsm *next;
-};
-typedef struct stage_hsm stage_hsm_t;
-/*BC END DEFINED TO KEEP COMPATIBILITY IN THE METHOD SIGNATURES */
-#endif
 
 #if defined(CNS_ROOT)
 typedef struct CnsFiles {
@@ -442,6 +426,10 @@ int DLL_DECL rfio_HsmIf_mkdir(const char *path, mode_t mode) {
     return(rc);
 }
 
+
+
+
+
 int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64) {
     int rc = -1;
     int save_serrno;
@@ -473,8 +461,8 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
         hsmfile->size = st.filesize;
         hsmfile->next = NULL;
 	/** NOW CALL THE NEW STAGER API */
-#ifdef NEW_STAGER_SUPPORT
-        {
+       
+	if (getenv(OLD_STAGE_API) == NULL) {
           struct stage_io_fileresp *response;
           char *requestId, *url;
 
@@ -485,6 +473,7 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
                           path,
                           flags,
                           mode,
+			  0,
                           &response,
                           &requestId,
                           NULL);
@@ -511,95 +500,100 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
             return -1;
           }
 
-          rc = rfio_open(url, flags, mode);
+	  if (mode64) {
+	    rc = rfio_open64(url, flags, mode);
+	  } else {
+	    rc = rfio_open(url, flags, mode);
+	  }
           free(response);
           free(url); 
-        }
 
-#else
-	if ((stage_getlog((void (**) _PROTO((int,char *))) &this_stglog) == 0) && (this_stglog == NULL)) {
-	  stage_setlog((void (*) _PROTO((int,char *)))&rfio_stglog); 
-	} 
-        {
-          struct stgcat_entry stcp_input;
-          int nstcp_output;
-          struct stgcat_entry *stcp_output = NULL;
-
-          memset(&stcp_input, 0, sizeof(struct stgcat_entry));
- 		  if (strlen(path) > STAGE_MAX_HSMLENGTH) { 
- 			  /* Oupsss... Stager api limitation */
- 			  if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL); 
- 			  (void)CnsCleanup(&hsmfile); 
- 			  serrno = SENAMETOOLONG; 
- 			  return(-1); 
- 		  } 
-          strcpy(stcp_input.u1.h.xfile,path);
-          if ( (flags & (O_RDONLY|O_RDWR|O_WRONLY)) == O_RDONLY || st.filesize > 0 ) 
-            rc = stage_in_hsm((u_signed64) 0,          /* Ebusy is possible... */
-							  (int) flags,             /* open flags */
-							  (char *) NULL,           /* hostname */
-							  (char *) NULL,           /* pooluser */
-							  (int) 1,                 /* nstcp_input */
-							  (struct stgcat_entry *) &stcp_input, /* stcp_input */
-							  (int *) &nstcp_output,   /* nstcp_output */
-							  (struct stgcat_entry **) &stcp_output, /* stcp_output */
-							  (int) 0,                 /* nstpp_input */
-							  (struct stgpath_entry *) NULL /* stpp_input */
+        } else {
+	  
+	  TRACE(3,"rfio","Using OLD stage API\n");
+	  if ((stage_getlog((void (**) _PROTO((int,char *))) &this_stglog) == 0) && (this_stglog == NULL)) {
+	    stage_setlog((void (*) _PROTO((int,char *)))&rfio_stglog); 
+	  } 
+	  {
+	    struct stgcat_entry stcp_input;
+	    int nstcp_output;
+	    struct stgcat_entry *stcp_output = NULL;
+	    
+	    memset(&stcp_input, 0, sizeof(struct stgcat_entry));
+	    if (strlen(path) > STAGE_MAX_HSMLENGTH) { 
+	      /* Oupsss... Stager api limitation */
+	      if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL); 
+	      (void)CnsCleanup(&hsmfile); 
+	      serrno = SENAMETOOLONG; 
+	      return(-1); 
+	    } 
+	    strcpy(stcp_input.u1.h.xfile,path);
+	    if ( (flags & (O_RDONLY|O_RDWR|O_WRONLY)) == O_RDONLY || st.filesize > 0 ) 
+	      rc = stage_in_hsm((u_signed64) 0,          /* Ebusy is possible... */
+				(int) flags,             /* open flags */
+				(char *) NULL,           /* hostname */
+				(char *) NULL,           /* pooluser */
+				(int) 1,                 /* nstcp_input */
+				(struct stgcat_entry *) &stcp_input, /* stcp_input */
+				(int *) &nstcp_output,   /* nstcp_output */
+				(struct stgcat_entry **) &stcp_output, /* stcp_output */
+				(int) 0,                 /* nstpp_input */
+				(struct stgpath_entry *) NULL /* stpp_input */
 				);
-          else
-            rc = stage_out_hsm((u_signed64) 0,          /* Ebusy is possible... */
-							   (int) flags,             /* open flags */
-							   (mode_t) mode,           /* open mode (c.f. also umask) */
-							   (char *) NULL,           /* hostname */
-							   (char *) NULL,           /* pooluser */
-							   (int) 1,                 /* nstcp_input */
-							   (struct stgcat_entry *) &stcp_input, /* stcp_input */
-							   (int *) &nstcp_output,   /* nstcp_output */
-							   (struct stgcat_entry **) &stcp_output, /* stcp_output */
-							   (int) 0,                       /* nstpp_input */
-							   (struct stgpath_entry *) NULL  /* stpp_input */
-				);
-          if ( rc == -1 ) {
-            save_serrno = serrno;
-            if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-            (void)CnsCleanup(&hsmfile);
-            serrno = save_serrno;
-            return(-1);
-          }
-          if ((nstcp_output != 1) || (stcp_output == NULL) || (*(stcp_output->ipath) == '\0')) {
-            /* Impossible */
-            save_serrno = SEINTERNAL;
-            if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-            (void)CnsCleanup(&hsmfile);
-            serrno = save_serrno;
-            if (stcp_output != NULL) free(stcp_output);
-            return(-1);
-          }
-          strcpy(hsmfile->upath,stcp_output->ipath);
-          free(stcp_output);
-        }
-        if (mode64)
+	    else
+	      rc = stage_out_hsm((u_signed64) 0,          /* Ebusy is possible... */
+				 (int) flags,             /* open flags */
+				 (mode_t) mode,           /* open mode (c.f. also umask) */
+				 (char *) NULL,           /* hostname */
+				 (char *) NULL,           /* pooluser */
+				 (int) 1,                 /* nstcp_input */
+				 (struct stgcat_entry *) &stcp_input, /* stcp_input */
+				 (int *) &nstcp_output,   /* nstcp_output */
+				 (struct stgcat_entry **) &stcp_output, /* stcp_output */
+				 (int) 0,                       /* nstpp_input */
+				 (struct stgpath_entry *) NULL  /* stpp_input */
+				 );
+	    if ( rc == -1 ) {
+	      save_serrno = serrno;
+	      if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
+	      (void)CnsCleanup(&hsmfile);
+	      serrno = save_serrno;
+	      return(-1);
+	    }
+	    if ((nstcp_output != 1) || (stcp_output == NULL) || (*(stcp_output->ipath) == '\0')) {
+	      /* Impossible */
+	      save_serrno = SEINTERNAL;
+	      if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
+	      (void)CnsCleanup(&hsmfile);
+	      serrno = save_serrno;
+	      if (stcp_output != NULL) free(stcp_output);
+	      return(-1);
+	    }
+	    strcpy(hsmfile->upath,stcp_output->ipath);
+	    free(stcp_output);
+	  }
+	  if (mode64)
             rc = rfio_open64(hsmfile->upath,flags,mode);
-        else
+	  else
             rc = rfio_open(hsmfile->upath,flags,mode);
-        if ( rc == -1 ) {
+	  if ( rc == -1 ) {
             save_serrno = (rfio_errno > 0 ? rfio_errno : serrno);
             if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
             (void)CnsCleanup(&hsmfile);
             serrno = save_serrno;
             return(-1);
-        }
-        if ( AddCnsFileDescriptor(rc,flags,hsmfile) == -1 ) {
+	  }
+	  if ( AddCnsFileDescriptor(rc,flags,hsmfile) == -1 ) {
             save_serrno = serrno;
             if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
             (void)CnsCleanup(&hsmfile);
             rfio_close(rc);
             serrno = save_serrno;
             return(-1);
-        }
-        if ( st.filesize == 0 ) SetCnsWrittenTo(rc);
-        if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-#endif /* NEW_STAGER_SUPPORT */
+	  }
+	  if ( st.filesize == 0 ) SetCnsWrittenTo(rc);
+	  if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
+	}
     }
 #endif /* CNS_ROOT */
     return(rc);
@@ -636,106 +630,149 @@ int DLL_DECL rfio_HsmIf_open_limbysz(const char *path, int flags, mode_t mode, u
         hsmfile->size = st.filesize;
         hsmfile->next = NULL;
 
-#ifdef NEW_STAGER_SUPPORT
+
+	/* New stager API call */
+	if (getenv(OLD_STAGE_API) == NULL) {
+          struct stage_io_fileresp *response;
+          char *requestId, *url;
+
+          TRACE(3,"rfio","Calling stage_open with: %s %x %x",
+                path, flags, mode);
+          rc = stage_open(NULL,
+                          MOVER_PROTOCOL_RFIO,
+                          path,
+                          flags,
+                          mode,
+			  maxsize,
+                          &response,
+                          &requestId,
+                          NULL);
+          if (rc < 0) {
+            return -1;
+          }
+
+          if (response == NULL) {
+            TRACE(3,"rfio","Received NULL response");
+            serrno = SEINTERNAL;
+            return -1;
+          }
+          
+          if (response->errorCode != 0) {
+            TRACE(3,"rfio","stage_open error: %d/%s",
+                  response->errorCode, response->errorMessage);
+            serrno = response->errorCode;
+            return -1;
+          }
+
+          url = stage_geturl(response);
+          if (url == 0) {
+            free(response);
+            return -1;
+          }
+
+	  if (mode64) {
+	    rc = rfio_open64(url, flags, mode);
+	  } else {
+	    rc = rfio_open(url, flags, mode);
+	  }
+          free(response);
+          free(url); 
 
 
+	} else {
+	  /* Old stager copatibility mode */
+	  if ((stage_getlog((void (**) _PROTO((int,char *))) &this_stglog) == 0) && (this_stglog == NULL)) {
+	    stage_setlog((void (*) _PROTO((int,char *)))&rfio_stglog);
+	  }
+	  {
+	    struct stgcat_entry stcp_input;
+	    int nstcp_output;
+	    struct stgcat_entry *stcp_output = NULL;
 
-
-
-#else
-
-        if ((stage_getlog((void (**) _PROTO((int,char *))) &this_stglog) == 0) && (this_stglog == NULL)) {
-          stage_setlog((void (*) _PROTO((int,char *)))&rfio_stglog);
-        }
-        {
-          struct stgcat_entry stcp_input;
-          int nstcp_output;
-          struct stgcat_entry *stcp_output = NULL;
-
-          memset(&stcp_input, 0, sizeof(struct stgcat_entry));
-		  if (strlen(path) > STAGE_MAX_HSMLENGTH) {
-			  /* Oupsss... Stager api limitation */
-			  if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-			  (void)CnsCleanup(&hsmfile);
-			  serrno = SENAMETOOLONG;
-			  return(-1);
-		  }
-          strcpy(stcp_input.u1.h.xfile,path);
-          if (maxsize > 0) stcp_input.size = maxsize;
-          if ( (flags & (O_RDONLY|O_RDWR|O_WRONLY)) == O_RDONLY || st.filesize > 0 ) {
-            rc = stage_in_hsm((u_signed64) 0,          /* Ebusy is possible... */
-							  (int) flags,             /* open flags */
-							  (char *) NULL,           /* hostname */
-							  (char *) NULL,           /* pooluser */
-							  (int) 1,                 /* nstcp_input */
-							  (struct stgcat_entry *) &stcp_input, /* stcp_input */
-							  (int *) &nstcp_output,   /* nstcp_output */
-							  (struct stgcat_entry **) &stcp_output, /* stcp_output */
-							  (int) 0,                 /* nstpp_input */
-							  (struct stgpath_entry *) NULL /* stpp_input */
+	    memset(&stcp_input, 0, sizeof(struct stgcat_entry));
+	    if (strlen(path) > STAGE_MAX_HSMLENGTH) {
+	      /* Oupsss... Stager api limitation */
+	      if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
+	      (void)CnsCleanup(&hsmfile);
+	      serrno = SENAMETOOLONG;
+	      return(-1);
+	    }
+	    strcpy(stcp_input.u1.h.xfile,path);
+	    if (maxsize > 0) stcp_input.size = maxsize;
+	    if ( (flags & (O_RDONLY|O_RDWR|O_WRONLY)) == O_RDONLY || st.filesize > 0 ) {
+	      rc = stage_in_hsm((u_signed64) 0,          /* Ebusy is possible... */
+				(int) flags,             /* open flags */
+				(char *) NULL,           /* hostname */
+				(char *) NULL,           /* pooluser */
+				(int) 1,                 /* nstcp_input */
+				(struct stgcat_entry *) &stcp_input, /* stcp_input */
+				(int *) &nstcp_output,   /* nstcp_output */
+				(struct stgcat_entry **) &stcp_output, /* stcp_output */
+				(int) 0,                 /* nstpp_input */
+				(struct stgpath_entry *) NULL /* stpp_input */
 				);
-            if ((rc != 0) && (serrno == ERTLIMBYSZ)) {
-              /* It is by definition possible to have 'File limited by size' error on a recall */
-              /* where we specified the maximum number of files to transfer */
-              /* This is called by rfcp.c only btw */
-              rc = 0;
-            }
-          } else {
-            rc = stage_out_hsm((u_signed64) 0,          /* Ebusy is possible... */
-							   (int) flags,             /* open flags */
-							   (mode_t) mode,           /* open mode (c.f. also umask) */
-							   (char *) NULL,           /* hostname */
-							   (char *) NULL,           /* pooluser */
-							   (int) 1,                 /* nstcp_input */
-							   (struct stgcat_entry *) &stcp_input, /* stcp_input */
-							   (int *) &nstcp_output,   /* nstcp_output */
-							   (struct stgcat_entry **) &stcp_output, /* stcp_output */
-							   (int) 0,                       /* nstpp_input */
-							   (struct stgpath_entry *) NULL  /* stpp_input */
-				);
-          }
-          if ( rc == -1 ) {
-            save_serrno = serrno;
-            if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-            (void)CnsCleanup(&hsmfile);
-            serrno = save_serrno;
-            return(-1);
-          }
-          if ((nstcp_output != 1) || (stcp_output == NULL) || (*(stcp_output->ipath) == '\0')) {
-            /* Impossible */
-            save_serrno = SEINTERNAL;
-            if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
-            (void)CnsCleanup(&hsmfile);
-            serrno = save_serrno;
-            if (stcp_output != NULL) free(stcp_output);
-            return(-1);
-          }
-          strcpy(hsmfile->upath,stcp_output->ipath);
-          free(stcp_output);
-        }
-        if (mode64)
+	      if ((rc != 0) && (serrno == ERTLIMBYSZ)) {
+		/* It is by definition possible to have 'File limited by size' error on a recall */
+		/* where we specified the maximum number of files to transfer */
+		/* This is called by rfcp.c only btw */
+		rc = 0;
+	      }
+	    } else {
+	      rc = stage_out_hsm((u_signed64) 0,          /* Ebusy is possible... */
+				 (int) flags,             /* open flags */
+				 (mode_t) mode,           /* open mode (c.f. also umask) */
+				 (char *) NULL,           /* hostname */
+				 (char *) NULL,           /* pooluser */
+				 (int) 1,                 /* nstcp_input */
+				 (struct stgcat_entry *) &stcp_input, /* stcp_input */
+				 (int *) &nstcp_output,   /* nstcp_output */
+				 (struct stgcat_entry **) &stcp_output, /* stcp_output */
+				 (int) 0,                       /* nstpp_input */
+				 (struct stgpath_entry *) NULL  /* stpp_input */
+				 );
+	    }
+	    if ( rc == -1 ) {
+	      save_serrno = serrno;
+	      if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
+	      (void)CnsCleanup(&hsmfile);
+	      serrno = save_serrno;
+	      return(-1);
+	    }
+	    if ((nstcp_output != 1) || (stcp_output == NULL) || (*(stcp_output->ipath) == '\0')) {
+	      /* Impossible */
+	      save_serrno = SEINTERNAL;
+	      if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
+	      (void)CnsCleanup(&hsmfile);
+	      serrno = save_serrno;
+	      if (stcp_output != NULL) free(stcp_output);
+	      return(-1);
+	    }
+	    strcpy(hsmfile->upath,stcp_output->ipath);
+	    free(stcp_output);
+	  }
+	  if (mode64)
             rc = rfio_open64(hsmfile->upath,flags,mode);
-        else
+	  else
             rc = rfio_open(hsmfile->upath,flags,mode);
-        if ( rc == -1 ) {
+	  if ( rc == -1 ) {
             save_serrno = (rfio_errno > 0 ? rfio_errno : serrno);
             if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
             (void)CnsCleanup(&hsmfile);
             serrno = save_serrno;
             return(-1);
-        }
-        if ( AddCnsFileDescriptor(rc,flags,hsmfile) == -1 ) {
+	  }
+	  if ( AddCnsFileDescriptor(rc,flags,hsmfile) == -1 ) {
             save_serrno = serrno;
             if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
             (void)CnsCleanup(&hsmfile);
             rfio_close(rc);
             serrno = save_serrno;
             return(-1);
-        }
-        if ( st.filesize == 0 ) SetCnsWrittenTo(rc);
-        if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
+	  }
+	  if ( st.filesize == 0 ) SetCnsWrittenTo(rc);
+	  if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL);
 
-#endif /* NEW_STAGER_SUPPORT */
+	}
     }
 #endif /* CNS_ROOT */
     return(rc);
@@ -786,21 +823,23 @@ int DLL_DECL rfio_HsmIf_reqtoput(char *name) {
     int rc = -1;
     int save_serrno;
 #if defined(CNS_ROOT)
-#ifdef NEW_STAGER_SUPPORT
-    rc = 0;
-#else
-     stage_hsm_t hsmfile; 
-     void (*this_stglog) _PROTO((int, char *)) = NULL; 
-     if ((stage_getlog((void (**) _PROTO((int,char *))) &this_stglog) == 0) && (this_stglog == NULL)) { 
-         stage_setlog((void (*) _PROTO((int,char *)))&rfio_stglog); 
-     } 
-     memset(&hsmfile, 0, sizeof(stage_hsm_t)); 
-     hsmfile.upath = name; 
-     rc = stage_updc_user((char *) NULL, (stage_hsm_t *) &hsmfile); 
-     save_serrno = serrno; 
+    
+
+    if (getenv(OLD_STAGE_API) == NULL) {
+      rc = 0;
+    } else {
+      stage_hsm_t hsmfile; 
+      void (*this_stglog) _PROTO((int, char *)) = NULL; 
+      if ((stage_getlog((void (**) _PROTO((int,char *))) &this_stglog) == 0) && (this_stglog == NULL)) { 
+	stage_setlog((void (*) _PROTO((int,char *)))&rfio_stglog); 
+      } 
+      memset(&hsmfile, 0, sizeof(stage_hsm_t)); 
+      hsmfile.upath = name; 
+      rc = stage_updc_user((char *) NULL, (stage_hsm_t *) &hsmfile); 
+      save_serrno = serrno; 
      if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL); 
      serrno = save_serrno; 
-#endif /* NEW_STAGER_SUPPORT */
+    }
 #endif
     return(rc);
 }
@@ -1028,28 +1067,31 @@ int DLL_DECL rfio_HsmIf_FirstWrite(int fd, void *buffer, int size) {
         return (-1);
     }
 #if defined(CNS_ROOT)
-#ifdef NEW_STAGER_SUPPORT
-    rc = 0;
-#else    /*BC Not needed by the new stager anymore */
-    if ( GetCnsFileDescriptor(fd,&flags,&hsmfile,&written_to) < 0 ) 
-      return (-1); 
-    if ( (flags & (O_WRONLY|O_RDWR|O_APPEND)) == 0 ) { 
-      serrno = EBADF; 
-      return (-1); 
-    } 
-    if ( written_to ) 
-      return (0); 
-    if ((stage_getlog((void (**) _PROTO((int,char *))) &this_stglog) == 0) && (this_stglog == NULL)) { 
-      stage_setlog((void (*) _PROTO((int,char *)))&rfio_stglog); 
-    } 
-    rc = stage_updc_filchg((char *) NULL,(stage_hsm_t *) hsmfile); 
-    save_serrno = serrno; 
-    if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL); 
-    serrno = save_serrno; 
-    if ( rc == -1 ) return(-1); 
-    rc = SetCnsWrittenTo(fd); 
-    rc = 0;
-#endif /* NEW_STAGER_SUPPORT */
+
+    if (getenv(OLD_STAGE_API) == NULL) {
+      rc = 0;
+    } else {
+
+      /*BC Not needed by the new stager anymore */
+      if ( GetCnsFileDescriptor(fd,&flags,&hsmfile,&written_to) < 0 ) 
+	return (-1); 
+      if ( (flags & (O_WRONLY|O_RDWR|O_APPEND)) == 0 ) { 
+	serrno = EBADF; 
+	return (-1); 
+      } 
+      if ( written_to ) 
+	return (0); 
+      if ((stage_getlog((void (**) _PROTO((int,char *))) &this_stglog) == 0) && (this_stglog == NULL)) { 
+	stage_setlog((void (*) _PROTO((int,char *)))&rfio_stglog); 
+      } 
+      rc = stage_updc_filchg((char *) NULL,(stage_hsm_t *) hsmfile); 
+      save_serrno = serrno; 
+      if (this_stglog == NULL) stage_setlog((void (*) _PROTO((int,char *))) NULL); 
+      serrno = save_serrno; 
+      if ( rc == -1 ) return(-1); 
+      rc = SetCnsWrittenTo(fd); 
+      rc = 0;
+    }
 #endif /* CNS_ROOT */
     return(rc);
 }
