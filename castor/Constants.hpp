@@ -39,75 +39,75 @@ namespace castor {
    * Ids of objects. Each persistent or serializable type has one
    */
   enum ObjectsIds {
-    OBJ_INVALID,
-    OBJ_Ptr, // Only used for streaming for circular dependencies
-    OBJ_CastorFile,
-    OBJ_Client,
-    OBJ_Cuuid,
-    OBJ_DiskCopy,
-    OBJ_DiskFile,
-    OBJ_DiskPool,
-    OBJ_DiskServer,
-    OBJ_EndResponse,
-    OBJ_FileClass,
-    OBJ_FileResponse,
-    OBJ_FileSystem,
-    OBJ_IClient,
-    OBJ_MessageAck,
-    OBJ_ReqId,
-    OBJ_ReqIdRequest,
-    OBJ_Request,
-    OBJ_Segment,
-    OBJ_StageClrRequest,
-    OBJ_StageFilChgRequest,    
-    OBJ_StageGetNextRequest,    
-    OBJ_StageInRequest,
-    OBJ_StageOutRequest,
-    OBJ_StageQryRequest,
-    OBJ_StageUpdcRequest,
-    OBJ_Stream,
-    OBJ_SubRequest,
-    OBJ_SvcClass,
-    OBJ_Tape,
-    OBJ_TapeCopy,
-    OBJ_TapePool,
-    OBJ_StringResponse,
-    OBJ_StageFileQueryRequest,
-    OBJ_StageFindRequestRequest,
-    OBJ_StageGetRequest,
-    OBJ_StagePrepareToGetRequest,
-    OBJ_StagePrepareToPutRequest,
-    OBJ_StagePrepareToUpdateRequest,
-    OBJ_StagePutDoneRequest,
-    OBJ_StagePutRequest,
-    OBJ_StageRequestQueryRequest,
-    OBJ_StageRmRequest,
-    OBJ_StageUpdateFileStatusRequest,
-    OBJ_StageUpdateRequest
+    OBJ_INVALID = 0,
+    OBJ_Ptr = 1, // Only used for streaming for circular dependencies
+    OBJ_CastorFile = 2,
+    OBJ_Client = 3,
+    OBJ_Cuuid = 4,
+    OBJ_DiskCopy = 5,
+    OBJ_DiskFile = 6,
+    OBJ_DiskPool = 7,
+    OBJ_DiskServer = 8,
+    OBJ_EndResponse = 9,
+    OBJ_FileClass = 10,
+    OBJ_FileResponse = 11,
+    OBJ_FileSystem = 12,
+    OBJ_IClient = 13,
+    OBJ_MessageAck = 14,
+    OBJ_ReqId = 15,
+    OBJ_ReqIdRequest = 16,
+    OBJ_Request = 17,
+    OBJ_Segment = 18,
+    OBJ_StageClrRequest = 19,
+    OBJ_StageFilChgRequest = 20,    
+    OBJ_StageGetNextRequest = 21,    
+    OBJ_StageInRequest = 22,
+    OBJ_StageOutRequest = 23,
+    OBJ_StageQryRequest = 24,
+    OBJ_StageUpdcRequest = 25,
+    OBJ_Stream = 26,
+    OBJ_SubRequest = 27,
+    OBJ_SvcClass = 28,
+    OBJ_Tape = 29,
+    OBJ_TapeCopy = 30,
+    OBJ_TapePool = 31,
+    OBJ_StringResponse = 32,
+    OBJ_StageFileQueryRequest = 33,
+    OBJ_StageFindRequestRequest = 34,
+    OBJ_StageGetRequest = 35,
+    OBJ_StagePrepareToGetRequest = 36,
+    OBJ_StagePrepareToPutRequest = 37,
+    OBJ_StagePrepareToUpdateRequest = 38,
+    OBJ_StagePutDoneRequest = 39,
+    OBJ_StagePutRequest = 40,
+    OBJ_StageRequestQueryRequest = 41,
+    OBJ_StageRmRequest = 42,
+    OBJ_StageUpdateFileStatusRequest = 43,
+    OBJ_StageUpdateRequest = 44
   };
     
   /**
    * Ids of services
    */
   enum ServicesIds {
-    SVC_INVALID,
-    SVC_NOMSG,
-    SVC_DLFMSG,
-    SVC_STDMSG,
-    SVC_ORACNV,
-    SVC_ODBCCNV,
-    SVC_STREAMCNV,
-    SVC_ORASTAGERSVC
+    SVC_INVALID = 0,
+    SVC_NOMSG = 1,
+    SVC_DLFMSG = 2,
+    SVC_STDMSG = 3,
+    SVC_ORACNV = 4,
+    SVC_ODBCCNV = 5,
+    SVC_STREAMCNV = 6,
+    SVC_ORASTAGERSVC = 7
   };
 
   /**
    * Ids of persistent representations
    */
   enum RepresentationsIds {
-    REP_INVALID,
-    REP_ORACLE,
-    REP_ODBC,
-    REP_STREAM
+    REP_INVALID = 0,
+    REP_ORACLE = 1,
+    REP_ODBC = 2,
+    REP_STREAM = 3
   };
 
   /**
