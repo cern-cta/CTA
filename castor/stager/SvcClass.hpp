@@ -169,6 +169,26 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_defaultFileSize
+       * Default size used for space allocation in the case of a stage put with no size
+       * explicitely given (ie size given was 0)
+       * @return the value of m_defaultFileSize
+       */
+      u_signed64 defaultFileSize() const {
+        return m_defaultFileSize;
+      }
+
+      /**
+       * Set the value of m_defaultFileSize
+       * Default size used for space allocation in the case of a stage put with no size
+       * explicitely given (ie size given was 0)
+       * @param new_var the new value of m_defaultFileSize
+       */
+      void setDefaultFileSize(u_signed64 new_var) {
+        m_defaultFileSize = new_var;
+      }
+
+      /**
        * Add a TapePool* object to the m_tapePoolsVector list
        */
       void addTapePools(TapePool* add_object) {
@@ -240,6 +260,9 @@ namespace castor {
 
       /// the name of this SvcClass
       std::string m_name;
+
+      /// Default size used for space allocation in the case of a stage put with no size explicitely given (ie size given was 0)
+      u_signed64 m_defaultFileSize;
 
       /// The id of this object
       u_signed64 m_id;

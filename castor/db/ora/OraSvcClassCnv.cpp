@@ -56,7 +56,7 @@ const castor::ICnvFactory& OraSvcClassCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraSvcClassCnv::s_insertStatementString =
-"INSERT INTO SvcClass (policy, nbDrives, name, id) VALUES (:1,:2,:3,:4)";
+"INSERT INTO SvcClass (policy, nbDrives, name, defaultFileSize, id) VALUES (:1,:2,:3,:4,:5)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraSvcClassCnv::s_deleteStatementString =
@@ -64,11 +64,11 @@ const std::string castor::db::ora::OraSvcClassCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraSvcClassCnv::s_selectStatementString =
-"SELECT policy, nbDrives, name, id FROM SvcClass WHERE id = :1";
+"SELECT policy, nbDrives, name, defaultFileSize, id FROM SvcClass WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraSvcClassCnv::s_updateStatementString =
-"UPDATE SvcClass SET policy = :1, nbDrives = :2, name = :3 WHERE id = :4";
+"UPDATE SvcClass SET policy = :1, nbDrives = :2, name = :3, defaultFileSize = :4 WHERE id = :5";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraSvcClassCnv::s_storeTypeStatementString =
@@ -465,7 +465,8 @@ void castor::db::ora::OraSvcClassCnv::createRep(castor::IAddress* address,
     m_insertStatement->setString(1, obj->policy());
     m_insertStatement->setInt(2, obj->nbDrives());
     m_insertStatement->setString(3, obj->name());
-    m_insertStatement->setDouble(4, obj->id());
+    m_insertStatement->setDouble(4, obj->defaultFileSize());
+    m_insertStatement->setDouble(5, obj->id());
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -491,6 +492,7 @@ void castor::db::ora::OraSvcClassCnv::createRep(castor::IAddress* address,
                     << "  policy : " << obj->policy() << std::endl
                     << "  nbDrives : " << obj->nbDrives() << std::endl
                     << "  name : " << obj->name() << std::endl
+                    << "  defaultFileSize : " << obj->defaultFileSize() << std::endl
                     << "  id : " << obj->id() << std::endl;
     throw ex;
   }
@@ -516,7 +518,8 @@ void castor::db::ora::OraSvcClassCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setString(1, obj->policy());
     m_updateStatement->setInt(2, obj->nbDrives());
     m_updateStatement->setString(3, obj->name());
-    m_updateStatement->setDouble(4, obj->id());
+    m_updateStatement->setDouble(4, obj->defaultFileSize());
+    m_updateStatement->setDouble(5, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -618,7 +621,8 @@ castor::IObject* castor::db::ora::OraSvcClassCnv::createObj(castor::IAddress* ad
     object->setPolicy(rset->getString(1));
     object->setNbDrives(rset->getInt(2));
     object->setName(rset->getString(3));
-    object->setId((u_signed64)rset->getDouble(4));
+    object->setDefaultFileSize((u_signed64)rset->getDouble(4));
+    object->setId((u_signed64)rset->getDouble(5));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -667,7 +671,8 @@ void castor::db::ora::OraSvcClassCnv::updateObj(castor::IObject* obj)
     object->setPolicy(rset->getString(1));
     object->setNbDrives(rset->getInt(2));
     object->setName(rset->getString(3));
-    object->setId((u_signed64)rset->getDouble(4));
+    object->setDefaultFileSize((u_signed64)rset->getDouble(4));
+    object->setId((u_signed64)rset->getDouble(5));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

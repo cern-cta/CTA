@@ -166,6 +166,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_SvcClass_defaultFileSize
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_defaultFileSize(castor::stager::SvcClass* instance, u_signed64* var) {
+    *var = instance->defaultFileSize();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_setDefaultFileSize
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_setDefaultFileSize(castor::stager::SvcClass* instance, u_signed64 new_var) {
+    instance->setDefaultFileSize(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_SvcClass_addTapePools
   //----------------------------------------------------------------------------
   int Cstager_SvcClass_addTapePools(castor::stager::SvcClass* instance, castor::stager::TapePool* obj) {

@@ -138,6 +138,20 @@ int Cstager_SvcClass_name(struct Cstager_SvcClass_t* instance, const char** var)
 int Cstager_SvcClass_setName(struct Cstager_SvcClass_t* instance, const char* new_var);
 
 /**
+ * Get the value of defaultFileSize
+ * Default size used for space allocation in the case of a stage put with no size
+ * explicitely given (ie size given was 0)
+ */
+int Cstager_SvcClass_defaultFileSize(struct Cstager_SvcClass_t* instance, u_signed64* var);
+
+/**
+ * Set the value of defaultFileSize
+ * Default size used for space allocation in the case of a stage put with no size
+ * explicitely given (ie size given was 0)
+ */
+int Cstager_SvcClass_setDefaultFileSize(struct Cstager_SvcClass_t* instance, u_signed64 new_var);
+
+/**
  * Add a struct Cstager_TapePool_t* object to the tapePools list
  */
 int Cstager_SvcClass_addTapePools(struct Cstager_SvcClass_t* instance, struct Cstager_TapePool_t* obj);

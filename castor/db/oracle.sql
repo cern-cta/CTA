@@ -146,7 +146,7 @@ CREATE TABLE FileSystem (free INTEGER, weight float, fsDeviation float, mountPoi
 
 /* SQL statements for type SvcClass */
 DROP TABLE SvcClass;
-CREATE TABLE SvcClass (policy VARCHAR(2048), nbDrives NUMBER, name VARCHAR(2048), id INTEGER PRIMARY KEY);
+CREATE TABLE SvcClass (policy VARCHAR(2048), nbDrives NUMBER, name VARCHAR(2048), defaultFileSize INTEGER, id INTEGER PRIMARY KEY);
 DROP INDEX I_SvcClass2TapePool_Child;
 DROP INDEX I_SvcClass2TapePool_Parent;
 DROP TABLE SvcClass2TapePool;

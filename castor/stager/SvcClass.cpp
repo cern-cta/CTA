@@ -43,6 +43,7 @@ castor::stager::SvcClass::SvcClass() throw() :
   m_policy(""),
   m_nbDrives(0),
   m_name(""),
+  m_defaultFileSize(),
   m_id() {
 };
 
@@ -76,6 +77,7 @@ void castor::stager::SvcClass::print(std::ostream& stream,
   stream << indent << "policy : " << m_policy << std::endl;
   stream << indent << "nbDrives : " << m_nbDrives << std::endl;
   stream << indent << "name : " << m_name << std::endl;
+  stream << indent << "defaultFileSize : " << m_defaultFileSize << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {
