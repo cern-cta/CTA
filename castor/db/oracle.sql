@@ -59,6 +59,10 @@ CREATE TABLE rh_ReqId (value VARCHAR(255), id INTEGER PRIMARY KEY, request INTEG
 DROP TABLE rh_SubRequest;
 CREATE TABLE rh_SubRequest (retryCounter NUMBER, fileName VARCHAR(255), protocol VARCHAR(255), poolName VARCHAR(255), xsize INTEGER, priority NUMBER, id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, request INTEGER, status INTEGER);
 
+/* SQL statements for type StageGetNextRequest */
+DROP TABLE rh_StageGetNextRequest;
+CREATE TABLE rh_StageGetNextRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, parent INTEGER, client INTEGER, parent INTEGER);
+
 /* SQL statements for type StageUpdcRequest */
 DROP TABLE rh_StageUpdcRequest;
 CREATE TABLE rh_StageUpdcRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
