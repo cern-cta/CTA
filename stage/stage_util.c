@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.11 2001/12/20 11:45:39 jdurand Exp $
+ * $Id: stage_util.c,v 1.12 2002/01/15 08:47:46 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -9,8 +9,8 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
+#include <time.h>
 #ifndef _WIN32
-#include <sys/time.h>
 #include <unistd.h>
 #else
 #include <winsock2.h>
@@ -18,8 +18,7 @@
 #include "osdep.h"
 #include "u64subr.h"
 #include "serrno.h"
-#include "stage_struct.h"
-#include "stage_messages.h"
+#include "stage_api.h"
 
 #ifdef __STDC__
 #define NAMEOFVAR(x) #x
