@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.23 $ $Date: 2001/10/01 05:57:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.24 $ $Date: 2002/02/07 06:11:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -149,6 +149,26 @@ vmgr_dbrec_addr *rec_addr;
 	return (0);
 }
 
+vmgr_delete_side_entry(dbfd, rec_addr)
+struct vmgr_dbfd *dbfd;
+vmgr_dbrec_addr *rec_addr;
+{
+	char func[23];
+	char rowid_value[19];
+	struct sqlca sqlca;
+
+	strcpy (func, "vmgr_delete_side_entry");
+	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+	EXEC SQL DELETE FROM vmgr_tape_side WHERE ROWID = :rowid_value;
+	if (sqlca.sqlcode) {
+		vmgrlogit (func, "DELETE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		return (-1);
+	}
+	return (0);
+}
+
 vmgr_delete_tape_entry(dbfd, rec_addr)
 struct vmgr_dbfd *dbfd;
 vmgr_dbrec_addr *rec_addr;
@@ -244,9 +264,10 @@ vmgr_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-vmgr_get_dgnmap_entry(dbfd, dgn, dgnmap_entry, lock, rec_addr)
+vmgr_get_dgnmap_entry(dbfd, model, library, dgnmap_entry, lock, rec_addr)
 struct vmgr_dbfd *dbfd;
-char *dgn;
+char *model;
+char *library;
 struct vmgr_tape_dgnmap *dgnmap_entry;
 int lock;
 vmgr_dbrec_addr *rec_addr;
@@ -258,12 +279,12 @@ vmgr_dbrec_addr *rec_addr;
 		SELECT
 		 DGN, MODEL, LIBRARY
 		FROM vmgr_tape_dgnmap
-		WHERE dgn = :dgn;
+		WHERE model = :model AND library = :library;
 	EXEC SQL DECLARE dgnmap_cursor4upd CURSOR FOR
 		SELECT ROWID,
 		 DGN, MODEL, LIBRARY
 		FROM vmgr_tape_dgnmap
-		WHERE dgn = :dgn
+		WHERE model = :model AND library = :library
 		FOR UPDATE;
 
 	strcpy (func, "vmgr_get_dgnmap_entry");
@@ -504,68 +525,55 @@ vmgr_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-vmgr_get_tape_by_vid(dbfd, vid, tape_entry, lock, rec_addr)
+vmgr_get_side_by_fullid (dbfd, vid, side, side_entry, lock, rec_addr)
 struct vmgr_dbfd *dbfd;
 char *vid;
-struct vmgr_tape_info *tape_entry;
+int side;
+struct vmgr_tape_side *side_entry;
 int lock;
 vmgr_dbrec_addr *rec_addr;
 {
-	char func[21];
-	short mf_ind;	/* indicator variable for manufacturer column */
+	char func[24];
 	char rowid_value[19];
-	short sn_ind;	/* indicator variable for sn column */
 	struct sqlca sqlca;
-	EXEC SQL DECLARE tape_vid_cursor CURSOR FOR
+	EXEC SQL DECLARE side_fullid_cursor CURSOR FOR
 		SELECT
-		 VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
-		 MANUFACTURER, SN, POOLNAME, ESTIMATED_FREE_SPACE,
-		 NBFILES, RCOUNT, WCOUNT, RTIME, WTIME, STATUS
-		FROM vmgr_tape_info
-		WHERE vid = :vid;
-	EXEC SQL DECLARE tape_vid_cursor4upd CURSOR FOR
+		 VID, SIDE, POOLNAME, STATUS, ESTIMATED_FREE_SPACE, NBFILES
+		FROM vmgr_tape_side
+		WHERE vid = :vid AND side = :side;
+	EXEC SQL DECLARE side_fullid_cursor4upd CURSOR FOR
 		SELECT ROWID,
-		 VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
-		 MANUFACTURER, SN, POOLNAME, ESTIMATED_FREE_SPACE,
-		 NBFILES, RCOUNT, WCOUNT, RTIME, WTIME, STATUS
-		FROM vmgr_tape_info
-		WHERE vid = :vid
+		 VID, SIDE, POOLNAME, STATUS, ESTIMATED_FREE_SPACE, NBFILES
+		FROM vmgr_tape_side
+		WHERE vid = :vid AND side = :side
 		FOR UPDATE;
 
-	strcpy (func, "vmgr_get_tape_by_vid");
+	strcpy (func, "vmgr_get_side_by_fullid");
 	if (lock) {
-		EXEC SQL OPEN tape_vid_cursor4upd;
+		EXEC SQL OPEN side_fullid_cursor4upd;
 		if (sqlca.sqlcode) {
 			vmgrlogit (func, "OPEN CURSOR error: %.*s\n",
 			    sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
 			serrno = SEINTERNAL;
 			return (-1);
 		}
-		EXEC SQL FETCH tape_vid_cursor4upd INTO
+		EXEC SQL FETCH side_fullid_cursor4upd INTO
 		 :rowid_value,
-		 :tape_entry->vid, :tape_entry->vsn, :tape_entry->dgn,
-		 :tape_entry->density, :tape_entry->lbltype, :tape_entry->model,
-		 :tape_entry->media_letter, :tape_entry->manufacturer:mf_ind,
-		 :tape_entry->sn:sn_ind, :tape_entry->poolname,
-		 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
-		 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rtime,
-		 :tape_entry->wtime, :tape_entry->status;
+		 :side_entry->vid, :side_entry->side, :side_entry->poolname,
+		 :side_entry->status, :side_entry->estimated_free_space,
+		 :side_entry->nbfiles;
 	} else {
-		EXEC SQL OPEN tape_vid_cursor;
+		EXEC SQL OPEN side_fullid_cursor;
 		if (sqlca.sqlcode) {
 			vmgrlogit (func, "OPEN CURSOR error: %.*s\n",
 			    sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
 			serrno = SEINTERNAL;
 			return (-1);
 		}
-		EXEC SQL FETCH tape_vid_cursor INTO
-		 :tape_entry->vid, :tape_entry->vsn, :tape_entry->dgn,
-		 :tape_entry->density, :tape_entry->lbltype, :tape_entry->model,
-		 :tape_entry->media_letter, :tape_entry->manufacturer:mf_ind,
-		 :tape_entry->sn:sn_ind, :tape_entry->poolname,
-		 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
-		 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rtime,
-		 :tape_entry->wtime, :tape_entry->status;
+		EXEC SQL FETCH side_fullid_cursor INTO
+		 :side_entry->vid, :side_entry->side, :side_entry->poolname,
+		 :side_entry->status, :side_entry->estimated_free_space,
+		 :side_entry->nbfiles;
 	}
 	switch (sqlca.sqlcode) {
 	case 0:
@@ -583,29 +591,104 @@ vmgr_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-vmgr_get_tape_by_size(dbfd, poolname, Size, tape_entry, lock, rec_addr)
+vmgr_get_tape_by_vid(dbfd, vid, tape_entry, lock, rec_addr)
 struct vmgr_dbfd *dbfd;
-char *poolname;
-u_signed64 Size;
+char *vid;
 struct vmgr_tape_info *tape_entry;
 int lock;
 vmgr_dbrec_addr *rec_addr;
 {
-	char func[22];
+	char func[21];
 	short mf_ind;	/* indicator variable for manufacturer column */
-	int reqsize = (Size + 1023) / 1024;
 	char rowid_value[19];
 	short sn_ind;	/* indicator variable for sn column */
 	struct sqlca sqlca;
+	EXEC SQL DECLARE tape_vid_cursor CURSOR FOR
+		SELECT
+		 VID, VSN, LIBRARY, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
+		 MANUFACTURER, SN, NBSIDES, ETIME, RCOUNT, WCOUNT, RHOST, WHOST,
+		 RJID, WJID, RTIME, WTIME
+		FROM vmgr_tape_info
+		WHERE vid = :vid;
+	EXEC SQL DECLARE tape_vid_cursor4upd CURSOR FOR
+		SELECT ROWID,
+		 VID, VSN, LIBRARY, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
+		 MANUFACTURER, SN, NBSIDES, ETIME, RCOUNT, WCOUNT, RHOST, WHOST,
+		 RJID, WJID, RTIME, WTIME
+		FROM vmgr_tape_info
+		WHERE vid = :vid
+		FOR UPDATE;
+
+	strcpy (func, "vmgr_get_tape_by_vid");
+	if (lock) {
+		EXEC SQL OPEN tape_vid_cursor4upd;
+		if (sqlca.sqlcode) {
+			vmgrlogit (func, "OPEN CURSOR error: %.*s\n",
+			    sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+			serrno = SEINTERNAL;
+			return (-1);
+		}
+		EXEC SQL FETCH tape_vid_cursor4upd INTO
+		 :rowid_value,
+		 :tape_entry->vid, :tape_entry->vsn, :tape_entry->library,
+		 :tape_entry->density, :tape_entry->lbltype, :tape_entry->model,
+		 :tape_entry->media_letter, :tape_entry->manufacturer:mf_ind,
+		 :tape_entry->sn:sn_ind, :tape_entry->nbsides, :tape_entry->etime,
+		 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rhost,
+		 :tape_entry->whost, :tape_entry->rjid, :tape_entry->wjid,
+		 :tape_entry->rtime, :tape_entry->wtime;
+	} else {
+		EXEC SQL OPEN tape_vid_cursor;
+		if (sqlca.sqlcode) {
+			vmgrlogit (func, "OPEN CURSOR error: %.*s\n",
+			    sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+			serrno = SEINTERNAL;
+			return (-1);
+		}
+		EXEC SQL FETCH tape_vid_cursor INTO
+		 :tape_entry->vid, :tape_entry->vsn, :tape_entry->library,
+		 :tape_entry->density, :tape_entry->lbltype, :tape_entry->model,
+		 :tape_entry->media_letter, :tape_entry->manufacturer:mf_ind,
+		 :tape_entry->sn:sn_ind, :tape_entry->nbsides, :tape_entry->etime,
+		 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rhost,
+		 :tape_entry->whost, :tape_entry->rjid, :tape_entry->wjid,
+		 :tape_entry->rtime, :tape_entry->wtime;
+	}
+	switch (sqlca.sqlcode) {
+	case 0:
+		if (lock)
+			memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+		return (0);
+	case 1403:
+		serrno = ENOENT;
+		break;
+	default:
+		vmgrlogit (func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+	}
+	return (-1);
+}
+
+vmgr_get_side_by_size(dbfd, poolname, Size, side_entry, lock, rec_addr)
+struct vmgr_dbfd *dbfd;
+char *poolname;
+u_signed64 Size;
+struct vmgr_tape_side *side_entry;
+int lock;
+vmgr_dbrec_addr *rec_addr;
+{
+	char func[22];
+	int reqsize = (Size + 1023) / 1024;
+	char rowid_value[19];
+	struct sqlca sqlca;
 	EXEC SQL DECLARE tape_size_cursor4upd CURSOR FOR
 		SELECT ROWID,
-		 VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
-		 MANUFACTURER, SN, POOLNAME, ESTIMATED_FREE_SPACE,
-		 NBFILES, RCOUNT, WCOUNT, RTIME, WTIME, STATUS
-		FROM vmgr_tape_info
+		 VID, SIDE, POOLNAME, STATUS, ESTIMATED_FREE_SPACE, NBFILES
+		FROM vmgr_tape_side
 		WHERE estimated_free_space =
 			(SELECT min(estimated_free_space)
-			FROM vmgr_tape_info
+			FROM vmgr_tape_side
 			WHERE poolname = :poolname AND status = 0 AND
 			 estimated_free_space >= :reqsize)
 		AND poolname = :poolname AND status = 0
@@ -613,13 +696,11 @@ vmgr_dbrec_addr *rec_addr;
 		FOR UPDATE;
 	EXEC SQL DECLARE tape_maxsize_cursor4upd CURSOR FOR
 		SELECT ROWID,
-		 VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
-		 MANUFACTURER, SN, POOLNAME, ESTIMATED_FREE_SPACE,
-		 NBFILES, RCOUNT, WCOUNT, RTIME, WTIME, STATUS
-		FROM vmgr_tape_info
+		 VID, SIDE, POOLNAME, STATUS, ESTIMATED_FREE_SPACE, NBFILES
+		FROM vmgr_tape_side
 		WHERE estimated_free_space =
 			(SELECT max(estimated_free_space)
-			FROM vmgr_tape_info
+			FROM vmgr_tape_side
 			WHERE poolname = :poolname AND status = 0)
 		AND poolname = :poolname AND status = 0
 		AND ROWNUM < 2
@@ -635,13 +716,9 @@ vmgr_dbrec_addr *rec_addr;
 	}
 	EXEC SQL FETCH tape_size_cursor4upd INTO
 	 :rowid_value,
-	 :tape_entry->vid, :tape_entry->vsn, :tape_entry->dgn,
-	 :tape_entry->density, :tape_entry->lbltype, :tape_entry->model,
-	 :tape_entry->media_letter, :tape_entry->manufacturer:mf_ind,
-	 :tape_entry->sn:sn_ind, :tape_entry->poolname,
-	 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
-	 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rtime,
-	 :tape_entry->wtime, :tape_entry->status;
+	 :side_entry->vid, :side_entry->side, :side_entry->poolname,
+	 :side_entry->status, :side_entry->estimated_free_space,
+	 :side_entry->nbfiles;
 	if (sqlca.sqlcode == 1403) {
 		EXEC SQL OPEN tape_maxsize_cursor4upd;
 		if (sqlca.sqlcode) {
@@ -652,13 +729,9 @@ vmgr_dbrec_addr *rec_addr;
 		}
 		EXEC SQL FETCH tape_maxsize_cursor4upd INTO
 		 :rowid_value,
-		 :tape_entry->vid, :tape_entry->vsn, :tape_entry->dgn,
-		 :tape_entry->density, :tape_entry->lbltype, :tape_entry->model,
-		 :tape_entry->media_letter, :tape_entry->manufacturer:mf_ind,
-		 :tape_entry->sn:sn_ind, :tape_entry->poolname,
-		 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
-		 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rtime,
-		 :tape_entry->wtime, :tape_entry->status;
+		 :side_entry->vid, :side_entry->side, :side_entry->poolname,
+		 :side_entry->status, :side_entry->estimated_free_space,
+		 :side_entry->nbfiles;
 	}
 	switch (sqlca.sqlcode) {
 	case 0:
@@ -835,6 +908,38 @@ struct vmgr_tape_pool *pool_entry;
 	return (-1);
 }
 
+vmgr_insert_side_entry(dbfd, side_entry)
+struct vmgr_dbfd *dbfd;
+struct vmgr_tape_side *side_entry;
+{
+	char func[23];
+	struct sqlca sqlca;
+
+	strcpy (func, "vmgr_insert_side_entry");
+	EXEC SQL INSERT INTO vmgr_tape_side
+		(VID, SIDE, POOLNAME, STATUS, ESTIMATED_FREE_SPACE, NBFILES)
+		VALUES
+		(:side_entry->vid, :side_entry->side, :side_entry->poolname,
+		 :side_entry->status, :side_entry->estimated_free_space,
+		 :side_entry->nbfiles);
+	switch (sqlca.sqlcode) {
+	case 0:
+		return (0);
+	case -1:
+		serrno = EEXIST;
+		break;
+	case -1631:
+	case -1632:
+		serrno = ENOSPC;
+		break;
+	default:
+		vmgrlogit (func, "INSERT error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+	}
+	return (-1);
+}
+
 vmgr_insert_tape_entry(dbfd, tape_entry)
 struct vmgr_dbfd *dbfd;
 struct vmgr_tape_info *tape_entry;
@@ -844,17 +949,17 @@ struct vmgr_tape_info *tape_entry;
 
 	strcpy (func, "vmgr_insert_tape_entry");
 	EXEC SQL INSERT INTO vmgr_tape_info
-		(VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
-		 MANUFACTURER, SN, POOLNAME, ESTIMATED_FREE_SPACE,
-		 NBFILES, RCOUNT, WCOUNT, RTIME, WTIME, STATUS)
+		(VID, VSN, LIBRARY, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
+		 MANUFACTURER, SN, NBSIDES, ETIME, RCOUNT, WCOUNT, RHOST, WHOST,
+		 RJID, WJID, RTIME, WTIME)
 		VALUES
-		(:tape_entry->vid, :tape_entry->vsn, :tape_entry->dgn,
+		(:tape_entry->vid, :tape_entry->vsn, :tape_entry->library,
 		 :tape_entry->density, :tape_entry->lbltype, :tape_entry->model,
 		 :tape_entry->media_letter, :tape_entry->manufacturer,
-		 :tape_entry->sn, :tape_entry->poolname,
-		 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
-		 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rtime,
-		 :tape_entry->wtime, :tape_entry->status);
+		 :tape_entry->sn, :tape_entry->nbsides, :tape_entry->etime,
+		 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rhost,
+		 :tape_entry->whost, :tape_entry->rjid, :tape_entry->wjid,
+		 :tape_entry->rtime, :tape_entry->wtime);
 	switch (sqlca.sqlcode) {
 	case 0:
 		return (0);
@@ -1072,34 +1177,49 @@ struct vmgr_tape_pool *pool_entry;
 	}
 }
 
-vmgr_list_tape_entry(dbfd, bol, pool_name, tape_entry)
+vmgr_list_side_entry(dbfd, bol, vid, pool_name, side_entry)
 struct vmgr_dbfd *dbfd;
 int bol;
+char *vid;
 char *pool_name;
-struct vmgr_tape_info *tape_entry;
+struct vmgr_tape_side *side_entry;
 {
 	char func[21];
-	short mf_ind;	/* indicator variable for manufacturer column */
-	short sn_ind;	/* indicator variable for sn column */
 	struct sqlca sqlca;
 	EXEC SQL DECLARE list_tape_cursor CURSOR FOR
 		SELECT
-		 VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
-		 MANUFACTURER, SN, POOLNAME, ESTIMATED_FREE_SPACE,
-		 NBFILES, RCOUNT, WCOUNT, RTIME, WTIME, STATUS
-		FROM vmgr_tape_info
-		ORDER BY vid;
+		 VID, SIDE, POOLNAME, STATUS, ESTIMATED_FREE_SPACE, NBFILES
+		FROM vmgr_tape_side
+		ORDER BY vid, side;
 	EXEC SQL DECLARE list_tape_in_pool_cursor CURSOR FOR
 		SELECT
-		 VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
-		 MANUFACTURER, SN, POOLNAME, ESTIMATED_FREE_SPACE,
-		 NBFILES, RCOUNT, WCOUNT, RTIME, WTIME, STATUS
-		FROM vmgr_tape_info
+		 VID, SIDE, POOLNAME, STATUS, ESTIMATED_FREE_SPACE, NBFILES
+		FROM vmgr_tape_side
 		WHERE poolname = :pool_name
-		ORDER BY vid;
+		ORDER BY vid, side;
+	EXEC SQL DECLARE list_vid_cursor CURSOR FOR
+		SELECT
+		 VID, SIDE, POOLNAME, STATUS, ESTIMATED_FREE_SPACE, NBFILES
+		FROM vmgr_tape_side
+		WHERE vid = :vid
+		ORDER BY side;
 
-	strcpy (func, "vmgr_list_tape_entry");
-	if (*pool_name) {
+	strcpy (func, "vmgr_list_side_entry");
+	if (*vid) {
+		if (bol) {
+			EXEC SQL OPEN list_vid_cursor;
+			if (sqlca.sqlcode) {
+				vmgrlogit (func, "OPEN CURSOR error: %.*s\n",
+				    sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+				serrno = SEINTERNAL;
+				return (-1);
+			}
+		}
+		EXEC SQL FETCH list_vid_cursor INTO
+		 :side_entry->vid, :side_entry->side, :side_entry->poolname,
+		 :side_entry->status, :side_entry->estimated_free_space,
+		 :side_entry->nbfiles;
+	} else if (*pool_name) {
 		if (bol) {
 			EXEC SQL OPEN list_tape_in_pool_cursor;
 			if (sqlca.sqlcode) {
@@ -1110,13 +1230,9 @@ struct vmgr_tape_info *tape_entry;
 			}
 		}
 		EXEC SQL FETCH list_tape_in_pool_cursor INTO
-		 :tape_entry->vid, :tape_entry->vsn, :tape_entry->dgn,
-		 :tape_entry->density, :tape_entry->lbltype, :tape_entry->model,
-		 :tape_entry->media_letter, :tape_entry->manufacturer:mf_ind,
-		 :tape_entry->sn:sn_ind, :tape_entry->poolname,
-		 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
-		 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rtime,
-		 :tape_entry->wtime, :tape_entry->status;
+		 :side_entry->vid, :side_entry->side, :side_entry->poolname,
+		 :side_entry->status, :side_entry->estimated_free_space,
+		 :side_entry->nbfiles;
 	} else {
 		if (bol) {
 			EXEC SQL OPEN list_tape_cursor;
@@ -1128,19 +1244,19 @@ struct vmgr_tape_info *tape_entry;
 			}
 		}
 		EXEC SQL FETCH list_tape_cursor INTO
-		 :tape_entry->vid, :tape_entry->vsn, :tape_entry->dgn,
-		 :tape_entry->density, :tape_entry->lbltype, :tape_entry->model,
-		 :tape_entry->media_letter, :tape_entry->manufacturer:mf_ind,
-		 :tape_entry->sn:sn_ind, :tape_entry->poolname,
-		 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
-		 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rtime,
-		 :tape_entry->wtime, :tape_entry->status;
+		 :side_entry->vid, :side_entry->side, :side_entry->poolname,
+		 :side_entry->status, :side_entry->estimated_free_space,
+		 :side_entry->nbfiles;
 	}
 	switch (sqlca.sqlcode) {
 	case 0:
 		return (0);
 	case 1403:
-		return (1);
+		if (*vid && bol) {
+			serrno = ENOENT;
+			return (-1);
+		} else
+			return (1);
 	default:
 		vmgrlogit (func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
 		    sqlca.sqlerrm.sqlerrmc);
@@ -1263,6 +1379,32 @@ struct vmgr_tape_pool *pool_entry;
 	return (0);
 }
 
+vmgr_update_side_entry(dbfd, rec_addr, side_entry)
+struct vmgr_dbfd *dbfd;
+vmgr_dbrec_addr *rec_addr;
+struct vmgr_tape_side *side_entry;
+{
+	char func[23];
+	char rowid_value[19];
+	struct sqlca sqlca;
+
+	strcpy (func, "vmgr_update_side_entry");
+	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+	EXEC SQL UPDATE vmgr_tape_side SET
+		POOLNAME = :side_entry->poolname,
+		STATUS = :side_entry->status,
+		ESTIMATED_FREE_SPACE = :side_entry->estimated_free_space,
+		NBFILES = :side_entry->nbfiles
+		WHERE ROWID = :rowid_value;
+	if (sqlca.sqlcode) {
+		vmgrlogit (func, "UPDATE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		return (-1);
+	}
+	return (0);
+}
+
 vmgr_update_tape_entry(dbfd, rec_addr, tape_entry)
 struct vmgr_dbfd *dbfd;
 vmgr_dbrec_addr *rec_addr;
@@ -1276,21 +1418,23 @@ struct vmgr_tape_info *tape_entry;
 	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
 	EXEC SQL UPDATE vmgr_tape_info SET
 		VSN = :tape_entry->vsn,
-		DGN = :tape_entry->dgn,
+		LIBRARY = :tape_entry->library,
 		DENSITY = :tape_entry->density,
 		LBLTYPE = :tape_entry->lbltype,
 		MODEL = :tape_entry->model,
 		MEDIA_LETTER = :tape_entry->media_letter,
 		MANUFACTURER = :tape_entry->manufacturer,
 		SN = :tape_entry->sn,
-		POOLNAME = :tape_entry->poolname,
-		ESTIMATED_FREE_SPACE = :tape_entry->estimated_free_space,
-		NBFILES = :tape_entry->nbfiles,
+		NBSIDES = :tape_entry->nbsides,
+		ETIME = :tape_entry->etime,
 		RCOUNT = :tape_entry->rcount,
 		WCOUNT = :tape_entry->wcount,
+		RHOST = :tape_entry->rhost,
+		WHOST = :tape_entry->whost,
+		RJID = :tape_entry->rjid,
+		WJID = :tape_entry->wjid,
 		RTIME = :tape_entry->rtime,
-		WTIME = :tape_entry->wtime,
-		STATUS = :tape_entry->status
+		WTIME = :tape_entry->wtime
 		WHERE ROWID = :rowid_value;
 	if (sqlca.sqlcode) {
 		vmgrlogit (func, "UPDATE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
