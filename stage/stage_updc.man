@@ -1,10 +1,10 @@
-.\" $Id: stage_updc.man,v 1.3 2000/05/15 13:14:14 jdurand Exp $
+.\" $Id: stage_updc.man,v 1.4 2000/05/15 13:16:52 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_updc.man,v $ $Revision: 1.3 $ $Date: 2000/05/15 13:14:14 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_updc.man,v $ $Revision: 1.4 $ $Date: 2000/05/15 13:16:52 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGE_UPDC "3" "$Date: 2000/05/15 13:14:14 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_UPDC "3" "$Date: 2000/05/15 13:16:52 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_updc \- update the stager catalog
 .SH SYNOPSIS
@@ -28,7 +28,7 @@ is over.
 .BI "char *" stageid
 Gives the global stageid. This parameters is in the form: reqid.key@stagehost
 .TP
-.BI "int status"
+.BI "int " status
 Exit code for the file stage subrequest. It is used in \fBstage_updc_tppos\fP only if its value is \fBETFSQ\fP.
 .TP
 .BI "char *" ifce
