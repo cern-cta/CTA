@@ -62,14 +62,56 @@ extern "C" {
 // String constants
 //------------------------------------------------------------------------------
 const char *castor::client::HOST_ENV_ALT = "STAGE_HOST";
-const char *castor::client::HOST_ENV = "RH_HOST";
+const char *castor::client::HOST_ENV = "STAGER_HOST";
 const char *castor::client::PORT_ENV_ALT = "STAGE_PORT";
-const char *castor::client::PORT_ENV = "RH_PORT";
-const char *castor::client::CATEGORY_CONF = "RH";
+const char *castor::client::PORT_ENV = "STAGER_PORT";
+const char *castor::client::CATEGORY_CONF = "STAGER";
 const char *castor::client::HOST_CONF = "HOST";
 const char *castor::client::PORT_CONF = "PORT";
 const char *castor::client::STAGE_EUID = "STAGE_EUID";
 const char *castor::client::STAGE_EGID = "STAGE_EGID";
+
+//------------------------------------------------------------------------------
+// Timing utility
+//------------------------------------------------------------------------------
+
+#ifdef SIXMONTHS
+#undef SIXMONTHS
+#endif
+#define SIXMONTHS (6*30*24*60*60)
+
+
+#if defined(_WIN32)
+static char strftime_format_sixmonthsold[] = "%b %d %Y";
+static char strftime_format[] = "%b %d %H:%M:%S";
+#else /* _WIN32 */
+static char strftime_format_sixmonthsold[] = "%b %e %Y";
+static char strftime_format[] = "%b %e %H:%M:%S";
+#endif /* _WIN32 */
+
+void DLL_DECL BaseClient_util_time(time_t then, char *timestr) {
+  time_t this_time = time(NULL);
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+  struct tm tmstruc;
+#endif /* _REENTRANT || _THREAD_SAFE */
+  struct tm *tp;
+  
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+  localtime_r(&(then),&tmstruc);
+  tp = &tmstruc;
+#else
+  tp = localtime(&(then));
+#endif /* _REENTRANT || _THREAD_SAFE */
+  if ((this_time >= then) && ((this_time - then) > SIXMONTHS)) {
+    /* Too much in past */
+    strftime(timestr,64,strftime_format_sixmonthsold,tp);
+  } else if ((this_time < then) && ((then - this_time) > SIXMONTHS)) {
+    /* Too much in feature...! */
+    strftime(timestr,64,strftime_format_sixmonthsold,tp);
+  } else {
+    strftime(timestr,64,strftime_format,tp);
+  }
+}
 
 
 //------------------------------------------------------------------------------
@@ -298,6 +340,11 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
   throw (castor::exception::Exception) {
   std::string requestId;
 
+  // Tracing the submit time
+  char timestr[64];
+  time_t now = time(NULL);
+  BaseClient_util_time(now, timestr);
+  stage_trace(3, "%s (%u) Sending request", timestr, now);
   // preparing the timing information
   struct tms buf;
   clock_t startTime = times(&buf);
