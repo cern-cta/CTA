@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.30 2002/04/30 13:07:13 jdurand Exp $
+ * $Id: stageclr.c,v 1.31 2002/05/23 10:24:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.30 $ $Date: 2002/04/30 13:07:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.31 $ $Date: 2002/05/23 10:24:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -42,6 +42,7 @@ void usage _PROTO((char *));
 
 int reqid_flag = 0;
 int side_flag = 0;
+int nodisk_flag = 0;
 
 int main(argc, argv)
 		 int	argc;
@@ -97,6 +98,7 @@ int main(argc, argv)
 		{"poolname",           REQUIRED_ARGUMENT,  NULL,      'p'},
 		{"file_sequence",      REQUIRED_ARGUMENT,  NULL,      'q'},
 		{"file_range",         REQUIRED_ARGUMENT,  NULL,      'Q'},
+		{"nodisk",             NO_ARGUMENT,      &nodisk_flag,  1},
 		{"r",                  REQUIRED_ARGUMENT,  NULL,      'r'},
 		{"reqid",              REQUIRED_ARGUMENT, &reqid_flag,  1},
 		{"side",               REQUIRED_ARGUMENT, &side_flag,   1},
@@ -392,9 +394,10 @@ void usage(cmd)
 		 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
-	fprintf (stderr, "%s%s%s%s",
-					 "[-c] [-h stage_host] [-F] [-G] [-I external_filename] [-i] [-L link]\n",
-					 "[-l label_type] [-M hsmfile] [-m minfree] [-P path] [-p pool]\n",
-					 "[-q file_sequence_number] [-Q file_sequence_range]\n",
-					 "[-remove_from_hsm] [--reqid reqid] [-V visual_identifier(s)] [--side sidenumber]\n");
+	fprintf (stderr, "%s",
+			 "[-c] [-h stage_host] [-F] [-G] [-I external_filename] [-i] [-L link]\n"
+			 "[-l label_type] [-M hsmfile] [-m minfree] [-P path] [-p pool]\n"
+			 "[-q file_sequence_number] [-Q file_sequence_range]\n"
+			 "[--nodisk]\n"
+			 "[-remove_from_hsm] [--reqid reqid] [-V visual_identifier(s)] [--side sidenumber]\n");
 }
