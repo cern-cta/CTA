@@ -1,6 +1,6 @@
-.\"   $Id: Cmutex.man,v 1.5 2002/01/09 10:07:03 jdurand Exp $
+.\"   $Id: Cmutex.man,v 1.6 2002/01/09 13:25:25 jdurand Exp $
 .\"
-.TH CMUTEX "3" "$Date: 2002/01/09 10:07:03 $" "CASTOR" "Common Library Functions"
+.TH CMUTEX "3" "$Date: 2002/01/09 13:25:25 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCmutex\fP \- \fBCASTOR\fP \fBMutex\fP inferface
 .SH SYNOPSIS
@@ -11,6 +11,39 @@
 .BI "int Cmutex_lock(void *" addr ", int " timeout ");"
 .P
 .BI "int Cmutex_unlock(void *" addr ");"
+
+
+.SH DESCRIPTION
+
+\fBCmutex\fP is a common API interface for application compiled or not with the multithread flag. If the application do never initialize the \fBCmutex\fP package, using \fBCmutex_init\fP, and two arguments that are the addresses of the mutex lock and unlock functions, 
+.BI lockfunction
+and
+.BI unlockfunction
+respectively, then all \fBCmutex\fP calls are dummy operations.
+.P
+Otherwise any call to \fBCmutex_lock\fP will raise a call to
+.BI lockfunction
+, and any call to \fBCmutex_unlock\fP will raise a call to
+.BI unlockfunction.
+.P
+Please note that the \fBCmutex\fP package is initially meant to be interfaced with \fBCthread\fP only.
+.P
+\fBCmutex_lock\fP takes as argument the adress
+.BI addr
+of anything that is static in your userspace, such as a 'static int variable;' address (see \fBEXAMPLE\fP section below), and a
+.BI timeout
+expressed in second unit.
+.br
+ If
+.BI timeout
+is lower than zero, the operation will block until the mutex is granted. If it is zero, the operation will try to have the mutex and immediately return, possibly with failure. If it is greater than zero, operation will exit if the timeout is reached. Please refer to \fBCthread_mutex_timedlock\fP description in the \fBCthread\fP man page.
+.br
+Return code of \fBCmutex_lock\fP is 0 if success, -1 on failure. If failure the \fBserrno\fP error code is set appropriately.
+.P
+\fBCmutex_unlock\fP releases a lock that you previously gained using \fBCmutex_lock\fP and the same address value
+.BI addr.
+.br
+ Return code is 0 if success and -1 on failure, error code is then in the \fBserrno\fP variable.
 
 .SH ERRORS
 If the \fBCthread\fP interface is chosen and activated, the errors value are in the \fBserrno\fP variable:
@@ -80,38 +113,6 @@ Permission denied
 Mutex is now owned by the calling thread (\fBPTHREAD_MUTEX_ERRORCHECK\fP mutexes only, this is not the default and should not happen via \fBCmutex\fP)
 .RE
 
-
-.SH DESCRIPTION
-
-\fBCmutex\fP is a common API interface for application compiled or not with the multithread flag. If the application do never initialize the \fBCmutex\fP package, using \fBCmutex_init\fP, and two arguments that are the addresses of the mutex lock and unlock functions, 
-.BI lockfunction
-and
-.BI unlockfunction
-respectively, then all \fBCmutex\fP calls are dummy operations.
-.P
-Otherwise any call to \fBCmutex_lock\fP will raise a call to
-.BI lockfunction
-, and any call to \fBCmutex_unlock\fP will raise a call to
-.BI unlockfunction.
-.P
-Please note that the \fBCmutex\fP package is initially meant to be interfaced with \fBCthread\fP only.
-.P
-\fBCmutex_lock\fP takes as argument the adress
-.BI addr
-of anything that is static in your userspace, such as a 'static int variable;' address (see \fBEXAMPLE\fP section below), and a
-.BI timeout
-expressed in second unit.
-.br
- If
-.BI timeout
-is lower than zero, the operation will block until the mutex is granted. If it is zero, the operation will try to have to mutex and immediately return, possibly with failure. If it is greated than zero, operation will exit if the timeout is reached. Please refer to \fBCthread_mutex_timedlock\fP description in the \fBCthread\fP man page.
-.br
-Return code of \fBCmutex_lock\fP is 0 if success, -1 on failure. If failure the \fBserrno\fP error code is set appropriately.
-.P
-\fBCmutex_unlock\fP releases a lock that you previously gained using \fBCmutex_lock\fP and the same address value
-.BI addr.
-.br
- Return code is 0 if success and -1 on failure, error code is then in the \fBserrno\fP variable.
 .SH EXAMPLE
 .nf
 /*

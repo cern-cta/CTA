@@ -1,6 +1,6 @@
-.\"   $Id: Cthread.man,v 1.11 2002/01/09 08:53:01 jdurand Exp $
+.\"   $Id: Cthread.man,v 1.12 2002/01/09 13:25:25 jdurand Exp $
 .\"
-.TH CTHREAD "3" "$Date: 2002/01/09 08:53:01 $" "CASTOR" "Common Library Functions"
+.TH CTHREAD "3" "$Date: 2002/01/09 13:25:25 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCthread\fP \- \fBCASTOR\fP \fBThread\fP inferface
 .SH SYNOPSIS
@@ -41,52 +41,6 @@
 .BI "int Cthread_getspecific(int *" global_key ", void **" addr ");"
 .P
 .BI "int Cthread_setspecific(int *" global_key ", void * " addr ");"
-
-.SH ERRORS
-Beyond the errno value, \fBCthread\fP is setting the serrno value to generic values that can be:
-.P
-.B SECTHREADINIT
-.RS
-CASTOR Thread interface initialization error
-.P
-A thread initialisation call failed. In principle, on UNIX this will be a call to pthread_mutex_init (and possibly pthread_mutexattr_init) that failed, on Windows/NT this might be a call to CreateMutex.
-.RE
-.P
-.B SECTHREADERR
-.RS
-CASTOR Thread interface failure in calling your thread library
-.P
-A thread call to your native system library (like the pthread one on UNIX) failed. Please note that this is differentiated to the Cthread initialization and can happen if you are using too much thread keys, for example. This is really a run-time error only concerning your operating system thread interface. Any other system call failure, but not a thread one, and not at the initialisation step, will set serrno to \fBSEINTERNAL\fP
-.RE
-.P
-.B SEOPNOTSUP
-.RS
-Operation not supported
-.P
-This can be generated only if you compiled Cthread with a -DCTHREAD_PROTO flag that Cthread do not know about. Check your CASTOR configuration site.def.
-.RE
-.P
-.B SEINTERNAL
-.RS
-Internal error
-.P
-You can have more information by compiling the Cthread package with the flag -DCTHREAD_DEBUG, and catching the printout on your stderr stream. This is any system call that failed (like malloc()), except those to the thread library (for which SECTHREADERR or SECTHREADINIT is to  be found), or any critical internal run-time error (such as a non correct value found in some Cthread internal structures).
-.RE
-.P
-.B SETIMEDOUT
-(routines with a timeout parameter only)
-.RS
-Timed out
-.P
-You called a routine with a timeout value greater than zero that reached the maximum number of timeout seconds in waiting state.
-.RE
-.P
-.B EINVAL
-.RS
-Invalid parameters
-.P
-You called a routine with invalid parameter(s). Please check your code.
-.RE
 
 .SH DESCRIPTION
 
@@ -230,6 +184,53 @@ that he have previously allocated, with the
 address. If he tries to do so without calling previously \fBCthread_getspecific\fP, then such a call will be done internally.
 .P
 Return value is 0 on success, or -1 on error.
+
+.SH ERRORS
+Beyond the errno value, \fBCthread\fP is setting the serrno value to generic values that can be:
+.P
+.B SECTHREADINIT
+.RS
+CASTOR Thread interface initialization error
+.P
+A thread initialisation call failed. In principle, on UNIX this will be a call to pthread_mutex_init (and possibly pthread_mutexattr_init) that failed, on Windows/NT this might be a call to CreateMutex.
+.RE
+.P
+.B SECTHREADERR
+.RS
+CASTOR Thread interface failure in calling your thread library
+.P
+A thread call to your native system library (like the pthread one on UNIX) failed. Please note that this is differentiated to the Cthread initialization and can happen if you are using too much thread keys, for example. This is really a run-time error only concerning your operating system thread interface. Any other system call failure, but not a thread one, and not at the initialisation step, will set serrno to \fBSEINTERNAL\fP
+.RE
+.P
+.B SEOPNOTSUP
+.RS
+Operation not supported
+.P
+This can be generated only if you compiled Cthread with a -DCTHREAD_PROTO flag that Cthread do not know about. Check your CASTOR configuration site.def.
+.RE
+.P
+.B SEINTERNAL
+.RS
+Internal error
+.P
+You can have more information by compiling the Cthread package with the flag -DCTHREAD_DEBUG, and catching the printout on your stderr stream. This is any system call that failed (like malloc()), except those to the thread library (for which SECTHREADERR or SECTHREADINIT is to  be found), or any critical internal run-time error (such as a non correct value found in some Cthread internal structures).
+.RE
+.P
+.B SETIMEDOUT
+(routines with a timeout parameter only)
+.RS
+Timed out
+.P
+You called a routine with a timeout value greater than zero that reached the maximum number of timeout seconds in waiting state.
+.RE
+.P
+.B EINVAL
+.RS
+Invalid parameters
+.P
+You called a routine with invalid parameter(s). Please check your code.
+.RE
+
 .SH EXAMPLES
 .B Here is an example with thread-specific data
 .P
