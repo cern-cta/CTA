@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.65 2001/09/23 07:12:52 jdurand Exp $
+ * $Id: procqry.c,v 1.66 2001/10/07 07:43:31 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.65 $ $Date: 2001/09/23 07:12:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.66 $ $Date: 2001/10/07 07:43:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -365,14 +365,14 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		if ((flags & STAGE_ALLOCED) == STAGE_ALLOCED) {
 			if ((t_or_d != 'a') && (t_or_d == 'd')) {
 				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_ALLOCED flag is valid only for t_or_d == 'a' or t_or_d == 'd'\n");
-				c = SYERR;
+				c = USERR;
 				goto reply;
 			}
 			/* t_or_d == 'a' is virtual and internally is equivalent to 'd' */
 			t_or_d = 'd';
 			if (stcp_input.u1.d.xfile[0] == '\0') {
 				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_ALLOCED flag is valid only non-empty u1.d.xfile member\n");
-				c = SYERR;
+				c = USERR;
 				goto reply;
 			}
 			afile = stcp_input.u1.d.xfile;
@@ -399,14 +399,14 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		if ((flags & STAGE_EXTERNAL) == STAGE_EXTERNAL) {
 			if ((t_or_d != 'a') && (t_or_d == 'd')) {
 				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_EXTERNAL flag is valid only for t_or_d == 'a' or t_or_d == 'd'\n");
-				c = SYERR;
+				c = USERR;
 				goto reply;
 			}
 			/* t_or_d == 'a' is virtual and internally is equivalent to 'd' */
 			t_or_d = 'd';
 			if (stcp_input.u1.d.xfile[0] == '\0') {
 				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_EXTERNAL flag is valid only non-empty u1.d.xfile member\n");
-				c = SYERR;
+				c = USERR;
 				goto reply;
 			}
 			xfile = stcp_input.u1.d.xfile;
@@ -1920,5 +1920,5 @@ void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 }
 
 /*
- * Last Update: "Sunday 23 September, 2001 at 09:01:56 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Sunday 07 October, 2001 at 09:42:52 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
