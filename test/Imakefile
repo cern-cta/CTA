@@ -29,10 +29,16 @@ depend:
 Makefiles:
 	@. ../setosflags ;\
 	for i in $(SUBDIRS) ;\
-	do (echo " test/$$i:" ; cd $$i ;\
-		../../imake/imake -I../../config -DOSMajorVersion="$$OSMAJNO" -DOSMinorVersion="$$OSMINNO" ;\
-		$(MAKE) $(MFLAGS) $@ \
-	) ; done ;
+	do (if [ -d $$i ] ;\
+	    then \
+	      (echo " $$i:" ; cd $$i ;\
+	      ../imake/imake -I../config -DOSMajorVersion="$$OSMAJNO" -DOSMinorVersion="$$OSMINNO" ;\
+	      $(MAKE) $(MFLAGS) $@) ;\
+	    else \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;\
+	    fi )\
+	done ;
 
 depend:
 	for i in $(SUBDIRS) ;\
