@@ -38,13 +38,13 @@
 namespace castor {
 
   namespace stager {
-   
+
     // Forward declarations
     class Tape;
     class Stream;
     class Segment;
     class TapeCopyForMigration;
-    
+
   }
 
   namespace db {
@@ -186,7 +186,7 @@ namespace castor {
          */
         virtual void fileRecalled(castor::stager::TapeCopy* tapeCopy)
           throw (castor::exception::Exception);
-        
+
         /**
          * Get an array of the tapes to be processed.
          * This method searches the request catalog for all tapes that are
@@ -214,7 +214,7 @@ namespace castor {
          */
         virtual std::vector<castor::stager::Stream*> streamsToDo()
           throw (castor::exception::Exception);
-        
+
         /**
          * Retrieves a tape from the database based on its vid,
          * side and tpmode. If no tape is found, creates one
@@ -243,7 +243,7 @@ namespace castor {
          */
         virtual castor::stager::SubRequest* subRequestToDo()
           throw (castor::exception::Exception);
-        
+
         /**
          * Decides whether a SubRequest should be scheduled.
          * Looks at all diskCopies for the file a SubRequest
@@ -314,6 +314,26 @@ namespace castor {
          std::list<castor::stager::DiskCopyForRecall*>& sources)
           throw (castor::exception::Exception);
 
+        /**
+         * Retrieves a SvcClass from the database based on its name.
+         * Caller is in charge of the deletion of the allocated object
+         * @param name the name of the SvcClass
+         * @return the SvcClass, or 0 if none found
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::SvcClass* selectSvcClass(const std::string name)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieves a CastorFile from the database based on its fileId.
+         * Caller is in charge of the deletion of the allocated object
+         * @param fileId the fileId of the CastorFile
+         * @return the CastorFile, or 0 if none found
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::CastorFile* selectCastorFile(const u_signed64 fileId)
+          throw (castor::exception::Exception);
+
       private:
 
         /*
@@ -332,43 +352,43 @@ namespace castor {
 
         /// SQL statement for function tapesToDo
         static const std::string s_tapesToDoStatementString;
-        
+
         /// SQL statement object for function tapesToDo
         oracle::occi::Statement *m_tapesToDoStatement;
 
         /// SQL statement for function streamsToDo
         static const std::string s_streamsToDoStatementString;
-        
+
         /// SQL statement object for function streamsToDo
         oracle::occi::Statement *m_streamsToDoStatement;
 
         /// SQL statement for function selectTape
         static const std::string s_selectTapeStatementString;
-        
+
         /// SQL statement object for function selectTape
         oracle::occi::Statement *m_selectTapeStatement;
 
         /// SQL statement for function anyTapeCopyForStream
         static const std::string s_anyTapeCopyForStreamStatementString;
-        
+
         /// SQL statement object for function anyTapeCopyForStream
         oracle::occi::Statement *m_anyTapeCopyForStreamStatement;
 
         /// SQL statement for function bestTapeCopyForStream
         static const std::string s_bestTapeCopyForStreamStatementString;
-        
+
         /// SQL statement object for function bestTapeCopyForStream
         oracle::occi::Statement *m_bestTapeCopyForStreamStatement;
 
         /// SQL statement for function bestFileSystemForSegment
         static const std::string s_bestFileSystemForSegmentStatementString;
-        
+
         /// SQL statement object for function bestFileSystemForSegment
         oracle::occi::Statement *m_bestFileSystemForSegmentStatement;
 
         /// SQL statement for function fileRecalled
         static const std::string s_fileRecalledStatementString;
-        
+
         /// SQL statement object for function fileRecalled
         oracle::occi::Statement *m_fileRecalledStatement;
 
@@ -377,15 +397,27 @@ namespace castor {
 
         /// SQL statement for function isSubRequestToSchedule
         static const std::string s_isSubRequestToScheduleStatementString;
-        
+
         /// SQL statement object for function isSubRequestToSchedule
         oracle::occi::Statement *m_isSubRequestToScheduleStatement;
 
         /// SQL statement for function scheduleSubRequest
         static const std::string s_scheduleSubRequestStatementString;
-        
+
         /// SQL statement object for function scheduleSubRequest
         oracle::occi::Statement *m_scheduleSubRequestStatement;
+
+        /// SQL statement for function selectSvcClass
+        static const std::string s_selectSvcClassStatementString;
+
+        /// SQL statement object for function selectSvcClass
+        oracle::occi::Statement *m_selectSvcClassStatement;
+
+        /// SQL statement for function selectCastorFile
+        static const std::string s_selectCastorFileStatementString;
+
+        /// SQL statement object for function selectCastorFile
+        oracle::occi::Statement *m_selectCastorFileStatement;
 
       }; // end of class OraStagerSvc
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/10/28 16:48:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/08 15:40:12 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -44,8 +44,10 @@ namespace castor {
     class Segment;
     class TapeCopy;
     class DiskCopy;
+    class SvcClass;
     class FileSystem;
     class SubRequest;
+    class CastorFile;
     class TapeCopyForMigration;
     class DiskCopyForRecall;
 
@@ -190,6 +192,8 @@ namespace castor {
        * Note that this method creates a lock on the row of the
        * given tape and does not release it. It is the
        * responsability of the caller to commit the transaction.
+       * The caller is also responsible for the deletion of the
+       * allocated object
        * @param vid the vid of the tape
        * @param side the side of the tape
        * @param tpmode the tpmode of the tape
@@ -281,6 +285,26 @@ namespace castor {
       (castor::stager::SubRequest* subreq,
        castor::stager::FileSystem* fileSystem,
        std::list<castor::stager::DiskCopyForRecall*>& sources)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Retrieves a SvcClass from the database based on its name.
+       * Caller is in charge of the deletion of the allocated object
+       * @param name the name of the SvcClass
+       * @return the SvcClass, or 0 if none found
+       * @exception Exception in case of error
+       */
+      virtual castor::stager::SvcClass* selectSvcClass(const std::string name)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Retrieves a CastorFile from the database based on its fileId.
+       * Caller is in charge of the deletion of the allocated object
+       * @param fileId the fileId of the CastorFile
+       * @return the CastorFile, or 0 if none found
+       * @exception Exception in case of error
+       */
+      virtual castor::stager::CastorFile* selectCastorFile(const u_signed64 fileId)
         throw (castor::exception::Exception) = 0;
 
     }; // end of class IStagerSvc

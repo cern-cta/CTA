@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/10/28 16:48:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/08 15:40:12 $ $Author: sponcec3 $
  *
  * 
  *
@@ -64,7 +64,7 @@ extern "C" {
   int Cstager_IStagerSvc_delete(Cstager_IStagerSvc_t* stgSvc) {
     try {
       if (0 == stgSvc) return 0;
-      if (0 != stgSvc->stgSvc) delete stgSvc->stgSvc;
+      if (0 != stgSvc->stgSvc) stgSvc->stgSvc->release();
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();
@@ -327,4 +327,38 @@ extern "C" {
     return stgSvc->errorMsg.c_str();
   }
   
+  //---------------------------------------------------------------------------
+  // Cstager_IStagerSvc_selectSvcClass
+  //---------------------------------------------------------------------------
+  int Cstager_IStagerSvc_selectSvcClass(struct Cstager_IStagerSvc_t* stgSvc,
+                                        castor::stager::SvcClass** svcClass,
+                                        const char* name) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      *svcClass = stgSvc->stgSvc->selectSvcClass(name);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //---------------------------------------------------------------------------
+  // Cstager_IStagerSvc_selectCastorFile
+  //---------------------------------------------------------------------------
+  int Cstager_IStagerSvc_selectCastorFile(struct Cstager_IStagerSvc_t* stgSvc,
+                                          castor::stager::CastorFile** castorFile,
+                                          const u_signed64 fileId) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      *castorFile = stgSvc->stgSvc->selectCastorFile(fileId);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
 }

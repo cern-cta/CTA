@@ -34,6 +34,8 @@ struct Cstager_Tape_t;
 struct Cstager_Stream_t;
 struct Cstager_Segment_t;
 struct Cstager_DiskCopy_t;
+struct Cstager_SvcClass_t;
+struct Cstager_CastorFile_t;
 struct Cstager_SubRequest_t;
 struct Cstager_FileSystem_t;
 struct Cstager_TapeCopyForMigration_t;
@@ -345,5 +347,35 @@ int Cstager_IStagerSvc_scheduleSubRequest
  * @return the error message
  */
 const char* Cstager_IStagerSvc_errorMsg(struct Cstager_IStagerSvc_t* stgSvc);
+
+/**
+ * Retrieves a SvcClass from the database based on its name.
+ * Caller is in charge of the deletion of the allocated object
+ * @param stgSvc the IStagerSvc used
+ * @param svcClass the SvcClass object returned, or 0 if none found
+ * @param name the name of the SvcClass
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_selectSvcClass(struct Cstager_IStagerSvc_t* stgSvc,
+                                      struct Cstager_SvcClass_t** svcClass,
+                                      const char* name);
+
+/**
+ * Retrieves a CastorFile from the database based on its fileId.
+ * Caller is in charge of the deletion of the allocated object
+ * @param stgSvc the IStagerSvc used
+ * @param castorFile the CastorFile object returned, or 0 if none found
+ * @param fileId the fileId of the CastorFile
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_selectCastorFile(struct Cstager_IStagerSvc_t* stgSvc,
+                                        struct Cstager_CastorFile_t** svcClass,
+                                        const u_signed64 fileId);
 
 #endif // CASTOR_ISTAGERSVC_H
