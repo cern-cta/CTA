@@ -149,26 +149,36 @@ int Csec_server_acquire_creds_impl(ctx, service_name)
   OM_uint32 maj_stat, min_stat;
   char *func = "Csec_server_acquire_creds";
 
-  Csec_trace(func, "Acquiring credentials for <%s>\n", service_name);
+  
     
-  /* Importing the service_name to a gss_buffer_desc */
-  name_buf.length = strlen(service_name) + 1;
-  name_buf.value = malloc(name_buf.length);
-  strncpy(name_buf.value, service_name, strlen(service_name) );
+  if (service_name == NULL) {
+    Csec_trace(func, "Acquiring default credentials\n");
+    server_name = GSS_C_NO_NAME;
+  } else {
+    Csec_trace(func, "Acquiring credentials for <%s>\n", service_name);
+    /* Importing the service_name to a gss_buffer_desc */
+    name_buf.length = strlen(service_name) + 1;
+    name_buf.value = malloc(name_buf.length);
+    strncpy(name_buf.value, service_name, strlen(service_name) );
+    
+    maj_stat = gss_import_name(&min_stat, &name_buf,
+			       (gss_OID) GSS_C_NT_USER_NAME, &server_name);
+    /* Releasing the buffer as it has now been use to create the gss_name_t.
+       It has to be cleared in all cases */
+    (void) gss_release_buffer(&min_stat, &name_buf);    
 
-  maj_stat = gss_import_name(&min_stat, &name_buf,
-			     (gss_OID) GSS_C_NT_USER_NAME, &server_name);
-
-  if (maj_stat != GSS_S_COMPLETE) {
-    serrno = _Csec_map_gssapi_err(maj_stat, min_stat);
-    _Csec_process_gssapi_err("importing name", maj_stat, min_stat);
-    ctx->flags &= !CSEC_CTX_CREDENTIALS_LOADED;
-    return -1;
+    if (maj_stat != GSS_S_COMPLETE) {
+      serrno = _Csec_map_gssapi_err(maj_stat, min_stat);
+      _Csec_process_gssapi_err("importing name", maj_stat, min_stat);
+      ctx->flags &= !CSEC_CTX_CREDENTIALS_LOADED;
+      return -1;
+    }
   }
 
-  (void) gss_release_buffer(&min_stat, &name_buf);
 
-  maj_stat = gss_acquire_cred(&min_stat, GSS_C_NO_NAME, 0,
+  maj_stat = gss_acquire_cred(&min_stat, 
+			      server_name, 
+			      0,
 			      GSS_C_NULL_OID_SET,
 			      GSS_C_ACCEPT,
 			      &(ctx->credentials), NULL, NULL);
@@ -180,13 +190,14 @@ int Csec_server_acquire_creds_impl(ctx, service_name)
     return -1;
   }
 
-  (void) gss_release_name(&min_stat, &server_name);
-
+  if (server_name != GSS_C_NO_NAME) {
+    (void) gss_release_name(&min_stat, &server_name);
+  }
+  
   /* Set the flags in the context object */
   ctx->flags |= CSEC_CTX_CREDENTIALS_LOADED;
 
-  Csec_trace(func, "Successfully acquired credentials for %s\n", service_name);
-    
+  Csec_trace(func, "Successfully acquired credentials\n");
   return 0;
 }
 

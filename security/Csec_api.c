@@ -52,11 +52,17 @@ static char sccsid[] = "@(#)Csec_api_loader.c,v 1.1 2004/01/12 10:31:39 CERN IT/
 #define CHECKCTX(CTX,FUNC) if(check_ctx(CTX, FUNC)<0) return -1;
 int Cdomainname(char *name, int namele);
 
+/**
+ * Structure containing the service name/ID
+ */
 struct _serv_table {
     char* name;
     int   type;
 };
 
+/**
+ * Table of service types
+ */
 static struct _serv_table service_table[] = {
     {"host", CSEC_SERVICE_TYPE_HOST},
     {"castor-central", CSEC_SERVICE_TYPE_CENTRAL},
@@ -72,7 +78,7 @@ static struct _serv_table service_table[] = {
  *****************************************************************/
 
 /**
- * Initializes the Csec the context, and the protocol as well
+ * Initializes the Csec context for a client
  */
 int Csec_client_init_context(Csec_context_t *ctx, 
 			     int service_type,
@@ -89,7 +95,7 @@ int Csec_client_init_context(Csec_context_t *ctx,
 }
 
 /**
- * Initializes the Csec the context, but not the protocol
+ * Initializes the Csec context for the server
  */
 int Csec_server_init_context(Csec_context_t *ctx, 
 			     int service_type,
@@ -105,7 +111,8 @@ int Csec_server_init_context(Csec_context_t *ctx,
 }
 
 /**
- * Re-initializes the Csec the context, but not the protocol
+ * Re-initializes the Csec context, clearing the
+ * variables first if needed.
  */
 int Csec_server_reinit_context(Csec_context_t *ctx, 
 			     int service_type,
@@ -224,7 +231,7 @@ int Csec_server_establish_context_ext(ctx, s, buf, len)
     return -1;
   }
 
-  if (Csec_server_set_service_name(ctx, s)) {
+  if (Csec_server_set_service_name(ctx)) {
     return -1;
   }
 
@@ -258,7 +265,7 @@ int Csec_client_establish_context(ctx, s)
     Csec_errmsg(func, "Service type not set");
     return -1;
   }
-
+ 
   /* Checking whether the list of protocols has been loaded */
   if (!(ctx->flags & CSEC_CTX_PROTOCOL_LOADED)) {
     int rc;
@@ -270,27 +277,24 @@ int Csec_client_establish_context(ctx, s)
     ctx->flags |= CSEC_CTX_PROTOCOL_LOADED;
     
     if (Csec_get_shlib(ctx) == NULL) {
-      
+
       return -1;
     }
   }
  
   /* Loading up the server service name */
-  if (Csec_client_set_service_name(ctx, s) != 0) {
-    /* Error already set in Csec_client_set_service_name */
-    return -1;
-  }
 
   if (!(ctx->flags & CSEC_CTX_SERVICE_NAME_SET)) {
-    serrno =  ESEC_NO_SVC_NAME;
-    Csec_errmsg(func, "Service name not set");
-    return -1;
+    if (Csec_client_set_service_name(ctx, s) != 0) {
+      /* Error already set in Csec_client_set_service_name */
+      return -1;
+    }
   }
 
   if (Csec_client_negociate_protocol(s, CSEC_NET_TIMEOUT, ctx) < 0) {
+    /* Error already reported */
     return -1;
   }
-    
     
   return (*(ctx->Csec_client_establish_context))(ctx, s);
 }
@@ -424,7 +428,10 @@ int Csec_get_peer_service_name(Csec_context_t *ctx, int s, int service_type, cha
 /**
  * Returns the principal that the service on local machine should have
  */
-int Csec_get_local_service_name(Csec_context_t *ctx, int s, int service_type, char *service_name, int  service_namelen) {
+int Csec_get_local_service_name(Csec_context_t *ctx, 
+				int service_type, 
+				char *service_name, 
+				int service_namelen) {
 
 
   int rc;
@@ -469,19 +476,22 @@ int Csec_get_local_service_name(Csec_context_t *ctx, int s, int service_type, ch
  * This function caches the credentials in the Csec_context_t object.
  * This function must be called again to refresh the credentials.
  */
-int Csec_server_acquire_creds(ctx, service_name)
-     Csec_context_t *ctx;
-     char *service_name;
-{
-  return (*(ctx->Csec_server_acquire_creds))(ctx, service_name);
+int Csec_server_acquire_creds(Csec_context_t *ctx) {
+  /* XXX the credentials are not cached, but looked up
+   every time for the moment */
+  return (*(ctx->Csec_server_acquire_creds))(ctx,
+					     Csec_server_get_service_name(ctx));
 }
 
+
+/**
+ * On a client, sets up the service name, according to the protocol
+ * and the server name, looked up using the socket
+ */
 int Csec_client_set_service_name(Csec_context_t *ctx, 
 				 int s) {
   int rc;
   char *func = "Csec_client_set_service_name";
-
-  /* XXX How can we do service type checking ? */
 
   CHECKCTX(ctx,func);
   rc = Csec_get_peer_service_name(ctx, 
@@ -495,11 +505,12 @@ int Csec_client_set_service_name(Csec_context_t *ctx,
     serrno = ESEC_NO_SVC_NAME;
     Csec_errmsg(func, "Could not set service name !");
   }
-
   return rc;
-
 }
 
+/**
+ * Sets the service type in the context
+ */
 int Csec_server_set_service_type(Csec_context_t *ctx, int service_type) {
   char *func = "Csec_server_set_service_type";
   CHECKCTX(ctx,func);
@@ -510,14 +521,12 @@ int Csec_server_set_service_type(Csec_context_t *ctx, int service_type) {
 
 
 
-int Csec_server_set_service_name(Csec_context_t *ctx, 
-				 int s) {
+int Csec_server_set_service_name(Csec_context_t *ctx) {
   int rc;
   char *func = "Csec_server_set_service_name";
 
   CHECKCTX(ctx,func);
   rc = Csec_get_local_service_name(ctx, 
-				  s, 
 				  ctx->server_service_type, 
 				  (ctx->local_name), 
 				  CA_MAXCSECNAMELEN);

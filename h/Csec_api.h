@@ -19,12 +19,15 @@ int DLL_DECL  Csec_server_reinit_context  _PROTO ((Csec_context_t *,
 int DLL_DECL  Csec_clear_context _PROTO ((Csec_context_t *));
 
 /* Credentials and context establishment */
-int DLL_DECL  Csec_server_acquire_creds _PROTO ((Csec_context_t *,
-                                                 char *));
+int DLL_DECL  Csec_server_acquire_creds _PROTO ((Csec_context_t *));
+
 int DLL_DECL  Csec_server_establish_context _PROTO ((Csec_context_t *,
                                                      int s));
 int DLL_DECL  Csec_client_establish_context _PROTO ((Csec_context_t *,
                                                      int s));
+
+/* Error lookup */
+char *DLL_DECL Csec_geterrmsg _PROTO(());
 
 
 /* Service type & name handling */

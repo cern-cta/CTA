@@ -95,7 +95,6 @@ int DLL_DECL check_ctx _PROTO ((Csec_context_t *, char *));
 void DLL_DECL *Csec_get_shlib _PROTO ((Csec_context_t *)); 
 /* int DLL_DECL Csec_init_context_ext _PROTO ((Csec_context_t *, int, int)) ; */
 int DLL_DECL Csec_errmsg _PROTO((char *func, char *msg, ...));
-char *DLL_DECL Csec_geterrmsg _PROTO(());
 int DLL_DECL Csec_apiinit _PROTO((struct Csec_api_thread_info **thip));
 int DLL_DECL Csec_seterrbuf _PROTO((char *buffer, int buflen));
 int DLL_DECL Csec_trace _PROTO((char *func, char *msg, ...));
@@ -130,12 +129,11 @@ int DLL_DECL Csec_map2id _PROTO((Csec_context_t *ctx, char *principal, uid_t *ui
 int DLL_DECL Csec_name2id _PROTO((char *name, uid_t *uid, gid_t *gid));
 int DLL_DECL Csec_get_peer_service_name _PROTO ((Csec_context_t *ctx, int s, int service_type,
                                                  char *service_name, int service_namelen));
-int DLL_DECL Csec_get_local_service_name _PROTO ((Csec_context_t *ctx, int s, int service_type,
+int DLL_DECL Csec_get_local_service_name _PROTO ((Csec_context_t *ctx, int service_type,
                                                   char *service_name, int service_namelen));
 int DLL_DECL  Csec_delete_connection_context _PROTO ((Csec_context_t *));
 int DLL_DECL  Csec_delete_creds _PROTO ((Csec_context_t *));
-int DLL_DECL Csec_server_set_service_name _PROTO ((Csec_context_t *, 
-						   int));
+int DLL_DECL Csec_server_set_service_name _PROTO ((Csec_context_t *));
 int DLL_DECL Csec_client_set_service_name _PROTO ((Csec_context_t *, 
 						   int));
 

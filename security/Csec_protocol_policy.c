@@ -44,7 +44,9 @@ int Csec_client_lookup_protocols(Csec_protocol **protocols, int *nbprotocols) {
 
   /* Getting the protocol list from environment variable, configuration file
      or default value */
-  if (!((p = (char *)getenv ("CSEC_MECH")) || (p = (char *)getconfent ("CSEC", "MECH", 0)))) {
+  if (!((p = (char *)getenv (CSEC_MECH)) 
+	|| (p = (char *)getconfent (CSEC_CONF_SECTION, 
+				    CSEC_CONF_ENTRY_MECH, 0)))) {
     p = CSEC_DEFAULT_MECHS;
   }
 
@@ -112,7 +114,8 @@ int Csec_server_lookup_protocols(long client_address,
 	     
   /* Getting the protocol list from environment variable, configuration file
      or default value */
-  if (!((p = (char *)getenv ("CSEC_MECH")) || (p = (char *)getconfent ("CSEC", "MECH", 0)))) {
+  if (!((p = (char *)getenv (CSEC_AUTH_MECH)) 
+	|| (p = (char *)getconfent (CSEC_CONF_SECTION, CSEC_CONF_ENTRY_AUTHMECH, 0)))) {
     p = CSEC_DEFAULT_MECHS;
   }
 
@@ -159,8 +162,7 @@ int Csec_server_lookup_protocols(long client_address,
 
 
 
-int Csec_server_set_protocols(Csec_context_t *ctx,
-			      int socket) {
+int Csec_server_set_protocols(Csec_context_t *ctx, int socket) {
   int rc;
   struct sockaddr_in from;
   socklen_t fromlen = sizeof(from);

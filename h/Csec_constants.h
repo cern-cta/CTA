@@ -19,13 +19,6 @@
 #define CSEC_TOKEN_TYPE_DATA           0x4
 
 
-/* char CSEC_TOKEN_TYPE[][30] = { "UNKNOWN",  */
-/* 			       "PROTOCOL_REQ", */
-/* 			       "PROTOCOL_RESP", */
-/* 			       "HANDSHAKE", */
-/* 			       "DATA", */
-/* 			       "OOB" }; */
-
 /** Buffer size for errors */
 #define SECPRTBUFSZ 2000
 /** Timeout used in the netread/netwrites */
@@ -37,6 +30,11 @@
 
 /** Environment variable to switch mechanism */
 #define CSEC_MECH "CSEC_MECH"
+#define CSEC_AUTH_MECH "CSEC_AUTH_MECH"
+#define CSEC_CONF_SECTION "CSEC"
+#define CSEC_CONF_ENTRY_MECH "MECH"
+#define CSEC_CONF_ENTRY_AUTHMECH "AUTHMECH"
+
 
 #define PROTID_SIZE 20
 
