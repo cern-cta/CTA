@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.29 2002/04/11 10:32:38 jdurand Exp $
+ * $Id: stageclr.c,v 1.30 2002/04/30 13:07:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.29 $ $Date: 2002/04/11 10:32:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.30 $ $Date: 2002/04/30 13:07:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -41,9 +41,7 @@ void cleanup _PROTO((int));
 void usage _PROTO((char *));
 
 int reqid_flag = 0;
-#ifdef STAGER_SIDE_CLIENT_SUPPORT
 int side_flag = 0;
-#endif
 
 int main(argc, argv)
 		 int	argc;
@@ -101,16 +99,14 @@ int main(argc, argv)
 		{"file_range",         REQUIRED_ARGUMENT,  NULL,      'Q'},
 		{"r",                  REQUIRED_ARGUMENT,  NULL,      'r'},
 		{"reqid",              REQUIRED_ARGUMENT, &reqid_flag,  1},
-#ifdef STAGER_SIDE_CLIENT_SUPPORT
 		{"side",               REQUIRED_ARGUMENT, &side_flag,   1},
-#endif
 		{"vid",                REQUIRED_ARGUMENT,  NULL,      'V'},
 		{NULL,                 0,                  NULL,        0}
 	};
 
 	/* char repbuf[CA_MAXPATHLEN+1]; */
 
-	uid = getuid();
+	uid = Guid = getuid();
 	gid = getgid();
 #if defined(_WIN32)
 	if (uid < 0 || gid < 0) {
@@ -396,17 +392,9 @@ void usage(cmd)
 		 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
-#ifdef STAGER_SIDE_CLIENT_SUPPORT
 	fprintf (stderr, "%s%s%s%s",
 					 "[-c] [-h stage_host] [-F] [-G] [-I external_filename] [-i] [-L link]\n",
 					 "[-l label_type] [-M hsmfile] [-m minfree] [-P path] [-p pool]\n",
 					 "[-q file_sequence_number] [-Q file_sequence_range]\n",
 					 "[-remove_from_hsm] [--reqid reqid] [-V visual_identifier(s)] [--side sidenumber]\n");
-#else
-	fprintf (stderr, "%s%s%s%s",
-					 "[-c] [-h stage_host] [-F] [-G] [-I external_filename] [-i] [-L link]\n",
-					 "[-l label_type] [-M hsmfile] [-m minfree] [-P path] [-p pool]\n",
-					 "[-q file_sequence_number] [-Q file_sequence_range]\n",
-					 "[-remove_from_hsm] [--reqid reqid] [-V visual_identifier(s)]\n");
-#endif
 }
