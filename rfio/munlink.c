@@ -1,5 +1,5 @@
 /*
- * $Id: munlink.c,v 1.6 2002/02/18 10:10:49 jdurand Exp $
+ * $Id: munlink.c,v 1.7 2002/02/25 16:49:52 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.6 $ $Date: 2002/02/18 10:10:49 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.7 $ $Date: 2002/02/25 16:49:52 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -317,12 +317,9 @@ static int rfio_munlink_allocentry(hostname,Tid,s)
   int i;
   int rc;
 
-  INIT_TRACE("RFIO_TRACE");
-
   TRACE(3,"rfio","rfio_munlink_allocentry: Lock munlink_tab");
   if (Cmutex_lock((void *) munlink_tab,-1) != 0) {
     TRACE(3,"rfio","rfio_munlink_allocentry: Cmutex_lock(munlink_tab,-1) error No %d (%s)", errno, strerror(errno));
-    END_TRACE();
     return(-1);
   }
   /* Scan it */
@@ -345,10 +342,8 @@ static int rfio_munlink_allocentry(hostname,Tid,s)
   TRACE(3,"rfio","rfio_munlink_allocentry: Unlock munlink_tab");
   if (Cmutex_unlock((void *) munlink_tab) != 0) {
     TRACE(3,"rfio","rfio_munlink_allocentry: Cmutex_unlock(munlink_tab) error No %d (%s)", errno, strerror(errno));
-    END_TRACE();
     return(-1);
   }
-  END_TRACE();
   return(rc);
 }
 
@@ -362,12 +357,9 @@ static int rfio_munlink_findentry(hostname,Tid)
   int i;
   int rc;
 
-  INIT_TRACE("RFIO_TRACE");
-
   TRACE(3,"rfio","rfio_munlink_findentry: Lock munlink_tab");
   if (Cmutex_lock((void *) munlink_tab,-1) != 0) {
     TRACE(3,"rfio","rfio_munlink_findentry: Cmutex_lock(munlink_tab,-1) error No %d (%s)", errno, strerror(errno));
-    END_TRACE();
     return(-1);
   }
   /* Scan it */
@@ -386,10 +378,8 @@ static int rfio_munlink_findentry(hostname,Tid)
   TRACE(3,"rfio","rfio_munlink_findentry: Unlock munlink_tab");
   if (Cmutex_unlock((void *) munlink_tab) != 0) {
     TRACE(3,"rfio","rfio_munlink_findentry: Cmutex_unlock(munlink_tab) error No %d (%s)", errno, strerror(errno));
-    END_TRACE();
     return(-1);
   }
-  END_TRACE();
   return(rc);
 }
 
