@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.226 2002/09/30 14:32:40 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.227 2002/10/03 09:46:54 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.226 $ $Date: 2002/09/30 14:32:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.227 $ $Date: 2002/10/03 09:46:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -3583,6 +3583,7 @@ int fork_exec_stager(wqp)
 	char progname[MAXPATH];
 	struct stgcat_entry *stcp;
 	struct stgcat_entry lying_stcp;
+	char changed_t_or_d = '\0';
 	struct waitf *wfp;
 #ifdef __INSURE__
 	/* INSURE DOES NOT WORK WITH THIS PIPE... I've spent three hours trying to make work */
@@ -3654,6 +3655,7 @@ int fork_exec_stager(wqp)
 			/* This apply only for internal copy of CASTOR HSM files */
 			memset((void *) &lying_stcp, 0, sizeof(struct stgcat_entry));
 			lying_stcp.t_or_d = 'd';
+			changed_t_or_d = '3';
 			strcpy(lying_stcp.u1.d.xfile,wfp->ipath);
 			lying_stcp.u1.d.Xparm[0] = '\0';
 			lying_stcp.actual_size = stcp->actual_size;
@@ -3695,18 +3697,21 @@ int fork_exec_stager(wqp)
 #endif
 		dup2 (pfd[0], 0);
 		switch (t_or_d) {
+		case 'h': /* CASTOR HSM */
+			sprintf (progfullpath, "%s/stager_castor", BIN);
+			sprintf (progname, "%s", "stager_castor");
+			break;
 		case 't': /* Tape */
 			sprintf (progfullpath, "%s/stager_tape", BIN);
 			sprintf (progname, "%s", "stager_tape");
 			break;
 		case 'd': /* Disk */
-		case 'm': /* Non-CASTOR HSM */
 			sprintf (progfullpath, "%s/stager_disk", BIN);
 			sprintf (progname, "%s", "stager_disk");
 			break;
-		case 'h': /* CASTOR HSM */
-			sprintf (progfullpath, "%s/stager_castor", BIN);
-			sprintf (progname, "%s", "stager_castor");
+		case 'm': /* Non-CASTOR HSM */
+			sprintf (progfullpath, "%s/stager_disk", BIN);
+			sprintf (progname, "%s", "stager_disk");
 			break;
 		}
 		sprintf (arg_reqid, "%d", wqp->reqid);
@@ -3787,11 +3792,6 @@ int fork_exec_stager(wqp)
 	} else {
 		wqp->status = 0;
 		close (pfd[0]);
-#if SACCT
-		stageacct (STGCMDS, wqp->req_uid, wqp->req_gid, wqp->clienthost,
-							 wqp->reqid, wqp->req_type, wqp->nretry, wqp->status,
-							 NULL, "", t_or_d);
-#endif
 		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
 			char save_user[CA_MAXUSRNAMELEN+1];
 			char save_group[CA_MAXUSRNAMELEN+1];
@@ -3822,6 +3822,7 @@ int fork_exec_stager(wqp)
 				/* and by definition there is only ONE entry here */
 				memset((void *) &lying_stcp, 0, sizeof(struct stgcat_entry));
 				lying_stcp.t_or_d = 'd';
+				changed_t_or_d = '3';
 				strcpy(lying_stcp.u1.d.xfile,wfp->ipath);
 				lying_stcp.u1.d.Xparm[0] = '\0';
 				lying_stcp.actual_size = stcp->actual_size;
@@ -3843,6 +3844,46 @@ int fork_exec_stager(wqp)
 			}
 		}
 		close (pfd[1]);
+#if SACCT
+		switch (t_or_d) {
+		case 'h': /* CASTOR HSM */
+			if (changed_t_or_d == '\0') {
+				if ((wqp->req_type == STAGEIN) || (wqp->req_type == STAGE_IN)) {
+					changed_t_or_d = '1';
+				} else {
+					changed_t_or_d = '2';
+				}
+			}
+			break;
+		case 't': /* Tape */
+			if ((wqp->req_type == STAGEIN) || (wqp->req_type == STAGE_IN)) {
+				changed_t_or_d = '4';
+			} else {
+				changed_t_or_d = '5';
+			}
+			break;
+		case 'd': /* Disk */
+			if ((wqp->req_type == STAGEIN) || (wqp->req_type == STAGE_IN)) {
+ 				changed_t_or_d = '6';
+			} else {
+				changed_t_or_d = '7';
+			}
+			break;
+		case 'm': /* Non-CASTOR HSM */
+			if ((wqp->req_type == STAGEIN) || (wqp->req_type == STAGE_IN)) {
+				changed_t_or_d = '8';
+			} else {
+				changed_t_or_d = '9';
+			}
+			break;
+		}
+		/* When stagestat processes accounting files, previous version was IGNORING any member but the subtype */
+		/* when subtype == STGCMDS. Exitcode is now used to store additional information */
+		/* Previous stagestat will continue to ignore it. New stagestat will use it. */
+		stageacct (STGCMDS, wqp->req_uid, wqp->req_gid, wqp->clienthost,
+				   wqp->reqid, wqp->req_type, wqp->nretry, (int) ((changed_t_or_d != '\0') ? changed_t_or_d : t_or_d),
+				   NULL, "", changed_t_or_d != '\0' ? changed_t_or_d : t_or_d);
+#endif
 	}
 	return (0);
 }
