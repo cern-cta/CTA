@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.83 2000/07/26 16:11:28 jdurand Exp $
+ * $Id: stager.c,v 1.84 2000/07/28 08:30:31 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.83 $ $Date: 2000/07/26 16:11:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.84 $ $Date: 2000/07/28 08:30:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -821,7 +821,7 @@ int stagein_castor_hsm_file() {
 		while (1) {
 			/* Wait for the corresponding tape to be available */
 #ifdef STAGER_DEBUG
-			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] %s : Calling vmgr_querytape(vid=\"%s\",vdn,dgn,aden,lbltype,model,NULL,NULL,NULL,NULL,NULL,NULL,NULL)\n",castor_hsm,last_vid);
+			sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] %s : Calling vmgr_querytape(vid=\"%s\",vsn,dgn,aden,lbltype,model,NULL,NULL,NULL,NULL,NULL,NULL,NULL)\n",castor_hsm,last_vid);
 #endif
 			if (vmgr_querytape (last_vid, vsn, dgn, aden, lbltype, model, NULL, NULL,
 								NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL) == 0) {
@@ -1541,14 +1541,16 @@ int filecopy(stcp, key, hostname)
 }
 
 void cleanup() {
-	/* Safety cleanup */
-	if (vid[0] != '\0') {
+	/* Safety cleanup - executed ONLY in case of write-to-tape */
+	if (((stcs->status & STAGEWRT) == STAGEWRT) || ((stcs->status & STAGEPUT) == STAGEPUT)) {
+		if (vid[0] != '\0') {
 #ifdef STAGER_DEBUG
-		sendrep (rpfd, MSG_ERR, "[DEBUG-CLEANUP] Calling vmgr_updatetape(vid=\"%s\",BytesWriten=0,CompressionFactor=0,Files0,Flags=0)\n",vid);
+			sendrep (rpfd, MSG_ERR, "[DEBUG-CLEANUP] Calling vmgr_updatetape(vid=\"%s\",BytesWriten=0,CompressionFactor=0,Files0,Flags=0)\n",vid);
 #endif
-		if (vmgr_updatetape (vid, (u_signed64) 0, 0, 0, 0) != 0) {
-			sendrep (rpfd, MSG_ERR, STG02, vid, "vmgr_updatetape",
-							 sstrerror (serrno));
+			if (vmgr_updatetape (vid, (u_signed64) 0, 0, 0, 0) != 0) {
+				sendrep (rpfd, MSG_ERR, STG02, vid, "vmgr_updatetape",
+								 sstrerror (serrno));
+			}
 		}
 	}
 }
