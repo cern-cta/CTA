@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.32 2002/09/30 16:53:43 jdurand Exp $
+ * $Id: stage_constants.h,v 1.33 2002/10/03 09:42:59 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -454,7 +454,7 @@
 #define STAGE_ALLOCED           CONSTLL(0x0000000004000)  /* -A           [stage_qry]            */
 #define STAGE_FILENAME          CONSTLL(0x0000000008000)  /* -f           [stage_qry]            */
 #define STAGE_EXTERNAL          CONSTLL(0x0000000010000)  /* -I           [stage_qry]            */
-#define STAGE_MULTIFSEQ         CONSTLL(0x0000000020000)  /* -Q           [stage_qry]            */
+#define STAGE_MULTIFSEQ         CONSTLL(0x0000000020000)  /* -Q           [stage_clr,stage_qry]  */
 #define STAGE_MIGRULES          CONSTLL(0x0000000040000)  /* --migrator   [stage_qry]            */
 #define STAGE_SILENT            CONSTLL(0x0000000080000)  /* --silent     [stage_iowc]           */
 #define STAGE_NOWAIT            CONSTLL(0x0000000100000)  /* --nowait     [stage_iowc]           */
