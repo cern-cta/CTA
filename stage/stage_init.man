@@ -1,0 +1,82 @@
+.\" $Id: stage_init.man,v 1.1 2002/11/06 08:51:28 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_init.man,v $ $Revision: 1.1 $ $Date: 2002/11/06 08:51:28 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_INIT "3" "$Date: 2002/11/06 08:51:28 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_init \- Tells stager daemon to re\-read pool configuration
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_init(u_signed64 " flags ,
+.BI "char *" hostname ");"
+
+.SH DESCRIPTION
+The \fBstage_init\fP API method tells the stager to re\-initialize, by first reading again pool configuration and then updating all necessary catalog entries v.s. their current state.
+
+.SH PARAMETERS
+.TP 1.5i
+.I flags
+Can be zero or a bit-wise of the following values:
+.RS
+.TP
+.I STAGE_NORETRY
+Prevents client to keep retrying. Can be set with environment variable $STAGE_NORETRY to a non\-zero value.
+.TP
+.I STAGE_FORCE
+Asks the re\-initialization to appear now. Default is to wait all active requests to finish before processing a \fBstage_init\fP.
+.TP
+.I STAGE_MIGRINIT
+Forces a re\-load of CASTOR fileclass. Note that default is to always do so if necessary.
+.RE
+.TP
+.I hostname
+Gives explicitely the hostname where is the stager daemon. If it NULL, default value apply: either the environment variable $STAGE_HOST, an entry 'STG HOST' in /etc/shift.conf file, or the default "stagepublic".
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SENOMAPFND
+Can't open mapping database (Windows only)
+.TP
+.B EACCES
+Permission denied
+.TP
+.B EINVAL
+Invalid argument
+.TP
+.B SECONNDROP
+Connection closed by remote end
+.TP
+.B SECOMERR
+Communication error
+.TP
+.B SEINTERNAL
+Internal error
+.TP
+.B SEUSERUNKN
+User unknown
+.TP
+.B ESTNACT
+Stager not active (if you specify the STAGE_NORETRY flag - default is to retry forever)
+.TP
+.B ESTCONF
+Stage configuration error
+.TP
+.B SENOSHOST
+Host not known
+
+.SH NOTES
+Priviliges are verified using \fBCupv\fP.
+
+.SH SEE ALSO
+\fBstageinit\fP(1), \fPCupvcheck\fP(1)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+

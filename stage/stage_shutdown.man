@@ -1,0 +1,76 @@
+.\" $Id: stage_shutdown.man,v 1.1 2002/11/06 08:51:28 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_shutdown.man,v $ $Revision: 1.1 $ $Date: 2002/11/06 08:51:28 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_SHUTDOWN "3" "$Date: 2002/11/06 08:51:28 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_shutdown \- Tells stager daemon to stopre\-read pool configuration
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_shutdown(u_signed64 " flags ,
+.BI "char *" hostname ");"
+
+.SH DESCRIPTION
+The \fBstage_shutdown\fP API method tells the stager to stop.
+
+.SH PARAMETERS
+.TP 1.5i
+.I flags
+Can be zero or a bit-wise of the following values:
+.RS
+.TP
+.I STAGE_NORETRY
+Prevents client to keep retrying. Can be set with environment variable $STAGE_NORETRY to a non\-zero value.
+.TP
+.I STAGE_FORCE
+Asks the shutdown to appear now. Default is to wait all active requests to finish before processing a \fBstage_shutdown\fP.
+.RE
+.TP
+.I hostname
+Gives explicitely the hostname where is the stager daemon. If it NULL, default value apply: either the environment variable $STAGE_HOST, an entry 'STG HOST' in /etc/shift.conf file, or the default "stagepublic".
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SENOMAPFND
+Can't open mapping database (Windows only)
+.TP
+.B EACCES
+Permission denied
+.TP
+.B EINVAL
+Invalid argument
+.TP
+.B SECONNDROP
+Connection closed by remote end
+.TP
+.B SECOMERR
+Communication error
+.TP
+.B SEINTERNAL
+Internal error
+.TP
+.B SEUSERUNKN
+User unknown
+.TP
+.B ESTNACT
+Stager not active (if you specify the STAGE_NORETRY flag - default is to retry forever)
+.TP
+.B SENOSHOST
+Host not known
+
+.SH NOTES
+Priviliges are verified using \fBCupv\fP.
+
+.SH SEE ALSO
+\fBstageshutdown\fP(1), \fPCupvcheck\fP(1)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+

@@ -1,0 +1,197 @@
+.\" $Id: stage_ping.man,v 1.1 2002/11/06 08:51:29 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_ping.man,v $ $Revision: 1.1 $ $Date: 2002/11/06 08:51:29 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_PING "3" "$Date: 2002/11/06 08:51:29 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_ping \- Ping the stager daemon
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_ping(u_signed64 " flags ,
+.BI "char *" hostname ");"
+
+.SH DESCRIPTION
+The \fBstage_ping\fP API method is a very lightweight way to check if the stager is up or not.
+
+.SH PARAMETERS
+.TP 1.5i
+.I flags
+Can be zero or a bit-wise of the following values:
+.RS
+.TP
+.I STAGE_NORETRY
+Prevents client to keep retrying. Can be set with environment variable $STAGE_NORETRY to a non\-zero value.
+.TP
+.I STAGE_VERBOSE
+Asks the stager daemon to send few operational information onto user's output or buffer.
+.RE
+.TP
+.I hostname
+Gives explicitely the hostname where is the stager daemon. If it NULL, default value apply: either the environment variable $STAGE_HOST, an entry 'STG HOST' in /etc/shift.conf file, or the default "stagepublic".
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SENOMAPFND
+Can't open mapping database (Windows only)
+.TP
+.B EINVAL
+Invalid argument
+.TP
+.B SECONNDROP
+Connection closed by remote end
+.TP
+.B SECOMERR
+Communication error
+.TP
+.B SEINTERNAL
+Internal error
+.TP
+.B SEUSERUNKN
+User unknown
+.TP
+.B ESTNACT
+Stager not active (if you specify the STAGE_NORETRY flag - default is to retry forever)
+.TP
+.B SENOSHOST
+Host not known
+
+.SH EXAMPLE
+Here is the source of stageping command\-line.
+.ft CW
+.nf
+.sp
+\s-2
+/*
+ * $Id: stage_ping.man,v 1.1 2002/11/06 08:51:29 jdurand Exp $
+ */
+
+/*
+ * Copyright (C) 2001 by CERN/IT/DS/HSM
+ * All rights reserved
+ */
+
+#include <errno.h>
+#include <stdio.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include "Cpwd.h"
+#include "Cgrp.h"
+#include <string.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#else
+#include <unistd.h>
+#include <netinet/in.h>
+#endif
+#include "stage_api.h"
+#include "Cgetopt.h"
+#include "serrno.h"
+
+void usage _PROTO((char *));
+void cleanup _PROTO((int));
+
+static int noretry_flag = 0;
+
+int main(argc, argv)
+		 int	argc;
+		 char	**argv;
+{
+	int c;
+	int errflg = 0;
+	char *stghost = NULL;
+#if defined(_WIN32)
+	WSADATA wsadata;
+#endif
+	u_signed64 flags = 0;
+	static struct Coptions longopts[] =
+	{
+		{"host",               REQUIRED_ARGUMENT,  NULL,      'h'},
+		{"verbose",            NO_ARGUMENT,        NULL,      'v'},
+		{"noretry",            NO_ARGUMENT,     &noretry_flag,  1},
+		{NULL,                 0,                  NULL,        0}
+	};
+
+	Coptind = 1;
+	Copterr = 1;
+	while ((c = Cgetopt_long (argc, argv, "h:v", longopts, NULL)) != \-1) {
+		switch (c) {
+		case 'h':
+			stghost = Coptarg;
+			break;
+		case 'v':
+			flags |= STAGE_VERBOSE;
+			break;
+		case 0:
+			/* Here are the long options */
+			break;
+		case '?':
+			errflg++;
+			break;
+		default:
+			errflg++;
+			break;
+		}
+        if (errflg != 0) break;
+	}
+	if (argc > Coptind) {
+		fprintf (stderr, STG16);
+		errflg++;
+	}
+
+	if (errflg != 0) {
+		usage (argv[0]);
+		exit (USERR);
+	}
+
+	if (noretry_flag) flags |= STAGE_NORETRY;
+
+#if !defined(_WIN32)
+	signal (SIGHUP, cleanup);
+#endif
+	signal (SIGINT, cleanup);
+#if !defined(_WIN32)
+	signal (SIGQUIT, cleanup);
+#endif
+	signal (SIGTERM, cleanup);
+	
+	c = stage_ping(flags,stghost);
+
+	exit (c == 0 ? 0 : rc_castor2shift(serrno));
+}
+
+void cleanup(sig)
+		 int sig;
+{
+	signal (sig, SIG_IGN);
+	
+#if defined(_WIN32)
+	WSACleanup();
+#endif
+	exit (USERR);
+}
+
+void usage(cmd)
+		 char *cmd;
+{
+	fprintf (stderr, "usage: %s ", cmd);
+	fprintf (stderr, "%s", "[\-h stage_host] [\-v] [\-\-noretry]\\n");
+}
+\s+2
+.ft
+.LP
+.fi
+
+.SH SEE ALSO
+\fBstageping\fP(1)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
