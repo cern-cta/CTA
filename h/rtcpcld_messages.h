@@ -82,6 +82,7 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_ZEROSIZE,
     RTCPCLD_MSG_COPYFAILED,
     RTCPCLD_MSG_NOTBLKIDPOS,
+    RTCPCLD_MSG_CKSUMNAMETOOLONG,
     RTCPCLD_MSG_RESERVED0,
     RTCPCLD_MSG_RESERVED1
 };
@@ -153,6 +154,7 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_ZEROSIZE, DLF_LVL_SYSTEM,"Zero size disk file rejected"},
     { RTCPCLD_MSG_COPYFAILED, DLF_LVL_ERROR,"Copy failed"},
     { RTCPCLD_MSG_NOTBLKIDPOS, DLF_LVL_WARNING,"Unusual position method"},
+    { RTCPCLD_MSG_CKSUMNAMETOOLONG, DLF_LVL_ALERT,"Checksum algorithm name too long"},
     { RTCPCLD_MSG_RESERVED0, DLF_LVL_DEBUG,""},
     { RTCPCLD_MSG_RESERVED1, DLF_LVL_DEBUG,""}
 };
