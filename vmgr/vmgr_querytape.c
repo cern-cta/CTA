@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_querytape.c,v $ $Revision: 1.7 $ $Date: 2001/01/19 11:20:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_querytape.c,v $ $Revision: 1.8 $ $Date: 2002/02/07 06:08:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_querytape - query about a tape volume */
@@ -22,21 +22,19 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_querytape.c,v $ $Revision: 1.7 $ $Dat
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_querytape(const char *vid, char *vsn, char *dgn, char *density, char *lbltype, char *model, char *media_letter, char *manufacturer, char *sn, char *poolname, int *free_space, int *nbfiles, int *rcount, int *wcount, time_t *rtime, time_t *wtime, int *status)
+vmgr_querytape(const char *vid, int side, struct vmgr_tape_info *tape_info, char *dgn)
 {
 	int c;
 	char func[15];
 	gid_t gid;
 	int msglen;
-	int n;
 	char *q;
 	char *rbp;
-	char repbuf[126];
+	char repbuf[177];
 	char *sbp;
 	char sendbuf[REQBUFSZ];
-	time_t t1;
 	struct vmgr_api_thread_info *thip;
-	char tmpbuf[25];
+	char tmpbuf[7];
 	uid_t uid;
 
         strcpy (func, "vmgr_querytape");
@@ -52,7 +50,7 @@ vmgr_querytape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
         }
 #endif
 
-	if (! vid) {
+	if (! vid || ! tape_info) {
 		serrno = EFAULT;
 		return (-1);
 	}
@@ -60,7 +58,7 @@ vmgr_querytape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
 	/* Build request header */
 
 	sbp = sendbuf;
-	marshall_LONG (sbp, VMGR_MAGIC);
+	marshall_LONG (sbp, VMGR_MAGIC2);
 	marshall_LONG (sbp, VMGR_QRYTAPE);
 	q = sbp;        /* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
@@ -71,6 +69,7 @@ vmgr_querytape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
 	marshall_LONG (sbp, uid);
 	marshall_LONG (sbp, gid);
 	marshall_STRING (sbp, vid);
+	marshall_WORD (sbp, side);
  
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
@@ -80,54 +79,33 @@ vmgr_querytape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
 		sleep (RETRYI);
 	if (c == 0) {
 		rbp = repbuf;
-		unmarshall_STRING (rbp, tmpbuf);
-		if (vsn)
-			strcpy (vsn, tmpbuf);
+		strcpy (tape_info->vid, vid);
+		unmarshall_STRING (rbp, tape_info->vsn);
+		unmarshall_STRING (rbp, tape_info->library);
 		unmarshall_STRING (rbp, tmpbuf);
 		if (dgn)
 			strcpy (dgn, tmpbuf);
-		unmarshall_STRING (rbp, tmpbuf);
-		if (density)
-			strcpy (density, tmpbuf);
-		unmarshall_STRING (rbp, tmpbuf);
-		if (lbltype)
-			strcpy (lbltype, tmpbuf);
-		unmarshall_STRING (rbp, tmpbuf);
-		if (model)
-			strcpy (model, tmpbuf);
-		unmarshall_STRING (rbp, tmpbuf);
-		if (media_letter)
-			strcpy (media_letter, tmpbuf);
-		unmarshall_STRING (rbp, tmpbuf);
-		if (manufacturer)
-			strcpy (manufacturer, tmpbuf);
-		unmarshall_STRING (rbp, tmpbuf);
-		if (sn)
-			strcpy (sn, tmpbuf);
-		unmarshall_STRING (rbp, tmpbuf);
-		if (poolname)
-			strcpy (poolname, tmpbuf);
-		unmarshall_LONG (rbp, n);
-		if (free_space)
-			*free_space = n;
-		unmarshall_LONG (rbp, n);
-		if (nbfiles)
-			*nbfiles = n;
-		unmarshall_LONG (rbp, n);
-		if (rcount)
-			*rcount = n;
-		unmarshall_LONG (rbp, n);
-		if (wcount)
-			*wcount = n;
-		unmarshall_TIME_T (rbp, t1);
-		if (rtime)
-			*rtime = t1;
-		unmarshall_TIME_T (rbp, t1);
-		if (wtime)
-			*wtime = t1;
-		unmarshall_LONG (rbp, n);
-		if (status)
-			*status = n;
+		unmarshall_STRING (rbp, tape_info->density);
+		unmarshall_STRING (rbp, tape_info->lbltype);
+		unmarshall_STRING (rbp, tape_info->model);
+		unmarshall_STRING (rbp, tape_info->media_letter);
+		unmarshall_STRING (rbp, tape_info->manufacturer);
+		unmarshall_STRING (rbp, tape_info->sn);
+		unmarshall_WORD (rbp, tape_info->nbsides);
+		unmarshall_TIME_T (rbp, tape_info->etime);
+		unmarshall_WORD (rbp, tape_info->side);
+		unmarshall_STRING (rbp, tape_info->poolname);
+		unmarshall_LONG (rbp, tape_info->estimated_free_space);
+		unmarshall_LONG (rbp, tape_info->nbfiles);
+		unmarshall_LONG (rbp, tape_info->rcount);
+		unmarshall_LONG (rbp, tape_info->wcount);
+		unmarshall_STRING (rbp, tape_info->rhost);
+		unmarshall_STRING (rbp, tape_info->whost);
+		unmarshall_LONG (rbp, tape_info->rjid);
+		unmarshall_LONG (rbp, tape_info->wjid);
+		unmarshall_TIME_T (rbp, tape_info->rtime);
+		unmarshall_TIME_T (rbp, tape_info->wtime);
+		unmarshall_LONG (rbp, tape_info->status);
 	}
 	return (c);
 }
