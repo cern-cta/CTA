@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.60 2000/11/25 11:16:48 jdurand Exp $
+ * $Id: procio.c,v 1.61 2000/11/26 10:07:10 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.60 $ $Date: 2000/11/25 11:16:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.61 $ $Date: 2000/11/26 10:07:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -721,7 +721,7 @@ void procioreq(req_type, req_data, clienthost)
 			}
 			setegid(0);
 			seteuid(0);
-			stgreq.size = (int) ((hsmsize > ONE_MB) ? (hsmsize / ONE_MB + 1) : 1);
+			stgreq.size = (int) ((hsmsize > ONE_MB) ? (((hsmsize - ((hsmsize / ONE_MB) * ONE_MB)) == 0) ? (hsmsize / ONE_MB) : ((hsmsize / ONE_MB) + 1)) : 1);
 		} else if (size) {
 			if ((p = strchr (size, ':')) != NULL) *p = '\0';
 			stgreq.size = strtol (size, &dp, 10);
@@ -1007,7 +1007,7 @@ void procioreq(req_type, req_data, clienthost)
 			else
 				stcp->reqid = reqid;
 			stcp->status = STAGEOUT;
-			stcp->c_time = time ( 0);
+			stcp->c_time = time(0);
 			stcp->a_time = stcp->c_time;
 			stcp->nbaccesses++;
 			if ((c = build_ipath (upath, stcp, pool_user)) < 0) {
@@ -1220,8 +1220,8 @@ void procioreq(req_type, req_data, clienthost)
 				}
 			} else {
 				/* Already done before */
-				stcp->actual_size = st.st_size;
-				stcp->c_time = st.st_mtime;
+				stcp->actual_size = correct_size;
+				stcp->c_time = hsmmtime;
 			}
 			stcp->a_time = time (0);
 			strcpy (stcp->ipath, upath);
