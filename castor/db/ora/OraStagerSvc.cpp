@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2004/10/22 12:44:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2004/10/22 15:43:56 $ $Author: sponcec3 $
  *
  *
  *
@@ -194,18 +194,26 @@ castor::db::ora::OraStagerSvc::bestFileSystemForSegment
 bool castor::db::ora::OraStagerSvc::anyTapeCopyForStream
 (castor::stager::Stream* searchItem)
   throw (castor::exception::Exception) {
-  // Check whether the statements are ok
-  if (0 == m_anyTapeCopyForStreamStatement) {
-    m_anyTapeCopyForStreamStatement =
-      createStatement(s_anyTapeCopyForStreamStatementString);
+  try {
+    // Check whether the statements are ok
+    if (0 == m_anyTapeCopyForStreamStatement) {
+      m_anyTapeCopyForStreamStatement =
+        createStatement(s_anyTapeCopyForStreamStatementString);
+    }
+    m_anyTapeCopyForStreamStatement->setInt(1, searchItem->id());
+    oracle::occi::ResultSet *rset =
+      m_anyTapeCopyForStreamStatement->executeQuery();
+    bool result = 
+      oracle::occi::ResultSet::END_OF_FETCH == rset->next();
+    m_anyTapeCopyForStreamStatement->closeResultSet(rset);
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in anyTapeCopyForStream."
+      << std::endl << e.what();
+    throw ex;
   }
-  m_anyTapeCopyForStreamStatement->setInt(1, searchItem->id());
-  oracle::occi::ResultSet *rset =
-    m_anyTapeCopyForStreamStatement->executeQuery();
-  bool result = 
-    oracle::occi::ResultSet::END_OF_FETCH == rset->next();
-  m_anyTapeCopyForStreamStatement->closeResultSet(rset);
-  return result;
 }
 
 // -----------------------------------------------------------------------
