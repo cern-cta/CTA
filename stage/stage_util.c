@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.3 2001/06/21 10:27:10 jdurand Exp $
+ * $Id: stage_util.c,v 1.4 2001/06/21 11:27:30 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -17,6 +17,7 @@
 #include "stage.h"
 #include "stage_api.h"
 #include "osdep.h"
+#include "u64subr.h"
 
 #ifdef __STDC__
 #define NAMEOFVAR(x) #x
@@ -147,8 +148,6 @@ void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
 		DUMP_U64(rpfd,stcp,u1.h.fileid);
 		DUMP_VAL(rpfd,stcp,u1.h.fileclass);
 		DUMP_STRING(rpfd,stcp,u1.h.tppool);
-		DUMP_VAL(rpfd,stcp,u1.h.retenp_on_disk);
-		DUMP_VAL(rpfd,stcp,u1.h.mintime_beforemigr);
 		break;
 	}
 }
@@ -224,8 +223,6 @@ void DLL_DECL print_stcp(stcp)
 		PRINT_U64(stcp,u1.h.fileid);
 		PRINT_VAL(stcp,u1.h.fileclass);
 		PRINT_STRING(stcp,u1.h.tppool);
-		PRINT_VAL(stcp,u1.h.retenp_on_disk);
-		PRINT_VAL(stcp,u1.h.mintime_beforemigr);
 		break;
 	}
 }
