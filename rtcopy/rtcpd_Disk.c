@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.44 $ $Date: 2000/03/13 08:56:57 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.45 $ $Date: 2000/03/13 10:17:35 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1316,6 +1316,10 @@ void *diskIOthread(void *arg) {
     filereq = &file->filereq;
     mode = tapereq->mode;
 
+    /*
+     * Initialize stager API error message buffer
+     */
+    (void)rtcpd_init_stgupdc();
     /*
      * Open the disk file given the specified record format (U/F).
      */
