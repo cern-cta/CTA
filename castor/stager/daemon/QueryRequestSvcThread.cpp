@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.8 2005/02/11 16:52:51 bcouturi Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.9 2005/02/23 13:08:24 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.8 $ $Date: 2005/02/11 16:52:51 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.9 $ $Date: 2005/02/23 13:08:24 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -214,9 +214,9 @@ namespace castor {
         case DISKCOPY_STAGEOUT:
                     
           /* fprintf(stderr, "---------> DC %d TC %d Seg %d\n", 
-                  dc->diskCopyStatus(), 
-                  dc->tapeCopyStatus(),
-                  dc->segmentStatus()); */
+             dc->diskCopyStatus(), 
+             dc->tapeCopyStatus(),
+             dc->segmentStatus()); */
 
           switch (dc->tapeCopyStatus()) {
           case -1:
@@ -236,8 +236,8 @@ namespace castor {
               st = FILE_BEINGMIGR;
             }
             break;
-        }
-        break;
+          }
+          break;
           
         case DISKCOPY_CANBEMIGR:
           st =  FILE_CANBEMIGR;
@@ -250,6 +250,9 @@ namespace castor {
           fr->setStatus(st);
           foundDiskCopy = true;
         } else {
+          // If there are sevral diskcopies for the file
+          // set the status to staged if ANY of the disk copies is 
+          // staged, otherwise keep the original status.
           if (dc->diskCopyStatus() == DISKCOPY_STAGED) {
             fr->setStatus(FILE_STAGED);
           }
@@ -258,141 +261,156 @@ namespace castor {
       
       
       void handle_fileQueryRequest_byFileId(castor::query::IQuerySvc* qrySvc,
-					    castor::IClient *client,
-					    std::string &fid, 
-					    std::string &nshost,
-					    bool& listAllFiles) {
-
-	char *func =  "castor::stager::queryService::handle_fileQueryRequest_byFileId";
-
-	/* Invoking the method                */
-	/* ---------------------------------- */
-	if (!listAllFiles) {
-	  STAGER_LOG_DEBUG(NULL, "Invoking diskCopies4File");
-	  std::list<castor::stager::DiskCopyInfo*> result =
-	    qrySvc->diskCopies4File(fid, nshost);
+                                            castor::IClient *client,
+                                            std::string &fid, 
+                                            std::string &nshost,
+                                            bool& listAllFiles) {
+        
+        char *func =  "castor::stager::queryService::handle_fileQueryRequest_byFileId";
+        
+        /* Invoking the method                */
+        /* ---------------------------------- */
+        if (!listAllFiles) {
+          STAGER_LOG_DEBUG(NULL, "Invoking diskCopies4File");
+          std::list<castor::stager::DiskCopyInfo*> result =
+            qrySvc->diskCopies4File(fid, nshost);
 	  
-	  if (result.size() == 0) {
-	    castor::exception::Exception e(ENOENT);
-	    e.getMessage() << "File " << fid << "@"
-			   << nshost << " not in stager";
-	    throw e;
-	  }
+          if (result.size() == 0) {
+            castor::exception::Exception e(ENOENT);
+            e.getMessage() << "File " << fid << "@"
+                           << nshost << " not in stager";
+            throw e;
+          }
 	  
-	  castor::rh::FileQueryResponse res;
-	  std::ostringstream sst;
-	  sst << fid << "@" <<  nshost;
-	  res.setFileName(sst.str());    
-	  bool foundDiskCopy = false;
+          castor::rh::FileQueryResponse res;
+          std::ostringstream sst;
+          sst << fid << "@" <<  nshost;
+          res.setFileName(sst.str());    
+          bool foundDiskCopy = false;
 	  
-	  for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit 
-		= result.begin();
-	      dcit != result.end();
-	      ++dcit) {
+          for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit 
+                = result.begin();
+              dcit != result.end();
+              ++dcit) {
 	    
-	    castor::stager::DiskCopyInfo* diskcopy = *dcit;  
-	    /* Preparing the response */
-	    /* ---------------------- */
-	    res.setSize(diskcopy->size());  
-	    setFileResponseStatus(&res, diskcopy, foundDiskCopy);
-	  }
+            castor::stager::DiskCopyInfo* diskcopy = *dcit;  
+            /* Preparing the response */
+            /* ---------------------- */
+            res.setSize(diskcopy->size());  
+            setFileResponseStatus(&res, diskcopy, foundDiskCopy);
+          }
 	  
-	  /* Sending the response */
-	  /* -------------------- */
-	  replyToClient(client, &res);
+          /* Sending the response */
+          /* -------------------- */
+          replyToClient(client, &res);
 	  
-	} else {
-	  STAGER_LOG_DEBUG(NULL, "Invoking listDiskCopies");
-	  std::list<castor::stager::DiskCopyInfo*> result =
-	    qrySvc->listDiskCopies();
+        } else {
+          STAGER_LOG_DEBUG(NULL, "Invoking listDiskCopies");
+          std::list<castor::stager::DiskCopyInfo*> result =
+            qrySvc->listDiskCopies();
 
 
-	  for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit 
-		= result.begin();
-	      dcit != result.end();
-	      ++dcit) {
-	    castor::rh::FileQueryResponse res;
-	    bool foundDiskCopy = false;
-	    castor::stager::DiskCopyInfo* diskcopy = *dcit;  
+          for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit 
+                = result.begin();
+              dcit != result.end();
+              ++dcit) {
+            castor::rh::FileQueryResponse res;
+            bool foundDiskCopy = false;
+            castor::stager::DiskCopyInfo* diskcopy = *dcit;  
 	    
-	    std::ostringstream sst;
-	    sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
-	    res.setFileName(sst.str());
-	    /* Preparing the response */
-	    /* ---------------------- */
-	    setFileResponseStatus(&res, diskcopy, foundDiskCopy);
-	    /* Sending the response */
-	    /* -------------------- */
-	    replyToClient(client, &res);
-	  }
-	}
+            std::ostringstream sst;
+            sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
+            res.setFileName(sst.str());
+            /* Preparing the response */
+            /* ---------------------- */
+            setFileResponseStatus(&res, diskcopy, foundDiskCopy);
+            /* Sending the response */
+            /* -------------------- */
+            replyToClient(client, &res);
+          }
+        }
       }
+      
 
 
 
       void handle_fileQueryRequest_byRequest(castor::query::IQuerySvc* qrySvc,
-					     castor::IClient *client,
-					     std::string &val,
-					     bool byUsertag = false) {
-	char *func =  "castor::stager::queryService::handle_fileQueryRequest_byRequest";
+                                             castor::IClient *client,
+                                             std::string &val,
+                                             bool byUsertag = false) {
+        char *func =  "castor::stager::queryService::handle_fileQueryRequest_byRequest";
 
-	// Performing the query on the database
-	std::list<castor::stager::DiskCopyInfo*> result;
+        // Performing the query on the database
+        std::list<castor::stager::DiskCopyInfo*> result;
 	
-	if (byUsertag) {
-	  result = qrySvc->diskCopies4Usertag(val);
-	  if (result.size() == 0) {
-	    castor::exception::Exception e(ENOENT);
-	    e.getMessage() << "Could not find request for usertag " << val;
-	    throw e;
-	  }
-	} else {
-	  result = qrySvc->diskCopies4Request(val);
-	  if (result.size() == 0) {
-	    castor::exception::Exception e(ENOENT);
-	    e.getMessage() << "Could not find request for id " << val;
-	    throw e;
-	  }
-	}
+        if (byUsertag) {
+          result = qrySvc->diskCopies4Usertag(val);
+          if (result.size() == 0) {
+            castor::exception::Exception e(ENOENT);
+            e.getMessage() << "Could not find request for usertag " << val;
+            throw e;
+          }
+        } else {
+          result = qrySvc->diskCopies4Request(val);
+          if (result.size() == 0) {
+            castor::exception::Exception e(ENOENT);
+            e.getMessage() << "Could not find request for id " << val;
+            throw e;
+          }
+        }
 
-	u_signed64 fileid = 0;
-	std::string nshost = "";
-	castor::rh::FileQueryResponse res;
-	bool foundDiskCopy = false;
+        /*
+         * Iterates over the list of disk copies, and returns one result
+         * per fileid to the client. It needs the SQL statement to return the diskcopies 
+         * sorted by fileid/nshost.
+         */
 
-	for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit 
-	      = result.begin();
-	    dcit != result.end();
-	    ++dcit) {
+        u_signed64 fileid = 0;
+        std::string nshost = "";
+        castor::rh::FileQueryResponse res;
+        bool foundDiskCopy = false;
 
-	  castor::stager::DiskCopyInfo* diskcopy = *dcit;  
+
+        for(std::list<castor::stager::DiskCopyInfo*>::iterator dcit 
+              = result.begin();
+            dcit != result.end();
+            ++dcit) {
+
+          castor::stager::DiskCopyInfo* diskcopy = *dcit;  
+
+          diskcopy->print();
+
+          if (diskcopy->fileId() != fileid
+              || diskcopy->nsHost() != nshost) {
+
+            // Sending the response for the previous 
+            // castor file being processed 
+            if (foundDiskCopy) {
+              replyToClient(client, &res);
+            }
+	    
+            // Now processing a new file !
+            bool foundDiskCopy = false;
+            fileid = diskcopy->fileId();
+            nshost = diskcopy->nsHost();
+	    
+
+            std::ostringstream sst;
+            sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
+            res.setFileName(sst.str());
+            res.setSize(diskcopy->size());
+	    
+          }
 	  
-	  if (diskcopy->fileId() != fileid
-	      || diskcopy->nsHost() != nshost) {
+          /* Preparing the response */
+          /* ---------------------- */
+          setFileResponseStatus(&res, diskcopy, foundDiskCopy);
+        }
 
-	    // Sending the response for the previous 
-	    // castor file being processed 
-	    if (foundDiskCopy) {
-	      replyToClient(client, &res);
-	    }
-	    
-	    // Now processing a new file !
-	    bool foundDiskCopy = false;
-	    fileid = diskcopy->fileId();
-	    nshost = diskcopy->nsHost();
-	    
-
-	    std::ostringstream sst;
-	    sst << diskcopy->fileId() << "@" <<  diskcopy->nsHost();
-	    res.setFileName(sst.str());
-	    res.setSize(diskcopy->size());
-	    
-	  }
-	  
-	  /* Preparing the response */
-	  /* ---------------------- */
-	  setFileResponseStatus(&res, diskcopy, foundDiskCopy);
-	}
+        // Send the last response if necessary
+        if (foundDiskCopy) {
+          replyToClient(client, &res);
+        }
       }
       
 
