@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.54 $ $Date: 2000/03/16 12:52:57 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.55 $ $Date: 2000/03/16 13:44:37 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1837,6 +1837,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                      nextfile->filereq.tape_fseq,nextfile->filereq.disk_fseq,
                      nextfile->filereq.file_path,nextfile->filereq.concat);
                      nextfile->filerqe.file_path,nextfile->filereq.concat);
+    } CLIST_ITERATE_END(nexttape->file,nextfile);
     /*
     return(0);
 }
