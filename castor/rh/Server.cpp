@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/07 15:54:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/07/02 09:10:01 $ $Author: sponcec3 $
  *
  *
  *
@@ -30,6 +30,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <errno.h>
 
 #include "castor/io/Socket.hpp"
 #include "castor/IObject.hpp"
