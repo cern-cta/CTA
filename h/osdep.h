@@ -1,14 +1,14 @@
 /*
- * $Id: osdep.h,v 1.10 2000/01/04 11:51:00 jdurand Exp $
+ * $Id: osdep.h,v 1.11 2000/03/03 11:31:30 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/IP
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/IP
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: osdep.h,v $ $Revision: 1.10 $ $Date: 2000/01/04 11:51:00 $ CERN IT-PDP/IP Frederic Hemmer
+ * @(#)$RCSfile: osdep.h,v $ $Revision: 1.11 $ $Date: 2000/03/03 11:31:30 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */
@@ -63,7 +63,16 @@ typedef int mode_t;
 typedef signed64 HYPER;
 typedef u_signed64 U_HYPER;
 
-#
+#define ONE_KB 0x400
+#define ONE_MB 0x100000
+#define ONE_GB 0x40000000
+#ifndef _WIN32
+#define ONE_TB 0x10000000000LL
+#define ONE_PB 0x4000000000000LL
+#else
+#define ONE_TB 0x10000000000
+#define ONE_PB 0x4000000000000
+#endif
 
 /*
  * Byte swapping
