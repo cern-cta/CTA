@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stagewrt.man,v $ $Revision: 1.8 $ $Date: 2001/06/21 10:39:45 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagewrt.man,v $ $Revision: 1.9 $ $Date: 2001/09/18 21:24:12 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEWRT l "$Date: 2001/06/21 10:39:45 $"
+.TH STAGEWRT l "$Date: 2001/09/18 21:24:12 $"
 .SH NAME
 stagewrt \- copy existing files from disk to tape, from disk to disk or from
 disk to a Hierarchical Storage Management System.
@@ -412,6 +412,8 @@ stagewrt -v CUT333 -F F -L 10240 -b 10240 myfiles.tar
 16	EBUSY: Device or resource busy.
 .br
 28	ENOSPC: No space left on device.
+.br
+188 Tape is held
 .br
 192	Request cancelled by stageclr.
 .br
