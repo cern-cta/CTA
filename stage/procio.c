@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.22 2000/05/12 12:36:20 jdurand Exp $
+ * $Id: procio.c,v 1.23 2000/05/12 13:17:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.22 $ $Date: 2000/05/12 12:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.23 $ $Date: 2000/05/12 13:17:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1219,11 +1219,7 @@ void procputreq(req_data, clienthost)
 				updfreespace (stcp->poolname, stcp->ipath,
 											stcp->size*1024*1024 - (int)stcp->actual_size);
 			}
-			if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-				stcp->status = STAGEPUT | CAN_BE_MIGR;
-			} else {
-				stcp->status = STAGEPUT;
-			}
+			stcp->status = STAGEPUT;
 			stcp->a_time = time (0);
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
@@ -1252,8 +1248,9 @@ void procputreq(req_data, clienthost)
 				if ((hsmfilesstcp[ihsmfiles]->status & 0xF)  == STAGEOUT) {
 					if (rfio_stat (hsmfilesstcp[ihsmfiles]->ipath, &st) == 0)
 						stcp->actual_size = st.st_size;
-					updfreespace (hsmfilesstcp[ihsmfiles]->poolname, hsmfilesstcp[ihsmfiles]->ipath,
-												hsmfilesstcp[ihsmfiles]->size*1024*1024 - (int) hsmfilesstcp[ihsmfiles]->actual_size);
+					if ((hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) != CAN_BE_MIGR) {
+						updfreespace (hsmfilesstcp[ihsmfiles]->poolname, hsmfilesstcp[ihsmfiles]->ipath,
+													hsmfilesstcp[ihsmfiles]->size*1024*1024 - (int) hsmfilesstcp[ihsmfiles]->actual_size);
 				}
 				if ((hsmfilesstcp[ihsmfiles]->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 					hsmfilesstcp[ihsmfiles]->status = STAGEPUT | CAN_BE_MIGR;
