@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.12 2001/12/20 11:26:49 jdurand Exp $
+ * $Id: stage_constants.h,v 1.13 2001/12/20 11:36:33 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -357,10 +357,12 @@
 #endif
 #define STGMAGIC3   0x13140703
 
+#ifdef STAGER_SIDE_SERVER_SUPPORT
 #ifdef STGMAGIC4
 #undef STGMAGIC4
 #endif
 #define STGMAGIC4   0x13140704
+#endif
 
 #ifdef ONE_SECOND
 #undef ONE_SECOND
