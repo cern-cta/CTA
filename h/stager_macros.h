@@ -1,13 +1,13 @@
 /*
- * $Id: stagerMacros.h,v 1.3 2004/10/27 15:21:46 jdurand Exp $
+ * $Id: stager_macros.h,v 1.1 2004/10/28 09:02:16 jdurand Exp $
  */
 
-#ifndef __stagerMacros_h
-#define __stagerMacros_h
+#ifndef __stager_macros_h
+#define __stager_macros_h
 
 #include "dlf_api.h"
 #include "Cns_api.h"
-#include "stagerMessages.h"
+#include "stager_messages.h"
 #include "serrno.h"
 #include "osdep.h"
 #include "Cthread_api.h"
@@ -133,4 +133,6 @@
   args; \
 }
 
-#endif /* __stagerMacros_h */
+#define STAGER_NB_ELEMENTS(a) (sizeof(a)/sizeof((a)[0]))
+
+#endif /* __stager_macros_h */
