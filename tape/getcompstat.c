@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1996-2002 by CERN/IT/PDP
+ * Copyright (C) 1996-2003 by CERN/IT/ADC
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.16 $ $Date: 2003/04/28 16:06:01 $ CERN CN-PDP Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.17 $ $Date: 2003/04/30 15:59:43 $ CERN Fabien Collin/Jean-Philippe Baud/Benjamin Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -115,45 +115,45 @@ COMPRESSION_STATS *comp_stats;
 		   strcmp (devtype, "SDLT") == 0 ||
 		   strcmp (devtype, "LTO") == 0) {	/* values in bytes */
 
-        /* Fixed by BC 2003/04/22
-           On IBM/HP LTO drives, the number of bytes field can be
-           a negative offset.
-        */
-        
-        while (p < endpage) {
-            parmcode = *p << 8 | *(p+1);
+/* Fixed by BC 2003/04/22
+   On IBM/HP LTO drives, the number of bytes field can be
+   a negative offset.
+*/
+
+	while (p < endpage) {
+		parmcode = *p << 8 | *(p+1);
 			switch (parmcode) {
 			case 0x2:
 				kbytes_to_host =
-				    (*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7)) << 10;
+					(*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7)) << 10;
 				break;
 			case 0x3:
 				kbytes_to_host +=
-				    (*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8) >> 10;
+					(*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8) >> 10;
 				break;
 			case 0x4:
 				kbytes_from_tape =
-				    (*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7)) << 10;
+					(*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7)) << 10;
 				break;
 			case 0x5:
 				kbytes_from_tape +=
-                     (*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8) >> 10;
+					(*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8) >> 10;
 				break;
 			case 0x6:
 				kbytes_from_host =
-				    (*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7)) << 10;
+					(*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7)) << 10;
 				break;
 			case 0x7:
 				kbytes_from_host +=
-                    (*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8) >> 10;
+					(*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8) >> 10;
 				break;
 			case 0x8:
 				kbytes_to_tape =
-				    (*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7)) << 10;
+					(*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8 | *(p+7)) << 10;
 				break;
 			case 0x9:
 				kbytes_to_tape +=
-				    (*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8) >> 10;
+					(*(p+4) << 24 | *(p+5) << 16 | *(p+6) << 8) >> 10;
 				break;
 			}
 			p += *(p+3) + 4;
