@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.9 $ $Date: 2000/01/19 15:40:02 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.10 $ $Date: 2000/01/19 15:48:48 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -388,53 +388,55 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                 serrno = EINVAL;
                 SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
                 if ( rc == -1 ) return(rc);
-            }
-        }
-        if ( strstr(filereq->file_path,":/afs") != NULL ) {
-            sprintf(errmsgtxt,RT145,"CPTPDSK");
-            serrno = EACCES;
-            SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
-            if ( rc == -1 ) return(rc);
-        }
-        rfio_errno = serrno = 0;
-        rc = rfio_stat(filereq->file_path,&st);
-        if ( rc != -1 && (((st.st_mode) & S_IFMT) == S_IFDIR) ) {
-            sprintf(errmsgtxt,"File %s is a directory !",filereq->file_path);
-            serrno = EISDIR;
-            SET_REQUEST_ERR(filereq,RTCP_OK);
-        }
-        /*
-         * If the file doesn't exist we should at least make sure 
-         * that the target directory exists.
-         */
-        if ( rc == -1 ) {
-            p = strrchr(filereq->file_path,'/');
-            if ( p == NULL ) p = strrchr(filereq->file_path,'\\');
-            if ( p != NULL ) {
-                dir_delim = *p;
-                *p = '\0';
-            }
-            rc = rfio_stat(filereq->file_path,&st);
-            if ( rc == -1 ) {
-                if ( rfio_errno != 0 ) serrno = rfio_errno;
-                else if ( serrno == 0 ) serrno = errno;
-                sprintf(errmsgtxt,"%s: %s",filereq->file_path,sstrerror(serrno));
-                if ( p != NULL ) *p = dir_delim;
+            } 
+        } else {
+            if ( strstr(filereq->file_path,":/afs") != NULL ) {
+                sprintf(errmsgtxt,RT145,"CPTPDSK");
+                serrno = EACCES;
                 SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
                 if ( rc == -1 ) return(rc);
+            }
+            rfio_errno = serrno = 0;
+            rc = rfio_stat(filereq->file_path,&st);
+            if ( rc != -1 && (((st.st_mode) & S_IFMT) == S_IFDIR) ) {
+                sprintf(errmsgtxt,"File %s is a directory !",filereq->file_path);
+                serrno = EISDIR;
+                SET_REQUEST_ERR(filereq,RTCP_OK);
             }
             /*
-             * Couldn't find S_ISDIR() macro under NT. 
+             * If the file doesn't exist we should at least make sure 
+             * that the target directory exists.
              */
-            if ( !(((st.st_mode) & S_IFMT) == S_IFDIR) ) {
-                sprintf(errmsgtxt,"directory %s does not exist",
-                    filereq->file_path);
+            if ( rc == -1 ) {
+                p = strrchr(filereq->file_path,'/');
+                if ( p == NULL ) p = strrchr(filereq->file_path,'\\');
+                if ( p != NULL ) {
+                    dir_delim = *p;
+                    *p = '\0';
+                }
+                rc = rfio_stat(filereq->file_path,&st);
+                if ( rc == -1 ) {
+                    if ( rfio_errno != 0 ) serrno = rfio_errno;
+                    else if ( serrno == 0 ) serrno = errno;
+                    sprintf(errmsgtxt,"%s: %s",filereq->file_path,
+                            sstrerror(serrno));
+                    if ( p != NULL ) *p = dir_delim;
+                    SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
+                    if ( rc == -1 ) return(rc);
+                }
+                /*
+                 * Couldn't find S_ISDIR() macro under NT. 
+                 */
+                if ( !(((st.st_mode) & S_IFMT) == S_IFDIR) ) {
+                    sprintf(errmsgtxt,"directory %s does not exist",
+                        filereq->file_path);
+                    if ( p != NULL ) *p = dir_delim;
+                    serrno = ENOTDIR;
+                    SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
+                    if ( rc == -1 ) return(rc);
+                }
                 if ( p != NULL ) *p = dir_delim;
-                serrno = ENOTDIR;
-                SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
-                if ( rc == -1 ) return(rc);
             }
-            if ( p != NULL ) *p = dir_delim;
         }
     }
     return(rc);
