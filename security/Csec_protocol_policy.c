@@ -12,14 +12,22 @@
 static char sccsid[] = "@(#)Csec_protocol_policy.c CERN IT/ADC/CA Benjamin Couturier";
 #endif
 		
+#include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <string.h>
 #include <serrno.h>
 #include <errno.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#include <osdep.h>
 #include <Csec.h>
 #include <Csec_protocol_policy.h>
 
+
+EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
 
 #define TMPBUFSIZE 300
 
@@ -40,14 +48,13 @@ int Csec_client_lookup_protocols(Csec_protocol **protocols, int *nbprotocols) {
     p = CSEC_DEFAULT_MECHS;
   }
 
-  {
-    char buff[300];
-    snprintf(buff, 299, "Protocols are <%s>\n", p);
-    Csec_trace("Csec_client_get_protocols", buff);
-  }
+  Csec_trace(func, "Protocols are <%s>\n", p);
   
   buf = (char *)malloc(strlen(p)+1);
   if (NULL == buf) {
+    serrno = ESEC_NO_SECPROT;
+    Csec_errmsg(func, "Error allocating buffer of size %d\n",
+		strlen(p)+1);
     return -1;
   }
 
@@ -61,7 +68,10 @@ int Csec_client_lookup_protocols(Csec_protocol **protocols, int *nbprotocols) {
 
   /* Allocating the list */
   prots = (Csec_protocol *)malloc(entry * sizeof(Csec_protocol));
-  if (NULL == buf) {
+  if (NULL == prots) {
+    serrno = ESEC_NO_SECPROT;
+    Csec_errmsg(func, "Error allocating buffer of size %d\n",
+		entry * sizeof(Csec_protocol));
     free(buf);
     return -1;
   }
@@ -79,9 +89,8 @@ int Csec_client_lookup_protocols(Csec_protocol **protocols, int *nbprotocols) {
     }
   }
 
-  free(buf);
   *protocols = prots;
-  
+  free(buf);
   return 0;
 }
 
@@ -96,8 +105,10 @@ int Csec_server_lookup_protocols(long client_address,
   int entry = 0;
   Csec_protocol *prots;
   char *func = "Csec_server_lookup_protocols";
+  struct in_addr a;
 
-  Csec_trace(func, "Looking for allowed security protocols for %s\n", inet_ntoa (client_address));
+  a.s_addr = client_address;
+  Csec_trace(func, "Looking for allowed security protocols for %s\n", inet_ntoa (a));
 	     
   /* Getting the protocol list from environment variable, configuration file
      or default value */
@@ -219,7 +230,6 @@ int Csec_server_receive_protocol(int s, int timeout, Csec_context *ctx, char *bu
   gss_buffer_desc gssbuf;
   char *func = "Csec_server_receive_protocol";
   char protid[PROTID_SIZE];
-  int rc;
   int received_token_type = 0;
 
   Csec_trace(func, "Entering\n");
@@ -297,6 +307,7 @@ int Csec_server_receive_protocol(int s, int timeout, Csec_context *ctx, char *bu
 
     if (protocol_ok) {
       if ( Csec_get_shlib(ctx) == NULL) {
+	serrno = ESEC_NO_SECMECH;
 	Csec_errmsg(func, "Could not load shared library for protocol <%s>\n", ctx->protocols[ctx->current_protocol].id);
 	return -1; 
       } 
@@ -377,8 +388,6 @@ int Csec_client_receive_server_response(int s, int timeout, Csec_context *ctx) {
 
   gss_buffer_desc gssbuf;
   char *func = "Csec_client_receive_server_response";
-  char protid[PROTID_SIZE];
-  int rc;
   int received_token_type = 0;
 
 

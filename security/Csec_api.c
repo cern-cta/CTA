@@ -48,67 +48,72 @@ static char sccsid[] = "@(#)Csec_api_loader.c,v 1.1 2004/01/12 10:31:39 CERN IT/
 #include <Csec.h>
 #include <Csec_protocol_policy.h>
 
+#define CHECKCTX_EXT(CTX,FUNC, RET) if(check_ctx(CTX, FUNC)<0) return RET;
 #define CHECKCTX(CTX,FUNC) if(check_ctx(CTX, FUNC)<0) return -1;
+int Cdomainname(char *name, int namele);
+
+/*****************************************************************
+ *                                                               *
+ *               CONTEXT INITIALIZATION FUNCTIONS                *
+ *                                                               *
+ *****************************************************************/
 
 /**
  * Initializes the Csec the context, and the protocol as well
  */
-int Csec_client_init_context(Csec_context *ctx) {
-  return Csec_init_context_ext(ctx, 1, 0);
+int Csec_client_init_context(Csec_context *ctx, 
+			     int service_type,
+			     Csec_protocol *protocol) {
+
+  char *func="Csec_client_init_context_ext";
+
+  memset(ctx, 0, sizeof(Csec_context));
+  ctx->magic = CSEC_CONTEXT_MAGIC_CLIENT_1;
+  ctx->server_service_type = service_type;
+  ctx->flags = CSEC_CTX_INITIALIZED|CSEC_CTX_SERVICE_TYPE_SET;
+
+  return 0;
 }
 
 /**
  * Initializes the Csec the context, but not the protocol
  */
-int Csec_server_init_context(Csec_context *ctx) {
-  return Csec_init_context_ext(ctx, 0, 0);
-}
+int Csec_server_init_context(Csec_context *ctx, 
+			     int service_type,
+			     Csec_protocol *protocol) {
+  char *func="Csec_server_init_context_ext";
 
-/**
- * Initializes the context, and allows to choose whether
- * the protocol/shared library should be as well.
-
-*/
-int Csec_init_context_ext(Csec_context *ctx, int init_proto, int reinitialize) {
-  char *func="Csec_init_context_ext";
-  int rc;
-  
-  if (reinitialize) {
-    if (ctx->flags & CSEC_CTX_CONTEXT_ESTABLISHED) {
-      if (ctx->Csec_delete_connection_context != NULL)
-	(*(ctx->Csec_delete_connection_context))(ctx);
-    }
-    if (ctx->flags & CSEC_CTX_CREDENTIALS_LOADED) {
-      if (ctx->Csec_delete_creds != NULL)
-	(*(ctx->Csec_delete_creds))(ctx);
-    }
-    if (ctx->shhandle != NULL)
-      dlclose(ctx->shhandle);
-  }
-  
   memset(ctx, 0, sizeof(Csec_context));
-  ctx->flags = CSEC_CTX_INITIALIZED;
-  
-  if (init_proto) {
-    rc = Csec_client_lookup_protocols(&(ctx->protocols), &(ctx->nb_protocols));
-    if (rc != 0) {
-      Csec_errmsg(func, "Could not get security protocols");
-      return rc;
-    }
-    ctx->flags |= CSEC_CTX_PROTOCOL_LOADED;
-    
-    if ( Csec_get_shlib(ctx) == NULL) {
-      return -1; 
-    } 
-  }
+  ctx->magic = CSEC_CONTEXT_MAGIC_SERVER_1;
+  ctx->server_service_type = service_type;
+  ctx->flags = CSEC_CTX_INITIALIZED|CSEC_CTX_SERVICE_TYPE_SET;
+
   return 0;
 }
 
+/**
+ * Re-initializes the Csec the context, but not the protocol
+ */
+int Csec_server_reinit_context(Csec_context *ctx, 
+			     int service_type,
+			     Csec_protocol *protocol) {
+  char *func="Csec_server_reinit_context";
+
+  Csec_clear_context(ctx);
+  return Csec_server_init_context(ctx, service_type, protocol);;
+}
 
 /**
- * Frees the Csec_context !
+ * Clears the Csec_context, deallocating memory.
  */
 int Csec_clear_context(Csec_context *ctx) {
+  char *func = "Csec_clear_context";
+
+  Csec_trace(func, "Clearing context\n");
+  if (ctx->magic !=  CSEC_CONTEXT_MAGIC_CLIENT_1
+      && ctx->magic !=  CSEC_CONTEXT_MAGIC_CLIENT_1) {
+    Csec_trace(func, "Bad magic:%xd - Probably uninitialized context !\n");
+  }
 
   if (ctx->flags & CSEC_CTX_CONTEXT_ESTABLISHED) {
     if (ctx->Csec_delete_connection_context != NULL)
@@ -133,15 +138,6 @@ int Csec_clear_context(Csec_context *ctx) {
 
   return 0;
     
-}
-
-/**
- * Reinitializes the security context
- */
-int Csec_server_reinit_context(ctx)
-     Csec_context *ctx;
-{
-  return  Csec_init_context_ext(ctx, 0, 1);
 }
 
 /**
@@ -174,6 +170,12 @@ int Csec_delete_creds(ctx)
   return (*(ctx->Csec_delete_creds))(ctx);   
 }
 
+/*****************************************************************
+ *                                                               *
+ *               CONTEXT ESTABLISHMENT FUNCTIONS                 *
+ *                                                               *
+ *****************************************************************/
+
 /**
  * API function for the server to establish the context
  *
@@ -197,7 +199,6 @@ int Csec_server_establish_context_ext(ctx, s, buf, len)
      int len;
 {
   char *func = "Csec_server_establish_context_ext";
-  char srv_name[CA_MAXSERVICENAMELEN];
 
   if (!(ctx->flags & CSEC_CTX_SERVICE_TYPE_SET)) {
     Csec_errmsg(func, "Service type not set");
@@ -235,12 +236,40 @@ int Csec_client_establish_context(ctx, s)
   }
     
   if (!(ctx->flags& CSEC_CTX_INITIALIZED)) {
-    if (Csec_client_init_context(ctx)<-1) {
+    serrno = ESEC_CTX_NOT_INITIALIZED;
+    return -1;
+  }
+
+  if (!(ctx->flags & CSEC_CTX_SERVICE_TYPE_SET)) {
+    serrno =  ESEC_NO_SVC_TYPE;
+    Csec_errmsg(func, "Service type not set");
+    return -1;
+  }
+
+  /* Checking whether the list of protocols has been loaded */
+  if (!(ctx->flags & CSEC_CTX_PROTOCOL_LOADED)) {
+    int rc;
+    rc = Csec_client_lookup_protocols(&(ctx->protocols), &(ctx->nb_protocols));
+    if (rc != 0) {
+      /* Csec_client_lookup_protocols already sets the serrno etc... */
+      return rc;
+    }
+    ctx->flags |= CSEC_CTX_PROTOCOL_LOADED;
+    
+    if (Csec_get_shlib(ctx) == NULL) {
+      
       return -1;
     }
   }
+ 
+  /* Loading up the server service name */
+  if (Csec_client_set_service_name(ctx, s) != 0) {
+    /* Error already set in Csec_client_set_service_name */
+    return -1;
+  }
 
- if (!(ctx->flags & CSEC_CTX_SERVICE_NAME_SET)) {
+  if (!(ctx->flags & CSEC_CTX_SERVICE_NAME_SET)) {
+    serrno =  ESEC_NO_SVC_NAME;
     Csec_errmsg(func, "Service name not set");
     return -1;
   }
@@ -252,6 +281,14 @@ int Csec_client_establish_context(ctx, s)
     
   return (*(ctx->Csec_client_establish_context))(ctx, s);
 }
+
+
+/*****************************************************************
+ *                                                               *
+ *               SERVICE NAME/MAPPING  FUNCTIONS                *
+ *                                                               *
+ *****************************************************************/
+
 
 
 int Csec_map2id(Csec_context *ctx, char *principal, uid_t *uid, gid_t *gid) {
@@ -426,22 +463,23 @@ int Csec_server_acquire_creds(ctx, service_name)
   return (*(ctx->Csec_server_acquire_creds))(ctx, service_name);
 }
 
-
 int Csec_client_set_service_name(Csec_context *ctx, 
-				 int s,
-				 int service_type) {
+				 int s) {
   int rc;
   char *func = "Csec_client_set_service_name";
+
+  /* XXX How can we do service type checking ? */
 
   CHECKCTX(ctx,func);
   rc = Csec_get_peer_service_name(ctx, 
 				  s, 
-				  service_type, 
+				  (ctx->server_service_type), 
 				  (ctx->peer_name), 
 				  CA_MAXCSECNAMELEN);
   if (rc == 0) {
     ctx->flags |= CSEC_CTX_SERVICE_NAME_SET;
   } else {
+    serrno = ESEC_NO_SVC_NAME;
     Csec_errmsg(func, "Could not set service name !");
   }
 
@@ -488,7 +526,7 @@ int Csec_server_set_service_name(Csec_context *ctx,
 char *Csec_client_get_service_name(Csec_context *ctx) {
   char *func = "Csec_client_get_service_name";
 
-  CHECKCTX(ctx,func);
+  CHECKCTX_EXT(ctx,func,NULL);
   if (ctx->flags & CSEC_CTX_SERVICE_NAME_SET) {
     return ctx->peer_name;
   } else {
@@ -503,7 +541,7 @@ char *Csec_client_get_service_name(Csec_context *ctx) {
 char *Csec_server_get_service_name(Csec_context *ctx) {
   char *func = "Csec_server_get_service_name";
 
-  CHECKCTX(ctx,func);
+  CHECKCTX_EXT(ctx,func,NULL);
   if (ctx->flags & CSEC_CTX_SERVICE_NAME_SET) {
     return ctx->local_name;
   } else {

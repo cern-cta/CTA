@@ -49,6 +49,7 @@ static char sccsid[] = "@(#)Csec_api_loader.c,v 1.1 2004/01/12 10:31:39 CERN IT/
 
 /* Macro to initialize one symbol in the context structure */
 #define DLSETFUNC(CTX, HDL, SYM) if ((CTX->SYM = dlsym(HDL, #SYM "_impl")) == NULL) { \
+    serrno =  ESEC_NO_SECMECH;                                  \
     Csec_errmsg(func, "Error finding symbol %s: %s\n",		\
 		#SYM, dlerror());					\
     CTX->shhandle = NULL;						\
@@ -79,6 +80,7 @@ void *Csec_get_shlib(Csec_context *ctx) {
   
   if (handle == NULL) {
     char dlerrmsg[ERRBUFSIZE+1];
+    serrno =  ESEC_NO_SECMECH;
     strncpy(dlerrmsg, dlerror(), ERRBUFSIZE);
     
     ctx->shhandle = NULL;
@@ -86,7 +88,7 @@ void *Csec_get_shlib(Csec_context *ctx) {
 	       dlerrmsg);
     Csec_errmsg(func, "Error opening shared library %s: %s\n", filename,
 		dlerrmsg);
-       
+    
     return NULL;
   }
 

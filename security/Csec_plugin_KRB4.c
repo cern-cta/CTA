@@ -30,6 +30,7 @@ static char sccsid[] = "@(#)Csec_plugin_KRB4.c,v 1.1 2004/01/12 10:31:40 CERN IT
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #endif
 
 #include "marshall.h"

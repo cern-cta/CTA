@@ -273,7 +273,7 @@ int Csec_server_establish_context_ext_impl(ctx, s, buf, len)
 				      &client,
 				      &doid,
 				      &send_tok,
-				      &(ctx->context_flags),
+				      (OM_uint32 *)&(ctx->context_flags),
 				      &time_req,
 				      &delegated_cred_handle);
 
@@ -427,7 +427,7 @@ int Csec_client_establish_context_impl(ctx, s)
 				    token_ptr,
 				    NULL, /* ignore mech type */
 				    &send_tok,
-				    &(ctx->context_flags),
+				    (OM_uint32 *)&(ctx->context_flags),
 				    NULL); /* ignore time_rec */
 
     if (gss_context==NULL) {
