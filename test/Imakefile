@@ -1,0 +1,33 @@
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 1999/10/22 09:54:25 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM
+COMM  Copyright (C) 1999 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+
+COMM		Make CASTOR tests
+
+#include <Project.tmpl>
+
+SUBDIRS = $(COMMONDIR) $(DBDIR) $(MSGDIR) $(NSDIR) $(RFIODIR) \
+	  $(SYSREQDIR) $(RTCOPYDIR) $(STAGEDIR) $(TAPEDIR) $(VDQMDIR) \
+	  $(COPYTAPEDIR)
+
+MakeSubdirs(all,$(SUBDIRS))
+MakeSubdirs(clean,$(SUBDIRS))
+MakeSubdirs(clobber,$(SUBDIRS))
+
+#if defined(_WIN32)
+Makefiles:
+	@for %i in ( $(SUBDIRS) ) \
+	do @(echo test\\%i - & cd %i & \
+		..\..\imake\imake -I..\..\config & \
+		$(MAKE) $(MFLAGS) $@ & cd .. )
+#else
+Makefiles:
+	@. ../setosflags ;\
+	for i in $(SUBDIRS) ;\
+	do (echo " test/$$i:" ; cd $$i ;\
+		../../imake/imake -I../../config -DOSMajorVersion="$$OSMAJNO" -DOSMinorVersion="$$OSMINNO" ;\
+		$(MAKE) $(MFLAGS) $@ \
+	) ; done ;
+#endif
