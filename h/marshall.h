@@ -1,13 +1,13 @@
 /*
- * $Id: marshall.h,v 1.12 2000/12/12 08:23:46 baud Exp $
+ * $Id: marshall.h,v 1.13 2002/11/19 08:43:12 baud Exp $
  */
 
 /*
- * @(#)$RCSfile: marshall.h,v $ $Revision: 1.12 $ $Date: 2000/12/12 08:23:46 $ CERN IT-PDP/DM  Fabrizio Cane
+ * @(#)$RCSfile: marshall.h,v $ $Revision: 1.13 $ $Date: 2002/11/19 08:43:12 $ CERN IT-PDP/DM  Fabrizio Cane
  */
 
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
@@ -140,7 +140,7 @@ EXTERN_C int DLL_DECL _unmarshall_STRINGN _PROTO((char **, char*, int));
  */
 
 #if !defined(__alpha) && !defined(i386) && !defined(_WIN32) && !defined(__ia64__)
-#define  marshall_HYPER(ptr,n)          { u_signed64 u_ = n; \
+#define  marshall_HYPER(ptr,n)          { U_HYPER u_ = n; \
 					  LONG n_ = htonl(*((unsigned long *)&(u_))); \
 					  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \
 					  INC_PTR(ptr,LONGSIZE); \
@@ -149,7 +149,7 @@ EXTERN_C int DLL_DECL _unmarshall_STRINGN _PROTO((char **, char*, int));
 					  INC_PTR(ptr,LONGSIZE); \
 					}
 
-#define  unmarshall_HYPER(ptr,n)        { u_signed64 u_; \
+#define  unmarshall_HYPER(ptr,n)        { U_HYPER u_; \
 					  LONG n_ = 0;  \
 					  (void) memcpy(LONGADDR(n_),(ptr),LONGSIZE); \
 					  *((LONG *)&(u_)) = ntohl((unsigned long)(n_)); \
@@ -162,7 +162,7 @@ EXTERN_C int DLL_DECL _unmarshall_STRINGN _PROTO((char **, char*, int));
 					  n = u_; \
 					}
 #else
-#define  marshall_HYPER(ptr,n)          { u_signed64 u_ = n; \
+#define  marshall_HYPER(ptr,n)          { U_HYPER u_ = n; \
 					  LONG n_ = htonl(*((U_LONG *)((char *)&(u_)+LONGSIZE))); \
 					  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \
 					  INC_PTR(ptr,LONGSIZE); \
@@ -171,7 +171,7 @@ EXTERN_C int DLL_DECL _unmarshall_STRINGN _PROTO((char **, char*, int));
 					  INC_PTR(ptr,LONGSIZE); \
 					}
 
-#define  unmarshall_HYPER(ptr,n)        { u_signed64 u_; \
+#define  unmarshall_HYPER(ptr,n)        { U_HYPER u_; \
 					  LONG n_ = 0;  \
 					  (void) memcpy(LONGADDR(n_),(ptr),LONGSIZE); \
 					  *((LONG *)((char *)&(u_)+LONGSIZE)) = \
