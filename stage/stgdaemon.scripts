@@ -5,9 +5,9 @@
 # chkconfig: 345 70 35
 # description: STGDAEMON server daemon
 #
-# $Id: stgdaemon.scripts,v 1.5 2004/03/09 19:11:59 jdurand Exp $
+# $Id: stgdaemon.scripts,v 1.6 2004/07/07 10:10:49 jdurand Exp $
 #
-# @(#)$RCSfile: stgdaemon.scripts,v $ $Revision: 1.5 $ $Date: 2004/03/09 19:11:59 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: stgdaemon.scripts,v $ $Revision: 1.6 $ $Date: 2004/07/07 10:10:49 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -96,11 +96,20 @@ case "$1" in
                 if [ -n "${ULIMIT_N}" ]; then
                     ulimit -n ${ULIMIT_N}
                 fi
+                if [ -n "${ULIMIT_C}" ]; then
+                    ulimit -c ${ULIMIT_C}
+                fi
             fi
             if [ $RETVAL -eq 0 ]; then
                 cd /
                 mkdir -p /usr/spool/sacct
                 mkdir -p /usr/spool/stage
+                #
+                ## Because we might generate a core file (c.f. ULIMIT_C)
+                ## We explicitely chdir in the yet created directory
+                ## /usr/spool/stage
+                #
+                cd /usr/spool/stage
                 $DAEMON $STGDAEMON $OPTIONS
                 if [ $? -eq 0 ]; then
                     [ -d $SUBSYSDIR ] && touch $SUBSYS

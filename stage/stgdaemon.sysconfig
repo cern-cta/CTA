@@ -1,7 +1,7 @@
 #
-# $Id: stgdaemon.sysconfig,v 1.1 2003/10/31 10:03:29 jdurand Exp $
+# $Id: stgdaemon.sysconfig,v 1.2 2004/07/07 10:11:13 jdurand Exp $
 #
-# @(#)$RCSfile: stgdaemon.sysconfig,v $ $Revision: 1.1 $ $Date: 2003/10/31 10:03:29 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: stgdaemon.sysconfig,v $ $Revision: 1.2 $ $Date: 2004/07/07 10:11:13 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 # should stgdaemon run?
 # any string but "yes" will equivalent to "NO"
@@ -11,3 +11,7 @@ RUN_STGDAEMON="yes"
 # should we run with another limit on the number of file descriptors than the default?
 # any string will be passed to ulimit -n
 #ULIMIT_N=4096
+#
+# should we run with another limit on the core file size than the default?
+# any string will be passed to ulimit -c
+ULIMIT_C=unlimited
