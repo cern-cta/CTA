@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.12 $ $Date: 2000/01/19 17:27:16 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.13 $ $Date: 2000/01/24 08:59:37 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1796,7 +1796,10 @@ static int rtcpc_diskfiles(int mode,
                     rc = -1;
                     break;
                 }
-                filereq->concat = CONCAT_TO_EOD;
+                /*
+                 * Don't override CONCAT_TO_EOD if set
+                 */
+                if ( filereq->concat == -1 ) filereq->concat = CONCAT;
                 strcpy(filereq->file_path,last_filename);
             } else {
                 if ( last_filename != NULL &&
