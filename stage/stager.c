@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.161 2001/11/09 11:45:01 jdurand Exp $
+ * $Id: stager.c,v 1.162 2001/11/14 12:23:07 jdurand Exp $
  */
 
 /*
@@ -9,6 +9,9 @@
 
 /* Do we want to maintain maxsize for the transfert... ? */
 /* #define SKIP_FILEREQ_MAXSIZE */
+
+/* Do you want to do the Cns_setsegattrs() under real uid/gid of the owner of file in Castor Name Server ? */
+/* #define SETSEGATTRS_WITH_OWNER_UID_GID */
 
 /* Do you want to check size of the file on disk v.s. size in the Castor Name Server ? */
 #define SKIP_CHECK_FILESIZE
@@ -31,7 +34,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.161 $ $Date: 2001/11/09 11:45:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.162 $ $Date: 2001/11/14 12:23:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1620,6 +1623,7 @@ int stagein_castor_hsm_file() {
 				/* Catch cases when error is a VDQM one not yet handle by stager_process_error() */
 				((save_serrno >= (EVQBASEOFF+1)) && (save_serrno <= EVQMAXERR))
 				) {
+				if (error_already_processed == 0) stager_process_error(&(rtcpcreqs[0]->tapereq),NULL,NULL);
 				forced_exit = 1;
 			} else {
 				for (stcp_tmp = stcp_start, i = 0; stcp_tmp < stcp_end; stcp_tmp++, i++) {
@@ -1699,7 +1703,8 @@ int stagewrt_castor_hsm_file() {
 
 		SETEID(stcp->uid,stcp->gid);
 #ifndef SKIP_CHECK_FILESIZE
-		if (rfio_mstat (stcp->ipath, &statbuf) < 0) {
+		PRE_RFIO;
+		if (rfio_mstat(stcp->ipath, &statbuf) < 0) {
 			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_mstat",rfio_serror());
 			RESTORE_EID;
@@ -2147,7 +2152,7 @@ int stagewrt_castor_hsm_file() {
 					sendrep (rpfd, MSG_ERR, "STG47 - Re-selecting another tape server in %d seconds\n", RETRYI);
 					sleep(RETRYI);
 				} else {
-					sendrep (rpfd, MSG_ERR, "STG47 - %s\n", "Re-selecting another tape server\n");
+					sendrep (rpfd, MSG_ERR, "STG47 - Re-selecting another tape server\n");
 				}
 				RESTORE_EID;
 				goto reselect;
@@ -2325,10 +2330,14 @@ int stage_tape() {
 				sendrep (rpfd, MSG_ERR, "STG47 - Re-selecting another tape server in %d seconds\n", RETRYI);
 				sleep(RETRYI);
 			} else {
-				sendrep (rpfd, MSG_ERR, "STG47 - %s\n", "Re-selecting another tape server\n");
+				sendrep (rpfd, MSG_ERR, "STG47 - Re-selecting another tape server\n");
 			}
 			RESTORE_EID;
 			if (concat_off_fseq > 0) {
+				int save_tapereq_err_max_tpretry = -1;
+				int save_tapereq_err_max_cpretry = -1;
+				int save_filereq_err_max_tpretry = -1;
+				int save_filereq_err_max_cpretry = -1;
 				/* In concat off mode we have to take care of what has been already done */
 				if (callback_nok > 0) {
 					if (callback_fseq >= atoi((stce-1)->u1.t.fseq)) {
@@ -2342,6 +2351,10 @@ int stage_tape() {
 						callback_nok = callback_fseq = 0;
 						/* We reset the number of effective entries */
 						nbcat_ent = 1;
+						save_tapereq_err_max_tpretry = rtcpcreqs[0]->tapereq.err.max_tpretry;
+						save_tapereq_err_max_cpretry = rtcpcreqs[0]->tapereq.err.max_cpretry;
+						save_filereq_err_max_tpretry = rtcpcreqs[0]->file->filereq.err.max_tpretry;
+						save_filereq_err_max_cpretry = rtcpcreqs[0]->file->filereq.err.max_cpretry;
 					}
 				}
 				/* Build the request */
@@ -2363,8 +2376,12 @@ int stage_tape() {
 					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG02, "", "build_rtcpcreq",sstrerror (serrno));
 					RESTORE_EID;
-				RETURN (SYERR);
+					RETURN (SYERR);
 				}
+				rtcpcreqs[0]->tapereq.err.max_tpretry = save_tapereq_err_max_tpretry;
+				rtcpcreqs[0]->tapereq.err.max_cpretry = save_tapereq_err_max_cpretry;
+				rtcpcreqs[0]->file->filereq.err.max_tpretry = save_filereq_err_max_tpretry;
+				rtcpcreqs[0]->file->filereq.err.max_cpretry = save_filereq_err_max_cpretry;
 			}
 			goto reselect;
 		}
@@ -2493,6 +2510,7 @@ int filecopy(stcp, key, hostname)
 #endif
 
 	SETID(stcp->uid,stcp->gid);
+	PRE_RFIO;
 	rf = rfio_popen (command, "r");
 	if (rf == NULL) {
 		/* This way we will sure that it will be logged... */
@@ -2500,13 +2518,16 @@ int filecopy(stcp, key, hostname)
 		return(SYERR);
 	}
 
-	while ((c = rfio_pread (buf, 1, sizeof(buf)-1, rf)) > 0) {
+	while (1) {
+		PRE_RFIO;
+		if ((c = rfio_pread (buf, 1, sizeof(buf)-1, rf)) <= 0) break;
 		buf[c] = '\0';
 		SAVE_EID;
 		sendrep (rpfd, RTCOPY_OUT, "%s", buf);
 		RESTORE_EID;
 	}
 
+	PRE_RFIO;
 	c = rfio_pclose (rf);
 	if (c != 0) {
 		sendrep(rpfd, MSG_ERR, "STG02 - %s : %s error : exiting with status 0x%x\n", "filecopy", "rfio_pclose", c);
@@ -3539,6 +3560,9 @@ int stager_hsm_callback(tapereq,filereq)
 	char tmpbuf2[21];
 	char tmpbuf3[21];
 #endif
+#ifdef SETSEGATTRS_WITH_OWNER_UID_GID
+	struct Cns_filestat statbuf;
+#endif
 	int compression_factor = 0;		/* times 100 */
 	int stager_client_callback_i = -1;
 	int stager_client_true_i = -1;
@@ -3740,6 +3764,36 @@ int stager_hsm_callback(tapereq,filereq)
 					/* tpwrite of this file is over */
 					strcpy(Cnsfileid.server,stcp->u1.h.server);
 					Cnsfileid.fileid = stcp->u1.h.fileid;
+#ifdef SETSEGATTRS_WITH_OWNER_UID_GID
+					/* Grab current euid/egid */
+#ifdef STAGER_DEBUG
+					SAVE_EID;
+					sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] Calling Cns_statx(path=\"%s\",&Cnsfileid={server=\"%s\",fileid=%s},&statbuf)\n",
+			                castor_hsm,
+			                Cnsfileid.server,
+			                u64tostr(Cnsfileid.fileid, tmpbuf1, 0));
+					RESTORE_EID;
+#endif
+					SAVE_EID;
+					if (Cns_statx (castor_hsm, &Cnsfileid, &statbuf) < 0) {
+						sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_statx", sstrerror (serrno));
+						RESTORE_EID;
+						callback_error = 1;
+						if (use_subreqid) {
+							SET_HSM_IGNORE(stager_client_true_i,serrno);
+						}
+						return(-1);
+					}
+#ifdef STAGER_DEBUG
+					sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] Calling Cns_setsegattrs(\"%s\",&Cnsfileid={server=\"%s\",fileid=%s},nbseg=%d,segments)\n",
+						castor_hsm,
+						Cnsfileid.server,
+						u64tostr(Cnsfileid.fileid,tmpbuf1,0),
+						hsm_nsegments[stager_client_true_i]);
+#endif
+					/* Move to this user uid/gid */
+					SETEID(statbuf.uid,statbuf.gid);
+#else /* SETSEGATTRS_WITH_OWNER_UID_GID */
 #ifdef STAGER_DEBUG
 					SAVE_EID;
 					sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] Calling Cns_setsegattrs(\"%s\",&Cnsfileid={server=\"%s\",fileid=%s},nbseg=%d,segments)\n",
@@ -3749,11 +3803,16 @@ int stager_hsm_callback(tapereq,filereq)
 						hsm_nsegments[stager_client_true_i]);
 					RESTORE_EID;
 #endif
+#endif /* SETSEGATTRS_WITH_OWNER_UID_GID */
 					if (Cns_setsegattrs(castor_hsm,
 										&Cnsfileid,
 										hsm_nsegments[stager_client_true_i],
 										hsm_segments[stager_client_true_i]) < 0) {
+#ifdef SETSEGATTRS_WITH_OWNER_UID_GID
+						SETEID(0,0);
+#else
 						SAVE_EID;
+#endif
 						sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setsegattrs", sstrerror(serrno));
 						RESTORE_EID;
 						callback_error = 1;
@@ -3762,6 +3821,10 @@ int stager_hsm_callback(tapereq,filereq)
 						}
 						return(-1);
 					}
+#ifdef SETSEGATTRS_WITH_OWNER_UID_GID
+					/* Go back to uid/gid before our change */
+					RESTORE_EID;
+#endif
 					/* If we reach this part of the code then we know undoubtly */
 					/* that the transfer of this HSM file IS ok                 */
 					hsm_status[stager_client_true_i] = 1;
@@ -4003,7 +4066,8 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 	int is_this_flag = 0;
 	char *this_string = NULL;
 
-	if ((tapereq == NULL) || (filereq == NULL)) return;
+	/* We require at least tapereq to not be NULL */
+	if (tapereq == NULL) return;
 
 	switch (serrno) {
 	case ETWLBL:                          /* Wrong label type */
@@ -4038,32 +4102,50 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 		break;
 	}
 	if (is_this_flag == 0) {
-		if (((filereq->err.errorcode == ETPARIT) || (filereq->err.errorcode == ETUNREC) || (filereq->err.errorcode == ETLBL))
+		if (((filereq != NULL) && ((filereq->err.errorcode == ETPARIT) || (filereq->err.errorcode == ETUNREC) || (filereq->err.errorcode == ETLBL)))
 			||
 			((tapereq->err.errorcode == ETPARIT) || (tapereq->err.errorcode == ETUNREC) || (tapereq->err.errorcode == ETLBL))
 			) {
 				/* serrno was not of any help but we can anyway detect there was something serious with this tape */
 			SAVE_EID;
  			if (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)) {
-				sendrep(rpfd, MSG_ERR, "### [%s] For tape %s, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) and filereq->err.errorcode=%d (0x%lx) - Safety action is to flag the tape as read-only\n",
-					(castor_hsm != NULL) ? castor_hsm : "...",
-					tapereq->vid,
-					serrno,
-					(int) tapereq->err.errorcode,
-					(unsigned long) tapereq->err.errorcode,
-					(int) filereq->err.errorcode,
-					(unsigned long) filereq->err.errorcode);
+				if (filereq != NULL) {
+					sendrep(rpfd, MSG_ERR, "### [%s] For tape %s, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) and filereq->err.errorcode=%d (0x%lx) - Safety action is to try to flag the tape as read-only\n",
+						(castor_hsm != NULL) ? castor_hsm : "...",
+						tapereq->vid,
+						serrno,
+						(int) tapereq->err.errorcode,
+						(unsigned long) tapereq->err.errorcode,
+						(int) filereq->err.errorcode,
+						(unsigned long) filereq->err.errorcode);
+				} else {
+					sendrep(rpfd, MSG_ERR, "### [%s] For tape %s, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) - Safety action is to try to flag the tape as read-only\n",
+						(castor_hsm != NULL) ? castor_hsm : "...",
+						tapereq->vid,
+						serrno,
+						(int) tapereq->err.errorcode,
+						(unsigned long) tapereq->err.errorcode);
+				}
 				this_flag = TAPE_RDONLY;
 				this_string = THIS_TAPE_RDONLY;
 			} else {
-				sendrep(rpfd, MSG_ERR, "### [%s] For tape %s, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) and filereq->err.errorcode=%d (0x%lx) - Safety action is to disable the tape \n",
-					(castor_hsm != NULL) ? castor_hsm : "...",
-					tapereq->vid,
-					serrno,
-					(int) tapereq->err.errorcode,
-					(unsigned long) tapereq->err.errorcode,
-					(int) filereq->err.errorcode,
-					(unsigned long) filereq->err.errorcode);
+				if (filereq != NULL) {
+					sendrep(rpfd, MSG_ERR, "### [%s] For tape %s, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) and filereq->err.errorcode=%d (0x%lx) - Safety action is to try to disable the tape \n",
+						(castor_hsm != NULL) ? castor_hsm : "...",
+						tapereq->vid,
+						serrno,
+						(int) tapereq->err.errorcode,
+						(unsigned long) tapereq->err.errorcode,
+						(int) filereq->err.errorcode,
+						(unsigned long) filereq->err.errorcode);
+				} else {
+					sendrep(rpfd, MSG_ERR, "### [%s] For tape %s, global error code %d not enough, but tapereq->err.errorcode=%d (0x%lx) - Safety action is to try to disable the tape \n",
+						(castor_hsm != NULL) ? castor_hsm : "...",
+						tapereq->vid,
+						serrno,
+						(int) tapereq->err.errorcode,
+						(unsigned long) tapereq->err.errorcode);
+				}
 				this_flag = DISABLED;
 				this_string = THIS_DISABLED;
 			}
@@ -4073,7 +4155,7 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 	}
 	if (is_this_flag != 0) {
 		SAVE_EID;
-		sendrep(rpfd, MSG_ERR, "### [%s] Setting tape %s to %s state\n", (castor_hsm != NULL) ? castor_hsm : "...", tapereq->vid, this_string);
+		sendrep(rpfd, MSG_ERR, "### [%s] Trying to set tape %s to %s state\n", (castor_hsm != NULL) ? castor_hsm : "...", tapereq->vid, this_string);
 		if (vmgr_updatetape(tapereq->vid, 0, 0, 0, this_flag) != 0) {
 			sendrep (rpfd, MSG_ERR, STG02, tapereq->vid, "vmgr_updatetape", sstrerror(serrno));
 			RESTORE_EID;
