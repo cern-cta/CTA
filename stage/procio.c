@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.80 2001/02/02 17:50:40 jdurand Exp $
+ * $Id: procio.c,v 1.81 2001/02/02 18:08:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.80 $ $Date: 2001/02/02 17:50:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.81 $ $Date: 2001/02/02 18:08:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -198,7 +198,7 @@ void procioreq(req_type, req_data, clienthost)
 	char upath[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	char *user;
 	struct waitf *wfp;
-	int *save_subreqid;
+	int *save_subreqid = NULL;
 	struct waitq *wqp = NULL;
 	int nhpssfiles = 0;
 	int ncastorfiles = 0;
@@ -1317,8 +1317,12 @@ void procioreq(req_type, req_data, clienthost)
 						wqp->rpfd = -1;
 					}
 				}
-				wfp->subreqid = *save_subreqid = stcp->reqid;
-				save_subreqid++;
+				wfp->subreqid = stcp->reqid;
+				/* Nota : save_subreqid is != NULL only if no '-c off' request */
+				if (save_subreqid != NULL) {
+					*save_subreqid = stcp->reqid;
+					save_subreqid++;
+				}
 				wfp->waiting_on_req = savereqid;
 				strcpy (wfp->upath, upath);
 				wfp->size_to_recall = size_to_recall;      /* Can be zero */
@@ -1469,8 +1473,12 @@ void procioreq(req_type, req_data, clienthost)
 						wqp->rpfd = -1;
 					}
 				}
-				wfp->subreqid = *save_subreqid = stcp->reqid;
-				save_subreqid++;
+				wfp->subreqid = stcp->reqid;
+				/* Nota : save_subreqid is != NULL only if no '-c off' request */
+				if (save_subreqid != NULL) {
+					*save_subreqid = stcp->reqid;
+					save_subreqid++;
+				}
 				wfp->size_to_recall = size_to_recall;   /* Can be zero */
 				wfp->size_yet_recalled = 0;
 				strcpy (wfp->upath, upath);
