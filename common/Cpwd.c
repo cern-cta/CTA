@@ -6,13 +6,14 @@
 
 
 #ifndef lint
-static char cvsId[] = "$RCSfile: Cpwd.c,v $ $Revision: 1.2 $ $Date: 1999/11/23 08:27:34 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "$RCSfile: Cpwd.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 11:49:56 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
  * Cpwd.c - CASTOR MT-safe wrappers on some pwd routines.
  */ 
 
+#include <stdio.h>
 #include <sys/types.h>
 #include <pwd.h>
 
