@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/19 16:58:19 $ $Author: jdurand $
+ * @(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/08/06 12:45:23 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.4 $ $Date: 2004/07/19 16:58:19 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.5 $ $Date: 2004/08/06 12:45:23 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 {
   int c, rc, mode = -1, side = -1;
   char *vid = NULL;
-  struct Cstager_Tape_t *tp;
+  struct Cstager_Tape_t *tp = NULL;
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t **dbSvc;
   struct Cdb_DbAddress_t *dbAddr;
@@ -164,8 +164,16 @@ int main(int argc, char *argv[])
 
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
-
-  iObj = Cstager_Tape_getIObject(tp);
+  if ( key != 0 ) {
+    rc = C_Services_createObj(*dbSvc,iAddr,&iObj);
+    if ( rc == -1 ) {
+      fprintf(stderr,"C_Services_createObj(%lu): %s, DB_ERROR=%s\n",
+              key,
+              sstrerror(serrno),
+              C_Services_errorMsg(*dbSvc));
+      return(1);
+    }
+  } else iObj = Cstager_Tape_getIObject(tp);
   rc = C_Services_deleteRep(*dbSvc,iAddr,iObj,1);
   if ( rc != 0 ) {
     fprintf(stderr,"C_Services_deleteRep(): %s, DB_ERROR=%s\n",
