@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.137 2001/07/12 11:06:02 jdurand Exp $
+ * $Id: procio.c,v 1.138 2001/07/12 15:22:52 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.137 $ $Date: 2001/07/12 11:06:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.138 $ $Date: 2001/07/12 15:22:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2057,15 +2057,16 @@ void procioreq(req_type, magic, req_data, clienthost)
 						goto stagewrt_continue_loop;
 					}
 
+					setegid(start_passwd.pw_gid);
+					seteuid(start_passwd.pw_uid);
 					if (rfio_mstat((api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, &filemig_stat) < 0) {
 						int save_serrno = rfio_serrno();
-						setegid(start_passwd.pw_gid);
-						seteuid(start_passwd.pw_uid);
 						sendrep (rpfd, MSG_ERR, STG02, (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, "rfio_mstat", rfio_serror());
 						global_c_stagewrt++;
 						c = (api_out != 0) ? save_serrno : USERR;
 						goto stagewrt_continue_loop;
 					}
+					SET_CORRECT_EUID_EGID;
 					/* If mtime of disk file is < mtime in nameserver : this is an obsolete version - no migration */
 					/*
 					if (filemig_stat.st_mtime < Cnsfilestat.mtime) {
@@ -2159,15 +2160,16 @@ void procioreq(req_type, magic, req_data, clienthost)
 					goto stagewrt_continue_loop;
 				} else {
 					/* It is not point to try to migrated something of zero size */
+					setegid(start_passwd.pw_gid);
+					seteuid(start_passwd.pw_uid);
 					if (rfio_mstat((api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, &filemig_stat) < 0) {
 						int save_serrno = rfio_serrno();
-						setegid(start_passwd.pw_gid);
-						seteuid(start_passwd.pw_uid);
 						sendrep (rpfd, MSG_ERR, STG02, (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, "rfio_mstat", rfio_serror());
 						global_c_stagewrt++;
 						c = (api_out != 0) ? save_serrno : USERR;
 						goto stagewrt_continue_loop;
 					}
+					SET_CORRECT_EUID_EGID;
 					if (filemig_stat.st_size <= 0) {
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
