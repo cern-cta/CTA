@@ -1,5 +1,5 @@
 /*
- * $Id: stage_put.c,v 1.1 2000/05/08 10:58:55 jdurand Exp $
+ * $Id: stage_put.c,v 1.2 2000/05/26 08:38:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.1 $ $Date: 2000/05/08 10:58:55 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.2 $ $Date: 2000/05/26 08:38:13 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -43,7 +43,8 @@ int DLL_DECL stage_put_hsm(stghost,Migrationflag,hsmstruct)
 	struct passwd *pw;
 	char *p, *q, *q2;
 	int nargs;
-	char sendbuf[REQBUFSZ];
+	char *sendbuf = NULL;
+    size_t sendbuf_size = 0;
 	int msglen;
 	int c;
 	int ntries = 0;
@@ -54,6 +55,7 @@ int DLL_DECL stage_put_hsm(stghost,Migrationflag,hsmstruct)
     int pid;
 	char repbuf[CA_MAXPATHLEN+1];
     stage_hsm_t *hsm;
+    char *command = "stage_put_hsm";
 
 	uid = geteuid();
 	gid = getegid();
@@ -76,8 +78,41 @@ int DLL_DECL stage_put_hsm(stghost,Migrationflag,hsmstruct)
       }
     }
 
-	/* Build request header */
+	if ((pw = getpwuid (uid)) == NULL) {
+		serrno = SENOMAPFND;
+		return (-1);
+	}
 
+	/* We calculate the amount of buffer we need */
+	sendbuf_size = 3 * LONGSIZE;                   /* Header */
+	sendbuf_size += strlen(pw->pw_name) + 1;       /* Username */
+	sendbuf_size += strlen(pw->pw_name) + 1;       /* Username under which put is done */
+	sendbuf_size += WORDSIZE;                      /* Uid */
+	sendbuf_size += WORDSIZE;                      /* Gid */
+	sendbuf_size += WORDSIZE;                      /* Pid */
+	sendbuf_size += WORDSIZE;                      /* Narg */
+	sendbuf_size += strlen(command) + 1;           /* Command */
+    if (Migrationflag) {
+		sendbuf_size += strlen("-m") + 1;          /* Migration Flag */
+    }
+    hsm = hsmstruct;
+    while (hsm != NULL) {
+      if (hsm->xfile[0] == '\0') {
+        serrno = EFAULT;
+        return (-1);
+      }
+      sendbuf_size += strlen("-M") + 1;            /* Migration file */
+      sendbuf_size += strlen(hsm->xfile) + 1;
+      hsm = hsm->next;
+	}
+
+	/* We request for this amount of space */
+	if ((sendbuf = (char *) malloc((size_t) sendbuf_size)) == NULL) {
+		serrno = SEINTERNAL;
+		return (-1);
+	}
+
+	/* Build request header */
 	sbp = sendbuf;
 	marshall_LONG (sbp, STGMAGIC);
 	marshall_LONG (sbp, STAGEPUT);
@@ -86,11 +121,6 @@ int DLL_DECL stage_put_hsm(stghost,Migrationflag,hsmstruct)
 	marshall_LONG (sbp, msglen);
 
 	/* Build request body */
-
-	if ((pw = getpwuid (uid)) == NULL) {
-		serrno = SENOMAPFND;
-		return (-1);
-	}
 	marshall_STRING (sbp, pw->pw_name);	/* login name */
     marshall_STRING (sbp, pw->pw_name);
     marshall_WORD (sbp, uid);
@@ -101,7 +131,7 @@ int DLL_DECL stage_put_hsm(stghost,Migrationflag,hsmstruct)
 	q2 = sbp;	/* save pointer. The next field will be updated */
 	nargs = 1;
 	marshall_WORD (sbp, nargs);
-	marshall_STRING (sbp, "stage_put_hsm");
+	marshall_STRING (sbp, command);
 
     if (Migrationflag) {
 		marshall_STRING (sbp, "-m");
@@ -110,10 +140,6 @@ int DLL_DECL stage_put_hsm(stghost,Migrationflag,hsmstruct)
 
     hsm = hsmstruct;
     while (hsm != NULL) {
-      if (hsm->xfile[0] == '\0') {
-        serrno = EFAULT;
-        return (-1);
-      }
       marshall_STRING (sbp,"-M");
       marshall_STRING (sbp, hsm->xfile);
       nargs += 2;
@@ -134,5 +160,6 @@ int DLL_DECL stage_put_hsm(stghost,Migrationflag,hsmstruct)
 		if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
 	}
+	free(sendbuf);
 	return (c == 0 ? 0 : -1);
 }

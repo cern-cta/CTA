@@ -1,5 +1,5 @@
 /*
- * $Id: stage_migpool.c,v 1.1 2000/05/08 10:23:50 jdurand Exp $
+ * $Id: stage_migpool.c,v 1.2 2000/05/26 08:38:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stage_migpool.c,v $ $Revision: 1.1 $ $Date: 2000/05/08 10:23:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stage_migpool.c,v $ $Revision: 1.2 $ $Date: 2000/05/26 08:38:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -44,11 +44,12 @@ int DLL_DECL stage_migpool(stghost,diskpool,migpool)
 	char *rbp;
 	char repbuf[CA_MAXPATHLEN+1];
 	char *sbp;
-	char sendbuf[REQBUFSZ];
+	char *sendbuf = NULL;
 	uid_t uid;
     char *diskpoolok;
     char *diskpooldefault = "-";
     char *stghost_ok = NULL;
+	char *command = "stage_migpool";
 
 	uid = getuid();
 	gid = getgid();
@@ -76,11 +77,30 @@ int DLL_DECL stage_migpool(stghost,diskpool,migpool)
       diskpoolok = diskpooldefault;
     }
 
+	if ((pw = getpwuid (uid)) == NULL) {
+		serrno = SENOMAPFND;
+		return (-1);
+	}
+
+	/* We calculate the amount of buffer we need */
+	msglen = 3 * LONGSIZE;                   /* Header */
+	msglen += strlen(pw->pw_name) + 1;       /* Username */
+	msglen += WORDSIZE;                      /* Uid */
+	msglen += WORDSIZE;                      /* Gid */
+	msglen += WORDSIZE;                      /* Narg */
+	msglen += strlen(command) + 1;           /* Command */
+	msglen += strlen(diskpoolok) + 1;        /* Diskpool */
+
+	/* We request for this amount of space */
+	if ((sendbuf = (char *) malloc((size_t) msglen)) == NULL) {
+		serrno = SEINTERNAL;
+		return (-1);
+	}
+
 	/* Init repbuf to null */
 	repbuf[0] = '\0';
 
 	/* Build request header */
-
 	sbp = sendbuf;
 	marshall_LONG (sbp, STGMAGIC);
 	marshall_LONG (sbp, STAGEMIGPOOL);
@@ -89,18 +109,13 @@ int DLL_DECL stage_migpool(stghost,diskpool,migpool)
 	marshall_LONG (sbp, msglen);
 
 	/* Build request body */
-
-	if ((pw = getpwuid (uid)) == NULL) {
-		serrno = SENOMAPFND;
-		return (-1);
-	}
 	marshall_STRING (sbp, pw->pw_name);	/* login name */
 	marshall_WORD (sbp, uid);
 	marshall_WORD (sbp, gid);
 	q2 = sbp;	/* save pointer. The next field will be updated */
 	nargs = 1;
 	marshall_WORD (sbp, nargs);
-	marshall_STRING (sbp, "stage_migpool");
+	marshall_STRING (sbp, command);
 
 	marshall_STRING (sbp, diskpoolok);
 	nargs += 1;
@@ -120,5 +135,7 @@ int DLL_DECL stage_migpool(stghost,diskpool,migpool)
 		rbp = repbuf;
 		unmarshall_STRING (rbp, migpool);
 	}
+	free(sendbuf);
 	return (c == 0 ? 0 : -1);
 }
+

@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.3 2000/05/09 06:48:34 jdurand Exp $
+ * $Id: stage_updc.c,v 1.4 2000/05/26 08:38:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.3 $ $Date: 2000/05/09 06:48:34 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.4 $ $Date: 2000/05/26 08:38:13 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -82,11 +82,13 @@ int DLL_DECL stage_updc_filcp(stageid, copyrc, ifce, size, waiting_time, transfe
   char repbuf[CA_MAXPATHLEN+1];
   int reqid;
   char *sbp;
-  char sendbuf[REQBUFSZ];
+  char *sendbuf;
+  size_t sendbuf_size;
   char *stghost;
   char tmpbuf[21];
   uid_t uid;
   char Zparm[CA_MAXSTGRIDLEN+1];
+  char *command = "stage_updc_filcp";
 
   uid = getuid();
   gid = getgid();
@@ -134,6 +136,72 @@ int DLL_DECL stage_updc_filcp(stageid, copyrc, ifce, size, waiting_time, transfe
     return (-1);
   }
 
+  if ((pw = getpwuid (uid)) == NULL) {
+    serrno = SENOMAPFND;
+    return (-1);
+  }
+
+  /* Check how many bytes we need */
+  sendbuf_size = 3 * LONGSIZE;                       /* Request header */
+  sendbuf_size += strlen(pw->pw_name) + 1;           /* Login name */
+  sendbuf_size += 3 * WORDSIZE;                      /* uid, gid, nargs */
+  sendbuf_size += strlen(command) + 1;               /* Command name */
+  sendbuf_size += strlen("Z") + strlen(stageid) + 2; /* -Z option and value */
+  if (blksize > 0) {
+    sprintf (tmpbuf, "%d", blksize);
+    sendbuf_size += strlen("-b") + strlen(tmpbuf) + 2; /* -b option and value */
+  }
+  if (drive) {
+    if (drive[0] != '\0') {
+      sendbuf_size += strlen("-D") + strlen(drive) + 2; /* -D option and value */
+    }
+  }
+  if (recfm) {
+    if (recfm[0] != '\0') {
+      sendbuf_size += strlen("-F") + strlen(recfm) + 2; /* -F option and value */
+    }
+  }
+  if (fid) {
+    if (fid[0] != '\0') {
+      sendbuf_size += strlen("-f") + strlen(fid) + 2; /* -f option and value */
+    }
+  }
+  if (ifce) {
+    if (ifce[0] != '\0') {
+      sendbuf_size += strlen("-I") + strlen(ifce) + 2; /* -I option and value */
+    }
+  }
+  if (lrecl > 0) {
+    sprintf (tmpbuf, "%d", lrecl);
+    sendbuf_size += strlen("-L") + strlen(tmpbuf) + 2; /* -L option and value */
+  }
+  if (size > 0) {
+    u64tostr((u_signed64) size, tmpbuf, 0);
+    sendbuf_size += strlen("-s") + strlen(tmpbuf) + 2; /* -s option and value */
+  }
+  if (copyrc >= 0) {
+    sprintf (tmpbuf, "%d", copyrc_castor2shift(copyrc));
+    sendbuf_size += strlen("-R") + strlen(tmpbuf) + 2; /* -R option and value */
+  }
+  if (transfer_time > 0) {
+    sprintf (tmpbuf, "%d", transfer_time);
+    sendbuf_size += strlen("-T") + strlen(tmpbuf) + 2; /* -T option and value */
+  }
+  if (waiting_time > 0) {
+    sprintf (tmpbuf, "%d", waiting_time);
+    sendbuf_size += strlen("-W") + strlen(tmpbuf) + 2; /* -W option and value */
+  }
+  if (fseq > 0) {
+    sprintf (tmpbuf, "%d", fseq);
+    sendbuf_size += strlen("-q") + strlen(tmpbuf) + 2; /* -q option and value */
+  }
+
+  /* Allocate memory */
+  if ((sendbuf = (char *) malloc(sendbuf_size)) == NULL) {
+    serrno = SEINTERNAL;
+    return (-1);
+  }
+
   /* Build request header */
 
   sbp = sendbuf;
@@ -144,18 +212,13 @@ int DLL_DECL stage_updc_filcp(stageid, copyrc, ifce, size, waiting_time, transfe
   marshall_LONG (sbp, msglen);
 
   /* Build request body */
-
-  if ((pw = getpwuid (uid)) == NULL) {
-    serrno = SENOMAPFND;
-    return (-1);
-  }
   marshall_STRING (sbp, pw->pw_name);	/* login name */
   marshall_WORD (sbp, uid);
   marshall_WORD (sbp, gid);
   q2 = sbp;	/* save pointer. The next field will be updated */
   nargs = 1;
   marshall_WORD (sbp, nargs);
-  marshall_STRING (sbp, "stage_updc_filcp");
+  marshall_STRING (sbp, command);
 
   marshall_STRING (sbp, "-Z");
   marshall_STRING (sbp, stageid);
@@ -245,6 +308,7 @@ int DLL_DECL stage_updc_filcp(stageid, copyrc, ifce, size, waiting_time, transfe
     rbp = repbuf;
     unmarshall_STRING (rbp, path);
   }
+  free(sendbuf);
   return (c == 0 ? 0 : -1);
 }
 
@@ -275,11 +339,13 @@ int DLL_DECL stage_updc_tppos(stageid, status, blksize, drive, fid, fseq, lrecl,
   char repbuf[CA_MAXPATHLEN+1];
   int reqid;
   char *sbp;
-  char sendbuf[REQBUFSZ];
+  char *sendbuf;
+  size_t sendbuf_size;
   char *stghost;
   char tmpbuf[21];
   uid_t uid;
   char Zparm[CA_MAXSTGRIDLEN+1];
+  char *command = "stage_updc_tppos";
 
   uid = getuid();
   gid = getgid();
@@ -327,6 +393,56 @@ int DLL_DECL stage_updc_tppos(stageid, status, blksize, drive, fid, fseq, lrecl,
     return (-1);
   }
 
+  if ((pw = getpwuid (uid)) == NULL) {
+    serrno = SENOMAPFND;
+    return (-1);
+  }
+
+  /* Check how many bytes we need */
+  sendbuf_size = 3 * LONGSIZE;                        /* Request header */
+  sendbuf_size += strlen(pw->pw_name) + 1;            /* Login name */
+  sendbuf_size += 3 * LONGSIZE;                       /* uid, gid, nargs */
+  sendbuf_size += strlen(command) + 1;                /* Command name */
+  sendbuf_size += strlen("-Z") + strlen(stageid) + 2; /* -Z option and value */
+  if (blksize > 0) {
+    sprintf (tmpbuf, "%d", blksize);
+    sendbuf_size += strlen("-b") + strlen(tmpbuf) + 2; /* -b option and value */
+  }
+  if (drive) {
+    if (drive[0] != '\0') {
+      sendbuf_size += strlen("-D") + strlen(drive) + 2; /* -D option and value */
+    }
+  }
+  if (recfm) {
+    if (recfm[0] != '\0') {
+      sendbuf_size += strlen("-F") + strlen(recfm) + 2; /* -F option and value */
+    }
+  }
+  if (fid) {
+    if (fid[0] != '\0') {
+      sendbuf_size += strlen("-f") + strlen(fid) + 2; /* -f option and value */
+    }
+  }
+  if (lrecl > 0) {
+    sprintf (tmpbuf, "%d", lrecl);
+    sendbuf_size += strlen("-L") + strlen(tmpbuf) + 2; /* -L option and value */
+  }
+  if (fseq > 0) {
+    sprintf (tmpbuf, "%d", fseq);
+    sendbuf_size += strlen("-q") + strlen(tmpbuf) + 2; /* -q option and value */
+  }
+  if (status == ETFSQ) {
+    n = 211;	/* emulate old (SHIFT) ETFSQ */
+    sprintf (tmpbuf, "%d", n);
+    sendbuf_size += strlen("-R") + strlen(tmpbuf) + 2; /* -R option and value */
+  }
+
+  /* Allocate memory */
+  if ((sendbuf = (char *) malloc(sendbuf_size)) == NULL) {
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+
   /* Build request header */
 
   sbp = sendbuf;
@@ -338,17 +454,13 @@ int DLL_DECL stage_updc_tppos(stageid, status, blksize, drive, fid, fseq, lrecl,
 
   /* Build request body */
 
-  if ((pw = getpwuid (uid)) == NULL) {
-    serrno = SENOMAPFND;
-    return (-1);
-  }
   marshall_STRING (sbp, pw->pw_name);	/* login name */
   marshall_WORD (sbp, uid);
   marshall_WORD (sbp, gid);
   q2 = sbp;	/* save pointer. The next field will be updated */
   nargs = 1;
   marshall_WORD (sbp, nargs);
-  marshall_STRING (sbp, "stage_updc_tppos");
+  marshall_STRING (sbp, command);
 
   marshall_STRING (sbp, "-Z");
   marshall_STRING (sbp, stageid);
@@ -414,6 +526,7 @@ int DLL_DECL stage_updc_tppos(stageid, status, blksize, drive, fid, fseq, lrecl,
     rbp = repbuf;
     unmarshall_STRING (rbp, path);
   }
+  free(sendbuf);
   return (c == 0 ? 0 : -1);
 }
 
@@ -430,7 +543,8 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   char *q, *q2;
   char repbuf[CA_MAXPATHLEN+1];
   char *sbp;
-  char sendbuf[REQBUFSZ];
+  char *sendbuf;
+  size_t sendbuf_size;
   uid_t uid;
   stage_hsm_t *hsm;
   
@@ -451,6 +565,34 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   /* Init repbuf to null */
   repbuf[0] = '\0';
 
+  if ((pw = getpwuid (uid)) == NULL) {
+    serrno = SENOMAPFND;
+    return (-1);
+  }
+
+  /* How many bytes do we need ? */
+  sendbuf_size = 3 * LONGSIZE;                     /* Request header */
+  sendbuf_size += strlen(pw->pw_name) + 1;         /* Login name */
+  sendbuf_size += 3 * WORDSIZE;                    /* uid, gid and nargs */
+  hsm = hsmstruct;
+  while (hsm != NULL) {
+    if (hsm->upath == NULL) {
+      serrno = EFAULT;
+      return (-1);
+    }
+    if (hsm->upath[0] == '\0') {
+      serrno = EFAULT;
+      return (-1);
+    }
+    sendbuf_size += strlen(hsm->upath) + 1;        /* user path */
+  }
+
+  /* Allocate memory */
+  if ((sendbuf = (char *) malloc(sendbuf_size)) == NULL) {
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+
   /* Build request header */
 
   sbp = sendbuf;
@@ -462,10 +604,6 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
 
   /* Build request body */
 
-  if ((pw = getpwuid (uid)) == NULL) {
-    serrno = SENOMAPFND;
-    return (-1);
-  }
   marshall_STRING (sbp, pw->pw_name);	/* login name */
   marshall_WORD (sbp, uid);
   marshall_WORD (sbp, gid);
@@ -477,14 +615,6 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   /* Build link files arguments */
   hsm = hsmstruct;
   while (hsm != NULL) {
-    if (hsm->upath == NULL) {
-      serrno = EFAULT;
-      return (-1);
-    }
-    if (hsm->upath[0] == '\0') {
-      serrno = EFAULT;
-      return (-1);
-    }
     marshall_STRING (sbp, hsm->upath);
     nargs += 1;
     hsm = hsm->next;
@@ -501,5 +631,6 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
     if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
     sleep (RETRYI);
   }
+  free(sendbuf);
   return (c == 0 ? 0 : -1);
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: stage_xxx.c,v 1.1 2000/05/08 10:56:37 jdurand Exp $
+ * $Id: stage_xxx.c,v 1.2 2000/05/26 08:38:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_xxx.c,v $ $Revision: 1.1 $ $Date: 2000/05/08 10:56:37 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_xxx.c,v $ $Revision: 1.2 $ $Date: 2000/05/26 08:38:13 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -44,11 +44,12 @@ int DLL_DECL stage_xxx_hsm(command,stghost,Kopt,diskpool,hsmstruct)
   char *q, *q2;
   char repbuf[CA_MAXPATHLEN+1];
   char *sbp;
-  char sendbuf[REQBUFSZ];
+  char *sendbuf;
+  size_t sendbuf_size;
   char tmpbuf[21];
   uid_t uid;
   stage_hsm_t *hsm;
-  int isize = 0;
+  int isize;
 #if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(_WIN32)
   int mask;
 #else
@@ -80,6 +81,90 @@ int DLL_DECL stage_xxx_hsm(command,stghost,Kopt,diskpool,hsmstruct)
     return (-1);
   }
   
+  if ((pw = getpwuid (uid)) == NULL) {
+    serrno = SENOMAPFND;
+    return (-1);
+  }
+
+  /* How many bytes do we need ? */
+  sendbuf_size = 3 * LONGSIZE;             /* Request header */
+  sendbuf_size += strlen(pw->pw_name) + 1; /* Login name */
+  sendbuf_size += strlen(pw->pw_name) + 1; /* User name */
+  sendbuf_size += 5 * WORDSIZE;            /* uid, gid, mask, pid and nargs */
+  switch (command) {
+  case STAGEOUT:
+    sendbuf_size += strlen("stage_out_hsm") + 1; /* Command name */
+    break;
+  case STAGEIN:
+    sendbuf_size += strlen("stage_in_hsm") + 1; /* Command name */
+    break;
+  case STAGEWRT:
+    sendbuf_size += strlen("stage_wrt_hsm") + 1; /* Command name */
+    break;
+  case STAGECAT:
+    sendbuf_size += strlen("stage_cat_hsm") + 1; /* Command name */
+    break;
+  }
+  switch (command) {
+  case STAGEOUT:
+  case STAGEWRT:
+    if (Kopt) {
+      sendbuf_size += strlen("-K") + 1; /* -K option */
+    }
+    break;
+  default:
+    break;
+  }
+  if (diskpool != NULL) {
+    if (diskpool[0] != '\0') {
+      sendbuf_size += strlen("-p") + strlen(diskpool) + 2; /* -p option and value */
+    }
+  }
+  hsm = hsmstruct;
+  isize = 0;
+  while (hsm != NULL) {
+    if (hsm->size > 0) {
+      if (isize++ == 0) {
+        sendbuf_size += strlen("-s") + 1; /* -s option */
+      }
+      u64tostr((u_signed64) hsm->size / ONE_MB, tmpbuf, 0);
+      sendbuf_size += strlen(tmpbuf) + 1; /* -s value */
+    }
+    hsm = hsm->next;
+  }
+  hsm = hsmstruct;
+  while (hsm != NULL) {
+    if (hsm->xfile == NULL) {
+      serrno = EFAULT;
+      return (-1);
+    }
+    if (hsm->xfile[0] == '\0') {
+      serrno = EFAULT;
+      return (-1);
+    }
+    sendbuf_size += strlen("-M") + strlen(hsm->xfile) + 2; /* -M option and value */
+    hsm = hsm->next;
+  }
+  hsm = hsmstruct;
+  while (hsm != NULL) {
+    if (hsm->upath == NULL) {
+      serrno = EFAULT;
+      return (-1);
+    }
+    if (hsm->upath[0] == '\0') {
+      serrno = EFAULT;
+      return (-1);
+    }
+    sendbuf_size += strlen(hsm->upath) + 1; /* User path */
+    hsm = hsm->next;
+  }
+
+  /* Allocate memory */
+  if ((sendbuf = (char *) malloc(sendbuf_size)) == NULL) {
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+
   /* Init repbuf to null */
   repbuf[0] = '\0';
   
@@ -94,10 +179,6 @@ int DLL_DECL stage_xxx_hsm(command,stghost,Kopt,diskpool,hsmstruct)
   
   /* Build request body */
   
-  if ((pw = getpwuid (uid)) == NULL) {
-    serrno = SENOMAPFND;
-    return (-1);
-  }
   marshall_STRING (sbp, pw->pw_name);	/* login name */
   marshall_STRING (sbp, pw->pw_name);	/* user */
   marshall_WORD (sbp, uid);
@@ -147,6 +228,7 @@ int DLL_DECL stage_xxx_hsm(command,stghost,Kopt,diskpool,hsmstruct)
 
   /* Build -s option */
   hsm = hsmstruct;
+  isize = 0;
   while (hsm != NULL) {
     if (hsm->size > 0) {
       if (isize++ == 0) {
@@ -167,14 +249,6 @@ int DLL_DECL stage_xxx_hsm(command,stghost,Kopt,diskpool,hsmstruct)
   /* Build -M option(s) */
   hsm = hsmstruct;
   while (hsm != NULL) {
-    if (hsm->xfile == NULL) {
-      serrno = EFAULT;
-      return (-1);
-    }
-    if (hsm->xfile[0] == '\0') {
-      serrno = EFAULT;
-      return (-1);
-    }
     marshall_STRING (sbp,"-M");
     marshall_STRING (sbp, hsm->xfile);
     nargs += 2;
@@ -184,14 +258,6 @@ int DLL_DECL stage_xxx_hsm(command,stghost,Kopt,diskpool,hsmstruct)
   /* Build link files arguments */
   hsm = hsmstruct;
   while (hsm != NULL) {
-    if (hsm->upath == NULL) {
-      serrno = EFAULT;
-      return (-1);
-    }
-    if (hsm->upath[0] == '\0') {
-      serrno = EFAULT;
-      return (-1);
-    }
     marshall_STRING (sbp, hsm->upath);
     nargs += 1;
     hsm = hsm->next;
@@ -208,5 +274,6 @@ int DLL_DECL stage_xxx_hsm(command,stghost,Kopt,diskpool,hsmstruct)
     if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
     sleep (RETRYI);
   }
+  free(sendbuf);
   return (c == 0 ? 0 : -1);
 }
