@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.36 2003/10/31 13:13:01 jdurand Exp $
+ * $Id: stgconvert.c,v 1.37 2004/03/02 16:56:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.36 $ $Date: 2003/10/31 13:13:01 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.37 $ $Date: 2004/03/02 16:56:55 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -1531,8 +1531,9 @@ int main(argc,argv)
 								} else {	
 									struct stgcat_entry *stcp1, *stcp2, *stcpe;
 									int nbcat_ent, ndeleted, ideleted;
-
-									printf("... Removing suplicated [STAGEOUT|STAGEPUT]|STAGED entries\n");
+#ifdef REMOVE_DUPLICATE
+									/* Very old code needed for old buggy stager daemon */
+									printf("... Removing duplicated [STAGEOUT|STAGEPUT]|STAGED entries\n");
 									nbcat_ent = statbuff.st_size / sizeof(struct stgcat_entry);
 									ndeleted = 0;
 									stcpe = stcpall + nbcat_ent;
@@ -1560,6 +1561,7 @@ int main(argc,argv)
 										}
 									}
 									printf("... ... %d duplicated removed (if > 0, can happen with version <= 1.3.2.5)\n", ndeleted);
+#endif
 									printf("... Sorting %s content\n",stgcat);
 									qsort(stcpall,statbuff.st_size/sizeof(struct stgcat_entry),
 												sizeof(struct stgcat_entry), &stgdb_stcpcmp);
