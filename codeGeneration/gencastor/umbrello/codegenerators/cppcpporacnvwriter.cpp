@@ -2316,7 +2316,7 @@ void CppCppOraCnvWriter::writeCreateObjContent() {
   *m_stream << getIndent() << "}" << endl
             << getIndent() << "// retrieve the object from the database"
             << endl << getIndent()
-            << "m_selectStatement->setDouble(1, ad->id());"
+            << "m_selectStatement->setDouble(1, ad->target());"
             << endl << getIndent()
             << "oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();"
             << endl << getIndent()
@@ -2329,7 +2329,7 @@ void CppCppOraCnvWriter::writeCreateObjContent() {
                            m_classInfo->packageName)
             << " ex;" << endl << getIndent()
             << "ex.getMessage() << \"No object found for id :\""
-            << " << ad->id();" << endl
+            << " << ad->target();" << endl
             << getIndent() << "throw ex;" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl << getIndent()
@@ -2647,7 +2647,7 @@ void CppCppOraCnvWriter::printSQLError(QString name,
             << "StatementString << std::endl";
   if (name == "select") {
     *m_stream << endl << getIndent()
-              << "                << \"and id was \" << ad->id() << std::endl;";
+              << "                << \"and id was \" << ad->target() << std::endl;";
   } else if (name == "delete") {
     *m_stream << endl << getIndent()
               << "                << \"and id was \" << obj->id() << std::endl;";
