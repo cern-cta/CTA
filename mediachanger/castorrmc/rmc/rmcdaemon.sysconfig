@@ -1,0 +1,22 @@
+#
+# $Id: rmcdaemon.sysconfig,v 1.1 2003/10/31 10:03:34 jdurand Exp $
+#
+# @(#)$RCSfile: rmcdaemon.sysconfig,v $ $Revision: 1.1 $ $Date: 2003/10/31 10:03:34 $ CERN/IT/ADC/CA Jean-Damien Durand
+#
+# should rmcdaemon run?
+# any string but "yes" will equivalent to "NO"
+#
+RUN_RMCDAEMON="NO"
+#
+# Very important: what is the parameter to rmcdaemon
+# This is device, for example /dev/sga
+# If empty, the following will make startup of
+# rmcdaemon disabled.
+# Please LET IT ANYWAY empty if you are NOT going
+# to run rmcdaemon.
+#
+OPTIONS=""
+#
+# should we run with another limit on the number of file descriptors than the default?
+# any string will be passed to ulimit -n
+#ULIMIT_N=4096
