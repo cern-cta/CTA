@@ -1,0 +1,125 @@
+.\" @(#)$RCSfile: vdqm_admin.man,v $ $Revision: 1.1 $ $Date: 2000/06/15 16:23:46 $ CERN IT-PDP/DM Olof Barring
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VDQM_ADMIN 1 "$Date: 2000/06/15 16:23:46 $" CASTOR "VDQM Administrator Commands"
+.SH NAME
+vdqm_admin \- administrate VDQM server
+.SH SYNOPSIS
+.B vdqm_admin
+.RB [ -ping ]
+.RB [ -shutdown ]
+.RB [ -hold ]
+.RB [ -release ]
+.RB [ -dedicate ]
+.RB [ -deldrv ]
+.RB [ -delvol ]
+.RB [ option\ value\ ... ]
+
+.SH DESCRIPTION
+.B vdqm_admin
+permits various administrative operation on the VDQM server itself as well as
+some actions on drive and volume requests managed by the VDQM server. The
+command syntax consist of a switch describing the action (e.g. ping, shutdown)
+followed by a
+.I option value ...
+pairs that depend on the requested action. Possible options-value pairs are
+.RE
+.BI "-dgn <" device\ group ">"
+.RE
+.BI "-server <" server\ name ">"
+.RE
+.BI "-drive <" drive\ name ">"
+.RE
+.BI "-vid <" VID ">"
+.RE
+.BI "-match <" dedicate\ string ">"
+.RE
+.BI "-reqid <" request\ ID ">"
+.PP
+Here follows a description of the individual actions and the associated
+option-value pair.
+.PP
+.BI "-ping"
+\- ping the VDQM server to detect whether it is ALIVE, HOLD or DEAD. The
+following option-value pairs can be specified: 
+.RE
+.BI "-dgn <" device\ group ">"
+.RE
+.BI "-vid <" VID ">"
+.RE
+.BI "-reqid <" request\ ID ">"
+.RS
+In this case the queue position for that volume request is given.
+.PP
+.BI "-shutdown"
+\- shutdown the VDQM server.
+.PP
+.BI "-hold"
+\- put the VDQM server in HOLD mode (no further requests will be accepted).
+.PP
+.BI "-release"
+\- release the VDQM server from HOLD mode.
+.PP
+.BI "-dedicate"
+\- dedicate the specified drive to clients matching the dedication expression.
+The following option-value pairs must be provided:
+.RE
+.BI "-dgn <" device\ group ">"
+.RE
+.BI "-server <" server\ name ">"
+.RE
+.BI "-drive <" drive\ name ">"
+.RE
+.BI "-match <" dedication\ string ">"
+.RS
+If the
+.BI "-match"
+option is omitted any previous dedication of that drive will be revoked.
+The patter matching string must be of the form:
+.I uid=.*,gid=.*,name=.*,host=.*,vid=.*,mode=.*,datestr.*,timestr.*,age.*
+(only the fields to be changed need to be specified, see example below).
+.PP
+.BI "-deldrv"
+\- delete the specified drive from the VDQM data base.
+The following option-value pairs must be provided:
+.RE
+.BI "-dgn <" device\ group ">"
+.RE
+.BI "-server <" server\ name ">"
+.RE
+.BI "-drive <" drive\ name ">"
+.RS
+.PP
+.BI "-delvol"
+\- delete the specified volume request from the VDQM data base.
+The following option-value pairs must be provided:
+.RE
+.BI "-dgn <" device\ group ">"
+.RE
+.BI "-reqid <" request\ ID ">"
+.RS
+
+.SH EXAMPLE
+.nf
+.ft CW
+% vdqm_admin -ping
+ALIVE
+% vdqm_admin -hold
+% vdqm_admin -ping
+HOLD
+% vdqm_admin -release
+% showqueues SD3R
+drv1@test (1220 MB) status FREE vid:  last update Jun 15 17:22:09
+drv2@test (14525 MB) status FREE vid:  last update Jun 15 17:22:09
+% vdqm_admin -dedicate -dgn SD3R -server test -drive drv1 -match 'gid=1160,host=test[0-5]'
+% vdqm_admin -deldrv -dgn SD3R -server test -drive drv2
+% showqueues SD3R
+drv1@test (1220 MB) status FREE vid:  last update Jun 15 17:22:09
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.B showqueues(1)
