@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.27 $ $Date: 2000/02/29 17:27:35 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)vdqm_QueueOp.c,v 1.27 2000/02/29 17:27:35 CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -287,12 +287,11 @@ static int AnyFreeDrvOnSrv(const dgn_element_t *dgn_context,
             if ( !strcmp(drv->drv.server,server) && 
                  (*drive == '\0' || !strcmp(drv->drv.drive,drive)) &&
                  ((drv->drv.status & VDQM_UNIT_RELEASE) || 
-                  !VolMounted(dgn_context,volid)) ) {
-                if ( *drv->drv.dedicate != '\0' && 
-                     vdqm_DrvMatch(volrec,drv) == 1 ) {
-                    if ( (top == NULL) || 
-                        (drv->drv.recvtime<top->drv.recvtime)) top = drv; 
-                }
+                  !VolMounted(dgn_context,volid)) && 
+                 *drv->drv.dedicate != '\0' && 
+                 vdqm_DrvMatch(volrec,drv) == 1 ) {
+                if ( (top == NULL) || 
+                     (drv->drv.recvtime<top->drv.recvtime)) top = drv; 
             }
         }
     } CLIST_ITERATE_END(dgn_context->drv_queue,drv);
@@ -307,9 +306,10 @@ static int AnyFreeDrvOnSrv(const dgn_element_t *dgn_context,
                 if ( !strcmp(drv->drv.server,server) &&
                      (*drive == '\0' || !strcmp(drv->drv.drive,drive)) &&
                      ((drv->drv.status & VDQM_UNIT_RELEASE) ||
-                      !VolMounted(dgn_context,volid)) ) {
-                        if ( (top == NULL) ||
-                             (drv->drv.recvtime<top->drv.recvtime)) top = drv;
+                      !VolMounted(dgn_context,volid)) &&
+                      *drv->drv.dedicate == '\0' ) {
+                    if ( (top == NULL) ||
+                         (drv->drv.recvtime<top->drv.recvtime)) top = drv;
                 }
             }
         } CLIST_ITERATE_END(dgn_context->drv_queue,drv);
@@ -337,13 +337,16 @@ static int CmpVolRec(const vdqm_volrec_t *vol1,
 
 static int PopVolRecord(const dgn_element_t *dgn_context,
                         vdqm_volrec_t **volrec) {
-    vdqm_volrec_t *vol, *top;
+    vdqm_volrec_t *start_vol, *vol, *top;
     
     if ( volrec == NULL || INVALID_DGN_CONTEXT ) return(-1);
     
     top = NULL;
+    start_vol = NULL;
+    if ( *volrec != NULL ) start_vol = *volrec;
     CLIST_ITERATE_BEGIN(dgn_context->vol_queue,vol) {
         if ( (vol->vol.DrvReqID == 0 ) &&
+             (start_vol == NULL || CmpVolRec(start_vol,vol) == 1 ) &&
              (top == NULL || CmpVolRec(vol,top) == 1) &&
             !VolInUse(dgn_context,vol->vol.volid) ) top = vol;
     } CLIST_ITERATE_END(dgn_context->vol_queue,vol);
@@ -590,15 +593,19 @@ static int PopDrvRecord(const dgn_element_t *dgn_context,
          * be selected by preference.
          */
         CLIST_ITERATE_BEGIN(dgn_context->drv_queue,drv) {
+            log(LOG_DEBUG,"PopDrvRecord() check %s@%s\n",drv->drv.drive,
+                drv->drv.server);
             if ( !(drv->drv.status & VDQM_UNIT_UNKNOWN) &&
                   (drv->drv.status & VDQM_UNIT_UP) &&
-                  (drv->drv.status & VDQM_UNIT_FREE) ) {
-                if ( *drv->drv.dedicate != '\0' &&
-                     vdqm_DrvMatch(volrec,drv) == 1 ) {
-                    if ((top == NULL) ||
-                        (drv->drv.recvtime<top->drv.recvtime)) top = drv;
-                }
+                  (drv->drv.status & VDQM_UNIT_FREE) && 
+                 *drv->drv.dedicate != '\0' &&
+                 vdqm_DrvMatch(volrec,drv) == 1 ) {
+               if ((top == NULL) ||
+                   (drv->drv.recvtime<top->drv.recvtime)) top = drv;
             }
+            if ( top != drv) 
+                log(LOG_DEBUG,"PopDrvRecord() %s@%s refused\n",drv->drv.drive,
+                    drv->drv.server);
         } CLIST_ITERATE_END(dgn_context->drv_queue,drv);
     }
 
@@ -606,7 +613,8 @@ static int PopDrvRecord(const dgn_element_t *dgn_context,
         CLIST_ITERATE_BEGIN(dgn_context->drv_queue,drv) {
             if ( !(drv->drv.status & VDQM_UNIT_UNKNOWN) &&
                   (drv->drv.status & VDQM_UNIT_UP) &&
-                  (drv->drv.status & VDQM_UNIT_FREE) ) {
+                  (drv->drv.status & VDQM_UNIT_FREE) &&
+                  *drv->drv.dedicate == '\0' ) {
                 if ((top == NULL) ||
                     (drv->drv.recvtime<top->drv.recvtime)) top = drv;
             }
@@ -717,7 +725,7 @@ static int SelectVolAndDrv(const dgn_element_t *dgn_context,
                            vdqm_volrec_t **vol,
                            vdqm_drvrec_t **drv) {
 
-    vdqm_volrec_t *volrec;
+    vdqm_volrec_t *volrec, *last_volrec;
     vdqm_drvrec_t *drvrec;
     int rc;
 
@@ -727,77 +735,92 @@ static int SelectVolAndDrv(const dgn_element_t *dgn_context,
     if ( INVALID_DGN_CONTEXT ) return(-1);
     volrec = (vdqm_volrec_t *)NULL;
     drvrec = (vdqm_drvrec_t *)NULL;
-    rc = PopVolRecord(dgn_context,&volrec);
-    if ( rc == -1 || volrec == NULL ) {
-        log(LOG_ERR,"SelectVolAndDrv(): PopVolRecord() returned rc=%d, volrec=0x%x\n",
-            rc,volrec);
-       return(-1);
-    }        
-    /*
-     * Reset update until we are sure
-     */
-    volrec->update = 0;
+    last_volrec = (vdqm_volrec_t *)NULL;
 
     /*
-     * If a specific server (and maybe also drive) has been
-     * specified, we check for that first
+     * Loop until we find a vol-drive match or end of vol queue
      */
-    if ( *volrec->vol.server != '\0' ) {
-        rc = AnyFreeDrvOnSrv(dgn_context,volrec,&drvrec);
-        log(LOG_DEBUG,"SelectVolAndDrv()::DEBUG AnyFreeDrvOnSrv(%s) returned rc=%d\n",
-            volrec->vol.server,rc);
-        /*
-         * No free drive on that server. Reset the search 
-         * volume record to allow for another volume record
-         * to be popped
-         */
-        if ( drvrec == NULL ) {
-            log(LOG_ERR,"SelectVolAndDrv(): AnyFreeDrvOnSrv() returned rc=%d\n",
-                rc);
-            volrec = NULL;
-        } else {
-            /*
-             * Reset update until we are sure
-             */
-            drvrec->update = 0;
-        }
-    }
-    if ( drvrec == NULL ) {
-        /*
-         * Either the volrec asked for a specific server/drive
-         * which wasn't free or it accepts any server
-         */
-        rc = PopDrvRecord(dgn_context,volrec,&drvrec);
-        if ( rc == -1 || drvrec == NULL ) {
-            log(LOG_ERR,"SelectVolAndDrv(): PopDrvRecord() returned rc=%d, drvrec=0x%x\n",
-                rc,drvrec);
-            return(-1);
+    for (;;) {
+        volrec = last_volrec;
+        rc = PopVolRecord(dgn_context,&volrec);
+        last_volrec = volrec;
+        if ( rc == -1 || volrec == NULL ) {
+            log(LOG_ERR,"SelectVolAndDrv(): PopVolRecord() returned rc=%d, volrec=0x%x\n",
+                rc,volrec);
+           return(-1);
         }
         /*
          * Reset update until we are sure
          */
-        drvrec->update = 0;
-        log(LOG_DEBUG,"SelectVolAndDrv()::DEBUG PopDrvRecord() returned rc=%d %s@%s\n",rc,
-            drvrec->drv.drive,drvrec->drv.server);
-        if ( volrec == NULL ) {
-            /*
-             * Search for a volume record that either
-             * explicitly asked for this server/drive or can
-             * accept any server.
-             */
-            rc = AnyVolRecForDrv(dgn_context,drvrec,&volrec);
-            log(LOG_DEBUG,"SelectVolAndDrv()::DEBUG AnyVolRecForDrv() returned rc=%d\n",rc);
-            if ( volrec == NULL ) {
-                log(LOG_ERR,"SelectVolAndDrv(): AnyVolRecForDrv() returned rc=%d\n",
+        volrec->update = 0;
+
+        /*
+         * If a specific server (and maybe also drive) has been
+         * specified, we check for that first
+         */
+        if ( *volrec->vol.server != '\0' ) {
+            rc = AnyFreeDrvOnSrv(dgn_context,volrec,&drvrec);
+            log(LOG_DEBUG,"SelectVolAndDrv()::DEBUG AnyFreeDrvOnSrv(%s) returned rc=%d\n",
+                volrec->vol.server,rc);
+
+            if ( drvrec == NULL ) {
+                /*
+                 * No free drive on that server. Reset the search
+                 * volume record to allow for another volume record
+                 * to be popped
+                 */
+                log(LOG_ERR,"SelectVolAndDrv(): AnyFreeDrvOnSrv() returned rc=%d\n",
                     rc);
-                return(-1);
+                volrec = NULL;
+            } else {
+                /*
+                 * Reset update until we are sure
+                 */
+                drvrec->update = 0;
+                break;
+            }
+        }
+        if ( drvrec == NULL ) {
+            /*
+             * Either the volrec asked for a specific server/drive
+             * which wasn't free or it accepts any server
+             */
+            rc = PopDrvRecord(dgn_context,volrec,&drvrec);
+            if ( rc == -1 || drvrec == NULL ) {
+                log(LOG_ERR,"SelectVolAndDrv(): PopDrvRecord() returned rc=%d, drvrec=0x%x\n",
+                    rc,drvrec);
+                if ( rc == 0 ) continue;
+                else return(-1);
             }
             /*
              * Reset update until we are sure
              */
-            volrec->update = 0;
+            drvrec->update = 0;
+            log(LOG_DEBUG,"SelectVolAndDrv()::DEBUG PopDrvRecord() returned rc=%d %s@%s\n",
+                rc,drvrec->drv.drive,drvrec->drv.server);
+            if ( volrec == NULL ) {
+                /*
+                 * Search for a volume record that either
+                 * explicitly asked for this server/drive or can
+                 * accept any server.
+                 */
+                rc = AnyVolRecForDrv(dgn_context,drvrec,&volrec);
+                log(LOG_DEBUG,"SelectVolAndDrv()::DEBUG AnyVolRecForDrv() returned rc=%d\n",rc);
+                if ( volrec == NULL ) {
+                    if ( rc == 0 ) continue;
+                    else {
+                        log(LOG_ERR,"SelectVolAndDrv(): AnyVolRecForDrv() returned rc=%d\n",rc);
+                        return(-1);
+                    }
+                }
+                /*
+                 * Reset update until we are sure
+                 */
+                volrec->update = 0;
+                break;
+            } else break;
         }
-    }
+    } /* for (;;) */
     if ( vol != NULL ) {
         volrec->update = 1;
         *vol = volrec;
