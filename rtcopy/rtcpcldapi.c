@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.60 $ $Release$ $Date: 2004/09/15 16:43:02 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.61 $ $Release$ $Date: 2004/09/17 15:40:43 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.60 $ $Date: 2004/09/15 16:43:02 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.61 $ $Date: 2004/09/17 15:40:43 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -70,6 +70,8 @@ static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.60 $ $Date: 
 #include <rtcpcld_messages.h>
 #include <rtcpcld.h>
 #include <rtcpcldapi.h>
+
+#define MAX_INCOMPLETE_SEGMENTS (50)
 
 #define LOG_FAILED_CALL(X,Y)  { \
         int _save_errno = errno; \
@@ -914,16 +916,35 @@ static int addNewSegmentsToDB(
   return(0);
 }
 
+static int validFile(
+                     file
+                     )
+     file_list_t *file;
+{
+  unsigned char nullblkid[4] = {'\0', '\0', '\0', '\0'};
+  if ( file == NULL ) return(0);
+  if ( (*file->filereq.file_path != '\0' &&
+        *file->filereq.file_path != '.') &&
+       (file->filereq.tape_fseq > 0 ||
+        memcmp(file->filereq.blockid,nullblkid,sizeof(nullblkid)) != 0) ) {
+    return(1);
+  }
+  return(0);
+}
+
 static int doFullUpdate(
                         clientCntx,
-                        tape
+                        tape,
+                        nbIncompleteSegments
                         )
      tape_list_t *tape;
      ClientCntx_t *clientCntx;
+     int nbIncompleteSegments;
 {
   file_list_t *fl;
   struct Cstager_Segment_t *segm;
-  int rc = 0, updated = 0, save_serrno;
+  enum SegmentStatusCodes segmStatus;
+  int rc = 0, updated = 0, save_serrno, nbIncomplete = 0, nbIterations = 0;
 
   if ( (tape == NULL) || 
        (clientCntx == NULL) ||
@@ -934,70 +955,75 @@ static int doFullUpdate(
   
   if ( rtcpcldc_killed(tape) == 1 ) return(-1);
 
-  CLIST_ITERATE_BEGIN(tape->file,fl) 
-    {
-      if ( fl->filereq.proc_status != RTCP_FINISHED ) {
-        segm = NULL;
-        rc = newOrUpdatedSegment(
-                                 tape,
-                                 fl,
-                                 clientCntx,
-                                 &segm
-                                 );
-        if ( rc == -1 ) {
-          break;
-        } else if ( rc == 1 ) {
-          rtcp_log(LOG_DEBUG,
-                   "doFullUpdate(): %s/%d(%s) new segment disk_fseq=%d, tape_fseq=%d, blockid=%.2d%.2d%.2d%.2d, %s\n",
-                   tape->tapereq.vid,
-                   tape->tapereq.side,
-                   (tape->tapereq.mode == WRITE_DISABLE ? "r" : "w"),
-                   fl->filereq.disk_fseq,
-                   fl->filereq.tape_fseq,
-                   (int)fl->filereq.blockid[0],
-                   (int)fl->filereq.blockid[1],
-                   (int)fl->filereq.blockid[2],
-                   (int)fl->filereq.blockid[3],
-                   fl->filereq.file_path
-                   );
-          rc = addSegment(
-                          clientCntx,
-                          fl,
-                          &segm
-                          );
-          if ( rc == -1 ) break;
-          updated = 1;
-          /*             if ( segm != NULL ) { */
-          /*               rc = addSegmentToDB( */
-          /*                                   tpList, */
-          /*                                   &fl->filereq, */
-          /*                                   segm */
-          /*                                   ); */
-          /*               if ( rc == -1 ) break; */
-          /*             } */
-        } else if ( (rc == 2) && (segm != NULL) ) {
-          rtcp_log(LOG_DEBUG,
-                   "doFullUpdate(): %s/%d(%s) update segment disk_fseq=%d, tape_fseq=%d, blockid=%.2d%.2d%.2d%.2d, %s\n",
-                   tape->tapereq.vid,
-                   tape->tapereq.side,
-                   (tape->tapereq.mode == WRITE_DISABLE ? "r" : "w"),
-                   fl->filereq.disk_fseq,
-                   fl->filereq.tape_fseq,
-                   (int)fl->filereq.blockid[0],
-                   (int)fl->filereq.blockid[1],
-                   (int)fl->filereq.blockid[2],
-                   (int)fl->filereq.blockid[3],
-                   fl->filereq.file_path
-                   );
-          rc = updateSegment(fl,segm);
-          if ( rc == -1 ) break;
-          rc = updateSegmentInDB(tape,fl,segm);
-          if ( rc == -1 ) break;
+  do {
+    nbIterations++;
+    CLIST_ITERATE_BEGIN(tape->file,fl) 
+      {
+        if ( fl->filereq.proc_status != RTCP_FINISHED ) {
+          segm = NULL;
+          rc = newOrUpdatedSegment(
+                                   tape,
+                                   fl,
+                                   clientCntx,
+                                   &segm
+                                   );
+          if ( rc == -1 ) {
+            break;
+          } else if ( rc == 1 ) {
+            rtcp_log(LOG_DEBUG,
+                     "doFullUpdate(): %s/%d(%s) new segment disk_fseq=%d, tape_fseq=%d, blockid=%.2d%.2d%.2d%.2d, %s\n",
+                     tape->tapereq.vid,
+                     tape->tapereq.side,
+                     (tape->tapereq.mode == WRITE_DISABLE ? "r" : "w"),
+                     fl->filereq.disk_fseq,
+                     fl->filereq.tape_fseq,
+                     (int)fl->filereq.blockid[0],
+                     (int)fl->filereq.blockid[1],
+                     (int)fl->filereq.blockid[2],
+                     (int)fl->filereq.blockid[3],
+                     fl->filereq.file_path
+                     );
+            if ( nbIncompleteSegments < MAX_INCOMPLETE_SEGMENTS ) {
+              rc = addSegment(
+                              clientCntx,
+                              fl,
+                              &segm
+                              );
+              if ( rc == -1 ) break;
+              updated = 1;
+              nbIncompleteSegments++;
+            }
+          } else if ( (rc == 2) && (segm != NULL) ) {
+            rtcp_log(LOG_DEBUG,
+                     "doFullUpdate(): %s/%d(%s) update segment disk_fseq=%d, tape_fseq=%d, blockid=%.2d%.2d%.2d%.2d, %s\n",
+                     tape->tapereq.vid,
+                     tape->tapereq.side,
+                     (tape->tapereq.mode == WRITE_DISABLE ? "r" : "w"),
+                     fl->filereq.disk_fseq,
+                     fl->filereq.tape_fseq,
+                     (int)fl->filereq.blockid[0],
+                     (int)fl->filereq.blockid[1],
+                     (int)fl->filereq.blockid[2],
+                     (int)fl->filereq.blockid[3],
+                     fl->filereq.file_path
+                     );
+            Cstager_Segment_status(segm,&segmStatus);
+            if ( ((segmStatus == SEGMENT_WAITFSEQ) ||
+                  (segmStatus == SEGMENT_WAITPATH)) &&
+                 (validFile(fl) == 1) ) {
+              nbIncompleteSegments--;
+            }
+            rc = updateSegment(fl,segm);
+            if ( rc == -1 ) break;
+            rc = updateSegmentInDB(tape,fl,segm);
+            if ( rc == -1 ) break;
+          }
         }
       }
-    }
-  CLIST_ITERATE_END(tape->file,fl);
-
+    CLIST_ITERATE_END(tape->file,fl);
+  } while ( (nbIncompleteSegments < MAX_INCOMPLETE_SEGMENTS) &&
+            (nbIterations < 2) );
+  
   if ( updated == 1 ) {
     rc = addNewSegmentsToDB(tape,clientCntx);
     if ( rc == -1 ) save_serrno = serrno;
@@ -1022,7 +1048,7 @@ static int getUpdates(
   enum Cstager_SegmentStatusCodes_t segmNewStatus;
   file_list_t *file;
   int rc, save_serrno, i;
-  int callGetMoreInfo = 0, nbNewSegms = 0;
+  int callGetMoreInfo = 0, nbNewSegms = 0, nbIncompleteSegments = 0;
   char *segmCksumAlgorithm, *errmsgtxt, *vwAddress;
   unsigned char *blockid;
   ID_TYPE key;
@@ -1242,6 +1268,7 @@ static int getUpdates(
       break;
     case SEGMENT_WAITFSEQ:
     case SEGMENT_WAITPATH:
+      nbIncompleteSegments++;
       if (callGetMoreInfo == 0 ) callGetMoreInfo = 1;
       break;
     case SEGMENT_UNKNOWN:
@@ -1271,7 +1298,7 @@ static int getUpdates(
     if ( rc == -1 ) {
       save_serrno = serrno;
     } else {
-      rc = doFullUpdate(clientCntx,tape);
+      rc = doFullUpdate(clientCntx,tape,nbIncompleteSegments);
       if ( rc == -1 ) save_serrno = serrno;
     }
     if ( rc == -1 ) {
@@ -1536,6 +1563,7 @@ int rtcpcldc(tape)
   enum Cstager_TapeStatusCodes_t currentStatus;
   file_list_t *fl;
   int rc, save_serrno, notificationPort = 0, maxfd = 0;
+  int nbIncompleteSegments = 0;
   SOCKET *notificationSocket = NULL;
   char myHost[CA_MAXHOSTNAMELEN+1], *p;
   struct timeval timeout;
@@ -1688,19 +1716,22 @@ int rtcpcldc(tape)
         fl->filereq.err.errorcode = 0;
         fl->filereq.err.severity = 0;
         *fl->filereq.err.errmsgtxt = '\0';
-        rc = addSegment(
-                        clientCntx,
-                        fl,
-                        NULL
-                        );
-        if ( rc == -1 ) {
-          LOG_FAILED_CALL("addSegment()","");
-          save_serrno = serrno;
-          (void)C_Services_rollback(*dbSvc,iAddr);
-          C_IAddress_delete(iAddr);
-          rtcpcldc_cleanup(tape);
-          serrno = save_serrno;
-          return(-1);
+        if ( (validFile(fl) == 1) || 
+             (nbIncompleteSegments++ < MAX_INCOMPLETE_SEGMENTS) ) {
+          rc = addSegment(
+                          clientCntx,
+                          fl,
+                          NULL
+                          );
+          if ( rc == -1 ) {
+            LOG_FAILED_CALL("addSegment()","");
+            save_serrno = serrno;
+            (void)C_Services_rollback(*dbSvc,iAddr);
+            C_IAddress_delete(iAddr);
+            rtcpcldc_cleanup(tape);
+            serrno = save_serrno;
+            return(-1);
+          }
         }
       }
     }
