@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.34 2001/12/10 16:17:50 jdurand Exp $
+ * $Id: procalloc.c,v 1.35 2002/01/14 15:22:37 jdurand Exp $
  */
 
 /*
@@ -8,13 +8,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.34 $ $Date: 2001/12/10 16:17:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.35 $ $Date: 2002/01/14 15:22:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <grp.h>
 #include <string.h>
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -123,7 +122,8 @@ void procallocreq(req_data, clienthost)
 		c = SYERR;
 		goto reply;
 	}
-	strcpy (stgreq.group, gr->gr_name);
+	strncpy (stgreq.group, gr->gr_name, CA_MAXGRPNAMELEN);
+	stgreq.group[CA_MAXGRPNAMELEN] = '\0';
 	Coptind = 1;
 	Copterr = 0;
 	while ((c = Cgetopt (nargs, argv, "Gh:Pp:s:U:u:")) != -1) {
