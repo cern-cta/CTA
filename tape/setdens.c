@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: setdens.c,v $ $Revision: 1.3 $ $Date: 2000/02/23 07:29:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: setdens.c,v $ $Revision: 1.4 $ $Date: 2000/03/09 08:43:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*	setdens - set density and compression flag */
@@ -12,6 +12,7 @@ static char sccsid[] = "@(#)$RCSfile: setdens.c,v $ $Revision: 1.3 $ $Date: 2000
 #include <stdio.h>
 #include <sys/types.h>
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "scsictl.h"
 setdens(tapefd, path, devtype, den)
 int tapefd;
@@ -22,9 +23,8 @@ int den;
 	unsigned char cdb[6];
 	unsigned char comppage;
 	unsigned char dencode;
-	extern struct devinfo devinfo[];
+	struct devinfo *devinfo;
 	char func[16];
-	int i;
 	int j;
 	unsigned char mscmd[28];
 	char *msgaddr;
@@ -36,14 +36,13 @@ int den;
 
 	/* find density code and code page for compression */
 
-	for (i = 0; *devinfo[i].devtype; i++)
-		if (strcmp (devtype, devinfo[i].devtype) == 0) break;
-	if (*devinfo[i].devtype == 0) RETURN (0);	/* unknown device */
-	comppage = devinfo[i].comppage;
+	devinfo = Ctape_devinfo (devtype);
+	if (*devinfo->devtype == 0) RETURN (0);	/* unknown device */
+	comppage = devinfo->comppage;
 	for (j = 0; j < CA_MAXDENFIELDS; j++)
-		if (den == devinfo[i].dencodes[j].den) break;
+		if (den == devinfo->dencodes[j].den) break;
 	if (j < CA_MAXDENFIELDS)
-		dencode = devinfo[i].dencodes[j].code;
+		dencode = devinfo->dencodes[j].code;
 	else
 		dencode = 0;
 

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.1 $ $Date: 2000/02/29 07:47:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.2 $ $Date: 2000/03/09 08:43:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -18,6 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.1 $ $Date:
 #include <sys/Atape.h>
 #endif
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "serrno.h"
 #if !defined(linux)
 extern	char	*sys_errlist[];
@@ -57,6 +58,7 @@ int maxfile;
 int code;
 int flags;
 {
+	struct devinfo *devinfo;
 	int errflg = 0;
 
 	if (! vid || *vid == '\0') {
@@ -132,11 +134,8 @@ int flags;
 		return (-1);
 	}
 
-	if (strncmp (devtype, "DLT", 3) == 0 ||
-	    strcmp (devtype, "3590") == 0 ||
-	    strcmp (devtype, "SD3") == 0 ||
-	    strcmp (devtype, "9840") == 0)
-		dev1tm = 1;	/* one TM at EOI is enough */
+	devinfo = Ctape_devinfo (devtype);
+	dev1tm = (devinfo->eoitpmrks == 1) ? 1 : 0;
 
 	if (maxblksize < 0)
 		if (strcmp (devtype, "SD3") == 0)

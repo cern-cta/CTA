@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: initlabel.c,v $ $Revision: 1.4 $ $Date: 2000/01/25 13:05:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: initlabel.c,v $ $Revision: 1.5 $ $Date: 2000/03/09 08:43:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -86,6 +86,7 @@ char *devtype;
 int den;
 int lblcode;
 {
+	struct devinfo *devinfo;
 	struct devlblinfo  *dlip;
 	int i;
 
@@ -95,11 +96,8 @@ int lblcode;
 	strcpy (dlip->path, path);
 	strcpy (dlip->devtype, devtype);
 
-	if (strncmp (devtype, "DLT", 3) == 0 || strcmp (devtype, "3590") == 0 ||
-	    strcmp (devtype, "SD3") == 0 || strcmp (devtype, "9840") == 0)
-		dlip->dev1tm = 1;	/* one TM at EOI is enough */
-	else
-		dlip->dev1tm = 0;
+	devinfo = Ctape_devinfo (devtype);
+	dlip->dev1tm = (devinfo->eoitpmrks == 1) ? 1 : 0;
 
 	if (strcmp (devtype, "8200") == 0 || den == D8200 || den == D8200C)
 		dlip->rewritetm = 1;	/* An Exabyte 8200 must be positionned
