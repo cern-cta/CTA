@@ -1,6 +1,10 @@
 /*
- * $Id: Cglobals.c,v 1.2 1999/07/20 15:09:33 obarring Exp $
-*/
+ * $Id: Cglobals.c,v 1.3 1999/07/20 15:10:56 obarring Exp $
+ * $Log: Cglobals.c,v $
+ * Revision 1.3  1999/07/20 15:10:56  obarring
+ * Add CVS log directive
+ *
+ */
 
 /*
  * Castor_globals.c - central entry to maintain all Castor globals
