@@ -53,7 +53,7 @@ int user_repbuf_len;
 	struct sockaddr_in sin; /* internet socket */
 	struct servent *sp;
 #ifdef CSEC
-	Csec_context ctx;
+	Csec_context_t ctx;
 #endif
 	strcpy (func, "send2nsd");
 	if (socketp == NULL || *socketp < 0) {	/* connection not opened yet */

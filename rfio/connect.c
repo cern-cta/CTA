@@ -334,16 +334,18 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
 #ifdef CSEC
    /* Performing authentication */
    {
-     Csec_context ctx;
+     Csec_context_t ctx;
      int rc;
      
      TRACE(1, "rfio", "Going to establish security context !");
-     Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_DISK, NULL);
+     if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_DISK, NULL) <0) {
+       TRACE(2, "rfio", "Could not initiate context: %s", Csec_geterrmsg());
+     }
      
      TRACE(1, "rfio", "Service is %s", Csec_client_get_service_name(&ctx));
      rc = Csec_client_establish_context(&ctx, s);
      if (rc != 0) {
-       TRACE(2, "rfio", "Could not establish context");
+       TRACE(2, "rfio", "Could not establish context: %s", Csec_geterrmsg());
        close(s);
        END_TRACE();
        return(-1);

@@ -96,7 +96,7 @@ const char KeyTabFile[] = RFIO_KEYTAB;
 
 #ifdef CSEC
 #include <Csec_api.h>
-Csec_context ctx;
+Csec_context_t ctx;
 int peer_uid;
 int peer_gid;
 #endif
