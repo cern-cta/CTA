@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.7 $ $Date: 2002/03/07 12:53:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.8 $ $Date: 2002/04/08 13:48:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -74,8 +74,9 @@ struct rbterr_codact {
 
 /*	rbtmount - mounts a volume on a specified drive  */
 
-rbtmount (vid, unm, dvn, ring, loader)
+rbtmount (vid, side, unm, dvn, ring, loader)
 char *vid;
+int side;
 char *unm;
 char *dvn;
 int ring;
@@ -133,7 +134,7 @@ char *loader;
 	}
 	if (*loader == 's') {
 		int c;
-		c = smcmount (vid, loader);
+		c = smcmount (vid, side, loader);
 		closesmc();
 		return (c);
 	}
@@ -1118,8 +1119,9 @@ char *loader;
 	RETURN (0);
 }
 
-smcmount(vid, loader)
+smcmount(vid, side, loader)
 char *vid;
+int side;
 char *loader;
 {
 	int c;
@@ -1151,7 +1153,7 @@ char *loader;
 		RETURN (RBT_OMSG_SLOW_R);
 	}
 	if ((c = smc_move_medium (smc_fd, smc_ldr, element_info.element_address,
-	    robot_info.device_start+drvord)) < 0) {
+	    robot_info.device_start+drvord), side) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
 		if (smc_status.rc == -1 || smc_status.rc == -2)
 			usrmsg (func, "%s\n", msgaddr);
