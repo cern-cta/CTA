@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.20 2001/12/13 17:54:24 jdurand Exp $
+ * $Id: sendrep.c,v 1.21 2002/04/11 10:13:12 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.20 $ $Date: 2001/12/13 17:54:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.21 $ $Date: 2002/04/11 10:13:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -59,7 +59,7 @@ int sendrep(va_alist) va_dcl
 	static char savebuf[256];
 	static int saveflag = 0;
 	u_signed64 uniqueid;
-	int api_magic;
+	int magic;
 
 	va_start (args);
 	rpfd = va_arg (args, int);
@@ -131,10 +131,21 @@ int sendrep(va_alist) va_dcl
 		break;
 	case STAGERC:
 		req_type = va_arg (args, int);
+		magic = va_arg (args, int);
 		rc = va_arg (args, int);
+		if (magic <= STGMAGIC2) {
+			/* We know that this client do not fully support error codes */
+			rc = rc_castor2shift(rc);
+		}
+		marshall_LONG (sav_rbp_magic, magic);
 		marshall_LONG (rbp, rc);
-		if (req_type != STAGEQRY)
-			stglogit (func, STG99, rc);
+		if (req_type != STAGEQRY) {
+			if (magic <= STGMAGIC2) {
+				stglogit (func, STG99, rc);
+			} else {
+				stglogit (func, STG199, rc);
+			}
+		}
 		break;
 	case SYMLINK:
 		file1 = va_arg (args, char *);
@@ -151,11 +162,11 @@ int sendrep(va_alist) va_dcl
 	case API_STCP_OUT:
 		/* There is another argument on the stack */
 		stcp = va_arg (args, struct stgcat_entry *);
-		api_magic = va_arg (args, int);
+		magic = va_arg (args, int);
 		api_stcp_out_status = 0;
-		marshall_LONG (sav_rbp_magic, api_magic);
+		marshall_LONG (sav_rbp_magic, magic);
 		p = stcp_marshalled;
-		marshall_STAGE_CAT (api_magic, STAGE_OUTPUT_MODE, api_stcp_out_status, p, stcp);
+		marshall_STAGE_CAT (magic, STAGE_OUTPUT_MODE, api_stcp_out_status, p, stcp);
 		marshall_LONG(rbp, p - stcp_marshalled);
 		marshall_OPAQUE(rbp, stcp_marshalled, p - stcp_marshalled);
  		break;
