@@ -1,5 +1,5 @@
 /*
- * $Id: stage_put.c,v 1.8 2001/03/02 18:16:48 jdurand Exp $
+ * $Id: stage_put.c,v 1.9 2001/06/08 15:06:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.8 $ $Date: 2001/03/02 18:16:48 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.9 $ $Date: 2001/06/08 15:06:05 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -29,6 +29,7 @@ static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.8 $ $Date: 20
 #include "stage_api.h"
 #include "stage.h"
 #include "Cpwd.h"
+#include "Castor_limits.h"
 
 extern char *getconfent();
 
@@ -37,8 +38,8 @@ int DLL_DECL stage_put_hsm(stghost,migratorflag,hsmstruct)
 	int migratorflag;
 	stage_hsm_t *hsmstruct;
 {
-	uid_t uid;
-	gid_t gid;
+	uid_t euid;
+	gid_t egid;
 	char *sbp;
 	struct passwd *pw;
 	char *q, *q2;
@@ -54,10 +55,10 @@ int DLL_DECL stage_put_hsm(stghost,migratorflag,hsmstruct)
     stage_hsm_t *hsm;
     char *command = "stage_put_hsm";
 
-	uid = geteuid();
-	gid = getegid();
+	euid = geteuid();
+	egid = getegid();
 #if defined(_WIN32)
-	if (uid < 0 || gid < 0) {
+	if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
       serrno = SENOMAPFND;
       return (-1);
 	}
@@ -75,8 +76,8 @@ int DLL_DECL stage_put_hsm(stghost,migratorflag,hsmstruct)
       }
     }
 
-	if ((pw = Cgetpwuid (uid)) == NULL) {
-		serrno = SENOMAPFND;
+	if ((pw = Cgetpwuid (euid)) == NULL) {
+		serrno = SEUSERUNKN;
 		return (-1);
 	}
 
@@ -119,9 +120,9 @@ int DLL_DECL stage_put_hsm(stghost,migratorflag,hsmstruct)
 
 	/* Build request body */
 	marshall_STRING (sbp, pw->pw_name);	/* login name */
-    marshall_STRING (sbp, pw->pw_name);
-    marshall_WORD (sbp, uid);
-	marshall_WORD (sbp, gid);
+	marshall_STRING (sbp, pw->pw_name);
+	marshall_WORD (sbp, euid);
+	marshall_WORD (sbp, egid);
 	pid = getpid();
 	marshall_WORD (sbp, pid);
 
