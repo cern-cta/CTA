@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IClientFactory.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/12/17 15:33:36 $ $Author: jdurand $
+ * @(#)$RCSfile: IClientFactory.h,v $ $Revision: 1.3 $ $Release$ $Date: 2005/01/04 13:29:16 $ $Author: bcouturi $
  *
  * 
  *
@@ -33,11 +33,14 @@ struct C_IClient_t;
 /**
  * converts a client to a human readable string.
  * In case of error, 0 is returned, serrno is set and
- * an error string is allocated in errorMsg
+ * an error string is allocated in errorMsg.
+ * N.B. The client string and the error string should be freed
+ * by the caller of this method after usage.
  * @param cl the Client to convert
  * @param an allocated string in case of error. The caller
  * is responsible for its deallocation
  * @result the resulting string, or 0 if an error occured
+ *         alloced on the heap
  */
 const char* C_IClientFactory_client2String
 (struct C_IClient_t* cl, const char** errorMsg);
@@ -47,6 +50,8 @@ const char* C_IClientFactory_client2String
  * string representation. Note that the caller is
  * responsible for the deallocation of the returned
  * Client.
+ * N.B. The error string should be freed
+ * by the caller of this method after usage.
  * @param st the human readable string.
  * @param an allocated string in case of error. The caller
  * is responsible for its deallocation
