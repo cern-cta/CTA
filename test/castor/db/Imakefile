@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/13 12:58:29 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/14 13:44:41 $ $Author: sponcec3 $
 #
 # Make Castor DB example
 #
@@ -58,3 +58,11 @@ clean:
 clobber:	clean
 	@echo clobbering in CurDir
 	-@RemoveFiles(ProgramTargetName(testdb))
+
+#if _WIN32
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend $(DFLAGS) -Y../../../h -Y../../.. *.cpp 2> /dev/null
+#endif
