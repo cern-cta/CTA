@@ -4,14 +4,14 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrdeletetape.c,v $ $Revision: 1.3 $ $Date: 2000/03/02 08:38:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrdeletetape.c,v $ $Revision: 1.4 $ $Date: 2000/03/02 08:41:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrdeletetape - delete a tape volume */
 #include <stdio.h>
 #include <sys/types.h>
 #include "serrno.h"
-#include "vmgr.h"
+#include "vmgr_api.h"
 extern	char	*optarg;
 extern	int	optind;
 main(argc, argv)
