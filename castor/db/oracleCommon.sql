@@ -30,6 +30,80 @@ BEGIN
   RETURN ret;
 END;
 
+/****************************************************************/
+/* NbTapeCopiesInFS to work around ORACLE missing optimizations */
+/****************************************************************/
+
+/* This table keeps track of the number of TapeCopy to migrate
+ * which have a diskCopy on this fileSystem. This table only exist
+ * because Oracle is not able to optimize the following query :
+ * SELECT max(A) from A, B where A.pk = B.fk;
+ * Such a query is needed in bestTapeCopyForStream in order to
+ * select filesystems effectively having tapecopies.
+ * As a work around, we keep track of the tapecopies for each
+ * filesystem. The cost is an increase of complexity and especially
+ * of the number of triggers ensuring consistency of the whole database */
+DROP TABLE NbTapeCopiesInFS;
+CREATE TABLE NbTapeCopiesInFS (FS NUMBER, Stream NUMBER, NbTapeCopies NUMBER);
+CREATE UNIQUE INDEX I_NbTapeCopiesInFS_FSStream on NbTapeCopiesInFS(FS, Stream);
+
+/* Used to create a row INTO NbTapeCopiesInFS whenever a new
+   FileSystem is created */
+CREATE OR REPLACE TRIGGER tr_FileSystem_Insert
+BEFORE INSERT ON FileSystem
+FOR EACH ROW
+BEGIN
+  FOR item in (SELECT id FROM Stream) LOOP
+    INSERT INTO NbTapeCopiesInFS (FS, Stream, NbTapeCopies) VALUES (:new.id, item.id, 0);
+  END LOOP;
+END;
+
+/* Used to delete rows IN NbTapeCopiesInFS whenever a
+   FileSystem is deleted */
+CREATE OR REPLACE TRIGGER tr_FileSystem_Delete
+BEFORE DELETE ON FileSystem
+FOR EACH ROW
+BEGIN
+  DELETE FROM NbTapeCopiesInFS WHERE FS = :old.id;
+END;
+
+/* Used to create a row INTO NbTapeCopiesInFS whenever a new
+   Stream is created */
+CREATE OR REPLACE TRIGGER tr_Stream_Insert
+BEFORE INSERT ON Stream
+FOR EACH ROW
+BEGIN
+  FOR item in (SELECT id FROM FileSystem) LOOP
+    INSERT INTO NbTapeCopiesInFS (FS, Stream, NbTapeCopies) VALUES (item.id, :new.id, 0);
+  END LOOP;
+END;
+
+/* Used to delte rows IN NbTapeCopiesInFS whenever a
+   Stream is deleted */
+CREATE OR REPLACE TRIGGER tr_Stream_Delete
+BEFORE DELETE ON Stream
+FOR EACH ROW
+BEGIN
+  DELETE FROM NbTapeCopiesInFS WHERE Stream = :old.id;
+END;
+
+/* Updates the count of tapecopies in NbTapeCopiesInFS
+   whenever a TapeCopy is linked to a Stream */
+CREATE OR REPLACE TRIGGER tr_Stream2TapeCopy_Insert
+AFTER INSERT ON Stream2TapeCopy
+FOR EACH ROW
+BEGIN
+  UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
+   WHERE FS IN (SELECT DiskCopy.FileSystem
+                  FROM DiskCopy, TapeCopy
+                 WHERE DiskCopy.CastorFile = TapeCopy.castorFile
+                   AND TapeCopy.id = :new.child)
+     AND Stream = :new.parent;
+END;
+
+/* XXX update count into NbTapeCopiesInFS when a Disk2Disk copy occurs
+   FOR a file in CANBEMIGR */
+
 /***************************************/
 /* Some triggers to prevent dead locks */
 /***************************************/
@@ -75,6 +149,29 @@ BEGIN
   SELECT * INTO unused FROM Stream
    WHERE id = :new.Parent FOR UPDATE;
 END;
+
+/*********************/
+/* FileSystem rating */
+/*********************/
+
+/* Computes a 'rate' for the filesystem which is an agglomeration
+   of weight and fsDeviation. The goal is to be able to classify
+   the fileSystems using a single value and to put an index on it */
+CREATE OR REPLACE FUNCTION FileSystemRate
+(weight IN NUMBER,
+ deltaWeight IN NUMBER,
+ fsDeviation IN NUMBER)
+RETURN NUMBER DETERMINISTIC IS
+BEGIN
+  RETURN 1000*(weight + deltaWeight) - fsDeviation;
+END;
+
+/* FileSystem index based on the rate. */
+CREATE INDEX I_FileSystem_Rate ON FileSystem(FileSystemRate(weight, deltaWeight, fsDeviation));
+
+/*************************/
+/* Procedure definitions */
+/*************************/
 
 /* PL/SQL method to make a SubRequest wait on another one, linked to the given DiskCopy */
 CREATE OR REPLACE PROCEDURE makeSubRequestWait(subreqId IN INTEGER, dci IN INTEGER) AS
@@ -136,22 +233,33 @@ BEGIN
   END IF;
 END;
 
-/* PL/SQL method implementing anyTapeCopyForStream */
+/* PL/SQL method implementing anyTapeCopyForStream.
+ * This implementation is not the original one. It uses NbTapeCopiesInFS
+ * because a join on the tables between DiskServer and Stream2TapeCopy
+ * costs too much. It should actually not be the case but ORACLE is unable
+ * to optimize correctly queries having a ROWNUM clause. It procesed the
+ * the query without it (yes !!!) and apply the clause afterwards.
+ * Here is the previous select in case ORACLE improves some day :
+ * SELECT \/*+ FIRST_ROWS *\/ TapeCopy.id INTO unused
+ * FROM DiskServer, FileSystem, DiskCopy, CastorFile, TapeCopy, Stream2TapeCopy
+ *  WHERE DiskServer.id = FileSystem.diskserver
+ *   AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
+ *   AND FileSystem.id = DiskCopy.filesystem
+ *   AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+ *   AND DiskCopy.castorfile = CastorFile.id
+ *   AND TapeCopy.castorfile = Castorfile.id
+ *   AND Stream2TapeCopy.child = TapeCopy.id
+ *   AND Stream2TapeCopy.parent = streamId
+ *   AND TapeCopy.status = 2 -- WAITINSTREAMS
+ *   AND ROWNUM < 2;  */
 CREATE OR REPLACE PROCEDURE anyTapeCopyForStream(streamId IN INTEGER, res OUT INTEGER) AS
   unused INTEGER;
 BEGIN
-  SELECT /*+ FIRST_ROWS */ TapeCopy.id INTO unused
-  FROM DiskServer, FileSystem, DiskCopy, CastorFile, TapeCopy, Stream2TapeCopy
-   WHERE DiskServer.id = FileSystem.diskserver
-    AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
-    AND FileSystem.id = DiskCopy.filesystem
-    AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
-    AND DiskCopy.castorfile = CastorFile.id
-    AND TapeCopy.castorfile = Castorfile.id
-    AND Stream2TapeCopy.child = TapeCopy.id
-    AND Stream2TapeCopy.parent = streamId
-    AND TapeCopy.status = 2 -- WAITINSTREAMS
-    AND ROWNUM < 2;
+  SELECT NbTapeCopiesInFS.NbTapeCopies INTO unused
+    FROM NbTapeCopiesInFS
+   WHERE NbTapeCopiesInFS.stream = streamId
+     AND NbTapeCopiesInFS.NbTapeCopies > 0
+     AND ROWNUM < 2;
   res := 1;
 EXCEPTION
  WHEN NO_DATA_FOUND THEN
@@ -179,6 +287,25 @@ BEGIN
   WHERE id = fs;
 END;
 
+/* This table is needed to insure that bestTapeCopyForStream works Ok.
+ * It basically serializes the queries ending to the same diskserver.
+ * This is only needed because of lack of funstionnality in ORACLE.
+ * The original goal was to lock the selected filesystem in the first
+ * query of bestTapeCopyForStream. But a SELECT FOR UPDATE was not enough
+ * because it does not revalidate the inner select and we were thus selecting
+ * n times the same filesystem when n queries were processed in parallel.
+ * (take care, they were processed sequentially due to the lock, but they
+ * were still locking the same filesystem). Thus an UPDATE was needed but
+ * UPDATE cannot use joins. Thus it was impossible to lock DiskServer
+ * and FileSystem at the same time (we need to avoid the DiskServer to
+ * be chosen again (with a different filesystem) before we update the
+ * weight of all filesystems). Locking the diskserver only was fine but
+ * was introducing a possible deadlock with a place where the FileSystem
+ * is locked before the DiskServer. Thus this table..... */
+DROP TABLE LockTable;
+CREATE TABLE LockTable (DiskServerId NUMBER PRIMARY KEY, TheLock NUMBER);
+INSERT INTO LockTable SELECT id, id FROM DiskServer;
+
 /* PL/SQL method implementing updateFileSystemForJob */
 CREATE OR REPLACE PROCEDURE updateFileSystemForJob
 (fs IN VARCHAR2, ds IN VARCHAR2,
@@ -186,6 +313,7 @@ CREATE OR REPLACE PROCEDURE updateFileSystemForJob
   fsID NUMBER;
   dsId NUMBER;
   dev NUMBER;
+  unused NUMBER;
 BEGIN
   SELECT FileSystem.id, FileSystem.fsDeviation,
          DiskServer.id INTO fsId, dev, dsId
@@ -193,6 +321,10 @@ BEGIN
    WHERE FileSystem.diskServer = DiskServer.id
      AND FileSystem.mountPoint = fs
      AND DiskServer.name = ds;
+  -- We have to lock the DiskServer in the LockTable TABLE if we want
+  -- to avoid dead locks with bestTapeCopyForStream. See the definition
+  -- of the table for a complete explanation on why it exists
+  SELECT TheLock INTO unused FROM LockTable WHERE DiskServerId = dsId FOR UPDATE;
   updateFsFileOpened(dsId, fsId, dev, fileSize);
 END;
 
@@ -204,59 +336,97 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
                                                   nsHost OUT VARCHAR2, fileSize OUT INTEGER,
                                                   tapeCopyId OUT INTEGER) AS
  fileSystemId INTEGER;
+ dsid NUMBER;
  deviation NUMBER;
  fsDiskServer NUMBER;
- CURSOR cfs IS SELECT /*+ FIRST_ROWS */
-    DiskServer.name, FileSystem.mountPoint, FileSystem.fsDeviation, FileSystem.diskserver, FileSystem.id
-   FROM DiskServer, FileSystem
-   WHERE DiskServer.id = FileSystem.diskserver
-    AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
-    AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
-   ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
-            FileSystem.fsDeviation ASC FOR UPDATE;
 BEGIN
-  -- Loop over the filesystems starting with the best one
-  -- As soon as we find something, we stop looping. So on average
-  -- we should loop only once or twice
-  -- Note that the first select is a FOR UPDATE one. So the open
-  -- of the cursor serializes the rest of the procedure
-  OPEN cfs;
-  LOOP
-    BEGIN
-      FETCH cfs INTO diskServerName, mountPoint, deviation, fsDiskServer, fileSystemId;
-      EXIT WHEN cfs%NOTFOUND;
-      -- select a TapeCopy. We don't need to lock it since this piece of code is serialized
-      SELECT /*+ FIRST_ROWS */
-          DiskCopy.path, DiskCopy.id, CastorFile.id, CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, TapeCopy.id
-        INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-        FROM DiskCopy, CastorFile, TapeCopy, Stream2TapeCopy
-       WHERE DiskCopy.filesystem = fileSystemId
-         AND DiskCopy.castorfile = CastorFile.id
-         AND DiskCopy.status = 10 -- CANBEMIGR
-         AND TapeCopy.castorfile = Castorfile.id
-         AND Stream2TapeCopy.child = TapeCopy.id
-         AND Stream2TapeCopy.parent = streamId
-         AND TapeCopy.status = 2 -- WAITINSTREAMS
-         AND ROWNUM < 2;
-      -- update status of selected tapecopy and stream
-      UPDATE TapeCopy SET status = 3 -- SELECTED
-       WHERE id = tapeCopyId;
-      UPDATE Stream SET status = 3 -- RUNNING
-       WHERE id = streamId;
-      -- Update Filesystem state
-      updateFsFileOpened(fsDiskServer, fileSystemId, deviation, 0);
-      -- exit loop
-      EXIT;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- No data found means the selected filesystem has no
-      -- tapecopies to be migrated. Thus we go to next one
-      NULL;
-    END;
-  END LOOP;
-  -- release locks
-  CLOSE cfs;
-  COMMIT;
-END;
+  -- We lock here a given DiskServer. See the comment for the creation of the LockTable
+  -- table for a full explanation of why we need such a stupid UPDATE statement.
+  UPDATE LockTable SET TheLock = 1
+   WHERE DiskServerId =
+   (SELECT DiskServer.id 
+      FROM FileSystem, NbTapeCopiesInFS, DiskServer
+     WHERE FileSystemRate(FileSystem.weight, FileSystem.deltaWeight, FileSystem.fsDeviation) =
+     -- The double level of subselects is due to the fact that ORACLE is unable
+     -- to use ROWNUM and ORDER BY at the same time. Thus, we have to first computes
+     -- the maxRate and then select on it.
+     (SELECT MAX(FileSystemRate(FileSystem.weight, FileSystem.deltaWeight, FileSystem.fsDeviation))
+        FROM FileSystem, NbTapeCopiesInFS, DiskServer
+       WHERE FileSystem.id = NbTapeCopiesInFS.FS
+         AND NbTapeCopiesInFS.NbTapeCopies > 0
+         AND NbTapeCopiesInFS.Stream = StreamId
+         AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+         AND DiskServer.id = FileSystem.diskserver
+         AND DiskServer.status IN (0, 1)) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
+       -- here we need to put all the check again in case we have 2 filesystems
+       -- with the same rate and one is not eligible !
+       AND FileSystem.id = NbTapeCopiesInFS.FS
+       AND NbTapeCopiesInFS.NbTapeCopies > 0
+       AND NbTapeCopiesInFS.Stream = StreamId
+       AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+       AND DiskServer.id = FileSystem.diskserver
+       AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
+       AND ROWNUM < 2)
+   RETURNING DiskServerId INTO dsid;
+  -- Now we got our Diskserver but we lost all other data (due to the fact we had
+  -- to do an update and we could not do a join in the update)
+  -- So let's get again the best filesystem on the diskServer (we could not get it straight
+  -- due to the need of an update on the LockTable
+  SELECT FileSystem.id INTO fileSystemId
+    FROM FileSystem, NbTapeCopiesInFS
+   WHERE FileSystemRate(FileSystem.weight, FileSystem.deltaWeight, FileSystem.fsDeviation) =
+     (SELECT MAX(FileSystemRate(FileSystem.weight, FileSystem.deltaWeight, FileSystem.fsDeviation))
+        FROM FileSystem, NbTapeCopiesInFS
+       WHERE FileSystem.id = NbTapeCopiesInFS.FS
+         AND NbTapeCopiesInFS.NbTapeCopies > 0
+         AND NbTapeCopiesInFS.Stream = StreamId
+         AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+         AND FileSystem.diskserver = dsId)
+     -- Again, we need to put all the check again in case we have 2 filesystems
+     -- with the same rate and one is not eligible !
+     AND FileSystem.id = NbTapeCopiesInFS.FS
+     AND NbTapeCopiesInFS.NbTapeCopies > 0
+     AND NbTapeCopiesInFS.Stream = StreamId
+     AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+     AND FileSystem.diskserver = dsId
+     AND ROWNUM < 2;
+  -- Now select what we need
+  SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.fsDeviation, FileSystem.diskserver, FileSystem.id
+    INTO diskServerName, mountPoint, deviation, fsDiskServer, fileSystemId
+    FROM FileSystem, DiskServer
+   WHERE FileSystem.id = fileSystemId
+     AND DiskServer.id = FileSystem.diskserver;
+  SELECT /*+ FIRST_ROWS */
+    DiskCopy.path, DiskCopy.id, CastorFile.id, CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, TapeCopy.id
+    INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
+    FROM DiskCopy, CastorFile, TapeCopy, Stream2TapeCopy
+   WHERE DiskCopy.filesystem = fileSystemId
+     AND DiskCopy.castorfile = CastorFile.id
+     AND DiskCopy.status = 10 -- CANBEMIGR
+     AND TapeCopy.castorfile = Castorfile.id
+     AND Stream2TapeCopy.child = TapeCopy.id
+     AND Stream2TapeCopy.parent = streamId
+     AND TapeCopy.status = 2 -- WAITINSTREAMS
+     AND ROWNUM < 2;
+  -- update status of selected tapecopy and stream
+  UPDATE TapeCopy SET status = 3 -- SELECTED
+   WHERE id = tapeCopyId;
+  UPDATE Stream SET status = 3 -- RUNNING
+   WHERE id = streamId;
+  -- update NbTapeCopiesInFS accordingly
+  UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies - 1
+   WHERE FS IN (SELECT DiskCopy.FileSystem
+                  FROM DiskCopy, TapeCopy
+                 WHERE DiskCopy.CastorFile = TapeCopy.castorFile
+                   AND TapeCopy.id = tapeCopyId)
+     AND Stream = streamId;
+  -- Update Filesystem state
+  updateFsFileOpened(fsDiskServer, fileSystemId, deviation, 0);
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- No data found means the selected filesystem has no
+    -- tapecopies to be migrated. Thus we go to next one
+    NULL;
+END; 
 
 /* PL/SQL method implementing bestFileSystemForSegment */
 CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskServerName OUT VARCHAR2,
@@ -669,20 +839,27 @@ CREATE OR REPLACE PROCEDURE resetStream (sid IN INTEGER) AS
   nbRes NUMBER;
   unused Stream%ROWTYPE;
 BEGIN
-  -- Used (together with a trigger) to avoid 
-  SELECT * INTO unused from Stream where id = sid FOR UPDATE;
-  SELECT count(*) INTO nbRes
-    FROM Stream2TapeCopy, TapeCopy
-    WHERE Stream2TapeCopy.Parent = sid
-      AND Stream2TapeCopy.Child = TapeCopy.id
-      AND status = 2 -- TAPECOPY_WAITINSTREAMS
-      AND ROWNUM < 2;
-  IF nbRes > 0 THEN
+  BEGIN
+    -- First lock the stream
+    SELECT * INTO unused from Stream where id = sid FOR UPDATE;
+    -- Selecting any column with hint FIRST_ROW and relying
+    -- on the exception mechanism in case nothing is found is
+    -- far better than issuing a SELECT count(*) because ORACLE
+    -- will then ignore the FIRST_ROWS and take ages...
+    SELECT /*+ FIRST_ROWS */ Tapecopy.id INTO nbRes
+      FROM Stream2TapeCopy, TapeCopy
+      WHERE Stream2TapeCopy.Parent = sid
+        AND Stream2TapeCopy.Child = TapeCopy.id
+        AND status = 2 -- TAPECOPY_WAITINSTREAMS
+        AND ROWNUM < 2;
+    -- We'we found one, update stream status
     UPDATE Stream SET status = 0, tape = 0 WHERE id = sid; -- STREAM_PENDING
-  ELSE
+  EXCEPTION  WHEN NO_DATA_FOUND THEN
+    -- We've found nothing, delete stream
     DELETE FROM Stream2TapeCopy WHERE Parent = sid;
     DELETE FROM Stream WHERE id = sid;
-  END IF;
+  END;
+  -- in any case, unlink tape and stream
   UPDATE Tape SET Stream = 0 WHERE Stream = sid;
 END;
 
