@@ -342,7 +342,7 @@ castor::IObject* castor::db::ora::OraFileClassCnv::createObj(castor::IAddress* a
     object->setMinFileSize(rset->getInt(2));
     object->setMaxFileSize(rset->getInt(3));
     object->setNbCopies(rset->getInt(4));
-    object->setId(rset->getDouble(5));
+    object->setId((unsigned long long)rset->getDouble(5));
     newlyCreated[object->id()] = object;
     m_selectStatement->closeResultSet(rset);
     return object;
@@ -400,7 +400,7 @@ void castor::db::ora::OraFileClassCnv::updateObj(castor::IObject* obj,
     object->setMinFileSize(rset->getInt(2));
     object->setMaxFileSize(rset->getInt(3));
     object->setNbCopies(rset->getInt(4));
-    object->setId(rset->getDouble(5));
+    object->setId((unsigned long long)rset->getDouble(5));
     alreadyDone[obj->id()] = obj;
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {

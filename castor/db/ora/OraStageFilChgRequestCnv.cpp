@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageFilChgRequestCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/05 13:37:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageFilChgRequestCnv.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/07 09:46:49 $ $Author: sponcec3 $
  *
  * 
  *
@@ -337,7 +337,7 @@ void castor::db::ora::OraStageFilChgRequestCnv::updateRep(castor::IAddress* addr
       }
       // Dealing with client
       {
-        u_signed64 clientId = rset->getInt(10);
+        u_signed64 clientId = (unsigned long long)rset->getDouble(10);
         castor::db::DbAddress ad(clientId, " ", 0);
         if (0 != clientId &&
             0 != obj->client() &&
@@ -531,7 +531,7 @@ castor::IObject* castor::db::ora::OraStageFilChgRequestCnv::createObj(castor::IA
     // create the new Object
     castor::stager::StageFilChgRequest* object = new castor::stager::StageFilChgRequest();
     // Now retrieve and set members
-    object->setFlags(rset->getDouble(1));
+    object->setFlags((unsigned long long)rset->getDouble(1));
     object->setUserName(rset->getString(2));
     object->setEuid(rset->getInt(3));
     object->setEgid(rset->getInt(4));
@@ -539,9 +539,9 @@ castor::IObject* castor::db::ora::OraStageFilChgRequestCnv::createObj(castor::IA
     object->setPid(rset->getInt(6));
     object->setMachine(rset->getString(7));
     object->setProjectName(rset->getString(8));
-    object->setId(rset->getDouble(9));
+    object->setId((unsigned long long)rset->getDouble(9));
     newlyCreated[object->id()] = object;
-    u_signed64 clientId = rset->getInt(10);
+    u_signed64 clientId = (unsigned long long)rset->getDouble(10);
     IObject* objClient = cnvSvc()->getObjFromId(clientId, newlyCreated);
     object->setClient(dynamic_cast<castor::IClient*>(objClient));
     object->setStatus((enum castor::stager::RequestStatusCodes)rset->getInt(11));
@@ -608,7 +608,7 @@ void castor::db::ora::OraStageFilChgRequestCnv::updateObj(castor::IObject* obj,
     // Now retrieve and set members
     castor::stager::StageFilChgRequest* object = 
       dynamic_cast<castor::stager::StageFilChgRequest*>(obj);
-    object->setFlags(rset->getDouble(1));
+    object->setFlags((unsigned long long)rset->getDouble(1));
     object->setUserName(rset->getString(2));
     object->setEuid(rset->getInt(3));
     object->setEgid(rset->getInt(4));
@@ -616,10 +616,10 @@ void castor::db::ora::OraStageFilChgRequestCnv::updateObj(castor::IObject* obj,
     object->setPid(rset->getInt(6));
     object->setMachine(rset->getString(7));
     object->setProjectName(rset->getString(8));
-    object->setId(rset->getDouble(9));
+    object->setId((unsigned long long)rset->getDouble(9));
     alreadyDone[obj->id()] = obj;
     // Dealing with client
-    u_signed64 clientId = rset->getInt(10);
+    u_signed64 clientId = (unsigned long long)rset->getDouble(10);
     if (0 != object->client() &&
         (0 == clientId ||
          object->client()->id() != clientId)) {

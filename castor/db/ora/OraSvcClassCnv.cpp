@@ -334,7 +334,7 @@ castor::IObject* castor::db::ora::OraSvcClassCnv::createObj(castor::IAddress* ad
     // Now retrieve and set members
     object->setPolicy(rset->getString(1));
     object->setNbDrives(rset->getInt(2));
-    object->setId(rset->getDouble(3));
+    object->setId((unsigned long long)rset->getDouble(3));
     newlyCreated[object->id()] = object;
     m_selectStatement->closeResultSet(rset);
     return object;
@@ -390,7 +390,7 @@ void castor::db::ora::OraSvcClassCnv::updateObj(castor::IObject* obj,
       dynamic_cast<castor::stager::SvcClass*>(obj);
     object->setPolicy(rset->getString(1));
     object->setNbDrives(rset->getInt(2));
-    object->setId(rset->getDouble(3));
+    object->setId((unsigned long long)rset->getDouble(3));
     alreadyDone[obj->id()] = obj;
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {

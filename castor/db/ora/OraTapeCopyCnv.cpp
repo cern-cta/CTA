@@ -330,7 +330,7 @@ void castor::db::ora::OraTapeCopyCnv::updateRep(castor::IAddress* address,
       }
       // Dealing with castorFile
       {
-        u_signed64 castorFileId = rset->getInt(2);
+        u_signed64 castorFileId = (unsigned long long)rset->getDouble(2);
         castor::db::DbAddress ad(castorFileId, " ", 0);
         if (0 != castorFileId &&
             0 != obj->castorFile() &&
@@ -530,9 +530,9 @@ castor::IObject* castor::db::ora::OraTapeCopyCnv::createObj(castor::IAddress* ad
     // create the new Object
     castor::stager::TapeCopy* object = new castor::stager::TapeCopy();
     // Now retrieve and set members
-    object->setId(rset->getDouble(1));
+    object->setId((unsigned long long)rset->getDouble(1));
     newlyCreated[object->id()] = object;
-    u_signed64 castorFileId = rset->getInt(2);
+    u_signed64 castorFileId = (unsigned long long)rset->getDouble(2);
     IObject* objCastorFile = cnvSvc()->getObjFromId(castorFileId, newlyCreated);
     object->setCastorFile(dynamic_cast<castor::stager::CastorFile*>(objCastorFile));
     object->setStatus((enum castor::stager::TapeCopyStatusCodes)rset->getInt(3));
@@ -599,10 +599,10 @@ void castor::db::ora::OraTapeCopyCnv::updateObj(castor::IObject* obj,
     // Now retrieve and set members
     castor::stager::TapeCopy* object = 
       dynamic_cast<castor::stager::TapeCopy*>(obj);
-    object->setId(rset->getDouble(1));
+    object->setId((unsigned long long)rset->getDouble(1));
     alreadyDone[obj->id()] = obj;
     // Dealing with castorFile
-    u_signed64 castorFileId = rset->getInt(2);
+    u_signed64 castorFileId = (unsigned long long)rset->getDouble(2);
     if (0 != object->castorFile() &&
         (0 == castorFileId ||
          object->castorFile()->id() != castorFileId)) {

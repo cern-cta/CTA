@@ -330,7 +330,7 @@ castor::IObject* castor::db::ora::OraTapePoolCnv::createObj(castor::IAddress* ad
     castor::stager::TapePool* object = new castor::stager::TapePool();
     // Now retrieve and set members
     object->setName(rset->getString(1));
-    object->setId(rset->getDouble(2));
+    object->setId((unsigned long long)rset->getDouble(2));
     newlyCreated[object->id()] = object;
     m_selectStatement->closeResultSet(rset);
     return object;
@@ -385,7 +385,7 @@ void castor::db::ora::OraTapePoolCnv::updateObj(castor::IObject* obj,
     castor::stager::TapePool* object = 
       dynamic_cast<castor::stager::TapePool*>(obj);
     object->setName(rset->getString(1));
-    object->setId(rset->getDouble(2));
+    object->setId((unsigned long long)rset->getDouble(2));
     alreadyDone[obj->id()] = obj;
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {

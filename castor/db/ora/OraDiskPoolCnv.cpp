@@ -330,7 +330,7 @@ castor::IObject* castor::db::ora::OraDiskPoolCnv::createObj(castor::IAddress* ad
     castor::stager::DiskPool* object = new castor::stager::DiskPool();
     // Now retrieve and set members
     object->setName(rset->getString(1));
-    object->setId(rset->getDouble(2));
+    object->setId((unsigned long long)rset->getDouble(2));
     newlyCreated[object->id()] = object;
     m_selectStatement->closeResultSet(rset);
     return object;
@@ -385,7 +385,7 @@ void castor::db::ora::OraDiskPoolCnv::updateObj(castor::IObject* obj,
     castor::stager::DiskPool* object = 
       dynamic_cast<castor::stager::DiskPool*>(obj);
     object->setName(rset->getString(1));
-    object->setId(rset->getDouble(2));
+    object->setId((unsigned long long)rset->getDouble(2));
     alreadyDone[obj->id()] = obj;
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {

@@ -417,7 +417,7 @@ castor::IObject* castor::db::ora::OraDiskServerCnv::createObj(castor::IAddress* 
     castor::stager::DiskServer* object = new castor::stager::DiskServer();
     // Now retrieve and set members
     object->setName(rset->getString(1));
-    object->setId(rset->getDouble(2));
+    object->setId((unsigned long long)rset->getDouble(2));
     newlyCreated[object->id()] = object;
     object->setStatus((enum castor::stager::DiskServerStatusCode)rset->getInt(3));
     m_selectStatement->closeResultSet(rset);
@@ -484,7 +484,7 @@ void castor::db::ora::OraDiskServerCnv::updateObj(castor::IObject* obj,
     castor::stager::DiskServer* object = 
       dynamic_cast<castor::stager::DiskServer*>(obj);
     object->setName(rset->getString(1));
-    object->setId(rset->getDouble(2));
+    object->setId((unsigned long long)rset->getDouble(2));
     alreadyDone[obj->id()] = obj;
     object->setStatus((enum castor::stager::DiskServerStatusCode)rset->getInt(3));
     m_selectStatement->closeResultSet(rset);

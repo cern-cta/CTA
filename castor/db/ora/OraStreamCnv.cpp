@@ -358,8 +358,8 @@ castor::IObject* castor::db::ora::OraStreamCnv::createObj(castor::IAddress* addr
     // create the new Object
     castor::stager::Stream* object = new castor::stager::Stream();
     // Now retrieve and set members
-    object->setInitialSizeToTransfer(rset->getDouble(1));
-    object->setId(rset->getDouble(2));
+    object->setInitialSizeToTransfer((unsigned long long)rset->getDouble(1));
+    object->setId((unsigned long long)rset->getDouble(2));
     newlyCreated[object->id()] = object;
     object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(3));
     m_selectStatement->closeResultSet(rset);
@@ -414,8 +414,8 @@ void castor::db::ora::OraStreamCnv::updateObj(castor::IObject* obj,
     // Now retrieve and set members
     castor::stager::Stream* object = 
       dynamic_cast<castor::stager::Stream*>(obj);
-    object->setInitialSizeToTransfer(rset->getDouble(1));
-    object->setId(rset->getDouble(2));
+    object->setInitialSizeToTransfer((unsigned long long)rset->getDouble(1));
+    object->setId((unsigned long long)rset->getDouble(2));
     alreadyDone[obj->id()] = obj;
     object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(3));
     m_selectStatement->closeResultSet(rset);

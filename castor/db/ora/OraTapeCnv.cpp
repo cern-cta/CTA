@@ -448,7 +448,7 @@ castor::IObject* castor::db::ora::OraTapeCnv::createObj(castor::IAddress* addres
     object->setErrorCode(rset->getInt(5));
     object->setSeverity(rset->getInt(6));
     object->setVwAddress(rset->getString(7));
-    object->setId(rset->getDouble(8));
+    object->setId((unsigned long long)rset->getDouble(8));
     newlyCreated[object->id()] = object;
     object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(9));
     m_selectStatement->closeResultSet(rset);
@@ -521,7 +521,7 @@ void castor::db::ora::OraTapeCnv::updateObj(castor::IObject* obj,
     object->setErrorCode(rset->getInt(5));
     object->setSeverity(rset->getInt(6));
     object->setVwAddress(rset->getString(7));
-    object->setId(rset->getDouble(8));
+    object->setId((unsigned long long)rset->getDouble(8));
     alreadyDone[obj->id()] = obj;
     object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(9));
     m_selectStatement->closeResultSet(rset);

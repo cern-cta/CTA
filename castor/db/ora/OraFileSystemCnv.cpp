@@ -332,7 +332,7 @@ void castor::db::ora::OraFileSystemCnv::updateRep(castor::IAddress* address,
       }
       // Dealing with diskserver
       {
-        u_signed64 diskserverId = rset->getInt(7);
+        u_signed64 diskserverId = (unsigned long long)rset->getDouble(7);
         castor::db::DbAddress ad(diskserverId, " ", 0);
         if (0 != diskserverId &&
             0 != obj->diskserver() &&
@@ -529,14 +529,14 @@ castor::IObject* castor::db::ora::OraFileSystemCnv::createObj(castor::IAddress* 
     // create the new Object
     castor::stager::FileSystem* object = new castor::stager::FileSystem();
     // Now retrieve and set members
-    object->setFree(rset->getDouble(1));
+    object->setFree((unsigned long long)rset->getDouble(1));
     object->setWeight(rset->getFloat(2));
     object->setFsDeviation(rset->getFloat(3));
     object->setRandomize(rset->getInt(4));
     object->setMountPoint(rset->getString(5));
-    object->setId(rset->getDouble(6));
+    object->setId((unsigned long long)rset->getDouble(6));
     newlyCreated[object->id()] = object;
-    u_signed64 diskserverId = rset->getInt(7);
+    u_signed64 diskserverId = (unsigned long long)rset->getDouble(7);
     IObject* objDiskserver = cnvSvc()->getObjFromId(diskserverId, newlyCreated);
     object->setDiskserver(dynamic_cast<castor::stager::DiskServer*>(objDiskserver));
     m_selectStatement->closeResultSet(rset);
@@ -602,15 +602,15 @@ void castor::db::ora::OraFileSystemCnv::updateObj(castor::IObject* obj,
     // Now retrieve and set members
     castor::stager::FileSystem* object = 
       dynamic_cast<castor::stager::FileSystem*>(obj);
-    object->setFree(rset->getDouble(1));
+    object->setFree((unsigned long long)rset->getDouble(1));
     object->setWeight(rset->getFloat(2));
     object->setFsDeviation(rset->getFloat(3));
     object->setRandomize(rset->getInt(4));
     object->setMountPoint(rset->getString(5));
-    object->setId(rset->getDouble(6));
+    object->setId((unsigned long long)rset->getDouble(6));
     alreadyDone[obj->id()] = obj;
     // Dealing with diskserver
-    u_signed64 diskserverId = rset->getInt(7);
+    u_signed64 diskserverId = (unsigned long long)rset->getDouble(7);
     if (0 != object->diskserver() &&
         (0 == diskserverId ||
          object->diskserver()->id() != diskserverId)) {

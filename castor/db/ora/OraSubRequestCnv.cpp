@@ -316,7 +316,7 @@ void castor::db::ora::OraSubRequestCnv::updateRep(castor::IAddress* address,
       }
       // Dealing with request
       {
-        u_signed64 requestId = rset->getInt(7);
+        u_signed64 requestId = (unsigned long long)rset->getDouble(7);
         castor::db::DbAddress ad(requestId, " ", 0);
         if (0 != requestId &&
             0 != obj->request() &&
@@ -484,10 +484,10 @@ castor::IObject* castor::db::ora::OraSubRequestCnv::createObj(castor::IAddress* 
     object->setFileName(rset->getString(2));
     object->setProtocol(rset->getString(3));
     object->setPoolName(rset->getString(4));
-    object->setXsize(rset->getDouble(5));
-    object->setId(rset->getDouble(6));
+    object->setXsize((unsigned long long)rset->getDouble(5));
+    object->setId((unsigned long long)rset->getDouble(6));
     newlyCreated[object->id()] = object;
-    u_signed64 requestId = rset->getInt(7);
+    u_signed64 requestId = (unsigned long long)rset->getDouble(7);
     IObject* objRequest = cnvSvc()->getObjFromId(requestId, newlyCreated);
     object->setRequest(dynamic_cast<castor::stager::Request*>(objRequest));
     object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(8));
@@ -547,11 +547,11 @@ void castor::db::ora::OraSubRequestCnv::updateObj(castor::IObject* obj,
     object->setFileName(rset->getString(2));
     object->setProtocol(rset->getString(3));
     object->setPoolName(rset->getString(4));
-    object->setXsize(rset->getDouble(5));
-    object->setId(rset->getDouble(6));
+    object->setXsize((unsigned long long)rset->getDouble(5));
+    object->setId((unsigned long long)rset->getDouble(6));
     alreadyDone[obj->id()] = obj;
     // Dealing with request
-    u_signed64 requestId = rset->getInt(7);
+    u_signed64 requestId = (unsigned long long)rset->getDouble(7);
     if (0 != object->request() &&
         (0 == requestId ||
          object->request()->id() != requestId)) {

@@ -481,10 +481,10 @@ castor::IObject* castor::db::ora::OraCastorFileCnv::createObj(castor::IAddress* 
     // create the new Object
     castor::stager::CastorFile* object = new castor::stager::CastorFile();
     // Now retrieve and set members
-    object->setFileId(rset->getDouble(1));
+    object->setFileId((unsigned long long)rset->getDouble(1));
     object->setNsHost(rset->getString(2));
-    object->setSize(rset->getDouble(3));
-    object->setId(rset->getDouble(4));
+    object->setSize((unsigned long long)rset->getDouble(3));
+    object->setId((unsigned long long)rset->getDouble(4));
     newlyCreated[object->id()] = object;
     m_selectStatement->closeResultSet(rset);
     // Get ids of objs to retrieve
@@ -559,10 +559,10 @@ void castor::db::ora::OraCastorFileCnv::updateObj(castor::IObject* obj,
     // Now retrieve and set members
     castor::stager::CastorFile* object = 
       dynamic_cast<castor::stager::CastorFile*>(obj);
-    object->setFileId(rset->getDouble(1));
+    object->setFileId((unsigned long long)rset->getDouble(1));
     object->setNsHost(rset->getString(2));
-    object->setSize(rset->getDouble(3));
-    object->setId(rset->getDouble(4));
+    object->setSize((unsigned long long)rset->getDouble(3));
+    object->setId((unsigned long long)rset->getDouble(4));
     alreadyDone[obj->id()] = obj;
     m_selectStatement->closeResultSet(rset);
     // Deal with diskFileCopies

@@ -387,7 +387,7 @@ void castor::db::ora::OraSegmentCnv::updateRep(castor::IAddress* address,
       }
       // Dealing with tape
       {
-        u_signed64 tapeId = rset->getInt(13);
+        u_signed64 tapeId = (unsigned long long)rset->getDouble(13);
         castor::db::DbAddress ad(tapeId, " ", 0);
         if (0 != tapeId &&
             0 != obj->tape() &&
@@ -421,7 +421,7 @@ void castor::db::ora::OraSegmentCnv::updateRep(castor::IAddress* address,
       }
       // Dealing with copy
       {
-        u_signed64 copyId = rset->getInt(14);
+        u_signed64 copyId = (unsigned long long)rset->getDouble(14);
         castor::db::DbAddress ad(copyId, " ", 0);
         if (0 != copyId &&
             0 != obj->copy() &&
@@ -455,7 +455,7 @@ void castor::db::ora::OraSegmentCnv::updateRep(castor::IAddress* address,
       }
       // Dealing with stgReqId
       {
-        u_signed64 stgReqIdId = rset->getInt(15);
+        u_signed64 stgReqIdId = (unsigned long long)rset->getDouble(15);
         castor::db::DbAddress ad(stgReqIdId, " ", 0);
         if (0 != stgReqIdId &&
             0 != obj->stgReqId() &&
@@ -633,24 +633,24 @@ castor::IObject* castor::db::ora::OraSegmentCnv::createObj(castor::IAddress* add
     // Now retrieve and set members
     object->setBlockid((unsigned char*)rset->getString(1).data());
     object->setFseq(rset->getInt(2));
-    object->setOffset(rset->getDouble(3));
-    object->setBytes_in(rset->getDouble(4));
-    object->setBytes_out(rset->getDouble(5));
-    object->setHost_bytes(rset->getDouble(6));
+    object->setOffset((unsigned long long)rset->getDouble(3));
+    object->setBytes_in((unsigned long long)rset->getDouble(4));
+    object->setBytes_out((unsigned long long)rset->getDouble(5));
+    object->setHost_bytes((unsigned long long)rset->getDouble(6));
     object->setSegmCksumAlgorithm(rset->getString(7));
     object->setSegmCksum(rset->getInt(8));
     object->setErrMsgTxt(rset->getString(9));
     object->setErrorCode(rset->getInt(10));
     object->setSeverity(rset->getInt(11));
-    object->setId(rset->getDouble(12));
+    object->setId((unsigned long long)rset->getDouble(12));
     newlyCreated[object->id()] = object;
-    u_signed64 tapeId = rset->getInt(13);
+    u_signed64 tapeId = (unsigned long long)rset->getDouble(13);
     IObject* objTape = cnvSvc()->getObjFromId(tapeId, newlyCreated);
     object->setTape(dynamic_cast<castor::stager::Tape*>(objTape));
-    u_signed64 copyId = rset->getInt(14);
+    u_signed64 copyId = (unsigned long long)rset->getDouble(14);
     IObject* objCopy = cnvSvc()->getObjFromId(copyId, newlyCreated);
     object->setCopy(dynamic_cast<castor::stager::TapeCopy*>(objCopy));
-    u_signed64 stgReqIdId = rset->getInt(15);
+    u_signed64 stgReqIdId = (unsigned long long)rset->getDouble(15);
     IObject* objStgReqId = cnvSvc()->getObjFromId(stgReqIdId, newlyCreated);
     object->setStgReqId(dynamic_cast<castor::stager::Cuuid*>(objStgReqId));
     object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(16));
@@ -708,19 +708,19 @@ void castor::db::ora::OraSegmentCnv::updateObj(castor::IObject* obj,
       dynamic_cast<castor::stager::Segment*>(obj);
     object->setBlockid((unsigned char*)rset->getString(1).data());
     object->setFseq(rset->getInt(2));
-    object->setOffset(rset->getDouble(3));
-    object->setBytes_in(rset->getDouble(4));
-    object->setBytes_out(rset->getDouble(5));
-    object->setHost_bytes(rset->getDouble(6));
+    object->setOffset((unsigned long long)rset->getDouble(3));
+    object->setBytes_in((unsigned long long)rset->getDouble(4));
+    object->setBytes_out((unsigned long long)rset->getDouble(5));
+    object->setHost_bytes((unsigned long long)rset->getDouble(6));
     object->setSegmCksumAlgorithm(rset->getString(7));
     object->setSegmCksum(rset->getInt(8));
     object->setErrMsgTxt(rset->getString(9));
     object->setErrorCode(rset->getInt(10));
     object->setSeverity(rset->getInt(11));
-    object->setId(rset->getDouble(12));
+    object->setId((unsigned long long)rset->getDouble(12));
     alreadyDone[obj->id()] = obj;
     // Dealing with tape
-    u_signed64 tapeId = rset->getInt(13);
+    u_signed64 tapeId = (unsigned long long)rset->getDouble(13);
     if (0 != object->tape() &&
         (0 == tapeId ||
          object->tape()->id() != tapeId)) {
@@ -739,7 +739,7 @@ void castor::db::ora::OraSegmentCnv::updateObj(castor::IObject* obj,
       }
     }
     // Dealing with copy
-    u_signed64 copyId = rset->getInt(14);
+    u_signed64 copyId = (unsigned long long)rset->getDouble(14);
     if (0 != object->copy() &&
         (0 == copyId ||
          object->copy()->id() != copyId)) {
@@ -758,7 +758,7 @@ void castor::db::ora::OraSegmentCnv::updateObj(castor::IObject* obj,
       }
     }
     // Dealing with stgReqId
-    u_signed64 stgReqIdId = rset->getInt(15);
+    u_signed64 stgReqIdId = (unsigned long long)rset->getDouble(15);
     if (0 != object->stgReqId() &&
         (0 == stgReqIdId ||
          object->stgReqId()->id() != stgReqIdId)) {

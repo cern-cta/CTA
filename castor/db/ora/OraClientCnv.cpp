@@ -307,7 +307,7 @@ void castor::db::ora::OraClientCnv::updateRep(castor::IAddress* address,
       }
       // Dealing with request
       {
-        u_signed64 requestId = rset->getInt(4);
+        u_signed64 requestId = (unsigned long long)rset->getDouble(4);
         castor::db::DbAddress ad(requestId, " ", 0);
         if (0 != requestId &&
             0 != obj->request() &&
@@ -469,9 +469,9 @@ castor::IObject* castor::db::ora::OraClientCnv::createObj(castor::IAddress* addr
     // Now retrieve and set members
     object->setIpAddress(rset->getInt(1));
     object->setPort(rset->getInt(2));
-    object->setId(rset->getDouble(3));
+    object->setId((unsigned long long)rset->getDouble(3));
     newlyCreated[object->id()] = object;
-    u_signed64 requestId = rset->getInt(4);
+    u_signed64 requestId = (unsigned long long)rset->getDouble(4);
     IObject* objRequest = cnvSvc()->getObjFromId(requestId, newlyCreated);
     object->setRequest(dynamic_cast<castor::stager::Request*>(objRequest));
     m_selectStatement->closeResultSet(rset);
@@ -528,10 +528,10 @@ void castor::db::ora::OraClientCnv::updateObj(castor::IObject* obj,
       dynamic_cast<castor::rh::Client*>(obj);
     object->setIpAddress(rset->getInt(1));
     object->setPort(rset->getInt(2));
-    object->setId(rset->getDouble(3));
+    object->setId((unsigned long long)rset->getDouble(3));
     alreadyDone[obj->id()] = obj;
     // Dealing with request
-    u_signed64 requestId = rset->getInt(4);
+    u_signed64 requestId = (unsigned long long)rset->getDouble(4);
     if (0 != object->request() &&
         (0 == requestId ||
          object->request()->id() != requestId)) {

@@ -340,7 +340,7 @@ void castor::db::ora::OraDiskCopyCnv::updateRep(castor::IAddress* address,
       }
       // Dealing with fileSystem
       {
-        u_signed64 fileSystemId = rset->getInt(3);
+        u_signed64 fileSystemId = (unsigned long long)rset->getDouble(3);
         castor::db::DbAddress ad(fileSystemId, " ", 0);
         if (0 != fileSystemId &&
             0 != obj->fileSystem() &&
@@ -374,7 +374,7 @@ void castor::db::ora::OraDiskCopyCnv::updateRep(castor::IAddress* address,
       }
       // Dealing with castorFile
       {
-        u_signed64 castorFileId = rset->getInt(4);
+        u_signed64 castorFileId = (unsigned long long)rset->getDouble(4);
         castor::db::DbAddress ad(castorFileId, " ", 0);
         if (0 != castorFileId &&
             0 != obj->castorFile() &&
@@ -547,12 +547,12 @@ castor::IObject* castor::db::ora::OraDiskCopyCnv::createObj(castor::IAddress* ad
     castor::stager::DiskCopy* object = new castor::stager::DiskCopy();
     // Now retrieve and set members
     object->setPath(rset->getString(1));
-    object->setId(rset->getDouble(2));
+    object->setId((unsigned long long)rset->getDouble(2));
     newlyCreated[object->id()] = object;
-    u_signed64 fileSystemId = rset->getInt(3);
+    u_signed64 fileSystemId = (unsigned long long)rset->getDouble(3);
     IObject* objFileSystem = cnvSvc()->getObjFromId(fileSystemId, newlyCreated);
     object->setFileSystem(dynamic_cast<castor::stager::FileSystem*>(objFileSystem));
-    u_signed64 castorFileId = rset->getInt(4);
+    u_signed64 castorFileId = (unsigned long long)rset->getDouble(4);
     IObject* objCastorFile = cnvSvc()->getObjFromId(castorFileId, newlyCreated);
     object->setCastorFile(dynamic_cast<castor::stager::CastorFile*>(objCastorFile));
     object->setStatus((enum castor::stager::DiskCopyStatusCode)rset->getInt(5));
@@ -609,10 +609,10 @@ void castor::db::ora::OraDiskCopyCnv::updateObj(castor::IObject* obj,
     castor::stager::DiskCopy* object = 
       dynamic_cast<castor::stager::DiskCopy*>(obj);
     object->setPath(rset->getString(1));
-    object->setId(rset->getDouble(2));
+    object->setId((unsigned long long)rset->getDouble(2));
     alreadyDone[obj->id()] = obj;
     // Dealing with fileSystem
-    u_signed64 fileSystemId = rset->getInt(3);
+    u_signed64 fileSystemId = (unsigned long long)rset->getDouble(3);
     if (0 != object->fileSystem() &&
         (0 == fileSystemId ||
          object->fileSystem()->id() != fileSystemId)) {
@@ -631,7 +631,7 @@ void castor::db::ora::OraDiskCopyCnv::updateObj(castor::IObject* obj,
       }
     }
     // Dealing with castorFile
-    u_signed64 castorFileId = rset->getInt(4);
+    u_signed64 castorFileId = (unsigned long long)rset->getDouble(4);
     if (0 != object->castorFile() &&
         (0 == castorFileId ||
          object->castorFile()->id() != castorFileId)) {

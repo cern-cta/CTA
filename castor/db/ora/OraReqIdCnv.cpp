@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/05 13:37:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/07 09:46:49 $ $Author: sponcec3 $
  *
  * 
  *
@@ -305,7 +305,7 @@ void castor::db::ora::OraReqIdCnv::updateRep(castor::IAddress* address,
       }
       // Dealing with request
       {
-        u_signed64 requestId = rset->getInt(3);
+        u_signed64 requestId = (unsigned long long)rset->getDouble(3);
         castor::db::DbAddress ad(requestId, " ", 0);
         if (0 != requestId &&
             0 != obj->request() &&
@@ -465,9 +465,9 @@ castor::IObject* castor::db::ora::OraReqIdCnv::createObj(castor::IAddress* addre
     castor::stager::ReqId* object = new castor::stager::ReqId();
     // Now retrieve and set members
     object->setValue(rset->getString(1));
-    object->setId(rset->getDouble(2));
+    object->setId((unsigned long long)rset->getDouble(2));
     newlyCreated[object->id()] = object;
-    u_signed64 requestId = rset->getInt(3);
+    u_signed64 requestId = (unsigned long long)rset->getDouble(3);
     IObject* objRequest = cnvSvc()->getObjFromId(requestId, newlyCreated);
     object->setRequest(dynamic_cast<castor::stager::ReqIdRequest*>(objRequest));
     m_selectStatement->closeResultSet(rset);
@@ -523,10 +523,10 @@ void castor::db::ora::OraReqIdCnv::updateObj(castor::IObject* obj,
     castor::stager::ReqId* object = 
       dynamic_cast<castor::stager::ReqId*>(obj);
     object->setValue(rset->getString(1));
-    object->setId(rset->getDouble(2));
+    object->setId((unsigned long long)rset->getDouble(2));
     alreadyDone[obj->id()] = obj;
     // Dealing with request
-    u_signed64 requestId = rset->getInt(3);
+    u_signed64 requestId = (unsigned long long)rset->getDouble(3);
     if (0 != object->request() &&
         (0 == requestId ||
          object->request()->id() != requestId)) {
