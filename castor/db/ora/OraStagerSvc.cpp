@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.124 $ $Release$ $Date: 2005/02/03 12:34:31 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.125 $ $Release$ $Date: 2005/02/03 16:52:59 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -328,7 +328,7 @@ int castor::db::ora::OraStagerSvc::anySegmentsForTape
       m_anySegmentsForTapeStatement =
         createStatement(s_anySegmentsForTapeStatementString);
       m_anySegmentsForTapeStatement->registerOutParam
-        (1, oracle::occi::OCCIINT);
+        (2, oracle::occi::OCCIINT);
       m_anySegmentsForTapeStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
@@ -359,7 +359,7 @@ castor::db::ora::OraStagerSvc::segmentsForTape
       m_segmentsForTapeStatement =
         createStatement(s_segmentsForTapeStatementString);
       m_segmentsForTapeStatement->registerOutParam
-        (1, oracle::occi::OCCICURSOR);
+        (2, oracle::occi::OCCICURSOR);
       m_segmentsForTapeStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
@@ -1000,7 +1000,7 @@ castor::db::ora::OraStagerSvc::requestToDo
         if (types.begin() != it) stmtString << ", ";
         stmtString << *it;
       }
-      stmtString << ") AND ROWNUM < 2 RETURNING id INTO :1;";
+      stmtString << ") AND ROWNUM < 2 RETURNING id INTO :1";
       m_requestToDoStatement =
         createStatement(stmtString.str());
       m_requestToDoStatement->registerOutParam
