@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.38 $ $Date: 2000/02/26 15:10:22 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.39 $ $Date: 2000/02/29 15:18:31 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1237,12 +1237,12 @@ static int DiskToMemory(int disk_fd, int pool_index,
                 if ( rc == 0 && AbortFlag != 0 && (severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) \
             } else { \
                 (void) rtcpd_stageupdc(tape,file); \
-                (void)rtcp_WriteAccountRecord(client,file,RTCPEMSG); \
+                (void)rtcp_WriteAccountRecord(client,tape,file,RTCPEMSG); \
             if ( AbortFlag == 0 ) \
         } else if ( mode == WRITE_DISABLE ) {\
             (void) tellClient(&client_socket,X,Y,0); \
             rtcpd_SetProcError(severity); \
-            (void)rtcp_WriteAccountRecord(client,file,RTCPEMSG); \
+            (void)rtcp_WriteAccountRecord(client,tape,file,RTCPEMSG); \
         if ( disk_fd != -1 ) \
         rtcp_CloseConnection(&client_socket); \
         if ( (severity & RTCP_LOCAL_RETRY) != 0 && mode == WRITE_DISABLE ) \
@@ -1455,7 +1455,7 @@ void *diskIOthread(void *arg) {
 
         tellClient(&client_socket,NULL,file,rc);
         (void)rtcp_WriteAccountRecord(client,tape,file,RTCPPRC); 
-        (void)rtcp_WriteAccountRecord(client,file,RTCPPRC); 
+
         rtcp_log(LOG_DEBUG,"diskIOthread() fseq %d <-> %s copied %d bytes, rc=%d, proc_status=%d severity=%d\n",
             filereq->tape_fseq,filereq->file_path,
             (unsigned long)file->diskbytes_sofar,filereq->cprc,

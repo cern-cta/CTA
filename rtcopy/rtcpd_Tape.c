@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.32 $ $Date: 2000/02/23 15:47:03 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.33 $ $Date: 2000/02/29 15:18:34 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -984,7 +984,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                  rtcp_log(LOG_DEBUG,"tapeIOthread() return RC=-1 to client\n");\
                  (void) tellClient(&client_socket,X,Y,-1); \
                  (void) rtcpd_stageupdc(nexttape,nextfile); \
-                 (void)rtcp_WriteAccountRecord(client,nextfile,RTCPEMSG); \
+                 (void)rtcp_WriteAccountRecord(client,nexttape,nextfile,RTCPEMSG); \
              } \
              (void)rtcpd_Release((X),NULL); \
          } else { \
@@ -992,7 +992,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
              if ( mode == WRITE_ENABLE ) { \
                  (void) tellClient(&client_socket,X,Y,0); \
                  rtcpd_SetProcError(severity); \
-                 (void)rtcp_WriteAccountRecord(client,nextfile,RTCPEMSG); \
+                 (void)rtcp_WriteAccountRecord(client,nexttape,nextfile,RTCPEMSG); \
              }\
          } \
          (void) tellClient(&client_socket,NULL,NULL,-1); \
@@ -1317,7 +1317,7 @@ void *tapeIOthread(void *arg) {
                             rc = rtcpd_stageupdc(nexttape,nextfile);
                             TP_STATUS(RTCP_PS_NOBLOCKING);
                             rtcpd_SetProcError(RTCP_FAILED | RTCP_USERR);
-                            (void)rtcp_WriteAccountRecord(client,nextfile,RTCPEMSG);
+                            (void)rtcp_WriteAccountRecord(client,nexttape,nextfile,RTCPEMSG);
                         }
                         TP_STATUS(RTCP_PS_RELEASE);
                         rtcpd_Release(nexttape,NULL);
@@ -1454,7 +1454,7 @@ void *tapeIOthread(void *arg) {
                 TP_STATUS(RTCP_PS_STAGEUPDC);
                 rc = rtcpd_stageupdc(nexttape,nextfile);
                 TP_STATUS(RTCP_PS_NOBLOCKING);
-                (void)rtcp_WriteAccountRecord(client,nextfile,RTCPEMSG);
+                (void)rtcp_WriteAccountRecord(client,nexttape,nextfile,RTCPEMSG);
             } /* if ( nexttape->tapereq.mode == WRITE_ENABLE ) */
         } CLIST_ITERATE_END(nexttape->file,nextfile);
         if ( nexttape->next != tape ) {
