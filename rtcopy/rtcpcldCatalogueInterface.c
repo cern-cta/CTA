@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.33 $ $Release$ $Date: 2004/08/12 06:53:29 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.34 $ $Release$ $Date: 2004/08/12 08:57:56 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.33 $ $Release$ $Date: 2004/08/12 06:53:29 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.34 $ $Release$ $Date: 2004/08/12 08:57:56 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -107,6 +107,21 @@ static struct Cstager_Tape_t *currentTape = NULL;
 /** rtcpclientd only: the list of active tapes
  */
 static RtcpcldTapeList_t *tpList = NULL;
+
+/*
+ * Macros for synchronizing access to global currentTape in VidWorker
+ * (and other multithreaded clients)
+ */
+#define LOCKTP { \
+  int __save_serrno = serrno; \
+  (void)Cmutex_lock(&currentTape); \
+  serrno = __save_serrno; \
+}
+#define UNLOCKTP { \
+  int __save_serrno = serrno; \
+  (void)Cmutex_unlock(&currentTape); \
+  serrno = __save_serrno; \
+}
 
 /*
  * We can affort this to be thread-unsafe since the
@@ -450,7 +465,9 @@ static int updateTapeFromDB(
     rc = C_Services_createObj(*svcs,iAddr,&iObj);
   } else {
     iObj = Cstager_Tape_getIObject(tp);
+    LOCKTP;
     rc = C_Services_updateObj(*svcs,iAddr,iObj);
+    UNLOCKTP;
   }
   
   if ( rc == -1 ) {
@@ -520,7 +537,9 @@ static int updateSegmentFromDB(
 
   Cstager_Segment_id(segm,&key);
 
+  LOCKTP;
   rc = C_Services_updateObj(*svcs,iAddr,iObj);  
+  UNLOCKTP;
   if ( rc == -1 ) {
     save_serrno = serrno;
     C_IAddress_delete(iAddr);
@@ -775,8 +794,7 @@ static int findSegment(
 }
 
 /**
- * Verify that currentTape really match the requested tape entry. If
- * the tape doesn't match it means that the rtcpclientd or somebody
+ * Verify that currentTape really match the requested tape entry. If * the tape doesn't match it means that the rtcpclientd or somebody
  * else has started the VidWorker with an incorrect database key specified
  * using the -k option.
  */
@@ -1224,9 +1242,6 @@ static int procReqsForVID(
     return(-1);
   }
 
-  rc = verifyTape(tape);
-  if ( rc == -1 ) return(-1);
-
   rc = getStgSvc(&stgsvc);
   if ( rc == -1 || stgsvc == NULL ) return(-1);
 
@@ -1238,7 +1253,13 @@ static int procReqsForVID(
   }
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
-
+  LOCKTP;
+  rc = verifyTape(tape);
+  if ( rc == -1 ) {
+    UNLOCKTP;
+    return(-1);
+  }
+  
   /*
    * BEGIN Hack until client can use a createRepNoRec() to add segments
    */
@@ -1273,6 +1294,7 @@ static int procReqsForVID(
       if ( _dbErr != NULL ) free(_dbErr);      
     }
     C_IAddress_delete(iAddr);
+    UNLOCKTP;
     serrno = save_serrno;
     return(-1);
   }
@@ -1311,6 +1333,7 @@ static int procReqsForVID(
     }
     C_Services_rollback(*svcs,iAddr);
     C_IAddress_delete(iAddr);
+    UNLOCKTP;
     serrno = save_serrno;
     return(-1);
   }
@@ -1319,6 +1342,7 @@ static int procReqsForVID(
   if ( nbItems == 0 ) {
     C_Services_rollback(*svcs,iAddr);
     C_IAddress_delete(iAddr);
+    UNLOCKTP;
     serrno = ENOENT;
     return(-1);
   }
@@ -1411,6 +1435,7 @@ static int procReqsForVID(
             }
             C_Services_rollback(*svcs,iAddr);
             C_IAddress_delete(iAddr);
+            UNLOCKTP;
             serrno = save_serrno;
             return(-1);
           }
@@ -1509,7 +1534,7 @@ static int procReqsForVID(
                             RTCPCLD_NB_PARAMS+4,
                             "DBSVCCALL",
                             DLF_MSG_PARAM_STR,
-                            "C_Services_updateObj()",
+                            "C_Services_updateRepNoRec()",
                             "DBKEY",
                             DLF_MSG_PARAM_INT,
                             (int)_key,
@@ -1525,6 +1550,7 @@ static int procReqsForVID(
           C_Services_rollback(*svcs,iAddr);
           C_IAddress_delete(iAddr);
           if ( segmArray != NULL ) free(segmArray);
+          UNLOCKTP;
           serrno = save_serrno;
           return(-1);
         }
@@ -1574,6 +1600,7 @@ static int procReqsForVID(
 /*     } */
 /*   } else C_Services_rollback(*svcs,iAddr); */
 
+  UNLOCKTP;
   C_IAddress_delete(iAddr);
   
   if ( segmArray != NULL ) free(segmArray);
@@ -1617,15 +1644,18 @@ int rtcpcld_anyReqsForVID(
     return(-1);
   }
 
-  rc = verifyTape(tape);
-  if ( rc == -1 ) {
-    return(-1);
-  }
-  
   rc = getStgSvc(&stgsvc);
   if ( rc == -1 || stgsvc == NULL ) return(-1);
 
+  LOCKTP;
+  rc = verifyTape(tape);
+  if ( rc == -1 ) {
+    UNLOCKTP;
+    return(-1);
+  }
+  
   rc = Cstager_IStagerSvc_anySegmentsForTape(stgsvc,currentTape);
+  UNLOCKTP;
   if ( rc == -1 ) {
     save_serrno = serrno;
     if ( dontLog == 0 ) {
@@ -1687,14 +1717,17 @@ int rtcpcld_updateVIDStatus(
   rc = getDbSvc(&svcs);
   if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
 
+  LOCKTP;
   rc = findTape(&(tape->tapereq),&tapeItem,NULL);
   if ( tapeItem == NULL ) {
     (void)updateTapeFromDB(NULL);
     rc = findTape(&(tape->tapereq),&tapeItem,NULL);
   } else if ( rc == 1 ) {
     rc = updateTapeFromDB(tapeItem);
-    if ( rc == -1 ) return(-1);
-    else rc = 1;
+    if ( rc == -1 ) {
+      UNLOCKTP;
+      return(-1);
+    } else rc = 1;
   }
 
   if ( rc != 1 || tapeItem == NULL ) {
@@ -1711,6 +1744,7 @@ int rtcpcld_updateVIDStatus(
                       RTCPCLD_LOG_WHERE
                       );
     }
+    UNLOCKTP;
     serrno = SEINTERNAL;
     return(-1);
   }
@@ -1719,7 +1753,10 @@ int rtcpcld_updateVIDStatus(
   if ( fromStatus == cmpStatus ) {
     ID_TYPE _key = 0;
     rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-    if ( rc == -1 ) return(-1);
+    if ( rc == -1 ) {
+      UNLOCKTP;
+      return(-1);
+    }
 
     iAddr = C_BaseAddress_getIAddress(baseAddr);
     iObj = Cstager_Tape_getIObject(tapeItem);
@@ -1765,12 +1802,14 @@ int rtcpcld_updateVIDStatus(
                         );
         if ( _dbErr != NULL ) free(_dbErr);
       }
+      UNLOCKTP;
       serrno = save_serrno;
       return(-1);
     }
     C_IAddress_delete(iAddr);
     (void)notifyTape(tapeItem);
   }
+  UNLOCKTP;
   return(0);
 }
 
@@ -1806,6 +1845,7 @@ int rtcpcld_setVidWorkerAddress(
   rc = getDbSvc(&svcs);
   if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
 
+  LOCKTP;
   rc = findTape(&(tape->tapereq),&tapeItem,NULL);
   if ( tapeItem == NULL ) {
     (void)updateTapeFromDB(NULL);
@@ -1826,12 +1866,16 @@ int rtcpcld_setVidWorkerAddress(
                       RTCPCLD_LOG_WHERE
                       );
     }
+    UNLOCKTP;
     serrno = SEINTERNAL;
     return(-1);
   }
   
   rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-  if ( rc == -1 ) return(-1);
+  if ( rc == -1 ) {
+    UNLOCKTP;
+    return(-1);
+  }
 
   iAddr = C_BaseAddress_getIAddress(baseAddr);
   iObj = Cstager_Tape_getIObject(tapeItem);
@@ -1864,6 +1908,7 @@ int rtcpcld_setVidWorkerAddress(
                       );
       if ( _dbErr != NULL ) free(_dbErr);
     }
+    UNLOCKTP;
     serrno = save_serrno;
     return(-1);
   }
@@ -1897,9 +1942,11 @@ int rtcpcld_setVidWorkerAddress(
                       );
       if ( _dbErr != NULL ) free(_dbErr);
     }
+    UNLOCKTP;
     serrno = save_serrno;
     return(-1);
   }
+  UNLOCKTP;
   C_IAddress_delete(iAddr);
   (void)notifyTape(currentTape);
   return(0);
@@ -1943,6 +1990,7 @@ int rtcpcld_updateVIDFileStatus(
   rc = getDbSvc(&svcs);
   if ( rc == -1 || svcs == NULL || *svcs == NULL ) return(-1);
 
+  LOCKTP;
   rc = findTape(&(tape->tapereq),&tapeItem,NULL);
   if ( tapeItem == NULL ) {
     (void)updateTapeFromDB(NULL);
@@ -1962,16 +2010,23 @@ int rtcpcld_updateVIDFileStatus(
                       RTCPCLD_LOG_WHERE
                       );
     }
+    UNLOCKTP;
     serrno = SEINTERNAL;
     return(-1);
   }
 
   rc = updateTapeFromDB(tapeItem);
-  if ( rc == -1 ) return(-1);
-
+  if ( rc == -1 ) {
+    UNLOCKTP;
+    return(-1);
+  }
+  
   rc = getStgSvc(&stgsvc);
-  if ( rc == -1 || stgsvc == NULL ) return(-1);
-
+  if ( rc == -1 || stgsvc == NULL ) {
+    UNLOCKTP;
+    return(-1);  
+  }
+  
   segments = NULL;
 
   Cstager_Tape_segments(tapeItem,&segments,&nbItems);
@@ -2068,7 +2123,10 @@ int rtcpcld_updateVIDFileStatus(
   if ( segments != NULL ) free(segments);
   if ( updated == 1 ) {
     rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-    if ( rc == -1 ) return(-1);
+    if ( rc == -1 ) {
+      UNLOCKTP;
+      return(-1);
+    }
 
     iAddr = C_BaseAddress_getIAddress(baseAddr);
     iObj = Cstager_Tape_getIObject(tapeItem);
@@ -2101,13 +2159,14 @@ int rtcpcld_updateVIDFileStatus(
                         );
         if ( _dbErr != NULL ) free(_dbErr);
       }
-      
+      UNLOCKTP;
       serrno = save_serrno;
       return(-1);
     }
     (void)notifyTape(tapeItem);
     C_IAddress_delete(iAddr);
   }
+  UNLOCKTP;
   return(0);
 }
 
@@ -2131,6 +2190,11 @@ int rtcpcld_setFileStatus(
   struct C_IObject_t *iObj;
   struct Cstager_Segment_t *segmItem;
   enum Cstager_SegmentStatusCodes_t currentStatus;
+  struct Cstager_Tape_t *dummyTp = NULL;
+  struct Cstager_IStagerSvc_t *stgsvc = NULL;
+  ID_TYPE _key = 0;
+  char *vid;
+  int mode, side;
   struct Cns_fileid fileid;
   char *nsHost;
   Cuuid_t stgUuid;
@@ -2145,18 +2209,27 @@ int rtcpcld_setFileStatus(
     return(-1);
   }
 
+  LOCKTP;
   rc = findSegment(filereq,&segmItem);
-  if ( rc == -1 ) return(-1);
+  if ( rc == -1 ) {
+    UNLOCKTP;
+    return(-1);
+  }
+
   if ( rc == 0 || segmItem == NULL ) {
     (void)updateTapeFromDB(NULL);
     rc = findSegment(filereq,&segmItem);
     if ( rc != 1 || segmItem == NULL ) {
+      UNLOCKTP;
       serrno = ENOENT;
       return(-1);
     }
   } else {
     rc = updateSegmentFromDB(segmItem);
-    if ( rc == -1 ) return(-1);
+    if ( rc == -1 ) {
+      UNLOCKTP;
+      return(-1);
+    }
   }
 
   Cstager_Segment_status(
@@ -2193,6 +2266,7 @@ int rtcpcld_setFileStatus(
                       RTCPCLD_LOG_WHERE
                       );
     }
+    UNLOCKTP;
     serrno = EPERM;
     return(-1);
   }
@@ -2210,12 +2284,71 @@ int rtcpcld_setFileStatus(
                           segmItem,
                           (CONST unsigned char **)&blockid
                           );
+
   if ( ((diskPath != NULL) && 
         (strcmp(filereq->file_path,diskPath) == 0)) &&
        (((filereq->position_method == TPPOSIT_FSEQ) &&
          (filereq->tape_fseq == fseq)) ||
         ((filereq->position_method == TPPOSIT_BLKID) &&
          (memcmp(filereq->blockid,blockid,sizeof(filereq->blockid))==0))) ) {
+    rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
+    if ( rc == -1 ) {
+      UNLOCKTP;
+      return(-1);
+    }
+    
+    iAddr = C_BaseAddress_getIAddress(baseAddr);
+    /*
+     * BEGIN Hack until client can use a createRepNoRec() to add segments
+     */
+    if ( currentTape != NULL ) {
+      Cstager_Tape_vid(currentTape,(CONST char **)&vid);
+      Cstager_Tape_tpmode(currentTape,&mode);
+      Cstager_Tape_side(currentTape,&side);
+      
+      rc = getStgSvc(&stgsvc);
+      if ( rc == -1 || stgsvc == NULL ) {
+        UNLOCKTP;
+        return(-1);
+      }
+      rc = Cstager_IStagerSvc_selectTape(
+                                         stgsvc,
+                                         &dummyTp,
+                                         vid,
+                                         side,
+                                         mode
+                                         );
+      if ( rc == -1 ) {
+        save_serrno = serrno;
+        if ( dontLog == 0 ) {
+          char *_dbErr = NULL;
+          (void)dlf_write(
+                          (inChild == 0 ? mainUuid : childUuid),
+                          DLF_LVL_ERROR,
+                          RTCPCLD_MSG_DBSVC,
+                          (struct Cns_fileid *)NULL,
+                          RTCPCLD_NB_PARAMS+3,
+                          "DBSVCCALL",
+                          DLF_MSG_PARAM_STR,
+                          "Cstager_IStagerSvc_selectTape()",
+                          "ERROR_STR",
+                          DLF_MSG_PARAM_STR,
+                          sstrerror(serrno),
+                          "DB_ERROR",
+                          DLF_MSG_PARAM_STR,
+                          (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
+                          RTCPCLD_LOG_WHERE
+                          );
+          if ( _dbErr != NULL ) free(_dbErr);      
+        }
+        UNLOCKTP;
+        serrno = save_serrno;
+        return(-1);
+      }
+    }
+    /*
+     * END Hack until client can use a createRepNoRec() to add segments
+     */
     Cstager_Segment_setStatus(
                               segmItem,
                               newStatus
@@ -2265,69 +2398,7 @@ int rtcpcld_setFileStatus(
                                     );
       }
     }
-    updated = 1;
-  } else {
-    serrno = ENOENT;
-    return(-1);
-  }
-  
-  if ( updated == 1 ) {
-    struct Cstager_Tape_t *dummyTp = NULL;
-    struct Cstager_IStagerSvc_t *stgsvc = NULL;
-    char *vid;
-    int mode, side;
-    ID_TYPE _key = 0;
-    rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-    if ( rc == -1 ) return(-1);
 
-    iAddr = C_BaseAddress_getIAddress(baseAddr);
-    /*
-     * BEGIN Hack until client can use a createRepNoRec() to add segments
-     */
-    if ( currentTape != NULL ) {
-      Cstager_Tape_vid(currentTape,(CONST char **)&vid);
-      Cstager_Tape_tpmode(currentTape,&mode);
-      Cstager_Tape_side(currentTape,&side);
-      
-      rc = getStgSvc(&stgsvc);
-      if ( rc == -1 || stgsvc == NULL ) return(-1);
-      rc = Cstager_IStagerSvc_selectTape(
-                                         stgsvc,
-                                         &dummyTp,
-                                         vid,
-                                         side,
-                                         mode
-                                         );
-      if ( rc == -1 ) {
-        save_serrno = serrno;
-        if ( dontLog == 0 ) {
-          char *_dbErr = NULL;
-          (void)dlf_write(
-                          (inChild == 0 ? mainUuid : childUuid),
-                          DLF_LVL_ERROR,
-                          RTCPCLD_MSG_DBSVC,
-                          (struct Cns_fileid *)NULL,
-                          RTCPCLD_NB_PARAMS+3,
-                          "DBSVCCALL",
-                          DLF_MSG_PARAM_STR,
-                          "Cstager_IStagerSvc_selectTape()",
-                          "ERROR_STR",
-                          DLF_MSG_PARAM_STR,
-                          sstrerror(serrno),
-                          "DB_ERROR",
-                          DLF_MSG_PARAM_STR,
-                          (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
-                          RTCPCLD_LOG_WHERE
-                          );
-          if ( _dbErr != NULL ) free(_dbErr);      
-        }
-        serrno = save_serrno;
-        return(-1);
-      }
-    }
-    /*
-     * END Hack until client can use a createRepNoRec() to add segments
-     */
     iObj = Cstager_Segment_getIObject(segmItem);
     Cstager_Segment_id(segmItem,&_key);
     svcs = NULL;
@@ -2373,12 +2444,18 @@ int rtcpcld_setFileStatus(
         if ( _dbErr != NULL ) free(_dbErr);
       }
       C_IAddress_delete(iAddr);
+      UNLOCKTP;
       serrno = save_serrno;
       return(-1);
     }
     C_IAddress_delete(iAddr);
     if ( notify == 1 ) (void)notifySegment(segmItem);
+  } else {
+    UNLOCKTP;
+    serrno = ENOENT;
+    return(-1);
   }
+  UNLOCKTP;
 
   return(0);
 }
