@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.165 2002/02/20 15:41:27 jdurand Exp $
+ * $Id: procio.c,v 1.166 2002/03/04 10:08:16 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.165 $ $Date: 2002/02/20 15:41:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.166 $ $Date: 2002/03/04 10:08:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -606,12 +606,14 @@ void procioreq(req_type, magic, req_data, clienthost)
 
 	if (Cgetpwuid (stgreq.uid) == NULL) {
 		char uidstr[8];
+		sendrep (rpfd, MSG_ERR, STG33, "Cgetpwuid", strerror(errno));
 		sprintf (uidstr, "%d", stgreq.uid);
 		sendrep (rpfd, MSG_ERR, STG11, uidstr);
 		c = (api_out != 0) ? SEUSERUNKN : SYERR;
 		goto reply;
 	}
 	if ((gr = Cgetgrgid (stgreq.gid)) == NULL) {
+		sendrep (rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
 		sendrep (rpfd, MSG_ERR, STG36, stgreq.gid);
 		c = (api_out != 0) ? SEUSERUNKN : SYERR;
 		goto reply;
@@ -3078,12 +3080,14 @@ void procputreq(req_type, req_data, clienthost)
 
 	if (Cgetpwuid (uid) == NULL) {
 		char uidstr[8];
+		sendrep (rpfd, MSG_ERR, STG33, "Cgetpwuid", strerror(errno));
 		sprintf (uidstr, "%d", uid);
 		sendrep (rpfd, MSG_ERR, STG11, uidstr);
 		c = SYERR;
 		goto reply;
 	}
 	if ((gr = Cgetgrgid (gid)) == NULL) {
+		sendrep (rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
 		sendrep (rpfd, MSG_ERR, STG36, gid);
 		c = SYERR;
 		goto reply;
@@ -3199,6 +3203,7 @@ void procputreq(req_type, req_data, clienthost)
 	}
 
 	if ((gr = Cgetgrgid (gid)) == NULL) {
+		sendrep (rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
 		sendrep (rpfd, MSG_ERR, STG36, gid);
 		c = SYERR;
 		goto reply;
