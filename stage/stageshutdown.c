@@ -1,5 +1,5 @@
 /*
- * $Id: stageshutdown.c,v 1.3 2001/02/01 12:03:47 jdurand Exp $
+ * $Id: stageshutdown.c,v 1.4 2001/02/01 12:14:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageshutdown.c,v $ $Revision: 1.3 $ $Date: 2001/02/01 12:03:47 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageshutdown.c,v $ $Revision: 1.4 $ $Date: 2001/02/01 12:14:15 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -42,7 +42,7 @@ int main(argc, argv)
 	void cleanup();
 	int errflg = 0;
 	gid_t gid;
-	int msglen;
+ 	int msglen;
 	int ntries = 0;
 	struct passwd *pw;
 	char *q;
@@ -50,7 +50,7 @@ int main(argc, argv)
 	char sendbuf[REQBUFSZ];
 	char *stghost = NULL;
 	uid_t uid;
-	/* char repbuf[CA_MAXPATHLEN+1]; */
+ 	int force_shutdown;
 	
 	uid = getuid();
 	gid = getgid();
@@ -58,6 +58,9 @@ int main(argc, argv)
 	Copterr = 1;
 	while ((c = Cgetopt (argc, argv, "Fh:")) != -1) {
 		switch (c) {
+		case 'F':
+			force_shutdown = 1;
+			break;
 		case 'h':
 			stghost = Coptarg;
 			break;
@@ -65,6 +68,7 @@ int main(argc, argv)
 			errflg++;
 			break;
 		default:
+			errflg++;
 			break;
 		}
 	}
@@ -77,7 +81,7 @@ int main(argc, argv)
 		errflg++;
 	}
 
-	if (errflg) {
+	if (errflg != 0) {
 		usage (argv[0]);
 		exit (USERR);
 	}
