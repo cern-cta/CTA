@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/24 17:22:06 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/12/08 14:39:39 $ $Author: bcouturi $
  *
  *
  *
@@ -316,7 +316,7 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
 
   int t = time(0);
   const int TIMEOUT = 60;
-  std::stack<int> *toremove = new std::stack<int>();
+  std::stack<int> toremove;
   char *func = "RequestReplier::garbageCollect ";
 
   for(std::map<int, ClientConnection *>::iterator iter = m_connections->begin();
@@ -330,7 +330,7 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
            << std::endl;
 
     if ((*iter).second->getStatus() == DONE_FAILURE) {
-      toremove->push((*iter).second->m_fd);
+      toremove.push((*iter).second->m_fd);
       unsigned long ip = (*iter).second->m_client.ipAddress();
       clog() << DEBUG << func << "ClientConnection " << iter->second
              << " DONE_FAILURE <"
@@ -339,7 +339,7 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
              << (*iter).second->m_client.port() << std::endl;
     } else if ((*iter).second->m_terminate == true
                && (*iter).second->m_responses.empty()) {
-      toremove->push((*iter).second->m_fd);
+      toremove.push((*iter).second->m_fd);
       unsigned long ip = (*iter).second->m_client.ipAddress();
       clog() << DEBUG << func << "ClientConnection " << iter->second
              <<" CLOSE <"
@@ -348,7 +348,7 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
              << (*iter).second->m_client.port() << std::endl;
 
     } else if ((t - (*iter).second->m_lastEventDate) > TIMEOUT) {
-      toremove->push((*iter).second->m_fd);
+      toremove.push((*iter).second->m_fd);
       unsigned long ip = (*iter).second->m_client.ipAddress();
       clog() << DEBUG << func << "ClientConnection " << iter->second
              << " TIMEOUT <"
@@ -361,10 +361,10 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
     }
   } // End for
 
-  while (!toremove->empty()) {
-    int tfd = toremove->top();
+  while (!toremove.empty()) {
+    int tfd = toremove.top();
     deleteConnection(tfd);
-    toremove->pop();
+    toremove.pop();
   } // End while
 }
 
