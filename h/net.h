@@ -1,5 +1,5 @@
 /*
- * $Id: net.h,v 1.3 2000/05/31 10:35:17 obarring Exp $ 
+ * $Id: net.h,v 1.4 2000/06/14 13:42:37 jdurand Exp $ 
  */
 
 #ifndef _NET_H
@@ -51,6 +51,7 @@ typedef int SOCKET;
 
 
 #else /* _WIN32 */
+#include <winsock2.h>
 /*
  * Some UNIX definitions for NT
  */
