@@ -6,7 +6,7 @@
 
 
 #ifndef lint
-static char cvsId[] = "$RCSfile: Cpwd.c,v $ $Revision: 1.1 $ $Date: 1999/11/22 17:51:58 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "$RCSfile: Cpwd.c,v $ $Revision: 1.2 $ $Date: 1999/11/23 08:27:34 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -31,7 +31,7 @@ const char *name;
     return(getpwnam(name));
 #elif defined(linux) || (defined(__osf__) && defined(__alpha)) || \
       (defined(SOLARIS) && defined(_POSIX_PTHREAD_SEMANTICS)) || \
-      defined(_AIX)
+      defined(AIX42) || defined(IRIX6)
     /*
      * The final POSIX.1c standard: the return value is int and
      * buffer pointer is returned as last argument
@@ -41,7 +41,7 @@ const char *name;
     struct passwd *pwd = NULL;
     struct passwd *result = NULL;
     char *pwdbuf = NULL;
-    size_t pwdbuflen = 1024;
+    size_t pwdbuflen = BUFSIZ;
     int rc;
 
     Cglobals_get(&pwd_key,(void **)&pwd,sizeof(struct passwd));
@@ -53,13 +53,13 @@ const char *name;
     }
     rc = getpwnam_r(name,pwd,pwdbuf,pwdbuflen,&result);
     return(result);
-#elif defined(hpux) || defined(HPUX10)
+#elif  defined(HPUX10)
     static int pwd_key = -1;
     static int pwdbuf_key = -1;
     struct passwd *pwd = NULL;
     struct passwd *result = NULL;
     char *pwdbuf = NULL;
-    size_t pwdbuflen = 1024;
+    size_t pwdbuflen = BUFSIZ;
     int rc;
 
     Cglobals_get(&pwd_key,(void **)&pwd,sizeof(struct passwd));
@@ -81,7 +81,7 @@ const char *name;
     struct passwd *pwd = NULL;
     struct passwd *result = NULL;
     char *pwdbuf = NULL;
-    size_t pwdbuflen = 1024;
+    size_t pwdbuflen = BUFSIZ;
     int rc;
 
     Cglobals_get(&pwd_key,(void **)&pwd,sizeof(struct passwd));
@@ -106,7 +106,7 @@ uid_t uid;
     return(getpwuid(uid));
 #elif defined(linux) || (defined(__osf__) && defined(__alpha)) || \
       (defined(SOLARIS) && defined(_POSIX_PTHREAD_SEMANTICS)) || \
-      defined(_AIX)
+      defined(AIX42) || defined(IRIX6)
     /*
      * The final POSIX.1c standard: the return value is int and
      * buffer pointer is returned as last argument
@@ -116,7 +116,7 @@ uid_t uid;
     struct passwd *pwd = NULL;
     struct passwd *result = NULL;
     char *pwdbuf = NULL;
-    size_t pwdbuflen = 1024;
+    size_t pwdbuflen = BUFSIZ;
     int rc;
 
     Cglobals_get(&pwd_key,(void **)&pwd,sizeof(struct passwd));
@@ -134,7 +134,7 @@ uid_t uid;
     struct passwd *pwd = NULL;
     struct passwd *result = NULL;
     char *pwdbuf = NULL;
-    size_t pwdbuflen = 1024;
+    size_t pwdbuflen = BUFSIZ;
     int rc;
 
     Cglobals_get(&pwd_key,(void **)&pwd,sizeof(struct passwd));
@@ -156,7 +156,7 @@ uid_t uid;
     struct passwd *pwd = NULL;
     struct passwd *result = NULL;
     char *pwdbuf = NULL;
-    size_t pwdbuflen = 1024;
+    size_t pwdbuflen = BUFSIZ;
     int rc;
 
     Cglobals_get(&pwd_key,(void **)&pwd,sizeof(struct passwd));
