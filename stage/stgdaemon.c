@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.165 2002/01/28 17:33:19 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.166 2002/01/28 18:30:10 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.165 $ $Date: 2002/01/28 17:33:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.166 $ $Date: 2002/01/28 18:30:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -224,7 +224,6 @@ extern void killcleanovl _PROTO((int));
 extern void killmigovl _PROTO((int));
 int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
 extern int get_put_failed_retenp _PROTO((char *));
-int nwaitq_with_connection _PROTO(());
 
 struct stgcat_entry *newreq _PROTO((int));
 struct waitf *add2wf _PROTO((struct waitq *));
@@ -285,8 +284,9 @@ extern int sendrep _PROTO(());
  */
 extern int nbhost;
 int nwaitq = 0;
+int nwaitq_with_connection = 0;
 
-#define RESERVED_FD (4 + nwaitq_with_connection() + 2 * nbhost)
+#define RESERVED_FD (4 + nwaitq_with_connection + 2 * nbhost)
 #define FREE_FD (sysconf(_SC_OPEN_MAX) - RESERVED_FD)
 
 int stgdaemon_port = 0;
@@ -2341,9 +2341,11 @@ void checkwaitq()
 	struct waitq *wqp, *wqp1;
 	int save_reqid;
 
+	nwaitq_with_connection = 0;
 	save_reqid = reqid;
 	wqp = waitqp;
 	while (wqp) {
+		if (wqp->rpfd >= 0) nwaitq_with_connection++;
 		reqid = wqp->reqid;
 		if ((shutdownreq_reqid != 0) && (wqp->status != STAGESHUTDOWN)) {
 			/* There is a coming shutdown */
@@ -2554,17 +2556,6 @@ void checkwaitq()
 	}
 #endif
 	reqid = save_reqid;
-}
-
-int nwaitq_with_connection()
-{
-	int n = 0;
-	
-	struct waitq *wqp;
-	for (wqp = waitqp; wqp; wqp = wqp->next) {
-		if (wqp->rpfd >= 0) n++;
-	}
-	return(n);
 }
 
 int create_dir(dirname, uid, gid, mask)
