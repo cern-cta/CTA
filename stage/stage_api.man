@@ -1,0 +1,99 @@
+.\" $Id: stage_api.man,v 1.1 2002/10/08 14:50:12 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_api.man,v $ $Revision: 1.1 $ $Date: 2002/10/08 14:50:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
+.\" Copyright (C) 1996-2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE "1" "$Date: 2002/10/08 14:50:12 $" "CASTOR" "Stage Library Functions"
+.SH DESCRIPTION
+The staging facilities offer fast access to data via copies in a disk pool.
+A stage daemon manages the pool space and keeps a catalog of staged files.
+A disk pool consists of a number of file systems distributed over different
+machines.
+It can be private to an experiment or public.
+Use 
+.B man
+.I function
+for details of the client API functions:
+.TP 2.0i
+.BI stage_alloc
+allocate space in a disk pool
+.TP
+.BI stage_get
+find file allocated in a disk pool with
+.BR stage_alloc .
+.TP
+.BI stage_getcallback
+get user callback function pointer
+.TP
+.BI stage_geterrbuf
+get user error buffer
+.TP
+.BI stage_getlog
+get user log function pointer
+.TP
+.BI stage_getoutbuf
+get user output buffer
+.TP
+.BI stage_in_disk
+allocate space in a disk pool and copy files from from disk to disk
+.TP
+.BI stage_in_hsm
+allocate space in a disk pool and copy files from from HSM to disk
+.TP
+.BI stage_in_tape
+allocate space in a disk pool and copy files from from tape to disk
+.TP
+.BI stage_kill
+send signal to stager daemon
+.TP
+.BI stage_out_disk
+allocate space and store the option values in the stgdaemon catalog for use by stage_put or stage_updc later, for disk files
+.TP
+.BI stage_out_hsm
+allocate space and store the option values in the stgdaemon catalog for use by stage_put or stage_updc later, for HSM files
+.TP
+.BI stage_out_tape
+allocate space and store the option values in the stgdaemon catalog for use by stage_put or stage_updc later, for tape files
+.TP
+.BI stage_put_hsm
+copy HSM files to tertiary storage. It can only be used for a file allocated with stage_out_hsm
+.TP
+.BI stage_qry_Disk
+query stager catalog about disk files \- version with user\-friendly parameters
+.TP
+.BI stage_qry_Hsm
+query stager catalog about HSM files \- version with user\-friendly parameters
+.TP
+.BI stage_qry_Tape
+query stager catalog about tape files \- version with user\-friendly parameters
+.TP
+.BI stage_setcallback
+set user callback function
+.TP
+.BI stage_seterrbuf
+set user error buffer
+.TP
+.BI stage_setlog
+set user log function
+.TP
+.BI stage_setoutbuf
+set user output buffer
+.TP
+.BI stage_updc
+update the stager catalog
+.TP
+.BI stage_wrt_disk
+copy existing files from disk to disk
+.TP
+.BI stage_wrt_hsm
+copy existing files from disk to HSM tertiary storage
+.TP
+.BI stage_wrt_tape
+copy existing files from disk to tape
+
+.SH SEE ALSO
+\fBstage\fP(1)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
