@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <sys/poll.h>
 #include <sys/stat.h>
+#include <sys/times.h>
 #include <Cpwd.h>
 #include "castor/io/ClientSocket.hpp"
 #include "castor/io/ServerSocket.hpp"
@@ -333,9 +334,10 @@ castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
   throw (castor::exception::Exception) {
 
   stage_trace(3, "Waiting for callback from stager");
-
+  struct tms buf;
+  clock_t startTime = times(&buf);
   int rc, nonblocking=1;
-
+  
   rc = ioctl(m_callbackSocket->socket(),FIONBIO,&nonblocking);
   if (rc == SOCKET_ERROR) {
     castor::exception::InvalidArgument e; // XXX To be changed
@@ -369,6 +371,9 @@ castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
       stop = true;
     }
   }
+
+  clock_t endTime = times(&buf);
+  stage_trace(3, "Received callback from stager after %.2f seconds\n", ((float)(endTime - startTime)) / ((float)sysconf(_SC_CLK_TCK)) );
 
   return m_callbackSocket->accept();
 }
