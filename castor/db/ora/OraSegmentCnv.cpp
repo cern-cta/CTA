@@ -209,7 +209,7 @@ void castor::db::ora::OraSegmentCnv::fillRepTape(castor::stager::Segment* obj)
       cnvSvc()->createRep(&ad, obj->tape(), false);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkTapeExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateTapeStatement) {
@@ -239,7 +239,7 @@ void castor::db::ora::OraSegmentCnv::fillRepTapeCopy(castor::stager::Segment* ob
       cnvSvc()->createRep(&ad, obj->copy(), false);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkTapeCopyExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateTapeCopyStatement) {

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/10/25 07:48:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/10/26 08:34:11 $ $Author: sponcec3 $
  *
  * 
  *
@@ -189,7 +189,7 @@ void castor::db::ora::OraReqIdCnv::fillRepReqIdRequest(castor::stager::ReqId* ob
       cnvSvc()->createRep(&ad, obj->request(), false);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkReqIdRequestExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateReqIdRequestStatement) {

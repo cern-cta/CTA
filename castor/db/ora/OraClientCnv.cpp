@@ -210,7 +210,7 @@ void castor::db::ora::OraClientCnv::fillRepRequest(castor::rh::Client* obj)
     }
   }
   // Close resultset
-  m_selectStatement->closeResultSet(rset);
+  m_deleteRequestStatement->closeResultSet(rset);
   if (0 != obj->request()) {
     // Check checkRequestExist statement
     if (0 == m_checkRequestExistStatement) {
@@ -224,7 +224,7 @@ void castor::db::ora::OraClientCnv::fillRepRequest(castor::rh::Client* obj)
       cnvSvc()->createRep(&ad, obj->request(), false, OBJ_IClient);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkRequestExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateRequestStatement) {

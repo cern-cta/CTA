@@ -227,7 +227,7 @@ void castor::db::ora::OraFileSystemCnv::fillRepDiskPool(castor::stager::FileSyst
       cnvSvc()->createRep(&ad, obj->diskPool(), false);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkDiskPoolExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateDiskPoolStatement) {
@@ -297,7 +297,7 @@ void castor::db::ora::OraFileSystemCnv::fillRepDiskServer(castor::stager::FileSy
       cnvSvc()->createRep(&ad, obj->diskserver(), false);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkDiskServerExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateDiskServerStatement) {

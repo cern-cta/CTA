@@ -303,7 +303,7 @@ void castor::db::ora::OraStreamCnv::fillRepTape(castor::stager::Stream* obj)
     }
   }
   // Close resultset
-  m_selectStatement->closeResultSet(rset);
+  m_deleteTapeStatement->closeResultSet(rset);
   if (0 != obj->tape()) {
     // Check checkTapeExist statement
     if (0 == m_checkTapeExistStatement) {
@@ -317,7 +317,7 @@ void castor::db::ora::OraStreamCnv::fillRepTape(castor::stager::Stream* obj)
       cnvSvc()->createRep(&ad, obj->tape(), false, OBJ_Stream);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkTapeExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateTapeStatement) {
@@ -347,7 +347,7 @@ void castor::db::ora::OraStreamCnv::fillRepTapePool(castor::stager::Stream* obj)
       cnvSvc()->createRep(&ad, obj->tapePool(), false);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkTapePoolExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateTapePoolStatement) {

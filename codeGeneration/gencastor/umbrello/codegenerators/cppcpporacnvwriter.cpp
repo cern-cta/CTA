@@ -1062,7 +1062,9 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
     // Close request
     *m_stream << getIndent() << "// Close resultset" << endl
               << getIndent()
-              << "m_selectStatement->closeResultSet(rset);"
+              << "m_delete"
+              << capitalizeFirstLetter(as->remotePart.typeName)
+              << "Statement->closeResultSet(rset);"
               << endl;
   }
   // Common part to all * to 1 associations :
@@ -1117,7 +1119,9 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
   *m_stream << getIndent() << "}" << endl;
   *m_stream << getIndent() << "// Close resultset" << endl
             << getIndent()
-            << "m_selectStatement->closeResultSet(rset);"
+            << "m_check"
+            << capitalizeFirstLetter(as->remotePart.typeName)
+            << "ExistStatement->closeResultSet(rset);"
             << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;

@@ -322,7 +322,7 @@ void castor::db::ora::OraTapeCopyCnv::fillRepCastorFile(castor::stager::TapeCopy
       cnvSvc()->createRep(&ad, obj->castorFile(), false);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkCastorFileExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateCastorFileStatement) {

@@ -222,7 +222,7 @@ void castor::db::ora::OraDiskCopyCnv::fillRepFileSystem(castor::stager::DiskCopy
       cnvSvc()->createRep(&ad, obj->fileSystem(), false);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkFileSystemExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateFileSystemStatement) {
@@ -252,7 +252,7 @@ void castor::db::ora::OraDiskCopyCnv::fillRepCastorFile(castor::stager::DiskCopy
       cnvSvc()->createRep(&ad, obj->castorFile(), false);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkCastorFileExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateCastorFileStatement) {

@@ -243,7 +243,7 @@ void castor::db::ora::OraSubRequestCnv::fillRepDiskCopy(castor::stager::SubReque
       cnvSvc()->createRep(&ad, obj->diskcopy(), false);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkDiskCopyExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateDiskCopyStatement) {
@@ -273,7 +273,7 @@ void castor::db::ora::OraSubRequestCnv::fillRepCastorFile(castor::stager::SubReq
       cnvSvc()->createRep(&ad, obj->castorFile(), false);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkCastorFileExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateCastorFileStatement) {
@@ -303,7 +303,7 @@ void castor::db::ora::OraSubRequestCnv::fillRepSubRequest(castor::stager::SubReq
       cnvSvc()->createRep(&ad, obj->parent(), false);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkSubRequestExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateSubRequestStatement) {
@@ -333,7 +333,7 @@ void castor::db::ora::OraSubRequestCnv::fillRepRequest(castor::stager::SubReques
       cnvSvc()->createRep(&ad, obj->request(), false);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkRequestExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateRequestStatement) {

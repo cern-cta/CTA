@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageFilChgRequestCnv.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/10/25 07:48:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageFilChgRequestCnv.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/10/26 08:34:11 $ $Author: sponcec3 $
  *
  * 
  *
@@ -255,7 +255,7 @@ void castor::db::ora::OraStageFilChgRequestCnv::fillRepSvcClass(castor::stager::
       cnvSvc()->createRep(&ad, obj->svcClass(), false);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkSvcClassExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateSvcClassStatement) {
@@ -332,7 +332,7 @@ void castor::db::ora::OraStageFilChgRequestCnv::fillRepIClient(castor::stager::S
     }
   }
   // Close resultset
-  m_selectStatement->closeResultSet(rset);
+  m_deleteIClientStatement->closeResultSet(rset);
   if (0 != obj->client()) {
     // Check checkIClientExist statement
     if (0 == m_checkIClientExistStatement) {
@@ -346,7 +346,7 @@ void castor::db::ora::OraStageFilChgRequestCnv::fillRepIClient(castor::stager::S
       cnvSvc()->createRep(&ad, obj->client(), false, OBJ_Request);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkIClientExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateIClientStatement) {

@@ -259,7 +259,7 @@ void castor::db::ora::OraCastorFileCnv::fillRepSvcClass(castor::stager::CastorFi
       cnvSvc()->createRep(&ad, obj->svcClass(), false);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkSvcClassExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateSvcClassStatement) {
@@ -289,7 +289,7 @@ void castor::db::ora::OraCastorFileCnv::fillRepFileClass(castor::stager::CastorF
       cnvSvc()->createRep(&ad, obj->fileClass(), false);
     }
     // Close resultset
-    m_selectStatement->closeResultSet(rset);
+    m_checkFileClassExistStatement->closeResultSet(rset);
   }
   // Check update statement
   if (0 == m_updateFileClassStatement) {
