@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/05/28 08:38:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/01 15:38:15 $ $Author: sponcec3 $
  *
  * 
  *
@@ -40,7 +40,6 @@
 int main (int argc, char** argv) {
   // Prepare a request
   castor::rh::StageInRequest* fr = new castor::rh::StageInRequest();
-  fr->setHostName("DummyHost");
   
   castor::rh::Client *cl = new castor::rh::Client();
   cl->setIpAddress(0606);
