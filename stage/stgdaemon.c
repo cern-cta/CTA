@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.42 2000/05/29 15:55:29 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.43 2000/05/30 11:07:23 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.42 $ $Date: 2000/05/29 15:55:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.43 $ $Date: 2000/05/30 11:07:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -78,7 +78,10 @@ struct winsize {
 #include "marshall.h"
 #undef  unmarshall_STRING
 #define unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
-#include "rfio.h"
+#ifndef _WIN32
+#include <dirent.h>
+#endif
+#include "rfio_api.h"
 #include "net.h"
 #include "stage.h"
 #if SACCT
@@ -93,8 +96,6 @@ struct winsize {
 
 extern char *optarg;
 extern int optind;
-extern int rfio_errno;
-extern char *rfio_serror();
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep (int, int, ...);
 #endif

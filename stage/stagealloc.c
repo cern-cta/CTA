@@ -1,5 +1,5 @@
 /*
- * $Id: stagealloc.c,v 1.10 2000/03/24 10:10:05 jdurand Exp $
+ * $Id: stagealloc.c,v 1.11 2000/05/30 11:07:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.10 $ $Date: 2000/03/24 10:10:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.11 $ $Date: 2000/05/30 11:07:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -22,11 +22,12 @@ static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.10 $ $Date: 
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
+#include <sys/stat.h>
+#include <dirent.h>
 #include <netinet/in.h>
 #endif
 #include "marshall.h"
-#define RFIO_KERNEL 1
-#include "rfio.h"
+#include "rfio_api.h"
 #include "stage.h"
 extern	char	*getenv();
 extern	char	*getconfent();

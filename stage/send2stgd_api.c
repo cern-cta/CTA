@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_api.c,v 1.7 2000/05/23 06:54:51 jdurand Exp $
+ * $Id: send2stgd_api.c,v 1.8 2000/05/30 11:07:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.7 $ $Date: 2000/05/23 06:54:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.8 $ $Date: 2000/05/30 11:07:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -25,16 +25,15 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.7 $ $Date
 #if !defined(_WIN32)
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <dirent.h>            /* For rfio_readdir() prototype */
 #endif
 #include "marshall.h"
-#include "rfio.h"
+#include "rfio_api.h"
 #include "net.h"
 #include "serrno.h"
 #include "osdep.h"
 #include "stage.h"
 #include "Cnetdb.h"
-
-extern int rfio_errno;
 
 int dosymlink _PROTO((char *, char *));
 void dounlink _PROTO((char *));

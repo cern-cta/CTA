@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd.c,v 1.19 2000/05/23 06:54:51 jdurand Exp $
+ * $Id: send2stgd.c,v 1.20 2000/05/30 11:07:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.19 $ $Date: 2000/05/23 06:54:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.20 $ $Date: 2000/05/30 11:07:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -26,16 +26,16 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.19 $ $Date: 2
 #include <sys/stat.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <dirent.h>
 #endif
 #include "marshall.h"
-#include "rfio.h"
+#include "rfio_api.h"
 #include "net.h"
 #include "serrno.h"
 #include "osdep.h"
 #include "stage.h"
 #include "Cnetdb.h"
 
-extern int rfio_errno;
 int nb_ovl;
 #ifndef _WIN32
 struct sigaction sa;
