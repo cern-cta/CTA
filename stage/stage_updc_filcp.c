@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc_filcp.c,v 1.5 2000/03/15 10:06:03 jdurand Exp $
+ * $Id: stage_updc_filcp.c,v 1.6 2000/03/15 19:12:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc_filcp.c,v $ $Revision: 1.5 $ $Date: 2000/03/15 10:06:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc_filcp.c,v $ $Revision: 1.6 $ $Date: 2000/03/15 19:12:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -204,6 +204,12 @@ int DLL_DECL stage_updc_filcp(stageid, copyrc, ifce, size, waiting_time, transfe
   if (waiting_time > 0) {
     sprintf (tmpbuf, "%d", waiting_time);
     marshall_STRING (sbp, "-W");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
+  if (fseq > 0) {
+    sprintf (tmpbuf, "%d", fseq);
+    marshall_STRING (sbp,"-q");
     marshall_STRING (sbp, tmpbuf);
     nargs += 2;
   }
