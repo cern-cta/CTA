@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.3 $ $Date: 2000/04/12 10:23:58 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.4 $ $Date: 2000/04/12 16:05:07 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
 
     CLIST_ITERATE_BEGIN(reqlist,tmp1) {
         if ( tmp1->drvreq.VolReqID > 0 ) {
-            tp = localtime(&tmp1->volreq.recvtime);
+            tp = localtime((time_t *)&tmp1->volreq.recvtime);
             (void)strftime(timestr,64,strftime_format,tp);
             fprintf(stdout,"%s@%s (%d MB) jid %d %s(%s) user (%d,%d) %d secs.\n",
                 tmp1->drvreq.drive,tmp1->drvreq.server,
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
                 tmp1->volreq.clientUID,tmp1->volreq.clientGID,
                 now - tmp1->drvreq.recvtime);
         } else if ( *tmp1->drvreq.drive != '\0' ) {
-            tp = localtime(&tmp1->drvreq.recvtime);
+            tp = localtime((time_t *)&tmp1->drvreq.recvtime);
             (void)strftime(timestr,64,strftime_format,tp);
             if ( tmp1->drvreq.status & VDQM_UNIT_DOWN ) 
                 strcpy(drv_status,"DOWN");
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
                     (int)tmp1->drvreq.TotalMB,drv_status,tmp1->drvreq.volid,
                     timestr);
         } else {
-            tp = localtime(&tmp1->volreq.recvtime);
+            tp = localtime((time_t *)&tmp1->volreq.recvtime);
             (void)strftime(timestr,64,strftime_format,tp);
             fprintf(stdout,"QUEUED: %s user (%d,%d)@%s received at %s\n",
                     tmp1->volreq.volid,tmp1->volreq.clientUID,
