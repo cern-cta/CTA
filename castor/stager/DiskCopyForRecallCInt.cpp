@@ -97,15 +97,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_DiskCopyForRecall_type
-  //----------------------------------------------------------------------------
-  int Cstager_DiskCopyForRecall_type(castor::stager::DiskCopyForRecall* instance,
-                                     int* ret) {
-    *ret = instance->type();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_DiskCopyForRecall_path
   //----------------------------------------------------------------------------
   int Cstager_DiskCopyForRecall_path(castor::stager::DiskCopyForRecall* instance, const char** var) {
@@ -229,6 +220,15 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_DiskCopyForRecall_setStatus(castor::stager::DiskCopyForRecall* instance, castor::stager::DiskCopyStatusCodes new_var) {
     instance->setStatus(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_type
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_type(castor::stager::DiskCopyForRecall* instance,
+                                     int* ret) {
+    *ret = instance->type();
     return 0;
   }
 

@@ -185,15 +185,6 @@ void CppWriter::writeClass(UMLClassifier *c) {
             idAt->setDoc("The id of this object");
             cl->getAttList()->append(idAt);
           }
-        } else {
-          // We need to reimplement type here since it won't
-          // be reimplemented though it needs to be since it's
-          // calling the static TYPE method
-          UMLOperation* type2Op = getDocument()->createOperation(c, "type const", &param);
-          type2Op->setReturnType("int");
-          type2Op->setID(m_doc->getUniqueID());
-          type2Op->setDoc("Gets the type of the object");
-          c->getOpList().append(type2Op);
         }
       }
     }

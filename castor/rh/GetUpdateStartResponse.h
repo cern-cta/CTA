@@ -93,12 +93,6 @@ int Crh_GetUpdateStartResponse_print(struct Crh_GetUpdateStartResponse_t* instan
  */
 int Crh_GetUpdateStartResponse_TYPE(int* ret);
 
-/**
- * Gets the type of the object
- */
-int Crh_GetUpdateStartResponse_type(struct Crh_GetUpdateStartResponse_t* instance,
-                                    int* ret);
-
 /******************************************/
 /* Implementation of ClientResponse class */
 /******************************************/
@@ -168,6 +162,12 @@ int Crh_GetUpdateStartResponse_setId(struct Crh_GetUpdateStartResponse_t* instan
  */
 int Crh_GetUpdateStartResponse_id(struct Crh_GetUpdateStartResponse_t* instance,
                                   u_signed64* ret);
+
+/**
+ * Gets the type of the object
+ */
+int Crh_GetUpdateStartResponse_type(struct Crh_GetUpdateStartResponse_t* instance,
+                                    int* ret);
 
 /**
  * virtual method to clone any object

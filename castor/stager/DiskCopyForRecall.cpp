@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
@@ -87,5 +88,12 @@ int castor::stager::DiskCopyForRecall::TYPE() {
 //------------------------------------------------------------------------------
 int castor::stager::DiskCopyForRecall::type() const {
   return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::stager::DiskCopyForRecall::clone() {
+  return new DiskCopyForRecall(*this);
 }
 

@@ -97,15 +97,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_TapeCopyForMigration_type
-  //----------------------------------------------------------------------------
-  int Cstager_TapeCopyForMigration_type(castor::stager::TapeCopyForMigration* instance,
-                                        int* ret) {
-    *ret = instance->type();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_TapeCopyForMigration_copyNb
   //----------------------------------------------------------------------------
   int Cstager_TapeCopyForMigration_copyNb(castor::stager::TapeCopyForMigration* instance, unsigned int* var) {
@@ -224,6 +215,15 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_TapeCopyForMigration_setStatus(castor::stager::TapeCopyForMigration* instance, castor::stager::TapeCopyStatusCodes new_var) {
     instance->setStatus(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopyForMigration_type
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopyForMigration_type(castor::stager::TapeCopyForMigration* instance,
+                                        int* ret) {
+    *ret = instance->type();
     return 0;
   }
 

@@ -107,15 +107,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Crh_IOResponse_type
-  //----------------------------------------------------------------------------
-  int Crh_IOResponse_type(castor::rh::IOResponse* instance,
-                          int* ret) {
-    *ret = instance->type();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Crh_IOResponse_status
   //----------------------------------------------------------------------------
   int Crh_IOResponse_status(castor::rh::IOResponse* instance, unsigned int* var) {
@@ -243,6 +234,15 @@ extern "C" {
   int Crh_IOResponse_setErrorMessage(castor::rh::IOResponse* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setErrorMessage(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_IOResponse_type
+  //----------------------------------------------------------------------------
+  int Crh_IOResponse_type(castor::rh::IOResponse* instance,
+                          int* ret) {
+    *ret = instance->type();
     return 0;
   }
 

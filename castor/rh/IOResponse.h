@@ -90,12 +90,6 @@ int Crh_IOResponse_print(struct Crh_IOResponse_t* instance);
  */
 int Crh_IOResponse_TYPE(int* ret);
 
-/**
- * Gets the type of the object
- */
-int Crh_IOResponse_type(struct Crh_IOResponse_t* instance,
-                        int* ret);
-
 /****************************************/
 /* Implementation of FileResponse class */
 /****************************************/
@@ -217,6 +211,12 @@ int Crh_IOResponse_setId(struct Crh_IOResponse_t* instance,
  */
 int Crh_IOResponse_id(struct Crh_IOResponse_t* instance,
                       u_signed64* ret);
+
+/**
+ * Gets the type of the object
+ */
+int Crh_IOResponse_type(struct Crh_IOResponse_t* instance,
+                        int* ret);
 
 /**
  * virtual method to clone any object

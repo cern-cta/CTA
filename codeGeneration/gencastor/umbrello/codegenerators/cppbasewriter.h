@@ -246,10 +246,10 @@ class CppBaseWriter : public CppCastorWriter {
      QValueList<std::pair<QString, int> >& alreadyGenerated);
 
 	/**
-	 * write a list of operations for a given class.
+	 * write an operation for a given class.
    * This is an abstract method that should be implemented
    * when needed.
-	 * @param list the list of operations you want to write
+	 * @param op the operation you want to write
 	 * @param isHeaderMethod whether or not we are writing this
    * to a source or header file
 	 * @param isInterfaceImpl whether or not we are implementing
@@ -257,11 +257,13 @@ class CppBaseWriter : public CppCastorWriter {
 	 * @param j the stream associated with the output file
 	 */
 	void writeOperations
-    (QPtrList<UMLOperation> &list,
+    (UMLOperation *op,
      bool isHeaderMethod,
      bool isInterfaceImpl,
      QTextStream &j,
-     QValueList<std::pair<QString, int> >& alreadyGenerated);
+     QValueList<std::pair<QString, int> >& alreadyGenerated,
+     bool* firstOp,
+     QString comment);
 
   /***************/
   /* For scoping */
@@ -490,6 +492,12 @@ class CppBaseWriter : public CppCastorWriter {
    */
   std::map<QString, void(*)(CppBaseWriter*, QTextStream&)>
     m_castorPrintImplementations;
+
+  /**
+   * All virtual methods that should be reimplemented in all
+   * non abtract classes
+   */
+  std::set<QString> m_virtualOpReImpl;
 
 };
 

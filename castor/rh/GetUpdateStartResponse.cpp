@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/rh/ClientResponse.hpp"
 #include "castor/rh/GetUpdateStartResponse.hpp"
@@ -103,5 +104,12 @@ int castor::rh::GetUpdateStartResponse::TYPE() {
 //------------------------------------------------------------------------------
 int castor::rh::GetUpdateStartResponse::type() const {
   return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::rh::GetUpdateStartResponse::clone() {
+  return new GetUpdateStartResponse(*this);
 }
 

@@ -33,6 +33,10 @@ CppBaseWriter::CppBaseWriter(UMLDoc *parent,
   m_stdMembers[QString("list")] = QString("<list>");
   m_stdMembers[QString("vector")] = QString("<vector>");
   m_stdMembers[QString("set")] = QString("<set>");
+  // All virtual methods that should be reimplemented in all
+  // non abtract classes
+  m_virtualOpReImpl.insert(QString("clone"));
+  m_virtualOpReImpl.insert(QString("type const"));
 }
 
 //=============================================================================
@@ -440,27 +444,47 @@ void CppBaseWriter::writeOperations
   // First this object methods
   QPtrList<UMLOperation> *opl;
   opl = c->getFilteredOperationsList(permitScope);
-  writeOperations(*opl,isHeaderMethod, false, stream, alreadyGenerated);
+  for (UMLOperation *op = opl->first();
+       0 != op;
+       op = opl->next()) {
+    bool firstOp = false;
+    QString comment = "";
+    writeOperations(op, isHeaderMethod, false,
+                    stream, alreadyGenerated,
+                    &firstOp, comment);
+  }
 
   // Then the implemented interfaces methods
   if (!c->getAbstract()) {
-    for (UMLClassifier *interface = m_classInfo->implementedAbstracts.first();
-         interface !=0;
-         interface = m_classInfo->implementedAbstracts.next()) { 
+    for (UMLClassifier *interface = m_classInfo->allImplementedAbstracts.first();
+         interface != 0;
+         interface = m_classInfo->allImplementedAbstracts.next()) {
+      bool firstOp = true;
+      bool firstImpl = -1 !=
+        m_classInfo->implementedAbstracts.findRef(interface);
+      QString com = " of " + interface->getName();
+      if (m_classInfo->isInterface)
+        com += " interface";
+      else
+        com += " abstract class";
       opl = interface->getFilteredOperationsList(permitScope, true);
-      if(opl->count()) {
-        QString com = " of " + interface->getName();
-        if (m_classInfo->isInterface)
-          com += " interface";
-        else
-          com += " abstract class";
-        if (isHeaderMethod)
-          writeHeaderComment(QString("Implementation") + com,
-                                     getIndent(), stream);
-        writeOperations(*opl,isHeaderMethod, true, stream, alreadyGenerated);
-        if (isHeaderMethod)
-          writeHeaderComment(QString("End") + com,
-                                     getIndent(), stream);
+      for (UMLOperation *op = opl->first();
+           0 != op;
+           op = opl->next()) {
+        // Implement if in implemented abstracts or if
+        // function is virtual
+        if (firstImpl ||
+            (op->getAbstract() &&
+             m_virtualOpReImpl.find(op->getName()) !=
+             m_virtualOpReImpl.end())) {
+          writeOperations(op,isHeaderMethod, true,
+                          stream, alreadyGenerated,
+                          &firstOp, com);
+        }
+      }
+      if (!firstOp && isHeaderMethod) {
+        writeHeaderComment(QString("End") + com,
+                           getIndent(), stream);
       }
     }
   }
@@ -470,144 +494,145 @@ void CppBaseWriter::writeOperations
 // writeOperations
 //=============================================================================
 void CppBaseWriter::writeOperations
-(QPtrList<UMLOperation> &oplist,
- bool isHeaderMethod,
- bool isInterfaceImpl,
- QTextStream &stream,
- QValueList<std::pair<QString, int> >& alreadyGenerated) {
+  (UMLOperation *op, bool isHeaderMethod,
+   bool isInterfaceImpl, QTextStream &stream,
+   QValueList<std::pair<QString, int> >& alreadyGenerated,
+   bool* firstOp, QString comment) {
   QString className = m_classInfo->fullPackageName;
   className.append(m_classInfo->className);
   // create a list of members
   UMLAttributeList *members = m_classInfo->getAttList();
-  // generate method decl for each operation given
-  for (UMLOperation *op = oplist.first();
-       0 != op;
-       op = oplist.next()) {
-    // If no implementation and we are in the .cpp, skip
-    if (!isHeaderMethod && op->getAbstract() && !isInterfaceImpl) continue;
-    // Deal with the const in the name
-    QString name = op->getName();
-    bool constOp = false;
-    if (name.endsWith(" const")) {
-      name = name.left(name.length()-6);
-      constOp = true;
-    }
-    // Check we will not generate this method as an accessor
-    bool skip = false;
-    for (UMLAttribute* mem = members->first();
-         0 != mem;
-         mem = members->next()) {
-      QString n = mem->getName();
-      if (0 == name.compare(n) ||
-          0 == name.compare(QString("set") +
-                            n.left(1).upper() +
-                            n.right(n.length() - 1))) {
-        skip = true;
-        break;
-      }
-    }
-    if (skip) continue;
-    // Check we did not already generate this method
-    std::pair<QString, int> p(name, op->getParmList()->count());
-    if (alreadyGenerated.find(p) != alreadyGenerated.end()) {
-      // already done, skip
-      continue;
-    } else {
-      // mark as done for the future
-      alreadyGenerated.append(p);
-    }
-    // First write the documentation of the method
-    if (isHeaderMethod) {
-      // Build the documentation from the member list
-      QString returnStr = "";
-      for(UMLAttribute *at = op->getParmList()->first();
-          0 != at;
-          at = op->getParmList()->next()) {
-        returnStr += "@param " + at->getName() +
-          " " + at->getDoc() + "\n";
-      }
-      writeDocumentation("", op->getDoc(), returnStr, stream);
-    } else {
-      writeWideHeaderComment(name, getIndent(), stream);
-    }
-    // Now write the method itself
-    int paramIndent = INDENT*m_indent;
-    QString methodReturnType =
-      fixTypeName(op->getReturnType(),
-                  getNamespace(op->getReturnType()),
-                  m_classInfo->packageName,
-                  !isHeaderMethod);
-    bool forceVirtual = false;
-    if (methodReturnType.left(8) == "virtual ") {
-      methodReturnType = methodReturnType.remove(0,8);
-      forceVirtual = true;
-    }
-    stream << getIndent();
-    if (isHeaderMethod &&
-        (isInterfaceImpl || op->getAbstract() || forceVirtual)) {
-      // declare abstract method as 'virtual'
-      stream << "virtual ";
-      paramIndent += 8;
-    }
-    // static declaration for header file
-    if (op->getStatic() && isHeaderMethod) {
-      stream << "static ";
-      paramIndent += 7;
-    }
-    // return type of method
-    stream << methodReturnType << " ";
-    paramIndent += methodReturnType.length() + 1;
-    if (!isHeaderMethod) {
-      stream << className << "::";
-      paramIndent += className.length() + 2;
-    }
-    stream << name << "(";
-    paramIndent += name.length() + 1;
-    // method parameters
-    QPtrList<UMLAttribute>* pl = op->getParmList();
-    for (unsigned int i = 0; i < pl->count(); i++) {
-      UMLAttribute* at = pl->at(i);
-      if (at) {
-        if (at != op->getParmList()->first()) {
-          stream << "," << endl << getIndent(paramIndent);
-        }
-        stream << fixTypeName(at->getTypeName(),
-                              getNamespace(at->getTypeName()),
-                              m_classInfo->packageName)
-               << " " << at->getName();
-        if (!(at->getInitialValue().isEmpty())) {
-          stream << " = " << at->getInitialValue();
-        }
-      }
-    }
-    stream << ")";
-    if (constOp) stream << " const";
-    // method body : only gets IF its not in a header
-    if (isHeaderMethod) {
-      if (op->getAbstract() && !isInterfaceImpl) {
-        stream << " = 0";
-      };
-      stream << ";\n";
-    } else {
-      stream << getIndent() << " {" << endl;
-      // See whether we have an implementation for this method
-      std::map<std::pair<QString, int>,
-        void(*)(CppBaseWriter* obj,
-                QTextStream &stream)>::iterator
-        it = m_methodImplementations.find
-        (std::pair<QString, int>
-         (op->getName(), op->getParmList()->count()));
-      if (it != m_methodImplementations.end()) {
-        // we've got an implemantation
-        m_indent++;
-        (*(it->second))(this, stream);
-        m_indent--;
-      }        
-      stream << getIndent() << "}" << endl;
-    }
-    // write it out
-    stream << endl;
+  // If no implementation and we are in the .cpp, skip
+  if (!isHeaderMethod && op->getAbstract() && !isInterfaceImpl) return;
+  // Deal with the const in the name
+  QString name = op->getName();
+  bool constOp = false;
+  if (name.endsWith(" const")) {
+    name = name.left(name.length()-6);
+    constOp = true;
   }
+  // Check we will not generate this method as an accessor
+  bool skip = false;
+  for (UMLAttribute* mem = members->first();
+       0 != mem;
+       mem = members->next()) {
+    QString n = mem->getName();
+    if (0 == name.compare(n) ||
+        0 == name.compare(QString("set") +
+                          n.left(1).upper() +
+                          n.right(n.length() - 1))) {
+      skip = true;
+      break;
+    }
+  }
+  if (skip) return;
+  // Check we did not already generate this method
+  std::pair<QString, int> p(name, op->getParmList()->count());
+  if (alreadyGenerated.find(p) != alreadyGenerated.end()) {
+    // already done, skip
+    return;
+  } else {
+    // mark as done for the future
+    alreadyGenerated.append(p);
+  }
+  if (*firstOp) {
+    *firstOp = false;
+    if (isHeaderMethod) {
+      writeHeaderComment(QString("Implementation") + comment,
+                         getIndent(), stream);
+    }
+  }
+  // First write the documentation of the method
+  if (isHeaderMethod) {
+    // Build the documentation from the member list
+    QString returnStr = "";
+    for(UMLAttribute *at = op->getParmList()->first();
+        0 != at;
+        at = op->getParmList()->next()) {
+      returnStr += "@param " + at->getName() +
+        " " + at->getDoc() + "\n";
+    }
+    writeDocumentation("", op->getDoc(), returnStr, stream);
+  } else {
+    writeWideHeaderComment(name, getIndent(), stream);
+  }
+  // Now write the method itself
+  int paramIndent = INDENT*m_indent;
+  QString methodReturnType =
+    fixTypeName(op->getReturnType(),
+                getNamespace(op->getReturnType()),
+                m_classInfo->packageName,
+                !isHeaderMethod);
+  bool forceVirtual = false;
+  if (methodReturnType.left(8) == "virtual ") {
+    methodReturnType = methodReturnType.remove(0,8);
+    forceVirtual = true;
+  }
+  stream << getIndent();
+  if (isHeaderMethod &&
+      (isInterfaceImpl || op->getAbstract() || forceVirtual)) {
+    // declare abstract method as 'virtual'
+    stream << "virtual ";
+    paramIndent += 8;
+  }
+  // static declaration for header file
+  if (op->getStatic() && isHeaderMethod) {
+    stream << "static ";
+    paramIndent += 7;
+  }
+  // return type of method
+  stream << methodReturnType << " ";
+  paramIndent += methodReturnType.length() + 1;
+  if (!isHeaderMethod) {
+    stream << className << "::";
+    paramIndent += className.length() + 2;
+  }
+  stream << name << "(";
+  paramIndent += name.length() + 1;
+  // method parameters
+  QPtrList<UMLAttribute>* pl = op->getParmList();
+  for (unsigned int i = 0; i < pl->count(); i++) {
+    UMLAttribute* at = pl->at(i);
+    if (at) {
+      if (at != op->getParmList()->first()) {
+        stream << "," << endl << getIndent(paramIndent);
+      }
+      stream << fixTypeName(at->getTypeName(),
+                            getNamespace(at->getTypeName()),
+                            m_classInfo->packageName)
+             << " " << at->getName();
+      if (!(at->getInitialValue().isEmpty())) {
+        stream << " = " << at->getInitialValue();
+      }
+    }
+  }
+  stream << ")";
+  if (constOp) stream << " const";
+  // method body : only gets IF its not in a header
+  if (isHeaderMethod) {
+    if (op->getAbstract() && !isInterfaceImpl) {
+      stream << " = 0";
+    };
+    stream << ";\n";
+  } else {
+    stream << getIndent() << " {" << endl;
+    // See whether we have an implementation for this method
+    std::map<std::pair<QString, int>,
+      void(*)(CppBaseWriter* obj,
+              QTextStream &stream)>::iterator
+      it = m_methodImplementations.find
+      (std::pair<QString, int>
+       (op->getName(), op->getParmList()->count()));
+    if (it != m_methodImplementations.end()) {
+      // we've got an implemantation
+      m_indent++;
+      (*(it->second))(this, stream);
+      m_indent--;
+    }        
+    stream << getIndent() << "}" << endl;
+  }
+  // write it out
+  stream << endl;
 }
 
 //=============================================================================

@@ -111,15 +111,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Crh_GetUpdateStartResponse_type
-  //----------------------------------------------------------------------------
-  int Crh_GetUpdateStartResponse_type(castor::rh::GetUpdateStartResponse* instance,
-                                      int* ret) {
-    *ret = instance->type();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Crh_GetUpdateStartResponse_id
   //----------------------------------------------------------------------------
   int Crh_GetUpdateStartResponse_id(castor::rh::GetUpdateStartResponse* instance, u_signed64* var) {
@@ -181,6 +172,15 @@ extern "C" {
   int Crh_GetUpdateStartResponse_setErrorMessage(castor::rh::GetUpdateStartResponse* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setErrorMessage(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_GetUpdateStartResponse_type
+  //----------------------------------------------------------------------------
+  int Crh_GetUpdateStartResponse_type(castor::rh::GetUpdateStartResponse* instance,
+                                      int* ret) {
+    *ret = instance->type();
     return 0;
   }
 

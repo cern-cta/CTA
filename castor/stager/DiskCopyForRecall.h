@@ -83,12 +83,6 @@ int Cstager_DiskCopyForRecall_print(struct Cstager_DiskCopyForRecall_t* instance
  */
 int Cstager_DiskCopyForRecall_TYPE(int* ret);
 
-/**
- * Gets the type of the object
- */
-int Cstager_DiskCopyForRecall_type(struct Cstager_DiskCopyForRecall_t* instance,
-                                   int* ret);
-
 /************************************/
 /* Implementation of DiskCopy class */
 /************************************/
@@ -189,6 +183,12 @@ int Cstager_DiskCopyForRecall_setId(struct Cstager_DiskCopyForRecall_t* instance
  */
 int Cstager_DiskCopyForRecall_id(struct Cstager_DiskCopyForRecall_t* instance,
                                  u_signed64* ret);
+
+/**
+ * Gets the type of the object
+ */
+int Cstager_DiskCopyForRecall_type(struct Cstager_DiskCopyForRecall_t* instance,
+                                   int* ret);
 
 /**
  * virtual method to clone any object

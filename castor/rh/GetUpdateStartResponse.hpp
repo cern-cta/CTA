@@ -37,6 +37,7 @@ namespace castor {
 
   // Forward declarations
   class ObjectSet;
+  class IObject;
 
   // Forward declarations
   namespace stager {
@@ -88,11 +89,22 @@ namespace castor {
        */
       static int TYPE();
 
+      /********************************************/
+      /* Implementation of IObject abstract class */
+      /********************************************/
       /**
        * Gets the type of the object
        */
-      int type() const;
+      virtual int type() const;
 
+      /**
+       * virtual method to clone any object
+       */
+      virtual castor::IObject* clone();
+
+      /*********************************/
+      /* End of IObject abstract class */
+      /*********************************/
       /**
        * Get the value of m_diskCopy
        * @return the value of m_diskCopy

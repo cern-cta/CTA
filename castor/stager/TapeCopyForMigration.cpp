@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/TapeCopyForMigration.hpp"
@@ -87,5 +88,12 @@ int castor::stager::TapeCopyForMigration::TYPE() {
 //------------------------------------------------------------------------------
 int castor::stager::TapeCopyForMigration::type() const {
   return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::stager::TapeCopyForMigration::clone() {
+  return new TapeCopyForMigration(*this);
 }
 

@@ -84,12 +84,6 @@ int Cstager_TapeCopyForMigration_print(struct Cstager_TapeCopyForMigration_t* in
  */
 int Cstager_TapeCopyForMigration_TYPE(int* ret);
 
-/**
- * Gets the type of the object
- */
-int Cstager_TapeCopyForMigration_type(struct Cstager_TapeCopyForMigration_t* instance,
-                                      int* ret);
-
 /************************************/
 /* Implementation of TapeCopy class */
 /************************************/
@@ -183,6 +177,12 @@ int Cstager_TapeCopyForMigration_setId(struct Cstager_TapeCopyForMigration_t* in
  */
 int Cstager_TapeCopyForMigration_id(struct Cstager_TapeCopyForMigration_t* instance,
                                     u_signed64* ret);
+
+/**
+ * Gets the type of the object
+ */
+int Cstager_TapeCopyForMigration_type(struct Cstager_TapeCopyForMigration_t* instance,
+                                      int* ret);
 
 /**
  * virtual method to clone any object

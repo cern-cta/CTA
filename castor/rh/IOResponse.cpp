@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/rh/FileResponse.hpp"
 #include "castor/rh/IOResponse.hpp"
@@ -91,5 +92,12 @@ int castor::rh::IOResponse::TYPE() {
 //------------------------------------------------------------------------------
 int castor::rh::IOResponse::type() const {
   return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::rh::IOResponse::clone() {
+  return new IOResponse(*this);
 }
 
