@@ -1,0 +1,163 @@
+COMM
+COMM  Copyright (C) 2001-2002 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 2004/12/21 22:38:39 $ CERN IT-PDP/DM Jean-Philippe Baud
+ 
+COMM 	Make SCSI media changer server programs. 
+
+#include <Project.tmpl>
+
+INCLUDES = FileName(..,h)
+#if linux
+LIBS = -L../lib -lshift $(ADNSLIB) -lnsl
+#else
+#if SOLARIS
+LIBS = -L../lib -lshift -lsocket -lnsl
+#else
+#if defined(_AIX) && defined(_IBMR2)
+LIBS = -L../lib -lshift -lodm
+#else
+#if defined(__alpha) && defined(__osf__)
+LIBS = -no_so -L../lib -lshift -so_archive
+#else
+#if _WIN32
+LIBS = ..\lib\shift.lib wsock32.lib advapi32.lib
+#else
+LIBS = -L../lib -lshift
+#endif
+#endif
+#endif
+#endif
+#endif
+OPSGRP = OperatorGid
+SPOOL = RmcSpool
+
+COMM######################### FLAGS ##############################
+
+DFLAGS = -DBIN=\"$(BIN)\" \
+	 -DLOGFILE=\"$(SPOOL)/log\"
+
+CFLAGS =	-I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS)
+
+COMM######################### DEPENDENCY LIBRARIES ###############
+
+GLOBLIB = DepLibraryTargetName(lib,shift)
+
+COMM######################### RULES ##############################
+
+MANPAGES = $(LIBMANDIR)/rmc_dismount.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/rmc_export.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/rmc_find_cartridge.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/rmc_get_geometry.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/rmc_import.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/rmc_mount.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/rmc_read_elem_status.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/rmc_seterrbuf.$(LIBMANSUFFIX) \
+	   $(MANDIR)/rmcdaemon.$(MANSUFFIX)
+EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rmc_dismount.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rmc_export.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rmc_find_cartridge.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rmc_get_geometry.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rmc_import.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rmc_mount.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rmc_read_elem_status.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),rmc_seterrbuf.$(LIBMANSUFFIX))) \
+	   FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rmcdaemon.$(MANSUFFIX)))
+#if BuildRmcServer
+PROGS_D = ProgramTargetName(rmcdaemon)
+IPROGS_D = FileName($(BIN),ProgramTargetName(rmcdaemon))
+#endif
+
+RMCDAEMON_OBJS	=	rmc_serv.Osuf \
+			rmc_procreq.Osuf \
+			rmclogit.Osuf \
+			sendrep.Osuf \
+			usrmsg.Osuf
+RMCLIB_OBJS	=	rmc_dismount.Osuf \
+			rmc_errmsg.Osuf \
+			rmc_export.Osuf \
+			rmc_find_cartridge.Osuf \
+			rmc_get_geometry.Osuf \
+			rmc_import.Osuf \
+			rmc_mount.Osuf \
+			rmc_read_elem_status.Osuf \
+			send2rmc.Osuf
+
+#if BuildRmcLibrary
+RMCLIBTARGET=LibraryTargetName(rmc)
+#endif
+
+all: $(RMCLIBTARGET) $(PROGS_D)
+
+NormalProgramTarget(rmcdaemon,$(RMCDAEMON_OBJS),$(GLOBLIB),$(LIBS))
+
+NormalLibraryTarget(rmc,$(RMCLIB_OBJS))
+
+MakeDepLibrary(lib,shift)
+
+#if BuildRmcServer
+install: $(BIN) $(IPROGS_D) $(SPOOL) $(SACCTDIR)
+#else
+install:
+#endif
+
+InstallProgram(rmcdaemon,$(BIN),root,$(OPSGRP),750)
+
+MakeDir($(BIN),root,bin,0755)
+MakeDir($(SPOOL),root,bin,0755)
+
+install.man: $(MANDIR) $(MANPAGES)
+
+MakeDir($(MANDIR),root,bin,0755)
+
+IMANPAGE(rmc_dismount,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(rmc_export,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(rmc_find_cartridge,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(rmc_get_geometry,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(rmc_import,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(rmc_mount,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(rmc_read_elem_status,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(rmc_seterrbuf,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(rmcdaemon,$(MANDIR),$(MANSUFFIX))
+
+EMANPAGE(rmc_dismount,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(rmc_export,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(rmc_find_cartridge,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(rmc_get_geometry,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(rmc_import,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(rmc_mount,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(rmc_read_elem_status,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(rmc_seterrbuf,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(rmcdaemon,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+
+export:
+
+exportman: $(EXPORTMANPAGES)
+
+exportshr:
+
+COMM###################### CLEANING RULES #######################
+
+clean:
+	-@RemoveFiles(FilesToClean)
+
+clobber:	clean
+	-@RemoveFiles($(PROGS_C) $(PROGS_D) LibraryTargetName(rmc))
+
+#if _WIN32
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend -Y$(INCLUDES) *.c 2> /dev/null
+#endif
+
+Makefiles:
+
+FORCE:
+
+COMM####################### DEPENDENCIES ##########################
+
+ 
+COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
