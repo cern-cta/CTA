@@ -1,5 +1,5 @@
 /*
- * $Id: rfstat.c,v 1.6 2002/11/19 12:55:34 baud Exp $
+ * $Id: rfstat.c,v 1.7 2004/03/02 09:16:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfstat.c,v $ $Revision: 1.6 $ $Date: 2002/11/19 12:55:34 $ CERN/IT/PDP/DM fhe";
+static char sccsid[] = "@(#)$RCSfile: rfstat.c,v $ $Revision: 1.7 $ $Date: 2004/03/02 09:16:55 $ CERN/IT/PDP/DM fhe";
 #endif /* not lint */
 
 #include <rfio_api.h>
@@ -123,6 +123,7 @@ struct stat64    *buf;
 
 	fprintf(stdout,"Device          : %x\n",(int) buf->st_dev);
 	fprintf(stdout,"Inode number    : %d\n",(int) buf->st_ino);
+	fprintf(stdout,"Nb blocks       : %d\n",(int) buf->st_blocks);
 	report_mode(buf->st_mode);
 	fprintf(stdout,"Hard Links      : %d\n",(int) buf->st_nlink);
 	if ((pwd = getpwuid(buf->st_uid)) == NULL)      {
