@@ -1,5 +1,5 @@
 /*
- * $Id: rfrm.c,v 1.8 2000/12/04 11:35:54 obarring Exp $
+ * $Id: rfrm.c,v 1.9 2000/12/06 11:52:17 obarring Exp $
  */
 
 /*
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.8 $ $Date: 2000/12/04 11:35:54 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.9 $ $Date: 2000/12/06 11:52:17 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -27,6 +27,12 @@ static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.8 $ $Date: 2000/12
 #endif
 #define RFIO_KERNEL 1
 #include <rfio.h>
+
+struct dirstack {
+  char *dir;
+  struct dirstack *prev;
+};
+
 static char *ckpath();
 char *getconfent();
 static int rm_recursive(); 
@@ -41,6 +47,7 @@ char *argv[];
   extern int    optind ;
   char *path,*root_path;
   int recursive = 0;
+  int ask_yesno = 1;
   struct stat st;
 #if defined(_WIN32)
   WSADATA wsadata;
@@ -73,7 +80,23 @@ char *argv[];
     if ( recursive ) {
       root_path = (char *)malloc(strlen(path)+1);
       strcpy(root_path,path);
-      rm_recursive(root_path);
+      /*
+       * remove all files
+       */
+      status = rm_recursive(root_path,&ask_yesno);
+      if ( status == -1 ) {
+         rfio_perror(root_path);
+         exit(2);
+      }
+      /*
+       * remove all directories. ENOENT can happen if the directory
+       * was empty and removed already in previous call.
+       */
+      status = rm_recursive(root_path,&ask_yesno);
+      if ( status == -1 && rfio_errno != ENOENT ) {
+         rfio_perror(root_path);
+         exit(2);
+      }
       free(root_path);
     } else {
       if ( rfio_lstat(path,&st) ) {
@@ -114,6 +137,31 @@ char *path;
   return(newpath);
 }
 
+static int rfio_pushdir(ds,dir)
+struct dirstack **ds;
+char *dir;
+{
+  struct dirstack *tmp;
+  if ( ds == NULL || dir == NULL ) return(0);
+  tmp = (struct dirstack *)malloc(sizeof(struct dirstack));
+  tmp->prev = *ds;
+  tmp->dir = (char *)malloc((strlen(dir)+1)*sizeof(char));
+  strcpy(tmp->dir,dir);
+  *ds = tmp;
+  return(0);
+}
+static struct dirstack *rfio_popdir(ds)
+struct dirstack **ds;
+{
+   struct dirstack *tmp;
+   if ( ds == NULL ) return(NULL);
+   tmp = *ds;
+   *ds = (*ds)->prev;
+   free(tmp->dir);
+   free(tmp);
+   return(*ds);
+}
+
 static int read_yesno() {
     int i, rc, retval;
     i =0;
@@ -129,46 +177,66 @@ static int read_yesno() {
     return(retval);
 }
 
-static int rm_recursive(path) 
+static int rm_recursive(path, yesno) 
 char *path;
+int *yesno;
 {
   DIR *dirp;
   struct dirent *de;
   struct stat st;
   char *p;
+  struct dirstack *ds = NULL;
+  int ask_yesno = 1;
+  int empty = 1;
   
   if ( !rfio_lstat(path,&st) ) {
     if ( (st.st_mode & S_IFDIR) ) {
-      printf("%s: remove files in directory %s? ",cmd,path);
-      if ( read_yesno() != 'y' ) return(0);
+      if ( yesno == NULL || *yesno ) {
+        printf("%s: decend into directory `%s'? ",cmd,path);
+        if ( read_yesno() != 'y' ) return(-1);
+        if ( yesno != NULL ) *yesno = 0;
+      }
 
       dirp = (DIR *)rfio_opendir(path);
       while ( ( de = (struct dirent *)rfio_readdir((RDIR *)dirp) ) != NULL ) {
-	if ( strcmp(de->d_name,".") && strcmp(de->d_name,"..") ) {
-	  p = (char *)malloc(strlen(path)+strlen(de->d_name)+2);
-	  strcpy(p,path);
-	  strcat(p,"/");
-	  strcat(p,de->d_name);
-	  rm_recursive(p);
-	  free(p);
-	}
+        if ( strcmp(de->d_name,".") && strcmp(de->d_name,"..") ) {
+          empty = 0;
+          p = (char *)malloc(strlen(path)+strlen(de->d_name)+2);
+          strcpy(p,path);
+          strcat(p,"/");
+          strcat(p,de->d_name);
+          if ( rfio_lstat(p,&st) == -1 ) {
+            fprintf(stderr,"%s: %s\n",p,rfio_serror());
+            free(p);
+          } else {
+            if ( S_ISDIR(st.st_mode) ) {
+              rfio_pushdir(&ds,p);
+            } else {
+              if ( rfio_unlink(p) ) {
+                fprintf(stderr,"unlink(%s): %s\n",p,rfio_serror());
+                exit(1);
+              }
+              free(p);
+            } 
+          }
+        }
       }
-      closedir(dirp);
+      rfio_closedir((RDIR *)dirp);
+      if ( empty ) {
+        printf("%s: remove directory `%s'? ",cmd,path);
+        if ( read_yesno() != 'y' ) return(-1);
+        if ( rfio_rmdir(path) == -1 ) {
+            fprintf(stderr,"rmdir(%s): %s\n",path,rfio_serror());
+            exit(2);
+        }
+      }
     }
-    if ( st.st_mode & S_IFDIR ) {
-      if ( rfio_rmdir(path) ) {
-        rfio_perror("rmdir()");
-        exit(1);
-      }
-    } else {
-      if ( rfio_unlink(path) ) {
-        rfio_perror("unlink()");
-        exit(1);
-      }
+    while ( ds != NULL ) {
+      while ( rm_recursive(ds->dir,&ask_yesno) == 0 );
+      rfio_popdir(&ds);
     }
   } else {
-    rfio_perror(path);
-    exit(2);
+    return(-1);
   }
   return(0);
 }
