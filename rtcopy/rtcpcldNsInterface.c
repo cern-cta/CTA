@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.24 $ $Release$ $Date: 2005/01/06 15:57:28 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.25 $ $Release$ $Date: 2005/01/06 16:21:02 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.24 $ $Release$ $Date: 2005/01/06 15:57:28 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.25 $ $Release$ $Date: 2005/01/06 16:21:02 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -499,7 +499,8 @@ int rtcpcld_checkNsSegment(
                     blkid,
                     RTCPCLD_LOG_WHERE
                     );
-    free(blkid);
+    if ( blkid != NULL ) free(blkid);
+    if ( currentSegattrs != NULL ) free(currentSegattrs);
     if ( castorFileId != NULL ) free(castorFileId);  
     serrno = ENOENT;
     return(-1);
@@ -578,6 +579,8 @@ int rtcpcld_checkNsSegment(
                                   );
       if ( rc < 0 ) {
         LOG_SYSCALL_ERR("Cns_updateseg_checksum()");
+        if ( blkid != NULL ) free(blkid);
+        if ( currentSegattrs != NULL ) free(currentSegattrs);
         if ( castorFileId != NULL ) free(castorFileId);  
         return(-1);
       }
