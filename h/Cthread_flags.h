@@ -1,8 +1,12 @@
 /*
- * $Id: Cthread_flags.h,v 1.3 1999/10/20 19:09:52 jdurand Exp $
+ * $Id: Cthread_flags.h,v 1.4 2000/01/10 10:11:21 jdurand Exp $
  *
  * $Log: Cthread_flags.h,v $
- * Revision 1.3  1999/10/20 19:09:52  jdurand
+ * Revision 1.4  2000/01/10 10:11:21  jdurand
+ * Force CTHREAD if (defined(_REENTRANT) || defined(_THREAD_SAFE)) on UNIX
+ * (Previous test was on _REENTRANT only)
+ *
+ * Revision 1.3  1999-10-20 21:09:52+02  jdurand
  * Introduced a _CTHREAD_WIN32MTX sequence following imake's rule UseMtx.
  * If not present, default is Win32 CriticalSection way, then Cthread_flags.h
  * makes sure that _WIN32_WINNT version is >= 0x0400
@@ -56,10 +60,13 @@
 #endif
 #define _CTHREAD_PROTO_WIN32 4
 
-/* Analyse                                      */
-/* -------------------------------------------- */
-/* Windows : Force to always use threads        */
-/* -------------------------------------------- */
+/* ----------------------------------------------- */
+/* Analyse of compilation flags                    */
+/* ----------------------------------------------- */
+
+/* ----------------------------------------------- */
+/* Windows : Force to always use threads on _WIN32 */
+/* ----------------------------------------------- */
 #ifdef _WIN32
 #ifdef NOCTHREAD
 #undef NOCTHREAD
@@ -78,7 +85,7 @@
 
 /* -------------------------------------------- */
 /* Unix-like:                                   */
-/* NOCTHREAD : Clearly the user do NOT     */
+/* NOCTHREAD : Clearly the user do NOT          */
 /* want threads                                 */
 /* -------------------------------------------- */
 #ifdef NOCTHREAD
@@ -86,11 +93,12 @@
 #else
 
 /* -------------------------------------------- */
-/* No CTHREAD : default is NOT to use      */
-/* threads unless _REENTRANT is defined         */
+/* CTHREAD undef : default is NOT to use        */
+/* threads unless _REENTRANT or _THREAD_SAFE    */
+/* is defined (UNIX)                            */
 /* -------------------------------------------- */
 #ifndef CTHREAD
-#ifdef _REENTRANT
+#if (defined(_REENTRANT) || defined(_THREAD_SAFE))
 #define _CTHREAD
 #else
 #define _NOCTHREAD
@@ -129,12 +137,12 @@
 /* Flags to extern user who whishes to know the */
 /* environment.                                 */
 /* -------------------------------------------- */
-/* We are really in a threaded environment */
+/* This is really in a threaded environment */
 #ifdef CTHREAD_TRUE_THREAD
 #undef CTHREAD_TRUE_THREAD
 #endif
 #define CTHREAD_TRUE_THREAD 1
-/* We are NOT in a threaded environment */
+/* This is NOT a threaded environment */
 #ifdef CTHREAD_MULTI_PROCESS
 #undef CTHREAD_MULTI_PROCESS
 #endif
