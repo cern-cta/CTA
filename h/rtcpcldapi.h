@@ -4,7 +4,7 @@
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
  *
- * Copyright (C) 2003  CERN
+ * Copyright (C) 2004  CERN
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.h,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/24 14:00:06 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/17 16:23:38 $ $Author: obarring $
  *
  * 
  *
@@ -28,10 +28,17 @@
 #define H_RTCPCLDAPI_H 1
 /** Client callback before and after each file copy
  *
- *@param tapereq Tape request structure
- *@param filereq File request structure
+ * \param tapereq Tape request structure
+ * \param filereq File request structure
  *
- *@see rtcpc() man-page
+ * The callback is identical to the rtcp_ClientCallback()
+ * provided with rtcpc(). The client is given control through
+ * this entry after each tape position and file copy. The
+ * difference to rtcpc() is that since rtcpcldc() is not
+ * communicating directly with the tape mover, the callback
+ * is asynchronous.
+ *
+ * \see rtcpc(3)
  */
 EXTERN_C int (*rtcpcld_ClientCallback) _PROTO((
                                                rtcpTapeRequest_t *tapereq,
@@ -39,8 +46,8 @@ EXTERN_C int (*rtcpcld_ClientCallback) _PROTO((
                                                ));
 /** Client callback to fill incomplete file requests
  *
- *@param tapereq Tape request structure
- *@param filereq File request structure
+ * \param tapereq Tape request structure
+ * \param filereq File request structure
  *
  *<P>
  *Give control to caller when an incomplete (missing tape position or disk
@@ -53,7 +60,7 @@ EXTERN_C int (*rtcpcld_MoreInfoCallback) _PROTO((
                                                  ));
 /** RTCOPY client daemon client
  *
- *@param tape - double linked list specifying the entire remote tape copy request.
+ * \param tape - double linked list specifying the entire remote tape copy request.
  *
  *<P>
  *Provides an interface similar to rtcpc() for interacting with the RTCOPY client
@@ -74,17 +81,18 @@ EXTERN_C int (*rtcpcld_MoreInfoCallback) _PROTO((
  *to fill missing information (e.g. disk path or file sequence number) to incomplete
  *file request.
  *
- *@return 
+ * \return 
  *  - 0 == OK
  *  - -1 if an error occurred. The serrno global is set as for rtcpc().
  *
+ * \see rtcpc(3)
  */
 void rtcpcldc _PROTO((
                       tape_list_t *tape
                       ));
 /** Cleanup after a series of rtcpcldc_appendFileReqs() calls
  *
- *@param tape - tape list passed in the original rtcpcldc() call.
+ * \param tape - tape list passed in the original rtcpcldc() call.
  *
  *<P>
  *The rtcpcldc_cleanup() cleans up the database service connection and internal
@@ -101,8 +109,8 @@ void rtcpcldc_cleanup _PROTO((
                               ));
 /** Append files to a running request
  *
- *@param tape tape request to which the files should be appended.
- *@param file files to be appended.
+ * \param tape tape request to which the files should be appended.
+ * \param file files to be appended.
  *
  *<P>
  *rtcpcldc_appendFileReqs() allows for appending files to a running (or queued)
@@ -113,7 +121,7 @@ void rtcpcldc_cleanup _PROTO((
  *conditions if rtcpcldc() and rtcpcldc_appendFileReqs() are called from different
   threads.
  *
- *@return
+ * \return
  *  - 0 == OK
  *  - -1 if an error occurred. The serrno global is set to one of the following values:
  *    - <B>EINVAL</B> tape or file arguments are NULL
@@ -122,7 +130,7 @@ void rtcpcldc_cleanup _PROTO((
  *    - Other error codes may be set in Cmutex, Cglobals or C_Services interfaces
  *.
  *
- *@see Cmutex, Cglobals man-pages
+ * \see Cmutex, Cglobals man-pages
  */
 int rtcpcldc_appendFileReqs _PROTO((
                                     tape_list_t *tape,
