@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.80 2000/07/03 16:44:01 jdurand Exp $
+ * $Id: stager.c,v 1.81 2000/07/04 10:08:22 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.80 $ $Date: 2000/07/03 16:44:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.81 $ $Date: 2000/07/04 10:08:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -2247,7 +2247,7 @@ void stager_log_callback(level,message)
   /* In debug mode we always want to have all the messages in the stager log-file */
   sendrep(rpfd,MSG_ERR,"%s",message);
 #else
-  sendrep(rpfd,level == LOG_INFO ? MSG_OUT : MSG_ERR,"%s",message);
+  sendrep(rpfd,(level == LOG_INFO) ? MSG_OUT : MSG_ERR,"%s",message);
 #endif
 }
 

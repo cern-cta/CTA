@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.20 2000/05/29 07:56:26 jdurand Exp $
+ * $Id: procupd.c,v 1.21 2000/07/04 10:08:22 jdurand Exp $
  */
 
 /*
@@ -8,12 +8,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.20 $ $Date: 2000/05/29 07:56:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.21 $ $Date: 2000/07/04 10:08:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <grp.h>
+#include <pwd.h>
 #include <string.h>
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -93,6 +95,7 @@ procupdreq(req_data, clienthost)
 	struct waitf *wfp;
 	struct waitq *wqp;
 	int Zflag = 0;
+	extern struct passwd *stpasswd;             /* Generic uid/gid stage:st */
 
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);	/* login name */
@@ -203,9 +206,12 @@ procupdreq(req_data, clienthost)
 	wqp = waitqp;
 	while (wqp) {
 		if (wqp->reqid == reqid &&
-				wqp->key == key &&
-				wqp->uid == uid &&
-				wqp->gid == gid) {
+			wqp->key == key &&
+			(wqp->Migrationflag ?
+				(stpasswd->pw_uid == uid && stpasswd->pw_gid == gid) :
+				(wqp->uid         == uid && wqp->gid         == gid)
+			)
+		) {
 			found = 1;
 			break;
 		}

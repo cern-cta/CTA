@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.32 2000/07/03 16:44:00 jdurand Exp $
+ * $Id: procio.c,v 1.33 2000/07/04 10:08:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.32 $ $Date: 2000/07/03 16:44:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.33 $ $Date: 2000/07/04 10:08:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -65,6 +65,7 @@ int last_tape_file;
 #ifdef USECDB
 extern struct stgdb_fd dbfd;
 #endif
+static char one[2] = "1";
 
 void procioreq _PROTO((int, char *, char *));
 void procputreq _PROTO((char *, char *));
@@ -436,7 +437,7 @@ void procioreq(req_type, req_data, clienthost)
 				strcpy (stgreq.u1.t.vid[i], stgreq.u1.t.vsn[i]);
 			numvid = numvsn;
 		}
-		if (fseq == NULL) fseq = "1";
+		if (fseq == NULL) fseq = one;
 
 		/* compute number of tape files */
 		if ((nbtpf = unpackfseq (fseq, req_type, &trailing, &fseq_list)) == 0)
@@ -771,8 +772,9 @@ void procioreq(req_type, req_data, clienthost)
 				stcp->nbaccesses++;
 				if (!wqp) {
 					wqp = add2wq (clienthost, user,
-												stcp->uid, stcp->gid, clientpid,
-												Upluspath, reqid, req_type, nbdskf, &wfp);
+									stcp->uid,
+									stcp->gid,
+									clientpid, Upluspath, reqid, req_type, nbdskf, &wfp);
 					wqp->Aflag = Aflag;
 					wqp->copytape = copytape;
 				}
@@ -964,13 +966,14 @@ void procioreq(req_type, req_data, clienthost)
 			}
 #endif
 			if (!wqp) wqp = add2wq (clienthost, user, stcp->uid,
-															stcp->gid, clientpid, Upluspath, reqid, req_type,
-															nbdskf, &wfp);
+									stcp->gid, clientpid, Upluspath, reqid, req_type,
+									nbdskf, &wfp);
 			wqp->copytape = copytape;
 			wfp->subreqid = stcp->reqid;
 			wqp->nbdskf++;
 			if (i < nbtpf || nhsmfiles > 0)
 				wqp->nb_subreqs++;
+			if (nhsmfiles > 0) wqp->Migrationflag = 1;
 			wfp++;
 			break;
 		case STAGECAT:
@@ -1204,6 +1207,9 @@ void procputreq(req_data, clienthost)
 
 	if (Migrationflag && ! Mflag) /* Cannot force migration flag without hsm file */
 		errflg++;
+
+	if (Mflag && ! Migrationflag) /* force migration flag if hsm file */
+		Migrationflag++;
 
 	if ((Iflag || Mflag) && (optind != nargs))
 		errflg++;
@@ -1525,28 +1531,26 @@ unpackfseq(fseq, req_type, trailing, fseq_list)
 	int n1, n2;
 	int nbtpf;
 	char *p, *q;
-	char tmp_fseq[CA_MAXFSEQLEN+1];
 
-	strcpy (tmp_fseq, fseq);
-	*trailing = *(tmp_fseq + strlen (tmp_fseq) - 1);
+	*trailing = *(fseq + strlen (fseq) - 1);
 	if (*trailing == '-') {
 		if (req_type != STAGEIN) {
 			sendrep (rpfd, MSG_ERR, STG18);
 			return (0);
 		}
-		*(tmp_fseq + strlen (tmp_fseq) - 1) = '\0';
+		*(fseq + strlen (fseq) - 1) = '\0';
 	}
-	switch (*tmp_fseq) {
+	switch (*fseq) {
 	case 'n':
 		if (req_type == STAGEIN) {
 			sendrep (rpfd, MSG_ERR, STG17, "-qn", "stagein");
 			return (0);
 		}
 	case 'u':
-		if (strlen (tmp_fseq) == 1) {
+		if (strlen (fseq) == 1) {
 			nbtpf = 1;
 		} else {
-			nbtpf = strtol (tmp_fseq + 1, &dp, 10);
+			nbtpf = strtol (fseq + 1, &dp, 10);
 			if (*dp != '\0') {
 				sendrep (rpfd, MSG_ERR, STG06, "-q");
 				return (0);
@@ -1554,11 +1558,11 @@ unpackfseq(fseq, req_type, trailing, fseq_list)
 		}
 		*fseq_list = (fseq_elem *) calloc (nbtpf, sizeof(fseq_elem));
 		for (i = 0; i < nbtpf; i++)
-			sprintf ((char *)(*fseq_list + i), "%c", *tmp_fseq);
+			sprintf ((char *)(*fseq_list + i), "%c", *fseq);
 		break;
 	default:
 		nbtpf = 0;
-		p = strtok (tmp_fseq, ",");
+		p = strtok (fseq, ",");
 		while (p != NULL) {
 			if ((q = strchr (p, '-')) != NULL) {
 				*q = '\0';
@@ -1590,7 +1594,7 @@ unpackfseq(fseq, req_type, trailing, fseq_list)
 		}
 		*fseq_list = (fseq_elem *) calloc (nbtpf, sizeof(fseq_elem));
 		nbtpf = 0;
-		p = strtok (tmp_fseq, ",");
+		p = strtok (fseq, ",");
 		while (p != NULL) {
 			if ((q = strchr (p, '-')) != NULL) {
 				*q = '\0';

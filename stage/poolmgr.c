@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.33 2000/07/03 10:21:48 jdurand Exp $
+ * $Id: poolmgr.c,v 1.34 2000/07/04 10:08:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.33 $ $Date: 2000/07/03 10:21:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.34 $ $Date: 2000/07/04 10:08:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1329,7 +1329,7 @@ int migpoolfiles(migr_p)
 	char func[16];
     int iclass;
     int itype;
-	struct passwd *stpasswd;             /* Generic uid/gid stage:st */
+	extern struct passwd *stpasswd;             /* Generic uid/gid stage:st */
     int *processes = NULL;
     int pid;
     int npidwait;
@@ -1345,12 +1345,6 @@ int migpoolfiles(migr_p)
     sleep(9);
     sleep(1);
 #endif
-
-	/* We get information on generic stage:st uid/gid */
-	if ((stpasswd = getpwnam("stage")) == NULL) {
-		stglogit(func, "### Cannot getpwnam(\"%s\") (%s)\n","stage",strerror(errno));
-		return(SYERR);
-	}
 
     if (stage_setlog((void (*) _PROTO((int, char *))) &migpoolfiles_log_callback) != 0) {
       stglogit(func, "### stage_setlog error (%s)\n",sstrerror(serrno));
@@ -1522,13 +1516,13 @@ int migpoolfiles(migr_p)
       }
       if (child_pid > 0) {
         if (WIFEXITED(term_status)) {
-          stglogit("migpoolfiles","Migration child pid %d exited or returned from main with a status of %d\n",
+          stglogit("migpoolfiles","Migration child pid=%d exited, status %d\n",
                    child_pid, WEXITSTATUS(term_status));
         } else if (WIFSIGNALED(term_status)) {
-          stglogit("migpoolfiles","Migration child pid %d exited due to uncaught signal %d\n",
+          stglogit("migpoolfiles","Migration child pid=%d exited due to uncaught signal %d\n",
                    child_pid, WTERMSIG(term_status));
         } else {
-          stglogit("migpoolfiles","Migration child pid %d was stopped\n",
+          stglogit("migpoolfiles","Migration child pid=%d was stopped\n",
                    child_pid);
         }
       }

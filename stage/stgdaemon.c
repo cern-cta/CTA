@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.54 2000/07/03 16:44:01 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.55 2000/07/04 10:08:23 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.54 $ $Date: 2000/07/03 16:44:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.55 $ $Date: 2000/07/04 10:08:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -138,6 +138,7 @@ char *Default_db_user = "Cstg_username";
 char *Default_db_pwd  = "Cstg_password";
 struct stgdb_fd dbfd;
 #endif
+struct passwd *stpasswd;             /* Generic uid/gid stage:st */
 extern char *optarg;
 extern int optind;
 
@@ -268,6 +269,12 @@ main(argc,argv)
 	stageacct (STGSTART, 0, 0, "", 0, 0, 0, 0, NULL, "");
 #endif
 
+	/* We get information on generic stage:st uid/gid */
+	if ((stpasswd = getpwnam("stage")) == NULL) {
+		stglogit(func, "### Cannot getpwnam(\"%s\") (%s)\n","stage",strerror(errno));
+ 		exit (SYERR);
+	}
+
 	FD_ZERO (&readmask);
 	FD_ZERO (&readfd);
 	signal (SIGPIPE,SIG_IGN);
@@ -284,7 +291,7 @@ main(argc,argv)
 	}
 	if ((sp = Cgetservbyname (STG, "tcp")) == NULL) {
 		stglogit (func, STG09, STG, "not defined in /etc/services");
-		exit (CONFERR);
+ 		exit (CONFERR);
 	}
 	memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
 	sin.sin_family = AF_INET ;
@@ -1767,7 +1774,6 @@ upd_staged(req_type, clienthost, user, uid, gid, clientpid, upath)
 		 char *upath;
 {
 	int found, c;
-	char *pool_user = "stage";
 	struct stat st;
 	struct stgcat_entry *stcp;
 	struct stgpath_entry *stpp;
