@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/06/30 13:59:58 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/07/01 10:24:56 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/06/30 13:59:58 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.10 $ $Release$ $Date: 2004/07/01 10:24:56 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -140,6 +140,7 @@ static int processGetMoreWorkCallback(
       if ( rc == 0 ) break;
       if ( rc == -1 ) {
         if ( serrno == EAGAIN ) {
+          if ( nbInProgress > 0 ) break; /* There was already something todo */
           (void)dlf_write(
                           childUuid,
                           DLF_LVL_ERROR,
