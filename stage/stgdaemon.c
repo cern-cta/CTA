@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.157 2001/12/20 11:39:15 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.158 2002/01/16 17:19:30 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.157 $ $Date: 2001/12/20 11:39:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.158 $ $Date: 2002/01/16 17:19:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -105,6 +105,9 @@ struct winsize {
 #include "Csetprocname.h"
 #endif
 
+/* Pages size */
+#define STG_BUFSIZ 8192
+
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
 /* calls to setresuid().                                                */
@@ -141,7 +144,9 @@ int last_reqid = 0;			/* last reqid used */
 char logbuf[PRTBUFSZ];
 int maxfds;
 int nbcat_ent;
+int nbcat_ent_old = -1;
 int nbpath_ent;
+int nbpath_ent_old = -1;
 fd_set readfd, readmask;
 int reqid;
 int rpfd = -1;
@@ -184,6 +189,8 @@ void checkwaitq _PROTO(());
 void create_link _PROTO((struct stgcat_entry *, char *));
 void dellink _PROTO((struct stgpath_entry *));
 void delreq _PROTO((struct stgcat_entry *, int));
+void stgcat_shrunk_pages _PROTO(());
+void stgpath_shrunk_pages _PROTO(());
 void delreqid _PROTO((int, int));
 void rmfromwq _PROTO((struct waitq *));
 void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
@@ -628,14 +635,14 @@ int main(argc,argv)
 	scfd = open (STGCAT, O_RDWR | O_CREAT, 0664);
 	fstat (scfd, &st);
 	if (st.st_size == 0) {
-		stgcat_bufsz = BUFSIZ;
+		stgcat_bufsz = STG_BUFSIZ;
 		stcs = (struct stgcat_entry *) calloc (1, stgcat_bufsz);
 		stce = stcs + (stgcat_bufsz/sizeof(struct stgcat_entry));
 		nbcat_ent = 0;
 		close (scfd);
 		last_reqid = 0;
 	} else {
-		stgcat_bufsz = (st.st_size + BUFSIZ -1) / BUFSIZ * BUFSIZ;
+		stgcat_bufsz = (st.st_size + STG_BUFSIZ -1) / STG_BUFSIZ * STG_BUFSIZ;
 		stcs = (struct stgcat_entry *) calloc (1, stgcat_bufsz);
 		stce = stcs + (stgcat_bufsz/sizeof(struct stgcat_entry));
 		nbcat_ent = st.st_size / sizeof(struct stgcat_entry);
@@ -655,13 +662,13 @@ int main(argc,argv)
 	spfd = open (STGPATH, O_RDWR | O_CREAT, 0664);
 	fstat (spfd, &st);
 	if (st.st_size == 0) {
-		stgpath_bufsz = BUFSIZ;
+		stgpath_bufsz = STG_BUFSIZ;
 		stps = (struct stgpath_entry *) calloc (1, stgpath_bufsz);
 		stpe = stps + (stgpath_bufsz/sizeof(struct stgpath_entry));
 		nbpath_ent = 0;
 		close (spfd);
 	} else {
-		stgpath_bufsz = (st.st_size + BUFSIZ -1) / BUFSIZ * BUFSIZ;
+		stgpath_bufsz = (st.st_size + STG_BUFSIZ -1) / STG_BUFSIZ * STG_BUFSIZ;
 		stps = (struct stgpath_entry *) calloc (1, stgpath_bufsz);
 		stpe = stps + (stgpath_bufsz/sizeof(struct stgpath_entry));
 		nbpath_ent = st.st_size / sizeof(struct stgpath_entry);
@@ -810,6 +817,8 @@ int main(argc,argv)
 		/* Before accept() we execute some automatic thing that are client disconnected */
 		rpfd = -1;
 
+		stgcat_shrunk_pages();
+		stgpath_shrunk_pages();
 		check_upd_fileclasses (); /* update all CASTOR fileclasses regularly */
 		check_delaymig (); /* move delay_migr to can_be_migr if any */
 		check_child_exit(); /* check childs [pid,status] */
@@ -2825,6 +2834,84 @@ void dellink(stpp)
 	memset (p2, 0, sizeof(struct stgpath_entry));
 }
 
+void stgcat_shrunk_pages()
+{
+	char *func = "stgcat_shrunk_pages";
+	int save_reqid = reqid;
+
+	reqid = 0;
+
+	if (nbcat_ent_old != nbcat_ent) {
+		size_t stgcat_bufsz_new;
+		int npages2free;
+
+		stgcat_bufsz_new = (nbcat_ent * sizeof(struct stgcat_entry) + STG_BUFSIZ -1) / STG_BUFSIZ * STG_BUFSIZ;
+		if (stgcat_bufsz_new == 0) stgcat_bufsz_new = STG_BUFSIZ;
+
+		if (stgcat_bufsz_new < stgcat_bufsz) {
+			/* Something was deleted - check if we can shrunk pages */
+
+			if ((npages2free = ((stgcat_bufsz - stgcat_bufsz_new) / STG_BUFSIZ)) > 0) {
+				/* This is giving the number of pages we can free() */
+				struct stgcat_entry *stcs_new;
+				char tmpbuf1[21];
+				char tmpbuf2[21];
+
+				if ((stcs_new = (struct stgcat_entry *) realloc(stcs, stgcat_bufsz_new)) != NULL) {
+					stcs = stcs_new;
+					stce = stcs + (stgcat_bufsz_new/sizeof(struct stgcat_entry));      
+					stglogit(func, "... Shrunked %d page%s of stgcat (%s to %s bytes)\n", npages2free, npages2free > 1 ? "s" : "", u64tostr((u_signed64) stgcat_bufsz, tmpbuf1, 0), u64tostr((u_signed64) stgcat_bufsz_new, tmpbuf2, 0));
+					stgcat_bufsz = stgcat_bufsz_new;
+				} else {
+					stglogit(func, "STG45 - realloc from %s to %s bytes error (%s)\n", u64tostr((u_signed64) stgcat_bufsz, tmpbuf1, 0), u64tostr((u_signed64) stgcat_bufsz_new, tmpbuf2, 0), strerror(errno));
+				}
+			}
+		}
+		nbcat_ent_old = nbcat_ent;
+	}
+	reqid = save_reqid;
+}
+
+
+void stgpath_shrunk_pages()
+{
+	char *func = "stgpath_shrunk_pages";
+	int save_reqid = reqid;
+
+	reqid = 0;
+
+	if (nbpath_ent_old != nbpath_ent) {
+		size_t stgpath_bufsz_new;
+		int npages2free;
+
+		stgpath_bufsz_new = (nbpath_ent * sizeof(struct stgpath_entry) + STG_BUFSIZ -1) / STG_BUFSIZ * STG_BUFSIZ;
+		if (stgpath_bufsz_new == 0) stgpath_bufsz_new = STG_BUFSIZ;
+
+		if (stgpath_bufsz_new < stgpath_bufsz) {
+			/* Something was deleted - check if we can shrunk pages */
+
+			if ((npages2free = ((stgpath_bufsz - stgpath_bufsz_new) / STG_BUFSIZ)) > 0) {
+				/* This is giving the number of pages we can free() */
+				struct stgpath_entry *stps_new;
+				char tmpbuf1[21];
+				char tmpbuf2[21];
+
+				if ((stps_new = (struct stgpath_entry *) realloc(stps, stgpath_bufsz_new)) != NULL) {
+					stps = stps_new;
+					stpe = stps + (stgpath_bufsz_new/sizeof(struct stgpath_entry));      
+					stglogit(func, "... Shrunked %d page%s of stgpath (%s to %s bytes)\n", npages2free, npages2free > 1 ? "s" : "", u64tostr((u_signed64) stgpath_bufsz, tmpbuf1, 0), u64tostr((u_signed64) stgpath_bufsz_new, tmpbuf2, 0));
+					stgpath_bufsz = stgpath_bufsz_new;
+				} else {
+					stglogit(func, "STG45 - realloc from %s to %s bytes error (%s)\n", u64tostr((u_signed64) stgpath_bufsz, tmpbuf1, 0), u64tostr((u_signed64) stgpath_bufsz_new, tmpbuf2, 0), strerror(errno));
+				}
+			}
+		}
+		nbpath_ent_old = nbpath_ent;
+	}
+	reqid = save_reqid;
+}
+
+
 /* If nodb_delete_flag is != 0 then only update in memory is performed */
 void delreq(stcp,nodb_delete_flag)
 		 struct stgcat_entry *stcp;
@@ -3126,9 +3213,9 @@ newpath()
 
 	nbpath_ent++;
 	if (nbpath_ent > stgpath_bufsz/sizeof(struct stgpath_entry)) {
-		stps = (struct stgpath_entry *) realloc (stps, stgpath_bufsz+BUFSIZ);
-		memset ((char *)stps+stgpath_bufsz, 0, BUFSIZ);
-		stgpath_bufsz += BUFSIZ;
+		stps = (struct stgpath_entry *) realloc (stps, stgpath_bufsz + STG_BUFSIZ);
+		memset ((char *)stps+stgpath_bufsz, 0, STG_BUFSIZ);
+		stgpath_bufsz += STG_BUFSIZ;
 		stpe = stps + (stgpath_bufsz/sizeof(struct stgpath_entry));
 	}
 	stpp = stps + (nbpath_ent - 1);
@@ -3144,9 +3231,9 @@ newreq(int_t_or_d)
 
 	nbcat_ent++;
 	if (nbcat_ent > stgcat_bufsz/sizeof(struct stgcat_entry)) {
-		stcs = (struct stgcat_entry *) realloc (stcs, stgcat_bufsz+BUFSIZ);
-		memset ((char *)stcs+stgcat_bufsz, 0, BUFSIZ);
-		stgcat_bufsz += BUFSIZ;
+		stcs = (struct stgcat_entry *) realloc (stcs, stgcat_bufsz + STG_BUFSIZ);
+		memset ((char *)stcs+stgcat_bufsz, 0, STG_BUFSIZ);
+		stgcat_bufsz += STG_BUFSIZ;
 		stce = stcs + (stgcat_bufsz/sizeof(struct stgcat_entry));
 	}
 	stcp = stcs + (nbcat_ent - 1);
