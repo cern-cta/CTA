@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.35 2002/05/15 06:44:48 jdurand Exp $
+ * $Id: stglogit.c,v 1.36 2002/05/23 10:22:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.35 $ $Date: 2002/05/15 06:44:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.36 $ $Date: 2002/05/23 10:22:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -118,51 +118,52 @@ char *stglogflags(func,logfile,flags)
 	int something_to_print;
 
 	struct flag2name flag2names[] = {
-		{ STAGE_DEFERRED   , "STAGE_DEFERRED"   },
-		{ STAGE_GRPUSER    , "STAGE_GRPUSER"    },
-		{ STAGE_COFF       , "STAGE_COFF"       },
-		{ STAGE_UFUN       , "STAGE_UFUN"       },
-		{ STAGE_INFO       , "STAGE_INFO"       },
-		{ STAGE_ALL        , "STAGE_ALL"        },
-		{ STAGE_LINKNAME   , "STAGE_LINKNAME"   },
-		{ STAGE_LONG       , "STAGE_LONG"       },
-		{ STAGE_PATHNAME   , "STAGE_PATHNAME"   },
-		{ STAGE_SORTED     , "STAGE_SORTED"     },
-		{ STAGE_STATPOOL   , "STAGE_STATPOOL"   },
-		{ STAGE_TAPEINFO   , "STAGE_TAPEINFO"   },
-		{ STAGE_USER       , "STAGE_USER"       },
-		{ STAGE_EXTENDED   , "STAGE_EXTENDED"   },
-		{ STAGE_ALLOCED    , "STAGE_ALLOCED"    },
-		{ STAGE_FILENAME   , "STAGE_FILENAME"   },
-		{ STAGE_EXTERNAL   , "STAGE_EXTERNAL"   },
-		{ STAGE_MULTIFSEQ  , "STAGE_MULTIFSEQ"  },
-		{ STAGE_MIGRULES   , "STAGE_MIGRULES"   },
-		{ STAGE_SILENT     , "STAGE_SILENT"     },
-		{ STAGE_NOWAIT     , "STAGE_NOWAIT"     },
-		{ STAGE_NOREGEXP   , "STAGE_NOREGEXP"   },
-		{ STAGE_DUMP       , "STAGE_DUMP"       },
-		{ STAGE_CLASS      , "STAGE_CLASS"      },
-		{ STAGE_QUEUE      , "STAGE_QUEUE"      },
-		{ STAGE_COUNTERS   , "STAGE_COUNTERS"   },
-		{ STAGE_NOHSMCREAT , "STAGE_NOHSMCREAT" },
-		{ STAGE_CONDITIONAL, "STAGE_CONDITIONAL"},
-		{ STAGE_FORCE      , "STAGE_FORCE"      },
-		{ STAGE_REMOVEHSM  , "STAGE_REMOVEHSM"  },
-		{ STAGE_RETENP     , "STAGE_RETENP"     },
-		{ STAGE_MINTIME    , "STAGE_MINTIME"    },
- 		{ STAGE_VERBOSE    , "STAGE_VERBOSE"    },
- 		{ STAGE_DISPLAY_SIDE , "STAGE_DISPLAY_SIDE" },
- 		{ STAGE_SIDE       , "STAGE_SIDE"       },
- 		{ STAGE_FILE_ROPEN  , "STAGE_FILE_ROPEN"  },
- 		{ STAGE_FILE_RCLOSE , "STAGE_FILE_RCLOSE" },
- 		{ STAGE_FILE_WOPEN  , "STAGE_FILE_WOPEN"  },
- 		{ STAGE_FILE_WCLOSE , "STAGE_FILE_WCLOSE" },
- 		{ STAGE_REQID       , "STAGE_REQID"       },
- 		{ STAGE_HSM_ENOENT_OK , "STAGE_HSM_ENOENT_OK" },
- 		{ STAGE_NOLINKCHECK , "STAGE_NOLINKCHECK" },
-  		{ STAGE_NORETRY     , "STAGE_NORETRY" },
-  		{ STAGE_VOLATILE_TPPOOL     , "STAGE_VOLATILE_TPPOOL" },
-        { 0                , NULL               }
+		{ STAGE_DEFERRED   , "STAGE_DEFERRED"             },
+		{ STAGE_GRPUSER    , "STAGE_GRPUSER"              },
+		{ STAGE_COFF       , "STAGE_COFF"                 },
+		{ STAGE_UFUN       , "STAGE_UFUN"                 },
+		{ STAGE_INFO       , "STAGE_INFO"                 },
+		{ STAGE_ALL        , "STAGE_ALL"                  },
+		{ STAGE_LINKNAME   , "STAGE_LINKNAME"             },
+		{ STAGE_LONG       , "STAGE_LONG"                 },
+		{ STAGE_PATHNAME   , "STAGE_PATHNAME"             },
+		{ STAGE_SORTED     , "STAGE_SORTED"               },
+		{ STAGE_STATPOOL   , "STAGE_STATPOOL"             },
+		{ STAGE_TAPEINFO   , "STAGE_TAPEINFO"             },
+		{ STAGE_USER       , "STAGE_USER"                 },
+		{ STAGE_EXTENDED   , "STAGE_EXTENDED"             },
+		{ STAGE_ALLOCED    , "STAGE_ALLOCED"              },
+		{ STAGE_FILENAME   , "STAGE_FILENAME"             },
+		{ STAGE_EXTERNAL   , "STAGE_EXTERNAL"             },
+		{ STAGE_MULTIFSEQ  , "STAGE_MULTIFSEQ"            },
+		{ STAGE_MIGRULES   , "STAGE_MIGRULES"             },
+		{ STAGE_SILENT     , "STAGE_SILENT"               },
+		{ STAGE_NOWAIT     , "STAGE_NOWAIT"               },
+		{ STAGE_NOREGEXP   , "STAGE_NOREGEXP"             },
+		{ STAGE_DUMP       , "STAGE_DUMP"                 },
+		{ STAGE_CLASS      , "STAGE_CLASS"                },
+		{ STAGE_QUEUE      , "STAGE_QUEUE"                },
+		{ STAGE_COUNTERS   , "STAGE_COUNTERS"             },
+		{ STAGE_NOHSMCREAT , "STAGE_NOHSMCREAT"           },
+		{ STAGE_CONDITIONAL, "STAGE_CONDITIONAL"          },
+		{ STAGE_FORCE      , "STAGE_FORCE"                },
+		{ STAGE_REMOVEHSM  , "STAGE_REMOVEHSM"            },
+		{ STAGE_RETENP     , "STAGE_RETENP"               },
+		{ STAGE_MINTIME    , "STAGE_MINTIME"              },
+ 		{ STAGE_VERBOSE    , "STAGE_VERBOSE"              },
+ 		{ STAGE_DISPLAY_SIDE , "STAGE_DISPLAY_SIDE"       },
+ 		{ STAGE_SIDE       , "STAGE_SIDE"                 },
+ 		{ STAGE_FILE_ROPEN  , "STAGE_FILE_ROPEN"          },
+ 		{ STAGE_FILE_RCLOSE , "STAGE_FILE_RCLOSE"         },
+ 		{ STAGE_FILE_WOPEN  , "STAGE_FILE_WOPEN"          },
+ 		{ STAGE_FILE_WCLOSE , "STAGE_FILE_WCLOSE"         },
+ 		{ STAGE_REQID       , "STAGE_REQID"               },
+ 		{ STAGE_HSM_ENOENT_OK , "STAGE_HSM_ENOENT_OK"     },
+ 		{ STAGE_NOLINKCHECK , "STAGE_NOLINKCHECK"         },
+  		{ STAGE_NORETRY     , "STAGE_NORETRY"             },
+  		{ STAGE_VOLATILE_TPPOOL , "STAGE_VOLATILE_TPPOOL" },
+  		{ STAGE_NODISK     , "STAGE_NODISK"               },
+        { 0                , NULL                         }
 	};
       
 	Cglobals_get(&prtbuf_key, (void**)&prtbuf, (size_t) PRTBUFSZ);
