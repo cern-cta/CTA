@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd.c,v 1.14 2000/03/08 17:35:35 jdurand Exp $
+ * $Id: send2stgd.c,v 1.15 2000/03/14 09:53:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.14 $ $Date: 2000/03/08 17:35:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.15 $ $Date: 2000/03/14 09:53:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -33,6 +33,8 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.14 $ $Date: 2
 #include "serrno.h"
 #include "stage.h"
 #include "osdep.h"
+#include "Cnetdb.h"
+
 extern int rfio_errno;
 int nb_ovl;
 #ifndef _WIN32
@@ -75,7 +77,7 @@ int want_reply;
 #endif
 	link_rc = 0;
 	nb_ovl = 0;
-	if ((sp = getservbyname (STG, "tcp")) == NULL) {
+	if ((sp = Cgetservbyname (STG, "tcp")) == NULL) {
 		fprintf (stderr, STG09, STG, "not defined in /etc/services");
 		return (CONFERR);
 	}
