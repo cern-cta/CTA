@@ -835,8 +835,6 @@ int stagewrt_castor_hsm_file() {
                           ) == 0) {
           break;
         }
-        /* Makes sure vid variable has not been overwritten... (to be checked with Jean-Philippe) */
-        strcpy(vid,"");
 #ifdef ALICETEST
         /* We try on the other tape pool immediately */
         if (vmgr_gettape (
@@ -853,12 +851,13 @@ int stagewrt_castor_hsm_file() {
                           ) == 0) {
           break;
         }        
-#else
+#endif
+        /* Makes sure vid variable has not been overwritten... (to be checked with Jean-Philippe) */
+        strcpy(vid,"");
         sendrep (rpfd, MSG_ERR, STG02, "", "vmgr_gettape",
                  sstrerror (serrno));
         sendrep (rpfd, MSG_OUT, "Retrying Volume Manager request in %d seconds\n", RETRYI);
         sleep(RETRYI);
-#endif
       }
       /* From now on, "vid" is in status TAPE_BUSY */
       
