@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.3 $ $Date: 2000/01/19 15:19:56 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.4 $ $Date: 2000/01/19 15:23:59 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -133,7 +133,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
              * Always give the return code
              */
             retval = 0;
-            rc = rtcpd_RetvalSHIFT(tape,file,&retval);
+            rc = rtcp_RetvalSHIFT(tape,file,&retval);
             sprintf(&stageupdc_cmd[strlen(stageupdc_cmd)]," -R %d ",retval);
             ADD_NOPT(stageupdc_cmd," -s %d ",(int)filereq->bytes_out);
         }
