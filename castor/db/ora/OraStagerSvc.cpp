@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.73 $ $Release$ $Date: 2004/12/03 16:55:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.74 $ $Release$ $Date: 2004/12/06 13:46:13 $ $Author: sponcec3 $
  *
  *
  *
@@ -107,7 +107,7 @@ const std::string castor::db::ora::OraStagerSvc::s_bestFileSystemForSegmentState
 
 /// SQL statement for fileRecalled
 const std::string castor::db::ora::OraStagerSvc::s_fileRecalledStatementString =
-  "BEGIN fileRecalled(:1, :2, :3, :4); END;";
+  "BEGIN fileRecalled(:1, :2); END;";
 
 /// SQL statement for isSubRequestToSchedule
 const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStatementString =
@@ -523,10 +523,6 @@ void castor::db::ora::OraStagerSvc::fileRecalled
     if (0 == m_fileRecalledStatement) {
       m_fileRecalledStatement =
         createStatement(s_fileRecalledStatementString);
-      m_fileRecalledStatement->setInt
-        (3, castor::stager::SUBREQUEST_RESTART);
-      m_fileRecalledStatement->setInt
-        (4, castor::stager::DISKCOPY_STAGED);
       m_fileRecalledStatement->setAutoCommit(true);
     }
     // get a Cuuid for the DiskCopy
@@ -975,6 +971,7 @@ castor::db::ora::OraStagerSvc::getUpdateStart
     unsigned int nb =
       m_getUpdateStartStatement->executeUpdate();
     if (0 == nb) {
+      rollback();
       castor::exception::Internal ex;
       ex.getMessage()
         << "getUpdateStart : unable to schedule SubRequest.";
@@ -985,6 +982,7 @@ castor::db::ora::OraStagerSvc::getUpdateStart
       = (u_signed64)m_getUpdateStartStatement->getDouble(7);
     // If no IClient returned, fail
     if (0 == clientId) {
+      rollback();
       castor::exception::Internal ex;
       ex.getMessage()
         << "getUpdateStart : No client found.";
@@ -993,6 +991,7 @@ castor::db::ora::OraStagerSvc::getUpdateStart
     // Get Client Object and cast it into IClient
     castor::IObject *iobj = cnvSvc()->getObjFromId(clientId);
     if (0 == iobj) {
+      rollback();
       castor::exception::Internal ex;
       ex.getMessage()
         << "GetUpdateStart : Could not get IClient object from id "
@@ -1003,6 +1002,7 @@ castor::db::ora::OraStagerSvc::getUpdateStart
       dynamic_cast<castor::IClient*>(iobj);
     if (0 == result) {
       delete iobj;
+      rollback();
       castor::exception::Internal ex;
       ex.getMessage()
         << "GetUpdateStart : IClient object had a bad type : "
