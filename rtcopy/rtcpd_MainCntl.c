@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.89 $ $Date: 2003/10/01 10:15:35 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.90 $ $Date: 2003/10/01 11:03:49 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1689,8 +1689,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDR);
 
     cmd = rtcp_cmds[tapereq.mode];
-    sleep(15);
-            
+
     /*
      * On UNIX: set client UID/GID
      */
