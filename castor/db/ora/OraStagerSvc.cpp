@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.115 $ $Release$ $Date: 2005/01/25 15:06:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.116 $ $Release$ $Date: 2005/01/25 16:57:21 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -182,14 +182,6 @@ const std::string castor::db::ora::OraStagerSvc::s_resetStreamStatementString =
 const std::string castor::db::ora::OraStagerSvc::s_bestFileSystemForJobStatementString =
   "BEGIN bestFileSystemForJob(:1, :2, :3, :4, :5); END;";
 
-/// SQL statement for segmentsForTape
-const std::string castor::db::ora::OraStagerSvc::s_segmentsForTapeStatementString =
-  "BEGIN segmentsForTape(:1, :2); END;";
-
-/// SQL statement for anySegmentsForTape
-const std::string castor::db::ora::OraStagerSvc::s_anySegmentsForTapeStatementString =
-  "BEGIN anySegmentsForTape(:1, :2); END;";
-
 // -----------------------------------------------------------------------
 // OraStagerSvc
 // -----------------------------------------------------------------------
@@ -221,9 +213,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_recreateCastorFileStatement(0),
   m_prepareForMigrationStatement(0),
   m_resetStreamStatement(0),
-  m_bestFileSystemForJobStatement(0),
-  m_segmentsForTapeStatement(0),
-  m_anySegmentsForTapeStatement(0) {
+  m_bestFileSystemForJobStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -281,8 +271,6 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_prepareForMigrationStatement);
     deleteStatement(m_resetStreamStatement);
     deleteStatement(m_bestFileSystemForJobStatement);
-    deleteStatement(m_segmentsForTapeStatement);
-    deleteStatement(m_anySegmentsForTapeStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;
@@ -312,37 +300,23 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_prepareForMigrationStatement = 0;
   m_resetStreamStatement = 0;
   m_bestFileSystemForJobStatement = 0;
-  m_segmentsForTapeStatement = 0;
-  m_anySegmentsForTapeStatement = 0;
 }
 
 // -----------------------------------------------------------------------
 // anySegmentsForTape
 // -----------------------------------------------------------------------
 int castor::db::ora::OraStagerSvc::anySegmentsForTape
-(castor::stager::Tape* tape)
+(castor::stager::Tape* searchItem)
   throw (castor::exception::Exception) {
-  try {
-    // Check whether the statements are ok
-    if (0 == m_anySegmentsForTapeStatement) {
-      m_anySegmentsForTapeStatement =
-        createStatement(s_anySegmentsForTapeStatementString);
-      m_anySegmentsForTapeStatement->registerOutParam
-        (1, oracle::occi::OCCIINT);
-      m_anySegmentsForTapeStatement->setAutoCommit(true);
-    }
-    // execute the statement and see whether we found something
-    m_anySegmentsForTapeStatement->setDouble(1, tape->id());
-    unsigned int nb = m_anySegmentsForTapeStatement->executeUpdate();
-    return m_anySegmentsForTapeStatement->getInt(2);
-  } catch (oracle::occi::SQLException e) {
-    rollback();
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in anySegmentsForTape."
-      << std::endl << e.what();
-    throw ex;
+  // XXX This is a first version. Has to be improved from
+  // XXX the efficiency point of view !
+  std::vector<castor::stager::Segment*> result =
+    segmentsForTape(searchItem);
+  if (result.size() > 0){
+    searchItem->setStatus(castor::stager::TAPE_WAITMOUNT);
+    cnvSvc()->updateRep(0, searchItem, true);
   }
+  return result.size();
 }
 
 // -----------------------------------------------------------------------
@@ -350,62 +324,35 @@ int castor::db::ora::OraStagerSvc::anySegmentsForTape
 // -----------------------------------------------------------------------
 std::vector<castor::stager::Segment*>
 castor::db::ora::OraStagerSvc::segmentsForTape
-(castor::stager::Tape* tape)
+(castor::stager::Tape* searchItem)
   throw (castor::exception::Exception) {
+  cnvSvc()->updateObj(searchItem);
+  cnvSvc()->fillObj(0, searchItem, OBJ_Segment);
   std::vector<castor::stager::Segment*> result;
-  try {
-    // Check whether the statements are ok
-    if (0 == m_segmentsForTapeStatement) {
-      m_segmentsForTapeStatement =
-        createStatement(s_segmentsForTapeStatementString);
-      m_segmentsForTapeStatement->registerOutParam
-        (1, oracle::occi::OCCICURSOR);
-      m_segmentsForTapeStatement->setAutoCommit(true);
+  std::vector<castor::stager::Segment*>::iterator it;
+  for (it = searchItem->segments().begin();
+       it != searchItem->segments().end();
+       it++) {
+    switch ((*it)->status()) {
+    case castor::stager::SEGMENT_UNPROCESSED :
+      result.push_back(*it);
+      searchItem->setStatus(castor::stager::TAPE_MOUNTED);
+      break;
+    default:
+      // Do not consider other status
+      break;
     }
-    // execute the statement and see whether we found something
-    m_segmentsForTapeStatement->setDouble(1, tape->id());
-    unsigned int nb = m_segmentsForTapeStatement->executeUpdate();
-    if (0 == nb) {
-      rollback();
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "segmentsForTape : Unable to get segments.";
-      throw ex;
-    }
-    oracle::occi::ResultSet *rs =
-      m_segmentsForTapeStatement->getCursor(2);
-    // Run through the cursor
-    oracle::occi::ResultSet::Status status = rs->next();
-    while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      castor::stager::Segment* item =
-        new castor::stager::Segment();
-      item->setFseq(rs->getInt(1));
-      item->setOffset((u_signed64)rs->getDouble(2));
-      item->setBytes_in((u_signed64)rs->getDouble(3));
-      item->setBytes_out((u_signed64)rs->getDouble(4));
-      item->setHost_bytes((u_signed64)rs->getDouble(5));
-      item->setSegmCksumAlgorithm(rs->getString(6));
-      item->setSegmCksum(rs->getInt(7));
-      item->setErrMsgTxt(rs->getString(8));
-      item->setErrorCode(rs->getInt(9));
-      item->setSeverity(rs->getInt(10));
-      item->setBlockId0(rs->getInt(11));
-      item->setBlockId1(rs->getInt(12));
-      item->setBlockId2(rs->getInt(13));
-      item->setBlockId3(rs->getInt(14));
-      item->setId((u_signed64)rs->getDouble(15));
-      item->setStatus((enum castor::stager::SegmentStatusCodes)rs->getInt(18));
-      result.push_back(item);
-      status = rs->next();
-    }
-  } catch (oracle::occi::SQLException e) {
-    rollback();
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in segmentsForTape."
-      << std::endl << e.what();
-    throw ex;
   }
+  if (result.size() > 0) {
+    castor::BaseAddress ad;
+    ad.setCnvSvcName("OraCnvSvc");
+    ad.setCnvSvcType(castor::SVC_ORACNV);
+    cnvSvc()->updateRep(&ad, searchItem, true);
+  }
+  /* Take care that fillObj is taking a lock on Segment
+     and that we have to release it even if result's size
+     is 0 */
+  cnvSvc()->commit();
   return result;
 }
 
