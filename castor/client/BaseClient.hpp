@@ -125,10 +125,12 @@ namespace castor {
         throw (castor::exception::Exception);
 
       /**
-       * sends a request to the request handler
-       * @return the object sent back
+       * Waits for a call back from the request replier and
+       * returns the ServerSocket created. No that the caller
+       * is responsible for the deletion of the returned socket.
+       * @return the socket to the requestReplier
        */
-      IObject* waitForCallBack()
+      castor::io::ServerSocket* waitForCallBack()
         throw (castor::exception::Exception);
 
     protected:

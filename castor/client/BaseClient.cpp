@@ -172,32 +172,58 @@ void castor::client::BaseClient::sendRequest
   req->setClient(cl);
   // sends the request
   internalSendRequest(*req);
-  // waits for callbacks
+  // waits for callbacks, first loop on the request
+  // replier connections
   bool stop = false;
+  struct pollfd pollit;
+  pollit.events = POLLIN | POLLHUP;
   while (!stop) {
-    IObject* result = waitForCallBack();
-    if (OBJ_EndResponse == result->type()) {
-      // flush messages
-      clog() << std::flush;
-      // terminate response handler
-      rh->terminate();
-      stop = true;
-    } else {
-      // cast response into Response*
-      castor::rh::Response* res =
-        dynamic_cast<castor::rh::Response*>(result);
-      if (0 == res) {
+    castor::io::ServerSocket* socket = waitForCallBack();
+    pollit.fd = socket->socket();
+    // Then loop on the responses sent over a given connection
+    while (!stop) {  
+      /* Will return > 0 if the descriptor is readable
+         No timeout is used, we wait forever */
+      pollit.revents = 0;
+      int rc = poll(&pollit,1,-1);
+      if (0 == rc) {
         castor::exception::Internal e;
-        e.getMessage() << "Receive bad response type :"
-                       << result->type();
-        delete res;
+        e.getMessage() << "Poll with no timeout did timeout !";
+        delete socket;
+        throw e;
+      } else if (rc < 0) {
+        castor::exception::Internal e;
+        e.getMessage() << "Poll error";
+        delete socket;
         throw e;
       }
-      // Print the request
-      rh->handleResponse(*res);
+      // We had a POLLIN event, read the data
+      IObject* obj = socket->readObject();
+      if (OBJ_EndResponse == obj->type()) {
+        // flush messages
+        clog() << std::flush;
+        // terminate response handler
+        rh->terminate();
+        stop = true;
+      } else {
+        // cast response into Response*
+        castor::rh::Response* res =
+          dynamic_cast<castor::rh::Response*>(obj);
+        if (0 == res) {
+          castor::exception::Internal e;
+          e.getMessage() << "Receive bad response type :"
+                         << obj->type();
+          delete obj;
+          delete socket;
+          throw e;
+        }
+        // Print the request
+        rh->handleResponse(*res);
+      }
+      delete obj;
     }
-    // delete the result
-    delete result;
+    // delete the socket
+    delete socket;
   }
 }
 
@@ -256,7 +282,7 @@ void castor::client::BaseClient::internalSendRequest(castor::rh::Request& reques
 //------------------------------------------------------------------------------
 // waitForCallBack
 //------------------------------------------------------------------------------
-castor::IObject* castor::client::BaseClient::waitForCallBack()
+castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
   throw (castor::exception::Exception) {
 
   int rc, nonblocking;
@@ -287,10 +313,7 @@ castor::IObject* castor::client::BaseClient::waitForCallBack()
     throw e;
   }
 
-  castor::io::ServerSocket* s = m_callbackSocket->accept();
-  IObject* obj = s->readObject();
-  delete s;
-  return obj;
+  return m_callbackSocket->accept();
 }
 
 //------------------------------------------------------------------------------
