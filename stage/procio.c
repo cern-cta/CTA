@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.212 2003/11/17 10:20:50 jdurand Exp $
+ * $Id: procio.c,v 1.213 2004/11/11 16:32:02 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.212 $ $Date: 2003/11/17 10:20:50 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.213 $ $Date: 2004/11/11 16:32:02 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1838,8 +1838,18 @@ void procioreq(req_type, magic, req_data, clienthost)
 		}
 		if (no_upath == 0) {
 			if (api_out == 0) {
+			        if (strlen( argv[Coptind+i]) > CA_MAXHOSTNAMELEN+MAXPATH) {
+			          sendrep (&rpfd, MSG_ERR, STG27, "link",  argv[Coptind+i]);
+				  c = SENAMETOOLONG;
+			          goto reply;
+			        }
 				strcpy(upath, argv[Coptind+i]);
 			} else {
+			        if (strlen(stpp_input[i].upath) > CA_MAXHOSTNAMELEN+MAXPATH) {
+			          sendrep (&rpfd, MSG_ERR, STG27, "link",  stpp_input[i].upath);
+				  c = SENAMETOOLONG;
+			          goto reply;
+			        }
 				strcpy(upath, stpp_input[i].upath);
 			}
 		}
