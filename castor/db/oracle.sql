@@ -173,10 +173,11 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER, tapeCopyS
                                                   castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                   nsHost OUT VARCHAR, fileSize OUT INTEGER,
                                                   tapeCopyId OUT INTEGER) AS
+ fileSystemId INTEGER;
 BEGIN
- SELECT rh_DiskServer.name, rh_FileSystem.mountPoint, rh_DiskCopy.path, rh_DiskCopy.id,
+ SELECT rh_DiskServer.name, rh_FileSystem.mountPoint, rh_DiskCopy.path, rh_DiskCopy.id, rh_FileSystem.id,
    rh_CastorFile.id, rh_CastorFile.fileId, rh_CastorFile.nsHost, rh_CastorFile.fileSize, rh_TapeCopy.id
-  INTO diskServerName, mountPoint, path, diskCopyId, castorFileId, fileId, nsHost, fileSize, tapeCopyId
+  INTO diskServerName, mountPoint, path, diskCopyId, fileSytemId, castorFileId, fileId, nsHost, fileSize, tapeCopyId
   FROM rh_DiskServer, rh_FileSystem, rh_DiskCopy, rh_CastorFile, rh_TapeCopy, rh_Stream2TapeCopy
   WHERE rh_DiskServer.id = rh_FileSystem.diskserver
     AND rh_FileSystem.id = rh_DiskCopy.filesystem
@@ -189,6 +190,7 @@ BEGIN
   ORDER by rh_FileSystem.weight DESC;
  UPDATE rh_TapeCopy SET status = newTapeCopyStatus WHERE id = tapeCopyId;
  UPDATE rh_Stream SET status = newStreamStatus WHERE id = streamId;
+ UPDATE rh_FileSystem SET weight = weight - fsDeviation WHERE id = fileSystemId;
 END;
 
 /* PL/SQL method implementing bestFileSystemForSegment */
@@ -214,6 +216,7 @@ SELECT rh_DiskServer.name, rh_FileSystem.mountPoint, rh_DiskCopy.path, rh_DiskCo
     AND ROWNUM < 2
   ORDER by rh_FileSystem.weight DESC;
 UPDATE rh_DiskCopy SET fileSystem = fileSystemId WHERE id = diskCopyId;
+UPDATE rh_FileSystem SET weight = weight - fsDeviation WHERE id = fileSystemId;
 END;
 
 /* PL/SQL method implementing fileRecalled */
