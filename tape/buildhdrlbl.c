@@ -1,21 +1,24 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildhdrlbl.c,v $ $Revision: 1.3 $ $Date: 2000/05/04 10:23:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildhdrlbl.c,v $ $Revision: 1.4 $ $Date: 2002/04/08 08:59:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	buildhdrlbl - build HDR1 and HDR2 from tpmnt parameters */
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
+#include "patchlevel.h"
+#define __BASEVERSION__ "?"
 #include "Ctape.h"
-buildhdrlbl(hdr1, hdr2, fid, fsec, fseq, retentd, recfm, blksize, lrecl, den, lblcode)
+buildhdrlbl(hdr1, hdr2, fid, fsid, fsec, fseq, retentd, recfm, blksize, lrecl, den, lblcode)
 char hdr1[];
 char hdr2[];
 char *fid;
+char *fsid;
 int fsec;
 int fseq;
 int retentd;
@@ -40,10 +43,13 @@ int lblcode;
 	hdr1[80] = '\0';
 	strcpy (hdr1, "HDR1");
 	memcpy (hdr1 + 4, fid, strlen (fid));
+	memcpy (hdr1 + 21, fsid, strlen (fsid));
 	sprintf (buf, "%.4d", fsec);
 	memcpy (hdr1 + 27, buf, 4);
-	sprintf (buf, "%.4d", fseq);
+	sprintf (buf, "%.4d", fseq % 10000);
 	memcpy (hdr1 + 31, buf, 4);
+	memcpy (hdr1 + 35, "0001", 4);
+	memcpy (hdr1 + 39, "00", 2);
 	time (&current_time);
 	tm = localtime (&current_time);
 	sprintf (buf, "%c%.2d%.3d", tm->tm_year / 100 ? '0' : ' ',
@@ -56,7 +62,8 @@ int lblcode;
 	memcpy (hdr1 + 47, buf, 6);
 	sprintf (buf, "%.6d", blkcnt);
 	memcpy (hdr1 + 54, buf, 6);
-	memcpy (hdr1 + 60, SYSCODE, strlen(SYSCODE));
+	memcpy (hdr1 + 60, "CASTOR", 6);
+	memcpy (hdr1 + 67, BASEVERSION, strlen (BASEVERSION));
 
 	/* build HDR2 */
 
@@ -85,4 +92,6 @@ int lblcode;
 	else if (den == D1600) hdr2[15] = '3';
 	else if (den == D6250) hdr2[15] = '4';
 	else if (den & IDRC) hdr2[34] = 'P';
+	if (lblcode == AL || lblcode == AUL)
+		memcpy (hdr2 + 50, "00", 2);
 }
