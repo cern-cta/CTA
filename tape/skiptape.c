@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.2 $ $Date: 1999/09/20 07:20:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.3 $ $Date: 1999/09/20 12:06:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -28,6 +28,7 @@ static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.2 $ $Date: 199
 #endif
 #endif
 #include "Ctape.h"
+#include "serrno.h"
 #if (defined(__alpha) && defined(__osf__)) || defined(ADSTAR) || defined(IRIX64) || defined(linux)
 extern int mt_rescnt;
 extern char *sys_errlist[];
