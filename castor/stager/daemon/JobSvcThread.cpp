@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.9 2004/12/08 16:35:22 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.10 2004/12/13 15:08:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.9 $ $Date: 2004/12/08 16:35:22 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.10 $ $Date: 2004/12/13 15:08:43 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -317,7 +317,7 @@ namespace castor {
         /* Invoking the method                */
         /* ---------------------------------- */
         STAGER_LOG_DEBUG(NULL, "Invoking updateRep");
-        stgSvc->updateRep(uReq->address(), uReq->object());
+        svcs->updateRep(uReq->address(), uReq->object());
 
       } catch (castor::exception::Exception e) {
         serrno = e.code();
