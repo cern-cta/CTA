@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.1 1999/12/08 15:59:45 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.2 1999/12/08 16:02:56 jdurand Exp $
  */
 
 #include <stdio.h>              /* Contains BUFSIZ */
@@ -15,6 +15,10 @@
 #else
 #define CONST
 #endif
+
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.2 $ $Date: 1999/12/08 16:02:56 $ CERN IT-PDP/DM Jean-Damien Durand";
+#endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
 int stgdb_stppcmp _PROTO((CONST void *, CONST void *));
