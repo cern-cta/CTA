@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpapi.c,v $ $Revision: 1.4 $ $Date: 2004/08/06 13:03:43 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpapi.c,v $ $Revision: 1.5 $ $Date: 2005/01/10 20:46:34 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -2369,7 +2369,7 @@ int rtcpc_runReq_ext(
       thr->pipe = internalPipe[1];
       thr->s = (*socks)->accept_socket;
       thr->index = socketIndex;
-      if ( dispatchRoutine != NULL )
+      if ( (dispatchRoutine != NULL) && (socketIndex >= 0) )
         *((*socks)->proc_socket[socketIndex]) = INVALID_SOCKET;
       (void)Cmutex_lock(activeThreads,-1);
       CLIST_INSERT(activeThreads,thr);
