@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_api.c,v 1.17 2001/04/29 08:54:16 jdurand Exp $
+ * $Id: send2stgd_api.c,v 1.18 2001/05/31 13:31:28 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.17 $ $Date: 2001/04/29 08:54:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.18 $ $Date: 2001/05/31 13:31:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -559,8 +559,9 @@ int send2stgd_sort_stcp(req_type,flags,nstcp_input,stcp_input,nstcp_output,stcp_
 	struct stgcat_entry **stcp_output;
 {
   int *seen;
-  int i, j, nseen;
+  int i, j, k, nseen;
   int status;
+  int nstcp_output_duplicate_found;
 
   /* No input/output structures ? */
   if (stcp_input == NULL || nstcp_input <= 0 ||
@@ -583,7 +584,8 @@ int send2stgd_sort_stcp(req_type,flags,nstcp_input,stcp_input,nstcp_output,stcp_
     return(0);
   }
 
-  /* In all other cases we order by making correspondance with initial request, except for a STAGE_QRY */
+  /* In all other cases we order by making correspondance with initial request, except for requests than can  */
+  /* receive in output more entries than in input, in particular: STAGE_QRY */
   if (req_type == STAGE_QRY) {
     return(0);
   }
@@ -615,10 +617,48 @@ int send2stgd_sort_stcp(req_type,flags,nstcp_input,stcp_input,nstcp_output,stcp_
 
   /* All output structures has been recognized ? */
   if (nseen != *nstcp_output) {
+    free(seen);
     return(-1);
   }
 
-  /* We reorder output structures */
+  /* We possibliy shrunk output structures to handle the special case when there was an */
+  /* internal retry by the stgdaemon - that assigned another catalog entry but for the */
+  /* same input entry - typically in case of ENOSPC entries successful after a retry */
+  /* for example */
+  /* This is visible from the API by the fact that multiple seen[] can reference the same */
+  /* input index, for example seen[i1] == seen[i2] == j */
+  /* Per construction, if two seen[] values are equal the latest one is always the correct */
+  /* one */
+  nstcp_output_duplicate_found = 1;      /* This statement just forces the while() to start... */
+  while (nstcp_output_duplicate_found != 0) {
+    nstcp_output_duplicate_found = 0;
+    for (i = 0; i < *nstcp_output; i++) {
+      for (j = i + 1; j < *nstcp_output; j++) {
+        if (seen[j] == seen[i]) {
+          /* Here is a case when entry No j (j > i per construction) refers to the same input */
+          /* This means that (*stcp_output)[i] is to be replaced by (*stcp_output)[j] and the */
+          /* total number of output entries decremented */
+          /* Finally all output entries with index > j have to be shifted as well */
+          (*stcp_output)[i] = (*stcp_output)[j];
+          for (k = j + 1; k < *nstcp_output; k++) {
+            (*stcp_output)[k - 1] = (*stcp_output)[k];
+            seen[k - 1] = seen[k];
+          }
+          nstcp_output_duplicate_found = 1;
+          *nstcp_output = *nstcp_output - 1;
+          break;
+        }
+      }
+      if (nstcp_output_duplicate_found != 0) {
+        /* We found a duplicate for Entry No i and it had already been overwriten */
+        /* With this break we force a new check on all the entries so that all */
+        /* duplicates must have been removed */
+        break;
+      }
+    }
+  }
+
+  /* We reorder output structures to match input structures original order */
   for (i = 0; i < nstcp_input; i++) {
     struct stgcat_entry dummy;
 
@@ -629,6 +669,7 @@ int send2stgd_sort_stcp(req_type,flags,nstcp_input,stcp_input,nstcp_output,stcp_
       (*stcp_output)[seen[i]] = dummy;
     }
   }
+  free(seen);
 
   /* OK */
   return(0);
