@@ -1,5 +1,5 @@
 /*
- * $Id: stager_usrmsg.c,v 1.15 2001/03/09 10:58:27 jdurand Exp $
+ * $Id: stager_usrmsg.c,v 1.16 2001/12/13 18:00:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.15 $ $Date: 2001/03/09 10:58:27 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.16 $ $Date: 2001/12/13 18:00:25 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /* stager_usrmsg.c - callback rtcp routine */
@@ -31,7 +31,6 @@ static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.15 $ $Dat
 #include <stdarg.h>             /* variable argument list definitions   */
 #endif /* IRIX5 || __Lynx__ */
 #include <log.h>                /* logging options and definitions      */
-#include <stage.h>              /* FOR MSG_ERR MSG_OUT constants        */
 #include "stage_api.h"          /* For seteuid/setegid macro on hpux */
 #include "osdep.h"
 
