@@ -1,0 +1,63 @@
+.\" @(#)$RCSfile: vmgr_gettag.man,v $ $Revision: 1.1 $ $Date: 2003/10/28 11:13:25 $ CERN IT-GD/CT Jean-Philippe Baud
+.\" Copyright (C) 2003 by CERN/IT/GD/CT
+.\" All rights reserved
+.\"
+.TH VMGR_GETTAG 3 "$Date: 2003/10/28 11:13:25 $" CASTOR "vmgr Library Functions"
+.SH NAME
+vmgr_gettag \- get the tag associated with a tape volume in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "vmgr_api.h"\fR
+.sp
+.BI "int vmgr_gettag (const char *" vid ,
+.BI "char *" tag )
+.SH DESCRIPTION
+.B vmgr_gettag
+gets the tag associated with a tape volume in the CASTOR Volume Manager.
+.TP
+.I vid
+is the volume visual identifier.
+It must be at most CA_MAXVIDLEN characters long.
+.TP
+.I tag
+points at a buffer to receive the tag.
+The buffer must be at least CA_MAXTAGLEN+1 characters long.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named volume does not exist or there is no tag associated with this volume.
+.TP
+.B EFAULT
+.I vid
+or
+.I tag
+is a NULL pointer.
+.TP
+.B EINVAL
+The length of
+.I vid
+exceeds
+.BR CA_MAXVIDLEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B EVMGRNACT
+Volume manager is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.B vmgr_settag(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

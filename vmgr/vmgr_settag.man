@@ -1,0 +1,72 @@
+.\" @(#)$RCSfile: vmgr_settag.man,v $ $Revision: 1.1 $ $Date: 2003/10/28 11:13:25 $ CERN IT-GD/CT Jean-Philippe Baud
+.\" Copyright (C) 2003 by CERN/IT/GD/CT
+.\" All rights reserved
+.\"
+.TH VMGR_SETTAG 3 "$Date: 2003/10/28 11:13:25 $" CASTOR "vmgr Library Functions"
+.SH NAME
+vmgr_settag \- add/replace a tag associated with a tape volume in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "vmgr_api.h"\fR
+.sp
+.BI "int vmgr_settag (const char *" vid ,
+.BI "char *" tag )
+.SH DESCRIPTION
+.B vmgr_settag
+adds/replaces a tag associated with a tape volume in the CASTOR Volume Manager.
+.TP
+.I vid
+is the volume visual identifier.
+It must be at most CA_MAXVIDLEN characters long.
+.TP
+.I tag
+is the tag text to be associated with the tape volume.
+It must be at most CA_MAXTAGLEN characters long.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named volume does not exist.
+.TP
+.B EACCES
+The effective user ID of the requestor does not match the owner ID of the tape
+pool this tape belongs to and
+the caller does not have TP_OPER privilege in the Cupv database.
+.TP
+.B EFAULT
+.I vid
+or
+.I tag
+is a NULL pointer.
+.TP
+.B EINVAL
+The length of
+.I vid
+exceeds
+.B CA_MAXVIDLEN
+or the length of
+.I tag
+exceeds
+.BR CA_MAXTAGLEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B EVMGRNACT
+Volume manager is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.B Cupvlist(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

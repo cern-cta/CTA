@@ -1,0 +1,36 @@
+.\" @(#)$RCSfile: vmgrsettag.man,v $ $Revision: 1.1 $ $Date: 2003/10/28 11:13:26 $ CERN IT-GD/CT Jean-Philippe Baud
+.\" Copyright (C) 2003 by CERN/IT/GD/CT
+.\" All rights reserved
+.\"
+.TH VMGRSETTAG 1 "$Date: 2003/10/28 11:13:26 $" CASTOR "vmgr User Commands"
+.SH NAME
+vmgrsettag \- add/replace a tag associated with a tape volume in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B vmgrsettag
+.B -V
+.I vid
+.B --tag
+.I tag
+.SH DESCRIPTION
+.B vmgrsettag
+adds/replaces a tag associated with a tape volume in the CASTOR Volume Manager.
+.LP
+The effective user ID of the process must match the owner of the volume or
+the caller must have TP_OPER privilege in the Cupv database.
+.TP
+.I vid
+is the volume visual identifier.
+It must be at most CA_MAXVIDLEN characters long.
+.TP
+.I tag
+is the tag text to be associated with the tape volume.
+It must be at most CA_MAXTAGLEN characters long.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cupvlist(1) ,
+.B vmgr_settag(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,0 +1,30 @@
+.\" @(#)$RCSfile: vmgrdeltag.man,v $ $Revision: 1.1 $ $Date: 2003/10/28 11:13:25 $ CERN IT-GD/CT Jean-Philippe Baud
+.\" Copyright (C) 2003 by CERN/IT/GD/CT
+.\" All rights reserved
+.\"
+.TH VMGRDELTAG 1 "$Date: 2003/10/28 11:13:25 $" CASTOR "vmgr User Commands"
+.SH NAME
+vmgrdeltag \- delete the tag associated with a tape volume in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B nsdeltag
+.B -V
+.I vid
+.SH DESCRIPTION
+.B nsdeltag
+deletes the tag associated with a tape volume in the CASTOR Volume Manager.
+.LP
+The effective user ID of the process must match the owner of the volume or
+the caller must have TP_OPER privilege in the Cupv database.
+.TP
+.I vid
+is the volume visual identifier.
+It must be at most CA_MAXVIDLEN characters long.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cupvlist(1) ,
+.B vmgr_deltag(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
