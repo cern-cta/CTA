@@ -1,0 +1,107 @@
+.\"
+.\" @(#)$RCSfile: vdqm_Disconnect.man,v $ $Revision: 1.1 $ $Date: 2000/08/09 09:55:21 $ CERN IT-PDP/DM O.Barring
+.\"
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\"
+.TH VDQM_DISCONNECT 3 "$Date: 2000/08/09 09:55:21 $" "CASTOR" "VDQM Library Functions"
+.SH NAME
+.PP
+vdqm_Disconnect \- disconnect from the VDQM server
+.SH SYNOPSIS
+.br
+\fB#include "Castor_limits.h"\fR
+.br
+\fB#include "osdep.h"\fR
+.br
+\fB#include "net.h"\fR
+.br
+\fB#include "vdqm_api.h"\fR
+.sp
+.BI "int vdqm_Disconnect ("
+.br
+.BI "                     vdqmnw_t **" nw );
+.SH PARAMETERS
+.I nw
+\- points to a pointer to a structure containing internal VDQM API network 
+information set by a prior call to
+.B vdqm_Connect(3).
+
+.PP
+.SH DESCRIPTION
+.B vdqm_Disconnect
+disconnects a connection opened with
+.B vdqm_Connect(3)
+VDQM API library call.
+
+All VDQM API library functions will call
+.B vdqm_Disconnect
+and
+.B vdqm_Connect(3)
+internally in case the connection is not yet established. It is therefore
+not necessary to directly call
+.B vdqm_Disconnect
+from an application. This is also the preferred usage since in its current
+implementation the VDQM server does not allow multiple API calls to re-use
+the same connection.
+
+.SH EXAMPLE
+Here follows an example showing how to open a connection to the VDQM server,
+issue an API call and thereafter close the connection.
+.P
+.nf
+#include <stdio.h>
+#include <stdlib.h>
+#include <Castor_limits.h>
+#include <serrno.h>
+#include <osdep.h>
+#include <net.h>
+#include <vdqm_api.h>
+
+int main(int argc, char *argv) {
+    int rc;
+    vdqmnw_t **nw = NULL;
+
+    rc = \fBvdqm_Connect\fP(nw);
+    if ( rc == -1 ) {
+        fprintf(stderr,"vdqm_Connect(): %s\\n",sstrerror(serrno));
+        exit(1);
+    }
+    /* ...                                  */
+    /* ... Call a VDQM API library function */
+    /* ...                                  */
+
+    /* Close the connection */
+    rc = \fBvdqm_Disconnect\fP(nw); 
+    if ( rc == -1 ) {
+        fprintf(stderr,"vdqm_Disconnect(): %s\\n",sstrerror(serrno));
+        exit(1);
+    }
+    exit(0);
+}
+.fi
+
+.SH RETURN VALUES
+.PP
+On successful completion, the
+.B vdqm_Connect
+function returns 0. Otherwise, a value of \-1 is returned and
+.B serrno
+is set to indicate the error.
+.SH ERRORS
+.PP
+If the
+.B vdqm_Connect
+function fails,
+.B serrno
+may be set to one of the following values:
+.TP
+.B SECOMERR
+A network library call failed when trying close the connection
+with the VDQM server.
+.TP
+.B EINVAL
+The nw parameter has not been returned by a successful call to
+.B vdqm_Connect(3).
+
+.SH SEE ALSO
+.BR vdqm_Connect(3) , 
