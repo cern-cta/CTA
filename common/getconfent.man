@@ -1,8 +1,8 @@
-.\" @(#)@(#)$RCSfile: getconfent.man,v $ $Revision: 1.4 $ $Date: 2001/09/26 09:13:49 $ CERN IT-PDP/DC Frederic Hemmer
+.\" @(#)@(#)$RCSfile: getconfent.man,v $ $Revision: 1.5 $ $Date: 2003/10/13 16:00:19 $ CERN IT-PDP/DC Frederic Hemmer
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DC
 .\" All rights reserved
 .\"
-.TH GETCONFENT 3 "$Date: 2001/09/26 09:13:49 $" CASTOR "Common Library Functions"
+.TH GETCONFENT 3 "$Date: 2003/10/13 16:00:19 $" CASTOR "Common Library Functions"
 .SH NAME
 getconfent, getconfent_r \- Get configuration entry
 .SH SYNOPSIS
@@ -46,7 +46,7 @@ using the passed
 parameter instead of an internal static buffer. 
 .PP
 If threads are created usint the
-.B Cthread_crate(\|)
+.B Cthread_create(\|)
 interface, it is not mandatory to call 
 .B getconfent_r(\|)
 in order to assure thread-safe code. In that case
