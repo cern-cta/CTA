@@ -1,6 +1,9 @@
 /*
- * $Id: vdqm_QueueOp.c,v 1.1 1999/07/27 09:21:23 obarring Exp $
+ * $Id: vdqm_QueueOp.c,v 1.2 1999/07/31 14:49:55 obarring Exp $
  * $Log: vdqm_QueueOp.c,v $
+ * Revision 1.2  1999/07/31 14:49:55  obarring
+ * Set error codes for exceptions
+ *
  * Revision 1.1  1999/07/27 09:21:23  obarring
  * First version
  *
@@ -23,6 +26,7 @@ static char cvsId[] = "$Id";
 #include <time.h>
 #include <net.h>
 #include <log.h>
+#include <serrno.h>
 #include <Castor_limits.h>
 #include <Cthread_api.h>
 #include <vdqm_constants.h>
@@ -48,10 +52,16 @@ static int SetDgnContext(dgn_element_t **dgn_context,const char *dgn) {
     dgn_element_t *tmp = NULL;
     int found,rc;
     
-    if ( dgn == NULL || dgn_context == NULL) return(-1);
+    if ( dgn == NULL || dgn_context == NULL) {
+        vdqm_SetError(SEINTERNAL);
+        return(-1);
+    }
     
     log(LOG_DEBUG,"(ID %d)SetDgnContext(%s) lock mutex 0x%x\n",thID,dgn,(long)&nb_dgn);
-    if ( (rc = Cthread_mutex_lock(&nb_dgn)) == -1 ) return(rc);
+    if ( (rc = Cthread_mutex_lock(&nb_dgn)) == -1 ) {
+        vdqm_SetError(EVQSYERR);
+        return(rc);
+    }
     found = 0;
     CLIST_ITERATE_BEGIN(dgn_queues,tmp) {
         if ( !strcmp(tmp->dgn,dgn) ) {
@@ -64,6 +74,7 @@ static int SetDgnContext(dgn_element_t **dgn_context,const char *dgn) {
         if ( tmp == NULL ) {
             log(LOG_INFO,"(ID %d)SetDgnContext(%s) unlock mutex 0x%x\n",thID,dgn,(long)&nb_dgn);
             Cthread_mutex_unlock(&nb_dgn);
+            vdqm_SetError(EVQSYERR);
             return(-1);
         }
         nb_dgn++;
@@ -80,6 +91,7 @@ static int SetDgnContext(dgn_element_t **dgn_context,const char *dgn) {
     Cthread_mutex_unlock(&nb_dgn);
     if ( *dgn_context == NULL ) {
         log(LOG_ERR,"(ID %d)SetDgnContext(%s) internal error: cannot assign DGN context\n",thID);
+        vdqm_SetError(SEINTERNAL);
         rc = -1;
     } else {
         log(LOG_DEBUG,"(ID %d)SetDgnContext(%s) lock mutex 0x%x\n",thID,dgn,(long)*dgn_context);
@@ -107,7 +119,10 @@ static int FreeDgnContext(dgn_element_t **dgn_context) {
 static int NextDgnContext(dgn_element_t **dgn_context) {
     char tmpdgn[CA_MAXDGNLEN+1];
     
-    if ( dgn_queues == NULL || dgn_context == NULL ) return(-1);
+    if ( dgn_queues == NULL || dgn_context == NULL ) {
+        vdqm_SetError(SEINTERNAL);
+        return(-1);
+    }
     *tmpdgn = '\0';
     log(LOG_DEBUG,"(ID %d)NextDgnContext() lock mutex 0x%x\n",thID,(long)&nb_dgn);
     Cthread_mutex_lock(&nb_dgn);
@@ -284,6 +299,7 @@ static int PopVolRecord(const dgn_element_t *dgn_context,
             !VolInUse(dgn_context,vol->vol.volid) ) top = vol;
     } CLIST_ITERATE_END(dgn_context->vol_queue,vol);
     if ( top != NULL ) top->update = 1;
+    else vdqm_SetError(EVQNOVOL);
     *volrec = top;
     return(0);
 }
@@ -314,7 +330,8 @@ static int AnyVolRecForMountedVol(const dgn_element_t *dgn_context,
         /*
          * This should never happen but....
          */
-        if ( i == -1 && vol == NULL ) return(-1);
+        if ( i == -1 || vol == NULL ) return(-1);
+        
         /*
          * Reset the update since we are not sure this
          * record will be used.
@@ -377,7 +394,8 @@ static int AnyVolRecForDrv(const dgn_element_t *dgn_context,
         /*
          * This should never happen but....
          */
-        if ( i == -1 && vol == NULL ) return(-1);
+        if ( i == -1 || vol == NULL ) return(-1);
+
         /*
          * Reset the update since we are not sure this
          * record will be used.
@@ -426,7 +444,10 @@ static int NewVolRecord(vdqm_volrec_t **volrec) {
     
     if ( volrec == NULL ) return(-1);
     *volrec = (vdqm_volrec_t *)calloc(1,sizeof(vdqm_volrec_t));
-    if ( *volrec == NULL ) return(-1);
+    if ( *volrec == NULL ) {
+        vdqm_SetError(EVQSYERR);
+        return(-1);
+    }
     (*volrec)->update = 1;
     return(0);
 }
@@ -445,7 +466,10 @@ static int NewDrvRecord(vdqm_drvrec_t **drvrec) {
     
     if ( drvrec == NULL ) return(-1);
     *drvrec = (vdqm_drvrec_t *)calloc(1,sizeof(vdqm_drvrec_t));
-    if ( *drvrec == NULL ) return(-1);
+    if ( *drvrec == NULL ) {
+        vdqm_SetError(EVQSYERR);
+        return(-1);
+    }
     (*drvrec)->update = 1;
     return(0);
 }
@@ -475,6 +499,7 @@ static int DelDrvRecord(dgn_element_t *dgn_context,
     rc = vdqm_DeleteFromReplica(NULL,&drvrec->drv);
     if ( rc == -1 ) {
         log(LOG_ERR,"DelDrvRecord() vdqm_DeleteFromReplica() returned error\n");
+        vdqm_SetError(EVQREPLICA);
     }
     return(0);
 }
@@ -495,6 +520,7 @@ static int PopDrvRecord(const dgn_element_t *dgn_context,
         }
     } CLIST_ITERATE_END(dgn_context->drv_queue,drv);
     if ( top != NULL ) top->update = 1;
+    else vdqm_SetError(EVQNODRV);
     *drvrec = top;
     return(0);
 }
@@ -535,7 +561,10 @@ static int GetVolRecord(const dgn_element_t *dgn_context,
     if ( found ) {
         tmprec->update = 1;
         *volrec = tmprec;
-    } else *volrec = NULL;
+    } else {
+        vdqm_SetError(EVQNOSVOL);
+        *volrec = NULL;
+    }
     
     return(0);
 }
@@ -556,7 +585,10 @@ static int FindDrvRecord(const dgn_element_t *dgn_context,
     } CLIST_ITERATE_END(dgn_context->drv_queue,tmprec);
     
     if ( found ) *drvrec = tmprec;
-    else *drvrec = NULL;
+    else {
+        vdqm_SetError(EVQNOSVOL);
+        *drvrec = NULL;
+    }
 
     return(0);
 }
@@ -580,7 +612,10 @@ static int GetDrvRecord(const dgn_element_t *dgn_context,
     if ( found ) {
         tmprec->update = 1;
         *drvrec = tmprec;
-    } else *drvrec = NULL;
+    } else {
+        *drvrec = NULL;
+        vdqm_SetError(EVQNOSDRV);
+    }
     
     return(0);
 }
@@ -869,6 +904,7 @@ int vdqm_NewVolReq(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) {
     if ( volrec != NULL ) {
         log(LOG_ERR,"(ID %d)vdqm_NewVolReq() input request already queued\n",thID);
         FreeDgnContext(&dgn_context);
+        vdqm_SetError(EVQALREADY);
         return(-1);
     }
     
@@ -1049,6 +1085,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
              */
             log(LOG_ERR,"(ID %d)vdqm_NewDrvReq(): unit is not UP\n",thID);
             FreeDgnContext(&dgn_context);
+            vdqm_SetError(EVQUNNOTUP);
             return(-1);
         }
         if ( DrvReq->status & VDQM_UNIT_BUSY ) {
@@ -1057,6 +1094,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
              */
             if ( DrvReq->status & VDQM_UNIT_FREE ) {
                 FreeDgnContext(&dgn_context);
+                vdqm_SetError(EVQBADSTAT);
                 return(-1);
             }
             drvrec->drv.status = DrvReq->status;
@@ -1073,6 +1111,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                 log(LOG_ERR,"(ID %d)vdqm_NewDrvReq(): cannot free assigned unit %s@%s, jobID=0x%x\n",thID,
                     drvrec->drv.drive,drvrec->drv.server,drvrec->drv.jobID);
                 FreeDgnContext(&dgn_context);
+                vdqm_SetError(EVQBADSTAT);
                 return(-1);
             }
             /*
@@ -1083,6 +1122,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                 log(LOG_ERR,"(ID %d)vdqm_NewDrvReq(): cannot free unit with tape mounted, volid=%s\n",thID,
                     drvrec->drv.volid);
                 FreeDgnContext(&dgn_context);
+                vdqm_SetError(EVQBADSTAT);
                 return(-1);
             }
         } else {
@@ -1097,6 +1137,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                     log(LOG_ERR,"(ID %d)vdqm_NewDrvReq(): inconsistent VolReqIDs (0x%x, 0x%x) on ASSIGN\n",thID,
                         DrvReq->VolReqID,drvrec->drv.VolReqID);
                     FreeDgnContext(&dgn_context);
+                    vdqm_SetError(EVQBADID);
                     return(-1);
                 } else {
                     drvrec->drv.jobID = DrvReq->jobID;
@@ -1112,6 +1153,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                 log(LOG_ERR,"(ID %d)vdqm_NewDrvReq(): inconsistent jobIDs (0x%x, 0x%x)\n",thID,
                     DrvReq->jobID,drvrec->drv.jobID);
                 FreeDgnContext(&dgn_context);
+                vdqm_SetError(EVQBADID);
                 return(-1);
             }
             
@@ -1126,6 +1168,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                 log(LOG_ERR,"(ID %d)vdqm_NewDrvReq(): status 0x%x requested on FREE drive\n",thID,
                     DrvReq->status);
                 FreeDgnContext(&dgn_context);
+                vdqm_SetError(EVQBADSTAT);
                 return(-1);
             }
             if ( DrvReq->status & VDQM_UNIT_ASSIGN ) {
@@ -1138,6 +1181,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                     log(LOG_ERR,"(ID %d)vdqm_NewDrvReq(): attempt to re-assign ID=0x%x to an unit assigned to ID=0x%x\n",thID,
                         drvrec->drv.jobID,DrvReq->jobID);
                     FreeDgnContext(&dgn_context);
+                    vdqm_SetError(EVQBADID);
                     return(-1);
                 }
             }
@@ -1171,12 +1215,14 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                 log(LOG_ERR,"(ID %d)vdqm_NewDrvReq(): mount request of %s for jobID 0x%x on non-ASSIGNED unit\n",thID,
                     DrvReq->volid,DrvReq->jobID);
                 FreeDgnContext(&dgn_context);
+                vdqm_SetError(EVQNOTASS);
                 return(-1);
             }
             if ( *DrvReq->volid == '\0' ) {
                 log(LOG_ERR,"(ID %d)vdqm_NewDrvReq(): mount request with empty VOLID for jobID 0x%x\n",thID,
                     drvrec->drv.jobID);
                 FreeDgnContext(&dgn_context);
+                vdqm_SetError(EVQBADVOLID);
                 return(-1);
             }
             /*
@@ -1186,6 +1232,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                 log(LOG_ERR,"(ID %d)vdqm_NewDrvReq(): inconsistent mount %s (should be %s) for jobID 0x%x\n",thID,
                     DrvReq->volid,drvrec->vol->vol.volid,DrvReq->jobID);
                 FreeDgnContext(&dgn_context);
+                vdqm_SetError(EVQBADVOLID);
                 return(-1);
             }
             strcpy(drvrec->drv.volid,DrvReq->volid);
@@ -1243,12 +1290,9 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
              * are any other valid request for the same volume.
              */
             rc = AnyVolRecForMountedVol(dgn_context,drvrec,&volrec);
-            if ( rc == -1 ) {
-                log(LOG_ERR,"(ID %d)vdqm_NewDrvReq(): AnyVolRecForVolid() returned error\n",thID);
-                FreeDgnContext(&dgn_context);
-                return(-1);
-            }
-            if ( volrec == NULL ) {
+            if ( rc == -1 || volrec == NULL ) {
+                if ( rc == -1 ) 
+                    log(LOG_ERR,"(ID %d)vdqm_NewDrvReq(): AnyVolRecForVolid() returned error\n",thID);
                 /*
                  * No, there wasn't another job for that volume. Tell the
                  * drive to unmount the volume
@@ -1360,6 +1404,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
             VDQM_VOL_UNMOUNT ) ) {
             log(LOG_ERR,"(ID %d)vdqm_NewDrvReq(): drive is DOWN\n",thID);
             FreeDgnContext(&dgn_context);
+            vdqm_SetError(EVQUNNOTUP);
             return(-1);
         }
     }
