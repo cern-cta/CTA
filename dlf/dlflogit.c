@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlflogit.c,v $ $Revision: 1.1 $ $Date: 2003/08/20 13:05:27 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlflogit.c,v $ $Revision: 1.2 $ $Date: 2003/09/08 13:30:14 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -14,15 +14,15 @@ static char sccsid[] = "@(#)$RCSfile: dlflogit.c,v $ $Revision: 1.1 $ $Date: 200
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
-#include <varargs.h>
+#include <stdarg.h>
 #include "Cglobals.h"
 #include "dlf.h"
 
 extern int jid;
 
-dlflogit(va_alist) va_dcl
+dlflogit(const char *args, ...)
 {
-	va_list args;
+	va_list ap;
 	char *func;
 	char *msg;
 	char prtbuf[LOGBUFSZ];
@@ -36,9 +36,8 @@ dlflogit(va_alist) va_dcl
 	int fd_log;
 
 	save_errno = errno;
-	va_start (args);
-	func = va_arg (args, char *);
-	msg = va_arg (args, char *);
+	va_start (ap, args);
+	msg = va_arg (ap, char *);
 	(void) time (&current_time);		/* Get current time */
 #if (defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32)
 	(void) localtime_r (&current_time, &tmstruc);
@@ -49,12 +48,12 @@ dlflogit(va_alist) va_dcl
 	Cglobals_getTid(&Tid);
 	if (Tid < 0)	/* main thread */
 		sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
-		    tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, jid, func);
+		    tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, jid, args);
 	else
 		sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d,%d %s: ", tm->tm_mon+1,
-		    tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, jid, Tid, func);
-	vsprintf (prtbuf+strlen(prtbuf), msg, args);
-	va_end (args);
+		    tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, jid, Tid, args);
+	vsprintf (prtbuf+strlen(prtbuf), msg, ap);
+	va_end (ap);
 	if ((fd_log = open (LOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664)) > 0) {
 	  write (fd_log, prtbuf, strlen(prtbuf));
 	  close (fd_log);
