@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.31 2001/09/18 20:34:45 jdurand Exp $
+ * $Id: procalloc.c,v 1.32 2001/09/22 07:49:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.31 $ $Date: 2001/09/18 20:34:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.32 $ $Date: 2001/09/22 07:49:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -46,7 +46,7 @@ extern int rpfd;
 extern struct stgcat_entry *stce;	/* end of stage catalog */
 extern struct stgcat_entry *stcs;	/* start of stage catalog */
 extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
-extern struct stgcat_entry *newreq _PROTO((char));
+extern struct stgcat_entry *newreq _PROTO((int));
 #ifdef USECDB
 extern struct stgdb_fd dbfd;
 #endif
@@ -179,7 +179,7 @@ void procallocreq(req_data, clienthost)
 	stgreq.t_or_d = 'a';
 	strcpy (stgreq.u1.d.xfile, argv[Coptind]);
 	strcpy (upath, argv[Coptind]);
-	stcp = newreq ('a');
+	stcp = newreq((int) 'a');
 	memcpy (stcp, &stgreq, sizeof(stgreq));
 	stcp->reqid = reqid;
 	stcp->status = STAGEALLOC;

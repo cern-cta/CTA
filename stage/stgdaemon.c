@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.149 2001/09/22 07:33:03 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.150 2001/09/22 07:49:15 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.149 $ $Date: 2001/09/22 07:33:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.150 $ $Date: 2001/09/22 07:49:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -212,7 +212,7 @@ extern void killmigovl _PROTO((int));
 int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
 extern int get_put_failed_retenp _PROTO((char *));
 
-struct stgcat_entry *newreq _PROTO((char));
+struct stgcat_entry *newreq _PROTO((int));
 struct waitf *add2wf _PROTO((struct waitq *));
 int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct waitf *));
 extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
@@ -1316,7 +1316,7 @@ add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
 					wqp->nbdskf++;
 					wqp->nb_subreqs++;
 					wqp->nb_waiting_on_req++;
-					stcp_ok = newreq('t');
+					stcp_ok = newreq((int) 't');
 					/* The memory may have been realloced, so we follow this eventual reallocation */
 					/* by reassigning stcp pointer using the found index */
 					stcp = &(stcs[index_found]);
@@ -2894,9 +2894,10 @@ newpath()
 }
 
 struct stgcat_entry *
-newreq(t_or_d)
-		char t_or_d;
+newreq(int_t_or_d)
+		int int_t_or_d;
 {
+	char t_or_d = (char) int_t_or_d;
 	struct stgcat_entry *stcp;
 
 	nbcat_ent++;
@@ -3442,5 +3443,5 @@ void check_upd_fileclasses() {
 }
 
 /*
- * Last Update: "Saturday 22 September, 2001 at 09:27:14 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Saturday 22 September, 2001 at 09:45:31 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */

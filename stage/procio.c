@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.139 2001/09/18 21:00:15 jdurand Exp $
+ * $Id: procio.c,v 1.140 2001/09/22 07:49:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.139 $ $Date: 2001/09/18 21:00:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.140 $ $Date: 2001/09/22 07:49:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -124,7 +124,7 @@ extern int reqid;
 extern int rpfd;
 extern struct stgcat_entry *stce;	/* end of stage catalog */
 extern struct stgcat_entry *stcs;	/* start of stage catalog */
-extern struct stgcat_entry *newreq _PROTO((char));
+extern struct stgcat_entry *newreq _PROTO((int));
 extern char *findpoolname _PROTO((char *));
 extern u_signed64 findblocksize _PROTO((char *));
 
@@ -1481,7 +1481,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				}
 #endif
 				savereqid = stcp->reqid;
-				stcp = newreq (stgreq.t_or_d);
+				stcp = newreq((int) stgreq.t_or_d);
 				memcpy (stcp, &stgreq, sizeof(stgreq));
 				if (i > 0)
 					stcp->reqid = nextreqid();
@@ -1623,7 +1623,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					/* We create a new entry with state STAGEIN|STAGED|STAGE_RDONLY */
 					struct stgcat_entry save_this_stcp = *stcp;
 
-					stcp = newreq (save_this_stcp.t_or_d);
+					stcp = newreq((int) save_this_stcp.t_or_d);
 					memcpy (stcp, &save_this_stcp, sizeof(struct stgcat_entry));
 					if (i > 0)
 						stcp->reqid = nextreqid();
@@ -1685,7 +1685,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					nbdskf = i;
 					continue;	/* exit from the loop */
 				}
-				stcp = newreq (stgreq.t_or_d);
+				stcp = newreq((int) stgreq.t_or_d);
 				memcpy (stcp, &stgreq, sizeof(stgreq));
 				if (i > 0)
 					stcp->reqid = nextreqid();
@@ -1865,7 +1865,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				c = USERR;
 				goto reply;
 			}
-			stcp = newreq (stgreq.t_or_d);
+			stcp = newreq((int) stgreq.t_or_d);
 			memcpy (stcp, &stgreq, sizeof(stgreq));
 			/* memcpy overwritted the -1 default values */
 			if (stcp->t_or_d == 'h') {
@@ -2298,12 +2298,12 @@ void procioreq(req_type, magic, req_data, clienthost)
 			if ((stgreq.t_or_d == 'h') && (stage_wrt_migration != 0)) {
 				struct stgcat_entry save_stcp = *stcp;
 				/* We copy sensible part of the structure */
-				stcp = newreq (stgreq.t_or_d);
+				stcp = newreq((int) stgreq.t_or_d);
 				memcpy (stcp, &stgreq, sizeof(stgreq));
                 /* Makes sure that it does not have keep thing */
 				COPY_SENSIBLE_STCP(stcp,&save_stcp);
 			} else {
-				stcp = newreq (stgreq.t_or_d);
+				stcp = newreq((int) stgreq.t_or_d);
 				memcpy (stcp, &stgreq, sizeof(stgreq));
 				/* memcpy overwritted the -1 default values */
 				if (stcp->t_or_d == 'h') {
@@ -2514,7 +2514,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				c = USERR;
 				goto reply;
 			}
-			stcp = newreq (stgreq.t_or_d);
+			stcp = newreq((int) stgreq.t_or_d);
 			memcpy (stcp, &stgreq, sizeof(stgreq));
 			if (i > 0)
 				stcp->reqid = nextreqid();

@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.83 2001/09/18 21:06:19 jdurand Exp $
+ * $Id: procupd.c,v 1.84 2001/09/22 07:49:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.83 $ $Date: 2001/09/18 21:06:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.84 $ $Date: 2001/09/22 07:49:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -65,7 +65,7 @@ extern int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct wa
 extern int extend_waitf _PROTO((struct waitf *, struct waitf *));
 extern int check_waiting_on_req _PROTO((int, int));
 extern int check_coff_waiting_on_req _PROTO((int, int));
-extern struct stgcat_entry *newreq _PROTO((char));
+extern struct stgcat_entry *newreq _PROTO((int));
 extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
 extern int req2argv _PROTO((char *, char ***));
@@ -426,7 +426,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 						goto reply;
 					}
 				}
-				stcp = newreq(stgreq.t_or_d);
+				stcp = newreq((int) stgreq.t_or_d);
 				memcpy (stcp, &stgreq, sizeof(stgreq));
 				if (i > 0)
 					stcp->reqid = nextreqid();
@@ -604,7 +604,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			goto reply;
 		}
 		wfp = &(wqp->wf[i]); /* We restore the correct found wf (mem might have been realloced) */
-		stcp_ok = newreq('t');
+		stcp_ok = newreq((int) 't');
 		/* The memory may have been realloced, so we follow this eventual reallocation */
 		/* by reassigning stcp pointer using the found index */
 		stcp = &(stcs[index_found]);
@@ -1480,5 +1480,5 @@ void update_hsm_a_time(stcp)
 }
 
 /*
- * Last Update: "Wednesday 12 September, 2001 at 23:17:18 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Saturday 22 September, 2001 at 09:47:37 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */

@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.151 2001/09/21 04:46:10 jdurand Exp $
+ * $Id: poolmgr.c,v 1.152 2001/09/22 07:49:14 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.151 $ $Date: 2001/09/21 04:46:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.152 $ $Date: 2001/09/22 07:49:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -93,7 +93,7 @@ extern int sendrep _PROTO((int, int, ...));
 #else
 extern int sendrep _PROTO(());
 #endif
-extern struct stgcat_entry *newreq _PROTO((char));
+extern struct stgcat_entry *newreq _PROTO((int));
 extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int));
 extern int nextreqid _PROTO(());
 
@@ -2487,7 +2487,7 @@ int update_migpool(stcp,flag,immediate)
           /* Because this may generate a realloc we need to restore afterwhile */
           /* the correct original *stcp */
           index_found = (*stcp) - stcs;
-          stcp_ok = newreq('h');
+          stcp_ok = newreq((int) 'h');
           memcpy(stcp_ok, &savestcp, sizeof(struct stgcat_entry));
           stcp_ok->reqid = nextreqid();
           reqid = savereqid;
