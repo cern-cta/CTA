@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.17 2001/02/02 14:18:02 jdurand Exp $
+ * $Id: stageqry.c,v 1.18 2001/03/02 18:09:51 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.17 $ $Date: 2001/02/02 14:18:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.18 $ $Date: 2001/03/02 18:09:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -27,6 +27,7 @@ static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.17 $ $Date: 20
 #endif
 #include "marshall.h"
 #include "stage.h"
+#include "stage_api.h"
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "Cgetopt.h"
@@ -42,6 +43,7 @@ int reqid_flag = 0;
 int dump_flag = 0;
 int migrator_flag = 0;
 int class_flag = 0;
+int queue_flag = 0;
 
 int main(argc, argv)
 		 int	argc;
@@ -95,6 +97,7 @@ int main(argc, argv)
 		{"dump",               NO_ARGUMENT,  &dump_flag,        1},
 		{"migrator",           NO_ARGUMENT,  &migrator_flag,    1},
 		{"class",              NO_ARGUMENT,  &class_flag,       1},
+		{"queue",              NO_ARGUMENT,  &queue_flag,       1},
 		{NULL,                 0,                  NULL,        0}
 	};
 
@@ -244,7 +247,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 	WSACleanup();
 #endif
-	exit (c == 0 ? 0 : serrno);
+	exit (c == 0 ? 0 : rc_castor2shift(serrno));
 }
 
 void cleanup(sig)
@@ -266,5 +269,5 @@ void usage(cmd)
 					 "[-A pattern | -M pattern] [-a] [-f] [-G] [-h stage_host] [-I external_filename]\n",
 					 "[-L] [-l] [-P] [-p pool] [-q file_sequence_number(s)] [-Q file_sequence_range] [-S] [-s] [-T]\n",
 					 "[-u] [-V visual_identifier(s)] [-x]\n",
-					 "[--migrator] [--class] [--noregexp] [--reqid reqid] [--dump] \n");
+					 "[--migrator] [--class] [--noregexp] [--reqid reqid] [--dump] [--queue]\n");
 }
