@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.11 $ $Date: 2000/05/30 10:48:47 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.12 $ $Date: 2000/05/30 10:59:41 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -98,6 +98,7 @@ EXTERN_C int DLL_DECL rfio_pclose _PROTO((RFILE *));
 EXTERN_C int DLL_DECL rfio_pread _PROTO((char *, int, int, RFILE *));
 EXTERN_C int DLL_DECL rfio_pwrite _PROTO((char *, int, int, RFILE *));
 #if !defined(_WIN32)
+EXTERN_C struct dirent DLL_DECL *rfio_readdir _PROTO((RDIR *));
 EXTERN_C int DLL_DECL rfio_rewinddir _PROTO((RDIR *));
 EXTERN_C int DLL_DECL rfio_closedir _PROTO((RDIR *));
 EXTERN_C RDIR DLL_DECL *rfio_opendir _PROTO((char *));
