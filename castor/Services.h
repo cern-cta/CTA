@@ -57,7 +57,7 @@ int C_Services_delete(struct C_Services_t* svcs);
 int C_Services_service(struct C_Services_t* svcs,
                        char* name,
                        unsigned int id,
-                       C_IService_t** svc);
+                       struct C_IService_t** svc);
 
 /**
  * create foreign representation from a C++ Object
