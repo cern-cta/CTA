@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.20 $ $Release$ $Date: 2005/01/28 20:38:54 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.21 $ $Release$ $Date: 2005/03/14 12:15:49 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.20 $ $Release$ $Date: 2005/01/28 20:38:54 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.21 $ $Release$ $Date: 2005/03/14 12:15:49 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -311,7 +311,7 @@ int recallerCallbackFileCopied(
                     childUuid,
                     RTCPCLD_LOG_MSG(RTCPCLD_MSG_STAGED),
                     castorFileId,
-                    9,
+                    10,
                     "",
                     DLF_MSG_PARAM_TPVID,
                     tapereq->vid,
@@ -330,9 +330,12 @@ int recallerCallbackFileCopied(
                     "DISKPATH",
                     DLF_MSG_PARAM_STR,
                     filereq->file_path,
+                    "OFFSET",
+                    DLF_MSG_PARAM_INT64,
+                    filereq->offset,
                     "FILESIZE",
                     DLF_MSG_PARAM_INT64,
-                    filereq->bytes_in,
+                    filereq->bytes_out,
                     "TOTFILES",
                     DLF_MSG_PARAM_INT,
                     filesCopied,
