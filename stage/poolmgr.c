@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.179 2002/02/05 15:24:37 jdurand Exp $
+ * $Id: poolmgr.c,v 1.180 2002/02/08 11:17:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.179 $ $Date: 2002/02/05 15:24:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.180 $ $Date: 2002/02/08 11:17:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3893,13 +3893,15 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory)
     fileclasses[nbfileclasses].Cnsfileclass = Cnsfileclass;
     strcpy(fileclasses[nbfileclasses].server,stcp->u1.h.server);
     fileclasses[nbfileclasses].last_tppool_used[0] = '\0';
-    stglogit ("upd_fileclass", STG109,
-              fileclasses[nbfileclasses].Cnsfileclass.name,
-              fileclasses[nbfileclasses].server,
-              fileclasses[nbfileclasses].Cnsfileclass.classid,
-              nbfileclasses,
-              fileclasses[nbfileclasses].Cnsfileclass.tppools);
-    stglogfileclass(&Cnsfileclass);
+	if (! only_memory) {
+		stglogit ("upd_fileclass", STG109,
+				  fileclasses[nbfileclasses].Cnsfileclass.name,
+				  fileclasses[nbfileclasses].server,
+				  fileclasses[nbfileclasses].Cnsfileclass.classid,
+				  nbfileclasses,
+				  fileclasses[nbfileclasses].Cnsfileclass.tppools);
+		stglogfileclass(&Cnsfileclass);
+	}
     ifileclass = nbfileclasses++;
 	/* File class at index (nbfileclasses - 1) has been created */
   }
