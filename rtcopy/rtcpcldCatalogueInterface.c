@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/06/25 15:35:56 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/06/28 14:59:32 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/06/25 15:35:56 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/06/28 14:59:32 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -859,6 +859,17 @@ int rtcpcld_getDbSvc(
 }
 
 /**
+ * Externalised version of getStgDbSvc(). Used in rtcpcldapi.c
+ */
+int rtcpcld_getStgDbSvc(
+                        stgSvc
+                        )
+     struct Cstager_IStagerSvc_t **stgSvc;
+{
+  return(getStgSvc(stgSvc));
+}
+
+/**
  * Externalised version of delTape(). Called by rtcpclientd to remove
  * a tape after it has been completely processed (VidWorker finished)
  */
@@ -968,11 +979,20 @@ int rtcpcld_getVIDsToDo(
                           DLF_LVL_ERROR,
                           RTCPCLD_MSG_SYSCALL,
                           (struct Cns_fileid *)NULL,
-                          RTCPCLD_NB_PARAMS+2,
+                          RTCPCLD_NB_PARAMS+5,
                           "SYSCALL",
                           DLF_MSG_PARAM_STR,
                           "vmgr_querytape()",
                           "ERROR_STR",
+                          "",
+                          DLF_MSG_PARAM_TPVID,
+                          tape->tapereq.vid,
+                          "TPSIDE",
+                          DLF_MSG_PARAM_INT,
+                          tape->tapereq.side,
+                          "TPMODE",
+                          DLF_MSG_PARAM_INT,
+                          tape->tapereq.mode,
                           DLF_MSG_PARAM_STR,
                           sstrerror(serrno),
                           RTCPCLD_LOG_WHERE
