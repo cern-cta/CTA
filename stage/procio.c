@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.143 2001/10/04 18:01:19 jdurand Exp $
+ * $Id: procio.c,v 1.144 2001/10/15 12:33:53 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.143 $ $Date: 2001/10/04 18:01:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.144 $ $Date: 2001/10/15 12:33:53 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -4031,9 +4031,19 @@ int check_hsm_type(arg,nhpssfiles,ncastorfiles,nexplevel,nuserlevel,t_or_d)
 	} else if (((*ncastorfiles) > 0)) {
 		/* It is a CASTOR request, so stgreq.t_or_d is set to 'h' */
 		if (t_or_d != NULL) *t_or_d = 'h';
+		if (strlen(arg) >= 167) {
+			serrno = SENAMETOOLONG;
+			sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
+			return(USERR);
+		}
 	} else {
 		/* It is a HPSS request, so stgreq.t_or_d is set to 'm' */
 		if (t_or_d != NULL) *t_or_d = 'm';
+		if (strlen(arg) >= 167) {
+			serrno = SENAMETOOLONG;
+			sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
+			return(USERR);
+		}
 	}
 	/* Ok */
 	return(0);
@@ -4082,9 +4092,19 @@ int check_hsm_type_light(arg,t_or_d)
 	} else if ((ncastorfiles > 0)) {
 		/* It is a CASTOR request, so stgreq.t_or_d is set to 'h' */
 		*t_or_d = 'h';
+		if (strlen(arg) >= 167) {
+			serrno = SENAMETOOLONG;
+			sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
+			return(USERR);
+		}
 	} else {
 		/* It is a HPSS request, so stgreq.t_or_d is set to 'm' */
 		*t_or_d = 'm';
+		if (strlen(arg) >= 167) {
+			serrno = SENAMETOOLONG;
+			sendrep (rpfd, MSG_ERR, "%s\n", sstrerror(serrno));
+			return(USERR);
+		}
 	}
 	/* Ok */
 	return(0);

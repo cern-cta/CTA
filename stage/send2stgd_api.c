@@ -479,7 +479,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 			SEND2STGD_API_ERROR(-1);
 		}
 		p = repbuf;
-		unmarshall_STRING (p, prtbuf);
+		unmarshall_STRINGN (p, prtbuf, REPBUFSZ);
 		switch (rep_type) {
 		case MSG_OUT:
 		case RTCOPY_OUT:
@@ -489,7 +489,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 			stage_errmsg (NULL, "%s", prtbuf);
 			break;
 		case SYMLINK:
-			unmarshall_STRING (p, file2);
+			unmarshall_STRINGN (p, file2, CA_MAXHOSTNAMELEN+CA_MAXPATHLEN+2);
 			if ((c = dosymlink (prtbuf, file2)))
 				link_rc = c;
 			break;

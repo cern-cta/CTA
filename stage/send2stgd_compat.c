@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_compat.c,v 1.4 2001/04/29 08:54:16 jdurand Exp $
+ * $Id: send2stgd_compat.c,v 1.5 2001/10/15 12:33:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.4 $ $Date: 2001/04/29 08:54:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_compat.c,v $ $Revision: 1.5 $ $Date: 2001/10/15 12:33:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -180,7 +180,7 @@ int DLL_DECL send2stgd_compat(host, reqp, reql, want_reply, user_repbuf, user_re
 			return (-1);
 		}
 		p = repbuf;
-		unmarshall_STRING (p, prtbuf);
+		unmarshall_STRINGN (p, prtbuf, REPBUFSZ);
 		switch (rep_type) {
 		case MSG_OUT:
 		case RTCOPY_OUT:
@@ -200,7 +200,7 @@ int DLL_DECL send2stgd_compat(host, reqp, reql, want_reply, user_repbuf, user_re
 			stage_errmsg (NULL, "%s", prtbuf);
 			break;
 		case SYMLINK:
-			unmarshall_STRING (p, file2);
+			unmarshall_STRINGN (p, file2, CA_MAXHOSTNAMELEN+CA_MAXPATHLEN+2);
 			if ((c = dosymlink (prtbuf, file2)) != 0)
 				link_rc = c;
 			break;

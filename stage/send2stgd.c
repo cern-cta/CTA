@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd.c,v 1.27 2001/09/18 21:07:21 jdurand Exp $
+ * $Id: send2stgd.c,v 1.28 2001/10/15 12:33:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.27 $ $Date: 2001/09/18 21:07:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.28 $ $Date: 2001/10/15 12:33:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -227,7 +227,7 @@ int send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_len)
 			return (-1);
 		}
 		p = repbuf;
-		unmarshall_STRING (p, prtbuf);
+		unmarshall_STRINGN (p, prtbuf, REPBUFSZ);
 		switch (rep_type) {
 		case MSG_OUT:
 			if (user_repbuf != NULL) {
@@ -247,7 +247,7 @@ int send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_len)
 			stage_errmsg (NULL, "%s", prtbuf);
 			break;
 		case SYMLINK:
-			unmarshall_STRING (p, file2);
+			unmarshall_STRINGN (p, file2, CA_MAXHOSTNAMELEN+CA_MAXPATHLEN+2);
 			if ((c = dosymlink (prtbuf, file2)) != 0)
 				link_rc = c;
 			break;
