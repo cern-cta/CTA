@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.29 2000/03/31 08:44:10 jdurand Exp $
+ * $Id: stager.c,v 1.30 2000/03/31 14:22:07 jdurand Exp $
  */
 
 /*
@@ -11,7 +11,7 @@
 /* #define SKIP_FILEREQ_MAXSIZE */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.29 $ $Date: 2000/03/31 08:44:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.30 $ $Date: 2000/03/31 14:22:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -71,7 +71,6 @@ char dgn[CA_MAXDENLEN+1];           /* Dgn returbed by vmgr_gettape or vmgr_quer
 char aden[CA_MAXDENLEN+1];          /* Aden returbed by vmgr_gettape or vmgr_querytape */
 char lbltype[3];                    /* Lbltype returbed by vmgr_gettape or vmgr_querytape */
 int fseq = -1;                      /* Fseq returbed by vmgr_gettape or vmgr_querytape */
-unsigned int blockid = 0;           /* Blockid returbed by vmgr_gettape or vmgr_querytape */
 char tmpbuf[21];                    /* Printout of u_signed64 quantity temp. buffer */
 char *fid = NULL;                   /* File ID */
 int nrtcpcreqs;                     /* Number of rtcpcreq structures in circular list */
@@ -83,7 +82,6 @@ u_signed64 *hsm_transferedsize = NULL;   /* Yet transfered size per hsm file */
 int *hsm_fseg = NULL;                    /* Current segment */
 u_signed64 *hsm_fsegsize = NULL;         /* Current segment size */
 int *hsm_fseq = NULL;                    /* Current file sequence on current tape (vid) */
-unsigned int *hsm_blockid = NULL;        /* Current blockid on current tape (vid) */
 char **hsm_vid = NULL;                   /* Current vid pointer or NULL if not in current rtcpc request */
 char putenv_string[CA_MAXHOSTNAMELEN + 10]; /* "CNS_HOST=%s" where %s max length is CA_MAXHOSTNAMELEN */
 char cns_error_buffer[512];
@@ -377,15 +375,15 @@ int stagein_castor_hsm_file() {
 	char tmpbuf1[21];
 	char tmpbuf2[21];
 #endif
+	unsigned char blockid[4];
 
 	/* We allocate as many size arrays */
-	if ((hsm_totalsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64)))      == NULL ||
-		(hsm_transferedsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64))) == NULL ||
-		(hsm_fseg = (int *) calloc(nbcat_ent,sizeof(int)))                         == NULL ||
-		(hsm_fsegsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64)))       == NULL ||
-		(hsm_fseq = (int *) calloc(nbcat_ent,sizeof(int)))                         == NULL ||
-		(hsm_blockid = (unsigned int *) calloc(nbcat_ent,sizeof(unsigned int)))    == NULL ||
-		(hsm_vid = (char **) calloc(nbcat_ent,sizeof(char *)))                     == NULL) {
+	if ((hsm_totalsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64)))        == NULL ||
+		(hsm_transferedsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64)))   == NULL ||
+		(hsm_fseg = (int *) calloc(nbcat_ent,sizeof(int)))                           == NULL ||
+		(hsm_fsegsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64)))         == NULL ||
+		(hsm_fseq = (int *) calloc(nbcat_ent,sizeof(int)))                           == NULL ||
+		(hsm_vid = (char **) calloc(nbcat_ent,sizeof(char *)))                       == NULL) {
 		sendrep (rpfd, MSG_ERR, STG02, "stagein_castor_hsm_file", "malloc error",strerror(errno));
 		RETURN (USERR);
 	}
@@ -447,8 +445,8 @@ int stagein_castor_hsm_file() {
 #endif
 		if (hsm_totalsize[i] >  hsm_transferedsize[i]) {
 #ifdef STAGER_DEBUG
-			sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEIN] Calling Cns_getsegattrs(%s,copyrc=1,hsm_fseg[%d]=%d,&(hsm_fsegsize[%d]),vid,&(hsm_fseq[%d]),&(hsm_blockid[%d]))\n",
-							castor_hsm,i,hsm_fseg[i],i,i,i);
+			sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEIN] Calling Cns_getsegattrs(%s,copyrc=1,hsm_fseg[%d]=%d,&(hsm_fsegsize[%d]),vid,&(hsm_fseq[%d]),blockid)\n",
+							castor_hsm,i,hsm_fseg[i],i,i);
 #endif
 				
 			if (Cns_getsegattrs (castor_hsm,        /* hsm path */
@@ -457,7 +455,7 @@ int stagein_castor_hsm_file() {
 								&(hsm_fsegsize[i]), /* segment size */
 								vid,                /* segment vid */
 								&(hsm_fseq[i]),     /* segment fseq */
-								&(hsm_blockid[i])   /* segment blockid */
+								blockid             /* segment blockid */
 								)) {
 				strcpy(vid,"");
 				sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_getsegattrs",
@@ -683,7 +681,6 @@ int stagein_castor_hsm_file() {
 }
 
 int stagewrt_castor_hsm_file() {
-	unsigned int blockid;
 	int compression_factor = 0;		/* times 100 */
 	int Flags;
 	int fseq;
@@ -698,15 +695,15 @@ int stagewrt_castor_hsm_file() {
 	char *castor_hsm;
 	char tmpbuf[21];
 	extern char* poolname2tapepool _PROTO((char *));
+	unsigned char blockid[4];
 
 	/* We allocate as many size arrays */
-	if ((hsm_totalsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64))) == NULL ||
-			(hsm_transferedsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64))) == NULL ||
-			(hsm_fseg = (int *) calloc(nbcat_ent,sizeof(int))) == NULL ||
-			(hsm_fsegsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64))) == NULL ||
-			(hsm_fseq = (int *) calloc(nbcat_ent,sizeof(int))) == NULL ||
-			(hsm_blockid = (unsigned int *) calloc(nbcat_ent,sizeof(unsigned int))) == NULL ||
-			(hsm_vid = (char **) calloc(nbcat_ent,sizeof(char *))) == NULL) {
+	if ((hsm_totalsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64)))            == NULL ||
+			(hsm_transferedsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64)))   == NULL ||
+			(hsm_fseg = (int *) calloc(nbcat_ent,sizeof(int)))                           == NULL ||
+			(hsm_fsegsize = (u_signed64 *) calloc(nbcat_ent,sizeof(u_signed64)))         == NULL ||
+			(hsm_fseq = (int *) calloc(nbcat_ent,sizeof(int)))                           == NULL ||
+			(hsm_vid = (char **) calloc(nbcat_ent,sizeof(char *)))                       == NULL) {
 		sendrep (rpfd, MSG_ERR, STG02, "stagewrt_castor_hsm_file", "malloc error",strerror(errno));
 		RETURN (USERR);
 	}
@@ -764,7 +761,6 @@ int stagewrt_castor_hsm_file() {
 		hsm_fseg[i] = 1;
 		hsm_fsegsize[i] = 0;
 		hsm_fseq[i] = -1;
-		hsm_blockid[i] = 0;
 		hsm_vid[i] = NULL;
 
 	gettape:
@@ -779,7 +775,7 @@ int stagewrt_castor_hsm_file() {
 
 			/* Wait for a free tape */
 #ifdef STAGER_DEBUG
-			sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] Calling vmgr_gettape(%s,%s,NULL,vid,vsn,dgn,aden,lbltype,&fseq,&blockid)\n",
+			sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] Calling vmgr_gettape(%s,%s,NULL,vid,vsn,dgn,aden,lbltype,&fseq)\n",
 							tape_pool != NULL ? tape_pool : "NULL", u64tostr((u_signed64) statbuf.st_size, tmpbuf, 0));
 #endif
 			if (vmgr_gettape (
@@ -791,8 +787,7 @@ int stagewrt_castor_hsm_file() {
 								dgn,                    /* dgn       (output)              */
 								aden,                   /* density   (output)              */
 								lbltype,                /* lbltype   (output)              */
-								&fseq,                  /* fseq      (output)              */
-								&blockid                /* blockid   (output)              */
+								&fseq                   /* fseq      (output)              */
 								) == 0) {
 				break;
 			}
@@ -807,11 +802,10 @@ int stagewrt_castor_hsm_file() {
 			
 		hsm_vid[i] = vid;
 		hsm_fseq[i] = fseq;
-		hsm_blockid[i] = blockid;
 
 #ifdef STAGER_DEBUG
-		sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] Use [vid,vsn,dgn,aden,lbltype,fseq,blockid]=[%s,%s,%s,%s,%s,%d,%d]\n",
-						vid,vsn,dgn,aden,lbltype,fseq,(int) blockid);
+		sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] Use [vid,vsn,dgn,aden,lbltype,fseq]=[%s,%s,%s,%s,%s,%d]\n",
+						vid,vsn,dgn,aden,lbltype,fseq);
 #endif
 
 		/* We "interrogate" for the number of structures */
@@ -923,9 +917,11 @@ int stagewrt_castor_hsm_file() {
 									 sstrerror (serrno));
 				}
 #ifdef STAGER_DEBUG
-				sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] Calling Cns_setsegattrs(%s,copyrc=1,hsm_fseg[%d]=%d,hsm_fsegsize[%d]=%s,vid=%s,fseq=%d,blockid=%d)\n",
-								castor_hsm,i,hsm_fseg[i],i,u64tostr(hsm_fsegsize[i], tmpbuf, 0), vid, fseq_rtcp, blockid);
+				sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] Calling Cns_setsegattrs(%s,copyrc=1,hsm_fseg[%d]=%d,hsm_fsegsize[%d]=%s,vid=%s,fseq=%d,blockid)\n",
+								castor_hsm,i,hsm_fseg[i],i,u64tostr(hsm_fsegsize[i], tmpbuf, 0), vid, fseq_rtcp);
 #endif
+				/* For the moment blockid is NOT used */
+				memset(blockid,0,sizeof(blockid));
 				if (Cns_setsegattrs (castor_hsm, 1, hsm_fseg[i], hsm_fsegsize[i], vid, fseq_rtcp, blockid) != 0) {
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setsegattrs",
 									 sstrerror (serrno));
@@ -951,9 +947,11 @@ int stagewrt_castor_hsm_file() {
 	}
 
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] Calling Cns_setsegattrs(%s,copyrc=1,hsm_fseg[%d]=%d,hsm_fsegsize[%d]=%s,vid=%s,fseq=%d,blockid=%d)\n",
-						castor_hsm,i,hsm_fseg[i],i,u64tostr(hsm_fsegsize[i], tmpbuf, 0), vid, fseq_rtcp, blockid);
+	sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] Calling Cns_setsegattrs(%s,copyrc=1,hsm_fseg[%d]=%d,hsm_fsegsize[%d]=%s,vid=%s,fseq=%d,blockid)\n",
+						castor_hsm,i,hsm_fseg[i],i,u64tostr(hsm_fsegsize[i], tmpbuf, 0), vid, fseq_rtcp);
 #endif
+	/* For the moment blockid is NOT used */
+	memset(blockid,0,sizeof(blockid));
 	if (Cns_setsegattrs (castor_hsm, 1, hsm_fseg[i], hsm_fsegsize[i], vid, fseq_rtcp, blockid) != 0) {
 			sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setsegattrs",
 							 sstrerror (serrno));
@@ -1632,13 +1630,8 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			}
 			fid++;
 			strcpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.fid, fid);
-			if (blockid) {
-				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.position_method = TPPOSIT_BLKID;
-				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.blockid = hsm_blockid[ihsm];
-			} else {
-				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.position_method = TPPOSIT_FSEQ;
-				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.tape_fseq = hsm_fseq[ihsm];
-			}
+			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.position_method = TPPOSIT_FSEQ;
+			(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.tape_fseq = hsm_fseq[ihsm];
 #ifndef SKIP_FILEREQ_MAXSIZE
 			if (stcp->size > 0) {
 				u_signed64 dummysize;
