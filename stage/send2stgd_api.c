@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_api.c,v 1.10 2000/09/13 17:21:50 jdurand Exp $
+ * $Id: send2stgd_api.c,v 1.11 2000/09/15 07:33:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.10 $ $Date: 2000/09/13 17:21:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.11 $ $Date: 2000/09/15 07:33:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -119,7 +119,7 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 	} else {
 		strcpy (stghost, host);
 	}
-	if ((hp = gethostbyname (stghost)) == NULL) {
+	if ((hp = Cgethostbyname(stghost)) == NULL) {
 		stage_errmsg (func, STG09, "Host unknown:", stghost);
 		serrno = SENOSHOST;
 		return (-1);
