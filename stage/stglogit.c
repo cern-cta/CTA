@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.16 2001/03/02 18:08:19 jdurand Exp $
+ * $Id: stglogit.c,v 1.17 2001/03/03 06:19:28 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.16 $ $Date: 2001/03/02 18:08:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.17 $ $Date: 2001/03/03 06:19:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -129,6 +129,7 @@ int stglogflags(va_alist) va_dcl
 		{ STAGE_NOWAIT    , "STAGE_NOWAIT"    },
 		{ STAGE_CLASS     , "STAGE_CLASS"     },
 		{ STAGE_QUEUE     , "STAGE_QUEUE"     },
+		{ STAGE_COUNTERS  , "STAGE_COUNTERS"  },
         { 0               , NULL              }
 	};
       

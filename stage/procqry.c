@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.49 2001/03/02 18:16:46 jdurand Exp $
+ * $Id: procqry.c,v 1.50 2001/03/03 06:19:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.49 $ $Date: 2001/03/02 18:16:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.50 $ $Date: 2001/03/03 06:19:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -74,7 +74,7 @@ extern int sendrep _PROTO(());
 extern int isvalidpool _PROTO((char *));
 extern int stglogit _PROTO(());
 extern int stglogflags _PROTO(());
-extern void print_pool_utilization _PROTO((int, char *, char *, char *, char *, int, int, int));
+extern void print_pool_utilization _PROTO((int, char *, char *, char *, char *, int, int, int, int));
 extern int nextreqid _PROTO(());
 extern int savereqs _PROTO(());
 extern int cleanpool _PROTO((char *));
@@ -117,6 +117,7 @@ int dump_flag;
 int migrator_flag;
 int class_flag;
 int queue_flag;
+int counters_flag;
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
@@ -232,6 +233,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		{"migrator",           NO_ARGUMENT,  &migrator_flag,    1},
 		{"class",              NO_ARGUMENT,  &class_flag,       1},
 		{"queue",              NO_ARGUMENT,  &queue_flag,       1},
+		{"counters",           NO_ARGUMENT,  &counters_flag,    1},
 		{NULL,                 0,                  NULL,        0}
 	};
 
@@ -241,6 +243,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	migrator_flag = 0;
 	class_flag = 0;
 	queue_flag = 0;
+	counters_flag = 0;
 	poolname[0] = '\0';
 	rbp = req_data;
 	local_unmarshall_STRING (rbp, user);	/* login name */
@@ -451,6 +454,9 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		if ((flags & STAGE_QUEUE) == STAGE_QUEUE) {
 			queue_flag++;
 		}
+		if ((flags & STAGE_COUNTERS) == STAGE_COUNTERS) {
+			counters_flag++;
+		}
 		/* Print the flags */
 		stglogflags("stage_qry",flags);
 	} else {
@@ -641,7 +647,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		goto reply;
 	}
 	if (sflag) {
-		print_pool_utilization (rpfd, poolname, defpoolname, defpoolname_in, defpoolname_out, migrator_flag, class_flag, queue_flag);
+		print_pool_utilization (rpfd, poolname, defpoolname, defpoolname_in, defpoolname_out, migrator_flag, class_flag, queue_flag, counters_flag);
 		goto reply;
 	}
 	if (Sflag) {

@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.95 2001/03/02 18:16:43 jdurand Exp $
+ * $Id: poolmgr.c,v 1.96 2001/03/03 06:19:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.95 $ $Date: 2001/03/02 18:16:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.96 $ $Date: 2001/03/03 06:19:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -123,7 +123,7 @@ struct pool_element_ext {
   char dirpath[MAXPATH];
 };
 
-void print_pool_utilization _PROTO((int, char *, char *, char *, char *, int, int, int));
+void print_pool_utilization _PROTO((int, char *, char *, char *, char *, int, int, int, int));
 int update_migpool _PROTO((struct stgcat_entry *, int, int));
 int insert_in_migpool _PROTO((struct stgcat_entry *));
 void checkfile2mig _PROTO(());
@@ -881,7 +881,7 @@ int poolalloc(pool_p, nbpool_ent)
   return (0);
 }
 
-void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpoolname_out, migrator_flag, class_flag, queue_flag)
+void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpoolname_out, migrator_flag, class_flag, queue_flag, counters_flag)
      int rpfd;
      char *poolname, *defpoolname, *defpoolname_in, *defpoolname_out;
      int migrator_flag;
@@ -955,19 +955,19 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
       after_fraction = elemp->capacity ?
         (10 * (elemp->free * 100 - elemp->capacity * before_fraction)) / elemp->capacity :
         0;
-      sendrep (rpfd, MSG_OUT, "  %s %s CAPACITY %s FREE %s (%s.%s%%)%s%s%4s%s%s%4s\n",
+      sendrep (rpfd, MSG_OUT, "  %s %s CAPACITY %s FREE %s (%s.%s%%)%s%s%s%s%s%s\n",
                elemp->server,
                elemp->dirpath,
                u64tostru(elemp->capacity, tmpbuf1, 0),
                u64tostru(elemp->free, tmpbuf2, 0),
                u64tostr(before_fraction, tmpbuf3, 0),
                u64tostr(after_fraction, tmpbuf4, 0),
-               is_poolout ?       " " : "",
-               is_poolout ?  "nread " : "",
-               is_poolout ? u64tostr((u_signed64) elemp->nbreadaccess, tmpbuf5, 0) : "",
-               is_poolout ?       " " : "",
-               is_poolout ? "nwrite " : "",
-               is_poolout ? u64tostr((u_signed64) elemp->nbwriteaccess, tmpbuf6, 0) : ""
+               (counters_flag && is_poolout) ?       " " : "",
+               (counters_flag && is_poolout) ?  "nread " : "",
+               (counters_flag && is_poolout) ? u64tostr((u_signed64) elemp->nbreadaccess, tmpbuf5, 0) : "",
+               (counters_flag && is_poolout) ?       " " : "",
+               (counters_flag && is_poolout) ? "nwrite " : "",
+               (counters_flag && is_poolout) ? u64tostr((u_signed64) elemp->nbwriteaccess, tmpbuf6, 0) : ""
                );
     }
   }
