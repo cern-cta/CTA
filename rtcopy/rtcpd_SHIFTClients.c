@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.24 $ $Date: 2000/04/25 13:12:20 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.25 $ $Date: 2000/04/27 09:27:57 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -308,11 +308,13 @@ static int rtcp_GetOldCinfo(rtcpHdr_t *hdr, shift_client_t *req) {
         if ( (DrvReq.status & VDQM_UNIT_UP) != 0 &&
              *DrvReq.dedicate == '\0' ) nb_units++;
     }
-
-    req->info.status = AVAILABLE;
-    req->info.nb_queued = nb_queued;
-    req->info.nb_units = nb_units;
-    req->info.nb_used = nb_used;
+    if ( nb_units == 0 ) req->info.status = ALLDOWN;
+    else {
+        req->info.status = AVAILABLE;
+        req->info.nb_queued = nb_queued;
+        req->info.nb_units = nb_units;
+        req->info.nb_used = nb_used;
+    }
     return(0);
 }
 
