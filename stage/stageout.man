@@ -1,10 +1,10 @@
-.\" $Id: stageout.man,v 1.14 2002/10/06 09:14:29 jdurand Exp $
+.\" $Id: stageout.man,v 1.15 2002/10/27 23:30:13 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageout.man,v $ $Revision: 1.14 $ $Date: 2002/10/06 09:14:29 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageout.man,v $ $Revision: 1.15 $ $Date: 2002/10/27 23:30:13 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEOUT "1" "$Date: 2002/10/06 09:14:29 $" "CASTOR" "Stage User Commands"
+.TH STAGEOUT "1" "$Date: 2002/10/27 23:30:13 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageout \- allocate space and store the option values in the stgdaemon catalog
 for use by stageput later.
@@ -48,9 +48,7 @@ If this option is absent, the disk file is removed as soon as the
 operation is successful.
 .TP
 .BI \-M " hsmfile"
-Gives the name of a Hierarchical Storage Manager (HSM) file. In this case,
-.B rfcp
-will be used to copy the file from the staging pool to that HSM file.
+Gives the name of a Hierarchical Storage Manager (HSM) file.
 .TP
 .BI \-p " poolname"
 Allocates the file in the pool
@@ -86,7 +84,12 @@ a.out out
 .br
 b.out out2
 .LP
-stageupdc out out2
+stageput \\
+.br
+\-M $CASTOR_HOME/stageout_file \\
+.br
+\-M $CASTOR_HOME/stageout_file2
+.br
 .RE
 
 .SH RETURN CODES
@@ -98,8 +101,6 @@ stageupdc out out2
 .br
 2	System error.
 .br
-4	Configuration error.
-.br
 16	EBUSY: Device or resource busy.
 .br
 28	ENOSPC: No space left on device.
@@ -109,7 +110,7 @@ stageupdc out out2
 198	Stager not active
 
 .SH SEE ALSO
-\fBstageupdc\fP(1), \fBstageput\fP(1), \fBstage_other_options\fP(1)
+\fBstageput\fP(1), \fBstage_other_options\fP(1)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
