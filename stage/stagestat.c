@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.42 2002/11/20 11:10:49 baud Exp $
+ * $Id: stagestat.c,v 1.43 2002/11/22 08:56:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.42 $ $Date: 2002/11/20 11:10:49 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.43 $ $Date: 2002/11/22 08:56:03 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -47,9 +47,9 @@ static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.42 $ $Date: 2
 #define swap_it(a) { swab((char *)&a,(char *)&a,sizeof(a)); a=((unsigned int)a<<16)|((unsigned int)a>>16); }
 
 int getacctrec _PROTO((int, struct accthdr *, char *, int *));
-int match_2_stgin _PROTO((struct acctstage2 *));
+int match_2_stgin _PROTO((struct acctstage64 *));
 time_t cvt_datime _PROTO((char *));
-void print_acct _PROTO((struct accthdr *, struct acctstage2 *));
+void print_acct _PROTO((struct accthdr *, struct acctstage64 *));
 int normalize_week _PROTO((int));
 
 #define NBBINSMAX 1000
@@ -171,16 +171,16 @@ int verbose = 0;
 int debug = 0;
 u_signed64 size_total, size_read;
 
-void create_filelist _PROTO((struct file_inf **, struct file_inf**, struct acctstage2 *));
-void create_poollist _PROTO((struct acctstage2 *));
-void create_stglist _PROTO((struct acctstage2 *));
-void enter_filc_details _PROTO((struct acctstage2 *, struct accthdr));
-void enter_fils_details _PROTO((struct acctstage2 *, struct accthdr));
-void enter_filw_details _PROTO((struct acctstage2 *, struct accthdr));
-void enter_pool_details _PROTO((struct acctstage2 *));
+void create_filelist _PROTO((struct file_inf **, struct file_inf**, struct acctstage64 *));
+void create_poollist _PROTO((struct acctstage64 *));
+void create_stglist _PROTO((struct acctstage64 *));
+void enter_filc_details _PROTO((struct acctstage64 *, struct accthdr));
+void enter_fils_details _PROTO((struct acctstage64 *, struct accthdr));
+void enter_filw_details _PROTO((struct acctstage64 *, struct accthdr));
+void enter_pool_details _PROTO((struct acctstage64 *));
 void sort_poolinf _PROTO(());
 void print_poolstat _PROTO((int, int, int, char *));
-void swap_fields _PROTO((struct acctstage2 *));
+void swap_fields _PROTO((struct acctstage64 *));
 void usage _PROTO((char *));
 void print_fdetails _PROTO((struct file_inf *));
 void print_globstat _PROTO((time_t, time_t, int));
@@ -221,7 +221,7 @@ int main(argc, argv)
 	char poolname[CA_MAXPOOLNAMELEN + 1];	/* pool name */
  
 	struct accthdr accthdr;		/* accthdr record */
-	struct acctstage2 rp;		/* pointer to accstage2 record */
+	struct acctstage64 rp;		/* pointer to accstage2 record */
 	struct stg_inf *srecord;		/* pointer to stg_inf record */
 
 	time_t endtime = 0;			/* time up to which to obtain information */
@@ -607,7 +607,7 @@ int main(argc, argv)
 			show_progress();
 		}
 		nrec++;
-		if ((accthdr.package != ACCTSTAGE) && (accthdr.package != ACCTSTAGE2)) {
+		if ((accthdr.package != ACCTSTAGE) && (accthdr.package != ACCTSTAGE2) && (accthdr.package != ACCTSTAGE64)) {
 			nrecnotst++;
 			continue;
 		}
@@ -626,6 +626,7 @@ int main(argc, argv)
 					if (Tflag && strstr(rp.u2.s.u1.t.vid,Tflag)) print_acct(&accthdr, &rp);
 					break;
 				case 'd':
+				case 'a':
 					if (Dflag && strstr(rp.u2.s.u1.d.xfile,Dflag)) print_acct(&accthdr, &rp);
 					break;
 				case 'm':
@@ -857,7 +858,7 @@ int main(argc, argv)
 void create_filelist (file_list, file_last, rp)
 	struct file_inf **file_list;
 	struct file_inf **file_last;
-	struct acctstage2 *rp;
+	struct acctstage64 *rp;
 {
 	struct file_inf *frec;			/* pointer to file_inf record */ 
 
@@ -874,6 +875,10 @@ void create_filelist (file_list, file_last, rp)
 	} else if (rp->u2.s.t_or_d == 'd') {
 		strcpy (frec->u1.d.xfile, rp->u2.s.u1.d.xfile);
 		frec->t_or_d = 'd';
+		num_drecs++;
+	} else if (rp->u2.s.t_or_d == 'a') {
+		strcpy (frec->u1.d.xfile, rp->u2.s.u1.d.xfile);
+		frec->t_or_d = 'a';
 		num_drecs++;
 	} else if (rp->u2.s.t_or_d == 'm') {
 		strcpy (frec->u1.m.xfile, rp->u2.s.u1.m.xfile);
@@ -899,7 +904,7 @@ void create_filelist (file_list, file_last, rp)
 /* Function to create record for each pool group found */
 
 void create_pool_list (rp)
-	struct acctstage2 *rp;
+	struct acctstage64 *rp;
 {
 	struct pool_inf *pf;				/* pointer to pool_inf record */
 
@@ -921,7 +926,7 @@ void create_pool_list (rp)
 /* Function to create record for each stagein request */
 
 void create_stglist (rp)
-	struct acctstage2 *rp;
+	struct acctstage64 *rp;
 {
 	struct stg_inf *sp;				/* pointer to stg_inf record */
 	
@@ -981,7 +986,7 @@ cvt_datime (arg)
 /* Function to enter file record details for each FILC */
 
 void enter_filc_details (rp, accthdr)
-	struct acctstage2 *rp;
+	struct acctstage64 *rp;
 	struct accthdr accthdr;
 {
 	int found = 0;			/* record found flag */
@@ -999,6 +1004,12 @@ void enter_filc_details (rp, accthdr)
 				break;
 			}
 		} else if (frecord->t_or_d == 'd') {
+			if ((strcmp (rp->u2.s.u1.d.xfile, frecord->u1.d.xfile) == 0) &&
+				(strcmp (rp->u2.s.poolname, frecord->poolname) == 0)) {
+				found = 1;
+				break;
+			}
+		} else if (frecord->t_or_d == 'a') {
 			if ((strcmp (rp->u2.s.u1.d.xfile, frecord->u1.d.xfile) == 0) &&
 				(strcmp (rp->u2.s.poolname, frecord->poolname) == 0)) {
 				found = 1;
@@ -1073,7 +1084,7 @@ void enter_filc_details (rp, accthdr)
 /* Function to enter details of each file successful stagein command */
 
 void enter_fils_details (rp, accthdr)
-	struct acctstage2 *rp;
+	struct acctstage64 *rp;
 	struct accthdr accthdr;
 {
 	int found = 0;			/* record found flag */
@@ -1092,6 +1103,12 @@ void enter_fils_details (rp, accthdr)
 				break;
 			}
 		} else if (rp->u2.s.t_or_d == 'd' && frecord->t_or_d == 'd') {
+			if ((strcmp (rp->u2.s.u1.d.xfile, frecord->u1.d.xfile) == 0) &&
+				(strcmp (rp->u2.s.poolname, frecord->poolname) == 0)){
+				found = 1;
+				break;
+			}
+		} else if (rp->u2.s.t_or_d == 'a' && frecord->t_or_d == 'a') {
 			if ((strcmp (rp->u2.s.u1.d.xfile, frecord->u1.d.xfile) == 0) &&
 				(strcmp (rp->u2.s.poolname, frecord->poolname) == 0)){
 				found = 1;
@@ -1149,7 +1166,7 @@ void enter_fils_details (rp, accthdr)
 /* Function to enter details of each file successful stagewrt/stageput command */
 
 void enter_filw_details (rp, accthdr)
-	struct acctstage2 *rp;
+	struct acctstage64 *rp;
 	struct accthdr accthdr;
 {
 	int found = 0;			/* record found flag */
@@ -1168,6 +1185,12 @@ void enter_filw_details (rp, accthdr)
 				break;
 			}
 		} else if (rp->u2.s.t_or_d == 'd' && frecord->t_or_d == 'd') {
+			if ((strcmp (rp->u2.s.u1.d.xfile, frecord->u1.d.xfile) == 0) &&
+				(strcmp (rp->u2.s.poolname, frecord->poolname) == 0)){
+				found = 1;
+				break;
+			}
+		} else if (rp->u2.s.t_or_d == 'a' && frecord->t_or_d == 'a') {
 			if ((strcmp (rp->u2.s.u1.d.xfile, frecord->u1.d.xfile) == 0) &&
 				(strcmp (rp->u2.s.poolname, frecord->poolname) == 0)){
 				found = 1;
@@ -1227,7 +1250,7 @@ void enter_filw_details (rp, accthdr)
 /* Function to enter details for each pool */
 
 void enter_pool_details (rp)
-	struct acctstage2 *rp;
+	struct acctstage64 *rp;
 {
 	struct pool_inf *pf;			/* pointer to pool_inf record */
 	int found = 0;
@@ -1256,6 +1279,7 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 	int c;
 	struct acctstage rp;		/* pointer to accstage record (backward compatibility) */
 	struct acctstage2 rp2;
+	struct acctstage64 rp64;
 	size_t thislen;
 
 	rfio_errno = serrno = 0;
@@ -1279,7 +1303,7 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 		*swapped = 1;
 	}
 
-	if ((accthdr->package != ACCTSTAGE) && (accthdr->package != ACCTSTAGE2)) {
+	if ((accthdr->package != ACCTSTAGE) && (accthdr->package != ACCTSTAGE2) && (accthdr->package != ACCTSTAGE64)) {
 		/* Not a STAGE accouting record - we just seek the pointer */
 		rfio_errno = serrno = 0;
 		if (rfio_lseek64(fd_acct, accthdr->len, SEEK_CUR) < 0) {
@@ -1292,7 +1316,8 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 
 	rfio_errno = serrno = 0;
 	switch (accthdr->package) {
-	case ACCTSTAGE2:
+	case ACCTSTAGE64:
+		/* buf is a pointer to an acctstage64 record: OK */
 		if ((c = rfio_read (fd_acct, buf, accthdr->len)) != accthdr->len) {
 			if (c >= 0)
 				fprintf (stderr, "rfio_read returns %d\n",c);
@@ -1301,7 +1326,75 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 			exit (SYERR);
 		}
 		break;
+	case ACCTSTAGE2:
+		/* buf is a pointer to an acctstage64 record: we will have to convert from acctstage2 */
+		if ((c = rfio_read (fd_acct, (char *) &rp2, accthdr->len)) != accthdr->len) {
+			if (c >= 0)
+				fprintf (stderr, "rfio_read returns %d\n",c);
+			else
+				fprintf (stderr, "rfio_read error : %s\n", rfio_serror());
+			exit (SYERR);
+		}
+		/* Convert acctstage2 to acctstage64 */
+		thislen = 0;
+
+		rp64.subtype = rp2.subtype;
+		thislen += sizeof(rp2.subtype);
+
+		rp64.uid = rp2.uid;
+		thislen += sizeof(rp2.uid);
+
+		rp64.gid = rp2.gid;
+		thislen += sizeof(rp2.gid);
+
+		rp64.reqid = rp2.reqid;
+		thislen += sizeof(rp2.reqid);
+
+		rp64.req_type = rp2.req_type;
+		thislen += sizeof(rp2.req_type);
+
+		rp64.retryn = rp2.retryn;
+		thislen += sizeof(rp2.retryn);
+
+		rp64.exitcode = rp2.exitcode;
+		thislen += sizeof(rp2.exitcode);
+
+		strcpy(rp64.u2.clienthost,rp2.u2.clienthost);
+		thislen += (strlen(rp2.u2.clienthost) + 1);
+
+		if ((accthdr->len > thislen) && (accthdr->len - thislen >= 8)) {
+			strcpy(rp64.u2.s.poolname,rp2.u2.s.poolname);
+			rp64.u2.s.t_or_d = rp2.u2.s.t_or_d;
+			rp64.u2.s.actual_size = rp2.u2.s.actual_size;
+			rp64.u2.s.c_time = rp2.u2.s.c_time;
+			if (rp2.u2.s.t_or_d == 't' || rp2.u2.s.t_or_d == 'd' || rp2.u2.s.t_or_d == 'a' || rp2.u2.s.t_or_d == 'm' || rp2.u2.s.t_or_d == 'h') {
+				rp64.u2.s.nbaccesses = rp2.u2.s.nbaccesses;
+				switch (rp2.u2.s.t_or_d) {
+				case 't':				
+					rp64.u2.s.u1.t.side = 0; /* Not set in acctstage */
+					strcpy(rp64.u2.s.u1.t.dgn, rp2.u2.s.u1.t.dgn);
+					strcpy(rp64.u2.s.u1.t.fseq, rp2.u2.s.u1.t.fseq);
+					strcpy(rp64.u2.s.u1.t.vid, rp2.u2.s.u1.t.vid);
+					strcpy(rp64.u2.s.u1.t.tapesrvr, rp2.u2.s.u1.t.tapesrvr);
+					break;
+				case 'd':
+				case 'a':
+					strcpy(rp64.u2.s.u1.d.xfile, rp2.u2.s.u1.d.xfile);
+					break;
+				case 'm':
+					strcpy(rp64.u2.s.u1.m.xfile, rp2.u2.s.u1.m.xfile);
+					break;
+				case 'h':
+					strcpy(rp64.u2.s.u1.h.xfile, rp2.u2.s.u1.h.xfile);
+					rp64.u2.s.u1.h.fileid = rp2.u2.s.u1.h.fileid;
+					break;
+				}
+			}
+		}
+		memcpy((void *) buf,(void *) &rp64,sizeof(struct acctstage64));
+		break;
 	case ACCTSTAGE:
+		/* buf is a pointer to an acctstage64 record: we will have to convert from acctstage2 */
 		if ((c = rfio_read (fd_acct, (char *) &rp, accthdr->len)) != accthdr->len) {
 			if (c >= 0)
 				fprintf (stderr, "rfio_read returns %d\n",c);
@@ -1309,62 +1402,63 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 				fprintf (stderr, "rfio_read error : %s\n", rfio_serror());
 			exit (SYERR);
 		}
-		/* Convert acctstage to acctstage2 */
+		/* Convert acctstage to acctstage64 */
 		thislen = 0;
-		rp2.u2.s.c_time = 0; /* Not set in acctstage */
+		rp64.u2.s.c_time = 0; /* Not set in acctstage */
 
-		rp2.subtype = rp.subtype;
+		rp64.subtype = rp.subtype;
 		thislen += sizeof(rp.subtype);
 
-		rp2.uid = rp.uid;
+		rp64.uid = rp.uid;
 		thislen += sizeof(rp.uid);
 
-		rp2.gid = rp.gid;
+		rp64.gid = rp.gid;
 		thislen += sizeof(rp.gid);
 
-		rp2.reqid = rp.reqid;
+		rp64.reqid = rp.reqid;
 		thislen += sizeof(rp.reqid);
 
-		rp2.req_type = rp.req_type;
+		rp64.req_type = rp.req_type;
 		thislen += sizeof(rp.req_type);
 
-		rp2.retryn = rp.retryn;
+		rp64.retryn = rp.retryn;
 		thislen += sizeof(rp.retryn);
 
-		rp2.exitcode = rp.exitcode;
+		rp64.exitcode = rp.exitcode;
 		thislen += sizeof(rp.exitcode);
 
-		strcpy(rp2.u2.clienthost,rp.u2.clienthost);
+		strcpy(rp64.u2.clienthost,rp.u2.clienthost);
 		thislen += (strlen(rp.u2.clienthost) + 1);
 
 		if ((accthdr->len > thislen) && (accthdr->len - thislen >= 8)) {
-			strcpy(rp2.u2.s.poolname,rp.u2.s.poolname);
-			rp2.u2.s.t_or_d = rp.u2.s.t_or_d;
-			rp2.u2.s.actual_size = rp.u2.s.actual_size;
-			if (rp.u2.s.t_or_d == 't' || rp.u2.s.t_or_d == 'd' || rp.u2.s.t_or_d == 'm' || rp.u2.s.t_or_d == 'h') {
-				rp2.u2.s.nbaccesses = rp.u2.s.nbaccesses;
+			strcpy(rp64.u2.s.poolname,rp.u2.s.poolname);
+			rp64.u2.s.t_or_d = rp.u2.s.t_or_d;
+			rp64.u2.s.actual_size = rp.u2.s.actual_size;
+			if (rp.u2.s.t_or_d == 't' || rp.u2.s.t_or_d == 'd' || rp.u2.s.t_or_d == 'a' || rp.u2.s.t_or_d == 'm' || rp.u2.s.t_or_d == 'h') {
+				rp64.u2.s.nbaccesses = rp.u2.s.nbaccesses;
 				switch (rp.u2.s.t_or_d) {
 				case 't':				
-					rp2.u2.s.u1.t.side = 0; /* Not set in acctstage */
-					strcpy(rp2.u2.s.u1.t.dgn, rp.u2.s.u1.t.dgn);
-					strcpy(rp2.u2.s.u1.t.fseq, rp.u2.s.u1.t.fseq);
-					strcpy(rp2.u2.s.u1.t.vid, rp.u2.s.u1.t.vid);
-					strcpy(rp2.u2.s.u1.t.tapesrvr, rp.u2.s.u1.t.tapesrvr);
+					rp64.u2.s.u1.t.side = 0; /* Not set in acctstage */
+					strcpy(rp64.u2.s.u1.t.dgn, rp.u2.s.u1.t.dgn);
+					strcpy(rp64.u2.s.u1.t.fseq, rp.u2.s.u1.t.fseq);
+					strcpy(rp64.u2.s.u1.t.vid, rp.u2.s.u1.t.vid);
+					strcpy(rp64.u2.s.u1.t.tapesrvr, rp.u2.s.u1.t.tapesrvr);
 					break;
 				case 'd':
-					strcpy(rp2.u2.s.u1.d.xfile, rp.u2.s.u1.d.xfile);
+				case 'a':
+					strcpy(rp64.u2.s.u1.d.xfile, rp.u2.s.u1.d.xfile);
 					break;
 				case 'm':
-					strcpy(rp2.u2.s.u1.m.xfile, rp.u2.s.u1.m.xfile);
+					strcpy(rp64.u2.s.u1.m.xfile, rp.u2.s.u1.m.xfile);
 					break;
 				case 'h':
-					strcpy(rp2.u2.s.u1.h.xfile, rp.u2.s.u1.h.xfile);
-					rp2.u2.s.u1.h.fileid = rp.u2.s.u1.h.fileid;
+					strcpy(rp64.u2.s.u1.h.xfile, rp.u2.s.u1.h.xfile);
+					rp64.u2.s.u1.h.fileid = rp.u2.s.u1.h.fileid;
 					break;
 				}
 			}
 		}
-		memcpy((void *) buf,(void *) &rp2,sizeof(struct acctstage2));
+		memcpy((void *) buf,(void *) &rp64,sizeof(struct acctstage64));
 		break;
 	}
 	size_read += c;
@@ -1374,7 +1468,7 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 /* Function to match a FILS request with a stagein request */
 
 int match_2_stgin (rp)
-	struct acctstage2 *rp;
+	struct acctstage64 *rp;
 {
 	int matched =0;				/* record matched flag */
 	struct stg_inf *srec;			/* pointer to stg_inf record */
@@ -1821,6 +1915,7 @@ void sort_poolinf ()
 				}
 				if (frecord->t_or_d == 't') pf->num_frecs++;
 				else if (frecord->t_or_d == 'd') pf->num_drecs++;
+				else if (frecord->t_or_d == 'a') pf->num_drecs++;
 				else if (frecord->t_or_d == 'm') pf->num_mrecs++;
 				else if (frecord->t_or_d == 'h') pf->num_hrecs++;
 				pf->num_files++;
@@ -1912,7 +2007,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 				}
 				fi++;
 			}
-			if (num_drecs > 0 && frecord->t_or_d == 'd') {
+			if (num_drecs > 0 && (frecord->t_or_d == 'd' || frecord->t_or_d == 'a')) {
 				if (aflag) {
 					daccs[di].rec = frecord;
 					strcpy (daccs[di].poolname, frecord->poolname);
@@ -2207,7 +2302,7 @@ int comp2 (a, b)
 }
 
 void swap_fields (rp)
-	struct acctstage2 *rp;
+	struct acctstage64 *rp;
 {
 	swap_it (rp->subtype);
 	swap_it (rp->uid);
@@ -2254,7 +2349,7 @@ void usage (cmd)
 
 void print_acct(accthdr,rp)
 	struct accthdr *accthdr;
-	struct acctstage2 *rp;
+	struct acctstage64 *rp;
 {
 	char timestr[64] ;        /* Time in its ASCII format */
 	char timestr2[64] ;        /* Time in its ASCII format */
@@ -2289,7 +2384,7 @@ void print_acct(accthdr,rp)
 		}
 		grp = &grp_unknown;
 	}
- 	u64tostru((u_signed64) rp->u2.s.actual_size, tmpbuf, 0);
+ 	u64tostr((u_signed64) rp->u2.s.actual_size, tmpbuf, 0);
  	u64tostr((u_signed64) rp->u2.s.c_time, tmpbuf2, 0);
 	stage_util_time(rp->u2.s.c_time,timestr2);
 	
@@ -2310,6 +2405,7 @@ void print_acct(accthdr,rp)
 	if (! ((accthdr->len > thislen) && (accthdr->len - thislen >= 8))) return;
 	if (rp->u2.s.t_or_d != 't' &&
 		rp->u2.s.t_or_d != 'd' &&
+		rp->u2.s.t_or_d != 'a' &&
 		rp->u2.s.t_or_d != 'm' &&
 		rp->u2.s.t_or_d != 'h'
 		) return;
@@ -2328,6 +2424,7 @@ void print_acct(accthdr,rp)
 		fprintf(stderr,"... Tapesrvr   : %s\n", rp->u2.s.u1.t.tapesrvr);
 		break;
 	case 'd':
+	case 'a':
 		fprintf(stderr,"... Xfile      : %s\n", rp->u2.s.u1.d.xfile);
 		break;
 	case 'm':
