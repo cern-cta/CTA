@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/14 08:16:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/23 12:44:23 $ $Author: sponcec3 $
  *
  * Basic object support, including pointer to Services and log support
  *
@@ -57,8 +57,9 @@ namespace castor {
     /**
      * gets the message service.
      * Note that the service has to be released after usage
-     * @return a pointer to the message service or 0 if none
-     * is available.
+     * @return a pointer to the message service. This is always
+     * a valid pointer if no exception was raised
+     * @exception Exception if something went wrong
      */
     MsgSvc* msgSvc() throw(castor::exception::Exception);
     

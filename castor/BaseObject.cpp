@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/14 08:16:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/23 12:44:22 $ $Author: sponcec3 $
  *
  * 
  *
@@ -40,11 +40,17 @@ castor::MsgSvc* castor::BaseObject::msgSvc()
   throw (castor::exception::Exception) {
   IService* svc = svcs()->service("MsgSvc",
                                   castor::MsgSvc::ID());
-  if (0 == svc) return 0;
+  if (0 == svc) {
+    castor::exception::Internal e;
+    e.getMessage() << "Unable to retrieve MsgSvc";
+    throw(e);
+  }
   castor::MsgSvc* msgSvc = dynamic_cast<castor::MsgSvc*> (svc);
   if (0 == msgSvc) {
     svc->release();
-    return 0;
+    castor::exception::Internal e;
+    e.getMessage() << "Got something weird when retrieving MsgSvc";
+    throw(e);
   }
   return msgSvc;
 }
