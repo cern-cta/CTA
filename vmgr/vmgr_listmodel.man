@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_listmodel.man,v $ $Revision: 1.1 $ $Date: 2000/04/12 05:52:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_listmodel.man,v $ $Revision: 1.2 $ $Date: 2000/09/11 06:03:03 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_LISTMODEL 3 "$Date: 2000/04/12 05:52:54 $" CASTOR "vmgr Library Functions"
+.TH VMGR_LISTMODEL 3 "$Date: 2000/09/11 06:03:03 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_listmodel \- list all existing cartridge model entries in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -20,14 +20,14 @@ lists all existing cartridge model entries in the CASTOR Volume Manager.
 may be one of the following constant:
 .RS
 .TP
-.B CNS_LIST_BEGIN
-the first call for a volume must have this flag set to allocate buffers and
+.B VMGR_LIST_BEGIN
+the first call must have this flag set to allocate buffers and
 initialize pointers.
 .TP
-.B CNS_LIST_CONTINUE
+.B VMGR_LIST_CONTINUE
 all the following calls must have this flag set.
 .TP
-.B CNS_LIST_END
+.B VMGR_LIST_END
 final call to terminate the list and free resources.
 .RE
 .SH RETURN VALUE
