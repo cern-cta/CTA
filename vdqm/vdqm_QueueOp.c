@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.53 $ $Date: 2003/12/10 14:50:16 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.54 $ $Date: 2004/03/16 17:22:01 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1078,6 +1078,7 @@ int vdqm_DelVolReq(vdqmVolReq_t *VolReq) {
     int rc;
 
     if ( VolReq == NULL ) return(-1);
+    log(LOG_INFO,"vdqm_DelVolReq() request for volreq id=%d\n",VolReq->VolReqID);
     log(LOG_INFO,"vdqm_DelVolReq() set context to dgn=%s\n",VolReq->dgn);
 
     rc = SetDgnContext(&dgn_context,VolReq->dgn);
@@ -1130,6 +1131,9 @@ int vdqm_DelDrvReq(vdqmDrvReq_t *DrvReq) {
     if ( DrvReq == NULL ) return(-1);
     rc = 0;
     
+    log(LOG_ERR,"vdqm_DelDrvReq() request for drive %s@%s\n",
+        DrvReq->drive,DrvReq->server);
+
     /*
      * Reset Device Group Name context
      */
@@ -1174,7 +1178,7 @@ int vdqm_DelDrvReq(vdqmDrvReq_t *DrvReq) {
         rc = DelVolRecord(dgn_context,drvrec->vol);
         free(drvrec->vol);
     }
-	vdqm_ResetDedicate(drvrec); /* If any */
+    vdqm_ResetDedicate(drvrec); /* If any */
     free(drvrec);
     FreeDgnContext(&dgn_context);
     return(0);
