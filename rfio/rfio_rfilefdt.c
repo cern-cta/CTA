@@ -1,10 +1,13 @@
 /*
- * $Id: rfio_rfilefdt.c,v 1.6 2001/05/12 07:25:09 jdurand Exp $
+ * $Id: rfio_rfilefdt.c,v 1.7 2001/05/12 07:33:43 jdurand Exp $
  */
 
 /*
  * System remote file I/O
  */
+#ifdef _WIN32
+#include "Cmutex.h"
+#endif
 #define RFIO_KERNEL     1
 #include <fcntl.h>
 #if defined(_WIN32)
