@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.16 $ $Date: 2000/03/04 13:46:12 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.17 $ $Date: 2000/03/10 14:38:49 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -34,7 +34,6 @@ extern char *geterr();
 #include <signal.h>
 
 #include <pwd.h>
-#include <grp.h>
 #include <Castor_limits.h>
 #include <Cglobals.h>
 #include <Cnetdb.h>
@@ -51,13 +50,6 @@ extern char *geterr();
 #include <rtcp_api.h>
 #include <Ctape_api.h>
 #include <serrno.h>
-
-#if defined(sgi)
-/*
- * Workaround for SGI flags in grp.h
- */
-extern struct group *getgrent();
-#endif /* IRIX */
 
 /*
  * Special unmarshall_STRING macro to avoid unnecessary copies.
@@ -110,77 +102,17 @@ static int rtcp_CheckClientHost(SOCKET *s,
     return(0);
 }
 
-/*
- * Check if newacct has been executed by the client
- */
-static int rtcpd_ChkNewAcct(shift_client_t *req,struct passwd *pwd,gid_t gid) {
-    char buf[BUFSIZ] ;
-    char * def_acct ;
-    struct group * gr ;
-    char * getacctent() ;
-
-    if ( req == NULL || pwd == NULL ) return(-1);
-    req->acctstr[0]= '\0' ;
-    /* get default account */
-    if ( getacctent(pwd,NULL,buf,sizeof(buf)) == NULL ) return(-1);
-    if ( strtok(buf,":") == NULL || (def_acct= strtok(NULL,":")) == NULL ) return(-1);
-    if ( strlen(def_acct) == 6 && *(def_acct+3) == '$' &&   /* uuu$gg */
-         (gr= getgrgid((gid_t)gid)) ) {
-        strncpy(req->acctstr,def_acct,4) ;
-        strcpy(req->acctstr+4,gr->gr_name) ; /* new uuu$gg */
-        if ( getacctent(pwd,req->acctstr,buf,sizeof(buf)) )
-            return(0);      /* newacct was executed */
-    }
-    req->acctstr[0]= '\0' ;
-    return(-1);
-}
-
-
-/*
- * This routine is inherently thread-unsafe because of getgrent()
- * However, this doesn't matter since we are guaranteed to be the
- * only thread calling it.
- */
 static int rtcp_CheckClientAuth(rtcpHdr_t *hdr, shift_client_t *req) {
-    struct passwd *pw;
-    struct group *gr;
-    char **gr_mem;
+    int rc;
     FILE *fs;
     char buf[CA_MAXHOSTNAMELEN+1];
-    int authorized;
+    int authorized, SHIFTrc;
 
-    if ( req->uid < 100 ) {
-        rtcp_log(LOG_ERR,"request from uid smaller than 100 are rejected\n");
-        if ( hdr->reqtype == RQST_INFO ) return(PERMDENIED);
+    rc = rtcpd_CheckClient((int)req->uid,(int)req->gid,req->name,
+                           req->acctstr,&SHIFTrc);
+    if ( rc == -1 ) {
+        if ( hdr->reqtype == RQST_INFO ) return(SHIFTrc);
         else return(SYERR);
-    }
-
-    if ( (pw = Cgetpwuid(req->uid)) == NULL ) {
-        rtcp_log(LOG_ERR,"your uid is not defined on this server\n");
-        if ( hdr->reqtype == RQST_INFO ) return(UNKNOWNUID);
-        else return(SYERR);
-    }
-    if ( strcmp(pw->pw_name,req->name) != 0 ) {
-        rtcp_log(LOG_ERR,"your uid does not match your login name\n");
-        if ( hdr->reqtype == RQST_INFO ) return(UIDMISMATCH);
-        else return(SYERR);
-    }
-
-    if ( pw->pw_gid != req->gid ) {
-        setgrent();
-        while ( (gr = getgrent()) ) {
-            if ( pw->pw_gid == gr->gr_gid ) continue;
-            for ( gr_mem = gr->gr_mem; gr_mem != NULL && *gr_mem != NULL; gr_mem++ ) 
-                if ( !strcmp(*gr_mem,req->name) ) break;
-            if ( gr_mem != NULL && *gr_mem != NULL && !strcmp(*gr_mem,req->name) ) break;
-        }
-        endgrent();
-        if ( (gr_mem == NULL || *gr_mem == NULL || strcmp(*gr_mem,req->name)) &&
-             (rtcpd_ChkNewAcct(req,pw,req->gid) < 0) ) {
-            rtcp_log(LOG_ERR,"your gid does not match your uid\n") ;
-            if ( hdr->reqtype == RQST_INFO ) return(UNKNOWNGID);
-            else return(SYERR);
-        }
     }
 
     authorized = 0;
@@ -494,11 +426,11 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
     retval = rtcp_CheckClientAuth(hdr,req);
     if ( retval == 0 ) { 
 #if !defined(_WIN32)
-        if ( setgid(req->gid) == -1 ) {
+        if ( setgid((gid_t)req->gid) == -1 ) {
             rtcp_log(LOG_ERR,"setgid(%d): %s\n",req->gid,sstrerror(errno));
             return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
         }
-        if ( setuid(req->uid) == -1 ) {
+        if ( setuid((uid_t)req->uid) == -1 ) {
             rtcp_log(LOG_ERR,"setuid(%d): %s\n",req->uid,sstrerror(errno));
             return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
         }

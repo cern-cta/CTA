@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.31 $ $Date: 2000/03/09 15:49:59 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.32 $ $Date: 2000/03/10 14:38:47 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -34,8 +34,10 @@ extern char *geterr();
 #include <signal.h>
 
 #include <pwd.h>
+#include <grp.h>
 #include <Castor_limits.h>
 #include <Cglobals.h>
+#include <Cpwd.h>
 #include <sacct.h>
 #include <log.h>
 #include <trace.h>
@@ -48,6 +50,12 @@ extern char *geterr();
 #include <rtcp_server.h>
 #include <Ctape_api.h>
 #include <serrno.h>
+#if defined(sgi)
+/*
+ * Workaround for SGI flags in grp.h
+ */
+extern struct group *getgrent();
+#endif /* IRIX */
 
 char rtcp_cmds[][10] = RTCOPY_CMD_STRINGS;
 
@@ -98,13 +106,87 @@ int rtcpd_CheckNoMoreTapes() {
     }
     return(0);
 }
+/*
+ * Check that client account code exists for requested group 
+ */
+static int rtcpd_ChkNewAcct(char *acctstr,struct passwd *pwd,gid_t gid) {
+    char buf[BUFSIZ] ;
+    char * def_acct ;
+    struct group * gr ;
+    char * getacctent() ;
+
+    if ( acctstr == NULL || pwd == NULL ) return(-1);
+    acctstr[0]= '\0' ;
+    /* get default account */
+    if ( getacctent(pwd,NULL,buf,sizeof(buf)) == NULL ) return(-1);
+    if ( strtok(buf,":") == NULL || (def_acct= strtok(NULL,":")) == NULL ) return(-1);
+    if ( strlen(def_acct) == 6 && *(def_acct+3) == '$' &&   /* uuu$gg */
+         (gr= getgrgid((gid_t)gid)) ) {
+        strncpy(acctstr,def_acct,4) ;
+        strcpy(acctstr+4,gr->gr_name) ; /* new uuu$gg */
+        if ( getacctent(pwd,acctstr,buf,sizeof(buf)) )
+            return(0);      /* newacct was executed */
+    }
+    acctstr[0]= '\0' ;
+    return(-1);
+}
+
 
 /*
- * Routine to check and authorize client.
- * Normally all checks have been done by VDQM but we may want
- * add local checks for the future.
+ * Routine to check and authorize client. This routine should be called
+ * from main thread. It's inherently thread unsafe because of getgrent(). 
  */
-static int rtcpd_CheckClient(rtcpClientInfo_t *client) {
+int rtcpd_CheckClient(int _uid, int _gid, char *name, 
+                      char *acctstr, int *rc) {
+    struct passwd *pw;
+    struct group *gr;
+    char **gr_mem;
+    uid_t uid;
+    gid_t gid;
+
+    if ( name == NULL || acctstr == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+    uid = (uid_t)_uid;
+    gid = (gid_t)_gid;
+    if ( rc != NULL ) *rc = 0;
+
+    if ( uid < 100 ) {
+        rtcp_log(LOG_ERR,"request from uid smaller than 100 are rejected\n");
+        if ( rc != NULL ) *rc = PERMDENIED;
+        return(-1);
+    }
+    if ( (pw = Cgetpwuid(uid)) == NULL ) {
+        rtcp_log(LOG_ERR,"your uid is not defined on this server\n");
+        if ( rc != NULL ) *rc = UNKNOWNUID;
+        return(-1);
+    }
+    if ( strcmp(pw->pw_name,name) != 0 ) {
+        rtcp_log(LOG_ERR,"your uid does not match your login name\n");
+        if ( rc != NULL ) *rc = UIDMISMATCH;
+        return(-1);
+    }
+    if ( pw->pw_gid != gid ) {
+        setgrent();
+        while ( (gr = getgrent()) ) {
+            if ( pw->pw_gid == gr->gr_gid ) continue;
+            for ( gr_mem = gr->gr_mem; gr_mem != NULL && *gr_mem != NULL;
+                  gr_mem++ ) if ( !strcmp(*gr_mem,name) ) break;
+
+            if ( gr_mem != NULL && *gr_mem != NULL && 
+                 !strcmp(*gr_mem,name) ) break;
+        }
+        endgrent();
+        if ( (gr_mem == NULL || *gr_mem == NULL || 
+              strcmp(*gr_mem,name)) &&
+             (rtcpd_ChkNewAcct(acctstr,pw,gid) < 0) ) {
+            rtcp_log(LOG_ERR,"your gid does not match your uid\n") ;
+            if ( rc != NULL ) *rc = UNKNOWNGID;
+            return(-1);
+        }
+    }
+
     return(0);
 }
 
@@ -876,12 +958,14 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     rtcpClientInfo_t *client;
     tape_list_t *tape, *nexttape;
     file_list_t *nextfile;
-    int rc, retry, reqtype, errmsglen,status, CLThId;
+    int rc, retry, reqtype, errmsglen,status, save_errno, CLThId;
     char *errmsg, *msgtxtbuf;
     static int thPoolId = -1;
     static int thPoolSz = -1;
     struct passwd *pwd;
     char *cmd = NULL;
+    char acctstr[7] = "";
+    char envacct[20];
 #if !defined(_WIN32) && !defined(hpux)
     /*
      * sigaction exists on hpux but it's just a mess with their
@@ -995,13 +1079,14 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     /*
      * Contact the client and get the request. First check if OK.
      */
-    rc = rtcpd_CheckClient(client);
+    rc = rtcpd_CheckClient((int)client->uid,(int)client->gid,
+                           client->name,acctstr,NULL);
     if ( rc == -1 ) {
         /*
          * Client not authorised
          */
-        rtcp_log(LOG_ERR,"rtcpd_MainCntl() client (%d,%d)@%s not authorised\n",
-                 client->uid,client->gid,client->clienthost);
+        rtcp_log(LOG_ERR,"rtcpd_MainCntl() %s(%d,%d)@%s not authorised\n",
+                 client->name,client->uid,client->gid,client->clienthost);
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
         return(-1);
     }
@@ -1125,17 +1210,16 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     /*
      * Log start message
      */
-    pwd = getpwuid(client->uid);
     if ( tapereq.mode == WRITE_ENABLE ) {
         rtcp_log(LOG_INFO,"cpdsktp request by %s (%d,%d) from %s\n",
-                 pwd->pw_name,client->uid,client->gid,client->clienthost);
+                 client->name,client->uid,client->gid,client->clienthost);
     } else {
         if ( tape->file != NULL ) { 
             rtcp_log(LOG_INFO,"cptpdsk request by %s (%d,%d) from %s\n",
-                     pwd->pw_name,client->uid,client->gid,client->clienthost);
+                     client->name,client->uid,client->gid,client->clienthost);
         } else {
             rtcp_log(LOG_INFO,"tpdump request by %s (%d,%d) from %s\n",
-                     pwd->pw_name,client->uid,client->gid,client->clienthost);
+                     client->name,client->uid,client->gid,client->clienthost);
         }
     }
 
@@ -1147,19 +1231,28 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      * On UNIX: set client UID/GID
      */
 #if !defined(_WIN32)
-    rc = setgid(client->gid);
+    rc = setgid((gid_t)client->gid);
+    save_errno = errno;
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() setgid(%d): %s\n",
-            client->gid,sstrerror(errno));
+            client->gid,sstrerror(save_errno));
         (void)rtcpd_AppendClientMsg(tape,NULL,"setgid(%d): %s",
-            client->gid,sstrerror(serrno));
+            client->gid,sstrerror(save_errno));
     } else {
-        rc = setuid(client->uid);
+        rc = setuid((uid_t)client->uid);
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"rtcpd_MainCntl() setuid(%d): %s\n",
-                client->uid,sstrerror(errno));
+                client->uid,sstrerror(save_errno));
             (void)rtcpd_AppendClientMsg(tape,NULL,"setuid(%d): %s",
-                client->uid,sstrerror(serrno));
+                client->uid,sstrerror(save_errno));
+        }
+        if ( acctstr != '\0' ) {
+            (void) sprintf(envacct,"ACCOUNT=%s",acctstr);
+            if ( putenv(envacct) != 0 ) {
+                rtcp_log(LOG_ERR,"putenv(%s) failed\n",envacct);
+                (void)rtcpd_AppendClientMsg(tape,NULL,"putenv(%s): %s",
+                      acctstr,sstrerror(save_errno));
+            }
         }
     }
     (void)rtcpd_PrintCmd(tape);

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.22 $ $Date: 2000/03/02 16:10:00 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.23 $ $Date: 2000/03/10 14:38:45 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1495,7 +1495,7 @@ static int rtcpc_v_opt(int mode,
 
             if ( *tapereq->vsn == '\0' ) {
                 if ( (q = strstr(p,":")) != NULL ) *q = '\0';
-                if ( strlen(p) > CA_MAXVIDLEN ) {
+                if ( strlen(p) > CA_MAXVSNLEN ) {
                     rtcp_log(LOG_ERR,"INVALID VSN SPECIFIED %s\n",p);
                     serrno = EINVAL;
                     rc = -1;
