@@ -1,5 +1,5 @@
 /*
- * $Id: xyopen.c,v 1.6 2000/05/29 16:42:07 obarring Exp $
+ * $Id: xyopen.c,v 1.7 2001/06/17 14:35:17 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.6 $ $Date: 2000/05/29 16:42:07 $ CERN/IT/PDP/DM Frederic Hemmer, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.7 $ $Date: 2001/06/17 14:35:17 $ CERN/IT/PDP/DM Frederic Hemmer, F. Hassine";
 #endif /* not lint */
 
 /* xyopen.c     Remote File I/O - Open a Fortran Logical Unit           */
@@ -42,6 +42,7 @@ static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.6 $ $Date: 2000/
 
 RFILE DLL_DECL *ftnlun[MAXFTNLUN];       /* Fortran logical units       */
 
+extern char *getacct();
 extern int DLL_DECL switch_open();
 #ifndef linux
 extern char *sys_errlist[];     /* system error list                    */
