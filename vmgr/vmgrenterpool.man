@@ -1,0 +1,35 @@
+.\" @(#)$RCSfile: vmgrenterpool.man,v $ $Revision: 1.1 $ $Date: 2000/03/04 14:43:03 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRENTERPOOL 1 "$Date: 2000/03/04 14:43:03 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrenterpool \- define a new tape pool in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B vmgrenterpool
+[
+.BI --gid " pool_group"
+]
+.BI --name " pool_name"
+[
+.BI --uid " pool_user"
+]
+.SH DESCRIPTION
+.B vmgrenterpool
+defines a new tape pool in the CASTOR Volume Manager.
+.TP
+.I pool_group
+if greater than zero, the tape pool is restricted to this group gid.
+.TP
+.I pool_name
+is the name of the tape pool.
+It must be at most CA_MAXPOOLNAMELEN characters long.
+.TP
+.I pool_user
+if greater than zero, the tape pool is restricted to this user uid.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.B vmgr_enterpool(3)

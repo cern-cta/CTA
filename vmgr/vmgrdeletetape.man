@@ -1,0 +1,24 @@
+.\" @(#)$RCSfile: vmgrdeletetape.man,v $ $Revision: 1.1 $ $Date: 2000/03/04 14:43:02 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRDELETETAPE 1 "$Date: 2000/03/04 14:43:02 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrdeletetape \- remove a tape from the CASTOR Volume Manager
+.SH SYNOPSIS
+.B vmgrdeletetape
+.BI -V " vid"
+.SH DESCRIPTION
+.B vmgrdeletetape
+removes a tape from the CASTOR Volume Manager.
+.TP
+.I vid
+is the volume visual identifier.
+It must be at most CA_MAXVIDLEN characters long.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR vmgr_deletetape(3) ,
+.B vmgrentertape(1)

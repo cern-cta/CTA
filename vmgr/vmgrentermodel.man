@@ -1,0 +1,41 @@
+.\" @(#)$RCSfile: vmgrentermodel.man,v $ $Revision: 1.1 $ $Date: 2000/03/04 14:43:03 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRENTERMODEL 1 "$Date: 2000/03/04 14:43:03 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrentermodel \- enter a new model of cartridge in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B vmgrentermodel
+[
+.BI --mc " media_cost"
+] [
+.BI --ml " media_letter"
+]
+.BI --mo " model"
+.BI --nc " native_capacity"
+.SH DESCRIPTION
+.B vmgrentermodel
+enters a new model of cartridge in the CASTOR Volume Manager.
+.TP
+.I media_cost
+in Swiss Francs.
+.TP
+.I media_letter
+is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood
+),
+"J" for IBM 3590, "R" for STK 9840.
+.TP
+.I model
+is the model of cartridge.
+It must be at most CA_MAXMODELLEN characters long.
+.TP
+.I native_capacity
+in bytes. The number may also have a suffix M or G to indicate Mbyte and
+Gbyte respectively.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.B vmgr_entermodel(3)

@@ -1,0 +1,116 @@
+.\" @(#)$RCSfile: vmgrentertape.man,v $ $Revision: 1.1 $ $Date: 2000/03/04 14:43:03 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRENTERTAPE 1 "$Date: 2000/03/04 14:43:03 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrentertape \- enter a new tape in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B vmgrentertape
+[
+.BI -d " density"
+]
+.BI -g " dgn"
+[
+.BI -l " lbltype"
+] [
+.BI -P " poolname"
+]
+.BI -V " vid"
+[
+.BI -v " vsn"
+] [
+.BI --ma " manufacturer"
+] [
+.BI --ml " media_letter"
+]
+.BI --mo " model"
+[
+.BI --po " poolname"
+] [
+.BI --sn " sn"
+] [
+.BI --st " status"
+]
+.SH DESCRIPTION
+.B vmgrentertape
+enters a new tape in the CASTOR Volume Manager.
+.TP
+.I density
+The supported alphanumeric densities are:
+.br
+.B 10G
+or
+.B 10GC
+for IBM 3590 cartridges,
+.BR 10G ,
+.BR 10GC ,
+.BR 25G ,
+.BR 25GC ,
+.B 50G
+or
+.B 50GC
+for Redwood cartridges,
+.B 20G
+or
+.B 20GC
+for STK 9840 cassettes.
+.TP
+.I dgn
+The device group name must be a member of an installation defined set of
+"device groups".
+.TP
+.I lbltype
+may be
+.BR al ,
+.B nl
+or
+.BR sl .
+Default is
+.BR al .
+.TP
+.I vid
+is the volume visual identifier.
+It must be at most CA_MAXVIDLEN characters long.
+.TP
+.I vsn
+specifies the magnetically recorded volume serial number of the tape.
+It must be at most six characters long.
+.TP
+.I manufacturer
+is an alphanumeric field CA_MAXMANUFLEN bytes long.
+.TP
+.I media_letter
+is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood),
+"J" for IBM 3590, "R" for STK 9840.
+.TP
+.I model
+is the model of cartridge.
+It must be at most CA_MAXMODELLEN characters long.
+.TP
+.I poolname
+is the tape pool name. It must be at most CA_MAXPOOLNAMELEN characters long.
+.TP
+.I sn
+The cartridge serial number is an alphanumeric field CA_MAXSNLEN bytes long.
+.TP
+.I status
+can be set to a combination of
+.BR TAPE_FULL ,
+.BR DISABLED ,
+.BR EXPORTED
+and
+.BR TAPE_RDONLY .
+.LP
+Only
+.IR vid ,
+.I dgn
+and
+.I model
+are mandatory. The other fields can be set later.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.B vmgr_entertape(3)
