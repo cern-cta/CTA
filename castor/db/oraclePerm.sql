@@ -158,19 +158,19 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
         (srId IN INTEGER, fileSystemId IN INTEGER,
          dci OUT INTEGER, rpath OUT VARCHAR,
          rstatus OUT NUMBER, sources OUT castor.DiskCopy_Cur,
-         rclient OUT INTEGER, rDiskCopyId OUT VARCHAR,
+         rDiskCopyId OUT VARCHAR,
          reuid OUT INTEGER, regid OUT INTEGER) AS
   cfid INTEGER;
   fid INTEGER;
   nh VARCHAR(2048);
   rFsWeight NUMBER;
 BEGIN
- -- Get IClient and uid, gid
- SELECT client, euid, egid INTO rclient, reuid, regid FROM SubRequest,
-      (SELECT client, id, euid, egid from StageGetRequest UNION
-       SELECT client, id, euid, egid from StagePrepareToGetRequest UNION
-       SELECT client, id, euid, egid from StageUpdateRequest UNION
-       SELECT client, id, euid, egid from StagePrepareToUpdateRequest) Request
+ -- Get and uid, gid
+ SELECT euid, egid INTO reuid, regid FROM SubRequest,
+      (SELECT id, euid, egid from StageGetRequest UNION
+       SELECT id, euid, egid from StagePrepareToGetRequest UNION
+       SELECT id, euid, egid from StageUpdateRequest UNION
+       SELECT id, euid, egid from StagePrepareToUpdateRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
  -- Try to find local DiskCopy
  dci := 0;
@@ -242,15 +242,12 @@ END;
 /* PL/SQL method implementing putStart */
 CREATE OR REPLACE PROCEDURE putStart
         (srId IN INTEGER, fileSystemId IN INTEGER,
-         rclient OUT INTEGER, rdcId OUT INTEGER,
+         rdcId OUT INTEGER,
          rdcStatus OUT INTEGER, rdcPath OUT VARCHAR,
          rdcDiskCopyId OUT VARCHAR) AS
 BEGIN
- -- Get IClient
- SELECT client, diskCopy INTO rclient, rdcId FROM SubRequest,
-      (SELECT client, id from StagePutRequest UNION
-       SELECT client, id from StagePrepareToPutRequest) Request
-  WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
+ -- Get diskCopy Id
+ SELECT diskCopy INTO rdcId FROM SubRequest WHERE SubRequest.id = srId;
  -- link DiskCopy and FileSystem and update DiskCopyStatus
  UPDATE DiskCopy SET status = 6, -- DISKCOPY_STAGEOUT
                      fileSystem = fileSystemId
@@ -258,7 +255,6 @@ BEGIN
   RETURNING status, path, diskcopyId
   INTO rdcStatus, rdcPath, rdcDiskCopyId;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
-  rclient := 0;
 END;
 
 /* PL/SQL method implementing updateAndCheckSubRequest */

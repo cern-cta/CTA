@@ -25,7 +25,6 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
 #include "castor/rh/GetUpdateStartResponse.hpp"
 #include "castor/rh/Response.hpp"
@@ -123,22 +122,6 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Crh_GetUpdateStartResponse_setId(castor::rh::GetUpdateStartResponse* instance, u_signed64 new_var) {
     instance->setId(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_GetUpdateStartResponse_client
-  //----------------------------------------------------------------------------
-  int Crh_GetUpdateStartResponse_client(castor::rh::GetUpdateStartResponse* instance, castor::IClient** var) {
-    *var = instance->client();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_GetUpdateStartResponse_setClient
-  //----------------------------------------------------------------------------
-  int Crh_GetUpdateStartResponse_setClient(castor::rh::GetUpdateStartResponse* instance, castor::IClient* new_var) {
-    instance->setClient(new_var);
     return 0;
   }
 

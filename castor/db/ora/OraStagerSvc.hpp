@@ -297,13 +297,12 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Handles ths start of a Get or Update job.
+         * Handles the start of a Get or Update job.
          * Schedules the corresponding SubRequest on a given
          * FileSystem and returns the DiskCopy to use for data
-         * access, as well as the IClient object to use for
-         * the reply to the client.
-         * Note that deallocation of the DiskCopy and IClient
-         * is the responsability of the caller.
+         * access.
+         * Note that deallocation of the DiskCopy is the
+         * responsability of the caller.
          * Depending on the available DiskCopies for the file
          * the SubRequest deals with, we have different cases :
          *  - no DiskCopy at all and file is not of size 0 :
@@ -330,13 +329,6 @@ namespace castor {
          * sources remains empty.
          * @param subreq  the SubRequest to consider
          * @param fileSystem the selected FileSystem
-         * @param diskCopy the DiskCopy to use for the data access or
-         * a null pointer if the data access will have to wait
-         * and there is nothing more to be done. Even in case
-         * of a non null pointer, the data access will have to
-         * wait for a disk to disk copy if the returned DiskCopy
-         * is in DISKCOPY_WAITDISKTODISKCOPY status. This
-         * disk to disk copy is the responsability of the caller.
          * @param sources this is a list of DiskCopies that
          * can be used as source of a Disk to Disk copy. This
          * list is never empty when diskCopy has status
@@ -345,13 +337,18 @@ namespace castor {
          * deallocated by the caller.
          * @param emptyFile whether the resulting diskCopy
          * deals with the recall of an empty file
-         * @return the IClient object to use for client reply
+         * @return the DiskCopy to use for the data access or
+         * a null pointer if the data access will have to wait
+         * and there is nothing more to be done. Even in case
+         * of a non null pointer, the data access will have to
+         * wait for a disk to disk copy if the returned DiskCopy
+         * is in DISKCOPY_WAITDISKTODISKCOPY status. This
+         * disk to disk copy is the responsability of the caller.
          * @exception Exception in case of error
          */
-        virtual castor::IClient* getUpdateStart
+        virtual castor::stager::DiskCopy* getUpdateStart
         (castor::stager::SubRequest* subreq,
          castor::stager::FileSystem* fileSystem,
-         castor::stager::DiskCopy** diskCopy,
          std::list<castor::stager::DiskCopyForRecall*>& sources,
          bool* emptyFile)
           throw (castor::exception::Exception);
@@ -361,20 +358,16 @@ namespace castor {
          * Links the DiskCopy associated to the SubRequest to
          * the given FileSystem and updates the DiskCopy status
          * to DISKCOPY_STAGEOUT.
-         * Returns the IClient object to use for the reply
-         * to the client and the DiskCopy to use for data access.
-         * Note that deallocation of the DiskCopy and IClient
-         * is the responsability of the caller.
+         * Note that deallocation of the DiskCopy is the
+         * responsability of the caller.
          * @param subreq  the SubRequest to consider
          * @param fileSystem the selected FileSystem
-         * @param diskCopy the DiskCopy to use for the data access
-         * @return the IClient object to use for client reply
+         * @return the DiskCopy to use for the data access
          * @exception Exception in case of error
          */      
-        virtual castor::IClient* putStart
+        virtual castor::stager::DiskCopy* putStart
         (castor::stager::SubRequest* subreq,
-         castor::stager::FileSystem* fileSystem,
-         castor::stager::DiskCopy** diskCopy)
+         castor::stager::FileSystem* fileSystem)
           throw (castor::exception::Exception);
 
         /**

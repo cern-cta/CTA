@@ -352,13 +352,12 @@ int Cstager_IStagerSvc_isSubRequestToSchedule
  unsigned int* sourcesNb);
 
 /**
- * Handles ths start of a Get or Update job.
+ * Handles the start of a Get or Update job.
  * Schedules the corresponding SubRequest on a given
  * FileSystem and returns the DiskCopy to use for data
- * access, as well as the IClient object to use for
- * the reply to the client.
- * Note that deallocation of the DiskCopy and IClient
- * is the responsability of the caller.
+ * access.
+ * Note that deallocation of the DiskCopy is the
+ * responsability of the caller.
  * Depending on the available DiskCopies for the file
  * the SubRequest deals with, we have different cases :
  *  - no DiskCopy at all and file is not of size 0 :
@@ -386,13 +385,6 @@ int Cstager_IStagerSvc_isSubRequestToSchedule
  * @param stgSvc the IStagerSvc used
  * @param subreq  the SubRequest to consider
  * @param fileSystem the selected FileSystem
- * @param diskCopy the DiskCopy to use for the data access or
- * a null pointer if the data access will have to wait
- * and there is nothing more to be done. Even in case
- * of a non null pointer, the data access will have to
- * wait for a disk to disk copy if the returned DiskCopy
- * is in DISKCOPY_WAITDISKTODISKCOPY status. This
- * disk to disk copy is the responsability of the caller.
  * @param sources this is a list of DiskCopies that
  * can be used as source of a Disk to Disk copy. This
  * list is never empty when diskCopy has status
@@ -402,7 +394,13 @@ int Cstager_IStagerSvc_isSubRequestToSchedule
  * @param sourcesNb the length of the sources list
  * @param emptyFile 1 if the resulting diskCopy
  * deals with the recall of an empty file, 0 in all other cases
- * @param client the IClient object to use for client reply
+ * @param diskCopy the DiskCopy to use for the data access or
+ * a null pointer if the data access will have to wait
+ * and there is nothing more to be done. Even in case
+ * of a non null pointer, the data access will have to
+ * wait for a disk to disk copy if the returned DiskCopy
+ * is in DISKCOPY_WAITDISKTODISKCOPY status. This
+ * disk to disk copy is the responsability of the caller.
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -414,24 +412,20 @@ int Cstager_IStagerSvc_getUpdateStart
  struct Cstager_FileSystem_t* fileSystem,
  struct Cstager_DiskCopyForRecall_t*** sources,
  unsigned int* sourcesNb,
- struct Cstager_DiskCopy_t** diskCopy,
  int *emptyFile,
- struct C_IClient_t** client);
+ struct Cstager_DiskCopy_t** diskCopy);
 
 /**
  * Handles the start of a Put job.
  * Links the DiskCopy associated to the SubRequest to
  * the given FileSystem and updates the DiskCopy status
  * to DISKCOPY_STAGEOUT.
- * Returns the IClient object to use for the reply
- * to the client. and the DiskCopy to use for data access.
- * Note that deallocation of the DiskCopy and IClient
- * is the responsability of the caller.
+ * Note that deallocation of the DiskCopy is the
+ * responsability of the caller.
  * @param stgSvc the IStagerSvc used
  * @param subreq  the SubRequest to consider
  * @param fileSystem the selected FileSystem
  * @param diskCopy the DiskCopy to use for the data access
- * @param client the IClient object to use for client reply
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -441,7 +435,6 @@ int Cstager_IStagerSvc_putStart
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_SubRequest_t* subreq,
  struct Cstager_FileSystem_t* fileSystem,
- struct C_IClient_t** client,
  struct Cstager_DiskCopy_t** diskCopy);
 
 /**

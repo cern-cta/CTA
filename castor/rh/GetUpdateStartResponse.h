@@ -29,7 +29,6 @@
 
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
-struct C_IClient_t;
 struct C_IObject_t;
 struct Crh_GetUpdateStartResponse_t;
 struct Crh_Response_t;
@@ -108,16 +107,6 @@ int Crh_GetUpdateStartResponse_id(struct Crh_GetUpdateStartResponse_t* instance,
  * The id of this object
  */
 int Crh_GetUpdateStartResponse_setId(struct Crh_GetUpdateStartResponse_t* instance, u_signed64 new_var);
-
-/**
- * Get the value of client
- */
-int Crh_GetUpdateStartResponse_client(struct Crh_GetUpdateStartResponse_t* instance, struct C_IClient_t** var);
-
-/**
- * Set the value of client
- */
-int Crh_GetUpdateStartResponse_setClient(struct Crh_GetUpdateStartResponse_t* instance, struct C_IClient_t* new_var);
 
 /**
  * Get the value of diskCopy

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2004/12/17 10:32:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/12/17 11:13:41 $ $Author: sponcec3 $
  *
  *
  *
@@ -272,11 +272,10 @@ bool castor::stager::RemoteStagerSvc::isSubRequestToSchedule
 class GetUpdateStartResponseHandler : public castor::client::IResponseHandler {
 public:
   GetUpdateStartResponseHandler
-  (castor::IClient** result,
-   castor::stager::DiskCopy** diskCopy,
+  (castor::stager::DiskCopy** diskCopy,
    std::list<castor::stager::DiskCopyForRecall*>& sources,
    bool *emptyFile) :
-    m_result(result), m_diskCopy(diskCopy),
+    m_diskCopy(diskCopy),
     m_sources(sources),
     m_emptyFile(emptyFile){}
 
@@ -289,7 +288,6 @@ public:
       e.getMessage() << resp->errorMessage();
       throw e;
     }
-    *m_result = resp->client();
     *m_diskCopy = resp->diskCopy();
     *m_emptyFile = resp->emptyFile();
     for (std::vector<castor::stager::DiskCopyForRecall*>::iterator it =
@@ -302,8 +300,6 @@ public:
   virtual void terminate()
     throw (castor::exception::Exception) {};
 private:
-  // where to store the result
-  castor::IClient** m_result;
   // where to store the diskCopy
   castor::stager::DiskCopy** m_diskCopy;
   // where to store the sources
@@ -316,19 +312,18 @@ private:
 // -----------------------------------------------------------------------
 // getUpdateStart
 // -----------------------------------------------------------------------
-castor::IClient*
+castor::stager::DiskCopy*
 castor::stager::RemoteStagerSvc::getUpdateStart
 (castor::stager::SubRequest* subreq,
  castor::stager::FileSystem* fileSystem,
- castor::stager::DiskCopy** diskCopy,
  std::list<castor::stager::DiskCopyForRecall*>& sources,
  bool* emptyFile)
   throw (castor::exception::Exception) {
   // placeholders for the result
-  castor::IClient* result;
+  castor::stager::DiskCopy* result;
   // Build a response Handler
   GetUpdateStartResponseHandler rh
-    (&result, diskCopy, sources, emptyFile);
+    (&result, sources, emptyFile);
   // Build the GetUpdateStartRequest
   castor::stager::GetUpdateStartRequest req;
   req.setSubreqId(subreq->id());
@@ -350,9 +345,8 @@ castor::stager::RemoteStagerSvc::getUpdateStart
  */
 class PutStartResponseHandler : public castor::client::IResponseHandler {
 public:
-  PutStartResponseHandler (castor::IClient** result,
-                           castor::stager::DiskCopy** diskCopy) :
-    m_result(result), m_diskCopy(diskCopy) {}
+  PutStartResponseHandler (castor::stager::DiskCopy** diskCopy) :
+    m_diskCopy(diskCopy) {}
 
   virtual void handleResponse(castor::rh::Response& r)
     throw (castor::exception::Exception) {
@@ -363,14 +357,11 @@ public:
       e.getMessage() << resp->errorMessage();
       throw e;
     }
-    *m_result = resp->client();
     *m_diskCopy = resp->diskCopy();
   };
   virtual void terminate()
     throw (castor::exception::Exception) {};
 private:
-  // where to store the result
-  castor::IClient** m_result;
   // where to store the diskCopy
   castor::stager::DiskCopy** m_diskCopy;
 };
@@ -378,16 +369,15 @@ private:
 // -----------------------------------------------------------------------
 // putStart
 // -----------------------------------------------------------------------
-castor::IClient*
+castor::stager::DiskCopy*
 castor::stager::RemoteStagerSvc::putStart
 (castor::stager::SubRequest* subreq,
- castor::stager::FileSystem* fileSystem,
- castor::stager::DiskCopy** diskCopy)
+ castor::stager::FileSystem* fileSystem)
   throw (castor::exception::Exception) {
   // placeholders for the result
-  castor::IClient* result;
+  castor::stager::DiskCopy* result;
   // Build a response Handler
-  PutStartResponseHandler rh(&result, diskCopy);
+  PutStartResponseHandler rh(&result);
   // Build the PutStartRequest
   castor::stager::PutStartRequest req;
   req.setSubreqId(subreq->id());

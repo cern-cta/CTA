@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.14 2004/12/17 08:39:15 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.15 2004/12/17 11:13:40 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.14 $ $Date: 2004/12/17 08:39:15 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.15 $ $Date: 2004/12/17 11:13:40 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -186,7 +186,6 @@ namespace castor {
       castor::stager::FileSystem *fs = 0;
       castor::stager::SubRequest *subreq = 0;
       castor::stager::DiskCopy *dc = 0;
-      castor::IClient *cl = 0;
       std::string error;
       std::list<castor::stager::DiskCopyForRecall*> sources;
       castor::stager::StartRequest *sReq;
@@ -244,10 +243,10 @@ namespace castor {
         /* ---------------------------------- */
         if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
           STAGER_LOG_DEBUG(NULL, "Invoking getUpdateStart");
-          cl = stgSvc->getUpdateStart(subreq, fs, &dc, sources, &emptyFile);
+          dc = stgSvc->getUpdateStart(subreq, fs, sources, &emptyFile);
         } else {
           STAGER_LOG_DEBUG(NULL, "Invoking PutStart");
-          cl = stgSvc->putStart(subreq, fs, &dc);
+          dc = stgSvc->putStart(subreq, fs);
         }
 
         /* Fill DiskCopy with SubRequest           */
@@ -281,7 +280,6 @@ namespace castor {
             res.addSources(*it);
           }
         }
-        res.setClient(cl);
         res.setEmptyFile(emptyFile);
       }
 
@@ -294,7 +292,6 @@ namespace castor {
       if (fs) delete fs;
       if (subreq) delete subreq;
       if (dc) delete dc;
-      if (cl) delete cl;
       if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
         for (std::list<castor::stager::DiskCopyForRecall*>::iterator it =
                sources.begin();

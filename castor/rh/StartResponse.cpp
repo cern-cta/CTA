@@ -26,7 +26,6 @@
 
 // Include Files
 #include "castor/Constants.hpp"
-#include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/rh/Response.hpp"
@@ -42,7 +41,6 @@
 castor::rh::StartResponse::StartResponse() throw() :
   Response(),
   m_id(0),
-  m_client(0),
   m_diskCopy(0) {
 };
 
@@ -69,12 +67,6 @@ void castor::rh::StartResponse::print(std::ostream& stream,
   // Output of all members
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "Client : " << std::endl;
-  if (0 != m_client) {
-    m_client->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
   stream << indent << "DiskCopy : " << std::endl;
   if (0 != m_diskCopy) {
     m_diskCopy->print(stream, indent + "  ", alreadyPrinted);

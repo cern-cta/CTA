@@ -29,7 +29,6 @@
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
-#include "castor/IClient.hpp"
 #include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
@@ -139,7 +138,6 @@ void castor::io::StreamGetUpdateStartResponseCnv::marshalObject(castor::IObject*
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->client(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->diskCopy(), address, alreadyDone);
     address->stream() << obj->sources().size();
     for (std::vector<castor::stager::DiskCopyForRecall*>::iterator it = obj->sources().begin();
@@ -166,9 +164,6 @@ castor::IObject* castor::io::StreamGetUpdateStartResponseCnv::unmarshalObject(ca
   // Fill object with associations
   castor::rh::GetUpdateStartResponse* obj = 
     dynamic_cast<castor::rh::GetUpdateStartResponse*>(object);
-  ad.setObjType(castor::OBJ_INVALID);
-  IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setClient(dynamic_cast<castor::IClient*>(objClient));
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objDiskCopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setDiskCopy(dynamic_cast<castor::stager::DiskCopy*>(objDiskCopy));

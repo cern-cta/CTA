@@ -38,7 +38,6 @@ namespace castor {
   // Forward declarations
   class ObjectSet;
   class IObject;
-  class IClient;
 
   // Forward declarations
   namespace stager {
@@ -125,22 +124,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_client
-       * @return the value of m_client
-       */
-      castor::IClient* client() const {
-        return m_client;
-      }
-
-      /**
-       * Set the value of m_client
-       * @param new_var the new value of m_client
-       */
-      void setClient(castor::IClient* new_var) {
-        m_client = new_var;
-      }
-
-      /**
        * Get the value of m_diskCopy
        * @return the value of m_diskCopy
        */
@@ -160,8 +143,6 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
-
-      castor::IClient* m_client;
 
       castor::stager::DiskCopy* m_diskCopy;
 

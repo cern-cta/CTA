@@ -29,7 +29,6 @@
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
-#include "castor/IClient.hpp"
 #include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
@@ -133,7 +132,6 @@ void castor::io::StreamStartResponseCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->client(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->diskCopy(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
@@ -154,9 +152,6 @@ castor::IObject* castor::io::StreamStartResponseCnv::unmarshalObject(castor::io:
   // Fill object with associations
   castor::rh::StartResponse* obj = 
     dynamic_cast<castor::rh::StartResponse*>(object);
-  ad.setObjType(castor::OBJ_INVALID);
-  IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setClient(dynamic_cast<castor::IClient*>(objClient));
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objDiskCopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setDiskCopy(dynamic_cast<castor::stager::DiskCopy*>(objDiskCopy));

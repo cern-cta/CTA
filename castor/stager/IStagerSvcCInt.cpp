@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2004/12/17 10:32:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2004/12/17 11:13:41 $ $Author: sponcec3 $
  *
  * 
  *
@@ -361,15 +361,14 @@ extern "C" {
    castor::stager::FileSystem* fileSystem,
    castor::stager::DiskCopyForRecall*** sources,
    unsigned int* sourcesNb,
-   castor::stager::DiskCopy** diskCopy,
    int *emptyFile,
-   castor::IClient** client) {
+   castor::stager::DiskCopy** diskCopy) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       bool ef;
       std::list<castor::stager::DiskCopyForRecall*> sourceslist;
-      *client = stgSvc->stgSvc->getUpdateStart
-        (subreq, fileSystem, diskCopy, sourceslist, &ef);
+      *diskCopy = stgSvc->stgSvc->getUpdateStart
+        (subreq, fileSystem, sourceslist, &ef);
       *emptyFile = ef ? 1 : 0;
       *sourcesNb = sourceslist.size();
       if (*sourcesNb > 0) {
@@ -396,12 +395,11 @@ extern "C" {
   (struct Cstager_IStagerSvc_t* stgSvc,
    castor::stager::SubRequest* subreq,
    castor::stager::FileSystem* fileSystem,
-   castor::IClient** client,
    castor::stager::DiskCopy** diskCopy) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      *client =
-        stgSvc->stgSvc->putStart(subreq, fileSystem, diskCopy);
+      *diskCopy =
+        stgSvc->stgSvc->putStart(subreq, fileSystem);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

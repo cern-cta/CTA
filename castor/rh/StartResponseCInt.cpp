@@ -25,7 +25,6 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
 #include "castor/rh/Response.hpp"
 #include "castor/rh/StartResponse.hpp"
@@ -157,22 +156,6 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Crh_StartResponse_setId(castor::rh::StartResponse* instance, u_signed64 new_var) {
     instance->setId(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_StartResponse_client
-  //----------------------------------------------------------------------------
-  int Crh_StartResponse_client(castor::rh::StartResponse* instance, castor::IClient** var) {
-    *var = instance->client();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_StartResponse_setClient
-  //----------------------------------------------------------------------------
-  int Crh_StartResponse_setClient(castor::rh::StartResponse* instance, castor::IClient* new_var) {
-    instance->setClient(new_var);
     return 0;
   }
 

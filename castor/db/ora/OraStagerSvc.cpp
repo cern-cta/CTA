@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.93 $ $Release$ $Date: 2004/12/17 10:32:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.94 $ $Release$ $Date: 2004/12/17 11:13:40 $ $Author: sponcec3 $
  *
  *
  *
@@ -1008,7 +1008,7 @@ bool castor::db::ora::OraStagerSvc::isSubRequestToSchedule
         createStatement(s_isSubRequestToScheduleStatementString);
       m_isSubRequestToScheduleStatement->registerOutParam
         (2, oracle::occi::OCCIINT);
-      m_getUpdateStartStatement->registerOutParam
+      m_isSubRequestToScheduleStatement->registerOutParam
         (3, oracle::occi::OCCICURSOR);
     }
     // execute the statement and see whether we found something
@@ -1068,11 +1068,10 @@ bool castor::db::ora::OraStagerSvc::isSubRequestToSchedule
 // -----------------------------------------------------------------------
 // getUpdateStart
 // -----------------------------------------------------------------------
-castor::IClient*
+castor::stager::DiskCopy*
 castor::db::ora::OraStagerSvc::getUpdateStart
 (castor::stager::SubRequest* subreq,
  castor::stager::FileSystem* fileSystem,
- castor::stager::DiskCopy** diskCopy,
  std::list<castor::stager::DiskCopyForRecall*>& sources,
  bool* emptyFile)
   throw (castor::exception::Exception) {
@@ -1091,13 +1090,11 @@ castor::db::ora::OraStagerSvc::getUpdateStart
       m_getUpdateStartStatement->registerOutParam
         (6, oracle::occi::OCCICURSOR);
       m_getUpdateStartStatement->registerOutParam
-        (7, oracle::occi::OCCIDOUBLE);
+        (7, oracle::occi::OCCISTRING, 2048);
       m_getUpdateStartStatement->registerOutParam
-        (8, oracle::occi::OCCISTRING, 2048);
+        (8, oracle::occi::OCCIINT);
       m_getUpdateStartStatement->registerOutParam
         (9, oracle::occi::OCCIINT);
-      m_getUpdateStartStatement->registerOutParam
-        (10, oracle::occi::OCCIINT);
     }
     // execute the statement and see whether we found something
     m_getUpdateStartStatement->setDouble(1, subreq->id());
@@ -1111,48 +1108,15 @@ castor::db::ora::OraStagerSvc::getUpdateStart
         << "getUpdateStart : unable to schedule SubRequest.";
       throw ex;
     }
-    // First get the IClient
-    u_signed64 clientId
-      = (u_signed64)m_getUpdateStartStatement->getDouble(7);
-    // If no IClient returned, fail
-    if (0 == clientId) {
-      rollback();
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "getUpdateStart : No client found.";
-      throw ex;
-    }
-    unsigned long euid = m_getUpdateStartStatement->getInt(9);
-    unsigned long egid = m_getUpdateStartStatement->getInt(10);
-    // Get Client Object and cast it into IClient
-    castor::IObject *iobj = cnvSvc()->getObjFromId(clientId);
-    if (0 == iobj) {
-      rollback();
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "GetUpdateStart : Could not get IClient object from id "
-        << clientId;
-      throw ex;
-    }
-    castor::IClient *result =
-      dynamic_cast<castor::IClient*>(iobj);
-    if (0 == result) {
-      delete iobj;
-      rollback();
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "GetUpdateStart : IClient object had a bad type : "
-        << castor::ObjectsIdStrings[clientId];
-      throw ex;
-    }
+    unsigned long euid = m_getUpdateStartStatement->getInt(8);
+    unsigned long egid = m_getUpdateStartStatement->getInt(9);
     // Check result
     u_signed64 id
       = (u_signed64)m_getUpdateStartStatement->getDouble(3);
     // If no DiskCopy returned, return
     if (0 == id) {
-      *diskCopy = 0;
       cnvSvc()->commit();
-      return result;
+      return 0;
     }
     // In case a diskcopy was created in WAITTAPERECALL
     // status, create the associated TapeCopy and Segments
@@ -1184,21 +1148,21 @@ castor::db::ora::OraStagerSvc::getUpdateStart
       delete dc;
       // commit and return
       cnvSvc()->commit();
-      *diskCopy = 0;
-      return result;
+      return 0;
     }
     // Else create a resulting DiskCopy
-    *diskCopy = new castor::stager::DiskCopy();
-    (*diskCopy)->setId(id);
-    (*diskCopy)->setPath(m_getUpdateStartStatement->getString(4));
+    castor::stager::DiskCopy* result =
+      new castor::stager::DiskCopy();
+    result->setId(id);
+    result->setPath(m_getUpdateStartStatement->getString(4));
     if (98 == status) {
-      (*diskCopy)->setStatus(castor::stager::DISKCOPY_WAITDISK2DISKCOPY);
+      result->setStatus(castor::stager::DISKCOPY_WAITDISK2DISKCOPY);
       *emptyFile = true;
     } else {
-      (*diskCopy)->setStatus
+      result->setStatus
         ((enum castor::stager::DiskCopyStatusCodes) status);
     }
-    (*diskCopy)->setDiskcopyId(m_getUpdateStartStatement->getString(8));
+    result->setDiskcopyId(m_getUpdateStartStatement->getString(7));
     if (status == castor::stager::DISKCOPY_WAITDISK2DISKCOPY) {
       try {
         oracle::occi::ResultSet *rs =
@@ -1243,13 +1207,13 @@ castor::db::ora::OraStagerSvc::getUpdateStart
 // -----------------------------------------------------------------------
 // putStart
 // -----------------------------------------------------------------------
-castor::IClient*
+castor::stager::DiskCopy*
 castor::db::ora::OraStagerSvc::putStart
 (castor::stager::SubRequest* subreq,
- castor::stager::FileSystem* fileSystem,
- castor::stager::DiskCopy** diskCopy)
+ castor::stager::FileSystem* fileSystem)
   throw (castor::exception::Exception) {
   castor::IObject *iobj = 0;
+  castor::stager::DiskCopy* result = 0;
   try {
     // Check whether the statements are ok
     if (0 == m_putStartStatement) {
@@ -1258,13 +1222,11 @@ castor::db::ora::OraStagerSvc::putStart
       m_putStartStatement->registerOutParam
         (3, oracle::occi::OCCIDOUBLE);
       m_putStartStatement->registerOutParam
-        (4, oracle::occi::OCCIDOUBLE);
+        (4, oracle::occi::OCCIINT);
       m_putStartStatement->registerOutParam
-        (5, oracle::occi::OCCIINT);
+        (5, oracle::occi::OCCISTRING, 2048);
       m_putStartStatement->registerOutParam
         (6, oracle::occi::OCCISTRING, 2048);
-      m_putStartStatement->registerOutParam
-        (7, oracle::occi::OCCISTRING, 2048);
     }
     // execute the statement and see whether we found something
     m_putStartStatement->setDouble(1, subreq->id());
@@ -1276,51 +1238,20 @@ castor::db::ora::OraStagerSvc::putStart
         << "putStart : unable to schedule SubRequest.";
       throw ex;
     }
-    // Check result
-    u_signed64 id
-      = (u_signed64)m_putStartStatement->getDouble(3);
-    // If no IClient returned, return null
-    if (0 == id) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "PutStart : No client found.";
-      throw ex;
-    }
-    // Else get the client
-    iobj = cnvSvc()->getObjFromId(id);
-    if (0 == iobj) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "PutStart : Could not get IClient object from id "
-        << id;
-      throw ex;
-    }
-    castor::IClient *result =
-      dynamic_cast<castor::IClient*>(iobj);
-    if (0 == result) {
-      delete iobj;
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "PutStart : IClient object had a bad type : "
-        << castor::ObjectsIdStrings[id];
-      throw ex;
-    }
-    // Get the DiskCopy
-    *diskCopy = new castor::stager::DiskCopy();
-    (*diskCopy)->setId((u_signed64)m_putStartStatement->getDouble(4));
-    (*diskCopy)->setStatus
+    // Get the result
+    result = new castor::stager::DiskCopy();
+    result->setId((u_signed64)m_putStartStatement->getDouble(3));
+    result->setStatus
       ((enum castor::stager::DiskCopyStatusCodes)
-       m_putStartStatement->getInt(5));
-    (*diskCopy)->setPath(m_putStartStatement->getString(6));
-    (*diskCopy)->setDiskcopyId(m_putStartStatement->getString(7));
+       m_putStartStatement->getInt(4));
+    result->setPath(m_putStartStatement->getString(5));
+    result->setDiskcopyId(m_putStartStatement->getString(6));
     // return
     cnvSvc()->commit();
     return result;
   } catch (oracle::occi::SQLException e) {
-    if (0 != iobj) delete iobj;
-    if (0 != *diskCopy) {
-      delete *diskCopy;
-      *diskCopy = 0;
+    if (0 != result) {
+      delete result;
     }
     rollback();
     castor::exception::Internal ex;
