@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.28 1999/12/09 13:39:29 jdurand Exp $
+ * $Id: Cthread.c,v 1.29 2000/01/19 11:04:08 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.28 $ $Date: 1999/12/09 13:39:29 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.29 $ $Date: 2000/01/19 11:04:08 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cthread_api.h>
@@ -1303,7 +1303,6 @@ int DLL_DECL Cthread_Join(file, line, cid, status)
     current = current->next;
     if (current->cid == cid) {
       n = 0;
-      current->joined = 1;
       break;
     }
   }
@@ -1316,6 +1315,7 @@ int DLL_DECL Cthread_Join(file, line, cid, status)
 
 #ifdef _NOCTHREAD
   n = (waitpid(current->pid,*status,WNOHANG) == current->pid ? 0 : -1);
+  current->joined = 1;
   _Cthread_destroy(file,line,current->cid);
   if (n != 0)
     serrno = SEINTERNAL;
@@ -1347,6 +1347,7 @@ int DLL_DECL Cthread_Join(file, line, cid, status)
            }
            break;
        }
+       current->joined = 1;
        _Cthread_destroy(__FILE__,__LINE__,current->cid);
   }
   return(n);
@@ -1360,7 +1361,10 @@ int DLL_DECL Cthread_Join(file, line, cid, status)
   /*
    * We can safely destroy here since the thread has exit.
    * If it was detached it has done the cleanup itself.
+   * There cannot be any concurrent access to current->joined
+   * since the thread has exit.
    */
+  current->joined = 1;
   if ( !current->detached ) 
      _Cthread_destroy(__FILE__,__LINE__,current->cid);
   return(0);
@@ -1372,7 +1376,10 @@ int DLL_DECL Cthread_Join(file, line, cid, status)
   /*
    * We can safely destroy here since the thread has exit.
    * If it was detached it has done the cleanup itself.
+   * There cannot be any concurrent access to current->joined
+   * since the thread has exit.
    */
+  current->joined = 1;
   if ( !current->detached ) 
      _Cthread_destroy(__FILE__,__LINE__,current->cid);
   return(0);
@@ -1385,7 +1392,10 @@ int DLL_DECL Cthread_Join(file, line, cid, status)
   /*
    * We can safely destroy here since the thread has exit.
    * If it was detached it has done the cleanup itself.
+   * There cannot be any concurrent access to current->joined
+   * since the thread has exit.
    */
+  current->joined = 1;
   if ( !current->detached ) 
      _Cthread_destroy(__FILE__,__LINE__,current->cid);
   return(0);
@@ -1726,6 +1736,12 @@ int _Cthread_destroy(file, line, cid)
    * status.
    */
   if ( current->detached || current->joined ) {
+#ifdef CTHREAD_DEBUG
+  if (Cthread_debug != 0)
+    log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_destroy(%d), detached=%d, joined=%d\n",
+        _Cthread_self(),cid,current->detached,current->joined);
+#endif
+
     /* It is a known process - We delete the entry */
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
     /* For threads created with _beginthreadex() we must do cleanup */
