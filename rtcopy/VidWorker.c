@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/07/29 09:38:54 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/07/29 15:17:59 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/07/29 09:38:54 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/07/29 15:17:59 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -305,10 +305,10 @@ int rtcpcld_Callback(
       getMoreWork = 1;
       msgNo = RTCPCLD_MSG_CALLBACK_GETW;
       func = "processGetMoreWorkCallback";
-      rc = processGetMoreWorkCallback(
-                                      tapereq,
-                                      filereq
-                                      );
+      if ( filereq->cprc == 0 ) rc = processGetMoreWorkCallback(
+                                                                tapereq,
+                                                                filereq
+                                                                );
     } else {
       msgNo = RTCPCLD_MSG_CALLBACK_CP;
       func = "processFileCopyCallback";
