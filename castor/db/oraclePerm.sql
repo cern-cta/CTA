@@ -10,6 +10,9 @@ CREATE INDEX I_SubRequest_Castorfile on SubRequest (castorFile);
 CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
 CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
 
+/* Constraint on FileClass name */
+ALTER TABLE FileClass ADD UNIQUE (name); 
+
 /* PL/SQL method to make a SubRequest wait on another one, linked to the given DiskCopy */
 CREATE OR REPLACE PROCEDURE makeSubRequestWait(subreqId IN INTEGER, dci IN INTEGER) AS
 BEGIN
@@ -429,7 +432,8 @@ BEGIN
     FROM Stream2TapeCopy, TapeCopy
     WHERE Stream2TapeCopy.Parent = sid
       AND Stream2TapeCopy.Child = TapeCopy.id
-      AND status = 2; -- TAPECOPY_WAITINSTREAMS
+      AND status = 2 -- TAPECOPY_WAITINSTREAMS
+      AND ROWNUM < 2;
   UPDATE Stream SET status = 0 WHERE id = sid; -- STREAM_PENDING
 EXCEPTION WHEN NO_DATA_FOUND THEN
   DELETE FROM Stream2TapeCopy WHERE Parent = sid;
