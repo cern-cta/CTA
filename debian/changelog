@@ -1,3 +1,11 @@
+castor (2.0.0-10) unstable; urgency=low
+
+  * Move job output to /var/spool/job
+  * Enabled dh_installcron
+  * Optimization of some SQL queries
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Mon, 31 Jan 2005 11:59:16 +0100
+
 castor (2.0.0-9) unstable; urgency=low
 
   * Fix in stagerJob.shell
