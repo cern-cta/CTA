@@ -95,12 +95,12 @@ int vdqm_DrvMatch(vdqm_volrec_t *vol, vdqm_drvrec_t *drv) {
      */
     if ( *drv->drv.dedicate == '\0' ) return(1);
     (void)time(&clock);
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+#if (defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32)
     (void)localtime_r(&clock,&tmstruc);
     current_tm = &tmstruc;
-#else
+#else /* (_REENTRANT || _THREAD_SAFE) && !_WIN32 */
     current_tm = localtime(&clock);
-#endif /* _REENTRANT || _THREAD_SAFE */
+#endif /* (_REENTRANT || _THREAD_SAFE) && !_WIN32 */
     VolReq = &vol->vol;
     (void) strftime(datestr,sizeof(datestr),VDQM_DEDICATE_DATEFORM,current_tm);
     (void) strftime(timestr,sizeof(timestr),VDQM_DEDICATE_TIMEFORM,current_tm);

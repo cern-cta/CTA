@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.13 $ $Date: 2000/06/15 17:07:10 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.14 $ $Date: 2000/08/22 14:05:27 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -28,9 +28,9 @@ static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.13 $ $Date
 #include <vdqm_constants.h>
 #include <vdqm.h>
 
-#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+#if (defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32)
 #define strtok(X,Y) strtok_r(X,Y,&last)
-#endif /* _REENTRANT || _THREAD_SAFE */
+#endif /* (_REENTRANT || _THREAD_SAFE) && !_WIN32 */
 
 
 static int success = 0;
