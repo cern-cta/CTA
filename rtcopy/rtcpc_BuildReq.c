@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.26 $ $Date: 2000/05/22 08:14:00 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.27 $ $Date: 2000/06/23 12:08:48 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -664,10 +664,13 @@ static int rtcpc_F_opt(int mode,
             }
             
             if ( (strcmp(valid_recfm[i],"F,-f77") == 0) ||
-                 (strcmp(valid_recfm[i],"U,bin")  == 0) ) 
-                filereq->convert |= NOF77CW;
+                 (strcmp(valid_recfm[i],"U,bin")  == 0) ) {
+                if ( filereq->convert == -1 ) filereq->convert = NOF77CW; 
+                else filereq->convert |= NOF77CW;
+            }
             
-            if ( strcmp(set_recfm[i],"U") == 0 ) 
+            if ( (strcmp(set_recfm[i],"U") == 0) &&
+                 (strcmp(valid_recfm[i],"U,bin")  != 0) ) 
                 filereq->recordlength = 0;
             
             strcpy(filereq->recfm,set_recfm[i]);
