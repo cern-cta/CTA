@@ -45,7 +45,7 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_UNKNOPT,
     RTCPCLD_MSG_WAITSEGMS,
     RTCPCLD_MSG_NOMORESEGMS,
-    RTCPCLD_MSG_RESERVED28,
+    RTCPCLD_MSG_UNEXPECTED_NEWSEGM,
     RTCPCLD_MSG_RESERVED29,
     RTCPCLD_MSG_RESERVED30
 };
@@ -86,7 +86,7 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_UNKNOPT, DLF_LVL_ERROR, "Unknown option"},
     { RTCPCLD_MSG_WAITSEGMS, DLF_LVL_SYSTEM, "Incomplete segments found. Wait for completion update"},
     { RTCPCLD_MSG_NOMORESEGMS, DLF_LVL_SYSTEM, "No more segments to process"},
-    { RTCPCLD_MSG_RESERVED28, DLF_LVL_DEBUG, ""},
+    { RTCPCLD_MSG_UNEXPECTED_NEWSEGM, DLF_LVL_ERROR, "Unexpected new segment not updated"},
     { RTCPCLD_MSG_RESERVED29, DLF_LVL_DEBUG, ""},
     { RTCPCLD_MSG_RESERVED30, DLF_LVL_DEBUG, ""}
 };
