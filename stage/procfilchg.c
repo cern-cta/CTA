@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.10 2001/07/12 10:17:13 jdurand Exp $
+ * $Id: procfilchg.c,v 1.11 2001/07/12 11:06:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.10 $ $Date: 2001/07/12 10:17:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.11 $ $Date: 2001/07/12 11:06:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -61,13 +61,18 @@ extern struct stgdb_fd dbfd;
 #endif
 
 extern char defpoolname[CA_MAXPOOLNAMELEN + 1];
+static int mintime_beforemigr_flag = 0;
 static int reqid_flag = 0;
+static int retenp_on_disk_flag = 0;
 static int status_flag = 0;
 static int poolname_flag = 0;
 extern int check_hsm_type_light _PROTO((char *, char *));
 extern int isvalidpool _PROTO((char *));
 extern struct stgcat_entry *stce;	/* end of stage catalog */
 extern struct stgcat_entry *stcs;	/* start of stage catalog */
+extern int mintime_beforemigr _PROTO((int));
+extern int retenp_on_disk _PROTO((int));
+extern int max_setretenp _PROTO((char *));
 extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *));
 extern int savereqs _PROTO(());
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
@@ -101,8 +106,12 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 	int errflg = 0;
 	char *hsmfile = NULL;
 	char t_or_d;
+	int thismintime_beforemigr = -1;
+	int donemintime_beforemigr = 0;
 	int thisreqid = -1;
 	int donereqid = 0;
+	int thisretenp_on_disk = -1;
+	int doneretenp_on_disk = 0;
 	int thisstatus = -1;
 	int donestatus = 0;
 	char *dp;
@@ -115,14 +124,18 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 	{
 		{"host",               REQUIRED_ARGUMENT,  NULL,               'h'},
 		{"migration_filename", REQUIRED_ARGUMENT,  NULL,               'M'},
+		{"mintime_beforemigr", REQUIRED_ARGUMENT,  &mintime_beforemigr_flag, 1},
 		{"poolname",           REQUIRED_ARGUMENT,  &poolname_flag,       1},
 		{"reqid",              REQUIRED_ARGUMENT,  &reqid_flag,          1},
+		{"retenp_on_disk",     REQUIRED_ARGUMENT,  &retenp_on_disk_flag, 1},
 		{"status",             REQUIRED_ARGUMENT,  &status_flag,         1},
 		{NULL,                 0,                  NULL,                 0}
 	};
 
 	poolname[0] = '\0';
+	mintime_beforemigr_flag = 0;
 	reqid_flag = 0;
+	retenp_on_disk_flag = 0;
 	status_flag = 0;
 
 	rbp = req_data;
@@ -170,6 +183,14 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			}
 			break;
 		case 0:
+			if ((mintime_beforemigr_flag != 0) && (! donemintime_beforemigr)) {
+				thismintime_beforemigr = strtol (Coptarg, &dp, 10);
+				if ((*dp != '\0') || (((thismintime_beforemigr == LONG_MIN) || (thismintime_beforemigr == LONG_MAX)) && (errno == ERANGE))) {
+					sendrep (rpfd, MSG_ERR, STG06, (*dp != '\0') ? "--mintime_beforemigr" : "--mintime_beforemigr (out of range)");
+					errflg++;
+				}
+				donemintime_beforemigr = 1;
+			}
 			if ((reqid_flag != 0) && (! donereqid)) {
 				thisreqid = strtol (Coptarg, &dp, 10);
 				if ((*dp != '\0') || (((thisreqid == LONG_MIN) || (thisreqid == LONG_MAX)) && (errno == ERANGE))) {
@@ -177,6 +198,14 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 					errflg++;
 				}
 				donereqid = 1;
+			}
+			if ((retenp_on_disk_flag != 0) && (! doneretenp_on_disk)) {
+				thisretenp_on_disk = strtol (Coptarg, &dp, 10);
+				if ((*dp != '\0') || (((thisretenp_on_disk == LONG_MIN) || (thisretenp_on_disk == LONG_MAX)) && (errno == ERANGE))) {
+					sendrep (rpfd, MSG_ERR, STG06, (*dp != '\0') ? "--retenp_on_disk" : "--retenp_on_disk (out of range)");
+					errflg++;
+				}
+				doneretenp_on_disk = 1;
 			}
 			if ((status_flag != 0) && (! donestatus)) {
 				thisstatus = strtol (Coptarg, &dp, 0);
@@ -212,7 +241,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 		strcpy(poolname,defpoolname);
 	}
 
-	if ((nargs > Coptind) && (hsmfile || donereqid || donestatus)) {
+	if ((nargs > Coptind) && (hsmfile || donemintime_beforemigr || donereqid || doneretenp_on_disk || donestatus)) {
 		sendrep(rpfd, MSG_ERR, "STG02 - Options and parameters are exclusive\n");
 		c = USERR;
 		goto reply;
@@ -228,16 +257,23 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 
 	if (strcmp (poolname, "NOPOOL") == 0) {
 		poolflag = -1;
+	} else if (doneretenp_on_disk) { /* --retenp_on_dik */
+		/* Note: MAX_SETRETENP can be < 0, e.g. allow no retention period set... */
+		if ((max_setretenp(poolname) != 0) && ((thisretenp_on_disk *= ((req_type < STAGE_00) ? ONE_DAY : 1)) > (max_setretenp(poolname) * ONE_DAY))) {
+			sendrep (rpfd, MSG_ERR, STG147, "--retenp_on_disk", max_setretenp(poolname), (max_setretenp(poolname) > 1 ? "days" : "day"));
+			c = USERR;
+			goto reply;
+		}
 	}
 
-	if (hsmfile || donereqid || donestatus) {
+	if (hsmfile || donemintime_beforemigr || donereqid || doneretenp_on_disk || donestatus) {
 		if (! hsmfile) {
 			sendrep(rpfd, MSG_ERR, "STG02 - Supply of -M option is mandatory\n");
 			c = USERR;
 			goto reply;
 		}
-		if (! (donestatus)) {
-			sendrep(rpfd, MSG_ERR, "STG02 - Supply of --status is mandatory\n");
+		if (! (donemintime_beforemigr || doneretenp_on_disk || donestatus)) {
+			sendrep(rpfd, MSG_ERR, "STG02 - Supply of --mintime_beforemigr, --retenp_on_disk or --status is mandatory\n");
 			c = USERR;
 			goto reply;
 		}
@@ -247,6 +283,8 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			struct Cns_filestat Cnsfilestat;   /* For     CASTOR hsm stat() */
 			extern struct passwd start_passwd; /* Start uid/gid stage:st */
 			int changed;
+			int currentmintime_beforemigr;
+			struct stgcat_entry thisstcp;
 
 			changed = 0;
 			if (stcp->reqid == 0) break;
@@ -280,6 +318,56 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 
 			/* From now on we assume that permission to change parameters on this file is granted */
 
+			/* We will now work on thisstcp */
+			thisstcp = *stcp;
+			if (donemintime_beforemigr) { /* --mintime_beforemigr */
+				/* Changing mintime_beforemigr is possible only on records with STAGEOUT|CAN_BE_MIGR status */
+				/* or STAGEOUT */
+				if ((stcp->status != (STAGEOUT|CAN_BE_MIGR)) && (stcp->status != STAGEOUT)) {
+					sendrep(rpfd, MSG_ERR, STG02, hsmfile, "--mintime", "should be in STAGEOUT|CAN_BE_MIGR or STAGEOUT status");
+					c = USERR;
+					goto reply;			
+				}
+				/* It is okay only if current value has not yet exhausted... */
+				if ((currentmintime_beforemigr = thisstcp.u1.h.mintime_beforemigr) < 0)
+					currentmintime_beforemigr = mintime_beforemigr(ifileclass); /* We take the default */
+				if (stcp->a_time + currentmintime_beforemigr < time(NULL)) {
+					sendrep(rpfd, MSG_ERR, STG02, hsmfile, "--mintime", "has already exhausted");
+					c = USERR;
+					goto reply;			
+				}
+				/* ... and if new value does not exceed default */
+				if (((thismintime_beforemigr >= 0) && (thismintime_beforemigr > currentmintime_beforemigr)) ||
+				    ((thismintime_beforemigr <  0) && (mintime_beforemigr(ifileclass) > currentmintime_beforemigr)))
+				{
+					sendrep (rpfd, MSG_OUT, STG151, hsmfile,
+								currentmintime_beforemigr,
+								(currentmintime_beforemigr > 1 ? "s" : ""),
+								(thisstcp.u1.h.mintime_beforemigr < 0 ? "fileclass" : "explicit"));
+					c = USERR;
+					goto reply;
+				}
+				if ((thisstcp.u1.h.mintime_beforemigr = thismintime_beforemigr) != stcp->u1.h.mintime_beforemigr) {
+					changed++;
+					sendrep (rpfd, MSG_OUT, STG152, hsmfile,
+								currentmintime_beforemigr,
+								(currentmintime_beforemigr > 1 ? "s" : ""),
+								(stcp->u1.h.mintime_beforemigr < 0 ? "fileclass" : "explicit"),
+								thismintime_beforemigr >= 0 ? thismintime_beforemigr : mintime_beforemigr(ifileclass),
+								(thismintime_beforemigr >= 0 ? thismintime_beforemigr : mintime_beforemigr(ifileclass)) > 1 ? "s" : "",
+								(thismintime_beforemigr < 0 ? "fileclass" : "explicit"));
+				} else {
+					sendrep (rpfd, MSG_OUT, STG150, hsmfile,
+								thismintime_beforemigr >= 0 ? thismintime_beforemigr : mintime_beforemigr(ifileclass),
+								(thismintime_beforemigr >= 0 ? thismintime_beforemigr : mintime_beforemigr(ifileclass)) > 1 ? "s" : "",
+								(thismintime_beforemigr < 0 ? "fileclass" : "explicit"));
+				}
+			}
+			if (doneretenp_on_disk) { /* --retenp_on_disk */
+				if ((thisstcp.u1.h.retenp_on_disk = thisretenp_on_disk) != stcp->u1.h.retenp_on_disk) {
+					changed++;
+				}
+			}
 			if (donestatus) { /* --status */
 				u_signed64 actual_size_block;
 				struct stat st;
@@ -335,6 +423,12 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			}
 			if (changed) {
 #ifdef USECDB
+				if (donemintime_beforemigr) { /* --mintime_beforemigr */
+					stcp->u1.h.mintime_beforemigr = thisstcp.u1.h.mintime_beforemigr;
+				}
+				if (doneretenp_on_disk) { /* --retenp_on_disk */
+					stcp->u1.h.retenp_on_disk = thisstcp.u1.h.retenp_on_disk;
+				}
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 				}
