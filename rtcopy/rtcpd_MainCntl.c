@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.63 $ $Date: 2000/04/18 09:50:31 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.64 $ $Date: 2000/04/18 14:38:45 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1393,31 +1393,9 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     char *cmd = NULL;
     char acctstr[7] = "";
     char envacct[20];
-#if !defined(_WIN32) && !defined(hpux)
-    /*
-     * sigaction exists on hpux but it's just a mess with their
-     * thread implementation
-     */
-    struct sigaction sigact;
-    sigset_t sigset;
-#endif /* _WIN32 */
 
     (void)setpgrp();
     AbortFlag = 0;
-#if !defined(_WIN32) && !defined(hpux)
-    (void)sigemptyset(&sigset);
-    sigact.sa_mask = sigset;
-    sigact.sa_handler = SIG_IGN;
-    sigaction(SIGPIPE,&sigact,NULL);
-    /*
-     * Should normally use sigwait(). 
-     */
-    sigact.sa_handler = (void (*)(int))rtcpd_AbortHandler;
-    sigaction(SIGTERM,&sigact,NULL);
-#else /* _WIN32 */
-    signal(SIGPIPE,SIG_IGN);
-    signal(SIGTERM,(void (*)(int))rtcpd_AbortHandler);
-#endif /* _WIN32 */
     rtcp_log(LOG_DEBUG,"rtcpd_MainCntl() called\n");
     rtcpd_SetDebug();
     client = (rtcpClientInfo_t *)calloc(1,sizeof(rtcpClientInfo_t));
@@ -1502,6 +1480,16 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_CloseConnection(): %s\n",
             sstrerror(serrno));
     }
+
+    /*
+     * Set up signal handlers for killjid
+     */
+#if !defined(_WIN32) && !defined(hpux)
+    (void)rtcpd_StartSignalThread();
+#else /* _WIN32 */
+    signal(SIGPIPE,SIG_IGN);
+    signal(SIGTERM,(void (*)(int))rtcpd_AbortHandler);
+#endif /* _WIN32 */
 
     /*
      * Contact the client and get the request. First check if OK.
