@@ -135,6 +135,7 @@ void castor::client::BaseClient::sendRequest
       }
     }
     req->setMachine(hostname);
+    m_rhHost = hostname;
     free(hostname);
   }
   // create a socket for the callback
@@ -144,6 +145,7 @@ void castor::client::BaseClient::sendRequest
   m_callbackSocket->getPortIp(port, ip);
   clog() << DEBUG << "Opened callback socket on port "
          << port << std::endl;
+  m_rhPort = port;
   // set the Client
   castor::IClient *cl = createClient();
   cl->setRequest(req);
