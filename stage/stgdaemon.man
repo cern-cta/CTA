@@ -1,10 +1,10 @@
-.\" $Id: stgdaemon.man,v 1.21 2002/10/28 16:02:31 jdurand Exp $
+.\" $Id: stgdaemon.man,v 1.22 2003/05/13 16:19:34 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.21 $ $Date: 2002/10/28 16:02:31 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.22 $ $Date: 2003/05/13 16:19:34 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STGDAEMON 1 "$Date: 2002/10/28 16:02:31 $" CASTOR "Stage Administrator Commands"
+.TH STGDAEMON 1 "$Date: 2003/05/13 16:19:34 $" CASTOR "Stage Administrator Commands"
 .SH NAME
 stgdaemon \- starts the stage daemon
 .SH SYNOPSIS
@@ -102,6 +102,55 @@ RFIOD   RTRUST     shd02
 RFIOD   WTRUST     shd02
 .RE
 .HP
+.LP
+On the stager machine, there can be the following entries in
+.B /etc/shift.conf
+:
+.LP
+.ft CW
+.nf
+.sp
+#
+## If no -p option nor $STAGE_PORT environment variable
+## Use that to overrwrite the default value 5007
+#
+STG   PORT     portnumber
+.br
+#
+## Say YES if you want pool/fs selection algorithm to
+## take into account r/o streams
+## Note: it works well only for applications like CDR
+## (Central Data Recording - e.g. production)
+#
+STG   SELECTFS_RO_WITH_NB_STREAM     YES
+.br
+#
+## Say YES if you want pool/fs selection algorithm to
+## take into account r/w streams
+## Note: it works well only for applications like CDR
+## (Central Data Recording - e.g. production)
+#
+STG   SELECTFS_RW_WITH_NB_STREAM     YES
+.br
+#
+## Number of seconds between automatic fileclasses
+## update in the memory cache. Default is 24 hours.
+#
+STG   UPD_FILECLASSES_INT     nbseconds
+.br
+#
+## Say YES if you want to limit stageinit to localhost
+#
+STG   STAGEINIT_FROM_LOCALHOST     YES
+.br
+#
+## Say YES if you want to limit stageshutdown to localhost
+#
+STG   STAGESHUTDOWN_FROM_LOCALHOST     YES
+.ft
+.LP
+.fi
+.HP
 There must be one entry in the configuration file per pool giving:
 .RS
 .TP
@@ -112,12 +161,24 @@ parameter in user commands. This parameter is mandatory.
 .I name
 is limited to CA_MAXPOOLNAME characters.
 .TP
+.BI METAPOOL " name"
+Name of a generic metapool. This parameter is not mandatory. If the application gives a poolname (\-p option of stageout, or stagein, for example) that is a metapool, or if the default pool name is also a metapool, then stager daemon will select a real pool (the
+.BI POOL
+itself) internally, trying to load\-balance between all pools that share the same metapool.
+.TP
 .BI DEFSIZE " size"
 is the maximum filesize if the
 .B \-s
 option is not specified on user commands. Default unit of
 .I size
 is MB, but can be specified with 'b','k','M','G','T' or 'P' for byte, kilobyte, megabyte, gigabyte, terabyte or petabyte respectively. This parameter is mandatory.
+.TP
+.BI MINDEFSIZE " size"
+is the minimum filesize used internally for allocation. Default unit of
+.I size
+is MB, but can be specified with 'b','k','M','G','T' or 'P' for byte, kilobyte, megabyte, gigabyte, terabyte or petabyte respectively. This parameter is not mandatory but must not exceed the
+.BI DEFSIZE
+value.
 .TP
 .BI MAX_SETRETENP " period"
 sets the maximum retention period a user can give for a CASTOR file. Default unit for
@@ -306,6 +367,9 @@ Sets stager configuration file. This file must be local and default to \fB/etc/S
 .TP
 .BI \-L " backlog"
 Sets listening backlog. Default value is 5.
+.TP
+.BI \-p " portnumber"
+Sets listening port number. Default value is 5007.
 .TP
 .BI \-\-rlimit_nproc " nproc"
 Sets maximum number of processes.
