@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_updatetape.man,v $ $Revision: 1.7 $ $Date: 2001/10/04 11:49:34 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr_updatetape.man,v $ $Revision: 1.8 $ $Date: 2002/02/07 06:43:48 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_UPDATETAPE 3 "$Date: 2001/10/04 11:49:34 $" CASTOR "vmgr Library Functions"
+.TH VMGR_UPDATETAPE 3 "$Date: 2002/02/07 06:43:48 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_updatetape \- update tape volume content information in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -11,6 +11,7 @@ vmgr_updatetape \- update tape volume content information in the CASTOR Volume M
 \fB#include "vmgr_api.h"\fR
 .sp
 .BI "int vmgr_updatetape (const char *" vid ,
+.BI "int " side ,
 .BI "u_signed64 " BytesWritten ,
 .BI "int " CompressionFactor ,
 .BI "int " FilesWritten ,
