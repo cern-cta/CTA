@@ -1,0 +1,102 @@
+.\" @(#)$RCSfile: Cupvdaemon.man,v $ $Revision: 1.1 $ $Date: 2003/11/04 12:31:29 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" Copyright (C) 2003 by CERN/IT/ADC/CA
+.\" All rights reserved
+.\"
+.TH CUPVDAEMON 1 "$Date: 2003/11/04 12:31:29 $" CASTOR "Cupv Administrator Commands"
+.SH NAME
+Cupvdaemon \- start the user privilege validation daemon
+.SH SYNOPSIS
+.B Cupvdaemon
+.SH DESCRIPTION
+.LP
+The
+.B Cupvdaemon
+command starts the user privilege validation daemon.
+This command is usually executed at system startup time
+.RB ( /etc/rc.local ).
+This will read the user privilege validation daemon configuration file,
+create a pool of threads and look for requests.
+Each of them is processed in a thread which opens a connection to the
+database server if necessary.
+When a request has been completed, the thread becomes idle until it is allocated
+to another request.
+The connection to the database server is kept open between 2 requests.
+If the name server is being shutdown or not active, the requests are
+automatically retried by the client API.
+.LP
+All error messages and statistical information are kept in a log.
+.LP
+The user privilege validation daemon listen port number can be defined on client hosts and
+on the daemon itself in either of the following ways:
+.RS
+.LP
+setting an environment variable CUPV_PORT
+.RS
+.HP
+setenv CUPV_PORT 56013
+.RE
+.LP
+an entry in
+.B /etc/shift.conf
+like:
+.RS
+.HP
+CUPV	PORT	56013
+.RE
+.LP
+an entry in
+.B /etc/services
+like:
+.RS
+.HP
+cns           56013/tcp                        # CASTOR user privilege
+.RE
+.RE
+.LP
+If none of these methods is used, the default port number is taken from the
+definition of CUPV_PORT in Cupv_constants.h.
+.LP
+The CASTOR user privilege host name can be defined on client hosts
+in either of the following ways:
+.RS
+.LP
+setting an environment variable CUPV_HOST, for example:
+.RS
+.HP
+setenv CUPV_HOST castor5
+.RE
+.LP
+an entry in
+.B /etc/shift.conf
+for example:
+.RS
+.HP
+CUPV	HOST	castor5
+.RE
+.RE
+.LP
+If none of these methods is used, the default host is taken from the
+definition of CupvHost in site.def.
+.LP
+The user privilege database keeps the information: uid, gid, source host, target host, privilege.
+.LP
+The user privilege configuration file contains password information for the
+database and must be readable/writable only by root.
+It contains a single line in the format:
+.RS
+.HP
+username/password@server
+.RE
+where 'username' and 'password' are the credentials to login to the database
+instance identified by 'server'.
+.SH FILES
+.TP 1.5i
+.B /etc/CUPVCONFIG
+configuration file
+.TP
+.B /usr/spool/upv/log
+.SH EXAMPLES
+.SH SEE ALSO
+.B Cupvshutdown(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
