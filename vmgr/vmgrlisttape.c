@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.1 $ $Date: 2000/03/20 08:48:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.2 $ $Date: 2000/03/20 09:00:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlisttape - query a given volume or list all existing tapes */
@@ -96,7 +96,7 @@ char **argv;
 		    media_letter, manufacturer, sn, pool_name, &free_space,
 		    &nbfiles, &rcount, &wcount, &rtime, &wtime, &status) < 0) {
 			fprintf (stderr, "vmgrlisttape %s: %s\n", vid,
-			    sstrerror(serrno));
+			    (serrno == ENOENT) ? "No such entry" : sstrerror(serrno));
 			exit (USERR);
 		}
 		listentry (vid, vsn, dgn, density, lbltype, model,
