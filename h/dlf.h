@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: dlf.h,v $ $Revision: 1.2 $ $Date: 2004/07/08 08:41:37 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: dlf.h,v $ $Revision: 1.3 $ $Date: 2004/07/08 15:43:18 $ CERN IT-ADC Vitaly Motyakov
  */
 
 #ifndef _DLF_H
@@ -59,6 +59,7 @@
 #define	DLF02	"DLF02 - %s error : %s\n"
 #define DLF03   "DLF03 - illegal function %d\n"
 #define DLF04   "DLF04 - error getting request, netread = %d\n"
+#define DLF05   "DLF05 - %s error : %s. Facility = %s\n"
 #define	DLF09	"DLF09 - fatal configuration error: %s %s\n"
 #define	DLF23	"DLF23 - %s is not accessible\n"
 #define DLF46	"DLF46 - request too large (max. %d)\n"
