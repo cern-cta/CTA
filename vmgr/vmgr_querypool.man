@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_querypool.man,v $ $Revision: 1.1 $ $Date: 2000/03/10 07:55:10 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_querypool.man,v $ $Revision: 1.2 $ $Date: 2001/01/30 07:00:20 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_QUERYPOOL 3 "$Date: 2000/03/10 07:55:10 $" CASTOR "vmgr Library Functions"
+.TH VMGR_QUERYPOOL 3 "$Date: 2001/01/30 07:00:20 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_querypool \- query about a tape pool in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -13,6 +13,7 @@ vmgr_querypool \- query about a tape pool in the CASTOR Volume Manager
 .BI "int vmgr_querypool (const char *" pool_name ,
 .BI "uid_t *" pool_user ,
 .BI "gid_t *" pool_group ,
+.BI "u_signed64 *" capacity ,
 .BI "u_signed64 *" tot_free_space )
 .SH DESCRIPTION
 .B vmgr_querypool
@@ -29,6 +30,9 @@ user uid.
 .I pool_group
 if the value returned is greater than zero, the tape pool is restricted to this
 group gid.
+.TP
+.I capacity
+in bytes.
 .TP
 .I tot_free_space
 in bytes.
