@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.31 $ $Date: 2005/01/18 17:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.32 $ $Date: 2005/01/19 17:43:06 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -87,7 +87,7 @@ libshift.sl libshift.so:     $(LIBRARIES0)
 	@mkdir tmp
 	for i in $(LIBRARIES0) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	(cd tmp; $(CXX) $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS))
+	(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libshift.so.__MAJOR_CASTOR_VERSION__ -o ../$@ *.o $(SHLIBREQLIBS))
 	@-rm -rf tmp
 
 libcastorCommonOra.so: $(LIBRARIES1)
@@ -96,7 +96,7 @@ libcastorCommonOra.so: $(LIBRARIES1)
 	@mkdir tmp
 	@for i in $(LIBRARIES1) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	@(cd tmp; $(CXX) $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS1))
+	@(cd tmp; $(CXX) $(SHLIBLDFLAGS) -Wl,-soname,libcastorCommonOra.so.__MAJOR_CASTOR_VERSION__ -o ../$@ *.o $(SHLIBREQLIBS1))
 	@-rm -rf tmp
 
 shift.dll:	$(LIBRARIES0)
