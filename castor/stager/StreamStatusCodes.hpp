@@ -41,7 +41,8 @@ namespace castor {
       STREAM_PENDING = 0,
       STREAM_WAITDRIVE = 1,
       STREAM_WAITMOUNT = 2,
-      STREAM_RUNNING = 3
+      STREAM_RUNNING = 3,
+      STREAM_WAITSPACE = 4
     }; // end of enum StreamStatusCodes
 
 #ifdef __cplusplus

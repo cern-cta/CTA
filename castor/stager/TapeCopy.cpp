@@ -40,6 +40,7 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::stager::TapeCopy::TapeCopy() throw() :
+  m_copyNb(0),
   m_id(),
   m_castorFile(0),
   m_status(TapeCopyStatusCodes(0)) {
@@ -75,6 +76,7 @@ void castor::stager::TapeCopy::print(std::ostream& stream,
     return;
   }
   // Output of all members
+  stream << indent << "copyNb : " << m_copyNb << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

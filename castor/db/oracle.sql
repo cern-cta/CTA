@@ -138,7 +138,7 @@ CREATE TABLE TapePool (name VARCHAR(255), id INTEGER PRIMARY KEY);
 
 /* SQL statements for type TapeCopy */
 DROP TABLE TapeCopy;
-CREATE TABLE TapeCopy (id INTEGER PRIMARY KEY, castorFile INTEGER, status INTEGER);
+CREATE TABLE TapeCopy (copyNb NUMBER, id INTEGER PRIMARY KEY, castorFile INTEGER, status INTEGER);
 
 /* SQL statements for type CastorFile */
 DROP TABLE CastorFile;

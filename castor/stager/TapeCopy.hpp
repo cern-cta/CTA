@@ -109,6 +109,24 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
+       * Get the value of m_copyNb
+       * The copy number allows to identify the different copies on tape of a single file
+       * @return the value of m_copyNb
+       */
+      unsigned int copyNb() const {
+        return m_copyNb;
+      }
+
+      /**
+       * Set the value of m_copyNb
+       * The copy number allows to identify the different copies on tape of a single file
+       * @param new_var the new value of m_copyNb
+       */
+      void setCopyNb(unsigned int new_var) {
+        m_copyNb = new_var;
+      }
+
+      /**
        * Add a Stream* object to the m_streamVector list
        */
       void addStream(Stream* add_object) {
@@ -201,6 +219,9 @@ namespace castor {
     private:
 
     private:
+
+      /// The copy number allows to identify the different copies on tape of a single file
+      unsigned int m_copyNb;
 
       /// The id of this object
       u_signed64 m_id;

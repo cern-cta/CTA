@@ -109,6 +109,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_TapeCopy_copyNb
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopy_copyNb(castor::stager::TapeCopy* instance, unsigned int* var) {
+    *var = instance->copyNb();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopy_setCopyNb
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopy_setCopyNb(castor::stager::TapeCopy* instance, unsigned int new_var) {
+    instance->setCopyNb(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_TapeCopy_addStream
   //----------------------------------------------------------------------------
   int Cstager_TapeCopy_addStream(castor::stager::TapeCopy* instance, castor::stager::Stream* obj) {

@@ -91,6 +91,7 @@ void castor::io::StreamTapeCopyCnv::createRep(castor::IAddress* address,
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
+  ad->stream() << obj->copyNb();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -105,6 +106,9 @@ castor::IObject* castor::io::StreamTapeCopyCnv::createObj(castor::IAddress* addr
   // create the new Object
   castor::stager::TapeCopy* object = new castor::stager::TapeCopy();
   // Now retrieve and set members
+  unsigned int copyNb;
+  ad->stream() >> copyNb;
+  object->setCopyNb(copyNb);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

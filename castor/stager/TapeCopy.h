@@ -94,6 +94,18 @@ int Cstager_TapeCopy_type(struct Cstager_TapeCopy_t* instance,
                           int* ret);
 
 /**
+ * Get the value of copyNb
+ * The copy number allows to identify the different copies on tape of a single file
+ */
+int Cstager_TapeCopy_copyNb(struct Cstager_TapeCopy_t* instance, unsigned int* var);
+
+/**
+ * Set the value of copyNb
+ * The copy number allows to identify the different copies on tape of a single file
+ */
+int Cstager_TapeCopy_setCopyNb(struct Cstager_TapeCopy_t* instance, unsigned int new_var);
+
+/**
  * Add a struct Cstager_Stream_t* object to the stream list
  */
 int Cstager_TapeCopy_addStream(struct Cstager_TapeCopy_t* instance, struct Cstager_Stream_t* obj);
