@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.4 $ $Date: 2002/12/17 08:28:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.5 $ $Date: 2003/04/10 09:40:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -65,6 +65,7 @@ char	**argv;
 		tapefd = open (dvn, O_RDONLY|O_NDELAY);
 		if (tapefd < 0 &&
 		    (errno == ENOENT || errno == ENXIO || errno == EBUSY ||
+		     errno == ENODEV ||
 		    (strcmp (dvrname, "Atape") == 0 && errno == EIO))) {
 			c = errno;
 		} else {
