@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.3 2004/07/15 06:49:19 bcouturi Exp $
+ * $Id: Cns_server.h,v 1.4 2004/07/15 09:25:48 bcouturi Exp $
  */
 
 /*
@@ -138,6 +138,8 @@ struct Cns_srv_thread_info {
 	char		errbuf[PRTBUFSZ];
 #ifdef CSEC
         Csec_context_t sec_ctx;
+        uid_t Csec_uid;
+        gid_t Csec_gid;
 #endif
 };
 
