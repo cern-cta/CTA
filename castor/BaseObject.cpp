@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/11/05 17:47:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/12/03 17:19:11 $ $Author: bcouturi $
  *
  * 
  *
@@ -32,7 +32,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "Cglobals.h"
-#include <Cthread_api.h>
+#include <Cmutex.h>
 
 // -----------------------------------------------------------------------
 // static values initialization
@@ -120,12 +120,12 @@ void castor::BaseObject::getTLS(int *key, void **thip)
 void castor::BaseObject::initLog(std::string name,
                                  const unsigned long id)
   throw() {
-  Cthread_mutex_lock(&s_msgSvcId);
+  Cmutex_lock(&s_msgSvcId, -1);
   // Nothing to do if already called
   if (0 != s_msgSvcId) return;
   s_msgSvcName = name;
   s_msgSvcId = id;
-  Cthread_mutex_unlock(&s_msgSvcId);
+  Cmutex_unlock(&s_msgSvcId);
 }
 
 //------------------------------------------------------------------------------
