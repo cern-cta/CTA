@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.2 $ $Date: 1999/11/05 07:21:09 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.3 $ $Date: 1999/12/01 07:39:04 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	send_scsi_cmd - Send a SCSI command to a device */
@@ -561,7 +561,7 @@ char **msgaddr;
 
 	if (sizeof(struct sg_header) + cdblen + buflen > SG_BIG_BUFF) {
 #if defined(TAPE)
-			sprintf (tp_err_msgbuf, "blocksize too large (max %d)",
+			sprintf (tp_err_msgbuf, "blocksize too large (max %d)\n",
 			    SG_BIG_BUFF - sizeof(struct sg_header) - cdblen);
 			*msgaddr = tp_err_msgbuf;
 #else
