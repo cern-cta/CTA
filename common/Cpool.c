@@ -1,5 +1,5 @@
 /*
- * $Id: Cpool.c,v 1.16 1999/12/09 13:39:26 jdurand Exp $
+ * Cpool.c,v 1.16 1999-12-09 14:39:26+01 jdurand Exp
  */
 
 /*
@@ -11,7 +11,7 @@
 /* For the what command                 */
 /* ------------------------------------ */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.16 $ $Date: 1999/12/09 13:39:26 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)Cpool.c,v 1.16 1999-12-09 14:39:26+01 CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cpool_api.h>
@@ -1988,7 +1988,7 @@ int DLL_DECL Cpool_assign(poolnb,startroutine,arg,timeout)
 		  if (timeout == 0) {
 			  /* No thread immediately available, and timeout == 0 */
 			  /* So we exit immediately                            */
-			  serrno = SETIMEDOUT;
+			  serrno = SEWOULDBLOCK;
 			  return(-1);
 		  }
 		  
@@ -2231,6 +2231,7 @@ int DLL_DECL Cpool_assign(poolnb,startroutine,arg,timeout)
 /* ============================================ */
 /* Routine  : Cpool_next_index                  */
 /* Arguments: pool number                       */
+/*            timeout (<= 0 means no timeout)   */
 /* -------------------------------------------- */
 /* Output   : index >= 0 (OK) -1 (ERROR)        */
 /* -------------------------------------------- */
@@ -2238,8 +2239,9 @@ int DLL_DECL Cpool_assign(poolnb,startroutine,arg,timeout)
 /* 08-JUN-1999       First implementation       */
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
-int DLL_DECL Cpool_next_index(poolnb)
+int DLL_DECL Cpool_next_index_timeout(poolnb,timeout)
      int poolnb;
+     int timeout;
 {
 
   /* We makes sure that Cthread pakage is initalized */
@@ -2248,8 +2250,8 @@ int DLL_DECL Cpool_next_index(poolnb)
 #ifdef CPOOL_DEBUG
   /* Cthread_mutex_lock(&lock_cpool_debug); */
   if (Cpool_debug != 0)
-    log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d)\n",
-        _Cpool_self(),_Cthread_self(),poolnb);
+    log(LOG_INFO,"[Cpool  [%2d][%2d]] In Cpool_next_index(%d,%d)\n",
+        _Cpool_self(),_Cthread_self(),poolnb,timeout);
   /* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
     
@@ -2267,7 +2269,9 @@ int DLL_DECL Cpool_next_index(poolnb)
     int                     i;
     fd_set                  readlist;
     int                     ready;
-    
+    struct timeval timeval;               /* For timeout */
+    int select_rc;
+
     if (poolnb < 0) {
       serrno = EINVAL;
       return(-1);
@@ -2307,6 +2311,11 @@ int DLL_DECL Cpool_next_index(poolnb)
           _Cpool_self(),_Cthread_self(),poolnb);
     /* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
+    /* We build the timeout if needed */
+    if (timeout > 0) {
+      timeval.tv_sec = timeout;
+      timeval.tv_usec = 0;
+    }
     maxfd = 0;
     FD_ZERO(&readlist);
     for (i = 0; i < current->nbelem; i++) {
@@ -2328,9 +2337,9 @@ int DLL_DECL Cpool_next_index(poolnb)
 #endif
     
     /* We wait for a flag of any of the child */
-    if (select(maxfd+1, (_cpool_fd_set *) &readlist, NULL, NULL, NULL) < 0) {
+    if ((select_rc = select(maxfd+1, (_cpool_fd_set *) &readlist, NULL, NULL, (timeout > 0 ? &timeval : NULL))) <= 0) {
       /* Error */
-      serrno = SEINTERNAL;
+      serrno = (select_rc == 0 ? SETIMEDOUT : SEINTERNAL);
       return(-1);
     }
     
@@ -2567,7 +2576,7 @@ int DLL_DECL Cpool_next_index(poolnb)
 				  /* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
 				  
-				  if (Cthread_cond_wait(&lock_parent) != 0) {
+				  if (Cthread_cond_timedwait(&lock_parent,timeout) != 0) {
 					  
 #ifdef CPOOL_DEBUG
 					  /* Cthread_mutex_lock(&lock_cpool_debug); */
