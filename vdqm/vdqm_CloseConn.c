@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_CloseConn.c,v $ $Revision: 1.10 $ $Date: 2000/03/13 11:17:42 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_CloseConn.c,v $ $Revision: 1.11 $ $Date: 2002/10/25 12:52:32 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 
@@ -17,16 +17,11 @@ static char sccsid[] = "@(#)$RCSfile: vdqm_CloseConn.c,v $ $Revision: 1.10 $ $Da
 #include <winsock2.h>
 extern char *geterr();
 #else /* _WIN32 */
+#include <unistd.h>
 #include <sys/param.h>
 #include <sys/types.h>                  /* Standard data types          */
 #include <sys/socket.h>
 #endif /* _WIN32 */
-
-#if defined(VDQMSERV)
-#if !defined(_WIN32)
-#include <regex.h>
-#endif /* _WIN32 */
-#endif /* VDQMSERV */
 
 #include <errno.h>
 #include <Castor_limits.h>
