@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/14 09:34:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/14 09:40:34 $ $Author: sponcec3 $
  *
  *
  *
@@ -56,7 +56,13 @@ extern "C" {
   // C_Services_delete
   //------------------------------------------------------------------------------
   int C_Services_delete(C_Services_t* svcs) {
-    if (0 != svcs->svcs) delete svcs->svcs;
+    try {
+      if (0 != svcs->svcs) delete svcs->svcs;
+    } catch (castor::Exception e) {
+      errno = EINVAL;
+      svcs->errorMsg = e.getMessage().str();
+      return -1;
+    }
     free(svcs);
     return 0;
   }
