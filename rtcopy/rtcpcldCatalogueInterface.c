@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.101 $ $Release$ $Date: 2004/12/08 14:40:57 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.102 $ $Release$ $Date: 2004/12/08 16:32:01 $ $Author: sponcec3 $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.101 $ $Release$ $Date: 2004/12/08 14:40:57 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.102 $ $Release$ $Date: 2004/12/08 16:32:01 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1455,7 +1455,8 @@ int nextSegmentToMigrate(
   rc = Cstager_IStagerSvc_bestTapeCopyForStream(
                                                 *stgsvc,
                                                 stream,
-                                                &nextMigrCandidate
+                                                &nextMigrCandidate,
+                                                1
                                                 );
   if ( rc == -1 ) {
     save_serrno = serrno;
