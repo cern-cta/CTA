@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smc.c,v $ $Revision: 1.5 $ $Date: 2002/12/02 16:24:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smc.c,v $ $Revision: 1.6 $ $Date: 2002/12/09 09:56:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -511,7 +511,7 @@ char *cmd;
 	    "-d -D drive_ordinal [-h rmcserver] -l loader [-V vid] [-v]\n",
 	    "\t-e [-h rmcserver] -l loader -V vid [-v]\n",
 	    "\t-i [-h rmcserver] -l loader [-V vid] [-v]\n",
-	    "\t-m -D drive_ordinal [-h rmcserver] -l loader -V vid [-v]\n",
+	    "\t-m -D drive_ordinal [-h rmcserver] [-I] -l loader -V vid [-v]\n",
 	    "\t-q D [-D drive_ordinal] [-h rmcserver] -l loader [-v]\n",
 	    "\t-q L [-h rmcserver] -l loader [-v]\n",
 	    "\t-q S [-h rmcserver] -l loader [-N nbelem] [-S starting_slot] [-v]\n",
