@@ -1,5 +1,5 @@
 /*
- * $Id: lseek.c,v 1.12 2002/05/02 07:26:01 baud Exp $
+ * $Id: lseek.c,v 1.13 2002/09/13 06:14:10 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lseek.c,v $ $Revision: 1.12 $ $Date: 2002/05/02 07:26:01 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: lseek.c,v $ $Revision: 1.13 $ $Date: 2002/09/13 06:14:10 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* lseek.c      Remote File I/O - move read/write file mark.	*/
@@ -402,7 +402,7 @@ int    how ;
 	  break ; 
        default:
 	  TRACE(1,"rfio","rfio_forcelseek(): Bad control word received") ; 
-	  rfio_errno= SEINTERNAL ;
+	  serrno= SEINTERNAL ;
 	  if ( temp ) (void) free(trp) ; 
 	  END_TRACE() ; 
 	  return -1 ;

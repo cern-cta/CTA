@@ -1,5 +1,5 @@
 /*
- * $Id: write.c,v 1.11 2002/03/21 10:26:24 baud Exp $
+ * $Id: write.c,v 1.12 2002/09/13 06:14:12 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.11 $ $Date: 2002/03/21 10:26:24 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.12 $ $Date: 2002/09/13 06:14:12 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* write.c      Remote File I/O - write a file                          */
@@ -219,7 +219,7 @@ int     s, size;
 	  break ; 
        default:	
 	  TRACE(1,"rfio","rfio_write(): Bad control word received\n") ; 
-	  rfio_errno= SEINTERNAL ;
+	  serrno= SEINTERNAL ;
 	  if ( temp ) (void) free(trp) ; 
 	  END_TRACE() ; 
 	  return -1 ;

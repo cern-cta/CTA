@@ -1,14 +1,14 @@
 /*
- * $Id: fstat.c,v 1.9 2000/11/24 07:29:07 jdurand Exp $
+ * $Id: fstat.c,v 1.10 2002/09/13 06:14:10 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fstat.c,v $ $Revision: 1.9 $ $Date: 2000/11/24 07:29:07 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fstat.c,v $ $Revision: 1.10 $ $Date: 2002/09/13 06:14:10 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fstat.c      Remote File I/O - get file status                       */
@@ -167,7 +167,7 @@ struct stat *statbuf;
 	  break ; 
        default:
 	  TRACE(1,"rfio","rfio_fstat(): Bad control word received\n") ; 
-	  rfio_errno= SEINTERNAL ;
+	  serrno= SEINTERNAL ;
 	  if ( temp ) (void) free(trp) ; 
 	  END_TRACE() ; 
 	  return -1 ;

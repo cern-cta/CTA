@@ -1,14 +1,14 @@
 /*
- * $Id: preseek.c,v 1.8 2000/10/02 08:02:31 jdurand Exp $
+ * $Id: preseek.c,v 1.9 2002/09/13 06:14:11 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: preseek.c,v $ $Revision: 1.8 $ $Date: 2000/10/02 08:02:31 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: preseek.c,v $ $Revision: 1.9 $ $Date: 2002/09/13 06:14:11 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* preseek.c      Remote File I/O - preseeking.		*/
@@ -170,7 +170,7 @@ struct iovec *iov ;
 	  break ; 
        default:
 	  TRACE(1,"rfio","rfio_preseek(): Bad control word received") ; 
-	  rfio_errno= SEINTERNAL ;
+	  serrno= SEINTERNAL ;
 	  END_TRACE() ; 
 	  return -1 ;
       }

@@ -1,5 +1,5 @@
 /*
- * $Id: fchmod.c,v 1.1 2002/06/16 06:49:11 baud Exp $
+ * $Id: fchmod.c,v 1.2 2002/09/13 06:14:10 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fchmod.c,v $ $Revision: 1.1 $ $Date: 2002/06/16 06:49:11 $ CERN/IT/DS/HSM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: fchmod.c,v $ $Revision: 1.2 $ $Date: 2002/09/13 06:14:10 $ CERN/IT/DS/HSM Jean-Philippe Baud";
 #endif /* not lint */
 
 /* fchmod.c      Remote File I/O - change file mode of a file            */
@@ -127,7 +127,7 @@ int mode;                      /* remote directory mode */
 	  break ; 
        default:
 	  TRACE(1,"rfio","rfio_fchmod(): Bad control word received\n") ; 
-	  rfio_errno= SEINTERNAL ;
+	  serrno= SEINTERNAL ;
 	  if ( temp ) (void) free(trp) ; 
 	  END_TRACE() ; 
 	  return(-1) ;
