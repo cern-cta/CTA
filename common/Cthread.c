@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.14 1999/10/08 16:58:25 jdurand Exp $
+ * $Id: Cthread.c,v 1.15 1999/10/08 17:21:54 jdurand Exp $
  */
 
 #include <Cthread_api.h>
@@ -104,7 +104,7 @@ int Cthread_debug = 0;
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.14 $ $Date: 1999/10/08 16:58:25 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.15 $ $Date: 1999/10/08 17:21:54 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 
 /* ============================================ */
 /* Typedefs                                     */
@@ -793,7 +793,7 @@ void *_Cthread_start_pthread(void *arg) {
   start_params = (Cthread_start_params_t *) arg;
 
 
-  pid = (Cth_pid_t) pthread_self();
+  pid = pthread_self();
   if (_Cthread_addcid(__FILE__,__LINE__,NULL,0,&pid,thID,start_params->_thread_routine,start_params->detached) < 0) {
     free(arg);
     return(NULL);
@@ -3516,7 +3516,7 @@ int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startrout
 /* Cthread variables.                           */
 /* ============================================ */
 void _Cthread_once() {
-  Cth_pid_t pid = -1;
+  Cth_pid_t pid;
   unsigned thID = 0;       /* WIN32 thread ID  */
 #ifdef _CTHREAD
 #if _CTHREAD_PROTO != _CTHREAD_PROTO_WIN32
@@ -3561,7 +3561,7 @@ void _Cthread_once() {
   if (pthread_mutex_init(&(Cthread.mtx),pthread_mutexattr_default) != 0) {
     return;
   }
-  pid = (Cth_pid_t) pthread_self();
+  pid = pthread_self();
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
   /* Create the mutex a-la LinuxThreads      */
   /* On this OS, pthread_mutexattr_init and  */
