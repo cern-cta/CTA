@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.74 2001/02/02 15:00:32 jdurand Exp $
+ * $Id: poolmgr.c,v 1.75 2001/02/02 23:54:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.74 $ $Date: 2001/02/02 15:00:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.75 $ $Date: 2001/02/02 23:54:18 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1858,7 +1858,7 @@ int migpoolfiles(pool_p)
     stcp_vs_tppool[nstcp_vs_tppool - 1].stcp = NULL;
     stcp_vs_tppool[nstcp_vs_tppool - 1].stpp = NULL;
     stcp_vs_tppool[nstcp_vs_tppool - 1].nstcp = 0;
-    stcp_vs_tppool[nstcp_vs_tppool - 1].size = 0;
+    stcp_vs_tppool[nstcp_vs_tppool - 1].size = 0;       /* In BYTES - not MBytes */
 
     /* We grab the most restrictive (euid/egid) pair based on our known fileclasses */
     stcp_vs_tppool[nstcp_vs_tppool - 1].euid = 0;
@@ -1995,19 +1995,19 @@ int migpoolfiles(pool_p)
           for (k = stcp_vs_tppool[j].nstcp - 1; k >= 0; k--) {
             if (i != upd_fileclass(pool_p,&(stcp_vs_tppool[j].stcp[k]))) continue;
             /* This stcp shares the same fileclass as i's */
-            if ((virtual_old_size -= stcp_vs_tppool[j].stcp[k].size) <= 0) {
+            if ((virtual_old_size -= stcp_vs_tppool[j].stcp[k].actual_size) <= 0) {
               /* We have scanned this whole stream ! */
               break;
             }
-            virtual_new_size += stcp_vs_tppool[j].stcp[k].size;
+            virtual_new_size += stcp_vs_tppool[j].stcp[k].actual_size;
             nstcp_to_move++;
             if (virtual_new_size >= minsize) {
               /* There is material to have a new stream ! */
               /* We continue the loop up to when we have splitted the original stream almost equally */
               if ((virtual_old_size < minsize) || (virtual_old_size <= 0)) {
                 /* We have scanned a bit too much */
-                virtual_old_size += stcp_vs_tppool[j].stcp[k].size;
-                if ((virtual_new_size -= stcp_vs_tppool[j].stcp[k].size) > 0) {
+                virtual_old_size += stcp_vs_tppool[j].stcp[k].actual_size;
+                if ((virtual_new_size -= stcp_vs_tppool[j].stcp[k].actual_size) > 0) {
                   can_create_new_stream = k;
                   nstcp_to_move--;
                 }
@@ -2015,8 +2015,8 @@ int migpoolfiles(pool_p)
               }
               if (virtual_new_size > virtual_old_size) {
                 /* Streams are approximatively of the same size */
-                virtual_old_size += stcp_vs_tppool[j].stcp[k].size;
-                if ((virtual_new_size -= stcp_vs_tppool[j].stcp[k].size) > 0) {
+                virtual_old_size += stcp_vs_tppool[j].stcp[k].actual_size;
+                if ((virtual_new_size -= stcp_vs_tppool[j].stcp[k].actual_size) > 0) {
                   can_create_new_stream = k;
                   nstcp_to_move--;
                 }
@@ -2050,9 +2050,15 @@ int migpoolfiles(pool_p)
             if (stpp != NULL) free(stpp);
             nstcp_vs_tppool--;
           } else {
+            int nstcp_being_moved = 0;
+
             /* We move some entries to this new stream - We know that "can_create_new_stream" contains */
             /* the index where we stopped the scanning */
             /* We also make sure that we don't take into account the new created stream in the loop below */
+
+            /* We also know in advance that this new streams will be of size virtual_new_size and */
+            /* will contain nstcp_to_move entries */
+
             for (j = 0; j < (nstcp_vs_tppool - 1); j++) {
               if (stcp_vs_tppool[j].size > minsize) {
                 int save_nstcp = stcp_vs_tppool[j].nstcp;
@@ -2065,6 +2071,12 @@ int migpoolfiles(pool_p)
                   if (i != upd_fileclass(pool_p,&(stcp_vs_tppool[j].stcp[k]))) continue;
                   /* We can move this stcp from tppool No j to tppool No (nstcp_vs_tppool - 1) */
 
+                  /* We check the number of stcp that we move */
+                  if (++nstcp_being_moved > nstcp_to_move) {
+                    /* We have reached the quota of nstcp_to_move entries... */
+                    break;
+                  }
+
                   /* First we move the stcp */
                   *stcp++ = stcp_vs_tppool[j].stcp[k];
                   /* Then we move the stcpp */
@@ -2076,16 +2088,12 @@ int migpoolfiles(pool_p)
                   stcp_vs_tppool[nstcp_vs_tppool - 1].size += stcp_vs_tppool[j].stcp[k].actual_size;
                   /* We decrement old stream total size to migrate */
                   stcp_vs_tppool[j].size -= stcp_vs_tppool[j].stcp[k].actual_size;
-                  /* We compress old stream stcp's, .e.g shift all entries starting at index k */
-                  if (k < stcp_vs_tppool[j].nstcp) {
-                    /* It is useful to do it only if index k is not the last of the entries... */
-                    memcpy(&(stcp_vs_tppool[j].stcp[k]),
-                           &(stcp_vs_tppool[j].stcp[k+1]),
-                           (stcp_vs_tppool[j].nstcp - k) * sizeof(struct stgcat_entry));
-                    memcpy(&(stcp_vs_tppool[j].stpp[k]),
-                           &(stcp_vs_tppool[j].stpp[k+1]),
-                           (stcp_vs_tppool[j].nstcp - k) * sizeof(struct stgpath_entry));
-                  }
+
+                  /* It is not point to compress the stream at index [j] because we shift */
+                  /* the stcp's and stpp's starting at the end of it. So decrementing the */
+                  /* number of entries is totally enough for the end of the processing, when */
+                  /* the stagewrt request are physically made... */
+
                   /* We decrement old stream number of entries */
                   stcp_vs_tppool[j].nstcp--;
                 }
@@ -2096,7 +2104,7 @@ int migpoolfiles(pool_p)
                      pool_p->migr->fileclass[i]->server,
                      pool_p->migr->fileclass[i]->Cnsfileclass.classid,
                      pool_p->migr->fileclass[i]->Cnsfileclass.maxdrives,
-                     u64tostr((u_signed64) minsize, tmpbuf, 0),
+                     u64tostr(stcp_vs_tppool[nstcp_vs_tppool - 1].size, tmpbuf, 0),
                      stcp_vs_tppool[nstcp_vs_tppool - 1].stcp[0].u1.h.tppool);
           }
         }
