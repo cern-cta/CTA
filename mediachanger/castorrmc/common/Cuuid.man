@@ -1,0 +1,59 @@
+.\"   $Id: Cuuid.man,v 1.1 2003/09/09 12:53:00 jdurand Exp $
+.\"
+.\"   Man page for the CASTOR's Universally Unique IDentifier (UUID)
+.\"
+.TH CUUID "3" "$Date: 2003/09/09 12:53:00 $" "CASTOR" "Common Library Functions"
+.SH NAME
+\fBCuuid\fP \- \fBCASTOR\fP \fBUUID\fP inferface
+.SH SYNOPSIS
+.B #include <Cuuid_api.h>
+.P
+.BI "int Cuuid_create(Cuuid_t *" uuid ");"
+.P
+.BI "int Cuuid_create_from_name(Cuuid_t *" uuid ", Cuuid_t " uuid_context ", char *" name ");"
+.P
+.BI "int Cuuid_compare(Cuuid_t *" uuid1 ", Cuuid_t *" uuid2 ");"
+
+.SH ERRORS
+\fBCuuid\fP is doing only local calls, please see
+.I errno
+documentation if there is a failure.
+
+.SH DESCRIPTION
+\fBCuuid_create\fP generate a UUID, stored in the structure
+.I uuid.
+.P
+Return value is 0 on success, or -1 on error.
+.P
+\fBCuuid_create_from_name\fP create a UUID, stored in
+.I uuid
+, using a yet existing
+.I uuid_context
+UUID as a name space, and a string
+.I name
+in input, so identical names from different name spaces generate different UUIDs.
+.P
+Return value is 0 on success, or -1 on error.
+.P
+\fBCsched_compare\fP compare two UUIDs
+.I uuid1
+and
+.I uuid2
+\"lexically\".
+.P
+Return value is -1 if
+.I uuid1
+is lexically before
+.I uui2
+, 0 if they are equal, 1 if
+.I uuid1
+is lexically after
+.I uui2.
+
+.SH NOTES
+Based on http://www.webdav.org/specs/draft-leach-uuids-guids-01.txt
+.P
+Lexical ordering is not temporal ordering.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
