@@ -1,5 +1,5 @@
 /*
- * $Id: socket_timeout.c,v 1.9 2000/04/05 09:55:25 jdurand Exp $
+ * $Id: socket_timeout.c,v 1.10 2000/04/05 09:58:20 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.9 $ $Date: 2000/04/05 09:55:25 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.10 $ $Date: 2000/04/05 09:58:20 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -72,7 +72,7 @@ ssize_t netread_timeout(fd, vptr, n, timeout)
 
   /* If n <= 0 (on some systems size_t can be lower than zero) it is an app. error */
   if (n <= 0) {
-    serrno = SEINVAL;
+    serrno = EINVAL;
     return(-1);
   }
 
@@ -153,7 +153,7 @@ ssize_t netwrite_timeout(fd, vptr, n, timeout)
 
   /* If n <= 0 (on some systems size_t can be lower than zero) it is an app. error */
   if (n <= 0) {
-    serrno = SEINVAL;
+    serrno = EINVAL;
     return(-1);
   }
 
