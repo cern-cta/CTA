@@ -1,0 +1,53 @@
+.\" $Id: sacct.man,v 1.1 2002/07/03 08:31:38 bcouturi Exp $
+.\"
+.\" Man page for the CASTOR accounting header file sacct.h
+.\"
+.TH SACCT "4" "$Date: 2002/07/03 08:31:38 $" "CASTOR" "Accounting records"
+.SH NAME
+\fBsacct\fP \- CASTOR accounting records
+
+.SH SYNOPSIS
+.BI "#include <" sacct.h ">"
+
+.SH DESCRIPTION
+The \fBsacct.h\fP header file contains the structure of the accounting records written by the CASTOR applications. Every record is composed of a header, plus a content. All CASTOR applications on a machine write to the same accounting file, usually /usr/spool/sacct/sacct.
+.P
+.br 
+The structure acchdr must be used to read the accounting record. 
+.P
+.nf
+ struct accthdr { /* header for accounting record */ 
+	time_t	timestamp;
+	int	package; /* Type of record */
+	int	len;     /* Length of the content */ 
+ };
+.fi
+.P
+.br
+The package identifies the type of the record, and indicates which structure should be used to read its content. The stuctures are also defined in sacct.h, and explicit what information is contained in the record. The different packages, and their associated structures are:
+.br
+.TP
+.B ACCTSYSTEM
+Accounting for system events. Use \fBstruct acctsystem\fP to read the content.
+.TP
+.B ACCTRFIO
+RFIO accounting entries. Use \fBstruct acctrfio\fP to read the content.
+.TP
+.B ACCTTAPE
+Tape daemon accounting entries. Use \fBstruct accttape\fP.
+.TP
+.B ACCTRTCOPY
+RTCOPY accounting entries. Use \fBstruct acctrtcp\fP.
+.TP
+.B ACCTSTAGE
+Stager accounting entries. Use \fBstruct acctstage\fP.
+.TP
+.B ACCTRTCPTIM
+RTCOPY timing entries. Use \fBstruct acctrtcp_timing\fP.
+.TP
+.B ACCTSTAGE2
+Stager accounting entries, new format. Use \fBstruct acctstage2\fP.
+.P
+.br
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
