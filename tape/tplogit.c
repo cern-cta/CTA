@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tplogit.c,v $ $Revision: 1.2 $ $Date: 2000/05/04 10:04:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tplogit.c,v $ $Revision: 1.3 $ $Date: 2000/06/05 05:22:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -41,4 +41,5 @@ tplogit(va_alist) va_dcl
 	write (fd_log, prtbuf, strlen(prtbuf));
 	close (fd_log);
 	errno = save_errno;
+	return (0);
 }
