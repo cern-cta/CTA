@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.108 $ $Date: 2004/09/24 13:09:36 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.109 $ $Date: 2005/03/15 15:08:50 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -345,18 +345,24 @@ static int DiskFileOpen(int pool_index,
                 if ( (filereq->concat & CONCAT_TO_EOD) != 0 &&
                      (filereq->concat & CONCAT) == 0 &&
                      ((file->prev->filereq.concat & CONCAT_TO_EOD) == 0 ||
-                      file == tape->file) )
+                      file == tape->file) ) {
                     flags = O_CREAT | O_WRONLY | O_TRUNC | binmode;
-                else
-                    flags = O_CREAT | O_WRONLY | O_APPEND | binmode;
+                } else {
+                  flags = O_CREAT | O_WRONLY | O_APPEND | binmode;
+                }
             } else {
                 /*
                  * New disk file unless an offset has been specified.
+                 * New stager will specify concat==OPEN_NOTRUNC in order
+                 * to allow for efficient recall of multi-segment files
+                 * (segments can be copied in any order).
                  */
-                if ( filereq->offset > 0 ) 
+                if ( (filereq->offset > 0) || 
+                     (filereq->concat == OPEN_NOTRUNC) ) {
                     flags = O_CREAT| O_WRONLY | binmode;
-                else 
-                    flags = O_CREAT | O_WRONLY | O_TRUNC | binmode;
+                } else {
+                  flags = O_CREAT | O_WRONLY | O_TRUNC | binmode;
+                }
             }
         }
         /* Activate new transfer mode for source file */
