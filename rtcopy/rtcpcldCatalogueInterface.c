@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.86 $ $Release$ $Date: 2004/11/26 14:06:38 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.87 $ $Release$ $Date: 2004/11/26 14:33:35 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.86 $ $Release$ $Date: 2004/11/26 14:06:38 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.87 $ $Release$ $Date: 2004/11/26 14:33:35 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1099,7 +1099,9 @@ static int procSegmentsForTape(
       Cstager_Segment_id(segmArray[i],&key);
       fl->dbRef->key = key;
     }
-    memcpy(fl->filereq.blockid,blockid,sizeof(fl->filereq.blockid));
+    if ( blockid != NULL ) {
+      memcpy(fl->filereq.blockid,blockid,sizeof(fl->filereq.blockid));
+    }
     if ( memcmp(fl->filereq.blockid,nullblkid,sizeof(nullblkid)) == 0 ) 
       fl->filereq.position_method = TPPOSIT_FSEQ;
     else fl->filereq.position_method = TPPOSIT_BLKID;
@@ -1325,7 +1327,6 @@ int nextSegmentToMigrate(
   tape_list_t *tl = NULL;
   file_list_t *fl = NULL;
   char *diskServer = NULL, *mountPoint = NULL, *relPath = NULL, *nsHost = NULL;
-  unsigned char *blockid;
   struct Cns_fileid *fileid;
   int rc, i, nbItems = 0, save_serrno, nbDskCps = 0;
 
@@ -3163,176 +3164,6 @@ int rtcpcld_setVidWorkerAddress(
     return(-1);
   }
   C_IAddress_delete(iAddr);
-  return(0);
-}
-
-/**
- * This method is only called from methods used by the VidWorker childs.
- * Update the status of a segments matching the passed filereq. If no
- * matching entry is found, the method returns -1 and sets serrno == ENOENT.
- */
-int rtcpcld_setFileStatus(
-                          tape,
-                          file, 
-                          newStatus,
-                          notify
-                          )
-     tape_list_t *tape;
-     file_list_t *file;
-     enum Cstager_SegmentStatusCodes_t newStatus;
-     int notify;
-{
-  struct C_Services_t **svcs = NULL;
-  struct C_BaseAddress_t *baseAddr = NULL;
-  struct C_IAddress_t *iAddr;
-  struct C_IObject_t *iObj;
-  struct Cstager_Segment_t *segmItem;
-  enum Cstager_SegmentStatusCodes_t currentStatus;
-  struct Cstager_Tape_t *dummyTp = NULL;
-  rtcpFileRequest_t *filereq;
-  ID_TYPE _key = 0;
-  char *vid;
-  int mode, side;
-  struct Cns_fileid fileid;
-  char *nsHost;
-  Cuuid_t stgUuid;
-  char *diskPath;
-  unsigned char *blockid = NULL;
-  int rc = 0, rcTmp, save_serrno, fseq;
-
-  if ( (file == NULL) || (file->dbRef == NULL) || (file->dbRef->row == NULL) ||
-       (*(file->filereq.file_path) == '\0') ||
-       (*(file->filereq.file_path) == '.') ) {
-    serrno = EINVAL;
-    return(-1);
-  }
-  filereq = &(file->filereq);
-
-  segmItem = (struct Cstager_Segment_t *)file->dbRef->row;
-
-
-  svcs = NULL;
-  rc = getDbSvc(&svcs);
-
-  rc = updateSegmentFromDB(file);
-  if ( rc == -1 ) {
-    return(-1);
-  }
-
-  Cstager_Segment_status(
-                         segmItem,
-                         &currentStatus
-                         );
-
-  if ( (currentStatus == SEGMENT_FAILED) &&
-       (newStatus != SEGMENT_FAILED) ) {
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SEGMFAILED),
-                    (struct Cns_fileid *)&fileid,
-                    RTCPCLD_NB_PARAMS+1,
-                    "",
-                    DLF_MSG_PARAM_UUID,
-                    stgUuid,
-                    RTCPCLD_LOG_WHERE
-                    );
-    serrno = EPERM;
-    return(-1);
-  }
-
-  diskPath = NULL;
-  Cstager_Segment_fseq(
-                       segmItem,
-                       &fseq
-                       );
-  Cstager_Segment_blockid(
-                          segmItem,
-                          (CONST unsigned char **)&blockid
-                          );
-
-  if ( ((diskPath != NULL) && 
-        (strcmp(filereq->file_path,diskPath) == 0)) &&
-       (((filereq->position_method == TPPOSIT_FSEQ) &&
-         (filereq->tape_fseq == fseq)) ||
-        ((filereq->position_method == TPPOSIT_BLKID) &&
-         (memcmp(filereq->blockid,blockid,sizeof(filereq->blockid))==0))) ) {
-    rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-    if ( rc == -1 ) {
-      return(-1);
-    }
-    
-    iAddr = C_BaseAddress_getIAddress(baseAddr);
-    
-    Cstager_Segment_setStatus(
-                              segmItem,
-                              newStatus
-                              );
-    if ( newStatus == SEGMENT_FILECOPIED ) {
-      Cstager_Segment_setBlockid(
-                                 segmItem,
-                                 filereq->blockid
-                                 );
-      Cstager_Segment_setBytes_in(
-                                  segmItem,
-                                  filereq->bytes_in
-                                  );
-      Cstager_Segment_setBytes_out(
-                                   segmItem,
-                                   filereq->bytes_out
-                                   );
-      Cstager_Segment_setHost_bytes(
-                                    segmItem,
-                                    filereq->host_bytes
-                                    );
-      Cstager_Segment_setSegmCksumAlgorithm(
-                                            segmItem,
-                                            filereq->castorSegAttr.segmCksumAlgorithm
-                                            );
-      Cstager_Segment_setSegmCksum(
-                                   segmItem,
-                                   filereq->castorSegAttr.segmCksum
-                                   );
-    }
-    if ( newStatus == SEGMENT_FAILED ) {
-      if (filereq->err.errorcode <= 0)
-        filereq->err.errorcode = SEINTERNAL;
-      Cstager_Segment_setErrorCode(segmItem,
-                                   filereq->err.errorcode);
-      
-      if (filereq->err.severity == RTCP_OK)
-        filereq->err.severity = RTCP_FAILED|RTCP_UNERR;
-      Cstager_Segment_setSeverity(segmItem,
-                                  filereq->err.severity);
-      
-      if (*filereq->err.errmsgtxt == '\0')
-        strncpy(filereq->err.errmsgtxt,
-                sstrerror(filereq->err.errorcode),
-                sizeof(filereq->err.errmsgtxt)-1);
-      Cstager_Segment_setErrMsgTxt(segmItem,
-                                   filereq->err.errmsgtxt);
-    }
-
-    iObj = Cstager_Segment_getIObject(segmItem);
-    Cstager_Segment_id(segmItem,&_key);
-    if ( rc != -1 && svcs != NULL && *svcs != NULL ) {
-      rc = C_Services_updateRep(*svcs,iAddr,iObj,1);
-      save_serrno = serrno;
-    }
-    
-    if ( rc == -1 ) {
-      save_serrno = serrno;
-      LOG_DBCALL_ERR((*svcs == NULL ? "getDbSvcs()" : "C_Services_updateRep()"),
-                     (*svcs == NULL ? "(null)" : C_Services_errorMsg(*svcs)));
-      C_IAddress_delete(iAddr);
-      serrno = save_serrno;
-      return(-1);
-    }
-    C_IAddress_delete(iAddr);
-  } else {
-    serrno = ENOENT;
-    return(-1);
-  }
-
   return(0);
 }
 
