@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.65 $ $Date: 2000/05/04 14:53:02 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.66 $ $Date: 2000/06/14 11:23:01 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -73,6 +73,7 @@ extern int failure;
 extern int AbortFlag;
 
 static int last_block_done = 0;
+static int WaitToJoin = FALSE;
 
 /*
  * Signal to disk IO thread that file has been positioned (tape read with
@@ -1121,7 +1122,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
          if ( AbortFlag != 0 ) { \
              if ( mode == WRITE_DISABLE ) (void)rtcp_WriteAccountRecord( \
                  client,nexttape,nextfile,RTCPEMSG); \
-             exit(0); \
+             if ( WaitToJoin == FALSE ) exit(0); \
          } \
          if ( rc == -1 ) return((void *)&failure); \
          else return((void *)&success); \
@@ -1685,6 +1686,7 @@ int rtcpd_WaitTapeIO(int *status) {
     rtcp_log(LOG_DEBUG,"rtcpd_WaitTapeIO() waiting for tape I/O thread\n");
 
     _status = NULL;
+    WaitToJoin = TRUE;
     rc = Cthread_join(proc_cntl.tapeIOthreadID,&_status);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_WaitTapeIO() Cthread_joint(): %s\n",
