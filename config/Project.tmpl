@@ -490,6 +490,18 @@
 #endif
 #endif
 
+
+/* -------- */
+/* SECURITY */
+/* -------- */
+#if BuildSecurity
+#if BuildCommon != YES
+#undef BuildCommon
+#define BuildCommon     YES
+#endif
+#endif
+
+
 /* ======================= */
 /* For hidden dependencies */
 /* ======================= */
@@ -573,6 +585,10 @@ IOTESTCPPDIR = io
 DBCTESTCPPDIR = dbC
 STGSVCTESTCPPDIR = stgSvc
 #endif
+#if BuildSecurity
+SECURITYDIR=security
+#endif
+
 
 /* Those directories are always defined because we always build at least */
 /* COMMON library */
