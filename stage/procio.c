@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.42 2000/10/09 06:24:30 jdurand Exp $
+ * $Id: procio.c,v 1.43 2000/10/09 07:58:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.42 $ $Date: 2000/10/09 06:24:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.43 $ $Date: 2000/10/09 07:58:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1793,6 +1793,7 @@ isstaged(cur, p, poolflag, poolname)
 	last_tape_file = 0;
 	for (stcp = stcs; stcp < stce; stcp++) {
 		if (stcp->reqid == 0) break;
+		if ((stcp->status & WAITING_REQ) == WAITING_REQ) continue;
 		if (cur->t_or_d != stcp->t_or_d) continue;
 		/* if no pool specified, the file may reside in any pool */
 		if (poolflag == 0) {
