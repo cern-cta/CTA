@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.15 $ $Date: 2002/01/24 08:26:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.16 $ $Date: 2002/04/08 14:50:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -331,7 +331,7 @@ u_signed64 *Size;
 				switch (qlab) {
 				case 0:	/* not a label */
 					break;
-				case 1:	/* HDR1/EOF1 */
+				case 1:	/* HDR1 */
 					if (fid) {
 						strncpy (fid, label + 4, 17);
 						*(fid+17) = '\0';
@@ -342,7 +342,7 @@ u_signed64 *Size;
 					if (fseq)
 						sscanf (label+31, "%4d", fseq);
 					continue;
-				case 2:	/* HDR2/EOF2 */
+				case 2:	/* HDR2 */
 					if (recfm) {
 						memset (recfm, 0, 4);
 						*recfm = label[4];
@@ -358,7 +358,15 @@ u_signed64 *Size;
 					if (lrecl)
 						sscanf (label+10, "%5d", lrecl);
 					continue;
-				default:	/* HDR3/EOF3/HDR4/EOF4 */
+				case 5: /* UHL1 */
+					if (fseq)
+						sscanf (label+4, "%10d", fseq);
+					if (blksize)
+						sscanf (label+14, "%10d", blksize);
+					if (lrecl)
+						sscanf (label+24, "%10d", lrecl);
+					continue;
+				default:
 					continue;
 				}
 			}
@@ -410,7 +418,6 @@ u_signed64 *Size;
 					close (infd);
 					return (1);
 				}
-				qlab = 0;
 			} else {
 				nfile++;
 				Ctape_dmpmsg (MSG_OUT, " ***** TAPE MARK READ *****      FILE %d CONTAINED %d BLOCKS.\n",
@@ -444,13 +451,14 @@ u_signed64 *Size;
 			close (infd);
 			infd = open (path, O_RDONLY);
 #endif
-			goodrec = 0;
 			irec = 0;
+			qbov = 0;
+			if (lcode == 0 || qlab < 0) return (0);
+			goodrec = 0;
 			max_block_length = 0;
 			min_block_length = 0;
-			qbov = 0;
+			qlab = 0;
 			sum_block_length = 0;
-			if (lcode == 0 || qlab < 0) return (0);
 		} else {
 			errcat = 0;
 			if (errno == ENOMEM) {
@@ -742,6 +750,10 @@ char *label;
 	} else if (strncmp (label, "HDR4", 4) == 0) {
 		Ctape_dmpmsg (MSG_OUT, "\n HEADER LABEL 4:             %.76s\n", label+4);
 		return (4);
+	} else if (strncmp (label, "UHL1", 4) == 0) {
+		Ctape_dmpmsg (MSG_OUT, "\n USER HEADER LABEL 1:\n");
+		printulabel1 (label);
+		return (5);
 	} else if (strncmp (label, "EOF1", 4) == 0) {
 		Ctape_dmpmsg (MSG_OUT, "\n TRAILER LABEL 1:\n");
 		printlabel1 (label);
@@ -764,6 +776,10 @@ char *label;
 		Ctape_dmpmsg (MSG_OUT, "\n END OF VOLUME LABEL 2:\n");
 		printlabel2 (label);
 		return (-2);
+	} else if (strncmp (label, "UTL1", 4) == 0) {
+		Ctape_dmpmsg (MSG_OUT, "\n USER TRAILER LABEL 1:\n");
+		printulabel1 (label);
+		return (-5);
 	}
 	return (0);
 }
@@ -788,6 +804,19 @@ char *label;
 	Ctape_dmpmsg (MSG_OUT, " DENSITY:                    %.1s\n", label + 15);
 	Ctape_dmpmsg (MSG_OUT, " DATA RECORDING:             %.1s\n", label + 34);
 	Ctape_dmpmsg (MSG_OUT, " BLOCKING ATTRIBUTE:         %.1s\n", label + 38);
+}
+
+printulabel1 (label)
+char *label;
+{
+	Ctape_dmpmsg (MSG_OUT, " FILE SEQNO:                 %.10s\n", label + 4);
+	Ctape_dmpmsg (MSG_OUT, " BLOCK LENGTH:               %.10s\n", label + 14);
+	Ctape_dmpmsg (MSG_OUT, " RECORD LENGTH:              %.10s\n", label + 24);
+	Ctape_dmpmsg (MSG_OUT, " SITE:                       %.8s\n", label + 34);
+	Ctape_dmpmsg (MSG_OUT, " TAPE MOVER HOSTNAME:        %.10s\n", label + 42);
+	Ctape_dmpmsg (MSG_OUT, " DRIVE MANUFACTURER:         %.8s\n", label + 52);
+	Ctape_dmpmsg (MSG_OUT, " DRIVE MODEL:                %.8s\n", label + 60);
+	Ctape_dmpmsg (MSG_OUT, " DRIVE SERIAL NUMBER:        %.12s\n", label + 68);
 }
 
 report_comp_stats (infd, path, devtype)
