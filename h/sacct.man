@@ -1,8 +1,8 @@
-.\" $Id: sacct.man,v 1.2 2002/08/22 07:23:52 bcouturi Exp $
+.\" $Id: sacct.man,v 1.3 2002/08/23 12:30:44 bcouturi Exp $
 .\"
 .\" Man page for the CASTOR accounting header file sacct.h
 .\"
-.TH SACCT "4" "$Date: 2002/08/22 07:23:52 $" "CASTOR" "Accounting records"
+.TH SACCT "4" "$Date: 2002/08/23 12:30:44 $" "CASTOR" "Accounting records"
 .SH NAME
 \fBsacct\fP \- CASTOR accounting records
 
@@ -10,31 +10,31 @@
 .BI "#include <" sacct.h ">"
 
 .SH DESCRIPTION
-The \fBsacct.h\fP header file contains the structure of the accounting records written by the CASTOR applications. Every record is composed of a header, plus a content. All CASTOR applications on a machine write to the same accounting file, usually /usr/spool/sacct/sacct.
+The \fBsacct.h\fP header file contains the structure of the accounting records written by the CASTOR applications. Every record is composed of a header, plus a body. All CASTOR applications on a machine write to the same accounting file, usually /usr/spool/sacct/sacct.
 .P
 .br 
-The structure acchdr must be used to read the accounting record. 
+The structure acchdr must be used to read the accounting header. 
 .P
 .nf
  struct accthdr { /* header for accounting record */ 
 	time_t	timestamp;
 	int	package; /* Type of record */
-	int	len;     /* Length of the content */ 
+	int	len;     /* Length of the body */ 
  };
 .fi
 .P
 .br
-The package identifies the type of the record, and indicates which structure should be used to read its content. The stuctures are also defined in sacct.h, and explicit what information is contained in the record. The different packages, and their associated structures are:
+The package identifies the type of the record, and indicates which structure should be used to read its content. The structures are defined in sacct.h, and explicit what information is contained in the record. The different packages, and their associated structures are:
 .br
 .TP
 .B ACCTSYSTEM
-Accounting for system events. Use \fBstruct acctsystem\fP to read the content. The only availble information is the subtype field, indicating system shutdown or startup.
+Accounting for system events. Use \fBstruct acctsystem\fP to read the content. The only availble information is the subtype field, indicating system shutdown or startup. These accounting records are not currently used by CASTOR.
 .TP
 .B ACCTRFIO
 RFIO accounting entries. Use \fBstruct acctrfio\fP to read the content. This record provides the type of request, the uid/gid of the user sending the request, the filename, as well as the summary of the of the data transfered.
 .TP
 .B ACCTTAPE
-Tape daemon accounting entries. Use \fBstruct accttape\fP. Information provided is: uid/gid of requestor, job id, the device group name of the drive, the drive used, the vid requested and the file sequence number on the tape. The subtype fileds indicates what action was actually performed by the tape daemon, or what happened to the daemon the possible values are:
+Tape daemon accounting entries. Use \fBstruct accttape\fP. Information provided is: uid/gid of requestor, job id, the device group name of the drive, the drive used, the vid requested and the file sequence number on the tape. The subtype fields indicates what action was actually performed by the tape daemon, or what happened to the daemon the possible values are:
 .br
 	TPDSTART: tpdaemon started 
 .br
@@ -54,7 +54,7 @@ Tape daemon accounting entries. Use \fBstruct accttape\fP. Information provided 
 .br	
 	TPCONFDN: drive configured down 
 .br	
-	TPDGQ: device group queue 
+	TPDGQ: device group queue (not used anymore).
 .br
 .TP
 .B ACCTRTCOPY
@@ -80,7 +80,7 @@ RTCOPY accounting entries. Use \fBstruct acctrtcp\fP. Contains uid/gid of reques
 RTCOPY timing entries. Use \fBstruct acctrtcp_timing\fP. This records provide, for a given job timing information about the way the request was performed, as well as the quantity of data transfered. There is no subtype for this accounting record.
 .TP
 .B ACCTSTAGE / ACCTSTAGE2
-Stager accounting entries. Use \fBstruct acctstage\fP or \fBstruct acctstage2\fP. These records give information about stage requests, including request id, requestor uid/gid and information concerning the details of the request itself. accstage2 is a new format used by the current stagres. 
+Stager accounting entries. Use \fBstruct acctstage\fP or \fBstruct acctstage2\fP. These records give information about stage requests, including request id, requestor uid/gid and information concerning the details of the request itself. accstage2 is a new format used by the current stagers. 
 The subtypes are:
 
 .br
@@ -99,5 +99,133 @@ The subtypes are:
 .TP
 .P
 .br
+
+.SH USAGE
+
+The accounting file is written using the machine's byte order. No marshalling is done at write time. When reading the accounting file from a remote machine, the byte order used by the remote platform must be taken into account. The following example shows how to read the accounting file.
+
+.P
+.nf
+#include <stdlib.h>
+#include <fcntl.h> 
+#include <string.h> 
+
+#include "sacct.h" /* For CASTOR Accounting records definition */
+#include "rfio_api.h" /* To open accounting files remotely using rfio */
+#include "serrno.h" /* For CASTOR errors */
+
+#define STAGER_ACCT "stagepublic:/usr/spool/sacct/sacct"
+
+int size_read = 0;
+
+#define swap_it(a) swab((char *)&a,(char *)&a,sizeof(a));\
+		   a=((unsigned int)a<<16)|((unsigned int)a>>16);
+
+int getacctrec _PROTO((int, struct accthdr *, char *, int *));
+
+/*  This programs opens a remote accounting file, 
+    and reads all the acctstage2 records */
+int main(argc, argv)
+     int argc;
+     char **argv;
+{
+
+  int fd_acct;                  /* File descriptor for remote file */
+  struct accthdr accthdr;		/* accthdr record */
+  struct acctstage2 rp;		/* accstage2 record */
+  int swapped = 0;		/* flag set if byte order swapped */
+
+  char *stgcmd[20] = { "STGSTART", "STGCMDR", "STGFILS", 
+		       "STGCMDC", "STGCMDS", "STGFILC" };
+
+  printf("Opening accounting file\n");
+
+  if ((fd_acct = rfio_open (STAGER_ACCT, O_RDONLY)) < 0) {
+    fprintf (stderr, "%s : rfio_open error : %s\n", STAGER_ACCT, rfio_serror());
+    exit (EXIT_FAILURE);
+  }
+  
+  printf("Reading all records\n");
+  
+  while (getacctrec (fd_acct, &accthdr, (char *) &rp, &swapped) > 0) {
+    if (accthdr.package == ACCTSTAGE2) {
+      if (swapped) {
+        swap_it(rp.subtype);
+	swap_it(rp.uid);
+        swap_it(rp.gid);
+      }
+      printf("Request Type: %s, from %d/%d\n", 
+      stgcmd[rp.subtype], rp.uid, rp.gid);
+    }
+  }
+
+  rfio_close(fd_acct);
+  exit(EXIT_SUCCESS);
+
+}
+
+/* Function that reads the accounting records, s
+   kipping the records which
+   subtype is not ACCTSTAGE2 */
+int getacctrec (fd_acct, accthdr, buf,swapped)
+     int fd_acct;
+     struct accthdr *accthdr;
+     char *buf;
+     int *swapped;
+{
+  int c;
+
+  rfio_errno = serrno = 0;
+  if ((c = rfio_read (fd_acct,accthdr,sizeof(struct accthdr))) 
+  != sizeof(struct accthdr)) {
+    if (c == 0) return (0);
+    if (c > 0)
+      fprintf (stderr, "rfio_read returns %d\n", c);
+    else
+      fprintf (stderr, "rfio_read error : %s\n", rfio_serror());
+    exit(EXIT_FAILURE);
+  }
+  
+  size_read += c;
+  
+  /* If package is > 255 then byte order needs swapping */
+  
+  if (accthdr->package > 255) {
+    swap_it (accthdr->package); 
+    swap_it (accthdr->len);
+    swap_it (accthdr->timestamp);
+    *swapped = 1;
+  }
+  
+  if (accthdr->package != ACCTSTAGE2) {
+    /* Not a STAGE accouting record - we just seek the pointer */
+    rfio_errno = serrno = 0;
+    if (rfio_lseek(fd_acct, accthdr->len, SEEK_CUR) < 0) {
+      fprintf (stderr, "rfio_lseek error : %s\n", rfio_serror());
+      exit (EXIT_FAILURE);
+    }
+    size_read += accthdr->len;
+    return (accthdr->len);
+  }
+  
+  /* We have an ACCTSTAGE2 record */
+
+  if ((c = rfio_read (fd_acct, buf, accthdr->len)) != accthdr->len) {
+    if (c >= 0)
+      fprintf (stderr, "rfio_read returns %d\n",c);
+    else
+      fprintf (stderr, "rfio_read error : %s\n", rfio_serror());
+    exit (EXIT_FAILURE);
+  }
+  
+  size_read += c;
+  return (accthdr->len);
+}
+
+.fi
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
+
+
+
+
