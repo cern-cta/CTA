@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageClrRequestCnv.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/10/26 08:34:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageClrRequestCnv.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/10/26 12:57:12 $ $Author: sponcec3 $
  *
  * 
  *
@@ -332,7 +332,7 @@ void castor::db::ora::OraStageClrRequestCnv::fillRepIClient(castor::stager::Stag
     }
   }
   // Close resultset
-  m_deleteIClientStatement->closeResultSet(rset);
+  m_selectIClientStatement->closeResultSet(rset);
   if (0 != obj->client()) {
     // Check checkIClientExist statement
     if (0 == m_checkIClientExistStatement) {

@@ -210,7 +210,7 @@ void castor::db::ora::OraClientCnv::fillRepRequest(castor::rh::Client* obj)
     }
   }
   // Close resultset
-  m_deleteRequestStatement->closeResultSet(rset);
+  m_selectRequestStatement->closeResultSet(rset);
   if (0 != obj->request()) {
     // Check checkRequestExist statement
     if (0 == m_checkRequestExistStatement) {

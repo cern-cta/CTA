@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdcRequestCnv.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/10/26 08:34:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdcRequestCnv.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/10/26 12:57:13 $ $Author: sponcec3 $
  *
  * 
  *
@@ -390,7 +390,7 @@ void castor::db::ora::OraStageUpdcRequestCnv::fillRepIClient(castor::stager::Sta
     }
   }
   // Close resultset
-  m_deleteIClientStatement->closeResultSet(rset);
+  m_selectIClientStatement->closeResultSet(rset);
   if (0 != obj->client()) {
     // Check checkIClientExist statement
     if (0 == m_checkIClientExistStatement) {

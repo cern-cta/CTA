@@ -303,7 +303,7 @@ void castor::db::ora::OraStreamCnv::fillRepTape(castor::stager::Stream* obj)
     }
   }
   // Close resultset
-  m_deleteTapeStatement->closeResultSet(rset);
+  m_selectTapeStatement->closeResultSet(rset);
   if (0 != obj->tape()) {
     // Check checkTapeExist statement
     if (0 == m_checkTapeExistStatement) {

@@ -1062,7 +1062,7 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as,
     // Close request
     *m_stream << getIndent() << "// Close resultset" << endl
               << getIndent()
-              << "m_delete"
+              << "m_select"
               << capitalizeFirstLetter(as->remotePart.typeName)
               << "Statement->closeResultSet(rset);"
               << endl;
