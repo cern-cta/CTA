@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/20 12:28:53 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/24 17:22:06 $ $Author: bcouturi $
  *
  *
  *
@@ -31,6 +31,7 @@
 #include "castor/IClient.hpp"
 #include "castor/rh/Client.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/Constants.hpp"
 #include "castor/logstream.h"
 #include "castor/io/biniostream.h"
@@ -629,6 +630,14 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
   throw(castor::exception::Exception) {
 
   char *func = "RequestReplier::sendResponse ";
+   
+  if (0 == client || 0 == response) {
+    castor::exception::Exception e(EINVAL);
+    e.getMessage() << "Parameter to sendResponse is NULL"
+                   << client << "/"
+                   << response;
+    throw e;
+  }
 
   // Marshalling the response
   castor::io::biniostream* buffer = new castor::io::biniostream();
@@ -640,9 +649,14 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
   Cthread_mutex_lock(&m_clientQueue);
 
   ClientResponse cr;
-  // XXX To be fixed. IClient must have send and close methods and
-  // XXX we should use them here
   castor::rh::Client* cl = dynamic_cast<castor::rh::Client*>(client);
+  if (0 == cl) {
+    castor::exception::Internal e;
+    e.getMessage() <<"Could not cast IClient to client";
+    Cthread_mutex_unlock(&m_clientQueue);
+    throw e;
+  }
+  
   cr.client = *cl;
   cr.response = buffer;
   cr.isLast = isLastResponse;
@@ -711,6 +725,12 @@ castor::replier::RequestReplier::sendEndResponse(castor::IClient *client)
   throw(castor::exception::Exception) {
 
   char *func = "RequestReplier::sendEndResponse ";
+
+  if (0 == client) {
+    castor::exception::Exception e(EINVAL);
+    e.getMessage() << "Client parameter to sendResponse is NULL";
+    throw e;
+  }
 
   // Adding the client to the queue, taking proper lock
   clog() << VERBOSE << func << "Taking lock on queue !" << std::endl;
