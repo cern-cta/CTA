@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.18 $ $Date: 2000/01/24 17:04:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.19 $ $Date: 2000/01/24 17:42:52 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -924,6 +924,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
     if ( rc == -1 || (severity & RTCP_FAILED) != 0 || \
          (rtcpd_CheckProcError() & RTCP_FAILED) != 0 ) { \
          rtcp_log(LOG_ERR,"tapeIOthread() %s\n",Z); \
+         if ( (severity & RTCP_FAILED) != 0 ) rtcpd_BroadcastException(); \
          if ( mode == WRITE_ENABLE &&  \
             (rtcpd_CheckProcError() & RTCP_FAILED) == 0 ) \
              rtcpd_SetProcError(RTCP_FAILED); \
@@ -1222,6 +1223,7 @@ void *tapeIOthread(void *arg) {
                         }
                         rtcpd_SetReqStatus(NULL,nextfile,serrno,
                             RTCP_FAILED | RTCP_USERR);
+                        rtcpd_BroadcastException();
                         if ( mode == WRITE_ENABLE ) {
                             tellClient(&client_socket,NULL,nextfile,-1);
                             TP_STATUS(RTCP_PS_STAGEUPDC);
