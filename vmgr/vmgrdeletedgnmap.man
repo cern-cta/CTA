@@ -1,0 +1,32 @@
+.\" @(#)$RCSfile: vmgrdeletedgnmap.man,v $ $Revision: 1.1 $ $Date: 2002/01/18 09:02:21 $ CERN IT-DS/HSM Jean-Philippe Baud
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH VMGRDELETEDGNMAP 1 "$Date: 2002/01/18 09:02:21 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrdeletedgnmap \- delete a triplet dgn/model/library in the CASTOR
+Volume Manager
+.SH SYNOPSIS
+.B vmgrdeletedgnmap
+.BI --li " library_name"
+.BI --mo " model"
+.SH DESCRIPTION
+.B vmgrdeletedgnmap
+deletes a triplet dgn/model/library in the CASTOR Volume Manager.
+.TP
+.I library
+is the name of the library.
+It must be at most CA_MAXTAPELIBLEN characters long.
+.TP
+.I model
+is the name of the media model.
+It must be at most CA_MAXMODELLEN characters long.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR vmgr_deletedgnmap(3) ,
+.B vmgrenterdgnmap(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

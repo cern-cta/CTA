@@ -1,0 +1,38 @@
+.\" @(#)$RCSfile: vmgrdeletedenmap.man,v $ $Revision: 1.1 $ $Date: 2002/01/18 09:02:20 $ CERN IT-DS/HSM Jean-Philippe Baud
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH VMGRDELETEDENMAP 1 "$Date: 2002/01/18 09:02:20 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrdeletedenmap \- delete a triplet model/media_letter/density in the CASTOR
+Volume Manager
+.SH SYNOPSIS
+.B vmgrdeletedenmap
+.BI -d " density"
+[
+.BI --ml " media_letter"
+]
+.BI --mo " model"
+.SH DESCRIPTION
+.B vmgrdeletedenmap
+deletes a triplet model/media_letter/density in the CASTOR Volume Manager.
+.TP
+.I density
+is alphanumeric. It must be at most CA_MAXDENLEN characters long.
+.TP
+.I media_letter
+is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood),
+"J" for IBM 3590, "R" for STK 9840.
+.TP
+.I model
+is the name of the media model.
+It must be at most CA_MAXMODELLEN characters long.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR vmgr_deletedenmap(3) ,
+.B vmgrenterdenmap(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
