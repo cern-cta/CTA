@@ -1,5 +1,5 @@
 /*
- * $Id: stage_shift.h,v 1.2 2000/01/10 06:57:30 jdurand Exp $
+ * $Id: stage_shift.h,v 1.3 2001/02/01 16:28:57 jdurand Exp $
  */
 
 /*
@@ -34,7 +34,6 @@ typedef long gid_t;
 typedef long uid_t;
 #endif
 
-#if ! defined(vms)
 struct stgcat_entry_old {		/* entry format in STGCAT table */
 	int	blksize;	/* maximum block size */
 	char	filler[2];
@@ -51,7 +50,7 @@ struct stgcat_entry_old {		/* entry format in STGCAT table */
 	char	user[15];	/* login name */
 	uid_t	uid;		/* uid or Guid */
 	gid_t	gid;
-#if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(vms) || defined(_WIN32)
+#if (defined(sun) && !defined(SOLARIS)) || defined(ultrix) || defined(_WIN32)
 	int mask;
 #else
 	mode_t	mask;
@@ -90,6 +89,5 @@ struct stgpath_entry_old {		/* entry format in STGPATH table */
 	int	reqid;
 	char	upath[MAXHOSTNAMELEN+MAXPATH];
 };
-#endif /* ! defined(vms) */
 
 #endif /* __stage_shift_h */
