@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.h,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/18 08:44:35 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.h,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/21 07:33:20 $ $Author: obarring $
  *
  * 
  *
@@ -39,32 +39,32 @@
  * Only a subset of the rtcpTapeRequest_t and rtcpFileRequest_t fields are passed
  * through the database. All other fields are set to default values and any other
  * value set by client is ignored. The relevant fields in rtcpTapeRequest_t are:
- *   - vid
- *   - side
- *   - mode
+ *  - <b>vid</b>
+ *  - <b>side</b>
+ *  - <b>mode</b>
  *
  * The relevant fields in rtcpFileRequest_t are:
- *   - tape_fseq
- *   - blockid
- *   - bytes_in
- *   - bytes_out
- *   - offset
- *   - host_bytes
- *   - file_path
- *   - castorSegAttr.segmCksumAlgorithm
- *   - castorSegAttr.segmCksum
- *   - castorSegAttr.nameServerHostName
- *   - castorSegAttr.castorFileId
- *   - stgReqId (UUID)
- *   - err.errorcode
- *   - err.severity
- *   - err.errmsgtxt
+ *  - <b>tape_fseq</b>
+ *  - <b>blockid</b>
+ *  - <b>bytes_in</b>
+ *  - <b>bytes_out</b>
+ *  - <b>offset</b>
+ *  - <b>host_bytes</b>
+ *  - <b>file_path</b>
+ *  - <b>castorSegAttr.segmCksumAlgorithm</b>
+ *  - <b>castorSegAttr.segmCksum</b>
+ *  - <b>castorSegAttr.nameServerHostName</b>
+ *  - <b>castorSegAttr.castorFileId</b>
+ *  - <b>stgReqId (UUID)</b>
+ *  - <b>err.errorcode</b>
+ *  - <b>err.severity</b>
+ *  - <b>err.errmsgtxt</b>
  *
- * The fields:
- *   - proc_status
- *   - cprc
- *   - stageID
- *   - stageSubreqID
+ * The following fields:
+ *  - <b>proc_status</b>
+ *  - <b>cprc</b>
+ *  - <b>stageID</b>
+ *  - <b>stageSubreqID</b>
  *
  * are used internally in rtcpcldapi.h but not passed on to the RTCOPY server.
  *
@@ -72,6 +72,11 @@
 
 #ifndef H_RTCPCLDAPI_H 
 #define H_RTCPCLDAPI_H 1
+#include <Castor_limits.h>
+#include <Cuuid.h>
+#include <rtcp_constants.h>
+#include <rtcp.h>
+
 /** Client callback before and after each file copy
  *
  * \param tapereq Tape request structure
@@ -133,9 +138,9 @@ EXTERN_C int (*rtcpcld_MoreInfoCallback) _PROTO((
  *
  * \see rtcpc(3)
  */
-void rtcpcldc _PROTO((
-                      tape_list_t *tape
-                      ));
+int rtcpcldc _PROTO((
+                     tape_list_t *tape
+                     ));
 /** Cleanup after a series of rtcpcldc_appendFileReqs() calls
  *
  * \param tape - tape list passed in the original rtcpcldc() call.
@@ -165,7 +170,7 @@ void rtcpcldc_cleanup _PROTO((
  *will be created. The tape parameter should be the same as the one passed in the
  *original rtcpcldc() call. The tape request is locked internally to avoid race
  *conditions if rtcpcldc() and rtcpcldc_appendFileReqs() are called from different
-  threads.
+ *threads.
  *
  * \return
  *  - 0 == OK
