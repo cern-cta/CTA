@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.8 $ $Date: 2000/03/03 13:15:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.9 $ $Date: 2000/03/06 12:39:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -120,7 +120,6 @@ int lock;
 vmgr_dbrec_addr *rec_addr;
 {
 	char func[21];
-	short ml_ind;	/* indicator variable for m_media_letter column */
 	char rowid_value[19];
 	EXEC SQL DECLARE model_cursor CURSOR FOR
 		SELECT
@@ -141,12 +140,12 @@ vmgr_dbrec_addr *rec_addr;
 		EXEC SQL OPEN model_cursor4upd;
 		EXEC SQL FETCH model_cursor4upd INTO
 		 :rowid_value,
-		 :model_entry->m_model, :model_entry->m_media_letter:ml_ind,
+		 :model_entry->m_model, :model_entry->m_media_letter,
 		 :model_entry->native_capacity, :model_entry->media_cost_GB;
 	} else {
 		EXEC SQL OPEN model_cursor;
 		EXEC SQL FETCH model_cursor INTO
-		 :model_entry->m_model, :model_entry->m_media_letter:ml_ind,
+		 :model_entry->m_model, :model_entry->m_media_letter,
 		 :model_entry->native_capacity, :model_entry->media_cost_GB;
 	}
 	switch (sqlca.sqlcode) {
@@ -225,7 +224,6 @@ int lock;
 vmgr_dbrec_addr *rec_addr;
 {
 	char func[21];
-	short ml_ind;	/* indicator variable for media_letter column */
 	short mf_ind;	/* indicator variable for manufacturer column */
 	char rowid_value[19];
 	short sn_ind;	/* indicator variable for sn column */
@@ -252,7 +250,7 @@ vmgr_dbrec_addr *rec_addr;
 		 :rowid_value,
 		 :tape_entry->vid, :tape_entry->vsn, :tape_entry->dgn,
 		 :tape_entry->density, :tape_entry->lbltype, :tape_entry->model,
-		 :tape_entry->media_letter:ml_ind, :tape_entry->manufacturer:mf_ind,
+		 :tape_entry->media_letter, :tape_entry->manufacturer:mf_ind,
 		 :tape_entry->sn:sn_ind, :tape_entry->poolname,
 		 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
 		 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rtime,
@@ -262,7 +260,7 @@ vmgr_dbrec_addr *rec_addr;
 		EXEC SQL FETCH tape_vid_cursor INTO
 		 :tape_entry->vid, :tape_entry->vsn, :tape_entry->dgn,
 		 :tape_entry->density, :tape_entry->lbltype, :tape_entry->model,
-		 :tape_entry->media_letter:ml_ind, :tape_entry->manufacturer:mf_ind,
+		 :tape_entry->media_letter, :tape_entry->manufacturer:mf_ind,
 		 :tape_entry->sn:sn_ind, :tape_entry->poolname,
 		 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
 		 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rtime,
@@ -293,7 +291,6 @@ int lock;
 vmgr_dbrec_addr *rec_addr;
 {
 	char func[22];
-	short ml_ind;	/* indicator variable for media_letter column */
 	short mf_ind;	/* indicator variable for manufacturer column */
 	int reqsize = (Size + 1023) / 1024;
 	char rowid_value[19];
@@ -318,7 +315,7 @@ vmgr_dbrec_addr *rec_addr;
 	 :rowid_value,
 	 :tape_entry->vid, :tape_entry->vsn, :tape_entry->dgn,
 	 :tape_entry->density, :tape_entry->lbltype, :tape_entry->model,
-	 :tape_entry->media_letter:ml_ind, :tape_entry->manufacturer:mf_ind,
+	 :tape_entry->media_letter, :tape_entry->manufacturer:mf_ind,
 	 :tape_entry->sn:sn_ind, :tape_entry->poolname,
 	 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
 	 :tape_entry->status;

@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_entertape.c,v $ $Revision: 1.4 $ $Date: 2000/03/05 16:34:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_entertape.c,v $ $Revision: 1.5 $ $Date: 2000/03/06 12:39:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_entertape - enter a new tape volume */
@@ -86,7 +86,7 @@ vmgr_entertape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
 	if (media_letter) {
 		marshall_STRING (sbp, media_letter);
 	} else {
-		marshall_STRING (sbp, "");
+		marshall_STRING (sbp, " ");
 	}
 	if (manufacturer) {
 		marshall_STRING (sbp, manufacturer);

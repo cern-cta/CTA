@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_entermodel.c,v $ $Revision: 1.2 $ $Date: 2000/01/10 14:39:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_entermodel.c,v $ $Revision: 1.3 $ $Date: 2000/03/06 12:39:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_entermodel - enter a new model of cartridge */
@@ -75,7 +75,7 @@ vmgr_entermodel(const char *model, char *media_letter, int native_capacity, int 
 	if (media_letter) {
 		marshall_STRING (sbp, media_letter);
 	} else {
-		marshall_STRING (sbp, "");
+		marshall_STRING (sbp, " ");
 	}
 	marshall_LONG (sbp, native_capacity);
 	marshall_LONG (sbp, media_cost);
