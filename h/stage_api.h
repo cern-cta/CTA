@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.4 2000/05/08 10:04:38 jdurand Exp $
+ * $Id: stage_api.h,v 1.5 2000/05/08 11:22:34 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -12,7 +12,6 @@
 struct stage_hsm {
   char *xfile;
   char *upath;
-  char *ipath;
   u_signed64 size;
   struct stage_hsm *next;
 };
