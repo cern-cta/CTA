@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.18 $ $Date: 2001/12/04 11:30:01 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.19 $ $Date: 2002/05/14 14:35:37 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -998,7 +998,7 @@ int vdqm_StartReplicaThread() {
      * Remove domain from local hostname if configuration entry is
      * specified without it.
      */
-    if ( strchr(primary_host,'.') != NULL ) {
+    if ( strchr(primary_host,'.') == NULL ) {
         q = strchr(l_hostname,'.');
         if ( q != NULL ) *q = '\0';
     }
