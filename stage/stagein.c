@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.37 2001/11/09 09:45:34 jdurand Exp $
+ * $Id: stagein.c,v 1.38 2001/11/30 12:14:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.37 $ $Date: 2001/11/09 09:45:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.38 $ $Date: 2001/11/30 12:14:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -34,12 +34,14 @@ static char sccsid[] = "@(#)RCSfile$ $Revision: 1.37 $ $Date: 2001/11/09 09:45:3
 #include <limits.h>
 #include "marshall.h"
 #include "rfio_api.h"
-#include "stage.h"
-#include "stage_api.h"
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "Cgetopt.h"
 #include "Castor_limits.h"
+#include "serrno.h"
+#include "stage_constants.h"
+#include "stage_messages.h"
+#include "stage_macros.h"
 
 EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
 EXTERN_C int  DLL_DECL  sysreq _PROTO((char *, char *, int *, char *, int *));
@@ -801,6 +803,7 @@ int main(argc, argv)
 			serrno = USERR;
 			break;
 		}
+		if (serrno == ESTNACT && ntries == 0) fprintf(stderr, STG161);
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
 	}
@@ -976,6 +979,7 @@ int stagein_chkdirw(path)
 	} else {
 		sav = *p;
 		*p = '\0';
+		PRE_RFIO;
 		rc = rfio_access (path, W_OK);
 		*p = sav;
 		if (rc < 0)
