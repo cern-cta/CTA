@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.60 $ $Release$ $Date: 2004/10/28 08:05:52 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.61 $ $Release$ $Date: 2004/10/28 09:33:37 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.60 $ $Release$ $Date: 2004/10/28 08:05:52 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.61 $ $Release$ $Date: 2004/10/28 09:33:37 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1807,10 +1807,10 @@ int rtcpcld_anyReqsForTape(
  */
 int rtcpcld_updcMigrFailed(
                            tape,
-                           filereq
+                           file
                            )
      tape_list_t *tape;
-     rtcpFileRequest_t *filereq;
+     file_list_t *file;
 {
   struct Cstager_TapeCopy_t *tapeCopy, **tapeCopyArray;
   enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
@@ -1821,28 +1821,21 @@ int rtcpcld_updcMigrFailed(
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj;
   struct C_Services_t **svcs = NULL;
-  file_list_t *file = NULL;
+  rtcpFileRequest_t *filereq;
   struct Cns_fileid *fileid;
   int rc = 0, nbTapeCopies, nbStreams, save_serrno, i, j;
   ID_TYPE key;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_ENABLE) ||
-       (filereq == NULL) ) {
+       (file == NULL) ) {
     serrno = EINVAL;
     return(-1);
   }
 
-  file = NULL;
-  rc = rtcpcld_findFile(
-                        tape,
-                        filereq,
-                        &file
-                        );
-  if ( rc == -1 ) {
-    return(-1);
-  }
+  filereq = &(file->filereq);
+
   fileid = NULL;
-  (void)rtcpcld_getFileId(filereq,&fileid);
+  (void)rtcpcld_getFileId(file,&fileid);
 
   rc = verifyTape(tape);
   if ( rc == -1 ) {
@@ -2008,10 +2001,10 @@ int rtcpcld_updcMigrFailed(
 
 int rtcpcld_updcRecallFailed(
                              tape,
-                             filereq
+                             file
                              )
      tape_list_t *tape;
-     rtcpFileRequest_t *filereq;
+     file_list_t *file;
 {
   int rc = 0;
   
@@ -2020,10 +2013,10 @@ int rtcpcld_updcRecallFailed(
 
 int rtcpcld_updcFileRecalled(
                              tape,
-                             filereq
+                             file
                              )
      tape_list_t *tape;
-     rtcpFileRequest_t *filereq;
+     file_list_t *file;
 {
   int rc = 0;
   
@@ -2032,10 +2025,10 @@ int rtcpcld_updcFileRecalled(
 
 int rtcpcld_updcFileMigrated(
                              tape,
-                             filereq
+                             file
                              )
      tape_list_t *tape;
-     rtcpFileRequest_t *filereq;
+     file_list_t *file;
 {
   struct Cstager_TapeCopy_t *tapeCopy, **tapeCopyArray;
   enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
@@ -2048,28 +2041,21 @@ int rtcpcld_updcFileMigrated(
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj;
   struct C_Services_t **svcs = NULL;
-  file_list_t *file = NULL;
+  rtcpFileRequest_t *filereq;
   struct Cns_fileid *fileid;
   int rc = 0, nbTapeCopies, nbDiskCopies, nbSegments, save_serrno, i, j;
   ID_TYPE key;
 
   if ( (tape == NULL) || (tape->tapereq.mode != WRITE_ENABLE) ||
-       (filereq == NULL) ) {
+       (file == NULL) ) {
     serrno = EINVAL;
     return(-1);
   }
 
-  file = NULL;
-  rc = rtcpcld_findFile(
-                        tape,
-                        filereq,
-                        &file
-                        );
-  if ( rc == -1 ) {
-    return(-1);
-  }
+  filereq = &(file->filereq);
+
   fileid = NULL;
-  (void)rtcpcld_getFileId(filereq,&fileid);
+  (void)rtcpcld_getFileId(file,&fileid);
 
   rc = verifyTape(tape);
   if ( rc == -1 ) {

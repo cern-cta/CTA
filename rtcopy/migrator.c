@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/28 08:10:08 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/28 09:33:37 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/28 08:10:08 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/28 09:33:37 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -98,12 +98,12 @@ int migratorCallbackFileCopied(
      rtcpTapeRequest_t *tapereq;
      rtcpFileRequest_t *filereq;
 {
-  file_list_t *file;
+  file_list_t *file = NULL;
   int rc, save_serrno;
   struct Cns_fileid *castorFileId = NULL;
   char *blkid;
 
-  if ( tapereq == NULL || filereq == NULL ) {
+  if ( (tapereq == NULL) || (filereq == NULL) ) {
     (void)dlf_write(
                     childUuid,
                     DLF_LVL_ERROR,
@@ -119,7 +119,14 @@ int migratorCallbackFileCopied(
     return(-1);
   }
 
-  (void)rtcpcld_getFileId(filereq,&castorFileId);
+  rc = rtcpcld_findFile(tape,filereq,&file);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("rtcpcld_findFile()");
+    return(-1);
+  }
+  file->filereq = *filereq;
+  
+  (void)rtcpcld_getFileId(file,&castorFileId);
   blkid = rtcp_voidToString(
                             (void *)filereq->blockid,
                             sizeof(filereq->blockid)
@@ -129,7 +136,7 @@ int migratorCallbackFileCopied(
   if ( ((filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED)) ) {
     rc = rtcpcld_updateTape(
                             tape,
-                            filereq,
+                            file,
                             0,
                             0
                             );
@@ -163,13 +170,13 @@ int migratorCallbackFileCopied(
                       );
       (void)rtcpcld_updcMigrFailed(
                                    tape,
-                                   filereq
+                                   file
                                    );
       serrno = save_serrno;
       return(-1);
     }
 
-    rc = rtcpcld_updateNsSegmentAttributes(tape,filereq);
+    rc = rtcpcld_updateNsSegmentAttributes(tape,file);
     if ( rc == -1 ) {
       save_serrno = serrno;
       (void)dlf_write(
@@ -200,24 +207,20 @@ int migratorCallbackFileCopied(
                       );
       (void)rtcpcld_updcMigrFailed(
                                    tape,
-                                   filereq
+                                   file
                                    );
       serrno = save_serrno;
       return(-1);
     }
     rc = rtcpcld_updcFileMigrated(
                                   tape,
-                                  filereq
+                                  file
                                   );
     if ( rc == -1 ) {
       LOG_SYSCALL_ERR("rtcpcld_updcFileMigrated()");
       return(-1);
     }
-    rc = rtcpcld_findFile(tape,filereq,&file);
-    if ( rc == -1 ) {
-      LOG_SYSCALL_ERR("rtcpcld_findFile()");
-      return(-1);
-    }
+
     rtcpcld_cleanupFile(file);
   } else {
     /*
@@ -225,7 +228,7 @@ int migratorCallbackFileCopied(
      */
     rc = rtcpcld_updcMigrFailed(
                                 tape,
-                                filereq
+                                file
                                 );
     if ( rc == -1 ) {
       LOG_SYSCALL_ERR("rtcpcld_updcMigrFailed()");

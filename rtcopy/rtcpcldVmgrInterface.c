@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/25 13:56:35 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/28 09:33:37 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/25 13:56:35 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/28 09:33:37 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -578,15 +578,16 @@ int rtcpcld_tapeOK(
 
 int rtcpcld_updateTape(
                        tape,
-                       filereq,
+                       file,
                        endOfRequest,
                        rtcpc_serrno
                        )
      tape_list_t *tape;
-     rtcpFileRequest_t *filereq;
+     file_list_t *file;
      int endOfRequest, rtcpc_serrno;
 {
   rtcpTapeRequest_t *tapereq;
+  rtcpFileRequest_t *filereq = NULL;
   int rc, save_serrno, maxFseq;
   u_signed64 bytesWritten = 0, freeSpace = 0;
   int compressionFactor = 0, filesWritten = 0, flags = 0;
@@ -598,6 +599,7 @@ int rtcpcld_updateTape(
     serrno = EINVAL;
     return(-1);
   }
+  if ( file != NULL ) filereq = &(file->filereq);
   
   tapereq = &(tape->tapereq);
   /**
@@ -659,7 +661,7 @@ int rtcpcld_updateTape(
   }
 
   if ( filereq != NULL ) {
-    (void)rtcpcld_getFileId(filereq,&fileId); /* Only for logging */
+    (void)rtcpcld_getFileId(file,&fileId); /* Only for logging */
     /*
      * Exceeded number of tape fseq allowed by the label ?
      */

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/27 16:51:33 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/28 09:33:37 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/27 16:51:33 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/28 09:33:37 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -107,71 +107,6 @@ static unsigned char nullblkid[4] = {'\0', '\0', '\0', '\0'};
 
 static int use_checksum = 1, change_checksum_name = 0;
 
-int rtcpcld_findRunningTpCopy(
-                              tape,
-                              filereq,
-                              tpCopy
-                              )
-     tape_list_t *tape;
-     rtcpFileRequest_t *filereq;
-     struct Cstager_TapeCopy_t **tpCopy;
-{
-  struct Cstager_Segment_t *segment;
-  file_list_t *file = NULL;
-  int rc, found, save_serrno;
-
-  if ( tpCopy == NULL ) {
-    serrno = EINVAL;
-    return(-1);
-  }
-
-  found = rtcpcld_findFile(tape,filereq,&file);
-  if ( found == -1 ) save_serrno = serrno;
-
-  if ( found == 1 ) {
-    if ( (file->dbRef == NULL) || (file->dbRef->row == NULL) ) {
-      (void)rtcpcld_updateSegmentFromDB(file);
-    }
-    
-    if ( (file->dbRef == NULL) || (file->dbRef->row == NULL) ) {
-      save_serrno = ENOENT;
-      found = -1;
-    } else {
-      segment = (struct Cstager_Segment_t *)file->dbRef->row;
-      Cstager_Segment_copy(segment,tpCopy);
-      if ( tpCopy == NULL ) found = 0;
-    }
-  }
-
-  if ( found == -1 ) serrno = save_serrno;
-  return(found);
-}
-
-static int orderSegmByOffset(
-                             arg1,
-                             arg2
-                             )
-     CONST void *arg1, *arg2;
-{
-  int rc;
-  struct Cstager_Segment_t **segm1, **segm2;
-  u_signed64 offset1, offset2;
-
-  segm1 = (struct Cstager_Segment_t **)arg1;
-  segm2 = (struct Cstager_Segment_t **)arg2;
-  if ( segm1 == NULL || segm2 == NULL || *segm1 == NULL || *segm2 == NULL ) {
-    return(0);
-  }
-  
-  Cstager_Segment_offset(*segm1,&offset1);
-  Cstager_Segment_offset(*segm2,&offset2);
-  rc = 0;
-
-  if ( offset1 < offset2 ) rc = -1;
-  if ( offset1 > offset2 ) rc = 1;
-  return(rc);
-}
-
 int rtcpcld_initNsInterface() 
 {
   char *p;
@@ -241,10 +176,10 @@ static int checkSegment(
   return(0);
 }
 
-int updateNsSegmentAttr(
-                        tape,
-                        file
-                        )
+int rtcpcld_updateNsSegmentAttributes(
+                                      tape,
+                                      file
+                                      )
      tape_list_t *tape;
      file_list_t *file;
 {
@@ -442,69 +377,28 @@ int updateNsSegmentAttr(
   return(rc);
 }
 
-int rtcpcld_updateNsSegmentAttributes(
-                                      tape,
-                                      filereq
-                                      )
-     tape_list_t *tape;
-     rtcpFileRequest_t *filereq;
-{
-  rtcpTapeRequest_t *tapereq;
-  file_list_t *file = NULL;
-  int rc = 0;
-  
-  if ( (tape == NULL) || (filereq == NULL) ) {
-    serrno = EINVAL;
-    return(-1);
-  }
-  tapereq = &(tape->tapereq);
-
-  rc = rtcpcld_findFile(
-                        tape,
-                        filereq,
-                        &file
-                        );
-  if ( rc == -1 ) return(-1);
-
-  rc = updateNsSegmentAttr(
-                           tape,
-                           file
-                           );
-  return(rc);
-}
-
 int rtcpcld_checkNsSegment(
                            tape,
-                           filereq
+                           file
                            )
      tape_list_t *tape;
-     rtcpFileRequest_t *filereq;
+     file_list_t *file;
 {
   int rc = 0, nbSegms = 0, i, found = 0, save_serrno;
-  file_list_t *file;
   struct Cns_segattrs *currentSegattrs, newSegattrs;
   struct Cns_fileid *castorFileId = NULL;
   rtcpTapeRequest_t *tapereq;
+  rtcpFileRequest_t *filereq;
   char *blkid = NULL, *p;
   
-  if ( (tape == NULL) || (filereq == NULL) ) {
+  if ( (tape == NULL) || (file == NULL) ) {
     serrno = EINVAL;
     return(-1);
   }
   tapereq = &(tape->tapereq);
+  filereq = &(file->filereq);
 
-  file = NULL;
-  rc = rtcpcld_findFile(
-                        tape,
-                        filereq,
-                        &file
-                        );
-  if ( rc == -1 ) {
-    LOG_SYSCALL_ERR("rtcpcld_findFile()");
-    return(-1);
-  }
-
-  rc = rtcpcld_getFileId(filereq,&castorFileId);
+  rc = rtcpcld_getFileId(file,&castorFileId);
   if ( (rc == -1) || (castorFileId == NULL) ) {
     LOG_SYSCALL_ERR("rtcpcld_findTape()");
     return(-1);
@@ -753,20 +647,20 @@ int rtcpcld_checkNsSegment(
 }
 
 int rtcpcld_checkCastorFile(
-                            filereq
+                            file
                             )
-     rtcpFileRequest_t *filereq;
+     file_list_t *file;
 {
   int rc;
   struct Cns_filestat statbuf;
   struct Cns_fileid *castorFileId = NULL;
   
-  if ( filereq == NULL ) {
+  if ( file == NULL ) {
     serrno = EINVAL;
     return(-1);
   }
 
-  rc = rtcpcld_getFileId(filereq,&castorFileId);
+  rc = rtcpcld_getFileId(file,&castorFileId);
   if ( rc < 0 ){
     LOG_SYSCALL_ERR("Cns_statx()");
     return(-1);
@@ -785,19 +679,19 @@ int rtcpcld_checkCastorFile(
 }
 
 int rtcpcld_setatime(
-                     filereq
+                     file
                      )
-     rtcpFileRequest_t *filereq;
+     file_list_t *file;
 {
   int rc;
   struct Cns_fileid *castorFileId = NULL;
 
-  if ( filereq == NULL ) {
+  if ( file == NULL ) {
     serrno = EINVAL;
     return(-1);
   }
 
-  rc = rtcpcld_getFileId(filereq,&castorFileId);
+  rc = rtcpcld_getFileId(file,&castorFileId);
   if ( rc < 0 ){
     LOG_SYSCALL_ERR("Cns_statx()");
     return(-1);
@@ -815,16 +709,18 @@ int rtcpcld_setatime(
 }
 
 int rtcpcld_getFileId(
-                      filereq,
+                      file,
                       fileId
                       )
-     rtcpFileRequest_t *filereq;
+     file_list_t *file;
      struct Cns_fileid **fileId;
 {
-  if ( (filereq == NULL) || (fileId == NULL) ) {
+  rtcpFileRequest_t *filereq;
+  if ( (file == NULL) || (fileId == NULL) ) {
     serrno = EINVAL;
     return(-1);
   }
+  filereq = &(file->filereq);
   *fileId = (struct Cns_fileid *)calloc(1,sizeof(struct Cns_fileid));
   if ( *fileId == NULL ) {
     serrno = SESYSERR;
