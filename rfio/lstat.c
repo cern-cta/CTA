@@ -1,14 +1,14 @@
 /*
- * $Id: lstat.c,v 1.8 2000/09/04 12:18:06 baud Exp $
+ * $Id: lstat.c,v 1.9 2001/06/17 14:00:34 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lstat.c,v $ $Revision: 1.8 $ $Date: 2000/09/04 12:18:06 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: lstat.c,v $ $Revision: 1.9 $ $Date: 2001/06/17 14:00:34 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* lstat.c       Remote File I/O - get file status   */
@@ -50,8 +50,8 @@ struct stat *statbuf;           	/* status buffer 		*/
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_lstat(%s, %x)", filepath, statbuf);
 
-   Cglobals_get(&old_uid_key, (void**)&old_uid, sizeof(int));
-   *old_uid = -1;
+   if ( Cglobals_get(&old_uid_key, (void**)&old_uid, sizeof(int)) > 0 )
+      *old_uid = -1;
    Cglobals_get(&pw_key, (void**)&pw, sizeof(struct passwd));
    if (!rfio_parseln(filepath,&host,&filename,NORDLINKS)) {
       /* if not a remote file, must be local or HSM  */

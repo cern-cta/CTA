@@ -1,15 +1,15 @@
 /*
- * $Id: mstat.c,v 1.9 2000/05/29 16:42:02 obarring Exp $
+ * $Id: mstat.c,v 1.10 2001/06/17 14:00:34 baud Exp $
  */
 
 
 /*
- * Copyright (C) 1995-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1995-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.9 $ $Date: 2000/05/29 16:42:02 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.10 $ $Date: 2001/06/17 14:00:34 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -152,8 +152,8 @@ int reqst ;
    INIT_TRACE("RFIO_TRACE");
    TRACE(1, "rfio", "rfio_stat(%s, %x)", filename, statbuf);
 
-   Cglobals_get(&old_uid_key, (void**)&old_uid, sizeof(int));
-   *old_uid = -1;
+   if ( Cglobals_get(&old_uid_key, (void**)&old_uid, sizeof(int)) > 0 )
+       *old_uid = -1;
    Cglobals_get(&pw_key, (void**)&pw, sizeof(struct passwd));
   
    len = strlen(filename)+1;
