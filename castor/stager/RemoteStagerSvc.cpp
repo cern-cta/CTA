@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/12/08 16:31:18 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/12/10 10:10:11 $ $Author: jdurand $
  *
  *
  *
@@ -283,6 +283,11 @@ public:
     throw (castor::exception::Exception) {
     castor::rh::GetUpdateStartResponse *resp =
       dynamic_cast<castor::rh::GetUpdateStartResponse*>(&r);
+    if (0 != resp->errorCode()) {
+      castor::exception::Exception e(resp->errorCode());
+      e.getMessage() << resp->errorMessage();
+      throw e;
+    }
     *m_result = resp->client();
     *m_diskCopy = resp->diskCopy();
     *m_emptyFile = resp->emptyFile();
@@ -352,6 +357,11 @@ public:
     throw (castor::exception::Exception) {
     castor::rh::StartResponse *resp =
       dynamic_cast<castor::rh::StartResponse*>(&r);
+    if (0 != resp->errorCode()) {
+      castor::exception::Exception e(resp->errorCode());
+      e.getMessage() << resp->errorMessage();
+      throw e;
+    }
     *m_result = resp->client();
     *m_diskCopy = resp->diskCopy();
   };
