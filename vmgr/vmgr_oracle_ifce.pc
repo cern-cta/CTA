@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.12 $ $Date: 2000/04/11 05:49:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.13 $ $Date: 2000/04/11 15:54:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -382,6 +382,20 @@ vmgr_dbrec_addr *rec_addr;
 		AND poolname = :poolname AND status = 0
 		AND ROWNUM < 2
 		FOR UPDATE;
+	EXEC SQL DECLARE tape_maxsize_cursor4upd CURSOR FOR
+		SELECT ROWID,
+		 VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
+		 MANUFACTURER, SN, POOLNAME, ESTIMATED_FREE_SPACE,
+		 NBFILES, STATUS
+		FROM vmgr_tape_info
+		WHERE estimated_free_space =
+			(SELECT max(estimated_free_space)
+			FROM vmgr_tape_info
+			WHERE poolname = :poolname AND status = 0 AND
+			 estimated_free_space >= :reqsize)
+		AND poolname = :poolname AND status = 0
+		AND ROWNUM < 2
+		FOR UPDATE;
 
 	strcpy (func, "vmgr_get_tape_by_size");
 	EXEC SQL OPEN tape_size_cursor4upd;
@@ -393,6 +407,17 @@ vmgr_dbrec_addr *rec_addr;
 	 :tape_entry->sn:sn_ind, :tape_entry->poolname,
 	 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
 	 :tape_entry->status;
+	if (sqlca.sqlcode == 1403) {
+		EXEC SQL OPEN tape_maxsize_cursor4upd;
+		EXEC SQL FETCH tape_maxsize_cursor4upd INTO
+		 :rowid_value,
+		 :tape_entry->vid, :tape_entry->vsn, :tape_entry->dgn,
+		 :tape_entry->density, :tape_entry->lbltype, :tape_entry->model,
+		 :tape_entry->media_letter, :tape_entry->manufacturer:mf_ind,
+		 :tape_entry->sn:sn_ind, :tape_entry->poolname,
+		 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
+		 :tape_entry->status;
+	}
 	switch (sqlca.sqlcode) {
 	case 0:
 		if (lock)
