@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.26 2000/09/21 07:29:29 jdurand Exp $
+ * $Id: stage.h,v 1.27 2000/09/27 07:52:56 jdurand Exp $
  */
 
 /*
@@ -220,7 +220,6 @@
 #define	REQKILD	196	/* request killed by user */
 #define	LIMBYSZ	197	/* limited by size */
 #define	ENOUGHF	199	/* enough free space */
-#define COFFOK  200 /* successful stager exit code for -c off mode */
 
 			/* stage daemon internal tables */
 
@@ -242,7 +241,7 @@ struct stgcat_entry {		/* entry format in STGCAT table */
 	char	recfm[CA_MAXRECFMLEN+1];	/* record format */
 	int	size;		/* size in Mbytes of data to be staged */
 	char	ipath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];	/* internal path */
-	char	t_or_d;		/* 't' for tape/disk, 'd' for disk/disk */
+	char	t_or_d;		/* 't' for tape/disk, 'd' for disk/disk , 'm' for non-CASTOR HSM, 'h' for CASTOR HSM */
 	char	group[CA_MAXGRPNAMELEN+1];
 	char	user[CA_MAXUSRNAMELEN+1];	/* login name */
 	uid_t	uid;		/* uid or Guid */
@@ -326,7 +325,7 @@ struct waitq {
 	int	status;
 	int	nretry;
 	int	Aflag; /* Deferred allocation (path returned to RTCOPY after tape position) */
-	int	Migrationflag; /* Determine if done under stage:st or not */
+	int	StageIDflag; /* Determine if done under stage:st or not */
 	int	concat_off_fseq; /* 0 or fseq just before the '-', like: 1-9,11- => concat_off_fseq = 11 */
 };
 
