@@ -265,7 +265,6 @@ castor::IObject* castor::db::ora::OraCuuidCnv::createObj(castor::IAddress* addre
     content.clock_seq_low = rset->getInt(5);
     memcpy(content.node, rset->getString(6).data(), 6*sizeof(BYTE));
     object->setContent(content);
-    object->setId(rset->getInt(7));
     newlyCreated[object->id()] = object;
     m_selectStatement->closeResultSet(rset);
     return object;
