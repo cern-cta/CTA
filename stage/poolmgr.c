@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.87 2001/02/12 11:23:56 jdurand Exp $
+ * $Id: poolmgr.c,v 1.88 2001/02/13 07:55:28 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.87 $ $Date: 2001/02/12 11:23:56 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.88 $ $Date: 2001/02/13 07:55:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1749,6 +1749,8 @@ int migpoolfiles(pool_p)
   int ntppool_vs_stcp = 0;
   char tmpbuf[21];
   char remember_tppool[CA_MAXPOOLNAMELEN+1];
+  u_signed64 ideal_minsize;
+  int nideal_minsize;
 
   /* We get the minimum size to be transfered */
   minsize = defminsize;
@@ -2047,8 +2049,19 @@ int migpoolfiles(pool_p)
       /* ones with the highest size first. */
       /* qsort((void *) tppool_vs_stcp, ntppool_vs_stcp, sizeof(struct files_per_stream), &tppool_vs_stcp_cmp_vs_size); */
 
+      /* We calculate the ideal mean of all those streams */
+      ideal_minsize = 0;
+      nideal_minsize = 0;
       for (j = 0; j < ntppool_vs_stcp; j++) {
         if (tppool_vs_stcp[j].size > minsize) {
+          ideal_minsize += (tppool_vs_stcp[j].size - minsize);
+          nideal_minsize++;
+        }
+      }
+      ideal_minsize /= ++nideal_minsize;
+
+      for (j = 0; j < ntppool_vs_stcp; j++) {
+        if (tppool_vs_stcp[j].size > ideal_minsize) {
           virtual_new_size = 0;
           virtual_old_size = tppool_vs_stcp[j].size;
 
@@ -2071,7 +2084,7 @@ int migpoolfiles(pool_p)
             if (virtual_new_size >= minsize) {
               /* There is right now, or already, material to have a new stream */
               /* We continue the loop up to when we have splitted the original stream almost equally */
-              if ((virtual_old_size < minsize) || (virtual_old_size <= 0)) {
+              if ((virtual_old_size < ideal_minsize) || (virtual_old_size <= 0)) {
                 /* We have scanned a bit too much - we cares only if we have emptied the old stream */
                 if (virtual_old_size <= 0) {
                   virtual_old_size += tppool_vs_stcp[j].stcp[k].actual_size;
@@ -2140,7 +2153,7 @@ int migpoolfiles(pool_p)
             /* to duplicate */
             
             for (j = 0; j < (ntppool_vs_stcp - 1); j++) {
-              if (tppool_vs_stcp[j].size > minsize) {
+              if (tppool_vs_stcp[j].size > ideal_minsize) {
                 int save_nstcp = tppool_vs_stcp[j].nstcp;
 
                 if (tppool_vs_stcp[j].nstcp <= 1) continue;
