@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.90 2001/12/20 13:25:25 jdurand Exp $
+ * $Id: procupd.c,v 1.91 2002/01/17 08:10:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.90 $ $Date: 2001/12/20 13:25:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.91 $ $Date: 2002/01/17 08:10:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -465,6 +465,8 @@ procupdreq(req_type, magic, req_data, clienthost)
 					c = SYERR;
 					goto reply;
 				}
+				c = 0;
+			procupd_lauch_gc:
 				stcp = newreq((int) stgreq.t_or_d);
 				memcpy (stcp, &stgreq, sizeof(stgreq));
 				if (i > 0)
@@ -484,7 +486,11 @@ procupdreq(req_type, magic, req_data, clienthost)
 				/* We try to find another entry immediately */
 				if (pool_user == NULL)
 					pool_user = STAGERGENERICUSER;
-				if ((c = build_ipath (NULL, stcp, pool_user, 0)) < 0) {
+				if (c == 0) {
+					/* This is how we distinguish from a first pass and a goto */
+					c = build_ipath (NULL, stcp, pool_user, 0);
+				}
+				if (c < 0) {
 					stcp->status |= WAITING_SPC;
 					/* But add this request to the waiting queue */
 					if (!wqp) {
@@ -524,7 +530,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 						(new_server == NULL) || (new_dirpath == NULL)) {
 						/* Strange - seems to not be in a known fs or a known pool - this is impossible */
 						sendrep (rpfd, MSG_ERR, STG166, stcp->ipath);
-						if (delfile (stcp, 1, 1, 1, "same [server,fs] selected", uid, gid, 0, 0) < 0) {
+						if (delfile (stcp, 1, 1, 1, "unknown filesystem", uid, gid, 0, 0) < 0) {
 							sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 						}
 						c = SYERR;
@@ -540,14 +546,14 @@ procupdreq(req_type, magic, req_data, clienthost)
 					/* in > 95% of the cases - at least in the CASTOR framework */
 					if ((strcmp(found_server,new_server) == 0) && (strcmp(found_dirpath,new_dirpath) == 0)) {
 						/* Same server - same filesystem */
-						sendrep (rpfd, MSG_ERR, STG167, stcp->ipath);
+						/* sendrep (rpfd, MSG_ERR, STG167, stcp->ipath); */
 						if (delfile (stcp, 1, 1, 1, "same [server,fs] selected", uid, gid, 0, 0) < 0) {
 							sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 							c = SYERR;
-						} else {
-							c = ENOSPC;
+							goto reply;
 						}
-						goto reply;
+						c = -1;
+						goto procupd_lauch_gc;
 					}
 					if (api_out) sendrep(rpfd, API_STCP_OUT, stcp, magic);
 					sendrep (rpfd, MSG_OUT, "%s", stcp->ipath);
@@ -1029,6 +1035,11 @@ procupdreq(req_type, magic, req_data, clienthost)
 	if (((rc != 0) && (rc != LIMBYSZ) &&
 			 (rc != BLKSKPD) && (rc != TPE_LSZ) && (rc != MNYPARI)) ||
 			((rc == MNYPARI) && ((stcp->u1.t.E_Tflags & KEEPFILE) == 0))) {
+		char *found_server;
+		char *found_dirpath;
+		char *new_server;
+		char *new_dirpath;
+
 		wqp->status = rc;
 		if (rc != ENOSPC) {
 			goto reply;
@@ -1040,12 +1051,30 @@ procupdreq(req_type, magic, req_data, clienthost)
 			c = ENOSPC;
 			goto reply;
 		}
+		/* We look if this entry is known to the stagein pool */
+		if ((findfs(stcp->ipath,&found_server,&found_dirpath) != 0) ||
+			(found_server == NULL) || (found_dirpath == NULL)) {
+			/* Strange - seems to not be in a known fs or a known pool - this is not legal */
+			sendrep (rpfd, MSG_ERR, STG166, stcp->ipath);
+			c = USERR;
+			goto reply;
+		}
+
 		if (delfile (stcp, 1, 0, 0, "nospace retry", uid, gid, 0, 0) < 0)
 			sendrep (wqp->rpfd, MSG_ERR, STG02, stcp->ipath,
 							 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+		c = 0;
+	procupd_lauch_gc2:
+		/* Make sure stcp->ipath[] is reset */
+		stcp->ipath[0] = '\0';
+
 		/* Instead of asking immediately for a garbage collector, we give it another immediate try */
 		/* by asking for another filesystem */
-		if ((c = build_ipath (wfp->upath, stcp, wqp->pool_user, 0)) < 0) {
+		if (c == 0) {
+			/* This is how we distinguish from a first pass and a goto */
+			c = build_ipath (wfp->upath, stcp, wqp->pool_user, 0);
+		}
+		if (c < 0) {
 			wqp->status = 0;
 			wqp->clnreq_reqid = upd_reqid;
 			wqp->clnreq_rpfd = rpfd;
@@ -1067,6 +1096,37 @@ procupdreq(req_type, magic, req_data, clienthost)
 			goto reply;
 		} else {
 			/* Space successfully allocated */
+
+			/* We neverthless check if the selected filesystem is the same as on which there was an ENOSPC */
+			/* In such a case we prefer to go back to usual processing */
+			if ((findfs(stcp->ipath,&new_server,&new_dirpath) != 0) ||
+				(new_server == NULL) || (new_dirpath == NULL)) {
+				/* Strange - seems to not be in a known fs or a known pool - this is impossible */
+				sendrep (rpfd, MSG_ERR, STG166, stcp->ipath);
+				if (delfile (stcp, 1, 0, 0, "unknown filesystem", uid, gid, 0, 0) < 0) {
+					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+				}
+				c = SYERR;
+				goto reply;
+			}
+
+			/* We check if we ever selected again the same filesystem... */
+			/* There is a time-window that give you the right to say: */
+			/* Within the time ENOSPC was reached and the time stgdaemon */
+			/* processes the ENOSPC, some data could have been freed on the */
+			/* filesystem. Yes. I think neverthless this time is small */
+			/* enough so that not taking it into account gives good behaviour */
+			/* in > 95% of the cases - at least in the CASTOR framework */
+			if ((strcmp(found_server,new_server) == 0) && (strcmp(found_dirpath,new_dirpath) == 0)) {
+				/* Same server - same filesystem */
+				/* sendrep (rpfd, MSG_ERR, STG167, stcp->ipath); */
+				if (delfile (stcp, 1, 0, 0, "same [server,fs] selected", uid, gid, 0, 0) < 0) {
+					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+				}
+				c = -1;
+				goto procupd_lauch_gc2;
+			}
+
 			if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
 			sendrep (rpfd, MSG_OUT, "%s", stcp->ipath);
 			wqp->status = 0;
