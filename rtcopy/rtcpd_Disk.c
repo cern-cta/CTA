@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.42 $ $Date: 2000/03/03 12:53:33 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.43 $ $Date: 2000/03/04 13:51:59 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -802,7 +802,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                     rtcpd_AppendClientMsg(NULL, file,RT115,"CPTPDSK",
                             rfio_serror());
 
-                    if ( save_serrno == ENOSPC || (save_serrno = 0 &&
+                    if ( save_serrno == ENOSPC || (save_serrno == 0 &&
                                                    last_errno == ENOSPC) ) {
                          save_serrno = ENOSPC;
                          rtcp_log(LOG_DEBUG,"MemoryToDisk(%s) ENOSPC detected\n",
