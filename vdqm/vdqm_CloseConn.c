@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_CloseConn.c,v $ $Revision: 1.11 $ $Date: 2002/10/25 12:52:32 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_CloseConn.c,v $ $Revision: 1.12 $ $Date: 2003/09/14 06:04:03 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 
@@ -30,11 +30,7 @@ extern char *geterr();
 #include <net.h>
 #include <vdqm_constants.h>
 #include <vdqm.h>
-#if !defined(linux)
-extern char *sys_errlist[];
-#else /* linux */
-#include <stdio.h>   /* Contains definition of sys_errlist[] */
-#endif /* linux */
+#include <stdio.h>
 
 int vdqm_CloseConn(vdqmnw_t *nw) {
     SOCKET s;
