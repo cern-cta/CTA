@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.115 2002/09/17 11:49:54 jdurand Exp $
+ * $Id: procupd.c,v 1.116 2002/09/20 12:27:10 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.115 $ $Date: 2002/09/17 11:49:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.116 $ $Date: 2002/09/20 12:27:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -62,7 +62,7 @@ extern struct stgdb_fd dbfd;
 extern struct fileclass *fileclasses;
 extern u_signed64 stage_uniqueid;
 
-extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *, int));
+extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *, int, int));
 extern struct waitf *add2wf _PROTO((struct waitq *));
 extern int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct waitf *));
 extern int extend_waitf _PROTO((struct waitf *, struct waitf *));
@@ -617,7 +617,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				goto reply;
 
 			} else {
-				if ((c = upd_stageout(req_type, argv_i, &subreqid, 1, NULL, 0)) != 0) {
+				if ((c = upd_stageout(req_type, argv_i, &subreqid, 1, NULL, 0, 0)) != 0) {
 					if ((c != CLEARED) && (c != ESTCLEARED)) {
 						goto reply;
 					} else {
