@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.160 2001/11/06 15:00:25 jdurand Exp $
+ * $Id: stager.c,v 1.161 2001/11/09 11:45:01 jdurand Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.160 $ $Date: 2001/11/06 15:00:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.161 $ $Date: 2001/11/09 11:45:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1616,9 +1616,9 @@ int stagein_castor_hsm_file() {
 			if (
 				(error_already_processed != 0) ||
 				/* Catch cases when error is a TAPE one not yet handle by stager_process_error() */
-				((save_serrno >= ETBASEOFF) && (save_serrno <= ETMAXERR)) ||
+				((save_serrno >= (ETBASEOFF+1)) && (save_serrno <= ETMAXERR)) ||
 				/* Catch cases when error is a VDQM one not yet handle by stager_process_error() */
-				((save_serrno >= EVQBASEOFF) && (save_serrno <= EVQMAXERR))
+				((save_serrno >= (EVQBASEOFF+1)) && (save_serrno <= EVQMAXERR))
 				) {
 				forced_exit = 1;
 			} else {
@@ -4087,9 +4087,3 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 		error_already_processed = 1;
 	}
 }
-
-
-/*
- * Last Update: "Tuesday 06 November, 2001 at 16:00:16 CET by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
- */
-
