@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/30 11:19:28 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/12/01 11:59:52 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/30 11:19:28 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/12/01 11:59:52 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -160,10 +160,9 @@ static int updateSegmCount(
   segmFailed += failed;
   (void)dlf_write(
                   childUuid,
-                  DLF_LVL_DEBUG,
-                  RTCPCLD_MSG_SEGMCNTS,
+                  RTCPCLD_LOG_MSG(RTCPCLD_MSG_SEGMCNTS),
                   (struct Cns_fileid *)NULL,
-                  RTCPCLD_NB_PARAMS+3,
+                  3,
                   "SUBM",
                   DLF_MSG_PARAM_INT,
                   segmSubmitted,
@@ -172,8 +171,7 @@ static int updateSegmCount(
                   segmCompleted,
                   "FAILED",
                   DLF_MSG_PARAM_INT,
-                  segmFailed,
-                  RTCPCLD_LOG_WHERE
+                  segmFailed
                   );
   rc = Cthread_mutex_unlock_ext(segmCountLock);
   if ( rc == -1 ) {
@@ -234,9 +232,8 @@ int recallerCallbackFileCopied(
      rtcpFileRequest_t *filereq;
 {
   file_list_t *file = NULL;
-  int rc;
+  int rc, save_serrno, finished = 0, failed = 0;
   struct Cns_fileid *castorFileId = NULL;
-  char *blkid;
 
   if ( (tapereq == NULL) || (filereq == NULL) ) {
     (void)dlf_write(
@@ -260,38 +257,46 @@ int recallerCallbackFileCopied(
   
   rc = rtcpcld_findFile(tape,filereq,&file);
   if ( rc == -1 ) {
+    save_serrno = serrno;
     LOG_SYSCALL_ERR("rtcpcld_findFile()");
+    (void)rtcpcld_unlockTape();
+    serrno = save_serrno;
     return(-1);
   }
   file->filereq = *filereq;
 
-  if ( rtcpcld_unlockTape() == -1 ) {
-    LOG_SYSCALL_ERR("rtcpcld_unlockTape()");
-    return(-1);
-  }
-
-  
   (void)rtcpcld_getFileId(file,&castorFileId);
-  blkid = rtcp_voidToString(
-                            (void *)filereq->blockid,
-                            sizeof(filereq->blockid)
-                            );
-  if ( blkid == NULL ) blkid = strdup("unknown");
 
   if ( (filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED) ) {
-    rc = updateSegmCount(0,1,0);
-    if ( rc == -1 ) {
-      LOG_SYSCALL_ERR("updateSegmCount()");
-    }
     rc = rtcpcld_updcFileRecalled(
                                   tape,
                                   file
                                   );
     if ( rc == -1 ) {
+      save_serrno = serrno;
       LOG_SYSCALL_ERR("rtcpcld_updcFileRecalled()");
+      (void)rtcpcld_unlockTape();
+      (void)updateSegmCount(0,0,1);
+      serrno = save_serrno;
       return(-1);
     }
     (void)rtcpcld_setatime(file);
+    (void)dlf_write(
+                    childUuid,
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_STAGED),
+                    castorFileId,
+                    3,
+                    "",
+                    DLF_MSG_PARAM_TPVID,
+                    tapereq->vid,
+                    "FSEQ",
+                    DLF_MSG_PARAM_INT,
+                    filereq->tape_fseq,
+                    "DISKPATH",
+                    DLF_MSG_PARAM_STR,
+                    filereq->file_path
+                    );
+    finished = 1;
   } else {
     /*
      * Segment failed
@@ -301,12 +306,23 @@ int recallerCallbackFileCopied(
                                   file
                                   );
     if ( rc == -1 ) {
+      save_serrno = serrno;
       LOG_SYSCALL_ERR("rtcpcld_updcRecallFailed()");
+      (void)rtcpcld_unlockTape();
+      (void)updateSegmCount(0,0,1);
+      serrno = save_serrno;
       return(-1);
     }
-    setAborted(1);
+    failed = 1;
   }
 
+  if ( rtcpcld_unlockTape() == -1 ) {
+    LOG_SYSCALL_ERR("rtcpcld_unlockTape()");
+    return(-1);
+  }
+  (void)updateSegmCount(0,finished,failed);
+  if ( failed != 0 ) setAborted(1);
+  
   return(0);
 }
 
@@ -366,8 +382,7 @@ int recallerCallbackMoreWork(
     } else if ( serrno == ENOENT ) {
       (void)dlf_write(
                       childUuid,
-                      DLF_LVL_SYSTEM,
-                      RTCPCLD_MSG_NOMORESEGMS,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_NOMORESEGMS),
                       (struct Cns_fileid *)NULL,
                       0
                       );
@@ -417,7 +432,7 @@ int recallerCallback(
      rtcpTapeRequest_t *tapereq;
      rtcpFileRequest_t *filereq;
 {
-  int rc = 0, save_serrno, msgNo, level = DLF_LVL_SYSTEM;
+  int rc = 0, save_serrno, msgNo;
   struct Cns_fileid *castorFileId = NULL;
   file_list_t *file = NULL;
   char *blkid = NULL, *func = NULL;
@@ -463,6 +478,7 @@ int recallerCallback(
   case RTCP_POSITIONED:
     msgNo = RTCPCLD_MSG_CALLBACK_POS;
     func = "processTapePositionCallback";
+    if ( file != NULL ) file->filereq.proc_status = filereq->proc_status;
     if ( (tapereq->tprc != 0) ||
          (filereq->cprc != 0) ) {
       msgNo = RTCPCLD_MSG_CALLBACK_CP;
@@ -472,12 +488,12 @@ int recallerCallback(
                                       filereq
                                       );
       if ( rc == -1 ) save_serrno = serrno;
-      (void)updateSegmCount(0,0,1);
     }
     break;
   case RTCP_FINISHED:
     msgNo = RTCPCLD_MSG_CALLBACK_CP;
     func = "processFileCopyCallback";
+    if ( file != NULL ) file->filereq.proc_status = filereq->proc_status;
     rc = recallerCallbackFileCopied(
                                     tapereq,
                                     filereq
@@ -499,8 +515,8 @@ int recallerCallback(
     break;
   default:
     msgNo = RTCPCLD_MSG_INTERNAL;
-    level = DLF_LVL_ERROR;
     func = "unprocessedCallback";
+    if ( file != NULL ) file->filereq.proc_status = filereq->proc_status;
     if ( (tapereq->tprc != 0) ||
          (filereq->cprc != 0) ) {
       msgNo = RTCPCLD_MSG_CALLBACK_CP;
@@ -510,7 +526,6 @@ int recallerCallback(
                                       filereq
                                       );
       if ( rc == -1 ) save_serrno = serrno;
-      (void)updateSegmCount(0,0,1);
     }
     break;
   }
@@ -519,8 +534,7 @@ int recallerCallback(
     if ( (tapereq->tprc == 0) && (filereq->cprc == 0) ) {
       (void)dlf_write(
                       childUuid,
-                      level,
-                      msgNo,
+                      RTCPCLD_LOG_MSG(msgNo),
                       castorFileId,
                       9,
                       "",
@@ -544,7 +558,7 @@ int recallerCallback(
                       "BLKID",
                       DLF_MSG_PARAM_STR,
                       (blkid != NULL ? blkid : "unknown"),
-                      "PATH",
+                      "DISKPATH",
                       DLF_MSG_PARAM_STR,
                       filereq->file_path,
                       "STATUS",
