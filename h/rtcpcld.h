@@ -204,7 +204,7 @@ int rtcpcld_initCatalogueInterface _PROTO((
                                            void
                                            ));
 int rtcpcld_updateNsSegmentAttributes _PROTO((
-                                              rtcpTapeRequest_t *,
+                                              tape_list_t *,
                                               rtcpFileRequest_t *
                                               ));
 int rtcpcld_checkSegment _PROTO((
@@ -245,19 +245,10 @@ int rtcpcld_segmentOK _PROTO((
 
 #if defined(CASTOR_STAGER_TAPECOPY_H)
 int rtcpcld_findRunningTpCopy _PROTO((
-                                      struct Cstager_TapeCopy_t **,
-                                      rtcpFileRequest_t **,
-                                      u_signed64 *
+                                      tape_list_t *,
+                                      rtcpFileRequest_t *,
+                                      struct Cstager_TapeCopy_t **
                                       ));
-int rtcpcld_addRunningTpCopy _PROTO((
-                                     struct Cstager_TapeCopy_t *,
-                                     rtcpFileRequest_t *,
-                                     u_signed64
-                                     ));
-int rtcpcld_delRunningTpCopy _PROTO((
-                                     struct Cstager_TapeCopy_t *,
-                                     rtcpFileRequest_t *
-                                     ));
 #endif /* CASTOR_STAGER_TAPECOPY_H */   
 
 #endif /* RTCPCLD_H */
