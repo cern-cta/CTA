@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.56 $ $Date: 2000/03/31 15:24:38 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.57 $ $Date: 2000/04/04 07:47:05 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1287,6 +1287,7 @@ void *tapeIOthread(void *arg) {
                         tmpfile->filereq.tape_fseq++;
                         tmpfile->filereq.proc_status = RTCP_WAITING;
                         tmpfile->tape = nexttape;
+                        tmpfile->end_index = -1;
                         CLIST_INSERT(nexttape->file,tmpfile);
                         rtcp_log(LOG_DEBUG,"tapeIOthread() create temporary file element for tape fseq=%d\n",tmpfile->filereq.tape_fseq);
                     }
