@@ -2,21 +2,9 @@
 -- Copyright (C) 2003 by CERN/IT/ADC/CA
 -- All rights reserved
 --
--- @(#)$RCSfile: dlf_oracle_tbl.sql,v $ $Revision: 1.1 $ $Date: 2003/08/20 12:59:35 $ CERN IT-ADC Vitaly Motyakov
+-- @(#)$RCSfile: dlf_oracle_tbl.sql,v $ $Revision: 1.2 $ $Date: 2003/12/08 06:28:10 $ CERN IT-ADC Vitaly Motyakov
 --
 --     Create logging facility ORACLE tables.
-
-DROP SEQUENCE message_seq;
-DROP SEQUENCE host_seq;
-DROP TABLE dlf_severities;
-DROP TABLE dlf_msg_texts;
-DROP TABLE dlf_num_param_values;
-DROP TABLE dlf_str_param_values;
-DROP TABLE dlf_rq_ids_map;
-DROP TABLE dlf_tape_ids;
-DROP TABLE dlf_messages;
-DROP TABLE dlf_facilities;
-DROP TABLE dlf_host_map;
 
 CREATE SEQUENCE message_seq;
 CREATE SEQUENCE host_seq;
