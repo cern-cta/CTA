@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.28 $ $Release$ $Date: 2005/02/03 07:53:08 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/03/14 12:18:37 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.28 $ $Release$ $Date: 2005/02/03 07:53:08 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.29 $ $Release$ $Date: 2005/03/14 12:18:37 $ Olof Barring";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -174,7 +174,7 @@ static int getServerNotifyAddr(
   if ( serverPort != NULL ) {
     if ( (p = getenv("RTCPCLD_NOTIFY_PORT")) != NULL ) {
       *serverPort = atoi(p);
-    } else if ( (p = getconfent("RTCPCLD","NOTIFY_PORT",0)) != NULL ) {
+    } else if ( (p = getconfent("rtcpcld","NOTIFY_PORT",0)) != NULL ) {
       *serverPort = atoi(p);
     } else if ( (sp = Cgetservbyname("rtcpcld","udp")) != 
                 (struct servent *)NULL ) {
@@ -191,7 +191,7 @@ static int getServerNotifyAddr(
     serverHost[serverHostNameLen-1] = '\0';
     if ( (p = getenv("RTCPCLD_NOTIFY_HOST")) != NULL ) {
       strncpy(serverHost,p,serverHostNameLen-1);
-    } else if ( (p = getconfent("RTCPCLD","NOTIFY_HOST",0)) != NULL ) {
+    } else if ( (p = getconfent("rtcpcld","NOTIFY_HOST",0)) != NULL ) {
       strncpy(serverHost,p,serverHostNameLen-1);
     } else {
 #ifdef RTCPCLD_NOTIFY_HOST
@@ -675,10 +675,13 @@ static int updateClientInfo(
                     childUuid,
                     RTCPCLD_LOG_MSG(RTCPCLD_MSG_PWUID),
                     (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+1,
+                    RTCPCLD_NB_PARAMS+2,
                     "ERROR_STRING",
                     DLF_MSG_PARAM_STR,
                     sstrerror(serrno),
+                    "UID",
+                    DLF_MSG_PARAM_INT,
+                    myUid,
                     RTCPCLD_LOG_WHERE
                     );
     serrno = SESYSERR;

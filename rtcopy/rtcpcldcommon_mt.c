@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/27 15:28:31 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.5 $ $Release$ $Date: 2005/03/14 12:18:37 $ $Author: obarring $
  *
  * 
  *
@@ -30,7 +30,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/27 15:28:31 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.5 $ $Release$ $Date: 2005/03/14 12:18:37 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -266,13 +266,13 @@ int rtcpcld_initThreadPool(
   if ( mode == WRITE_ENABLE ) {
     if ( (p = getenv("MIGRATOR_THREAD_POOL")) != (char *)NULL ) {
       poolsize = atoi(p);
-    } else if ( ( p = getconfent("MIGRATOR","THREAD_POOL",0)) != (char *)NULL ) {
+    } else if ( ( p = getconfent("migrator","THREAD_POOL",0)) != (char *)NULL ) {
       poolsize = atoi(p);
     }
   } else {
     if ( (p = getenv("RECALLER_THREAD_POOL")) != (char *)NULL ) {
       poolsize = atoi(p);
-    } else if ( ( p = getconfent("RECALLER","THREAD_POOL",0)) != (char *)NULL ) {
+    } else if ( ( p = getconfent("recaller","THREAD_POOL",0)) != (char *)NULL ) {
       poolsize = atoi(p);
     }
   }
