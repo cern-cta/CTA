@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.61 $ $Release$ $Date: 2004/09/17 15:40:43 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.62 $ $Release$ $Date: 2004/09/19 07:12:21 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.61 $ $Date: 2004/09/17 15:40:43 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.62 $ $Date: 2004/09/19 07:12:21 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -945,6 +945,7 @@ static int doFullUpdate(
   struct Cstager_Segment_t *segm;
   enum SegmentStatusCodes segmStatus;
   int rc = 0, updated = 0, save_serrno, nbIncomplete = 0, nbIterations = 0;
+  int validFilereq = 0;
 
   if ( (tape == NULL) || 
        (clientCntx == NULL) ||
@@ -961,6 +962,7 @@ static int doFullUpdate(
       {
         if ( fl->filereq.proc_status != RTCP_FINISHED ) {
           segm = NULL;
+          validFilereq = validFile(fl);
           rc = newOrUpdatedSegment(
                                    tape,
                                    fl,
@@ -983,7 +985,8 @@ static int doFullUpdate(
                      (int)fl->filereq.blockid[3],
                      fl->filereq.file_path
                      );
-            if ( nbIncompleteSegments < MAX_INCOMPLETE_SEGMENTS ) {
+            if ( validFilereq == 1 ||
+                 nbIncompleteSegments < MAX_INCOMPLETE_SEGMENTS ) {
               rc = addSegment(
                               clientCntx,
                               fl,
@@ -991,7 +994,7 @@ static int doFullUpdate(
                               );
               if ( rc == -1 ) break;
               updated = 1;
-              nbIncompleteSegments++;
+              if ( validFilereq != 1 ) nbIncompleteSegments++;
             }
           } else if ( (rc == 2) && (segm != NULL) ) {
             rtcp_log(LOG_DEBUG,
@@ -1010,7 +1013,7 @@ static int doFullUpdate(
             Cstager_Segment_status(segm,&segmStatus);
             if ( ((segmStatus == SEGMENT_WAITFSEQ) ||
                   (segmStatus == SEGMENT_WAITPATH)) &&
-                 (validFile(fl) == 1) ) {
+                 (validFilereq == 1) ) {
               nbIncompleteSegments--;
             }
             rc = updateSegment(fl,segm);
