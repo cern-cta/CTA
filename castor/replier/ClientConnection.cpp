@@ -111,9 +111,10 @@ std::string castor::replier::ClientConnection::getStatusStr()
 
 void castor::replier::ClientConnection::close() throw() {
 
+  char *func = "ClientConnection::close ";
   ::close(m_fd);
   while (!m_responses.empty()) {
-    clog() << DEBUG << "Deleting response" << std::endl;
+    clog() << DEBUG << func << "Deleting response" << std::endl;
     castor::io::biniostream *response = m_responses.front();
     delete response;
     m_responses.pop();
@@ -127,9 +128,10 @@ castor::rh::Client castor::replier::ClientConnection::getClient()  throw() {
 
 void castor::replier::ClientConnection::setStatus(enum RCStatus stat)
   throw() {
+  char *func = "ClientConnection::setStatus ";
   m_status = stat;
   m_lastEventDate = time(0);
-  clog() << DEBUG << "<" << m_fd << "> Setting status to "
+  clog() << DEBUG << func << "<" << m_fd << "> Setting status to "
          << getStatusStr() << std::endl;
 }
 
@@ -174,6 +176,8 @@ void castor::replier::ClientConnection::createSocket()
 void castor::replier::ClientConnection::connect()
   throw(castor::exception::Exception) {
 
+  char *func = "ClientConnection::connect ";
+
   // Preparing the client address
   struct sockaddr_in saddr;
   memset(&saddr, 0, sizeof(saddr));
@@ -190,7 +194,7 @@ void castor::replier::ClientConnection::connect()
     ::close(m_fd);
     throw ex;
   }
-  clog() << INFO << "Connected back to "
+  clog() << INFO << func << "Connected back to "
          << castor::ip << m_client.ipAddress()
          << " successfully." << std::endl;   
   setStatus(CONNECTING);  
@@ -206,18 +210,20 @@ void castor::replier::ClientConnection::pop()  throw(castor::exception::Exceptio
 
 void castor::replier::ClientConnection::sendData()  throw(castor::exception::Exception) {
 
+  char *func = "ClientConnection::sendData ";
   if (m_responses.empty()) {
-     clog() << DEBUG << "sendData: No more messages in queue!" << std::endl;
+     clog() << DEBUG << func << "sendData: No more messages in queue!" << std::endl;
      NoMoreMessagesException nme;
     throw nme;
   }
-  clog() << DEBUG << "sendData: Sending Next Message !" << std::endl;
+  clog() << DEBUG << func << "sendData: Sending Next Message !" << std::endl;
   send();
 }
 
 void castor::replier::ClientConnection::send()
   throw(castor::exception::Exception) {
 
+  char *func = "ClientConnection::send ";
   castor::io::biniostream *response;
 
   if (!m_responses.empty()) {
@@ -241,7 +247,7 @@ void castor::replier::ClientConnection::send()
   char *pc = (char *)buf;
 
   int rc = write(m_fd, (char *)(buf), buflen);
-  clog() << DEBUG << "Write syscall returned " << rc
+  clog() << DEBUG << func << "Write syscall returned " << rc
          <<  " (len:" << buflen << ")"
          << std::endl;
   if (rc == -1) {
@@ -249,7 +255,7 @@ void castor::replier::ClientConnection::send()
       setStatus(RESEND);
     } else {
       delete[] buf;
-      clog() << ERROR << "WRITE FAILURE"
+      clog() << ERROR << func << "WRITE FAILURE"
              << strerror(errno)
              << std::endl;
       setStatus(DONE_FAILURE);
@@ -261,7 +267,7 @@ void castor::replier::ClientConnection::send()
     }
   } else {
     m_lastEventDate = time(0);
-    clog() << DEBUG << "Data sent back to "
+    clog() << DEBUG << func << "Data sent back to "
            << castor::ip << m_client.ipAddress()
            << std::endl;   
     pop();

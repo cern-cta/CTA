@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplierCInt.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/16 15:45:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RequestReplierCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/20 12:28:53 $ $Author: bcouturi $
  *
  * 
  *
@@ -74,6 +74,44 @@ extern "C" {
     }
     return 0;
   }
+
+
+  //---------------------------------------------------------------------------
+  // Creplier_RequestReplier_sendResponse
+  //---------------------------------------------------------------------------
+  int Creplier_RequestReplier_sendResponse(Creplier_RequestReplier_t *rr,
+					   castor::IClient *client,
+					   castor::IObject *response,
+					   int isLastResponse) {
+    if (!checkRequestReplier(rr)) return -1;
+    try {
+      rr->rr->sendResponse(client, response, isLastResponse != 0);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      rr->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+
+  //---------------------------------------------------------------------------
+  // Creplier_RequestReplier_replyToClient
+  //---------------------------------------------------------------------------
+  int Creplier_RequestReplier_sendEndResponse(Creplier_RequestReplier_t *rr,
+					      castor::IClient *client) {
+    if (!checkRequestReplier(rr)) return -1;
+    try {
+      rr->rr->sendEndResponse(client);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      rr->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+
   
   //---------------------------------------------------------------------------
   // Creplier_RequestReplier_release

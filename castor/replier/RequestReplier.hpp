@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/16 15:45:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RequestReplier.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/20 12:28:53 $ $Author: bcouturi $
  *
  *
  *
@@ -65,11 +65,37 @@ namespace castor {
        * @param isLastResponse Whether this will be the last response
        * to this client.
        * @exception Exception in case of error
+       * @deprecated
        */
       void replyToClient(castor::IClient *client,
                          castor::IObject *response,
                          bool isLastResponse = false)
         throw(castor::exception::Exception);
+
+
+      /**
+       * Adds a client to the queue of clients waiting for a response.
+       * @param client The client object indicating the client address
+       * @param response The response to send
+       * @param isLastResponse Whether this will be the last response
+       * to this client.
+       * @exception Exception in case of error
+       */
+      void sendResponse(castor::IClient *client,
+			castor::IObject *response,
+			bool isLastResponse = false)
+        throw(castor::exception::Exception);
+
+
+      /**
+       * Sends an EndResponse over a connection, to indicate that
+       * there are no more messages to send.
+       * @param client The client object indicating the client address
+       * @exception Exception in case of error
+       */
+      void sendEndResponse(castor::IClient *client)
+        throw(castor::exception::Exception);
+      
 
       /**
        * Finishes sending the request, and blocks until all requests are sent

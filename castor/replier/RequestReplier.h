@@ -56,6 +56,39 @@ int Creplier_RequestReplier_replyToClient(struct Creplier_RequestReplier_t *rr,
                                           struct C_IObject_t *response,
                                           int isLastResponse);
 
+
+/**
+ * Adds a client to the queue of clients waiting for a response.
+ * @param rr the request replier used
+ * @param client the client object indicating the client address
+ * @param response the response to send
+ * @param isLastResponse whether this will be the last response
+ * to this client.
+ * @return 0 : call was successful,
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Creplier_RequestReplier_errorMsg
+ */
+int Creplier_RequestReplier_sendResponse(struct Creplier_RequestReplier_t *rr,
+					 struct C_IClient_t *client,
+					 struct C_IObject_t *response,
+					 int isLastResponse);
+
+
+/**
+ * Adds a client to the queue of clients waiting for a response.
+ * @param rr the request replier used
+ * @param client the client object indicating the client address
+ * to this client.
+ * @return 0 : call was successful,
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Creplier_RequestReplier_errorMsg
+ */
+int Creplier_RequestReplier_sendEndResponse(struct Creplier_RequestReplier_t *rr,
+					    struct C_IClient_t *client);
+
+
 /**
  * Releases an instance of the RequestReplier singleton
  * @param rr the request replier instance to release

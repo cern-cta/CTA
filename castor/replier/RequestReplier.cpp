@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/19 18:29:33 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/20 12:28:53 $ $Author: bcouturi $
  *
  *
  *
@@ -77,10 +77,12 @@ castor::replier::RequestReplier *castor::replier::RequestReplier::s_rr = 0;
 //-----------------------------------------------------------------------------
 castor::replier::RequestReplier *
 castor::replier::RequestReplier::getInstance() throw() {
+
+  char *func = "RequestReplier::getInstance ";
   // XXX lock ?
   if (0 == s_rr) {
     s_rr = new castor::replier::RequestReplier();
-    s_rr->clog() << ALWAYS << "Created new request replier" << std::endl;
+    s_rr->clog() << ALWAYS << func << "Created new request replier" << std::endl;
   }
   return s_rr;
 }
@@ -90,6 +92,8 @@ castor::replier::RequestReplier::getInstance() throw() {
 //-----------------------------------------------------------------------------
 castor::replier::RequestReplier::RequestReplier() throw() {
 
+  char *func = "RequestReplier::RequestReplier ";
+
   // Initializing collections
   m_clientQueue = new std::queue<ClientResponse>();
   m_connections = new std::map<int, ClientConnection *>();
@@ -97,7 +101,7 @@ castor::replier::RequestReplier::RequestReplier() throw() {
   // Establishing the pipe used for notification with ReplierThread
   int rc = pipe(m_commPipe);
   if (-1 == rc) {
-    clog() << ERROR << "Could not establish communication pipe !" << std::endl;
+    clog() << ERROR << func << "Could not establish communication pipe !" << std::endl;
   }
   m_pipeRead = &m_commPipe[0];
   m_pipeWrite = &m_commPipe[1];
@@ -114,11 +118,11 @@ castor::replier::RequestReplier::RequestReplier() throw() {
 //-----------------------------------------------------------------------------
 void
 castor::replier::RequestReplier::start() throw() {
-
+  char *func = "RequestReplier::start ";
   if ((m_threadId = Cthread_create(&(staticReplierThread), this))<0) {
-    clog() << FATAL << "Could not create thread !" << std::endl;
+    clog() << FATAL << func << "Could not create thread !" << std::endl;
   }
-  clog() << DEBUG << "Request Replier thread ID is: " << m_threadId << std::endl;
+  clog() << DEBUG << func << "Request Replier thread ID is: " << m_threadId << std::endl;
 
 }
 
@@ -129,14 +133,14 @@ void *
 castor::replier::RequestReplier::staticReplierThread(void *arg) throw() {
   if (0 == arg) {
     // XXX Commented out because clog no longer a static method !
-    //clog() << ERROR << "Please specify an argument to staticReplierThread" << std::endl;
+    //clog() << ERROR << func << "Please specify an argument to staticReplierThread" << std::endl;
     return 0;
   }
 
   castor::replier::RequestReplier *s_rr = static_cast<castor::replier::RequestReplier *>(arg);
   if (0 == s_rr) {
     // XXX Commented out because clog no longer a static method !
-    // clog() << ERROR << "Error in dynamic cast" << std::endl;
+    // clog() << ERROR << func << "Error in dynamic cast" << std::endl;
     return 0;
   }
 
@@ -160,6 +164,8 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
   int nbPollFd = 1000;
   struct ::pollfd *toPoll = new struct ::pollfd[nbPollFd];
 
+  char *func = "RequestReplier::replierThread ";
+
   while (1) {
 
     // Getting the value of the end processing flag
@@ -170,11 +176,11 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
     if (terminate) {
       if(m_connections->size() == 0
          && m_clientQueue->size() == 0) {
-        clog() << ALWAYS << "Finished processing - Terminating"
+        clog() << ALWAYS << func << "Finished processing - Terminating"
                << std::endl;
         break;
       } else {
-        clog() << ALWAYS << "Waiting to terminate - ConnQ:"
+        clog() << ALWAYS << func << "Waiting to terminate - ConnQ:"
                << m_connections->size()
                << " ClientQ:"
                << m_clientQueue->size()
@@ -192,15 +198,15 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
     // Build new poll array for next call
     int nbfd = buildNewPollArray(toPoll);
 
-    clog() << DEBUG << "Polling, nbfd=" << nbfd << std::endl;
+    clog() << DEBUG << func << "Polling, nbfd=" << nbfd << std::endl;
     pollRc = poll(toPoll, nbfd, pollTimeout * 1000);
-    clog() << VERBOSE << "Poll returned" << std::endl;
+    clog() << VERBOSE << func << "Poll returned" << std::endl;
     if (pollRc == 0) {
       // Poll timed-out
-      clog() << DEBUG << "Poll timed out" << std::endl;
+      clog() << DEBUG << func << "Poll timed out" << std::endl;
       garbageCollect();
       if (m_clientQueue->size() > 0) {
-        clog() << VERBOSE << "Timeout with "
+        clog() << VERBOSE << func << "Timeout with "
                << m_clientQueue->size()
                << " in queue" << std::endl;
       }
@@ -208,11 +214,11 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
       continue;
     } else if (pollRc < 0) {
       if (errno == EINTR) {
-        clog() << VERBOSE << "Poll interrupted, continuing"
+        clog() << VERBOSE << func << "Poll interrupted, continuing"
                << std::endl;
         continue;
       } else {
-        clog() << DEBUG << "Error in poll:"
+        clog() << DEBUG << func << "Error in poll:"
                << strerror(errno)
                << std::endl;
         return 0;
@@ -234,6 +240,8 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
 //-----------------------------------------------------------------------------
 void castor::replier::RequestReplier::createNewClientConnection(ClientResponse cr)
   throw() {
+  
+  char *func = "RequestReplier::createNewClientConnection ";
 
   // Looking in the hash of client to find if there is one already established
   ClientConnection *r = 0;
@@ -249,7 +257,7 @@ void castor::replier::RequestReplier::createNewClientConnection(ClientResponse c
         && newhost == c.ipAddress()) {
       // Found an existing connection !
       // XXX Should there be status testing ?
-      clog() << DEBUG << "Found existing connection " << (*iter).second
+      clog() << DEBUG << func << "Found existing connection " << (*iter).second
              << " status " << (*iter).second->getStatusStr() << std::endl;
       r = (*iter).second;
       break;
@@ -259,12 +267,12 @@ void castor::replier::RequestReplier::createNewClientConnection(ClientResponse c
   // Create new connection in case none was found !
   if (0 == r) {
     r = new ClientConnection(cr);
-    clog() << DEBUG << "Creating new ClientConnection " << r << std::endl;
+    clog() << DEBUG << func << "Creating new ClientConnection " << r << std::endl;
     try {
       r->createSocket();
       r->connect();
       (*m_connections)[r->m_fd] = r;
-      clog() << VERBOSE << "ClientConnection " << r << " added fd is "
+      clog() << VERBOSE << func << "ClientConnection " << r << " added fd is "
              << r->m_fd << std::endl;
     } catch(castor::exception::Exception e) {
       clog() << ERROR
@@ -285,8 +293,10 @@ void castor::replier::RequestReplier::createNewClientConnection(ClientResponse c
 //-----------------------------------------------------------------------------
 void castor::replier::RequestReplier::deleteConnection(int dfd) throw() {
 
+  char *func = "RequestReplier::deleteConnection ";
+
   ClientConnection *cr = (*m_connections)[dfd];
-  clog() << VERBOSE << "ClientConnection " << cr
+  clog() << VERBOSE << func << "ClientConnection " << cr
          << " fd:" << dfd << " being deleted."
          << std::endl;
 
@@ -306,12 +316,13 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
   int t = time(0);
   const int TIMEOUT = 60;
   std::stack<int> *toremove = new std::stack<int>();
+  char *func = "RequestReplier::garbageCollect ";
 
   for(std::map<int, ClientConnection *>::iterator iter = m_connections->begin();
       iter != m_connections->end();
       iter++) {
 
-    clog() << VERBOSE << "GC Checking " << (*iter).second
+    clog() << VERBOSE << func << "GC Checking " << (*iter).second
            << " status: " << (*iter).second->getStatusStr()
            << " active time: "
            << (t - (*iter).second->m_lastEventDate)
@@ -320,7 +331,7 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
     if ((*iter).second->getStatus() == DONE_FAILURE) {
       toremove->push((*iter).second->m_fd);
       unsigned long ip = (*iter).second->m_client.ipAddress();
-      clog() << DEBUG << "ClientConnection " << iter->second
+      clog() << DEBUG << func << "ClientConnection " << iter->second
              << " DONE_FAILURE <"
              << (*iter).second->m_fd << "> client "
              << castor::ip << ip << ":"
@@ -329,7 +340,7 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
                && (*iter).second->m_responses.empty()) {
       toremove->push((*iter).second->m_fd);
       unsigned long ip = (*iter).second->m_client.ipAddress();
-      clog() << DEBUG << "ClientConnection " << iter->second
+      clog() << DEBUG << func << "ClientConnection " << iter->second
              <<" CLOSE <"
              << (*iter).second->m_fd << "> client "
              << castor::ip << ip << ":"
@@ -338,7 +349,7 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
     } else if ((t - (*iter).second->m_lastEventDate) > TIMEOUT) {
       toremove->push((*iter).second->m_fd);
       unsigned long ip = (*iter).second->m_client.ipAddress();
-      clog() << DEBUG << "ClientConnection " << iter->second
+      clog() << DEBUG << func << "ClientConnection " << iter->second
              << " TIMEOUT <"
              << (*iter).second->m_fd << "> client "
              << castor::ip << ip << ":"
@@ -364,6 +375,8 @@ int
 castor::replier::RequestReplier::buildNewPollArray(struct ::pollfd pl[])
   throw() {
 
+  char *func = "RequestReplier::buildNewPollArray ";
+
   // BEWARE: Keep entry 0 identical as this the pollfd for the messaging pipe
   pl[0].fd = *m_pipeRead;
   pl[0].events = POLLIN;
@@ -378,7 +391,7 @@ castor::replier::RequestReplier::buildNewPollArray(struct ::pollfd pl[])
         || (*iter).second->getStatus() == RESEND
         || ((*iter).second->getStatus() == CONNECTED
             && !(((*iter).second->m_responses).empty()))) {
-      clog() << VERBOSE << "Listening to fd: "
+      clog() << VERBOSE << func << "Listening to fd: "
              << (*iter).first << std::endl;
       pl[i].fd = (*iter).first;
       pl[i].events = POLLIN|POLLOUT|POLLHUP|POLLERR;
@@ -387,7 +400,7 @@ castor::replier::RequestReplier::buildNewPollArray(struct ::pollfd pl[])
     }
 
     //     if ((*iter).second->getStatus() == SENT) {
-    //       clog() << VERBOSE << "Listening to fd: "
+    //       clog() << VERBOSE << func << "Listening to fd: "
     //              << (*iter).first << std::endl;
     //       pl[i].fd = (*iter).first;
     //       pl[i].events = POLLIN|POLLHUP|POLLERR;
@@ -397,7 +410,7 @@ castor::replier::RequestReplier::buildNewPollArray(struct ::pollfd pl[])
 
   }
 
-  clog() << DEBUG << "There are " << (i-1)
+  clog() << DEBUG << func << "There are " << (i-1)
          << " client(s) to reply to ! (among "
          << m_connections->size() << " connections)"
          << std::endl;
@@ -413,7 +426,9 @@ void
 castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd)
   throw() {
 
-  clog() << VERBOSE << "Processing poll Array "
+  char *func = "RequestReplier::processPollArray ";
+
+  clog() << VERBOSE << func << "Processing poll Array "
          << pl[0].revents <<std::endl;
 
   if (pl[0].revents != 0) {
@@ -431,20 +446,20 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
         continue;
       }
 
-      clog() << DEBUG << "ClientConnection " << cr << " fd active : " << pl[i].fd
+      clog() << DEBUG << func << "ClientConnection " << cr << " fd active : " << pl[i].fd
              << ", status : " << cr->getStatusStr()
              << " Events:" << pl[i].revents
              << std::endl;
 
       if (pl[i].revents & POLLHUP) {
-        clog() << ERROR << pl[i].fd
+        clog() << ERROR << func << pl[i].fd
                << "Connection dropped" << std::endl;
         cr->setStatus(DONE_FAILURE);
         cr->m_errorMessage = "Peer dropped the connection!";
       }
 
       if (pl[i].revents & POLLERR) {
-        clog() << ERROR << pl[i].fd
+        clog() << ERROR << func << pl[i].fd
                << "POLLERR received" << std::endl;
         cr->setStatus(DONE_FAILURE);
         cr->m_errorMessage = "Connection error";
@@ -453,10 +468,10 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
       switch (cr->getStatus()) {
       case CONNECTING:
         cr->setStatus(CONNECTED);
-        clog() << DEBUG << "Connect successful for fd: "
+        clog() << DEBUG << func << "Connect successful for fd: "
                << pl[i].fd << std::endl;
       case CONNECTED:
-        clog() << DEBUG << "Send successful for fd: "
+        clog() << DEBUG << func << "Send successful for fd: "
                << pl[i].fd << " now sending next message" << std::endl;
         try {
           cr->sendData();
@@ -478,22 +493,22 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
         break;
       case RESEND:
         if (pl[i].revents & POLLOUT) {
-          clog() << DEBUG << "CCCR Resending data for fd"
+          clog() << DEBUG << func << "CCCR Resending data for fd"
                  << pl[i].fd << std::endl;
           try {
             cr->sendData();
           } catch (castor::exception::Exception ex) {
-            clog() << ERROR << "Exception caught in sending data : "
+            clog() << ERROR << func << "Exception caught in sending data : "
                    << sstrerror(ex.code()) << std::endl
                    << ex.getMessage().str() << std::endl;
           }
         } else if (pl[i].revents & POLLIN) {
-          clog() << DEBUG << "CCCR Resending data for fd but got POLLIN"
+          clog() << DEBUG << func << "CCCR Resending data for fd but got POLLIN"
                  << pl[i].fd << std::endl;
           try {
             cr->sendData();
           } catch (castor::exception::Exception ex) {
-            clog() << ERROR << "Exception caught in sending data : "
+            clog() << ERROR << func << "Exception caught in sending data : "
                    << sstrerror(ex.code()) << std::endl
                    << ex.getMessage().str() << std::endl;
           }
@@ -515,7 +530,7 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
         //         }
         //         break;
       default:
-        clog() << ERROR << "Should not have status "
+        clog() << ERROR << func << "Should not have status "
                << cr->getStatusStr() << " fd is " << pl[i].fd << std::endl;
       } // End switch
     } // End if revents != 0
@@ -529,19 +544,21 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
 void
 castor::replier::RequestReplier::readFromClientQueue() throw() {
 
+  char *func = "RequestReplier::readFromClientQueue ";
+
   int val;
   int rc = read(*m_pipeRead, &val, sizeof(val));
   if (rc < 0) {
-    clog() << ERROR << "Error reading !" << std::endl;
+    clog() << ERROR << func << "Error reading !" << std::endl;
   }
 
-  clog() << VERBOSE << "Taking lock on queue !" << std::endl;
+  clog() << VERBOSE << func << "Taking lock on queue !" << std::endl;
   Cthread_mutex_lock(&m_clientQueue);
 
-  clog() << VERBOSE << "Getting client from queue" << std::endl;
+  clog() << VERBOSE << func << "Getting client from queue" << std::endl;
 
   if (m_clientQueue->size() == 0) {
-    clog() << VERBOSE << "No client in queue, removing lock" << std::endl;
+    clog() << VERBOSE << func << "No client in queue, removing lock" << std::endl;
     Cthread_mutex_unlock(&m_clientQueue);
     return; // XXX Throw exception ?
   }
@@ -549,14 +566,14 @@ castor::replier::RequestReplier::readFromClientQueue() throw() {
   ClientResponse cr = m_clientQueue->front();
   m_clientQueue->pop();
 
-  clog() << VERBOSE << "Client2 is "
+  clog() << VERBOSE << func << "Client2 is "
          << castor::ip << cr.client.ipAddress() << ":"
          << cr.client.port() << std::endl;
 
-  clog() << DEBUG << "Creating connection to client" << std::endl;
+  clog() << DEBUG << func << "Creating connection to client" << std::endl;
   createNewClientConnection(cr);
 
-  clog() << VERBOSE << "Removing lock on queue !" << std::endl;
+  clog() << VERBOSE << func << "Removing lock on queue !" << std::endl;
   Cthread_mutex_unlock(&m_clientQueue);
 
 }
@@ -569,7 +586,9 @@ void
 castor::replier::RequestReplier::terminate()
   throw() {
 
-  clog() << ALWAYS << "Requesting RequestReplier termination"
+  char *func = "RequestReplier::terminate ";
+
+  clog() << ALWAYS << func << "Requesting RequestReplier termination"
          << std::endl;
 
   // Setting the end processing flag to 1
@@ -599,10 +618,17 @@ castor::replier::RequestReplier::replyToClient(castor::IClient *client,
                                                castor::IObject *response,
                                                bool isLastResponse)
   throw(castor::exception::Exception) {
+  sendResponse(client, response, isLastResponse);
+}
 
-  char *func = "replyToClient: ";
 
-  clog() << DEBUG << func << "ISLASTRESPONSE:" <<  isLastResponse << std::endl;
+void
+castor::replier::RequestReplier::sendResponse(castor::IClient *client,
+                                               castor::IObject *response,
+                                               bool isLastResponse)
+  throw(castor::exception::Exception) {
+
+  char *func = "RequestReplier::sendResponse ";
 
   // Marshalling the response
   castor::io::biniostream* buffer = new castor::io::biniostream();
@@ -610,7 +636,7 @@ castor::replier::RequestReplier::replyToClient(castor::IClient *client,
   svcs()->createRep(&ad, response, true);
 
   // Adding the client to the queue, taking proper lock
-  clog() << func << VERBOSE << "Taking lock on queue !" << std::endl;
+  clog() << VERBOSE << func << "Taking lock on queue !" << std::endl;
   Cthread_mutex_lock(&m_clientQueue);
 
   ClientResponse cr;
@@ -675,3 +701,51 @@ castor::replier::RequestReplier::replyToClient(castor::IClient *client,
 	 << "Removing lock on queue !" << std::endl;
   Cthread_mutex_unlock(&m_clientQueue);
 }
+
+
+//-----------------------------------------------------------------------------
+// Method to add an EndResponse
+//-----------------------------------------------------------------------------
+void
+castor::replier::RequestReplier::sendEndResponse(castor::IClient *client)
+  throw(castor::exception::Exception) {
+
+  char *func = "RequestReplier::sendEndResponse ";
+
+  // Adding the client to the queue, taking proper lock
+  clog() << VERBOSE << func << "Taking lock on queue !" << std::endl;
+  Cthread_mutex_lock(&m_clientQueue);
+
+  castor::rh::EndResponse endresp;
+  castor::io::biniostream* buffer = new castor::io::biniostream();
+  castor::io::StreamAddress ad(*buffer, "StreamCnvSvc", castor::SVC_STREAMCNV);
+  svcs()->createRep(&ad, &endresp, true);
+
+  ClientResponse cr;
+  castor::rh::Client* cl = dynamic_cast<castor::rh::Client*>(client);
+  cr.client = *cl;
+  cr.response = buffer;
+  
+  clog() << DEBUG << func << "Adding End Response to queue" << std::endl;
+  m_clientQueue->push(cr);
+
+  int val = 1;
+  int rc = write(*m_pipeWrite, (void *)&val, sizeof(val));
+  if (rc != sizeof(val)) {
+    clog() << ERROR << func 
+	   << "Error writting EndResponse to communication pipe with RRThread" 
+	   << std::endl;
+  } else {
+    clog() << DEBUG 
+	   << func 
+	   <<"Successfully written EndResponse to communication pipe with RRThread" 
+	   << std::endl;
+  }
+
+
+  // Exiting...
+  clog() << VERBOSE << func 
+	 << "Removing lock on queue !" << std::endl;
+  Cthread_mutex_unlock(&m_clientQueue);
+}
+
