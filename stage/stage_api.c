@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.63 2003/03/11 11:06:55 jdurand Exp $
+ * $Id: stage_api.c,v 1.64 2003/04/28 10:03:11 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -35,7 +35,7 @@
 #include "net.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.63 $ $Date: 2003/03/11 11:06:55 $ CERN IT/DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.64 $ $Date: 2003/04/28 10:03:11 $ CERN IT/DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifdef hpux
@@ -759,6 +759,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 			(serrno == EISDIR) ||
 			(serrno == ERTMNYPARY) || (serrno == ERTLIMBYSZ) || (serrno == ESTCLEARED) ||
 			(serrno == ESTKILLED)  || (serrno == ENOSPC) || (serrno == EBUSY) || (serrno == ESTLNKNSUP)) break;
+		if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 		if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
 		if (serrno != ESTNACT && ntries++ > maxretry) break;
 		if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
@@ -1392,6 +1393,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 			break;
 		}
 		if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (serrno == SENAMETOOLONG)) break;
+		if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 		if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
 		if (serrno != ESTNACT && ntries++ > maxretry) break;
 		if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
@@ -1861,6 +1863,7 @@ int DLL_DECL stage_updc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_outpu
 		}
 		if ((c == 0) ||
 			(serrno == EINVAL) || (serrno == ENOSPC) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (serrno == SENAMETOOLONG)) break;
+		if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 		if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
 		if (serrno != ESTNACT && ntries++ > maxretry) break;
 		if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
@@ -2294,6 +2297,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
 		}
 		if ((c == 0) ||
 			(serrno == EINVAL)     || (serrno == EBUSY) || (serrno == ENOUGHF) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (serrno == SENAMETOOLONG)) break;
+		if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 		if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
 		if (serrno != ESTNACT && ntries++ > maxretry) break;
 		if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
@@ -2589,6 +2593,7 @@ int DLL_DECL stage_ping(flags,hostname)
 			break;
 		}
 		if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (serrno == SENAMETOOLONG)) break;
+		if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 		if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
 		if (serrno != ESTNACT && ntries++ > maxretry) break;
 		if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
@@ -2740,6 +2745,7 @@ int DLL_DECL stage_init(flags,hostname)
 			return(stageinit(flags,hostname));
 		}
 		if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (serrno == SENAMETOOLONG) || (serrno == ESTCONF) || (serrno == ECUPVNACT)) break;
+		if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 		if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
 		if (serrno != ESTNACT && ntries++ > maxretry) break;
 		if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
@@ -2892,6 +2898,7 @@ static int DLL_DECL stageinit(flags,hostname)
 	while (1) {
 		c = send2stgd(hostname, req_type, (u_signed64) 0, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, NULL, NULL, NULL, NULL);
 		if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (serrno == SENAMETOOLONG) || (serrno == ESTCONF) || (serrno == ECUPVNACT)) break;
+		if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 		if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
 		if (serrno != ESTNACT && ntries++ > maxretry) break;
 		if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
@@ -3043,6 +3050,7 @@ int DLL_DECL stage_shutdown(flags,hostname)
 			return(stageshutdown(flags,hostname));
 		}
 		if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (serrno == SENAMETOOLONG) || (serrno == ESTCONF) || (serrno == ECUPVNACT)) break;
+		if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 		if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
 		if (serrno != ESTNACT && ntries++ > maxretry) break;
 		if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
@@ -3189,6 +3197,7 @@ static int DLL_DECL stageshutdown(flags,hostname)
 	while (1) {
 		c = send2stgd(hostname, req_type, (u_signed64) 0, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, NULL, NULL, NULL, NULL);
 		if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (serrno == SENAMETOOLONG) || (serrno == ESTCONF) || (serrno == ECUPVNACT)) break;
+		if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 		if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
 		if (serrno != ESTNACT && ntries++ > maxretry) break;
 		if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
@@ -3518,6 +3527,7 @@ int DLL_DECL stage_alloc_or_get(req_type,flags,openmode,hostname,pooluser,filena
 			(serrno == EISDIR) ||
 			(serrno == ERTMNYPARY) || (serrno == ERTLIMBYSZ) || (serrno == ESTCLEARED) ||
 			(serrno == ESTKILLED)  || (serrno == ENOSPC) || (serrno == EBUSY) || (serrno == ESTLNKNSUP)) break;
+		if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 		if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
 		if (serrno != ESTNACT && ntries++ > maxretry) break;
 		if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */

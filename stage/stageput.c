@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.34 2002/10/16 22:58:55 jdurand Exp $
+ * $Id: stageput.c,v 1.35 2003/04/28 10:03:14 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.34 $ $Date: 2002/10/16 22:58:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.35 $ $Date: 2003/04/28 10:03:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -374,6 +374,7 @@ int main(argc, argv)
 		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 		if (c == 0 || serrno == EINVAL || serrno == ERTLIMBYSZ || serrno == ESTCLEARED ||
 				serrno == ENOSPC || serrno == ESTKILLED) break;
+		if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 		if (serrno == ESTNACT && nstg161++ == 0) fprintf(stderr, STG161);
 		if (serrno != ESTNACT && ntries++ > maxretry) break;
 		if (noretry_flag != 0) break; /* To be sure we always break if --noretry is in action */

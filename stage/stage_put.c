@@ -1,5 +1,5 @@
 /*
- * $Id: stage_put.c,v 1.21 2002/10/08 08:48:37 jdurand Exp $
+ * $Id: stage_put.c,v 1.22 2003/04/28 10:03:12 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.21 $ $Date: 2002/10/08 08:48:37 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.22 $ $Date: 2003/04/28 10:03:12 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -147,6 +147,7 @@ int DLL_DECL stage_put_hsm(stghost,hsmstruct)
 	while (1) {
 		c = send2stgd_compat (stghost_ok, sendbuf, msglen, 1, repbuf, (int) sizeof(repbuf));
 		if ((c == 0) || (serrno == EINVAL) || (serrno == ERTLIMBYSZ) || (serrno == ESTCLEARED) || (serrno == ENOSPC) || (serrno == ESTKILLED) || (serrno == ENOENT) || (serrno == EACCES) || (serrno == EPERM) || (serrno == SENAMETOOLONG)) break;
+		if (serrno == SHIFT_ESTNACT) serrno = ESTNACT; /* Stager daemon bug */
 		if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		stage_sleep (RETRYI);
