@@ -1,5 +1,5 @@
 /*
- * $Id: stagealloc.c,v 1.24 2001/12/04 10:54:11 jdurand Exp $
+ * $Id: stagealloc.c,v 1.25 2001/12/05 10:10:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.24 $ $Date: 2001/12/04 10:54:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.25 $ $Date: 2001/12/05 10:10:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -65,6 +65,7 @@ int main(argc, argv)
 	int msglen;
 	int nargs;
 	int ntries = 0;
+	int nstg161 = 0;
 	char *p, *q;
 	char path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	int pflag = 0;
@@ -262,7 +263,7 @@ int main(argc, argv)
 			c = 0;
 			break;
 		}
-		if (serrno == ESTNACT && ntries == 0) fprintf(stderr, STG161);
+		if (serrno == ESTNACT && nstg161++ == 0) fprintf(stderr, STG161);
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
 	}

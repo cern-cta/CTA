@@ -1,5 +1,5 @@
 /*
- * $Id: stageget.c,v 1.18 2001/11/30 12:13:45 jdurand Exp $
+ * $Id: stageget.c,v 1.19 2001/12/05 10:10:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.18 $ $Date: 2001/11/30 12:13:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.19 $ $Date: 2001/12/05 10:10:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -54,6 +54,7 @@ int main(argc, argv)
 	int msglen;
 	int nargs;
 	int ntries = 0;
+	int nstg161 = 0;
 	char *q;
 	char path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	char *pool_user = NULL;
@@ -167,7 +168,7 @@ int main(argc, argv)
 	while (1) {
 		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 		if (c == 0 || serrno == EINVAL) break;
-		if (serrno == ESTNACT && ntries == 0) fprintf(stderr, STG161);
+		if (serrno == ESTNACT && nstg161++ == 0) fprintf(stderr, STG161);
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
 	}

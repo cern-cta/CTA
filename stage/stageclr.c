@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.23 2001/11/30 12:13:07 jdurand Exp $
+ * $Id: stageclr.c,v 1.24 2001/12/05 10:10:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.23 $ $Date: 2001/11/30 12:13:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.24 $ $Date: 2001/12/05 10:10:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -58,6 +58,7 @@ int main(argc, argv)
 	int Mflag = 0;
 	int msglen;
 	int ntries = 0;
+	int nstg161 = 0;
 	int numvid;
 	int Pflag = 0;
 	char *p;
@@ -303,7 +304,7 @@ int main(argc, argv)
 				c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 				if (c == 0 || serrno == EINVAL || serrno == EBUSY) break;
 				if (serrno == ENOUGHF) break;
-				if (serrno == ESTNACT && ntries == 0) fprintf(stderr, STG161);
+				if (serrno == ESTNACT && nstg161++ == 0) fprintf(stderr, STG161);
 				if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 				sleep (RETRYI);
 			}
@@ -334,7 +335,7 @@ int main(argc, argv)
 				c = 0;
 				break;
 			}
-			if (serrno == ESTNACT && ntries == 0) fprintf(stderr, STG161);
+			if (serrno == ESTNACT && nstg161++ == 0) fprintf(stderr, STG161);
 			if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 			sleep (RETRYI);
 		}

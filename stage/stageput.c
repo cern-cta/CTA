@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.27 2001/12/04 10:54:11 jdurand Exp $
+ * $Id: stageput.c,v 1.28 2001/12/05 10:10:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.27 $ $Date: 2001/12/04 10:54:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.28 $ $Date: 2001/12/05 10:10:18 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -69,6 +69,7 @@ int main(argc, argv)
 	int msglen;
 	int nargs;
 	int ntries = 0;
+	int nstg161 = 0;
 	int numvid;
 	char *p, *q;
 	char path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
@@ -366,7 +367,7 @@ int main(argc, argv)
 		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 		if (c == 0 || serrno == EINVAL || serrno == ERTLIMBYSZ || serrno == ESTCLEARED ||
 				serrno == ENOSPC || serrno == ESTKILLED) break;
-		if (serrno == ESTNACT && ntries == 0) fprintf(stderr, STG161);
+		if (serrno == ESTNACT && nstg161++ == 0) fprintf(stderr, STG161);
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
 	}

@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.18 2001/11/30 12:08:12 jdurand Exp $
+ * $Id: stage_updc.c,v 1.19 2001/12/05 10:10:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.18 $ $Date: 2001/11/30 12:08:12 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.19 $ $Date: 2001/12/05 10:10:17 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -60,6 +60,7 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
   int msglen;
   int nargs;
   int ntries = 0;
+  int nstg161 = 0;
   char *p;
   struct passwd *pw;
   char *q, *q2;
@@ -299,7 +300,7 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
-	if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
+	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
@@ -332,6 +333,7 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
   int n;
   int nargs;
   int ntries = 0;
+  int nstg161 = 0;
   char *p;
   struct passwd *pw;
   char *q, *q2;
@@ -532,7 +534,7 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
-	if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
+	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
@@ -553,6 +555,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   int msglen;
   int nargs;
   int ntries = 0;
+  int nstg161 = 0;
   struct passwd *pw;
   char *q, *q2;
   char repbuf[CA_MAXPATHLEN+1];
@@ -648,7 +651,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
-	if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
+	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
@@ -666,6 +669,7 @@ int DLL_DECL stage_updc_error(stghost,copyrc,hsmstruct)
   int msglen;
   int nargs;
   int ntries = 0;
+  int nstg161 = 0;
   struct passwd *pw;
   char *q, *q2;
   char repbuf[CA_MAXPATHLEN+1];
@@ -774,7 +778,7 @@ int DLL_DECL stage_updc_error(stghost,copyrc,hsmstruct)
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
-	if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
+	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }
@@ -791,6 +795,7 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   int msglen;
   int nargs;
   int ntries = 0;
+  int nstg161 = 0;
   struct passwd *pw;
   char *q, *q2;
   char repbuf[CA_MAXPATHLEN+1];
@@ -889,7 +894,7 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   while (1) {
     c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
-	if (serrno == ESTNACT && ntries == 0) stage_errmsg(func, STG161);
+	if (serrno == ESTNACT && nstg161++ == 0) stage_errmsg(func, STG161);
     if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
     stage_sleep (RETRYI);
   }

@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.22 2001/11/30 12:15:58 jdurand Exp $
+ * $Id: stageqry.c,v 1.23 2001/12/05 10:10:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.22 $ $Date: 2001/11/30 12:15:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.23 $ $Date: 2001/12/05 10:10:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -61,6 +61,7 @@ int main(argc, argv)
 	int Mflag = 0;
 	int msglen;
 	int ntries = 0;
+	int nstg161 = 0;
 	int numvid;
 	char *p;
 	struct passwd *pw;
@@ -247,7 +248,7 @@ int main(argc, argv)
 	while (1) {
 		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 		if (c == 0 || serrno == EINVAL) break;
-		if (serrno == ESTNACT && ntries == 0) fprintf(stderr, STG161);
+		if (serrno == ESTNACT && nstg161++ == 0) fprintf(stderr, STG161);
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
 	}
