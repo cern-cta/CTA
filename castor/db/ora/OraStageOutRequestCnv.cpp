@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageOutRequestCnv.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2004/10/26 14:48:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageOutRequestCnv.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/10/29 08:17:06 $ $Author: sponcec3 $
  *
  * 
  *
@@ -57,7 +57,7 @@ const castor::IFactory<castor::IConverter>& OraStageOutRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraStageOutRequestCnv::s_insertStatementString =
-"INSERT INTO rh_StageOutRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, openmode, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12)";
+"INSERT INTO rh_StageOutRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, openmode, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraStageOutRequestCnv::s_deleteStatementString =
@@ -65,11 +65,11 @@ const std::string castor::db::ora::OraStageOutRequestCnv::s_deleteStatementStrin
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraStageOutRequestCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, openmode, id, svcClass, client FROM rh_StageOutRequest WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, openmode, id, svcClass, client FROM rh_StageOutRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraStageOutRequestCnv::s_updateStatementString =
-"UPDATE rh_StageOutRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, openmode = :9 WHERE id = :10";
+"UPDATE rh_StageOutRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, openmode = :10 WHERE id = :11";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraStageOutRequestCnv::s_storeTypeStatementString =
@@ -342,7 +342,7 @@ void castor::db::ora::OraStageOutRequestCnv::fillRepIClient(castor::stager::Stag
   m_selectIClientStatement->setDouble(1, obj->id());
   oracle::occi::ResultSet *rset = m_selectIClientStatement->executeQuery();
   if (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-    u_signed64 clientId = (u_signed64)rset->getDouble(12);
+    u_signed64 clientId = (u_signed64)rset->getDouble(13);
     if (0 != clientId &&
         0 == obj->client() ||
         obj->client()->id() != clientId) {
@@ -434,7 +434,7 @@ void castor::db::ora::OraStageOutRequestCnv::fillObjSvcClass(castor::stager::Sta
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = (u_signed64)rset->getDouble(11);
+  u_signed64 svcClassId = (u_signed64)rset->getDouble(12);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -520,7 +520,7 @@ void castor::db::ora::OraStageOutRequestCnv::fillObjIClient(castor::stager::Stag
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = (u_signed64)rset->getDouble(12);
+  u_signed64 clientId = (u_signed64)rset->getDouble(13);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -581,10 +581,11 @@ void castor::db::ora::OraStageOutRequestCnv::createRep(castor::IAddress* address
     m_insertStatement->setInt(6, obj->pid());
     m_insertStatement->setString(7, obj->machine());
     m_insertStatement->setString(8, obj->svcClassName());
-    m_insertStatement->setInt(9, obj->openmode());
-    m_insertStatement->setDouble(10, obj->id());
-    m_insertStatement->setDouble(11, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setDouble(12, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setString(9, obj->userTag());
+    m_insertStatement->setInt(10, obj->openmode());
+    m_insertStatement->setDouble(11, obj->id());
+    m_insertStatement->setDouble(12, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setDouble(13, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -615,6 +616,7 @@ void castor::db::ora::OraStageOutRequestCnv::createRep(castor::IAddress* address
                     << "  pid : " << obj->pid() << std::endl
                     << "  machine : " << obj->machine() << std::endl
                     << "  svcClassName : " << obj->svcClassName() << std::endl
+                    << "  userTag : " << obj->userTag() << std::endl
                     << "  openmode : " << obj->openmode() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  svcClass : " << obj->svcClass() << std::endl
@@ -648,8 +650,9 @@ void castor::db::ora::OraStageOutRequestCnv::updateRep(castor::IAddress* address
     m_updateStatement->setInt(6, obj->pid());
     m_updateStatement->setString(7, obj->machine());
     m_updateStatement->setString(8, obj->svcClassName());
-    m_updateStatement->setInt(9, obj->openmode());
-    m_updateStatement->setDouble(10, obj->id());
+    m_updateStatement->setString(9, obj->userTag());
+    m_updateStatement->setInt(10, obj->openmode());
+    m_updateStatement->setDouble(11, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -769,8 +772,9 @@ castor::IObject* castor::db::ora::OraStageOutRequestCnv::createObj(castor::IAddr
     object->setPid(rset->getInt(6));
     object->setMachine(rset->getString(7));
     object->setSvcClassName(rset->getString(8));
-    object->setOpenmode(rset->getInt(9));
-    object->setId((u_signed64)rset->getDouble(10));
+    object->setUserTag(rset->getString(9));
+    object->setOpenmode(rset->getInt(10));
+    object->setId((u_signed64)rset->getDouble(11));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -824,8 +828,9 @@ void castor::db::ora::OraStageOutRequestCnv::updateObj(castor::IObject* obj)
     object->setPid(rset->getInt(6));
     object->setMachine(rset->getString(7));
     object->setSvcClassName(rset->getString(8));
-    object->setOpenmode(rset->getInt(9));
-    object->setId((u_signed64)rset->getDouble(10));
+    object->setUserTag(rset->getString(9));
+    object->setOpenmode(rset->getInt(10));
+    object->setId((u_signed64)rset->getDouble(11));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

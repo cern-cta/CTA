@@ -221,6 +221,26 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_userTag
+       * This is a string that the user is free to use. It can be useful to classify and
+       * select requests.
+       * @return the value of m_userTag
+       */
+      std::string userTag() const {
+        return m_userTag;
+      }
+
+      /**
+       * Set the value of m_userTag
+       * This is a string that the user is free to use. It can be useful to classify and
+       * select requests.
+       * @param new_var the new value of m_userTag
+       */
+      void setUserTag(std::string new_var) {
+        m_userTag = new_var;
+      }
+
+      /**
        * Get the value of m_svcClass
        * @return the value of m_svcClass
        */
@@ -304,6 +324,9 @@ namespace castor {
       std::string m_machine;
 
       std::string m_svcClassName;
+
+      /// This is a string that the user is free to use. It can be useful to classify and select requests.
+      std::string m_userTag;
 
       SvcClass* m_svcClass;
 

@@ -197,6 +197,23 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_Request_userTag
+  //----------------------------------------------------------------------------
+  int Cstager_Request_userTag(castor::stager::Request* instance, const char** var) {
+    *var = instance->userTag().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Request_setUserTag
+  //----------------------------------------------------------------------------
+  int Cstager_Request_setUserTag(castor::stager::Request* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setUserTag(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_Request_svcClass
   //----------------------------------------------------------------------------
   int Cstager_Request_svcClass(castor::stager::Request* instance, castor::stager::SvcClass** var) {

@@ -42,23 +42,23 @@ CREATE TABLE rh_Client (ipAddress NUMBER, port NUMBER, id INTEGER PRIMARY KEY, r
 
 /* SQL statements for type StageInRequest */
 DROP TABLE rh_StageInRequest;
-CREATE TABLE rh_StageInRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), openflags NUMBER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE rh_StageInRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), openflags NUMBER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type StageQryRequest */
 DROP TABLE rh_StageQryRequest;
-CREATE TABLE rh_StageQryRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE rh_StageQryRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type StageOutRequest */
 DROP TABLE rh_StageOutRequest;
-CREATE TABLE rh_StageOutRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), openmode NUMBER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE rh_StageOutRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), openmode NUMBER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type StageClrRequest */
 DROP TABLE rh_StageClrRequest;
-CREATE TABLE rh_StageClrRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE rh_StageClrRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type StageFilChgRequest */
 DROP TABLE rh_StageFilChgRequest;
-CREATE TABLE rh_StageFilChgRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE rh_StageFilChgRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type ReqId */
 DROP TABLE rh_ReqId;
@@ -70,11 +70,11 @@ CREATE TABLE rh_SubRequest (retryCounter NUMBER, fileName VARCHAR(255), protocol
 
 /* SQL statements for type StageGetNextRequest */
 DROP TABLE rh_StageGetNextRequest;
-CREATE TABLE rh_StageGetNextRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER, parent INTEGER);
+CREATE TABLE rh_StageGetNextRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER, parent INTEGER);
 
 /* SQL statements for type StageUpdcRequest */
 DROP TABLE rh_StageUpdcRequest;
-CREATE TABLE rh_StageUpdcRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE rh_StageUpdcRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), userTag VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type Tape */
 DROP TABLE rh_Tape;

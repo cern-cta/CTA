@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageInRequestCnv.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/14 16:34:46 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageInRequestCnv.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/29 08:17:06 $ $Author: sponcec3 $
  *
  * 
  *
@@ -99,6 +99,7 @@ void castor::io::StreamStageInRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->pid();
   ad->stream() << obj->machine();
   ad->stream() << obj->svcClassName();
+  ad->stream() << obj->userTag();
   ad->stream() << obj->openflags();
   ad->stream() << obj->id();
 }
@@ -137,6 +138,9 @@ castor::IObject* castor::io::StreamStageInRequestCnv::createObj(castor::IAddress
   std::string svcClassName;
   ad->stream() >> svcClassName;
   object->setSvcClassName(svcClassName);
+  std::string userTag;
+  ad->stream() >> userTag;
+  object->setUserTag(userTag);
   int openflags;
   ad->stream() >> openflags;
   object->setOpenflags(openflags);
