@@ -144,7 +144,7 @@ extern "C" {
   // Cstager_Stream_tapeCopy
   //----------------------------------------------------------------------------
   int Cstager_Stream_tapeCopy(castor::stager::Stream* instance, castor::stager::TapeCopy*** var, int* len) {
-    std::vector<castor::stager::TapeCopy*> result = instance->tapeCopy();
+    std::vector<castor::stager::TapeCopy*>& result = instance->tapeCopy();
     *len = result.size();
     *var = (castor::stager::TapeCopy**) malloc((*len) * sizeof(castor::stager::TapeCopy*));
     for (int i = 0; i < *len; i++) {

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequestCInt.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/19 11:15:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequestCInt.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/22 14:47:23 $ $Author: sponcec3 $
  *
  * 
  *
@@ -130,7 +130,7 @@ extern "C" {
   // Cstager_StageUpdateFileStatusRequest_subRequests
   //----------------------------------------------------------------------------
   int Cstager_StageUpdateFileStatusRequest_subRequests(castor::stager::StageUpdateFileStatusRequest* instance, castor::stager::SubRequest*** var, int* len) {
-    std::vector<castor::stager::SubRequest*> result = instance->subRequests();
+    std::vector<castor::stager::SubRequest*>& result = instance->subRequests();
     *len = result.size();
     *var = (castor::stager::SubRequest**) malloc((*len) * sizeof(castor::stager::SubRequest*));
     for (int i = 0; i < *len; i++) {

@@ -143,7 +143,7 @@ extern "C" {
   // Cstager_DiskServer_fileSystems
   //----------------------------------------------------------------------------
   int Cstager_DiskServer_fileSystems(castor::stager::DiskServer* instance, castor::stager::FileSystem*** var, int* len) {
-    std::vector<castor::stager::FileSystem*> result = instance->fileSystems();
+    std::vector<castor::stager::FileSystem*>& result = instance->fileSystems();
     *len = result.size();
     *var = (castor::stager::FileSystem**) malloc((*len) * sizeof(castor::stager::FileSystem*));
     for (int i = 0; i < *len; i++) {

@@ -209,7 +209,7 @@ extern "C" {
   // Cstager_CastorFile_diskCopies
   //----------------------------------------------------------------------------
   int Cstager_CastorFile_diskCopies(castor::stager::CastorFile* instance, castor::stager::DiskCopy*** var, int* len) {
-    std::vector<castor::stager::DiskCopy*> result = instance->diskCopies();
+    std::vector<castor::stager::DiskCopy*>& result = instance->diskCopies();
     *len = result.size();
     *var = (castor::stager::DiskCopy**) malloc((*len) * sizeof(castor::stager::DiskCopy*));
     for (int i = 0; i < *len; i++) {
@@ -238,7 +238,7 @@ extern "C" {
   // Cstager_CastorFile_tapeCopies
   //----------------------------------------------------------------------------
   int Cstager_CastorFile_tapeCopies(castor::stager::CastorFile* instance, castor::stager::TapeCopy*** var, int* len) {
-    std::vector<castor::stager::TapeCopy*> result = instance->tapeCopies();
+    std::vector<castor::stager::TapeCopy*>& result = instance->tapeCopies();
     *len = result.size();
     *var = (castor::stager::TapeCopy**) malloc((*len) * sizeof(castor::stager::TapeCopy*));
     for (int i = 0; i < *len; i++) {

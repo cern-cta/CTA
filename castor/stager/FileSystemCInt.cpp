@@ -208,7 +208,7 @@ extern "C" {
   // Cstager_FileSystem_copies
   //----------------------------------------------------------------------------
   int Cstager_FileSystem_copies(castor::stager::FileSystem* instance, castor::stager::DiskCopy*** var, int* len) {
-    std::vector<castor::stager::DiskCopy*> result = instance->copies();
+    std::vector<castor::stager::DiskCopy*>& result = instance->copies();
     *len = result.size();
     *var = (castor::stager::DiskCopy**) malloc((*len) * sizeof(castor::stager::DiskCopy*));
     for (int i = 0; i < *len; i++) {

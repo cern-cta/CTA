@@ -258,7 +258,7 @@ extern "C" {
   // Cstager_Tape_segments
   //----------------------------------------------------------------------------
   int Cstager_Tape_segments(castor::stager::Tape* instance, castor::stager::Segment*** var, int* len) {
-    std::vector<castor::stager::Segment*> result = instance->segments();
+    std::vector<castor::stager::Segment*>& result = instance->segments();
     *len = result.size();
     *var = (castor::stager::Segment**) malloc((*len) * sizeof(castor::stager::Segment*));
     for (int i = 0; i < *len; i++) {

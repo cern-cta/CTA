@@ -176,7 +176,7 @@ extern "C" {
   // Cstager_SvcClass_tapePools
   //----------------------------------------------------------------------------
   int Cstager_SvcClass_tapePools(castor::stager::SvcClass* instance, castor::stager::TapePool*** var, int* len) {
-    std::vector<castor::stager::TapePool*> result = instance->tapePools();
+    std::vector<castor::stager::TapePool*>& result = instance->tapePools();
     *len = result.size();
     *var = (castor::stager::TapePool**) malloc((*len) * sizeof(castor::stager::TapePool*));
     for (int i = 0; i < *len; i++) {
@@ -205,7 +205,7 @@ extern "C" {
   // Cstager_SvcClass_diskPools
   //----------------------------------------------------------------------------
   int Cstager_SvcClass_diskPools(castor::stager::SvcClass* instance, castor::stager::DiskPool*** var, int* len) {
-    std::vector<castor::stager::DiskPool*> result = instance->diskPools();
+    std::vector<castor::stager::DiskPool*>& result = instance->diskPools();
     *len = result.size();
     *var = (castor::stager::DiskPool**) malloc((*len) * sizeof(castor::stager::DiskPool*));
     for (int i = 0; i < *len; i++) {

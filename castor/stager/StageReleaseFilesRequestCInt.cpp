@@ -130,7 +130,7 @@ extern "C" {
   // Cstager_StageReleaseFilesRequest_subRequests
   //----------------------------------------------------------------------------
   int Cstager_StageReleaseFilesRequest_subRequests(castor::stager::StageReleaseFilesRequest* instance, castor::stager::SubRequest*** var, int* len) {
-    std::vector<castor::stager::SubRequest*> result = instance->subRequests();
+    std::vector<castor::stager::SubRequest*>& result = instance->subRequests();
     *len = result.size();
     *var = (castor::stager::SubRequest**) malloc((*len) * sizeof(castor::stager::SubRequest*));
     for (int i = 0; i < *len; i++) {

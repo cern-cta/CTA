@@ -143,7 +143,7 @@ extern "C" {
   // Cstager_DiskPool_fileSystems
   //----------------------------------------------------------------------------
   int Cstager_DiskPool_fileSystems(castor::stager::DiskPool* instance, castor::stager::FileSystem*** var, int* len) {
-    std::vector<castor::stager::FileSystem*> result = instance->fileSystems();
+    std::vector<castor::stager::FileSystem*>& result = instance->fileSystems();
     *len = result.size();
     *var = (castor::stager::FileSystem**) malloc((*len) * sizeof(castor::stager::FileSystem*));
     for (int i = 0; i < *len; i++) {
@@ -172,7 +172,7 @@ extern "C" {
   // Cstager_DiskPool_svcClasses
   //----------------------------------------------------------------------------
   int Cstager_DiskPool_svcClasses(castor::stager::DiskPool* instance, castor::stager::SvcClass*** var, int* len) {
-    std::vector<castor::stager::SvcClass*> result = instance->svcClasses();
+    std::vector<castor::stager::SvcClass*>& result = instance->svcClasses();
     *len = result.size();
     *var = (castor::stager::SvcClass**) malloc((*len) * sizeof(castor::stager::SvcClass*));
     for (int i = 0; i < *len; i++) {

@@ -130,7 +130,7 @@ extern "C" {
   // Cstager_StagePutDoneRequest_subRequests
   //----------------------------------------------------------------------------
   int Cstager_StagePutDoneRequest_subRequests(castor::stager::StagePutDoneRequest* instance, castor::stager::SubRequest*** var, int* len) {
-    std::vector<castor::stager::SubRequest*> result = instance->subRequests();
+    std::vector<castor::stager::SubRequest*>& result = instance->subRequests();
     *len = result.size();
     *var = (castor::stager::SubRequest**) malloc((*len) * sizeof(castor::stager::SubRequest*));
     for (int i = 0; i < *len; i++) {

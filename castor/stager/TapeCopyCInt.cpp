@@ -144,7 +144,7 @@ extern "C" {
   // Cstager_TapeCopy_stream
   //----------------------------------------------------------------------------
   int Cstager_TapeCopy_stream(castor::stager::TapeCopy* instance, castor::stager::Stream*** var, int* len) {
-    std::vector<castor::stager::Stream*> result = instance->stream();
+    std::vector<castor::stager::Stream*>& result = instance->stream();
     *len = result.size();
     *var = (castor::stager::Stream**) malloc((*len) * sizeof(castor::stager::Stream*));
     for (int i = 0; i < *len; i++) {
@@ -173,7 +173,7 @@ extern "C" {
   // Cstager_TapeCopy_segments
   //----------------------------------------------------------------------------
   int Cstager_TapeCopy_segments(castor::stager::TapeCopy* instance, castor::stager::Segment*** var, int* len) {
-    std::vector<castor::stager::Segment*> result = instance->segments();
+    std::vector<castor::stager::Segment*>& result = instance->segments();
     *len = result.size();
     *var = (castor::stager::Segment**) malloc((*len) * sizeof(castor::stager::Segment*));
     for (int i = 0; i < *len; i++) {
