@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.1 $ $Release$ $Date: 2005/01/20 11:34:00 $ $Author: obarring $
+ * @(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/01/20 13:31:36 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.1 $ $Release$ $Date: 2005/01/20 11:34:00 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/01/20 13:31:36 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -61,7 +61,7 @@ enum FileClassAttributes {
   NbCopies,
   MinFileSize,
   MaxFileSize,
-} svcClassAttributes;
+};
 
 static struct Coptions longopts[] = {
   {"help",NO_ARGUMENT,&help_flag,'h'},
@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
   iObj = Cstager_FileClass_getIObject(fileClass);
   rc = C_Services_createRep(svcs,iAddr,iObj,1);
   if ( rc == -1 ) {
-    fprintf(stderr,"C_Services_createObj(): %s, %s\n",
+    fprintf(stderr,"C_Services_createRep(): %s, %s\n",
             sstrerror(serrno),
             C_Services_errorMsg(svcs));
     return(1);
