@@ -1,0 +1,584 @@
+.\" @(#)$RCSfile: stage_other_options.man,v $ $Revision: 1.1 $ $Date: 2002/10/03 13:32:18 $ CERN/IT/DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH "STAGE_OTHER_OPTIONS" "1" "$Date: 2002/10/03 13:32:18 $" "CASTOR" "Stage User Commands"
+.SH NAME
+stage other options \- list of options supported for backward compatibility but not recommended for new applications
+
+.SH SYNOPSIS
+[
+.BI \-b " max_block_size"
+] [
+.BI \-c " off"
+] [
+.BI \-C " charconv"
+] [
+.BI \-d " density"
+] [ 
+.BI \-E " error_action"
+] [
+.BI \-F " record_format" 
+] [
+.BI \-f " file_id"
+] [
+.BI \-G 
+] [ 
+.BI \-g " device_group_name"
+] [
+.BI \-I " external_filename"
+] [ 
+.BI \-L " record_length"
+or
+.BI \-L " link_name"
+] [ 
+.BI \-l " label_type"
+] [ 
+.BI \-N " nread"
+] [
+.BI \-o
+] [
+.BI \-Q " file_sequence_range"
+] [
+.BI \-q " file_sequence_number"
+] [
+.BI \-S " tape_server"
+] [
+.BI \-T
+] [
+.BI \-U " fun"
+] [
+.BI \-u " user"
+or
+.BI \-u
+] [
+.BI \-V " visual_identifier(s)"
+] [ 
+.BI \-v " volume_serial_number(s)"
+] [
+.BI \-X " xparm"
+] [ 
+.BI \-z
+] 
+
+.SH DESCRIPTION
+This man pages describes stage command\-line options that become deprecated, the recommended way of working is HSM files, not explicit tape requests in particular. The following options are supported for backward compatibility, and could be dropped of in a next major release of the software.
+.br
+We describe here tape options, disk options, and few configuration options.
+
+.SH RESTRICTIONS
+Not all commands support the whole set of obsolete options. In the
+.B OPTIONS
+section below, after each option, the list of concerned commands is given.
+
+.SH OPTIONS
+.TP
+.BI \-b " blocksize"
+.br
+Apply to:
+.br
+.B stagecat,stagein,stageout,stageupdc,stagewrt
+.br
+Specifies the maximum block size.
+If not given and the tape is labelled, the block size is taken from the
+header label when the field is not zero; otherwise:
+for all drive types except Redwoods the default is 32760 if
+.I record_length
+is not specified,
+.I record_length
+otherwise. On Redwoods, the default is 262144 if
+.I record_length
+is not specified or the largest multiple of
+.I record_length
+below 262144.
+.TP
+.BI \-c " off"
+.br
+Apply to:
+.br
+.B stagein
+.br
+Stages \fBall\fP the file sequences of a tape onto separate disk files, given that you specify the starting file sequence through option \-q followed by the file sequence number itself, followed again by a '\-' character. This option is useless if not used in a tape request context. For example: 'stagein \-V AB1234 \-c off \-q 17\-' will stage all the file sequences on tape AB1234 from file sequence 17, up to the last one, into as many separate disk files.
+.TP
+.BI \-C " charconv"
+.br
+Apply to:
+.br
+.B stagecat,stagein,stageout,stagewrt
+.br
+The data is converted from this character set when doing the copy.
+.I charconv
+may be
+.B ascii
+(no conversion is done) or
+.BR ebcdic .
+The option value may also be
+.BR block .
+In this case, the trailing blanks are stripped off and a newline is appended
+to each record.
+Option values may be combined; they are separated by comma in this case.
+.br
+For example:
+.br
+	\-C ebcdic,block
+.TP
+.BI \-d " density"
+.br
+Apply to:
+.br
+.B stagecat,stagein,stageout,stagewrt
+.br
+.B 1600
+or
+.B 6250
+for round (IBM 3420) tapes,
+.B 38000
+for standard IBM 3480 cartridges,
+.B 38KC
+for 3480 cartridges with compaction (IDRC),
+.B 38KD
+for double density IBM 3490 cartridges,
+.B 38KDC
+for 3490 cartridges with compaction (IDRC),
+.BR 8200 ,
+.B 8500
+or
+.B 8500C
+for Exabytes,
+.B DDS
+or
+.B DDSC
+for DAT cartridges,
+.BR 2G ,
+.BR 6G ,
+.BR 10G ,
+.BR 10GC ,
+.BR 20G ,
+.BR 20GC ,
+.B 35G
+or
+.B 35GC
+for DLT cartridges,
+.B 10G
+or
+.B 10GC
+for IBM 3590 cartridges,
+.BR 10G ,
+.BR 10GC ,
+.BR 25G ,
+.BR 25GC ,
+.B 50G
+or
+.B 50GC
+for Redwood cartridges.
+It must match the device group specified in VMGR (if installed).
+If this parameter is missing, the value is taken from VMGR.
+.TP
+.BI \-E " error_action"
+.br
+Apply to:
+.br
+.B stagein
+.br
+Specifies the action to be taken in case of tape read error. This action may be:
+.RS
+.TP
+.B skip
+unreadable blocks are skipped. For each, an error message indicates the error
+type and the block number.
+A maximum of 10 blocks may be skipped.
+.TP
+.B keep
+the file up to the block where the error occurred is kept on disk. By default,
+the disk file is removed.
+.TP
+.B ignoreeoi
+Do not take two consecutive tapemarks as End Of Information.
+This option is only valid for label type
+.B nl
+or
+.B blp
+and should be avoided on IBM 3420 drives (the reel could wind off).
+.RE
+.TP
+.BI \-F " recfm"
+.br
+Apply to:
+.br
+.B stagecat,stagein,stageout,stageupdc,stagewrt
+.br
+Specifies the record format of the data on the tape. It may be one of the 
+following:
+.RS
+.TP
+.B U,\|f77
+Blocks may be of unknown length. A single logical record on disk corresponds
+to one tape block. The disk copy of the file is formatted according to the 
+convention for sequential 
+.SM FORTRAN 
+unformatted I/O.
+.TP
+.B U
+is an alias for
+.BR U,\|f77 .
+.TP
+.B U,\|bin
+Blocks may be of unknown length. The data is transferred as a byte stream.
+This format is suitable for use with direct access Fortran unformatted I/O
+or C I/O.
+.TP
+.B F
+Each tape block is exactly
+.IR blocksize
+bytes long (See the \-b option) with the exception of the last block
+which may be shorter.
+If both
+.I blocksize
+and
+.I recorld_length
+are provided, they should be equal.
+.br
+Data is copied from tape to disk as a continuous data stream.
+This format is suitable for use with direct access Fortran unformatted I/O
+or C I/O.
+.TP
+.B FB
+This allows to group several records of
+.I record_length
+bytes into tape blocks of
+.I blksize
+bytes.
+.I blksize
+must be a multiple of
+.IR record_length .
+.TP
+.B F,\|\-f77
+The tape file is known to be formatted according to the convention 
+for sequential 
+.SM FORTRAN 
+unformatted I/O. The control words are stripped off so that the disk file
+is suitable for use with direct access 
+.SM FORTRAN
+unformatted I/O or C I/O.
+The logical record length on the tape file must correspond to the record 
+length specified either with the \-L
+.I record_length
+ or, if the \-L
+.I record_length
+is not specified, the record length given in the label.
+.LP
+If the tape is labelled, the record format is taken from the header label;
+otherwise the default is
+.BR U .
+.RE
+.TP
+.BI \-f " fid"
+.br
+Apply to:
+.br
+.B stagecat,stagein,stageout,stageupdc,stagewrt
+.br
+Specifies the fileid in HDR1. If more than 17 characters long,
+only the last 17 are taken. It is then converted to upper case.
+.I fid
+is checked against the fid in HDR1.
+In the case of multiple files, a series of file identifiers may be given,
+separated by ":"s. These apply to the tape files in the specified order.
+If there are more files than identifiers, the last one will be used for all
+remaining files. Thus,
+a single file identifier may be given which applies to all files on the tape.
+.TP
+.B \-G
+.br
+Apply to:
+.br
+.B stagealloc,stagecat,stagein,stageout,stageput,stagewrt
+.br
+Specifies that the tape copy operations should be issued on the tape server by
+the 'group user'. A 'group user' may be defined for each group in 
+.B /etc/shift.conf.
+.br
+For example: 
+.br
+	GRPUSER ws	opalprod
+.TP 
+.BI \-g " dgn"
+.br
+Apply to:
+.br
+.B stagecat,stagein,stageout,stagewrt
+.br
+Requests a device from an installation defined set of "device groups".
+It must match the device group specified in VMGR (if installed).
+If this parameter is missing, the value is taken from VMGR or
+defaults to CART.
+.TP
+.BI \-I " external_filename"
+.br
+Apply to:
+.br
+.B stagecat,stageclr,stagein,stageout,stageput,stageqry,stageupdc,stagewrt
+.br
+Gives the name of an external disk file. In this case,
+.B rfcp
+is used to copy this file to the staging pool.
+.TP
+.BI \-L " record_length"
+.br
+Apply to:
+.br
+.B stagecat,stagein,stageout,stageupdc,stagewrt
+.br
+Specifies the logical record length for fixed length record format files.
+.TP
+.BI \-L " link_name"
+.br
+Apply to:
+.br
+.B stageclr,stageqry
+.br
+gives the pathname of the user link to be removed (stageclr \- the data file is not removed) or queried (stageqry).
+removed.
+.TP
+.BI \-l " lab_type"
+.br
+Apply to:
+.br
+.B stagecat,stageclr,stagein,stageout,stagewrt
+.br
+Specifies the type of label which should be checked or generated. The following
+label types are supported:
+.RS
+.TP
+.B al
+.SM ANSI 
+label
+.TP
+.B blp
+bypass label processing
+.TP
+.B nl
+no label
+.TP
+.B sl
+standard 
+.SM IBM
+label
+.TP
+.B aul
+ANSI user label
+.LP
+It must match the label type specified in VMGR (if installed).
+If this parameter is missing, the value is taken from VMGR or
+defaults to
+.BR sl .
+.RE
+.TP
+.BI \-N " nread"
+.br
+Apply to:
+.br
+.B stagecat,stagein,stageout,stagewrt
+.br
+If specified, only 
+.I nread 
+records will be copied.
+In the case of multiple files, a series of nread values may be given,
+separated by ":"s. These apply to the tape files in the specified order.
+If there are more files than nread values, the last one will be used for all
+remaining files. Thus,
+a single nread value may be given which applies to all files on the tape.
+.TP
+.BI \-o
+.br
+Apply to:
+.br
+.B stagein,stageout,stagewrt
+.br
+Implies old fileid. The existing fileid is checked if the option
+.B \-f
+is also specified.
+.TP
+.BI \-q " fseq"
+.br
+Apply to:
+.br
+.B stagecat,stageclr,stagein,stageout,stageput,stageupdc,stageqry,stagewrt
+.br
+Specifies the file sequence number(s) of the tape file(s) to be copied or
+created. Default is 1.
+Multiple files may be specified using the following syntax:
+.RS 
+.TP 1.5i 
+.I f1\-f2 
+Files 
+.I f1
+to 
+.I f2 
+inclusive.
+.TP
+.I f1\- 
+Files 
+.I f1
+to the last file on the tape.
+.TP
+.I f1\-f2,\|f4,\|f6\- 
+A series of non-consecutive ranges of files.
+.TP
+.B u
+Position the tape by fid.
+.TP
+.BI u x
+Position the tape by fid on
+.I x
+different files.  A series of
+.I x
+fileids must be given as
+.B \-f
+option value.
+.RE
+.TP
+.BI \-Q " fseq"
+.br
+Apply to:
+.br
+.B stageclr,stageqry
+.br
+restricts the search to tape files having the sequence numbers within the given range.
+Multiple file numbers may be separated by commas or specified as a range
+using the dash as separator.
+It is exclusive with \-q option.
+.TP
+.BI \-S " server"
+.br
+Apply to:
+.br
+.B stagecat,stagein,stageout,stagewrt
+.br
+Specifies that the tape copy operation has to be issued on the tape server 
+.IR server. 
+.TP
+.BI \-T
+.br
+Apply to:
+.br
+.B stagein
+.br
+Does not check trailer labels.
+.TP
+.BI \-T
+.br
+Apply to:
+.br
+.B stageqry
+.br
+gives on standard output, as an option string, the main characteristics of a
+tape file. The information is taken from the header labels. This includes
+block size (\-b), record format (\-F), file identifier (\-f) and record length (\-L).
+.TP
+.BI \-U " fun"
+.br
+Apply to:
+.br
+.B stagealloc,stageget,stagein,stageout,stageput,stageupdc,stagewrt
+.br
+Fortran unit number.
+This is internally converted to a local path
+.BI ftn fun
+(HP-UX) or
+.BI fort. fun
+(all other platforms).
+The
+.B \-U
+option and the
+.I file
+parameter may be both specified for single file stageing only.
+.TP
+.BI \-u " user"
+.br
+Apply to:
+.br
+.B stagealloc,stageget,stagein,stageout
+.br
+A file allocated in a pool will be stored in a subdirectory
+.IR user .
+This may also be specified thru the environment variable STAGE_USER.
+The default subdirectory name is
+.BR stage .
+.I user
+must be a valid user name and belong to the same group as the requestor.
+.TP
+.BI \-u
+.br
+Apply to:
+.br
+.B stageqry
+.br
+restricts the query to files that belong to the requestor.
+.TP
+.BI \-V " vid"
+.br
+Apply to:
+.br
+.B stagecat,stageclr,stagein,stageout,stageput,stageqry,stagewrt
+.br
+Specifies the tape 
+.SM VID
+if different from the 
+.SM VSN .
+In the case of multi-volume files a series of 
+.IR vid s
+may be given, separated by ":"s, in the order in which the tapes are to be used.
+.TP
+.BI \-v " vsn"
+.br
+Apply to:
+.br
+.B stagecat,stagein,stageout,stageupdc,stagewrt
+.br
+Specifies the volume serial number of the tape. In the case of a multi-volume
+file a series of 
+.IR vsn s
+may be given, separated by ":"s, in the order in which the tapes are to be used.
+When \-v and \-V are both used, each
+.IR vsn
+must be matched by a
+.IR vid
+in the same order.
+.TP
+.B \-z
+.br
+Apply to:
+.br
+.B stagein
+.br
+Gives on standard error, as an option string, the main characteristics of the 
+tape file just staged. This includes block size (\-b), record format (\-F), file
+identifier (\-f), record length (\-L), full pathname of diskfile in the pool (\-P)
+and file sequence number (\-q).
+The line is prefixed by the string "STG47 \- ". This flag is set by
+.BR copytape .
+For non-tape requests, this prints only the full pathname.
+
+.SH EXAMPLES
+.LP
+To get the data from a tape into the default stage pool:
+.RS
+stagein \-v CIN111 inp
+.RE
+.LP
+To stage all files one by one from a tape into the pool mypool using server myserver:
+.RS
+stagein -V AB1234 -q 1- -c off
+.RE
+.LP
+To concatenate few files from tape:
+.RS
+stagein -V DC5678 -q 1-32,34,65-67
+.RE
+
+.SH SEE ALSO
+\fBstage\fP(1)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
