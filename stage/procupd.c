@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.67 2001/03/22 20:30:06 jdurand Exp $
+ * $Id: procupd.c,v 1.68 2001/03/28 14:07:38 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.67 $ $Date: 2001/03/22 20:30:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.68 $ $Date: 2001/03/28 14:07:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -25,9 +25,9 @@ static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.67 $ $Date: 200
 #endif
 #include <sys/stat.h>
 #include "marshall.h"
-#undef  unmarshall_STRING
-#define unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
+#define local_unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
 #include "stage.h"
+#include "stage_api.h"
 #if SACCT
 #include "../h/sacct.h"
 #endif
@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.67 $ $Date: 200
 #include "u64subr.h"
 #include "Cgrp.h"
 
-void procupdreq _PROTO((char *, char *));
+void procupdreq _PROTO((int, int, char *, char *));
 void update_hsm_a_time _PROTO((struct stgcat_entry *));
 
 extern char func[16];
@@ -50,6 +50,8 @@ extern int reqid;
 extern int rpfd;
 extern struct stgcat_entry *stce;	/* end of stage catalog */
 extern struct stgcat_entry *stcs;	/* start of stage catalog */
+extern struct stgpath_entry *stpe;	/* end of stage path catalog */
+extern struct stgpath_entry *stps;	/* start of stage path catalog */
 extern struct waitq *waitqp;
 #ifdef USECDB
 extern struct stgdb_fd dbfd;
@@ -73,6 +75,7 @@ extern int sendrep _PROTO((int, int, ...));
 extern int sendrep _PROTO(());
 #endif
 extern int stglogit _PROTO(());
+extern int stglogflags _PROTO(());
 extern int nextreqid _PROTO(());
 extern int savereqs _PROTO(());
 extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *));
@@ -87,6 +90,7 @@ extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
 extern char *findpoolname _PROTO((char *));
+extern int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *));
 
 #define IS_RC_OK(rc) (rc == 0)
 #define IS_RC_WARNING(rc) (rc == LIMBYSZ || rc == BLKSKPD || rc == TPE_LSZ || (rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE)))
@@ -113,7 +117,9 @@ extern char *findpoolname _PROTO((char *));
 #define BLOCKS_TO_SIZE(blocks) (((u_signed64) blocks) * 512)
 
 void
-procupdreq(req_data, clienthost)
+procupdreq(req_type, magic, req_data, clienthost)
+		 int req_type;
+		 int magic;
 		 char *req_data;
 		 char *clienthost;
 {
@@ -154,7 +160,7 @@ procupdreq(req_data, clienthost)
 	char *user;
 	int waiting_time = 0;
 	struct waitf *wfp;
-	struct waitq *wqp;
+	struct waitq *wqp = NULL;
 	int Zflag = 0;
 	int callback_index = -1;
 	int found_wfp = 0;
@@ -163,120 +169,309 @@ procupdreq(req_data, clienthost)
 	char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
 	u_signed64 actual_size_block;
+	int api_out = 0;
+#if defined(_WIN32)
+	int mask;
+#else
+	mode_t mask;
+#endif
+	int clientpid;
+	u_signed64  flags;
+	int  nstpp_input, path_status;
+	struct stgpath_entry *stpp_input = NULL;
+	struct group *gr;
+	char save_group[CA_MAXGRPNAMELEN+1];
+	char *pool_user = NULL;
+	char *User;
+	char *name;
 
 	u1h_sizeof = sizeof(struct stgcat_entry) - offsetof(struct stgcat_entry,u1.h.xfile);
-
 	rbp = req_data;
-	unmarshall_STRING (rbp, user);	/* login name */
-	unmarshall_WORD (rbp, uid);
-	unmarshall_WORD (rbp, gid);
-	nargs = req2argv (rbp, &argv);
+	local_unmarshall_STRING (rbp, user);	/* login name */
+	if (req_type > STAGE_00) {
+		char tmpbuf[21];
+
+		upd_reqid = reqid;
+		upd_rpfd = rpfd;
+
+		/* Note that we already checked in stgdaemon.c that magic == STGMAGIC2 */
+		local_unmarshall_STRING (rbp, name);
+		unmarshall_LONG(rbp, uid);
+		unmarshall_LONG(rbp, gid);
+		unmarshall_LONG(rbp, mask);
+		unmarshall_LONG(rbp, clientpid);
+		unmarshall_HYPER(rbp, stage_uniqueid);
+		local_unmarshall_STRING(rbp, User);
+		pool_user = NULL;
+		if (User[0] != '\0') pool_user = User;
+		unmarshall_HYPER(rbp, flags);
+		unmarshall_STRING(rbp, tmpbuf);
+		rc = atoi(tmpbuf);
+		api_out = 1;
+		unmarshall_LONG(rbp, nstpp_input);
+#ifndef __INSURE__
+		stglogit (func, STG92, "stage_updc", user, uid, gid, clienthost);
+#endif
+		if (nstpp_input != 1) {
+			sendrep(rpfd, MSG_ERR, "STG02 - Invalid number of input structure (%d stgpath) - one only is supported\n", nstpp_input);
+			c = USERR;
+			goto reply;
+		}
+		if ((stpp_input = (struct stgpath_entry *) calloc(nstpp_input,sizeof(struct stgpath_entry))) == NULL) {
+			sendrep(rpfd, MSG_ERR, "STG02 - memory allocation error (%s)\n", strerror(errno));
+			c = SYERR;
+			goto reply;
+		}
+		path_status = 0;
+		unmarshall_STAGE_PATH(STAGE_INPUT_MODE, path_status, rbp, &(stpp_input[0]));
+		if ((path_status != 0) || (stpp_input[0].upath[0] == '\0')) {
+			sendrep(rpfd, MSG_ERR, "STG02 - Bad input (path input structure No %d/%d)\n", ++i, nstpp_input);
+			c = USERR;
+			goto reply;
+		}
+		stglogit(func,"stpp[1/1] : %s\n",stpp_input[0].upath);
+		if (rc >= 0) stglogit(func,"-R %d\n", rc);
+		/* Print the flags */
+		stglogflags(func,flags);
+
 #if SACCT
-	stageacct (STGCMDR, uid, gid, clienthost, reqid, STAGEUPDC, 0, 0, NULL, "");
+		stageacct (STGCMDR, uid, gid, clienthost, reqid, STAGE_UPDC, 0, 0, NULL, "");
 #endif
 
-	dvn = unknown;
-	ifce = unknown;
-	upd_reqid = reqid;
-	upd_rpfd = rpfd;
-	Coptind = 1;
-	Copterr = 0;
-	while ((c = Cgetopt (nargs, argv, "b:D:F:f:h:i:I:L:q:R:s:T:U:W:Z:")) != -1) {
-		switch (c) {
-		case 'b':
-			blksize = strtol (Coptarg, &dp, 10);
-			if (*dp != '\0') {
-				sendrep (rpfd, MSG_ERR, STG06, "-b");
-				errflg++;
-			}
-			break;
-		case 'D':
-			dvn = Coptarg;
-			break;
-		case 'F':
-			recfm = Coptarg;
-			break;
-		case 'f':
-			fid = Coptarg;
-			break;
-		case 'h':
-			break;
-		case 'i':
-			if ((callback_index = atoi(Coptarg)) < 0) {
-				sendrep (rpfd, MSG_ERR, STG06, "-i");
-				errflg++;
-			}
-			break;
-		case 'I':
-			ifce = Coptarg;
-			break;
-		case 'L':
-			lrecl = strtol (Coptarg, &dp, 10);
-			if (*dp != '\0') {
-				sendrep (rpfd, MSG_ERR, STG06, "-L");
-				errflg++;
-			}
-			break;
-		case 'q':
-			fseq = Coptarg;
-			break;
-		case 'R':
-			rc = strtol (Coptarg, &dp, 10);
-			if (*dp != '\0') {
-				sendrep (rpfd, MSG_ERR, STG06, "-R");
-				errflg++;
-			}
-			break;
-		case 's':
-			size = strtol (Coptarg, &dp, 10);
-			if (*dp != '\0') {
-				sendrep (rpfd, MSG_ERR, STG06, "-s");
-				errflg++;
-			}
-			break;
-		case 'T':
-			transfer_time = strtol (Coptarg, &dp, 10);
-			if (*dp != '\0') {
-				sendrep (rpfd, MSG_ERR, STG06, "-T");
-				errflg++;
-			}
-			break;
-		case 'W':
-			waiting_time = strtol (Coptarg, &dp, 10);
-			if (*dp != '\0') {
-				sendrep (rpfd, MSG_ERR, STG06, "-W");
-				errflg++;
-			}
-			break;
-		case 'Z':
-			Zflag++;
-			if ((p = strtok (Coptarg, ".")) != NULL) {
-				reqid = strtol (p, &dp, 10);
-				if ((p = strtok (NULL, "@")) != NULL) {
-					key = strtol (p, &dp, 10);
+	} else {
+		unmarshall_WORD (rbp, uid);
+		unmarshall_WORD (rbp, gid);
+		nargs = req2argv (rbp, &argv);
+#if SACCT
+		stageacct (STGCMDR, uid, gid, clienthost, reqid, STAGEUPDC, 0, 0, NULL, "");
+#endif
+
+		dvn = unknown;
+		ifce = unknown;
+		upd_reqid = reqid;
+		upd_rpfd = rpfd;
+		Coptind = 1;
+		Copterr = 0;
+		while ((c = Cgetopt (nargs, argv, "b:D:F:f:h:i:I:L:q:R:s:T:U:W:Z:")) != -1) {
+			switch (c) {
+			case 'b':
+				blksize = strtol (Coptarg, &dp, 10);
+				if (*dp != '\0') {
+					sendrep (rpfd, MSG_ERR, STG06, "-b");
+					errflg++;
 				}
+				break;
+			case 'D':
+				dvn = Coptarg;
+				break;
+			case 'F':
+				recfm = Coptarg;
+				break;
+			case 'f':
+				fid = Coptarg;
+				break;
+			case 'h':
+				break;
+			case 'i':
+				if ((callback_index = atoi(Coptarg)) < 0) {
+					sendrep (rpfd, MSG_ERR, STG06, "-i");
+					errflg++;
+				}
+				break;
+			case 'I':
+				ifce = Coptarg;
+				break;
+			case 'L':
+				lrecl = strtol (Coptarg, &dp, 10);
+				if (*dp != '\0') {
+					sendrep (rpfd, MSG_ERR, STG06, "-L");
+					errflg++;
+				}
+				break;
+			case 'q':
+				fseq = Coptarg;
+				break;
+			case 'R':
+				rc = strtol (Coptarg, &dp, 10);
+				if (*dp != '\0') {
+					sendrep (rpfd, MSG_ERR, STG06, "-R");
+					errflg++;
+				}
+				break;
+			case 's':
+				size = strtol (Coptarg, &dp, 10);
+				if (*dp != '\0') {
+					sendrep (rpfd, MSG_ERR, STG06, "-s");
+					errflg++;
+				}
+				break;
+			case 'T':
+				transfer_time = strtol (Coptarg, &dp, 10);
+				if (*dp != '\0') {
+					sendrep (rpfd, MSG_ERR, STG06, "-T");
+					errflg++;
+				}
+				break;
+			case 'W':
+				waiting_time = strtol (Coptarg, &dp, 10);
+				if (*dp != '\0') {
+					sendrep (rpfd, MSG_ERR, STG06, "-W");
+					errflg++;
+				}
+				break;
+			case 'Z':
+				Zflag++;
+				if ((p = strtok (Coptarg, ".")) != NULL) {
+					reqid = strtol (p, &dp, 10);
+					if ((p = strtok (NULL, "@")) != NULL) {
+						key = strtol (p, &dp, 10);
+					}
+				}
+				break;
 			}
-			break;
+		}
+		if (Zflag && nargs > Coptind) {
+			sendrep (rpfd, MSG_ERR, STG16);
+			errflg++;
+		}
+		if (errflg) {
+			c = USERR;
+			goto reply;
 		}
 	}
-	if (Zflag && nargs > Coptind) {
-		sendrep (rpfd, MSG_ERR, STG16);
-		errflg++;
-	}
-	if (errflg) {
-		c = USERR;
+
+	if ((gr = Cgetgrgid (gid)) == NULL) {
+		sendrep (rpfd, MSG_ERR, STG36, gid);
+		c = SYERR;
 		goto reply;
 	}
-	if (nargs > Coptind) {
+	strncpy (save_group, gr->gr_name, CA_MAXGRPNAMELEN);
+	save_group[CA_MAXGRPNAMELEN] = '\0';
+
+	if ((req_type == STAGE_UPDC) || ((req_type == STAGEUPDC) && (nargs > Coptind))) {
+		char *argv_i = NULL;
+		/* Please note that STAGE_UPDC supports ONLY the following actions */
+		if (req_type == STAGE_UPDC) {
+			/* Makes sure that the loop below will also work with STAGE_UPDC */
+			nargs = nstpp_input;
+			Coptind = 0;
+			c = 0;
+		}
 		for  (i = Coptind; i < nargs; i++) {
-			if (rc == ENOSPC) {
-				char *poolname;
-				if ((poolname = findpoolname(argv[i])) != NULL) {
-					cleanpool(poolname);
+			argv_i = ((req_type == STAGE_UPDC) ? stpp_input[i].upath : argv[i]);
+			/* We need to restrict the following action to STAGE_UPDC (e.g. API) because we NEED */
+			/* to have more info, like pid of the client - that only the API sends */
+			if ((req_type == STAGE_UPDC) && (rc == ENOSPC)) {
+				/* We are going here to mimic a STAGEOUT that would fail because of WAITING_SPC */
+				/* This means that we have to do in one go: creation of an entry in the waitq */
+				/* followed by the same processing as with a stage_updc_tppos -R 28 */
+				struct stgpath_entry *stpp;
+				struct stgcat_entry stgreq;
+				char save_fseq[CA_MAXFSEQLEN+1];
+				char *fseq = NULL;
+
+				found = 0;
+				for (stpp = stps; stpp < stpe; stpp++) {
+					if (stpp->reqid == 0) break;
+					if (strcmp (argv_i, stpp->upath)) continue;
+					found = 1;
+					break;
 				}
-				c = 0;
+				if (found != 0) {
+					found = 0;
+					for (stcp = stcs; stcp < stce; stcp++) {
+						if (stcp->reqid == 0) break;
+						if ((! ISSTAGEOUT(stcp)) && (! ISSTAGEALLOC(stcp))) continue;
+						if (stpp->reqid != stcp->reqid) continue;
+						found = 1;
+						break;
+					}
+				} else {
+					for (stcp = stcs; stcp < stce; stcp++) {
+						if (stcp->reqid == 0) break;
+						if ((! ISSTAGEOUT(stcp)) && (! ISSTAGEALLOC(stcp))) continue;
+						if (strcmp (argv_i, stcp->ipath)) continue;
+						found = 1;
+						break;
+					}
+				}
+				if (found != 1) {
+					sendrep (rpfd, MSG_ERR, STG22);
+					c = USERR;
+					goto reply;
+				}
+				/* We have found a STAGEOUT or STAGEALLOC entry matching argv_i */
+				/* So we know end-up in the case where we simulate a stageout on */
+				/* an entry that is already in stageout */
+				memset((char *) &stgreq, 0, sizeof(stgreq));
+				stgreq = *stcp;
+				strncpy (stgreq.user, user, CA_MAXUSRNAMELEN);
+				stgreq.user[CA_MAXUSRNAMELEN] = '\0';
+				stgreq.uid = uid;
+				stgreq.gid = gid;
+				stgreq.mask = stcp->mask;
+				strcpy(stgreq.poolname,stcp->poolname);
+				if (stcp->t_or_d == 't') {
+					strcpy(save_fseq,stcp->u1.t.fseq);
+					fseq = save_fseq;
+				} else {
+					save_fseq[0] = '\0';
+				}
+				if ((stcp->t_or_d != 't') || (stcp->u1.t.fseq[0] != 'n')) {
+					if (strcmp (user, stcp->user)) {
+						sendrep (rpfd, MSG_ERR, STG37);
+						c = USERR;
+						goto reply;
+					}
+					if (delfile (stcp, 1, 1, 1, "no more space", uid, gid, 0, 0) < 0) {
+						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_unlink", rfio_serror());
+						c = SYERR;
+						goto reply;
+					}
+				}
+				stcp = newreq();
+				memcpy (stcp, &stgreq, sizeof(stgreq));
+				if (i > 0)
+					stcp->reqid = nextreqid();
+				else
+					stcp->reqid = reqid;
+				stcp->status = STAGEOUT;
+				stcp->c_time = time(NULL);
+				stcp->a_time = stcp->c_time;
+				stcp->nbaccesses++;
+				stcp->status |= WAITING_SPC;
+				stcp->status |= WAITING_NS;
+#ifdef USECDB
+				if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
+					stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+				}
+#endif
+				savereqs();
+				/* And add this request to the waiting queue */
+				if (!wqp) {
+					wqp = add2wq (clienthost,
+									user, stcp->uid, stcp->gid,
+									user, save_group, stcp->uid, stcp->gid,
+									clientpid,    /* Client pid unknown with old protocol, Aie... */
+									0,    /* No Upluspath */
+									reqid, STAGEOUT, 1, &wfp, NULL, 
+									stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq, 0);
+					wqp->api_out = api_out;
+					wqp->openflags = 0;
+					wqp->openmode = 0;
+					wqp->uniqueid = stage_uniqueid;
+					wqp->silent = 0;
+				}
+				wfp->subreqid = stcp->reqid;
+				wfp->upath[0] = '\0';
+				wqp->nbdskf++;
+				wfp++;
+				if (pool_user == NULL)
+					pool_user = "stage";
+				strcpy (wqp->pool_user, pool_user);
+				strcpy (wqp->waiting_pool, stcp->poolname);
 			} else {
-				if ((c = upd_stageout(STAGEUPDC, argv[i], &subreqid, 1, NULL)) != 0) {
+				if ((c = upd_stageout(STAGEUPDC, argv_i, &subreqid, 1, NULL)) != 0) {
 					if (c != CLEARED) {
 						goto reply;
 					} else {
@@ -943,9 +1138,16 @@ procupdreq(req_data, clienthost)
 #endif
  reply:
 	free (argv);
+	if (stpp_input != NULL) free(stpp_input);
 	reqid = upd_reqid;
 	rpfd = upd_rpfd;
-	sendrep (rpfd, STAGERC, STAGEUPDC, c);
+	if ((req_type == STAGE_UPDC) && (rc == ENOSPC) && (wqp != NULL) && (c == 0)) {
+		/* We have successfully created a new entry in the waitq */
+		wqp->nb_clnreq++;
+		cleanpool (wqp->waiting_pool);
+	} else {
+		sendrep (rpfd, STAGERC, STAGEUPDC, c);
+	}
 }
 
 void update_hsm_a_time(stcp)
