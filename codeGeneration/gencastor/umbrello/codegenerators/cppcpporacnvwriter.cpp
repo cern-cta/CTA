@@ -1112,11 +1112,11 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as) {
     *m_stream << getIndent()
               << "if (0 != " << as->remotePart.name
               << "Id &&" << endl
-              << getIndent() << "    0 == obj->"
+              << getIndent() << "    (0 == obj->"
               << as->remotePart.name << "() ||" << endl
-              << getIndent() << "    obj->"
+              << getIndent() << "     obj->"
               << as->remotePart.name << "()->id() != "
-              << as->remotePart.name << "Id) {" << endl;
+              << as->remotePart.name << "Id)) {" << endl;
     m_indent++;
     *m_stream << getIndent()
               << "if (0 == m_delete"
@@ -1134,8 +1134,9 @@ void CppCppOraCnvWriter::writeBasicMult1FillRep(Assoc* as) {
     *m_stream << getIndent() << "}" << endl << getIndent()
               << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
-              << "Statement->setDouble(1, obj->"
-              << as->remotePart.name << "()->id());"
+              << "Statement->setDouble(1, "
+              << as->remotePart.name
+              << "Id);"
               << endl << getIndent() << "m_delete"
               << capitalizeFirstLetter(as->remotePart.typeName)
               << "Statement->executeUpdate();"
@@ -1515,10 +1516,61 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
     *m_stream << ", OBJ_" << as->localPart.typeName;
   }
   *m_stream << ");" << endl;
+  if (as->type.multiLocal == MULT_ONE &&
+      !as->remotePart.abstract) {
+    m_indent--;
+    *m_stream << getIndent() << "} else {" << endl;
+    m_indent++;
+    *m_stream << getIndent()
+              << "// Check remote update statement"
+              << endl << getIndent()
+              << "if (0 == m_remoteUpdate" << as->remotePart.typeName
+              << "Statement) {" << endl;
+    m_indent++;
+    *m_stream << getIndent()
+              << "m_remoteUpdate" << as->remotePart.typeName
+              << "Statement = createStatement(s_remoteUpdate"
+              << as->remotePart.typeName
+              << "StatementString);"
+              << endl;
+    m_indent--;
+    *m_stream << getIndent() << "}" << endl << getIndent()
+              << "// Update remote object"
+              << endl << getIndent()
+              << "m_remoteUpdate" << as->remotePart.typeName
+              << "Statement->setDouble(1, obj->id());"
+              << endl << getIndent()
+              << "m_remoteUpdate" << as->remotePart.typeName
+              << "Statement->setDouble(2, (*it)->id());"
+              << endl << getIndent()
+              << "m_remoteUpdate" << as->remotePart.typeName
+              << "Statement->executeUpdate();"
+              << endl;
+  }
+  if (as->type.multiLocal == MULT_N) {
+    m_indent--;
+    *m_stream << getIndent() << "}" << endl;
+  }
+  *m_stream << getIndent()
+            << fixTypeName("set", "", "")
+            << "<int>::iterator item;" << endl
+            << getIndent() << "if ((item = "
+            << as->remotePart.name
+            << "List.find((*it)->id())) != "
+            << as->remotePart.name
+            << "List.end()) {"
+            << endl;
+  m_indent++;
+  *m_stream << getIndent() << as->remotePart.name
+            << "List.erase(item);"
+            << endl;
   if (as->type.multiLocal == MULT_N) {
     // N to N association
     // Here we will use a dedicated table for the association
     // Find out the parent and child in this table
+    m_indent--;
+    *m_stream << getIndent() << "} else {" << endl;
+    m_indent++;
     *m_stream << getIndent()
               << "if (0 == m_insert"
               << capitalizeFirstLetter(as->remotePart.typeName)
@@ -1548,53 +1600,12 @@ void CppCppOraCnvWriter::writeBasicMultNFillRep(Assoc* as) {
               << endl;
   }
   m_indent--;
-  *m_stream << getIndent() << "} else {" << endl;
-  m_indent++;
+  *m_stream << getIndent() << "}" << endl;
   if (as->type.multiLocal == MULT_ONE &&
       !as->remotePart.abstract) {
-    *m_stream << getIndent()
-              << "// Check remote update statement"
-              << endl << getIndent()
-              << "if (0 == m_remoteUpdate" << as->remotePart.typeName
-              << "Statement) {" << endl;
-    m_indent++;
-    *m_stream << getIndent()
-              << "m_remoteUpdate" << as->remotePart.typeName
-              << "Statement = createStatement(s_remoteUpdate"
-              << as->remotePart.typeName
-              << "StatementString);"
-              << endl;
-    m_indent--;
-    *m_stream << getIndent() << "}" << endl << getIndent()
-              << "// Update remote object"
-              << endl << getIndent()
-              << "m_remoteUpdate" << as->remotePart.typeName
-              << "Statement->setDouble(1, obj->id());"
-              << endl << getIndent()
-              << "m_remoteUpdate" << as->remotePart.typeName
-              << "Statement->setDouble(2, (*it)->id());"
-              << endl << getIndent()
-              << "m_remoteUpdate" << as->remotePart.typeName
-              << "Statement->executeUpdate();"
-              << endl;
+    m_indent--;  
+    *m_stream << getIndent() << "}" << endl;
   }
-  *m_stream << getIndent()
-            << fixTypeName("set", "", "")
-            << "<int>::iterator item;" << endl
-            << getIndent() << "if ((item = "
-            << as->remotePart.name
-            << "List.find((*it)->id())) != "
-            << as->remotePart.name
-            << "List.end()) {"
-            << endl;
-  m_indent++;
-  *m_stream << getIndent() << as->remotePart.name
-            << "List.erase(item);"
-            << endl;
-  m_indent--;
-  *m_stream << getIndent() << "}" << endl;
-  m_indent--;
-  *m_stream << getIndent() << "}" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl
             << getIndent() << "// Delete old links"
