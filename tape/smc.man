@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: smc.man,v $ $Revision: 1.3 $ $Date: 2002/04/08 13:51:36 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: smc.man,v $ $Revision: 1.4 $ $Date: 2002/10/08 07:33:04 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1998-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH SMC 1 "$Date: 2002/04/08 13:51:36 $" CASTOR "Ctape User Commands"
+.TH SMC 1 "$Date: 2002/10/08 07:33:04 $" CASTOR "Ctape User Commands"
 .SH NAME
 smc \- command line interface to drive robotic devices through SCSI
 .SH SYNOPSIS
@@ -269,5 +269,7 @@ JK2005      1031        drive
 8	Should send a msg to operator and wait.
 .br
 9	Should unload the tape and retry demount.
+.br
+16	Robot busy.
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
