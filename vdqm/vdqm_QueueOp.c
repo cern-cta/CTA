@@ -1984,6 +1984,11 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                     drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_ASSIGN;
                     drvrec->drv.status = drvrec->drv.status | VDQM_UNIT_FREE;
                 }
+                /*
+                 * Always tell the client to unmount just in case there was an
+                 * error and VDQM wasn't notified.
+                 */
+                DrvReq->status  = VDQM_VOL_UNMOUNT;
             }
         } 
         /*
