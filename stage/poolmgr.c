@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.170 2002/01/15 08:30:32 jdurand Exp $
+ * $Id: poolmgr.c,v 1.171 2002/01/21 11:43:51 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.170 $ $Date: 2002/01/15 08:30:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.171 $ $Date: 2002/01/21 11:43:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2232,8 +2232,8 @@ int update_migpool(stcp,flag,immediate)
             pool_p->migr->fileclass[ifileclass]->Cnsfileclass.min_filesize,
             u64tostr ((*stcp)->actual_size , tmpbuf1, 0),
             u64tostru((*stcp)->actual_size , tmpbuf2, 0));
-    /* We mark it as staged */
-    (*stcp)->status |= STAGED;
+    /* We mark it as put_failed */
+    (*stcp)->status |= PUT_FAILED;
     if (((*stcp)->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
       /* And not as a migration candidate */
       (*stcp)->status &= ~CAN_BE_MIGR;
@@ -2262,8 +2262,8 @@ int update_migpool(stcp,flag,immediate)
             pool_p->migr->fileclass[ifileclass]->Cnsfileclass.max_filesize,
             u64tostr ((*stcp)->actual_size , tmpbuf1, 0),
             u64tostru((*stcp)->actual_size , tmpbuf2, 0));
-    /* We mark it as staged */
-    (*stcp)->status |= STAGED;
+    /* We mark it as put_failed */
+    (*stcp)->status |= PUT_FAILED;
     if (((*stcp)->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
       /* And not as a migration candidate */
       (*stcp)->status &= ~CAN_BE_MIGR;
