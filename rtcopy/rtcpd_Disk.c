@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.32 $ $Date: 2000/02/07 17:47:44 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.33 $ $Date: 2000/02/09 15:29:51 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -140,7 +140,7 @@ int rtcpd_WaitForPosition(tape_list_t *tape, file_list_t *file) {
                 sstrerror(serrno));
             return(-1);
         }
-        rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
+        rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
         if ( ((severity | rtcpd_CheckProcError()) & 
               (RTCP_FAILED | RTCP_RESELECT_SERV)) != 0 ) {
             (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
@@ -335,7 +335,7 @@ static int DiskFileOpen(int pool_index,
                      filereq->file_path,sstrerror(serrno));
             return(-1);
         }
-        rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
+        rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
         if ( (severity & RTCP_EOD) != 0 ) return(-1);
     }
 
@@ -607,7 +607,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
 
             databufs[i]->nb_waiters--;
 
-            rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
+            rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
             if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
                               (RTCP_FAILED | RTCP_RESELECT_SERV))) != 0 ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
@@ -637,7 +637,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
 
         if ( (proc_err & (RTCP_FAILED | RTCP_RESELECT_SERV)) == 0 && 
              (concat & (NOCONCAT_TO_EOD | CONCAT_TO_EOD)) != 0 ) { 
-            rtcpd_CheckReqStatus(NULL,file,NULL,&proc_err);
+            rtcpd_CheckReqStatus(file->tape,file,NULL,&proc_err);
             if ( (proc_err = proc_err & RTCP_EOD) != 0 ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
@@ -892,7 +892,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
          * Has something fatal happened while we were occupied
          * reading from the disk? 
          */
-        rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
+        rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
         if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
                           (RTCP_FAILED | RTCP_RESELECT_SERV))) != 0 ) break;
     } /* for (;;) */
@@ -979,7 +979,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
                 return(-1);
             }
             databufs[i]->nb_waiters--;
-            rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
+            rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
             if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
                               (RTCP_FAILED | RTCP_RESELECT_SERV))) != 0 ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
@@ -1191,7 +1191,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
          * Has something fatal happened while we were occupied
          * reading from the disk?
          */
-        rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
+        rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
         if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
                           (RTCP_FAILED | RTCP_RESELECT_SERV))) != 0 ) break;
     } /* for (;;) */
@@ -1307,13 +1307,13 @@ void *diskIOthread(void *arg) {
     rc = rtcpd_WaitForPosition(tape, file);
     DK_STATUS(RTCP_PS_NOBLOCKING);
     CHECK_PROC_ERR(file->tape,file,"rtcpd_WaitForPosition() error");
-    CHECK_PROC_ERR(NULL,file,"rtcpd_WaitForPosition() error");
+
     if ( (severity & RTCP_EOD) == 0 ) {
     do {
         rc = DiskFileOpen(pool_index,tape,file);
         save_serrno = serrno;
         if ( rc != -1 ) break;
-        rtcpd_CheckReqStatus(NULL,file,NULL,&severity);
+        rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
         if ( (severity & RTCP_EOD) != 0 && 
              (severity & (RTCP_FAILED | RTCP_RESELECT_SERV)) == 0 ) {
             rtcp_log(LOG_DEBUG,"diskIOthread(%s): EOD reached\n",
@@ -1325,18 +1325,18 @@ void *diskIOthread(void *arg) {
         rtcp_log(LOG_INFO,"diskIOthread(%s): local retry open\n",
                  filereq->file_path);
     } while ( (severity & (RTCP_FAILED | RTCP_RESELECT_SERV)) == 0 ) ; 
-    CHECK_PROC_ERR(NULL,file,"DiskFileOpen() error");
+    CHECK_PROC_ERR(file->tape,file,"DiskFileOpen() error");
         if ( mode == WRITE_DISABLE ) {
     disk_fd = rc;
     if ( (severity & RTCP_EOD) == 0 ) {
             rc = MemoryToDisk(disk_fd,pool_index,&indxp,&offset,
                               &last_file,&end_of_tpfile,tape,file);
             if ( rc == 0 ) disk_fd = -1;
-            CHECK_PROC_ERR(NULL,file,"MemoryToDisk() error");
+        } else {
             rc = DiskToMemory(disk_fd,pool_index,&indxp,&offset,
                               &last_file,&end_of_tpfile,tape,file);
             if ( rc == 0 ) disk_fd = -1;
-            CHECK_PROC_ERR(NULL,file,"DiskToMemory() error");
+        }
     }
 
     filereq->TEndTransferDisk = (int)time(NULL);
@@ -1579,10 +1579,13 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
              *    before starting the disk -> memory copy.
              * For tape read we must also check if the tapeIO has
             rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO(): nb_reserver_bufs=%d, nb_bufs=%d, mode=%d, diskIOstarted=%d, tapeIOfinished=%d, blocksize=%d\n",
+            rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO(): nb_reserver_bufs=%d, nb_bufs=%d, mode=%d, diskIOstarted=%d, blocksize=%d\n",
+                    proc_cntl.diskIOstarted,proc_cntl.tapeIOfinished,
+                    proc_cntl.diskIOstarted,filereq->blocksize);
             while ( proc_cntl.nb_reserved_bufs >= nb_bufs ||
                    ((proc_cntl.diskIOstarted == 0) ||
                      (filereq->blocksize <= 0))) ) {
-                     (filereq->blocksize < 0))) ) {
+                rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() waiting... (nb_reserved_bufs=%d\n",proc_cntl.nb_reserved_bufs);
                 rc = Cthread_cond_wait_ext(proc_cntl.cntl_lock);
                 if ( rc == -1 ) {
                     save_serrno = serrno;

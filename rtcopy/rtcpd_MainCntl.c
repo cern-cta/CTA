@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.22 $ $Date: 2000/02/08 15:24:32 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.23 $ $Date: 2000/02/09 15:30:00 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -677,7 +677,6 @@ void rtcpd_CheckReqStatus(tape_list_t *tape,
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
     if ( (tape == NULL && file == NULL) ||
-         (tape != NULL && file != NULL) ||
          (status == NULL && severity == NULL) ) return;
 
     if ( tape != NULL ) tapereq = &tape->tapereq;
@@ -689,13 +688,15 @@ void rtcpd_CheckReqStatus(tape_list_t *tape,
             sstrerror(serrno));
         return;
     }
+    _severity = 0;
+    _status = 0;
     if ( tapereq != NULL ) {
         _status = tapereq->err.errorcode;
-        _severity = tapereq->err.severity;
+        _severity |= tapereq->err.severity;
     }
     if ( filereq != NULL ) {
-        _status = filereq->err.errorcode;
-        _severity = filereq->err.severity;
+        if ( _status == 0 ) _status = filereq->err.errorcode;
+        _severity |= filereq->err.severity;
     }
     (void)Cthread_mutex_unlock_ext(proc_cntl.ReqStatus_lock);
     if ( status != NULL ) *status = _status;

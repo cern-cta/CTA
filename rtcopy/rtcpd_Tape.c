@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.25 $ $Date: 2000/02/08 13:07:38 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.26 $ $Date: 2000/02/09 15:29:56 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -211,6 +211,10 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                 if ( convert_buffer != NULL ) free(convert_buffer);
                 if ( convert_context != NULL ) free(convert_context);
             }
+            (void)rtcpd_SetReqStatus(NULL,file,SEINTERNAL,
+                                     RTCP_FAILED|RTCP_UNERR);
+            (void)rtcpd_AppendClientMsg(NULL,file,"Internal error: %s\n",
+                                        "MemoryToTape() blocksize mismatch");
             return(-1);
         }
         if ( ((convert & FIXVAR) != 0) && (convert_buffer == NULL) ) {
@@ -1165,7 +1169,7 @@ void *tapeIOthread(void *arg) {
                  */
                 BroadcastInfo = FALSE;
                 if ( nexttape->tapereq.mode == WRITE_ENABLE &&
-                    nextfile->filereq.blocksize < 0 ) {
+                    nextfile->filereq.blocksize <= 0 ) {
                     TP_STATUS(RTCP_PS_WAITMTX);
                     rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
                     TP_STATUS(RTCP_PS_NOBLOCKING);
