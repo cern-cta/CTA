@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.2 $ $Date: 1999/12/03 08:46:42 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.3 $ $Date: 2000/01/14 13:29:27 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -180,14 +180,6 @@ int Ctape_kill(char *a) {
     char *b;
     CTAPE_DECL
     CTAPE_BODY((stdout,"Ctape_kill(%s)\n",a));
-}
-int Ctape_label(char *a, int b, char *c, char *d, 
-                char *e, char *f, 
-                char *g, int h) {
-    CTAPE_DECL
-    CTAPE_BODY((stdout,"Ctape_label(%s,%d,%s,%s,%s,%s,%s,%d)\n",
-        a,b,c,d,e,f,g,h));
-    return(rc);
 }
 int Ctape_mount(char *a, char *b, int c, char *d, char *e, char *f, int g,
                 char *h, char *i, int j) {
