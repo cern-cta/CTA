@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.31 2002/08/27 08:38:03 jdurand Exp $
+ * $Id: procfilchg.c,v 1.32 2002/09/20 12:22:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.31 $ $Date: 2002/08/27 08:38:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.32 $ $Date: 2002/09/20 12:22:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -68,6 +68,7 @@ static int reqid_flag = 0;
 static int retenp_on_disk_flag = 0;
 static int status_flag = 0;
 static int poolname_flag = 0;
+static int hsmcreat_flag = 0;
 extern int check_hsm_type_light _PROTO((char *, char *));
 extern int isvalidpool _PROTO((char *));
 extern struct stgcat_entry *stce;	/* end of stage catalog */
@@ -75,7 +76,7 @@ extern struct stgcat_entry *stcs;	/* start of stage catalog */
 extern int mintime_beforemigr _PROTO((int));
 extern int retenp_on_disk _PROTO((int));
 extern int max_setretenp _PROTO((char *));
-extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *, int));
+extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *, int, int));
 extern int savereqs _PROTO(());
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int, int));
 extern void redomigpool _PROTO(());
@@ -126,9 +127,11 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 	char poolname[CA_MAXPOOLNAMELEN + 1];
 	int poolflag = 0;
 	int ifileclass;
+	int nocheck_hsmsize = 0;
 	static struct Coptions longopts[] =
 	{
 		{"host",               REQUIRED_ARGUMENT,  NULL,               'h'},
+		{"hsmcreat",           NO_ARGUMENT,  &hsmcreat_flag,             1},
 		{"migration_filename", REQUIRED_ARGUMENT,  NULL,               'M'},
 		{"mintime_beforemigr", REQUIRED_ARGUMENT,  &mintime_beforemigr_flag, 1},
 		{"poolname",           REQUIRED_ARGUMENT,  &poolname_flag,       1},
@@ -143,6 +146,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 	reqid_flag = 0;
 	retenp_on_disk_flag = 0;
 	status_flag = 0;
+	hsmcreat_flag = 0;
 
 	rbp = req_data;
 	local_unmarshall_STRING (rbp, user);	/* login name */
@@ -157,7 +161,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 	nargs = req2argv (rbp, &argv);
 #if SACCT
 	stageacct (STGCMDR, uid, gid, clienthost,
-			   reqid, STAGEFILCHG, 0, 0, NULL, "", (char) 0);
+			   reqid, req_type, 0, 0, NULL, "", (char) 0);
 #endif
 
 	Coptind = 1;
@@ -378,6 +382,11 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			c = EINVAL;
 			goto reply;
 		}
+		if (! (donemintime_beforemigr || doneretenp_on_disk || donestatus)) {
+			sendrep(&rpfd, MSG_ERR, "STG02 - Supply of --mintime or --retenp or --status is mandatory\n");
+			c = EINVAL;
+			goto reply;
+		}
 		c = 0;
 		/* User choosed the 'option' way of using stagechng */
 		for (stcp = stcs; stcp < stce; stcp++) {
@@ -405,7 +414,8 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
 			if (hsmfile)
 				if (strcmp(stcp->u1.h.xfile, hsmfile) != 0) continue; /* -M */
-			if ((ifileclass = upd_fileclass(NULL,stcp,ISSTAGED(stcp),0,0)) < 0) {
+			if ((ifileclass = upd_fileclass(NULL,stcp,5,0,0)) < 0) {
+				sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "stagechng", sstrerror(serrno));
 				c = serrno;
 				goto reply;
 			}
@@ -446,12 +456,30 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 				setegid(start_passwd.pw_gid);
 				seteuid(start_passwd.pw_uid);
 				if (rc != 0) {
-					sendrep (&rpfd, MSG_ERR, STG02, hsmfile, "Cns_statx", sstrerror(serrno));
-					c = EINVAL;
-					goto reply;			
+					if (serrno == ENOENT) {
+						if (hsmcreat_flag == 0) {
+							sendrep (&rpfd, MSG_ERR, STG02, hsmfile, "Cns_statx", sstrerror(serrno));
+							c = serrno;
+							goto reply;
+						} else {
+							nocheck_hsmsize = 1;
+						}
+					} else {
+						sendrep (&rpfd, MSG_ERR, STG02, hsmfile, "Cns_statx", sstrerror(serrno));
+						c = serrno;
+						goto reply;
+					}
+				} else {
+					/* Thanks to Cns_stat we can also verify the size of the file */
+					/* unless hsmcreat_flag is setted. In this case we do not care */
+					/* if file in the name server differs from size on disk : file */
+					/* would then be resetted by stageput_check_hsm() */
+					if (hsmcreat_flag != 0) {
+						nocheck_hsmsize = 1;
+					} else {
+						hsmsize = Cnsfilestat.filesize;
+					}
 				}
-				/* Thanks to Cns_stat we can also verify the size of the file */
-				hsmsize = Cnsfilestat.filesize;
 			}
 
 			/* From now on we assume that permission to change status for this file is granted */
@@ -568,10 +596,12 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 							actual_size_block = stcp->actual_size;
 						}
 						/* We grabbed the size in the name server before. We verify consistency */
-						if (hsmsize != stcp->actual_size) {
-							sendrep(&rpfd, MSG_ERR, STG171, hsmfile, u64tostr((u_signed64) hsmsize, tmpbuf1, 0), u64tostr(stcp->actual_size, tmpbuf2, 0));
-							c = EINVAL;
-							goto reply;			
+						if (nocheck_hsmsize == 0) {
+							if (hsmsize != stcp->actual_size) {
+								sendrep(&rpfd, MSG_ERR, STG171, hsmfile, u64tostr((u_signed64) hsmsize, tmpbuf1, 0), u64tostr(stcp->actual_size, tmpbuf2, 0));
+								c = EINVAL;
+								goto reply;			
+							}
 						}
 						save_stcp_status = stcp->status;
 						stcp->status = STAGEOUT;
@@ -589,7 +619,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 							/* so that it is automatically expanded */
 							stcp->u1.h.tppool[0] = '\0';
 						}
-						if ((c = upd_stageout(STAGEUPDC, NULL, NULL, 1, stcp, 1)) != 0) {
+						if ((c = upd_stageout(STAGEUPDC, NULL, NULL, 1, stcp, 1, (hsmcreat_flag == 0) ? 1 : 0)) != 0) {
 							if ((c != CLEARED) && (c != ESTCLEARED)) {
 								stcp->status = save_stcp_status;
 #ifdef USECDB
@@ -662,7 +692,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 
   reply:
 	free (argv);
-	sendrep (&rpfd, STAGERC, STAGEFILCHG, magic, c);
+	sendrep (&rpfd, STAGERC, req_type, magic, c);
 }
 
 
