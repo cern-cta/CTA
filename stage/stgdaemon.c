@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.150 2001/09/22 07:49:15 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.151 2001/11/05 15:36:47 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.150 $ $Date: 2001/09/22 07:49:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.151 $ $Date: 2001/11/05 15:36:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -787,10 +787,31 @@ int main(argc,argv)
 										sys_errlist[errno]);
 				goto select_continue;
 			}
+			/* We check that what returned accept() is not a pending file descriptor */
+			/* that we keep in our waiting queue and that could be invalid because of */
+			/* any connection broken in the TCP/IP layer. If we find any fd in the waitq */
+			/* that is equal to what accept() have just give to us, this mean that we have */
+			/* to invalidate the fd with same value inside the waitq. Putting it to value -1 */
+			/* is enough : this found element in the waitq will then work in silent mode */
+			/* Of course we do not have to do close(rqfd) since we just received it! */
+			for (wqp = waitqp; wqp; wqp = wqp->next) {
+				if (wqp->rpfd == rqfd) {
+					int sav_reqid = reqid;
+					reqid = wqp->reqid;
+					stglogit (func, "### STG02 - Socket fd %d taken over by new request - Moving to silent mode\n", wqp->rpfd);
+					wqp->rpfd = -1;
+					reqid = sav_reqid;
+					/* In theory this cannot happen more than once - so we break now */
+					break;
+				}
+			}
 			if (getpeername (rqfd, (struct sockaddr*)&from,
 										 &fromlen) < 0) {
+				int sav_reqid = reqid;
+				reqid = 0;
 				stglogit (func, STG02, "", "getpeername",
 										sys_errlist[errno]);
+				reqid = sav_reqid;
 			}
 			hp = Cgethostbyaddr((char *)(&from.sin_addr),sizeof(struct in_addr),from.sin_family);
 			if (hp == NULL)
@@ -3443,5 +3464,5 @@ void check_upd_fileclasses() {
 }
 
 /*
- * Last Update: "Saturday 22 September, 2001 at 09:45:31 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Monday 05 November, 2001 at 16:34:37 CET by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
