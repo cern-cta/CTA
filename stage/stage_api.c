@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.67 2003/10/31 19:49:07 jdurand Exp $
+ * $Id: stage_api.c,v 1.68 2003/10/31 19:50:51 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -35,7 +35,7 @@
 #include "net.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.67 $ $Date: 2003/10/31 19:49:07 $ CERN IT/DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.68 $ $Date: 2003/10/31 19:50:51 $ CERN IT/DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifdef hpux
@@ -353,7 +353,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 	/* We check existence of an STG NORETRY from environment variable or configuration or flags */
 	if (
 		(((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
-		(((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0)) ||
+		(((p = getconfent("STG","NORETRY",1)) != NULL) && (atoi(p) != 0)) ||
 		((flags & STAGE_NORETRY) == STAGE_NORETRY)
 		) {
 		/* Makes sure STAGE_NORETRY is anyway in the flags so that the server will log it */
@@ -1215,7 +1215,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 	/* We check existence of an STG NORETRY from environment variable or configuration or flags */
 	if (
 		(((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
-		(((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0)) ||
+		(((p = getconfent("STG","NORETRY",1)) != NULL) && (atoi(p) != 0)) ||
 		((flags & STAGE_NORETRY) == STAGE_NORETRY)
 		) {
 		/* Makes sure STAGE_NORETRY is anyway in the flags so that the server will log it */
@@ -1666,7 +1666,7 @@ int DLL_DECL stage_updc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_outpu
 	/* We check existence of an STG NORETRY from environment variable or configuration or flags */
 	if (
 		(((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
-		(((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0)) ||
+		(((p = getconfent("STG","NORETRY",1)) != NULL) && (atoi(p) != 0)) ||
 		((flags & STAGE_NORETRY) == STAGE_NORETRY)
 		) {
 		/* Makes sure STAGE_NORETRY is anyway in the flags so that the server will log it */
@@ -2019,7 +2019,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
 	/* We check existence of an STG NORETRY from environment variable or configuration or flags */
 	if (
 		(((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
-		(((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0)) ||
+		(((p = getconfent("STG","NORETRY",1)) != NULL) && (atoi(p) != 0)) ||
 		((flagsok & STAGE_NORETRY) == STAGE_NORETRY)
 		) {
 		/* Makes sure STAGE_NORETRY is anyway in the flagsok so that the server will log it */
@@ -2527,7 +2527,7 @@ int DLL_DECL stage_ping(flags,hostname)
 	/* We check existence of an STG NORETRY from environment variable or configuration or flags */
 	if (
 		(((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
-		(((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0)) ||
+		(((p = getconfent("STG","NORETRY",1)) != NULL) && (atoi(p) != 0)) ||
 		((flags & STAGE_NORETRY) == STAGE_NORETRY)
 		) {
 		/* Makes sure STAGE_NORETRY is anyway in the flags so that the server will log it */
@@ -2698,7 +2698,7 @@ int DLL_DECL stage_init(flags,hostname)
 	/* We check existence of an STG NORETRY from environment variable or configuration or flags */
 	if (
 		(((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
-		(((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0)) ||
+		(((p = getconfent("STG","NORETRY",1)) != NULL) && (atoi(p) != 0)) ||
 		((flags & STAGE_NORETRY) == STAGE_NORETRY)
 		) {
 		/* Makes sure STAGE_NORETRY is anyway in the flags so that the server will log it */
@@ -2837,7 +2837,7 @@ static int DLL_DECL stageinit(flags,hostname)
 	/* We check existence of an STG NORETRY from environment variable or configuration or flags */
 	if (
 		(((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
-		(((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0)) ||
+		(((p = getconfent("STG","NORETRY",1)) != NULL) && (atoi(p) != 0)) ||
 		((flags & STAGE_NORETRY) == STAGE_NORETRY)
 		) {
 		/* Makes sure STAGE_NORETRY is anyway in the flags so that the server will log it */
@@ -3003,7 +3003,7 @@ int DLL_DECL stage_shutdown(flags,hostname)
 	/* We check existence of an STG NORETRY from environment variable or configuration or flags */
 	if (
 		(((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
-		(((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0)) ||
+		(((p = getconfent("STG","NORETRY",1)) != NULL) && (atoi(p) != 0)) ||
 		((flags & STAGE_NORETRY) == STAGE_NORETRY)
 		) {
 		/* Makes sure STAGE_NORETRY is anyway in the flags so that the server will log it */
@@ -3142,7 +3142,7 @@ static int DLL_DECL stageshutdown(flags,hostname)
 	/* We check existence of an STG NORETRY from environment variable or configuration or flags */
 	if (
 		(((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
-		(((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0)) ||
+		(((p = getconfent("STG","NORETRY",1)) != NULL) && (atoi(p) != 0)) ||
 		((flags & STAGE_NORETRY) == STAGE_NORETRY)
 		) {
 		/* Makes sure STAGE_NORETRY is anyway in the flags so that the server will log it */
@@ -3335,7 +3335,7 @@ int DLL_DECL stage_alloc_or_get(req_type,flags,openmode,hostname,pooluser,filena
 	/* We check existence of an STG NORETRY from environment variable or configuration or flags */
 	if (
 		(((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
-		(((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0)) ||
+		(((p = getconfent("STG","NORETRY",1)) != NULL) && (atoi(p) != 0)) ||
 		((flags & STAGE_NORETRY) == STAGE_NORETRY)
 		) {
 		/* Makes sure STAGE_NORETRY is anyway in the flags so that the server will log it */
