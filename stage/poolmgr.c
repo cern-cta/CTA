@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.118 2001/03/24 02:18:15 jdurand Exp $
+ * $Id: poolmgr.c,v 1.119 2001/03/24 02:26:28 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.118 $ $Date: 2001/03/24 02:18:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.119 $ $Date: 2001/03/24 02:26:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1587,7 +1587,11 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
       free (pool_p->elemp);
     }
     free (sav_pools);
-    if (sav_migrator) free (sav_migrator);
+    if (sav_migrator) {
+      if (sav_migrator->fileclass != NULL) free (sav_migrator->fileclass);
+      if (sav_migrator->fileclass_predicates != NULL) free (sav_migrator->fileclass_predicates);
+      free (sav_migrator);
+    }
     /* And restore rw counters */
     for (stcp = stcs; stcp < stce; stcp++) {
       if (stcp->reqid == 0) break;
