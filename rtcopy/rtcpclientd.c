@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/16 15:00:18 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/18 11:14:47 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/16 15:00:18 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/18 11:14:47 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -45,6 +45,7 @@ WSADATA wsadata;
 #include <Cgetopt.h>
 #include <Cinit.h>
 #include <Cuuid.h>
+#include <Cgrp.h>
 #include <Cpwd.h>
 #include <Cnetdb.h>
 #include <dlf_api.h>
@@ -970,6 +971,55 @@ int rtcpcld_main(
   return(0);
 }
 
+static int runAsUser(
+                     myUser,
+                     myGroup
+                     )
+     char *myUser, *myGroup;
+{
+  struct passwd *pw = NULL;
+  struct group *grp = NULL;
+  gid_t gid;
+  int rc;
+  
+  if ( myUser == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  
+  pw = Cgetpwnam(myUser);
+  if ( pw == NULL ) return(-1);
+  gid = pw->pw_gid;
+
+  if ( myGroup != NULL ) {
+    grp = Cgetgrnam(myGroup);
+    if ( grp == NULL ) return(-1);
+    gid = grp->gr_gid;
+  }
+
+  rc = setgid(gid);
+  if ( rc == -1 ) return(-1);
+  
+  rc = setuid(pw->pw_uid);
+  if ( rc == -1 ) return(-1);
+  
+  if ( (pw->pw_uid != getuid()) || (gid != getgid()) ) {
+    serrno = EPERM;
+    return(-1);
+  }
+  
+  return(0);
+}
+
+static void usage(
+                  cmd
+                  )
+     char *cmd;
+{
+  printf("Usage: %s [-d] [-f facilityName] [-p port] [-u uid] [-g gid]\n",cmd);
+  return;
+}
+
 int main(
          argc,
          argv
@@ -977,13 +1027,27 @@ int main(
      int argc;
      char *argv[];
 {
-  int c;
+  int c, rc;
+  char *myUser, *myGroup;
   char *rtcpcldFacilityName = RTCPCLIENTD_FACILITY_NAME;
+
+
+#ifdef RTCPCLD_USER
+  myUser = RTCPCLD_USER;
+#else /* RTCPCLD_USER */
+  myUser = NULL;
+#endif /* RTCPCLD_USER */
+
+#ifdef RTCPCLD_GROUP
+  myGroup = RTCPCLD_GROUP;
+#else /* RTCPCLD_GROUP */
+  myGroup = NULL;
+#endif /* RTCPCLD_GROUP */
 
   Coptind = 1;
   Copterr = 1;
 
-  while ( (c = Cgetopt(argc, argv, "df:p:")) != -1 ) {
+  while ( (c = Cgetopt(argc, argv, "df:p:u:g:")) != -1 ) {
     switch (c) {
     case 'd':
       Debug = TRUE;
@@ -996,13 +1060,32 @@ int main(
         return(1);
       }
       break;
+    case 'g':
+      myGroup = Coptarg;
+      break;
     case 'p':
       use_port = atoi(Coptarg);
       break;
+    case 'u':
+      myUser = Coptarg;
+      break;
     default:
+      usage(argv[0]);
       break;
     }
   }
+
+  rc = runAsUser(myUser,myGroup);
+  if ( rc == -1 ) {
+    c = (serrno > 0 ? serrno : errno);
+    fprintf(stderr,"Failed to start as user (%s,%s): %s\n",
+            (myUser != NULL ? myUser : "(null)"),
+            (myGroup != NULL ? myGroup : "(null)"),
+            sstrerror(c));
+    usage(argv[0]);
+    return(1);
+  }
+  
   Cuuid_create(&mainUuid);
 
   (void)rtcpcld_initLogging(rtcpcldFacilityName);
