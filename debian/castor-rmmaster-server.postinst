@@ -22,9 +22,37 @@ case "$1" in
 
 	[ -x /sbin/chkconfig ] && /sbin/chkconfig --add `basename $0`
 
+	if [ "$2" = "" ] ; then
+	    action="start"
+	else
+	    action="restart"
+	fi
+	if [ -x /sbin/service ]; then
+	    /sbin/service `basename $0` $action
+	elif [ -x /usr/sbin/invoke-rc.d ]; then
+	    /usr/sbin/invoke-rc.d `basename $0` $action || true
+	else
+	    /etc/init.d/`basename $0` $action
+	fi
+
     ;;
 
-    abort-upgrade|abort-remove|abort-deconfigure)
+    abort-upgrade)
+
+    ;;
+
+    abort-remove)
+	if [ -x /sbin/service ]; then
+	    /sbin/service `basename $0` start
+	elif [ -x /usr/sbin/invoke-rc.d ]; then
+	    /usr/sbin/invoke-rc.d `basename $0` start || true
+	else
+	    /etc/init.d/`basename $0` start
+	fi
+
+    ;;
+
+    abort-deconfigure)
 
     ;;
 

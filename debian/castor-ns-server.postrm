@@ -19,13 +19,20 @@ set -e
 
 
 case "$1" in
-       purge|remove)
+       remove)
 
 	[ -x /sbin/chkconfig ] && /sbin/chkconfig --del `basename $0`
 
 	;;
 
-       purge|remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+       purge)
+
+	[ -x /sbin/chkconfig ] && /sbin/chkconfig --del `basename $0`
+	rm -f /etc/init.d/`basename $0`
+	[ -x /usr/sbin/update-rc.d ] && update-rc.d -f `basename $0` remove >/dev/null
+	;;
+
+       upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
 
 
         ;;
