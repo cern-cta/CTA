@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.17 2001/03/28 14:08:12 jdurand Exp $
+ * $Id: stage_api.c,v 1.18 2001/06/07 14:42:04 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -232,7 +232,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   egid = getegid();             /* Get current effective gid */
 #if defined(_WIN32)
   if (euid < 0 || egid < 0) {
-    serrno = SENOMAPFND;
+    serrno = SEUSERUNKN;
     return (-1);
   }
 #endif
@@ -257,7 +257,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
       strcpy (Gname, p);
       if ((pw = Cgetpwnam(p)) == NULL) { /* And if GRPUSER content is a valid user name */
         stage_errmsg(func, STG11, p);
-        serrno = ESTUSER;
+        serrno = SEUSERUNKN;
         return(-1);
       } else
         Geuid = pw->pw_uid;              /* In such a case we grab its uid */
@@ -270,7 +270,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
     /* We verify this user login is defined */
     if (((pw = Cgetpwnam(User)) == NULL) || (pw->pw_gid != egid)) {
       stage_errmsg(func, STG11, User);
-      serrno = ESTUSER;
+      serrno = SEUSERUNKN;
       return(-1);
     }
   } else {
@@ -298,7 +298,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   rfiosetopt (RFIO_NETOPT, &c, 4);
 
   if ((pw = Cgetpwuid(euid)) == NULL) { /* We check validity of current effective uid */
-    serrno = SENOMAPFND;
+    serrno = SEUSERUNKN;
 #if defined(_WIN32)
     WSACleanup();
 #endif
@@ -895,7 +895,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   egid = getegid();             /* Get current effective gid */
 #if defined(_WIN32)
   if (euid < 0 || egid < 0) {
-    serrno = SENOMAPFND;
+    serrno = SEUSERUNKN;
     return (-1);
   }
 #endif
@@ -939,7 +939,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 #endif
 
   if ((pw = Cgetpwuid(euid)) == NULL) { /* We check validity of current effective uid */
-    serrno = SENOMAPFND;
+    serrno = SEUSERUNKN;
 #if defined(_WIN32)
     WSACleanup();
 #endif
@@ -1304,7 +1304,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   egid = getegid();             /* Get current effective gid */
 #if defined(_WIN32)
   if (euid < 0 || egid < 0) {
-    serrno = SENOMAPFND;
+    serrno = SEUSERUNKN;
     return (-1);
   }
 #endif
@@ -1329,7 +1329,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
       strcpy (Gname, p);
       if ((pw = Cgetpwnam(p)) == NULL) { /* And if GRPUSER content is a valid user name */
         stage_errmsg(func, STG11, p);
-        serrno = ESTUSER;
+        serrno = SEUSERUNKN;
         return(-1);
       } else
         Geuid = pw->pw_uid;              /* In such a case we grab its uid */
@@ -1342,7 +1342,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
     /* We verify this user login is defined */
     if (((pw = Cgetpwnam(User)) == NULL) || (pw->pw_gid != egid)) {
       stage_errmsg(func, STG11, User);
-      serrno = ESTUSER;
+      serrno = SEUSERUNKN;
       return(-1);
     }
   } else {
@@ -1359,7 +1359,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   rfiosetopt (RFIO_NETOPT, &c, 4);
 
   if ((pw = Cgetpwuid(euid)) == NULL) { /* We check validity of current effective uid */
-    serrno = SENOMAPFND;
+    serrno = SEUSERUNKN;
 #if defined(_WIN32)
     WSACleanup();
 #endif
@@ -1583,7 +1583,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   egid = getegid();             /* Get current effective gid */
 #if defined(_WIN32)
   if (euid < 0 || egid < 0) {
-    serrno = SENOMAPFND;
+    serrno = SEUSERUNKN;
     return (-1);
   }
 #endif
@@ -1602,7 +1602,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
       strcpy (Gname, p);
       if ((pw = Cgetpwnam(p)) == NULL) { /* And if GRPUSER content is a valid user name */
         stage_errmsg(func, STG11, p);
-        serrno = ESTUSER;
+        serrno = SEUSERUNKN;
         return(-1);
       } else
         Geuid = pw->pw_uid;              /* In such a case we grab its uid */
@@ -1637,7 +1637,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   rfiosetopt (RFIO_NETOPT, &c, 4);
 
   if ((pw = Cgetpwuid(euid)) == NULL) { /* We check validity of current effective uid */
-    serrno = SENOMAPFND;
+    serrno = SEUSERUNKN;
 #if defined(_WIN32)
     WSACleanup();
 #endif
