@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.15 2002/03/27 08:13:28 jdurand Exp $
+ * $Id: stage_util.c,v 1.16 2002/04/11 10:30:14 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -105,8 +105,8 @@ void DLL_DECL stage_sleep(nsec)
 
 /* This function will return the preferred magic number used by the client */
 
-#define STGMAGIC_DEFAULT STGMAGIC2
-#define STGMAGIC_DEFAULT_STRING "STGMAGIC2"
+#define STGMAGIC_DEFAULT STGMAGIC3
+#define STGMAGIC_DEFAULT_STRING "STGMAGIC3"
 
 int DLL_DECL stage_stgmagic()
 {
@@ -522,3 +522,21 @@ int DLL_DECL stage_util_status2string(output, maxsize, status)
 	return(*thisp != '\0' ? 0 : -1);
 }
 
+/* Returns the maximum tape file sequence allowed v.s. label type */
+/* Will return -1 if not limited */
+int DLL_DECL stage_util_maxtapefseq(labeltype)
+	char *labeltype;
+{
+	if (labeltype == NULL) return(-1);
+
+	if ((strcmp(labeltype,"al") == 0) ||  /* Ansi Label */
+		(strcmp(labeltype,"sl") == 0))    /* Standard Label */
+		return(9999);
+	if (strcmp(labeltype,"aul") == 0)     /* Ansi (extended) User Label */
+		return(INT_MAX / 3);
+	if ((strcmp(labeltype,"nl") == 0) ||  /* No Label */
+		(strcmp(labeltype,"blp") == 0))   /* Bypass Label Type */
+		return(INT_MAX);
+
+	return(-1);                           /* Unknown type : not limited */
+}
