@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2rmc.c,v $ $Revision: 1.2 $ $Date: 2003/10/07 13:52:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2rmc.c,v $ $Revision: 1.3 $ $Date: 2003/11/18 14:59:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -57,13 +57,16 @@ int user_repbuf_len;
 		sin.sin_port = sp->s_port;
 	} else {
 		sin.sin_port = htons ((unsigned short)RMC_PORT);
+		serrno = 0;
 	}
 	if (host && *host)
 		strcpy (rmchost, host);
 	else if ((p = getenv ("RMC_HOST")) || (p = getconfent ("RMC", "HOST", 0)))
 		strcpy (rmchost, p);
-	else
+	else {
 		gethostname (rmchost, CA_MAXHOSTNAMELEN+1);
+		serrno = 0;
+	}
 	if ((hp = Cgethostbyname (rmchost)) == NULL) {
 		rmc_errmsg (func, RMC09, "Host unknown:", rmchost);
 		serrno = ERMCUNREC;
