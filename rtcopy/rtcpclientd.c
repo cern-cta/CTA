@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.20 $ $Release$ $Date: 2005/01/11 13:02:07 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.21 $ $Release$ $Date: 2005/01/17 12:40:04 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.20 $ $Release$ $Date: 2005/01/11 13:02:07 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.21 $ $Release$ $Date: 2005/01/17 12:40:04 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -72,6 +72,8 @@ typedef struct rtcpcld_RequestList {
   struct rtcpcld_RequestList *prev;
 } rtcpcld_RequestList_t;
 rtcpcld_RequestList_t *requestList = NULL;
+
+static int port = -1;
 
 extern int rtcp_InitLog _PROTO((char *, FILE *, FILE *, SOCKET *));
 extern int Cinitdaemon _PROTO((char *, void (*)(int)));
@@ -436,13 +438,113 @@ static void logConnection(
 
 static int checkVdqmReqs() 
 {
+  rtcpcld_RequestList_t *iterator;
+  tape_list_t *tape;
+  int vdqmPingInterval = RTCPCLD_VDQMPOLL_TIMEOUT;
+  time_t now;
+  int rc = 0, save_serrno;
+  
+  now = time(NULL);
+  CLIST_ITERATE_BEGIN(requestList,iterator) {
+    if ( (iterator->pid <= 0) &&
+         (now - iterator->lastVdqmPingTime > vdqmPingInterval) ) {
+      tape = iterator->tape;
+      iterator->lastVdqmPingTime = now;
+      (void)dlf_write(
+                      mainUuid,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_VDQM_PING),
+                      (struct Cns_fileid *)NULL,
+                      4,
+                      "",
+                      DLF_MSG_PARAM_TPVID,
+                      tape->tapereq.vid,
+                      "MODE",
+                      DLF_MSG_PARAM_INT,
+                      tape->tapereq.mode,
+                      "VDQMRQID",
+                      DLF_MSG_PARAM_INT,
+                      tape->tapereq.VolReqID,
+                      "DGN",
+                      DLF_MSG_PARAM_STR,
+                      tape->tapereq.dgn
+                      );
+      rc = vdqm_PingServer(NULL,tape->tapereq.dgn,tape->tapereq.VolReqID);
+      if ( rc == -1 ) {
+        save_serrno = serrno;
+        if ( (save_serrno != EVQHOLD) && (save_serrno != SECOMERR) ) {
+          (void)dlf_write(
+                          mainUuid,
+                          RTCPCLD_LOG_MSG(RTCPCLD_MSG_VDQM_LOST),
+                          (struct Cns_fileid *)NULL,
+                          4,
+                          "",
+                          DLF_MSG_PARAM_TPVID,
+                          tape->tapereq.vid,
+                          "MODE",
+                          DLF_MSG_PARAM_INT,
+                          tape->tapereq.mode,
+                          "VDQMRQID",
+                          DLF_MSG_PARAM_INT,
+                          tape->tapereq.VolReqID,
+                          "DGN",
+                          DLF_MSG_PARAM_STR,
+                          tape->tapereq.dgn
+                          );
+          tape->tapereq.VolReqID = 0;
+          rc = vdqm_SendVolReq(
+                               NULL,
+                               &(tape->tapereq.VolReqID),
+                               tape->tapereq.vid,
+                               tape->tapereq.dgn,
+                               NULL,
+                               NULL,
+                               tape->tapereq.mode,
+                               port
+                               );
+          if ( rc == -1 ) {
+            (void)dlf_write(
+                            mainUuid,
+                            RTCPCLD_LOG_MSG(RTCPCLD_MSG_VDQM),
+                            (struct Cns_fileid *)NULL,
+                            RTCPCLD_NB_PARAMS+1,
+                            "ERROR_STR", 
+                            DLF_MSG_PARAM_STR,
+                            sstrerror(serrno),
+                            RTCPCLD_LOG_WHERE
+                            );
+          } else {
+            (void)dlf_write(
+                            mainUuid,
+                            RTCPCLD_LOG_MSG(RTCPCLD_MSG_VDQMINFO),
+                            (struct Cns_fileid *)NULL,
+                            3,
+                            "VID",
+                            DLF_MSG_PARAM_STR,
+                            tape->tapereq.vid,
+                            "MODE",
+                            DLF_MSG_PARAM_INT,
+                            tape->tapereq.mode,
+                            "VDQMRQID",
+                            DLF_MSG_PARAM_INT,
+                            tape->tapereq.VolReqID
+                            );
+          }
+        }
+      }
+      /*
+       * Only do one at a time so that we don't overload
+       * VDQM with pings
+       */
+      break;
+    }
+  } CLIST_ITERATE_END(requestList,iterator);
   return(0);
 }
 
 void  wait4Worker(
-                     signo
-                     )
-  int signo; 
+                  signo
+                  )
+  int signo;
 {
   return;
 }
@@ -521,6 +623,34 @@ void checkWorkerExit()
     }
   }
   return;
+}
+
+static int blockChild(
+                     yesNo
+                     )
+     int yesNo;
+{
+  int rc = 0;
+#ifndef _WIN32
+  struct sigaction saChld;
+  sigset_t sigset;
+
+  memset(&saChld,'\0',sizeof(saChld));
+  sigemptyset(&sigset);
+  sigaddset(&sigset,SIGCHLD);
+  if ( yesNo != 0 ) rc = sigprocmask(SIG_BLOCK,&sigset,NULL);
+  else rc = sigprocmask(SIG_UNBLOCK,&sigset,NULL);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("sigprocmask()");
+  }
+  saChld.sa_mask = sigset;
+  saChld.sa_handler = (void (*)(int))wait4Worker;
+  rc = sigaction(SIGCHLD,&saChld,NULL);
+  if ( rc == -1 ) {
+    LOG_SYSCALL_ERR("sigaction()");
+  }
+#endif /* WIN32 */
+  return(rc);
 }
 
 static int startWorker(
@@ -715,7 +845,7 @@ int rtcpcld_main(
                  )
      struct main_args *main_args;
 {
-  int rc, pid, maxfd, cnt, i, port, len, save_errno;
+  int rc, pid, maxfd, cnt, i, len, save_errno;
   fd_set rd_set, wr_set, ex_set, rd_setcp, wr_setcp, ex_setcp;
   struct sockaddr_in sin ; /* Internet address */ 
   struct timeval timeout, timeout_cp;
@@ -725,14 +855,17 @@ int rtcpcld_main(
   SOCKET acceptSocket = INVALID_SOCKET;
   tape_list_t **tapeArray, *tape;
   rtcpTapeRequest_t tapereq;
-  struct sigaction sa;
+  struct sigaction saOther;
 
   /* Initializing the C++ log */
   /* Necessary at start of program and after any fork */
   C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
 
 #if !defined(_WIN32)
-  signal(SIGPIPE,SIG_IGN);
+  memset(&saOther,'\0',sizeof(saOther));
+  saOther.sa_handler = SIG_IGN;
+  sigaction(SIGPIPE,&saOther,NULL);
+  sigaction(SIGXFSZ,&saOther,NULL);
 #endif /* _WIN32 */
 
   gethostname(serverName,CA_MAXHOSTNAMELEN);
@@ -812,9 +945,6 @@ int rtcpcld_main(
   maxfd = *rtcpdSocket;
   if ( maxfd < *notificationSocket ) maxfd = *notificationSocket;
   maxfd++;
-  memset(&sa,'\0',sizeof(sa));
-  sa.sa_handler = (void (*)(int))wait4Worker;
-  (void)sigaction(SIGCHLD,&sa,NULL);
 #endif /* _WIN32 */
   rc = 0;
   /*
@@ -826,6 +956,10 @@ int rtcpcld_main(
     rd_setcp = rd_set;
     wr_setcp = wr_set;
     ex_setcp = ex_set;
+    /*
+     * Allow child signal to interrupt the select
+     */
+    (void)blockChild(0);
     errno = serrno = 0;
     rc = select(
                 maxfd, 
@@ -835,7 +969,14 @@ int rtcpcld_main(
                 &timeout_cp
                 );
     save_errno = errno;
+    /*
+     * Block the child signal to avoid EINTR in vmgr and other APIs
+     */
+    (void)blockChild(1);
     timeout_cp = timeout;
+    /*
+     * Cleanup from finished workers
+     */
     checkWorkerExit();
     if ( rc < 0 ) {
       /*
