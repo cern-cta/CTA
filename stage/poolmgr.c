@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.210 2002/07/18 11:08:48 jdurand Exp $
+ * $Id: poolmgr.c,v 1.211 2002/07/27 06:46:37 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.210 $ $Date: 2002/07/18 11:08:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.211 $ $Date: 2002/07/27 06:46:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -341,6 +341,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 			pool_p->max_setretenp = -1;
 			pool_p->put_failed_retenp = -1;
 			pool_p->stageout_retenp = -1;
+			pool_p->stagealloc_retenp = -1;
 			while ((p = strtok (NULL, " \t\n")) != NULL) {
 				if (strcmp (p, "DEFSIZE") == 0) {
 					int checkrc;
@@ -387,44 +388,262 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 						goto reply;
 					}
 				} else if (strcmp (p, "MAX_SETRETENP") == 0) {
+					int thisunit = ONE_SECOND; /* Default is second */
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
 						stglogit (func, STG26, "MAX_SETRETENP in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
-					stage_strtoi(&(pool_p->max_setretenp), p, &dp, 10);
-					if (*dp != '\0') {
-						stglogit (func, STG26, "MAX_SETRETENP in pool", pool_p->name);
+					switch (p[strlen(p)-1]) {
+					case 'S':
+					case 's':
+						thisunit = ONE_SECOND; /* Second */
+						p[strlen(p) - 1] = '\0';
+						break;
+					case 'M':
+					case 'm':
+						thisunit = ONE_MINUTE; /* Minute */
+						p[strlen(p) - 1] = '\0';
+						break;
+					case 'H':
+					case 'h':
+						thisunit = ONE_HOUR; /* Hour */
+						p[strlen(p) - 1] = '\0';
+						break;
+					case 'D':
+					case 'd':
+						thisunit = ONE_DAY; /* Day */
+						p[strlen(p) - 1] = '\0';
+						break;
+					case 'Y':
+					case 'y':
+						thisunit = ONE_YEAR; /* Year */
+						p[strlen(p) - 1] = '\0';
+						break;
+					default:
+						/* If there is another non-digit character the stage_strtoi() call will catch it */
+						break;
+					}
+					if (stage_strtoi(&(pool_p->max_setretenp), p, &dp, 0) != 0) {
+						if (serrno != ERANGE) {
+							stglogit (func, STG26, "MAX_SETRETENP in pool", pool_p->name);
+						} else {
+							stglogit (func, STG26, "MAX_SETRETENP (out of range) in pool", pool_p->name);
+						}
+						errflg++;
+						goto reply;
+					}
+					if (pool_p->max_setretenp < 0) {
+						pool_p->max_setretenp = -1;
+					} else {
+						if (thisunit != ONE_SECOND) {
+							/* Again out of range ? */
+							if (pool_p->max_setretenp > (INT_MAX / thisunit)) {
+								stglogit (func, STG26, "MAX_SETRETENP (out of range) in pool", pool_p->name);
+								errflg++;
+								goto reply;
+							} else {
+								pool_p->max_setretenp *= thisunit;
+							}
+						}
+					}
+					if (pool_p->max_setretenp == 0) {
+						stglogit (func, STG26, "MAX_SETRETENP (should be <0 xor >0) in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp (p, "PUT_FAILED_RETENP") == 0) {
+					int thisunit = ONE_SECOND; /* Default is second */
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
 						stglogit (func, STG26, "PUT_FAILED_RETENP in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
-					stage_strtoi(&(pool_p->put_failed_retenp), p, &dp, 10);
-					if (pool_p->put_failed_retenp < 0) pool_p->put_failed_retenp = -1;
-					if (*dp != '\0' || pool_p->put_failed_retenp == 0) {
-						if (*dp == '\0' && pool_p->put_failed_retenp == 0)
-							stglogit (func, STG26, "option", "pool_p->put_failed_retenp (should be <0 or >0)");
-						stglogit (func, STG26, "PUT_FAILED_RETENP in pool", pool_p->name);
+					switch (p[strlen(p)-1]) {
+					case 'S':
+					case 's':
+						thisunit = ONE_SECOND; /* Second */
+						p[strlen(p) - 1] = '\0';
+						break;
+					case 'M':
+					case 'm':
+						thisunit = ONE_MINUTE; /* Minute */
+						p[strlen(p) - 1] = '\0';
+						break;
+					case 'H':
+					case 'h':
+						thisunit = ONE_HOUR; /* Hour */
+						p[strlen(p) - 1] = '\0';
+						break;
+					case 'D':
+					case 'd':
+						thisunit = ONE_DAY; /* Day */
+						p[strlen(p) - 1] = '\0';
+						break;
+					case 'Y':
+					case 'y':
+						thisunit = ONE_YEAR; /* Year */
+						p[strlen(p) - 1] = '\0';
+						break;
+					default:
+						/* If there is another non-digit character the stage_strtoi() call will catch it */
+						break;
+					}
+					if (stage_strtoi(&(pool_p->put_failed_retenp), p, &dp, 0) != 0) {
+						if (serrno != ERANGE) {
+							stglogit (func, STG26, "PUT_FAILED_RETENP in pool", pool_p->name);
+						} else {
+							stglogit (func, STG26, "PUT_FAILED_RETENP (out of range) in pool", pool_p->name);
+						}
+						errflg++;
+						goto reply;
+					}
+					if (pool_p->put_failed_retenp < 0) {
+						pool_p->put_failed_retenp = -1;
+					} else {
+						if (thisunit != ONE_SECOND) {
+							/* Again out of range ? */
+							if (pool_p->put_failed_retenp > (INT_MAX / thisunit)) {
+								stglogit (func, STG26, "PUT_FAILED_RETENP (out of range) in pool", pool_p->name);
+								errflg++;
+								goto reply;
+							} else {
+								pool_p->put_failed_retenp *= thisunit;
+							}
+						}
+					}
+					if (pool_p->put_failed_retenp == 0) {
+						stglogit (func, STG26, "PUT_FAILED_RETENP (should be <0 xor >0) in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
 				} else if (strcmp (p, "STAGEOUT_RETENP") == 0) {
+					int thisunit = ONE_SECOND; /* Default is second */
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
 						stglogit (func, STG26, "STAGEOUT_RETENP in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
-					stage_strtoi(&(pool_p->stageout_retenp), p, &dp, 10);
-					if (pool_p->stageout_retenp < 0) pool_p->stageout_retenp = -1;
-					if (*dp != '\0' || pool_p->stageout_retenp == 0) {
-						if (*dp == '\0' && pool_p->stageout_retenp == 0)
-							stglogit (func, STG26, "option", "pool_p->stageout_retenp (should be <0 xor >0)");
-						stglogit (func, STG26, "STAGEOUT_RETENP in pool", pool_p->name);
+					switch (p[strlen(p)-1]) {
+					case 'S':
+					case 's':
+						thisunit = ONE_SECOND; /* Second */
+						p[strlen(p) - 1] = '\0';
+						break;
+					case 'M':
+					case 'm':
+						thisunit = ONE_MINUTE; /* Minute */
+						p[strlen(p) - 1] = '\0';
+						break;
+					case 'H':
+					case 'h':
+						thisunit = ONE_HOUR; /* Hour */
+						p[strlen(p) - 1] = '\0';
+						break;
+					case 'D':
+					case 'd':
+						thisunit = ONE_DAY; /* Day */
+						p[strlen(p) - 1] = '\0';
+						break;
+					case 'Y':
+					case 'y':
+						thisunit = ONE_YEAR; /* Year */
+						p[strlen(p) - 1] = '\0';
+						break;
+					default:
+						/* If there is another non-digit character the stage_strtoi() call will catch it */
+						break;
+					}
+					if (stage_strtoi(&(pool_p->stageout_retenp), p, &dp, 0) != 0) {
+						if (serrno != ERANGE) {
+							stglogit (func, STG26, "STAGEOUT_RETENP in pool", pool_p->name);
+						} else {
+							stglogit (func, STG26, "STAGEOUT_RETENP (out of range) in pool", pool_p->name);
+						}
+						errflg++;
+						goto reply;
+					}
+					if (pool_p->stageout_retenp < 0) {
+						pool_p->stageout_retenp = -1;
+					} else {
+						if (thisunit != ONE_SECOND) {
+							/* Again out of range ? */
+							if (pool_p->stageout_retenp > (INT_MAX / thisunit)) {
+								stglogit (func, STG26, "STAGEOUT_RETENP (out of range) in pool", pool_p->name);
+								errflg++;
+								goto reply;
+							} else {
+								pool_p->stageout_retenp *= thisunit;
+							}
+						}
+					}
+					if (pool_p->stageout_retenp == 0) {
+						stglogit (func, STG26, "STAGEOUT_RETENP (should be <0 xor >0) in pool", pool_p->name);
+						errflg++;
+						goto reply;
+					}
+				} else if (strcmp (p, "STAGEALLOC_RETENP") == 0) {
+					int thisunit = ONE_SECOND; /* Default is second */
+					if ((p = strtok (NULL, " \t\n")) == NULL) {
+						stglogit (func, STG26, "STAGEALLOC_RETENP in pool", pool_p->name);
+						errflg++;
+						goto reply;
+					}
+					switch (p[strlen(p)-1]) {
+					case 'S':
+					case 's':
+						thisunit = ONE_SECOND; /* Second */
+						p[strlen(p) - 1] = '\0';
+						break;
+					case 'M':
+					case 'm':
+						thisunit = ONE_MINUTE; /* Minute */
+						p[strlen(p) - 1] = '\0';
+						break;
+					case 'H':
+					case 'h':
+						thisunit = ONE_HOUR; /* Hour */
+						p[strlen(p) - 1] = '\0';
+						break;
+					case 'D':
+					case 'd':
+						thisunit = ONE_DAY; /* Day */
+						p[strlen(p) - 1] = '\0';
+						break;
+					case 'Y':
+					case 'y':
+						thisunit = ONE_YEAR; /* Year */
+						p[strlen(p) - 1] = '\0';
+						break;
+					default:
+						/* If there is another non-digit character the stage_strtoi() call will catch it */
+						break;
+					}
+					if (stage_strtoi(&(pool_p->stagealloc_retenp), p, &dp, 0) != 0) {
+						if (serrno != ERANGE) {
+							stglogit (func, STG26, "STAGEALLOC_RETENP in pool", pool_p->name);
+						} else {
+							stglogit (func, STG26, "STAGEALLOC_RETENP (out of range) in pool", pool_p->name);
+						}
+						errflg++;
+						goto reply;
+					}
+					if (pool_p->stagealloc_retenp < 0) {
+						pool_p->stagealloc_retenp = -1;
+					} else {
+						if (thisunit != ONE_SECOND) {
+							/* Again out of range ? */
+							if (pool_p->stagealloc_retenp > (INT_MAX / thisunit)) {
+								stglogit (func, STG26, "STAGEALLOC_RETENP (out of range) in pool", pool_p->name);
+								errflg++;
+								goto reply;
+							} else {
+								pool_p->stagealloc_retenp *= thisunit;
+							}
+						}
+					}
+					if (pool_p->stagealloc_retenp == 0) {
+						stglogit (func, STG26, "STAGEALLOC_RETENP (should be <0 xor >0) in pool", pool_p->name);
 						errflg++;
 						goto reply;
 					}
@@ -729,24 +948,22 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 			if (pool_p->max_setretenp < 0) {
 				stglogit (func,".... MAX_SETRETENP <none>\n");
 			} else {
-				stglogit (func,".... MAX_SETRETENP %d DAY%s\n",
-						  pool_p->max_setretenp,
-						  pool_p->max_setretenp > 1 ? "S" : ""
-					);
+				stglogit (func,".... MAX_SETRETENP %d\n", pool_p->max_setretenp);
 			}
 			if (pool_p->put_failed_retenp < 0) {
 				stglogit (func,".... PUT_FAILED_RETENP <infinite>\n");
 			} else {
-				stglogit (func,".... PUT_FAILED_RETENP %d DAY%s\n",
-						  pool_p->put_failed_retenp,
-						  pool_p->put_failed_retenp > 1 ? "S" : "");
+				stglogit (func,".... PUT_FAILED_RETENP %d\n", pool_p->put_failed_retenp);
 			}
 			if (pool_p->stageout_retenp < 0) {
 				stglogit (func,".... STAGEOUT_RETENP <infinite>\n");
 			} else {
-				stglogit (func,".... STAGEOUT_RETENP %d DAY%s\n",
-						  pool_p->stageout_retenp,
-						  pool_p->stageout_retenp > 1 ? "S" : "");
+				stglogit (func,".... STAGEOUT_RETENP %d\n", pool_p->stageout_retenp);
+			}
+			if (pool_p->stagealloc_retenp < 0) {
+				stglogit (func,".... STAGEALLOC_RETENP <infinite>\n");
+			} else {
+				stglogit (func,".... STAGEALLOC_RETENP %d\n", pool_p->stagealloc_retenp);
 			}
 			if (pool_p->migr_name[0] != '\0') {
 				stglogit (func,".... MIGRATOR %s\n", pool_p->migr_name);
@@ -1151,6 +1368,8 @@ int iscleanovl(pid, status)
 		}
 	if (! found) return (0);
 	pool_p->ovl_pid = 0;
+	pool_p->cleanreqtime_previous = pool_p->cleanreqtime;
+	pool_p->cleanreqtime_previous_end = time(NULL);
 	pool_p->cleanreqtime = 0;
 	if (status == 0)
 		pool_p->cleanstatus = 1;
@@ -1211,6 +1430,8 @@ int ismigovl(pid, status)
 	}
 
 	pool_p_ok->migr->mig_pid = 0;
+	pool_p_ok->migr->migreqtime_previous = pool_p_ok->migr->migreqtime;
+	pool_p_ok->migr->migreqtime_previous_end = time(NULL);
 	pool_p_ok->migr->migreqtime = 0;
 	/* We check if there are remaining entries in WAITING_MIG status in this pool */
 	/* If so, this is the migrator that failed. */
@@ -1336,6 +1557,10 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 	struct migrator *pool_p_migr = NULL;
 	char tmpbuf[21];
 	char timestr[64] ;   /* Time in its ASCII format             */
+	char max_setretenp_timestr[64] ;
+	char put_failed_retenp_timestr[64] ;
+	char stageout_retenp_timestr[64] ;
+	char stagealloc_retenp_timestr[64] ;
 	char tmpbuf0[21];
 	char tmpbuf1[21];
 	char tmpbuf2[21];
@@ -1349,7 +1574,11 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
 		if (*poolname && strcmp (poolname, pool_p->name)) continue;
 		if (*poolname) pool_p_migr = pool_p->migr;
-		sendrep (rpfd, MSG_OUT, "POOL %s%s%s DEFSIZE %s GC_START_THRESH %d GC_STOP_THRESH %d GC %s%s%s%s%s%s%s%s%s MAX_SETRETENP %d PUT_FAILED_RETENP %d STAGEOUT_RETENP %d\n",
+		stage_util_retenp(pool_p->max_setretenp,max_setretenp_timestr);
+		stage_util_retenp(pool_p->stageout_retenp,stageout_retenp_timestr);
+		stage_util_retenp(pool_p->stagealloc_retenp,stagealloc_retenp_timestr);
+		stage_util_retenp(pool_p->put_failed_retenp,put_failed_retenp_timestr);
+		sendrep (rpfd, MSG_OUT, "POOL %s%s%s DEFSIZE %s GC_START_THRESH %d GC_STOP_THRESH %d GC %s%s%s%s%s%s%s%s%s MAX_SETRETENP %s PUT_FAILED_RETENP %s STAGEOUT_RETENP %s STAGEALLOC_RETENP %s\n",
 				 pool_p->name,
 				 pool_p->no_file_creation ? " NO_FILE_CREATION" : "",
 				 pool_p->export_hsm ? " EXPORT_HSM" : "",
@@ -1365,15 +1594,28 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 				 (pool_p->migr_name[0] != '\0') ? u64tostr(pool_p->mig_stop_thresh, tmpbuf2, 0) : "",
 				 (pool_p->migr_name[0] != '\0') ? " MIG_DATA_THRESH " : "",
 				 (pool_p->migr_name[0] != '\0') ? u64tostru(pool_p->mig_data_thresh, tmpbuf3, 0) : "",
-				 pool_p->max_setretenp,
-				 pool_p->put_failed_retenp,
-				 pool_p->stageout_retenp
+				 max_setretenp_timestr,
+				 put_failed_retenp_timestr,
+				 stageout_retenp_timestr,
+				 stagealloc_retenp_timestr
 			);
 		if (pool_p->cleanreqtime > 0) {
 			stage_util_time(pool_p->cleanreqtime,timestr);
 			sendrep (rpfd, MSG_OUT, "\tLAST GARBAGE COLLECTION STARTED %s%s\n", timestr, pool_p->ovl_pid > 0 ? " STILL ACTIVE" : "");
 		} else {
 			sendrep (rpfd, MSG_OUT, "\tLAST GARBAGE COLLECTION STARTED <none>\n");
+		}
+		if (pool_p->cleanreqtime_previous > 0) {
+			stage_util_time(pool_p->cleanreqtime_previous,timestr);
+			sendrep (rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION STARTED %s\n", timestr);
+		} else {
+			sendrep (rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION STARTED <none>\n");
+		}
+		if (pool_p->cleanreqtime_previous_end > 0) {
+			stage_util_time(pool_p->cleanreqtime_previous_end,timestr);
+			sendrep (rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION ENDED %s\n", timestr);
+		} else {
+			sendrep (rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION ENDED <none>\n");
 		}
 		before_fraction = pool_p->capacity ? (100 * pool_p->free) / pool_p->capacity : 0;
 		after_fraction = pool_p->capacity ?
@@ -1430,6 +1672,18 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 				sendrep (rpfd, MSG_OUT, "\tLAST MIGRATION STARTED %s%s\n", timestr, migr_p->mig_pid > 0 ? " STILL ACTIVE" : "");
 			} else {
 				sendrep (rpfd, MSG_OUT, "\tLAST MIGRATION STARTED <none>\n");
+			}
+			if (migr_p->migreqtime_previous > 0) {
+				stage_util_time(migr_p->migreqtime_previous,timestr);
+				sendrep (rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION STARTED %s\n", timestr);
+			} else {
+				sendrep (rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION STARTED <none>\n");
+			}
+			if (migr_p->migreqtime_previous_end > 0) {
+				stage_util_time(migr_p->migreqtime_previous_end,timestr);
+				sendrep (rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION ENDED %s\n", timestr);
+			} else {
+				sendrep (rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION ENDED <none>\n");
 			}
 			for (j = 0; j < migr_p->nfileclass; j++) {
 				sendrep (rpfd, MSG_OUT, "\tFILECLASS %s@%s (classid=%d)\n",
