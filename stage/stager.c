@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.9 2000/02/11 11:06:58 jdurand Exp $
+ * $Id: stager.c,v 1.10 2000/02/11 14:29:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.9 $ $Date: 2000/02/11 11:06:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.10 $ $Date: 2000/02/11 14:29:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -99,7 +99,10 @@ char **argv;
 	nretry = atoi (argv[5]);
 	Aflag = atoi (argv[6]);
 
-	stcs = (struct stgcat_entry *) malloc (nbcat_ent * sizeof(struct stgcat_entry));
+	if ((stcs = (struct stgcat_entry *) malloc (nbcat_ent * sizeof(struct stgcat_entry))) == NULL) {
+      exit(SYERR);
+    }
+
 	stcp = stcs;
 	while ((l = read (0, &stgreq, sizeof(stgreq)))) {
 		if (l == sizeof(stgreq)) {
