@@ -1,8 +1,8 @@
-.\" @(#)Ctape_position.man,v 1.4 1999-09-08 14:16:33+02 CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_position.man,v $ $Revision: 1.6 $ $Date: 1999/11/26 15:54:50 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_POSITION l "1999-09-08 14:16:33+02"
+.TH CTAPE_POSITION l "$Date: 1999/11/26 15:54:50 $"
 .SH NAME
 Ctape_position \- send a request to the tape daemon to get the tape
 positionned to a given file and the HDR labels checked
@@ -57,10 +57,14 @@ position by block id (locate).
 .RE
 .TP
 .I fseq
-file sequence number
+file sequence number. This parameter is meaningful only for method
+.B TPPOSIT_FSEQ
 .TP
 .I fsec
-file section number
+file section number. This parameter is meaningful only for methods
+.B TPPOSIT_FSEQ
+and
+.B TPPOSIT_FID
 .TP
 .I blockid
 value returned by a previous Read Block Id
