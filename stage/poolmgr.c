@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.224 2002/10/01 06:57:27 jdurand Exp $
+ * $Id: poolmgr.c,v 1.225 2002/10/01 09:23:38 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.224 $ $Date: 2002/10/01 06:57:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.225 $ $Date: 2002/10/01 09:23:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -88,6 +88,7 @@ extern struct stgpath_entry *stps;	/* start of stage path catalog */
 extern int maxfds;
 extern int reqid;
 extern int stglogit _PROTO(());
+extern int stgmiglogit _PROTO(());
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int *, int, ...));
@@ -219,6 +220,14 @@ extern int create_dir _PROTO((char *, uid_t, gid_t, mode_t));
 signed64 get_stageout_retenp _PROTO((struct stgcat_entry *));
 signed64 get_stagealloc_retenp _PROTO((struct stgcat_entry *));
 signed64 get_put_failed_retenp _PROTO((struct stgcat_entry *));
+
+signed64 get_stageout_retenp_raw _PROTO((struct stgcat_entry *));
+signed64 get_stagealloc_retenp_raw _PROTO((struct stgcat_entry *));
+signed64 get_put_failed_retenp_raw _PROTO((struct stgcat_entry *));
+
+int have_at_least_one_stageout_retenp_raw _PROTO(());
+int have_at_least_one_stagealloc_retenp_raw _PROTO(());
+int have_at_least_one_put_failed_retenp_raw _PROTO(());
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -5183,10 +5192,27 @@ void check_expired() {
 	struct stgcat_entry *stcp;
 	char *func = "check_expired";
 	int fork_pid;
-
+	int have_stagealloc_retenp;
+	int have_stageout_retenp;
+	
     /* We do NOT loop if there is nothing to check */
     if ((nbstageout <= 0) && (nbstagealloc <= 0)) return;
 
+	have_stagealloc_retenp = have_at_least_one_stagealloc_retenp_raw();
+	have_stageout_retenp = have_at_least_one_stageout_retenp_raw();
+
+	if (nbstageout <= 0) {
+		/* This mean that we are here only because of nbstagealloc > 0 */
+		/* Is there any pool that gives a retention period > 0 for them ? */
+		if (have_stagealloc_retenp < 0) return;
+	}
+	
+	if (nbstagealloc <= 0) {
+		/* This mean that we are here only because of nbstageout > 0 */
+		/* Is there any pool that gives a retention period > 0 for them ? */
+		if (have_stageout_retenp < 0) return;
+	}
+	
 	thistime = time(NULL);
 
 	for (stcp = stcs; stcp < stce; stcp++) {
@@ -5196,14 +5222,16 @@ void check_expired() {
 		if (stcp->reqid == 0) break;
 		if ((stcp->status != STAGEOUT) && (stcp->status != STAGEALLOC)) continue;
 		if (stcp->filler[0] == 'Z') continue; /* Flag to prevent another stageclr */
-		if (stcp->a_time > thistime) continue;
+		if (stcp->a_time > thistime) continue; /* We will overflow */
 		if (stcp->status == STAGEOUT) {
-			if ((thisretenp = get_stageout_retenp(stcp)) < 0) continue;
+			if (have_stageout_retenp < 0) continue; /* No retenp in any pool */
+			if ((thisretenp = get_stageout_retenp_raw(stcp)) <= 0) continue;
 		}
 		if (stcp->status == STAGEALLOC) {
-			if ((thisretenp = get_stagealloc_retenp(stcp)) < 0) continue;
+			if (have_stagealloc_retenp < 0) continue; /* No retenp in any pool */
+			if ((thisretenp = get_stagealloc_retenp_raw(stcp)) <= 0) continue;
 		}
-		if ((thistime - stcp->a_time) <= thisretenp) continue;
+		if ((thistime - stcp->a_time) <= thisretenp) continue; /* Not expired */
 
 		/* Generate a stageclr on this internal path */
 		if ((fork_pid = fork()) < 0) {
@@ -5972,4 +6000,76 @@ signed64 get_put_failed_retenp(stcp)
 		if (strcmp (stcp->poolname, pool_p->name) == 0) 
 			return((signed64) pool_p->put_failed_retenp);
 	return ((signed64) -1);
+}
+
+signed64 get_stageout_retenp_raw(stcp)
+	struct stgcat_entry *stcp;
+{
+	int i;
+	struct pool *pool_p;
+
+	if (nbpool == 0) return (-1);
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+		if (strcmp (stcp->poolname, pool_p->name) == 0) 
+			return((signed64) pool_p->stageout_retenp);
+	return ((signed64) -1);
+}
+
+signed64 get_stagealloc_retenp_raw(stcp)
+	struct stgcat_entry *stcp;
+{
+	int i;
+	struct pool *pool_p;
+
+	if (nbpool == 0) return (-1);
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+		if (strcmp (stcp->poolname, pool_p->name) == 0) 
+			return((signed64) pool_p->stagealloc_retenp);
+	return ((signed64) -1);
+}
+
+signed64 get_put_failed_retenp_raw(stcp)
+	struct stgcat_entry *stcp;
+{
+	int i;
+	struct pool *pool_p;
+
+	if (nbpool == 0) return (-1);
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+		if (strcmp (stcp->poolname, pool_p->name) == 0) 
+			return((signed64) pool_p->put_failed_retenp);
+	return ((signed64) -1);
+}
+
+int have_at_least_one_stageout_retenp_raw()
+{
+	int i;
+	struct pool *pool_p;
+
+	if (nbpool == 0) return (-1);
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+		if (pool_p->stageout_retenp > 0) return(0);
+	return (-1);
+}
+
+int have_at_least_one_stagealloc_retenp_raw()
+{
+	int i;
+	struct pool *pool_p;
+
+	if (nbpool == 0) return (-1);
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+		if (pool_p->stagealloc_retenp > 0) return(0);
+	return (-1);
+}
+
+int have_at_least_one_put_failed_retenp_raw()
+{
+	int i;
+	struct pool *pool_p;
+
+	if (nbpool == 0) return (-1);
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+		if (pool_p->put_failed_retenp > 0) return(0);
+	return (-1);
 }
