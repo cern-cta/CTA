@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.57 2000/09/02 06:29:28 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.58 2000/09/02 08:14:17 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.57 $ $Date: 2000/09/02 06:29:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.58 $ $Date: 2000/09/02 08:14:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1327,7 +1327,7 @@ delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
 								 "rfio_unlink", rfio_serror());
 			}
 		} else if (stcp->t_or_d == 'h') {
-			if (Cns_unlink (stcp->u1.h.xfile) != 0) {
+			if (Cns_unlink (stcp->u1.h.xfile) == 0) {
 				stglogit (func, STG95, stcp->u1.h.xfile, by);
 			} else {
 				sendrep (rpfd, RTCOPY_OUT, STG02, stcp->u1.h.xfile,
