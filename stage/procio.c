@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.15 2000/03/23 01:41:18 jdurand Exp $
+ * $Id: procio.c,v 1.16 2000/03/24 13:19:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.15 $ $Date: 2000/03/23 01:41:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.16 $ $Date: 2000/03/24 13:19:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -401,8 +401,6 @@ void procioreq(req_type, req_data, clienthost)
 
 	/* setting defaults */
 
-	if (stgreq.t_or_d != 't')
-		Aflag = 0;
 	if (concat_off)
 		Aflag = 1;	/* force deferred space allocation */
 	if (req_type == STAGEIN && stgreq.t_or_d == 'm' && ! size)
@@ -516,39 +514,6 @@ void procioreq(req_type, req_data, clienthost)
 		if (Uflag && nbdskf == 2)
 			Upluspath = 1;
 	}
-
-	/* Fetching HSM file size */
-
-	/* 
-	 * Moved to the stager
-	 *
-	 if (req_type == STAGEIN && stgreq.t_or_d == 'm' && !size) {
-	 if (rfio_stat (stgreq.u1.m.xfile, &filemig_stat) < 0) {
-	 sendrep (rpfd, MSG_ERR, STG02, stgreq.u1.m.xfile,
-	 "rfio_stat", rfio_serror());
-	 c = USERR;
-	 goto reply;
-	 }
-	 sprintf (filemig_size, "%d", (int) ((filemig_stat.st_size/(1024*1024)) + 1));
-	 size = filemig_size;
-	 }
-	*/
-
-	/* Overwriting an existing HSM file is not allowed */
-
-	/* Moved to the stager */
-	/*
-	if ((req_type == STAGEOUT || req_type == STAGEWRT) && stgreq.t_or_d == 'm') {
-			for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
-				if (rfio_stat (hsmfiles[ihsmfiles], &filemig_stat) == 0) {
-					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles],
-									 "rfio_stat", "file already exists");
-					c = USERR;
-					goto reply;
-				}
-			}
-		}
-	*/
 
 	/* building catalog entries */
 
