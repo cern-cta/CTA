@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: initlabel.c,v $ $Revision: 1.3 $ $Date: 2000/01/09 17:42:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: initlabel.c,v $ $Revision: 1.4 $ $Date: 2000/01/25 13:05:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -64,7 +64,7 @@ int flags;
 	if (path) {
 		for (i = 0, dlip = devlblinfop; i < nb_rsvd_resources; i++, dlip++)
 			if (strcmp (dlip->path, path) == 0) break;
-		if (flags == TPRLS_KEEP_RSV) {
+		if (flags & TPRLS_KEEP_RSV) {
 			memset (dlip, '\0', sizeof(struct devlblinfo));
 		} else {
 			nb_rsvd_resources--;
@@ -73,7 +73,7 @@ int flags;
 			}
 		}
 	}
-	if (flags == TPRLS_ALL || nb_rsvd_resources == 0)
+	if ((flags & TPRLS_ALL) || nb_rsvd_resources == 0)
 		free (devlblinfop);
 }
 
