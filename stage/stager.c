@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.20 2000/03/30 09:54:08 jdurand Exp $
+ * $Id: stager.c,v 1.21 2000/03/30 10:01:50 jdurand Exp $
  */
 
 /*
@@ -11,7 +11,7 @@
 /* #define SKIP_FILEREQ_MAXSIZE */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.20 $ $Date: 2000/03/30 09:54:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.21 $ $Date: 2000/03/30 10:01:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -335,6 +335,7 @@ char *hsmpath(stcp)
 		if (strstr(host_hsm,"hpss") != host_hsm) {
 			/* It is an explicit and valid castor nameserver : the API will be able */
 			/* to connect directly to this host. No need to do a putenv ourself. */
+			end_host_hsm[0] = save_char;
 			return(stcp->u1.m.xfile);
 			/*
 #ifdef STAGER_DEBUG
