@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2000 by CERN/IT/PDP/DM
+ * Copyright (C) 2000-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.13 $ $Date: 2001/03/13 07:17:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.14 $ $Date: 2001/05/08 06:08:32 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlisttape - query a given volume or list all existing tapes */
@@ -154,14 +154,14 @@ int xflag;
 	time_t ltime;
 	char p_stat = '\0';
 	struct tm *tm;
-	char tmpbuf[8];
+	char tmpbuf[9];
 	u_signed64 u64;
 
 	u64 = ((u_signed64) free_space) * 1024;
 	printf ("%-6s %-6s %-6s %-8s %-2s ",
 	    vid, vsn, dgn, density, lbltype);
 	if (! xflag) {
-		printf ("%-15s %-7sB ", pool_name, u64tostru (u64, tmpbuf, 7));
+		printf ("%-15s %-8sB ", pool_name, u64tostru (u64, tmpbuf, 8));
 		ltime = (wtime < rtime) ? rtime : wtime;
 		if (ltime) {
 			tm = localtime (&ltime);
