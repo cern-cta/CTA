@@ -1,35 +1,15 @@
 /*
- * $Id: vdqm_PoolOp.c,v 1.5 1999/09/02 15:21:49 obarring Exp $
- * $Log: vdqm_PoolOp.c,v $
- * Revision 1.5  1999/09/02 15:21:49  obarring
- * Add osdep.h because of new u_signed64 decl. in vdqm.h
- *
- * Revision 1.4  1999/09/01 15:09:59  obarring
- * Fix (again) sccsid string
- *
- * Revision 1.3  1999/09/01 15:09:23  obarring
- * Fix sccsid string
- *
- * Revision 1.2  1999/07/29 09:36:15  obarring
- * Replace TABs with 4 SPACEs
- *
- * Revision 1.1  1999/07/27 09:20:47  obarring
- * First version
- *
- */
-
-/*
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
  */
 
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: vdqm_PoolOp.c,v $ $Revision: 1.6 $ $Date: 1999/09/27 15:23:47 $ CERN IT-PDP/DM Olof Barring";
+#endif /* not lint */
+
 /*
  * vdqm_PoolOp.c - Assign a thread and dispatch request (server only).
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$Id: vdqm_PoolOp.c,v 1.5 1999/09/02 15:21:49 obarring Exp $";
-#endif /* not lint */
 
 #if defined(_WIN32)
 #include <winsock2.h>    /* Needed for SOCKET definition */
@@ -37,18 +17,13 @@ static char sccsid[] = "@(#)$Id: vdqm_PoolOp.c,v 1.5 1999/09/02 15:21:49 obarrin
 #include <stdlib.h>
 #include <errno.h>
 #include <Castor_limits.h>
+#include <serrno.h>
 #include <osdep.h>
 #include <net.h>
 #include <log.h>
 #include <vdqm_constants.h>
 #include <vdqm.h>
 #include <Cpool_api.h>
-
-#if !defined(linux)
-extern char *sys_errlist[];
-#else /* linux */
-#include <stdio.h>   /* Contains definition of sys_errlist[] */
-#endif /* linux */
 
 int vdqm_GetPool(int poolID, vdqmnw_t *nw, vdqmnw_t nwtable[]) {
     extern void *vdqm_ProcReq(void *);
@@ -67,6 +42,9 @@ int vdqm_GetPool(int poolID, vdqmnw_t *nw, vdqmnw_t nwtable[]) {
     log(LOG_DEBUG,"vdqm_GetPool(): next thread index is %d, nw=0x%x\n",
         rc,tmpnw);
     rc = Cpool_assign(poolID,vdqm_ProcReq,(void *)tmpnw,-1);
+    if ( rc == -1 ) {
+      log(LOG_ERR,"vdqm_GetPool() Cpool_assign(): %s\n",ssterror(serrno));
+    }
     return(rc);
 }
 int vdqm_ReturnPool(vdqmnw_t *nw) {
