@@ -317,7 +317,6 @@ void castor::db::ora::OraCuuidCnv::updateObj(castor::IObject* obj,
     content.clock_seq_low = rset->getInt(5);
     memcpy(content.node, rset->getString(6).data(), 6*sizeof(BYTE));
     object->setContent(content);
-    object->setId(rset->getInt(7));
     alreadyDone[object->id()] = object;
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
