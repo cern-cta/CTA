@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.26 2002/05/23 15:18:56 jdurand Exp $
+ * $Id: stagestat.c,v 1.27 2002/05/23 17:02:47 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.26 $ $Date: 2002/05/23 15:18:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.27 $ $Date: 2002/05/23 17:02:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -168,7 +168,7 @@ char *Dflag = NULL;
 char *Mflag = NULL;
 char *Hflag = NULL;
 int use_c_time = 0;
-int all_c_time = 0;
+int all_stageclrs = 0;
 
 int main(argc, argv)
 	int argc;
@@ -212,7 +212,7 @@ int main(argc, argv)
 	while ((c = Cgetopt (argc, argv, "acdD:e:f:hH:M:p:r:S:s:T:v")) != -1) {
 		switch (c) {
 		case 'a':
-			all_c_time++;
+			all_stageclrs++;
 			break;
 		case 'c':
 			use_c_time++;
@@ -820,7 +820,7 @@ void enter_fils_details (rp, accthdr)
 		 (rp->exitcode == 197)
 			)
 		) {
-		frecord->last_stgin = accthdr.timestamp;
+		frecord->last_stgin = (use_c_time && rp->u2.s.c_time > 0) ? rp->u2.s.c_time : accthdr.timestamp;
 	}
 
 	if (rp->retryn == 0) {
@@ -1100,17 +1100,16 @@ void print_fdetails (frecord)
 	/* only.  If the file has not been garbage collected, then the average life */
 	/* is calculated using the user cleared information */
 
+	
 	if (frecord->num_periods_gc > 0) 
 		avg = (frecord->total_stgin_gc / 3600.0) / frecord->num_periods_gc;
-	else if (frecord->num_periods_uc > 0)
-		avg = (frecord->total_stgin_uc / 3600.0) / frecord->num_periods_uc;
-	else avg = 0.0;
+	if (all_stageclrs && frecord->num_periods_uc > 0)
+		avg += (frecord->total_stgin_uc / 3600.0) / frecord->num_periods_uc;
 
 	if (frecord->num_periods_gc2 > 0) 
 		avg2 = (frecord->total_stgin_gc2 / 3600.0) / frecord->num_periods_gc2;
-	else if (frecord->num_periods_uc2 > 0)
-		avg2 = (frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2;
-	else avg2 = 0.0;
+	if (all_stageclrs && frecord->num_periods_uc2 > 0)
+		avg2 += (frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2;
 
 	if (use_c_time) {
 		if ((frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0) ||
@@ -1264,15 +1263,13 @@ void print_ddetails (frecord)
 
 	if (frecord->num_periods_gc > 0) 
 		avg = (frecord->total_stgin_gc / 3600.0) / frecord->num_periods_gc;
-	else if (frecord->num_periods_uc > 0)
-		avg = (frecord->total_stgin_uc / 3600.0) / frecord->num_periods_uc;
-	else avg = 0.0;
+	if (all_stageclrs && frecord->num_periods_uc > 0)
+		avg += (frecord->total_stgin_uc / 3600.0) / frecord->num_periods_uc;
 
 	if (frecord->num_periods_gc2 > 0) 
 		avg2 = (frecord->total_stgin_gc2 / 3600.0) / frecord->num_periods_gc2;
-	else if (frecord->num_periods_uc2 > 0)
-		avg2 = (frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2;
-	else avg2 = 0.0;
+	if (all_stageclrs && frecord->num_periods_uc2 > 0)
+		avg2 += (frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2;
 
 	if (use_c_time) {
 		if ((frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0) ||
@@ -1343,20 +1340,18 @@ void print_mdetails (frecord)
 
 	/* Calculate the average life time of the file. If the file has been garbage */
 	/* collected then average life is calculated using the garbage collected info */
-	/* only.  If the file has not been garbage collected, then the average life */
-	/* is calculated using the user cleared information */
+	/* only.  If the file has been also cleared by user then total average life */
+	/* is computed if all_stageclrs is in action */
 
 	if (frecord->num_periods_gc > 0) 
 		avg = (frecord->total_stgin_gc / 3600.0) / frecord->num_periods_gc;
-	else if (frecord->num_periods_uc > 0)
-		avg = (frecord->total_stgin_uc / 3600.0) / frecord->num_periods_uc;
-	else avg = 0.0;
+	if (all_stageclrs && frecord->num_periods_uc > 0)
+		avg += (frecord->total_stgin_uc / 3600.0) / frecord->num_periods_uc;
 
 	if (frecord->num_periods_gc2 > 0) 
 		avg2 = (frecord->total_stgin_gc2 / 3600.0) / frecord->num_periods_gc2;
-	else if (frecord->num_periods_uc2 > 0)
-		avg2 = (frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2;
-	else avg2 = 0.0;
+	if (all_stageclrs && frecord->num_periods_uc2 > 0)
+		avg2 += (frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2;
 
 	if (use_c_time) {
 		if ((frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0) ||
@@ -1431,15 +1426,13 @@ void print_hdetails (frecord)
 
 	if (frecord->num_periods_gc > 0) 
 		avg = (frecord->total_stgin_gc / 3600.0) / frecord->num_periods_gc;
-	else if (frecord->num_periods_uc > 0)
-		avg = (frecord->total_stgin_uc / 3600.0) / frecord->num_periods_uc;
-	else avg = 0.0;
+	if (all_stageclrs && frecord->num_periods_uc > 0)
+		avg += (frecord->total_stgin_uc / 3600.0) / frecord->num_periods_uc;
 
 	if (frecord->num_periods_gc2 > 0) 
 		avg2 = (frecord->total_stgin_gc2 / 3600.0) / frecord->num_periods_gc2;
-	else if (frecord->num_periods_uc2 > 0)
-		avg2 = (frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2;
-	else avg2 = 0.0;
+	if (all_stageclrs && frecord->num_periods_uc2 > 0)
+		avg2 += (frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2;
 
 	if (use_c_time) {
 		if ((frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0) ||
@@ -1497,7 +1490,8 @@ void sort_poolinf ()
 					if (frecord->num_periods_gc2>0 && frecord->total_stgin_gc2 > 0) {
 						pf->total_stged_files2++;
 						pf->total_avg_life2 += ((frecord->total_stgin_gc2 / 3600.0) / frecord->num_periods_gc2);
-					} else if ((all_c_time) && (frecord->num_periods_uc2>0 && frecord->total_stgin_uc2 > 0)) {
+					}
+					if ((all_stageclrs) && (frecord->num_periods_uc2>0 && frecord->total_stgin_uc2 > 0)) {
 						pf->total_stged_files2++;
 						pf->total_avg_life2 += ((frecord->total_stgin_uc2 / 3600.0) / frecord->num_periods_uc2);
 					}
@@ -1505,7 +1499,8 @@ void sort_poolinf ()
 					if (frecord->num_periods_gc>0 && frecord->total_stgin_gc > 0) {
 						pf->total_stged_files++;
 						pf->total_avg_life += ((frecord->total_stgin_gc / 3600.0) / frecord->num_periods_gc);
-					} else if ((all_c_time) && (frecord->num_periods_uc>0 && frecord->total_stgin_uc > 0)) {
+					}
+					if ((all_stageclrs) && (frecord->num_periods_uc>0 && frecord->total_stgin_uc > 0)) {
 						pf->total_stged_files++;
 						pf->total_avg_life += ((frecord->total_stgin_uc / 3600.0) / frecord->num_periods_uc);
 					}
@@ -1593,20 +1588,18 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 						if (frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0)
 							favg[fi].avg_life2 = (frecord->total_stgin_gc2 / 3600.0)
 								/ frecord->num_periods_gc2;
-						else if (frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
+						if (all_stageclrs && frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
 								 > 0)
-							favg[fi].avg_life2 = (frecord->total_stgin_uc2 / 3600.0)
+							favg[fi].avg_life2 += (frecord->total_stgin_uc2 / 3600.0)
 								/ frecord->num_periods_uc2;
-						else favg[fi].avg_life2 = 0.0;
 					} else {
 						if (frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0)
 							favg[fi].avg_life = (frecord->total_stgin_gc / 3600.0)
 								/ frecord->num_periods_gc;
-						else if (frecord->num_periods_uc > 0 && frecord->total_stgin_uc
+						if (all_stageclrs && frecord->num_periods_uc > 0 && frecord->total_stgin_uc
 								 > 0)
-							favg[fi].avg_life = (frecord->total_stgin_uc / 3600.0)
+							favg[fi].avg_life += (frecord->total_stgin_uc / 3600.0)
 								/ frecord->num_periods_uc;
-						else favg[fi].avg_life = 0.0;
 					}
 				}
 				fi++;
@@ -1623,20 +1616,18 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 						if (frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0)
 							davg[di].avg_life2 = (frecord->total_stgin_gc2 / 3600.0)
 								/ frecord->num_periods_gc2;
-						else if (frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
+						if (all_stageclrs && frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
 								 > 0)
-							davg[di].avg_life2 = (frecord->total_stgin_uc2 / 3600.0)
+							davg[di].avg_life2 += (frecord->total_stgin_uc2 / 3600.0)
 								/ frecord->num_periods_uc2;
-						else davg[di].avg_life2 = 0.0;
 					} else {
 						if (frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0)
 							davg[di].avg_life = (frecord->total_stgin_gc / 3600.0)
 								/ frecord->num_periods_gc;
-						else if (frecord->num_periods_uc > 0 && frecord->total_stgin_uc
+						if (all_stageclrs && frecord->num_periods_uc > 0 && frecord->total_stgin_uc
 								 > 0)
-							davg[di].avg_life = (frecord->total_stgin_uc / 3600.0)
+							davg[di].avg_life += (frecord->total_stgin_uc / 3600.0)
 								/ frecord->num_periods_uc;
-						else davg[di].avg_life = 0.0;
 					}
 				}
 				di++;
@@ -1653,20 +1644,18 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 						if (frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0)
 							mavg[mi].avg_life2 = (frecord->total_stgin_gc2 / 3600.0)
 								/ frecord->num_periods_gc2;
-						else if (frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
+						if (all_stageclrs && frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
 								 > 0)
-							mavg[mi].avg_life2 = (frecord->total_stgin_uc2 / 3600.0)
+							mavg[mi].avg_life2 += (frecord->total_stgin_uc2 / 3600.0)
 								/ frecord->num_periods_uc2;
-						else mavg[mi].avg_life2 = 0.0;
 					} else {
 						if (frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0)
 							mavg[mi].avg_life = (frecord->total_stgin_gc / 3600.0)
 								/ frecord->num_periods_gc;
-						else if (frecord->num_periods_uc > 0 && frecord->total_stgin_uc
+						if (all_stageclrs && frecord->num_periods_uc > 0 && frecord->total_stgin_uc
 								 > 0)
-							mavg[mi].avg_life = (frecord->total_stgin_uc / 3600.0)
+							mavg[mi].avg_life += (frecord->total_stgin_uc / 3600.0)
 								/ frecord->num_periods_uc;
-						else mavg[mi].avg_life = 0.0;
 					}
 				}
 				mi++;
@@ -1683,20 +1672,18 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 						if (frecord->num_periods_gc2 > 0 && frecord->total_stgin_gc2 > 0)
 							havg[hi].avg_life2 = (frecord->total_stgin_gc2 / 3600.0)
 								/ frecord->num_periods_gc2;
-						else if (frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
+						if (all_stageclrs && frecord->num_periods_uc2 > 0 && frecord->total_stgin_uc2
 								 > 0)
-							havg[hi].avg_life2 = (frecord->total_stgin_uc2 / 3600.0)
+							havg[hi].avg_life2 += (frecord->total_stgin_uc2 / 3600.0)
 								/ frecord->num_periods_uc2;
-						else havg[hi].avg_life2 = 0.0;
 					} else {
 						if (frecord->num_periods_gc > 0 && frecord->total_stgin_gc > 0)
 							havg[hi].avg_life = (frecord->total_stgin_gc / 3600.0)
 								/ frecord->num_periods_gc;
-						else if (frecord->num_periods_uc > 0 && frecord->total_stgin_uc
+						if (all_stageclrs && frecord->num_periods_uc > 0 && frecord->total_stgin_uc
 								 > 0)
-							havg[hi].avg_life = (frecord->total_stgin_uc / 3600.0)
+							havg[hi].avg_life += (frecord->total_stgin_uc / 3600.0)
 								/ frecord->num_periods_uc;
-						else havg[hi].avg_life = 0.0;
 					}
 				}
 				hi++;
@@ -1756,7 +1743,7 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 		if (use_c_time) {
 			if (pf->total_avg_life2 > 0.0 && pf->total_stged_files2 > 0)
 				printf ("\n Average lifetime of staged and then garbaged%s file using creation time \t:\t %8.2f hours\n",
-						(all_c_time ? "/cleared_by_user" : ""),
+						(all_stageclrs ? " or cleared_by_user" : ""),
 						(float) (pf->total_avg_life2/pf->total_stged_files2));
 		} else {
 			if (pf->total_avg_life > 0.0 && pf->total_stged_files > 0)
