@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Date: 2001/11/07 12:12:14 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Date: 2001/11/07 12:13:14 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -14,7 +14,7 @@ LIBS = -L../../lib -lshift $(ADNSLIB) -lnsl
 LIBS = -L../../lib -lshift -lsocket -lnsl
 #else
 #if defined(__alpha) && defined(__osf__)
-LIBS = -no_so -L../lib -lshift -so_archive
+LIBS = -no_so -L../../lib -lshift -so_archive
 #else
 #if _WIN32
 LIBS = ..\..\lib\shift.lib wsock32.lib advapi32.lib
