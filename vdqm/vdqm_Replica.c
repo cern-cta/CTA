@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.7 $ $Date: 2000/03/09 12:28:04 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_Replica.c,v $ $Revision: 1.8 $ $Date: 2000/03/10 15:59:23 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -30,6 +30,11 @@ typedef void * regex_t
 #include <vdqm_constants.h>
 #include <vdqm.h>
 
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+#define strtok(X,Y) strtok_r(X,Y,&last)
+#endif /* _REENTRANT || _THREAD_SAFE */
+
+
 static int success = 0;
 static int failure = -1;
 static int replication_ON = 0;
@@ -53,16 +58,18 @@ static vdqmReplicaList_t *ReplicaList = NULL;
 static int nb_Replicas = 0;
 void *ReplicaList_lock = NULL;
 
-static struct vdqmReplicationPipe {
-    void *lock;
-    int nb_piped;
-    struct Pipe {
+typedef struct ReqPipe {
        int update;        /* 0=drv only, 1=vol only, 2=both drv&vol */
        vdqmHdr_t drvhdr;
        vdqmDrvReq_t drv;
        vdqmHdr_t volhdr;
-       vdqmVolReq_t vol; 
-    } pipe[VDQM_REPLICA_PIPELEN];
+       vdqmVolReq_t vol;
+} ReqPipe_t;
+
+static struct vdqmReplicationPipe {
+    void *lock;
+    int nb_piped;
+    ReqPipe_t *pipe;
 } ReplicationPipe;
 
 /*
@@ -413,6 +420,12 @@ static int InitReplicaList() {
                 sstrerror(serrno));
             return(-1);
         }
+    }
+    ReplicationPipe.pipe = (ReqPipe_t *)calloc(1,VDQM_REPLICA_PIPELEN*sizeof(ReqPipe_t));
+    if ( ReplicationPipe.pipe == NULL ) {
+        log(LOG_ERR,"InitReplicaList() calloc(): %s\n",
+            sstrerror(errno));
+        return(-1);
     }
     return(0);
 }
@@ -773,7 +786,7 @@ void *vdqm_ReplicationThread(void *arg) {
     } /* for (;;) */
 }
 
-void *vdqm_ReplicaListenThread(char *arg) {
+void *vdqm_ReplicaListenThread(void *arg) {
     int rc, retry_time;
     int *rc_p = NULL;
     vdqmHdr_t hdr;
@@ -791,7 +804,7 @@ void *vdqm_ReplicaListenThread(char *arg) {
     retry_time = 5;
     rc_p = &success;
 
-    strcpy(primary_host,arg);
+    strcpy(primary_host,(char *)arg);
     log(LOG_INFO,"vdqm_ReplicaListenThread() using primary host %s\n",
         primary_host);
 
@@ -872,6 +885,7 @@ int vdqm_StartReplicaThread() {
     char *p, *q, l_hostname[CA_MAXHOSTNAMELEN+1];
     char *primary_host = NULL;
     char *secondary_host = NULL;
+    char *last = NULL;
 
     /*
      * Determine whether we are a primary server or not.
@@ -943,7 +957,7 @@ int vdqm_StartReplicaThread() {
         log(LOG_INFO,"vdqm_StartReplicaThread() trying to get queues from %s\n",
             secondary_host);
         retry_replication = hold = 1;
-        rc_p = (int *)vdqm_ReplicaListenThread(secondary_host);
+        rc_p = (int *)vdqm_ReplicaListenThread((void *)secondary_host);
         if ( rc_p == NULL || *rc_p == failure ) continue;
         /*
          * Repeat request to force secondary server to re-enter replication mode
