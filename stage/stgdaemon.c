@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.36 2000/05/19 16:14:52 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.37 2000/05/23 09:15:35 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.36 $ $Date: 2000/05/19 16:14:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.37 $ $Date: 2000/05/23 09:15:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -165,7 +165,7 @@ main(argc,argv)
 	int msglen;
 	int on = 1;	/* for REUSEADDR */
 	char *rbp;
-	char req_data[REQBUFSZ-3*LONGSIZE];
+	char *req_data = NULL;      /* This initialization to NULL is important */
 	char req_hdr[3*LONGSIZE];
 	int req_type;
 	int rqfd;
@@ -532,6 +532,14 @@ main(argc,argv)
 				unmarshall_LONG (rbp, msglen);
 				rpfd = rqfd;
 				l = msglen - sizeof(req_hdr);
+				if (req_data != NULL) {
+					free(req_data);
+				}
+				if ((req_data = (char *) malloc((size_t) l)) == NULL) {
+					sendrep(rpfd, MSG_ERR, "STG45 - malloc error (%s)\n", strerror(errno));
+					close(rqfd);
+					goto endreq;
+				}
 				if ((read_size = netread_timeout (rqfd, req_data, l, STGTIMEOUT))) {
 					if (req_type == STAGEIN || req_type == STAGEOUT || req_type == STAGEALLOC ||
 							req_type == STAGEWRT || req_type == STAGEPUT)
