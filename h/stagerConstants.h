@@ -1,5 +1,5 @@
 /*
- * $Id: stagerConstants.h,v 1.6 2004/10/25 11:00:42 jdurand Exp $
+ * $Id: stagerConstants.h,v 1.7 2004/10/25 13:15:13 jdurand Exp $
  */
 
 #ifndef __stagerConstants_h
@@ -10,6 +10,7 @@
 #define STAGER_DEFAULT_TIMEOUT      20                   /* Default send/recv timeout */
 #define STAGER_DEFAULT_SECURE_PORT 5515                  /* Default secure port number */
 #define STAGER_DEFAULT_PORT        5015                  /* Default port number */
+#define STAGER_DEFAULT_SECURE        0                   /* Default secure mode - to be 1 in the future */
 #define STAGER_DEFAULT_DEBUG         0                   /* Default debug mode (!= 0 means yes) */
 #define STAGER_DEFAULT_TRACE         0                   /* Default trace mode (!= 0 means yes) */
 #define STAGER_DEFAULT_DB_NBTHREAD   5                   /* Default number of db threads */
@@ -22,6 +23,7 @@
 
 #define STAGER_CLASS_TIMEOUT      "TIMEOUT"              /* Sub-label in config file for timeout */
 #define STAGER_CLASS_SECURE_PORT  "SPORT"                /* Sub-label in config file for secure port */
+#define STAGER_CLASS_SECURE       "SECURE"               /* Sub-label in config file for secure mode */
 #define STAGER_CLASS_PORT         "PORT"                 /* Sub-label in config file for port */
 #define STAGER_CLASS_DEBUG        "DEBUG"                /* Sub-label in config file for debug */
 #define STAGER_CLASS_TRACE        "TRACE"                /* Sub-label in config file for trace */
@@ -33,6 +35,7 @@
 
 #define STAGER_ENV_TIMEOUT        "STAGER_TIMEOUT"       /* Environment variable for timeout */
 #define STAGER_ENV_SECURE_PORT    "STAGER_SPORT"         /* Environment variable for secure port */
+#define STAGER_ENV_SECURE         "STAGER_SECURE"        /* Environment variable for secure stager */
 #define STAGER_ENV_PORT           "STAGER_PORT"          /* Environment variable for port */
 #define STAGER_ENV_DEBUG          "STAGER_DEBUG"         /* Environment variable for debug */
 #define STAGER_ENV_TRACE          "STAGER_TRACE"         /* Environment variable for trace */
