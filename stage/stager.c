@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.104 2000/11/29 07:16:52 jdurand Exp $
+ * $Id: stager.c,v 1.105 2000/11/29 18:51:04 jdurand Exp $
  */
 
 /*
@@ -19,7 +19,7 @@
 /* -DTAPESRVR=\"your_tape_server_hostname\" */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.104 $ $Date: 2000/11/29 07:16:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.105 $ $Date: 2000/11/29 18:51:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -2525,9 +2525,6 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			case STAGEWRT:
 			case STAGEPUT:
 				/* This is an hsm write request */
-				if (stcp->u1.t.filstat == 'o') {
-					(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.check_fid = CHECK_FILE;
-				}
 				(*rtcpcreqs_in)[i]->tapereq.mode            = WRITE_ENABLE;
 				break;
 			default:
@@ -3318,5 +3315,5 @@ int rtcpd_PrintCmd(tape)
 #endif /* STAGER_DEBUG */
 
 /*
- * Last Update: "Wednesday 29 November, 2000 at 08:14:24 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Wednesday 29 November, 2000 at 19:48:35 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
