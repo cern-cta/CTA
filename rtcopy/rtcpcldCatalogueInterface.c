@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.46 $ $Release$ $Date: 2004/08/20 13:20:40 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.47 $ $Release$ $Date: 2004/08/27 14:21:59 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.46 $ $Release$ $Date: 2004/08/20 13:20:40 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.47 $ $Release$ $Date: 2004/08/27 14:21:59 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1643,7 +1643,6 @@ static int procReqsForVID(
   /*
    * BEGIN Hack: commit all new segment updates
    */
-  (void)getStgSvc(&stgsvc);
   rc = C_Services_commit(*svcs,iAddr);
   /*
    * END Hack: commit all new segment updates
@@ -2020,7 +2019,7 @@ int rtcpcld_setVidWorkerAddress(
                       RTCPCLD_NB_PARAMS+4,
                       "DBSVCCALL",
                       DLF_MSG_PARAM_STR,
-                      "C_Services_updateRep()",
+                      "C_Services_updateRepNoRec()",
                       "DBKEY",
                       DLF_MSG_PARAM_INT,
                       (int)_key,
@@ -2064,7 +2063,7 @@ int rtcpcld_updateVIDFileStatus(
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj;
-  struct Cstager_Tape_t *tapeItem;
+  struct Cstager_Tape_t *tapeItem = NULL;
   struct Cstager_Segment_t **segments, *segmItem;
   struct Cns_fileid fileid;
   char *nsHost;
