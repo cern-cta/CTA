@@ -98,23 +98,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_SvcClass_policy
-  //----------------------------------------------------------------------------
-  int Cstager_SvcClass_policy(castor::stager::SvcClass* instance, const char** var) {
-    *var = instance->policy().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_SvcClass_setPolicy
-  //----------------------------------------------------------------------------
-  int Cstager_SvcClass_setPolicy(castor::stager::SvcClass* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setPolicy(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_SvcClass_nbDrives
   //----------------------------------------------------------------------------
   int Cstager_SvcClass_nbDrives(castor::stager::SvcClass* instance, unsigned int* var) {
@@ -160,6 +143,90 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_SvcClass_setDefaultFileSize(castor::stager::SvcClass* instance, u_signed64 new_var) {
     instance->setDefaultFileSize(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_maxReplicaNb
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_maxReplicaNb(castor::stager::SvcClass* instance, int* var) {
+    *var = instance->maxReplicaNb();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_setMaxReplicaNb
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_setMaxReplicaNb(castor::stager::SvcClass* instance, int new_var) {
+    instance->setMaxReplicaNb(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_replicationPolicy
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_replicationPolicy(castor::stager::SvcClass* instance, const char** var) {
+    *var = instance->replicationPolicy().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_setReplicationPolicy
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_setReplicationPolicy(castor::stager::SvcClass* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setReplicationPolicy(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_gcPolicy
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_gcPolicy(castor::stager::SvcClass* instance, const char** var) {
+    *var = instance->gcPolicy().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_setGcPolicy
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_setGcPolicy(castor::stager::SvcClass* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setGcPolicy(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_migratorPolicy
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_migratorPolicy(castor::stager::SvcClass* instance, const char** var) {
+    *var = instance->migratorPolicy().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_setMigratorPolicy
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_setMigratorPolicy(castor::stager::SvcClass* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setMigratorPolicy(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_recallerPolicy
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_recallerPolicy(castor::stager::SvcClass* instance, const char** var) {
+    *var = instance->recallerPolicy().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_setRecallerPolicy
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_setRecallerPolicy(castor::stager::SvcClass* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setRecallerPolicy(snew_var);
     return 0;
   }
 

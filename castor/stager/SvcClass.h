@@ -88,16 +88,6 @@ int Cstager_SvcClass_clone(struct Cstager_SvcClass_t* instance,
                            struct C_IObject_t* ret);
 
 /**
- * Get the value of policy
- */
-int Cstager_SvcClass_policy(struct Cstager_SvcClass_t* instance, const char** var);
-
-/**
- * Set the value of policy
- */
-int Cstager_SvcClass_setPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
-
-/**
  * Get the value of nbDrives
  * Number of drives to use for this service class. This is the default number, but
  * it could be that occasionnally more drives are used, if a resource is shared with
@@ -138,6 +128,70 @@ int Cstager_SvcClass_defaultFileSize(struct Cstager_SvcClass_t* instance, u_sign
  * explicitely given (ie size given was 0)
  */
 int Cstager_SvcClass_setDefaultFileSize(struct Cstager_SvcClass_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of maxReplicaNb
+ * Maximum number of replicas for a file created with this service class. If 0, the
+ * replication is ruled by the replication policy. If there is none, then 0 means
+ * infinity.
+ */
+int Cstager_SvcClass_maxReplicaNb(struct Cstager_SvcClass_t* instance, int* var);
+
+/**
+ * Set the value of maxReplicaNb
+ * Maximum number of replicas for a file created with this service class. If 0, the
+ * replication is ruled by the replication policy. If there is none, then 0 means
+ * infinity.
+ */
+int Cstager_SvcClass_setMaxReplicaNb(struct Cstager_SvcClass_t* instance, int new_var);
+
+/**
+ * Get the value of replicationPolicy
+ * Policy ruling the replication of files in the diskpools.
+ */
+int Cstager_SvcClass_replicationPolicy(struct Cstager_SvcClass_t* instance, const char** var);
+
+/**
+ * Set the value of replicationPolicy
+ * Policy ruling the replication of files in the diskpools.
+ */
+int Cstager_SvcClass_setReplicationPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
+
+/**
+ * Get the value of gcPolicy
+ * Policy ruling the garbage collection of files
+ */
+int Cstager_SvcClass_gcPolicy(struct Cstager_SvcClass_t* instance, const char** var);
+
+/**
+ * Set the value of gcPolicy
+ * Policy ruling the garbage collection of files
+ */
+int Cstager_SvcClass_setGcPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
+
+/**
+ * Get the value of migratorPolicy
+ * Policy ruling the migration of files.
+ */
+int Cstager_SvcClass_migratorPolicy(struct Cstager_SvcClass_t* instance, const char** var);
+
+/**
+ * Set the value of migratorPolicy
+ * Policy ruling the migration of files.
+ */
+int Cstager_SvcClass_setMigratorPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
+
+/**
+ * Get the value of recallerPolicy
+ * Policy ruling the recall of files.
+ */
+int Cstager_SvcClass_recallerPolicy(struct Cstager_SvcClass_t* instance, const char** var);
+
+/**
+ * Set the value of recallerPolicy
+ * Policy ruling the recall of files.
+ */
+int Cstager_SvcClass_setRecallerPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
 
 /**
  * Get the value of id

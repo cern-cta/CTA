@@ -139,6 +139,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_gcWeight
+       * Weight possibly used by the garbage collector to decide who should be removed.
+       * @return the value of m_gcWeight
+       */
+      double gcWeight() const {
+        return m_gcWeight;
+      }
+
+      /**
+       * Set the value of m_gcWeight
+       * Weight possibly used by the garbage collector to decide who should be removed.
+       * @param new_var the new value of m_gcWeight
+       */
+      void setGcWeight(double new_var) {
+        m_gcWeight = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -240,6 +258,9 @@ namespace castor {
 
       /// The Cuuid identifying the DiskCopy, stored as a human readable string
       std::string m_diskcopyId;
+
+      /// Weight possibly used by the garbage collector to decide who should be removed.
+      double m_gcWeight;
 
       /// The id of this object
       u_signed64 m_id;

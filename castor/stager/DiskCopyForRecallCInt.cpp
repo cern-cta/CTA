@@ -131,6 +131,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_gcWeight
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_gcWeight(castor::stager::DiskCopyForRecall* instance, double* var) {
+    *var = instance->gcWeight();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_setGcWeight
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_setGcWeight(castor::stager::DiskCopyForRecall* instance, double new_var) {
+    instance->setGcWeight(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_DiskCopyForRecall_id
   //----------------------------------------------------------------------------
   int Cstager_DiskCopyForRecall_id(castor::stager::DiskCopyForRecall* instance, u_signed64* var) {

@@ -56,7 +56,7 @@ const castor::ICnvFactory& OraSvcClassCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraSvcClassCnv::s_insertStatementString =
-"INSERT INTO SvcClass (policy, nbDrives, name, defaultFileSize, id) VALUES (:1,:2,:3,:4,ids_seq.nextval) RETURNING id INTO :5";
+"INSERT INTO SvcClass (nbDrives, name, defaultFileSize, maxReplicaNb, replicationPolicy, gcPolicy, migratorPolicy, recallerPolicy, id) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,ids_seq.nextval) RETURNING id INTO :9";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraSvcClassCnv::s_deleteStatementString =
@@ -64,11 +64,11 @@ const std::string castor::db::ora::OraSvcClassCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraSvcClassCnv::s_selectStatementString =
-"SELECT policy, nbDrives, name, defaultFileSize, id FROM SvcClass WHERE id = :1";
+"SELECT nbDrives, name, defaultFileSize, maxReplicaNb, replicationPolicy, gcPolicy, migratorPolicy, recallerPolicy, id FROM SvcClass WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraSvcClassCnv::s_updateStatementString =
-"UPDATE SvcClass SET policy = :1, nbDrives = :2, name = :3, defaultFileSize = :4 WHERE id = :5";
+"UPDATE SvcClass SET nbDrives = :1, name = :2, defaultFileSize = :3, maxReplicaNb = :4, replicationPolicy = :5, gcPolicy = :6, migratorPolicy = :7, recallerPolicy = :8 WHERE id = :9";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraSvcClassCnv::s_storeTypeStatementString =
@@ -452,18 +452,22 @@ void castor::db::ora::OraSvcClassCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(5, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(9, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
-    m_insertStatement->setString(1, obj->policy());
-    m_insertStatement->setInt(2, obj->nbDrives());
-    m_insertStatement->setString(3, obj->name());
-    m_insertStatement->setDouble(4, obj->defaultFileSize());
+    m_insertStatement->setInt(1, obj->nbDrives());
+    m_insertStatement->setString(2, obj->name());
+    m_insertStatement->setDouble(3, obj->defaultFileSize());
+    m_insertStatement->setInt(4, obj->maxReplicaNb());
+    m_insertStatement->setString(5, obj->replicationPolicy());
+    m_insertStatement->setString(6, obj->gcPolicy());
+    m_insertStatement->setString(7, obj->migratorPolicy());
+    m_insertStatement->setString(8, obj->recallerPolicy());
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(5));
+    obj->setId((u_signed64)m_insertStatement->getDouble(9));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -488,10 +492,14 @@ void castor::db::ora::OraSvcClassCnv::createRep(castor::IAddress* address,
                     << "Statement was :" << std::endl
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
-                    << "  policy : " << obj->policy() << std::endl
                     << "  nbDrives : " << obj->nbDrives() << std::endl
                     << "  name : " << obj->name() << std::endl
                     << "  defaultFileSize : " << obj->defaultFileSize() << std::endl
+                    << "  maxReplicaNb : " << obj->maxReplicaNb() << std::endl
+                    << "  replicationPolicy : " << obj->replicationPolicy() << std::endl
+                    << "  gcPolicy : " << obj->gcPolicy() << std::endl
+                    << "  migratorPolicy : " << obj->migratorPolicy() << std::endl
+                    << "  recallerPolicy : " << obj->recallerPolicy() << std::endl
                     << "  id : " << obj->id() << std::endl;
     throw ex;
   }
@@ -514,11 +522,15 @@ void castor::db::ora::OraSvcClassCnv::updateRep(castor::IAddress* address,
       m_updateStatement = createStatement(s_updateStatementString);
     }
     // Update the current object
-    m_updateStatement->setString(1, obj->policy());
-    m_updateStatement->setInt(2, obj->nbDrives());
-    m_updateStatement->setString(3, obj->name());
-    m_updateStatement->setDouble(4, obj->defaultFileSize());
-    m_updateStatement->setDouble(5, obj->id());
+    m_updateStatement->setInt(1, obj->nbDrives());
+    m_updateStatement->setString(2, obj->name());
+    m_updateStatement->setDouble(3, obj->defaultFileSize());
+    m_updateStatement->setInt(4, obj->maxReplicaNb());
+    m_updateStatement->setString(5, obj->replicationPolicy());
+    m_updateStatement->setString(6, obj->gcPolicy());
+    m_updateStatement->setString(7, obj->migratorPolicy());
+    m_updateStatement->setString(8, obj->recallerPolicy());
+    m_updateStatement->setDouble(9, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -617,11 +629,15 @@ castor::IObject* castor::db::ora::OraSvcClassCnv::createObj(castor::IAddress* ad
     // create the new Object
     castor::stager::SvcClass* object = new castor::stager::SvcClass();
     // Now retrieve and set members
-    object->setPolicy(rset->getString(1));
-    object->setNbDrives(rset->getInt(2));
-    object->setName(rset->getString(3));
-    object->setDefaultFileSize((u_signed64)rset->getDouble(4));
-    object->setId((u_signed64)rset->getDouble(5));
+    object->setNbDrives(rset->getInt(1));
+    object->setName(rset->getString(2));
+    object->setDefaultFileSize((u_signed64)rset->getDouble(3));
+    object->setMaxReplicaNb(rset->getInt(4));
+    object->setReplicationPolicy(rset->getString(5));
+    object->setGcPolicy(rset->getString(6));
+    object->setMigratorPolicy(rset->getString(7));
+    object->setRecallerPolicy(rset->getString(8));
+    object->setId((u_signed64)rset->getDouble(9));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -667,11 +683,15 @@ void castor::db::ora::OraSvcClassCnv::updateObj(castor::IObject* obj)
     // Now retrieve and set members
     castor::stager::SvcClass* object = 
       dynamic_cast<castor::stager::SvcClass*>(obj);
-    object->setPolicy(rset->getString(1));
-    object->setNbDrives(rset->getInt(2));
-    object->setName(rset->getString(3));
-    object->setDefaultFileSize((u_signed64)rset->getDouble(4));
-    object->setId((u_signed64)rset->getDouble(5));
+    object->setNbDrives(rset->getInt(1));
+    object->setName(rset->getString(2));
+    object->setDefaultFileSize((u_signed64)rset->getDouble(3));
+    object->setMaxReplicaNb(rset->getInt(4));
+    object->setReplicationPolicy(rset->getString(5));
+    object->setGcPolicy(rset->getString(6));
+    object->setMigratorPolicy(rset->getString(7));
+    object->setRecallerPolicy(rset->getString(8));
+    object->setId((u_signed64)rset->getDouble(9));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

@@ -102,22 +102,6 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
-       * Get the value of m_policy
-       * @return the value of m_policy
-       */
-      std::string policy() const {
-        return m_policy;
-      }
-
-      /**
-       * Set the value of m_policy
-       * @param new_var the new value of m_policy
-       */
-      void setPolicy(std::string new_var) {
-        m_policy = new_var;
-      }
-
-      /**
        * Get the value of m_nbDrives
        * Number of drives to use for this service class. This is the default number, but
        * it could be that occasionnally more drives are used, if a resource is shared with
@@ -175,6 +159,100 @@ namespace castor {
        */
       void setDefaultFileSize(u_signed64 new_var) {
         m_defaultFileSize = new_var;
+      }
+
+      /**
+       * Get the value of m_maxReplicaNb
+       * Maximum number of replicas for a file created with this service class. If 0, the
+       * replication is ruled by the replication policy. If there is none, then 0 means
+       * infinity.
+       * @return the value of m_maxReplicaNb
+       */
+      int maxReplicaNb() const {
+        return m_maxReplicaNb;
+      }
+
+      /**
+       * Set the value of m_maxReplicaNb
+       * Maximum number of replicas for a file created with this service class. If 0, the
+       * replication is ruled by the replication policy. If there is none, then 0 means
+       * infinity.
+       * @param new_var the new value of m_maxReplicaNb
+       */
+      void setMaxReplicaNb(int new_var) {
+        m_maxReplicaNb = new_var;
+      }
+
+      /**
+       * Get the value of m_replicationPolicy
+       * Policy ruling the replication of files in the diskpools.
+       * @return the value of m_replicationPolicy
+       */
+      std::string replicationPolicy() const {
+        return m_replicationPolicy;
+      }
+
+      /**
+       * Set the value of m_replicationPolicy
+       * Policy ruling the replication of files in the diskpools.
+       * @param new_var the new value of m_replicationPolicy
+       */
+      void setReplicationPolicy(std::string new_var) {
+        m_replicationPolicy = new_var;
+      }
+
+      /**
+       * Get the value of m_gcPolicy
+       * Policy ruling the garbage collection of files
+       * @return the value of m_gcPolicy
+       */
+      std::string gcPolicy() const {
+        return m_gcPolicy;
+      }
+
+      /**
+       * Set the value of m_gcPolicy
+       * Policy ruling the garbage collection of files
+       * @param new_var the new value of m_gcPolicy
+       */
+      void setGcPolicy(std::string new_var) {
+        m_gcPolicy = new_var;
+      }
+
+      /**
+       * Get the value of m_migratorPolicy
+       * Policy ruling the migration of files.
+       * @return the value of m_migratorPolicy
+       */
+      std::string migratorPolicy() const {
+        return m_migratorPolicy;
+      }
+
+      /**
+       * Set the value of m_migratorPolicy
+       * Policy ruling the migration of files.
+       * @param new_var the new value of m_migratorPolicy
+       */
+      void setMigratorPolicy(std::string new_var) {
+        m_migratorPolicy = new_var;
+      }
+
+      /**
+       * Get the value of m_recallerPolicy
+       * Policy ruling the recall of files.
+       * @return the value of m_recallerPolicy
+       */
+      std::string recallerPolicy() const {
+        return m_recallerPolicy;
+      }
+
+      /**
+       * Set the value of m_recallerPolicy
+       * Policy ruling the recall of files.
+       * @param new_var the new value of m_recallerPolicy
+       */
+      void setRecallerPolicy(std::string new_var) {
+        m_recallerPolicy = new_var;
       }
 
       /**
@@ -255,8 +333,6 @@ namespace castor {
 
     private:
 
-      std::string m_policy;
-
       /*
        * Number of drives to use for this service class.
        * This is the default number, but it could be that occasionnally more drives are used, if a resource is shared with another service class using more drives
@@ -268,6 +344,21 @@ namespace castor {
 
       /// Default size used for space allocation in the case of a stage put with no size explicitely given (ie size given was 0)
       u_signed64 m_defaultFileSize;
+
+      /// Maximum number of replicas for a file created with this service class. If 0, the replication is ruled by the replication policy. If there is none, then 0 means infinity.
+      int m_maxReplicaNb;
+
+      /// Policy ruling the replication of files in the diskpools.
+      std::string m_replicationPolicy;
+
+      /// Policy ruling the garbage collection of files
+      std::string m_gcPolicy;
+
+      /// Policy ruling the migration of files.
+      std::string m_migratorPolicy;
+
+      /// Policy ruling the recall of files.
+      std::string m_recallerPolicy;
 
       /// The id of this object
       u_signed64 m_id;

@@ -146,7 +146,7 @@ CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR(2048), fileSize INTEGER,
 
 /* SQL statements for type DiskCopy */
 DROP TABLE DiskCopy;
-CREATE TABLE DiskCopy (path VARCHAR(2048), diskcopyId VARCHAR(2048), id INTEGER PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER);
+CREATE TABLE DiskCopy (path VARCHAR(2048), diskcopyId VARCHAR(2048), gcWeight double, id INTEGER PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER);
 
 /* SQL statements for type FileSystem */
 DROP TABLE FileSystem;
@@ -154,7 +154,7 @@ CREATE TABLE FileSystem (free INTEGER, weight float, fsDeviation float, mountPoi
 
 /* SQL statements for type SvcClass */
 DROP TABLE SvcClass;
-CREATE TABLE SvcClass (policy VARCHAR(2048), nbDrives NUMBER, name VARCHAR(2048), defaultFileSize INTEGER, id INTEGER PRIMARY KEY);
+CREATE TABLE SvcClass (nbDrives NUMBER, name VARCHAR(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, replicationPolicy VARCHAR(2048), gcPolicy VARCHAR(2048), migratorPolicy VARCHAR(2048), recallerPolicy VARCHAR(2048), id INTEGER PRIMARY KEY);
 DROP INDEX I_SvcClass2TapePool_Child;
 DROP INDEX I_SvcClass2TapePool_Parent;
 DROP TABLE SvcClass2TapePool;
@@ -499,7 +499,7 @@ CREATE OR REPLACE PROCEDURE recreateCastorFile(cfId IN INTEGER,
   nh VARCHAR(2048);
 BEGIN
  -- Lock the access to the TapeCopies and DiskCopies
- LOCK TABLE TapeCopy, DiskCopy, Id2Type in exclusive mode;
+ LOCK TABLE TapeCopy, DiskCopy, Id2Type IN exclusive mode;
  -- check if recreation is possible (exception if not)
  BEGIN
    SELECT id INTO dcId FROM TapeCopy
