@@ -1,5 +1,5 @@
 /*
- * $Id: Cupv_util.c,v 1.3 2002/06/12 08:17:11 bcouturi Exp $
+ * $Id: Cupv_util.c,v 1.4 2002/06/14 08:22:23 bcouturi Exp $
  */
 
 #include <sys/types.h>
@@ -120,6 +120,7 @@ int DLL_DECL Cupv_strtoi(output,nptr,endptr,base)
 	long thislong;
 	int rc = 0;
 
+	errno = 0;
 	thislong = strtol (nptr, endptr, base);
 	if ((**endptr != '\0') || (((thislong == LONG_MIN) || (thislong == LONG_MAX)) && (errno == ERANGE))) {
 		if (thislong <= INT_MIN) {
