@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.9 1999/12/10 18:32:51 jdurand Exp $
+ * $Id: procqry.c,v 1.10 1999/12/13 07:55:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.9 $ $Date: 1999/12/10 18:32:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.10 $ $Date: 1999/12/13 07:55:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -261,33 +261,10 @@ char *clienthost;
 			/* We are in the child : we open a new connection to the Database Server so that   */
 			/* it will not clash with current one owned by the main process.                   */
 
-			/* Get stager/database login:password */
-			{
-				FILE *configfd;
-				char cfbuf[80];
-				char *p_p, *p_u;
+            dbfd_in_fork.username = dbfd.username;
+            dbfd_in_fork.password = dbfd.password;
 
-				if ((configfd = fopen(STGDBCONFIG,"r")) == NULL) {
-					stglogit (func, "Cannot open Db Configuration file %s\n", STGDBCONFIG);
-					stglogit (func, "Using default Db Username/Password = \"%s\"/\"%s\"\n",
-						Default_db_user,Default_db_pwd);
-					p_u = Default_db_user;
-					p_p  = Default_db_pwd;
-				} else {
-					if (fgets (cfbuf, sizeof(cfbuf), configfd) &&
-						strlen (cfbuf) >= 5 && (p_u = strtok (cfbuf, "/\n")) &&
-						(p_p = strtok (NULL, "@\n"))) {
-					} else {
-						stglogit(func, "Error reading Db Configuration file %s\n",STGDBCONFIG);
-						exit (CONFERR);
-					}
-					fclose(configfd);
-				}
-				strcpy (db_user, p_u);
-				strcpy (db_pwd, p_p);
-			}
-
-			if (stgdb_login(db_user,db_pwd,&dbfd_in_fork) != 0) {
+			if (stgdb_login(&dbfd_in_fork) != 0) {
 				stglogit(func, "Error loging to database server (%s)\n",sstrerror(serrno));
 				exit(SYERR);
 			}
