@@ -1,5 +1,5 @@
 /*
- * $Id: Csetprocname.c,v 1.4 2003/09/09 16:03:20 jdurand Exp $
+ * $Id: Csetprocname.c,v 1.5 2003/11/04 13:20:49 jdurand Exp $
  */
 
 /*
@@ -16,6 +16,7 @@
  */
 
 #include "Csetprocname.h"
+#include "Csnprintf.h"
 #include <stdlib.h>
 #include <string.h>
 #include <serrno.h>
@@ -52,7 +53,7 @@ int DLL_DECL Cinitsetprocname(argc, argv, envp)
 }
 
 int DLL_DECL 
-Csetprocname(CONST char *fmt, ...)
+Csetprocname(char *fmt, ...)
 {
   return(0);
 }
@@ -187,9 +188,9 @@ static char buf[SPT_BUFSIZE];   /* Automatically initialized to zeroes */
 static char	**Argv = NULL;		/* pointer to argument vector */
 static char	*LastArgv = NULL;	/* end of argv */
 #if SPT_TYPE != SPT_BUILTIN
-static int	__Csetprocname _PROTO((CONST char *, ...));
+static int	__Csetprocname _PROTO((char *, ...));
 #endif /* SPT_TYPE != SPT_BUILTIN */
-static size_t __sm_strlcpy _PROTO((register char *, register CONST char *, ssize_t));
+static size_t __sm_strlcpy _PROTO((register char *, register char *, ssize_t));
 
 int DLL_DECL Cinitsetprocname(argc, argv, envp)
      int argc;
@@ -259,7 +260,7 @@ int DLL_DECL Cinitsetprocname(argc, argv, envp)
 #if SPT_TYPE != SPT_BUILTIN
 
 static int
-__Csetprocname(CONST char *fmt, ...)
+__Csetprocname(char *fmt, ...)
 {
 # if SPT_TYPE != SPT_NONE
   register int i;
@@ -281,15 +282,7 @@ __Csetprocname(CONST char *fmt, ...)
   
   /* print the argument string */
   SM_VA_START(ap, fmt);
-#  if (defined(__osf__) && defined(__alpha))
-  vsprintf (p, fmt, ap);
-#  else
-#  if defined(_WIN32)
-  _vsnprintf (p, SPT_BUFSIZE - strlen(p), fmt, ap);
-#  else
-  vsnprintf (p, SPT_BUFSIZE - strlen(p), fmt, ap);
-#  endif
-#  endif
+  Cvsnprintf (p, SPT_BUFSIZE - strlen(p), fmt, ap);
   SM_VA_END(ap);
   p[SPT_BUFSIZE-1] = '\0';
 
@@ -397,7 +390,7 @@ __Csetprocname(CONST char *fmt, ...)
 
 static size_t __sm_strlcpy(dst, src, size)
      register char *dst;
-     register CONST char *src;
+     register char *src;
      ssize_t size;
 {
   register ssize_t i;
@@ -430,7 +423,7 @@ static size_t __sm_strlcpy(dst, src, size)
 */
 
 int DLL_DECL 
-Csetprocname(CONST char *fmt, ...)
+Csetprocname(char *fmt, ...)
 {
   char buf[SPT_BUFSIZE];
   SM_VA_LOCAL_DECL;
@@ -439,15 +432,7 @@ Csetprocname(CONST char *fmt, ...)
   /* print the argument string */
   SM_VA_START(ap, fmt);
   buf[0] = '\0';
-#if (defined(__osf__) && defined(__alpha))
-  vsprintf (buf, fmt, ap);
-#else
-#if defined(_WIN32)
-  _vsnprintf (buf, SPT_BUFSIZE - strlen(buf), fmt, ap);
-#else
-  vsnprintf (buf, SPT_BUFSIZE - strlen(buf), fmt, ap);
-#endif
-#endif
+  Cvsnprintf (buf, SPT_BUFSIZE - strlen(buf), fmt, ap);
   buf[SPT_BUFSIZE-1] = '\0';
   SM_VA_END(ap);
 
