@@ -758,8 +758,11 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForJob
  ds NUMBER;
  fs NUMBER;
  dev NUMBER;
- TYPE AnyCursor IS REF CURSOR;
- c1 castor.AnyCursor;
+ TYPE cursorContent IS RECORD
+   (mountPoint VARCHAR(2048), dsName VARCHAR(2048),
+    dsId NUMBER, fsId NUMBER, deviation NUMBER);
+ TYPE AnyCursor IS REF CURSOR RETURN cursorContent;
+ c1 AnyCursor;
 BEGIN
  IF fileSystems.COUNT > 0 THEN
   DECLARE
