@@ -1,5 +1,5 @@
 /*
- * rfio_constants.h,v 1.13 2003/01/09 13:40:39 CERN IT-PDP/DM Olof Barring
+ * $Id: rfio_constants.h,v 1.2 2004/08/12 13:03:57 motiakov Exp $
  */
 
 /*
@@ -19,10 +19,11 @@
  */
 #define RFIO_NAME "rfio"
 #define RFIO_PROTO "tcp"
-#ifdef CSEC
-#define RFIO_PORT 5501
-#else
 #define RFIO_PORT 5001
+#ifdef CSEC
+#define SRFIO_PORT 5501
+#define SRFIO_NAME "srfio"
+#define SRFIO_PROTO "tcp"
 #endif
 
 /*
