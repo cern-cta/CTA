@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.23 2000/04/03 09:35:17 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.24 2000/05/02 11:57:06 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.23 $ $Date: 2000/04/03 09:35:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.24 $ $Date: 2000/05/02 11:57:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -484,7 +484,7 @@ main(argc,argv)
 						stcp->actual_size = st.st_size;
 #ifdef USECDB
 						if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-							sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+							stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 						}
 #endif
 					}
@@ -888,7 +888,7 @@ void checkpoolstatus()
 							stcp->status &= 0xF;
 #ifdef USECDB
 							if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-								sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+								stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 							}
 #endif
 							*wqp->waiting_pool = '\0';
@@ -1180,7 +1180,7 @@ void create_link(stcp, upath)
 	savepath ();
 #ifdef USECDB
 	if (stgdb_ins_stgpath(&dbfd,stpp) != 0) {
-		sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+		stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
 	}
 #endif
 }
@@ -1270,7 +1270,7 @@ void dellink(stpp)
 	stglogit (func, STG93, stpp->upath);
 #ifdef USECDB
 	if (stgdb_del_stgpath(&dbfd,stpp) != 0) {
-		sendrep(rpfd, MSG_ERR, STG100, "delete", sstrerror(serrno), __FILE__, __LINE__);
+		stglogit (func, STG100, "delete", sstrerror(serrno), __FILE__, __LINE__);
 	}
 #endif
 	sendrep (rpfd, RMSYMLINK, stpp->upath);
@@ -1295,7 +1295,7 @@ void delreq(stcp,nodb_delete_flag)
 #ifdef USECDB
 	if (nodb_delete_flag == 0) {
 		if (stgdb_del_stgcat(&dbfd,stcp) != 0) {
-			sendrep(rpfd, MSG_ERR, STG100, "delete", sstrerror(serrno), __FILE__, __LINE__);
+			stglogit (func, STG100, "delete", sstrerror(serrno), __FILE__, __LINE__);
 		}
 	}
 #endif
@@ -1637,7 +1637,7 @@ upd_stageout(req_type, upath, subreqid)
 
 #ifdef USECDB
 	if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-		sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+		stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 	}
 #endif
 

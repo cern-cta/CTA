@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.18 2000/04/14 13:54:05 jdurand Exp $
+ * $Id: procio.c,v 1.19 2000/05/02 11:57:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.18 $ $Date: 2000/04/14 13:54:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.19 $ $Date: 2000/05/02 11:57:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -567,7 +567,7 @@ void procioreq(req_type, req_data, clienthost)
 				stcp->nbaccesses++;
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-					sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 				}
 #endif
 				savereqid = stcp->reqid;
@@ -584,7 +584,7 @@ void procioreq(req_type, req_data, clienthost)
 				stcp->status |= WAITING_REQ;
 #ifdef USECDB
 				if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-					sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+					stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
 				}
 #endif
 				if (!wqp) {
@@ -640,7 +640,7 @@ void procioreq(req_type, req_data, clienthost)
 				stcp->nbaccesses++;
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-					sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 				}
 #endif
 #if SACCT
@@ -707,7 +707,7 @@ void procioreq(req_type, req_data, clienthost)
 				}
 #ifdef USECDB
 				if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-					sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+					stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
 				}
 #endif
 				wqp->nbdskf++;
@@ -790,7 +790,7 @@ void procioreq(req_type, req_data, clienthost)
 			}
 #ifdef USECDB
 			if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-				sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+				stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
 			break;
@@ -847,7 +847,7 @@ void procioreq(req_type, req_data, clienthost)
 			strcpy (stcp->ipath, upath);
 #ifdef USECDB
 			if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-				sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+				stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
 			if (!wqp) wqp = add2wq (clienthost, user, stcp->uid,
@@ -902,7 +902,7 @@ void procioreq(req_type, req_data, clienthost)
 			strcpy (stcp->ipath, upath);
 #ifdef USECDB
 			if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-				sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+				stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
 			break;
@@ -1096,7 +1096,7 @@ void procputreq(req_data, clienthost)
 			stcp->a_time = time (0);
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-				sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
 			if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
@@ -1138,7 +1138,7 @@ void procputreq(req_data, clienthost)
 		stcp->a_time = time (0);
 #ifdef USECDB
 		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-			sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+			stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 		}
 #endif
 		if (!wqp) wqp = add2wq (clienthost, user, uid, gid,
@@ -1185,7 +1185,7 @@ void procputreq(req_data, clienthost)
 			stcp->status = STAGEOUT|PUT_FAILED;
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-				sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
 		}

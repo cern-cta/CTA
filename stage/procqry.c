@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.18 2000/03/23 01:41:21 jdurand Exp $
+ * $Id: procqry.c,v 1.19 2000/05/02 11:57:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.18 $ $Date: 2000/03/23 01:41:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.19 $ $Date: 2000/05/02 11:57:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -278,14 +278,14 @@ void procqryreq(req_data, clienthost)
 			strcpy(dbfd_in_fork.password,dbfd.password);
 
 			if (stgdb_login(&dbfd_in_fork) != 0) {
-				sendrep(rpfd, MSG_ERR, STG100, "login", sstrerror(serrno), __FILE__, __LINE__);
+				stglogit (func, STG100, "login", sstrerror(serrno), __FILE__, __LINE__);
 				stglogit(func, "Error loging to database server (%s)\n",sstrerror(serrno));
 				exit(SYERR);
 			}
 
 			/* Open the database */
 			if (stgdb_open(&dbfd_in_fork,"stage") != 0) {
-				sendrep(rpfd, MSG_ERR, STG100, "open", sstrerror(serrno), __FILE__, __LINE__);
+				stglogit (func, STG100, "open", sstrerror(serrno), __FILE__, __LINE__);
 				stglogit(func, "Error opening \"stage\" database (%s)\n",sstrerror(serrno));
 				exit(SYERR);
 			}
@@ -420,7 +420,7 @@ void procqryreq(req_data, clienthost)
 			if (has_been_updated != 0) {
 #ifdef USECDB
 				if (stgdb_upd_stgcat(dbfd_query,stcp) != 0) {
-					sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 				}
 #endif
 			}
@@ -552,10 +552,10 @@ void procqryreq(req_data, clienthost)
 	if (pid == 0) {	/* we are in the child */
 #ifdef USECDB
 		if (stgdb_close(dbfd_query) != 0) {
-			sendrep(rpfd, MSG_ERR, STG100, "close", sstrerror(serrno), __FILE__, __LINE__);
+			stglogit (func, STG100, "close", sstrerror(serrno), __FILE__, __LINE__);
 		}
 		if (stgdb_logout(dbfd_query) != 0) {
-			sendrep(rpfd, MSG_ERR, STG100, "logout", sstrerror(serrno), __FILE__, __LINE__);
+			stglogit (func, STG100, "logout", sstrerror(serrno), __FILE__, __LINE__);
 		}
 #endif
 		exit (c);
@@ -734,7 +734,7 @@ print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, xfile,
 			if (has_been_updated != 0) {
 #ifdef USECDB
 				if (stgdb_upd_stgcat(dbfd_query,stcp) != 0) {
-					sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 				}
 #endif
 			}

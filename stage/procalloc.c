@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.14 2000/03/23 01:41:11 jdurand Exp $
+ * $Id: procalloc.c,v 1.15 2000/05/02 11:57:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.14 $ $Date: 2000/03/23 01:41:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.15 $ $Date: 2000/05/02 11:57:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -199,7 +199,7 @@ void procallocreq(req_data, clienthost)
 	}
 #ifdef USECDB
 	if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-		sendrep(rpfd, MSG_ERR, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+		stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
 	}
 #endif
 	savepath ();
@@ -352,7 +352,7 @@ void procgetreq(req_data, clienthost)
 	stcp->nbaccesses++;
 #ifdef USECDB
 	if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-		sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+		stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 	}
 #endif
 	if (Pflag)
