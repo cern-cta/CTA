@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.15 $ $Date: 2003/02/18 14:01:19 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.16 $ $Date: 2004/01/28 13:51:23 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -41,6 +41,7 @@ int vdqm_main(struct main_args *main_args) {
 
 #if !defined(_WIN32)
     signal(SIGPIPE,SIG_IGN);
+	signal (SIGXFSZ,SIG_IGN);
 #endif /* _WIN32 */
 
     signal(SIGINT,&cleanup);

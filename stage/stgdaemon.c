@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.248 $ $Date: 2003/11/17 10:20:51 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.249 $ $Date: 2004/01/28 13:48:16 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -757,7 +757,10 @@ int main(argc,argv)
 	FD_ZERO (&readmask);
 	FD_ZERO (&readfd);
 	signal (SIGPIPE,SIG_IGN);
-
+#ifndef _WIN32
+	signal(SIGXFSZ,SIG_IGN);
+#endif
+	
 	/* Set daemon mask to zero */
 	umask (0);
 
@@ -4509,9 +4512,6 @@ int check_send_monitormsg() {
 }
 #endif
 
-
-
-
 /* ----------------------------------------------------------- */
 /* Subroutine: stg_count_digits                                */
 /* ----------------------------------------------------------- */
@@ -4543,16 +4543,3 @@ size_t stg_count_digits(number, base)
 	rc = (size_t) digits;
 	return(rc);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
