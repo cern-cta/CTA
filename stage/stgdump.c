@@ -1,5 +1,5 @@
 /*
- * $Id: stgdump.c,v 1.5 2002/11/19 08:57:32 jdurand Exp $
+ * $Id: stgdump.c,v 1.6 2003/01/15 16:58:59 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdump.c,v $ $Revision: 1.5 $ $Date: 2002/11/19 08:57:32 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdump.c,v $ $Revision: 1.6 $ $Date: 2003/01/15 16:58:59 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -293,5 +293,5 @@ void qry_callback(stcp,stpp)
 void usage(prog)
 	char *prog;
 {
-	fprintf(stderr,"Usage: %s [--stghost_input hostname] [--stghost_output hostname] --stcp_output <filename> --stcpp_output <filename>\n", prog);
+	fprintf(stderr,"Usage: %s [--stghost_input hostname] [--stghost_output hostname] --stcp_output <filename> --stpp_output <filename>\n", prog);
 }
