@@ -87,8 +87,18 @@ namespace castor {
      */
     virtual void print() const = 0;
 
+  private:
+
   }; // end of class IObject
 
 }; // end of namespace castor
+
+/**
+ * outputs this IObject to an output stream
+ * This method is actually not virtual as is always the case for
+ * streaming operators. However, it makes use of the print method
+ * which is pure virtual.
+ */
+std::ostream& operator<<(std::ostream& s, const castor::IObject& addr);
 
 #endif // CASTOR_IOBJECT_HPP
