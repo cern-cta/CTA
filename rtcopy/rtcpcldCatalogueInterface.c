@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.34 $ $Release$ $Date: 2004/08/12 08:57:56 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.35 $ $Release$ $Date: 2004/08/12 09:23:09 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.34 $ $Release$ $Date: 2004/08/12 08:57:56 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.35 $ $Release$ $Date: 2004/08/12 09:23:09 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -114,7 +114,7 @@ static RtcpcldTapeList_t *tpList = NULL;
  */
 #define LOCKTP { \
   int __save_serrno = serrno; \
-  (void)Cmutex_lock(&currentTape); \
+  (void)Cmutex_lock(&currentTape,-1); \
   serrno = __save_serrno; \
 }
 #define UNLOCKTP { \
@@ -465,9 +465,7 @@ static int updateTapeFromDB(
     rc = C_Services_createObj(*svcs,iAddr,&iObj);
   } else {
     iObj = Cstager_Tape_getIObject(tp);
-    LOCKTP;
     rc = C_Services_updateObj(*svcs,iAddr,iObj);
-    UNLOCKTP;
   }
   
   if ( rc == -1 ) {
@@ -537,9 +535,7 @@ static int updateSegmentFromDB(
 
   Cstager_Segment_id(segm,&key);
 
-  LOCKTP;
   rc = C_Services_updateObj(*svcs,iAddr,iObj);  
-  UNLOCKTP;
   if ( rc == -1 ) {
     save_serrno = serrno;
     C_IAddress_delete(iAddr);
