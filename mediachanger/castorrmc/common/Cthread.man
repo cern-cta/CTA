@@ -1,8 +1,11 @@
-.\"   $Id: Cthread.man,v 1.1.1.1 1999/07/20 08:03:06 jdurand Exp $
+.\"   $Id: Cthread.man,v 1.2 1999/09/02 08:39:41 jdurand Exp $
 .\"
 .\"   Man page for the CASTOR's Thread Interface (Cthread)
 .\"
 .\"   $Log: Cthread.man,v $
+.\"   Revision 1.2  1999/09/02 08:39:41  jdurand
+.\"   Added serrno error values
+.\"
 .\"   Revision 1.1.1.1  1999/07/20 08:03:06  jdurand
 .\"   Imported Sources
 .\"
@@ -45,12 +48,57 @@
 .P
 .BI "int Cthread_setspecific(int *" global_key ", void * " addr ");"
 
+.SH ERRORS
+Beyond the errno value, \fBCthread\fP is setting the serrno value to generic values that can be:
+.P
+.B SECTHREADINIT
+.RS
+CASTOR Thread interface initialization error
+.P
+A thread initialisation call failed. In principle, on UNIX this will be a call to pthread_mutex_init (and possibly pthread_mutexattr_init) that failed, on Windows/NT this might be a call to CreateMutex.
+.RE
+.P
+.B SECTHREADERR
+.RS
+CASTOR Thread interface failure in calling your thread library
+.P
+A thread call to your native system library (like the pthread one on UNIX) failed. Please note that this is differentiated to the Cthread initialization and can happen if you are using too much thread keys, for example. This is really a run-time error only concerning your operating system thread interface. Any other system call failure, but not a thread one, and not at the initialisation step, will set serrno to \fBSEINTERNAL\fP
+.RE
+.P
+.B SEOPNOTSUP
+.RS
+Operation not supported
+.P
+This can be generated only if you compiled Cthread with a -DCTHREAD_PROTO flag that Cthread do not know about. Check your CASTOR configuration site.def.
+.RE
+.P
+.B SEINTERNAL
+.RS
+Internal error
+.P
+You can have more information by compiling the Cthread package with the flag -DCTHREAD_DEBUG, and catching the printout on your stderr stream. This is any system call that failed (like malloc()), except those to the thread library (for which SECTHREADERR or SECTHREADINIT is to  be found), or any critical internal run-time error (such as a non correct value found in some Cthread internal structures).
+.RE
+.P
+.B SETIMEDOUT
+(routines with a timeout parameter only)
+.RS
+Timed out
+.P
+You called a routine with a timeout value greater than zero that reached the maximum number of timeout seconds in waiting state.
+.RE
+.P
+.B EINVAL
+.RS
+Invalid parameters
+.P
+You called a routine with invalid parameter(s). Please check your code.
+.RE
+
 .SH DESCRIPTION
 
 \fBCthread\fP is a common API interface for multithreaded programs, although there is also support for nonthreaded application, where some of the \fBCthread\fP functions then becomes useless.
 .P
-For non-thread applications see the section
-.B NON-THREAD ENVIRONMENT
+For non-thread applications see the section \fBNON-THREAD ENVIRONMENT\fP
 .P
 Any created thread is identified uniquely with a \fBcid\fP, standing for \fBc\fPthif \fBid\fPentifier.
 .P
@@ -179,7 +227,6 @@ Return value is 0 on success, or -1 on error.
 .P
 .nf
 #include <Cthread_api.h> /* \fBCthread\fP include file */
-#include <errno.h>       /* For error propagation in our code */
 #include <stdio.h>       /* For I/O functions and definitions */
 #define NTHREADS 5 /* Number of threads */
 #define NLOOP    5 /* Number of loops in threads */
