@@ -1,5 +1,5 @@
 /*
- * $Id: Csec_plugin_GSS_mapper.c,v 1.5 2004/08/27 14:39:57 motiakov Exp $
+ * $Id: Csec_plugin_GSS_mapper.c,v 1.6 2004/10/22 20:15:13 jdurand Exp $
  * Copyright (C) 2003 by CERN/IT/ADC/CA Benjamin Couturier
  * All rights reserved
  */
@@ -25,6 +25,7 @@ char KRB5_service_prefix[][20] = { "host",
                                    "castor-central",
                                    "castor-disk",
                                    "castor-tape",
+                                   "castor-stager",
                                    "" };
 
 #endif
@@ -34,6 +35,7 @@ char GSI_service_prefix[][20] = { "host",
                                   "castor-central",
                                   "castor-disk",
                                   "castor-tape",
+                                  "castor-stager",
                                   "" };
 char *GSI_DN_header = "";
 
@@ -99,7 +101,7 @@ int (CSEC_METHOD_NAME(Csec_get_service_name, MECH))(Csec_context_t *ctx, int ser
                service_name,
                service_namelen);
     
-    if (service_type < 0 ||  service_type > CSEC_SERVICE_TYPE_TAPE
+    if (service_type < 0 ||  service_type >= CSEC_SERVICE_TYPE_MAX
         || service_name == NULL || service_namelen <= 0) {
         serrno = EINVAL;
         return -1;
