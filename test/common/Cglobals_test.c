@@ -11,7 +11,7 @@ static int my_var_static; /* If Cglobals_get error in order not to crash */
 void *doit _PROTO((void *));
 
 int doit_v = 0;
-#define NTHREAD 100
+#define NTHREADS 100
 
 int *C__my_var()
 {
@@ -57,17 +57,17 @@ int main()
     exit(1);
   }
   sleep(1);
-  for (i = 0; i < NTHREAD; i++) {
+  for (i = 0; i < NTHREADS; i++) {
     Cthread_create(&doit, &doit_v);
     doit_v++;
   }
   fprintf(stdout, "[%d] ---> After all Cthread_create calls\n", -1);
   fprintf(stdout, "[%d] Current my_var value is: %d\n", -1, my_var);
-  fprintf(stdout, "[%d] Set my_var value to: %d\n", -1, NTHREAD * 10000 + 12);
-  my_var = NTHREAD * 10000 + 12;
+  fprintf(stdout, "[%d] Set my_var value to: %d\n", -1, NTHREADS * 10000 + 12);
+  my_var = NTHREADS * 10000 + 12;
   fprintf(stdout, "[%d] Current my_var value is: %d\n", -1, my_var);
   fprintf(stdout, "[%d] Testing consistency\n", -1);
-  if (my_var != (NTHREAD * 10000 + 12)) {
+  if (my_var != (NTHREADS * 10000 + 12)) {
     fprintf(stdout, "[%d] Cglobals_get worked ok\n", -1);
     exit(1);
   }
