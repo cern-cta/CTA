@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr.man,v $ $Revision: 1.3 $ $Date: 2000/04/19 13:53:18 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr.man,v $ $Revision: 1.4 $ $Date: 2001/02/23 16:49:23 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR 1 "$Date: 2000/04/19 13:53:18 $" CASTOR "vmgr Commands"
+.TH VMGR 1 "$Date: 2001/02/23 16:49:23 $" CASTOR "vmgr Commands"
 .SH DESCRIPTION
 A vmgr daemon manages the tape pool space.
 A tape pool consists in a set of cartridges.
@@ -11,6 +11,9 @@ Use
 .B man
 command for details of the commands recognized by the vmgr:
 .TP 1.5i
+vmgrdeletepool
+remove the definition of a pool of tapes from the CASTOR Volume Manager Database (admin only)
+.TP
 vmgrdeletetape
 remove a tape from the CASTOR Volume Manager Database (admin only)
 .TP
@@ -37,6 +40,9 @@ query the CASTOR Volume Manager about a given tape pool or list all existing poo
 .TP
 vmgrlisttape
 query the CASTOR Volume Manager about a tape or list all existing tapes
+.TP
+vmgrmodifypool
+modify the definition of an existing tape pool in the CASTOR Volume Manager (admin only)
 .TP
 vmgrmodifytape
 modify an existing tape volume entry in the CASTOR Volume Manager (admin or operator only)
