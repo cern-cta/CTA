@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.42 2002/04/09 07:36:47 jdurand Exp $
+ * $Id: stage_api.c,v 1.43 2002/04/11 10:26:21 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -28,16 +28,22 @@
 #include "Cglobals.h"          /* To get CthreadId */
 #include "stage_api.h"
 #include "rtcp_constants.h"    /* For EBCCONV, FIXVAR, SKIPBAD, KEEPFILE */
-#include "Ctape_constants.h"   /* For IGNOREEOI */
+#include "Ctape_constants.h"   /* For IGNOREEOI, WRITE_ENABLE and WRITE_DISABLE */
+#if VMGR
+#include "vmgr_api.h"          /* For vmgrcheck() */
+#endif
 
 extern char *getenv();         /* To get environment variables */
 extern char *getconfent();     /* To get configuration entries */
-EXTERN_C int DLL_DECL sysreq _PROTO((char *, char *, int *, char *, int *));
 extern int rfio_access _PROTO((char *, int));
 
-int stage_api_chkdirw _PROTO((char *));
 #if TMS
-int stage_api_tmscheck _PROTO((char *, char *, char *, char *, char *));
+static int stage_api_tmscheck _PROTO((char *, char *, char *, char *, char *));
+EXTERN_C int DLL_DECL sysreq _PROTO((char *, char *, int *, char *, int *));
+#endif
+#if VMGR
+char vmgr_error_buffer[512];        /* Vmgr error buffer */
+static int stage_api_vmgrcheck _PROTO((char *, char *, char *, char *, char *, int));
 #endif
 
 #define STVAL2BUF(stcp,member,option,buf,bufsize) {                                       \
@@ -133,8 +139,8 @@ int stage_api_tmscheck _PROTO((char *, char *, char *, char *, char *));
 int DLL_DECL rc_castor2shift(rc)
      int rc;
 {
-  /* Input  is a CASTOR return code (usually serrno) */
-  /* Output is a SHIFT  return code (usually process return code) */
+  /* Input  is a CASTOR return code (routine error code) */
+  /* Output is a SHIFT  return code (process exit code) */
   switch (rc) {
   case ETHELD:
     return(ETHELDERR);
@@ -147,9 +153,10 @@ int DLL_DECL rc_castor2shift(rc)
     return(MNYPARI);
   case ERTLIMBYSZ:
     return(LIMBYSZ);
-  case EINVAL:
-    return(USERR);
   case EACCES:
+  case EINVAL:
+  case ENOENT:
+  case EPERM:
     return(USERR);
   case SESYSERR:
     return(SYERR);
@@ -159,6 +166,10 @@ int DLL_DECL rc_castor2shift(rc)
     return(REQKILD);
   case ESTCLEARED:
     return(CLEARED);
+  case ESTCONF:
+    return(CONFERR);
+  case ESTLNKNSUP:
+    return(LNKNSUP);
   default:
     return(rc);
   }
@@ -424,27 +435,53 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
         if (strcmp(thiscat->u1.t.den,"38K") == 0) strcpy(thiscat->u1.t.dgn,"38000");
         /* setting defaults (from TMS if installed) */
         for (i = 0; i < numvid; i++) {
-#if TMS
-          if (stage_api_tmscheck (thiscat->u1.t.vid[i], thiscat->u1.t.vsn[i], thiscat->u1.t.dgn, thiscat->u1.t.den, thiscat->u1.t.lbl)) {
-            /*
-              stage_errmsg(func, "STG02 - TMSCHECK(%s,%s,%s,%s,%s) error\n",
-              thiscat->u1.t.vid[i], thiscat->u1.t.vsn[i], thiscat->u1.t.dgn, thiscat->u1.t.den, thiscat->u1.t.lbl);
-            */
-            serrno = ESTTMSCHECK;
-#if defined(_WIN32)
-            WSACleanup();
+#if VMGR
+			/* Call VMGR */
+			if (stage_api_vmgrcheck(thiscat->u1.t.vid[i], thiscat->u1.t.vsn[i], thiscat->u1.t.dgn, thiscat->u1.t.den, thiscat->u1.t.lbl, ((req_type == STAGE_OUT) || (req_type == STAGE_WRT)) ? WRITE_ENABLE : WRITE_DISABLE) != 0) {
 #endif
-            return(-1);
-          }
-#else
-          if (thiscat->u1.t.vsn[i][0] == '\0') {
-            strcpy(thiscat->u1.t.vsn[i],thiscat->u1.t.vid[i]);
-          }
-          if (thiscat->u1.t.dgn[0] == '\0')
-            strcpy (thiscat->u1.t.dgn, DEFDGN);
-          thiscat->u1.t.den[0] = '\0';      /* No default density */
-          if (thiscat->u1.t.lbl[0] == '\0')
-            strcpy (thiscat->u1.t.lbl, "sl");
+#if TMS
+#if VMGR
+				if (serrno == ETVUNKN) {
+					/* VMGR fails with acceptable serrno and TMS is available */
+#endif
+					if (stage_api_tmscheck (thiscat->u1.t.vid[i], thiscat->u1.t.vsn[i], thiscat->u1.t.dgn, thiscat->u1.t.den, thiscat->u1.t.lbl) != 0) {
+						serrno = ESTTMSCHECK;
+#if defined(_WIN32)
+						WSACleanup();
+#endif
+						return(-1);
+					}
+#if VMGR
+				} else {
+					/* VMGR fails with not acceptable serrno */
+					stage_errmsg(func, STG02, thiscat->u1.t.vid[i][0] != '\0' ? thiscat->u1.t.vid[i] : thiscat->u1.t.vsn[i], "vmgrcheck", sstrerror(serrno));
+#if defined(_WIN32)
+					WSACleanup();
+#endif
+					return(-1);
+				}
+#endif
+#elif (defined(VMGR))
+				/* VMGR fails and there is not TMS */
+				stage_errmsg(func, STG02, thiscat->u1.t.vid[i][0] != '\0' ? thiscat->u1.t.vid[i] : thiscat->u1.t.vsn[i], "vmgrcheck", sstrerror(serrno));
+#if defined(_WIN32)
+				WSACleanup();
+#endif
+				return(-1);
+#endif /* TMS */
+#if VMGR
+			}
+#endif
+#if (! (defined(VMGR) || defined(TMS)))
+			/* No VMGR not TMS */
+			if (thiscat->u1.t.vsn[i][0] == '\0') {
+				strcpy(thiscat->u1.t.vsn[i],thiscat->u1.t.vid[i]);
+			}
+			if (thiscat->u1.t.dgn[0] == '\0')
+				strcpy (thiscat->u1.t.dgn, DEFDGN);
+			thiscat->u1.t.den[0] = '\0';      /* No default density */
+			if (thiscat->u1.t.lbl[0] == '\0')
+				strcpy (thiscat->u1.t.lbl, "sl");
 #endif
         }
       }
@@ -520,7 +557,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
     }
 	if ((flags & STAGE_NOLINKCHECK) != STAGE_NOLINKCHECK) {
 		user_path[0] = '\0';
-		if ((build_linkname_status = build_linkname(thispath->upath, user_path, sizeof(user_path), req_type)) == SYERR) {
+		if ((build_linkname_status = build_linkname(thispath->upath, user_path, sizeof(user_path), req_type)) == SESYSERR) {
 			serrno = ESTLINKNAME;
 #if defined(_WIN32)
 			WSACleanup();
@@ -620,14 +657,10 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   while (1) {
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, nstcp_output, stcp_output, NULL, NULL);
     if ((c == 0) ||
-        (serrno == EINVAL)     || (serrno == ERTBLKSKPD) || (serrno == ERTTPE_LSZ) || (serrno == EACCES) ||
+        (serrno == EINVAL)     || (serrno == ERTBLKSKPD) || (serrno == ERTTPE_LSZ) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) ||
 		(serrno == EISDIR) ||
 		(serrno == ERTMNYPARY) || (serrno == ERTLIMBYSZ) || (serrno == ESTCLEARED) ||
-		(serrno == ESTKILLED)  || (serrno == ENOSPC) || (serrno == EBUSY)) break;
-    if (serrno == ESTLNKNSUP) {	/* symbolic links not supported on that platform */
-      serrno = USERR;
-      break;
-    }
+		(serrno == ESTKILLED)  || (serrno == ENOSPC) || (serrno == EBUSY) || (serrno == ESTLNKNSUP)) break;
 	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > maxretry) break;
 	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
@@ -642,7 +675,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 }
 
 #if TMS
-int stage_api_tmscheck(vid, vsn, dgn, den, lbl)
+static int stage_api_tmscheck(vid, vsn, dgn, den, lbl)
      char *vid;
      char *vsn;
      char *dgn;
@@ -739,41 +772,43 @@ int stage_api_tmscheck(vid, vsn, dgn, den, lbl)
 }
 #endif
 
-/*	stage_api_chkdirw - extract directory name from full pathname
- *		and check if writable.
- *
- *	return	-1	in case of error
- *		0	if writable
- */
-int stage_api_chkdirw(path)
-     char *path;
+#if VMGR
+static int stage_api_vmgrcheck(vid, vsn, dgn, den, lbl, mode)
+     char *vid;
+     char *vsn;
+     char *dgn;
+     char *den;
+     char *lbl;
+	 int mode;
 {
-  char *p, *q;
-  int rc;
-  char sav;
-  char *func = "chkdirw";
-  
-  if ((q = strchr (path, ':')) != NULL)
-    q++;
-  else
-    q = path;
-  p = strrchr (path, '/');
-  if (p == q)
-    p++;
-  if (strncmp (path, "/afs/", 5) == 0) {
-    stage_errmsg(func, STG44);
-    rc = -1;
-  } else {
-    sav = *p;
-    *p = '\0';
-	PRE_RFIO;
-    rc = rfio_access (path, W_OK);
-    *p = sav;
-    if (rc < 0)
-      stage_errmsg(func, STG33, path, rfio_serror());
-  }
-  return (rc);
+    uid_t uid;
+    gid_t gid;
+	int rc;
+
+    /* Make sure error buffer of VMGR do not go to stderr */
+    vmgr_error_buffer[0] = '\0';
+    if (vmgr_seterrbuf(vmgr_error_buffer,sizeof(vmgr_error_buffer)) != 0) {
+		return(serrno);
+    }
+
+    /* We need to know exact current uid/gid */
+    uid = geteuid();
+    gid = getegid();
+
+#if defined(_WIN32)
+    if (uid < 0 || gid < 0) {
+		return(SEUSERUNKN);
+    }
+#endif
+
+	if ((rc = vmgrcheck(vid,vsn,dgn,den,lbl,mode,uid,gid)) != 0) {
+		serrno = rc;
+		return(1);
+	} else {
+		return(0);
+	}
 }
+#endif
 
 int DLL_DECL stage_stcp2buf(buf,bufsize,stcp)
      char *buf;
@@ -917,15 +952,6 @@ int DLL_DECL stage_admin_kill(hostname,uniqueid)
   egid = getegid();             /* Get current effective gid */
   pw = Cgetpwuid(euid);
 
-#if defined(_WIN32)
-  /* Well - in principle the real information is the uniqueid - we continue */
-  /*
-  if (euid < 0 || egid < 0) {
-    exit (USERR);
-  }
-  */
-#endif
-  
   if ((uniqueid == NULL) || (*uniqueid == 0)) {
     /* If the parameter is NULL or a dummy value, we use the thread-specific variable */
     if (stage_getuniqueid(&this_uniqueid) != 0) {
@@ -1162,7 +1188,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   /* Dial with the daemon */
   while (1) {
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, &nstcp_output_internal, &stcp_output_internal, &nstpp_output_internal, &stpp_output_internal);
-    if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT)) break;
 	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > maxretry) break;
 	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
@@ -1498,7 +1524,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
     }
 	if ((flags & STAGE_NOLINKCHECK) != STAGE_NOLINKCHECK) {
 		user_path[0] = '\0';
-		if ((build_linkname_status = build_linkname(thispath->upath, user_path, sizeof(user_path), req_type)) == SYERR) {
+		if ((build_linkname_status = build_linkname(thispath->upath, user_path, sizeof(user_path), req_type)) == SESYSERR) {
 			serrno = ESTLINKNAME;
 #if defined(_WIN32)
 			WSACleanup();
@@ -1588,7 +1614,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   while (1) {
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, nstcp_output, stcp_output, NULL, NULL);
     if ((c == 0) ||
-        (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == EACCES)) break;
+        (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT)) break;
 	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > maxretry) break;
 	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
@@ -1859,7 +1885,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
     }
 	if ((flags & STAGE_NOLINKCHECK) != STAGE_NOLINKCHECK) {
 		user_path[0] = '\0';
-		if ((build_linkname_status = build_linkname(thispath->upath, user_path, sizeof(user_path), req_type)) == SYERR) {
+		if ((build_linkname_status = build_linkname(thispath->upath, user_path, sizeof(user_path), req_type)) == SESYSERR) {
 			serrno = ESTLINKNAME;
 #if defined(_WIN32)
 			WSACleanup();
@@ -1951,7 +1977,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   while (1) {
     c = send2stgd(hostname, req_type, flagsok, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, 0, NULL, NULL, NULL);
     if ((c == 0) ||
-        (serrno == EINVAL)     || (serrno == EBUSY) || (serrno == ENOUGHF) || (serrno == EACCES)) break;
+        (serrno == EINVAL)     || (serrno == EBUSY) || (serrno == ENOUGHF) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT)) break;
 	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > maxretry) break;
 	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
@@ -2206,7 +2232,7 @@ int DLL_DECL stage_ping(flags,hostname)
   /* Dial with the daemon */
   while (1) {
     c = send2stgd(hostname, req_type, (u_signed64) 0, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, NULL, NULL, NULL, NULL);
-    if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT)) break;
 	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > maxretry) break;
 	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
