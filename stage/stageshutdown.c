@@ -1,5 +1,5 @@
 /*
- * $Id: stageshutdown.c,v 1.2 2001/02/01 11:51:41 jdurand Exp $
+ * $Id: stageshutdown.c,v 1.3 2001/02/01 12:03:47 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageshutdown.c,v $ $Revision: 1.2 $ $Date: 2001/02/01 11:51:41 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageshutdown.c,v $ $Revision: 1.3 $ $Date: 2001/02/01 12:03:47 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -72,6 +72,11 @@ int main(argc, argv)
 		fprintf (stderr, STG16);
 		errflg++;
 	}
+	/* We force -h parameter to appear in the parameters */
+	if (stghost == NULL) {
+		errflg++;
+	}
+
 	if (errflg) {
 		usage (argv[0]);
 		exit (USERR);
@@ -127,5 +132,5 @@ void cleanup(sig)
 void usage(cmd)
 		 char *cmd;
 {
-	fprintf (stderr, "usage: %s [-F] [-h stage_host]\n", cmd);
+	fprintf (stderr, "usage: %s -h stagehost [-F]\n", cmd);
 }
