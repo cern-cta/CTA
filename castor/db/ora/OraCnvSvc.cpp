@@ -32,6 +32,7 @@
 #include "castor/SvcFactory.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/db/ora/OraBaseObj.hpp"
+#include "castor/exception/BadVersion.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
@@ -152,7 +153,34 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
       m_environment->createConnection(m_user, m_passwd, m_dbName);
     clog() << DEBUG << "Created new Oracle connection : "
            << m_connection << std::endl;
-    //oracle::occi::Statement* stmt = m_connection->createStatement
+    std::string codeVersion = "2.0.0.0";
+    std::string DBVersion = "";
+    oracle::occi::Statement* stmt = 0;
+    try {
+      oracle::occi::Statement* stmt = m_connection->createStatement
+        ("SELECT version FROM CastorVersion;");
+      oracle::occi::ResultSet *rset = stmt->executeQuery();
+      if (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+        DBVersion = rset->getString(1);
+      }   
+      m_connection->terminateStatement(stmt);
+      if (codeVersion != DBVersion) {
+        castor::exception::BadVersion e;
+        e.getMessage() << "Version mismatch between the database and the code : \""
+                       << DBVersion << "\" versus \""
+                       << codeVersion << "\"";
+        throw e;
+      }
+    } catch (oracle::occi::SQLException e) {
+      // No CastorVersion table ?? This means bad version
+      if (0 != stmt) m_connection->terminateStatement(stmt);
+      castor::exception::BadVersion e;
+      e.getMessage() << "Not able to find the version of castor in the database";
+      throw e;
+    }
+    
+    // Uncomment this to unable tracing of the DB
+    //stmt = m_connection->createStatement
     //  ("alter session set events '10046 trace name context forever, level 8'");
     //stmt->executeUpdate();
     //m_connection->terminateStatement(stmt);

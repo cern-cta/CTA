@@ -211,6 +211,11 @@ ALTER TABLE Stream2TapeCopy
 /* This file contains SQL code that is not generated automatically */
 /* and is inserted at the end of the generated code           */
 
+/* A small table used to cross check code and DB versions */
+DROP TABLE CastorVersion;
+CREATE TABLE CastorVersion (version VARCHAR(2048));
+INSERT INTO CastorVersion VALUES ('2.0.0.0');
+
 /* Indexes related to CastorFiles */
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
 CREATE UNIQUE INDEX I_CastorFile_fileIdNsHost on CastorFile (fileId, nsHost);
@@ -306,7 +311,7 @@ END;
 CREATE OR REPLACE PROCEDURE updateFsWeight
 (ds IN INTEGER, fs IN INTEGER, deviation IN INTEGER) AS
 BEGIN
- UPDATE FileSystem SET weightDelta = weightDelta - deviation
+ UPDATE FileSystem SET deltaWeight = deltaWeight - deviation
   WHERE diskServer = ds;
  UPDATE FileSystem SET fsDeviation = 2 * deviation
   WHERE id = fs;
@@ -375,7 +380,7 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskS
      AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
      AND DiskServer.id = FileSystem.diskServer
      AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
-   ORDER by FileSystem.weight + FileSystem.deltaWeigth DESC,
+   ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
             FileSystem.fsDeviation ASC;
 BEGIN
  OPEN c1;
@@ -503,8 +508,7 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, look in others
  BEGIN
   -- Try to find remote DiskCopies
-  SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-         FileSystem.weight
+  SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
   INTO dci, rpath, rstatus
   FROM DiskCopy, SubRequest, FileSystem, DiskServer
   WHERE SubRequest.id = srId
@@ -754,8 +758,8 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForJob
  ds NUMBER;
  fs NUMBER;
  dev NUMBER;
- c1 castor.AnyCursor;
  TYPE AnyCursor IS REF CURSOR;
+ c1 AnyCursor;
 BEGIN
  IF fileSystems.COUNT > 0 THEN
   DECLARE
