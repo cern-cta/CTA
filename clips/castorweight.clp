@@ -685,10 +685,12 @@
 		   )
 		)
 		(bind ?thisWeight
-			(* ?diskserverWeight
-				(+
-					(/ ?thisFilesystemNbTot ?diskserverNbTot )
-					(/ ?thisFilesystemIoTot ?diskserverIo    )
+			(abs
+				(* ?diskserverWeight
+					(+
+						(/ ?thisFilesystemNbTot ?diskserverNbTot )
+						(/ ?thisFilesystemIoTot ?diskserverIo    )
+					)
 				)
 			)
 		 )
