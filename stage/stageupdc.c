@@ -1,5 +1,5 @@
 /*
- * $Id: stageupdc.c,v 1.19 2001/09/18 21:22:45 jdurand Exp $
+ * $Id: stageupdc.c,v 1.20 2001/11/30 12:15:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.19 $ $Date: 2001/09/18 21:22:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.20 $ $Date: 2001/11/30 12:15:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -26,10 +26,10 @@ static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.19 $ $Date: 2
 #include <netinet/in.h>
 #endif
 #include "marshall.h"
-#include "stage.h"
 #include "stage_api.h"
 #include "Cpwd.h"
 #include "Cgetopt.h"
+#include "serrno.h"
 
 #if !defined(linux)
 extern	char	*sys_errlist[];
@@ -72,7 +72,6 @@ int main(argc, argv)
 	WSADATA wsadata;
 #endif
 	char Zparm[CA_MAXHOSTNAMELEN + 1 + 14];
-	/* char repbuf[CA_MAXPATHLEN+1]; */
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 	char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
@@ -225,6 +224,7 @@ int main(argc, argv)
 	while (1) {
 		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 		if (c == 0 || serrno == EINVAL || serrno == ENOSPC) break;
+		if (serrno == ESTNACT && ntries == 0) fprintf(stderr, STG161);
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
 	}

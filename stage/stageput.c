@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.24 2001/09/18 21:17:28 jdurand Exp $
+ * $Id: stageput.c,v 1.25 2001/11/30 12:15:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.24 $ $Date: 2001/09/18 21:17:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.25 $ $Date: 2001/11/30 12:15:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -27,11 +27,11 @@ static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.24 $ $Date: 20
 #include <netinet/in.h>
 #endif
 #include "marshall.h"
-#include "stage.h"
 #include "stage_api.h"
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "Cgetopt.h"
+#include "serrno.h"
 
 EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
 extern	char	*getenv();
@@ -366,6 +366,7 @@ int main(argc, argv)
 		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 		if (c == 0 || serrno == EINVAL || serrno == ERTLIMBYSZ || serrno == CLEARED ||
 				serrno == ENOSPC) break;
+		if (serrno == ESTNACT && ntries == 0) fprintf(stderr, STG161);
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
 	}
