@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.65 2001/03/20 13:11:19 jdurand Exp $
+ * $Id: procupd.c,v 1.66 2001/03/21 15:28:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.65 $ $Date: 2001/03/20 13:11:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.66 $ $Date: 2001/03/21 15:28:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -86,6 +86,7 @@ extern int retenp_on_disk _PROTO((int));
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
+extern char *findpoolname _PROTO((char *));
 
 #define IS_RC_OK(rc) (rc == 0)
 #define IS_RC_WARNING(rc) (rc == LIMBYSZ || rc == BLKSKPD || rc == TPE_LSZ || (rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE)))
@@ -268,12 +269,20 @@ procupdreq(req_data, clienthost)
 	}
 	if (nargs > Coptind) {
 		for  (i = Coptind; i < nargs; i++) {
-			if ((c = upd_stageout(STAGEUPDC, argv[i], &subreqid, 1, NULL)) != 0) {
-				if (c != CLEARED) {
-					goto reply;
-				} else {
-					/* This is not formally an error to do an updc on a zero-length file */
-					c = 0;
+			if (rc == ENOSPC) {
+				char *poolname;
+				if ((poolname = findpoolname(argv[i])) != NULL) {
+					cleanpool(poolname);
+				}
+				c = 0;
+			} else {
+				if ((c = upd_stageout(STAGEUPDC, argv[i], &subreqid, 1, NULL)) != 0) {
+					if (c != CLEARED) {
+						goto reply;
+					} else {
+						/* This is not formally an error to do an updc on a zero-length file */
+						c = 0;
+					}
 				}
 			}
 		}

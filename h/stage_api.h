@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.34 2001/03/03 06:17:38 jdurand Exp $
+ * $Id: stage_api.h,v 1.35 2001/03/21 15:28:43 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -317,6 +317,7 @@ EXTERN_C int  DLL_DECL  stage_updc_tppos _PROTO((char *, int, int, int, char *, 
 /* Not yet done - only old protocol available */
 EXTERN_C int  DLL_DECL  stage_updc_filchg _PROTO((char *, stage_hsm_t *));
 EXTERN_C int  DLL_DECL  stage_updc_user _PROTO((char *, stage_hsm_t *));
+EXTERN_C int  DLL_DECL  stage_updc_error _PROTO((char *, int, stage_hsm_t *));
 
 /* ---------------------------- */
 /* Generic STAGE_QRY interface */

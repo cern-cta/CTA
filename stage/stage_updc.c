@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.14 2001/03/02 18:16:48 jdurand Exp $
+ * $Id: stage_updc.c,v 1.15 2001/03/21 15:28:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.14 $ $Date: 2001/03/02 18:16:48 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.15 $ $Date: 2001/03/21 15:28:46 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -631,6 +631,131 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   nargs = 1;
   marshall_WORD (sbp, nargs);
   marshall_STRING (sbp, command);
+
+  hsm = hsmstruct;
+  while (hsm != NULL) {
+    marshall_STRING (sbp, hsm->upath);
+    nargs += 1;
+    hsm = hsm->next;
+  }
+
+  marshall_WORD (q2, nargs);	/* update nargs */
+
+  msglen = sbp - sendbuf;
+  marshall_LONG (q, msglen);	/* update length field */
+
+  while (1) {
+    c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
+    if ((c == 0) || (serrno == EINVAL) || (serrno == ENOSPC)) break;
+    if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
+    stage_sleep (RETRYI);
+  }
+  free(sendbuf);
+  return (c == 0 ? 0 : -1);
+}
+
+int DLL_DECL stage_updc_error(stghost,copyrc,hsmstruct)
+     char *stghost;
+     int copyrc;
+     stage_hsm_t *hsmstruct;
+{
+  int c;
+  gid_t gid;
+  int msglen;
+  int nargs;
+  int ntries = 0;
+  struct passwd *pw;
+  char *q, *q2;
+  char repbuf[CA_MAXPATHLEN+1];
+  char *sbp;
+  char *sendbuf;
+  size_t sendbuf_size;
+  uid_t uid;
+  stage_hsm_t *hsm;
+  char *command = "stage_updc_error";
+  int nupath;
+  char tmpbuf[21];
+
+  if (hsmstruct == NULL) {
+    serrno = EFAULT;
+    return (-1);
+  }
+  
+  uid = geteuid();
+  gid = getegid();
+#if defined(_WIN32)
+  if (uid < 0 || gid < 0) {
+    serrno = SENOMAPFND;
+    return (-1);
+  }
+#endif
+
+  /* Init repbuf to null */
+  repbuf[0] = '\0';
+
+  if ((pw = Cgetpwuid (uid)) == NULL) {
+    serrno = SENOMAPFND;
+    return (-1);
+  }
+
+  /* How many bytes do we need ? */
+  sendbuf_size = 3 * LONGSIZE;                     /* Request header */
+  sendbuf_size += strlen(pw->pw_name) + 1;         /* Login name */
+  sendbuf_size += 3 * WORDSIZE;                    /* uid, gid and nargs */
+  sendbuf_size += strlen(command) + 1;                /* Command name */
+
+  if (copyrc >= 0) {
+    sprintf (tmpbuf, "%d", rc_castor2shift(copyrc));
+    sendbuf_size += strlen("-R") + strlen(tmpbuf) + 2; /* -R option and value */
+  }
+
+  /* Count the number of link files */
+  hsm = hsmstruct;
+  nupath = 0;
+  while (hsm != NULL) {
+    if (hsm->upath != NULL && hsm->upath[0] != '\0') {
+      sendbuf_size += strlen(hsm->upath) + 1; /* User path */
+      nupath++;
+    }
+    hsm = hsm->next;
+  }
+
+  if (nupath == 0) {
+    serrno = EFAULT;
+    return(-1);
+  }
+
+  /* Allocate memory */
+  if ((sendbuf = (char *) malloc(sendbuf_size)) == NULL) {
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+
+  /* Build request header */
+
+  sbp = sendbuf;
+  marshall_LONG (sbp, STGMAGIC);
+  marshall_LONG (sbp, STAGEUPDC);
+  q = sbp;	/* save pointer. The next field will be updated */
+  msglen = 3 * LONGSIZE;
+  marshall_LONG (sbp, msglen);
+
+  /* Build request body */
+
+  marshall_STRING (sbp, pw->pw_name);	/* login name */
+  marshall_WORD (sbp, uid);
+  marshall_WORD (sbp, gid);
+  q2 = sbp;	/* save pointer. The next field will be updated */
+  nargs = 1;
+  marshall_WORD (sbp, nargs);
+  marshall_STRING (sbp, command);
+
+  if (copyrc >= 0) {
+    sprintf (tmpbuf, "%d", rc_castor2shift(copyrc));
+    marshall_STRING (sbp, "-R");
+    marshall_STRING (sbp, tmpbuf);
+    nargs += 2;
+  }
 
   hsm = hsmstruct;
   while (hsm != NULL) {
