@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.224 2002/09/23 12:28:37 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.225 2002/09/30 14:04:04 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.224 $ $Date: 2002/09/23 12:28:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.225 $ $Date: 2002/09/30 14:04:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -314,6 +314,7 @@ extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int,
 extern int upd_fileclasses _PROTO(());
 extern char *getconfent();
 extern void check_delaymig _PROTO(());
+extern void check_expired _PROTO(());
 extern int create_hsm_entry _PROTO((int, struct stgcat_entry *, int, mode_t, int));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern u_signed64 findblocksize _PROTO((char *));
@@ -342,6 +343,7 @@ EXTERN_C int DLL_DECL Cdomainname _PROTO((char *, int));
  * nbhost for the rfio_munlink()
  */
 extern int nbhost;
+extern int nbstageout;
 int nwaitq = 0;
 int nwaitq_with_connection = 0;
 
@@ -984,6 +986,8 @@ int main(argc,argv)
 
 #endif
 
+	/* Counters on the number of entries in STAGEOUT status */
+	nbstageout = 0;
 	/* remove uncompleted requests */
 	for (stcp = stcs; stcp < stce; ) {
 		int rc_upd_fileclass;
@@ -1181,6 +1185,7 @@ int main(argc,argv)
 		stgpath_shrunk_pages();
 		check_upd_fileclasses (); /* update all CASTOR fileclasses regularly */
 		check_delaymig (); /* move delay_migr to can_be_migr if any */
+		check_expired (); /* delete expired stageout/stagealloc entries */
 		check_child_exit(); /* check childs [pid,status] */
 		checkpoolstatus ();	/* check if any pool just cleaned */
 		checkwaitingspc ();	/* check requests that are waiting for space */
