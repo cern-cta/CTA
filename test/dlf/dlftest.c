@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlftest.c,v $ $Revision: 1.3 $ $Date: 2003/12/18 11:04:25 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlftest.c,v $ $Revision: 1.4 $ $Date: 2003/12/28 12:07:05 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -164,11 +164,12 @@ void *gen_log(arg)
   char tpname[10];
   u_signed64 nsinv;
   int pari;
-  HYPER pari64;
+  U_HYPER pari64;
   float parf;
   double pard;
   int rv;
   int num_msgs;
+  struct Cns_fileid ns_fileid = { "cns.cern.ch", 0 };
 
   fprintf (stdout,
            "[%d] - Generating and writing log messages.\n",
@@ -188,13 +189,13 @@ void *gen_log(arg)
     /* Generate tape name */
     tpn = 1 + (int)(9999.0 * rand()/(RAND_MAX+1.0));
     snprintf(tpname, sizeof(tpname), "TP%04d", tpn);
-    nsinv = (0XF1234567 * (2^32)) + 0X87654321;
+    ns_fileid.fileid = ((U_HYPER)(0XF1234567) << 32) + 0X87654321;
     pari = 32768;
-    pari64 = (HYPER) ((12345678 * (10^8)) + 987654321);
+    pari64 = ((U_HYPER)(0X12345678) << 32) + 0X87654321;
     parf = 32.768;
     pard = 65.535;
 
-    rv = dlf_write (req_id, sev, msgn, nsinv, 7,
+    rv = dlf_write (req_id, sev, msgn, &ns_fileid, 7,
                     "PINT", DLF_MSG_PARAM_INT, pari,
                     "PSTR", DLF_MSG_PARAM_STR, "This_is_a_string",
                     NULL,   DLF_MSG_PARAM_UUID, sreq_id,
