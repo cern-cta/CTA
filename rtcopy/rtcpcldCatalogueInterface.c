@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.24 $ $Release$ $Date: 2004/08/02 12:36:26 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.25 $ $Release$ $Date: 2004/08/02 14:28:50 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.24 $ $Release$ $Date: 2004/08/02 12:36:26 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.25 $ $Release$ $Date: 2004/08/02 14:28:50 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1351,10 +1351,15 @@ static int procReqsForVID(
           fl->filereq.position_method = TPPOSIT_FSEQ;
         else fl->filereq.position_method = TPPOSIT_BLKID;
         fl->filereq.proc_status = RTCP_WAITING;
+        /*
+         * Temporary hack until rtcpd_MainCntl.c fix has been deployed
+         */
+        fl->filereq.blocksize = 32760;
+
         strcpy(fl->filereq.file_path,".");
         if ( (diskPath != NULL) && (*diskPath != '\0') &&
              (strcmp(diskPath,".") != 0) ) {
-          strcpy(fl->filereq.file_path,diskPath);          
+          strcpy(fl->filereq.file_path,diskPath);
         }
         Cstager_Segment_bytes_in(
                                  segmArray[i],
