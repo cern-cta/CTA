@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/27 07:28:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/30 14:28:43 $ $Author: sponcec3 $
  *
  *
  *
@@ -193,4 +193,24 @@ void castor::Services::updateObj(castor::IAddress* address,
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   ObjectCatalog newlyCreated;
   cnvSvc->updateObj(object, newlyCreated);
+}
+
+//------------------------------------------------------------------------------
+// commit
+//------------------------------------------------------------------------------
+void castor::Services::commit(castor::IAddress* address)
+  throw (castor::exception::Exception) {
+  // Always returns a valid cnvSvc or throws an exception
+  castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
+  cnvSvc->commit();
+}
+
+//------------------------------------------------------------------------------
+// rollback
+//------------------------------------------------------------------------------
+void castor::Services::rollback(castor::IAddress* address)
+  throw (castor::exception::Exception) {
+  // Always returns a valid cnvSvc or throws an exception
+  castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
+  cnvSvc->rollback();
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/06/28 13:41:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/06/30 14:28:43 $ $Author: sponcec3 $
  *
  *
  *
@@ -188,6 +188,46 @@ extern "C" {
       return -1;
     }
     return 0;
+  }
+
+  //------------------------------------------------------------------------------
+  // C_Services_commit
+  //------------------------------------------------------------------------------
+  int C_Services_commit(C_Services_t* svcs,
+                        castor::IAddress* address) {
+    if (0 == svcs->svcs) {
+      errno = EINVAL;
+      svcs->errorMsg = "Empty context";
+      return -1;
+    }
+    try {
+      svcs->svcs->commit(address);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      svcs->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //------------------------------------------------------------------------------
+  // C_Services_rollback
+  //------------------------------------------------------------------------------
+  int C_Services_rollback(C_Services_t* svcs,
+                          castor::IAddress* address) {
+    if (0 == svcs->svcs) {
+      errno = EINVAL;
+      svcs->errorMsg = "Empty context";
+      return -1;
+    }
+    try {
+      svcs->svcs->rollback(address);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      svcs->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;    
   }
 
   //------------------------------------------------------------------------------

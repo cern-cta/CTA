@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/25 09:26:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/06/30 14:28:42 $ $Author: sponcec3 $
  *
  *
  *
@@ -182,4 +182,20 @@ void castor::BaseCnvSvc::deleteRepByAddress (castor::IAddress* address,
   address->setObjType(obj->type());
   castor::ObjectSet alreadyDeleted;
   deleteRep(address, obj, alreadyDeleted, autocommit);
+}
+
+//------------------------------------------------------------------------------
+// commit
+//------------------------------------------------------------------------------
+void castor::BaseCnvSvc::commit()
+  throw (castor::exception::Exception) {
+  // Default implementation, does nothing.
+}
+
+//------------------------------------------------------------------------------
+// rollback
+//------------------------------------------------------------------------------
+void castor::BaseCnvSvc::rollback()
+  throw (castor::exception::Exception) {
+  // Default implementation, does nothing.
 }

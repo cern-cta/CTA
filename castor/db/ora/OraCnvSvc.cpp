@@ -220,6 +220,40 @@ castor::IObject* castor::db::ora::OraCnvSvc::createObj (castor::IAddress* addres
   return this->BaseCnvSvc::createObj(address, newlyCreated);
 }
 
+//------------------------------------------------------------------------------
+// commit
+//------------------------------------------------------------------------------
+void castor::db::ora::OraCnvSvc::commit()
+  throw (castor::exception::Exception) {
+  try {
+    if (0 != m_connection) {
+      m_connection->commit();
+    }
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Error while commiting :"
+                    << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// rollback
+//------------------------------------------------------------------------------
+void castor::db::ora::OraCnvSvc::rollback()
+  throw (castor::exception::Exception) {
+  try {
+    if (0 != m_connection) {
+      m_connection->rollback();
+    }
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Error while rollbacking :"
+                    << std::endl << e.what();
+    throw ex;
+  }
+}
+
 // -----------------------------------------------------------------------
 // getIds
 // -----------------------------------------------------------------------

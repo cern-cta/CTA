@@ -115,7 +115,7 @@ int C_Services_deleteRep(struct C_Services_t* svcs,
  * @param svcs the services object to use
  * @param address the place where to find the foreign
  * representation
- * @return the C++ object created from its reprensentation
+ * @param object the C++ object created from its reprensentation
  * or 0 if unsuccessful. Note that the caller is responsible
  * for the deallocation of the newly created object
  * @return -1 in case of error, 0 if successful
@@ -138,6 +138,28 @@ int C_Services_createObj(struct C_Services_t* svcs,
 int C_Services_updateObj(struct C_Services_t* svcs,
                          struct C_IAddress_t* address,
                          struct C_IObject_t* object);
+
+/**
+ * Forces the commit of the last changes in a given DB
+ * @param svcs the services object to use
+ * @param address what to commit
+ * @return -1 in case of error, 0 if successful
+ * A detailed error message can be retrieved by calling
+ * C_Services_errorMsg
+ */
+int C_Services_commit(struct C_Services_t* svcs,
+                      struct C_IAddress_t* address);
+
+/**
+ * Forces the rollback of the last changes in a given DB
+ * @param svcs the services object to use
+ * @param address what to rollback
+ * @return -1 in case of error, 0 if successful
+ * A detailed error message can be retrieved by calling
+ * C_Services_errorMsg
+ */
+int C_Services_rollback(struct C_Services_t* svcs,
+                        struct C_IAddress_t* address);
 
 /**
  * Returns the error message associated to the last error.

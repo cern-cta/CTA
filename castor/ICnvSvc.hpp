@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ICnvSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/25 16:26:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ICnvSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/30 14:28:42 $ $Author: sponcec3 $
  *
  *
  *
@@ -145,6 +145,20 @@ namespace castor {
      */
     virtual void updateObj(IObject* object,
                            ObjectCatalog& alreadyDone)
+      throw (castor::exception::Exception) = 0;
+
+    /**
+     * Forces the commit of the last changes.
+     * @exception Exception throws an Exception in case of error
+     */
+    virtual void commit()
+      throw (castor::exception::Exception) = 0;
+
+    /**
+     * Forces the rollback of the last changes
+     * @exception Exception throws an Exception in case of error
+     */
+    virtual void rollback()
       throw (castor::exception::Exception) = 0;
 
     /**

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/05/26 15:43:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/30 14:28:43 $ $Author: sponcec3 $
  *
  *
  *
@@ -141,6 +141,22 @@ namespace castor {
      */
     virtual void updateObj(castor::IAddress* address,
                            castor::IObject* object)
+      throw (castor::exception::Exception);
+
+    /**
+     * Forces the commit of the last changes in a given DB
+     * @param address what to commit
+     * @exception Exception throws an Exception in case of error
+     */
+    virtual void commit(castor::IAddress* address)
+      throw (castor::exception::Exception);
+
+    /**
+     * Forces the rollback of the last changes in a given DB
+     * @param address what to rollback
+     * @exception Exception throws an Exception in case of error
+     */
+    virtual void rollback(castor::IAddress* address)
       throw (castor::exception::Exception);
 
   private:

@@ -114,6 +114,21 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Forces the commit of the last changes.
+         * @param address what to commit
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void commit()
+          throw (castor::exception::Exception);
+
+        /**
+         * Forces the rollback of the last changes
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void rollback()
+          throw (castor::exception::Exception);
+
+        /**
          * reserves a bunch of ids from the database and
          * returns the first one. The others are obtained
          * by increasing the first id by 1.
