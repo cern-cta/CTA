@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.66 2003/10/31 06:58:06 jdurand Exp $
+ * $Id: stage_api.c,v 1.67 2003/10/31 19:49:07 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -35,7 +35,7 @@
 #include "net.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.66 $ $Date: 2003/10/31 06:58:06 $ CERN IT/DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.67 $ $Date: 2003/10/31 19:49:07 $ CERN IT/DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifdef hpux
@@ -298,7 +298,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 	if ((p = getenv("STAGE_POOL")) != NULL) {
 		strncpy(stgpool_forced,p,CA_MAXPOOLNAMELEN);
 		stgpool_forced[CA_MAXPOOLNAMELEN] = '\0';
-	} else if ((p = getconfent("STG","POOL")) != NULL) {
+	} else if ((p = getconfent("STG","POOL",1)) != NULL) {
 		strncpy(stgpool_forced,p,CA_MAXPOOLNAMELEN);
 		stgpool_forced[CA_MAXPOOLNAMELEN] = '\0';
 	} else {
@@ -1205,7 +1205,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 	if ((p = getenv("STAGE_POOL")) != NULL) {
 		strncpy(stgpool_forced,p,CA_MAXPOOLNAMELEN);
 		stgpool_forced[CA_MAXPOOLNAMELEN] = '\0';
-	} else if ((p = getconfent("STG","POOL")) != NULL) {
+	} else if ((p = getconfent("STG","POOL",1)) != NULL) {
 		strncpy(stgpool_forced,p,CA_MAXPOOLNAMELEN);
 		stgpool_forced[CA_MAXPOOLNAMELEN] = '\0';
 	} else {
@@ -3311,7 +3311,7 @@ int DLL_DECL stage_alloc_or_get(req_type,flags,openmode,hostname,pooluser,filena
 	if ((p = getenv("STAGE_POOL")) != NULL) {
 		strncpy(stgpool_forced,p,CA_MAXPOOLNAMELEN);
 		stgpool_forced[CA_MAXPOOLNAMELEN] = '\0';
-	} else if ((p = getconfent("STG","POOL")) != NULL) {
+	} else if ((p = getconfent("STG","POOL",1)) != NULL) {
 		strncpy(stgpool_forced,p,CA_MAXPOOLNAMELEN);
 		stgpool_forced[CA_MAXPOOLNAMELEN] = '\0';
 	} else {
