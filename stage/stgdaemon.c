@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.53 2000/06/29 09:00:11 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.54 2000/07/03 16:44:01 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.53 $ $Date: 2000/06/29 09:00:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.54 $ $Date: 2000/07/03 16:44:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1729,7 +1729,7 @@ upd_stageout(req_type, upath, subreqid)
                 seteuid(stcp->uid);
                 if (Cns_setfsize(NULL,&Cnsfileid,(u_signed64) stcp->actual_size) != 0) {
                   sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile,
-                           "Cns_setfsize (with invariants only)", sstrerror(serrno));
+                           "Cns_setfsize", sstrerror(serrno));
                   setegid(0);
                   seteuid(0);
                   goto upd_stageout_return;

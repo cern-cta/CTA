@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.79 2000/06/29 09:00:10 jdurand Exp $
+ * $Id: stager.c,v 1.80 2000/07/03 16:44:01 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.79 $ $Date: 2000/06/29 09:00:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.80 $ $Date: 2000/07/03 16:44:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -2446,47 +2446,8 @@ int stager_client_callback(tapereq,filereq)
           callback_error = 1;
           return(-1);
         }
-        if (((stcs->status & STAGEWRT) == STAGEWRT)) {
-          /* Case of explicit migration : we call Cns_setfsize */
-#ifdef STAGER_DEBUG
-          sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT-CALLBACK] Calling Cns_setfsize(%s,&Cnsfileid={server=\"%s\",fileid=%s},%s)\n",
-                  castor_hsm,
-                  Cnsfileid.server,
-                  u64tostr(Cnsfileid.fileid,tmpbuf1,0),
-                  u64tostr((u_signed64) hsm_transferedsize[stager_client_callback_i], tmpbuf2, 0));
-#endif
-          if (Cns_setfsize (castor_hsm,
-                            &Cnsfileid,
-                            (u_signed64) hsm_transferedsize[stager_client_callback_i]) != 0) {
-            sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setfsize",
-                     sstrerror (serrno));
-            callback_error = 1;
-            return(-1);
-          }
-        } else {
-          /* Case of automatic migration : we call Cns_setfsize if transfered size is higher than what was known to the stager */
-          if (hsm_transferedsize[stager_client_callback_i] > hsm_totalsize[stager_client_callback_i]) {
-#ifdef STAGER_DEBUG
-            sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEPUT-CALLBACK] Calling Cns_setfsize(%s,&Cnsfileid={server=\"%s\",fileid=%s},%s) (known total size was %s < %s)\n",
-                    castor_hsm,
-                    Cnsfileid.server,
-                    u64tostr(Cnsfileid.fileid,tmpbuf1,0),
-                    u64tostr((u_signed64) hsm_transferedsize[stager_client_callback_i], tmpbuf2, 0),
-                    u64tostr((u_signed64) hsm_totalsize[stager_client_callback_i], tmpbuf3, 0),
-                    u64tostr((u_signed64) hsm_transferedsize[stager_client_callback_i], tmpbuf4, 0));
-#endif
-            if (Cns_setfsize (castor_hsm,
-                              &Cnsfileid,
-                              (u_signed64) hsm_transferedsize[stager_client_callback_i]) != 0) {
-            sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setfsize",
-                     sstrerror (serrno));
-            callback_error = 1;
-            return(-1);
-            }
-          }
-        }
-        /* If we reach this part of the code then we know undoubly */
-        /* that the transfer of this HSM file IS ok                */
+        /* If we reach this part of the code then we know undoubtly */
+        /* that the transfer of this HSM file IS ok                 */
         hsm_status[stager_client_callback_i] = 1;
       }
     } else {

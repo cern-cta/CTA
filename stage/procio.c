@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.31 2000/06/29 09:00:10 jdurand Exp $
+ * $Id: procio.c,v 1.32 2000/07/03 16:44:00 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.31 $ $Date: 2000/06/29 09:00:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.32 $ $Date: 2000/07/03 16:44:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -916,6 +916,28 @@ void procioreq(req_type, req_data, clienthost)
 				c = USERR;
 				goto reply;
 			}
+			if (stgreq.t_or_d == 'h') {
+				if (rfio_stat (upath, &st) == 0) {
+		            /* We set the size in the name server */
+					setegid(stgreq.gid);
+					seteuid(stgreq.uid);
+					if (Cns_setfsize(NULL,&(hsmfileids[ihsmfiles]),(u_signed64) st.st_size) != 0) {
+						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles],
+							"Cns_setfsize", sstrerror(serrno));
+						setegid(0);
+						seteuid(0);
+						c = SYERR;
+						goto reply;
+					}
+					setegid(0);
+					seteuid(0);
+				} else {
+					sendrep (rpfd, MSG_ERR, STG02, upath,
+						"rfio_stat", rfio_serror());
+					c = SYERR;
+					goto reply;
+				}
+			}
 			stcp = newreq ();
 			memcpy (stcp, &stgreq, sizeof(stgreq));
 			if (i > 0)
@@ -924,7 +946,13 @@ void procioreq(req_type, req_data, clienthost)
 				stcp->reqid = reqid;
 			stcp->status = STAGEWRT;
 			strcpy (stcp->poolname, actual_poolname);
-			if (rfio_stat (upath, &st) == 0) {
+			if (stgreq.t_or_d != 'h') {
+				if (rfio_stat (upath, &st) == 0) {
+					stcp->actual_size = st.st_size;
+					stcp->c_time = st.st_mtime;
+				}
+			} else {
+				/* Already done before */
 				stcp->actual_size = st.st_size;
 				stcp->c_time = st.st_mtime;
 			}
