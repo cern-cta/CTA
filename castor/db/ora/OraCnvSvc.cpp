@@ -37,7 +37,6 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include <iomanip>
-#include <Cthread_api.h>
 
 // Local Files
 #include "OraCnvSvc.hpp"
