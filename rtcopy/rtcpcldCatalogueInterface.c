@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.47 $ $Release$ $Date: 2004/08/27 14:21:59 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.48 $ $Release$ $Date: 2004/09/17 15:40:04 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.47 $ $Release$ $Date: 2004/08/27 14:21:59 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.48 $ $Release$ $Date: 2004/09/17 15:40:04 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1254,6 +1254,17 @@ static int validSegment(
   } else {
     return(0);
   }
+}
+
+/*
+ * Externalised version for rtcpcldapi.c
+ */
+int rtcpcld_validSegment(
+                         segment
+                         )
+     struct Cstager_Segment_t *segment;
+{
+  return(validSegment(segment));
 }
 
 static int compareSegments(
