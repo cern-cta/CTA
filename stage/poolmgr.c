@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.42 2000/10/21 20:51:59 jdurand Exp $
+ * $Id: poolmgr.c,v 1.43 2000/10/21 21:01:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.42 $ $Date: 2000/10/21 20:51:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.43 $ $Date: 2000/10/21 21:01:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -966,6 +966,7 @@ selectfs(poolname, size, path)
 	int i;
 	struct pool *pool_p;
 	u_signed64 reqsize;
+	char tmpbuf0[21];
 	char tmpbuf1[21];
 	char tmpbuf2[21];
 
@@ -1007,8 +1008,8 @@ selectfs(poolname, size, path)
 		strcpy (path, elemp->dirpath);
 	else
 		sprintf (path, "%s:%s", elemp->server, elemp->dirpath);
-	stglogit ("selectfs", "%s reqsize=%ld, elemp->free=%s, pool_p->free=%s\n",
-						path, reqsize, u64tostr(elemp->free, tmpbuf1, 0), u64tostr(pool_p->free, tmpbuf2, 0));
+	stglogit ("selectfs", "%s reqsize=%s, elemp->free=%s, pool_p->free=%s\n",
+						path, u64tostr(reqsize, tmpbuf0, 0), u64tostr(elemp->free, tmpbuf1, 0), u64tostr(pool_p->free, tmpbuf2, 0));
 	return (1);
 }
 
