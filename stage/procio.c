@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.188 2002/08/31 07:48:42 jdurand Exp $
+ * $Id: procio.c,v 1.189 2002/09/12 07:04:08 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.188 $ $Date: 2002/08/31 07:48:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.189 $ $Date: 2002/09/12 07:04:08 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -292,6 +292,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	char *fseq = NULL;
 	fseq_elem *fseq_list = NULL;
 	struct group *gr;
+	struct passwd *pw;
 	char **hsmfiles = NULL;
 	int *hsmpoolflags = NULL;
 	int ihsmfiles;
@@ -1071,7 +1072,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		}
 	}
 
-/* We copy in stgreq the permanent information when request comes from the API */
+	/* We copy in stgreq the permanent information when request comes from the API */
 	if (api_out != 0) {
 		/* Internal remapping of API commands to command-line equivalents */
 		switch (req_type) {
@@ -1427,9 +1428,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 	} else nbtpf = 1;
 
 	/* Root protection */
-	if (ISROOT(save_uid,save_gid)) {
-		sendrep (&rpfd, MSG_ERR, STG156, ROOTUIDLIMIT, ROOTGIDLIMIT);
-		errflg++;
+	if (req_type != STAGECAT) {
+		if (ISROOT(save_uid,save_gid)) {
+			sendrep (&rpfd, MSG_ERR, STG156, ROOTUIDLIMIT, ROOTGIDLIMIT);
+			errflg++;
+		}
 	}
 
 	if (errflg != 0) {
@@ -3034,9 +3037,32 @@ void procioreq(req_type, magic, req_data, clienthost)
 				delreq(stcp,1);
 				goto reply;
 			}
+			/* If group is different than requestor's group we verify its existence in group file */
+			/* But if it fails this is not formally an error : we will let the requestor's group in stgreq */
+			stcp->gid = st.st_gid;
+			if ((gr = Cgetgrgid (stcp->gid)) == NULL) {
+				if (errno != ENOENT) sendrep (&rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
+				sendrep (&rpfd, MSG_ERR, STG36, st.st_gid);
+			} else {
+				strncpy (stcp->group, gr->gr_name, CA_MAXGRPNAMELEN);
+				stcp->group[CA_MAXGRPNAMELEN] = '\0';
+			}
+			/* If user is different than requestor's group we verify its existence in password file */
+			/* But if it fails this is not formally an error : we will let the requestor's name in stgreq */
+			stcp->uid = st.st_uid;
+			if ((pw = Cgetpwuid (stcp->uid)) == NULL) {
+				char uidstr[8];
+				if (errno != ENOENT) sendrep (&rpfd, MSG_ERR, STG33, "Cgetpwuid", strerror(errno));
+				sprintf (uidstr, "%d", stgreq.uid);
+				sendrep (&rpfd, MSG_ERR, STG11, uidstr);
+			} else {
+				strncpy (stcp->user, pw->pw_name, CA_MAXUSRNAMELEN);
+				stcp->user[CA_MAXUSRNAMELEN] = '\0';
+			}
+			stcp->size = st.st_size;
 			stcp->actual_size = st.st_size;
 			stcp->c_time = st.st_mtime;
-			stcp->a_time = st.st_atime;
+			stcp->a_time = time(NULL);
 			stcp->nbaccesses = 1;
 			strcpy (stcp->ipath, upath);
 #ifdef USECDB
