@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.62 2001/03/13 08:05:29 jdurand Exp $
+ * $Id: procupd.c,v 1.63 2001/03/14 12:01:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.62 $ $Date: 2001/03/13 08:05:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.63 $ $Date: 2001/03/14 12:01:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -751,12 +751,15 @@ procupdreq(req_data, clienthost)
 							}
 							if (stcp_found == NULL) {
 								/* This is acceptable only if the request is an explicit STAGEPUT */
+								/*
 								if (stcp->status != STAGEPUT) {
 									sendrep (rpfd, MSG_ERR, STG22);
 									continue;
 								} else {
 									stcp_found = stcp;
 								}
+								*/
+								stcp_found = stcp;
 							}
 							if ((stcp_found->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 								update_migpool(&stcp_found,-1,0);
