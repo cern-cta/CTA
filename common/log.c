@@ -1,5 +1,5 @@
 /*
- * $Id: log.c,v 1.4 1999/12/09 13:39:41 jdurand Exp $
+ * $Id: log.c,v 1.5 2000/02/01 13:13:03 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:39:41 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.5 $ $Date: 2000/02/01 13:13:03 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* log.c        - generalized logging routines                          */
@@ -146,15 +146,21 @@ void logit(int level, ...)
         tp = localtime(&clock);
 #endif /* _REENTRANT || _THREAD_SAFE */
         (void) strftime(timestr,64,strftime_format,tp);
-        pid = getpid();
         Cglobals_getTid(&Tid);
-        if ( Tid < 0 ) 
+        if ( Tid < 0 ) {
             /*
              * Non-MT or main thread. Don't print thread ID.
              */
+            pid = getpid();
             (void) sprintf(line,"%s %s[%d]: ",timestr,logname,pid) ;
-        else
+        } else {
+#if defined(linux)
+            pid = getppid();
+#else /* linux */
+            pid = getpid();
+#endif /* linux */
             (void) sprintf(line,"%s %s[%d,%d]: ",timestr,logname,pid,Tid) ;
+        }
         (void) vsprintf(line+strlen(line),format,args);
         if (strlen(logfilename)!=0) {
             if ( (fd= open(logfilename,O_CREAT|O_WRONLY|
