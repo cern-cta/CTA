@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.61 2002/09/25 10:46:25 jdurand Exp $
+ * $Id: stage_api.h,v 1.62 2002/10/08 08:48:32 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -261,7 +261,7 @@ EXTERN_C int DLL_DECL stageupdc _PROTO((u_signed64,               /* flags */
 /* Generic STAGE_PUT interface */
 /* --------------------------- */
 /* Not available yet - only old protocol */
-EXTERN_C int  DLL_DECL  stage_put_hsm _PROTO((char *, int, stage_hsm_t *));
+EXTERN_C int  DLL_DECL  stage_put_hsm _PROTO((char *, stage_hsm_t *));
 
 /* ----------------------------- */
 /* Generic STAGE_PING interface  */
