@@ -112,7 +112,7 @@ FFLAGS = $(FFOPTFLAGS) $(FPPUFL)
 LDLIBS = -no_so -L../lib -lshift -so_archive
 #else
 #if linux
-LDLIBS = -L../lib -lshift $(ADNSLIB) -lnsl $(MTLDLIBS)
+LDLIBS = -L../shlib -lshift $(ADNSLIB) -lnsl $(MTLDLIBS)
 #else
 #if SOLARIS
 LDLIBS = -L../lib -lshift -lsocket -lnsl
