@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.2 $ $Date: 2000/02/14 11:01:54 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.3 $ $Date: 2000/02/23 15:56:52 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -37,7 +37,7 @@ int rtcp_wacct(int   subtype,
     char *p;
 
     if ((p = getconfent("ACCT", "RTCOPY", 0)) == NULL ||
-        (strcmp (p, "YES") && strcmp (p, "yes"))) return;
+        (strcmp (p, "YES") != 0 && strcmp (p, "yes")) != 0) return(0);
     memset ((char *) &acctrtcp, 0, sizeof(struct acctrtcp));
     acctrtcp.subtype = subtype;
     acctrtcp.uid = uid;

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.12 $ $Date: 2000/02/13 11:50:57 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.13 $ $Date: 2000/02/23 15:56:48 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -27,6 +27,7 @@ extern char *geterr();
 
 #include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
