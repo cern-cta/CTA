@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.6 $ $Date: 1999/12/17 17:26:23 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.7 $ $Date: 1999/12/28 15:16:23 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -574,6 +574,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     struct passwd *pwd;
     char *cmd = NULL;
 
+    rtcp_log(LOG_DEBUG,"rtcpd_MainCntl() called\n");
     rtcpd_SetDebug();
     AbortFlag = 0;
     NOTRACE;                 /* Switch off tracing */
@@ -618,6 +619,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         /*
          * This is an old client
          */
+        rtcp_log(LOG_INFO,"Running old (SHIFT) client request\n");
         rc = rtcp_RunOld(accept_socket,&hdr);
         (void)rtcp_CloseConnection(accept_socket);
         return(rc);
@@ -662,7 +664,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         /*
          * Client not authorised
          */
-        rtcp_log(LOG_ERR,"rtcp_MainCntl() client (%d,%d)@%s not authorised\n",
+        rtcp_log(LOG_ERR,"rtcpd_MainCntl() client (%d,%d)@%s not authorised\n",
                  client->uid,client->gid,client->clienthost);
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
         return(-1);
@@ -683,7 +685,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
                                client->clienthost,
                                &client->clientport);
     if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcp_MainCntl() rtcp_ConnectToClient(%s,%d): %s\n",
+        rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_ConnectToClient(%s,%d): %s\n",
                  client->clienthost,client->clientport,sstrerror(serrno));
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
         return(-1);
@@ -700,14 +702,14 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         rc = rtcp_RecvReq(client_socket,
             &hdr,client,&tapereq,&filereq);
         if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"rtcp_MainCntl() rtcp_RecvReq(): %s\n",
+            rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_RecvReq(): %s\n",
                      sstrerror(serrno));
             break;
         }
         reqtype = hdr.reqtype;
         rc = rtcp_SendAckn(client_socket,reqtype);
         if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"rtcp_MainCntl() rtcp_SendAckn(): %s\n",
+            rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_SendAckn(): %s\n",
                 sstrerror(serrno));
             break;
         }
@@ -717,7 +719,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
              */
             nexttape = (tape_list_t *)calloc(1,sizeof(tape_list_t));
             if ( nexttape == NULL ) {
-                rtcp_log(LOG_ERR,"rtcp_MainCntl() calloc(): %s\n",
+                rtcp_log(LOG_ERR,"rtcpd_MainCntl() calloc(): %s\n",
                     sstrerror(errno));
                 rc = -1;
                 break;
@@ -741,14 +743,14 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
              */
             nextfile = (file_list_t *)calloc(1,sizeof(file_list_t));
             if ( nextfile == NULL ) {
-                rtcp_log(LOG_ERR,"rtcp_MainCntl() calloc(): %s\n",
+                rtcp_log(LOG_ERR,"rtcpd_MainCntl() calloc(): %s\n",
                     sstrerror(errno));
                 rc = -1;
                 break;
             }
             nextfile->filereq = filereq;
             if ( nexttape == NULL ) {
-                rtcp_log(LOG_ERR,"rtcp_MainCntl() invalid request sequence\n");
+                rtcp_log(LOG_ERR,"rtcpd_MainCntl() invalid request sequence\n");
                 rc = -1;
                 break;
             }
@@ -762,7 +764,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     } /* End while ( reqtype != RTCP_NOMORE_REQ ) */
 
     if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcp_MainCntl() request loop finished with error\n");
+        rtcp_log(LOG_ERR,"rtcpd_MainCntl() request loop finished with error\n");
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
         rtcpd_FreeResources(&client_socket,&client,&tape);
         return(-1);
@@ -805,7 +807,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      */
     rc = rtcp_CheckReq(client_socket,tape);
     if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcp_MainCntl() rtcp_CheckReq(): %s\n",
+        rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcp_CheckReq(): %s\n",
             sstrerror(serrno));
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
         rtcpd_FreeResources(&client_socket,&client,&tape);
@@ -818,7 +820,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     rc = rtcpd_AllocBuffers();
     if ( rc == -1 ) {
         (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
-        rtcp_log(LOG_ERR,"rtcp_MainCntl() failed to allocate buffers\n");
+        rtcp_log(LOG_ERR,"rtcpd_MainCntl() failed to allocate buffers\n");
         (void)rtcpd_AppendClientMsg(tape,NULL,RT105,sstrerror(serrno));
         (void)tellClient(client_socket,tape,NULL,-1);
         (void)rtcpd_Deassign(client->VolReqID,&tapereq);
@@ -875,7 +877,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         if ( rc == -1 ) {
             (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
             rtcp_log(LOG_ERR,
-                "rtcp_MainCntl() failed to start Tape I/O thread\n");
+                "rtcpd_MainCntl() failed to start Tape I/O thread\n");
             (void)rtcpd_AppendClientMsg(tape,NULL,"rtcpd_StartTapeIO(): %s\n",
                   sstrerror(serrno));
             (void)tellClient(client_socket,tape,NULL,-1);
@@ -889,7 +891,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         rc = rtcpd_StartDiskIO(client,tape,tape->file,thPoolId,thPoolSz);
         if ( rc == -1 ) {
             (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
-            rtcp_log(LOG_ERR,"rtcp_MainCntl() failed to start disk I/O thread\n");
+            rtcp_log(LOG_ERR,"rtcpd_MainCntl() failed to start disk I/O thread\n");
             rtcpd_SetProcError(RTCP_FAILED);
         }
 
@@ -899,10 +901,10 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
          */
         rc = rtcpd_WaitTapeIO(&status);
         if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"rtcp_MainCntl() rtcpd_WaitTapeIO(): %s\n",
+            rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_WaitTapeIO(): %s\n",
                 sstrerror(serrno));
         }
-        rtcp_log(LOG_INFO,"rtcp_MainCntl() tape I/O thread returned status=%d\n",
+        rtcp_log(LOG_INFO,"rtcpd_MainCntl() tape I/O thread returned status=%d\n",
             status);
         if ( !(rtcpd_CheckProcError() & RTCP_LOCAL_RETRY) ) break;
         /*
@@ -916,10 +918,10 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      */
     rc = rtcpd_WaitCLThread(CLThId,&status);
     if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcp_MainCntl() rtcpd_WaitCLThread(%d): %s\n",
+        rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_WaitCLThread(%d): %s\n",
             CLThId,sstrerror(serrno));
     }
-    rtcp_log(LOG_DEBUG,"rtcp_MainCntl() Client Listen thread returned status=%d\n",
+    rtcp_log(LOG_DEBUG,"rtcpd_MainCntl() Client Listen thread returned status=%d\n",
         status);
 
     proc_stat.tapeIOstatus.current_activity = RTCP_PS_FINISHED;
