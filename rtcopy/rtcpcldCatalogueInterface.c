@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.91 $ $Release$ $Date: 2004/11/30 15:48:40 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.92 $ $Release$ $Date: 2004/12/01 11:54:39 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.91 $ $Release$ $Date: 2004/11/30 15:48:40 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.92 $ $Release$ $Date: 2004/12/01 11:54:39 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -2493,11 +2493,18 @@ int rtcpcld_updcFileRecalled(
                              tp,
                              tapeCopy
                              );
-    if ( rc == -1 ) return(-1);
+    if ( rc == -1 ) {
+      LOG_SYSCALL_ERR("deleteSegmentFromDB()");
+      return(-1);
+    }
+    
     rc = deleteTapeCopyFromDB(
                               tapeCopy
                               );
-    if ( rc == -1 ) return(-1);
+    if ( rc == -1 ) {
+      LOG_SYSCALL_ERR("deleteTapeCopyFromDB()");
+      return(-1);
+    }
   }
   
   return(0);
@@ -2515,8 +2522,8 @@ int rtcpcld_updcFileMigrated(
   struct Cstager_CastorFile_t *castorFile;
   struct Cstager_DiskCopy_t **diskCopyArray;
   enum Cstager_DiskCopyStatusCodes_t diskCopyStatus;
-  struct Cstager_Segment_t *segment;
-  struct Cstager_Tape_t *tp;
+  struct Cstager_Segment_t *segment = NULL;
+  struct Cstager_Tape_t *tp = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj;
@@ -2552,10 +2559,12 @@ int rtcpcld_updcFileMigrated(
   C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
-  tp = (struct Cstager_Tape_t *)tape->dbRef->row;
-  segment = (struct Cstager_Segment_t *)file->dbRef->row;
-  free(file->dbRef);
-  file->dbRef = NULL;
+  if ( tape->dbRef != NULL ) tp = (struct Cstager_Tape_t *)tape->dbRef->row;
+  if ( file->dbRef != NULL ) {
+    segment = (struct Cstager_Segment_t *)file->dbRef->row;
+    free(file->dbRef);
+    file->dbRef = NULL;
+  }
   if ( segment != NULL ) Cstager_Segment_copy(segment,&tapeCopy);
   if ( tapeCopy != NULL ) Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
   if ( (segment == NULL) || (tapeCopy == NULL) || (castorFile == NULL) ) {
