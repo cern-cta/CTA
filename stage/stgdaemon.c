@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.64 2000/09/30 09:04:35 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.65 2000/10/03 15:28:01 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.64 $ $Date: 2000/09/30 09:04:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.65 $ $Date: 2000/10/03 15:28:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -784,7 +784,7 @@ add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
 	struct stgcat_entry *stcp;
 	struct stgcat_entry *stcp_ok;
 	struct waitf *wfp_ok;
-	int found;
+	int found, index_found;
 	int save_reqid, save_nextreqid;
 	int rc = 0;
 
@@ -794,13 +794,14 @@ add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
 		reqid = wqp->reqid;
 		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
 			if (wfp->waiting_on_req != wfp_orig->subreqid) continue;
-			found = 0;
+			found = index_found = 0;
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (stcp->reqid == 0) break;
 				if (stcp->reqid == wfp->subreqid) {
 					found = 1;
 					break;
 				}
+				index_found++;
 			}
 			if (! found) {
 				sendrep(wqp->rpfd, MSG_ERR, "STG02 - Internal error : Your are waiting on a \"-c off\" another request, but corresponding member is not in the in-memory catalog\n");
@@ -819,48 +820,66 @@ add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
 					rc = -1;
 					goto add2otherwf_return;
 				}
-				if ((newwaitf = (struct waitf *) realloc(wqp->wf, (wqp->nbdskf + 1) * sizeof(struct waitf))) == NULL) {
- 					sendrep(wqp->rpfd, MSG_ERR, "STG02 - System error : realloc failed at %s:%d (%s)\n",__FILE__,__LINE__,strerror(errno));
-					rc = -1;
-					goto add2otherwf_return;
-				}
-				wqp->wf = wfp = newwaitf;
-				wqp->nbdskf++;
-				wqp->nb_subreqs++;
-				wqp->nb_waiting_on_req++;
-				stcp_ok = newreq();
-				save_nextreqid = nextreqid();
-				memcpy(stcp_ok,stcp,sizeof(struct stgcat_entry));
-				stcp_ok->reqid = save_nextreqid;
-				/* Current stcp is "<X>-", new one is "<X+1>-" */
-				sprintf(stcp_ok->u1.t.fseq,"%d",atoi(stcp->u1.t.fseq) + 1);
-				strcat(stcp_ok->u1.t.fseq,"-");
-				/* And it is a deffered allocation */
-				stcp_ok->ipath[0] = '\0';
-				wfp_ok = &(wqp->wf[wqp->nbdskf - 1]);
-				memset((char *) wfp_ok,0,sizeof(struct waitf));
-				wfp_ok->subreqid = stcp_ok->reqid;
-				wfp_ok->waiting_on_req = wfp_new->subreqid;
-				/* Current stcp become "<X>" */
-				sprintf(stcp->u1.t.fseq,"%d",atoi(fseq_orig));
-#ifdef USECDB
-				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-				}
-				if (stgdb_ins_stgcat(&dbfd,stcp_ok) != 0) {
-					stglogit(func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-				}
-#endif
-				savereqs ();
+				/* If the file sequence of this "-c off" callback is higher or equal to the one */
+				/* we are waiting for, then we extended the structure. */
+				/* Otherwise we only update it. */
+				/* This handles the case where a "-q 3- -c off", for example, is waiting on */
+				/* "-q 1- -c off" one. Until the callback for file sequence 3 is reached we */
+				/* only update the structure */
+				if (atoi(fseq_orig) < atoi(stcp->u1.t.fseq)) {
+					wfp->waiting_on_req = wfp_new->subreqid;
 #ifdef STAGER_DEBUG
-				sendrep(wqp->rpfd, MSG_ERR, "STG33 - Extended wfp for eventual tape_fseq %s\n",stcp_ok->u1.t.fseq);
+					sendrep(wqp->rpfd, MSG_ERR, "STG33 - Updated wfp for eventual tape_fseq %d-\n",atoi(fseq_orig) + 1);
 #else
-				stglogit(func, "[DEBUG] add2otherwf : Extended wfp for eventual tape_fseq %s\n",stcp_ok->u1.t.fseq);
+					stglogit(func, "[DEBUG] add2otherwf : Updated wfp for eventual tape_fseq %d-\n",atoi(fseq_orig) + 1);
 #endif
+				} else {
+					if ((newwaitf = (struct waitf *) realloc(wqp->wf, (wqp->nbdskf + 1) * sizeof(struct waitf))) == NULL) {
+ 						sendrep(wqp->rpfd, MSG_ERR, "STG02 - System error : realloc failed at %s:%d (%s)\n",__FILE__,__LINE__,strerror(errno));
+						rc = -1;
+						goto add2otherwf_return;
+					}
+					wqp->wf = wfp = newwaitf;
+					wqp->nbdskf++;
+					wqp->nb_subreqs++;
+					wqp->nb_waiting_on_req++;
+					stcp_ok = newreq();
+					/* The memory may have been realloced, so we follow this eventual reallocation */
+					/* by reassigning stcp pointer using the found index */
+					stcp = &(stcs[index_found]);
+					save_nextreqid = nextreqid();
+					memcpy(stcp_ok,stcp,sizeof(struct stgcat_entry));
+					stcp_ok->reqid = save_nextreqid;
+					/* Current stcp is "<X>-", new one is "<X+1>-" */
+					sprintf(stcp_ok->u1.t.fseq,"%d",atoi(stcp->u1.t.fseq) + 1);
+					strcat(stcp_ok->u1.t.fseq,"-");
+					/* And it is a deffered allocation */
+					stcp_ok->ipath[0] = '\0';
+					wfp_ok = &(wqp->wf[wqp->nbdskf - 1]);
+					memset((char *) wfp_ok,0,sizeof(struct waitf));
+					wfp_ok->subreqid = stcp_ok->reqid;
+					wfp_ok->waiting_on_req = wfp_new->subreqid;
+					/* Current stcp become "<X>" */
+					sprintf(stcp->u1.t.fseq,"%d",atoi(fseq_orig));
+#ifdef USECDB
+					if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+						stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					}
+					if (stgdb_ins_stgcat(&dbfd,stcp_ok) != 0) {
+						stglogit(func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+					}
+#endif
+					savereqs ();
+#ifdef STAGER_DEBUG
+					sendrep(wqp->rpfd, MSG_ERR, "STG33 - Extended wfp for eventual tape_fseq %s\n",stcp_ok->u1.t.fseq);
+#else
+					stglogit(func, "[DEBUG] add2otherwf : Extended wfp for eventual tape_fseq %s\n",stcp_ok->u1.t.fseq);
+#endif
+				}
 			} else {
 				/* This request is NOT a "-c off" one, but is neverthless waiting on another "-c off" one */
 				/* We will simply update the wfp->waiting_on_req to wfp_new->subreqid, only if the fseq */
-				/* given on the command is NOT the what we are waiting for. */
+				/* given on the command is NOT what we are waiting for. */
 				if (strcmp(stcp->u1.t.fseq, fseq_orig) == 0) continue;
 				wfp->waiting_on_req = wfp_new->subreqid;
 #ifdef STAGER_DEBUG
