@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.50 2002/03/05 14:44:03 jdurand Exp $
+ * $Id: procclr.c,v 1.51 2002/04/11 10:07:12 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.50 $ $Date: 2002/03/05 14:44:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.51 $ $Date: 2002/04/11 10:07:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -192,7 +192,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 	if ((gr = Cgetgrgid (gid)) == NULL) {
 		if (errno != ENOENT) sendrep (rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
 		sendrep (rpfd, MSG_ERR, STG36, gid);
-		c = SYERR;
+		c = (serrno == ENOENT) ? ESTGROUP : SESYSERR;
 		goto reply;
 	}
 	strncpy (group, gr->gr_name, CA_MAXGRPNAMELEN);
@@ -217,13 +217,13 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			((nstcp_input >  0) && (nstcp_input != 1)) ||
             ((nstpp_input >  0) && (nstpp_input != 1))) {
 			sendrep(rpfd, MSG_ERR, "STG02 - Only exactly one stcp (%d here) or one stpp (%d here) input is supported\n", nstcp_input, nstpp_input);
-			c = USERR;
+			c = EINVAL;
 			goto reply;
         }
 		if ((flags & STAGE_MULTIFSEQ) == STAGE_MULTIFSEQ) {
 			if (t_or_d != 't') {
 				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_MULTIFSEQ flag is valid only for t_or_d == 't'\n");
-				c = USERR;
+				c = EINVAL;
 				goto reply;
 			}
 		}
@@ -238,7 +238,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				unmarshall_STAGE_CAT(magic, STAGE_INPUT_MODE, struct_status, rbp, &(stcp_input));
 				if (struct_status != 0) {
 					sendrep(rpfd, MSG_ERR, "STG02 - Bad catalog entry input\n");
-					c = SYERR;
+					c = SEINTERNAL;
 					goto reply;
 				}
 				logit[0] = '\0';
@@ -272,7 +272,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 					if ((flags & STAGE_MULTIFSEQ) == STAGE_MULTIFSEQ) {
 						if ((nbtpf = unpackfseq (stcp_input.u1.t.fseq, STAGECLR, &trailing, &fseq_list, 0, NULL)) == 0) {
 							sendrep(rpfd, MSG_ERR, "STG02 - STAGE_MULTIFSEQ option value (u1.t.fseq) invalid\n");
-							c = USERR;
+							c = EINVAL;
 							goto reply;
 						}
 					} else {
@@ -294,7 +294,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 					strcpy (poolname, stcp_input.poolname);
 				} else {
 					sendrep (rpfd, MSG_ERR, STG32, stcp_input.poolname);
-					c = USERR;
+					c = EINVAL;
 					goto reply;
 				}
 			}
@@ -303,7 +303,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			unmarshall_STAGE_PATH(magic, STAGE_INPUT_MODE, path_status, rbp, &(stpp_input));
 			if (path_status != 0) {
 				sendrep(rpfd, MSG_ERR, "STG02 - Bad input (path input structure)\n");
-				c = USERR;
+				c = EINVAL;
 				goto reply;
 			}
 			stglogit(func,"stpp[1/1] : %s\n",stpp_input.upath);
@@ -315,7 +315,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			if ((flags & STAGE_PATHNAME) == STAGE_PATHNAME) path = stpp_input.upath;
 			if ((linkname != NULL) && (path != NULL)) {
 				sendrep(rpfd, MSG_ERR, "STG02 - Both STAGE_LINKNAME and STAGE_PATHNAME is not allowed\n");
-				c = USERR;
+				c = EINVAL;
 				goto reply;
 			}
 		}
@@ -332,13 +332,13 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			if (stcp_input.t_or_d == 't') {
 				if ((side = stcp_input.u1.t.side) < 0) {
 					sendrep (rpfd, MSG_ERR, STG06, "u1.t.side (STAGE_SIDE in the flags)");
-					c = USERR;
+					c = EINVAL;
 					goto reply;
 				}
 			} else {
 				/* Hmmm.... STAGE_SIDE flag and not a 't' request might indicate something more wrong than expected */
 				sendrep(rpfd, MSG_ERR, "STG02 - STAGE_SIDE flag is valid only for t_or_d == 't'\n");
-				c = USERR;
+				c = EINVAL;
 				goto reply;
 			}
 		}
@@ -453,7 +453,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
     }
 
 	if (errflg) {
-		c = USERR;
+		c = EINVAL;
 		goto reply;
 	}
 	c = 0;
@@ -474,7 +474,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			savepath ();
 		} else {
 			sendrep (rpfd, MSG_ERR, STG33, linkname, "file not found");
-			c = USERR;
+			c = EINVAL;
 			goto reply;
 		}
 	} else if (path) {
@@ -530,7 +530,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 		}
 		if (! found) {
 			sendrep (rpfd, MSG_ERR, STG33, path, "file not found");
-			c = USERR;
+			c = EINVAL;
 			goto reply;
 		}
 	} else {
@@ -600,12 +600,8 @@ void procclrreq(req_type, magic, req_data, clienthost)
 					if (Cns_unlink (mfile) == 0) {
 						stglogit (func, STG95, mfile, user);
 					} else {
+						c = serrno;
 						sendrep (rpfd, MSG_ERR, STG02, mfile, "Cns_unlink", sstrerror(serrno));
-						if (req_type > STAGE_00) {
-							c = serrno;
-						} else {
-							c = ((serrno == EINVAL) || (serrno == EPERM) || (serrno == EACCES)) ? USERR : SYERR;
-						}
 					}
 				} else {
 					PRE_RFIO;
@@ -614,18 +610,14 @@ void procclrreq(req_type, magic, req_data, clienthost)
 					} else {
 						int save_serrno = rfio_serrno();
 						sendrep (rpfd, MSG_ERR, STG02, mfile, "rfio_unlink", rfio_serror());
-						if (req_type > STAGE_00) {
-							c = save_serrno;
-						} else {
-							c = ((save_serrno == EINVAL) || (save_serrno == EPERM) || (save_serrno == EACCES)) ? USERR : SYERR;
-						}
+						c = save_serrno;
 					}
 				}
 				setegid(start_passwd.pw_gid);
 				seteuid(start_passwd.pw_uid);
 			} else {
 				sendrep (rpfd, MSG_ERR, STG33, (mfile ? mfile : (xfile ? xfile : "")), "file not found");
-				c = USERR;
+				c = EINVAL;
 			}
 		}
 	}
@@ -633,7 +625,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 	if (argv != NULL) free (argv);
 	if (fseq_list != NULL) free(fseq_list);
 	rpfd = save_rpfd;
-	sendrep (rpfd, STAGERC, STAGECLR, c);
+	sendrep (rpfd, STAGERC, STAGECLR, magic, c);
 }
 
 int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
@@ -657,15 +649,14 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 	 */
 
     /* Special case of intermediate state or CASTOR-migration state (original record + stream) */
-	if ((ISCASTORWAITINGMIG(stcp) || ISCASTORBEINGMIG(stcp) || ((stcp->t_or_d == 'h') && (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) && (! ISSTAGED(stcp)))) &&
-		(uid != 0)) {
+	if ((ISCASTORWAITINGMIG(stcp) || ISCASTORBEINGMIG(stcp) || ((stcp->t_or_d == 'h') && (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) && (! ISSTAGED(stcp)))) && (! ISROOT(uid,gid))) {
 		sendrep (rpfd, MSG_ERR, STG33, stcp->u1.h.xfile, strerror(EBUSY));
 		return (EBUSY);
 	}
 
-	if ((strcmp (group, STGGRP) != 0) && (strcmp (group, stcp->group) != 0) && (uid != 0)) {
+	if ((strcmp (group, STGGRP) != 0) && (strcmp (group, stcp->group) != 0) && (! ISROOT(uid,gid))) {
 		sendrep (rpfd, MSG_ERR, STG33, "", "permission denied");
-		return (USERR);
+		return (EPERM);
 	}
 
 	if (((stcp->status & 0xF0) == STAGED) ||
@@ -675,7 +666,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 		if (delfile (stcp, 0, 1, 1, user, uid, gid, rflag, 1) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
 					 rfio_serror());
-			return (USERR);
+			return (rfio_serrno() > 0 ? rfio_serrno() : SESYSERR);
 		}
 	} else if (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp)) {
 		if ((ISSTAGEOUT(stcp) && (! ISCASTORMIG(stcp))) || (ISSTAGEALLOC(stcp) && ((stcp->status | STAGED) != STAGED))) {
@@ -684,7 +675,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 		if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag, 1) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
 					 rfio_serror());
-			return (USERR);
+			return (rfio_serrno() > 0 ? rfio_serrno() : SESYSERR);
 		}
 	} else {	/* the request should be in the active/wait queue */
 		found = 0;
@@ -723,11 +714,11 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 			if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag, 1) < 0) {
 				sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
 						 rfio_serror());
-				return (USERR);
+				return (rfio_serrno() > 0 ? rfio_serrno() : SESYSERR);
 			}
 		} else {
 			sendrep (rpfd, MSG_ERR, STG104, stcp->status);
-			return (USERR);
+			return (rfio_serrno() > 0 ? rfio_serrno() : SESYSERR);
 		}
 	}
 	return (-1);
