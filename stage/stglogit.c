@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.22 2001/03/30 05:28:56 jdurand Exp $
+ * $Id: stglogit.c,v 1.23 2001/06/21 11:21:53 jdurand Exp $
  */
 
 /*
@@ -8,11 +8,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.22 $ $Date: 2001/03/30 05:28:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.23 $ $Date: 2001/06/21 11:21:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
 #include <time.h>
@@ -171,6 +172,106 @@ int stglogflags(va_alist) va_dcl
 		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
 #else
 	snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s flags: ", tm->tm_mon+1,
+		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
+#endif
+	prtbuf[PRTBUFSZ-1] = '\0';
+	thisp = prtbuf + strlen(prtbuf);
+	i = -1;
+	something_to_print = 0;
+    while (1) {
+		if (flag2names[++i].name == NULL) break;
+		if ((flags & flag2names[i].flag) == flag2names[i].flag) {
+			if (strlen(prtbuf) > (PRTBUFSZ - 3)) break;
+			if (*thisp != '\0') {
+				strcat(prtbuf, "|");
+			}
+			if (strlen(prtbuf) > (PRTBUFSZ - 1 - strlen(flag2names[i].name) - 1)) break;
+			strcat(prtbuf, flag2names[i].name);
+			something_to_print = 1;
+		}
+	}
+	if (something_to_print != 0) {
+		strcat(prtbuf, "\n");
+		if ((fd_log = open (LOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664)) >= 0) {
+			write (fd_log, prtbuf, strlen(prtbuf));
+			close (fd_log);
+		}
+	}
+	return(0);
+}
+
+int stglogopenflags(va_alist) va_dcl
+{
+	va_list args;
+	char *func;
+	u_signed64 flags;
+	char prtbuf[PRTBUFSZ];
+	char *thisp;
+	struct tm *tm;
+	time_t current_time;
+	int fd_log;
+	int i;
+	int something_to_print;
+
+	struct flag2name flag2names[] = {
+#ifdef O_RDONLY
+		{ O_RDONLY    , "O_RDONLY"    },
+#endif
+#ifdef O_WRONLY
+		{ O_WRONLY    , "O_WRONLY"    },
+#endif
+#ifdef O_RDWR
+		{ O_RDWR      , "O_RDWR"      },
+#endif
+#ifdef O_CREAT
+		{ O_CREAT     , "O_CREAT"     },
+#endif
+#ifdef O_EXCL
+		{ O_EXCL      , "O_EXCL"      },
+#endif
+#ifdef O_NOCTTY
+		{ O_NOCTTY    , "O_NOCTTY"    },
+#endif
+#ifdef O_TRUNC
+		{ O_TRUNC     , "O_TRUNC"     },
+#endif
+#ifdef O_APPEND
+		{ O_APPEND    , "O_APPEND"    },
+#endif
+#ifdef O_NONBLOCK
+		{ O_NONBLOCK  , "O_NONBLOCK"  },
+#endif
+#ifdef O_NDELAY
+		{ O_NDELAY    , "O_NDELAY"    },
+#endif
+#ifdef O_SYNC
+		{ O_SYNC      , "O_SYNC"      },
+#endif
+#ifdef O_NOFOLLOW
+		{ O_NOFOLLOW  , "O_NOFOLLOW"  },
+#endif
+#ifdef O_DIRECTORY
+		{ O_DIRECTORY , "O_DIRECTORY" },
+#endif
+#ifdef O_LARGEFILE
+		{ O_LARGEFILE , "O_LARGEFILE" },
+#endif
+        { 0                , NULL     }
+	};
+      
+	va_start (args);
+	func = va_arg (args, char *);
+	flags = va_arg (args, u_signed64);
+	va_end (args);
+
+	/* Buffersize all the flags */
+	time (&current_time);		/* Get current time */
+	tm = localtime (&current_time);
+#if (defined(__osf__) && defined(__alpha))
+	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s openflags: ", tm->tm_mon+1,
+		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
+#else
+	snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s openflags: ", tm->tm_mon+1,
 		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
 #endif
 	prtbuf[PRTBUFSZ-1] = '\0';
