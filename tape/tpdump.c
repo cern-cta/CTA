@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.6 $ $Date: 1999/11/16 12:46:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.7 $ $Date: 1999/11/16 14:54:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpdump - analyse the content of a tape */
@@ -273,6 +273,8 @@ char	**argv;
 
 	/* Set default values */
 
+	if (code == 0)
+		code = SL;
 	den = cvtden (aden);
 	switch (den) {
 	case D800:
