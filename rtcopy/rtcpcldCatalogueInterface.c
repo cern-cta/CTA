@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.39 $ $Release$ $Date: 2004/08/13 12:10:15 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.40 $ $Release$ $Date: 2004/08/13 14:11:05 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.39 $ $Release$ $Date: 2004/08/13 12:10:15 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.40 $ $Release$ $Date: 2004/08/13 14:11:05 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1692,6 +1692,8 @@ int rtcpcld_updateVIDStatus(
   struct C_IObject_t *iObj;
   struct Cstager_Tape_t *tapeItem = NULL;
   enum Cstager_TapeStatusCodes_t cmpStatus;  
+  struct Cstager_Tape_t *dummyTp = NULL;
+  struct Cstager_IStagerSvc_t *stgsvc = NULL;
   int rc = 0, save_serrno;
 
   if ( tape == NULL ) {
@@ -1742,9 +1744,57 @@ int rtcpcld_updateVIDStatus(
       return(-1);
     }
 
+    rc = getStgSvc(&stgsvc);
+    if ( rc == -1 || stgsvc == NULL ) {
+      UNLOCKTP;
+      return(-1);
+    }
+
     iAddr = C_BaseAddress_getIAddress(baseAddr);
     iObj = Cstager_Tape_getIObject(tapeItem);
     Cstager_Tape_id(tapeItem,&_key);
+    /*
+     * BEGIN Hack until client can use a createRepNoRec() to add segments
+     */
+    rc = Cstager_IStagerSvc_selectTape(
+                                       stgsvc,
+                                       &dummyTp,
+                                       tape->tapereq.vid,
+                                       tape->tapereq.side,
+                                       tape->tapereq.mode
+                                       );
+    if ( rc == -1 ) {
+      save_serrno = serrno;
+      if ( dontLog == 0 ) {
+        char *_dbErr = NULL;
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        DLF_LVL_ERROR,
+                        RTCPCLD_MSG_DBSVC,
+                        (struct Cns_fileid *)NULL,
+                        RTCPCLD_NB_PARAMS+3,
+                        "DBSVCCALL",
+                        DLF_MSG_PARAM_STR,
+                        "Cstager_IStagerSvc_selectTape()",
+                        "ERROR_STR",
+                        DLF_MSG_PARAM_STR,
+                        sstrerror(serrno),
+                        "DB_ERROR",
+                        DLF_MSG_PARAM_STR,
+                        (_dbErr = rtcpcld_fixStr(Cstager_IStagerSvc_errorMsg(stgsvc))),
+                        RTCPCLD_LOG_WHERE
+                        );
+        if ( _dbErr != NULL ) free(_dbErr);      
+      }
+      C_IAddress_delete(iAddr);
+      UNLOCKTP;
+      serrno = save_serrno;
+      return(-1);
+    }
+    Cstager_Tape_delete(dummyTp);
+    /*
+     * END Hack until client can use a createRepNoRec() to add segments
+     */
     Cstager_Tape_setStatus(tapeItem,toStatus);
     /*
      * Set error info, if TAPE_FAILED status is requested
@@ -1759,6 +1809,18 @@ int rtcpcld_updateVIDStatus(
     }
     
     rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,1);
+    save_serrno = serrno;
+    /*
+     * BEGIN Hack: always rollback since we haven't modified the Tape.
+     */
+    if ( dummyTp != NULL ) {
+      C_Services_rollback(*svcs,iAddr);
+      Cstager_Tape_delete(dummyTp);
+    }
+    serrno = save_serrno;
+    /*
+     * END Hack: always rollback since we haven't modified the Tape.
+     */
     if ( rc == -1 ) {
       save_serrno = serrno;
       C_IAddress_delete(iAddr);
@@ -2393,8 +2455,11 @@ int rtcpcld_setFileStatus(
     /*
      * BEGIN Hack: always rollback since we haven't modified the Tape.
      */
-    if ( dummyTp != NULL ) C_Services_rollback(*svcs,iAddr);
-    Cstager_Tape_delete(dummyTp);
+    if ( dummyTp != NULL ) {
+      C_Services_rollback(*svcs,iAddr);
+      Cstager_Tape_delete(dummyTp);
+    }
+    serrno = save_serrno;
     /*
      * END Hack: always rollback since we haven't modified the Tape.
      */

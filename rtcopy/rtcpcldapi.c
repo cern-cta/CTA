@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.50 $ $Release$ $Date: 2004/08/13 12:11:10 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.51 $ $Release$ $Date: 2004/08/13 14:11:04 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.50 $ $Date: 2004/08/13 12:11:10 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.51 $ $Date: 2004/08/13 14:11:04 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -909,17 +909,19 @@ static int updateSegmList(
 }
 
 static int lockTapeInDB(
-                        tpList
+                        tpList,
+                        tp
                         )
      RtcpcldTapeList_t *tpList;
+     struct Cstager_Tape_t **tp;
 {
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
-  struct Cstager_Tape_t *tp = NULL;
   rtcpTapeRequest_t *tapereq = NULL;
   int rc, mode, side, save_serrno;
   char *vid = NULL;
   
-  if ( tpList == NULL || tpList->tp == NULL || tpList->tape == NULL ) {
+  if ( tpList == NULL || tp == NULL || 
+       tpList->tp == NULL || tpList->tape == NULL ) {
     serrno = EINVAL;
     return(-1);
   }
@@ -952,7 +954,7 @@ static int lockTapeInDB(
 
   rc = Cstager_IStagerSvc_selectTape(
                                      stgSvc,
-                                     &tp,
+                                     tp,
                                      vid,
                                      side,
                                      mode
@@ -975,15 +977,16 @@ static int lockTapeInDB(
     serrno = save_serrno;
     return(-1);
   }
-  Cstager_Tape_delete(tp);
   return(0);
 }
 
 static int unlockTapeInDB(
                           tpList,
+                          tp,
                           doCommit
                           )
      RtcpcldTapeList_t *tpList;
+     struct Cstager_Tape_t *tp;
      int doCommit;
 {
   struct C_Services_t **dbSvc = NULL;
@@ -1061,6 +1064,7 @@ static int unlockTapeInDB(
     /* Not sure if this is needed but... */
     (void)C_Services_rollback(*dbSvc,iAddr);
   }
+  Cstager_Tape_delete(tp);
   C_IAddress_delete(iAddr);
 
   return(0);
@@ -1250,7 +1254,7 @@ static int doFullUpdate(
   tape_list_t *tl;
   file_list_t *fl;
   RtcpcldSegmentList_t *segm = NULL;
-  int rc = 0, save_serrno;
+  int rc = 0, updated = 0, save_serrno;
 
   if ( rtcpcld_killed(tape) == 1 ) return(-1);
 
@@ -1288,6 +1292,7 @@ static int doFullUpdate(
                             &segm
                             );
             if ( rc == -1 ) break;
+            updated = 1;
 /*             if ( segm != NULL ) { */
 /*               rc = addSegmentToDB( */
 /*                                   tpList, */
@@ -1312,6 +1317,7 @@ static int doFullUpdate(
                      );
             rc = updateSegment(segm);
             if ( rc == -1 ) break;
+            updated = 1;
 /*             rc = updateSegmentInDB(segm); */
 /*             if ( rc == -1 ) break; */
           }
@@ -1322,6 +1328,8 @@ static int doFullUpdate(
   CLIST_ITERATE_END(tape,tl);
 
   if ( rc == -1 ) serrno = save_serrno;
+  else rc = updated;
+  
   return(rc);
 }
 
@@ -1587,16 +1595,15 @@ static int getUpdates(
           if ( rc == -1 ) {
             save_serrno = serrno;
           } else {
-            rc = lockTapeInDB(tpIterator);
+            struct Cstager_Tape_t *tmpTp = NULL;
+            rc = C_Services_updateObj(svcs,iAddr,iObj);
+            if ( rc == -1 ) LOG_FAILED_CALL("C_Services_updateObj()",
+                                            C_Services_errorMsg(svcs));
+            rc = lockTapeInDB(tpIterator,&tmpTp);
             if ( rc == -1 ) save_serrno = serrno;
-            else {
-              rc = C_Services_updateObj(svcs,iAddr,iObj);
-              if ( rc == -1 ) LOG_FAILED_CALL("C_Services_updateObj()",
-                                              C_Services_errorMsg(svcs));
-            }
             if ( rc == 0 ) rc = doFullUpdate(tpIterator,tape);
             if ( rc == -1 ) save_serrno = serrno;
-            rc = unlockTapeInDB(tpIterator,rc);
+            rc = unlockTapeInDB(tpIterator,&tmpTp,rc);
             if ( rc == -1 ) save_serrno = serrno;
           }
           dumpSegmList(tpIterator);
