@@ -39,6 +39,12 @@ char DLL_DECL *Csec_server_get_client_username _PROTO ((Csec_context_t *,
 							int *,
 							int *));
 
+char DLL_DECL *Csec_server_get_client_name _PROTO ((Csec_context_t *));
+
+int DLL_DECL Csec_client_get_service_type _PROTO ((Csec_context_t *));
+
+int DLL_DECL Csec_server_is_castor_service _PROTO ((Csec_context_t *));
+
 /* Funtion providing a default per thread context */
 Csec_context_t *DLL_DECL Csec_get_default_context _PROTO(());
 
