@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.23 2000/03/31 08:07:53 jdurand Exp $
+ * $Id: stager.c,v 1.24 2000/03/31 08:13:54 jdurand Exp $
  */
 
 /*
@@ -11,7 +11,7 @@
 /* #define SKIP_FILEREQ_MAXSIZE */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.23 $ $Date: 2000/03/31 08:07:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.24 $ $Date: 2000/03/31 08:13:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1529,11 +1529,15 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 					} else {
 						if (fixed_stcs->status == STAGEWRT || fixed_stcs->status == STAGEPUT) {
 							if (j >= nbtpf) {
-								fl[j].filereq.concat = CONCAT;
+								fl[j].filereq.concat = CONCAT_TO_EOD;
+							} else {
+								fl[j].filereq.concat = NOCONCAT_TO_EOD;
 							}
 						} else {
 							if (j >= nbcat_ent) {
-								fl[j].filereq.concat = CONCAT;
+								fl[j].filereq.concat = CONCAT_TO_EOD;
+							} else {
+								fl[j].filereq.concat = NOCONCAT_TO_EOD;
 							}
 						}
 					}
