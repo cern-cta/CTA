@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.117 $ $Release$ $Date: 2005/02/04 13:01:52 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.118 $ $Release$ $Date: 2005/02/04 16:30:28 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.117 $ $Release$ $Date: 2005/02/04 13:01:52 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.118 $ $Release$ $Date: 2005/02/04 16:30:28 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -2243,23 +2243,24 @@ int deleteTapeCopyFromDB(
                                   streamArray[i],
                                   tapeCopy
                                   );
-    rc = C_Services_fillRep(
-                            *svcs,
-                            iAddr,
-                            iObj,
-                            OBJ_Stream,
-                            0
-                            );
-    if ( rc == -1 ) {
-      save_serrno = serrno;
-      LOG_DBCALL_ERR("C_Services_fillRep()",
-                     C_Services_errorMsg(*svcs));
-      C_IAddress_delete(iAddr);
-      free(streamArray);
-      serrno = save_serrno;
-      return(-1);
-    }
   }
+  rc = C_Services_fillRep(
+                          *svcs,
+                          iAddr,
+                          iObj,
+                          OBJ_Stream,
+                          0
+                          );
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    LOG_DBCALL_ERR("C_Services_fillRep()",
+                   C_Services_errorMsg(*svcs));
+    C_IAddress_delete(iAddr);
+    free(streamArray);
+    serrno = save_serrno;
+    return(-1);
+  }
+
   if ( streamArray != NULL ) free(streamArray);
   
   Cstager_TapeCopy_setCastorFile(tapeCopy,NULL);
