@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/10/28 08:03:59 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/11/01 12:54:24 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/10/28 08:03:59 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/11/01 12:54:24 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1396,7 +1396,7 @@ int rtcpcld_workerFinished(
      int workerRC, workerErrorCode;
 {
   char *shiftMsg = NULL;
-  int retval, rc;
+  int retval = 0, rc;
 
   rc = rtcpcld_updateTape(
                           tape,
