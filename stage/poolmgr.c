@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.76 2001/02/04 21:49:48 jdurand Exp $
+ * $Id: poolmgr.c,v 1.77 2001/02/04 22:02:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.76 $ $Date: 2001/02/04 21:49:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.77 $ $Date: 2001/02/04 22:02:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2658,7 +2658,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,tppool_out,being_migr)
       if ((migr->fileclass_predicates[j].nbfiles_canbemig - migr->fileclass_predicates[j].nbfiles_beingmig) <= 0) continue;
     }
     if (found_fileclass == 0) {
-      sendrep(rpfd, "euid_egid", MSG_ERR, "STG02 - Cannot find fileclass that can trigger your migration\n");
+      sendrep(rpfd, MSG_ERR, "STG02 - Cannot find fileclass that can trigger your migration\n");
       return(-1);
     }
     /* From now on, we are sure that this fileclass contains files that are migration candidates */
@@ -2683,7 +2683,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,tppool_out,being_migr)
       } else {
         /* If we already updated it - we check consistency */
         if (*euid != fileclasses[i].Cnsfileclass.uid) {
-          sendrep(rpfd, "euid_egid", MSG_ERR, STG118, last_fileclass_euid, fileclasses[i].Cnsfileclass.name, tppool, "uid", *euid, fileclasses[i].Cnsfileclass.uid);
+          sendrep(rpfd, MSG_ERR, STG118, last_fileclass_euid, fileclasses[i].Cnsfileclass.name, tppool, "uid", *euid, fileclasses[i].Cnsfileclass.uid);
           return(-1);
         }
       }
@@ -2697,7 +2697,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,tppool_out,being_migr)
       } else {
         /* If we already updated it - we check consistency */
         if (*egid != fileclasses[i].Cnsfileclass.gid) {
-          sendrep(rpfd, "euid_egid", MSG_ERR, STG118, last_fileclass_egid, fileclasses[i].Cnsfileclass.name, tppool, "gid", *egid, fileclasses[i].Cnsfileclass.gid);
+          sendrep(rpfd, MSG_ERR, STG118, last_fileclass_egid, fileclasses[i].Cnsfileclass.name, tppool, "gid", *egid, fileclasses[i].Cnsfileclass.gid);
           return(-1);
         }
       }
@@ -2716,14 +2716,14 @@ int euid_egid(euid,egid,tppool,migr,stcp,tppool_out,being_migr)
     if (last_fileclass_egid != 0) {
       /* There is an explicit filter on group id - current's stcp->gid have to match it */
       if (*egid != stcp->gid) {
-        sendrep(rpfd, "euid_egid", MSG_ERR, STG125, stcp->user, "gid", stcp->gid, "group", *egid, stcp->u1.h.xfile);
+        sendrep(rpfd, MSG_ERR, STG125, stcp->user, "gid", stcp->gid, "group", *egid, stcp->u1.h.xfile);
         return(-1);
       }
       /* We check compatibility of uid */
       if (last_fileclass_euid != 0) {
         /* There is an explicit filter on user id - current's stcp->uid have to match it */
         if (*euid != stcp->uid) {
-          sendrep(rpfd, "euid_egid", MSG_ERR, STG125, stcp->user, "uid", stcp->uid, "user", *euid, stcp->u1.h.xfile);
+          sendrep(rpfd, MSG_ERR, STG125, stcp->user, "uid", stcp->uid, "user", *euid, stcp->u1.h.xfile);
           return(-1);
         }
       } else {
@@ -2735,7 +2735,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,tppool_out,being_migr)
       if (last_fileclass_euid != 0) {
         /* There is an explicit filter on user id - current's stcp->uid have to match it */
         if (*euid != stcp->uid) {
-          sendrep(rpfd, "euid_egid", MSG_ERR, STG125, stcp->user, "uid", stcp->uid, "user", *euid, stcp->u1.h.xfile);
+          sendrep(rpfd, MSG_ERR, STG125, stcp->user, "uid", stcp->uid, "user", *euid, stcp->u1.h.xfile);
           return(-1);
         }
       }
