@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logbuf.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/28 09:40:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logbuf.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/16 14:43:54 $ $Author: sponcec3 $
  *
  * 
  *
@@ -48,7 +48,11 @@ std::string castor::logbuf::getTimeStamp() {
       << "/" << tm->tm_mday
       << " " << tm->tm_hour
       << ":" << tm->tm_min
-      << ":" << tm->tm_sec
-      << " " << Cthread_self() << " ";
+      << ":" << tm->tm_sec;
+#ifdef THREAD_SAFE
+    buf << " " << Cthread_self() << " ";
+#else
+    buf << " 0 ";
+#endif
   return buf.str();
 }
