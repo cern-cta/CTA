@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.228 2002/10/08 13:45:50 jdurand Exp $
+ * $Id: poolmgr.c,v 1.229 2002/10/18 09:25:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.228 $ $Date: 2002/10/08 13:45:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.229 $ $Date: 2002/10/18 09:25:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -4271,6 +4271,7 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 	int ifileclass_vs_migrator = -1;
 	int i;
 	int skip_Cns_queryclass = 0;
+	extern struct passwd start_passwd;         /* Generic uid/gid at startup (admin) */
 
 	if ((stcp == NULL) || (stcp->t_or_d != 'h')) {
 		serrno = SEINTERNAL;
@@ -4326,9 +4327,15 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 	}
 
 	if ((stcp->u1.h.fileclass <= 0) || (forced_Cns_statx)) {
+		int Cns_statx_rc;
 		strcpy(Cnsfileid.server,stcp->u1.h.server);
 		Cnsfileid.fileid = stcp->u1.h.fileid;
-		if (Cns_statx(stcp->u1.h.xfile, &Cnsfileid, &Cnsfilestat) != 0) {
+		setegid(stcp->gid);
+		seteuid(stcp->uid);
+		Cns_statx_rc = Cns_statx(stcp->u1.h.xfile, &Cnsfileid, &Cnsfilestat);
+		setegid(start_passwd.pw_gid);
+		seteuid(start_passwd.pw_uid);
+		if (Cns_statx_rc != 0) {
 			int save_serrno;
 			int c;
 
