@@ -1,5 +1,5 @@
 /*
- * $Id: procping.c,v 1.14 2002/08/27 08:38:03 jdurand Exp $
+ * $Id: procping.c,v 1.15 2002/10/19 14:33:53 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.14 $ $Date: 2002/08/27 08:38:03 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.15 $ $Date: 2002/10/19 14:33:53 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -50,6 +50,8 @@ extern char func[16];
 extern int rpfd;
 extern int reqid;
 
+static int noretry_flag = 0;
+
 void procpingreq(req_type, magic, req_data, clienthost)
 		 int req_type;
 		 int magic;
@@ -69,6 +71,7 @@ void procpingreq(req_type, magic, req_data, clienthost)
 	{
 		{"host",               REQUIRED_ARGUMENT,  NULL,      'h'},
 		{"verbose",            NO_ARGUMENT,        NULL,      'v'},
+		{"noretry",            NO_ARGUMENT,     &noretry_flag,  1},
 		{NULL,                 0,                  NULL,        0}
 	};
 	u_signed64 flags = 0;

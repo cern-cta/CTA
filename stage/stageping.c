@@ -1,5 +1,5 @@
 /*
- * $Id: stageping.c,v 1.5 2002/10/16 22:58:55 jdurand Exp $
+ * $Id: stageping.c,v 1.6 2002/10/19 14:33:53 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageping.c,v $ $Revision: 1.5 $ $Date: 2002/10/16 22:58:55 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageping.c,v $ $Revision: 1.6 $ $Date: 2002/10/19 14:33:53 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -31,8 +31,12 @@ static char sccsid[] = "@(#)$RCSfile: stageping.c,v $ $Revision: 1.5 $ $Date: 20
 #include "serrno.h"
 
 EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
+extern	char	*getenv();
+extern	char	*getconfent();
 void usage _PROTO((char *));
 void cleanup _PROTO((int));
+
+static int noretry_flag = 0;
 
 int main(argc, argv)
 		 int	argc;
@@ -54,10 +58,12 @@ int main(argc, argv)
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
+	int maxretry = MAXRETRY;
 	static struct Coptions longopts[] =
 	{
 		{"host",               REQUIRED_ARGUMENT,  NULL,      'h'},
 		{"verbose",            NO_ARGUMENT,        NULL,      'v'},
+		{"noretry",            NO_ARGUMENT,     &noretry_flag,  1},
 		{NULL,                 0,                  NULL,        0}
 	};
 
@@ -99,6 +105,16 @@ int main(argc, argv)
 		usage (argv[0]);
 		exit (USERR);
 	}
+
+	if (! noretry_flag) {
+		if (
+			(((p = getenv("STAGE_NORETRY")) != NULL) && (atoi(p) != 0)) ||
+			(((p = getconfent("STG","NORETRY")) != NULL) && (atoi(p) != 0))
+			) {
+			noretry_flag = 1;
+		}
+	}
+	if (noretry_flag != 0) maxretry = 0;
 
 	/* Build request header */
 
@@ -148,7 +164,8 @@ int main(argc, argv)
 		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 		if (c == 0 || serrno == EINVAL) break;
 		if (serrno == ESTNACT && nstg161++ == 0) fprintf(stderr, STG161);
-		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
+		if (serrno != ESTNACT && ntries++ > maxretry) break;
+		if (noretry_flag != 0) break; /* To be sure we always break if --noretry is in action */
 		sleep (RETRYI);
 	}
 #if defined(_WIN32)
@@ -172,5 +189,5 @@ void usage(cmd)
 		 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
-	fprintf (stderr, "%s", "[-h stage_host] [-v]\n");
+	fprintf (stderr, "%s", "[-h stage_host] [-v] [--noretry]\n");
 }

@@ -1,10 +1,10 @@
-.\" $Id: stageping.man,v 1.4 2002/10/03 14:00:07 jdurand Exp $
+.\" $Id: stageping.man,v 1.5 2002/10/19 14:33:53 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageping.man,v $ $Revision: 1.4 $ $Date: 2002/10/03 14:00:07 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stageping.man,v $ $Revision: 1.5 $ $Date: 2002/10/19 14:33:53 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2001-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEPING "1" "$Date: 2002/10/03 14:00:07 $" "CASTOR" "Stage User Commands"
+.TH STAGEPING "1" "$Date: 2002/10/19 14:33:53 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageping \- ping the stager daemon
 .SH SYNOPSIS
@@ -13,6 +13,8 @@ stageping \- ping the stager daemon
 .BI \-h " host"
 ] [
 .BI \-v
+] [ 
+.BI \-\-noretry
 ]
 
 .SH DESCRIPTION
@@ -28,6 +30,9 @@ This may also be specified thru the environment variable STAGE_HOST.
 .TP
 .BI \-v
 Asks for additional information, like CASTOR package version, generated time and uptime.
+.TP
+.B \-\-noretry
+There will be no retry in case of any failure. Can be set using environment variable STAGE_NORETRY to a non-zero value, or an entry 'STG NORETRY' in /etc/shift.conf.
 
 .SH RETURN CODES
 \
