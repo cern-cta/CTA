@@ -15,7 +15,11 @@ static char sccsid[] = "@(#)vdqm_AdmOps.c,v 1.1 2000/02/29 07:51:10  CERN IT-PDP
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#if !defined(_WIN32)
 #include <regex.h>
+#else
+typedef void * regex_t
+#endif /* !_WIN32 */
 #include <stdlib.h>
 #include <pwd.h>
 #include <time.h>
@@ -40,6 +44,7 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
 
     DrvReq = &drv->drv;
     log(LOG_DEBUG,"vdqm_SetDedicate() compile regexp %s\n",DrvReq->dedicate);
+#if !defined(_WIN32)
     rc = regcomp(&drv->expbuf, DrvReq->dedicate, REG_EXTENDED|REG_ICASE);
     if ( rc != 0 ) {
         rc = regerror(rc,&drv->expbuf,errstr,sizeof(errstr));
@@ -47,6 +52,7 @@ int vdqm_SetDedicate(vdqm_drvrec_t *drv) {
             DrvReq->dedicate,errstr);
         return(-1); 
     }
+#endif /* _WIN32 */
     return(0);
 }
 
@@ -61,7 +67,9 @@ int vdqm_ResetDedicate(vdqm_drvrec_t *drv) {
     DrvReq = &drv->drv;
 
     if ( *DrvReq->dedicate != '\0' ) {
+#if !defined(_WIN32)
         (void)regfree(&drv->expbuf);
+#endif /* _WIN32 */
         *DrvReq->dedicate = '\0';
     }
     return(0);
@@ -111,8 +119,13 @@ int vdqm_DrvMatch(vdqm_volrec_t *vol, vdqm_drvrec_t *drv) {
     FILL_MATCHSTR(match_item,format,formats);
 
     log(LOG_DEBUG,"vdqm_DrvMatch(): match %s with %s\n",match_item,drv->drv.dedicate);
+#if !defined(_WIN32)
     if ((regexec(&drv->expbuf, match_item, (size_t)0, NULL, 0)) == 0) {
         log(LOG_DEBUG,"vdqm_DrvMatch() matched!\n");
         return(1);
     } else return(0);
+#else /* !_WIN32 */
+    log(LOG_INFO,"vdqm_DrvMatch() regexp. matching not available on WIN32!\n");
+    return(1);
+#endif /* !_WIN32 */
 }
