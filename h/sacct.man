@@ -1,8 +1,8 @@
-.\" $Id: sacct.man,v 1.1 2002/07/03 08:31:38 bcouturi Exp $
+.\" $Id: sacct.man,v 1.2 2002/08/22 07:23:52 bcouturi Exp $
 .\"
 .\" Man page for the CASTOR accounting header file sacct.h
 .\"
-.TH SACCT "4" "$Date: 2002/07/03 08:31:38 $" "CASTOR" "Accounting records"
+.TH SACCT "4" "$Date: 2002/08/22 07:23:52 $" "CASTOR" "Accounting records"
 .SH NAME
 \fBsacct\fP \- CASTOR accounting records
 
@@ -28,25 +28,75 @@ The package identifies the type of the record, and indicates which structure sho
 .br
 .TP
 .B ACCTSYSTEM
-Accounting for system events. Use \fBstruct acctsystem\fP to read the content.
+Accounting for system events. Use \fBstruct acctsystem\fP to read the content. The only availble information is the subtype field, indicating system shutdown or startup.
 .TP
 .B ACCTRFIO
-RFIO accounting entries. Use \fBstruct acctrfio\fP to read the content.
+RFIO accounting entries. Use \fBstruct acctrfio\fP to read the content. This record provides the type of request, the uid/gid of the user sending the request, the filename, as well as the summary of the of the data transfered.
 .TP
 .B ACCTTAPE
-Tape daemon accounting entries. Use \fBstruct accttape\fP.
+Tape daemon accounting entries. Use \fBstruct accttape\fP. Information provided is: uid/gid of requestor, job id, the device group name of the drive, the drive used, the vid requested and the file sequence number on the tape. The subtype fileds indicates what action was actually performed by the tape daemon, or what happened to the daemon the possible values are:
+.br
+	TPDSTART: tpdaemon started 
+.br
+	TPASSIGN: drive assigned 
+.br	
+	TP2MOUNT: tape to be mounted 
+.br	
+	TPMOUNTED: tape mounted 
+.br	
+	TPPOSIT: tape positionned to requested file 
+.br	
+	TPUNLOAD: tape is unloading 
+.br	
+	TPFREE: drive freed 
+.br	
+	TPCONFUP: drive configured up 
+.br	
+	TPCONFDN: drive configured down 
+.br	
+	TPDGQ: device group queue 
+.br
 .TP
 .B ACCTRTCOPY
-RTCOPY accounting entries. Use \fBstruct acctrtcp\fP.
-.TP
-.B ACCTSTAGE
-Stager accounting entries. Use \fBstruct acctstage\fP.
+RTCOPY accounting entries. Use \fBstruct acctrtcp\fP. Contains uid/gid of requestor, the RTCOPY job id, the type of the request (Read, Write, or Dumptape), the stager request ID if applicable, the size of the transfer when known as well as the client host, disk server, volume ID and file sequence number. The different subtypes of RTCOPY accounting entries are:
+.br
+
+.br
+	RTCPCMDR: command received
+.br
+	RTCPPRC: completion of partial request
+.br
+	RTCPCMDC: command completed (with success or not)
+.br
+	RTCPPRR: retry of partial request
+.br
+	RTCPTPR: retry of tape mount
+.br
+	RTCPCMDD: Decrypted command line
+.br
+	RTCPEMSG: Error message
 .TP
 .B ACCTRTCPTIM
-RTCOPY timing entries. Use \fBstruct acctrtcp_timing\fP.
+RTCOPY timing entries. Use \fBstruct acctrtcp_timing\fP. This records provide, for a given job timing information about the way the request was performed, as well as the quantity of data transfered. There is no subtype for this accounting record.
 .TP
-.B ACCTSTAGE2
-Stager accounting entries, new format. Use \fBstruct acctstage2\fP.
+.B ACCTSTAGE / ACCTSTAGE2
+Stager accounting entries. Use \fBstruct acctstage\fP or \fBstruct acctstage2\fP. These records give information about stage requests, including request id, requestor uid/gid and information concerning the details of the request itself. accstage2 is a new format used by the current stagres. 
+The subtypes are:
+
+.br
+	STGSTART: stgdaemon started
+.br
+	STGCMDR: command received
+.br
+	STGFILS: file staged
+.br
+	STGCMDC: command completed (with success or not)
+.br
+	STGCMDS: stager started
+.br
+	STGFILC: file cleared
+.br
+.TP
 .P
 .br
 .SH AUTHOR
