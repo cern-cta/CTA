@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.53 $ $Release$ $Date: 2004/11/25 10:45:38 $ $Author: bcouturi $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.54 $ $Release$ $Date: 2004/11/25 11:04:17 $ $Author: sponcec3 $
  *
  *
  *
@@ -227,6 +227,7 @@ castor::db::ora::OraStagerSvc::segmentsForTape
 (castor::stager::Tape* searchItem)
   throw (castor::exception::Exception) {
   cnvSvc()->updateObj(searchItem);
+  cnvSvc()->fillObj(0, searchItem, OBJ_Segment);
   std::vector<castor::stager::Segment*> result;
   std::vector<castor::stager::Segment*>::iterator it;
   for (it = searchItem->segments().begin();
