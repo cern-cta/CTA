@@ -232,6 +232,7 @@ char *sys_rterrlist[ERTMAXERR-ERTBASEOFF+2] =
          "Request interrupted by operator",
          "Request list is not circular",
          "Bad request structure", 
+         "Request partially processed",
          "BAD ERROR NUMBER"
         };
 
