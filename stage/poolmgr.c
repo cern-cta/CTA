@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.142 2001/06/21 12:24:03 jdurand Exp $
+ * $Id: poolmgr.c,v 1.143 2001/06/22 17:49:09 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.142 $ $Date: 2001/06/21 12:24:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.143 $ $Date: 2001/06/22 17:49:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3996,7 +3996,7 @@ void bestnextpool_out(nextout,mode)
     /* Go to the next pool unless round about or same pool returned */
     nextpool_out(thispool_out);
     if ((strcmp(thispool_out, firstpool_out) == 0) || (strcmp(thispool_out, sav_thispool_out) == 0)) {
-      stglogit(func, "Turnaround reached at outpool %s\n", thispool_out);
+      /* stglogit(func, "Turnaround reached at outpool %s\n", thispool_out); */
       break;
     }
   }
@@ -4105,6 +4105,7 @@ void bestnextpool_out(nextout,mode)
     } else {
       strcpy(timestr,"<none>");
     }
+    /*
     stglogit(func, "selected element: %s %s read=%d write=%d readserver=%d writeserver=%d poolmigrating=%d free=%s capacity=%s last_allocation=%s\n",
              this_best_element->server,
              this_best_element->dirpath,
@@ -4117,6 +4118,7 @@ void bestnextpool_out(nextout,mode)
              u64tostru(this_best_element->capacity, tmpbuf2, 0),
              timestr
              );
+    */
   }
 
   if (best_elements != NULL) free(best_elements);
