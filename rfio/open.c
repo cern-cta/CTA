@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.24 2004/01/23 10:27:45 jdurand Exp $
+ * $Id: open.c,v 1.25 2004/06/03 09:14:01 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.24 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.25 $ $Date: 2004/06/03 09:14:01 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
 #endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */
@@ -23,6 +23,8 @@ static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.24 $ $Date: 2004/0
 #include "rfcntl.h"             /* remote file control mapping macros   */
 #if !defined(_WIN32)
 #include <arpa/inet.h>          /* for inet_ntoa()                      */
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 #endif
 #include <pwd.h>
 #include <stdlib.h>
@@ -393,6 +395,14 @@ char  	*vmstr ;
    if (setsockopt(rfp->s, SOL_SOCKET, SO_KEEPALIVE,(char *)&rcode, sizeof (int) ) == -1) {
       TRACE(2, "rfio" ,"rfio_open: setsockopt(SO_KEEPALIVE) failed");
       syslog(LOG_ALERT, "rfio: open: setsockopt(SO_KEEPALIVE): %s", strerror(errno));
+   }
+
+   if ( (p = getenv("RFIO_TCP_NODELAY")) != NULL ) {
+	   rcode = 1;
+	   TRACE(2,"rfio","rfio_open: setsockopt(IPPROTO_TCP,TCP_NODELAY)");
+	   if ( setsockopt(rfp->s,IPPROTO_TCP,TCP_NODELAY,(char *)&rcode,sizeof(rcode)) == -1 ) {
+		  TRACE(2,"rfio","rfio_open: setsockopt(IPPROTO_TCP,TCP_NODELAY) failed");
+	   }
    }
 
    /*
