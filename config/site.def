@@ -27,14 +27,12 @@
 #define AdminHosts "castor tms-2 sure01 sure02"
 #define AuthorizedHosts	/etc/rtcopy.hosts
 #define CDKDir	/usr/local/src/CDK
-#define CopytapeHost	"stagepublic"
-#define CopytapeSpool	/usr/spool/copytape
 #if defined(_WIN32)
 #define CupvConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\CUPVCONFIG
 #else
 #define CupvConfigFile	/etc/CUPVCONFIG
 #endif
-#define CupvHost	"castor"
+#define CupvHost	"castorcupv"
 #define CupvSpool	/usr/spool/upv
 #define RmMasterSpool	/usr/spool/rmmaster
 #if defined(_WIN32)
@@ -56,7 +54,7 @@
 #endif
 #define DbSpool	/usr/spool/db
 #define DomainName	cern.ch
-#define FilManDir       /usr/local/man/man4
+#define FilManDir       /usr/man/man4
 #define FilManSuffix    4
 #define HsmToolsSpool	/usr/spool/hsmtools
 #if defined(_WIN32)
@@ -67,26 +65,26 @@
 #if defined(_WIN32)
 #define InstallBinDir	\\cern.ch\dfs\Applications\CERN\CASTOR\bin
 #else
-#define InstallBinDir	/usr/local/bin
+#define InstallBinDir	/usr/bin
 #endif
 #if defined(_WIN32)
 #define InstallIncludeDir       \\cern.ch\dfs\Applications\CERN\CASTOR\include
 #else
-#define InstallIncludeDir       /usr/local/include
+#define InstallIncludeDir       /usr/include
 #endif
 #if defined(_WIN32)
 #define InstallLibDir	\\cern.ch\dfs\Applications\CERN\CASTOR\lib
 #else
-#define InstallLibDir	/usr/local/lib
+#define InstallLibDir	/usr/lib
 #endif
-#define LibManDir       /usr/local/man/man3
+#define LibManDir       /usr/man/man3
 #define LibManSuffix    3
 #if defined(_WIN32)
 #define LocalHostsList 	%%SystemRoot%%\\system32\\drivers\\etc\\shift.localhosts
 #else
 #define LocalHostsList  /etc/shift.localhosts
 #endif
-#define ManDir  /usr/local/man/man1
+#define ManDir  /usr/man/man1
 #define ManSuffix       1
 #if defined(_WIN32)
 #define MappingFile	%%SystemRoot%%\\system32\\drivers\\etc\\ext.users
@@ -103,7 +101,7 @@
 #else
 #define NsConfigFile	/etc/NSCONFIG
 #endif
-#define NsHost	"castor"
+#define NsHost	"castorns"
 #define NsHostPfx	cns
 #define NsSpool	/usr/spool/ns
 #define NsRoot  "/castor"
@@ -149,7 +147,7 @@
 #else
 #define VmgrConfigFile	/etc/VMGRCONFIG
 #endif
-#define VmgrHost	"castor"
+#define VmgrHost	"castorvmgr"
 #define VmgrSpool	/usr/spool/vmgr
 #if defined(_WIN32)
 #define DlfConfigFile  %%SystemRoot%%\\system32\\drivers\\etc\\DLFCONFIG
@@ -176,60 +174,64 @@
 #define LsfInstallDir /usr/local/lsf/lib
 #endif
 
-#define BuildCommands		YES
-#define BuildCommon		YES
-#define BuildCopytapeClient	NO
-#define BuildCopytapeServer	NO
-#define BuildCupvClient		YES
+#define BuildCommands		NO
+#define BuildCommon		NO
+#define BuildCupvClient		NO
 #define BuildCupvDaemon		NO
-#define BuildDbClient		NO
-#define BuildDbDaemon		NO
+#define	BuildCupvLibrary	NO
 #define BuildExamples		NO
-#define	BuildHpssClient		NO
-#define	BuildHpssServer		NO
 #define BuildHsmTools		NO
-#define BuildMonitorClient	YES
+#define BuildMonitorClient	NO
 #define BuildMonitorServer	NO
-#define BuildMsgClient		YES
-#define BuildMsgServer		YES
+#define BuildMonitorLibrary	NO
+#define BuildMsgClient		NO
+#define BuildMsgServer		NO
+#define BuildMsgLibrary		NO
 #define BuildNameServerClient	NO
 #define BuildNameServerDaemon	NO
-#define BuildNameServerLibrary	YES
-#define BuildRfioClient		YES
-#define BuildRfioServer		YES
-#define BuildRmcClient		YES
+#define BuildNameServerLibrary	NO
+#define BuildRfioClient		NO
+#define BuildRfioServer		NO
+#define BuildRfioLibrary	NO
+/* To be added when there will be end-user RMC client(s) */
+/* #define BuildRmcClient		NO */
 #define BuildRmcServer		NO
-#define BuildJob		YES
-#define BuildRtcopyClient	YES
+#define BuildRmcLibrary		NO
+#define BuildJob		NO
+#define BuildRtcopyClient	NO
 #define BuildRtcopyServer	NO
+#define BuildRtcopyLibrary	NO
 #define BuildRtstat		NO
-#define BuildStageClient	YES
-#define BuildStageDaemon	YES
-#define BuildNewStageDaemon     YES
-#define BuildStageLibrary	YES
-#define BuildRmMaster		YES
-#define BuildRmNode		YES
-#define BuildRmClient		YES
-#define BuildSysreq		YES
-#define BuildTapeClient		YES
-#define BuildTapeDaemon		YES
+/* To be added when there will be end-user STAGE client(s) */
+/* #define BuildStageClient	NO */
+#define BuildStageDaemon	NO
+#define BuildStageLibrary	NO
+#define BuildRmMaster		NO
+#define BuildRmNode		NO
+#define BuildRmClient		NO
+#define	BuildRmLibrary		NO
+#define BuildTapeClient		NO
+#define BuildTapeDaemon		NO
+#define BuildTapeLibrary	NO
 #define BuildTest	        NO
 #define BuildTpusage		NO
-#define BuildVdqmClient		YES
-#define BuildVdqmServer		NO 
-#define BuildVolumeMgrClient	YES
+#define BuildVdqmClient		NO
+#define BuildVdqmServer		NO
+#define BuildVdqmLibrary	NO
+#define BuildVolumeMgrClient	NO
 #define BuildVolumeMgrDaemon	NO
+#define BuildVolumeMgrLibrary	NO
 #define BuildDlfClient    	NO
 #define BuildDlfDaemon    	NO
-#define BuildExpertClient	YES
-#define BuildExpertDaemon	YES
-#define BuildSchedPlugin	YES
-
-#define BuildClientCpp          YES
-#define BuildDstageCpp          YES
-#define BuildRHCpp              YES
-#define BuildOraCpp             YES
-#define BuildCppTest	        YES
+#define BuildDlfLibrary    	NO
+#define BuildExpertClient	NO
+#define BuildExpertDaemon	NO
+#define BuildExpertLibrary	NO
+#define BuildSchedPlugin	NO
+#define BuildRHCpp              NO
+#define BuildOraCpp             NO
+#define BuildCastorClientCPPLibrary	NO
+#define BuildCppTest	        NO
 
 #define Accounting		YES
 #define ClientLogging           NO
@@ -244,9 +246,6 @@
 #define UseMtx			NO
 #define UseMySQL		NO
 #define UseOracle		YES
-#define UseRaima		NO
-#define UseStageCdb		NO
-#define UseTms			NO
 #define UseVmgr			YES
 #define UseLsf			NO
 #define UseScheduler	YES
@@ -266,7 +265,7 @@
  * Section specifying the build of the Security packages
  */
 
-#define BuildSecurity		YES
+#define BuildSecurity		NO
 #define UseGSI                  YES
 #define UseKRB5                 YES
 #define UseHeimdalKrb5		NO
