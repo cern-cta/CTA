@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.51 $ $Release$ $Date: 2004/11/24 13:33:04 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.52 $ $Release$ $Date: 2004/11/25 10:41:46 $ $Author: sponcec3 $
  *
  *
  *
@@ -751,7 +751,7 @@ castor::db::ora::OraStagerSvc::requestToDo
       stmtString
         << "UPDATE RequestsStatus SET status = 'PROCESSED'"
         << " WHERE status = 'NEW' AND ROWNUM < 2 AND "
-        << "(SELECT type FROM Id2Type WHERE Id2Typeid = RequestStatus.id)"
+        << "(SELECT type FROM Id2Type WHERE Id2Typeid = RequestsStatus.id)"
         << " IN (";
       for (std::vector<ObjectsIds>::const_iterator it = types.begin();
            it!= types.end();
