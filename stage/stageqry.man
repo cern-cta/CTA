@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.12 $ $Date: 2001/03/03 06:19:28 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.13 $ $Date: 2001/06/21 10:38:31 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEQRY l "$Date: 2001/03/03 06:19:28 $"
+.TH STAGEQRY l "$Date: 2001/06/21 10:38:31 $"
 .SH NAME
 stageqry \- give the status of all staged tapes
 .SH SYNOPSIS
@@ -123,11 +123,11 @@ stageqry \- give the status of all staged tapes
 ] [
 .BI -x
 ] [
+.BI --dump
+] [
 .BI --noregexp
 ] [
 .BI --reqid " reqid "
-] [
-.BI --dump
 ]
 .LP
 .B stageqry
@@ -193,6 +193,14 @@ STAGED_LSZ	successfully staged to specified size
 STAGED_TPE	successfully staged but blocks were skipped
 .TP
 PUT_FAILED	stageput failed
+.TP
+CAN_BE_MIGR	candidate for the next automatic migration (CASTOR HSM only)
+.TP
+BEING_MIGR	being migrated by the automatic migrator (CASTOR HSM only)
+.TP
+WAITING_NS	waiting for creation in nameserver (CASTOR HSM only)
+.TP
+WAITING_MIGR	waiting for automatic migration request (CASTOR HSM only)
 .RE
 .HP
 Nbaccess number of requests for this disk file.
@@ -392,3 +400,8 @@ stageqry -T
 2	System error.
 .br
 4	Configuration error.
+.SH SEE ALSO
+\fBstagechng\fP(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
+
