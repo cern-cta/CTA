@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.66 2001/03/21 15:28:45 jdurand Exp $
+ * $Id: procupd.c,v 1.67 2001/03/22 20:30:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.66 $ $Date: 2001/03/21 15:28:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.67 $ $Date: 2001/03/22 20:30:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -723,6 +723,7 @@ procupdreq(req_data, clienthost)
 		((rc == 0) && (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)))) {
 		/* Note : wfp->size_to_recall is zero if it not a recall of CASTOR file(s) */
 		/* (always the case it it is not a recall of CASTOR file) */
+		int save_wfp_subreqid = wfp->subreqid;
 		wqp->nb_subreqs--;
 		wqp->nbdskf--;
 		rpfd = wqp->rpfd;
@@ -855,8 +856,28 @@ procupdreq(req_data, clienthost)
 					if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
 				}
 			}
-			i = 0;		/* reset these variables changed by the above loop */
-			wfp = wqp->wf;	/* and needed in the loop below */
+			/* In STAGEWRT mode we have to take care that async callback may be */
+			/* enabled */
+			if ((callback_index < 0) || (wqp->nbdskf == 0)) {
+				/* No STAGEWRT async callback : we do normal crunch of waiting files */
+				/* If wqp->nbdskf the memcpy() below will not be executed... */
+				/* so it will be no point to search in the else branch lower */
+				i = 0;		/* reset these variables changed by the above loop */
+				wfp = wqp->wf;	/* and needed in the loop below */
+			} else {
+				/* We search the exact index in the waiting files corresponding to the current */
+				/* one */
+				int iwf;
+				struct waitf *iwfp;
+
+				for (iwf = 0, iwfp = wqp->wf; iwf < (wqp->nbdskf + 1); iwf++, iwfp++) {
+					if (iwfp->subreqid == save_wfp_subreqid) {
+						i = iwf;
+						wfp = iwfp;
+						break;
+					}
+				}
+            }
 		} else {	/* STAGEIN */
 			stcp->status |= STAGED;
 			if (rc == BLKSKPD || rc == TPE_LSZ || rc == MNYPARI)
