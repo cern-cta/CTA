@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.23 $ $Date: 2000/12/13 09:52:44 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.24 $ $Date: 2000/12/21 11:18:33 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -92,6 +92,8 @@ EXTERN_C int DLL_DECL rfio_rmdir _PROTO((char *));
 EXTERN_C int DLL_DECL rfio_rename _PROTO((char *, char *));
 EXTERN_C int DLL_DECL rfio_lockf _PROTO((int, int, long));
 EXTERN_C int DLL_DECL rfio_chmod _PROTO((char *, int));
+EXTERN_C int DLL_DECL rfio_symlink _PROTO((char *, char *));
+EXTERN_C int DLL_DECL rfio_unlink _PROTO((char *));
 EXTERN_C int DLL_DECL rfiosetopt _PROTO((int, int *, int));
 
 /*
