@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_errmsg.c,v $ $Revision: 1.3 $ $Date: 2003/08/28 10:16:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_errmsg.c,v $ $Revision: 1.4 $ $Date: 2003/10/13 07:25:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -46,6 +46,7 @@ vmgr_errmsg(char *func, char *msg, ...)
 	else
 		*prtbuf = '\0';
 	vsprintf (prtbuf + strlen(prtbuf), msg, args);
+	va_end (args);
 	if (thip->errbufp) {
 		if (strlen (prtbuf) < thip->errbuflen) {
 			strcpy (thip->errbufp, prtbuf);
