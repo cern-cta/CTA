@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.29 $ $Release$ $Date: 2004/07/30 16:58:28 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.30 $ $Release$ $Date: 2004/08/02 12:46:07 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.29 $ $Date: 2004/07/30 16:58:28 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.30 $ $Date: 2004/08/02 12:46:07 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1156,6 +1156,21 @@ static int getUpdates(
         if ( rc == -1 ) {
           save_serrno = serrno;
         } else {
+          tape_list_t *tl;
+          file_list_t *fl;
+          rtcp_log(LOG_DEBUG,
+                   "Full dump of tape list returned by getMoreInfo()"
+                   );
+          CLIST_ITERATE_BEGIN(tape,tl) 
+            {
+              (void)dumpTapeReq(tl);
+              CLIST_ITERATE_BEGIN(tl->file,fl)
+                {
+                  (void)dumpFileReq(fl);
+                }
+              CLIST_ITERATE_END(tl->file,fl);
+            }
+          CLIST_ITERATE_END(tape,tl);
           rc = updateSegmList(tpIterator,tape->file);
           if ( rc == -1 ) {
             save_serrno = serrno;
