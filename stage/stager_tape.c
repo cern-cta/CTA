@@ -1,5 +1,5 @@
 /*
- * $Id: stager_tape.c,v 1.1 2001/11/30 12:25:44 jdurand Exp $
+ * $Id: stager_tape.c,v 1.2 2001/12/05 18:20:41 jdurand Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.1 $ $Date: 2001/11/30 12:25:44 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.2 $ $Date: 2001/12/05 18:20:41 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -485,6 +485,9 @@ int main(argc,argv)
 	signal (SIGINT, stagekilled);        /* If client died */
 	signal (SIGTERM, stagekilled);       /* If killed from administrator */
 	if (nretry) sleep (RETRYI);
+
+	/* Redirect RTCOPY log message directly to user's console */
+	rtcp_log = (void (*) _PROTO((int, CONST char *, ...))) (silent != 0 ? &stager_migmsg : &stager_usrmsg);
 
 	/* -------- TAPE TO TAPE ----------- */
 
