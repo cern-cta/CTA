@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stgdaemon.c,v $ $Revision: 1.242 $ $Date: 2003/09/14 05:59:36 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "$RCSfile: stgdaemon.c,v $ $Revision: 1.243 $ $Date: 2003/09/14 06:02:04 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -780,7 +780,7 @@ int main(argc,argv)
 
 	/* Open request socket */
 	if ((stg_s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		stglogit (func, STG02, "", "socket", sys_errlist[errno]);
+		stglogit (func, STG02, "", "socket", strerror(errno));
 		stglogit (func, "Exit.\n");
 		exit (CONFERR);
 	}
