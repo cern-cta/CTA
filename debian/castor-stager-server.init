@@ -5,9 +5,9 @@
 # chkconfig: 345 70 35
 # description: STAGER server daemon
 #
-# $Id: castor-stager-server.init,v 1.1 2005/01/19 21:57:33 jdurand Exp $
+# $Id: castor-stager-server.init,v 1.2 2005/01/31 10:01:01 jdurand Exp $
 #
-# @(#)$RCSfile: castor-stager-server.init,v $ $Revision: 1.1 $ $Date: 2005/01/19 21:57:33 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-stager-server.init,v $ $Revision: 1.2 $ $Date: 2005/01/31 10:01:01 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 #
@@ -109,7 +109,8 @@ case "$1" in
                 ## Because we might generate a core file (c.f. ULIMIT_C)
                 ## We explicitely chdir in /tmp
                 #
-                cd /tmp
+		mkdir -p /var/spool/stager
+                cd /var/spool/stager
                 $DAEMON $STAGER $OPTIONS
                 if [ $? -eq 0 ]; then
                     [ -d $SUBSYSDIR ] && touch $SUBSYS

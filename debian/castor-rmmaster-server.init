@@ -5,9 +5,9 @@
 # chkconfig: 345 72 33
 # description: RMMASTER (Node Resource Monitoring Master Daemon)
 #
-# $Id: castor-rmmaster-server.init,v 1.1 2005/01/19 21:57:32 jdurand Exp $
+# $Id: castor-rmmaster-server.init,v 1.2 2005/01/31 10:01:01 jdurand Exp $
 #
-# @(#)$RCSfile: castor-rmmaster-server.init,v $ $Revision: 1.1 $ $Date: 2005/01/19 21:57:32 $ CERN/IT/ADC/CA Vitaly Motyakov
+# @(#)$RCSfile: castor-rmmaster-server.init,v $ $Revision: 1.2 $ $Date: 2005/01/31 10:01:01 $ CERN/IT/ADC/CA Vitaly Motyakov
 #
 
 sysname=`uname -s`
@@ -113,13 +113,14 @@ case "$1" in
             fi
             if [ $RETVAL -eq 0 ]; then
                 cd /
-                mkdir -p /usr/spool/rmmaster
+                mkdir -p /var/spool/rmmaster
                 #
                 ## Because we might generate a core file (c.f. ULIMIT_C)
                 ## We explicitely chdir in the yet created directory
-                ## /usr/spool/rmmaster
+                ## /var/spool/rmmaster
                 #
-                cd /usr/spool/rmmaster
+		mkdir -p /var/spool/rmmaster
+                cd /var/spool/rmmaster
                 $DAEMON $RMMASTER $OPTIONS
                 if [ $? -eq 0 ]; then
                     [ -d $SUBSYSDIR ] && touch $SUBSYS

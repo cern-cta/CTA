@@ -5,9 +5,9 @@
 # chkconfig: 345 65 40
 # description: RFIO server daemon
 #
-# $Id: castor-rfio-server.init,v 1.1 2005/01/19 21:57:31 jdurand Exp $
+# $Id: castor-rfio-server.init,v 1.2 2005/01/31 10:01:00 jdurand Exp $
 #
-# @(#)$RCSfile: castor-rfio-server.init,v $ $Revision: 1.1 $ $Date: 2005/01/19 21:57:31 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-rfio-server.init,v $ $Revision: 1.2 $ $Date: 2005/01/31 10:01:00 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -96,8 +96,9 @@ case "$1" in
             fi
             if [ $RETVAL -eq 0 ]; then
                 cd /
-                mkdir -p /usr/spool/sacct
-                mkdir -p /usr/spool/rfio
+                mkdir -p /var/spool/sacct
+                mkdir -p /var/spool/rfio
+		cd /var/spool/rfio
                 $DAEMON $RFIOD $OPTIONS
                 if [ $? -eq 0 ]; then
                     [ -d $SUBSYSDIR ] && touch $SUBSYS

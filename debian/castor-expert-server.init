@@ -5,9 +5,9 @@
 # chkconfig: 345 75 30
 # description: EXPERT server daemon
 #
-# $Id: castor-expert-server.init,v 1.1 2005/01/19 21:57:30 jdurand Exp $
+# $Id: castor-expert-server.init,v 1.2 2005/01/31 10:01:00 jdurand Exp $
 #
-# @(#)$RCSfile: castor-expert-server.init,v $ $Revision: 1.1 $ $Date: 2005/01/19 21:57:30 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-expert-server.init,v $ $Revision: 1.2 $ $Date: 2005/01/31 10:01:00 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -96,13 +96,14 @@ case "$1" in
         fi
         if [ $RETVAL -eq 0 ]; then
             cd /
-            mkdir -p /usr/spool/expert
+            mkdir -p /var/spool/expert
             #
             ## Because we might generate a core file (c.f. ULIMIT_C)
             ## We explicitely chdir in the yet created directory
-            ## /usr/spool/expert
+            ## /var/spool/expert
             #
-            cd /usr/spool/expert
+	    mkdir -p /var/spool/expert
+            cd /var/spool/expert
             $DAEMON $EXPERTD $OPTIONS
             if [ $? -eq 0 ]; then
                 [ -d $SUBSYSDIR ] && touch $SUBSYS

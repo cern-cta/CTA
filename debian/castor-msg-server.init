@@ -5,9 +5,9 @@
 # chkconfig: 345 62 54
 # description: CASTOR Message Daemon
 #
-# $Id: castor-msg-server.init,v 1.1 2005/01/31 09:45:28 jdurand Exp $
+# $Id: castor-msg-server.init,v 1.2 2005/01/31 10:01:00 jdurand Exp $
 #
-# @(#)$RCSfile: castor-msg-server.init,v $ $Revision: 1.1 $ $Date: 2005/01/31 09:45:28 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-msg-server.init,v $ $Revision: 1.2 $ $Date: 2005/01/31 10:01:00 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -102,6 +102,7 @@ case "$1" in
             ## We explicitely chdir in the yet created directory
             ## /var/spool/msgdaemon
             #
+	    mkdir -p /var/spool/msgdaemon
             cd /var/spool/msgdaemon
             $DAEMON $MSGDAEMON $OPTIONS
             if [ $? -eq 0 ]; then

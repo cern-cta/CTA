@@ -5,9 +5,9 @@
 # chkconfig: 345 67 38
 # description: DLF server
 #
-# $Id: castor-dlf-server.init,v 1.1 2005/01/19 21:57:30 jdurand Exp $
+# $Id: castor-dlf-server.init,v 1.2 2005/01/31 10:01:00 jdurand Exp $
 #
-# @(#)$RCSfile: castor-dlf-server.init,v $ $Revision: 1.1 $ $Date: 2005/01/19 21:57:30 $ CERN/IT/ADC/CA Vitaly Motyakov
+# @(#)$RCSfile: castor-dlf-server.init,v $ $Revision: 1.2 $ $Date: 2005/01/31 10:01:00 $ CERN/IT/ADC/CA Vitaly Motyakov
 #
 
 #
@@ -105,8 +105,8 @@ case "$1" in
             fi
         fi
         if [ $RETVAL -eq 0 ]; then
-            cd /
-            mkdir -p /usr/spool/dlf
+            mkdir -p /var/spool/dlf
+	    cd /var/spool/dlf
             $DAEMON $DLFSERVER $OPTIONS
             if [ $? -eq 0 ]; then
                 [ -d $SUBSYSDIR ] && touch $SUBSYS

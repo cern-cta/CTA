@@ -5,9 +5,9 @@
 # chkconfig: 345 64 41
 # description: VDQM server daemon
 #
-# $Id: castor-vdqm-server.init,v 1.1 2005/01/19 21:57:34 jdurand Exp $
+# $Id: castor-vdqm-server.init,v 1.2 2005/01/31 10:01:01 jdurand Exp $
 #
-# @(#)$RCSfile: castor-vdqm-server.init,v $ $Revision: 1.1 $ $Date: 2005/01/19 21:57:34 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-vdqm-server.init,v $ $Revision: 1.2 $ $Date: 2005/01/31 10:01:01 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -87,9 +87,9 @@ case "$1" in
                 RETVAL=1
             fi
         fi
-		if [ $RETVAL -eq 0 ]; then
-            cd /
-            mkdir -p /usr/spool/vdqm
+	if [ $RETVAL -eq 0 ]; then
+            mkdir -p /var/spool/vdqm
+	    cd /var/spool/vdqm
             $DAEMON $VDQMSERV $OPTIONS
             if [ $? -eq 0 ]; then
                 [ -d $SUBSYSDIR ] && touch $SUBSYS

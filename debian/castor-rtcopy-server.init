@@ -5,9 +5,9 @@
 # chkconfig: 345 73 32
 # description: RTCPD server daemon
 #
-# $Id: castor-rtcopy-server.init,v 1.1 2005/01/19 21:57:33 jdurand Exp $
+# $Id: castor-rtcopy-server.init,v 1.2 2005/01/31 10:01:01 jdurand Exp $
 #
-# @(#)$RCSfile: castor-rtcopy-server.init,v $ $Revision: 1.1 $ $Date: 2005/01/19 21:57:33 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-rtcopy-server.init,v $ $Revision: 1.2 $ $Date: 2005/01/31 10:01:01 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 sysname=`uname -s`
@@ -94,9 +94,9 @@ case "$1" in
             fi
         fi
         if [ $RETVAL -eq 0 ]; then
-            cd /
-            mkdir -p /usr/spool/sacct
-            mkdir -p /usr/spool/rtcopy
+            mkdir -p /var/spool/sacct
+            mkdir -p /var/spool/rtcopy
+	    cd /var/spool/rtcopy
             $DAEMON $RTCPD $OPTIONS
             if [ $? -eq 0 ]; then
                 [ -d $SUBSYSDIR ] && touch $SUBSYS
