@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.21 2000/05/12 12:17:40 jdurand Exp $
+ * $Id: procqry.c,v 1.22 2000/05/12 12:47:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.21 $ $Date: 2000/05/12 12:17:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.22 $ $Date: 2000/05/12 12:47:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -94,7 +94,7 @@ void procqryreq(req_data, clienthost)
 	struct group *gr;
 	int hdrprinted = 0;
 	int Lflag = 0;
-	static char l_stat[4][11] = {"", "STAGED_LSZ", "STAGED_TPE", "CAN_BE_MIGR"};
+	static char l_stat[5][11] = {"", "STAGED_LSZ", "STAGED_TPE", "", "CAN_BE_MIGR"};
 	int lflag = 0;
 	char *mfile = NULL;
 	int nargs;
