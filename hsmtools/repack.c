@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.9 $ $Date: 2004/03/04 16:59:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.10 $ $Date: 2004/03/05 10:58:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      repack - copy the active segments from a set of volumes to another set */
@@ -540,7 +540,7 @@ repack_callback (rtcpTapeRequest_t *tl, rtcpFileRequest_t *fl)
 						);
 					fflush (stdout);
 					return(-1);
-				}				
+				}
 			}
 		}
 
@@ -551,6 +551,9 @@ repack_callback (rtcpTapeRequest_t *tl, rtcpFileRequest_t *fl)
 		strcpy (old_segattrs.vid, seg_list[last_seg_repacked].vid);
 		old_segattrs.side = seg_list[last_seg_repacked].side;
 		old_segattrs.fseq = seg_list[last_seg_repacked].fseq;
+		/* Old checksum is always there anyway - useless not to print it, if any */
+		strcpy(old_segattrs.checksum_name,seg_list[last_seg_repacked].checksum_name);
+		old_segattrs.checksum = seg_list[last_seg_repacked].checksum;
 
 		new_segattrs.copyno = seg_list[last_seg_repacked].copyno;
 		new_segattrs.fsec = seg_list[last_seg_repacked].fsec;
@@ -561,14 +564,14 @@ repack_callback (rtcpTapeRequest_t *tl, rtcpFileRequest_t *fl)
 		memcpy (new_segattrs.blockid, fl->blockid, 4);
 
 		if (use_checksum) {
-			/* Propagate checksum */
-			strncpy(seg_list[last_seg_repacked].checksum_name, fl->castorSegAttr.segmCksumAlgorithm,CA_MAXCKSUMNAMELEN);
-			seg_list[last_seg_repacked].checksum_name[CA_MAXCKSUMNAMELEN] = '\0';
-			seg_list[last_seg_repacked].checksum = fl->castorSegAttr.segmCksum;
+			/* Propagate checksum that mover returned into the new segment structure */
+			strncpy(new_segattrs.checksum_name, fl->castorSegAttr.segmCksumAlgorithm,CA_MAXCKSUMNAMELEN);
+			new_segattrs.checksum_name[CA_MAXCKSUMNAMELEN] = '\0';
+			new_segattrs.checksum = fl->castorSegAttr.segmCksum;
 		} else {
-			/* Make sure it is zero */
-			seg_list[last_seg_repacked].checksum_name[0] = '\0';
-			seg_list[last_seg_repacked].checksum = 0;
+			/* Make sure it is zero in the new segment structure */
+			new_segattrs.checksum_name[0] = '\0';
+		    new_segattrs.checksum = 0;
 		}
 		
 		if (Cns_replaceseg (host, fileid, &old_segattrs, &new_segattrs) < 0) {
