@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.8 2004/12/08 15:10:06 jdurand Exp $
+ * $Id: JobSvcThread.cpp,v 1.9 2004/12/08 16:35:22 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.8 $ $Date: 2004/12/08 15:10:06 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.9 $ $Date: 2004/12/08 16:35:22 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -182,6 +182,7 @@ namespace castor {
       std::string error;
       std::list<castor::stager::DiskCopyForRecall*> sources;
       castor::stager::StartRequest *sReq;
+      bool emptyFile;
       
       try {
 
@@ -227,7 +228,7 @@ namespace castor {
         /* ---------------------------------- */
         if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
           STAGER_LOG_DEBUG(NULL, "Invoking getUpdateStart");
-          cl = stgSvc->getUpdateStart(subreq, fs, &dc, sources);
+          cl = stgSvc->getUpdateStart(subreq, fs, &dc, sources, &emptyFile);
         } else {
           STAGER_LOG_DEBUG(NULL, "Invoking PutStart");
           cl = stgSvc->putStart(subreq, fs, &dc);          
@@ -265,6 +266,7 @@ namespace castor {
           }
         }
         res.setClient(cl);  
+        res.setEmptyFile(emptyFile);
       }
       
       /* Reply To Client                */
