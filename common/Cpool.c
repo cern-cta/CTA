@@ -1,5 +1,5 @@
 /*
- * $Id: Cpool.c,v 1.12 1999/11/04 18:50:00 jdurand Exp $
+ * $Id: Cpool.c,v 1.13 1999/11/09 15:23:09 jdurand Exp $
  */
 
 #include <Cpool_api.h>
@@ -35,7 +35,7 @@ int Cpool_debug = 0;
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.12 $ $Date: 1999/11/04 18:50:00 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.13 $ $Date: 1999/11/09 15:23:09 $ CERN IT-PDP/DM Jean-Damien Durand";
 
 /* ------------------------------------ */
 /* Mutex static variables a-la-Cthread  */
@@ -1698,7 +1698,7 @@ int DLL_DECL Cpool_assign(poolnb,startroutine,arg,timeout)
               _Cpool_self(),_Cthread_self(),current->readfd[i]);
         /* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
-        _Cpool_readn(current->readfd[i], &ready, sizeof(int));
+        _Cpool_readn(current->readfd[i], (void *) &ready, sizeof(int));
         /* And we send the arguments */
         /* ... address of the start routine */
 #ifdef CPOOL_DEBUG
@@ -1708,7 +1708,7 @@ int DLL_DECL Cpool_assign(poolnb,startroutine,arg,timeout)
               _Cpool_self(),_Cthread_self(),(unsigned long) startroutine,current->writefd[i]);
         /* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
-        _Cpool_writen(current->writefd[i],&startroutine,sizeof(void *));
+        _Cpool_writen(current->writefd[i],(void *) &startroutine,sizeof(void *));
         /* In a non-thread environment we write the argument length and content */
 #ifdef CPOOL_DEBUG
         /* Cthread_mutex_lock(&lock_cpool_debug); */
@@ -1717,7 +1717,7 @@ int DLL_DECL Cpool_assign(poolnb,startroutine,arg,timeout)
               _Cpool_self(),_Cthread_self(),(int) length_vars,current->writefd[i]);
         /* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
-        _Cpool_writen(current->writefd[i],&length_vars,sizeof(size_t));
+        _Cpool_writen(current->writefd[i],(void *) &length_vars,sizeof(size_t));
         /* And the arguments themselves */
         if (length_vars > 0) {
 #ifdef CPOOL_DEBUG
@@ -2323,7 +2323,7 @@ int DLL_DECL Cpool_next_index(poolnb)
               _Cpool_self(),_Cthread_self(),poolnb,current->readfd[i]);
         /* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
-        _Cpool_readn(current->readfd[i], &ready, sizeof(int));
+        _Cpool_readn(current->readfd[i], (void *) &ready, sizeof(int));
         /* And we send a wait flag */
 #ifdef CPOOL_DEBUG
         /* Cthread_mutex_lock(&lock_cpool_debug); */
@@ -2332,11 +2332,10 @@ int DLL_DECL Cpool_next_index(poolnb)
               _Cpool_self(),_Cthread_self(),poolnb,current->writefd[i]);
         /* Cthread_mutex_unlock(&lock_cpool_debug); */
 #endif
-        _Cpool_writen(current->writefd[i],&_cpool_sleep_flag,sizeof(void *));
+        _Cpool_writen(current->writefd[i],(void *) &_cpool_sleep_flag,sizeof(void *));
         /* We remember it for the next assignment */
         current->forceid = i;
         return(i);
-        break;
       }
     }
     
