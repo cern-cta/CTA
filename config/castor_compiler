@@ -1,45 +1,5 @@
 # Global compiler setup for CASTOR
 
-# $Id: castor_compiler,v 1.2 2004/06/23 21:35:49 jdurand Exp $
+# $Id: castor_compiler,v 1.3 2005/01/24 11:29:57 jdurand Exp $
 # Copyright CERN/IT/ADC/CA 2004
 
-# Version 3.2.3 of the gcc compiler
-if [ -n "$PATH" ]; then
-  PATH=/usr/local/gcc-alt-3.2.3/bin:${PATH}
-else
-  PATH=/usr/local/gcc-alt-3.2.3/bin
-fi
-if [ -n "$LD_LIBRARY_PATH" ]; then
-  LD_LIBRARY_PATH=/usr/local/gcc-alt-3.2.3/lib:${LD_LIBRARY_PATH}
-else
-  LD_LIBRARY_PATH=/usr/local/gcc-alt-3.2.3/lib
-fi
-
-#
-## We make sure that c++ and cc do exist in /usr/local/gcc-alt-3.2.3/lib
-#
-REF=/usr/local/gcc-alt-3.2.3/bin
-if [ ! -x $REF/c++ ]; then
-  if [ ! -x $REF/g++ ]; then
-    echo "/etc/sysconfig/castor_compiler warning: no g++ nor c++ in $REF ?"
-  else
-    pushd $REF >/dev/null
-    rm -f c++
-    ln -s g++ c++
-    popd >/dev/null
-    echo "/etc/sysconfig/castor_compiler info: created link $REF/c++ -> $REF/g++"
-  fi
-fi
-if [ ! -x $REF/cc ]; then
-  if [ ! -x $REF/gcc ]; then
-    echo "/etc/sysconfig/castor_compiler warning: no gcc nor cc in $REF ?"
-  else
-    pushd $REF >/dev/null
-    rm -f cc
-    ln -s gcc cc
-    popd $REF >/dev/null
-    echo "/etc/sysconfig/castor_compiler info: created link $REF/cc -> $REF/gcc"
-  fi
-fi
-export PATH
-export LD_LIBRARY_PATH
