@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.92 $ $Date: 2004/05/11 12:25:28 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.93 $ $Date: 2004/07/28 09:30:43 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1321,8 +1321,15 @@ static int lockMoreWork() {
     rc = Cthread_mutex_lock_ext(proc_cntl.requestMoreWork_lock);
     if ( (rc == -1) || (rtcpd_CheckProcError() &
         (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) ) {
-        rtcp_log(LOG_ERR,"lockMoreWork(): Cthread_mutex_lock_ext(requestMoreWork_lock): %s\n",
-            sstrerror(serrno));
+        rtcp_log(LOG_ERR,"lockMoreWork(): Cthread_mutex_lock_ext(requestMoreWork_lock): rc=%d, %s\n",
+            rc, sstrerror(serrno));
+        if ( rc == 0 ) {
+            (void)Cthread_mutex_unlock_ext(proc_cntl.requestMoreWork_lock);
+            /*
+             * Not our error, some other thread has failed
+             */
+            return(0);
+        }
         return(-1);
     }
     return(0);
