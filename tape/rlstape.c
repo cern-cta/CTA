@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.14 $ $Date: 2000/02/02 12:54:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.15 $ $Date: 2000/02/14 15:08:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -102,7 +102,7 @@ char	**argv;
 #endif
 
 	if (*vid == '\0')	/* mount req failed or killed */
-		goto reply;	/* before volume was requested on drive */
+		goto freedrv;	/* before volume was requested on drive */
 	gethostname (hostname, CA_MAXHOSTNAMELEN+1);
 
         /* initialize for select */
@@ -127,8 +127,10 @@ char	**argv;
 	tplogit (func, "vdqm_UnitStatus returned %s\n",
 		vdqm_rc ? sstrerror(serrno) : "ok");
 	if (vdqm_rc == 0 && (vdqm_status & VDQM_VOL_UNMOUNT) == 0 &&
-	    (rlsflags & TPRLS_UNLOAD) == 0)
+	    (rlsflags & TPRLS_UNLOAD) == 0) {
+		rlsflags |= TPRLS_NOUNLOAD;
 		goto freevol;
+	}
 #endif
 	if (rlsflags & TPRLS_NOUNLOAD)
 		goto freevol;
@@ -203,11 +205,9 @@ unload_loop:
 		} while (n == 1);
 		if (n == 2) goto unload_loop;
 	}
-freevol:
 #ifdef TMS
 	c = sendtmsmount (mode, "CA", vid, jid, name, acctname, drive);
 #endif
-reply:
 #if VDQM
 	vdqm_status = VDQM_VOL_UNMOUNT;
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_VOL_UNMOUNT)\n");
@@ -216,6 +216,14 @@ reply:
 	tplogit (func, "vdqm_UnitStatus returned %s\n",
 		vdqm_rc ? sstrerror(serrno) : "ok");
 #endif
+	goto freedrv;
+
+freevol:
+#ifdef TMS
+	c = sendtmsmount (mode, "CA", vid, jid, name, acctname, drive);
+#endif
+
+freedrv:
 
 	/* Build FREEDRV request header */
 
