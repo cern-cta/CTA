@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_entertape.c,v $ $Revision: 1.3 $ $Date: 2000/03/01 16:23:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_entertape.c,v $ $Revision: 1.4 $ $Date: 2000/03/05 16:34:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_entertape - enter a new tape volume */
@@ -47,7 +47,7 @@ vmgr_entertape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
         }
 #endif
 
-	if (! vid || ! dgn) {
+	if (! vid || ! dgn || ! model) {
 		serrno = EFAULT;
 		return (-1);
 	}
@@ -82,11 +82,7 @@ vmgr_entertape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
 	} else {
 		marshall_STRING (sbp, "al");
 	}
-	if (model) {
-		marshall_STRING (sbp, model);
-	} else {
-		marshall_STRING (sbp, "");
-	}
+	marshall_STRING (sbp, model);
 	if (media_letter) {
 		marshall_STRING (sbp, media_letter);
 	} else {

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_entertape.man,v $ $Revision: 1.7 $ $Date: 2000/03/01 16:23:01 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_entertape.man,v $ $Revision: 1.8 $ $Date: 2000/03/05 16:25:38 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_ENTERTAPE 3 "$Date: 2000/03/01 16:23:01 $" CASTOR "vmgr Library Functions"
+.TH VMGR_ENTERTAPE 3 "$Date: 2000/03/05 16:25:38 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_entertape \- enter a new tape in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -92,9 +92,10 @@ and
 .BR TAPE_RDONLY .
 .LP
 Only
-.I vid
-and
+.IR vid ,
 .I dgn
+and
+.I model
 are mandatory. The other fields can be set later.
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation

@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrentertape.c,v $ $Revision: 1.4 $ $Date: 2000/03/02 14:47:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrentertape.c,v $ $Revision: 1.5 $ $Date: 2000/03/05 16:30:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrentertape - enter a new tape volume */
@@ -96,8 +96,8 @@ char **argv;
         if (errflg) {
                 fprintf (stderr, "usage: %s %s%s%s", argv[0],
 		    "[-d density] -g dgn [-l lbltype] [-P pool_name] -V vid\n",
-		    "[-v vsn] [--ma manufacturer] [--ml media_letter] [--mo model]\n",
-		    "[--pool pool_name] [--sn serail_number] [--st status]\n");
+		    "[-v vsn] [--ma manufacturer] [--ml media_letter] --mo model\n",
+		    "[--pool pool_name] [--sn serial_number] [--st status]\n");
                 exit (USERR);
         }
  
