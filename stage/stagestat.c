@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.23 2002/05/07 12:57:33 jdurand Exp $
+ * $Id: stagestat.c,v 1.24 2002/05/09 08:20:00 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.23 $ $Date: 2002/05/07 12:57:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.24 $ $Date: 2002/05/09 08:20:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -190,6 +190,10 @@ int main(argc, argv)
 	int aflag = 0;			/* sort on num accesses */	
 	int rflag = 0;            /* Select a reqid */
 	struct stat mystat;
+#if defined(_WIN32)
+	WSADATA 	wsadata;
+	int 	rcode;
+#endif
   
 	acctfile[0] = '\0';
 	poolname[0] = '\0';
@@ -279,6 +283,14 @@ int main(argc, argv)
 		strcpy (acctfile, ACCTFILE);
 	}
 
+#if defined(_WIN32)
+	rcode = WSAStartup(MAKEWORD(2, 0), &wsadata);	/* initialization of WinSock DLL */
+	if( rcode )  {	
+		fprintf(stderr,"WSAStartup: %s\n", ws_strerr(rcode) );
+		exit(SYERR);
+	}
+#endif /* if WIN32 */
+
 	{
 		char *host = NULL;
 		char *filename = NULL;
@@ -301,11 +313,17 @@ int main(argc, argv)
 	rfio_errno = serrno = 0;
 	if ((fd_acct = rfio_open (acctfile, O_RDONLY)) < 0) {
 		fprintf (stderr, "%s : rfio_open error : %s\n", acctfile, rfio_serror());
+#if defined(_WIN32)
+		WSACleanup();
+#endif     
 		exit (USERR);
 	}
 
 	if (rfio_stat(acctfile, &mystat) < 0) {
 		fprintf (stderr, "%s : rfio_stat error : %s\n", acctfile, rfio_serror());
+#if defined(_WIN32)
+		WSACleanup();
+#endif     
 		exit (USERR);
 	}
 	size_total = mystat.st_size;
@@ -492,6 +510,10 @@ int main(argc, argv)
 	printf("\n");
 	print_globstat (starttime, endtime, num_fork_exec_stager, num_multireqs);
 	print_poolstat (tflag, aflag, pflag, poolname);
+
+#if defined(_WIN32)
+	WSACleanup();
+#endif     
 
 	if (errflg)
 		exit (SYERR);
