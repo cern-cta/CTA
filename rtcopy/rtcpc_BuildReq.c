@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.18 $ $Date: 2000/02/14 14:54:15 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.19 $ $Date: 2000/02/16 10:02:40 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -22,6 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.18 $ $Da
 #include <Castor_limits.h>
 #include <Cglobals.h>
 #include <Ctape_api.h>
+#include <Ctape.h>
 #include <log.h>
 #include <osdep.h>
 #include <net.h>
@@ -1824,8 +1825,7 @@ static int rtcpc_diskfiles(int mode,
                  * This should never happen! the check is already done in
                  * rtcp_q_opt()
                  */
-                rtcp_log(LOG_ERR,"trailing minus in -q sequence list is invalid
-for cpdsktp\n"); 
+                rtcp_log(LOG_ERR,"trailing minus in -q sequence list is invalid for cpdsktp\n");
                 serrno = EINVAL;
                 return(-1);
             }
@@ -1917,6 +1917,158 @@ for cpdsktp\n");
     }
 
     return(rc);
+}
+
+#define DMPTP_INT_OPT(X,Y) { \
+    if ( (X) < 0 ) { \
+        X = strtol(optarg,&dp,10); \
+        if ( dp == NULL || *dp != '\0' ) { \
+            rtcp_log(LOG_ERR, TP006, #Y); \
+            errflg++; \
+        } \
+    } else { \
+        rtcp_log(LOG_ERR, TP018, #Y); \
+        errflg++; \
+    }}
+
+
+#define DMPTP_STR_OPT(X,Y) { \
+    if ( *(X) == '\0' ) { \
+        if ( strlen(optarg) < sizeof((X)) ) strcpy((X),optarg); \
+        else { \
+            rtcp_log(LOG_ERR, TP006, #Y); \
+            errflg++; \
+        } \
+    } else { \
+        rtcp_log(LOG_ERR, TP018, #Y); \
+        errflg++; \
+    }}
+
+int rtcpc_InitDumpTapeReq(rtcpDumpTapeRequest_t *dump) {
+    if ( dump == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+    memset(dump,'\0',sizeof(rtcpDumpTapeRequest_t));
+    dump->maxbyte = -1;
+    dump->blocksize = -1;
+    dump->convert = -1;
+    dump->tp_err_action = -1;
+    dump->maxfile = -1;
+    dump->fromblock = -1;
+    dump->toblock = -1; 
+    return(0);
+}
+
+int rtcpc_BuildDumpTapeReq(tape_list_t **tape,
+                           int argc, char *argv[]) {
+    rtcpDumpTapeRequest_t *dumpreq;
+    rtcpTapeRequest_t *tapereq;
+    int rc,c;
+    char *p, *dp;
+    int errflg = 0;
+    extern int getopt();
+
+    if ( tape == NULL || argc < 0 || argv == NULL ) {
+        rtcp_log(LOG_ERR,"rtcpc_BuildDumpTapeReq() called with NULL args\n");
+        serrno = EINVAL;
+        return(-1);
+    }
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,WRITE_DISABLE);
+        if ( rc == -1 ) return(-1);
+    }
+    tapereq = &(*tape)->tapereq;
+    dumpreq = &(*tape)->dumpreq;
+
+    rc = rtcpc_InitDumpTapeReq(dumpreq);
+    if ( rc == -1 ) return(rc);
+
+    while ( (c = getopt(argc,argv,"B:b:C:d:E:F:g:N:S:T:V:v:")) != EOF) {
+        switch (c) {
+        case 'B':
+            DMPTP_INT_OPT(dumpreq->maxbyte,-B);
+            break;
+        case 'b':
+            DMPTP_INT_OPT(dumpreq->blocksize,-b);
+            break;
+        case 'C':
+            if ( dumpreq->convert < 0 ) {
+                if (strcmp (optarg, "ascii") == 0 ) dumpreq->convert = ASCCONV;
+                else if ( strcmp (optarg, "ebcdic") == 0 ) 
+                    dumpreq->convert = EBCCONV;
+                else {
+                    rtcp_log(LOG_ERR, TP006, "-C");
+                    errflg++;
+                }
+            } else {
+                rtcp_log(LOG_ERR, TP018, "-C");
+                errflg++;
+            }
+            break;
+        case 'd':
+            DMPTP_STR_OPT(tapereq->density,-d);
+            break;
+        case 'E':
+            if ( strcmp (optarg, "ignoreeoi") == 0 ) 
+                dumpreq->tp_err_action = IGNOREEOI;
+            else {
+                rtcp_log(LOG_ERR, TP006, "-E");
+                errflg++;
+            }
+            break;
+        case 'F':
+            DMPTP_INT_OPT(dumpreq->maxfile,-F);
+            break;
+        case 'g':
+            DMPTP_STR_OPT(tapereq->dgn,-g);
+            break;
+        case 'N':
+            if ( dumpreq->fromblock < 0 ) {
+                if ( (p = strchr (optarg, ',')) != NULL ) {
+                    *p++ = '\0';
+                    dumpreq->fromblock = strtol(optarg, &dp, 10);
+                    if ( dp == NULL || *dp != '\0' ) {
+                        rtcp_log(LOG_ERR, TP006, "-N");
+                        errflg++;
+                    }
+                } else {
+                    p = optarg;
+                    dumpreq->fromblock = 1;
+                }
+                dumpreq->toblock = strtol(p, &dp, 10);
+                if ( dp == NULL || *dp != '\0' ) {
+                    rtcp_log(LOG_ERR, TP006, "-N");
+                    errflg++;
+                }
+            }
+            break;
+        case 'S':
+            DMPTP_STR_OPT(tapereq->server,-S);
+            break;
+        case 'V':
+            DMPTP_STR_OPT(tapereq->vid,-V);
+            break;
+        case 'v':
+            DMPTP_STR_OPT(tapereq->vsn,-v);
+            break;
+        case '?':
+            errflg++;
+            break;
+        }
+    }
+
+    if ( *tapereq->vid == '\0' && *tapereq->vsn == '\0' ) {
+        rtcp_log(LOG_ERR,TP031);
+        errflg++;
+    }
+    if ( errflg > 0 ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( strcmp(tapereq->dgn,"CT1") == 0 ) strcpy(tapereq->dgn,"CART");
+    return(0);
 }
 
 #define DUMPSTR(Y,X) {if ( *X != '\0' ) rtcp_log(LOG_DEBUG,"%s%s: %s\n",Y,#X,X);}
