@@ -1,9 +1,9 @@
 /*
- * $Id: Cregexp.c,v 1.3 2002/09/12 13:23:31 jdurand Exp $
+ * $Id: Cregexp.c,v 1.4 2003/12/10 10:00:22 jdurand Exp $
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cregexp.c,v $ $Revision: 1.3 $ $Date: 2002/09/12 13:23:31 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cregexp.c,v $ $Revision: 1.4 $ $Date: 2003/12/10 10:00:22 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /*
@@ -384,7 +384,7 @@ Cregexp_t DLL_DECL *Cregexp_comp(exp)
 	char ***_Cregexp_endp;
 
 	if (exp == NULL) {
-		serrno = EDB_D_EINVAL;
+		serrno = EINVAL;
 		return(NULL);
 	}
 
@@ -423,13 +423,13 @@ Cregexp_t DLL_DECL *Cregexp_comp(exp)
 
 	/* Small enough for pointer-storage convention? */
 	if (*_Cregexp_size >= 32767) {
-		serrno = EDB_D_NOSPC;
+		serrno = ENOMEM;
 		return(NULL);
 	}
 
 	/* Allocate space. */
 	if ((r = (Cregexp_t *) malloc(sizeof(Cregexp_t) + (unsigned) (*_Cregexp_size))) == NULL) {
-		serrno = EDB_DS_MALLOC;
+		serrno = errno;
 		return(NULL);
 	}
 
@@ -538,7 +538,7 @@ char *_Cregexp_reg(paren,
 	/* Make an OPEN node, if parenthesized. */
 	if (paren) {
 		if (*_Cregexp_npar >= CREGEXP_NSUBEXP) {
-			serrno = EDB_D_EINVAL;
+			serrno = EINVAL;
 			return(NULL);
 		}
 		parno = *_Cregexp_npar;
@@ -633,14 +633,14 @@ char *_Cregexp_reg(paren,
 
 	/* Check for proper termination. */
 	if (paren && *(*_Cregexp_parse)++ != ')') {
-		serrno = EDB_D_EINVAL; /* Unmatched () */
+		serrno = EINVAL; /* Unmatched () */
 		return(NULL);
 	} else if (!paren && *(*_Cregexp_parse) != '\0') {
 		if (*(*_Cregexp_parse) == ')') {
-			serrno = EDB_D_EINVAL; /* Unmatched () */
+			serrno = EINVAL; /* Unmatched () */
 			return(NULL);
 		} else {
-			serrno = EDB_D_EINVAL;
+			serrno = EINVAL;
 			return(NULL); /* "Can't happen". junk on end */
 		}
 	}
@@ -760,7 +760,7 @@ char *_Cregexp_piece(flagp,
 
 	if (! (flags & HASWIDTH) && op != '?') {
 		/* *+ operand could be empty */
-		serrno = EDB_D_EINVAL;
+		serrno = EINVAL;
 		return(NULL);
 	}
 	*flagp = (op != '+') ? (WORST | SPSTART) : (WORST | HASWIDTH);
@@ -925,7 +925,7 @@ char *_Cregexp_piece(flagp,
 	(*_Cregexp_parse)++;
 	if (ISMULT(*(*_Cregexp_parse))) {
 		/* nested *?+ */
-		serrno = EDB_D_EINVAL;
+		serrno = EINVAL;
 		return(NULL);
 	}
 
@@ -1029,7 +1029,7 @@ char *_Cregexp_atom(flagp,
 					classend = UCHARAT(*_Cregexp_parse);
 					if (class > classend+1) {
 						/* invalid [] range */
-						serrno = EDB_D_EINVAL;
+						serrno = EINVAL;
 						return(NULL);
 					}
 					for (; class <= classend; class++) {
@@ -1058,7 +1058,7 @@ char *_Cregexp_atom(flagp,
 				   _Cregexp_size);
 		if (*(*_Cregexp_parse) != ']') {
 			/* unmatched [] */
-			serrno = EDB_D_EINVAL;
+			serrno = EINVAL;
 			return(NULL);
 		}
 		(*_Cregexp_parse)++;
@@ -1082,18 +1082,18 @@ char *_Cregexp_atom(flagp,
 	case '|':
 	case ')':
 		/* internal urp */
-		serrno = EDB_D_EINVAL;
+		serrno = EINVAL;
 		return(NULL);
 	case '?':
 	case '+':
 	case '*':
 		/* ?+* follows nothing */
-		serrno = EDB_D_EINVAL;
+		serrno = EINVAL;
 		return(NULL);
 	case '\\':
 		if (*(*_Cregexp_parse) == '\0') {
 			/* tailing \\ */
-			serrno = EDB_D_EINVAL;
+			serrno = EINVAL;
 			return(NULL);
 		}
 		ret = _Cregexp_node((char) EXACTLY,
@@ -1388,7 +1388,7 @@ int DLL_DECL Cregexp_exec(prog, string)
 
 	/* Be paranoid... */
 	if (prog == NULL || string == NULL) {
-		serrno = EDB_D_EINVAL;
+		serrno = EINVAL;
 		return(-1);
 	}
 
@@ -1408,7 +1408,7 @@ int DLL_DECL Cregexp_exec(prog, string)
 			s++;
 		}
 		if (s == NULL) {	/* Not present. */
-			serrno = EDB_D_EINVAL;
+			serrno = EINVAL;
 			return(-1);
 		}
 	}
@@ -1468,7 +1468,7 @@ int DLL_DECL Cregexp_exec(prog, string)
 		} while (*s++ != '\0');
 
 	/* Failure. */
-	serrno = EDB_D_ENOENT;
+	serrno = ENOENT;
 	return(-1);
 }
 
@@ -1526,7 +1526,7 @@ int	_Cregexp_try(prog,
 		prog->endp[0] = *_Cregexp_input;
 		return(0);
 	} else {
-		serrno = EDB_D_ENOENT;
+		serrno = ENOENT;
 		return(-1);
 	}
 }
@@ -1911,7 +1911,7 @@ int DLL_DECL Cregexp_sub(prog, source, dest, maxsize)
 
 	if (prog == NULL || source == NULL || dest == NULL || maxsize <= 0) {
 		/* NULL parm to regsub */
-		serrno = EDB_D_EINVAL;
+		serrno = EINVAL;
 		return(-1);
 	}
 	if (UCHARAT(prog->program) != CREGEXP_MAGIC) {
@@ -1937,7 +1937,7 @@ int DLL_DECL Cregexp_sub(prog, source, dest, maxsize)
 		} else if (prog->startp[no] != NULL && prog->endp[no] != NULL) {
 			len = prog->endp[no] - prog->startp[no];
 			if (dst + len > dest + maxsize) {
-				serrno = EDB_D_NOSPC;
+				serrno = ENOMEM;
 				/* Makes sure that null terminates */
 				dest[maxsize] = '\0';
 				return(-1);
