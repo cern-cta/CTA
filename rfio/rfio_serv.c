@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.12 2004/09/28 14:13:32 obarring Exp $
+ * $Id: rfio_serv.c,v 1.13 2004/12/02 17:26:22 jdurand Exp $
  */
 
 /*
@@ -8,13 +8,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)rfio_serv.c,v 1.4 2004/03/22 12:50:01 CERN/IT/PDP/DM Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.13 $ $Date: 2004/12/02 17:26:22 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */
 
 #define RFIO_KERNEL     1               /* KERNEL part of the programs  */
 
+#include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 #include <Castor_limits.h>
@@ -62,6 +63,7 @@ static char sccsid[] = "@(#)rfio_serv.c,v 1.4 2004/03/22 12:50:01 CERN/IT/PDP/DM
 #else
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #endif
 
@@ -78,6 +80,9 @@ static char sccsid[] = "@(#)rfio_serv.c,v 1.4 2004/03/22 12:50:01 CERN/IT/PDP/DM
 #include <Cgrp.h>
 static struct passwd stagersuperuser;
 static int have_stagersuperuser = 0; /* Default is no alternate super-user */
+
+int exit_code_from_last_child = -1;
+int have_a_child = 0;
 
 #if defined(HPSS)
 #include <dirent.h>
@@ -429,28 +434,30 @@ char    **argv;
          /* The setsid IRIX man page claims that setsid will */
          /* disassociate from controlling terminal provided  */
          /* that we always first fork.                       */
-         pid = fork();
-         if (pid == -1)   {
-            perror("main fork");
-            exit(1);
-         }
-         if (pid > 0) exit(0); /* Parent terminates */
-         /* Become session leader - this also disconnect from terminal */
-         if (setsid() < 0) {
-            perror("main fork");
-            exit(1);
-         }
-         pid = fork();
-         if (pid == -1)   {
-            perror("second fork");
-            exit(1);
-         }
-         if (pid > 0) exit(0); /* 1st child terminates */
-         for (i=0; i< maxfds; i++) {
-			 if (i != Socket_parent) {
-				 (void) close(i);
-			 }
-		 }
+         if ( !nodetach ) {
+	   pid = fork();
+	   if (pid == -1)   {
+	     perror("main fork");
+	     exit(1);
+	   }
+	   if (pid > 0) exit(0); /* Parent terminates */
+	   /* Become session leader - this also disconnect from terminal */
+	   if (setsid() < 0) {
+	     perror("main fork");
+	     exit(1);
+	   }
+	   pid = fork();
+	   if (pid == -1)   {
+	     perror("second fork");
+	     exit(1);
+	   }
+	   if (pid > 0) exit(0); /* 1st child terminates */
+	   for (i=0; i< maxfds; i++) {
+	     if (i != Socket_parent) {
+	       (void) close(i);
+	     }
+	   }
+	 }
       }
 #else /* IRIX5 || IRIX6 */
 /*
@@ -706,6 +713,21 @@ char    **argv;
             goto select_continue;
          }
 #endif
+ {
+   char *p;
+
+   if (((p = getenv("RFIOD_TCP_NODELAY")) != NULL) ||
+       ((p = getconfent("RFIOD", "TCP_NODELAY", 0)) != NULL)
+       ) {
+     if ((strcmp(p,"YES") == 0) || (strcmp(p,"yes") == 0)) {
+       int rcode = 1;
+       if ( setsockopt(ns,IPPROTO_TCP,TCP_NODELAY,(char *)&rcode,sizeof(rcode)) == -1 ) {
+	 log(LOG_ERR, "setsockopt(..,TCP_NODELAY,...): %s\n",strerror(errno));
+       }
+     }
+   }
+   
+ }
          if (!singlethread)      {
 #if defined(HPSS)
             if ( rhpss_startreq(ns,&from,fromlen,privhosts,threadData,nb_threads) ) {
@@ -746,22 +768,12 @@ char    **argv;
                td->_is_remote++;
             serrno = sav_serrno; /* Failure or not of isremote(), we continue */
             }
-			if (once_only) {
-				mt_doit((void*)td); 
-				log(LOG_INFO, "Once-only mode. Exiting\n");
-				exit(0);
-			}
             pid = _beginthread(mt_doit, 0, (void*)td ); 
             if( pid == -1 ) {
                log(LOG_ERR, "_beginthread: %s\n", strerror(errno));
                closesocket(ns);
             }
 #else
-			if (once_only) {
-				doit(ns, &from, mode);
-				log(LOG_INFO, "Once-only mode. Exiting\n");
-				exit(0);
-			}
             pid = fork();
             switch (pid)    {
                case -1:
@@ -773,6 +785,7 @@ char    **argv;
                   doit(ns, &from, mode);
                   break;
             }
+	    have_a_child = 1;
             close(ns);                          /* Parent */
 #endif /* WIN32 */  
          } else {	/* singlethread */
@@ -789,12 +802,22 @@ char    **argv;
       timeval.tv_usec = 0;
       if ((select_status = select (s + 1, &readfd, NULL, NULL, &timeval)) < 0) { /* Error */
 		  if (once_only) {
-			  exit(1);
+		    if (have_a_child && exit_code_from_last_child >= 0) {
+		      exit(exit_code_from_last_child);
+		    } else if (! have_a_child) {
+		      /* error and no child : we assume very old client */
+		      exit(0);
+		    }
 		  }
 		  FD_ZERO (&readfd);
       }
 	  if (select_status == 0 && once_only) { /* Timeout */
-		  exit(1);
+	    if (have_a_child && exit_code_from_last_child >= 0) {
+	      exit(exit_code_from_last_child);
+	    } else if (! have_a_child) {
+	      /* timeout and no child : we assume very old client */
+	      exit(0);
+	    }
 	  }
      }
    } else {       /* !standalone */
@@ -1801,8 +1824,9 @@ void check_child_exit()
   int term_status;
 
   while ((child_pid = waitpid(-1, &term_status, WNOHANG)) > 0) {
+    exit_code_from_last_child = WEXITSTATUS(term_status);
     if (WIFEXITED(term_status)) {
-      log(LOG_ERR,"Waiting for end of child %d, status %d\n", child_pid, WEXITSTATUS(term_status));
+      log(LOG_ERR,"Waiting for end of child %d, status %d\n", child_pid, exit_code_from_last_child);
     } else if (WIFSIGNALED(term_status)) {
       log(LOG_ERR,"Waiting for end of child %d, uncaught signal %d\n", child_pid, WTERMSIG(term_status));
     } else {
