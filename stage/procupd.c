@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.69 2001/03/30 05:21:29 jdurand Exp $
+ * $Id: procupd.c,v 1.70 2001/03/30 08:28:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.69 $ $Date: 2001/03/30 05:21:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.70 $ $Date: 2001/03/30 08:28:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -95,12 +95,6 @@ extern int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, 
 #define IS_RC_OK(rc) (rc == 0)
 #define IS_RC_WARNING(rc) (rc == LIMBYSZ || rc == BLKSKPD || rc == TPE_LSZ || (rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE)))
 
-/* offset can be undef sometimes */
-#ifndef offsetof
-#define offsetof(s_name, s_member) \
-        ((size_t)((char *)&((s_name *)NULL)->s_member - (char *)NULL))
-#endif
-
 #ifdef HAVE_SENSIBLE_STCP
 #undef HAVE_SENSIBLE_STCP
 #endif
@@ -164,7 +158,6 @@ procupdreq(req_type, magic, req_data, clienthost)
 	int Zflag = 0;
 	int callback_index = -1;
 	int found_wfp = 0;
-	size_t u1h_sizeof;
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 	char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
@@ -185,7 +178,6 @@ procupdreq(req_type, magic, req_data, clienthost)
 	char *User;
 	char *name;
 
-	u1h_sizeof = sizeof(struct stgcat_entry) - offsetof(struct stgcat_entry,u1.h.xfile);
 	rbp = req_data;
 	local_unmarshall_STRING (rbp, user);	/* login name */
 	if (req_type > STAGE_00) {
@@ -958,7 +950,11 @@ procupdreq(req_type, magic, req_data, clienthost)
 							for (stcp_search = stcs; stcp_search < stce; stcp_search++) {
 								if (stcp_search->reqid == 0) break;
 								if (! ISCASTORBEINGMIG(stcp_search)) continue;
-								if (memcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile,u1h_sizeof) == 0) {
+								if ((strcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile) == 0) &&
+									(strcmp(stcp_search->u1.h.server,save_stcp->u1.h.server) == 0) &&
+									(stcp_search->u1.h.fileid == save_stcp->u1.h.fileid) &&
+									(stcp_search->u1.h.fileclass == save_stcp->u1.h.fileclass) &&
+									(strcmp(stcp_search->u1.h.tppool,save_stcp->u1.h.tppool) == 0)) {
 									if (stcp_found == NULL) {
 										stcp_found = stcp_search;
 										break;

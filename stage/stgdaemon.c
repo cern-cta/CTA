@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.128 2001/03/29 15:38:30 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.129 2001/03/30 08:28:59 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.128 $ $Date: 2001/03/29 15:38:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.129 $ $Date: 2001/03/30 08:28:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -115,12 +115,6 @@ struct winsize {
 #endif
 /* This macro will check sensible part of the CASTOR HSM union */
 #define HAVE_SENSIBLE_STCP(stcp) (((stcp)->u1.h.xfile[0] != '\0') && ((stcp)->u1.h.server[0] != '\0') && ((stcp)->u1.h.fileid != 0) && ((stcp)->u1.h.fileclass != 0))
-
-/* offset can be undef sometimes */
-#ifndef offsetof
-#define offsetof(s_name, s_member) \
-        ((size_t)((char *)&((s_name *)NULL)->s_member - (char *)NULL))
-#endif
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
@@ -2025,9 +2019,6 @@ void checkwaitq()
 	struct stgcat_entry *stcp;
 	struct waitf *wfp;
 	struct waitq *wqp, *wqp1;
-	size_t u1h_sizeof;
-
-	u1h_sizeof = sizeof(struct stgcat_entry) - offsetof(struct stgcat_entry,u1.h.xfile);
 
 	wqp = waitqp;
 	while (wqp) {
@@ -2139,7 +2130,11 @@ void checkwaitq()
 							for (stcp_search = stcs; stcp_search < stce; stcp_search++) {
 								if (stcp_search->reqid == 0) break;
 								if (! (ISCASTORBEINGMIG(stcp_search) || ISCASTORWAITINGMIG(stcp))) continue;
-								if (memcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile,u1h_sizeof) == 0) {
+								if ((strcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile) == 0) &&
+									(strcmp(stcp_search->u1.h.server,save_stcp->u1.h.server) == 0) &&
+									(stcp_search->u1.h.fileid == save_stcp->u1.h.fileid) &&
+									(stcp_search->u1.h.fileclass == save_stcp->u1.h.fileclass) &&
+									(strcmp(stcp_search->u1.h.tppool,save_stcp->u1.h.tppool) == 0)) {
 									if (stcp_found == NULL) {
 										stcp_found = stcp_search;
 										break;
