@@ -1,10 +1,18 @@
 /*
- * Copyright (C) 1990-1998 by CERN IT-PDP/SC
+ * $Id: setnetio.c,v 1.3 1999/07/31 15:42:10 obarring Exp $
+ * $Log: setnetio.c,v $
+ * Revision 1.3  1999/07/31 15:42:10  obarring
+ * Add CVS keywords
+ *
+ */
+
+/*
+ * Copyright (C) 1990-1999 by CERN IT-PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)setnetio.c	1.7 05/05/98 CERN IT-PDP/SC Frederic Hemmer";
+static char cvsId[] = "$Id: setnetio.c,v 1.3 1999/07/31 15:42:10 obarring Exp $";
 #endif /* not lint */
 
 /* setnetio.c   Set network input/output characteristics                */
