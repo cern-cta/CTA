@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageupdc.man,v $ $Revision: 1.8 $ $Date: 2002/05/02 07:47:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageupdc.man,v $ $Revision: 1.9 $ $Date: 2002/05/03 04:47:41 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEUPDC l "$Date: 2002/05/02 07:47:11 $"
+.TH STAGEUPDC l "$Date: 2002/05/03 04:47:41 $"
 .SH NAME
 stageupdc \- update the stager catalog
 .SH SYNOPSIS
@@ -100,7 +100,7 @@ Specifies the file sequence number of the tape file.
 Exit code for the file stage subrequest.
 .TP
 .BI \-s " size"
-Gives the actual filesize in bytes. Only digits followed by eventual unit are accepted. The unit can be 'b' for byte (default), 'k' for kilo-byte, 'M' for Mega-byte, 'G' for Gige-byte, 'T' for Tera-byte and 'P' for Peta-byte.
+Gives the actual filesize in bytes. Only digits followed by eventual unit are accepted. The unit can be 'b' for byte (default), 'k' for kilo-byte, 'M' for Mega-byte, 'G' for Giga-byte, 'T' for Tera-byte and 'P' for Peta-byte.
 .TP
 .BI \-T " transfer_time"
 Time spent transferring data between tape and disk server.
