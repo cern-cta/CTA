@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.18 $ $Release$ $Date: 2004/10/27 14:49:54 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/10/28 08:03:59 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.18 $ $Release$ $Date: 2004/10/27 14:49:54 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/10/28 08:03:59 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -520,9 +520,16 @@ static int filereqsEqual(
   if ( rtcpcld_validFilereq(filereq2) == 0 ) return(0);
 
   if ( filereq1->tape_fseq != filereq2->tape_fseq ) return(0);
-  if ( memcmp(filereq1->blockid,
-              filereq2->blockid,
-              sizeof(filereq1->blockid)) != 0 ) return(0);
+  /*
+   * Blockids must only be equal if valid (this is never the case
+   * for migration since the blockid cannot be known before the
+   * file has been written to tape)
+   */
+  if ( (rtcpcld_validBlockid(filereq1->blockid) == 1) &&
+       (rtcpcld_validBlockid(filereq2->blockid) == 1) &&
+       (memcmp(filereq1->blockid,
+               filereq2->blockid,
+               sizeof(filereq1->blockid)) != 0) ) return(0);
   if ( strncmp(filereq1->file_path,
                filereq2->file_path,
                CA_MAXHOSTNAMELEN) != 0 ) return(0);
