@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.75 2001/06/21 10:05:58 jdurand Exp $
+ * $Id: procupd.c,v 1.76 2001/06/22 10:09:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.75 $ $Date: 2001/06/21 10:05:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.76 $ $Date: 2001/06/22 10:09:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1124,6 +1124,8 @@ procupdreq(req_type, magic, req_data, clienthost)
 							if ((stcp_found_rdonly != NULL) || (stcp_found_stageout != NULL)) {
 								if (stcp_found_rdonly != NULL) {
 									stcp_found_rdonly->status = STAGEIN|STAGED;
+									if (stcp_found_rdonly->t_or_d == 'h')
+										stcp_found_rdonly->u1.h.tppool[0] = '\0'; /* We reset the poolname */
 									if (stcp_found_stageout != NULL) {
 										stcp_found_rdonly->nbaccesses += (stcp_found_stageout->nbaccesses - 1);
 									}
@@ -1175,6 +1177,8 @@ procupdreq(req_type, magic, req_data, clienthost)
 						/* all nbaccessses - 1 because, at creation, we incremented the migration entry's */
 						/* nbaccesses as well as created a new entry with one for nbaccesses */
 						stcp_found->status = (STAGEIN|STAGED);
+						if (stcp_found->t_or_d == 'h')
+							stcp_found->u1.h.tppool[0] = '\0'; /* We reset the poolname */
 						stcp_found->nbaccesses += (stcp->nbaccesses - 1);
 #ifdef USECDB
 						if (stgdb_upd_stgcat(&dbfd,stcp_found) != 0) {
@@ -1329,5 +1333,5 @@ void update_hsm_a_time(stcp)
 }
 
 /*
- * Last Update: "Thursday 21 June, 2001 at 12:04:00 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Friday 22 June, 2001 at 12:08:59 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
