@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrlistpool.man,v $ $Revision: 1.4 $ $Date: 2000/04/11 09:48:26 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrlistpool.man,v $ $Revision: 1.5 $ $Date: 2001/02/01 10:30:32 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRLISTPOOL 1 "$Date: 2000/04/11 09:48:26 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRLISTPOOL 1 "$Date: 2001/02/01 10:30:32 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrlistpool \- query the CASTOR Volume Manager about a given pool or list all existing tape pools
 .SH SYNOPSIS
@@ -15,13 +15,15 @@ vmgrlistpool \- query the CASTOR Volume Manager about a given pool or list all e
 queries the CASTOR Volume Manager about a given pool or list all existing tape
 pools in tabular form:
 .HP 1.2i
-poolname		name of the tape pool.
+poolname	name of the tape pool.
 .HP
-pool_user		the pool is restricted to this user.
+pool_user	the pool is restricted to this user.
 .HP
-pool_group		the pool is restricted to this group.
+pool_group	the pool is restricted to this group.
 .HP
-free_space		estimated free space in the pool.
+capacity		the native pool capacity.
+.HP
+free_space	estimated free space in the pool.
 .SH OPTIONS
 .TP
 .I pool_name
@@ -31,10 +33,10 @@ It must be at most CA_MAXPOOLNAMELEN characters long.
 .nf
 .ft CW
 vmgrlistpool -P alicemdc
-alicemdc        alicemdc z2      48.83TB
+alicemdc        alicemdc z2     CAPACITY    1.22TB FREE  887.39GB ( 71.0%)
 
 vmgrlistpool -P default
-default         -        -       49.18TB
+default         -        -      CAPACITY    3.74TB FREE    3.54TB ( 94.6%)
 .ft
 .fi
 .SH EXIT STATUS
