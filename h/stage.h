@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.61 2001/06/21 11:34:33 jdurand Exp $
+ * $Id: stage.h,v 1.62 2001/06/21 15:52:58 jdurand Exp $
  */
 
 /*
@@ -231,7 +231,7 @@
 #define	STG98	"STG98 - %s\n"
 #define	STG99	"STG99 - stage returns %d\n"
 #define STG100  "STG100 - Database %s error (%s) at %s:%d\n"
-#define STG101  "STG101 - HSM File %s previously staged under name %s. Catalog updated.\n"
+#define STG101  "STG101 - HSM File %s previously staged under name %s (fileid %s@%s), catalog updated\n"
 #define STG102  "STG102 - Mixed %s HSM host with %s HSM filename: %s\n"
 #define STG103  "STG103 - -F option is only for admin\n"
 #define STG104  "STG104 - Internal error: status=0x%x but req not in waitq - Ask admin to try with -F option\n"
@@ -242,7 +242,7 @@
 #define	STG109	"STG109 - New fileclass %s@%s (classid %d), internal index %d, tppools=%s\n"
 #define STG110  "STG110 - Internal error in %s for pool %s, class %s@%s: %s\n"
 #define STG111  "STG111 - Last used tape pool \"%s\" unknown to fileclass %s@%s (classid %d)\n"
-#define STG112  "STG112 - %s already have %d copies (its current fileclass specifies %d cop%s), not migrated.\n"
+#define STG112  "STG112 - %s already have %d copies (its current fileclass specifies %d cop%s), not migrated\n"
 #define STG113  "STG113 - Cannot find next tape pool - use the first in the list\n"
 #define STG114  "STG114 - Found more files to migrate (%d) that what is known in advance (%d)\n"
 #define STG115  "STG115 - Reqid %d (%s) have no tape pool associated yet\n"
@@ -274,8 +274,15 @@
 #define	STG141	"STG141 - Invalid magic number 0x%lx\n"
 #define STG142  "STG142 - %s not removed - Retention period is %s\n"
 #define STG143  "STG143 - %s : %s lifetime on disk exceeds %d second%s - %s\n"
+#define STG144  "STG144 - %s : retention period on disk is %d second%s (%s value)\n"
+#define STG145  "STG145 - %s : retention period on disk changed from %d second%s (%s value) to %d second%s (%s value)\n"
+#define STG146  "STG146 - %s : retention period on disk unchanged to %d second%s (%s value)\n"
+#define STG147  "STG147 - invalid value for option %s, maximum value is %d %s\n"
 #define	STG148	"STG148 - Configuration warning: %s %s %d\n"
 #define STG149  "STG149 - %s : will not be migrated until pool %s have an associated migrator\n"
+#define STG150  "STG150 - %s : mintime_beforemigr unchanged to %d second%s (%s value)\n"
+#define STG151  "STG151 - %s : mintime_beforemigr cannot be higher than %d second%s (%s value)\n"
+#define STG152  "STG152 - %s : mintime_beforemigr changed from %d second%s (%s value) to %d second%s (%s value)\n"
 #define STG153  "STG153 - %s : %s (pool %s)\n"
 #define STG154  "STG154 - HSM File %s was renamed to %s (fileid %s@%s), catalog updated for reqid=%d\n"
 #define STG155  "STG155 - HSM File %s, pool %s, fileid %s@%s moved from DELAY_MIGR to CAN_BE_MIGR\n"
