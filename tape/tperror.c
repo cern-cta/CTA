@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.4 $ $Date: 2000/01/07 16:50:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: tperror.c,v $ $Revision: 1.5 $ $Date: 2000/01/09 14:35:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      gettperror - get drive status after I/O error and
@@ -17,6 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.4 $ $Date: 2000
  *		ETNOSNS		no sense
  */
 #include <errno.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #if defined(_WIN32)
 #include <windows.h>
@@ -38,8 +39,9 @@ static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.4 $ $Date: 2000
 #include "Ctape.h"
 #include "serrno.h"
 #if defined(_WIN32)
-gettperror(tapefd, msgaddr)
+gettperror(tapefd, path, msgaddr)
 int tapefd;
+char *path;
 char **msgaddr;
 {
 	int last_error;
@@ -71,7 +73,6 @@ char **msgaddr;
 }
 #else
 extern char *sys_errlist[];
-extern char *devtype;
 static char nosensekey[] = "no sense key available";
 static char bbot[] = "BOT hit";
 #if ! defined(_AIX) || defined(ADSTAR)
@@ -215,10 +216,13 @@ struct era_info era_codmsg[] = {
 int mt_rescnt;
 static char tp_err_msgbuf[32];
 
-gettperror(tapefd, msgaddr)
+gettperror(tapefd, path, msgaddr)
 int tapefd;
+char *path;
 char **msgaddr;
 {
+	char *devtype;
+	struct devlblinfo  *dlip;
 	extern char *dvrname;
 	int rc;
 	int save_errno;
@@ -243,6 +247,11 @@ char **msgaddr;
 #endif
 
 	save_errno = errno;
+	if (getlabelinfo (path, &dlip) < 0) {
+		devtype = NULL;
+		errno = save_errno;
+	} else
+		devtype = dlip->devtype;
 #ifndef _AIX
 #if defined(DUXV4) && EEI_VERSION == 1
 	deveei.version = EEI_VERSION;
@@ -258,7 +267,8 @@ char **msgaddr;
 		} else if (deveei.flags & EEI_SCSI_SENSE_VALID) {
 			ALL_REQ_SNS_DATA *sdp =
 				(ALL_REQ_SNS_DATA *) deveei.arch.cam.scsi_sense;
-			rc = get_sk_msg (sdp->sns_key, sdp->asc, sdp->asq, msgaddr);
+			rc = get_sk_msg (devtype, sdp->sns_key, sdp->asc,
+			    sdp->asq, msgaddr);
 			mt_rescnt = ((sdp->info_byte3 * 256 + sdp->info_byte2) * 256 +
 				      sdp->info_byte1) * 256 + sdp->info_byte0;
 		} else if (deveei.flags & EEI_CAM_STATUS_VALID) {
@@ -282,7 +292,7 @@ char **msgaddr;
 	       if ((tpsense[0] & 0x70) &&
        		   ((tpsense[2] & 0xE0) == 0 ||
        		    (tpsense[2] & 0xF) != 0)) {
-			rc = get_sk_msg (tpsense[2] & 0xF,
+			rc = get_sk_msg (devtype, tpsense[2] & 0xF,
 					 tpsense[12],
 					 tpsense[13], msgaddr);
 	       } else {
@@ -296,7 +306,7 @@ char **msgaddr;
 		rc = -1;
 	} else {
 #if hpux
-		rc = get_sk_msg ((mt_info.mt_dsreg1 >> 24) & 0xF,
+		rc = get_sk_msg (devtype, (mt_info.mt_dsreg1 >> 24) & 0xF,
 			(mt_info.mt_dsreg1 >> 16) & 0xFF,
 			(mt_info.mt_dsreg1 >> 8) & 0xFF, msgaddr);
 #else
@@ -305,7 +315,7 @@ char **msgaddr;
 		    ((mt_info.mt_erreg >> 16) & 0x40)) {
 			*msgaddr = bbot;
 			rc = ETUNREC;
-		} else rc = get_sk_msg ((mt_info.mt_erreg >> 16) & 0xF,
+		} else rc = get_sk_msg (devtype, (mt_info.mt_erreg >> 16) & 0xF,
 			(mt_info.mt_erreg >> 8) & 0xFF,
 			(mt_info.mt_erreg) & 0xFF, msgaddr);
 #else
@@ -322,7 +332,7 @@ char **msgaddr;
 		} else if (mt_info.eei.flags & EEI_SCSI_SENSE_VALID) {
 			ALL_REQ_SNS_DATA *sdp =
 				(ALL_REQ_SNS_DATA *) mt_info.eei.arch.cam.scsi_sense;
-			rc = get_sk_msg (sdp->sns_key, sdp->asc, sdp->asq, msgaddr);
+			rc = get_sk_msg (devtype, sdp->sns_key, sdp->asc, sdp->asq, msgaddr);
 		} else if (mt_info.eei.flags & EEI_CAM_STATUS_VALID) {
 			get_cs_msg (mt_info.eei.arch.cam.cam_status & 0x3F, msgaddr);
 			rc = -1;
@@ -331,7 +341,7 @@ char **msgaddr;
 			rc = -1;
 		}
 #else
-		rc = get_sk_msg (mt_info.mt_erreg, 0, 0, msgaddr);
+		rc = get_sk_msg (devtype, mt_info.mt_erreg, 0, 0, msgaddr);
 #endif
 #endif
 #endif
@@ -365,7 +375,7 @@ char **msgaddr;
 				*msgaddr = bbot;
 				rc = ETUNREC;
 			} else {
-				rc = get_sk_msg (rs->key, rs->asc, rs->ascq, msgaddr);
+				rc = get_sk_msg (devtype, rs->key, rs->asc, rs->ascq, msgaddr);
 				mt_rescnt = stsense.residual_count;
 			}
 		} else {
@@ -412,7 +422,8 @@ char **msgaddr;
 #endif
 
 #if ! defined(_AIX) || defined(ADSTAR)
-get_sk_msg(key, asc, ascq, msgaddr)
+get_sk_msg(devtype, key, asc, ascq, msgaddr)
+char *devtype;
 int key;
 int asc;
 int ascq;
@@ -431,8 +442,8 @@ char **msgaddr;
 				sk_codmsg[key].text, asc, ascq);
 			*msgaddr = tp_err_msgbuf;
 		}
-		if (strcmp (devtype, "SD3") == 0 && key == 3 && asc == 0x30 &&
-		    ascq == 0x01)
+		if (devtype && strcmp (devtype, "SD3") == 0 &&
+		    key == 3 && asc == 0x30 && ascq == 0x01)
 			rc = ETBLANK;
 		else
 			rc = sk_codmsg[key].errcat;
@@ -456,10 +467,10 @@ char *cmd;
 	int rc;
 
 #if defined(_WIN32)
-	if ((rc = gettperror (tapefd, &msgaddr)) <= 0) rc = EIO;
+	if ((rc = gettperror (tapefd, path, &msgaddr)) <= 0) rc = EIO;
 #else
 	if (errno == EIO) {
-		if ((rc = gettperror (tapefd, &msgaddr)) <= 0) rc = EIO;
+		if ((rc = gettperror (tapefd, path, &msgaddr)) <= 0) rc = EIO;
 #if defined(_IBMR2)
 	} else if (errno == ENXIO && strcmp (cmd, "write") == 0) {
 		msgaddr = "Volume overflow";

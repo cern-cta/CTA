@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: initlabel.c,v $ $Revision: 1.1 $ $Date: 2000/01/09 07:33:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: initlabel.c,v $ $Revision: 1.2 $ $Date: 2000/01/09 14:35:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -93,6 +93,7 @@ int lblcode;
 		if (dlip->path[0] == '\0') break;
 
 	strcpy (dlip->path, path);
+	strcpy (dlip->devtype, devtype);
 
 	if (strncmp (devtype, "DLT", 3) == 0 || strcmp (devtype, "3590") == 0 ||
 	    strcmp (devtype, "SD3") == 0 || strcmp (devtype, "9840") == 0)

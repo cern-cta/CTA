@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.4 $ $Date: 2000/01/07 16:51:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: readlbl.c,v $ $Revision: 1.5 $ $Date: 2000/01/09 14:35:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	readlbl - read one possible label record */
@@ -60,7 +60,7 @@ char *lblbuf;
 				msgaddr = "";
 				rc = ETPARIT;
 			} else if (errno == EIO) {
-				errcat = gettperror (tapefd, &msgaddr);
+				errcat = gettperror (tapefd, path, &msgaddr);
 #if defined(sun) || defined(RS6000PCTA) || defined(ADSTAR) || defined(hpux) || defined(linux)
 				if (errcat == ETBLANK) RETURN (3);
 #endif
@@ -78,7 +78,7 @@ char *lblbuf;
 	}
 	if (n == 0) {
 #if defined(sun) || defined(linux)
-		if (gettperror (tapefd, &msgaddr) == ETBLANK)
+		if (gettperror (tapefd, path, &msgaddr) == ETBLANK)
 			RETURN (3);	/* blank tape */
 #endif
 		RETURN (2);	/* tapemark */

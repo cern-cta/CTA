@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.3 $ $Date: 1999/09/20 12:06:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: skiptape.c,v $ $Revision: 1.4 $ $Date: 2000/01/09 14:35:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -51,7 +51,7 @@ int n;
 #else
 		if (errno == EIO) {
 #endif
-			errcat = gettperror (tapefd, &msgaddr);
+			errcat = gettperror (tapefd, path, &msgaddr);
 #if defined(__alpha) && defined(__osf__) && ! defined(DUXV4)
 			if (errcat == ETNOSNS)
 #else

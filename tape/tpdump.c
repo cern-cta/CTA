@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.10 $ $Date: 2000/01/07 16:50:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: tpdump.c,v $ $Revision: 1.11 $ $Date: 2000/01/09 14:35:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpdump - analyse the content of a tape */
@@ -26,7 +26,6 @@ extern	char	*optarg;
 #if !defined(linux)
 extern	char	*sys_errlist[];
 #endif
-char *devtype;
 int Ctape_kill_needed;
 int code;
 char *dvrname;
@@ -51,7 +50,7 @@ char	**argv;
 	int den;
 	int density;
 	int dev1tm = 0;	/* by default 2 tapemarks are written at EOI */
-	char actual_devtype[CA_MAXDVTLEN+1];
+	char devtype[CA_MAXDVTLEN+1];
 	static char dgn[CA_MAXDGNLEN+1] = "";
 	struct dgn_rsv dgn_rsv;
 	char *dp;
@@ -282,10 +281,9 @@ char	**argv;
 	    NULL, "U", 0, 0, 0, 0))
 		exit_prog ((serrno == EINVAL) ? USERR : SYERR);
 	Ctape_kill_needed = 0;
-	if (Ctape_info (infil, NULL, NULL, aden, actual_devtype, drive, NULL,
+	if (Ctape_info (infil, NULL, NULL, aden, devtype, drive, NULL,
 	    NULL, NULL, NULL))
 		exit_prog (SYERR);
-	devtype = actual_devtype;
 
 	printf (" DUMP - TAPE MOUNTED ON DRIVE %s\n", drive);
 
@@ -472,7 +470,7 @@ char	**argv;
 
 		} else if (nbytes == 0) {	/* tape mark found */
 #if defined(sun) || defined(linux)
-			if (gettperror (infd, &msgaddr) == ETBLANK) {
+			if (gettperror (infd, infil, &msgaddr) == ETBLANK) {
 				if (dev1tm && !qbov && irec == 0) break;
 				fflush (stdout);
 				fprintf (stderr, " DUMP ! READ ERROR: %s (BLOCK # %d)\n",
@@ -538,7 +536,7 @@ char	**argv;
 			sum_block_length = 0;
 		} else {
 			if (errno == EIO)
-				errcat = gettperror (infd, &msgaddr);
+				errcat = gettperror (infd, infil, &msgaddr);
 			else
 #if sgi || (__alpha && __osf__)
 				if (errno == ENOSPC) {
