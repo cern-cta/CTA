@@ -88,11 +88,11 @@ typedef struct rtcpFileRequest {
     int TEndTransferDisk;              /* End time for transfer to/from disk */
     int TStartTransferTape;            /* Start time for tranfser to/from tape */
     int TEndTransferTape;              /* End time for tranfser to/from tape */
+    int blockid;                       /* If position_method == TPPOSIT_BLKID */
 
     /*
      * 64 bit quantities
      */
-    u_signed64 blockid;                /* If position_method == TPPOSIT_BLKID */
 
     /*
      * Compression statistics (actual transfer size)
@@ -104,6 +104,8 @@ typedef struct rtcpFileRequest {
     u_signed64 bytes_out;              /* Bytes to tape (write) or
                                         * bytes to host (read)
                                         */
+    u_signed64 bytes_from_host;        /* Bytes written to tape including
+                                        * the label.
     u_signed64 nbrecs;                 /* Number of records copied */
 
     /*
@@ -120,7 +122,7 @@ typedef struct rtcpFileRequest {
 
 } rtcpFileRequest_t;
 
-#define RTCP_FILEREQLEN(X) (23*LONGSIZE + 8*QUADSIZE + \
+#define RTCP_FILEREQLEN(X) (24*LONGSIZE + 8*QUADSIZE + \
         strlen(X->file_path) + strlen(X->tape_path) + \
         strlen(X->recfm) + strlen(X->fid) + strlen(X->ifce) + \
         strlen(X->stageID) + strlen(X->vmsopt) + 7)
