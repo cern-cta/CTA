@@ -1,0 +1,198 @@
+/*
+ * Copyright (C) 1993-2004 by CERN/IT/ADC
+ * All rights reserved
+ */
+
+/*
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.1 $ $Date: 2004/05/14 07:18:28 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ */
+
+#if BuildCopytapeServer
+#if BuildStageClient != YES
+#define BuildStageClient	YES
+#endif
+#endif
+
+#if BuildNameServerDaemon && !UseOracle && !UseRaima
+#if BuildDbClient != YES
+#define BuildDbClient YES
+#endif
+#endif
+#if BuildStageDaemon && UseStageCdb
+#if BuildDbClient != YES
+#define BuildDbClient YES
+#endif
+#endif
+#if BuildVolumeMgrrDaemon && !UseOracle && !UseRaima
+#if BuildDbClient != YES
+#define BuildDbClient YES
+#endif
+#endif
+#if BuildDbClient
+DBLIB = DepLibraryTargetName(db,db)
+#endif
+
+#if BuildStageClient
+#if UseTms
+#if BuildSysreq != YES
+#define BuildSysreq	YES
+#endif
+#endif
+#if BuildRfioClient != YES
+#define BuildRfioClient       YES
+#endif
+#endif
+
+#if BuildStageDaemon
+#if BuildCupvClient != YES
+#define BuildCupvClient	YES
+#endif
+#if BuildNameServerLibrary != YES
+#define BuildNameServerLibrary YES
+#endif
+#if BuildRtcopyClient != YES
+#define BuildRtcopyClient       YES
+#endif
+#if BuildVolumeMgrClient != YES
+#define BuildVolumeMgrClient YES
+#endif
+#endif
+
+#if BuildStageLibrary
+#if BuildRfioClient != YES
+#define BuildRfioClient       YES
+#endif
+#endif
+
+#if BuildStageClient || BuildStageDaemon || BuildStageLibrary
+STGLIB = DepLibraryTargetName(stage,stage)
+#endif
+
+#if BuildRtcopyClient
+RTCOPYLIB = DepLibraryTargetName(rtcopy,rtcpapi)
+#if UseTms
+#if BuildSysreq != YES
+#define BuildSysreq	YES
+#endif
+#endif
+#if BuildVdqmClient != YES
+#define BuildVdqmClient	YES
+#endif
+#endif
+
+#if BuildTapeClient
+TAPELIB = DepLibraryTargetName(tape,tape)
+#if UseTms
+#if BuildSysreq != YES
+#define BuildSysreq	YES
+#endif
+#endif
+#if BuildMsgClient != YES
+#define BuildMsgClient	YES
+#endif
+#if BuildRmcClient != YES
+#define BuildRmcClient	YES
+#endif
+#endif
+
+#if BuildTapeDaemon && UseVmgr
+#if BuildVolumeMgrClient != YES
+#define BuildVolumeMgrClient YES
+#endif
+#endif
+
+#if BuildTpusage
+#if BuildRfioClient != YES
+#define BuildRfioClient	YES
+#endif
+#endif
+
+#if BuildRfioClient
+RFIOLIB = DepLibraryTargetName(rfio,rfio)
+#if BuildCommon != YES
+#define BuildCommon	YES
+#endif
+#if BuildNameServerClient != YES && BuildNameServerLibrary != YES
+#define BuildNameServerLibrary	YES
+#endif
+#if BuildStageClient != YES && BuildStageLibrary != YES
+#define BuildStageLibrary	YES
+#endif
+#endif
+
+#if BuildMsgClient
+MSGLIB = DepLibraryTargetName(msg,msg)
+#if BuildCommon != YES
+#define BuildCommon	YES
+#endif
+#endif
+
+#if BuildNameServerDaemon
+#if BuildCupvClient != YES
+#define BuildCupvClient	YES
+#endif
+#endif
+
+#if BuildNameServerClient || BuildNameServerLibrary
+NSLIB = DepLibraryTargetName(ns,ns)
+#if BuildCommon != YES
+#define BuildCommon	YES
+#endif
+#endif
+
+#if BuildRmcClient
+RMCLIB = DepLibraryTargetName(rmc,rmc)
+#endif
+
+#if BuildVdqmClient
+VDQMLIB = DepLibraryTargetName(vdqm,vdqmapi)
+#if BuildCommon != YES
+#define BuildCommon	YES
+#endif
+#endif
+
+#if BuildVolumeMgrDaemon
+#if BuildCupvClient != YES
+#define BuildCupvClient	YES
+#endif
+#endif
+
+
+#if BuildVolumeMgrClient
+VMGRLIB = DepLibraryTargetName(vmgr,vmgr)
+#if BuildCommon != YES
+#define BuildCommon	YES
+#endif
+#endif
+
+#if BuildCupvClient || BuildCupvDaemon
+UPVLIB = DepLibraryTargetName(upv,upv)
+#if BuildCommon != YES
+#define BuildCommon	YES
+#endif
+#endif
+
+#if BuildMonitorClient || BuildMonitorServer
+MONITORLIB = DepLibraryTargetName(monitor,monitor)
+#if BuildCommon != YES
+#define BuildCommon	YES
+#endif
+#endif
+
+#if BuildCommon
+COMMONLIB = DepLibraryTargetName(common,common)
+#endif
+
+#if BuildSysreq
+SYSREQLIB = DepLibraryTargetName(sysreq,sysreq)
+#endif
+
+#if BuildHpssClient
+HPSSLIB = DepLibraryTargetName(hpss,hpss_common)
+#endif
+
+#if BuildDlfClient
+DLFLIB = DepLibraryTargetName(dlf,dlf)
+#endif
+
+
