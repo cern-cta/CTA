@@ -6,7 +6,7 @@
 */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.14 $ $Date: 2004/07/08 11:16:30 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.15 $ $Date: 2004/08/05 14:29:33 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -996,11 +996,16 @@ dlf_log_message_t *msg;
 		msg->ns_fileid.fileid);
 	/* Go to the end of the file */
 	if (fd != 1) {
-	        if ((lseek (fd, 0, SEEK_END)) < 0) return (-1);
+	        if ((lseek (fd, 0, SEEK_END)) < 0) {
+		  close(fd);
+		  return (-1);
+		}
 	}
 	written = write (fd, prtbuf, n);
-	if (written < n)
+	if (written < n) {
+	        close(fd);
 		return (-1);
+	}
 	for (p = msg->param_list.head; p != NULL; p = p->next) {
 		switch(p->type) {
 		case DLF_MSG_PARAM_STR:
@@ -1026,8 +1031,10 @@ dlf_log_message_t *msg;
 			return (-1);
 		}
 		written = write (fd, prtbuf, n);
-		if (written < n)
+		if (written < n) {
+		        close(fd);
 			return (-1);
+		}
 	}
 	write (fd, "\n", 1);
 #if !defined(_WIN32)
@@ -1036,8 +1043,7 @@ dlf_log_message_t *msg;
 	/* Unlock the file */
 #endif
 	/* Lock is removed when file is closed */
-		if (fd != 1)
-		        close (fd);
+		if (fd != 1) close(fd);
 	return (0);
 }
 
