@@ -156,7 +156,7 @@
 #else
 #define DlfConfigFile  /etc/DLFCONFIG
 #endif
-#define DlfHost        "lxshare001d"
+#define DlfHost        "lxshare003d"
 #define DlfSpool       /usr/spool/dlf
 #if defined(_WIN32)
 #define ExpertConfigFile  %%SystemRoot%%\\system32\\drivers\\etc\\EXPCONFIG
