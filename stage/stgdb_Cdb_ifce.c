@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.9 1999/12/17 09:06:44 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.10 2000/01/06 11:27:37 jdurand Exp $
  */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.9 $ $Date: 1999/12/17 09:06:44 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.10 $ $Date: 2000/01/06 11:27:37 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
@@ -382,7 +382,8 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
 
   /* We sort the stgcat entries per c_time, and per reqid as secondary key */
   if (stcp > *stcsp) {
-    qsort(*stcsp, (stcp - *stcsp), sizeof(struct stgcat_entry), &stgdb_stcpcmp);
+    qsort(*stcsp, (stcp - *stcsp)/sizeof(struct stgcat_entry),
+          sizeof(struct stgcat_entry), &stgdb_stcpcmp);
   }
 
   /*
@@ -398,7 +399,8 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
 
   /* We sort the stgpath entries per reqid */
   if (stpp > *stpsp) {
-    qsort(*stpsp, (stpp - *stpsp), sizeof(struct stgpath_entry), &stgdb_stppcmp);
+    qsort(*stpsp, (stpp - *stpsp)/sizeof(struct stgpath_entry),
+          sizeof(struct stgpath_entry), &stgdb_stppcmp);
   }
 
   return(0);
