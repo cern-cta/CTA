@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SelfMonitor.c,v $ $Revision: 1.1 $ $Date: 1999/11/29 11:22:02 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SelfMonitor.c,v $ $Revision: 1.2 $ $Date: 2000/03/04 14:00:38 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -220,7 +220,6 @@ void *rtcpd_MonitorThread(void *arg) {
             nb_diskIO*sizeof(diskIOstatus_t));
         ps_check.timestamp = time(NULL);
     }
-    return(NULL);
 }
 
 int rtcpd_StartMonitor(int pool_size) {

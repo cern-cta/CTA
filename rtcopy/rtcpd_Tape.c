@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.37 $ $Date: 2000/03/03 16:22:25 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.38 $ $Date: 2000/03/04 14:00:36 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1038,9 +1038,17 @@ void *tapeIOthread(void *arg) {
     client = ((thread_arg_t *)arg)->client;
     client_socket = ((thread_arg_t *)arg)->client_socket;
     free(arg);
+
+    if ( tape == NULL ) {
+        rtcp_log(LOG_ERR,"tapeIOthread() received NULL tape request\n");
+        rtcpd_SetProcError(RTCP_FAILED);
+        return((void *)&failure);
+    }
+
     nexttape = NULL;
     nextfile = NULL;
     bytes_in = 0;
+    mode = tape->tapereq.mode;
 
     /*
      * Initialize the tapeIO processing status
