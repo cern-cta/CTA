@@ -1,6 +1,9 @@
 /*
- * $Id: getifnam.c,v 1.3 1999/07/26 10:55:57 obarring Exp $
+ * $Id: getifnam.c,v 1.4 1999/07/26 11:28:46 obarring Exp $
  * $Log: getifnam.c,v $
+ * Revision 1.4  1999/07/26 11:28:46  obarring
+ * Add typecast to avoid warnings
+ *
  * Revision 1.3  1999/07/26 10:55:57  obarring
  * Add missing closing parenthesis
  *
@@ -15,7 +18,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: getifnam.c,v 1.3 1999/07/26 10:55:57 obarring Exp $";
+static char cvsId[] = "$Id: getifnam.c,v 1.4 1999/07/26 11:28:46 obarring Exp $";
 #endif /* not lint */
 
 /* getifnam.c   Get connected socket interface name                     */
@@ -160,7 +163,7 @@ SOCKET s;
     char *ifname = NULL;
     size_t ifnamelen = 16;
 
-    Cglobals_get(&ifname_key,&ifname,ifnamelen);
+    Cglobals_get(&ifname_key,(void **)&ifname,ifnamelen);
 
     return(getifnam_r(s,ifname,ifnamelen));
 }
