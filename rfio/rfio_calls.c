@@ -73,6 +73,10 @@ static char sccsid[] = "@(#)rfio_calls.c,v 1.3 2004/03/22 12:11:24 CERN/IT/PDP/D
 #include <nfs/nfsio.h>
 #endif
 
+extern int forced_umask;
+#define CORRECT_UMASK(this) (forced_umask > 0 ? forced_umask : this)
+extern int ignore_uid_gid;
+
 #ifdef CSEC
 extern int Csec_service_type;
 extern int peer_uid;
@@ -672,7 +676,7 @@ int rt ;
       */
      log(LOG_DEBUG, "rchmod for (%d,%d): reading %d bytes\n", uid,gid,len);
      /* chmod() is not for remote users */
-     (void)umask(0) ;
+     (void)umask((mode_t) CORRECT_UMASK(0)) ;
      if ( rt ) { 
        status = -1;
        rcode = EACCES ;
@@ -762,7 +766,7 @@ int rt ;
       */
      log(LOG_DEBUG, "rmkdir for (%d,%d): reading %d bytes\n", uid,gid,len);
      /* mkdir() is not for remote users */
-     (void)umask(0) ;
+     (void)umask((mode_t) CORRECT_UMASK(0)) ;
      if ( rt ) { 
        status = -1;
        rcode = EACCES ;
@@ -851,7 +855,7 @@ int rt ;
       */
      log(LOG_DEBUG, "rrmdir for (%d,%d): reading %d bytes\n", uid,gid,len);
      /* rmdir() is not for remote users */
-     (void)umask(0) ;
+     (void)umask((mode_t) CORRECT_UMASK(0)) ;
      if ( rt ) { 
        status = -1;
        rcode = EACCES ;
@@ -1788,7 +1792,7 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
        log(LOG_DEBUG, "ropen: account: %s\n", account);
        log(LOG_DEBUG, "ropen: filename: %s\n", CORRECT_FILENAME(filename));
        log(LOG_INFO, "ropen(%s,0X%X,0X%X) for (%d,%d)\n",CORRECT_FILENAME(filename),flags,mode,uid,gid);
-       (void) umask(mask) ;
+       (void) umask((mode_t) CORRECT_UMASK(mask)) ;
        if ( ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
             ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
          if (status == -2)
@@ -3486,7 +3490,7 @@ char *permstr;          /* permission string for the request */
     *gid = peer_gid;
   }
 #endif
-  return chsuser(*uid,*gid,hostname,ptrcode,permstr);
+  return(ignore_uid_gid != 0 ? 0 : chsuser(*uid,*gid,hostname,ptrcode,permstr));
 }
 
 
@@ -3897,7 +3901,7 @@ int     bet;            /* Version indicator: 0(old) or 1(new) */
        log(LOG_DEBUG, "ropen_v3: account: %s\n", account);
        log(LOG_DEBUG, "ropen_v3: filename: %s\n", CORRECT_FILENAME(filename));
        log(LOG_INFO, "ropen_v3(%s,0X%X,0X%X) for (%d,%d)\n",CORRECT_FILENAME(filename),flags,mode,uid,gid);
-       (void) umask(mask) ;
+       (void) (mode_t) CORRECT_UMASK(mask)) ;
 #if !defined(_WIN32)  
        if ( ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
             ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {

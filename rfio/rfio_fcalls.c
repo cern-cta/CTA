@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_fcalls.c,v 1.1 2004/12/07 12:15:08 jdurand Exp $
+ * $Id: rfio_fcalls.c,v 1.2 2004/12/07 14:17:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_fcalls.c,v $ $Revision: 1.1 $ $Date: 2004/12/07 12:15:08 $ CERN/IT/PDP/DM Felix Hassine" ;
+static char sccsid[] = "@(#)$RCSfile: rfio_fcalls.c,v $ $Revision: 1.2 $ $Date: 2004/12/07 14:17:19 $ CERN/IT/PDP/DM Felix Hassine" ;
 #endif /* not lint */
 
 /* rfio_fcalls.c        - Remote file I/O - server FORTRAN calls        */
@@ -27,6 +27,9 @@ static char sccsid[] = "@(#)$RCSfile: rfio_fcalls.c,v $ $Revision: 1.1 $ $Date: 
 #include <sys/param.h>                  /* System parameters            */
 #endif
 #include <pwd.h>
+
+extern int forced_umask;
+#define CORRECT_UMASK(this) (forced_umask > 0 ? forced_umask : this)
 
 #if defined(HPSS)
 #include "../h/marshall.h"
@@ -288,7 +291,7 @@ int 	bet ;
        log(LOG_DEBUG, "rxyopen: filename: %s\n", filename);
        log(LOG_INFO, "rxyopen(%s) for (%d,%d)\n",filename,uid,gid);
        *rlun = lun;
-       (void) umask(mask);
+       (void) umask((mode_t) CORRECT_UMASK(mask)) ;
        append = openopt & FFOOPT_A;
        trunc = openopt & FFOOPT_T;
 #if !defined(_WIN32)

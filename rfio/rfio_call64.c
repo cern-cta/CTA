@@ -75,6 +75,10 @@ static char sccsid[] = "@(#)rfio_call64.c,v 1.3 2004/03/22 12:34:03 CERN/IT/PDP/
 
 #include <fcntl.h>
 
+extern int forced_umask;
+#define CORRECT_UMASK(this) (forced_umask > 0 ? forced_umask : this)
+extern int ignore_uid_gid;
+
 #if defined(HPSS)
 #include <dirent.h>
 #include <dce/pthread.h>
@@ -769,7 +773,7 @@ char tmpbuf[21], tmpbuf2[21];
        log(LOG_DEBUG, "sropen64: account: %s\n", account);
        log(LOG_INFO, "sropen64: (%s,0%o,0%o) for (%d,%d)\n",
            CORRECT_FILENAME(filename), flags, mode, uid, gid);
-       (void) umask(mask) ;
+       (void) umask((mode_t) CORRECT_UMASK(mask)) ;
        if ( ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
             ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
          if (status == -2)
@@ -1919,7 +1923,7 @@ char        *host;         /* Where the request comes from        */
            uid, gid, mask, ftype, flags, mode);
        log(LOG_DEBUG, "ropen64_v3: account: %s\n", account);
        log(LOG_INFO,  "ropen64_v3: (%s,0%o,0%o) for (%d,%d)\n", CORRECT_FILENAME(filename), flags, mode, uid, gid);
-       (void) umask(mask) ;
+       (void) umask((mode_t) CORRECT_UMASK(mask)) ;
 #if !defined(_WIN32)  
        if ( ((status=check_user_perm(&uid,&gid,host,&rcode,((ntohopnflg(flags) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
             ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
