@@ -1,11 +1,17 @@
 /*
- * $Id: Cglobals.c,v 1.3 1999/07/20 15:10:56 obarring Exp $
+ * $Id: Cglobals.c,v 1.4 1999/07/21 13:25:58 obarring Exp $
  * $Log: Cglobals.c,v $
+ * Revision 1.4  1999/07/21 13:25:58  obarring
+ * Add cvsId string
+ *
  * Revision 1.3  1999/07/20 15:10:56  obarring
  * Add CVS log directive
  *
  */
 
+#ifndef lint
+static char cvsId[] = "$Id: Cglobals.c,v 1.4 1999/07/21 13:25:58 obarring Exp $";
+#endif /* lint */
 /*
  * Castor_globals.c - central entry to maintain all Castor globals
  */
