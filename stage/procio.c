@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.39 2000/09/27 08:08:55 jdurand Exp $
+ * $Id: procio.c,v 1.40 2000/09/28 12:50:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.39 $ $Date: 2000/09/27 08:08:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.40 $ $Date: 2000/09/28 12:50:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -496,10 +496,7 @@ void procioreq(req_type, req_data, clienthost)
 				int maxfseq;
 				char concat_off_flag;
 
-				if (trailing != '-') {
-					sendrep (rpfd, MSG_ERR, "STG02 - option -c off requires the last tapefile to end with '-'\n");
-					errflg++;
-				} else if (nbtpf != 1) {
+				if (trailing != '-' || nbtpf != 1) {
 					sendrep (rpfd, MSG_ERR, "STG02 - option -c off requires exactly one tapefile, ending with '-'\n");
 					errflg++;
 				}
