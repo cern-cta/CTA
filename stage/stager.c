@@ -24,6 +24,7 @@ static char sccsid[] = "stager.c,v 1.37 2000/04/07 07:04:54 CERN IT-PDP/DM Jean-
 #include <fcntl.h>
 #include <signal.h>
 #include <errno.h>
+#include <time.h>
 #include "Cns_api.h"
 #include "log.h"
 #define RFIO_KERNEL
@@ -775,7 +776,18 @@ int stagewrt_castor_hsm_file() {
 		Flags = 0;
 		while (1) {
 #ifdef ALICETEST
-			char *tape_pool = "alicemdc";
+			char *tape_pool;
+			char *tape_pool_odd  = "alicemdc";
+			char *tape_pool_even = "alicemdc2";
+			time_t this_time;
+
+			time(&this_time);
+
+			if (this_time & 0x1 == 0x1) {
+				tape_pool = tape_pool_odd;
+			} else {
+				tape_pool = tape_pool_even;
+			}
 #else
 			char *tape_pool = NULL;
 
@@ -869,6 +881,10 @@ int stagewrt_castor_hsm_file() {
 						 rtcpcreqs[0]->tapereq.err.errorcode == ETUNREC) {
 				sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Flaging tape to DISABLED");
 				Flags |= DISABLED;
+			} else if ((rtcpcreqs[0]->file->filereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV ||
+						(rtcpcreqs[0]->tapereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV) {
+				/* Reselect a server - we retry, though */
+				sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Retrying (Another Tape Server Required)");
 			} else if (rtcpcreqs[0]->tapereq.err.errorcode == ETVBSY ||
 						 rtcpcreqs[0]->file->filereq.err.errorcode == ENOENT) {
 				/* Tape info very probably inconsistency with, for ex., TMS */
@@ -962,6 +978,14 @@ int stagewrt_castor_hsm_file() {
 				if (vmgr_updatetape (vid,hsm_fsegsize[i], 0, 0, Flags) != 0) {
 					sendrep (rpfd, MSG_ERR, STG02, vid, "vmgr_updatetape",
 							 sstrerror (serrno));
+				}
+				/* ... Except in the following cases: */
+				if ((rtcpcreqs[0]->file->filereq.err.severity == RTCP_USERR|RTCP_FAILED ||
+					rtcpcreqs[0]->tapereq.err.severity       == RTCP_USERR|RTCP_FAILED) &&
+					serrno == EISDIR) {
+					sendrep (rpfd, MSG_ERR, STG02, vid, "Fatal Error - Exit",
+							 sstrerror (serrno));
+					RETURN (USERR);
 				}
 			}
 			goto gettape;
