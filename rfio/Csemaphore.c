@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: Csemaphore.c,v $ $Revision: 1.1 $ $Date: 2004/02/16 13:21:36 $ CERN/IT/PDP/DM";
+static char sccsid[] = "$RCSfile: Csemaphore.c,v $ $Revision: 1.2 $ $Date: 2004/02/16 13:32:41 $ CERN/IT/PDP/DM";
 #endif /* not lint */
 
 /*//////////////////////////////////////////////////////////////////////
@@ -58,7 +58,7 @@ void
 Csemaphore_destroy (CSemaphore * s)
 {
     if (Cthread_mutex_destroy ((s)) == -1)
-     do_error ("Error destroying semaphore mutex");
+     do_error ("Error destroying Csemaphore mutex");
 }
 
 /*
@@ -115,7 +115,7 @@ Csemaphore_down (CSemaphore * s)
  *
  */
 int
-semaphore_decrement (Semaphore * s)
+Csemaphore_decrement (CSemaphore * s)
 {
     int         value_after_op;
 
