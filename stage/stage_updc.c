@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.12 2000/12/18 10:38:28 jdurand Exp $
+ * $Id: stage_updc.c,v 1.13 2001/01/31 19:00:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.12 $ $Date: 2000/12/18 10:38:28 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.13 $ $Date: 2001/01/31 19:00:03 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -31,33 +31,13 @@ static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.12 $ $Date: 
 #include "u64subr.h"
 #include "Cpwd.h"
 
-int copyrc_shift2castor _PROTO((int));
+extern int copyrc_shift2castor _PROTO((int));
 
 #ifndef _WIN32
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
 #endif /* _WIN32 */
-
-int copyrc_castor2shift(copyrc)
-     int copyrc;
-{
-  /* Input  is a CASTOR return code */
-  /* Output is a SHIFT  return code */
-  switch (copyrc) {
-  case ERTBLKSKPD:
-    return(BLKSKPD);
-  case ERTTPE_LSZ:
-    return(TPE_LSZ);
-  case ERTMNYPARY:
-  case ETPARIT:
-    return(MNYPARI);
-  case ERTLIMBYSZ:
-    return(LIMBYSZ);
-  default:
-    return(copyrc);
-  }
-}
 
 int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_time, transfer_time, blksize, drive, fid, fseq, lrecl, recfm, path)
      char *stageid;
@@ -320,10 +300,10 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
   marshall_LONG (q, msglen);	/* update length field */
 
   while (1) {
-    c = send2stgd (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
+    c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if (c == 0) break;
     if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
-    sleep (RETRYI);
+    stage_sleep (RETRYI);
   }
   if (c == 0 && path != NULL && repbuf[0] != '\0') {
     rbp = repbuf;
@@ -552,10 +532,10 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
   marshall_LONG (q, msglen);	/* update length field */
 
   while (1) {
-    c = send2stgd (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
+    c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if (c == 0) break;
     if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
-    sleep (RETRYI);
+    stage_sleep (RETRYI);
   }
   if (c == 0 && path != NULL && repbuf[0] != '\0') {
     rbp = repbuf;
@@ -667,10 +647,10 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   marshall_LONG (q, msglen);	/* update length field */
 
   while (1) {
-    c = send2stgd (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
+    c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if (c == 0) break;
     if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
-    sleep (RETRYI);
+    stage_sleep (RETRYI);
   }
   free(sendbuf);
   return (c == 0 ? 0 : -1);
@@ -781,10 +761,10 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   marshall_LONG (q, msglen);	/* update length field */
 
   while (1) {
-    c = send2stgd (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
+    c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if (c == 0) break;
     if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
-    sleep (RETRYI);
+    stage_sleep (RETRYI);
   }
   free(sendbuf);
   return (c == 0 ? 0 : -1);

@@ -1,5 +1,5 @@
 /*
- * $Id: stageupdc.c,v 1.14 2000/12/12 14:13:41 jdurand Exp $
+ * $Id: stageupdc.c,v 1.15 2001/01/31 19:00:08 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.14 $ $Date: 2000/12/12 14:13:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.15 $ $Date: 2001/01/31 19:00:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -32,8 +32,13 @@ static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.14 $ $Date: 2
 extern	char	*sys_errlist[];
 #endif
 
+EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
 void usage _PROTO((char *));
 void cleanup _PROTO((int));
+
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+#define strtok(X,Y) strtok_r(X,Y,&last)
+#endif /* _REENTRANT || _THREAD_SAFE */
 
 int main(argc, argv)
 		 int	argc;
@@ -63,6 +68,9 @@ int main(argc, argv)
 #endif
 	char Zparm[CA_MAXHOSTNAMELEN + 1 + 14];
 	/* char repbuf[CA_MAXPATHLEN+1]; */
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+	char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
 
 	nargs = argc;
 	uid = getuid();
@@ -210,7 +218,7 @@ int main(argc, argv)
 	signal (SIGTERM, cleanup);
 
 	while (1) {
-		c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
+		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 		if (c == 0 || serrno == EINVAL || serrno == ENOSPC) break;
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);

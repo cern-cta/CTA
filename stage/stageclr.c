@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.17 2000/12/12 14:35:37 jdurand Exp $
+ * $Id: stageclr.c,v 1.18 2001/01/31 19:00:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.17 $ $Date: 2000/12/12 14:35:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.18 $ $Date: 2001/01/31 19:00:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -30,6 +30,7 @@ static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.17 $ $Date: 20
 #include "Cgrp.h"
 #include "Cgetopt.h"
 
+EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
 extern	char	*getenv();
 extern	char	*getconfent();
 
@@ -292,7 +293,7 @@ int main(argc, argv)
 			marshall_LONG (sbp, msglen);	/* update length field */
 
 			while (1) {
-				c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
+				c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 				if (c == 0 || serrno == EINVAL || serrno == EBUSY) break;
 				if (serrno == ENOUGHF) break;
 				if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
@@ -319,7 +320,7 @@ int main(argc, argv)
 		marshall_LONG (q, msglen);	/* update length field */
 
 		while (1) {
-			c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
+			c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 			if (c == 0 || serrno == EINVAL) break;
 			if (serrno == ENOUGHF) {
 				c = 0;

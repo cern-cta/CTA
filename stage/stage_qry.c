@@ -1,5 +1,5 @@
 /*
- * $Id: stage_qry.c,v 1.2 2000/12/21 13:55:08 jdurand Exp $
+ * $Id: stage_qry.c,v 1.3 2001/01/31 19:00:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_qry.c,v $ $Revision: 1.2 $ $Date: 2000/12/21 13:55:08 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_qry.c,v $ $Revision: 1.3 $ $Date: 2001/01/31 19:00:02 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -158,7 +158,7 @@ int _stage_qry_hsm_ipath(stghost,stgpool,hsmpath,ipath)
   marshall_LONG (q, msglen);	/* update length field */
   
   while (1) {
-    c = send2stgd (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
+    c = send2stgd_compat (stghost, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if (c == 0) break;
     if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
     sleep (RETRYI);

@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.88 2001/01/12 08:40:50 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.89 2001/01/31 19:00:10 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.88 $ $Date: 2001/01/12 08:40:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.89 $ $Date: 2001/01/31 19:00:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 20000
@@ -83,6 +83,7 @@ struct winsize {
 #include "rfio_api.h"
 #include "net.h"
 #include "stage.h"
+#include "stage_api.h"
 #if SACCT
 #include "../h/sacct.h"
 #endif
@@ -97,6 +98,7 @@ struct winsize {
 #include "Cgrp.h"
 #include "Cgetopt.h"
 #include "u64subr.h"
+#include "Castor_limits.h"
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -105,23 +107,34 @@ struct winsize {
 #define setegid(egid) setresgid(-1,egid,-1)
 #endif
 
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+#define strtok(X,Y) strtok_r(X,Y,&last)
+#endif /* _REENTRANT || _THREAD_SAFE */
+
 #if !defined(linux)
 extern char *sys_errlist[];
 #endif
 char defpoolname[CA_MAXPOOLNAMELEN + 1];
-int force_init;
+char defpoolname_in[CA_MAXPOOLNAMELEN + 1];
+char defpoolname_out[CA_MAXPOOLNAMELEN + 1];
+int force_init = 0;
+int force_shutdown = 0;
+int migr_init;
 char func[16];
-int initreq_reqid;
-int initreq_rpfd;
-int last_reqid;			/* last reqid used */
+int initreq_reqid = 0;
+int initreq_rpfd = 0;
+int shutdownreq_reqid = 0;
+int shutdownreq_rpfd = 0;
+int last_reqid = 0;			/* last reqid used */
 char logbuf[PRTBUFSZ];
 int maxfds;
 int nbcat_ent;
 int nbpath_ent;
 fd_set readfd, readmask;
 int reqid;
-int rpfd;
+int rpfd = -1;
 int stg_s;
+u_signed64 stage_uniqueid = 0;
 #ifndef _WIN32
 struct sigaction sa;
 #endif
@@ -139,10 +152,16 @@ struct stgdb_fd dbfd;
 #endif
 struct passwd stage_passwd;             /* Generic uid/gid stage:st */
 struct passwd start_passwd;
+char localhost[CA_MAXHOSTNAMELEN+1];  /* Local hostname */
+time_t upd_fileclasses_int = 3600 * 24; /* Default update time for all CASTOR fileclasses - one day */
+time_t last_upd_fileclasses = 0;
 
-void prockilreq _PROTO((char *, char *));
+void prockilreq _PROTO((int, char *, char *));
 void procinireq _PROTO((char *, char *));
+void procshutdownreq _PROTO((char *, char *));
+void check_upd_fileclasses _PROTO(());
 void checkpoolstatus _PROTO(());
+void checkwaitingspc _PROTO(());
 void check_child_exit _PROTO(());
 void checkwaitq _PROTO(());
 void create_link _PROTO((struct stgcat_entry *, char *));
@@ -155,6 +174,7 @@ void stgdaemon_wait4child _PROTO(());
 int req2argv _PROTO((char *, char ***));
 int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *));
 int ask_stageout _PROTO((int, char *, struct stgcat_entry **));
+int file_modified _PROTO((int, char *, char *, uid_t, gid_t, int, char *));
 int check_coff_waiting_on_req _PROTO((int, int));
 int check_waiting_on_req _PROTO((int, int));
 int nextreqid _PROTO(());
@@ -168,33 +188,47 @@ int build_ipath _PROTO((char *, struct stgcat_entry *, char *));
 int fork_exec_stager _PROTO((struct waitq *));
 int savepath _PROTO(());
 int upd_staged _PROTO((char *));
+void checkovlstatus _PROTO((int, int));
+void killallovl _PROTO((int));
+extern void killcleanovl _PROTO((int));
+extern void killmigovlv2 _PROTO((int));
+int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
 
 struct stgcat_entry *newreq _PROTO(());
 struct waitf *add2wf _PROTO((struct waitq *));
 int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct waitf *));
-extern void procmigpoolreq _PROTO((char *, char *));
-extern void update_migpool _PROTO((struct stgcat_entry *, int));
+extern int update_migpoolv2 _PROTO((struct stgcat_entry *, int, int));
 extern int iscleanovl _PROTO((int, int));
-extern int ismigovl _PROTO((int, int));
+extern int ismigovlv2 _PROTO((int, int));
 extern int selectfs _PROTO((char *, int *, char *));
 extern int updfreespace _PROTO((char *, char *, signed64));
-struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
+extern void procupdreq _PROTO((char *, char *));
+int stcp_cmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
+int stpp_cmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
+struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
 int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int));
-extern void checkfile2mig _PROTO(());
-extern int updpoolconf _PROTO((char *));
+extern void checkfile2migv2 _PROTO(());
+extern int updpoolconf _PROTO((char *, char *, char *));
 extern void procioreq _PROTO((int, char *, char *));
-extern void procputreq _PROTO((char *, char *));
-extern void procqryreq _PROTO((char *, char *));
+extern void procputreq _PROTO((int, char *, char *));
+extern void procqryreq _PROTO((int, char *, char *));
 extern void procclrreq _PROTO((char *, char *));
 extern void procupdreq _PROTO((char *, char *));
 extern void procallocreq _PROTO((char *, char *));
 extern void procgetreq _PROTO((char *, char *));
 extern void procfilchgreq _PROTO((char *, char *));
-extern int getpoolconf _PROTO((char *));
+extern int getpoolconf _PROTO((char *, char *, char *));
 extern int checkpoolcleaned _PROTO((char ***));
+extern void checkpoolspace _PROTO(());
 extern int cleanpool _PROTO((char *));
 extern int get_create_file_option _PROTO((char *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
+extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
+extern int upd_fileclasses _PROTO(());
+extern char *getconfent();
+extern int retenp_on_disk _PROTO((int));
+extern void check_retenp_on_disk _PROTO(());
+extern int create_hsm_entry _PROTO((int, struct stgcat_entry *, int, mode_t, int));
 
 /* Function with variable list of arguments - defined as in non-_STDC_ to avoir proto problem */
 extern int stglogit _PROTO(());
@@ -237,6 +271,7 @@ int main(argc,argv)
 	char tmpbuf[21];
 	struct passwd *this_passwd;             /* password structure pointer */
 	struct passwd root_passwd;
+	char myenv[11 + CA_MAXHOSTNAMELEN + 1];
 
 	Coptind = 1;
 	Copterr = 0;
@@ -311,6 +346,21 @@ int main(argc,argv)
 	stageacct (STGSTART, 0, 0, "", 0, 0, 0, 0, NULL, "");
 #endif
 
+	/* Get localhostname */
+	if (gethostname(localhost,sizeof(localhost)) != 0)   {
+		stglogit(func, "Cannot get local hostname (%s) - forcing \"localhost\"\n", strerror(errno));
+		strcpy(localhost,"localhost");
+    }
+
+	/* Force environment variable to be sure that all our callbacks, forked processes, etc... will really go there... */
+	strcpy(myenv, "STAGE_HOST=");
+	strcat(myenv, localhost);
+	if (putenv(myenv) != 0) {
+		stglogit(func, "Cannot set %s (%s)\n", myenv, strerror(errno));
+    } else {
+		stglogit(func, "Setted environment variable %s\n", myenv);
+    }
+
 	/* We get information on current uid/gid */
 	if ((this_passwd = Cgetpwuid(getuid())) == NULL) {
 		stglogit(func, "### Cannot Cgetpwuid(%d) (%s)\n",(int) getuid(), strerror(errno));
@@ -323,7 +373,7 @@ int main(argc,argv)
 		stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", start_passwd.pw_gid, start_passwd.pw_name);
  		exit (SYERR);
 	}
-	stglogit(func, "Running under \"%s\" account (uid=%d,gid=%d)\n", start_passwd.pw_name, start_passwd.pw_uid, start_passwd.pw_gid);
+	stglogit(func, "Running under \"%s\" account (uid=%d,gid=%d), pid=%d\n", start_passwd.pw_name, start_passwd.pw_uid, start_passwd.pw_gid, (int) getpid());
 
 	/* We get information on generic stage:st uid/gid */
 	if ((this_passwd = Cgetpwnam("stage")) == NULL) {
@@ -392,7 +442,7 @@ int main(argc,argv)
 
 	/* get pool configuration */
 
-	if ((c = getpoolconf (defpoolname))) exit (c);
+	if ((c = getpoolconf (defpoolname, defpoolname_in, defpoolname_out))) exit (c);
 
 #ifdef USECDB
 	/* Get stager/database login:password */
@@ -400,6 +450,9 @@ int main(argc,argv)
 		FILE *configfd;
 		char cfbuf[80];
 		char *p_p, *p_u;
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+		char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
 
 		if ((configfd = fopen(STGDBCONFIG,"r")) == NULL) {
 			stglogit (func, "Cannot open Db Configuration file %s\n", STGDBCONFIG);
@@ -538,6 +591,7 @@ int main(argc,argv)
 		if ((((stcp->status & 0xF) == STAGEIN) &&
 				 ((stcp->status & 0xF0) != STAGED)) ||
 				(stcp->status == (STAGEOUT|WAITING_SPC)) ||
+				(stcp->status == (STAGEOUT|WAITING_NS)) ||
 				(stcp->status == (STAGEALLOC|WAITING_SPC))) {
 			if (delfile (stcp, 0, 0, 1, "startup", 0, 0, 0) < 0) { /* remove incomplete file */
 				stglogit (func, STG02, stcp->ipath, "rfio_unlink",
@@ -574,7 +628,7 @@ int main(argc,argv)
 		} else if (stcp->status == (STAGEPUT|CAN_BE_MIGR)) {
 			stcp->status = STAGEOUT|CAN_BE_MIGR;
 			/* This is a file for automatic migration */
-			update_migpool(stcp,1);
+			update_migpoolv2(stcp,1,0);
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -590,23 +644,33 @@ int main(argc,argv)
 			}
 #endif
 			/* This is a file for automatic migration */
-			update_migpool(stcp,1);
+			update_migpoolv2(stcp,1,0);
 			stcp++;
 		} else stcp++;
 	}
 
-	/* main loop */
+	/* Initialize check_upd_fileclasses time */
+	last_upd_fileclasses = time(NULL);
 
+	/* main loop */
 	while (1) {
+		check_upd_fileclasses (); /* update all CASTOR fileclasses regularly */
+		check_retenp_on_disk (); /* remove all CASTOR files that are out of disk retention time */
 		check_child_exit(); /* check childs [pid,status] */
 		checkpoolstatus ();	/* check if any pool just cleaned */
+		checkwaitingspc ();	/* check requests that are waiting for space */
+		checkpoolspace ();	/* launch gc if necessary */
 		checkwaitq ();	/* scan the wait queue */
-		checkfile2mig ();	/* scan the pools vs. their migration policies */
-		if (initreq_reqid && (waitqp == NULL || force_init)) {
+		checkfile2migv2 ();	/* scan the pools vs. their migration policies */
+		if ((shutdownreq_reqid != 0) && (waitqp == NULL || force_shutdown)) {
+			/* We send a kill to all processes we are aware about */
+			killallovl(SIGINT);
+		}
+		if ((initreq_reqid != 0) && (waitqp == NULL || force_init)) {
 			/* reread pool configuration + adjust space */
 			reqid = initreq_reqid;
 			rpfd = initreq_rpfd;
-			c = updpoolconf (defpoolname);
+			c = updpoolconf (defpoolname, defpoolname_in, defpoolname_out);
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if ((stcp->status == STAGEIN) ||
 					(stcp->status == STAGEOUT) ||
@@ -623,16 +687,11 @@ int main(argc,argv)
 					}
 					updfreespace (stcp->poolname, stcp->ipath,
 							(signed64) ((signed64) stcp->actual_size - (signed64) stcp->size * (signed64) ONE_MB));
-				} else if (! c) {
-					if ((stcp->status & (STAGEOUT|CAN_BE_MIGR)) == (STAGEOUT|CAN_BE_MIGR)) {
-						/* This is a file for automatic migration */
-						update_migpool(stcp,1);
-					}
 				}
 			}
 			if (c != 0) sendrep (rpfd, MSG_ERR, STG09, STGCONFIG, "incorrect");
 			sendrep (rpfd, STAGERC, STAGEINIT, c);
-			force_init = 0;
+			force_init = migr_init = 0;
 			initreq_reqid = 0;
 		}
 
@@ -674,15 +733,30 @@ int main(argc,argv)
 					goto endreq;
 				}
 				if ((read_size = netread_timeout (rqfd, req_data, l, STGTIMEOUT))) {
-					if (req_type == STAGEIN || req_type == STAGEOUT || req_type == STAGEALLOC ||
-							req_type == STAGEWRT || req_type == STAGEPUT)
-						if (initreq_reqid ||
-								stat (NOMORESTAGE, &st) == 0) {
+					if (req_type == STAGEIN   || req_type == STAGEOUT  || req_type == STAGEALLOC  ||
+						req_type == STAGEWRT  || req_type == STAGEPUT  || req_type == STAGEQRY    ||
+
+						req_type == STAGE_IN  || req_type == STAGE_OUT || req_type == STAGE_ALLOC ||
+						req_type == STAGE_WRT || req_type == STAGE_PUT || req_type == STAGE_QRY) {
+						if ((initreq_reqid != 0) || (shutdownreq_reqid != 0) || (stat (NOMORESTAGE, &st) == 0)) {
 							sendrep (rpfd, STAGERC, req_type,
 											 SHIFT_ESTNACT);
 							goto endreq;
 						}
+					}
+					/* We ask for a new uniqueid */
+					if (stgdb_uniqueid(&dbfd,&stage_uniqueid) != 0) {
+						sendrep(rpfd, MSG_ERR, STG100, "uniqueid", sstrerror(serrno), __FILE__, __LINE__);
+						goto endreq;
+					} else if (req_type > STAGE_00) {
+						/* If this is an API request, we send right now the corresponding uniqueid */
+						sendrep(rpfd, UNIQUEID, stage_uniqueid);
+					}
 					switch (req_type) {
+					case STAGE_IN:
+					case STAGE_OUT:
+					case STAGE_WRT:
+					case STAGE_CAT:
 					case STAGEIN:
 					case STAGEOUT:
 					case STAGEWRT:
@@ -690,16 +764,18 @@ int main(argc,argv)
 						procioreq (req_type, req_data, clienthost);
 						break;
 					case STAGEPUT:
-						procputreq (req_data, clienthost);
+						procputreq (req_type, req_data, clienthost);
 						break;
+					case STAGE_QRY:
 					case STAGEQRY:
-						procqryreq (req_data, clienthost);
+						procqryreq (req_type, req_data, clienthost);
 						break;
 					case STAGECLR:
 						procclrreq (req_data, clienthost);
 						break;
+					case STAGE_KILL:
 					case STAGEKILL:
-						prockilreq (req_data, clienthost);
+						prockilreq (req_type, req_data, clienthost);
 						break;
 					case STAGEUPDC:
 						procupdreq (req_data, clienthost);
@@ -713,11 +789,11 @@ int main(argc,argv)
 					case STAGEGET:
 						procgetreq (req_data, clienthost);
 						break;
-					case STAGEMIGPOOL:
-						procmigpoolreq (req_data, clienthost);
-						break;
 					case STAGEFILCHG:
 						procfilchgreq (req_data, clienthost);
+						break;
+					case STAGESHUTDOWN:
+						procshutdownreq (req_data, clienthost);
 						break;
 					default:
 						sendrep (rpfd, MSG_ERR, STG03, req_type);
@@ -736,47 +812,111 @@ int main(argc,argv)
 		endreq:
 			FD_CLR (rqfd, &readfd);
 		}
+	select_continue:
 		memcpy (&readfd, &readmask, sizeof(readmask));
 		timeval.tv_sec = CHECKI;	/* must set each time for linux */
 		timeval.tv_usec = 0;
 		if (select (maxfds, &readfd, (fd_set *)0, (fd_set *)0, &timeval) < 0) {
+			int select_eintr;
+
+			if (errno == EINTR) {
+				/* Select has been interrupted - might happen if one of our child died */
+				select_eintr = 1;
+			} else {
+				select_eintr = 0;
+			}
 			FD_ZERO (&readfd);
+			if (select_eintr != 0) {
+				goto select_continue;
+			}
 		}
 	}
 }
 
-void prockilreq(req_data, clienthost)
+void prockilreq(req_type, req_data, clienthost)
+		 int req_type;
 		 char *req_data;
 		 char *clienthost;
 {
 	int clientpid;
+	uid_t uid;
 	gid_t gid;
 	char *rbp;
 	char *user;
 	struct waitq *wqp;
-	int found;
+	u_signed64 this_uniqueid;
+	struct passwd *pw;
+	struct group *gr;
+	int found = 0;
 
 	rbp = req_data;
-	unmarshall_STRING (rbp, user);	/* login name */
-	unmarshall_WORD (rbp, gid);
-	unmarshall_WORD (rbp, clientpid);
+	switch (req_type) {
+	case STAGEKILL:
+		/* Command-line version */
+		unmarshall_STRING (rbp, user);	/* login name */
+		unmarshall_WORD (rbp, gid);
+		unmarshall_WORD (rbp, clientpid);
 
-	found = 0;
-	wqp = waitqp;
-	while (wqp) {
-		if (wqp->clientpid == clientpid && strcmp (wqp->clienthost, clienthost) == 0 &&
-			wqp->req_gid == gid && strcmp (wqp->req_user, user) == 0) {
-			stglogit (func, "kill received for request %d\n", wqp->reqid);
-			found = 1;
-			if (wqp->ovl_pid) {
-				stglogit (func, "killing process %d\n", wqp->ovl_pid);
-				kill (wqp->ovl_pid, SIGINT);
+		gr = Cgetgrgid(gid);
+
+		wqp = waitqp;
+		while (wqp) {
+			if (wqp->clientpid == clientpid && strcmp (wqp->clienthost, clienthost) == 0 &&
+				wqp->req_gid == gid && strcmp (wqp->req_user, user) == 0) {
+				stglogit (func, "kill received for request %d\n", wqp->reqid);
+				found = 1;
+				if (wqp->ovl_pid) {
+					stglogit (func, "killing process %d\n", wqp->ovl_pid);
+					kill (wqp->ovl_pid, SIGINT);
+				}
+				wqp->status = REQKILD;
+				break;
+			} else {
+				wqp = wqp->next;
 			}
-			wqp->status = REQKILD;
-			break;
-		} else {
-			wqp = wqp->next;
 		}
+		if (found == 0) {
+			stglogit(func, "kill received but ignored (no overlay), clientpid=%d, clienthost=%s, user=%s, gid=%d\n", clientpid, clienthost, user, gid);
+		}
+		close (rpfd);
+		break;
+	case STAGE_KILL:
+		/* API version */
+		unmarshall_STRING (rbp, user);	/* login name */
+		unmarshall_LONG (rbp, uid);
+		unmarshall_LONG (rbp, gid);
+		unmarshall_HYPER (rbp, this_uniqueid);
+
+		pw = Cgetpwuid(uid);
+		gr = Cgetgrgid(gid);
+
+		wqp = waitqp;
+		while (wqp) {
+          /* This separated line allows any root to kill any forked stager */
+			if (uid != 0 || gid != 0) {
+				if (strcmp(wqp->clienthost, clienthost) != 0 ||
+					strcmp(wqp->req_user, user) != 0) {
+					continue;
+				}
+			}
+			if (wqp->uniqueid == this_uniqueid) {
+				stglogit (func, "kill received for request %d\n", wqp->reqid);
+				found = 1;
+				if (wqp->ovl_pid) {
+					stglogit (func, "killing process %d\n", wqp->ovl_pid);
+					kill (wqp->ovl_pid, SIGINT);
+				}
+				wqp->status = REQKILD;
+				break;
+			} else {
+				wqp = wqp->next;
+			}
+		}
+		/* This will close cleanly the connection from the API */
+		sendrep (wqp->rpfd, STAGERC, req_type, (int) 0);
+		break;
+	default:
+		break;
 	}
 	if (found == 0) {
 		stglogit(func, "kill received but ignored (no overlay), clientpid=%d, clienthost=%s, user=%s, gid=%d\n", clientpid, clienthost, user, gid);
@@ -803,7 +943,7 @@ void procinireq(req_data, clienthost)
 	stageacct (STGCMDR, -1, gid, clienthost,
 						 reqid, STAGEINIT, 0, 0, NULL, "");
 #endif
-	if (initreq_reqid) {
+	if (initreq_reqid != 0) {
 		free (argv);
 		sendrep (rpfd, MSG_ERR, STG39);
 		sendrep (rpfd, STAGERC, STAGEINIT, USERR);
@@ -812,10 +952,14 @@ void procinireq(req_data, clienthost)
 
 	Coptind = 1;
 	Copterr = 0;
-	while ((c = Cgetopt (nargs, argv, "Fh:")) != -1) {
+	while ((c = Cgetopt (nargs, argv, "Fh:X")) != -1) {
 		switch (c) {
 		case 'F':
 			force_init = 1;
+			break;
+		case 'X':
+			migr_init = 1;
+			break;
 		}
 	}
 	initreq_reqid = reqid;
@@ -823,13 +967,54 @@ void procinireq(req_data, clienthost)
 	free (argv);
 }
 
+void procshutdownreq(req_data, clienthost)
+		 char *req_data;
+		 char *clienthost;
+{
+	char **argv;
+	int c;
+	gid_t gid;
+	int nargs;
+	char *rbp;
+	char *user;
+
+	rbp = req_data;
+	unmarshall_STRING (rbp, user);	/* login name */
+	unmarshall_WORD (rbp, gid);
+	nargs = req2argv (rbp, &argv);
+#if SACCT
+	stageacct (STGCMDR, -1, gid, clienthost,
+						 reqid, STAGESHUTDOWN, 0, 0, NULL, "");
+#endif
+	if (shutdownreq_reqid != 0) {
+		free (argv);
+		sendrep (rpfd, MSG_ERR, STG58);
+		sendrep (rpfd, STAGERC, STAGESHUTDOWN, USERR);
+		return;
+	}
+
+	Coptind = 1;
+	Copterr = 0;
+	while ((c = Cgetopt (nargs, argv, "Fh")) != -1) {
+		switch (c) {
+		case 'F':
+			force_shutdown = 1;
+			break;
+		}
+	}
+	shutdownreq_reqid = reqid;
+	shutdownreq_rpfd = rpfd;
+	free (argv);
+}
+
 struct waitq *
-add2wq (clienthost, req_user, req_uid, req_gid, rtcp_user, rtcp_uid, rtcp_gid, clientpid, Upluspath, reqid, req_type, nbwf, wfp, save_subreqid, vid, fseq, use_subreqid)
+add2wq (clienthost, req_user, req_uid, req_gid, rtcp_user, rtcp_group, rtcp_uid, rtcp_gid, clientpid, Upluspath, reqid, req_type, nbwf, wfp, save_subreqid, vid, fseq, use_subreqid)
 		 char *clienthost;
 		 char *req_user;
 		 uid_t req_uid;
 		 gid_t req_gid;
 		 char *rtcp_user;
+		 char *rtcp_group;
 		 uid_t rtcp_uid;
 		 gid_t rtcp_gid;
 		 int clientpid;
@@ -863,6 +1048,7 @@ add2wq (clienthost, req_user, req_uid, req_gid, rtcp_user, rtcp_uid, rtcp_gid, c
 	wqp->req_uid = req_uid;
 	wqp->req_gid = req_gid;
 	strcpy (wqp->rtcp_user, rtcp_user);
+	strcpy (wqp->rtcp_group, rtcp_group);
 	wqp->rtcp_uid = rtcp_uid;
 	wqp->rtcp_gid = rtcp_gid;
 	wqp->clientpid = clientpid;
@@ -1155,9 +1341,9 @@ checkovlstatus(pid, status)
 		stglogit (func, "cleaner process %d exiting with status %x\n",
 							pid, status & 0xFFFF);
 	/* was it a "migrator" overlay ? */
-	} else if (ismigovl (pid, status)) {
+	} else if (ismigovl2 (pid, status)) {
 		reqid = 0;
-		stglogit (func, "migration process %d exiting with status %x\n",
+		stglogit (func, "migrationv2 process %d exiting with status %x\n",
 							pid, status & 0xFFFF);
 	} else {	/* it was a "stager" or a "stageqry" overlay */
 		found =  0;
@@ -1187,6 +1373,51 @@ checkovlstatus(pid, status)
 	reqid = savereqid;
 }
 
+void
+killallovl(sig)
+		 int sig;
+{
+	struct waitq *wqp;
+	char *func = "killallovl";
+
+    /* kill the "stager"s */
+	wqp = waitqp;
+	while (wqp) {
+		if (wqp->ovl_pid != 0) {
+			stglogit (func, "killing stager process %d\n", wqp->ovl_pid);
+			kill (wqp->ovl_pid, sig);
+		}
+	}
+
+    /* Check current child exits */
+	check_child_exit();
+
+	/* Do safety things without launching anything - but return ESTNACT to clients */
+	checkpoolstatus ();	/* check if any pool just cleaned */
+	checkwaitingspc ();	/* check requests that are waiting for space */
+	checkpoolspace ();	/* launch gc if necessary */
+	checkwaitq ();	/* scan the wait queue */
+
+	/* kill the cleaners */
+	killcleanovl(SIGINT);
+
+	/* kill the "migratorv2"s */
+	killmigovlv2(SIGINT);
+
+	/* Protect agsin the signal we are doing to send */
+	signal (SIGINT,SIG_IGN);
+
+	/* kill every process in our process group */
+	stglogit(func, STG124);
+	kill(0,SIGINT);
+
+	/* We reply shutdown is ok */
+	sendrep (shutdownreq_rpfd, STAGERC, STAGESHUTDOWN, 0);
+
+	/* Global exit */
+	exit(0);
+}
+
 void checkpoolstatus()
 {
 	int c, i, j, n;
@@ -1201,6 +1432,12 @@ void checkpoolstatus()
 			if (strcmp (wqp->waiting_pool, poolc[j]) == 0) {
 				reqid = wqp->reqid;
 				rpfd = wqp->rpfd;
+				if ((shutdownreq_reqid != 0) && (wqp->status != STAGESHUTDOWN)) {
+					/* There is a coming shutdown */
+					sendrep (rpfd, STAGERC, STAGESHUTDOWN, SHIFT_ESTNACT);
+					wqp->status = STAGESHUTDOWN;
+					continue;
+				}
 				for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
 					if (wfp->waiting_on_req > 0) continue;
 					for (stcp = stcs; stcp < stce; stcp++) {
@@ -1208,8 +1445,7 @@ void checkpoolstatus()
 							break;
 					}
 					if ((stcp->status & 0xF0) == WAITING_SPC) {
-						if ((c = build_ipath (wfp->upath,
-																	stcp, wqp->pool_user)) < 0) {
+						if ((c = build_ipath (wfp->upath, stcp, wqp->pool_user)) < 0) {
 							if (wqp->nb_clnreq++ > MAXRETRY) {
 								sendrep (rpfd, MSG_ERR, STG45);
 								wqp->status = ENOSPC;
@@ -1221,24 +1457,106 @@ void checkpoolstatus()
 						} else if (c) {
 							wqp->status = c;
 						} else {
+							int hsm_ns_error = 0;
 							stcp->status &= 0xF;
+							if (stcp->t_or_d == 'h') {
+								stcp->status |= WAITING_NS;
+							}
 #ifdef USECDB
 							if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 								stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 							}
 #endif
-							*wqp->waiting_pool = '\0';
-							if ((stcp->status == STAGEOUT) ||
-								(stcp->status == STAGEALLOC)) {
-								if (wqp->Pflag)
-									sendrep (rpfd, MSG_OUT,
-													 "%s\n", stcp->ipath);
-								if (strcmp (stcp->ipath, wfp->upath))
-									create_link (stcp, wfp->upath);
-								if (wqp->Upluspath &&
-										strcmp (stcp->ipath, (wfp+1)->upath))
-									create_link (stcp, (wfp+1)->upath);
+							if (stcp->t_or_d == 'h') {
+								int this_status;
+								/* Try now to create entry in the HSM name server */
+								if ((this_status = create_hsm_entry(wqp->rpfd, stcp, wqp->api_out, wqp->openmode, 0)) != 0) {
+									/* Too bad - finally this request fails because of the name server */
+									wqp->status = this_status;
+									hsm_ns_error = 1;
+								}
 							}
+							if (hsm_ns_error == 0) {
+								*wqp->waiting_pool = '\0';
+								if ((stcp->status == STAGEOUT) ||
+									(stcp->status == STAGEALLOC)) {
+									if (wqp->Pflag)
+										sendrep (rpfd, MSG_OUT,
+														 "%s\n", stcp->ipath);
+									if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
+										create_link (stcp, wfp->upath);
+									if (wqp->Upluspath && *((wfp+1)->upath) &&
+											strcmp (stcp->ipath, (wfp+1)->upath))
+										create_link (stcp, (wfp+1)->upath);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+void checkwaitingspc()
+{
+	int c, i, j, n;
+	char **poolc;
+	struct stgcat_entry *stcp;
+	struct waitf *wfp;
+	struct waitq *wqp;
+
+	for (wqp = waitqp; wqp; wqp = wqp->next) {
+		reqid = wqp->reqid;
+		rpfd = wqp->rpfd;
+		if ((shutdownreq_reqid != 0) && (wqp->status != STAGESHUTDOWN)) {
+			/* There is a coming shutdown */
+			sendrep (rpfd, STAGERC, STAGESHUTDOWN, SHIFT_ESTNACT);
+			wqp->status = STAGESHUTDOWN;
+			continue;
+		}
+		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
+			if (wfp->waiting_on_req > 0) continue;
+			for (stcp = stcs; stcp < stce; stcp++) {
+				if (wfp->subreqid == stcp->reqid)
+					break;
+			}
+			if ((stcp->status & 0xF0) == WAITING_SPC) {
+				if ((c = build_ipath (wfp->upath, stcp, wqp->pool_user)) == 0) {
+					int hsm_ns_error = 0;
+
+					/* We succeeded to allocate space for this WAITING_SPC request */
+					/* regardless of an existing gc or not */
+					stcp->status &= 0xF;
+					if (stcp->t_or_d == 'h') {
+						stcp->status |= WAITING_NS;
+					}
+#ifdef USECDB
+					if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+						stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					}
+#endif
+					if (stcp->t_or_d == 'h') {
+						int this_status;
+						/* Try now to create entry in the HSM name server */
+						if ((this_status = create_hsm_entry(wqp->rpfd, stcp, wqp->api_out, wqp->openmode, 0)) != 0) {
+							/* Too bad - finally this request fails because of the name server */
+							wqp->status = this_status;
+							hsm_ns_error = 1;
+						}
+					}
+					if (hsm_ns_error == 0) {
+						*wqp->waiting_pool = '\0';
+						if ((stcp->status == STAGEOUT) ||
+							(stcp->status == STAGEALLOC)) {
+							if (wqp->Pflag)
+								sendrep (rpfd, MSG_OUT,
+												 "%s\n", stcp->ipath);
+							if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
+								create_link (stcp, wfp->upath);
+	                            if (wqp->Upluspath && *((wfp+1)->upath) &&
+									strcmp (stcp->ipath, (wfp+1)->upath))
+								create_link (stcp, (wfp+1)->upath);
 						}
 					}
 				}
@@ -1286,7 +1604,9 @@ check_waiting_on_req(subreqid, state)
 						if (stcp_check->reqid == 0) break;
 						if (stcp_check->reqid == wfp->subreqid) break;
 					}
+#ifdef STAGER_DEBUG
                     sendrep(rpfd, MSG_ERR, "stcp_check->u1.t.fseq=%s\n", stcp_check->u1.t.fseq);
+#endif
 					if (strcmp(stcp->u1.t.fseq,stcp_check->u1.t.fseq) != 0) {
 						/* The file sequence of this "-c off" callback does not */
 						/* match the file sequence we are waiting for. */
@@ -1302,11 +1622,12 @@ check_waiting_on_req(subreqid, state)
 								 stcp->actual_size,
 								 (float)(stcp->actual_size)/(1024.*1024.),
 								 stcp->nbaccesses);
+				if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
 				if (wqp->copytape)
 					sendinfo2cptape (rpfd, stcp);
 				if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
 					create_link (stcp, wfp->upath);
-				if (wqp->Upluspath &&
+				if (wqp->Upluspath && *((wfp+1)->upath) &&
 						strcmp (stcp->ipath, (wfp+1)->upath))
 					create_link (stcp, (wfp+1)->upath);
 				for (stcp = stcs; stcp < stce; stcp++) {
@@ -1506,6 +1827,15 @@ void checkwaitq()
 	wqp = waitqp;
 	while (wqp) {
 		reqid = wqp->reqid;
+		if ((shutdownreq_reqid != 0) && (wqp->status != STAGESHUTDOWN)) {
+			/* There is a coming shutdown */
+			sendrep (wqp->rpfd, STAGERC, STAGESHUTDOWN, SHIFT_ESTNACT);
+			wqp->status = STAGESHUTDOWN;
+			wqp1 = wqp;
+			wqp = wqp->next;
+			rmfromwq (wqp1);
+			continue;
+		}
 #ifdef STAGER_DEBUG
 		sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] nb_subreqs=%d, concat_off_fseq=%d, nb_waiting_on_req=%d, waiting_pool=%s, ovl_pid=%d\n", wqp->nb_subreqs, wqp->concat_off_fseq, wqp->nb_waiting_on_req, wqp->waiting_pool, wqp->ovl_pid);
 #endif
@@ -1530,7 +1860,7 @@ void checkwaitq()
 				sendrep (wqp->rpfd, MSG_ERR, STG43, wqp->nretry);
 			fork_exec_stager (wqp);
 			wqp = wqp->next;
-		} else if (wqp->clnreq_reqid &&	/* space requested by rtcopy */
+		} else if ((wqp->clnreq_reqid != 0) &&	/* space requested by rtcopy */
 							 (! *(wqp->waiting_pool) ||	/* has been freed or */
 								wqp->status)) {		/* could not be found */
 			reqid = wqp->clnreq_reqid;
@@ -1554,11 +1884,17 @@ void checkwaitq()
 								 reqid, wqp->req_type, wqp->nretry, wqp->status,
 								 NULL, "");
 #endif
-			if (wqp->status != REQKILD)
+			if (wqp->status != REQKILD) {
 				sendrep (wqp->rpfd, STAGERC, wqp->req_type,
 								 wqp->status);
-			else
-				close (wqp->rpfd);
+			} else {
+				if (wqp->api_out) {
+					/* We close cleanly the connection */
+					sendrep (wqp->rpfd, STAGERC, 0, ESTKILLED);
+				} else {
+					close (wqp->rpfd);
+				}
+			}
 			for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
 				for (stcp = stcs; stcp < stce; stcp++) {
 					if (wfp->subreqid == stcp->reqid)
@@ -1580,7 +1916,7 @@ void checkwaitq()
 				case STAGEWRT:
 					if ((stcp->status & (CAN_BE_MIGR)) == CAN_BE_MIGR) {
 						/* This is a file coming from (being migrated or not) migration */
-						update_migpool(stcp,-1);
+						update_migpoolv2(stcp,-1,0);
 					}
 					/* There is intentionnaly no 'break' here */
 				case STAGEOUT:
@@ -1590,7 +1926,7 @@ void checkwaitq()
 				case STAGEPUT:
 					if ((stcp->status & (CAN_BE_MIGR)) == CAN_BE_MIGR) {
 						/* This is a file coming from (automatic or not) migration */
-						update_migpool(stcp,-1);
+						update_migpoolv2(stcp,-1,0);
 						stcp->status = STAGEOUT | PUT_FAILED | CAN_BE_MIGR;
 					} else {
 						stcp->status = STAGEOUT | PUT_FAILED;
@@ -1600,6 +1936,7 @@ void checkwaitq()
 						stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 					}
 #endif
+					if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
 				}
 			}
 			wqp1 = wqp;
@@ -1774,7 +2111,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
 					((stcp->status & PUT_FAILED) != PUT_FAILED)) ||
 				((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR))) {
 				/* This is a file coming from (automatic or not) migration */
-				update_migpool(stcp,-1);
+				update_migpoolv2(stcp,-1,0);
 			}
 			updfreespace (stcp->poolname, stcp->ipath, (signed64) ((freersv) ?
 										((signed64) stcp->size * (signed64) ONE_MB) : ((signed64) actual_size)));
@@ -1856,7 +2193,7 @@ void delreq(stcp,nodb_delete_flag)
 	if ((char *)stcp != p2) {	/* not last request in the list */
 		p1 = (char *)stcp + sizeof(struct stgcat_entry);
 		n = p2 + sizeof(struct stgcat_entry) - p1;
-		memcpy ((char *)stcp, p1, n);
+		memmove ((char *)stcp, p1, n);
 	}
 	memset (p2, 0, sizeof(struct stgcat_entry));
 	savereqs ();
@@ -1865,8 +2202,9 @@ void delreq(stcp,nodb_delete_flag)
 int fork_exec_stager(wqp)
 		 struct waitq *wqp;
 {
-	char arg_Aflag[2], arg_StageIDflag[2], arg_background[2], arg_use_subreqid[2];
+	char arg_Aflag[2], arg_silent[2], arg_use_subreqid[2];
 	char arg_key[6], arg_nbsubreqs[4], arg_reqid[7], arg_nretry[3], arg_rpfd[3], arg_concat_off_fseq[CA_MAXFSEQLEN + 1];
+	char arg_api_flag[2];
 	int c, i;
 	static int pfd[2];
 	int pid;
@@ -1924,50 +2262,50 @@ int fork_exec_stager(wqp)
 		sprintf (arg_nbsubreqs, "%d", wqp->nbdskf - wqp->nb_waiting_on_req);
 		sprintf (arg_nretry, "%d", wqp->nretry);
 		sprintf (arg_Aflag, "%d", wqp->Aflag);
-		sprintf (arg_StageIDflag, "%d", wqp->StageIDflag);
 		sprintf (arg_concat_off_fseq, "%d", wqp->concat_off_fseq);
-		sprintf (arg_background, "%d", wqp->background);
+		sprintf (arg_silent, "%d", wqp->silent);
 		sprintf (arg_use_subreqid, "%d", wqp->use_subreqid);
+		sprintf (arg_api_flag, "%d", wqp->api_out);
 
 #ifdef __INSURE__
-		stglogit (func, "execing stager reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s StageIDflag=%s concat_off_fseq=%s background=%s use_subreqid=%s, tmpfile=%s, pid=%d\n",
+		stglogit (func, "execing stager reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s concat_off_fseq=%s silent=%s use_subreqid=%s api_flag=%s, tmpfile=%s, pid=%d\n",
 							arg_reqid,
 							arg_key,
 							arg_rpfd,
 							arg_nbsubreqs,
 							arg_nretry,
 							arg_Aflag,
-							arg_StageIDflag,
 							arg_concat_off_fseq,
-							arg_background,
+							arg_silent,
 							arg_use_subreqid,
+							arg_api_flag,
 							tmpfile,
-							getpid());
+							(int) getpid());
 		execl (progfullpath, "stager",
 							arg_reqid,
 							arg_key, arg_rpfd,
 							arg_nbsubreqs,
 							arg_nretry,
 							arg_Aflag,
-							arg_StageIDflag,
 							arg_concat_off_fseq,
-							arg_background,
+							arg_silent,
 							arg_use_subreqid,
+							arg_api_flag,
 							tmpfile,
 							NULL);
 #else
-		stglogit (func, "execing stager reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s StageIDflag=%s concat_off_fseq=%s background=%s use_subreqid=%s, pid=%d\n",
+		stglogit (func, "execing stager reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s concat_off_fseq=%s silent=%s use_subreqid=%s api_flag=%s, pid=%d\n",
 							arg_reqid,
 							arg_key,
 							arg_rpfd,
 							arg_nbsubreqs,
 							arg_nretry,
 							arg_Aflag,
-							arg_StageIDflag,
 							arg_concat_off_fseq,
-							arg_background,
+							arg_silent,
 							arg_use_subreqid,
-							getpid());
+							arg_api_flag,
+							(int) getpid());
 		execl (progfullpath, "stager",
 							arg_reqid,
 							arg_key,
@@ -1975,10 +2313,10 @@ int fork_exec_stager(wqp)
 					 		arg_nbsubreqs,
 							arg_nretry,
 							arg_Aflag,
-							arg_StageIDflag,
 							arg_concat_off_fseq,
-							arg_background,
+							arg_silent,
 							arg_use_subreqid,
+							arg_api_flag,
 							NULL);
 #endif
 		stglogit (func, STG02, "stager", "execl", sys_errlist[errno]);
@@ -1992,11 +2330,35 @@ int fork_exec_stager(wqp)
 							 NULL, "");
 #endif
 		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
+			char save_user[CA_MAXUSRNAMELEN+1];
+			char save_group[CA_MAXUSRNAMELEN+1];
+			uid_t save_uid;
+			gid_t save_gid;
+
 			if (wfp->waiting_on_req > 0) continue;
 			if (wfp->waiting_on_req < 0) wfp->waiting_on_req = 0;
 			for (stcp = stcs; stcp < stce; stcp++)
 				if (stcp->reqid == wfp->subreqid) break;
+			if ((wqp->rtcp_uid != 0) && (wqp->rtcp_gid) && (wqp->rtcp_user[0] != '\0') && (wqp->rtcp_group[0] != '\0')) {
+				/* Submission in the wait queue specifies explicit a running RTCOPY uid/gid */
+				/* We do so by replacing in the stcp's the uid/gid/user... */
+				strcpy(save_user,stcp->user);
+				strcpy(save_group,stcp->group);
+				save_uid = stcp->uid;
+				save_gid = stcp->gid;
+
+				strcpy(stcp->user,wqp->rtcp_user);
+				strcpy(stcp->group,wqp->rtcp_group);
+				stcp->uid = wqp->rtcp_uid;
+				stcp->gid = wqp->rtcp_gid;
+			}
 			write (pfd[1], (char *) stcp, sizeof(struct stgcat_entry));
+			if ((wqp->rtcp_uid != 0) && (wqp->rtcp_gid) && (wqp->rtcp_user[0] != '\0') && (wqp->rtcp_group[0] != '\0')) {
+				strcpy(stcp->user,save_user);
+				strcpy(stcp->group,save_group);
+				stcp->uid = save_uid;
+				stcp->gid = save_gid;
+			}
 		}
 		close (pfd[1]);
 	}
@@ -2323,7 +2685,10 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 					if (can_be_migr_flag) {
 						stcp->status |= CAN_BE_MIGR; /* Now status is STAGEOUT | CAN_BE_MIGR */
 						/* This is a file for automatic migration */
-						update_migpool(stcp,1);
+						if (update_migpoolv2(stcp,1,0) != 0) {
+							stcp->status &= ~CAN_BE_MIGR;
+							return(USERR);
+						}
 					}
 				}
 			}
@@ -2375,8 +2740,8 @@ int upd_staged(upath)
 			sendrep (rpfd, MSG_ERR, STG22);
 		} else if (stcp->t_or_d != 'm' && stcp->t_or_d != 'h') {
 			sendrep (rpfd, MSG_ERR, "STG02 - Request should be a HSM file\n");
-		} else if ((stcp->status & 0xF0) != STAGED) {
-			sendrep (rpfd, MSG_ERR, "STG02 - %s : Request should be in STAGED status\n", stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile);
+		} else {
+			sendrep (rpfd, MSG_ERR, "STG02 - %s : Request should be in STAGED or CAN_BE_MIGR status\n", stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile);
 		}
 		return (USERR);
 	}
@@ -2392,6 +2757,8 @@ int upd_staged(upath)
 		stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 	}
 #endif
+	updfreespace (stcp->poolname, stcp->ipath,
+					(signed64) ((signed64) stcp->actual_size - (signed64) stcp->size * (signed64) ONE_MB));
 	return (0);
 }
 
@@ -2419,4 +2786,122 @@ void stgdaemon_usage() {
 				 "  -v      Print version\n"
 				 "\n"
 				 );
+}
+
+#define VAL_CMP(x,y) (((x) < (y)) ? -1 : 1)
+#define VAL_CHK(s1,s2,member) { \
+  if (((s1)->member    != 0) && ((s1)->member != (s2)->member)) return(VAL_CMP((s1)->member,(s2)->member)); \
+}
+#define STR_CHK(s1,s2,member) { \
+  if (((s1)->member[0] != '\0') && (strcmp((s1)->member,(s2)->member) != 0)) return(strcmp((s1)->member,(s2)->member)); \
+}
+
+int stcp_cmp(stcp1,stcp2)
+	struct stgcat_entry *stcp1;
+	struct stgcat_entry *stcp2;
+{
+	/* stcp1 is the reference from which we decide to do or not the comparison */
+	VAL_CHK(stcp1,stcp2,blksize);
+	VAL_CHK(stcp1,stcp2,charconv);
+	VAL_CHK(stcp1,stcp2,keep);
+	VAL_CHK(stcp1,stcp2,lrecl);
+	VAL_CHK(stcp1,stcp2,nread);
+	STR_CHK(stcp1,stcp2,poolname);
+	STR_CHK(stcp1,stcp2,recfm);
+	VAL_CHK(stcp1,stcp2,size);
+	STR_CHK(stcp1,stcp2,ipath);
+	VAL_CHK(stcp1,stcp2,t_or_d);
+	STR_CHK(stcp1,stcp2,group);
+	STR_CHK(stcp1,stcp2,user);
+	VAL_CHK(stcp1,stcp2,uid);
+	VAL_CHK(stcp1,stcp2,gid);
+	VAL_CHK(stcp1,stcp2,mask);
+	VAL_CHK(stcp1,stcp2,reqid);
+	VAL_CHK(stcp1,stcp2,status);
+	VAL_CHK(stcp1,stcp2,actual_size);
+	VAL_CHK(stcp1,stcp2,c_time);
+	VAL_CHK(stcp1,stcp2,a_time);
+	VAL_CHK(stcp1,stcp2,nbaccesses);
+	switch (stcp1->t_or_d) {
+	case 't':
+		{
+			int __i_stage_api;
+			STR_CHK(stcp1,stcp2,u1.t.den);
+			STR_CHK(stcp1,stcp2,u1.t.dgn);
+			STR_CHK(stcp1,stcp2,u1.t.fid);
+			VAL_CHK(stcp1,stcp2,u1.t.filstat);
+			STR_CHK(stcp1,stcp2,u1.t.fseq);
+			STR_CHK(stcp1,stcp2,u1.t.lbl);
+			VAL_CHK(stcp1,stcp2,u1.t.retentd);
+			STR_CHK(stcp1,stcp2,u1.t.tapesrvr);
+			VAL_CHK(stcp1,stcp2,u1.t.E_Tflags);
+			for (__i_stage_api = 0; __i_stage_api < MAXVSN; __i_stage_api++) {
+				STR_CHK(stcp1,stcp2,u1.t.vid[__i_stage_api]);
+				STR_CHK(stcp1,stcp2,u1.t.vsn[__i_stage_api]);
+			}
+		}
+		break;
+	case 'd':
+		STR_CHK(stcp1,stcp2,u1.d.xfile);
+		STR_CHK(stcp1,stcp2,u1.d.Xparm);
+		break;
+	case 'a':
+		STR_CHK(stcp1,stcp2,u1.d.xfile);
+		break;
+	case 'm':
+		STR_CHK(stcp1,stcp2,u1.m.xfile);
+		break;
+	case 'h':
+		STR_CHK(stcp1,stcp2,u1.h.xfile);
+		STR_CHK(stcp1,stcp2,u1.h.server);
+		VAL_CHK(stcp1,stcp2,u1.h.fileid);
+		break;
+	}
+
+	/* All relevant (.e.g non-zero) fields are the same */
+	return(0);
+}
+
+int verif_euid_egid(euid,egid,username,group)
+	uid_t euid;
+	gid_t egid;
+	char *username;
+	char *group;
+{
+	struct passwd *this_passwd;             /* password structure pointer */
+	struct group *this_gr;
+
+	if ((this_passwd = Cgetpwuid(euid)) == NULL) {
+		stglogit(func, "### Cannot Cgetpwuid(%d) (%s)\n",(int) euid, strerror(errno));
+		stglogit(func, "### Please check existence of uid %d in password file\n", (int) euid);
+ 		return(-1);
+	}
+
+	/* We verify that the found gid matches the parameter on the stack */
+	if (egid != this_passwd->pw_gid) {
+		stglogit(func, "### Gid %d does not match uid %d (primary gid is %d)\n", (int) egid, (int) euid, (int) this_passwd->pw_gid);
+		serrno = EINVAL;
+		stglogit(func, "### Please check existence of pair [uid,gid]=[%d,%d] in password file\n", (int) euid, (int) egid);
+ 		return(-1);
+	}
+	/* We get group name */
+	if ((this_gr = Cgetgrgid(egid)) == NULL) {
+		stglogit(func, "### Cannot Cgetgrgid(%d) (%s)\n",egid,strerror(errno));
+		stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", egid, this_passwd->pw_name);
+ 		return(-1);
+	}
+	if (username != NULL) strcpy(username,this_passwd->pw_name);
+	if (group != NULL) strcpy(group,this_gr->gr_name);
+	/* Ok */
+	return(0);
+}
+
+void check_upd_fileclasses() {
+	time_t this_time = time(NULL);
+	char *func = "check_upd_fileclasses";
+
+	if ((this_time - last_upd_fileclasses) > upd_fileclasses_int) {
+		stglogit(func, "Automatic update of CASTOR fileclasses\n");
+		upd_fileclasses();
+	}
 }

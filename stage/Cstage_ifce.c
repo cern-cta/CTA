@@ -1,5 +1,5 @@
 /*
- * $Id: Cstage_ifce.c,v 1.8 2000/05/29 07:56:24 jdurand Exp $
+ * $Id: Cstage_ifce.c,v 1.9 2001/01/31 18:59:47 jdurand Exp $
  */
 
 /*
@@ -19,7 +19,7 @@
 #include "stage.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.8 $ $Date: 2000/05/29 07:56:24 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.9 $ $Date: 2001/01/31 18:59:47 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -121,7 +121,7 @@ int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,castor,alloc)
 		strcpy(hsm->xfile,     stcp->u1.m.xfile);
 		break;
 	case 'h':
-		memset(hsm,0,sizeof(struct stgcat_hsm));
+		memset(castor,0,sizeof(struct stgcat_hsm));
 		castor->reqid       =   stcp->reqid;
 		castor->nread       =   stcp->nread;
 		castor->size        =   stcp->size;
@@ -141,6 +141,8 @@ int DLL_DECL stcp2Cdb(stcp,tape,disk,hsm,castor,alloc)
 		strcpy(castor->xfile,     stcp->u1.h.xfile);
 		strcpy(castor->server,    stcp->u1.h.server);
 		castor->fileid      =   stcp->u1.h.fileid;
+		castor->fileclass   =   stcp->u1.h.fileclass;
+		strcpy(castor->tppool,  stcp->u1.h.tppool);
 		break;
 	case 'a':
 		memset(alloc,0,sizeof(struct stgcat_alloc));
@@ -323,6 +325,8 @@ int DLL_DECL Cdb2stcp(stcp,tape,disk,hsm,castor,alloc)
 		strcpy(stcp->u1.h.xfile, castor->xfile);
 		strcpy(stcp->u1.h.server, castor->server);
 		stcp->u1.h.fileid =      castor->fileid;
+		stcp->u1.h.fileclass =   castor->fileclass;
+		strcpy(stcp->u1.h.tppool, castor->tppool);
 	} else if (alloc != NULL) {
 		/* No blksize member in alloc database */
 		/* No filler member in alloc database */

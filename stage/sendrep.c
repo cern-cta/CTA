@@ -1,5 +1,5 @@
 /*
- * $Id: sendrep.c,v 1.12 2000/12/21 13:55:07 jdurand Exp $
+ * $Id: sendrep.c,v 1.13 2001/01/31 19:00:00 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.12 $ $Date: 2000/12/21 13:55:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.13 $ $Date: 2001/01/31 19:00:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -25,6 +25,8 @@ static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.12 $ $Date: 200
 #include "marshall.h"
 #include "net.h"
 #include "stage.h"
+#include "osdep.h"
+#include "stage_api.h"
 #ifndef linux 
 extern char *sys_errlist[];
 #endif
@@ -36,7 +38,16 @@ int sendrep(va_alist) va_dcl
 {
 	va_list args;
 	char *file1, *file2;
-	char func[16];
+	struct stgcat_entry *stcp;
+	char api_stcp_out[3 * LONGSIZE + sizeof(struct stgcat_entry)]; /* We overestimate a bit this buffer length (gaps + strings) */
+	char stcp_marshalled[sizeof(struct stgcat_entry)];
+	int  api_stcp_out_status = 0;
+	char api_stpp_out[3 * LONGSIZE + sizeof(struct stgpath_entry)];
+	char stpp_marshalled[sizeof(struct stgcat_entry)];
+	int  api_stpp_out_status = 0;
+	char *func_sendrep = "sendrep";
+	char *func_stgdaemon = "stgdaemon";
+	char *func;
 	char *msg;
 	char *p;
 	char prtbuf[PRTBUFSZ];
@@ -50,13 +61,20 @@ int sendrep(va_alist) va_dcl
 	int rpfd;
 	static char savebuf[256];
 	static int saveflag = 0;
+	u_signed64 uniqueid;
 
-	strcpy (func, "sendrep");
-	rbp = repbuf;
-	marshall_LONG (rbp, STGMAGIC);
 	va_start (args);
 	rpfd = va_arg (args, int);
+
+	if (rpfd > 0) {
+		func = func_sendrep;
+	} else {
+		func = func_stgdaemon;
+	}
+
 	rep_type = va_arg (args, int);
+	rbp = (rep_type == API_STCP_OUT ? api_stcp_out : (rep_type == API_STPP_OUT ? api_stpp_out : repbuf));
+	marshall_LONG (rbp, STGMAGIC);
 	marshall_LONG (rbp, rep_type);
 	switch (rep_type) {
 	case MSG_OUT:
@@ -125,18 +143,40 @@ int sendrep(va_alist) va_dcl
 		file1 = va_arg (args, char *);
 		marshall_LONG (rbp, strlen (file1) + 1);
 		marshall_STRING (rbp, file1);
+		break;
+	case API_STCP_OUT:
+		api_stcp_out_status = 0;
+		stcp = va_arg (args, struct stgcat_entry *);
+		p = stcp_marshalled;
+		marshall_STAGE_CAT (STAGE_OUTPUT_MODE, api_stcp_out_status, p, stcp);
+		marshall_LONG(rbp, p - stcp_marshalled);
+		marshall_OPAQUE(rbp, stcp_marshalled, p - stcp_marshalled);
+ 		break;
+	case UNIQUEID:
+		uniqueid = va_arg (args, u_signed64);
+		marshall_LONG (rbp, HYPERSIZE);
+		marshall_HYPER (rbp, uniqueid);
+		break;
+	default:
+ 		break;
+		stglogit (func, "STG02 - unknown rep_type (%d)\n", rep_type);
+		if (rpfd >= 0) close (rpfd);
+		return (-1);
 	}
  sndmsg:
 	va_end (args);
-	repsize = rbp - repbuf;
-	if (netwrite_timeout (rpfd, repbuf, repsize, STGTIMEOUT) != repsize) {
-		stglogit (func, STG02, "", "write", sys_errlist[errno]);
+	repsize = rbp - (rep_type == API_STCP_OUT ? api_stcp_out : (rep_type == API_STPP_OUT ? api_stpp_out : repbuf));
+	if (rpfd >= 0) {
+      /* At the startup, rpfd is < 0 */
+		if (netwrite_timeout (rpfd, (rep_type == API_STCP_OUT ? api_stcp_out : (rep_type == API_STPP_OUT ? api_stpp_out : repbuf)), repsize, STGTIMEOUT) != repsize) {
+			stglogit (func, STG02, "", "write", sys_errlist[errno]);
+			if (rep_type == STAGERC)
+				close (rpfd);
+			return (-1);
+		}
 		if (rep_type == STAGERC)
 			close (rpfd);
-		return (-1);
 	}
-	if (rep_type == STAGERC)
-		close (rpfd);
 	return (0);
 }
 
@@ -162,3 +202,5 @@ int iserrmsg(p)
 		return (0);
 	}
 }
+
+

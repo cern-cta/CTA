@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageput.man,v $ $Revision: 1.5 $ $Date: 2000/09/27 08:11:39 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageput.man,v $ $Revision: 1.6 $ $Date: 2001/01/31 19:00:06 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEPUT l "$Date: 2000/09/27 08:11:39 $"
+.TH STAGEPUT l "$Date: 2001/01/31 19:00:06 $"
 .SH NAME
 stageput \- copy disk files to tape, to an external disk file or to a
 Hierarchical Storage Management System.
@@ -15,6 +15,8 @@ Hierarchical Storage Management System.
 ] [
 .BI -U " fun"
 ] [
+.BI --nowait
+] [
 .I files
 ]
 .LP
@@ -25,6 +27,8 @@ Hierarchical Storage Management System.
 .BI -h " host"
 ] [
 .BI -q " file_sequence_number(s)"
+] [
+.BI --nowait
 ]
 .BI -V " visual_identifier"
 .LP
@@ -35,6 +39,8 @@ Hierarchical Storage Management System.
 .BI -h " host"
 ] [
 .BI -I " external_filename"
+] [
+.BI --nowait
 ]
 .LP
 .B stageput
@@ -46,7 +52,9 @@ Hierarchical Storage Management System.
 .BI -M " hsmfile"
 [
 .BI -M ...
-] ]
+] [
+.BI --nowait
+]
 .SH DESCRIPTION
 .B stageput
 copies disk files to tape, to an external disk file or to a
@@ -107,6 +115,9 @@ if the first command format is used.
 .TP
 .BI \-V " vid"
 copy the files corresponding to the given vid.
+.TP
+.BI \--nowait
+specifies that the command should return immediately. Copy in done in the background of the stager daemon.
 .SH RETURN CODES
 \
 .br

@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.12 2000/12/12 14:13:41 jdurand Exp $
+ * $Id: stageqry.c,v 1.13 2001/01/31 19:00:06 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.12 $ $Date: 2000/12/12 14:13:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.13 $ $Date: 2001/01/31 19:00:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -32,8 +32,12 @@ static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.12 $ $Date: 20
 
 extern	char	*getconfent();
 
+EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
 void usage _PROTO((char *));
 void cleanup _PROTO((int));
+int noregexp_flag = 0;
+int reqid_flag = 0;
+int dump_flag = 0;
 
 int main(argc, argv)
 		 int	argc;
@@ -60,6 +64,33 @@ int main(argc, argv)
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
+	static struct Coptions longopts[] =
+	{
+		{"allocated",          REQUIRED_ARGUMENT,  NULL,      'A'},
+		{"allgroups",          NO_ARGUMENT,        NULL,      'a'},
+		{"full",               NO_ARGUMENT,        NULL,      'f'},
+		{"grpuser",            NO_ARGUMENT,        NULL,      'G'},
+		{"host",               REQUIRED_ARGUMENT,  NULL,      'h'},
+		{"external_filename",  REQUIRED_ARGUMENT,  NULL,      'I'},
+		{"link",               NO_ARGUMENT,        NULL,      'L'},
+		{"long",               NO_ARGUMENT,        NULL,      'l'},
+		{"migration_filename", REQUIRED_ARGUMENT,  NULL,      'M'},
+		{"path",               NO_ARGUMENT,        NULL,      'P'},
+		{"poolname",           REQUIRED_ARGUMENT,  NULL,      'p'},
+		{"file_sequence",      REQUIRED_ARGUMENT,  NULL,      'q'},
+		{"file_range",         REQUIRED_ARGUMENT,  NULL,      'Q'},
+		{"sort",               NO_ARGUMENT,        NULL,      'S'},
+		{"statistic",          NO_ARGUMENT,        NULL,      's'},
+		{"tape_info",          NO_ARGUMENT,        NULL,      'T'},
+		{"user",               NO_ARGUMENT,        NULL,      'u'},
+		{"vid",                REQUIRED_ARGUMENT,  NULL,      'V'},
+		{"extended",           NO_ARGUMENT,        NULL,      'x'},
+		{"migration_rules",    NO_ARGUMENT,        NULL,      'X'},
+		{"noregexp",           NO_ARGUMENT,  &noregexp_flag,    1},
+		{"reqid",              REQUIRED_ARGUMENT,  &reqid_flag, 1},
+		{"dump",               NO_ARGUMENT,  &dump_flag,        1},
+		{NULL,                 0,                  NULL,        0}
+	};
 
 	uid = getuid();
 	gid = getgid();
@@ -72,10 +103,14 @@ int main(argc, argv)
 	numvid = 0;
 	Coptind = 1;
 	Copterr = 1;
-	while ((c = Cgetopt (argc, argv, "A:afGh:I:LlM:Pp:q:Q:SsTuV:x")) != -1) {
+	while ((c = Cgetopt_long (argc, argv, "A:afGh:I:LlM:Pp:q:Q:SsTuV:xX", longopts, NULL)) != -1) {
 		switch (c) {
 		case 'A':
 			Aflag = 1;
+			break;
+		case 'a':
+			break;
+		case 'f':
 			break;
 		case 'G':
 			Gflag++;
@@ -96,16 +131,46 @@ int main(argc, argv)
 		case 'h':
 			stghost = Coptarg;
 			break;
+		case 'I':
+			break;
+		case 'L':
+			break;
+		case 'l':
+			break;
 		case 'M':
 			Mflag = 1;
 			break;
+		case 'P':
+			break;
+		case 'p':
+			break;
+		case 'q':
+			break;
+		case 'Q':
+			break;
+		case 'S':
+			break;
+		case 's':
+			break;
+		case 'T':
+			break;
+		case 'u':
+			break;
 		case 'V':
 			errflg += getlist_of_vid ("-V", vid, &numvid);
+			break;
+		case 'x':
+			break;
+		case 'X':
+			break;
+		case 0:
+			/* Here are the long options */
 			break;
 		case '?':
 			errflg++;
 			break;
 		default:
+			errflg++;
 			break;
 		}
 	}
@@ -166,7 +231,7 @@ int main(argc, argv)
 	signal (SIGTERM, cleanup);
 	
 	while (1) {
-		c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
+		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 		if (c == 0 || serrno == EINVAL) break;
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
@@ -195,5 +260,5 @@ void usage(cmd)
 	fprintf (stderr, "%s%s%s",
 					 "[-A pattern | -M pattern] [-a] [-f] [-G] [-h stage_host] [-I external_filename]\n",
 					 "[-L] [-l] [-P] [-p pool] [-q file_sequence_number(s)] [-Q file_sequence_range] [-S] [-s] [-T]\n",
-					 "[-u] [-V visual_identifier(s)] [-x]\n");
+					 "[-u] [-V visual_identifier(s)] [-x] [--noregexp] [--reqid reqid] [--dump]\n");
 }

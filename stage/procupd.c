@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.48 2000/12/21 15:36:37 jdurand Exp $
+ * $Id: procupd.c,v 1.49 2001/01/31 18:59:59 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.48 $ $Date: 2000/12/21 15:36:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.49 $ $Date: 2001/01/31 18:59:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -53,6 +53,8 @@ extern struct waitq *waitqp;
 #ifdef USECDB
 extern struct stgdb_fd dbfd;
 #endif
+extern struct fileclass *fileclasses;
+
 extern int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *));
 extern struct waitf *add2wf _PROTO((struct waitq *));
 extern int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct waitf *));
@@ -60,7 +62,7 @@ extern int extend_waitf _PROTO((struct waitf *, struct waitf *));
 extern int check_waiting_on_req _PROTO((int, int));
 extern int check_coff_waiting_on_req _PROTO((int, int));
 extern struct stgcat_entry *newreq _PROTO(());
-extern void update_migpool _PROTO((struct stgcat_entry *, int));
+extern int update_migpoolv2 _PROTO((struct stgcat_entry *, int, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
 extern int req2argv _PROTO((char *, char ***));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
@@ -78,9 +80,26 @@ extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, 
 extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 extern void create_link _PROTO((struct stgcat_entry *, char *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
+extern int retenp_on_disk _PROTO((int));
 
 #define IS_RC_OK(rc) (rc == 0)
 #define IS_RC_WARNING(rc) (rc == LIMBYSZ || rc == BLKSKPD || rc == TPE_LSZ || (rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE)))
+
+/* offset can be undef sometimes */
+#ifndef offsetof
+#define offsetof(s_name, s_member) \
+        ((size_t)((char *)&((s_name *)NULL)->s_member - (char *)NULL))
+#endif
+
+#ifdef HAVE_SENSIBLE_STCP
+#undef HAVE_SENSIBLE_STCP
+#endif
+/* This macro will check sensible part of the CASTOR HSM union */
+#define HAVE_SENSIBLE_STCP(stcp) (((stcp)->u1.h.xfile[0] != '\0') && ((stcp)->u1.h.server[0] != '\0') && ((stcp)->u1.h.fileid != 0) && ((stcp)->u1.h.fileclass != 0))
+
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+#define strtok(X,Y) strtok_r(X,Y,&last)
+#endif /* _REENTRANT || _THREAD_SAFE */
 
 void
 procupdreq(req_data, clienthost)
@@ -128,6 +147,12 @@ procupdreq(req_data, clienthost)
 	int Zflag = 0;
 	int callback_index = -1;
 	int found_wfp = 0;
+	size_t u1h_sizeof;
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+	char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
+
+	u1h_sizeof = sizeof(struct stgcat_entry) - offsetof(struct stgcat_entry,u1.h.xfile);
 
 	rbp = req_data;
 	unmarshall_STRING (rbp, user);	/* login name */
@@ -233,7 +258,7 @@ procupdreq(req_data, clienthost)
 	}
 	if (nargs > Coptind) {
 		for  (i = Coptind; i < nargs; i++)
-			if ((c = upd_stageout (STAGEUPDC, argv[i], &subreqid, 1, NULL)) != 0) {
+			if ((c = upd_stageout(STAGEUPDC, argv[i], &subreqid, 1, NULL)) != 0) {
 				if (c != CLEARED) {
 					goto reply;
 				} else {
@@ -513,7 +538,7 @@ procupdreq(req_data, clienthost)
 					stcp->user, stcp->group,
 					clienthost, dvn, ifce,
 					u64tostr((u_signed64) size, tmpbuf, 0),
-					size, waiting_time, transfer_time, rc);
+					waiting_time, transfer_time, rc);
 		}
 	}
 #if SACCT
@@ -543,6 +568,7 @@ procupdreq(req_data, clienthost)
 				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
+			if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
 			break;
 		}
 		wqp->nb_subreqs = i;
@@ -667,36 +693,104 @@ procupdreq(req_data, clienthost)
 				wqp->nbdskf = 0;
 			}
 			for (i = 0; i < n; i++, wfp++) {
+				int ifileclass;
+
+				if (stcp->t_or_d == 'h')
+					ifileclass = upd_fileclass(NULL,stcp);
+				else
+					ifileclass = -1;
 				for (stcp = stcs; stcp < stce; stcp++)
 					if (stcp->reqid == wfp->subreqid) break;
 				if (wqp->copytape)
 					sendinfo2cptape (rpfd, stcp);
 				if (! stcp->keep && stcp->nbaccesses <= 1) {
-					if ((stcp->status == STAGEWRT ||
+					/* No -K option and only one access */
+					struct stgcat_entry *stcp_search, *stcp_found;
+					if (((stcp->status == STAGEWRT) ||
 						((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR))) &&
-						stcp->poolname[0] == '\0')
-						delreq (stcp,0);
-					else if (delfile (stcp, 0, 1, 1,
-							stcp->status == STAGEWRT ? "stagewrt ok" :
-								(((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR)) ? "migration stagewrt ok" :
-									(((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) ? "migration stageput ok" : "stageput ok")), uid, gid, 0) < 0) {
-						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
-										 "rfio_unlink", rfio_serror());
-						/* For migration files, delfile will call update_migpool(stcp,-1) that will */
-						/* remove the BEING_MIGR flag */
-						if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) stcp->status &= ~CAN_BE_MIGR;
-						stcp->status |= STAGED;
-						update_hsm_a_time(stcp);
-#ifdef USECDB
-						if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-							stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+						(stcp->poolname[0] == '\0')) {
+						if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+							update_migpoolv2(stcp,-1,0);
 						}
+						delreq (stcp,0);
+					} else {
+						struct stgcat_entry *save_stcp = stcp;
+						int save_status = stcp->status;
+
+						if ((save_stcp->t_or_d == 'h') && (((save_stcp->status & 0xF) == STAGEWRT) || ((save_stcp->status & 0xF) == STAGEPUT)) && HAVE_SENSIBLE_STCP(save_stcp)) {
+							/* If this entry is a CASTOR file and has tppool[0] != '\0' this must/might be */
+							/* a corresponding stcp entry with the stageout matching STAGEOUT|CAN_BE_MIGR|BEING_MIGR */
+							stcp_found = NULL;
+							for (stcp_search = stcs; stcp_search < stce; stcp_search++) {
+								if (stcp_search->reqid == 0) break;
+								if (! ISCASTORBEINGMIG(stcp_search)) continue;
+								if (memcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile,u1h_sizeof) == 0) {
+									if (stcp_found == NULL) {
+										stcp_found = stcp_search;
+										break;
+									}
+								}
+							}
+							if (stcp_found == NULL) {
+								/* This is acceptable only if the request is an explicit STAGEPUT */
+								if (stcp->status != STAGEPUT) {
+									sendrep (rpfd, MSG_ERR, STG22);
+									continue;
+								} else {
+									stcp_found = stcp;
+								}
+							}
+							if ((stcp_found->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+								update_migpoolv2(stcp_found,-1,0);
+								stcp_found->status &= ~CAN_BE_MIGR;
+							}
+							stcp_found->u1.h.tppool[0] = '\0'; /* We reset the poolname */
+							stcp_found->status |= STAGED;
+							update_hsm_a_time(stcp_found);
+#ifdef USECDB
+							if (stgdb_upd_stgcat(&dbfd,stcp_found) != 0) {
+								stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+							}
 #endif
+							if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp_found);
+						}
+						if (stcp_found != NULL) {
+							if (stcp_found != save_stcp) {
+								int continue_flag = 0;;
+								/* The found element is not the STAGEWRT or STAGEPUT itself */
+								/* this means it was a migration request */
+								if (ifileclass >= 0) {
+									time_t thistime = time(NULL);
+									/* Fileclass's retention period on disk larger than current lifetime ? */
+									if (((int) (thistime - stcp_found->a_time)) < retenp_on_disk(ifileclass)) {
+										stglogit(func, STG131, stcp_found->u1.h.xfile, retenp_on_disk(ifileclass), (thistime - stcp_found->a_time));
+										continue_flag = 1;
+									} else {
+										stglogit (func, STG133, stcp_found->u1.h.xfile, fileclasses[ifileclass].Cnsfileclass.name, stcp_found->u1.h.server, fileclasses[ifileclass].Cnsfileclass.classid, fileclasses[ifileclass].Cnsfileclass.retenp_on_disk, (int) (thistime - stcp_found->a_time));
+									}
+								}
+								if ((save_stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+									update_migpoolv2(save_stcp,-1,0);
+								}
+								delreq(save_stcp,0);
+								if (continue_flag != 0) {
+									continue;
+								} else {
+									goto delete_entry;
+								}
+							} else {
+							delete_entry:
+								/* We can delete this entry */
+								if (delfile (stcp_found, 0, 1, 1, ((save_status & STAGEWRT) == STAGEWRT) ? "stagewrt ok" : "stageput ok", uid, gid, 0) < 0) {
+									sendrep (rpfd, MSG_ERR, STG02, stcp_found->ipath,
+												 "rfio_unlink", rfio_serror());
+								}
+							}
+						}
 					}
 				} else {
 					if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-						/* update_migpool(stcp,-1) will remove the BEING_MIGR flag */
-						update_migpool(stcp,-1);
+						update_migpoolv2(stcp,-1,0);
 						stcp->status &= ~CAN_BE_MIGR;
 					}
 					stcp->status |= STAGED;
@@ -706,6 +800,7 @@ procupdreq(req_data, clienthost)
 						stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 					}
 #endif
+					if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
 				}
 			}
 			i = 0;		/* reset these variables changed by the above loop */
@@ -721,11 +816,12 @@ procupdreq(req_data, clienthost)
 				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
+			if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
 			if (wqp->copytape)
 				sendinfo2cptape (rpfd, stcp);
 			if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
 				create_link (stcp, wfp->upath);
-			if (wqp->Upluspath &&
+			if (wqp->Upluspath && *((wfp+1)->upath) &&
 					strcmp (stcp->ipath, (wfp+1)->upath))
 				create_link (stcp, (wfp+1)->upath);
 			updfreespace (stcp->poolname, stcp->ipath,
@@ -813,6 +909,8 @@ void update_hsm_a_time(stcp)
 		break;
 	}
 }
+
+
 
 
 

@@ -1,4 +1,4 @@
-/* $Id: Cstage_db.des,v 1.12 2000/06/06 10:13:11 jdurand Exp $ */
+/* $Id: Cstage_db.des,v 1.13 2001/01/31 18:59:47 jdurand Exp $ */
 
 /* ======================================================= */
 /* CASTOR STAGER Database Description File - Cdb Interface */
@@ -122,9 +122,11 @@ database stage {         /* STAGE Database Description */
     char group[CA_MAXGRPNAMELEN+1]; /* group name */
     char user[CA_MAXUSRNAMELEN+1]; /* login name */
     char keep;           /* Keep data on disk after successful stagewrt */
-    char xfile[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+2];
-    char server[(CA_MAXHOSTNAMELEN+1)];
-    u_signed64 fileid;
+    char xfile[(CA_MAXHOSTNAMELEN+CA_MAXPATHLEN)+2]; /* File name */
+    char server[(CA_MAXHOSTNAMELEN+1)]; /* Host name (nameserver) */
+    u_signed64 fileid;   /* Fileid within Host name */
+    short fileclass;     /* Associated fileclass number */
+    char tppool[CA_MAXPOOLNAMELEN+1];
     unique key stgcat_hsm_per_reqid {
       order none;
       reqid;

@@ -1,5 +1,5 @@
 /*
-	$Id: check_Cdbentry.c,v 1.9 2000/12/12 14:13:40 jdurand Exp $
+	$Id: check_Cdbentry.c,v 1.10 2001/01/31 18:59:48 jdurand Exp $
 */
 
 #include "Cstage_db.h"
@@ -465,6 +465,8 @@ void stcpprint(stcp)
 		DUMP_STRING(stcp,u1.h.xfile);
 		DUMP_STRING(stcp,u1.h.server);
 		DUMP_U64(stcp,u1.h.fileid);
+		DUMP_VAL(stcp,u1.h.fileclass);
+		DUMP_STRING(stcp,u1.h.tppool);
 		break;
 	}
 }

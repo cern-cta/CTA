@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.23 2000/12/21 15:36:36 jdurand Exp $
+ * $Id: procclr.c,v 1.24 2001/01/31 18:59:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.23 $ $Date: 2000/12/21 15:36:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.24 $ $Date: 2001/01/31 18:59:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -63,6 +63,10 @@ extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, str
 
 int check_delete _PROTO((struct stgcat_entry *, gid_t, uid_t, char *, char *, int, int));
 
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+#define strtok(X,Y) strtok_r(X,Y,&last)
+#endif /* _REENTRANT || _THREAD_SAFE */
+
 void procclrreq(req_data, clienthost)
 		 char *req_data;
 		 char *clienthost;
@@ -81,7 +85,7 @@ void procclrreq(req_data, clienthost)
 	char *lbl = NULL;
 	char *linkname = NULL;
 	char *mfile = NULL;
-	int minfree = 0;
+	int gc_stop_thresh = 0;
 	int nargs;
 	int numvid = 0;
 	char *path = NULL;
@@ -96,6 +100,9 @@ void procclrreq(req_data, clienthost)
 	char *user;
 	char vid[MAXVSN][7];
 	char *xfile = NULL;
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+	char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
 
 	poolname[0] = '\0';
 	rbp = req_data;
@@ -149,8 +156,8 @@ void procclrreq(req_data, clienthost)
 			mfile = Coptarg;
 			break;
 		case 'm':
-			minfree = strtol (Coptarg, &dp, 10);
-			if (*dp != '\0' || minfree > 100) {
+			gc_stop_thresh = strtol (Coptarg, &dp, 10);
+			if (*dp != '\0' || gc_stop_thresh > 100) {
 				sendrep (rpfd, MSG_ERR, STG06, "-m");
 				errflg++;
 			}
@@ -231,7 +238,7 @@ void procclrreq(req_data, clienthost)
 				if (stpp->reqid == stcp->reqid) break;
 			}
 			if (cflag && stcp->poolname[0] &&
-					enoughfreespace (stcp->poolname, minfree)) {
+					enoughfreespace (stcp->poolname, gc_stop_thresh)) {
 				c = ENOUGHF;
 				goto reply;
 			}
@@ -250,7 +257,7 @@ void procclrreq(req_data, clienthost)
 				if (strcmp (path, stcp->ipath) == 0) {
 					found = 1;
 					if (cflag && stcp->poolname[0] &&
-							enoughfreespace (stcp->poolname, minfree)) {
+							enoughfreespace (stcp->poolname, gc_stop_thresh)) {
 						c = ENOUGHF;
 						goto reply;
 					}
@@ -302,7 +309,7 @@ void procclrreq(req_data, clienthost)
 			}
 			found = 1;
 			if (cflag && stcp->poolname[0] &&
-					enoughfreespace (stcp->poolname, minfree)) {
+					enoughfreespace (stcp->poolname, gc_stop_thresh)) {
 				c = ENOUGHF;
 				goto reply;
 			}

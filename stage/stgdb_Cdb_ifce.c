@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.20 2000/12/21 13:55:12 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.21 2001/01/31 19:00:11 jdurand Exp $
  */
 
 /*
@@ -18,13 +18,16 @@
 #include "Cstage_ifce.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.20 $ $Date: 2000/12/21 13:55:12 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.21 $ $Date: 2001/01/31 19:00:11 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
 int stgdb_stppcmp _PROTO((CONST void *, CONST void *));
 extern int stglogit _PROTO(());
 extern char func[];
+#ifndef USECDB
+u_signed64 local_uniqueid = 0;
+#endif
 
 #ifdef STGDB_CONRETRY
 #undef STGDB_CONRETRY
@@ -452,9 +455,10 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
 	*/
 
 	/* We sort the stgcat entries per c_time, and per reqid as secondary key */
+    /* Warning : arithmetic operation between stcp and *stcsp will return the number */
+    /* of the same entities, so no need to divide by sizeof(struct stgcat_entry) */
 	if (stcp > *stcsp) {
-		qsort(*stcsp, (stcp - *stcsp)/sizeof(struct stgcat_entry),
-					sizeof(struct stgcat_entry), &stgdb_stcpcmp);
+		qsort(*stcsp, (stcp - *stcsp), sizeof(struct stgcat_entry), &stgdb_stcpcmp);
 	}
 
 	/*
@@ -469,9 +473,10 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
 	*/
 
 	/* We sort the stgpath entries per reqid */
+    /* Warning : arithmetic operation between stpp and *stpsp will return the number */
+    /* of the same entities, so no need to divide by sizeof(struct stgpath_entry) */
 	if (stpp > *stpsp) {
-		qsort(*stpsp, (stpp - *stpsp)/sizeof(struct stgpath_entry),
-					sizeof(struct stgpath_entry), &stgdb_stppcmp);
+		qsort(*stpsp, (stpp - *stpsp), sizeof(struct stgpath_entry), &stgdb_stppcmp);
 	}
 
 	return(0);
@@ -1018,6 +1023,26 @@ int DLL_DECL Stgdb_ins_stgpath(dbfd,stpp,file,line)
 	}
 	return(0);
 #else
+	return(0);
+#endif
+}
+
+int DLL_DECL Stgdb_uniqueid(dbfd,uniqueid,file,line)
+		 stgdb_fd_t *dbfd;
+		 u_signed64 *uniqueid;
+		 char *file;
+		 int line;
+{
+#ifdef USECDB
+	/* The trick is to always a generated uniqueid from the SAME table */
+	/* so that we guarantee its uniqueness. */
+	return(Cdb_uniqueid(&(dbfd->Cdb_db),
+						"stgcat_link",
+						0,                         /* Start value */
+						1,                         /* Step value */
+						uniqueid));
+#else
+	*uniqueid = ++local_uniqueid;
 	return(0);
 #endif
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_api.c,v 1.12 2000/12/21 13:55:07 jdurand Exp $
+ * $Id: send2stgd_api.c,v 1.13 2001/01/31 18:59:59 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.12 $ $Date: 2000/12/21 13:55:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.13 $ $Date: 2001/01/31 18:59:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -34,16 +34,99 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.12 $ $Dat
 #include "serrno.h"
 #include "osdep.h"
 #include "stage.h"
+#include "stage_api.h"
 #include "Cnetdb.h"
+#include "Cglobals.h"
 #include "stage_api.h"
 
 int dosymlink _PROTO((char *, char *));
 void dounlink _PROTO((char *));
 int rc_shift2castor _PROTO((int));
+int send2stgd_sort_stcp _PROTO((int, u_signed64, int, struct stgcat_entry *, int *, struct stgcat_entry **));
+int send2stgd_sort_by_fseq _PROTO((CONST void *, CONST void *));
+int send2stgd_api_cmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
 EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
 
+/* This macro makes sure that uniqueid stored in thread-specific */
+/* variable is reset before the return so that from now on, any  */
+/* stage_kill() hanler call will have NO effect.                 */
+#define SEND2STGD_API_RETURN(c) {                 \
+	if (stage_setuniqueid((u_signed64) 0) != 0) { \
+		stage_errmsg(func, STG02, func,           \
+					"stage_setuniqueid",          \
+					sstrerror(serrno));           \
+		return (-1);                              \
+	}                                             \
+	return(c);                                    \
+}
+
+#define SEND2STGD_API_ERROR(c) { \
+	if (nstcp_output != NULL) *nstcp_output = 0; \
+	if (stcp_output != NULL) { free(*stcp_output) ; *stcp_output = NULL;} \
+	if (nstpp_output != NULL) *nstpp_output = 0; \
+	if (stpp_output != NULL) { free(*stpp_output) ; *stpp_output = NULL;} \
+	SEND2STGD_API_RETURN(c); \
+}
+
+static int uniqueidp_key = 0;
+static int laststghostp_key = 0;
+
+int DLL_DECL stage_setuniqueid(uniqueid)
+	u_signed64 uniqueid;
+{
+	u_signed64 *uniqueidp;
+
+	Cglobals_get (&uniqueidp_key, (void **)&uniqueidp, sizeof(u_signed64));
+	if (uniqueidp == NULL) {
+		return(-1);
+	}
+	*uniqueidp = uniqueid;
+	return(0);
+}
+
+int DLL_DECL stage_getuniqueid(uniqueid)
+	u_signed64 *uniqueid;
+{
+	u_signed64 *uniqueidp;
+
+	Cglobals_get (&uniqueidp_key, (void **)&uniqueidp, sizeof(u_signed64));
+	if (uniqueidp == NULL) {
+		return(-1);
+	}
+	*uniqueid = *uniqueidp;
+	return(0);
+}
+
+
+int DLL_DECL stage_setlaststghost(laststghost)
+	char *laststghost;
+{
+	char *laststghostp;
+
+	Cglobals_get (&laststghostp_key, (void **)&laststghostp, CA_MAXHOSTNAMELEN+1);
+	if (laststghostp == NULL) {
+		return(-1);
+	}
+	if (laststghost != NULL) strncpy(laststghostp,laststghost,CA_MAXHOSTNAMELEN);
+	return(0);
+}
+
+int DLL_DECL stage_getlaststghost(laststghost)
+	char **laststghost;
+{
+	char *laststghostp;
+
+	Cglobals_get (&laststghostp_key, (void **)&laststghostp, CA_MAXHOSTNAMELEN+1);
+	if (laststghostp == NULL) {
+		return(-1);
+	}
+	*laststghost = laststghostp;
+	return(0);
+}
+
+
 int rc_shift2castor(rc)
-		 int rc;
+	int rc;
 {
 	/* Input  is a SHIFT  return code */
 	/* Output is a CASTOR return code */
@@ -67,13 +150,21 @@ int rc_shift2castor(rc)
 	}
 }
 
-int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_len)
-		 char *host;
-		 char *reqp;
-		 int reql;
-		 int want_reply;
-		 char *user_repbuf;
-		 int user_repbuf_len;
+int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbuf, user_repbuf_len, nstcp_input, stcp_input, nstcp_output, stcp_output, nstpp_output, stpp_output)
+	char *host;
+	int req_type;
+	u_signed64 flags;
+	char *reqp;
+	int reql;
+	int want_reply;
+	char *user_repbuf;
+	int user_repbuf_len;
+	int nstcp_input;
+	struct stgcat_entry *stcp_input;
+	int *nstcp_output;
+	struct stgcat_entry **stcp_output;
+	int *nstpp_output;
+	struct stgpath_entry **stpp_output;
 {
 	int actual_replen = 0;
 	int c;
@@ -95,21 +186,39 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 	char stghost[CA_MAXHOSTNAMELEN+1];
 	char *stagehost = STAGEHOST;
 	int stg_service = 0;
+	int _nstcp_output = 0;
+	struct stgcat_entry *_stcp_output = NULL;
+	int _nstpp_output = 0;
+	struct stgpath_entry *_stpp_output = NULL;
+	u_signed64 uniqueid = 0;
 
 	strcpy (func, "send2stgd");
+
+    /* We initialize output values */
+	if (nstcp_output != NULL) *nstcp_output = 0;
+	if (stcp_output != NULL) *stcp_output = NULL;
+	if (nstpp_output != NULL) *nstpp_output = 0;
+	if (stpp_output != NULL) *stpp_output = NULL;
+
+    /* We always reset our uniqueid value */
+    if (stage_setuniqueid(uniqueid) != 0) {
+		stage_errmsg(func, STG02, func, "stage_setuniqueid", sstrerror(serrno));
+		return (-1);
+    }
+
 	link_rc = 0;
 	if ((p = getenv ("STAGE_PORT")) == NULL &&
 		(p = getconfent("STG", "PORT",0)) == NULL) {
 		if ((sp = Cgetservbyname (STG, "tcp")) == NULL) {
 			stage_errmsg (func, STG09, STG, "not defined in /etc/services");
 			serrno = SENOSSERV;
-			return (-1);
+			SEND2STGD_API_RETURN(-1);
 		}
 	} else {
 		if ((stg_service = atoi(p)) <= 0) {
 			stage_errmsg (func, STG09, STG, "service from environment or configuration is <= 0");
 			serrno = SENOSSERV;
-			return (-1);
+			SEND2STGD_API_RETURN(-1);
 		}
 	}
 	if (host == NULL) {
@@ -125,7 +234,7 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 	if ((hp = Cgethostbyname(stghost)) == NULL) {
 		stage_errmsg (func, STG09, "Host unknown:", stghost);
 		serrno = SENOSHOST;
-		return (-1);
+		SEND2STGD_API_RETURN(-1);
 	}
 	sin.sin_family = AF_INET;
 	sin.sin_port = (stg_service > 0 ? stg_service : sp->s_port);
@@ -134,7 +243,7 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 	if ((stg_s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
 		stage_errmsg (func, STG02, "", "socket", neterror());
 		serrno = SECOMERR;
-		return (-1);
+		SEND2STGD_API_RETURN(-1);
 	}
 
 	c = RFIO_NONET;
@@ -151,14 +260,15 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 			stage_errmsg (func, STG00, stghost);
 			(void) netclose (stg_s);
 			serrno = ESTNACT;
-			return (-1);
+			SEND2STGD_API_RETURN(-1);
 		} else {
 			stage_errmsg (func, STG02, "", "connect", neterror());
 			(void) netclose (stg_s);
 			serrno = SECOMERR;
-			return (-1);
+			SEND2STGD_API_RETURN(-1);
 		}
 	}
+
 	if ((n = netwrite_timeout (stg_s, reqp, reql, STGTIMEOUT)) != reql) {
 		if (n == 0)
 			stage_errmsg (func, STG02, "", "send", sys_serrlist[SERRNO]);
@@ -166,13 +276,16 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 			stage_errmsg (func, STG02, "", "send", neterror());
 		(void) netclose (stg_s);
 		serrno = SECOMERR;
-		return (-1);
+		SEND2STGD_API_RETURN(-1);
 	}
 	if (! want_reply) {
 		(void) netclose (stg_s);
-		return (0);
+		SEND2STGD_API_RETURN(0);
 	}
 	
+    /* Connect and netwrite suceeded : this is the latest stghost contacted in this thread */
+    stage_setlaststghost(stghost);
+
 	while (1) {
 		if ((n = netread(stg_s, repbuf, 3 * LONGSIZE)) != (3 * LONGSIZE)) {
 			if (n == 0)
@@ -181,7 +294,7 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 				stage_errmsg (func, STG02, "", "recv", neterror());
 			(void) netclose (stg_s);
 			serrno = SECOMERR;
-			return (-1);
+			SEND2STGD_API_ERROR(-1);
 		}
 		p = repbuf;
 		unmarshall_LONG (p, magic) ;
@@ -194,6 +307,127 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 				c = -1;
 			}
 			break;
+		} else if (rep_type == API_STCP_OUT) {
+			int noutput_header,noutput_data,nstcp_out, donestcp, donestpp;
+			char *msgbuf_out;
+			int unmarshall_status;
+
+			p = repbuf;
+			if (c <= 0) {
+				serrno = SEINTERNAL;
+				SEND2STGD_API_ERROR(-1);
+			}
+			if ((msgbuf_out = (char *) malloc((size_t) c)) == NULL) {
+				serrno = SEINTERNAL;
+				SEND2STGD_API_ERROR(-1);
+			}
+			if ((noutput_data = netread(stg_s, msgbuf_out, c)) != c) {
+				if (noutput_data == 0)
+					stage_errmsg (func, STG02, "", "recv", sys_serrlist[SERRNO]);
+				else
+					stage_errmsg (func, STG02, "", "recv", neterror());
+				(void) netclose (stg_s);
+				serrno = SECOMERR;
+				free(msgbuf_out);
+				SEND2STGD_API_ERROR(-1);
+			}
+			if (_nstcp_output++ == 0) {
+				if ((_stcp_output = (struct stgcat_entry *) calloc(1,sizeof(struct stgcat_entry))) == NULL) {
+					(void) netclose (stg_s);
+					serrno = SEINTERNAL;
+					free(msgbuf_out);
+					SEND2STGD_API_ERROR(-1);
+				}
+			} else {
+				struct stgcat_entry *dummy;
+				if ((dummy = (struct stgcat_entry *) realloc(_stcp_output,_nstcp_output * sizeof(struct stgcat_entry))) == NULL) {
+					(void) netclose (stg_s);
+					serrno = SEINTERNAL;
+					free(msgbuf_out);
+					SEND2STGD_API_ERROR(-1);
+				}
+                _stcp_output = dummy;
+                memset(&(_stcp_output[_nstcp_output - 1]),0,sizeof(struct stgcat_entry));
+			}
+			p = msgbuf_out;
+			unmarshall_status = 0;
+			unmarshall_STAGE_CAT(STAGE_OUTPUT_MODE,unmarshall_status,p,&(_stcp_output[_nstcp_output - 1]));
+			free(msgbuf_out);
+			if (unmarshall_status == 0) stage_callback(&(_stcp_output[_nstcp_output - 1]),NULL);
+			if (stcp_output != NULL) *stcp_output = _stcp_output;
+			if (nstcp_output != NULL) *nstcp_output = _nstcp_output;
+			continue;
+		} else if (rep_type == API_STPP_OUT) {
+			int noutput_header,noutput_data,nstpp_out, donestcp, donestpp;
+			char *msgbuf_out;
+			int unmarshall_status;
+
+			p = repbuf;
+			if (c <= 0) {
+				serrno = SEINTERNAL;
+				SEND2STGD_API_ERROR(-1);
+			}
+			if ((msgbuf_out = (char *) malloc((size_t) c)) == NULL) {
+				serrno = SEINTERNAL;
+				SEND2STGD_API_ERROR(-1);
+			}
+			if ((noutput_data = netread(stg_s, msgbuf_out, c)) != c) {
+				if (noutput_data == 0)
+					stage_errmsg (func, STG02, "", "recv", sys_serrlist[SERRNO]);
+				else
+					stage_errmsg (func, STG02, "", "recv", neterror());
+				(void) netclose (stg_s);
+				serrno = SECOMERR;
+				free(msgbuf_out);
+				SEND2STGD_API_ERROR(-1);
+			}
+			if (_nstpp_output++ == 0) {
+				if ((_stpp_output = (struct stgpath_entry *) calloc(1,sizeof(struct stgpath_entry))) == NULL) {
+					(void) netclose (stg_s);
+					serrno = SEINTERNAL;
+					free(msgbuf_out);
+					SEND2STGD_API_ERROR(-1);
+				}
+			} else {
+				struct stgpath_entry *dummy;
+				if ((dummy = (struct stgpath_entry *) realloc(_stpp_output,_nstpp_output * sizeof(struct stgpath_entry))) == NULL) {
+					(void) netclose (stg_s);
+					serrno = SEINTERNAL;
+					free(msgbuf_out);
+					SEND2STGD_API_ERROR(-1);
+				}
+                _stpp_output = dummy;
+                memset(&(_stpp_output[_nstpp_output - 1]),0,sizeof(struct stgpath_entry));
+			}
+			p = msgbuf_out;
+			unmarshall_status = 0;
+			unmarshall_STAGE_PATH(STAGE_OUTPUT_MODE,unmarshall_status,p,&(_stpp_output[_nstpp_output - 1]));
+			free(msgbuf_out);
+			if (unmarshall_status == 0) stage_callback(NULL,&(_stpp_output[_nstpp_output - 1]));
+			if (stpp_output != NULL) *stpp_output = _stpp_output;
+			if (nstpp_output != NULL) *nstpp_output = _nstpp_output;
+			continue;
+		} else if (rep_type == UNIQUEID) {
+			char uniqueidbuf[HYPERSIZE];
+			int  nread;
+
+			if ((nread = netread(stg_s, uniqueidbuf, HYPERSIZE)) != HYPERSIZE) {
+				if (nread == 0)
+					stage_errmsg (func, STG02, "", "recv", sys_serrlist[SERRNO]);
+				else
+					stage_errmsg (func, STG02, "", "recv", neterror());
+				(void) netclose (stg_s);
+				serrno = SECOMERR;
+				SEND2STGD_API_ERROR(-1);
+			}
+			p = uniqueidbuf;
+			unmarshall_HYPER(p, uniqueid);
+			if (stage_setuniqueid(uniqueid) != 0) {
+				(void) netclose (stg_s);
+				serrno = SEINTERNAL;
+				SEND2STGD_API_ERROR(-1);
+			}
+			continue;
 		}
 		if ((n = netread(stg_s, repbuf, c)) != c) {
 			if (n == 0)
@@ -202,23 +436,13 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 				stage_errmsg (func, STG02, "", "recv", neterror());
 			(void) netclose (stg_s);
 			serrno = SECOMERR;
-			return (-1);
+			SEND2STGD_API_ERROR(-1);
 		}
 		p = repbuf;
 		unmarshall_STRING (p, prtbuf);
 		switch (rep_type) {
 		case MSG_OUT:
-			if (user_repbuf != NULL) {
-				if (actual_replen + c <= user_repbuf_len)
-					n = c;
-				else
-					n = user_repbuf_len - actual_replen;
-				if (n) {
-					memcpy (user_repbuf + actual_replen, repbuf, n);
-					actual_replen += n;
-				}
-			} else
-				stage_outmsg (NULL, "%s", prtbuf);
+			stage_outmsg (NULL, "%s", prtbuf);
 			break;
 		case MSG_ERR:
 		case RTCOPY_OUT:
@@ -233,12 +457,16 @@ int DLL_DECL send2stgd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_le
 			dounlink (prtbuf);
 		}
 	}
-	return (c ? c : link_rc);
+	if (send2stgd_sort_stcp(req_type,flags,nstcp_input,stcp_input,nstcp_output,stcp_output) != 0) {
+		SEND2STGD_API_ERROR(-1);
+    }
+
+	SEND2STGD_API_RETURN(c ? c : link_rc);
 }
 
 int dosymlink (file1, file2)
-		 char *file1;
-		 char *file2;
+	char *file1;
+	char *file2;
 {
 	char *filename;
 	char func[16];
@@ -268,9 +496,8 @@ int dosymlink (file1, file2)
 	return (0);
 }
 
-void
-dounlink (path)
-		 char *path;
+void dounlink (path)
+	char *path;
 {
 	char *filename;
 	char func[16];
@@ -307,3 +534,167 @@ dounlink (path)
 	}
 #endif
 }
+
+int send2stgd_sort_stcp(req_type,flags,nstcp_input,stcp_input,nstcp_output,stcp_output)
+	int req_type;
+	u_signed64 flags;
+	int nstcp_input;
+	struct stgcat_entry *stcp_input;
+	int *nstcp_output;
+	struct stgcat_entry **stcp_output;
+{
+  int *seen;
+  int i, j, nseen;
+  int status;
+
+  /* No input/output structures ? */
+  if (stcp_input == NULL || nstcp_input <= 0 ||
+      stcp_output == NULL || nstcp_output == NULL || *nstcp_output <= 0) return(0);
+
+  /* No sort needed ? */
+  /*
+    STAGE_QRY and STAGE_UPDC are not yet supported
+  */
+  /*
+  if (req_type == STAGE_QRY ||
+      req_type == STAGE_UPDC) {
+    return(0);
+  }
+  */
+
+  if ((req_type == STAGE_IN) && ((flags & STAGE_COFF) == STAGE_COFF)) {
+    /* In the case "stagein -c off", the output is known to be sorted by fseq */
+    qsort((void *) *stcp_output, *nstcp_output, sizeof(struct stgcat_entry), &send2stgd_sort_by_fseq);
+    return(0);
+  }
+
+  /* In all other cases we order by making correspondance with initial request, except for a STAGE_QRY */
+  if (req_type == STAGE_QRY) {
+    return(0);
+  }
+
+  if ((seen = (int *) malloc(*nstcp_output * sizeof(int))) == NULL) {
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+  nseen = 0;
+  for (i = 0; i < *nstcp_output; i++) {
+    seen[i] = -1;
+    status = -1;
+    for (j = 0; j < nstcp_input; j++) {
+      if (send2stgd_api_cmp(&(stcp_input[j]),&((*stcp_output)[i])) == 0) {
+        /* We believe the output No i corresponds to input No j */
+        status = 0;
+        seen[i] = j;
+        nseen++;
+        break;
+      }
+    }
+    if (status != 0) {
+      /* Not found !?? */
+      serrno = SEINTERNAL;
+      free(seen);
+      return(-1);
+    }
+  }
+
+  /* All output structures has been recognized ? */
+  if (nseen != *nstcp_output) {
+    return(-1);
+  }
+
+  /* We reorder output structures */
+  for (i = 0; i < nstcp_input; i++) {
+    struct stgcat_entry dummy;
+
+    if (seen[i] != i) {
+      /* Output structure No i is to be switched with output structure No seen[i] */
+      dummy = (*stcp_output)[i];
+      (*stcp_output)[i] = (*stcp_output)[seen[i]];
+      (*stcp_output)[seen[i]] = dummy;
+    }
+  }
+
+  /* OK */
+  return(0);
+}
+
+int send2stgd_sort_by_fseq(p1,p2)
+     CONST void *p1;
+     CONST void *p2;
+{
+  struct stgcat_entry *stcp1 = (struct stgcat_entry *) p1;
+  struct stgcat_entry *stcp2 = (struct stgcat_entry *) p2;
+  int fseq1, fseq2;
+
+  fseq1 = atoi(stcp1->u1.t.fseq);
+  fseq2 = atoi(stcp2->u1.t.fseq);
+
+  if (fseq1 < fseq2) {
+    return(-1);
+  } else if (fseq1 > fseq2) {
+    return(1);
+  } else {
+    return(0);
+  }
+}
+
+int send2stgd_api_cmp(stcp1,stcp2)
+     struct stgcat_entry *stcp1;
+     struct stgcat_entry *stcp2;
+{
+  int i;
+
+  /* stcp1 is the reference and we check if it matches stcp2 */
+  if (stcp1->blksize     != 0    && stcp1->blksize  != stcp2->blksize)  return(-1);
+  if (stcp1->charconv    != '\0' && stcp1->charconv != stcp2->charconv) return(-1);
+  if (stcp1->keep        != '\0' && stcp1->keep     != stcp2->keep) return(-1);
+  if (stcp1->lrecl       != 0    && stcp1->lrecl    != stcp2->lrecl)  return(-1);
+  if (stcp1->nread       != 0    && stcp1->nread    != stcp2->nread)  return(-1);
+  if (stcp1->poolname[0] != '\0' && strcmp(stcp1->poolname,stcp2->poolname) != 0) return(-1);
+  if (stcp1->recfm[0]    != '\0' && strcmp(stcp1->recfm,stcp2->recfm) != 0) return(-1);
+  if (stcp1->size        != 0    && stcp1->size     != stcp2->size)  return(-1);
+  if (stcp1->t_or_d == '\0') return(-1);
+  if (stcp1->t_or_d   != stcp2->t_or_d) {
+    /* This is accepted only if input was 'h' or 'm' and output was 'm' or 'h' */
+    if ((stcp1->t_or_d == 'h' && stcp2->t_or_d != 'm') ||
+        (stcp1->t_or_d == 'm' && stcp2->t_or_d != 'h')) {
+      return(-1);
+    }
+  }
+
+  switch (stcp2->t_or_d) { /* We use stcp2 because it might be 'm' or 'h' when input is 'm' */
+  case 't':
+    if (stcp1->u1.t.den[0]      != '\0' && strcmp(stcp1->u1.t.den,stcp2->u1.t.den) != 0) return(-1);
+    if (stcp1->u1.t.dgn[0]      != '\0' && strcmp(stcp1->u1.t.dgn,stcp2->u1.t.dgn) != 0) return(-1);
+    if (stcp1->u1.t.fid[0]      != '\0' && strcmp(stcp1->u1.t.fid,stcp2->u1.t.fid) != 0) return(-1);
+    if (stcp1->u1.t.filstat     != '\0' && stcp1->u1.t.filstat != stcp2->u1.t.filstat) return(-1);
+    if (stcp1->u1.t.fseq[0]     != '\0' && strcmp(stcp1->u1.t.fseq,stcp2->u1.t.fseq) != 0) return(-1);
+    if (stcp1->u1.t.lbl[0]      != '\0' && strcmp(stcp1->u1.t.lbl,stcp2->u1.t.lbl) != 0) return(-1);
+    if (stcp1->u1.t.retentd     != 0    && stcp1->u1.t.retentd != stcp2->u1.t.retentd) return(-1);
+    if (stcp1->u1.t.tapesrvr[0] != '\0' && strcmp(stcp1->u1.t.tapesrvr,stcp2->u1.t.tapesrvr) != 0) return(-1);
+    if (stcp1->u1.t.E_Tflags    != 0    && stcp1->u1.t.E_Tflags != stcp2->u1.t.E_Tflags) return(-1);
+    for (i = 0; i < MAXVSN; i++) {
+      if (stcp1->u1.t.vid[i][0] != '\0' && strcmp(stcp1->u1.t.vid[i],stcp2->u1.t.vid[i]) != 0) return(-1);
+      if (stcp1->u1.t.vsn[i][0] != '\0' && strcmp(stcp1->u1.t.vsn[i],stcp2->u1.t.vsn[i]) != 0) return(-1);
+    }
+    break;
+  case 'd':
+    if (stcp1->u1.d.xfile[0] != '\0' && strcmp(stcp1->u1.d.xfile,stcp2->u1.d.xfile) != 0) return(-1);
+    if (stcp1->u1.d.Xparm[0] != '\0' && strcmp(stcp1->u1.d.Xparm,stcp2->u1.d.Xparm) != 0) return(-1);
+    break;
+  case 'a':
+    if (stcp1->u1.d.xfile[0] != '\0' && strcmp(stcp1->u1.d.xfile,stcp2->u1.d.xfile) != 0) return(-1);
+    break;
+  case 'm':
+    if (stcp1->u1.d.xfile[0] != '\0' && strcmp(stcp1->u1.d.xfile,stcp2->u1.d.xfile) != 0) return(-1);
+    break;
+  case 'h':
+    if (stcp1->u1.h.xfile[0] != '\0' && strcmp(stcp1->u1.h.xfile,stcp2->u1.h.xfile) != 0) return(-1);
+    break;
+  }
+
+  /* OK */
+  return(0);
+}
+

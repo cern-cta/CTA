@@ -1,5 +1,5 @@
 /*
- * $Id: stgpath_Cdbtest.c,v 1.7 2000/12/21 14:37:05 jdurand Exp $
+ * $Id: stgpath_Cdbtest.c,v 1.8 2001/01/31 19:00:12 jdurand Exp $
  */
 
 /* ============== */
@@ -38,6 +38,10 @@
 #endif
 #define LINE_PAGESIZE 256        /* Default line paging size (a-la-gnu)     */
 
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+#define strtok(X,Y) strtok_r(X,Y,&last)
+#endif /* _REENTRANT || _THREAD_SAFE */
+
 /* ========== */
 /* Prototypes */
 /* ========== */
@@ -72,6 +76,9 @@ int main(argc,argv)
     int errflg = 0;
     int max = -1;
     int imax = 0;
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+	char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
 
 	Coptind = 1;
 	Copterr = 1;

@@ -1,5 +1,5 @@
 /*
- * $Id: stageget.c,v 1.13 2000/12/12 14:13:41 jdurand Exp $
+ * $Id: stageget.c,v 1.14 2001/01/31 19:00:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.13 $ $Date: 2000/12/12 14:13:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.14 $ $Date: 2001/01/31 19:00:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -29,6 +29,7 @@ static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.13 $ $Date: 20
 #include "Cpwd.h"
 #include "Cgetopt.h"
 
+EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
 extern	char	*getenv();
 extern	char	*getconfent();
 static gid_t gid;
@@ -162,7 +163,7 @@ int main(argc, argv)
 	signal (SIGTERM, cleanup);
 
 	while (1) {
-		c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
+		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 		if (c == 0 || serrno == EINVAL) break;
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);

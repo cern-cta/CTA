@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.26 2001/01/12 08:35:17 jdurand Exp $
+ * $Id: procalloc.c,v 1.27 2001/01/31 18:59:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.26 $ $Date: 2001/01/12 08:35:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.27 $ $Date: 2001/01/31 18:59:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -44,7 +44,7 @@ extern int reqid;
 extern int rpfd;
 extern struct stgcat_entry *stce;	/* end of stage catalog */
 extern struct stgcat_entry *stcs;	/* start of stage catalog */
-extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
+extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
 extern struct stgcat_entry *newreq _PROTO(());
 #ifdef USECDB
 extern struct stgdb_fd dbfd;
@@ -186,7 +186,7 @@ void procallocreq(req_data, clienthost)
 		stcp->status |= WAITING_SPC;
 		if (!wqp) wqp = add2wq (clienthost,
 								user, stcp->uid, stcp->gid,
-								user, stcp->uid, stcp->gid,
+								user, stcp->group, stcp->uid, stcp->gid,
 								clientpid,
 								Upluspath, reqid, STAGEALLOC, nbdskf, &wfp, NULL, NULL, NULL, 0);
 		wqp->Pflag = Pflag;
@@ -212,7 +212,7 @@ void procallocreq(req_data, clienthost)
 			sendrep (rpfd, MSG_OUT, "%s\n", stcp->ipath);
 		if (*upath && strcmp (stcp->ipath, upath))
 			create_link (stcp, upath);
-		if (Upluspath &&
+		if (Upluspath && (argv[Coptind+1][0] != '\0') && 
 				strcmp (stcp->ipath, argv[Coptind+1]))
 			create_link (stcp, argv[Coptind+1]);
 	}
@@ -375,7 +375,7 @@ void procgetreq(req_data, clienthost)
 		sendrep (rpfd, MSG_OUT, "%s\n", stcp->ipath);
 	if (*upath && strcmp (stcp->ipath, upath))
 		create_link (stcp, upath);
-	if (Upluspath &&
+	if (Upluspath && (argv[Coptind+1][0] != '\0') &&
 			strcmp (stcp->ipath, argv[Coptind+1]))
 		create_link (stcp, argv[Coptind+1]);
 	savereqs ();

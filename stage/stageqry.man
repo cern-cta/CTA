@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.6 $ $Date: 2000/06/09 11:06:07 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.7 $ $Date: 2001/01/31 19:00:06 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEQRY l "$Date: 2000/06/09 11:06:07 $"
+.TH STAGEQRY l "$Date: 2001/01/31 19:00:06 $"
 .SH NAME
 stageqry \- give the status of all staged tapes
 .SH SYNOPSIS
@@ -33,6 +33,10 @@ stageqry \- give the status of all staged tapes
 .BI -V " visual_identifier(s)"
 ] [
 .BI -x
+] [
+.BI --dump
+] [
+.BI --reqid " reqid "
 ]
 .LP
 .B stageqry
@@ -58,6 +62,10 @@ stageqry \- give the status of all staged tapes
 .BI -u
 ] [
 .BI -x
+] [
+.BI --dump
+] [
+.BI --reqid " reqid "
 ]
 .LP
 .B stageqry
@@ -83,6 +91,12 @@ stageqry \- give the status of all staged tapes
 .BI -u
 ] [
 .BI -x
+] [
+.BI --dump
+] [
+.BI --noregexp
+] [
+.BI --reqid " reqid "
 ]
 .LP
 .B stageqry
@@ -108,6 +122,12 @@ stageqry \- give the status of all staged tapes
 .BI -u
 ] [
 .BI -x
+] [
+.BI --noregexp
+] [
+.BI --reqid " reqid "
+] [
+.BI --dump
 ]
 .LP
 .B stageqry
@@ -117,6 +137,8 @@ stageqry \- give the status of all staged tapes
 .BI -p " pool"
 ] [
 .BI -s
+] [
+.BI -X
 ]
 .SH DESCRIPTION
 .B stageqry
@@ -254,6 +276,18 @@ Multiple vids will be separated by colons.
 .BI \-x
 adds two columns to the output: they give the request id and the internal
 pathname.
+.TP
+.BI \-X
+gives statistics on migration rules, fileclasses that are associated to the disk pools listed.
+.TP
+.BI \--reqid " reqid "
+outputs only entries that have this given reqid.
+.TP
+.BI \--dump
+dumps the content of the found entry(ies) in the main catalog, or in the path catalog in case of -L option.
+.TP
+.BI \--noregexp
+prevents regular expression to be applied in case of -A of -M options. You then have to give the full (hsm) name as it was given when the entry was created inside the stager.
 .SH EXAMPLES
 .TP
 stageqry

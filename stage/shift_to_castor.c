@@ -1,5 +1,5 @@
 /*
- * $Id: shift_to_castor.c,v 1.9 2000/12/12 14:13:40 jdurand Exp $
+ * $Id: shift_to_castor.c,v 1.10 2001/01/31 19:00:01 jdurand Exp $
  */
 
 /* ============== */
@@ -393,30 +393,34 @@ int convert_stgcat() {
 		case 'm':
 			if (ISCASTOR(stcp_old.u1.m.xfile)) {
 				struct Cns_fileid Cnsfileid;
-				struct Cns_filestat statbuf;
+				struct Cns_filestat Cnsfilestat;
 
 				memset(&Cnsfileid, 0, sizeof(struct Cns_fileid));
 
 				stcp_old.t_or_d = stcp_castor.t_or_d = 'h';
 
 				if (ISCASTORHOST(stcp_old.u1.m.xfile)) {
-					if (Cns_statx(stcp_old.u1.m.xfile,&Cnsfileid,&statbuf) != 0) {
+					if (Cns_statx(stcp_old.u1.m.xfile,&Cnsfileid,&Cnsfilestat) != 0) {
 						printf("### Cns_statx on %s : %s\n",stcp_old.u1.m.xfile,sstrerror(serrno));
 						status = 1;
 					} else {
 						/* Note that u1.h.xfile and u1.m.xfile starts are the same address by definition */
 						strcpy(stcp_castor.u1.h.server,Cnsfileid.server);
 						stcp_castor.u1.h.fileid = Cnsfileid.fileid;
+						stcp_castor.u1.h.fileclass = Cnsfilestat.fileclass;
+						stcp_castor.u1.h.tppool[0] = '\0';
 					}
 				} else if (! ISHPSSHOST(stcp_old.u1.m.xfile)) {
 					/* Try neverthless to stat */
-					if (Cns_statx(stcp_old.u1.m.xfile,&Cnsfileid,&statbuf) != 0) {
+					if (Cns_statx(stcp_old.u1.m.xfile,&Cnsfileid,&Cnsfilestat) != 0) {
 						printf("### Cns_statx on %s : %s\n",stcp_old.u1.m.xfile,sstrerror(serrno));
 						status = 1;
 					} else {
 						/* Note that u1.h.xfile and u1.m.xfile starts are the same address by definition */
 						strcpy(stcp_castor.u1.h.server,Cnsfileid.server);
 						stcp_castor.u1.h.fileid = Cnsfileid.fileid;
+						stcp_castor.u1.h.fileclass = Cnsfilestat.fileclass;
+						stcp_castor.u1.h.tppool[0] = '\0';
 					}
 				} else {
 					printf("### %s : not a CASTOR host\n",stcp_old.u1.m.xfile);

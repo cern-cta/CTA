@@ -1,5 +1,5 @@
 /*
- * $Id: stageinit.c,v 1.13 2000/12/21 13:55:09 jdurand Exp $
+ * $Id: stageinit.c,v 1.14 2001/01/31 19:00:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.13 $ $Date: 2000/12/21 13:55:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.14 $ $Date: 2001/01/31 19:00:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -29,6 +29,7 @@ static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.13 $ $Date: 2
 #include "Cpwd.h"
 #include "Cgetopt.h"
 
+EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
 void cleanup _PROTO((int));
 void usage _PROTO((char *));
 extern int send2stgd _PROTO((char *, char *, int, int, char *, int));
@@ -55,7 +56,7 @@ int main(argc, argv)
 	gid = getgid();
 	Coptind = 1;
 	Copterr = 1;
-	while ((c = Cgetopt (argc, argv, "Fh:")) != -1) {
+	while ((c = Cgetopt (argc, argv, "Fh:X")) != -1) {
 		switch (c) {
 		case 'h':
 			stghost = Coptarg;
@@ -107,7 +108,7 @@ int main(argc, argv)
 	signal (SIGTERM, cleanup);
 
 	while (1) {
-		c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
+		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 		if (c == 0 || serrno == EINVAL || serrno == CONFERR) break;
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
@@ -126,5 +127,5 @@ void cleanup(sig)
 void usage(cmd)
 		 char *cmd;
 {
-	fprintf (stderr, "usage: %s [-F] [-h stage_host]\n", cmd);
+	fprintf (stderr, "usage: %s [-F] [-h stage_host] [-X]\n", cmd);
 }

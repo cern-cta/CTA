@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stagein.man,v $ $Revision: 1.5 $ $Date: 2000/12/05 11:39:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagein.man,v $ $Revision: 1.6 $ $Date: 2001/01/31 19:00:05 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEIN l "$Date: 2000/12/05 11:39:54 $"
+.TH STAGEIN l "$Date: 2001/01/31 19:00:05 $"
 .SH NAME
 stagein \- allocate space in a disk pool and copy files from tape to disk or
 from disk to disk
@@ -62,6 +62,10 @@ from disk to disk
 .BI -X " xparm"
 ] [ 
 .BI -z
+] [ 
+.BI --nowait
+] [ 
+.BI --tppool
 ] [ 
 .I files
 ] 
@@ -477,6 +481,12 @@ and file sequence number (-q).
 The line is prefixed by the string "STG47 - ". This flag is set by
 .BR copytape .
 For non-tape requests, this prints only the full pathname.
+.TP
+.B \--nowait
+Does not hang the client. Recall is done internally without further notification.
+.TP
+.B \--tppool
+Forces a specific tape pool. Meaningful only for CASTOR HSM files.
 .SH EXAMPLES
 .LP
 To get the data from a tape into the default stage pool:

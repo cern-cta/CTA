@@ -1,5 +1,5 @@
 /*
- * $Id: stage_xxx.c,v 1.11 2000/12/21 13:55:08 jdurand Exp $
+ * $Id: stage_xxx.c,v 1.12 2001/01/31 19:00:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_xxx.c,v $ $Revision: 1.11 $ $Date: 2000/12/21 13:55:08 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_xxx.c,v $ $Revision: 1.12 $ $Date: 2001/01/31 19:00:03 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -263,7 +263,7 @@ int _stage_xxx_hsm(command,stghost,stgpool,stguser,Kopt,hsmstruct)
     int correct_size_MB;
 
     if (hsm->size > 0) {
-      correct_size_MB = (int) ((hsm->size > ONE_MB) ? (((hsm->size - ((hsm->size / ONE_MB) * ONE_MB)) == 0) ? (hsm->size / ONE_MB) : ((hsm->size / ONE_MB) + 1)) : 1);
+      correct_size_MB = (int) ((hsm->size > (u_signed64) ONE_MB) ? (((hsm->size - ((hsm->size / ONE_MB) * ONE_MB)) == 0) ? (hsm->size / ONE_MB) : ((hsm->size / ONE_MB) + 1)) : 1);
       if (isize++ == 0) {
         sendbuf_size += strlen("-s") + 1; /* -s option */
       }
@@ -384,7 +384,7 @@ int _stage_xxx_hsm(command,stghost,stgpool,stguser,Kopt,hsmstruct)
     int correct_size_MB;
 
     if (hsm->size > 0) {
-      correct_size_MB = (int) ((hsm->size > ONE_MB) ? (((hsm->size - ((hsm->size / ONE_MB) * ONE_MB)) == 0) ? (hsm->size / ONE_MB) : ((hsm->size / ONE_MB) + 1)) : 1);
+      correct_size_MB = (int) ((hsm->size > (u_signed64) ONE_MB) ? (((hsm->size - ((hsm->size / ONE_MB) * ONE_MB)) == 0) ? (hsm->size / ONE_MB) : ((hsm->size / ONE_MB) + 1)) : 1);
       if (isize++ == 0) {
         marshall_STRING (sbp,"-s");
         nargs += 2;
@@ -425,7 +425,7 @@ int _stage_xxx_hsm(command,stghost,stgpool,stguser,Kopt,hsmstruct)
   marshall_LONG (q, msglen);	/* update length field */
   
   while (1) {
-    c = send2stgd (NULL, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
+    c = send2stgd_compat (NULL, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
     if (c == 0) break;
     if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
     sleep (RETRYI);

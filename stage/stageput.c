@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.17 2000/12/12 14:13:41 jdurand Exp $
+ * $Id: stageput.c,v 1.18 2001/01/31 19:00:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.17 $ $Date: 2000/12/12 14:13:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.18 $ $Date: 2001/01/31 19:00:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -31,6 +31,7 @@ static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.17 $ $Date: 20
 #include "Cgrp.h"
 #include "Cgetopt.h"
 
+EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
 extern	char	*getenv();
 extern	char	*getconfent();
 #if !defined(linux)
@@ -40,6 +41,8 @@ static gid_t gid;
 static int pid;
 static struct passwd *pw;
 char *stghost;
+int tppool_flag = 0;
+int nowait_flag = 0;
 
 void usage _PROTO((char *));
 void cleanup _PROTO((int));
@@ -60,7 +63,6 @@ int main(argc, argv)
 	char *hsm_host;
 	char hsm_path[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	int Iflag = 0;
-	int migratorflag = 0;
 	int Mflag = 0;
 	int msglen;
 	int nargs;
@@ -77,7 +79,20 @@ int main(argc, argv)
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
-	/* char repbuf[CA_MAXPATHLEN+1]; */
+	char *tppool = NULL;
+	static struct Coptions longopts[] =
+	{
+		{"grpuser",            REQUIRED_ARGUMENT,  NULL,      'G'},
+		{"host",               REQUIRED_ARGUMENT,  NULL,      'h'},
+		{"external_filename",  REQUIRED_ARGUMENT,  NULL,      'I'},
+		{"migration_filename", REQUIRED_ARGUMENT,  NULL,      'M'},
+		{"file_sequence",      REQUIRED_ARGUMENT,  NULL,      'q'},
+		{"fortran_unit",       REQUIRED_ARGUMENT,  NULL,      'U'},
+		{"vid",                REQUIRED_ARGUMENT,  NULL,      'V'},
+		{"nowait",             NO_ARGUMENT,  &nowait_flag,      1},
+		{"tppool",             REQUIRED_ARGUMENT, &tppool_flag, 1},
+		{NULL,                 0,                  NULL,        0}
+	};
 
 	nargs = argc;
 	uid = getuid();
@@ -91,7 +106,7 @@ int main(argc, argv)
 	numvid = 0;
 	Coptind = 1;
 	Copterr = 1;
-	while ((c = Cgetopt (argc, argv, "Gh:I:mM:q:U:V:")) != -1) {
+	while ((c = Cgetopt_long (argc, argv, "Gh:I:M:q:U:V:", longopts, NULL)) != -1) {
 		switch (c) {
 		case 'G':
 			Gflag++;
@@ -116,9 +131,6 @@ int main(argc, argv)
 			break;
 		case 'I':
 			Iflag = 1;
-			break;
-		case 'm':
-			migratorflag = 1;
 			break;
 		case 'M':
 			Mflag = 1;
@@ -207,6 +219,8 @@ int main(argc, argv)
 				errflg++;
 			}
 			break;
+		case 'q':
+			break;
 		case 'U':
 			fun = strtol (Coptarg, &dp, 10);
 			if (*dp != '\0') {
@@ -222,18 +236,20 @@ int main(argc, argv)
 				errflg++;
 			}
 			break;
+		case 0:
+			/* Long option without short option correspondance */
+			if (tppool_flag != 0) {
+				tppool = Coptarg;
+			}
+			break;
 		case '?':
 			errflg++;
 			break;
 		}
+        if (errflg) break;
 	}
 	if (Coptind >= argc && fun == 0 && numvid == 0 && Iflag == 0 && Mflag == 0) {
 		fprintf (stderr, STG46);
-		errflg++;
-	}
-
-	if (migratorflag != 0) {
-		fprintf (stderr, "STG17 - option -m is not supported on the command-line\n");
 		errflg++;
 	}
 
@@ -341,7 +357,7 @@ int main(argc, argv)
 	signal (SIGTERM, cleanup);
 	
 	while (1) {
-		c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
+		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 		if (c == 0 || serrno == EINVAL || serrno == ERTLIMBYSZ || serrno == CLEARED ||
 				serrno == ENOSPC) break;
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
@@ -395,7 +411,7 @@ void cleanup(sig)
 	marshall_WORD (sbp, pid);
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
-	c = send2stgd (stghost, sendbuf, msglen, 0, NULL, 0);
+	c = send2stgd_cmd (stghost, sendbuf, msglen, 0, NULL, 0);
 #if defined(_WIN32)
 	WSACleanup();
 #endif
@@ -409,5 +425,5 @@ void usage(cmd)
 	fprintf (stderr, "%s", "[-G] [-h stage_host] [-U fun] pathname(s)\n");
 	fprintf (stderr, "       %s ", cmd);
 	fprintf (stderr, "%s",
-					 "[-G] [-h stage_host] [-q file_sequence_number(s)] -V visual_identifier\n");
+					 "[-G] [-h stage_host] [-q file_sequence_number(s)] [--tppool tape pool] -V visual_identifier\n");
 }

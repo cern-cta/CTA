@@ -1,5 +1,5 @@
 /*
- * $Id: stagealloc.c,v 1.17 2000/12/12 14:13:40 jdurand Exp $
+ * $Id: stagealloc.c,v 1.18 2001/01/31 19:00:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.17 $ $Date: 2000/12/12 14:13:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.18 $ $Date: 2001/01/31 19:00:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -30,6 +30,7 @@ static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.17 $ $Date: 
 #include "Cgrp.h"
 #include "Cgetopt.h"
 
+EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
 extern	char	*getenv();
 extern	char	*getconfent();
 static gid_t gid;
@@ -252,7 +253,7 @@ int main(argc, argv)
 	signal (SIGTERM, cleanup);
 
 	while (1) {
-		c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
+		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 		if (c == 0 || serrno == EINVAL || serrno == CLEARED || serrno == ENOSPC) break;
 		if (serrno == LNKNSUP) {	/* symbolic links not supported on that platform */
 			c = 0;
@@ -290,7 +291,7 @@ void cleanup(sig)
 	marshall_WORD (sbp, pid);
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
-	c = send2stgd (stghost, sendbuf, msglen, 0, NULL, 0);
+	c = send2stgd_cmd (stghost, sendbuf, msglen, 0, NULL, 0);
 #if defined(_WIN32)
 	WSACleanup();
 #endif

@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.27 2000/12/12 14:13:42 jdurand Exp $
+ * $Id: stgconvert.c,v 1.28 2001/01/31 19:00:09 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.27 $ $Date: 2000/12/12 14:13:42 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.28 $ $Date: 2001/01/31 19:00:09 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -2364,7 +2364,9 @@ int stcpcmp(stcp1,stcp2,bindiff)
 	case 'h':
 		if (strcmp(stcp1->u1.h.xfile,stcp2->u1.h.xfile) != 0 ||
             strcmp(stcp1->u1.h.server,stcp2->u1.h.server) != 0 ||
-            stcp1->u1.h.fileid != stcp2->u1.h.fileid) {
+            stcp1->u1.h.fileid != stcp2->u1.h.fileid ||
+            stcp1->u1.h.fileclass != stcp2->u1.h.fileclass ||
+            strcmp(stcp1->u1.h.tppool,stcp2->u1.h.tppool) != 0) {
 			printf("### ... HSM part differs\n");
 			return(-1);
 		}
@@ -2443,6 +2445,8 @@ void stcpprint(stcp1,stcp2)
 			STCCMP_STRING(u1.h.xfile);
 			STCCMP_STRING(u1.h.server);
 			STCCMP_VAL(u1.h.fileid);
+			STCCMP_VAL(u1.h.fileclass);
+			STCCMP_STRING(u1.h.tppool);
 			break;
 		}
 	}

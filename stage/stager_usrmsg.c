@@ -1,5 +1,5 @@
 /*
- * $Id: stager_usrmsg.c,v 1.11 2000/12/21 13:55:10 jdurand Exp $
+ * $Id: stager_usrmsg.c,v 1.12 2001/01/31 19:00:08 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.11 $ $Date: 2000/12/21 13:55:10 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.12 $ $Date: 2001/01/31 19:00:08 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /* stager_usrmsg.c - callback rtcp routine */
@@ -37,6 +37,7 @@ static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.11 $ $Dat
 extern int rpfd;
 int sendrep _PROTO(());
 int stglogit _PROTO(());
+int stgmiglogit _PROTO(());
 extern struct passwd start_passwd;
 
 #define SETEID(thiseuid,thisegid) {              \
@@ -118,9 +119,9 @@ void stager_migmsg(int level, ...)
 	SETEID(0,0);
 #ifdef STAGER_DEBUG
     /* In debug mode - we always want to have all messages in stager log-file */
-	stglogit("migrator","%s",line);
+	stgmiglogit("migrator","%s",line);
 #else
-	if (level != LOG_DEBUG) stglogit("migrator","%s",line);
+	if (level != LOG_DEBUG) stgmiglogit("migrator","%s",line);
 #endif
 	SETEID(save_euid,save_egid);
 	va_end(args);

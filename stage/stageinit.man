@@ -1,14 +1,16 @@
-.\" @(#)$RCSfile: stageinit.man,v $ $Revision: 1.4 $ $Date: 1999/12/04 09:47:17 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageinit.man,v $ $Revision: 1.5 $ $Date: 2001/01/31 19:00:05 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEINIT l "$Date: 1999/12/04 09:47:17 $"
+.TH STAGEINIT l "$Date: 2001/01/31 19:00:05 $"
 .SH NAME
 stageinit \- tells stgdaemon to reread the pool configuration file
 .SH SYNOPSIS
 .B stageinit
 [
 .B -F
+] [
+.BI -X
 ] [
 .BI -h " host"
 ]
@@ -32,6 +34,9 @@ they just continue to run in parallel.
 Sends the request to the stager on
 .IR host .
 This may also be specified thru the environment variable STAGE_HOST.
+.TP
+.B \-X
+Updates all migration and fileclasses status plus knowledge.
 .SH FILES
 .TP 1.5i
 .B /etc/STGCONFIG

@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.4 2000/12/21 15:36:36 jdurand Exp $
+ * $Id: procfilchg.c,v 1.5 2001/01/31 18:59:51 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.4 $ $Date: 2000/12/21 15:36:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.5 $ $Date: 2001/01/31 18:59:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -23,8 +23,7 @@ static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.4 $ $Date: 2
 #endif
 #include <sys/stat.h>
 #include "marshall.h"
-#undef  unmarshall_STRING
-#define unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
+#define local_unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
 #include "stage.h"
 #if SACCT
 #include "../h/sacct.h"
@@ -66,7 +65,7 @@ procfilchgreq(req_data, clienthost)
 	int clientpid;
 
 	rbp = req_data;
-	unmarshall_STRING (rbp, user);	/* login name */
+	local_unmarshall_STRING (rbp, user);	/* login name */
 	unmarshall_WORD (rbp, uid);
 	unmarshall_WORD (rbp, gid);
 	unmarshall_WORD (rbp, clientpid);

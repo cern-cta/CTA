@@ -1,5 +1,5 @@
 /*
- * $Id: getlisttp.c,v 1.9 2000/12/12 14:13:40 jdurand Exp $
+ * $Id: getlisttp.c,v 1.10 2001/01/31 18:59:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getlisttp.c,v $ $Revision: 1.9 $ $Date: 2000/12/12 14:13:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getlisttp.c,v $ $Revision: 1.10 $ $Date: 2001/01/31 18:59:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -17,6 +17,10 @@ static char sccsid[] = "@(#)$RCSfile: getlisttp.c,v $ $Revision: 1.9 $ $Date: 20
 #include "stage.h"
 #include "Cgetopt.h"
 
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+#define strtok(X,Y) strtok_r(X,Y,&last)
+#endif /* _REENTRANT || _THREAD_SAFE */
+
 getlist_of_vid(opt, v, num)
 		 char *opt;
 		 char v[MAXVSN][7];
@@ -24,6 +28,9 @@ getlist_of_vid(opt, v, num)
 {
 	int errflg = 0;
 	char *p;
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+	char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
 
 	if (*num == 0) {
 		p = strtok (Coptarg, ":");

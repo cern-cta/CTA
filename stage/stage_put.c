@@ -1,5 +1,5 @@
 /*
- * $Id: stage_put.c,v 1.6 2000/12/21 13:55:08 jdurand Exp $
+ * $Id: stage_put.c,v 1.7 2001/01/31 19:00:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.6 $ $Date: 2000/12/21 13:55:08 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.7 $ $Date: 2001/01/31 19:00:02 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -152,10 +152,10 @@ int DLL_DECL stage_put_hsm(stghost,migratorflag,hsmstruct)
 	repbuf[0] = '\0';
 
 	while (1) {
-		c = send2stgd (stghost_ok, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
+		c = send2stgd_compat (stghost_ok, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
 		if (c == 0) break;
 		if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
-		sleep (RETRYI);
+		stage_sleep (RETRYI);
 	}
 	free(sendbuf);
 	return (c == 0 ? 0 : -1);

@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.23 2000/12/12 14:13:41 jdurand Exp $
+ * $Id: stagein.c,v 1.24 2001/01/31 19:00:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.23 $ $Date: 2000/12/12 14:13:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.24 $ $Date: 2001/01/31 19:00:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -38,6 +38,7 @@ static char sccsid[] = "@(#)RCSfile$ $Revision: 1.23 $ $Date: 2000/12/12 14:13:4
 #include "Cgrp.h"
 #include "Cgetopt.h"
 
+EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, int));  /* Command-line version */
 extern	char	*getenv();
 extern	char	*getconfent();
 #if !defined(linux)
@@ -48,11 +49,13 @@ static int pid;
 static struct passwd *pw;
 char *stghost;
 char user[15];	/* login name */
+int nowait_flag = 0;
+int tppool_flag = 0;
 
 #if TMS
 int tmscheck _PROTO((char *, char *, char *, char *, char *));
 #endif
-int chkdirw _PROTO((char *));
+int stagein_chkdirw _PROTO((char *));
 void cleanup _PROTO((int));
 void usage _PROTO((char *));
 void freehsmfiles _PROTO((int, char **));
@@ -109,6 +112,44 @@ int main(argc, argv)
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
+	char *tppool = NULL;
+	static struct Coptions longopts[] =
+	{
+		{"allocation_mode",    REQUIRED_ARGUMENT,  NULL,      'A'},
+		{"blocksize",          REQUIRED_ARGUMENT,  NULL,      'b'},
+		{"charconv",           REQUIRED_ARGUMENT,  NULL,      'C'},
+		{"concat",             REQUIRED_ARGUMENT,  NULL,      'c'},
+		{"density",            REQUIRED_ARGUMENT,  NULL,      'd'},
+		{"error_action",       REQUIRED_ARGUMENT,  NULL,      'E'},
+		{"format",             REQUIRED_ARGUMENT,  NULL,      'F'},
+		{"fid",                REQUIRED_ARGUMENT,  NULL,      'f'},
+		{"grpuser",            NO_ARGUMENT,        NULL,      'G'},
+		{"group_device",       REQUIRED_ARGUMENT,  NULL,      'g'},
+		{"host",               REQUIRED_ARGUMENT,  NULL,      'h'},
+		{"external_filename",  REQUIRED_ARGUMENT,  NULL,      'I'},
+		{"keep",               NO_ARGUMENT,        NULL,      'K'},
+		{"record_length",      REQUIRED_ARGUMENT,  NULL,      'L'},
+		{"label_type",         REQUIRED_ARGUMENT,  NULL,      'l'},
+		{"migration_filename", REQUIRED_ARGUMENT,  NULL,      'M'},
+		{"nread",              REQUIRED_ARGUMENT,  NULL,      'N'},
+		{"new_fid",            NO_ARGUMENT,        NULL,      'n'},
+		{"old_fid",            NO_ARGUMENT,        NULL,      'o'},
+		{"poolname",           REQUIRED_ARGUMENT,  NULL,      'p'},
+		{"file_sequence",      REQUIRED_ARGUMENT,  NULL,      'q'},
+		{"tape_server",        REQUIRED_ARGUMENT,  NULL,      'S'},
+		{"size",               REQUIRED_ARGUMENT,  NULL,      's'},
+		{"trailer_label_off",  NO_ARGUMENT,        NULL,      'T'},
+		{"retention_period",   REQUIRED_ARGUMENT,  NULL,      't'},
+		{"fortran_unit",       REQUIRED_ARGUMENT,  NULL,      'U'},
+		{"user",               REQUIRED_ARGUMENT,  NULL,      'u'},
+		{"vid",                REQUIRED_ARGUMENT,  NULL,      'V'},
+		{"vsn",                REQUIRED_ARGUMENT,  NULL,      'v'},
+		{"xparm",              REQUIRED_ARGUMENT,  NULL,      'X'},
+		{"copytape",           NO_ARGUMENT,        NULL,      'z'},
+		{"nowait",             NO_ARGUMENT,  &nowait_flag,      1},
+		{"tppool",             REQUIRED_ARGUMENT, &tppool_flag, 1},
+		{NULL,                 0,                  NULL,        0}
+	};
 
 	nargs = argc;
 	if (
@@ -143,8 +184,14 @@ int main(argc, argv)
 	memset (vsn, 0, sizeof(vsn));
 	Coptind = 1;
 	Copterr = 1;
-	while ((c = Cgetopt (argc, argv, "A:b:C:c:d:E:F:f:Gg:h:I:KL:l:M:N:nop:q:S:s:Tt:U:u:V:v:X:z")) != -1) {
+	while ((c = Cgetopt_long (argc, argv, "A:b:C:c:d:E:F:f:Gg:h:I:KL:l:M:N:nop:q:S:s:Tt:U:u:V:v:X:z", longopts, NULL)) != -1) {
 		switch (c) {
+		case 'A':
+			break;
+		case 'b':
+			break;
+		case 'C':
+			break;
 		case 'd':
 			stagetape++;
 			dflag++;
@@ -156,6 +203,8 @@ int main(argc, argv)
 			break;
 		case 'E':
 			stagetape++;
+			break;
+		case 'F':
 			break;
 		case 'f':
 			stagetape++;
@@ -192,6 +241,10 @@ int main(argc, argv)
 			break;
 		case 'I':
 			stagedisk++;
+			break;
+		case 'K':
+			break;
+		case 'L':
 			break;
 		case 'l':
 			stagetape++;
@@ -288,6 +341,8 @@ int main(argc, argv)
 				errflg++;
 			}
 			break;
+		case 'N':
+			break;
 		case 'n':
 			stagetape++;
 			break;
@@ -303,6 +358,8 @@ int main(argc, argv)
 			break;
 		case 'S':
 			stagetape++;
+			break;
+		case 's':
 			break;
 		case 'T':
 			stagetape++;
@@ -329,16 +386,26 @@ int main(argc, argv)
 			vflag++;
 			errflg += getlist_of_vid ("-v", vsn, &numvsn);
 			break;
+		case 'X':
+			break;
 		case 'z':
 			stagetape++;
 			copytape++;
+			break;
+		case 0:
+			/* Long option without short option correspondance */
+			if (tppool_flag != 0) {
+				tppool = Coptarg;
+			}
 			break;
 		case '?':
 			errflg++;
 			break;
 		default:
+			errflg++;
 			break;
 		}
+        if (errflg) break;
 	}
 	if (req_type != STAGEIN && req_type != STAGEOUT &&
 			Coptind >= argc && fun == 0) {
@@ -516,7 +583,7 @@ int main(argc, argv)
 			continue;
 		} else {
 			if (poolname && strcmp (poolname, "NOPOOL") == 0 &&
-					chkdirw (path) < 0) {
+					stagein_chkdirw (path) < 0) {
 				errflg++;
 				continue;
 			}
@@ -538,7 +605,7 @@ int main(argc, argv)
 		} else if (c)
 			errflg++;
 		else if (poolname && strcmp (poolname, "NOPOOL") == 0 &&
-						 chkdirw (path) < 0) {
+						 stagein_chkdirw (path) < 0) {
 			errflg++;
 		} else {
 			if (sbp + strlen (path) - sendbuf >= sizeof(sendbuf)) {
@@ -569,7 +636,7 @@ int main(argc, argv)
 	signal (SIGTERM, cleanup);
 	
 	while (1) {
-		c = send2stgd (stghost, sendbuf, msglen, 1, NULL, 0);
+		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 		if (c == 0 || serrno == EINVAL || serrno == ERTBLKSKPD || serrno == ERTTPE_LSZ ||
 				serrno == ERTMNYPARY || serrno == ERTLIMBYSZ || serrno == CLEARED ||
 				serrno == ENOSPC) break;
@@ -701,13 +768,13 @@ int tmscheck(vid, vsn, dgn, den, lbl)
 }
 #endif
 
-/*	chkdirw - extract directory name from full pathname
+/*	stagein_chkdirw - extract directory name from full pathname
  *		and check if writable.
  *
  *	return	-1	in case of error
  *		0	if writable
  */
-int chkdirw(path)
+int stagein_chkdirw(path)
 		 char *path;
 {
 	char *p, *q;
@@ -757,7 +824,7 @@ void cleanup(sig)
 	marshall_WORD (sbp, pid);
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
-	c = send2stgd (stghost, sendbuf, msglen, 0, NULL, 0);
+	c = send2stgd_cmd (stghost, sendbuf, msglen, 0, NULL, 0);
 #if defined(_WIN32)
 	WSACleanup();
 #endif
@@ -768,12 +835,14 @@ void usage(cmd)
 		 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
-	fprintf (stderr, "%s%s%s%s%s%s%s",
+	fprintf (stderr, "%s%s%s%s%s%s%s%s%s",
 					 "[-A alloc_mode] [-b max_block_size] [-C charconv] [-c off|on]\n",
 					 "[-d density] [-E error_action] [-F record_format] [-f file_id] [-G]\n",
 					 "[-g device_group_name] [-h stage_host] [-I external_filename] [-K]\n",
 					 "[-L record_length] [-l label_type] [-M hsmfile [-M...]] [-N nread] [-n] [-o] [-p pool]\n",
 					 "[-q file_sequence_number] [-S tape_server] [-s size] [-T] [-t retention_period]\n",
 					 "[-U fun] [-u user] [-V visual_identifier(s)] [-v volume_serial_number(s)]\n",
-					 "[-X xparm] pathname(s)\n");
+					 "[-X xparm]\n",
+					 "[--nowait] [--tppool tapepool]\n",
+					 "pathname(s)\n");
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: stage_migpool.c,v 1.4 2000/12/21 13:55:08 jdurand Exp $
+ * $Id: stage_migpool.c,v 1.5 2001/01/31 19:00:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stage_migpool.c,v $ $Revision: 1.4 $ $Date: 2000/12/21 13:55:08 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "$RCSfile: stage_migpool.c,v $ $Revision: 1.5 $ $Date: 2001/01/31 19:00:02 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -127,7 +127,7 @@ int stage_migpool(stghost,diskpool,migpool)
 	marshall_LONG (q, msglen);	/* update length field */
 
 	while (1) {
-		c = send2stgd (stghost_ok, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
+		c = send2stgd_compat (stghost_ok, sendbuf, msglen, 1, repbuf, sizeof(repbuf));
 		if (c == 0) break;
 		if (serrno != ESTNACT || ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
