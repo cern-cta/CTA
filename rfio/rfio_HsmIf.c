@@ -478,6 +478,8 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
           struct stage_io_fileresp *response;
           char *requestId, *url;
 
+          TRACE(3,"rfio","Calling stage_open with: %s %x %x",
+                path, flags, mode);
           rc = stage_open(NULL,
                           MOVER_PROTOCOL_RFIO,
                           path,
@@ -490,12 +492,25 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
             return -1;
           }
 
+          if (response == NULL) {
+            TRACE(3,"rfio","Received NULL response");
+            serrno = SEINTERNAL;
+            return -1;
+          }
+          
+          if (response->errorCode != 0) {
+            TRACE(3,"rfio","stage_open error: %d/%s",
+                  response->errorCode, response->errorMessage);
+            serrno = response->errorCode;
+            return -1;
+          }
+
           url = stage_geturl(response);
           if (url == 0) {
             free(response);
             return -1;
           }
-          
+
           rc = rfio_open(url, flags, mode);
           free(response);
           free(url); 
