@@ -7,6 +7,7 @@
 #include <unistd.h>
 #endif
 #include <string.h>
+#include <errno.h>
 #include "stage_api.h"
 #include "osdep.h"
 #include "Cgetopt.h"
@@ -19,9 +20,18 @@ void usage _PROTO((char *));
 
 int fd_stcp;
 int fd_stpp;
+int reqid;
+int istcp_output = 0;
+int istpp_output = 0;
+
 char *stcp_output = NULL;
 char *stpp_output = NULL;
-int reqid;
+char *stghost_input = NULL;
+char *stghost_output = NULL;
+static int stcp_output_flag = 0;
+static int stpp_output_flag = 0;
+static int stghost_input_flag = 0;
+static int stghost_output_flag = 0;
 
 int main(argc,argv)
 	int argc;
@@ -32,17 +42,17 @@ int main(argc,argv)
 	int nstpp_output = 0;
 	int rc;
 	char *func = "stgdump";
-	static int stcp_output_flag;
-	static int stpp_output_flag;
 	int errflg = 0;
 	int c;
 	char *stghost = NULL;
+	int v;
 
 	static struct Coptions longopts[] =
 	{
 		{"stcp_output",        REQUIRED_ARGUMENT,  &stcp_output_flag,  1},
 		{"stpp_output",        REQUIRED_ARGUMENT,  &stpp_output_flag,  1},
-		{"hostname",           REQUIRED_ARGUMENT,  NULL,              'h'},
+		{"stghost_input",      REQUIRED_ARGUMENT,  &stghost_input_flag,  1},
+		{"stghost_output",     REQUIRED_ARGUMENT,  &stghost_output_flag,  1},
 		{NULL,                 0,                  NULL,               0}
 	};
 
@@ -56,7 +66,7 @@ int main(argc,argv)
 	stcp_output_flag = 0;
 	stpp_output_flag = 0;
 
-	while ((c = Cgetopt_long (argc, argv, "h:", longopts, NULL)) != -1) {
+	while ((c = Cgetopt_long (argc, argv, "", longopts, NULL)) != -1) {
 		switch (c) {
 		case 'h':
 			stghost = Coptarg;
@@ -70,6 +80,14 @@ int main(argc,argv)
 			if (stpp_output_flag && ! stpp_output) {
 				/* --stpp_output */
 				stpp_output = Coptarg;
+			}
+			if (stghost_input_flag && ! stghost_input) {
+				/* --stghost_input */
+				stghost_input = Coptarg;
+			}
+			if (stghost_output_flag && ! stghost_output) {
+				/* --stghost_output */
+				stghost_output = Coptarg;
 			}
 			break;
 		case '?':
@@ -91,7 +109,12 @@ int main(argc,argv)
 		usage(argv[0]);
 		exit(EXIT_FAILURE);
 	}
-
+	if (((stghost_input != NULL) && (stghost_output == NULL)) ||
+		((stghost_input == NULL) && (stghost_output != NULL))) {
+		stage_errmsg(func,"arguments : --stghost_input and --stghost_output must be set all together\n");
+		usage(argv[0]);
+		exit(EXIT_FAILURE);
+	}
 	
 	if ((stcp_output != NULL) && (stpp_output != NULL)) {
 		if (strcmp(stcp_output,stpp_output) == 0) {
@@ -100,6 +123,19 @@ int main(argc,argv)
 		}
 	}
 	
+	/* We will not seek etc... so we can work in V3 mode */
+	v = RFIO_STREAM;
+	rfiosetopt(RFIO_READOPT,&v,4); 
+
+	if (stghost_output != NULL) {
+		char myenv[1024];
+
+		sprintf(myenv,"STAGE_HOST=%s",stghost_output);
+		if (putenv(myenv) != 0) {
+			stage_errmsg(func,"Cannot putenv(\"%s\"), %s\n", myenv, strerror(errno));
+		}
+	}
+
 	/* Open output files */
 	if (stcp_output != NULL) {
 		PRE_RFIO;
@@ -112,7 +148,7 @@ int main(argc,argv)
 		PRE_RFIO;
 		if ((fd_stpp = rfio_open(stpp_output, O_CREAT|O_WRONLY|O_TRUNC, 0644)) < 0) {
 			stage_errmsg(func,"%s open error : %s\n", stpp_output, rfio_serror());
-			close(fd_stcp);
+			rfio_close(fd_stcp);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -123,6 +159,15 @@ int main(argc,argv)
 
 	memset(&stcp_dummy, 0, sizeof(struct stgcat_entry));
 	if (stcp_output != NULL) {
+		if (stghost_input != NULL) {
+			char myenv[1024];
+			
+			sprintf(myenv,"STAGE_HOST=%s",stghost_input);
+			if (putenv(myenv) != 0) {
+				stage_errmsg(func,"Cannot putenv(\"%s\"), %s\n", myenv, strerror(errno));
+			}
+		}
+
 		if ((rc = stage_qry('t',                    /* t_or_d */
 							(u_signed64) STAGE_ALL, /* Flags */
 							stghost,                /* Hostname */
@@ -135,10 +180,18 @@ int main(argc,argv)
 			)) < 0) {
 			stage_errmsg(func,"stage_qry error : %s\n", sstrerror(serrno));
 		} else {
-			stage_errmsg(func,"==> Got %d stcp\n", nstcp_output);
+			fprintf(stdout,"==> Got %d stcp\n", nstcp_output);
 		}
 	}
 	if (stpp_output != NULL) {
+		if (stghost_input != NULL) {
+			char myenv[1024];
+			
+			sprintf(myenv,"STAGE_HOST=%s",stghost_input);
+			if (putenv(myenv) != 0) {
+				stage_errmsg(func,"Cannot putenv(\"%s\"), %s\n", myenv, strerror(errno));
+			}
+		}
 		if ((rc = stage_qry('t',                    /* t_or_d */
 							(u_signed64) STAGE_ALL|STAGE_LINKNAME, /* Flags */
 							stghost,                /* Hostname */
@@ -151,7 +204,16 @@ int main(argc,argv)
 			)) < 0) {
 			stage_errmsg(func,"stage_qry error : %s\n", sstrerror(serrno));
 		} else {
-			stage_errmsg(func,"==> Got %d stpp\n", nstpp_output);
+			fprintf(stdout,"==> Got %d stpp\n", nstpp_output);
+		}
+	}
+
+	if (stghost_output != NULL) {
+		char myenv[1024];
+
+		sprintf(myenv,"STAGE_HOST=%s",stghost_output);
+		if (putenv(myenv) != 0) {
+			stage_errmsg(func,"Cannot putenv(\"%s\"), %s\n", myenv, strerror(errno));
 		}
 	}
 
@@ -176,8 +238,9 @@ void log_callback(level,message)
 	int level;
 	char *message;
 {
-	if (level == MSG_ERR)
+	if (level == MSG_ERR) {
 		fprintf(stderr,"%s",message);
+	}
 	return;
 }
 
@@ -195,6 +258,9 @@ void qry_callback(stcp,stpp)
 		PRE_RFIO;
 		if (rfio_write(fd_stcp, stcp, (int) sizeof(struct stgcat_entry)) != sizeof(struct stgcat_entry)) {
 			stage_errmsg(func,"write of stcp error : %s\n", rfio_serror());
+			exit(EXIT_FAILURE);
+		} else {
+			if (++istcp_output % 1000 == 0) fprintf(stdout,"... Got %d stcp\n", istcp_output);
 		}
 		
 	}
@@ -203,6 +269,9 @@ void qry_callback(stcp,stpp)
 		PRE_RFIO;
 		if (rfio_write(fd_stpp, stpp, (int) sizeof(struct stgpath_entry)) != sizeof(struct stgpath_entry)) {
 			stage_errmsg(func,"write of stpp error : %s\n", rfio_serror());
+			exit(EXIT_FAILURE);
+		} else {
+			if (++istpp_output % 1000 == 0) fprintf(stdout,"... Got %d stcp\n", istpp_output);
 		}
 		
 	}
@@ -211,5 +280,5 @@ void qry_callback(stcp,stpp)
 void usage(prog)
 	char *prog;
 {
-	fprintf(stderr,"Usage: %s [-h hostname] --stcp_output <filename> --stcpp_output <filename>\n", prog);
+	fprintf(stderr,"Usage: %s [--stghost_input hostname] [--stghost_output hostname] --stcp_output <filename> --stcpp_output <filename>\n", prog);
 }
