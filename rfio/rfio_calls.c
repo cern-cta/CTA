@@ -3479,8 +3479,10 @@ char *hostname ;        /* caller's host name                */
 int *ptrcode ;          /* Return code                       */
 char *permstr;          /* permission string for the request */
 {
+#ifdef CSEC
   *uid = peer_uid;
   *gid = peer_gid;
+#endif
   return chsuser(*uid,*gid,hostname,ptrcode,permstr);
 }
 
