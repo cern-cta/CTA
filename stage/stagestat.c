@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.29 2002/06/16 04:58:12 jdurand Exp $
+ * $Id: stagestat.c,v 1.30 2002/06/16 05:29:12 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.29 $ $Date: 2002/06/16 04:58:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.30 $ $Date: 2002/06/16 05:29:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1921,20 +1921,21 @@ void usage (cmd)
 			 "[-a][-c][-d][-e end_time][-f accounting_file][-h][-s start_time][-p pool_name][-S <a or t>][-v]\n"
 			 "[-D diskfile][-H castorfile][-M noncastorfile][-T vid]\n"
 			 "\n"
-			 "      -a                 Use files deleted by user and admin for lifetime analysis - Default to admin (== garbage collector) only\n"
-			 "where -c                 Use creation time for doing lifetime analysis\n"
+			 "where -a                 Use files deleted by user and admin for lifetime analysis - Default to admin (== garbage collector) only\n"
+			 "      -c                 Use creation time for doing lifetime analysis\n"
 			 "      -d                 Debug mode\n"
+			 "      -D diskfile        is for searching and dumping accounting for DISK entries matching \"diskfile\"\n"
 			 "      -e end_time        Limits analysis up to mmddhhmm[yy]\n"
 			 "      -f accounting_file For using \"accounting_file\" (rfio syntax)\n"
 			 "      -h accounting_file This help\n"
-			 "      -s start_time      Limits analysis from mmddhhmm[yy]\n"
-			 "      -p pool_name       Limits analysis to pool \"pool_name\"\n"
-			 "      -S <a or t>        Sorting criteria (\"a\" per access number, \"t\" per lifetime)\n"
-			 "      -v                 Verbose mode\n"
-			 "where -D diskfile        is for searching and dumping accounting for DISK entries matching \"diskfile\"\n"
 			 "      -H castorfile      is for searching and dumping accounting for CASTOR entries matching \"castorfile\"\n"
 			 "      -M hsmfile         is for searching and dumping accounting for HSM and NON-CASTOR entries matching \"hsmfile\"\n"
+			 "      -p pool_name       Limits analysis to pool \"pool_name\"\n"
+			 "      -r reqid           is for searching and dumping accounting for this \"reqid\"\n"
+			 "      -s start_time      Limits analysis from mmddhhmm[yy]\n"
+			 "      -S <a or t>        Sorting criteria (\"a\" per access number, \"t\" per lifetime)\n"
 			 "      -T vid             is for searching and dumping accounting for TAPE entries matching \"vid\"\n"
+			 "      -v                 Verbose mode\n"
 		);
 }
 
