@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.137 $ $Release$ $Date: 2005/03/15 15:49:36 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.138 $ $Release$ $Date: 2005/03/16 15:08:11 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -2166,9 +2166,9 @@ void castor::db::ora::OraStagerSvc::bestFileSystemForJob
     unsigned int maxFS = 0;
     unsigned int maxM = 0;
     for (int i = 0; i < fileSystemsNb; i++) {
-      lensFS[i] = strlen(fileSystems[i]) + 1; // +1 for the \0
+      lensFS[i] = strlen(fileSystems[i]);
       if (lensFS[i] > maxFS) maxFS = lensFS[i];
-      lensM[i] = strlen(machines[i]) + 1; // +1 for the \0
+      lensM[i] = strlen(machines[i]);
       if (lensM[i] > maxM) maxM = lensM[i];
     }
     // Allocate buffer for giving the parameters to ORACLE
