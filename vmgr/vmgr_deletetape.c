@@ -4,12 +4,13 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_deletetape.c,v $ $Revision: 1.1 $ $Date: 1999/12/16 06:57:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_deletetape.c,v $ $Revision: 1.2 $ $Date: 1999/12/17 07:13:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_deletetape - delete a tape volume */
 
 #include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -49,6 +50,11 @@ vmgr_deletetape(const char *vid)
 
 	if (! vid) {
 		serrno = EFAULT;
+		return (-1);
+	}
+
+	if (strlen (vid) > CA_MAXVIDLEN) {
+		serrno = EINVAL;
 		return (-1);
 	}
  
