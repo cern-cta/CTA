@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.99 $ $Release$ $Date: 2005/01/05 13:59:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.100 $ $Release$ $Date: 2005/01/06 15:09:29 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -170,6 +170,10 @@ const std::string castor::db::ora::OraStagerSvc::s_recreateCastorFileStatementSt
 const std::string castor::db::ora::OraStagerSvc::s_prepareForMigrationStatementString =
   "BEGIN prepareForMigration(:1, :2, :3, :4, :5, :6); END;";
 
+/// SQL statement for resetStream
+const std::string castor::db::ora::OraStagerSvc::s_resetStreamStatementString =
+  "BEGIN resetStream(:1); END;";
+
 // -----------------------------------------------------------------------
 // OraStagerSvc
 // -----------------------------------------------------------------------
@@ -198,7 +202,8 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_updateAndCheckSubRequestStatement(0),
   m_disk2DiskCopyDoneStatement(0),
   m_recreateCastorFileStatement(0),
-  m_prepareForMigrationStatement(0) {
+  m_prepareForMigrationStatement(0),
+  m_resetStreamStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -253,6 +258,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_disk2DiskCopyDoneStatement);
     deleteStatement(m_recreateCastorFileStatement);
     deleteStatement(m_prepareForMigrationStatement);
+    deleteStatement(m_resetStreamStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;
@@ -279,6 +285,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_disk2DiskCopyDoneStatement = 0;
   m_recreateCastorFileStatement = 0;
   m_prepareForMigrationStatement = 0;
+  m_resetStreamStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -1960,6 +1967,32 @@ void castor::db::ora::OraStagerSvc::prepareForMigration
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in prepareForMigration."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// resetStream
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::resetStream
+(castor::stager::Stream* stream)
+  throw (castor::exception::Exception) {
+    try {
+    // Check whether the statements are ok
+    if (0 == m_resetStreamStatement) {
+      m_resetStreamStatement =
+        createStatement(s_resetStreamStatementString);
+      m_resetStreamStatement->setAutoCommit(true);
+    }
+    // execute the statement and see whether we found something
+    m_resetStreamStatement->setDouble(1, stream->id());
+    unsigned int nb = m_resetStreamStatement->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    rollback();
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in resetStream."
       << std::endl << e.what();
     throw ex;
   }

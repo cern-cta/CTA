@@ -539,6 +539,17 @@ namespace castor {
          u_signed64 fileSize)
           throw (castor::exception::Exception);
 
+        /**
+         * resets a stream by either deleting it or setting
+         * its status to STREAM_PENDING depending on whether
+         * there are TapeCopies in status WAITINSTREAMS status.
+         * Also deletes all links to TapeCopies for this stream
+         * @param stream the stream to reset
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void resetStream(castor::stager::Stream* stream)
+          throw (castor::exception::Exception);
+
       private:
 
         /**
@@ -710,6 +721,12 @@ namespace castor {
 
         /// SQL statement object for function prepareForMigration
         oracle::occi::Statement *m_prepareForMigrationStatement;
+
+        /// SQL statement for function resetStream
+        static const std::string s_resetStreamStatementString;
+
+        /// SQL statement object for function resetStream
+        oracle::occi::Statement *m_resetStreamStatement;
 
       }; // end of class OraStagerSvc
 

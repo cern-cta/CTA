@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2004/12/17 11:13:41 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2005/01/06 15:09:29 $ $Author: sponcec3 $
  *
- * 
+ *
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -31,10 +31,10 @@
 #include <string>
 
 extern "C" {
-  
+
   // C include files
-  #include "castor/ServicesCInt.hpp"
-  #include "castor/stager/IStagerSvcCInt.hpp"
+#include "castor/ServicesCInt.hpp"
+#include "castor/stager/IStagerSvcCInt.hpp"
 
   //----------------------------------------------------------------------------
   // checkIStagerSvc
@@ -114,7 +114,7 @@ extern "C" {
     }
     return 0;
   }
-  
+
   //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_bestFileSystemForSegment
   //-------------------------------------------------------------------------
@@ -414,7 +414,7 @@ extern "C" {
   const char* Cstager_IStagerSvc_errorMsg(Cstager_IStagerSvc_t* stgSvc) {
     return stgSvc->errorMsg.c_str();
   }
-  
+
   //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_selectSvcClass
   //-------------------------------------------------------------------------
@@ -582,9 +582,9 @@ extern "C" {
       stgSvc->errorMsg = e.getMessage().str();
       return -1;
     }
-    return 0;    
+    return 0;
   }
-  
+
   //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_prepareForMigration
   //-------------------------------------------------------------------------
@@ -601,7 +601,7 @@ extern "C" {
       stgSvc->errorMsg = e.getMessage().str();
       return -1;
     }
-    return 0;    
+    return 0;
   }
 
   //-------------------------------------------------------------------------
@@ -619,7 +619,24 @@ extern "C" {
       stgSvc->errorMsg = e.getMessage().str();
       return -1;
     }
-    return 0;    
+    return 0;
   }
-  
+
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_resetStream
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_resetStream
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   castor::stager::Stream* stream) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      stgSvc->stgSvc->resetStream(stream);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
 }

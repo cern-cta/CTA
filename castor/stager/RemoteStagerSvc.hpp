@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/12/17 11:13:41 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2005/01/06 15:09:29 $ $Author: sponcec3 $
  *
  *
  *
@@ -522,6 +522,17 @@ namespace castor {
       virtual void prepareForMigration
       (castor::stager::SubRequest* subreq,
        u_signed64 fileSize)
+        throw (castor::exception::Exception);
+
+      /**
+       * resets a stream by either deleting it or setting
+       * its status to STREAM_PENDING depending on whether
+       * there are TapeCopies in status WAITINSTREAMS status.
+       * Also deletes all links to TapeCopies for this stream
+       * @param stream the stream to reset
+       * @exception Exception throws an Exception in case of error
+       */
+      virtual void resetStream(castor::stager::Stream* stream)
         throw (castor::exception::Exception);
 
     }; // end of class RemoteStagerSvc

@@ -499,7 +499,7 @@ CREATE OR REPLACE PROCEDURE recreateCastorFile(cfId IN INTEGER,
   nh VARCHAR(2048);
 BEGIN
  -- Lock the access to the TapeCopies and DiskCopies
- LOCK TABLE TapeCopy, DiskCopy in exclusive mode;
+ LOCK TABLE TapeCopy, DiskCopy, Id2Type in exclusive mode;
  -- check if recreation is possible (exception if not)
  BEGIN
    SELECT id INTO dcId FROM TapeCopy
@@ -608,4 +608,23 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       RETURNING id, fileSize INTO rid, rfs;
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
   END;
+END;
+
+/* PL/SQL method implementing resetStream */
+CREATE OR REPLACE PROCEDURE resetStream (sid IN INTEGER) AS
+  fake : NUMBER;
+BEGIN
+  -- needed to avoid dead locks. Anyway, this won't be
+  -- executed very often
+  LOCK TABLE Stream2TapeCopy, Stream IN exclusive mode;
+  SELECT Stream2TapeCopy.Child
+    FROM Stream2TapeCopy, TapeCopy
+    WHERE Stream2TapeCopy.Parent = sid
+      AND Stream2TapeCopyChild = TapeCopy.id
+      AND status = 2 -- TAPECOPY_WAITINSTREAMS
+    INTO fake;
+  UPDATE Stream SET status = 0 WHERE id = sid; -- STREAM_PENDING
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  DELETE FROM Stream2TapeCopy WHERE Parent = sid;
+  DELETE FROM Stream WHERE id = sid;
 END;

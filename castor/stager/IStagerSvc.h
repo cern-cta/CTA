@@ -666,4 +666,20 @@ int Cstager_IStagerSvc_prepareForMigration
  struct Cstager_SubRequest_t* subreq,
  u_signed64 fileSize);
 
+/**
+ * resets a stream by either deleting it or setting
+ * its status to STREAM_PENDING depending on whether
+ * there are TapeCopies in status WAITINSTREAMS status.
+ * Also deletes all links to TapeCopies for this stream
+ * @param stgSvc the IStagerSvc used
+ * @param stream the stream to reset
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_resetStream
+(struct Cstager_IStagerSvc_t* stgSvc,
+ struct Cstager_Stream_t* stream);
+
 #endif // CASTOR_ISTAGERSVC_H

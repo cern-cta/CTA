@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/12/17 11:13:41 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteStagerSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2005/01/06 15:09:29 $ $Author: sponcec3 $
  *
  *
  *
@@ -551,4 +551,17 @@ void castor::stager::RemoteStagerSvc::prepareForMigration
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client;
   client.sendRequest(&req, &rh);
+}
+
+// -----------------------------------------------------------------------
+// prepareForMigration
+// -----------------------------------------------------------------------
+void castor::stager::RemoteStagerSvc::resetStream
+(castor::stager::Stream* stream)
+  throw (castor::exception::Exception) {
+  castor::exception::NotSupported ex;
+  ex.getMessage()
+    << "RemoteStagerSvc implementation is not complete"
+    << std::endl << "This method is not supported.";
+  throw ex;
 }
