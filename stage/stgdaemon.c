@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stgdaemon.c,v $ $Revision: 1.243 $ $Date: 2003/09/14 06:02:04 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "$RCSfile: stgdaemon.c,v $ $Revision: 1.244 $ $Date: 2003/09/25 07:35:58 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -2377,13 +2377,7 @@ killallovl(sig)
 	checkwaitingspc ();	/* check requests that are waiting for space */
 	checkwaitq ();	/* scan the wait queue */
 
-	/* kill the cleaners */
-	killcleanovl(SIGINT);
-
-	/* kill the "migrator"s */
-	killmigovl(SIGINT);
-
-	/* Protect agsin the signal we are doing to send */
+	/* Protect against the signal we are going to send */
 	signal (SIGINT,SIG_IGN);
 
 	/* kill every process in our process group */
