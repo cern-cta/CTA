@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.56 $ $Release$ $Date: 2004/08/19 14:45:21 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.57 $ $Release$ $Date: 2004/08/20 13:20:40 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.56 $ $Date: 2004/08/19 14:45:21 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.57 $ $Date: 2004/08/20 13:20:40 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -577,49 +577,6 @@ static int addSegment(
   return(0);
 }
 
-static int matchOldSegment(
-                           segment,
-                           oldSegmArray,
-                           nbOldSegms,
-                           startIndex,
-                           oldSegm
-                           )
-     struct Cstager_Segment_t *segment, **oldSegmArray, **oldSegm;
-     int nbOldSegms, startIndex;
-{
-  int i, iStart, found = 0;
-  ID_TYPE searchKey, key;
-
-  if ( segment == NULL || oldSegmArray == NULL ) {
-    serrno = EINVAL;
-    return(-1);
-  }
-
-  Cstager_Segment_id(segment,&searchKey);
-  
-  if ( (startIndex > 0) && (startIndex < nbOldSegms) ) iStart = startIndex;
-  else iStart = 0;
-  
-  for ( i = iStart; i<nbOldSegms; i++ ) {
-    Cstager_Segment_id(oldSegmArray[i],&key);
-    if ( key == searchKey ) {
-      found = 1;
-      break;
-    }
-  }
-  if ( found == 0 ) {
-    for ( i=0; i<iStart; i++ ) {
-      Cstager_Segment_id(oldSegmArray[i],&key);
-      if ( key == searchKey ) {
-        found = 1;
-        break;
-      }
-    }
-  }
-  if ( (found == 1) && (oldSegm != NULL) ) *oldSegm = oldSegmArray[i];
-  return(found);
-}
-
 static int newOrUpdatedSegment(
                                tape,
                                file,
@@ -789,7 +746,7 @@ static int addNewSegmentsToDB(
   struct C_Services_t **dbSvc = NULL;
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr;
-  struct C_IObject_t *tapeIObj = NULL;
+  struct C_IObject_t *iObj = NULL;
   struct Cstager_IStagerSvc_t *stgSvc = NULL;
   struct Cstager_Tape_t *tp = NULL;
   struct Cstager_Segment_t **newSegms = NULL;
@@ -863,12 +820,14 @@ static int addNewSegmentsToDB(
   }
 
   /*
+   * Move the new segments one by one to the newly created Tape.
    * All new segments do not (yet) have a key. We have to be careful
    * since we at the same time remove the segment from the current
    * tape. Safest is probably to update the array at every iteration
    * (although a bit expensive)...
    */
   keyNew = 0;
+  rc = 0;
   while ( keyNew == 0 ) {
     newSegms = NULL;
     Cstager_Tape_segments(clientCntx->currentTp,&newSegms,&nbNew);
@@ -881,10 +840,17 @@ static int addNewSegmentsToDB(
         Cstager_Tape_removeSegments(clientCntx->currentTp,newSegms[i]);
         Cstager_Tape_addSegments(tp,newSegms[i]);
         Cstager_Segment_setTape(newSegms[i],tp);
+        iObj = Cstager_Segment_getIObject(newSegms[i]);
+        rc = C_Services_createRepNoRec(*dbSvc,iAddr,iObj,0);
+        if ( rc == -1 ) {
+          save_serrno = serrno;
+          break;
+        }
         free(newSegms);
         break;
       }
     }
+    if ( rc == -1 ) break;
   }
   
   if ( newSegms != NULL ) free(newSegms);
@@ -893,14 +859,36 @@ static int addNewSegmentsToDB(
     save_serrno = serrno;
     (void)C_Services_rollback(*dbSvc,iAddr);
     rtcp_log(LOG_ERR,"Request aborted\n");
+    serrno = save_serrno;
+    return(-1);
   }
   
-  rtcp_log(LOG_DEBUG,"addNewSegmentsToDB() commit updates\n");
-  tapeIObj = Cstager_Tape_getIObject(tp);
+/*   iObj = Cstager_Tape_getIObject(tp); */
 
-  rc = C_Services_updateRep(*dbSvc,iAddr,tapeIObj,1);
+/*   rc = C_Services_updateRep(*dbSvc,iAddr,iObj,0); */
   if ( rc != 0 ) {
-    LOG_FAILED_CALL("C_Services_updateRep()",
+/*     LOG_FAILED_CALL("C_Services_updateRep()", */
+/*                     C_Services_errorMsg(*dbSvc)); */
+/*     save_serrno = serrno; */
+    LOG_FAILED_CALL("C_Services_createRepNoRec()",
+                    C_Services_errorMsg(*dbSvc));
+    (void)C_Services_rollback(*dbSvc,iAddr);
+    tapereq->err.errorcode = save_serrno;
+    strncpy(tapereq->err.errmsgtxt,
+            C_Services_errorMsg(*dbSvc),
+            sizeof(tapereq->err.errmsgtxt)-1);
+    tapereq->err.severity = RTCP_FAILED|RTCP_SYERR;
+    rtcp_log(LOG_ERR,"DB error: %s\n",
+             tapereq->err.errmsgtxt);
+    Cstager_Tape_delete(tp);
+    serrno = save_serrno;
+    return(-1);
+  }
+
+  rtcp_log(LOG_DEBUG,"addNewSegmentsToDB() commit updates\n");
+  rc = C_Services_commit(*dbSvc,iAddr);
+  if ( rc != 0 ) {
+    LOG_FAILED_CALL("C_Services_commit()",
                     C_Services_errorMsg(*dbSvc));
     save_serrno = serrno;
     (void)C_Services_rollback(*dbSvc,iAddr);
@@ -915,6 +903,7 @@ static int addNewSegmentsToDB(
     serrno = save_serrno;
     return(-1);
   }
+  
   
   /*
    * Update client context with the updated Tape instance
