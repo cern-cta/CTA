@@ -1,0 +1,48 @@
+.\" @(#)$RCSfile: stgshift_to_castor.man,v $ $Revision: 1.1 $ $Date: 2000/01/26 16:37:37 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH STGSHIFT_TO_CASTOR l "$Date: 2000/01/26 16:37:37 $"
+.SH NAME
+stgshift_to_castor \- Convert SHIFT stager catalogs to CASTOR disk ones
+.SH SYNOPSIS
+.B stgshift_to_castor [options] stgcat_shift stgpath_shift stgcat_castor stgpath_castor
+.SH DESCRIPTION
+.LP
+The
+.B stgshift_to_castor
+command will convert SHIFT's stdgaemon catalogs to CASTOR's stgdaemon ones.
+.P
+See the \fBEXAMPLE\fP section below.
+.SH OPTIONS
+The options are:
+.RS
+.B -h
+.RS
+Online help
+.RE
+.B -C
+.RS
+Ignore main catalog (stgcat) processing
+.RE
+.B -L
+.RS
+Ignore second catalog (stgpath) processing
+.RE
+.BI "-n <" number ">"
+.RS
+Online output frequency on your terminal. Default is every 1000 processed entries
+.RE
+.RE
+
+.SH EXAMPLE
+.ft 3
+.nf
+.sp
+stgshift_to_castor /usr/spool/stage/stgcat /usr/spool/stage/stgpath ./stgcat_castor ./stgpath_castor
+.ft
+.LP
+.fi
+
+.SH SEE ALSO
+\fBstgconvert\fP(1), \fBstgcastor_to_shift\fP(1), \fBstgshift_cmp_shift\fP(1)
