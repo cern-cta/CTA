@@ -7,6 +7,7 @@
 #include <qstring.h>
 
 // Local includes
+#include "../codegenerator.h"
 #include "simplecodegenerator.h"
 #include "../classifier.h"
 

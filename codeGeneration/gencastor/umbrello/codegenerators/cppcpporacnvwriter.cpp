@@ -251,6 +251,16 @@ void CppCppOraCnvWriter::writeConstants() {
     n++;
     *m_stream << mem->name << " = :" << n;
   }
+  // Go through dependant objects
+  for (Assoc* as = assocs.first();
+       0 != as;
+       as = assocs.next()) {
+    if (isEnum(as->remotePart.typeName)) {
+      if (n > 0) *m_stream << ", ";
+      n++;
+      *m_stream << as->remotePart.name << " = :" << n;
+    }
+  }
   *m_stream << " WHERE id = :" << n+1
             << "\";" << endl << endl << getIndent()
             << "/// SQL statement for type storage"
@@ -1665,6 +1675,16 @@ void CppCppOraCnvWriter::writeUpdateRepContent() {
     writeSingleSetIntoStatement("update", *mem, n);
     n++;
   }
+  // Go through dependant objects
+  AssocList assocs = createAssocsList();
+  for (Assoc* as = assocs.first();
+       0 != as;
+       as = assocs.next()) {
+    if (isEnum(as->remotePart.typeName)) {
+      writeSingleSetIntoStatement("update", as->remotePart, n, true);
+      n++;
+    }
+  }
   // Last thing : the id
   if (0 == idMem) {
     *m_stream << getIndent()
@@ -2096,13 +2116,18 @@ CppCppOraCnvWriter::writeSingleSetIntoStatement(QString statement,
   }
   *m_stream << getIndent()
             << "m_" << statement << "Statement->set";
-  *m_stream << getOraType(mem.typeName);
+  if (isEnum) {
+    *m_stream << "Int";
+  } else {
+    *m_stream << getOraType(mem.typeName);
+  }
   *m_stream << "(" << n << ", ";
   if (isArray) {
     *m_stream << mem.name << "S";
   } else {
-    if (isEnum)
+    if (isEnum) {
       *m_stream << "(int)";
+    }
     *m_stream << "obj->"
               << mem.name
               << "()";

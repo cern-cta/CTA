@@ -67,7 +67,7 @@ const std::string castor::db::ora::OraDiskServerCnv::s_selectStatementString =
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraDiskServerCnv::s_updateStatementString =
-"UPDATE rh_DiskServer SET name = :1 WHERE id = :2";
+"UPDATE rh_DiskServer SET name = :1, status = :2 WHERE id = :3";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraDiskServerCnv::s_storeTypeStatementString =
@@ -349,7 +349,8 @@ void castor::db::ora::OraDiskServerCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setString(1, obj->name());
-    m_updateStatement->setDouble(2, obj->id());
+    m_updateStatement->setInt(2, (int)obj->status());
+    m_updateStatement->setDouble(3, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();

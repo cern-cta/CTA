@@ -67,7 +67,7 @@ const std::string castor::db::ora::OraTapeCnv::s_selectStatementString =
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraTapeCnv::s_updateStatementString =
-"UPDATE rh_Tape SET vid = :1, side = :2, tpmode = :3, errMsgTxt = :4, errorCode = :5, severity = :6, vwAddress = :7 WHERE id = :8";
+"UPDATE rh_Tape SET vid = :1, side = :2, tpmode = :3, errMsgTxt = :4, errorCode = :5, severity = :6, vwAddress = :7, status = :8 WHERE id = :9";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraTapeCnv::s_storeTypeStatementString =
@@ -367,7 +367,8 @@ void castor::db::ora::OraTapeCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(5, obj->errorCode());
     m_updateStatement->setInt(6, obj->severity());
     m_updateStatement->setString(7, obj->vwAddress());
-    m_updateStatement->setDouble(8, obj->id());
+    m_updateStatement->setInt(8, (int)obj->status());
+    m_updateStatement->setDouble(9, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();

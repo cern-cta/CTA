@@ -69,7 +69,7 @@ const std::string castor::db::ora::OraSubRequestCnv::s_selectStatementString =
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraSubRequestCnv::s_updateStatementString =
-"UPDATE rh_SubRequest SET retryCounter = :1, fileName = :2, protocol = :3, poolName = :4, xsize = :5 WHERE id = :6";
+"UPDATE rh_SubRequest SET retryCounter = :1, fileName = :2, protocol = :3, poolName = :4, xsize = :5, status = :6 WHERE id = :7";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraSubRequestCnv::s_storeTypeStatementString =
@@ -689,7 +689,8 @@ void castor::db::ora::OraSubRequestCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setString(3, obj->protocol());
     m_updateStatement->setString(4, obj->poolName());
     m_updateStatement->setDouble(5, obj->xsize());
-    m_updateStatement->setDouble(6, obj->id());
+    m_updateStatement->setInt(6, (int)obj->status());
+    m_updateStatement->setDouble(7, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();

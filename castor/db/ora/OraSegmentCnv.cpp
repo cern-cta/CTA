@@ -67,7 +67,7 @@ const std::string castor::db::ora::OraSegmentCnv::s_selectStatementString =
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraSegmentCnv::s_updateStatementString =
-"UPDATE rh_Segment SET blockid = :1, fseq = :2, offset = :3, bytes_in = :4, bytes_out = :5, host_bytes = :6, segmCksumAlgorithm = :7, segmCksum = :8, errMsgTxt = :9, errorCode = :10, severity = :11 WHERE id = :12";
+"UPDATE rh_Segment SET blockid = :1, fseq = :2, offset = :3, bytes_in = :4, bytes_out = :5, host_bytes = :6, segmCksumAlgorithm = :7, segmCksum = :8, errMsgTxt = :9, errorCode = :10, severity = :11, status = :12 WHERE id = :13";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraSegmentCnv::s_storeTypeStatementString =
@@ -483,7 +483,8 @@ void castor::db::ora::OraSegmentCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setString(9, obj->errMsgTxt());
     m_updateStatement->setInt(10, obj->errorCode());
     m_updateStatement->setInt(11, obj->severity());
-    m_updateStatement->setDouble(12, obj->id());
+    m_updateStatement->setInt(12, (int)obj->status());
+    m_updateStatement->setDouble(13, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();

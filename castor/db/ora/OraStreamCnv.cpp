@@ -68,7 +68,7 @@ const std::string castor::db::ora::OraStreamCnv::s_selectStatementString =
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraStreamCnv::s_updateStatementString =
-"UPDATE rh_Stream SET initialSizeToTransfer = :1 WHERE id = :2";
+"UPDATE rh_Stream SET initialSizeToTransfer = :1, status = :2 WHERE id = :3";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraStreamCnv::s_storeTypeStatementString =
@@ -450,7 +450,8 @@ void castor::db::ora::OraStreamCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setDouble(1, obj->initialSizeToTransfer());
-    m_updateStatement->setDouble(2, obj->id());
+    m_updateStatement->setInt(2, (int)obj->status());
+    m_updateStatement->setDouble(3, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
