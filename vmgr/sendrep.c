@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.2 $ $Date: 1999/12/15 14:55:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendrep.c,v $ $Revision: 1.3 $ $Date: 2000/03/18 13:24:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -32,7 +32,7 @@ sendrep(va_alist) va_dcl
 	int rc;
 	int rep_type;
 	int req_type;
-	char repbuf[REPBUFSZ];
+	char repbuf[REPBUFSZ+12];
 	int repsize;
 	int rpfd;
 
