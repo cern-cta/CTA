@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.81 2001/07/23 10:53:37 jdurand Exp $
+ * $Id: procupd.c,v 1.82 2001/08/07 07:26:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.81 $ $Date: 2001/07/23 10:53:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.82 $ $Date: 2001/08/07 07:26:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -477,7 +477,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					/* Space successfully allocated - Here c == 0 per construction */
 					if (api_out) sendrep(rpfd, API_STCP_OUT, stcp, magic);
 					sendrep (rpfd, MSG_OUT, "%s", stcp->ipath);
-					wqp->status = 0;
+					/* wqp->status = 0; */
 				}
 			} else {
 				if ((c = upd_stageout(STAGEUPDC, argv_i, &subreqid, 1, NULL)) != 0) {
@@ -1462,5 +1462,5 @@ void update_hsm_a_time(stcp)
 }
 
 /*
- * Last Update: "Monday 23 July, 2001 at 12:49:00 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Tuesday 07 August, 2001 at 09:23:08 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
