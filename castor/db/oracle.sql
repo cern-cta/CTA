@@ -130,7 +130,7 @@ CREATE TABLE Tape (vid VARCHAR(2048), side NUMBER, tpmode NUMBER, errMsgTxt VARC
 
 /* SQL statements for type Segment */
 DROP TABLE Segment;
-CREATE TABLE Segment (blockid CHAR(4), fseq NUMBER, offset INTEGER, bytes_in INTEGER, bytes_out INTEGER, host_bytes INTEGER, segmCksumAlgorithm VARCHAR(2048), segmCksum NUMBER, errMsgTxt VARCHAR(2048), errorCode NUMBER, severity NUMBER, id INTEGER PRIMARY KEY, tape INTEGER, copy INTEGER, status INTEGER);
+CREATE TABLE Segment (fseq NUMBER, offset INTEGER, bytes_in INTEGER, bytes_out INTEGER, host_bytes INTEGER, segmCksumAlgorithm VARCHAR(2048), segmCksum NUMBER, errMsgTxt VARCHAR(2048), errorCode NUMBER, severity NUMBER, blockId0 INTEGER, blockId1 INTEGER, blockId2 INTEGER, blockId3 INTEGER, id INTEGER PRIMARY KEY, tape INTEGER, copy INTEGER, status INTEGER);
 
 /* SQL statements for type TapePool */
 DROP TABLE TapePool;

@@ -91,16 +91,6 @@ int Cstager_Segment_clone(struct Cstager_Segment_t* instance,
                           struct C_IObject_t* ret);
 
 /**
- * Get the value of blockid
- */
-int Cstager_Segment_blockid(struct Cstager_Segment_t* instance, const unsigned char** var);
-
-/**
- * Set the value of blockid
- */
-int Cstager_Segment_setBlockid(struct Cstager_Segment_t* instance, const unsigned char* new_var);
-
-/**
  * Get the value of fseq
  * Tape media file sequence number (if no locate)
  */
@@ -207,6 +197,54 @@ int Cstager_Segment_severity(struct Cstager_Segment_t* instance, int* var);
  * Set the value of severity
  */
 int Cstager_Segment_setSeverity(struct Cstager_Segment_t* instance, int new_var);
+
+/**
+ * Get the value of blockId0
+ * First unsigned char of the blockId
+ */
+int Cstager_Segment_blockId0(struct Cstager_Segment_t* instance, unsigned char* var);
+
+/**
+ * Set the value of blockId0
+ * First unsigned char of the blockId
+ */
+int Cstager_Segment_setBlockId0(struct Cstager_Segment_t* instance, unsigned char new_var);
+
+/**
+ * Get the value of blockId1
+ * Second unsigned char of the blockId
+ */
+int Cstager_Segment_blockId1(struct Cstager_Segment_t* instance, unsigned char* var);
+
+/**
+ * Set the value of blockId1
+ * Second unsigned char of the blockId
+ */
+int Cstager_Segment_setBlockId1(struct Cstager_Segment_t* instance, unsigned char new_var);
+
+/**
+ * Get the value of blockId2
+ * Third unsigned char of the blockId
+ */
+int Cstager_Segment_blockId2(struct Cstager_Segment_t* instance, unsigned char* var);
+
+/**
+ * Set the value of blockId2
+ * Third unsigned char of the blockId
+ */
+int Cstager_Segment_setBlockId2(struct Cstager_Segment_t* instance, unsigned char new_var);
+
+/**
+ * Get the value of blockId3
+ * Fourth unsigned char of the blockId
+ */
+int Cstager_Segment_blockId3(struct Cstager_Segment_t* instance, unsigned char* var);
+
+/**
+ * Set the value of blockId3
+ * Fourth unsigned char of the blockId
+ */
+int Cstager_Segment_setBlockId3(struct Cstager_Segment_t* instance, unsigned char new_var);
 
 /**
  * Get the value of id

@@ -98,22 +98,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_Segment_blockid
-  //----------------------------------------------------------------------------
-  int Cstager_Segment_blockid(castor::stager::Segment* instance, const unsigned char** var) {
-    *var = instance->blockid();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Segment_setBlockid
-  //----------------------------------------------------------------------------
-  int Cstager_Segment_setBlockid(castor::stager::Segment* instance, const unsigned char* new_var) {
-    instance->setBlockid(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_Segment_fseq
   //----------------------------------------------------------------------------
   int Cstager_Segment_fseq(castor::stager::Segment* instance, int* var) {
@@ -272,6 +256,70 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_Segment_setSeverity(castor::stager::Segment* instance, int new_var) {
     instance->setSeverity(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Segment_blockId0
+  //----------------------------------------------------------------------------
+  int Cstager_Segment_blockId0(castor::stager::Segment* instance, unsigned char* var) {
+    *var = instance->blockId0();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Segment_setBlockId0
+  //----------------------------------------------------------------------------
+  int Cstager_Segment_setBlockId0(castor::stager::Segment* instance, unsigned char new_var) {
+    instance->setBlockId0(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Segment_blockId1
+  //----------------------------------------------------------------------------
+  int Cstager_Segment_blockId1(castor::stager::Segment* instance, unsigned char* var) {
+    *var = instance->blockId1();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Segment_setBlockId1
+  //----------------------------------------------------------------------------
+  int Cstager_Segment_setBlockId1(castor::stager::Segment* instance, unsigned char new_var) {
+    instance->setBlockId1(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Segment_blockId2
+  //----------------------------------------------------------------------------
+  int Cstager_Segment_blockId2(castor::stager::Segment* instance, unsigned char* var) {
+    *var = instance->blockId2();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Segment_setBlockId2
+  //----------------------------------------------------------------------------
+  int Cstager_Segment_setBlockId2(castor::stager::Segment* instance, unsigned char new_var) {
+    instance->setBlockId2(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Segment_blockId3
+  //----------------------------------------------------------------------------
+  int Cstager_Segment_blockId3(castor::stager::Segment* instance, unsigned char* var) {
+    *var = instance->blockId3();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Segment_setBlockId3
+  //----------------------------------------------------------------------------
+  int Cstager_Segment_setBlockId3(castor::stager::Segment* instance, unsigned char new_var) {
+    instance->setBlockId3(new_var);
     return 0;
   }
 

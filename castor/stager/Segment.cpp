@@ -39,7 +39,6 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::stager::Segment::Segment() throw() :
-  m_blockid(),
   m_fseq(0),
   m_offset(0),
   m_bytes_in(0),
@@ -50,11 +49,14 @@ castor::stager::Segment::Segment() throw() :
   m_errMsgTxt(""),
   m_errorCode(0),
   m_severity(0),
+  m_blockId0(0),
+  m_blockId1(0),
+  m_blockId2(0),
+  m_blockId3(0),
   m_id(0),
   m_tape(0),
   m_copy(0),
   m_status(SegmentStatusCodes(0)) {
-  memset(m_blockid, 0, 4 * sizeof(unsigned char));
 };
 
 //------------------------------------------------------------------------------
@@ -82,7 +84,6 @@ void castor::stager::Segment::print(std::ostream& stream,
     return;
   }
   // Output of all members
-  stream << indent << "blockid : " << m_blockid << std::endl;
   stream << indent << "fseq : " << m_fseq << std::endl;
   stream << indent << "offset : " << m_offset << std::endl;
   stream << indent << "bytes_in : " << m_bytes_in << std::endl;
@@ -93,6 +94,10 @@ void castor::stager::Segment::print(std::ostream& stream,
   stream << indent << "errMsgTxt : " << m_errMsgTxt << std::endl;
   stream << indent << "errorCode : " << m_errorCode << std::endl;
   stream << indent << "severity : " << m_severity << std::endl;
+  stream << indent << "blockId0 : " << m_blockId0 << std::endl;
+  stream << indent << "blockId1 : " << m_blockId1 << std::endl;
+  stream << indent << "blockId2 : " << m_blockId2 << std::endl;
+  stream << indent << "blockId3 : " << m_blockId3 << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Tape : " << std::endl;

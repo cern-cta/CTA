@@ -104,22 +104,6 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
-       * Get the value of m_blockid
-       * @return the value of m_blockid
-       */
-      const unsigned char* blockid() const {
-        return m_blockid;
-      }
-
-      /**
-       * Set the value of m_blockid
-       * @param new_var the new value of m_blockid
-       */
-      void setBlockid(const unsigned char* new_var) {
-        memcpy(m_blockid, new_var, 4 * sizeof(unsigned char));
-      }
-
-      /**
        * Get the value of m_fseq
        * Tape media file sequence number (if no locate)
        * @return the value of m_fseq
@@ -288,6 +272,78 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_blockId0
+       * First unsigned char of the blockId
+       * @return the value of m_blockId0
+       */
+      unsigned char blockId0() const {
+        return m_blockId0;
+      }
+
+      /**
+       * Set the value of m_blockId0
+       * First unsigned char of the blockId
+       * @param new_var the new value of m_blockId0
+       */
+      void setBlockId0(unsigned char new_var) {
+        m_blockId0 = new_var;
+      }
+
+      /**
+       * Get the value of m_blockId1
+       * Second unsigned char of the blockId
+       * @return the value of m_blockId1
+       */
+      unsigned char blockId1() const {
+        return m_blockId1;
+      }
+
+      /**
+       * Set the value of m_blockId1
+       * Second unsigned char of the blockId
+       * @param new_var the new value of m_blockId1
+       */
+      void setBlockId1(unsigned char new_var) {
+        m_blockId1 = new_var;
+      }
+
+      /**
+       * Get the value of m_blockId2
+       * Third unsigned char of the blockId
+       * @return the value of m_blockId2
+       */
+      unsigned char blockId2() const {
+        return m_blockId2;
+      }
+
+      /**
+       * Set the value of m_blockId2
+       * Third unsigned char of the blockId
+       * @param new_var the new value of m_blockId2
+       */
+      void setBlockId2(unsigned char new_var) {
+        m_blockId2 = new_var;
+      }
+
+      /**
+       * Get the value of m_blockId3
+       * Fourth unsigned char of the blockId
+       * @return the value of m_blockId3
+       */
+      unsigned char blockId3() const {
+        return m_blockId3;
+      }
+
+      /**
+       * Set the value of m_blockId3
+       * Fourth unsigned char of the blockId
+       * @param new_var the new value of m_blockId3
+       */
+      void setBlockId3(unsigned char new_var) {
+        m_blockId3 = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -355,8 +411,6 @@ namespace castor {
 
     private:
 
-      unsigned char m_blockid[4];
-
       /// Tape media file sequence number (if no locate)
       int m_fseq;
 
@@ -380,6 +434,18 @@ namespace castor {
       int m_errorCode;
 
       int m_severity;
+
+      /// First unsigned char of the blockId
+      unsigned char m_blockId0;
+
+      /// Second unsigned char of the blockId
+      unsigned char m_blockId1;
+
+      /// Third unsigned char of the blockId
+      unsigned char m_blockId2;
+
+      /// Fourth unsigned char of the blockId
+      unsigned char m_blockId3;
 
       /// The id of this object
       u_signed64 m_id;

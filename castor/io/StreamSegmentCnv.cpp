@@ -90,7 +90,6 @@ void castor::io::StreamSegmentCnv::createRep(castor::IAddress* address,
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
-  ad->stream() << obj->blockid()[0] << obj->blockid()[1] << obj->blockid()[2] << obj->blockid()[3];
   ad->stream() << obj->fseq();
   ad->stream() << obj->offset();
   ad->stream() << obj->bytes_in();
@@ -101,6 +100,10 @@ void castor::io::StreamSegmentCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->errMsgTxt();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->severity();
+  ad->stream() << obj->blockId0();
+  ad->stream() << obj->blockId1();
+  ad->stream() << obj->blockId2();
+  ad->stream() << obj->blockId3();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -115,9 +118,6 @@ castor::IObject* castor::io::StreamSegmentCnv::createObj(castor::IAddress* addre
   // create the new Object
   castor::stager::Segment* object = new castor::stager::Segment();
   // Now retrieve and set members
-  unsigned char blockid[4];
-  ad->stream() >> blockid[0] >> blockid[1] >> blockid[2] >> blockid[3];
-  object->setBlockid((unsigned char*)blockid);
   int fseq;
   ad->stream() >> fseq;
   object->setFseq(fseq);
@@ -148,6 +148,18 @@ castor::IObject* castor::io::StreamSegmentCnv::createObj(castor::IAddress* addre
   int severity;
   ad->stream() >> severity;
   object->setSeverity(severity);
+  unsigned char blockId0;
+  ad->stream() >> blockId0;
+  object->setBlockId0(blockId0);
+  unsigned char blockId1;
+  ad->stream() >> blockId1;
+  object->setBlockId1(blockId1);
+  unsigned char blockId2;
+  ad->stream() >> blockId2;
+  object->setBlockId2(blockId2);
+  unsigned char blockId3;
+  ad->stream() >> blockId3;
+  object->setBlockId3(blockId3);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
