@@ -60,6 +60,7 @@ namespace castor {
     OBJ_Segment,
     OBJ_StageClrRequest,
     OBJ_StageFilChgRequest,    
+    OBJ_StageGetNextRequest,    
     OBJ_StageInRequest,
     OBJ_StageOutRequest,
     OBJ_StageQryRequest,
