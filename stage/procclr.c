@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.15 2000/09/20 11:21:08 jdurand Exp $
+ * $Id: procclr.c,v 1.16 2000/10/03 11:00:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.15 $ $Date: 2000/09/20 11:21:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.16 $ $Date: 2000/10/03 11:00:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -361,7 +361,7 @@ check_delete(stcp, gid, uid, group, user, rflag)
 			}
 		}
 		sendrep (rpfd, MSG_ERR,
-						 "internal error: status=%x but req not in waitq\n",
+						 "internal error: status=0x%x but req not in waitq\n",
 						 stcp->status);
 		return (USERR);
 	}
