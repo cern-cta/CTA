@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.68 $ $Date: 2000/08/09 06:56:31 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.69 $ $Date: 2000/09/15 11:55:36 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1300,9 +1300,15 @@ void *tapeIOthread(void *arg) {
                  * Check for tape EOD if we are concatenating rest of 
                  * tape to last disk file. If so, we must wake up the
                  * disk IO thread from waiting for next data buffer.
+                 * 6/9/2000:  we allow the same mechanism for deferred stagin
+                 *            requests with NOCONCAT_TO_EOD in the last element.
+                 *            This is to allow stagin of a complete tape with
+                 *            an unspecified number files.
                  */ 
                 if ( (nexttape->tapereq.mode == WRITE_DISABLE) &&
-                     ((nextfile->filereq.concat & CONCAT_TO_EOD) != 0) ) {
+                     (((nextfile->filereq.concat & CONCAT_TO_EOD) != 0) ||
+                      (((nextfile->filereq.concat & NOCONCAT_TO_EOD) != 0) && 
+                       (nextfile->filereq.def_alloc > 0))) ) {
                     rtcpd_CheckReqStatus(NULL,nextfile,NULL,&severity); 
                     if ( severity == (RTCP_OK | RTCP_EOD) ) {
                         nextfile->filereq.TEndTransferDisk = 

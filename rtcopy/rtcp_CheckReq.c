@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.42 $ $Date: 2000/09/06 07:30:47 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.43 $ $Date: 2000/09/15 11:55:35 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -293,15 +293,60 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         SET_REQUEST_ERR(filereq,RTCP_SYERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
+    /*
+     * Concat or no concat to EOD is only allowed for tape read
+     */
+    if ( (mode == WRITE_ENABLE) && 
+         ((filereq->concat & (CONCAT_TO_EOD|NOCONCAT_TO_EOD)) != 0) ) {
+        sprintf(errmsgtxt,RT143,CMD(mode));
+        serrno = EINVAL;
+        SET_REQUEST_ERR(filereq, RTCP_USERR | RTCP_FAILED);
+        if ( rc == -1 ) return(rc);
+    }
+
+    /*
+     * Concat to EOD only allowed for last file element in list
+     */
+    if ( ((filereq->concat & CONCAT_TO_EOD) != 0) && 
+         (file->next != file->tape->file) ) {
+        sprintf(errmsgtxt,RT153,CMD(mode));
+        serrno = EINVAL;
+        SET_REQUEST_ERR(filereq, RTCP_USERR | RTCP_FAILED);
+        if ( rc == -1 ) return(rc);
+    }
+
+    /*
+     * No concat to EOD is allowed in the last element only if it is
+     * deferred stagin request.
+     */
+    if ( ((filereq->concat & NOCONCAT_TO_EOD) != 0) &&
+         (file->next == file->tape->file) &&
+         ((*filereq->stageID == '\0') || (filereq->def_alloc == 0)) ) {
+        sprintf(errmsgtxt,RT154,CMD(mode));
+        serrno = EINVAL;
+        SET_REQUEST_ERR(filereq, RTCP_USERR | RTCP_FAILED);
+        if ( rc == -1 ) return(rc);
+    }
 
     /*
      * If concatenate to EOD: insert a dummy file list element
      * so that the diskIOthread waits for the tapeIOthread to
-     * signal EOD.
+     * signal EOD. 
+     * 6/9/2000:  we allow the same mechanism for deferred stagin
+     *            requests with NOCONCAT_TO_EOD in the last element.
+     *            This is to allow stagin of a complete tape with
+     *            an unspecified number files. To facilitate the logic
+     *            we allow for NOCONCAT_TO_EOD *only* in the last
+     *            element in this case. 
      */
-    if ( (mode == WRITE_DISABLE) && ((filereq->concat & CONCAT_TO_EOD) != 0) &&
-         ((file->prev == file) || 
-          (file->prev->filereq.concat & CONCAT_TO_EOD) == 0) ) {
+    if ( (mode == WRITE_DISABLE) && 
+         ((((filereq->concat & CONCAT_TO_EOD) != 0) &&
+           ((file->prev == file) ||
+            (file->prev->filereq.concat & CONCAT_TO_EOD) == 0)) ||
+          (((filereq->concat & NOCONCAT_TO_EOD) != 0) &&
+           (filereq->def_alloc > 0) && (file->next == file->tape->file) &&
+           ((file->prev == file) ||
+            (file->prev->filereq.concat & NOCONCAT_TO_EOD) == 0))) ) {
         tmpfile = (file_list_t *)calloc(1,sizeof(file_list_t));
         if ( tmpfile == NULL ) {
             serrno = errno;
