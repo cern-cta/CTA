@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.3 $ $Date: 1999/09/21 04:24:33 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.4 $ $Date: 1999/10/13 14:04:32 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -13,6 +13,7 @@
 			/* tape daemon constants and macros */
 
 #include "Ctape_constants.h"
+#include "osdep.h"
 #define CHECKI     10	/* max interval to check for work to be done */
 #define CLNREQI   180	/* interval to check for jobs that have died */
 #define LBLBUFSZ  128   /* size of buffers to read labels */
