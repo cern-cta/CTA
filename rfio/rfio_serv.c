@@ -768,7 +768,10 @@ char    **argv;
       timeval.tv_sec = CHECKI;  /* must set each time for linux */
       timeval.tv_usec = 0;
       if (select (s + 1, &readfd, NULL, NULL, &timeval) < 0) {
-        FD_ZERO (&readfd);
+		  if (once_only) {
+			  exit(1);
+		  }
+		  FD_ZERO (&readfd);
       }
      }
    } else {       /* !standalone */
