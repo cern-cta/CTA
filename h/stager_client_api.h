@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/28 12:51:50 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/29 09:59:17 $ $Author: bcouturi $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.3 $
- * @date $Date: 2004/10/28 12:51:50 $
+ * @version $Revision: 1.4 $
+ * @date $Date: 2004/10/29 09:59:17 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.3 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.4 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -81,7 +81,7 @@
  * the struct stage_prepareToGet_filerequest. Request with lower priority are processed first,
  *
  * - stage _prepareToUpdate is a cross between prepareToGet and prepareToPut. It recalls the file
- * from tape and allows opening it in write mode (with stage_getNext or stageupdate). 
+ * from tape and allows opening it in write mode (with stage_getNext or stage_update). 
  * To allow the file to be migrated back to tape, stage_putDone must be called.
  * 
  * - stage_get which can behave in two ways;
@@ -573,11 +573,11 @@ EXTERN_C int DLL_DECL stage_updateFileStatus _PROTO((struct stage_filereq **requ
 
 
 ////////////////////////////////////////////////////////////
-//    stage_removeFiles                                   //
+//    stage_rm                                   //
 ////////////////////////////////////////////////////////////
 
 /**
- * stage_removeFiles
+ * stage_rm
  * Clears the files from the stager.
  * \ingroup Functions
  * 
@@ -592,11 +592,11 @@ EXTERN_C int DLL_DECL stage_updateFileStatus _PROTO((struct stage_filereq **requ
  * @note requestId and responses are allocated by the call, and therefore
  *       should be freed by the client.
  */
-EXTERN_C int DLL_DECL stage_removeFiles(struct stage_filereq **requests,
-					int nbreqs,
-					struct stage_fileresp ***responses,
-					int *nbresps,
-					char **requestId);
+EXTERN_C int DLL_DECL stage_rm(struct stage_filereq **requests,
+			       int nbreqs,
+			       struct stage_fileresp ***responses,
+			       int *nbresps,
+			       char **requestId);
 
 ////////////////////////////////////////////////////////////
 //    stage_releaseFiles                                  //
