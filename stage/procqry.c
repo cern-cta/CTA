@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.26 2000/06/16 14:35:20 jdurand Exp $
+ * $Id: procqry.c,v 1.27 2000/09/20 11:26:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.26 $ $Date: 2000/06/16 14:35:20 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.27 $ $Date: 2000/09/20 11:26:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -49,7 +49,7 @@ void procqryreq _PROTO((char *, char *));
 void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *));
 int print_sorted_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *));
 void print_tape_info _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *));
-extern unpackfseq _PROTO((char *, int, char *, fseq_elem **));
+extern unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
 
 extern char *optarg;
 extern int optind;
@@ -226,7 +226,7 @@ void procqryreq(req_data, clienthost)
 			break;
 		case 'Q':	/* file sequence range */
 			/* compute number of tape files */
-			if ((nbtpf = unpackfseq (optarg, STAGEQRY, &trailing, &fseq_list)) == 0)
+			if ((nbtpf = unpackfseq (optarg, STAGEQRY, &trailing, &fseq_list, 0, NULL)) == 0)
 				errflg++;
 			break;
 		case 'S':	/* sort requests for cleaner */
