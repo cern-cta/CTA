@@ -229,6 +229,7 @@ BEGIN
   INTO diskServerName, mountPoint, path, dci, fileSystemId, castorFileId, fileId, nsHost, fileSize, tapeCopyId
   FROM DiskServer, FileSystem, DiskCopy, CastorFile, TapeCopy, Stream2TapeCopy
   WHERE DiskServer.id = FileSystem.diskserver
+    AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
     AND FileSystem.id = DiskCopy.filesystem
     AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
     AND DiskCopy.castorfile = CastorFile.id
@@ -270,6 +271,7 @@ SELECT DiskServer.name, FileSystem.mountPoint, DiskCopy.path, DiskCopy.id
     AND FileSystem.free > CastorFile.fileSize
     AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
     AND DiskServer.id = FileSystem.diskServer
+    AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
     AND ROWNUM < 2
   ORDER by FileSystem.weight DESC;
 UPDATE DiskCopy SET fileSystem = fileSystemId WHERE id = dci;
