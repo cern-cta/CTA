@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.86 $ $Date: 2002/04/08 14:51:20 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.87 $ $Date: 2002/08/29 16:02:59 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1049,12 +1049,23 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
                      */
                     if ( tapereq->mode == WRITE_DISABLE ||
                         (filereq->concat & CONCAT) == 0 ) {
-                        Ttransfer += (time_t)max(
-                                  (time_t)filereq->TEndTransferDisk,
-                                  (time_t)filereq->TEndTransferTape) -
-                                  (time_t)max(
-                                      (time_t)filereq->TStartTransferDisk,
-                                      (time_t)filereq->TStartTransferTape);
+                        
+		      {
+			time_t endxfer;
+			time_t startxfer;
+
+			endxfer = (time_t)max(
+					      (time_t)filereq->TEndTransferDisk,
+					      (time_t)filereq->TEndTransferTape);
+    
+			startxfer =  (time_t)max(
+						 (time_t)filereq->TStartTransferDisk,
+						 (time_t)filereq->TStartTransferTape);
+    
+			if (endxfer > 0 && startxfer > 0) {
+			  Ttransfer +=  ( endxfer - startxfer );
+			}
+		      }
                     }
 
                     if ( tapereq->mode == WRITE_ENABLE &&
