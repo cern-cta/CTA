@@ -1,5 +1,5 @@
 /*
- * $Id: stage_xxx.c,v 1.8 2000/09/13 17:21:49 jdurand Exp $
+ * $Id: stage_xxx.c,v 1.9 2000/11/17 07:45:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_xxx.c,v $ $Revision: 1.8 $ $Date: 2000/09/13 17:21:49 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_xxx.c,v $ $Revision: 1.9 $ $Date: 2000/11/17 07:45:22 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -185,7 +185,9 @@ int _stage_xxx_hsm(command,stghost,stgpool,stguser,Kopt,hsmstruct)
   mode_t mask;
 #endif
   int pid;
-  
+  int nxfile;
+  int nupath;
+
   uid = geteuid();
   gid = getegid();
 #if defined(_WIN32)
@@ -267,6 +269,7 @@ int _stage_xxx_hsm(command,stghost,stgpool,stguser,Kopt,hsmstruct)
     hsm = hsm->next;
   }
   hsm = hsmstruct;
+  nxfile = 0;
   while (hsm != NULL) {
     if (hsm->xfile == NULL) {
       serrno = EFAULT;
@@ -278,19 +281,22 @@ int _stage_xxx_hsm(command,stghost,stgpool,stguser,Kopt,hsmstruct)
     }
     sendbuf_size += strlen("-M") + strlen(hsm->xfile) + 2; /* -M option and value */
     hsm = hsm->next;
+    nxfile++;
   }
   hsm = hsmstruct;
+  nupath = 0;
   while (hsm != NULL) {
-    if (hsm->upath == NULL) {
-      serrno = EFAULT;
-      return (-1);
+    if (hsm->upath != NULL && hsm->upath[0] != '\0') {
+      sendbuf_size += strlen(hsm->upath) + 1; /* User path */
+      nupath++;
     }
-    if (hsm->upath[0] == '\0') {
-      serrno = EFAULT;
-      return (-1);
-    }
-    sendbuf_size += strlen(hsm->upath) + 1; /* User path */
     hsm = hsm->next;
+  }
+
+  /* We accept either that nupath is zero or equal to the number of hsm files */
+  if (nupath != 0 && nupath != nxfile) {
+    serrno = EINVAL;
+    return (-1);
   }
 
   /* Allocate memory */
@@ -399,8 +405,10 @@ int _stage_xxx_hsm(command,stghost,stgpool,stguser,Kopt,hsmstruct)
   /* Build link files arguments */
   hsm = hsmstruct;
   while (hsm != NULL) {
-    marshall_STRING (sbp, hsm->upath);
-    nargs += 1;
+    if (hsm->upath != NULL && hsm->upath[0] != '\0') {
+      marshall_STRING (sbp, hsm->upath);
+      nargs += 1;
+    }
     hsm = hsm->next;
   }
 
