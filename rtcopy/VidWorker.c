@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/25 15:35:56 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/06/29 17:36:23 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/25 15:35:56 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/06/29 17:36:23 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -133,25 +133,35 @@ static int processGetMoreWorkCallback(
      * Internal list empty or has no waiting requests (however that
      * happened?). Get more file requests from Catalogue.
      */
-    rc = rtcpcld_getReqsForVID(
-                               vidChildTape
-                               );
-    if ( rc == -1 ) {
-      (void)dlf_write(
-                      childUuid,
-                      DLF_LVL_ERROR,
-                      RTCPCLD_MSG_SYSCALL,
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+2,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "rtcpcld_getReqsForVID()",
-                      "ERROR_STRING",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      RTCPCLD_LOG_WHERE
-                      );
-      return(-1);
+    for (;;) {
+      rc = rtcpcld_getReqsForVID(
+                                 vidChildTape
+                                 );
+      if ( rc == 0 ) break;
+      if ( rc == -1 ) {
+        if ( serrno == EAGAIN ) {
+          sleep(5);
+          continue;
+        }
+        
+        if ( serrno == ENOENT ) break;
+        
+        (void)dlf_write(
+                        childUuid,
+                        DLF_LVL_ERROR,
+                        RTCPCLD_MSG_SYSCALL,
+                        (struct Cns_fileid *)NULL,
+                        RTCPCLD_NB_PARAMS+2,
+                        "SYSCALL",
+                        DLF_MSG_PARAM_STR,
+                        "rtcpcld_getReqsForVID()",
+                        "ERROR_STRING",
+                        DLF_MSG_PARAM_STR,
+                        sstrerror(serrno),
+                        RTCPCLD_LOG_WHERE
+                        );
+        return(-1);
+      }
     }
     /*
      * Check if any new requests were found in Catalogue
@@ -164,110 +174,32 @@ static int processGetMoreWorkCallback(
     } CLIST_ITERATE_END(vidChildTape->file,fl);
   }
 
-  if ( (fl == NULL) || (found == FALSE) ) {
+  if ( (found == TRUE) && (fl != NULL) ) {
     /*
-     * Nothing more found... Give up (for the moment)
+     * Request is OK. Go on with the copying
      */
-    rc = -1;
-  } else if ( (*fl->filereq.file_path == '\0') || 
-              (*fl->filereq.file_path == '.') ) {
-    /*
-     * A waiting request was found but no path has been assigned yet.
-     * Iterate until we get a path or an error occurred
-     */
-    while ( (*fl->filereq.file_path == '\0') ||
-            (*fl->filereq.file_path == '.') ) {
-      rc = rtcpcld_getPhysicalPath(
-                                   &vidChildTape->tapereq, 
-                                   &fl->filereq
-                                   );
-      if ( (rc != -1) &&
-           (*fl->filereq.file_path != '\0') &&
-           (*fl->filereq.file_path != '.') ) {
-        /*
-         * Valid path found. Go on with the file copying.
-         */
-        nbInProgress++;
-        filereq->proc_status = RTCP_WAITING;
-        rc = rtcpcld_setFileStatus(
-                                   &fl->filereq,
-                                   SEGMENT_COPYRUNNING
-                                   );
-        if ( rc == -1 ) {
-          (void)dlf_write(
-                          childUuid,
-                          DLF_LVL_ERROR,
-                          RTCPCLD_MSG_SYSCALL,
-                          (struct Cns_fileid *)NULL,
-                          RTCPCLD_NB_PARAMS+2,
-                          "SYSCALL",
-                          DLF_MSG_PARAM_STR,
-                          "rtcpcld_setFileStatus()",
-                          "ERROR_STRING",
-                          DLF_MSG_PARAM_STR,
-                          sstrerror(serrno),
-                          RTCPCLD_LOG_WHERE
-                          );
-          return(-1);
-        }
-        break;
-      } else {
-        if ( (rc == -1) && (serrno == ENOENT) ) {
-          /*
-           * Oops, our waiting request has disappeared.
-           * Give up searching (for the moment).
-           */
-          break;
-        } else if ( (rc == -1) && (serrno == EAGAIN) ) {
-          /*
-           * There might be a path coming soon. Wait for
-           * it unless there is already some stuff to do.
-           */
-          if ( nbInProgress > 0 ) break;
-          sleep(1);
-          continue;
-        } else {
-          /*
-           * Something strange happened. Give up immediately.
-           */
-          (void)dlf_write(
-                          childUuid,
-                          DLF_LVL_ERROR,
-                          RTCPCLD_MSG_SYSCALL,
-                          (struct Cns_fileid *)NULL,
-                          RTCPCLD_NB_PARAMS+4,
-                          "SYSCALL",
-                          DLF_MSG_PARAM_STR,
-                          "rtcpcld_getPhysicalPath()",
-                          "RETVAL",
-                          DLF_MSG_PARAM_INT,
-                          rc,
-                          "FILE_PATH",
-                          DLF_MSG_PARAM_STR,
-                          fl->filereq.file_path,
-                          "ERROR_STRING",
-                          DLF_MSG_PARAM_STR,
-                          sstrerror(serrno),
-                          RTCPCLD_LOG_WHERE
-                          );
-          return(-1);
-        }
-      }
-    }
-  } else {
-    /*
-     * Path is OK. Go on with the copying
-     */
-    nbInProgress++;
     rc = rtcpcld_setFileStatus(
                                &fl->filereq,
                                SEGMENT_COPYRUNNING
                                );
-    if ( rc == -1 ) return(-1);
-    rc = 0;
-  }
-  
-  if ( rc == 0 ) {
+    if ( rc == -1 ) {
+      (void)dlf_write(
+                      childUuid,
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_SYSCALL,
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+2,
+                      "SYSCALL",
+                      DLF_MSG_PARAM_STR,
+                      "rtcpcld_setFileStatus()",
+                      "ERROR_STRING",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(serrno),
+                      RTCPCLD_LOG_WHERE
+                      );
+      return(-1);
+    }
+
     /*
      * Pop off request by request until all has been passed back 
      * through callback. Make sure to retain the original tape
@@ -278,7 +210,11 @@ static int processGetMoreWorkCallback(
             filereq->tape_path,
             sizeof(fl->filereq.tape_path)-1
             );
-    if ( fl->filereq.proc_status == RTCP_WAITING ) *filereq = fl->filereq;
+    if ( fl->filereq.proc_status == RTCP_WAITING ) {
+      *filereq = fl->filereq;
+      nbInProgress++;
+    }
+    
     CLIST_DELETE(vidChildTape->file,fl);
     free(fl);
   } else {
