@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.25 $ $Date: 2002/05/31 05:16:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.26 $ $Date: 2002/07/27 10:08:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -770,6 +770,7 @@ struct vmgr_tape_denmap *denmap_entry;
 		break;
 	case -1631:
 	case -1632:
+	case -1654:
 		serrno = ENOSPC;
 		break;
 	default:
@@ -801,6 +802,7 @@ struct vmgr_tape_dgnmap *dgnmap_entry;
 		break;
 	case -1631:
 	case -1632:
+	case -1654:
 		serrno = ENOSPC;
 		break;
 	default:
@@ -832,6 +834,7 @@ struct vmgr_tape_library *library_entry;
 		break;
 	case -1631:
 	case -1632:
+	case -1654:
 		serrno = ENOSPC;
 		break;
 	default:
@@ -863,6 +866,7 @@ struct vmgr_tape_media *model_entry;
 		break;
 	case -1631:
 	case -1632:
+	case -1654:
 		serrno = ENOSPC;
 		break;
 	default:
@@ -898,6 +902,7 @@ struct vmgr_tape_pool *pool_entry;
 		break;
 	case -1631:
 	case -1632:
+	case -1654:
 		serrno = ENOSPC;
 		break;
 	default:
@@ -930,6 +935,7 @@ struct vmgr_tape_side *side_entry;
 		break;
 	case -1631:
 	case -1632:
+	case -1654:
 		serrno = ENOSPC;
 		break;
 	default:
@@ -968,6 +974,7 @@ struct vmgr_tape_info *tape_entry;
 		break;
 	case -1631:
 	case -1632:
+	case -1654:
 		serrno = ENOSPC;
 		break;
 	default:
