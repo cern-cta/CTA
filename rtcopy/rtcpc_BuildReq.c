@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.8 $ $Date: 2000/01/04 08:48:29 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.9 $ $Date: 2000/01/12 17:51:31 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1796,6 +1796,7 @@ static int rtcpc_diskfiles(int mode,
                 strcpy(filereq->file_path,last_filename);
             } else {
                 if ( last_filename != NULL &&
+                     mode == WRITE_DISABLE &&
                      strcmp(last_filename,filereq->file_path) == 0 ) {
                     /*
                      * Concatenate but not to EOD
