@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.126 2001/03/27 15:06:35 jdurand Exp $
+ * $Id: poolmgr.c,v 1.127 2001/03/28 12:53:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.126 $ $Date: 2001/03/27 15:06:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.127 $ $Date: 2001/03/28 12:53:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -98,6 +98,11 @@ extern struct stgdb_fd dbfd;
 #endif
 extern int savereqs _PROTO(());
 extern char localhost[CA_MAXHOSTNAMELEN+1];
+
+/* Why does HP-UX reports it in 1K block-size ? - We Handle this by making sure that BLOCKS_TO_SIZE >= actual_size */
+/* We can't handle this exactly in this macro because file systems can be remote and we have no way */
+/* to determine if the remote file system is an HP-UX one or not */
+#define BLOCKS_TO_SIZE(blocks) (((u_signed64) blocks) * 512)
 
 struct files_per_stream {
   struct stgcat_entry *stcp;
@@ -3686,8 +3691,24 @@ void check_lifetime_on_disk() {
 
         /* Is is a STAGEOUT file not yet STAGED and its exceeds the STAGEOUT lifetime limit ? */
         if (ISSTAGEOUT(stcp) && (! ISCASTORMIG(stcp)) && ((stcp->status & STAGED) != STAGED) && ((stcp->status & PUT_FAILED) != PUT_FAILED) && (stageout_lifetime > 0) && ((time(NULL) - stcp->a_time) > stageout_lifetime)) {
+          u_signed64 actual_size_block;
+          struct stat st;
+
           stglogit (func, STG143, stcp->ipath, stageout_lifetime);
+          if (rfio_stat(stcp->ipath, &st) == 0) {
+            stcp->actual_size = (u_signed64) st.st_size;
+            if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks)) < stcp->actual_size) {
+              /* This happens unfortunately if remote fs is an HP-UX file system */
+              actual_size_block = stcp->actual_size;
+            }
+          } else {
+            stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+            /* No block information - assume mismatch with actual_size will be acceptable */
+            actual_size_block = stcp->actual_size;
+          }
           rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
+          updfreespace (stcp->poolname, stcp->ipath,
+						(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) actual_size_block));
           stcp->status |= PUT_FAILED;
           /* If we do this it will be considered as a candidate for migration at next restart */
           /*
