@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.63 2002/10/09 07:37:19 jdurand Exp $
+ * $Id: stage_api.h,v 1.64 2003/09/08 15:55:24 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -298,17 +298,10 @@ EXTERN_C int  DLL_DECL  send2stgd _PROTO((char *, int, u_signed64, char *, int, 
 EXTERN_C int  DLL_DECL  send2stgd_compat _PROTO((char *, char *, int, int, char *, int)); /* Old version without forking */
 EXTERN_C void DLL_DECL stage_sleep _PROTO((int)); /* Sleep thread-safe */
 EXTERN_C int  DLL_DECL stage_stgmagic _PROTO(()); /* Return current magic number */
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 EXTERN_C void DLL_DECL dump_stpp _PROTO((int *, struct stgpath_entry *, int (*) _PROTO((int *, int, ...))));
 EXTERN_C void DLL_DECL dump_stcp _PROTO((int *, struct stgcat_entry *, int (*) _PROTO((int *, int, ...))));
 EXTERN_C void DLL_DECL print_stpp _PROTO((struct stgpath_entry *));
 EXTERN_C void DLL_DECL print_stcp _PROTO((struct stgcat_entry *));
-#else
-EXTERN_C void DLL_DECL dump_stpp _PROTO((int *, struct stgpath_entry *, int (*) _PROTO(())));
-EXTERN_C void DLL_DECL dump_stcp _PROTO((int *, struct stgcat_entry *, int (*) _PROTO(())));
-EXTERN_C void DLL_DECL print_stpp _PROTO((struct stgpath_entry *));
-EXTERN_C void DLL_DECL print_stcp _PROTO((struct stgcat_entry *));
-#endif
 EXTERN_C int  DLL_DECL stage_strtoi _PROTO((int *,char *,char **, int));
 EXTERN_C void DLL_DECL stage_util_time _PROTO((time_t, char *));
 EXTERN_C void DLL_DECL stage_util_retenp _PROTO((int, char *));
