@@ -72,6 +72,8 @@ struct rmjob {
 	char subrequestid[CUUID_STRING_LEN+1];
 	size_t clientStructLenWithNullByte;
 	char *clientStruct;
+	u_signed64 castorFileId;
+	char castorNsHost[CA_MAXHOSTNAMELEN+1];
 	struct rmjob *next;
 	struct rmjob *prev;
 };
