@@ -10,6 +10,7 @@ INSERT INTO CastorVersion VALUES ('2_0_0_17');
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
 CREATE UNIQUE INDEX I_CastorFile_fileIdNsHost on CastorFile (fileId, nsHost);
 CREATE INDEX I_DiskCopy_Castorfile on DiskCopy (castorFile);
+CREATE INDEX I_DiskCopy_FileSystem on DiskCopy (fileSystem);
 CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
 CREATE INDEX I_SubRequest_Castorfile on SubRequest (castorFile);
 CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
@@ -205,41 +206,56 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
  fileSystemId INTEGER;
  deviation NUMBER;
  fsDiskServer NUMBER;
- CURSOR c1 IS SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.fsDeviation, FileSystem.diskserver, DiskCopy.path, DiskCopy.id, FileSystem.id,
-   CastorFile.id, CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, TapeCopy.id
-   FROM DiskServer, FileSystem, DiskCopy, CastorFile, TapeCopy, Stream2TapeCopy
+ CURSOR cfs IS SELECT /*+ FIRST_ROWS */
+    DiskServer.name, FileSystem.mountPoint, FileSystem.fsDeviation, FileSystem.diskserver, FileSystem.id
+   FROM DiskServer, FileSystem
    WHERE DiskServer.id = FileSystem.diskserver
     AND DiskServer.status IN (0, 1) -- DISKSERVER_PRODUCTION, DISKSERVER_DRAINING
-    AND FileSystem.id = DiskCopy.filesystem
     AND FileSystem.status IN (0, 1) -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
-    AND DiskCopy.castorfile = CastorFile.id
-    AND DiskCopy.status = 10 -- CANBEMIGR
-    AND TapeCopy.castorfile = Castorfile.id
-    AND Stream2TapeCopy.child = TapeCopy.id
-    AND Stream2TapeCopy.parent = streamId
-    AND TapeCopy.status = 2 -- WAITINSTREAMS
    ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
-            FileSystem.fsDeviation ASC;
-  tpStatus NUMBER;
+            FileSystem.fsDeviation ASC FOR UPDATE;
 BEGIN
- LOOP
-   OPEN c1;
-   FETCH c1 INTO diskServerName, mountPoint, deviation, fsDiskServer, path, dci, fileSystemId, castorFileId, fileId, nsHost, fileSize, tapeCopyId;
-   CLOSE c1;
-   -- Lock the TapeCopy for update
-   SELECT status INTO tpStatus FROM TapeCopy WHERE id = tapeCopyId FOR UPDATE;
-   -- not selected by anyone else in between selection and
-   -- locking, this is fine, we stop looping
-   EXIT WHEN tpStatus = 2; -- WAITINSTREAMS
-   -- selected by someone else while we were locking,
-   -- release this one, go for another one TapeCopy
-   COMMIT;
- END LOOP;
- UPDATE TapeCopy SET status = 3 -- SELECTED
-  WHERE id = tapeCopyId;
- UPDATE Stream SET status = 3 -- RUNNING
-  WHERE id = streamId;
- updateFsFileOpened(fsDiskServer, fileSystemId, deviation, 0);
+  -- Loop over the filesystems starting with the best one
+  -- As soon as we find something, we stop looping. So on average
+  -- we should loop only once or twice
+  -- Note that the first select is a FOR UPDATE one. So the open
+  -- of the cursor serializes the rest of the procedure
+  OPEN cfs;
+  LOOP
+    BEGIN
+      FETCH cfs INTO diskServerName, mountPoint, deviation, fsDiskServer, fileSystemId;
+      EXIT WHEN cfs%NOTFOUND;
+      -- select a TapeCopy. We don't need to lock it since this piece of code is serialized
+      SELECT /*+ FIRST_ROWS */
+          DiskCopy.path, DiskCopy.id, CastorFile.id, CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, TapeCopy.id
+        INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
+        FROM DiskCopy, CastorFile, TapeCopy, Stream2TapeCopy
+       WHERE DiskCopy.filesystem = fileSystemId
+         AND DiskCopy.castorfile = CastorFile.id
+         AND DiskCopy.status = 10 -- CANBEMIGR
+         AND TapeCopy.castorfile = Castorfile.id
+         AND Stream2TapeCopy.child = TapeCopy.id
+         AND Stream2TapeCopy.parent = streamId
+         AND TapeCopy.status = 2 -- WAITINSTREAMS
+         AND ROWNUM < 2;
+      -- update status of selected tapecopy and stream
+      UPDATE TapeCopy SET status = 3 -- SELECTED
+       WHERE id = tapeCopyId;
+      UPDATE Stream SET status = 3 -- RUNNING
+       WHERE id = streamId;
+      -- Update Filesystem state
+      updateFsFileOpened(fsDiskServer, fileSystemId, deviation, 0);
+      -- exit loop
+      EXIT;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- No data found means the selected filesystem has no
+      -- tapecopies to be migrated. Thus we go to next one
+      NULL;
+    END;
+  END LOOP;
+  -- release locks
+  CLOSE cfs;
+  COMMIT;
 END;
 
 /* PL/SQL method implementing bestFileSystemForSegment */
