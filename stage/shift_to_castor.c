@@ -1,5 +1,5 @@
 /*
- * $Id: shift_to_castor.c,v 1.2 2000/01/09 11:41:48 jdurand Exp $
+ * $Id: shift_to_castor.c,v 1.3 2000/01/10 10:29:00 jdurand Exp $
  */
 
 /* ============== */
@@ -240,6 +240,7 @@ int main(argc, argv)
   }
 
   if (skip_stgcat == 0) {
+    printf("\n*** Conversion SHIFT's %s to CASTOR's %s\n\n",stgcat_in,stgcat_out);
     if (convert_stgcat() != 0) {
       return(EXIT_FAILURE);
     }
@@ -247,6 +248,7 @@ int main(argc, argv)
     close(stgcat_out_fd);
   }
   if (skip_stgpath == 0) {
+    printf("\n*** Conversion SHIFT's %s to CASTOR's %s\n\n",stgpath_in,stgpath_out);
     if (convert_stgpath() != 0) {
       return(EXIT_FAILURE);
     }
