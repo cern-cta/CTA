@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCuuidCnv.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/07/29 15:08:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCuuidCnv.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/08/19 10:12:48 $ $Author: sponcec3 $
  *
  *
  *
@@ -81,12 +81,17 @@ namespace castor {
        * of circular dependencies
        * @param autocommit whether the changes to the database
        * should be commited or not
+       * @param recursive if set to true, the objects refered
+       * by object will be created/updated too and recursively
+       * If it's set to false, the objects refered will not be touched
+       * But an exception will be thrown if one is missing that is needed
        * @exception Exception throws an Exception in cas of error
        */
       virtual void createRep(castor::IAddress* address,
                              castor::IObject* object,
                              castor::ObjectSet& alreadyDone,
-                             bool autocommit)
+                             bool autocommit,
+                             bool recursive)
         throw (castor::exception::Exception);
 
       /**

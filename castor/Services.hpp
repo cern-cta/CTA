@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/07/29 15:08:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/08/19 10:12:45 $ $Author: sponcec3 $
  *
  *
  *
@@ -77,7 +77,25 @@ namespace castor {
     void removeService(const std::string name) throw();
 
     /**
+     * create foreign representation from a C++ Object.
+     * Does not touch the objects it refers to. An exception
+     * will be send if ana object that is needed (because
+     * refered) is not present in the database
+     * @param address where to store the representation of
+     * the object
+     * @param object the object to deal with
+     * @param autocommit whether the changes to the database
+     * should be commited or not. Default is yes.
+     * @exception Exception throws an Exception in case of error
+     */
+    void createRepNoRec(IAddress* address,
+                   IObject* object,
+                   bool autocommit = true)
+      throw (castor::exception::Exception);
+
+    /**
      * create foreign representation from a C++ Object
+     * as well as all the objects it refers to and recursively.
      * @param address where to store the representation of
      * the object
      * @param object the object to deal with

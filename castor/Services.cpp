@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/07/29 15:08:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/08/19 10:12:45 $ $Author: sponcec3 $
  *
  *
  *
@@ -111,6 +111,19 @@ void castor::Services::removeService(const std::string name) throw() {
 }
 
 // -----------------------------------------------------------------------
+// createRepNoRec
+// -----------------------------------------------------------------------
+void castor::Services::createRepNoRec(castor::IAddress* address,
+                                      castor::IObject* object,
+                                      bool autocommit)
+  throw (castor::exception::Exception) {
+  // Always returns a valid cnvSvc or throws an exception
+  castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
+  ObjectSet alreadyDone;
+  cnvSvc->createRep(address, object, alreadyDone, autocommit, false);
+}
+
+// -----------------------------------------------------------------------
 // createRep
 // -----------------------------------------------------------------------
 void castor::Services::createRep(castor::IAddress* address,
@@ -120,7 +133,7 @@ void castor::Services::createRep(castor::IAddress* address,
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   ObjectSet alreadyDone;
-  cnvSvc->createRep(address, object, alreadyDone, autocommit);
+  cnvSvc->createRep(address, object, alreadyDone, autocommit, true);
 }
 
 // -----------------------------------------------------------------------

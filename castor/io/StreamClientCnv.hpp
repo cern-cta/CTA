@@ -81,12 +81,17 @@ namespace castor {
        * of circular dependencies
        * @param autocommit whether the changes to the database
        * should be commited or not
+       * @param recursive if set to true, the objects refered
+       * by object will be created/updated too and recursively
+       * If it's set to false, the objects refered will not be touched
+       * But an exception will be thrown if one is missing that is needed
        * @exception Exception throws an Exception in cas of error
        */
       virtual void createRep(castor::IAddress* address,
                              castor::IObject* object,
                              castor::ObjectSet& alreadyDone,
-                             bool autocommit)
+                             bool autocommit,
+                             bool recursive)
         throw (castor::exception::Exception);
 
       /**

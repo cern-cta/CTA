@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/07/29 15:08:18 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/08/19 10:12:47 $ $Author: sponcec3 $
  *
  *
  *
@@ -283,7 +283,7 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
       castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
       castor::ObjectSet objset;
       try {
-        cnvSvc()->createRep(&ad, tape, objset, true);
+        cnvSvc()->createRep(&ad, tape, objset, true, true);
         return tape;
       } catch (oracle::occi::SQLException e) {
         delete tape;

@@ -112,7 +112,8 @@ const unsigned int castor::db::ora::OraCuuidCnv::objType() const {
 void castor::db::ora::OraCuuidCnv::createRep(castor::IAddress* address,
                                              castor::IObject* object,
                                              castor::ObjectSet& alreadyDone,
-                                             bool autocommit)
+                                             bool autocommit,
+                                             bool /*recursive*/)
   throw (castor::exception::Exception) {
   castor::stager::Cuuid* obj =
     dynamic_cast<castor::stager::Cuuid*>(object);

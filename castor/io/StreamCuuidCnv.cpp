@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCuuidCnv.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/07/29 15:08:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCuuidCnv.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/08/19 10:12:48 $ $Author: sponcec3 $
  *
  *
  *
@@ -80,7 +80,8 @@ const unsigned int castor::io::StreamCuuidCnv::objType() const {
 void castor::io::StreamCuuidCnv::createRep(castor::IAddress* address,
                                            castor::IObject* object,
                                            castor::ObjectSet& alreadyDone,
-                                           bool autocommit)
+                                           bool autocommit,
+                                           bool /*recursive*/)
   throw (castor::exception::Exception) {
   castor::stager::Cuuid* obj =
     dynamic_cast<castor::stager::Cuuid*>(object);

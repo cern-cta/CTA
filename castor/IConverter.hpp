@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IConverter.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/07/29 15:08:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IConverter.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/08/19 10:12:45 $ $Author: sponcec3 $
  *
  *
  *
@@ -71,12 +71,17 @@ namespace castor {
      * of circular dependencies
      * @param autocommit whether the changes to the database
      * should be commited or not
+     * @param recursive if set to true, the objects refered
+     * by object will be created/updated too and recursively
+     * If it's set to false, the objects refered will not be touched
+     * But an exception will be thrown if one is missing that is needed
      * @exception Exception throws an Exception in case of error
      */
     virtual void createRep(IAddress* address,
                            IObject* object,
                            ObjectSet& alreadyDone,
-                           bool autocommit)
+                           bool autocommit,
+                           bool recursive)
       throw (castor::exception::Exception) = 0;
     
     /**
