@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.241 2003/04/17 07:29:24 jdurand Exp $
+ * $Id: poolmgr.c,v 1.242 2003/04/28 17:02:56 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.241 $ $Date: 2003/04/17 07:29:24 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.242 $ $Date: 2003/04/28 17:02:56 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -172,6 +172,7 @@ void poolmgr_wait4child _PROTO(());
 int selectfs _PROTO((char *, u_signed64 *, char *, int, int));
 void rwcountersfs _PROTO((char *, char *, int, int));
 void getdefsize _PROTO((char *, u_signed64 *));
+void getmindefsize _PROTO((char *, u_signed64 *));
 int updfreespace _PROTO((char *, char *, int, u_signed64 *, signed64));
 void redomigpool _PROTO(());
 int updpoolconf _PROTO((char *, char *, char *));
@@ -249,6 +250,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 {
 	char buf[4096];
 	u_signed64 defsize;
+	u_signed64 mindefsize;
 	char *dp;
 	struct pool_element *elemp = NULL;
 	int errflg = 0;
@@ -287,6 +289,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 	*defpoolname_in = '\0';
 	*defpoolname_out = '\0';
 	defsize = 0;
+	mindefsize = 0;
 	while (fgets (buf, sizeof(buf), s) != NULL) {
 		int gotit;
 		char *pdash;
@@ -384,6 +387,26 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 						goto reply;
 					}
 					if (checkrc == 0) pool_p->defsize *= ONE_MB; /* Not unit : default MB */
+				} else if (strcmp (p, "MINDEFSIZE") == 0) {
+					int checkrc;
+					if ((p = strtok (NULL, " \t\n")) == NULL) {
+						sendrep (&rpfd, MSG_ERR, STG26, "MINDEFSIZE in pool", pool_p->name);
+						errflg++;
+						goto reply;
+					}
+					if ((checkrc = stage_util_check_for_strutou64(p)) < 0) {
+						sendrep (&rpfd, MSG_ERR, STG26, "MINDEFSIZE in pool", pool_p->name);
+						errflg++;
+						goto reply;
+					}
+					pool_p->mindefsize = strutou64(p);
+					if (pool_p->mindefsize <= 0) {
+						/* Well, it can not be < 0, strictly speaking */
+						sendrep (&rpfd, MSG_ERR, STG26, "MINDEFSIZE in pool", pool_p->name);
+						errflg++;
+						goto reply;
+					}
+					if (checkrc == 0) pool_p->mindefsize *= ONE_MB; /* Not unit : default MB */
 				} else if ((strcmp (p, "MINFREE") == 0) || (strcmp (p, "GC_STOP_THRESH") == 0)) {
 					if ((p = strtok (NULL, " \t\n")) == NULL) {
 						sendrep (&rpfd, MSG_ERR, STG26, "GC_STOP_THRESH (or MINFREE) in pool", pool_p->name);
@@ -845,6 +868,31 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 				goto reply;
 			}
 			if (checkrc == 0) defsize *= ONE_MB; /* Not unit : default MB */
+		} else if (strcmp (p, "MINDEFSIZE") == 0) {
+			int checkrc;
+			if (poolalloc (pool_p, nbpool_ent) < 0) {
+				errflg++;
+				goto reply;
+			}
+			nbpool_ent = -1;
+			if ((p = strtok (NULL, " \t\n")) == NULL) {
+				sendrep (&rpfd, MSG_ERR, STG28);
+				errflg++;
+				goto reply;
+			}
+			if ((checkrc = stage_util_check_for_strutou64(p)) < 0) {
+				sendrep (&rpfd, MSG_ERR, STG28);
+				errflg++;
+				goto reply;
+			}
+			mindefsize = strutou64(p);
+			if (mindefsize <= 0) {
+				/* Cannot be < 0, strictly speaking */
+				sendrep (&rpfd, MSG_ERR, STG28);
+				errflg++;
+				goto reply;
+			}
+			if (checkrc == 0) mindefsize *= ONE_MB; /* Not unit : default MB */
 		} else {
 			if (nbpool_ent < 0) {
 				sendrep (&rpfd, MSG_ERR, STG26, "pool", "");
@@ -954,9 +1002,11 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 		if ((p = strtok (buf, " \t\n")) == NULL) continue;
 		if (strcmp (p, "POOL") == 0) {
 			char tmpbuf[21];
+			char tmpbuf2[21];
 			pool_p++;
 			elemp = pool_p->elemp;
 			if (pool_p->defsize == 0) pool_p->defsize = defsize;
+			if (pool_p->mindefsize == 0) pool_p->mindefsize = mindefsize;
 			if (pool_p->defsize <= 0) {
 				sendrep(&rpfd, MSG_ERR,
 						 "### CONFIGURATION ERROR : POOL %s with DEFSIZE <= 0\n",
@@ -964,8 +1014,16 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 				errflg++;
 				goto reply;
 			}
-			stglogit (func,"POOL %s DEFSIZE %s GC_STOP_THRESH %d GC_START_THRESH %d\n",
-					  pool_p->name, u64tostru(pool_p->defsize, tmpbuf, 0), pool_p->gc_stop_thresh, pool_p->gc_start_thresh);
+			if (pool_p->mindefsize > pool_p->defsize) {
+				sendrep(&rpfd, MSG_ERR,
+						 "### CONFIGURATION ERROR : POOL %s with MINDEFSIZE > DEFSIZE\n",
+						 pool_p->name);
+				errflg++;
+				goto reply;
+			}
+			/* It is allowed to have mindefsize <= 0 */
+			stglogit (func,"POOL %s DEFSIZE %s MINDEFSIZE %s GC_STOP_THRESH %d GC_START_THRESH %d\n",
+					  pool_p->name, u64tostru(pool_p->defsize, tmpbuf, 0), u64tostru(pool_p->mindefsize, tmpbuf2, 0), pool_p->gc_stop_thresh, pool_p->gc_start_thresh);
 			stglogit (func,".... GC %s\n",
 					  *(pool_p->gc) != '\0' ? pool_p->gc : "<none>");
 			if (*(pool_p->gc) == '\0') {
@@ -1006,6 +1064,7 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 		else if (strcmp (p, "DEFPOOL_IN") == 0) continue;
 		else if (strcmp (p, "DEFPOOL_OUT") == 0) continue;
 		else if (strcmp (p, "DEFSIZE") == 0) continue;
+		else if (strcmp (p, "MINDEFSIZE") == 0) continue;
 		else {
 			if ((int) strlen (p) > CA_MAXHOSTNAMELEN) {
 				sendrep (&rpfd, MSG_ERR, STG26, "pool element [with hostname too long]", p);
@@ -1625,6 +1684,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 	char tmpbuf4[21];
 	char tmpbuf5[21];
 	char tmpbuf6[21];
+	char tmpbuf7[21];
 	u_signed64 before_fraction, after_fraction;
 
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
@@ -1634,11 +1694,12 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 		stage_util_retenp(pool_p->stageout_retenp,stageout_retenp_timestr);
 		stage_util_retenp(pool_p->stagealloc_retenp,stagealloc_retenp_timestr);
 		stage_util_retenp(pool_p->put_failed_retenp,put_failed_retenp_timestr);
-		sendrep (rpfd, MSG_OUT, "POOL %s%s%s DEFSIZE %s GC_START_THRESH %d GC_STOP_THRESH %d GC %s%s%s%s%s%s%s%s%s MAX_SETRETENP %s PUT_FAILED_RETENP %s STAGEOUT_RETENP %s STAGEALLOC_RETENP %s\n",
+		sendrep (rpfd, MSG_OUT, "POOL %s%s%s DEFSIZE %s MINDEFSIZE %s GC_START_THRESH %d GC_STOP_THRESH %d GC %s%s%s%s%s%s%s%s%s MAX_SETRETENP %s PUT_FAILED_RETENP %s STAGEOUT_RETENP %s STAGEALLOC_RETENP %s\n",
 				 pool_p->name,
 				 pool_p->no_file_creation ? " NO_FILE_CREATION" : "",
 				 pool_p->export_hsm ? " EXPORT_HSM" : "",
 				 u64tostru(pool_p->defsize,tmpbuf0,0),
+				 u64tostru(pool_p->mindefsize,tmpbuf7,0),
 				 pool_p->gc_start_thresh,
 				 pool_p->gc_stop_thresh,
 				 pool_p->gc,
@@ -1877,6 +1938,7 @@ selectfs(poolname, size, path, status, noallocation)
 	int i;
 	struct pool *pool_p;
 	u_signed64 reqsize;
+	u_signed64 reqsize_orig;
 	char tmpbuf0[21];
 	char tmpbuf1[21];
 	char tmpbuf2[21];
@@ -1890,15 +1952,24 @@ selectfs(poolname, size, path, status, noallocation)
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
 		if (strcmp (poolname, pool_p->name) == 0) break;
 	if (! noallocation) {
-		if (*size == 0) *size = pool_p->defsize;
+		if (*size == 0) {
+			*size = pool_p->defsize;
+		}
 		reqsize = *size;	/* size in bytes */
+		reqsize_orig = reqsize;
+		if (reqsize < pool_p->mindefsize) {
+			/* We guarantee at minimum MINDEFSIZE bytes when allocation */
+			/* even if user asked for less */
+			reqsize = pool_p->mindefsize;
+		}
 	} else {
 		*size = 0;
 		reqsize = 0;
+		reqsize_orig = 0;
 	}
 
 	/* If this is an OUT pool we do qsort() anyway */
-	if ((stcp->status == STAGEOUT) || (stcp->status == STAGEALLOC)) {
+	if (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp)) {
 		if ((this_element = betterfs_vs_pool(poolname,WRITE_MODE,reqsize,&i)) == NULL) {
 			/* Oups... Tant-pis, return what will provocate the ENOENT */
 			return(-1);
@@ -1928,16 +1999,16 @@ selectfs(poolname, size, path, status, noallocation)
 
 	pool_p->next_pool_elem = i + 1;
 	if (pool_p->next_pool_elem >= pool_p->nbelem) pool_p->next_pool_elem = 0;
-	pool_p->free -= reqsize;
-	elemp->free -= reqsize;
+	pool_p->free -= reqsize_orig;
+	elemp->free -= reqsize_orig;
 	if (pool_p->free > pool_p->capacity) {
-		/* This is impossible. In theory it can happen only if reqsize > previous pool_p->free and */
+		/* This is impossible. In theory it can happen only if reqsize_orig > previous pool_p->free and */
 		/* if pool_p->capacity < max_u_signed64 */
 		stglogit ("selectfs", "### Warning, pool_p->free > pool_p->capacity. pool_p->free set to 0\n");
 		pool_p->free = 0;
 	}
 	if (elemp->free > elemp->capacity) {
-		/* This is impossible. In theory it can happen only if reqsize > previous elemp->free and */
+		/* This is impossible. In theory it can happen only if reqsize_orig > previous elemp->free and */
 		/* if elemp->capacity < max_u_signed64 */
 		stglogit ("selectfs", "### Warning, elemp->free > elemp->capacity. elemp->free set to 0\n");
 		elemp->free = 0;
@@ -1953,7 +2024,7 @@ selectfs(poolname, size, path, status, noallocation)
 	else
 		sprintf (path, "%s:%s", elemp->server, elemp->dirpath);
 	stglogit ("selectfs", "%s reqsize=%s, elemp->free=%s, pool_p->free=%s\n",
-			  path, u64tostr(reqsize, tmpbuf0, 0), u64tostr(elemp->free, tmpbuf1, 0), u64tostr(pool_p->free, tmpbuf2, 0));
+			  path, u64tostr(reqsize_orig, tmpbuf0, 0), u64tostr(elemp->free, tmpbuf1, 0), u64tostr(pool_p->free, tmpbuf2, 0));
 	/* We udpate known allocation timestamp */
 	elemp->last_allocation = time(NULL);
 	return (1);
@@ -2117,6 +2188,20 @@ getdefsize(poolname, size)
 		if (strcmp (poolname, pool_p->name) == 0) break;
 	*size = pool_p->defsize;
 }
+
+void
+getmindefsize(poolname, size)
+	char *poolname;
+	u_signed64 *size;
+{
+	int i;
+	struct pool *pool_p;
+
+	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+		if (strcmp (poolname, pool_p->name) == 0) break;
+	*size = pool_p->mindefsize;
+}
+
 int
 updfreespace(poolname, ipath, reject_overflow, elemp_free, incr)
 	char *poolname;
