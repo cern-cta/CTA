@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.10 2000/03/07 17:29:12 jdurand Exp $
+ * $Id: stage.h,v 1.11 2000/03/08 17:48:03 jdurand Exp $
  */
 
 /*
@@ -194,6 +194,12 @@ typedef char fseq_elem[7];
 typedef long gid_t;
 typedef long uid_t;
 #endif
+
+struct child_exit_q {   /* list of children having exited */
+  struct child_exit_q *next;
+  int     ovly_pid;
+  int     status;
+};
 
 #if ! defined(vms)
 struct stgcat_entry {		/* entry format in STGCAT table */
