@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.13 $ $Date: 2000/01/10 08:59:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.14 $ $Date: 2000/02/13 10:36:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpdump - analyse the content of a tape */
@@ -274,8 +274,10 @@ char	**argv;
 	/* mount and position the input tape */
 
 	Ctape_kill_needed = 1;
-	if (Ctape_mount (infil, vid, 0, dgn, NULL, NULL, WRITE_DISABLE,
-	    NULL, "blp", 0))
+	while ((c = Ctape_mount (infil, vid, 0, dgn, NULL, NULL, WRITE_DISABLE,
+	    NULL, "blp", 0)) && serrno == ETVBSY)
+		sleep (VOLBSYRI);
+	if (c)
 		exit_prog ((serrno == EACCES || serrno == EINVAL) ? USERR : SYERR);
 	if (Ctape_position (infil, TPPOSIT_FSEQ, 1, 1, 0, 0, 0, CHECK_FILE,
 	    NULL, "U", 0, 0, 0, 0))
