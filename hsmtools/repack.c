@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.6 $ $Date: 2003/11/21 11:07:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.7 $ $Date: 2003/11/23 06:48:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      repack - copy the active segments from a set of volumes to another set */
@@ -488,6 +488,11 @@ repack_callback (rtcpTapeRequest_t *tl, rtcpFileRequest_t *fl)
 		    compression_factor, 1, Flags) < 0) {
 			fprintf (stderr, "vmgr_updatetape %s: %s\n", tl->vid,
 			    sstrerror(serrno));
+			if (serrno == EACCES)
+				usr_errflg++;
+			else
+				sys_errflg++;
+			return (-1);
 		}
 
 		fileid = seg_list[last_seg_repacked].fileid;
@@ -608,7 +613,7 @@ char *pool_name;
 	    &estimated_free_space) < 0) {
 		fprintf (stderr, "vmgr_gettape error: %s\n",
 		    sstrerror(serrno));
-		return (SYERR);
+		return ((serrno == EACCES) ? USERR : SYERR);
 	}
 	out_vid = tl->tapereq.vid;
 	out_side = tl->tapereq.side;
@@ -700,6 +705,8 @@ char *pool_name;
 		    (u_signed64) 0, 0, 0, Flags) < 0) {
 			fprintf (stderr, "vmgr_updatetape %s: %s\n", tl->tapereq.vid,
 			    sstrerror(serrno));
+			if (c == 0)
+				c = (serrno == EACCES) ? USERR : SYERR;
 		}
 	}
 	out_vid = NULL;
