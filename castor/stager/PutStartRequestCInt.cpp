@@ -51,20 +51,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_PutStartRequest_getRequest
-  //----------------------------------------------------------------------------
-  castor::stager::Request* Cstager_PutStartRequest_getRequest(castor::stager::PutStartRequest* obj) {
-    return obj;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_PutStartRequest_fromRequest
-  //----------------------------------------------------------------------------
-  castor::stager::PutStartRequest* Cstager_PutStartRequest_fromRequest(castor::stager::Request* obj) {
-    return dynamic_cast<castor::stager::PutStartRequest*>(obj);
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_PutStartRequest_getStartRequest
   //----------------------------------------------------------------------------
   castor::stager::StartRequest* Cstager_PutStartRequest_getStartRequest(castor::stager::PutStartRequest* obj) {
@@ -75,6 +61,20 @@ extern "C" {
   // Cstager_PutStartRequest_fromStartRequest
   //----------------------------------------------------------------------------
   castor::stager::PutStartRequest* Cstager_PutStartRequest_fromStartRequest(castor::stager::StartRequest* obj) {
+    return dynamic_cast<castor::stager::PutStartRequest*>(obj);
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_PutStartRequest_getRequest
+  //----------------------------------------------------------------------------
+  castor::stager::Request* Cstager_PutStartRequest_getRequest(castor::stager::PutStartRequest* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_PutStartRequest_fromRequest
+  //----------------------------------------------------------------------------
+  castor::stager::PutStartRequest* Cstager_PutStartRequest_fromRequest(castor::stager::Request* obj) {
     return dynamic_cast<castor::stager::PutStartRequest*>(obj);
   }
 
@@ -105,6 +105,56 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_PutStartRequest_TYPE(int* ret) {
     *ret = castor::stager::PutStartRequest::TYPE();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_PutStartRequest_subreqId
+  //----------------------------------------------------------------------------
+  int Cstager_PutStartRequest_subreqId(castor::stager::PutStartRequest* instance, u_signed64* var) {
+    *var = instance->subreqId();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_PutStartRequest_setSubreqId
+  //----------------------------------------------------------------------------
+  int Cstager_PutStartRequest_setSubreqId(castor::stager::PutStartRequest* instance, u_signed64 new_var) {
+    instance->setSubreqId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_PutStartRequest_diskServer
+  //----------------------------------------------------------------------------
+  int Cstager_PutStartRequest_diskServer(castor::stager::PutStartRequest* instance, const char** var) {
+    *var = instance->diskServer().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_PutStartRequest_setDiskServer
+  //----------------------------------------------------------------------------
+  int Cstager_PutStartRequest_setDiskServer(castor::stager::PutStartRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setDiskServer(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_PutStartRequest_fileSystem
+  //----------------------------------------------------------------------------
+  int Cstager_PutStartRequest_fileSystem(castor::stager::PutStartRequest* instance, const char** var) {
+    *var = instance->fileSystem().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_PutStartRequest_setFileSystem
+  //----------------------------------------------------------------------------
+  int Cstager_PutStartRequest_setFileSystem(castor::stager::PutStartRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setFileSystem(snew_var);
     return 0;
   }
 
@@ -302,56 +352,6 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_PutStartRequest_setClient(castor::stager::PutStartRequest* instance, castor::IClient* new_var) {
     instance->setClient(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_PutStartRequest_subreqId
-  //----------------------------------------------------------------------------
-  int Cstager_PutStartRequest_subreqId(castor::stager::PutStartRequest* instance, u_signed64* var) {
-    *var = instance->subreqId();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_PutStartRequest_setSubreqId
-  //----------------------------------------------------------------------------
-  int Cstager_PutStartRequest_setSubreqId(castor::stager::PutStartRequest* instance, u_signed64 new_var) {
-    instance->setSubreqId(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_PutStartRequest_diskServer
-  //----------------------------------------------------------------------------
-  int Cstager_PutStartRequest_diskServer(castor::stager::PutStartRequest* instance, const char** var) {
-    *var = instance->diskServer().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_PutStartRequest_setDiskServer
-  //----------------------------------------------------------------------------
-  int Cstager_PutStartRequest_setDiskServer(castor::stager::PutStartRequest* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setDiskServer(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_PutStartRequest_fileSystem
-  //----------------------------------------------------------------------------
-  int Cstager_PutStartRequest_fileSystem(castor::stager::PutStartRequest* instance, const char** var) {
-    *var = instance->fileSystem().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_PutStartRequest_setFileSystem
-  //----------------------------------------------------------------------------
-  int Cstager_PutStartRequest_setFileSystem(castor::stager::PutStartRequest* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setFileSystem(snew_var);
     return 0;
   }
 

@@ -31,10 +31,8 @@
 #include "castor/stager/ReqIdRequest.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/StageAbortRequest.hpp"
-#include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
-#include <vector>
 
 extern "C" {
 
@@ -51,20 +49,6 @@ extern "C" {
   int Cstager_StageAbortRequest_delete(castor::stager::StageAbortRequest* obj) {
     delete obj;
     return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageAbortRequest_getFileRequest
-  //----------------------------------------------------------------------------
-  castor::stager::FileRequest* Cstager_StageAbortRequest_getFileRequest(castor::stager::StageAbortRequest* obj) {
-    return obj;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageAbortRequest_fromFileRequest
-  //----------------------------------------------------------------------------
-  castor::stager::StageAbortRequest* Cstager_StageAbortRequest_fromFileRequest(castor::stager::FileRequest* obj) {
-    return dynamic_cast<castor::stager::StageAbortRequest*>(obj);
   }
 
   //----------------------------------------------------------------------------
@@ -122,35 +106,6 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_StageAbortRequest_TYPE(int* ret) {
     *ret = castor::stager::StageAbortRequest::TYPE();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageAbortRequest_addSubRequests
-  //----------------------------------------------------------------------------
-  int Cstager_StageAbortRequest_addSubRequests(castor::stager::StageAbortRequest* instance, castor::stager::SubRequest* obj) {
-    instance->addSubRequests(obj);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageAbortRequest_removeSubRequests
-  //----------------------------------------------------------------------------
-  int Cstager_StageAbortRequest_removeSubRequests(castor::stager::StageAbortRequest* instance, castor::stager::SubRequest* obj) {
-    instance->removeSubRequests(obj);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_StageAbortRequest_subRequests
-  //----------------------------------------------------------------------------
-  int Cstager_StageAbortRequest_subRequests(castor::stager::StageAbortRequest* instance, castor::stager::SubRequest*** var, int* len) {
-    std::vector<castor::stager::SubRequest*>& result = instance->subRequests();
-    *len = result.size();
-    *var = (castor::stager::SubRequest**) malloc((*len) * sizeof(castor::stager::SubRequest*));
-    for (int i = 0; i < *len; i++) {
-      (*var)[i] = result[i];
-    }
     return 0;
   }
 

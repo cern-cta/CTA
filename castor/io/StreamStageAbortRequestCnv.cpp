@@ -40,11 +40,9 @@
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StageAbortRequest.hpp"
-#include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
 #include <string>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -172,12 +170,6 @@ void castor::io::StreamStageAbortRequestCnv::marshalObject(castor::IObject* obje
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    address->stream() << obj->subRequests().size();
-    for (std::vector<castor::stager::SubRequest*>::iterator it = obj->subRequests().begin();
-         it != obj->subRequests().end();
-         it++) {
-      cnvSvc()->marshalObject(*it, address, alreadyDone);
-    }
     cnvSvc()->marshalObject(obj->parent(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->svcClass(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->client(), address, alreadyDone);
@@ -200,13 +192,6 @@ castor::IObject* castor::io::StreamStageAbortRequestCnv::unmarshalObject(castor:
   // Fill object with associations
   castor::stager::StageAbortRequest* obj = 
     dynamic_cast<castor::stager::StageAbortRequest*>(object);
-  unsigned int subRequestsNb;
-  ad.stream() >> subRequestsNb;
-  for (unsigned int i = 0; i < subRequestsNb; i++) {
-    ad.setObjType(castor::OBJ_INVALID);
-    IObject* objSubRequests = cnvSvc()->unmarshalObject(ad, newlyCreated);
-    obj->addSubRequests(dynamic_cast<castor::stager::SubRequest*>(objSubRequests));
-  }
   ad.setObjType(castor::OBJ_INVALID);
   IObject* objParent = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setParent(dynamic_cast<castor::stager::FileRequest*>(objParent));

@@ -89,6 +89,9 @@ void castor::io::StreamGetUpdateStartRequestCnv::createRep(castor::IAddress* add
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
+  ad->stream() << obj->subreqId();
+  ad->stream() << obj->diskServer();
+  ad->stream() << obj->fileSystem();
   ad->stream() << obj->flags();
   ad->stream() << obj->userName();
   ad->stream() << obj->euid();
@@ -99,9 +102,6 @@ void castor::io::StreamGetUpdateStartRequestCnv::createRep(castor::IAddress* add
   ad->stream() << obj->svcClassName();
   ad->stream() << obj->userTag();
   ad->stream() << obj->reqId();
-  ad->stream() << obj->subreqId();
-  ad->stream() << obj->diskServer();
-  ad->stream() << obj->fileSystem();
   ad->stream() << obj->id();
 }
 
@@ -115,6 +115,15 @@ castor::IObject* castor::io::StreamGetUpdateStartRequestCnv::createObj(castor::I
   // create the new Object
   castor::stager::GetUpdateStartRequest* object = new castor::stager::GetUpdateStartRequest();
   // Now retrieve and set members
+  u_signed64 subreqId;
+  ad->stream() >> subreqId;
+  object->setSubreqId(subreqId);
+  std::string diskServer;
+  ad->stream() >> diskServer;
+  object->setDiskServer(diskServer);
+  std::string fileSystem;
+  ad->stream() >> fileSystem;
+  object->setFileSystem(fileSystem);
   u_signed64 flags;
   ad->stream() >> flags;
   object->setFlags(flags);
@@ -145,15 +154,6 @@ castor::IObject* castor::io::StreamGetUpdateStartRequestCnv::createObj(castor::I
   std::string reqId;
   ad->stream() >> reqId;
   object->setReqId(reqId);
-  u_signed64 subreqId;
-  ad->stream() >> subreqId;
-  object->setSubreqId(subreqId);
-  std::string diskServer;
-  ad->stream() >> diskServer;
-  object->setDiskServer(diskServer);
-  std::string fileSystem;
-  ad->stream() >> fileSystem;
-  object->setFileSystem(fileSystem);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

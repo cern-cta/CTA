@@ -54,7 +54,7 @@ const castor::ICnvFactory& OraGetUpdateStartRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraGetUpdateStartRequestCnv::s_insertStatementString =
-"INSERT INTO GetUpdateStartRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, subreqId, diskServer, fileSystem, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,ids_seq.nextval,:14,:15) RETURNING id INTO :16";
+"INSERT INTO GetUpdateStartRequest (subreqId, diskServer, fileSystem, flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,ids_seq.nextval,:14,:15) RETURNING id INTO :16";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraGetUpdateStartRequestCnv::s_deleteStatementString =
@@ -62,11 +62,11 @@ const std::string castor::db::ora::OraGetUpdateStartRequestCnv::s_deleteStatemen
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraGetUpdateStartRequestCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, subreqId, diskServer, fileSystem, id, svcClass, client FROM GetUpdateStartRequest WHERE id = :1";
+"SELECT subreqId, diskServer, fileSystem, flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, svcClass, client FROM GetUpdateStartRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraGetUpdateStartRequestCnv::s_updateStatementString =
-"UPDATE GetUpdateStartRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, subreqId = :11, diskServer = :12, fileSystem = :13 WHERE id = :14";
+"UPDATE GetUpdateStartRequest SET subreqId = :1, diskServer = :2, fileSystem = :3, flags = :4, userName = :5, euid = :6, egid = :7, mask = :8, pid = :9, machine = :10, svcClassName = :11, userTag = :12, reqId = :13 WHERE id = :14";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraGetUpdateStartRequestCnv::s_storeTypeStatementString =
@@ -377,19 +377,19 @@ void castor::db::ora::OraGetUpdateStartRequestCnv::createRep(castor::IAddress* a
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
-    m_insertStatement->setDouble(1, obj->flags());
-    m_insertStatement->setString(2, obj->userName());
-    m_insertStatement->setInt(3, obj->euid());
-    m_insertStatement->setInt(4, obj->egid());
-    m_insertStatement->setInt(5, obj->mask());
-    m_insertStatement->setInt(6, obj->pid());
-    m_insertStatement->setString(7, obj->machine());
-    m_insertStatement->setString(8, obj->svcClassName());
-    m_insertStatement->setString(9, obj->userTag());
-    m_insertStatement->setString(10, obj->reqId());
-    m_insertStatement->setDouble(11, obj->subreqId());
-    m_insertStatement->setString(12, obj->diskServer());
-    m_insertStatement->setString(13, obj->fileSystem());
+    m_insertStatement->setDouble(1, obj->subreqId());
+    m_insertStatement->setString(2, obj->diskServer());
+    m_insertStatement->setString(3, obj->fileSystem());
+    m_insertStatement->setDouble(4, obj->flags());
+    m_insertStatement->setString(5, obj->userName());
+    m_insertStatement->setInt(6, obj->euid());
+    m_insertStatement->setInt(7, obj->egid());
+    m_insertStatement->setInt(8, obj->mask());
+    m_insertStatement->setInt(9, obj->pid());
+    m_insertStatement->setString(10, obj->machine());
+    m_insertStatement->setString(11, obj->svcClassName());
+    m_insertStatement->setString(12, obj->userTag());
+    m_insertStatement->setString(13, obj->reqId());
     m_insertStatement->setDouble(14, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
     m_insertStatement->setDouble(15, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->executeUpdate();
@@ -420,6 +420,9 @@ void castor::db::ora::OraGetUpdateStartRequestCnv::createRep(castor::IAddress* a
                     << "Statement was :" << std::endl
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
+                    << "  subreqId : " << obj->subreqId() << std::endl
+                    << "  diskServer : " << obj->diskServer() << std::endl
+                    << "  fileSystem : " << obj->fileSystem() << std::endl
                     << "  flags : " << obj->flags() << std::endl
                     << "  userName : " << obj->userName() << std::endl
                     << "  euid : " << obj->euid() << std::endl
@@ -430,9 +433,6 @@ void castor::db::ora::OraGetUpdateStartRequestCnv::createRep(castor::IAddress* a
                     << "  svcClassName : " << obj->svcClassName() << std::endl
                     << "  userTag : " << obj->userTag() << std::endl
                     << "  reqId : " << obj->reqId() << std::endl
-                    << "  subreqId : " << obj->subreqId() << std::endl
-                    << "  diskServer : " << obj->diskServer() << std::endl
-                    << "  fileSystem : " << obj->fileSystem() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  svcClass : " << obj->svcClass() << std::endl
                     << "  client : " << obj->client() << std::endl;
@@ -457,19 +457,19 @@ void castor::db::ora::OraGetUpdateStartRequestCnv::updateRep(castor::IAddress* a
       m_updateStatement = createStatement(s_updateStatementString);
     }
     // Update the current object
-    m_updateStatement->setDouble(1, obj->flags());
-    m_updateStatement->setString(2, obj->userName());
-    m_updateStatement->setInt(3, obj->euid());
-    m_updateStatement->setInt(4, obj->egid());
-    m_updateStatement->setInt(5, obj->mask());
-    m_updateStatement->setInt(6, obj->pid());
-    m_updateStatement->setString(7, obj->machine());
-    m_updateStatement->setString(8, obj->svcClassName());
-    m_updateStatement->setString(9, obj->userTag());
-    m_updateStatement->setString(10, obj->reqId());
-    m_updateStatement->setDouble(11, obj->subreqId());
-    m_updateStatement->setString(12, obj->diskServer());
-    m_updateStatement->setString(13, obj->fileSystem());
+    m_updateStatement->setDouble(1, obj->subreqId());
+    m_updateStatement->setString(2, obj->diskServer());
+    m_updateStatement->setString(3, obj->fileSystem());
+    m_updateStatement->setDouble(4, obj->flags());
+    m_updateStatement->setString(5, obj->userName());
+    m_updateStatement->setInt(6, obj->euid());
+    m_updateStatement->setInt(7, obj->egid());
+    m_updateStatement->setInt(8, obj->mask());
+    m_updateStatement->setInt(9, obj->pid());
+    m_updateStatement->setString(10, obj->machine());
+    m_updateStatement->setString(11, obj->svcClassName());
+    m_updateStatement->setString(12, obj->userTag());
+    m_updateStatement->setString(13, obj->reqId());
     m_updateStatement->setDouble(14, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
@@ -577,19 +577,19 @@ castor::IObject* castor::db::ora::OraGetUpdateStartRequestCnv::createObj(castor:
     // create the new Object
     castor::stager::GetUpdateStartRequest* object = new castor::stager::GetUpdateStartRequest();
     // Now retrieve and set members
-    object->setFlags((u_signed64)rset->getDouble(1));
-    object->setUserName(rset->getString(2));
-    object->setEuid(rset->getInt(3));
-    object->setEgid(rset->getInt(4));
-    object->setMask(rset->getInt(5));
-    object->setPid(rset->getInt(6));
-    object->setMachine(rset->getString(7));
-    object->setSvcClassName(rset->getString(8));
-    object->setUserTag(rset->getString(9));
-    object->setReqId(rset->getString(10));
-    object->setSubreqId((u_signed64)rset->getDouble(11));
-    object->setDiskServer(rset->getString(12));
-    object->setFileSystem(rset->getString(13));
+    object->setSubreqId((u_signed64)rset->getDouble(1));
+    object->setDiskServer(rset->getString(2));
+    object->setFileSystem(rset->getString(3));
+    object->setFlags((u_signed64)rset->getDouble(4));
+    object->setUserName(rset->getString(5));
+    object->setEuid(rset->getInt(6));
+    object->setEgid(rset->getInt(7));
+    object->setMask(rset->getInt(8));
+    object->setPid(rset->getInt(9));
+    object->setMachine(rset->getString(10));
+    object->setSvcClassName(rset->getString(11));
+    object->setUserTag(rset->getString(12));
+    object->setReqId(rset->getString(13));
     object->setId((u_signed64)rset->getDouble(14));
     m_selectStatement->closeResultSet(rset);
     return object;
@@ -636,19 +636,19 @@ void castor::db::ora::OraGetUpdateStartRequestCnv::updateObj(castor::IObject* ob
     // Now retrieve and set members
     castor::stager::GetUpdateStartRequest* object = 
       dynamic_cast<castor::stager::GetUpdateStartRequest*>(obj);
-    object->setFlags((u_signed64)rset->getDouble(1));
-    object->setUserName(rset->getString(2));
-    object->setEuid(rset->getInt(3));
-    object->setEgid(rset->getInt(4));
-    object->setMask(rset->getInt(5));
-    object->setPid(rset->getInt(6));
-    object->setMachine(rset->getString(7));
-    object->setSvcClassName(rset->getString(8));
-    object->setUserTag(rset->getString(9));
-    object->setReqId(rset->getString(10));
-    object->setSubreqId((u_signed64)rset->getDouble(11));
-    object->setDiskServer(rset->getString(12));
-    object->setFileSystem(rset->getString(13));
+    object->setSubreqId((u_signed64)rset->getDouble(1));
+    object->setDiskServer(rset->getString(2));
+    object->setFileSystem(rset->getString(3));
+    object->setFlags((u_signed64)rset->getDouble(4));
+    object->setUserName(rset->getString(5));
+    object->setEuid(rset->getInt(6));
+    object->setEgid(rset->getInt(7));
+    object->setMask(rset->getInt(8));
+    object->setPid(rset->getInt(9));
+    object->setMachine(rset->getString(10));
+    object->setSvcClassName(rset->getString(11));
+    object->setUserTag(rset->getString(12));
+    object->setReqId(rset->getString(13));
     object->setId((u_signed64)rset->getDouble(14));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {

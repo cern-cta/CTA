@@ -28,7 +28,6 @@
 #define CASTOR_STAGER_PUTSTARTREQUEST_HPP
 
 // Include Files
-#include "castor/stager/Request.hpp"
 #include "castor/stager/StartRequest.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -50,7 +49,7 @@ namespace castor {
      * This request exists to avoid the jobs on the diskservers to handle a connection
      * to the database. 
      */
-    class PutStartRequest : public virtual Request, public virtual StartRequest {
+    class PutStartRequest : public virtual StartRequest {
 
     public:
 

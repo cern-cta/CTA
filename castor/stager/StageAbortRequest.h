@@ -35,7 +35,6 @@ struct Cstager_FileRequest_t;
 struct Cstager_ReqIdRequest_t;
 struct Cstager_Request_t;
 struct Cstager_StageAbortRequest_t;
-struct Cstager_SubRequest_t;
 struct Cstager_SvcClass_t;
 
 //------------------------------------------------------------------------------
@@ -53,16 +52,6 @@ int Cstager_StageAbortRequest_create(struct Cstager_StageAbortRequest_t** obj);
  * Empty Destructor
  */
 int Cstager_StageAbortRequest_delete(struct Cstager_StageAbortRequest_t* obj);
-
-/**
- * Cast into FileRequest
- */
-struct Cstager_FileRequest_t* Cstager_StageAbortRequest_getFileRequest(struct Cstager_StageAbortRequest_t* obj);
-
-/**
- * Dynamic cast from FileRequest
- */
-struct Cstager_StageAbortRequest_t* Cstager_StageAbortRequest_fromFileRequest(struct Cstager_FileRequest_t* obj);
 
 /**
  * Cast into ReqIdRequest
@@ -103,25 +92,6 @@ int Cstager_StageAbortRequest_print(struct Cstager_StageAbortRequest_t* instance
  * Gets the type of this kind of objects
  */
 int Cstager_StageAbortRequest_TYPE(int* ret);
-
-/************************************************/
-/* Implementation of FileRequest abstract class */
-/************************************************/
-
-/**
- * Add a struct Cstager_SubRequest_t* object to the subRequests list
- */
-int Cstager_StageAbortRequest_addSubRequests(struct Cstager_StageAbortRequest_t* instance, struct Cstager_SubRequest_t* obj);
-
-/**
- * Remove a struct Cstager_SubRequest_t* object from subRequests
- */
-int Cstager_StageAbortRequest_removeSubRequests(struct Cstager_StageAbortRequest_t* instance, struct Cstager_SubRequest_t* obj);
-
-/**
- * Get the list of struct Cstager_SubRequest_t* objects held by subRequests
- */
-int Cstager_StageAbortRequest_subRequests(struct Cstager_StageAbortRequest_t* instance, struct Cstager_SubRequest_t*** var, int* len);
 
 /*************************************************/
 /* Implementation of ReqIdRequest abstract class */

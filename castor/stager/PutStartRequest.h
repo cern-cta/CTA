@@ -57,16 +57,6 @@ int Cstager_PutStartRequest_create(struct Cstager_PutStartRequest_t** obj);
 int Cstager_PutStartRequest_delete(struct Cstager_PutStartRequest_t* obj);
 
 /**
- * Cast into Request
- */
-struct Cstager_Request_t* Cstager_PutStartRequest_getRequest(struct Cstager_PutStartRequest_t* obj);
-
-/**
- * Dynamic cast from Request
- */
-struct Cstager_PutStartRequest_t* Cstager_PutStartRequest_fromRequest(struct Cstager_Request_t* obj);
-
-/**
  * Cast into StartRequest
  */
 struct Cstager_StartRequest_t* Cstager_PutStartRequest_getStartRequest(struct Cstager_PutStartRequest_t* obj);
@@ -75,6 +65,16 @@ struct Cstager_StartRequest_t* Cstager_PutStartRequest_getStartRequest(struct Cs
  * Dynamic cast from StartRequest
  */
 struct Cstager_PutStartRequest_t* Cstager_PutStartRequest_fromStartRequest(struct Cstager_StartRequest_t* obj);
+
+/**
+ * Cast into Request
+ */
+struct Cstager_Request_t* Cstager_PutStartRequest_getRequest(struct Cstager_PutStartRequest_t* obj);
+
+/**
+ * Dynamic cast from Request
+ */
+struct Cstager_PutStartRequest_t* Cstager_PutStartRequest_fromRequest(struct Cstager_Request_t* obj);
 
 /**
  * Cast into IObject
@@ -95,6 +95,48 @@ int Cstager_PutStartRequest_print(struct Cstager_PutStartRequest_t* instance);
  * Gets the type of this kind of objects
  */
 int Cstager_PutStartRequest_TYPE(int* ret);
+
+/*************************************************/
+/* Implementation of StartRequest abstract class */
+/*************************************************/
+
+/**
+ * Get the value of subreqId
+ * The id of the subRequest that should be scheduled
+ */
+int Cstager_PutStartRequest_subreqId(struct Cstager_PutStartRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of subreqId
+ * The id of the subRequest that should be scheduled
+ */
+int Cstager_PutStartRequest_setSubreqId(struct Cstager_PutStartRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of diskServer
+ * The name of the diskserver on which the selected filesystem for the given
+ * SubRequest resides
+ */
+int Cstager_PutStartRequest_diskServer(struct Cstager_PutStartRequest_t* instance, const char** var);
+
+/**
+ * Set the value of diskServer
+ * The name of the diskserver on which the selected filesystem for the given
+ * SubRequest resides
+ */
+int Cstager_PutStartRequest_setDiskServer(struct Cstager_PutStartRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of fileSystem
+ * The mount point of the selected filesystem for the given SubRequest
+ */
+int Cstager_PutStartRequest_fileSystem(struct Cstager_PutStartRequest_t* instance, const char** var);
+
+/**
+ * Set the value of fileSystem
+ * The mount point of the selected filesystem for the given SubRequest
+ */
+int Cstager_PutStartRequest_setFileSystem(struct Cstager_PutStartRequest_t* instance, const char* new_var);
 
 /********************************************/
 /* Implementation of Request abstract class */
@@ -237,48 +279,6 @@ int Cstager_PutStartRequest_client(struct Cstager_PutStartRequest_t* instance, s
  * Set the value of client
  */
 int Cstager_PutStartRequest_setClient(struct Cstager_PutStartRequest_t* instance, struct C_IClient_t* new_var);
-
-/*************************************************/
-/* Implementation of StartRequest abstract class */
-/*************************************************/
-
-/**
- * Get the value of subreqId
- * The id of the subRequest that should be scheduled
- */
-int Cstager_PutStartRequest_subreqId(struct Cstager_PutStartRequest_t* instance, u_signed64* var);
-
-/**
- * Set the value of subreqId
- * The id of the subRequest that should be scheduled
- */
-int Cstager_PutStartRequest_setSubreqId(struct Cstager_PutStartRequest_t* instance, u_signed64 new_var);
-
-/**
- * Get the value of diskServer
- * The name of the diskserver on which the selected filesystem for the given
- * SubRequest resides
- */
-int Cstager_PutStartRequest_diskServer(struct Cstager_PutStartRequest_t* instance, const char** var);
-
-/**
- * Set the value of diskServer
- * The name of the diskserver on which the selected filesystem for the given
- * SubRequest resides
- */
-int Cstager_PutStartRequest_setDiskServer(struct Cstager_PutStartRequest_t* instance, const char* new_var);
-
-/**
- * Get the value of fileSystem
- * The mount point of the selected filesystem for the given SubRequest
- */
-int Cstager_PutStartRequest_fileSystem(struct Cstager_PutStartRequest_t* instance, const char** var);
-
-/**
- * Set the value of fileSystem
- * The mount point of the selected filesystem for the given SubRequest
- */
-int Cstager_PutStartRequest_setFileSystem(struct Cstager_PutStartRequest_t* instance, const char* new_var);
 
 /***************************************/
 /* Implementation of IObject interface */
