@@ -43,6 +43,8 @@ castor::stager::DiskCopyInfo::DiskCopyInfo() throw() :
   m_tapeCopyStatus(0),
   m_segmentStatus(0),
   m_DiskCopyId(0),
+  m_fileId(0),
+  m_nsHost(""),
   m_id(0) {
 };
 
@@ -71,6 +73,8 @@ void castor::stager::DiskCopyInfo::print(std::ostream& stream,
   stream << indent << "tapeCopyStatus : " << m_tapeCopyStatus << std::endl;
   stream << indent << "segmentStatus : " << m_segmentStatus << std::endl;
   stream << indent << "DiskCopyId : " << m_DiskCopyId << std::endl;
+  stream << indent << "fileId : " << m_fileId << std::endl;
+  stream << indent << "nsHost : " << m_nsHost << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

@@ -157,6 +157,30 @@ int Cstager_DiskCopyInfo_DiskCopyId(struct Cstager_DiskCopyInfo_t* instance, u_s
 int Cstager_DiskCopyInfo_setDiskCopyId(struct Cstager_DiskCopyInfo_t* instance, u_signed64 new_var);
 
 /**
+ * Get the value of fileId
+ * fileId of the underlying castorfile
+ */
+int Cstager_DiskCopyInfo_fileId(struct Cstager_DiskCopyInfo_t* instance, u_signed64* var);
+
+/**
+ * Set the value of fileId
+ * fileId of the underlying castorfile
+ */
+int Cstager_DiskCopyInfo_setFileId(struct Cstager_DiskCopyInfo_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of nsHost
+ * name server host of the underlying castorfile
+ */
+int Cstager_DiskCopyInfo_nsHost(struct Cstager_DiskCopyInfo_t* instance, const char** var);
+
+/**
+ * Set the value of nsHost
+ * name server host of the underlying castorfile
+ */
+int Cstager_DiskCopyInfo_setNsHost(struct Cstager_DiskCopyInfo_t* instance, const char* new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

@@ -192,6 +192,39 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_DiskCopyInfo_fileId
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyInfo_fileId(castor::stager::DiskCopyInfo* instance, u_signed64* var) {
+    *var = instance->fileId();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyInfo_setFileId
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyInfo_setFileId(castor::stager::DiskCopyInfo* instance, u_signed64 new_var) {
+    instance->setFileId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyInfo_nsHost
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyInfo_nsHost(castor::stager::DiskCopyInfo* instance, const char** var) {
+    *var = instance->nsHost().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyInfo_setNsHost
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyInfo_setNsHost(castor::stager::DiskCopyInfo* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setNsHost(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_DiskCopyInfo_id
   //----------------------------------------------------------------------------
   int Cstager_DiskCopyInfo_id(castor::stager::DiskCopyInfo* instance, u_signed64* var) {
