@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_api.h,v 1.5 1999/12/09 13:46:14 jdurand Exp $
+ * $Id: Ctape_api.h,v 1.6 1999/12/19 09:47:11 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.5 $ $Date: 1999/12/09 13:46:14 $ CERN IT-PDP/DM Jean-Philippe Baud
+static char sccsid[] = "@(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.6 $ $Date: 1999/12/19 09:47:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
  */
 
 #ifndef _CTAPE_API_H
@@ -60,8 +60,8 @@ extern int Ctape_config(char *, int, int);
 extern int Ctape_info(char *, int *, unsigned int *, char *, char *, char *,
 	char *, int *, int *, char *);
 extern int Ctape_kill(char *);
-extern int Ctape_label(char *, int, char *, char *, char *, char *, char *, int,
-	int);
+extern int Ctape_label(char *, char *, int, char *, char *, char *, char *,
+	char *, int, int);
 extern int Ctape_mount(char *, char *, int, char *, char *, char *, int,
 	char *, char *, int);
 extern int Ctape_position(char *, int, int, int, unsigned int, int, int,

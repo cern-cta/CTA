@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_label.c,v $ $Revision: 1.8 $ $Date: 1999/11/19 17:03:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_label.c,v $ $Revision: 1.9 $ $Date: 1999/12/19 09:48:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_label - send a request to the tape daemon to have a tape mounted
@@ -23,7 +23,8 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_label.c,v $ $Revision: 1.8 $ $Date: 
 #include "serrno.h"
 extern char *sys_errlist[];
 
-Ctape_label(vid, partition, dgn, density, drive, vsn, lbltype, nbhdr, vdqm_reqid)
+Ctape_label(path, vid, partition, dgn, density, drive, vsn, lbltype, nbhdr, vdqm_reqid)
+char *path;
 char *vid;
 int partition;
 char *dgn;
@@ -53,7 +54,7 @@ int vdqm_reqid;
 	int mode = WRITE_ENABLE;
 	int msglen;
 	char *p, *q;
-	char path[CA_MAXPATHLEN+1];
+	char internal_path[CA_MAXPATHLEN+1];
 	char *rbp;
 	char repbuf[16];
 	char *sbp;
@@ -86,7 +87,8 @@ int vdqm_reqid;
 
 	/* path */
 
-	strcpy (path, tempnam (NULL, "tp"));
+	if (! path)
+		strcpy (internal_path, tempnam (NULL, "tp"));
 
 	/* vid */
 
@@ -156,7 +158,7 @@ int vdqm_reqid;
 	marshall_LONG (sbp, gid);
 	marshall_LONG (sbp, jid);
 	marshall_STRING (sbp, acctname);
-	marshall_STRING (sbp, path);
+	marshall_STRING (sbp, path ? path : internal_path);
 	marshall_STRING (sbp, vid);
 	marshall_WORD (sbp, partition);
 	marshall_STRING (sbp, actual_dgn);
