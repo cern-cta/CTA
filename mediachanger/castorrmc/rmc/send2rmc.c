@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2rmc.c,v $ $Revision: 1.3 $ $Date: 2003/11/18 14:59:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2rmc.c,v $ $Revision: 1.4 $ $Date: 2003/11/19 12:22:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -55,6 +55,7 @@ int user_repbuf_len;
 		sin.sin_port = htons ((unsigned short)atoi (p));
 	} else if (sp = Cgetservbyname ("rmc", "tcp")) {
 		sin.sin_port = sp->s_port;
+		serrno = 0;
 	} else {
 		sin.sin_port = htons ((unsigned short)RMC_PORT);
 		serrno = 0;
