@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.36 2000/11/24 14:05:16 jdurand Exp $
+ * $Id: procqry.c,v 1.37 2000/12/12 14:44:14 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.36 $ $Date: 2000/11/24 14:05:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.37 $ $Date: 2000/12/12 14:44:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -46,6 +46,7 @@ static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.36 $ $Date: 200
 #include "osdep.h"
 #include "Cgrp.h"
 #include "rfio_api.h"
+#include "Cgetopt.h"
 
 void procqryreq _PROTO((char *, char *));
 void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *));
@@ -53,8 +54,6 @@ int print_sorted_list _PROTO((char *, int, char *, int, char *, int, char (*)[7]
 void print_tape_info _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *));
 extern unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
 
-extern char *optarg;
-extern int optind;
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep (int, int, ...);
 #endif
@@ -158,15 +157,12 @@ void procqryreq(req_data, clienthost)
 	/* Makes sure null terminates */
 	group[CA_MAXGRPNAMELEN] = '\0';
 	
-#ifdef linux
-	optind = 0;
-#else
-	optind = 1;
-#endif
-	while ((c = getopt (nargs, argv, "A:afGh:I:LlM:Pp:q:Q:SsTuV:x")) != EOF) {
+	Coptind = 1;
+	Copterr = 0;
+	while ((c = Cgetopt (nargs, argv, "A:afGh:I:LlM:Pp:q:Q:SsTuV:x")) != -1) {
 		switch (c) {
 		case 'A':
-			afile = optarg;
+			afile = Coptarg;
 			if (
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 					regcomp (&preg, afile, 0)
@@ -190,7 +186,7 @@ void procqryreq(req_data, clienthost)
 		case 'h':
 			break;
 		case 'I':
-			xfile = optarg;
+			xfile = Coptarg;
 			break;
 		case 'L':	/* print linkname */
 			Lflag++;
@@ -199,7 +195,7 @@ void procqryreq(req_data, clienthost)
 			lflag++;
 			break;
 		case 'M':
-			mfile = optarg;
+			mfile = Coptarg;
 			if (
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 					regcomp (&preg, mfile, 0)
@@ -215,20 +211,20 @@ void procqryreq(req_data, clienthost)
 			Pflag++;
 			break;
 		case 'p':
-			if (strcmp (optarg, "NOPOOL") == 0 ||
-					isvalidpool (optarg)) {
-				strcpy (poolname, optarg);
+			if (strcmp (Coptarg, "NOPOOL") == 0 ||
+					isvalidpool (Coptarg)) {
+				strcpy (poolname, Coptarg);
 			} else {
-				sendrep (rpfd, MSG_ERR, STG32, optarg);
+				sendrep (rpfd, MSG_ERR, STG32, Coptarg);
 				errflg++;
 			}
 			break;
 		case 'q':	/* file sequence number(s) */
-			fseq = optarg;
+			fseq = Coptarg;
 			break;
 		case 'Q':	/* file sequence range */
 			/* compute number of tape files */
-			if ((nbtpf = unpackfseq (optarg, STAGEQRY, &trailing, &fseq_list, 0, NULL)) == 0)
+			if ((nbtpf = unpackfseq (Coptarg, STAGEQRY, &trailing, &fseq_list, 0, NULL)) == 0)
 				errflg++;
 			break;
 		case 'S':	/* sort requests for cleaner */
@@ -244,7 +240,7 @@ void procqryreq(req_data, clienthost)
 			uflag++;
 			break;
 		case 'V':	/* visual identifier(s) */
-			q = strtok (optarg, ":");
+			q = strtok (Coptarg, ":");
 			while (q != NULL) {
 				strcpy (vid[numvid], q);
 				UPPER (vid[numvid]);
@@ -408,16 +404,17 @@ void procqryreq(req_data, clienthost)
 		else
 			strcpy (p_lrecl, "     *");
 		if (stcp->size > 0)
-			sprintf (p_size, "%d", stcp->size);
+			if (ISCASTORMIG(stcp))
+				strcpy (p_size, "*");
+			else
+				sprintf (p_size, "%d", stcp->size);
 		else
 			strcpy (p_size, "*");
 		if (stcp->status & 0xF00)
 			if ((stcp->status & 0xF0) && ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR))
 				strcpy (p_stat, x_stat[(stcp->status & 0xF0) >> 4]);
 			else
-				strcpy (p_stat, ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR)) ?
-								"BEING_MIGR" :
-								l_stat[(stcp->status & 0xF00) >> 8]);
+				strcpy (p_stat, ISCASTORMIG(stcp) ? "BEING_MIGR" : l_stat[(stcp->status & 0xF00) >> 8]);
 		else if (stcp->status & 0xF0)
 			strcpy (p_stat, x_stat[(stcp->status & 0xF0) >> 4]);
 		else if (stcp->status == STAGEALLOC)
