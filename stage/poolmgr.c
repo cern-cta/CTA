@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.132 2001/04/07 10:20:40 jdurand Exp $
+ * $Id: poolmgr.c,v 1.133 2001/04/30 06:29:07 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.132 $ $Date: 2001/04/07 10:20:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.133 $ $Date: 2001/04/30 06:29:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -758,7 +758,9 @@ findpoolname(path)
   struct pool *pool_p;
   char server[CA_MAXHOSTNAMELEN + 1];
 
-  if ((p = strchr (path, ':')) != NULL) {
+  /* If we find a ":/" set - it is a hostname specification if there is no '/' before */
+  if (((p = strstr (path, ":/")) != NULL) && (strchr(path, '/') > p)) {
+    /* Note that per construction strchr() returns != NULL, because we know there is a '/' */
     strncpy (server, path, p - path);
     server[p - path] = '\0';
   }

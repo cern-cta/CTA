@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.72 2001/04/07 10:20:41 jdurand Exp $
+ * $Id: procupd.c,v 1.73 2001/04/30 06:29:09 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.72 $ $Date: 2001/04/07 10:20:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.73 $ $Date: 2001/04/30 06:29:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -699,9 +699,10 @@ procupdreq(req_type, magic, req_data, clienthost)
 		}
 	}
 	if (stcp->ipath[0] != '\0') {
-		if ((p = strchr (stcp->ipath, ':')) != NULL) {
+		if (((p = strstr (stcp->ipath, ":/")) != NULL) && (strchr(stcp->ipath, '/') > p)) {
 			q = stcp->ipath;
 		} else {
+			/* Assumes RFIO syntax */
 			q = strchr (stcp->ipath + 1, '/') + 1;
 			p = strchr (q, '/');
 		}
