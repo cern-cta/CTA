@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: u64subr.c,v $ $Revision: 1.1 $ $Date: 2004/10/05 13:19:21 $ CERN IT-ADC/CA Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: u64subr.c,v $ $Revision: 1.2 $ $Date: 2005/02/09 10:42:35 $ CERN IT-ADC/CA Jean-Damien Durand";
 #endif /* not lint */
  
 #include <stdio.h>       /* For sprintf */
@@ -302,9 +302,9 @@ char DLL_DECL *u64tostru(u64, buf, fldsize)
 		unit = ' ';
 	}
 	if (unit != ' ')
-		sprintf (tmpbuf, "%.2f%c", fnum, unit);
+		sprintf (tmpbuf, "%.2f%c", fnum, unit); /* fnum <= 1024 */
 	else
-		sprintf (tmpbuf, "%d", inum);
+		sprintf (tmpbuf, "%d", inum); /* By constuction inum is < 1024 */
 
 	if (fldsize <= 0) {
 		strcpy (buf, tmpbuf);
@@ -312,8 +312,8 @@ char DLL_DECL *u64tostru(u64, buf, fldsize)
 		n = fldsize - strlen (tmpbuf);
 		if (n > 0) {
 			memset (buf, ' ', n);
-			strcpy (buf + n, tmpbuf);
-		}
+	        }
+		strcpy (buf + n, tmpbuf);
 	}
 		
 	return (buf);
