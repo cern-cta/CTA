@@ -1,7 +1,10 @@
 /*
- * $Id: Cthread.c,v 1.10 1999/09/02 08:39:39 jdurand Exp $
+ * $Id: Cthread.c,v 1.11 1999/09/07 13:46:48 jdurand Exp $
  *
  * $Log: Cthread.c,v $
+ * Revision 1.11  1999/09/07 13:46:48  jdurand
+ * Fixed typo (ECHTREADERROR -> SECTHREADERR)
+ *
  * Revision 1.10  1999/09/02 08:39:39  jdurand
  * Added serrno error values
  *
@@ -1736,14 +1739,14 @@ CTHREAD_DECL Cthread_Wait_Condition(char *file, int line, void *addr, int timeou
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
     if ((n = pthread_cond_wait(&(current->cond),&(current->mtx)))) {
       errno = n;
-      serrno = ECTHREADERROR;
+      serrno = SECTHREADERR;
       rc = -1;
     } else {
       rc = 0;
     }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
     if (pthread_cond_wait(&(current->cond),&(current->mtx))) {
-      serrno = ECTHREADERROR;
+      serrno = SECTHREADERR;
       rc = -1;
     } else {
       rc = 0;
