@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.95 $ $Date: 2001/02/12 10:32:42 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.96 $ $Date: 2001/06/18 09:13:36 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -831,7 +831,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                     if ( nb_bytes > 0 ) rc = rfio_write(disk_fd,bufp,nb_bytes);
                     else rc = nb_bytes;
                     DK_STATUS(RTCP_PS_NOBLOCKING);
-                    if ( rc == -1 ) {
+                    if ( rc == -1 || rc != nb_bytes ) {
                         last_errno = errno;
                         save_serrno = rfio_errno;
                         rtcp_log(LOG_ERR,"rfio_write(): errno = %d, serrno = %d, rfio_errno = %d\n",last_errno,serrno,save_serrno);
