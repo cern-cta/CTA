@@ -303,11 +303,11 @@ BEGIN
   FROM DiskCopy, SubRequest, FileSystem, DiskServer
   WHERE SubRequest.id = rsubreqId
    AND SubRequest.castorfile = DiskCopy.castorfile
-   AND DiskCopy.status IN (0, 1, 2, 5, 6) -- STAGED, WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT
    AND DiskCopy.fileSystem = FileSystem.id
    AND FileSystem.status = 0 -- PRODUCTION
    AND FileSystem.diskserver = DiskServer.id
    AND DiskServer.status = 0 -- PRODUCTION
+   AND DiskCopy.status IN (0, 1, 2, 5, 6) -- STAGED, WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT
    AND ROWNUM < 2;
  IF stat IN (1, 2, 5) -- DISKCCOPY_WAIT*
  THEN
