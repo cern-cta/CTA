@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.115 2001/03/21 17:33:26 jdurand Exp $
+ * $Id: poolmgr.c,v 1.116 2001/03/22 10:59:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.115 $ $Date: 2001/03/21 17:33:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.116 $ $Date: 2001/03/22 10:59:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2852,7 +2852,7 @@ int migpoolfiles(pool_p)
       setegid(tppool_vs_stcp[j].egid);                /* Move to requestor (from fileclasses) */
       seteuid(tppool_vs_stcp[j].euid);
     stagewrt_hsm_retry:
-      if ((rc = stagewrt_hsm((u_signed64) STAGE_SILENT,    /* Flags */
+      if ((rc = stagewrt_hsm((u_signed64) STAGE_SILENT|STAGE_NOHSMCREAT, /* Flags */
                              0,                            /* open flags - disabled */
                              localhost,                    /* Hostname */
                              NULL,                         /* Pooluser */
@@ -3030,7 +3030,8 @@ int upd_fileclass(pool_p,stcp)
     }
 
     /* @@@@ EXCEPTIONNAL @@@@ */
-    /* Cnsfileclass.migr_time_interval = 1; */
+    /* Cnsfileclass.migr_time_interval = 60; */
+    /* Cnsfileclass.maxdrives = 1; */
     /* Cnsfileclass.retenp_on_disk = 0; */
     /* @@@@ END OF EXCEPTIONNAL @@@@ */
 
