@@ -1,10 +1,10 @@
-.\" $Id: stageqry_Hsm.man,v 1.6 2002/09/09 15:43:54 jdurand Exp $
+.\" $Id: stageqry_Hsm.man,v 1.7 2002/09/15 06:56:05 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageqry_Hsm.man,v $ $Revision: 1.6 $ $Date: 2002/09/09 15:43:54 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stageqry_Hsm.man,v $ $Revision: 1.7 $ $Date: 2002/09/15 06:56:05 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEQRY_HSM "3" "$Date: 2002/09/09 15:43:54 $" "CASTOR" "Stage Library Functions"
+.TH STAGEQRY_HSM "3" "$Date: 2002/09/15 06:56:05 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stageqry_Hsm \- Query the stager catalog about an HSM file
 .SH SYNOPSIS
@@ -139,7 +139,7 @@ int main(argc,argv)
   rc = stageqry_Hsm((u_signed64) 0,              /* Flags */
                     NULL,                        /* Hostname */
                     NULL,                        /* Poolname */
-                    (argc > 1 ? argv[1] : YOUR_FILE_NAME), /* Nb stcp input */
+                    (argc > 1 ? argv[1] : YOUR_FILE_NAME), /* HSM filename */
                     &nstcp_output,               /* Nb stcp output */
                     &stcp_output,                /* Stcp output */
                     NULL,                        /* Nb stpp output */
