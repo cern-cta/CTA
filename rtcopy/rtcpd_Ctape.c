@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.27 $ $Date: 2000/04/07 11:35:03 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.28 $ $Date: 2000/04/07 15:51:21 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -324,13 +324,17 @@ int rtcpd_Mount(tape_list_t *tape) {
                 severity |= RTCP_RESELECT_SERV;
             }
             break;
+        case ETVBSY:
+            /*
+             * Retry forever on a volume busy
+             */
+            tapereq->err.max_tpretry = MAX_TPRETRY;
         case EEXIST:
             /*
              * This should not happen...
              */
         case ENXIO:
         case ETRSLT:
-        case ETVBSY:
             severity = RTCP_RESELECT_SERV;
             break;
         case SYERR:
@@ -363,8 +367,7 @@ int rtcpd_Mount(tape_list_t *tape) {
             severity = RTCP_FAILED | RTCP_UNERR;
             break;
         }
-        if ( save_serrno != ETVBSY )
-            rtcpd_SetReqStatus(tape,NULL,save_serrno,severity);
+        rtcpd_SetReqStatus(tape,NULL,save_serrno,severity);
     } /* if ( rc == -1 ) */
     if ( rc == 0 ) 
         rtcp_log(LOG_DEBUG,"rtcpd_Mount() Ctape_mount() successful\n");

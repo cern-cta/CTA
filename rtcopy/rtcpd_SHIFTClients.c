@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.21 $ $Date: 2000/04/06 12:08:52 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.22 $ $Date: 2000/04/07 15:51:23 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -424,7 +424,7 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
      * Check access
      */
     retval = rtcp_CheckClientAuth(hdr,req);
-    if ( retval == 0 ) { 
+    while ( retval == 0 ) { 
 #if !defined(_WIN32)
         if ( setgid((gid_t)req->gid) == -1 ) {
             rtcp_log(LOG_ERR,"setgid(%d): %s\n",req->gid,sstrerror(errno));
@@ -452,6 +452,8 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
         gethostname(req->tape->tapereq.server,namelen);
  
         rc = rtcpc(req->tape);
+        if ( rc == -1 && serrno == ETVBSY ) sleep(60);
+        else break;
     }
     (void) rtcp_SendRC(s,hdr,&retval,req); 
 

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.10 $ $Date: 2000/02/08 16:06:10 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.11 $ $Date: 2000/04/07 15:51:23 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
     rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
     char errtxt[1024];
-    int rc, retval, dont_change_srv;
+    int rc, save_serrno, retval, dont_change_srv;
 
     rtcp_InitLog(errtxt,NULL,stderr,NULL);
     initlog(argv[0],LOG_INFO,"");
@@ -90,6 +90,7 @@ int main(int argc, char *argv[]) {
          */
         for (;;) {
             rc = rtcpc(tape);
+            save_serrno = serrno;
             if ( AbortFlag != 0 ) break;
             if ( rc == -1 ) {
                 if ( CheckRetry(tape) == TRUE ) {
@@ -101,6 +102,7 @@ int main(int argc, char *argv[]) {
                         *tl->tapereq.unit = '\0';
                         if ( dont_change_srv == 0 ) *tl->tapereq.server = '\0'; 
                     } CLIST_ITERATE_END(tape,tl);
+                    if ( save_serrno == ETVBSY ) sleep(60);
                     continue;
                 } else {
                     rtcp_log(LOG_DEBUG,"%s rtcpc(): %s\n",argv[0],

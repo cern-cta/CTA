@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.56 $ $Date: 2000/04/06 09:34:13 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.57 $ $Date: 2000/04/07 15:51:22 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -572,6 +572,9 @@ static int rtcpd_ResetRequest(tape_list_t *tape) {
                 filereq->err.severity = RTCP_OK;
                 filereq->err.errorcode = 0;
                 *filereq->err.errmsgtxt = '\0';
+                tl->tapereq.err.severity = RTCP_OK;
+                tl->tapereq.err.errorcode = 0;
+                *tl->tapereq.err.errmsgtxt = '\0';
             }
             if ( (((filereq->concat & CONCAT) != 0) && 
                   ((fl->next->filereq.concat & CONCAT) == 0)) ||
@@ -591,6 +594,9 @@ static int rtcpd_ResetRequest(tape_list_t *tape) {
                     filereq->err.severity = RTCP_OK;
                     filereq->err.errorcode = 0;
                     *filereq->err.errmsgtxt = '\0'; 
+                    tl->tapereq.err.severity = RTCP_OK;
+                    tl->tapereq.err.errorcode = 0;
+                    *tl->tapereq.err.errmsgtxt = '\0';
                     fltmp = fl;
                     while ( fltmp->prev != fl && 
                        ((fltmp->filereq.concat & CONCAT) != 0 ||
@@ -1775,6 +1781,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      * Local retry loop to break out from
      */
     retry = 0;
+    rtcpd_ResetRequest(tape);
     for (;;) {
         /*
          * Start tape control and I/O thread. From now on the
