@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.5 $ $Date: 2000/08/04 13:36:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.6 $ $Date: 2000/08/08 11:24:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -170,6 +170,8 @@ int flags;
 		dmp_usrmsg (MSG_OUT, " DUMP - TO LAST BLOCK\n");
 	else
 		dmp_usrmsg (MSG_OUT, " DUMP - TO BLOCK: %d\n", toblock);
+	if (fromfile > 0)
+		dmp_usrmsg (MSG_OUT, " DUMP - FROM FILE %d\n", fromfile);
 	if (maxfile == 0)
 		dmp_usrmsg (MSG_OUT, " DUMP - ALL FILES\n");
 	else
@@ -279,14 +281,33 @@ u_signed64 *Size;
 					    label+4);
 					dmp_usrmsg (MSG_OUT, " OWNER IDENTIFIER:           %.14s\n",
 					    label+37);
-					continue;
 				} else {
 					dmp_usrmsg (MSG_OUT, "               %s IS UNLABELLED\n",
 					    dmpparm.vid);
 				}
 				if (lbltype)
 					strcpy (lbltype, labels[lcode]);
-
+				if (dmpparm.fromfile > 1) {
+					int n;
+					goodrec = 0;
+					n = dmpparm.fromfile - 1;
+					if (lcode == AL || lcode == SL)
+						n *= 3;
+					dmp_usrmsg (MSG_OUT, "\n DUMP - SKIPPING TO FILE %d\n",
+					    dmpparm.fromfile);
+					if (skiptpff (infd, path, n) < 0) {
+						dmp_usrmsg (MSG_ERR, " DUMP ! SKIP ERROR\n");
+						errcat = EIO;
+						break;
+					}
+					irec = 0;
+					max_block_length = 0;
+					min_block_length = 0;
+					sum_block_length = 0;
+					continue;
+				}
+				if (lcode)
+					continue;
 			} else if (irec < 6 && nbytes == 80) {
 				if (lcode == SL)
 					ebc_asc (buffer, label, 80);
@@ -369,7 +390,6 @@ u_signed64 *Size;
 			else if (den == DDS || den == DDSC)
 				tape_used = tape_used + 4.0;
 			if (qbov) {	/* beginning of tape */
-				qbov = 0;
 				dmp_usrmsg (MSG_OUT, "               %s IS UNLABELLED\n", dmpparm.vid);
 				if (lbltype)
 					strcpy (lbltype, labels[lcode]);
@@ -404,7 +424,7 @@ u_signed64 *Size;
 						close (infd);
 						return (1);
 					}
-				} else if ((dmpparm.flags & IGNOREEOI) == 0) {
+				} else if ((dmpparm.flags & IGNOREEOI) == 0 && !qbov) {
 					dmp_usrmsg (MSG_OUT, " ***** DOUBLE TAPE MARK READ *****\n");
 					break;
 				}
@@ -417,6 +437,7 @@ u_signed64 *Size;
 			irec = 0;
 			max_block_length = 0;
 			min_block_length = 0;
+			qbov = 0;
 			sum_block_length = 0;
 			if (lcode == 0 || qlab < 0) return (0);
 		} else {
