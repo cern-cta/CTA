@@ -1,5 +1,5 @@
 /*
- * $Id: buildupath.c,v 1.12 2001/02/01 18:09:25 jdurand Exp $
+ * $Id: buildupath.c,v 1.13 2001/03/04 07:39:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.12 $ $Date: 2001/02/01 18:09:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.13 $ $Date: 2001/03/04 07:39:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -42,6 +42,7 @@ int init_cwd_hostname()
 	char *getcwd();
 	int n = 0;
 	char *p;
+	char *func = "init_cwd_hostname";
 
 	initialized = 1;
 	p = getconfent ("RFIO", "NFS_ROOT", 0);
@@ -59,12 +60,12 @@ int init_cwd_hostname()
 #else
 	while ((p = getcwd (cwd, sizeof(cwd))) == NULL && errno == ETIMEDOUT) {
 		if (n++ == 0)
-			stage_errmsg(STG02, "", "getcwd", sys_errlist[errno]);
+			stage_errmsg(func, STG02, "", "getcwd", sys_errlist[errno]);
 		stage_sleep (RETRYI);
 	}
 #endif
 	if (p == NULL) {
-		stage_errmsg(STG02, "", "getcwd", sys_errlist[errno]);
+		stage_errmsg(func, STG02, "", "getcwd", sys_errlist[errno]);
 		return (SYERR);
 	}
 	return (0);
@@ -81,6 +82,7 @@ int resolvelinks(argvi, buf, buflen, req_type)
 	char *getcwd();
 	char linkbuf[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	char *p, *q;
+	char *func = "resolvelinks";
 
 	if ((p = strstr (argvi, ":/")) != NULL) {
 		strncpy (dsksrvr, argvi, p - argvi);
@@ -115,7 +117,7 @@ int resolvelinks(argvi, buf, buflen, req_type)
 	strcpy (linkbuf, dir);	/* links are not supported */
 #else
 	if (chdir (dir) < 0) {
-		stage_errmsg(STG02, dir, "chdir", sys_errlist[errno]);
+		stage_errmsg(func, STG02, dir, "chdir", sys_errlist[errno]);
 		if (req_type == STAGECLR || req_type == STAGE_CLR) {	/* let stgdaemon try */
 			if (strlen (dir) + 1 > buflen) return (-1);
 			strcpy (buf, dir);
@@ -124,11 +126,11 @@ int resolvelinks(argvi, buf, buflen, req_type)
 			return (-1);
 	}
 	if (getcwd (linkbuf, sizeof(linkbuf)) == NULL) {
-		stage_errmsg(STG02, argvi, "getcwd", sys_errlist[errno]);
+		stage_errmsg(func, STG02, argvi, "getcwd", sys_errlist[errno]);
 		return (-1);
 	}
 	if (chdir (cwd) < 0) {
-		stage_errmsg(STG02, cwd, "chdir", sys_errlist[errno]);
+		stage_errmsg(func, STG02, cwd, "chdir", sys_errlist[errno]);
 		return (-1);
 	}
 #endif
@@ -157,6 +159,7 @@ int DLL_DECL build_linkname(argvi, path, size, req_type)
 	char buf[256];
 	int c;
 	char *p;
+	char *func = "build_linkname";
 
 	if (! initialized && (c = init_cwd_hostname())) return (c);
 	if (*argvi != '/' && strstr (argvi, ":/") == NULL) {
@@ -166,13 +169,13 @@ int DLL_DECL build_linkname(argvi, path, size, req_type)
 				&& (strncmp (cwd, "/afs/", 5) || (req_type == STAGEWRT || req_type == STAGE_WRT)))
 			if ((int) strlen (hostname) + (int) strlen (cwd) +
 					(int) strlen (argvi) + 3 > size) {
-				stage_errmsg(STG08, argvi);
+				stage_errmsg(func, STG08, argvi);
 				return (USERR);
 			} else
 				sprintf (path, "%s:%s/%s", hostname, cwd, argvi);
 		else
 			if ((int) strlen (cwd) + (int) strlen (argvi) + 2 > size) {
-				stage_errmsg(STG08, argvi);
+				stage_errmsg(func, STG08, argvi);
 				return (USERR);
 			} else
 				sprintf (path, "%s/%s", cwd, argvi);
@@ -181,12 +184,12 @@ int DLL_DECL build_linkname(argvi, path, size, req_type)
 		if ((p = strrchr (buf, '/')) != NULL) {
 			*p = '\0';
 			if (resolvelinks (buf, path, size - strlen (p+1) - 1, req_type) < 0) {
-				stage_errmsg(STG08, argvi);
+				stage_errmsg(func, STG08, argvi);
 				return (USERR);
 			}
 			*p = '/';
 		} else {
-			stage_errmsg(STG08, argvi);
+			stage_errmsg(func, STG08, argvi);
 			return (USERR);
 		}
 		strcat (path, p);
@@ -203,6 +206,7 @@ int DLL_DECL build_Upath(fun, path, size, req_type)
 #if !defined(_WIN32)
 	char buf[16];
 	int c;
+	char *func = "build_Upath";
 
 	if (! initialized && (c = init_cwd_hostname())) return (c);
 #if _IBMESA
@@ -220,13 +224,13 @@ int DLL_DECL build_Upath(fun, path, size, req_type)
 			&& (strncmp (cwd, "/afs/", 5) || (req_type == STAGEWRT || req_type == STAGE_WRT)))
 		if ((int) strlen (hostname) + (int) strlen (cwd) +
 				(int) strlen (buf) + 3 > size) {
-			stage_errmsg(STG08, buf);
+			stage_errmsg(func, STG08, buf);
 			return (USERR);
 		} else
 			sprintf (path, "%s:%s/%s", hostname, cwd, buf);
 	else
 		if ((int) strlen (cwd) + (int) strlen (buf) + 2 > size) {
-			stage_errmsg(STG08, buf);
+			stage_errmsg(func, STG08, buf);
 			return (USERR);
 		} else
 			sprintf (path, "%s/%s", cwd, buf);
