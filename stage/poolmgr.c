@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.135 2001/06/07 15:16:33 jdurand Exp $
+ * $Id: poolmgr.c,v 1.136 2001/06/08 14:30:16 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.135 $ $Date: 2001/06/07 15:16:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.136 $ $Date: 2001/06/08 14:30:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1523,7 +1523,7 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
   char sav_defpoolname[CA_MAXPOOLNAMELEN + 1];
   char sav_defpoolname_in[CA_MAXPOOLNAMELEN + 1];
   char sav_defpoolname_out[10 * (CA_MAXPOOLNAMELEN + 1)];
-  struct migrator *sav_migrator;
+  struct migrator *sav_migrators;
   int sav_nbmigrator;
   int sav_nbpool;
   char **sav_poolc;
@@ -1538,7 +1538,7 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
   strcpy (sav_defpoolname, defpoolname);
   strcpy (sav_defpoolname_in, defpoolname_in);
   strcpy (sav_defpoolname_out, defpoolname_out);
-  sav_migrator = migrators;
+  sav_migrators = migrators;
   sav_nbmigrator = nbmigrator;
   sav_nbpool = nbpool;
   sav_poolc = poolc;
@@ -1577,7 +1577,7 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
     strcpy (defpoolname, sav_defpoolname);
     strcpy (defpoolname_in, sav_defpoolname_in);
     strcpy (defpoolname_out, sav_defpoolname_out);
-    migrators = sav_migrator;
+    migrators = sav_migrators;
     nbmigrator = sav_nbmigrator;
     nbpool = sav_nbpool;
     pools = sav_pools;
@@ -1602,10 +1602,12 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
       free (pool_p->elemp);
     }
     free (sav_pools);
-    if (sav_migrator) {
-      if (sav_migrator->fileclass != NULL) free (sav_migrator->fileclass);
-      if (sav_migrator->fileclass_predicates != NULL) free (sav_migrator->fileclass_predicates);
-      free (sav_migrator);
+    if (sav_migrators) {
+      for (i = 0; i < sav_nbmigrator; i++) {
+        if (sav_migrators[i].fileclass != NULL) free (sav_migrators[i].fileclass);
+        if (sav_migrators[i].fileclass_predicates != NULL) free (sav_migrators[i].fileclass_predicates);
+      }
+      free (sav_migrators);
     }
     /* And restore rw counters */
     for (stcp = stcs; stcp < stce; stcp++) {
