@@ -45,6 +45,22 @@ SECLIB_UTIL_OBJS = Csec_errmsg.Osuf Csec_apiinit.Osuf Csec_common.Osuf
 SECLIB_OBJS = Csec_api_loader.Osuf Csec_protocol_policy.Osuf Csec_api.Osuf $(SECLIB_UTIL_OBJS)
 #endif
 
+#if SecMakeStaticLibrary
+SECLIB_STATIC_OBJS =  Csec_static_loader.Osuf Csec_plugin_ID.Osuf 
+#if UseKRB5
+SECLIB_GSS_OBJS = Csec_plugin_KRB5.Osuf Csec_plugin_KRB5_mapper.Osuf
+#else
+#if UseGSI
+SECLIB_GSS_OBJS = Csec_plugin_GSI.Osuf Csec_plugin_GSI_mapper.Osuf
+#else
+#if UseKRB4
+SECLIB_KRB4_OBJS = Csec_plugin_KRB4.Osuf
+#endif
+#endif
+#endif
+SECLIB_OBJS = Csec_protocol_policy.Osuf Csec_api.Osuf  $(SECLIB_UTIL_OBJS) $(SECLIB_STATIC_OBJS) $(SECLIB_GSS_OBJS) $(SECLIB_KRB4_OBJS)
+#endif
+
 CSEC_MECHLIST=CSEC_Mechlist
 CFLAGS = $(DFLAGS) $(MTCCFLAGS) -g -DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\"" -I$(INCLUDES) 
 LDFLAGS =  SecLibs
@@ -54,6 +70,10 @@ COMM######################### DEPENDENCY LIBRARIES ###############
 DEPLIB = DepSharedLibraryTargetName(shlib,shift)
  
 COMM######################### RULES ##############################
+
+#if SecMakeStaticLibrary
+ALL_TARGETS = $(SECLIB)
+#else
 
 ALL_TARGETS = $(SECLIB) SharedLibraryTargetName(Csec_plugin_ID)
 #if UseGSI
@@ -65,14 +85,47 @@ ALL_TARGETS += SharedLibraryTargetName(Csec_plugin_KRB5)
 #if UseKRB4
 ALL_TARGETS += SharedLibraryTargetName(Csec_plugin_KRB4)
 #endif
-
+#endif
 
 all: $(ALL_TARGETS)
+
+#if  SecMakeStaticLibrary
+
+NormalLibraryTarget(security,$(SECLIB_OBJS))
+
+#if UseGSI
+Csec_static_loader.Osuf: Csec_static_loader.c
+	$(CC) $(CFLAGS) SecAuthMechGSI	SecIncludeDirGSI -o $@ -c Csec_static_loader.c
+Csec_plugin_GSI.Osuf: Csec_plugin_GSS.c
+	$(CC) $(CFLAGS) SecAuthMechGSI SecIncludeDirGSI	-o $@ -c Csec_plugin_GSS.c
+
+Csec_plugin_GSI_mapper.Osuf:  Csec_plugin_GSS_mapper.c
+	$(CC) $(CFLAGS) SecAuthMechGSI SecIncludeDirGSI	-o $@ -c Csec_plugin_GSS_mapper.c
+#else
+#if UseKRB5
+Csec_static_loader.Osuf: Csec_static_loader.c
+	$(CC) $(CFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5	-o $@ -c Csec_static_loader.c
+Csec_plugin_KRB5.Osuf: Csec_plugin_GSS.c
+	$(CC) $(CFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5	-o $@ -c Csec_plugin_GSS.c
+
+Csec_plugin_KRB5_mapper.Osuf:  Csec_plugin_GSS_mapper.c
+	$(CC) $(CFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5	-o $@ -c Csec_plugin_GSS_mapper.c
+#else
+#if UseKRB4
+Csec_static_loader.Osuf: Csec_static_loader.c
+	$(CC) $(CFLAGS) -DKRB4 SecIncludeDirKRB4	-o $@ -c Csec_static_loader.c
+
+Csec_plugin_KRB4.Osuf: Csec_plugin_KRB4.c 
+	$(CC) $(CFLAGS) SecIncludeDirKRB4	-o $@ -c Csec_plugin_KRB4.c
+#endif
+#endif
+#endif
+#else
 
 NormalLibraryTarget(security,$(SECLIB_OBJS))
 
 Csec_api_loader.Osuf: Csec_api_loader.c
-	$(CC) $(CFLAGS) -rdynamic -c -o Csec_api_loader.Osuf Csec_api_loader.c -ldl
+	$(CC) $(CFLAGS) -rdynamic -c -o Csec_api_loader.Osuf Csec_api_loader.c
 
 #if UseGSI
 SharedLibraryTargetName(Csec_plugin_GSI): $(SECLIB_UTIL_OBJS) Csec_plugin_GSI.Osuf Csec_plugin_GSI_mapper.Osuf
@@ -110,7 +163,7 @@ SharedLibraryTargetName(Csec_plugin_ID): $(SECLIB_UTIL_OBJS) Csec_plugin_ID.Osuf
 
 Csec_plugin_ID.Osuf: Csec_plugin_ID.c
 	$(CC) $(CFLAGS) -o $@ -c Csec_plugin_ID.c
-
+#endif
 
 MakeDepLibrary(lib,shift)
 
