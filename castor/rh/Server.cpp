@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2004/11/23 16:16:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2004/11/25 12:46:38 $ $Author: bcouturi $
  *
  *
  *
@@ -197,10 +197,9 @@ void *castor::rh::Server::processRequest(void *param) throw() {
       // XXX wherever you use it !!!
       Cuuid_t cuuid;
       Cuuid_create(&cuuid);
-      char uuid[17];
-      uuid[17] = 0;
-      char* uuid2 = uuid;
-      marshall_UUID(uuid2, cuuid);
+      char uuid[CUUID_STRING_LEN+1];
+      uuid[CUUID_STRING_LEN] = 0;
+      Cuuid2string(uuid, CUUID_STRING_LEN, &cuuid);
       fr->setReqId(uuid);
       handleRequest(fr);
       ack.setRequestId(uuid);
