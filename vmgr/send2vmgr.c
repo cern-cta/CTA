@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2vmgr.c,v $ $Revision: 1.2 $ $Date: 2004/07/19 15:36:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2vmgr.c,v $ $Revision: 1.3 $ $Date: 2004/08/12 13:42:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -56,20 +56,40 @@ int user_repbuf_len;
 	struct servent *sp;
 #ifdef CSEC
 	Csec_context_t ctx;
+	int secure_connection = 0;
 #endif
 
 	strcpy (func, "send2vmgr");
+#ifdef CSEC
+	if (getenv("SECURE_CASTOR") != NULL) secure_connection++;
+#endif
 	if (socketp == NULL || *socketp < 0) {	/* connection not opened yet */
 		sin.sin_family = AF_INET;
-		if ((p = getenv ("VMGR_PORT")) || (p = getconfent ("VMGR", "PORT", 0))) {
-			sin.sin_port = htons ((unsigned short)atoi (p));
-		} else if (sp = Cgetservbyname ("vmgr", "tcp")) {
-			sin.sin_port = sp->s_port;
-			serrno = 0;
+#ifdef CSEC
+		if (secure_connection) {
+		  if ((p = getenv ("SVMGR_PORT")) || (p = getconfent ("SVMGR", "PORT", 0))) {
+		    sin.sin_port = htons ((unsigned short)atoi (p));
+		  } else if (sp = Cgetservbyname ("svmgr", "tcp")) {
+		    sin.sin_port = sp->s_port;
+		    serrno = 0;
+		  } else {
+		    sin.sin_port = htons ((unsigned short)SVMGR_PORT);
+		    serrno = 0;
+		  }
 		} else {
-			sin.sin_port = htons ((unsigned short)VMGR_PORT);
-			serrno = 0;
+#endif
+		  if ((p = getenv ("VMGR_PORT")) || (p = getconfent ("VMGR", "PORT", 0))) {
+		    sin.sin_port = htons ((unsigned short)atoi (p));
+		  } else if (sp = Cgetservbyname ("vmgr", "tcp")) {
+		    sin.sin_port = sp->s_port;
+		    serrno = 0;
+		  } else {
+		    sin.sin_port = htons ((unsigned short)VMGR_PORT);
+		    serrno = 0;
+		  }
+#ifdef CSEC
 		}
+#endif
 		if ((p = getenv ("VMGR_HOST")) || (p = getconfent ("VMGR", "HOST", 0)))
 			strcpy (vmgrhost, p);
 		else {
@@ -111,26 +131,26 @@ int user_repbuf_len;
 			}
 		}
 #ifdef CSEC
+			if (secure_connection) {
 
-
-			if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
-			  vmgr_errmsg (func, VMG02, "send", "Could not init context");
-			  serrno = ESEC_CTX_NOT_INITIALIZED;
-			  (void) netclose (s);
-			  return -1;
+			  if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
+			    vmgr_errmsg (func, VMG02, "send", "Could not init context");
+			    serrno = ESEC_CTX_NOT_INITIALIZED;
+			    (void) netclose (s);
+			    return -1;
 			}
 			
-			if(Csec_client_establish_context(&ctx, s)< 0) {
-			  vmgr_errmsg (func, "%s: %s\n",
-				      "send",
-				      "Could not establish context");
-			  (void) netclose (s);
-			  serrno = ESEC_NO_CONTEXT;
-			  return -1;
+			  if(Csec_client_establish_context(&ctx, s)< 0) {
+			    vmgr_errmsg (func, "%s: %s\n",
+					 "send",
+					 "Could not establish context");
+			    (void) netclose (s);
+			    serrno = ESEC_NO_CONTEXT;
+			    return -1;
+			  }
+
+			  Csec_clear_context(&ctx);
 			}
-
-			Csec_clear_context(&ctx);
-
 #endif
 		if (socketp)
 			*socketp = s;
