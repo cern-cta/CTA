@@ -1,7 +1,10 @@
 /*
- * $Id: socket_timeout.h,v 1.4 1999/10/20 19:11:53 jdurand Exp $
+ * $Id: socket_timeout.h,v 1.5 2000/05/31 10:35:17 obarring Exp $
  *
  * $Log: socket_timeout.h,v $
+ * Revision 1.5  2000/05/31 10:35:17  obarring
+ * Add DLL_DECL to prototypes
+ *
  * Revision 1.4  1999/10/20 19:11:53  jdurand
  * Introduced a typdef size_t ssize_t so that Windows is happy
  *
@@ -17,6 +20,9 @@
 #ifndef __stgtimeout_h
 #define __stgtimeout_h
 
+#include <osdep.h>
+#include <net.h>
+
 #if _WIN32
 #include <windows.h>
 typedef size_t ssize_t;
@@ -24,16 +30,7 @@ typedef size_t ssize_t;
 #include <sys/types.h>
 #endif
 
-#if defined(__STDC__)
-
-extern ssize_t  netread_timeout(int, void *, size_t, int);
-extern ssize_t  netwrite_timeout(int, void *, size_t, int);
-
-#else /* __STDC__ */
-
-extern ssize_t  netread_timeout();
-extern ssize_t  netwrite_timeout();
-
-#endif /* __STDC__ */
+EXTERN_C ssize_t DLL_DECL  netread_timeout _PROTO((SOCKET, void *, size_t, int));
+EXTERN_C ssize_t DLL_DECL  netwrite_timeout _PROTO((SOCKET, void *, size_t, int));
 
 #endif /* __stgtimeout_h */

@@ -1,14 +1,10 @@
 /*
- * $Id: log.h,v 1.5 1999/12/09 13:46:16 jdurand Exp $
- */
-
-/*
- * Copyright (C) 1990-1999 by CERN CN-PDP/CS
+ * Copyright (C) 1990-2000 by CERN CN-PDP/CS
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: log.h,v $ $Revision: 1.5 $ $Date: 1999/12/09 13:46:16 $ CERN CN-PDP/CS F. Hemmer
+ * @(#)$RCSfile: log.h,v $ $Revision: 1.6 $ $Date: 2000/05/31 10:35:17 $ CERN CN-PDP/CS F. Hemmer
  */
 
 /* log.h        generalized logging facilities                          */
@@ -19,7 +15,11 @@
 #define LOG_NOLOG       -1      /* Don't log                            */
 #include <osdep.h>
 
-EXTERN_C void DLL_DECL (*logfunc)();  /* logging function to use */
+EXTERN_C void DLL_DECL (*logfunc) _PROTO((int, ...));  
+                                /* logging function to use */
+EXTERN_C void DLL_DECL initlog _PROTO((char *, int, char *));
+EXTERN_C void DLL_DECL logit _PROTO((int, ...));
+EXTERN_C int DLL_DECL getloglv _PROTO((void));
 
 #ifdef log
 #undef log

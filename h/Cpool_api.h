@@ -46,12 +46,3 @@ EXTERN_C int  DLL_DECL  Cpool_next_index_timeout _PROTO((int, int));
 
 #endif /* __cpool_api_h */
 
-
-
-
-
-
-
-
-
-

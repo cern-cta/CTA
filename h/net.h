@@ -1,5 +1,5 @@
 /*
- * $Id: net.h,v 1.2 1999/07/20 15:54:37 obarring Exp $ 
+ * $Id: net.h,v 1.3 2000/05/31 10:35:17 obarring Exp $ 
  */
 
 #ifndef _NET_H
@@ -8,7 +8,7 @@
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
  */
-
+#include <osdep.h>
 /*
  * Define NT types and constants for UNIX system. All
  * CASTOR sources dealing with networking access should 
@@ -74,15 +74,23 @@ typedef int SOCKET;
 
 #endif /* _WIN32 */
 
-extern int (*recvfunc)();               /* Network receive function     */
+EXTERN_C int DLL_DECL (*recvfunc) _PROTO((SOCKET, char *, int));
+                                        /* Network receive function     */
 #define netread    (*recvfunc)
-extern int (*sendfunc)();               /* Network send function        */
+EXTERN_C int DLL_DECL (*sendfunc) _PROTO((SOCKET, char *, int));
+                                        /* Network send function        */
 #define netwrite   (*sendfunc)
-extern int (*closefunc)();              /* Network close function       */
+EXTERN_C int DLL_DECL (*closefunc) _PROTO((SOCKET));
+                                        /* Network close function       */
 #define netclose   (*closefunc)
-extern int (*ioctlfunc)();              /* Network ioctl function       */
+EXTERN_C int DLL_DECL (*ioctlfunc) _PROTO((SOCKET, int, int));
+                                        /* Network ioctl function       */
 #define netioctl  (*ioctlfunc)
-extern char *(*errfunc)();              /* Network error function       */
+EXTERN_C char DLL_DECL *(*errfunc) _PROTO((void));
+                                        /* Network error function       */
 #define neterror (*errfunc)
+
+#include <socket_timeout.h>
+
 
 #endif /* _NET_H */

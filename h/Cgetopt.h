@@ -1,5 +1,14 @@
 /*
- * $Id: Cgetopt.h,v 1.2 2000/05/12 15:50:59 jdurand Exp $
+ * $RCSfile: Cgetopt.h,v $ $Revision: 1.3 $ $Date: 2000/05/31 10:35:17 $ Jean-Damien Durand IT-PDP/DM
+ */
+
+/*
+ * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+/*
+ * Cgetopt.h    - CASTOR getopt definitions
  */
 
 #ifndef __Cgetopt_h
@@ -44,14 +53,13 @@ EXTERN_C char DLL_DECL **C__Coptarg _PROTO((void));
 /*
  * non-MT environment
  */
-extern  int     Copterr;
-extern  int     Coptind;
-extern  int     Coptopt;
-extern  int     Coptreset;
-extern  char   *Coptarg;
+EXTERN_C  int DLL_DECL Copterr;
+EXTERN_C  int DLL_DECL Coptind;
+EXTERN_C  int DLL_DECL Coptopt;
+EXTERN_C  int DLL_DECL Coptreset;
+EXTERN_C  char DLL_DECL *Coptarg;
 #endif /* _REENTRANT || _TREAD_SAFE */
 
-EXTERN_C int DLL_DECL Cgetopt_config _PROTO(());
-EXTERN_C int DLL_DECL Cgetopt _PROTO(());
+EXTERN_C int DLL_DECL Cgetopt _PROTO((int, char * CONST *, CONST char *));
 
 #endif /* __Cgetopt_h */
