@@ -29,6 +29,17 @@ COPYTAPEDIR = copytape
 #endif
 #endif
 
+#if BuildNewStageDaemon
+#if BuildStageDaemon != YES
+#undef BuildStageDaemon
+#define BuildStageDaemon YES
+#endif
+#if BuildProtoCppStager != YES
+#undef BuildProtoCppStager
+#define BuildProtoCppStager YES
+#endif
+#endif
+
 #if BuildNameServerDaemon && !UseOracle && !UseRaima
 #if BuildDbClient != YES
 #undef BuildDbClient
@@ -82,6 +93,10 @@ STAGEDIR = stage
 #if BuildVolumeMgrClient != YES
 #undef BuildVolumeMgrClient
 #define BuildVolumeMgrClient YES
+#endif
+#if BuildTapeClient != YES
+#undef BuildTapeClient
+#define BuildTapeClient YES
 #endif
 #endif
 

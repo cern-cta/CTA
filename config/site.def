@@ -189,6 +189,7 @@
 #define BuildRtstat		NO
 #define BuildStageClient	YES
 #define BuildStageDaemon	YES
+#define BuildNewStageDaemon     YES
 #define BuildStageLibrary	YES
 #define BuildRmLocal		YES
 #define BuildRmMaster		YES
