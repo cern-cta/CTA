@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlogit.c,v $ $Revision: 1.1 $ $Date: 1999/12/15 14:33:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlogit.c,v $ $Revision: 1.2 $ $Date: 2000/03/03 14:14:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -37,7 +37,8 @@ vmgrlogit(va_alist) va_dcl
 	msg = va_arg (args, char *);
 	(void) time (&current_time);		/* Get current time */
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
-	tm = localtime_r (&current_time, &tmstruc);
+	(void) localtime_r (&current_time, &tmstruc);
+	tm = &tmstruc;
 #else
 	tm = localtime (&current_time);
 #endif
@@ -54,4 +55,5 @@ vmgrlogit(va_alist) va_dcl
 	write (fd_log, prtbuf, strlen(prtbuf));
 	close (fd_log);
 	errno = save_errno;
+	return (0);
 }
