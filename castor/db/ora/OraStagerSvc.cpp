@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.72 $ $Release$ $Date: 2004/12/03 14:03:46 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.73 $ $Release$ $Date: 2004/12/03 16:55:22 $ $Author: sponcec3 $
  *
  *
  *
@@ -147,7 +147,7 @@ const std::string castor::db::ora::OraStagerSvc::s_selectDiskServerStatementStri
 
 /// SQL statement for selectTapeCopiesForMigration
 const std::string castor::db::ora::OraStagerSvc::s_selectTapeCopiesForMigrationStatementString =
-  "SELECT id FROM TapeCopy, CastorFile WHERE TapeCopy.castorFile = CastorFile.id AND CastorFile.svcClass = :1 AND TapeCopy.status IN (0, 1)";
+  "SELECT TapeCopy.id FROM TapeCopy, CastorFile WHERE TapeCopy.castorFile = CastorFile.id AND CastorFile.svcClass = :1 AND TapeCopy.status IN (0, 1)";
 
 /// SQL statement for updateAndCheckSubRequest
 const std::string castor::db::ora::OraStagerSvc::s_updateAndCheckSubRequestStatementString =
