@@ -29,6 +29,7 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/stager/FileSystemStatusCodes.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -241,6 +242,22 @@ namespace castor {
         m_diskserver = new_var;
       }
 
+      /**
+       * Get the value of m_status
+       * @return the value of m_status
+       */
+      FileSystemStatusCodes status() const {
+        return m_status;
+      }
+
+      /**
+       * Set the value of m_status
+       * @param new_var the new value of m_status
+       */
+      void setStatus(FileSystemStatusCodes new_var) {
+        m_status = new_var;
+      }
+
     private:
 
     private:
@@ -263,6 +280,8 @@ namespace castor {
       std::vector<DiskCopy*> m_copiesVector;
 
       DiskServer* m_diskserver;
+
+      FileSystemStatusCodes m_status;
 
     }; // end of class FileSystem
 

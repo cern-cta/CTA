@@ -40,6 +40,10 @@ END;
 DROP TABLE Client;
 CREATE TABLE Client (ipAddress NUMBER, port NUMBER, id INTEGER PRIMARY KEY, request INTEGER);
 
+/* SQL statements for type ScheduleSubReqRequest */
+DROP TABLE ScheduleSubReqRequest;
+CREATE TABLE ScheduleSubReqRequest (flags INTEGER, userName VARCHAR(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), subreqId INTEGER, diskServer VARCHAR(2048), fileSystem VARCHAR(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
+
 /* SQL statements for type StagePrepareToGetRequest */
 DROP TABLE StagePrepareToGetRequest;
 CREATE TABLE StagePrepareToGetRequest (flags INTEGER, userName VARCHAR(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
@@ -138,7 +142,7 @@ CREATE TABLE DiskCopy (path VARCHAR(2048), diskcopyId VARCHAR(2048), id INTEGER 
 
 /* SQL statements for type FileSystem */
 DROP TABLE FileSystem;
-CREATE TABLE FileSystem (free INTEGER, weight float, fsDeviation float, mountPoint VARCHAR(2048), id INTEGER PRIMARY KEY, diskPool INTEGER, diskserver INTEGER);
+CREATE TABLE FileSystem (free INTEGER, weight float, fsDeviation float, mountPoint VARCHAR(2048), id INTEGER PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER);
 
 /* SQL statements for type SvcClass */
 DROP TABLE SvcClass;
@@ -188,6 +192,8 @@ DROP INDEX I_SubRequest_Castorfile;
 DROP INDEX I_FileSystem_DiskPool;
 DROP INDEX I_SubRequest_DiskCopy;
 DROP INDEX I_CastorFile_fileIdNsHost;
+DROP INDEX I_DiskServer_name;
+CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
 CREATE UNIQUE INDEX I_CastorFile_fileIdNsHost on CastorFile (fileId, nsHost);
 CREATE INDEX I_DiskCopy_Castorfile on DiskCopy (castorFile);
 CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);

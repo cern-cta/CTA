@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.49 $ $Release$ $Date: 2004/11/23 16:27:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.50 $ $Release$ $Date: 2004/11/24 11:52:23 $ $Author: sponcec3 $
  *
  *
  *
@@ -33,6 +33,7 @@
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/DiskServer.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/FileClass.hpp"
 #include "castor/stager/CastorFile.hpp"
@@ -116,6 +117,10 @@ const std::string castor::db::ora::OraStagerSvc::s_selectFileClassStatementStrin
 const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementString =
   "SELECT id, fileSize FROM CastorFile WHERE fileId = :1 AND nsHost = :2";
 
+/// SQL statement for selectFileSystem
+const std::string castor::db::ora::OraStagerSvc::s_selectFileSystemStatementString =
+  "SELECT DiskServer.id, DiskServer.status, FileSystem.id, FileSystem.free, FileSystem.weight, FileSystem.fsDeviation, FileSystem.status FROM FileSystem, DiskServer WHERE DiskServer.name = :1 AND FileSystem.mountPoint = :2 AND FileSystem.diskserver = DiskServer.id";
+
 /// SQL statement for scheduleSubRequest
 const std::string castor::db::ora::OraStagerSvc::s_updateAndCheckSubRequestStatementString =
   "BEGIN updateAndCheckSubRequest(:1, :2, :3); END;";
@@ -131,7 +136,8 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_bestFileSystemForSegmentStatement(0),
   m_fileRecalledStatement(0), m_subRequestToDoStatement(0),
   m_selectSvcClassStatement(0), m_selectFileClassStatement(0),
-  m_selectCastorFileStatement(0), m_updateAndCheckSubRequestStatement(0) {
+  m_selectCastorFileStatement(0), m_selectFileSystemStatement(0),
+  m_updateAndCheckSubRequestStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -172,6 +178,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_subRequestToDoStatement);
     deleteStatement(m_selectSvcClassStatement);
     deleteStatement(m_selectFileClassStatement);
+    deleteStatement(m_selectFileSystemStatement);
     deleteStatement(m_selectCastorFileStatement);
     deleteStatement(m_updateAndCheckSubRequestStatement);
   } catch (oracle::occi::SQLException e) {};
@@ -186,6 +193,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_subRequestToDoStatement = 0;
   m_selectSvcClassStatement = 0;
   m_selectFileClassStatement = 0;
+  m_selectFileSystemStatement = 0;
   m_selectCastorFileStatement = 0;
   m_updateAndCheckSubRequestStatement = 0;
 }
@@ -944,6 +952,59 @@ castor::db::ora::OraStagerSvc::selectCastorFile
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select castorFile by fileId :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// selectFileSystem
+// -----------------------------------------------------------------------
+castor::stager::FileSystem*
+castor::db::ora::OraStagerSvc::selectFileSystem
+(const std::string mountPoint,
+ const std::string diskServer)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_selectFileSystemStatement) {
+    m_selectFileSystemStatement = createStatement(s_selectFileSystemStatementString);
+  }
+  // Execute statement and get result
+  unsigned long id;
+  try {
+    m_selectFileSystemStatement->setString(1, diskServer);
+    m_selectFileSystemStatement->setString(1, mountPoint);
+    oracle::occi::ResultSet *rset = m_selectFileSystemStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      // Nothing found, return 0
+      m_selectFileSystemStatement->closeResultSet(rset);
+      return 0;
+    }
+    // Found the FileSystem and the DiskServer,
+    // create them in memory
+    castor::stager::DiskServer* ds =
+      new castor::stager::DiskServer();
+    ds->setId((u_signed64)rset->getDouble(1));
+    ds->setStatus
+      ((enum castor::stager::DiskServerStatusCode)rset->getInt(2));
+    ds->setName(diskServer);
+    castor::stager::FileSystem* result =
+      new castor::stager::FileSystem();
+    result->setId((u_signed64)rset->getDouble(3));
+    result->setFree((u_signed64)rset->getDouble(4));
+    result->setWeight(rset->getDouble(5));
+    result->setFsDeviation(rset->getDouble(6));
+    result->setStatus
+      ((enum castor::stager::FileSystemStatusCodes)rset->getInt(7));
+    result->setMountPoint(mountPoint);
+    result->setDiskserver(ds);
+    ds->addFileSystems(result);
+    m_selectFileSystemStatement->closeResultSet(rset);
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select FileSystem by name :"
       << std::endl << e.getMessage();
     throw ex;
   }

@@ -90,7 +90,9 @@ namespace castor {
     OBJ_FileQueryResponse = 56,
     OBJ_FindReqResponse = 57,
     OBJ_DiskCopyForRecall = 58,
-    OBJ_TapeCopyForMigration = 59
+    OBJ_TapeCopyForMigration = 59,
+    OBJ_ScheduleSubReqRequest = 60,
+    OBJ_ScheduleSubReqResponse = 61
   };
     
   /**
@@ -132,7 +134,7 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[60];
+  extern const char* ObjectsIdStrings[62];
 
   /**
    * Names of the differents Services, used to display

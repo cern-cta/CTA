@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/FileSystem.cpp
+ *                      castor/rh/ScheduleSubReqResponse.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
+ * @(#)$RCSfile: ScheduleSubReqResponse.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/24 11:52:23 $ $Author: sponcec3 $
  *
  * 
  *
@@ -28,10 +28,9 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/rh/Response.hpp"
+#include "castor/rh/ScheduleSubReqResponse.hpp"
 #include "castor/stager/DiskCopy.hpp"
-#include "castor/stager/DiskPool.hpp"
-#include "castor/stager/DiskServer.hpp"
-#include "castor/stager/FileSystem.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -40,82 +39,58 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::stager::FileSystem::FileSystem() throw() :
-  m_free(),
-  m_weight(0.0),
-  m_fsDeviation(0.0),
-  m_mountPoint(""),
+castor::rh::ScheduleSubReqResponse::ScheduleSubReqResponse() throw() :
+  Response(),
   m_id(),
-  m_diskPool(0),
-  m_diskserver(0),
-  m_status(FileSystemStatusCodes(0)) {
+  m_diskCopy(0) {
 };
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::stager::FileSystem::~FileSystem() throw() {
-  if (0 != m_diskPool) {
-    m_diskPool->removeFileSystems(this);
-  }
-  for (unsigned int i = 0; i < m_copiesVector.size(); i++) {
-    m_copiesVector[i]->setFileSystem(0);
-  }
-  m_copiesVector.clear();
-  if (0 != m_diskserver) {
-    m_diskserver->removeFileSystems(this);
-  }
+castor::rh::ScheduleSubReqResponse::~ScheduleSubReqResponse() throw() {
 };
 
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::stager::FileSystem::print(std::ostream& stream,
-                                       std::string indent,
-                                       castor::ObjectSet& alreadyPrinted) const {
-  stream << indent << "[# FileSystem #]" << std::endl;
+void castor::rh::ScheduleSubReqResponse::print(std::ostream& stream,
+                                               std::string indent,
+                                               castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# ScheduleSubReqResponse #]" << std::endl;
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
     stream << indent << "Back pointer, see above" << std::endl;
     return;
   }
+  // Call print on the parent class(es)
+  this->Response::print(stream, indent, alreadyPrinted);
   // Output of all members
-  stream << indent << "free : " << m_free << std::endl;
-  stream << indent << "weight : " << m_weight << std::endl;
-  stream << indent << "fsDeviation : " << m_fsDeviation << std::endl;
-  stream << indent << "mountPoint : " << m_mountPoint << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "DiskPool : " << std::endl;
-  if (0 != m_diskPool) {
-    m_diskPool->print(stream, indent + "  ", alreadyPrinted);
+  stream << indent << "DiskCopy : " << std::endl;
+  if (0 != m_diskCopy) {
+    m_diskCopy->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }
   {
-    stream << indent << "Copies : " << std::endl;
+    stream << indent << "Sources : " << std::endl;
     int i;
-    std::vector<DiskCopy*>::const_iterator it;
-    for (it = m_copiesVector.begin(), i = 0;
-         it != m_copiesVector.end();
+    std::vector<castor::stager::DiskCopy*>::const_iterator it;
+    for (it = m_sourcesVector.begin(), i = 0;
+         it != m_sourcesVector.end();
          it++, i++) {
       stream << indent << "  " << i << " :" << std::endl;
       (*it)->print(stream, indent + "    ", alreadyPrinted);
     }
   }
-  stream << indent << "Diskserver : " << std::endl;
-  if (0 != m_diskserver) {
-    m_diskserver->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
-  stream << indent << "status : " << FileSystemStatusCodesStrings[m_status] << std::endl;
 }
 
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::stager::FileSystem::print() const {
+void castor::rh::ScheduleSubReqResponse::print() const {
   ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
@@ -123,35 +98,35 @@ void castor::stager::FileSystem::print() const {
 //------------------------------------------------------------------------------
 // TYPE
 //------------------------------------------------------------------------------
-int castor::stager::FileSystem::TYPE() {
-  return OBJ_FileSystem;
+int castor::rh::ScheduleSubReqResponse::TYPE() {
+  return OBJ_ScheduleSubReqResponse;
 }
 
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::stager::FileSystem::setId(u_signed64 id) {
+void castor::rh::ScheduleSubReqResponse::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-u_signed64 castor::stager::FileSystem::id() const {
+u_signed64 castor::rh::ScheduleSubReqResponse::id() const {
   return m_id;
 }
 
 //------------------------------------------------------------------------------
 // type
 //------------------------------------------------------------------------------
-int castor::stager::FileSystem::type() const {
+int castor::rh::ScheduleSubReqResponse::type() const {
   return TYPE();
 }
 
 //------------------------------------------------------------------------------
 // clone
 //------------------------------------------------------------------------------
-castor::IObject* castor::stager::FileSystem::clone() {
-  return new FileSystem(*this);
+castor::IObject* castor::rh::ScheduleSubReqResponse::clone() {
+  return new ScheduleSubReqResponse(*this);
 }
 

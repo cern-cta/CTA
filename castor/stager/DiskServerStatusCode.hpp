@@ -39,14 +39,15 @@ namespace castor {
      */
     enum DiskServerStatusCode {
       DISKSERVER_PRODUCTION,
-      DISKSERVER_MAINTENANCE
+      DISKSERVER_DRAINING,
+      DISKSERVER_DISABLED
     }; // end of enum DiskServerStatusCode
 
     /**
      * Names of the differents representations, used to display
      * correctly the DiskServerStatusCode enum
      */
-    extern const char* DiskServerStatusCodeStrings[2];
+    extern const char* DiskServerStatusCodeStrings[3];
 
 #ifdef __cplusplus
   }; // end of namespace stager

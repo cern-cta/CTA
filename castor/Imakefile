@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.54 $ $Release$ $Date: 2004/11/24 10:53:55 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.55 $ $Release$ $Date: 2004/11/24 11:52:23 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -118,6 +118,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               io/StreamFileSystemCnv.cpp \
               io/StreamMessageAckCnv.cpp \
               io/StreamPtrCnv.cpp \
+              io/StreamScheduleSubReqRequestCnv.cpp \
+              io/StreamScheduleSubReqResponseCnv.cpp \
               io/StreamSegmentCnv.cpp \
               io/StreamStringResponseCnv.cpp \
               io/StreamSubRequestCnv.cpp \
@@ -169,6 +171,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               rh/IOResponseCInt.cpp \
               rh/RequestQueryResponse.cpp \
               rh/RequestQueryResponseCInt.cpp \
+              rh/ScheduleSubReqResponse.cpp \
+              rh/ScheduleSubReqResponseCInt.cpp \
               stager/CastorFile.cpp \
               stager/CastorFileCInt.cpp \
               stager/DiskCopy.cpp \
@@ -189,6 +193,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/FileRequestCInt.cpp \
               stager/FileSystem.cpp \
               stager/FileSystemCInt.cpp \
+              stager/FileSystemStatusCodes.cpp \
               stager/IStagerSvcCInt.cpp \
               stager/SvcClass.cpp \
               stager/SvcClassCInt.cpp \
@@ -199,6 +204,8 @@ STGLIB_SRCS = IAddressCInt.cpp \
               stager/Request.cpp \
               stager/RequestCInt.cpp \
 	      stager/RequestQueryType.cpp \
+              stager/ScheduleSubReqRequest.cpp \
+              stager/ScheduleSubReqRequestCInt.cpp \
               stager/Segment.cpp \
               stager/SegmentCInt.cpp \
               stager/SegmentStatusCodes.cpp \

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/io/StreamFileSystemCnv.cpp
+ *                      castor/io/StreamScheduleSubReqResponseCnv.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
+ * @(#)$RCSfile: StreamScheduleSubReqResponseCnv.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/24 11:52:23 $ $Author: sponcec3 $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 // Include Files
-#include "StreamFileSystemCnv.hpp"
+#include "StreamScheduleSubReqResponseCnv.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
@@ -37,11 +37,8 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
+#include "castor/rh/ScheduleSubReqResponse.hpp"
 #include "castor/stager/DiskCopy.hpp"
-#include "castor/stager/DiskPool.hpp"
-#include "castor/stager/DiskServer.hpp"
-#include "castor/stager/FileSystem.hpp"
-#include "castor/stager/FileSystemStatusCodes.hpp"
 #include "osdep.h"
 #include <string>
 #include <vector>
@@ -49,97 +46,85 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamFileSystemCnv> s_factoryStreamFileSystemCnv;
-const castor::ICnvFactory& StreamFileSystemCnvFactory = 
-  s_factoryStreamFileSystemCnv;
+static castor::CnvFactory<castor::io::StreamScheduleSubReqResponseCnv> s_factoryStreamScheduleSubReqResponseCnv;
+const castor::ICnvFactory& StreamScheduleSubReqResponseCnvFactory = 
+  s_factoryStreamScheduleSubReqResponseCnv;
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::io::StreamFileSystemCnv::StreamFileSystemCnv(castor::ICnvSvc* cnvSvc) :
+castor::io::StreamScheduleSubReqResponseCnv::StreamScheduleSubReqResponseCnv(castor::ICnvSvc* cnvSvc) :
   StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::io::StreamFileSystemCnv::~StreamFileSystemCnv() throw() {
+castor::io::StreamScheduleSubReqResponseCnv::~StreamScheduleSubReqResponseCnv() throw() {
 }
 
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamFileSystemCnv::ObjType() {
-  return castor::stager::FileSystem::TYPE();
+const unsigned int castor::io::StreamScheduleSubReqResponseCnv::ObjType() {
+  return castor::rh::ScheduleSubReqResponse::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::io::StreamFileSystemCnv::objType() const {
+const unsigned int castor::io::StreamScheduleSubReqResponseCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::io::StreamFileSystemCnv::createRep(castor::IAddress* address,
-                                                castor::IObject* object,
-                                                bool autocommit,
-                                                unsigned int type)
+void castor::io::StreamScheduleSubReqResponseCnv::createRep(castor::IAddress* address,
+                                                            castor::IObject* object,
+                                                            bool autocommit,
+                                                            unsigned int type)
   throw (castor::exception::Exception) {
-  castor::stager::FileSystem* obj = 
-    dynamic_cast<castor::stager::FileSystem*>(object);
+  castor::rh::ScheduleSubReqResponse* obj = 
+    dynamic_cast<castor::rh::ScheduleSubReqResponse*>(object);
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
-  ad->stream() << obj->free();
-  ad->stream() << obj->weight();
-  ad->stream() << obj->fsDeviation();
-  ad->stream() << obj->mountPoint();
+  ad->stream() << obj->errorCode();
+  ad->stream() << obj->errorMessage();
   ad->stream() << obj->id();
-  ad->stream() << obj->status();
 }
 
 //------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
-castor::IObject* castor::io::StreamFileSystemCnv::createObj(castor::IAddress* address)
+castor::IObject* castor::io::StreamScheduleSubReqResponseCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   // create the new Object
-  castor::stager::FileSystem* object = new castor::stager::FileSystem();
+  castor::rh::ScheduleSubReqResponse* object = new castor::rh::ScheduleSubReqResponse();
   // Now retrieve and set members
-  u_signed64 free;
-  ad->stream() >> free;
-  object->setFree(free);
-  float weight;
-  ad->stream() >> weight;
-  object->setWeight(weight);
-  float fsDeviation;
-  ad->stream() >> fsDeviation;
-  object->setFsDeviation(fsDeviation);
-  std::string mountPoint;
-  ad->stream() >> mountPoint;
-  object->setMountPoint(mountPoint);
+  unsigned int errorCode;
+  ad->stream() >> errorCode;
+  object->setErrorCode(errorCode);
+  std::string errorMessage;
+  ad->stream() >> errorMessage;
+  object->setErrorMessage(errorMessage);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
-  int status;
-  ad->stream() >> status;
-  object->setStatus((castor::stager::FileSystemStatusCodes)status);
   return object;
 }
 
 //------------------------------------------------------------------------------
 // marshalObject
 //------------------------------------------------------------------------------
-void castor::io::StreamFileSystemCnv::marshalObject(castor::IObject* object,
-                                                    castor::io::StreamAddress* address,
-                                                    castor::ObjectSet& alreadyDone)
+void castor::io::StreamScheduleSubReqResponseCnv::marshalObject(castor::IObject* object,
+                                                                castor::io::StreamAddress* address,
+                                                                castor::ObjectSet& alreadyDone)
   throw (castor::exception::Exception) {
-  castor::stager::FileSystem* obj = 
-    dynamic_cast<castor::stager::FileSystem*>(object);
+  castor::rh::ScheduleSubReqResponse* obj = 
+    dynamic_cast<castor::rh::ScheduleSubReqResponse*>(object);
   if (0 == obj) {
     // Case of a null pointer
     address->stream() << castor::OBJ_Ptr << ((unsigned int)0);
@@ -148,14 +133,13 @@ void castor::io::StreamFileSystemCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->diskPool(), address, alreadyDone);
-    address->stream() << obj->copies().size();
-    for (std::vector<castor::stager::DiskCopy*>::iterator it = obj->copies().begin();
-         it != obj->copies().end();
+    cnvSvc()->marshalObject(obj->diskCopy(), address, alreadyDone);
+    address->stream() << obj->sources().size();
+    for (std::vector<castor::stager::DiskCopy*>::iterator it = obj->sources().begin();
+         it != obj->sources().end();
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
-    cnvSvc()->marshalObject(obj->diskserver(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -165,29 +149,26 @@ void castor::io::StreamFileSystemCnv::marshalObject(castor::IObject* object,
 //------------------------------------------------------------------------------
 // unmarshalObject
 //------------------------------------------------------------------------------
-castor::IObject* castor::io::StreamFileSystemCnv::unmarshalObject(castor::io::biniostream& stream,
-                                                                  castor::ObjectCatalog& newlyCreated)
+castor::IObject* castor::io::StreamScheduleSubReqResponseCnv::unmarshalObject(castor::io::biniostream& stream,
+                                                                              castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
   // Fill object with associations
-  castor::stager::FileSystem* obj = 
-    dynamic_cast<castor::stager::FileSystem*>(object);
+  castor::rh::ScheduleSubReqResponse* obj = 
+    dynamic_cast<castor::rh::ScheduleSubReqResponse*>(object);
   ad.setObjType(castor::OBJ_INVALID);
-  IObject* objDiskPool = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setDiskPool(dynamic_cast<castor::stager::DiskPool*>(objDiskPool));
-  unsigned int copiesNb;
-  ad.stream() >> copiesNb;
-  for (unsigned int i = 0; i < copiesNb; i++) {
+  IObject* objDiskCopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setDiskCopy(dynamic_cast<castor::stager::DiskCopy*>(objDiskCopy));
+  unsigned int sourcesNb;
+  ad.stream() >> sourcesNb;
+  for (unsigned int i = 0; i < sourcesNb; i++) {
     ad.setObjType(castor::OBJ_INVALID);
-    IObject* objCopies = cnvSvc()->unmarshalObject(ad, newlyCreated);
-    obj->addCopies(dynamic_cast<castor::stager::DiskCopy*>(objCopies));
+    IObject* objSources = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addSources(dynamic_cast<castor::stager::DiskCopy*>(objSources));
   }
-  ad.setObjType(castor::OBJ_INVALID);
-  IObject* objDiskserver = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setDiskserver(dynamic_cast<castor::stager::DiskServer*>(objDiskserver));
   return object;
 }
 

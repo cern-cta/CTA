@@ -352,6 +352,21 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Retrieves a FileSystem from the database based on its
+         * mount point and diskServer name.
+         * Caller is in charge of the deletion of the allocated
+         * objects, including the DiskServer Object
+         * @param mountPoint the mountPoint of the FileSystem
+         * @param diskServer the name of the disk server hosting this file system
+         * @return the FileSystem linked to its DiskServer, or 0 if none found
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::FileSystem* selectFileSystem
+        (const std::string mountPoint,
+         const std::string diskServer)
+          throw (castor::exception::Exception);
+
+        /**
          * Updates a SubRequest status in the DB and tells
          * whether the request to which it belongs still
          * has some SubRequests in SUBREQUEST_START status.
@@ -456,6 +471,12 @@ namespace castor {
 
         /// SQL statement object for function selectCastorFile
         oracle::occi::Statement *m_selectCastorFileStatement;
+
+        /// SQL statement for function selectFileSystem
+        static const std::string s_selectFileSystemStatementString;
+
+        /// SQL statement object for function selectFileSystem
+        oracle::occi::Statement *m_selectFileSystemStatement;
 
         /// SQL statement for function updateAndCheckSubRequest
         static const std::string s_updateAndCheckSubRequestStatementString;

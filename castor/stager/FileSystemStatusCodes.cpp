@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/DiskServerStatusCode.cpp
+ *                      castor/stager/FileSystemStatusCodes.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -25,14 +25,14 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/stager/DiskServerStatusCode.hpp"
+#include "castor/stager/FileSystemStatusCodes.hpp"
 
 //------------------------------------------------------------------------------
-// DiskServerStatusCodeStrings
+// FileSystemStatusCodesStrings
 //------------------------------------------------------------------------------
-const char* castor::stager::DiskServerStatusCodeStrings[3] = {
-  "DISKSERVER_PRODUCTION",
-  "DISKSERVER_DRAINING",
-  "DISKSERVER_DISABLED"
+const char* castor::stager::FileSystemStatusCodesStrings[3] = {
+  "FILESYSTEM_PRODUCTION",
+  "FILESYSTEM_DRAINING",
+  "FILESYSTEM_DISABLED"
 };
 

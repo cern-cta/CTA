@@ -30,6 +30,7 @@
 #include "castor/stager/DiskPool.hpp"
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/FileSystem.hpp"
+#include "castor/stager/FileSystemStatusCodes.hpp"
 #include "osdep.h"
 #include <vector>
 
@@ -239,6 +240,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_FileSystem_setDiskserver(castor::stager::FileSystem* instance, castor::stager::DiskServer* new_var) {
     instance->setDiskserver(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_status
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_status(castor::stager::FileSystem* instance, castor::stager::FileSystemStatusCodes* var) {
+    *var = instance->status();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_setStatus
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_setStatus(castor::stager::FileSystem* instance, castor::stager::FileSystemStatusCodes new_var) {
+    instance->setStatus(new_var);
     return 0;
   }
 

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/DiskServerStatusCode.cpp
+ *                      castor/stager/FileSystemStatusCodes.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,15 +24,35 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-// Include Files
-#include "castor/stager/DiskServerStatusCode.hpp"
+#ifndef CASTOR_STAGER_FILESYSTEMSTATUSCODES_HPP
+#define CASTOR_STAGER_FILESYSTEMSTATUSCODES_HPP
 
-//------------------------------------------------------------------------------
-// DiskServerStatusCodeStrings
-//------------------------------------------------------------------------------
-const char* castor::stager::DiskServerStatusCodeStrings[3] = {
-  "DISKSERVER_PRODUCTION",
-  "DISKSERVER_DRAINING",
-  "DISKSERVER_DISABLED"
-};
+#ifdef __cplusplus
+namespace castor {
 
+  namespace stager {
+
+#endif
+    /**
+     * enum FileSystemStatusCodes
+     * Possible status codes for a DiskServer
+     */
+    enum FileSystemStatusCodes {
+      FILESYSTEM_PRODUCTION,
+      FILESYSTEM_DRAINING,
+      FILESYSTEM_DISABLED
+    }; // end of enum FileSystemStatusCodes
+
+    /**
+     * Names of the differents representations, used to display
+     * correctly the FileSystemStatusCodes enum
+     */
+    extern const char* FileSystemStatusCodesStrings[3];
+
+#ifdef __cplusplus
+  }; // end of namespace stager
+
+}; // end of namespace castor
+
+#endif
+#endif // CASTOR_STAGER_FILESYSTEMSTATUSCODES_HPP

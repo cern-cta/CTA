@@ -28,6 +28,7 @@
 #define CASTOR_STAGER_FILESYSTEM_H
 
 // Include Files and Forward declarations for the C world
+#include "castor/stager/FileSystemStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_DiskCopy_t;
@@ -177,5 +178,15 @@ int Cstager_FileSystem_diskserver(struct Cstager_FileSystem_t* instance, struct 
  * Set the value of diskserver
  */
 int Cstager_FileSystem_setDiskserver(struct Cstager_FileSystem_t* instance, struct Cstager_DiskServer_t* new_var);
+
+/**
+ * Get the value of status
+ */
+int Cstager_FileSystem_status(struct Cstager_FileSystem_t* instance, enum Cstager_FileSystemStatusCodes_t* var);
+
+/**
+ * Set the value of status
+ */
+int Cstager_FileSystem_setStatus(struct Cstager_FileSystem_t* instance, enum Cstager_FileSystemStatusCodes_t new_var);
 
 #endif // CASTOR_STAGER_FILESYSTEM_H
