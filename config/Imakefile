@@ -1,0 +1,31 @@
+COMM       $Id: Imakefile,v 1.1 2004/06/23 04:54:58 jdurand Exp $
+COMM
+COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
+COMM  All rights reserved
+COMM
+
+COMM		Make config files
+
+#include <Project.tmpl>
+
+CONFIG_OBJS = castor castor_compiler castor_db castor_paths
+ICONFIG_OBJS = FileName($(CONFIGDIR),castor) FileName($(CONFIGDIR),castor_compiler) FileName($(CONFIGDIR),castor_db) FileName($(CONFIGDIR),castor_paths)
+
+all:
+
+install: $(CONFIGDIR) $(ICONFIG_OBJS)
+
+export:
+
+exportman:
+
+exportshr:
+
+install.man:
+
+MakeDir($(CONFIGDIR),root,bin,0755)
+
+InstallNonExecFile(castor,$(CONFIGDIR),root,bin,0644)
+InstallNonExecFile(castor_compiler,$(CONFIGDIR),root,bin,0644)
+InstallNonExecFile(castor_db,$(CONFIGDIR),root,bin,0644)
+InstallNonExecFile(castor_paths,$(CONFIGDIR),root,bin,0644)
