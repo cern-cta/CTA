@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.7 2000/05/03 13:42:35 obarring Exp $
+ * $Id: mstat.c,v 1.8 2000/05/25 09:58:49 obarring Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.7 $ $Date: 2000/05/03 13:42:35 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.8 $ $Date: 2000/05/25 09:58:49 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -107,10 +107,15 @@ struct stat *statb;
 	       rc = rfio_smstat(fd,filename,statb,RQST_STAT_SEC) ;
 	    else
 	       rc = rfio_smstat(fd,filename,statb,RQST_STAT);
+            if ( rc != -1 ) {
+                TRACE(2,"rfio","rfio_mstat() overflow connect table. Closing %d",fd);
+                (void)close(fd);
+            }
+            fd = -1;
 	 }
 	 if ( !(rc == -1 && serrno == SEPROTONOTSUP) ) break;
       }
-      (*rfindex)++;
+      if ( fd > 0 ) (*rfindex)++;
       END_TRACE();
       return (rc)  ;
    }
@@ -257,6 +262,7 @@ int rfio_end()
       marshall_WORD(p, RFIO_MAGIC);
       marshall_WORD(p, RQST_END);
       marshall_LONG(p, j);
+      TRACE(2,"rfio","rfio_end: close(tab[%d].s=%d)",i,tab[i].s);
       if (netwrite_timeout(tab[i].s,buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
 	 TRACE(2, "rfio", "rfio_stat: write(): ERROR occured (errno=%d)", errno);
 	 END_TRACE();
