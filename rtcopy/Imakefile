@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.15 $ $Date: 2004/10/18 06:57:10 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.16 $ $Date: 2004/11/30 15:54:51 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -420,7 +420,7 @@ depend:
 	@echo Not supported on this platform
 #else
 depend:
-	makedepend -Y$(INCLUDES) *.c 2> /dev/null
+	makedepend -Y -- $(CFLAGS) -- *.c 2> /dev/null
 #endif
 
 Makefiles:
