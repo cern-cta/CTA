@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2Cupv.c,v $ $Revision: 1.1 $ $Date: 2004/07/16 12:30:19 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: send2Cupv.c,v $ $Revision: 1.2 $ $Date: 2004/07/19 15:38:36 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -29,7 +29,7 @@ static char sccsid[] = "@(#)$RCSfile: send2Cupv.c,v $ $Revision: 1.1 $ $Date: 20
 extern char *ws_strerr;
 #endif
 
-/* send2Cupv - send a request to the volume manager and wait for the reply */
+/* send2Cupv - send a request to the CUPV daemon and wait for the reply */
 
 send2Cupv(socketp, reqp, reql, user_repbuf, user_repbuf_len)
 int *socketp;
@@ -115,7 +115,8 @@ int user_repbuf_len;
 
 			if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
 			  Cupv_errmsg (func, CUP02, "send", "Could not init context");
-			  serrno = SECOMERR;
+			  (void) netclose (s);
+			  serrno = ESEC_CTX_NOT_INITIALIZED;
 			  return -1;
 			}
 			
@@ -123,7 +124,8 @@ int user_repbuf_len;
 			  Cupv_errmsg (func, "%s: %s\n",
 				      "send",
 				      "Could not establish context");
-			  serrno = SECOMERR;
+			  (void) netclose (s);
+			  serrno = ESEC_NO_CONTEXT;
 			  return -1;
 			}
 
