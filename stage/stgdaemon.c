@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.81 2000/12/05 09:59:42 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.82 2000/12/07 18:14:24 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.81 $ $Date: 2000/12/05 09:59:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.82 $ $Date: 2000/12/07 18:14:24 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1754,6 +1754,8 @@ void delreq(stcp,nodb_delete_flag)
 	}
 #endif
 
+	/* Be aware : do NOT do realloc here, procio.c:isstaged depends on this */
+	/* ==================================================================== */
 	nbcat_ent--;
 	p2 = (char *)stcs + (nbcat_ent * sizeof(struct stgcat_entry));
 	if ((char *)stcp != p2) {	/* not last request in the list */
