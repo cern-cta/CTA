@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.6 $ $Date: 1999/12/08 10:49:21 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.7 $ $Date: 1999/12/17 14:04:01 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -40,6 +40,7 @@ void *vdqm_ProcReq(void *arg) {
     vdqmHdr_t hdr;
     vdqmnw_t *client_connection;
     char dgn[CA_MAXDGNLEN+1];
+    char server[CA_MAXHOSTNAMELEN+1];
     void *vol_place_holder,*drv_place_holder,*dgn_place_holder;
     int reqtype,rc,i;
     char req_strings[][20] = VDQM_REQ_STRINGS;
@@ -101,12 +102,16 @@ void *vdqm_ProcReq(void *arg) {
                 break;
             case VDQM_GET_VOLQUEUE:
                 *dgn = '\0';
+                *server = '\0';
                 vol_place_holder = dgn_place_holder = NULL;
                 if ( *volumeRequest.dgn != '\0' ) strcpy(dgn,volumeRequest.dgn);
+                if ( *volumeRequest.server != '\0' ) strcpy(server,volumeRequest.server);
                 do {
                     rc = vdqm_GetVolQueue(dgn,&volumeRequest,
                         &dgn_place_holder,&vol_place_holder);
-                    if ( rc != -1 )
+                    if ( rc != -1 && ((*server == '\0') || 
+                        ((*server != '\0') && 
+                         (strcmp(server,volumeRequest.server) == 0))) )
                         rc = vdqm_SendReq(client_connection,&hdr,
                             &volumeRequest,&driveRequest);
                 } while ( rc != -1 );
@@ -118,12 +123,16 @@ void *vdqm_ProcReq(void *arg) {
                 break;
             case VDQM_GET_DRVQUEUE:
                 *dgn = '\0';
+                *server = '\0';
                 drv_place_holder = dgn_place_holder = NULL;
                 if ( *driveRequest.dgn != '\0' ) strcpy(dgn,driveRequest.dgn);
+                if ( *driveRequest.server != '\0' ) strcpy(server,driveRequest.server);
                 do {
                     rc = vdqm_GetDrvQueue(dgn,&driveRequest,
                         &dgn_place_holder,&drv_place_holder);
-                    if ( rc != -1 )
+                    if ( rc != -1 && ((*server == '\0') ||
+                        ((*server != '\0') &&
+                         (strcmp(server,driveRequest.server) == 0))) ) 
                         rc = vdqm_SendReq(client_connection,&hdr,
                             &volumeRequest,&driveRequest);
                 } while ( rc != -1 );
