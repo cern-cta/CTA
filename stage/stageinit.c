@@ -1,5 +1,5 @@
 /*
- * $Id: stageinit.c,v 1.21 2002/04/11 10:34:55 jdurand Exp $
+ * $Id: stageinit.c,v 1.22 2002/05/31 08:15:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.21 $ $Date: 2002/04/11 10:34:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.22 $ $Date: 2002/05/31 08:15:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -38,32 +38,24 @@ int main(argc, argv)
 		 int	argc;
 		 char	**argv;
 {
-	int c, i;
+	int c;
 	void cleanup();
 	int errflg = 0;
-	gid_t gid;
-	int msglen;
-	int ntries = 0;
-	int nstg161 = 0;
-	struct passwd *pw;
-	char *q;
-	char *sbp;
-	char sendbuf[REQBUFSZ];
 	char *stghost = NULL;
-	uid_t uid;
-	
-	uid = getuid();
-	gid = getgid();
+	u_signed64 flags = 0;
+
 	Coptind = 1;
 	Copterr = 1;
 	while ((c = Cgetopt (argc, argv, "Fh:X")) != -1) {
 		switch (c) {
 		case 'F':
+			flags |= STAGE_FORCE;
 			break;
 		case 'h':
 			stghost = Coptarg;
 			break;
 		case 'X':
+			flags |= STAGE_MIGRINIT;
 			break;
 		case '?':
 			errflg++;
@@ -82,34 +74,6 @@ int main(argc, argv)
 		exit (USERR);
 	}
 
-	/* Build request header */
-
-	sbp = sendbuf;
-	marshall_LONG (sbp, STGMAGIC);
-	marshall_LONG (sbp, STAGEINIT);
-	q = sbp;	/* save pointer. The next field will be updated */
-	msglen = 3 * LONGSIZE;
-	marshall_LONG (sbp, msglen);
-
-	/* Build request body */
-
-	if ((pw = Cgetpwuid (uid)) == NULL) {
-		char uidstr[8], *p;
-		if (errno != ENOENT) fprintf (stderr, STG33, "Cgetpwuid", strerror(errno));
-		sprintf (uidstr, "%d", uid);
-		p = uidstr;
-		fprintf (stderr, STG11, p);
-		exit (SYERR);
-	}
-	marshall_STRING (sbp, pw->pw_name);	/* login name */
-	marshall_WORD (sbp, gid);
-	marshall_WORD (sbp, argc);
-	for (i = 0; i < argc; i++)
-		marshall_STRING (sbp, argv[i]);
-
-	msglen = sbp - sendbuf;
-	marshall_LONG (q, msglen);	/* update length field */
-
 #if !defined(_WIN32)
 	signal (SIGHUP, cleanup);
 #endif
@@ -119,13 +83,8 @@ int main(argc, argv)
 #endif
 	signal (SIGTERM, cleanup);
 
-	while (1) {
-		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
-		if (c == 0 || serrno == EINVAL || serrno == ESTCONF) break;
-		if (serrno == ESTNACT && nstg161++ == 0) fprintf(stderr, STG161);
-		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
-		sleep (RETRYI);
-	}
+	c = stage_init(flags,stghost);
+
 	exit (c == 0 ? 0 : rc_castor2shift(serrno));
 }
 
