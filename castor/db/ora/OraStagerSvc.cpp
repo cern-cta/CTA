@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.86 $ $Release$ $Date: 2004/12/10 14:10:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.87 $ $Release$ $Date: 2004/12/13 11:15:43 $ $Author: sponcec3 $
  *
  *
  *
@@ -1164,9 +1164,8 @@ castor::db::ora::OraStagerSvc::getUpdateStart
           m_getUpdateStartStatement->getCursor(6);
         // We don't fetch the first time since it's done
         // in the PL/SQL code
-        oracle::occi::ResultSet::Status status = rs->status();
+        oracle::occi::ResultSet::Status status = rs->next();
         while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-          status = rs->next();
           castor::stager::DiskCopyForRecall* item =
             new castor::stager::DiskCopyForRecall();
           item->setId((u_signed64) rs->getDouble(1));
@@ -1175,7 +1174,7 @@ castor::db::ora::OraStagerSvc::getUpdateStart
           item->setDiskcopyId(rs->getString(4));
           item->setFsWeight(rs->getFloat(5));
           sources.push_back(item);
-          status = rs->status();
+          status = rs->next();
         }
       } catch (oracle::occi::SQLException e) {
         rollback();
