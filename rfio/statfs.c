@@ -1,5 +1,5 @@
 /*
- * $Id: statfs.c,v 1.8 2004/03/03 11:16:00 obarring Exp $
+ * $Id: statfs.c,v 1.9 2004/05/25 08:47:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: statfs.c,v $ $Revision: 1.8 $ $Date: 2004/03/03 11:16:00 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: statfs.c,v $ $Revision: 1.9 $ $Date: 2004/05/25 08:47:13 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* statfs.c       Remote File I/O - get file system status     */
@@ -51,7 +51,6 @@ struct rfstatfs *statfsbuf;     /* status buffer (subset of local used) */
      TRACE(2,"rfio","rfio_statfs: request too long %d (max %d)",
            RQSTSIZE+len,BUFSIZ);
      END_TRACE();
-     (void) netclose(s);
      serrno = E2BIG;
      return(-1);
    }
