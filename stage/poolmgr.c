@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.239 2003/01/13 12:47:03 jdurand Exp $
+ * $Id: poolmgr.c,v 1.240 2003/03/11 16:03:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.239 $ $Date: 2003/01/13 12:47:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.240 $ $Date: 2003/03/11 16:03:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -4143,7 +4143,6 @@ int migpoolfiles(pool_p)
 							stage_sleep(1);
 							goto stage_wrt_hsm_retry;
 						} else if ((serrno == SEINTERNAL) ||
-								   (serrno == EINVAL)     ||
 								   (serrno == ESTKILLED)  ||
 								   (serrno == ESTCLEARED) ||
 								   (serrno == SESYSERR)   ||
@@ -4155,6 +4154,8 @@ int migpoolfiles(pool_p)
 								   ISVDQMSERRNO(serrno)
 							) {
 							break;
+						} else {
+							nb_done_request += nb_in_this_request;
 						}
 					} else {
 						nb_done_request += nb_in_this_request;
