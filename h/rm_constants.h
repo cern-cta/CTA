@@ -1,4 +1,4 @@
-/* $Id: rm_constants.h,v 1.2 2004/11/25 11:01:19 jdurand Exp $ */
+/* $Id: rm_constants.h,v 1.3 2004/11/29 12:42:33 jdurand Exp $ */
 
 #ifndef __rm_constants_h
 
@@ -291,6 +291,18 @@
 
 #ifndef CA_MAXFSSTATUSLEN
 #define CA_MAXFSSTATUSLEN 9
+#endif
+
+#ifndef RM_MAXUSRNAMELEN
+#define RM_MAXUSRNAMELEN 20
+#endif
+
+#ifndef RM_MAXGRPNAMELEN
+#define RM_MAXGRPNAMELEN 20
+#endif
+
+#ifndef RM_MAXACCOUNTNAMELEN
+#define RM_MAXACCOUNTNAMELEN 20
 #endif
 
 #define LSF_MEM_UNIT ONE_MB

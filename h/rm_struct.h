@@ -28,11 +28,11 @@ struct rmjob {
 	u_signed64 startdate; /* earliest time job would be allowed to start */
 	u_signed64 starttime; /* time job was started by the resource manager */
 	u_signed64 completiontime; /* time job completed execution */
-	char uname[21]; /* userid under which job will run */
+	char uname[RM_MAXUSRNAMELEN]; /* userid under which job will run */
 	u_signed64 uid;      /* corresponding uid */
-	char gname[21]; /* groupid under which job will run */
+	char gname[RM_MAXGRPNAMELEN+1]; /* groupid under which job will run */
 	u_signed64 gid;      /* corresponding gid */
-	char account[21]; /* accountid under which job will run */
+	char account[RM_MAXACCOUNTNAMELEN]; /* accountid under which job will run */
 	char rfeatures[1024]; /* list of features required on node */
 	char rnetwork[CRM_IFCONF_MAXNAMELEN+1]; /* network adapter required by job */
 	char dnetwork[CRM_IFCONF_MAXNAMELEN+1]; /* network adapter which must be dedicated to job */
