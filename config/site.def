@@ -176,7 +176,7 @@
 #define BuildSysreq		YES
 #define BuildTapeClient		YES
 #define BuildTapeDaemon		YES
-#define BuildTest		NO
+#define BuildTest	        YES
 #define BuildTpusage		YES
 #define BuildVdqmClient		YES
 #define BuildVdqmServer		NO 
@@ -189,8 +189,7 @@
 #define BuildDstageCpp          YES
 #define BuildRHCpp              YES
 #define BuildOraCpp             YES
-#define BuildTestsCpp           YES
-
+#define BuildCppTest	        YES
 
 #define Accounting		YES
 #define ClientLogging           NO

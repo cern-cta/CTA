@@ -286,13 +286,6 @@ DSTAGECPPDIR = dstage
 RHCPPDIR = rh
 #endif
 
-#if BuildTestsCpp
-#if BuildOraCpp != YES
-#define BuildOraCpp YES
-#endif
-TESTSCPPDIR = $(COMMONCPPDIR)/tests
-#endif
-
 DBCPPDIR = db
 #if BuildOraCpp
 #if BuildClientCpp != YES
@@ -303,4 +296,10 @@ ORACPPDIR = ora
 
 #if BuildClientCpp
 COMMONCPPDIR = castor
+#endif
+
+#if BuildCppTest
+DBTESTCPPDIR = db
+IOTESTCPPDIR = io
+DBCTESTCPPDIR = dbC
 #endif
