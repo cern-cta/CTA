@@ -20,6 +20,7 @@ EXTERN_C int  DLL_DECL Crm_util_freeswap _PROTO((u_signed64 *));
 EXTERN_C int  DLL_DECL Crm_util_swap _PROTO((u_signed64 *, u_signed64 *));
 EXTERN_C int  DLL_DECL Crm_util_totalspace _PROTO((char *, u_signed64 *));
 EXTERN_C int  DLL_DECL Crm_util_freespace _PROTO((char *, u_signed64 *));
+EXTERN_C int  DLL_DECL Crm_util_countstream _PROTO((char *, int *, int *, int *));
 EXTERN_C int  DLL_DECL Crm_util_space _PROTO((char *, u_signed64 *, u_signed64 *));
 EXTERN_C int  DLL_DECL Crm_util_io _PROTO((char *, u_signed64 *, u_signed64 *));
 EXTERN_C int  DLL_DECL Crm_util_totalproc _PROTO((int *));
@@ -48,7 +49,7 @@ EXTERN_C int  DLL_DECL Crm_send_stagerhost _PROTO((int, int, char *, int, char *
 EXTERN_C int  DLL_DECL Crm_send_stagerport _PROTO((int, int, char *, int, int));
 EXTERN_C int  DLL_DECL Crm_send_ifce _PROTO((int, int, char *, int, struct Crm_ifconf *));
 EXTERN_C int  DLL_DECL Crm_send_state _PROTO((int, int, char *, int, char *));
-EXTERN_C int  DLL_DECL Crm_send_fs_state _PROTO((int, int, char *, int, int, char *, char *, char *, char *));
+EXTERN_C int  DLL_DECL Crm_send_fs_state _PROTO((int, int, char *, int, int, char *, char *, char *, char *, int *, int *, int *));
 EXTERN_C int  DLL_DECL Crm_send_loadavg _PROTO((int, int, char *, int, double));
 EXTERN_C int  DLL_DECL Crm_checkdir _PROTO((char *));
 EXTERN_C int  DLL_DECL Crm_strtoi _PROTO((int *,char *,char **, int));
