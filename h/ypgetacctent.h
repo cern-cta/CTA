@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: ypgetacctent.h,v $ $Revision: 1.1 $ $Date: 2000/05/31 10:14:23 $ CERN CN-PDP/CS Antony Simmins
+ * @(#)$RCSfile: ypgetacctent.h,v $ $Revision: 1.2 $ $Date: 2001/09/21 04:29:14 $ CERN CN-PDP/CS Antony Simmins
  */
 
 
@@ -20,7 +20,13 @@
 #define NAME_LEN	10
 #define ACCT_LEN	9
 
+#ifdef FALSE
+#undef FALSE
+#endif
 #define FALSE		0
+#ifdef TRUE
+#undef TRUE
+#endif
 #define TRUE		1
 
 #define NEWLINE_CHR	'\n'
