@@ -1,4 +1,4 @@
-.\" $Id: Cgetopt.man,v 1.2 2000/10/05 06:59:41 jdurand Exp $
+.\" $Id: Cgetopt.man,v 1.3 2000/12/14 16:25:13 jdurand Exp $
 .\"
 .\"	$NetBSD: getopt_long.3,v 1.1 1999/07/23 03:55:27 mcr Exp $
 .\"
@@ -35,15 +35,15 @@
 .\"
 .\"     @(#)getopt.3	8.5 (Berkeley) 4/27/95
 .\"
-.TH CGETOPT_LONG "3" "$Date: 2000/10/05 06:59:41 $" "CASTOR" "Common Library"
+.TH CGETOPT_LONG "3" "$Date: 2000/12/14 16:25:13 $" "CASTOR" "Common Library"
 .SH NAME
 Cgetopt_long - get long options from command line argument list
 .SH SYNOPSIS
-.BI "#include < "Cgetopt.h ">"
+.BI "#include <Cgetopt.h>"
 .sp
-.BI "int Cgetopt (int " argc ", char **argv ", char * "optstring ")"
+.BI "int Cgetopt (int " argc ", char **" argv ", char *" optstring ")"
 .br
-.BI "int Cgetopt_long (int " argc ", char ** " argv ", char * " optstring ", Coptions_t * " long_options ", int * " index ")"
+.BI "int Cgetopt_long (int " argc ", char **" argv ", char *" optstring ", Coptions_t *" long_options ", int *" index ")"
 
 .SH DESCRIPTION
 The
