@@ -1,5 +1,5 @@
 /*
- * $Id: sacct.h,v 1.12 2002/03/27 08:34:00 jdurand Exp $
+ * $Id: sacct.h,v 1.13 2002/04/30 12:12:22 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: sacct.h,v $ $Revision: 1.12 $ $Date: 2002/03/27 08:34:00 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: sacct.h,v $ $Revision: 1.13 $ $Date: 2002/04/30 12:12:22 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Include file for CASTOR software accounting */
 
@@ -31,6 +31,7 @@ struct accthdr {	/* header for accounting record */
 #define	ACCTSTAGE	4
 #define	ACCTNQS		5
 #define ACCTRTCPTIM     6
+#define	ACCTSTAGE2	7
 
 struct  acctsystem      {
 	int     subtype;
@@ -231,9 +232,50 @@ struct acctstage {	/* accounting record for stage software */
 			int nbaccesses;
 			union {
 				struct {		/* tape specific info */
-#ifdef STAGER_SIDE_SERVER_SUPPORT
+					char dgn[CA_MAXDGNLEN+1];
+					char fseq[CA_MAXFSEQLEN+1];
+					char vid[CA_MAXVIDLEN+1];
+					char tapesrvr[CA_MAXHOSTNAMELEN+1];
+				} t;
+				struct {		/* info for disk file stageing */
+					char xfile[CA_MAXHOSTNAMELEN+MAXPATH+1];
+				} d;
+				struct {		/* info for disk file stageing */
+					char xfile[STAGE_MAX_HSMLENGTH+1];
+				} m;
+				struct {		/* info for disk file stageing */
+					char xfile[STAGE_MAX_HSMLENGTH+1];
+					u_signed64 fileid;
+				} h;
+			} u1;
+	    } s;
+	} u2;
+};
+
+struct acctstage2 {	/* accounting record for stage software */
+	int	subtype;
+#if defined(_WIN32)
+	int     uid;
+	int     gid;
+#else
+	uid_t	uid;
+	gid_t	gid;
+#endif /* _WIN32 */
+	int	reqid;
+	int	req_type;
+	int	retryn;		/* retry number */
+	int	exitcode;
+	union {
+		char clienthost[CA_MAXHOSTNAMELEN+1];
+		struct {
+			char poolname[CA_MAXPOOLNAMELEN+1];
+			char t_or_d;
+			off_t actual_size;
+			time_t c_time;
+			int nbaccesses;
+			union {
+				struct {		/* tape specific info */
 					int  side;
-#endif
 					char dgn[CA_MAXDGNLEN+1];
 					char fseq[CA_MAXFSEQLEN+1];
 					char vid[CA_MAXVIDLEN+1];
