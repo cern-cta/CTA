@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: expexec.c,v $ $Revision: 1.2 $ $Date: 2004/07/01 14:43:09 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: expexec.c,v $ $Revision: 1.3 $ $Date: 2004/07/06 14:52:11 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -37,7 +37,7 @@ char **argv;
 
 	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
 		fprintf (stderr, EXP52);
-		exit (SYERR);
+		exit (EXP_SYERR);
 	}
 #endif
 	n = expert_send_request(&socket, EXP_EXECUTE);

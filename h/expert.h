@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: expert.h,v $ $Revision: 1.2 $ $Date: 2004/07/01 14:47:43 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: expert.h,v $ $Revision: 1.3 $ $Date: 2004/07/06 14:53:27 $ CERN IT-ADC Vitaly Motyakov
  */
 
 #ifndef _EXPERT_H
@@ -38,7 +38,7 @@ struct exp_api_thread_info
 #define	RETRYI	60
 #define LISTBUFSZ 3960
 #define LOGBUFSZ 1024
-#define PRTBUFSZ  180
+#define EXP_PRTBUFSZ  180
 #define EXP_REPBUFSZ 16380	/* must be >= max EXPERT reply size */
 #define EXP_REQBUFSZ 10240	/* must be >= max EXPERT request size */
 

@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: exp_errmsg.c,v $ $Revision: 1.1 $ $Date: 2004/06/30 16:18:35 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: exp_errmsg.c,v $ $Revision: 1.2 $ $Date: 2004/07/06 14:52:11 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -35,7 +35,7 @@ exp_errmsg(const char *args, ...)
 {
   va_list ap;
   char *msg;
-  char prtbuf[PRTBUFSZ];
+  char prtbuf[EXP_PRTBUFSZ];
   int save_errno;
   struct exp_api_thread_info *thip;
 

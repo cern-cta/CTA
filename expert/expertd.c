@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: expertd.c,v $ $Revision: 1.2 $ $Date: 2004/07/01 14:43:09 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: expertd.c,v $ $Revision: 1.3 $ $Date: 2004/07/06 14:52:11 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -78,7 +78,7 @@ struct main_args *main_args;
   if (strchr (localhost, '.') == NULL) {
     if (Cdomainname (domainname, sizeof(domainname)) < 0) {
       explogit (func, "Unable to get domainname\n");
-      exit (SYERR);
+      exit (EXP_SYERR);
     }
     strcat (localhost, ".");
     strcat (localhost, domainname);
@@ -95,7 +95,7 @@ struct main_args *main_args;
 
   if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     explogit (func, EXP02, "socket", neterror());
-    return (CONFERR);
+    return (EXP_CONFERR);
   }
   memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
   sin.sin_family = AF_INET ;
@@ -115,11 +115,11 @@ struct main_args *main_args;
     explogit (func,  "setsockopt error\n");
   if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
     explogit (func, EXP02, "bind", neterror());
-    return (CONFERR);
+    return (EXP_CONFERR);
   }
   if (listen (s, 5) != 0) {
     explogit (func, "listen error\n");
-    return (CONFERR);
+    return (EXP_CONFERR);
   }
 
   FD_SET (s, &readmask);
@@ -164,11 +164,11 @@ main()
 {
 #if ! defined(_WIN32)
   if ((maxfds = Cinitdaemon ("expertd", NULL)) < 0)
-    exit (SYERR);
+    exit (EXP_SYERR);
   exit (expertd_main (NULL));
 #else
   if (Cinitservice ("expert", &expertd_main))
-    exit (SYERR);
+    exit (EXP_SYERR);
 #endif
 }
 
