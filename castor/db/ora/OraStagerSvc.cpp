@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.104 $ $Release$ $Date: 2005/01/17 14:45:04 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.105 $ $Release$ $Date: 2005/01/17 17:15:59 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1835,7 +1835,9 @@ void castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   for (unsigned int i = 0; i < tapeCopy.segments().size(); i++) {
     castor::stager::Segment* seg = tapeCopy.segments()[i];
     cnvSvc()->fillRep(&ad, seg, castor::OBJ_Tape, false);
-    delete seg->tape();
+  }
+  while (tapeCopy.segments().size() > 0) {
+    delete tapeCopy.segments()[0]->tape();
   }
   cnvSvc()->commit();
 }
