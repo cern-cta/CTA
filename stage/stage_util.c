@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.6 2001/09/18 21:12:48 jdurand Exp $
+ * $Id: stage_util.c,v 1.7 2001/10/01 11:38:15 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -276,6 +276,7 @@ int DLL_DECL stage_strtoi(output,nptr,endptr,base)
 	int base;
 {
 	long thislong;
+	int rc = 0;
 
 	thislong = strtol (nptr, endptr, base);
 	if ((**endptr != '\0') || (((thislong == LONG_MIN) || (thislong == LONG_MAX)) && (errno == ERANGE))) {
@@ -286,30 +287,34 @@ int DLL_DECL stage_strtoi(output,nptr,endptr,base)
 			*output = INT_MAX;
 			serrno = errno = ERANGE;
 		} else {
+			*output = (int) thislong;
 			serrno = errno = EINVAL;
 		}
 		if (**endptr == '\0') {
 			/* We force the caller to have an error anyway, just checking **endptr */
 			*endptr = forced_endptr_error;
 		}
-		return(-1);
+		rc = -1;
 	} else {
 		if ((thislong <= INT_MIN) || (thislong >= INT_MAX)) {
 			if (thislong <= INT_MIN) {
 				*output = INT_MIN;
 			} else if (thislong >= INT_MAX) {
 				*output = INT_MAX;
-			}
+			} else {
+				*output = (int) thislong;
+            }
 			if (**endptr == '\0') {
 				/* We force the caller to have an error anyway, just checking **endptr */
 				*endptr = forced_endptr_error;
 			}
 			serrno = errno = ERANGE;
-			return(-1);
+			rc = -1;
 		} else {
 			*output = (int) thislong;
 		}
 	}
-	return(0);
+	return(rc);
 }
+
 
