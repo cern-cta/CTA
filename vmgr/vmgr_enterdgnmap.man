@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_enterdgnmap.man,v $ $Revision: 1.2 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_enterdgnmap.man,v $ $Revision: 1.3 $ $Date: 2002/05/30 10:20:25 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_ENTERDGNMAP 3 "$Date: 2001/09/26 09:13:56 $" CASTOR "vmgr Library Functions"
+.TH VMGR_ENTERDGNMAP 3 "$Date: 2002/05/30 10:20:25 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_enterdgnmap \- enter a new triplet dgn/model/library in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -21,7 +21,7 @@ enters a new triplet dgn/model/library in the CASTOR Volume Manager.
 is the device group name associated with the pair model/library.
 It must be at most CA_MAXDGNLEN characters long.
 .TP
-.I library_name
+.I library
 is the name of the library.
 It must be at most CA_MAXTAPELIBLEN characters long.
 .TP
@@ -39,7 +39,7 @@ is set appropriately.
 .IR dgn ,
 .I model
 or
-.I library_name
+.I library
 is a NULL pointer.
 .TP
 .B EEXIST
@@ -55,7 +55,7 @@ or the length of
 exceeds
 .B CA_MAXMODELLEN
 or the length of
-.I library_name
+.I library
 exceeds
 .BR CA_MAXTAPELIBLEN .
 .TP
