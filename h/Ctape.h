@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.28 2000/05/03 06:29:59 baud Exp $
+ * $Id: Ctape.h,v 1.29 2000/07/04 05:15:55 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.28 $ $Date: 2000/05/03 06:29:59 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.29 $ $Date: 2000/07/04 05:15:55 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -203,7 +203,7 @@
 #define	TP053	"TP053 - you are not registered in the unix group/passwd mapping file\n"
 #endif
 #define	TP054	"TP054 - tape not mounted or not ready\n"
-#define	TP055	"TP055 - parameter inconsistency with TMS for vid %s: %s<->%s\n"
+#define	TP055	"TP055 - parameter inconsistency with TMS for vid %s: %s on request <-> %s in TMS\n"
 #define	TP056	"TP056 - %s request by %d,%d from %s\n"
 #define	TP057	"TP057 - drive %s is not free\n"
 #define	TP058	"TP058 - no free drive\n"
