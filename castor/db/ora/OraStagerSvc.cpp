@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.81 $ $Release$ $Date: 2004/12/07 14:36:52 $ $Author: jdurand $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.82 $ $Release$ $Date: 2004/12/07 17:15:54 $ $Author: sponcec3 $
  *
  *
  *
@@ -115,7 +115,7 @@ const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStateme
 
 /// SQL statement for getUpdateStart
 const std::string castor::db::ora::OraStagerSvc::s_getUpdateStartStatementString =
-  "BEGIN getUpdateStart(:1, :2, :3, :4, :5, :6, :7, :8); END;";
+  "BEGIN getUpdateStart(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10); END;";
 
 /// SQL statement for putStart
 const std::string castor::db::ora::OraStagerSvc::s_putStartStatementString =
@@ -964,6 +964,10 @@ castor::db::ora::OraStagerSvc::getUpdateStart
         (7, oracle::occi::OCCIDOUBLE);
       m_getUpdateStartStatement->registerOutParam
         (8, oracle::occi::OCCISTRING, 2048);
+      m_getUpdateStartStatement->registerOutParam
+        (9, oracle::occi::OCCIINT);
+      m_getUpdateStartStatement->registerOutParam
+        (10, oracle::occi::OCCIINT);
     }
     // execute the statement and see whether we found something
     m_getUpdateStartStatement->setDouble(1, subreq->id());
@@ -988,6 +992,8 @@ castor::db::ora::OraStagerSvc::getUpdateStart
         << "getUpdateStart : No client found.";
       throw ex;
     }
+    unsigned long euid = m_getUpdateStartStatement->getInt(9);
+    unsigned long egid = m_getUpdateStartStatement->getInt(10);
     // Get Client Object and cast it into IClient
     castor::IObject *iobj = cnvSvc()->getObjFromId(clientId);
     if (0 == iobj) {
@@ -1042,7 +1048,7 @@ castor::db::ora::OraStagerSvc::getUpdateStart
       // Then get the associated CastorFile
       cnvSvc()->fillObj(&ad, iobj, castor::OBJ_CastorFile);
       // create needed TapeCopy(ies) and Segment(s)
-      createTapeCopySegmentsForRecall(dc->castorFile());
+      createTapeCopySegmentsForRecall(dc->castorFile(), euid, egid);
       // Cleanup
       delete dc->castorFile();
       delete dc;
@@ -1598,7 +1604,9 @@ void invalidateAllSegmentsForCopy(int copyNb,
 // createTapeCopySegmentsForRecall
 // -----------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
-(castor::stager::CastorFile *castorFile)
+(castor::stager::CastorFile *castorFile,
+ unsigned long euid,
+ unsigned long egid)
   throw (castor::exception::Exception) {
   // check argument
   if (0 == castorFile) {
@@ -1613,6 +1621,21 @@ void castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     e.getMessage() << "createTapeCopySegmentsForRecall "
                    << "name server host has too long name";
     throw e;
+  }
+  // Prepare access to name server : avoid log and set uid
+  char cns_error_buffer[512];  /* Cns error buffer */
+  if (Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "createTapeCopySegmentsForRecall : Cns_seterrbuf failed.";
+    throw ex;
+  }
+  if (Cns_setid(euid,egid) != 0) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "createTapeCopySegmentsForRecall : Cns_setid failed :"
+      << std::endl << cns_error_buffer;
+    throw ex;
   }
   // Get segments for castorFile
   struct Cns_fileid fileid;

@@ -536,10 +536,14 @@ namespace castor {
          * appropriate TapeCopy(ies) and Segment(s) in the
          * database.
          * @param castorFile the CastorFile we want to recall
+         * @param euid the euid of the user recalling the file
+         * @param egid the egid of the user recalling the file
          * @exception Exception throws an Exception in case of error
          */
         void createTapeCopySegmentsForRecall
-        (castor::stager::CastorFile *castorFile)
+        (castor::stager::CastorFile *castorFile,
+         unsigned long euid,
+         unsigned long egid)
           throw (castor::exception::Exception);
 
       private:
