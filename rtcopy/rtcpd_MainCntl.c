@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.41 $ $Date: 2000/03/15 20:05:00 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.42 $ $Date: 2000/03/16 12:52:59 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -437,11 +437,20 @@ static int rtcpd_AllocBuffers() {
 
     return(0);
 }
-static int rtcpd_ResetBuffers() {
-    int i;
+static int rtcpd_ResetRequest(tape_list_t *tape) {
+    int i, mode;
+    tape_list_t *tl;
+    file_list_t *fl, *fltmp;
+    rtcpFileRequest_t *filereq = NULL;
 
+    /*
+     * Reset the data buffers
+     */
     for (i=0; i<nb_bufs; i++) {
         databufs[i]->maxlength = bufsz;
+        databufs[i]->data_length = 0;
+        databufs[i]->length = 0;
+        databufs[i]->bufendp = 0;
         databufs[i]->end_of_tpfile = FALSE;
         databufs[i]->last_buffer = FALSE;
         databufs[i]->nb_waiters = 0;
@@ -452,6 +461,62 @@ static int rtcpd_ResetBuffers() {
          */
         databufs[i]->flag = BUFFER_EMPTY;
     }
+    /*
+     * Reset all non-finished requests
+     */
+    CLIST_ITERATE_BEGIN(tape,tl) {
+        mode = tl->tapereq.mode;
+        CLIST_ITERATE_BEGIN(tape->file,fl) {
+            filereq = &fl->filereq;
+            if ( filereq->proc_status == RTCP_WAITING ||
+                 filereq->proc_status == RTCP_POSITIONED ) {
+                rtcp_log(LOG_DEBUG,"rtcpd_ResetRequest() reset filereq(%d,%d,%s)\n",
+                         filereq->tape_fseq,filereq->disk_fseq,
+                         filereq->file_path);
+                filereq->proc_status = RTCP_WAITING;
+                filereq->bytes_out = 0;
+                fl->diskbytes_sofar = 0;
+                fl->tapebytes_sofar = 0;
+                if ( mode == WRITE_DISABLE ) filereq->bytes_in = 0;
+                filereq->err.severity = RTCP_OK;
+                filereq->err.errorcode = 0;
+                *filereq->err.errmsgtxt = '\0';
+            }
+            if ( (((filereq->concat & CONCAT) != 0) && 
+                  ((fl->next->filereq.concat & CONCAT) == 0)) ||
+                 (((filereq->concat & CONCAT_TO_EOD) != 0) &&
+                  (((fl->next->filereq.concat & CONCAT_TO_EOD) == 0) ||
+                   (fl == tape->file))) ) {
+                /*
+                 * Last file in a concatenation. Check if it has finished
+                 * successfully. If not, we must reset the status of all
+                 * files in this concatenation.
+                 */
+                if ( filereq->proc_status != RTCP_FINISHED ) {
+                    rtcp_log(LOG_DEBUG,"rtcpd_ResetRequest() reset filereq(%d,%d,%s,concat:%d)\n",
+                         filereq->tape_fseq,filereq->disk_fseq,
+                         filereq->file_path,filereq->concat);
+                    filereq->proc_status = RTCP_WAITING;
+                    filereq->err.severity = RTCP_OK;
+                    filereq->err.errorcode = 0;
+                    *filereq->err.errmsgtxt = '\0'; 
+                    fltmp = fl;
+                    while ( fltmp->prev != fl && 
+                       ((fltmp->filereq.concat & CONCAT) != 0 ||
+                        (fltmp->prev->filereq.concat & CONCAT_TO_EOD) != 0) ) {
+                        fltmp = fltmp->prev;
+                        rtcp_log(LOG_DEBUG,"rtcpd_ResetRequest() reset filereq(%d,%d,%s,concat:%d)\n",
+                               fltmp->filereq.tape_fseq,
+                               fltmp->filereq.disk_fseq,
+                               fltmp->filereq.file_path,
+                               fltmp->filereq.concat);
+                        fltmp->filereq.proc_status = RTCP_WAITING;
+                        fltmp->filereq.err = filereq->err;
+                    }
+                }
+            }
+        } CLIST_ITERATE_END(tape->file,fl);
+    } CLIST_ITERATE_END(tape,tl);
 
     return(0);
 }
@@ -1476,7 +1541,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
          * do a local retry
          */
         rtcpd_WaitProcStatus(RTCP_RETRY_OK);
-        rtcpd_ResetBuffers();
+        rtcpd_ResetRequest(tape);
         rtcpd_SetProcError(RTCP_OK);
     } /* for (;;) */
 

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.53 $ $Date: 2000/03/15 20:38:25 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.54 $ $Date: 2000/03/16 12:52:57 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1411,7 +1411,7 @@ void *diskIOthread(void *arg) {
             if ( (severity & RTCP_EOD) == 0 ) {
                 nbbytes -= filereq->startsize;
                 filereq->proc_status = RTCP_PARTIALLY_FINISHED;
-                filereq->proc_status = RTCP_PARTIALLY_FINISHED; 
+            } else {
                 filereq->proc_status = RTCP_FINISHED;
             }
         } else if ( (filereq->concat & VOLUME_SPANNING) != 0 ) { 
@@ -1833,7 +1833,10 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
             rc = Cpool_assign(poolID,diskIOthread,(void *)tharg,-1);
             if ( rc == -1 ) {
 
-        } /* if ( ... ) */
+            rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() skipping finished request (%d,%d,%s,concat:%d\n",
+                     nextfile->filereq.tape_fseq,nextfile->filereq.disk_fseq,
+                     nextfile->filereq.file_path,nextfile->filereq.concat);
+                     nextfile->filerqe.file_path,nextfile->filereq.concat);
     /*
     return(0);
 }

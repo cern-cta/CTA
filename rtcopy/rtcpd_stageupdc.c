@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.27 $ $Date: 2000/03/15 20:05:01 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.28 $ $Date: 2000/03/16 12:53:01 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -138,11 +138,11 @@ int rtcpd_stageupdc(tape_list_t *tape,
                                   status,
                                   filereq->blocksize,
                                   tapereq->unit,
-                                  (filereq->fid!='\0'? filereq->fid : NULL),
+                                  filereq->fid,
                                   filereq->tape_fseq,
                                   filereq->recordlength,
                                   filereq->recfm,
-                                  (status==-1? newpath : NULL));
+                                  newpath);
             save_serrno = serrno;
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_tppos(): %s\n",
@@ -195,33 +195,17 @@ int rtcpd_stageupdc(tape_list_t *tape,
 
             rc = stage_updc_filcp(filereq->stageID,
                                   retval,
-                                  (filereq->ifce!='\0'? filereq->ifce : NULL),
+                                  filereq->ifce,
                                   nb_bytes,
                                   WaitTime,
                                   TransferTime,
                                   filereq->blocksize,
                                   tapereq->unit,
-                                  (filereq->fid!='\0'? filereq->fid : NULL),
+                                  filereq->fid,
                                   filereq->tape_fseq,
                                   filereq->recordlength,
                                   filereq->recfm,
-                                  NULL);
-            if ( rc == 0 && retval == ENOSPC ) {
-                retval = -1;
-                rc = stage_updc_filcp(filereq->stageID,
-                                      retval,
-                                    (filereq->ifce!='\0'? filereq->ifce : NULL),
-                                      nb_bytes,
-                                      WaitTime,
-                                      TransferTime,
-                                      filereq->blocksize,
-                                      tapereq->unit,
-                                      (filereq->fid!='\0'? filereq->fid : NULL),
-                                      filereq->tape_fseq,
-                                      filereq->recordlength,
-                                      filereq->recfm,
-                                      newpath);
-            }
+                                  newpath);
             save_serrno = serrno;
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_filcp(): %s\n",

@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.11 $ $Date: 2000/03/13 11:37:58 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.12 $ $Date: 2000/03/16 12:52:54 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -169,6 +169,7 @@ void rtcpd_AppendClientMsg(tape_list_t *tape, file_list_t *file,
     int l_buf;
 
     buf = NULL;
+    rtcp_log(LOG_DEBUG,"rtcpd_AppendClientMsg() called\n");
     if ( format == NULL || *format == '\0' ) return;
     if ( file != NULL ) {
         filereq = &file->filereq;
@@ -182,9 +183,9 @@ void rtcpd_AppendClientMsg(tape_list_t *tape, file_list_t *file,
         va_start(args,format);
         vsprintf(tmpbuf,format,args);
         va_end(args);
-        if ( tmpbuf[strlen(tmpbuf)-1] != '\0' )
-            strcat(tmpbuf,"\n");
-        rtcp_log(LOG_DEBUG,"rtcpd_AppendClientMsg() send: %s",tmpbuf);
+        if ( tmpbuf[strlen(tmpbuf)-1] != '\n' ) strcat(tmpbuf,"\n");
+        rtcp_log(LOG_DEBUG,"rtcpd_AppendClientMsg() txtbuf=%s\n",tmpbuf);
+        if ( *tmpbuf != '\0' ) rtcp_log(LOG_ERR,tmpbuf);
         l_buf = strlen(buf) + strlen(tmpbuf);
         if ( l_buf < CA_MAXLINELEN ) strcat(buf,tmpbuf);
     }
