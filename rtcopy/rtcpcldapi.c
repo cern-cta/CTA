@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.34 $ $Release$ $Date: 2004/08/03 14:42:10 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.35 $ $Release$ $Date: 2004/08/04 08:35:32 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.34 $ $Date: 2004/08/03 14:42:10 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.35 $ $Date: 2004/08/04 08:35:32 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -2021,10 +2021,9 @@ int rtcpcldc(tape)
           }
         }
       CLIST_ITERATE_END(tape->file,fl);
-      if ( rc == -1 ) break;
     }
     (void)Cmutex_unlock(tape);
-    if ( rc == 1 ) break;
+    if ( (rc == -1) || (rc == 1) ) break;
   }
 
   rtcpcldc_cleanup(tape);
