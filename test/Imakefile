@@ -32,7 +32,7 @@ Makefiles:
 	do (if [ -d $$i ] ;\
 	    then \
 	      (echo " $$i:" ; cd $$i ;\
-	      ../imake/imake -I../config -DOSMajorVersion="$$OSMAJNO" -DOSMinorVersion="$$OSMINNO" ;\
+	      ../../imake/imake -I../../config -DOSMajorVersion="$$OSMAJNO" -DOSMinorVersion="$$OSMINNO" ;\
 	      $(MAKE) $(MFLAGS) $@) ;\
 	    else \
 	      (echo "ERROR : No directory $$i" ;\
