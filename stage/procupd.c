@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.116 2002/09/20 12:27:10 jdurand Exp $
+ * $Id: procupd.c,v 1.117 2002/09/23 11:12:59 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.116 $ $Date: 2002/09/20 12:27:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.117 $ $Date: 2002/09/23 11:12:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -96,6 +96,7 @@ extern char *findpoolname _PROTO((char *));
 extern u_signed64 findblocksize _PROTO((char *));
 extern int findfs _PROTO((char *, char **, char **));
 extern int rc_shift2castor _PROTO((int,int));
+extern int ask_stageout _PROTO((int, char *, struct stgcat_entry **));
 
 #define IS_RC_OK(rc) (rc == 0)
 #define IS_RC_WARNING(rc) (rc == LIMBYSZ || rc == BLKSKPD || rc == TPE_LSZ || (rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE)))
@@ -189,6 +190,8 @@ procupdreq(req_type, magic, req_data, clienthost)
 	char *User;
 	char *name;
 	int checkrc;
+	extern time_t last_upd_fileclasses; /* == 0 only at the initial startup or when not wanted */
+	time_t save_last_upd_fileclasses;
 
 	rbp = req_data;
 	local_unmarshall_STRING (rbp, user);	/* login name */
@@ -617,8 +620,33 @@ procupdreq(req_type, magic, req_data, clienthost)
 				goto reply;
 
 			} else {
-				if ((c = upd_stageout(req_type, argv_i, &subreqid, 1, NULL, 0, 0)) != 0) {
+				if ((c = upd_stageout(req_type, argv_i, &subreqid, 1, NULL, 0, 1)) != 0) {
 					if ((c != CLEARED) && (c != ESTCLEARED)) {
+						struct stgcat_entry *found_stcp;
+						int save_rpfd;
+
+						save_rpfd = rpfd;
+						rpfd = -1;
+						/* Check in silent mode */
+						if (ask_stageout (req_type, argv_i, &found_stcp) == 0) {
+							if ((found_stcp->t_or_d == 'h') && (found_stcp->status == STAGEOUT)) {
+								/* Force a Cns_statx call for a STAGEOUT file */
+								/* upd_fileclass() will move to PUT_FAILED if necessary */
+								save_last_upd_fileclasses = last_upd_fileclasses;
+								last_upd_fileclasses = 0;
+								/* Take action not in silent mode */
+								rpfd = save_rpfd;
+								if (upd_fileclass(NULL,found_stcp,2,0,0) < 0) {
+									/* Try to fetch fileclass only unless record was cleared */
+									if (serrno == ESTCLEARED) {
+										last_upd_fileclasses = save_last_upd_fileclasses;
+										continue;
+									}
+								}
+								last_upd_fileclasses = save_last_upd_fileclasses;
+							}
+						}
+						rpfd = save_rpfd;
 						goto reply;
 					} else {
 						/* This is not formally an error to do an updc on a zero-length file */
