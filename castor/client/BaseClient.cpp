@@ -60,10 +60,10 @@ extern "C" {
 //------------------------------------------------------------------------------
 // String constants
 //------------------------------------------------------------------------------
-const char *castor::client::HOST_ENV = "STAGE_HOST";
-const char *castor::client::HOST_ENV_ALT = "RH_HOST";
-const char *castor::client::PORT_ENV = "STAGE_PORT";
-const char *castor::client::PORT_ENV_ALT = "RH_PORT";
+const char *castor::client::HOST_ENV_ALT = "STAGE_HOST";
+const char *castor::client::HOST_ENV = "RH_HOST";
+const char *castor::client::PORT_ENV_ALT = "STAGE_PORT";
+const char *castor::client::PORT_ENV = "RH_PORT";
 const char *castor::client::CATEGORY_CONF = "RH";
 const char *castor::client::HOST_CONF = "HOST";
 const char *castor::client::PORT_CONF = "PORT";
