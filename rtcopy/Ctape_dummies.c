@@ -4,12 +4,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.1 $ $Date: 1999/11/29 11:21:26 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.2 $ $Date: 1999/12/03 08:46:42 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
  * Ctape_dummies.c - Ctape dummy interface
  */
+
+#if defined(CTAPE_DUMMIES)
 
 #include <stdlib.h>
 #if defined(_WIN32)
@@ -32,6 +34,7 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.1 $ $Date
 #include <vdqm_api.h>
 #include <Ctape_api.h>
 #include <serrno.h>
+#include <log.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
 #include <rtcp_server.h>
@@ -61,13 +64,14 @@ static char unit[CA_MAXUNMLEN+1];
       serrno = value; \
       errbuf = rtcpd_CtapeErrMsg(); \
     } \
+    _rc = 0; \
+    jobID = getpid(); \
     if ( errbuf != NULL ) strcpy(errbuf,msg); \
     if ( rc == 0 && strstr(#Z,"Ctape_mount") != NULL ) {\
       status = VDQM_UNIT_ASSIGN; \
       value = VolReqID; \
       if ( serrno != ETDNP ) \
         _rc = vdqm_UnitStatus(NULL,NULL,dgn,NULL,unit,&status,&value,0); \
-      jobID = getpid(); \
       status = VDQM_VOL_MOUNT; \
       value = 0; \
       _rc = open((char *)a,O_CREAT | O_RDWR,S_IREAD | S_IWRITE); close(_rc); \
@@ -93,6 +97,7 @@ static char unit[CA_MAXUNMLEN+1];
           _rc = vdqm_UnitStatus(NULL,NULL,dgn, \
                               NULL,unit,&status,NULL,0); \
     } \
+    if ( _rc == -1 ) rtcp_log(LOG_ERR,"%s: vdqm_UnitStatus(): %s\n",#Z,sstrerror(serrno)); \
     return(rc);
 
 int Ctape_InitDummy() {
@@ -251,3 +256,6 @@ int checkeofeov(int a, char *b) {
     CTAPE_DECL
     CTAPE_BODY((stdout,"checkeofeov(%d,%s)\n",a,b));
 }
+
+#endif /* CTAPE_DUMMIES */
+
