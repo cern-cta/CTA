@@ -1,14 +1,14 @@
 /*
- * $Id: Ctape_api.h,v 1.17 2001/02/04 17:57:18 baud Exp $
+ * $Id: Ctape_api.h,v 1.18 2001/07/25 05:16:48 baud Exp $
  */
 
 /*
- * Copyright (C) 1994-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1994-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.17 $ $Date: 2001/02/04 17:57:18 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.18 $ $Date: 2001/07/25 05:16:48 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -35,7 +35,7 @@ struct devinfo {	/* device characteristics */
 	struct {
 		short den;		/* density code */
 		unsigned char code;	/* code to send to the drive */
-	} dencodes[6];
+	} dencodes[CA_MAXDENFIELDS];
 };
 struct dgn_rsv {		/* device group reservation */
 	char	name[CA_MAXDGNLEN+1];
