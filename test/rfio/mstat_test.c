@@ -16,7 +16,7 @@ int main()
 {
   int i;
 
-  setenv("RFIO_TRACE", "3", (int) 1);
+  putenv("RFIO_TRACE=3");
 
   for (i = 0; i < NTHREAD; i++) {
     Cthread_create(&doit, NULL);
