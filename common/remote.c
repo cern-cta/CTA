@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.12 $ $Date: 2001/01/31 12:52:58 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.13 $ $Date: 2001/02/07 07:29:49 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -36,7 +36,6 @@ static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.12 $ $Date: 2001/
 #include <Castor_limits.h>
 #include <log.h> 
 #include <net.h>
-#include <common.h>
 #include <serrno.h>
 #include <Cnetdb.h>
 
@@ -64,6 +63,7 @@ static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.12 $ $Date: 2001/
 #if !defined(linux)
 extern char *sys_errlist[];
 #endif
+extern char *getconfent();
 
 /*
  * isremote(): returns 0 if requestor is in site
