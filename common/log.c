@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.16 $ $Date: 2003/09/26 13:52:31 $ CERN IT/ADC/CA Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.17 $ $Date: 2004/09/02 08:15:25 $ CERN IT/ADC/CA Jean-Damien Durand";
 #endif /* not lint */
 
 /* log.c        - generalized logging routines                          */
@@ -88,6 +88,9 @@ char    *output;                /* output specifier                     */
      */
     if (!strcmp(output,"syslog"))   {
         logfunc=(void (*) _PROTO((int, char *, ...)))syslog;
+    } else if (!strcmp(output,"stdout"))   {
+        logfunc=(void (*) _PROTO((int, char *, ...)))logit;
+        logfd= fileno(stdout) ; /* standard output       */
     } else {
         logfunc=(void (*) _PROTO((int, char *, ...)))logit;
         if (strlen(output) == 0) {
