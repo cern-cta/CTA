@@ -112,7 +112,7 @@ int Cstager_IStagerSvc_bestTapeCopyForStream
  * Cstager_IStagerSvc_errorMsg
  */
 int Cstager_IStagerSvc_anySegmentsForTape(struct Cstager_IStagerSvc_t* stgSvc,
-                                          struct Cstager_Stream_t* searchItem);
+                                          struct Cstager_Tape_t* searchItem);
 
 /**
  * Check if there still is any tapeCopy waiting for a stream.
@@ -128,7 +128,7 @@ int Cstager_IStagerSvc_anySegmentsForTape(struct Cstager_IStagerSvc_t* stgSvc,
  * Cstager_IStagerSvc_errorMsg
  */
 int Cstager_IStagerSvc_anyTapeCopyForStream(struct Cstager_IStagerSvc_t* stgSvc,
-                                            struct Cstager_Tape_t* searchItem);
+                                            struct Cstager_Stream_t* searchItem);
 
 /**
  * Get an array of the tapes to be processed.
