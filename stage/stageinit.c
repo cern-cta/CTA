@@ -1,5 +1,5 @@
 /*
- * $Id: stageinit.c,v 1.22 2002/05/31 08:15:21 jdurand Exp $
+ * $Id: stageinit.c,v 1.23 2003/09/08 15:44:14 jdurand Exp $
  */
 
 /*
@@ -8,10 +8,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.22 $ $Date: 2002/05/31 08:15:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.23 $ $Date: 2003/09/08 15:44:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 #ifndef _WIN32
 #include <unistd.h>

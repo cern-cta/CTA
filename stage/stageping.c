@@ -1,5 +1,5 @@
 /*
- * $Id: stageping.c,v 1.7 2002/10/20 08:41:27 jdurand Exp $
+ * $Id: stageping.c,v 1.8 2003/09/08 15:40:09 jdurand Exp $
  */
 
 /*
@@ -8,11 +8,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageping.c,v $ $Revision: 1.7 $ $Date: 2002/10/20 08:41:27 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageping.c,v $ $Revision: 1.8 $ $Date: 2003/09/08 15:40:09 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <fcntl.h>
