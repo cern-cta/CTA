@@ -143,14 +143,6 @@ castor::IObject* castor::db::OraBaseCnv::getObjFromId
     return newlyCreated[id];
   } else {
     castor::db::DbAddress clientAd(id, "OraCnvSvc", repType());
-    try {
-      return cnvSvc()->createObj(&clientAd, newlyCreated);
-    } catch (castor::Exception e) {
-      if (e.getMessage().str().compare(0, 13, "No type found") == 0) {
-        return 0;
-      } else {
-        throw e;
-      }
-    }
+    return cnvSvc()->createObj(&clientAd, newlyCreated);
   }
 }

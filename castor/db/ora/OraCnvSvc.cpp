@@ -199,6 +199,8 @@ castor::IObject* castor::db::OraCnvSvc::createObj (castor::IAddress* address,
   if (OBJ_INVALID == address->objType()) {
     castor::db::DbAddress* ad =
       dynamic_cast<castor::db::DbAddress*>(address);
+    unsigned int type = getTypeFromId(ad->id());
+    if (0 == type) return 0;
     ad->setObjType(getTypeFromId(ad->id()));
   }
   // call method of parent object
@@ -313,6 +315,8 @@ unsigned int castor::db::OraCnvSvc::nbRequestsToProcess()
 const unsigned int
 castor::db::OraCnvSvc::getTypeFromId(const unsigned long id)
   throw (castor::Exception) {
+  // a null id has a null type
+  if (0 == id) return 0;
   try {
     // Check whether the statement is ok
     if (0 == m_getTypeStatement) {
