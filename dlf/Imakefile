@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2003 by CERN/IT/ADC
 COMM  All rights reserved
 COMM
-COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 2004/12/21 22:38:39 $ CERN IT-ADC Vitaly Motyakov
+COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Date: 2005/01/23 08:27:50 $ CERN IT-ADC Vitaly Motyakov
 COMM    Make dlf programs.
 
 #include <Project.tmpl>
@@ -333,7 +333,7 @@ clean:
 	-@RemoveFiles(FilesToClean)
  
 clobber:        clean
-	-@RemoveFiles($(CLIENT) $(PROGS_D))
+	-@RemoveFiles($(CLIENT) $(PROGS_D) dlf_oracle_ifce.c dlf_oracle_ifce.lis)
  
 #if _WIN32
 depend:
