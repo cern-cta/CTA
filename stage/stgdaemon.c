@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.193 2002/05/15 14:03:12 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.194 2002/05/21 08:07:22 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.193 $ $Date: 2002/05/15 14:03:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.194 $ $Date: 2002/05/21 08:07:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -377,18 +377,27 @@ int main(argc,argv)
 	char myenv[11 + CA_MAXHOSTNAMELEN + 1]; /* 11 == strlen("STAGE_HOST=") */
 	char *upd_fileclasses_int_p;
 	size_t read_size;
+	static int rlimit_nproc_flag;
+	static int rlimit_nofile_flag;
+	int done_rlimit_nproc;
+	int done_rlimit_nofile;
 	static struct Coptions longopts[] =
 	{
 		{"foreground",         NO_ARGUMENT,        NULL,      'f'},
 		{"help",               NO_ARGUMENT,        NULL,      'h'},
 		{"backlog",            REQUIRED_ARGUMENT,  NULL,      'L'},
-		{"rlimit_nproc",       REQUIRED_ARGUMENT,  NULL,      'F'},
-		{"rlimit_nofile",      REQUIRED_ARGUMENT,  NULL,     'P'},
+		{"rlimit_nofile",     REQUIRED_ARGUMENT,  &rlimit_nofile_flag,     'F'},
+		{"rlimit_nproc",      REQUIRED_ARGUMENT,  &rlimit_nproc_flag,      'P'},
  		{NULL,                 0,                  NULL,        0},
 	};
 
 	Coptind = 1;
 	Copterr = 0;
+	rlimit_nproc_flag = 0;
+	rlimit_nofile_flag = 0;
+	done_rlimit_nproc = 0;
+	done_rlimit_nofile = 0;
+
 	while ((c = Cgetopt_long (argc, argv, "fhL:F:P:", longopts, NULL)) != -1) {
 		switch (c) {
 		case 'f':
@@ -413,6 +422,20 @@ int main(argc,argv)
 			if ((rlimit_nproc = atoi(Coptarg)) <= 0) {
 				fprintf(stderr,"RLIMIT_NPROC (-P/--rlimit_nproc option) value '%s' : must be > 0\n",Coptarg);
 				++errflg;
+			}
+			break;
+		case 0:
+			if ((rlimit_nproc_flag != 0) && (! done_rlimit_nproc)) {
+				if ((rlimit_nproc = atoi(Coptarg)) <= 0) {
+					fprintf(stderr,"RLIMIT_NPROC (-P/--rlimit_nproc option) value '%s' : must be > 0\n",Coptarg);
+					++errflg;
+				}
+			}
+			if ((rlimit_nofile_flag != 0) && (! done_rlimit_nofile)) {
+				if ((rlimit_nofile = atoi(Coptarg)) <= 0) {
+					fprintf(stderr,"RLIMIT_NOFILE (-F/--rlimit_nofile option) value '%s' : must be > 0\n",Coptarg);
+					++errflg;
+				}
 			}
 			break;
 		case '?':
@@ -495,6 +518,7 @@ int main(argc,argv)
 #else
 	stglogit(func, "... RLIMIT_NPROC undefined on this platform\n");
 #endif
+
 #if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(sgi)
 	maxfds = getdtablesize();
 #else
@@ -1129,15 +1153,6 @@ int main(argc,argv)
 						}
 					}
 
-					if (FREE_FD <= 0) {
-						/* There is no more available free connections if we process this new one */
-						/* We are at the limit - Sorry we have to reject */
-						/* We count on the client retry some time later saying him we are not */
-						/* available for the moment - with ESTNACT */
-						sendrep (rpfd, MSG_ERR, STG160, sysconf(_SC_OPEN_MAX));
-						sendrep (rpfd, STAGERC, req_type, magic, SHIFT_ESTNACT);
-						goto endreq;
-					}
 					switch (req_type) {
 					case STAGE_IN:
 					case STAGE_OUT:
@@ -3208,6 +3223,23 @@ int fork_exec_stager(wqp)
 	char tmpfile[L_tmpnam];
 	FILE *f;
 #endif
+
+	/* We look if we can really fork a stager. The macro FREE_FD() already */
+	/* takes into account the two file descriptors needed for the pipe. But we */
+	/* have to make sure that there will always be at least one available file descriptor to serve the next request */
+	/* Current requests count as one, and is a candidate for the waitq */
+	/* So we need two free file descriptors left: one for the current one, one for the next */
+
+	/* This logic apply only on fresh new connections, and not on internal retries */
+	if (! wqp->nretry) {
+		if (FREE_FD <= 2) {
+			/* We are at the limit - Sorry we have to reject */
+			/* We count on the client retry some time later saying him we are not */
+			/* available for the moment - with ESTNACT */
+			sendrep (rpfd, MSG_ERR, STG160, sysconf(_SC_OPEN_MAX));
+			return(SHIFT_ESTNACT);
+		}
+	}
 
 	/* We determine in advance the t_or_d to know which stager to fork_exec */
 	for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
