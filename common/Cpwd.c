@@ -6,7 +6,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpwd.c,v $ $Revision: 1.5 $ $Date: 2000/05/31 10:33:52 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Cpwd.c,v $ $Revision: 1.6 $ $Date: 2000/06/15 12:12:23 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -30,6 +30,8 @@ CONST char *name;
      * If single-threaded compilation we don't do anything.
      */
     return(getpwnam(name));
+#elif (defined(_WIN32))
+    return(getpwnam((char *) name));
 #elif defined(linux) || (defined(__osf__) && defined(__alpha)) || \
       (defined(SOLARIS) && defined(_POSIX_PTHREAD_SEMANTICS)) || \
       defined(AIX42) || defined(IRIX6)
@@ -104,6 +106,8 @@ uid_t uid;
     /*
      * If single-threaded compilation we don't do anything.
      */
+    return(getpwuid(uid));
+#elif (defined(_WIN32))
     return(getpwuid(uid));
 #elif defined(linux) || (defined(__osf__) && defined(__alpha)) || \
       (defined(SOLARIS) && defined(_POSIX_PTHREAD_SEMANTICS)) || \
