@@ -47,29 +47,12 @@ static char sccsid[] = "@(#)Csec_api_loader.c,v 1.1 2004/01/12 10:31:39 CERN IT/
 
 #include <Csec.h>
 
-/*char protocols[][PROTID_SIZE] = { "KRB5",
-                                  "GSI" ,
-                                  "ID"}; */
-
 /* Macro to initialize one symbol in the context structure */
 #define DLSETFUNC(CTX, HDL, SYM) if ((CTX->SYM = dlsym(HDL, #SYM "_impl")) == NULL) { \
     Csec_errmsg(func, "Error finding symbol %s: %s\n",		\
 		#SYM, dlerror());					\
     CTX->shhandle = NULL;						\
     return NULL; }
-
-int check_ctx(Csec_context *ctx, char *func) {
-  if (!(ctx->flags& CSEC_CTX_INITIALIZED)) {
-    Csec_errmsg(func, "Context not initialized");
-    serrno = ESEC_CTX_NOT_INITIALIZED;
-    return -1;
-  }
-  return 0;
-}
-
-#define CHECKCTX(CTX,FUNC) if(check_ctx(CTX, FUNC)<0) return -1;
-
-
 
 /**
  * Gets the shared library corresponding to the context !
@@ -78,17 +61,19 @@ void *Csec_get_shlib(Csec_context *ctx) {
   char filename[CA_MAXNAMELEN];
   void *handle;
   char *func = "Csec_get_shlib";
-  /* Checking input */
+ 
+ /* Checking input */
   if (ctx == NULL) {
     serrno = EINVAL;
+    Csec_errmsg(func, "Context is NULL !");
     return NULL;
   }
 
   /* Creating the library name */
-  snprintf(filename, CA_MAXNAMELEN, "libCsec_plugin_%s.so", ctx->protid);
+  snprintf(filename, CA_MAXNAMELEN, "libCsec_plugin_%s.so", ctx->protocols[ctx->current_protocol].id);
   Csec_trace(func, "Using shared library <%s> for mechanism <%s>\n",
 	     filename,
-	     ctx->protid);
+	     ctx->protocols[ctx->current_protocol].id);
     
   handle = dlopen(filename, RTLD_NOW);
 
@@ -107,12 +92,14 @@ void *Csec_get_shlib(Csec_context *ctx) {
   DLSETFUNC(ctx, handle, Csec_init_context);
   DLSETFUNC(ctx, handle, Csec_reinit_context);
   DLSETFUNC(ctx, handle, Csec_delete_context);
-  DLSETFUNC(ctx, handle, Csec_delete_credentials);
+  DLSETFUNC(ctx, handle, Csec_delete_creds);
   DLSETFUNC(ctx, handle, Csec_server_acquire_creds);
   DLSETFUNC(ctx, handle, Csec_server_establish_context_ext);
   DLSETFUNC(ctx, handle, Csec_client_establish_context);
   DLSETFUNC(ctx, handle, Csec_map2name);
   DLSETFUNC(ctx, handle, Csec_get_service_name);
+
+  ctx->flags |= CSEC_CTX_SHLIB_LOADED;
 
   return handle;
     

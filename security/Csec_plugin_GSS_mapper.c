@@ -30,7 +30,7 @@ char GSI_service_prefix[][20] = { "host",
                                   "host",
                                   "" };
 
-char *GSI_DN_header = "/C=CH/O=CERN/OU=GRID";
+char *GSI_DN_header = "";
 
 
 #ifdef KRB5

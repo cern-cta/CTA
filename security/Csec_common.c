@@ -195,10 +195,11 @@ int _Csec_send_token(s, tok, timeout, token_type)
 /**
  * Reads a gss_buffer_t from a socket
  */
-int _Csec_recv_token(s, tok, timeout)
+int _Csec_recv_token(s, tok, timeout, rtype)
      int s;
      gss_buffer_t tok;
      int timeout;
+     int *rtype;
 {
   int ret;
   char *func = "_Csec_recv_token";
@@ -293,6 +294,10 @@ int _Csec_recv_token(s, tok, timeout)
   type=ntohl(type);
   len=ntohl(len);
 
+  if (rtype != NULL) {
+    *rtype = type;
+  }
+
   Csec_trace(func, "Receiving packet Magic: %xd Type: %d, Len: %d\n",
 	     magic, type, len);
 
@@ -360,4 +365,12 @@ void _Csec_print_token(tok)
   Csec_trace(NULL, "\n\n");
 }
 
+int check_ctx(Csec_context *ctx, char *func) {
+  if (!(ctx->flags& CSEC_CTX_INITIALIZED)) {
+    Csec_errmsg(func, "Context not initialized");
+    serrno = ESEC_CTX_NOT_INITIALIZED;
+    return -1;
+  }
+  return 0;
+}
 

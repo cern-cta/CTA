@@ -112,7 +112,7 @@ int Csec_reinit_context_impl(ctx)
     }
 
     if (ctx->flags & CSEC_CTX_CREDENTIALS_LOADED) {
-        Csec_delete_credentials_impl(ctx);
+        Csec_delete_creds_impl(ctx);
     }
 
     memset(ctx, 0, sizeof(Csec_context));
@@ -133,7 +133,7 @@ int Csec_delete_context_impl(ctx)
 /**
  * Deletes the credentials inside the Csec_context
  */
-int Csec_delete_credentials_impl(ctx)
+int Csec_delete_creds_impl(ctx)
     Csec_context *ctx;
 {
   return 0;
@@ -159,14 +159,9 @@ int Csec_server_acquire_creds_impl(ctx, service_name)
  * API function for the server to establish the context
  *
  */
-int Csec_server_establish_context_ext_impl(ctx, s, service_name, client_name, 
-					   client_name_size, ret_flags, buf, len)
+int Csec_server_establish_context_ext_impl(ctx, s, buf, len)
     Csec_context *ctx;
     int s;
-    char *service_name;
-    char *client_name;
-    int client_name_size;
-    U_LONG  *ret_flags;
     char *buf;
     int len;
 {
@@ -272,11 +267,9 @@ int Csec_server_establish_context_ext_impl(ctx, s, service_name, client_name,
 /**
  * API function for client to establish function with the server
  */
-int Csec_client_establish_context_impl(ctx, s, service_name, ret_flags)
+int Csec_client_establish_context_impl(ctx, s)
     Csec_context *ctx;
     int s;
-    const char *service_name;
-    U_LONG *ret_flags;
 {
 
     char *func = "client_extablish_context";
