@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.208 2002/06/19 13:29:51 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.209 2002/06/19 13:39:11 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.208 $ $Date: 2002/06/19 13:29:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.209 $ $Date: 2002/06/19 13:39:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -399,6 +399,8 @@ int main(argc,argv)
 	static int rlimit_nofile_flag;
 	int done_rlimit_nproc;
 	int done_rlimit_nofile;
+	int doit_rlimit_nproc;
+	int doit_rlimit_nofile;
 	char thislocalhost[CA_MAXHOSTNAMELEN+1];  /* Local hostname */
 	static struct Coptions longopts[] =
 	{
@@ -416,6 +418,8 @@ int main(argc,argv)
 	rlimit_nofile_flag = 0;
 	done_rlimit_nproc = 0;
 	done_rlimit_nofile = 0;
+	doit_rlimit_nproc = 0;
+	doit_rlimit_nofile = 0;
 
 	while ((c = Cgetopt_long (argc, argv, "fhI:L:F:P:", longopts, NULL)) != -1) {
 		switch (c) {
@@ -435,17 +439,19 @@ int main(argc,argv)
 			}
 			break;
 		case 'F':
-			rlimit_nofile_flag = 1;
 			if ((rlimit_nofile = atoi(Coptarg)) <= 0) {
 				fprintf(stderr,"RLIMIT_NOFILE (-F/--rlimit_nofile option) value '%s' : must be > 0\n",Coptarg);
 				++errflg;
+			} else {
+				doit_rlimit_nofile = 1;
 			}
 			break;
 		case 'P':
-			rlimit_nproc_flag = 1;
 			if ((rlimit_nproc = atoi(Coptarg)) <= 0) {
 				fprintf(stderr,"RLIMIT_NPROC (-P/--rlimit_nproc option) value '%s' : must be > 0\n",Coptarg);
 				++errflg;
+			} else {
+				doit_rlimit_nproc = 1;
 			}
 			break;
 		case 0:
@@ -453,12 +459,18 @@ int main(argc,argv)
 				if ((rlimit_nproc = atoi(Coptarg)) <= 0) {
 					fprintf(stderr,"RLIMIT_NPROC (-P/--rlimit_nproc option) value '%s' : must be > 0\n",Coptarg);
 					++errflg;
+				} else {
+					doit_rlimit_nproc = 1;
+					done_rlimit_nproc = 1;
 				}
 			}
 			if ((rlimit_nofile_flag != 0) && (! done_rlimit_nofile)) {
 				if ((rlimit_nofile = atoi(Coptarg)) <= 0) {
 					fprintf(stderr,"RLIMIT_NOFILE (-F/--rlimit_nofile option) value '%s' : must be > 0\n",Coptarg);
 					++errflg;
+				} else {
+					doit_rlimit_nofile = 1;
+					done_rlimit_nofile = 1;
 				}
 			}
 			break;
@@ -491,7 +503,7 @@ int main(argc,argv)
 
 	/* Before getting system limit, change them right now - we do nothing if wanted value are below what system provide */
 #ifdef RLIMIT_NOFILE
-	if (rlimit_nofile_flag != 0) {
+	if (doit_rlimit_nofile != 0) {
 		/* RLIMIT_NOFILE */
 		if (getrlimit(RLIMIT_NOFILE,&rlim) != 0) {
 			stglogit(func, "... getrlimit(RLIMIT_NOFILE,&rlim) error : %s\n", strerror(errno));
@@ -528,7 +540,7 @@ int main(argc,argv)
 	stglogit(func, "... RLIMIT_NOFILE undefined on this platform\n");
 #endif
 #ifdef RLIMIT_NPROC
-	if (rlimit_nproc_flag != 0) {
+	if (doit_rlimit_nproc != 0) {
 		/* RLIMIT_NPROC */
 		if (getrlimit(RLIMIT_NPROC,&rlim) != 0) {
 			stglogit(func, "... getrlimit(RLIMIT_NPROC,&rlim) error : %s\n", strerror(errno));
