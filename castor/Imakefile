@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Release$ $Date: 2004/05/26 15:46:25 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Release$ $Date: 2004/05/27 08:38:18 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -70,89 +70,91 @@ DEPLIB = DepLibraryTargetName(lib,shift)
 INCLUDES = -I FileName(..,h) -I FileName(..,)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
-STGLIB_OBJS = IAddressCInt.Osuf \
-              BaseAddress.Osuf \
-              BaseAddressCInt.Osuf \
-              BaseCnvSvc.Osuf \
-              BaseObject.Osuf \
-              BaseServer.Osuf \
-              BaseSvc.Osuf \
-              Converters.Osuf \
-              Factories.Osuf \
-              IAddress.Osuf \
-              IClientCInt.Osuf \
-              IObjectCInt.Osuf \
-              IPersistentCInt.Osuf \
-              IPrintableCInt.Osuf \
-              MessageAck.Osuf \
-              MessageAckCInt.Osuf \
-              MsgSvc.Osuf \
-              ObjectCatalog.Osuf \
-              ObjectSet.Osuf \
-              Services.Osuf \
-              ServicesCInt.Osuf \
-              logstream.Osuf \
-              client/BaseClient.Osuf \
-              io/Socket.Osuf \
-              io/StreamAddress.Osuf \
-              io/StreamBaseCnv.Osuf \
-              io/StreamCastorFileCnv.Osuf \
-              io/StreamClientCnv.Osuf \
-              io/StreamCnvSvc.Osuf \
-              io/StreamCuuidCnv.Osuf \
-              io/StreamDiskFileCnv.Osuf \
-              io/StreamDiskFileCopyCnv.Osuf \
-              io/StreamDiskFileSystemCnv.Osuf \
-              io/StreamDiskServerCnv.Osuf \
-              io/StreamFileCnv.Osuf \
-              io/StreamFlagCnv.Osuf \
-              io/StreamMessageAckCnv.Osuf \
-              io/StreamPtrCnv.Osuf \
-              io/StreamSegmentCnv.Osuf \
-              io/StreamStageInRequestCnv.Osuf \
-              io/StreamTapeCnv.Osuf \
-              io/StreamTapePoolCnv.Osuf \
-              io/StreamTapeRequestCnv.Osuf \
-              rh/Client.Osuf \
-              rh/ClientCInt.Osuf \
-              rh/File.Osuf \
-              rh/FileCInt.Osuf \
-              rh/FileRequest.Osuf \
-              rh/FileRequestCInt.Osuf \
-              rh/Flag.Osuf \
-              rh/FlagCInt.Osuf \
-              rh/Request.Osuf \
-              rh/RequestCInt.Osuf \
-              rh/StageInRequest.Osuf \
-              rh/StageInRequestCInt.Osuf \
-              stager/IStagerSvcCInt.Osuf \
-              stager/CastorFile.Osuf \
-              stager/CastorFileCInt.Osuf \
-              stager/Cuuid.Osuf \
-              stager/DiskFile.Osuf \
-              stager/DiskFileCInt.Osuf \
-              stager/DiskFileCopy.Osuf \
-              stager/DiskFileCopyCInt.Osuf \
-              stager/DiskFileSystem.Osuf \
-              stager/DiskFileSystemCInt.Osuf \
-              stager/DiskServer.Osuf \
-              stager/DiskServerCInt.Osuf \
-              stager/Segment.Osuf \
-              stager/SegmentCInt.Osuf \
-              stager/Tape.Osuf \
-              stager/TapeCInt.Osuf \
-              stager/TapePool.Osuf \
-              stager/TapePoolCInt.Osuf \
-              stager/TapeRequest.Osuf \
-              stager/TapeRequestCInt.Osuf \
-              stager/TpFileCopy.Osuf \
-              stager/TpFileCopyCInt.Osuf \
-              db/DbAddress.Osuf \
-              db/DbAddressCInt.Osuf \
-              exception/Exception.Osuf \
-              exception/InvalidArgument.Osuf \
-              exception/Internal.Osuf \
-              exception/NoEntry.Osuf
+STGLIB_SRCS = IAddressCInt.cpp \
+              BaseAddress.cpp \
+              BaseAddressCInt.cpp \
+              BaseCnvSvc.cpp \
+              BaseObject.cpp \
+              BaseServer.cpp \
+              BaseSvc.cpp \
+              Converters.cpp \
+              Factories.cpp \
+              IAddress.cpp \
+              IClientCInt.cpp \
+              IObjectCInt.cpp \
+              IPersistentCInt.cpp \
+              IPrintableCInt.cpp \
+              MessageAck.cpp \
+              MessageAckCInt.cpp \
+              MsgSvc.cpp \
+              ObjectCatalog.cpp \
+              ObjectSet.cpp \
+              Services.cpp \
+              ServicesCInt.cpp \
+              logstream.cpp \
+              client/BaseClient.cpp \
+              io/Socket.cpp \
+              io/StreamAddress.cpp \
+              io/StreamBaseCnv.cpp \
+              io/StreamCastorFileCnv.cpp \
+              io/StreamClientCnv.cpp \
+              io/StreamCnvSvc.cpp \
+              io/StreamCuuidCnv.cpp \
+              io/StreamDiskFileCnv.cpp \
+              io/StreamDiskFileCopyCnv.cpp \
+              io/StreamDiskFileSystemCnv.cpp \
+              io/StreamDiskServerCnv.cpp \
+              io/StreamFileCnv.cpp \
+              io/StreamFlagCnv.cpp \
+              io/StreamMessageAckCnv.cpp \
+              io/StreamPtrCnv.cpp \
+              io/StreamSegmentCnv.cpp \
+              io/StreamStageInRequestCnv.cpp \
+              io/StreamTapeCnv.cpp \
+              io/StreamTapePoolCnv.cpp \
+              io/StreamTapeRequestCnv.cpp \
+              rh/Client.cpp \
+              rh/ClientCInt.cpp \
+              rh/File.cpp \
+              rh/FileCInt.cpp \
+              rh/FileRequest.cpp \
+              rh/FileRequestCInt.cpp \
+              rh/Flag.cpp \
+              rh/FlagCInt.cpp \
+              rh/Request.cpp \
+              rh/RequestCInt.cpp \
+              rh/StageInRequest.cpp \
+              rh/StageInRequestCInt.cpp \
+              stager/IStagerSvcCInt.cpp \
+              stager/CastorFile.cpp \
+              stager/CastorFileCInt.cpp \
+              stager/Cuuid.cpp \
+              stager/DiskFile.cpp \
+              stager/DiskFileCInt.cpp \
+              stager/DiskFileCopy.cpp \
+              stager/DiskFileCopyCInt.cpp \
+              stager/DiskFileSystem.cpp \
+              stager/DiskFileSystemCInt.cpp \
+              stager/DiskServer.cpp \
+              stager/DiskServerCInt.cpp \
+              stager/Segment.cpp \
+              stager/SegmentCInt.cpp \
+              stager/Tape.cpp \
+              stager/TapeCInt.cpp \
+              stager/TapePool.cpp \
+              stager/TapePoolCInt.cpp \
+              stager/TapeRequest.cpp \
+              stager/TapeRequestCInt.cpp \
+              stager/TpFileCopy.cpp \
+              stager/TpFileCopyCInt.cpp \
+              db/DbAddress.cpp \
+              db/DbAddressCInt.cpp \
+              exception/Exception.cpp \
+              exception/InvalidArgument.cpp \
+              exception/Internal.cpp \
+              exception/NoEntry.cpp
+
+STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
 
 STAGEIN_OBJ = client/StageIn.Osuf
 MTTEST_OBJ = client/Mttest.Osuf
@@ -202,6 +204,7 @@ Makefiles:
 	done ;
 
 depend:
+	makedepend $(INCLUDES) $(STGLIB_SRCS) 2> /dev/null
 	for i in $(DEPENDDIRS) ;\
 	do (if [ -d $$i ] ;\
 	    then \

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/25 15:30:52 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/27 08:38:18 $ $Author: sponcec3 $
 #
 # Make Castor DB libraries
 #
@@ -39,25 +39,27 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
 LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh -lcastorClient
 
-ORALIB_OBJS = OraBaseCnv.Osuf \
-              OraCastorFileCnv.Osuf \
-              OraClientCnv.Osuf \
-              OraCnvSvc.Osuf \
-              OraStagerSvc.Osuf \
-              OraCuuidCnv.Osuf \
-              OraDiskFileCnv.Osuf \
-              OraDiskFileCopyCnv.Osuf \
-              OraDiskFileSystemCnv.Osuf \
-              OraDiskServerCnv.Osuf \
-              OraFileCnv.Osuf \
-              OraFlagCnv.Osuf \
-              OraMessageAckCnv.Osuf \
-              OraSegmentCnv.Osuf \
-              OraStageInRequestCnv.Osuf \
-              OraTapeCnv.Osuf \
-              OraTapePoolCnv.Osuf \
-              OraTapeRequestCnv.Osuf \
-              OraTpFileCopyCnv.Osuf
+ORALIB_SRCS = OraBaseCnv.cpp \
+              OraCastorFileCnv.cpp \
+              OraClientCnv.cpp \
+              OraCnvSvc.cpp \
+              OraStagerSvc.cpp \
+              OraCuuidCnv.cpp \
+              OraDiskFileCnv.cpp \
+              OraDiskFileCopyCnv.cpp \
+              OraDiskFileSystemCnv.cpp \
+              OraDiskServerCnv.cpp \
+              OraFileCnv.cpp \
+              OraFlagCnv.cpp \
+              OraMessageAckCnv.cpp \
+              OraSegmentCnv.cpp \
+              OraStageInRequestCnv.cpp \
+              OraTapeCnv.cpp \
+              OraTapePoolCnv.cpp \
+              OraTapeRequestCnv.cpp \
+              OraTpFileCopyCnv.cpp
+
+ORALIB_OBJS = $(ORALIB_SRCS:.cpp=.Osuf)
 
 COMMONLIB = SharedLibraryTargetName(castorCommonOra)
 LDFLAGS = -L ../..
@@ -68,6 +70,14 @@ all: $(COMMONLIB)
 SharedLibraryTarget(castorCommonOra,$(ORALIB_OBJS),$(DEPLIB),$(LIBS))
 
 Makefiles:
+
+#if defined(_WIN32)
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend $(INCLUDES) $(ORALIB_SRCS) 2> /dev/null
+#endif
 
 clean:
 	@echo cleaning in CurDir

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:35 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/27 08:38:18 $ $Author: sponcec3 $
 #
 # Make Castor RH library
 #
@@ -37,7 +37,9 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
 LIBS = -lcastorClient -lcastorCommonOra
 
-RHBIN_OBJ = Server.Osuf
+RHBIN_SRCS = Server.cpp
+
+RHBIN_OBJS = $(RHBIN_SRCS:.cpp=.Osuf)
 
 DEPLIB = DepSharedLibraryTargetName(,castorClient) \
          DepSharedLibraryTargetName(db/ora,castorCommonOra)
@@ -47,9 +49,17 @@ LD = g++
 
 all: ProgramTargetName(rhserver)
 
-NormalProgramTarget(rhserver,$(RHBIN_OBJ),$(DEPLIB),$(LIBS))
+NormalProgramTarget(rhserver,$(RHBIN_OBJS),$(DEPLIB),$(LIBS))
 
 Makefiles:
+
+#if defined(_WIN32)
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend $(INCLUDES) $(RHBIN_SRCS) 2> /dev/null
+#endif
 
 clean:
 	@echo cleaning in CurDir
