@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.3 $ $Date: 2000/03/23 14:09:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.4 $ $Date: 2000/04/11 05:46:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlisttape - query a given volume or list all existing tapes */
@@ -26,8 +26,11 @@ char **argv;
 	char density[CA_MAXDENLEN+1];
 	char dgn[CA_MAXDGNLEN+1];
 	int errflg = 0;
+	int flags;
 	int free_space;
 	char lbltype[3];
+	vmgr_list list;
+	struct vmgr_tape_info *lp;
 	char manufacturer[CA_MAXMANUFLEN+1];
 	char media_letter[2];
 	char model[CA_MAXMODELLEN+1];
@@ -103,6 +106,16 @@ char **argv;
 		    media_letter, manufacturer, sn, pool_name, free_space,
 		    nbfiles, rcount, wcount, rtime, wtime, status, xflag);
 	} else {
+		flags = VMGR_LIST_BEGIN;
+		while ((lp = vmgr_listtape (flags, &list)) != NULL) {
+			listentry (lp->vid, lp->vsn, lp->dgn, lp->density,
+			    lp->lbltype, lp->model, lp->media_letter,
+			    lp->manufacturer, lp->sn, lp->poolname,
+			    lp->estimated_free_space, lp->nbfiles, lp->rcount,
+			    lp->wcount, lp->rtime, lp->wtime, lp->status, xflag);
+			flags = VMGR_LIST_CONTINUE;
+		}
+		(void) vmgr_listtape (VMGR_LIST_END, &list);
 	}
 	exit (0);
 }
