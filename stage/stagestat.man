@@ -1,10 +1,10 @@
-.\" $Id: stagestat.man,v 1.19 2003/08/28 13:11:38 jdurand Exp $
+.\" $Id: stagestat.man,v 1.20 2003/08/28 14:20:40 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.19 $ $Date: 2003/08/28 13:11:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
+.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.20 $ $Date: 2003/08/28 14:20:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
 .\" Copyright (C) 1995-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGESTAT "1" "$Date: 2003/08/28 13:11:38 $" "CASTOR" "Stager User Commands"
+.TH STAGESTAT "1" "$Date: 2003/08/28 14:20:40 $" "CASTOR" "Stager User Commands"
 .SH NAME
 stagestat \- gives global statistics on stager usage and detailed statistics on
 each file staged in 
@@ -45,7 +45,9 @@ each file staged in
 ]
 .BI \-v
 ] [
-.BI \-w " week1[\-[week2]]"
+.BI \-w " week1[\-week2]"
+] [
+.BI \-z
 ]
 .SH DESCRIPTION
 .B stagestat
@@ -173,6 +175,9 @@ will append the week number to accounting filename, except for current week when
 and
 .I week2
 have the format yymm where yy are the year in current century (like 02 for year 2002), and ww is the week number.
+.TP
+.BI \-z
+Do not admit stage records from a stager that was (supposed to be) compiled with different internal limits. Default is to silently accept them. This should be rare and depend on your setup. The correct solution is always to use a version of stagestat from the same package that produced the accounting records you want to analyse.
 
 .SH NOTES
 If, for a given

@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.46 2003/08/28 13:11:38 jdurand Exp $
+ * $Id: stagestat.c,v 1.47 2003/08/28 14:20:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.46 $ $Date: 2003/08/28 13:11:38 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.47 $ $Date: 2003/08/28 14:20:39 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -202,6 +202,7 @@ char *Dflag = NULL;
 char *Mflag = NULL;
 int Hflag = 0;
 int wflag = 0;		/* If set week number given */
+int zflag = 0;      /* Do not accept records of bizarre length */
 int fflag = 0;
 int gflag = 0;      /* Global statistics only */
 char *week1 = NULL;
@@ -266,7 +267,7 @@ int main(argc, argv)
 	
 	Coptind = 1;
 	Copterr = 1;
-	while ((c = Cgetopt (argc, argv, "adD:e:f:gH:h:M:n:N:p:r:S:s:T:vw:")) != -1) {
+	while ((c = Cgetopt (argc, argv, "adD:e:f:gH:h:M:n:N:p:r:S:s:T:vw:z")) != -1) {
 		switch (c) {
 		case 'a':
 			all_stageclrs++;
@@ -458,6 +459,9 @@ int main(argc, argv)
 		  	wflag++;
 		}
 		break;
+		case 'z':
+			zflag++;
+			break;
 		case '?':
 			errflg++;
 			break;
@@ -1298,14 +1302,16 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 	struct acctstage2 rp2;
 	struct acctstage64 rp64;
 	size_t thislen;
+	char *tmpbuf;
+	size_t max_to_read = 0;
 
 	rfio_errno = serrno = 0;
 	if ((c = rfio_read (fd_acct,accthdr,sizeof(struct accthdr))) != sizeof(struct accthdr)) {
 		if (c == 0) return (0);
 		if (c > 0)
-			fprintf (stderr, "rfio_read returns %d\n", c);
+			fprintf (stderr, "\nrfio_read returns %d for the header, expected %d\n", c, (int) sizeof(struct accthdr));
 		else
-			fprintf (stderr, "rfio_read error : %s\n", rfio_serror());
+			fprintf (stderr, "\nrfio_read error : %s\n", rfio_serror());
 		exit (SYERR);
 	}
 
@@ -1334,23 +1340,52 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 	rfio_errno = serrno = 0;
 	switch (accthdr->package) {
 	case ACCTSTAGE64:
+		if ((! zflag) && accthdr->len > sizeof(struct acctstage64)) {
+			/* Aie... This is an accounting file from a package for which internal limits were */
+			/* probably different. Should be xfile name length */
+			/* But cross the fingers or use option -z */
+			max_to_read = sizeof(struct acctstage64);
+		}
+		
 		/* buf is a pointer to an acctstage64 record: OK */
-		if ((c = rfio_read (fd_acct, buf, accthdr->len)) != accthdr->len) {
+		if ((c = rfio_read (fd_acct, buf, max_to_read ? max_to_read : accthdr->len)) != (max_to_read ? max_to_read : accthdr->len)) {
 			if (c >= 0)
-				fprintf (stderr, "rfio_read returns %d\n",c);
+				fprintf (stderr, "\nrfio_read returns %d for an ACCTSTAGE64 record, expected %d\n",c,(int) max_to_read ? max_to_read : sizeof(struct acctstage64));
 			else
-				fprintf (stderr, "rfio_read error : %s\n", rfio_serror());
+				fprintf (stderr, "\nrfio_read error : %s\n", rfio_serror());
 			exit (SYERR);
+		}
+		if (max_to_read) {
+			/* Go to the end of the record as if there was no problem */
+			rfio_errno = serrno = 0;
+			if (rfio_lseek64(fd_acct, (off64_t) accthdr->len - max_to_read, SEEK_CUR) < 0) {
+				fprintf (stderr, "rfio_lseek64 error : %s\n", rfio_serror());
+				exit (SYERR);
+			}
 		}
 		break;
 	case ACCTSTAGE2:
+		if ((! zflag) && accthdr->len > sizeof(struct acctstage64)) {
+			/* Aie... This is an accounting file from a package for which internal limits were */
+			/* probably different. Should be xfile name length */
+			/* But cross the fingers or use option -z */
+			max_to_read = sizeof(struct acctstage64);
+		}
 		/* buf is a pointer to an acctstage64 record: we will have to convert from acctstage2 */
-		if ((c = rfio_read (fd_acct, (char *) &rp2, accthdr->len)) != accthdr->len) {
+		if ((c = rfio_read (fd_acct, buf, max_to_read ? max_to_read : accthdr->len)) != (max_to_read ? max_to_read : accthdr->len)) {
 			if (c >= 0)
-				fprintf (stderr, "rfio_read returns %d\n",c);
+				fprintf (stderr, "\nrfio_read returns %d for an ACCTSTAGE2 record, expected %d\n",c,(int) max_to_read ? max_to_read : accthdr->len);
 			else
-				fprintf (stderr, "rfio_read error : %s\n", rfio_serror());
+				fprintf (stderr, "\nrfio_read error : %s\n", rfio_serror());
 			exit (SYERR);
+		}
+		if (max_to_read) {
+			/* Go to the end of the record as if there was no problem */
+			rfio_errno = serrno = 0;
+			if (rfio_lseek64(fd_acct, (off64_t) accthdr->len - max_to_read, SEEK_CUR) < 0) {
+				fprintf (stderr, "rfio_lseek64 error : %s\n", rfio_serror());
+				exit (SYERR);
+			}
 		}
 		/* Convert acctstage2 to acctstage64 */
 		thislen = 0;
@@ -1411,13 +1446,27 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 		memcpy((void *) buf,(void *) &rp64,sizeof(struct acctstage64));
 		break;
 	case ACCTSTAGE:
+		if ((! zflag) && accthdr->len > sizeof(struct acctstage64)) {
+			/* Aie... This is an accounting file from a package for which internal limits were */
+			/* probably different. Should be xfile name length */
+			/* But cross the fingers or use option -z */
+			max_to_read = sizeof(struct acctstage64);
+		}
 		/* buf is a pointer to an acctstage64 record: we will have to convert from acctstage2 */
-		if ((c = rfio_read (fd_acct, (char *) &rp, accthdr->len)) != accthdr->len) {
+		if ((c = rfio_read (fd_acct, buf, max_to_read ? max_to_read : accthdr->len)) != (max_to_read ? max_to_read : accthdr->len)) {
 			if (c >= 0)
-				fprintf (stderr, "rfio_read returns %d\n",c);
+				fprintf (stderr, "\nrfio_read returns %d for an ACCTSTAGE record, expected %d\n",c,(int) max_to_read ? max_to_read : accthdr->len);
 			else
-				fprintf (stderr, "rfio_read error : %s\n", rfio_serror());
+				fprintf (stderr, "\nrfio_read error : %s\n", rfio_serror());
 			exit (SYERR);
+		}
+		if (max_to_read) {
+			/* Go to the end of the record as if there was no problem */
+			rfio_errno = serrno = 0;
+			if (rfio_lseek64(fd_acct, (off64_t) accthdr->len - max_to_read, SEEK_CUR) < 0) {
+				fprintf (stderr, "rfio_lseek64 error : %s\n", rfio_serror());
+				exit (SYERR);
+			}
 		}
 		/* Convert acctstage to acctstage64 */
 		thislen = 0;
@@ -2360,6 +2409,7 @@ void usage (cmd)
 			 "      -T vid             is for searching and dumping accounting for TAPE entries matching \"vid\"\n"
 			 "      -v                 Verbose mode\n"
 			 "      -w                 Week number, give stats for a specify week yyww (y=year w=week ex:0227) or for a range of weeks yyww1-yyww2; if yyww2 blank takes up to current week. The -f option can be used to force the accouting file name. Except for the current week, this tool will then try to open files <-f option value>.yyww. For example '-f /tmp/sacct -w 0230-0232' will attempt to open /tmp/sacct.0230, /tmp/sacct.0231 and /tmp/sacct.0232\n"
+			 "      -z                 Do not admit stage records from a stager that was (supposed to be) compiled with different internal limits. Default is to silently accept them. This should be rare and depend on your setup. The correct solution is always to use a version of stagestat from the same package that produced the accounting records you want to analyse.\n"
 			 "\n"
 			 "Note: If this tool cannot open the disk file it will always try to access the archived version that should be at %s/%s/c3/backup/sacct/<hostname>/sacct.yyww\n",
 			 NSROOT, localdomain
