@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2001 by CERN IT-PDP/DM
  * All rights reserved
  */
 
@@ -1378,8 +1378,6 @@ static int DiskToMemory(int disk_fd, int pool_index,
         } \
         if ( disk_fd != -1 ) \
             (void)DiskFileClose(disk_fd,pool_index,tape,file); \
-        (void) tellClient(&client_socket,NULL,NULL,-1); \
-        rtcp_CloseConnection(&client_socket); \
         if ( (severity & RTCP_LOCAL_RETRY) != 0 && mode == WRITE_DISABLE ) \
             rtcpd_SetProcError(severity); \
         if ( AbortFlag == 0 ) rtcpd_BroadcastException(); \
@@ -1430,8 +1428,6 @@ void *diskIOthread(void *arg) {
     if ( file == NULL || tape == NULL ) {
         rtcp_log(LOG_ERR,"diskIOthread() received NULL tape/file element\n");
         rtcpd_SetProcError(RTCP_FAILED);
-        (void) tellClient(&client_socket,NULL,NULL,-1); 
-        rtcp_CloseConnection(&client_socket);
         DiskIOfinished();
         return((void *)&failure);
     }
@@ -1473,8 +1469,6 @@ void *diskIOthread(void *arg) {
             if ( ENOSPC_occurred == TRUE ) {
                 rtcp_log(LOG_INFO,"diskIOthread() exit for synchronization due to ENOSPC\n");
                 filereq->proc_status = RTCP_WAITING;
-                (void) tellClient(&client_socket,NULL,NULL,-1);
-                rtcp_CloseConnection(&client_socket);
                 DiskIOfinished();
                 return((void *)&success);
             }
@@ -1644,8 +1638,6 @@ void *diskIOthread(void *arg) {
     } /* if ( mode == WRITE_DISABLE ) */
 
     DiskIOfinished();
-    tellClient(&client_socket,NULL,NULL,0);
-    rtcp_CloseConnection(&client_socket);
     return((void *)&success);
 }
 
@@ -1690,7 +1682,12 @@ int rtcpd_InitDiskIO(int *poolsize) {
     return(rc);
 }
 
-int rtcpd_CleanUpDiskIO(int poolID) {
+int rtcpd_CleanUpDiskIO(int poolID, int poolsize) {
+    int thIndex;
+    for ( thIndex = 0; thIndex < poolsize; thIndex++ ) {
+        tellClient(&thargs[thIndex].client_socket,NULL,NULL,0);
+        rtcp_CloseConnection(&thargs[thIndex].client_socket);
+    }
     if ( thargs != NULL ) free(thargs);
     return(0);
 }
@@ -1723,13 +1720,36 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
     /*
      * Reserve a thread argument table
      */
-    thargs = (thread_arg_t *)malloc(poolsize * sizeof(thread_arg_t));
     if ( thargs == NULL ) {
-        save_serrno = errno;
-        rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() malloc(): %s\n",
-            sstrerror(errno));
-        serrno = save_serrno;
-        return(-1);
+        thargs = (thread_arg_t *)malloc(poolsize * sizeof(thread_arg_t));
+        if ( thargs == NULL ) {
+            save_serrno = errno;
+            rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() malloc(): %s\n",
+                sstrerror(errno));
+            serrno = save_serrno;
+            return(-1);
+        }
+        for ( thIndex = 0; thIndex < poolsize; thIndex++ ) {
+            /*
+             * Open a separate connection to client. An unique
+             * connection for each thread allows them to talk
+             * independently to the client. The connections are
+             * closed at cleanup after the full request has finished
+             * (in rtcpd_CleanUpDiskIO()).
+             */
+            tharg = &thargs[thIndex];
+            tharg->client_socket = INVALID_SOCKET;
+            rc = rtcpd_ConnectToClient(&tharg->client_socket,
+                                       client->clienthost,
+                                       &client->clientport);
+            if ( rc == -1 ) {
+                save_serrno = serrno;
+                rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() rtcpd_ConnectToClient(%s,%d): %s\n",
+                    client->clienthost,client->clientport,sstrerror(serrno));
+                serrno = save_serrno;
+                return(-1);
+            }
+        }
     }
 
     /*
@@ -2019,21 +2039,6 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 return(-1);
             }
             tharg = &thargs[thIndex];
-            /*
-             * Open a separate connection to client (to be closed 
-             * by the thread at end of processing).
-             */
-            tharg->client_socket = INVALID_SOCKET;
-            rc = rtcpd_ConnectToClient(&tharg->client_socket,
-                                       client->clienthost,
-                                       &client->clientport);
-            if ( rc == -1 ) {
-                save_serrno = serrno;
-                rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() rtcpd_ConnectToClient(%s,%d): %s\n",
-                    client->clienthost,client->clientport,sstrerror(serrno));
-                serrno = save_serrno;
-                return(-1);
-            }
 
             tharg->tape = nexttape;
             tharg->file = nextfile;

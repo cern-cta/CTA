@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999 by CERN IT-PDP/DM
+ * Copyright (C) 1999-2001 by CERN IT-PDP/DM
  * All rights reserved
  */
 
@@ -1893,6 +1893,12 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
      * or disk IO can possibly be active at this stage.
      */
     (void)rtcpd_FreeBuffers();
+
+    /*
+     * Close disk IO thread connections to client + some cleanup
+     */
+    rtcpd_CleanUpDiskIO(thPoolId,thPoolSz);
+
     /*
      * Wait for the client listen thread to return.
      */
@@ -1909,7 +1915,6 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     /*
      * Clean up allocated resources and return
      */
-    rtcpd_CleanUpDiskIO(thPoolId);
     (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
     rtcpd_FreeResources(&client_socket,&client,&tape);
 
