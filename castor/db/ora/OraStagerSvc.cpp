@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.64 $ $Release$ $Date: 2004/11/30 18:24:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.65 $ $Release$ $Date: 2004/12/01 16:33:54 $ $Author: sponcec3 $
  *
  *
  *
@@ -36,8 +36,9 @@
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskPool.hpp"
-#include "castor/stager/DiskServer.hpp"
 #include "castor/stager/SvcClass.hpp"
+#include "castor/stager/TapeCopy.hpp"
+#include "castor/stager/DiskServer.hpp"
 #include "castor/stager/FileClass.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/SubRequest.hpp"
@@ -151,15 +152,23 @@ const std::string castor::db::ora::OraStagerSvc::s_recreateCastorFileStatementSt
 // -----------------------------------------------------------------------
 castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   BaseSvc(name), OraBaseObj(0),
-  m_tapesToDoStatement(0), m_streamsToDoStatement(0),
-  m_selectTapeStatement(0), m_anyTapeCopyForStreamStatement(0),
+  m_tapesToDoStatement(0),
+  m_streamsToDoStatement(0),
+  m_selectTapeStatement(0),
+  m_anyTapeCopyForStreamStatement(0),
   m_bestTapeCopyForStreamStatement(0),
   m_bestFileSystemForSegmentStatement(0),
-  m_fileRecalledStatement(0), m_subRequestToDoStatement(0),
+  m_fileRecalledStatement(0),
+  m_subRequestToDoStatement(0),
   m_requestToDoStatement(0),
-  m_selectSvcClassStatement(0), m_selectFileClassStatement(0),
-  m_selectCastorFileStatement(0), m_selectFileSystemStatement(0),
-  m_selectDiskPoolStatement(0), m_selectDiskServerStatement(0),
+  m_isSubRequestToScheduleStatement(0),
+  m_scheduleSubRequestStatement(0),
+  m_selectSvcClassStatement(0),
+  m_selectFileClassStatement(0),
+  m_selectCastorFileStatement(0),
+  m_selectFileSystemStatement(0),
+  m_selectDiskPoolStatement(0),
+  m_selectDiskServerStatement(0),
   m_updateAndCheckSubRequestStatement(0),
   m_recreateCastorFileStatement(0) {
 }
@@ -201,6 +210,8 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_fileRecalledStatement);
     deleteStatement(m_subRequestToDoStatement);
     deleteStatement(m_requestToDoStatement);
+    deleteStatement(m_isSubRequestToScheduleStatement);
+    deleteStatement(m_scheduleSubRequestStatement);
     deleteStatement(m_selectSvcClassStatement);
     deleteStatement(m_selectFileClassStatement);
     deleteStatement(m_selectFileSystemStatement);
@@ -220,6 +231,8 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_fileRecalledStatement = 0;
   m_subRequestToDoStatement = 0;
   m_requestToDoStatement = 0;
+  m_isSubRequestToScheduleStatement = 0;
+  m_scheduleSubRequestStatement = 0;
   m_selectSvcClassStatement = 0;
   m_selectFileClassStatement = 0;
   m_selectFileSystemStatement = 0;
@@ -1463,11 +1476,12 @@ void castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     // Only deal with segments of the copy we choose
     if (nsSegmentAttrs[i].copyno != useCopyNb) continue;
     // create Segment
-    castor::stager::Segment segment;
-    segment.setBlockid(nsSegmentAttrs[i].blockid);
-    segment.setFseq(nsSegmentAttrs[i].fseq);
-    segment.setOffset(totalSize);
-    segment.setStatus(castor::stager::SEGMENT_UNPROCESSED);
+    castor::stager::Segment *segment =
+      new castor::stager::Segment();
+    segment->setBlockid(nsSegmentAttrs[i].blockid);
+    segment->setFseq(nsSegmentAttrs[i].fseq);
+    segment->setOffset(totalSize);
+    segment->setStatus(castor::stager::SEGMENT_UNPROCESSED);
     totalSize += nsSegmentAttrs[i].segsize;
     // get tape for this segment
     castor::stager::Tape *tape =
@@ -1482,24 +1496,29 @@ void castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
       tape->setStatus(castor::stager::TAPE_PENDING);
     }
     // Link Tape with Segment
-    segment.setTape(tape);
-    tape->addSegments(&segment);
+    segment->setTape(tape);
+    tape->addSegments(segment);
     // Link Segment with TapeCopy
-    segment.setCopy(&tapeCopy);
-    tapeCopy.addSegments(&segment);
-    // Cleanup
-    delete tape;
+    segment->setCopy(&tapeCopy);
+    tapeCopy.addSegments(segment);
   }
   // create Segments in DataBase
-  cnvSvc()->fillRep(&ad, &tapeCopy, castor::OBJ_Segment, true);
+  cnvSvc()->fillRep(&ad, &tapeCopy, castor::OBJ_Segment, false);
+  // Fill Segment to Tape link and Cleanup
+  for (unsigned int i = 0; i < tapeCopy.segments().size(); i++) {
+    castor::stager::Segment* seg = tapeCopy.segments()[i];
+    cnvSvc()->fillRep(&ad, seg, castor::OBJ_Tape, false);
+    delete seg->tape();
+  }
+  cnvSvc()->commit();
 }
 
 // -----------------------------------------------------------------------
 // recreateCastorFile
 // -----------------------------------------------------------------------
 castor::stager::DiskCopy*
-castor::db::ora::OraStagerSvc::recreateCastorFile
-(castor::stager::CastorFile *castorFile)
+castor::db::ora::OraStagerSvc::recreateCastorFile(
+castor::stager::CastorFile *castorFile)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -1535,7 +1554,5 @@ castor::db::ora::OraStagerSvc::recreateCastorFile
       << "Error caught in recreateCastorFile."
       << std::endl << e.what();
     throw ex;
-  }
-
-
+  }  
 }
