@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.28 $ $Date: 2000/03/16 12:53:01 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.29 $ $Date: 2000/03/20 13:05:21 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -48,6 +48,8 @@ extern char *geterr();
 #include <rtcp_server.h>
 #include <serrno.h>
 
+extern processing_cntl_t proc_cntl;
+
 #if defined(USE_STAGECMD)
 #define ADD_COPT(X,Y,Z) {if (Z!=NULL && *Z!='\0') sprintf(&X[strlen(X)],Y,Z);}
 #define ADD_NOPT(X,Y,Z) {if (Z>0) sprintf(&X[strlen(X)],Y,Z);}
@@ -64,9 +66,6 @@ extern char *geterr();
 #endif /* STGCMD */
 #endif /* USE_STAGECMD */
 
-static int stgupdc_key = -1;
-static char Unkn_errorstr[] = "unknown error";
-
 void rtcp_stglog(int type, char *msg) {
     if ( type == MSG_ERR ) rtcp_log(LOG_ERR,msg);
     return;
@@ -82,6 +81,18 @@ int rtcpd_init_stgupdc(tape_list_t *tape) {
     rc = stage_setlog(rtcp_stglog);
 #endif /* !USE_STAGECMD */
     return(rc); 
+}
+
+int rtcpd_LockForTpPos(const int lock) {
+    int rc,severity,i, *my_wait_entry;
+    static int nb_waiters = 0;
+    static int next_entry = 0;
+    static int *wait_list = NULL;
+
+    rtcp_log(LOG_DEBUG,"rtcpd_LockForTpPos(%d), current_lock=%d\n",
+             lock,proc_cntl.TpPos);
+    return(rtcpd_SerializeLock(lock,&proc_cntl.TpPos,proc_cntl.TpPos_lock,
+                               &nb_waiters,&next_entry,&wait_list));
 }
 
 int rtcpd_stageupdc(tape_list_t *tape,
@@ -120,9 +131,20 @@ int rtcpd_stageupdc(tape_list_t *tape,
 #if !defined(USE_STAGECMD)
     for ( retry=0; retry<RTCP_STGUPDC_RETRIES; retry++ ) {
         status = filereq->err.errorcode;
-        if ( filereq->proc_status == RTCP_POSITIONED ||
-             status == ETFSQ || status == ETEOV ) {
+        if ( (filereq->proc_status == RTCP_POSITIONED && 
+              (((filereq->concat & (CONCAT|CONCAT_TO_EOD)) == 0) ||
+               (((filereq->concat & CONCAT_TO_EOD) != 0) && (file==tape->file ||
+                 ((file->prev->filereq.concat & CONCAT_TO_EOD) == 0))))) ||
+             ((filereq->concat & CONCAT_TO_EOD) == 0 && (status == ETFSQ ||
+               status == ETEOV)) ) {
             if ( status != ETFSQ && status != ETEOV ) status = -1;
+            else (void)rtcpd_LockForTpPos(0);
+
+            if ( retry == 0 && status != ETFSQ && status != ETEOV &&
+                 (rtcpd_LockForTpPos(1) == -1) ) {
+                rtcp_log(LOG_ERR,"rtcpd_stageupdc() rtcpd_LockForTpPos(1): %s\n",
+                         sstrerror(serrno));
+            }
             rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() stage_updc_tppos(%s,%d,%d,%s,%s,%d,%d,%s,%s)\n",
                      filereq->stageID,
                      status,
@@ -146,7 +168,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
             save_serrno = serrno;
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_tppos(): %s\n",
-                         sstrerror(serrno));
+                         sstrerror(save_serrno));
                 switch (save_serrno) {
                 case EINVAL:
                     rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_USERR);
@@ -163,10 +185,15 @@ int rtcpd_stageupdc(tape_list_t *tape,
                 continue;
             } 
         } 
-        if ( (filereq->cprc != 0 ||
-              filereq->err.errorcode == ENOSPC ||
-              filereq->proc_status == RTCP_FINISHED) &&
-              (status != ETFSQ && status != ETEOV)  ) {
+        if ( (status != ETFSQ && status != ETEOV) &&
+              (filereq->cprc != 0 || 
+               filereq->err.errorcode == ENOSPC ||
+               (filereq->proc_status == RTCP_FINISHED && 
+                (((file->next->filereq.concat & CONCAT) == 0 &&
+                  (filereq->concat & (CONCAT|CONCAT_TO_EOD)) == 0) ||
+                  ((filereq->concat & CONCAT) != 0 &&
+                   ((file->next->filereq.concat & CONCAT) == 0 ||
+                    file->next == tape->file))))) ) {
             /*
              * Always give the return code
              */
@@ -207,6 +234,12 @@ int rtcpd_stageupdc(tape_list_t *tape,
                                   filereq->recfm,
                                   newpath);
             save_serrno = serrno;
+            if ( rc == 0 && (rtcpd_LockForTpPos(0) == -1) ) {
+                rtcp_log(LOG_ERR,"rtcpd_stageupdc() rtcpd_LockForTpPos(0): %s\n"
+,
+                         sstrerror(serrno));
+            }   
+
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_filcp(): %s\n",
                          sstrerror(save_serrno));
@@ -228,6 +261,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
         if ( rc == 0 ) break;
     } /* for ( retry=0; retry < RTCP_STGUPDC_RETRIES; retry++ ) */
     if ( rc == -1 ) {
+        (void)rtcpd_LockForTpPos(0);
         if ( save_serrno == SECOMERR || save_serrno == SESYSERR ) {
             rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_SYERR);
             serrno = save_serrno;

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.42 $ $Date: 2000/03/16 12:52:59 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.43 $ $Date: 2000/03/20 13:05:18 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -640,8 +640,100 @@ static int rtcpd_InitProcCntl() {
         return(-1);
     }
 
+    /*
+     * Initialize exclusive lock for stage_updc_tppos() 
+     */
+    rc = Cthread_mutex_lock(&proc_cntl.TpPos);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,
+            "rtcpd_InitProcCntl() Cthread_mutex_lock(TpPos): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    rc = Cthread_mutex_unlock(&proc_cntl.TpPos);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,
+            "rtcpd_InitProcCntl() Cthread_mutex_unlock(TpPos): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+    /*
+     * Get direct pointer to Cthread structure to allow for
+     * low overhead locks
+     */
+    proc_cntl.TpPos_lock = Cthread_mutex_lock_addr(&proc_cntl.TpPos);
+    if ( proc_cntl.TpPos_lock == NULL ) {
+        rtcp_log(LOG_ERR,
+            "rtcpd_InitProcCntl() Cthread_mutex_lock_addr(TpPos): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    }
+
     return(0);
 }
+
+int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr, 
+                        int *nb_waiters, int *next_entry, int **wait_list) {
+    int rc, severity, i, *my_wait_entry;
+
+    if ( lockflag == NULL || lockaddr == NULL || nb_waiters == NULL ||
+         next_entry == NULL || wait_list == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    rc = Cthread_mutex_lock_ext(lockaddr);
+    if ( (rtcpd_CheckProcError() &
+          (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) {
+        *lockflag = lock;
+        (void)Cthread_cond_broadcast_ext(lockaddr);
+        (void)Cthread_mutex_unlock_ext(lockaddr);
+        return(-1);
+    }
+
+    if ( rc == -1 ) return(-1);
+    if ( *wait_list == NULL ) {
+        /*
+         * There cannot be more waiters than the number of disk IO threads.
+         */
+        *wait_list = (int *)calloc(proc_stat.nb_diskIO,sizeof(int));
+        if ( *wait_list == NULL ) {
+            *lockflag = lock;
+            (void)Cthread_cond_broadcast_ext(lockaddr);
+            (void)Cthread_mutex_unlock_ext(lockaddr);
+            return(-1);
+        }
+    }
+
+    if ( lock != 0 ) {
+        (*wait_list)[*next_entry] = *nb_waiters;
+        my_wait_entry = &(*wait_list)[*next_entry];
+        *next_entry = (*next_entry + 1) % proc_stat.nb_diskIO;
+        *nb_waiters++;
+        while ( *lockflag == lock || *my_wait_entry > 0 ) {
+            rc = Cthread_cond_wait_ext(lockaddr);
+            if ( rc == -1 || (rtcpd_CheckProcError() &
+                 (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) {
+                *lockflag = lock;
+                (void)Cthread_cond_broadcast_ext(lockaddr);
+                (void)Cthread_mutex_unlock_ext(lockaddr);
+                return(-1);
+            }
+        }
+        *nb_waiters--;
+        for (i=0; i<proc_stat.nb_diskIO; i++) (*wait_list)[i]--;
+    }
+    rtcp_log(LOG_DEBUG,"rtcpd_SerializeLock() change lock from %d to %d\n",
+             *lockflag,lock);
+    *lockflag = lock;
+    if ( lock == 0 ) {
+        rc = Cthread_cond_broadcast_ext(lockaddr);
+    }
+    (void)Cthread_mutex_unlock_ext(lockaddr);
+    if ( rc == -1 ) return(-1);
+    return(0);
+}
+
 
 static int rtcpd_FreeBuffers() {
     int i, *q;
