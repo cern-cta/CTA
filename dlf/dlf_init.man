@@ -1,9 +1,9 @@
 .lf 1 dlf_init.man
-.\" @(#)$RCSfile: dlf_init.man,v $ $Revision: 1.1 $ $Date: 2003/08/20 12:57:31 $ CERN IT-ADC Vitaly Motyakov
+.\" @(#)$RCSfile: dlf_init.man,v $ $Revision: 1.2 $ $Date: 2004/07/08 10:05:16 $ CERN IT-ADC Vitaly Motyakov
 .\" Copyright (C) 2003 by CERN/IT/ADC
 .\" All rights reserved
 .\"
-.TH DLF_INIT 3 "$Date: 2003/08/20 12:57:31 $" CASTOR "DLF Library Functions"
+.TH DLF_INIT 3 "$Date: 2004/07/08 10:05:16 $" CASTOR "DLF Library Functions"
 .SH NAME
 dlf_init \- initialize DLF structures for subsequent
 writing of the log messages
@@ -16,8 +16,10 @@ writing of the log messages
 .B dlf_init
 initializes DLF structures for subsequent writing of the log
 messages. The function gets log destinations from the CASTOR common
-configuration file /etc/shift.conf and reads all facility specific
-message texts from the DLF server. The obtained information is then
+configuration file /etc/shift.conf or from the 
+environment variables and reads all facility specific
+message texts from the DLF server, or from the supplied text file
+when in standalone mode. The obtained information is then
 stored in the global DLF structures.
 .TP
 .I facility_name
@@ -27,7 +29,8 @@ DLF_MAXFACNAMELEN characters long.
 This function must be called
 in the main thread prior to any other thread creation.
 .SH RETURN VALUE
-This function returns 0 if the operation was successful or -1 otherwise.
+This function returns 0 (zero) if the operation was successful, 1 (one) if no log destinations
+have been specified, or -1 otherwise.
 .B serrno
 is set appropriately.
 .SH ERRORS

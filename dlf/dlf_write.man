@@ -1,9 +1,9 @@
 .lf 1 dlf_write.man
-.\" @(#)$RCSfile: dlf_write.man,v $ $Revision: 1.3 $ $Date: 2003/12/28 12:01:59 $ CERN IT-ADC Vitaly Motyakov
+.\" @(#)$RCSfile: dlf_write.man,v $ $Revision: 1.4 $ $Date: 2004/07/08 10:05:17 $ CERN IT-ADC Vitaly Motyakov
 .\" Copyright (C) 2003 by CERN/IT/ADC
 .\" All rights reserved
 .\"
-.TH DLF_WRITE 3 "$Date: 2003/12/28 12:01:59 $" CASTOR "DLF Library Functions"
+.TH DLF_WRITE 3 "$Date: 2004/07/08 10:05:17 $" CASTOR "DLF Library Functions"
 .SH NAME
 dlf_write \- write log message to the log destination(s)
 .SH SYNOPSIS
@@ -16,7 +16,8 @@ dlf_write \- write log message to the log destination(s)
 .SH DESCRIPTION
 .B dlf_write
 writes log message to the log destination(s) specified in the CASTOR
-common configuration file /etc/shift.conf. Several fields like as
+common configuration file /etc/shift.conf or through the
+environment variables. Several fields like as
 the timestamp, the name of the host, and the process identifier are added
 to the log message by this function itself.
 .TP
@@ -130,7 +131,8 @@ for the double precision floating parameter type;
 .B Cuuid_t
 for the uuid parameter type.
 .SH RETURN VALUE
-This function returns 0 if the operation was successful or -1 otherwise.
+This function returns 0 (zero) if the operation was successful, 1 (one) 
+if no log destinations have been specified for the given severity lavel, or -1 otherwise.
 .B serrno
 is set appropriately.
 .SH ERRORS
