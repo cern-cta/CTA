@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: makedeb.sh,v 1.2 2005/01/20 10:50:36 jdurand Exp $
+# $Id: makedeb.sh,v 1.3 2005/01/20 18:29:18 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -10,6 +10,29 @@ if [ "x${MINOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MINOR_CASTOR_VERSION environment variable"
   exit 1
 fi
+
+#
+## We expect ${MAJOR_CASTOR_VERSION} in the form a.b
+#
+echo ${MAJOR_CASTOR_VERSION} | egrep -q '^[0-9]+\.[0-9]+$'
+if [ $? -ne 0 ]; then
+  echo "MAJOR_CASTOR_VERSION (${MAJOR_CASTOR_VERSION}) should be in the form a.b, example: 2.0"
+  exit 1
+fi
+
+#
+## We expect ${MINOR_CASTOR_VERSION} in the form c.d
+#
+echo ${MINOR_CASTOR_VERSION} | egrep -q '^[0-9]+\.[0-9]+$'
+if [ $? -ne 0 ]; then
+  echo "MINOR_CASTOR_VERSION (${MINOR_CASTOR_VERSION}) should be in the form c.d, example: 99.1"
+  exit 1
+fi
+
+a=`echo ${MAJOR_CASTOR_VERSION} | sed 's/\..*//g'`
+b=`echo ${MAJOR_CASTOR_VERSION} | sed 's/.*\.//g'`
+c=`echo ${MINOR_CASTOR_VERSION} | sed 's/\..*//g'`
+d=`echo ${MINOR_CASTOR_VERSION} | sed 's/.*\.//g'`
 
 #
 ## Make sure makedepend (/usr/X11R6/bin) is in the path
@@ -22,9 +45,9 @@ export PATH
 #
 dir=`pwd`
 cd /tmp
-rm -rf castor-${MAJOR_CASTOR_VERSION} castor-${MAJOR_CASTOR_VERSION}.tar.gz
-mkdir castor-${MAJOR_CASTOR_VERSION}
-cd castor-${MAJOR_CASTOR_VERSION}
+rm -rf castor-${a}.${b}.${c} castor-${a}.${b}.${c}.tar.gz
+mkdir castor-${a}.${b}.${c}
+cd castor-${a}.${b}.${c}
 /bin/cp -Lfr ${dir}/* .
 #
 ## Force build rules to YES for a lot of things
@@ -39,8 +62,9 @@ for this in BuildExamples BuildSchedPlugin BuildCppTest ClientLogging HasNis RFI
     perl -pi -e "s/$this.*(YES|NO)/$this\tNO/g" config/site.def
 done
 cd ..
-tar -cvhzf castor-${MAJOR_CASTOR_VERSION}.tar.gz castor-${MAJOR_CASTOR_VERSION}
-cd castor-${MAJOR_CASTOR_VERSION}
+tar -cvhzf castor-${a}.${b}.${c}.tar.gz castor-${a}.${b}.${c}
+cd castor-${a}.${b}.${c}
+fakeroot dch --newversion ${a}.${b}.${c}-${d}
 fakeroot dpkg-buildpackage
 status=$?
 
