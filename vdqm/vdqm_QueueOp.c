@@ -1,32 +1,15 @@
 /*
- * $Id: vdqm_QueueOp.c,v 1.4 1999/09/03 14:50:55 obarring Exp $
- * $Log: vdqm_QueueOp.c,v $
- * Revision 1.4  1999/09/03 14:50:55  obarring
- * Add action for new unit status types: WAITDOWN, MBCOUNT and ERROR
- *
- * Revision 1.3  1999/09/01 15:11:06  obarring
- * Fix sccsid string
- *
- * Revision 1.2  1999/07/31 14:49:55  obarring
- * Set error codes for exceptions
- *
- * Revision 1.1  1999/07/27 09:21:23  obarring
- * First version
- *
- */
-
-/*
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
  */
 
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.5 $ $Date: 1999/09/27 15:28:27 $ CERN IT-PDP/DM Olof Barring";
+#endif /* not lint */
+
 /*
  * vdqm_QueueOp.c - Queue volume and drive requests (server only).
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$Id: vdqm_QueueOp.c,v 1.4 1999/09/03 14:50:55 obarring Exp $";
-#endif /* not lint */
 
 #include <stdlib.h>
 #include <time.h>
@@ -38,12 +21,6 @@ static char sccsid[] = "@(#)$Id: vdqm_QueueOp.c,v 1.4 1999/09/03 14:50:55 obarri
 #include <Cthread_api.h>
 #include <vdqm_constants.h>
 #include <vdqm.h>
-
-#if !defined(linux)
-extern char *sys_errlist[];
-#else /* linux */
-#include <stdio.h>   /* Contains definition of sys_errlist[] */
-#endif /* linux */
 
 #define INVALID_DGN_CONTEXT (dgn_context == NULL)
 #define thID Cthread_self()
@@ -920,7 +897,7 @@ int vdqm_NewVolReq(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) {
      */
     rc = NewVolRecord(&volrec);
     if ( rc < 0 || volrec == NULL ) {
-        log(LOG_ERR,"(ID %d)vdqm_NewVolReq(): NewVolRecord() %s\n",thID,ERRTXT);
+        log(LOG_ERR,"(ID %d)vdqm_NewVolReq(): NewVolRecord() %s\n",thID,sstrerror(errno));
         FreeDgnContext(&dgn_context);
         return(-1);
     }
