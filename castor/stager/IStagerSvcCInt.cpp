@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2005/01/31 15:10:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2005/02/11 11:10:39 $ $Author: sponcec3 $
  *
  *
  *
@@ -672,6 +672,25 @@ extern "C" {
         (fileSystems, machines, fileSystemsNb, minFree, &mp, &ds);
       *mountPoint = strdup(mp.c_str());
       *diskServer = strdup(ds.c_str());
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;    
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_updateFileSystemForJob
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_updateFileSystemForJob
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   char* fileSystem, char* diskServer,
+   u_signed64 fileSize) {
+    if (!checkIStagerSvc(stgSvc)) return -1;
+    try {
+      stgSvc->stgSvc->updateFileSystemForJob
+        (fileSystem, diskServer, fileSize);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

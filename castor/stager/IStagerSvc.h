@@ -730,4 +730,24 @@ int Cstager_IStagerSvc_bestFileSystemForJob
  unsigned int fileSystemsNb, u_signed64 minFree,
  char** mountPoint, char** diskServer);
 
+/**
+ * Updates a filesystem state (e.g : weight,
+ * fsdeviation) to take into account the opening of
+ * a new job.
+ * @param stgSvc the IStagerSvc used
+ * @param fileSystem the file system mount point
+ * @param diskServer the name of the diskserver
+ * where the filesystem resides
+ * @param fileSize the (supposed) size of the file
+ * to be written by the job
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
+ */
+int Cstager_IStagerSvc_updateFileSystemForJob
+(struct Cstager_IStagerSvc_t* stgSvc,
+ char* fileSystem,
+ char* diskServer,
+ u_signed64 fileSize);
 #endif // CASTOR_ISTAGERSVC_H
