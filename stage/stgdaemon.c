@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.127 2001/03/28 14:09:17 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.128 2001/03/29 15:38:30 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.127 $ $Date: 2001/03/28 14:09:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.128 $ $Date: 2001/03/29 15:38:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -2354,6 +2354,14 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 				}
 			}
 		}
+		/* It can be that the entry we have in input is a STAGEIN|STAGED one and that what we found is a STAGEOUT|CAN_BE_MIGR one */
+		/* In such a case it is also legal to remove the file */
+		if ((allow_one_stagein != 0) && (found == 1) && ISSTAGEIN(stcp) && ((stcp->status & STAGED) == STAGED) && (stcp_perhaps_stagein->status == (STAGEOUT|CAN_BE_MIGR))) {
+			struct stgcat_entry *dummystcp;
+			dummystcp = stcp;
+			stcp = stcp_perhaps_stagein;
+			stcp_perhaps_stagein = dummystcp;
+		}
 		if ((found == 0) ||
 			((allow_one_stagein != 0) && (found == 1) && ISSTAGEIN(stcp_perhaps_stagein) && (stcp_perhaps_stagein->nbaccesses == 1) &&
 				(
@@ -2444,7 +2452,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 				 ((stcp_perhaps_stagein->status & STAGED_LSZ) == STAGED_LSZ)
 				)
 			) {
-			/* We have no only stcp to delete - but also stcp_perhaps_stagein */
+			/* We have not only stcp to delete - but also stcp_perhaps_stagein */
 			struct stgcat_entry *stclp;
 			struct stgcat_entry save_stcp = *stcp_perhaps_stagein;
 			delreq (stcp,0);
