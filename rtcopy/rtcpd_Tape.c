@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.58 $ $Date: 2000/04/04 10:04:28 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.59 $ $Date: 2000/04/04 12:47:58 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1078,9 +1078,17 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
          if ( (severity & RTCP_LOCAL_RETRY) == 0 ) { \
              if ( mode == WRITE_ENABLE ) { \
                  rtcp_log(LOG_DEBUG,"tapeIOthread() return RC=-1 to client\n");\
+                 if ( rc != -1 && (nextfile->next->filereq.concat & CONCAT) != 0 ) { \
+                     tmpfile = nextfile; \
+                     while (tmpfile->next!=nexttape->file && \
+                            (tmpfile->next->filereq.concat & CONCAT) != 0 && \
+                            *tmpfile->filereq.err.errmsgtxt == '\0' ) \
+                         tmpfile = tmpfile->next; \
+                     if ( *tmpfile->filereq.err.errmsgtxt != '\0' ) nextfile = tmpfile; \
+                 } \
                  (void) tellClient(&client_socket,X,Y,-1); \
-                 (void) rtcpd_stageupdc(nexttape,nextfile); \
-                 (void)rtcp_WriteAccountRecord(client,nexttape,nextfile,RTCPEMSG); \
+                 (void) rtcpd_stageupdc(nexttape,(tmpfile!=NULL?tmpfile:nextfile)); \
+                 (void)rtcp_WriteAccountRecord(client,nexttape,(tmpfile!=NULL?tmpfile:nextfile),RTCPEMSG); \
              } \
              (void)rtcpd_Release((X),NULL); \
          } else { \

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.52 $ $Date: 2000/04/03 15:41:59 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.53 $ $Date: 2000/04/04 12:47:55 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1200,6 +1200,7 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
                         file_list_t *file,
                         int status,
                         int severity) {
+    file_list_t *fl;
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
     int rc,i;
@@ -1247,8 +1248,52 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
                 filereq->err.severity = filereq->err.severity & ~RTCP_RETRY_OK;
                 filereq->err.severity = filereq->err.severity & ~RTCP_LOCAL_RETRY;
                 filereq->err.severity |= severity;
+                fl = file;
+                /*
+                 * Set same status for all concatenated requests
+                 */
+                if ( (filereq->concat & (CONCAT|CONCAT_TO_EOD)) != 0 ) {
+                    while (fl != file->tape->file &&
+                           ((fl->filereq.concat & CONCAT) != 0 ||
+                            (fl->prev->filereq.concat & CONCAT_TO_EOD) != 0)) {
+                        fl = fl->prev;
+                        fl->filereq.err.severity = filereq->err.severity;
+                    }
+                }
+                /*
+                 * For failed requests we must set  same status for
+                 * all *following* requests.
+                 */
+                fl = file;
+                while ( fl != file->tape->file ) {
+                    fl->filereq.err.severity = filereq->err.severity;
+                    fl = fl->next;
+                }
             } else {
                 filereq->err.severity |= severity;
+                if ( (severity & RTCP_LOCAL_RETRY) != 0 ) {
+                    fl = file;
+                    /*
+                     * Set same status for all concatenated requests
+                     */
+                    if ( (filereq->concat & (CONCAT|CONCAT_TO_EOD)) != 0 ) {
+                        while (fl != file->tape->file &&
+                               ((fl->filereq.concat & CONCAT) != 0 ||
+                                (fl->prev->filereq.concat & CONCAT_TO_EOD) != 0)) {
+                            fl = fl->prev;
+                            fl->filereq.err.severity = filereq->err.severity;
+                        }
+                    }
+                    fl = file;
+                    /*
+                     * For failed requests we must set  same status for
+                     * all *following* requests.
+                     */
+                    while ( fl != file->tape->file ) {
+                        fl->filereq.err.severity = filereq->err.severity;
+                        fl = fl->next;
+                    }
+                }
             } 
         }
     }
