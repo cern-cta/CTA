@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.78 2001/02/05 12:36:57 jdurand Exp $
+ * $Id: poolmgr.c,v 1.79 2001/02/08 09:46:14 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.78 $ $Date: 2001/02/05 12:36:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.79 $ $Date: 2001/02/08 09:46:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -527,18 +527,18 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
     else if (strcmp (p, "DEFSIZE") == 0) continue;
     else {
       if ((int) strlen (p) > CA_MAXHOSTNAMELEN) {
-        stglogit (func, STG26, pool_p->name);
+        stglogit (func, STG26, "pool element [host too long]", p);
         errflg++;
         goto reply;
       }
       strcpy (elemp->server, p);
       if ((p = strtok (NULL, " \t\n")) == NULL) {
-        stglogit (func, STG26, pool_p->name);
+        stglogit (func, STG26, "pool element [no path]", elemp->server);
         errflg++;
         goto reply;
       }
       if ((int) strlen (p) >= MAXPATH) {
-        stglogit (func, STG26, pool_p->name);
+        stglogit (func, STG26, "pool element [path too long]", p);
         errflg++;
         goto reply;
       }
