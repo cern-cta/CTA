@@ -45,6 +45,9 @@ static int timeout_set=0;
 #include <winsock2.h>
 #include <ws_errmsg.h>
 #else
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <sys/time.h>
 #endif
 #include <errno.h>
@@ -59,9 +62,11 @@ static int timeout_set=0;
 #endif /* DEBUG || DUMP */
 #include <serrno.h>                     /* special errors               */
 
+#ifdef READTIMEOUT
 static jmp_buf alarmbuf;
 static void     (* defsigalrm) ();
- 
+#endif
+
 #ifndef min
 #define min(x, y)       (((x-y) > 0) ? y : x)
 #endif /* min */
