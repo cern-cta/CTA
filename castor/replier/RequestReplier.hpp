@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/02/04 16:09:55 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplier.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/03/30 16:31:46 $ $Author: bcouturi $
  *
  *
  *
@@ -42,6 +42,8 @@ namespace castor {
   class IClient;
 
   namespace replier {
+
+    enum MajorConnectionStatus { MCS_SUCCESS=0, MCS_FAILURE=1, MCS_TIMEOUT=2 };
 
     class RequestReplier : public BaseObject {
 
@@ -72,6 +74,15 @@ namespace castor {
                          bool isLastResponse = false)
         throw(castor::exception::Exception);
 
+
+      /**
+       * Sets the callback to be called once the RequestReplier
+       * has finished with a connection.
+       * @param callback The callback function
+       * @exception Exception in case of error
+       */
+      void setCallback(void (*callback)(castor::IClient *, MajorConnectionStatus status))
+        throw(castor::exception::Exception);
 
       /**
        * Adds a client to the queue of clients waiting for a response.
@@ -203,6 +214,11 @@ namespace castor {
       int m_nbQueuedResponses;
       int m_nbDequeuedResponses;
       
+
+      /**
+       * Callback for when a connnection is cleared
+       */
+      void (*m_connectionStatusCallback)(castor::IClient *, MajorConnectionStatus);
 
 
     }; // class RequestReplier

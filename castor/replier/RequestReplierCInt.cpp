@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplierCInt.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/12/02 14:53:07 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplierCInt.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/03/30 16:31:46 $ $Author: bcouturi $
  *
  * 
  *
@@ -67,6 +67,29 @@ extern "C" {
     if (!checkRequestReplier(rr)) return -1;
     try {
       rr->rr->replyToClient(client, response, isLastResponse != 0);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      rr->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+
+  //---------------------------------------------------------------------------
+  // Creplier_RequestReplier_setCallback
+  //---------------------------------------------------------------------------
+  int Creplier_RequestReplier_setCallback(struct Creplier_RequestReplier_t *rr,
+					  void (*callback)(struct C_IClient_t *client,
+							   int status)) {
+   
+    void (*cpp_callback)(castor::IClient *, castor::replier::MajorConnectionStatus);
+
+    cpp_callback = (void (*) (castor::IClient *, castor::replier::MajorConnectionStatus)) callback;
+
+    if (!checkRequestReplier(rr)) return -1;
+    try {
+      rr->rr->setCallback(cpp_callback);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       rr->errorMsg = e.getMessage().str();

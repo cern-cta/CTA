@@ -56,6 +56,26 @@ int Creplier_RequestReplier_replyToClient(struct Creplier_RequestReplier_t *rr,
                                           struct C_IObject_t *response,
                                           int isLastResponse);
 
+/**
+ * Sets the callback to be called once the RequestReplier
+ * @param rr the request replier used
+ * @param callback The callback function
+ * @return 0 : call was successful,
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Creplier_RequestReplier_errorMsg
+ * @note The status value passed to the callback can be:
+ *       - 0: The connection terminated sucessfully
+ *       - 1: There was a problem (at connect or send)
+ *       - 2: The connection terminated with a time before the EndResponse was sent
+ *
+ */
+int Creplier_RequestReplier_setCallback(struct Creplier_RequestReplier_t *rr,
+					void (*callback)(struct C_IClient_t *client,
+							 int status));
+
+
+
 
 /**
  * Adds a client to the queue of clients waiting for a response.

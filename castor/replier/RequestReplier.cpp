@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2005/02/04 16:09:55 $ $Author: bcouturi $
+ * @(#)$RCSfile: RequestReplier.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2005/03/30 16:31:46 $ $Author: bcouturi $
  *
  *
  *
@@ -103,6 +103,9 @@ castor::replier::RequestReplier::RequestReplier() throw() {
   // Initializing collections
   m_clientQueue = new std::queue<ClientResponse>();
   m_connections = new std::map<int, ClientConnection *>();
+
+  // Making sure the callback is null
+  m_connectionStatusCallback = 0;
 
   // Establishing the pipe used for notification with ReplierThread
   int rc = pipe(m_commPipe);
@@ -357,6 +360,7 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
       iter++) {
 
     ClientConnection *cc = (*iter).second;
+    castor::rh::Client client = cc->client();
 
     clog() << VERBOSE << SETW func  <<  cc->toString() << " GC Check  active time: "
            << (t - cc->lastEventDate())
@@ -367,7 +371,9 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
       toremove.push(cc->fd());
       unsigned long ip = cc->client().ipAddress();
       clog() << DEBUG << SETW func  <<  cc->toString() << " in DONE_FAILURE - to remove" << std::endl;
-
+      if (m_connectionStatusCallback) {
+	m_connectionStatusCallback(&client, MCS_FAILURE); 
+      }
       
     } else if (cc->terminate() == true
                &&  !(cc->hasMessagesToSend()) ) {
@@ -378,6 +384,9 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
       clog() << DEBUG << SETW func  <<  cc->toString() 
 	     << " terminate:true and no more messages - to remove" << std::endl;
 
+      if (m_connectionStatusCallback) {
+	m_connectionStatusCallback(&client, MCS_SUCCESS); 
+      }
 
     } else if ((t - cc->lastEventDate()) > TIMEOUT) {
 
@@ -387,6 +396,10 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
       clog() << DEBUG << SETW func  <<  cc->toString() 
 	     << " inactive for " << (t - cc->lastEventDate()) << " s >" << TIMEOUT
 	     << std::endl;
+
+      if (m_connectionStatusCallback) {
+	m_connectionStatusCallback(&client, MCS_TIMEOUT); 
+      }
     }
   } // End for
 
@@ -709,6 +722,34 @@ castor::replier::RequestReplier::replyToClient(castor::IClient *client,
   throw(castor::exception::Exception) {
   sendResponse(client, response, isLastResponse);
 }
+
+
+void 
+castor::replier::RequestReplier::setCallback(void (*callback)(castor::IClient *, MajorConnectionStatus))
+  throw(castor::exception::Exception) {
+
+  char *func = "rr::setCallback    CLIENT ";
+   
+  if (0 == callback) {
+    castor::exception::Exception e(EINVAL);
+    e.getMessage() << "Callback is NULL";
+    throw e;
+  }
+
+  // Setting the callback function, taking proper lock
+  clog() << VERBOSE << SETW func  <<  "Locking m_clientQueue" << std::endl;
+  Cthread_mutex_lock(&m_clientQueue);
+
+  m_connectionStatusCallback = callback;
+
+  // Exiting...
+  clog() << VERBOSE << SETW func 
+	 << "Unlocking m_clientQueue" << std::endl;
+  Cthread_mutex_unlock(&m_clientQueue);
+
+
+}
+
 
 
 void
