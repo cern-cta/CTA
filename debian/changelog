@@ -1,3 +1,9 @@
+castor (2.0.0-15) unstable; urgency=low
+
+  * In version 2.0.0-14, the correction factor on i/o stat monitoring was wrongly applied to the number of blocks we get from filesystem stats, instead of the computed rate
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Wed,  2 Feb 2005 00:43:04 +0100
+
 castor (2.0.0-14) unstable; urgency=low
 
   * Fix in shared i/o stat monitoring
