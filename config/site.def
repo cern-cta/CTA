@@ -108,7 +108,7 @@
 #define NsSpool	/usr/spool/ns
 #define NsRoot  "/castor"
 #define OperConfigFile	/etc/OPERCONFIG
-#define OperatorGid	ct
+#define OperatorGid	root
 #if defined(_WIN32)
 #define OperatorDir	%%SystemRoot%%
 #else
