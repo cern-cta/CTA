@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: marshall.c,v $ $Revision: 1.2 $ $Date: 2000/12/12 09:41:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: marshall.c,v $ $Revision: 1.3 $ $Date: 2000/12/12 09:43:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*
@@ -12,6 +12,7 @@ static char sccsid[] = "@(#)$RCSfile: marshall.c,v $ $Revision: 1.2 $ $Date: 200
  */
 
 #include <string.h> 
+#include "osdep.h"
 
 int DLL_DECL
 _unmarshall_STRINGN(ptr, str, n)
