@@ -1,5 +1,5 @@
 /*
- * $Id: procping.c,v 1.6 2002/03/05 14:44:03 jdurand Exp $
+ * $Id: procping.c,v 1.7 2002/03/11 08:27:09 baud Exp $
  */
 
 /*
@@ -8,12 +8,13 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.6 $ $Date: 2002/03/05 14:44:03 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.7 $ $Date: 2002/03/11 08:27:09 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <netinet/in.h>
 #include "osdep.h"
 #include "stage_constants.h"
 #include "stage_messages.h"
