@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.10 $ $Date: 2000/01/03 16:55:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.11 $ $Date: 2000/01/07 16:50:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -34,6 +34,7 @@ static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.10 $ $Date: 200
 #if !defined(linux)
 extern char *sys_errlist[];
 #endif
+char *devtype;
 char *dvrname;
 char func[16];
 char hostname[CA_MAXHOSTNAMELEN+1];
@@ -53,7 +54,6 @@ char	**argv;
 	int c;
 	unsigned int demountforce;
 	int den;
-	char *devtype;
 	char *dgn;
 	char *drive;
 	char *dvn;

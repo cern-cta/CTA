@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.3 $ $Date: 1999/09/20 12:02:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.4 $ $Date: 2000/01/07 16:50:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      gettperror - get drive status after I/O error and
@@ -71,6 +71,7 @@ char **msgaddr;
 }
 #else
 extern char *sys_errlist[];
+extern char *devtype;
 static char nosensekey[] = "no sense key available";
 static char bbot[] = "BOT hit";
 #if ! defined(_AIX) || defined(ADSTAR)
@@ -430,7 +431,11 @@ char **msgaddr;
 				sk_codmsg[key].text, asc, ascq);
 			*msgaddr = tp_err_msgbuf;
 		}
-		rc = sk_codmsg[key].errcat;
+		if (strcmp (devtype, "SD3") == 0 && key == 3 && asc == 0x30 &&
+		    ascq == 0x01)
+			rc = ETBLANK;
+		else
+			rc = sk_codmsg[key].errcat;
 	} else {
 		sprintf (tp_err_msgbuf, "Undefined sense key %02X", key);
 		*msgaddr = tp_err_msgbuf;
