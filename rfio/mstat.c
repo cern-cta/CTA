@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.33 2004/01/23 10:27:45 jdurand Exp $
+ * $Id: mstat.c,v 1.34 2004/03/03 11:15:58 obarring Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.33 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.34 $ $Date: 2004/03/03 11:15:58 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -159,7 +159,7 @@ struct stat *statbuf ;
 int reqst ;
 
 {
-   char     buf[MAXFILENAMSIZE+20];
+   char     buf[BUFSIZ];
    int             status;         /* remote fopen() status        */
    int     len;
    int     rc;
@@ -208,6 +208,12 @@ int reqst ;
     default:
        END_TRACE();
        return (-1) ;
+   }
+   if ( len > BUFSIZ ) {
+     TRACE(2,"rfio","rfio_stat: request too long %d (max %d)",len,BUFSIZ);
+     END_TRACE();
+     serrno = E2BIG;
+     return(-1);
    }
    marshall_LONG(p, len);
    p= buf + RQSTSIZE;
@@ -277,7 +283,7 @@ int reqst ;
 int DLL_DECL rfio_end()
 {
    int i,Tid, j=0 ;
-   char buf[256];
+   char buf[RQSTSIZE];
    char *p=buf ;
    int rc = 0;
    
@@ -296,6 +302,7 @@ int DLL_DECL rfio_end()
   for (i = 0; i < MAXMCON; i++) {
     if (mstat_tab[i].Tid == Tid) {
       if ((mstat_tab[i].s >= 0) && (mstat_tab[i].host[0] != '\0')) {
+        p = buf;
         marshall_WORD(p, RFIO_MAGIC);
         marshall_WORD(p, RQST_END);
         marshall_LONG(p, j);
@@ -331,7 +338,7 @@ static int rfio_end_this(s,flag)
      int flag;
 {
   int i,Tid, j=0 ;
-  char buf[256];
+  char buf[RQSTSIZE];
   int found = 0;
   char *p=buf ;
   int rc = 0;
@@ -636,11 +643,12 @@ struct stat64 *statbuf ;
 int    reqst ;
 
 {
-   char        buf[256];
+   char        buf[BUFSIZ];
    int         status;            /* remote fopen() status         */
    int         len;
    int         replen;
    int         rc;
+   int         save_errno, save_serrno;
    char        *p=buf;
    int         uid;
    int         gid;
@@ -713,6 +721,14 @@ int    reqst ;
       }
       len += 2*WORDSIZE + strlen(pw->pw_name) + 1;
    }
+
+   if ( len > BUFSIZ ) {
+     TRACE(2,"rfio","rfio_smstat64: request too long %d (max %d)",len,BUFSIZ);
+     rfio_end_this(s,0);
+     END_TRACE();
+     serrno = E2BIG;
+     return(-1);
+   }
    
    marshall_LONG(p, len);
    p= buf + RQSTSIZE;
@@ -726,10 +742,10 @@ int    reqst ;
    marshall_STRING(p, filename);
    TRACE(2,"rfio","rfio_smstat64: sending %d bytes", RQSTSIZE+len) ;
    if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
-      TRACE(2, "rfio", "rfio_smstat64: write(): ERROR occured (errno=%d)", errno);
-      rfio_end_this(s,0);
-      END_TRACE();
-      return(-1);
+     TRACE(2, "rfio", "rfio_smstat64: write(): ERROR occured (errno=%d)", errno);
+     rfio_end_this(s,0);
+     END_TRACE();
+     return(-1);
    }
    p = buf;
    if ( m64 )
@@ -751,16 +767,16 @@ int    reqst ;
       TRACE(2, "rfio", "rfio_smstat64: Server doesn't support %s()",
          m64 ? "stat64" : "secure stat");
       rfio_end_this(s,0);
-      serrno = SEPROTONOTSUP;
       END_TRACE();
+      serrno = SEPROTONOTSUP;
       return(-1);
    }
    if ( rc != replen)  {
-      TRACE(2, "rfio", "rfio_smstat64: read(): ERROR received %d/%d bytes (errno=%d)",
-         rc, replen, errno);
-      rfio_end_this(s, (rc <= 0 ? 0 : 1));
-      END_TRACE();
-      return(-1);
+     TRACE(2, "rfio", "rfio_smstat64: read(): ERROR received %d/%d bytes (errno=%d)",
+           rc, replen, errno);
+     rfio_end_this(s, (rc <= 0 ? 0 : 1));
+     END_TRACE();
+     return(-1);
    }
    if (m64) {
       unmarshall_WORD(p, statbuf->st_dev);

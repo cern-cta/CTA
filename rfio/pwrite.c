@@ -1,5 +1,5 @@
 /*
- * $Id: pwrite.c,v 1.7 2002/09/20 06:59:36 baud Exp $
+ * $Id: pwrite.c,v 1.8 2004/03/03 11:15:59 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: pwrite.c,v $ $Revision: 1.7 $ $Date: 2002/09/20 06:59:36 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: pwrite.c,v $ $Revision: 1.8 $ $Date: 2004/03/03 11:15:59 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* pwrite.c     Remote command I/O - write input to a popened command   */
@@ -22,7 +22,7 @@ char    *ptr;                           /* buffer pointer               */
 int     size, items;                    /* .. size items                */
 RFILE   *fp;                            /* remote file pointer          */
 {
-   char    buf[256];       /* General input/output buffer          */
+   char    buf[BUFSIZ];       /* General input/output buffer          */
    int status ;
    char *p=buf;
 
@@ -52,6 +52,12 @@ RFILE   *fp;                            /* remote file pointer          */
    marshall_WORD(p, RQST_FWRITE);
    marshall_LONG(p, size);
    marshall_LONG(p, items);
+   if ( items*size > BUFSIZ ) {
+     TRACE(2,"rfio","rfio_pwrite: request too long %d (max %d)",items*size,BUFSIZ);
+     END_TRACE();
+     serrno = E2BIG;
+     return(-1);
+   }
    TRACE(2, "rfio", "rfio_pwrite: sending %d bytes", 2*WORDSIZE+2*LONGSIZE);
    if (netwrite_timeout(fp->s, buf, RQSTSIZE, RFIO_CTRL_TIMEOUT) != RQSTSIZE )     {
       TRACE(2,"rfio","rfio_pwrite: write(): ERROR occured (errno=%d)",errno);

@@ -1,14 +1,14 @@
 /*
- * $Id: error.c,v 1.9 2003/09/09 11:13:45 jdurand Exp $
+ * $Id: error.c,v 1.10 2004/03/03 11:15:58 obarring Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2004 by CERN-IT
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: error.c,v $ $Revision: 1.9 $ $Date: 2003/09/09 11:13:45 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: error.c,v $ $Revision: 1.10 $ $Date: 2004/03/03 11:15:58 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* error.c      Remote File I/O - error numbers and message handling    */
@@ -17,7 +17,8 @@ static char sccsid[] = "@(#)$RCSfile: error.c,v $ $Revision: 1.9 $ $Date: 2003/0
  * System remote file I/O definitions
  */
 #define RFIO_KERNEL     1 
-#include "rfio.h" 
+#include <Castor_limits.h>
+#include "rfio.h"
 #include <Cglobals.h>
 #include <rfio_errno.h>
 
@@ -39,8 +40,8 @@ size_t 	buflen;
 {
    char   *p;
    LONG   len;
-   char msg[256];
-   char rfio_buf[256];
+   char msg[CA_MAXLINELEN+1];
+   char rfio_buf[CA_MAXLINELEN+1];
 
    if( buf == NULL || buflen <=0 ) return NULL;
    memset(buf, '\0', buflen);
@@ -72,7 +73,7 @@ size_t 	buflen;
       return((char *) NULL);
    }
    p= rfio_buf;
-   unmarshall_STRING(p, msg);
+   unmarshall_STRINGN(p, msg, CA_MAXLINELEN+1);
    TRACE(1, "rfio", "rfio_errmsg: <%s>", msg);
    END_TRACE();
    strcpy(buf, msg);
@@ -86,7 +87,7 @@ int     s;
 int     code;
 {
    char *buf = NULL;
-   int buflen = 256;
+   int buflen = CA_MAXLINELEN+1;
 
    Cglobals_get(&rfio_error_key, (void **)&buf, buflen);
    return(rfio_errmsg_r(s, code, buf, buflen));
@@ -103,7 +104,7 @@ size_t buflen;
    int          last_serrno ;   /* to preserve serrno                   */
    int 		rt ;		/* Request is from other network?  	*/
    char 	*rferrmsg ;
-   char 	rerrlist[256] ; /* Message from errlist 		*/
+   char 	rerrlist[CA_MAXLINELEN+1] ; /* Message from errlist 		*/
 
    if( buf == NULL || buflen <=0 ) return NULL;
    memset(buf, '\0', buflen);
@@ -186,7 +187,7 @@ static int rfio_serror_key = -1;
 char DLL_DECL *rfio_serror() 
 {
    char *buf = NULL;
-   int buflen = 256;
+   int buflen = CA_MAXLINELEN+1;
 
    Cglobals_get(&rfio_serror_key, (void **)&buf, buflen);
    return(rfio_serror_r(buf, buflen));

@@ -1,5 +1,5 @@
 /*
- * $Id: unlink.c,v 1.4 2004/01/23 10:27:46 jdurand Exp $
+ * $Id: unlink.c,v 1.5 2004/03/03 11:16:00 obarring Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: unlink.c,v $ $Revision: 1.4 $ $Date: 2004/01/23 10:27:46 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: unlink.c,v $ $Revision: 1.5 $ $Date: 2004/03/03 11:16:00 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #define RFIO_KERNEL     1
@@ -40,7 +40,7 @@ char *n2 ;
    int uid ;
    int gid ;
    struct passwd *pw ;
-   char buf[256];
+   char buf[BUFSIZ];
    char *n1 = "";
    /*
     * The file is local.
@@ -119,6 +119,7 @@ char *n2 ;
    if (netwrite_timeout(s,nbuf,status,RFIO_CTRL_TIMEOUT) != status ) {
       TRACE(2, "rfio", "unlink: write(): ERROR occured (errno=%d)",errno);
       (void) close(s);
+      free(nbuf);
       END_TRACE();
       return(-1);
    }

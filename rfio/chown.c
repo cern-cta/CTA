@@ -1,5 +1,5 @@
 /*
- * $Id: chown.c,v 1.9 2004/01/23 10:27:45 jdurand Exp $
+ * $Id: chown.c,v 1.10 2004/03/03 11:15:57 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: chown.c,v $ $Revision: 1.9 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: chown.c,v $ $Revision: 1.10 $ $Date: 2004/03/03 11:15:57 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* chown.c       Remote File I/O - Change a file owner */
@@ -22,7 +22,7 @@ char		*file;          /* remote file path             */
 int		owner ;		   /* Owner's uid */
 int 		group ;		   /* Owner's gid */
 {
-	char     buf[256];       /* General input/output buffer          */
+	char     buf[BUFSIZ];       /* General input/output buffer          */
 	register int    s;              /* socket descriptor            */
 	int             status;         /* remote chown() status        */
 	int     	len;
@@ -67,6 +67,14 @@ int 		group ;		   /* Owner's gid */
 	}
 
 	len = strlen(filename)+ 2* WORDSIZE + 1;
+  if ( RQSTSIZE+len > BUFSIZ ) {
+    TRACE(2,"rfio","rfio_chown: request too long %d (max %d)",
+          RQSTSIZE+len,BUFSIZ);
+    END_TRACE();
+    (void) netclose(s);
+    serrno = E2BIG;
+    return(-1);
+  }
 	marshall_WORD(p, RFIO_MAGIC);
 	marshall_WORD(p, RQST_CHOWN);
 	marshall_WORD(p, geteuid());
@@ -79,7 +87,7 @@ int 		group ;		   /* Owner's gid */
 	TRACE(2,"rfio","rfio_chown: sending %d bytes",RQSTSIZE+len) ;
 	if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
 		TRACE(2, "rfio", "rfio_chown: write(): ERROR occured (errno=%d)", errno);
-		(void) close(s);
+		(void) netclose(s);
 		END_TRACE();
 		return(-1);
 	}
@@ -87,7 +95,7 @@ int 		group ;		   /* Owner's gid */
 	TRACE(2, "rfio", "rfio_chown: reading %d bytes", LONGSIZE);
 	if (netread_timeout(s, buf, 2* LONGSIZE, RFIO_CTRL_TIMEOUT) != (2 * LONGSIZE))  {
 		TRACE(2, "rfio", "rfio_chown: read(): ERROR occured (errno=%d)", errno);
-		(void) close(s);
+		(void) netclose(s);
 		END_TRACE();
 		return(-1);
 	}
@@ -95,7 +103,7 @@ int 		group ;		   /* Owner's gid */
 	unmarshall_LONG(p, rcode);
 	TRACE(1, "rfio", "rfio_chown: return %d",status);
 	rfio_errno = rcode;
-	(void) close(s);
+	(void) netclose(s);
 	if (status)     {
 		END_TRACE();
 		return(-1);

@@ -1,5 +1,5 @@
 /*
- * $Id: lstat.c,v 1.14 2004/01/23 10:27:45 jdurand Exp $
+ * $Id: lstat.c,v 1.15 2004/03/03 11:15:58 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lstat.c,v $ $Revision: 1.14 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: lstat.c,v $ $Revision: 1.15 $ $Date: 2004/03/03 11:15:58 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* lstat.c       Remote File I/O - get file status   */
@@ -39,7 +39,7 @@ struct stat *statbuf;           	/* status buffer 		*/
    return (lstatus);
 #else
    register int    s;           /* socket descriptor 		*/
-   char     buf[256];      	/* General input/output buffer  */
+   char     buf[BUFSIZ];      	/* General input/output buffer  */
    int	    len;
    char     *host, *filename;
    char     *p=buf;
@@ -120,6 +120,14 @@ struct stat *statbuf;           	/* status buffer 		*/
 	    *old_uid = uid;
 	 }
 	 len+=2*WORDSIZE + strlen(pw->pw_name) + 1;
+   if ( RQSTSIZE+len > BUFSIZ ) {
+     TRACE(2,"rfio","rfio_lstat: request too long %d (max %d)",
+           RQSTSIZE+len,BUFSIZ);
+     END_TRACE();
+     (void) netclose(s);
+     serrno = E2BIG;
+     return(-1);
+   }
       }
       marshall_LONG(p, len);
       p= buf + RQSTSIZE;

@@ -1,5 +1,5 @@
 /*
- * $Id: mkdir.c,v 1.10 2004/01/23 10:27:45 jdurand Exp $
+ * $Id: mkdir.c,v 1.11 2004/03/03 11:15:58 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mkdir.c,v $ $Revision: 1.10 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Antony Simmins";
+static char sccsid[] = "@(#)$RCSfile: mkdir.c,v $ $Revision: 1.11 $ $Date: 2004/03/03 11:15:58 $ CERN/IT/PDP/DM Antony Simmins";
 #endif /* not lint */
 
 /* mkdir.c       Remote File I/O - make a directory file                */
@@ -21,7 +21,7 @@ int DLL_DECL rfio_mkdir(dirpath, mode)     /* Remote mkdir              */
 char		*dirpath;          /* remote directory path             */
 int		mode;              /* remote directory mode             */
 {
-   char     buf[256];       /* General input/output buffer          */
+   char     buf[BUFSIZ];       /* General input/output buffer          */
    register int    s;              /* socket descriptor            */
    int             status;         /* remote mkdir() status        */
    int     	len;
@@ -65,6 +65,15 @@ int		mode;              /* remote directory mode             */
    curmask = umask(0);          /* get the mode         */
    umask(curmask);              /* restore it           */
    mode &= ~curmask;            /* and apply it to mode */
+
+   len = strlen(filename)+ LONGSIZE + 1;
+   if ( len > BUFSIZ ) {
+     TRACE(2, "rfio", "rfio_mkdir: request too long %d (max %d)", len, BUFSIZ);
+     rfio_errno = 0;
+     serrno = E2BIG;
+     return(-1);
+   }
+   
   
    s = rfio_connect(host,&rt);
    if (s < 0)      {
@@ -72,7 +81,6 @@ int		mode;              /* remote directory mode             */
       return(-1);
    }
 
-   len = strlen(filename)+ LONGSIZE + 1;
    marshall_WORD(p, RFIO_MAGIC);
    marshall_WORD(p, RQST_MKDIR);
    marshall_WORD(p, geteuid());

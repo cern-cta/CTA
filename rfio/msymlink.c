@@ -1,5 +1,5 @@
 /*
- * $Id: msymlink.c,v 1.13 2004/01/23 10:27:45 jdurand Exp $
+ * $Id: msymlink.c,v 1.14 2004/03/03 11:15:59 obarring Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.13 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: msymlink.c,v $ $Revision: 1.14 $ $Date: 2004/03/03 11:15:59 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
@@ -114,7 +114,7 @@ static int rfio_smsymlink(s,n1,filename)
      char * n1 ;
      char * filename ;
 {
-  char     buf[256];
+  char     buf[BUFSIZ];
   int             status;         /* remote fopen() status        */
   int     len;
   int     rc, ans_req, rcode;
@@ -149,6 +149,13 @@ static int rfio_smsymlink(s,n1,filename)
   marshall_WORD(p, RQST_MSYMLINK);
   status = strlen(pw->pw_name)+strlen(n1)+strlen(filename)+3+2*WORDSIZE;
   marshall_LONG(p, status) ;
+  if ( status > BUFSIZ ) {
+    TRACE(3,"rfio","rfio_smsymlink: request too long %d (max %d)",status,BUFSIZ);
+    END_TRACE();
+    rfio_symend_this(s,0);
+    serrno = E2BIG;
+    return(-1);
+  }
 
   if (netwrite_timeout(s,buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
     TRACE(3, "rfio", "smsymlink: write(): ERROR occured (errno=%d)",
@@ -209,7 +216,7 @@ static int rfio_smsymlink(s,n1,filename)
 int DLL_DECL rfio_symend()
 {
   int i,Tid, j=0 ;
-  char buf[256];
+  char buf[RQSTSIZE];
   char *p=buf ;
   int rc = 0;
 
@@ -262,7 +269,7 @@ static int rfio_symend_this(s,flag)
      int flag;
 {
   int i,Tid, j=0 ;
-  char buf[256];
+  char buf[RQSTSIZE];
   char *p=buf ;
   int rc = 0;
 

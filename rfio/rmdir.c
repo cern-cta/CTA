@@ -1,5 +1,5 @@
 /*
- * $Id: rmdir.c,v 1.7 2004/01/23 10:27:46 jdurand Exp $
+ * $Id: rmdir.c,v 1.8 2004/03/03 11:15:59 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmdir.c,v $ $Revision: 1.7 $ $Date: 2004/01/23 10:27:46 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rmdir.c,v $ $Revision: 1.8 $ $Date: 2004/03/03 11:15:59 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* rmdir.c       Remote File I/O - make a directory file                */
@@ -21,7 +21,7 @@ static char sccsid[] = "@(#)$RCSfile: rmdir.c,v $ $Revision: 1.7 $ $Date: 2004/0
 int  DLL_DECL rfio_rmdir(dirpath)           /* Remote rmdir             */
 char		*dirpath;          /* remote directory path             */
 {
-	static char     buf[256];       /* General input/output buffer          */
+	static char     buf[BUFSIZ];       /* General input/output buffer          */
 	register int    s;              /* socket descriptor            */
 	int             status;         /* remote rmdir() status        */
 	int     	len;
@@ -66,6 +66,14 @@ char		*dirpath;          /* remote directory path             */
 	}
 
 	len = strlen(filename) + 1;
+   if ( RQSTSIZE+len > BUFSIZ ) {
+     TRACE(2,"rfio","rfio_rmdir: request too long %d (max %d)",
+           RQSTSIZE+len,BUFSIZ);
+     END_TRACE();
+     (void) netclose(s);
+     serrno = E2BIG;
+     return(-1);
+   }
 	marshall_WORD(p, RFIO_MAGIC);
 	marshall_WORD(p, RQST_RMDIR);
 	marshall_WORD(p, geteuid());

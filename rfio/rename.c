@@ -1,5 +1,5 @@
 /*
- * $Id: rename.c,v 1.10 2004/01/23 10:27:45 jdurand Exp $
+ * $Id: rename.c,v 1.11 2004/03/03 11:15:59 obarring Exp $
  */
 
 /*
@@ -8,14 +8,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rename.c,v $ $Revision: 1.10 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Antony Simmins";
+static char sccsid[] = "@(#)$RCSfile: rename.c,v $ $Revision: 1.11 $ $Date: 2004/03/03 11:15:59 $ CERN/IT/PDP/DM Antony Simmins";
 #endif /* not lint */
 
 /* rename.c       Remote File I/O - change the name of a file           */
 
 #define RFIO_KERNEL     1       /* KERNEL part of the routines          */
 #if defined(_WIN32)
-#define MAXHOSTNAMELEN 64
+#define MAXHOSTNAMELEN (CA_MAXHOSTNAMELEN+1)
 #else
 #include <sys/param.h>
 #endif
@@ -29,7 +29,7 @@ int  DLL_DECL rfio_rename(fileo, filen)  /* Remote rename               */
 char		*fileo,		/* remote old path  			*/
    *filen;		/* remote new path            		*/
 {
-   char     buf[256];       /* General input/output buffer          */
+   char     buf[BUFSIZ];       /* General input/output buffer          */
    register int    s;              /* socket descriptor            */
    int             status;         /* remote rename() status       */
    int     	len;
@@ -115,6 +115,14 @@ char		*fileo,		/* remote old path  			*/
    }
 
    len = strlen(filenameo) + strlen(filenamen) + 2;
+   if ( RQSTSIZE+len > BUFSIZ ) {
+     TRACE(2,"rfio","rfio_rename: request too long %d (max %d)",
+           RQSTSIZE+len,BUFSIZ);
+     END_TRACE();
+     (void) netclose(s);
+     serrno = E2BIG;
+     return(-1);
+   }
    marshall_WORD(p, RFIO_MAGIC);
    marshall_WORD(p, RQST_RENAME);
    marshall_WORD(p, geteuid());

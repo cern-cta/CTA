@@ -1,5 +1,5 @@
 /*
- * $Id: readlink.c,v 1.10 2004/01/23 10:27:45 jdurand Exp $
+ * $Id: readlink.c,v 1.11 2004/03/03 11:15:59 obarring Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readlink.c,v $ $Revision: 1.10 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: readlink.c,v $ $Revision: 1.11 $ $Date: 2004/03/03 11:15:59 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #define RFIO_KERNEL     1
@@ -31,7 +31,7 @@ int length ;
    int rcode , len, parserc;
    int uid ;
    int gid ;
-   char buffer[MAXFILENAMSIZE];
+   char buffer[BUFSIZ];
    char tmpbuf[MAXFILENAMSIZE];
 
    /*
@@ -69,10 +69,18 @@ int length ;
 
    status = 2*WORDSIZE + strlen(path) + 1;
    marshall_LONG(p, status) ;
+   if ( status > BUFSIZ ) {
+     TRACE(2,"rfio","rfio_readlink: request too long %d (max %d)",
+           status,BUFSIZ);
+     END_TRACE();
+     (void) netclose(s);
+     serrno = E2BIG;
+     return(-1);
+   }
 
    if (netwrite_timeout(s,buffer,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE) {
       TRACE(2, "rfio", "readlink: write(): ERROR occured (errno=%d)",errno);
-      (void) close(s);
+      (void) netclose(s);
       END_TRACE();
       return(-1);
    }
@@ -84,7 +92,7 @@ int length ;
 	
    if (netwrite_timeout(s,buffer,status,RFIO_CTRL_TIMEOUT) != status ) {
       TRACE(2, "rfio", "readlink(): write(): ERROR occured (errno=%d)",errno);
-      (void) close(s);
+      (void) netclose(s);
       END_TRACE();
       return(-1);
    }
@@ -98,7 +106,7 @@ int length ;
 	 TRACE(2, "rfio", "rfio_readlink: read(): ERROR occured (serrno=%d)", serrno);
       } else
 	 TRACE(2, "rfio", "rfio_readlink: read(): ERROR occured (errno=%d)", errno);
-      (void) close(s);
+      (void) netclose(s);
       END_TRACE();
       return(-1);
    }
@@ -110,14 +118,14 @@ int length ;
    if ( status < 0 ) {
       TRACE(1,"rfio","rfio_readlink(): rcode = %d , status = %d",rcode, status);
       rfio_errno = rcode ;
-      (void) close(s);
+      (void) netclose(s);
       END_TRACE();
       return(status);
    }
    /* Length is not of a long size, so RFIO_CTRL_TIMEOUT is enough */
    if (netread_timeout(s, buffer, len, RFIO_CTRL_TIMEOUT) != len)  {
       TRACE(2, "rfio", "rfio_readlink: read(): ERROR occured (errno=%d)", errno);
-      (void) close(s);
+      (void) netclose(s);
       END_TRACE();
       return(-1);
    }
@@ -125,12 +133,12 @@ int length ;
    if (rcode < length) {
       unmarshall_STRING( p, buf ) ;
    } else {
-      unmarshall_STRING( p, tmpbuf ) ;
+      unmarshall_STRINGN( p, tmpbuf, MAXFILENAMSIZE) ;
       memcpy (buf, tmpbuf, length) ;
    }
    TRACE (2,"rfio","rfio_readlink succeded: returned %s",buf);
    END_TRACE();
-   (void) close (s) ;
+   (void) netclose (s) ;
    return(rcode) ;
 }
 

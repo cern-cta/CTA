@@ -1,5 +1,5 @@
 /*
- * $Id: statfs.c,v 1.7 2004/01/23 10:27:46 jdurand Exp $
+ * $Id: statfs.c,v 1.8 2004/03/03 11:16:00 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: statfs.c,v $ $Revision: 1.7 $ $Date: 2004/01/23 10:27:46 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: statfs.c,v $ $Revision: 1.8 $ $Date: 2004/03/03 11:16:00 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* statfs.c       Remote File I/O - get file system status     */
@@ -20,7 +20,7 @@ int DLL_DECL rfio_statfs(path, statfsbuf)
 char    *path;              	/* remote file path                     */
 struct rfstatfs *statfsbuf;     /* status buffer (subset of local used) */
 {
-   char     buf[256];       /* General input/output buffer          */
+   char     buf[BUFSIZ];       /* General input/output buffer          */
    register int    s;      /* socket descriptor            */
    int      status;
    int      len;
@@ -46,13 +46,22 @@ struct rfstatfs *statfsbuf;     /* status buffer (subset of local used) */
 	   return(-1);
    }
 
+   len = strlen(path)+1;
+   if ( RQSTSIZE+len > BUFSIZ ) {
+     TRACE(2,"rfio","rfio_statfs: request too long %d (max %d)",
+           RQSTSIZE+len,BUFSIZ);
+     END_TRACE();
+     (void) netclose(s);
+     serrno = E2BIG;
+     return(-1);
+   }
+
    s = rfio_connect(host,&rt);
    if (s < 0)      {
       END_TRACE();
       return(-1);
    }
 
-   len = strlen(path)+1;
    marshall_WORD(p, RFIO_MAGIC);
    marshall_WORD(p, RQST_STATFS);
    marshall_LONG(p, len);

@@ -1,5 +1,5 @@
 /*
- * $Id: chmod.c,v 1.9 2004/01/23 10:27:45 jdurand Exp $
+ * $Id: chmod.c,v 1.10 2004/03/03 11:15:57 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: chmod.c,v $ $Revision: 1.9 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: chmod.c,v $ $Revision: 1.10 $ $Date: 2004/03/03 11:15:57 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* chmod.c       Remote File I/O - change file mode                     */
@@ -21,7 +21,7 @@ int DLL_DECL rfio_chmod(dirpath, mode)     /* Remote chmod	        */
 char		*dirpath;          /* remote directory path             */
 int		mode;              /* remote directory mode             */
 {
-	char     buf[256];       /* General input/output buffer          */
+	char     buf[BUFSIZ];       /* General input/output buffer          */
 	register int    s;              /* socket descriptor            */
 	int             status;         /* remote chmod() status        */
 	int     	len;
@@ -68,6 +68,14 @@ int		mode;              /* remote directory mode             */
 	}
 
 	len = strlen(filename)+ LONGSIZE + 1;
+  if ( RQSTSIZE+len > BUFSIZ ) {
+    TRACE(2,"rfio","rfio_chmod: request too long %d (max %d)",
+          RQSTSIZE+len,BUFSIZ);
+    END_TRACE();
+    (void) netclose(s);
+    serrno = E2BIG;
+    return(-1);
+  }
 	marshall_WORD(p, RFIO_MAGIC);
 	marshall_WORD(p, RQST_CHMOD);
 	marshall_WORD(p, geteuid());
@@ -80,7 +88,7 @@ int		mode;              /* remote directory mode             */
 	TRACE(2,"rfio","rfio_chmod: sending %d bytes",RQSTSIZE+len) ;
 	if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
 		TRACE(2, "rfio", "rfio_chmod: write(): ERROR occured (errno=%d)", errno);
-		(void) close(s);
+		(void) netclose(s);
 		END_TRACE();
 		return(-1);
 	}
@@ -88,7 +96,7 @@ int		mode;              /* remote directory mode             */
 	TRACE(2, "rfio", "rfio_chmod: reading %d bytes", LONGSIZE);
 	if (netread_timeout(s, buf, 2* LONGSIZE, RFIO_CTRL_TIMEOUT) != (2 * LONGSIZE))  {
 		TRACE(2, "rfio", "rfio_chmod: read(): ERROR occured (errno=%d)", errno);
-		(void) close(s);
+		(void) netclose(s);
 		END_TRACE();
 		return(-1);
 	}
@@ -96,7 +104,7 @@ int		mode;              /* remote directory mode             */
 	unmarshall_LONG(p, rcode);
 	TRACE(1, "rfio", "rfio_chmod: return %d",status);
 	rfio_errno = rcode;
-	(void) close(s);
+	(void) netclose(s);
 	if (status)     {
 		END_TRACE();
 		return(-1);

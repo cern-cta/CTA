@@ -1,5 +1,5 @@
 /*
- * $Id: symlink.c,v 1.12 2004/01/23 10:27:46 jdurand Exp $
+ * $Id: symlink.c,v 1.13 2004/03/03 11:16:00 obarring Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: symlink.c,v $ $Revision: 1.12 $ $Date: 2004/01/23 10:27:46 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: symlink.c,v $ $Revision: 1.13 $ $Date: 2004/03/03 11:16:00 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #define RFIO_KERNEL     1
@@ -41,7 +41,7 @@ char *n2 ;
    int uid ;
    int gid ;
    struct passwd *pw ;
-   char buf[256];
+   char buf[BUFSIZ];
    /*
     * The file is local.
     */
@@ -124,6 +124,7 @@ char *n2 ;
    if (netwrite_timeout(s,nbuf,status,RFIO_CTRL_TIMEOUT) != status ) {
       TRACE(2, "rfio", "symlink: write(): ERROR occured (errno=%d)",errno);
       (void) close(s);
+      free(nbuf);
       END_TRACE();
       return(-1);
    }
