@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.33 2000/05/18 14:56:33 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.34 2000/05/18 16:59:04 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.33 $ $Date: 2000/05/18 14:56:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.34 $ $Date: 2000/05/18 16:59:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -460,14 +460,18 @@ main(argc,argv)
 			stcp++;
 		} else if (stcp->status == STAGEWRT) {
 			delreq (stcp,0);
-		} else if ((stcp->status & 0xF) == STAGEPUT) {
-			if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-				stcp->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
-				/* This was a file for automatic migration */
-				update_migpool(stcp,1);
-			} else {
-				stcp->status = STAGEOUT|PUT_FAILED;
+		} else if (stcp->status == STAGEPUT) {
+			stcp->status = STAGEOUT|PUT_FAILED;
+#ifdef USECDB
+			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 			}
+#endif
+			stcp++;
+		} else if (stcp->status == (STAGEPUT | CAN_BE_MIGR)) {
+			stcp->status = STAGEOUT|PUT_FAILED|CAN_BE_MIGR;
+			/* This was a file for automatic migration */
+			update_migpool(stcp,1);
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
