@@ -1,5 +1,5 @@
 /*
- * $Id: stageacct.c,v 1.11 2001/12/20 11:44:20 jdurand Exp $
+ * $Id: stageacct.c,v 1.12 2002/03/11 06:51:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.11 $ $Date: 2001/12/20 11:44:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.12 $ $Date: 2002/03/11 06:51:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -20,25 +20,29 @@ static char sccsid[] = "@(#)$RCSfile: stageacct.c,v $ $Revision: 1.11 $ $Date: 2
 void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern int wsacct _PROTO((int, char *, int));
 
+#ifdef hpux
+void stageacct(int subtype, uid_t uid, gid_t gid, char *clienthost, int reqid, int req_type, int retryn, int exitcode, struct stgcat_entry *stcp, char *tapesrvr, char forced_t_or_d)
+#else
 void
 stageacct(subtype, uid, gid, clienthost, reqid, req_type, retryn, exitcode, stcp, tapesrvr, forced_t_or_d)
-     int subtype;
-     uid_t uid;
-     gid_t gid;
-     char *clienthost;
-     int reqid;
-     int req_type;
-     int retryn;
-     int exitcode;
-     struct stgcat_entry *stcp;
-     char *tapesrvr;
-     char forced_t_or_d;
+	int subtype;
+	uid_t uid;
+	gid_t gid;
+	char *clienthost;
+	int reqid;
+	int req_type;
+	int retryn;
+	int exitcode;
+	struct stgcat_entry *stcp;
+	char *tapesrvr;
+	char forced_t_or_d;
+#endif
 {
   int acctreclen;
   struct acctstage acctstage;
   char *getconfent();
   char *p;
-
+  
   if ((p = getconfent("ACCT", "STAGE", 0)) == NULL ||
       (strcmp (p, "YES") && strcmp (p, "yes"))) return;
   memset ((char *) &acctstage, 0, sizeof(struct acctstage));
