@@ -1,0 +1,231 @@
+COMM
+COMM $Id: Imakefile,v 1.1 2004/07/30 12:54:09 motiakov Exp $
+COMM
+
+COMM
+COMM Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+
+COMM         Make VDQM API library and server
+
+#include <Project.tmpl>
+
+INCLUDES = FileName(..,h)
+
+COMM
+COMM        VDQM server logfile
+COMM
+SPOOL = VdqmSpool
+LOGFILE = FileName($(SPOOL),vdqm.log)
+DRIVESFILE = FileName($(SPOOL),vdqm.drives)
+BCSERVER_LOGFILE = FileName($(SPOOL),vdqmbc.log)
+
+COMM
+COMM        Default VDQM server node name
+COMM
+VDQM_HOST = VdqmHost
+
+THREADFLAGS = $(MTCCFLAGS)
+
+#if SOLARIS
+LDLIBS = -lsocket -lnsl
+#else
+#if linux
+LDLIBS = $(ADNSLIB) -lnsl
+#else
+#if _WIN32
+LDLIBS = ws2_32.lib advapi32.lib mpr.lib
+#endif
+#endif
+#endif
+
+GLOBLIB = DepLibraryTargetName(vdqm,vdqmapi) DepLibraryTargetName(common,common)
+
+.PRECIOUS: LibraryTargetName(vdqmapi)
+
+#if BuildVdqmServer
+VDQMFLAGS=-DVDQMSERV
+#endif
+#if BuildSecurity
+SECURITYFLAG=-DCSEC
+LDLIBS+= -ldl -L../lib -lshift
+#endif  
+
+CFLAGS = -O -I$(INCLUDES) $(THREADFLAGS) -DVDQM_HOST=\"$(VDQM_HOST)\" -DVDQM_LOG_FILE=\"$(LOGFILE)\" -DVDQM_DRIVES_FILE=\"$(DRIVESFILE)\" $(VDQMFLAGS) $(SECURITYFLAG)
+
+#if BuildVdqmClient
+PROG_C = ProgramTargetName(showqueues) ProgramTargetName(tpsrv_in_prod)
+CLIENT = $(PROG_C)
+IPROGS_C = FileName($(BIN),ProgramTargetName(showqueues)) \
+	     FileName($(BIN),ProgramTargetName(tpsrv_in_prod))
+EPROGS_C = FileName($(EXPORTBIN),showqueues)
+MANPAGES_C = FileName($(LIBMANDIR),vdqm_Connect.$(LIBMANSUFFIX)) \
+	     FileName($(LIBMANDIR),vdqm_DelDrive.$(LIBMANSUFFIX)) \
+	     FileName($(LIBMANDIR),vdqm_DelVolumeReq.$(LIBMANSUFFIX)) \
+	     FileName($(LIBMANDIR),vdqm_Disconnect.$(LIBMANSUFFIX)) \
+	     FileName($(LIBMANDIR),vdqm_NextDrive.$(LIBMANSUFFIX)) \
+	     FileName($(LIBMANDIR),vdqm_NextVol.$(LIBMANSUFFIX)) \
+	     FileName($(LIBMANDIR),vdqm_SendVolReq.$(LIBMANSUFFIX)) \
+	     FileName($(LIBMANDIR),vdqm_UnitStatus.$(LIBMANSUFFIX)) \
+	     FileName($(MANDIR),showqueues.$(MANSUFFIX)) \
+	     FileName($(MANDIR),tpsrv_in_prod.$(MANSUFFIX))
+EMANPAGES_C = FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),vdqm_Connect.$(LIBMANSUFFIX))) \
+	     FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),vdqm_DelDrive.$(LIBMANSUFFIX))) \
+	     FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),vdqm_DelVolumeReq.$(LIBMANSUFFIX))) \
+	     FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),vdqm_Disconnect.$(LIBMANSUFFIX))) \
+	     FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),vdqm_NextDrive.$(LIBMANSUFFIX))) \
+	     FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),vdqm_NextVol.$(LIBMANSUFFIX))) \
+	     FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),vdqm_SendVolReq.$(LIBMANSUFFIX))) \
+	     FileName($(EXPORTMAN),FileName(man$(LIBMANSUFFIX),vdqm_UnitStatus.$(LIBMANSUFFIX))) \
+	     FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),showqueues.$(MANSUFFIX))) \
+	     FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tpsrv_in_prod.$(MANSUFFIX)))
+#endif
+
+#if BuildVdqmServer
+SERVER = ProgramTargetName(vdqmserv)\
+	 ProgramTargetName(vdqm_admin) \
+	 ProgramTargetName(vdqmbc_serv)
+IPROGS_S = FileName($(BIN),ProgramTargetName(vdqmserv)) \
+	   FileName($(BIN),ProgramTargetName(vdqm_admin)) \
+	   FileName($(BIN),ProgramTargetName(vdqmbc_serv))
+EPROGS_S = 
+MANPAGES_S = FileName($(MANDIR),vdqm_admin.$(MANSUFFIX)) \
+	     FileName($(MANDIR),vdqmserv.$(MANSUFFIX))
+EMANPAGES_S = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqm_admin.$(MANSUFFIX))) \
+	FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),vdqmserv.$(MANSUFFIX)))
+#endif
+
+IPROGS = $(IPROGS_C) $(IPROGS_S)
+
+SRVOBJS = vdqm_CloseConn.Osuf vdqm_InitNW.Osuf vdqm_InitPool.Osuf \
+		vdqm_Listen.Osuf vdqm_PoolOp.Osuf vdqm_ProcReq.Osuf \
+		vdqm_QueueOp.Osuf vdqm_Replica.Osuf vdqm_RtcopyOp.Osuf \
+		vdqm_SendRecv.Osuf vdqm_AdmOps.Osuf vdqmserv.Osuf
+BC_SRVOBJS = vdqm_CloseConn.Osuf vdqm_InitNW.Osuf vdqm_Listen.Osuf \
+		vdqm_PoolOp.Osuf vdqm_ProcReq.Osuf vdqm_QueueOp.Osuf \
+		vdqm_Replica.Osuf vdqm_RtcopyOp.Osuf vdqm_SendRecv.Osuf \
+		vdqm_AdmOps.Osuf vdqmbc_serv.Osuf
+
+VDQMLIB_OBJS = vdqmapi.Osuf vdqmc_SendRecv.Osuf
+
+all: LibraryTargetName(vdqmapi) $(CLIENT) $(SERVER)
+
+#if BuildVdqmServer
+install: $(BIN) $(IPROGS) $(SPOOL)
+#else
+install: $(BIN) $(IPROGS)
+#endif
+
+export: $(EPROGS_C) $(EPROGS_S)
+
+exportman: $(EMANPAGES_C) $(EMANPAGES_S)
+
+exportshr:
+
+#if BuildVdqmClient
+NormalProgramTarget(showqueues,showqueues.Osuf, \
+  DepLibraryTargetName(common,common), \
+  $(LDFLAGS) $(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(MTLDLIBS))
+
+NormalProgramTarget(tpsrv_in_prod,tpsrv_in_prod.Osuf, \
+  DepLibraryTargetName(common,common), \
+  $(LDFLAGS) $(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(MTLDLIBS))
+
+#endif
+
+NormalLibraryTarget(vdqmapi,$(VDQMLIB_OBJS))
+
+MakeDepLibrary(lib,shift)
+
+
+#if BuildVdqmServer
+NormalProgramTarget(vdqmserv,$(SRVOBJS),DepLibraryTargetName(common,common), \
+  $(LDFLAGS) $(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(MTLDLIBS))
+
+NormalProgramTarget(vdqmbc_serv,$(BC_SRVOBJS), \
+  DepLibraryTargetName(common,common), \
+  $(LDFLAGS) $(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(MTLDLIBS))
+
+NormalProgramTarget(vdqm_admin,vdqm_admin.Osuf $(VDQMLIB_OBJS), \
+  DepLibraryTargetName(common,common), \
+  $(LDFLAGS) $(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(MTLDLIBS))
+#endif
+
+InstallProgram(vdqmserv,$(BIN),root,bin,0750)
+InstallProgram(vdqm_admin,$(BIN),root,bin,0750)
+InstallProgram(showqueues,$(BIN),root,bin,0755)
+InstallProgram(tpsrv_in_prod,$(BIN),root,bin,0750)
+InstallProgram(vdqmbc_serv,$(BIN),root,bin,0750)
+IEXPORT(showqueues,$(EXPORTBIN),0755)
+
+MakeDir($(BIN),root,bin,0755)
+MakeDir($(SPOOL),root,bin,0755)
+
+install.man: $(MANDIR) $(LIBMANDIR) $(MANPAGES_C) $(MANPAGES_S)
+
+MakeDir($(MANDIR),root,bin,0755)
+MakeDir($(LIBMANDIR),root,bin,0755)
+
+IMANPAGE(vdqm_Connect,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vdqm_DelDrive,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vdqm_DelVolumeReq,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vdqm_Disconnect,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vdqm_NextDrive,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vdqm_NextVol,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vdqm_SendVolReq,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(vdqm_UnitStatus,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(showqueues,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(tpsrv_in_prod,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vdqm_admin,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(vdqmserv,$(MANDIR),$(MANSUFFIX))
+
+EMANPAGE(vdqm_Connect,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(vdqm_DelDrive,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(vdqm_DelVolumeReq,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(vdqm_Disconnect,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(vdqm_NextDrive,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(vdqm_NextVol,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(vdqm_SendVolReq,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(vdqm_UnitStatus,FileName($(EXPORTMAN),man$(LIBMANSUFFIX)),$(LIBMANSUFFIX))
+EMANPAGE(showqueues,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(tpsrv_in_prod,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(vdqm_admin,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(vdqmserv,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+
+clean:
+	@echo cleaning in CurDir
+	-@RemoveFiles(FilesToClean)
+
+clobber:	clean
+	@echo clobbering in CurDir
+	-@RemoveFiles(ProgramTargetName(vdqmserv))
+	-@RemoveFiles(ProgramTargetName(showqueues))
+	-@RemoveFiles(ProgramTargetName(tpsrv_in_prod))
+	-@RemoveFiles(ProgramTargetName(vdqmbs_serv))
+
+Makefiles:
+
+MakeDepLibrary(common,common)
+
+FORCE:
+
+COMM
+COMM Dependencies
+COMM
+#if _WIN32
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend -Y$(INCLUDES) *.c 2> /dev/null
+#endif
+
+vdqmc_SendRecv.c:	vdqm_SendRecv.c
+	RemoveFile(vdqmc_SendRecv.c)
+	$(CP) vdqm_SendRecv.c vdqmc_SendRecv.c
+
+vdqmc_SendRecv.Osuf: vdqmc_SendRecv.c 
+	$(CC) -c -I$(INCLUDES) $(THREADFLAGS) vdqmc_SendRecv.c
+
+COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
