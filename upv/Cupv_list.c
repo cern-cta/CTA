@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_list.c,v $ $Revision: 1.3 $ $Date: 2002/06/07 15:58:46 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_list.c,v $ $Revision: 1.4 $ $Date: 2002/06/10 13:04:09 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
  
 /*      Cupv_list - list privileges */
@@ -54,6 +54,12 @@ Cupv_list(int flags, Cupv_entry_list *listp, struct Cupv_userpriv *filter)
                 return (NULL);
         }
 #endif
+
+	if (strlen(filter->srchost) > CA_MAXREGEXPLEN 
+	    || strlen(filter->tgthost) > CA_MAXREGEXPLEN) {
+		serrno = EINVAL;
+		return (-1);
+	}
 
 	if (! listp) {
 		serrno = EFAULT;

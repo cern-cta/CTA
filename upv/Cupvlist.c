@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupvlist.c,v $ $Revision: 1.3 $ $Date: 2002/06/07 15:58:46 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupvlist.c,v $ $Revision: 1.4 $ $Date: 2002/06/10 13:04:09 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 /*      Cupvlist - list privilege entries */
@@ -58,7 +58,7 @@ main(argc, argv)
   char tgt[CA_MAXREGEXPLEN + 1];
   int priv = -1;  
   char usr[CA_MAXUSRNAMELEN + 1];
-  char grp[CA_MAXGRPNAMELEN + 1];
+  char grp[MAXGRPNAMELEN + 1];
 
 
   usr[0] = 0;
@@ -88,9 +88,17 @@ main(argc, argv)
       }
       break;
     case OPT_SRC:
+      if (strlen(Coptarg) > CA_MAXREGEXPLEN) {
+	fprintf(stderr, "%s: SRC too long\n", argv[0]);
+	return(USERR);
+      }
       strcpy(src, Coptarg);
       break;
     case OPT_TGT:
+      if (strlen(Coptarg) > CA_MAXREGEXPLEN) {
+	fprintf(stderr, "%s: TGT too long\n", argv[0]);
+	return(USERR);
+      }
       strcpy(tgt, Coptarg);
       break;
     case OPT_PRV:
@@ -100,9 +108,17 @@ main(argc, argv)
       verbose = 1;
       break;
     case OPT_USR:
+      if (strlen(Coptarg) > CA_MAXUSRNAMELEN) {
+	fprintf(stderr, "%s: Username too long\n", argv[0]);
+	return(USERR);
+      }
       strcpy(usr, Coptarg);
       break;
     case OPT_GRP:
+      if (strlen(Coptarg) > MAXGRPNAMELEN) {
+	fprintf(stderr, "%s: Groupname too long\n", argv[0]);
+	return(USERR);
+      }
       strcpy(grp, Coptarg);
       break;
     case '?':
@@ -177,7 +193,7 @@ main(argc, argv)
 int displayLine(struct Cupv_userpriv *lp, int verbose) {
 
   char usr[CA_MAXUSRNAMELEN + 50];
-  char grp[CA_MAXGRPNAMELEN + 50];
+  char grp[MAXGRPNAMELEN + 50];
   char buf[MAXPRIVSTRLEN + 1];
   char *c, *p;
 

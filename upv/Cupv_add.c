@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_add.c,v $ $Revision: 1.3 $ $Date: 2002/06/07 07:21:38 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_add.c,v $ $Revision: 1.4 $ $Date: 2002/06/10 13:04:09 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
  
 
@@ -33,6 +33,7 @@ Cupv_add(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt, int p
 	char sendbuf[REQBUFSZ];
 	struct Cupv_api_thread_info *thip;
 	uid_t uid;
+	int lensrc, lentgt;
 
         strcpy (func, "Cupv_add");
         if (Cupv_apiinit (&thip))
@@ -52,8 +53,12 @@ Cupv_add(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt, int p
 	  return (-1);
 	}
 
+	lensrc = strlen(src);
+	lentgt = strlen(tgt);
+
 	if (src == NULL || tgt == NULL 
-	    || strlen(src) == 0 || strlen(tgt) == 0) {
+	    || lensrc == 0 || lentgt == 0
+	    || lensrc > CA_MAXREGEXPLEN || lentgt > CA_MAXREGEXPLEN) {
 		serrno = EINVAL;
 		return (-1);
 	}
