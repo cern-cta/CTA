@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.55 2002/05/15 14:08:17 jdurand Exp $
+ * $Id: procclr.c,v 1.56 2002/05/23 10:21:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.55 $ $Date: 2002/05/15 14:08:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.56 $ $Date: 2002/05/23 10:21:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -102,7 +102,7 @@ extern int isvalidpool _PROTO((char *));
 extern void dellink _PROTO((struct stgpath_entry *));
 extern int enoughfreespace _PROTO((char *, int));
 extern int checklastaccess _PROTO((char *, time_t));
-extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int));
+extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int, int));
 extern int savepath _PROTO(());
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
@@ -110,7 +110,7 @@ extern char *stglogflags _PROTO((char *, char *, u_signed64));
 extern int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
 extern char *findpoolname _PROTO((char *));
 
-int check_delete _PROTO((struct stgcat_entry *, gid_t, uid_t, char *, char *, int, int));
+int check_delete _PROTO((struct stgcat_entry *, gid_t, uid_t, char *, char *, int, int, int));
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
@@ -121,6 +121,7 @@ extern u_signed64 stage_uniqueid;
 static int nbtpf = 0;
 static int side_flag = 0;
 static int reqid_flag = 0;
+static int nodisk_flag = 0;
 
 void procclrreq(req_type, magic, req_data, clienthost)
 	int req_type;
@@ -186,6 +187,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 		{"poolname",           REQUIRED_ARGUMENT,  NULL,      'p'},
 		{"file_sequence",      REQUIRED_ARGUMENT,  NULL,      'q'},
 		{"file_range",         REQUIRED_ARGUMENT,  NULL,      'Q'},
+		{"nodisk",             NO_ARGUMENT,       &nodisk_flag, 1},
 		{"r",                  REQUIRED_ARGUMENT,  NULL,      'r'},
 		{"reqid",              REQUIRED_ARGUMENT, &reqid_flag,  1},
 		{"side",               REQUIRED_ARGUMENT, &side_flag,   1},
@@ -193,6 +195,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 		{NULL,                 0,                  NULL,        0}
 	};
 
+	nodisk_flag = 0;
 	reqid_flag = 0;
 	side_flag = 0;
 	c = 0;
@@ -345,6 +348,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 		if ((flags & STAGE_CONDITIONAL) == STAGE_CONDITIONAL) cflag = 1;
 		if ((flags & STAGE_FORCE) == STAGE_FORCE) Fflag = 1;
 		if ((flags & STAGE_REMOVEHSM) == STAGE_REMOVEHSM) rflag = 1;
+		if ((flags & STAGE_NODISK) == STAGE_NODISK) nodisk_flag = 1;
 		if ((flags & STAGE_SILENT) == STAGE_SILENT) {
 			silentflag = 1;
 			rpfd = -1;
@@ -520,7 +524,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				goto reply;
 			}
 			STAGE_TIME_START("check_delete");
-			i = check_delete (stcp, gid, uid, group, user, rflag, Fflag);
+			i = check_delete (stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag);
 			STAGE_TIME_END;
 			if (i > 0) {
 				c = i;
@@ -543,7 +547,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 						goto reply;
 					}
 					STAGE_TIME_START("check_delete");
-					i = check_delete (stcp, gid, uid, group, user, rflag, Fflag);
+					i = check_delete (stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag);
 					STAGE_TIME_END;
 					if (i > 0) {
 						c = i;
@@ -606,7 +610,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				goto reply;
 			}
  			STAGE_TIME_START("check_delete");
-			i = check_delete (stcp, gid, uid, group, user, rflag, Fflag);
+			i = check_delete (stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag);
  			STAGE_TIME_END;
 			if (i > 0) {
 				c = i;
@@ -652,7 +656,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 	sendrep (rpfd, STAGERC, STAGECLR, magic, c);
 }
 
-int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
+int check_delete(stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag)
 	struct stgcat_entry *stcp;
 	gid_t gid;
 	uid_t uid;
@@ -660,6 +664,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 	char *user;
 	int rflag; /* True if HSM source file has to be removed */
 	int Fflag; /* Forces deletion of request in memory instead of internal error */
+	int nodisk_flag; /* No disk access - pure catalog removal */
 {
 	int found;
 	int i;
@@ -687,7 +692,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 		((stcp->status & (STAGEOUT|PUT_FAILED)) == (STAGEOUT|PUT_FAILED)) ||
 		(stcp->status == (STAGEOUT|CAN_BE_MIGR))) {
 		/* Note: The STAGEOUT|CAN_BE_MIGR|PUT_FAILED case is handle by the second test */
-		if (delfile (stcp, 0, 1, 1, user, uid, gid, rflag, 1) < 0) {
+		if (delfile (stcp, 0, 1, 1, user, uid, gid, rflag, 1, nodisk_flag) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
 					 rfio_serror());
 			return (rfio_serrno() > 0 ? rfio_serrno() : SESYSERR);
@@ -696,7 +701,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 		if ((ISSTAGEOUT(stcp) && (! ISCASTORMIG(stcp))) || (ISSTAGEALLOC(stcp) && ((stcp->status | STAGED) != STAGED))) {
 			rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
 		}
-		if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag, 1) < 0) {
+		if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag, 1, nodisk_flag) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
 					 rfio_serror());
 			return (rfio_serrno() > 0 ? rfio_serrno() : SESYSERR);
@@ -735,7 +740,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 					rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
 				}
 			}
-			if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag, 1) < 0) {
+			if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag, 1, nodisk_flag) < 0) {
 				sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
 						 rfio_serror());
 				return (rfio_serrno() > 0 ? rfio_serrno() : SESYSERR);
