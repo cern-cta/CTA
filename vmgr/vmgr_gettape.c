@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_gettape.c,v $ $Revision: 1.2 $ $Date: 1999/12/17 13:03:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_gettape.c,v $ $Revision: 1.3 $ $Date: 2000/01/05 09:42:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_gettape - get a tape volume to store a given amount of data */
@@ -30,7 +30,7 @@ vmgr_gettape(const char *poolname, int Size, const char *Condition, char *vid, c
 	int msglen;
 	char *q;
 	char *rbp;
-	char repbuf[CA_MAXVIDLEN+17];
+	char repbuf[41];
 	char *sbp;
 	struct vmgr_api_thread_info *thip;
 	char sendbuf[REQBUFSZ];
