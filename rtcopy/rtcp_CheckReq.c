@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.23 $ $Date: 2000/03/10 12:34:59 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.24 $ $Date: 2000/03/10 14:32:41 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -411,7 +411,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
          */
         if ( ((st.st_mode) & S_IFMT) == S_IFDIR ) {
             serrno = EISDIR;
-            sprintf(errmsgtxt,RT110,CMD(mode),sstrerror_serrno));
+            sprintf(errmsgtxt,RT110,CMD(mode),sstrerror(serrno));
             SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         }
         /*
