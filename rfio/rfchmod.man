@@ -1,0 +1,45 @@
+.\"
+.\" $Id: rfchmod.man,v 1.1 2002/02/13 10:14:08 baud Exp $
+.\"
+.\" @(#)$RCSfile: rfchmod.man,v $ $Revision: 1.1 $ $Date: 2002/02/13 10:14:08 $  IN2P3 CC Philippe Gaillardon
+.\" Copyright (C) 1998-2002 by IN2P3 CC
+.\" All rights reserved
+.\"
+.TH RFCHMOD 1 "$Date: 2002/02/13 10:14:08 $" CASTOR "Rfio User Commands"
+.SH NAME
+rfchmod \- change file access permission
+.SH SYNOPSIS
+.B rfchmod
+.IR mode
+.IR file...
+.SH DESCRIPTION
+.IX "\fLrfchmod\fR"
+.B rfchmod
+provides an interface to the
+.B shift
+remote file I/O daemon (rfiod) for changing the file access permission, so called
+file mode.
+.TP
+.I mode
+argument allows users to specify the file access permission applied to the file.
+Only the absolute octal representation of the file access permission is supported.
+For values of mode, see
+.BR chmod(1) .
+.TP
+.I file
+argument is either a remote file name of the form:
+.RS
+.RS
+.HP
+.IB hostname : path
+.RE
+.LP
+or a local file name (not containing the :/ character combination).
+.RE
+.LP
+Modification of the file access permission require authorisation.
+.SH "SEE ALSO"
+.BR chmod(1),
+.BR rfio_chmod(3).
+.SH "AUTHOR"
+\fBCASTOR\fP Team <castor.support@cern.ch>
