@@ -7,7 +7,7 @@ DROP INDEX I_Id2Type_full;
 DROP TABLE Id2Type;
 CREATE TABLE Id2Type (id INTEGER PRIMARY KEY, type NUMBER);
 CREATE INDEX I_Id2Type_full on Id2Type (id, type);
-CREATE INDEX main.I_Id2Type_type ON Id2Type(type);
+CREATE INDEX I_Id2Type_type ON Id2Type(type);
 
 /* Sequence for indices */
 DROP SEQUENCE ids_seq;
