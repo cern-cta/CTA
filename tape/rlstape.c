@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.9 $ $Date: 1999/11/23 13:57:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.10 $ $Date: 2000/01/03 16:55:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -197,15 +197,15 @@ unload_loop:
 		do {
 			c = rbtdemount (vid, drive, dvn, loader, demountforce);
 			if ((n = rbtdmntchk (&c, drive, &demountforce)) < 0)
-				goto reply;
+				goto freevol;
 		} while (n == 1);
 		if (n == 2) goto unload_loop;
 	}
 freevol:
-reply:
 #ifdef TMS
 	c = sendtmsmount (mode, "CA", vid, jid, name, acctname, drive);
 #endif
+reply:
 #if VDQM
 	vdqm_status = VDQM_VOL_UNMOUNT;
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_VOL_UNMOUNT)\n");
