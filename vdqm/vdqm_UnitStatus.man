@@ -1,6 +1,9 @@
 .\"
-.\" $Id: vdqm_UnitStatus.man,v 1.4 1999/09/02 15:13:15 obarring Exp $
+.\" $Id: vdqm_UnitStatus.man,v 1.5 1999/09/02 15:18:21 obarring Exp $
 .\" $Log: vdqm_UnitStatus.man,v $
+.\" Revision 1.5  1999/09/02 15:18:21  obarring
+.\" Add osdep.h (because of u_signed64 declaration in vdqm.h)
+.\"
 .\" Revision 1.4  1999/09/02 15:13:15  obarring
 .\" Add missing qoutes ""
 .\"
@@ -16,13 +19,15 @@
 .\"
 .\" Copyright (C) 1999 by CERN/IT/PDP/DM
 .\"
-.TH VDQM_UNITSTATUS l "$Date: 1999/09/02 15:13:15 $"
+.TH VDQM_UNITSTATUS l "$Date: 1999/09/02 15:18:21 $"
 .SH NAME
 .PP
 vdqm_UnitStatus \- update volume drive unit status in VDQM
 .SH SYNOPSIS
 .br
 \fB#include "Castor_limits.h"\fR
+.br
+\fB#include "osdep.h"\fR
 .br
 \fB#include "net.h"\fR
 .br
