@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.81 $ $Date: 2001/09/21 12:03:27 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.82 $ $Date: 2001/09/25 13:50:21 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1005,8 +1005,8 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
              */
             break_and_return = TRUE;
         }
-        if ( databufs[i]->flag == BUFFER_FULL ) 
-            DEBUG_PRINT(LOG_DEBUG,"TapeToMemory() flag buffer %d full\n",i);
+        if ( databufs[i]->flag == BUFFER_FULL )
+            DEBUG_PRINT((LOG_DEBUG,"TapeToMemory() flag buffer %d full\n",i));
         if ( databufs[i]->nb_waiters > 0 ) {
             rc = Cthread_cond_broadcast_ext(databufs[i]->lock);
             if ( rc == -1 ) {
