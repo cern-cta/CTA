@@ -155,9 +155,9 @@ int rtcpcld_setTapeFseq _PROTO((
 int rtcpcld_getTapeFseq _PROTO((
                                 void
                                 ));
-int rtcpcld_incrementTapeFseq _PROTO((
-                                      void
-                                      ));
+int rtcpcld_getAndIncrementTapeFseq _PROTO((
+                                            void
+                                            ));
 int rtcpcld_unlockTape _PROTO((
                                void
                                ));
@@ -168,14 +168,14 @@ int rtcpcld_myDispatch _PROTO((
 int rtcpcld_initThreadPool _PROTO((
                                    int
                                    ));
-int rtcpcld_getVIDsToDo _PROTO((
-                                tape_list_t ***,
-                                int *
-                                ));
-int rtcpcld_getReqsForVID _PROTO((
-                                  tape_list_t *
-                                  ));
-int rtcpcld_anyReqsForVID _PROTO((
+int rtcpcld_getTapesToDo _PROTO((
+                                 tape_list_t ***,
+                                 int *
+                                 ));
+int rtcpcld_getSegmentsToDo _PROTO((
+                                    tape_list_t *
+                                    ));
+int rtcpcld_anyReqsForTape _PROTO((
                                   tape_list_t *
                                   ));
 int rtcpcld_setVidWorkerAddress _PROTO((
@@ -184,11 +184,11 @@ int rtcpcld_setVidWorkerAddress _PROTO((
                                         ));
 
 #if defined(CASTOR_STAGER_TAPESTATUSCODES_H) && defined(CASTOR_STAGER_SEGMENTSTATUSCODES_H)
-int rtcpcld_updateVIDStatus _PROTO((
-                                    tape_list_t *, 
-                                    enum Cstager_TapeStatusCodes_t,
-                                    enum Cstager_TapeStatusCodes_t
-                                    ));
+int rtcpcld_updateTapeStatus _PROTO((
+                                     tape_list_t *, 
+                                     enum Cstager_TapeStatusCodes_t,
+                                     enum Cstager_TapeStatusCodes_t
+                                     ));
 int rtcpcld_updateVIDFileStatus _PROTO((
                                         tape_list_t *,
                                         enum Cstager_SegmentStatusCodes_t,
