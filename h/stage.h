@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.45 2001/02/09 18:24:09 jdurand Exp $
+ * $Id: stage.h,v 1.46 2001/02/14 15:26:44 jdurand Exp $
  */
 
 /*
@@ -29,6 +29,23 @@
 
 /* This macro returns TRUE is the host is an hpss one */
 #define ISHPSSHOST(xfile) (strstr(xfile,"hpss") == xfile )
+
+/* ISSTAGEIN  macro returns TRUE if it is a STAGEIN  request (0x001) */
+/* ISSTAGEOUT macro returns TRUE if it is a STAGEOUT request (0x010) */
+/* ISSTAGEWRT macro returns TRUE if it is a STAGEWRT request (0x011) */
+/* ISSTAGEPUT macro returns TRUE if it is a STAGEPUT request (0x100) */
+
+/* STAGEIN bits can be matched by STAGEIN and STAGEWRT */
+#define ISSTAGEIN(stcp) ((stcp->status & 0xF) == STAGEIN)
+
+/* STAGEOUT bits can be matched by STAGEOUT and STAGEWRT */
+#define ISSTAGEOUT(stcp) ((stcp->status & 0xF) == STAGEOUT)
+
+/* STAGEWRT bits can be matched by nothing else but STAGEWRT */
+#define ISSTAGEWRT(stcp) ((stcp->status & 0xF) == STAGEWRT)
+
+/* STAGEPUT bits can be matched by nothing else but STAGEPUT) */
+#define ISSTAGEPUT(stcp) ((stcp->status & 0xF) == STAGEPUT)
 
 /* ISCASTORMIG macro returns TRUE if it is a CASTOR HSM file candidate for/beeing, migration/migrated */
 /* ISCASTORBEINGMIG macro returns TRUE if it is a CASTOR HSM file beeing migrated */
