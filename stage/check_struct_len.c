@@ -1,9 +1,10 @@
 /*
- * $Id: check_struct_len.c,v 1.4 2000/03/23 01:40:58 jdurand Exp $
+ * $Id: check_struct_len.c,v 1.5 2000/05/30 12:06:16 jdurand Exp $
  */
 
 #include <stddef.h>            /* for NULL */
 #include <sys/types.h>
+#include <string.h>
 #include "stage.h"
 #include "stage_shift.h"
 
@@ -11,7 +12,16 @@
 #ifndef offsetof
 #define offsetof(s_name, s_member) \
 				((size_t)((char *)&((s_name *)NULL)->s_member - (char *)NULL))
+#endif /* offsetof */
+#ifdef offsetofchar
+#undef offsetofchar
 #endif
+#if (defined(__osf__) && defined(__alpha))
+#define offsetofchar(s_name, s_member) \
+				((size_t)((char *)((s_name *)NULL)->s_member - (char *)NULL))
+#else
+#define offsetofchar(s_name, s_member) offsetof(s_name, s_member)
+#endif /* (defined(__osf__) && defined(__alpha)) */
 
 int main() {
 	struct stgcat_entry_old  stcp_old;
@@ -30,8 +40,8 @@ int main() {
 	printf("... Old/New stgcat.filler        length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.filler),
 				 (int) sizeof(stcp.filler),
-				 (int) offsetof(struct stgcat_entry_old,filler),
-				 (int) offsetof(struct stgcat_entry,filler));
+				 (int) offsetofchar(struct stgcat_entry_old,filler),
+				 (int) offsetofchar(struct stgcat_entry,filler));
 	printf("... Old/New stgcat.charconv      length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.charconv),
 				 (int) sizeof(stcp.charconv),
@@ -55,13 +65,13 @@ int main() {
 	printf("... Old/New stgcat.poolname      length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.poolname),
 				 (int) sizeof(stcp.poolname),
-				 (int) offsetof(struct stgcat_entry_old,poolname),
-				 (int) offsetof(struct stgcat_entry,poolname));
+				 (int) offsetofchar(struct stgcat_entry_old,poolname),
+				 (int) offsetofchar(struct stgcat_entry,poolname));
 	printf("... Old/New stgcat.recfm         length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.recfm),
 				 (int) sizeof(stcp.recfm),
-				 (int) offsetof(struct stgcat_entry_old,recfm),
-				 (int) offsetof(struct stgcat_entry,recfm));
+				 (int) offsetofchar(struct stgcat_entry_old,recfm),
+				 (int) offsetofchar(struct stgcat_entry,recfm));
 	printf("... Old/New stgcat.size          length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.size),
 				 (int) sizeof(stcp.size),
@@ -70,8 +80,8 @@ int main() {
 	printf("... Old/New stgcat.ipath         length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.ipath),
 				 (int) sizeof(stcp.ipath),
-				 (int) offsetof(struct stgcat_entry_old,ipath),
-				 (int) offsetof(struct stgcat_entry,ipath));
+				 (int) offsetofchar(struct stgcat_entry_old,ipath),
+				 (int) offsetofchar(struct stgcat_entry,ipath));
 	printf("... Old/New stgcat.t_or_d        length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.t_or_d),
 				 (int) sizeof(stcp.t_or_d),
@@ -80,13 +90,13 @@ int main() {
 	printf("... Old/New stgcat.group         length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.group),
 				 (int) sizeof(stcp.group),
-				 (int) offsetof(struct stgcat_entry_old,group),
-				 (int) offsetof(struct stgcat_entry,group));
+				 (int) offsetofchar(struct stgcat_entry_old,group),
+				 (int) offsetofchar(struct stgcat_entry,group));
 	printf("... Old/New stgcat.user          length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.user),
 				 (int) sizeof(stcp.user),
-				 (int) offsetof(struct stgcat_entry_old,user),
-				 (int) offsetof(struct stgcat_entry,user));
+				 (int) offsetofchar(struct stgcat_entry_old,user),
+				 (int) offsetofchar(struct stgcat_entry,user));
 	printf("... Old/New stgcat.uid           length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.uid),
 				 (int) sizeof(stcp.uid),
@@ -145,18 +155,18 @@ int main() {
 	printf("... Old/New stgcat.u1.t.den      length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.u1.t.den),
 				 (int) sizeof(stcp.u1.t.den),
-				 (int) offsetof(struct stgcat_entry_old,u1.t.den),
-				 (int) offsetof(struct stgcat_entry,u1.t.den));
+				 (int) offsetofchar(struct stgcat_entry_old,u1.t.den),
+				 (int) offsetofchar(struct stgcat_entry,u1.t.den));
 	printf("... Old/New stgcat.u1.t.dgn      length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.u1.t.dgn),
 				 (int) sizeof(stcp.u1.t.dgn),
-				 (int) offsetof(struct stgcat_entry_old,u1.t.dgn),
-				 (int) offsetof(struct stgcat_entry,u1.t.dgn));
+				 (int) offsetofchar(struct stgcat_entry_old,u1.t.dgn),
+				 (int) offsetofchar(struct stgcat_entry,u1.t.dgn));
 	printf("... Old/New stgcat.u1.t.fid      length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.u1.t.fid),
 				 (int) sizeof(stcp.u1.t.fid),
-				 (int) offsetof(struct stgcat_entry_old,u1.t.fid),
-				 (int) offsetof(struct stgcat_entry,u1.t.fid));
+				 (int) offsetofchar(struct stgcat_entry_old,u1.t.fid),
+				 (int) offsetofchar(struct stgcat_entry,u1.t.fid));
 	printf("... Old/New stgcat.u1.t.filstat  length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.u1.t.filstat),
 				 (int) sizeof(stcp.u1.t.filstat),
@@ -165,13 +175,13 @@ int main() {
 	printf("... Old/New stgcat.u1.t.fseq     length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.u1.t.fseq),
 				 (int) sizeof(stcp.u1.t.fseq),
-				 (int) offsetof(struct stgcat_entry_old,u1.t.fseq),
-				 (int) offsetof(struct stgcat_entry,u1.t.fseq));
+				 (int) offsetofchar(struct stgcat_entry_old,u1.t.fseq),
+				 (int) offsetofchar(struct stgcat_entry,u1.t.fseq));
 	printf("... Old/New stgcat.u1.t.lbl      length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.u1.t.lbl),
 				 (int) sizeof(stcp.u1.t.lbl),
-				 (int) offsetof(struct stgcat_entry_old,u1.t.lbl),
-				 (int) offsetof(struct stgcat_entry,u1.t.lbl));
+				 (int) offsetofchar(struct stgcat_entry_old,u1.t.lbl),
+				 (int) offsetofchar(struct stgcat_entry,u1.t.lbl));
 	printf("... Old/New stgcat.u1.t.retentd  length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.u1.t.retentd),
 				 (int) sizeof(stcp.u1.t.retentd),
@@ -180,8 +190,8 @@ int main() {
 	printf("... Old/New stgcat.u1.t.tapesrvr length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.u1.t.tapesrvr),
 				 (int) sizeof(stcp.u1.t.tapesrvr),
-				 (int) offsetof(struct stgcat_entry_old,u1.t.tapesrvr),
-				 (int) offsetof(struct stgcat_entry,u1.t.tapesrvr));
+				 (int) offsetofchar(struct stgcat_entry_old,u1.t.tapesrvr),
+				 (int) offsetofchar(struct stgcat_entry,u1.t.tapesrvr));
 	printf("... Old/New stgcat.u1.t.E_Tflags length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.u1.t.E_Tflags),
 				 (int) sizeof(stcp.u1.t.E_Tflags),
@@ -190,13 +200,13 @@ int main() {
 	printf("... Old/New stgcat.u1.t.vid      length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.u1.t.vid),
 				 (int) sizeof(stcp.u1.t.vid),
-				 (int) offsetof(struct stgcat_entry_old,u1.t.vid),
-				 (int) offsetof(struct stgcat_entry,u1.t.vid));
+				 (int) offsetofchar(struct stgcat_entry_old,u1.t.vid),
+				 (int) offsetofchar(struct stgcat_entry,u1.t.vid));
 	printf("... Old/New stgcat.u1.t.vsn      length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.u1.t.vsn),
 				 (int) sizeof(stcp.u1.t.vsn),
-				 (int) offsetof(struct stgcat_entry_old,u1.t.vsn),
-				 (int) offsetof(struct stgcat_entry,u1.t.vsn));
+				 (int) offsetofchar(struct stgcat_entry_old,u1.t.vsn),
+				 (int) offsetofchar(struct stgcat_entry,u1.t.vsn));
 	printf("... Old/New stgcat.u1.d          length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.u1.d),
 				 (int) sizeof(stcp.u1.d),
@@ -205,13 +215,13 @@ int main() {
 	printf("... Old/New stgcat.u1.d.xfile    length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.u1.d.xfile),
 				 (int) sizeof(stcp.u1.d.xfile),
-				 (int) offsetof(struct stgcat_entry_old,u1.d.xfile),
-				 (int) offsetof(struct stgcat_entry,u1.d.xfile));
+				 (int) offsetofchar(struct stgcat_entry_old,u1.d.xfile),
+				 (int) offsetofchar(struct stgcat_entry,u1.d.xfile));
 	printf("... Old/New stgcat.u1.d.Xparm    length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.u1.d.Xparm),
 				 (int) sizeof(stcp.u1.d.Xparm),
-				 (int) offsetof(struct stgcat_entry_old,u1.d.Xparm),
-				 (int) offsetof(struct stgcat_entry,u1.d.Xparm));
+				 (int) offsetofchar(struct stgcat_entry_old,u1.d.Xparm),
+				 (int) offsetofchar(struct stgcat_entry,u1.d.Xparm));
 	printf("... Old/New stgcat.u1.m          length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.u1.m),
 				 (int) sizeof(stcp.u1.m),
@@ -220,8 +230,8 @@ int main() {
 	printf("... Old/New stgcat.u1.m.xfile    length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stcp_old.u1.m.xfile),
 				 (int) sizeof(stcp.u1.m.xfile),
-				 (int) offsetof(struct stgcat_entry_old,u1.m.xfile),
-				 (int) offsetof(struct stgcat_entry,u1.m.xfile));
+				 (int) offsetofchar(struct stgcat_entry_old,u1.m.xfile),
+				 (int) offsetofchar(struct stgcat_entry,u1.m.xfile));
 
 	printf("... Old/New stgpath              length: %3d / %3d\n",
 				 (int) sizeof(stpp_old),
@@ -234,8 +244,8 @@ int main() {
 	printf("... Old/New stgpath.upath        length: %3d / %3d     offset: %3d / %3d\n",
 				 (int) sizeof(stpp_old.upath),
 				 (int) sizeof(stpp.upath),
-				 (int) offsetof(struct stgpath_entry_old,upath),
-				 (int) offsetof(struct stgpath_entry,upath));
+				 (int) offsetofchar(struct stgpath_entry_old,upath),
+				 (int) offsetofchar(struct stgpath_entry,upath));
 
 	return(0);
 }
