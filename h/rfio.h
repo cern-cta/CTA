@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.24 $ $Date: 2002/02/26 07:51:05 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.25 $ $Date: 2002/08/28 05:40:44 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -229,6 +229,7 @@ struct rfiostat	{
 #define fwrite          rfio_fwrite
 #define fread           rfio_fread
 #define fseek           rfio_fseek
+#define ftell           rfio_ftell
 #define stat(X,Y)       rfio_stat(X,Y)
 #define chdir           rfio_chdir
 #define getc            rfio_getc
