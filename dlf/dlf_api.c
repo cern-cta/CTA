@@ -6,7 +6,7 @@
 */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.7 $ $Date: 2003/11/06 07:19:14 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.8 $ $Date: 2003/12/28 11:42:56 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -14,22 +14,22 @@ static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.7 $ $Date: 2003
 
   API interface to the CASTOR Distributed Logging Facility
   
-    ----------------------------------------------------------------------
+ ----------------------------------------------------------------------
     
-	  int dlf_init (const char* facility_name)
+ int dlf_init (const char* facility_name)
 	  
-		Initializes DLF global structure.
-		Reads the configuration file and stores log destinations.
-		Get log messages form the DLF server and stores them in memory. 
+ Initializes DLF global structure.
+ Reads the configuration file and stores log destinations.
+ Get log messages form the DLF server and stores them in memory. 
 		
-		  ----------------------------------------------------------------------
+ ----------------------------------------------------------------------
 		  
-			int dlf_write (Cuuid_t request_id, int severity, int message_no,
-			U_HYPER ns_invariant, int numparams, ...)
+ int dlf_write (Cuuid_t request_id, int severity, int message_no,
+               struct Cns_fileid *ns_invariant, int numparams, ...)
 			
-			  Writes log message to the destination according to the severity.
-			  Message parameters should be in trios: parameter name, parameter type,
-			  parameter value.
+ Writes log message to the destination according to the severity.
+ Message parameters should be in trios: parameter name, parameter type,
+ parameter value.
 			  
 ***********************************************************************/
 
@@ -613,7 +613,7 @@ char DLL_DECL * dlf_format_str(char *buf, int buf_len, const char *fmt, ...) {
 }
 
 int DLL_DECL dlf_write (Cuuid_t request_id, int severity, int message_no,
-						U_HYPER ns_invariant, int numparams, ...)  {
+						struct Cns_fileid *ns_invariant, int numparams, ...)  {
 	
 	int i;
 	HYPER par_int;
@@ -624,6 +624,7 @@ int DLL_DECL dlf_write (Cuuid_t request_id, int severity, int message_no,
 	int par_type;
 	int rv;
 	int saved_rv;
+	int num_char;
 	dlf_log_message_t *log_message;
 	dlf_log_dst_t *dst;
 	struct timeval cur_time;
@@ -641,7 +642,19 @@ int DLL_DECL dlf_write (Cuuid_t request_id, int severity, int message_no,
 	memcpy( &(log_message->request_id), &request_id, sizeof(Cuuid_t) );
 	log_message->severity = severity;
 	log_message->message_no = message_no;
-	log_message->ns_invariant = ns_invariant;
+	if (ns_invariant != NULL) {
+	  log_message->ns_fileid.fileid = ns_invariant->fileid;
+	  num_char = strlen(ns_invariant->server);
+	  if (num_char < 0 || num_char > CA_MAXHOSTNAMELEN) {
+	    dlf_free_log_message(log_message);
+	    return (-1);
+	  }
+	  strcpy (log_message->ns_fileid.server, ns_invariant->server);
+	}
+	else {
+	  log_message->ns_fileid.fileid = 0;
+	  strcpy (log_message->ns_fileid.server, "N/A");
+	}
 #if !defined(_WIN32)  
 	gettimeofday (&cur_time, NULL);
 	/* Format time */
@@ -758,7 +771,7 @@ int DLL_DECL dlf_write_to_file(dst, msg)
 dlf_log_dst_t *dst;
 dlf_log_message_t *msg;
 {
-	static char fmt1[] = "DATE=%s.%06d HOST=%s LVL=%s PRGN=%d PROG=%s PID=%d TID=%d MSGN=%d MSG=\"%s\" RQID=%s NSINV=%016llx";
+	static char fmt1[] = "DATE=%s.%06d HOST=%s LVL=%s PRGN=%d PROG=%s PID=%d TID=%d MSGN=%d MSG=\"%s\" RQID=%s CNS=%s FID=%016llx";
 	static char fmt2[] = " %s=\"%s\"";
 	static char fmt3[] = " %s=%lld";
 	static char fmt4[] = " %s=%f";
@@ -780,9 +793,9 @@ dlf_log_message_t *msg;
 		return (-1);
 	
 #if !defined(_WIN32)
-	/* Lock file at the end of file*/
+	/* Lock file */
 	fl_struct.l_type = F_WRLCK;
-	fl_struct.l_whence = SEEK_END;
+	fl_struct.l_whence = SEEK_SET;
 	fl_struct.l_start = 0;
 	fl_struct.l_len = 0;
 	fl_struct.l_pid = 0;
@@ -801,7 +814,10 @@ dlf_log_message_t *msg;
 		msg->message_no,
 		((txt = dlf_get_msg_text(msg->message_no)) != NULL) ? txt : "No text",
 		dlf_uuid2hex(msg->request_id, uuidhex, sizeof(uuidhex)),
-		msg->ns_invariant);
+		msg->ns_fileid.server,
+		msg->ns_fileid.fileid);
+	/* Go to the end of the file */
+	if ((lseek (fd, 0, SEEK_END)) < 0) return (-1);
 	
 	written = write (fd, prtbuf, n);
 	if (written < n)
@@ -840,16 +856,8 @@ dlf_log_message_t *msg;
 	fsync (fd);
 	
 	/* Unlock the file */
-	fl_struct.l_type = F_UNLCK;
-	fl_struct.l_whence = SEEK_END;
-	fl_struct.l_start = 0;
-	fl_struct.l_len = 0;
-	fl_struct.l_pid = 0;
-	
-	if (fcntl(fd, F_SETLKW64, &fl_struct) < 0)
-		return (-1);
-	
 #endif
+	/* Lock is removed when file is closed */
 	close (fd);
 	return (0);
 }
@@ -871,6 +879,7 @@ dlf_log_message_t *msg;
 		+ sizeof(int)
 #endif
 		+ sizeof(int)
+	        + strlen(msg->ns_fileid.server) + 1
 		+ sizeof(HYPER)
 		+ sizeof(U_BYTE)
 		+ sizeof(U_BYTE)
@@ -984,7 +993,8 @@ int last_message;
 	marshall_LONG(sbp, msg->pid);
 	marshall_LONG(sbp, msg->cid);
 	
-	marshall_HYPER(sbp, msg->ns_invariant);
+	marshall_STRING(sbp, msg->ns_fileid.server);
+	marshall_HYPER(sbp, msg->ns_fileid.fileid);
 	
 	marshall_BYTE(sbp, msg->facility_no);
 	marshall_BYTE(sbp, msg->severity);
