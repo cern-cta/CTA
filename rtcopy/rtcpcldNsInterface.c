@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/12/09 15:39:59 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.22 $ $Release$ $Date: 2005/01/04 09:04:29 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/12/09 15:39:59 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.22 $ $Release$ $Date: 2005/01/04 09:04:29 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -460,9 +460,10 @@ int rtcpcld_checkNsSegment(
     if ( strcmp(currentSegattrs[i].vid,tapereq->vid) != 0 ) continue;
     if ( currentSegattrs[i].side != tapereq->side ) continue;
     if ( currentSegattrs[i].fseq != filereq->tape_fseq ) continue;
-    if ( memcmp(currentSegattrs[i].blockid,
-                filereq->blockid,
-                sizeof(filereq->blockid)) != 0 ) continue;
+    if ( (filereq->position_method == TPPOSIT_BLKID) &&
+         (memcmp(currentSegattrs[i].blockid,
+                 filereq->blockid,
+                 sizeof(filereq->blockid)) != 0) ) continue;
     found = 1;
   }
 
@@ -741,40 +742,6 @@ int rtcpcld_checkDualCopies(
     free(fileId);
   }
   return(0);
-}
-
-                            
-
-int rtcpcld_setatime(
-                     file
-                     )
-     file_list_t *file;
-{
-  int rc;
-  struct Cns_fileid *castorFileId = NULL;
-  char *nsErrMsg = NULL;
-
-  if ( file == NULL ) {
-    serrno = EINVAL;
-    return(-1);
-  }
-
-  (void)getNsErrBuf(&nsErrMsg);
-  rc = rtcpcld_getFileId(file,&castorFileId);
-  if ( rc < 0 ){
-    LOG_SYSCALL_ERR("Cns_statx()");
-    return(-1);
-  }
-
-  rc = Cns_setatime(
-                    NULL,
-                    castorFileId
-                    );
-  if ( rc < 0 ){
-    LOG_SYSCALL_ERR("Cns_setatime()");
-  }
-  if ( castorFileId != NULL ) free(castorFileId);  
-  return(rc);
 }
 
 int rtcpcld_getFileId(
