@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.1 $ $Release$ $Date: 2005/04/01 14:41:18 $ $Author: obarring $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/01 16:22:49 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.1 $ $Release$ $Date: 2005/04/01 14:41:18 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/04/01 16:22:49 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -728,7 +728,7 @@ static int checkRecallRetry(
   }
   free(expertBuffer);
   free(segments);
-  return(0);
+  return(rc);
 }
 
 /*
