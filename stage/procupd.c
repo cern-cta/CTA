@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.88 2001/12/10 16:19:56 jdurand Exp $
+ * $Id: procupd.c,v 1.89 2001/12/20 11:46:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.88 $ $Date: 2001/12/10 16:19:56 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.89 $ $Date: 2001/12/20 11:46:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -151,6 +151,10 @@ procupdreq(req_type, magic, req_data, clienthost)
 	struct waitf *wfp;
 	struct waitq *wqp = NULL;
 	int Zflag = 0;
+	int cflag = 0;
+	int oflag = 0;
+	int Cflag = 0;
+	int Oflag = 0;
 	int callback_index = -1;
 	int found_wfp = 0;
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
@@ -218,6 +222,10 @@ procupdreq(req_type, magic, req_data, clienthost)
 		}
 		stglogit(func,"stpp[1/1] : %s\n",stpp_input[0].upath);
 		if (rc >= 0) stglogit(func,"-R %d\n", rc);
+		if ((flags & STAGE_FILE_ROPEN) == STAGE_FILE_ROPEN) oflag = 1;
+		if ((flags & STAGE_FILE_RCLOSE) == STAGE_FILE_RCLOSE) cflag = 1;
+		if ((flags & STAGE_FILE_WOPEN) == STAGE_FILE_ROPEN) Oflag = 1;
+		if ((flags & STAGE_FILE_WCLOSE) == STAGE_FILE_RCLOSE) Cflag = 1;
 		/* Print the flags */
 		stglogflags(func,flags);
 
@@ -245,7 +253,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		upd_rpfd = rpfd;
 		Coptind = 1;
 		Copterr = 0;
-		while ((c = Cgetopt (nargs, argv, "b:D:F:f:h:i:I:L:q:R:s:T:U:W:Z:")) != -1) {
+		while ((c = Cgetopt (nargs, argv, "b:cCD:F:f:h:i:I:L:oOq:R:s:T:U:W:Z:")) != -1) {
 			switch (c) {
 			case 'b':
 				stage_strtoi(&blksize, Coptarg, &dp, 10);
@@ -253,6 +261,12 @@ procupdreq(req_type, magic, req_data, clienthost)
 					sendrep (rpfd, MSG_ERR, STG06, "-b");
 					errflg++;
 				}
+				break;
+			case 'c':
+				cflag++;
+				break;
+			case 'C':
+				Cflag++;
 				break;
 			case 'D':
 				dvn = Coptarg;
@@ -280,6 +294,12 @@ procupdreq(req_type, magic, req_data, clienthost)
 					sendrep (rpfd, MSG_ERR, STG06, "-L");
 					errflg++;
 				}
+				break;
+			case 'o':
+				oflag++;
+				break;
+			case 'O':
+				Oflag++;
 				break;
 			case 'q':
 				fseq = Coptarg;
@@ -331,6 +351,13 @@ procupdreq(req_type, magic, req_data, clienthost)
 			c = USERR;
 			goto reply;
 		}
+	}
+
+    /* Protect agains specifying open and close at the same time */
+	if ((oflag + cflag + Oflag + Cflag) > 1) {
+		sendrep (rpfd, MSG_ERR, STG35, "-c [or -C]", "-o [or -O]");
+		c = USERR;
+		goto reply;
 	}
 
 	if ((gr = Cgetgrgid (gid)) == NULL) {
@@ -484,6 +511,50 @@ procupdreq(req_type, magic, req_data, clienthost)
 					rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
 					/* wqp->status = 0; */
 				}
+			} else if ((req_type == STAGE_UPDC) && (cflag || oflag || Cflag || Oflag)) {
+				struct stgpath_entry *stpp;
+
+				found = 0;
+				for (stpp = stps; stpp < stpe; stpp++) {
+					if (stpp->reqid == 0) break;
+					if (strcmp (argv_i, stpp->upath)) continue;
+					found = 1;
+					break;
+				}
+				if (found != 0) {
+					found = 0;
+					for (stcp = stcs; stcp < stce; stcp++) {
+						if (stcp->reqid == 0) break;
+						if (stpp->reqid != stcp->reqid) continue;
+						found = 1;
+						break;
+					}
+				} else {
+					for (stcp = stcs; stcp < stce; stcp++) {
+						if (stcp->reqid == 0) break;
+						if (strcmp (argv_i, stcp->ipath)) continue;
+						found = 1;
+						break;
+					}
+				}
+				if (found != 1) {
+					sendrep (rpfd, MSG_ERR, STG22);
+					c = USERR;
+					goto reply;
+				}
+
+				if (oflag) /* Open on disk in read mode (disk -> client) */
+					rwcountersfs(stcp->poolname, stcp->ipath, STAGEWRT, STAGEWRT); /* Could be STAGEPUT */
+				else if (cflag) /* Corresponding close */
+					rwcountersfs(stcp->poolname, stcp->ipath, STAGEWRT, STAGEUPDC);
+				else if (Oflag) /* Open on disk in write mode (client -> disk) */
+					rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT); /* Could be STAGEALLOC */
+				else if (Cflag) /* Corresponding close */
+					rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEUPDC);
+
+				c = 0;
+				goto reply;
+
 			} else {
 				if ((c = upd_stageout(STAGEUPDC, argv_i, &subreqid, 1, NULL, 0)) != 0) {
 					if (c != CLEARED) {
@@ -583,6 +654,49 @@ procupdreq(req_type, magic, req_data, clienthost)
 
 	/* Here stcp points to the found entry */
 	/* and index_found points to the index starting at stcs */
+	if (oflag) {
+		/* The processing of oflag is an end point doing nothing else but updating r/w counters */
+		if (wqp->last_rwcounterfs_vs_R != LAST_RWCOUNTERSFS_TPPOS) {
+			/* Should be either 0 (from initialization) or LAST_RWCOUNTERSFS_FILCP */
+			rwcountersfs(stcp->poolname, stcp->ipath, STAGEWRT, STAGEWRT); /* Could be STAGEPUT */
+			wqp->last_rwcounterfs_vs_R = LAST_RWCOUNTERSFS_TPPOS;
+		}
+		c = 0;
+		goto reply;
+	}
+
+	if (cflag) {
+		/* The processing of cflag is an end point doing nothing else but updating r/w counters */
+		if (wqp->last_rwcounterfs_vs_R == LAST_RWCOUNTERSFS_TPPOS) {
+			/* Should be LAST_RWCOUNTERSFS_TPPOS */
+			rwcountersfs(stcp->poolname, stcp->ipath, STAGEWRT, STAGEUPDC);
+			wqp->last_rwcounterfs_vs_R = LAST_RWCOUNTERSFS_FILCP;
+		}
+		c = 0;
+		goto reply;
+	}
+
+	if (Oflag) {
+		/* The processing of Oflag is an end point doing nothing else but updating r/w counters */
+		if (wqp->last_rwcounterfs_vs_R != LAST_RWCOUNTERSFS_TPPOS) {
+			/* Should be either 0 (from initialization) or LAST_RWCOUNTERSFS_FILCP */
+			rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT); /* Could be STAGEALLOC */
+			wqp->last_rwcounterfs_vs_R = LAST_RWCOUNTERSFS_TPPOS;
+		}
+		c = 0;
+		goto reply;
+	}
+
+	if (Cflag) {
+		/* The processing of Cflag is an end point doing nothing else but updating r/w counters */
+		if (wqp->last_rwcounterfs_vs_R == LAST_RWCOUNTERSFS_TPPOS) {
+			/* Should be LAST_RWCOUNTERSFS_TPPOS */
+			rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEUPDC);
+			wqp->last_rwcounterfs_vs_R = LAST_RWCOUNTERSFS_FILCP;
+		}
+		c = 0;
+		goto reply;
+	}
 
 	if ((IS_RC_OK(rc) || IS_RC_WARNING(rc)) &&
 		wqp->concat_off_fseq > 0 && i == (wqp->nbdskf - 1) && stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] == '-') {
