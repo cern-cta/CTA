@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.19 $ $Date: 2000/01/19 11:14:31 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.20 $ $Date: 2000/01/19 12:02:44 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -88,8 +88,6 @@ static int FortranUnitTable[NB_FORTRAN_UNITS];  /* Table of Fortran units */
 
 int success = 0;
 int failure = -1;
-
-thread_arg_t *thargs;
 
 static int DiskIOstarted() {
     int rc;
@@ -1273,7 +1271,7 @@ int rtcpd_InitDiskIO(int *poolsize) {
         *poolsize = RTCPD_THREAD_POOL;
 #else /* VDQM_THREAD_POOL */
         *poolsize = 3;         /* Set some reasonable default */
-        *poolsize = 5;         /* Set some reasonable default */
+#endif /* VDQM_TRHEAD_POOL */
     }
     
     rc = Cpool_create(*poolsize,poolsize);
@@ -1294,12 +1292,6 @@ int rtcpd_InitDiskIO(int *poolsize) {
 }
 
 int rtcpd_CleanUpDiskIO(int poolID) {
-int rtcpd_CleanUpDiskIO(int poolID) {
-    if ( thargs != NULL ) free(thargs);
-    return(0);
-}
-
-
                       tape_list_t *tape,
                       file_list_t *file,
                       int poolID, int poolsize) {
@@ -1311,7 +1303,7 @@ int rtcpd_CleanUpDiskIO(int poolID) {
     rtcpFileRequest_t *filereq;
     diskIOstatus_t *diskIOstatus;
     thread_arg_t *tharg;
-    thread_arg_t *tharg;
+    thread_arg_t *thargs,*tharg;
     int rc, indxp, offset, last_file,end_of_tpfile;
     int prev_bufsz, next_nb_bufs, next_bufsz, thIndex;
     register int convert;
@@ -1560,6 +1552,7 @@ int rtcpd_CleanUpDiskIO(int poolID) {
                         RTCP_FAILED | RTCP_RESELECT_SERV);
                     rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cpool_next_index(): %s\n",
                         sstrerror(serrno));
+                    free(thargs);
                     return(-1);
                 }
                 tharg = &thargs[thIndex];
@@ -1601,6 +1594,7 @@ int rtcpd_CleanUpDiskIO(int poolID) {
             } /* if ( ... ) */
         } CLIST_ITERATE_END(nexttape->file,nextfile);
     } CLIST_ITERATE_END(tape,nexttape);
+    free(thargs);
     return(0);
 }
 
