@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.25 2002/05/15 06:38:56 jdurand Exp $
+ * $Id: stage_constants.h,v 1.26 2002/05/23 10:25:20 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -471,6 +471,7 @@
 #define STAGE_NOLINKCHECK       CONSTLL(0x040000000000)  /* --nolinkcheck [stage_iowc,stage_updc,stage_clr] */
 #define STAGE_NORETRY           CONSTLL(0x100000000000)  /* --noretry  [stage_iowc]             */
 #define STAGE_VOLATILE_TPPOOL   CONSTLL(0x200000000000)  /* --volatile_tppool  [stage_iowc]     */
+#define STAGE_NODISK            CONSTLL(0x400000000000)  /* --nodisk  [stage_clr]               */
 
 /* ======================================================================= */
 /* =================== DEFINITION OF API METHODS ========================= */
