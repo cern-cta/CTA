@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.7 $ $Date: 2000/01/11 11:46:35 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.8 $ $Date: 2000/01/13 11:49:08 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -48,9 +48,10 @@ extern char *geterr();
 #include <serrno.h>
 
 #define SET_REQUEST_ERR(X,Z) {\
-    rtcpd_AppendClientMsg(tape,file,errmsgtxt); \
     (X)->err.severity = (Z); \
     (X)->err.errorcode = serrno; \
+    rtcp_log(LOG_ERR,errmsgtxt); \
+    rtcpd_AppendClientMsg(tape,file,errmsgtxt); \
     if ( ((X)->err.severity & RTCP_FAILED) ) rc = -1;}
 
 static int max_tpretry = MAX_TPRETRY;

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.8 $ $Date: 2000/01/10 08:16:11 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.9 $ $Date: 2000/01/13 11:49:11 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -442,8 +442,8 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
                     serrno = ENOSPC;
 #endif /* _IBMR2 */
                 else twerror(fd,tape,file);
-                rtcp_log(LOG_ERR,"tclose(%d) wrttrllbl(): %s\n",
-                    sstrerror(serrno));
+                rtcp_log(LOG_ERR,"tclose(%d) wrttrllbl(%s): %s\n",fd,
+                    filereq->tape_path,sstrerror(serrno));
             }
         }
     }
