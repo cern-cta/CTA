@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_api.c,v 1.18 2001/05/31 13:31:28 jdurand Exp $
+ * $Id: send2stgd_api.c,v 1.19 2001/05/31 13:52:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.18 $ $Date: 2001/05/31 13:31:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_api.c,v $ $Revision: 1.19 $ $Date: 2001/05/31 13:52:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -47,6 +47,12 @@ int send2stgd_sort_by_fseq _PROTO((CONST void *, CONST void *));
 int send2stgd_api_cmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
 EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
 
+/* This macro cleans everything that have to be cleaned, in particular internally memory allocated on the heap */
+#define SEND2STGD_API_CLEAN() { \
+  if ((_stcp_output != NULL) && (stcp_output == NULL)) { free(_stcp_output) ; _stcp_output = NULL;} \
+  if ((_stpp_output != NULL) && (stpp_output == NULL)) { free(_stpp_output) ; _stpp_output = NULL;} \
+}
+
 /* This macro makes sure that uniqueid stored in thread-specific */
 /* variable is reset before the return so that from now on, any  */
 /* stage_kill() hanler call will have NO effect.                 */
@@ -55,16 +61,23 @@ EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
 		stage_errmsg(func, STG02, func,           \
 					"stage_setuniqueid",          \
 					sstrerror(serrno));           \
+        SEND2STGD_API_CLEAN();                    \
 		return (-1);                              \
 	}                                             \
+    SEND2STGD_API_CLEAN();                        \
 	return(c);                                    \
 }
 
+/* This macro cleans everything that can be cleaned because if it is called there is a error */
+/* Note that if _stcp_output != NULL or _stpp_output != NULL it clears and reset it so that */
+/* we are sure that the call to macro SEND2STGD_API_CLEAN() will not clear something yet done */
 #define SEND2STGD_API_ERROR(c) { \
 	if (nstcp_output != NULL) *nstcp_output = 0; \
-	if (stcp_output != NULL) { free(*stcp_output) ; *stcp_output = NULL;} \
+	if (stcp_output != NULL) { if (*stcp_output != NULL) free(*stcp_output) ; *stcp_output = NULL;} \
 	if (nstpp_output != NULL) *nstpp_output = 0; \
-	if (stpp_output != NULL) { free(*stpp_output) ; *stpp_output = NULL;} \
+	if (stpp_output != NULL) { if (*stpp_output != NULL) free(*stpp_output) ; *stpp_output = NULL;} \
+	if (_stcp_output != NULL) { free(_stcp_output) ; _stcp_output = NULL;} \
+	if (_stpp_output != NULL) { free(_stpp_output) ; _stpp_output = NULL;} \
 	SEND2STGD_API_RETURN(c); \
 }
 
@@ -145,6 +158,8 @@ int rc_shift2castor(rc)
 		return(SESYSERR);
 	case SHIFT_ESTNACT:
 		return(ESTNACT);
+	case REQKILD:
+		return(ESTKILLED);
 	default:
 		return(rc);
 	}
@@ -219,16 +234,17 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 			if ((stg_service = STAGE_PORT) <= 0) {
 				stage_errmsg (func, STG09, STAGE_NAME, "service from environment or configuration is <= 0");
 				serrno = SENOSSERV;
-				SEND2STGD_API_RETURN(-1);
+				SEND2STGD_API_ERROR(-1);
 			}
 		}
 	} else {
 		if ((stg_service = atoi(p)) <= 0) {
 			stage_errmsg (func, STG09, STAGE_NAME, "service from environment or configuration is <= 0");
 			serrno = SENOSSERV;
-			SEND2STGD_API_RETURN(-1);
+			SEND2STGD_API_ERROR(-1);
 		}
 	}
+
 	if (host == NULL) {
 		if ((p = getenv ("STAGE_HOST")) == NULL &&
 				(p = getconfent("STG", "HOST",0)) == NULL) {
@@ -239,10 +255,11 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 	} else {
 		strcpy (stghost, host);
 	}
+
 	if ((hp = Cgethostbyname(stghost)) == NULL) {
 		stage_errmsg (func, STG09, "Host unknown:", stghost);
 		serrno = SENOSHOST;
-		SEND2STGD_API_RETURN(-1);
+		SEND2STGD_API_ERROR(-1);
 	}
 	sin.sin_family = AF_INET;
 	sin.sin_port = (stg_service > 0 ? htons((u_short) stg_service) : sp->s_port);
@@ -251,7 +268,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 	if ((stg_s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
 		stage_errmsg (func, STG02, "", "socket", neterror());
 		serrno = SECOMERR;
-		SEND2STGD_API_RETURN(-1);
+		SEND2STGD_API_ERROR(-1);
 	}
 
 	c = RFIO_NONET;
@@ -268,12 +285,12 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 			stage_errmsg (func, STG00, stghost);
 			(void) netclose (stg_s);
 			serrno = ESTNACT;
-			SEND2STGD_API_RETURN(-1);
+			SEND2STGD_API_ERROR(-1);
 		} else {
 			stage_errmsg (func, STG02, "", "connect", neterror());
 			(void) netclose (stg_s);
 			serrno = SECOMERR;
-			SEND2STGD_API_RETURN(-1);
+			SEND2STGD_API_ERROR(-1);
 		}
 	}
 
@@ -284,7 +301,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 			stage_errmsg (func, STG02, "", "send", neterror());
 		(void) netclose (stg_s);
 		serrno = SECOMERR;
-		SEND2STGD_API_RETURN(-1);
+		SEND2STGD_API_ERROR(-1);
 	}
 	if (! want_reply) {
 		(void) netclose (stg_s);
@@ -295,13 +312,14 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
     if (stage_setuniqueid(current_uniqueid) != 0) {
 		stage_errmsg(func, STG02, func, "stage_setuniqueid", sstrerror(serrno));
 		(void) netclose (stg_s);
-		SEND2STGD_API_RETURN(-1);
+		SEND2STGD_API_ERROR(-1);
     }
 
     /* Connect and netwrite suceeded : Let's remind the latest stghost contacted in this thread */
     stage_setlaststghost(stghost);
 
 	while (1) {
+      
 		if ((n = netread(stg_s, repbuf, 3 * LONGSIZE)) != (3 * LONGSIZE)) {
 			if (n == 0)
 				stage_errmsg (func, STG02, "", "recv", sys_serrlist[SERRNO]);
@@ -315,6 +333,7 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 		unmarshall_LONG (p, magic) ;
 		unmarshall_LONG (p, rep_type) ;
 		unmarshall_LONG (p, c) ;
+
 		if (rep_type == STAGERC) {
 			(void) netclose (stg_s);
 			if (c) {
@@ -361,8 +380,8 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 					free(msgbuf_out);
 					SEND2STGD_API_ERROR(-1);
 				}
-                _stcp_output = dummy;
-                memset(&(_stcp_output[_nstcp_output - 1]),0,sizeof(struct stgcat_entry));
+				_stcp_output = dummy;
+				memset(&(_stcp_output[_nstcp_output - 1]),0,sizeof(struct stgcat_entry));
 			}
 			p = msgbuf_out;
 			unmarshall_status = 0;
@@ -754,7 +773,11 @@ int send2stgd_api_cmp(stcp1,stcp2)
     if (stcp1->u1.d.xfile[0] != '\0' && strcmp(stcp1->u1.d.xfile,stcp2->u1.d.xfile) != 0) return(-1);
     break;
   case 'h':
-    if (stcp1->u1.h.xfile[0] != '\0' && strcmp(stcp1->u1.h.xfile,stcp2->u1.h.xfile) != 0) return(-1);
+    if (stcp1->u1.h.xfile[0]       != '\0' && strcmp(stcp1->u1.h.xfile,stcp2->u1.h.xfile) != 0) return(-1);
+    if (stcp1->u1.h.server[0]      != '\0' && strcmp(stcp1->u1.h.server,stcp2->u1.h.server) != 0) return(-1);
+    if (stcp1->u1.h.fileid         != 0    && stcp1->u1.h.fileid != stcp2->u1.h.fileid) return(-1);
+    if (stcp1->u1.h.fileclass      != 0    && stcp1->u1.h.fileclass != stcp2->u1.h.fileid) return(-1);
+    if (stcp1->u1.h.tppool[0]      != '\0' && strcmp(stcp1->u1.h.tppool,stcp2->u1.h.tppool) != 0) return(-1);
     break;
   }
 
