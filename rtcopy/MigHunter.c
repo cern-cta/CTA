@@ -1,3 +1,4 @@
+
 /******************************************************************************
  *                      MigHunter.c
  *
@@ -17,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/12/09 19:34:45 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/12/09 20:08:17 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/12/09 19:34:45 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.9 $ $Release$ $Date: 2004/12/09 20:08:17 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -510,6 +511,7 @@ int streamCreator(
   
   nbStreamsTotal = 0;
   for ( i=0; i<nbTapePools; i++ ) {
+    streamArray = NULL;
     Cstager_TapePool_streams(tapePoolArray[i],&streamArray,&nbStreams);
     if ( (nbStreams > 0) && (streamArray != NULL) ) {
       nbStreamsTotal += nbStreams;
@@ -624,6 +626,7 @@ int startStreams(
 
   Cstager_SvcClass_tapePools(svcClass,&tapePoolArray,&nbTapePools);
   for ( i=0; i<nbTapePools; i++ ) {
+    streamArray = NULL;
     Cstager_TapePool_streams(tapePoolArray[i],&streamArray,&nbStreams);
     tapePoolName = NULL;
     Cstager_TapePool_name(tapePoolArray[i],(CONST char **)&tapePoolName);
@@ -691,6 +694,7 @@ int addTapeCopyToStreams(
     Cstager_TapePool_name(tapePoolArray[i],(CONST char **)&tapePoolName);
     if ( findTapePoolInFileClass(fileClass,tapePoolName) == 1 ) {
       addedToStream = 1;
+      streamArray = NULL;
       Cstager_TapePool_streams(tapePoolArray[i],&streamArray,&nbStreams);
       for ( j=0; j<nbStreams; j++ ) {
         Cstager_Stream_addTapeCopy(streamArray[j],tapeCopy);
