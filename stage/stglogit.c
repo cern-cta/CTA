@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.28 2001/12/20 11:34:53 jdurand Exp $
+ * $Id: stglogit.c,v 1.29 2002/01/21 10:33:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.28 $ $Date: 2001/12/20 11:34:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.29 $ $Date: 2002/01/21 10:33:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -48,10 +48,10 @@ int stglogit(va_alist) va_dcl
 	tm = localtime (&current_time);
 #if (defined(__osf__) && defined(__alpha))
 	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
-		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
+			 tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
 #else
 	snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
-		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
+			  tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
 #endif
 	prtbuf[PRTBUFSZ-1] = '\0';
 	if ((strlen(prtbuf) + 1) < PRTBUFSZ) {
@@ -97,10 +97,10 @@ int stglogtppool(va_alist) va_dcl
 	tm = localtime (&current_time);
 #if (defined(__osf__) && defined(__alpha))
 	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s tppool: %s\n", tm->tm_mon+1,
-		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func, tppool);
+			 tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func, tppool);
 #else
 	snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s tppool: %s\n", tm->tm_mon+1,
-		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func, tppool);
+			  tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func, tppool);
 #endif
 	prtbuf[PRTBUFSZ-1] = '\0';
 	if ((fd_log = open (LOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664)) >= 0) {
@@ -166,6 +166,7 @@ int stglogflags(va_alist) va_dcl
  		{ STAGE_FILE_RCLOSE , "STAGE_FILE_RCLOSE" },
  		{ STAGE_FILE_WOPEN  , "STAGE_FILE_WOPEN"  },
  		{ STAGE_FILE_WCLOSE , "STAGE_FILE_WCLOSE" },
+ 		{ STAGE_REQID       , "STAGE_REQID"       },
         { 0                , NULL               }
 	};
       
@@ -179,10 +180,10 @@ int stglogflags(va_alist) va_dcl
 	tm = localtime (&current_time);
 #if (defined(__osf__) && defined(__alpha))
 	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s flags: ", tm->tm_mon+1,
-		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
+			 tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
 #else
 	snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s flags: ", tm->tm_mon+1,
-		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
+			  tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
 #endif
 	prtbuf[PRTBUFSZ-1] = '\0';
 	thisp = prtbuf + strlen(prtbuf);
@@ -279,10 +280,10 @@ int stglogopenflags(va_alist) va_dcl
 	tm = localtime (&current_time);
 #if (defined(__osf__) && defined(__alpha))
 	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s openflags: ", tm->tm_mon+1,
-		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
+			 tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
 #else
 	snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s openflags: ", tm->tm_mon+1,
-		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
+			  tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
 #endif
 	prtbuf[PRTBUFSZ-1] = '\0';
 	thisp = prtbuf + strlen(prtbuf);
@@ -329,10 +330,10 @@ int stgmiglogit(va_alist) va_dcl
 	tm = localtime (&current_time);
 #if (defined(__osf__) && defined(__alpha))
 	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
-		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
+			 tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
 #else
 	snprintf (prtbuf, PRTBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,
-		tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
+			  tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, reqid, func);
 #endif
 	prtbuf[PRTBUFSZ-1] = '\0';
 	if ((strlen(prtbuf) + 1) < PRTBUFSZ) {

@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.70 2001/12/19 17:25:51 jdurand Exp $
+ * $Id: procqry.c,v 1.71 2002/01/21 10:33:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.70 $ $Date: 2001/12/19 17:25:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.71 $ $Date: 2002/01/21 10:33:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -140,10 +140,10 @@ static int force_side_format_flag;
 #endif /* _REENTRANT || _THREAD_SAFE */
 
 void procqryreq(req_type, magic, req_data, clienthost)
-		 int req_type;
-		 int magic;
-		 char *req_data;
-		 char *clienthost;
+	int req_type;
+	int magic;
+	char *req_data;
+	char *clienthost;
 {
 	char *afile = NULL;
 	char **argv = NULL;
@@ -333,7 +333,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	}
 #if SACCT
 	stageacct (STGCMDR, -1, gid, clienthost,
-						 reqid, req_type, 0, 0, NULL, "", (char) 0);
+			   reqid, req_type, 0, 0, NULL, "", (char) 0);
 #endif
 	
 	if ((gr = Cgetgrgid (gid)) == NULL) {
@@ -346,7 +346,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	group[CA_MAXGRPNAMELEN] = '\0';
 	
 	if (req_type > STAGE_00) {
-      /* This is coming from the API */
+		/* This is coming from the API */
 		if (nstcp_input != 1) {
 			sendrep(rpfd, MSG_ERR, "STG02 - Invalid number of input structure (%d) - Should be 1\n", nstcp_input);
 			c = USERR;
@@ -378,7 +378,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
  			}
 		}
 		/* We mimic the getopt below */
-		if ((this_reqid = stcp_input.reqid) > 0) {
+		if (((flags & STAGE_REQID) == STAGE_REQID) && ((this_reqid = stcp_input.reqid) > 0)) {
 			reqid_flag++;
 		} else {
 			this_reqid = 0;
@@ -406,15 +406,15 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			if (! noregexp_flag) {
 				if (
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-						regcomp (&preg, afile, 0)
+					regcomp (&preg, afile, 0)
 #else
-						! compile (afile, expbuf, expbuf+sizeof(expbuf), '\0')
+					! compile (afile, expbuf, expbuf+sizeof(expbuf), '\0')
 #endif
-						)
-					{
-						sendrep (rpfd, MSG_ERR, STG06, "STAGE_ALLOCED");
-						errflg++;
-					}
+					)
+				{
+					sendrep (rpfd, MSG_ERR, STG06, "STAGE_ALLOCED");
+					errflg++;
+				}
 			}
 		}
 		if ((flags & STAGE_ALL) == STAGE_ALL) {
@@ -450,11 +450,11 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			if (! noregexp_flag) {
 				if (
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-						regcomp (&preg, mfile, 0)
+					regcomp (&preg, mfile, 0)
 #else
-						! compile (mfile, expbuf, expbuf+sizeof(expbuf), '\0')
+					! compile (mfile, expbuf, expbuf+sizeof(expbuf), '\0')
 #endif
-						) {
+					) {
 					sendrep (rpfd, MSG_ERR, STG06, "HSM Filename not a valid regexp");
 					errflg++;
 				}
@@ -466,7 +466,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		if (stcp_input.poolname[0] != '\0') {
 			/* Implicit -p option */
 			if (strcmp (stcp_input.poolname, "NOPOOL") == 0 ||
-					isvalidpool (stcp_input.poolname)) {
+				isvalidpool (stcp_input.poolname)) {
 				strcpy (poolname, stcp_input.poolname);
 			} else {
 				sendrep (rpfd, MSG_ERR, STG32, stcp_input.poolname);
@@ -591,7 +591,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				break;
 			case 'p':
 				if (strcmp (Coptarg, "NOPOOL") == 0 ||
-						isvalidpool (Coptarg)) {
+					isvalidpool (Coptarg)) {
 					strcpy (poolname, Coptarg);
 				} else {
 					sendrep (rpfd, MSG_ERR, STG32, Coptarg);
@@ -661,24 +661,24 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			if (afile) {
 				if (
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-						regcomp (&preg, afile, 0)
+					regcomp (&preg, afile, 0)
 #else
-						! compile (afile, expbuf, expbuf+sizeof(expbuf), '\0')
+					! compile (afile, expbuf, expbuf+sizeof(expbuf), '\0')
 #endif
-						)
-					{
-						sendrep (rpfd, MSG_ERR, STG06, "-A");
-						errflg++;
-					}
+					)
+				{
+					sendrep (rpfd, MSG_ERR, STG06, "-A");
+					errflg++;
+				}
 			}
 			if (mfile) {
 				if (
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-						regcomp (&preg, mfile, 0)
+					regcomp (&preg, mfile, 0)
 #else
-						! compile (mfile, expbuf, expbuf+sizeof(expbuf), '\0')
+					! compile (mfile, expbuf, expbuf+sizeof(expbuf), '\0')
 #endif
-						) {
+					) {
 					sendrep (rpfd, MSG_ERR, STG06, "-M");
 					errflg++;
 				}
@@ -750,13 +750,13 @@ void procqryreq(req_type, magic, req_data, clienthost)
 
 	if (Lflag) {
 		print_link_list (poolname, aflag, group, uflag, user,
-						numvid, vid, fseq, fseq_list, xfile, afile, mfile, req_type, this_reqid, magic,
+						 numvid, vid, fseq, fseq_list, xfile, afile, mfile, req_type, this_reqid, magic,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-						side_flag, side
+						 side_flag, side
 #else
-						0, 0
+						 0, 0
 #endif
-						);
+			);
 		goto reply;
 	}
 	if (sflag) {
@@ -765,11 +765,11 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	}
 	if (Sflag) {
 		if (print_sorted_list (poolname, aflag, group, uflag, user,
-								numvid, vid, fseq, fseq_list, xfile, afile, mfile, req_type, this_reqid, magic, class_flag,
+							   numvid, vid, fseq, fseq_list, xfile, afile, mfile, req_type, this_reqid, magic, class_flag,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-						side_flag, side
+							   side_flag, side
 #else
-						0, 0
+							   0, 0
 #endif
 			) < 0)
 			c = SYERR;
@@ -777,13 +777,13 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	}
 	if (Tflag) {
 		print_tape_info (poolname, aflag, group, uflag, user,
-						numvid, vid, fseq, fseq_list, req_type, this_reqid, magic, 
+						 numvid, vid, fseq, fseq_list, req_type, this_reqid, magic, 
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-						side_flag, side
+						 side_flag, side
 #else
-						0, 0
+						 0, 0
 #endif
-						);
+			);
 		goto reply;
 	}
 	for (stcp = stcs; stcp < stce; stcp++) {
@@ -968,8 +968,8 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				strcpy( p_stat, "BEING_MIGR");
 			else if (ISCASTORWAITINGMIG(stcp))
 				strcpy( p_stat, "WAITING_MIGR");
-			/* Please note that stcp->a_time + thismintime_beforemigr can go out of bounds */
-			/* That's why I typecase everything to u_signed64 */
+		/* Please note that stcp->a_time + thismintime_beforemigr can go out of bounds */
+		/* That's why I typecase everything to u_signed64 */
 			else if ((ifileclass >= 0) && ((u_signed64) ((u_signed64) stcp->a_time + (u_signed64) thismintime_beforemigr) > (u_signed64) this_time))
 				strcpy (p_stat, "DELAY_MIGR");
 			else
@@ -1042,10 +1042,10 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					if (mintime_flag != 0) {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
-										"%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n" :
+									 ((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
+									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n" :
 #endif
-										"%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n",
+									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n",
 									 vid_and_side, stcp->u1.t.fseq, stcp->u1.t.lbl,
 									 p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
 									 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1060,10 +1060,10 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					} else {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
-									"%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n" :
+									 ((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
+									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n" :
 #endif
-									"%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n",
+									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n",
 									 vid_and_side, stcp->u1.t.fseq, stcp->u1.t.lbl,
 									 p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
 									 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1079,10 +1079,10 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					if (mintime_flag != 0) {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
-									"%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n" :
+									 ((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
+									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n" :
 #endif
-									"%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n",
+									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n",
 									 vid_and_side, stcp->u1.t.fseq, stcp->u1.t.lbl,
 									 p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
 									 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1096,10 +1096,10 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					} else {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
-									"%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n" :
+									 ((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
+									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n" :
 #endif
-									"%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n",
+									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n",
 									 vid_and_side, stcp->u1.t.fseq, stcp->u1.t.lbl,
 									 p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
 									 (float)(stcp->actual_size)/(1024.*1024.), p_size,
@@ -1116,7 +1116,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					if (mintime_flag != 0) {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
+									 ((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %s\n",
@@ -1133,7 +1133,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					} else {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
+									 ((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n",
@@ -1150,7 +1150,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					if (mintime_flag != 0) {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
+									 ((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n",
@@ -1166,7 +1166,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					} else {
 						if (sendrep (rpfd, MSG_OUT,
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-									((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
+									 ((stcp->u1.t.side > 0) || (force_side_format_flag)) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %s\n" :
 #endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %s\n",
@@ -1190,45 +1190,45 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				if (retenp_flag != 0) {
 					if (mintime_flag != 0) {
 						if ((stcp->t_or_d == 'd' &&
-								sendrep (rpfd, MSG_OUT,
-										"%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n", q,
-										stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
-										(float)(stcp->actual_size)/(1024.*1024.), p_size,
-										stcp->poolname,
-										get_retenp(stcp,timestr) == 0 ? timestr : "",
-										get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
-										stcp->reqid, stcp->ipath) < 0) ||
+							 sendrep (rpfd, MSG_OUT,
+									  "%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n", q,
+									  stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
+									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
+									  stcp->poolname,
+									  get_retenp(stcp,timestr) == 0 ? timestr : "",
+									  get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
+									  stcp->reqid, stcp->ipath) < 0) ||
 							(stcp->t_or_d == 'a' &&
-								sendrep (rpfd, MSG_OUT,
-										"%-36s %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n", q,
-										p_stat, stcp->nbaccesses,
-										(float)(stcp->actual_size)/(1024.*1024.), p_size,
-										stcp->poolname,
-										get_retenp(stcp,timestr) == 0 ? timestr : "",
-										get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
-										stcp->reqid, stcp->ipath)
-							< 0)) {
+							 sendrep (rpfd, MSG_OUT,
+									  "%-36s %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n", q,
+									  p_stat, stcp->nbaccesses,
+									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
+									  stcp->poolname,
+									  get_retenp(stcp,timestr) == 0 ? timestr : "",
+									  get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
+									  stcp->reqid, stcp->ipath)
+							 < 0)) {
 							c = SYERR;
 							goto reply;
 						}
 					} else {
 						if ((stcp->t_or_d == 'd' &&
-								sendrep (rpfd, MSG_OUT,
-										"%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n", q,
-										stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
-										(float)(stcp->actual_size)/(1024.*1024.), p_size,
-										stcp->poolname,
-										get_retenp(stcp,timestr) == 0 ? timestr : "",
-										stcp->reqid, stcp->ipath) < 0) ||
+							 sendrep (rpfd, MSG_OUT,
+									  "%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n", q,
+									  stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
+									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
+									  stcp->poolname,
+									  get_retenp(stcp,timestr) == 0 ? timestr : "",
+									  stcp->reqid, stcp->ipath) < 0) ||
 							(stcp->t_or_d == 'a' &&
-								sendrep (rpfd, MSG_OUT,
-										"%-36s %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n", q,
-										p_stat, stcp->nbaccesses,
-										(float)(stcp->actual_size)/(1024.*1024.), p_size,
-										stcp->poolname,
-										get_retenp(stcp,timestr) == 0 ? timestr : "",
-										stcp->reqid, stcp->ipath)
-							< 0)) {
+							 sendrep (rpfd, MSG_OUT,
+									  "%-36s %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n", q,
+									  p_stat, stcp->nbaccesses,
+									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
+									  stcp->poolname,
+									  get_retenp(stcp,timestr) == 0 ? timestr : "",
+									  stcp->reqid, stcp->ipath)
+							 < 0)) {
 							c = SYERR;
 							goto reply;
 						}
@@ -1236,41 +1236,41 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				} else {
 					if (mintime_flag != 0) {
 						if ((stcp->t_or_d == 'd' &&
-								sendrep (rpfd, MSG_OUT,
-										"%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n", q,
-										stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
-										(float)(stcp->actual_size)/(1024.*1024.), p_size,
-										stcp->poolname,
-										get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
-										stcp->reqid, stcp->ipath) < 0) ||
+							 sendrep (rpfd, MSG_OUT,
+									  "%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n", q,
+									  stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
+									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
+									  stcp->poolname,
+									  get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
+									  stcp->reqid, stcp->ipath) < 0) ||
 							(stcp->t_or_d == 'a' &&
-								sendrep (rpfd, MSG_OUT,
-										"%-36s %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n", q,
-										p_stat, stcp->nbaccesses,
-										(float)(stcp->actual_size)/(1024.*1024.), p_size,
-										stcp->poolname,
-										get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
-										stcp->reqid, stcp->ipath)
-							< 0)) {
+							 sendrep (rpfd, MSG_OUT,
+									  "%-36s %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n", q,
+									  p_stat, stcp->nbaccesses,
+									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
+									  stcp->poolname,
+									  get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
+									  stcp->reqid, stcp->ipath)
+							 < 0)) {
 							c = SYERR;
 							goto reply;
 						}
 					} else {
 						if ((stcp->t_or_d == 'd' &&
-								sendrep (rpfd, MSG_OUT,
-										"%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
-										stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
-										(float)(stcp->actual_size)/(1024.*1024.), p_size,
-										stcp->poolname,
-										stcp->reqid, stcp->ipath) < 0) ||
+							 sendrep (rpfd, MSG_OUT,
+									  "%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
+									  stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
+									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
+									  stcp->poolname,
+									  stcp->reqid, stcp->ipath) < 0) ||
 							(stcp->t_or_d == 'a' &&
-								sendrep (rpfd, MSG_OUT,
-										"%-36s %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
-										p_stat, stcp->nbaccesses,
-										(float)(stcp->actual_size)/(1024.*1024.), p_size,
-										stcp->poolname,
-										stcp->reqid, stcp->ipath)
-							< 0)) {
+							 sendrep (rpfd, MSG_OUT,
+									  "%-36s %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
+									  p_stat, stcp->nbaccesses,
+									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
+									  stcp->poolname,
+									  stcp->reqid, stcp->ipath)
+							 < 0)) {
 							c = SYERR;
 							goto reply;
 						}
@@ -1280,41 +1280,41 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				if (retenp_flag != 0) {
 					if (mintime_flag != 0) {
 						if ((stcp->t_or_d == 'd' &&
-								sendrep (rpfd, MSG_OUT,
-										"%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %s\n", q,
-										stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
-										(float)(stcp->actual_size)/(1024.*1024.), p_size,
-										stcp->poolname,
-										get_retenp(stcp,timestr) == 0 ? timestr : "",
-										get_mintime(stcp,timestr2) == 0 ? timestr2 : "") < 0) ||
+							 sendrep (rpfd, MSG_OUT,
+									  "%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %s\n", q,
+									  stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
+									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
+									  stcp->poolname,
+									  get_retenp(stcp,timestr) == 0 ? timestr : "",
+									  get_mintime(stcp,timestr2) == 0 ? timestr2 : "") < 0) ||
 							(stcp->t_or_d == 'a' &&
-								sendrep (rpfd, MSG_OUT,
-										"%-36s %-11s %5d %6.1f/%-4s %-14s %-19s %s\n", q,
-										p_stat, stcp->nbaccesses,
-										(float)(stcp->actual_size)/(1024.*1024.), p_size,
-										stcp->poolname,
-										get_retenp(stcp,timestr) == 0 ? timestr : "",
-										get_mintime(stcp,timestr2) == 0 ? timestr2 : "")
-							< 0)) {
+							 sendrep (rpfd, MSG_OUT,
+									  "%-36s %-11s %5d %6.1f/%-4s %-14s %-19s %s\n", q,
+									  p_stat, stcp->nbaccesses,
+									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
+									  stcp->poolname,
+									  get_retenp(stcp,timestr) == 0 ? timestr : "",
+									  get_mintime(stcp,timestr2) == 0 ? timestr2 : "")
+							 < 0)) {
 							c = SYERR;
 							goto reply;
 						}
 					} else {
 						if ((stcp->t_or_d == 'd' &&
-								sendrep (rpfd, MSG_OUT,
-										"%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %s\n", q,
-										stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
-										(float)(stcp->actual_size)/(1024.*1024.), p_size,
-										stcp->poolname,
-										get_retenp(stcp,timestr) == 0 ? timestr : "") < 0) ||
+							 sendrep (rpfd, MSG_OUT,
+									  "%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %s\n", q,
+									  stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
+									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
+									  stcp->poolname,
+									  get_retenp(stcp,timestr) == 0 ? timestr : "") < 0) ||
 							(stcp->t_or_d == 'a' &&
-								sendrep (rpfd, MSG_OUT,
-										"%-36s %-11s %5d %6.1f/%-4s %-14s %s\n", q,
-										p_stat, stcp->nbaccesses,
-										(float)(stcp->actual_size)/(1024.*1024.), p_size,
-										stcp->poolname,
-										get_retenp(stcp,timestr) == 0 ? timestr : "")
-							< 0)) {
+							 sendrep (rpfd, MSG_OUT,
+									  "%-36s %-11s %5d %6.1f/%-4s %-14s %s\n", q,
+									  p_stat, stcp->nbaccesses,
+									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
+									  stcp->poolname,
+									  get_retenp(stcp,timestr) == 0 ? timestr : "")
+							 < 0)) {
 							c = SYERR;
 							goto reply;
 						}
@@ -1322,35 +1322,35 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				} else {
 					if (mintime_flag != 0) {
 						if ((stcp->t_or_d == 'd' &&
-								sendrep (rpfd, MSG_OUT,
-										"%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %s\n", q,
-										stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
-										(float)(stcp->actual_size)/(1024.*1024.), p_size,
-										stcp->poolname,
-										get_mintime(stcp,timestr2) == 0 ? timestr2 : "") < 0) ||
+							 sendrep (rpfd, MSG_OUT,
+									  "%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %s\n", q,
+									  stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
+									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
+									  stcp->poolname,
+									  get_mintime(stcp,timestr2) == 0 ? timestr2 : "") < 0) ||
 							(stcp->t_or_d == 'a' &&
-								sendrep (rpfd, MSG_OUT,
-										"%-36s %-11s %5d %6.1f/%-4s %-18s %s\n", q,
-										p_stat, stcp->nbaccesses,
-										(float)(stcp->actual_size)/(1024.*1024.), p_size,
-										get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
-										stcp->poolname) < 0)) {
+							 sendrep (rpfd, MSG_OUT,
+									  "%-36s %-11s %5d %6.1f/%-4s %-18s %s\n", q,
+									  p_stat, stcp->nbaccesses,
+									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
+									  get_mintime(stcp,timestr2) == 0 ? timestr2 : "",
+									  stcp->poolname) < 0)) {
 							c = SYERR;
 							goto reply;
 						}
 					} else {
 						if ((stcp->t_or_d == 'd' &&
-								sendrep (rpfd, MSG_OUT,
-										"%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %s\n", q,
-										stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
-										(float)(stcp->actual_size)/(1024.*1024.), p_size,
-										stcp->poolname) < 0) ||
+							 sendrep (rpfd, MSG_OUT,
+									  "%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %s\n", q,
+									  stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
+									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
+									  stcp->poolname) < 0) ||
 							(stcp->t_or_d == 'a' &&
-								sendrep (rpfd, MSG_OUT,
-										"%-36s %-11s %5d %6.1f/%-4s %s\n", q,
-										p_stat, stcp->nbaccesses,
-										(float)(stcp->actual_size)/(1024.*1024.), p_size,
-										stcp->poolname) < 0)) {
+							 sendrep (rpfd, MSG_OUT,
+									  "%-36s %-11s %5d %6.1f/%-4s %s\n", q,
+									  p_stat, stcp->nbaccesses,
+									  (float)(stcp->actual_size)/(1024.*1024.), p_size,
+									  stcp->poolname) < 0)) {
 							c = SYERR;
 							goto reply;
 						}
@@ -1569,7 +1569,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 										 p_stat, stcp->nbaccesses,
 										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
 										 stcp->poolname,
-										get_retenp(stcp,timestr) == 0 ? timestr : "") < 0) {
+										 get_retenp(stcp,timestr) == 0 ? timestr : "") < 0) {
 								c = SYERR;
 								goto reply;
 							}
@@ -1602,19 +1602,19 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		if (fflag) {
 			if ((stcp->t_or_d == 'a') || (stcp->t_or_d == 'd')) {
 				if (sendrep (rpfd, MSG_OUT, " %s\n",
-										 stcp->u1.d.xfile) < 0) {
+							 stcp->u1.d.xfile) < 0) {
 					c = SYERR;
 					goto reply;
 				}
 			} else if (stcp->t_or_d == 'm') {
 				if (sendrep (rpfd, MSG_OUT, " %s\n",
-										 stcp->u1.m.xfile) < 0) {
+							 stcp->u1.m.xfile) < 0) {
 					c = SYERR;
 					goto reply;
 				}
 			} else if (stcp->t_or_d == 'h') {
 				if (sendrep (rpfd, MSG_OUT, " %s\n",
-										 stcp->u1.h.xfile) < 0) {
+							 stcp->u1.h.xfile) < 0) {
 					c = SYERR;
 					goto reply;
 				}
@@ -1641,7 +1641,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		}
 		if (dump_flag != 0) dump_stcp(rpfd, stcp, &sendrep);
 	}
- reply:
+  reply:
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 	if (afile || mfile)
 		if (! noregexp_flag) regfree (&preg);
@@ -1664,23 +1664,23 @@ void procqryreq(req_type, magic, req_data, clienthost)
 }
 
 void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fseq_list, xfile, afile, mfile, req_type, this_reqid, magic, side_flag, side)
-		 char *poolname;
-		 int aflag;
-		 char *group;
-		 int uflag;
-		 char *user;
-		 int numvid;
-		 char vid[MAXVSN][7];
-		 char *fseq;
-		 fseq_elem *fseq_list;
-		 char *xfile;
-		 char *afile;
-		 char *mfile;		
-		 int req_type;
-		 int this_reqid;
-		 int magic;
-		 int side_flag;
-		 int side;
+	char *poolname;
+	int aflag;
+	char *group;
+	int uflag;
+	char *user;
+	int numvid;
+	char vid[MAXVSN][7];
+	char *fseq;
+	fseq_elem *fseq_list;
+	char *xfile;
+	char *afile;
+	char *mfile;		
+	int req_type;
+	int this_reqid;
+	int magic;
+	int side_flag;
+	int side;
 {
 	int j;
 	char *p;
@@ -1786,24 +1786,24 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 }
 
 int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fseq_list, xfile, afile, mfile, req_type, this_reqid, magic, class_flag, side_flag, side)
-		 char *poolname;
-		 int aflag;
-		 char *group;
-		 int uflag;
-		 char *user;
-		 int numvid;
-		 char vid[MAXVSN][7];
-		 char *fseq;
-		 fseq_elem *fseq_list;
-		 char *xfile;
-		 char *afile;
-		 char *mfile;
-		 int req_type;
-		 int this_reqid;
-		 int magic;
-		 int class_flag;
-		 int side_flag;
-		 int side;
+	char *poolname;
+	int aflag;
+	char *group;
+	int uflag;
+	char *user;
+	int numvid;
+	char vid[MAXVSN][7];
+	char *fseq;
+	fseq_elem *fseq_list;
+	char *xfile;
+	char *afile;
+	char *mfile;
+	int req_type;
+	int this_reqid;
+	int magic;
+	int class_flag;
+	int side_flag;
+	int side;
 {
 	/* We use the weight algorithm defined by Fabrizio Cane for DPM */
 	time_t thistime = time(NULL);
@@ -1847,15 +1847,15 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 		/* STAGEOUT entries that have expired retention period on disk */
 		/* PUT_FAILED entries that have expired retention period on disk */
 		isstageout_exhausted   = (   ISSTAGEOUT  (stcp)   &&     /* A STAGEOUT file */
-								 (!  ISCASTORMIG (stcp) ) &&     /* Not candidate for migration */
-								 (!  ISSTAGED    (stcp) ) &&     /* And not yet STAGED */
-								 (!  ISPUT_FAILED(stcp) ) &&     /* And not yet subject to a failed transfer */
-								 (  (stageout_retenp = get_stageout_retenp(stcp)) >= 0) && /* And with a retention period */
-								 (  (thistime - stcp->a_time) > stageout_retenp)); /* And with a exhausted retention period */
+									 (!  ISCASTORMIG (stcp) ) &&     /* Not candidate for migration */
+									 (!  ISSTAGED    (stcp) ) &&     /* And not yet STAGED */
+									 (!  ISPUT_FAILED(stcp) ) &&     /* And not yet subject to a failed transfer */
+									 (  (stageout_retenp = get_stageout_retenp(stcp)) >= 0) && /* And with a retention period */
+									 (  (thistime - stcp->a_time) > stageout_retenp)); /* And with a exhausted retention period */
 		isput_failed_exhausted = (   ISSTAGEOUT  (stcp)   &&     /* A STAGEOUT file */
 								     ISPUT_FAILED(stcp)   &&     /* Subject to a failed transfer */
-								 (  (put_failed_retenp = get_put_failed_retenp(stcp)) >= 0) && /* And with a ret. period */
-								 (  (thistime - stcp->a_time) > put_failed_retenp)); /* That got exhausted */
+									 (  (put_failed_retenp = get_put_failed_retenp(stcp)) >= 0) && /* And with a ret. period */
+									 (  (thistime - stcp->a_time) > put_failed_retenp)); /* That got exhausted */
 		isother_ok = ISSTAGED(stcp);
 		if (! (isstageout_exhausted || isput_failed_exhausted || isother_ok)) continue;
 		if (poolflag < 0) {	/* -p NOPOOL */
@@ -2018,7 +2018,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 						 -CA_MAXCLASNAMELEN,
 						 fileclasses[ifileclass].Cnsfileclass.name,
 						 fileclasses[ifileclass].server
-						) < 0) {
+				) < 0) {
 				free (scs);
 				return (-1);
 			}
@@ -2042,20 +2042,20 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 }
 
 void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq, fseq_list, req_type, this_reqid, magic, side_flag, side)
-		 char *poolname;
-		 int aflag;
-		 char *group;
-		 int uflag;
-		 char *user;
-		 int numvid;
-		 char vid[MAXVSN][7];
-		 char *fseq;
-		 fseq_elem *fseq_list;
-		 int req_type;
-		 int this_reqid;
-		 int magic;
-		 int side_flag;
-		 int side;
+	char *poolname;
+	int aflag;
+	char *group;
+	int uflag;
+	char *user;
+	int numvid;
+	char vid[MAXVSN][7];
+	char *fseq;
+	fseq_elem *fseq_list;
+	int req_type;
+	int this_reqid;
+	int magic;
+	int side_flag;
+	int side;
 {
 	int j;
 	int poolflag = 0;
@@ -2091,9 +2091,9 @@ void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 			}
 		}
 		if (strcmp (stcp->u1.t.lbl, "al") &&
-				strcmp (stcp->u1.t.lbl, "sl")) continue;
+			strcmp (stcp->u1.t.lbl, "sl")) continue;
 		sendrep (rpfd, MSG_OUT, "-b %d -F %s -f %s -L %d\n",
-						 stcp->blksize, stcp->recfm, stcp->u1.t.fid, stcp->lrecl);
+				 stcp->blksize, stcp->recfm, stcp->u1.t.fid, stcp->lrecl);
 		if (req_type > STAGE_00) sendrep(rpfd, API_STCP_OUT, stcp, magic);
 		if (dump_flag != 0) dump_stcp(rpfd, stcp, &sendrep);
 	}
@@ -2132,135 +2132,135 @@ signed64 get_put_failed_retenp(stcp)
 /* return value will be 0 or -1, where 0 means that timestr is trustable, -1 means that timestr would have has non-sense */
 /* timestr, if return value is zero, contains contains a human-readable format of retention period on disk */
 int get_retenp(stcp,timestr)
-     struct stgcat_entry *stcp;
-     char *timestr;
+	struct stgcat_entry *stcp;
+	char *timestr;
 {
-  signed64 this_retenp;
-  time_t this_time = time(NULL);
-  int ifileclass;
+	signed64 this_retenp;
+	time_t this_time = time(NULL);
+	int ifileclass;
 
-  /* Depending of the status of the stcp we will return the correct current retention period on disk */
-  switch (stcp->status) {
-  case STAGEOUT:
-    /* stageout entry */
-    if ((this_retenp = get_stageout_retenp(stcp)) >= 0) {
-      /* There is a stageout retention period */
-      if ((this_time - stcp->a_time) > this_retenp) {
-        strcpy(timestr,"Exhausted");
-      } else {
-        time_t dummy_retenp;
-        this_retenp += stcp->a_time;
-        dummy_retenp = (time_t) this_retenp;
-        /* Retention period not yet exhausted */
-        stage_util_time(dummy_retenp,timestr);
-      }
-    } else {
-      strcpy(timestr,"INFINITE_LIFETIME");
-    }
-    break;
-  case STAGEOUT|PUT_FAILED:
-  case STAGEOUT|PUT_FAILED|CAN_BE_MIGR:
-    /* put_failed entry (castor or not) */
-    if ((this_retenp = get_put_failed_retenp(stcp)) >= 0) {
-      /* There is a put_failed retention period */
-      if ((this_time - stcp->a_time) > this_retenp) {
-        strcpy(timestr,"Exhausted");
-      } else {
-        time_t dummy_retenp;
-        this_retenp += stcp->a_time;
-        dummy_retenp = (time_t) this_retenp;
-        /* Retention period not yet exhausted */
-        stage_util_time(dummy_retenp,timestr);
-      }
-    } else {
-      return(-1);
-    }
-    break;
-  default:
-    if ((stcp->status & (STAGEOUT|STAGED)) != (STAGEOUT|STAGED) &&
-        (stcp->status & (STAGEWRT|STAGED)) != (STAGEWRT|STAGED) &&
-        (stcp->status & ( STAGEIN|STAGED)) != ( STAGEIN|STAGED) &&
-        (stcp->status & (STAGEPUT|STAGED)) != (STAGEPUT|STAGED)) {
-      /* Not a STAGEd migrated file */
-      return(-1);
-    }
-    /* We distinguish between CASTOR entries and non-CASTOR entry */
-    switch (stcp->t_or_d) {
-    case 'h':
-      /* CASTOR entry */
-      if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) {
-        return(-1);
-      }
-      /* If no explicit value for retention period we take the default */
-      if ((this_retenp = stcp->u1.h.retenp_on_disk) < 0) this_retenp = retenp_on_disk(ifileclass);
+	/* Depending of the status of the stcp we will return the correct current retention period on disk */
+	switch (stcp->status) {
+	case STAGEOUT:
+		/* stageout entry */
+		if ((this_retenp = get_stageout_retenp(stcp)) >= 0) {
+			/* There is a stageout retention period */
+			if ((this_time - stcp->a_time) > this_retenp) {
+				strcpy(timestr,"Exhausted");
+			} else {
+				time_t dummy_retenp;
+				this_retenp += stcp->a_time;
+				dummy_retenp = (time_t) this_retenp;
+				/* Retention period not yet exhausted */
+				stage_util_time(dummy_retenp,timestr);
+			}
+		} else {
+			strcpy(timestr,"INFINITE_LIFETIME");
+		}
+		break;
+	case STAGEOUT|PUT_FAILED:
+	case STAGEOUT|PUT_FAILED|CAN_BE_MIGR:
+		/* put_failed entry (castor or not) */
+		if ((this_retenp = get_put_failed_retenp(stcp)) >= 0) {
+			/* There is a put_failed retention period */
+			if ((this_time - stcp->a_time) > this_retenp) {
+				strcpy(timestr,"Exhausted");
+			} else {
+				time_t dummy_retenp;
+				this_retenp += stcp->a_time;
+				dummy_retenp = (time_t) this_retenp;
+				/* Retention period not yet exhausted */
+				stage_util_time(dummy_retenp,timestr);
+			}
+		} else {
+			return(-1);
+		}
+		break;
+	default:
+		if ((stcp->status & (STAGEOUT|STAGED)) != (STAGEOUT|STAGED) &&
+			(stcp->status & (STAGEWRT|STAGED)) != (STAGEWRT|STAGED) &&
+			(stcp->status & ( STAGEIN|STAGED)) != ( STAGEIN|STAGED) &&
+			(stcp->status & (STAGEPUT|STAGED)) != (STAGEPUT|STAGED)) {
+			/* Not a STAGEd migrated file */
+			return(-1);
+		}
+		/* We distinguish between CASTOR entries and non-CASTOR entry */
+		switch (stcp->t_or_d) {
+		case 'h':
+			/* CASTOR entry */
+			if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) {
+				return(-1);
+			}
+			/* If no explicit value for retention period we take the default */
+			if ((this_retenp = stcp->u1.h.retenp_on_disk) < 0) this_retenp = retenp_on_disk(ifileclass);
 #ifdef hpux
-      /* hpux10 complaints: error 1654: Expression type is too large for switch expression.' */
-      switch ((time_t) this_retenp)
+			/* hpux10 complaints: error 1654: Expression type is too large for switch expression.' */
+			switch ((time_t) this_retenp)
 #else
-      switch (this_retenp)
+				switch (this_retenp)
 #endif
-        {
-      case AS_LONG_AS_POSSIBLE:
-        strcpy(timestr,"AS_LONG_AS_POSSIBLE");
-        break;
-      case INFINITE_LIFETIME:
-        strcpy(timestr,"INFINITE_LIFETIME");
-        break;
-      default:
-        if ((this_time - stcp->a_time) > this_retenp) {
-          strcpy(timestr,"Exhausted");
-        } else {
-          time_t dummy_retenp;
-          this_retenp += stcp->a_time;
-          dummy_retenp = (time_t) this_retenp;
-          /* Retention period not yet exhausted */
-          stage_util_time(dummy_retenp,timestr);
-        }
-        break;
-      }
-      break;
-    default:
-      return(-1);
-    }
-  }
-  /* Okay */
-  return(0);
+				{
+				case AS_LONG_AS_POSSIBLE:
+					strcpy(timestr,"AS_LONG_AS_POSSIBLE");
+					break;
+				case INFINITE_LIFETIME:
+					strcpy(timestr,"INFINITE_LIFETIME");
+					break;
+				default:
+					if ((this_time - stcp->a_time) > this_retenp) {
+						strcpy(timestr,"Exhausted");
+					} else {
+						time_t dummy_retenp;
+						this_retenp += stcp->a_time;
+						dummy_retenp = (time_t) this_retenp;
+						/* Retention period not yet exhausted */
+						stage_util_time(dummy_retenp,timestr);
+					}
+					break;
+				}
+			break;
+		default:
+			return(-1);
+		}
+	}
+	/* Okay */
+	return(0);
 }
 
 /* return value will be 0 or -1, where 0 means that timestr is trustable, -1 means that timestr would have has non-sense */
 /* timestr, if return value is zero, contains contains a human-readable format of retention period on disk */
 int get_mintime(stcp,timestr)
-     struct stgcat_entry *stcp;
-     char *timestr;
+	struct stgcat_entry *stcp;
+	char *timestr;
 {
-  time_t this_mintime_beforemigr;
-  time_t this_time = time(NULL);
-  int ifileclass;
+	time_t this_mintime_beforemigr;
+	time_t this_time = time(NULL);
+	int ifileclass;
 
-  if (stcp->t_or_d != 'h') return(-1);
+	if (stcp->t_or_d != 'h') return(-1);
 
-  /* Depending of the status of the stcp we will return the correct current retention period on disk */
-  switch (stcp->status) {
-  case STAGEOUT|CAN_BE_MIGR:
-    /* CASTOR entry */
-    if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) {
-      return(-1);
-    }
-    if ((this_mintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0) /* No explicit value */
-      this_mintime_beforemigr = mintime_beforemigr(ifileclass); /* So we take the default */
-    if ((this_time - stcp->a_time) > this_mintime_beforemigr) {
-      strcpy(timestr,"Exhausted");
-    } else {
-      time_t dummy_mintime_beforemigr;
-      this_mintime_beforemigr += stcp->a_time;
-      dummy_mintime_beforemigr = (time_t) this_mintime_beforemigr;
-      /* Retention period not yet exhausted */
-      stage_util_time(dummy_mintime_beforemigr,timestr);
-    }
-    break;
-  default:
-    return(-1);
-  }
-  /* Okay */
-  return(0);
+	/* Depending of the status of the stcp we will return the correct current retention period on disk */
+	switch (stcp->status) {
+	case STAGEOUT|CAN_BE_MIGR:
+		/* CASTOR entry */
+		if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) {
+			return(-1);
+		}
+		if ((this_mintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0) /* No explicit value */
+			this_mintime_beforemigr = mintime_beforemigr(ifileclass); /* So we take the default */
+		if ((this_time - stcp->a_time) > this_mintime_beforemigr) {
+			strcpy(timestr,"Exhausted");
+		} else {
+			time_t dummy_mintime_beforemigr;
+			this_mintime_beforemigr += stcp->a_time;
+			dummy_mintime_beforemigr = (time_t) this_mintime_beforemigr;
+			/* Retention period not yet exhausted */
+			stage_util_time(dummy_mintime_beforemigr,timestr);
+		}
+		break;
+	default:
+		return(-1);
+	}
+	/* Okay */
+	return(0);
 }
