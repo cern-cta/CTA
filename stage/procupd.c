@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.18 2000/05/15 17:38:46 jdurand Exp $
+ * $Id: procupd.c,v 1.19 2000/05/18 16:51:14 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.18 $ $Date: 2000/05/15 17:38:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.19 $ $Date: 2000/05/18 16:51:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -452,7 +452,10 @@ procupdreq(req_data, clienthost)
 #endif
 				}
 			} else {
-				if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) stcp->status &= ~CAN_BE_MIGR;
+				if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
+                  stcp->status &= ~CAN_BE_MIGR;
+                  update_migpool(stcp,-1);
+                }
 				stcp->status |= STAGED;
 #ifdef USECDB
 				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
