@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_api.h,v 1.11 2000/03/31 15:04:44 baud Exp $
+ * $Id: Ctape_api.h,v 1.12 2000/04/07 14:06:45 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.11 $ $Date: 2000/03/31 15:04:44 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.12 $ $Date: 2000/04/07 14:06:45 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -76,7 +76,7 @@ extern int Ctape_info(char *, int *, unsigned char *, char *, char *, char *,
 	char *, int *, int *, char *);
 extern int Ctape_kill(char *);
 extern int Ctape_label(char *, char *, int, char *, char *, char *, char *,
-	char *, int, int);
+	char *, int, int, int);
 extern int Ctape_mount(char *, char *, int, char *, char *, char *, int,
 	char *, char *, int);
 extern int Ctape_position(char *, int, int, int, unsigned char *, int, int,
