@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.131 2001/04/29 08:54:16 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.132 2001/04/29 09:34:47 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.131 $ $Date: 2001/04/29 08:54:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.132 $ $Date: 2001/04/29 09:34:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -446,7 +446,7 @@ int main(argc,argv)
 	}
 	memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
 	if ((sp = Cgetservbyname (STAGE_NAME, STAGE_PROTO)) == NULL) {
-		stglogit (func, STG144, STAGE_NAME, "not defined in /etc/services - Using default value", (int) STAGE_PORT);
+		stglogit (func, STG148, STAGE_NAME, "not defined in /etc/services - Using default value", (int) STAGE_PORT);
 		sin.sin_port = htons((u_short) STAGE_PORT);
 	} else {
 		sin.sin_port = sp->s_port;
