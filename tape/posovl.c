@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.18 $ $Date: 2000/04/01 07:56:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.19 $ $Date: 2000/04/01 09:12:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -105,8 +105,8 @@ char	**argv;
 	lblcode = atoi (argv[12]);
 	vsn = argv[13];
 
-	sscanf (argv[14], "%02x%02x%02x%02x", blockid[0], blockid[1],
-	    blockid[2], blockid[3]);
+	sscanf (argv[14], "%02x%02x%02x%02x", &blockid[0], &blockid[1],
+	    &blockid[2], &blockid[3]);
 	cfseq = atoi (argv[15]);
 	strcpy (fid, argv[16]);
 	filstat = atoi (argv[17]);
