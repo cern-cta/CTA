@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.126 2001/03/27 08:35:32 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.127 2001/03/28 14:09:17 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.126 $ $Date: 2001/03/27 08:35:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.127 $ $Date: 2001/03/28 14:09:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -224,7 +224,7 @@ extern int iscleanovl _PROTO((int, int));
 extern int ismigovl _PROTO((int, int));
 extern int selectfs _PROTO((char *, int *, char *, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
-extern void procupdreq _PROTO((char *, char *));
+extern void procupdreq _PROTO((int, int, char *, char *));
 int stcp_cmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
 int stpp_cmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
 struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
@@ -234,8 +234,7 @@ extern int updpoolconf _PROTO((char *, char *, char *));
 extern void procioreq _PROTO((int, int, char *, char *));
 extern void procputreq _PROTO((int, char *, char *));
 extern void procqryreq _PROTO((int, int, char *, char *));
-extern void procclrreq _PROTO((char *, char *));
-extern void procupdreq _PROTO((char *, char *));
+extern void procclrreq _PROTO((int, int, char *, char *));
 extern void procallocreq _PROTO((char *, char *));
 extern void procgetreq _PROTO((char *, char *));
 extern void procfilchgreq _PROTO((char *, char *));
@@ -719,7 +718,6 @@ int main(argc,argv)
 		}
 		check_upd_fileclasses (); /* update all CASTOR fileclasses regularly */
 		check_lifetime_on_disk (); /* remove all CASTOR files that are out of disk retention time or */
-									/* put in PUT_FAILED the STAGEOUT files that have too long lifetime */
 		check_child_exit(); /* check childs [pid,status] */
 		checkpoolstatus ();	/* check if any pool just cleaned */
 		checkwaitingspc ();	/* check requests that are waiting for space */
@@ -823,6 +821,19 @@ int main(argc,argv)
 							goto endreq;
 						}
 					}
+					if ((req_type == STAGE_UPDC) && (magic != STGMAGIC2)) {
+						/* The API of stage_updc only exist with magic number version 2 */
+						stglogit(func, STG141, (unsigned long) magic);
+						close(rqfd);
+						goto endreq;
+					}
+					if ((req_type == STAGE_CLR) && (magic != STGMAGIC2)) {
+						/* The API of stage_clr only exist with magic number version 2 */
+						stglogit(func, STG141, (unsigned long) magic);
+						close(rqfd);
+						goto endreq;
+					}
+
 					if (req_type > STAGE_00) {
 						if (magic == STGMAGIC) {
 							/* Firt version of the API was only accepting a uniqueid given by stgdaemon */
@@ -849,15 +860,17 @@ int main(argc,argv)
 					case STAGEQRY:
 						procqryreq (req_type, magic, req_data, clienthost);
 						break;
+					case STAGE_CLR:
 					case STAGECLR:
-						procclrreq (req_data, clienthost);
+						procclrreq (req_type, magic, req_data, clienthost);
 						break;
 					case STAGE_KILL:
 					case STAGEKILL:
 						prockilreq (req_type, req_data, clienthost);
 						break;
+					case STAGE_UPDC:
 					case STAGEUPDC:
-						procupdreq (req_data, clienthost);
+						procupdreq (req_type, magic, req_data, clienthost);
 						break;
 					case STAGEINIT:
 						procinireq (req_data, clienthost);
@@ -1620,7 +1633,7 @@ void checkpoolstatus()
 							if (ISSTAGEOUT(stcp)) {
 								if (stcp->t_or_d == 'h') {
 									stcp->status |= WAITING_NS;
-								}
+                                }
 #ifdef USECDB
 								if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 									stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -1646,6 +1659,7 @@ void checkpoolstatus()
 								*wqp->waiting_pool = '\0';
 								if ((stcp->status == STAGEOUT) ||
 									(stcp->status == STAGEALLOC)) {
+									if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
 									if (wqp->Pflag)
 										sendrep (rpfd, MSG_OUT,
 														 "%s\n", stcp->ipath);
@@ -1736,6 +1750,7 @@ void checkwaitingspc()
 						*wqp->waiting_pool = '\0';
 						if ((stcp->status == STAGEOUT) ||
 							(stcp->status == STAGEALLOC)) {
+							if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
 							if (wqp->Pflag)
 								sendrep (rpfd, MSG_OUT,
 												 "%s\n", stcp->ipath);
@@ -2916,7 +2931,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (stcp->reqid == 0) break;
 				if (strcmp (upath, stcp->ipath)) continue;
-				if ((req_type == STAGEUPDC) && (stcp->status != STAGEOUT) && (stcp->status != STAGEALLOC)) continue;
+				if ((req_type == STAGEUPDC) && (! ISSTAGEOUT(stcp)) && (! ISSTAGEALLOC(stcp))) continue;
 				found = 1;
 				break;
 			}
@@ -2927,13 +2942,13 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 	}
 	if (found == 0 ||
 			(req_type == STAGEUPDC &&
-			 stcp->status != STAGEOUT && stcp->status != STAGEALLOC) ||
+			 (! ISSTAGEOUT(stcp)) && (! ISSTAGEALLOC(stcp))) ||
 			(req_type == STAGEPUT &&
-			 stcp->status != STAGEOUT && stcp->status != (STAGEOUT|PUT_FAILED))) {
+			 (! ISSTAGEOUT(stcp)) && ((stcp->status & (STAGEOUT|PUT_FAILED)) != (STAGEOUT|PUT_FAILED)))) {
 		sendrep (rpfd, MSG_ERR, STG22);
 		return (USERR);
 	}
-	if ((stcp->status == STAGEOUT) || (stcp->status == STAGEALLOC)) {
+	if (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp)) {
 		u_signed64 actual_size_block;
 
 		if (rfio_stat (stcp->ipath, &st) == 0) {
@@ -2953,7 +2968,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 	if (req_type == STAGEPUT) {
 		stcp->status = STAGEPUT;
 	} else if (req_type == STAGEUPDC) {
-		if ((stcp->status == STAGEOUT) && ((stcp->t_or_d == 'm') || (stcp->t_or_d == 'h'))) {
+		if (ISSTAGEOUT(stcp) && ((stcp->t_or_d == 'm') || (stcp->t_or_d == 'h'))) {
 			if (stcp->actual_size <= 0) {
 				/* We cannot put a to-be-migrated file in status CAN_BE_MIGR if its size is zero */
 				if (delfile(stcp, 0, 1, 1,
