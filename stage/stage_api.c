@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.37 2002/03/04 11:10:53 jdurand Exp $
+ * $Id: stage_api.c,v 1.38 2002/03/05 14:44:03 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -294,7 +294,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 
   if ((flags & STAGE_GRPUSER) == STAGE_GRPUSER) {  /* User want to overwrite euid under which request is processed by stgdaemon */
     if ((gr = Cgetgrgid(egid)) == NULL) { /* This is allowed only if its group exist */
-      stage_errmsg(func, STG33, "Cgetgrgid", strerror(errno));
+      if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetgrgid", strerror(errno));
       stage_errmsg(func, STG36, egid);
       serrno = ESTGROUP;
       return(-1);
@@ -306,7 +306,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
     } else {
       strcpy (Gname, p);
       if ((pw = Cgetpwnam(p)) == NULL) { /* And if GRPUSER content is a valid user name */
-        stage_errmsg(func, STG33, "Cgetpwnam", strerror(errno));
+        if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwnam", strerror(errno));
         stage_errmsg(func, STG11, p);
         serrno = SEUSERUNKN;
         return(-1);
@@ -321,7 +321,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
     User[CA_MAXUSRNAMELEN] = '\0';
     /* We verify this user login is defined */
     if (((pw = Cgetpwnam(User)) == NULL) || (pw->pw_gid != egid)) {
-      stage_errmsg(func, STG33, "Cgetpwnam", strerror(errno));
+      if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwnam", strerror(errno));
       stage_errmsg(func, STG11, User);
       serrno = SEUSERUNKN;
       return(-1);
@@ -355,7 +355,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   rfiosetopt (RFIO_NETOPT, &c, 4);
 
   if ((pw = Cgetpwuid(euid)) == NULL) { /* We check validity of current effective uid */
-    stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
+    if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
     serrno = SEUSERUNKN;
 #if defined(_WIN32)
     WSACleanup();
@@ -1058,7 +1058,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
 #endif
 
   if ((pw = Cgetpwuid(euid)) == NULL) { /* We check validity of current effective uid */
-    stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
+    if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
     serrno = SEUSERUNKN;
 #if defined(_WIN32)
     WSACleanup();
@@ -1369,7 +1369,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
 
   if ((flags & STAGE_GRPUSER) == STAGE_GRPUSER) {  /* User want to overwrite euid under which request is processed by stgdaemon */
     if ((gr = Cgetgrgid(egid)) == NULL) { /* This is allowed only if its group exist */
-      stage_errmsg(func, STG33, "Cgetgrgid", strerror(errno));
+      if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetgrgid", strerror(errno));
       stage_errmsg(func, STG36, egid);
       serrno = ESTGROUP;
       return(-1);
@@ -1381,7 +1381,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
     } else {
       strcpy (Gname, p);
       if ((pw = Cgetpwnam(p)) == NULL) { /* And if GRPUSER content is a valid user name */
-        stage_errmsg(func, STG33, "Cgetpwnam", strerror(errno));
+        if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwnam", strerror(errno));
         stage_errmsg(func, STG11, p);
         serrno = SEUSERUNKN;
         return(-1);
@@ -1396,7 +1396,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
     User[CA_MAXUSRNAMELEN] = '\0';
     /* We verify this user login is defined */
     if (((pw = Cgetpwnam(User)) == NULL) || (pw->pw_gid != egid)) {
-      stage_errmsg(func, STG33, "Cgetpwnam", strerror(errno));
+      if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwnam", strerror(errno));
       stage_errmsg(func, STG11, User);
       serrno = SEUSERUNKN;
       return(-1);
@@ -1418,7 +1418,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   rfiosetopt (RFIO_NETOPT, &c, 4);
 
   if ((pw = Cgetpwuid(euid)) == NULL) { /* We check validity of current effective uid */
-    stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
+    if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
     serrno = SEUSERUNKN;
 #if defined(_WIN32)
     WSACleanup();
@@ -1664,7 +1664,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
 
   if ((flagsok & STAGE_GRPUSER) == STAGE_GRPUSER) {  /* User want to overwrite euid under which request is processed by stgdaemon */
     if ((gr = Cgetgrgid(egid)) == NULL) { /* This is allowed only if its group exist */
-      stage_errmsg(func, STG33, "Cgetgrgid", strerror(errno));
+      if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetgrgid", strerror(errno));
       stage_errmsg(func, STG36, egid);
       serrno = ESTGROUP;
       return(-1);
@@ -1676,7 +1676,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
     } else {
       strcpy (Gname, p);
       if ((pw = Cgetpwnam(p)) == NULL) { /* And if GRPUSER content is a valid user name */
-        stage_errmsg(func, STG33, "Cgetpwnam", strerror(errno));
+        if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwnam", strerror(errno));
         stage_errmsg(func, STG11, p);
         serrno = SEUSERUNKN;
         return(-1);
@@ -1716,7 +1716,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   rfiosetopt (RFIO_NETOPT, &c, 4);
 
   if ((pw = Cgetpwuid(euid)) == NULL) { /* We check validity of current effective uid */
-    stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
+    if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
     serrno = SEUSERUNKN;
 #if defined(_WIN32)
     WSACleanup();
@@ -2094,7 +2094,7 @@ int DLL_DECL stage_ping(flags,hostname)
 #endif
 
   if ((pw = Cgetpwuid(euid)) == NULL) { /* We check validity of current effective uid */
-    stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
+    if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
     serrno = SEUSERUNKN;
 #if defined(_WIN32)
     WSACleanup();

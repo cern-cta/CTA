@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.177 2002/03/04 11:16:09 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.178 2002/03/05 14:44:04 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.177 $ $Date: 2002/03/04 11:16:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.178 $ $Date: 2002/03/05 14:44:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1610,7 +1610,7 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 			return (c);
 		}
 		if ((pw = Cgetpwnam (pool_user)) == NULL) {
-			sendrep (rpfd, MSG_ERR, STG33, "Cgetpwnam", strerror(errno));
+			if (errno != ENOENT) sendrep (rpfd, MSG_ERR, STG33, "Cgetpwnam", strerror(errno));
 			sendrep (rpfd, MSG_ERR, STG11, pool_user);
 			stcp->ipath[0] = '\0';
 			return (SYERR);
@@ -1652,7 +1652,7 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 			return (c);
 		}
 		if ((pw = Cgetpwnam (pool_user)) == NULL) {
-			sendrep (rpfd, MSG_ERR, STG33, "Cgetpwnam", strerror(errno));
+			if (errno != ENOENT) sendrep (rpfd, MSG_ERR, STG33, "Cgetpwnam", strerror(errno));
 			sendrep (rpfd, MSG_ERR, STG11, pool_user);
 			stcp->ipath[0] = '\0';
 			return (SYERR);

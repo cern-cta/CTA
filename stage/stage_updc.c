@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.21 2002/03/04 11:11:30 jdurand Exp $
+ * $Id: stage_updc.c,v 1.22 2002/03/05 14:44:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.21 $ $Date: 2002/03/04 11:11:30 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.22 $ $Date: 2002/03/05 14:44:04 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -126,7 +126,7 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
   }
 
   if ((pw = Cgetpwuid (euid)) == NULL) {
-    stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
+    if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
     serrno = SEUSERUNKN;
     return (-1);
   }
@@ -400,7 +400,7 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
   }
 
   if ((pw = Cgetpwuid (euid)) == NULL) {
-    stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
+    if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
     serrno = SEUSERUNKN;
     return (-1);
   }
@@ -587,7 +587,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   repbuf[0] = '\0';
 
   if ((pw = Cgetpwuid (euid)) == NULL) {
-    stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
+    if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
     serrno = SEUSERUNKN;
     return (-1);
   }
@@ -703,7 +703,7 @@ int DLL_DECL stage_updc_error(stghost,copyrc,hsmstruct)
   repbuf[0] = '\0';
 
   if ((pw = Cgetpwuid (euid)) == NULL) {
-    stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
+    if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
     serrno = SEUSERUNKN;
     return (-1);
   }
@@ -830,7 +830,7 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   repbuf[0] = '\0';
 
   if ((pw = Cgetpwuid (euid)) == NULL) {
-    stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
+    if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
     serrno = SEUSERUNKN;
     return (-1);
   }
@@ -985,7 +985,7 @@ int DLL_DECL stage_updc_open(stageid, subreqid, mode)
   }
 
   if ((pw = Cgetpwuid (euid)) == NULL) {
-    stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
+    if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
     serrno = SEUSERUNKN;
     return (-1);
   }
@@ -1133,7 +1133,7 @@ int DLL_DECL stage_updc_close(stageid, subreqid)
   }
 
   if ((pw = Cgetpwuid (euid)) == NULL) {
-    stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
+    if (errno != ENOENT) stage_errmsg(func, STG33, "Cgetpwuid", strerror(errno));
     serrno = SEUSERUNKN;
     return (-1);
   }

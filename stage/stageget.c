@@ -1,5 +1,5 @@
 /*
- * $Id: stageget.c,v 1.20 2002/03/04 11:12:40 jdurand Exp $
+ * $Id: stageget.c,v 1.21 2002/03/05 14:44:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.20 $ $Date: 2002/03/04 11:12:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageget.c,v $ $Revision: 1.21 $ $Date: 2002/03/05 14:44:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -118,7 +118,7 @@ int main(argc, argv)
 
 	if ((pw = Cgetpwuid (uid)) == NULL) {
 		char uidstr[8], *p;
-		fprintf (stderr, STG33, "Cgetpwuid", strerror(errno));
+		if (errno != ENOENT) fprintf (stderr, STG33, "Cgetpwuid", strerror(errno));
 		sprintf (uidstr, "%d", uid);
 		p = uidstr;
 		fprintf (stderr, STG11, p);
