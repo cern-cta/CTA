@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.37 2000/05/23 09:15:35 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.38 2000/05/23 12:32:32 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.37 $ $Date: 2000/05/23 09:15:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.38 $ $Date: 2000/05/23 12:32:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -521,6 +521,16 @@ main(argc,argv)
 
 		if (FD_ISSET (stg_s, &readfd)) {
 			rqfd = accept (stg_s, (struct sockaddr *) &from, &fromlen);
+			if (getpeername (rqfd, (struct sockaddr*)&from,
+										 &fromlen) < 0) {
+				stglogit (func, STG02, "", "getpeername",
+										sys_errlist[errno]);
+			}
+			hp = gethostbyaddr ((char *)(&from.sin_addr),sizeof(struct in_addr),from.sin_family);
+			if (hp == NULL)
+				clienthost = inet_ntoa (from.sin_addr);
+			else
+				clienthost = hp->h_name ;
 			reqid = nextreqid();
 			l = netread_timeout (rqfd, req_hdr, sizeof(req_hdr), STGTIMEOUT);
 			if (l == sizeof(req_hdr)) {
@@ -549,17 +559,6 @@ main(argc,argv)
 											 SHIFT_ESTNACT);
 							goto endreq;
 						}
-					if (getpeername (rqfd, (struct sockaddr*)&from,
-													 &fromlen) < 0) {
-						stglogit (func, STG02, "", "getpeername",
-											sys_errlist[errno]);
-					}
-					hp = gethostbyaddr ((char *)(&from.sin_addr),
-															sizeof(struct in_addr),from.sin_family);
-					if (hp == NULL)
-						clienthost = inet_ntoa (from.sin_addr);
-					else
-						clienthost = hp->h_name ;
 					switch (req_type) {
 					case STAGEIN:
 					case STAGEOUT:
@@ -601,12 +600,12 @@ main(argc,argv)
 				} else {
 					close (rqfd);
 					if (l != 0)
-						stglogit (func, "Network read error\n");
+						stglogit (func, "Network read error from %s\n",clienthost);
 				}
 			} else {
 				close (rqfd);
 				if (l != 0)
-					stglogit (func, STG04, l);
+					stglogit (func, STG04, l, clienthost, strerror(errno), sstrerror(serrno));
 			}
 		endreq:
 			FD_CLR (rqfd, &readfd);

@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.19 2000/05/17 16:27:28 jdurand Exp $
+ * $Id: stage.h,v 1.20 2000/05/23 12:32:26 jdurand Exp $
  */
 
 /*
@@ -103,7 +103,7 @@
 #define STG01	"STG01 - no response from stage daemon\n"
 #define STG02	"STG02 - %s : %s error : %s\n"
 #define STG03   "STG03 - illegal function %d\n"
-#define STG04   "STG04 - error reading request header, read = %d\n"
+#define STG04   "STG04 - error reading request header, read = %d from %s (%s - %s)\n"
 #define STG05	"STG05 - cannot get memory\n"
 #define STG06	"STG06 - invalid value for option %s\n"
 #define	STG07	"STG07 - pathname is mandatory\n"
