@@ -41,15 +41,14 @@ namespace castor {
       SEGMENT_UNPROCESSED = 0,
       SEGMENT_FILECOPIED = 5,
       SEGMENT_FAILED = 6,
-      SEGMENT_SELECTED = 7,
-      SEGMENT_INVALID = 8
+      SEGMENT_SELECTED = 7
     }; // end of enum SegmentStatusCodes
 
     /**
      * Names of the differents representations, used to display
      * correctly the SegmentStatusCodes enum
      */
-    extern const char* SegmentStatusCodesStrings[9];
+    extern const char* SegmentStatusCodesStrings[8];
 
 #ifdef __cplusplus
   }; // end of namespace stager

@@ -106,7 +106,7 @@ CREATE TABLE StageFindRequestRequest (flags INTEGER, userName VARCHAR(2048), eui
 
 /* SQL statements for type SubRequest */
 DROP TABLE SubRequest;
-CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR(2048), protocol VARCHAR(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR(2048), id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER);
+CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR(2048), protocol VARCHAR(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR(2048), flags NUMBER, modeBits NUMBER, id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER);
 
 /* SQL statements for type StageReleaseFilesRequest */
 DROP TABLE StageReleaseFilesRequest;
@@ -282,8 +282,8 @@ UPDATE FileSystem SET weight = weight - fsDeviation WHERE id = fileSystemId;
 END;
 
 /* PL/SQL method implementing fileRecalled */
-CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER, SubRequestStatus IN NUMBER,
-                                         diskCopyStatus IN NUMBER) AS
+CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER
+                                         uuid IN VARCHAR) AS
  SubRequestId NUMBER;
  dci NUMBER;
 BEGIN
@@ -293,9 +293,9 @@ SELECT SubRequest.id, DiskCopy.id
  WHERE TapeCopy.id = tapecopyId
   AND DiskCopy.castorFile = TapeCopy.castorFile
   AND SubRequest.diskcopy = DiskCopy.id;
-UPDATE DiskCopy SET status = diskCopyStatus WHERE id = dci;
-UPDATE SubRequest SET status = SubRequestStatus WHERE id = SubRequestId;
-UPDATE SubRequest SET status = SubRequestStatus WHERE parent = SubRequestId;
+UPDATE DiskCopy SET status = 0, diskcopyId = uuid WHERE id = dci; -- DISKCOPY_STAGED
+UPDATE SubRequest SET status = 1 WHERE id = SubRequestId; -- SUBREQUEST_RESTART
+UPDATE SubRequest SET status = 1 WHERE parent = SubRequestId; -- SUBREQUEST_RESTART
 END;
 
 /* PL/SQL method implementing isSubRequestToSchedule */

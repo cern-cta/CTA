@@ -97,6 +97,8 @@ void castor::io::StreamSubRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->xsize();
   ad->stream() << obj->priority();
   ad->stream() << obj->subreqId();
+  ad->stream() << obj->flags();
+  ad->stream() << obj->modeBits();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -129,6 +131,12 @@ castor::IObject* castor::io::StreamSubRequestCnv::createObj(castor::IAddress* ad
   std::string subreqId;
   ad->stream() >> subreqId;
   object->setSubreqId(subreqId);
+  int flags;
+  ad->stream() >> flags;
+  object->setFlags(flags);
+  int modeBits;
+  ad->stream() >> modeBits;
+  object->setModeBits(modeBits);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

@@ -215,6 +215,44 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_flags
+       * open flags for the file handled by this SubRequest
+       * @return the value of m_flags
+       */
+      int flags() const {
+        return m_flags;
+      }
+
+      /**
+       * Set the value of m_flags
+       * open flags for the file handled by this SubRequest
+       * @param new_var the new value of m_flags
+       */
+      void setFlags(int new_var) {
+        m_flags = new_var;
+      }
+
+      /**
+       * Get the value of m_modeBits
+       * Permissions for the file handled by this SubRequest (essentially used at creation
+       * time)
+       * @return the value of m_modeBits
+       */
+      int modeBits() const {
+        return m_modeBits;
+      }
+
+      /**
+       * Set the value of m_modeBits
+       * Permissions for the file handled by this SubRequest (essentially used at creation
+       * time)
+       * @param new_var the new value of m_modeBits
+       */
+      void setModeBits(int new_var) {
+        m_modeBits = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -361,6 +399,12 @@ namespace castor {
 
       /// The Cuuid identifying the SubRequest, stored as a human readable string
       std::string m_subreqId;
+
+      /// open flags for the file handled by this SubRequest
+      int m_flags;
+
+      /// Permissions for the file handled by this SubRequest (essentially used at creation time)
+      int m_modeBits;
 
       /// The id of this object
       u_signed64 m_id;

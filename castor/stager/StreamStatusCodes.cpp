@@ -30,11 +30,12 @@
 //------------------------------------------------------------------------------
 // StreamStatusCodesStrings
 //------------------------------------------------------------------------------
-const char* castor::stager::StreamStatusCodesStrings[5] = {
+const char* castor::stager::StreamStatusCodesStrings[6] = {
   "STREAM_PENDING",
   "STREAM_WAITDRIVE",
   "STREAM_WAITMOUNT",
   "STREAM_RUNNING",
-  "STREAM_WAITSPACE"
+  "STREAM_WAITSPACE",
+  "STREAM_CREATED"
 };
 

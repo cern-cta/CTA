@@ -46,6 +46,8 @@ castor::stager::SubRequest::SubRequest() throw() :
   m_xsize(0),
   m_priority(0),
   m_subreqId(""),
+  m_flags(0),
+  m_modeBits(0),
   m_id(0),
   m_diskcopy(0),
   m_castorFile(0),
@@ -88,6 +90,8 @@ void castor::stager::SubRequest::print(std::ostream& stream,
   stream << indent << "xsize : " << m_xsize << std::endl;
   stream << indent << "priority : " << m_priority << std::endl;
   stream << indent << "subreqId : " << m_subreqId << std::endl;
+  stream << indent << "flags : " << m_flags << std::endl;
+  stream << indent << "modeBits : " << m_modeBits << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Diskcopy : " << std::endl;

@@ -165,6 +165,32 @@ int Cstager_SubRequest_subreqId(struct Cstager_SubRequest_t* instance, const cha
 int Cstager_SubRequest_setSubreqId(struct Cstager_SubRequest_t* instance, const char* new_var);
 
 /**
+ * Get the value of flags
+ * open flags for the file handled by this SubRequest
+ */
+int Cstager_SubRequest_flags(struct Cstager_SubRequest_t* instance, int* var);
+
+/**
+ * Set the value of flags
+ * open flags for the file handled by this SubRequest
+ */
+int Cstager_SubRequest_setFlags(struct Cstager_SubRequest_t* instance, int new_var);
+
+/**
+ * Get the value of modeBits
+ * Permissions for the file handled by this SubRequest (essentially used at creation
+ * time)
+ */
+int Cstager_SubRequest_modeBits(struct Cstager_SubRequest_t* instance, int* var);
+
+/**
+ * Set the value of modeBits
+ * Permissions for the file handled by this SubRequest (essentially used at creation
+ * time)
+ */
+int Cstager_SubRequest_setModeBits(struct Cstager_SubRequest_t* instance, int new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */
