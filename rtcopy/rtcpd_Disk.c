@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.10 $ $Date: 1999/12/17 12:47:28 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.11 $ $Date: 1999/12/17 16:56:04 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -235,6 +235,7 @@ static int DiskFileOpen(int pool_index,
     diskIOstatus = &proc_stat.diskIOstatus[pool_index];
     tapereq = &tape->tapereq;
     filereq = &file->filereq;
+    umask((mode_t)filereq->umask);
 
     /*
      * Open the disk file

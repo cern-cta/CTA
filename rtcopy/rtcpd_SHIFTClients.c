@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.2 $ $Date: 1999/12/17 15:16:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.3 $ $Date: 1999/12/17 16:56:06 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -59,7 +59,8 @@ static int rtcp_GetOldCMsg(SOCKET *s,
                            rtcpHdr_t *hdr,
                            shift_client_t **req) {
     int argc = -1;
-    int rc, rfio_key, mask, i;
+    int rc, rfio_key, i;
+    mode_t mask;
     char **argv = NULL;
     char *p;
     char *msgbuf = NULL;
@@ -112,8 +113,9 @@ static int rtcp_GetOldCMsg(SOCKET *s,
         } else if ( hdr->reqtype == RQST_DKTP ||
                     hdr->reqtype == RQST_TPDK ||
                     hdr->reqtype == RQST_DPTP ) {
-            unmarshall_WORD(p,rfio_key);
+            if ( hdr->magic == RTCOPY_MAGIC_SHIFT ) unmarshall_WORD(p,rfio_key);
             unmarshall_WORD(p,mask);
+            umask(mask);
             unmarshall_LONG(p,argc);
             if ( argc < 0 ) {
                 serrno = SEINTERNAL;
