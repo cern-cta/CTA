@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.38 2002/08/27 08:16:07 jdurand Exp $
+ * $Id: stglogit.c,v 1.39 2002/08/27 08:18:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.38 $ $Date: 2002/08/27 08:16:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.39 $ $Date: 2002/08/27 08:18:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -322,7 +322,9 @@ int stgmiglogit(va_alist) va_dcl
 	struct tm *tm;
 	time_t current_time;
 	int fd_log;
+	int save_errno;
 
+	save_errno = errno;
 	va_start (args);
 	func = va_arg (args, char *);
 	msg = va_arg (args, char *);
@@ -349,6 +351,7 @@ int stgmiglogit(va_alist) va_dcl
 		write (fd_log, prtbuf, strlen(prtbuf));
 		close (fd_log);
 	}
+	errno = save_errno;
 	return(0);
 }
 
