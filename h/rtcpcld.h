@@ -176,7 +176,8 @@ int rtcpcld_updateVIDFileStatus _PROTO((
 
 int rtcpcld_setFileStatus _PROTO((
                                   rtcpFileRequest_t *,
-                                  enum Cstager_SegmentStatusCodes_t
+                                  enum Cstager_SegmentStatusCodes_t,
+                                  int
                                   ));
 #endif /* CASTOR_STAGER_TAPESTATUSCODES_H && CASTOR_STAGER_SEGMENTSTATUSCODES_H */
 
