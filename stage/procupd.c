@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.73 2001/04/30 06:29:09 jdurand Exp $
+ * $Id: procupd.c,v 1.74 2001/06/21 10:03:13 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.73 $ $Date: 2001/04/30 06:29:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.74 $ $Date: 2001/06/21 10:03:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -65,7 +65,7 @@ extern int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct wa
 extern int extend_waitf _PROTO((struct waitf *, struct waitf *));
 extern int check_waiting_on_req _PROTO((int, int));
 extern int check_coff_waiting_on_req _PROTO((int, int));
-extern struct stgcat_entry *newreq _PROTO(());
+extern struct stgcat_entry *newreq _PROTO((char));
 extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
 extern int req2argv _PROTO((char *, char ***));
@@ -90,7 +90,7 @@ extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
 extern char *findpoolname _PROTO((char *));
-extern int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *));
+extern u_signed64 findblocksize _PROTO((char *));
 
 #define IS_RC_OK(rc) (rc == 0)
 #define IS_RC_WARNING(rc) (rc == LIMBYSZ || rc == BLKSKPD || rc == TPE_LSZ || (rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE)))
@@ -104,11 +104,6 @@ extern int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
-
-/* Why does HP-UX reports it in 1K block-size ? - We Handle this by making sure that BLOCKS_TO_SIZE >= actual_size */
-/* We can't handle this exactly in this macro because file systems can be remote and we have no way */
-/* to determine if the remote file system is an HP-UX one or not */
-#define BLOCKS_TO_SIZE(blocks) (((u_signed64) blocks) * 512)
 
 void
 procupdreq(req_type, magic, req_data, clienthost)
@@ -186,7 +181,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		upd_reqid = reqid;
 		upd_rpfd = rpfd;
 
-		/* Note that we already checked in stgdaemon.c that magic == STGMAGIC2 */
+		/* Note that we already checked in stgdaemon.c that magic >= STGMAGIC2 */
 		local_unmarshall_STRING (rbp, name);
 		unmarshall_LONG(rbp, uid);
 		unmarshall_LONG(rbp, gid);
@@ -215,7 +210,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			goto reply;
 		}
 		path_status = 0;
-		unmarshall_STAGE_PATH(STAGE_INPUT_MODE, path_status, rbp, &(stpp_input[0]));
+		unmarshall_STAGE_PATH(magic, STAGE_INPUT_MODE, path_status, rbp, &(stpp_input[0]));
 		if ((path_status != 0) || (stpp_input[0].upath[0] == '\0')) {
 			sendrep(rpfd, MSG_ERR, "STG02 - Bad input (path input structure\n");
 			c = USERR;
@@ -233,7 +228,13 @@ procupdreq(req_type, magic, req_data, clienthost)
 	} else {
 		unmarshall_WORD (rbp, uid);
 		unmarshall_WORD (rbp, gid);
+
+#ifndef __INSURE__
+		stglogit (func, STG92, "stageupdc", user, uid, gid, clienthost);
+#endif
+
 		nargs = req2argv (rbp, &argv);
+
 #if SACCT
 		stageacct (STGCMDR, uid, gid, clienthost, reqid, STAGEUPDC, 0, 0, NULL, "");
 #endif
@@ -393,8 +394,9 @@ procupdreq(req_type, magic, req_data, clienthost)
 					goto reply;
 				}
 				/* We have found a STAGEOUT or STAGEALLOC entry matching argv_i */
-				/* So we know end-up in the case where we simulate a stageout on */
+				/* So we now end up in the case where we simulate a stageout on */
 				/* an entry that is already in stageout */
+
 				memset((char *) &stgreq, 0, sizeof(stgreq));
 				stgreq = *stcp;
 				strncpy (stgreq.user, user, CA_MAXUSRNAMELEN);
@@ -421,7 +423,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 						goto reply;
 					}
 				}
-				stcp = newreq();
+				stcp = newreq(stgreq.t_or_d);
 				memcpy (stcp, &stgreq, sizeof(stgreq));
 				if (i > 0)
 					stcp->reqid = nextreqid();
@@ -431,37 +433,52 @@ procupdreq(req_type, magic, req_data, clienthost)
 				stcp->c_time = time(NULL);
 				stcp->a_time = stcp->c_time;
 				stcp->nbaccesses++;
-				stcp->status |= WAITING_SPC;
-				stcp->status |= WAITING_NS;
 #ifdef USECDB
 				if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
 					stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
 				}
 #endif
 				savereqs();
-				/* And add this request to the waiting queue */
-				if (!wqp) {
-					wqp = add2wq (clienthost,
-									user, stcp->uid, stcp->gid,
-									user, save_group, stcp->uid, stcp->gid,
-									clientpid,    /* Client pid unknown with old protocol, Aie... */
-									0,    /* No Upluspath */
-									reqid, STAGEOUT, 1, &wfp, NULL, 
-									stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq, 0);
-					wqp->api_out = api_out;
-					wqp->openflags = 0;
-					wqp->openmode = 0;
-					wqp->uniqueid = stage_uniqueid;
-					wqp->silent = 0;
-				}
-				wfp->subreqid = stcp->reqid;
-				wfp->upath[0] = '\0';
-				wqp->nbdskf++;
-				wfp++;
+				/* We try to find another entry immediately */
 				if (pool_user == NULL)
 					pool_user = "stage";
-				strcpy (wqp->pool_user, pool_user);
-				strcpy (wqp->waiting_pool, stcp->poolname);
+				if ((c = build_ipath (NULL, stcp, pool_user)) < 0) {
+					stcp->status |= WAITING_SPC;
+					/* But add this request to the waiting queue */
+					if (!wqp) {
+						wqp = add2wq (clienthost,
+										user, stcp->uid, stcp->gid,
+										user, save_group, stcp->uid, stcp->gid,
+										clientpid,    /* Client pid unknown with old protocol, Aie... */
+										0,    /* No Upluspath */
+										reqid, STAGEOUT, 1, &wfp, NULL, 
+										stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq, 0);
+						wqp->api_out = api_out;
+						wqp->magic = magic;
+						wqp->openflags = 0;
+						wqp->openmode = 0;
+						wqp->uniqueid = stage_uniqueid;
+						wqp->silent = 0;
+					}
+					wfp->subreqid = stcp->reqid;
+					wfp->upath[0] = '\0';
+					wqp->nbdskf++;
+					wfp++;
+					strcpy (wqp->pool_user, pool_user);
+					strcpy (wqp->waiting_pool, stcp->poolname);
+					/* This is for the return here at the end of the routine */
+					c = 0;
+				} else if (c) {
+					updfreespace (stcp->poolname, stcp->ipath,
+								(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
+					delreq(stcp,0);
+					goto reply;
+				} else {
+					/* Space successfully allocated - Here c == 0 per construction */
+					if (api_out) sendrep(rpfd, API_STCP_OUT, stcp, magic);
+					sendrep (rpfd, MSG_OUT, "%s", stcp->ipath);
+					wqp->status = 0;
+				}
 			} else {
 				if ((c = upd_stageout(STAGEUPDC, argv_i, &subreqid, 1, NULL)) != 0) {
 					if (c != CLEARED) {
@@ -527,7 +544,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 #ifdef STAGER_DEBUG
 			sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] Comparing wqp->save_subreqid[%d]=%d with wfp->subreqid=%d [i=%d]\n", callback_index, wqp->save_subreqid[callback_index], wfp->subreqid, i);
 #endif
-			if (wfp->subreqid == wqp->save_subreqid[callback_index] && ! wfp->waiting_on_req) {
+			if ((wfp->subreqid == wqp->save_subreqid[callback_index]) && (! wfp->waiting_on_req)) {
 				found_wfp = 1;
 				break;
 			}
@@ -582,7 +599,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			goto reply;
 		}
 		wfp = &(wqp->wf[i]); /* We restore the correct found wf (mem might have been realloced) */
-		stcp_ok = newreq();
+		stcp_ok = newreq('t');
 		/* The memory may have been realloced, so we follow this eventual reallocation */
 		/* by reassigning stcp pointer using the found index */
 		stcp = &(stcs[index_found]);
@@ -713,8 +730,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 
 			if (rfio_stat (stcp->ipath, &st) == 0) {
 				stcp->actual_size = (u_signed64) st.st_size;
-				if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks)) < stcp->actual_size) {
-					/* This happens unfortunately if remote fs is an HP-UX file system */
+				if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 					actual_size_block = stcp->actual_size;
 				}
 				wfp->nb_segments++;
@@ -797,7 +813,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
-			if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
+			if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
 			break;
 		}
 		wqp->nb_subreqs = i;
@@ -856,19 +872,36 @@ procupdreq(req_type, magic, req_data, clienthost)
 		if (delfile (stcp, 1, 0, 0, "nospace retry", uid, gid, 0, 0) < 0)
 			sendrep (wqp->rpfd, MSG_ERR, STG02, stcp->ipath,
 							 "rfio_unlink", rfio_serror());
-		wqp->status = 0;
-		wqp->clnreq_reqid = upd_reqid;
-		wqp->clnreq_rpfd = rpfd;
-		wqp->clnreq_waitingreqid = stcp->reqid;
-		stcp->status |= WAITING_SPC;
+		/* Instead of asking immediately for a garbage collector, we give it another immediate try */
+		/* by asking for another filesystem */
+		if ((c = build_ipath (wfp->upath, stcp, wqp->pool_user)) < 0) {
+			wqp->status = 0;
+			wqp->clnreq_reqid = upd_reqid;
+			wqp->clnreq_rpfd = rpfd;
+			wqp->clnreq_waitingreqid = stcp->reqid;
+			stcp->status |= WAITING_SPC;
 #ifdef USECDB
-		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-			stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-		}
+			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+			}
 #endif
-		strcpy (wqp->waiting_pool, stcp->poolname);
-		if ((c = cleanpool (stcp->poolname)) != 0) goto reply;
-		return;
+			strcpy (wqp->waiting_pool, stcp->poolname);
+			if ((c = cleanpool (stcp->poolname)) != 0) goto reply;
+			return;
+		} else if (c) {
+			updfreespace (stcp->poolname, stcp->ipath,
+						(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
+			delreq(stcp,0);
+			wqp->status = c;
+			goto reply;
+		} else {
+			/* Space successfully allocated */
+			if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
+			sendrep (rpfd, MSG_OUT, "%s", stcp->ipath);
+			wqp->status = 0;
+			goto reply;
+		}
+		/* In any case, here, we should have returned */
 	}
 	if ((stcp->t_or_d != 'm') && (stcp->t_or_d != 'h')) {
 		int has_been_updated = 0;
@@ -945,13 +978,25 @@ procupdreq(req_type, magic, req_data, clienthost)
 						delreq (stcp,0);
 					} else {
 						struct stgcat_entry *save_stcp = stcp;
+						struct stgcat_entry save_stcp_rdonly;
 						int save_status = stcp->status;
+
+						save_stcp_rdonly.reqid = 0;
 						if ((save_stcp->t_or_d == 'h') && (ISSTAGEWRT(save_stcp) || ISSTAGEPUT(save_stcp)) && HAVE_SENSIBLE_STCP(save_stcp)) {
 							/* If this entry is a CASTOR file and has tppool[0] != '\0' this must/might be */
 							/* a corresponding stcp entry with the stageout matching STAGEOUT|CAN_BE_MIGR|BEING_MIGR */
 							stcp_found = NULL;
 							for (stcp_search = stcs; stcp_search < stce; stcp_search++) {
 								if (stcp_search->reqid == 0) break;
+								if ((save_stcp->poolname[0] != '\0') &&
+									(strcmp(stcp_search->poolname, save_stcp->poolname) != 0)) continue;
+								if ((stcp_search->status == (STAGEIN|STAGED|STAGE_RDONLY)) &&
+									((strcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile) == 0) &&
+										(strcmp(stcp_search->u1.h.server,save_stcp->u1.h.server) == 0) &&
+										(stcp_search->u1.h.fileid == save_stcp->u1.h.fileid) &&
+										(stcp_search->u1.h.fileclass == save_stcp->u1.h.fileclass))) {
+									save_stcp_rdonly = *stcp_search;
+								}
 								if (! ISCASTORBEINGMIG(stcp_search)) continue;
 								if ((strcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile) == 0) &&
 									(strcmp(stcp_search->u1.h.server,save_stcp->u1.h.server) == 0) &&
@@ -959,7 +1004,24 @@ procupdreq(req_type, magic, req_data, clienthost)
 									(stcp_search->u1.h.fileclass == save_stcp->u1.h.fileclass) &&
 									(strcmp(stcp_search->u1.h.tppool,save_stcp->u1.h.tppool) == 0)) {
 									if (stcp_found == NULL) {
-										stcp_found = stcp_search;
+										/* We do the ++ because of the possible loop below */
+										stcp_found = stcp_search++;
+										break;
+									}
+								}
+							}
+							if (save_stcp_rdonly.reqid == 0) {
+								/* We continue the search of a STAGEIN|STAGED|STAGE_RDONLY entry */
+								for ( ; stcp_search < stce; stcp_search++) {
+									if (stcp_search->reqid == 0) break;
+									if ((save_stcp->poolname[0] != '\0') &&
+										(strcmp(stcp_search->poolname, save_stcp->poolname) != 0)) continue;
+									if ((stcp_search->status == (STAGEIN|STAGED|STAGE_RDONLY)) &&
+										((strcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile) == 0) &&
+											(strcmp(stcp_search->u1.h.server,save_stcp->u1.h.server) == 0) &&
+											(stcp_search->u1.h.fileid == save_stcp->u1.h.fileid) &&
+											(stcp_search->u1.h.fileclass == save_stcp->u1.h.fileclass))) {
+										save_stcp_rdonly = *stcp_search;
 										break;
 									}
 								}
@@ -988,7 +1050,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 								stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 							}
 #endif
-							if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp_found);
+							if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp_found, wqp->magic);
 						} else {
 							stcp_found = stcp;
 							goto delete_entry;
@@ -1021,7 +1083,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 								}
 								if (! ((stcp_found == save_stcp) && (save_status & STAGEPUT) == STAGEPUT)) delreq(save_stcp,0);
 								if (continue_flag != 0) {
-									continue;
+									goto continue_entry;
 								} else {
 									goto delete_entry;
 								}
@@ -1034,20 +1096,104 @@ procupdreq(req_type, magic, req_data, clienthost)
 								}
 							}
 						}
+					continue_entry:
+						/* Suppose now that we have also found a stcp in read-only mode */
+						if (save_stcp_rdonly.reqid > 0) {
+							struct stgcat_entry *stcp_found_rdonly = NULL;
+							struct stgcat_entry *stcp_found_stageout = NULL;
+							/* We scan again the catalog to change the STAGEIN|STAGED|STAGE_RDONLY to STAGEIN|STAGED */
+							/* And to remove the STAGEOUT|STAGED entry */
+							for (stcp_search = stcs; stcp_search < stce; stcp_search++) {
+								if (stcp_search->reqid == 0) break;
+								if (stcp_search->reqid == save_stcp_rdonly.reqid) {
+									stcp_found_rdonly = stcp_search;
+									continue;
+								}
+								if ((save_stcp_rdonly.poolname[0] != '\0') &&
+									(strcmp(stcp_search->poolname, save_stcp_rdonly.poolname) != 0)) continue;
+								if ((stcp_search->status == (STAGEOUT|STAGED)) &&
+									((strcmp(stcp_search->u1.h.xfile,save_stcp_rdonly.u1.h.xfile) == 0) &&
+										(strcmp(stcp_search->u1.h.server,save_stcp_rdonly.u1.h.server) == 0) &&
+										(stcp_search->u1.h.fileid == save_stcp_rdonly.u1.h.fileid) &&
+										(stcp_search->u1.h.fileclass == save_stcp_rdonly.u1.h.fileclass))) {
+									stcp_found_stageout = stcp_search;
+								}
+								if ((stcp_found_rdonly != NULL) && (stcp_found_stageout != NULL)) {
+									break;
+								}
+							}
+							if ((stcp_found_rdonly != NULL) || (stcp_found_stageout != NULL)) {
+								if (stcp_found_rdonly != NULL) {
+									stcp_found_rdonly->status = STAGEIN|STAGED;
+									if (stcp_found_stageout != NULL) {
+										stcp_found_rdonly->nbaccesses += (stcp_found_stageout->nbaccesses - 1);
+									}
+#ifdef USECDB
+									if (stgdb_upd_stgcat(&dbfd,stcp_found_rdonly) != 0) {
+										stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+									}
+#endif
+								}
+								if (stcp_found_stageout != NULL) {
+									delreq(stcp_found_stageout,0);
+								}
+								savereqs();
+							}
+						}
 					}
 				} else {
+					struct stgcat_entry *save_stcp = stcp;
+					struct stgcat_entry *stcp_search, *stcp_found;
+
 					if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
 						update_migpool(&stcp,-1,0);
 						stcp->status &= ~CAN_BE_MIGR;
 					}
 					stcp->status |= STAGED;
 					update_hsm_a_time(stcp);
-#ifdef USECDB
-					if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-						stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					/* We send the reply right now */
+					if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
+					/* We check if there is any STAGEIN|STAGED|STAGE_RDONLY entry pending */
+					stcp_found = NULL;
+					for (stcp_search = stcs; stcp_search < stce; stcp_search++) {
+						if (stcp_search->reqid == 0) break;
+						if ((save_stcp->poolname[0] != '\0') &&
+							(strcmp(stcp_search->poolname, save_stcp->poolname) != 0)) continue;
+						if (stcp_search->status != (STAGEIN|STAGED|STAGE_RDONLY)) continue;
+						if ((strcmp(stcp_search->u1.h.xfile,save_stcp->u1.h.xfile) == 0) &&
+							(strcmp(stcp_search->u1.h.server,save_stcp->u1.h.server) == 0) &&
+							(stcp_search->u1.h.fileid == save_stcp->u1.h.fileid) &&
+							(stcp_search->u1.h.fileclass == save_stcp->u1.h.fileclass)) {
+							stcp_found = stcp_search;
+							break;
+						}
 					}
+					if (stcp_found != NULL) {
+						/* Here we are : the file has been migrated but has been accessed before the */
+						/* end of the migration in read-only mode */
+
+						/* We change the status of stcp to be a classic STAGEIN|STAGED one, adding */
+						/* all nbaccessses - 1 because, at creation, we incremented the migration entry's */
+						/* nbaccesses as well as created a new entry with one for nbaccesses */
+						stcp_found->status = (STAGEIN|STAGED);
+						stcp_found->nbaccesses += (stcp->nbaccesses - 1);
+#ifdef USECDB
+						if (stgdb_upd_stgcat(&dbfd,stcp_found) != 0) {
+							stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+						}
 #endif
-					if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
+						/* And we delete the now virtual STAGEIN|STAGED|STAGE_RDONLY entry */
+						/* Be aware that this can shift the whole catalog in memory - that's why */
+						/* it has to be done at the very end of current processing */
+						delreq(stcp,0);
+					} else {
+						/* No other entry in status STAGEIN|STAGED|STAGE_RDONLY */
+#ifdef USECDB
+						if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+							stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+						}
+#endif
+					}
 				}
 			}
 			/* In STAGEWRT mode we have to take care that async callback may be */
@@ -1084,7 +1230,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
-			if (wqp->api_out) sendrep(rpfd, API_STCP_OUT, stcp);
+			if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
 			if (wqp->copytape)
 				sendinfo2cptape (rpfd, stcp);
 			if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
@@ -1142,7 +1288,10 @@ procupdreq(req_type, magic, req_data, clienthost)
 	rpfd = upd_rpfd;
 	if ((req_type == STAGE_UPDC) && (rc == ENOSPC) && (wqp != NULL) && (c == 0)) {
 		/* We have successfully created a new entry in the waitq */
+		wqp->status = 0;
 		wqp->nb_clnreq++;
+		wqp->clnreq_reqid = upd_reqid;
+		wqp->clnreq_rpfd = rpfd;
 		cleanpool (wqp->waiting_pool);
 	} else {
 		sendrep (rpfd, STAGERC, STAGEUPDC, c);
@@ -1180,7 +1329,6 @@ void update_hsm_a_time(stcp)
 	}
 }
 
-
-
-
-
+/*
+ * Last Update: "Thursday 07 June, 2001 at 16:07:44 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ */
