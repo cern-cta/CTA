@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.21 2002/03/27 08:34:00 jdurand Exp $
+ * $Id: stage_constants.h,v 1.22 2002/04/11 09:58:31 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -243,78 +243,73 @@
 #endif
 #define	MSG_ERR		1
 
-/* ==================================== */
-/* stage daemon return codes and states */
-/* ==================================== */
+/* ================================================================= */
+/* stage daemon return codes and states for the command-line clients */
+/* ================================================================= */
 #ifdef  USERR
 #undef  USERR
 #endif
-#define	USERR	  1	/* user error */
+#define	USERR	  1	/* user error - serrno: SEUSERR */
 
 #ifdef  SYERR
 #undef  SYERR
 #endif
-#define	SYERR 	  2	/* system error */
-
-#ifdef  UNERR
-#undef  UNERR
-#endif
-#define	UNERR	  3	/* undefined error */
+#define	SYERR 	  2	/* system error - serrno: SESYSERR */
 
 #ifdef  CONFERR
 #undef  CONFERR
 #endif
-#define	CONFERR	  4	/* configuration error */
+#define	CONFERR	  4	/* configuration error - serrno: ESTCONF */
 
 #ifdef  ETHELDERR
 #undef  ETHELDERR
 #endif
-#define	ETHELDERR	188	/* Tape is held */
+#define	ETHELDERR	188	/* Tape is held - serrno: ETHELD */
 
 #ifdef  LNKNSUP
 #undef  LNKNSUP
 #endif
-#define	LNKNSUP	189	/* symbolic links not supported on that platform */
+#define	LNKNSUP	189	/* symbolic links not supported on that platform - serrno: ESTLNKNSUP */
 
 #ifdef  CLEARED
 #undef  CLEARED
 #endif
-#define	CLEARED	192	/* aborted by stageclr */
+#define	CLEARED	192	/* aborted by stageclr - serrno: ESTCLEARED */
 
 #ifdef  BLKSKPD
 #undef  BLKSKPD
 #endif
-#define	BLKSKPD	193	/* blocks were skipped */
+#define	BLKSKPD	193	/* blocks were skipped - serrno: ERTBLKSKPD */
 
 #ifdef  TPE_LSZ
 #undef  TPE_LSZ
 #endif
-#define	TPE_LSZ	194	/* blocks were skipped, stageing limited by size */
+#define	TPE_LSZ	194	/* blocks were skipped, stageing limited by size - serrno: ERTTPE_LSZ */
 
 #ifdef  MNYPARI
 #undef  MNYPARI
 #endif
-#define	MNYPARI	195	/* stagein stopped: too many tape errors, but -E keep */
+#define	MNYPARI	195	/* stagein stopped: too many tape errors, but -E keep - serrno: ERTMNYPARY */
 
 #ifdef  REQKILD
 #undef  REQKILD
 #endif
-#define	REQKILD	196	/* request killed by user */
+#define	REQKILD	196	/* request killed by user - serrno: ESTKILLED */
 
 #ifdef  LIMBYSZ
 #undef  LIMBYSZ
 #endif
-#define	LIMBYSZ	197	/* limited by size */
+#define	LIMBYSZ	197	/* limited by size - serrno: ERTLIMBYSZ */
 
 #ifdef SHIFT_ESTNACT
 #undef SHIFT_ESTNACT
 #endif
-#define SHIFT_ESTNACT 198 /* Old SHIFT value when nomorestage - remapped in send2stgd */
+#define SHIFT_ESTNACT 198 /* Old SHIFT value when nomorestage - serrno: ESTNACT */
 
 #ifdef  ENOUGHF
 #undef  ENOUGHF
 #endif
-#define	ENOUGHF	199	/* enough free space */
+#define	ENOUGHF	199	/* enough free space - not mapped to serrno, this is an internal flag */
 
 /* ======================= */
 /* stage generic constants */
