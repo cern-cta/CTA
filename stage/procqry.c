@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.101 2002/09/27 06:41:19 jdurand Exp $
+ * $Id: procqry.c,v 1.102 2002/09/30 13:57:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.101 $ $Date: 2002/09/27 06:41:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.102 $ $Date: 2002/09/30 13:57:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -66,9 +66,9 @@ void procqryreq _PROTO((int, int, char *, char *));
 void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int, int, int, int, int));
 int print_sorted_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int, int, int, int, int, int));
 void print_tape_info _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, int, int, int, int, int, int));
-signed64 get_stageout_retenp _PROTO((struct stgcat_entry *));
-signed64 get_stagealloc_retenp _PROTO((struct stgcat_entry *));
-signed64 get_put_failed_retenp _PROTO((struct stgcat_entry *));
+extern signed64 get_stageout_retenp _PROTO((struct stgcat_entry *));
+extern signed64 get_stagealloc_retenp _PROTO((struct stgcat_entry *));
+extern signed64 get_put_failed_retenp _PROTO((struct stgcat_entry *));
 int get_retenp _PROTO((struct stgcat_entry *, char *));
 int get_mintime _PROTO((struct stgcat_entry *, char *));
 
@@ -123,7 +123,6 @@ struct stgdb_fd *dbfd_query;
 extern u_signed64 stage_uniqueid;
 extern struct fileclass *fileclasses;
 extern int nbpool;
-extern struct pool *pools;
 
 static int nbtpf;
 static int noregexp_flag;
@@ -2090,51 +2089,6 @@ void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 		if (req_type > STAGE_00) sendrep(&rpfd, API_STCP_OUT, stcp, magic);
 		if (dump_flag != 0) if (! format_flag) dump_stcp(&rpfd, stcp, &sendrep);
 	}
-}
-
-signed64 get_stageout_retenp(stcp)
-	struct stgcat_entry *stcp;
-{
-	int i;
-	struct pool *pool_p;
-
-	if ((stcp->t_or_d == 'h') && (stcp->u1.h.retenp_on_disk >= 0))
-		return((signed64) stcp->u1.h.retenp_on_disk);
-	if (nbpool == 0) return (-1);
-	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
-		if (strcmp (stcp->poolname, pool_p->name) == 0) 
-			return((time_t) pool_p->stageout_retenp);
-	return ((signed64) -1);
-}
-
-signed64 get_stagealloc_retenp(stcp)
-	struct stgcat_entry *stcp;
-{
-	int i;
-	struct pool *pool_p;
-
-	if ((stcp->t_or_d == 'h') && (stcp->u1.h.retenp_on_disk >= 0))
-		return((signed64) stcp->u1.h.retenp_on_disk);
-	if (nbpool == 0) return (-1);
-	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
-		if (strcmp (stcp->poolname, pool_p->name) == 0) 
-			return((time_t) pool_p->stagealloc_retenp);
-	return ((signed64) -1);
-}
-
-signed64 get_put_failed_retenp(stcp)
-	struct stgcat_entry *stcp;
-{
-	int i;
-	struct pool *pool_p;
-
-	if ((stcp->t_or_d == 'h') && (stcp->u1.h.retenp_on_disk >= 0))
-		return((signed64) stcp->u1.h.retenp_on_disk);
-	if (nbpool == 0) return (-1);
-	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
-		if (strcmp (stcp->poolname, pool_p->name) == 0) 
-			return((time_t) pool_p->put_failed_retenp);
-	return ((signed64) -1);
 }
 
 /* return value will be 0 or -1, where 0 means that timestr is trustable, -1 means that timestr would have has non-sense */
