@@ -1,5 +1,5 @@
 /*
- * $Id: rfrm.c,v 1.7 2000/11/28 06:04:40 baud Exp $
+ * $Id: rfrm.c,v 1.8 2000/12/04 11:35:54 obarring Exp $
  */
 
 /*
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.7 $ $Date: 2000/11/28 06:04:40 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.8 $ $Date: 2000/12/04 11:35:54 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -25,6 +25,7 @@ static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.7 $ $Date: 2000/11
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
+#define RFIO_KERNEL 1
 #include <rfio.h>
 static char *ckpath();
 char *getconfent();
@@ -113,23 +114,36 @@ char *path;
   return(newpath);
 }
 
+static int read_yesno() {
+    int i, rc, retval;
+    i =0;
+    retval = 'n';
+    do {
+        rc = fgetc(stdin);
+        if ( rc == ' ' ) continue;
+        if ( i == 0 ) {
+            retval = rc;
+            i++;
+        }
+    } while ( rc != EOF && rc != '\n');
+    return(retval);
+}
+
 static int rm_recursive(path) 
 char *path;
 {
-   DIR *dirp;
+  DIR *dirp;
   struct dirent *de;
   struct stat st;
   char *p;
-  char yesno[4];
   
   if ( !rfio_lstat(path,&st) ) {
     if ( (st.st_mode & S_IFDIR) ) {
       printf("%s: remove files in directory %s? ",cmd,path);
-      scanf("%[^\n]",yesno);
-      fflush(stdin);
-      if ( strcmp(yesno,"y") ) return(0);
-      dirp = rfio_opendir(path);
-      while ( ( de = readdir(dirp) ) != NULL ) {
+      if ( read_yesno() != 'y' ) return(0);
+
+      dirp = (DIR *)rfio_opendir(path);
+      while ( ( de = (struct dirent *)rfio_readdir((RDIR *)dirp) ) != NULL ) {
 	if ( strcmp(de->d_name,".") && strcmp(de->d_name,"..") ) {
 	  p = (char *)malloc(strlen(path)+strlen(de->d_name)+2);
 	  strcpy(p,path);
