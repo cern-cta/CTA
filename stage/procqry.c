@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.100 2002/09/26 17:10:58 jdurand Exp $
+ * $Id: procqry.c,v 1.101 2002/09/27 06:41:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.100 $ $Date: 2002/09/26 17:10:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.101 $ $Date: 2002/09/27 06:41:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -1992,7 +1992,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 	for (scc = scf; scc; scc = scc->next) {
 		if (format_flag && req_type > STAGE_00) {
 			/* User is just interested by the strucrtures */
-			sendrep(&rpfd, API_STCP_OUT, stcp, magic);
+			sendrep(&rpfd, API_STCP_OUT, scc->stcp, magic);
 			continue;
         }
 		tm = localtime (&scc->stcp->a_time);
@@ -2028,7 +2028,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 				return (-1);
 			}
 		}
-		if (req_type > STAGE_00) sendrep(&rpfd, API_STCP_OUT, stcp, magic);
+		if (req_type > STAGE_00) sendrep(&rpfd, API_STCP_OUT, scc->stcp, magic);
 		if (dump_flag != 0) dump_stcp(&rpfd, scc->stcp, &sendrep);
 	}
 	free (scs);
