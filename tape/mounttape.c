@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.24 $ $Date: 2000/04/07 14:33:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.25 $ $Date: 2000/05/29 13:34:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -157,6 +157,7 @@ char	**argv;
 #endif
 
 	c = 0;
+	devinfo = Ctape_devinfo (devtype);
 	gethostname (hostname, CA_MAXHOSTNAMELEN+1);
 
 	/* initialize for select */
@@ -220,13 +221,11 @@ reselect_loop:
 	strcpy (msg1, vid);
 	if (mode == WRITE_DISABLE)
 		strcat (msg1, " .");
-	if (strcmp (devtype, "3480") == 0 ||
-	    strcmp (devtype, "9840") == 0 ||
-	    strcmp (devtype, "SD3") == 0)
+	if (devinfo->lddtype == 0)		/* STK */
 		lddisplay (-1, path, 0x40, msg1, "", 0);
-	else if (strcmp (devtype, "3590") == 0)
+	else if (devinfo->lddtype == 1)		/* IBM */
 		lddisplay (-1, path, 0x40, msg1, "", 1);
-	else if (strstr (devtype, "/VB"))
+	else if (strstr (devtype, "/VB"))	/* Vision Box */
 		lddisplay (-1, path, 0x18, msg1, "", 2);
 
 	while (1) {
@@ -365,11 +364,9 @@ procorep:
 				goto reply;
 			} else if ((int) strlen (orepbuf) < CA_MAXUNMLEN+1) {
 				/* reselect ? */
-				if (strcmp (devtype, "3480") == 0 ||
-				    strcmp (devtype, "9840") == 0 ||
-				    strcmp (devtype, "SD3") == 0)
+				if (devinfo->lddtype == 0)
 					lddisplay (-1, path, 0x20, "", "", 0);
-				else if (strcmp (devtype, "3590") == 0)
+				else if (devinfo->lddtype == 1)
 					lddisplay (-1, path, 0x20, "", "", 1);
 				else if (strstr (devtype, "/VB"))
 					lddisplay (-1, path, 0x80, "", "", 2);
@@ -430,11 +427,9 @@ unload_loop1:
 
 		/* tape is ready */
 
-		if (strcmp (devtype, "3480") == 0 ||
-		    strcmp (devtype, "9840") == 0 ||
-		    strcmp (devtype, "SD3") == 0)
+		if (devinfo->lddtype == 0)
 			lddisplay (tapefd, path, 0x20, msg1, "", 0);
-		else if (strcmp (devtype, "3590") == 0)
+		else if (devinfo->lddtype == 1)
 			lddisplay (tapefd, path, 0x20, msg1, "", 1);
 		else if (strstr (devtype, "/VB"))
 			lddisplay (tapefd, path, 0x80, msg1, "", 2);
@@ -453,11 +448,9 @@ unload_loop1:
 		if (tpmode != mode && *loader == 'm') {
 			if (c = unldtape (tapefd, path))
 				goto reply;
-			if (strcmp (devtype, "3480") == 0 ||
-			    strcmp (devtype, "9840") == 0 ||
-			    strcmp (devtype, "SD3") == 0)
+			if (devinfo->lddtype == 0)
 				lddisplay (tapefd, path, 0x50, msg1, "wrng rng", 0);
-			else if (strcmp (devtype, "3590") == 0)
+			else if (devinfo->lddtype == 1)
 				lddisplay (tapefd, path, 0x50, msg1, "wrng rng", 1);
 			else if (strstr (devtype, "/VB"))
 				lddisplay (tapefd, path, 0x1A, msg1, "wrong ring", 2);
@@ -560,11 +553,9 @@ unload_loop1:
 				c = n;
 				goto reply;
 			}
-		if (strcmp (devtype, "3480") == 0 ||
-		    strcmp (devtype, "9840") == 0 ||
-		    strcmp (devtype, "SD3") == 0)
+		if (devinfo->lddtype == 0)
 			lddisplay (tapefd, path, 0x50, msg1, "wrng vsn", 0);
-		else if (strcmp (devtype, "3590") == 0)
+		else if (devinfo->lddtype == 1)
 			lddisplay (tapefd, path, 0x50, msg1, "wrng vsn", 1);
 		else if (strstr (devtype, "/VB"))
 			lddisplay (tapefd, path, 0x1A, msg1, "wrong vsn", 2);
@@ -657,7 +648,6 @@ positp:
 			}
 		}
 		if  ((c = wrttpmrk (tapefd, path, 1)) < 0) goto reply;
-		devinfo = Ctape_devinfo (devtype);
 		if (devinfo->eoitpmrks == 2 || Tflag)
 			if  ((c = wrttpmrk (tapefd, path, 1)) < 0) goto reply;
 		if (strcmp (devtype, "SD3") == 0 && ! Tflag)	/* flush buffer */

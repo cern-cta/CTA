@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.19 $ $Date: 2000/04/10 10:04:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.20 $ $Date: 2000/05/29 13:34:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -22,6 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.19 $ $Date: 200
 #include <sys/select.h>
 #endif
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "marshall.h"
 #if SACCT
 #include "sacct.h"
@@ -54,6 +55,7 @@ char	**argv;
 	int c;
 	unsigned int demountforce;
 	int den;
+	struct devinfo *devinfo;
 	char *dgn;
 	char *drive;
 	char *dvn;
@@ -105,6 +107,7 @@ char	**argv;
 		sonyraw = 0;
 #endif
 
+	devinfo = Ctape_devinfo (devtype);
 	pwd = getpwuid (uid);
 	strcpy (name, pwd->pw_name);
 
@@ -161,13 +164,11 @@ unload_loop:
 #endif
 		sleep (UCHECKI);
 	if (tapefd >= 0) {
-		if (strcmp (devtype, "3480") == 0 ||
-		    strcmp (devtype, "9840") == 0 ||
-		    strcmp (devtype, "SD3") == 0)
+		if (devinfo->lddtype == 0)		/* STK */
 			lddisplay (tapefd, dvn, 0x20, "", "", 0);
-		else if (strcmp (devtype, "3590") == 0)
+		else if (devinfo->lddtype == 1)		/* IBM */
 			lddisplay (tapefd, dvn, 0x20, "", "", 1);
-		else if (strstr (devtype, "/VB"))
+		else if (strstr (devtype, "/VB"))	/* Vision Box */
 			lddisplay (tapefd, dvn, 0x80, "", "", 2);
 		if (chkdriveready (tapefd) > 0) {
 			if (*loader != 'n')
