@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlflisttext.c,v $ $Revision: 1.1 $ $Date: 2003/08/20 13:04:33 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlflisttext.c,v $ $Revision: 1.2 $ $Date: 2003/11/06 07:26:22 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -72,7 +72,7 @@ char **argv;
  
 #if defined(_WIN32)
 	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-		fprintf (stderr, VMG52);
+		fprintf (stderr, DLF52);
 		exit (SYERR);
 	}
 #endif

@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlfdeletefacility.c,v $ $Revision: 1.1 $ $Date: 2003/08/20 13:00:59 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlfdeletefacility.c,v $ $Revision: 1.2 $ $Date: 2003/11/06 07:20:50 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -35,6 +35,9 @@ char **argv;
 	char c;
 	char fac_name[DLF_MAXFACNAMELEN + 1];
 	int fac_name_set = 0;
+#if defined (_WIN32)
+	WSADATA wsadata;
+#endif
 
 	errflg = 0;
         while ((c = getopt (argc, argv, "F:?")) != EOF) {

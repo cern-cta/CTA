@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlflogstore.c,v $ $Revision: 1.3 $ $Date: 2003/11/03 08:54:23 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlflogstore.c,v $ $Revision: 1.4 $ $Date: 2003/11/06 07:27:10 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 #include <errno.h>
@@ -103,6 +103,7 @@ int main(argc, argv)
 	Cuuid_t sub_request_id;
 	char *end_ptr;
 	HYPER i64val;
+	int i32val;
 	double dval;
 	dlf_log_dst_t dst_host;
 	int file_given = 0;
@@ -113,6 +114,9 @@ int main(argc, argv)
 	int last_message;
 	struct servent *sp;
 	int line_no = 1;
+#if defined (_WIN32)
+	WSADATA wsadata;
+#endif
 
 	uid = geteuid();
 	gid = getegid();
@@ -137,7 +141,11 @@ int main(argc, argv)
 			}
                         break;
 		case 's':
-		        for (i = 0; g_dlf_levels[i].lvl_id != 0 && strcasecmp(optarg, g_dlf_levels[i].lvl_name) != 0 ; i++);
+#if defined(_WIN32)
+			for (i = 0; g_dlf_levels[i].lvl_id != 0 && stricmp(optarg, g_dlf_levels[i].lvl_name) != 0 ; i++);
+#else
+			for (i = 0; g_dlf_levels[i].lvl_id != 0 && strcasecmp(optarg, g_dlf_levels[i].lvl_name) != 0 ; i++);
+#endif
 			store_severity = g_dlf_levels[i].lvl_id;
 			if (store_severity == 0) {
 			        fprintf (stderr, "Unrecognized severity level: %s\n", optarg);
@@ -359,13 +367,25 @@ int main(argc, argv)
 	    /* Here we may get string, integer or floating point */
 	    if (dlf_isinteger(par_str_val)) {
 	      errno = 0; /* Clear error */
-	      i64val = strtoll(par_str_val, &end_ptr, 10);
+		  /* Try to store it as 32-bit value */
+		  i32val = strtol(par_str_val, &end_ptr, 10);
 	      if (*end_ptr == '\0' && errno != ERANGE) {
-		rv = dlf_add_int_parameter(&log_message, par_name, i64val);
+			i64val = i32val;
+			rv = dlf_add_int_parameter(&log_message, par_name, i64val);
 	      }
-	      else { /* Store it as a string */
-		rv = dlf_add_str_parameter (&log_message, par_name, par_str_val);	      
-	      }
+#if !defined (_WIN32)
+	      else { /* Try to store it as 64-bit value */
+		      i64val = strtoll(par_str_val, &end_ptr, 10);
+			  if (*end_ptr == '\0' && errno != ERANGE) {
+				rv = dlf_add_int_parameter(&log_message, par_name, i64val);
+			  }
+#endif
+			  else { /* Store it as a string */
+				rv = dlf_add_str_parameter (&log_message, par_name, par_str_val);
+#if !defined (_WIN32)
+			  }
+#endif
+		  }
 	    }
 	    else if (dlf_isfloat(par_str_val)) {
 	      errno = 0; /* Clear error */
