@@ -1,5 +1,5 @@
 /*
- * $Id: stager_usrmsg.c,v 1.16 2001/12/13 18:00:25 jdurand Exp $
+ * $Id: stager_usrmsg.c,v 1.17 2002/08/27 08:38:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.16 $ $Date: 2001/12/13 18:00:25 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.17 $ $Date: 2002/08/27 08:38:04 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /* stager_usrmsg.c - callback rtcp routine */
@@ -35,9 +35,12 @@ static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.16 $ $Dat
 #include "osdep.h"
 
 extern int rpfd;
-int sendrep _PROTO(());
-int stglogit _PROTO(());
-int stgmiglogit _PROTO(());
+#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
+extern int sendrep _PROTO((int *, int, ...));
+#else
+extern int sendrep _PROTO(());
+#endif
+extern int stgmiglogit _PROTO(());
 extern struct passwd start_passwd;
 
 #if hpux
@@ -89,15 +92,15 @@ void stager_usrmsg(int level, ...)
 	line[BUFSIZ-1] = '\0';
 #ifdef STAGER_DEBUG
     /* In debug mode - we always want to have all messages in stager log-file */
-	sendrep(rpfd,MSG_ERR,"%s",line) ;
+	sendrep(&rpfd,MSG_ERR,"%s",line) ;
 #else
-	if (level != LOG_DEBUG) sendrep(rpfd,RTCOPY_OUT,"%s",line) ;
+	if (level != LOG_DEBUG) sendrep(&rpfd,RTCOPY_OUT,"%s",line) ;
 #endif
 	va_end(args);
 }
 
 /*
- * Version for automatic migration - Calls stglogit
+ * Version for automatic migration - Calls stgmiglogit
  *
  * stager_migmsg should be called with the following syntax
  * stager_migmsg(LOG_LEVEL,format[,value,...]) ;

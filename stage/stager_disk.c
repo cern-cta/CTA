@@ -1,5 +1,5 @@
 /*
- * $Id: stager_disk.c,v 1.8 2002/04/30 13:09:55 jdurand Exp $
+ * $Id: stager_disk.c,v 1.9 2002/08/27 08:38:04 jdurand Exp $
  */
 
 /*
@@ -15,7 +15,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.8 $ $Date: 2002/04/30 13:09:55 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.9 $ $Date: 2002/08/27 08:38:04 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.8 $ $Date: 
 
 EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
-extern int sendrep _PROTO((int, int, ...));
+extern int sendrep _PROTO((int *, int, ...));
 #else
 extern int sendrep _PROTO(());
 #endif
@@ -157,6 +157,8 @@ int main(argc,argv)
 	int nretry;
 #ifdef STAGER_DEBUG
 	int i;
+#else
+	int thisrpfd;
 #endif
 	struct stgcat_entry *stcp;
 	struct stgcat_entry stgreq;
@@ -183,44 +185,45 @@ int main(argc,argv)
 	{
 		int i;
 
-		sendrep(atoi (argv[3]), MSG_ERR, "[DEBUG] argc = %d\n", argc);
+		thisrpfd = atoi(argv[3]);
+		sendrep(&thisrpfd, MSG_ERR, "[DEBUG] argc = %d\n", argc);
 
 		for (i = 0; i < argc; i++) {
-			sendrep(atoi (argv[3]), MSG_ERR, "[DEBUG] argv[%d] = %s\n", i, argv[i]);
+			sendrep(&thisrpfd, MSG_ERR, "[DEBUG] argv[%d] = %s\n", i, argv[i]);
 		}
 	}
 #endif
 	reqid = atoi (argv[1]);
 #ifdef STAGER_DEBUG
-	sendrep(atoi (argv[3]), MSG_ERR, "[DEBUG] reqid = %d\n", reqid);
+	sendrep(&thisrpfd, MSG_ERR, "[DEBUG] reqid = %d\n", reqid);
 #endif
 	key = atoi (argv[2]);
 #ifdef STAGER_DEBUG
-	sendrep(atoi (argv[3]), MSG_ERR, "[DEBUG] key = %d\n", key);
+	sendrep(&thisrpfd, MSG_ERR, "[DEBUG] key = %d\n", key);
 #endif
 	rpfd = atoi (argv[3]);
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] rpfd = %d\n", rpfd);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] rpfd = %d\n", rpfd);
 #endif
 	nbcat_ent = atoi (argv[4]);
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] nbcat_ent = %d\n", nbcat_ent);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] nbcat_ent = %d\n", nbcat_ent);
 #endif
 	nretry = atoi (argv[5]);
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] nretry = %d\n", nretry);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] nretry = %d\n", nretry);
 #endif
 	Aflag = atoi (argv[6]);
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] Aflag = %d\n", Aflag);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] Aflag = %d\n", Aflag);
 #endif
 	concat_off_fseq = atoi (argv[7]);
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] concat_off_fseq = %d\n", concat_off_fseq);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] concat_off_fseq = %d\n", concat_off_fseq);
 #endif
 	silent = atoi (argv[8]);
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] silent = %d\n", silent);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] silent = %d\n", silent);
 #endif
 #ifdef USE_SUBREQID
 	use_subreqid = atoi (argv[9]);
@@ -234,20 +237,20 @@ int main(argc,argv)
 	}
 #endif
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] use_subreqid = %d\n", use_subreqid);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] use_subreqid = %d\n", use_subreqid);
 #endif
 	api_flag = atoi (argv[10]);
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] api_flag = %d\n", api_flag);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] api_flag = %d\n", api_flag);
 #endif
 	api_flags = strtou64(argv[11]);
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] api_flags = %s\n", stglogflags(NULL,NULL,(u_signed64) api_flags));
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] api_flags = %s\n", stglogflags(NULL,NULL,(u_signed64) api_flags));
 #endif
 #ifdef __INSURE__
 	tmpfile = argv[12];
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] tmpfile = %s\n", tmpfile);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] tmpfile = %s\n", tmpfile);
 #endif
 #endif
 
@@ -281,15 +284,15 @@ int main(argc,argv)
 		int i;
 
 		for (i = 0; i < nbcat_ent; i++) {
-			dump_stcp(rpfd, stcs + i, &sendrep);
+			dump_stcp(&rpfd, stcs + i, &sendrep);
         }
 	}
 #endif
 
 #ifdef STAGER_DEBUG
 	SAVE_EID;
-	sendrep(rpfd, MSG_ERR, "[DEBUG] GO ON WITH gdb /usr/local/bin/stager_disk %d, then break %d\n",getpid(),__LINE__ + 6);
-	sendrep(rpfd, MSG_ERR, "[DEBUG] sleep(%d)\n", SLEEP_DEBUG);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] GO ON WITH gdb /usr/local/bin/stager_disk %d, then break %d\n",getpid(),__LINE__ + 6);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] sleep(%d)\n", SLEEP_DEBUG);
 	sleep(SLEEP_DEBUG);
 	RESTORE_EID;
 #endif
@@ -331,7 +334,7 @@ int main(argc,argv)
 	for (stcp = stcs; stcp < stce; stcp++) {
 		if (stcs->t_or_d != 'd' && stcs->t_or_d != 'm') {
 			SAVE_EID;
-			sendrep(rpfd, MSG_ERR, "### HSM file is of unvalid type ('%c')\n",stcp->t_or_d);
+			sendrep(&rpfd, MSG_ERR, "### HSM file is of unvalid type ('%c')\n",stcp->t_or_d);
 			RESTORE_EID;
 			free(stcs);
 			exit(USERR);
@@ -347,12 +350,12 @@ int main(argc,argv)
 	/* We always set stager logger callback because we will use stage API in filecopy() */
 #ifdef STAGER_DEBUG
 	SAVE_EID;
-	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN/WRT/PUT] Setting stage_setlog()\n");
+	sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGEIN/WRT/PUT] Setting stage_setlog()\n");
 	RESTORE_EID;
 #endif
 	if (stage_setlog((void (*) _PROTO((int, char *))) &stager_log_callback) != 0) {
 		SAVE_EID;
-		sendrep(rpfd, MSG_ERR, "### Cannot set stager API callback function (%s)\n",sstrerror(serrno));
+		sendrep(&rpfd, MSG_ERR, "### Cannot set stager API callback function (%s)\n",sstrerror(serrno));
 		RESTORE_EID;
 		free(stcs);
 		exit(SYERR);
@@ -403,7 +406,7 @@ int filecopy(stcp, key, hostname)
 		sprintf (stageid, "%d.%d@%s", reqid, key, hostname);
 #ifdef STAGER_DEBUG
 		SAVE_EID;
-		sendrep (rpfd, MSG_ERR, "Calling stage_updc_tppos(stageid=%s,...)\n",stageid);
+		sendrep (&rpfd, MSG_ERR, "Calling stage_updc_tppos(stageid=%s,...)\n",stageid);
 		RESTORE_EID;
 #endif
 #ifdef STAGE_CSETPROCNAME
@@ -428,14 +431,14 @@ int filecopy(stcp, key, hostname)
 								stcp->ipath              /* path          */
 								) != 0) {
 			SAVE_EID;
-			sendrep (rpfd, MSG_ERR, STG02, stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.d.xfile,
+			sendrep (&rpfd, MSG_ERR, STG02, stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.d.xfile,
 					"stage_updc_tppos", sstrerror (serrno));
 			RESTORE_EID;
 			return(serrno << 8); /* We simulate the output from rfio_pclose() */
 		}
 #ifdef STAGER_DEBUG
 		SAVE_EID;
-		sendrep (rpfd, MSG_ERR, "[DEBUG-FILECOPY] Internal path setted to %s\n", stcp->ipath);
+		sendrep (&rpfd, MSG_ERR, "[DEBUG-FILECOPY] Internal path setted to %s\n", stcp->ipath);
 		RESTORE_EID;
 #endif
 	}
@@ -478,7 +481,7 @@ int filecopy(stcp, key, hostname)
 	}
 #ifdef STAGER_DEBUG
 	SAVE_EID;
-	sendrep(rpfd, MSG_ERR, "[DEBUG-FILECOPY] Execing %s\n",command);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG-FILECOPY] Execing %s\n",command);
 	RESTORE_EID;
 #else
 	SAVE_EID;
@@ -501,7 +504,7 @@ int filecopy(stcp, key, hostname)
 	rf = rfio_popen (command, "r");
 	if (rf == NULL) {
 		/* This way we will sure that it will be logged... */
-		sendrep(rpfd, MSG_ERR, "STG02 - %s : %s\n", command, rfio_serror());
+		sendrep(&rpfd, MSG_ERR, "STG02 - %s : %s\n", command, rfio_serror());
 		return(rfio_serrno() << 8); /* We simulate the output from rfio_pclose() */
 	}
 
@@ -510,14 +513,14 @@ int filecopy(stcp, key, hostname)
 		if ((c = rfio_pread (buf, 1, sizeof(buf)-1, rf)) <= 0) break;
 		buf[c] = '\0';
 		SAVE_EID;
-		sendrep (rpfd, RTCOPY_OUT, "%s", buf);
+		sendrep (&rpfd, RTCOPY_OUT, "%s", buf);
 		RESTORE_EID;
 	}
 
 	PRE_RFIO;
 	c = rfio_pclose (rf);
 	if (c != 0) {
-		sendrep(rpfd, MSG_ERR, "STG02 - %s : error reported at %s time : status 0x%x (%s)\n", "filecopy", "rfio_pclose", c, sstrerror((c >> 8) & 0xFF));
+		sendrep(&rpfd, MSG_ERR, "STG02 - %s : error reported at %s time : status 0x%x (%s)\n", "filecopy", "rfio_pclose", c, sstrerror((c >> 8) & 0xFF));
 	}
 	return(c); /* This is the output of rfio_pclose, e.g. status in the higher byte */
 }
@@ -556,10 +559,10 @@ void stager_log_callback(level,message)
 	SAVE_EID;
 #ifdef STAGER_DEBUG
 	/* In debug mode we always want to have all the messages in the stager log-file */
-	sendrep(rpfd,MSG_ERR,"%s",message);
+	sendrep(&rpfd,MSG_ERR,"%s",message);
 #else
 	/* In migration mode we want to make sure that everything is logged */
-	sendrep(rpfd, (level == LOG_INFO) ? MSG_OUT : MSG_ERR,"%s",message);
+	sendrep(&rpfd, (level == LOG_INFO) ? MSG_OUT : MSG_ERR,"%s",message);
 #endif
 	RESTORE_EID;
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.214 2002/08/21 05:44:08 jdurand Exp $
+ * $Id: poolmgr.c,v 1.215 2002/08/27 08:38:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.214 $ $Date: 2002/08/21 05:44:08 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.215 $ $Date: 2002/08/27 08:38:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -90,7 +90,7 @@ extern int reqid;
 extern int stglogit _PROTO(());
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
-extern int sendrep _PROTO((int, int, ...));
+extern int sendrep _PROTO((int *, int, ...));
 #else
 extern int sendrep _PROTO(());
 #endif
@@ -185,7 +185,7 @@ char *next_tppool _PROTO((struct fileclass *));
 int euid_egid _PROTO((uid_t *, gid_t *, char *, struct migrator *, struct stgcat_entry *, struct stgcat_entry *, char **, int, int));
 extern int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
 void stglogfileclass _PROTO((struct Cns_fileclass *));
-void printfileclass _PROTO((int, struct fileclass *));
+void printfileclass _PROTO((int *, struct fileclass *));
 int retenp_on_disk _PROTO((int));
 int mintime_beforemigr _PROTO((int));
 int mintime_beforemigr_vs_pool _PROTO((struct pool *, int));
@@ -1579,7 +1579,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 		stage_util_retenp(pool_p->stageout_retenp,stageout_retenp_timestr);
 		stage_util_retenp(pool_p->stagealloc_retenp,stagealloc_retenp_timestr);
 		stage_util_retenp(pool_p->put_failed_retenp,put_failed_retenp_timestr);
-		sendrep (rpfd, MSG_OUT, "POOL %s%s%s DEFSIZE %s GC_START_THRESH %d GC_STOP_THRESH %d GC %s%s%s%s%s%s%s%s%s MAX_SETRETENP %s PUT_FAILED_RETENP %s STAGEOUT_RETENP %s STAGEALLOC_RETENP %s\n",
+		sendrep (&rpfd, MSG_OUT, "POOL %s%s%s DEFSIZE %s GC_START_THRESH %d GC_STOP_THRESH %d GC %s%s%s%s%s%s%s%s%s MAX_SETRETENP %s PUT_FAILED_RETENP %s STAGEOUT_RETENP %s STAGEALLOC_RETENP %s\n",
 				 pool_p->name,
 				 pool_p->no_file_creation ? " NO_FILE_CREATION" : "",
 				 pool_p->export_hsm ? " EXPORT_HSM" : "",
@@ -1602,27 +1602,27 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 			);
 		if (pool_p->cleanreqtime > 0) {
 			stage_util_time(pool_p->cleanreqtime,timestr);
-			sendrep (rpfd, MSG_OUT, "\tLAST GARBAGE COLLECTION STARTED %s%s\n", timestr, pool_p->ovl_pid > 0 ? " STILL ACTIVE" : "");
+			sendrep (&rpfd, MSG_OUT, "\tLAST GARBAGE COLLECTION STARTED %s%s\n", timestr, pool_p->ovl_pid > 0 ? " STILL ACTIVE" : "");
 		} else {
-			sendrep (rpfd, MSG_OUT, "\tLAST GARBAGE COLLECTION STARTED <none>\n");
+			sendrep (&rpfd, MSG_OUT, "\tLAST GARBAGE COLLECTION STARTED <none>\n");
 		}
 		if (pool_p->cleanreqtime_previous > 0) {
 			stage_util_time(pool_p->cleanreqtime_previous,timestr);
-			sendrep (rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION STARTED %s\n", timestr);
+			sendrep (&rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION STARTED %s\n", timestr);
 		} else {
-			sendrep (rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION STARTED <none>\n");
+			sendrep (&rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION STARTED <none>\n");
 		}
 		if (pool_p->cleanreqtime_previous_end > 0) {
 			stage_util_time(pool_p->cleanreqtime_previous_end,timestr);
-			sendrep (rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION ENDED %s\n", timestr);
+			sendrep (&rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION ENDED %s\n", timestr);
 		} else {
-			sendrep (rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION ENDED <none>\n");
+			sendrep (&rpfd, MSG_OUT, "\tPREVIOUS GARBAGE COLLECTION ENDED <none>\n");
 		}
 		before_fraction = pool_p->capacity ? (100 * pool_p->free) / pool_p->capacity : 0;
 		after_fraction = pool_p->capacity ?
 			(10 * (pool_p->free * 100 - pool_p->capacity * before_fraction)) / pool_p->capacity :
 			0;
-		sendrep (rpfd, MSG_OUT,"                              CAPACITY %s FREE %s (%s.%s%%)\n",
+		sendrep (&rpfd, MSG_OUT,"                              CAPACITY %s FREE %s (%s.%s%%)\n",
 				 u64tostru(pool_p->capacity, tmpbuf1, 0),
 				 u64tostru(pool_p->free, tmpbuf2, 0),
 				 u64tostr(before_fraction, tmpbuf3, 0),
@@ -1633,7 +1633,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 			after_fraction = elemp->capacity ?
 				(10 * (elemp->free * 100 - elemp->capacity * before_fraction)) / elemp->capacity :
 				0;
-			sendrep (rpfd, MSG_OUT, "  %s %s CAPACITY %s FREE %s (%s.%s%%)%s%s%s%s%s%s\n",
+			sendrep (&rpfd, MSG_OUT, "  %s %s CAPACITY %s FREE %s (%s.%s%%)%s%s%s%s%s%s\n",
 					 elemp->server,
 					 elemp->dirpath,
 					 u64tostru(elemp->capacity, tmpbuf1, 0),
@@ -1650,60 +1650,60 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 		}
 	}
 	if (*poolname == '\0') {
-		sendrep (rpfd, MSG_OUT, "DEFPOOL     %s\n", defpoolname);
-		sendrep (rpfd, MSG_OUT, "DEFPOOL_IN  %s\n", defpoolname_in);
-		sendrep (rpfd, MSG_OUT, "DEFPOOL_OUT %s\n", defpoolname_out);
+		sendrep (&rpfd, MSG_OUT, "DEFPOOL     %s\n", defpoolname);
+		sendrep (&rpfd, MSG_OUT, "DEFPOOL_IN  %s\n", defpoolname_in);
+		sendrep (&rpfd, MSG_OUT, "DEFPOOL_OUT %s\n", defpoolname_out);
 	}
 	if ((migrator_flag != 0) && (migrators != NULL)) {
 		for (i = 0, migr_p = migrators; i < nbmigrator; i++, migr_p++) {
 			if (*poolname && pool_p_migr != migr_p) continue;
 			if (migr_newline) {
-				sendrep (rpfd, MSG_OUT, "\n");
+				sendrep (&rpfd, MSG_OUT, "\n");
 				migr_newline = 0;
 			}
-			sendrep (rpfd, MSG_OUT, "MIGRATOR %s\n",migr_p->name);
-			sendrep (rpfd, MSG_OUT, "\tNBFILES_CAN_BE_MIGR    %d\n", migr_p->global_predicates.nbfiles_canbemig);
-			sendrep (rpfd, MSG_OUT, "\tSPACE_CAN_BE_MIGR      %s\n", u64tostru(migr_p->global_predicates.space_canbemig, tmpbuf, 0));
-			sendrep (rpfd, MSG_OUT, "\tNBFILES_DELAY_MIGR     %d\n", migr_p->global_predicates.nbfiles_delaymig);
-			sendrep (rpfd, MSG_OUT, "\tSPACE_DELAY_MIGR       %s\n", u64tostru(migr_p->global_predicates.space_delaymig, tmpbuf, 0));
-			sendrep (rpfd, MSG_OUT, "\tNBFILES_BEING_MIGR     %d\n", migr_p->global_predicates.nbfiles_beingmig);
-			sendrep (rpfd, MSG_OUT, "\tSPACE_BEING_MIGR       %s\n", u64tostru(migr_p->global_predicates.space_beingmig, tmpbuf, 0));
+			sendrep (&rpfd, MSG_OUT, "MIGRATOR %s\n",migr_p->name);
+			sendrep (&rpfd, MSG_OUT, "\tNBFILES_CAN_BE_MIGR    %d\n", migr_p->global_predicates.nbfiles_canbemig);
+			sendrep (&rpfd, MSG_OUT, "\tSPACE_CAN_BE_MIGR      %s\n", u64tostru(migr_p->global_predicates.space_canbemig, tmpbuf, 0));
+			sendrep (&rpfd, MSG_OUT, "\tNBFILES_DELAY_MIGR     %d\n", migr_p->global_predicates.nbfiles_delaymig);
+			sendrep (&rpfd, MSG_OUT, "\tSPACE_DELAY_MIGR       %s\n", u64tostru(migr_p->global_predicates.space_delaymig, tmpbuf, 0));
+			sendrep (&rpfd, MSG_OUT, "\tNBFILES_BEING_MIGR     %d\n", migr_p->global_predicates.nbfiles_beingmig);
+			sendrep (&rpfd, MSG_OUT, "\tSPACE_BEING_MIGR       %s\n", u64tostru(migr_p->global_predicates.space_beingmig, tmpbuf, 0));
 			if (migr_p->migreqtime > 0) {
 				stage_util_time(migr_p->migreqtime,timestr);
-				sendrep (rpfd, MSG_OUT, "\tLAST MIGRATION STARTED %s%s\n", timestr, migr_p->mig_pid > 0 ? " STILL ACTIVE" : "");
+				sendrep (&rpfd, MSG_OUT, "\tLAST MIGRATION STARTED %s%s\n", timestr, migr_p->mig_pid > 0 ? " STILL ACTIVE" : "");
 			} else {
-				sendrep (rpfd, MSG_OUT, "\tLAST MIGRATION STARTED <none>\n");
+				sendrep (&rpfd, MSG_OUT, "\tLAST MIGRATION STARTED <none>\n");
 			}
 			if (migr_p->migreqtime_previous > 0) {
 				stage_util_time(migr_p->migreqtime_previous,timestr);
-				sendrep (rpfd, MSG_OUT, "\tPREVIOUS MIGRATION STARTED %s\n", timestr);
+				sendrep (&rpfd, MSG_OUT, "\tPREVIOUS MIGRATION STARTED %s\n", timestr);
 			} else {
-				sendrep (rpfd, MSG_OUT, "\tPREVIOUS MIGRATION STARTED <none>\n");
+				sendrep (&rpfd, MSG_OUT, "\tPREVIOUS MIGRATION STARTED <none>\n");
 			}
 			if (migr_p->migreqtime_previous_end > 0) {
 				stage_util_time(migr_p->migreqtime_previous_end,timestr);
-				sendrep (rpfd, MSG_OUT, "\tPREVIOUS MIGRATION ENDED %s\n", timestr);
+				sendrep (&rpfd, MSG_OUT, "\tPREVIOUS MIGRATION ENDED %s\n", timestr);
 			} else {
-				sendrep (rpfd, MSG_OUT, "\tPREVIOUS MIGRATION ENDED <none>\n");
+				sendrep (&rpfd, MSG_OUT, "\tPREVIOUS MIGRATION ENDED <none>\n");
 			}
 			for (j = 0; j < migr_p->nfileclass; j++) {
-				sendrep (rpfd, MSG_OUT, "\tFILECLASS %s@%s (classid=%d)\n",
+				sendrep (&rpfd, MSG_OUT, "\tFILECLASS %s@%s (classid=%d)\n",
 						 migr_p->fileclass[j]->Cnsfileclass.name,
 						 migr_p->fileclass[j]->server,
 						 migr_p->fileclass[j]->Cnsfileclass.classid);
-				sendrep (rpfd, MSG_OUT, "\t\tNBFILES_CAN_BE_MIGR    %d\n", migr_p->fileclass_predicates[j].nbfiles_canbemig);
-				sendrep (rpfd, MSG_OUT, "\t\tSPACE_CAN_BE_MIGR      %s\n", u64tostru(migr_p->fileclass_predicates[j].space_canbemig, tmpbuf, 0));
-				sendrep (rpfd, MSG_OUT, "\t\tNBFILES_DELAY_MIGR     %d\n", migr_p->fileclass_predicates[j].nbfiles_delaymig);
-				sendrep (rpfd, MSG_OUT, "\t\tSPACE_DELAY_MIGR       %s\n", u64tostru(migr_p->fileclass_predicates[j].space_delaymig, tmpbuf, 0));
-				sendrep (rpfd, MSG_OUT, "\t\tNBFILES_BEING_MIGR     %d\n", migr_p->fileclass_predicates[j].nbfiles_beingmig);
-				sendrep (rpfd, MSG_OUT, "\t\tSPACE_BEING_MIGR       %s\n", u64tostru(migr_p->fileclass_predicates[j].space_beingmig, tmpbuf, 0));
+				sendrep (&rpfd, MSG_OUT, "\t\tNBFILES_CAN_BE_MIGR    %d\n", migr_p->fileclass_predicates[j].nbfiles_canbemig);
+				sendrep (&rpfd, MSG_OUT, "\t\tSPACE_CAN_BE_MIGR      %s\n", u64tostru(migr_p->fileclass_predicates[j].space_canbemig, tmpbuf, 0));
+				sendrep (&rpfd, MSG_OUT, "\t\tNBFILES_DELAY_MIGR     %d\n", migr_p->fileclass_predicates[j].nbfiles_delaymig);
+				sendrep (&rpfd, MSG_OUT, "\t\tSPACE_DELAY_MIGR       %s\n", u64tostru(migr_p->fileclass_predicates[j].space_delaymig, tmpbuf, 0));
+				sendrep (&rpfd, MSG_OUT, "\t\tNBFILES_BEING_MIGR     %d\n", migr_p->fileclass_predicates[j].nbfiles_beingmig);
+				sendrep (&rpfd, MSG_OUT, "\t\tSPACE_BEING_MIGR       %s\n", u64tostru(migr_p->fileclass_predicates[j].space_beingmig, tmpbuf, 0));
 			}
 		}
 	}
 	if ((class_flag != 0) && (fileclasses != NULL)) {
-		sendrep (rpfd, MSG_OUT, "\n");
+		sendrep (&rpfd, MSG_OUT, "\n");
 		for (i = 0; i < nbfileclasses; i++) {
-			printfileclass(rpfd, &(fileclasses[i]));
+			printfileclass(&rpfd, &(fileclasses[i]));
 		}
 	}
 	if (queue_flag != 0) {
@@ -1714,90 +1714,91 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 
 		for (wqp = waitqp, iwaitq = 1; wqp; wqp = wqp->next, iwaitq++) {
 			struct stgcat_entry *stcp;
-			sendrep (rpfd, MSG_OUT, "\n--------------------\nWaiting Queue No %d\n--------------------\n", iwaitq);
-			sendrep (rpfd, MSG_OUT, "pool_user                %s\n", wqp->pool_user);
-			sendrep (rpfd, MSG_OUT, "clienthost               %s\n", wqp->clienthost);
-			sendrep (rpfd, MSG_OUT, "req_user                 %s\n", wqp->req_user);
-			sendrep (rpfd, MSG_OUT, "req_uid                  %ld\n", (unsigned long) wqp->req_uid);
-			sendrep (rpfd, MSG_OUT, "req_gid                  %ld\n", (unsigned long) wqp->req_gid);
-			sendrep (rpfd, MSG_OUT, "rtcp_user                %s\n", wqp->rtcp_user);
-			sendrep (rpfd, MSG_OUT, "rtcp_group               %s\n", wqp->rtcp_group);
-			sendrep (rpfd, MSG_OUT, "rtcp_uid                 %ld\n", (unsigned long) wqp->rtcp_uid);
-			sendrep (rpfd, MSG_OUT, "rtcp_gid                 %ld\n", (unsigned long) wqp->rtcp_gid);
-			sendrep (rpfd, MSG_OUT, "clientpid                %ld\n", (unsigned long) wqp->clientpid);
-			sendrep (rpfd, MSG_OUT, "uniqueid gives           Pid=0x%lx (%d) CthreadId+1=0x%lx (-> Tid=%d)\n",
+			sendrep (&rpfd, MSG_OUT, "\n--------------------\nWaiting Queue No %d\n--------------------\n", iwaitq);
+			sendrep (&rpfd, MSG_OUT, "pool_user                %s\n", wqp->pool_user);
+			sendrep (&rpfd, MSG_OUT, "clienthost               %s\n", wqp->clienthost);
+			sendrep (&rpfd, MSG_OUT, "req_user                 %s\n", wqp->req_user);
+			sendrep (&rpfd, MSG_OUT, "req_uid                  %ld\n", (unsigned long) wqp->req_uid);
+			sendrep (&rpfd, MSG_OUT, "req_gid                  %ld\n", (unsigned long) wqp->req_gid);
+			sendrep (&rpfd, MSG_OUT, "rtcp_user                %s\n", wqp->rtcp_user);
+			sendrep (&rpfd, MSG_OUT, "rtcp_group               %s\n", wqp->rtcp_group);
+			sendrep (&rpfd, MSG_OUT, "rtcp_uid                 %ld\n", (unsigned long) wqp->rtcp_uid);
+			sendrep (&rpfd, MSG_OUT, "rtcp_gid                 %ld\n", (unsigned long) wqp->rtcp_gid);
+			sendrep (&rpfd, MSG_OUT, "clientpid                %ld\n", (unsigned long) wqp->clientpid);
+			sendrep (&rpfd, MSG_OUT, "uniqueid gives           Pid=0x%lx (%d) CthreadId+1=0x%lx (-> Tid=%d)\n",
 					 (unsigned long) (wqp->uniqueid / 0xFFFFFFFF),
 					 (int) (wqp->uniqueid / 0xFFFFFFFF),
 					 (unsigned long) (wqp->uniqueid - (wqp->uniqueid / 0xFFFFFFFF) * 0xFFFFFFFF),
 					 (int) (wqp->uniqueid - (wqp->uniqueid / 0xFFFFFFFF) * 0xFFFFFFFF) - 1
 				);
-			sendrep (rpfd, MSG_OUT, "copytape                 %d\n", wqp->copytape);
-			sendrep (rpfd, MSG_OUT, "Pflag                    %d\n", wqp->Pflag);
-			sendrep (rpfd, MSG_OUT, "Upluspath                %d\n", wqp->Upluspath);
-			sendrep (rpfd, MSG_OUT, "reqid                    %d\n", wqp->reqid);
-			sendrep (rpfd, MSG_OUT, "key                      %d\n", wqp->key);
-			sendrep (rpfd, MSG_OUT, "rpfd                     %d\n", wqp->rpfd);
-			sendrep (rpfd, MSG_OUT, "ovl_pid                  %d\n", wqp->ovl_pid);
-			sendrep (rpfd, MSG_OUT, "nb_subreqs               %d\n", wqp->nb_subreqs);
-			sendrep (rpfd, MSG_OUT, "nbdskf                   %d\n", wqp->nbdskf);
-			sendrep (rpfd, MSG_OUT, "nb_waiting_on_req        %d\n", wqp->nb_waiting_on_req);
-			sendrep (rpfd, MSG_OUT, "nb_clnreq                %d\n", wqp->nb_clnreq);
-			sendrep (rpfd, MSG_OUT, "waiting_pool             %d\n", wqp->waiting_pool);
-			sendrep (rpfd, MSG_OUT, "clnreq_reqid             %d\n", wqp->clnreq_reqid);
-			sendrep (rpfd, MSG_OUT, "clnreq_rpfd              %d\n", wqp->clnreq_rpfd);
-			sendrep (rpfd, MSG_OUT, "wqp->clnreq_waitingreqid %d\n", wqp->clnreq_waitingreqid);
-			sendrep (rpfd, MSG_OUT, "status                   %d\n", wqp->status);
-			sendrep (rpfd, MSG_OUT, "nretry                   %d\n", wqp->nretry);
-			sendrep (rpfd, MSG_OUT, "Aflag                    %d\n", wqp->Aflag);
-			sendrep (rpfd, MSG_OUT, "concat_off_fseq          %d\n", wqp->concat_off_fseq);
-			sendrep (rpfd, MSG_OUT, "magic                    0x%lx\n", (unsigned long) wqp->magic);
-			sendrep (rpfd, MSG_OUT, "api_out                  %d\n", wqp->api_out);
-			sendrep (rpfd, MSG_OUT, "openmode                 %d\n", (int) wqp->openmode);
-			sendrep (rpfd, MSG_OUT, "openflags                0x%lx\n", (unsigned long) wqp->openflags);
-			sendrep (rpfd, MSG_OUT, "silent                   %d\n", wqp->silent);
-			sendrep (rpfd, MSG_OUT, "use_subreqid             %d\n", wqp->use_subreqid);
-			sendrep (rpfd, MSG_OUT, "save_nbsubreqid          %d\n", wqp->save_nbsubreqid);
-			sendrep (rpfd, MSG_OUT, "(API) flags              %s\n", stglogflags(NULL,NULL,(u_signed64) wqp->flags));
+			sendrep (&rpfd, MSG_OUT, "copytape                 %d\n", wqp->copytape);
+			sendrep (&rpfd, MSG_OUT, "Pflag                    %d\n", wqp->Pflag);
+			sendrep (&rpfd, MSG_OUT, "Upluspath                %d\n", wqp->Upluspath);
+			sendrep (&rpfd, MSG_OUT, "reqid                    %d\n", wqp->reqid);
+			sendrep (&rpfd, MSG_OUT, "key                      %d\n", wqp->key);
+			sendrep (&rpfd, MSG_OUT, "rpfd                     %d\n", wqp->rpfd);
+			sendrep (&rpfd, MSG_OUT, "ovl_pid                  %d\n", wqp->ovl_pid);
+			sendrep (&rpfd, MSG_OUT, "nb_subreqs               %d\n", wqp->nb_subreqs);
+			sendrep (&rpfd, MSG_OUT, "nbdskf                   %d\n", wqp->nbdskf);
+			sendrep (&rpfd, MSG_OUT, "nb_waiting_on_req        %d\n", wqp->nb_waiting_on_req);
+			sendrep (&rpfd, MSG_OUT, "nb_clnreq                %d\n", wqp->nb_clnreq);
+			sendrep (&rpfd, MSG_OUT, "waiting_pool             %d\n", wqp->waiting_pool);
+			sendrep (&rpfd, MSG_OUT, "clnreq_reqid             %d\n", wqp->clnreq_reqid);
+			sendrep (&rpfd, MSG_OUT, "clnreq_rpfd              %d\n", wqp->clnreq_rpfd);
+			sendrep (&rpfd, MSG_OUT, "wqp->clnreq_waitingreqid %d\n", wqp->clnreq_waitingreqid);
+			sendrep (&rpfd, MSG_OUT, "status                   %d\n", wqp->status);
+			sendrep (&rpfd, MSG_OUT, "nretry                   %d\n", wqp->nretry);
+			sendrep (&rpfd, MSG_OUT, "noretry flag             %d\n", wqp->noretry);
+			sendrep (&rpfd, MSG_OUT, "Aflag                    %d\n", wqp->Aflag);
+			sendrep (&rpfd, MSG_OUT, "concat_off_fseq          %d\n", wqp->concat_off_fseq);
+			sendrep (&rpfd, MSG_OUT, "magic                    0x%lx\n", (unsigned long) wqp->magic);
+			sendrep (&rpfd, MSG_OUT, "api_out                  %d\n", wqp->api_out);
+			sendrep (&rpfd, MSG_OUT, "openmode                 %d\n", (int) wqp->openmode);
+			sendrep (&rpfd, MSG_OUT, "openflags                0x%lx\n", (unsigned long) wqp->openflags);
+			sendrep (&rpfd, MSG_OUT, "silent                   %d\n", wqp->silent);
+			sendrep (&rpfd, MSG_OUT, "use_subreqid             %d\n", wqp->use_subreqid);
+			sendrep (&rpfd, MSG_OUT, "save_nbsubreqid          %d\n", wqp->save_nbsubreqid);
+			sendrep (&rpfd, MSG_OUT, "(API) flags              %s\n", stglogflags(NULL,NULL,(u_signed64) wqp->flags));
 			if (wqp->save_subreqid != NULL) {
 				for (i = 0, wfp = wqp->wf; i < wqp->save_nbsubreqid; i++, wfp++) {
-					sendrep (rpfd, MSG_OUT, "\tsave_subreqid[%d] = %d\n", i, wqp->save_subreqid[i]);
+					sendrep (&rpfd, MSG_OUT, "\tsave_subreqid[%d] = %d\n", i, wqp->save_subreqid[i]);
 				}
 			}
-			sendrep (rpfd, MSG_OUT, "last_rwcounterfs_vs_R     %d\n", wqp->last_rwcounterfs_vs_R);
+			sendrep (&rpfd, MSG_OUT, "last_rwcounterfs_vs_R     %d\n", wqp->last_rwcounterfs_vs_R);
 			for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
 				for (stcp = stcs; stcp < stce; stcp++) {
 					if (wfp->subreqid == stcp->reqid) {
 						char tmpbuf1[21];
 						char tmpbuf2[22];
 
-						sendrep(rpfd, MSG_OUT, "\tWaiting File No %3d\n", i);
-						sendrep(rpfd, MSG_OUT, "\t\tsubreqid=%d\n", wfp->subreqid);
-						sendrep(rpfd, MSG_OUT, "\t\twaiting_on_req=%d\n", wfp->waiting_on_req);
-						sendrep(rpfd, MSG_OUT, "\t\tupath=%s\n", wfp->upath);
-						sendrep(rpfd, MSG_OUT, "\t\tsize_to_recall=%s\n", u64tostr(wfp->size_to_recall, tmpbuf1, 0));
-						sendrep(rpfd, MSG_OUT, "\t\thsmsize=%s\n", u64tostr(wfp->hsmsize, tmpbuf1, 0));
-						sendrep(rpfd, MSG_OUT, "\t\tnb_segments=%d\n", wfp->nb_segments);
-						sendrep(rpfd, MSG_OUT, "\t\tsize_yet_recalled=%s\n", u64tostr(wfp->size_yet_recalled, tmpbuf2, 0));
+						sendrep(&rpfd, MSG_OUT, "\tWaiting File No %3d\n", i);
+						sendrep(&rpfd, MSG_OUT, "\t\tsubreqid=%d\n", wfp->subreqid);
+						sendrep(&rpfd, MSG_OUT, "\t\twaiting_on_req=%d\n", wfp->waiting_on_req);
+						sendrep(&rpfd, MSG_OUT, "\t\tupath=%s\n", wfp->upath);
+						sendrep(&rpfd, MSG_OUT, "\t\tsize_to_recall=%s\n", u64tostr(wfp->size_to_recall, tmpbuf1, 0));
+						sendrep(&rpfd, MSG_OUT, "\t\thsmsize=%s\n", u64tostr(wfp->hsmsize, tmpbuf1, 0));
+						sendrep(&rpfd, MSG_OUT, "\t\tnb_segments=%d\n", wfp->nb_segments);
+						sendrep(&rpfd, MSG_OUT, "\t\tsize_yet_recalled=%s\n", u64tostr(wfp->size_yet_recalled, tmpbuf2, 0));
 
 						switch (stcp->t_or_d) {
 						case 't':
-							sendrep(rpfd, MSG_OUT, "\t\tVID.FSEQ=%s.%s\n", stcp->u1.t.vid[0], stcp->u1.t.fseq);
+							sendrep(&rpfd, MSG_OUT, "\t\tVID.FSEQ=%s.%s\n", stcp->u1.t.vid[0], stcp->u1.t.fseq);
 							break;
 						case 'd':
 						case 'a':
-							sendrep(rpfd, MSG_OUT, "\t\tu1.d.xfile=%s\n", stcp->u1.d.xfile);
+							sendrep(&rpfd, MSG_OUT, "\t\tu1.d.xfile=%s\n", stcp->u1.d.xfile);
 							break;
 						case 'm':
-							sendrep(rpfd, MSG_OUT, "\t\tu1.m.xfile=%s\n", stcp->u1.m.xfile);
+							sendrep(&rpfd, MSG_OUT, "\t\tu1.m.xfile=%s\n", stcp->u1.m.xfile);
 							break;
 						case 'h':
-							sendrep(rpfd, MSG_OUT, "\t\tu1.h.xfile=%s\n", stcp->u1.h.xfile);
+							sendrep(&rpfd, MSG_OUT, "\t\tu1.h.xfile=%s\n", stcp->u1.h.xfile);
 							if (wfp->ipath[0] != '\0') {
-								sendrep(rpfd, MSG_OUT, "\t\tipath=%s (copy between pools)\n", wfp->ipath);
+								sendrep(&rpfd, MSG_OUT, "\t\tipath=%s (copy between pools)\n", wfp->ipath);
 							}
 							break;
 						default:
-							sendrep(rpfd, MSG_OUT, "\t\t<unknown_type>\n");
+							sendrep(&rpfd, MSG_OUT, "\t\t<unknown_type>\n");
 							break;
 						}
 						break;
@@ -2565,7 +2566,7 @@ int update_migpool(stcp,flag,immediate)
 	}
 	/* We check that this pool have a migrator */
 	if (pool_p->migr == NULL) {
-		sendrep(rpfd, MSG_ERR, STG149, (*stcp)->u1.h.xfile, (*stcp)->poolname);
+		sendrep(&rpfd, MSG_ERR, STG149, (*stcp)->u1.h.xfile, (*stcp)->poolname);
 		rc = -1;
 		goto update_migpool_return;
 	}
@@ -2583,7 +2584,7 @@ int update_migpool(stcp,flag,immediate)
 		/* immediately */
 		if ((pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbcopies == 0) || 
 			(pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbtppools == 0)) {
-			sendrep(rpfd, MSG_ERR, STG139,
+			sendrep(&rpfd, MSG_ERR, STG139,
 					(*stcp)->u1.h.xfile, 
 					pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
 					pool_p->migr->fileclass[ifileclass]->server,
@@ -2611,7 +2612,7 @@ int update_migpool(stcp,flag,immediate)
 			((u_signed64) ((*stcp)->actual_size) < (u_signed64) (((u_signed64) pool_p->migr->fileclass[ifileclass]->Cnsfileclass.min_filesize) * ((u_signed64) ONE_MB)))) {
 			char tmpbuf1[21];
 			char tmpbuf2[21];
-			sendrep(rpfd, MSG_ERR, STG168,
+			sendrep(&rpfd, MSG_ERR, STG168,
 					(*stcp)->u1.h.xfile, 
 					pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
 					pool_p->migr->fileclass[ifileclass]->server,
@@ -2641,7 +2642,7 @@ int update_migpool(stcp,flag,immediate)
 			((u_signed64) (*stcp)->actual_size > (u_signed64) (((u_signed64) pool_p->migr->fileclass[ifileclass]->Cnsfileclass.max_filesize) * ((u_signed64) ONE_MB)))) {
 			char tmpbuf1[21];
 			char tmpbuf2[21];
-			sendrep(rpfd, MSG_ERR, STG168,
+			sendrep(&rpfd, MSG_ERR, STG168,
 					(*stcp)->u1.h.xfile, 
 					pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
 					pool_p->migr->fileclass[ifileclass]->server,
@@ -2669,7 +2670,7 @@ int update_migpool(stcp,flag,immediate)
 		/* If the fileclass specifies (uid,gid) filters we verify that user does match them */
 		if (((pool_p->migr->fileclass[ifileclass]->Cnsfileclass.uid != 0) && ((*stcp)->uid != pool_p->migr->fileclass[ifileclass]->Cnsfileclass.uid)) ||
 			((pool_p->migr->fileclass[ifileclass]->Cnsfileclass.gid != 0) && ((*stcp)->gid != pool_p->migr->fileclass[ifileclass]->Cnsfileclass.gid))) {
-			sendrep(rpfd, MSG_ERR, STG176,
+			sendrep(&rpfd, MSG_ERR, STG176,
 					(*stcp)->u1.h.xfile, 
 					pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
 					pool_p->migr->fileclass[ifileclass]->server,
@@ -2838,7 +2839,7 @@ int update_migpool(stcp,flag,immediate)
 		/* This is to add an entry for the next automatic migration */
 
 		if ((*stcp)->actual_size <= 0) {
-			sendrep(rpfd, MSG_ERR, STG105, "update_migpool", "(*stcp)->actual_size <= 0");
+			sendrep(&rpfd, MSG_ERR, STG105, "update_migpool", "(*stcp)->actual_size <= 0");
 			/* No point */
 			serrno = EINVAL;
 			rc = -1;
@@ -2937,7 +2938,7 @@ int update_migpool(stcp,flag,immediate)
 		}
 		break;
 	default:
-		sendrep(rpfd, MSG_ERR, STG105, "update_migpool", "flag != 1 && flag != -1");
+		sendrep(&rpfd, MSG_ERR, STG105, "update_migpool", "flag != 1 && flag != -1");
 		serrno = EINVAL;
 		rc = -1;
 		break;
@@ -4164,7 +4165,7 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 		Cnsfileid.fileid = stcp->u1.h.fileid;
 		if (Cns_statx(stcp->u1.h.xfile, &Cnsfileid, &Cnsfilestat) != 0) {
 			int save_serrno = serrno;
-			sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_statx", sstrerror(serrno));
+			sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_statx", sstrerror(serrno));
 			serrno = save_serrno;
 			return(-1);
 		}
@@ -4172,7 +4173,7 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 			if ((stcp->u1.h.fileclass > 0) && (Cnsfilestat.fileclass > 0)) {
 				/* Never executed when original stcp have no fileclass yet... */
 				char tmpbuf[21];
-				sendrep(rpfd, MSG_ERR, STG173, stcp->u1.h.xfile, stcp->u1.h.fileclass, Cnsfilestat.fileclass, u64tostr((u_signed64) stcp->u1.h.fileid, tmpbuf, 0), stcp->u1.h.server);
+				sendrep(&rpfd, MSG_ERR, STG173, stcp->u1.h.xfile, stcp->u1.h.fileclass, Cnsfilestat.fileclass, u64tostr((u_signed64) stcp->u1.h.fileid, tmpbuf, 0), stcp->u1.h.server);
 			}
 			stcp->u1.h.fileclass = Cnsfilestat.fileclass;
 			if (! only_memory) {
@@ -4203,7 +4204,7 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 
 		if (Cns_queryclass(stcp->u1.h.server, stcp->u1.h.fileclass, NULL, &Cnsfileclass) != 0) {
 			int save_serrno = serrno;
-			sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_queryclass", sstrerror(serrno));
+			sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_queryclass", sstrerror(serrno));
 			serrno = save_serrno;
 			return(-1);
 		}
@@ -4217,13 +4218,13 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 
 		/* We check that this fileclass does not contain values that we cannot sustain */
 		if ((sav_nbcopies = Cnsfileclass.nbcopies) < 0) {
-			sendrep (rpfd, MSG_ERR, STG126, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, Cnsfileclass.nbcopies);
+			sendrep (&rpfd, MSG_ERR, STG126, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, Cnsfileclass.nbcopies);
 			serrno = EINVAL;
 			return(-1);
 		}
 		/* We check that the number of tape pools is valid */
 		if (Cnsfileclass.nbtppools < 0) {
-			sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_queryclass", "returns invalid number of tape pool - invalid fileclass - Please contact your admin");
+			sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_queryclass", "returns invalid number of tape pool - invalid fileclass - Please contact your admin");
 			serrno = EINVAL;
 			return(-1);
 		}
@@ -4231,7 +4232,7 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 		/* We allow (nbcopies == 0 && nbtppool == 0) only */
 		if ((sav_nbcopies == 0) || (Cnsfileclass.nbtppools == 0)) {
 			if ((sav_nbcopies > 0) || (Cnsfileclass.nbtppools > 0)) {
-				sendrep (rpfd, MSG_ERR, STG138, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, sav_nbcopies, Cnsfileclass.nbtppools);
+				sendrep (&rpfd, MSG_ERR, STG138, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, sav_nbcopies, Cnsfileclass.nbtppools);
 				serrno = EINVAL;
 				return(-1);
 			}
@@ -4251,7 +4252,7 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 			}
 		}
 		if (i != Cnsfileclass.nbtppools) {
-			sendrep (rpfd, MSG_ERR, STG127, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, Cnsfileclass.nbtppools, i);
+			sendrep (&rpfd, MSG_ERR, STG127, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, Cnsfileclass.nbtppools, i);
 			Cnsfileclass.nbtppools = i;
 		}
 		/* We reduce eventual list of duplicate tape pool in tppools element */
@@ -4264,7 +4265,7 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 				pj = pi + (CA_MAXPOOLNAMELEN+1);
 				for (j = i + 1; j < new_nbtppools; j++) {
 					if (strcmp(pi,pj) == 0) {
-						sendrep (rpfd, MSG_ERR, STG128, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, pi);
+						sendrep (&rpfd, MSG_ERR, STG128, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, pi);
 						have_duplicate = j;
 						nb_duplicate++;
 						break;
@@ -4286,12 +4287,12 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 		}
 		if (new_nbtppools != Cnsfileclass.nbtppools) {
 			/* We found duplicate(s) - so we rescan number of tape pools */
-			sendrep (rpfd, MSG_ERR, STG129, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, Cnsfileclass.nbtppools, new_nbtppools);
+			sendrep (&rpfd, MSG_ERR, STG129, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, Cnsfileclass.nbtppools, new_nbtppools);
 			Cnsfileclass.nbtppools = new_nbtppools;
 		}
 		/* We check the number of copies vs. number of tape pools */
 		if (Cnsfileclass.nbcopies > Cnsfileclass.nbtppools) {
-			sendrep (rpfd, MSG_ERR, STG130, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, Cnsfileclass.nbcopies, Cnsfileclass.nbtppools, Cnsfileclass.nbtppools);
+			sendrep (&rpfd, MSG_ERR, STG130, Cnsfileclass.name, stcp->u1.h.server, Cnsfileclass.classid, Cnsfileclass.nbcopies, Cnsfileclass.nbtppools, Cnsfileclass.nbtppools);
 			Cnsfileclass.nbcopies = new_nbtppools;
 		}
 
@@ -4299,7 +4300,7 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 		/* We add this fileclass to the list of known fileclasses */
 		if (nbfileclasses <= 0) {
 			if ((fileclasses = (struct fileclass *) malloc(sizeof(struct fileclass))) == NULL) {
-				sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "malloc", strerror(errno));
+				sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "malloc", strerror(errno));
 				serrno = SEINTERNAL;
 				return(-1);
 			}
@@ -4310,7 +4311,7 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 
 			if ((dummy = (struct fileclass *)
 				 malloc((nbfileclasses + 1) * sizeof(struct fileclass))) == NULL) {
-				sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "malloc", strerror(errno));
+				sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "malloc", strerror(errno));
 				serrno = SEINTERNAL;
 				return(-1);
 			}
@@ -4363,7 +4364,7 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
 				if (pool_p->migr->nfileclass <= 0) {
 					if (((pool_p->migr->fileclass            = (struct fileclass **) malloc(sizeof(struct fileclass *))) == NULL) || 
 						((pool_p->migr->fileclass_predicates = (struct predicates *) malloc(sizeof(struct predicates))) == NULL)) {
-						sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "malloc", strerror(errno));
+						sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "malloc", strerror(errno));
 						serrno = SEINTERNAL;
 						return(-1);
 					}
@@ -4374,14 +4375,14 @@ int upd_fileclass(pool_p,stcp,forced_Cns_statx,only_memory,no_db_update)
           
 					if ((dummy = (struct fileclass **) 
 						 realloc(pool_p->migr->fileclass,(pool_p->migr->nfileclass + 1) * sizeof(struct fileclass *))) == NULL) {
-						sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "realloc", strerror(errno));
+						sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "realloc", strerror(errno));
 						serrno = SEINTERNAL;
 						return(-1);
 					} else {
 						if ((dummy2 = (struct predicates *)
 							 realloc(pool_p->migr->fileclass_predicates,(pool_p->migr->nfileclass + 1) * sizeof(struct predicates))) == NULL) {
 							free(dummy);
-							sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "realloc", strerror(errno));
+							sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "realloc", strerror(errno));
 							serrno = SEINTERNAL;
 							return(-1);
 						}
@@ -4561,7 +4562,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr,only_m
 				p += (CA_MAXPOOLNAMELEN+1);
 			}
 			if (found_tppool == 0) {
-				sendrep(rpfd, MSG_ERR, STG122, tppool);
+				sendrep(&rpfd, MSG_ERR, STG122, tppool);
 				serrno = EINVAL;
 				return(-1);
 			}
@@ -4597,7 +4598,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr,only_m
 		  if ((migr->fileclass_predicates[j].nbfiles_canbemig - migr->fileclass_predicates[j].nbfiles_beingmig) <= 0) continue;
 		  }
 		  if (found_fileclass == 0) {
-		  sendrep(rpfd, MSG_ERR, "STG02 - Cannot find fileclass that can trigger your migration\n");
+		  sendrep(&rpfd, MSG_ERR, "STG02 - Cannot find fileclass that can trigger your migration\n");
 		  return(-1);
 		  }
 		*/
@@ -4623,7 +4624,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr,only_m
 			} else {
 				/* If we already updated it - we check consistency */
 				if (*euid != fileclasses[i].Cnsfileclass.uid) {
-					sendrep(rpfd, MSG_ERR, STG118, last_fileclass_euid, fileclasses[i].Cnsfileclass.name, tppool, "uid", *euid, fileclasses[i].Cnsfileclass.uid);
+					sendrep(&rpfd, MSG_ERR, STG118, last_fileclass_euid, fileclasses[i].Cnsfileclass.name, tppool, "uid", *euid, fileclasses[i].Cnsfileclass.uid);
 					serrno = EINVAL;
 					return(-1);
 				}
@@ -4638,7 +4639,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr,only_m
 			} else {
 				/* If we already updated it - we check consistency */
 				if (*egid != fileclasses[i].Cnsfileclass.gid) {
-					sendrep(rpfd, MSG_ERR, STG118, last_fileclass_egid, fileclasses[i].Cnsfileclass.name, tppool, "gid", *egid, fileclasses[i].Cnsfileclass.gid);
+					sendrep(&rpfd, MSG_ERR, STG118, last_fileclass_egid, fileclasses[i].Cnsfileclass.name, tppool, "gid", *egid, fileclasses[i].Cnsfileclass.gid);
 					serrno = EINVAL;
 					return(-1);
 				}
@@ -4657,7 +4658,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr,only_m
 		if (last_fileclass_egid != 0) {
 			/* There is an explicit filter on group id - current's stcp_check->gid have to match it */
 			if ((*egid != stcp_check->gid) && (stcp_check->gid != start_passwd.pw_gid)) {
-				sendrep(rpfd, MSG_ERR, STG125, stcp_check->user, "gid", stcp_check->gid, "group", *egid, stcp_check->u1.h.xfile);
+				sendrep(&rpfd, MSG_ERR, STG125, stcp_check->user, "gid", stcp_check->gid, "group", *egid, stcp_check->u1.h.xfile);
 				serrno = EINVAL;
 				return(-1);
 			}
@@ -4665,7 +4666,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr,only_m
 			if (last_fileclass_euid != 0) {
 				/* There is an explicit filter on user id - current's stcp_check->uid have to match it */
 				if ((*euid != stcp_check->uid) && (stcp_check->uid != start_passwd.pw_uid)) {
-					sendrep(rpfd, MSG_ERR, STG125, stcp_check->user, "uid", stcp_check->uid, "user", *euid, stcp_check->u1.h.xfile);
+					sendrep(&rpfd, MSG_ERR, STG125, stcp_check->user, "uid", stcp_check->uid, "user", *euid, stcp_check->u1.h.xfile);
 					serrno = EINVAL;
 					return(-1);
 				} else {
@@ -4685,7 +4686,7 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr,only_m
 			if (last_fileclass_euid != 0) {
 				/* There is an explicit filter on user id - current's stcp_check->uid have to match it */
 				if ((*euid != stcp_check->uid) && (stcp_check->uid != start_passwd.pw_uid)) {
-					sendrep(rpfd, MSG_ERR, STG125, stcp_check->user, "uid", stcp_check->uid, "user", *euid, stcp_check->u1.h.xfile);
+					sendrep(&rpfd, MSG_ERR, STG125, stcp_check->user, "uid", stcp_check->uid, "user", *euid, stcp_check->u1.h.xfile);
 					serrno = EINVAL;
 					return(-1);
 				} else {
@@ -4812,7 +4813,7 @@ void stglogfileclass(Cnsfileclass)
 }
 
 void printfileclass(rpfd,fileclass)
-	int rpfd;
+	int *rpfd;
 	struct fileclass *fileclass;
 {
 	struct group *gr;

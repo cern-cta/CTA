@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.30 2002/07/27 06:47:54 jdurand Exp $
+ * $Id: procfilchg.c,v 1.31 2002/08/27 08:38:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.30 $ $Date: 2002/07/27 06:47:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.31 $ $Date: 2002/08/27 08:38:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -51,7 +51,7 @@ extern int rpfd;
 extern int req2argv _PROTO((char *, char ***));
 extern int upd_staged _PROTO((char *));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
-extern int sendrep _PROTO((int, int, ...));
+extern int sendrep _PROTO((int *, int, ...));
 #else
 extern int sendrep _PROTO(());
 #endif
@@ -169,12 +169,12 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 		case 'M':
 			hsmfile = Coptarg;
 			if (check_hsm_type_light(Coptarg,&(t_or_d)) != 0) {
-				sendrep(rpfd, MSG_ERR, "STG02 - Bad HSM filename\n");
+				sendrep(&rpfd, MSG_ERR, "STG02 - Bad HSM filename\n");
 				c = EINVAL;
 				goto reply;
 			}
 			if (t_or_d != 'h') {
-				sendrep(rpfd, MSG_ERR, "STG02 - Only CASTOR HSM filename supported\n");
+				sendrep(&rpfd, MSG_ERR, "STG02 - Only CASTOR HSM filename supported\n");
 				c = EINVAL;
 				goto reply;
 			}
@@ -184,7 +184,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 				isvalidpool (Coptarg)) {
 				strcpy (poolname, Coptarg);
 			} else {
-				sendrep (rpfd, MSG_ERR, STG32, Coptarg);
+				sendrep (&rpfd, MSG_ERR, STG32, Coptarg);
 				errflg++;
 			}
 			break;
@@ -225,7 +225,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 					}
 				}
 				if (stage_strtoi(&thismintime_beforemigr, Coptarg, &dp, 0) != 0) {
-					sendrep (rpfd, MSG_ERR, STG06, (serrno != ERANGE) ? "--mintime_beforemigr" : "--mintime_beforemigr (out of range)");
+					sendrep (&rpfd, MSG_ERR, STG06, (serrno != ERANGE) ? "--mintime_beforemigr" : "--mintime_beforemigr (out of range)");
 					errflg++;
 				}
 				if (thismintime_beforemigr < 0) thismintime_beforemigr = -1;
@@ -233,7 +233,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			}
 			if ((reqid_flag != 0) && (! donereqid)) {
 				if (stage_strtoi(&thisreqid, Coptarg, &dp, 10) != 0) {
-					sendrep (rpfd, MSG_ERR, STG06, (serrno != ERANGE) ? "--reqid" : "--reqid (out of range)");
+					sendrep (&rpfd, MSG_ERR, STG06, (serrno != ERANGE) ? "--reqid" : "--reqid (out of range)");
 					errflg++;
 				}
 				donereqid = 1;
@@ -274,7 +274,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 					}
 				}
 				if (stage_strtoi(&thisretenp_on_disk, Coptarg, &dp, 0) != 0) {
-					sendrep (rpfd, MSG_ERR, STG06, (serrno != ERANGE) ? "--retenp_on_disk" : "--retenp_on_disk (out of range)");
+					sendrep (&rpfd, MSG_ERR, STG06, (serrno != ERANGE) ? "--retenp_on_disk" : "--retenp_on_disk (out of range)");
 					errflg++;
 				}
 				if (thisretenp_on_disk < 0) thisretenp_on_disk = -1;
@@ -282,12 +282,12 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			}
 			if ((status_flag != 0) && (! donestatus)) {
 				if (stage_strtoi(&thisstatus, Coptarg, &dp, 0) != 0) {
-					sendrep (rpfd, MSG_ERR, STG06, (serrno != ERANGE) ? "--status" : "--status (out of range)");
+					sendrep (&rpfd, MSG_ERR, STG06, (serrno != ERANGE) ? "--status" : "--status (out of range)");
 					errflg++;
 				}
 				/* The only status change supported here are STAGEOUT|CAN_BE_MIGR */
 				if ((thisstatus != (STAGEOUT|CAN_BE_MIGR)) && (! errflg)) {
-					sendrep (rpfd, MSG_ERR, STG06, "--status");
+					sendrep (&rpfd, MSG_ERR, STG06, "--status");
 					errflg++;
 				}
 				donestatus = 1;
@@ -308,7 +308,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			if (thisunit_mintime != ONE_SECOND) {
 				/* We check that --mintime_beforemigr is not out of range */
 				if (thismintime_beforemigr > (INT_MAX / thisunit_mintime)) {
-					sendrep (rpfd, MSG_ERR, STG06, "--mintime_beforemigr (out of range)");
+					sendrep (&rpfd, MSG_ERR, STG06, "--mintime_beforemigr (out of range)");
 					errflg++;
 				} else {
 					thismintime_beforemigr *= thisunit_mintime;
@@ -322,7 +322,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			if (thisunit_retenp != ONE_SECOND) {
 				/* We check that --retenp_on_disk is not out of range */
 				if (thisretenp_on_disk > (INT_MAX / thisunit_retenp)) {
-					sendrep (rpfd, MSG_ERR, STG06, "--retenp_on_disk (out of range)");
+					sendrep (&rpfd, MSG_ERR, STG06, "--retenp_on_disk (out of range)");
 					errflg++;
 				} else {
 					thisretenp_on_disk *= thisunit_retenp;
@@ -342,7 +342,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 	}
 
 	if ((nargs > Coptind) && (hsmfile || donemintime_beforemigr || donereqid || doneretenp_on_disk || donestatus)) {
-		sendrep(rpfd, MSG_ERR, "STG02 - Options and parameters are exclusive\n");
+		sendrep(&rpfd, MSG_ERR, "STG02 - Options and parameters are exclusive\n");
 		c = EINVAL;
 		goto reply;
 	}
@@ -365,7 +365,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 				char max_setretenp_timestr[64] ;
 
 				stage_util_retenp(max_setretenp(poolname),max_setretenp_timestr);
-				sendrep (rpfd, MSG_ERR, STG147, "--retenp_on_disk", max_setretenp_timestr);
+				sendrep (&rpfd, MSG_ERR, STG147, "--retenp_on_disk", max_setretenp_timestr);
 				c = EINVAL;
 				goto reply;
 			}
@@ -374,7 +374,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 
 	if (hsmfile || donemintime_beforemigr || donereqid || doneretenp_on_disk || donestatus) {
 		if (! (hsmfile || donereqid)) {
-			sendrep(rpfd, MSG_ERR, "STG02 - Supply of -M or --reqid is mandatory\n");
+			sendrep(&rpfd, MSG_ERR, "STG02 - Supply of -M or --reqid is mandatory\n");
 			c = EINVAL;
 			goto reply;
 		}
@@ -412,7 +412,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			/* We check if the name of this file in the name server is really the one we have in input */
 			if (Cns_getpath(stcp->u1.h.server, stcp->u1.h.fileid, checkpath) == 0) {
 				if (strcmp(checkpath, stcp->u1.h.xfile) != 0) {
-					sendrep (rpfd, MSG_ERR, STG157, stcp->u1.h.xfile, checkpath, u64tostr((u_signed64) stcp->u1.h.fileid, tmpbuf1, 0), stcp->u1.h.server);
+					sendrep (&rpfd, MSG_ERR, STG157, stcp->u1.h.xfile, checkpath, u64tostr((u_signed64) stcp->u1.h.fileid, tmpbuf1, 0), stcp->u1.h.server);
 					strncpy(stcp->u1.h.xfile, checkpath, (CA_MAXHOSTNAMELEN+MAXPATH));
 					stcp->u1.h.xfile[(CA_MAXHOSTNAMELEN+MAXPATH)] = '\0';
 #ifdef USECDB
@@ -446,7 +446,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 				setegid(start_passwd.pw_gid);
 				seteuid(start_passwd.pw_uid);
 				if (rc != 0) {
-					sendrep (rpfd, MSG_ERR, STG02, hsmfile, "Cns_statx", sstrerror(serrno));
+					sendrep (&rpfd, MSG_ERR, STG02, hsmfile, "Cns_statx", sstrerror(serrno));
 					c = EINVAL;
 					goto reply;			
 				}
@@ -461,7 +461,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 				/* Changing mintime_beforemigr is possible only on records with STAGEOUT|CAN_BE_MIGR status */
 				/* or STAGEOUT */
 				if ((stcp->status != (STAGEOUT|CAN_BE_MIGR)) && (stcp->status != STAGEOUT)) {
-					sendrep(rpfd, MSG_ERR, STG02, hsmfile, "--mintime", "should be in STAGEOUT|CAN_BE_MIGR or STAGEOUT status");
+					sendrep(&rpfd, MSG_ERR, STG02, hsmfile, "--mintime", "should be in STAGEOUT|CAN_BE_MIGR or STAGEOUT status");
 					c = EINVAL;
 					goto reply;			
 				}
@@ -469,7 +469,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 					currentmintime_beforemigr = mintime_beforemigr(ifileclass); /* We take the default */
 				if ((thisstcp.u1.h.mintime_beforemigr = thismintime_beforemigr) != stcp->u1.h.mintime_beforemigr) {
 					changed++;
-					sendrep (rpfd, MSG_OUT, STG152, hsmfile,
+					sendrep (&rpfd, MSG_OUT, STG152, hsmfile,
 							 currentmintime_beforemigr,
 							 (currentmintime_beforemigr > 1 ? "s" : ""),
 							 (stcp->u1.h.mintime_beforemigr < 0 ? "fileclass" : "explicit"),
@@ -477,7 +477,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 							 (thismintime_beforemigr >= 0 ? thismintime_beforemigr : mintime_beforemigr(ifileclass)) > 1 ? "s" : "",
 							 (thismintime_beforemigr < 0 ? "fileclass" : "explicit"));
 				} else {
-					sendrep (rpfd, MSG_OUT, STG150, hsmfile,
+					sendrep (&rpfd, MSG_OUT, STG150, hsmfile,
 							 thismintime_beforemigr >= 0 ? thismintime_beforemigr : mintime_beforemigr(ifileclass),
 							 (thismintime_beforemigr >= 0 ? thismintime_beforemigr : mintime_beforemigr(ifileclass)) > 1 ? "s" : "",
 							 (thismintime_beforemigr < 0 ? "fileclass" : "explicit"));
@@ -531,7 +531,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 								/* files themselves refering to the SAME CASTOR HSM file */
 								/* This is a consistency problem for us */
 								if (strcmp(stcp->ipath,stcp2->ipath) != 0) {
-									sendrep (rpfd, MSG_ERR, STG169, hsmfile, stcp->ipath, stcp2->ipath);
+									sendrep (&rpfd, MSG_ERR, STG169, hsmfile, stcp->ipath, stcp2->ipath);
 									c = EINVAL;
 									goto reply;			
 								}
@@ -541,7 +541,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 								case STAGEOUT|CAN_BE_MIGR|PUT_FAILED:
 									break;
 								default:
-									sendrep(rpfd, MSG_ERR, STG170, hsmfile, stcp->reqid, stcp2->reqid);
+									sendrep(&rpfd, MSG_ERR, STG170, hsmfile, stcp->reqid, stcp2->reqid);
 									c = EINVAL;
 									goto reply;			
 								}
@@ -569,7 +569,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 						}
 						/* We grabbed the size in the name server before. We verify consistency */
 						if (hsmsize != stcp->actual_size) {
-							sendrep(rpfd, MSG_ERR, STG171, hsmfile, u64tostr((u_signed64) hsmsize, tmpbuf1, 0), u64tostr(stcp->actual_size, tmpbuf2, 0));
+							sendrep(&rpfd, MSG_ERR, STG171, hsmfile, u64tostr((u_signed64) hsmsize, tmpbuf1, 0), u64tostr(stcp->actual_size, tmpbuf2, 0));
 							c = EINVAL;
 							goto reply;			
 						}
@@ -609,13 +609,13 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 						}
 						break;
 					default:
-						sendrep(rpfd, MSG_ERR, STG02, hsmfile, "--status", "should be in STAGEOUT|CAN_BE_MIGR|PUT_FAILED or STAGEOUT|PUT_FAILED status");
+						sendrep(&rpfd, MSG_ERR, STG02, hsmfile, "--status", "should be in STAGEOUT|CAN_BE_MIGR|PUT_FAILED or STAGEOUT|PUT_FAILED status");
 						c = EINVAL;
 						goto reply;			
 					}
 					break;
 				default:
-					sendrep(rpfd, MSG_ERR, STG02, hsmfile, "--status", "only --status CAN_BE_MIGR option value supported");
+					sendrep(&rpfd, MSG_ERR, STG02, hsmfile, "--status", "only --status CAN_BE_MIGR option value supported");
 					c = EINVAL;
 					goto reply;			
 				}
@@ -647,14 +647,14 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			if (loop_break) break;
 		}
 		if (! found) {
-			sendrep (rpfd, MSG_ERR, STG153, hsmfile ? hsmfile : "", "file not found", poolname);
+			sendrep (&rpfd, MSG_ERR, STG153, hsmfile ? hsmfile : "", "file not found", poolname);
 			c = ENOENT;
 			goto reply;
 		} else {
 			c = 0;
 		}
 	} else {
-		sendrep(rpfd, MSG_ERR, "STG02 - Supply of options or parameters is mandatory\n");
+		sendrep(&rpfd, MSG_ERR, "STG02 - Supply of options or parameters is mandatory\n");
 		c = EINVAL;
 		goto reply;
 	}
@@ -662,7 +662,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 
   reply:
 	free (argv);
-	sendrep (rpfd, STAGERC, STAGEFILCHG, magic, c);
+	sendrep (&rpfd, STAGERC, STAGEFILCHG, magic, c);
 }
 
 

@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.113 2002/07/27 07:22:07 jdurand Exp $
+ * $Id: procupd.c,v 1.114 2002/08/27 08:38:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.113 $ $Date: 2002/07/27 07:22:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.114 $ $Date: 2002/08/27 08:38:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -70,7 +70,7 @@ extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
 extern int updfreespace _PROTO((char *, char *, int, u_signed64 *, signed64));
 extern int req2argv _PROTO((char *, char ***));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
-extern int sendrep _PROTO((int, int, ...));
+extern int sendrep _PROTO((int *, int, ...));
 #else
 extern int sendrep _PROTO(());
 #endif
@@ -214,19 +214,19 @@ procupdreq(req_type, magic, req_data, clienthost)
 		stglogit (func, STG92, "stage_updc", user, uid, gid, clienthost);
 #endif
 		if (nstpp_input != 1) {
-			sendrep(rpfd, MSG_ERR, "STG02 - Invalid number of input structure (%d stgpath) - one only is supported\n", nstpp_input);
+			sendrep(&rpfd, MSG_ERR, "STG02 - Invalid number of input structure (%d stgpath) - one only is supported\n", nstpp_input);
 			c = EINVAL;
 			goto reply;
 		}
 		if ((stpp_input = (struct stgpath_entry *) calloc(nstpp_input,sizeof(struct stgpath_entry))) == NULL) {
-			sendrep(rpfd, MSG_ERR, "STG02 - memory allocation error (%s)\n", strerror(errno));
+			sendrep(&rpfd, MSG_ERR, "STG02 - memory allocation error (%s)\n", strerror(errno));
 			c = SESYSERR;
 			goto reply;
 		}
 		path_status = 0;
 		unmarshall_STAGE_PATH(magic, STGDAEMON_LEVEL, STAGE_INPUT_MODE, path_status, rbp, &(stpp_input[0]));
 		if ((path_status != 0) || (stpp_input[0].upath[0] == '\0')) {
-			sendrep(rpfd, MSG_ERR, "STG02 - Bad input (path input structure\n");
+			sendrep(&rpfd, MSG_ERR, "STG02 - Bad input (path input structure\n");
 			c = EINVAL;
 			goto reply;
 		}
@@ -268,7 +268,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			case 'b':
 				stage_strtoi(&blksize, Coptarg, &dp, 10);
 				if (*dp != '\0') {
-					sendrep (rpfd, MSG_ERR, STG06, "-b");
+					sendrep (&rpfd, MSG_ERR, STG06, "-b");
 					errflg++;
 				}
 				break;
@@ -291,7 +291,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				break;
 			case 'i':
 				if ((callback_index = atoi(Coptarg)) < 0) {
-					sendrep (rpfd, MSG_ERR, STG06, "-i");
+					sendrep (&rpfd, MSG_ERR, STG06, "-i");
 					errflg++;
 				}
 				break;
@@ -301,7 +301,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			case 'L':
 				stage_strtoi(&lrecl, Coptarg, &dp, 10);
 				if (*dp != '\0') {
-					sendrep (rpfd, MSG_ERR, STG06, "-L");
+					sendrep (&rpfd, MSG_ERR, STG06, "-L");
 					errflg++;
 				}
 				break;
@@ -317,13 +317,13 @@ procupdreq(req_type, magic, req_data, clienthost)
 			case 'R':
 				stage_strtoi(&rc, Coptarg, &dp, 10);
 				if (*dp != '\0') {
-					sendrep (rpfd, MSG_ERR, STG06, "-R");
+					sendrep (&rpfd, MSG_ERR, STG06, "-R");
 					errflg++;
 				}
 				break;
 			case 's':
 				if ((checkrc = stage_util_check_for_strutou64(Coptarg)) < 0) {
-					sendrep (rpfd, MSG_ERR, STG06, "-s");
+					sendrep (&rpfd, MSG_ERR, STG06, "-s");
 					errflg++;
 				} else {
 					size = strutou64(Coptarg); /* Default unit is byte there */
@@ -332,14 +332,14 @@ procupdreq(req_type, magic, req_data, clienthost)
 			case 'T':
 				stage_strtoi(&transfer_time, Coptarg, &dp, 10);
 				if (*dp != '\0') {
-					sendrep (rpfd, MSG_ERR, STG06, "-T");
+					sendrep (&rpfd, MSG_ERR, STG06, "-T");
 					errflg++;
 				}
 				break;
 			case 'W':
 				stage_strtoi(&waiting_time, Coptarg, &dp, 10);
 				if (*dp != '\0') {
-					sendrep (rpfd, MSG_ERR, STG06, "-W");
+					sendrep (&rpfd, MSG_ERR, STG06, "-W");
 					errflg++;
 				}
 				break;
@@ -355,7 +355,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			}
 		}
 		if (Zflag && nargs > Coptind) {
-			sendrep (rpfd, MSG_ERR, STG16);
+			sendrep (&rpfd, MSG_ERR, STG16);
 			errflg++;
 		}
 		if (errflg) {
@@ -366,14 +366,14 @@ procupdreq(req_type, magic, req_data, clienthost)
 
     /* Protect agains specifying open and close at the same time */
 	if ((oflag + cflag + Oflag + Cflag) > 1) {
-		sendrep (rpfd, MSG_ERR, STG35, "-c [or -C]", "-o [or -O]");
+		sendrep (&rpfd, MSG_ERR, STG35, "-c [or -C]", "-o [or -O]");
 		c = EINVAL;
 		goto reply;
 	}
 
 	if ((gr = Cgetgrgid (gid)) == NULL) {
-		if (errno != ENOENT) sendrep (rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
-		sendrep (rpfd, MSG_ERR, STG36, gid);
+		if (errno != ENOENT) sendrep (&rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
+		sendrep (&rpfd, MSG_ERR, STG36, gid);
 		c = (api_out != 0) ? ESTGROUP : SESYSERR;
 		goto reply;
 	}
@@ -432,7 +432,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					}
 				}
 				if (found != 1) {
-					sendrep (rpfd, MSG_ERR, STG22);
+					sendrep (&rpfd, MSG_ERR, STG22);
 					c = ENOENT;
 					goto reply;
 				}
@@ -444,7 +444,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				if ((findfs(stcp->ipath,&found_server,&found_dirpath) != 0) ||
 					(found_server == NULL) || (found_dirpath == NULL)) {
 					/* Strange - seems to not be in a known fs or a known pool - this is not legal */
-					sendrep (rpfd, MSG_ERR, STG166, stcp->ipath);
+					sendrep (&rpfd, MSG_ERR, STG166, stcp->ipath);
 					c = EINVAL;
 					goto reply;
 				}
@@ -467,12 +467,12 @@ procupdreq(req_type, magic, req_data, clienthost)
 					save_fseq[0] = '\0';
 				}
 				if (strcmp (user, stcp->user)) {
-					sendrep (rpfd, MSG_ERR, STG37);
+					sendrep (&rpfd, MSG_ERR, STG37);
 					c = EINVAL;
 					goto reply;
 				}
 				if (delfile (stcp, 1, 1, 1, "no more space", uid, gid, 0, 0, 0) < 0) {
-					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+					sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 					c = SESYSERR;
 					goto reply;
 				}
@@ -538,9 +538,9 @@ procupdreq(req_type, magic, req_data, clienthost)
 					if ((findfs(stcp->ipath,&new_server,&new_dirpath) != 0) ||
 						(new_server == NULL) || (new_dirpath == NULL)) {
 						/* Strange - seems to not be in a known fs or a known pool - this is impossible */
-						sendrep (rpfd, MSG_ERR, STG166, stcp->ipath);
+						sendrep (&rpfd, MSG_ERR, STG166, stcp->ipath);
 						if (delfile (stcp, 1, 1, 1, "unknown filesystem", uid, gid, 0, 0, 0) < 0) {
-							sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+							sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 						}
 						c = SESYSERR;
 						goto reply;
@@ -555,17 +555,17 @@ procupdreq(req_type, magic, req_data, clienthost)
 					/* in > 95% of the cases - at least in the CASTOR framework */
 					if ((strcmp(found_server,new_server) == 0) && (strcmp(found_dirpath,new_dirpath) == 0)) {
 						/* Same server - same filesystem */
-						/* sendrep (rpfd, MSG_ERR, STG167, stcp->ipath); */
+						/* sendrep (&rpfd, MSG_ERR, STG167, stcp->ipath); */
 						if (delfile (stcp, 1, 1, 1, "same [server,fs] selected", uid, gid, 0, 0, 0) < 0) {
-							sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+							sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 							c = SESYSERR;
 							goto reply;
 						}
 						c = -1;
 						goto procupd_launch_gc;
 					}
-					if (api_out) sendrep(rpfd, API_STCP_OUT, stcp, magic);
-					sendrep (rpfd, MSG_OUT, "%s", stcp->ipath);
+					if (api_out) sendrep(&rpfd, API_STCP_OUT, stcp, magic);
+					sendrep (&rpfd, MSG_OUT, "%s", stcp->ipath);
 					/* We increment r/w counter on this new file system */
 					rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
 				}
@@ -596,7 +596,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					}
 				}
 				if (found != 1) {
-					sendrep (rpfd, MSG_ERR, STG22);
+					sendrep (&rpfd, MSG_ERR, STG22);
 					c = ENOENT;
 					goto reply;
 				}
@@ -640,7 +640,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		wqp = wqp->next;
 	}
 	if (! found) {
-		sendrep (rpfd, MSG_ERR, STG22);
+		sendrep (&rpfd, MSG_ERR, STG22);
 		/* We log information because this might be a bug */
 		wqp = waitqp;
 		while (wqp) {
@@ -670,13 +670,13 @@ procupdreq(req_type, magic, req_data, clienthost)
 	} else {
 		if (callback_index >= wqp->save_nbsubreqid) {
 			/* False value */
-			sendrep (rpfd, MSG_ERR, STG22);
+			sendrep (&rpfd, MSG_ERR, STG22);
 			c = ENOENT;
 			goto reply;
 		}
 		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
 #ifdef STAGER_DEBUG
-			sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] Comparing wqp->save_subreqid[%d]=%d with wfp->subreqid=%d [i=%d]\n", callback_index, wqp->save_subreqid[callback_index], wfp->subreqid, i);
+			sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] Comparing wqp->save_subreqid[%d]=%d with wfp->subreqid=%d [i=%d]\n", callback_index, wqp->save_subreqid[callback_index], wfp->subreqid, i);
 #endif
 			if ((wfp->subreqid == wqp->save_subreqid[callback_index]) && (! wfp->waiting_on_req)) {
 				found_wfp = 1;
@@ -686,7 +686,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 	}
 	if (! found_wfp) {
 		/* False value */
-		sendrep (rpfd, MSG_ERR, STG22);
+		sendrep (&rpfd, MSG_ERR, STG22);
 		c = ENOENT;
 		goto reply;
 	}
@@ -702,12 +702,12 @@ procupdreq(req_type, magic, req_data, clienthost)
 		index_found++;
 	}
 	if (! found) {
-		sendrep (rpfd, MSG_ERR, STG22);
+		sendrep (&rpfd, MSG_ERR, STG22);
 		c = ENOENT;
 		goto reply;
 	}
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] procupd : rc=%d, concat_off_fseq=%d, i=%d, nbdskf=%d\n", rc, wqp->concat_off_fseq, i, wqp->nbdskf);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] procupd : rc=%d, concat_off_fseq=%d, i=%d, nbdskf=%d\n", rc, wqp->concat_off_fseq, i, wqp->nbdskf);
 #endif
 
 	/* Here stcp points to the found entry */
@@ -841,11 +841,11 @@ procupdreq(req_type, magic, req_data, clienthost)
 				strcat(stcp->u1.t.fseq,"-");
 			}
 			if (c > 0) {
-				sendrep (rpfd, MSG_ERR, "STG02 - build_ipath error\n");
+				sendrep (&rpfd, MSG_ERR, "STG02 - build_ipath error\n");
 				goto reply;
             }
 			if (c < 0) {
-				sendrep (rpfd, MSG_ERR, "STG02 - build_ipath reaching out of space\n");
+				sendrep (&rpfd, MSG_ERR, "STG02 - build_ipath reaching out of space\n");
 				wqp->clnreq_reqid = upd_reqid;
 				wqp->clnreq_rpfd = rpfd;
 				wqp->clnreq_waitingreqid = stcp->reqid;
@@ -881,7 +881,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			}
 #endif
 		}
-		sendrep (rpfd, MSG_OUT, "%s", stcp->ipath);
+		sendrep (&rpfd, MSG_OUT, "%s", stcp->ipath);
 		if (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) {
 			if (wqp->last_rwcounterfs_vs_R != LAST_RWCOUNTERSFS_TPPOS) {
 				/* Should be either 0 (from initialization) or LAST_RWCOUNTERSFS_FILCP */
@@ -1022,7 +1022,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
-			if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
+			if (wqp->api_out) sendrep(&(wqp->rpfd), API_STCP_OUT, stcp, wqp->magic);
 			break;
 		}
 		wqp->nb_subreqs = i;
@@ -1036,7 +1036,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				continue;
 			}
 			if (delfile (stcp, 1, 0, 1, "no more file", uid, gid, 0, 0, 0) < 0)
-				sendrep (wqp->rpfd, MSG_ERR, STG02, stcp->ipath,
+				sendrep (&(wqp->rpfd), MSG_ERR, STG02, stcp->ipath,
 								 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 			check_coff_waiting_on_req (wfp->subreqid, LAST_TPFILE);
 			check_waiting_on_req (wfp->subreqid, STG_FAILED);
@@ -1063,14 +1063,14 @@ procupdreq(req_type, magic, req_data, clienthost)
 		else
 			p_stat = "failed";
 		if (stcp->t_or_d == 't')
-			sendrep (wqp->rpfd, RTCOPY_OUT, STG41, p_cmd, p_stat,
+			sendrep (&(wqp->rpfd), RTCOPY_OUT, STG41, p_cmd, p_stat,
 							 fseq ? fseq : stcp->u1.t.fseq, stcp->u1.t.vid[0], rc);
 		else if (stcp->t_or_d == 'd')
-			sendrep (wqp->rpfd, RTCOPY_OUT, STG42, p_cmd, p_stat, stcp->u1.d.xfile, rc);
+			sendrep (&(wqp->rpfd), RTCOPY_OUT, STG42, p_cmd, p_stat, stcp->u1.d.xfile, rc);
 		else if (stcp->t_or_d == 'm')
-			sendrep (wqp->rpfd, RTCOPY_OUT, STG42, p_cmd, p_stat, stcp->u1.m.xfile, rc);
+			sendrep (&(wqp->rpfd), RTCOPY_OUT, STG42, p_cmd, p_stat, stcp->u1.m.xfile, rc);
 		else if (stcp->t_or_d == 'h')
-			sendrep (wqp->rpfd, RTCOPY_OUT, STG42, p_cmd, p_stat, stcp->u1.h.xfile, rc);
+			sendrep (&(wqp->rpfd), RTCOPY_OUT, STG42, p_cmd, p_stat, stcp->u1.h.xfile, rc);
 	}
 	if (((rc != 0) && (rc != LIMBYSZ) &&
 			 (rc != BLKSKPD) && (rc != TPE_LSZ) && (rc != MNYPARI)) ||
@@ -1095,13 +1095,13 @@ procupdreq(req_type, magic, req_data, clienthost)
 		if ((findfs(stcp->ipath,&found_server,&found_dirpath) != 0) ||
 			(found_server == NULL) || (found_dirpath == NULL)) {
 			/* Strange - seems to not be in a known fs or a known pool - this is not legal */
-			sendrep (rpfd, MSG_ERR, STG166, stcp->ipath);
+			sendrep (&rpfd, MSG_ERR, STG166, stcp->ipath);
 			c = EINVAL;
 			goto reply;
 		}
 
 		if (delfile (stcp, 1, 0, 0, "nospace retry", uid, gid, 0, 0, 0) < 0)
-			sendrep (wqp->rpfd, MSG_ERR, STG02, stcp->ipath,
+			sendrep (&(wqp->rpfd), MSG_ERR, STG02, stcp->ipath,
 							 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 		c = 0;
 	procupd_launch_gc2:
@@ -1140,9 +1140,9 @@ procupdreq(req_type, magic, req_data, clienthost)
 			if ((findfs(stcp->ipath,&new_server,&new_dirpath) != 0) ||
 				(new_server == NULL) || (new_dirpath == NULL)) {
 				/* Strange - seems to not be in a known fs or a known pool - this is impossible */
-				sendrep (rpfd, MSG_ERR, STG166, stcp->ipath);
+				sendrep (&rpfd, MSG_ERR, STG166, stcp->ipath);
 				if (delfile (stcp, 1, 0, 0, "unknown filesystem", uid, gid, 0, 0, 0) < 0) {
-					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+					sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 				}
 				c = SESYSERR;
 				goto reply;
@@ -1157,16 +1157,16 @@ procupdreq(req_type, magic, req_data, clienthost)
 			/* in > 95% of the cases - at least in the CASTOR framework */
 			if ((strcmp(found_server,new_server) == 0) && (strcmp(found_dirpath,new_dirpath) == 0)) {
 				/* Same server - same filesystem */
-				/* sendrep (rpfd, MSG_ERR, STG167, stcp->ipath); */
+				/* sendrep (&rpfd, MSG_ERR, STG167, stcp->ipath); */
 				if (delfile (stcp, 1, 0, 0, "same [server,fs] selected", uid, gid, 0, 0, 0) < 0) {
-					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+					sendrep (&rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 				}
 				c = -1;
 				goto procupd_launch_gc2;
 			}
 
-			if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
-			sendrep (rpfd, MSG_OUT, "%s", stcp->ipath);
+			if (wqp->api_out) sendrep(&(wqp->rpfd), API_STCP_OUT, stcp, wqp->magic);
+			sendrep (&rpfd, MSG_OUT, "%s", stcp->ipath);
 			wqp->status = 0;
 			goto reply;
 		}
@@ -1350,7 +1350,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 								/* This is acceptable only if the request is an explicit STAGEPUT */
 								/*
 								if (stcp->status != STAGEPUT) {
-									sendrep (rpfd, MSG_ERR, STG22);
+									sendrep (&rpfd, MSG_ERR, STG22);
 									continue;
 								} else {
 									stcp_found = stcp;
@@ -1375,7 +1375,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 								stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 							}
 #endif
-							if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp_found, wqp->magic);
+							if (wqp->api_out) sendrep(&(wqp->rpfd), API_STCP_OUT, stcp_found, wqp->magic);
 						} else {
 							stcp_found = stcp;
 							goto delete_entry;
@@ -1425,7 +1425,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 										char tmpbuf1[21];
 										/* We neverthless log to indicate that, regardless of continue_flag */
 										/* we decided anyway to force the deletion */
-										sendrep (rpfd, MSG_ERR, STG175,
+										sendrep (&rpfd, MSG_ERR, STG175,
 												 stcp_found->u1.h.xfile,
 												 u64tostr((u_signed64) stcp_found->u1.h.fileid, tmpbuf1, 0),
 												 stcp_found->u1.h.server,
@@ -1446,7 +1446,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 								} else {
 									/* We can delete this entry */
 									if (delfile (stcp_found, 0, 1, 1, ((save_status & 0xF) == STAGEWRT) ? "stagewrt ok" : "stageput ok", uid, gid, 0, ((save_status & 0xF) == STAGEWRT) ? 1 : 0, 0) < 0) {
-										sendrep (rpfd, MSG_ERR, STG02, stcp_found->ipath,
+										sendrep (&rpfd, MSG_ERR, STG02, stcp_found->ipath,
 													 RFIO_UNLINK_FUNC(stcp_found->ipath), rfio_serror());
 									}
 								}
@@ -1523,7 +1523,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					stcp->status |= STAGED;
 					update_hsm_a_time(stcp);
 					/* We send the reply right now */
-					if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
+					if (wqp->api_out) sendrep(&(wqp->rpfd), API_STCP_OUT, stcp, wqp->magic);
 					/* We check if there is any STAGEIN|STAGED|STAGE_RDONLY entry pending */
 					if (stcp->t_or_d != 'h') goto not_an_HSM_castor_callback;
 					stcp_found = stcp_other_migration_found = stcp_other_migrated_found = NULL;
@@ -1672,7 +1672,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
-			if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
+			if (wqp->api_out) sendrep(&(wqp->rpfd), API_STCP_OUT, stcp, wqp->magic);
 			if (wqp->copytape)
 				sendinfo2cptape (rpfd, stcp);
 			if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
@@ -1692,7 +1692,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 	if ((rc == MNYPARI) || ((wqp->nbdskf <= 0) && ((rc == TPE_LSZ) || (rc == LIMBYSZ) || (rc == BLKSKPD)))) wqp->status = rc_shift2castor(STGMAGIC,rc);
 #ifdef STAGER_DEBUG
 	for (wqp = waitqp; wqp; wqp = wqp->next) {
-		sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : Waitq->wf : \n");
+		sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] procupd : Waitq->wf : \n");
 		for (i = 0, wfp = wqp->wf; i < wqp->nb_subreqs; i++, wfp++) {
 			for (stcp = stcs; stcp < stce; stcp++) {
 				char tmpbuf1[21];
@@ -1701,20 +1701,20 @@ procupdreq(req_type, magic, req_data, clienthost)
 				if (wfp->subreqid == stcp->reqid) {
 					switch (stcp->t_or_d) {
 					case 't':
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] procupd : No %3d    : VID.FSEQ=%s.%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.t.vid[0], stcp->u1.t.fseq,wfp->subreqid, wfp->waiting_on_req, wfp->upath);
 						break;
 					case 'd':
 					case 'a':
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : No %3d    : u1.d.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.d.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] procupd : No %3d    : u1.d.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.d.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
 						break;
 					case 'm':
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : No %3d    : u1.m.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.m.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] procupd : No %3d    : u1.m.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s\n",i,stcp->u1.m.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath);
 						break;
 					case 'h':
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : No %3d    : u1.h.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s, size_to_recall=%s, size_yet_recalled=%s\n",i,stcp->u1.h.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath, u64tostr((u_signed64) wfp->size_to_recall, tmpbuf1, 0), u64tostr((u_signed64) wfp->size_yet_recalled, tmpbuf2, 0));
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] procupd : No %3d    : u1.h.xfile=%s, subreqid=%d, waiting_on_req=%d, upath=%s, size_to_recall=%s, size_yet_recalled=%s\n",i,stcp->u1.h.xfile, wfp->subreqid, wfp->waiting_on_req, wfp->upath, u64tostr((u_signed64) wfp->size_to_recall, tmpbuf1, 0), u64tostr((u_signed64) wfp->size_yet_recalled, tmpbuf2, 0));
 						break;
 					default:
-						sendrep(wqp->rpfd, MSG_ERR, "[DEBUG] procupd : No %3d    : <unknown to_or_d=%c>\n",i,stcp->t_or_d);
+						sendrep(&(wqp->rpfd), MSG_ERR, "[DEBUG] procupd : No %3d    : <unknown to_or_d=%c>\n",i,stcp->t_or_d);
 						break;
 					}
 					break;
@@ -1736,7 +1736,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		wqp->clnreq_rpfd = rpfd;
 		cleanpool (wqp->waiting_pool);
 	} else {
-		sendrep (rpfd, STAGERC, STAGEUPDC, magic, c);
+		sendrep (&rpfd, STAGERC, STAGEUPDC, magic, c);
 	}
 }
 

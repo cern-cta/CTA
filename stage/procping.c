@@ -1,5 +1,5 @@
 /*
- * $Id: procping.c,v 1.13 2002/06/05 13:22:34 jdurand Exp $
+ * $Id: procping.c,v 1.14 2002/08/27 08:38:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.13 $ $Date: 2002/06/05 13:22:34 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.14 $ $Date: 2002/08/27 08:38:03 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -41,7 +41,7 @@ extern int stglogit _PROTO(());
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
 extern int req2argv _PROTO((char *, char ***));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
-extern int sendrep _PROTO((int, int, ...));
+extern int sendrep _PROTO((int *, int, ...));
 #else
 extern int sendrep _PROTO(());
 #endif
@@ -104,8 +104,8 @@ void procpingreq(req_type, magic, req_data, clienthost)
 	}
 	
 	if ((gr = Cgetgrgid (gid)) == NULL) {
-		if (errno != ENOENT) sendrep (rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
-		sendrep (rpfd, MSG_ERR, STG36, gid);
+		if (errno != ENOENT) sendrep (&rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
+		sendrep (&rpfd, MSG_ERR, STG36, gid);
 		c = (api_out != 0) ? ESTGROUP : SESYSERR;
 		goto reply;
 	}
@@ -154,22 +154,22 @@ void procpingreq(req_type, magic, req_data, clienthost)
 #define FREE_FD (sysconf(_SC_OPEN_MAX) - RESERVED_FD)
 
 		stage_util_time(started_time,timestr);
-		sendrep (rpfd, MSG_OUT, "Stager daemon on %s - CASTOR %s.%d%c\n", localhost, BASEVERSION, PATCHLEVEL, hpss_aware);
-		sendrep (rpfd, MSG_OUT, "Generated %s around %s\n", __DATE__, __TIME__);
-		sendrep (rpfd, MSG_OUT, "Running since %s, pid=%d\n", timestr, (int) getpid());
-		sendrep (rpfd, MSG_OUT, "Maximum/reserved/available number of opened file descriptors: %d/%d/%d\n", sysconf(_SC_OPEN_MAX), RESERVED_FD, FREE_FD);
+		sendrep (&rpfd, MSG_OUT, "Stager daemon on %s - CASTOR %s.%d%c\n", localhost, BASEVERSION, PATCHLEVEL, hpss_aware);
+		sendrep (&rpfd, MSG_OUT, "Generated %s around %s\n", __DATE__, __TIME__);
+		sendrep (&rpfd, MSG_OUT, "Running since %s, pid=%d\n", timestr, (int) getpid());
+		sendrep (&rpfd, MSG_OUT, "Maximum/reserved/available number of opened file descriptors: %d/%d/%d\n", sysconf(_SC_OPEN_MAX), RESERVED_FD, FREE_FD);
 #ifdef RLIMIT_NPROC
 		if (getrlimit(RLIMIT_NPROC,&rlim) != 0) {
-			sendrep (rpfd, MSG_OUT, "Maximum number of processes: ... getrlimit(RLIMIT_NPROC,&rlim) error : %s\n", strerror(errno));
+			sendrep (&rpfd, MSG_OUT, "Maximum number of processes: ... getrlimit(RLIMIT_NPROC,&rlim) error : %s\n", strerror(errno));
 		} else {
- 			sendrep (rpfd, MSG_OUT, "Maximum number of processes: { cur=%d, max=%d }\n", rlim.rlim_cur, rlim.rlim_max);
+ 			sendrep (&rpfd, MSG_OUT, "Maximum number of processes: { cur=%d, max=%d }\n", rlim.rlim_cur, rlim.rlim_max);
 		}
 #else
-		sendrep (rpfd, MSG_OUT, "... RLIMIT_NPROC undefined on platform where runs stager daemon\n");
+		sendrep (&rpfd, MSG_OUT, "... RLIMIT_NPROC undefined on platform where runs stager daemon\n");
 #endif
 	}
 	reply:
 	if (argv != NULL) free (argv);
-	sendrep (rpfd, STAGERC, STAGEPING, magic, rc);
+	sendrep (&rpfd, STAGERC, STAGEPING, magic, rc);
 	return;
 }

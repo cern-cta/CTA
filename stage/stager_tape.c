@@ -1,5 +1,5 @@
 /*
- * $Id: stager_tape.c,v 1.10 2002/06/03 13:03:58 jdurand Exp $
+ * $Id: stager_tape.c,v 1.11 2002/08/27 08:38:04 jdurand Exp $
  */
 
 /*
@@ -25,7 +25,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.10 $ $Date: 2002/06/03 13:03:58 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_tape.c,v $ $Revision: 1.11 $ $Date: 2002/08/27 08:38:04 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -59,7 +59,7 @@ EXTERN_C void DLL_DECL stager_usrmsg _PROTO((int, ...));
 EXTERN_C void DLL_DECL stager_migmsg _PROTO((int, ...));
 #endif
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
-extern int sendrep _PROTO((int, int, ...));
+extern int sendrep _PROTO((int *, int, ...));
 #else
 extern int sendrep _PROTO(());
 #endif
@@ -262,6 +262,9 @@ int main(argc,argv)
 {
 	int c;
 	int l;
+#ifdef STAGER_DEBUG
+	int thisrpfd;
+#endif
 	int nretry;
 	struct stgcat_entry *stcp;
 	struct stgcat_entry stgreq;
@@ -287,44 +290,46 @@ int main(argc,argv)
 	{
 		int i;
 
-		sendrep(atoi (argv[3]), MSG_ERR, "[DEBUG] argc = %d\n", argc);
+		thisrpfd = atoi(argv[3]);
+		
+		sendrep(&thisrpfd, MSG_ERR, "[DEBUG] argc = %d\n", argc);
 
 		for (i = 0; i < argc; i++) {
-			sendrep(atoi (argv[3]), MSG_ERR, "[DEBUG] argv[%d] = %s\n", i, argv[i]);
+			sendrep(&thisrpfd, MSG_ERR, "[DEBUG] argv[%d] = %s\n", i, argv[i]);
 		}
 	}
 #endif
 	reqid = atoi (argv[1]);
 #ifdef STAGER_DEBUG
-	sendrep(atoi (argv[3]), MSG_ERR, "[DEBUG] reqid = %d\n", reqid);
+	sendrep(&thisrpfd, MSG_ERR, "[DEBUG] reqid = %d\n", reqid);
 #endif
 	key = atoi (argv[2]);
 #ifdef STAGER_DEBUG
-	sendrep(atoi (argv[3]), MSG_ERR, "[DEBUG] key = %d\n", key);
+	sendrep(&thisrpfd, MSG_ERR, "[DEBUG] key = %d\n", key);
 #endif
 	rpfd = atoi (argv[3]);
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] rpfd = %d\n", rpfd);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] rpfd = %d\n", rpfd);
 #endif
 	nbcat_ent = atoi (argv[4]);
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] nbcat_ent = %d\n", nbcat_ent);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] nbcat_ent = %d\n", nbcat_ent);
 #endif
 	nretry = atoi (argv[5]);
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] nretry = %d\n", nretry);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] nretry = %d\n", nretry);
 #endif
 	Aflag = atoi (argv[6]);
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] Aflag = %d\n", Aflag);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] Aflag = %d\n", Aflag);
 #endif
 	concat_off_fseq = atoi (argv[7]);
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] concat_off_fseq = %d\n", concat_off_fseq);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] concat_off_fseq = %d\n", concat_off_fseq);
 #endif
 	silent = atoi (argv[8]);
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] silent = %d\n", silent);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] silent = %d\n", silent);
 #endif
 #ifdef USE_SUBREQID
 	use_subreqid = atoi (argv[9]);
@@ -338,20 +343,20 @@ int main(argc,argv)
 	}
 #endif
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] use_subreqid = %d\n", use_subreqid);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] use_subreqid = %d\n", use_subreqid);
 #endif
 	api_flag = atoi (argv[10]);
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] api_flag = %d\n", api_flag);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] api_flag = %d\n", api_flag);
 #endif
 	api_flags = strtou64(argv[11]);
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] api_flags = %s\n", stglogflags(NULL,NULL,(u_signed64) api_flags));
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] api_flags = %s\n", stglogflags(NULL,NULL,(u_signed64) api_flags));
 #endif
 #ifdef __INSURE__
 	tmpfile = argv[12];
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG] tmpfile = %s\n", tmpfile);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] tmpfile = %s\n", tmpfile);
 #endif
 #endif
 
@@ -385,15 +390,15 @@ int main(argc,argv)
 		int i;
 
 		for (i = 0; i < nbcat_ent; i++) {
-			dump_stcp(rpfd, stcs + i, &sendrep);
+			dump_stcp(&rpfd, stcs + i, &sendrep);
         }
 	}
 #endif
 
 #ifdef STAGER_DEBUG
 	SAVE_EID;
-	sendrep(rpfd, MSG_ERR, "[DEBUG] GO ON WITH gdb /usr/local/bin/stager_tape %d, then break %d\n",getpid(),__LINE__ + 6);
-	sendrep(rpfd, MSG_ERR, "[DEBUG] sleep(%d)\n", SLEEP_DEBUG);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] GO ON WITH gdb /usr/local/bin/stager_tape %d, then break %d\n",getpid(),__LINE__ + 6);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG] sleep(%d)\n", SLEEP_DEBUG);
 	sleep(SLEEP_DEBUG);
 	RESTORE_EID;
 #endif
@@ -435,7 +440,7 @@ int main(argc,argv)
 	for (stcp = stcs; stcp < stce; stcp++) {
 		if (stcp->t_or_d != 't') {
 			SAVE_EID;
-			sendrep(rpfd, MSG_ERR, "### HSM file is of unvalid type ('%c')\n",stcp->t_or_d);
+			sendrep(&rpfd, MSG_ERR, "### HSM file is of unvalid type ('%c')\n",stcp->t_or_d);
 			RESTORE_EID;
 			free(stcs);
 			exit(USERR);
@@ -446,7 +451,7 @@ int main(argc,argv)
 		if (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)) {
 			/* By precaution, we allow concat_off only for stagein here again */
 			SAVE_EID;
-    	    sendrep(rpfd, MSG_ERR, "### concat_off option not allowed in write-to-tape\n");
+    	    sendrep(&rpfd, MSG_ERR, "### concat_off option not allowed in write-to-tape\n");
 			RESTORE_EID;
 			free(stcs);
 	        exit(USERR);
@@ -454,7 +459,7 @@ int main(argc,argv)
 		if (! Aflag) {
 			/* By precaution, we allow concat_off only for deferred allocation */
 			SAVE_EID;
-    	    sendrep(rpfd, MSG_ERR, "### concat_off option allowed only in deffered allocation mode\n");
+    	    sendrep(&rpfd, MSG_ERR, "### concat_off option allowed only in deffered allocation mode\n");
 			RESTORE_EID;
 			free(stcs);
 	        exit(USERR);
@@ -462,7 +467,7 @@ int main(argc,argv)
 		if (use_subreqid != 0) {
 			/* By precaution, we do not allow async callback if concat_off_fseq is set */
 			SAVE_EID;
-    	    sendrep(rpfd, MSG_ERR, "### concat_off option is not compatible with async callback\n");
+    	    sendrep(&rpfd, MSG_ERR, "### concat_off option is not compatible with async callback\n");
 			RESTORE_EID;
 			free(stcs);
 	        exit(USERR);
@@ -471,7 +476,7 @@ int main(argc,argv)
     if (use_subreqid != 0) {
 		if (ISSTAGEWRT(stcs) || ISSTAGEPUT(stcs)) {
 			SAVE_EID;
-			sendrep(rpfd, MSG_ERR, "### async callback is not allowed in write-to-tape\n");
+			sendrep(&rpfd, MSG_ERR, "### async callback is not allowed in write-to-tape\n");
 			RESTORE_EID;
 			free(stcs);
 			exit(USERR);
@@ -490,8 +495,8 @@ int main(argc,argv)
 
 #ifdef STAGER_DEBUG
 	SAVE_EID;
-	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGETAPE] GO ON WITH gdb /usr/local/bin/stager_tape %d, then break stage_tape\n",getpid());
-	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGETAPE] sleep(%d)\n",SLEEP_DEBUG);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGETAPE] GO ON WITH gdb /usr/local/bin/stager_tape %d, then break stage_tape\n",getpid());
+	sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGETAPE] sleep(%d)\n",SLEEP_DEBUG);
 	sleep(SLEEP_DEBUG);
 	RESTORE_EID;
 #endif
@@ -543,7 +548,7 @@ int stage_tape() {
 		issplitted = 0;
 		if ((iend - istart + 1) > MAX_RTCPC_FILEREQ) {
 			SAVE_EID;
-			sendrep (rpfd, MSG_ERR, "STG02 - stage_tape : MAX_RTCPC_FILEREQ=%d reached. Request will be sequentially splitted (round No %d)\n",MAX_RTCPC_FILEREQ, ++nsplitted);
+			sendrep (&rpfd, MSG_ERR, "STG02 - stage_tape : MAX_RTCPC_FILEREQ=%d reached. Request will be sequentially splitted (round No %d)\n",MAX_RTCPC_FILEREQ, ++nsplitted);
 			RESTORE_EID;
 			iend = MAX_RTCPC_FILEREQ + istart - 1;
 			stcp_end = stcp_start + MAX_RTCPC_FILEREQ;
@@ -570,7 +575,7 @@ int stage_tape() {
 	if (nrtcpcreqs <= 0) {
 		serrno = SEINTERNAL;
 		SAVE_EID;
-		sendrep (rpfd, MSG_ERR, STG02, "stage_tape", "Cannot determine number of tapes",sstrerror(serrno));
+		sendrep (&rpfd, MSG_ERR, STG02, "stage_tape", "Cannot determine number of tapes",sstrerror(serrno));
 		RESTORE_EID;
 		RETURN (USERR);
 	}
@@ -582,7 +587,7 @@ int stage_tape() {
 	}
 	if (build_rtcpcreq(&nrtcpcreqs, &rtcpcreqs, stcp_start, stcp_end, stcp_start, stcp_end) != 0) {
 		SAVE_EID;
-		sendrep (rpfd, MSG_ERR, STG02, "", "build_rtcpcreq",sstrerror (serrno));
+		sendrep (&rpfd, MSG_ERR, STG02, "", "build_rtcpcreq",sstrerror (serrno));
 		RESTORE_EID;
 		RETURN ((serrno == EINVAL) ? USERR : SYERR);
 	}
@@ -590,9 +595,9 @@ int stage_tape() {
 
 #ifdef STAGER_DEBUG
 	SAVE_EID;
-	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGETAPE] Calling rtcpc()\n");
+	sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGETAPE] Calling rtcpc()\n");
 	STAGER_RTCP_DUMP(rtcpcreqs[0]);
-	sendrep(rpfd, MSG_ERR, "[DEBUG-STAGETAPE] sleep(%d)\n",SLEEP_DEBUG);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG-STAGETAPE] sleep(%d)\n",SLEEP_DEBUG);
 	sleep(SLEEP_DEBUG);
 	RESTORE_EID;
 #endif
@@ -618,12 +623,25 @@ int stage_tape() {
     if (callback_error != 0) {
 		/* This is a callback error - considered as fatal */
 		SAVE_EID;
-		sendrep (rpfd, MSG_ERR, STG02, "stage_tape", "callback", sstrerror(serrno));
+		sendrep (&rpfd, MSG_ERR, STG02, "stage_tape", "callback", sstrerror(serrno));
 		RESTORE_EID;
 		RETURN (SYERR);
 	}
 
 	if (rtcp_rc < 0) {
+
+		if ((api_flags & STAGE_NORETRY) == STAGE_NORETRY) {
+			/* Error and user said to never retry */
+			SAVE_EID;
+			if (rtcpcreqs[0]->tapereq.side > 0) {
+				sendrep (&rpfd, MSG_ERR, STG202, rtcpcreqs[0]->tapereq.vid, rtcpcreqs[0]->tapereq.side, "rtcpc",sstrerror(save_serrno));
+			} else {
+				sendrep (&rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc",sstrerror(save_serrno));
+			}
+			RESTORE_EID;
+			RETURN (SYERR);
+		}
+
 		if (rtcpc_CheckRetry(rtcpcreqs[0]) == TRUE) {
 			tape_list_t *tl;
 			/* Rtcopy bits suggest to retry */
@@ -633,15 +651,15 @@ int stage_tape() {
 			} CLIST_ITERATE_END(rtcpcreqs[0],tl);
 			SAVE_EID;
 			if (rtcpcreqs[0]->tapereq.side > 0) {
-				sendrep (rpfd, MSG_ERR, STG202, rtcpcreqs[0]->tapereq.vid, rtcpcreqs[0]->tapereq.side, "rtcpc",sstrerror(save_serrno));
+				sendrep (&rpfd, MSG_ERR, STG202, rtcpcreqs[0]->tapereq.vid, rtcpcreqs[0]->tapereq.side, "rtcpc",sstrerror(save_serrno));
 			} else {
-				sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc",sstrerror(save_serrno));
+				sendrep (&rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc",sstrerror(save_serrno));
 			}
 			if (save_serrno == ETVBSY) {
-				sendrep (rpfd, MSG_ERR, "STG47 - Re-selecting another tape server in %d seconds\n", RETRYI);
+				sendrep (&rpfd, MSG_ERR, "STG47 - Re-selecting another tape server in %d seconds\n", RETRYI);
 				sleep(RETRYI);
 			} else {
-				sendrep (rpfd, MSG_ERR, "STG47 - Re-selecting another tape server\n");
+				sendrep (&rpfd, MSG_ERR, "STG47 - Re-selecting another tape server\n");
 			}
 			RESTORE_EID;
 			if (concat_off_fseq > 0) {
@@ -686,13 +704,13 @@ int stage_tape() {
 				if (nrtcpcreqs <= 0) {
 					serrno = SEINTERNAL;
 					SAVE_EID;
-					sendrep (rpfd, MSG_ERR, STG02, "stage_tape", "Cannot determine number of tapes",sstrerror(serrno));
+					sendrep (&rpfd, MSG_ERR, STG02, "stage_tape", "Cannot determine number of tapes",sstrerror(serrno));
 					RESTORE_EID;
 					RETURN (USERR);
 				}
 				if (build_rtcpcreq(&nrtcpcreqs, &rtcpcreqs, stcp_start, stcp_end, stcp_start, stcp_end) != 0) {
 					SAVE_EID;
-					sendrep (rpfd, MSG_ERR, STG02, "", "build_rtcpcreq",sstrerror (serrno));
+					sendrep (&rpfd, MSG_ERR, STG02, "", "build_rtcpcreq",sstrerror (serrno));
 					RESTORE_EID;
 					RETURN ((serrno == EINVAL) ? USERR : SYERR);
 				}
@@ -713,9 +731,9 @@ int stage_tape() {
 
 		SAVE_EID;
 		if (rtcpcreqs[0]->tapereq.side > 0) {
-			sendrep (rpfd, MSG_ERR, STG202, rtcpcreqs[0]->tapereq.vid, rtcpcreqs[0]->tapereq.side, "rtcpc", sstrerror(save_serrno));
+			sendrep (&rpfd, MSG_ERR, STG202, rtcpcreqs[0]->tapereq.vid, rtcpcreqs[0]->tapereq.side, "rtcpc", sstrerror(save_serrno));
 		} else {
-			sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc", sstrerror(save_serrno));
+			sendrep (&rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc", sstrerror(save_serrno));
 		}
 		RESTORE_EID;
 		RETURN ((save_serrno == ETHELD) ? ETHELDERR : USERR);
@@ -723,9 +741,9 @@ int stage_tape() {
 	} else if (rtcp_rc > 0) {
 		SAVE_EID;
 		if  (rtcpcreqs[0]->tapereq.side > 0) {
-			sendrep (rpfd, MSG_ERR, STG202, rtcpcreqs[0]->tapereq.vid, rtcpcreqs[0]->tapereq.side, "rtcpc","Unknown error code (>0)");
+			sendrep (&rpfd, MSG_ERR, STG202, rtcpcreqs[0]->tapereq.vid, rtcpcreqs[0]->tapereq.side, "rtcpc","Unknown error code (>0)");
 		} else {
-			sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc","Unknown error code (>0)");
+			sendrep (&rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc","Unknown error code (>0)");
 		}
 		RESTORE_EID;
 		RETURN (SYERR);
@@ -748,7 +766,7 @@ void cleanup() {
 		/* rtcpc() API cleanup */
 #ifdef STAGER_DEBUG
 		SAVE_EID;
-		sendrep (rpfd, MSG_ERR, "[DEBUG-CLEANUP] Calling rtcpc_kill()\n");
+		sendrep (&rpfd, MSG_ERR, "[DEBUG-CLEANUP] Calling rtcpc_kill()\n");
 		RESTORE_EID;
 #endif
 		rtcpc_kill();
@@ -801,7 +819,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 	if (nrtcpcreqs_in == NULL || fixed_stcs == NULL || fixed_stce == NULL) {
 		serrno = SEINTERNAL;
 		SAVE_EID;
-		sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "Bad arguments to build_rtcpcreq",sstrerror(serrno));
+		sendrep (&rpfd, MSG_ERR, STG02, "build_rtcpcreq", "Bad arguments to build_rtcpcreq",sstrerror(serrno));
 		RESTORE_EID;
 		return(-1);
 	}
@@ -830,7 +848,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 	/* We allocate the array */
 	if ((*rtcpcreqs_in = (tape_list_t **) calloc(*nrtcpcreqs_in,sizeof(tape_list_t *))) == NULL) {
 		SAVE_EID;
-		sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "calloc",strerror(errno));
+		sendrep (&rpfd, MSG_ERR, STG02, "build_rtcpcreq", "calloc",strerror(errno));
 		RESTORE_EID;
 		serrno = SEINTERNAL;
 		return(-1);
@@ -840,7 +858,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 	for (i = 0; i < *nrtcpcreqs_in; i++) {
 		if (((*rtcpcreqs_in)[i] = calloc(1,sizeof(tape_list_t))) == NULL) {
 			SAVE_EID;
-			sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "calloc",strerror(errno));
+			sendrep (&rpfd, MSG_ERR, STG02, "build_rtcpcreq", "calloc",strerror(errno));
 			RESTORE_EID;
 			serrno = SEINTERNAL;
 			return(-1);
@@ -948,7 +966,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 		if (i == 0) {
 			if ((fl = (file_list_t *) calloc (nbfiles_ok, sizeof(file_list_t))) == NULL) {
 				SAVE_EID;
-				sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "calloc",strerror(errno));
+				sendrep (&rpfd, MSG_ERR, STG02, "build_rtcpcreq", "calloc",strerror(errno));
 				RESTORE_EID;
 				serrno = SEINTERNAL;
 				return(-1);
@@ -956,7 +974,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 		} else {
 			if ((fl = (file_list_t *) calloc (1, sizeof(file_list_t))) == NULL) {
 				SAVE_EID;
-				sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "calloc",strerror(errno));
+				sendrep (&rpfd, MSG_ERR, STG02, "build_rtcpcreq", "calloc",strerror(errno));
 				RESTORE_EID;
 				serrno = SEINTERNAL;
 				return(-1);
@@ -1073,7 +1091,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				fl[j_ok].filereq.tape_fseq = atoi (fseq_list[stcp_inbtpf++]);
 				if ((max_tape_fseq > 0) && (fl[j_ok].filereq.tape_fseq > max_tape_fseq)) {
 					SAVE_EID;
-					sendrep (rpfd, MSG_ERR, "STG02 - %s : Tape sequence must be <= %d (label type \"%s\")\n", stcp->u1.t.vid, max_tape_fseq, stcs->u1.t.lbl);
+					sendrep (&rpfd, MSG_ERR, "STG02 - %s : Tape sequence must be <= %d (label type \"%s\")\n", stcp->u1.t.vid, max_tape_fseq, stcs->u1.t.lbl);
 					RESTORE_EID;
 					serrno = EINVAL;
 					RETURN (USERR);
@@ -1099,7 +1117,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				fl[j_ok].filereq.tape_fseq = atoi (fseq_list[stcp_inbtpf]);
 				if ((max_tape_fseq > 0) && (fl[j_ok].filereq.tape_fseq > max_tape_fseq)) {
 					SAVE_EID;
-					sendrep (rpfd, MSG_ERR, "STG02 - %s : Tape sequence must be <= %d (label type \"%s\")\n", stcp->u1.t.vid, max_tape_fseq, stcs->u1.t.lbl);
+					sendrep (&rpfd, MSG_ERR, "STG02 - %s : Tape sequence must be <= %d (label type \"%s\")\n", stcp->u1.t.vid, max_tape_fseq, stcs->u1.t.lbl);
 					RESTORE_EID;
 					serrno = EINVAL;
 					RETURN (USERR);
@@ -1230,7 +1248,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				fl[j_ok].filereq.tape_fseq = callback_fseq + 1;
 				if ((max_tape_fseq > 0) && (fl[j_ok].filereq.tape_fseq > max_tape_fseq)) {
 					SAVE_EID;
-					sendrep (rpfd, MSG_ERR, "STG02 - %s : Tape sequence must be <= %d (label type \"%s\")\n", stcp->u1.t.vid, max_tape_fseq, stcs->u1.t.lbl);
+					sendrep (&rpfd, MSG_ERR, "STG02 - %s : Tape sequence must be <= %d (label type \"%s\")\n", stcp->u1.t.vid, max_tape_fseq, stcs->u1.t.lbl);
 					RESTORE_EID;
 					serrno = EINVAL;
 					RETURN (USERR);
@@ -1299,7 +1317,7 @@ int unpackfseq(fseq, req_type, trailing, fseq_list)
 
 #ifdef STAGER_DEBUG
 	SAVE_EID;
-	sendrep(rpfd, MSG_ERR, "[DEBUG-XXX] unpackfseq : Analysing fseq = %s\n", fseq);
+	sendrep(&rpfd, MSG_ERR, "[DEBUG-XXX] unpackfseq : Analysing fseq = %s\n", fseq);
 	RESTORE_EID;
 #endif
 
@@ -1307,7 +1325,7 @@ int unpackfseq(fseq, req_type, trailing, fseq_list)
 	if (*trailing == '-') {
 		if ((req_type & 0xF) != STAGEIN) {
 			SAVE_EID;
-			sendrep (rpfd, MSG_ERR, STG18);
+			sendrep (&rpfd, MSG_ERR, STG18);
 			RESTORE_EID;
 			return (0);
 		}
@@ -1317,7 +1335,7 @@ int unpackfseq(fseq, req_type, trailing, fseq_list)
 	case 'n':
 		if ((req_type & 0xF) == STAGEIN) {
 			SAVE_EID;
-			sendrep (rpfd, MSG_ERR, STG17, "-qn", "stagein");
+			sendrep (&rpfd, MSG_ERR, STG17, "-qn", "stagein");
 			RESTORE_EID;
 			return (0);
 		}
@@ -1328,7 +1346,7 @@ int unpackfseq(fseq, req_type, trailing, fseq_list)
 			stage_strtoi(&nbtpf, fseq + 1, &dp, 10);
 			if (*dp != '\0') {
 				SAVE_EID;
-				sendrep (rpfd, MSG_ERR, STG06, "-q");
+				sendrep (&rpfd, MSG_ERR, STG06, "-q");
 				RESTORE_EID;
 				return (0);
 			}
@@ -1346,14 +1364,14 @@ int unpackfseq(fseq, req_type, trailing, fseq_list)
 				stage_strtoi(&n2, q + 1, &dp, 10);
 				if (*dp != '\0') {
 					SAVE_EID;
-					sendrep (rpfd, MSG_ERR, STG06, "-q");
+					sendrep (&rpfd, MSG_ERR, STG06, "-q");
 					RESTORE_EID;
 					return (0);
 				}
 				stage_strtoi(&n1, p, &dp, 10);
 				if (*dp != '\0') {
 					SAVE_EID;
-					sendrep (rpfd, MSG_ERR, STG06, "-q");
+					sendrep (&rpfd, MSG_ERR, STG06, "-q");
 					RESTORE_EID;
 					return (0);
 				}
@@ -1362,7 +1380,7 @@ int unpackfseq(fseq, req_type, trailing, fseq_list)
 				stage_strtoi(&n1, p, &dp, 10);
 				if (*dp != '\0') {
 					SAVE_EID;
-					sendrep (rpfd, MSG_ERR, STG06, "-q");
+					sendrep (&rpfd, MSG_ERR, STG06, "-q");
 					RESTORE_EID;
 					return (0);
 				}
@@ -1370,7 +1388,7 @@ int unpackfseq(fseq, req_type, trailing, fseq_list)
 			}
 			if (n1 <= 0 || n2 < n1) {
 				SAVE_EID;
-				sendrep (rpfd, MSG_ERR, STG06, "-q");
+				sendrep (&rpfd, MSG_ERR, STG06, "-q");
 				RESTORE_EID;
 				return (0);
 			}
@@ -1497,7 +1515,7 @@ void stager_tape_log_callback(tapereq,filereq)
 
 	SAVE_EID;
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG-CALLBACK] VID.FSEQ=%s.%d, File No %d (%s), filereq->cprc=%d, bytes_in=%s, bytes_out=%s, host_bytes=%s\n",
+	sendrep(&rpfd, MSG_ERR, "[DEBUG-CALLBACK] VID.FSEQ=%s.%d, File No %d (%s), filereq->cprc=%d, bytes_in=%s, bytes_out=%s, host_bytes=%s\n",
 		tapereq->vid,
 		(int) filereq->tape_fseq,
 		(int) filereq->disk_fseq,
@@ -1506,7 +1524,7 @@ void stager_tape_log_callback(tapereq,filereq)
 		u64tostr((u_signed64) filereq->bytes_in, tmpbuf1, 0),
 		u64tostr((u_signed64) filereq->bytes_out, tmpbuf2, 0),
 		u64tostr((u_signed64) filereq->host_bytes, tmpbuf3, 0));
-	sendrep(rpfd, MSG_ERR, "[DEBUG-CALLBACK] VID.FSEQ=%s.%d, filereq->proc_status=%d (0x%lx), filereq->err.severity=%d (0x%lx), filereq->err.errorcode=%d (0x%lx), tapereq->err.severity=%d (0x%lx), tapereq->err.errorcode=%d (0x%lx)\n",
+	sendrep(&rpfd, MSG_ERR, "[DEBUG-CALLBACK] VID.FSEQ=%s.%d, filereq->proc_status=%d (0x%lx), filereq->err.severity=%d (0x%lx), filereq->err.errorcode=%d (0x%lx), tapereq->err.severity=%d (0x%lx), tapereq->err.errorcode=%d (0x%lx)\n",
 		tapereq->vid,
 		(int) filereq->tape_fseq,
 		(int) filereq->proc_status,
@@ -1519,7 +1537,7 @@ void stager_tape_log_callback(tapereq,filereq)
 		(unsigned long) tapereq->err.severity,
 		(int) tapereq->err.errorcode,
 		(unsigned long) tapereq->err.errorcode);
-	sendrep(rpfd, MSG_ERR, "[DEBUG-CALLBACK] VID.FSEQ=%s.%d, errno=%d (%s), serrno=%d (%s)\n",
+	sendrep(&rpfd, MSG_ERR, "[DEBUG-CALLBACK] VID.FSEQ=%s.%d, errno=%d (%s), serrno=%d (%s)\n",
 		tapereq->vid,
 		(int) filereq->tape_fseq,
 		errno,

@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.44 2002/06/19 06:55:01 jdurand Exp $
+ * $Id: procalloc.c,v 1.45 2002/08/27 08:38:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.44 $ $Date: 2002/06/19 06:55:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.45 $ $Date: 2002/08/27 08:38:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -57,7 +57,7 @@ void procgetreq _PROTO((int, int, char *, char *));
 extern int updfreespace _PROTO((char *, char *, int, u_signed64 *, signed64));
 extern int req2argv _PROTO((char *, char ***));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
-extern int sendrep _PROTO((int, int, ...));
+extern int sendrep _PROTO((int *, int, ...));
 #else
 extern int sendrep _PROTO(());
 #endif
@@ -106,7 +106,7 @@ void procallocreq(req_type, magic, req_data, clienthost)
 	unmarshall_STRING (rbp, user);	/* login name - this is not yet a local copy */
 	if (strlen(user) > CA_MAXUSRNAMELEN) {
 		serrno = SENAMETOOLONG;
-		sendrep (rpfd, MSG_ERR, STG33, "user name", sstrerror(serrno));
+		sendrep (&rpfd, MSG_ERR, STG33, "user name", sstrerror(serrno));
 		c = EINVAL;
 		goto reply;
 	}
@@ -125,8 +125,8 @@ void procallocreq(req_type, magic, req_data, clienthost)
 #endif
 
 	if ((gr = Cgetgrgid (stgreq.gid)) == NULL) {
-		if (errno != ENOENT) sendrep (rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
-		sendrep (rpfd, MSG_ERR, STG36, stgreq.gid);
+		if (errno != ENOENT) sendrep (&rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
+		sendrep (&rpfd, MSG_ERR, STG36, stgreq.gid);
 		c = (errno == ENOENT) ? ESTGROUP : SESYSERR;
 		goto reply;
 	}
@@ -147,18 +147,18 @@ void procallocreq(req_type, magic, req_data, clienthost)
 			if (isvalidpool (Coptarg)) {
 				strcpy (stgreq.poolname, Coptarg);
 			} else {
-				sendrep (rpfd, MSG_ERR, STG32, Coptarg);
+				sendrep (&rpfd, MSG_ERR, STG32, Coptarg);
 				errflg++;
 			}
 			break;
 		case 's':
 			if ((checkrc = stage_util_check_for_strutou64(Coptarg)) < 0) {
-				sendrep (rpfd, MSG_ERR, STG06, "-s");
+				sendrep (&rpfd, MSG_ERR, STG06, "-s");
 				errflg++;
 			} else {
 				stgreq.size = strutou64(Coptarg);
 				if (stgreq.size <= 0) {
-					sendrep (rpfd, MSG_ERR, STG06, "-s");
+					sendrep (&rpfd, MSG_ERR, STG06, "-s");
 					errflg++;
 				} else {
 					if (checkrc == 0) stgreq.size *= ONE_MB; /* Not unit : default MB */
@@ -226,7 +226,7 @@ void procallocreq(req_type, magic, req_data, clienthost)
 		goto reply;
 	} else {
 		if (Pflag)
-			sendrep (rpfd, MSG_OUT, "%s\n", stcp->ipath);
+			sendrep (&rpfd, MSG_OUT, "%s\n", stcp->ipath);
 		if (*upath && strcmp (stcp->ipath, upath))
 			create_link (stcp, upath);
 		if (Upluspath && (argv[Coptind+1][0] != '\0') && 
@@ -251,7 +251,7 @@ void procallocreq(req_type, magic, req_data, clienthost)
 	stageacct (STGCMDC, stgreq.uid, stgreq.gid, clienthost,
 						 reqid, STAGEALLOC, 0, c, NULL, "", (char) 0);
 #endif
-	sendrep (rpfd, STAGERC, STAGEALLOC, magic, c);
+	sendrep (&rpfd, STAGERC, STAGEALLOC, magic, c);
 	if (c && wqp) {
 		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
 			for (stcp = stcs; stcp < stce; stcp++) {
@@ -306,8 +306,8 @@ void procgetreq(req_type, magic, req_data, clienthost)
 #endif
 
 	if ((gr = Cgetgrgid (gid)) == NULL) {
-		if (errno != ENOENT) sendrep (rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
-		sendrep (rpfd, MSG_ERR, STG36, gid);
+		if (errno != ENOENT) sendrep (&rpfd, MSG_ERR, STG33, "Cgetgrgid", strerror(errno));
+		sendrep (&rpfd, MSG_ERR, STG36, gid);
 		c = (errno == ENOENT) ? ESTGROUP : SESYSERR;
 		goto reply;
 	}
@@ -326,7 +326,7 @@ void procgetreq(req_type, magic, req_data, clienthost)
 			if (isvalidpool (Coptarg)) {
 				strcpy (poolname, Coptarg);
 			} else {
-				sendrep (rpfd, MSG_ERR, STG32, Coptarg);
+				sendrep (&rpfd, MSG_ERR, STG32, Coptarg);
 				errflg++;
 			}
 			break;
@@ -379,7 +379,7 @@ void procgetreq(req_type, magic, req_data, clienthost)
 		}
 	}
 	if ((found == 0) || (stcp->status != (STAGEALLOC|STAGED))) {
-		sendrep (rpfd, MSG_ERR, STG22);
+		sendrep (&rpfd, MSG_ERR, STG22);
 		c = ENOENT;
 		goto reply;
 	}
@@ -391,7 +391,7 @@ void procgetreq(req_type, magic, req_data, clienthost)
 	}
 #endif
 	if (Pflag)
-		sendrep (rpfd, MSG_OUT, "%s\n", stcp->ipath);
+		sendrep (&rpfd, MSG_OUT, "%s\n", stcp->ipath);
 	if (*upath && strcmp (stcp->ipath, upath))
 		create_link (stcp, upath);
 	if (Upluspath && (argv[Coptind+1][0] != '\0') &&
@@ -405,5 +405,5 @@ void procgetreq(req_type, magic, req_data, clienthost)
 	stageacct (STGCMDC, uid, gid, clienthost,
 						 reqid, STAGEGET, 0, c, NULL, "", (char) 0);
 #endif
-	sendrep (rpfd, STAGERC, STAGEGET, magic, c);
+	sendrep (&rpfd, STAGERC, STAGEGET, magic, c);
 }

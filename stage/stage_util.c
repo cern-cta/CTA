@@ -1,5 +1,5 @@
 /*
- * $Id: stage_util.c,v 1.22 2002/07/27 06:51:17 jdurand Exp $
+ * $Id: stage_util.c,v 1.23 2002/08/27 08:38:05 jdurand Exp $
  */
 
 #include <sys/types.h>
@@ -151,10 +151,10 @@ int DLL_DECL stage_stgmagic()
 }
 
 void DLL_DECL dump_stpp(rpfd, stpp, funcrep)
-	int rpfd;
+	int *rpfd;
 	struct stgpath_entry *stpp;
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
-	int (*funcrep) _PROTO((int, int, ...));
+	int (*funcrep) _PROTO((int *, int, ...));
 #else
 	int (*funcrep) _PROTO(());
 #endif
@@ -169,10 +169,10 @@ void DLL_DECL dump_stpp(rpfd, stpp, funcrep)
 }
 
 void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
-	int rpfd;
+	int *rpfd;
 	struct stgcat_entry *stcp;
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
-	int (*funcrep) _PROTO((int, int, ...));
+	int (*funcrep) _PROTO((int *, int, ...));
 #else
 	int (*funcrep) _PROTO(());
 #endif
