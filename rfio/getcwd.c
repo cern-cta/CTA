@@ -1,16 +1,19 @@
 /*
- * $Id: getcwd.c,v 1.1 2001/06/17 13:38:04 baud Exp $
+ * $Id: getcwd.c,v 1.2 2002/03/06 09:53:04 baud Exp $
  */
 
 /*
- * Copyright (C) 2001 by CERN/IT/PDP/DM
+ * Copyright (C) 2001-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcwd.c,v $ $Revision: 1.1 $ $Date: 2001/06/17 13:38:04 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getcwd.c,v $ $Revision: 1.2 $ $Date: 2002/03/06 09:53:04 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
+#if defined(_WIN32)
+#include <direct.h>
+#endif
 /* getcwd.c      Remote File I/O - get current working directory        */
 
 #define RFIO_KERNEL     1       /* KERNEL part of the routines          */
