@@ -1,5 +1,5 @@
 /*
- * $Id: rfdir.c,v 1.7 2000/09/01 08:01:26 obarring Exp $
+ * $Id: rfdir.c,v 1.8 2000/09/18 15:49:15 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.7 $ $Date: 2000/09/01 08:01:26 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.8 $ $Date: 2000/09/18 15:49:15 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
@@ -270,7 +270,7 @@ int recursively,multiple;
     fprintf(stdout,"%s %3d %-8.8s %-8.8s %6d %s %s\n",modestr,st.st_nlink,uidstr,gidstr,
 	    (int)st.st_size,t_creat,de->d_name);
     if ( strcmp(de->d_name,".") && strcmp(de->d_name,"..") && 
-	 (st.st_mode & S_IFDIR) && recursively ) rfio_pushdir(&ds,path);
+	 S_ISDIR(st.st_mode) && recursively ) rfio_pushdir(&ds,path);
   }
   rfio_closedir(dirp);
   while ( ds != NULL ) {
