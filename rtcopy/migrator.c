@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.37 $ $Release$ $Date: 2005/01/27 11:22:58 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.38 $ $Release$ $Date: 2005/02/22 12:05:28 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.37 $ $Release$ $Date: 2005/01/27 11:22:58 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.38 $ $Release$ $Date: 2005/02/22 12:05:28 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -400,8 +400,9 @@ int migratorCallbackMoreWork(
                         RTCPCLD_LOG_WHERE
                         );
         serrno = save_serrno;
+        filereq->proc_status = RTCP_FINISHED;
         (void)rtcpcld_unlockTape();
-        return(-1);
+        return(0);
       }
     }
     break;
