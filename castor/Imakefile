@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.18 $ $Release$ $Date: 2004/06/16 14:54:51 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.19 $ $Release$ $Date: 2004/06/21 16:34:29 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -195,6 +195,8 @@ LDFLAGS = -L .
 LD = g++
 
 all: $(COMMONLIB) $(PROGS_C)
+
+install:
 
 SharedLibraryTarget(castorClient,$(STGLIB_OBJS),$(DEPLIB),$(LIBS))
 NormalLibraryTarget(castorClient,$(STGLIB_OBJS))
