@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcDaemon.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2005/03/29 12:07:55 $ $Author: jiltsov $
+ * @(#)$RCSfile: GcDaemon.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/03/30 12:05:15 $ $Author: jiltsov $
  *
  * Garbage collector daemon handling the deletion of local
  * files on a filesystem. Makes remote calls to the stager
@@ -164,8 +164,18 @@ int castor::gc::GcDaemon::start()
   for (;;) {
     int cid;
     clog() << DEBUG 
-           << " GC checking garbage on " << diskServerName 
+           << " Checking garbage on " << diskServerName 
            << "... " << std::endl;
+
+    // get new sleep interval if the environment has been changed
+    int  gcintervalnew;
+    if ((p = getenv ("GC_INTERVAL")) || (p = getconfent ("GC", "INTERVAL", 0)))
+         gcintervalnew = atoi( strcpy (gcint, p) );
+    else gcintervalnew = gcinterval;
+    if ( gcintervalnew != gcinterval) {
+         gcinterval = gcintervalnew;
+         clog() << USAGE << " New sleep interval: " << gcinterval << " sec." << std::endl;
+    }
 
     // Retrieve list of files to delete
     std::vector<castor::stager::GCLocalFile>* files2Delete = 0;
@@ -173,7 +183,7 @@ int castor::gc::GcDaemon::start()
           files2Delete = stgSvc->selectFiles2Delete(diskServerName);
     } catch (castor::exception::Exception e) {
           clog() << DEBUG << "No garbage files found - Nothing to do."
-                 << " GC sleeping  " << gcinterval << " sec..." 
+                 << " Sleeping  " << gcinterval << " sec..." 
                  << std::endl << e.getMessage().str();
           sleep(gcinterval);
           continue;
@@ -209,17 +219,17 @@ int castor::gc::GcDaemon::start()
             gcfilestotal++;
             if ( (gcfilesize = GCremoveFilePath(it->fileName())) < 0 ) {
                gcfilesfailed++;
-               clog() << ERROR << "-Failed: " << it->fileName() << std::endl;
+               clog() << DEBUG << "-Failed: " << it->fileName() << std::endl;
             } else {
                gcfilesremoved++;
                gcremovedsize =+ gcfilesize;
                clog() << DEBUG << "Removed " << it->fileName() << ": " 
                                << gcfilesize << " KB" 
                                << std::endl;
+               // Add the file to the list of deleted ones
+               u_signed64 gcfileid = it->diskCopyId();
+               deletedFiles.push_back(&gcfileid);
             }
-            // Add the file to the list of deleted ones
-            u_signed64 gcfileid = it->diskCopyId();
-            deletedFiles.push_back(&gcfileid);
          }
        } // end of delete files loop
 
@@ -234,24 +244,25 @@ int castor::gc::GcDaemon::start()
        }
        // Inform stager of the deletion
        try {
-            stgSvc->filesDeleted(deletedFiles);
+           stgSvc->filesDeleted(deletedFiles);
        } catch (castor::exception::Exception e) {
-            clog() << ERROR << "Unable to inform stager of the files deleted :"
-                   << std::endl << e.getMessage().str()
-                   << std::endl << "Files IDs: ";
-         for (std::vector<u_signed64*>::iterator it = deletedFiles.begin();
-                 it != deletedFiles.end();
-                 it++) {
+           clog() << ERROR << "Unable to inform stager of the files deleted: "
+                  //<< std::endl << e.getMessage().str()
+                  << "Files IDs: ";
+           for (std::vector<u_signed64*>::iterator it = deletedFiles.begin();
+                it != deletedFiles.end();
+                it++) {
               clog() << **it << " ";
-         }
+           }
+           clog() << std::endl << e.getMessage().str();
        }
        exit(cid); // end child
-       }
-       clog() << "GC check finished on " << diskServerName 
-              << " - sleeping " << gcinterval << " sec..." 
-              << std::endl;
+    }
+    clog() << "GC check finished on " << diskServerName 
+           << " - sleeping " << gcinterval << " sec..." 
+           << std::endl;
 
-       sleep(gcinterval);
+    sleep(gcinterval);
   } // End of main loop
 }
 /***
