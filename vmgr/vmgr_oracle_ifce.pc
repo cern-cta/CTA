@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.16 $ $Date: 2000/10/09 07:55:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.17 $ $Date: 2001/01/04 10:37:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -676,9 +676,10 @@ struct vmgr_tape_pool *pool_entry;
 	}
 }
 
-vmgr_list_tape_entry(dbfd, bol, tape_entry)
+vmgr_list_tape_entry(dbfd, bol, pool_name, tape_entry)
 struct vmgr_dbfd *dbfd;
 int bol;
+char *pool_name;
 struct vmgr_tape_info *tape_entry;
 {
 	char func[21];
@@ -690,20 +691,43 @@ struct vmgr_tape_info *tape_entry;
 		 VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
 		 MANUFACTURER, SN, POOLNAME, ESTIMATED_FREE_SPACE,
 		 NBFILES, RCOUNT, WCOUNT, RTIME, WTIME, STATUS
-		FROM vmgr_tape_info;
+		FROM vmgr_tape_info
+		ORDER BY vid;
+	EXEC SQL DECLARE list_tape_in_pool_cursor CURSOR FOR
+		SELECT
+		 VID, VSN, DGN, DENSITY, LBLTYPE, MODEL, MEDIA_LETTER,
+		 MANUFACTURER, SN, POOLNAME, ESTIMATED_FREE_SPACE,
+		 NBFILES, RCOUNT, WCOUNT, RTIME, WTIME, STATUS
+		FROM vmgr_tape_info
+		WHERE poolname = :pool_name
+		ORDER BY vid;
 
 	strcpy (func, "vmgr_list_tape_entry");
-	if (bol) {
-		EXEC SQL OPEN list_tape_cursor;
+	if (*pool_name) {
+		if (bol) {
+			EXEC SQL OPEN list_tape_in_pool_cursor;
+		}
+		EXEC SQL FETCH list_tape_in_pool_cursor INTO
+		 :tape_entry->vid, :tape_entry->vsn, :tape_entry->dgn,
+		 :tape_entry->density, :tape_entry->lbltype, :tape_entry->model,
+		 :tape_entry->media_letter, :tape_entry->manufacturer:mf_ind,
+		 :tape_entry->sn:sn_ind, :tape_entry->poolname,
+		 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
+		 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rtime,
+		 :tape_entry->wtime, :tape_entry->status;
+	} else {
+		if (bol) {
+			EXEC SQL OPEN list_tape_cursor;
+		}
+		EXEC SQL FETCH list_tape_cursor INTO
+		 :tape_entry->vid, :tape_entry->vsn, :tape_entry->dgn,
+		 :tape_entry->density, :tape_entry->lbltype, :tape_entry->model,
+		 :tape_entry->media_letter, :tape_entry->manufacturer:mf_ind,
+		 :tape_entry->sn:sn_ind, :tape_entry->poolname,
+		 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
+		 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rtime,
+		 :tape_entry->wtime, :tape_entry->status;
 	}
-	EXEC SQL FETCH list_tape_cursor INTO
-	 :tape_entry->vid, :tape_entry->vsn, :tape_entry->dgn,
-	 :tape_entry->density, :tape_entry->lbltype, :tape_entry->model,
-	 :tape_entry->media_letter, :tape_entry->manufacturer:mf_ind,
-	 :tape_entry->sn:sn_ind, :tape_entry->poolname,
-	 :tape_entry->estimated_free_space, :tape_entry->nbfiles,
-	 :tape_entry->rcount, :tape_entry->wcount, :tape_entry->rtime,
-	 :tape_entry->wtime, :tape_entry->status;
 	switch (sqlca.sqlcode) {
 	case 0:
 		return (0);
