@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.32 $ $Date: 2004/02/12 15:59:07 $ CERN/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.33 $ $Date: 2004/02/23 17:43:47 $ CERN/ADC Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -394,6 +394,10 @@ int topen(tape_list_t *tape, file_list_t *file) {
     if ( file->sonyraw > 0 ) tmode = O_RDWR;
 #endif /* SOLARIS */
   }
+
+  file->cksumRoutine = (unsigned long (*) _PROTO((unsigned long,
+                                                  const char *,
+                                                  unsigned int)))NULL;
   if ( *filereq->castorSegAttr.segmCksumAlgorithm != '\0' ) {
     if ( strncmp(filereq->castorSegAttr.segmCksumAlgorithm,
                  RTCP_CKSUM_ADLER32,
@@ -410,6 +414,7 @@ int topen(tape_list_t *tape, file_list_t *file) {
     } else {
       log(LOG_ERR,"topen() client specifies unknown cksum algorithm: %s\n",
           filereq->castorSegAttr.segmCksumAlgorithm);
+      *filereq->castorSegAttr.segmCksumAlgorithm = '\0';
     }
   }
   
@@ -455,7 +460,7 @@ int topen(tape_list_t *tape, file_list_t *file) {
     } else if ( strcmp(p,"none") == 0 || strcmp(p,"NONE") == 0 ) {
       rtcp_log(
                LOG_INFO,
-               "Segment checksum is disabled by configuration"
+               "Segment checksum is disabled by configuration\n"
                );
     } 
   }
