@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.18 2000/05/17 16:28:30 jdurand Exp $
+ * $Id: poolmgr.c,v 1.19 2000/05/18 14:59:11 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.18 $ $Date: 2000/05/17 16:28:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.19 $ $Date: 2000/05/18 14:59:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1297,7 +1297,6 @@ int migpoolfiles(migr_p)
 	for (stcp = stcs; stcp < stce; stcp++) {
 		if (stcp->reqid == 0) break;
 		if ((stcp->status & CAN_BE_MIGR) != CAN_BE_MIGR) continue;
-		if ((stcp->status & PUT_FAILED) == PUT_FAILED) continue;
 		okpoolname = 0;
 		/* Does it belong to a pool managed by this migrator ? */
 		for (ipoolname = 0; ipoolname < migr_p->nbpool; ipoolname++) {
