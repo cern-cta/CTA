@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.1 $ $Date: 1999/11/03 16:30:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.2 $ $Date: 1999/11/05 08:38:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -17,6 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.1 $ $Date: 1999
 #include <sys/select.h>
 #endif
 #include "Ctape.h"
+#include "marshall.h"
 #if SACCT
 #include "sacct.h"
 #endif
@@ -191,7 +192,7 @@ reply:
 	/* Build request body */
 
 	marshall_WORD (sbp, uid);
-	nmarshall_WORD (sbp, gid);
+	marshall_WORD (sbp, gid);
 	marshall_LONG (sbp, jid);
 	marshall_WORD (sbp, keeprsv);
 	marshall_WORD (sbp, rpfd);
