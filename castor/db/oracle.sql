@@ -412,7 +412,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
     UPDATE SubRequest SET diskCopy = dci WHERE id = srId
      RETURNING castorFile INTO cfid;
     INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
-     VALUES (rpath, dci, 0, cfid, 1); -- status WAITDISK2DISKCOPY
+     VALUES (rpath, dci, fileSystemId, cfid, 1); -- status WAITDISK2DISKCOPY
     INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
     rstatus := 1; -- status WAITDISK2DISKCOPY
   END IF;
@@ -425,7 +425,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
   SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
   buildPathFromFileId(fid, nh, rpath);
   INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status)
-   VALUES (rpath, dci, 0, cfid, 2); -- status WAITTAPERECALL
+   VALUES (rpath, dci, fileSystemId, cfid, 2); -- status WAITTAPERECALL
   INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
   rstatus := 99; -- WAITTAPERECALL, NEWLY CREATED
  END;
@@ -472,6 +472,15 @@ BEGIN
     AND ROWNUM < 2;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
   result := 0;
+END;
+
+/* PL/SQL method implementing disk2DiskCopyDone */
+CREATE OR REPLACE PROCEDURE disk2DiskCopyDone(dcId IN INTEGER) AS
+BEGIN
+  -- update DiskCopy
+  UPDATE DiskCopy set status = 0 WHERE id = dcId; -- status DISKCOPY_STAGED
+  -- update SubRequest
+  UPDATE SubRequest set status = 6 WHERE diskCopy = dcId; -- status SUBREQUEST_READY
 END;
 
 /* PL/SQL method implementing recreateCastorFile */
