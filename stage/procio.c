@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.54 2000/11/06 07:29:06 jdurand Exp $
+ * $Id: procio.c,v 1.55 2000/11/06 11:46:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.54 $ $Date: 2000/11/06 07:29:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.55 $ $Date: 2000/11/06 11:46:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -659,7 +659,6 @@ void procioreq(req_type, req_data, clienthost)
 						strcpy(stgreq.u1.h.server,hsmfileids[ihsmfiles].server);
 						stgreq.u1.h.fileid = hsmfileids[ihsmfiles].fileid;
 						switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname)) {
-							case STAGEOUT|CAN_BE_MIGR:
 							case STAGEPUT|CAN_BE_MIGR:
 								/* And is busy with respect to our knowledge */
 								sendrep (rpfd, MSG_ERR, STG37);
@@ -999,6 +998,7 @@ void procioreq(req_type, req_data, clienthost)
 				}
 				break;
 			case STAGEOUT:
+			case STAGEOUT|CAN_BE_MIGR:
 			case STAGEOUT|WAITING_SPC:
 				if (stgreq.t_or_d == 't' && *stgreq.u1.t.fseq == 'n') break;
 				if (strcmp (user, stcp->user)) {
@@ -1011,6 +1011,10 @@ void procioreq(req_type, req_data, clienthost)
 									 "rfio_unlink", rfio_serror());
 					c = SYERR;
 					goto reply;
+				}
+				if ((stcp->status & (STAGEOUT|CAN_BE_MIGR)) == (STAGEOUT|CAN_BE_MIGR)) {
+					/* This is a file to delete from automatic migration */
+					update_migpool(stcp,-1);
 				}
 				break;
 			default:
