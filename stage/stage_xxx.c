@@ -1,5 +1,5 @@
 /*
- * $Id: stage_xxx.c,v 1.4 2000/06/16 17:41:39 jdurand Exp $
+ * $Id: stage_xxx.c,v 1.5 2000/06/23 07:21:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_xxx.c,v $ $Revision: 1.4 $ $Date: 2000/06/16 17:41:39 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_xxx.c,v $ $Revision: 1.5 $ $Date: 2000/06/23 07:21:17 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -27,6 +27,7 @@ static char sccsid[] = "@(#)$RCSfile: stage_xxx.c,v $ $Revision: 1.4 $ $Date: 20
 #include "stage_api.h"
 #include "stage.h"
 #include "u64subr.h"
+#include "Cpwd.h"
 
 int _stage_xxx_hsm _PROTO((int, char *, int, char *, stage_hsm_t *));
 
@@ -117,7 +118,7 @@ int _stage_xxx_hsm(command,stghost,Kopt,diskpool,hsmstruct)
     return (-1);
   }
   
-  if ((pw = getpwuid (uid)) == NULL) {
+  if ((pw = Cgetpwuid (uid)) == NULL) {
     serrno = SENOMAPFND;
     return (-1);
   }

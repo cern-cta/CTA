@@ -1,5 +1,5 @@
 /*
- * $Id: stage_put.c,v 1.2 2000/05/26 08:38:13 jdurand Exp $
+ * $Id: stage_put.c,v 1.3 2000/06/23 07:21:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.2 $ $Date: 2000/05/26 08:38:13 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.3 $ $Date: 2000/06/23 07:21:17 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -29,6 +29,7 @@ static char sccsid[] = "@(#)$RCSfile: stage_put.c,v $ $Revision: 1.2 $ $Date: 20
 #include "serrno.h"
 #include "stage_api.h"
 #include "stage.h"
+#include "Cpwd.h"
 
 extern char *getconfent();
 
@@ -78,7 +79,7 @@ int DLL_DECL stage_put_hsm(stghost,Migrationflag,hsmstruct)
       }
     }
 
-	if ((pw = getpwuid (uid)) == NULL) {
+	if ((pw = Cgetpwuid (uid)) == NULL) {
 		serrno = SENOMAPFND;
 		return (-1);
 	}

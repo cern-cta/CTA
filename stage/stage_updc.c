@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.8 2000/06/16 14:35:49 jdurand Exp $
+ * $Id: stage_updc.c,v 1.9 2000/06/23 07:21:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.8 $ $Date: 2000/06/16 14:35:49 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.9 $ $Date: 2000/06/23 07:21:17 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -29,8 +29,15 @@ static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.8 $ $Date: 2
 #include "stage_api.h"
 #include "stage.h"
 #include "u64subr.h"
+#include "Cpwd.h"
 
 int copyrc_shift2castor _PROTO((int));
+
+#ifndef _WIN32
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+#define strtok(X,Y) strtok_r(X,Y,&last)
+#endif /* _REENTRANT || _THREAD_SAFE */
+#endif /* _WIN32 */
 
 int copyrc_castor2shift(copyrc)
      int copyrc;
@@ -90,6 +97,9 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
   uid_t uid;
   char Zparm[CA_MAXSTGRIDLEN+1];
   char *command = "stage_updc_filcp";
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+  char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
 
   uid = getuid();
   gid = getgid();
@@ -137,7 +147,7 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
     return (-1);
   }
 
-  if ((pw = getpwuid (uid)) == NULL) {
+  if ((pw = Cgetpwuid (uid)) == NULL) {
     serrno = SENOMAPFND;
     return (-1);
   }
@@ -147,7 +157,7 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
   sendbuf_size += strlen(pw->pw_name) + 1;           /* Login name */
   sendbuf_size += 3 * WORDSIZE;                      /* uid, gid, nargs */
   sendbuf_size += strlen(command) + 1;               /* Command name */
-  sendbuf_size += strlen("Z") + strlen(stageid) + 2; /* -Z option and value */
+  sendbuf_size += strlen("-Z") + strlen(stageid) + 2; /* -Z option and value */
   if (blksize > 0) {
     sprintf (tmpbuf, "%d", blksize);
     sendbuf_size += strlen("-b") + strlen(tmpbuf) + 2; /* -b option and value */
@@ -348,6 +358,9 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
   uid_t uid;
   char Zparm[CA_MAXSTGRIDLEN+1];
   char *command = "stage_updc_tppos";
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+  char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
 
   uid = getuid();
   gid = getgid();
@@ -395,7 +408,7 @@ int DLL_DECL stage_updc_tppos(stageid, subreqid, status, blksize, drive, fid, fs
     return (-1);
   }
 
-  if ((pw = getpwuid (uid)) == NULL) {
+  if ((pw = Cgetpwuid (uid)) == NULL) {
     serrno = SENOMAPFND;
     return (-1);
   }
@@ -568,7 +581,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   /* Init repbuf to null */
   repbuf[0] = '\0';
 
-  if ((pw = getpwuid (uid)) == NULL) {
+  if ((pw = Cgetpwuid (uid)) == NULL) {
     serrno = SENOMAPFND;
     return (-1);
   }
@@ -677,7 +690,7 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   /* Init repbuf to null */
   repbuf[0] = '\0';
 
-  if ((pw = getpwuid (uid)) == NULL) {
+  if ((pw = Cgetpwuid (uid)) == NULL) {
     serrno = SENOMAPFND;
     return (-1);
   }
