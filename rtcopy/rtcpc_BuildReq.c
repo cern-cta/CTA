@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.2 $ $Date: 1999/12/03 17:05:09 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.3 $ $Date: 1999/12/08 11:56:12 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -71,7 +71,7 @@ int rtcpc_BuildReq(tape_list_t **tape, int argc, char *argv[]) {
     static int recursion_level = 0;
     char opts[OPT_MAX] = "";
     int i,j,rc, local_optind, local_repeated[OPT_MAX];
-    char c;
+    int c;
     int mode;
     extern int getopt();
     
@@ -361,7 +361,7 @@ static int rtcpc_b_opt(int mode,
 static int rtcpc_c_opt(int mode, 
                      const char *value, 
                      tape_list_t **tape) {
-    int rc;
+    int rc = 0;
     return(rc);
 }
 
@@ -722,7 +722,7 @@ static int rtcpc_g_opt(int mode,
 static int rtcpc_G_opt(int mode, 
                      const char *value, 
                      tape_list_t **tape) {
-    int rc;
+    int rc = 0;
     return(rc);
 }
 /*
@@ -1572,7 +1572,7 @@ static int rtcpc_V_opt(int mode,
 static int rtcpc_x_opt(int mode, 
                      const char *value, 
                      tape_list_t **tape) {
-    int rc;
+    int rc = 0;
     /*
      * Set LOG_DEBUG (7) loglevel
      */
