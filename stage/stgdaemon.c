@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.190 2002/05/09 17:04:31 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.191 2002/05/15 06:45:12 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.190 $ $Date: 2002/05/09 17:04:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.191 $ $Date: 2002/05/15 06:45:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -399,7 +399,9 @@ int main(argc,argv)
 	}
 
 	strcpy (func, "stgdaemon");
+	stglogit (func, "==============================================\n");
 	stglogit (func, "started\n");
+	stglogit (func, "==============================================\n");
 
 	/* Before getting system limit, change them right now - we do nothing if wanted value are below what system provide */
 	/* RLIMIT_NOFILE */
