@@ -149,6 +149,54 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_CastorFile_creationTime
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_creationTime(castor::stager::CastorFile* instance, u_signed64* var) {
+    *var = instance->creationTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_CastorFile_setCreationTime
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_setCreationTime(castor::stager::CastorFile* instance, u_signed64 new_var) {
+    instance->setCreationTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_CastorFile_lastAccessTime
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_lastAccessTime(castor::stager::CastorFile* instance, u_signed64* var) {
+    *var = instance->lastAccessTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_CastorFile_setLastAccessTime
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_setLastAccessTime(castor::stager::CastorFile* instance, u_signed64 new_var) {
+    instance->setLastAccessTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_CastorFile_nbAccesses
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_nbAccesses(castor::stager::CastorFile* instance, unsigned int* var) {
+    *var = instance->nbAccesses();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_CastorFile_setNbAccesses
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_setNbAccesses(castor::stager::CastorFile* instance, unsigned int new_var) {
+    instance->setNbAccesses(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_CastorFile_id
   //----------------------------------------------------------------------------
   int Cstager_CastorFile_id(castor::stager::CastorFile* instance, u_signed64* var) {

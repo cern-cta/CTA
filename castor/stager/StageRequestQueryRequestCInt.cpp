@@ -305,6 +305,38 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_StageRequestQueryRequest_creationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StageRequestQueryRequest_creationTime(castor::stager::StageRequestQueryRequest* instance, u_signed64* var) {
+    *var = instance->creationTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageRequestQueryRequest_setCreationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StageRequestQueryRequest_setCreationTime(castor::stager::StageRequestQueryRequest* instance, u_signed64 new_var) {
+    instance->setCreationTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageRequestQueryRequest_lastModificationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StageRequestQueryRequest_lastModificationTime(castor::stager::StageRequestQueryRequest* instance, u_signed64* var) {
+    *var = instance->lastModificationTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageRequestQueryRequest_setLastModificationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StageRequestQueryRequest_setLastModificationTime(castor::stager::StageRequestQueryRequest* instance, u_signed64 new_var) {
+    instance->setLastModificationTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_StageRequestQueryRequest_svcClass
   //----------------------------------------------------------------------------
   int Cstager_StageRequestQueryRequest_svcClass(castor::stager::StageRequestQueryRequest* instance, castor::stager::SvcClass** var) {

@@ -231,6 +231,38 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_SubRequest_creationTime
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_creationTime(castor::stager::SubRequest* instance, u_signed64* var) {
+    *var = instance->creationTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setCreationTime
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setCreationTime(castor::stager::SubRequest* instance, u_signed64 new_var) {
+    instance->setCreationTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_lastModificationTime
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_lastModificationTime(castor::stager::SubRequest* instance, u_signed64* var) {
+    *var = instance->lastModificationTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setLastModificationTime
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setLastModificationTime(castor::stager::SubRequest* instance, u_signed64 new_var) {
+    instance->setLastModificationTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_SubRequest_id
   //----------------------------------------------------------------------------
   int Cstager_SubRequest_id(castor::stager::SubRequest* instance, u_signed64* var) {

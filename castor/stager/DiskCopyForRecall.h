@@ -112,6 +112,18 @@ int Cstager_DiskCopyForRecall_gcWeight(struct Cstager_DiskCopyForRecall_t* insta
 int Cstager_DiskCopyForRecall_setGcWeight(struct Cstager_DiskCopyForRecall_t* instance, float new_var);
 
 /**
+ * Get the value of creationTime
+ * Time when this DiskCopy was created
+ */
+int Cstager_DiskCopyForRecall_creationTime(struct Cstager_DiskCopyForRecall_t* instance, u_signed64* var);
+
+/**
+ * Set the value of creationTime
+ * Time when this DiskCopy was created
+ */
+int Cstager_DiskCopyForRecall_setCreationTime(struct Cstager_DiskCopyForRecall_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

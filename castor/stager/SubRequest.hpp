@@ -253,6 +253,42 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_creationTime
+       * The time when this SubRequest was created
+       * @return the value of m_creationTime
+       */
+      u_signed64 creationTime() const {
+        return m_creationTime;
+      }
+
+      /**
+       * Set the value of m_creationTime
+       * The time when this SubRequest was created
+       * @param new_var the new value of m_creationTime
+       */
+      void setCreationTime(u_signed64 new_var) {
+        m_creationTime = new_var;
+      }
+
+      /**
+       * Get the value of m_lastModificationTime
+       * Time of the last modification on this SubRequest
+       * @return the value of m_lastModificationTime
+       */
+      u_signed64 lastModificationTime() const {
+        return m_lastModificationTime;
+      }
+
+      /**
+       * Set the value of m_lastModificationTime
+       * Time of the last modification on this SubRequest
+       * @param new_var the new value of m_lastModificationTime
+       */
+      void setLastModificationTime(u_signed64 new_var) {
+        m_lastModificationTime = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -405,6 +441,12 @@ namespace castor {
 
       /// Permissions for the file handled by this SubRequest (essentially used at creation time)
       int m_modeBits;
+
+      /// The time when this SubRequest was created
+      u_signed64 m_creationTime;
+
+      /// Time of the last modification on this SubRequest
+      u_signed64 m_lastModificationTime;
 
       /// The id of this object
       u_signed64 m_id;

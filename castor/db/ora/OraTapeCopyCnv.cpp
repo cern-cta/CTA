@@ -112,7 +112,7 @@ const std::string castor::db::ora::OraTapeCopyCnv::s_checkCastorFileExistStateme
 
 /// SQL update statement for member castorFile
 const std::string castor::db::ora::OraTapeCopyCnv::s_updateCastorFileStatementString =
-"UPDATE TapeCopy SET castorFile = : 1 WHERE id = :2";
+"UPDATE TapeCopy SET castorFile = :1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

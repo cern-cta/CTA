@@ -45,14 +45,15 @@ namespace castor {
       SUBREQUEST_WAITTAPERECALL = 4,
       SUBREQUEST_WAITSUBREQ = 5,
       SUBREQUEST_READY = 6,
-      SUBREQUEST_FAILED = 7
+      SUBREQUEST_FAILED = 7,
+      SUBREQUEST_FINISHED = 8
     }; // end of enum SubRequestStatusCodes
 
     /**
      * Names of the differents representations, used to display
      * correctly the SubRequestStatusCodes enum
      */
-    extern const char* SubRequestStatusCodesStrings[8];
+    extern const char* SubRequestStatusCodesStrings[9];
 
 #ifdef __cplusplus
   }; // end of namespace stager

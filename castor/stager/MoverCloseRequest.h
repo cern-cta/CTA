@@ -206,6 +206,30 @@ int Cstager_MoverCloseRequest_reqId(struct Cstager_MoverCloseRequest_t* instance
 int Cstager_MoverCloseRequest_setReqId(struct Cstager_MoverCloseRequest_t* instance, const char* new_var);
 
 /**
+ * Get the value of creationTime
+ * Time when the Request was created
+ */
+int Cstager_MoverCloseRequest_creationTime(struct Cstager_MoverCloseRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of creationTime
+ * Time when the Request was created
+ */
+int Cstager_MoverCloseRequest_setCreationTime(struct Cstager_MoverCloseRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of lastModificationTime
+ * Time when the request was last modified
+ */
+int Cstager_MoverCloseRequest_lastModificationTime(struct Cstager_MoverCloseRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of lastModificationTime
+ * Time when the request was last modified
+ */
+int Cstager_MoverCloseRequest_setLastModificationTime(struct Cstager_MoverCloseRequest_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of svcClass
  */
 int Cstager_MoverCloseRequest_svcClass(struct Cstager_MoverCloseRequest_t* instance, struct Cstager_SvcClass_t** var);

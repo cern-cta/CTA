@@ -125,6 +125,42 @@ int Cstager_CastorFile_fileSize(struct Cstager_CastorFile_t* instance, u_signed6
 int Cstager_CastorFile_setFileSize(struct Cstager_CastorFile_t* instance, u_signed64 new_var);
 
 /**
+ * Get the value of creationTime
+ * Time when this instance of a CastorFile was created
+ */
+int Cstager_CastorFile_creationTime(struct Cstager_CastorFile_t* instance, u_signed64* var);
+
+/**
+ * Set the value of creationTime
+ * Time when this instance of a CastorFile was created
+ */
+int Cstager_CastorFile_setCreationTime(struct Cstager_CastorFile_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of lastAccessTime
+ * Time of the last access to this CastorFile
+ */
+int Cstager_CastorFile_lastAccessTime(struct Cstager_CastorFile_t* instance, u_signed64* var);
+
+/**
+ * Set the value of lastAccessTime
+ * Time of the last access to this CastorFile
+ */
+int Cstager_CastorFile_setLastAccessTime(struct Cstager_CastorFile_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of nbAccesses
+ * Number of accesses to this CastorFile since its creation
+ */
+int Cstager_CastorFile_nbAccesses(struct Cstager_CastorFile_t* instance, unsigned int* var);
+
+/**
+ * Set the value of nbAccesses
+ * Number of accesses to this CastorFile since its creation
+ */
+int Cstager_CastorFile_setNbAccesses(struct Cstager_CastorFile_t* instance, unsigned int new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

@@ -55,7 +55,7 @@ const castor::ICnvFactory& OraStageAbortRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_insertStatementString =
-"INSERT INTO StageAbortRequest (parentUuid, flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, parent, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,ids_seq.nextval,:12,:13,:14) RETURNING id INTO :15";
+"INSERT INTO StageAbortRequest (parentUuid, flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, parent, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,ids_seq.nextval,:14,:15,:16) RETURNING id INTO :17";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_deleteStatementString =
@@ -63,11 +63,11 @@ const std::string castor::db::ora::OraStageAbortRequestCnv::s_deleteStatementStr
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_selectStatementString =
-"SELECT parentUuid, flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, id, parent, svcClass, client FROM StageAbortRequest WHERE id = :1";
+"SELECT parentUuid, flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, parent, svcClass, client FROM StageAbortRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_updateStatementString =
-"UPDATE StageAbortRequest SET parentUuid = :1, flags = :2, userName = :3, euid = :4, egid = :5, mask = :6, pid = :7, machine = :8, svcClassName = :9, userTag = :10, reqId = :11 WHERE id = :12";
+"UPDATE StageAbortRequest SET parentUuid = :1, flags = :2, userName = :3, euid = :4, egid = :5, mask = :6, pid = :7, machine = :8, svcClassName = :9, userTag = :10, reqId = :11, lastModificationTime = :12 WHERE id = :13";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_storeTypeStatementString =
@@ -87,7 +87,7 @@ const std::string castor::db::ora::OraStageAbortRequestCnv::s_deleteStatusStatem
 
 /// SQL update statement for member parent
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_updateFileRequestStatementString =
-"UPDATE StageAbortRequest SET parent = : 1 WHERE id = :2";
+"UPDATE StageAbortRequest SET parent = :1 WHERE id = :2";
 
 /// SQL existence statement for member svcClass
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_checkSvcClassExistStatementString =
@@ -95,11 +95,11 @@ const std::string castor::db::ora::OraStageAbortRequestCnv::s_checkSvcClassExist
 
 /// SQL update statement for member svcClass
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_updateSvcClassStatementString =
-"UPDATE StageAbortRequest SET svcClass = : 1 WHERE id = :2";
+"UPDATE StageAbortRequest SET svcClass = :1 WHERE id = :2";
 
 /// SQL update statement for member client
 const std::string castor::db::ora::OraStageAbortRequestCnv::s_updateIClientStatementString =
-"UPDATE StageAbortRequest SET client = : 1 WHERE id = :2";
+"UPDATE StageAbortRequest SET client = :1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -321,7 +321,7 @@ void castor::db::ora::OraStageAbortRequestCnv::fillObjFileRequest(castor::stager
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 parentId = (u_signed64)rset->getDouble(13);
+  u_signed64 parentId = (u_signed64)rset->getDouble(15);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -359,7 +359,7 @@ void castor::db::ora::OraStageAbortRequestCnv::fillObjSvcClass(castor::stager::S
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = (u_signed64)rset->getDouble(14);
+  u_signed64 svcClassId = (u_signed64)rset->getDouble(16);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -397,7 +397,7 @@ void castor::db::ora::OraStageAbortRequestCnv::fillObjIClient(castor::stager::St
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = (u_signed64)rset->getDouble(15);
+  u_signed64 clientId = (u_signed64)rset->getDouble(17);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -435,7 +435,7 @@ void castor::db::ora::OraStageAbortRequestCnv::createRep(castor::IAddress* addre
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(15, oracle::occi::OCCIDOUBLE);
+      m_insertStatement->registerOutParam(17, oracle::occi::OCCIDOUBLE);
     }
     if (0 == m_insertStatusStatement) {
       m_insertStatusStatement = createStatement(s_insertStatusStatementString);
@@ -455,11 +455,13 @@ void castor::db::ora::OraStageAbortRequestCnv::createRep(castor::IAddress* addre
     m_insertStatement->setString(9, obj->svcClassName());
     m_insertStatement->setString(10, obj->userTag());
     m_insertStatement->setString(11, obj->reqId());
-    m_insertStatement->setDouble(12, (type == OBJ_FileRequest && obj->parent() != 0) ? obj->parent()->id() : 0);
-    m_insertStatement->setDouble(13, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setDouble(14, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setInt(12, time(0));
+    m_insertStatement->setInt(13, time(0));
+    m_insertStatement->setDouble(14, (type == OBJ_FileRequest && obj->parent() != 0) ? obj->parent()->id() : 0);
+    m_insertStatement->setDouble(15, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setDouble(16, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->executeUpdate();
-    obj->setId((u_signed64)m_insertStatement->getDouble(15));
+    obj->setId((u_signed64)m_insertStatement->getDouble(17));
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
@@ -497,6 +499,8 @@ void castor::db::ora::OraStageAbortRequestCnv::createRep(castor::IAddress* addre
                     << "  svcClassName : " << obj->svcClassName() << std::endl
                     << "  userTag : " << obj->userTag() << std::endl
                     << "  reqId : " << obj->reqId() << std::endl
+                    << "  creationTime : " << obj->creationTime() << std::endl
+                    << "  lastModificationTime : " << obj->lastModificationTime() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  parent : " << obj->parent() << std::endl
                     << "  svcClass : " << obj->svcClass() << std::endl
@@ -533,7 +537,8 @@ void castor::db::ora::OraStageAbortRequestCnv::updateRep(castor::IAddress* addre
     m_updateStatement->setString(9, obj->svcClassName());
     m_updateStatement->setString(10, obj->userTag());
     m_updateStatement->setString(11, obj->reqId());
-    m_updateStatement->setDouble(12, obj->id());
+    m_updateStatement->setInt(12, time(0));
+    m_updateStatement->setDouble(13, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -651,7 +656,9 @@ castor::IObject* castor::db::ora::OraStageAbortRequestCnv::createObj(castor::IAd
     object->setSvcClassName(rset->getString(9));
     object->setUserTag(rset->getString(10));
     object->setReqId(rset->getString(11));
-    object->setId((u_signed64)rset->getDouble(12));
+    object->setCreationTime((u_signed64)rset->getDouble(12));
+    object->setLastModificationTime((u_signed64)rset->getDouble(13));
+    object->setId((u_signed64)rset->getDouble(14));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -708,7 +715,9 @@ void castor::db::ora::OraStageAbortRequestCnv::updateObj(castor::IObject* obj)
     object->setSvcClassName(rset->getString(9));
     object->setUserTag(rset->getString(10));
     object->setReqId(rset->getString(11));
-    object->setId((u_signed64)rset->getDouble(12));
+    object->setCreationTime((u_signed64)rset->getDouble(12));
+    object->setLastModificationTime((u_signed64)rset->getDouble(13));
+    object->setId((u_signed64)rset->getDouble(14));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

@@ -30,7 +30,7 @@
 //------------------------------------------------------------------------------
 // SubRequestStatusCodesStrings
 //------------------------------------------------------------------------------
-const char* castor::stager::SubRequestStatusCodesStrings[8] = {
+const char* castor::stager::SubRequestStatusCodesStrings[9] = {
   "SUBREQUEST_START",
   "SUBREQUEST_RESTART",
   "SUBREQUEST_RETRY",
@@ -38,6 +38,7 @@ const char* castor::stager::SubRequestStatusCodesStrings[8] = {
   "SUBREQUEST_WAITTAPERECALL",
   "SUBREQUEST_WAITSUBREQ",
   "SUBREQUEST_READY",
-  "SUBREQUEST_FAILED"
+  "SUBREQUEST_FAILED",
+  "SUBREQUEST_FINISHED"
 };
 

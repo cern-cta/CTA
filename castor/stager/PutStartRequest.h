@@ -261,6 +261,30 @@ int Cstager_PutStartRequest_reqId(struct Cstager_PutStartRequest_t* instance, co
 int Cstager_PutStartRequest_setReqId(struct Cstager_PutStartRequest_t* instance, const char* new_var);
 
 /**
+ * Get the value of creationTime
+ * Time when the Request was created
+ */
+int Cstager_PutStartRequest_creationTime(struct Cstager_PutStartRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of creationTime
+ * Time when the Request was created
+ */
+int Cstager_PutStartRequest_setCreationTime(struct Cstager_PutStartRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of lastModificationTime
+ * Time when the request was last modified
+ */
+int Cstager_PutStartRequest_lastModificationTime(struct Cstager_PutStartRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of lastModificationTime
+ * Time when the request was last modified
+ */
+int Cstager_PutStartRequest_setLastModificationTime(struct Cstager_PutStartRequest_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of svcClass
  */
 int Cstager_PutStartRequest_svcClass(struct Cstager_PutStartRequest_t* instance, struct Cstager_SvcClass_t** var);

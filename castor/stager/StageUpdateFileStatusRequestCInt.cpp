@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequestCInt.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/11/30 08:55:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequestCInt.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2005/02/01 17:45:23 $ $Author: sponcec3 $
  *
  * 
  *
@@ -301,6 +301,38 @@ extern "C" {
   int Cstager_StageUpdateFileStatusRequest_setReqId(castor::stager::StageUpdateFileStatusRequest* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setReqId(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_creationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_creationTime(castor::stager::StageUpdateFileStatusRequest* instance, u_signed64* var) {
+    *var = instance->creationTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_setCreationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_setCreationTime(castor::stager::StageUpdateFileStatusRequest* instance, u_signed64 new_var) {
+    instance->setCreationTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_lastModificationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_lastModificationTime(castor::stager::StageUpdateFileStatusRequest* instance, u_signed64* var) {
+    *var = instance->lastModificationTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateFileStatusRequest_setLastModificationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateFileStatusRequest_setLastModificationTime(castor::stager::StageUpdateFileStatusRequest* instance, u_signed64 new_var) {
+    instance->setLastModificationTime(new_var);
     return 0;
   }
 

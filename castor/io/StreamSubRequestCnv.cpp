@@ -99,6 +99,8 @@ void castor::io::StreamSubRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->subreqId();
   ad->stream() << obj->flags();
   ad->stream() << obj->modeBits();
+  ad->stream() << obj->creationTime();
+  ad->stream() << obj->lastModificationTime();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -137,6 +139,12 @@ castor::IObject* castor::io::StreamSubRequestCnv::createObj(castor::IAddress* ad
   int modeBits;
   ad->stream() >> modeBits;
   object->setModeBits(modeBits);
+  u_signed64 creationTime;
+  ad->stream() >> creationTime;
+  object->setCreationTime(creationTime);
+  u_signed64 lastModificationTime;
+  ad->stream() >> lastModificationTime;
+  object->setLastModificationTime(lastModificationTime);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

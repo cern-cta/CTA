@@ -112,7 +112,7 @@ const std::string castor::db::ora::OraStreamCnv::s_checkTapeExistStatementString
 
 /// SQL update statement for member tape
 const std::string castor::db::ora::OraStreamCnv::s_updateTapeStatementString =
-"UPDATE Stream SET tape = : 1 WHERE id = :2";
+"UPDATE Stream SET tape = :1 WHERE id = :2";
 
 /// SQL existence statement for member tapePool
 const std::string castor::db::ora::OraStreamCnv::s_checkTapePoolExistStatementString =
@@ -120,7 +120,7 @@ const std::string castor::db::ora::OraStreamCnv::s_checkTapePoolExistStatementSt
 
 /// SQL update statement for member tapePool
 const std::string castor::db::ora::OraStreamCnv::s_updateTapePoolStatementString =
-"UPDATE Stream SET tapePool = : 1 WHERE id = :2";
+"UPDATE Stream SET tapePool = :1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

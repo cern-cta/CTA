@@ -244,6 +244,30 @@ int Cstager_StageAbortRequest_reqId(struct Cstager_StageAbortRequest_t* instance
 int Cstager_StageAbortRequest_setReqId(struct Cstager_StageAbortRequest_t* instance, const char* new_var);
 
 /**
+ * Get the value of creationTime
+ * Time when the Request was created
+ */
+int Cstager_StageAbortRequest_creationTime(struct Cstager_StageAbortRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of creationTime
+ * Time when the Request was created
+ */
+int Cstager_StageAbortRequest_setCreationTime(struct Cstager_StageAbortRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of lastModificationTime
+ * Time when the request was last modified
+ */
+int Cstager_StageAbortRequest_lastModificationTime(struct Cstager_StageAbortRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of lastModificationTime
+ * Time when the request was last modified
+ */
+int Cstager_StageAbortRequest_setLastModificationTime(struct Cstager_StageAbortRequest_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of svcClass
  */
 int Cstager_StageAbortRequest_svcClass(struct Cstager_StageAbortRequest_t* instance, struct Cstager_SvcClass_t** var);

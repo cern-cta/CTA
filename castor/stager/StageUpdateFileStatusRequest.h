@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdateFileStatusRequest.h,v $ $Revision: 1.8 $ $Release$ $Date: 2004/11/30 08:55:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdateFileStatusRequest.h,v $ $Revision: 1.9 $ $Release$ $Date: 2005/02/01 17:45:23 $ $Author: sponcec3 $
  *
  * 
  *
@@ -233,6 +233,30 @@ int Cstager_StageUpdateFileStatusRequest_reqId(struct Cstager_StageUpdateFileSta
  * The Cuuid identifying the Request, stored as a human readable string
  */
 int Cstager_StageUpdateFileStatusRequest_setReqId(struct Cstager_StageUpdateFileStatusRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of creationTime
+ * Time when the Request was created
+ */
+int Cstager_StageUpdateFileStatusRequest_creationTime(struct Cstager_StageUpdateFileStatusRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of creationTime
+ * Time when the Request was created
+ */
+int Cstager_StageUpdateFileStatusRequest_setCreationTime(struct Cstager_StageUpdateFileStatusRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of lastModificationTime
+ * Time when the request was last modified
+ */
+int Cstager_StageUpdateFileStatusRequest_lastModificationTime(struct Cstager_StageUpdateFileStatusRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of lastModificationTime
+ * Time when the request was last modified
+ */
+int Cstager_StageUpdateFileStatusRequest_setLastModificationTime(struct Cstager_StageUpdateFileStatusRequest_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of svcClass

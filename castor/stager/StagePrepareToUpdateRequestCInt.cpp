@@ -305,6 +305,38 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_StagePrepareToUpdateRequest_creationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StagePrepareToUpdateRequest_creationTime(castor::stager::StagePrepareToUpdateRequest* instance, u_signed64* var) {
+    *var = instance->creationTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePrepareToUpdateRequest_setCreationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StagePrepareToUpdateRequest_setCreationTime(castor::stager::StagePrepareToUpdateRequest* instance, u_signed64 new_var) {
+    instance->setCreationTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePrepareToUpdateRequest_lastModificationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StagePrepareToUpdateRequest_lastModificationTime(castor::stager::StagePrepareToUpdateRequest* instance, u_signed64* var) {
+    *var = instance->lastModificationTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePrepareToUpdateRequest_setLastModificationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StagePrepareToUpdateRequest_setLastModificationTime(castor::stager::StagePrepareToUpdateRequest* instance, u_signed64 new_var) {
+    instance->setLastModificationTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_StagePrepareToUpdateRequest_svcClass
   //----------------------------------------------------------------------------
   int Cstager_StagePrepareToUpdateRequest_svcClass(castor::stager::StagePrepareToUpdateRequest* instance, castor::stager::SvcClass** var) {

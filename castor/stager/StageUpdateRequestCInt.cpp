@@ -305,6 +305,38 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_creationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_creationTime(castor::stager::StageUpdateRequest* instance, u_signed64* var) {
+    *var = instance->creationTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_setCreationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_setCreationTime(castor::stager::StageUpdateRequest* instance, u_signed64 new_var) {
+    instance->setCreationTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_lastModificationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_lastModificationTime(castor::stager::StageUpdateRequest* instance, u_signed64* var) {
+    *var = instance->lastModificationTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StageUpdateRequest_setLastModificationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StageUpdateRequest_setLastModificationTime(castor::stager::StageUpdateRequest* instance, u_signed64 new_var) {
+    instance->setLastModificationTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_StageUpdateRequest_svcClass
   //----------------------------------------------------------------------------
   int Cstager_StageUpdateRequest_svcClass(castor::stager::StageUpdateRequest* instance, castor::stager::SvcClass** var) {

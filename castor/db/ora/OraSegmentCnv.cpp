@@ -83,7 +83,7 @@ const std::string castor::db::ora::OraSegmentCnv::s_checkTapeExistStatementStrin
 
 /// SQL update statement for member tape
 const std::string castor::db::ora::OraSegmentCnv::s_updateTapeStatementString =
-"UPDATE Segment SET tape = : 1 WHERE id = :2";
+"UPDATE Segment SET tape = :1 WHERE id = :2";
 
 /// SQL existence statement for member copy
 const std::string castor::db::ora::OraSegmentCnv::s_checkTapeCopyExistStatementString =
@@ -91,7 +91,7 @@ const std::string castor::db::ora::OraSegmentCnv::s_checkTapeCopyExistStatementS
 
 /// SQL update statement for member copy
 const std::string castor::db::ora::OraSegmentCnv::s_updateTapeCopyStatementString =
-"UPDATE Segment SET copy = : 1 WHERE id = :2";
+"UPDATE Segment SET copy = :1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

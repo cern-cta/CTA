@@ -47,6 +47,8 @@ castor::stager::Request::Request() throw() :
   m_svcClassName(""),
   m_userTag(""),
   m_reqId(""),
+  m_creationTime(0),
+  m_lastModificationTime(0),
   m_svcClass(0),
   m_client(0) {
 };
@@ -84,6 +86,8 @@ void castor::stager::Request::print(std::ostream& stream,
   stream << indent << "svcClassName : " << m_svcClassName << std::endl;
   stream << indent << "userTag : " << m_userTag << std::endl;
   stream << indent << "reqId : " << m_reqId << std::endl;
+  stream << indent << "creationTime : " << m_creationTime << std::endl;
+  stream << indent << "lastModificationTime : " << m_lastModificationTime << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "SvcClass : " << std::endl;
   if (0 != m_svcClass) {

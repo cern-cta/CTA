@@ -191,6 +191,30 @@ int Cstager_SubRequest_modeBits(struct Cstager_SubRequest_t* instance, int* var)
 int Cstager_SubRequest_setModeBits(struct Cstager_SubRequest_t* instance, int new_var);
 
 /**
+ * Get the value of creationTime
+ * The time when this SubRequest was created
+ */
+int Cstager_SubRequest_creationTime(struct Cstager_SubRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of creationTime
+ * The time when this SubRequest was created
+ */
+int Cstager_SubRequest_setCreationTime(struct Cstager_SubRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of lastModificationTime
+ * Time of the last modification on this SubRequest
+ */
+int Cstager_SubRequest_lastModificationTime(struct Cstager_SubRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of lastModificationTime
+ * Time of the last modification on this SubRequest
+ */
+int Cstager_SubRequest_setLastModificationTime(struct Cstager_SubRequest_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

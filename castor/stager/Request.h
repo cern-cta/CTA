@@ -188,6 +188,30 @@ int Cstager_Request_reqId(struct Cstager_Request_t* instance, const char** var);
 int Cstager_Request_setReqId(struct Cstager_Request_t* instance, const char* new_var);
 
 /**
+ * Get the value of creationTime
+ * Time when the Request was created
+ */
+int Cstager_Request_creationTime(struct Cstager_Request_t* instance, u_signed64* var);
+
+/**
+ * Set the value of creationTime
+ * Time when the Request was created
+ */
+int Cstager_Request_setCreationTime(struct Cstager_Request_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of lastModificationTime
+ * Time when the request was last modified
+ */
+int Cstager_Request_lastModificationTime(struct Cstager_Request_t* instance, u_signed64* var);
+
+/**
+ * Set the value of lastModificationTime
+ * Time when the request was last modified
+ */
+int Cstager_Request_setLastModificationTime(struct Cstager_Request_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of svcClass
  */
 int Cstager_Request_svcClass(struct Cstager_Request_t* instance, struct Cstager_SvcClass_t** var);

@@ -157,6 +157,60 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_creationTime
+       * Time when this instance of a CastorFile was created
+       * @return the value of m_creationTime
+       */
+      u_signed64 creationTime() const {
+        return m_creationTime;
+      }
+
+      /**
+       * Set the value of m_creationTime
+       * Time when this instance of a CastorFile was created
+       * @param new_var the new value of m_creationTime
+       */
+      void setCreationTime(u_signed64 new_var) {
+        m_creationTime = new_var;
+      }
+
+      /**
+       * Get the value of m_lastAccessTime
+       * Time of the last access to this CastorFile
+       * @return the value of m_lastAccessTime
+       */
+      u_signed64 lastAccessTime() const {
+        return m_lastAccessTime;
+      }
+
+      /**
+       * Set the value of m_lastAccessTime
+       * Time of the last access to this CastorFile
+       * @param new_var the new value of m_lastAccessTime
+       */
+      void setLastAccessTime(u_signed64 new_var) {
+        m_lastAccessTime = new_var;
+      }
+
+      /**
+       * Get the value of m_nbAccesses
+       * Number of accesses to this CastorFile since its creation
+       * @return the value of m_nbAccesses
+       */
+      unsigned int nbAccesses() const {
+        return m_nbAccesses;
+      }
+
+      /**
+       * Set the value of m_nbAccesses
+       * Number of accesses to this CastorFile since its creation
+       * @param new_var the new value of m_nbAccesses
+       */
+      void setNbAccesses(unsigned int new_var) {
+        m_nbAccesses = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -274,6 +328,15 @@ namespace castor {
 
       /// Size of the file
       u_signed64 m_fileSize;
+
+      /// Time when this instance of a CastorFile was created
+      u_signed64 m_creationTime;
+
+      /// Time of the last access to this CastorFile
+      u_signed64 m_lastAccessTime;
+
+      /// Number of accesses to this CastorFile since its creation
+      unsigned int m_nbAccesses;
 
       /// The id of this object
       u_signed64 m_id;

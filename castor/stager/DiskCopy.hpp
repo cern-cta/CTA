@@ -139,6 +139,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_creationTime
+       * Time when this DiskCopy was created
+       * @return the value of m_creationTime
+       */
+      u_signed64 creationTime() const {
+        return m_creationTime;
+      }
+
+      /**
+       * Set the value of m_creationTime
+       * Time when this DiskCopy was created
+       * @param new_var the new value of m_creationTime
+       */
+      void setCreationTime(u_signed64 new_var) {
+        m_creationTime = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -240,6 +258,9 @@ namespace castor {
 
       /// Weight possibly used by the garbage collector to decide who should be removed.
       float m_gcWeight;
+
+      /// Time when this DiskCopy was created
+      u_signed64 m_creationTime;
 
       /// The id of this object
       u_signed64 m_id;

@@ -305,6 +305,38 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_StagePutDoneRequest_creationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutDoneRequest_creationTime(castor::stager::StagePutDoneRequest* instance, u_signed64* var) {
+    *var = instance->creationTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutDoneRequest_setCreationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutDoneRequest_setCreationTime(castor::stager::StagePutDoneRequest* instance, u_signed64 new_var) {
+    instance->setCreationTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutDoneRequest_lastModificationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutDoneRequest_lastModificationTime(castor::stager::StagePutDoneRequest* instance, u_signed64* var) {
+    *var = instance->lastModificationTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StagePutDoneRequest_setLastModificationTime
+  //----------------------------------------------------------------------------
+  int Cstager_StagePutDoneRequest_setLastModificationTime(castor::stager::StagePutDoneRequest* instance, u_signed64 new_var) {
+    instance->setLastModificationTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_StagePutDoneRequest_svcClass
   //----------------------------------------------------------------------------
   int Cstager_StagePutDoneRequest_svcClass(castor::stager::StagePutDoneRequest* instance, castor::stager::SvcClass** var) {

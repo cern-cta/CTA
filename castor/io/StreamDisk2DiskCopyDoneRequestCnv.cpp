@@ -99,6 +99,8 @@ void castor::io::StreamDisk2DiskCopyDoneRequestCnv::createRep(castor::IAddress* 
   ad->stream() << obj->svcClassName();
   ad->stream() << obj->userTag();
   ad->stream() << obj->reqId();
+  ad->stream() << obj->creationTime();
+  ad->stream() << obj->lastModificationTime();
   ad->stream() << obj->diskCopyId();
   ad->stream() << obj->status();
   ad->stream() << obj->id();
@@ -144,6 +146,12 @@ castor::IObject* castor::io::StreamDisk2DiskCopyDoneRequestCnv::createObj(castor
   std::string reqId;
   ad->stream() >> reqId;
   object->setReqId(reqId);
+  u_signed64 creationTime;
+  ad->stream() >> creationTime;
+  object->setCreationTime(creationTime);
+  u_signed64 lastModificationTime;
+  ad->stream() >> lastModificationTime;
+  object->setLastModificationTime(lastModificationTime);
   u_signed64 diskCopyId;
   ad->stream() >> diskCopyId;
   object->setDiskCopyId(diskCopyId);

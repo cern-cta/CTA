@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/10 09:38:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2005/02/01 17:45:22 $ $Author: sponcec3 $
  *
  * 
  *
@@ -101,6 +101,8 @@ void castor::io::StreamStageUpdateFileStatusRequestCnv::createRep(castor::IAddre
   ad->stream() << obj->svcClassName();
   ad->stream() << obj->userTag();
   ad->stream() << obj->reqId();
+  ad->stream() << obj->creationTime();
+  ad->stream() << obj->lastModificationTime();
   ad->stream() << obj->id();
 }
 
@@ -144,6 +146,12 @@ castor::IObject* castor::io::StreamStageUpdateFileStatusRequestCnv::createObj(ca
   std::string reqId;
   ad->stream() >> reqId;
   object->setReqId(reqId);
+  u_signed64 creationTime;
+  ad->stream() >> creationTime;
+  object->setCreationTime(creationTime);
+  u_signed64 lastModificationTime;
+  ad->stream() >> lastModificationTime;
+  object->setLastModificationTime(lastModificationTime);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

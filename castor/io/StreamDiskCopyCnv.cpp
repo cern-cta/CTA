@@ -94,6 +94,7 @@ void castor::io::StreamDiskCopyCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->type();
   ad->stream() << obj->path();
   ad->stream() << obj->gcWeight();
+  ad->stream() << obj->creationTime();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -114,6 +115,9 @@ castor::IObject* castor::io::StreamDiskCopyCnv::createObj(castor::IAddress* addr
   float gcWeight;
   ad->stream() >> gcWeight;
   object->setGcWeight(gcWeight);
+  u_signed64 creationTime;
+  ad->stream() >> creationTime;
+  object->setCreationTime(creationTime);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

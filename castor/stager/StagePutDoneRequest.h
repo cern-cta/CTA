@@ -235,6 +235,30 @@ int Cstager_StagePutDoneRequest_reqId(struct Cstager_StagePutDoneRequest_t* inst
 int Cstager_StagePutDoneRequest_setReqId(struct Cstager_StagePutDoneRequest_t* instance, const char* new_var);
 
 /**
+ * Get the value of creationTime
+ * Time when the Request was created
+ */
+int Cstager_StagePutDoneRequest_creationTime(struct Cstager_StagePutDoneRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of creationTime
+ * Time when the Request was created
+ */
+int Cstager_StagePutDoneRequest_setCreationTime(struct Cstager_StagePutDoneRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of lastModificationTime
+ * Time when the request was last modified
+ */
+int Cstager_StagePutDoneRequest_lastModificationTime(struct Cstager_StagePutDoneRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of lastModificationTime
+ * Time when the request was last modified
+ */
+int Cstager_StagePutDoneRequest_setLastModificationTime(struct Cstager_StagePutDoneRequest_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of svcClass
  */
 int Cstager_StagePutDoneRequest_svcClass(struct Cstager_StagePutDoneRequest_t* instance, struct Cstager_SvcClass_t** var);

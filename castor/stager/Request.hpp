@@ -257,6 +257,42 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_creationTime
+       * Time when the Request was created
+       * @return the value of m_creationTime
+       */
+      u_signed64 creationTime() const {
+        return m_creationTime;
+      }
+
+      /**
+       * Set the value of m_creationTime
+       * Time when the Request was created
+       * @param new_var the new value of m_creationTime
+       */
+      void setCreationTime(u_signed64 new_var) {
+        m_creationTime = new_var;
+      }
+
+      /**
+       * Get the value of m_lastModificationTime
+       * Time when the request was last modified
+       * @return the value of m_lastModificationTime
+       */
+      u_signed64 lastModificationTime() const {
+        return m_lastModificationTime;
+      }
+
+      /**
+       * Set the value of m_lastModificationTime
+       * Time when the request was last modified
+       * @param new_var the new value of m_lastModificationTime
+       */
+      void setLastModificationTime(u_signed64 new_var) {
+        m_lastModificationTime = new_var;
+      }
+
+      /**
        * Get the value of m_svcClass
        * @return the value of m_svcClass
        */
@@ -317,6 +353,12 @@ namespace castor {
 
       /// The Cuuid identifying the Request, stored as a human readable string
       std::string m_reqId;
+
+      /// Time when the Request was created
+      u_signed64 m_creationTime;
+
+      /// Time when the request was last modified
+      u_signed64 m_lastModificationTime;
 
       SvcClass* m_svcClass;
 

@@ -97,7 +97,7 @@ const std::string castor::db::ora::OraTapeCnv::s_checkStreamExistStatementString
 
 /// SQL update statement for member stream
 const std::string castor::db::ora::OraTapeCnv::s_updateStreamStatementString =
-"UPDATE Tape SET stream = : 1 WHERE id = :2";
+"UPDATE Tape SET stream = :1 WHERE id = :2";
 
 /// SQL select statement for member segments
 const std::string castor::db::ora::OraTapeCnv::s_selectSegmentStatementString =

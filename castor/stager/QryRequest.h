@@ -200,6 +200,30 @@ int Cstager_QryRequest_reqId(struct Cstager_QryRequest_t* instance, const char**
 int Cstager_QryRequest_setReqId(struct Cstager_QryRequest_t* instance, const char* new_var);
 
 /**
+ * Get the value of creationTime
+ * Time when the Request was created
+ */
+int Cstager_QryRequest_creationTime(struct Cstager_QryRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of creationTime
+ * Time when the Request was created
+ */
+int Cstager_QryRequest_setCreationTime(struct Cstager_QryRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of lastModificationTime
+ * Time when the request was last modified
+ */
+int Cstager_QryRequest_lastModificationTime(struct Cstager_QryRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of lastModificationTime
+ * Time when the request was last modified
+ */
+int Cstager_QryRequest_setLastModificationTime(struct Cstager_QryRequest_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of svcClass
  */
 int Cstager_QryRequest_svcClass(struct Cstager_QryRequest_t* instance, struct Cstager_SvcClass_t** var);

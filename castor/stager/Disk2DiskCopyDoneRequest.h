@@ -206,6 +206,30 @@ int Cstager_Disk2DiskCopyDoneRequest_reqId(struct Cstager_Disk2DiskCopyDoneReque
 int Cstager_Disk2DiskCopyDoneRequest_setReqId(struct Cstager_Disk2DiskCopyDoneRequest_t* instance, const char* new_var);
 
 /**
+ * Get the value of creationTime
+ * Time when the Request was created
+ */
+int Cstager_Disk2DiskCopyDoneRequest_creationTime(struct Cstager_Disk2DiskCopyDoneRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of creationTime
+ * Time when the Request was created
+ */
+int Cstager_Disk2DiskCopyDoneRequest_setCreationTime(struct Cstager_Disk2DiskCopyDoneRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of lastModificationTime
+ * Time when the request was last modified
+ */
+int Cstager_Disk2DiskCopyDoneRequest_lastModificationTime(struct Cstager_Disk2DiskCopyDoneRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of lastModificationTime
+ * Time when the request was last modified
+ */
+int Cstager_Disk2DiskCopyDoneRequest_setLastModificationTime(struct Cstager_Disk2DiskCopyDoneRequest_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of svcClass
  */
 int Cstager_Disk2DiskCopyDoneRequest_svcClass(struct Cstager_Disk2DiskCopyDoneRequest_t* instance, struct Cstager_SvcClass_t** var);

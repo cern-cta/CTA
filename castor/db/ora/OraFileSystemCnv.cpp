@@ -86,7 +86,7 @@ const std::string castor::db::ora::OraFileSystemCnv::s_checkDiskPoolExistStateme
 
 /// SQL update statement for member diskPool
 const std::string castor::db::ora::OraFileSystemCnv::s_updateDiskPoolStatementString =
-"UPDATE FileSystem SET diskPool = : 1 WHERE id = :2";
+"UPDATE FileSystem SET diskPool = :1 WHERE id = :2";
 
 /// SQL select statement for member copies
 const std::string castor::db::ora::OraFileSystemCnv::s_selectDiskCopyStatementString =
@@ -106,7 +106,7 @@ const std::string castor::db::ora::OraFileSystemCnv::s_checkDiskServerExistState
 
 /// SQL update statement for member diskserver
 const std::string castor::db::ora::OraFileSystemCnv::s_updateDiskServerStatementString =
-"UPDATE FileSystem SET diskserver = : 1 WHERE id = :2";
+"UPDATE FileSystem SET diskserver = :1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

@@ -259,6 +259,38 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_Disk2DiskCopyDoneRequest_creationTime
+  //----------------------------------------------------------------------------
+  int Cstager_Disk2DiskCopyDoneRequest_creationTime(castor::stager::Disk2DiskCopyDoneRequest* instance, u_signed64* var) {
+    *var = instance->creationTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Disk2DiskCopyDoneRequest_setCreationTime
+  //----------------------------------------------------------------------------
+  int Cstager_Disk2DiskCopyDoneRequest_setCreationTime(castor::stager::Disk2DiskCopyDoneRequest* instance, u_signed64 new_var) {
+    instance->setCreationTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Disk2DiskCopyDoneRequest_lastModificationTime
+  //----------------------------------------------------------------------------
+  int Cstager_Disk2DiskCopyDoneRequest_lastModificationTime(castor::stager::Disk2DiskCopyDoneRequest* instance, u_signed64* var) {
+    *var = instance->lastModificationTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Disk2DiskCopyDoneRequest_setLastModificationTime
+  //----------------------------------------------------------------------------
+  int Cstager_Disk2DiskCopyDoneRequest_setLastModificationTime(castor::stager::Disk2DiskCopyDoneRequest* instance, u_signed64 new_var) {
+    instance->setLastModificationTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_Disk2DiskCopyDoneRequest_svcClass
   //----------------------------------------------------------------------------
   int Cstager_Disk2DiskCopyDoneRequest_svcClass(castor::stager::Disk2DiskCopyDoneRequest* instance, castor::stager::SvcClass** var) {
