@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.29 2001/02/03 09:20:19 jdurand Exp $
+ * $Id: stage_api.h,v 1.30 2001/02/05 10:10:17 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -29,6 +29,14 @@ struct stage_hsm {
   struct stage_hsm *next;
 };
 typedef struct stage_hsm stage_hsm_t;
+
+#define UPPER(s) \
+	{ \
+	char *q; \
+	if (*q != '\0') \
+		for (q = s; *q; q++) \
+			if (*q >= 'a' && *q <= 'z') *q = *q + ('A' - 'a'); \
+	}
 
 /* ====================================================================== */
 /* ====================== DEFINITION OF API PROTOCOL  =================== */
@@ -155,6 +163,7 @@ typedef struct stage_hsm stage_hsm_t;
       output += unmarshall_STRINGN(ptr,(st)->u1.t.den,CA_MAXDENLEN+1); \
       output += unmarshall_STRINGN(ptr,(st)->u1.t.dgn,CA_MAXDGNLEN+1); \
       output += unmarshall_STRINGN(ptr,(st)->u1.t.fid,CA_MAXFIDLEN+1); \
+      UPPER((st)->u1.t.fid);                       \
       unmarshall_BYTE(ptr,(st)->u1.t.filstat);       \
       output += unmarshall_STRINGN(ptr,(st)->u1.t.fseq,CA_MAXFSEQLEN+1); \
       output += unmarshall_STRINGN(ptr,(st)->u1.t.lbl,CA_MAXLBLTYPLEN+1); \
