@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.19 $ $Release$ $Date: 2004/06/21 16:34:29 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.20 $ $Release$ $Date: 2004/06/22 12:39:52 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -30,25 +30,25 @@ SUBDIRS = $(DBCPPDIR) $(RHCPPDIR) $(DSTAGECPPDIR) $(PROTOCPPDIR)
 DEPENDDIRS = $(DBCPPDIR) $(RHCPPDIR) $(DSTAGECPPDIR) $(PROTOCPPDIR)
 
 #if _AIX
-LIBS = -L../lib -lshift
+OSLIBS = -L../lib -lshift
 #else
 #if defined(__alpha) && defined(__osf__)
-LIBS = -no_so -L../lib -lshift -so_archive
+OSLIBS = -no_so -L../lib -lshift -so_archive
 #else
 #if hpux
-LIBS = -L../lib -lshift
+OSLIBS = -L../lib -lshift
 #else
 #if linux
-LIBS = -L../lib -lshift $(ADNSLIB) -lnsl
+OSLIBS = -L../lib -lshift $(ADNSLIB) -lnsl
 #else
 #if sgi
-LIBS = -L../lib -lshift
+OSLIBS = -L../lib -lshift
 #else
 #if SOLARIS
-LIBS = -L../lib -lshift -lsocket -lnsl
+OSLIBS = -L../lib -lshift -lsocket -lnsl
 #else
 #if _WIN32
-LIBS = ..\lib\shift.lib wsock32.lib advapi32.lib
+OSLIBS = ..\lib\shift.lib wsock32.lib advapi32.lib
 #endif
 #endif
 #endif
@@ -56,6 +56,7 @@ LIBS = ..\lib\shift.lib wsock32.lib advapi32.lib
 #endif
 #endif
 #endif
+LIBS = $(OSLIBS) $(MTLDLIBS)
 
 #if !defined(_WIN32)
 #if linux
@@ -191,7 +192,7 @@ PROGS_C = ProgramTargetName(stagein) \
 
 COMMONLIB = LibraryTargetName(castorClient) SharedLibraryTargetName(castorClient)
 GLOBLIB = DepSharedLibraryTargetName(castor,castorClient)
-LDFLAGS = -L .
+LDFLAGS = -L . $(MTLDFLAGS)
 LD = g++
 
 all: $(COMMONLIB) $(PROGS_C)
@@ -201,11 +202,11 @@ install:
 SharedLibraryTarget(castorClient,$(STGLIB_OBJS),$(DEPLIB),$(LIBS))
 NormalLibraryTarget(castorClient,$(STGLIB_OBJS))
 
-NormalProgramTarget(stagein,  $(STAGEIN_OBJS),  $(GLOBLIB),-lcastorClient -lpthread -lshift)
-NormalProgramTarget(stageout, $(STAGEOUT_OBJS), $(GLOBLIB),-lcastorClient -lpthread -lshift)
-NormalProgramTarget(stageupdc,$(STAGEUPDC_OBJS),$(GLOBLIB),-lcastorClient -lpthread -lshift)
-NormalProgramTarget(stageqry, $(STAGEQRY_OBJS) ,$(GLOBLIB),-lcastorClient -lpthread -lshift)
-NormalProgramTarget(mttest,   $(MTTEST_OBJS),   $(GLOBLIB),-lcastorClient -lpthread -lshift)
+NormalProgramTarget(stagein,  $(STAGEIN_OBJS),  $(GLOBLIB),$(LIBS) -lcastorClient)
+NormalProgramTarget(stageout, $(STAGEOUT_OBJS), $(GLOBLIB),$(LIBS) -lcastorClient)
+NormalProgramTarget(stageupdc,$(STAGEUPDC_OBJS),$(GLOBLIB),$(LIBS) -lcastorClient)
+NormalProgramTarget(stageqry, $(STAGEQRY_OBJS) ,$(GLOBLIB),$(LIBS) -lcastorClient)
+NormalProgramTarget(mttest,   $(MTTEST_OBJS),   $(GLOBLIB),$(LIBS) -lcastorClient)
 
 MakeSubdirs(all,$(SUBDIRS))
 MakeCondSubdirs(clean,$(SUBDIRS),)
