@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.59 2000/12/21 15:20:05 jdurand Exp $
+ * $Id: poolmgr.c,v 1.60 2000/12/21 15:36:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.59 $ $Date: 2000/12/21 15:20:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.60 $ $Date: 2000/12/21 15:36:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -58,7 +58,11 @@ extern struct stgcat_entry *stcs;	/* start of stage catalog */
 extern int maxfds;
 extern int reqid;
 extern int stglogit _PROTO(());
+#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
+extern int sendrep _PROTO((int, int, ...));
+#else
 extern int sendrep _PROTO(());
+#endif
 
 #if !defined(linux)
 extern char *sys_errlist[];

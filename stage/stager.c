@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.111 2000/12/21 13:55:09 jdurand Exp $
+ * $Id: stager.c,v 1.112 2000/12/21 15:36:38 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define TAPESRVR_EVEN "shd79" */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.111 $ $Date: 2000/12/21 13:55:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.112 $ $Date: 2000/12/21 15:36:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -63,7 +63,11 @@ EXTERN_C void DLL_DECL stager_usrmsg _PROTO((int, ...));
 EXTERN_C void DLL_DECL stager_migmsg _PROTO((int, ...));
 #endif
 EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
+#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
+extern int sendrep _PROTO((int, int, ...));
+#else
 extern int sendrep _PROTO(());
+#endif
 extern int stglogit _PROTO(());
 extern int stage_migpool _PROTO((char *, char *, char *));
 
@@ -3170,6 +3174,6 @@ int get_subreqid(stcp)
 
 
 /*
- * Last Update: "Thursday 21 December, 2000 at 13:08:55 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Thursday 21 December, 2000 at 16:34:20 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
 

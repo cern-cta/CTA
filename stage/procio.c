@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.68 2000/12/21 13:55:06 jdurand Exp $
+ * $Id: procio.c,v 1.69 2000/12/21 15:36:36 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.68 $ $Date: 2000/12/21 13:55:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.69 $ $Date: 2000/12/21 15:36:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -82,7 +82,11 @@ extern int updfreespace _PROTO((char *, char *, signed64));
 extern void getdefsize _PROTO((char *, int *));
 extern int stglogit _PROTO(());
 extern int req2argv _PROTO((char *, char ***));
+#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
+extern int sendrep _PROTO((int, int, ...));
+#else
 extern int sendrep _PROTO(());
+#endif
 extern int isvalidpool _PROTO((char *));
 extern int packfseq _PROTO((fseq_elem *, int, int, int, char, char *, int));
 extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int));

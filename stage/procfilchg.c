@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.3 2000/12/21 13:55:05 jdurand Exp $
+ * $Id: procfilchg.c,v 1.4 2000/12/21 15:36:36 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.3 $ $Date: 2000/12/21 13:55:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.4 $ $Date: 2000/12/21 15:36:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -43,7 +43,11 @@ extern int reqid;
 extern int rpfd;
 extern int req2argv _PROTO((char *, char ***));
 extern int upd_staged _PROTO((char *));
+#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
+extern int sendrep _PROTO((int, int, ...));
+#else
 extern int sendrep _PROTO(());
+#endif
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
 
 void

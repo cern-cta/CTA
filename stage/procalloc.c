@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.24 2000/12/21 13:55:05 jdurand Exp $
+ * $Id: procalloc.c,v 1.25 2000/12/21 15:36:36 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.24 $ $Date: 2000/12/21 13:55:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.25 $ $Date: 2000/12/21 15:36:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -54,7 +54,11 @@ void procallocreq _PROTO((char *, char *));
 void procgetreq _PROTO((char *, char *));
 extern int updfreespace _PROTO((char *, char *, signed64));
 extern int req2argv _PROTO((char *, char ***));
+#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
+extern int sendrep _PROTO((int, int, ...));
+#else
 extern int sendrep _PROTO(());
+#endif
 extern int stglogit _PROTO(());
 extern int isvalidpool _PROTO((char *));
 extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *));

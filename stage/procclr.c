@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.22 2000/12/21 13:55:05 jdurand Exp $
+ * $Id: procclr.c,v 1.23 2000/12/21 15:36:36 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.22 $ $Date: 2000/12/21 13:55:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.23 $ $Date: 2000/12/21 15:36:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -47,7 +47,11 @@ extern struct stgpath_entry *stpe;	/* end of stage path catalog */
 extern struct stgpath_entry *stps;	/* start of stage path catalog */
 extern struct waitq *waitqp;
 extern int req2argv _PROTO((char *, char ***));
+#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
+extern int sendrep _PROTO((int, int, ...));
+#else
 extern int sendrep _PROTO(());
+#endif
 extern int stglogit _PROTO(());
 extern int isvalidpool _PROTO((char *));
 extern void dellink _PROTO((struct stgpath_entry *));

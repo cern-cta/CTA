@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.86 2000/12/21 13:55:11 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.87 2000/12/21 15:36:39 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.86 $ $Date: 2000/12/21 13:55:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.87 $ $Date: 2000/12/21 15:36:39 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 20000
@@ -198,7 +198,11 @@ extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, str
 
 /* Function with variable list of arguments - defined as in non-_STDC_ to avoir proto problem */
 extern int stglogit _PROTO(());
+#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
+extern int sendrep _PROTO((int, int, ...));
+#else
 extern int sendrep _PROTO(());
+#endif
 
 int main(argc,argv)
 		 int argc;

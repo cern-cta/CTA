@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.47 2000/12/21 13:55:07 jdurand Exp $
+ * $Id: procupd.c,v 1.48 2000/12/21 15:36:37 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.47 $ $Date: 2000/12/21 13:55:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.48 $ $Date: 2000/12/21 15:36:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -63,7 +63,11 @@ extern struct stgcat_entry *newreq _PROTO(());
 extern void update_migpool _PROTO((struct stgcat_entry *, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
 extern int req2argv _PROTO((char *, char ***));
+#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
+extern int sendrep _PROTO((int, int, ...));
+#else
 extern int sendrep _PROTO(());
+#endif
 extern int stglogit _PROTO(());
 extern int nextreqid _PROTO(());
 extern int savereqs _PROTO(());

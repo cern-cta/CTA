@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.40 2000/12/21 15:18:55 jdurand Exp $
+ * $Id: procqry.c,v 1.41 2000/12/21 15:36:37 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.40 $ $Date: 2000/12/21 15:18:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.41 $ $Date: 2000/12/21 15:36:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -57,7 +57,11 @@ int print_sorted_list _PROTO((char *, int, char *, int, char *, int, char (*)[7]
 void print_tape_info _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *));
 extern int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
 extern int req2argv _PROTO((char *, char ***));
+#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
+extern int sendrep _PROTO((int, int, ...));
+#else
 extern int sendrep _PROTO(());
+#endif
 extern int isvalidpool _PROTO((char *));
 extern int stglogit _PROTO(());
 extern void print_pool_utilization _PROTO((int, char *, char *));
