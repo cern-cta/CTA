@@ -1,0 +1,326 @@
+/*
+ * Copyright (C) 1999-2002 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+ 
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: Cupv_oracle_ifce.pc,v $ $Revision: 1.1 $ $Date: 2002/05/28 10:06:20 $ CERN IT-PDP/DM Ben Couturier";
+#endif /* not lint */
+
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sqlca.h>
+#ifndef USE_ORACLE
+#define USE_ORACLE
+#endif
+#include "serrno.h"
+#include "u64subr.h"
+#include "Cupv.h"
+#include "Cupv_server.h"
+
+static sql_context ctx[CUPV_NBTHREADS];
+
+Cupv_init_dbpkg()
+{
+	int i;
+
+	EXEC SQL ENABLE THREADS;
+	for (i = 0; i < CUPV_NBTHREADS; i++) {
+		EXEC SQL CONTEXT ALLOCATE :ctx[i];
+	}
+	return (0);
+}
+
+EXEC SQL CONTEXT USE :ctx[dbfd->idx]; 
+
+Cupv_abort_tr(dbfd)
+struct Cupv_dbfd *dbfd;
+{
+	EXEC SQL ROLLBACK WORK;
+	dbfd->tr_started = 0;
+	return (0);
+}
+
+Cupv_closedb(dbfd)
+struct Cupv_dbfd *dbfd;
+{
+	EXEC SQL CONTEXT FREE :ctx[dbfd->idx];
+	return (0);
+}
+
+
+Cupv_delete_privilege(dbfd, uid, gid, src, tgt) 
+     struct Cupv_dbfd *dbfd; 
+     int uid;
+     int gid;
+     char *src;
+     char *tgt;
+{ 
+  char func[24]; 
+  char rowid_value[19]; 
+  struct sqlca sqlca; 
+  
+  strcpy (func, "Cupv_delete"); 
+
+  EXEC SQL DELETE FROM USER_PRIVILEGE WHERE U_ID = :uid
+    AND G_ID = :gid
+    AND SRC_HOST = :src
+    AND TGT_HOST = :tgt;
+     
+  switch(sqlca.sqlcode) {
+  case 0:  
+    return (0);  
+  case 1403:  
+    serrno = SEENTRYNFND;  
+    break;  
+  default:  
+    serrno = SEINTERNAL;  
+    break;
+  }
+  Cupvlogit (func, "DELETE error: %.*s\n", sqlca.sqlerrm.sqlerrml, 
+	     sqlca.sqlerrm.sqlerrmc);  
+  return (-1); 
+} 
+
+
+Cupv_end_tr(dbfd)
+     struct Cupv_dbfd *dbfd;
+{
+  EXEC SQL COMMIT WORK;
+  dbfd->tr_started = 0;
+  return (0);
+}
+
+
+Cupv_add_privilege(dbfd, uid, gid, srcHost, tgtHost, priv)
+struct Cupv_dbfd *dbfd;
+int uid;
+int gid;
+char *srcHost;
+char *tgtHost;
+int priv;
+{
+	char func[24];
+	struct sqlca sqlca;
+
+	strcpy (func, "Cupv_add_privilege");
+
+	EXEC SQL INSERT INTO USER_PRIVILEGE
+		(U_ID, G_ID, SRC_HOST, TGT_HOST, PRIV_CAT)
+		VALUES
+		(:uid, :gid,
+		 :srcHost, :tgtHost, :priv);
+
+	switch (sqlca.sqlcode) {
+	case 0:
+		return (0);
+	case -1:
+		serrno = SEENTRYEXISTS;
+		break;
+	case -1631:
+	case -1632:
+		serrno = ENOSPC;
+		break;
+	default:
+		Cupvlogit (func, "INSERT error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+	}
+	return (-1);
+}
+
+Cupv_modify_privilege(dbfd, uid, gid, srcHost, tgtHost, newsrcHost, newtgtHost,  priv)
+struct Cupv_dbfd *dbfd;
+int uid;
+int gid;
+char *srcHost;
+char *tgtHost;
+char *newsrcHost;
+char *newtgtHost;
+int priv;
+{
+  char func[24];
+  struct sqlca sqlca;
+  char sqlstatement[MAXSQLSTMENTLEN +1];
+  char *p;
+  int nbfieldupdated = 0;
+
+  strcpy (func, "Cupv_modify_privilege");
+  
+  /* Building the sql statement */
+  p = sqlstatement;
+
+  p += sprintf(p, "UPDATE USER_PRIVILEGE SET ");
+  
+  if (priv != -1) {
+    p += sprintf(p, " PRIV_CAT = %d ", priv);
+    nbfieldupdated++;
+  }
+  if (newsrcHost[0] != 0) {
+    if (nbfieldupdated != 0) {
+      p += sprintf(p, ", "); 
+    }
+    p += sprintf(p, " SRC_HOST = '%s' ", newsrcHost);
+    nbfieldupdated++;
+  }
+  if (newtgtHost[0] != 0) {
+    if (nbfieldupdated != 0) {
+      p += sprintf(p, ", "); 
+    }
+    p += sprintf(p, " TGT_HOST = '%s' ", newtgtHost);
+    nbfieldupdated++;
+  }
+  
+  /* Checing that there is a SET clause with at least one param */
+  if (nbfieldupdated == 0) {
+    Cupvlogit (func, "At least ONE field should be updated\n");
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+
+  /* Adding the where clause */
+  p += sprintf(p," WHERE U_ID = %d AND G_ID = %d AND SRC_HOST = '%s' AND TGT_HOST = '%s' ",
+	       uid, gid, srcHost, tgtHost);
+  *p = '\0';
+
+  Cupvlogit(func, sqlstatement);
+
+   EXEC SQL EXECUTE IMMEDIATE :sqlstatement;
+    
+   switch (sqlca.sqlcode) {
+   case 0:
+     return(0);
+   case -1631:
+   case -1632:
+     serrno = ENOSPC;
+     break;
+   case 1403:
+     serrno = SEENTRYNFND;
+     break;
+   default:
+     Cupvlogit (func, "MODIFY error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		sqlca.sqlerrm.sqlerrmc);
+     serrno = SEINTERNAL;
+     break;;
+   }
+
+   return(-1);
+
+}
+
+
+
+
+Cupv_list_privilege(dbfd, bol, priv_entry) 
+     struct Cupv_dbfd *dbfd; 
+     int bol; 
+     struct Cupv_userpriv *priv_entry; 
+{ 
+  char func[22]; 
+  struct sqlca sqlca; 
+  int lensrc = 0;
+  int lentgt = 0;
+
+  strcpy (func, "Cupv_list"); 
+
+  lensrc = strlen(priv_entry->srchost);
+  lentgt = strlen(priv_entry->tgthost);
+
+  EXEC SQL DECLARE list_cursor CURSOR FOR 
+    SELECT 
+    U_ID, G_ID, SRC_HOST, TGT_HOST, PRIV_CAT 
+    FROM USER_PRIVILEGE 
+    WHERE ( (:priv_entry->uid = -1) OR (U_ID = :priv_entry->uid)) 
+    AND  ( (:priv_entry->gid = -1) OR (G_ID = :priv_entry->gid)) 
+    AND  ( ( :lensrc = 0) OR (SRC_HOST LIKE :priv_entry->srchost)) 
+    AND  ( ( :lentgt = 0) OR (TGT_HOST LIKE :priv_entry->tgthost))   
+    AND  ( (:priv_entry->privcat = -1) OR (PRIV_CAT = :priv_entry->privcat)) 
+    ORDER BY U_ID, G_ID, SRC_HOST, TGT_HOST;  
+
+  if (bol) { 
+
+    EXEC SQL OPEN list_cursor; 
+
+    if (sqlca.sqlcode) { 
+      Cupvlogit (func, "OPEN CURSOR error: %.*s\n", 
+		 sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc); 
+      serrno = SEINTERNAL; 
+      return (-1); 
+    } 
+  } 
+
+  EXEC SQL FETCH list_cursor INTO 
+    :priv_entry->uid, :priv_entry->gid, 
+    :priv_entry->srchost, :priv_entry->tgthost, :priv_entry->privcat; 
+  
+  switch (sqlca.sqlcode) { 
+  case 0: 
+    
+    Cupvlogit(func, "Fetch returned: <%d> <%d> <%s> <%s> <%d>\n", priv_entry->uid, priv_entry->gid, 
+	      priv_entry->srchost, priv_entry->tgthost, priv_entry->privcat);
+
+    return (0); 
+  case 1403: 
+    return (1); 
+  default: 
+    Cupvlogit (func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml, 
+	       sqlca.sqlerrm.sqlerrmc); 
+    serrno = SEINTERNAL; 
+    return (-1); 
+  } 
+} 
+
+Cupv_opendb(db_srvr, db_user, db_pwd, dbfd)
+char *db_srvr;
+char *db_user;
+char *db_pwd;
+struct Cupv_dbfd *dbfd;
+{
+	int c;
+	char func[16];
+	int ntries;
+	struct sqlca sqlca;
+
+	strcpy (func, "Cupv_opendb");
+	ntries = 0;
+	while (1) {
+		EXEC SQL CONNECT :db_user IDENTIFIED BY :db_pwd;
+		if (sqlca.sqlcode == 0) return (0);
+		if (sqlca.sqlcode != -1014 && sqlca.sqlcode != -1033 &&
+		    sqlca.sqlcode != -1034) break;
+		if (ntries++ >= MAXRETRY) break;
+		sleep (RETRYI);
+	}
+	Cupvlogit (func, "CONNECT error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+	    sqlca.sqlerrm.sqlerrmc);
+	serrno = SEINTERNAL;
+	return (-1);
+}
+
+Cupv_start_tr(s, dbfd)
+int s;
+struct Cupv_dbfd *dbfd;
+{
+	dbfd->tr_started = 1;
+	return (0);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
