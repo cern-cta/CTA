@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.20 $ $Date: 2004/07/05 14:23:56 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.21 $ $Date: 2004/07/15 10:12:23 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -32,7 +32,28 @@ ALL1=SharedLibraryTargetName(castorCommonOra)
 ALL2=SharedLibraryTargetName(castorProto)
 #endif
 
-all:    $(ALL0) $(ALL1) $(ALL2)
+#if BuildSecurity
+
+ALLSEC=DepSharedLibraryTargetName(security,Csec_plugin_ID)
+
+#if UseGSI
+ALLSEC+= DepSharedLibraryTargetName(security,Csec_plugin_GSI)
+
+#endif
+
+#if UseKRB5
+ALLSEC+= DepSharedLibraryTargetName(security,Csec_plugin_KRB5)
+
+#endif
+
+#if UseKRB4
+ALLSEC+= DepSharedLibraryTargetName(security,Csec_plugin_KRB4)
+
+#endif
+
+#endif
+
+all:    $(ALL0) $(ALL1) $(ALL2) $(ALLSEC)
 
 INSTALL0=FileName($(LIB),SharedLibraryTargetName(shift))
 #if BuildOraCpp
@@ -156,6 +177,21 @@ MakeDepLibrary(tape,tape)
 MakeDepLibrary(castor/db/ora,castorCommonOra)
 
 MakeDepLibrary(expert,expert)
+
+#if BuildSecurity
+MakeDepLibrary(security,security)
+MakeDepSharedLibrary(security,Csec_plugin_ID)
+#if UseGSI
+MakeDepSharedLibrary(security,Csec_plugin_GSI)
+#endif
+#if UseKRB5
+MakeDepSharedLibrary(security,Csec_plugin_KRB5)
+#endif
+#if UseKRB4
+MakeDepSharedLibrary(security,Csec_plugin_KRB4)
+#endif
+#endif
+
 
 FORCE:
 
