@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.19 $ $Date: 2000/01/18 09:11:14 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.20 $ $Date: 2000/01/19 09:56:03 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1291,6 +1291,8 @@ n",
             } 
             drvrec->drv.status = VDQM_UNIT_UP | VDQM_UNIT_FREE;
         }
+        drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_DOWN;
+        drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_WAITDOWN;
 
         if ( DrvReq->status == VDQM_UNIT_UP )
             drvrec->drv.status |= VDQM_UNIT_FREE;
