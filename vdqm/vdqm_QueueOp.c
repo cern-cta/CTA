@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.47 $ $Date: 2001/09/26 13:33:42 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.48 $ $Date: 2002/10/25 13:02:12 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -13,9 +13,6 @@ static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.47 $ $Date
 
 #include <stdlib.h>
 #include <time.h>
-#if !defined(_WIN32)
-#include <regex.h>
-#endif /* _WIN32 */
 #include <osdep.h>
 #include <net.h>
 #include <log.h>
@@ -914,6 +911,7 @@ static int DelAllDrvOnSrv(dgn_element_t *dgn_context,
             rc = DelVolRecord(dgn_context,drv->vol);
             free(drv->vol);
         }
+		vdqm_ResetDedicate(drv); /* If any */
         free(drv);
     }
 
@@ -1160,6 +1158,7 @@ int vdqm_DelDrvReq(vdqmDrvReq_t *DrvReq) {
         rc = DelVolRecord(dgn_context,drvrec->vol);
         free(drvrec->vol);
     }
+	vdqm_ResetDedicate(drvrec); /* If any */
     free(drvrec);
     FreeDgnContext(&dgn_context);
     return(0);
