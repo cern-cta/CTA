@@ -1,5 +1,5 @@
 /*
- * $Id: opendir.c,v 1.16 2003/09/14 06:38:57 jdurand Exp $
+ * $Id: opendir.c,v 1.17 2003/10/31 12:59:34 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.16 $ $Date: 2003/09/14 06:38:57 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.17 $ $Date: 2003/10/31 12:59:34 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* opendir.c       Remote File I/O - open a directory                   */
@@ -249,8 +249,8 @@ char  	*vmstr ;
    TRACE(2,"rfio","rfio_opendir: sending %d bytes",RQSTSIZE+len) ;
    if (netwrite_timeout(rdp->s,rfio_buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
       TRACE(2,"rfio","rfio_opendir: write(): ERROR occured (errno=%d)", errno) ;
-      syslog(LOG_ALERT, "rfio: opendir: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netwrite(%d,0X%X,%d)",
-	     strerror(errno), errno, rdp->host, rdp->uid, rdp->gid, getpid(), rdp->s, rfio_buf, RQSTSIZE+len);
+      syslog(LOG_ALERT, "rfio: opendir: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netwrite(%d,0X%lX,%d)",
+	     strerror(errno), errno, rdp->host, rdp->uid, rdp->gid, getpid(), rdp->s, (unsigned long) rfio_buf, RQSTSIZE+len);
       rfio_dircleanup(rdp->s) ;
       END_TRACE() ;
       return(NULL) ;
@@ -261,9 +261,9 @@ char  	*vmstr ;
    TRACE(1, "rfio", "rfio_opendir: reading %d bytes",WORDSIZE+3*LONGSIZE) ;
    if (netread_timeout(rdp->s,rfio_buf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE) ) {
       TRACE(2, "rfio", "rfio_opendir: read(): ERROR occured (errno=%d)", errno);
-      syslog(LOG_ALERT, "rfio: opendir: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netread(%d,0X%X,%d)",
+      syslog(LOG_ALERT, "rfio: opendir: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netread(%d,0X%lX,%d)",
 	     strerror(errno), errno, rdp->host, rdp->uid, rdp->gid, getpid(), rdp->s, 
-	     rfio_buf, WORDSIZE+3*LONGSIZE);
+	     (unsigned long) rfio_buf, WORDSIZE+3*LONGSIZE);
       rfio_dircleanup(rdp->s);
       END_TRACE();
       return(NULL);
