@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.22 2001/06/21 10:52:35 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.23 2001/12/04 10:33:23 jdurand Exp $
  */
 
 /*
@@ -18,7 +18,7 @@
 #include "Cstage_ifce.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.22 $ $Date: 2001/06/21 10:52:35 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.23 $ $Date: 2001/12/04 10:33:23 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
@@ -282,7 +282,13 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
 		}
 		*stcp++ = thisstcp;
 	}
-	Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_tape");
+	if (serrno != EDB_D_DUMPEND) {
+		int save_serrno = serrno;
+		Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_tape");
+		serrno = save_serrno;
+		goto _stgdb_load_error;
+    }
+ 	Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_tape");
 
 	/* We ask for a dump of disk table from Cdb */
 	/* ---------------------------------------- */
@@ -317,6 +323,12 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
 		}
 		*stcp++ = thisstcp;
 	}
+	if (serrno != EDB_D_DUMPEND) {
+		int save_serrno = serrno;
+		Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_disk");
+		serrno = save_serrno;
+		goto _stgdb_load_error;
+    }
 	Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_disk");
 
 	/* We ask for a dump of hsm table from Cdb */
@@ -352,6 +364,12 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
 		}
 		*stcp++ = thisstcp;
 	}
+	if (serrno != EDB_D_DUMPEND) {
+		int save_serrno = serrno;
+		Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_hpss");
+		serrno = save_serrno;
+		goto _stgdb_load_error;
+    }
 	Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_hpss");
 
 	/* We ask for a dump of castor table from Cdb */
@@ -387,6 +405,12 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
 		}
 		*stcp++ = thisstcp;
 	}
+	if (serrno != EDB_D_DUMPEND) {
+		int save_serrno = serrno;
+		Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_hsm");
+		serrno = save_serrno;
+		goto _stgdb_load_error;
+    }
 	Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_hsm");
 
 	/* We ask for a dump of alloc table from Cdb */
@@ -422,6 +446,12 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
 		}
 		*stcp++ = thisstcp;
 	}
+	if (serrno != EDB_D_DUMPEND) {
+		int save_serrno = serrno;
+		Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_alloc");
+		serrno = save_serrno;
+		goto _stgdb_load_error;
+    }
 	Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_alloc");
 
 	/* We ask for a dump of link table from Cdb */
@@ -457,6 +487,12 @@ int DLL_DECL Stgdb_load(dbfd,stcsp,stcep,stgcat_bufsz,stpsp,stpep,stgpath_bufsz,
 		}
 		*stpp++ = thisstpp;
 	}
+	if (serrno != EDB_D_DUMPEND) {
+		int save_serrno = serrno;
+		Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_link");
+		serrno = save_serrno;
+		goto _stgdb_load_error;
+    }
 	Cdb_dump_end(&(dbfd->Cdb_db),"stgcat_link");
 
 	/*
