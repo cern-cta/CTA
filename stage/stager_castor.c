@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.28 2002/09/30 16:54:38 jdurand Exp $
+ * $Id: stager_castor.c,v 1.29 2002/10/01 07:00:10 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.28 $ $Date: 2002/09/30 16:54:38 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.29 $ $Date: 2002/10/01 07:00:10 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -229,7 +229,7 @@ int save_euid, save_egid;
 #define SAVE_EID {                               \
 	save_euid = geteuid();                       \
 	save_egid = getegid();                       \
-	SETEID(0,0);                                 \
+	SETEID(start_passwd.pw_gid,start_passwd.pw_uid); \
 }
 #define RESTORE_EID {                            \
 	SETEID(save_euid,save_egid);                 \
@@ -3171,7 +3171,7 @@ int stager_hsm_callback(tapereq,filereq)
 										hsm_segments[stager_client_true_i]) < 0) {
 						int save_serrno = serrno;
 #ifdef SETSEGATTRS_WITH_OWNER_UID_GID
-						SETEID(0,0);
+						SETEID(start_passwd.pw_gid,start_passwd.pw_uid);
 #else
 						SAVE_EID;
 #endif
