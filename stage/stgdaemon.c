@@ -217,6 +217,9 @@ unsigned long ipaddrlocal;
 int have_ipaddrlocal;
 time_t upd_fileclasses_int_default = 3600 * 24; /* Default update time for all CASTOR fileclasses - one day */
 time_t upd_fileclasses_int;
+int selectfs_ro_with_nb_stream;
+int selectfs_rw_with_nb_stream;
+char *selectfs_p;
 time_t last_upd_fileclasses = 0;
 time_t started_time;
 char cns_error_buffer[512];         /* Cns error buffer */
@@ -1133,6 +1136,22 @@ int main(argc,argv)
 		}
 	}
 
+	/* Do we take into account nb of streams when allocation a filesystem or a pool in READ_MODE ? */
+	if (((selectfs_p = getconfent("STG", "SELECTFS_RO_WITH_NB_STREAM", 0)) != NULL) && (strcmp(selectfs_p,"YES") == 0)) {
+		selectfs_ro_with_nb_stream = 1;
+	} else {
+		selectfs_ro_with_nb_stream = 0;
+	}
+
+	/* Do we take into account nb of streams when allocation a filesystem or a pool in WRITE_MODE ? */
+	if (((selectfs_p = getconfent("STG", "SELECTFS_RW_WITH_NB_STREAM", 0)) != NULL) && (strcmp(selectfs_p,"YES") == 0)) {
+		selectfs_rw_with_nb_stream = 1;
+	} else {
+		selectfs_rw_with_nb_stream = 0;
+	}
+
+	stglogit(func,"selectfs_ro_with_nb_stream=%d, selectfs_rw_with_nb_stream=%d\n", selectfs_ro_with_nb_stream, selectfs_rw_with_nb_stream);
+
 	/* Get default upd_fileclasses_int from configuration if any (not from getenv because conf is re-checked again) */
 	if ((upd_fileclasses_int_p = getconfent("STG", "UPD_FILECLASSES_INT", 0)) != NULL) {
 		if ((upd_fileclasses_int = atoi(upd_fileclasses_int_p)) <= 0) {
@@ -1246,6 +1265,23 @@ int main(argc,argv)
 			sendrep (&rpfd, STAGERC, initreq_req_type, STGMAGIC, c);
 			force_init = migr_init = 0;
 			initreq_reqid = 0;
+
+			/* Re-do scan for selectfs() behaviour */
+			/* Do we take into account nb of streams when allocation a filesystem or a pool in READ_MODE ? */
+			if (((selectfs_p = getconfent("STG", "SELECTFS_RO_WITH_NB_STREAM", 0)) != NULL) && (strcmp(selectfs_p,"YES") == 0)) {
+				selectfs_ro_with_nb_stream = 1;
+			} else {
+				selectfs_ro_with_nb_stream = 0;
+			}
+			
+			/* Do we take into account nb of streams when allocation a filesystem or a pool in WRITE_MODE ? */
+			if (((selectfs_p = getconfent("STG", "SELECTFS_RW_WITH_NB_STREAM", 0)) != NULL) && (strcmp(selectfs_p,"YES") == 0)) {
+				selectfs_rw_with_nb_stream = 1;
+			} else {
+				selectfs_rw_with_nb_stream = 0;
+			}
+			
+			stglogit(func,"selectfs_ro_with_nb_stream=%d, selectfs_rw_with_nb_stream=%d\n", selectfs_ro_with_nb_stream, selectfs_rw_with_nb_stream);
 		}
 
 		if (FD_ISSET (stg_s, &readfd)) {
@@ -2040,6 +2076,14 @@ int build_ipath(upath, stcp, pool_user, noallocation, api_out, openmode)
 		okmode = ( 0777 & ~ stcp->mask);
 	} else {
 		okmode = (07777 & (openmode & ~ stcp->mask));
+	}
+
+	if (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp)) {
+		/* We are in write-mode */
+		if ((okmode & S_IWUSR) != S_IWUSR) {
+			stglogit (func, STG33, "owner will not be able to write the file", "Forcing S_IWUSR (00200) in open mode");
+			okmode |= S_IWUSR;
+		}
 	}
 
 	if (*stcp->poolname == '\0' && upath != NULL) {
@@ -3600,6 +3644,8 @@ int fork_exec_stager(wqp)
 	char arg_key[6], arg_nbsubreqs[7], arg_reqid[7], arg_nretry[3], arg_rpfd[3], arg_concat_off_fseq[CA_MAXFSEQLEN + 1];
 	char arg_api_flag[2];      /* Flag telling if this is an API call or not */
 	char arg_api_flags[21];    /* Flag giving the API flags themselves */
+	char arg_rtcp_uid[21];     /* Explicit uid under which the process will run */
+	char arg_rtcp_gid[21];     /* Explicit uid under which the process will run */
 	int c, i, sav_ovl_pid;
 	static int pfd[2];
 	int pid;
@@ -3718,7 +3764,7 @@ int fork_exec_stager(wqp)
 		/* will still be alive from parent (stgdaemon point of view) */
 #ifdef __INSURE__
 		c = 0;
-		if (c != pfd[0] && c != wqp->rpfd) close (c);
+		/* if (c != pfd[0] && c != wqp->rpfd) close (c); */
 #else
 		for (c = 0; c < maxfds; c++)
 			if (c != pfd[0] && c != wqp->rpfd) close (c);
@@ -3757,63 +3803,73 @@ int fork_exec_stager(wqp)
 		sprintf (arg_use_subreqid, "%d", wqp->use_subreqid);
 		sprintf (arg_api_flag, "%d", wqp->api_out);
 		u64tostr(wqp->flags, arg_api_flags, 0);
+		sprintf(arg_rtcp_uid,"%d",wqp->rtcp_uid);
+		sprintf(arg_rtcp_gid,"%d",wqp->rtcp_gid);
 #ifdef __INSURE__
-		stglogit (func, "execing %s reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s concat_off_fseq=%s silent=%s use_subreqid=%s api_flag=%s flags=%s, tmpfile=%s, pid=%d\n",
-							progname,
-							arg_reqid,
-							arg_key,
-							arg_rpfd,
-							arg_nbsubreqs,
-							arg_nretry,
-							arg_Aflag,
-							arg_concat_off_fseq,
-							arg_silent,
-							arg_use_subreqid,
-							arg_api_flag,
-							stglogflags(NULL,NULL,(u_signed64) wqp->flags),
-							tmpfile,
-							(int) getpid());
+		stglogit (func, "execing %s reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s concat_off_fseq=%s silent=%s use_subreqid=%s api_flag=%s flags=%s, rtcp_uid=%s, rtcp_gid=%s, tmpfile=%s, pid=%d\n",
+				  progname,
+				  arg_reqid,
+				  arg_key,
+				  arg_rpfd,
+				  arg_nbsubreqs,
+				  arg_nretry,
+				  arg_Aflag,
+				  arg_concat_off_fseq,
+				  arg_silent,
+				  arg_use_subreqid,
+				  arg_api_flag,
+				  stglogflags(NULL,NULL,(u_signed64) wqp->flags),
+				  arg_rtcp_uid,
+				  arg_rtcp_gid,
+				  tmpfile,
+				  (int) getpid());
 		execl (progfullpath, progname,
-							arg_reqid,
-							arg_key, arg_rpfd,
-							arg_nbsubreqs,
-							arg_nretry,
-							arg_Aflag,
-							arg_concat_off_fseq,
-							arg_silent,
-							arg_use_subreqid,
-							arg_api_flag,
-							arg_api_flags,
-							tmpfile,
-							NULL);
+			   arg_reqid,
+			   arg_key, arg_rpfd,
+			   arg_nbsubreqs,
+			   arg_nretry,
+			   arg_Aflag,
+			   arg_concat_off_fseq,
+			   arg_silent,
+			   arg_use_subreqid,
+			   arg_api_flag,
+			   arg_api_flags,
+			   arg_rtcp_uid,
+			   arg_rtcp_gid,
+			   tmpfile,
+			   NULL);
 #else
-		stglogit (func, "execing %s reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s concat_off_fseq=%s silent=%s use_subreqid=%s api_flag=%s flags=%s, pid=%d\n",
-							progname,
-							arg_reqid,
-							arg_key,
-							arg_rpfd,
-							arg_nbsubreqs,
-							arg_nretry,
-							arg_Aflag,
-							arg_concat_off_fseq,
-							arg_silent,
-							arg_use_subreqid,
-							arg_api_flag,
-							stglogflags(NULL,NULL,(u_signed64) wqp->flags),
-							(int) getpid());
+		stglogit (func, "execing %s reqid=%s key=%s rpfd=%s nbsubreqs=%s nretry=%s Aflag=%s concat_off_fseq=%s silent=%s use_subreqid=%s api_flag=%s flags=%s rtcp_uid=%s rtcp_gid=%s, pid=%d\n",
+				  progname,
+				  arg_reqid,
+				  arg_key,
+				  arg_rpfd,
+				  arg_nbsubreqs,
+				  arg_nretry,
+				  arg_Aflag,
+				  arg_concat_off_fseq,
+				  arg_silent,
+				  arg_use_subreqid,
+				  arg_api_flag,
+				  stglogflags(NULL,NULL,(u_signed64) wqp->flags),
+				  arg_rtcp_uid,
+				  arg_rtcp_gid,
+				  (int) getpid());
 		execl (progfullpath, progname,
-							arg_reqid,
-							arg_key,
-							arg_rpfd,
-					 		arg_nbsubreqs,
-							arg_nretry,
-							arg_Aflag,
-							arg_concat_off_fseq,
-							arg_silent,
-							arg_use_subreqid,
-							arg_api_flag,
-							arg_api_flags,
-							NULL);
+			   arg_reqid,
+			   arg_key,
+			   arg_rpfd,
+			   arg_nbsubreqs,
+			   arg_nretry,
+			   arg_Aflag,
+			   arg_concat_off_fseq,
+			   arg_silent,
+			   arg_use_subreqid,
+			   arg_api_flag,
+			   arg_api_flags,
+			   arg_rtcp_uid,
+			   arg_rtcp_gid,
+			   NULL);
 #endif
 		stglogit (func, STG02, "stager", "execl", sys_errlist[errno]);
 		exit (SYERR);
@@ -3821,28 +3877,10 @@ int fork_exec_stager(wqp)
 		wqp->status = 0;
 		close (pfd[0]);
 		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
-			char save_user[CA_MAXUSRNAMELEN+1];
-			char save_group[CA_MAXUSRNAMELEN+1];
-			uid_t save_uid = 0;
-			gid_t save_gid = 0;
-
 			if (wfp->waiting_on_req > 0) continue;
 			if (wfp->waiting_on_req < 0) wfp->waiting_on_req = 0;
 			for (stcp = stcs; stcp < stce; stcp++)
 				if (stcp->reqid == wfp->subreqid) break;
-			if ((wqp->rtcp_uid != 0) && (wqp->rtcp_gid) && (wqp->rtcp_user[0] != '\0') && (wqp->rtcp_group[0] != '\0')) {
-				/* Submission in the wait queue specifies explicit a running RTCOPY uid/gid */
-				/* We do so by replacing in the stcp's the uid/gid/user... */
-				strcpy(save_user,stcp->user);
-				strcpy(save_group,stcp->group);
-				save_uid = stcp->uid;
-				save_gid = stcp->gid;
-
-				strcpy(stcp->user,wqp->rtcp_user);
-				strcpy(stcp->group,wqp->rtcp_group);
-				stcp->uid = wqp->rtcp_uid;
-				stcp->gid = wqp->rtcp_gid;
-			}
 #ifndef __INSURE__
 			if (wfp->ipath[0] != '\0') {
 				/* We lye to the system making it believing it is a disk copy */
@@ -3865,12 +3903,6 @@ int fork_exec_stager(wqp)
 				write (pfd[1], (char *) stcp, sizeof(struct stgcat_entry));
 			}
 #endif
-			if ((wqp->rtcp_uid != 0) && (wqp->rtcp_gid) && (wqp->rtcp_user[0] != '\0') && (wqp->rtcp_group[0] != '\0')) {
-				strcpy(stcp->user,save_user);
-				strcpy(stcp->group,save_group);
-				stcp->uid = save_uid;
-				stcp->gid = save_gid;
-			}
 		}
 		close (pfd[1]);
 #if SACCT
