@@ -67,7 +67,8 @@ namespace castor {
     SVC_MSG,
     SVC_ORACNV,
     SVC_ODBCCNV,
-    SVC_STREAMCNV
+    SVC_STREAMCNV,
+    SVC_ORASTAGERSVC
   };
 
   /**
