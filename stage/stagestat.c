@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.34 2002/07/26 12:22:59 jdurand Exp $
+ * $Id: stagestat.c,v 1.35 2002/07/26 12:24:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.34 $ $Date: 2002/07/26 12:22:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.35 $ $Date: 2002/07/26 12:24:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -530,8 +530,10 @@ int main(argc, argv)
 	printf("                                ... %10d (error)\n", nrecerror);
 	printf("                                ... %10d (filtered)\n", nrecfiltered);
 	printf("\n");
-	print_globstat (starttime, endtime, num_fork_exec_stager, num_multireqs);
-	print_poolstat (tflag, aflag, pflag, poolname);
+	if (nrecok > 0) {
+		print_globstat (starttime, endtime, num_fork_exec_stager, num_multireqs);
+		print_poolstat (tflag, aflag, pflag, poolname);
+	}
 
 #if defined(_WIN32)
 	WSACleanup();
