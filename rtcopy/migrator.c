@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.30 $ $Release$ $Date: 2005/01/11 13:02:07 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.31 $ $Release$ $Date: 2005/01/12 11:27:46 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.30 $ $Release$ $Date: 2005/01/11 13:02:07 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.31 $ $Release$ $Date: 2005/01/12 11:27:46 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -280,7 +280,16 @@ int migratorCallbackFileCopied(
       if ( castorFileId != NULL ) free(castorFileId);
       return(-1);
     }
-    rtcpcld_cleanupFile(file);
+
+    /*
+     * Remove the associated data structures from memory if
+     * the migration was successful. Otherwise (i.e. VOLUME OVERFLOW)
+     * we have to keep the file to permit resetting the status of
+     * the tape copy before this migration stream exits.
+     */
+    if ( filereq->cprc == 0 ) {
+      rtcpcld_cleanupFile(file);
+    }
     if ( rtcpcld_unlockTape() == -1 ) {
       LOG_SYSCALL_ERR("rtcpcld_unlockTape()");
       if ( blkid != NULL ) free(blkid);
