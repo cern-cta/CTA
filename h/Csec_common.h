@@ -3,6 +3,7 @@
 
 #include <osdep.h>
 #include <Castor_limits.h>
+#include <marshall.h>
 
 #if defined(KRB5) && defined(linux) 
 #include <gssapi/gssapi_generic.h>
@@ -44,10 +45,18 @@ struct Csec_api_thread_info {
 #define CSEC_TOKEN_MAGIC_1   0xCA03
 
 /** Various token types */
-#define CSEC_TOKEN_TYPE_INITIAL 0x15
-#define CSEC_TOKEN_TYPE_HANDSHAKE 0x16
-#define CSEC_TOKEN_TYPE_DATA      0x17
+#define CSEC_TOKEN_TYPE_PROTOCOL_REQ   0x1
+#define CSEC_TOKEN_TYPE_PROTOCOL_RESP  0x2
+#define CSEC_TOKEN_TYPE_HANDSHAKE      0x3
+#define CSEC_TOKEN_TYPE_DATA           0x4
 
+
+/* char CSEC_TOKEN_TYPE[][30] = { "UNKNOWN",  */
+/* 			       "PROTOCOL_REQ", */
+/* 			       "PROTOCOL_RESP", */
+/* 			       "HANDSHAKE", */
+/* 			       "DATA", */
+/* 			       "OOB" }; */
 
 /** Buffer size for errors */
 #define PRTBUFSZ 2000
@@ -69,24 +78,52 @@ struct Csec_api_thread_info {
 #define CSEC_SERVICE_TYPE_DISK    1
 #define CSEC_SERVICE_TYPE_TAPE    2
 
+#define PROT_STAT_INITIAL       0x0
+#define PROT_STAT_REQ_SENT      0x1
+#define PROT_STAT_NOK           0x2
+#define PROT_STAT_OK            0x4
+
+#define PROT_REQ_OK "OK"
+#define PROT_REQ_NOK "NOK"
+
+typedef struct Csec_protocol {
+  char id[PROTID_SIZE+1];
+} Csec_protocol;
 
 /** Structure holding the context */ 
 typedef struct Csec_context {
   U_LONG flags; /* Flags containing status of  context structure */
-  char protid[PROTID_SIZE];     /* Protocol for which the context has been initialized */
+  /* char protid[PROTID_SIZE+1]; */    /* Protocol for which the context has been initialized */
   void *shhandle; /* Handle to the shared library */
   void *credentials; /*     gss_cred_id_t credentials; */
   void *context;     /*     gss_ctx_id_t context; */
 
+  /* Variables containing ths status of the security protocol negociation
+     between client and server */
+  int protocol_negociation_status;
+  Csec_protocol *protocols; /* Contains the list of protocols supported by this end of the connection */
+  int nb_protocols; /* Number of entries in the previous list */
+  int current_protocol; /* Index of the protocol in the list mentioned above */
+  Csec_protocol *peer_protocols; /* List of protocols accepted by peer */
+  int nb_peer_protocols; /* Number of entries in list above */
+
+  /* Local and peer identity information */
+  char local_name[CA_MAXCSECNAMELEN+1];
+  char peer_name[CA_MAXCSECNAMELEN+1]; /*  Requested server name (in the Csec client) */
+  char effective_peer_name[CA_MAXCSECNAMELEN+1]; /* Name returned by the GSI layer */
+  unsigned long context_flags; /* Context flags from the GSS API */
+
+  /* Used on the server only ! */
+  int server_service_type;
+
   int (*Csec_init_context)(struct Csec_context *);
   int (*Csec_reinit_context)(struct Csec_context *);
   int (*Csec_delete_context)(struct Csec_context *);
-  int (*Csec_delete_credentials)(struct Csec_context *);
+  int (*Csec_delete_creds)(struct Csec_context *);
   int (*Csec_server_acquire_creds)(struct Csec_context *, char *);
-  int (*Csec_server_establish_context)(struct Csec_context *, int, char *,int, U_LONG *);
-  int (*Csec_server_establish_context_ext)(struct Csec_context *, int, char *, char *, int,
-					   U_LONG *,char *, int);
-  int (*Csec_client_establish_context)(struct Csec_context *, int, const char *, U_LONG *);
+  int (*Csec_server_establish_context)(struct Csec_context *, int);
+  int (*Csec_server_establish_context_ext)(struct Csec_context *, int,char *, int);
+  int (*Csec_client_establish_context)(struct Csec_context *, int);
   int (*Csec_map2name)(struct Csec_context *, char *, char *, int);
   int (*Csec_get_service_name)(struct Csec_context *, int, char *, char *, char *, int);
   
@@ -95,21 +132,30 @@ typedef struct Csec_context {
 #define CSEC_CTX_INITIALIZED          0x00000001L
 #define CSEC_CTX_CREDENTIALS_LOADED   0x00000002L
 #define CSEC_CTX_CONTEXT_ESTABLISHED  0x00000004L
+#define CSEC_CTX_SERVICE_TYPE_SET     0x00000008L
+#define CSEC_CTX_PROTOCOL_LOADED      0x00000010L
+#define CSEC_CTX_SHLIB_LOADED         0x00000010L
+#define CSEC_CTX_SERVICE_NAME_SET     0x00000020L
 
 int DLL_DECL check_ctx _PROTO ((Csec_context *, char *));
 void DLL_DECL *Csec_get_shlib _PROTO ((Csec_context *)); 
-int DLL_DECL Csec_init_context_ext _PROTO ((Csec_context *, int)) ;
-int DLL_DECL Csec_init_protocol _PROTO ((Csec_context *, char *));
+int DLL_DECL Csec_init_context_ext _PROTO ((Csec_context *, int, int)) ;
+/*int DLL_DECL Csec_init_protocol _PROTO ((Csec_context *, char *));*/
 int DLL_DECL Csec_errmsg _PROTO((char *func, char *msg, ...));
 int DLL_DECL Csec_apiinit _PROTO((struct Csec_api_thread_info **thip));
 int DLL_DECL Csec_seterrbuf _PROTO((char *buffer, int buflen));
 int DLL_DECL Csec_errmsg _PROTO((char *func, char *msg, ...));
 int DLL_DECL Csec_trace _PROTO((char *func, char *msg, ...));
 int DLL_DECL Csec_setup_trace _PROTO(());
-int DLL_DECL _Csec_recv_token _PROTO ((int s, gss_buffer_t tok, int timeout));
+int DLL_DECL _Csec_recv_token _PROTO ((int s, gss_buffer_t tok, int timeout, int *token_type));
 int DLL_DECL _Csec_send_token _PROTO ((int s, gss_buffer_t tok, int timeout, int token_type));
 void DLL_DECL  _Csec_print_token _PROTO((gss_buffer_t tok));
-int DLL_DECL Csec_receive_protocol _PROTO((int, int, Csec_context *, char *, int));
-int DLL_DECL Csec_send_protocol _PROTO((int, int, Csec_context *));
-    
+
+int DLL_DECL Csec_client_negociate_protocol _PROTO((int, int, Csec_context *));
+int DLL_DECL Csec_client_send_protocol _PROTO((int, int, Csec_context *));
+int DLL_DECL Csec_client_receive_server_reponse _PROTO((int, int, Csec_context *));
+int DLL_DECL Csec_server_receive_protocol _PROTO((int, int, Csec_context *, char *, int));
+int DLL_DECL Csec_server_send_response _PROTO ((int, int, Csec_context *, int));   
+
+
 #endif /* _CSEC_COMMON_H */

@@ -416,7 +416,10 @@
 #define ESEC_NO_PRINC   ESECBASEOFF + 6 /*Could not map principal to username */
 #define ESEC_NO_SECMECH   ESECBASEOFF + 7 /*Could not load security mechanism */
 #define ESEC_CTX_NOT_INITIALIZED   ESECBASEOFF + 8 /* Context not initialized */
-#define ESECMAXERR     ESECBASEOFF + 8
+#define ESEC_PROTNOTSUPP   ESECBASEOFF + 9 /* Security protocol not supported */
+#define ESEC_NO_SVC_NAME   ESECBASEOFF + 10 /* Service name not set */
+#define ESEC_NO_SVC_TYPE   ESECBASEOFF + 11 /* Service type not set */
+#define ESECMAXERR     ESECBASEOFF + 11
 
 
 /*
