@@ -424,7 +424,8 @@ char *sys_monerrlist[EMONMAXERR - EMONBASEOFF +2] =
  *------------------------------------------------------------------------
  */
 char *sys_secerrlist[ESECMAXERR-ESECBASEOFF+2] = 
-         {"System error",
+         {"Error 0",
+	  "System error",
           "Bad credentials",
           "Could not establish context",
           "Bad magic number",
@@ -432,6 +433,9 @@ char *sys_secerrlist[ESECMAXERR-ESECBASEOFF+2] =
           "Could not map principal to username",
           "Could not load security mechanism",
           "Context not initialized",
+          "Security protocol not supported",
+	  "Service name not set",
+	  "Service type not set",
           "BAD ERROR NUMBER"
          };
 
