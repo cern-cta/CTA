@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.112 $ $Release$ $Date: 2005/01/14 22:14:40 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.113 $ $Release$ $Date: 2005/01/15 19:36:03 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.112 $ $Release$ $Date: 2005/01/14 22:14:40 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.113 $ $Release$ $Date: 2005/01/15 19:36:03 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1695,13 +1695,16 @@ int nextSegmentToMigrate(
                         (inChild == 0 ? mainUuid : childUuid),
                         RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                         (struct Cns_fileid *)castorFileId,
-                        RTCPCLD_NB_PARAMS+2,
+                        RTCPCLD_NB_PARAMS+4,
                         "SYSCALL",
                         DLF_MSG_PARAM_STR,
                         "rfio_stat()",
                         "ERROR_STR",
                         DLF_MSG_PARAM_STR,
-                        sstrerror(save_serrno),
+                        rfio_serror(),
+                        "PATH",
+                        DLF_MSG_PARAM_STR,
+                        filereq->file_path,
                         RTCPCLD_LOG_WHERE
                         );
       } else {
