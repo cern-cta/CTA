@@ -1,5 +1,5 @@
 /*
- * $Id: stageupdc.c,v 1.16 2001/02/01 18:09:31 jdurand Exp $
+ * $Id: stageupdc.c,v 1.17 2001/02/05 20:54:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.16 $ $Date: 2001/02/01 18:09:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.17 $ $Date: 2001/02/05 20:54:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -39,9 +39,11 @@ EXTERN_C int  DLL_DECL  send2stgd_cmd _PROTO((char *, char *, int, int, char *, 
 void usage _PROTO((char *));
 void cleanup _PROTO((int));
 
+#ifndef _WIN32
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
+#endif
 
 int main(argc, argv)
 		 int	argc;
