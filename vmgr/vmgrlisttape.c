@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.12 $ $Date: 2001/03/08 13:11:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.13 $ $Date: 2001/03/13 07:17:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlisttape - query a given volume or list all existing tapes */
@@ -191,23 +191,23 @@ int xflag;
 		p_stat = '|';
 	}
 	if (status & TAPE_BUSY) {
-		printf ("%cBUSY", p_stat);
+		printf (p_stat ? "|BUSY" : "BUSY");
 		p_stat = '|';
 	}
 	if (status & TAPE_RDONLY) {
-		printf ("%cRDONLY", p_stat);
+		printf (p_stat ? "|RDONLY" : "RDONLY");
 		p_stat = '|';
 	}
 	if (status & EXPORTED) {
-		printf ("%cEXPORTED", p_stat);
+		printf (p_stat ? "|EXPORTED" : "EXPORTED");
 		p_stat = '|';
 	}
 	if (status & DISABLED) {
-		printf ("%cDISABLED", p_stat);
+		printf (p_stat ? "|DISABLED" : "DISABLED");
 		p_stat = '|';
 	}
 	if (status & ARCHIVED) {
-		printf ("%cARCHIVED", p_stat);
+		printf (p_stat ? "|ARCHIVED" : "ARCHIVED");
 		p_stat = '|';
 	}
 	printf ("\n");
