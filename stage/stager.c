@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.105 2000/11/29 18:51:04 jdurand Exp $
+ * $Id: stager.c,v 1.106 2000/12/07 12:32:45 jdurand Exp $
  */
 
 /*
@@ -19,7 +19,7 @@
 /* -DTAPESRVR=\"your_tape_server_hostname\" */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.105 $ $Date: 2000/11/29 18:51:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.106 $ $Date: 2000/12/07 12:32:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -506,7 +506,7 @@ int main(argc, argv)
       /* We get information on generic stage:st uid/gid */
       if ((stpasswd = Cgetpwnam("stage")) == NULL) {
 		SAVE_EID;
-        sendrep(rpfd, MSG_ERR, "STG02 - Cannot Cgetpwnam(\"%s\") (%s)\n","stage",strerror(errno));
+        sendrep(rpfd, MSG_ERR, "STG02 - Cannot Cgetpwnam(\"%s\") (%s)","stage",strerror(errno));
 		RESTORE_EID;
 		free(stcs);
         exit(SYERR);
@@ -1147,6 +1147,11 @@ int stagein_castor_hsm_file() {
 			/* Rtcopy bits suggest to stop */
 			SAVE_EID;
 			sendrep (rpfd, MSG_ERR, STG02, "", "rtcpc",sstrerror(save_serrno));
+			/* We reset all the hsm_flag[] values */
+			for (i = 0; i < nbcat_ent; i++) {
+				hsm_flag[i] = 0;
+			}
+
 			for (stcp_tmp = stcp_start, i = 0; stcp_tmp < stcp_end; stcp_tmp++, i++) {
 				if (rtcpcreqs[0]->file[i].filereq.err.errorcode == ETPARIT ||
 					rtcpcreqs[0]->file[i].filereq.err.errorcode == ETUNREC ||
@@ -1165,13 +1170,13 @@ int stagein_castor_hsm_file() {
 
 					if ((ihsm = hsmidx(stcp_tmp)) < 0) {
 						serrno = SEINTERNAL;
-						sendrep (rpfd, MSG_ERR, STG02, stcp_tmp->u1.h.xfile, "Cannot find internal index !\n",sstrerror(serrno));
+						sendrep (rpfd, MSG_ERR, STG02, stcp_tmp->u1.h.xfile, "Cannot find internal hsm index",sstrerror(serrno));
 						forced_exit = 1;
 						break;
 					} else {
 						/* Entry did not exist */
 						serrno = ENOENT;
-						sendrep (rpfd, MSG_ERR, STG02, stcp_tmp->u1.h.xfile, "Empty file !\n",sstrerror(serrno));
+						sendrep (rpfd, MSG_ERR, STG02, stcp_tmp->u1.h.xfile, "Empty file",sstrerror(serrno));
 						forced_exit = 1;
 						break;
 					}
@@ -2347,7 +2352,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			if ((ihsm = hsmidx(stcp)) < 0) {
 				serrno = SEINTERNAL;
 				SAVE_EID;
-				sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "Cannot find valid hsm !\n",sstrerror(serrno));
+				sendrep (rpfd, MSG_ERR, STG02, "build_rtcpcreq", "Cannot find internal hsm index",sstrerror(serrno));
 				RESTORE_EID;
 				return(-1);
 			}
@@ -3315,5 +3320,5 @@ int rtcpd_PrintCmd(tape)
 #endif /* STAGER_DEBUG */
 
 /*
- * Last Update: "Wednesday 29 November, 2000 at 19:48:35 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Thursday 07 December, 2000 at 13:29:03 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
