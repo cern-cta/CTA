@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tpdaemon.man,v $ $Revision: 1.9 $ $Date: 2003/10/14 07:17:16 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: tpdaemon.man,v $ $Revision: 1.10 $ $Date: 2004/03/25 14:38:16 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TPDAEMON 1 "$Date: 2003/10/14 07:17:16 $" CASTOR "Ctape Administrator Commands"
+.TH TPDAEMON 1 "$Date: 2004/03/25 14:38:16 $" CASTOR "Ctape Administrator Commands"
 .SH NAME
 tpdaemon \- starts the tape daemon
 .SH SYNOPSIS
@@ -156,8 +156,8 @@ there will be no check on the ring status. This field may also be set to
 .BI lmcp xxxx
 (Library Manager Control Point as defined in /dev)
 if the IBM 3494/3495 robot is driven directly from an RS 6000,
-.BI acs a,l,p,d
-for an STK robot driven by ACSLS,
+.BI acs a,l,p,d [,noro]
+for an STK robot driven by ACSLS ("noro" disables the use of the acs_mount read-only flag, when mounting tapes for reading; This is useful for the L700 library that does not support this flag),
 .BI R x
 for a SONY DMS-24 or
 .BI smc x,d

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.13 $ $Date: 2003/09/15 08:42:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.14 $ $Date: 2004/03/25 14:38:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -614,19 +614,23 @@ int ring;
 	SEQ_NO s;
 	STATUS status;
 	VOLID vol_id;
-
+    int use_read_only_flag = 1;
 	ENTRY (acsmount);
+    /* Check whether the "No read-only" option was specified */
+    if (strstr(loader, ACS_NO_READ_ONLY) != NULL) {
+        use_read_only_flag = 0;
+    }
 	strcpy (acsloader, loader);
 	strcpy (vol_id.external_label, vid);
 	drive_id.panel_id.lsm_id.acs = atoi (strtok (&acsloader[3], ","));
 	drive_id.panel_id.lsm_id.lsm = atoi (strtok (NULL, ","));
 	drive_id.panel_id.panel = atoi (strtok (NULL, ","));
 	drive_id.drive = atoi (strtok (NULL, ","));
-	tplogit (func, "vol_id = %s drive_id = %d,%d,%d,%d\n", vol_id.external_label,
+	tplogit (func, "vol_id = %s drive_id = %d,%d,%d,%d ROflag:%d\n", vol_id.external_label,
 	    drive_id.panel_id.lsm_id.acs, drive_id.panel_id.lsm_id.lsm,
-	    drive_id.panel_id.panel, drive_id.drive);
+	    drive_id.panel_id.panel, drive_id.drive, use_read_only_flag);
 	if (status = acs_mount (++myseqnum, NO_LOCK_ID, vol_id, drive_id,
-	    ring ? FALSE : TRUE, 0)) {
+	    (ring || !use_read_only_flag) ? FALSE : TRUE, 0)) {
 		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
 		usrmsg (func, "%s\n", msg);
 		c = acserr2act (0, status);
