@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.3 $ $Date: 2000/01/14 13:29:27 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.4 $ $Date: 2000/01/19 10:59:28 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -142,7 +142,7 @@ int Ctape_info(char *tp_path,
         }
         if ( blockid != NULL ) {
             fprintf(stdout,"blockid=?\n");
-            scanf("%lu",blockid);
+            scanf("%u",blockid);
         }
         if ( density != NULL ) {
             fprintf(stdout,"density=?\n");
