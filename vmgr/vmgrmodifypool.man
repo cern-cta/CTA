@@ -1,31 +1,35 @@
-.\" @(#)$RCSfile: vmgrmodifypool.man,v $ $Revision: 1.1 $ $Date: 2000/12/15 16:12:16 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrmodifypool.man,v $ $Revision: 1.2 $ $Date: 2001/02/04 08:38:00 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRMODIFYPOOL 1 "$Date: 2000/12/15 16:12:16 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRMODIFYPOOL 1 "$Date: 2001/02/04 08:38:00 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrmodifypool \- modify the definition of an existing tape pool in the CASTOR Volume Manager
 .SH SYNOPSIS
 .B vmgrmodifypool
 [
-.BI --gid " pool_group"
+.BI --gid " pool_gid"
+] [
+.BI --group " pool_group"
 ]
 .BI --name " pool_name"
 [
-.BI --uid " pool_user"
+.BI --uid " pool_uid"
+] [
+.BI --user " pool_user"
 ]
 .SH DESCRIPTION
 .B vmgrmodifypool
 modifies the definition of an existing tape pool in the CASTOR Volume Manager.
 .TP
-.I pool_group
+.I pool_gid
 if greater than zero, the tape pool is restricted to this group gid.
 .TP
 .I pool_name
 is the name of the tape pool.
 It must be at most CA_MAXPOOLNAMELEN characters long.
 .TP
-.I pool_user
+.I pool_uid
 if greater than zero, the tape pool is restricted to this user uid.
 .LP
 Only
