@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/25 10:18:11 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/27 16:51:33 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/25 10:18:11 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/27 16:51:33 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -189,208 +189,107 @@ int rtcpcld_initNsInterface()
 }
 
 
-static int checkSegments(
-                         segmArray,
-                         nbSegms,
-                         castorFileSize,
-                         errorStr
-                         )
-     struct Cstager_Segment_t **segmArray;
-     int nbSegms;
-     u_signed64 castorFileSize;
-     char **errorStr;
+static int checkSegment(
+                        tape,
+                        file
+                        )
+     tape_list_t *tape;
+     file_list_t *file;
 {
-  int rc = 0, i, save_serrno, errorCode, severity;
-  char *failedTestName = NULL;
-  enum Cstager_SegmentStatusCodes_t segmStatus;
-  u_signed64 totSize = 0;
-  u_signed64 segmSize, segmOffset, nextSegmOffset;
-  u_signed64 lastSegmOffset = 0, lastSegmSize = 0;
+  struct Cstager_Segment_t *segment;
+  struct Cstager_TapeCopy_t *tapeCopy;
+  struct Cstager_CastorFile_t *castorFile;
+  u_signed64 fileSize = 0;
+  int rc = 0, i, save_serrno;
 
-  /*
-   * Sanity checks:
-   *  Test 1: accumulated segment size must match the castor file size
-   *  Test 2: all but last segment must have hit EOT (errorCode = ENOSPC)
-   *  Test 3: last segment must have no error
-   *  Test 4: offset + bytes_in of last segment must match the castor file size
-   *  Test 5: offset + bytes_in of each but last segment must match the offset
-   *          of the next segment (paranoid...)
-   */
-  for ( i=0; i<nbSegms; i++ ) {
-    segmSize = segmOffset = nextSegmOffset = 0;
-    Cstager_Segment_bytes_in(segmArray[i],&segmSize);
-    Cstager_Segment_offset(segmArray[i],&segmOffset);
-    if ( i < (nbSegms-1) ) Cstager_Segment_offset(
-                                                  segmArray[i+1],
-                                                  &nextSegmOffset
-                                                  );
-    /*
-     * Calculate accumulated segment size for test 1
-     */
-    totSize += segmSize;
+  if ( (tape == NULL) || (file == NULL) ||
+       (tape->dbRef == NULL) || (file->dbRef == NULL) ||
+       (tape->dbRef->row == NULL) || (file->dbRef->row == NULL ) ) {
+    serrno = EINVAL;
+    return(-1);
+  }
 
-    Cstager_Segment_status(segmArray[i],&segmStatus);
-    Cstager_Segment_severity(segmArray[i],&severity);
-    Cstager_Segment_errorCode(segmArray[i],&errorCode);
-    if ( i < (nbSegms-1) ) {
-      /*
-       * Test 2: If not last segment, check that EOT was hit
-       */
-      if ( (segmStatus != SEGMENT_FAILED) ||
-           ((severity & RTCP_FAILED) != RTCP_FAILED) ||
-           (errorCode != ENOSPC) ) {
-        failedTestName = strdup("EOT was not hit for intermediate segment");
-        rc = -1;
-        break;
-      }
-      /*
-       * Test 5: If not last segment, check that offset + bytes_in == offset of
-       * next segment
-       */
-      if ( (segmOffset + segmSize) != nextSegmOffset ) {
-        failedTestName = strdup("Hole detected between two intermediate segments");
-        rc = -1;
-        break;
-      }
+  if ( (file->filereq.proc_status != RTCP_FINISHED) ||
+       (file->filereq.cprc == -1) || 
+       ((file->filereq.err.severity & RTCP_OK) != RTCP_OK) ) {
+    if ( (serrno = file->filereq.err.errorcode) <= 0 ) {
+      serrno = SEINTERNAL;
     }
-  }
-  /*
-   * Test 1: accumulated size must match castor file size
-   */
-  if ( totSize != castorFileSize ) {
-    failedTestName = strdup("Accumulated segment size do not match file size");
-    rc = -1;
-  }
-  /*
-   * Test 3: last segment must be successful
-   */
-  if ( (segmStatus != SEGMENT_FILECOPIED) ||
-       (errorCode != 0) || (severity != RTCP_OK) ) {
-    failedTestName = strdup("Last segment not successfully copied");
-    rc = -1;
-  }
-  /*
-   * Test 4: last segment offset + bytes_in must match
-   * castor file size
-   */
-  if ( (segmOffset + segmSize) != castorFileSize ) {
-    failedTestName = strdup("Last segment offset+size != file size");
-    rc = -1;
+    return(-1);
   }
 
-  if ( errorStr != NULL ) *errorStr = failedTestName;
+  segment = (struct Cstager_Segment_t *)file->dbRef->row;
+  Cstager_Segment_copy(segment,&tapeCopy);
+  
+  if ( tapeCopy == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  
+  Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
+  if ( castorFile == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
 
-  return(rc);
+  Cstager_CastorFile_fileSize(castorFile,&fileSize);
+  if ( fileSize != file->filereq.bytes_in ) {
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+  
+  return(0);
 }
 
-int updateSegmentsForTpCopy(
-                            nsHost,
-                            fileId,
-                            castorFileSize,
-                            tpCopy
-                            )
-
-     char *nsHost;
-     u_signed64 fileId, castorFileSize;
-     struct Cstager_TapeCopy_t *tpCopy;
+int updateNsSegmentAttr(
+                        tape,
+                        file
+                        )
+     tape_list_t *tape;
+     file_list_t *file;
 {
+  rtcpTapeRequest_t *tapereq;
+  rtcpFileRequest_t *filereq;
   int rc, i, save_serrno, nbSegms = 0, errorCode, severity, compressionFactor;
   int mode, side;
-  struct Cstager_Segment_t **segmArray = NULL, *segm;
-  struct Cstager_Tape_t *tp;
   struct Cns_fileid castorFileId;
   struct Cns_segattrs *nsSegAttrs = NULL;
-  unsigned char *blockid;
-  char *errorStr = NULL, *cksumName = NULL, *vid, *blkid;
-  unsigned long cksumValue;
-  ID_TYPE key;
-  u_signed64 hostBytes, bytesOut;
+  char *blkid = NULL;
 
-  if ( tpCopy == NULL ) {
+  if ( (tape == NULL) || (file == NULL) ) {
     serrno = EINVAL;
     return(-1);
   }
 
-  Cstager_TapeCopy_segments(tpCopy,&segmArray,&nbSegms);
-  if ( (segmArray == NULL) || (nbSegms <= 0) ) {
-    Cstager_TapeCopy_id(tpCopy,&key);
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_TPCPNOSEGM,
-                    (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+1,
-                    "KEY",
-                    DLF_MSG_PARAM_INT64,
-                    key,
-                    RTCPCLD_LOG_WHERE
-                    );
-    serrno = ENOENT;
-    return(-1);
-  }
-
-  /*
-   * File segmentation not allowed (feature request #5179)
-   */
-  if ( nbSegms != 1 ) {
-    Cstager_TapeCopy_id(tpCopy,&key);
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_TOOMANYSEGMS,
-                    (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+2,
-                    "KEY",
-                    DLF_MSG_PARAM_INT64,
-                    key,
-                    "NBSEGMS",
-                    DLF_MSG_PARAM_INT,
-                    nbSegms,
-                    RTCPCLD_LOG_WHERE
-                    );
-    serrno = ENOENT;
-    return(-1);
-  }
+  tapereq = &(tape->tapereq);
+  filereq = &(file->filereq);
 
   memset(&castorFileId,'\0',sizeof(castorFileId));
-  strncpy(castorFileId.server,nsHost,sizeof(castorFileId.server)-1);
-  castorFileId.fileid = fileId;
+  strncpy(
+          castorFileId.server,
+          filereq->castorSegAttr.nameServerHostName,
+          sizeof(castorFileId.server)-1
+          );
+  castorFileId.fileid = filereq->castorSegAttr.castorFileId;
   
-  if ( castorFileSize <= 0 ){
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_ZEROSIZE,
-                    (struct Cns_fileid *)&castorFileId,
-                    RTCPCLD_NB_PARAMS,
-                    RTCPCLD_LOG_WHERE
+  rc = checkSegment(
+                    tape,
+                    file
                     );
-    free(segmArray);
-    serrno = EINVAL;
-    return(-1);
-  }
-
-  rc = checkSegments(
-                     segmArray,
-                     nbSegms,
-                     castorFileSize,
-                     &errorStr
-                     );
   if ( rc == -1 ) {
+    save_serrno = serrno;
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
                     DLF_LVL_ERROR,
                     RTCPCLD_MSG_SEGMCHECK,
                     (struct Cns_fileid *)&castorFileId,
                     RTCPCLD_NB_PARAMS+1,
-                    "ERRORSTR",
+                    "ERROR",
                     DLF_MSG_PARAM_STR,
-                    errorStr,
+                    sstrerror(save_serrno),
                     RTCPCLD_LOG_WHERE
                     );
-    free(segmArray);
-    free(errorStr);
-    serrno = EINVAL;
+    serrno = save_serrno;
     return(-1);
   }
 
@@ -421,43 +320,21 @@ int updateSegmentsForTpCopy(
                     sstrerror(save_serrno),
                     RTCPCLD_LOG_WHERE
                     );
-    free(segmArray);
     serrno = save_serrno;
     return(-1);
   }
 
   nsSegAttrs->copyno = 0;
   nsSegAttrs->fsec = 1;
-  Cstager_Segment_bytes_in(segmArray[0],&(nsSegAttrs->segsize));
-  Cstager_Segment_bytes_out(segmArray[0],&bytesOut);
-  if ( bytesOut > 0 ) {
-    Cstager_Segment_host_bytes(segmArray[0],&hostBytes);
-    compressionFactor = (hostBytes * 100) / bytesOut;
+  nsSegAttrs->segsize = filereq->bytes_in;
+  if ( filereq->bytes_out > 0 ) {
+    compressionFactor = (filereq->host_bytes * 100) / filereq->bytes_out;
   } else {
     compressionFactor = 0;
   }
   nsSegAttrs->compression = compressionFactor;
-  Cstager_Segment_tape(segmArray[0],&tp);
-  if ( tp == NULL ) {
-    (void)dlf_write(
-                    (inChild == 0 ? mainUuid : childUuid),
-                    DLF_LVL_ERROR,
-                    RTCPCLD_MSG_NOTAPE,
-                    (struct Cns_fileid *)&castorFileId,
-                    RTCPCLD_NB_PARAMS,
-                    RTCPCLD_LOG_WHERE
-                    );
-    serrno = EINVAL;
-    free(segmArray);
-    return(-1);
-  }
   nsSegAttrs->s_status = '-';
-  
-  vid = NULL;
-  Cstager_Tape_vid(tp,(CONST char **)&vid);
-  Cstager_Tape_side(tp,&side);
-  Cstager_Tape_tpmode(tp,&mode);
-  if ( mode != WRITE_ENABLE ) {
+  if ( tapereq->mode != WRITE_ENABLE ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
                     DLF_LVL_ERROR,
@@ -466,43 +343,35 @@ int updateSegmentsForTpCopy(
                     RTCPCLD_NB_PARAMS+3,
                     "",
                     DLF_MSG_PARAM_TPVID,
-                    vid,
+                    tapereq->vid,
                     "SIDE",
                     DLF_MSG_PARAM_INT,
-                    side,
+                    tapereq->side,
                     "MODE",
                     DLF_MSG_PARAM_INT,
-                    mode,
+                    tapereq->mode,
                     RTCPCLD_LOG_WHERE
                     );
     serrno = EINVAL;
-    free(segmArray);
     return(-1);
   }
-  strncpy(nsSegAttrs->vid,vid,CA_MAXVIDLEN);
-  nsSegAttrs->side = side;
+  strncpy(nsSegAttrs->vid,tapereq->vid,CA_MAXVIDLEN);
+  nsSegAttrs->side = tapereq->side;
   
-  blockid = NULL;
-  Cstager_Segment_blockid(segmArray[0],(CONST unsigned char **)&blockid);
-  if ( blockid != NULL ) {
-    memcpy(nsSegAttrs->blockid,blockid,sizeof(nsSegAttrs->blockid));
-  }
-  Cstager_Segment_fseq(segmArray[0],&(nsSegAttrs->fseq));
+  memcpy(
+         nsSegAttrs->blockid,
+         filereq->blockid,
+         sizeof(nsSegAttrs->blockid)
+         );
+
+  nsSegAttrs->fseq = filereq->tape_fseq;
   if ( use_checksum == 1 ) {
-    Cstager_Segment_segmCksumAlgorithm(
-                                       segmArray[0],
-                                       (CONST char **)&cksumName
-                                       );
-    Cstager_Segment_segmCksum(
-                              segmArray[0],
-                              &cksumValue
-                              );
     strncpy(
             nsSegAttrs->checksum_name,
-            cksumName,
+            filereq->castorSegAttr.segmCksumAlgorithm,
             CA_MAXCKSUMNAMELEN
             );
-    nsSegAttrs->checksum = cksumValue;
+    nsSegAttrs->checksum = filereq->castorSegAttr.segmCksum;
   }
   blkid = rtcp_voidToString(
                             (void *)nsSegAttrs->blockid,
@@ -569,7 +438,6 @@ int updateSegmentsForTpCopy(
                     );
     serrno = save_serrno;
   }
-  free(segmArray);
 
   return(rc);
 }
@@ -582,11 +450,7 @@ int rtcpcld_updateNsSegmentAttributes(
      rtcpFileRequest_t *filereq;
 {
   rtcpTapeRequest_t *tapereq;
-  struct Cstager_TapeCopy_t *tpCopy = NULL;
-  struct Cstager_Segment_t *segment = NULL;
-  struct Cstager_Tape_t *tp = NULL;
-  struct C_Services_t **svcs;
-  u_signed64 castorFileSize;
+  file_list_t *file = NULL;
   int rc = 0;
   
   if ( (tape == NULL) || (filereq == NULL) ) {
@@ -595,68 +459,17 @@ int rtcpcld_updateNsSegmentAttributes(
   }
   tapereq = &(tape->tapereq);
 
-  rc = rtcpcld_findRunningTpCopy(
-                                 tape,
-                                 filereq,
-                                 &tpCopy
-                                 );
+  rc = rtcpcld_findFile(
+                        tape,
+                        filereq,
+                        &file
+                        );
   if ( rc == -1 ) return(-1);
 
-  rc = Cstager_Segment_create(&segment);
-  if ( rc == -1 ) {
-    LOG_SYSCALL_ERR("Cstager_Segment_create()");
-    return(-1);
-  }
-  Cstager_Segment_setCopy(segment,tpCopy);
-  Cstager_TapeCopy_addSegments(tpCopy,segment);
-
-  if ( (tape->dbRef == NULL) || (tape->dbRef->row == NULL) ) {
-    rc = rtcpcld_updateTapeFromDB(tape);
-    if ( rc == -1 ) {
-      LOG_SYSCALL_ERR("rtcpcld_updateTapeFromDB()");
-      return(-1);
-    }
-  }
-  tp = (struct Cstager_Tape_t *)tape->dbRef->row;
-  
-  Cstager_Segment_setTape(segment,tp);
-  Cstager_Tape_addSegments(tp,segment);
-
-  Cstager_Segment_setBlockid(segment,
-                             filereq->blockid);
-  Cstager_Segment_setBytes_in(segment,
-                              filereq->bytes_in);
-  Cstager_Segment_setBytes_out(segment,
-                               filereq->bytes_out);
-  Cstager_Segment_setHost_bytes(segment,
-                                filereq->host_bytes);
-  Cstager_Segment_setOffset(segment,
-                            filereq->offset);
-  Cstager_Segment_setSegmCksumAlgorithm(segment,
-                                        filereq->castorSegAttr.segmCksumAlgorithm);
-  Cstager_Segment_setSegmCksum(segment,
-                               filereq->castorSegAttr.segmCksum);
-  if ( (filereq->cprc < 0) && 
-       ((filereq->err.severity & RTCP_FAILED) == RTCP_FAILED) ) {
-    Cstager_Segment_setErrorCode(segment,
-                                 filereq->err.errorcode);
-    Cstager_Segment_setSeverity(segment,
-                                filereq->err.severity);
-    
-    if (*filereq->err.errmsgtxt == '\0')
-      strncpy(filereq->err.errmsgtxt,
-              sstrerror(filereq->err.errorcode),
-              sizeof(filereq->err.errmsgtxt)-1);
-    Cstager_Segment_setErrMsgTxt(segment,
-                                 filereq->err.errmsgtxt);
-  }
-
-  rc = updateSegmentsForTpCopy(
-                               filereq->castorSegAttr.nameServerHostName,
-                               filereq->castorSegAttr.castorFileId,
-                               castorFileSize,
-                               tpCopy
-                               );
+  rc = updateNsSegmentAttr(
+                           tape,
+                           file
+                           );
   return(rc);
 }
 
