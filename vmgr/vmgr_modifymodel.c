@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_modifymodel.c,v $ $Revision: 1.1 $ $Date: 2000/01/03 07:56:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_modifymodel.c,v $ $Revision: 1.2 $ $Date: 2000/01/10 14:39:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_modifymodel - modify an existing model of cartridge */
@@ -49,6 +49,12 @@ vmgr_modifymodel(const char *model, char *media_letter, int native_capacity, int
 
 	if (! model) {
 		serrno = EFAULT;
+		return (-1);
+	}
+
+	if (strlen (model) > CA_MAXMODELLEN ||
+	    (media_letter && strlen (media_letter) > 1)) {
+		serrno = EINVAL;
 		return (-1);
 	}
  
