@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.2 2000/05/08 14:47:44 jdurand Exp $
+ * $Id: stage_updc.c,v 1.3 2000/05/09 06:48:34 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.2 $ $Date: 2000/05/08 14:47:44 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.3 $ $Date: 2000/05/09 06:48:34 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -417,9 +417,9 @@ int DLL_DECL stage_updc_tppos(stageid, status, blksize, drive, fid, fseq, lrecl,
   return (c == 0 ? 0 : -1);
 }
 
-int DLL_DECL stage_updc_user(stghost,linkfile)
+int DLL_DECL stage_updc_user(stghost,hsmstruct)
      char *stghost;
-     char *linkfile;
+     stage_hsm_t *hsmstruct;
 {
   int c;
   gid_t gid;
@@ -432,6 +432,12 @@ int DLL_DECL stage_updc_user(stghost,linkfile)
   char *sbp;
   char sendbuf[REQBUFSZ];
   uid_t uid;
+  stage_hsm_t *hsm;
+  
+  if (hsmstruct == NULL) {
+    serrno = EFAULT;
+    return (-1);
+  }
   
   uid = getuid();
   gid = getgid();
@@ -441,14 +447,6 @@ int DLL_DECL stage_updc_user(stghost,linkfile)
     return (-1);
   }
 #endif
-  if (! linkfile) {
-    serrno = EFAULT;
-    return (-1);
-  }
-  if (linkfile[0] == '\0') {
-    serrno = EFAULT;
-    return (-1);
-  }
 
   /* Init repbuf to null */
   repbuf[0] = '\0';
@@ -476,8 +474,22 @@ int DLL_DECL stage_updc_user(stghost,linkfile)
   marshall_WORD (sbp, nargs);
   marshall_STRING (sbp, "stage_updc_user");
 
-  marshall_STRING (sbp, linkfile);
-  nargs += 1;
+  /* Build link files arguments */
+  hsm = hsmstruct;
+  while (hsm != NULL) {
+    if (hsm->upath == NULL) {
+      serrno = EFAULT;
+      return (-1);
+    }
+    if (hsm->upath[0] == '\0') {
+      serrno = EFAULT;
+      return (-1);
+    }
+    marshall_STRING (sbp, hsm->upath);
+    nargs += 1;
+    hsm = hsm->next;
+  }
+
   marshall_WORD (q2, nargs);	/* update nargs */
 
   msglen = sbp - sendbuf;
