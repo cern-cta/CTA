@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.5 $ $Date: 1999/12/04 09:47:18 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.6 $ $Date: 2001/06/21 10:39:15 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGESTAT l "$Date: 1999/12/04 09:47:18 $"
+.TH STAGESTAT l "$Date: 2001/06/21 10:39:15 $"
 .SH NAME
 stagestat \- gives global statistics on stager usage and detailed statistics on
 each file staged in 
@@ -160,3 +160,5 @@ Tape VID     Fseq    Avg Life   Number    Login Name    Group
 1	User error.
 .br
 2	System error.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>

@@ -1,10 +1,10 @@
-.\" $Id: stage_out.man,v 1.1 2000/05/15 14:42:36 jdurand Exp $
+.\" $Id: stage_out.man,v 1.2 2001/06/21 10:24:23 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_out.man,v $ $Revision: 1.1 $ $Date: 2000/05/15 14:42:36 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_out.man,v $ $Revision: 1.2 $ $Date: 2001/06/21 10:24:23 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGE_OUT "3" "$Date: 2000/05/15 14:42:36 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_OUT "3" "$Date: 2001/06/21 10:24:23 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_out_hsm \- allocate space and store the option values of a migrated entry in the stgdaemon catalog for use by stageput later.
 
@@ -64,3 +64,5 @@ Connection closed by remote end
 .TP
 .B SECOMERR
 Communication error
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>

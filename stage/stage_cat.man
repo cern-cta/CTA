@@ -1,10 +1,10 @@
-.\" $Id: stage_cat.man,v 1.1 2000/05/15 14:55:23 jdurand Exp $
+.\" $Id: stage_cat.man,v 1.2 2001/06/21 10:23:46 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_cat.man,v $ $Revision: 1.1 $ $Date: 2000/05/15 14:55:23 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_cat.man,v $ $Revision: 1.2 $ $Date: 2001/06/21 10:23:46 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGE_CAT "3" "$Date: 2000/05/15 14:55:23 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_CAT "3" "$Date: 2001/06/21 10:23:46 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_cat_hsm \- put an entry in the stage daemon catalog for an existing HSM file.
 
@@ -63,3 +63,5 @@ Connection closed by remote end
 .TP
 .B SECOMERR
 Communication error
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageshutdown.man,v $ $Revision: 1.2 $ $Date: 2001/02/01 12:03:47 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stageshutdown.man,v $ $Revision: 1.3 $ $Date: 2001/06/21 10:39:01 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1995-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGESHUTDOWN l "$Date: 2001/02/01 12:03:47 $"
+.TH STAGESHUTDOWN l "$Date: 2001/06/21 10:39:01 $"
 .SH NAME
 stageshutdown \- tells stgdaemon to exit
 .SH SYNOPSIS
@@ -37,3 +37,6 @@ This option is mandatory, regardless of environment variable $STAGE_HOST.
 2	System error.
 .br
 4	Configuration error.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
+

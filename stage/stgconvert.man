@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stgconvert.man,v $ $Revision: 1.1 $ $Date: 2000/01/26 16:14:49 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stgconvert.man,v $ $Revision: 1.2 $ $Date: 2001/06/21 10:40:26 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STGCONVERT l "$Date: 2000/01/26 16:14:49 $"
+.TH STGCONVERT l "$Date: 2001/06/21 10:40:26 $"
 .SH NAME
 stgconvert \- Convert CASTOR stager catalogs in Cdb to and from disk
 .SH SYNOPSIS
@@ -130,3 +130,12 @@ stgconvert -g -1 /usr/spool/stage/stgcat_castor.bak /usr/spool/stage/stgpath_cas
 
 .SH SEE ALSO
 \fBstgshift_to_castor\fP(1), \fBstgcastor_to_shift\fP(1), \fBstgshift_cmp_shift\fP(1)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
+
+
+
+
+
+

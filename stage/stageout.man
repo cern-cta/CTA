@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageout.man,v $ $Revision: 1.5 $ $Date: 2001/03/05 07:20:17 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageout.man,v $ $Revision: 1.6 $ $Date: 2001/06/21 10:33:56 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEOUT l "$Date: 2001/03/05 07:20:17 $"
+.TH STAGEOUT l "$Date: 2001/06/21 10:33:56 $"
 .SH NAME
 stageout \- allocate space and store the option values in the stgdaemon catalog
 for use by stageput later.
@@ -439,3 +439,5 @@ stageput out
 28	ENOSPC: No space left on device.
 .br
 192	Request cancelled by stageclr.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>

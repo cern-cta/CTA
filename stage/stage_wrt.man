@@ -1,10 +1,10 @@
-.\" $Id: stage_wrt.man,v 1.1 2000/05/15 14:46:25 jdurand Exp $
+.\" $Id: stage_wrt.man,v 1.2 2001/06/21 10:28:42 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_wrt.man,v $ $Revision: 1.1 $ $Date: 2000/05/15 14:46:25 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_wrt.man,v $ $Revision: 1.2 $ $Date: 2001/06/21 10:28:42 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGE_WRT "3" "$Date: 2000/05/15 14:46:25 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_WRT "3" "$Date: 2001/06/21 10:28:42 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage_wrt_hsm \- copy  existing files from disk to a Hierarchical Storage Management System (HSM).
 
@@ -64,3 +64,5 @@ Connection closed by remote end
 .TP
 .B SECOMERR
 Communication error
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>

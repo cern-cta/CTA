@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stagealloc.man,v $ $Revision: 1.4 $ $Date: 1999/12/04 09:47:16 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagealloc.man,v $ $Revision: 1.5 $ $Date: 2001/06/21 10:29:02 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEALLOC l "$Date: 1999/12/04 09:47:16 $"
+.TH STAGEALLOC l "$Date: 2001/06/21 10:29:02 $"
 .SH NAME
 stagealloc \- allocate space in a disk pool
 .SH SYNOPSIS
@@ -113,3 +113,5 @@ stageupdc out
 28	ENOSPC: unable to find enough disk space.
 .br
 192	Request cancelled by stageclr.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>

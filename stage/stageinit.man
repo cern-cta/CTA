@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageinit.man,v $ $Revision: 1.5 $ $Date: 2001/01/31 19:00:05 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageinit.man,v $ $Revision: 1.6 $ $Date: 2001/06/21 10:33:42 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEINIT l "$Date: 2001/01/31 19:00:05 $"
+.TH STAGEINIT l "$Date: 2001/06/21 10:33:42 $"
 .SH NAME
 stageinit \- tells stgdaemon to reread the pool configuration file
 .SH SYNOPSIS
@@ -51,3 +51,5 @@ configuration file
 2	System error.
 .br
 4	Configuration error.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stage_seterrbuf.man,v $ $Revision: 1.1 $ $Date: 2001/03/28 09:03:57 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stage_seterrbuf.man,v $ $Revision: 1.2 $ $Date: 2001/06/21 10:25:05 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGE_SETERRBUF 3 "$Date: 2001/03/28 09:03:57 $" CASTOR "stage Library Functions"
+.TH STAGE_SETERRBUF 3 "$Date: 2001/06/21 10:25:05 $" CASTOR "stage Library Functions"
 .SH NAME
 stage_seterrbuf \- set receiving buffer for error messages
 .SH SYNOPSIS
@@ -48,3 +48,5 @@ is set appropriately.
 .TP 1.3i
 .B ENOMEM
 memory could not be allocated for the thread specific information.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>

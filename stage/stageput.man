@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageput.man,v $ $Revision: 1.6 $ $Date: 2001/01/31 19:00:06 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageput.man,v $ $Revision: 1.7 $ $Date: 2001/06/21 10:34:50 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEPUT l "$Date: 2001/01/31 19:00:06 $"
+.TH STAGEPUT l "$Date: 2001/06/21 10:34:50 $"
 .SH NAME
 stageput \- copy disk files to tape, to an external disk file or to a
 Hierarchical Storage Management System.
@@ -134,3 +134,5 @@ specifies that the command should return immediately. Copy in done in the backgr
 192	Request cancelled by stageclr.
 .br
 197	Stageing limited by size.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@listbox.cern.ch>
