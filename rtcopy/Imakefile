@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.9 $ $Date: 2004/06/18 11:14:12 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.10 $ $Date: 2004/06/24 14:27:18 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -63,7 +63,7 @@ CCOPTIM = -g
 #REDEF_RTCPC = -Drtcpc=rtcpcldc
 REDEF_RTCPC =
 
-#DBLIBS = -L../dlf -ldlf  -L../castor -lcastorClient -L../castor/db/ora -lcastorCommonOra
+#DBLIBS = -L../dlf -ldlf -L../castor/db/ora -lcastorCommonOra
 
 #if defined(SONYRAW)
 SONYRFLG = -DSONYRAW
@@ -177,9 +177,9 @@ DFLAGS = -DBIN=\"$(BIN)\" \
 CFLAGS = $(CCOPTIM) -I$(INCLUDES) -I$(INCLUDES_CPP) $(THREADFLAGS) $(DFLAGS)
 
 COMM######################### DEPENDENCY LIBRARIES ###############
-DEPLIB += DepLibraryTargetName(lib,shift)
+DEPLIB += DepSharedLibraryTargetName(shlib,shift)
 
-GLOBLIB += -L../lib -lshift
+GLOBLIB += -L../shlib -lshift
 
 COMM######################### RULES ##############################
 
@@ -191,9 +191,8 @@ EPROGS_RTSTAT = FileName($(EXPORTBIN),rtstat)
 MANPAGES_RTSTAT = FileName($(MANDIR),rtstat.$(MANSUFFIX))
 EMANPAGES_RTSTAT = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtstat.$(MANSUFFIX)))
 #endif
-DEPLIB += DepSharedLibraryTargetName(castor,castorClient) \
-	  DepSharedLibraryTargetName(castor/db/ora,castorCommonOra)
-GLOBLIB += -L../castor -lcastorClient -L../castor/db/ora -lcastorCommonOra
+DEPLIB += DepSharedLibraryTargetName(shlib,castorCommonOra)
+GLOBLIB += -L../shlib -lcastorCommonOra
 PROGS_C = ProgramTargetName(tpread) \
 	  ProgramTargetName(tpwrite) \
 	  ProgramTargetName(VidWorker) \
@@ -314,11 +313,9 @@ NormalProgramTarget(killjid,killjid.Osuf $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) 
 
 NormalLibraryTarget(rtcpapi,$(RTCPLIB_OBJS))
 
-MakeDepLibrary(lib,shift)
+MakeDepLibrary(shlib,shift)
 
-MakeDepSharedLibrary(castor,castorClient)
-
-MakeDepSharedLibrary(castor/db/ora,castorCommonOra)
+MakeDepSharedLibrary(shlib,castorCommonOra)
 
 #if BuildRtcopyServer
 install: $(BIN) $(ERRLISTDIR) $(IPROGS_C) $(IPROGS_D) $(RTCOPYWORKDIR) $(SPOOL) $(SACCTDIR)
