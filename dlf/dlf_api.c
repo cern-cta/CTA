@@ -6,7 +6,7 @@
 */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.16 $ $Date: 2004/08/05 14:42:56 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.17 $ $Date: 2004/08/20 13:16:43 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -960,18 +960,22 @@ dlf_log_message_t *msg;
 	char *sev_name;
 	dlf_msg_param_t *p;
 	int fd;
+	int write_to_stdout = 0;
 	int written;
 	char uuidhex[2 * sizeof(Cuuid_t) + 1];
 	
-	if (strcmp("stdout", dst->name) == 0)
+	if (strcmp("stdout", dst->name) == 0) {
+	        write_to_stdout = 1;
 	        fd = 1;
+	}
 	else {
+	        write_to_stdout = 0;
 	        if ((fd = open (dst->name, O_WRONLY | O_CREAT | O_APPEND, 0664)) < 0)
 		     return (-1);
 	}
 #if !defined(_WIN32)
 	/* Lock file */
-	if (fd != 1) {
+	if (!write_to_stdout) {
 	        fl_struct.l_type = F_WRLCK;
 	        fl_struct.l_whence = SEEK_SET;
 	        fl_struct.l_start = 0;
@@ -997,7 +1001,7 @@ dlf_log_message_t *msg;
 		msg->ns_fileid.server,
 		msg->ns_fileid.fileid);
 	/* Go to the end of the file */
-	if (fd != 1) {
+	if (!write_to_stdout) {
 	        if ((lseek (fd, 0, SEEK_END)) < 0) {
 		  close(fd);
 		  return (-1);
@@ -1005,7 +1009,7 @@ dlf_log_message_t *msg;
 	}
 	written = write (fd, prtbuf, n);
 	if (written < n) {
-	        close(fd);
+	        if (!write_to_stdout) close(fd);
 		return (-1);
 	}
 	for (p = msg->param_list.head; p != NULL; p = p->next) {
@@ -1030,22 +1034,23 @@ dlf_log_message_t *msg;
 			break;
 		default:
 			serrno = SEINTERNAL;
+			if (!write_to_stdout) close(fd);
 			return (-1);
 		}
 		written = write (fd, prtbuf, n);
 		if (written < n) {
-		        close(fd);
+		        if (!write_to_stdout) close(fd);
 			return (-1);
 		}
 	}
 	write (fd, "\n", 1);
 #if !defined(_WIN32)
 	/* Flush buffers */
-		fsync (fd);
+	fsync (fd);
 	/* Unlock the file */
 #endif
 	/* Lock is removed when file is closed */
-		if (fd != 1) close(fd);
+	if (!write_to_stdout) close(fd);
 	return (0);
 }
 
