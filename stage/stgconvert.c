@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.22 2000/05/11 09:54:41 jdurand Exp $
+ * $Id: stgconvert.c,v 1.23 2000/05/11 20:03:48 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.22 $ $Date: 2000/05/11 09:54:41 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.23 $ $Date: 2000/05/11 20:03:48 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -52,6 +52,8 @@ int warns = 1;
 int Cdb_debug = 0;                      /* To satisfy external : Server debug level */
 char Cdb_server_pwd[CA_MAXNAMELEN+1];   /* To satisfy external : Server password file */
 int Cdb_server_hashsize = 127;          /* To satisfy external : Server hashsize */
+int Cdb_server_hole_idx;                /* To satisfy external : Server Hole Policy in index files */
+int Cdb_server_hole_dat;                /* To satisfy external : Server Hole Policy in data files */
 char *CallerFile = NULL;
 int CallerLine = 0;
 
