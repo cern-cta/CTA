@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/12/09 15:33:40 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.15 $ $Release$ $Date: 2005/01/04 09:06:06 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.14 $ $Release$ $Date: 2004/12/09 15:33:40 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.15 $ $Release$ $Date: 2005/01/04 09:06:06 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -282,6 +282,7 @@ int recallerCallbackFileCopied(
       (void)rtcpcld_unlockTape();
       (void)updateSegmCount(0,0,1);
       serrno = save_serrno;
+      return(-1);
     }
 
     rc = rtcpcld_updcFileRecalled(
@@ -296,7 +297,6 @@ int recallerCallbackFileCopied(
       serrno = save_serrno;
       return(-1);
     }
-    (void)rtcpcld_setatime(file);
     filesCopied++;
     bytesCopied += filereq->bytes_out;
     (void)dlf_write(
@@ -369,6 +369,7 @@ int recallerCallbackMoreWork(
      rtcpFileRequest_t *filereq;
 {
   static int requestToProcess = 0;
+  char *castorFileId = NULL;
   int rc, save_serrno;
   file_list_t *file = NULL;
 
@@ -448,6 +449,18 @@ int recallerCallbackMoreWork(
     if ( rtcpcld_unlockTape() == -1 ) {
       LOG_SYSCALL_ERR("rtcpcld_unlockTape()");
       return(-1);
+    }
+    if ( filereq->position_method != TPPOSIT_BLKID ) {
+      (void)rtcpcld_getFileId(file,&castorFileId);
+      (void)dlf_write(
+                      childUuid,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_NOTBLKIDPOS),
+                      (struct Cns_fileid *)castorFileId,
+                      1,
+                      "METHOD",
+                      DLF_MSG_PARAM_INT,
+                      filereq->position_method
+                      );
     }
     requestToProcess = 1;
     (void)updateSegmCount(1,0,0);
