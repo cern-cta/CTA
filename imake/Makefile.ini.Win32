@@ -33,6 +33,8 @@ clean:
 	if exist imake.obj $(RM) imake.obj
 	if exist imake.exe $(RM) imake.exe
 
+clobber: clean
+
 depend:
 
 
