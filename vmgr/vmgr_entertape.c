@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_entertape.c,v $ $Revision: 1.6 $ $Date: 2000/04/03 12:38:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_entertape.c,v $ $Revision: 1.7 $ $Date: 2002/02/07 06:05:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_entertape - enter a new tape volume */
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_entertape.c,v $ $Revision: 1.6 $ $Dat
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_entertape(const char *vid, char *vsn, char *dgn, char *density, char *lbltype, char *model, char *media_letter, char *manufacturer, char *sn, char *poolname, int status)
+vmgr_entertape(const char *vid, char *vsn, char *library, char *density, char *lbltype, char *model, char *media_letter, char *manufacturer, char *sn, int nbsides, char *poolname, int status)
 {
 	int c;
 	char func[15];
@@ -47,7 +47,7 @@ vmgr_entertape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
         }
 #endif
 
-	if (! vid || ! dgn || ! model) {
+	if (! vid || ! library || ! density || ! model) {
 		serrno = EFAULT;
 		return (-1);
 	}
@@ -71,12 +71,8 @@ vmgr_entertape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
 	} else {
 		marshall_STRING (sbp, vid);
 	}
-	marshall_STRING (sbp, dgn);
-	if (density) {
-		marshall_STRING (sbp, density);
-	} else {
-		marshall_STRING (sbp, "");
-	}
+	marshall_STRING (sbp, library);
+	marshall_STRING (sbp, density);
 	if (lbltype) {
 		marshall_STRING (sbp, lbltype);
 	} else {
@@ -98,6 +94,7 @@ vmgr_entertape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
 	} else {
 		marshall_STRING (sbp, "");
 	}
+	marshall_WORD (sbp, nbsides);
 	if (poolname) {
 		marshall_STRING (sbp, poolname);
 	} else {
