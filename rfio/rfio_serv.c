@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.16 2004/12/07 12:18:03 jdurand Exp $
+ * $Id: rfio_serv.c,v 1.17 2005/01/04 11:22:52 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.16 $ $Date: 2004/12/07 12:18:03 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: rfio_serv.c,v $ $Revision: 1.17 $ $Date: 2005/01/04 11:22:52 $ CERN/IT/ADC/CA Frederic Hemmer, Jean-Philippe Baud, Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 /* rfio_serv.c  SHIFT remote file access super server                   */
@@ -810,7 +810,7 @@ char    **argv;
 #endif
     select_continue:
       memcpy (&readfd, &readmask, sizeof(readmask));
-      timeval.tv_sec = select_timeout;  /* must set each time for linux */
+      timeval.tv_sec = (once_only && have_a_child) ? 1 : select_timeout;  /* must set each time for linux */
       timeval.tv_usec = 0;
       if ((select_status = select (s + 1, &readfd, NULL, NULL, &timeval)) < 0) { /* Error */
 	log(LOG_DEBUG,"select error No %d (%s)\n", errno, strerror(errno));
