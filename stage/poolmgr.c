@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.12 2000/05/12 11:58:54 jdurand Exp $
+ * $Id: poolmgr.c,v 1.13 2000/05/12 12:28:20 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.12 $ $Date: 2000/05/12 11:58:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.13 $ $Date: 2000/05/12 12:28:20 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1130,7 +1130,7 @@ int migpoolfiles(pool_p)
 	strcpy (func, "migpoolfiles");
 
 #ifdef STAGER_DEBUG
-    stglogit(func, "### Please gdb /usr/local/bin/stgdaemon %d, then break %d\n",getpid(),__LINE__+1);
+    stglogit(func, "### Please gdb /usr/local/bin/stgdaemon %d, then break %d\n",getpid(),__LINE__+2);
     sleep(9);
     sleep(1);
 #endif
@@ -1165,7 +1165,7 @@ int migpoolfiles(pool_p)
 	sci = scs;
 	for (stcp = stcs; stcp < stce; stcp++) {
 		if (stcp->reqid == 0) break;
-		if ((stcp->status & 0xF0) != CAN_BE_MIGR) continue;
+		if ((stcp->status & CAN_BE_MIGR) != CAN_BE_MIGR) continue;
 		if (strcmp (pool_p->name, stcp->poolname)) continue;
 		sci->weight = (double)stcp->a_time;
 		if (stcp->actual_size > 1024)
@@ -1204,6 +1204,11 @@ int migpoolfiles(pool_p)
       if ((nfiles_per_request = (found_nbfiles / pool_p->migp->maxdrives)) <= 0) {
         /* Strange configuration but that's it : there is more maxdrives than files to migrate */
         nfiles_per_request = 1;
+      } else {
+        if (nfiles_per_request * pool_p->migp->maxdrives < found_nbfiles) {
+          /* Will occur if the result is fractionnal */
+          nfiles_per_request++;
+        }
       }
     } else {
       nfiles_per_request = found_nbfiles;
@@ -1267,7 +1272,8 @@ int migpoolfiles(pool_p)
             files[nfiles - 1].next = &(files[nfiles]);
           }
           nfiles++;
-          if (nfiles >= nfiles_per_request) {
+          if (nfiles >= nfiles_per_request || scc->next == NULL) {
+            /* We reached the maximum number of files per request, or the end */
             if ((fork_pid= fork()) < 0) {
               stglogit(func, "### Cannot fork (%s)\n",strerror(errno));
             } else if (fork_pid == 0) {
