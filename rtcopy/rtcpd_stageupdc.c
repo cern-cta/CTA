@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.48 $ $Date: 2000/11/06 08:56:11 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.49 $ $Date: 2000/11/07 13:30:19 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -138,9 +138,13 @@ int rtcpd_stageupdc(tape_list_t *tape,
         /*
          * Local status variable is used for tppos only (filcp uses the local
          * variable "retval"). It cannot take any other values than 0 or
-         * ETFSQ (invalid tape file sequence number).
+         * ETFSQ (invalid tape file sequence number). In case there was
+         * a warning while copying the data from tape to memory we must
+         * reset for small files (<128MB) the entire file may be already
+         * in memory when the disk IO starts up.
          */
-        if ( status != ETFSQ ) status = 0;
+        if ( status == ERTLIMBYSZ || status == ERTBLKSKPD ||
+             status == ERTMNYPARY ) status = 0;
         if ( filereq->proc_status == RTCP_POSITIONED && status == 0 ||
              (filereq->proc_status == RTCP_FINISHED && 
               (filereq->concat & NOCONCAT_TO_EOD) != 0 && status == ETFSQ) ) { 
