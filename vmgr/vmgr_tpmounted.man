@@ -1,0 +1,67 @@
+.\" @(#)$RCSfile: vmgr_tpmounted.man,v $ $Revision: 1.1 $ $Date: 2000/03/03 13:04:33 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGR_TPMOUNTED 3 "$Date: 2000/03/03 13:04:33 $" CASTOR "vmgr Library Functions"
+.SH NAME
+vmgr_tpmounted \- update tape volume access time/count in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "vmgr_api.h"\fR
+.sp
+.BI "int vmgr_tpmounted (const char *" vid ,
+.BI "int " mode )
+.SH DESCRIPTION
+.B vmgr_tpmounted
+updates the tape volume access time/count in the CASTOR Volume Manager.
+.TP
+.I vid
+is the volume visual identifier of the tape.
+It must be at most CA_MAXVIDLEN characters long.
+.TP
+.I mode
+may be either
+.B WRITE_ENABLE
+or
+.BR WRITE_DISABLE .
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named volume does not exist.
+.TP
+.B EACCES
+The effective user ID of the requestor does not match the owner ID of the tape
+pool this tape belongs to and the requestor is not super-user.
+.TP
+.B EFAULT
+.I vid
+is a NULL pointer.
+.TP
+.B EINVAL
+The length of
+.I vid
+exceeds
+.B CA_MAXVIDLEN
+or bad parameter value.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B EVMGRNACT
+Volume manager is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR vmgr_gettape(3) ,
+.B vmgr_querytape(3)
