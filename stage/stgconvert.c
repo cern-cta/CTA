@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.31 2001/11/30 12:21:24 jdurand Exp $
+ * $Id: stgconvert.c,v 1.32 2002/02/11 14:07:32 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.31 $ $Date: 2001/11/30 12:21:24 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.32 $ $Date: 2002/02/11 14:07:32 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -2336,6 +2336,17 @@ int stcpcmp(stcp1,stcp2,bindiff)
 		return(-2);
 	}
 
+	if ((stcp1->reqid <= 0) && (stcp2->reqid <= 0)) {
+		/* Who cares */
+		return(0);
+	} else if ((stcp1->reqid <= 0) && (stcp2->reqid  > 0)) {
+		/* stcp1 to go at the end */
+		return(1);
+	} else if ((stcp1->reqid  > 0) && (stcp2->reqid <= 0)) {
+		/* stcp2 to go at the end */
+		return(-1);
+	}
+	
 	if (bindiff != 0) {
 		return(memcmp(stcp1,stcp2,sizeof(struct stgcat_entry)));
 	}
@@ -2508,6 +2519,17 @@ int stppcmp(stpp1,stpp2,bindiff)
 		return(-2);
 	}
 
+	if ((stpp1->reqid <= 0) && (stpp2->reqid <= 0)) {
+		/* Who cares */
+		return(0);
+	} else if ((stp1->reqid <= 0) && (stpp2->reqid  > 0)) {
+		/* stpp1 to go at the end */
+		return(1);
+	} else if ((stpp1->reqid  > 0) && (stpp2->reqid <= 0)) {
+		/* stpp2 to go at the end */
+		return(-1);
+	}
+	
 	if (bindiff != 0) {
 		return(memcmp(stpp1,stpp2,sizeof(struct stgpath_entry)));
 	}
@@ -2528,6 +2550,17 @@ int stgdb_stcpcmp(p1,p2)
 	struct stgcat_entry *stcp1 = (struct stgcat_entry *) p1;
 	struct stgcat_entry *stcp2 = (struct stgcat_entry *) p2;
 
+	if ((stcp1->reqid <= 0) && (stcp2->reqid <= 0)) {
+		/* Who cares */
+		return(0);
+	} else if ((stcp1->reqid <= 0) && (stcp2->reqid  > 0)) {
+		/* stcp1 to go at the end */
+		return(1);
+	} else if ((stcp1->reqid  > 0) && (stcp2->reqid <= 0)) {
+		/* stcp2 to go at the end */
+		return(-1);
+	}
+	
 	if (stcp1->c_time < stcp2->c_time) {
 		return(-1);
 	} else if (stcp1->c_time > stcp2->c_time) {
@@ -2554,6 +2587,17 @@ int stgdb_stppcmp(p1,p2)
 	struct stgpath_entry *stpp1 = (struct stgpath_entry *) p1;
 	struct stgpath_entry *stpp2 = (struct stgpath_entry *) p2;
 
+	if ((stpp1->reqid <= 0) && (stpp2->reqid <= 0)) {
+		/* Who cares */
+		return(0);
+	} else if ((stpp1->reqid <= 0) && (stpp2->reqid  > 0)) {
+		/* stpp1 to go at the end */
+		return(1);
+	} else if ((stpp1->reqid  > 0) && (stpp2->reqid <= 0)) {
+		/* stpp2 to go at the end */
+		return(-1);
+	}
+	
 	if (stpp1->reqid < stpp2->reqid) {
 		return(-1);
 	} else if (stpp1->reqid > stpp2->reqid) {
