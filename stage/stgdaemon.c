@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.132 2001/04/29 09:34:47 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.133 2001/05/17 11:31:35 jdurand Exp $
  */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.132 $ $Date: 2001/04/29 09:34:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.133 $ $Date: 2001/05/17 11:31:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 1000000
@@ -1170,8 +1170,15 @@ add2wq (clienthost, req_user, req_uid, req_gid, rtcp_user, rtcp_group, rtcp_uid,
 	wqp->rpfd = rpfd;
 	wqp->use_subreqid = use_subreqid;
 	wqp->wf = (struct waitf *) calloc (nbwf, sizeof(struct waitf));
-	wqp->save_nbsubreqid = nbwf;
 	wqp->last_rwcounterfs_vs_R = 0;
+	if (wqp->use_subreqid != 0) {
+		if ((wqp->save_subreqid = *save_subreqid = (int *) calloc (nbwf, sizeof(int))) == NULL) {
+			sendrep (rpfd, MSG_ERR, STG33, "malloc", strerror(errno));
+			wqp->use_subreqid = 0;
+		} else {
+			wqp->save_nbsubreqid = nbwf;
+		}
+	}
 	if (wqp->use_subreqid != 0) {
 		wqp->save_subreqid = *save_subreqid = (int *) calloc (nbwf, sizeof(int));
 		wqp->save_nbsubreqid = nbwf;
@@ -1844,6 +1851,16 @@ check_waiting_on_req(subreqid, state)
 					strcpy (wfp->upath, (wfp+1)->upath);
 					*/
 				}
+				if (wqp->save_subreqid != NULL) {
+					int isubreqid;
+					/* This waiting queue is supporting the async callback */
+					/* By construction we already had allocated enough space */
+					/* in wqp->save_subreqid (an automatic retry cannot be done with more than previous try) */
+					for (isubreqid = 0, wfp = wqp->wf; isubreqid < wqp->nbdskf; isubreqid++, wfp++) {
+						wqp->save_subreqid[isubreqid] = wfp->subreqid;
+					}
+					wqp->save_nbsubreqid = wqp->nbdskf;
+				}
 			} else {	/* FAILED or KILLED */
 				if (firstreqid == 0) {
 					for (stcp = stcs; stcp < stce; stcp++) {
@@ -1975,6 +1992,16 @@ check_coff_waiting_on_req(subreqid, state)
 					strcpy (wfp->upath, (wfp+1)->upath);
 					*/
 				}
+				if (wqp->save_subreqid != NULL) {
+					int isubreqid;
+					/* This waiting queue is supporting the async callback */
+					/* By construction we already had allocated enough space */
+					/* in wqp->save_subreqid (an automatic retry cannot be done with more than previous try) */
+					for (isubreqid = 0, wfp = wqp->wf; isubreqid < wqp->nbdskf; isubreqid++, wfp++) {
+						wqp->save_subreqid[isubreqid] = wfp->subreqid;
+					}
+					wqp->save_nbsubreqid = wqp->nbdskf;
+				}
 			}
 			break;
 		}
@@ -2055,7 +2082,7 @@ void checkwaitq()
 							 wqp->status != REQKILD && wqp->nretry < MAXRETRY) {
 			if (wqp->nretry)
 				sendrep (wqp->rpfd, MSG_ERR, STG43, wqp->nretry);
-			if (wqp->use_subreqid != 0) {
+			if (wqp->save_subreqid != NULL) {
 				int isubreqid;
 				/* This waiting queue is supporting the async callback */
 				/* By construction we already had allocated enough space */
@@ -2590,6 +2617,10 @@ int fork_exec_stager(wqp)
 		sprintf (arg_Aflag, "%d", wqp->Aflag);
 		sprintf (arg_concat_off_fseq, "%d", wqp->concat_off_fseq);
 		sprintf (arg_silent, "%d", wqp->silent);
+		if ((wqp->nb_waiting_on_req > 0) && (wqp->use_subreqid != 0)) {
+			stglogit(func, "### wqp->nb_waiting_on_req=%d and wqp->use_subreqid=%d are not compatible, wqp->use_subreqid forced to 0\n", wqp->nb_waiting_on_req, wqp->use_subreqid);
+			wqp->use_subreqid = 0;
+		}
 		sprintf (arg_use_subreqid, "%d", wqp->use_subreqid);
 		sprintf (arg_api_flag, "%d", wqp->api_out);
 
