@@ -235,6 +235,22 @@ namespace castor {
         m_subreqId = new_var;
       }
 
+      /**
+       * Get the value of m_protocol
+       * @return the value of m_protocol
+       */
+      std::string protocol() const {
+        return m_protocol;
+      }
+
+      /**
+       * Set the value of m_protocol
+       * @param new_var the new value of m_protocol
+       */
+      void setProtocol(std::string new_var) {
+        m_protocol = new_var;
+      }
+
     private:
 
     private:
@@ -259,6 +275,8 @@ namespace castor {
 
       /// The Cuuid of the SubRequest that dealt with this file, given as a human readable string
       std::string m_subreqId;
+
+      std::string m_protocol;
 
       /// The id of this object
       u_signed64 m_id;
