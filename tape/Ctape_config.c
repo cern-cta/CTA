@@ -1,7 +1,11 @@
 /*
- * $Id: Ctape_config.c,v 1.2 1999/07/20 19:53:17 jdurand Exp $
+ * $Id: Ctape_config.c,v 1.3 1999/07/21 13:38:59 jdurand Exp $
  *
  * $Log: Ctape_config.c,v $
+ * Revision 1.3  1999/07/21 13:38:59  jdurand
+ * Put back "marshall.h" and "Ctape_api.h" in Ctape_config.c
+ * Added getdvrnam for aix compilation
+ *
  * Revision 1.2  1999/07/20 19:53:17  jdurand
  * Changed "Ctape.h" to <Ctape.h> and "marshall.h" to <marshall.h>
  *
@@ -25,8 +29,8 @@ static char sccsid[] = "%W% %G% CERN IT-PDP/DM Jean-Philippe Baud";
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
-#include <Ctape.h>
-#include <marshall.h>
+#include "Ctape.h"
+#include "marshall.h"
 
 Ctape_config(unm, status, reason)
 char *unm;
