@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.7 $ $Date: 1999/12/09 15:12:12 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.8 $ $Date: 1999/12/13 13:46:05 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1175,8 +1175,8 @@ int rtcpd_CleanUpDiskIO(int poolID) {
             Uformat = (*filereq->recfm == 'U' ? TRUE : FALSE);
             if ( nexttape->next == tape && 
                  nextfile->next == nexttape->file ) last_file = TRUE;
-            if ( filereq->tape_fseq != nextfile->next->filereq.tape_fseq )
-                end_of_tpfile = TRUE;
+            if ( last_file == TRUE || (nextfile->next->filereq.concat & 
+                 (NOCONCAT | NOCONCAT_TO_EOD)) != 0 ) end_of_tpfile = TRUE;
             if ( nextfile->filereq.proc_status != RTCP_FINISHED ) {
                 /*
                  * Get control info
@@ -1213,7 +1213,7 @@ int rtcpd_CleanUpDiskIO(int poolID) {
                  *    Ctape_info() for more info. (i.e. blocksize)
                  *    before starting the disk -> memory copy.
                 next_bufsz = rtcpd_CalcBufSz(nexttape,nextfile);
-                while ( proc_cntl.nb_reserved_bufs > nb_bufs ||
+                while ( proc_cntl.nb_reserved_bufs >= nb_bufs ||
                        ((tapereq->mode == WRITE_ENABLE) &&
                         ((proc_cntl.diskIOstarted == 0) ||
                          (filereq->blocksize < 0))) ) {
@@ -1408,8 +1408,8 @@ int rtcpd_CleanUpDiskIO(int poolID) {
                 /*
                  * Assign next thread and start the request
                  */
-                DEBUG_PRINT((LOG_DEBUG,"rtcpd_StartDiskIO(thIndex=%d,arg=0x%lx) start with indxp=%d, offset=%d\n",
-                    thIndex,tharg,indxp,offset));
+                DEBUG_PRINT((LOG_DEBUG,"rtcpd_StartDiskIO(thIndex=%d,arg=0x%lx) start with indxp=%d, offset=%d, end_of_tpfile=%d\n",
+                    thIndex,tharg,indxp,offset,end_of_tpfile));
                 rc = Cpool_assign(poolID,diskIOthread,(void *)tharg,-1);
 
             } /* if ( ... ) */
