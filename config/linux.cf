@@ -14,7 +14,7 @@ CXX += -fPIC -D_LARGEFILE64_SOURCE
 MTCCFLAGS = -pthread -DCTHREAD_POSIX -D_THREAD_SAFE -D_REENTRANT
 MTLDLIBS =
 MTLDFLAGS = -pthread
-SHLIBLDFLAGS = -shared
+SHLIBLDFLAGS = -shared -Wl,-soname,libshift.so.__CASTOR_VERSION__
 SHLIBREQLIBS = -lc -lpthread `g++ -print-file-name=libstdc++.so`
 #if UseAdns
 ADNSLIB = -ladns
