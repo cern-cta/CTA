@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.15 2001/03/02 18:16:48 jdurand Exp $
+ * $Id: stage_api.c,v 1.16 2001/03/02 18:42:52 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -369,8 +369,10 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
         for (i = 0; i < numvid; i++) {
 #if TMS
           if (stage_api_tmscheck (thiscat->u1.t.vid[i], thiscat->u1.t.vsn[i], thiscat->u1.t.dgn, thiscat->u1.t.den, thiscat->u1.t.lbl)) {
-            stage_errmsg(func, "STG02 - TMSCHECK(%s,%s,%s,%s,%s) error\n",
-                         thiscat->u1.t.vid[i], thiscat->u1.t.vsn[i], thiscat->u1.t.dgn, thiscat->u1.t.den, thiscat->u1.t.lbl);
+            /*
+              stage_errmsg(func, "STG02 - TMSCHECK(%s,%s,%s,%s,%s) error\n",
+              thiscat->u1.t.vid[i], thiscat->u1.t.vsn[i], thiscat->u1.t.dgn, thiscat->u1.t.den, thiscat->u1.t.lbl);
+            */
             serrno = ESTTMSCHECK;
 #if defined(_WIN32)
             WSACleanup();
@@ -994,8 +996,10 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
         for (i = 0; i < numvid; i++) {
 #if TMS
           if (stage_api_tmscheck (thiscat->u1.t.vid[i], thiscat->u1.t.vsn[i], thiscat->u1.t.dgn, thiscat->u1.t.den, thiscat->u1.t.lbl)) {
+            /*
             stage_errmsg(func, "STG02 - TMSCHECK(%s,%s,%s,%s,%s) error\n",
                          thiscat->u1.t.vid[i], thiscat->u1.t.vsn[i], thiscat->u1.t.dgn, thiscat->u1.t.den, thiscat->u1.t.lbl);
+            */
             serrno = ESTTMSCHECK;
 #if defined(_WIN32)
             WSACleanup();
