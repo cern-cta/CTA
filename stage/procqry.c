@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.97 2002/09/20 12:26:48 jdurand Exp $
+ * $Id: procqry.c,v 1.98 2002/09/26 08:58:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.97 $ $Date: 2002/09/20 12:26:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.98 $ $Date: 2002/09/26 08:58:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -63,9 +63,9 @@ static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.97 $ $Date: 200
 #include "net.h"
 
 void procqryreq _PROTO((int, int, char *, char *));
-void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int, int, int, int));
-int print_sorted_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int, int, int, int, int));
-void print_tape_info _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, int, int, int, int, int));
+void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int, int, int, int, int));
+int print_sorted_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int, int, int, int, int, int));
+void print_tape_info _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, int, int, int, int, int, int));
 signed64 get_stageout_retenp _PROTO((struct stgcat_entry *));
 signed64 get_stagealloc_retenp _PROTO((struct stgcat_entry *));
 signed64 get_put_failed_retenp _PROTO((struct stgcat_entry *));
@@ -137,6 +137,7 @@ static int retenp_flag;
 static int mintime_flag;
 static int side_flag;
 static int display_side_flag;
+static int format_flag; /* Hint given by stageqry command-line that is using the API */
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
@@ -307,6 +308,8 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	counters_flag = 0;
 	retenp_flag = 0;
 	mintime_flag = 0;
+    format_flag = 0;
+
 	poolname[0] = '\0';
 	rbp = req_data;
 	local_unmarshall_STRING (rbp, user);	/* login name */
@@ -385,6 +388,9 @@ void procqryreq(req_type, magic, req_data, clienthost)
         }
 		if ((flags & STAGE_DUMP) == STAGE_DUMP) {
 			dump_flag++;
+		}
+		if ((flags & STAGE_FORMAT) == STAGE_FORMAT) {
+			format_flag++;
 		}
 		if ((flags & STAGE_NOREGEXP) == STAGE_NOREGEXP) {
 			noregexp_flag++;
@@ -755,7 +761,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	if (Lflag) {
 		print_link_list (poolname, aflag, group, uflag, user,
 						 numvid, vid, fseq, fseq_list, xfile, afile, mfile, req_type, this_reqid, magic,
-						 side_flag, side
+						 side_flag, side, format_flag
 			);
 		goto reply;
 	}
@@ -766,7 +772,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	if (Sflag) {
 		if (print_sorted_list (poolname, aflag, group, uflag, user,
 							   numvid, vid, fseq, fseq_list, xfile, afile, mfile, req_type, this_reqid, magic, class_flag,
-							   side_flag, side
+							   side_flag, side, format_flag
 			) < 0)
 			c = SESYSERR;
 		goto reply;
@@ -774,7 +780,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	if (Tflag) {
 		print_tape_info (poolname, aflag, group, uflag, user,
 						 numvid, vid, fseq, fseq_list, req_type, this_reqid, magic, 
-						 side_flag, side
+						 side_flag, side, format_flag
 			);
 		goto reply;
 	}
@@ -840,13 +846,12 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			}
 		}
 		if (Pflag) {
-			sendrep (&rpfd, MSG_OUT, "%s\n", stcp->ipath);
+			if (! format_flag) sendrep (&rpfd, MSG_OUT, "%s\n", stcp->ipath);
 			if (req_type > STAGE_00) sendrep(&rpfd, API_STCP_OUT, stcp, magic);
-			if (dump_flag != 0) dump_stcp(&rpfd, stcp, &sendrep);
+			if (dump_flag != 0) if (! format_flag) dump_stcp(&rpfd, stcp, &sendrep);
 			continue;
 		}
-		if (req_type > STAGE_00) sendrep(&rpfd, API_STCP_OUT, stcp, magic);
-		if (hdrprinted++ == 0) {
+		if (format_flag == 0 && hdrprinted++ == 0) {
 			if (xfile)
 				if (class_flag != 0)
 					if (retenp_flag != 0)
@@ -917,62 +922,64 @@ void procqryreq(req_type, magic, req_data, clienthost)
 						else
 							sendrep (&rpfd, MSG_OUT, title);
 		}
-		if (stcp->t_or_d == 'h') {
-			if ((ifileclass = upd_fileclass(NULL,stcp,3,1,1)) >= 0) {
-				if ((thismintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0) {
-					thismintime_beforemigr = mintime_beforemigr(ifileclass);
+        if (! format_flag) {
+			if (stcp->t_or_d == 'h') {
+				if ((ifileclass = upd_fileclass(NULL,stcp,3,1,1)) >= 0) {
+					if ((thismintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0) {
+						thismintime_beforemigr = mintime_beforemigr(ifileclass);
+					}
 				}
 			}
-		}
-		if (strcmp (stcp->recfm, "U,b") == 0)
-			strcpy (p_recfm, "U,bin");
-		else if (strcmp (stcp->recfm, "U,f") == 0)
-			strcpy (p_recfm, "U,f77");
-		else
-			strcpy (p_recfm, stcp->recfm);
-		if (stcp->lrecl > 0)
-			sprintf (p_lrecl, "%6d", stcp->lrecl);
-		else
-			strcpy (p_lrecl, "     *");
-		if (stcp->size > 0)
-			if (ISCASTORMIG(stcp))
-				strcpy (p_size, "*");
-			else if ((stcp->status == STAGEWRT) && (stcp->t_or_d == 'h'))
-				/* a STAGEWRT stcp that is doing migration of another STAGEOUT|CAN_BE_MIGR|BEING_MIGR stcp */
-				strcpy (p_size, "*");
+			if (strcmp (stcp->recfm, "U,b") == 0)
+				strcpy (p_recfm, "U,bin");
+			else if (strcmp (stcp->recfm, "U,f") == 0)
+				strcpy (p_recfm, "U,f77");
 			else
-				if ((stcp->size / ONE_MB) <= (u_signed64) INT_MAX)
-					sprintf (p_size, "%d", (int) (stcp->size / ONE_MB)); /* Compatibility with old stageqry output */
+				strcpy (p_recfm, stcp->recfm);
+			if (stcp->lrecl > 0)
+				sprintf (p_lrecl, "%6d", stcp->lrecl);
+			else
+				strcpy (p_lrecl, "     *");
+			if (stcp->size > 0)
+				if (ISCASTORMIG(stcp))
+					strcpy (p_size, "*");
+				else if ((stcp->status == STAGEWRT) && (stcp->t_or_d == 'h'))
+					/* a STAGEWRT stcp that is doing migration of another STAGEOUT|CAN_BE_MIGR|BEING_MIGR stcp */
+					strcpy (p_size, "*");
 				else
-					sprintf (p_size, "%s", u64tostru(stcp->size,tmpbuf,0)); /* Cannot represent this quantity with an integer - switch to u64 mode */
-		else if (stcp->status == (STAGEIN|STAGED))
-			/* Case of stageing of a zero-length file */
-			strcpy (p_size, "0");
-		else
-			strcpy (p_size, "*");
-		if (stcp->status & 0xF0)
-			if (((stcp->status & STAGED_LSZ) == STAGED_LSZ) ||
-				((stcp->status & STAGED_TPE) == STAGED_TPE))
-				strcpy (p_stat, l_stat[(stcp->status & 0xF00) >> 8]);
+					if ((stcp->size / ONE_MB) <= (u_signed64) INT_MAX)
+						sprintf (p_size, "%d", (int) (stcp->size / ONE_MB)); /* Compatibility with old stageqry output */
+					else
+						sprintf (p_size, "%s", u64tostru(stcp->size,tmpbuf,0)); /* Cannot represent this quantity with an integer - switch to u64 mode */
+			else if (stcp->status == (STAGEIN|STAGED))
+				/* Case of stageing of a zero-length file */
+				strcpy (p_size, "0");
 			else
-				strcpy (p_stat, x_stat[(stcp->status & 0xF0) >> 4]);
-		else if (stcp->status & 0xF00)
-			if (ISCASTORBEINGMIG(stcp))
-				strcpy( p_stat, "BEING_MIGR");
-			else if (ISCASTORWAITINGMIG(stcp))
-				strcpy( p_stat, "WAITING_MIGR");
-		/* Please note that stcp->a_time + thismintime_beforemigr can go out of bounds */
-		/* That's why I typecase everything to u_signed64 */
-			else if ((ifileclass >= 0) && ((u_signed64) ((u_signed64) stcp->a_time + (u_signed64) thismintime_beforemigr) > (u_signed64) this_time))
-				strcpy (p_stat, "DELAY_MIGR");
+				strcpy (p_size, "*");
+			if (stcp->status & 0xF0)
+				if (((stcp->status & STAGED_LSZ) == STAGED_LSZ) ||
+					((stcp->status & STAGED_TPE) == STAGED_TPE))
+					strcpy (p_stat, l_stat[(stcp->status & 0xF00) >> 8]);
+				else
+					strcpy (p_stat, x_stat[(stcp->status & 0xF0) >> 4]);
+			else if (stcp->status & 0xF00)
+				if (ISCASTORBEINGMIG(stcp))
+					strcpy( p_stat, "BEING_MIGR");
+				else if (ISCASTORWAITINGMIG(stcp))
+					strcpy( p_stat, "WAITING_MIGR");
+			/* Please note that stcp->a_time + thismintime_beforemigr can go out of bounds */
+			/* That's why I typecase everything to u_signed64 */
+				else if ((ifileclass >= 0) && ((u_signed64) ((u_signed64) stcp->a_time + (u_signed64) thismintime_beforemigr) > (u_signed64) this_time))
+					strcpy (p_stat, "DELAY_MIGR");
+				else
+					strcpy (p_stat, l_stat[(stcp->status & 0xF00) >> 8]);
+			else if (stcp->status == STAGEALLOC)
+				strcpy (p_stat, "STAGEALLOC");
+			else if (ISCASTORWAITINGNS(stcp))
+				strcpy( p_stat, "WAITING_NS");
 			else
-				strcpy (p_stat, l_stat[(stcp->status & 0xF00) >> 8]);
-		else if (stcp->status == STAGEALLOC)
-			strcpy (p_stat, "STAGEALLOC");
-		else if (ISCASTORWAITINGNS(stcp))
-			strcpy( p_stat, "WAITING_NS");
-		else
-			strcpy (p_stat, s_stat[stcp->status]);
+				strcpy (p_stat, s_stat[stcp->status]);
+        }
         /* STAGEIN                    1                        001 */
         /* STAGEOUT                   2                        010 */
         /* STAGEWRT                   3                        011 */
@@ -1013,6 +1020,8 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
 			}
 		}
+		if (req_type > STAGE_00) sendrep(&rpfd, API_STCP_OUT, stcp, magic);
+        if (format_flag) continue; /* User just needs the records structures - not the lines */
 		if (stcp->t_or_d == 't') {
 			char vid_and_side[CA_MAXVIDLEN+1+10+1]; /* VID[/%d].%d */
 
@@ -1636,7 +1645,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	}
 }
 
-void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fseq_list, xfile, afile, mfile, req_type, this_reqid, magic, side_flag, side)
+void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fseq_list, xfile, afile, mfile, req_type, this_reqid, magic, side_flag, side, format_flag)
 	char *poolname;
 	int aflag;
 	char *group;
@@ -1654,6 +1663,7 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 	int magic;
 	int side_flag;
 	int side;
+    int format_flag;
 {
 	int j;
 	char *p;
@@ -1677,9 +1687,9 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 		for (stpp = stps; stpp < stpe; stpp++) {
 			if (stpp->reqid == 0) break;
 			if ((this_reqid > 0) && (stpp->reqid != this_reqid)) continue;
-			sendrep (&rpfd, MSG_OUT, "%s\n", stpp->upath);
+			if (! format_flag) sendrep (&rpfd, MSG_OUT, "%s\n", stpp->upath);
 			if (req_type > STAGE_00) sendrep(&rpfd, API_STPP_OUT, stpp);
-			if (dump_flag != 0) dump_stpp(&rpfd, stpp, &sendrep);
+			if (dump_flag != 0) if (! format_flag) dump_stpp(&rpfd, stpp, &sendrep);
 		}
 		return;
 	}
@@ -1748,15 +1758,15 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 		for (stpp = stps; stpp < stpe; stpp++) {
 			if (stpp->reqid == 0) break;
 			if (stcp->reqid == stpp->reqid) {
-				sendrep (&rpfd, MSG_OUT, "%s\n", stpp->upath);
+				if (! format_flag) sendrep (&rpfd, MSG_OUT, "%s\n", stpp->upath);
 				if (req_type > STAGE_00) sendrep(&rpfd, API_STPP_OUT, stpp);
-				if (dump_flag != 0) dump_stpp(&rpfd, stpp, &sendrep);
+				if (dump_flag != 0) if (! format_flag) dump_stpp(&rpfd, stpp, &sendrep);
 			}
 		}
 	}
 }
 
-int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fseq_list, xfile, afile, mfile, req_type, this_reqid, magic, class_flag, side_flag, side)
+int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fseq_list, xfile, afile, mfile, req_type, this_reqid, magic, class_flag, side_flag, side, format_flag)
 	char *poolname;
 	int aflag;
 	char *group;
@@ -1775,6 +1785,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 	int class_flag;
 	int side_flag;
 	int side;
+    int format_flag;
 {
 	/* We use the weight algorithm defined by Fabrizio Cane for DPM */
 	time_t thistime = time(NULL);
@@ -1827,11 +1838,11 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 								   (  (stageout_retenp = get_stageout_retenp(stcp)) >= 0) && /* And with a retention period */
 								   (  (thistime - stcp->a_time) > stageout_retenp)); /* And with an expired retention period */
 		isstagealloc_expired   = (   ISSTAGEALLOC  (stcp)   &&     /* A STAGEALLOC file */
-								   (!  ISCASTORMIG (stcp) ) &&     /* Not candidate for migration */
-								   (!  ISSTAGED    (stcp) ) &&     /* And not yet STAGED */
-								   (!  ISPUT_FAILED(stcp) ) &&     /* And not yet subject to a failed transfer */
-								   (  (stagealloc_retenp = get_stagealloc_retenp(stcp)) >= 0) && /* And with a retention period */
-								   (  (thistime - stcp->a_time) > stagealloc_retenp)); /* And with an expired retention period */
+									 (!  ISCASTORMIG (stcp) ) &&     /* Not candidate for migration */
+									 (!  ISSTAGED    (stcp) ) &&     /* And not yet STAGED */
+									 (!  ISPUT_FAILED(stcp) ) &&     /* And not yet subject to a failed transfer */
+									 (  (stagealloc_retenp = get_stagealloc_retenp(stcp)) >= 0) && /* And with a retention period */
+									 (  (thistime - stcp->a_time) > stagealloc_retenp)); /* And with an expired retention period */
 		isput_failed_expired = (   ISSTAGEOUT  (stcp)   &&     /* A STAGEOUT file */
 								   ISPUT_FAILED(stcp)   &&     /* Subject to a failed transfer */
 								   (  (put_failed_retenp = get_put_failed_retenp(stcp)) >= 0) && /* And with a ret. period */
@@ -1979,6 +1990,11 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 	/* output the sorted list */
 
 	for (scc = scf; scc; scc = scc->next) {
+		if (format_flag && req_type > STAGE_00) {
+			/* User is just interested by the strucrtures */
+			sendrep(&rpfd, API_STCP_OUT, stcp, magic);
+			continue;
+        }
 		tm = localtime (&scc->stcp->a_time);
 		ifileclass = -1;
 		save_rpfd = rpfd;
@@ -2019,7 +2035,7 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 	return (0);
 }
 
-void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq, fseq_list, req_type, this_reqid, magic, side_flag, side)
+void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq, fseq_list, req_type, this_reqid, magic, side_flag, side, format_flag)
 	char *poolname;
 	int aflag;
 	char *group;
@@ -2034,6 +2050,7 @@ void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 	int magic;
 	int side_flag;
 	int side;
+    int format_flag;
 {
 	int j;
 	int poolflag = 0;
@@ -2068,10 +2085,10 @@ void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 		}
 		if (strcmp (stcp->u1.t.lbl, "al") &&
 			strcmp (stcp->u1.t.lbl, "sl")) continue;
-		sendrep (&rpfd, MSG_OUT, "-b %d -F %s -f %s -L %d\n",
-				 stcp->blksize, stcp->recfm, stcp->u1.t.fid, stcp->lrecl);
+		if (! format_flag) sendrep (&rpfd, MSG_OUT, "-b %d -F %s -f %s -L %d\n",
+									stcp->blksize, stcp->recfm, stcp->u1.t.fid, stcp->lrecl);
 		if (req_type > STAGE_00) sendrep(&rpfd, API_STCP_OUT, stcp, magic);
-		if (dump_flag != 0) dump_stcp(&rpfd, stcp, &sendrep);
+		if (dump_flag != 0) if (! format_flag) dump_stcp(&rpfd, stcp, &sendrep);
 	}
 }
 
