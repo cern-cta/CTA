@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.51 $ $Release$ $Date: 2004/08/13 14:11:04 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.52 $ $Release$ $Date: 2004/08/13 14:16:11 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.51 $ $Date: 2004/08/13 14:11:04 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.52 $ $Date: 2004/08/13 14:16:11 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1603,7 +1603,7 @@ static int getUpdates(
             if ( rc == -1 ) save_serrno = serrno;
             if ( rc == 0 ) rc = doFullUpdate(tpIterator,tape);
             if ( rc == -1 ) save_serrno = serrno;
-            rc = unlockTapeInDB(tpIterator,&tmpTp,rc);
+            rc = unlockTapeInDB(tpIterator,tmpTp,rc);
             if ( rc == -1 ) save_serrno = serrno;
           }
           dumpSegmList(tpIterator);
