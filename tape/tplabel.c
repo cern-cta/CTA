@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.5 $ $Date: 2000/03/06 07:49:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.6 $ $Date: 2000/04/07 14:08:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tplabel - prelabel al and sl tapes, write 2 tape marks for nl tapes */
@@ -35,6 +35,7 @@ char	**argv;
 	char *dp;
 	static char drive[CA_MAXUNMLEN+1] = "";
 	int errflg = 0;
+	int flags = 0;
 	char *getacct();
 	static char lbltype[CA_MAXLBLTYPLEN+1] = "";
 	int nbhdr = -1;
@@ -44,7 +45,7 @@ char	**argv;
 	static char vid[CA_MAXDENLEN+1] = "";
 	static char vsn[CA_MAXDENLEN+1] = "";
 
-	while ((c = getopt (argc, argv, "D:d:g:H:l:V:v:")) != EOF) {
+	while ((c = getopt (argc, argv, "D:d:g:H:l:TV:v:")) != EOF) {
 		switch (c) {
 		case 'D':
 			if (! drive[0]) {
@@ -110,6 +111,9 @@ char	**argv;
 				fprintf (stderr, TP018, "-l");
 				errflg++;
 			}
+			break;
+		case 'T':
+			flags = DOUBLETM;
 			break;
 		case 'V':
 			if (! vid[0]) {
@@ -186,7 +190,7 @@ char	**argv;
 	/* mount the tape, check if blank tape and write the prelabel */
 
 	if (Ctape_label (path, vid, partition, dgn, density, drive, vsn,
-	    lbltype, nbhdr, 0))
+	    lbltype, nbhdr, flags, 0))
 		exit_prog ((serrno == EACCES || serrno == EINVAL) ? USERR : SYERR);
 	exit_prog (0);
 }
