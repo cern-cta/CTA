@@ -146,6 +146,28 @@ int rtcpcld_workerFinished _PROTO((
                                    int, 
                                    int
                                    ));
+int rtcpcld_initLocks _PROTO((
+                              tape_list_t *
+                              ));
+int rtcpcld_setTapeFseq _PROTO((
+                                int
+                                ));
+int rtcpcld_getTapeFseq _PROTO((
+                                void
+                                ));
+int rtcpcld_incrementTapeFseq _PROTO((
+                                      void
+                                      ));
+int rtcpcld_unlockTape _PROTO((
+                               void
+                               ));
+int rtcpcld_myDispatch _PROTO((
+                               void *(*) _PROTO((void *)),
+                               void *
+                               ));
+int rtcpcld_initThreadPool _PROTO((
+                                   int
+                                   ));
 int rtcpcld_getVIDsToDo _PROTO((
                                 tape_list_t ***,
                                 int *
@@ -188,15 +210,22 @@ int rtcpcld_setVIDFailedStatus _PROTO((
 char *rtcpcld_fixStr _PROTO((
                              CONST char *
                              ));
-int rtcpcld_setTapeFseq _PROTO((
-                                int
-                                ));
-int rtcpcld_getTapeFseq _PROTO((
-                                void
-                                ));
-int rtcpcld_incrementTapeFseq _PROTO((
-                                      void
-                                      ));
+int rtcpcld_updcMigrFailed _PROTO((
+                                   tape_list_t *,
+                                   rtcpFileRequest_t *
+                                   ));
+int rtcpcld_updcRecallFailed _PROTO((
+                                     tape_list_t *,
+                                     rtcpFileRequest_t *
+                                     ));
+int rtcpcld_updcFileMigrated _PROTO((
+                                     tape_list_t *,
+                                     rtcpFileRequest_t *
+                                   ));
+int rtcpcld_updcFileRecalled _PROTO((
+                                     tape_list_t *,
+                                     rtcpFileRequest_t *
+                                     ));
 int rtcpcld_initNsInterface _PROTO((
                                     void
                                     ));
@@ -234,7 +263,7 @@ int rtcpcld_tapeOK _PROTO((
                            tape_list_t *
                            ));
 int rtcpcld_updateTape _PROTO((
-                               rtcpTapeRequest_t *,
+                               tape_list_t *,
                                rtcpFileRequest_t *,
                                int,
                                int
