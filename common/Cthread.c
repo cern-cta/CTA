@@ -1,5 +1,5 @@
 /*
- * Cthread.c,v 1.43 2000/08/23 13:59:12 obarring Exp
+ * $Id: Cthread.c,v 1.48 2002/02/06 14:01:38 jdurand Exp $
  */
 
 /*
