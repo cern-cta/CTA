@@ -111,7 +111,7 @@
 #if defined(_WIN32)
 #define OperatorDir	%%SystemRoot%%
 #else
-#define OperatorDir	/etc/operator
+#define OperatorDir	/var/run
 #endif
 #define RaimaDir	/usr/local/raima
 #if defined(_WIN32)
