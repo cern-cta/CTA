@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.151 2002/01/18 08:32:35 jdurand Exp $
+ * $Id: procio.c,v 1.152 2002/01/21 11:05:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.151 $ $Date: 2002/01/18 08:32:35 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.152 $ $Date: 2002/01/21 11:05:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -224,10 +224,10 @@ extern int have_another_pool_with_export_hsm_option _PROTO((char *));
 #endif /* _REENTRANT || _THREAD_SAFE */
 
 void procioreq(req_type, magic, req_data, clienthost)
-		 int req_type;
-		 int magic;
-		 char *req_data;
-		 char *clienthost;
+	int req_type;
+	int magic;
+	char *req_data;
+	char *clienthost;
 {
 	int Aflag = 0;
 	int actual_poolflag;
@@ -415,33 +415,33 @@ void procioreq(req_type, magic, req_data, clienthost)
 
 #ifndef __INSURE__
 	stglogit (func, STG92, req_type == STAGECAT ? "stagecat" : (req_type == STAGE_CAT ? "stage_cat" : (req_type < STAGE_00 ? cmdnames[req_type] : cmdnames_api[req_type - STAGE_00])),
-						stgreq.user, stgreq.uid, stgreq.gid, clienthost);
+			  stgreq.user, stgreq.uid, stgreq.gid, clienthost);
 #else
     {
-      char *stagecat = "stagecat";
-      char *stage_cat = "stage_cat";
-      char *this;
-      switch (req_type) {
-      case STAGECAT:
-        this = stagecat;
-        break;
-      case STAGE_CAT:
-        this = stage_cat;
-        break;
-      default:
-        if (req_type < STAGE_00) {
-          this = cmdnames[req_type];
-        } else {
-          this = cmdnames_api[req_type - STAGE_00];
-        }
-        break;
-      }
-      stglogit (func, STG92, this, stgreq.user, stgreq.uid, stgreq.gid, clienthost);
+		char *stagecat = "stagecat";
+		char *stage_cat = "stage_cat";
+		char *this;
+		switch (req_type) {
+		case STAGECAT:
+			this = stagecat;
+			break;
+		case STAGE_CAT:
+			this = stage_cat;
+			break;
+		default:
+			if (req_type < STAGE_00) {
+				this = cmdnames[req_type];
+			} else {
+				this = cmdnames_api[req_type - STAGE_00];
+			}
+			break;
+		}
+		stglogit (func, STG92, this, stgreq.user, stgreq.uid, stgreq.gid, clienthost);
     }
 #endif
 #if SACCT
 	stageacct (STGCMDR, stgreq.uid, stgreq.gid, clienthost,
-						 reqid, req_type, 0, 0, NULL, "", (char) 0);
+			   reqid, req_type, 0, 0, NULL, "", (char) 0);
 #endif
 
 	if (req_type > STAGE_00) {
@@ -733,10 +733,10 @@ void procioreq(req_type, magic, req_data, clienthost)
 					hsmfiles = dummy;
 				}
                 /*
-				if (Aflag && (stcp_input[i].size != 0) && (req_type == STAGE_IN)) {
-					sendrep (rpfd, MSG_ERR, STG35, "-A deffered", "-s <size_in_MB>");
-					errflg++;
-				}
+				  if (Aflag && (stcp_input[i].size != 0) && (req_type == STAGE_IN)) {
+				  sendrep (rpfd, MSG_ERR, STG35, "-A deffered", "-s <size_in_MB>");
+				  errflg++;
+				  }
                 */
 				hsmfiles[nhsmfiles++] = (t_or_d == 'm' ? stcp_input[i].u1.m.xfile : stcp_input[i].u1.h.xfile);
 				if ((c = check_hsm_type(hsmfiles[nhsmfiles - 1],&nhpssfiles,&ncastorfiles,&nuserlevel,&nexplevel,&t_or_d)) != 0) {
@@ -763,7 +763,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 						/* We will better check afterwards for STAGEWRT */
 						/* this depends on other option -M existence */
 						sendrep (rpfd, MSG_ERR, STG17, "-A deferred",
-										 "stageout/stagecat");
+								 "stageout/stagecat");
 						errflg++;
 					} else
 						Aflag = 1; /* deferred space allocation */
@@ -798,7 +798,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				if (strcmp (Coptarg, "off") == 0) {
 					if (req_type != STAGEIN){
 						sendrep (rpfd, MSG_ERR, STG17, "-c off",
-										 "stageout/stagewrt/stagecat");
+								 "stageout/stagewrt/stagecat");
 						errflg++;
 					} else
 						concat_off = 1;
@@ -824,9 +824,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 				break;
 			case 'F':
 				if (strcmp (Coptarg, "F") && strcmp (Coptarg, "FB") &&
-						strcmp (Coptarg, "FBS") && strcmp (Coptarg, "FS") &&
-						strcmp (Coptarg, "U") && strcmp (Coptarg, "U,bin") &&
-						strcmp (Coptarg, "U,f77") && strcmp (Coptarg, "F,-f77")) {
+					strcmp (Coptarg, "FBS") && strcmp (Coptarg, "FS") &&
+					strcmp (Coptarg, "U") && strcmp (Coptarg, "U,bin") &&
+					strcmp (Coptarg, "U,f77") && strcmp (Coptarg, "F,-f77")) {
 					sendrep (rpfd, MSG_ERR, STG06, "-F");
 					errflg++;
 				} else
@@ -859,7 +859,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				break;
 			case 'l':
 				if (strcmp (Coptarg, "blp") ||
-						(req_type != STAGEOUT && req_type != STAGEWRT))
+					(req_type != STAGEOUT && req_type != STAGEWRT))
 					strcpy (stgreq.u1.t.lbl, Coptarg);
 				else {
 					sendrep (rpfd, MSG_ERR, STG17, "-l blp", "stageout/stagewrt");
@@ -908,7 +908,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				break;
 			case 'p':
 				if (strcmp (Coptarg, "NOPOOL") == 0 ||
-						isvalidpool (Coptarg)) {
+					isvalidpool (Coptarg)) {
 					strcpy (stgreq.poolname, Coptarg);
 				} else {
 					sendrep (rpfd, MSG_ERR, STG32, Coptarg);
@@ -1059,11 +1059,44 @@ void procioreq(req_type, magic, req_data, clienthost)
 
 	if (nhsmfiles > 0) {
 		/* We check that there is no redundant hsm files (multiple equivalent ones) */
+
+		if (ncastorfiles) {
+			for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
+				stcp_input[ihsmfiles].filler[0] = '\0'; /* We will use this internal flag few lines below */
+			}
+		}
 		for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
+			if (ncastorfiles) {
+				if (stcp_input[ihsmfiles].filler[0] != '\0') continue; /* Yet skipped */
+			}
 			for (jhsmfiles = ihsmfiles + 1; jhsmfiles < nhsmfiles; jhsmfiles++) {
+				if (ncastorfiles) {
+					if (stcp_input[jhsmfiles].filler[0] != '\0') continue; /* Yet skipped */
+				}
 				if (strcmp(hsmfiles[ihsmfiles],hsmfiles[jhsmfiles]) == 0) {
-					sendrep (rpfd, MSG_ERR, STG59, hsmfiles[ihsmfiles]);
-					errflg++;
+					/* If both ihsmfiles and jhsmfiles have exactly the same invariants */
+					/* We neverthless continue, skipping the offending entry */
+					if ((ncastorfiles) &&
+						(stcp_input[ihsmfiles].u1.h.server[0] != '\0') &&
+						(strcmp(stcp_input[ihsmfiles].u1.h.server, stcp_input[jhsmfiles].u1.h.server) == 0) &&
+						(stcp_input[ihsmfiles].u1.h.fileid != 0) &&
+						(stcp_input[ihsmfiles].u1.h.fileid == stcp_input[jhsmfiles].u1.h.fileid)) {
+						char tmpbuf[21];
+						stcp_input[jhsmfiles].filler[0] = 'D';
+						sendrep (rpfd, MSG_ERR, STG172, hsmfiles[ihsmfiles], u64tostr((u_signed64) stcp_input[ihsmfiles].u1.h.fileid, tmpbuf, 0), stcp_input[ihsmfiles].u1.h.server);
+					} else {
+						sendrep (rpfd, MSG_ERR, STG59, hsmfiles[ihsmfiles]);
+						errflg++;
+					}
+				} else if (ncastorfiles &&
+						   (stcp_input[ihsmfiles].u1.h.server[0] != '\0') &&
+						   (strcmp(stcp_input[ihsmfiles].u1.h.server, stcp_input[jhsmfiles].u1.h.server) == 0) &&
+						   (stcp_input[ihsmfiles].u1.h.fileid != 0) &&
+						   (stcp_input[ihsmfiles].u1.h.fileid == stcp_input[jhsmfiles].u1.h.fileid)) {
+					/* User lied using the hsm filenames - but invariants clearly indicates same files... */
+					char tmpbuf[21];
+					stcp_input[jhsmfiles].filler[0] = 'D';
+					sendrep (rpfd, MSG_ERR, STG172, hsmfiles[ihsmfiles], u64tostr((u_signed64) stcp_input[ihsmfiles].u1.h.fileid, tmpbuf, 0), stcp_input[ihsmfiles].u1.h.server);
 				}
 			}
 		}
@@ -1128,12 +1161,12 @@ void procioreq(req_type, magic, req_data, clienthost)
 				for (i = 1; i < nstcp_input; i++) {
 					if (strcmp(stcp_input[i-1].u1.h.tppool, stcp_input[i].u1.h.tppool) != 0) {
 						sendrep (rpfd, MSG_ERR, STG117,
-								i-1,
-								stcp_input[i-1].u1.h.xfile,
-								i,
-								stcp_input[i].u1.h.xfile,
-								stcp_input[i-1].u1.h.tppool,
-								stcp_input[i].u1.h.tppool);
+								 i-1,
+								 stcp_input[i-1].u1.h.xfile,
+								 i,
+								 stcp_input[i].u1.h.xfile,
+								 stcp_input[i-1].u1.h.tppool,
+								 stcp_input[i].u1.h.tppool);
 						errflg++;
 						break;
 					}
@@ -1244,9 +1277,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 			/* In API mode - there is only one stcp in input, so poolflag is hsmpoolflags[0] */
 			/* and then the poolname specified by the user is stcp_input[0].poolname */
 			if ((maxfseq = maxfseq_per_vid(&stgreq,
-											(api_out != 0) ? hsmpoolflags[0] : poolflag,
-											(api_out != 0) ? stcp_input[0].poolname : stgreq.poolname,
-											&concat_off_flag)) > 0) {
+										   (api_out != 0) ? hsmpoolflags[0] : poolflag,
+										   (api_out != 0) ? stcp_input[0].poolname : stgreq.poolname,
+										   &concat_off_flag)) > 0) {
 				fseq_elem *newfseq_list = NULL;
 
 				if (maxfseq >= concat_off_fseq) {
@@ -1316,9 +1349,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 		}
 	} else if (concat_off != 0 || api_out == 0) {
 		if ((req_type == STAGEIN &&
-				 ! Uflag && nbdskf > nbtpf && trailing != '-') ||
-				(req_type != STAGEIN && nbtpf > nbdskf) ||
-				(Uflag && nbdskf > 2)) {
+			 ! Uflag && nbdskf > nbtpf && trailing != '-') ||
+			(req_type != STAGEIN && nbtpf > nbdskf) ||
+			(Uflag && nbdskf > 2)) {
 			sendrep (rpfd, MSG_ERR, STG19);
 			c = USERR;
 			goto reply;
@@ -1387,7 +1420,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					}
 				}
 				if (packfseq (fseq_list, i, nbdskf, nbtpf, trailing,
-											stgreq.u1.t.fseq, CA_MAXFSEQLEN + 1)) {
+							  stgreq.u1.t.fseq, CA_MAXFSEQLEN + 1)) {
 					sendrep (rpfd, MSG_ERR, STG21);
 					c = USERR;
 					goto reply;
@@ -1405,6 +1438,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		} else if (stgreq.t_or_d == 'm') {
 			strcpy(stgreq.u1.m.xfile,hsmfiles[ihsmfiles]);
 		} else if (stgreq.t_or_d == 'h') {
+			if (stcp_input[ihsmfiles].filler[0] != '\0') continue; /* Skipped */
 			strcpy(stgreq.u1.h.xfile,hsmfiles[ihsmfiles]);
 			/* Unless API request we make sure those fields are initialized */
 			if (api_out == 0) {
@@ -1499,7 +1533,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				if (size != NULL) goto get_size_from_user;
 			}
 		} else if (size) {
-		get_size_from_user:
+		  get_size_from_user:
 			if ((p = strchr (size, ':')) != NULL) *p = '\0';
 			stage_strtoi(&(stgreq.size), size, &dp, 10);
 			if (p != NULL) {
@@ -1526,28 +1560,131 @@ void procioreq(req_type, magic, req_data, clienthost)
 
 		switch (req_type) {
 		case STAGEIN:
-		stagein_isstaged_retry:
-			switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname, rdonly_flag, poolname_exclusion, &isstaged_nomore)) {
-			case ISSTAGEDBUSY:
-				c = EBUSY;
-				goto reply;
-			case ISSTAGEDSYERR:
-				c = SYERR;
-				goto reply;
-			case STAGEIN:	/* stage in progress */
-			case STAGEIN|WAITING_SPC:	/* waiting space */
-				if (poolname_exclusion != NULL) {
-					/* We do not generated WAITING_REQ entries when a record is found in another poolname */
-					/* than what the user requested */
-					goto notstaged;
-				}
-				stcp->nbaccesses++;
+		  stagein_isstaged_retry:
+		  switch (isstaged (&stgreq, &stcp, poolflag, stgreq.poolname, rdonly_flag, poolname_exclusion, &isstaged_nomore)) {
+		  case ISSTAGEDBUSY:
+			  c = EBUSY;
+			  goto reply;
+		  case ISSTAGEDSYERR:
+			  c = SYERR;
+			  goto reply;
+		  case STAGEIN:	/* stage in progress */
+		  case STAGEIN|WAITING_SPC:	/* waiting space */
+			  if (poolname_exclusion != NULL) {
+				  /* We do not generated WAITING_REQ entries when a record is found in another poolname */
+				  /* than what the user requested */
+				  goto notstaged;
+			  }
+			  stcp->nbaccesses++;
 #ifdef USECDB
-				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-				}
+			  if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+				  stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+			  }
 #endif
-				savereqid = stcp->reqid;
+			  savereqid = stcp->reqid;
+			  stcp = newreq((int) stgreq.t_or_d);
+			  memcpy (stcp, &stgreq, sizeof(stgreq));
+			  if (i > 0)
+				  stcp->reqid = nextreqid();
+			  else
+				  stcp->reqid = reqid;
+			  stcp->status = STAGEIN;
+			  stcp->c_time = stcp->a_time = time(NULL);
+			  stcp->nbaccesses++;
+			  stcp->status |= WAITING_REQ;
+#ifdef USECDB
+			  if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
+				  stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+			  }
+#endif
+			  if (!wqp) {
+				  wqp = add2wq (clienthost,
+								user, stcp->uid, stcp->gid,
+								user, save_group, stcp->uid, stcp->gid,
+								clientpid,
+								Upluspath, reqid, req_type, nbdskf, &wfp, &save_subreqid,
+								stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq,
+								(concat_off_fseq <= 0) ? 1 : 0);
+				  /* Please note that we explicitely disabled async callbacks if */
+				  /* option -c off is in action */
+				  wqp->Aflag = Aflag;
+				  wqp->copytape = copytape;
+				  wqp->concat_off_fseq = concat_off_fseq;
+				  wqp->api_out = api_out;
+				  wqp->magic = magic;
+				  wqp->uniqueid = stage_uniqueid;
+				  wqp->silent = silent_flag;
+				  if (nowait_flag != 0) {
+					  /* User said nowait - we force silent flag anyway and reset rpfd to N/A */
+					  wqp->silent = 1;
+					  wqp->rpfd = -1;
+				  }
+			  }
+			  wfp->subreqid = stcp->reqid;
+			  /* Nota : save_subreqid is != NULL only if no '-c off' request */
+			  if (save_subreqid != NULL) {
+				  *save_subreqid = stcp->reqid;
+				  save_subreqid++;
+			  }
+			  wfp->waiting_on_req = savereqid;
+			  strcpy (wfp->upath, upath);
+			  wfp->size_to_recall = size_to_recall;      /* Can be zero */
+			  wfp->size_yet_recalled = 0;
+			  strcpy (wqp->pool_user, pool_user);
+			  wqp->nb_waiting_on_req++;
+			  wqp->nbdskf++;
+			  wqp->nb_subreqs++;
+			  wfp++;
+			  if (Upluspath) {
+				  wfp->subreqid = stcp->reqid;
+				  strcpy (wfp->upath, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath);
+			  }
+			  break;
+		  case STAGED:		/* staged */
+			  PRE_RFIO;
+			  if (RFIO_STAT(stcp->ipath, &st) < 0) {
+				  stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
+				  if (delfile (stcp, 0, 1, 1, "not on disk", 0, 0, 0, 1) < 0) {
+					  int save_serrno = rfio_serrno();
+					  sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
+							   RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+					  c = (api_out != 0) ? save_serrno : SYERR;
+					  goto reply;
+				  }
+				  goto notstaged;
+			  } else {
+				  /*
+				   * File exists, now check to see if it is
+				   * a partial file, and replace it if current
+				   * request is for a larger size.
+				   */
+				  if (((stcp->status == (STAGEIN|STAGED|STAGED_LSZ)) || ((stcp->status == (STAGEIN|STAGED)) && (stcp->t_or_d != 't'))) &&
+					  (stgreq.size > stcp->size)) {
+					  if (delfile (stcp, 0, 1, 1, "larger req", stgreq.uid, stgreq.gid, 0, 1) < 0) {
+						  int save_serrno = rfio_serrno();
+						  sendrep (rpfd, MSG_ERR,
+								   STG02, stcp->ipath,
+								   RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+						  c = (api_out != 0) ? save_serrno : SYERR;
+						  goto reply;
+					  }
+					  goto notstaged;
+				  }
+			  }
+			  /* There is intentionnaly no break here */
+		  case STAGEWRT:
+		  case STAGEWRT|CAN_BE_MIGR:
+		  case STAGEOUT|CAN_BE_MIGR:
+			forced_yet_staged_branch:
+			if (poolname_exclusion != NULL) {
+				char sav_ipath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
+				char sav_poolname[CA_MAXPOOLNAMELEN+1];
+
+				/* We have to generate a copy between pools */
+				/* Note that by definition this apply only to */
+				/* a single CASTOR HSM file request */
+				strcpy(sav_ipath,stcp->ipath);
+				strcpy(sav_poolname,stcp->poolname);
 				stcp = newreq((int) stgreq.t_or_d);
 				memcpy (stcp, &stgreq, sizeof(stgreq));
 				if (i > 0)
@@ -1557,20 +1694,13 @@ void procioreq(req_type, magic, req_data, clienthost)
 				stcp->status = STAGEIN;
 				stcp->c_time = stcp->a_time = time(NULL);
 				stcp->nbaccesses++;
-				stcp->status |= WAITING_REQ;
-#ifdef USECDB
-				if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-					stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-				}
-#endif
 				if (!wqp) {
 					wqp = add2wq (clienthost,
-									user, stcp->uid, stcp->gid,
-									user, save_group, stcp->uid, stcp->gid,
-									clientpid,
-									Upluspath, reqid, req_type, nbdskf, &wfp, &save_subreqid,
-									stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq,
-									(concat_off_fseq <= 0) ? 1 : 0);
+								  user, stcp->uid, stcp->gid,
+								  user, save_group, stcp->uid, stcp->gid,
+								  clientpid, Upluspath, reqid, req_type, nbdskf, &wfp, &save_subreqid,
+								  NULL, fseq,
+								  1);
 					/* Please note that we explicitely disabled async callbacks if */
 					/* option -c off is in action */
 					wqp->Aflag = Aflag;
@@ -1592,332 +1722,236 @@ void procioreq(req_type, magic, req_data, clienthost)
 					*save_subreqid = stcp->reqid;
 					save_subreqid++;
 				}
-				wfp->waiting_on_req = savereqid;
-				strcpy (wfp->upath, upath);
-				wfp->size_to_recall = size_to_recall;      /* Can be zero */
+				wfp->size_to_recall = size_to_recall;   /* Can be zero */
 				wfp->size_yet_recalled = 0;
+				strcpy (wfp->upath, upath);
 				strcpy (wqp->pool_user, pool_user);
-				wqp->nb_waiting_on_req++;
+				if (! Aflag) {
+					if ((c = build_ipath (upath, stcp, pool_user, 0)) < 0) {
+						stcp->status |= WAITING_SPC;
+						strcpy (wqp->waiting_pool, stcp->poolname);
+					} else if (c) {
+						updfreespace (stcp->poolname, stcp->ipath,
+									  (signed64) ((signed64) stcp->size * (signed64) ONE_MB));
+						delreq(stcp,1);
+						goto reply;
+					}
+				}
+#ifdef USECDB
+				if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
+					stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+				}
+#endif
 				wqp->nbdskf++;
 				wqp->nb_subreqs++;
+				/* We lie to the system filling this ipath member of waitf */
+				stglogit (func, "%s : Found in pool %s at %s\n", stgreq.u1.h.xfile, sav_poolname, sav_ipath);
+				strcpy(wfp->ipath, sav_ipath);
 				wfp++;
 				if (Upluspath) {
 					wfp->subreqid = stcp->reqid;
 					strcpy (wfp->upath, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath);
 				}
 				break;
-			case STAGED:		/* staged */
-				PRE_RFIO;
-				if (RFIO_STAT(stcp->ipath, &st) < 0) {
-					stglogit (func, STG02, stcp->ipath, RFIO_STAT_FUNC(stcp->ipath), rfio_serror());
-					if (delfile (stcp, 0, 1, 1, "not on disk", 0, 0, 0, 1) < 0) {
-						int save_serrno = rfio_serrno();
-						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
-										 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
-						c = (api_out != 0) ? save_serrno : SYERR;
-						goto reply;
-					}
-					goto notstaged;
-				} else {
-					/*
-					 * File exists, now check to see if it is
-					 * a partial file, and replace it if current
-					 * request is for a larger size.
-					 */
-					if (((stcp->status == (STAGEIN|STAGED|STAGED_LSZ)) || ((stcp->status == (STAGEIN|STAGED)) && (stcp->t_or_d != 't'))) &&
-							(stgreq.size > stcp->size)) {
-						if (delfile (stcp, 0, 1, 1, "larger req", stgreq.uid, stgreq.gid, 0, 1) < 0) {
-							int save_serrno = rfio_serrno();
-							sendrep (rpfd, MSG_ERR,
-											 STG02, stcp->ipath,
-											 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
-							c = (api_out != 0) ? save_serrno : SYERR;
-							goto reply;
-						}
-						goto notstaged;
-					}
-				}
-				/* There is intentionnaly no break here */
-			case STAGEWRT:
-			case STAGEWRT|CAN_BE_MIGR:
-			case STAGEOUT|CAN_BE_MIGR:
-			forced_yet_staged_branch:
-				if (poolname_exclusion != NULL) {
-					char sav_ipath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
-					char sav_poolname[CA_MAXPOOLNAMELEN+1];
-
-					/* We have to generate a copy between pools */
-					/* Note that by definition this apply only to */
-					/* a single CASTOR HSM file request */
-					strcpy(sav_ipath,stcp->ipath);
-					strcpy(sav_poolname,stcp->poolname);
-					stcp = newreq((int) stgreq.t_or_d);
-					memcpy (stcp, &stgreq, sizeof(stgreq));
-					if (i > 0)
-						stcp->reqid = nextreqid();
-					else
-						stcp->reqid = reqid;
-					stcp->status = STAGEIN;
-					stcp->c_time = stcp->a_time = time(NULL);
-					stcp->nbaccesses++;
-					if (!wqp) {
-						wqp = add2wq (clienthost,
-										user, stcp->uid, stcp->gid,
-										user, save_group, stcp->uid, stcp->gid,
-										clientpid, Upluspath, reqid, req_type, nbdskf, &wfp, &save_subreqid,
-										NULL, fseq,
-										1);
-						/* Please note that we explicitely disabled async callbacks if */
-						/* option -c off is in action */
-						wqp->Aflag = Aflag;
-						wqp->copytape = copytape;
-						wqp->concat_off_fseq = concat_off_fseq;
-						wqp->api_out = api_out;
-						wqp->magic = magic;
-						wqp->uniqueid = stage_uniqueid;
-						wqp->silent = silent_flag;
-						if (nowait_flag != 0) {
-							/* User said nowait - we force silent flag anyway and reset rpfd to N/A */
-							wqp->silent = 1;
-							wqp->rpfd = -1;
-						}
-					}
-					wfp->subreqid = stcp->reqid;
-					/* Nota : save_subreqid is != NULL only if no '-c off' request */
-					if (save_subreqid != NULL) {
-						*save_subreqid = stcp->reqid;
-						save_subreqid++;
-					}
-					wfp->size_to_recall = size_to_recall;   /* Can be zero */
-					wfp->size_yet_recalled = 0;
-					strcpy (wfp->upath, upath);
-					strcpy (wqp->pool_user, pool_user);
-					if (! Aflag) {
-						if ((c = build_ipath (upath, stcp, pool_user, 0)) < 0) {
-							stcp->status |= WAITING_SPC;
-							strcpy (wqp->waiting_pool, stcp->poolname);
-						} else if (c) {
-							updfreespace (stcp->poolname, stcp->ipath,
-														(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
-							delreq(stcp,1);
-							goto reply;
-						}
-					}
+			}
+			if (stcp->t_or_d == 'h') {
+				/* update access time in Cns */
+				struct Cns_fileid Cnsfileid;
+				strcpy (Cnsfileid.server, stcp->u1.h.server);
+				Cnsfileid.fileid = stcp->u1.h.fileid;
+				setegid(stgreq.gid);
+				seteuid(stgreq.uid);
+				(void) Cns_setatime(NULL, &Cnsfileid);
+				setegid(start_passwd.pw_gid);
+				seteuid(start_passwd.pw_uid);
+			}
+			stcp->a_time = time(NULL);
+			stcp->nbaccesses++;
 #ifdef USECDB
-					if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-						stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-					}
+			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+				stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+			}
 #endif
-					wqp->nbdskf++;
-					wqp->nb_subreqs++;
-					/* We lie to the system filling this ipath member of waitf */
-					stglogit (func, "%s : Found in pool %s at %s\n", stgreq.u1.h.xfile, sav_poolname, sav_ipath);
-					strcpy(wfp->ipath, sav_ipath);
-					wfp++;
-					if (Upluspath) {
-						wfp->subreqid = stcp->reqid;
-						strcpy (wfp->upath, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath);
-					}
-					break;
-				}
-				if (stcp->t_or_d == 'h') {
-					/* update access time in Cns */
-					struct Cns_fileid Cnsfileid;
-					strcpy (Cnsfileid.server, stcp->u1.h.server);
-					Cnsfileid.fileid = stcp->u1.h.fileid;
-					setegid(stgreq.gid);
-					seteuid(stgreq.uid);
-					(void) Cns_setatime(NULL, &Cnsfileid);
-					setegid(start_passwd.pw_gid);
-					seteuid(start_passwd.pw_uid);
-				}
-				stcp->a_time = time(NULL);
-				stcp->nbaccesses++;
-#ifdef USECDB
-				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-					stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-				}
-#endif
-				if (forced_yet_staged_branch) {
-					/* If we are there, this is because there was a stagein --rdonly on a file being migrated */
-					/* We create a new entry with state STAGEIN|STAGED|STAGE_RDONLY */
-					struct stgcat_entry save_this_stcp = *stcp;
+			if (forced_yet_staged_branch) {
+				/* If we are there, this is because there was a stagein --rdonly on a file being migrated */
+				/* We create a new entry with state STAGEIN|STAGED|STAGE_RDONLY */
+				struct stgcat_entry save_this_stcp = *stcp;
 
-					stcp = newreq((int) save_this_stcp.t_or_d);
-					memcpy (stcp, &save_this_stcp, sizeof(struct stgcat_entry));
-					if (i > 0)
-						stcp->reqid = nextreqid();
-					else
-						stcp->reqid = reqid;
-					stcp->status = STAGEIN|STAGED|STAGE_RDONLY;
-					stcp->nbaccesses = 1;
-#ifdef USECDB
-					if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-						stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-					}
-#endif
-				}
-#if SACCT
-				stageacct (STGFILS, stgreq.uid, stgreq.gid,
-							 clienthost, reqid, req_type, 0, 0, stcp, "", (char) 0);
-#endif
-				sendrep (rpfd, RTCOPY_OUT, STG96,
-								 strrchr (stcp->ipath, '/')+1,
-								 stcp->actual_size,
-								 (float)(stcp->actual_size)/(1024.*1024.),
-								 stcp->nbaccesses);
-				if (api_out != 0) sendrep(rpfd, API_STCP_OUT, stcp, magic);
-				if (copytape)
-					sendinfo2cptape (rpfd, stcp);
-				if (*upath && strcmp (stcp->ipath, upath))
-					create_link (stcp, upath);
-				if (Upluspath && ((api_out == 0) ? (argv[Coptind+1][0] != '\0') : (stpp_input[1].upath[0] != '\0')) &&
-						strcmp (stcp->ipath, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath))
-					create_link (stcp, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath);
-				break;
-			case STAGEOUT:
-			case STAGEOUT|WAITING_SPC:
-			case STAGEOUT|WAITING_NS:
-				sendrep (rpfd, MSG_ERR, STG37);
-				c = USERR;
-				goto reply;
-			case STAGEOUT|CAN_BE_MIGR|WAITING_MIGR:
-			case STAGEOUT|CAN_BE_MIGR|BEING_MIGR:
-			case STAGEPUT|CAN_BE_MIGR:
-			case STAGEWRT|CAN_BE_MIGR|BEING_MIGR:
-				/* This stcp is is physically being really migrated */
-				/* We accept a STAGEIN on it only if is explicitely gives the O_RDONLY flag */
-				if (! rdonly_flag) {
-					sendrep (rpfd, MSG_ERR, STG37);
-					c = EBUSY;
-					goto reply;
-				} else {
-					/* We force the yet staged branch */
-					forced_yet_staged_branch = 1;
-					goto forced_yet_staged_branch;
-                }
-			notstaged:
-			default:
-				if ((poolname_exclusion == NULL) &&
-					(! nocopy_flag) &&
-					(poolflag > 0) &&
-					(rdonly_flag) &&
-					(stgreq.t_or_d == 'h') &&
-					(have_another_pool_with_export_hsm_option(stgreq.poolname)) &&
-					(hsmsize > 0)
-					) {
-					/* Unless user said he does not want to have internal copy between disk pools */
-					/* And if user did specified explicitely a pool (if not we would already have */
-					/* searched within all of them !) and if there is at least one pool other than */
-					/* the one he specified that have the export_hsm flag, then we have to look to */
-					/* other poolnames*/
-					/* This apply only on CASTOR-HSM files accessed in O_RDONLY mode */
-					/* The test on poolname_exclusion == NULL ensure that we do a second pass to isstaged() only once */
-
-					/* We do NOT apply this mechanism if hsmsize if == 0 */
-					/* stglogit (func, "%s : Searching in any other pool except %s\n", stgreq.u1.h.xfile, stgreq.poolname); */
-					poolname_exclusion = stgreq.poolname;
-					goto stagein_isstaged_retry;
-				}
-				if (trailing == '-' && last_tape_file &&
-						atoi (stgreq.u1.t.fseq) > last_tape_file) {
-					/* requested file is not on tape */
-					stglogit (func, "requested file is not on tape\n");
-					nbdskf = i;
-					continue;	/* exit from the loop */
-				}
-				stcp = newreq((int) stgreq.t_or_d);
-				memcpy (stcp, &stgreq, sizeof(stgreq));
+				stcp = newreq((int) save_this_stcp.t_or_d);
+				memcpy (stcp, &save_this_stcp, sizeof(struct stgcat_entry));
 				if (i > 0)
 					stcp->reqid = nextreqid();
 				else
 					stcp->reqid = reqid;
-				stcp->status = STAGEIN;
-				stcp->c_time = stcp->a_time = time(NULL);
-				/* Case of a recall of an HSM file of zero size */
-				if ((nhsmfiles > 0) && (hsmsize == 0)) {
-					int ifileclass;
-
-					if ((ncastorfiles > 0) && ((ifileclass = upd_fileclass(NULL,stcp)) < 0)) {
-						int save_serrno = serrno;
-						sendrep (rpfd, MSG_ERR, STG132, stcp->u1.h.xfile, sstrerror(serrno));
-						c = (api_out != 0) ? save_serrno : USERR;
-						delreq(stcp,1);
-						goto reply;
-					}
-					if ((c = build_ipath (upath, stcp, pool_user, 1)) != 0) {
-						updfreespace (stcp->poolname, stcp->ipath,
-													(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
-						delreq(stcp,1);
-						goto reply;
-					}
-					stcp->status = STAGEIN|STAGED;
+				stcp->status = STAGEIN|STAGED|STAGE_RDONLY;
+				stcp->nbaccesses = 1;
 #ifdef USECDB
-					if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-						stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-					}
-#endif
-					goto forced_yet_staged_branch;
-				} else {
-					stcp->nbaccesses++;
-					if (!wqp) {
-						wqp = add2wq (clienthost,
-										user, stcp->uid, stcp->gid,
-										user, save_group, stcp->uid, stcp->gid,
-										clientpid, Upluspath, reqid, req_type, nbdskf, &wfp, &save_subreqid,
-										stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq,
-										(concat_off_fseq <= 0) ? 1 : 0);
-						/* Please note that we explicitely disabled async callbacks if */
-						/* option -c off is in action */
-						wqp->Aflag = Aflag;
-						wqp->copytape = copytape;
-						wqp->concat_off_fseq = concat_off_fseq;
-						wqp->api_out = api_out;
-						wqp->magic = magic;
-						wqp->uniqueid = stage_uniqueid;
-						wqp->silent = silent_flag;
-						if (nowait_flag != 0) {
-							/* User said nowait - we force silent flag anyway and reset rpfd to N/A */
-							wqp->silent = 1;
-							wqp->rpfd = -1;
-						}
-					}
-					wfp->subreqid = stcp->reqid;
-					/* Nota : save_subreqid is != NULL only if no '-c off' request */
-					if (save_subreqid != NULL) {
-						*save_subreqid = stcp->reqid;
-						save_subreqid++;
-					}
-					wfp->size_to_recall = size_to_recall;   /* Can be zero */
-					wfp->size_yet_recalled = 0;
-					strcpy (wfp->upath, upath);
-					strcpy (wqp->pool_user, pool_user);
-					if (! Aflag) {
-						if ((c = build_ipath (upath, stcp, pool_user, 0)) < 0) {
-							stcp->status |= WAITING_SPC;
-							strcpy (wqp->waiting_pool, stcp->poolname);
-						} else if (c) {
-							updfreespace (stcp->poolname, stcp->ipath,
-														(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
-							delreq(stcp,1);
-							goto reply;
-						}
-					}
-#ifdef USECDB
-					if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-						stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-					}
-#endif
-					wqp->nbdskf++;
-					wqp->nb_subreqs++;
-					wfp++;
-					if (Upluspath) {
-						wfp->subreqid = stcp->reqid;
-						strcpy (wfp->upath, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath);
-					}
+				if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
+					stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
 				}
+#endif
 			}
+#if SACCT
+			stageacct (STGFILS, stgreq.uid, stgreq.gid,
+					   clienthost, reqid, req_type, 0, 0, stcp, "", (char) 0);
+#endif
+			sendrep (rpfd, RTCOPY_OUT, STG96,
+					 strrchr (stcp->ipath, '/')+1,
+					 stcp->actual_size,
+					 (float)(stcp->actual_size)/(1024.*1024.),
+					 stcp->nbaccesses);
+			if (api_out != 0) sendrep(rpfd, API_STCP_OUT, stcp, magic);
+			if (copytape)
+				sendinfo2cptape (rpfd, stcp);
+			if (*upath && strcmp (stcp->ipath, upath))
+				create_link (stcp, upath);
+			if (Upluspath && ((api_out == 0) ? (argv[Coptind+1][0] != '\0') : (stpp_input[1].upath[0] != '\0')) &&
+				strcmp (stcp->ipath, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath))
+				create_link (stcp, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath);
 			break;
+		  case STAGEOUT:
+		  case STAGEOUT|WAITING_SPC:
+		  case STAGEOUT|WAITING_NS:
+			  sendrep (rpfd, MSG_ERR, STG37);
+			  c = USERR;
+			  goto reply;
+		  case STAGEOUT|CAN_BE_MIGR|WAITING_MIGR:
+		  case STAGEOUT|CAN_BE_MIGR|BEING_MIGR:
+		  case STAGEPUT|CAN_BE_MIGR:
+		  case STAGEWRT|CAN_BE_MIGR|BEING_MIGR:
+			  /* This stcp is is physically being really migrated */
+			  /* We accept a STAGEIN on it only if is explicitely gives the O_RDONLY flag */
+			  if (! rdonly_flag) {
+				  sendrep (rpfd, MSG_ERR, STG37);
+				  c = EBUSY;
+				  goto reply;
+			  } else {
+				  /* We force the yet staged branch */
+				  forced_yet_staged_branch = 1;
+				  goto forced_yet_staged_branch;
+			  }
+			notstaged:
+		  default:
+			  if ((poolname_exclusion == NULL) &&
+				  (! nocopy_flag) &&
+				  (poolflag > 0) &&
+				  (rdonly_flag) &&
+				  (stgreq.t_or_d == 'h') &&
+				  (have_another_pool_with_export_hsm_option(stgreq.poolname)) &&
+				  (hsmsize > 0)
+				  ) {
+				  /* Unless user said he does not want to have internal copy between disk pools */
+				  /* And if user did specified explicitely a pool (if not we would already have */
+				  /* searched within all of them !) and if there is at least one pool other than */
+				  /* the one he specified that have the export_hsm flag, then we have to look to */
+				  /* other poolnames*/
+				  /* This apply only on CASTOR-HSM files accessed in O_RDONLY mode */
+				  /* The test on poolname_exclusion == NULL ensure that we do a second pass to isstaged() only once */
+
+				  /* We do NOT apply this mechanism if hsmsize if == 0 */
+				  /* stglogit (func, "%s : Searching in any other pool except %s\n", stgreq.u1.h.xfile, stgreq.poolname); */
+				  poolname_exclusion = stgreq.poolname;
+				  goto stagein_isstaged_retry;
+			  }
+			  if (trailing == '-' && last_tape_file &&
+				  atoi (stgreq.u1.t.fseq) > last_tape_file) {
+				  /* requested file is not on tape */
+				  stglogit (func, "requested file is not on tape\n");
+				  nbdskf = i;
+				  continue;	/* exit from the loop */
+			  }
+			  stcp = newreq((int) stgreq.t_or_d);
+			  memcpy (stcp, &stgreq, sizeof(stgreq));
+			  if (i > 0)
+				  stcp->reqid = nextreqid();
+			  else
+				  stcp->reqid = reqid;
+			  stcp->status = STAGEIN;
+			  stcp->c_time = stcp->a_time = time(NULL);
+			  /* Case of a recall of an HSM file of zero size */
+			  if ((nhsmfiles > 0) && (hsmsize == 0)) {
+				  int ifileclass;
+
+				  if ((ncastorfiles > 0) && ((ifileclass = upd_fileclass(NULL,stcp)) < 0)) {
+					  int save_serrno = serrno;
+					  sendrep (rpfd, MSG_ERR, STG132, stcp->u1.h.xfile, sstrerror(serrno));
+					  c = (api_out != 0) ? save_serrno : USERR;
+					  delreq(stcp,1);
+					  goto reply;
+				  }
+				  if ((c = build_ipath (upath, stcp, pool_user, 1)) != 0) {
+					  updfreespace (stcp->poolname, stcp->ipath,
+									(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
+					  delreq(stcp,1);
+					  goto reply;
+				  }
+				  stcp->status = STAGEIN|STAGED;
+#ifdef USECDB
+				  if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
+					  stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+				  }
+#endif
+				  goto forced_yet_staged_branch;
+			  } else {
+				  stcp->nbaccesses++;
+				  if (!wqp) {
+					  wqp = add2wq (clienthost,
+									user, stcp->uid, stcp->gid,
+									user, save_group, stcp->uid, stcp->gid,
+									clientpid, Upluspath, reqid, req_type, nbdskf, &wfp, &save_subreqid,
+									stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq,
+									(concat_off_fseq <= 0) ? 1 : 0);
+					  /* Please note that we explicitely disabled async callbacks if */
+					  /* option -c off is in action */
+					  wqp->Aflag = Aflag;
+					  wqp->copytape = copytape;
+					  wqp->concat_off_fseq = concat_off_fseq;
+					  wqp->api_out = api_out;
+					  wqp->magic = magic;
+					  wqp->uniqueid = stage_uniqueid;
+					  wqp->silent = silent_flag;
+					  if (nowait_flag != 0) {
+						  /* User said nowait - we force silent flag anyway and reset rpfd to N/A */
+						  wqp->silent = 1;
+						  wqp->rpfd = -1;
+					  }
+				  }
+				  wfp->subreqid = stcp->reqid;
+				  /* Nota : save_subreqid is != NULL only if no '-c off' request */
+				  if (save_subreqid != NULL) {
+					  *save_subreqid = stcp->reqid;
+					  save_subreqid++;
+				  }
+				  wfp->size_to_recall = size_to_recall;   /* Can be zero */
+				  wfp->size_yet_recalled = 0;
+				  strcpy (wfp->upath, upath);
+				  strcpy (wqp->pool_user, pool_user);
+				  if (! Aflag) {
+					  if ((c = build_ipath (upath, stcp, pool_user, 0)) < 0) {
+						  stcp->status |= WAITING_SPC;
+						  strcpy (wqp->waiting_pool, stcp->poolname);
+					  } else if (c) {
+						  updfreespace (stcp->poolname, stcp->ipath,
+										(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
+						  delreq(stcp,1);
+						  goto reply;
+					  }
+				  }
+#ifdef USECDB
+				  if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
+					  stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+				  }
+#endif
+				  wqp->nbdskf++;
+				  wqp->nb_subreqs++;
+				  wfp++;
+				  if (Upluspath) {
+					  wfp->subreqid = stcp->reqid;
+					  strcpy (wfp->upath, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath);
+				  }
+			  }
+		  }
+		  break;
 		case STAGEOUT:
 			/* Note : create_hsm_entry will naturally fail if output is a directory */
 			if (stgreq.t_or_d == 'h') {
@@ -1960,7 +1994,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1) < 0) {
 						int save_serrno = rfio_serrno();
 						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
-										 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+								 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 						c = (api_out != 0) ? save_serrno : SYERR;
 						goto reply;
 					}
@@ -1982,7 +2016,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					if (delfile (stcp, 1, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1) < 0) {
 						int save_serrno = rfio_serrno();
 						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
-										 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+								 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 						c = (api_out != 0) ? save_serrno : SYERR;
 						goto reply;
 					}
@@ -2031,11 +2065,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 				stcp->status |= WAITING_SPC;
 				if (!wqp) {
 					wqp = add2wq (clienthost,
-									user, stcp->uid, stcp->gid,
-									user, save_group, stcp->uid, stcp->gid,
-									clientpid,
-									Upluspath, reqid, req_type, nbdskf, &wfp, NULL, 
-									stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq, 0);
+								  user, stcp->uid, stcp->gid,
+								  user, save_group, stcp->uid, stcp->gid,
+								  clientpid,
+								  Upluspath, reqid, req_type, nbdskf, &wfp, NULL, 
+								  stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq, 0);
 					wqp->api_out = api_out;
 					wqp->magic = magic;
 					wqp->openflags = openflags;
@@ -2060,7 +2094,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				strcpy (wqp->waiting_pool, stcp->poolname);
 			} else if (c) {
 				updfreespace (stcp->poolname, stcp->ipath,
-							(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
+							  (signed64) ((signed64) stcp->size * (signed64) ONE_MB));
 				delreq(stcp,stcp->t_or_d == 'h' ? 0 : 1);
 				goto reply;
 			} else {
@@ -2072,7 +2106,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				if (*upath && strcmp (stcp->ipath, upath))
 					create_link (stcp, upath);
 				if (Upluspath && ((api_out == 0) ? (argv[Coptind+1][0] != '\0') : (stpp_input[1].upath[0] != '\0')) &&
-						strcmp (stcp->ipath, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath))
+					strcmp (stcp->ipath, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath))
 					create_link (stcp, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath);
 				rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT);
 			}
@@ -2090,7 +2124,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			/* Note : create_hsm_entry will naturally fail if output is a directory */
 			if ((p = findpoolname (upath)) != NULL) {
 				if (poolflag < 0 ||
-						(poolflag > 0 && strcmp (stgreq.poolname, p)))
+					(poolflag > 0 && strcmp (stgreq.poolname, p)))
 					sendrep (rpfd, MSG_ERR, STG49, upath, p);
 				actual_poolflag = 1;
 				strcpy (actual_poolname, p);
@@ -2125,7 +2159,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					if (delfile (stcp, 0, 1, 1, user, stgreq.uid, stgreq.gid, 0, 1) < 0) {
  						int save_serrno = rfio_serrno();
 						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
-										 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+								 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 						global_c_stagewrt++;
 						global_c_stagewrt_SYERR++;
 						global_c_stagewrt_last_serrno = save_serrno;
@@ -2155,7 +2189,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				/* We accept a stagewrt request on a record waiting for it only if both tape pool matches */
 				/* and are non-null */
 				if (! ((stgreq.t_or_d == 'h') && 
-						(stcp->u1.h.tppool[0] != '\0') && strcmp(stcp->u1.h.tppool,stgreq.u1.h.tppool) == 0)) {
+					   (stcp->u1.h.tppool[0] != '\0') && strcmp(stcp->u1.h.tppool,stgreq.u1.h.tppool) == 0)) {
 					sendrep (rpfd, MSG_ERR, STG37);
 					global_c_stagewrt++;
 					c = USERR;
@@ -2262,8 +2296,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
 						sendrep (rpfd, MSG_ERR,
-									"STG98 - %s size is of zero size - not migrated\n",
-									(api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath);
+								 "STG98 - %s size is of zero size - not migrated\n",
+								 (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath);
 						global_c_stagewrt++;
 						c = USERR;
 						goto stagewrt_continue_loop;
@@ -2273,9 +2307,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 							setegid(start_passwd.pw_gid);
 							seteuid(start_passwd.pw_uid);
 							sendrep (rpfd, MSG_ERR,
-										"STG98 - %s renewed (size differs vs. %s)\n",
-										hsmfiles[ihsmfiles],
-										(api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath);
+									 "STG98 - %s renewed (size differs vs. %s)\n",
+									 hsmfiles[ihsmfiles],
+									 (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath);
 							setegid(stgreq.gid);
 							seteuid(stgreq.uid);
 						}
@@ -2307,8 +2341,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
 						sendrep (rpfd, MSG_ERR,
-									"STG98 - %s size is of zero size - not migrated\n",
-									(api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath);
+								 "STG98 - %s size is of zero size - not migrated\n",
+								 (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath);
 						global_c_stagewrt++;
 						c = USERR;
 						goto stagewrt_continue_loop;
@@ -2370,7 +2404,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					} else {
 						int save_serrno = rfio_serrno();
 						sendrep (rpfd, MSG_ERR, STG02, upath,
-							RFIO_STAT_FUNC(upath), rfio_serror());
+								 RFIO_STAT_FUNC(upath), rfio_serror());
 						global_c_stagewrt++;
 						c = (api_out != 0) ? save_serrno : USERR;
 						goto stagewrt_continue_loop;
@@ -2470,7 +2504,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				}
 				if ((stage_wrt_migration == 0) && (actual_poolname[0] != '\0')) {
 					/* This entry is in the pool anyway and this is not for internal migration */
-                  /* if (! Aflag) update_migpool(&stcp,1,4); */ /* Don't needed in theory - Condition move DELAY -> CAN_BE_MIGR */
+					/* if (! Aflag) update_migpool(&stcp,1,4); */ /* Don't needed in theory - Condition move DELAY -> CAN_BE_MIGR */
 					if (update_migpool(&stcp,1,Aflag ? 0 : 1) != 0) {
 						global_c_stagewrt++;
 						c = (api_out != 0) ? serrno : USERR;
@@ -2499,10 +2533,10 @@ void procioreq(req_type, magic, req_data, clienthost)
 							}
 						}
 						if (verif_euid_egid(euid,egid,user_waitq,group_waitq) != 0) {
-								global_c_stagewrt++;
-								c = (api_out != 0) ? serrno : USERR;
-								delreq(stcp,0);
-								goto stagewrt_exit_loop;
+							global_c_stagewrt++;
+							c = (api_out != 0) ? serrno : USERR;
+							delreq(stcp,0);
+							goto stagewrt_exit_loop;
 						}
 					} else {
 						euid = stgreq.uid;
@@ -2513,12 +2547,12 @@ void procioreq(req_type, magic, req_data, clienthost)
 					uid_waitq = euid;
 					gid_waitq = egid;
 					wqp = add2wq (clienthost,
-									user, stcp->uid, stcp->gid,
-									user_waitq, group_waitq, uid_waitq, gid_waitq,
-									clientpid, Upluspath, reqid, req_type,
-									nbdskf, &wfp, (nohsmcreat_flag != 0) ? &save_subreqid : NULL, 
-									stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq,
-									(nohsmcreat_flag != 0) ? 1 : 0);
+								  user, stcp->uid, stcp->gid,
+								  user_waitq, group_waitq, uid_waitq, gid_waitq,
+								  clientpid, Upluspath, reqid, req_type,
+								  nbdskf, &wfp, (nohsmcreat_flag != 0) ? &save_subreqid : NULL, 
+								  stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq,
+								  (nohsmcreat_flag != 0) ? 1 : 0);
 					wqp->copytape = copytape;
 					wqp->api_out = api_out;
 					wqp->magic = magic;
@@ -2541,7 +2575,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				wfp++;
 			}
 			break;
-		stagewrt_continue_loop:
+		  stagewrt_continue_loop:
 			/* Some cleaning in case... */
 			if ((stage_wrt_migration != 0) && (have_save_stcp_for_Cns_creatx != 0)) {
 				struct stgcat_entry *stclp;
@@ -2561,7 +2595,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				}
 			}
 			break;
-		stagewrt_exit_loop:
+		  stagewrt_exit_loop:
 			/* Some cleaning in case... */
 			if ((stage_wrt_migration != 0) && (have_save_stcp_for_Cns_creatx != 0)) {
 				struct stgcat_entry *stclp;
@@ -2584,7 +2618,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		case STAGECAT:
 			if ((p = findpoolname (upath)) != NULL) {
 				if (poolflag < 0 ||
-						(poolflag > 0 && strcmp (stgreq.poolname, p)))
+					(poolflag > 0 && strcmp (stgreq.poolname, p)))
 					sendrep (rpfd, MSG_ERR, STG49, upath, p);
 				actual_poolflag = 1;
 				strcpy (actual_poolname, p);
@@ -2619,7 +2653,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			PRE_RFIO;
 			if (RFIO_STAT(upath, &st) < 0) {
 				sendrep (rpfd, MSG_ERR, STG02, upath, RFIO_STAT_FUNC(upath),
-								 rfio_serror());
+						 rfio_serror());
 				delreq(stcp,1);
 				goto reply;
 			}
@@ -2664,7 +2698,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	if (stcp_input != NULL) free(stcp_input);
 	if (stpp_input != NULL) free(stpp_input);
 	return;
- reply:
+  reply:
 	if (fseq_list != NULL) free (fseq_list);
 	if (argv != NULL) free (argv);
 	if (hsmfiles != NULL) free(hsmfiles);
@@ -2673,7 +2707,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	if (stpp_input != NULL) free(stpp_input);
 #if SACCT
 	stageacct (STGCMDC, stgreq.uid, stgreq.gid, clienthost,
-						 reqid, req_type, 0, c, NULL, "", (char) 0);
+			   reqid, req_type, 0, c, NULL, "", (char) 0);
 #endif
 	sendrep (rpfd, STAGERC, req_type, c);
 	if (c && wqp) {
@@ -2684,7 +2718,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			}
 			if (! wfp->waiting_on_req)
 				updfreespace (stcp->poolname, stcp->ipath,
-					(signed64) ((signed64) stcp->size * (signed64) ONE_MB));
+							  (signed64) ((signed64) stcp->size * (signed64) ONE_MB));
 			delreq(stcp,0);
 		}
 		rmfromwq (wqp);
@@ -2693,9 +2727,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 }
 
 void procputreq(req_type, req_data, clienthost)
-		 int req_type;
-		 char *req_data;
-		 char *clienthost;
+	int req_type;
+	char *req_data;
+	char *clienthost;
 {
 	char **argv = NULL;
 	int c, i;
@@ -2791,7 +2825,7 @@ void procputreq(req_type, req_data, clienthost)
 	nargs = req2argv (rbp, &argv);
 #if SACCT
 	stageacct (STGCMDR, uid, gid, clienthost,
-						 reqid, STAGEPUT, 0, 0, NULL, "", (char) 0);
+			   reqid, STAGEPUT, 0, 0, NULL, "", (char) 0);
 #endif
 
 	wqp = NULL;
@@ -2930,8 +2964,8 @@ void procputreq(req_type, req_data, clienthost)
 				break;
 			}
 			if (found == 0 ||
-					((stcp->status != STAGEOUT) &&
-					 (stcp->status != (STAGEOUT|PUT_FAILED)))) {
+				((stcp->status != STAGEOUT) &&
+				 (stcp->status != (STAGEOUT|PUT_FAILED)))) {
 				sendrep (rpfd, MSG_ERR, STG22);
 				c = USERR;
 				goto reply;
@@ -2950,7 +2984,7 @@ void procputreq(req_type, req_data, clienthost)
 					actual_size_block = stcp->actual_size;
 				}
 				updfreespace (stcp->poolname, stcp->ipath,
-					(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) actual_size_block));
+							  (signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) actual_size_block));
 			}
 			stcp->status = STAGEPUT;
 			stcp->a_time = time(NULL);
@@ -2961,10 +2995,10 @@ void procputreq(req_type, req_data, clienthost)
 #endif
 			if (!wqp) {
 				wqp = add2wq (clienthost,
-								user, uid, gid,
-								user, save_group, uid, gid,
-								clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp,
-								NULL, NULL, NULL, 0);
+							  user, uid, gid,
+							  user, save_group, uid, gid,
+							  clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp,
+							  NULL, NULL, NULL, 0);
 				if (nowait_flag != 0) {
 					/* User said nowait - we force silent flag anyway and reset rpfd to N/A */
 					wqp->silent = 1;
@@ -3055,8 +3089,8 @@ void procputreq(req_type, req_data, clienthost)
 		}
 		if (Iflag) {
 			if (found == 0 ||
-					((stcp->status != STAGEOUT) &&
-					 (stcp->status != (STAGEOUT|PUT_FAILED)))) {
+				((stcp->status != STAGEOUT) &&
+				 (stcp->status != (STAGEOUT|PUT_FAILED)))) {
 				sendrep (rpfd, MSG_ERR, STG22);
 				c = USERR;
 				goto reply;
@@ -3075,7 +3109,7 @@ void procputreq(req_type, req_data, clienthost)
 					actual_size_block = stcp->actual_size;
 				}
 				updfreespace (stcp->poolname, stcp->ipath,
-					(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) actual_size_block));
+							  (signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) actual_size_block));
 			}
 			stcp->status = STAGEPUT;
 			stcp->a_time = time(NULL);
@@ -3086,10 +3120,10 @@ void procputreq(req_type, req_data, clienthost)
 #endif
 			if (!wqp) {
 				wqp = add2wq (clienthost,
-								user, uid, gid,
-								user, save_group, uid, gid,
-								clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp,
-								NULL, NULL, NULL, 0);
+							  user, uid, gid,
+							  user, save_group, uid, gid,
+							  clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp,
+							  NULL, NULL, NULL, 0);
 				if (nowait_flag != 0) {
 					/* User said nowait - we force silent flag anyway and reset rpfd to N/A */
 					wqp->silent = 1;
@@ -3168,10 +3202,10 @@ void procputreq(req_type, req_data, clienthost)
 				}
 				if (!wqp) {
 					wqp = add2wq (clienthost,
-									user, uid, gid,
-									user_waitq, group_waitq, uid_waitq, gid_waitq,
-									clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp,
-									NULL, NULL, NULL, 0);
+								  user, uid, gid,
+								  user_waitq, group_waitq, uid_waitq, gid_waitq,
+								  clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp,
+								  NULL, NULL, NULL, 0);
 					if (nowait_flag != 0) {
 						/* User said nowait - we force silent flag anyway and reset rpfd to N/A */
 						wqp->silent = 1;
@@ -3204,9 +3238,9 @@ void procputreq(req_type, req_data, clienthost)
 					++nhpssfiles;
                     /* We accept explicit migration only on absence of specific status */
                     if (! ISCASTORFREE4MIG(found_stcp)) {
-                      sendrep(rpfd, MSG_ERR, STG33, upath, "is not eligible for explicit migration");
-                      c = USERR;
-                      goto reply;
+						sendrep(rpfd, MSG_ERR, STG33, upath, "is not eligible for explicit migration");
+						c = USERR;
+						goto reply;
                     }
 					euid = uid;
 					egid = gid;
@@ -3217,9 +3251,9 @@ void procputreq(req_type, req_data, clienthost)
 					++ncastorfiles;
                     /* We accept explicit migration only on absence of specific status */
                     if (! ISCASTORFREE4MIG(found_stcp)) {
-                      sendrep(rpfd, MSG_ERR, STG33, upath, "is not eligible for explicit migration");
-                      c = USERR;
-                      goto reply;
+						sendrep(rpfd, MSG_ERR, STG33, upath, "is not eligible for explicit migration");
+						c = USERR;
+						goto reply;
                     }
 					/* If tppool specified in input very that it is compatible with eventual yet asisgned tppool */
 					/* if tppool is NULL at first iteration, it will be set by the euid_egid() call */
@@ -3395,10 +3429,10 @@ void procputreq(req_type, req_data, clienthost)
 			}
 			if (!wqp) {
 				wqp = add2wq (clienthost,
-								user, uid, gid,
-								user_waitq, group_waitq, uid_waitq, gid_waitq,
-								clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp,
-								NULL, NULL, NULL, 0);
+							  user, uid, gid,
+							  user_waitq, group_waitq, uid_waitq, gid_waitq,
+							  clientpid, Upluspath, reqid, STAGEPUT, nbdskf, &wfp,
+							  NULL, NULL, NULL, 0);
 				if (nowait_flag != 0) {
 					/* User said nowait - we force silent flag anyway and reset rpfd to N/A */
 					wqp->silent = 1;
@@ -3424,10 +3458,10 @@ void procputreq(req_type, req_data, clienthost)
 	if (hsmfiles != NULL) free(hsmfiles);
 	if (hsmfilesstcp != NULL) free(hsmfilesstcp);
 	return;
- reply:
+  reply:
 #if SACCT
 	stageacct (STGCMDC, uid, gid, clienthost,
-						 reqid, STAGEPUT, 0, c, NULL, "", (char) 0);
+			   reqid, STAGEPUT, 0, c, NULL, "", (char) 0);
 #endif
 	sendrep (rpfd, STAGERC, STAGEPUT, c);
 	if (c) {
@@ -3513,13 +3547,13 @@ void procputreq(req_type, req_data, clienthost)
 
 int
 isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion, isstaged_nomore)
-		 struct stgcat_entry *cur;
-		 struct stgcat_entry **p;
-		 int poolflag;
-		 char *poolname;
-		 int rdonly;
-		 char *poolname_exclusion;
-		 int *isstaged_nomore;
+	struct stgcat_entry *cur;
+	struct stgcat_entry **p;
+	int poolflag;
+	char *poolname;
+	int rdonly;
+	char *poolname_exclusion;
+	int *isstaged_nomore;
 {
 	int found = 0;
 	int found_regardless_of_rdonly = 0;
@@ -3744,16 +3778,16 @@ isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion, isstaged_nomore
 											(
 												ISSTAGEWRT(stcp_regardless_of_rdonly) ||
 												ISSTAGEPUT(stcp_regardless_of_rdonly)
-											) &&
+												) &&
 											ISCASTORMIG(stcp)
-										) ||
+											) ||
 										(
 											(
 												((stcp->status & STAGED) == STAGED) && 
 												((stcp_regardless_of_rdonly->status & STAGED) != STAGED)
+												)
 											)
-										)
-									   ) {
+										) {
 										stcp_regardless_of_rdonly = stcp;
 									}
 								}
@@ -3832,7 +3866,7 @@ isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion, isstaged_nomore
 		if ((cur->t_or_d == 'h') && ((stcp_castor_name != NULL) || (stcp_castor_invariants != NULL))) {
 			if (stcp_castor_name != NULL) {
 				int stcp_castor_invariants_reqid = ((stcp_castor_invariants != NULL) ?
-														stcp_castor_invariants->reqid : 0);
+													stcp_castor_invariants->reqid : 0);
 				/* Matched name only - this stcp is always to be removed if possible */
 				if (ISCASTORBEINGMIG(stcp_castor_name) || ISCASTORWAITINGMIG(stcp_castor_name)) {
 					/* We cannot delete this file - it is busy */
@@ -3846,10 +3880,10 @@ isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion, isstaged_nomore
 				}
 				if (delfile (stcp_castor_name, ((stcp_castor_name->status & 0xF0) == STAGED ||
 												(stcp_castor_name->status & (STAGEOUT | PUT_FAILED)) == (STAGEOUT | PUT_FAILED)) ?
-												0 : 1,
-												 1, 1, "in catalog with wrong invariants", cur->uid, cur->gid, 0, 1) < 0) {
-						sendrep (rpfd, MSG_ERR, STG02, stcp_castor_name->ipath, RFIO_UNLINK_FUNC(stcp_castor_name->ipath), rfio_serror());
-						return(ISSTAGEDSYERR);
+							 0 : 1,
+							 1, 1, "in catalog with wrong invariants", cur->uid, cur->gid, 0, 1) < 0) {
+					sendrep (rpfd, MSG_ERR, STG02, stcp_castor_name->ipath, RFIO_UNLINK_FUNC(stcp_castor_name->ipath), rfio_serror());
+					return(ISSTAGEDSYERR);
 				}
 				if (stcp_castor_invariants_reqid != 0) {
 					int found_stcp_invariants = 0;
@@ -3889,7 +3923,7 @@ isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion, isstaged_nomore
 		}
 		return (NOTSTAGED);
 	} else {
-	isstaged_return:
+	  isstaged_return:
 		/* If user asked to a STAGEIN read-only and it if found, isstaged() will always return STAGED as for a normal */
 		/* STAGEIN, and this will increment the nbaccesses of the read-only entry in the catalog */
 		*p = ((stcp_rdonly != NULL) ? stcp_rdonly : stcp);
@@ -3947,10 +3981,10 @@ isstaged(cur, p, poolflag, poolname, rdonly, poolname_exclusion, isstaged_nomore
 
 int
 maxfseq_per_vid(cur, poolflag, poolname, concat_off_flag)
-		 struct stgcat_entry *cur;
-		 int poolflag;
-		 char *poolname;
-		 char *concat_off_flag;
+	struct stgcat_entry *cur;
+	int poolflag;
+	char *poolname;
+	char *concat_off_flag;
 {
 	int found = 0;
 	int i;
@@ -3987,12 +4021,12 @@ maxfseq_per_vid(cur, poolflag, poolname, concat_off_flag)
 }
 
 int unpackfseq(fseq, req_type, trailing, fseq_list, concat_off, concat_off_fseq)
-		 char *fseq;
-		 int req_type;
-		 char *trailing;
-		 fseq_elem **fseq_list;
-		 int concat_off;
-		 int *concat_off_fseq;
+	char *fseq;
+	int req_type;
+	char *trailing;
+	fseq_elem **fseq_list;
+	int concat_off;
+	int *concat_off_fseq;
 {
 	char *dp;
 	int i;
@@ -4107,7 +4141,7 @@ int unpackfseq(fseq, req_type, trailing, fseq_list, concat_off, concat_off_fseq)
 	if (have_qu == 0 && have_qn == 0) {
 		/* We verify the fseq list (if more than one element) */
 		i = 1;
- retry_verif:
+	  retry_verif:
 		for (; i < nbtpf; i++) {
 			if (strcmp((char *)(*fseq_list + i),(char *)(*fseq_list + i - 1)) == 0) {
 				int j, new_nbtpf;
@@ -4297,9 +4331,9 @@ int create_hsm_entry(rpfd,stcp,api_out,openmode,immediate_delete)
 		seteuid(start_passwd.pw_uid);
 		sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_creatx", sstrerror(serrno));
 		if (immediate_delete != 0) {
-		  if (delfile (stcp, 1, 1, 1, stcp->user, stcp->uid, stcp->gid, 0, 1) < 0) {
-		    sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
-		  }
+			if (delfile (stcp, 1, 1, 1, stcp->user, stcp->uid, stcp->gid, 0, 1) < 0) {
+				sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+			}
 		}
 		serrno = save_serrno;
 		if (api_out != 0) {
@@ -4319,7 +4353,7 @@ int create_hsm_entry(rpfd,stcp,api_out,openmode,immediate_delete)
 	/* The fileclass will be checked at next user call - in a stageupdc for example */
 #ifdef USECDB
 	if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-	stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+		stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
 	}
 #endif
 	savereqs();
@@ -4394,14 +4428,14 @@ int stageput_check_hsm(stcp,uid,gid,was_put_failed)
 				if (Cnsfilestat.status == 'm') {
 					/* If this file already has some migrated stuff we say to the user that we are going to recreate it */
 					sendrep (rpfd, MSG_ERR,
-								"STG98 - %s, size=%srenewed\n",
-								stcp->ipath, u64tostr(hsmsize, tmpbuf, 0));
+							 "STG98 - %s, size=%srenewed\n",
+							 stcp->ipath, u64tostr(hsmsize, tmpbuf, 0));
 					forced_Cns_creatx = 1;
 				} else {
-    	          /* Otherwise we just log it for our purpose */
+					/* Otherwise we just log it for our purpose */
 					stglogit (func, 
-								"STG98 - %s, size=%s renewed\n",
-								stcp->ipath, u64tostr(hsmsize, tmpbuf, 0));
+							  "STG98 - %s, size=%s renewed\n",
+							  stcp->ipath, u64tostr(hsmsize, tmpbuf, 0));
 				}
 				forced_Cns_setfsize = 1;
 			} else {
@@ -4414,16 +4448,16 @@ int stageput_check_hsm(stcp,uid,gid,was_put_failed)
 				return(0);
 			} else if (correct_size <= 0) {
 				sendrep (rpfd, MSG_ERR,
-							"STG98 - %s size is of zero size - not migrated\n",
-							stcp->ipath);
+						 "STG98 - %s size is of zero size - not migrated\n",
+						 stcp->ipath);
 				return(-1);
 			} else {
 				/* Not the same size or diskfile size is zero */
 				if (hsmsize > 0) {
 					sendrep (rpfd, MSG_ERR,
-								"STG98 - %s renewed (size differs vs. %s)\n",
-								stcp->u1.h.xfile,
-								stcp->ipath);
+							 "STG98 - %s renewed (size differs vs. %s)\n",
+							 stcp->u1.h.xfile,
+							 stcp->ipath);
 					if (Cnsfilestat.status == 'm') {
 						forced_Cns_creatx = 1;
 					}
@@ -4443,8 +4477,8 @@ int stageput_check_hsm(stcp,uid,gid,was_put_failed)
 		}
 		if (filemig_stat.st_size <= 0) {
 			sendrep (rpfd, MSG_ERR,
-						"STG98 - %s size is of zero size - not migrated\n",
-						stcp->ipath);
+					 "STG98 - %s size is of zero size - not migrated\n",
+					 stcp->ipath);
 			return(-1);
 		}
 		/* We will have to create it */
