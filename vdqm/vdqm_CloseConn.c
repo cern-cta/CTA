@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_CloseConn.c,v $ $Revision: 1.6 $ $Date: 1999/09/27 15:06:54 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_CloseConn.c,v $ $Revision: 1.7 $ $Date: 1999/09/27 15:09:11 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 
@@ -45,11 +45,11 @@ int vdqm_CloseConn(vdqmnw_t *nw) {
     if ( s == INVALID_SOCKET ) return(-1);
     status = shutdown(s,SD_BOTH);
     if ( status == SOCKET_ERROR ) {
-        log(LOG_ERR,"vdqm_CloseConn(): shutdown() %s\n",NWERRTXT);
+        log(LOG_ERR,"vdqm_CloseConn(): shutdown() %s\n",neterror());
     }
     status = closesocket(s);
     if ( status == SOCKET_ERROR ) {
-        log(LOG_ERR,"vdqm_CloseConn(): closesocket() %s\n",NWERRTXT);
+        log(LOG_ERR,"vdqm_CloseConn(): closesocket() %s\n",neterror());
     }
     return(status);
 }
