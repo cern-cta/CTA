@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: checkjobdied.c,v $ $Revision: 1.4 $ $Date: 2001/01/24 08:38:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: checkjobdied.c,v $ $Revision: 1.5 $ $Date: 2003/05/14 07:28:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	checkjobdied - returns the list of jobs that have died */
@@ -14,7 +14,7 @@ static char sccsid[] = "@(#)$RCSfile: checkjobdied.c,v $ $Revision: 1.4 $ $Date:
 #include <sys/time.h>
 #include <sys/types.h>
 #ifndef hpux
-#if defined(SOLARIS) || defined(sgi) || (defined(__osf__) && defined(__alpha)) || defined(linux)
+#if defined(SOLARIS) || defined(sgi) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(AIX51)
 #include <errno.h>
 #include <sys/stat.h>
 #else
@@ -36,7 +36,7 @@ int jobs[];
 	int i, j, k;
 #ifndef hpux
 	int fdkmem;
-#if defined(SOLARIS) || defined(sgi) || (defined(__osf__) && defined(__alpha)) || defined(linux)
+#if defined(SOLARIS) || defined(sgi) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(AIX51)
 	char name[12];
 	struct stat st;
 #else
@@ -66,7 +66,7 @@ int jobs[];
 		if (j < 0 && errno == ENOENT) jobs[k++] = jobs[i];	/* job has died */
 	}
 #else
-#if defined(SOLARIS) || defined(sgi) || (defined(__osf__) && defined(__alpha))
+#if defined(SOLARIS) || defined(sgi) || (defined(__osf__) && defined(__alpha)) || defined(AIX51)
 	for (i = 0, k = 0; jobs[i]; i++) {
 		sprintf (name, "/proc/%.5d", jobs[i]);
 		j = stat (name, &st);
