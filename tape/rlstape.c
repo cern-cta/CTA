@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.8 $ $Date: 1999/11/19 17:08:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.9 $ $Date: 1999/11/23 13:57:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -124,7 +124,8 @@ char	**argv;
 		NULL, jid);
 	tplogit (func, "vdqm_UnitStatus returned %s\n",
 		vdqm_rc ? sstrerror(serrno) : "ok");
-	if (vdqm_status != VDQM_VOL_UNMOUNT && (rlsflags & TPRLS_UNLOAD) == 0)
+	if (vdqm_rc == 0 && (vdqm_status & VDQM_VOL_UNMOUNT) == 0 &&
+	    (rlsflags & TPRLS_UNLOAD) == 0)
 		goto freevol;
 #endif
 	if (rlsflags & TPRLS_NOUNLOAD)
