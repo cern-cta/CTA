@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.43 2002/04/11 10:26:21 jdurand Exp $
+ * $Id: stage_api.c,v 1.44 2002/04/30 13:02:11 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -157,6 +157,7 @@ int DLL_DECL rc_castor2shift(rc)
   case EINVAL:
   case ENOENT:
   case EPERM:
+  case SENAMETOOLONG:
     return(USERR);
   case SESYSERR:
     return(SYERR);
@@ -265,7 +266,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
     return(-1);
   }
 
-  euid = geteuid();             /* Get current effective uid */
+  euid = Geuid = geteuid();             /* Get current effective uid */
   egid = getegid();             /* Get current effective gid */
 #if defined(_WIN32)
   if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
@@ -657,7 +658,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   while (1) {
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, nstcp_output, stcp_output, NULL, NULL);
     if ((c == 0) ||
-        (serrno == EINVAL)     || (serrno == ERTBLKSKPD) || (serrno == ERTTPE_LSZ) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) ||
+        (serrno == EINVAL)     || (serrno == ERTBLKSKPD) || (serrno == ERTTPE_LSZ) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (serrno == SENAMETOOLONG) ||
 		(serrno == EISDIR) ||
 		(serrno == ERTMNYPARY) || (serrno == ERTLIMBYSZ) || (serrno == ESTCLEARED) ||
 		(serrno == ESTKILLED)  || (serrno == ENOSPC) || (serrno == EBUSY) || (serrno == ESTLNKNSUP)) break;
@@ -857,9 +858,7 @@ int DLL_DECL stage_stcp2buf(buf,bufsize,stcp)
     STSTR2BUF(stcp,u1.t.dgn,'g',buf,bufsize);
     STSTR2BUF(stcp,u1.t.fid,'f',buf,bufsize);
     STVAL2BUF(stcp,u1.t.retentd,'t',buf,bufsize);
-#ifdef STAGER_SIDE_SERVER_SUPPORT
     STVAL2BUF_V3(stcp,u1.t.side," --side",buf,bufsize);
-#endif
     STSTR2BUF(stcp,u1.t.fseq,'q',buf,bufsize);
     /* Special case of filstat */
     if (stcp->u1.t.filstat == 'o') {
@@ -1188,7 +1187,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   /* Dial with the daemon */
   while (1) {
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, nstcp_input, stcp_input, &nstcp_output_internal, &stcp_output_internal, &nstpp_output_internal, &stpp_output_internal);
-    if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (SENAMETOOLONG)) break;
 	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > maxretry) break;
 	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
@@ -1390,7 +1389,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
     return(-1);
   }
 
-  euid = geteuid();             /* Get current effective uid */
+  euid = Geuid = geteuid();             /* Get current effective uid */
   egid = getegid();             /* Get current effective gid */
 #if defined(_WIN32)
   if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
@@ -1614,7 +1613,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   while (1) {
     c = send2stgd(hostname, req_type, flags, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, nstcp_output, stcp_output, NULL, NULL);
     if ((c == 0) ||
-        (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT)) break;
+        (serrno == EINVAL) || (serrno == ENOSPC) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > maxretry) break;
 	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
@@ -1704,7 +1703,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
     return(-1);
   }
 
-  euid = geteuid();             /* Get current effective uid */
+  euid = Geuid = geteuid();             /* Get current effective uid */
   egid = getegid();             /* Get current effective gid */
 #if defined(_WIN32)
   if ((euid < 0) || (euid >= CA_MAXUID) || (egid < 0) || (egid >= CA_MAXGID)) {
@@ -1977,7 +1976,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   while (1) {
     c = send2stgd(hostname, req_type, flagsok, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, 0, NULL, NULL, NULL);
     if ((c == 0) ||
-        (serrno == EINVAL)     || (serrno == EBUSY) || (serrno == ENOUGHF) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT)) break;
+        (serrno == EINVAL)     || (serrno == EBUSY) || (serrno == ENOUGHF) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > maxretry) break;
 	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
@@ -2232,7 +2231,7 @@ int DLL_DECL stage_ping(flags,hostname)
   /* Dial with the daemon */
   while (1) {
     c = send2stgd(hostname, req_type, (u_signed64) 0, sendbuf, msglen, 1, NULL, (size_t) 0, 0, NULL, NULL, NULL, NULL, NULL);
-    if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT)) break;
+    if ((c == 0) || (serrno == EINVAL) || (serrno == EACCES) || (serrno == EPERM) || (serrno == ENOENT) || (serrno == SENAMETOOLONG)) break;
 	if (serrno == ESTNACT && nstg161++ == 0 && ((flags & STAGE_NORETRY) != STAGE_NORETRY)) stage_errmsg(NULL, STG161);
     if (serrno != ESTNACT && ntries++ > maxretry) break;
 	if ((flags & STAGE_NORETRY) == STAGE_NORETRY) break;  /* To be sure we always break if --noretry is in action */
