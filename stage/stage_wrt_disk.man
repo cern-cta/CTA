@@ -1,0 +1,156 @@
+.\" $Id: stage_wrt_disk.man,v 1.1 2002/10/08 13:43:53 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_wrt_disk.man,v $ $Revision: 1.1 $ $Date: 2002/10/08 13:43:53 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_WRT_DISK "3" "$Date: 2002/10/08 13:43:53 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_wrt_disk \- Asks for one or more disks files to be copied from disk to disk
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_wrt_disk(u_signed64 " flags ,
+.BI "int " openflag ,
+.BI "char *" hostname ,
+.BI "char *" pooluser ,
+.BI "int " nstcp_input ,
+.BI "struct stgcat_entry *" stcp_input ,
+.BI "int *" nstcp_output ,
+.BI "struct stgcat_entry **" stcp_output ,
+.BI "int " nstpp_input ,
+.BI "struct stgpath_entry *" stpp_input ");"
+
+.SH DESCRIPTION
+The \fBstage_wrt_disk\fP API method asks the stager for one or more DISK files to be copied from disk to disk.
+There are two ouputs: the default ttys (unless you use \fBstage_setlog\fP) and the output parameters, that are allocated on the fly (e.g. the user will have to free them if necessary/wanted).
+
+.SH PARAMETERS
+.TP 1.5i
+.I flags
+Can be zero or a logical or the following values:
+.RS
+.TP
+.I STAGE_REQID
+The member reqid of all 
+.I stcp_input
+structures given in input must match a known entry having exactly this request id. Otherwise, even it is set in the input structures, the reqid member will be ignored when processing the request.
+.TP
+.I STAGE_SILENT
+Print nothing (the log callback will never be notified neither).
+.TP
+.I STAGE_NORETRY
+Does not prevent stager daemon to decide to do a retry, neverthelessm, but prevents client to keep retrying in any case. Can be set with environment variable $STAGE_NORETRY to a non\-zero value.
+.TP
+.I STAGE_NOWAIT
+If data is to be copied, this will be done in the background, and client will get an immediate return with ok status.
+.RE
+.TP
+.I openflags
+Not used here.
+.TP
+.I hostname
+Gives explicitely the hostname where is the stager daemon. If it NULL, default value apply: either the environment variable $STAGE_HOST, an entry 'STG HOST' in /etc/shift.conf file, or the default "stagepublic".
+.TP
+.I pooluser
+Not used here.
+.TP
+.I nstcp_input
+Number of stcp_input entries.
+.TP
+.I stcp_input
+Entries describing the files you want to be copied. Only the member xfile of the structures is mandatory. Other members of interest are:
+.RS
+.TP
+.I size
+Gives how many bytes should be allocated rather than the default
+.TP
+.I poolname
+Specify explicitely a disk pool
+.LP
+Others members should all be setted to zero in order to avoid your request to possibly misbehave.
+.RE
+.TP
+.I nstcp_output
+Filled with the number of staged/copied entries at return.
+.TP
+.I stcp_output
+Filled with the address of an array containg the staged entries at return. Up to the user to free it if necessary.
+.TP
+.I nstpp_input
+Number of 
+.I stpp_input
+entries describing user links.
+.TP
+.I stpp_input
+User links pointing to source files to be written.
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SENOMAPFND
+Can't open mapping database (Windows only)
+.TP
+.B EFAULT
+Bad address
+.TP
+.B EINVAL
+Invalid argument
+.TP
+.B ESTGROUP
+Invalid group
+.TP
+.B SECONNDROP
+Connection closed by remote end
+.TP
+.B SECOMERR
+Communication error
+.TP
+.B SEINTERNAL
+Internal error
+.TP
+.B SEUSERUNKN
+User unknown
+.TP
+.B ESTLINKNAME
+User link name processing error
+.TP
+.B SEOPNOTSUP
+Operation not supported (should not happen)
+.TP
+.B ESTMEM
+Request too big
+.TP
+.B ENOENT
+No such file or directory
+.TP
+.B SESYSERR
+System error
+.TP
+.B ESTCLEARED
+Request cleared
+.TP
+.B ESTKILLED
+Request killed
+.TP
+.B ENOSPC
+No space left on device
+.TP
+.B ESTLNKNSUP
+Symbolic link not supported
+.TP
+.B ESTNACT
+Stager not active (if you specify the STAGE_NORETRY flag - default is to retry forever)
+.TP
+.B SENOSHOST
+Host not known
+
+.SH SEE ALSO
+\fBstagewrt\fP(1), \fBstage_limits\fP(3), \fBCastor_limits\fP(3), \fBstage_setlog\fP(3), \fBrc_castor2shift\fP(3), \fBstage_kill\fP(3), \fBstage_struct\fP(3), \fBstage_macros\fP(3), \fBstage_constants\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
