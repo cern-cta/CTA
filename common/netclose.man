@@ -1,0 +1,37 @@
+.\" @(#)$RCSfile: netclose.man,v $ $Revision: 1.1 $ $Date: 2001/10/23 08:46:51 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1991-2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH NETCLOSE 3 "$Date: 2001/10/23 08:46:51 $" CASTOR "Common Library Functions"
+.SH NAME
+netclose \- close an existing socket
+.SH SYNOPSIS
+\fB#include "net.h"\fR
+.sp
+.BI "int netclose (int " s );
+.SH DESCRIPTION
+.B netclose
+closes an existing socket.
+.SH RETURN VALUE
+This routine returns zero if the operation was successful
+or -1 if the operation failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.2i
+.B EINTR
+The function was interrupted by a signal.
+.TP
+.B EBADF
+.I s
+is not a valid descriptor.
+.TP
+.B ENOTSOCK
+.I s
+is not a socket.
+.SH SEE ALSO
+.BR close(2) ,
+.BR closesocket(WNT) ,
+.B neterror(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
