@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.10 $ $Date: 2000/01/24 09:09:07 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.11 $ $Date: 2000/01/24 17:08:39 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -654,7 +654,7 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
     rtcpFileRequest_t *filereq = NULL;
     rtcpTapeRequest_t *tapereq = NULL;
 
-    if ( file == NULL ) flags = TPRLS_ALL;
+    if ( file == NULL ) flags = TPRLS_ALL | TPRLS_NOWAIT;
     else {
         filereq = &file->filereq;
         path = filereq->tape_path;
