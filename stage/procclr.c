@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.32 2001/06/21 09:40:45 jdurand Exp $
+ * $Id: procclr.c,v 1.33 2001/06/21 09:43:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.32 $ $Date: 2001/06/21 09:40:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.33 $ $Date: 2001/06/21 09:43:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -167,7 +167,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 		unmarshall_LONG (rbp, nstcp_input);
 		unmarshall_LONG (rbp, nstpp_input);
 		/* We support one nstcp_input == 1 xor nstpp_input == 1 */
-		if (((nstcp_input >= 0) && (nstpp_input <= 0)) ||
+		if (((nstcp_input <= 0) && (nstpp_input <= 0)) ||
 			((nstcp_input >  0) && (nstpp_input >  0)) ||
 			((nstcp_input >  0) && (nstcp_input != 1)) ||
             ((nstpp_input >  0) && (nstpp_input != 1))) {
