@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.56 2002/08/27 08:30:44 jdurand Exp $
+ * $Id: stage_api.h,v 1.57 2002/08/29 09:07:19 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -181,15 +181,15 @@ EXTERN_C int DLL_DECL stage_clr _PROTO((char,                      /* t_or_d */
                                         struct stgpath_entry *));  /* stpp_input */
 #endif /* hpux */
 #define stageclr_tape(flags,hostname,nstcp_input,stcp_input) \
-  stage_clr('t',flags,hostname,nstcp_input,stcp_input,0,NULL)
+  stage_clr('t',flags,hostname,nstcp_input,stcp_input,0,(struct stgpath_entry *) NULL)
 #define stageclr_disk(flags,hostname,nstcp_input,stcp_input) \
-  stage_clr('d',flags,hostname,nstcp_input,stcp_input,0,NULL)
+  stage_clr('d',flags,hostname,nstcp_input,stcp_input,0,(struct stgpath_entry *) NULL)
 #define stageclr_hsm(flags,hostname,nstcp_input,stcp_input) \
-  stage_clr('m',flags,hostname,nstcp_input,stcp_input,0,NULL)
+  stage_clr('m',flags,hostname,nstcp_input,stcp_input,0,(struct stgpath_entry *) NULL)
 #define stageclr_path(flags,hostname,nstpp_input,stpp_input) \
-  stage_clr('p',flags,hostname,0,NULL,nstpp_input,stpp_input)
+  stage_clr('p',flags,hostname,0,(struct stgcat_entry *) NULL,nstpp_input,stpp_input)
 #define stageclr_link(flags,hostname,nstpp_input,stpp_input) \
-  stage_clr('l',flags,hostname,0,NULL,nstpp_input,stpp_input)
+  stage_clr('l',flags,hostname,0,(struct stgcat_entry *) NULL,nstpp_input,stpp_input)
 
 /* ----------------------------- */
 /* Shorthand STAGE_CLR interface */
