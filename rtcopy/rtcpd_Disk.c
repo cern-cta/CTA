@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.77 $ $Date: 2000/04/25 13:12:18 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.78 $ $Date: 2000/04/26 08:03:39 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1316,6 +1316,7 @@ void *diskIOthread(void *arg) {
         rtcp_log(LOG_ERR,"diskIOthread() received NULL argument\n");
         rtcpd_SetProcError(RTCP_FAILED);
         DiskIOfinished();
+        return((void *)&failure);
     }
 
     tape = ((thread_arg_t *)arg)->tape;
@@ -1332,7 +1333,9 @@ void *diskIOthread(void *arg) {
         rtcp_log(LOG_ERR,"diskIOthread() received NULL tape/file element\n");
         rtcpd_SetProcError(RTCP_FAILED);
         (void) tellClient(&client_socket,NULL,NULL,-1); 
+        rtcp_CloseConnection(&client_socket);
         DiskIOfinished();
+        return((void *)&failure);
     }
     diskIOstatus = &proc_stat.diskIOstatus[pool_index];
     tapereq = &tape->tapereq;
@@ -1370,6 +1373,8 @@ void *diskIOthread(void *arg) {
                 rtcp_log(LOG_INFO,"diskIOthread() exit for synchronization due to ENOSPC\n");
                 filereq->proc_status = RTCP_WAITING;
                 (void) tellClient(&client_socket,NULL,NULL,-1);
+                rtcp_CloseConnection(&client_socket);
+                DiskIOfinished();
                 return((void *)&success);
             }
         }
