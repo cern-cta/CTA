@@ -38,6 +38,9 @@ COPYTAPEDIR = copytape
 #undef BuildProtoCppStager
 #define BuildProtoCppStager YES
 #endif
+#if BuildExpertClient != YES
+#define BuildExpertClient YES
+#endif
 #endif
 
 #if BuildNameServerDaemon && !UseOracle && !UseRaima
