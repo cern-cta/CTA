@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.15 2000/10/27 14:04:33 jdurand Exp $
+ * $Id: stageput.c,v 1.16 2000/12/11 08:33:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.15 $ $Date: 2000/10/27 14:04:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.16 $ $Date: 2000/12/11 08:33:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -74,7 +74,6 @@ int main(argc, argv)
 	uid_t uid;
 	char **hsmfiles = NULL;
 	int nhsmfiles = 0;
-	int ihsmfiles;
 	int stagemig = 0;
 #if defined(_WIN32)
 	WSADATA wsadata;
@@ -381,6 +380,7 @@ void cleanup(sig)
 	char sendbuf[64];
 	/* char repbuf[CA_MAXPATHLEN+1]; */
 	
+
 	signal (sig, SIG_IGN);
 	
 	sbp = sendbuf;
