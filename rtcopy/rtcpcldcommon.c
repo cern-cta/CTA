@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 13:05:21 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/10 06:34:54 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 13:05:21 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/10 06:34:54 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -50,11 +50,12 @@ WSADATA wsadata;
 #include <rtcp_constants.h>
 #include <vdqm_api.h>
 #include <Cnetdb.h>
+#include <castor/stager/TapeStatusCodes.h>
+#include <castor/stager/SegmentStatusCodes.h>
 #include <rtcp.h>
 #include <rtcp_server.h>
 #include <rtcp_api.h>
 #include <rtcpcld_constants.h>
-#include <rtcpcldCatalog.h>
 #include <rtcpcld.h>
 #define RTCPCLD_COMMON
 #include <rtcpcld_messages.h>
@@ -64,7 +65,6 @@ extern int inChild;
 extern Cuuid_t mainUuid;
 extern Cuuid_t childUuid;
 
-#ifdef RTCPCLDSERVER
 /*
  * Only used when rtcpcld calls RTCOPY or other libraries
  * that may do internal logging.
@@ -125,7 +125,6 @@ int rtcpcld_initLogging(
   rtcp_log = rtcpcld_extlog;
   return(0);
 }
-#endif /* RTCPCLDSERVER */
 
 int rtcpcld_initNotifyByPort(
                              notificationSocket,
@@ -329,7 +328,6 @@ int rtcpcld_sendNotify(
   return(0);
 }
 
-#ifdef USEFAKECATALOGUE
 int rtcpcld_setVIDFailedStatus(
                                tape
                                ) 
@@ -338,26 +336,25 @@ int rtcpcld_setVIDFailedStatus(
   int failed = 0;
 
   if ( rtcpcld_updateVIDStatus(tape,
-                               TPINFO_WAITVDQM,
-                               TPINFO_FAILED) == -1 ) failed++;
+                               TAPE_WAITVDQM,
+                               TAPE_FAILED) == -1 ) failed++;
   if ( rtcpcld_updateVIDStatus(tape,
-                               TPINFO_WAITMOUNT,
-                               TPINFO_FAILED) == -1 ) failed++;
+                               TAPE_WAITMOUNT,
+                               TAPE_FAILED) == -1 ) failed++;
   if ( rtcpcld_updateVIDFileStatus(tape,
-                                   TPFILEINFO_WAITFSEQ,
-                                   TPFILEINFO_FAILED) == -1 ) failed++;
+                                   SEGMENT_WAITFSEQ,
+                                   SEGMENT_FAILED) == -1 ) failed++;
   if ( rtcpcld_updateVIDFileStatus(tape,
-                                   TPFILEINFO_WAITPATH,
-                                   TPFILEINFO_FAILED) == -1 ) failed++;
+                                   SEGMENT_WAITPATH,
+                                   SEGMENT_FAILED) == -1 ) failed++;
   if ( rtcpcld_updateVIDFileStatus(tape,
-                                   TPFILEINFO_WAITCOPY,
-                                   TPFILEINFO_FAILED) == -1 ) failed++;
+                                   SEGMENT_WAITCOPY,
+                                   SEGMENT_FAILED) == -1 ) failed++;
   if ( rtcpcld_updateVIDFileStatus(tape,
-                                   TPFILEINFO_COPYRUNNING,
-                                   TPFILEINFO_FAILED) == -1 ) failed++;
+                                   SEGMENT_COPYRUNNING,
+                                   SEGMENT_FAILED) == -1 ) failed++;
 
   if ( failed > 0 ) return(-1);
   else return(0);
 }
-#endif /* USEFAKECATALOGUE */
 
