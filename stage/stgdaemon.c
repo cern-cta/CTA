@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.48 2000/06/16 14:38:38 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.49 2000/06/16 15:17:33 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.48 $ $Date: 2000/06/16 14:38:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.49 $ $Date: 2000/06/16 15:17:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -93,6 +93,13 @@ struct winsize {
 #include <serrno.h>
 #include "osdep.h"
 #include "Cnetdb.h"
+#include "Cns_api.h"
+#if hpux
+/* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
+/* calls to setresuid().                                                */
+#define seteuid(euid) setresuid(-1,euid,-1)
+#define setegid(egid) setresgid(-1,egid,-1)
+#endif
 
 extern char *optarg;
 extern int optind;
@@ -1748,6 +1755,7 @@ upd_staged(req_type, clienthost, user, uid, gid, clientpid, upath)
 	struct stgpath_entry *stpp;
 	struct waitf *wfp;
 	struct waitq *wqp = NULL;
+	struct Cns_fileid Cnsfileid;
 
 	found = 0;
 	/* first lets assume that internal and user path are different */
@@ -1769,15 +1777,34 @@ upd_staged(req_type, clienthost, user, uid, gid, clientpid, upath)
 			break;
 		}
 	}
-	if (found == 0 || (stcp->status & 0xF0) != STAGED) {
+	if (found == 0 || (stcp->status & 0xF0) != STAGED || stcp->t_or_d != 'h') {
 		sendrep (rpfd, MSG_ERR, STG22);
 		return (USERR);
 	}
+	setegid(gid);
+	seteuid(uid);
+	if (Cns_creatx(stcp->u1.h.xfile, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP, &Cnsfileid) != 0) {
+		sendrep (rpfd, MSG_ERR, "STG02 - %s : %s\n", stcp->u1.h.xfile, sstrerror(serrno));
+		setegid(0);
+		seteuid(0);
+		return(USERR);
+	}
+	setegid(0);
+	seteuid(0);
+    if (strcmp(stcp->u1.h.server,Cnsfileid.server) != 0 ||
+        stcp->u1.h.fileid != Cnsfileid.fileid) {
+      /* Something have changed */
+      sendrep (rpfd, MSG_ERR, "%s : Old entry do not exist anymore (previously deleted, different name server ?)\n",stcp->u1.h.xfile);
+      setegid(0);
+      seteuid(0);
+      return(USERR);
+    }
 	stcp->status = STAGEOUT;
 	stcp->a_time = time (0);
 	stcp->nbaccesses++;
 	if (*upath && strcmp (stcp->ipath, upath))
 		create_link (stcp, upath);
+
 	savereqs();
 #ifdef USECDB
 	if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
