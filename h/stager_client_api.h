@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.8 $ $Release$ $Date: 2004/11/19 18:30:48 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.9 $ $Release$ $Date: 2004/11/22 22:00:00 $ $Author: bcouturi $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.8 $
- * @date $Date: 2004/11/19 18:30:48 $
+ * @version $Revision: 1.9 $
+ * @date $Date: 2004/11/22 22:00:00 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.8 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.9 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -213,9 +213,14 @@ struct stage_prepareToGet_fileresp {
   int		status;
 
   /**
+   * Error code
+   */
+  int errorCode;
+  
+  /**
    * Error message, if the error code indicates a problem
    */
-  char		*errstring;
+  char		*errorMessage;
 };
 
 /**
@@ -286,9 +291,14 @@ struct stage_get_fileresp {
   int		status;
 
   /**
+   * Error code
+   */
+  int		errorCode;
+
+  /**
    * Error message, if the error code indicates a problem
    */
-  char		*errstring;
+  char		*errorMessage;
 
 };
 
@@ -445,10 +455,31 @@ struct stage_prepareToPut_filereq {
  * Response to a prepareToPut file Request.
  */
 struct stage_prepareToPut_fileresp {
+  /**
+   * Name of the file
+   */
   char		*filename;
+
+  /**
+   * Size
+   */
   u_signed64	filesize;
+
+  /**
+   * Status of the sub request concerning the file
+   */
   int		status;
-  char		*errstring;
+
+  /**
+   * Error code
+   */
+  int		errorCode;
+
+  /**
+   * Error message, if the error code indicates a problem
+   */
+  char		*errorMessage;
+
 };
 
 /**
@@ -491,7 +522,8 @@ struct stage_put_fileresp {
   int           port;
   char		*filename;
   int		status;
-  char		*errstring;
+  int errorCode;
+  char		*errorMessage;
 };
 
 		       

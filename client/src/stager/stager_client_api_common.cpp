@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.2 2004/11/19 18:31:31 bcouturi Exp $
+ * $Id: stager_client_api_common.cpp,v 1.3 2004/11/22 22:00:59 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.2 $ $Date: 2004/11/19 18:31:31 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.3 $ $Date: 2004/11/22 22:00:59 $ CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
@@ -36,7 +36,7 @@ int _free_prepareToGet_filereq (struct stage_prepareToGet_filereq  *ptr) {
 
 int _free_prepareToGet_fileresp (struct stage_prepareToGet_fileresp  *ptr) { 
   if (ptr->filename != NULL) free (ptr->filename);
-  if (ptr->errstring != NULL) free (ptr->errstring);
+  if (ptr->errorMessage != NULL) free (ptr->errorMessage);
   free(ptr);
   return 0; 
 }
@@ -46,7 +46,7 @@ int _free_get_fileresp (struct stage_get_fileresp  *ptr){
   if (ptr->protocol != NULL) free (ptr->protocol);
   if (ptr->server != NULL) free (ptr->server);
   if (ptr->filename != NULL) free (ptr->filename);
-  if (ptr->errstring != NULL) free (ptr->errstring);
+  if (ptr->errorMessage != NULL) free (ptr->errorMessage);
   free(ptr);
   return 0; 
 }
@@ -58,7 +58,7 @@ int _free_prepareToPut_filereq (struct stage_prepareToPut_filereq  *ptr){
 }
 int _free_prepareToPut_fileresp (struct stage_prepareToPut_fileresp  *ptr){ 
   if (ptr->filename != NULL) free (ptr->filename);
-  if (ptr->errstring != NULL) free (ptr->errstring);
+  if (ptr->errorMessage != NULL) free (ptr->errorMessage);
   free(ptr);
   return 0; 
 }
@@ -66,7 +66,7 @@ int _free_put_fileresp (struct stage_put_fileresp  *ptr){
   if (ptr->protocol != NULL) free (ptr->protocol);
   if (ptr->server != NULL) free (ptr->server);
   if (ptr->filename != NULL) free (ptr->filename);
-  if (ptr->errstring != NULL) free (ptr->errstring);
+  if (ptr->errorMessage != NULL) free (ptr->errorMessage);
   free(ptr);
   return 0; 
 }
