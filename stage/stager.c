@@ -257,7 +257,7 @@ int main(argc, argv)
 #ifdef STAGER_DEBUG
 		sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] Setting Cns_errbuf and vmgr_errbuf\n");
 		if (Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0 ||
-			vmgr_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0 ||
+			vmgr_seterrbuf(vmgr_error_buffer,sizeof(vmgr_error_buffer)) != 0 ||
 			stage_setlog((void (*) _PROTO((int, char *))) &stager_log_callback) != 0) {
 			sendrep(rpfd, MSG_ERR, "### Cannot set Cns or Vmgr API error buffer(s) or stager API callback function (%s)\n",sstrerror(serrno));
 			exit(SYERR);
@@ -607,12 +607,8 @@ int stagein_castor_hsm_file() {
 					/* Reselect a server - we retry, though */
 					stagein_castor_hsm_file_retry = 1;
 				} else if (rtcpcreqs[0]->tapereq.err.errorcode == ETVBSY) {
-					/* This is *serious* error, most probably tape info inconsistency with, for ex., TMS */
-					Flags |= DISABLED;
-					sendrep(rpfd, MSG_ERR, STG02, vid, "rtcpc", "Tape information inconsistency - Contact responsibles");
-					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Flaging tape to DISABLED");
-					free(stcs_tmp);
-					RETURN (SYERR);
+					/* Reselect a server - we retry, though */
+					stagein_castor_hsm_file_retry = 1;
 				} else if (rtcpcreqs[0]->file[i].filereq.err.errorcode != ENOENT) {
 					Flags |= DISABLED;
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc",sstrerror (serrno));
@@ -885,8 +881,10 @@ int stagewrt_castor_hsm_file() {
 						(rtcpcreqs[0]->tapereq.err.severity & RTCP_RESELECT_SERV) == RTCP_RESELECT_SERV) {
 				/* Reselect a server - we retry, though */
 				sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Retrying (Another Tape Server Required)");
-			} else if (rtcpcreqs[0]->tapereq.err.errorcode == ETVBSY ||
-						 rtcpcreqs[0]->file->filereq.err.errorcode == ENOENT) {
+			} else if (rtcpcreqs[0]->tapereq.err.errorcode == ETVBSY) {
+				/* Reselect also server */
+				sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Retrying (ETVBSY)");
+			} else if (rtcpcreqs[0]->file->filereq.err.errorcode == ENOENT) {
 				/* Tape info very probably inconsistency with, for ex., TMS */
 				sendrep(rpfd, MSG_ERR, STG02, vid, "rtcpc", "Tape information inconsistency - Contact responsibles");
 				sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "rtcpc","Flaging tape to TAPE_FULL");
