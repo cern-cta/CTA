@@ -1,8 +1,8 @@
-.\" $Id: Ctape_rstatus.man,v 1.2 1999/09/02 15:10:29 baud Exp $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_rstatus.man,v $ $Revision: 1.3 $ $Date: 1999/09/12 05:39:37 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1991-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_RSTATUS l "$Date: 1999/09/02 15:10:29 $"
+.TH CTAPE_RSTATUS l "$Date: 1999/09/12 05:39:37 $"
 .SH NAME
 Ctape_rstatus \- get resource reservation status
 .SH SYNOPSIS

@@ -1,8 +1,8 @@
-.\" $Id: Ctape_status.man,v 1.2 1999/09/02 15:14:31 baud Exp $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_status.man,v $ $Revision: 1.3 $ $Date: 1999/09/12 05:42:38 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_STATUS l "$Date: 1999/09/02 15:14:31 $"
+.TH CTAPE_STATUS l "$Date: 1999/09/12 05:42:38 $"
 .SH NAME
 Ctape_status \- get the status of all tape drives
 .SH SYNOPSIS
