@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_open.man,v 1.1 2000/07/07 14:06:51 jdurand Exp $
+.\" $Id: rfio_open.man,v 1.2 2000/07/07 14:08:33 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: rfio_open.man,v $ $Revision: 1.1 $ $Date: 2000/07/07 14:06:51 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_open.man,v $ $Revision: 1.2 $ $Date: 2000/07/07 14:08:33 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_OPEN 3 "$Date: 2000/07/07 14:06:51 $" CASTOR "Rfio Library Functions"
+.TH RFIO_OPEN 3 "$Date: 2000/07/07 14:08:33 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_open \- opens a file
 .SH SYNOPSIS
@@ -17,7 +17,7 @@ rfio_open \- opens a file
 .BI "const int" flags ,
 .BI "const int" mode )
 .SH DESCRIPTION
-.B rfio_fopen
+.B rfio_open
 opens the file whose name is the string pointed to by
 .BI path
 , a character string containing the filename specification, and associates a RFILE stream with it.
