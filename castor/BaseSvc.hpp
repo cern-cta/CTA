@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseSvc.hpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/07 15:54:43 $ $Author: sponcec3 $
  *
  * 
  *
@@ -47,12 +47,12 @@ namespace castor {
     /**
      * Constructor
      */
-    BaseSvc(const std::string name);
+    BaseSvc(const std::string name) throw();
 
     /**
      * Destructor
      */
-    virtual ~BaseSvc(){};
+    virtual ~BaseSvc() throw() {};
     
     /**
      * Get the service name
@@ -68,7 +68,7 @@ namespace castor {
      * removes a reference to the service and releases it
      * if the count goes to 0
      */
-    virtual void release();
+    virtual void release() throw();
 
   private:
 

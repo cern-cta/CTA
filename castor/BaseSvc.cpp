@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseSvc.cpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/07 15:54:43 $ $Author: sponcec3 $
  *
  * 
  *
@@ -31,7 +31,7 @@
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::BaseSvc::BaseSvc(const std::string name) :
+castor::BaseSvc::BaseSvc(const std::string name) throw() :
   BaseObject(),
   m_name(name),
   m_refs(1) {}
@@ -39,7 +39,7 @@ castor::BaseSvc::BaseSvc(const std::string name) :
 // -----------------------------------------------------------------------
 // release
 // -----------------------------------------------------------------------
-void castor::BaseSvc::release() {
+void castor::BaseSvc::release() throw() {
   m_refs--;
   if (0 == m_refs) {
     svcs()->removeService(name());
