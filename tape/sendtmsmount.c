@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendtmsmount.c,v $ $Revision: 1.5 $ $Date: 2000/05/04 10:27:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendtmsmount.c,v $ $Revision: 1.6 $ $Date: 2000/06/30 15:01:01 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*	sendtmsmount -  send a MOUNT request to TMS */
@@ -13,6 +13,7 @@ static char sccsid[] = "@(#)$RCSfile: sendtmsmount.c,v $ $Revision: 1.5 $ $Date:
 #include <sys/types.h>
 #include "Ctape.h"
 #include "serrno.h"
+#if TMS
 extern int rpfd;
 sendtmsmount(mode, mtype, vid, jid, logonid, acctname, drive)
 int mode;
@@ -84,3 +85,4 @@ char *drive;
 	}
 	RETURN (rc);
 }
+#endif
