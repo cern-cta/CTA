@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.16 2000/03/23 01:42:03 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.17 2000/05/11 11:59:31 jdurand Exp $
  */
 
 /*
@@ -18,7 +18,7 @@
 #include "Cstage_ifce.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.16 $ $Date: 2000/03/23 01:42:03 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.17 $ $Date: 2000/05/11 11:59:31 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
@@ -83,7 +83,7 @@ extern char func[];
 		stglogit("stgdb_Cdb_ifce","### Warning at %s:%d: Cannot reconnect to Cdb at retry "	\
 						 "No %d\n",															\
 						 __FILE__,__LINE__,iretry);											\
-		sleep(1);																			\
+		sleep(STGDB_CONRETRYINT);															\
 	}																						\
 }
 
