@@ -1,14 +1,21 @@
 /*
- * Copyright (C) 1990-1995 by CERN CN-PDP/CS
+ * $Id: ypgetacctent.c,v 1.2 1999/07/22 14:47:34 obarring Exp $
+ * $Log: ypgetacctent.c,v $
+ * Revision 1.2  1999/07/22 14:47:34  obarring
+ * MT safe version
+ *
+ */
+
+/*
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)ypgetacctent.c	1.2 01/29/96 CERN CN-PDP/CS Antoine Trannoy";
+static char cvsId[] = "$Id: ypgetacctent.c,v 1.2 1999/07/22 14:47:34 obarring Exp $";
 #endif /* not lint */
 
-
-/* 	ypgetacctent() - Get account id in YP	*/
+/*  ypgetacctent() - Get account id in YP   */
 
 #if defined(NIS)
 #include <stdio.h>
@@ -24,145 +31,147 @@ static char sccsid[] = "@(#)ypgetacctent.c	1.2 01/29/96 CERN CN-PDP/CS Antoine T
 
 #include "ypgetacctent.h"
 
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+#define strtok(X,Y) strtok_r(X,Y,&last)
+#endif /* _REENTRANT || _THREAD_SAFE */
+
+typedef struct Cyp_spec {
+        char name[NAME_LEN];
+        char account[ACCT_LEN];
+        int firsttime;
+} Cyp_spec_t;
+static int Cypent_key = -1;
+#define name Cyp->name
+#define account Cyp->account
+#define firsttime Cyp->firsttime
 
 static int ypcall(instatus, inkey, inkeylen, inval, invallen, indata)
-	int	instatus;
-	char	*inkey;
-	int	inkeylen;
-	char	*inval;
-	int	invallen;
-	char	*indata;
+    int instatus;
+    char    *inkey;
+    int inkeylen;
+    char    *inval;
+    int invallen;
+    char    *indata;
+{
 
-	{ static char	name[NAME_LEN];
-	  static char	account[ACCT_LEN];
-	  static int	firsttime = TRUE; 
-	  char		*cp = NULL; 
-	  char		buf[BUFSIZ];
+    char      *cp = NULL; 
+    char      buf[BUFSIZ];
+    Cyp_spec_t *Cyp;
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+    char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
 
-	  /*
-	   * There is an error
-	   */
+    /*
+     * There is an error
+     */
 
-	  if (instatus != 1)
-	    { *indata = ENDSTR_CHR;
+    if (instatus != 1) { 
+        *indata = ENDSTR_CHR;
+        return(1);
+    }
 
-	      return(1);
-	    }
+    Cglobals_get(&Cypent_key,&Cyp,sizeof(Cyp_spec_t));
 
-	  /*
-	   * It is the first time
-	   */
+    /*
+     * It is the first time
+     */
 
-	  if (firsttime == TRUE)
-	    { (void)strcpy(name, strtok(indata, COLON_STR));
+    if (firsttime == 0) {
+        (void)strcpy(name, strtok(indata, COLON_STR));
+        (void)strcpy(account, strtok((char *)NULL, COLON_STR));
+        firsttime = 1; 
+    }
+    
+    (void)strncpy(buf, inval, (size_t)invallen);
 
-	      (void)strcpy(account, strtok((char *)NULL, COLON_STR));
+    buf[invallen] = '\0';     /* see man strncpy */
+
+    cp = strtok(inval, COLON_STR);
+
+    if (strcmp(cp, name) != 0)
+      /*
+       * Username does not match.
+       */
+      return(0);
+    else {
+        cp = strtok((char *)NULL, COLON_STR);
+        if (*account == STAR_CHR) {
+            (void)strcpy(indata, buf);
+            return(1);
+        } else { 
+            if (strcmp(cp, account) != 0) return(0);
+            (void)strcpy(indata, buf); 
+            return(1);
+        }
+    }
+}
+
+#undef name
+#undef account
+#undef first
+
+char    *ypgetacctent(pwd, account, buffer, bufferlen)
+    struct passwd   *pwd; 
+    char        *account;
+    char        *buffer;
+    int     bufferlen;
+{
+    struct ypall_callback call;
+    char          *domain = NULL; 
+    char          buf[BUFSIZ];
+    char          *outval = NULL;
+    int           outvallen = 0;
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+    char *last = NULL;
+#endif /* _REENTRANT || _THREAD_SAFE */
 
 
-	      firsttime = FALSE; 
-	    }
-	
-	  (void)strncpy(buf, inval, (size_t)invallen);
+    /*
+     * Consulting YP.
+     */
 
-	  buf[invallen] = '\0';		/* see man strncpy */
+    if (yp_get_default_domain(&domain) != 0) return(NULL);
 
-	  cp = strtok(inval, COLON_STR);
+    if (account == NULL) {
+        (void)sprintf(buf, "%s:%s", pwd->pw_name, DFLT_SEQ_STR);
+        if (yp_match(domain, ACCT_MAP_NAME, buf, (int)strlen(buf), &outval, &outvallen) == 0) {
+            (void)strncpy(buffer, outval, (size_t)bufferlen);
+            return(buffer);
+        }
+    } else {
+        int   seq = 0;
 
-	  if (strcmp(cp, name) != 0)
-	    /*
-	     * Username does not match.
-	     */
-	    return(0);
-	  else
-	    { cp = strtok((char *)NULL, COLON_STR);
+        for (seq = 0; seq < MAX_SEQ_NUM; seq++) {
+            (void)sprintf(buf, "%s:%d", pwd->pw_name, seq);
+            if (yp_match(domain, ACCT_MAP_NAME, buf, (int)strlen(buf), &outval, &outvallen) == 0) {
+                char  fub[BUFSIZ], *acctfld;       
+                acctfld = NULL;
 
-	      if (*account == STAR_CHR)
-		{ (void)strcpy(indata, buf);
+                (void)strcpy(fub, buf);
+                acctfld = strtok(fub, COLON_STR);
+                acctfld = strtok((char *)NULL, COLON_STR);
 
-		  return(1);
-		} 
-	      else
-		{ if (strcmp(cp, account) != 0)
-		    return(0);
+                if (strcmp(account, acctfld) == 0) {
+                    (void)strncpy(buffer, outval, (size_t)bufferlen);
+                    return(buffer);
+                }
+            }
+        }
 
-		  (void)strcpy(indata, buf); 
+        (void)sprintf(buf, "%s:%s", pwd->pw_name, account);
 
-		  return(1);
-		}
-	    }	
-	}
+        call.foreach  = ypcall;
+        call.data     = buf;
 
+        if (yp_all(domain, ACCT_MAP_NAME, &call) != 0) return(NULL);
 
-char	*ypgetacctent(pwd, account, buffer, bufferlen)
-	struct passwd	*pwd; 
-	char		*account;
-	char		*buffer;
-	int		bufferlen;
-
-	{ struct ypall_callback	call;
-	  char			*domain = NULL; 
-	  char			buf[BUFSIZ];
-	  char			*outval = NULL;
-	  int			outvallen = 0;
-
-	  /*
-	   * Consulting YP.
-	   */
-
-	  if (yp_get_default_domain(&domain) != 0) 
-	    return(NULL);
-
-	  if (account == NULL)
-	    { (void)sprintf(buf, "%s:%s", pwd->pw_name, DFLT_SEQ_STR);
-
-	      if (yp_match(domain, ACCT_MAP_NAME, buf, (int)strlen(buf), &outval, &outvallen) == 0)
-		{ (void)strncpy(buffer, outval, (size_t)bufferlen);
-
-		  return(buffer);
-		}
-	    }
-	  else
-	    { int	seq = 0;
-
-	      for (seq = 0; seq < MAX_SEQ_NUM; seq++)
-		{ (void)sprintf(buf, "%s:%d", pwd->pw_name, seq);
-
-		  if (yp_match(domain, ACCT_MAP_NAME, buf, (int)strlen(buf), &outval, &outvallen) == 0)
-		    { char	fub[BUFSIZ],
-				*acctfld = NULL;;
-
-		      (void)strcpy(fub, buf);
-
-		      acctfld = strtok(fub, COLON_STR);
-
-		      acctfld = strtok((char *)NULL, COLON_STR);
-
-		      if (strcmp(account, acctfld) == 0)
-			{ (void)strncpy(buffer, outval, (size_t)bufferlen);
-
-			  return(buffer);
-			}
-		    }
-		}
-
-	      (void)sprintf(buf, "%s:%s", pwd->pw_name, account);
-
-	      call.foreach	= ypcall;
-	      call.data		= buf;
-
-	      if (yp_all(domain, ACCT_MAP_NAME, &call) != 0) 
-	        return(NULL);
-
-	      if (*(char *)(call.data) == ENDSTR_CHR)
-	        return(NULL);
-	      else
-	        { (void)strncpy(buffer, call.data, (size_t)bufferlen);
-
-	          return(buffer);
-	        }
-	    }
-
-	  return(NULL);
-	}
+        if (*(char *)(call.data) == ENDSTR_CHR) return(NULL);
+        else {
+            (void)strncpy(buffer, call.data, (size_t)bufferlen);
+            return(buffer);
+        }
+    }
+    return(NULL);
+}
 
 #endif /* NIS */
