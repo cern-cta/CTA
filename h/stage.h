@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.66 2001/09/22 07:30:35 jdurand Exp $
+ * $Id: stage.h,v 1.67 2001/10/02 17:14:56 jdurand Exp $
  */
 
 /*
@@ -62,7 +62,7 @@
 #define ISSTAGEWRT(stcp)   ((stcp->status & 0xF) == STAGEWRT)
 #define ISSTAGEPUT(stcp)   ((stcp->status & 0xF) == STAGEPUT)
 #define ISSTAGEALLOC(stcp) ((stcp->status & 0xF) == STAGEALLOC)
-#define ISWAITING(stcp)    ((stcp->status & (WAITING_SPC|WAITING_REQ|WAITING_MIGR|WAITING_NS)) != 0)
+#define ISWAITING(stcp)    (((stcp->status & 0xF0) == WAITING_SPC) || ((stcp->status & 0xF0) == WAITING_REQ) || ((stcp->status & (WAITING_MIGR|WAITING_NS)) != 0))
 
 /* ISCASTORMIG macro returns TRUE if it is a CASTOR HSM file candidate for/beeing, migration/migrated */
 /* ISCASTORBEINGMIG macro returns TRUE if it is a CASTOR HSM file beeing migrated */
