@@ -1,0 +1,31 @@
+.\" $Id: print_stcp.man,v 1.1 2002/10/07 08:44:34 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: print_stcp.man,v $ $Revision: 1.1 $ $Date: 2002/10/07 08:44:34 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH PRINT_STCP "3" "$Date: 2002/10/07 08:44:34 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+print_stcp \- Dumps an stgcat_entry to stdout
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "void print_stcp (struct stgcat_entry *" stcp ");"
+
+.SH DESCRIPTION
+The \fBprint_stcp\fP API method prints to standard output the content of an stgcat_entry structure.
+
+.SH PARAMETERS
+.TP 1.5i
+.I stcp
+Pointer to an stgcat_entry structure.
+
+.SH EXAMPLE
+See \fBstageqry_Hsm\fP(3).
+
+.SH SEE ALSO
+\fBstage_struct\fP(3), \fBstageqry_Hsm\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+

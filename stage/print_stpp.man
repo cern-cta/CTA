@@ -1,0 +1,31 @@
+.\" $Id: print_stpp.man,v 1.1 2002/10/07 08:44:34 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: print_stpp.man,v $ $Revision: 1.1 $ $Date: 2002/10/07 08:44:34 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH PRINT_STPP "3" "$Date: 2002/10/07 08:44:34 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+print_stpp \- Dumps an stgpath_entry to stdout
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "void print_stpp (struct stgpath_entry *" stpp ");"
+
+.SH DESCRIPTION
+The \fBprint_stpp\fP API method prints to standard output the content of an stgpath_entry structure.
+
+.SH PARAMETERS
+.TP 1.5i
+.I stpp
+Pointer to an stgpath_entry structure.
+
+.SH EXAMPLE
+See \fBstageqry_Hsm\fP(3).
+
+.SH SEE ALSO
+\fBstage_struct\fP(3), \fBstageqry_Hsm\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
