@@ -1,0 +1,65 @@
+.\" @(#)$RCSfile: rtcpcldCleanupDB.man,v $ $Revision: 1.1 $ $Date: 2004/06/30 14:28:16 $ CERN IT/ADC Olof Barring
+.\" Copyright (C) 2004 by CERN/IT
+.\" All rights reserved
+.\"
+.TH RTCPCLDCLEANUPDB 1 "$Date: 2004/06/30 14:28:16 $" CASTOR "RTCOPY Operator Commands"
+.SH NAME
+rtcpcldCleanupDB \- cleanup tape and segments in request DB
+.SH SYNOPSIS
+.B rtcpcldCleanupDB
+[
+.BI -V
+] [
+.BI VID
+]
+[
+.BI -s
+] [
+.BI side
+]
+[
+.BI -m
+] [
+.BI mode
+]
+[
+.BI -k
+] [
+.BI dbKey
+]
+.SH DESCRIPTION
+.B rtcpcldCleanupDB
+can be used to cleanup the rtcpclientd/VidWorker request database from leftover
+requests after a server crash. The program takes as arguments either a valid
+VID/side/mode (all three must be specified) or the database key for the tape entry.
+The
+.B VID
+is the volume id (VID) of the tape. The
+.B side
+parameter specifies the media side. The
+.B side
+is alwasy 0 (zero) for normal tapes. The
+.B mode
+parameter specifies the tape access mode: 0 == read, 1 == write. The
+.B dbKey
+parameter can be used to directly specify the database key of the tape
+entry that should be removed.
+
+The
+.B rtcpcldCleanupDB
+program attempts to remove the specified tape and all its associated segments
+from the request database. Be careful to use this program when there is a risk
+that new segment requests may appear from active clients.
+
+.SH EXAMPLE
+.fi
+# rtcpcldCleanupDB -V SEA003 -s 0 -m 0
+.fi
+# rtcpcldCleanupDB -k 122
+
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
