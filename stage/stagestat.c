@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.21 2002/04/11 10:39:48 jdurand Exp $
+ * $Id: stagestat.c,v 1.22 2002/04/30 13:11:24 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.21 $ $Date: 2002/04/11 10:39:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.22 $ $Date: 2002/04/30 13:11:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -47,9 +47,9 @@ extern char *sys_errlist[];
 #endif
 
 int getacctrec _PROTO((int, struct accthdr *, char *, int *));
-int match_2_stgin _PROTO((struct acctstage *));
+int match_2_stgin _PROTO((struct acctstage2 *));
 time_t cvt_datime _PROTO((char *));
-void print_acct _PROTO((struct accthdr *, struct acctstage *));
+void print_acct _PROTO((struct accthdr *, struct acctstage2 *));
 
 EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
 
@@ -140,16 +140,16 @@ int verbose = 0;
 int debug = 0;
 u_signed64 size_total, size_read;
 
-void create_filelist _PROTO((struct file_inf **, struct file_inf**, struct acctstage *));
-void create_poollist _PROTO((struct acctstage *));
-void create_stglist _PROTO((struct acctstage *));
-void enter_filc_details _PROTO((struct acctstage *, struct accthdr));
-void enter_fils_details _PROTO((struct acctstage *, struct accthdr));
-void enter_filw_details _PROTO((struct acctstage *, struct accthdr));
-void enter_pool_details _PROTO((struct acctstage *));
+void create_filelist _PROTO((struct file_inf **, struct file_inf**, struct acctstage2 *));
+void create_poollist _PROTO((struct acctstage2 *));
+void create_stglist _PROTO((struct acctstage2 *));
+void enter_filc_details _PROTO((struct acctstage2 *, struct accthdr));
+void enter_fils_details _PROTO((struct acctstage2 *, struct accthdr));
+void enter_filw_details _PROTO((struct acctstage2 *, struct accthdr));
+void enter_pool_details _PROTO((struct acctstage2 *));
 void sort_poolinf _PROTO(());
 void print_poolstat _PROTO((int, int, int, char *));
-void swap_fields _PROTO((struct acctstage *));
+void swap_fields _PROTO((struct acctstage2 *));
 void usage _PROTO((char *));
 void print_fdetails _PROTO((struct file_inf *));
 void print_globstat _PROTO((time_t, time_t, int, int));
@@ -174,7 +174,7 @@ int main(argc, argv)
 	char poolname[CA_MAXPOOLNAMELEN + 1];	/* pool name */
  
 	struct accthdr accthdr;		/* accthdr record */
-	struct acctstage rp;		/* pointer to accstage record */
+	struct acctstage2 rp;		/* pointer to accstage2 record */
 	struct stg_inf *srecord;		/* pointer to stg_inf record */
 
 	time_t endtime = 0;			/* time up to which to obtain information */
@@ -322,7 +322,7 @@ int main(argc, argv)
 			show_progress();
 		}
 		nrec++;
-		if (accthdr.package != ACCTSTAGE) {
+		if ((accthdr.package != ACCTSTAGE) && (accthdr.package != ACCTSTAGE2)) {
 			nrecnotst++;
 			continue;
 		}
@@ -511,7 +511,7 @@ int main(argc, argv)
 void create_filelist (file_list, file_last, rp)
 	struct file_inf **file_list;
 	struct file_inf **file_last;
-	struct acctstage *rp;
+	struct acctstage2 *rp;
 {
 	struct file_inf *frec;			/* pointer to file_inf record */ 
 
@@ -553,7 +553,7 @@ void create_filelist (file_list, file_last, rp)
 /* Function to create record for each pool group found */
 
 void create_pool_list (rp)
-	struct acctstage *rp;
+	struct acctstage2 *rp;
 {
 	struct pool_inf *pf;				/* pointer to pool_inf record */
 
@@ -575,7 +575,7 @@ void create_pool_list (rp)
 /* Function to create record for each stagein request */
 
 void create_stglist (rp)
-	struct acctstage *rp;
+	struct acctstage2 *rp;
 {
 	struct stg_inf *sp;				/* pointer to stg_inf record */
 	
@@ -635,7 +635,7 @@ cvt_datime (arg)
 /* Function to enter file record details for each FILC */
 
 void enter_filc_details (rp, accthdr)
-	struct acctstage *rp;
+	struct acctstage2 *rp;
 	struct accthdr accthdr;
 {
 	int found = 0;			/* record found flag */
@@ -699,7 +699,7 @@ void enter_filc_details (rp, accthdr)
 /* Function to enter details of each file successful stagein command */
 
 void enter_fils_details (rp, accthdr)
-	struct acctstage *rp;
+	struct acctstage2 *rp;
 	struct accthdr accthdr;
 {
 	int found = 0;			/* record found flag */
@@ -775,7 +775,7 @@ void enter_fils_details (rp, accthdr)
 /* Function to enter details of each file successful stagewrt/stageput command */
 
 void enter_filw_details (rp, accthdr)
-	struct acctstage *rp;
+	struct acctstage2 *rp;
 	struct accthdr accthdr;
 {
 	int found = 0;			/* record found flag */
@@ -853,7 +853,7 @@ void enter_filw_details (rp, accthdr)
 /* Function to enter details for each pool */
 
 void enter_pool_details (rp)
-	struct acctstage *rp;
+	struct acctstage2 *rp;
 {
 	struct pool_inf *pf;			/* pointer to pool_inf record */
 	int found = 0;
@@ -880,6 +880,8 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 	int *swapped;
 {
 	int c;
+	struct acctstage rp;		/* pointer to accstage record (backward compatibility) */
+	struct acctstage2 rp2;
 
 	rfio_errno = serrno = 0;
 	if ((c = rfio_read (fd_acct,accthdr,sizeof(struct accthdr))) != sizeof(struct accthdr)) {
@@ -902,7 +904,7 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 		*swapped = 1;
 	}
 
-	if (accthdr->package != ACCTSTAGE) {
+	if ((accthdr->package != ACCTSTAGE) && (accthdr->package != ACCTSTAGE2)) {
 		/* Not a STAGE accouting record - we just seek the pointer */
 		rfio_errno = serrno = 0;
 		if (rfio_lseek(fd_acct, accthdr->len, SEEK_CUR) < 0) {
@@ -914,12 +916,61 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 	}
 
 	rfio_errno = serrno = 0;
-	if ((c = rfio_read (fd_acct, buf, accthdr->len)) != accthdr->len) {
-		if (c >= 0)
-			fprintf (stderr, "rfio_read returns %d\n",c);
-		else
-			fprintf (stderr, "rfio_read error : %s\n", rfio_serror());
-		exit (SYERR);
+	switch (accthdr->package) {
+	case ACCTSTAGE2:
+		if ((c = rfio_read (fd_acct, buf, accthdr->len)) != accthdr->len) {
+			if (c >= 0)
+				fprintf (stderr, "rfio_read returns %d\n",c);
+			else
+				fprintf (stderr, "rfio_read error : %s\n", rfio_serror());
+			exit (SYERR);
+		}
+		break;
+	case ACCTSTAGE:
+		if ((c = rfio_read (fd_acct, (char *) &rp, accthdr->len)) != accthdr->len) {
+			if (c >= 0)
+				fprintf (stderr, "rfio_read returns %d\n",c);
+			else
+				fprintf (stderr, "rfio_read error : %s\n", rfio_serror());
+			exit (SYERR);
+		}
+		/* Convert acctstage to acctstage2 */
+		rp2.uid = rp.uid;
+		rp2.gid = rp.gid;
+		rp2.u2.s.actual_size = rp.u2.s.actual_size;
+		rp2.u2.s.c_time = 0; /* Not set in acctstage */
+		rp2.subtype = rp.subtype;
+		rp2.reqid = rp.reqid;
+		rp2.req_type = rp.req_type;
+		rp2.retryn = rp.retryn;
+		rp2.exitcode = rp.exitcode;
+		strcpy(rp2.u2.clienthost,rp.u2.clienthost);
+		rp2.u2.s.t_or_d = rp.u2.s.t_or_d;
+		if (rp.u2.s.t_or_d == 't' || rp.u2.s.t_or_d == 'd' || rp.u2.s.t_or_d == 'm' || rp.u2.s.t_or_d == 'h') {
+			strcpy(rp2.u2.s.poolname,rp.u2.s.poolname);
+			rp2.u2.s.nbaccesses = rp.u2.s.nbaccesses;
+			switch (rp.u2.s.t_or_d) {
+			case 't':				
+				rp2.u2.s.u1.t.side = 0; /* Not set in acctstage */
+				strcpy(rp2.u2.s.u1.t.dgn, rp.u2.s.u1.t.dgn);
+				strcpy(rp2.u2.s.u1.t.fseq, rp.u2.s.u1.t.fseq);
+				strcpy(rp2.u2.s.u1.t.vid, rp.u2.s.u1.t.vid);
+				strcpy(rp2.u2.s.u1.t.tapesrvr, rp.u2.s.u1.t.tapesrvr);
+				break;
+			case 'd':
+				strcpy(rp2.u2.s.u1.d.xfile, rp.u2.s.u1.d.xfile);
+				break;
+			case 'm':
+				strcpy(rp2.u2.s.u1.m.xfile, rp.u2.s.u1.m.xfile);
+				break;
+			case 'h':
+				strcpy(rp2.u2.s.u1.h.xfile, rp.u2.s.u1.h.xfile);
+				rp2.u2.s.u1.h.fileid = rp.u2.s.u1.h.fileid;
+				break;
+			}
+		}
+		memcpy((void *) buf,(void *) &rp2,sizeof(struct acctstage2));
+		break;
 	}
 	size_read += c;
 	return (accthdr->len);
@@ -928,7 +979,7 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 /* Function to match a FILS request with a stagein request */
 
 int match_2_stgin (rp)
-	struct acctstage *rp;
+	struct acctstage2 *rp;
 {
 	int matched =0;				/* record matched flag */
 	struct stg_inf *srec;			/* pointer to stg_inf record */
@@ -1321,14 +1372,14 @@ void print_poolstat (tflag, aflag, pflag, poolname)
 	int di = 0;					/* counter for disk files */
 	int mi = 0;					/* counter for non-CASTOR-HSM files */
 	int hi = 0;					/* counter for CASTOR-HSM files */
-	struct frec_nbaccs *faccs;		/* arrays to store address of each record */
-	struct frec_nbaccs *daccs;		/* along with either the average life or the */
-	struct frec_nbaccs *maccs;
-	struct frec_nbaccs *haccs;
-	struct frec_avg *favg;			/* number of accesses and poolname.  These */
-	struct frec_avg *davg;			/* arrays are used to sort the data */
-	struct frec_avg *mavg;
-	struct frec_avg *havg;			/* arrays are used to sort the data */
+	struct frec_nbaccs *faccs = NULL;		/* arrays to store address of each record */
+	struct frec_nbaccs *daccs = NULL;		/* along with either the average life or the */
+	struct frec_nbaccs *maccs = NULL;
+	struct frec_nbaccs *haccs = NULL;
+	struct frec_avg *favg = NULL;			/* number of accesses and poolname.  These */
+	struct frec_avg *davg = NULL;			/* arrays are used to sort the data */
+	struct frec_avg *mavg = NULL;
+	struct frec_avg *havg = NULL;			/* arrays are used to sort the data */
 	char current_pool[CA_MAXPOOLNAMELEN + 1];		/* current pool name */
 	struct pool_inf *pf;				/* pointer to pool_inf record */
 	struct file_inf *frecord;			/* pointer to file_inf record */
@@ -1633,7 +1684,7 @@ int comp2 (a, b)
 }
 
 void swap_fields (rp)
-	struct acctstage *rp;
+	struct acctstage2 *rp;
 {
 	swap_it (rp->subtype);
 	swap_it (rp->uid);
@@ -1663,9 +1714,10 @@ void usage (cmd)
 
 void print_acct(accthdr,rp)
 	struct accthdr *accthdr;
-	struct acctstage *rp;
+	struct acctstage2 *rp;
 {
 	char timestr[64] ;        /* Time in its ASCII format */
+	char timestr2[64] ;        /* Time in its ASCII format */
 	struct passwd *pwd;				/* password structure */
 	struct group *grp;				/* group structure */
 	struct passwd pwd_unknown;
@@ -1673,6 +1725,7 @@ void print_acct(accthdr,rp)
 	char pw_name_unknown[21];
 	char gr_name_unknown[21];
 	char tmpbuf[21];
+	char tmpbuf2[21];
 	
 	pwd_unknown.pw_name = pw_name_unknown;
 	grp_unknown.gr_name = gr_name_unknown;
@@ -1696,6 +1749,8 @@ void print_acct(accthdr,rp)
 		grp = &grp_unknown;
 	}
  	u64tostru((u_signed64) rp->u2.s.actual_size, tmpbuf, 0);
+ 	u64tostr((u_signed64) rp->u2.s.c_time, tmpbuf2, 0);
+	stage_util_time(rp->u2.s.c_time,timestr2);
 	
 	fprintf(stderr,"... -------------------\n");
 	fprintf(stderr,"... Timestamp  : %s\n", timestr);
@@ -1718,13 +1773,12 @@ void print_acct(accthdr,rp)
 
 	fprintf(stderr,"... Poolname   : %s\n", rp->u2.s.poolname);
 	fprintf(stderr,"... Actualsize : %s\n", tmpbuf);
+	fprintf(stderr,"... Creat time : %s (%s)\n", tmpbuf2, timestr2);
 	fprintf(stderr,"... Nbaccesses : %d\n", rp->u2.s.nbaccesses);
 	fprintf(stderr,"... t_or_d     : %c\n", rp->u2.s.t_or_d);
 	switch (rp->u2.s.t_or_d) {
 	case 't':
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 		fprintf(stderr,"... Side       : %d\n", rp->u2.s.u1.t.side);
-#endif
 		fprintf(stderr,"... Dgn        : %s\n", rp->u2.s.u1.t.dgn);
 		fprintf(stderr,"... Fseq       : %s\n", rp->u2.s.u1.t.fseq);
 		fprintf(stderr,"... Vid        : %s\n", rp->u2.s.u1.t.vid);
