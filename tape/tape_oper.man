@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tape_oper.man,v $ $Revision: 1.1 $ $Date: 1999/09/21 04:29:40 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: tape_oper.man,v $ $Revision: 1.2 $ $Date: 1999/09/21 04:37:26 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1996-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TAPE_OPER l "$Date: 1999/09/21 04:29:40 $"
+.TH TAPE_OPER l "$Date: 1999/09/21 04:37:26 $"
 .SH NAME
 tape_oper \- operator interface to tape subsystem
 .SH DESCRIPTION
@@ -18,7 +18,7 @@ on drive
 .IR drive_name @ hostname
 for
 .I username
-.IR jid ",  (" reason )
+.IR jid " (" reason )
 or reply cancel | drive name
 .RS
 .I reason
