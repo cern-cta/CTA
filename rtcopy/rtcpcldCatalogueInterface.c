@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.121 $ $Release$ $Date: 2005/02/22 12:06:30 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.122 $ $Release$ $Date: 2005/02/22 12:12:24 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.121 $ $Release$ $Date: 2005/02/22 12:06:30 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.122 $ $Release$ $Date: 2005/02/22 12:12:24 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1518,14 +1518,13 @@ int nextSegmentToMigrate(
     const char *_msg;
     save_serrno = serrno;
     _msg = Cstager_IStagerSvc_errorMsg(*stgsvc);
+    LOG_DBCALLANDKEY_ERR("Cstager_IStagerSvc_bestTapeCopyForStream()",
+                         Cstager_IStagerSvc_errorMsg(*stgsvc),
+                         key);
     if ( save_serrno == ENOENT ) {
       C_IAddress_delete(iAddr);
       serrno = ENOENT;
       return(-1);
-    } else {
-      LOG_DBCALLANDKEY_ERR("Cstager_IStagerSvc_bestTapeCopyForStream()",
-                           Cstager_IStagerSvc_errorMsg(*stgsvc),
-                           key);
     }
     if ( strstr(_msg,"deadlock") != NULL ) {
       sleep((((int)getpid()) % 10) + 1);
