@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2005/01/21 12:47:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2005/01/22 19:25:49 $ $Author: jdurand $
  *
  *
  *
@@ -669,8 +669,8 @@ extern "C" {
       std::vector<std::string> fss;
       std::vector<std::string> ms;
       for (unsigned int i = 0; i < fileSystemsNb; i++) {
-        fss[i] = fileSystems[i];
-        ms[i] = machines[i];
+        fss.push_back(fileSystems[i]);
+        ms.push_back(machines[i]);
       }
       std::string mp, ds;
       stgSvc->stgSvc->bestFileSystemForJob
