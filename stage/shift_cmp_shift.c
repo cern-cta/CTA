@@ -1,11 +1,12 @@
 /*
- * $Id: shift_cmp_shift.c,v 1.1 2000/01/09 11:42:40 jdurand Exp $
+ * $Id: shift_cmp_shift.c,v 1.2 2000/01/17 15:08:58 jdurand Exp $
  */
 
 /* ============== */
 /* System headers */
 /* ============== */
 #include <stdio.h>            /* All I/O defs */
+#include <stdlib.h>           /* malloc etc... */
 #include <sys/stat.h>         /* fstat etc... */
 #include <sys/types.h>        /* For all types  */
 #include <fcntl.h>            /* RDWR etc... */
@@ -303,10 +304,14 @@ int main(argc, argv)
 int cmp_stgcat() {
   int answer;
   struct stgcat_entry_old stcp1;
+  struct stgcat_entry_old *stcp1_all = NULL;
   struct stgcat_entry_old stcp2;
+  struct stgcat_entry_old *stcp2_all = NULL;
   int i;
-  int imax;
   int j;
+  int found;
+  int imax;
+  int jmax;
 
   /* We check in the size of the in-file module SHIFT stager structure matches... */
   if (stgcat_in1_statbuff.st_size % sizeof(struct stgcat_entry_old) != 0) {
@@ -334,7 +339,7 @@ int cmp_stgcat() {
     }
   }
   if (stgcat_in1_statbuff.st_size != stgcat_in2_statbuff.st_size) {
-    printf("### Current %s and %s lengths %% is NOT the same (%d and %d)...\n"
+    printf("### Current %s and %s lengths are NOT the same (%d and %d)...\n"
            ".... I believe that either this file is truncated or currupted, either\n"
            ".... you did not gave a read old SHIFT stager stgcat file as input\n"
            ,stgcat_in1,stgcat_in2,
@@ -347,21 +352,63 @@ int cmp_stgcat() {
     }
   }
 
-  /* We compare all the entries */
-  imax = MIN(stgcat_in1_statbuff.st_size,stgcat_in2_statbuff.st_size) / sizeof(struct stgcat_entry_old) - 1;
+  /* We load the files in memory */
+  if ((stcp1_all = (struct stgcat_entry_old *) malloc(stgcat_in1_statbuff.st_size)) == NULL) {
+    printf("### malloc error on %s (%s) at %s:%d\n",stgcat_in1,
+           strerror(errno),__FILE__,__LINE__);
+    return(-1);
+  }
+  if ((stcp2_all = (struct stgcat_entry_old *) malloc(stgcat_in2_statbuff.st_size)) == NULL) {
+    printf("### malloc error on %s (%s) at %s:%d\n",stgcat_in1,
+           strerror(errno),__FILE__,__LINE__);
+    free(stcp1_all);
+    return(-1);
+  }
+  if (lseek(stgcat_in1_fd,SEEK_SET,0) != 0) {
+    printf("### lseek error on %s (%s) at %s:%d\n",stgcat_in2,
+           strerror(errno),__FILE__,__LINE__);
+    free(stcp1_all);
+    free(stcp2_all);
+    return(-1);
+  }
+  printf("... Loading %s\n",stgcat_in1);
+  if (read(stgcat_in1_fd,stcp1_all,stgcat_in1_statbuff.st_size) != stgcat_in1_statbuff.st_size) {
+    printf("### read error on %s (%s) at %s:%d\n",stgcat_in1,
+           strerror(errno),__FILE__,__LINE__);
+    free(stcp1_all);
+    free(stcp2_all);
+    return(-1);
+  }
+  printf("... Loading %s\n",stgcat_in2);
+  if (read(stgcat_in2_fd,stcp2_all,stgcat_in2_statbuff.st_size) != stgcat_in2_statbuff.st_size) {
+    printf("### read error on %s (%s) at %s:%d\n",stgcat_in2,
+           strerror(errno),__FILE__,__LINE__);
+    free(stcp1_all);
+    free(stcp2_all);
+    return(-1);
+  }
+
+  /* We compare all the entries using file 1 as a reference */
+  imax = stgcat_in1_statbuff.st_size / sizeof(struct stgcat_entry_old) - 1;
+  jmax = stgcat_in2_statbuff.st_size / sizeof(struct stgcat_entry_old) - 1;
+
+  printf("\n--> Use %s as a reference\n\n",stgcat_in1);
+
   for (i = 0; i <= imax; i++) {
-    if (read(stgcat_in1_fd, &stcp1, sizeof(struct stgcat_entry_old)) != 
-        sizeof(struct stgcat_entry_old)) {
-      printf("### read error on %s (%s) at %s:%d\n",stgcat_in1,
-             strerror(errno),__FILE__,__LINE__);
-      return(-1);
+    found = -1;
+    stcp1 = stcp1_all[i];
+    for (j = 0; j <= jmax; j++) {
+      stcp2 = stcp2_all[j];
+      if (stcp2.reqid == stcp1.reqid) {
+        found = j;
+        break;
+      }
     }
-    if (read(stgcat_in2_fd, &stcp2, sizeof(struct stgcat_entry_old)) != 
-        sizeof(struct stgcat_entry_old)) {
-      printf("### read error on %s (%s) at %s:%d\n",stgcat_in2,
-             strerror(errno),__FILE__,__LINE__);
-      return(-1);
+    if (found < 0) {
+      printf("### (%5d/%5d) Reqid = %d (%s) not in %s\n",i,imax,
+             stcp1.reqid,stgcat_in1,stgcat_in2);
     }
+    stcp2 = stcp2_all[found];
     /* Compare the SHIFT entries */
     if (i == 0 || i % frequency == 0 || i == imax) {
       printf("--> (%5d/%5d) Doing reqid = %d / %d\n",i,imax,stcp1.reqid,stcp2.reqid);
@@ -370,22 +417,55 @@ int cmp_stgcat() {
       stcpprint(&stcp1,&stcp2);
     }
   }
+
+  printf("\n--> Use %s as a reference\n\n",stgcat_in2);
+
+  /* We compare all the entries using file 2 as a reference */
+  for (j = 0; j <= jmax; j++) {
+    found = -1;
+    stcp2 = stcp2_all[j];
+    for (i = 0; i <= imax; i++) {
+      stcp1 = stcp1_all[i];
+      if (stcp2.reqid == stcp1.reqid) {
+        found = i;
+        break;
+      }
+    }
+    if (found < 0) {
+      printf("### (%5d/%5d) Reqid = %d (%s) not in %s\n",j,jmax,
+             stcp2.reqid,stgcat_in2,stgcat_in1);
+    }
+    stcp1 = stcp1_all[found];
+    /* Compare the SHIFT entries */
+    if (j == 0 || j % frequency == 0 || j == jmax) {
+      printf("--> (%5d/%5d) Doing reqid = %d / %d\n",j,jmax,stcp2.reqid,stcp1.reqid);
+    }
+    if (stcpcmp(&stcp2,&stcp1,bindiff) != 0) {
+      stcpprint(&stcp2,&stcp1);
+    }
+  }
+  free(stcp1_all);
+  free(stcp2_all);
   return(0);
 }
 
 int cmp_stgpath() {
   int answer;
   struct stgpath_entry_old stpp1;
+  struct stgpath_entry_old *stpp1_all = NULL;
   struct stgpath_entry_old stpp2;
-  int i;
+  struct stgpath_entry_old *stpp2_all = NULL;
+  int i, i2;
+  int j, j2;
+  int found;
   int imax;
-  int j;
+  int jmax;
 
   /* We check in the size of the in-file module SHIFT stager structure matches... */
   if (stgpath_in1_statbuff.st_size % sizeof(struct stgpath_entry_old) != 0) {
     printf("### Current %s length %% sizeof(old SHIFT structure) is NOT zero (%d)...\n"
            ".... I believe that either this file is truncated or currupted, either\n"
-           ".... you did not gave a read old SHIFT stager stgcat file as input\n"
+           ".... you did not gave a read old SHIFT stager stgpath file as input\n"
            ,stgpath_in1,
            (int) (stgpath_in1_statbuff.st_size % sizeof(struct stgpath_entry_old)));
     printf("### Do you really want to proceed (y/n) ? ");
@@ -397,7 +477,7 @@ int cmp_stgpath() {
   if (stgpath_in2_statbuff.st_size % sizeof(struct stgpath_entry_old) != 0) {
     printf("### Current %s length %% sizeof(old SHIFT structure) is NOT zero (%d)...\n"
            ".... I believe that either this file is truncated or currupted, either\n"
-           ".... you did not gave a read old SHIFT stager stgcat file as input\n"
+           ".... you did not gave a read old SHIFT stager stgpath file as input\n"
            ,stgpath_in2,
            (int) (stgpath_in2_statbuff.st_size % sizeof(struct stgpath_entry_old)));
     printf("### Do you really want to proceed (y/n) ? ");
@@ -407,9 +487,9 @@ int cmp_stgpath() {
     }
   }
   if (stgpath_in1_statbuff.st_size != stgpath_in2_statbuff.st_size) {
-    printf("### Current %s and %s lengths %% is NOT the same (%d and %d)...\n"
+    printf("### Current %s and %s lengths are NOT the same (%d and %d)...\n"
            ".... I believe that either this file is truncated or currupted, either\n"
-           ".... you did not gave a read old SHIFT stager stgcat file as input\n"
+           ".... you did not gave a read old SHIFT stager stgpath file as input\n"
            ,stgpath_in1,stgpath_in2,
            (int) stgpath_in1_statbuff.st_size,
            (int) stgpath_in2_statbuff.st_size);
@@ -420,21 +500,80 @@ int cmp_stgpath() {
     }
   }
 
-  /* We compare all the entries */
-  imax = MIN(stgpath_in1_statbuff.st_size,stgpath_in2_statbuff.st_size) / sizeof(struct stgpath_entry_old) - 1;
+  /* We load the files in memory */
+  if ((stpp1_all = (struct stgpath_entry_old *) malloc(stgpath_in1_statbuff.st_size)) == NULL) {
+    printf("### malloc error on %s (%s) at %s:%d\n",stgpath_in1,
+           strerror(errno),__FILE__,__LINE__);
+    return(-1);
+  }
+  if ((stpp2_all = (struct stgpath_entry_old *) malloc(stgpath_in2_statbuff.st_size)) == NULL) {
+    printf("### malloc error on %s (%s) at %s:%d\n",stgpath_in1,
+           strerror(errno),__FILE__,__LINE__);
+    free(stpp1_all);
+    return(-1);
+  }
+  if (lseek(stgpath_in1_fd,SEEK_SET,0) != 0) {
+    printf("### lseek error on %s (%s) at %s:%d\n",stgpath_in2,
+           strerror(errno),__FILE__,__LINE__);
+    free(stpp1_all);
+    free(stpp2_all);
+    return(-1);
+  }
+  printf("... Loading %s\n",stgpath_in1);
+  if (read(stgpath_in1_fd,stpp1_all,stgpath_in1_statbuff.st_size) != stgpath_in1_statbuff.st_size) {
+    printf("### read error on %s (%s) at %s:%d\n",stgpath_in1,
+           strerror(errno),__FILE__,__LINE__);
+    free(stpp1_all);
+    free(stpp2_all);
+    return(-1);
+  }
+  printf("... Loading %s\n",stgpath_in2);
+  if (read(stgpath_in2_fd,stpp2_all,stgpath_in2_statbuff.st_size) != stgpath_in2_statbuff.st_size) {
+    printf("### read error on %s (%s) at %s:%d\n",stgpath_in2,
+           strerror(errno),__FILE__,__LINE__);
+    free(stpp1_all);
+    free(stpp2_all);
+    return(-1);
+  }
+
+  /* We compare all the entries using file 1 as a reference */
+  imax = stgpath_in1_statbuff.st_size / sizeof(struct stgpath_entry_old) - 1;
+  jmax = stgpath_in2_statbuff.st_size / sizeof(struct stgpath_entry_old) - 1;
+
+  printf("\n--> Use %s as a reference\n\n",stgpath_in1);
+
   for (i = 0; i <= imax; i++) {
-    if (read(stgpath_in1_fd, &stpp1, sizeof(struct stgpath_entry_old)) != 
-        sizeof(struct stgpath_entry_old)) {
-      printf("### read error on %s (%s) at %s:%d\n",stgpath_in1,
-             strerror(errno),__FILE__,__LINE__);
+    found = -1;
+    stpp1 = stpp1_all[i];
+    for (j = 0; j <= jmax; j++) {
+      stpp2 = stpp2_all[j];
+      if (stpp2.reqid == stpp1.reqid) {
+        /* We search for the last one... */
+        found = j;
+        /* break; */
+      }
+    }
+    if (found < 0) {
+      printf("### (%5d/%5d) Reqid = %d (%s) not in %s\n",i,imax,
+             stpp1.reqid,stgpath_in1,stgpath_in2);
+    }
+    stpp2 = stpp2_all[found];
+    found = -1;
+    /* We look if there are other entries in first first with the same reqid...     */
+    /* For stgpath we always need to take the LAST of the entries with this reqid ! */
+    for (i2 = 0; i2 <= imax; i2++) {
+      stpp1 = stpp1_all[i2];
+      if (stpp1.reqid == stpp2.reqid) {
+        found = i2;
+      }
+    }
+    if (found < 0) {
+      printf("### Internal error...\n");
+      free(stpp1_all);
+      free(stpp2_all);
       return(-1);
     }
-    if (read(stgpath_in2_fd, &stpp2, sizeof(struct stgpath_entry_old)) != 
-        sizeof(struct stgpath_entry_old)) {
-      printf("### read error on %s (%s) at %s:%d\n",stgpath_in2,
-             strerror(errno),__FILE__,__LINE__);
-      return(-1);
-    }
+    stpp1 = stpp1_all[found];
     /* Compare the SHIFT entries */
     if (i == 0 || i % frequency == 0 || i == imax) {
       printf("--> (%5d/%5d) Doing reqid = %d / %d\n",i,imax,stpp1.reqid,stpp2.reqid);
@@ -443,11 +582,57 @@ int cmp_stgpath() {
       stppprint(&stpp1,&stpp2);
     }
   }
+
+  printf("\n--> Use %s as a reference\n\n",stgpath_in2);
+
+  /* We compare all the entries using file 2 as a reference */
+  for (j = 0; j <= jmax; j++) {
+    found = -1;
+    stpp2 = stpp2_all[j];
+    for (i = 0; i <= imax; i++) {
+      stpp1 = stpp1_all[i];
+      if (stpp2.reqid == stpp1.reqid) {
+        /* We search for the last one... */
+        found = i;
+        /* break; */
+      }
+    }
+    if (found < 0) {
+      printf("### (%5d/%5d) Reqid = %d (%s) not in %s\n",j,jmax,
+             stpp2.reqid,stgpath_in2,stgpath_in1);
+    }
+    stpp1 = stpp1_all[found];
+    /* We look if there are other entries in first first with the same reqid...     */
+    /* For stgpath we always need to take the LAST of the entries with this reqid ! */
+    found = -1;
+    for (j2 = 0; j2 <= jmax; j2++) {
+      stpp2 = stpp2_all[j2];
+      if (stpp2.reqid == stpp1.reqid) {
+        found = j2;
+      }
+    }
+    if (found < 0) {
+      printf("### Internal error...\n");
+      free(stpp1_all);
+      free(stpp2_all);
+      return(-1);
+    }
+    stpp2 = stpp2_all[found];
+    /* Compare the SHIFT entries */
+    if (j == 0 || j % frequency == 0 || j == jmax) {
+      printf("--> (%5d/%5d) Doing reqid = %d / %d\n",j,jmax,stpp2.reqid,stpp1.reqid);
+    }
+    if (stppcmp(&stpp2,&stpp1,bindiff) != 0) {
+      stppprint(&stpp2,&stpp1);
+    }
+  }
+  free(stpp1_all);
+  free(stpp2_all);
   return(0);
 }
 
 void shift_cmp_shift_usage() {
-  printf("Usage : shift_cmp_shift [options] <stgcat_in1> <stgpath_in2> <stgcat_in2> <stgpath_in2>\n"
+  printf("Usage : stgshift_cmp_shift [options] <stgcat_in1> <stgpath_in2> <stgcat_in2> <stgpath_in2>\n"
          "\n"
          "  where options can be:\n"
          "  -b           Binary diff\n"
@@ -459,7 +644,7 @@ void shift_cmp_shift_usage() {
          "  This program will compare two SHIFT stager catalogs. It is dedicated to check that the conversion programs shift_to_castor and castor_to_shift gives the same SHIFT catalog... The SHIFT stager catalogs are typically <stgcat_in> == /usr/spool/stage/stgcat and <stgpath_in> == /usr/spool/stage/stgpath\n"
          "\n"
          "  Example:\n"
-         "shift_cmp_shift /usr/spool/stage/stgcat /usr/spool/stage/stgpath ./stgcat_shift_bak ./stgpath_shift_bak\n"
+         "stgshift_cmp_shift /usr/spool/stage/stgcat /usr/spool/stage/stgpath ./stgcat_shift_bak ./stgpath_shift_bak\n"
          "Comments to castor-support@listbox.cern.ch\n"
          "\n",
          FREQUENCY
