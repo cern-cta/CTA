@@ -30,6 +30,7 @@
 // Include Files and Forward declarations for the C world
 #include "osdep.h"
 struct C_IObject_t;
+struct Cstager_Stream_t;
 struct Cstager_TapePool_t;
 
 //------------------------------------------------------------------------------
@@ -100,5 +101,20 @@ int Cstager_TapePool_name(struct Cstager_TapePool_t* instance, const char** var)
  * Name of this pool
  */
 int Cstager_TapePool_setName(struct Cstager_TapePool_t* instance, const char* new_var);
+
+/**
+ * Add a struct Cstager_Stream_t* object to the streams list
+ */
+int Cstager_TapePool_addStreams(struct Cstager_TapePool_t* instance, struct Cstager_Stream_t* obj);
+
+/**
+ * Remove a struct Cstager_Stream_t* object from streams
+ */
+int Cstager_TapePool_removeStreams(struct Cstager_TapePool_t* instance, struct Cstager_Stream_t* obj);
+
+/**
+ * Get the list of struct Cstager_Stream_t* objects held by streams
+ */
+int Cstager_TapePool_streams(struct Cstager_TapePool_t* instance, struct Cstager_Stream_t*** var, int* len);
 
 #endif // CASTOR_STAGER_TAPEPOOL_H

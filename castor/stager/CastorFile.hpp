@@ -43,6 +43,8 @@ namespace castor {
 
     // Forward declarations
     class TapeCopy;
+    class SvcClass;
+    class FileClass;
     class DiskCopy;
 
     /**
@@ -161,6 +163,38 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_svcClass
+       * @return the value of m_svcClass
+       */
+      SvcClass* svcClass() const {
+        return m_svcClass;
+      }
+
+      /**
+       * Set the value of m_svcClass
+       * @param new_var the new value of m_svcClass
+       */
+      void setSvcClass(SvcClass* new_var) {
+        m_svcClass = new_var;
+      }
+
+      /**
+       * Get the value of m_fileClass
+       * @return the value of m_fileClass
+       */
+      FileClass* fileClass() const {
+        return m_fileClass;
+      }
+
+      /**
+       * Set the value of m_fileClass
+       * @param new_var the new value of m_fileClass
+       */
+      void setFileClass(FileClass* new_var) {
+        m_fileClass = new_var;
+      }
+
+      /**
        * Add a DiskCopy* object to the m_diskFileCopiesVector list
        */
       void addDiskFileCopies(DiskCopy* add_object) {
@@ -233,6 +267,10 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
+
+      SvcClass* m_svcClass;
+
+      FileClass* m_fileClass;
 
       std::vector<DiskCopy*> m_diskFileCopiesVector;
 

@@ -27,11 +27,14 @@
 // Include Files
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/stager/CastorFile.hpp"
+#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -43,6 +46,8 @@ castor::stager::SubRequest::SubRequest() throw() :
   m_poolName(""),
   m_xsize(),
   m_id(),
+  m_diskcopy(0),
+  m_castorFile(0),
   m_request(0),
   m_status(SubRequestStatusCodes(0)) {
 };
@@ -51,6 +56,10 @@ castor::stager::SubRequest::SubRequest() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::SubRequest::~SubRequest() throw() {
+  for (unsigned int i = 0; i < m_parentVector.size(); i++) {
+    m_parentVector[i]->removeChild(this);
+  }
+  m_parentVector.clear();
   if (0 != m_request) {
     m_request->removeSubRequests(this);
   }
@@ -75,6 +84,29 @@ void castor::stager::SubRequest::print(std::ostream& stream,
   stream << indent << "xsize : " << m_xsize << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "Diskcopy : " << std::endl;
+  if (0 != m_diskcopy) {
+    m_diskcopy->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
+  stream << indent << "CastorFile : " << std::endl;
+  if (0 != m_castorFile) {
+    m_castorFile->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
+  {
+    stream << indent << "Parent : " << std::endl;
+    int i;
+    std::vector<SubRequest*>::const_iterator it;
+    for (it = m_parentVector.begin(), i = 0;
+         it != m_parentVector.end();
+         it++, i++) {
+      stream << indent << "  " << i << " :" << std::endl;
+      (*it)->print(stream, indent + "    ", alreadyPrinted);
+    }
+  }
   stream << indent << "Request : " << std::endl;
   if (0 != m_request) {
     m_request->print(stream, indent + "  ", alreadyPrinted);

@@ -103,6 +103,14 @@ public:
 	UMLAssociationList getSpecificAssocs(Uml::Association_Type assocType);
 
 	/**
+	 * Shorthand for getSpecificAssocs(Uml::at_Association)
+   * and getSpecificAssocs(Uml::at_UniAssoication)
+	 * 
+	 * @return	The list of "standard" associations for the Concept.
+	 */
+  UMLAssociationList getStdAssociations();
+
+	/**
 	 *	Shorthand for getSpecificAssocs(Uml::at_Generalization)
 	 *
 	 *	@return The list of generalizations for the Concept.

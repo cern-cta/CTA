@@ -28,6 +28,8 @@
 #include "castor/IObject.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/FileClass.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "osdep.h"
 #include <vector>
@@ -152,6 +154,38 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_CastorFile_setSize(castor::stager::CastorFile* instance, u_signed64 new_var) {
     instance->setSize(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_CastorFile_svcClass
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_svcClass(castor::stager::CastorFile* instance, castor::stager::SvcClass** var) {
+    *var = instance->svcClass();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_CastorFile_setSvcClass
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_setSvcClass(castor::stager::CastorFile* instance, castor::stager::SvcClass* new_var) {
+    instance->setSvcClass(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_CastorFile_fileClass
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_fileClass(castor::stager::CastorFile* instance, castor::stager::FileClass** var) {
+    *var = instance->fileClass();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_CastorFile_setFileClass
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_setFileClass(castor::stager::CastorFile* instance, castor::stager::FileClass* new_var) {
+    instance->setFileClass(new_var);
     return 0;
   }
 

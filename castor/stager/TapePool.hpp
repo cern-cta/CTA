@@ -32,6 +32,7 @@
 #include "osdep.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace castor {
 
@@ -39,6 +40,9 @@ namespace castor {
   class ObjectSet;
 
   namespace stager {
+
+    // Forward declarations
+    class Stream;
 
     /**
      * class TapePool
@@ -119,6 +123,35 @@ namespace castor {
         m_name = new_var;
       }
 
+      /**
+       * Add a Stream* object to the m_streamsVector list
+       */
+      void addStreams(Stream* add_object) {
+        m_streamsVector.push_back(add_object);
+      }
+
+      /**
+       * Remove a Stream* object from m_streamsVector
+       */
+      void removeStreams(Stream* remove_object) {
+        for (unsigned int i = 0; i < m_streamsVector.size(); i++) {
+          Stream* item = m_streamsVector[i];
+          if (item == remove_object) {
+            std::vector<Stream*>::iterator it = m_streamsVector.begin() + i;
+            m_streamsVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of Stream* objects held by m_streamsVector
+       * @return list of Stream* objects held by m_streamsVector
+       */
+      std::vector<Stream*>& streams() {
+        return m_streamsVector;
+      }
+
     private:
 
     private:
@@ -128,6 +161,8 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
+
+      std::vector<Stream*> m_streamsVector;
 
     }; // end of class TapePool
 

@@ -163,6 +163,14 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type DiskPool refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepDiskPool(castor::stager::FileSystem* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Fill the database with objects of type DiskCopy refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -187,6 +195,14 @@ namespace castor {
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
                              unsigned int type)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type DiskPool refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjDiskPool(castor::stager::FileSystem* obj)
           throw (castor::exception::Exception);
 
         /**

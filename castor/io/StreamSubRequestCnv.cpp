@@ -37,11 +37,14 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
+#include "castor/stager/CastorFile.hpp"
+#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "osdep.h"
 #include <string>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -148,6 +151,14 @@ void castor::io::StreamSubRequestCnv::marshalObject(castor::IObject* object,
     cnvSvc()->createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
+    cnvSvc()->marshalObject(obj->diskcopy(), address, alreadyDone);
+    cnvSvc()->marshalObject(obj->castorFile(), address, alreadyDone);
+    address->stream() << obj->parent().size();
+    for (std::vector<castor::stager::SubRequest*>::iterator it = obj->parent().begin();
+         it != obj->parent().end();
+         it++) {
+      cnvSvc()->marshalObject(*it, address, alreadyDone);
+    }
     cnvSvc()->marshalObject(obj->request(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
@@ -168,6 +179,16 @@ castor::IObject* castor::io::StreamSubRequestCnv::unmarshalObject(castor::io::bi
   // Fill object with associations
   castor::stager::SubRequest* obj = 
     dynamic_cast<castor::stager::SubRequest*>(object);
+  IObject* objDiskcopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setDiskcopy(dynamic_cast<castor::stager::DiskCopy*>(objDiskcopy));
+  IObject* objCastorFile = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setCastorFile(dynamic_cast<castor::stager::CastorFile*>(objCastorFile));
+  unsigned int parentNb;
+  ad.stream() >> parentNb;
+  for (unsigned int i = 0; i < parentNb; i++) {
+    IObject* objParent = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addParent(dynamic_cast<castor::stager::SubRequest*>(objParent));
+  }
   IObject* objRequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setRequest(dynamic_cast<castor::stager::Request*>(objRequest));
 }

@@ -32,6 +32,7 @@
 #include "osdep.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace castor {
 
@@ -39,6 +40,9 @@ namespace castor {
   class ObjectSet;
 
   namespace stager {
+
+    // Forward declarations
+    class FileSystem;
 
     /**
      * class DiskPool
@@ -120,6 +124,35 @@ namespace castor {
         m_name = new_var;
       }
 
+      /**
+       * Add a FileSystem* object to the m_fileSystemsVector list
+       */
+      void addFileSystems(FileSystem* add_object) {
+        m_fileSystemsVector.push_back(add_object);
+      }
+
+      /**
+       * Remove a FileSystem* object from m_fileSystemsVector
+       */
+      void removeFileSystems(FileSystem* remove_object) {
+        for (unsigned int i = 0; i < m_fileSystemsVector.size(); i++) {
+          FileSystem* item = m_fileSystemsVector[i];
+          if (item == remove_object) {
+            std::vector<FileSystem*>::iterator it = m_fileSystemsVector.begin() + i;
+            m_fileSystemsVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of FileSystem* objects held by m_fileSystemsVector
+       * @return list of FileSystem* objects held by m_fileSystemsVector
+       */
+      std::vector<FileSystem*>& fileSystems() {
+        return m_fileSystemsVector;
+      }
+
     private:
 
     private:
@@ -129,6 +162,8 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
+
+      std::vector<FileSystem*> m_fileSystemsVector;
 
     }; // end of class DiskPool
 

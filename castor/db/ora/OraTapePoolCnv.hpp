@@ -37,6 +37,14 @@ namespace castor {
   // Forward declarations
   class IObject;
 
+  // Forward declarations
+  namespace stager {
+
+    // Forward declarations
+    class TapePool;
+
+  }; // end of namespace stager
+
   namespace db {
 
     namespace ora {
@@ -155,6 +163,14 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type Stream refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepStream(castor::stager::TapePool* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -163,6 +179,14 @@ namespace castor {
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
                              unsigned int type)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type Stream refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjStream(castor::stager::TapePool* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -202,6 +226,24 @@ namespace castor {
 
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
+
+        /// SQL insert statement for member streams
+        static const std::string s_insertTapePool2StreamStatementString;
+
+        /// SQL insert statement object for member streams
+        oracle::occi::Statement *m_insertTapePool2StreamStatement;
+
+        /// SQL delete statement for member streams
+        static const std::string s_deleteTapePool2StreamStatementString;
+
+        /// SQL delete statement object for member streams
+        oracle::occi::Statement *m_deleteTapePool2StreamStatement;
+
+        /// SQL select statement for member streams
+        static const std::string s_TapePool2StreamStatementString;
+
+        /// SQL select statement object for member streams
+        oracle::occi::Statement *m_TapePool2StreamStatement;
 
       }; // end of class OraTapePoolCnv
 

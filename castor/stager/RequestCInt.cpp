@@ -29,6 +29,7 @@
 #include "castor/IObject.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/SubRequest.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
 #include <vector>
 
@@ -192,6 +193,22 @@ extern "C" {
   int Cstager_Request_setSvcClassName(castor::stager::Request* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setSvcClassName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Request_svcClass
+  //----------------------------------------------------------------------------
+  int Cstager_Request_svcClass(castor::stager::Request* instance, castor::stager::SvcClass** var) {
+    *var = instance->svcClass();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Request_setSvcClass
+  //----------------------------------------------------------------------------
+  int Cstager_Request_setSvcClass(castor::stager::Request* instance, castor::stager::SvcClass* new_var) {
+    instance->setSvcClass(new_var);
     return 0;
   }
 

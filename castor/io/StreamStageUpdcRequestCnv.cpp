@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageUpdcRequestCnv.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/11 16:44:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageUpdcRequestCnv.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/13 09:01:55 $ $Author: sponcec3 $
  *
  * 
  *
@@ -41,6 +41,7 @@
 #include "castor/stager/ReqId.hpp"
 #include "castor/stager/StageUpdcRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
 #include <string>
 #include <vector>
@@ -164,6 +165,7 @@ void castor::io::StreamStageUpdcRequestCnv::marshalObject(castor::IObject* objec
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
+    cnvSvc()->marshalObject(obj->svcClass(), address, alreadyDone);
     address->stream() << obj->subRequests().size();
     for (std::vector<castor::stager::SubRequest*>::iterator it = obj->subRequests().begin();
          it != obj->subRequests().end();
@@ -196,6 +198,8 @@ castor::IObject* castor::io::StreamStageUpdcRequestCnv::unmarshalObject(castor::
     IObject* objReqids = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addReqids(dynamic_cast<castor::stager::ReqId*>(objReqids));
   }
+  IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));
   unsigned int subRequestsNb;
   ad.stream() >> subRequestsNb;
   for (unsigned int i = 0; i < subRequestsNb; i++) {

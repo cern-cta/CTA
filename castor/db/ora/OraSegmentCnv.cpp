@@ -227,7 +227,7 @@ void castor::db::ora::OraSegmentCnv::fillRepTape(castor::stager::Segment* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeId = (unsigned long long)rset->getDouble(11);
+  u_signed64 tapeId = (u_signed64)rset->getDouble(12);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(tapeId, " ", 0);
@@ -277,7 +277,7 @@ void castor::db::ora::OraSegmentCnv::fillRepTapeCopy(castor::stager::Segment* ob
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 copyId = (unsigned long long)rset->getDouble(12);
+  u_signed64 copyId = (u_signed64)rset->getDouble(13);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(copyId, " ", 0);
@@ -352,7 +352,7 @@ void castor::db::ora::OraSegmentCnv::fillObjTape(castor::stager::Segment* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeId = (unsigned long long)rset->getDouble(11);
+  u_signed64 tapeId = (u_signed64)rset->getDouble(11);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -391,7 +391,7 @@ void castor::db::ora::OraSegmentCnv::fillObjTapeCopy(castor::stager::Segment* ob
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 copyId = (unsigned long long)rset->getDouble(12);
+  u_signed64 copyId = (u_signed64)rset->getDouble(12);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -650,16 +650,18 @@ castor::IObject* castor::db::ora::OraSegmentCnv::createObj(castor::IAddress* add
     // Now retrieve and set members
     object->setBlockid((unsigned char*)rset->getString(1).data());
     object->setFseq(rset->getInt(2));
-    object->setOffset((unsigned long long)rset->getDouble(3));
-    object->setBytes_in((unsigned long long)rset->getDouble(4));
-    object->setBytes_out((unsigned long long)rset->getDouble(5));
-    object->setHost_bytes((unsigned long long)rset->getDouble(6));
+    object->setOffset((u_signed64)rset->getDouble(3));
+    object->setBytes_in((u_signed64)rset->getDouble(4));
+    object->setBytes_out((u_signed64)rset->getDouble(5));
+    object->setHost_bytes((u_signed64)rset->getDouble(6));
     object->setSegmCksumAlgorithm(rset->getString(7));
     object->setSegmCksum(rset->getInt(8));
     object->setErrMsgTxt(rset->getString(9));
     object->setErrorCode(rset->getInt(10));
     object->setSeverity(rset->getInt(11));
-    object->setId((unsigned long long)rset->getDouble(12));
+    object->setId((u_signed64)rset->getDouble(12));
+    u_signed64 tapeId = (u_signed64)rset->getDouble(13);
+    u_signed64 copyId = (u_signed64)rset->getDouble(14);
     object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(15));
     m_selectStatement->closeResultSet(rset);
     return object;
@@ -708,16 +710,16 @@ void castor::db::ora::OraSegmentCnv::updateObj(castor::IObject* obj)
       dynamic_cast<castor::stager::Segment*>(obj);
     object->setBlockid((unsigned char*)rset->getString(1).data());
     object->setFseq(rset->getInt(2));
-    object->setOffset((unsigned long long)rset->getDouble(3));
-    object->setBytes_in((unsigned long long)rset->getDouble(4));
-    object->setBytes_out((unsigned long long)rset->getDouble(5));
-    object->setHost_bytes((unsigned long long)rset->getDouble(6));
+    object->setOffset((u_signed64)rset->getDouble(3));
+    object->setBytes_in((u_signed64)rset->getDouble(4));
+    object->setBytes_out((u_signed64)rset->getDouble(5));
+    object->setHost_bytes((u_signed64)rset->getDouble(6));
     object->setSegmCksumAlgorithm(rset->getString(7));
     object->setSegmCksum(rset->getInt(8));
     object->setErrMsgTxt(rset->getString(9));
     object->setErrorCode(rset->getInt(10));
     object->setSeverity(rset->getInt(11));
-    object->setId((unsigned long long)rset->getDouble(12));
+    object->setId((u_signed64)rset->getDouble(12));
     object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(15));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {

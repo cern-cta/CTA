@@ -27,6 +27,7 @@
 // Include Files
 #include "OraFileClassCnv.hpp"
 #include "castor/CnvFactory.hpp"
+#include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IConverter.hpp"
 #include "castor/IFactory.hpp"
@@ -36,7 +37,10 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
+#include "castor/stager/CastorFile.hpp"
 #include "castor/stager/FileClass.hpp"
+#include <set>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -72,6 +76,18 @@ const std::string castor::db::ora::OraFileClassCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraFileClassCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
+/// SQL insert statement for member 
+const std::string castor::db::ora::OraFileClassCnv::s_insertFileClass2CastorFileStatementString =
+"INSERT INTO rh_FileClass2CastorFile (Parent, Child) VALUES (:1, :2)";
+
+/// SQL delete statement for member 
+const std::string castor::db::ora::OraFileClassCnv::s_deleteFileClass2CastorFileStatementString =
+"DELETE FROM rh_FileClass2CastorFile WHERE Parent = :1 AND Child = :2";
+
+/// SQL select statement for member 
+const std::string castor::db::ora::OraFileClassCnv::s_FileClass2CastorFileStatementString =
+"SELECT Child from rh_FileClass2CastorFile WHERE Parent = :1";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -82,7 +98,10 @@ castor::db::ora::OraFileClassCnv::OraFileClassCnv() :
   m_selectStatement(0),
   m_updateStatement(0),
   m_storeTypeStatement(0),
-  m_deleteTypeStatement(0) {}
+  m_deleteTypeStatement(0),
+  m_insertFileClass2CastorFileStatement(0),
+  m_deleteFileClass2CastorFileStatement(0),
+  m_FileClass2CastorFileStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -104,6 +123,8 @@ void castor::db::ora::OraFileClassCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_insertFileClass2CastorFileStatement);
+    deleteStatement(m_FileClass2CastorFileStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -112,6 +133,9 @@ void castor::db::ora::OraFileClassCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
+  m_insertFileClass2CastorFileStatement = 0;
+  m_deleteFileClass2CastorFileStatement = 0;
+  m_FileClass2CastorFileStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -139,6 +163,9 @@ void castor::db::ora::OraFileClassCnv::fillRep(castor::IAddress* address,
   castor::stager::FileClass* obj = 
     dynamic_cast<castor::stager::FileClass*>(object);
   switch (type) {
+  case castor::OBJ_CastorFile :
+    fillRepCastorFile(obj);
+    break;
   default :
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "fillRep called on type " << type 
@@ -152,6 +179,44 @@ void castor::db::ora::OraFileClassCnv::fillRep(castor::IAddress* address,
 }
 
 //------------------------------------------------------------------------------
+// fillRepCastorFile
+//------------------------------------------------------------------------------
+void castor::db::ora::OraFileClassCnv::fillRepCastorFile(castor::stager::FileClass* obj)
+  throw (castor::exception::Exception) {
+  // check select statement
+  if (0 == m_FileClass2CastorFileStatement) {
+    m_FileClass2CastorFileStatement = createStatement(s_FileClass2CastorFileStatementString);
+  }
+  // Get current database data
+  std::set<int> List;
+  m_FileClass2CastorFileStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_FileClass2CastorFileStatement->executeQuery();
+  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    List.insert(rset->getInt(1));
+  }
+  m_FileClass2CastorFileStatement->closeResultSet(rset);
+  // update segments and create new ones
+  for (std::vector<castor::stager::CastorFile*>::iterator it = obj->().begin();
+       it != obj->().end();
+       it++) {
+    std::set<int>::iterator item;
+    if ((item = List.find((*it)->id())) == List.end()) {
+      cnvSvc()->createRep(0, *it, false);
+    } else {
+      List.erase(item);
+      cnvSvc()->updateRep(0, *it, false);
+    }
+  }
+  // Delete old data
+  for (std::set<int>::iterator it = List.begin();
+       it != List.end();
+       it++) {
+    castor::db::DbAddress ad(*it, " ", 0);
+    cnvSvc()->deleteRepByAddress(&ad, false);
+  }
+}
+
+//------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
 void castor::db::ora::OraFileClassCnv::fillObj(castor::IAddress* address,
@@ -161,6 +226,9 @@ void castor::db::ora::OraFileClassCnv::fillObj(castor::IAddress* address,
   castor::stager::FileClass* obj = 
     dynamic_cast<castor::stager::FileClass*>(object);
   switch (type) {
+  case castor::OBJ_CastorFile :
+    fillObjCastorFile(obj);
+    break;
   default :
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "fillObj called on type " << type 
@@ -171,261 +239,38 @@ void castor::db::ora::OraFileClassCnv::fillObj(castor::IAddress* address,
 }
 
 //------------------------------------------------------------------------------
-// createRep
+// fillObjCastorFile
 //------------------------------------------------------------------------------
-void castor::db::ora::OraFileClassCnv::createRep(castor::IAddress* address,
-                                                 castor::IObject* object,
-                                                 bool autocommit)
+void castor::db::ora::OraFileClassCnv::fillObjCastorFile(castor::stager::FileClass* obj)
   throw (castor::exception::Exception) {
-  castor::stager::FileClass* obj = 
-    dynamic_cast<castor::stager::FileClass*>(object);
-  // check whether something needs to be done
-  if (0 == obj) return;
-  try {
-    // Check whether the statements are ok
-    if (0 == m_insertStatement) {
-      m_insertStatement = createStatement(s_insertStatementString);
-    }
-    if (0 == m_storeTypeStatement) {
-      m_storeTypeStatement = createStatement(s_storeTypeStatementString);
-    }
-    // Get an id for the new object
-    obj->setId(cnvSvc()->getIds(1));
-    // Now Save the current object
-    m_storeTypeStatement->setDouble(1, obj->id());
-    m_storeTypeStatement->setInt(2, obj->type());
-    m_storeTypeStatement->executeUpdate();
-    m_insertStatement->setString(1, obj->name());
-    m_insertStatement->setInt(2, obj->minFileSize());
-    m_insertStatement->setInt(3, obj->maxFileSize());
-    m_insertStatement->setInt(4, obj->nbCopies());
-    m_insertStatement->setDouble(5, obj->id());
-    m_insertStatement->executeUpdate();
-    if (autocommit) {
-      cnvSvc()->getConnection()->commit();
-    }
-  } catch (oracle::occi::SQLException e) {
-    try {
-      // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
-      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-        // We've obviously lost the ORACLE connection here
-        cnvSvc()->dropConnection();
-      }
-    } catch (oracle::occi::SQLException e) {
-      // rollback failed, let's drop the connection for security
-      cnvSvc()->dropConnection();
-    }
-    castor::exception::InvalidArgument ex; // XXX Fix it, depending on ORACLE error
-    ex.getMessage() << "Error in insert request :"
-                    << std::endl << e.what() << std::endl
-                    << "Statement was :" << std::endl
-                    << s_insertStatementString << std::endl
-                    << "and parameters' values were :" << std::endl
-                    << "  name : " << obj->name() << std::endl
-                    << "  minFileSize : " << obj->minFileSize() << std::endl
-                    << "  maxFileSize : " << obj->maxFileSize() << std::endl
-                    << "  nbCopies : " << obj->nbCopies() << std::endl
-                    << "  id : " << obj->id() << std::endl;
-    throw ex;
+  // Check select statement
+  if (0 == m_FileClass2CastorFileStatement) {
+    m_FileClass2CastorFileStatement = createStatement(s_FileClass2CastorFileStatementString);
   }
-}
-
-//------------------------------------------------------------------------------
-// updateRep
-//------------------------------------------------------------------------------
-void castor::db::ora::OraFileClassCnv::updateRep(castor::IAddress* address,
-                                                 castor::IObject* object,
-                                                 bool autocommit)
-  throw (castor::exception::Exception) {
-  castor::stager::FileClass* obj = 
-    dynamic_cast<castor::stager::FileClass*>(object);
-  // check whether something needs to be done
-  if (0 == obj) return;
-  try {
-    // Check whether the statements are ok
-    if (0 == m_updateStatement) {
-      m_updateStatement = createStatement(s_updateStatementString);
-    }
-    // Update the current object
-    m_updateStatement->setString(1, obj->name());
-    m_updateStatement->setInt(2, obj->minFileSize());
-    m_updateStatement->setInt(3, obj->maxFileSize());
-    m_updateStatement->setInt(4, obj->nbCopies());
-    m_updateStatement->setDouble(5, obj->id());
-    m_updateStatement->executeUpdate();
-    if (autocommit) {
-      cnvSvc()->getConnection()->commit();
-    }
-  } catch (oracle::occi::SQLException e) {
-    try {
-      // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
-      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-        // We've obviously lost the ORACLE connection here
-        cnvSvc()->dropConnection();
-      }
-    } catch (oracle::occi::SQLException e) {
-      // rollback failed, let's drop the connection for security
-      cnvSvc()->dropConnection();
-    }
-    castor::exception::InvalidArgument ex; // XXX Fix it, depending on ORACLE error
-    ex.getMessage() << "Error in update request :"
-                    << std::endl << e.what() << std::endl
-                    << "Statement was :" << std::endl
-                    << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
-    throw ex;
+  // retrieve the object from the database
+  std::set<int> List;
+  m_FileClass2CastorFileStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_FileClass2CastorFileStatement->executeQuery();
+  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    List.insert(rset->getInt(1));
   }
-}
-
-//------------------------------------------------------------------------------
-// deleteRep
-//------------------------------------------------------------------------------
-void castor::db::ora::OraFileClassCnv::deleteRep(castor::IAddress* address,
-                                                 castor::IObject* object,
-                                                 bool autocommit)
-  throw (castor::exception::Exception) {
-  castor::stager::FileClass* obj = 
-    dynamic_cast<castor::stager::FileClass*>(object);
-  // check whether something needs to be done
-  if (0 == obj) return;
-  try {
-    // Check whether the statements are ok
-    if (0 == m_deleteStatement) {
-      m_deleteStatement = createStatement(s_deleteStatementString);
+  // Close ResultSet
+  m_FileClass2CastorFileStatement->closeResultSet(rset);
+  // Update objects and mark old ones for deletion
+  std::vector<castor::stager::CastorFile*> toBeDeleted;
+  for (std::vector<castor::stager::CastorFile*>::iterator it = obj->().begin();
+       it != obj->().end();
+       it++) {
+    std::set<int>::iterator item;
+    if ((item = List.find((*it)->id())) == List.end()) {
+      toBeDeleted.push_back(*it);
+    } else {
+      List.erase(item);
+      cnvSvc()->updateObj((*it));
     }
-    if (0 == m_deleteTypeStatement) {
-      m_deleteTypeStatement = createStatement(s_deleteTypeStatementString);
-    }
-    // Now Delete the object
-    m_deleteTypeStatement->setDouble(1, obj->id());
-    m_deleteTypeStatement->executeUpdate();
-    m_deleteStatement->setDouble(1, obj->id());
-    m_deleteStatement->executeUpdate();
-    if (autocommit) {
-      cnvSvc()->getConnection()->commit();
-    }
-  } catch (oracle::occi::SQLException e) {
-    try {
-      // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
-      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-        // We've obviously lost the ORACLE connection here
-        cnvSvc()->dropConnection();
-      }
-    } catch (oracle::occi::SQLException e) {
-      // rollback failed, let's drop the connection for security
-      cnvSvc()->dropConnection();
-    }
-    castor::exception::InvalidArgument ex; // XXX Fix it, depending on ORACLE error
-    ex.getMessage() << "Error in delete request :"
-                    << std::endl << e.what() << std::endl
-                    << "Statement was :" << std::endl
-                    << s_deleteStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
-    throw ex;
   }
-}
-
-//------------------------------------------------------------------------------
-// createObj
-//------------------------------------------------------------------------------
-castor::IObject* castor::db::ora::OraFileClassCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
-  castor::db::DbAddress* ad = 
-    dynamic_cast<castor::db::DbAddress*>(address);
-  try {
-    // Check whether the statement is ok
-    if (0 == m_selectStatement) {
-      m_selectStatement = createStatement(s_selectStatementString);
-    }
-    // retrieve the object from the database
-    m_selectStatement->setDouble(1, ad->id());
-    oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      castor::exception::NoEntry ex;
-      ex.getMessage() << "No object found for id :" << ad->id();
-      throw ex;
-    }
-    // create the new Object
-    castor::stager::FileClass* object = new castor::stager::FileClass();
-    // Now retrieve and set members
-    object->setName(rset->getString(1));
-    object->setMinFileSize(rset->getInt(2));
-    object->setMaxFileSize(rset->getInt(3));
-    object->setNbCopies(rset->getInt(4));
-    object->setId((unsigned long long)rset->getDouble(5));
-    m_selectStatement->closeResultSet(rset);
-    return object;
-  } catch (oracle::occi::SQLException e) {
-    try {
-      // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
-      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-        // We've obviously lost the ORACLE connection here
-        cnvSvc()->dropConnection();
-      }
-    } catch (oracle::occi::SQLException e) {
-      // rollback failed, let's drop the connection for security
-      cnvSvc()->dropConnection();
-    }
-    castor::exception::InvalidArgument ex; // XXX Fix it, depending on ORACLE error
-    ex.getMessage() << "Error in select request :"
-                    << std::endl << e.what() << std::endl
-                    << "Statement was :" << std::endl
-                    << s_selectStatementString << std::endl
-                    << "and id was " << ad->id() << std::endl;;
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// updateObj
-//------------------------------------------------------------------------------
-void castor::db::ora::OraFileClassCnv::updateObj(castor::IObject* obj)
-  throw (castor::exception::Exception) {
-  try {
-    // Check whether the statement is ok
-    if (0 == m_selectStatement) {
-      m_selectStatement = createStatement(s_selectStatementString);
-    }
-    // retrieve the object from the database
-    m_selectStatement->setDouble(1, obj->id());
-    oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      castor::exception::NoEntry ex;
-      ex.getMessage() << "No object found for id :" << obj->id();
-      throw ex;
-    }
-    // Now retrieve and set members
-    castor::stager::FileClass* object = 
-      dynamic_cast<castor::stager::FileClass*>(obj);
-    object->setName(rset->getString(1));
-    object->setMinFileSize(rset->getInt(2));
-    object->setMaxFileSize(rset->getInt(3));
-    object->setNbCopies(rset->getInt(4));
-    object->setId((unsigned long long)rset->getDouble(5));
-    m_selectStatement->closeResultSet(rset);
-  } catch (oracle::occi::SQLException e) {
-    try {
-      // Always try to rollback
-      cnvSvc()->getConnection()->rollback();
-      if (3114 == e.getErrorCode() || 28 == e.getErrorCode()) {
-        // We've obviously lost the ORACLE connection here
-        cnvSvc()->dropConnection();
-      }
-    } catch (oracle::occi::SQLException e) {
-      // rollback failed, let's drop the connection for security
-      cnvSvc()->dropConnection();
-    }
-    castor::exception::InvalidArgument ex; // XXX Fix it, depending on ORACLE error
-    ex.getMessage() << "Error in update request :"
-                    << std::endl << e.what() << std::endl
-                    << "Statement was :" << std::endl
-                    << s_updateStatementString << std::endl
-                    << "and id was " << obj->id() << std::endl;;
-    throw ex;
-  }
-}
-
+  // Delete old objects
+  for (std::vector<castor::stager::CastorFile*>::iterator it = toBeDeleted.begin();
+       it != toBeDeleted.end();
+       it++) {
+    obj->remove

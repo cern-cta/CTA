@@ -43,6 +43,7 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
+    class SvcClass;
     class SubRequest;
 
     /**
@@ -220,6 +221,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_svcClass
+       * @return the value of m_svcClass
+       */
+      SvcClass* svcClass() const {
+        return m_svcClass;
+      }
+
+      /**
+       * Set the value of m_svcClass
+       * @param new_var the new value of m_svcClass
+       */
+      void setSvcClass(SvcClass* new_var) {
+        m_svcClass = new_var;
+      }
+
+      /**
        * Add a SubRequest* object to the m_subRequestsVector list
        */
       void addSubRequests(SubRequest* add_object) {
@@ -287,6 +304,8 @@ namespace castor {
       std::string m_machine;
 
       std::string m_svcClassName;
+
+      SvcClass* m_svcClass;
 
       std::vector<SubRequest*> m_subRequestsVector;
 

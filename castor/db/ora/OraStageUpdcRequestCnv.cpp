@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdcRequestCnv.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/12 14:44:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdcRequestCnv.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/13 09:01:54 $ $Author: sponcec3 $
  *
  * 
  *
@@ -41,6 +41,7 @@
 #include "castor/stager/ReqId.hpp"
 #include "castor/stager/StageUpdcRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include <set>
 #include <vector>
 
@@ -56,7 +57,7 @@ const castor::IFactory<castor::IConverter>& OraStageUpdcRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_insertStatementString =
-"INSERT INTO rh_StageUpdcRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, id, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10)";
+"INSERT INTO rh_StageUpdcRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_deleteStatementString =
@@ -64,11 +65,11 @@ const std::string castor::db::ora::OraStageUpdcRequestCnv::s_deleteStatementStri
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, id, client FROM rh_StageUpdcRequest WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, id, svcClass, client FROM rh_StageUpdcRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_updateStatementString =
-"UPDATE rh_StageUpdcRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, client = :9 WHERE id = :10";
+"UPDATE rh_StageUpdcRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, svcClass = :9, client = :10 WHERE id = :11";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_storeTypeStatementString =
@@ -222,6 +223,9 @@ void castor::db::ora::OraStageUpdcRequestCnv::fillRep(castor::IAddress* address,
   case castor::OBJ_ReqId :
     fillRepReqId(obj);
     break;
+  case castor::OBJ_SvcClass :
+    fillRepSvcClass(obj);
+    break;
   case castor::OBJ_SubRequest :
     fillRepSubRequest(obj);
     break;
@@ -287,6 +291,44 @@ void castor::db::ora::OraStageUpdcRequestCnv::fillRepReqId(castor::stager::Stage
     m_deleteReqIdRequest2ReqIdStatement->setDouble(1, obj->id());
     m_deleteReqIdRequest2ReqIdStatement->setDouble(2, *it);
     m_deleteReqIdRequest2ReqIdStatement->executeUpdate();
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillRepSvcClass
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStageUpdcRequestCnv::fillRepSvcClass(castor::stager::StageUpdcRequest* obj)
+  throw (castor::exception::Exception) {
+  // Check select statement
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 svcClassId = (u_signed64)rset->getDouble(9);
+  // Close resultset
+  m_selectStatement->closeResultSet(rset);
+  castor::db::DbAddress ad(svcClassId, " ", 0);
+  // Check whether old object should be deleted
+  if (0 != svcClassId &&
+      0 != obj->svcClass() &&
+      obj->svcClass()->id() != svcClassId) {
+    cnvSvc()->deleteRepByAddress(&ad, false);
+    svcClassId = 0;
+  }
+  // Update object or create new one
+  if (svcClassId == 0) {
+    if (0 != obj->svcClass()) {
+      cnvSvc()->createRep(&ad, obj->svcClass(), false);
+    }
+  } else {
+    cnvSvc()->updateRep(&ad, obj->svcClass(), false);
   }
 }
 
@@ -357,7 +399,7 @@ void castor::db::ora::OraStageUpdcRequestCnv::fillRepIClient(castor::stager::Sta
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = (unsigned long long)rset->getDouble(8);
+  u_signed64 clientId = (u_signed64)rset->getDouble(10);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(clientId, " ", 0);
@@ -402,6 +444,9 @@ void castor::db::ora::OraStageUpdcRequestCnv::fillObj(castor::IAddress* address,
   switch (type) {
   case castor::OBJ_ReqId :
     fillObjReqId(obj);
+    break;
+  case castor::OBJ_SvcClass :
+    fillObjSvcClass(obj);
     break;
   case castor::OBJ_SubRequest :
     fillObjSubRequest(obj);
@@ -462,6 +507,45 @@ void castor::db::ora::OraStageUpdcRequestCnv::fillObjReqId(castor::stager::Stage
        it++) {
     IObject* item = cnvSvc()->getObjFromId(*it);
     obj->addReqids(dynamic_cast<castor::stager::ReqId*>(item));
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObjSvcClass
+//------------------------------------------------------------------------------
+void castor::db::ora::OraStageUpdcRequestCnv::fillObjSvcClass(castor::stager::StageUpdcRequest* obj)
+  throw (castor::exception::Exception) {
+  // Check whether the statement is ok
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 svcClassId = (u_signed64)rset->getDouble(8);
+  // Close ResultSet
+  m_selectStatement->closeResultSet(rset);
+  // Check whether something should be deleted
+  if (0 != obj->svcClass() &&
+      (0 == svcClassId ||
+       obj->svcClass()->id() != svcClassId)) {
+    delete obj->svcClass();
+    obj->setSvcClass(0);
+  }
+  // Update object or create new one
+  if (0 != svcClassId) {
+    if (0 == obj->svcClass()) {
+      obj->setSvcClass
+        (dynamic_cast<castor::stager::SvcClass*>
+         (cnvSvc()->getObjFromId(svcClassId)));
+    } else if (obj->svcClass()->id() == svcClassId) {
+      cnvSvc()->updateObj(obj->svcClass());
+    }
   }
 }
 
@@ -529,7 +613,7 @@ void castor::db::ora::OraStageUpdcRequestCnv::fillObjIClient(castor::stager::Sta
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = (unsigned long long)rset->getDouble(8);
+  u_signed64 clientId = (u_signed64)rset->getDouble(9);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -590,7 +674,8 @@ void castor::db::ora::OraStageUpdcRequestCnv::createRep(castor::IAddress* addres
     m_insertStatement->setString(7, obj->machine());
     m_insertStatement->setString(8, obj->svcClassName());
     m_insertStatement->setDouble(9, obj->id());
-    m_insertStatement->setDouble(10, obj->client() ? obj->client()->id() : 0);
+    m_insertStatement->setDouble(10, obj->svcClass() ? obj->svcClass()->id() : 0);
+    m_insertStatement->setDouble(11, obj->client() ? obj->client()->id() : 0);
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -622,6 +707,7 @@ void castor::db::ora::OraStageUpdcRequestCnv::createRep(castor::IAddress* addres
                     << "  machine : " << obj->machine() << std::endl
                     << "  svcClassName : " << obj->svcClassName() << std::endl
                     << "  id : " << obj->id() << std::endl
+                    << "  svcClass : " << obj->svcClass() << std::endl
                     << "  client : " << obj->client() << std::endl;
     throw ex;
   }
@@ -652,8 +738,9 @@ void castor::db::ora::OraStageUpdcRequestCnv::updateRep(castor::IAddress* addres
     m_updateStatement->setInt(6, obj->pid());
     m_updateStatement->setString(7, obj->machine());
     m_updateStatement->setString(8, obj->svcClassName());
-    m_updateStatement->setDouble(9, obj->client() ? obj->client()->id() : 0);
-    m_updateStatement->setDouble(10, obj->id());
+    m_updateStatement->setDouble(9, obj->svcClass() ? obj->svcClass()->id() : 0);
+    m_updateStatement->setDouble(10, obj->client() ? obj->client()->id() : 0);
+    m_updateStatement->setDouble(11, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -770,7 +857,7 @@ castor::IObject* castor::db::ora::OraStageUpdcRequestCnv::createObj(castor::IAdd
     // create the new Object
     castor::stager::StageUpdcRequest* object = new castor::stager::StageUpdcRequest();
     // Now retrieve and set members
-    object->setFlags((unsigned long long)rset->getDouble(1));
+    object->setFlags((u_signed64)rset->getDouble(1));
     object->setUserName(rset->getString(2));
     object->setEuid(rset->getInt(3));
     object->setEgid(rset->getInt(4));
@@ -778,7 +865,9 @@ castor::IObject* castor::db::ora::OraStageUpdcRequestCnv::createObj(castor::IAdd
     object->setPid(rset->getInt(6));
     object->setMachine(rset->getString(7));
     object->setSvcClassName(rset->getString(8));
-    object->setId((unsigned long long)rset->getDouble(9));
+    object->setId((u_signed64)rset->getDouble(9));
+    u_signed64 svcClassId = (u_signed64)rset->getDouble(10);
+    u_signed64 clientId = (u_signed64)rset->getDouble(11);
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -824,7 +913,7 @@ void castor::db::ora::OraStageUpdcRequestCnv::updateObj(castor::IObject* obj)
     // Now retrieve and set members
     castor::stager::StageUpdcRequest* object = 
       dynamic_cast<castor::stager::StageUpdcRequest*>(obj);
-    object->setFlags((unsigned long long)rset->getDouble(1));
+    object->setFlags((u_signed64)rset->getDouble(1));
     object->setUserName(rset->getString(2));
     object->setEuid(rset->getInt(3));
     object->setEgid(rset->getInt(4));
@@ -832,7 +921,7 @@ void castor::db::ora::OraStageUpdcRequestCnv::updateObj(castor::IObject* obj)
     object->setPid(rset->getInt(6));
     object->setMachine(rset->getString(7));
     object->setSvcClassName(rset->getString(8));
-    object->setId((unsigned long long)rset->getDouble(9));
+    object->setId((u_signed64)rset->getDouble(9));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

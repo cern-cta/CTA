@@ -37,6 +37,14 @@ namespace castor {
   // Forward declarations
   class IObject;
 
+  // Forward declarations
+  namespace stager {
+
+    // Forward declarations
+    class Stream;
+
+  }; // end of namespace stager
+
   namespace db {
 
     namespace ora {
@@ -155,6 +163,22 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type TapeCopy refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepTapeCopy(castor::stager::Stream* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Fill the database with objects of type TapePool refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepTapePool(castor::stager::Stream* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -163,6 +187,22 @@ namespace castor {
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
                              unsigned int type)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type TapeCopy refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjTapeCopy(castor::stager::Stream* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type TapePool refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjTapePool(castor::stager::Stream* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -202,6 +242,36 @@ namespace castor {
 
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
+
+        /// SQL insert statement for member 
+        static const std::string s_insertStream2TapeCopyStatementString;
+
+        /// SQL insert statement object for member 
+        oracle::occi::Statement *m_insertStream2TapeCopyStatement;
+
+        /// SQL delete statement for member 
+        static const std::string s_deleteStream2TapeCopyStatementString;
+
+        /// SQL delete statement object for member 
+        oracle::occi::Statement *m_deleteStream2TapeCopyStatement;
+
+        /// SQL select statement for member 
+        static const std::string s_Stream2TapeCopyStatementString;
+
+        /// SQL select statement object for member 
+        oracle::occi::Statement *m_Stream2TapeCopyStatement;
+
+        /// SQL insert statement for member tapePool
+        static const std::string s_insertTapePool2StreamStatementString;
+
+        /// SQL insert statement object for member tapePool
+        oracle::occi::Statement *m_insertTapePool2StreamStatement;
+
+        /// SQL delete statement for member tapePool
+        static const std::string s_deleteTapePool2StreamStatementString;
+
+        /// SQL delete statement object for member tapePool
+        oracle::occi::Statement *m_deleteTapePool2StreamStatement;
 
         /// SQL insert statement for member status
         static const std::string s_insertStream2StreamStatusCodesStatementString;

@@ -187,7 +187,7 @@ void castor::db::ora::OraClientCnv::fillRepRequest(castor::rh::Client* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 requestId = (unsigned long long)rset->getDouble(2);
+  u_signed64 requestId = (u_signed64)rset->getDouble(3);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(requestId, " ", 0);
@@ -259,7 +259,7 @@ void castor::db::ora::OraClientCnv::fillObjRequest(castor::rh::Client* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 requestId = (unsigned long long)rset->getDouble(2);
+  u_signed64 requestId = (u_signed64)rset->getDouble(2);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -472,7 +472,8 @@ castor::IObject* castor::db::ora::OraClientCnv::createObj(castor::IAddress* addr
     // Now retrieve and set members
     object->setIpAddress(rset->getInt(1));
     object->setPort(rset->getInt(2));
-    object->setId((unsigned long long)rset->getDouble(3));
+    object->setId((u_signed64)rset->getDouble(3));
+    u_signed64 requestId = (u_signed64)rset->getDouble(4);
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -520,7 +521,7 @@ void castor::db::ora::OraClientCnv::updateObj(castor::IObject* obj)
       dynamic_cast<castor::rh::Client*>(obj);
     object->setIpAddress(rset->getInt(1));
     object->setPort(rset->getInt(2));
-    object->setId((unsigned long long)rset->getDouble(3));
+    object->setId((u_signed64)rset->getDouble(3));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

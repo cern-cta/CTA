@@ -732,7 +732,7 @@ void CppCppOraCnvWriter::writeFillRep() {
 
   // Now write the dedicated fillRep Methods
   MemberList members = createMembersList();
-  unsigned int n = members.count() - 1; // All but Id
+  unsigned int n = members.count();
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
@@ -2041,11 +2041,12 @@ void CppCppOraCnvWriter::writeCreateObjContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (as->first.first == MULT_ONE &&
-        isEnum(as->second.second)) {
-      writeSingleGetFromSelect(as->second, n, false, true);
-    }
+    if (as->first.first == MULT_ONE) {
+      bool isenum = isEnum(as->second.second);
+      writeSingleGetFromSelect
+        (as->second, n, !isenum, isenum);
     n++;
+    }
   }
   // Close request
   *m_stream << getIndent()
@@ -2234,7 +2235,7 @@ void CppCppOraCnvWriter::writeSingleGetFromSelect(Member pair,
               << ")";
   }
   if (isAssoc || pair.second == "u_signed64") {
-    *m_stream << "(unsigned long long)";
+    *m_stream << "(u_signed64)";
   }
   *m_stream << "rset->get";
   if (isEnum) {

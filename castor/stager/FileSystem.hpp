@@ -43,6 +43,7 @@ namespace castor {
 
     // Forward declarations
     class DiskServer;
+    class DiskPool;
     class DiskCopy;
 
     /**
@@ -193,6 +194,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_diskPool
+       * @return the value of m_diskPool
+       */
+      DiskPool* diskPool() const {
+        return m_diskPool;
+      }
+
+      /**
+       * Set the value of m_diskPool
+       * @param new_var the new value of m_diskPool
+       */
+      void setDiskPool(DiskPool* new_var) {
+        m_diskPool = new_var;
+      }
+
+      /**
        * Add a DiskCopy* object to the m_copiesVector list
        */
       void addCopies(DiskCopy* add_object) {
@@ -256,6 +273,8 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
+
+      DiskPool* m_diskPool;
 
       std::vector<DiskCopy*> m_copiesVector;
 

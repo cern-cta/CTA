@@ -29,6 +29,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/Segment.hpp"
+#include "castor/stager/Stream.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -40,6 +41,7 @@
 //------------------------------------------------------------------------------
 castor::stager::TapeCopy::TapeCopy() throw() :
   m_id(),
+  m_stream(0),
   m_castorFile(0),
   m_status(TapeCopyStatusCodes(0)) {
 };
@@ -72,6 +74,12 @@ void castor::stager::TapeCopy::print(std::ostream& stream,
   // Output of all members
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "Stream : " << std::endl;
+  if (0 != m_stream) {
+    m_stream->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
   {
     stream << indent << "Segments : " << std::endl;
     int i;

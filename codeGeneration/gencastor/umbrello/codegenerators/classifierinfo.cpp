@@ -113,6 +113,16 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
 
 	// another preparation, determine what we have
 	plainAssociations = c->getSpecificAssocs(Uml::at_Association); // BAD! only way to get "general" associations.
+  UMLAssociationList ul =
+    c->getSpecificAssocs(Uml::at_UniAssociation);
+  for (unsigned int i = 0; i < ul.count(); i++) {
+    plainAssociations.append(ul.at(i));
+  }
+  UMLAssociationList dl =
+    c->getSpecificAssocs(Uml::at_Dependency);
+  for (unsigned int i = 0; i < dl.count(); i++) {
+    plainAssociations.append(dl.at(i));
+  }
 	plainAssociations.setAutoDelete(false);
 
 	aggregations = c->getAggregations();

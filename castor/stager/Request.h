@@ -33,6 +33,7 @@ struct C_IClient_t;
 struct C_IObject_t;
 struct Cstager_Request_t;
 struct Cstager_SubRequest_t;
+struct Cstager_SvcClass_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -156,6 +157,16 @@ int Cstager_Request_svcClassName(struct Cstager_Request_t* instance, const char*
  * Set the value of svcClassName
  */
 int Cstager_Request_setSvcClassName(struct Cstager_Request_t* instance, const char* new_var);
+
+/**
+ * Get the value of svcClass
+ */
+int Cstager_Request_svcClass(struct Cstager_Request_t* instance, struct Cstager_SvcClass_t** var);
+
+/**
+ * Set the value of svcClass
+ */
+int Cstager_Request_setSvcClass(struct Cstager_Request_t* instance, struct Cstager_SvcClass_t* new_var);
 
 /**
  * Add a struct Cstager_SubRequest_t* object to the subRequests list

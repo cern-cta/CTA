@@ -32,6 +32,7 @@
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_Stream_t;
+struct Cstager_TapePool_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -101,6 +102,16 @@ int Cstager_Stream_initialSizeToTransfer(struct Cstager_Stream_t* instance, u_si
  * Initial data volume to be migrated (needed by vmgr_gettape())
  */
 int Cstager_Stream_setInitialSizeToTransfer(struct Cstager_Stream_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of tapePool
+ */
+int Cstager_Stream_tapePool(struct Cstager_Stream_t* instance, struct Cstager_TapePool_t** var);
+
+/**
+ * Set the value of tapePool
+ */
+int Cstager_Stream_setTapePool(struct Cstager_Stream_t* instance, struct Cstager_TapePool_t* new_var);
 
 /**
  * Get the value of status

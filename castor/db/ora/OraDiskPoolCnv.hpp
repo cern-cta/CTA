@@ -37,6 +37,14 @@ namespace castor {
   // Forward declarations
   class IObject;
 
+  // Forward declarations
+  namespace stager {
+
+    // Forward declarations
+    class DiskPool;
+
+  }; // end of namespace stager
+
   namespace db {
 
     namespace ora {
@@ -155,6 +163,14 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type FileSystem refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepFileSystem(castor::stager::DiskPool* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -163,6 +179,14 @@ namespace castor {
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
                              unsigned int type)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type FileSystem refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjFileSystem(castor::stager::DiskPool* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -202,6 +226,24 @@ namespace castor {
 
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
+
+        /// SQL insert statement for member fileSystems
+        static const std::string s_insertDiskPool2FileSystemStatementString;
+
+        /// SQL insert statement object for member fileSystems
+        oracle::occi::Statement *m_insertDiskPool2FileSystemStatement;
+
+        /// SQL delete statement for member fileSystems
+        static const std::string s_deleteDiskPool2FileSystemStatementString;
+
+        /// SQL delete statement object for member fileSystems
+        oracle::occi::Statement *m_deleteDiskPool2FileSystemStatement;
+
+        /// SQL select statement for member fileSystems
+        static const std::string s_DiskPool2FileSystemStatementString;
+
+        /// SQL select statement object for member fileSystems
+        oracle::occi::Statement *m_DiskPool2FileSystemStatement;
 
       }; // end of class OraDiskPoolCnv
 

@@ -38,6 +38,7 @@
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/DiskPool.hpp"
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/FileSystem.hpp"
 #include "osdep.h"
@@ -145,6 +146,7 @@ void castor::io::StreamFileSystemCnv::marshalObject(castor::IObject* object,
     cnvSvc()->createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
+    cnvSvc()->marshalObject(obj->diskPool(), address, alreadyDone);
     address->stream() << obj->copies().size();
     for (std::vector<castor::stager::DiskCopy*>::iterator it = obj->copies().begin();
          it != obj->copies().end();
@@ -171,6 +173,8 @@ castor::IObject* castor::io::StreamFileSystemCnv::unmarshalObject(castor::io::bi
   // Fill object with associations
   castor::stager::FileSystem* obj = 
     dynamic_cast<castor::stager::FileSystem*>(object);
+  IObject* objDiskPool = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setDiskPool(dynamic_cast<castor::stager::DiskPool*>(objDiskPool));
   unsigned int copiesNb;
   ad.stream() >> copiesNb;
   for (unsigned int i = 0; i < copiesNb; i++) {

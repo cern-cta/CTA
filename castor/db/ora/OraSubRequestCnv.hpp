@@ -163,6 +163,30 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type DiskCopy refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepDiskCopy(castor::stager::SubRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Fill the database with objects of type CastorFile refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepCastorFile(castor::stager::SubRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Fill the database with objects of type SubRequest refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepSubRequest(castor::stager::SubRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Fill the database with objects of type Request refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -179,6 +203,30 @@ namespace castor {
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
                              unsigned int type)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type DiskCopy refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjDiskCopy(castor::stager::SubRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type CastorFile refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjCastorFile(castor::stager::SubRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type SubRequest refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjSubRequest(castor::stager::SubRequest* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -226,6 +274,24 @@ namespace castor {
 
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
+
+        /// SQL insert statement for member parent
+        static const std::string s_insertSubRequest2SubRequestStatementString;
+
+        /// SQL insert statement object for member parent
+        oracle::occi::Statement *m_insertSubRequest2SubRequestStatement;
+
+        /// SQL delete statement for member parent
+        static const std::string s_deleteSubRequest2SubRequestStatementString;
+
+        /// SQL delete statement object for member parent
+        oracle::occi::Statement *m_deleteSubRequest2SubRequestStatement;
+
+        /// SQL select statement for member parent
+        static const std::string s_SubRequest2SubRequestStatementString;
+
+        /// SQL select statement object for member parent
+        oracle::occi::Statement *m_SubRequest2SubRequestStatement;
 
         /// SQL insert statement for member request
         static const std::string s_insertRequest2SubRequestStatementString;

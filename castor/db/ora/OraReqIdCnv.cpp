@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/12 14:44:50 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/13 09:01:54 $ $Author: sponcec3 $
  *
  * 
  *
@@ -187,7 +187,7 @@ void castor::db::ora::OraReqIdCnv::fillRepReqIdRequest(castor::stager::ReqId* ob
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 requestId = (unsigned long long)rset->getDouble(1);
+  u_signed64 requestId = (u_signed64)rset->getDouble(2);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(requestId, " ", 0);
@@ -259,7 +259,7 @@ void castor::db::ora::OraReqIdCnv::fillObjReqIdRequest(castor::stager::ReqId* ob
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 requestId = (unsigned long long)rset->getDouble(1);
+  u_signed64 requestId = (u_signed64)rset->getDouble(1);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -468,7 +468,8 @@ castor::IObject* castor::db::ora::OraReqIdCnv::createObj(castor::IAddress* addre
     castor::stager::ReqId* object = new castor::stager::ReqId();
     // Now retrieve and set members
     object->setValue(rset->getString(1));
-    object->setId((unsigned long long)rset->getDouble(2));
+    object->setId((u_signed64)rset->getDouble(2));
+    u_signed64 requestId = (u_signed64)rset->getDouble(3);
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -515,7 +516,7 @@ void castor::db::ora::OraReqIdCnv::updateObj(castor::IObject* obj)
     castor::stager::ReqId* object = 
       dynamic_cast<castor::stager::ReqId*>(obj);
     object->setValue(rset->getString(1));
-    object->setId((unsigned long long)rset->getDouble(2));
+    object->setId((u_signed64)rset->getDouble(2));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

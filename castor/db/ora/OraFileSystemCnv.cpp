@@ -38,6 +38,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/DiskPool.hpp"
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/FileSystem.hpp"
 #include <set>
@@ -55,7 +56,7 @@ const castor::IFactory<castor::IConverter>& OraFileSystemCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraFileSystemCnv::s_insertStatementString =
-"INSERT INTO rh_FileSystem (free, weight, fsDeviation, randomize, mountPoint, id, diskserver) VALUES (:1,:2,:3,:4,:5,:6,:7)";
+"INSERT INTO rh_FileSystem (free, weight, fsDeviation, randomize, mountPoint, id, diskPool, diskserver) VALUES (:1,:2,:3,:4,:5,:6,:7,:8)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraFileSystemCnv::s_deleteStatementString =
@@ -63,11 +64,11 @@ const std::string castor::db::ora::OraFileSystemCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraFileSystemCnv::s_selectStatementString =
-"SELECT free, weight, fsDeviation, randomize, mountPoint, id, diskserver FROM rh_FileSystem WHERE id = :1";
+"SELECT free, weight, fsDeviation, randomize, mountPoint, id, diskPool, diskserver FROM rh_FileSystem WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraFileSystemCnv::s_updateStatementString =
-"UPDATE rh_FileSystem SET free = :1, weight = :2, fsDeviation = :3, randomize = :4, mountPoint = :5, diskserver = :6 WHERE id = :7";
+"UPDATE rh_FileSystem SET free = :1, weight = :2, fsDeviation = :3, randomize = :4, mountPoint = :5, diskPool = :6, diskserver = :7 WHERE id = :8";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraFileSystemCnv::s_storeTypeStatementString =
@@ -178,6 +179,9 @@ void castor::db::ora::OraFileSystemCnv::fillRep(castor::IAddress* address,
   castor::stager::FileSystem* obj = 
     dynamic_cast<castor::stager::FileSystem*>(object);
   switch (type) {
+  case castor::OBJ_DiskPool :
+    fillRepDiskPool(obj);
+    break;
   case castor::OBJ_DiskCopy :
     fillRepDiskCopy(obj);
     break;
@@ -193,6 +197,44 @@ void castor::db::ora::OraFileSystemCnv::fillRep(castor::IAddress* address,
   }
   if (autocommit) {
     cnvSvc()->getConnection()->commit();
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillRepDiskPool
+//------------------------------------------------------------------------------
+void castor::db::ora::OraFileSystemCnv::fillRepDiskPool(castor::stager::FileSystem* obj)
+  throw (castor::exception::Exception) {
+  // Check select statement
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 diskPoolId = (u_signed64)rset->getDouble(6);
+  // Close resultset
+  m_selectStatement->closeResultSet(rset);
+  castor::db::DbAddress ad(diskPoolId, " ", 0);
+  // Check whether old object should be deleted
+  if (0 != diskPoolId &&
+      0 != obj->diskPool() &&
+      obj->diskPool()->id() != diskPoolId) {
+    cnvSvc()->deleteRepByAddress(&ad, false);
+    diskPoolId = 0;
+  }
+  // Update object or create new one
+  if (diskPoolId == 0) {
+    if (0 != obj->diskPool()) {
+      cnvSvc()->createRep(&ad, obj->diskPool(), false);
+    }
+  } else {
+    cnvSvc()->updateRep(&ad, obj->diskPool(), false);
   }
 }
 
@@ -263,7 +305,7 @@ void castor::db::ora::OraFileSystemCnv::fillRepDiskServer(castor::stager::FileSy
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 diskserverId = (unsigned long long)rset->getDouble(5);
+  u_signed64 diskserverId = (u_signed64)rset->getDouble(7);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(diskserverId, " ", 0);
@@ -306,6 +348,9 @@ void castor::db::ora::OraFileSystemCnv::fillObj(castor::IAddress* address,
   castor::stager::FileSystem* obj = 
     dynamic_cast<castor::stager::FileSystem*>(object);
   switch (type) {
+  case castor::OBJ_DiskPool :
+    fillObjDiskPool(obj);
+    break;
   case castor::OBJ_DiskCopy :
     fillObjDiskCopy(obj);
     break;
@@ -318,6 +363,45 @@ void castor::db::ora::OraFileSystemCnv::fillObj(castor::IAddress* address,
                     << " on object of type " << obj->type() 
                     << ". This is meaningless.";
     throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObjDiskPool
+//------------------------------------------------------------------------------
+void castor::db::ora::OraFileSystemCnv::fillObjDiskPool(castor::stager::FileSystem* obj)
+  throw (castor::exception::Exception) {
+  // Check whether the statement is ok
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
+  if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 diskPoolId = (u_signed64)rset->getDouble(5);
+  // Close ResultSet
+  m_selectStatement->closeResultSet(rset);
+  // Check whether something should be deleted
+  if (0 != obj->diskPool() &&
+      (0 == diskPoolId ||
+       obj->diskPool()->id() != diskPoolId)) {
+    delete obj->diskPool();
+    obj->setDiskPool(0);
+  }
+  // Update object or create new one
+  if (0 != diskPoolId) {
+    if (0 == obj->diskPool()) {
+      obj->setDiskPool
+        (dynamic_cast<castor::stager::DiskPool*>
+         (cnvSvc()->getObjFromId(diskPoolId)));
+    } else if (obj->diskPool()->id() == diskPoolId) {
+      cnvSvc()->updateObj(obj->diskPool());
+    }
   }
 }
 
@@ -385,7 +469,7 @@ void castor::db::ora::OraFileSystemCnv::fillObjDiskServer(castor::stager::FileSy
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 diskserverId = (unsigned long long)rset->getDouble(5);
+  u_signed64 diskserverId = (u_signed64)rset->getDouble(6);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -438,7 +522,8 @@ void castor::db::ora::OraFileSystemCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(4, obj->randomize());
     m_insertStatement->setString(5, obj->mountPoint());
     m_insertStatement->setDouble(6, obj->id());
-    m_insertStatement->setDouble(7, obj->diskserver() ? obj->diskserver()->id() : 0);
+    m_insertStatement->setDouble(7, obj->diskPool() ? obj->diskPool()->id() : 0);
+    m_insertStatement->setDouble(8, obj->diskserver() ? obj->diskserver()->id() : 0);
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -467,6 +552,7 @@ void castor::db::ora::OraFileSystemCnv::createRep(castor::IAddress* address,
                     << "  randomize : " << obj->randomize() << std::endl
                     << "  mountPoint : " << obj->mountPoint() << std::endl
                     << "  id : " << obj->id() << std::endl
+                    << "  diskPool : " << obj->diskPool() << std::endl
                     << "  diskserver : " << obj->diskserver() << std::endl;
     throw ex;
   }
@@ -494,8 +580,9 @@ void castor::db::ora::OraFileSystemCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setFloat(3, obj->fsDeviation());
     m_updateStatement->setInt(4, obj->randomize());
     m_updateStatement->setString(5, obj->mountPoint());
-    m_updateStatement->setDouble(6, obj->diskserver() ? obj->diskserver()->id() : 0);
-    m_updateStatement->setDouble(7, obj->id());
+    m_updateStatement->setDouble(6, obj->diskPool() ? obj->diskPool()->id() : 0);
+    m_updateStatement->setDouble(7, obj->diskserver() ? obj->diskserver()->id() : 0);
+    m_updateStatement->setDouble(8, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -605,12 +692,14 @@ castor::IObject* castor::db::ora::OraFileSystemCnv::createObj(castor::IAddress* 
     // create the new Object
     castor::stager::FileSystem* object = new castor::stager::FileSystem();
     // Now retrieve and set members
-    object->setFree((unsigned long long)rset->getDouble(1));
+    object->setFree((u_signed64)rset->getDouble(1));
     object->setWeight(rset->getFloat(2));
     object->setFsDeviation(rset->getFloat(3));
     object->setRandomize(rset->getInt(4));
     object->setMountPoint(rset->getString(5));
-    object->setId((unsigned long long)rset->getDouble(6));
+    object->setId((u_signed64)rset->getDouble(6));
+    u_signed64 diskPoolId = (u_signed64)rset->getDouble(7);
+    u_signed64 diskserverId = (u_signed64)rset->getDouble(8);
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -656,12 +745,12 @@ void castor::db::ora::OraFileSystemCnv::updateObj(castor::IObject* obj)
     // Now retrieve and set members
     castor::stager::FileSystem* object = 
       dynamic_cast<castor::stager::FileSystem*>(obj);
-    object->setFree((unsigned long long)rset->getDouble(1));
+    object->setFree((u_signed64)rset->getDouble(1));
     object->setWeight(rset->getFloat(2));
     object->setFsDeviation(rset->getFloat(3));
     object->setRandomize(rset->getInt(4));
     object->setMountPoint(rset->getString(5));
-    object->setId((unsigned long long)rset->getDouble(6));
+    object->setId((u_signed64)rset->getDouble(6));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

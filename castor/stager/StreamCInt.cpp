@@ -28,6 +28,7 @@
 #include "castor/IObject.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/StreamStatusCodes.hpp"
+#include "castor/stager/TapePool.hpp"
 #include "osdep.h"
 
 extern "C" {
@@ -117,6 +118,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_Stream_setInitialSizeToTransfer(castor::stager::Stream* instance, u_signed64 new_var) {
     instance->setInitialSizeToTransfer(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Stream_tapePool
+  //----------------------------------------------------------------------------
+  int Cstager_Stream_tapePool(castor::stager::Stream* instance, castor::stager::TapePool** var) {
+    *var = instance->tapePool();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Stream_setTapePool
+  //----------------------------------------------------------------------------
+  int Cstager_Stream_setTapePool(castor::stager::Stream* instance, castor::stager::TapePool* new_var) {
+    instance->setTapePool(new_var);
     return 0;
   }
 

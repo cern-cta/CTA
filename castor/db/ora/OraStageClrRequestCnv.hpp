@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageClrRequestCnv.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/12 14:44:50 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageClrRequestCnv.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/10/13 09:01:54 $ $Author: sponcec3 $
  *
  * 
  *
@@ -163,6 +163,14 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type SvcClass refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepSvcClass(castor::stager::StageClrRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Fill the database with objects of type SubRequest refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -187,6 +195,14 @@ namespace castor {
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
                              unsigned int type)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type SvcClass refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjSvcClass(castor::stager::StageClrRequest* obj)
           throw (castor::exception::Exception);
 
         /**

@@ -173,7 +173,18 @@ UMLClassifierList UMLCanvasObject::getSubClasses() {
 	return list;
 }
 
-QPtrList<UMLAssociation> UMLCanvasObject::getGeneralizations() {
+UMLAssociationList UMLCanvasObject::getStdAssociations() {
+  UMLAssociationList al =
+    getSpecificAssocs(Uml::at_Association);
+  UMLAssociationList ul =
+    getSpecificAssocs(Uml::at_UniAssociation);
+  for (unsigned int i = 0; i < ul.count(); i++) {
+    al.append(ul.at(i));
+  }
+  return al;
+}
+
+UMLAssociationList UMLCanvasObject::getGeneralizations() {
 	return getSpecificAssocs(Uml::at_Generalization);
 }
 

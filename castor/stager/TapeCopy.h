@@ -33,6 +33,7 @@
 struct C_IObject_t;
 struct Cstager_CastorFile_t;
 struct Cstager_Segment_t;
+struct Cstager_Stream_t;
 struct Cstager_TapeCopy_t;
 
 //------------------------------------------------------------------------------
@@ -91,6 +92,16 @@ int Cstager_TapeCopy_id(struct Cstager_TapeCopy_t* instance,
  */
 int Cstager_TapeCopy_type(struct Cstager_TapeCopy_t* instance,
                           int* ret);
+
+/**
+ * Get the value of stream
+ */
+int Cstager_TapeCopy_stream(struct Cstager_TapeCopy_t* instance, struct Cstager_Stream_t** var);
+
+/**
+ * Set the value of stream
+ */
+int Cstager_TapeCopy_setStream(struct Cstager_TapeCopy_t* instance, struct Cstager_Stream_t* new_var);
 
 /**
  * Add a struct Cstager_Segment_t* object to the segments list

@@ -163,6 +163,22 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type SvcClass refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepSvcClass(castor::stager::CastorFile* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Fill the database with objects of type FileClass refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepFileClass(castor::stager::CastorFile* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Fill the database with objects of type DiskCopy refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -187,6 +203,22 @@ namespace castor {
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
                              unsigned int type)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type SvcClass refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjSvcClass(castor::stager::CastorFile* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type FileClass refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjFileClass(castor::stager::CastorFile* obj)
           throw (castor::exception::Exception);
 
         /**

@@ -41,6 +41,9 @@ namespace castor {
 
   namespace stager {
 
+    // Forward declarations
+    class TapePool;
+
     /**
      * class Stream
      * A logical stream for the writing of DiskCopies on Tapes
@@ -121,6 +124,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_tapePool
+       * @return the value of m_tapePool
+       */
+      TapePool* tapePool() const {
+        return m_tapePool;
+      }
+
+      /**
+       * Set the value of m_tapePool
+       * @param new_var the new value of m_tapePool
+       */
+      void setTapePool(TapePool* new_var) {
+        m_tapePool = new_var;
+      }
+
+      /**
        * Get the value of m_status
        * @return the value of m_status
        */
@@ -145,6 +164,8 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
+
+      TapePool* m_tapePool;
 
       StreamStatusCodes m_status;
 

@@ -29,6 +29,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/SubRequest.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -46,6 +47,7 @@ castor::stager::Request::Request() throw() :
   m_pid(0),
   m_machine(""),
   m_svcClassName(""),
+  m_svcClass(0),
   m_client(0) {
 };
 
@@ -86,6 +88,12 @@ void castor::stager::Request::print(std::ostream& stream,
   stream << indent << "machine : " << m_machine << std::endl;
   stream << indent << "svcClassName : " << m_svcClassName << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "SvcClass : " << std::endl;
+  if (0 != m_svcClass) {
+    m_svcClass->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
   {
     stream << indent << "SubRequests : " << std::endl;
     int i;

@@ -27,6 +27,7 @@
 // Include Files
 #include "castor/IObject.hpp"
 #include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/DiskPool.hpp"
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/FileSystem.hpp"
 #include "osdep.h"
@@ -184,6 +185,22 @@ extern "C" {
   int Cstager_FileSystem_setMountPoint(castor::stager::FileSystem* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setMountPoint(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_diskPool
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_diskPool(castor::stager::FileSystem* instance, castor::stager::DiskPool** var) {
+    *var = instance->diskPool();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_setDiskPool
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_setDiskPool(castor::stager::FileSystem* instance, castor::stager::DiskPool* new_var) {
+    instance->setDiskPool(new_var);
     return 0;
   }
 

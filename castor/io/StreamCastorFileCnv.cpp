@@ -39,6 +39,8 @@
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/FileClass.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "osdep.h"
 #include <string>
@@ -137,6 +139,8 @@ void castor::io::StreamCastorFileCnv::marshalObject(castor::IObject* object,
     cnvSvc()->createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
+    cnvSvc()->marshalObject(obj->svcClass(), address, alreadyDone);
+    cnvSvc()->marshalObject(obj->fileClass(), address, alreadyDone);
     address->stream() << obj->diskFileCopies().size();
     for (std::vector<castor::stager::DiskCopy*>::iterator it = obj->diskFileCopies().begin();
          it != obj->diskFileCopies().end();
@@ -168,6 +172,10 @@ castor::IObject* castor::io::StreamCastorFileCnv::unmarshalObject(castor::io::bi
   // Fill object with associations
   castor::stager::CastorFile* obj = 
     dynamic_cast<castor::stager::CastorFile*>(object);
+  IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));
+  IObject* objFileClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setFileClass(dynamic_cast<castor::stager::FileClass*>(objFileClass));
   unsigned int diskFileCopiesNb;
   ad.stream() >> diskFileCopiesNb;
   for (unsigned int i = 0; i < diskFileCopiesNb; i++) {

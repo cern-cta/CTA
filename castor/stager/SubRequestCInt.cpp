@@ -26,10 +26,13 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/stager/CastorFile.hpp"
+#include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "osdep.h"
+#include <vector>
 
 extern "C" {
 
@@ -185,6 +188,96 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_SubRequest_setXsize(castor::stager::SubRequest* instance, u_signed64 new_var) {
     instance->setXsize(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_diskcopy
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_diskcopy(castor::stager::SubRequest* instance, castor::stager::DiskCopy** var) {
+    *var = instance->diskcopy();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setDiskcopy
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setDiskcopy(castor::stager::SubRequest* instance, castor::stager::DiskCopy* new_var) {
+    instance->setDiskcopy(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_castorFile
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_castorFile(castor::stager::SubRequest* instance, castor::stager::CastorFile** var) {
+    *var = instance->castorFile();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setCastorFile
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setCastorFile(castor::stager::SubRequest* instance, castor::stager::CastorFile* new_var) {
+    instance->setCastorFile(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_addParent
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_addParent(castor::stager::SubRequest* instance, castor::stager::SubRequest* obj) {
+    instance->addParent(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_removeParent
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_removeParent(castor::stager::SubRequest* instance, castor::stager::SubRequest* obj) {
+    instance->removeParent(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_parent
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_parent(castor::stager::SubRequest* instance, castor::stager::SubRequest*** var, int* len) {
+    std::vector<castor::stager::SubRequest*> result = instance->parent();
+    *len = result.size();
+    *var = (castor::stager::SubRequest**) malloc((*len) * sizeof(castor::stager::SubRequest*));
+    for (int i = 0; i < *len; i++) {
+      (*var)[i] = result[i];
+    }
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_addChild
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_addChild(castor::stager::SubRequest* instance, castor::stager::SubRequest* obj) {
+    instance->addChild(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_removeChild
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_removeChild(castor::stager::SubRequest* instance, castor::stager::SubRequest* obj) {
+    instance->removeChild(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_child
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_child(castor::stager::SubRequest* instance, castor::stager::SubRequest*** var, int* len) {
+    std::vector<castor::stager::SubRequest*> result = instance->child();
+    *len = result.size();
+    *var = (castor::stager::SubRequest**) malloc((*len) * sizeof(castor::stager::SubRequest*));
+    for (int i = 0; i < *len; i++) {
+      (*var)[i] = result[i];
+    }
     return 0;
   }
 

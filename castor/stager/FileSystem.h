@@ -31,6 +31,7 @@
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_DiskCopy_t;
+struct Cstager_DiskPool_t;
 struct Cstager_DiskServer_t;
 struct Cstager_FileSystem_t;
 
@@ -146,6 +147,16 @@ int Cstager_FileSystem_mountPoint(struct Cstager_FileSystem_t* instance, const c
  * Mount point of this file system on the disk server
  */
 int Cstager_FileSystem_setMountPoint(struct Cstager_FileSystem_t* instance, const char* new_var);
+
+/**
+ * Get the value of diskPool
+ */
+int Cstager_FileSystem_diskPool(struct Cstager_FileSystem_t* instance, struct Cstager_DiskPool_t** var);
+
+/**
+ * Set the value of diskPool
+ */
+int Cstager_FileSystem_setDiskPool(struct Cstager_FileSystem_t* instance, struct Cstager_DiskPool_t* new_var);
 
 /**
  * Add a struct Cstager_DiskCopy_t* object to the copies list

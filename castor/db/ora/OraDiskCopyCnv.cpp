@@ -226,7 +226,7 @@ void castor::db::ora::OraDiskCopyCnv::fillRepFileSystem(castor::stager::DiskCopy
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 fileSystemId = (unsigned long long)rset->getDouble(1);
+  u_signed64 fileSystemId = (u_signed64)rset->getDouble(2);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(fileSystemId, " ", 0);
@@ -276,7 +276,7 @@ void castor::db::ora::OraDiskCopyCnv::fillRepCastorFile(castor::stager::DiskCopy
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 castorFileId = (unsigned long long)rset->getDouble(2);
+  u_signed64 castorFileId = (u_signed64)rset->getDouble(3);
   // Close resultset
   m_selectStatement->closeResultSet(rset);
   castor::db::DbAddress ad(castorFileId, " ", 0);
@@ -351,7 +351,7 @@ void castor::db::ora::OraDiskCopyCnv::fillObjFileSystem(castor::stager::DiskCopy
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 fileSystemId = (unsigned long long)rset->getDouble(1);
+  u_signed64 fileSystemId = (u_signed64)rset->getDouble(1);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -390,7 +390,7 @@ void castor::db::ora::OraDiskCopyCnv::fillObjCastorFile(castor::stager::DiskCopy
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 castorFileId = (unsigned long long)rset->getDouble(2);
+  u_signed64 castorFileId = (u_signed64)rset->getDouble(2);
   // Close ResultSet
   m_selectStatement->closeResultSet(rset);
   // Check whether something should be deleted
@@ -616,7 +616,9 @@ castor::IObject* castor::db::ora::OraDiskCopyCnv::createObj(castor::IAddress* ad
     castor::stager::DiskCopy* object = new castor::stager::DiskCopy();
     // Now retrieve and set members
     object->setPath(rset->getString(1));
-    object->setId((unsigned long long)rset->getDouble(2));
+    object->setId((u_signed64)rset->getDouble(2));
+    u_signed64 fileSystemId = (u_signed64)rset->getDouble(3);
+    u_signed64 castorFileId = (u_signed64)rset->getDouble(4);
     object->setStatus((enum castor::stager::DiskCopyStatusCode)rset->getInt(5));
     m_selectStatement->closeResultSet(rset);
     return object;
@@ -664,7 +666,7 @@ void castor::db::ora::OraDiskCopyCnv::updateObj(castor::IObject* obj)
     castor::stager::DiskCopy* object = 
       dynamic_cast<castor::stager::DiskCopy*>(obj);
     object->setPath(rset->getString(1));
-    object->setId((unsigned long long)rset->getDouble(2));
+    object->setId((u_signed64)rset->getDouble(2));
     object->setStatus((enum castor::stager::DiskCopyStatusCode)rset->getInt(5));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {

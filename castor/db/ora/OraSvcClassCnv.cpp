@@ -351,7 +351,7 @@ castor::IObject* castor::db::ora::OraSvcClassCnv::createObj(castor::IAddress* ad
     object->setPolicy(rset->getString(1));
     object->setNbDrives(rset->getInt(2));
     object->setName(rset->getString(3));
-    object->setId((unsigned long long)rset->getDouble(4));
+    object->setId((u_signed64)rset->getDouble(4));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -400,7 +400,7 @@ void castor::db::ora::OraSvcClassCnv::updateObj(castor::IObject* obj)
     object->setPolicy(rset->getString(1));
     object->setNbDrives(rset->getInt(2));
     object->setName(rset->getString(3));
-    object->setId((unsigned long long)rset->getDouble(4));
+    object->setId((u_signed64)rset->getDouble(4));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

@@ -27,6 +27,7 @@
 // Include Files
 #include "OraTapePoolCnv.hpp"
 #include "castor/CnvFactory.hpp"
+#include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IConverter.hpp"
 #include "castor/IFactory.hpp"
@@ -36,7 +37,10 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
+#include "castor/stager/Stream.hpp"
 #include "castor/stager/TapePool.hpp"
+#include <set>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -72,6 +76,18 @@ const std::string castor::db::ora::OraTapePoolCnv::s_storeTypeStatementString =
 const std::string castor::db::ora::OraTapePoolCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
+/// SQL insert statement for member streams
+const std::string castor::db::ora::OraTapePoolCnv::s_insertTapePool2StreamStatementString =
+"INSERT INTO rh_TapePool2Stream (Parent, Child) VALUES (:1, :2)";
+
+/// SQL delete statement for member streams
+const std::string castor::db::ora::OraTapePoolCnv::s_deleteTapePool2StreamStatementString =
+"DELETE FROM rh_TapePool2Stream WHERE Parent = :1 AND Child = :2";
+
+/// SQL select statement for member streams
+const std::string castor::db::ora::OraTapePoolCnv::s_TapePool2StreamStatementString =
+"SELECT Child from rh_TapePool2Stream WHERE Parent = :1";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -82,7 +98,10 @@ castor::db::ora::OraTapePoolCnv::OraTapePoolCnv() :
   m_selectStatement(0),
   m_updateStatement(0),
   m_storeTypeStatement(0),
-  m_deleteTypeStatement(0) {}
+  m_deleteTypeStatement(0),
+  m_insertTapePool2StreamStatement(0),
+  m_deleteTapePool2StreamStatement(0),
+  m_TapePool2StreamStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -104,6 +123,8 @@ void castor::db::ora::OraTapePoolCnv::reset() throw() {
     deleteStatement(m_updateStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
+    deleteStatement(m_insertTapePool2StreamStatement);
+    deleteStatement(m_TapePool2StreamStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -112,6 +133,9 @@ void castor::db::ora::OraTapePoolCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
+  m_insertTapePool2StreamStatement = 0;
+  m_deleteTapePool2StreamStatement = 0;
+  m_TapePool2StreamStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -139,6 +163,9 @@ void castor::db::ora::OraTapePoolCnv::fillRep(castor::IAddress* address,
   castor::stager::TapePool* obj = 
     dynamic_cast<castor::stager::TapePool*>(object);
   switch (type) {
+  case castor::OBJ_Stream :
+    fillRepStream(obj);
+    break;
   default :
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "fillRep called on type " << type 
@@ -152,6 +179,56 @@ void castor::db::ora::OraTapePoolCnv::fillRep(castor::IAddress* address,
 }
 
 //------------------------------------------------------------------------------
+// fillRepStream
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapePoolCnv::fillRepStream(castor::stager::TapePool* obj)
+  throw (castor::exception::Exception) {
+  // check select statement
+  if (0 == m_TapePool2StreamStatement) {
+    m_TapePool2StreamStatement = createStatement(s_TapePool2StreamStatementString);
+  }
+  // Get current database data
+  std::set<int> streamsList;
+  m_TapePool2StreamStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_TapePool2StreamStatement->executeQuery();
+  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    streamsList.insert(rset->getInt(1));
+  }
+  m_TapePool2StreamStatement->closeResultSet(rset);
+  // update segments and create new ones
+  for (std::vector<castor::stager::Stream*>::iterator it = obj->streams().begin();
+       it != obj->streams().end();
+       it++) {
+    std::set<int>::iterator item;
+    if ((item = streamsList.find((*it)->id())) == streamsList.end()) {
+      cnvSvc()->createRep(0, *it, false);
+      if (0 == m_insertTapePool2StreamStatement) {
+        m_insertTapePool2StreamStatement = createStatement(s_insertTapePool2StreamStatementString);
+      }
+      m_insertTapePool2StreamStatement->setDouble(1, obj->id());
+      m_insertTapePool2StreamStatement->setDouble(2, (*it)->id());
+      m_insertTapePool2StreamStatement->executeUpdate();
+    } else {
+      streamsList.erase(item);
+      cnvSvc()->updateRep(0, *it, false);
+    }
+  }
+  // Delete old data
+  for (std::set<int>::iterator it = streamsList.begin();
+       it != streamsList.end();
+       it++) {
+    castor::db::DbAddress ad(*it, " ", 0);
+    cnvSvc()->deleteRepByAddress(&ad, false);
+    if (0 == m_deleteTapePool2StreamStatement) {
+      m_deleteTapePool2StreamStatement = createStatement(s_deleteTapePool2StreamStatementString);
+    }
+    m_deleteTapePool2StreamStatement->setDouble(1, obj->id());
+    m_deleteTapePool2StreamStatement->setDouble(2, *it);
+    m_deleteTapePool2StreamStatement->executeUpdate();
+  }
+}
+
+//------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
 void castor::db::ora::OraTapePoolCnv::fillObj(castor::IAddress* address,
@@ -161,12 +238,62 @@ void castor::db::ora::OraTapePoolCnv::fillObj(castor::IAddress* address,
   castor::stager::TapePool* obj = 
     dynamic_cast<castor::stager::TapePool*>(object);
   switch (type) {
+  case castor::OBJ_Stream :
+    fillObjStream(obj);
+    break;
   default :
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "fillObj called on type " << type 
                     << " on object of type " << obj->type() 
                     << ". This is meaningless.";
     throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObjStream
+//------------------------------------------------------------------------------
+void castor::db::ora::OraTapePoolCnv::fillObjStream(castor::stager::TapePool* obj)
+  throw (castor::exception::Exception) {
+  // Check select statement
+  if (0 == m_TapePool2StreamStatement) {
+    m_TapePool2StreamStatement = createStatement(s_TapePool2StreamStatementString);
+  }
+  // retrieve the object from the database
+  std::set<int> streamsList;
+  m_TapePool2StreamStatement->setDouble(1, obj->id());
+  oracle::occi::ResultSet *rset = m_TapePool2StreamStatement->executeQuery();
+  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    streamsList.insert(rset->getInt(1));
+  }
+  // Close ResultSet
+  m_TapePool2StreamStatement->closeResultSet(rset);
+  // Update objects and mark old ones for deletion
+  std::vector<castor::stager::Stream*> toBeDeleted;
+  for (std::vector<castor::stager::Stream*>::iterator it = obj->streams().begin();
+       it != obj->streams().end();
+       it++) {
+    std::set<int>::iterator item;
+    if ((item = streamsList.find((*it)->id())) == streamsList.end()) {
+      toBeDeleted.push_back(*it);
+    } else {
+      streamsList.erase(item);
+      cnvSvc()->updateObj((*it));
+    }
+  }
+  // Delete old objects
+  for (std::vector<castor::stager::Stream*>::iterator it = toBeDeleted.begin();
+       it != toBeDeleted.end();
+       it++) {
+    obj->removeStreams(*it);
+    delete (*it);
+  }
+  // Create new objects
+  for (std::set<int>::iterator it = streamsList.begin();
+       it != streamsList.end();
+       it++) {
+    IObject* item = cnvSvc()->getObjFromId(*it);
+    obj->addStreams(dynamic_cast<castor::stager::Stream*>(item));
   }
 }
 
@@ -343,7 +470,7 @@ castor::IObject* castor::db::ora::OraTapePoolCnv::createObj(castor::IAddress* ad
     castor::stager::TapePool* object = new castor::stager::TapePool();
     // Now retrieve and set members
     object->setName(rset->getString(1));
-    object->setId((unsigned long long)rset->getDouble(2));
+    object->setId((u_signed64)rset->getDouble(2));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -390,7 +517,7 @@ void castor::db::ora::OraTapePoolCnv::updateObj(castor::IObject* obj)
     castor::stager::TapePool* object = 
       dynamic_cast<castor::stager::TapePool*>(obj);
     object->setName(rset->getString(1));
-    object->setId((unsigned long long)rset->getDouble(2));
+    object->setId((u_signed64)rset->getDouble(2));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

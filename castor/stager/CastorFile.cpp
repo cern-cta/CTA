@@ -29,6 +29,8 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/FileClass.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -42,7 +44,9 @@ castor::stager::CastorFile::CastorFile() throw() :
   m_fileId(),
   m_nsHost(""),
   m_size(),
-  m_id() {
+  m_id(),
+  m_svcClass(0),
+  m_fileClass(0) {
 };
 
 //------------------------------------------------------------------------------
@@ -77,6 +81,18 @@ void castor::stager::CastorFile::print(std::ostream& stream,
   stream << indent << "size : " << m_size << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "SvcClass : " << std::endl;
+  if (0 != m_svcClass) {
+    m_svcClass->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
+  stream << indent << "FileClass : " << std::endl;
+  if (0 != m_fileClass) {
+    m_fileClass->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
   {
     stream << indent << "DiskFileCopies : " << std::endl;
     int i;

@@ -28,6 +28,7 @@
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/DiskPool.hpp"
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/FileSystem.hpp"
 #include "osdep.h"
@@ -45,6 +46,7 @@ castor::stager::FileSystem::FileSystem() throw() :
   m_randomize(0),
   m_mountPoint(""),
   m_id(),
+  m_diskPool(0),
   m_diskserver(0) {
 };
 
@@ -52,6 +54,9 @@ castor::stager::FileSystem::FileSystem() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::FileSystem::~FileSystem() throw() {
+  if (0 != m_diskPool) {
+    m_diskPool->removeFileSystems(this);
+  }
   for (unsigned int i = 0; i < m_copiesVector.size(); i++) {
     m_copiesVector[i]->setFileSystem(0);
   }
@@ -80,6 +85,12 @@ void castor::stager::FileSystem::print(std::ostream& stream,
   stream << indent << "mountPoint : " << m_mountPoint << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "DiskPool : " << std::endl;
+  if (0 != m_diskPool) {
+    m_diskPool->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
   {
     stream << indent << "Copies : " << std::endl;
     int i;

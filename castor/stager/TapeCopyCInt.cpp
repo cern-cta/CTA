@@ -28,6 +28,7 @@
 #include "castor/IObject.hpp"
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/Segment.hpp"
+#include "castor/stager/Stream.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/TapeCopyStatusCodes.hpp"
 #include "osdep.h"
@@ -104,6 +105,22 @@ extern "C" {
   int Cstager_TapeCopy_type(castor::stager::TapeCopy* instance,
                             int* ret) {
     *ret = instance->type();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopy_stream
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopy_stream(castor::stager::TapeCopy* instance, castor::stager::Stream** var) {
+    *var = instance->stream();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_TapeCopy_setStream
+  //----------------------------------------------------------------------------
+  int Cstager_TapeCopy_setStream(castor::stager::TapeCopy* instance, castor::stager::Stream* new_var) {
+    instance->setStream(new_var);
     return 0;
   }
 

@@ -28,9 +28,11 @@
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/DiskPool.hpp"
+#include "castor/stager/FileSystem.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -44,6 +46,10 @@ castor::stager::DiskPool::DiskPool() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::DiskPool::~DiskPool() throw() {
+  for (unsigned int i = 0; i < m_fileSystemsVector.size(); i++) {
+    m_fileSystemsVector[i]->setDiskPool(0);
+  }
+  m_fileSystemsVector.clear();
 };
 
 //------------------------------------------------------------------------------
@@ -61,6 +67,17 @@ void castor::stager::DiskPool::print(std::ostream& stream,
   stream << indent << "name : " << m_name << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  {
+    stream << indent << "FileSystems : " << std::endl;
+    int i;
+    std::vector<FileSystem*>::const_iterator it;
+    for (it = m_fileSystemsVector.begin(), i = 0;
+         it != m_fileSystemsVector.end();
+         it++, i++) {
+      stream << indent << "  " << i << " :" << std::endl;
+      (*it)->print(stream, indent + "    ", alreadyPrinted);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------

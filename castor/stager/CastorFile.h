@@ -32,6 +32,8 @@
 struct C_IObject_t;
 struct Cstager_CastorFile_t;
 struct Cstager_DiskCopy_t;
+struct Cstager_FileClass_t;
+struct Cstager_SvcClass_t;
 struct Cstager_TapeCopy_t;
 
 //------------------------------------------------------------------------------
@@ -126,6 +128,26 @@ int Cstager_CastorFile_size(struct Cstager_CastorFile_t* instance, u_signed64* v
  * Size of the file
  */
 int Cstager_CastorFile_setSize(struct Cstager_CastorFile_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of svcClass
+ */
+int Cstager_CastorFile_svcClass(struct Cstager_CastorFile_t* instance, struct Cstager_SvcClass_t** var);
+
+/**
+ * Set the value of svcClass
+ */
+int Cstager_CastorFile_setSvcClass(struct Cstager_CastorFile_t* instance, struct Cstager_SvcClass_t* new_var);
+
+/**
+ * Get the value of fileClass
+ */
+int Cstager_CastorFile_fileClass(struct Cstager_CastorFile_t* instance, struct Cstager_FileClass_t** var);
+
+/**
+ * Set the value of fileClass
+ */
+int Cstager_CastorFile_setFileClass(struct Cstager_CastorFile_t* instance, struct Cstager_FileClass_t* new_var);
 
 /**
  * Add a struct Cstager_DiskCopy_t* object to the diskFileCopies list

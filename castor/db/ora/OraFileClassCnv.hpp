@@ -37,6 +37,14 @@ namespace castor {
   // Forward declarations
   class IObject;
 
+  // Forward declarations
+  namespace stager {
+
+    // Forward declarations
+    class FileClass;
+
+  }; // end of namespace stager
+
   namespace db {
 
     namespace ora {
@@ -155,6 +163,14 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type CastorFile refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepCastorFile(castor::stager::FileClass* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -163,6 +179,14 @@ namespace castor {
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
                              unsigned int type)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type CastorFile refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjCastorFile(castor::stager::FileClass* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -202,6 +226,24 @@ namespace castor {
 
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
+
+        /// SQL insert statement for member 
+        static const std::string s_insertFileClass2CastorFileStatementString;
+
+        /// SQL insert statement object for member 
+        oracle::occi::Statement *m_insertFileClass2CastorFileStatement;
+
+        /// SQL delete statement for member 
+        static const std::string s_deleteFileClass2CastorFileStatementString;
+
+        /// SQL delete statement object for member 
+        oracle::occi::Statement *m_deleteFileClass2CastorFileStatement;
+
+        /// SQL select statement for member 
+        static const std::string s_FileClass2CastorFileStatementString;
+
+        /// SQL select statement object for member 
+        oracle::occi::Statement *m_FileClass2CastorFileStatement;
 
       }; // end of class OraFileClassCnv
 

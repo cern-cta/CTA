@@ -31,23 +31,23 @@ CREATE TABLE rh_Request2IClient (Parent INTEGER, Child INTEGER);
 
 /* SQL statements for type StageInRequest */
 DROP TABLE rh_StageInRequest;
-CREATE TABLE rh_StageInRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), openflags NUMBER, id INTEGER PRIMARY KEY, client INTEGER);
+CREATE TABLE rh_StageInRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), openflags NUMBER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type StageQryRequest */
 DROP TABLE rh_StageQryRequest;
-CREATE TABLE rh_StageQryRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), id INTEGER PRIMARY KEY, client INTEGER);
+CREATE TABLE rh_StageQryRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type StageOutRequest */
 DROP TABLE rh_StageOutRequest;
-CREATE TABLE rh_StageOutRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), openmode NUMBER, id INTEGER PRIMARY KEY, client INTEGER);
+CREATE TABLE rh_StageOutRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), openmode NUMBER, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type StageClrRequest */
 DROP TABLE rh_StageClrRequest;
-CREATE TABLE rh_StageClrRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), id INTEGER PRIMARY KEY, client INTEGER);
+CREATE TABLE rh_StageClrRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type StageFilChgRequest */
 DROP TABLE rh_StageFilChgRequest;
-CREATE TABLE rh_StageFilChgRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), id INTEGER PRIMARY KEY, client INTEGER);
+CREATE TABLE rh_StageFilChgRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type ReqId */
 DROP TABLE rh_ReqId;
@@ -57,13 +57,13 @@ CREATE TABLE rh_ReqIdRequest2ReqId (Parent INTEGER, Child INTEGER);
 
 /* SQL statements for type SubRequest */
 DROP TABLE rh_SubRequest;
-CREATE TABLE rh_SubRequest (retryCounter NUMBER, fileName VARCHAR(255), protocol VARCHAR(255), poolName VARCHAR(255), xsize INTEGER, id INTEGER PRIMARY KEY, request INTEGER, status INTEGER);
+CREATE TABLE rh_SubRequest (retryCounter NUMBER, fileName VARCHAR(255), protocol VARCHAR(255), poolName VARCHAR(255), xsize INTEGER, id INTEGER PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, request INTEGER, status INTEGER);
 DROP TABLE rh_Request2SubRequest;
 CREATE TABLE rh_Request2SubRequest (Parent INTEGER, Child INTEGER);
 
 /* SQL statements for type StageUpdcRequest */
 DROP TABLE rh_StageUpdcRequest;
-CREATE TABLE rh_StageUpdcRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), id INTEGER PRIMARY KEY, client INTEGER);
+CREATE TABLE rh_StageUpdcRequest (flags INTEGER, userName VARCHAR(255), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR(255), svcClassName VARCHAR(255), id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type Tape */
 DROP TABLE rh_Tape;
@@ -83,13 +83,13 @@ CREATE TABLE rh_TapePool (name VARCHAR(255), id INTEGER PRIMARY KEY);
 
 /* SQL statements for type TapeCopy */
 DROP TABLE rh_TapeCopy;
-CREATE TABLE rh_TapeCopy (id INTEGER PRIMARY KEY, castorFile INTEGER, status INTEGER);
+CREATE TABLE rh_TapeCopy (id INTEGER PRIMARY KEY, stream INTEGER, castorFile INTEGER, status INTEGER);
 DROP TABLE rh_CastorFile2TapeCopy;
 CREATE TABLE rh_CastorFile2TapeCopy (Parent INTEGER, Child INTEGER);
 
 /* SQL statements for type CastorFile */
 DROP TABLE rh_CastorFile;
-CREATE TABLE rh_CastorFile (fileId INTEGER, nsHost VARCHAR(255), size INTEGER, id INTEGER PRIMARY KEY);
+CREATE TABLE rh_CastorFile (fileId INTEGER, nsHost VARCHAR(255), size INTEGER, id INTEGER PRIMARY KEY, svcClass INTEGER, fileClass INTEGER);
 
 /* SQL statements for type DiskCopy */
 DROP TABLE rh_DiskCopy;
@@ -101,7 +101,7 @@ CREATE TABLE rh_CastorFile2DiskCopy (Parent INTEGER, Child INTEGER);
 
 /* SQL statements for type FileSystem */
 DROP TABLE rh_FileSystem;
-CREATE TABLE rh_FileSystem (free INTEGER, weight float, fsDeviation float, randomize NUMBER, mountPoint VARCHAR(255), id INTEGER PRIMARY KEY, diskserver INTEGER);
+CREATE TABLE rh_FileSystem (free INTEGER, weight float, fsDeviation float, randomize NUMBER, mountPoint VARCHAR(255), id INTEGER PRIMARY KEY, diskPool INTEGER, diskserver INTEGER);
 DROP TABLE rh_DiskServer2FileSystem;
 CREATE TABLE rh_DiskServer2FileSystem (Parent INTEGER, Child INTEGER);
 
@@ -115,7 +115,9 @@ CREATE TABLE rh_DiskPool (name VARCHAR(255), id INTEGER PRIMARY KEY);
 
 /* SQL statements for type Stream */
 DROP TABLE rh_Stream;
-CREATE TABLE rh_Stream (initialSizeToTransfer INTEGER, id INTEGER PRIMARY KEY, status INTEGER);
+CREATE TABLE rh_Stream (initialSizeToTransfer INTEGER, id INTEGER PRIMARY KEY, tapePool INTEGER, status INTEGER);
+DROP TABLE rh_TapePool2Stream;
+CREATE TABLE rh_TapePool2Stream (Parent INTEGER, Child INTEGER);
 
 /* SQL statements for type FileClass */
 DROP TABLE rh_FileClass;

@@ -27,7 +27,9 @@
 // Include Files
 #include "castor/IObject.hpp"
 #include "castor/stager/DiskPool.hpp"
+#include "castor/stager/FileSystem.hpp"
 #include "osdep.h"
+#include <vector>
 
 extern "C" {
 
@@ -117,6 +119,35 @@ extern "C" {
   int Cstager_DiskPool_setName(castor::stager::DiskPool* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskPool_addFileSystems
+  //----------------------------------------------------------------------------
+  int Cstager_DiskPool_addFileSystems(castor::stager::DiskPool* instance, castor::stager::FileSystem* obj) {
+    instance->addFileSystems(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskPool_removeFileSystems
+  //----------------------------------------------------------------------------
+  int Cstager_DiskPool_removeFileSystems(castor::stager::DiskPool* instance, castor::stager::FileSystem* obj) {
+    instance->removeFileSystems(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskPool_fileSystems
+  //----------------------------------------------------------------------------
+  int Cstager_DiskPool_fileSystems(castor::stager::DiskPool* instance, castor::stager::FileSystem*** var, int* len) {
+    std::vector<castor::stager::FileSystem*> result = instance->fileSystems();
+    *len = result.size();
+    *var = (castor::stager::FileSystem**) malloc((*len) * sizeof(castor::stager::FileSystem*));
+    for (int i = 0; i < *len; i++) {
+      (*var)[i] = result[i];
+    }
     return 0;
   }
 

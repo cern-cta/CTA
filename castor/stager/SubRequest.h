@@ -31,6 +31,8 @@
 #include "castor/stager/SubRequestStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
+struct Cstager_CastorFile_t;
+struct Cstager_DiskCopy_t;
 struct Cstager_Request_t;
 struct Cstager_SubRequest_t;
 
@@ -154,6 +156,56 @@ int Cstager_SubRequest_xsize(struct Cstager_SubRequest_t* instance, u_signed64* 
  * the default.
  */
 int Cstager_SubRequest_setXsize(struct Cstager_SubRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of diskcopy
+ */
+int Cstager_SubRequest_diskcopy(struct Cstager_SubRequest_t* instance, struct Cstager_DiskCopy_t** var);
+
+/**
+ * Set the value of diskcopy
+ */
+int Cstager_SubRequest_setDiskcopy(struct Cstager_SubRequest_t* instance, struct Cstager_DiskCopy_t* new_var);
+
+/**
+ * Get the value of castorFile
+ */
+int Cstager_SubRequest_castorFile(struct Cstager_SubRequest_t* instance, struct Cstager_CastorFile_t** var);
+
+/**
+ * Set the value of castorFile
+ */
+int Cstager_SubRequest_setCastorFile(struct Cstager_SubRequest_t* instance, struct Cstager_CastorFile_t* new_var);
+
+/**
+ * Add a struct Cstager_SubRequest_t* object to the parent list
+ */
+int Cstager_SubRequest_addParent(struct Cstager_SubRequest_t* instance, struct Cstager_SubRequest_t* obj);
+
+/**
+ * Remove a struct Cstager_SubRequest_t* object from parent
+ */
+int Cstager_SubRequest_removeParent(struct Cstager_SubRequest_t* instance, struct Cstager_SubRequest_t* obj);
+
+/**
+ * Get the list of struct Cstager_SubRequest_t* objects held by parent
+ */
+int Cstager_SubRequest_parent(struct Cstager_SubRequest_t* instance, struct Cstager_SubRequest_t*** var, int* len);
+
+/**
+ * Add a struct Cstager_SubRequest_t* object to the child list
+ */
+int Cstager_SubRequest_addChild(struct Cstager_SubRequest_t* instance, struct Cstager_SubRequest_t* obj);
+
+/**
+ * Remove a struct Cstager_SubRequest_t* object from child
+ */
+int Cstager_SubRequest_removeChild(struct Cstager_SubRequest_t* instance, struct Cstager_SubRequest_t* obj);
+
+/**
+ * Get the list of struct Cstager_SubRequest_t* objects held by child
+ */
+int Cstager_SubRequest_child(struct Cstager_SubRequest_t* instance, struct Cstager_SubRequest_t*** var, int* len);
 
 /**
  * Get the value of request

@@ -33,6 +33,7 @@
 #include "osdep.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace castor {
 
@@ -43,6 +44,8 @@ namespace castor {
 
     // Forward declarations
     class Request;
+    class DiskCopy;
+    class CastorFile;
 
     /**
      * class SubRequest
@@ -200,6 +203,96 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_diskcopy
+       * @return the value of m_diskcopy
+       */
+      DiskCopy* diskcopy() const {
+        return m_diskcopy;
+      }
+
+      /**
+       * Set the value of m_diskcopy
+       * @param new_var the new value of m_diskcopy
+       */
+      void setDiskcopy(DiskCopy* new_var) {
+        m_diskcopy = new_var;
+      }
+
+      /**
+       * Get the value of m_castorFile
+       * @return the value of m_castorFile
+       */
+      CastorFile* castorFile() const {
+        return m_castorFile;
+      }
+
+      /**
+       * Set the value of m_castorFile
+       * @param new_var the new value of m_castorFile
+       */
+      void setCastorFile(CastorFile* new_var) {
+        m_castorFile = new_var;
+      }
+
+      /**
+       * Add a SubRequest* object to the m_parentVector list
+       */
+      void addParent(SubRequest* add_object) {
+        m_parentVector.push_back(add_object);
+      }
+
+      /**
+       * Remove a SubRequest* object from m_parentVector
+       */
+      void removeParent(SubRequest* remove_object) {
+        for (unsigned int i = 0; i < m_parentVector.size(); i++) {
+          SubRequest* item = m_parentVector[i];
+          if (item == remove_object) {
+            std::vector<SubRequest*>::iterator it = m_parentVector.begin() + i;
+            m_parentVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of SubRequest* objects held by m_parentVector
+       * @return list of SubRequest* objects held by m_parentVector
+       */
+      std::vector<SubRequest*>& parent() {
+        return m_parentVector;
+      }
+
+      /**
+       * Add a SubRequest* object to the m_childVector list
+       */
+      void addChild(SubRequest* add_object) {
+        m_childVector.push_back(add_object);
+      }
+
+      /**
+       * Remove a SubRequest* object from m_childVector
+       */
+      void removeChild(SubRequest* remove_object) {
+        for (unsigned int i = 0; i < m_childVector.size(); i++) {
+          SubRequest* item = m_childVector[i];
+          if (item == remove_object) {
+            std::vector<SubRequest*>::iterator it = m_childVector.begin() + i;
+            m_childVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of SubRequest* objects held by m_childVector
+       * @return list of SubRequest* objects held by m_childVector
+       */
+      std::vector<SubRequest*>& child() {
+        return m_childVector;
+      }
+
+      /**
        * Get the value of m_request
        * @return the value of m_request
        */
@@ -254,6 +347,14 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
+
+      DiskCopy* m_diskcopy;
+
+      CastorFile* m_castorFile;
+
+      std::vector<SubRequest*> m_parentVector;
+
+      std::vector<SubRequest*> m_childVector;
 
       Request* m_request;
 

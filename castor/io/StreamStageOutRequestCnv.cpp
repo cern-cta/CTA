@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageOutRequestCnv.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/11 16:44:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageOutRequestCnv.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/13 09:01:55 $ $Author: sponcec3 $
  *
  * 
  *
@@ -40,6 +40,7 @@
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/StageOutRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
 #include <string>
 #include <vector>
@@ -161,6 +162,7 @@ void castor::io::StreamStageOutRequestCnv::marshalObject(castor::IObject* object
     cnvSvc()->createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
+    cnvSvc()->marshalObject(obj->svcClass(), address, alreadyDone);
     address->stream() << obj->subRequests().size();
     for (std::vector<castor::stager::SubRequest*>::iterator it = obj->subRequests().begin();
          it != obj->subRequests().end();
@@ -187,6 +189,8 @@ castor::IObject* castor::io::StreamStageOutRequestCnv::unmarshalObject(castor::i
   // Fill object with associations
   castor::stager::StageOutRequest* obj = 
     dynamic_cast<castor::stager::StageOutRequest*>(object);
+  IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));
   unsigned int subRequestsNb;
   ad.stream() >> subRequestsNb;
   for (unsigned int i = 0; i < subRequestsNb; i++) {

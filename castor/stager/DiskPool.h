@@ -31,6 +31,7 @@
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_DiskPool_t;
+struct Cstager_FileSystem_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -101,5 +102,20 @@ int Cstager_DiskPool_name(struct Cstager_DiskPool_t* instance, const char** var)
  * Name of this pool
  */
 int Cstager_DiskPool_setName(struct Cstager_DiskPool_t* instance, const char* new_var);
+
+/**
+ * Add a struct Cstager_FileSystem_t* object to the fileSystems list
+ */
+int Cstager_DiskPool_addFileSystems(struct Cstager_DiskPool_t* instance, struct Cstager_FileSystem_t* obj);
+
+/**
+ * Remove a struct Cstager_FileSystem_t* object from fileSystems
+ */
+int Cstager_DiskPool_removeFileSystems(struct Cstager_DiskPool_t* instance, struct Cstager_FileSystem_t* obj);
+
+/**
+ * Get the list of struct Cstager_FileSystem_t* objects held by fileSystems
+ */
+int Cstager_DiskPool_fileSystems(struct Cstager_DiskPool_t* instance, struct Cstager_FileSystem_t*** var, int* len);
 
 #endif // CASTOR_STAGER_DISKPOOL_H

@@ -37,9 +37,11 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
+#include "castor/stager/Stream.hpp"
 #include "castor/stager/TapePool.hpp"
 #include "osdep.h"
 #include <string>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -126,6 +128,12 @@ void castor::io::StreamTapePoolCnv::marshalObject(castor::IObject* object,
     cnvSvc()->createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
+    address->stream() << obj->streams().size();
+    for (std::vector<castor::stager::Stream*>::iterator it = obj->streams().begin();
+         it != obj->streams().end();
+         it++) {
+      cnvSvc()->marshalObject(*it, address, alreadyDone);
+    }
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -142,5 +150,14 @@ castor::IObject* castor::io::StreamTapePoolCnv::unmarshalObject(castor::io::bini
   castor::IObject* object = cnvSvc()->createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
+  // Fill object with associations
+  castor::stager::TapePool* obj = 
+    dynamic_cast<castor::stager::TapePool*>(object);
+  unsigned int streamsNb;
+  ad.stream() >> streamsNb;
+  for (unsigned int i = 0; i < streamsNb; i++) {
+    IObject* objStreams = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addStreams(dynamic_cast<castor::stager::Stream*>(objStreams));
+  }
 }
 
