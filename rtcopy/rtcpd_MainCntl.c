@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.40 $ $Date: 2000/03/15 14:44:28 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.41 $ $Date: 2000/03/15 20:05:00 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -437,6 +437,24 @@ static int rtcpd_AllocBuffers() {
 
     return(0);
 }
+static int rtcpd_ResetBuffers() {
+    int i;
+
+    for (i=0; i<nb_bufs; i++) {
+        databufs[i]->maxlength = bufsz;
+        databufs[i]->end_of_tpfile = FALSE;
+        databufs[i]->last_buffer = FALSE;
+        databufs[i]->nb_waiters = 0;
+        databufs[i]->nbrecs = 0;
+        databufs[i]->lrecl_table = NULL;
+        /*
+         * Initialize semaphores
+         */
+        databufs[i]->flag = BUFFER_EMPTY;
+    }
+
+    return(0);
+}
 
 static int rtcpd_InitProcCntl() {
     int rc;
@@ -830,6 +848,7 @@ static int rtcpd_ProcError(int *code) {
         }
         rc = proc_cntl.ProcError;
     }
+    (void) Cthread_cond_broadcast_ext(proc_cntl.ProcError_lock);
     (void) Cthread_mutex_unlock_ext(proc_cntl.ProcError_lock);
     return(rc);
 }
@@ -854,6 +873,33 @@ void rtcpd_SetProcError(int code) {
         rtcpd_BroadcastException(); 
 
     return;
+}
+
+int rtcpd_WaitProcStatus(int what) {
+    int rc;
+
+    rc = Cthread_mutex_lock_ext(proc_cntl.ProcError_lock);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"rtcpd_WaitProcStatus(): Cthread_mutex_lock_ext(): %s\n",
+            sstrerror(serrno));
+        return(-1);
+    } 
+    while ( (proc_cntl.ProcError & what) == 0 ) {
+        rc = Cthread_cond_wait_ext(proc_cntl.ProcError_lock);
+        if ( rc == -1 ) {
+            rtcp_log(LOG_ERR,"rtcpd_WaitProcStatus(): Cthread_wait_cond_ext(): %s\n",
+            sstrerror(serrno));
+            (void) Cthread_mutex_unlock_ext(proc_cntl.ProcError_lock);
+            return(-1);
+        }
+    }
+    rc = Cthread_mutex_unlock_ext(proc_cntl.ProcError_lock);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"rtcpd_WaitProcStatus(): Cthread_mutex_unlock_ext(): %s\n",
+                 sstrerror(serrno));
+        return(-1);
+    }
+    return(0);
 }
 
 int rtcpd_CheckProcError() {
@@ -1429,6 +1475,8 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
         /*
          * do a local retry
          */
+        rtcpd_WaitProcStatus(RTCP_RETRY_OK);
+        rtcpd_ResetBuffers();
         rtcpd_SetProcError(RTCP_OK);
     } /* for (;;) */
 

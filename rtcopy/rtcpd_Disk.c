@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.51 $ $Date: 2000/03/15 14:44:24 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.52 $ $Date: 2000/03/15 20:04:57 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1271,7 +1271,8 @@ static int DiskToMemory(int disk_fd, int pool_index,
         (void) tellClient(&client_socket,NULL,NULL,-1); \
         rtcp_CloseConnection(&client_socket); \
         if ( (severity & RTCP_LOCAL_RETRY) != 0 && mode == WRITE_DISABLE ) \
-        if ( (severity & RTCP_LOCAL_RETRY) != 0 ) proc_cntl.nb_reserved_bufs =0;\
+            rtcpd_SetProcError(RTCP_RETRY_OK|severity); \
+        DiskIOfinished(); \
         else return((void *)&success); \
     }}
 
@@ -1362,7 +1363,7 @@ void *diskIOthread(void *arg) {
         if ( (severity & RTCP_LOCAL_RETRY) == 0 ) break;
         retry++;
         rtcp_log(LOG_INFO,"diskIOthread(%s): local retry %d open\n",
-                 retry,filereq->file_path);
+                 filereq->file_path,retry);
     } while ( retry < 10 &&
               (severity & (RTCP_FAILED | RTCP_RESELECT_SERV)) == 0 ) ; 
     CHECK_PROC_ERR(file->tape,file,"DiskFileOpen() error");
@@ -1592,6 +1593,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
      */
     proc_cntl.diskIOstarted = 1;
     proc_cntl.diskIOfinished = 0;
+    nexttape = tape;
     /*
      * We don't loop over volumes since volume spanning is only allowed
      * for last tape file in the request and the file must start in the 
