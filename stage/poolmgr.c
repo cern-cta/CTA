@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.36 2000/09/11 15:22:19 jdurand Exp $
+ * $Id: poolmgr.c,v 1.37 2000/09/20 11:18:05 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.36 $ $Date: 2000/09/11 15:22:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.37 $ $Date: 2000/09/20 11:18:05 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -79,7 +79,7 @@ void cvtdbl2str _PROTO((double, char *));
 void print_pool_utilization _PROTO((int, char *, char *));
 char *selecttapepool _PROTO((char *));
 void procmigpoolreq _PROTO((char *, char *));
-void update_migpool _PROTO((struct stgcat_entry *, int));
+void update_migpool _PROTO((struct stgcat_entry *, int, int));
 void checkfile2mig _PROTO(());
 int migrate_files _PROTO((struct migrator *));
 int migpoolfiles _PROTO((struct migrator *));
@@ -89,6 +89,7 @@ int isvalidpool _PROTO((char *));
 void migpoolfiles_log_callback _PROTO((int, char *));
 int isuserlevel _PROTO((char *));
 void poolmgr_wait4child _PROTO(());
+int selectfs _PROTO((char *, int *, char *));
 
 getpoolconf(defpoolname)
 		 char *defpoolname;
@@ -855,6 +856,8 @@ void print_pool_utilization(rpfd, poolname, defpoolname)
 	struct pool_element *elemp;
 	char free_s[9];
 	int i, j;
+	int migr_newline = 1;
+	int migp_newline = 1;
 	struct pool *pool_p;
 	struct migrator *migr_p;
 	struct migrator *pool_p_migr = NULL;
@@ -910,7 +913,10 @@ void print_pool_utilization(rpfd, poolname, defpoolname)
 		for (i = 0, migr_p = migrators; i < nbmigrator; i++, migr_p++) {
 			if (*poolname && pool_p_migr != migr_p) continue;
 			if (*poolname) pool_p_migr_migp = migr_p->migp;
-			if (i == 0) sendrep (rpfd, MSG_OUT, "\n");
+			if (migr_newline) {
+				sendrep (rpfd, MSG_OUT, "\n");
+				migr_newline = 0;
+			}
 			sendrep (rpfd, MSG_OUT, "MIGRATOR %s MIGPOLICY %s\n",migr_p->name,migr_p->migp->name);
 			sendrep (rpfd, MSG_OUT, "\tNBFILES_CAN_BE_MIGR    %d\n", migr_p->nbfiles_canbemig);
 			sendrep (rpfd, MSG_OUT, "\tSPACE_CAN_BE_MIGR      %s\n", u64tostru(migr_p->space_canbemig, tmpbuf, 0));
@@ -933,7 +939,10 @@ void print_pool_utilization(rpfd, poolname, defpoolname)
 			int thisindex = 0;
 
 			if (*poolname && pool_p_migr_migp != migp_p) continue;
-			if (i == 0) sendrep (rpfd, MSG_OUT, "\n");
+			if (migp_newline) {
+				sendrep (rpfd, MSG_OUT, "\n");
+				migp_newline = 0;
+			}
 			sendrep (rpfd, MSG_OUT, "MIGPOLICY %s\n",migp_p->name);
 			if (migp_p->data_mig_threshold > 0) {
 				sendrep (rpfd, MSG_OUT, "\tDATATHRESHOLD %s\n", u64tostru(migp_p->data_mig_threshold, tmpbuf, 0));
@@ -959,30 +968,21 @@ void print_pool_utilization(rpfd, poolname, defpoolname)
 }
 
 int
-selectfs(poolname, size, path, t_or_d)
+selectfs(poolname, size, path)
 		 char *poolname;
 		 int *size;
 		 char *path;
-		 char t_or_d;
 {
 	struct pool_element *elemp;
 	int found = 0;
 	int i;
 	struct pool *pool_p;
 	long reqsize;
-	int size_to_use;
 
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
 		if (strcmp (poolname, pool_p->name) == 0) break;
-	if (*size == 0) {
-		if (t_or_d != 'm' && t_or_d != 'h') {
-			*size = pool_p->defsize;
-		}
-		size_to_use = pool_p->defsize;
-	} else {
-		size_to_use = *size;
-	}
-	reqsize = size_to_use * ONE_MB;	/* size in bytes */
+	if (*size == 0) *size = pool_p->defsize;
+	reqsize = *size * ONE_MB;	/* size in bytes */
 	i = pool_p->next_pool_elem;
 	do {
 		elemp = pool_p->elemp + i;
@@ -1215,14 +1215,15 @@ void procmigpoolreq(req_data, clienthost)
 	free (argv);
 }
 
-void update_migpool(stcp,flag)
+void update_migpool(stcp,flag,isauto)
 	struct stgcat_entry *stcp;
     int flag;
+    int isauto;
 {
 	int i, ipool;
 	struct pool *pool_p;
 
-    /* We check that this poolname exist */
+	/* We check that this poolname exist */
 	ipool = -1;
 	for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
       if (strcmp(pool_p->name,stcp->poolname) == 0) {
@@ -1241,7 +1242,7 @@ void update_migpool(stcp,flag)
 				/* This should never happen but who knows */
 				pool_p->migr->nbfiles_canbemig = 0;
 			}
-			if (flag < 0) {
+			if (flag < 0 && stcp->filler[1] == 'h') {
 				/* This is from a return of automatic migration */
 				if (pool_p->migr->nbfiles_canbemig-- < 0) {
 					stglogit ("update_migpool", "Internal error for pool %s, nbfiles_canbemig < 0 after migration OK (resetted to 0)\n",
@@ -1255,10 +1256,12 @@ void update_migpool(stcp,flag)
 				} else {
 					pool_p->migr->space_canbemig -= stcp->actual_size;
 				}
-			} else if (flag > 0) {
+				stcp->filler[1] = '\0';
+			} else if (flag > 0 && isauto != 0) {
 				/* This is to add an entry for a next automatic migration */
 				pool_p->migr->nbfiles_canbemig++;
 				pool_p->migr->space_canbemig += stcp->actual_size;
+				stcp->filler[1] = 'h';
 			}
 		}
 	}
