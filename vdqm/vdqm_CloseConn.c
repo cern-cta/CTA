@@ -1,6 +1,9 @@
 /*
- * $Id: vdqm_CloseConn.c,v 1.1 1999/07/27 09:19:42 obarring Exp $
+ * $Id: vdqm_CloseConn.c,v 1.2 1999/07/29 09:17:50 obarring Exp $
  * $Log: vdqm_CloseConn.c,v $
+ * Revision 1.2  1999/07/29 09:17:50  obarring
+ * Replace TABs with 4 SPACEs
+ *
  * Revision 1.1  1999/07/27 09:19:42  obarring
  * First version
  *
@@ -16,7 +19,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: vdqm_CloseConn.c,v 1.1 1999/07/27 09:19:42 obarring Exp $";
+static char cvsId[] = "$Id: vdqm_CloseConn.c,v 1.2 1999/07/29 09:17:50 obarring Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -41,21 +44,21 @@ extern char *sys_errlist[];
 #endif /* linux */
 
 int vdqm_CloseConn(vdqmnw_t *nw) {
-	SOCKET s;
-	int status = 0;
+    SOCKET s;
+    int status = 0;
 
-	if ( nw == NULL ) return(-1);
-	if ( (s = nw->accept_socket) == INVALID_SOCKET ) 
-		s = nw->connect_socket;
+    if ( nw == NULL ) return(-1);
+    if ( (s = nw->accept_socket) == INVALID_SOCKET ) 
+        s = nw->connect_socket;
 
-	if ( s == INVALID_SOCKET ) return(-1);
-	status = shutdown(s,SD_BOTH);
-	if ( status == SOCKET_ERROR ) {
-		log(LOG_ERR,"vdqm_CloseConn(): shutdown() %s\n",NWERRTXT);
-	}
-	status = closesocket(s);
-	if ( status == SOCKET_ERROR ) {
-		log(LOG_ERR,"vdqm_CloseConn(): closesocket() %s\n",NWERRTXT);
-	}
-	return(status);
+    if ( s == INVALID_SOCKET ) return(-1);
+    status = shutdown(s,SD_BOTH);
+    if ( status == SOCKET_ERROR ) {
+        log(LOG_ERR,"vdqm_CloseConn(): shutdown() %s\n",NWERRTXT);
+    }
+    status = closesocket(s);
+    if ( status == SOCKET_ERROR ) {
+        log(LOG_ERR,"vdqm_CloseConn(): closesocket() %s\n",NWERRTXT);
+    }
+    return(status);
 }
