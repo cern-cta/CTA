@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/28 09:41:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/01 15:33:28 $ $Author: sponcec3 $
  *
  *
  *
@@ -37,6 +37,7 @@
 #include "castor/ICnvSvc.hpp"
 #include "castor/Services.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/BaseAddress.hpp"
 
 #include "castor/rh/Request.hpp"
@@ -152,6 +153,11 @@ void *castor::rh::Server::processRequest(void *param) throw() {
            << castor::ip << ip << ":" << port << std::endl;
     castor::rh::Client *client =
       dynamic_cast<castor::rh::Client *>(fr->client());
+    if (0 == client) {
+      castor::exception::Internal e;
+      e.getMessage() << "Request arrived with no client object.";
+      throw e;
+    }
     client->setIpAddress(ip);
 
     // handle the request
