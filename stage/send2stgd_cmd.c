@@ -1,0 +1,238 @@
+/*
+ * $Id: send2stgd_cmd.c,v 1.1 2001/01/31 19:03:45 jdurand Exp $
+ */
+
+/*
+ * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: send2stgd_cmd.c,v $ $Revision: 1.1 $ $Date: 2001/01/31 19:03:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+#endif /* not lint */
+
+#include <errno.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#else
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#endif
+#ifndef _WIN32
+#include <signal.h>
+#include <sys/wait.h>
+#endif
+#include <sys/stat.h>
+#include "marshall.h"
+#include "rfio_api.h"
+#include "net.h"
+#include "serrno.h"
+#include "osdep.h"
+#include "stage.h"
+#include "Cnetdb.h"
+
+int nb_ovl;
+#ifndef _WIN32
+struct sigaction sa;
+#endif
+
+extern int dosymlink _PROTO((char *, char *));
+extern void dounlink _PROTO((char *));
+#ifndef _WIN32
+void wait4child _PROTO(());
+#endif
+extern int rc_shift2castor _PROTO((int));
+
+int DLL_DECL send2stgd_cmd(host, reqp, reql, want_reply, user_repbuf, user_repbuf_len)
+		 char *host;
+		 char *reqp;
+		 int reql;
+		 int want_reply;
+		 char *user_repbuf;
+		 int user_repbuf_len;
+{
+	int actual_replen = 0;
+	int c;
+	char file2[CA_MAXHOSTNAMELEN+CA_MAXPATHLEN+2];
+	char func[16];
+	char *getconfent();
+	char *getenv();
+	struct hostent *hp;
+	int link_rc;
+	int magic;
+	int n;
+	char *p;
+	char prtbuf[PRTBUFSZ];
+	int rep_type;
+	char repbuf[REPBUFSZ];
+	struct sockaddr_in sin; /* internet socket */
+	struct servent *sp = NULL;
+	int stg_s;
+	char stghost[CA_MAXHOSTNAMELEN+1];
+	char *stagehost = STAGEHOST;
+	int stg_service = 0;
+
+	strcpy (func, "send2stgd");
+#ifndef _WIN32
+	sa.sa_handler = wait4child;
+	sa.sa_flags = SA_RESTART;
+	sigaction (SIGCHLD, &sa, NULL);
+#endif
+	link_rc = 0;
+	if ((p = getenv ("STAGE_PORT")) == NULL &&
+		(p = getconfent("STG", "PORT",0)) == NULL) {
+		if ((sp = Cgetservbyname (STG, "tcp")) == NULL) {
+			stage_errmsg (func, STG09, STG, "not defined in /etc/services");
+			serrno = SENOSSERV;
+			return (-1);
+		}
+	} else {
+		if ((stg_service = atoi(p)) <= 0) {
+			stage_errmsg (func, STG09, STG, "service from environment or configuration is <= 0");
+			serrno = SENOSSERV;
+			return (-1);
+		}
+	}
+	nb_ovl = 0;
+	if (host == NULL) {
+		if ((p = getenv ("STAGE_HOST")) == NULL &&
+				(p = getconfent("STG", "HOST",0)) == NULL) {
+			strcpy (stghost, stagehost);
+		} else {
+			strcpy (stghost, p);
+		}
+	} else {
+		strcpy (stghost, host);
+	}
+	if ((hp = Cgethostbyname(stghost)) == NULL) {
+		stage_errmsg (func, STG09, "Host unknown:", stghost);
+		serrno = SENOSHOST;
+		return (-1);
+	}
+	sin.sin_family = AF_INET;
+	sin.sin_port = (stg_service > 0 ? stg_service : sp->s_port);
+	sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
+
+	if ((stg_s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
+		stage_errmsg (func, STG02, "", "socket", neterror());
+		serrno = SECOMERR;
+		return (-1);
+	}
+
+	c = RFIO_NONET;
+	rfiosetopt (RFIO_NETOPT, &c, 4);
+
+	if (connect (stg_s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
+		if (
+#if defined(_WIN32)
+				WSAGetLastError() == WSAECONNREFUSED
+#else
+				errno == ECONNREFUSED
+#endif
+				) {
+			stage_errmsg (func, STG00, stghost);
+			(void) netclose (stg_s);
+			serrno = ESTNACT;
+			return (-1);
+		} else {
+			stage_errmsg (func, STG02, "", "connect", neterror());
+			(void) netclose (stg_s);
+			serrno = SECOMERR;
+			return (-1);
+		}
+	}
+	if ((n = netwrite_timeout (stg_s, reqp, reql, STGTIMEOUT)) != reql) {
+		if (n == 0)
+			stage_errmsg (func, STG02, "", "send", sys_serrlist[SERRNO]);
+		else
+			stage_errmsg (func, STG02, "", "send", neterror());
+		(void) netclose (stg_s);
+		serrno = SECOMERR;
+		return (-1);
+	}
+	if (! want_reply) {
+		(void) netclose (stg_s);
+		return (0);
+	}
+	
+	while (1) {
+		if ((n = netread(stg_s, repbuf, 3 * LONGSIZE)) != (3 * LONGSIZE)) {
+			if (n == 0)
+				stage_errmsg (func, STG02, "", "recv", sys_serrlist[SERRNO]);
+			else
+				stage_errmsg (func, STG02, "", "recv", neterror());
+			(void) netclose (stg_s);
+			serrno = SECOMERR;
+			return (-1);
+		}
+		p = repbuf;
+		unmarshall_LONG (p, magic) ;
+		unmarshall_LONG (p, rep_type) ;
+		unmarshall_LONG (p, c) ;
+		if (rep_type == STAGERC) {
+			(void) netclose (stg_s);
+			if (c) {
+				serrno = rc_shift2castor(c);
+				c = -1;
+			}
+			break;
+		}
+		if ((n = netread(stg_s, repbuf, c)) != c) {
+			if (n == 0)
+				stage_errmsg (func, STG02, "", "recv", sys_serrlist[SERRNO]);
+			else
+				stage_errmsg (func, STG02, "", "recv", neterror());
+			(void) netclose (stg_s);
+			serrno = SECOMERR;
+			return (-1);
+		}
+		p = repbuf;
+		unmarshall_STRING (p, prtbuf);
+		switch (rep_type) {
+		case MSG_OUT:
+			if (user_repbuf != NULL) {
+				if (actual_replen + c <= user_repbuf_len)
+					n = c;
+				else
+					n = user_repbuf_len - actual_replen;
+				if (n) {
+					memcpy (user_repbuf + actual_replen, repbuf, n);
+					actual_replen += n;
+				}
+			} else
+				stage_outmsg (NULL, "%s", prtbuf);
+			break;
+		case MSG_ERR:
+		case RTCOPY_OUT:
+			stage_errmsg (NULL, "%s", prtbuf);
+			break;
+		case SYMLINK:
+			unmarshall_STRING (p, file2);
+			if (c = dosymlink (prtbuf, file2))
+				link_rc = c;
+			break;
+		case RMSYMLINK:
+			dounlink (prtbuf);
+		}
+	}
+#if !defined(_WIN32)
+	while (nb_ovl > 0) sleep (1);
+#endif
+	return (c ? c : link_rc);
+}
+
+#if !defined(_WIN32)
+void wait4child()
+{
+	int pid;
+	int status;
+	
+	while ((pid = waitpid (-1, &status, WNOHANG)) > 0)
+		nb_ovl--;
+}
+#endif
+
