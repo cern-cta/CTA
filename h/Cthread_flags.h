@@ -1,5 +1,10 @@
 /*
- * $Id: Cthread_flags.h,v 1.7 2000/06/19 09:48:34 jdurand Exp $
+ * $Id: Cthread_flags.h,v 1.8 2002/09/30 16:28:27 jdurand Exp $
+ */
+
+/*
+ * Copyright (C) 1999-2002 by CERN/IT/DS/HSM
+ * All rights reserved
  */
 
 #ifndef __Cthread_flags_h
