@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.5 $ $Date: 2000/01/11 07:47:40 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.6 $ $Date: 2000/01/12 08:52:00 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -93,9 +93,7 @@ int main(int argc, char *argv[]) {
             }
         } else break;
     }
-    if ( AbortFlag != 0 ) {
-        rtcp_log(LOG_DEBUG,"Cancelling VDQM request\n");
-        rtcpc_cancel(tape);
+    if ( rc == -1 || AbortFlag != 0 ) {
         rtcp_log(LOG_INFO,"command failed\n\n") ;
         return(USERR);
     }
