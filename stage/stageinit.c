@@ -1,21 +1,25 @@
 /*
- * $Id: stageinit.c,v 1.9 2000/03/24 10:10:07 jdurand Exp $
+ * $Id: stageinit.c,v 1.10 2000/08/15 11:06:15 baud Exp $
  */
 
 /*
- * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1994-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.9 $ $Date: 2000/03/24 10:10:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.10 $ $Date: 2000/08/15 11:06:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <pwd.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#else
 #include <netinet/in.h>
+#endif
 #include <errno.h>
 #include "marshall.h"
 #include "stage.h"
@@ -87,9 +91,13 @@ int main(argc, argv)
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
+#if !defined(_WIN32)
 	signal (SIGHUP, cleanup);
+#endif
 	signal (SIGINT, cleanup);
+#if !defined(_WIN32)
 	signal (SIGQUIT, cleanup);
+#endif
 	signal (SIGTERM, cleanup);
 
 	while (1) {
