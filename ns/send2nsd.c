@@ -1,4 +1,6 @@
 /*
+ * $Id: send2nsd.c,v 1.5 2004/08/12 14:03:25 motiakov Exp $
+ *
  * Copyright (C) 1993-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
@@ -54,19 +56,39 @@ int user_repbuf_len;
 	struct servent *sp;
 #ifdef CSEC
 	Csec_context_t ctx;
+	int secure_connection = 0;
 #endif
 	strcpy (func, "send2nsd");
+#ifdef CSEC
+	if (getenv("SECURE_CASTOR") != NULL) secure_connection++;
+#endif
 	if (socketp == NULL || *socketp < 0) {	/* connection not opened yet */
 		sin.sin_family = AF_INET;
-		if ((p = getenv ("CNS_PORT")) || (p = getconfent ("CNS", "PORT", 0))) {
-			sin.sin_port = htons ((unsigned short)atoi (p));
-		} else if (sp = Cgetservbyname ("cns", "tcp")) {
-			sin.sin_port = sp->s_port;
-			serrno = 0;
+#ifdef CSEC
+		if (secure_connection) {
+		  if ((p = getenv ("SCNS_PORT")) || (p = getconfent ("SCNS", "PORT", 0))) {
+		    sin.sin_port = htons ((unsigned short)atoi (p));
+		  } else if (sp = Cgetservbyname ("scns", "tcp")) {
+		    sin.sin_port = sp->s_port;
+		    serrno = 0;
+		  } else {
+		    sin.sin_port = htons ((unsigned short)SCNS_PORT);
+		    serrno = 0;
+		  }
 		} else {
-			sin.sin_port = htons ((unsigned short)CNS_PORT);
-			serrno = 0;
+#endif
+		  if ((p = getenv ("CNS_PORT")) || (p = getconfent ("CNS", "PORT", 0))) {
+		    sin.sin_port = htons ((unsigned short)atoi (p));
+		  } else if (sp = Cgetservbyname ("cns", "tcp")) {
+		    sin.sin_port = sp->s_port;
+		    serrno = 0;
+		  } else {
+		    sin.sin_port = htons ((unsigned short)CNS_PORT);
+		    serrno = 0;
+		  }
+#ifdef CSEC
 		}
+#endif
 		if (host && *host)
 			strcpy (Cnshost, host);
 		else if ((p = getenv ("CNS_HOST")) || (p = getconfent ("CNS", "HOST", 0)))
@@ -111,26 +133,26 @@ int user_repbuf_len;
 		}
 
 #ifdef CSEC
+			if (secure_connection) {
 
-
-			if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
-			  Cns_errmsg (func, NS002, "send", "Could not init context");
-			  (void) netclose (s);
-			  serrno = ESEC_CTX_NOT_INITIALIZED;
-			  return -1;
-			}
+			  if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
+			    Cns_errmsg (func, NS002, "send", "Could not init context");
+			    (void) netclose (s);
+			    serrno = ESEC_CTX_NOT_INITIALIZED;
+			    return -1;
+			  }
 			
-			if(Csec_client_establish_context(&ctx, s)< 0) {
-			  Cns_errmsg (func, "%s: %s\n",
-				      "send",
-				      "Could not establish context");
-			  (void) netclose (s);
-			  serrno = ESEC_NO_CONTEXT;
-			  return -1;
+			  if(Csec_client_establish_context(&ctx, s)< 0) {
+			    Cns_errmsg (func, "%s: %s\n",
+					"send",
+					"Could not establish context");
+			    (void) netclose (s);
+			    serrno = ESEC_NO_CONTEXT;
+			    return -1;
+			  }
+
+			  Csec_clear_context(&ctx);
 			}
-
-			Csec_clear_context(&ctx);
-
 #endif
 
 
