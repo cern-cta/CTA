@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd.c,v 1.9 1999/12/09 13:47:31 jdurand Exp $
+ * $Id: send2stgd.c,v 1.10 1999/12/14 14:51:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.9 $ $Date: 1999/12/09 13:47:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.10 $ $Date: 1999/12/14 14:51:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -32,6 +32,7 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.9 $ $Date: 19
 #include "net.h"
 #include "serrno.h"
 #include "stage.h"
+#include "osdep.h"
 extern int rfio_errno;
 #if !defined(linux)
 extern char *sys_errlist[];
@@ -40,6 +41,8 @@ int nb_ovl;
 #if (defined(_AIX) && defined(_IBMR2)) || defined(SOLARIS) || defined(IRIX5) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 struct sigaction sa;
 #endif
+
+void dounlink _PROTO(());
 
 send2stgd(host, reqp, reql, want_reply)
 char *host;
@@ -238,7 +241,7 @@ char *file2;
 	return (0);
 }
 
-dounlink (path)
+void dounlink (path)
 char *path;
 {
 	char *filename;

@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.6 1999/12/09 13:47:35 jdurand Exp $
+ * $Id: stagein.c,v 1.7 1999/12/14 14:51:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagein.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:47:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagein.c,v $ $Revision: 1.7 $ $Date: 1999/12/14 14:51:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -691,7 +691,7 @@ int sig;
 	exit (USERR);
 }
 
-usage(cmd)
+int usage(cmd)
 char *cmd;
 {
 	fprintf (stderr, "usage: %s ", cmd);
@@ -703,4 +703,5 @@ char *cmd;
 	  "[-q file_sequence_number] [-S tape_server] [-s size] [-T] [-t retention_period]\n",
 	  "[-U fun] [-u user] [-V visual_identifier(s)] [-v volume_serial_number(s)]\n",
 	  "[-X xparm] pathname(s)\n");
+    return(0);
 }

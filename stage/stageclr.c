@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.6 1999/12/09 13:47:33 jdurand Exp $
+ * $Id: stageclr.c,v 1.7 1999/12/14 14:51:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:47:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.7 $ $Date: 1999/12/14 14:51:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -332,4 +332,5 @@ char *cmd;
 	  "[-c] [-h stage_host] [-G] [-I external_filename] [-i] [-L link]\n",
 	  "[-l label_type] [-M hsmfile] [-m minfree] [-P path] [-p pool]\n",
           "[-q file_sequence_number(s)] [-remove_from_hsm] [-V visual_identifier(s)]\n");
+    return(0);
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: stageinit.c,v 1.6 1999/12/09 13:47:36 jdurand Exp $
+ * $Id: stageinit.c,v 1.7 1999/12/14 14:51:44 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:47:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageinit.c,v $ $Revision: 1.7 $ $Date: 1999/12/14 14:51:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -107,4 +107,5 @@ usage(cmd)
 char *cmd;
 {
 	fprintf (stderr, "usage: %s [-F] [-h stage_host]\n", cmd);
+    return(0);
 }

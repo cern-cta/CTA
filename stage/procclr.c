@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.9 1999/12/10 18:32:50 jdurand Exp $
+ * $Id: procclr.c,v 1.10 1999/12/14 14:51:38 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.9 $ $Date: 1999/12/10 18:32:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.10 $ $Date: 1999/12/14 14:51:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -29,6 +29,9 @@ static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.9 $ $Date: 1999
 #if SACCT
 #include "../h/sacct.h"
 #endif
+#include "osdep.h"
+
+void procclrreq _PROTO((char *, char *));
 
 extern char *optarg;
 extern int optind;
@@ -43,7 +46,7 @@ extern struct stgpath_entry *stpe;	/* end of stage path catalog */
 extern struct stgpath_entry *stps;	/* start of stage path catalog */
 extern struct waitq *waitqp;
 
-procclrreq(req_data, clienthost)
+void procclrreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {

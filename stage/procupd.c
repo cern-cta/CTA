@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.8 1999/12/10 18:32:51 jdurand Exp $
+ * $Id: procupd.c,v 1.9 1999/12/14 14:51:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.8 $ $Date: 1999/12/10 18:32:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.9 $ $Date: 1999/12/14 14:51:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -29,6 +29,9 @@ static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.8 $ $Date: 1999
 #include "../h/sacct.h"
 #endif
 #include "stgdb_Cdb_ifce.h"
+#include "osdep.h"
+
+void procupdreq _PROTO((char *, char *));
 
 extern char *optarg;
 extern int optind;
@@ -42,7 +45,7 @@ extern struct stgcat_entry *stcs;	/* start of stage catalog */
 extern struct waitq *waitqp;
 extern struct stgdb_fd dbfd;
 
-procupdreq(req_data, clienthost)
+void procupdreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {

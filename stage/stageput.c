@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.6 1999/12/09 13:47:36 jdurand Exp $
+ * $Id: stageput.c,v 1.7 1999/12/14 14:51:44 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:47:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.7 $ $Date: 1999/12/14 14:51:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -309,4 +309,5 @@ char *cmd;
 	fprintf (stderr, "       %s ", cmd);
 	fprintf (stderr, "%s",
 	  "[-G] [-h stage_host] [-q file_sequence_number(s)] -V visual_identifier\n");
+    return(0);
 }

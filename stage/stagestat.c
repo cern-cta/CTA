@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.7 1999/12/09 13:47:38 jdurand Exp $
+ * $Id: stagestat.c,v 1.8 1999/12/14 14:51:47 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.7 $ $Date: 1999/12/09 13:47:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.8 $ $Date: 1999/12/14 14:51:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -23,6 +23,7 @@ static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.7 $ $Date: 19
 #include "stage.h"
 #include "../h/sacct.h"
 #include <time.h>
+#include <osdep.h>
 
 /* Macro to swap byte order */
 
@@ -102,6 +103,21 @@ int rc[12][10];		/* array to store num of errors and warnings for each command *
 int num_remounts = 0;		/* number of files remounted during time period */
 unsigned int num_frecs = 0;		/* total number of tape files */
 unsigned int num_xrecs = 0;		/* total number of disk files */
+
+void create_filelist _PROTO((struct acctstage *));
+void create_poollist _PROTO((struct acctstage *));
+void create_stglist _PROTO((struct acctstage *));
+void enter_filc_details _PROTO((struct acctstage *, struct accthdr));
+void enter_fils_details _PROTO((struct acctstage *, struct accthdr));
+void enter_pool_details _PROTO((struct acctstage *));
+void sort_poolinf _PROTO(());
+void print_poolstat _PROTO((int, int, int, char *));
+void swap_fields _PROTO((struct acctstage *));
+void usage _PROTO((char *));
+void print_fdetails _PROTO((struct file_inf *));
+void print_globstat _PROTO((time_t, time_t, int, int));
+void print_time_interval _PROTO((time_t, time_t));
+void print_xdetails _PROTO((struct file_inf *));
 
 main(argc, argv)
 int argc;
@@ -245,7 +261,7 @@ char **argv;
 
 /* Function to create a file record for each new file found */
 
-create_filelist (rp)
+void create_filelist (rp)
 struct acctstage *rp;
 {
    struct file_inf *frec;			/* pointer to file_inf record */ 
@@ -279,7 +295,7 @@ struct acctstage *rp;
 
 /* Function to create record for each pool group found */
 
-create_pool_list (rp)
+void create_pool_list (rp)
 struct acctstage *rp;
 {
    struct pool_inf *pf;				/* pointer to pool_inf record */
@@ -301,7 +317,7 @@ struct acctstage *rp;
 
 /* Function to create record for each stagein request */
 
-create_stglist (rp)
+void create_stglist (rp)
 struct acctstage *rp;
 {
    struct stg_inf *sp;				/* pointer to stg_inf record */
@@ -359,7 +375,7 @@ char *arg;
 
 /* Function to enter file record details for each FILS stagein command */
 
-enter_filc_details (rp, accthdr)
+void enter_filc_details (rp, accthdr)
 struct acctstage *rp;
 struct accthdr accthdr;
 {
@@ -411,7 +427,7 @@ struct accthdr accthdr;
 
 /* Function to enter details of each file clear command */
 
-enter_fils_details (rp, accthdr)
+void enter_fils_details (rp, accthdr)
 struct acctstage *rp;
 struct accthdr accthdr;
 {
@@ -467,7 +483,7 @@ struct accthdr accthdr;
 
 /* Function to enter details for each pool */
 
-enter_pool_details (rp)
+void enter_pool_details (rp)
 struct acctstage *rp;
 {
    struct pool_inf *pf;			/* pointer to pool_inf record */
@@ -548,7 +564,7 @@ struct acctstage *rp;
 	
 /* Function to print out a record */
 
-print_fdetails (frecord)
+void print_fdetails (frecord)
 struct file_inf *frecord;
 {
    struct passwd *pwd;				/* password structure */
@@ -591,7 +607,7 @@ struct file_inf *frecord;
 
 /* Function to print out global statistics */
 
-print_globstat (starttime, endtime, num_mounts, num_multireqs)
+void print_globstat (starttime, endtime, num_mounts, num_multireqs)
 time_t starttime;
 time_t endtime;
 int num_mounts;
@@ -637,7 +653,7 @@ int num_multireqs;
 
 /* Function to print out the time interval */
 
-print_time_interval (starttime, endtime)
+void print_time_interval (starttime, endtime)
 time_t starttime;
 time_t endtime;
 {
@@ -656,7 +672,7 @@ time_t endtime;
 
 /*Function to print out a Xrecord*/
 
-print_xdetails (frecord)
+void print_xdetails (frecord)
 struct file_inf * frecord;
 {
    struct passwd *pwd;				/* password structure */
@@ -696,7 +712,7 @@ struct file_inf * frecord;
 
 /* Function to create  pool information */
 
-sort_poolinf ()
+void sort_poolinf ()
 {
    struct pool_inf *pf;				/* pointer to pool_inf record */
    struct file_inf *frecord;			/* pointer to file_inf record */
@@ -736,7 +752,7 @@ sort_poolinf ()
 
 /* Function to create pool records and print results */
 
-print_poolstat (tflag, aflag, pflag, poolname)
+void print_poolstat (tflag, aflag, pflag, poolname)
 int tflag;
 int aflag;
 int pflag;
@@ -941,7 +957,7 @@ struct frec_avg  *b;
    else return (-1);
 }
 
-swap_fields (rp)
+void swap_fields (rp)
 struct acctstage *rp;
 {
    swap_it (rp->subtype);
@@ -954,7 +970,7 @@ struct acctstage *rp;
    swap_it (rp->u2.s.nbaccesses);
 }
 
-usage (cmd)
+void usage (cmd)
 char *cmd;
 {
    fprintf (stderr, "usage: %s ", cmd);

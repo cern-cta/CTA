@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.10 1999/12/13 07:55:13 jdurand Exp $
+ * $Id: procqry.c,v 1.11 1999/12/14 14:51:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.10 $ $Date: 1999/12/13 07:55:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.11 $ $Date: 1999/12/14 14:51:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -41,10 +41,15 @@ static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.10 $ $Date: 199
 #endif
 #include "stgdb_Cdb_ifce.h"
 #include <serrno.h>
+#include "osdep.h"
+
+void procqryreq _PROTO((char *, char *));
+void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, char *, char *, char *));
+void print_tape_info _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *));
 
 extern char *optarg;
 extern int optind;
-#if defined(IRIX64)
+#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep (int, int, ...);
 #endif
 #if !defined(linux)
@@ -72,7 +77,7 @@ extern char *Default_db_pwd;
 struct stgdb_fd dbfd_in_fork;
 struct stgdb_fd *dbfd_query;
 
-procqryreq(req_data, clienthost)
+void procqryreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -533,7 +538,7 @@ reply:
     }
 }
 
-print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, xfile, afile, mfile)
+void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, xfile, afile, mfile)
 char *poolname;
 int aflag;
 char *group;
@@ -761,7 +766,7 @@ char *mfile;
 	return (0);
 }
 
-print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq)
+void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq)
 char *poolname;
 int aflag;
 char *group;

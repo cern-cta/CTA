@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.5 1999/12/13 07:56:52 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.6 1999/12/14 14:51:53 jdurand Exp $
  */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.5 $ $Date: 1999/12/13 07:56:52 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.6 $ $Date: 1999/12/14 14:51:53 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
@@ -822,8 +822,6 @@ int DLL_DECL Stgdb_ins_stgpath(dbfd,stpp,file,line)
       return(-1);
     }
   }
-
-  return(insert_status);
 #else
   return(0);
 #endif

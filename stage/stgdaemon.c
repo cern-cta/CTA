@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.10 1999/12/13 07:55:52 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.11 1999/12/14 14:51:52 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.10 $ $Date: 1999/12/13 07:55:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.11 $ $Date: 1999/12/14 14:51:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -29,6 +29,7 @@ static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.10 $ $Date: 1
 #include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <signal.h>
 #include <sys/stat.h>
@@ -54,12 +55,13 @@ static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.10 $ $Date: 1
 #endif
 #include "stgdb_Cdb_ifce.h"
 #include <serrno.h>
+#include "osdep.h"
 
 extern char *optarg;
 extern int optind;
 extern int rfio_errno;
 extern char *rfio_serror();
-#if defined(IRIX64)
+#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep (int, int, ...);
 #endif
 #if !defined(linux)
@@ -81,10 +83,10 @@ int rpfd;
 #if (defined(_AIX) && defined(_IBMR2)) || defined(SOLARIS) || defined(IRIX5) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 struct sigaction sa;
 #endif
-int stgcat_bufsz;
+size_t stgcat_bufsz;
 struct stgcat_entry *stce;	/* end of stage catalog */
 struct stgcat_entry *stcs;	/* start of stage catalog */
-int stgpath_bufsz;
+size_t stgpath_bufsz;
 struct stgpath_entry *stpe;	/* end of stage path catalog */
 struct stgpath_entry *stps;	/* start of stage path catalog */
 struct waitq *waitqp;
@@ -93,6 +95,16 @@ char *Default_db_pwd = "CASTOR_Stager_Password";
 char db_pwd[33];
 char db_user[33];
 struct stgdb_fd dbfd;
+
+void prockilreq _PROTO((char *, char *));
+void procinireq _PROTO((char *, char *));
+void checkpoolstatus _PROTO(());
+void checkwaitq _PROTO(());
+void create_link _PROTO((struct stgcat_entry *, char *));
+void dellink _PROTO((struct stgpath_entry *));
+void delreq _PROTO((struct stgcat_entry *, int));
+void rmfromwq _PROTO((struct waitq *));
+void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 
 main()
 {
@@ -197,6 +209,8 @@ main()
   sin.sin_port = sp->s_port;
   sin.sin_addr.s_addr = htonl(INADDR_ANY);
   if (setsockopt (stg_s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
+    stglogit (func, STG02, "", "setsockopt", sys_errlist[errno]);
+  if (setsockopt (stg_s, IPPROTO_TCP, TCP_NODELAY, (char *)&on, sizeof(on)) < 0)
     stglogit (func, STG02, "", "setsockopt", sys_errlist[errno]);
   if (bind (stg_s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
     stglogit (func, STG02, "", "bind", sys_errlist[errno]);
@@ -488,7 +502,7 @@ main()
   }
 }
 
-prockilreq(req_data, clienthost)
+void prockilreq(req_data, clienthost)
      char *req_data;
      char *clienthost;
 {
@@ -523,7 +537,7 @@ prockilreq(req_data, clienthost)
   close (rpfd);
 }
 
-procinireq(req_data, clienthost)
+void procinireq(req_data, clienthost)
      char *req_data;
      char *clienthost;
 {
@@ -751,7 +765,7 @@ checkovlstatus(pid, status)
   reqid = savereqid;
 }
 
-checkpoolstatus()
+void checkpoolstatus()
 {
   int c, i, j, n;
   char **poolc;
@@ -904,7 +918,7 @@ check_waiting_on_req(subreqid, state)
   return (found);
 }
 
-checkwaitq()
+void checkwaitq()
 {
   int i;
   struct stgcat_entry *stcp;
@@ -1027,7 +1041,7 @@ create_dir(dirname, uid, gid, mask)
   return (0);
 }
 
-create_link(stcp, upath)
+void create_link(stcp, upath)
      struct stgcat_entry *stcp;
      char *upath;
 {
@@ -1139,7 +1153,7 @@ delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
   return (0);
 }
 
-dellink(stpp)
+void dellink(stpp)
      struct stgpath_entry *stpp;
 {
   int n;
@@ -1159,7 +1173,7 @@ dellink(stpp)
 }
 
 /* If nodb_delete_flag is != 0 then only update in memory is performed */
-delreq(stcp,nodb_delete_flag)
+void delreq(stcp,nodb_delete_flag)
      struct stgcat_entry *stcp;
      int nodb_delete_flag;
 {
@@ -1329,7 +1343,7 @@ req2argv(rbp, argvp)
   return (nargs);
 }
 
-rmfromwq(wqp)
+void rmfromwq(wqp)
      struct waitq *wqp;
 {
   if (wqp->prev) (wqp->prev)->next = wqp->next;
@@ -1401,7 +1415,7 @@ savereqs()
   return (0);
 }
 
-sendinfo2cptape(rpfd, stcp)
+void sendinfo2cptape(rpfd, stcp)
      int rpfd;
      struct stgcat_entry *stcp;
 {

@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit.c,v 1.7 1999/12/10 18:32:53 jdurand Exp $
+ * $Id: stglogit.c,v 1.8 1999/12/14 14:51:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.7 $ $Date: 1999/12/10 18:32:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.8 $ $Date: 1999/12/14 14:51:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -45,4 +45,5 @@ stglogit(va_alist) va_dcl
 	fd_log = open (LOGFILE, O_WRONLY | O_CREAT | O_APPEND, 0664);
 	write (fd_log, prtbuf, strlen(prtbuf));
 	close (fd_log);
+    return(0);
 }

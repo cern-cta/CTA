@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.8 1999/12/10 18:32:51 jdurand Exp $
+ * $Id: procio.c,v 1.9 1999/12/14 14:51:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.8 $ $Date: 1999/12/10 18:32:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.9 $ $Date: 1999/12/14 14:51:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -33,11 +33,12 @@ static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.8 $ $Date: 1999/
 #include "../h/sacct.h"
 #endif
 #include "stgdb_Cdb_ifce.h"
+#include "osdep.h"
 
 extern char *optarg;
 extern int optind;
 extern char *rfio_serror();
-#if defined(IRIX64)
+#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep (int, int, ...);
 #endif
 extern char defpoolname[MAXPOOLNAMELEN];
@@ -51,7 +52,10 @@ char *findpoolname();
 int last_tape_file;
 extern struct stgdb_fd dbfd;
 
-procioreq(req_type, req_data, clienthost)
+void procioreq _PROTO((int, char *, char *));
+void procputreq _PROTO((char *, char *));
+
+void procioreq(req_type, req_data, clienthost)
 int req_type;
 char *req_data;
 char *clienthost;
@@ -441,7 +445,7 @@ char *clienthost;
 			c = USERR;
 			goto reply;
 		}
-		sprintf (filemig_size, "%d", (filemig_stat.st_size/(1024*1024)) + 1);
+		sprintf (filemig_size, "%d", (int) ((filemig_stat.st_size/(1024*1024)) + 1));
 		size = filemig_size;
 	}
 
@@ -853,7 +857,7 @@ reply:
 	}
 }
 
-procputreq(req_data, clienthost)
+void procputreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {

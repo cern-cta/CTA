@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.6 1999/12/09 13:47:26 jdurand Exp $
+ * $Id: poolmgr.c,v 1.7 1999/12/14 14:51:36 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:47:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.7 $ $Date: 1999/12/14 14:51:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -20,9 +20,11 @@ static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.6 $ $Date: 1999
 #define RFIO_KERNEL 1
 #include "rfio.h"
 #include "stage.h"
+#include "osdep.h"
+
 extern char *getconfent();
 extern char *rfio_serror();
-#if defined(IRIX64)
+#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep (int, int, ...);
 #endif
 #if !defined(linux)
@@ -32,6 +34,9 @@ static char *nfsroot;
 static int nbpool;
 static char **poolc;
 static struct pool *pools;
+
+void cvtdbl2str _PROTO((double, char *));
+void print_pool_utilization _PROTO((int, char *, char *));
 
 getpoolconf(defpoolname)
 char *defpoolname;
@@ -421,7 +426,7 @@ char *poolname;
 	return (i == nbpool ? 0 : 1);
 }
 
-cvtdbl2str(dnum, buf)
+void cvtdbl2str(dnum, buf)
 double dnum;
 char *buf;
 {
@@ -471,7 +476,7 @@ int nbpool_ent;
 	return (0);
 }
 
-print_pool_utilization(rpfd, poolname, defpoolname)
+void print_pool_utilization(rpfd, poolname, defpoolname)
 int rpfd;
 char *poolname, *defpoolname;
 {

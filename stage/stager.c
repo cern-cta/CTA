@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.6 1999/12/09 13:47:38 jdurand Exp $
+ * $Id: stager.c,v 1.7 1999/12/14 14:51:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:47:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.7 $ $Date: 1999/12/14 14:51:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -29,6 +29,10 @@ static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.6 $ $Date: 1999/
 #define RFIO_KERNEL
 #include "rfio.h"
 #include "stage.h"
+#include "osdep.h"
+
+void checkovlstatus _PROTO((int, int));
+
 #if !defined(linux)
 extern char *sys_errlist[];
 #endif
@@ -423,7 +427,7 @@ char **argv;
 	exit (ovl_status);
 }
 
-checkovlstatus(pid, status)
+void checkovlstatus(pid, status)
 int pid;
 int status;
 {
@@ -461,7 +465,7 @@ char *hostname;
 
 	/* Writing file */
 	if ((stcp->status == STAGEWRT) || (stcp->status == STAGEPUT)) {
-		sprintf (command+strlen(command), " -s %d",stcp->actual_size);
+		sprintf (command+strlen(command), " -s %d",(int) stcp->actual_size);
 		sprintf (command+strlen(command), " %s", stcp->ipath);
 		if (stcp->t_or_d == 'm')
 			sprintf (command+strlen(command), " %s", stcp->u1.m.xfile);

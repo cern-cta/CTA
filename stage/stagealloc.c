@@ -1,5 +1,5 @@
 /*
- * $Id: stagealloc.c,v 1.6 1999/12/09 13:47:33 jdurand Exp $
+ * $Id: stagealloc.c,v 1.7 1999/12/14 14:51:42 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:47:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagealloc.c,v $ $Revision: 1.7 $ $Date: 1999/12/14 14:51:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -296,4 +296,5 @@ char *cmd;
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "%s",
 	  "[-G] [-h stage_host] [-P] [-p pool] [-s size] [-U fun] [-u user] pathname\n");
+    return(0);
 }

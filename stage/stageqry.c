@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.6 1999/12/09 13:47:37 jdurand Exp $
+ * $Id: stageqry.c,v 1.7 1999/12/14 14:51:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:47:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.7 $ $Date: 1999/12/14 14:51:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -220,4 +220,5 @@ char *cmd;
 	  "[-A pattern | -M pattern] [-a] [-f] [-G] [-h stage_host] [-I external_filename]\n",
 	  "[-L] [-l] [-P] [-p pool] [-q file_sequence_number(s)] [-S] [-s] [-T]\n",
 	  "[-u] [-V visual_identifier(s)] [-x]\n");
+    return(0);
 }

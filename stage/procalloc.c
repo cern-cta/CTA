@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.8 1999/12/10 18:32:50 jdurand Exp $
+ * $Id: procalloc.c,v 1.9 1999/12/14 14:51:37 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.8 $ $Date: 1999/12/10 18:32:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.9 $ $Date: 1999/12/14 14:51:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -30,6 +30,7 @@ static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.8 $ $Date: 19
 #include "../h/sacct.h"
 #endif
 #include "stgdb_Cdb_ifce.h"
+#include "osdep.h"
 
 extern char *optarg;
 extern int optind;
@@ -42,7 +43,10 @@ extern struct stgcat_entry *stcs;	/* start of stage catalog */
 struct waitq *add2wq();
 extern struct stgdb_fd dbfd;
 
-procallocreq(req_data, clienthost)
+void procallocreq _PROTO((char *, char *));
+void procgetreq _PROTO((char *, char *));
+
+void procallocreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -217,7 +221,7 @@ reply:
 	}
 }
 
-procgetreq(req_data, clienthost)
+void procgetreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {

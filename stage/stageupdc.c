@@ -1,5 +1,5 @@
 /*
- * $Id: stageupdc.c,v 1.6 1999/12/09 13:47:39 jdurand Exp $
+ * $Id: stageupdc.c,v 1.7 1999/12/14 14:51:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:47:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.7 $ $Date: 1999/12/14 14:51:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -228,4 +228,5 @@ char *cmd;
 	  "[-h stage_host] [-I network_interface] [-L record_length] [-q file_sequence_number]\n",
 	  "[-R return_code] [-s size] [-T transfer_time] [-U fun] [-W waiting_time]\n",
 	  "[-Z reqid.key@stagehost] pathname(s)\n");
+    return(0);
 }
