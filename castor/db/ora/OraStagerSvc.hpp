@@ -166,8 +166,8 @@ namespace castor {
         /**
          * Updates the database when a file recalled is over.
          * This includes updating the DiskCopy status to DISKCOPY_STAGED
-         * (note that it is garanted that there is a single diskcopy in
-         * status DISKCOPY_WAITTAPERECALL for this TapeCopy).
+         * and uuid (note that it is garanted that there is a single
+         * diskcopy in status DISKCOPY_WAITTAPERECALL for this TapeCopy).
          * It also includes updating the status of the corresponding
          * SubRequest to SUBREQUEST_RESTART and updating the status of
          * the SubRequests waiting on this recall to SUBREQUEST_RESTART

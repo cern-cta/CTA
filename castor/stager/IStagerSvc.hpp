@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.26 $ $Release$ $Date: 2004/12/03 10:31:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.27 $ $Release$ $Date: 2004/12/03 11:12:24 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -158,8 +158,8 @@ namespace castor {
       /**
        * Updates the database when a file recalled is over.
        * This includes updating the DiskCopy status to DISKCOPY_STAGED
-       * (note that it is garanted that there is a single diskcopy in
-       * status DISKCOPY_WAITTAPERECALL for this TapeCopy).
+       * and uuid (note that it is garanted that there is a single
+       * diskcopy in status DISKCOPY_WAITTAPERECALL for this TapeCopy).
        * It also includes updating the status of the corresponding
        * SubRequest to SUBREQUEST_RESTART and updating the status of
        * the SubRequests waiting on this recall to SUBREQUEST_RESTART

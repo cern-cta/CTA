@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.69 $ $Release$ $Date: 2004/12/03 10:31:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.70 $ $Release$ $Date: 2004/12/03 11:12:24 $ $Author: sponcec3 $
  *
  *
  *
@@ -61,6 +61,7 @@
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/BaseAddress.hpp"
 #include "occi.h"
+#include <Cuuid.h>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -106,7 +107,7 @@ const std::string castor::db::ora::OraStagerSvc::s_bestFileSystemForSegmentState
 
 /// SQL statement for fileRecalled
 const std::string castor::db::ora::OraStagerSvc::s_fileRecalledStatementString =
-  "BEGIN fileRecalled(:1, :2, :3); END;";
+  "BEGIN fileRecalled(:1, :2, :3, :4); END;";
 
 /// SQL statement for isSubRequestToSchedule
 const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStatementString =
@@ -516,13 +517,23 @@ void castor::db::ora::OraStagerSvc::fileRecalled
       m_fileRecalledStatement =
         createStatement(s_fileRecalledStatementString);
       m_fileRecalledStatement->setInt
-        (2, castor::stager::SUBREQUEST_RESTART);
+        (3, castor::stager::SUBREQUEST_RESTART);
       m_fileRecalledStatement->setInt
-        (3, castor::stager::DISKCOPY_STAGED);
+        (4, castor::stager::DISKCOPY_STAGED);
       m_fileRecalledStatement->setAutoCommit(true);
     }
+    // get a Cuuid for the DiskCopy
+    // XXX Interface to Cuuid has to be improved !
+    // XXX its length has currently yo be hardcoded
+    // XXX wherever you use it !!!
+    Cuuid_t cuuid;
+    Cuuid_create(&cuuid);
+    char uuid[CUUID_STRING_LEN+1];
+    uuid[CUUID_STRING_LEN] = 0;
+    Cuuid2string(uuid, CUUID_STRING_LEN, &cuuid);
     // execute the statement and see whether we found something
     m_fileRecalledStatement->setDouble(1, tapeCopy->id());
+    m_fileRecalledStatement->setString(2, uuid);
     unsigned int nb =
       m_fileRecalledStatement->executeUpdate();
     if (nb == 0) {
