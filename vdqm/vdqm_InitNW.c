@@ -1,12 +1,12 @@
 /*
- * $Id: vdqm_InitNW.c,v 1.1 2004/07/30 12:54:08 motiakov Exp $
+ * $Id: vdqm_InitNW.c,v 1.2 2004/08/12 16:09:39 motiakov Exp $
  *
  * Copyright (C) 1999-2001 by CERN IT-PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_InitNW.c,v $ $Revision: 1.1 $ $Date: 2004/07/30 12:54:08 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_InitNW.c,v $ $Revision: 1.2 $ $Date: 2004/08/12 16:09:39 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -49,6 +49,7 @@ static int InitNW(vdqmnw_t **nw, char *vdqm_host, int use_port) {
     SOCKET s;
 #ifdef CSEC
     int n;
+    int secure_connection = 0;
 #endif
 
 #if defined(_WIN32)
@@ -76,10 +77,35 @@ static int InitNW(vdqmnw_t **nw, char *vdqm_host, int use_port) {
      * to initialize Win32 socket library only.
      */
     if ( nw == NULL ) return(0);
-
+#ifdef CSEC
+    if (getenv("SECURE_CASTOR") != NULL) secure_connection++;
+#endif
     if ( use_port > 0 ) {
         vdqm_port = use_port;
     } else {
+#ifdef CSEC
+      if (secure_connection) {
+        /*
+         * Set appropriate listen port in order of priority:
+         *        (1) env variable if defined
+         *        (2) configuration variable
+         *        (3) service entry
+         *        (4) compiler constant
+         *        (5) -1 : return error
+         */
+        if ( (p = getenv("SVDQM_PORT")) != (char *)NULL ) {
+            vdqm_port = atoi(p);
+        } else if ( (p = getconfent("SVDQM","PORT",0)) != (char *)NULL ) {
+            vdqm_port = atoi(p);
+        } else if ( (sp = Cgetservbyname("svdqm","tcp")) != (struct servent *)NULL ) {
+            vdqm_port = (int)ntohs(sp->s_port);
+        } else {
+#if defined(SVDQM_PORT)
+            vdqm_port = SVDQM_PORT;
+#endif /* SVDQM_PORT */
+        }
+      } else {
+#endif
         /*
          * Set appropriate listen port in order of priority:
          *        (1) env variable if defined
@@ -99,6 +125,9 @@ static int InitNW(vdqmnw_t **nw, char *vdqm_host, int use_port) {
             vdqm_port = VDQM_PORT;
 #endif /* VDQM_PORT */
         }
+#ifdef CSEC
+      }
+#endif
     }
     if ( vdqm_port < 0 ) {
         log(LOG_ERR,"InitNW() vdqm_port = %d\n",vdqm_port);
@@ -164,26 +193,27 @@ static int InitNW(vdqmnw_t **nw, char *vdqm_host, int use_port) {
             return(-1);
         }
 #ifdef CSEC
-
-	if (Csec_client_init_context(&((*nw)->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
+	if (secure_connection) {
+	  if (Csec_client_init_context(&((*nw)->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
 	    log(LOG_ERR, "InitNW() Could not init context\n");
             closesocket((*nw)->connect_socket);
 	    serrno = ESEC_CTX_NOT_INITIALIZED;
 	    return -1;
-	}
-	
-	if(Csec_client_establish_context(&((*nw)->sec_ctx), (*nw)->connect_socket)< 0) {
+	  }
+	  
+	  if(Csec_client_establish_context(&((*nw)->sec_ctx), (*nw)->connect_socket)< 0) {
 	    log (LOG_ERR, "InitNW() Could not establish context\n");
             closesocket((*nw)->connect_socket);
 	    serrno = ESEC_NO_CONTEXT;
 	    return -1;
+	  }
+	
+	  p = Csec_client_get_service_name(&((*nw)->sec_ctx));
+	  n = Csec_client_get_service_type(&((*nw)->sec_ctx));
+	  Csec_trace ("InitNW", "Service name = %s, type = %d\n",p, n);
+	
+	  Csec_clear_context(&((*nw)->sec_ctx));
 	}
-	
-	p = Csec_client_get_service_name(&((*nw)->sec_ctx));
-	n = Csec_client_get_service_type(&((*nw)->sec_ctx));
-	Csec_trace ("InitNW", "Service name = %s, type = %d\n",p, n);
-	
-	Csec_clear_context(&((*nw)->sec_ctx));
 #endif
 
         (*nw)->listen_socket = INVALID_SOCKET;
