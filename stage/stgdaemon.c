@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.251 $ $Date: 2004/11/02 17:47:13 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.252 $ $Date: 2004/11/17 13:07:08 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -3412,8 +3412,12 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 				update_migpool(&stcp,-1,0);
 			}
 			if (! nodisk_flag) {
-				updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) ((freersv) ? (signed64) (stcp->size) : ((signed64) actual_size_block)));
+				if (! freersv) {
+					actual_size = (u_signed64) (stcp->actual_size ? stcp->actual_size : stcp->size);
+					actual_size_block = actual_size;
+				}
 			}
+			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) ((freersv) ? (signed64) (stcp->size) : ((signed64) actual_size_block)));
 		} else {
 			/* We neverthless take into account the migration counters */
 			if ((((stcp->status & (STAGEPUT|CAN_BE_MIGR)) == (STAGEPUT|CAN_BE_MIGR)) && ((stcp->status & PUT_FAILED) != PUT_FAILED)) ||
