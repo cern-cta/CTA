@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: reclaim.c,v $ $Revision: 1.4 $ $Date: 2002/01/23 07:25:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: reclaim.c,v $ $Revision: 1.5 $ $Date: 2002/02/07 10:18:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      reclaim - reset information concerning a volume */
@@ -33,7 +33,7 @@ char **argv;
 	char *p;
 	char p_stat[9];
 	char path[CA_MAXPATHLEN+1];
-	int status;
+	struct vmgr_tape_info tape_info;
 	FILE *tmpfile();
 	char *vid = NULL;
 
@@ -62,18 +62,17 @@ char **argv;
 
 	/* check if the volume is FULL */
 
-	if (vmgr_querytape (vid, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	    NULL, NULL, NULL, NULL, NULL, NULL, NULL, &status) < 0) {
+	if (vmgr_querytape (vid, 0, &tape_info, NULL) < 0) {
 		fprintf (stderr, "reclaim %s: %s\n", vid,
 		    (serrno == ENOENT) ? "No such volume" : sstrerror(serrno));
 		exit (USERR);
 	}
-	if ((status & TAPE_FULL) == 0) {
-		if (status == 0) strcpy (p_stat, "FREE");
-		else if (status & TAPE_BUSY) strcpy (p_stat, "BUSY");
-		else if (status & TAPE_RDONLY) strcpy (p_stat, "RDONLY");
-		else if (status & EXPORTED) strcpy (p_stat, "EXPORTED");
-		else if (status & DISABLED) strcpy (p_stat, "DISABLED");
+	if ((tape_info.status & TAPE_FULL) == 0) {
+		if (tape_info.status == 0) strcpy (p_stat, "FREE");
+		else if (tape_info.status & TAPE_BUSY) strcpy (p_stat, "BUSY");
+		else if (tape_info.status & TAPE_RDONLY) strcpy (p_stat, "RDONLY");
+		else if (tape_info.status & EXPORTED) strcpy (p_stat, "EXPORTED");
+		else if (tape_info.status & DISABLED) strcpy (p_stat, "DISABLED");
 		else strcpy (p_stat, "?");
 		fprintf (stderr, "Volume %s has status %s\n", vid, p_stat);
 		exit (USERR);
