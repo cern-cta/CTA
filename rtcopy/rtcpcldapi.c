@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.40 $ $Release$ $Date: 2004/08/09 08:46:46 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.41 $ $Release$ $Date: 2004/08/09 14:06:04 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.40 $ $Date: 2004/08/09 08:46:46 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.41 $ $Date: 2004/08/09 14:06:04 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1019,7 +1019,7 @@ static int getUpdates(
   enum Cstager_SegmentStatusCodes_t segmOldStatus, segmNewStatus;
   tape_list_t *tape;
   file_list_t *file;
-  int rc, save_serrno, callGetMoreInfo;
+  int rc, save_serrno, callGetMoreInfo = 0;
   char *segmCksumAlgorithm, *errmsgtxt, *vwAddress;
   unsigned char *blockid;
   ID_TYPE key;
@@ -1102,7 +1102,7 @@ static int getUpdates(
         return(-1);
       }
 
-      callGetMoreInfo = 0;
+      if ( callGetMoreInfo != -1 ) callGetMoreInfo = 0;
       CLIST_ITERATE_BEGIN(tpIterator->segments,segmIterator) 
         {
           /*
@@ -1186,9 +1186,10 @@ static int getUpdates(
                   (void)rtcpcld_setVIDFailedStatus(tape);
                 }
                 /* Allow client to add more requests to keep the stream running */
-                callGetMoreInfo = 1;
+                if ( callGetMoreInfo == 0 ) callGetMoreInfo = 1;
                 break;
               case SEGMENT_FAILED:
+                callGetMoreInfo = -1;
                 Cstager_Segment_errMsgTxt(
                                           segmIterator->segment,
                                           (CONST char **)&errmsgtxt
@@ -1212,11 +1213,12 @@ static int getUpdates(
                 file->filereq.cprc = -1;
                 save_serrno = file->filereq.err.errorcode;
                 (void)rtcpc_GiveInfo(tape,file,0);
-                rc = updateCaller(tape,file);
+                (void)updateCaller(tape,file);
+                rc = -1;
                 break;
               case SEGMENT_WAITFSEQ:
               case SEGMENT_WAITPATH:
-                callGetMoreInfo = 1;
+                if (callGetMoreInfo == 0 ) callGetMoreInfo = 1;
                 break;
               case SEGMENT_UNKNOWN:
                 rtcp_log(
@@ -1239,7 +1241,7 @@ static int getUpdates(
           }
         }
       CLIST_ITERATE_END(tpIterator->segments,segmIterator);
-      if ( callGetMoreInfo != 0 ) {
+      if ( callGetMoreInfo == 1 ) {
         rc = getMoreInfo(tape);
         if ( rc == -1 ) {
           save_serrno = serrno;
@@ -1913,6 +1915,7 @@ int rtcpcldc(tape)
       } else {
         rtcpcldTp->oldStatus = currentStatus;
       }
+      tape->tapereq.TStartRequest = (int)time(NULL);
 
       rtcp_log(
                LOG_DEBUG,
