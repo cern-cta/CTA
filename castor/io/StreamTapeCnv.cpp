@@ -193,5 +193,6 @@ castor::IObject* castor::io::StreamTapeCnv::unmarshalObject(castor::io::biniostr
     IObject* objSegments = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addSegments(dynamic_cast<castor::stager::Segment*>(objSegments));
   }
+return object;
 }
 

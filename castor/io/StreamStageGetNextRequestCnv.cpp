@@ -204,5 +204,6 @@ castor::IObject* castor::io::StreamStageGetNextRequestCnv::unmarshalObject(casto
   obj->setClient(dynamic_cast<castor::IClient*>(objClient));
   IObject* objParent = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setParent(dynamic_cast<castor::stager::Request*>(objParent));
+return object;
 }
 

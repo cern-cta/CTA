@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageQryRequestCnv.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/10/29 08:17:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageQryRequestCnv.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/10/29 08:23:22 $ $Author: sponcec3 $
  *
  * 
  *
@@ -200,5 +200,6 @@ castor::IObject* castor::io::StreamStageQryRequestCnv::unmarshalObject(castor::i
   }
   IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setClient(dynamic_cast<castor::IClient*>(objClient));
+return object;
 }
 

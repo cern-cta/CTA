@@ -138,5 +138,6 @@ castor::IObject* castor::io::StreamEndResponseCnv::unmarshalObject(castor::io::b
   castor::IObject* object = cnvSvc()->createObj(&ad);
   // Mark object as created
   newlyCreated.insert(object);
+return object;
 }
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamReqIdCnv.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/14 16:34:46 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamReqIdCnv.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/10/29 08:23:22 $ $Author: sponcec3 $
  *
  * 
  *
@@ -150,5 +150,6 @@ castor::IObject* castor::io::StreamReqIdCnv::unmarshalObject(castor::io::biniost
     dynamic_cast<castor::stager::ReqId*>(object);
   IObject* objRequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setRequest(dynamic_cast<castor::stager::ReqIdRequest*>(objRequest));
+return object;
 }
 

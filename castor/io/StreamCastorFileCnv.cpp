@@ -189,5 +189,6 @@ castor::IObject* castor::io::StreamCastorFileCnv::unmarshalObject(castor::io::bi
     IObject* objTapeCopies = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addTapeCopies(dynamic_cast<castor::stager::TapeCopy*>(objTapeCopies));
   }
+return object;
 }
 

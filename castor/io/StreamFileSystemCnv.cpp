@@ -180,5 +180,6 @@ castor::IObject* castor::io::StreamFileSystemCnv::unmarshalObject(castor::io::bi
   }
   IObject* objDiskserver = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setDiskserver(dynamic_cast<castor::stager::DiskServer*>(objDiskserver));
+return object;
 }
 

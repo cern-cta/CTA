@@ -159,5 +159,6 @@ castor::IObject* castor::io::StreamDiskCopyCnv::unmarshalObject(castor::io::bini
   obj->setFileSystem(dynamic_cast<castor::stager::FileSystem*>(objFileSystem));
   IObject* objCastorFile = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setCastorFile(dynamic_cast<castor::stager::CastorFile*>(objCastorFile));
+return object;
 }
 

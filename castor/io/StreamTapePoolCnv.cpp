@@ -173,5 +173,6 @@ castor::IObject* castor::io::StreamTapePoolCnv::unmarshalObject(castor::io::bini
     IObject* objStreams = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addStreams(dynamic_cast<castor::stager::Stream*>(objStreams));
   }
+return object;
 }
 
