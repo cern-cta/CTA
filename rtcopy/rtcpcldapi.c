@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.46 $ $Release$ $Date: 2004/08/10 16:00:22 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.47 $ $Release$ $Date: 2004/08/11 09:34:47 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.46 $ $Date: 2004/08/10 16:00:22 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.47 $ $Date: 2004/08/11 09:34:47 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -655,6 +655,7 @@ static int addSegment(
 {
   int rc;
   char *notificationAddr = NULL;
+  rtcpFileRequest_t *filereq = NULL;
   RtcpcldSegmentList_t *rtcpcldSegm = NULL;
   enum SegmentStatusCodes segmentStatus;
   
@@ -663,16 +664,30 @@ static int addSegment(
     return(-1);
   }
 
+  filereq = &(file->filereq);
+
+  if ( !RTCP_FILEREQ_OK(filereq) ) {
+    rtcp_log(
+             LOG_ERR,
+             "addSegment(): filereq (disk fseq=%d, tape fseq=%d) not OK! at least one string is not terminated\n",
+             filereq->disk_fseq,
+             filereq->tape_fseq
+             );
+    serrno = ERTBADREQ;
+    return(-1);
+  }
+
   rtcp_log(
            LOG_DEBUG,
            "Add segment: fseq=%d, blockid=%.2d%.2d%.2d%.2d, diskPath=%s\n",
-           file->filereq.tape_fseq,
-           (int)file->filereq.blockid[0],
-           (int)file->filereq.blockid[1],
-           (int)file->filereq.blockid[2],
-           (int)file->filereq.blockid[3],
-           file->filereq.file_path
+           filereq->tape_fseq,
+           (int)filereq->blockid[0],
+           (int)filereq->blockid[1],
+           (int)filereq->blockid[2],
+           (int)filereq->blockid[3],
+           filereq->file_path
            );
+
            
   notificationAddr = myNotificationAddr;
   
@@ -693,47 +708,47 @@ static int addSegment(
     return(-1);
   }
   CLIST_INSERT(tpList->segments, rtcpcldSegm);
-  rtcpcldSegm->diskFseq = file->filereq.disk_fseq;
+  rtcpcldSegm->diskFseq = filereq->disk_fseq;
   Cstager_Segment_setFseq(
                           rtcpcldSegm->segment,
-                          file->filereq.tape_fseq
+                          filereq->tape_fseq
                           );
   Cstager_Segment_setDiskPath(
                               rtcpcldSegm->segment,
-                              file->filereq.file_path
+                              filereq->file_path
                               );
   Cstager_Segment_setCastorNsHost(
                                   rtcpcldSegm->segment,
-                                  file->filereq.castorSegAttr.nameServerHostName
+                                  filereq->castorSegAttr.nameServerHostName
                                   );
   Cstager_Segment_setCastorFileId(
                                   rtcpcldSegm->segment,
-                                  file->filereq.castorSegAttr.castorFileId
+                                  filereq->castorSegAttr.castorFileId
                                   );
   Cstager_Segment_setOffset(
                             rtcpcldSegm->segment,
-                            file->filereq.offset
+                            filereq->offset
                             );
   Cstager_Segment_setBlockid(
                              rtcpcldSegm->segment,
-                             file->filereq.blockid
+                             filereq->blockid
                              );
   Cstager_Segment_setSegmCksumAlgorithm(
                                         rtcpcldSegm->segment,
-                                        file->filereq.castorSegAttr.segmCksumAlgorithm
+                                        filereq->castorSegAttr.segmCksumAlgorithm
                                         );
   Cstager_Segment_setStgReqId(
                               rtcpcldSegm->segment,
-                              file->filereq.stgReqId
+                              filereq->stgReqId
                               );
 
-  if ( file->filereq.proc_status < RTCP_WAITING )
-    file->filereq.proc_status = RTCP_WAITING;
+  if ( filereq->proc_status < RTCP_WAITING )
+    filereq->proc_status = RTCP_WAITING;
   
-  if ( file->filereq.proc_status <= RTCP_WAITING ||
-       file->filereq.proc_status == RTCP_POSITIONED ) {
+  if ( filereq->proc_status <= RTCP_WAITING ||
+       filereq->proc_status == RTCP_POSITIONED ) {
     segmentStatus = SEGMENT_UNPROCESSED;
-  } else if ( file->filereq.proc_status == RTCP_FINISHED ) {
+  } else if ( filereq->proc_status == RTCP_FINISHED ) {
     segmentStatus = SEGMENT_FILECOPIED;
   } else {
     segmentStatus = SEGMENT_UNKNOWN;
