@@ -1,14 +1,14 @@
 /*
- * $Id: readdir.c,v 1.13 2002/09/20 06:59:36 baud Exp $
+ * $Id: readdir.c,v 1.14 2003/08/01 15:04:13 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readdir.c,v $ $Revision: 1.13 $ $Date: 2002/09/20 06:59:36 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: readdir.c,v $ $Revision: 1.14 $ $Date: 2003/08/01 15:04:13 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* readdir.c       Remote File I/O - read  a directory entry            */
@@ -150,3 +150,34 @@ RDIR *dirp;
    END_TRACE();
    return(de);
 }
+
+#if !defined(SOLARIS) && !defined(linux)
+struct dirent DLL_DECL *rfio_readdir64(dirp)
+RDIR *dirp;
+{
+   return (rfio_readdir(dirp));
+}
+#else
+struct dirent64 DLL_DECL *rfio_readdir64(dirp)
+RDIR *dirp;
+{
+   struct dirent64 *de;
+   struct dirent *de32;
+   ino_t ino;
+   short namlen;
+   off_t offset;
+
+   if ((de32 = rfio_readdir(dirp)) == NULL)
+      return(NULL);
+   
+   ino = de32->d_ino;
+   offset = de32->d_off;
+   namlen = strlen(de32->d_name);
+   de = (struct dirent64 *) de32;
+   memmove (de->d_name, de32->d_name, namlen + 1);
+   de->d_ino = ino;
+   de->d_off = offset;
+   de->d_reclen = ((&de->d_name[0] - (char *) de + namlen + 8) / 8) * 8;
+   return(de);
+}
+#endif

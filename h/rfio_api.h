@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.41 $ $Date: 2003/01/15 09:43:21 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.42 $ $Date: 2003/08/01 15:03:47 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -195,6 +195,11 @@ EXTERN_C int DLL_DECL rfio_rewinddir _PROTO((RDIR *));
 EXTERN_C RFILE DLL_DECL *rfio_fopen64 _PROTO((char *, char *));
 EXTERN_C int DLL_DECL rfio_fseeko64 _PROTO((RFILE *, off64_t, int));
 EXTERN_C off64_t DLL_DECL rfio_ftello64 _PROTO((RFILE *));
+#if defined(linux) || defined(SOLARIS)
+EXTERN_C struct dirent64 DLL_DECL *rfio_readdir64 _PROTO((RDIR *));
+#else
+EXTERN_C struct dirent DLL_DECL *rfio_readdir64 _PROTO((RDIR *));
+#endif
 #endif
 #else /* RFIO_KERNEL */
 /*
@@ -225,6 +230,11 @@ EXTERN_C int DLL_DECL rfio_rewinddir _PROTO((DIR *));
 EXTERN_C FILE DLL_DECL *rfio_fopen64 _PROTO((char *, char *));
 EXTERN_C int DLL_DECL rfio_fseeko64 _PROTO((FILE *, off64_t, int));
 EXTERN_C off64_t DLL_DECL rfio_ftello64 _PROTO((FILE *));
+#if defined(linux) || defined(SOLARIS)
+EXTERN_C struct dirent64 DLL_DECL *rfio_readdir64 _PROTO((DIR *));
+#else
+EXTERN_C struct dirent DLL_DECL *rfio_readdir64 _PROTO((DIR *));
+#endif
 #endif
 #endif /* RFIO_KERNEL */
 
