@@ -4,13 +4,24 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.7 $ $Date: 2004/06/10 10:47:30 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.8 $ $Date: 2004/06/21 13:59:19 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #if BuildCopytapeServer
 #if BuildStageClient != YES
 #undef BuildStageClient
 #define BuildStageClient	YES
+#endif
+#endif
+
+#if BuildNewStageDaemon
+#if BuildStageDaemon != YES
+#undef BuildStageDaemon
+#define BuildStageDaemon YES
+#endif
+#if BuildProtoCppStager != YES
+#undef BuildProtoCppStager
+#define BuildProtoCppStager YES
 #endif
 #endif
 
@@ -66,6 +77,10 @@ DBLIB = DepLibraryTargetName(db,db)
 #undef BuildVolumeMgrClient
 #define BuildVolumeMgrClient YES
 #endif
+#if BuildTapeClient != YES
+#undef BuildTapeClient
+#define BuildTapeClient YES
+#endif
 #endif
 
 #if BuildStageLibrary
@@ -87,7 +102,7 @@ RTCOPYLIB = DepLibraryTargetName(rtcopy,rtcpapi)
 #define BuildSysreq	YES
 #endif
 #if BuildOraCpp != YES
-#undef
+#undef BuildOraCpp
 #define BuildOraCpp	YES
 #endif
 #endif
@@ -260,4 +275,32 @@ DLFLIB = DepLibraryTargetName(dlf,dlf)
 SECURITYLIB = DepLibraryTargetName(security,security)
 #endif
 
+#if BuildDstageCpp
+#if BuildOraCpp != YES
+#undef BuildOraCpp
+#define BuildOraCpp YES
+#endif
+#endif
 
+#if BuildRHCpp
+#if BuildOraCpp != YES
+#undef BuildOraCpp
+#define BuildOraCpp YES
+#endif
+#endif
+
+#if BuildOraCpp
+RHORALIB = DepLibraryTargetName(castor/db/ora,castorCommonOra)
+#endif
+
+#if BuildProtoCppStager
+#if BuildClientCpp != YES
+#undef BuildClientCpp
+#define BuildClientCpp YES
+#endif
+RHPROTOLIB = DepLibraryTargetName(castor/proto,castorProto)
+#endif
+
+#if BuildClientCpp
+RHCLIENTLIB = DepLibraryTargetName(castor,castorClient)
+#endif

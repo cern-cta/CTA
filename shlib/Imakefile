@@ -1,0 +1,85 @@
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 2004/06/21 13:59:20 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM
+COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+
+COMM 		Make CASTOR shared libraries           GENERIC
+
+#include <Library.tmpl>
+
+LIB = InstallLibDir
+
+COMM Archive symbol table entry name
+#if __osf__ && __alpha
+SYMTABNAM = ________64ELEL_
+#else
+SYMTABNAM = __.SYMDEF
+#endif
+
+COMM Libraries to include in SharedLibraryTargetName(shift)
+LIBRARIES = $(COMMONLIB) $(RFIOLIB) $(SYSREQLIB) $(HPSSLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHORALIB) $(RHPROTOLIB) $(RHCLIENTLIB)
+
+all:    SharedLibraryTargetName(shift)
+
+install: $(LIB) FileName($(LIB),SharedLibraryTargetName(shift))
+
+export: $(EXPORTLIB)/SharedLibraryTargetName(shift)
+
+exportman: 
+
+exportshr: 
+
+libshift.sl libshift.so:     $(LIBRARIES)
+	@echo " making $@ in `pwd`"
+	@-rm -rf tmp
+	@mkdir tmp
+	@for i in $? ;\
+	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
+	@(cd tmp; ld $(SHLIBLDFLAGS) -o ../$@ *.o $(SHLIBREQLIBS))
+	@-rm -rf tmp
+
+shift.dll:	$(LIBRARIES)
+	@echo  making $@ in CurDir
+	link /dll /noentry /nologo /out:$@ $**
+
+MakeDir($(LIB),root,bin,0755)
+
+InstallSharedLibrary(shift,__CASTOR_VERSION__,$(LIB))
+
+InstallSharedLibrary(shift,__CASTOR_VERSION__,$(EXPORTLIB))
+
+install.man:
+
+#if _WIN32
+clean:
+	@echo cleaning in CurDir
+	-@RemoveFiles(FilesToClean)
+#else
+clean:
+	@echo cleaning in CurDir
+	-@RemoveFiles(FilesToClean)
+	-@rm -rf tmp > /dev/null 2>&1
+#endif
+clobber:        clean
+
+Makefiles:
+
+MakeDepLibrary(common,common)
+
+MakeDepLibrary(rfio,rfio)
+
+MakeDepLibrary(sysreq,sysreq)
+
+#if BuildHpssClient
+MakeDepLibrary(hpss,hpss_common)
+#endif
+
+MakeDepLibrary(ns,ns)
+
+MakeDepLibrary(stage,stage)
+
+MakeDepLibrary(vmgr,vmgr)
+
+FORCE:
+
