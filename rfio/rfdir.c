@@ -1,14 +1,14 @@
 /*
- * $Id: rfdir.c,v 1.5 2000/05/03 13:46:32 obarring Exp $
+ * $Id: rfdir.c,v 1.6 2000/05/04 13:46:10 baud Exp $
  */
 
 /*
- * Copyright (C) 1998-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1998-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.5 $ $Date: 2000/05/03 13:46:32 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.6 $ $Date: 2000/05/04 13:46:10 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
@@ -18,6 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.5 $ $Date: 2000/0
 #include <limits.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <sys/stat.h>

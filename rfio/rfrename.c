@@ -1,20 +1,22 @@
 /*
- * $Id: rfrename.c,v 1.3 1999/12/09 13:47:13 jdurand Exp $
+ * $Id: rfrename.c,v 1.4 2000/05/04 13:46:10 baud Exp $
  */
 
 /*
- * Copyright (C) 1998-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1998-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrename.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:13 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrename.c,v $ $Revision: 1.4 $ $Date: 2000/05/04 13:46:10 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
  * Make remote directory
  */
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <rfio.h>
 static char *ckpath();
 char *getconfent();
