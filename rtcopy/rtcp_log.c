@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.8 $ $Date: 2000/02/09 18:34:15 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.9 $ $Date: 2000/02/29 15:16:09 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #if defined(_WIN32)
@@ -83,22 +83,30 @@ void rtcpc_SetErrTxt(int level, char *format, ...) {
         va_end(args);
 
         /*
-         * tpread/tpwrite command output for client log messages.
+         * tpread/tpwrite command output for client log messages
+         * (like "selecting server ...").
          */
         if ( level == LOG_INFO && (strncmp(msgbuf," CP",3) != 0 &&
+             strncmp(msgbuf," DUMP",5) != 0 && 
              *msgbuf != '\0' && *msgbuf != '\n') ) {
-            if (tpread_command == TRUE ) log(LOG_INFO,msgbuf);
+            if ( tpread_command == TRUE ) log(LOG_INFO,msgbuf);
             return;
         }
-        if ( level >= LOG_INFO && out_p != NULL && *out_p != NULL )
-            fprintf(*out_p,msgbuf);
-        else if ( err_p != NULL && *err_p != NULL ) 
-            fprintf( *err_p,msgbuf);
 
         if ( client_socket_p != NULL && *client_socket_p != NULL ) {
             if ( level <= LOG_ERR ) log(level,msgbuf);
             rtcp_ClientMsg(*client_socket_p,msgbuf);
         }
+ 
+        if ( out_p != NULL && *out_p != NULL && 
+             err_p != NULL && *err_p != NULL ) {
+            if ( loglevel >= LOG_INFO ) fprintf(*out_p,msgbuf);
+            else fprintf(*err_p,msgbuf);
+        } else {
+            if ( out_p != NULL && *out_p != NULL ) fprintf(*out_p,msgbuf);
+            else if ( err_p != NULL && *err_p != NULL ) fprintf(*err_p,msgbuf);
+        }
+
     }
     return;
 }

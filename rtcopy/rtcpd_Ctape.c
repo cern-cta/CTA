@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.16 $ $Date: 2000/02/13 12:03:13 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.17 $ $Date: 2000/02/29 15:16:10 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -240,8 +240,17 @@ int rtcpd_Mount(tape_list_t *tape) {
      * VDQM but allows us to share tapes between SHIFT and CASTOR.
      */
     for (;;) {
-        rtcp_log(LOG_DEBUG,"rtcpd_Mount() path=%s, vid=%s@unit=%s\n",
-            filereq->tape_path,tapereq->vid,tapereq->unit);
+        rtcp_log(LOG_DEBUG,"Ctape_mount(%s,%s,%d,%s,%s,%s,%d,%s,%s,%d)\n",
+                 filereq->tape_path,
+                 tapereq->vid,
+                 tapereq->partition,
+                 tapereq->dgn,
+                 tapereq->density,
+                 tapereq->unit,
+                 tapereq->mode,
+                 tapereq->vsn,
+                 tapereq->label,
+                 tapereq->VolReqID);
 
         severity = RTCP_OK;
 
@@ -371,7 +380,7 @@ int rtcpd_Mount(tape_list_t *tape) {
 
 int rtcpd_Position(tape_list_t *tape,
                    file_list_t *file) {
-    int rc, j, save_serrno, flags,filstat, do_retry, severity;
+    int rc, j, save_serrno, flags, do_retry, severity;
     char *p, confparam[32];
     rtcpFileRequest_t *prevreq,*filereq;
     rtcpTapeRequest_t *tapereq;
@@ -426,8 +435,6 @@ int rtcpd_Position(tape_list_t *tape,
     }
 
 
-    filstat = filereq->check_fid;
-
     do_retry = 1;
 
     filereq->TStartPosition = (int)time(NULL);
@@ -439,7 +446,7 @@ int rtcpd_Position(tape_list_t *tape,
      */
     strcpy(tape_path,filereq->tape_path);
     while (do_retry) {
-        rtcp_log(LOG_DEBUG,"rtcpd_Position() Ctape_position(%s,0x%x,%d,%d,%u,%d,%d,0x%x,%s,%s,%d,%d,%d,0x%x)\n",filereq->tape_path,filereq->position_method,filereq->tape_fseq,file->tape_fsec,filereq->blockid,tapereq->start_file,tapereq->end_file,filstat,filereq->fid,filereq->recfm,filereq->blocksize,filereq->recordlength,filereq->retention,flags);
+        rtcp_log(LOG_DEBUG,"rtcpd_Position() Ctape_position(%s,0x%x,%d,%d,%u,%d,%d,0x%x,%s,%s,%d,%d,%d,0x%x)\n",filereq->tape_path,filereq->position_method,filereq->tape_fseq,file->tape_fsec,filereq->blockid,tapereq->start_file,tapereq->end_file,filereq->check_fid,filereq->fid,filereq->recfm,filereq->blocksize,filereq->recordlength,filereq->retention,flags);
         serrno = errno = 0;
         rtcpd_ResetCtapeError();
         rc = Ctape_position(filereq->tape_path,
@@ -449,7 +456,7 @@ int rtcpd_Position(tape_list_t *tape,
                             (unsigned int)filereq->blockid,
                             tapereq->start_file,
                             tapereq->end_file,
-                            filstat,
+                            filereq->check_fid,
                             filereq->fid,
                             filereq->recfm,
                             filereq->blocksize,
@@ -738,4 +745,119 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
     return(rc);
 }
 
-    
+int rtcpd_DmpInit(tape_list_t *tape) {
+    int rc, code, flags, save_serrno;
+
+    if ( tape == NULL || tape->file == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+
+    if ( tape->dumpreq.convert == EBCCONV ) code = DMP_EBC;
+    else code = DMP_ASC;
+
+    rtcp_log(LOG_DEBUG,"rtcpd_DmpInit() called\n");
+
+    rtcp_log(LOG_DEBUG,"Ctape_dmpinit(%s,%s,%s,%s,%s,%d,%d,%d,%d,%d,%d,%d)\n",
+             tape->file->filereq.tape_path,
+             tape->tapereq.vid,
+             tape->tapereq.density,
+             tape->tapereq.unit,
+             tape->tapereq.devtype,
+             tape->dumpreq.blocksize,
+             tape->dumpreq.fromblock,
+             tape->dumpreq.toblock,
+             tape->dumpreq.maxbyte,
+             tape->dumpreq.maxfile,
+             code,
+             tape->dumpreq.tp_err_action);
+
+
+    rc = Ctape_dmpinit(tape->file->filereq.tape_path,
+                       tape->tapereq.vid,
+                       tape->tapereq.density,
+                       tape->tapereq.unit,
+                       tape->tapereq.devtype,
+                       tape->dumpreq.blocksize,
+                       tape->dumpreq.fromblock,
+                       tape->dumpreq.toblock,
+                       tape->dumpreq.maxbyte,
+                       tape->dumpreq.maxfile,
+                       code,
+                       tape->dumpreq.tp_err_action);
+
+    save_serrno = serrno;
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"rtcpd_DmpInit() Ctape_dmpinit(): %s\n",
+                 sstrerror(save_serrno));
+        serrno = save_serrno;
+    } else rtcp_log(LOG_DEBUG,"rtcpd_DmpInit() Ctape_dmpinit() successful\n");
+    return(rc);
+}
+
+int rtcpd_DmpFile(tape_list_t *tape, file_list_t *file) {
+    int rc, save_serrno;
+    rtcpFileRequest_t filereq;
+
+    if ( tape == NULL || tape->file == NULL ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+    rtcp_log(LOG_DEBUG,"rtcpd_DmpFile() called\n");
+
+    memset(&filereq,'\0',sizeof(filereq));
+
+   rtcp_log(LOG_DEBUG,"call Ctape_dmpfil(%s,%s,%d,%s,%d,%d,%d,%s,%d)\n",
+            tape->file->filereq.tape_path,
+            tape->tapereq.label,
+            filereq.blocksize,
+            filereq.fid,
+            tape->file->tape_fsec,
+            filereq.tape_fseq,
+            filereq.recordlength,
+            filereq.recfm,
+            (int)filereq.maxsize);
+
+    rc = Ctape_dmpfil(tape->file->filereq.tape_path,
+                      tape->tapereq.label,
+                      &filereq.blocksize,
+                      filereq.fid,
+                      &(tape->file->tape_fsec),
+                      &filereq.tape_fseq,
+                      &filereq.recordlength,
+                      filereq.recfm,
+                      &filereq.maxsize);
+
+   rtcp_log(LOG_DEBUG,"returned Ctape_dmpfil(%s,%s,%d,%s,%d,%d,%d,%s,%d)\n",
+            tape->file->filereq.tape_path,
+            tape->tapereq.label,
+            filereq.blocksize,
+            filereq.fid,
+            tape->file->tape_fsec,
+            filereq.tape_fseq,
+            filereq.recordlength,
+            filereq.recfm,
+            (int)filereq.maxsize);
+
+
+     save_serrno = serrno;
+     if ( rc == -1 ) {
+         rtcp_log(LOG_ERR,"rtcpd_DmpFile() Ctape_dmpfil(): %s\n",
+                  sstrerror(save_serrno));
+         serrno = save_serrno;
+     } else {
+         rtcp_log(LOG_DEBUG,"rtcpd_DmpFile() Ctape_dmpfil() successful\n");
+         if ( file != NULL ) file->filereq = filereq;
+     }
+     return(rc);
+}
+
+int rtcpd_DmpEnd() {
+    int rc, save_serrno;
+
+    rtcp_log(LOG_DEBUG,"rtcpd_DmpEnd() called\n");
+
+    (void)Ctape_dmpend();
+    rtcp_log(LOG_DEBUG,"rtcpd_DmpEnd() Ctape_dmpend() successful\n");
+    return(0);
+}

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.17 $ $Date: 2000/02/08 08:31:31 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.18 $ $Date: 2000/02/29 15:16:04 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -62,6 +62,7 @@ static int rtcp_CheckTapeReq(tape_list_t *tape) {
     file_list_t *file = NULL;
     int rc = 0;
     rtcpTapeRequest_t *tapereq;
+    rtcpDumpTapeRequest_t *dumpreq = NULL;
     char errmsgtxt[CA_MAXLINELEN+1];
 
     *errmsgtxt = '\0';
@@ -97,6 +98,30 @@ static int rtcp_CheckTapeReq(tape_list_t *tape) {
     }
     if ( *tapereq->vid == '\0' ) strcpy(tapereq->vid,tapereq->vsn);
 
+    /*
+     * Dumptape ? 
+     */
+    if ( tape->file == NULL ) {
+        dumpreq = &tape->dumpreq;
+        /*
+         * Mode must be WRITE_DISABLE
+         */
+        if ( tapereq->mode == WRITE_ENABLE ) {
+            serrno = EINVAL;
+            sprintf(errmsgtxt,"dumptape is invalid with WRITE_ENABLE mode set\n");
+            SET_REQUEST_ERR(tapereq,RTCP_USERR | RTCP_FAILED);
+            if ( rc == -1 ) return(rc);
+        }
+
+        if ( dumpreq->tp_err_action < 0 ) dumpreq->tp_err_action = 0;
+        if ( dumpreq->convert < 0 ) dumpreq->convert = EBCCONV;
+        if ( !VALID_CONVERT(dumpreq) ) {
+            serrno = EINVAL;
+            sprintf(errmsgtxt,"INVALID CONVERSION SPECIFIED\n");
+            SET_REQUEST_ERR(tapereq,RTCP_USERR | RTCP_FAILED);
+            if ( rc == -1 ) return(rc);
+        }
+    }
 
     return(rc);
 }

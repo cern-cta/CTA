@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.14 $ $Date: 2000/02/23 15:56:50 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.15 $ $Date: 2000/02/29 15:16:08 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -296,7 +296,11 @@ static int rtcp_GetOldCMsg(SOCKET *s,
             argv[argc] = NULL;
             msgtxtbuf = (char *)calloc(1,RTCP_SHIFT_BUFSZ);
             rtcp_InitLog(msgtxtbuf,NULL,NULL,s);
-            rc = rtcpc_BuildReq(&((*req)->tape),argc,argv);
+            if ( hdr->reqtype == RQST_DPTP ) {
+                rc = rtcpc_BuildDumpTapeReq(&((*req)->tape),argc,argv);
+            } else {
+                rc = rtcpc_BuildReq(&((*req)->tape),argc,argv);
+            }
             rtcp_InitLog(NULL,NULL,NULL,NULL);
             free(msgtxtbuf);
             free(msgbuf);
