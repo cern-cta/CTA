@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.13 $ $Date: 2000/04/11 15:54:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.14 $ $Date: 2000/04/18 15:20:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -391,8 +391,7 @@ vmgr_dbrec_addr *rec_addr;
 		WHERE estimated_free_space =
 			(SELECT max(estimated_free_space)
 			FROM vmgr_tape_info
-			WHERE poolname = :poolname AND status = 0 AND
-			 estimated_free_space >= :reqsize)
+			WHERE poolname = :poolname AND status = 0)
 		AND poolname = :poolname AND status = 0
 		AND ROWNUM < 2
 		FOR UPDATE;
