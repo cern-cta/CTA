@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.13 2001/11/06 15:20:09 jdurand Exp $
+ * $Id: mstat.c,v 1.14 2001/11/07 11:01:06 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.13 $ $Date: 2001/11/06 15:20:09 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.14 $ $Date: 2001/11/07 11:01:06 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -37,8 +37,8 @@ typedef struct socks {
   int Tid;
 } mstat_connects ;
 static mstat_connects mstat_tab[MAXMCON]; /* UP TO MAXMCON connections simultaneously */
-extern int rfio_smstat() ;
 
+EXTERN_C int DLL_DECL rfio_smstat _PROTO((int, char *, struct stat *, int));
 static int rfio_mstat_allocentry _PROTO((char *, int, int, int));
 static int rfio_mstat_findentry _PROTO((char *,int));
 static int rfio_end_this _PROTO((int));
@@ -294,7 +294,7 @@ int DLL_DECL rfio_end()
 }
 
 /* This is a simplified version of rfio_end() that just free entry in the table */
-int DLL_DECL rfio_end_this(s)
+static int rfio_end_this(s)
      int s;
 {
   int i,Tid, j=0 ;
