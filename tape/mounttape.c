@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.33 $ $Date: 2001/07/30 10:15:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.34 $ $Date: 2002/02/07 10:30:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -623,7 +623,7 @@ unload_loop1:
 #if VMGR
 	(void) vmgr_seterrbuf (errbuf, sizeof(errbuf));
 	errbuf[0] = '\0';
-	if (vmgr_tpmounted (vid, mode) && serrno != ENOENT) {
+	if (vmgr_tpmounted (vid, mode, jid) && serrno != ENOENT) {
 		if (*errbuf)
 			usrmsg (func, "%s", errbuf);
 		usrmsg (func, "vmgr_tpmounted returned %s\n", sstrerror (serrno));
