@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.25 2000/05/08 10:52:27 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.26 2000/05/11 10:40:59 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.25 $ $Date: 2000/05/08 10:52:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.26 $ $Date: 2000/05/11 10:40:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -1651,9 +1651,17 @@ upd_stageout(req_type, upath, subreqid)
 		stcp->status = STAGEPUT;
 	} else if (req_type == STAGEUPDC) {
 		if (stcp->status == STAGEOUT && stcp->t_or_d == 'm') {
-			stcp->status |= CAN_BE_MIGR;
-			/* We update the corresponding poolname structure */
-			update_migpool(stcp,1);
+			if (stcp->size <= 0) {
+				/* We cannot put a to-be-migrated file in status CAN_BE_MIGR is its size is zero */
+				if (delfile (stcp, 0, 1, 1, "stageupdc on zero-length to-be-migrated file ok", stcp->uid, stcp->gid, 0) < 0) {
+					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
+									 "rfio_unlink", rfio_serror());
+				}
+            } else {
+				stcp->status |= CAN_BE_MIGR;
+				/* We update the corresponding poolname structure */
+				update_migpool(stcp,1);
+            }
         } else {
 			stcp->status |= STAGED;
 		}
