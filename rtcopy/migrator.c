@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.35 $ $Release$ $Date: 2005/01/17 13:58:54 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.36 $ $Release$ $Date: 2005/01/20 16:29:00 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.35 $ $Release$ $Date: 2005/01/17 13:58:54 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.36 $ $Release$ $Date: 2005/01/20 16:29:00 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -149,7 +149,8 @@ int migratorCallbackFileCopied(
   if ( blkid == NULL ) blkid = strdup("unknown");
 
   if ( ((filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED)) ||
-       ((filereq->cprc == -1) && (filereq->err.errorcode == ENOSPC)) ) {
+       ((filereq->cprc == -1) && ((filereq->err.errorcode == ENOSPC) ||
+                                  (rtcpcld_handleTapeError(tape,file) == 1))) ) {
     rc = rtcpcld_updateTape(
                             tape,
                             file,
@@ -294,7 +295,7 @@ int migratorCallbackFileCopied(
 
     /*
      * Remove the associated data structures from memory if
-     * the migration was successful. Otherwise (i.e. VOLUME OVERFLOW)
+     * the migration was successful. Otherwise (e.g. VOLUME OVERFLOW)
      * we have to keep the file to permit resetting the status of
      * the tape copy before this migration stream exits.
      */
