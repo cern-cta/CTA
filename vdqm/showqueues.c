@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.9 $ $Date: 2000/08/22 14:05:26 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.10 $ $Date: 2000/10/25 13:14:59 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -101,8 +101,8 @@ int main(int argc, char *argv[]) {
     do {
        if ( tmp == NULL )
            tmp = (struct vdqm_reqlist *)calloc(1,sizeof(struct vdqm_reqlist));
+       memset(tmp,'\0',sizeof(tmp));
        strcpy(tmp->volreq.dgn,dgn);
-       if ( *server != '\0' ) strcpy(tmp->volreq.server,server);
        rc = vdqm_NextVol(&nw,&tmp->volreq);
        if ( rc != -1 && tmp->volreq.VolReqID > 0 && 
             (tmp->volreq.VolReqID != last_id) ) {
@@ -184,7 +184,8 @@ int main(int argc, char *argv[]) {
                     timestr);
             if ( *tmp1->drvreq.dedicate != 0 )
                 fprintf(stdout,"Dedicated: %s\n",tmp1->drvreq.dedicate);
-        } else {
+        } else if ( *server == '\0' || 
+                    strcmp(server,tmp1->volreq.server) == 0 ) {
             tp = localtime((time_t *)&tmp1->volreq.recvtime);
             (void)strftime(timestr,64,strftime_format,tp);
             fprintf(stdout,"QUEUED: %s ReqID: %d user (%d,%d)@%s received at %s\n",
