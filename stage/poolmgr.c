@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.119 2001/03/24 02:26:28 jdurand Exp $
+ * $Id: poolmgr.c,v 1.120 2001/03/24 03:47:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.119 $ $Date: 2001/03/24 02:26:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.120 $ $Date: 2001/03/24 03:47:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3766,7 +3766,7 @@ void bestnextpool_out(nextout,mode)
     }
 
     if (nbest_elements == 0) {
-      if ((this_best_element = best_elements = (struct pool_element_ext *) malloc(sizeof(struct pool_element))) == NULL) {
+      if ((this_best_element = best_elements = (struct pool_element_ext *) malloc(sizeof(struct pool_element_ext))) == NULL) {
         /* Oups... Tant-pis, return current pool */
         strcpy(nextout, thispool_out);
         return;
@@ -3774,7 +3774,7 @@ void bestnextpool_out(nextout,mode)
     } else {
       struct pool_element_ext *dummy;
 
-      if ((dummy = (struct pool_element_ext *) realloc(best_elements, (nbest_elements + 1) * sizeof(struct pool_element))) == NULL) {
+      if ((dummy = (struct pool_element_ext *) realloc(best_elements, (nbest_elements + 1) * sizeof(struct pool_element_ext))) == NULL) {
         /* Oups... Tant-pis, return current pool */
         free(best_elements);
         strcpy(nextout, thispool_out);
