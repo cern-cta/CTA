@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.17 2005/01/27 11:20:38 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.18 2005/01/27 12:37:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.17 $ $Date: 2005/01/27 11:20:38 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.18 $ $Date: 2005/01/27 12:37:19 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -91,7 +91,7 @@ EXTERN_C int DLL_DECL stager_job_select(void **output) {
 
     /* Loading services */
     /* ---------------- */
-    STAGER_LOG_DEBUG(NULL,"Loading services");
+    STAGER_LOG_VERBOSE(NULL,"Loading services");
     svcs = castor::BaseObject::services();
     castor::IService* svc =
       svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
@@ -100,7 +100,7 @@ EXTERN_C int DLL_DECL stager_job_select(void **output) {
 
     /* Get any new request to do    */
     /* ---------------------------- */
-    STAGER_LOG_DEBUG(NULL,"Getting any request to do");
+    STAGER_LOG_VERBOSE(NULL,"Getting any request to do");
     std::vector<castor::ObjectsIds> types;
     types.push_back(castor::OBJ_GetUpdateStartRequest);
     types.push_back(castor::OBJ_PutStartRequest);
@@ -110,7 +110,7 @@ EXTERN_C int DLL_DECL stager_job_select(void **output) {
 
     if (0 == req) {
       /* Nothing to do */
-      STAGER_LOG_DEBUG(NULL,"Nothing to do");
+      STAGER_LOG_VERBOSE(NULL,"Nothing to do");
       serrno = ENOENT;
       rc = -1;
     } else {
@@ -202,7 +202,7 @@ namespace castor {
 
         /* Loading the subrequest from Oracle */
         /* ---------------------------------- */
-        STAGER_LOG_DEBUG(NULL, "Loading the subrequest from Oracle");
+        STAGER_LOG_VERBOSE(NULL, "Loading the subrequest from Oracle");
         ad.setTarget(sReq->subreqId());
         castor::IObject *obj = svcs->createObj(&ad);
         if (0 == obj) {
@@ -230,7 +230,7 @@ namespace castor {
 
         /* Getting the FileSystem Object      */
         /* ---------------------------------- */
-        STAGER_LOG_DEBUG(NULL, "Getting the FileSystem Object");
+        STAGER_LOG_VERBOSE(NULL, "Getting the FileSystem Object");
         fs = stgSvc->selectFileSystem(sReq->fileSystem(),
                                       sReq->diskServer());
         if (0==fs) {
@@ -253,7 +253,7 @@ namespace castor {
 
         /* Fill DiskCopy with SubRequest           */
         /* --------------------------------------- */
-        STAGER_LOG_DEBUG(NULL,"Filling DiskCopy with SubRequest");
+        STAGER_LOG_VERBOSE(NULL,"Filling DiskCopy with SubRequest");
         if (0 != dc) {
           svcs->fillObj(&ad, dc, castor::OBJ_SubRequest);
         }
@@ -384,7 +384,7 @@ namespace castor {
 
         /* Loading the subrequest from Oracle */
         /* ---------------------------------- */
-        STAGER_LOG_DEBUG(NULL, "Loading the subrequest from Oracle");
+        STAGER_LOG_VERBOSE(NULL, "Loading the subrequest from Oracle");
         ad.setTarget(mcReq->subReqId());
         castor::IObject *obj = svcs->createObj(&ad);
         if (0 == obj) {
@@ -488,7 +488,7 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
 
     /* Loading services */
     /* ---------------- */
-    STAGER_LOG_DEBUG(NULL,"Loading services");
+    STAGER_LOG_VERBOSE(NULL,"Loading services");
     svcs = castor::BaseObject::services();
     castor::IService* svc =
       svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
@@ -496,7 +496,7 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
 
     /* Casting the request */
     /* ------------------- */
-    STAGER_LOG_DEBUG(NULL, "Casting Request");
+    STAGER_LOG_VERBOSE(NULL, "Casting Request");
     req = (castor::stager::Request*)output;
     if (0 == req) {
       castor::exception::Internal e;

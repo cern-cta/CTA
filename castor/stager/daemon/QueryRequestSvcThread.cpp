@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.3 2005/01/26 14:44:04 bcouturi Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.4 2005/01/27 12:38:20 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.3 $ $Date: 2005/01/26 14:44:04 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.4 $ $Date: 2005/01/27 12:38:20 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -90,7 +90,7 @@ EXTERN_C int DLL_DECL stager_query_select(void **output) {
 
     /* Loading services */
     /* ---------------- */
-    STAGER_LOG_DEBUG(NULL,"Loading services");
+    STAGER_LOG_VERBOSE(NULL,"Loading services");
     svcs = castor::BaseObject::services();
     castor::IService* svc =
       svcs->service("OraStagerSvc", castor::SVC_ORASTAGERSVC);
@@ -99,7 +99,7 @@ EXTERN_C int DLL_DECL stager_query_select(void **output) {
 
     /* Get any new request to do    */
     /* ---------------------------- */
-    STAGER_LOG_DEBUG(NULL,"Getting any request to do");
+    STAGER_LOG_VERBOSE(NULL,"Getting any request to do");
     std::vector<castor::ObjectsIds> types;
     types.push_back(castor::OBJ_StageFileQueryRequest);
     types.push_back(castor::OBJ_StageFindRequestRequest);
@@ -108,11 +108,11 @@ EXTERN_C int DLL_DECL stager_query_select(void **output) {
 
     if (0 == req) {
       /* Nothing to do */
-      STAGER_LOG_DEBUG(NULL,"Nothing to do");
+      STAGER_LOG_VERBOSE(NULL,"Nothing to do");
       serrno = ENOENT;
       rc = -1;
     } else {
-      STAGER_LOG_DEBUG(NULL,"req FOUND");
+      STAGER_LOG_VERBOSE(NULL,"req FOUND");
       *output = req;
       rc = 0;
     }
@@ -209,7 +209,7 @@ namespace castor {
             
             switch(ptype) {
             case REQUESTQUERYTYPE_FILENAME:
-              STAGER_LOG_DEBUG(NULL, "Looking up file id from filename");
+              STAGER_LOG_VERBOSE(NULL, "Looking up file id from filename");
               struct Cns_fileid Cnsfileid;
               memset(&Cnsfileid,'\0',sizeof(Cnsfileid));
               struct Cns_filestat Cnsfilestat;
@@ -230,7 +230,7 @@ namespace castor {
             case REQUESTQUERYTYPE_USERTAG:
               break;
             case REQUESTQUERYTYPE_FILEID:
-              STAGER_LOG_DEBUG(NULL, "Received fileif parameter");
+              STAGER_LOG_VERBOSE(NULL, "Received fileif parameter");
               std::string::size_type idx = pval.find('@');
               if (idx == std::string::npos) {
                 // XXX Error
@@ -320,7 +320,7 @@ namespace castor {
                                      castor::query::IQuerySvc* qrySvc,
                                      castor::BaseAddress &ad) {
         char *func = "handle_findRequestRequest";
-        STAGER_LOG_DEBUG(NULL,"Handling findRequestRequest");
+        STAGER_LOG_VERBOSE(NULL,"Handling findRequestRequest");
       }
 
       /**
@@ -337,7 +337,7 @@ namespace castor {
                                       castor::query::IQuerySvc* qrySvc,
                                       castor::BaseAddress &ad) {
         char *func = "handle_requestQueryRequest";
-        STAGER_LOG_DEBUG(NULL,"Handling requestQueryRequest");
+        STAGER_LOG_VERBOSE(NULL,"Handling requestQueryRequest");
       }
 
     } // End of namespace query service
@@ -390,7 +390,7 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
 
     /* Loading services */
     /* ---------------- */
-    STAGER_LOG_DEBUG(NULL,"Loading services");
+    STAGER_LOG_VERBOSE(NULL,"Loading services");
     svcs = castor::BaseObject::services();
     castor::IService* svc =
       svcs->service("OraQuerySvc", castor::SVC_ORAQUERYSVC);
@@ -398,7 +398,7 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
 
     /* Casting the request */
     /* ------------------- */
-    STAGER_LOG_DEBUG(NULL, "Casting Request");
+    STAGER_LOG_VERBOSE(NULL, "Casting Request");
     req = (castor::stager::Request*)output;
     if (0 == req) {
       castor::exception::Internal e;
