@@ -1,5 +1,5 @@
 /*
- * $Id: Cstage_ifce.c,v 1.10 2001/07/12 10:55:59 jdurand Exp $
+ * $Id: Cstage_ifce.c,v 1.11 2001/11/30 11:24:11 jdurand Exp $
  */
 
 /*
@@ -16,10 +16,10 @@
 
 #include "Cdb_api.h"
 #include "Cstage_db.h"
-#include "stage.h"
+#include "Cstage_ifce.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.10 $ $Date: 2001/07/12 10:55:59 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cstage_ifce.c,v $ $Revision: 1.11 $ $Date: 2001/11/30 11:24:11 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 
