@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.22 $ $Release$ $Date: 2004/07/01 09:14:14 $ $Author: jdurand $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.23 $ $Release$ $Date: 2004/07/01 09:18:28 $ $Author: jdurand $
 #
 # Make Castor libraries and executables
 #
@@ -259,3 +259,6 @@ clean::
 clobber::	clean
 	@echo clobbering in CurDir
 	-@RemoveFiles($(COMMONLIB) $(PROGS_C))
+
+FORCE:
+
