@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.8 $ $Date: 2000/08/14 13:55:24 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.9 $ $Date: 2000/08/14 14:35:57 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -133,7 +133,7 @@ int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
 
     filereq = &fl->filereq;
     filereq->position_method = TPPOSIT_FSEQ;
-    filereq->tape_fseq = 1;
+    filereq->tape_fseq = 0;
     fl->tape_fsec = 1;
     filereq->check_fid = CHECK_FILE;
     *filereq->fid = '\0';
@@ -168,6 +168,13 @@ int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
     strcpy(tape->tapereq.label,lbltyp);
     if ( rc == -1 ) (void)rtcpd_Deassign(-1,&tape->tapereq);
     CHECK_PROC_ERR(tape,NULL,"rtcpd_Mount() error");
+
+    TP_STATUS(RTCP_PS_POSITION);
+    rc = rtcpd_Info(tape,tape->file);
+    TP_STATUS(RTCP_PS_NOBLOCKING);
+    *(tape->file->filereq.err.errmsgtxt) = '\0';
+    tape->file->filereq.err.severity = RTCP_OK;
+    tape->file->filereq.err.errorcode = 0;
 
     /*
      * Initialise the dumptape routines

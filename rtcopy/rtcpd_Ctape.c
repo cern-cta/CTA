@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.40 $ $Date: 2000/08/14 13:05:31 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.41 $ $Date: 2000/08/14 14:35:55 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -752,7 +752,7 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
             tapereq->unit,unit);
         rc = -1;
     }
-    if ( filereq->blocksize <= 0 ) {
+    if ( fseq > 0 && filereq->blocksize <= 0 ) {
         rtcp_log(LOG_ERR,
             "rtcpd_Info() Ctape_info() returns blocksize = %d\n",
             filereq->blocksize);
