@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_errmsg.c,v $ $Revision: 1.1 $ $Date: 2004/10/24 22:13:24 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_errmsg.c,v $ $Revision: 1.2 $ $Date: 2004/10/28 15:02:28 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -15,7 +15,7 @@ static char sccsid[] = "@(#)$RCSfile: stager_errmsg.c,v $ $Revision: 1.1 $ $Date
 #include <stdlib.h>
 #include "serrno.h"
 #include "Cglobals.h"
-#include "stagerConstants.h"
+#include "stager_constants.h"
 #include "Csnprintf.h"
 
 static int errbufp_key = 0;
