@@ -750,7 +750,7 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
   TYPE Segment_Cur IS REF CURSOR RETURN Segment%ROWTYPE;
   TYPE "strList" IS TABLE OF VARCHAR2(2048) index by binary_integer;
-  TYPE "numList" IS TABLE OF INTEGER index by binary_integer;
+  TYPE "cnumList" IS TABLE OF NUMBER index by binary_integer;
 END castor;
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
@@ -1122,7 +1122,7 @@ END;
 /* PL/SQL method implementing bestFileSystemForJob */
 CREATE OR REPLACE PROCEDURE bestFileSystemForJob
 (fileSystems IN castor."strList", machines IN castor."strList",
- minFree IN castor."numList", rMountPoint OUT VARCHAR2,
+ minFree IN castor."cnumList", rMountPoint OUT VARCHAR2,
  rDiskServer OUT VARCHAR2) AS
  ds NUMBER;
  fs NUMBER;
