@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.8 $ $Date: 2000/05/31 10:33:53 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.9 $ $Date: 2000/06/15 12:16:50 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -37,9 +37,11 @@ static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.8 $ $Date: 2000/0
 #include <net.h>
 #include <Cnetdb.h>
 
+#ifndef _WIN32
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
+#endif /* _WIN32 */
 
 #ifndef LOCALHOSTSFILE
 #if defined(_WIN32)
