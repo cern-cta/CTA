@@ -1,5 +1,5 @@
 /*
- * $Id: stage_messages.h,v 1.5 2001/12/20 12:57:26 jdurand Exp $
+ * $Id: stage_messages.h,v 1.6 2001/12/20 13:23:34 jdurand Exp $
  */
 
 #ifndef __stage_messages_h
@@ -146,5 +146,6 @@
 #define STG164  "STG164 - %s : wrong poolname \"%s\" - changed to \"%s\"\n"
 #define STG165  "STG165 - %s : bad copy number %s (should be > 0)\n"
 #define STG166  "STG166 - %s : not found within current pool definition\n"
+#define STG167  "STG167 - %s : loop detected in filesystem selection\n"
 
 #endif /* __stage_messages_h */
