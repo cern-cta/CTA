@@ -1,10 +1,10 @@
-.\" $Id: stgdaemon.man,v 1.22 2003/05/13 16:19:34 jdurand Exp $
+.\" $Id: stgdaemon.man,v 1.23 2003/05/13 16:23:07 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.22 $ $Date: 2003/05/13 16:19:34 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.23 $ $Date: 2003/05/13 16:23:07 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STGDAEMON 1 "$Date: 2003/05/13 16:19:34 $" CASTOR "Stage Administrator Commands"
+.TH STGDAEMON 1 "$Date: 2003/05/13 16:23:07 $" CASTOR "Stage Administrator Commands"
 .SH NAME
 stgdaemon \- starts the stage daemon
 .SH SYNOPSIS
@@ -397,6 +397,8 @@ automatic migration output log
 .B /etc/operator/nomoremigr
 .TP
 .B /etc/operator/nomorestage
+.TP
+.B /etc/shift.conf
 .SH EXAMPLES
 .TP
 Here is an example of a configuration file:
