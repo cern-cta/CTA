@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tpdaemon.man,v $ $Revision: 1.3 $ $Date: 2000/02/03 10:44:44 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: tpdaemon.man,v $ $Revision: 1.4 $ $Date: 2001/05/04 05:38:02 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TPDAEMON 1 "$Date: 2000/02/03 10:44:44 $" CASTOR "Ctape Administrator Commands"
+.TH TPDAEMON 1 "$Date: 2001/05/04 05:38:02 $" CASTOR "Ctape Administrator Commands"
 .SH NAME
 tpdaemon \- starts the tape daemon
 .SH SYNOPSIS
@@ -23,14 +23,35 @@ drives.
 .LP
 All error messages and statistical information are kept in a log.
 .LP
-The tape daemon listen port number must be defined on all client hosts and
-on the tape server itself with an entry in
+The tape daemon listen port number can be defined on client hosts and
+on the tape server itself in either of the following ways:
+.RS
+.LP
+setting an environment variable TAPE_PORT
+.RS
+.HP
+setenv TAPE_PORT 5011
+.RE
+.LP
+an entry in
+.B /etc/shift.conf
+like:
+.RS
+.HP
+TAPE	PORT	5011
+.RE
+.LP
+an entry in
 .B /etc/services
 like:
 .RS
 .HP
-tape           5011/tcp                        # CASTOR tape daemon
+tape          5011/tcp                        # CASTOR tape daemon
 .RE
+.RE
+.LP
+If none of these methods is used, the default port number is taken from the
+definition of TAPE_PORT in Ctape_constants.h.
 .LP
 There must be one entry in the configuration file per tape drive giving:
 .RS
