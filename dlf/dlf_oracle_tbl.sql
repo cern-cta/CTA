@@ -2,7 +2,7 @@
 -- Copyright (C) 2003 by CERN/IT/ADC/CA
 -- All rights reserved
 --
--- @(#)$RCSfile: dlf_oracle_tbl.sql,v $ $Revision: 1.4 $ $Date: 2005/01/07 09:59:10 $ CERN IT-ADC Vitaly Motyakov
+-- @(#)$RCSfile: dlf_oracle_tbl.sql,v $ $Revision: 1.5 $ $Date: 2005/02/02 13:49:50 $ CERN IT-ADC Vitaly Motyakov
 --
 --     Create logging facility ORACLE tables.
 
@@ -103,3 +103,5 @@ CREATE INDEX dlf.I_strparam_seq_no ON dlf.dlf_str_param_values (msg_seq_no);
 CREATE INDEX dlf.I_numparam_seq_no ON dlf.dlf_num_param_values (msg_seq_no);
 CREATE INDEX dlf.I_tapeds_seq_no ON dlf.dlf_tape_ids (msg_seq_no);
 CREATE INDEX dlf.I_rqids_seq_no ON dlf.dlf_rq_ids_map (msg_seq_no);
+CREATE INDEX dlf.I_messages_fileid ON dlf.dlf_messages (ns_file_id);
+CREATE INDEX dlf.I_messages_requestid ON dlf.dlf_messages (req_id);
