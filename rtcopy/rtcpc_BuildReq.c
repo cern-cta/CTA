@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.36 $ $Date: 2001/01/28 10:32:20 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.37 $ $Date: 2001/01/30 16:11:48 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -210,8 +210,8 @@ static int newTapeList(tape_list_t **tape, tape_list_t **newtape,
     }
     tl = (tape_list_t *)calloc(1,sizeof(tape_list_t));
     if ( tl == NULL ) return(-1);
-    tl->tapereq.mode = mode;
     rtcpc_InitReqStruct(&tl->tapereq,NULL);
+    tl->tapereq.mode = mode;
     if ( *tape != NULL ) {
         CLIST_INSERT((*tape)->prev,tl);
     } else {
