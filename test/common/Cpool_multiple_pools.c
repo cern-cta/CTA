@@ -17,6 +17,7 @@ int cid[NMASTER_THREADS];
 int nassign[NMASTER_THREADS] = {1000,100000,100000,100000,100000,100000,100000,100000,100000,100000};
 
 extern int Cpool_debug;
+extern int Cthread_debug;
 
 int main(argc,argv)
 	int argc;
@@ -26,19 +27,19 @@ int main(argc,argv)
 	int n;
 
 	if (argc < 2) {
-		fprintf(stderr, "Usage: %s <nb_thread> [n_assignment_per_thread] where nb_thread is between 1 and 10 and n_assignment_per_thread is > 0\n", argv[0]);
+		fprintf(stderr, "Usage: %s <nb_pool> [n_assignment_per_thread] where nb_pool is between 1 and 10 and n_assignment_per_thread is > 0. Each pool will have 10 threads.\n", argv[0]);
 		exit(1);
 	}
 	n = atoi(argv[1]);
 	if ((n < 1) || (n > 10)) {
-		fprintf(stderr, "Usage: %s <nb_thread> [n_assignment_per_thread] where nb_thread MUST be between 1 and 10\n", argv[0]);
+		fprintf(stderr, "Usage: %s <nb_pool> [n_assignment_per_thread] where nb_pool MUST be between 1 and 10\n", argv[0]);
 		exit(1);
 	}
 	if (argc == 3) {
 		int z;
 		
 		if ((z = atoi(argv[2])) <= 0) {
-			fprintf(stderr, "Usage: %s <nb_thread> [n_assignment_per_thread] where n_assignment_per_thread MUST be > 0\n", argv[0]);
+			fprintf(stderr, "Usage: %s <nb_pool> [n_assignment_per_thread] where n_assignment_per_thread MUST be > 0\n", argv[0]);
 			exit(1);
 		}
 		for (i = 0; i < n; i++) {
@@ -47,6 +48,7 @@ int main(argc,argv)
 	}
 	
 	Cpool_debug = 0;
+	Cthread_debug = 0;
 
 	initlog("Cpool_multiple_pools",LOG_DEBUG,"");
 
