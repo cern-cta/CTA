@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.81 $ $Date: 2000/05/03 15:44:59 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.82 $ $Date: 2000/05/04 14:52:59 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1257,6 +1257,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
         rtcp_log(LOG_ERR,"diskIOthread() %s, severity=%d, errno=%d, serrno=%d\n",\
         (Z),severity,save_errno,save_serrno); \
         if ( mode == WRITE_DISABLE && \
+          (rc == -1 || (severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) != 0) && \
           (rtcpd_CheckProcError() & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) { \
             (void)rtcpd_WaitCompletion(tape,file); \
             if ( (severity & (RTCP_FAILED | RTCP_RESELECT_SERV)) != 0 ) \
