@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.29 2002/09/17 15:35:43 jdurand Exp $
+ * $Id: stage_constants.h,v 1.30 2002/09/20 10:07:43 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -483,6 +483,7 @@
 #define STAGE_VOLATILE_TPPOOL   CONSTLL(0x0200000000000)  /* --volatile_tppool  [stage_iowc]     */
 #define STAGE_NODISK            CONSTLL(0x0400000000000)  /* --nodisk  [stage_clr]               */
 #define STAGE_MIGRINIT          CONSTLL(0x1000000000000)  /* -X  [stage_init]                    */
+#define STAGE_HSMCREAT          CONSTLL(0x2000000000000)  /* --hsmcreat [stage_chng]             */
 
 /* ======================================================================= */
 /* =================== DEFINITION OF API METHODS ========================= */
