@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.107 2002/05/31 10:08:57 jdurand Exp $
+ * $Id: procupd.c,v 1.108 2002/06/10 13:43:14 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.107 $ $Date: 2002/05/31 10:08:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.108 $ $Date: 2002/06/10 13:43:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -474,7 +474,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					goto reply;
 				}
 				c = 0;
-			procupd_lauch_gc:
+			procupd_launch_gc:
 				stcp = newreq((int) stgreq.t_or_d);
 				memcpy (stcp, &stgreq, sizeof(stgreq));
 				if (i > 0)
@@ -559,7 +559,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 							goto reply;
 						}
 						c = -1;
-						goto procupd_lauch_gc;
+						goto procupd_launch_gc;
 					}
 					if (api_out) sendrep(rpfd, API_STCP_OUT, stcp, magic);
 					sendrep (rpfd, MSG_OUT, "%s", stcp->ipath);
@@ -1071,7 +1071,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 			sendrep (wqp->rpfd, MSG_ERR, STG02, stcp->ipath,
 							 RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 		c = 0;
-	procupd_lauch_gc2:
+	procupd_launch_gc2:
 		/* Make sure stcp->ipath[] is reset */
 		stcp->ipath[0] = '\0';
 
@@ -1129,7 +1129,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 				}
 				c = -1;
-				goto procupd_lauch_gc2;
+				goto procupd_launch_gc2;
 			}
 
 			if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
