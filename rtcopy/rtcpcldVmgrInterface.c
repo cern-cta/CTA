@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.15 $ $Release$ $Date: 2005/01/17 12:41:55 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.16 $ $Release$ $Date: 2005/01/20 16:27:26 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.15 $ $Release$ $Date: 2005/01/17 12:41:55 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.16 $ $Release$ $Date: 2005/01/20 16:27:26 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -66,20 +66,6 @@ WSADATA wsadata;
 #include <serrno.h>
 #include <Cns_api.h>
 #include <vmgr_api.h>
-/*
-#include <Ctape_constants.h>
-#include <castor/stager/Tape.h>
-#include <castor/stager/Segment.h>
-#include <castor/stager/TapeStatusCodes.h>
-#include <castor/stager/SegmentStatusCodes.h>
-#include <castor/stager/IStagerSvc.h>
-#include <castor/Services.h>
-#include <castor/BaseAddress.h>
-#include <castor/db/DbAddress.h>
-#include <castor/IAddress.h>
-#include <castor/IObject.h>
-#include <castor/IClient.h>
-*/
 #include <castor/Constants.h>
 #include <rtcp_constants.h>
 #include <vdqm_api.h>
@@ -88,6 +74,8 @@ WSADATA wsadata;
 #include <rtcpcld_constants.h>
 #include <rtcpcld_messages.h>
 #include <rtcpcld.h>
+
+extern char *getconfent _PROTO((char *, char *, int));
 
 /** Global needed for determine which uuid to log
  */
@@ -540,6 +528,59 @@ int rtcpcld_tapeOK(
   return(tapeStatus(tape,NULL,NULL));
 }
 
+/** rtcpcld_handleTapeError() - allow configurable handling of tape errors
+ *
+ * This routine allows for taking automated actions upon tape errors directly
+ * in the migrator (we don't allow it for recaller).
+ * If the filereq indicates a tape error (e.g. media errors), the following
+ * automated actions will take place:
+ *  - mark tape RDONLY in VMGR
+ *  - reset the TapeCopy for migration to another tape
+ *
+ * This behaviour can be disabled via a configuration:
+ * migrator HANDLE_TPERR NO
+ */
+int rtcpcld_handleTapeError(
+                            tape,
+                            file
+                            )
+     tape_list_t *tape;
+     file_list_t *file;
+{
+  rtcpFileRequest_t *filereq;
+  rtcpTapeRequest_t *tapereq;
+  char *p = NULL;
+  int mode;
+
+  if ( tape == NULL || file == NULL ) return(0);
+  /*
+   * Don't handle tape read error here. It's up to the
+   * error hunter to decide what to do with the segment and tape.
+   */
+  tapereq = &(tape->tapereq);
+  if ( tapereq->mode == WRITE_DISABLE ) return(0);
+
+  filereq = &(file->filereq);
+  if ( (filereq->cprc == -1) &&
+       ((filereq->err.severity & RTCP_FAILED) == RTCP_FAILED) &&
+       ((filereq->err.errorcode == ETPARIT) || 
+        (filereq->err.errorcode == ETUNREC) || 
+        (filereq->err.errorcode == ETLBL) || 
+        (tapereq->err.errorcode == ETPARIT) || 
+        (tapereq->err.errorcode == ETUNREC) || 
+        (tapereq->err.errorcode == ETLBL)) ) {
+    p = getconfent("migrator","HANDLE_TPERROR",0);
+    if ( (p != NULL) &&
+         ((strcmp(p,"no") == 0) ||
+          (strcmp(p,"NO") == 0)) ) {
+      return(0);
+    } else {
+      return(1);
+    }
+  }
+  return(0);
+}
+
 int rtcpcld_updateTape(
                        tape,
                        file,
@@ -676,21 +717,6 @@ int rtcpcld_updateTape(
           } else {
             compressionFactor = 100;
           }
-          {
-            char u64buf1[32];
-            char u64buf2[32];
-            char u64buf3[32];
-            char u64buf4[32];
-            char u64buf5[32];
-            rtcp_log(LOG_DEBUG,
-                     "updateTape() on ENOSPC: bytes_in=%s, bytes_out=%s, host_bytes=%s, freeSpace=%s, bytesWritten=%s\n",
-                     u64tostr(filereq->bytes_in,u64buf1,-sizeof(u64buf1)),
-                     u64tostr(filereq->bytes_out,u64buf2,-sizeof(u64buf2)),
-                     u64tostr(filereq->host_bytes,u64buf3,-sizeof(u64buf3)),
-                     u64tostr(freeSpace,u64buf4,-sizeof(u64buf4)),
-                     u64tostr(bytesWritten,u64buf5,-sizeof(u64buf5))
-                     );
-          }
         } else {
           if ( (filereq->cprc == 0) || (filereq->host_bytes > 0) ) {
             bytesWritten = filereq->bytes_in;
@@ -712,12 +738,7 @@ int rtcpcld_updateTape(
          *
          * In this case we set the volume readonly to avoid further problems.
          */
-        if ( (filereq->err.errorcode == ETPARIT) || 
-             (filereq->err.errorcode == ETUNREC) || 
-             (filereq->err.errorcode == ETLBL) || 
-             (tapereq->err.errorcode == ETPARIT) || 
-             (tapereq->err.errorcode == ETUNREC) || 
-             (tapereq->err.errorcode == ETLBL) ) {
+        if ( rtcpcld_handleTapeError(tape,file) == 1 ) {
           flags = TAPE_RDONLY; 
         }
       }
@@ -727,14 +748,40 @@ int rtcpcld_updateTape(
   statusStr = rtcpcld_tapeStatusStr(flags);
 
   (void)getVmgrErrBuf(&vmgrErrMsg);
-  rc = vmgr_updatetape(
-                       tapereq->vid,
-                       tapereq->side,
-                       bytesWritten,
-                       compressionFactor,
-                       filesWritten,
-                       flags
-                       );
+  if ( flags == TAPE_FULL ) {
+    /*
+     * A dirty hack to make the free space work for FULL tapes:
+     * we must first declare the tape full and *thereafter* give
+     * the free space
+     */
+    rc = vmgr_updatetape(
+                         tapereq->vid,
+                         tapereq->side,
+                         0,
+                         0,
+                         0,
+                         flags
+                         );
+    if ( rc != -1 ) {
+      rc = vmgr_updatetape(
+                           tapereq->vid,
+                           tapereq->side,
+                           bytesWritten,
+                           compressionFactor,
+                           filesWritten,
+                           0
+                           );
+    }
+  } else {
+    rc = vmgr_updatetape(
+                         tapereq->vid,
+                         tapereq->side,
+                         bytesWritten,
+                         compressionFactor,
+                         filesWritten,
+                         flags
+                         );
+  }
   if ( rc == -1 ) {
     save_serrno = serrno;
     (void)dlf_write(
