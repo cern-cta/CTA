@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.29 2002/11/19 15:36:48 baud Exp $
+ * $Id: mstat.c,v 1.30 2002/12/02 14:49:34 baud Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.29 $ $Date: 2002/11/19 15:36:48 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.30 $ $Date: 2002/12/02 14:49:34 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -725,8 +725,8 @@ int    reqst ;
 #endif
       TRACE(2, "rfio", "rfio_smstat64: Server doesn't support %s()",
          m64 ? "stat64" : "secure stat");
+      rfio_end_this(s,0);
       serrno = SEPROTONOTSUP;
-      rfio_end_this(s,1);
       END_TRACE();
       return(-1);
    }
