@@ -1,7 +1,10 @@
 /*
- * $Id: Cthread.c,v 1.3 1999/07/20 13:26:52 obarring Exp $
+ * $Id: Cthread.c,v 1.4 1999/07/20 13:38:11 obarring Exp $
  *
  * $Log: Cthread.c,v $
+ * Revision 1.4  1999/07/20 13:38:11  obarring
+ * Add call to Cglobals_init()
+ *
  * Revision 1.3  1999/07/20 13:26:52  obarring
  * empty line for test
  *
@@ -2461,6 +2464,7 @@ void _Cthread_once(void) {
   Cmtx.next  = NULL;
   Cspec.next = NULL;
   _Cthread_once_status = 0;
+  _Cglobals_init(Cthread_getspecific,Cthread_setspecific);
   return;
 #endif /* ifndef _CTHREAD */
 }
