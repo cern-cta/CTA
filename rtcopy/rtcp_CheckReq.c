@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.47 $ $Date: 2001/08/17 13:52:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.48 $ $Date: 2002/01/10 11:38:26 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -414,6 +414,13 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         sprintf(errmsgtxt,RT104,CMD(mode));
         SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
+    }
+    /*
+     * For concatenation to tape, make sure to repeate blocksize
+     * since there will be no new tppos
+     */
+    if ( mode == WRITE_ENABLE && filereq->concat == CONCAT ) {
+        if ( filereq->blocksize < 0 ) filereq->blocksize = file->prev->filereq.blocksize;
     }
     /*
      * If the client didn't provide any value we put it to zero
