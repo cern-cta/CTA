@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/25 16:26:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/27 07:28:30 $ $Author: sponcec3 $
  *
  *
  *
@@ -58,7 +58,7 @@ castor::Services::~Services() {
 // service
 //-----------------------------------------------------------------------------
 castor::IService* castor::Services::service(const std::string name,
-                                            const unsigned int id) {
+                                            const unsigned int id) throw() {
   std::map<const std::string, IService*>::const_iterator it =
     m_services.find(name);
   if (it == m_services.end()) {
@@ -88,7 +88,7 @@ castor::IService* castor::Services::service(const std::string name,
 // cnvService
 //-----------------------------------------------------------------------------
 castor::ICnvSvc* castor::Services::cnvService(const std::string name,
-                                              const unsigned int id) {
+                                              const unsigned int id) throw() {
   IService* svc = service(name, id);
   if (0 == svc) {
     return 0;
@@ -99,6 +99,13 @@ castor::ICnvSvc* castor::Services::cnvService(const std::string name,
     return 0;
   }
   return cnvSvc;
+}
+
+// -----------------------------------------------------------------------
+// removeService
+// -----------------------------------------------------------------------
+void castor::Services::removeService(const std::string name) throw() {
+  m_services.erase(name);
 }
 
 // -----------------------------------------------------------------------
@@ -186,12 +193,4 @@ void castor::Services::updateObj(castor::IAddress* address,
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   ObjectCatalog newlyCreated;
   cnvSvc->updateObj(object, newlyCreated);
-}
-                       
-
-// -----------------------------------------------------------------------
-// removeService
-// -----------------------------------------------------------------------
-void castor::Services::removeService(const std::string name) {
-  m_services.erase(name);
 }
