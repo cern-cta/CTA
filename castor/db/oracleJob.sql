@@ -143,7 +143,7 @@ CREATE OR REPLACE PROCEDURE buildPathFromFileId(fid IN INTEGER,
                                                 nsHost IN VARCHAR,
                                                 path OUT VARCHAR) AS
 BEGIN
-  path := CONCAT(CONCAT(CONCAT(TO_CHAR(MOD(fid,100),09), '/'),
+  path := CONCAT(CONCAT(CONCAT(TO_CHAR(MOD(fid,100),'FM09'), '/'),
                         CONCAT(TO_CHAR(fid), '@')),
                  nsHost);
 END;
