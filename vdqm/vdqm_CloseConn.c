@@ -4,8 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_CloseConn.c,v $ $Revision: 1.5 $ $Date: 1999/09/27 15:06:00 $ CERN IT-PDP/DM Olof Barr
-ing";
+static char sccsid[] = "@(#)$RCSfile: vdqm_CloseConn.c,v $ $Revision: 1.6 $ $Date: 1999/09/27 15:06:54 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 
