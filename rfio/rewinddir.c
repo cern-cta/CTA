@@ -1,5 +1,5 @@
 /*
- * $Id: rewinddir.c,v 1.12 2000/11/20 15:01:19 jdurand Exp $
+ * $Id: rewinddir.c,v 1.13 2000/11/20 16:18:24 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rewinddir.c,v $ $Revision: 1.12 $ $Date: 2000/11/20 15:01:19 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rewinddir.c,v $ $Revision: 1.13 $ $Date: 2000/11/20 16:18:24 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* rewinddir.c      Remote File I/O - rewind a directory                     */
@@ -48,15 +48,18 @@ RDIR *dirp;
     */
    if (s_index == -1) {
       TRACE(2, "rfio", "rfio_rewinddir: check if HSM directory");
-      (void)rfio_HsmIf_rewinddir((DIR *)dirp);
-      TRACE(2, "rfio", "rfio_rewinddir: using local rewinddir(0x%x)",dirp) ; 
+      if ( rfio_HsmIf_IsHsmDirEntry((DIR *)dirp) != -1 ) {
+          (void)rfio_HsmIf_rewinddir((DIR *)dirp);
+      } else {
+          TRACE(2, "rfio", "rfio_rewinddir: using local rewinddir(0x%x)",dirp) ; 
 #if defined(_WIN32)
-      serrno = SEOPNOTSUP;
-      return(-1);
+          serrno = SEOPNOTSUP;
+          return(-1);
 #else /* _WIN32 */
-      (void)rewinddir((DIR *)dirp) ; 
+          (void)rewinddir((DIR *)dirp) ; 
 #endif /* _WIN32 */
-      END_TRACE() ; 
+      }
+      END_TRACE();
       return(0) ;
    }
    s = rdirfdt[s_index]->s;
