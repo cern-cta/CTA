@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.44 2002/01/20 12:03:41 jdurand Exp $
+ * $Id: procclr.c,v 1.45 2002/01/22 07:36:36 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.44 $ $Date: 2002/01/20 12:03:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.45 $ $Date: 2002/01/22 07:36:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -92,10 +92,10 @@ static int side_flag = 0;
 static int reqid_flag = 0;
 
 void procclrreq(req_type, magic, req_data, clienthost)
-		 int req_type;
-		 int magic;
-		 char *req_data;
-		 char *clienthost;
+	int req_type;
+	int magic;
+	char *req_data;
+	char *clienthost;
 {
 	char **argv = NULL;
 	int c, i, j;
@@ -187,7 +187,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 #endif
 #if SACCT
 	stageacct (STGCMDR, uid, gid, clienthost,
-						 reqid, req_type, 0, 0, NULL, "", (char) 0);
+			   reqid, req_type, 0, 0, NULL, "", (char) 0);
 #endif
 	if ((gr = Cgetgrgid (gid)) == NULL) {
 		sendrep (rpfd, MSG_ERR, STG36, gid);
@@ -252,7 +252,9 @@ void procclrreq(req_type, magic, req_data, clienthost)
 					logit[BUFSIZ] = '\0';
 					stglogit("stage_clr","stcp[1/1] : %s\n",logit);
 	 			}
-				this_reqid = stcp_input.reqid;
+				if ((flags & STAGE_REQID) == STAGE_REQID) {
+					this_reqid = stcp_input.reqid;
+				}
 			}
 			/* We set the flags */
 			switch (t_or_d) {
@@ -287,7 +289,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			}
 			if (stcp_input.poolname[0] != '\0') {
 				if (strcmp (stcp_input.poolname, "NOPOOL") == 0 ||
-						isvalidpool (stcp_input.poolname)) {
+					isvalidpool (stcp_input.poolname)) {
 					strcpy (poolname, stcp_input.poolname);
 				} else {
 					sendrep (rpfd, MSG_ERR, STG32, stcp_input.poolname);
@@ -381,13 +383,13 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			case 'P':
 				path = Coptarg;
 				if (*path == '\0') {
-				sendrep (rpfd, MSG_ERR, STG06, "-P");
+					sendrep (rpfd, MSG_ERR, STG06, "-P");
 					errflg++;
 				}
 				break;
 			case 'p':
 				if (strcmp (Coptarg, "NOPOOL") == 0 ||
-						isvalidpool (Coptarg)) {
+					isvalidpool (Coptarg)) {
 					strcpy (poolname, Coptarg);
 				} else {
 					sendrep (rpfd, MSG_ERR, STG32, Coptarg);
@@ -486,12 +488,12 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				if (stpp->reqid == stcp->reqid) break;
 			}
 			if (cflag && stcp->poolname[0] &&
-					enoughfreespace (stcp->poolname, gc_stop_thresh)) {
+				enoughfreespace (stcp->poolname, gc_stop_thresh)) {
 				c = ENOUGHF;
 				goto reply;
 			}
 			if (cflag && uid == 0 &&	/* probably garbage collector */
-					checklastaccess (stcp->poolname, stcp->a_time)) {
+				checklastaccess (stcp->poolname, stcp->a_time)) {
 				c = EBUSY;
 				goto reply;
 			}
@@ -506,12 +508,12 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				if (strcmp (path, stcp->ipath) == 0) {
 					found = 1;
 					if (cflag && stcp->poolname[0] &&
-							enoughfreespace (stcp->poolname, gc_stop_thresh)) {
+						enoughfreespace (stcp->poolname, gc_stop_thresh)) {
 						c = ENOUGHF;
 						goto reply;
 					}
 					if (cflag && uid == 0 &&
-							checklastaccess (stcp->poolname, stcp->a_time)) {
+						checklastaccess (stcp->poolname, stcp->a_time)) {
 						c = EBUSY;
 						goto reply;
 					}
@@ -575,7 +577,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			}
 			found = 1;
 			if (cflag && stcp->poolname[0] &&
-					enoughfreespace (stcp->poolname, gc_stop_thresh)) {
+				enoughfreespace (stcp->poolname, gc_stop_thresh)) {
 				c = ENOUGHF;
 				goto reply;
 			}
@@ -624,7 +626,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 			}
 		}
 	}
- reply:
+  reply:
 	if (argv != NULL) free (argv);
 	if (fseq_list != NULL) free(fseq_list);
 	rpfd = save_rpfd;
@@ -632,13 +634,13 @@ void procclrreq(req_type, magic, req_data, clienthost)
 }
 
 int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
-		 struct stgcat_entry *stcp;
-		 gid_t gid;
-		 uid_t uid;
-		 char *group;
-		 char *user;
-		 int rflag; /* True if HSM source file has to be removed */
-		 int Fflag; /* Forces deletion of request in memory instead of internal error */
+	struct stgcat_entry *stcp;
+	gid_t gid;
+	uid_t uid;
+	char *group;
+	char *user;
+	int rflag; /* True if HSM source file has to be removed */
+	int Fflag; /* Forces deletion of request in memory instead of internal error */
 {
 	int found;
 	int i;
@@ -667,7 +669,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 		(stcp->status & (STAGEOUT | PUT_FAILED)) == (STAGEOUT | PUT_FAILED)) {
 		if (delfile (stcp, 0, 1, 1, user, uid, gid, rflag, 1) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
-							 rfio_serror());
+					 rfio_serror());
 			return (USERR);
 		}
 	} else if (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp)) {
@@ -676,7 +678,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 		}
 		if (delfile (stcp, 1, 1, 1, user, uid, gid, rflag, 1) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
-							 rfio_serror());
+					 rfio_serror());
 			return (USERR);
 		}
 	} else {	/* the request should be in the active/wait queue */
@@ -697,7 +699,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 				/* is there an active stager overlay for this file? */
 				if (wqp->ovl_pid) {
 					stglogit (func, "killing process %d\n",
-										wqp->ovl_pid);
+							  wqp->ovl_pid);
 					kill (wqp->ovl_pid, SIGINT);
 					wqp->ovl_pid = 0;
 				}

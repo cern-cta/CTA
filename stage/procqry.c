@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.71 2002/01/21 10:33:55 jdurand Exp $
+ * $Id: procqry.c,v 1.72 2002/01/22 07:36:36 jdurand Exp $
  */
 
 /*
@@ -8,8 +8,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.71 $ $Date: 2002/01/21 10:33:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.72 $ $Date: 2002/01/22 07:36:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
+
+/* Enable this if you want stageqry to always run within the same process - usefull for debugging */
+#define STAGEQRY_IN_MAIN
 
 /* Disable the update of the catalog in stageqry mode */
 #ifdef USECDB
@@ -702,13 +705,15 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	if (strcmp (poolname, "NOPOOL") == 0)
 		poolflag = -1;
 	if (! sflag) {
+#ifndef STAGEQRY_IN_MAIN
 		/* We run this procqry requests in a forked child */
 		if ((pid = fork ()) < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, "", "fork", sys_errlist[errno]);
 			c = SYERR;
 			goto reply;
 		}
-		if (pid) {
+#endif
+		if (pid > 0) {
 			stglogit (func, "forking procqry, pid=%d\n", pid);
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 			if (afile || mfile)
