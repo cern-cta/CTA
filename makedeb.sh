@@ -1,4 +1,6 @@
-#!/bin/sh -vx
+#!/bin/sh
+
+# $Id: makedeb.sh,v 1.2 2005/01/20 10:50:36 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
