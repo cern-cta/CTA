@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testio.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/19 16:47:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: testio.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/28 08:38:38 $ $Author: sponcec3 $
  *
  * 
  *
@@ -41,8 +41,8 @@
 int main (int argc, char** argv) {
   // Prepare a request
   castor::rh::StageInRequest* fr = new castor::rh::StageInRequest();
-  fr->setDescription("This is a test FileRequest");
-  
+  fr->setHostName("Dummy hostName");
+
   castor::rh::Client *cl = new castor::rh::Client();
   cl->setIpAddress(0606);
   cl->setPort(0707);

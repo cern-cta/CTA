@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testdbC.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/17 14:48:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: testdbC.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/28 08:38:38 $ $Author: sponcec3 $
  *
  * 
  *
@@ -62,7 +62,7 @@ int main (int argc, char** argv) {
   frfr = Crh_StageInRequest_getFileRequest(fr);
   frr  = Crh_FileRequest_getRequest(frfr);
   frio = Crh_Request_getIObject(frr);
-  Crh_FileRequest_setDescription(frfr, "This is a test FileRequest");
+  Crh_Request_setHostName(frr, "Dummy hostName");
     
   Crh_Client_create(&cl);
   clic = Crh_Client_getIClient(cl);
