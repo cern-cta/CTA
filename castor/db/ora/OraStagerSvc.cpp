@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2004/10/28 10:11:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2004/10/28 16:48:55 $ $Author: sponcec3 $
  *
  *
  *
@@ -726,7 +726,8 @@ bool castor::db::ora::OraStagerSvc::isSubRequestToSchedule
 castor::stager::DiskCopy*
 castor::db::ora::OraStagerSvc::scheduleSubRequest
 (castor::stager::SubRequest* subreq,
- castor::stager::FileSystem* fileSystem)
+ castor::stager::FileSystem* fileSystem,
+ std::list<castor::stager::DiskCopyForRecall*>& sources)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -739,6 +740,8 @@ castor::db::ora::OraStagerSvc::scheduleSubRequest
         (4, oracle::occi::OCCISTRING, 255);
       m_scheduleSubRequestStatement->registerOutParam
         (5, oracle::occi::OCCIINT);
+      m_scheduleSubRequestStatement->registerOutParam
+        (6, oracle::occi::OCCICURSOR);
     }
     // execute the statement and see whether we found something
     m_scheduleSubRequestStatement->setDouble(1, subreq->id());
@@ -759,6 +762,19 @@ castor::db::ora::OraStagerSvc::scheduleSubRequest
     result->setStatus
       ((enum castor::stager::DiskCopyStatusCodes)
        m_scheduleSubRequestStatement->getInt(5));
+    oracle::occi::ResultSet *rs =
+      m_scheduleSubRequestStatement->getCursor(6);
+    oracle::occi::ResultSet::Status status = rs->status(); 
+    status = rs->next();
+    while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      castor::stager::DiskCopyForRecall* item =
+        new castor::stager::DiskCopyForRecall();
+      item->setId((u_signed64) rs->getDouble(1));
+      item->setPath(rs->getString(2));
+      item->setStatus((castor::stager::DiskCopyStatusCodes)rs->getInt(3));
+      sources.push_back(item);
+      status = rs->next();
+    }
     // return
     return result;
   } catch (oracle::occi::SQLException e) {

@@ -20,6 +20,15 @@ DROP TABLE RH_REQUESTSSTATUS;
 CREATE TABLE RH_REQUESTSSTATUS (id INTEGER PRIMARY KEY, status CHAR(8), creation DATE, lastChange DATE);
 CREATE INDEX I_RH_REQUESTSSTATUS_FULL on RH_REQUESTSSTATUS (id, status);
 
+/* PL/SQL procedure for id retrieval */
+CREATE OR REPLACE PROCEDURE getId(nb IN INTEGER, id OUT INTEGER) AS
+BEGIN
+ UPDATE rh_indices
+  SET value = value + nb
+  WHERE name='next_id'
+  RETURNING value INTO id;
+END;
+
 /* PL/SQL procedure for getting the next request to handle */
 CREATE OR REPLACE PROCEDURE getNRStatement(reqid OUT INTEGER) AS
 BEGIN

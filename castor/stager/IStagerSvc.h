@@ -282,40 +282,59 @@ int Cstager_IStagerSvc_isSubRequestToSchedule
  struct Cstager_SubRequest_t* subreq);
 
 /**
- * Schedules a SubRequest on a given FileSystem.
+ * Schedules a SubRequest on a given FileSystem and
+ * return the DiskCopy to use for data access.
  * Depending on the available DiskCopies for the file
- * the SubRequest deals with, decides what to do.
- * The different cases are :
+ * the SubRequest deals with, we have different cases :
  *  - no DiskCopy at all : a DiskCopy is created with
- * status DISKCOPY_WAITTAPERECALL.
+ * status DISKCOPY_WAITTAPERECALL. Null pointer is returned
  *  - one DiskCopy in DISKCOPY_WAITTAPERECALL status :
  * the SubRequest is linked to the one recalling and
- * put in SUBREQUEST_WAITSUBREQ status.
+ * put in SUBREQUEST_WAITSUBREQ status. Null pointer is
+ * returned.
  *  - no DiskCopy on the selected FileSystem but some
- * in status DISKCOPY_STAGOUT or DISKCOPY_STAGED on other
+ * in status DISKCOPY_STAGEOUT or DISKCOPY_STAGED on other
  * FileSystems : a new DiskCopy is created with status
- * DISKCOPY_WAITDISK2DISKCOPY.
+ * DISKCOPY_WAITDISK2DISKCOPY. It is returned and the
+ * sources parameter is filed with the DiskCopies found
+ * on the non selected FileSystems.
  *  - one DiskCopy on the selected FileSystem in
  * DISKCOPY_WAITDISKTODISKCOPY status : the SubRequest
- * has to wait until the end of the copy
+ * has to wait until the end of the copy.
+ * The DiskCopy found is returned, sources remains empty.
  *  - one DiskCopy on the selected FileSystem in
  * DISKCOPY_STAGOUT or DISKCOPY_STAGED status :
- * the SubRequest is ready
+ * the SubRequest is ready, the DiskCopy is returned and
+ * sources remains empty.
  * @param stgSvc the IStagerSvc used
  * @param subreq  the SubRequest to consider
  * @param fileSystem the selected FileSystem
- * @param diskCopy the diskCopy to work on. The DiskCopy and
- * SubRequest status gives the result of the decision
- * that was taken.
- * @return whether to schedule it. 1 for YES, 0 for NO,
- * -1 for an error. In the later case serrno is set to
- * the corresponding error code and a detailed error
- * message can be retrieved by calling Cstager_IStagerSvc_errorMsg
+ * @param sources this is a list of DiskCopies that
+ * can be used as source of a Disk to Disk copy. If
+ * this list is not empty, the Disk to Disk copy must
+ * be performed. If it is empty, the copy is performed
+ * by someone else and the caller should just wait
+ * for its end.
+ * @param sourcesNb the length of the sources list
+ * @param diskCopy The DiskCopy to use for the data access
+ * or a null pointer if the data access will have to wait
+ * and there is nothing more to be done. Even in case
+ * of a non null pointer, the data access will have to
+ * wait for a disk to disk copy if the returned DiskCopy
+ * is in DISKCOPY_WAITDISKTODISKCOPY status. This
+ * disk to disk copy is the responsability of the caller
+ * if sources is not empty.
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IStagerSvc_errorMsg
  */
 int Cstager_IStagerSvc_scheduleSubRequest
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_SubRequest_t* subreq,
  struct Cstager_FileSystem_t* fileSystem,
+ struct Cstager_DiskCopyForRecall_t*** sources,
+ unsigned int* sourcesNb,
  struct Cstager_DiskCopy_t** diskCopy);
 
 /**

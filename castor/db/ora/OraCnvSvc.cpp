@@ -64,7 +64,7 @@ const std::string castor::db::ora::OraCnvSvc::s_getTypeStatementString =
 
 /// SQL statement for id retrieval
 const std::string castor::db::ora::OraCnvSvc::s_getIdStatementString =
-  "BEGIN UPDATE rh_indices SET value = value + :1 WHERE name='next_id' RETURNING value INTO :result; END;";
+  "BEGIN getId(:1, :2); END;";
 
 /// SQL statement for selecting next request to be processed
 const std::string castor::db::ora::OraCnvSvc::s_getNRStatementString =
