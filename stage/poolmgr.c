@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.141 2001/06/21 11:32:51 jdurand Exp $
+ * $Id: poolmgr.c,v 1.142 2001/06/21 12:24:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.141 $ $Date: 2001/06/21 11:32:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.142 $ $Date: 2001/06/21 12:24:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1734,7 +1734,7 @@ int update_migpool(stcp,flag,immediate)
   int ngen = 0;
 
   if (((flag != 1) && (flag != -1)) || ((immediate != 0) && (immediate != 1) && (immediate != 2))) {
-    stglogit (func, STG105, func,  "flag should be 1 or -1, and immediate should be 1, 2 or 3");
+    stglogit (func, STG105, func,  "flag should be 1 or -1, and immediate should be 0, 1 or 2");
     serrno = EINVAL;
     rc = -1;
     goto update_migpool_return;
