@@ -386,6 +386,7 @@ void castor::db::ora::OraSubRequestCnv::fillObjDiskCopy(castor::stager::SubReque
   if (0 != obj->diskcopy() &&
       (0 == diskcopyId ||
        obj->diskcopy()->id() != diskcopyId)) {
+    obj->diskcopy()->removeSubRequests(obj);
     obj->setDiskcopy(0);
   }
   // Update object or create new one
@@ -397,6 +398,7 @@ void castor::db::ora::OraSubRequestCnv::fillObjDiskCopy(castor::stager::SubReque
     } else {
       cnvSvc()->updateObj(obj->diskcopy());
     }
+    obj->diskcopy()->addSubRequests(obj);
   }
 }
 

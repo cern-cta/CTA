@@ -31,7 +31,9 @@
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/stager/FileSystem.hpp"
+#include "castor/stager/SubRequest.hpp"
 #include "osdep.h"
+#include <vector>
 
 extern "C" {
 
@@ -134,6 +136,35 @@ extern "C" {
   int Cstager_DiskCopyForRecall_setDiskcopyId(castor::stager::DiskCopyForRecall* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setDiskcopyId(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_addSubRequests
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_addSubRequests(castor::stager::DiskCopyForRecall* instance, castor::stager::SubRequest* obj) {
+    instance->addSubRequests(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_removeSubRequests
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_removeSubRequests(castor::stager::DiskCopyForRecall* instance, castor::stager::SubRequest* obj) {
+    instance->removeSubRequests(obj);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskCopyForRecall_subRequests
+  //----------------------------------------------------------------------------
+  int Cstager_DiskCopyForRecall_subRequests(castor::stager::DiskCopyForRecall* instance, castor::stager::SubRequest*** var, int* len) {
+    std::vector<castor::stager::SubRequest*>& result = instance->subRequests();
+    *len = result.size();
+    *var = (castor::stager::SubRequest**) malloc((*len) * sizeof(castor::stager::SubRequest*));
+    for (int i = 0; i < *len; i++) {
+      (*var)[i] = result[i];
+    }
     return 0;
   }
 

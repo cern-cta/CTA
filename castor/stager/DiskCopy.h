@@ -34,6 +34,7 @@ struct C_IObject_t;
 struct Cstager_CastorFile_t;
 struct Cstager_DiskCopy_t;
 struct Cstager_FileSystem_t;
+struct Cstager_SubRequest_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -122,6 +123,21 @@ int Cstager_DiskCopy_diskcopyId(struct Cstager_DiskCopy_t* instance, const char*
  * The Cuuid identifying the DiskCopy, stored as a human readable string
  */
 int Cstager_DiskCopy_setDiskcopyId(struct Cstager_DiskCopy_t* instance, const char* new_var);
+
+/**
+ * Add a struct Cstager_SubRequest_t* object to the subRequests list
+ */
+int Cstager_DiskCopy_addSubRequests(struct Cstager_DiskCopy_t* instance, struct Cstager_SubRequest_t* obj);
+
+/**
+ * Remove a struct Cstager_SubRequest_t* object from subRequests
+ */
+int Cstager_DiskCopy_removeSubRequests(struct Cstager_DiskCopy_t* instance, struct Cstager_SubRequest_t* obj);
+
+/**
+ * Get the list of struct Cstager_SubRequest_t* objects held by subRequests
+ */
+int Cstager_DiskCopy_subRequests(struct Cstager_DiskCopy_t* instance, struct Cstager_SubRequest_t*** var, int* len);
 
 /**
  * Get the value of fileSystem

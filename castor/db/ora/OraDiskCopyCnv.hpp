@@ -169,6 +169,14 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type SubRequest refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepSubRequest(castor::stager::DiskCopy* obj)
+          throw (castor::exception::Exception, oracle::occi::SQLException);
+
+        /**
          * Fill the database with objects of type FileSystem refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -193,6 +201,14 @@ namespace castor {
         virtual void fillObj(castor::IAddress* address,
                              castor::IObject* object,
                              unsigned int type)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type SubRequest refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjSubRequest(castor::stager::DiskCopy* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -248,6 +264,24 @@ namespace castor {
 
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
+
+        /// SQL select statement for member subRequests
+        static const std::string s_selectSubRequestStatementString;
+
+        /// SQL select statement object for member subRequests
+        oracle::occi::Statement *m_selectSubRequestStatement;
+
+        /// SQL delete statement for member subRequests
+        static const std::string s_deleteSubRequestStatementString;
+
+        /// SQL delete statement object for member subRequests
+        oracle::occi::Statement *m_deleteSubRequestStatement;
+
+        /// SQL remote update statement for member subRequests
+        static const std::string s_remoteUpdateSubRequestStatementString;
+
+        /// SQL remote update statement object for member subRequests
+        oracle::occi::Statement *m_remoteUpdateSubRequestStatement;
 
         /// SQL checkExist statement for member fileSystem
         static const std::string s_checkFileSystemExistStatementString;

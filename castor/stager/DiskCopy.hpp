@@ -33,6 +33,7 @@
 #include "osdep.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace castor {
 
@@ -42,6 +43,7 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
+    class SubRequest;
     class FileSystem;
     class CastorFile;
 
@@ -148,6 +150,35 @@ namespace castor {
       }
 
       /**
+       * Add a SubRequest* object to the m_subRequestsVector list
+       */
+      void addSubRequests(SubRequest* add_object) {
+        m_subRequestsVector.push_back(add_object);
+      }
+
+      /**
+       * Remove a SubRequest* object from m_subRequestsVector
+       */
+      void removeSubRequests(SubRequest* remove_object) {
+        for (unsigned int i = 0; i < m_subRequestsVector.size(); i++) {
+          SubRequest* item = m_subRequestsVector[i];
+          if (item == remove_object) {
+            std::vector<SubRequest*>::iterator it = m_subRequestsVector.begin() + i;
+            m_subRequestsVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of SubRequest* objects held by m_subRequestsVector
+       * @return list of SubRequest* objects held by m_subRequestsVector
+       */
+      std::vector<SubRequest*>& subRequests() {
+        return m_subRequestsVector;
+      }
+
+      /**
        * Get the value of m_fileSystem
        * @return the value of m_fileSystem
        */
@@ -207,6 +238,8 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
+
+      std::vector<SubRequest*> m_subRequestsVector;
 
       FileSystem* m_fileSystem;
 

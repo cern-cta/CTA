@@ -58,6 +58,9 @@ castor::stager::SubRequest::SubRequest() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::SubRequest::~SubRequest() throw() {
+  if (0 != m_diskcopy) {
+    m_diskcopy->removeSubRequests(this);
+  }
   if (0 != m_parent) {
     m_parent->removeChild(this);
   }

@@ -31,9 +31,11 @@
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/FileSystem.hpp"
+#include "castor/stager/SubRequest.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -51,6 +53,10 @@ castor::stager::DiskCopy::DiskCopy() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::DiskCopy::~DiskCopy() throw() {
+  for (unsigned int i = 0; i < m_subRequestsVector.size(); i++) {
+    m_subRequestsVector[i]->setDiskcopy(0);
+  }
+  m_subRequestsVector.clear();
   if (0 != m_fileSystem) {
     m_fileSystem->removeCopies(this);
   }
@@ -76,6 +82,17 @@ void castor::stager::DiskCopy::print(std::ostream& stream,
   stream << indent << "diskcopyId : " << m_diskcopyId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  {
+    stream << indent << "SubRequests : " << std::endl;
+    int i;
+    std::vector<SubRequest*>::const_iterator it;
+    for (it = m_subRequestsVector.begin(), i = 0;
+         it != m_subRequestsVector.end();
+         it++, i++) {
+      stream << indent << "  " << i << " :" << std::endl;
+      (*it)->print(stream, indent + "    ", alreadyPrinted);
+    }
+  }
   stream << indent << "FileSystem : " << std::endl;
   if (0 != m_fileSystem) {
     m_fileSystem->print(stream, indent + "  ", alreadyPrinted);
