@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: expert.h,v $ $Revision: 1.1 $ $Date: 2004/06/30 16:09:56 $ CERN IT-ADC Vitaly Motyakov
+ * @(#)$RCSfile: expert.h,v $ $Revision: 1.2 $ $Date: 2004/07/01 14:47:43 $ CERN IT-ADC Vitaly Motyakov
  */
 
 #ifndef _EXPERT_H
@@ -29,12 +29,6 @@ struct exp_api_thread_info
 
 #define EXP_ST_ACCEPTED 1
 #define EXP_ST_ERROR    2
-
-#define SEEXPILLREQ 1
-#define SEEXPERRCONF 2
-#define SEEXPCDWDIR 3
-#define SEEXPEXECV  4
-
 
 #define EXP_MAGIC	0x68777001
 #define EXP_LISTTIMEOUT 300	/* timeout while waiting for the next request */
