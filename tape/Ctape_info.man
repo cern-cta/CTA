@@ -1,8 +1,8 @@
-.\" $Id: Ctape_info.man,v 1.2 1999/09/02 14:49:01 baud Exp $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Ctape_info.man,v $ $Revision: 1.3 $ $Date: 1999/09/10 15:17:53 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_INFO l "$Date: 1999/09/02 14:49:01 $"
+.TH CTAPE_INFO l "$Date: 1999/09/10 15:17:53 $"
 .SH NAME
 Ctape_info \- get tape file information from header labels and mount requests;
 get also information about the tape drive used.
