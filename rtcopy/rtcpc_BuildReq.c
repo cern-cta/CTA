@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.30 $ $Date: 2000/08/01 13:02:14 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.31 $ $Date: 2000/08/03 11:10:45 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -45,6 +45,7 @@ static int rtcpc_F_opt(int , const char *, tape_list_t **);
 static int rtcpc_g_opt(int , const char *, tape_list_t **);
 static int rtcpc_G_opt(int , const char *, tape_list_t **);
 static int rtcpc_i_opt(int , const char *, tape_list_t **);
+static int rtcpc_I_opt(int , const char *, tape_list_t **);
 static int rtcpc_l_opt(int , const char *, tape_list_t **);
 static int rtcpc_L_opt(int , const char *, tape_list_t **);
 static int rtcpc_n_opt(int , const char *, tape_list_t **);
@@ -88,6 +89,7 @@ int rtcpc_BuildReq(tape_list_t **tape, int argc, char *argv[]) {
     BIND_OPT('g',g,g:);
     BIND_OPT('G',G,G);
     BIND_OPT('i',i,i:);
+    BIND_OPT('I',I,I);
     BIND_OPT('l',l,l:);
     BIND_OPT('L',L,L:);
     BIND_OPT('n',n,n);
@@ -234,6 +236,7 @@ static int newFileList(tape_list_t **tape, file_list_t **newfile,
      */
     CLIST_INSERT((*tape)->file,fl);
 
+    fl->tape = *tape;
     if ( newfile != NULL ) *newfile = fl;
     return(0);
 }
@@ -851,6 +854,27 @@ static int rtcpc_i_opt(int mode,
     return(rc);
 }
 
+/*
+ * Support for tpread -I ... to provide device queue information only.
+ */
+static int rtcpc_I_opt(int mode, 
+                       const char *value,
+                       tape_list_t **tape) {
+    int rc;
+
+    if ( *tape == NULL ) {
+        rc = newTapeList(tape,NULL,mode);
+        if ( rc == -1 ) return(-1);
+    }
+
+    /*
+     * We distinguish info. requests from normal read/write requests
+     * by setting the tape mode to RTCP_INFO_REQ;
+     */
+    (*tape)->tapereq.mode = RTCP_INFO_REQ;
+
+    return(0);
+}
 
 static int rtcpc_l_opt(int mode, 
                      const char *value, 
