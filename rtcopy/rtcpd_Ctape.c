@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.25 $ $Date: 2000/03/28 10:31:37 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.26 $ $Date: 2000/03/31 16:11:24 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -455,14 +455,14 @@ int rtcpd_Position(tape_list_t *tape,
      */
     strcpy(tape_path,filereq->tape_path);
     while (do_retry) {
-        rtcp_log(LOG_DEBUG,"rtcpd_Position() Ctape_position(%s,0x%x,%d,%d,%u,%d,%d,0x%x,%s,%s,%d,%d,%d,0x%x)\n",filereq->tape_path,filereq->position_method,filereq->tape_fseq,file->tape_fsec,filereq->blockid,tapereq->start_file,tapereq->end_file,filereq->check_fid,filereq->fid,filereq->recfm,filereq->blocksize,filereq->recordlength,filereq->retention,flags);
+        rtcp_log(LOG_DEBUG,"rtcpd_Position() Ctape_position(%s,0x%x,%d,%d,0x%x,%d,%d,0x%x,%s,%s,%d,%d,%d,0x%x)\n",filereq->tape_path,filereq->position_method,filereq->tape_fseq,file->tape_fsec,*filereq->blockid,tapereq->start_file,tapereq->end_file,filereq->check_fid,filereq->fid,filereq->recfm,filereq->blocksize,filereq->recordlength,filereq->retention,flags);
         serrno = errno = 0;
         rtcpd_ResetCtapeError();
         rc = Ctape_position(filereq->tape_path,
                             filereq->position_method,
                             filereq->tape_fseq,
                             file->tape_fsec,
-                            (unsigned int)filereq->blockid,
+                            filereq->blockid,
                             tapereq->start_file,
                             tapereq->end_file,
                             filereq->check_fid,
@@ -641,7 +641,7 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
     rtcpd_ResetCtapeError();
     rc = Ctape_info( filereq->tape_path,
                     &filereq->blocksize,
-                    (unsigned int *)&filereq->blockid,
+                     filereq->blockid,
                      tapereq->density,
                      tapereq->devtype,
                      unit,
