@@ -1,12 +1,12 @@
 
 /*
- * Copyright (C) 2000 by CERN/IT/PDP/DM
+ * Copyright (C) 2000-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cgrp.c,v $ $Revision: 1.1 $ $Date: 2000/10/27 13:56:24 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cgrp.c,v $ $Revision: 1.2 $ $Date: 2002/12/11 08:29:30 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /*
@@ -34,7 +34,7 @@ CONST char *name;
     return(getgrnam((char *) name));
 #elif defined(linux) || (defined(__osf__) && defined(__alpha)) || \
       (defined(SOLARIS) && defined(_POSIX_PTHREAD_SEMANTICS)) || \
-      defined(AIX42) || defined(IRIX6)
+      defined(AIX42) || defined(IRIX6) || defined(HPUX11)
     /*
      * The final POSIX.1c standard: the return value is int and
      * buffer pointer is returned as last argument
