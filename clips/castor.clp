@@ -4,7 +4,7 @@
 ;
 ; PROPOSAL FOR 64BITS QUANTITIES: Use the u64subr.h syntax, e.g. with a unit
 ;
-; $Id: castor.clp,v 1.1 2005/01/07 10:11:30 jdurand Exp $
+; $Id: castor.clp,v 1.2 2005/01/12 15:01:01 jdurand Exp $
 ; (c) CASTOR CERN/IT/ADC/CA 2004 - Jean-Damien.Durand@cern.ch
 ;
 ; ====================
@@ -44,8 +44,8 @@
 	?*memImportance* = 1.           ; How mem counts into a diskserver weight
 	?*swapImportance* = 1.          ; How swap counts into a diskserver weight
 	?*procImportance* = 1.          ; How proc counts into a diskserver weight
-	?*loadImportance* = 1.          ; How load counts into a diskserver weight
-	?*ioImportance* = 1.            ; How i/o counts into a diskserver weight
+	?*loadImportance* = 3.          ; How load counts into a diskserver weight
+	?*ioImportance* = 2.            ; How i/o counts into a diskserver weight
 	?*filesystemReadImportance* = 1.; How readRate counts into a filesystem weight
 	?*filesystemWriteImportance* = 1.; How writeRate counts into a filesystem weight
 	?*readImportance* = 1.          ; How a read stream counts into a diskserver weight
