@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.43 2002/01/18 11:17:19 jdurand Exp $
+ * $Id: procclr.c,v 1.44 2002/01/20 12:03:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.43 $ $Date: 2002/01/18 11:17:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.44 $ $Date: 2002/01/20 12:03:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -89,6 +89,7 @@ static int nbtpf = 0;
 #ifdef STAGER_SIDE_SERVER_SUPPORT
 static int side_flag = 0;
 #endif
+static int reqid_flag = 0;
 
 void procclrreq(req_type, magic, req_data, clienthost)
 		 int req_type;
@@ -135,6 +136,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 	char trailing;
 	fseq_elem *fseq_list = NULL;
 	int inbtpf;
+	int this_reqid = 0;
 #ifdef STAGER_SIDE_SERVER_SUPPORT
 	int side = 0; /* The default */
 	int have_parsed_side = 0;
@@ -156,6 +158,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 		{"file_sequence",      REQUIRED_ARGUMENT,  NULL,      'q'},
 		{"file_range",         REQUIRED_ARGUMENT,  NULL,      'Q'},
 		{"r",                  REQUIRED_ARGUMENT,  NULL,      'r'},
+		{"reqid",              REQUIRED_ARGUMENT, &reqid_flag,  1},
 #ifdef STAGER_SIDE_SERVER_SUPPORT
 		{"side",               REQUIRED_ARGUMENT, &side_flag,   1},
 #endif
@@ -163,6 +166,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 		{NULL,                 0,                  NULL,        0}
 	};
 
+	reqid_flag = 0;
 #ifdef STAGER_SIDE_SERVER_SUPPORT
 	side_flag = 0;
 #endif
@@ -248,6 +252,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 					logit[BUFSIZ] = '\0';
 					stglogit("stage_clr","stcp[1/1] : %s\n",logit);
 	 			}
+				this_reqid = stcp_input.reqid;
 			}
 			/* We set the flags */
 			switch (t_or_d) {
@@ -299,6 +304,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 				goto reply;
 			}
 			stglogit(func,"stpp[1/1] : %s\n",stpp_input.upath);
+			this_reqid = stpp_input.reqid;
 			/* We set the flags */
 			if ((flags & STAGE_LINKNAME) == STAGE_LINKNAME) linkname = stpp_input.upath;
 			if ((flags & STAGE_PATHNAME) == STAGE_PATHNAME) path = stpp_input.upath;
@@ -421,6 +427,13 @@ void procclrreq(req_type, magic, req_data, clienthost)
 					have_parsed_side = 1;
 				}
 #endif
+				if ((reqid_flag != 0) && (! this_reqid)) {  /* Not yet done */
+					stage_strtoi(&this_reqid, Coptarg, &dp, 10);
+					if ((*dp != '\0') || (this_reqid < 0)) {
+						sendrep (rpfd, MSG_ERR, STG06, "--reqid");
+						errflg++;
+					}
+				}
 				break;
 			}
 		}
@@ -445,6 +458,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 	if (linkname) {
 		for (stpp = stps; stpp < stpe; stpp++) {
 			if (stpp->reqid == 0) break;
+			if (this_reqid && (stpp->reqid != this_reqid)) continue;
 			if (strcmp (linkname, stpp->upath) == 0) {
 				found = 1;
 				break;
@@ -461,6 +475,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 	} else if (path) {
 		for (stpp = stps; stpp < stpe; stpp++) {
 			if (stpp->reqid == 0) break;
+			if (this_reqid && (stpp->reqid != this_reqid)) continue;
 			if (strcmp (path, stpp->upath) == 0) {
 				found = 1;
 				break;
@@ -487,6 +502,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 		} else {
 			for (stcp = stcs; stcp < stce; stcp++) {
 				if (stcp->reqid == 0) break;
+				if (this_reqid && (stcp->reqid != this_reqid)) continue;
 				if (strcmp (path, stcp->ipath) == 0) {
 					found = 1;
 					if (cflag && stcp->poolname[0] &&
@@ -515,6 +531,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 	} else {
 		for (stcp = stcs; stcp < stce; stcp++) {
 			if (stcp->reqid == 0) break;
+			if (this_reqid && (stcp->reqid != this_reqid)) continue;
 			if (poolflag < 0) {	/* -p NOPOOL */
 				if (stcp->poolname[0]) continue;
 			} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;

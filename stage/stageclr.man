@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.9 $ $Date: 2001/09/26 09:13:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.10 $ $Date: 2002/01/20 12:03:41 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECLR l "$Date: 2001/09/26 09:13:54 $"
+.TH STAGECLR l "$Date: 2002/01/20 12:03:41 $"
 .SH NAME
 stageclr \- remove staged files
 .SH SYNOPSIS
@@ -22,9 +22,13 @@ stageclr \- remove staged files
 ] [
 .BI -q " file_sequence_number"
 ] [
+.BI --reqid " reqid"
+] [
 .BI -Q " file_sequence_range"
 ]
 .BI -V " visual_identifier(s)"
+] [
+.BI --side " sidenumber"
 .br
 .B stageclr
 [
@@ -39,6 +43,9 @@ stageclr \- remove staged files
 .BI -p " pool"
 ]
 .BI -I " external_filename"
+] [
+.BI --reqid " reqid"
+]
 .br
 .B stageclr
 [
@@ -53,6 +60,8 @@ stageclr \- remove staged files
 .BI -p " pool"
 ] [
 .BI -remove_from_hsm
+] [
+.BI --reqid " reqid"
 ]
 .BI -M " hsmfile"
 .br
@@ -67,6 +76,9 @@ stageclr \- remove staged files
 .BI -m " minfree"
 ]
 .BI -P " pathname"
+] [
+.BI --reqid " reqid"
+]
 .br
 .B stageclr
 [
@@ -79,6 +91,9 @@ stageclr \- remove staged files
 .BI -m " minfree"
 ]
 .BI -i
+] [
+.BI --reqid " reqid"
+]
 .br
 .B stageclr
 [
@@ -87,6 +102,9 @@ stageclr \- remove staged files
 .BI -F
 ]
 .BI -L " link_name"
+] [
+.BI --reqid " reqid"
+]
 .SH DESCRIPTION
 .B stageclr
 removes staged files from disk if the requestor is in the same group as the
@@ -168,9 +186,17 @@ It is exclusive with \-q option.
 .BI \-remove_from_hsm
 to remove the file from the Hierarchical Storage Management System as well.
 .TP
+.BI \--reqid " reqid"
+to remove only entry that has this explicit request ID.
+.TP
 .BI \-V " vid(s)"
 restricts the search to files corresponding to given vids.
 Multiple vids will be separated by colons.
+.TP
+.B \--side "sidenumber"
+Tells which side of the device you refer to (applies to multi-side medias files yet in the disk pool, like DVD). Only when used with
+.B \-V
+option.
 .SH RETURN CODES
 \
 .br

@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.25 2002/01/15 08:35:41 jdurand Exp $
+ * $Id: stageclr.c,v 1.26 2002/01/20 12:03:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.25 $ $Date: 2002/01/15 08:35:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.26 $ $Date: 2002/01/20 12:03:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -40,6 +40,7 @@ extern	char	*getconfent();
 void cleanup _PROTO((int));
 void usage _PROTO((char *));
 
+int reqid_flag = 0;
 #ifdef STAGER_SIDE_CLIENT_SUPPORT
 int side_flag = 0;
 #endif
@@ -99,6 +100,7 @@ int main(argc, argv)
 		{"file_sequence",      REQUIRED_ARGUMENT,  NULL,      'q'},
 		{"file_range",         REQUIRED_ARGUMENT,  NULL,      'Q'},
 		{"r",                  REQUIRED_ARGUMENT,  NULL,      'r'},
+		{"reqid",              REQUIRED_ARGUMENT, &reqid_flag,  1},
 #ifdef STAGER_SIDE_CLIENT_SUPPORT
 		{"side",               REQUIRED_ARGUMENT, &side_flag,   1},
 #endif
@@ -246,7 +248,7 @@ int main(argc, argv)
 		fprintf (stderr, STG16);
 		errflg++;
 	}
-	if (numvid == 0 && Iflag == 0 && iflag == 0 && Lflag == 0 && Pflag == 0 && Mflag == 0) {
+	if (numvid == 0 && Iflag == 0 && iflag == 0 && Lflag == 0 && Pflag == 0 && Mflag == 0 && reqid_flag == 0) {
 		fprintf (stderr, STG46);
 		errflg++;
 	}
@@ -396,12 +398,12 @@ void usage(cmd)
 					 "[-c] [-h stage_host] [-F] [-G] [-I external_filename] [-i] [-L link]\n",
 					 "[-l label_type] [-M hsmfile] [-m minfree] [-P path] [-p pool]\n",
 					 "[-q file_sequence_number] [-Q file_sequence_range]\n",
-					 "[-remove_from_hsm] [-V visual_identifier(s)] [--side sidenumber]\n");
+					 "[-remove_from_hsm] [--reqid reqid] [-V visual_identifier(s)] [--side sidenumber]\n");
 #else
 	fprintf (stderr, "%s%s%s%s",
 					 "[-c] [-h stage_host] [-F] [-G] [-I external_filename] [-i] [-L link]\n",
 					 "[-l label_type] [-M hsmfile] [-m minfree] [-P path] [-p pool]\n",
 					 "[-q file_sequence_number] [-Q file_sequence_range]\n",
-					 "[-remove_from_hsm] [-V visual_identifier(s)]\n");
+					 "[-remove_from_hsm] [--reqid reqid] [-V visual_identifier(s)]\n");
 #endif
 }
