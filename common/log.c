@@ -1,5 +1,5 @@
 /*
- * $Id: log.c,v 1.7 2000/03/14 09:48:41 jdurand Exp $
+ * $Id: log.c,v 1.8 2000/03/14 14:32:18 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.7 $ $Date: 2000/03/14 09:48:41 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.8 $ $Date: 2000/03/14 14:32:18 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* log.c        - generalized logging routines                          */
