@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.184 2002/04/09 07:36:47 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.185 2002/04/11 10:41:44 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.184 $ $Date: 2002/04/09 07:36:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.185 $ $Date: 2002/04/11 10:41:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -240,11 +240,11 @@ extern void checkfile2mig _PROTO(());
 extern int updpoolconf _PROTO((char *, char *, char *));
 extern void procioreq _PROTO((int, int, char *, char *));
 extern void procpingreq _PROTO((int, int, char *, char *));
-extern void procputreq _PROTO((int, char *, char *));
+extern void procputreq _PROTO((int, int, char *, char *));
 extern void procqryreq _PROTO((int, int, char *, char *));
 extern void procclrreq _PROTO((int, int, char *, char *));
-extern void procallocreq _PROTO((char *, char *));
-extern void procgetreq _PROTO((char *, char *));
+extern void procallocreq _PROTO((int, int, char *, char *));
+extern void procgetreq _PROTO((int, int, char *, char *));
 extern void procfilchgreq _PROTO((int, int, char *, char *));
 extern int getpoolconf _PROTO((char *, char *, char *));
 extern int checkpoolcleaned _PROTO((char ***));
@@ -551,7 +551,7 @@ int main(argc,argv)
 
 	/* get pool configuration */
 
-	if ((c = getpoolconf (defpoolname, defpoolname_in, defpoolname_out))) exit (c);
+	if ((c = getpoolconf (defpoolname, defpoolname_in, defpoolname_out))) exit (CONFERR);
 
 #ifdef USECDB
 	/* Get stager/database login:password */
@@ -879,7 +879,7 @@ int main(argc,argv)
 			} else {
 				stglogit(func, "Working with %d free file descriptors (system max: %d)\n", (int) FREE_FD, (int) sysconf(_SC_OPEN_MAX));
 			}
-			sendrep (rpfd, STAGERC, STAGEINIT, c);
+			sendrep (rpfd, STAGERC, STAGEINIT, STGMAGIC, c);
 			force_init = migr_init = 0;
 			initreq_reqid = 0;
 		}
@@ -965,7 +965,7 @@ int main(argc,argv)
 						req_type == STAGE_IN  || req_type == STAGE_OUT || req_type == STAGE_ALLOC ||
 						req_type == STAGE_WRT || req_type == STAGE_PUT) {
 						if ((initreq_reqid != 0) || (shutdownreq_reqid != 0) || (stat (NOMORESTAGE, &st) == 0)) {
-							sendrep (rpfd, STAGERC, req_type, SHIFT_ESTNACT);
+							sendrep (rpfd, STAGERC, req_type, magic, SHIFT_ESTNACT);
 							goto endreq;
 						}
 					}
@@ -1004,7 +1004,7 @@ int main(argc,argv)
 						/* We count on the client retry some time later saying him we are not */
 						/* available for the moment - with ESTNACT */
 						sendrep (rpfd, MSG_ERR, STG160, sysconf(_SC_OPEN_MAX));
-						sendrep (rpfd, STAGERC, req_type, SHIFT_ESTNACT);
+						sendrep (rpfd, STAGERC, req_type, magic, SHIFT_ESTNACT);
 						goto endreq;
 					}
 					switch (req_type) {
@@ -1019,7 +1019,7 @@ int main(argc,argv)
 						procioreq (req_type, magic, req_data, clienthost);
 						break;
 					case STAGEPUT:
-						procputreq (req_type, req_data, clienthost);
+						procputreq (req_type, magic, req_data, clienthost);
 						break;
 					case STAGE_QRY:
 					case STAGEQRY:
@@ -1045,10 +1045,10 @@ int main(argc,argv)
 						procinireq (req_type, (unsigned long) from.sin_addr.s_addr, req_data, clienthost);
 						break;
 					case STAGEALLOC:
-						procallocreq (req_data, clienthost);
+						procallocreq (req_type, magic, req_data, clienthost);
 						break;
 					case STAGEGET:
-						procgetreq (req_data, clienthost);
+						procgetreq (req_type, magic, req_data, clienthost);
 						break;
 					case STAGE_FILCHG:
 					case STAGEFILCHG:
@@ -1059,7 +1059,7 @@ int main(argc,argv)
 						break;
 					default:
 						sendrep (rpfd, MSG_ERR, STG03, req_type);
-						sendrep (rpfd, STAGERC, req_type, USERR);
+						sendrep (rpfd, STAGERC, req_type, magic, EINVAL);
 					}
 				} else {
 					close (rqfd);
@@ -1121,7 +1121,7 @@ void prockilreq(req_type, req_data, clienthost)
 					stglogit (func, "killing process %d\n", wqp->ovl_pid);
 					kill (wqp->ovl_pid, SIGINT);
 				}
-				wqp->status = REQKILD;
+				wqp->status = ESTKILLED;
 				break;
 			} else {
 				wqp = wqp->next;
@@ -1156,9 +1156,9 @@ void prockilreq(req_type, req_data, clienthost)
 					stglogit (func, "killing process %d\n", wqp->ovl_pid);
 					kill (wqp->ovl_pid, SIGINT);
 				}
-				wqp->status = REQKILD;
+				wqp->status = ESTKILLED;
 				/* This will close cleanly the connection from the API */
-				sendrep (wqp->rpfd, STAGERC, 0, ESTKILLED);
+				sendrep (wqp->rpfd, STAGERC, 0, wqp->magic, ESTKILLED);
 				wqp->rpfd = -1;
 				break;
 			} else {
@@ -1208,15 +1208,15 @@ void procinireq(req_type, ipaddr, req_data, clienthost)
 	if (initreq_reqid != 0) {
 		free (argv);
 		sendrep (rpfd, MSG_ERR, STG39);
-		sendrep (rpfd, STAGERC, STAGEINIT, USERR);
+		sendrep (rpfd, STAGERC, STAGEINIT, STGMAGIC, EINVAL);
 		return;
 	}
 	/* Do some check */
 	/* - is it coming for a root account ? */
 	if (! ISGIDROOT(gid)) {
 		free (argv);
-		sendrep (rpfd, MSG_ERR, STG02, "", "stageinit", strerror(EPERM));
-		sendrep (rpfd, STAGERC, STAGEINIT, USERR);
+		sendrep (rpfd, MSG_ERR, STG02, "", "stageinit", strerror(EACCES));
+		sendrep (rpfd, STAGERC, STAGEINIT, STGMAGIC, EINVAL);
 		return;
 	}
 	/* - Do we want to force it to come from local host ? */
@@ -1232,8 +1232,8 @@ void procinireq(req_type, ipaddr, req_data, clienthost)
 
 					free (argv);
 					stglogit (func, "[STAGEINIT_FROM_LOCALHOST] Requestor's %s IP address (%d.%d.%d.%d) != Localhost's %s IP address (%d.%d.%d.%d)\n", clienthost, s_client[0] & 0xFF, s_client[1] & 0xFF, s_client[2] & 0xFF, s_client[3] & 0xFF, localhost, s_local[0] & 0xFF, s_local[1] & 0xFF, s_local[2] & 0xFF, s_local[3] & 0xFF);
-					sendrep (rpfd, MSG_ERR, STG02, clienthost, "stageinit", strerror(EPERM));
-					sendrep (rpfd, STAGERC, STAGEINIT, USERR);
+					sendrep (rpfd, MSG_ERR, STG02, clienthost, "stageinit", strerror(EACCES));
+					sendrep (rpfd, STAGERC, STAGEINIT, STGMAGIC, EINVAL);
 					return;
 				}
 			}
@@ -1264,7 +1264,7 @@ void procinireq(req_type, ipaddr, req_data, clienthost)
 		initreq_rpfd = rpfd;
 	} else {
 		sendrep (rpfd, MSG_ERR, "usage: stageinit [-F] [-h stage_host] [-X]\n");
-		sendrep (rpfd, STAGERC, req_type, USERR);
+		sendrep (rpfd, STAGERC, req_type, STGMAGIC, EINVAL);
     }
 	free (argv);
 }
@@ -1294,7 +1294,7 @@ void procshutdownreq(req_data, clienthost)
 	if (shutdownreq_reqid != 0) {
 		free (argv);
 		sendrep (rpfd, MSG_ERR, STG58);
-		sendrep (rpfd, STAGERC, STAGESHUTDOWN, USERR);
+		sendrep (rpfd, STAGERC, STAGESHUTDOWN, STGMAGIC, EINVAL);
 		return;
 	}
 
@@ -1324,7 +1324,7 @@ void procshutdownreq(req_data, clienthost)
 	if (errflg != 0) {
 		free (argv);
 		sendrep (rpfd, MSG_ERR, STG33, "stageshutdown", "invalid option(s)");
-		sendrep (rpfd, STAGERC, STAGESHUTDOWN, USERR);
+		sendrep (rpfd, STAGERC, STAGESHUTDOWN, STGMAGIC, EINVAL);
 		return;
 	}
 
@@ -1612,7 +1612,7 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 			if (errno != ENOENT) sendrep (rpfd, MSG_ERR, STG33, "Cgetpwnam", strerror(errno));
 			sendrep (rpfd, MSG_ERR, STG11, pool_user);
 			stcp->ipath[0] = '\0';
-			return (SYERR);
+			return ((errno == ENOENT) ? SEUSERUNKN : SESYSERR);
 		}
 		*p_f = '\0';
 		c = create_dir (stcp->ipath, pw->pw_uid, stcp->gid, (mode_t) 0775);
@@ -1638,7 +1638,7 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_open",
 							 rfio_serror());
 			stcp->ipath[0] = '\0';
-			return (SYERR);
+			return (SESYSERR);
 		}
 
 		/* create group and user directories */
@@ -1654,7 +1654,7 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 			if (errno != ENOENT) sendrep (rpfd, MSG_ERR, STG33, "Cgetpwnam", strerror(errno));
 			sendrep (rpfd, MSG_ERR, STG11, pool_user);
 			stcp->ipath[0] = '\0';
-			return (SYERR);
+			return (SESYSERR);
 		}
 		*p_f = '\0';
 		c = create_dir (stcp->ipath, pw->pw_uid, stcp->gid, (mode_t) 0775);
@@ -1673,7 +1673,7 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 		if (fd < 0) {
 			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_open", rfio_serror());
 			stcp->ipath[0] = '\0';
-			return (SYERR);
+			return (SESYSERR);
 		}
 	}
 	PRE_RFIO;
@@ -1689,9 +1689,20 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 			stglogit (func, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
         }
 		stcp->ipath[0] = '\0';
-		return (SYERR);
+		return (SESYSERR);
 	}
 	return (0);
+}
+
+#define STG_LOG_OVL_STATUS(type,pid,status) { \
+	if (WIFEXITED(status)) { \
+		stglogit (func, "%s process %d exiting with status %d\n", type, pid, (status = WEXITSTATUS(status))); \
+	} else if (WIFSIGNALED(status)) { \
+		stglogit (func, "%s process %d exiting due to uncaught signal %d\n", type, pid, (status = WTERMSIG(status))); \
+	} else { \
+		stglogit (func, "%s process %d was stopped\n", pid); \
+        status = REQKILD; \
+	} \
 }
 
 void
@@ -1708,13 +1719,11 @@ checkovlstatus(pid, status)
 	/* was it a "cleaner" overlay ? */
 	if (iscleanovl (pid, status)) {
 		reqid = 0;
-		stglogit (func, "cleaner process %d exiting with status %x\n",
-							pid, status & 0xFFFF);
+		STG_LOG_OVL_STATUS("cleaner",pid,status);
 	/* was it a "migrator" overlay ? */
 	} else if (ismigovl (pid, status)) {
 		reqid = 0;
-		stglogit (func, "migration process %d exiting with status %x\n",
-							pid, status & 0xFFFF);
+		STG_LOG_OVL_STATUS("migration",pid,status);
 	} else {	/* it was a "stager" or a "stageqry" overlay */
 		found =  0;
 		wqp = waitqp;
@@ -1727,15 +1736,15 @@ checkovlstatus(pid, status)
 		}
 		if (! found) {		/* entry already discarded from waitq or stageqry */
 			reqid = 0;
-			stglogit (func, "process %d exiting with status %x\n",
-				pid, status & 0xFFFF);
+			STG_LOG_OVL_STATUS("forked",pid,status);
 		} else {
 			reqid = wqp->reqid;
-			stglogit (func, "stager process %d exiting with status %x\n",
-				pid, status & 0xFFFF);
+			STG_LOG_OVL_STATUS("stager",pid,status);
 			wqp->ovl_pid = 0;
-			if (wqp->status == 0)
-				if ((wqp->status = (status & 0xFF) ? SYERR : ((status >> 8) & 0xFF)) == ETHELDERR) wqp->status = ETHELD;
+			if (wqp->status == 0) {
+				/* Status was not yet set */
+				wqp->status = rc_shift2castor(STGMAGIC,status);
+			}
 			wqp->nretry++;
 		}
 	}
@@ -1822,7 +1831,7 @@ killallovl(sig)
 	kill(0,SIGINT);
 
 	/* We reply shutdown is ok */
-	sendrep (shutdownreq_rpfd, STAGERC, STAGESHUTDOWN, c);
+	sendrep (shutdownreq_rpfd, STAGERC, STAGESHUTDOWN, STGMAGIC, c);
 
 	/* Reset the permanent RFIO connections */
 	rfio_end();
@@ -1853,7 +1862,7 @@ void checkpoolstatus()
 				if ((shutdownreq_reqid != 0) && (wqp->status != STAGESHUTDOWN)) {
 					/* There is a coming shutdown */
 					sendrep (rpfd, MSG_ERR, STG162);
-					sendrep (rpfd, STAGERC, STAGESHUTDOWN, SHIFT_ESTNACT);
+					sendrep (rpfd, STAGERC, STAGESHUTDOWN, wqp->magic, SHIFT_ESTNACT);
 					wqp->status = STAGESHUTDOWN;
 					continue;
 				}
@@ -1962,7 +1971,7 @@ void checkwaitingspc()
 			/* There is a coming shutdown */
 			reqid = wqp->reqid;
 			sendrep (rpfd, MSG_ERR, STG162);
-			sendrep (wqp->rpfd, STAGERC, STAGESHUTDOWN, SHIFT_ESTNACT);
+			sendrep (wqp->rpfd, STAGERC, STAGESHUTDOWN, wqp->magic, SHIFT_ESTNACT);
 			wqp->status = STAGESHUTDOWN;
 			continue;
 		}
@@ -2360,7 +2369,7 @@ void checkwaitq()
 		if ((shutdownreq_reqid != 0) && (wqp->status != STAGESHUTDOWN)) {
 			/* There is a coming shutdown */
 			sendrep (rpfd, MSG_ERR, STG162);
-			sendrep (wqp->rpfd, STAGERC, STAGESHUTDOWN, SHIFT_ESTNACT);
+			sendrep (wqp->rpfd, STAGERC, STAGESHUTDOWN, wqp->magic, SHIFT_ESTNACT);
 			wqp->status = STAGESHUTDOWN;
 			wqp1 = wqp;
 			wqp = wqp->next;
@@ -2378,15 +2387,17 @@ void checkwaitq()
 								 reqid, wqp->req_type, wqp->nretry, wqp->status,
 								 NULL, "", (char) 0);
 #endif
-			sendrep (wqp->rpfd, STAGERC, wqp->req_type, wqp->status);
+			sendrep (wqp->rpfd, STAGERC, wqp->req_type, wqp->magic, wqp->status);
 			wqp1 = wqp;
 			wqp = wqp->next;
 			rmfromwq (wqp1);
 		} else if (wqp->nb_subreqs > wqp->nb_waiting_on_req &&
-							 ! wqp->ovl_pid &&
-							 ! *(wqp->waiting_pool) && wqp->status != ENOSPC &&
-							 wqp->status != USERR && wqp->status != CLEARED &&
-							 wqp->status != REQKILD && wqp->nretry < (wqp->noretry ? 0 : MAXRETRY)) {
+				   ! wqp->ovl_pid &&
+				   ! *(wqp->waiting_pool) && wqp->status != ENOSPC &&
+				   wqp->status != USERR   && wqp->status != EINVAL &&
+				   wqp->status != CLEARED && wqp->status != ESTCLEARED &&
+				   wqp->status != REQKILD && wqp->status != ESTKILLED &&
+				   wqp->nretry < (wqp->noretry ? 0 : MAXRETRY)) {
 			if (wqp->nretry)
 				sendrep (wqp->rpfd, MSG_ERR, STG43, wqp->nretry);
 			if (wqp->save_subreqid != NULL) {
@@ -2407,7 +2418,7 @@ void checkwaitq()
 				wqp->nretry++;
 				if (! (wqp->nretry < (wqp->noretry ? 0 : MAXRETRY))) {
 					/* Has reached the maximum number of retries : there is a system error in here... */
-					wqp->status = SYERR;
+					wqp->status = SESYSERR;
 				}
 			}
 			wqp = wqp->next;
@@ -2432,7 +2443,7 @@ void checkwaitq()
 					break;
 			}
 			sendrep (rpfd, MSG_OUT, "%s", stcp->ipath);
-			sendrep (rpfd, STAGERC, STAGEUPDC, wqp->status);
+			sendrep (rpfd, STAGERC, STAGEUPDC, wqp->magic, wqp->status);
 			wqp->status = 0;
 			wqp->clnreq_waitingreqid = 0;
 			wqp = wqp->next;
@@ -2443,9 +2454,9 @@ void checkwaitq()
 								 reqid, wqp->req_type, wqp->nretry, wqp->status,
 								 NULL, "", (char) 0);
 #endif
-			sendrep (wqp->rpfd, MSG_ERR, STG98, sstrerror(rc_shift2castor(wqp->status)));
+			sendrep (wqp->rpfd, MSG_ERR, STG98, sstrerror(wqp->status));
 			/* We close cleanly the connection */
-			sendrep (wqp->rpfd, STAGERC, (wqp->status == REQKILD) ? 0 : wqp->req_type, rc_shift2castor(wqp->status));
+			sendrep (wqp->rpfd, STAGERC, wqp->req_type, wqp->magic, wqp->status);
 
 			for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
 				for (stcp = stcs; stcp < stce; stcp++) {
@@ -2458,12 +2469,12 @@ void checkwaitq()
 						delreq (stcp,0);
 						continue;
 					}
-					if (delfile (stcp, 1, 0, 1, (wqp->status == REQKILD) ?
+					if (delfile (stcp, 1, 0, 1, ((wqp->status == REQKILD) || (wqp->status == ESTKILLED)) ?
 											 "req killed" : "failing req", wqp->req_uid, wqp->req_gid, 0, 0) < 0)
 						stglogit (func, STG02, stcp->ipath,
 											RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
 					check_waiting_on_req (wfp->subreqid,
-							(wqp->status == REQKILD) ? KILLED : STG_FAILED);
+							((wqp->status == REQKILD) || (wqp->status == ESTKILLED)) ? KILLED : STG_FAILED);
 					break;
 				case STAGEWRT:
 					if (stcp->t_or_d == 'h') {
@@ -2591,14 +2602,14 @@ int create_dir(dirname, uid, gid, mask)
 		} else {
 			sendrep (rpfd, MSG_ERR, STG02, dirname, "rfio_mkdir",
 							 rfio_serror());
-			return (SYERR);
+			return (SESYSERR);
 		}
 	}
 	PRE_RFIO;
 	if (rfio_chown (dirname, uid, gid) < 0) {
 		sendrep (rpfd, MSG_ERR, STG02, dirname, "rfio_chown",
 						 rfio_serror());
-		return (SYERR);
+		return (SESYSERR);
 	}
 	return (0);
 }
@@ -2744,8 +2755,8 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 									 reqid, 0, 0, 0, stcp, "", (char) 0);
 #endif
 				stglogit (func, STG95, stcp->ipath, by);
-			} else if (errno != ENOENT && rfio_errno != ENOENT) {
-				if (errno != EIO && rfio_errno != EIO)
+			} else if ((errno != ENOENT) && (rfio_errno != ENOENT)) {
+				if ((errno != EIO) && (rfio_errno != EIO))
 					return (-1);
 				else
 					stglogit (func, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath),
@@ -3020,20 +3031,24 @@ int fork_exec_stager(wqp)
 		break;
 	default:
 		sendrep (wqp->rpfd, MSG_ERR, "STG02 - Unknown request type '%c'\n", t_or_d);
-		return (SYERR);
+		return (SEINTERNAL);
 	}
 
 	if (pipe (pfd) < 0) {
 		sendrep (wqp->rpfd, MSG_ERR, STG02, "", "pipe", sys_errlist[errno]);
-		return (SYERR);
+		return (SESYSERR);
 	}
 
 #ifdef __INSURE__
 	if (tmpnam(tmpfile) == NULL) {
-		return (SYERR);
+		close (pfd[0]);
+		close (pfd[1]);
+		return (SESYSERR);
 	}
 	if ((f = fopen(tmpfile,"w+b")) == NULL) {
-		return (SYERR);
+		close (pfd[0]);
+		close (pfd[1]);
+		return (SESYSERR);
 	}
 	for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
 		if (wfp->waiting_on_req > 0) continue;
@@ -3073,7 +3088,7 @@ int fork_exec_stager(wqp)
 		close (pfd[0]);
 		close (pfd[1]);
 		wqp->ovl_pid = sav_ovl_pid;
-		return (SYERR);
+		return (SESYSERR);
 	} else if (pid == 0) {	/* we are in the child */
 		rfio_mstat_reset();  /* Reset permanent RFIO stat connections */
 		rfio_munlink_reset(); /* Reset permanent RFIO unlink connections */
@@ -3472,7 +3487,7 @@ int ask_stageout(req_type, upath, found_stcp)
 			(req_type == STAGEPUT &&
 			 stcp->status != STAGEOUT && stcp->status != (STAGEOUT|PUT_FAILED))) {
 		sendrep (rpfd, MSG_ERR, STG22);
-		return (USERR);
+		return (ENOENT);
 	}
 	*found_stcp = stcp;
 	return (0);
@@ -3524,7 +3539,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 			((req_type == STAGEPUT) &&
 			 (! ISSTAGEOUT(stcp)) && ((stcp->status & (STAGEOUT|PUT_FAILED)) != (STAGEOUT|PUT_FAILED)))) {
 		sendrep (rpfd, MSG_ERR, STG22);
-		return ((req_type > STAGE_00) ? EINVAL : USERR);
+		return (ENOENT);
 	}
 	if (ISSTAGEOUT(stcp) || ISSTAGEALLOC(stcp)) {
 		u_signed64 actual_size_block;
@@ -3573,7 +3588,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 						done_a_time = 1;
 						stcp->a_time = time(NULL);
 						if ((thisrc = update_migpool(&stcp,1,0)) != 0) {
-							return((req_type > STAGE_00) ? serrno : USERR);
+							return(serrno);
 						}
 					}
 				}
@@ -3635,7 +3650,7 @@ int upd_staged(upath)
 		} else {
 			sendrep (rpfd, MSG_ERR, "STG02 - %s : Request should be on a STAGED or CAN_BE_MIGR HSM file\n", stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile);
 		}
-		return (USERR);
+		return (ENOENT);
 	}
 	if ((stcp->status & (STAGEOUT|CAN_BE_MIGR)) == (STAGEOUT|CAN_BE_MIGR)) {
 		/* There are the migration counters to update */
@@ -3701,7 +3716,7 @@ void check_child_exit()
 	int status;
 
 	while ((pid = waitpid (-1, &status, WNOHANG)) > 0) {
-		checkovlstatus(pid,status & 0xFFFF);
+		checkovlstatus(pid,status);
 	}
 }
 #endif
