@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.18 2001/11/14 10:44:27 jdurand Exp $
+ * $Id: mstat.c,v 1.19 2001/11/30 09:58:16 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.18 $ $Date: 2001/11/14 10:44:27 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.19 $ $Date: 2001/11/30 09:58:16 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -176,6 +176,7 @@ int DLL_DECL rfio_smstat(s,filename,statbuf,reqst)
     uid = geteuid() ;
     gid = getegid () ;
     if ( uid != *old_uid ) {
+      TRACE(2,"rfio","rfio_stat: uid=%d != *old_uid=%d\n", (int) uid, (int) *old_uid);
 	  pw_tmp = Cgetpwuid(uid);
 	  if( pw_tmp  == NULL ) {
         TRACE(2, "rfio" ,"rfio_stat: Cgetpwuid(): ERROR occured (errno=%d)",errno);
@@ -202,6 +203,7 @@ int DLL_DECL rfio_smstat(s,filename,statbuf,reqst)
   marshall_LONG(p, len);
   p= buf + RQSTSIZE;
   if ( reqst == RQST_STAT_SEC || reqst == RQST_MSTAT_SEC ) {
+    TRACE(2,"rfio","rfio_stat: using (uid=%d,gid=%d)\n",(int) uid, (int) gid);
     marshall_WORD(p, uid);
     marshall_WORD(p, gid);
     marshall_STRING(p,pw->pw_name);
