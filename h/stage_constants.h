@@ -1,9 +1,24 @@
 /*
- * $Id: stage_constants.h,v 1.4 2001/03/28 14:00:25 jdurand Exp $
+ * $Id: stage_constants.h,v 1.5 2001/04/29 08:52:31 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
 #define __stage_constants_h
+
+#ifdef STAGE_NAME
+#undef STAGE_NAME
+#endif
+#define STAGE_NAME "stage"
+
+#ifdef STAGE_PROTO
+#undef STAGE_PROTO
+#endif
+#define STAGE_PROTO "tcp"
+
+#ifdef STAGE_PORT
+#undef STAGE_PORT
+#endif
+#define STAGE_PORT 5007
 
 #ifdef MAXPATH
 #undef MAXPATH
