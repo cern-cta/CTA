@@ -2,13 +2,6 @@
 /* and is inserted at the end of the generated code           */
 
 /* Indexes related to CastorFiles */
-DROP INDEX I_DiskCopy_Castorfile;
-DROP INDEX I_TapeCopy_Castorfile;
-DROP INDEX I_SubRequest_Castorfile;
-DROP INDEX I_FileSystem_DiskPool;
-DROP INDEX I_SubRequest_DiskCopy;
-DROP INDEX I_CastorFile_fileIdNsHost;
-DROP INDEX I_DiskServer_name;
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
 CREATE UNIQUE INDEX I_CastorFile_fileIdNsHost on CastorFile (fileId, nsHost);
 CREATE INDEX I_DiskCopy_Castorfile on DiskCopy (castorFile);
@@ -86,7 +79,7 @@ UPDATE FileSystem SET weight = weight - fsDeviation WHERE id = fileSystemId;
 END;
 
 /* PL/SQL method implementing fileRecalled */
-CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER
+CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER,
                                          uuid IN VARCHAR) AS
  SubRequestId NUMBER;
  dci NUMBER;
@@ -137,7 +130,7 @@ BEGIN
   NULL;
 END;
 CREATE OR REPLACE PACKAGE castor AS
-  TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR(2048), status NUMBER);
+  TYPE DiskCopyCore IS RECORD (id INTEGER, path VARCHAR(2048), status NUMBER, diskCopyId VARCHAR(2048));
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
 END castor;
 
@@ -182,7 +175,7 @@ BEGIN
    makeSubRequestWait(srId, dci);
    dci := 0;
    rpath := '';
-   rDiskCopyId = '';
+   rDiskCopyId := '';
  END IF;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, look in others
  -- Try to find remote DiskCopies
@@ -211,7 +204,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No disk copy found on selected FileSystem, 
      makeSubRequestWait(srId, dci);
      dci := 0;
      rpath := '';
-     rDiskCopyId = '';
+     rDiskCopyId := '';
      close sources;
    ELSE
      -- create DiskCopy for Disk to Disk copy
