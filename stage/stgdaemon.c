@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.212 2002/07/25 16:40:12 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.213 2002/07/27 07:04:47 jdurand Exp $
  */
 
 /*   
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.212 $ $Date: 2002/07/25 16:40:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.213 $ $Date: 2002/07/27 07:04:47 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -265,7 +265,12 @@ int create_dir _PROTO(());
 int create_dir _PROTO((char *, uid_t, gid_t, mode_t));
 #endif
 #endif
+#ifdef hpux
+/* What the hell does hpux does not like this prototype ??? */
+int build_ipath _PROTO(());
+#else
 int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int, int, mode_t));
+#endif
 int fork_exec_stager _PROTO((struct waitq *));
 int savepath _PROTO(());
 int upd_staged _PROTO((char *));
