@@ -1,0 +1,81 @@
+.\" @(#)$RCSfile: vmgr_updatetape.man,v $ $Revision: 1.1 $ $Date: 1999/12/17 15:27:51 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGR_UPDATETAPE l "$Date: 1999/12/17 15:27:51 $"
+.SH NAME
+vmgr_updatetape \- update tape volume content information in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "vmgr_api.h"\fR
+.sp
+.BI "int vmgr_updatetape (const char *" vid ,
+.BI "u_signed64 " BytesWritten ,
+.BI "int " CompressionFactor ,
+.BI "int " FilesWritten ,
+.BI "int " Flags )
+.SH DESCRIPTION
+.B vmgr_updatetape
+updates the tape volume content information in the CASTOR Volume Manager.
+.TP
+.I vid
+is the volume visual identifier of the tape obtained with
+.BR vmgr_gettape() .
+It must be at most six characters long.
+.TP
+.I CompressionFactor
+kbytes_from_host * 100 / kbytes_to_tape
+.TP
+.I Flags
+can be:
+.RS
+.TP 1.3i
+.B 0
+file successfully written to tape
+.TP
+.B TAPE_FULL
+file incompletely written to tape because of a tape full condition
+.TP
+.B DISABLED
+file incompletely written to tape because of a hardware/medium error
+.RE
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The named volume does not exist.
+.TP
+.B EACCES
+The effective user ID of the requestor does not match the owner ID of the tape
+pool this tape belongs to and the requestor is not super-user.
+.TP
+.B EFAULT
+.I vid
+is a NULL pointer.
+.TP
+.B EINVAL
+The length of
+.I vid
+exceeds
+.B CA_MAXVIDLEN
+or bad parameter value.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B EVMGRNACT
+Volume manager is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(l) ,
+.B vmgr_gettape(l)
