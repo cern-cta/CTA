@@ -1,5 +1,5 @@
 /*
- * $Id: stager_disk.c,v 1.13 2003/05/12 12:50:11 jdurand Exp $
+ * $Id: stager_disk.c,v 1.14 2003/09/08 15:53:14 jdurand Exp $
  */
 
 /*
@@ -15,7 +15,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.13 $ $Date: 2003/05/12 12:50:11 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.14 $ $Date: 2003/09/08 15:53:14 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -42,12 +42,8 @@ static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.13 $ $Date:
 #include "Cgrp.h"
 
 EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int *, int, ...));
-#else
-extern int sendrep _PROTO(());
-#endif
-extern int stglogit _PROTO(());
+extern int stglogit _PROTO((char *, char *, ...));
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
 
 int filecopy _PROTO((struct stgcat_entry *, int, char *));

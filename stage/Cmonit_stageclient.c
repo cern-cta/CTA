@@ -30,7 +30,7 @@
 #include "Cnetdb.h"
 #include "common.h"
 
-extern int stglogit _PROTO(());
+extern int stglogit _PROTO((char *, char *, ...));
 
 /* Functions used only in this module */
 int Cmonit_write_pool(struct pool *pool_p, char **p);

@@ -1,9 +1,9 @@
 /*
- * $Id: stage_util.c,v 1.28 2003/06/30 10:05:06 jdurand Exp $
+ * $Id: stage_util.c,v 1.29 2003/09/08 15:53:14 jdurand Exp $
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.28 $ $Date: 2003/06/30 10:05:06 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.29 $ $Date: 2003/09/08 15:53:14 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -177,11 +177,7 @@ int DLL_DECL stage_stgmagic()
 void DLL_DECL dump_stpp(rpfd, stpp, funcrep)
 	int *rpfd;
 	struct stgpath_entry *stpp;
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 	int (*funcrep) _PROTO((int *, int, ...));
-#else
-	int (*funcrep) _PROTO(());
-#endif
 {
 	if ((funcrep == NULL) || (stpp == NULL)) return;
 
@@ -195,11 +191,7 @@ void DLL_DECL dump_stpp(rpfd, stpp, funcrep)
 void DLL_DECL dump_stcp(rpfd, stcp, funcrep)
 	int *rpfd;
 	struct stgcat_entry *stcp;
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 	int (*funcrep) _PROTO((int *, int, ...));
-#else
-	int (*funcrep) _PROTO(());
-#endif
 {
 	int i;
 

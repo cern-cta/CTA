@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stgdaemon.c,v $ $Revision: 1.240 $ $Date: 2003/06/30 12:54:13 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "$RCSfile: stgdaemon.c,v $ $Revision: 1.241 $ $Date: 2003/09/08 15:53:15 $ CERN IT-ADC/CA Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -326,13 +326,9 @@ extern char *findpoolname _PROTO((char *));
 extern int rc_shift2castor _PROTO((int,int));
 
 /* Function with variable list of arguments - defined as in non-_STDC_ to avoir proto problem */
-extern int stglogit _PROTO(());
+extern int stglogit _PROTO((char *, char *, ...));
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int *, int, ...));
-#else
-extern int sendrep _PROTO(());
-#endif
 EXTERN_C int DLL_DECL Cdomainname _PROTO((char *, int));
 
 /*

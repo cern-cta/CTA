@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.25 2002/04/30 13:14:42 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.26 2003/09/08 15:53:15 jdurand Exp $
  */
 
 /*
@@ -18,12 +18,12 @@
 #include "Cstage_ifce.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.25 $ $Date: 2002/04/30 13:14:42 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.26 $ $Date: 2003/09/08 15:53:15 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
 int stgdb_stppcmp _PROTO((CONST void *, CONST void *));
-extern int stglogit _PROTO(());
+extern int stglogit _PROTO((char *, char *, ...));
 #ifndef USECDB
 u_signed64 local_uniqueid = 0;
 #endif

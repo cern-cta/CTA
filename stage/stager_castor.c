@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.41 2003/05/13 06:47:26 jdurand Exp $
+ * $Id: stager_castor.c,v 1.42 2003/09/08 15:53:14 jdurand Exp $
  */
 
 /*
@@ -37,7 +37,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.41 $ $Date: 2003/05/13 06:47:26 $ CERN IT-DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.42 $ $Date: 2003/09/08 15:53:14 $ CERN IT-DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -76,12 +76,8 @@ EXTERN_C void DLL_DECL stager_usrmsg _PROTO(());
 EXTERN_C void DLL_DECL stager_usrmsg _PROTO((int, ...));
 #endif
 EXTERN_C int DLL_DECL rfio_parseln _PROTO((char *, char **, char **, int));
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int *, int, ...));
-#else
-extern int sendrep _PROTO(());
-#endif
-extern int stglogit _PROTO(());
+extern int stglogit _PROTO((char *, char *, ...));
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
 
 int stagein_castor_hsm_file _PROTO(());

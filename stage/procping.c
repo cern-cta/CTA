@@ -1,5 +1,5 @@
 /*
- * $Id: procping.c,v 1.16 2003/05/12 12:37:59 jdurand Exp $
+ * $Id: procping.c,v 1.17 2003/09/08 15:53:14 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.16 $ $Date: 2003/05/12 12:37:59 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.17 $ $Date: 2003/09/08 15:53:14 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -37,14 +37,10 @@ static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.16 $ $Date: 20
 
 void procpingreq _PROTO((int, int, char *, char *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
-extern int stglogit _PROTO(());
+extern int stglogit _PROTO((char *, char *, ...));
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
 extern int req2argv _PROTO((char *, char ***));
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int *, int, ...));
-#else
-extern int sendrep _PROTO(());
-#endif
 
 extern char func[];
 extern int rpfd;

@@ -1,5 +1,5 @@
 /*
- * $Id: stager_usrmsg.c,v 1.18 2002/09/30 15:44:58 jdurand Exp $
+ * $Id: stager_usrmsg.c,v 1.19 2003/09/08 15:53:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.18 $ $Date: 2002/09/30 15:44:58 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.19 $ $Date: 2003/09/08 15:53:15 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /* stager_usrmsg.c - callback rtcp routine */
@@ -35,12 +35,7 @@ static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.18 $ $Dat
 #include "osdep.h"
 
 extern int rpfd;
-#if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
 extern int sendrep _PROTO((int *, int, ...));
-#else
-extern int sendrep _PROTO(());
-#endif
-extern int stgmiglogit _PROTO(());
 extern struct passwd start_passwd;
 
 #if hpux
