@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.52 $ $Date: 2000/03/15 20:04:57 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.53 $ $Date: 2000/03/15 20:38:25 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -258,6 +258,7 @@ static int LockForAppend(const int lock) {
     rc = Cthread_mutex_lock_ext(proc_cntl.DiskFileAppend_lock);
     if ( (rtcpd_CheckProcError() & 
           (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) {
+        proc_cntl.DiskFileAppend = lock;
         (void)Cthread_cond_broadcast_ext(proc_cntl.DiskFileAppend_lock);
         (void)Cthread_mutex_unlock_ext(proc_cntl.DiskFileAppend_lock);
         return(-1);
@@ -269,6 +270,7 @@ static int LockForAppend(const int lock) {
          */
         wait_list = (int *)calloc(1,proc_stat.nb_diskIO);
         if ( wait_list == NULL ) {
+            proc_cntl.DiskFileAppend = lock;
             (void)Cthread_cond_broadcast_ext(proc_cntl.DiskFileAppend_lock);
             (void)Cthread_mutex_unlock_ext(proc_cntl.DiskFileAppend_lock);
             return(-1);
@@ -283,6 +285,7 @@ static int LockForAppend(const int lock) {
             rc = Cthread_cond_wait_ext(proc_cntl.DiskFileAppend_lock);
             if ( rc == -1 || (rtcpd_CheckProcError() & 
                  (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) { 
+                proc_cntl.DiskFileAppend = lock;
                 (void)Cthread_cond_broadcast_ext(proc_cntl.DiskFileAppend_lock);
                 (void)Cthread_mutex_unlock_ext(proc_cntl.DiskFileAppend_lock);
                 return(-1);
