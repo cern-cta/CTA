@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.5 2002/02/08 11:55:00 jdurand Exp $
+ * $Id: stager_castor.c,v 1.6 2002/02/11 15:53:48 jdurand Exp $
  */
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.5 $ $Date: 2002/02/08 11:55:00 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.6 $ $Date: 2002/02/11 15:53:48 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1669,9 +1669,9 @@ int stagein_castor_hsm_file() {
 			/* Rtcopy bits suggest to stop */
 			SAVE_EID;
 			if (rtcpcreqs[0]->tapereq.side > 0) {
-				sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc",sstrerror(save_serrno));
-			} else {
 				sendrep (rpfd, MSG_ERR, STG202, rtcpcreqs[0]->tapereq.vid, rtcpcreqs[0]->tapereq.side, "rtcpc",sstrerror(save_serrno));
+			} else {
+				sendrep (rpfd, MSG_ERR, STG02, rtcpcreqs[0]->tapereq.vid, "rtcpc",sstrerror(save_serrno));
 			}
 			if (
 				(error_already_processed != 0) ||
