@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.76 $ $Release$ $Date: 2004/12/06 16:28:34 $ $Author: jdurand $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.77 $ $Release$ $Date: 2004/12/06 17:54:12 $ $Author: sponcec3 $
  *
  *
  *
@@ -1116,13 +1116,13 @@ castor::db::ora::OraStagerSvc::putStart
         createStatement(s_putStartStatementString);
       m_putStartStatement->registerOutParam
         (3, oracle::occi::OCCIDOUBLE);
-      m_getUpdateStartStatement->registerOutParam
+      m_putStartStatement->registerOutParam
         (4, oracle::occi::OCCIDOUBLE);
-      m_getUpdateStartStatement->registerOutParam
+      m_putStartStatement->registerOutParam
         (5, oracle::occi::OCCIINT);
-      m_getUpdateStartStatement->registerOutParam
+      m_putStartStatement->registerOutParam
         (6, oracle::occi::OCCISTRING, 2048);
-      m_getUpdateStartStatement->registerOutParam
+      m_putStartStatement->registerOutParam
         (7, oracle::occi::OCCISTRING, 2048);
     }
     // execute the statement and see whether we found something
