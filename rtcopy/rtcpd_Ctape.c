@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.49 $ $Date: 2000/10/02 08:08:45 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.50 $ $Date: 2000/10/02 09:44:25 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -197,12 +197,22 @@ int rtcpd_Deassign(int VolReqID,
         *(nexttape->tapereq.dgn) = '\0';
         nexttape->tapereq.mode = WRITE_DISABLE;
         rc = rtcpd_Mount(tape);
+        /*
+         * Make sure we release without NOWAIT
+         */
+        tape->tapereq.tprc = -1;
         (void)rtcpd_Release(tape,NULL);
 
         free(nextfile);
         free(nexttape);
         return(rc);
     }
+
+    /*
+     * If status is already FREE or DOWN we don't need to do anything more
+     */
+    if ( rc != -1 && (status == VDQM_UNIT_UP|VDQM_UNIT_FREE ||
+                      (status & VDQM_UNIT_DOWN) != 0) ) return(0);
     /*
      * We're here because there was no tape physically mounted on the drive.
      * Just make sure that the job is released in VDQM.
@@ -218,22 +228,22 @@ int rtcpd_Deassign(int VolReqID,
         else value = tapereq->VolReqID;
         jobID = rtcpd_jobID();
 
-        rtcp_log(LOG_DEBUG,"rtcpd_Deassign() ASSIGN volreq ID %d -> jobID %d\n",
+        rtcp_log(LOG_INFO,"rtcpd_Deassign() ASSIGN volreq ID %d -> jobID %d\n",
             value,jobID);
         rc = vdqm_UnitStatus(NULL,NULL,tapereq->dgn,NULL,tapereq->unit,
             &status,&value,jobID);
         if ( rc == -1 ) {
-            rtcp_log(LOG_DEBUG,"rtcpd_Deassign() vdqm_UnitStatus(UNIT_ASSIGN) %s\n",
+            rtcp_log(LOG_INFO,"rtcpd_Deassign() vdqm_UnitStatus(UNIT_ASSIGN) %s\n",
                 sstrerror(serrno));
         }
     } else jobID = tapereq->jobID;
     status = VDQM_UNIT_RELEASE;
 
-    rtcp_log(LOG_DEBUG,"rtcpd_Deassign() RELEASE job ID %d\n",jobID);
+    rtcp_log(LOG_INFO,"rtcpd_Deassign() RELEASE job ID %d\n",jobID);
     rc = vdqm_UnitStatus(NULL,NULL,tapereq->dgn,NULL,tapereq->unit,
         &status,NULL,jobID);
     if ( rc == -1 ) {
-        rtcp_log(LOG_DEBUG,"rtcpd_Deassign() vdqm_UnitStatus(UNIT_RELEASE) %s\n",
+        rtcp_log(LOG_INFO,"rtcpd_Deassign() vdqm_UnitStatus(UNIT_RELEASE) %s\n",
             sstrerror(serrno));
     }
     serrno = save_serrno;

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.73 $ $Date: 2000/09/20 09:22:30 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.74 $ $Date: 2000/10/02 09:44:25 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1231,8 +1231,7 @@ void *tapeIOthread(void *arg) {
             rc = rtcpd_Mount(nexttape);
             TP_STATUS(RTCP_PS_NOBLOCKING);
             save_serrno = serrno; save_errno = errno;
-            if ( rc == -1 && (serrno == EINVAL||serrno == SECOMERR) ) 
-                (void)rtcpd_Deassign(-1,&tape->tapereq);
+            if ( rc == -1 ) (void)rtcpd_Deassign(-1,&tape->tapereq);
             serrno = save_serrno; errno = save_errno;
             CHECK_PROC_ERR(nexttape,NULL,"rtcpd_Mount() error");
         }
