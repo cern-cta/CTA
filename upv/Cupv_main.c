@@ -1,10 +1,12 @@
 /*
+ * $Id: Cupv_main.c,v 1.3 2004/08/12 14:24:34 motiakov Exp $
+ *
  * Copyright (C) 1999-2002 by CERN IT-DS/HSM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: Cupv_main.c,v $ $Revision: 1.2 $ $Date: 2004/07/26 15:10:17 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "$RCSfile: Cupv_main.c,v $ $Revision: 1.3 $ $Date: 2004/08/12 14:24:34 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -127,6 +129,15 @@ struct main_args *main_args;
 	}
 	memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
 	sin.sin_family = AF_INET ;
+#ifdef CSEC
+	if ((p = getenv ("SCUPV_PORT")) || (p = getconfent ("SCUPV", "PORT", 0))) {
+		sin.sin_port = htons ((unsigned short)atoi (p));
+	} else if (sp = getservbyname ("sCupv", "tcp")) {
+		sin.sin_port = sp->s_port;
+	} else {
+		sin.sin_port = htons ((unsigned short)SCUPV_PORT);
+	}
+#else
 	if ((p = getenv ("CUPV_PORT")) || (p = getconfent ("CUPV", "PORT", 0))) {
 		sin.sin_port = htons ((unsigned short)atoi (p));
 	} else if (sp = getservbyname ("Cupv", "tcp")) {
@@ -134,6 +145,7 @@ struct main_args *main_args;
 	} else {
 		sin.sin_port = htons ((unsigned short)CUPV_PORT);
 	}
+#endif
 	sin.sin_addr.s_addr = htonl(INADDR_ANY);
 	if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
 		Cupvlogit (func, CUP02, "setsockopt", neterror());
