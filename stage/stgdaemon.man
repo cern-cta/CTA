@@ -1,12 +1,19 @@
-.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.10 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.11 $ $Date: 2002/02/20 14:17:00 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STGDAEMON 1 "$Date: 2002/01/30 08:12:54 $" CASTOR "stage Administrator Commands"
+.TH STGDAEMON 1 "$Date: 2002/02/20 14:17:00 $" CASTOR "stage Administrator Commands"
 .SH NAME
 stgdaemon \- starts the stage daemon
 .SH SYNOPSIS
 .B stgdaemon
+[
+.BI \-f
+] [
+.BI \-h
+] [
+.BI \-L " backlog"
+]
 .SH DESCRIPTION
 .LP
 The
@@ -230,6 +237,16 @@ The message STG96 gives the internal file path and the current number of
 accesses to the file.
 A message STG95 giving the internal file path appears in the log every time
 a file is deleted.
+.SH OPTIONS
+.TP
+.BI \-f
+Runs in foreground
+.TP
+.BI \-h
+Print help
+.TP
+.BI \-L " backlog"
+Sets listening backlog. Default value is 5.
 .SH FILES
 .TP 1.5i
 .B /etc/STGCONFIG
