@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.61 $ $Release$ $Date: 2004/10/28 09:33:37 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.62 $ $Release$ $Date: 2004/10/28 10:09:44 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.61 $ $Release$ $Date: 2004/10/28 09:33:37 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.62 $ $Release$ $Date: 2004/10/28 10:09:44 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -967,6 +967,7 @@ void rtcpcld_cleanupFile(
           for ( i=0; i<nbCopies; i++ ) {
             Cstager_TapeCopy_delete(tapeCopyArray[i]);
           }
+          if ( tapeCopyArray != NULL ) free(tapeCopyArray);
           Cstager_CastorFile_delete(castorFile);
         }
       }
