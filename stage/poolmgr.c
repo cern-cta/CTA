@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.155 2001/10/05 12:49:30 jdurand Exp $
+ * $Id: poolmgr.c,v 1.156 2001/10/29 16:17:31 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.155 $ $Date: 2001/10/05 12:49:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.156 $ $Date: 2001/10/29 16:17:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -4458,7 +4458,7 @@ void check_lifetime_on_disk() {
           int save_reqid = reqid;
 
           reqid = 0;
-          stglogit (func, STG143, stcp->ipath, "stageout", (int) (stageout_retenp / ONE_DAY), "move to PUT_FAILED");
+          stglogit (func, STG143, stcp->ipath, "stageout", (int) (stageout_retenp / ONE_DAY), ((stageout_retenp / ONE_DAY) > 1) ? "s" : "", "move to PUT_FAILED");
           reqid = save_reqid;
           if (rfio_stat(stcp->ipath, &st) == 0) {
             stcp->actual_size = (u_signed64) st.st_size;
@@ -4496,7 +4496,7 @@ void check_lifetime_on_disk() {
 
         /* Is it a PUT_FAILED file that exceeds PUT_FAILED lifetime on disk ? */
         if (ISSTAGEOUT(stcp) && ((stcp->status & PUT_FAILED) == PUT_FAILED) && ((put_failed_retenp = get_put_failed_retenp(stcp->poolname)) >= 0) && ((thistime - stcp->a_time) > put_failed_retenp)) {
-          stglogit (func, STG143, stcp->ipath, "put_failed", (int) (put_failed_retenp / ONE_DAY), "deletion");
+          stglogit (func, STG143, stcp->ipath, "put_failed", (int) (put_failed_retenp / ONE_DAY), ((put_failed_retenp / ONE_DAY) > 1) ? "s" : "", "deletion");
           /* Candidate for garbage */
           if (delfile (stcp, 0, 1, 1, "check_lifetime_on_disk", start_passwd.pw_uid, start_passwd.pw_gid, 0, 0) < 0) {
             stglogit (STG02, stcp->ipath, "rfio_unlink", rfio_serror());
