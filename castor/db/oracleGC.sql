@@ -307,8 +307,7 @@ CREATE OR REPLACE PROCEDURE recreateCastorFile(cfId IN INTEGER,
   nh VARCHAR(2048);
 BEGIN
  -- Lock the access to the TapeCopies and DiskCopies
- LOCK TABLE TapeCopy in exclusive mode;
- LOCK TABLE DiskCopy in exclusive mode;
+ LOCK TABLE TapeCopy, DiskCopy in exclusive mode;
  -- check if recreation is possible (exception if not)
  BEGIN
    SELECT id INTO dcId FROM TapeCopy

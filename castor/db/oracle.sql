@@ -499,8 +499,7 @@ CREATE OR REPLACE PROCEDURE recreateCastorFile(cfId IN INTEGER,
   nh VARCHAR(2048);
 BEGIN
  -- Lock the access to the TapeCopies and DiskCopies
- LOCK TABLE TapeCopy in share mode;
- LOCK TABLE DiskCopy in share mode;
+ LOCK TABLE TapeCopy, DiskCopy in exclusive mode;
  -- check if recreation is possible (exception if not)
  BEGIN
    SELECT id INTO dcId FROM TapeCopy
@@ -598,7 +597,7 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN
   BEGIN
     -- lock table to be atomic
-    LOCK TABLE CastorFile in share mode;
+    LOCK TABLE CastorFile in exclusive mode;
     -- retry the select in case a creation was done in between
     SELECT id, fileSize INTO rid, rfs FROM CastorFile
       WHERE fileId = fid AND nsHost = nh;
