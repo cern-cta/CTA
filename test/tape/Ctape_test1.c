@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_test1.c,v $ $Revision: 1.4 $ $Date: 2002/04/08 11:50:32 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_test1.c,v $ $Revision: 1.5 $ $Date: 2002/10/08 14:23:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_test1 - test program 1: copy one tape to another */
@@ -116,7 +116,7 @@ char **argv;
 		exit (c);
 	}
 	if (c = Ctape_position (opath, TPPOSIT_FSEQ, 1, 1, 0, 0, 0, NEW_FILE,
-	    NULL, NULL, 0, 0, 0, 0)) {
+	    NULL, NULL, NULL, 0, 0, 0, 0)) {
 		fprintf (stderr, "%s", errbuf);
 		exit (c);
 	}
