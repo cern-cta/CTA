@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.27 $ $Release$ $Date: 2005/01/27 11:22:58 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.28 $ $Release$ $Date: 2005/02/03 07:53:08 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.27 $ $Release$ $Date: 2005/01/27 11:22:58 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.28 $ $Release$ $Date: 2005/02/03 07:53:08 $ Olof Barring";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -1380,29 +1380,25 @@ static void setErrorInfo(
      char *errMsgTxt;
      int errorCode;
 {
-  int rc = 0, segmFailed = 0;
-  
   if ( tape == NULL ) return;
   
-  if ( (rc == 1) && (segmFailed == 0) ) {
-    if ( tape->tapereq.tprc == 0 ) tape->tapereq.tprc = -1;
-    if ( tape->tapereq.err.errorcode == 0 ) 
-      tape->tapereq.err.errorcode = errorCode;
-    if ( *tape->tapereq.err.errmsgtxt == '\0' ) {
-      if ( errMsgTxt != NULL ) {
-        strncpy(tape->tapereq.err.errmsgtxt,
-                errMsgTxt,
-                sizeof(tape->tapereq.err.errmsgtxt)-1);
-      } else {
-        strncpy(tape->tapereq.err.errmsgtxt,
-                sstrerror(errorCode),
-                sizeof(tape->tapereq.err.errmsgtxt)-1);
-      }
+  if ( tape->tapereq.tprc == 0 ) tape->tapereq.tprc = -1;
+  if ( tape->tapereq.err.errorcode == 0 ) 
+    tape->tapereq.err.errorcode = errorCode;
+  if ( *tape->tapereq.err.errmsgtxt == '\0' ) {
+    if ( errMsgTxt != NULL ) {
+      strncpy(tape->tapereq.err.errmsgtxt,
+              errMsgTxt,
+              sizeof(tape->tapereq.err.errmsgtxt)-1);
+    } else {
+      strncpy(tape->tapereq.err.errmsgtxt,
+              sstrerror(errorCode),
+              sizeof(tape->tapereq.err.errmsgtxt)-1);
     }
-    if ( (tape->tapereq.err.severity == RTCP_OK) ||
-         (tape->tapereq.err.severity == 0 ) ) {
-      tape->tapereq.err.severity = RTCP_UNERR|RTCP_FAILED;
-    }
+  }
+  if ( (tape->tapereq.err.severity == RTCP_OK) ||
+       (tape->tapereq.err.severity == 0 ) ) {
+    tape->tapereq.err.severity = RTCP_UNERR|RTCP_FAILED;
   }
   return;  
 }
@@ -1425,7 +1421,7 @@ int rtcpcld_workerFinished(
   rc = rtcpcld_updateTape(
                           tape,
                           NULL,
-                          1,
+                          0,
                           workerErrorCode
                           );
   if ( rc == -1 ) {
@@ -1492,7 +1488,7 @@ int rtcpcld_workerFinished(
                   shiftMsg
                   );
   if ( workerRC == -1 ) {
-    setErrorInfo(tape,workerErrorCode,shiftMsg);
+    setErrorInfo(tape,workerErrorCode,NULL);
     (void)rtcpcld_setVIDFailedStatus(tape);
   } else {
     (void)rtcpcld_updateTapeStatus(
