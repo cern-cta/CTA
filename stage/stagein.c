@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.18 2000/09/11 15:29:40 jdurand Exp $
+ * $Id: stagein.c,v 1.19 2000/09/20 11:30:46 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.18 $ $Date: 2000/09/11 15:29:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.19 $ $Date: 2000/09/20 11:30:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -229,46 +229,52 @@ int main(argc, argv)
 					}
 					/* We want to know if there is no ':' in the string or, if there is such a ':' */
 					/* if there is no '/' before (then is will indicate a hostname)                */
-					if ((dummy = strchr(optarg,':')) == NULL || (dummy != optarg && strrchr(dummy,'/') == NULL)) {
-						if ((hsm_host = getenv("HSM_HOST")) != NULL) {
-							strcpy (hsm_path, hsm_host);
-							strcat (hsm_path, ":");
-							strcat (hsm_path, optarg);
-							if ((hsmfiles[nhsmfiles] = (char *) malloc((attached != 0 ? 2 : 0) + strlen(hsm_path) + 1)) == NULL) {
-								fprintf(stderr,"malloc error (%s)\n",strerror(errno));
-								errflg++;
-							} else {
-								if (attached != 0) {
-									strcpy(hsmfiles[nhsmfiles],"-M");
-									strcat(hsmfiles[nhsmfiles++],hsm_path);
+					if (! ISCASTOR(optarg)) {
+						/* We prepend HSM_HOST only for non CASTOR-like files */
+						if ((dummy = strchr(optarg,':')) == NULL || (dummy != optarg && strrchr(dummy,'/') == NULL)) {
+							if ((hsm_host = getenv("HSM_HOST")) != NULL) {
+								strcpy (hsm_path, hsm_host);
+								strcat (hsm_path, ":");
+								strcat (hsm_path, optarg);
+								if ((hsmfiles[nhsmfiles] = (char *) malloc((attached != 0 ? 2 : 0) + strlen(hsm_path) + 1)) == NULL) {
+									fprintf(stderr,"malloc error (%s)\n",strerror(errno));
+									errflg++;
 								} else {
-									strcpy(hsmfiles[nhsmfiles++],hsm_path);
+									if (attached != 0) {
+										strcpy(hsmfiles[nhsmfiles],"-M");
+										strcat(hsmfiles[nhsmfiles++],hsm_path);
+									} else {
+										strcpy(hsmfiles[nhsmfiles++],hsm_path);
+									}
 								}
-							}
-						} else if ((hsm_host = getconfent("STG", "HSM_HOST",0)) != NULL) {
-							strcpy (hsm_path, hsm_host);
-							strcat (hsm_path, ":");
-							strcat (hsm_path, optarg);
-							if ((hsmfiles[nhsmfiles] = (char *) malloc((attached != 0 ? 2 : 0) + strlen(hsm_path) + 1)) == NULL) {
-								fprintf(stderr,"malloc error (%s)\n",strerror(errno));
-								errflg++;
-							} else {
-								if (attached != 0) {
-									strcpy(hsmfiles[nhsmfiles],"-M");
-									strcat(hsmfiles[nhsmfiles++],hsm_path);
+							} else if ((hsm_host = getconfent("STG", "HSM_HOST",0)) != NULL) {
+								strcpy (hsm_path, hsm_host);
+								strcat (hsm_path, ":");
+								strcat (hsm_path, optarg);
+								if ((hsmfiles[nhsmfiles] = (char *) malloc((attached != 0 ? 2 : 0) + strlen(hsm_path) + 1)) == NULL) {
+									fprintf(stderr,"malloc error (%s)\n",strerror(errno));
+									errflg++;
 								} else {
-									strcpy(hsmfiles[nhsmfiles++],hsm_path);
+									if (attached != 0) {
+										strcpy(hsmfiles[nhsmfiles],"-M");
+										strcat(hsmfiles[nhsmfiles++],hsm_path);
+									} else {
+										strcpy(hsmfiles[nhsmfiles++],hsm_path);
+									}
 								}
+							} else {
+								fprintf (stderr, STG54);
+								errflg++;
 							}
+							argv[optind - 1] = hsmfiles[nhsmfiles - 1];
 						} else {
-							fprintf (stderr, STG54);
-							errflg++;
-						}
-						argv[optind - 1] = hsmfiles[nhsmfiles - 1];
+							/* Here we believe that the user gave a hostname */
+							hsmfiles[nhsmfiles++] = NULL;
+            	        }
 					} else {
-						/* Here we believe that the user gave a hostname */
+						/* Here we believe that the user gave a CASTOR file */
 						hsmfiles[nhsmfiles++] = NULL;
-                    }
+					}
 				} else {
 					fprintf (stderr, "Cannot parse hsm file %s\n", optarg);
 					errflg++;
