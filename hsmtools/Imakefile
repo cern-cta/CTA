@@ -1,0 +1,136 @@
+COMM
+COMM  Copyright (C) 2000-2003 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Date: 2004/12/21 22:38:39 $ CERN IT-PDP/DM Jean-Philippe Baud
+ 
+COMM    Make HSM admin tools.
+
+#include <Project.tmpl>
+
+INCLUDES = FileName(..,h)
+#if UseTms
+TMS = TMS
+#else
+TMS = NOTMS
+#endif
+#if _AIX
+LIBS = -L../shlib -lshift
+#else
+#if defined(__alpha) && defined(__osf__)
+LIBS = -no_so -L../shlib -lshift -so_archive
+#else
+#if hpux
+LIBS = -L../shlib -lshift
+#else
+#if linux
+LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl
+#else
+#if sgi
+LIBS = -L../shlib -lshift
+#else
+#if SOLARIS
+LIBS = -L../shlib -lshift -lsocket -lnsl
+#else
+#if _WIN32
+LIBS = ..\lib\shift.lib wsock32.lib ws2_32.lib /NODEFAULTLIB:libc.lib advapi32.lib
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
+SPOOL = HsmToolsSpool
+ 
+COMM######################### FLAGS ##############################
+ 
+DFLAGS = -D$(TMS)
+ 
+CFLAGS =        -I$(INCLUDES) $(DFLAGS)
+ 
+COMM######################### DEPENDENCY LIBRARIES ###############
+ 
+DEPLIB = DepSharedLibraryTargetName(shlib,shift)
+ 
+COMM######################### RULES ##############################
+
+MANPAGES = $(MANDIR)/reclaim.$(MANSUFFIX) \
+	   $(MANDIR)/repack.$(MANSUFFIX) \
+	   $(MANDIR)/tapetohsm.$(MANSUFFIX)
+EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),repack.$(MANSUFFIX))) \
+		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),tapetohsm.$(MANSUFFIX)))
+
+PROGS =  ProgramTargetName(reclaim) \
+	 ProgramTargetName(repack) \
+	 ProgramTargetName(tapetohsm)
+IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
+	 FileName($(BIN),ProgramTargetName(repack)) \
+	 FileName($(BIN),ProgramTargetName(tapetohsm))
+EPROGS = $(EXPORTBIN)/reclaim \
+	 $(EXPORTBIN)/repack \
+	 $(EXPORTBIN)/tapetohsm
+
+all: $(PROGS)
+
+NormalProgramTarget(reclaim,reclaim.Osuf,$(DEPLIB),$(LIBS))
+NormalProgramTarget(repack,repack.Osuf,$(DEPLIB),$(LIBS))
+NormalProgramTarget(tapetohsm,tapetohsm.Osuf,$(DEPLIB),$(LIBS))
+
+MakeDepSharedLibrary(shlib,shift)
+
+install: $(BIN) $(IPROGS) $(SPOOL)
+
+InstallProgram(reclaim,$(BIN),root,bin,755)
+IEXPORT(reclaim,$(EXPORTBIN),755);
+
+InstallProgram(repack,$(BIN),root,bin,755)
+IEXPORT(repack,$(EXPORTBIN),755);
+
+InstallProgram(tapetohsm,$(BIN),root,bin,755)
+IEXPORT(tapetohsm,$(EXPORTBIN),755);
+
+MakeDir($(BIN),root,bin,0755)
+MakeDir($(SPOOL),root,bin,0755)
+ 
+install.man: $(MANDIR) $(MANPAGES)
+
+MakeDir($(MANDIR),root,bin,0755)
+
+IMANPAGE(reclaim,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(repack,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(tapetohsm,$(MANDIR),$(MANSUFFIX))
+EMANPAGE(reclaim,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(repack,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+EMANPAGE(tapetohsm,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+
+export: $(EPROGS)
+
+exportman: $(EXPORTMANPAGES)
+
+exportshr:
+
+COMM###################### CLEANING RULES ########################
+ 
+clean:
+	-@RemoveFiles(FilesToClean)
+ 
+clobber:        clean
+	-@RemoveFiles($(PROGS))
+ 
+#if _WIN32
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend -Y$(INCLUDES) *.c 2> /dev/null
+#endif
+
+Makefiles:
+ 
+FORCE:
+
+COMM###################### DEPENDENCIES ##########################
+
+COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
