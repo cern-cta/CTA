@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.30 2001/03/30 10:43:47 jdurand Exp $
+ * $Id: procclr.c,v 1.31 2001/04/18 16:00:48 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.30 $ $Date: 2001/03/30 10:43:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.31 $ $Date: 2001/04/18 16:00:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -498,6 +498,13 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag)
 		sendrep (rpfd, MSG_ERR, STG33, "", "permission denied");
 		return (USERR);
 	}
+
+    /* Special case of intermediate state */
+	if (ISCASTORWAITINGMIG(stcp)) {
+		sendrep (rpfd, MSG_ERR, STG33, stcp->u1.h.xfile, strerror(EBUSY));
+		return (EBUSY);
+	}
+
 	if ((stcp->status & 0xF0) == STAGED ||
 		(stcp->status & (STAGEOUT | PUT_FAILED)) == (STAGEOUT | PUT_FAILED)) {
 		if (delfile (stcp, 0, 1, 1, user, uid, gid, rflag, 1) < 0) {
