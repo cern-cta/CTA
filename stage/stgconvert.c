@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.17 2000/01/30 09:13:26 jdurand Exp $
+ * $Id: stgconvert.c,v 1.18 2000/02/02 10:49:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.17 $ $Date: 2000/01/30 09:13:26 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.18 $ $Date: 2000/02/02 10:49:19 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -655,28 +655,6 @@ int main(argc,argv)
         }
         if (stpp2Cdb(stpp,&link) != 0) {
           printf("### stpp2Cdb (eg. stgpath -> Cdb on-the-fly) conversion error for reqid = %d\n",stpp->reqid);
-        }
-
-        /* stgpath can have multiple entries - We silently delete previous one if it */
-        /* exists.                                                                   */
-        if (Cdb_api_keyfind_fetch(&Cdb_db,"stgcat_link","stgcat_link_per_reqid","w",&link,&Cdb_offset,NULL) == 0) {
-          if (warns != 0) {
-            printf("### Warning (harmless) : stpp entry with reqid %6d yet exists at offset %s.\n",
-                   link.reqid,
-                   u64tostr((u_signed64) Cdb_offset, tmpbuf, 0));
-          }
-          if (Cdb_api_delete(&Cdb_db,"stgcat_link",&Cdb_offset) != 0) {
-            printf("### Cannot delete previous stgpath occurence for reqid=%d\n",link.reqid);
-            if (Cdb_api_unlock(&Cdb_db,"stgcat_link",&Cdb_offset) != 0) {
-              printf("### Cannot remove lock in Cdb at offset %s\n",
-                     u64tostr((u_signed64) Cdb_offset, tmpbuf, 0));
-            }
-            continue;
-          }
-          if (Cdb_api_unlock(&Cdb_db,"stgcat_link",&Cdb_offset) != 0) {
-            printf("### Cannot remove lock in Cdb at offset %s\n",
-                   u64tostr((u_signed64) Cdb_offset, tmpbuf, 0));
-          }
         }
 
         /* We insert this record */
@@ -1937,14 +1915,9 @@ int main(argc,argv)
              global_stgcat_cmp_status,
              global_stgcat_cmp_status == 0 ? "OK" : "NOT OK");
       
-      /* If i != nstpp, we verify that i corresponds exactly to the number of unique entries */
       if (i != nstpp && i > 0) {
 
-        printf("[### NOTA ### stgpath catalog in Cdb contains unique versions vs. reqid, while yours can]\n");
-        printf("[             contain multiple ones vs. reqid. That is, only the last reqid is compared.]\n");
-        printf("[             This behaviour is normal, and if the global status below is OK, then you  ]\n");
-        printf("[             are done well with stpath conversion.                                     ]\n");
-        printf("... %d != %d (total entries in %s). Checking the number of unique entries vs. reqid in the disk catalog version\n",
+        printf("... %d != %d (total entries in %s). Checking entries vs. reqid in the disk catalog version\n",
                i,nstpp,stgpath);
         
         for (stpp = stps; stpp < stpe; stpp++) {
