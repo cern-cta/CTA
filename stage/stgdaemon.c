@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.16 2000/01/14 16:54:50 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.17 2000/02/01 12:21:40 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.16 $ $Date: 2000/01/14 16:54:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.17 $ $Date: 2000/02/01 12:21:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -568,7 +568,7 @@ main(argc,argv)
             break;
           default:
             sendrep (rpfd, MSG_ERR, STG03, req_type);
-          sendrep (rpfd, STAGERC, req_type, USERR);
+            sendrep (rpfd, STAGERC, req_type, USERR);
           }
         } else {
           close (rqfd);
@@ -1225,12 +1225,6 @@ delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
           actual_size = st.st_size;
         else
           actual_size = stcp->actual_size;
-
-#ifdef USECDB
-        if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-          sendrep(rpfd, MSG_ERR, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-        }
-#endif
       }
       if (rfio_unlink (stcp->ipath) == 0) {
 #if SACCT
@@ -1571,7 +1565,7 @@ upd_stageout(req_type, upath, subreqid)
   for (stpp = stps; stpp < stpe; stpp++) {
     stglogit(func, "stpp->reqid=%d...\n",stpp->reqid);
     if (stpp->reqid == 0) break;
-    stglogit(func, "stpp->reqid=%d, Comparing upath=\"%s\" and stpp->upath=\"%s\"\n",stpp->reqid,upath,stpp->upath);
+    /* stglogit(func, "stpp->reqid=%d, Comparing upath=\"%s\" and stpp->upath=\"%s\"\n",stpp->reqid,upath,stpp->upath); */
     if (strcmp (upath, stpp->upath)) continue;
     found = 1;
     break;
@@ -1586,7 +1580,7 @@ upd_stageout(req_type, upath, subreqid)
     for (stcp = stcs; stcp < stce; stcp++) {
       stglogit(func, "stcp->reqid=%d...\n",stcp->reqid);
       if (stcp->reqid == 0) break;
-      stglogit(func, "stcp->reqid=%d, Comparing upath=\"%s\" and stcp->upath=\"%s\"\n",stcp->reqid,upath,stcp->ipath);
+      /* stglogit(func, "stcp->reqid=%d, Comparing upath=\"%s\" and stcp->ipath=\"%s\"\n",stcp->reqid,upath,stcp->ipath); */
       if (strcmp (upath, stcp->ipath)) continue;
       found = 1;
       break;
