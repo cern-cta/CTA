@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.86 2001/02/12 08:33:36 jdurand Exp $
+ * $Id: poolmgr.c,v 1.87 2001/02/12 11:23:56 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.86 $ $Date: 2001/02/12 08:33:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.87 $ $Date: 2001/02/12 11:23:56 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1483,7 +1483,7 @@ int update_migpool(stcp,flag,immediate)
 int insert_in_migpool(stcp)
      struct stgcat_entry *stcp;
 {
-  int i, ipool;
+  int i, ifileclass, ipool;
   struct pool *pool_p;
   char *func = "insert_in_migpool";
 
@@ -1510,6 +1510,14 @@ int insert_in_migpool(stcp)
   if ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR)) {
     pool_p->migr->global_predicates.nbfiles_beingmig++;
     pool_p->migr->global_predicates.space_beingmig += stcp->actual_size;
+  }
+  if ((ifileclass = upd_fileclass(pool_p,stcp)) >= 0) {
+    pool_p->migr->fileclass_predicates[ifileclass].nbfiles_canbemig++;
+    pool_p->migr->fileclass_predicates[ifileclass].space_canbemig += stcp->actual_size;
+    if ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR)) {
+      pool_p->migr->fileclass_predicates[ifileclass].nbfiles_beingmig++;
+      pool_p->migr->fileclass_predicates[ifileclass].space_beingmig += stcp->actual_size;
+    }
   }
   return(0);
 }
