@@ -1,5 +1,5 @@
 /*
- * $Id: stager_constants.h,v 1.2 2004/10/28 17:48:15 jdurand Exp $
+ * $Id: stager_constants.h,v 1.3 2004/11/08 09:38:26 jdurand Exp $
  */
 
 #ifndef __stager_constants_h
@@ -75,5 +75,8 @@
 #define STAGER_OPTION_START    CONSTLL(0x00000000000002) /* --start */
 
 #define STAGER_PRTBUFSZ           4096                   /* Buffer size in the client for printout */
+
+#define STAGER_AUTOCOMMIT_TRUE    1                      /* Util macro for catalog interface : autocommit to 1 (== yes) */
+#define STAGER_AUTOCOMMIT_FALSE   0                      /* Util macro for catalog interface : autocommit to 0 (== no)  */
 
 #endif /* __stager_constants_h */
