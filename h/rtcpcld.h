@@ -292,6 +292,9 @@ int rtcpcld_checkCastorFile _PROTO((
 int rtcpcld_setatime _PROTO((
                              file_list_t *
                              ));
+int rtcpcld_checkDualCopies _PROTO((
+                                    file_list_t *
+                                    ));
 char *rtcpcld_tapeStatusStr _PROTO((
                                     int
                                     ));
