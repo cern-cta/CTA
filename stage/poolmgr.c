@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.180 2002/02/08 11:17:17 jdurand Exp $
+ * $Id: poolmgr.c,v 1.181 2002/02/12 12:29:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.180 $ $Date: 2002/02/08 11:17:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.181 $ $Date: 2002/02/12 12:29:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2870,6 +2870,8 @@ int migpoolfiles(pool_p)
   int itppool, found_tppool;
   int npoolname_out;
   int original_nb_of_stream;
+  int nstreams_to_fork;
+  int nstreams_forked;
 
   /* We get the minimum size to be transfered */
   minsize = defminsize;
@@ -3463,18 +3465,18 @@ int migpoolfiles(pool_p)
     }
   }
 
+  /* We count how meany streams we will have to fork */
+  nstreams_to_fork = nstreams_forked = 0;
+  for (j = 0; j < ntppool_vs_stcp; j++) {
+	  if ((tppool_vs_stcp[j].nb_substreams > 0) && (tppool_vs_stcp[j].size <= 0)) continue;
+	  nstreams_to_fork++;
+  }
+
   /* We fork and execute the stagewrt request(s) */
   for (j = 0; j < ntppool_vs_stcp; j++) {
     if ((tppool_vs_stcp[j].nb_substreams > 0) && (tppool_vs_stcp[j].size <= 0)) continue;
     if ((fork_pid= fork()) < 0) {
       stglogit(func, "### Cannot fork (%s)\n",strerror(errno));
-      free(scs);
-      for (i = 0; i < ntppool_vs_stcp; i++) {
-        if (tppool_vs_stcp[i].stcp != NULL) free(tppool_vs_stcp[i].stcp);
-        if (tppool_vs_stcp[i].stpp != NULL) free(tppool_vs_stcp[i].stpp);
-      }
-      free(tppool_vs_stcp);
-      return(SYERR);
     } else if (fork_pid == 0) {
       /* We are in the child */
       int rc;
@@ -3607,7 +3609,10 @@ int migpoolfiles(pool_p)
       }
 #endif
       exit((rc != 0) ? SYERR : 0);
-    }
+    } else {
+		/* We are in the parent */
+		nstreams_forked++;
+	}
   }
 
   free(scs);
@@ -3639,7 +3644,8 @@ int migpoolfiles(pool_p)
     sleep(1);
   }
 
-  return(0);
+  /* Return v.s. if we have forked all the streams we wanted */
+  return((nstreams_to_fork == nstreams_forked) ? 0 : SYERR);
 }
 
 void migpoolfiles_log_callback(level,message)
