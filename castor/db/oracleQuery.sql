@@ -4,7 +4,7 @@
 /* A small table used to cross check code and DB versions */
 DROP TABLE CastorVersion;
 CREATE TABLE CastorVersion (version VARCHAR2(2048));
-INSERT INTO CastorVersion VALUES ('2.0.0.9');
+INSERT INTO CastorVersion VALUES ('2.0.0.10');
 
 /* Indexes related to CastorFiles */
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
@@ -97,9 +97,9 @@ BEGIN
   -- Try to see whether another subrequest in the same
   -- request is still procesing
   SELECT count(*) INTO nb FROM SubRequest
-   WHERE status != 8; -- FINISHED
+   WHERE request = rid AND status != 8; -- FINISHED
   -- Archive request, client and SubRequests if needed
-  IF nb > 0 THEN
+  IF nb = 0 THEN
     -- DELETE request from Id2Type
     DELETE FROM Id2Type WHERE id = rid RETURNING type INTO rtype;
     -- delete request and get client id

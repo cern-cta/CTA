@@ -13,11 +13,15 @@ CREATE INDEX main.I_Id2Type_type ON Id2Type(type);
 DROP SEQUENCE ids_seq;
 CREATE SEQUENCE ids_seq;
 
-/* SQL statements for requests status */
+/* SQL statements for newRequests table */
 DROP INDEX I_newRequests_type;
 DROP TABLE newRequests;
 CREATE TABLE newRequests (id INTEGER PRIMARY KEY, type INTEGER, creation DATE);
 CREATE INDEX I_newRequests_type on newRequests (type);
+
+/* SQL statements for newSubRequests table */
+DROP TABLE newSubRequests;
+CREATE TABLE newSubRequests (id INTEGER PRIMARY KEY, creation DATE);
 ALTER TABLE SvcClass2TapePool
   DROP CONSTRAINT fk_SvcClass2TapePool_Parent
   DROP CONSTRAINT fk_SvcClass2TapePool_Child;
@@ -208,7 +212,7 @@ ALTER TABLE Stream2TapeCopy
 /* A small table used to cross check code and DB versions */
 DROP TABLE CastorVersion;
 CREATE TABLE CastorVersion (version VARCHAR2(2048));
-INSERT INTO CastorVersion VALUES ('2.0.0.9');
+INSERT INTO CastorVersion VALUES ('2.0.0.10');
 
 /* Indexes related to CastorFiles */
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
@@ -301,9 +305,9 @@ BEGIN
   -- Try to see whether another subrequest in the same
   -- request is still procesing
   SELECT count(*) INTO nb FROM SubRequest
-   WHERE status != 8; -- FINISHED
+   WHERE request = rid AND status != 8; -- FINISHED
   -- Archive request, client and SubRequests if needed
-  IF nb > 0 THEN
+  IF nb = 0 THEN
     -- DELETE request from Id2Type
     DELETE FROM Id2Type WHERE id = rid RETURNING type INTO rtype;
     -- delete request and get client id
