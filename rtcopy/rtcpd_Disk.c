@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.87 $ $Date: 2000/09/15 16:52:12 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.88 $ $Date: 2000/09/19 16:29:14 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -314,11 +314,13 @@ static int DiskFileOpen(int pool_index,
         log(LOG_DEBUG,"DiskFileOpen(%s) lock file for concatenation\n",
             filereq->file_path);
         rc = LockForAppend(1);
+        rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
         if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"DiskFileOpen(%s) LockForAppend(0): %s\n",
+             rtcp_log(LOG_ERR,"DiskFileOpen(%s) LockForAppend(0): %s\n",
                      filereq->file_path,sstrerror(serrno));
             return(-1);
         }
+        if ( (severity & RTCP_EOD) != 0 ) return(-1);
     }
 
     /*
@@ -1674,6 +1676,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 /* It's not our error */
                 return(0);
             }
+
             /*
              * Wait while buffers are overallocated. For tape write
              * there are two additional conditions:
@@ -1914,6 +1917,13 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 serrno = save_serrno;
                 return(-1);
             }
+            /*
+             * Have we reached End Of Data on tape in a CONCAT_TO_EOD or
+             * NOCONCAT_TO_EOD request ?
+             */
+            if ( tapereq->mode == WRITE_DISABLE &&
+                (filereq->err.severity & RTCP_EOD) != 0 ) break;
+
         } else { /* if ( ... ) */
             rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() skipping finished request (%d,%d,%s,concat:%d\n",
                      nextfile->filereq.tape_fseq,nextfile->filereq.disk_fseq,

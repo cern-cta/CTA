@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.71 $ $Date: 2000/09/18 16:10:53 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.72 $ $Date: 2000/09/19 16:29:14 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1322,7 +1322,6 @@ void *tapeIOthread(void *arg) {
                         databufs[indxp]->flag = BUFFER_FULL;
                         (void)Cthread_cond_broadcast_ext(databufs[indxp]->lock);
                         (void)Cthread_mutex_unlock_ext(databufs[indxp]->lock);
-                        (void)rtcpd_SetProcError(severity);
                         break;
                     } else if ( nextfile->next->next == nexttape->file &&
                                 ((nextfile->filereq.concat & NOCONCAT_TO_EOD) == 0 || 
