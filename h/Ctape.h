@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.29 2000/07/04 05:15:55 baud Exp $
+ * $Id: Ctape.h,v 1.30 2000/08/08 12:01:07 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.29 $ $Date: 2000/07/04 05:15:55 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.30 $ $Date: 2000/08/08 12:01:07 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -57,6 +57,7 @@
 #define D25G	0xF
 #define D35G	0x10
 #define D50G	0x11
+#define D40G	0x12
 #define IDRC	0x100
 #define	D38KC	(D38000 | IDRC)
 #define	D38KDC	(D38KD | IDRC)
@@ -67,6 +68,7 @@
 #define D20GC	(D20G | IDRC)
 #define D25GC	(D25G | IDRC)
 #define D35GC	(D35G | IDRC)
+#define D40GC	(D40G | IDRC)
 #define D50GC	(D50G | IDRC)
 
 #ifdef NOTRACE
