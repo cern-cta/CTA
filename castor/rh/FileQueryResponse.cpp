@@ -40,14 +40,14 @@
 castor::rh::FileQueryResponse::FileQueryResponse() throw() :
   Response(),
   m_fileName(""),
-  m_fileId(),
+  m_fileId(0),
   m_status(0),
-  m_size(),
+  m_size(0),
   m_poolName(""),
-  m_creationTime(),
-  m_accessTime(),
+  m_creationTime(0),
+  m_accessTime(0),
   m_nbAccesses(0),
-  m_id() {
+  m_id(0) {
 };
 
 //------------------------------------------------------------------------------

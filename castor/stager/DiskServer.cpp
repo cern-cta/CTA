@@ -40,7 +40,7 @@
 //------------------------------------------------------------------------------
 castor::stager::DiskServer::DiskServer() throw() :
   m_name(""),
-  m_id(),
+  m_id(0),
   m_status(DiskServerStatusCode(0)) {
 };
 

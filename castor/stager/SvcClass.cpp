@@ -43,8 +43,8 @@ castor::stager::SvcClass::SvcClass() throw() :
   m_policy(""),
   m_nbDrives(0),
   m_name(""),
-  m_defaultFileSize(),
-  m_id() {
+  m_defaultFileSize(0),
+  m_id(0) {
 };
 
 //------------------------------------------------------------------------------

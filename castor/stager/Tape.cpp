@@ -47,7 +47,7 @@ castor::stager::Tape::Tape() throw() :
   m_errorCode(0),
   m_severity(0),
   m_vwAddress(""),
-  m_id(),
+  m_id(0),
   m_stream(0),
   m_status(TapeStatusCodes(0)) {
 };

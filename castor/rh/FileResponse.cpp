@@ -41,10 +41,10 @@ castor::rh::FileResponse::FileResponse() throw() :
   Response(),
   m_status(0),
   m_castorFileName(""),
-  m_fileSize(),
-  m_fileId(),
+  m_fileSize(0),
+  m_fileId(0),
   m_subreqId(""),
-  m_id() {
+  m_id(0) {
 };
 
 //------------------------------------------------------------------------------

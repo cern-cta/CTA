@@ -40,7 +40,7 @@
 castor::rh::AbortResponse::AbortResponse() throw() :
   Response(),
   m_aborted(false),
-  m_id() {
+  m_id(0) {
 };
 
 //------------------------------------------------------------------------------

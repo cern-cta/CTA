@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: UpdateRepRequest.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/11/30 11:28:00 $ $Author: sponcec3 $
+ * @(#)$RCSfile: UpdateRepRequest.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/12/01 10:41:16 $ $Author: sponcec3 $
  *
  * 
  *
@@ -40,7 +40,7 @@
 //------------------------------------------------------------------------------
 castor::stager::UpdateRepRequest::UpdateRepRequest() throw() :
   Request(),
-  m_id(),
+  m_id(0),
   m_object(0),
   m_address(0) {
 };

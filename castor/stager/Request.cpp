@@ -37,7 +37,7 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::stager::Request::Request() throw() :
-  m_flags(),
+  m_flags(0),
   m_userName(""),
   m_euid(0),
   m_egid(0),

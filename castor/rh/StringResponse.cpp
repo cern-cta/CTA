@@ -39,7 +39,7 @@
 castor::rh::StringResponse::StringResponse() throw() :
   Response(),
   m_content(""),
-  m_id() {
+  m_id(0) {
 };
 
 //------------------------------------------------------------------------------

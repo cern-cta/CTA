@@ -40,7 +40,7 @@
 castor::stager::StageRequestQueryRequest::StageRequestQueryRequest() throw() :
   QryRequest(),
   m_parameter(""),
-  m_id(),
+  m_id(0),
   m_status(RequestQueryType(0)) {
 };
 

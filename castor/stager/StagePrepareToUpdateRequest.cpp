@@ -39,7 +39,7 @@
 //------------------------------------------------------------------------------
 castor::stager::StagePrepareToUpdateRequest::StagePrepareToUpdateRequest() throw() :
   FileRequest(),
-  m_id() {
+  m_id(0) {
 };
 
 //------------------------------------------------------------------------------

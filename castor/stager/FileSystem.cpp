@@ -41,11 +41,11 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::stager::FileSystem::FileSystem() throw() :
-  m_free(),
+  m_free(0),
   m_weight(0.0),
   m_fsDeviation(0.0),
   m_mountPoint(""),
-  m_id(),
+  m_id(0),
   m_diskPool(0),
   m_diskserver(0),
   m_status(FileSystemStatusCodes(0)) {

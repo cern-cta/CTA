@@ -42,10 +42,10 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::stager::CastorFile::CastorFile() throw() :
-  m_fileId(),
+  m_fileId(0),
   m_nsHost(""),
-  m_fileSize(),
-  m_id(),
+  m_fileSize(0),
+  m_id(0),
   m_svcClass(0),
   m_fileClass(0) {
 };

@@ -43,7 +43,7 @@
 castor::stager::DiskCopy::DiskCopy() throw() :
   m_path(""),
   m_diskcopyId(""),
-  m_id(),
+  m_id(0),
   m_fileSystem(0),
   m_castorFile(0),
   m_status(DiskCopyStatusCodes(0)) {

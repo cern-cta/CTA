@@ -41,9 +41,9 @@ castor::rh::RequestQueryResponse::RequestQueryResponse() throw() :
   Response(),
   m_reqId(""),
   m_status(0),
-  m_creationTime(),
-  m_modificationTime(),
-  m_id() {
+  m_creationTime(0),
+  m_modificationTime(0),
+  m_id(0) {
 };
 
 //------------------------------------------------------------------------------

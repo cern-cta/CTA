@@ -40,7 +40,7 @@
 castor::rh::FindReqResponse::FindReqResponse() throw() :
   Response(),
   m_reqId(""),
-  m_id() {
+  m_id(0) {
 };
 
 //------------------------------------------------------------------------------

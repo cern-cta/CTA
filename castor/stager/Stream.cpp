@@ -41,8 +41,8 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::stager::Stream::Stream() throw() :
-  m_initialSizeToTransfer(),
-  m_id(),
+  m_initialSizeToTransfer(0),
+  m_id(0),
   m_tape(0),
   m_tapePool(0),
   m_status(StreamStatusCodes(0)) {

@@ -42,7 +42,7 @@
 //------------------------------------------------------------------------------
 castor::stager::TapeCopy::TapeCopy() throw() :
   m_copyNb(0),
-  m_id(),
+  m_id(0),
   m_castorFile(0),
   m_status(TapeCopyStatusCodes(0)) {
 };
