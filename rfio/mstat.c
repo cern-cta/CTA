@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.16 2001/11/13 17:10:22 jdurand Exp $
+ * $Id: mstat.c,v 1.17 2001/11/13 17:22:18 jdurand Exp $
  */
 
 
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.16 $ $Date: 2001/11/13 17:10:22 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.17 $ $Date: 2001/11/13 17:22:18 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -410,6 +410,8 @@ static int rfio_mstat_allocentry(hostname,Tid,s,sec)
   pid_t pid = getpid();
 #endif
 
+  INIT_TRACE("RFIO_TRACE");
+
   if (Cmutex_lock((void *) mstat_tab,-1) != 0) {
     TRACE(3,"rfio","rfio_mstat_allocentry : Cmutex_lock(mstat_tab,-1) error No %d (%s)", errno, strerror(errno));
     END_TRACE();
@@ -465,6 +467,8 @@ static int rfio_mstat_findentry(hostname,Tid)
 #else
   pid_t pid = getpid();
 #endif
+
+  INIT_TRACE("RFIO_TRACE");
 
   if (Cmutex_lock((void *) mstat_tab,-1) != 0) {
     TRACE(3,"rfio","rfio_mstat_findentry : Cmutex_lock(mstat_tab,-1) error No %d (%s)", errno, strerror(errno));
