@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/19 16:37:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/05/25 16:26:54 $ $Author: sponcec3 $
  *
  *
  *
@@ -81,7 +81,7 @@ namespace castor {
      * @param object the object to deal with
      * @param autocommit whether the changes to the database
      * should be commited or not. Default is yes.
-     * @exception Exception throws an Exception in cas of error
+     * @exception Exception throws an Exception in case of error
      */
     void createRep(IAddress* address,
                    IObject* object,
@@ -98,7 +98,7 @@ namespace castor {
      * of circular dependencies
      * @param autocommit whether the changes to the database
      * should be commited or not
-     * @exception Exception throws an Exception in cas of error
+     * @exception Exception throws an Exception in case of error
      */
     void updateRep(IAddress* address,
                    IObject* object,
@@ -126,9 +126,21 @@ namespace castor {
      * @return the C++ object created from its reprensentation
      * or 0 if unsuccessful. Note that the caller is responsible
      * for the deallocation of the newly created object
-     * @exception Exception throws an Exception in cas of error
+     * @exception Exception throws an Exception in case of error
      */
     IObject* createObj(IAddress* address)
+      throw (castor::exception::Exception);
+
+    /**
+     * Updates C++ object from its foreign representation.
+     * @param address where to find the object
+     * @param object the object to deal with
+     * @param alreadyDone the set of objects already updated.
+     * This is needed to avoid looping in case of circular dependencies
+     * @exception Exception throws an Exception in cas of error
+     */
+    virtual void updateObj(castor::IAddress* address,
+                           castor::IObject* object)
       throw (castor::exception::Exception);
 
   private:

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ICnvSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ICnvSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/25 16:26:54 $ $Author: sponcec3 $
  *
  *
  *
@@ -75,7 +75,7 @@ namespace castor {
      * of circular dependencies
      * @param autocommit whether the changes to the database
      * should be commited or not
-     * @exception Exception throws an Exception in cas of error
+     * @exception Exception throws an Exception in case of error
      */
     virtual void createRep(IAddress* address,
                            IObject* object,
@@ -93,7 +93,7 @@ namespace castor {
      * of circular dependencies
      * @param autocommit whether the changes to the database
      * should be commited or not
-     * @exception Exception throws an Exception in cas of error
+     * @exception Exception throws an Exception in case of error
      */
     virtual void updateRep(IAddress* address,
                            IObject* object,
@@ -111,7 +111,7 @@ namespace castor {
      * of circular dependencies
      * @param autocommit whether the changes to the database
      * should be commited or not
-     * @exception Exception throws an Exception in cas of error
+     * @exception Exception throws an Exception in case of error
      */
     virtual void deleteRep(castor::IAddress* address,
                            castor::IObject* object,
@@ -130,10 +130,36 @@ namespace castor {
      * @return the C++ object created from its reprensentation
      * or 0 if unsuccessful. Note that the caller is responsible
      * for the deallocation of the newly created object
-     * @exception Exception throws an Exception in cas of error
+     * @exception Exception throws an Exception in case of error
      */
     virtual IObject* createObj (IAddress* address,
                                 ObjectCatalog& newlyCreated)
+      throw (castor::exception::Exception) = 0;
+
+    /**
+     * Updates C++ object from its foreign representation.
+     * @param object the object to deal with
+     * @param alreadyDone the set of objects already updated.
+     * This is needed to avoid looping in case of circular dependencies
+     * @exception Exception throws an Exception in case of error
+     */
+    virtual void updateObj(IObject* object,
+                           ObjectCatalog& alreadyDone)
+      throw (castor::exception::Exception) = 0;
+
+    /**
+     * Deletes foreign representation of a C++ Object without
+     * needing the object. The cost of this method is higher
+     * than the cost of deleteRep since it needs to call
+     * createObj first
+     * @param address where the representation of
+     * the object is stored
+     * @param autocommit whether the changes to the database
+     * should be commited or not
+     * @exception Exception throws an Exception in cas of error
+     */
+    virtual void deleteRepByAddress (IAddress* address,
+                                     bool autocommit = true)
       throw (castor::exception::Exception) = 0;
 
   };

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/25 16:26:54 $ $Author: sponcec3 $
  *
  *
  *
@@ -108,6 +108,7 @@ void castor::Services::createRep(castor::IAddress* address,
                                  castor::IObject* object,
                                  bool autocommit)
   throw (castor::exception::Exception) {
+  // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   ObjectSet alreadyDone;
   cnvSvc->createRep(address, object, alreadyDone, autocommit);
@@ -120,6 +121,7 @@ void castor::Services::updateRep(castor::IAddress* address,
                                  castor::IObject* object,
                                  bool autocommit)
   throw (castor::exception::Exception) {
+  // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   ObjectSet alreadyDone;
   cnvSvc->updateRep(address, object, alreadyDone, autocommit);
@@ -132,6 +134,7 @@ void castor::Services::deleteRep(castor::IAddress* address,
                                  castor::IObject* object,
                                  bool autocommit)
   throw (castor::exception::Exception) {
+  // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   ObjectSet alreadyDone;
   cnvSvc->deleteRep(address, object, alreadyDone, autocommit);
@@ -166,13 +169,28 @@ castor::Services::cnvSvcFromAddress(castor::IAddress* address) {
 // -----------------------------------------------------------------------
 castor::IObject* castor::Services::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
+  // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   ObjectCatalog newlyCreated;
   return cnvSvc->createObj(address, newlyCreated);
 }
 
+
+//------------------------------------------------------------------------------
+// updateObj
+//------------------------------------------------------------------------------
+void castor::Services::updateObj(castor::IAddress* address,
+                                 castor::IObject* object)
+  throw (castor::exception::Exception) {
+  // Always returns a valid cnvSvc or throws an exception
+  castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
+  ObjectCatalog newlyCreated;
+  cnvSvc->updateObj(object, newlyCreated);
+}
+                       
+
 // -----------------------------------------------------------------------
-// createObj
+// removeService
 // -----------------------------------------------------------------------
 void castor::Services::removeService(const std::string name) {
   m_services.erase(name);
