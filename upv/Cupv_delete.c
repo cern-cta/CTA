@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_delete.c,v $ $Revision: 1.5 $ $Date: 2002/06/10 16:42:35 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_delete.c,v $ $Revision: 1.6 $ $Date: 2003/11/04 14:24:43 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
  
 
@@ -69,7 +69,10 @@ Cupv_delete(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt)
 		return (-1);
 	}
  
-
+#ifndef HAVE_CUPV_DAEMON
+	serrno = EPERM;
+	return(-1);
+#else
 	/* Build request header */
 	sbp = sendbuf;
 	marshall_LONG (sbp, CUPV_MAGIC);
@@ -92,6 +95,7 @@ Cupv_delete(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt)
 	    serrno == ECUPVNACT)
 		sleep (RETRYI);
 	return (c);
+#endif
 }
 
 

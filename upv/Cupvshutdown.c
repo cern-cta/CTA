@@ -65,6 +65,10 @@ char **argv;
                 exit (USERR);
         }
  
+#ifndef HAVE_CUPV_DAEMON
+	fprintf(stderr,"Permission denied\n");
+	exit(USERR);
+#else
 	/* Build request header */
 
 	sbp = sendbuf;
@@ -101,7 +105,8 @@ char **argv;
 #if defined(_WIN32)
       WSACleanup();
 #endif
-	exit (0);
+#endif
+	  exit (0);
 }
 
 

@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_check.c,v $ $Revision: 1.6 $ $Date: 2002/06/10 16:42:35 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_check.c,v $ $Revision: 1.7 $ $Date: 2003/11/04 14:24:42 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
  
 
@@ -82,8 +82,12 @@ Cupv_check(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt, int
 	    return(0);
 	  }
 	} /* In other cases, a message is sent to the server for validation */
- 
-	/* Build request header */
+
+#ifndef HAVE_CUPV_DAEMON
+	serrno = EPERM;
+	return(-1);
+#else
+ 	/* Build request header */
 	sbp = sendbuf;
 	marshall_LONG (sbp, CUPV_MAGIC);
 	marshall_LONG (sbp, CUPV_CHECK);
@@ -117,6 +121,7 @@ Cupv_check(uid_t priv_uid, gid_t priv_gid, const char *src, const char *tgt, int
 	       serrno == ECUPVNACT)
 	  sleep (RETRYI);
 	return (c);
+#endif
 }
 
 
