@@ -4,17 +4,17 @@
  */
 
 #ifndef lint
-static char sccsid[] = "%W% %G% CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.2 $ $Date: 1999/09/20 09:59:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      gettperror - get drive status after I/O error and
 			build error msg from sense key or sense bytes */
-/*	return	ETBLANK	216	blank tape
- *		ETCOMPA	217	compatibility problem
- *		ETHWERR	218	device malfunction
- *		ETPARIT	219	parity error
- *		ETUNREC	220	unrecoverable media error
- *		ETNOSNS	221	no sense
+/*	return	ETBLANK		blank tape
+ *		ETCOMPA		compatibility problem
+ *		ETHWERR		device malfunction
+ *		ETPARIT		parity error
+ *		ETUNREC		unrecoverable media error
+ *		ETNOSNS		no sense
  */
 #include <errno.h>
 #include <sys/types.h>
