@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.19 2000/02/15 16:51:28 baud Exp $
+ * $Id: Ctape.h,v 1.20 2000/02/21 14:27:33 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.19 $ $Date: 2000/02/15 16:51:28 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.20 $ $Date: 2000/02/21 14:27:33 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -129,6 +129,7 @@
 
 			/* tape daemon reply types */
 
+#define	MSG_OUT		0
 #define	MSG_ERR		1
 #define	MSG_DATA	2
 #define	TAPERC		3
