@@ -33,6 +33,29 @@
                     ); \
     serrno = _save_serrno;}
 
+#define LOG_DBCALL_ERR(func,dbMsg) { \
+    char *_dbErr = NULL; \
+    int _save_serrno = serrno; \
+    (void)dlf_write( \
+                    childUuid, \
+                    DLF_LVL_ERROR, \
+                    RTCPCLD_MSG_DBSVC, \
+                    (struct Cns_fileid *)NULL, \
+                    RTCPCLD_NB_PARAMS+3, \
+                    "SYSCALL", \
+                    DLF_MSG_PARAM_STR, \
+                    func, \
+                    "ERROR_STRING", \
+                    DLF_MSG_PARAM_STR, \
+                    sstrerror(serrno), \
+                    "DB_ERROR", \
+                    DLF_MSG_PARAM_STR, \
+                    (_dbErr = rtcpcld_fixStr(dbMsg)), \
+                    RTCPCLD_LOG_WHERE \
+                    ); \
+    if ( _dbErr != NULL ) free(_dbErr); \
+    serrno = _save_serrno;}
+
 
 #define ID_TYPE u_signed64
 enum NotificationState {
