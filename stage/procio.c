@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.102 2001/03/07 18:36:01 jdurand Exp $
+ * $Id: procio.c,v 1.103 2001/03/08 08:51:52 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.102 $ $Date: 2001/03/07 18:36:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.103 $ $Date: 2001/03/08 08:51:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2756,7 +2756,7 @@ void procputreq(req_type, req_data, clienthost)
 						/* stcx is a dummy req which inherits the uid/gid of the caller. */
 						/* We use it at the first round to check that requestor's uid/gid is compatible */
 						/* the uid/gid under which migration will effectively run might be different (case of stage:st) */
-						if (euid_egid(&euid,&egid,tppool,NULL,found_stcp,(found == 1) ? &stcx : NULL,&tppool,0) != 0) {
+						if (euid_egid(&euid,&egid,tppool,NULL,found_stcp,(i == 0) ? &stcx : NULL,&tppool,0) != 0) {
 							c = USERR;
 							goto reply;
 						}
