@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.2 2001/02/05 11:22:52 jdurand Exp $
+ * $Id: stage_constants.h,v 1.3 2001/03/02 18:19:07 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -30,5 +30,8 @@
 #define ISSTAGEDSYERR 0x10000   /* Internal error while scanning catalog : matched twice in catalog and cannot delete one of them */
 #define	WAITING_MIGR  0x20000   /* file being migrated and waiting confirmation (e.g. the real migration request) */
 #define	WAITING_NS    0x40000   /* file waiting for an entry in the HSM name server */
+
+#define	MSG_OUT		0
+#define	MSG_ERR		1
 
 #endif /* __stage_constants_h */

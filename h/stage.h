@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.46 2001/02/14 15:26:44 jdurand Exp $
+ * $Id: stage.h,v 1.47 2001/03/02 18:19:06 jdurand Exp $
  */
 
 /*
@@ -30,22 +30,17 @@
 /* This macro returns TRUE is the host is an hpss one */
 #define ISHPSSHOST(xfile) (strstr(xfile,"hpss") == xfile )
 
-/* ISSTAGEIN  macro returns TRUE if it is a STAGEIN  request (0x001) */
-/* ISSTAGEOUT macro returns TRUE if it is a STAGEOUT request (0x010) */
-/* ISSTAGEWRT macro returns TRUE if it is a STAGEWRT request (0x011) */
-/* ISSTAGEPUT macro returns TRUE if it is a STAGEPUT request (0x100) */
+/* ISSTAGEIN    macro returns TRUE if it is a STAGEIN    request */
+/* ISSTAGEOUT   macro returns TRUE if it is a STAGEOUT   request */
+/* ISSTAGEWRT   macro returns TRUE if it is a STAGEWRT   request */
+/* ISSTAGEPUT   macro returns TRUE if it is a STAGEPUT   request */
+/* ISSTAGEALLOC macro returns TRUE if it is a STAGEALLOC request */
 
-/* STAGEIN bits can be matched by STAGEIN and STAGEWRT */
-#define ISSTAGEIN(stcp) ((stcp->status & 0xF) == STAGEIN)
-
-/* STAGEOUT bits can be matched by STAGEOUT and STAGEWRT */
-#define ISSTAGEOUT(stcp) ((stcp->status & 0xF) == STAGEOUT)
-
-/* STAGEWRT bits can be matched by nothing else but STAGEWRT */
-#define ISSTAGEWRT(stcp) ((stcp->status & 0xF) == STAGEWRT)
-
-/* STAGEPUT bits can be matched by nothing else but STAGEPUT) */
-#define ISSTAGEPUT(stcp) ((stcp->status & 0xF) == STAGEPUT)
+#define ISSTAGEIN(stcp)    ((stcp->status & 0xF) == STAGEIN)
+#define ISSTAGEOUT(stcp)   ((stcp->status & 0xF) == STAGEOUT)
+#define ISSTAGEWRT(stcp)   ((stcp->status & 0xF) == STAGEWRT)
+#define ISSTAGEPUT(stcp)   ((stcp->status & 0xF) == STAGEPUT)
+#define ISSTAGEALLOC(stcp) ((stcp->status & 0xF) == STAGEALLOC)
 
 /* ISCASTORMIG macro returns TRUE if it is a CASTOR HSM file candidate for/beeing, migration/migrated */
 /* ISCASTORBEINGMIG macro returns TRUE if it is a CASTOR HSM file beeing migrated */
@@ -98,6 +93,7 @@
 #define CHECKI	10	/* max interval to check for work to be done */
 #define	RETRYI	60
 #define STGMAGIC    0x13140701
+#define STGMAGIC2   0x13140702
 #define STG	"stage"	/* service name in /etc/services */
 
 #define SHIFT_ESTNACT 198 /* Old SHIFT value when nomorestage - remapped in send2stgd */
@@ -130,20 +126,20 @@
 
 			/* stage daemon reply types */
 
-#define	MSG_OUT		0
-#define	MSG_ERR		1
 #define	RTCOPY_OUT	2
 #define	STAGERC		3
 #define	SYMLINK		4
 #define	RMSYMLINK	5
 #define API_STCP_OUT	6
 #define API_STPP_OUT	7
-#define UNIQUEID	8
+#define UNIQUEID	8                /* First version of the API - magic = STGMAGIC - stgdaemon giving back a uniqueid */
+#define UNIQUEID2	9                /* Second version of the API - magic = STGMAGIC2 - stgdaemon receiving a uniqueid */
 
 			/* -C, -E and -T options */
 
 #include "Ctape_constants.h"
 #include "rtcp_constants.h"
+#include "stage_constants.h"
 
 			/* stage daemon messages */
 
@@ -229,7 +225,7 @@
 #define STG105  "STG105 - Internal error in %s : %s\n"
 #define STG106  "STG106 - Internal error in %s for %s: %s\n"
 #define	STG107	"STG107 - %s:%s segment %d staged by (%s,%s), server %s  unit %s  ifce %s  size %s  wtim %d  ttim %d rc %d\n"
-#define	STG108	"STG108 - %s:%s staged using %d segments by (%s,%s), size %s rc %d\n"
+#define	STG108	"STG108 - %s:%s staged using %d segments by (%s,%s), actual_size %s size %d rc %d\n"
 #define	STG109	"STG109 - New fileclass %s@%s (classid %d), internal index %d, tppools=%s\n"
 #define STG110  "STG110 - Internal error in %s for pool %s, class %s@%s: %s\n"
 #define STG111  "STG111 - Last used tape pool \"%s\" unknown to fileclass %s@%s (classid %d)\n"
@@ -256,11 +252,12 @@
 #define STG132  "STG132 - %s fileclass : %s\n"
 #define STG133  "STG133 - %s : Fileclass %s@%s (classid %d) specified retention period %d v.s. %d seconds lifetime\n"
 #define STG134  "STG134 - Tape %s is not accessible (%s status)\n"
-#define STG135  "STG135 - Fileclass %s@%s (classid %d) : specifies up to %d stream - Created a new one of size %s on tape pool %s\n"
+#define STG135  "STG135 - Stream No %d : %d HSM files - %s bytes - tape pool %s\n"
 #define STG136  "STG136 - %s (copy number No %d) claims that start segment No %d is ok, while its segment No %d (same copy number) is NOT - Please contact your admin - copy number No %d declared non valid for recall\n"
 #define STG137  "STG137 - %s (copy number No %d) : segment No %d not taken into account because of segment No %d - Please contact your admin\n"
 #define STG138  "STG138 - Fileclass %s@%s (classid %d) : specifies %d nbcopies and %d nbtppools - only both zero or both non-zero is legal - invalid fileclass - Please contact your admin\n"
 #define STG139  "STG139 - %s : fileclass %s@%s (classid %d) specifies %d nbcopies and %d nbtppools - this file will not be migrated\n"
+#define	STG140	"STG140 - %s : could not find corresponding entry in catalog\n"
 
 			/* stage daemon return codes and states */
 
@@ -277,6 +274,11 @@
 #define	LIMBYSZ	197	/* limited by size */
 #define	ENOUGHF	199	/* enough free space */
 
+			/* stage daemon stream modes */
+
+#define WRITE_MODE 1
+#define READ_MODE -1
+
 			/* stage daemon internal tables */
 
 #include "stage_struct.h"
@@ -290,6 +292,8 @@ struct waitf {
 	char	upath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];
 };
 
+#define LAST_RWCOUNTERSFS_TPPOS 1
+#define LAST_RWCOUNTERSFS_FILCP 2
 struct waitq {
 	struct waitq *prev;
 	struct waitq *next;
@@ -303,7 +307,7 @@ struct waitq {
 	uid_t	rtcp_uid;		/* uid or Guid */
 	gid_t	rtcp_gid;
 	int	clientpid;
-	u_signed64 uniqueid; /* Unique IDentifier when called from the API */
+	u_signed64 uniqueid; /* Unique IDentifier given by stgdaemon (magic = STGMAGIC) or by API (CthreadID, magic = STGMAGIC2) */
 	int	copytape;
 	int	Pflag;		/* stagealloc -P option */
 	int	Upluspath;
@@ -335,6 +339,7 @@ struct waitq {
 	int use_subreqid; /* Says if we allow RTCOPY to do asynchroneous callback */
 	int *save_subreqid; /* Array saying relation between subreqid and all wf at the beginning */
 	int save_nbsubreqid; /* Save original number of entries */
+	int last_rwcounterfs_vs_R; /* Last -R option value that triggered the rwcountersfs call */
 };
 
 struct pool {
@@ -372,7 +377,9 @@ struct fileclass {
 	char last_tppool_used[CA_MAXPOOLNAMELEN+1];
 	int  flag;                                      /* Flag preventing us to double count next member */
 	int  streams;                                   /* Number of streams using this fileclass while migrating */
+	int  nfree_stream;                              /* Nb of expanded streams while migrating */
 	int being_migr;                                 /* Number of files being migrated in this fileclass */
+	int  ifree_stream;                              /* Internal counter used to dispatch to new streams */
 };
 
 struct migrator {
@@ -391,6 +398,8 @@ struct pool_element {
 	char	dirpath[MAXPATH];
 	u_signed64	capacity;	/* filesystem capacity in bytes */
 	u_signed64	free;		/* free space in bytes */
+	int nbreadaccess;       /* Number of known accesses in read mode */
+	int nbwriteaccess;      /* Number of known accesses in write mode */
 };
 
 struct sorted_ent {
