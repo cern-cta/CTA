@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.18 2000/05/29 07:56:30 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.19 2000/06/06 10:13:12 jdurand Exp $
  */
 
 /*
@@ -18,7 +18,7 @@
 #include "Cstage_ifce.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.18 $ $Date: 2000/05/29 07:56:30 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.19 $ $Date: 2000/06/06 10:13:12 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
@@ -717,7 +717,7 @@ int DLL_DECL Stgdb_upd_stgpath(dbfd,stpp,file,line)
 						 __FILE__,__LINE__,stpp->reqid,file,line);
 	}
 
-	if (Cdb_keyfind(&(dbfd->Cdb_db), "stgcat_link","stgcat_link_per_reqid","w",
+	if (Cdb_keyfind(&(dbfd->Cdb_db), "stgcat_link","stgcat_link_per_upath","w",
 									(void *) &link,&Cdb_offset) != 0) {
 		stglogit("stgdb_upd_stgpath",
 						 "### Warning[%s:%d] : unknown record to update for reqid %d (%s) called at %s:%d\n",
@@ -906,7 +906,7 @@ int DLL_DECL Stgdb_del_stgpath(dbfd,stpp,file,line)
 						 __FILE__,__LINE__,stpp->reqid,file,line);
 	}
 
-	if (Cdb_keyfind(&(dbfd->Cdb_db), "stgcat_link","stgcat_link_per_reqid","w",
+	if (Cdb_keyfind(&(dbfd->Cdb_db), "stgcat_link","stgcat_link_per_upath","w",
 									(void *) &link,&Cdb_offset) != 0) {
 		stglogit("stgdb_del_stgpath",
 						 "### Warning[%s:%d] : unknown record to delete for reqid %d called at %s:%d\n",

@@ -1,5 +1,5 @@
 /*
-	$Id: check_Cdbentry.c,v 1.7 2000/05/29 07:56:24 jdurand Exp $
+	$Id: check_Cdbentry.c,v 1.8 2000/06/06 10:13:11 jdurand Exp $
 */
 
 #include "Cstage_db.h"
@@ -107,7 +107,7 @@ int main(argc,argv)
 		"stgcat_hpss_per_reqid",
 		"stgcat_hsm_per_reqid",
 		"stgcat_alloc_per_reqid",
-		"stgcat_link_per_reqid",
+		"stgcat_link_per_upath",
 	};
 	int ndb = 6;
 	int idb;
@@ -125,7 +125,6 @@ int main(argc,argv)
 	int rc;
 	int iargv;
 	int stgpath_mode = 0;
-	int forced_exit = 0;
 
 	while ((c = getopt(argc,argv,"Chu:p:")) != EOF) {
 		switch (c) {
@@ -171,25 +170,14 @@ int main(argc,argv)
 	}
 
 	/* Check the arguments */
-	if (stgpath_mode != 0) {
-		if ((argc - optind) != 2) {
-			printf("### -C option requires exactly two arguments : reqid and upath [optind=%d, argc=%d]\n",optind,argc);
-			check_Cdbentry_usage();
-			return(EXIT_FAILURE);
-		}
-		if ((reqid = atoi(argv[optind])) <= 0) {
-			printf("### reqid is <= 0\n");
-			check_Cdbentry_usage();
-			return(EXIT_FAILURE);
-		}
-	} else {
-		for (iargv = optind; iargv < argc; iargv++) {
-			if ((reqid = atoi(argv[iargv])) <= 0) {
-				printf("### one of the argument is <= 0\n");
-				check_Cdbentry_usage();
-				return(EXIT_FAILURE);
-			}
-		}
+	if (stgpath_mode == 0) {
+      for (iargv = optind; iargv < argc; iargv++) {
+        if ((reqid = atoi(argv[iargv])) <= 0) {
+          printf("### one of the argument is <= 0\n");
+          check_Cdbentry_usage();
+          return(EXIT_FAILURE);
+        }
+      }
 	}
 
 	/* We open a connection to Cdb */
@@ -232,8 +220,13 @@ int main(argc,argv)
 	/* Loop on the arguments */
 	for (iargv = optind; iargv < argc; iargv++) {
 		int global_find_status = 0;
+        char *upath;
 
-		reqid = atoi(argv[iargv]);
+        if (stgpath_mode == 0) {
+          reqid = atoi(argv[iargv]);
+        } else {
+          upath = argv[iargv];
+        }
 
 		/* Search for the corresponding record in all databases */
 		for (idb = 0; idb < ndb; idb++) {
@@ -316,38 +309,26 @@ int main(argc,argv)
 				}
 				break;
 			case 5:
+				if (stgpath_mode == 0) {
+					break;
+				}
 				memset(&link,0,sizeof(struct stgcat_link));
-				if (stgpath_mode != 0) {
-					forced_exit = 1;
-					link.reqid = reqid;
-					strcpy(link.upath,argv[optind + 1]);
-					if ((find_status = Cdb_keyfind_fetch(&Cdb_db,db[idb],key[idb],NULL,&link,&found_offset,&link)) == 0) {
-						Cdb2stpp(&stpp,&link);
-						++global_find_status;
-						printf("--> Record [%d,%s] found at offset %s in database \"%s\":\n",
-									 link.reqid, link.upath, u64tostr((u_signed64) found_offset, tmpbuf, 0),
-									 db[idb]);
-						stppprint(&stpp);
-						break;
-					}
-				} else {
-					link.reqid = reqid;
-					if ((find_status = Cdb_pkeyfind_fetch(&Cdb_db,db[idb],key[idb],1,NULL,&link,&found_offset,&link)) == 0) {
-						Cdb2stpp(&stpp,&link);
-						++global_find_status;
-						printf("--> Reqid %d found at offset %s in database \"%s\":\n",
-									 reqid, u64tostr((u_signed64) found_offset, tmpbuf, 0),
-									 db[idb]);
-						stppprint(&stpp);
-						while (Cdb_pkeynext_fetch(&Cdb_db,db[idb],key[idb],1,NULL,&found_offset,&link) == 0) {
-							Cdb2stpp(&stpp,&link);
-							++global_find_status;
-							printf("--> Reqid %d found again at offset %s in database \"%s\":\n",
-										 reqid, u64tostr((u_signed64) found_offset, tmpbuf, 0),
-										 db[idb]);
-							stppprint(&stpp);
-						}
-					}
+                strcpy(link.upath,upath);
+                if ((find_status = Cdb_keyfind_fetch(&Cdb_db,db[idb],key[idb],NULL,&link,&found_offset,&link)) == 0) {
+                  Cdb2stpp(&stpp,&link);
+                  ++global_find_status;
+                  printf("--> Upath %s (reqid=%d) found at offset %s in database \"%s\":\n",
+                         upath, link.reqid, u64tostr((u_signed64) found_offset, tmpbuf, 0),
+                         db[idb]);
+                  stppprint(&stpp);
+                  while (Cdb_keynext_fetch(&Cdb_db,db[idb],key[idb],NULL,&found_offset,&link) == 0) {
+                    Cdb2stpp(&stpp,&link);
+                    ++global_find_status;
+                    printf("--> Upath %s (reqid=%d) found again at offset %s in database \"%s\":\n",
+                           upath, link.reqid, u64tostr((u_signed64) found_offset, tmpbuf, 0),
+                           db[idb]);
+                    stppprint(&stpp);
+                  }
 				}
 				break;
 			default:
@@ -355,25 +336,27 @@ int main(argc,argv)
 				rc = EXIT_FAILURE;
 				goto check_Cdbentry_return;
 			}
-			if (forced_exit != 0) {
-				break;
-			}
 		}
 		if (global_find_status == 0) {
 			if (stgpath_mode != 0) {
-				printf("--> Record [%d,%s] not found\n",reqid,argv[optind+1]);
+				printf("--> Upath %s not found\n",upath);
 			} else {
 				printf("--> Reqid %d not found\n",reqid);
 			}
 		} else {
-			printf("==> Reqid %d found %d time%s\n",
-						 reqid,
-						 global_find_status,
-						 global_find_status > 1 ? "s" : ""
-						 );
-		}
-		if (forced_exit != 0) {
-			break;
+          if (stgpath_mode != 0) {
+            printf("==> Upath %s found %d time%s\n",
+                   upath,
+                   global_find_status,
+                   global_find_status > 1 ? "s" : ""
+                   );
+          } else {
+            printf("==> Reqid %d found %d time%s\n",
+                   reqid,
+                   global_find_status,
+                   global_find_status > 1 ? "s" : ""
+                   );
+          }
 		}
 	}
 
@@ -394,11 +377,11 @@ void check_Cdbentry_usage() {
 				 "Usage : check_Cdbentry [-h] [-p password] [-u username] reqid [reqid [...]]\n"
 				 "\n"
 				 "or\n"
-				 "        check_Cdbentry [-C] [-h] [-p password] [-u username] reqid upath\n"
+				 "        check_Cdbentry [-C] [-h] [-p password] [-u username] upath [upath [...]]\n"
 				 "\n"
 				 "  This program will load entries with reqid (>0) from Cdb and print in human format\n"
 				 "\n"
-				 "  -C                Search for a full entry in stgpath-like database\n"
+				 "  -C                Search for an entry in stgpath-like database\n"
 				 "  -h                Print this help and exit\n"
 				 "  -u                Cdb username\n"
 				 "  -p                Cdb password\n"

@@ -1,5 +1,5 @@
 /*
- * $Id: stgpath_Cdbtest.c,v 1.4 2000/05/10 17:34:19 jdurand Exp $
+ * $Id: stgpath_Cdbtest.c,v 1.5 2000/06/06 10:13:12 jdurand Exp $
  */
 
 /* ============== */
@@ -47,6 +47,8 @@ int _logfile_readline _PROTO((FILE *, char **, size_t *));
 /* ================ */
 int reqid;
 
+void _stgpath_Cdbtest_usage _PROTO(());
+
 int main(argc,argv)
 		 int argc;
 		 char **argv;
@@ -64,21 +66,44 @@ int main(argc,argv)
 	char *p;
 	int ip;
 	char *found;
+    int c;
+    extern char *optarg;
+    extern int optind;
+    extern int opterr;
+    extern int optopt;
+    int errflg = 0;
+    int max = -1;
+    int imax = 0;
+
+    while ((c = getopt(argc,argv,"hn:")) != EOF) {
+      switch (c) {
+      case 'h':
+        _stgpath_Cdbtest_usage();
+        return(EXIT_SUCCESS);
+      case 'n':
+        max = atoi(optarg);
+        break;
+      case '?':
+        ++errflg;
+        fprintf(stderr,"Unknown option\n"); fflush(stderr);
+        break;
+      default:
+        ++errflg;
+        fprintf(stderr,"?? getopt returned character code 0%o (octal) 0x%lx (hex) %d (int) '%c' (char) ?\n"
+                ,c,(unsigned long) c,c,(char) c);  fflush(stderr);
+        break;
+      }
+      if (errflg != 0) {
+        fprintf(stderr,"### getopt error\n"); fflush(stderr);
+        _stgpath_Cdbtest_usage();
+        return(EXIT_FAILURE);
+      }
+    }
 
 	if (argc < 2) {
-		fprintf(stderr,
-						"Usage: stgpath_Cdbinsert <logfile> [<logfile> ...]\n"
-						"\n"
-						"Nota: Cdb server and port is setted via the environment variables\n"
-						"      $CDB_HOST and $CDB_SERV, respectively.\n"
-						"\n"
-                        "### Please use the stgpath_Cdbtest.des file for DB definition !!!\n"
-						"\n"
-						"Author: Jean-Damien.Durand@cern.ch\n"
-						);
-		return(EXIT_FAILURE);
-	}
-
+      _stgpath_Cdbtest_usage();
+      return(EXIT_FAILURE);
+    }
 	strcpy(dbfd.username,Default_db_user);
 	strcpy(dbfd.password,Default_db_pwd);
 
@@ -95,7 +120,7 @@ int main(argc,argv)
 	}
 
 	/* Loop on logfiles */
-	for (i = 1; i < argc; i++) {
+	for (i = optind; i < argc; i++) {
 
 		/* Try to open logfile */
 		if ((fd = fopen(argv[i],"r")) == NULL) {
@@ -142,6 +167,9 @@ int main(argc,argv)
 								}
 								save = end[0];
 								end[0] = '\0';
+                                if (max >=0 && ++imax > max) {
+                                  return(EXIT_SUCCESS);
+                                }
 								switch (last_command) {
 								case INSERT:
 									fprintf(stdout,"[%s] INSERT %10d %s\n",argv[i],reqid,p);
@@ -158,16 +186,14 @@ int main(argc,argv)
 									fprintf(stdout,"[%s] DELETE %10d %s\n",argv[i],reqid,p);
 									stpp.reqid = reqid;
 									strcpy(stpp.upath,p);
-                                    /* We use the secondary key to find where is this record */
-                                    if (Cdb_pkeyfind_fetch(&(dbfd.Cdb_db),
-                                                           "stgcat_link",
-                                                           "stgcat_link_per_upath",
-                                                           1,
-                                                           NULL,
-                                                           &stpp,
-                                                           NULL,
-                                                           &stpp) != 0) {
-                                      fprintf(stderr,"--> [%s] Cdb_pkeyfind_fetch error (%s)\n",argv[i],sstrerror(serrno));
+                                    if (Cdb_keyfind_fetch(&(dbfd.Cdb_db),
+                                                          "stgcat_link",
+                                                          "stgcat_link_per_upath",
+                                                          NULL,
+                                                          &stpp,
+                                                          NULL,
+                                                          &stpp) != 0) {
+                                      fprintf(stderr,"--> [%s] Cdb_keyfind_fetch error (%s)\n",argv[i],sstrerror(serrno));
                                       if (serrno == EDB_D_CORRUPT) {
                                         exit(EXIT_FAILURE);
                                       }
@@ -291,4 +317,15 @@ int _logfile_readline(fd, buf, size)
 	(*buf)[n] = '\0';
 
 	return(c == EOF ? ( n > 0 ? 0 : 1 ) : 0);
+}
+
+void _stgpath_Cdbtest_usage() {
+  fprintf(stderr,
+          "Usage: stgpath_Cdbinsert <logfile> [<logfile> ...]\n"
+          "\n"
+          "Nota: Cdb server and port is setted via the environment variables\n"
+          "      $CDB_HOST and $CDB_SERV, respectively.\n"
+          "\n"
+          "Author: Jean-Damien.Durand@cern.ch\n"
+          );
 }
