@@ -1,5 +1,5 @@
 /*
- * $Id: connect.c,v 1.6 2004/08/12 13:08:08 motiakov Exp $
+ * $Id: connect.c,v 1.7 2004/12/01 18:16:01 bcouturi Exp $
  */
 
 /*
@@ -27,12 +27,43 @@ static char sccsid[] = "@(#)connect.c,v 1.2 2003/10/30 11:00:34 CERN/IT/ADC/CA F
 #ifdef CSEC
 #include "Csec_api.h"
 #endif
+#include "Castor_limits.h"
 
 extern char     *getconfent();
 extern char     *getenv();      /* get environmental variable value     */
 char *rfio_lasthost _PROTO(()); /* returns last succesfully connected host     */
 int rfio_newhost _PROTO((char *)); /* returns last succesfully connected host     */
 
+/** Parses the node name to check whether it contains the port number as well */
+static int nodeHasPort(char *node, char *host, int *port) {
+  char *pos;
+  char *nodecp;
+  int tmpport;
+  
+
+  nodecp = strdup(node);
+  if (nodecp == NULL) {
+    serrno = ENOMEM;
+    return -1;
+  }
+  
+  pos = strchr(nodecp, ':');
+  if (pos == NULL) {
+    return 0;
+  }
+  
+  if (pos - node > 0) {
+    *pos = '\0';
+    strncpy(host, nodecp,CA_MAXHOSTNAMELEN);
+    host[CA_MAXHOSTNAMELEN] = '\0';
+  }
+
+  tmpport =  atoi(pos+1);
+  *port = tmpport;
+  
+  free(nodecp);
+  return 1;
+}
 
 static int 	last_host_key = -1; /* key to hold the last connect host name in TLS */
 
@@ -68,7 +99,26 @@ int DLL_DECL rfio_connect_with_port(node,port,remote)       /* Connect <node>'s 
 #ifdef CSEC
    int secure_connection = 0;
 #endif
+   char tmphost[CA_MAXHOSTNAMELEN+1];
+   
    INIT_TRACE("RFIO_TRACE");
+
+   /*BC First parse the node name to check whether it contains the port*/
+   {
+     int rc;
+     
+     rc = nodeHasPort(node, tmphost, &port);
+     if (rc == 1) {
+       TRACE(2, "srfio", "rfio_connect: Hostname includes port(%s)",
+             node);
+       node = tmphost;
+     }  
+   }
+   
+   /*BC End parse the node name to check whether it contains the port*/
+
+
+
 /*
  * Should we use an alternate name ?
  */
