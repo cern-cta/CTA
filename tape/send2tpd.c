@@ -1,12 +1,12 @@
 /*
- * $Id: send2tpd.c,v 1.1 2004/07/28 12:16:00 motiakov Exp $
+ * $Id: send2tpd.c,v 1.2 2004/08/12 16:26:52 motiakov Exp $
  *
  * Copyright (C) 1993-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2tpd.c,v $ $Revision: 1.1 $ $Date: 2004/07/28 12:16:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2tpd.c,v $ $Revision: 1.2 $ $Date: 2004/08/12 16:26:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -55,19 +55,39 @@ int user_repbuf_len;
 	char tapehost[CA_MAXHOSTNAMELEN+1];
 #ifdef CSEC
 	Csec_context_t ctx;
+	int secure_connection = 0;
 #endif
 
 	strcpy (func, "send2tpd");
+#ifdef CSEC
+	if (getenv("SECURE_CASTOR") != NULL) secure_connection++;
+#endif
 	sin.sin_family = AF_INET;
-	if ((p = getenv ("TAPE_PORT")) || (p = getconfent ("TAPE", "PORT", 0))) {
-		sin.sin_port = htons ((unsigned short)atoi (p));
-	} else if (sp = Cgetservbyname ("tape", "tcp")) {
-		sin.sin_port = sp->s_port;
-		serrno = 0;
+#ifdef CSEC
+	if (secure_connection) {
+	  if ((p = getenv ("STAPE_PORT")) || (p = getconfent ("STAPE", "PORT", 0))) {
+	    sin.sin_port = htons ((unsigned short)atoi (p));
+	  } else if (sp = Cgetservbyname ("stape", "tcp")) {
+	    sin.sin_port = sp->s_port;
+	    serrno = 0;
+	  } else {
+	    sin.sin_port = htons ((unsigned short)STAPE_PORT);
+	    serrno = 0;
+	  }
 	} else {
-		sin.sin_port = htons ((unsigned short)TAPE_PORT);
-		serrno = 0;
+#endif
+	  if ((p = getenv ("TAPE_PORT")) || (p = getconfent ("TAPE", "PORT", 0))) {
+	    sin.sin_port = htons ((unsigned short)atoi (p));
+	  } else if (sp = Cgetservbyname ("tape", "tcp")) {
+	    sin.sin_port = sp->s_port;
+	    serrno = 0;
+	  } else {
+	    sin.sin_port = htons ((unsigned short)TAPE_PORT);
+	    serrno = 0;
+	  }
+#ifdef CSEC
 	}
+#endif
 	if (host == NULL) {
 		gethostname (tapehost, CA_MAXHOSTNAMELEN+1);
 	} else {
@@ -105,7 +125,7 @@ int user_repbuf_len;
 	}
 #ifdef CSEC
 
-
+		if (secure_connection) {
 			if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_TAPE, NULL) <0) {
 			  Ctape_errmsg (func, TP002, "send", "Could not init context");
 			  (void) netclose (s);
@@ -127,7 +147,7 @@ int user_repbuf_len;
 			Csec_trace (func, "Service name = %s, type = %d\n",p, n);
 
 			Csec_clear_context(&ctx);
-
+		}
 #endif
 
 	/* send request to tape daemon */
