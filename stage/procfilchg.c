@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.26 2002/04/11 10:07:41 jdurand Exp $
+ * $Id: procfilchg.c,v 1.27 2002/04/30 12:32:55 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.26 $ $Date: 2002/04/11 10:07:41 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.27 $ $Date: 2002/04/30 12:32:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -41,6 +41,7 @@ static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.26 $ $Date: 
 #include "Cns_api.h"
 #include "stage_api.h"
 #include "rfio_api.h"
+#include "u64subr.h"
 
 void procfilchgreq _PROTO((int, int, char *, char *));
 
@@ -81,6 +82,7 @@ extern void redomigpool _PROTO(());
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern u_signed64 findblocksize _PROTO((char *));
 extern int updfreespace _PROTO((char *, char *, int, u_signed64 *, signed64));
+extern void delreq _PROTO((struct stgcat_entry *, int));
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -375,7 +377,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			char checkpath[CA_MAXPATHLEN+1];
 			char tmpbuf1[21];
 			char tmpbuf2[21];
-			u_signed64 hsmsize;
+			u_signed64 hsmsize = 0;
 
 			changed = loop_break = 0;
 			if (stcp->reqid == 0) break;
@@ -533,7 +535,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 								/* Good - we can delete this entry - it has no indicence on */
 								/* migration counters btw, since it was already in PUT_FAILED */
 								/* e.g. not a candidate */
-								delreq(stcp2);
+								delreq(stcp2,0);
                                 stcp2--;
 							}
 						}
@@ -554,7 +556,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 						}
 						/* We grabbed the size in the name server before. We verify consistency */
 						if (hsmsize != stcp->actual_size) {
-							sendrep(rpfd, MSG_ERR, STG171, hsmfile, u64tostr((u_signed64) hsmsize, tmpbuf1, 0), u64tostr((u_signed64) stcp->actual_size, tmpbuf2, 0));
+							sendrep(rpfd, MSG_ERR, STG171, hsmfile, u64tostr((u_signed64) hsmsize, tmpbuf1, 0), u64tostr(stcp->actual_size, tmpbuf2, 0));
 							c = EINVAL;
 							goto reply;			
 						}
@@ -565,7 +567,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 							stcp->ipath,
 							0,
 							NULL,
-							(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB)
+							(signed64) ((signed64) actual_size_block - (signed64) stcp->size)
 							);
 						rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT);
 						if (! donereqid) {
