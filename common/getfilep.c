@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getfilep.c,v $ $Revision: 1.3 $ $Date: 2000/05/31 10:33:53 $ CERN/IT/PDP/DM Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: getfilep.c,v $ $Revision: 1.4 $ $Date: 2000/06/05 05:37:37 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* getfilep.c   Fortran I/O to C mapper                                 */
@@ -21,7 +21,7 @@ static char sccsid[] = "@(#)$RCSfile: getfilep.c,v $ $Revision: 1.3 $ $Date: 200
 /* F. Hemmer    13 Dec 90       Initial writing for IRIX 3.1            */
 /* F. Hemmer    23 Jan 91       Added MIPS Ultrix support               */
 
-#if defined(sgi) || (defined(mips) && defined(ultrix))
+#if defined(sgi)
 #include <stdio.h>              /* Standard Input/Output                */
 #include <cmplrs/fio.h>
 #include <osdep.h>
@@ -56,19 +56,16 @@ int     *lun;
 	return((FILE *)-1);
 }
 
-#endif /* (sgi) || ((mips) && (ultrix)) */
+#endif /* (sgi) */
 
 #if defined (_AIX)
 #include <stdio.h>
 #include <sys/limits.h>
+#include <osdep.h>
 #include <sys/stat.h>
 
 FILE DLL_DECL  *
-#if defined(_IBMESA)
-getfilep_(filename)
-#else
 getfilep(filename)
-#endif
         char           *filename;
 {
         struct stat     statbuf;
