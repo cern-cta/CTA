@@ -1,7 +1,10 @@
 /*
- * $Id: getifnam.c,v 1.4 1999/07/26 11:28:46 obarring Exp $
+ * $Id: getifnam.c,v 1.5 1999/10/08 16:58:27 jdurand Exp $
  * $Log: getifnam.c,v $
- * Revision 1.4  1999/07/26 11:28:46  obarring
+ * Revision 1.5  1999/10/08 16:58:27  jdurand
+ * *** empty log message ***
+ *
+ * Revision 1.4  1999-07-26 13:28:46+02  obarring
  * Add typecast to avoid warnings
  *
  * Revision 1.3  1999/07/26 10:55:57  obarring
@@ -18,7 +21,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: getifnam.c,v 1.4 1999/07/26 11:28:46 obarring Exp $";
+static char cvsId[] = "$Id: getifnam.c,v 1.5 1999/10/08 16:58:27 jdurand Exp $";
 #endif /* not lint */
 
 /* getifnam.c   Get connected socket interface name                     */
@@ -43,6 +46,7 @@ static char cvsId[] = "$Id: getifnam.c,v 1.4 1999/07/26 11:28:46 obarring Exp $"
 #include <sys/ioctl.h>                  /* ioctl() definitions          */
 #endif
 #include <trace.h>                      /* tracing definitions          */
+#include <string.h>                     /* For strlen                   */
 #include <Cglobals.h>                   /* Cglobals prototypes          */
 
 #if !defined(linux)

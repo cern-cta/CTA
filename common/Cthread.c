@@ -1,44 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.13 1999/09/10 15:49:42 jdurand Exp $
- *
- * $Log: Cthread.c,v $
- * Revision 1.13  1999/09/10 15:49:42  jdurand
- * Made non __STDC__ compliant
- *
- * Revision 1.12  1999-09-08 18:19:49+02  jdurand
- * Bug fixes (missing return value for some timeouted routines)
- *
- * Revision 1.11  1999-09-07 15:46:48+02  jdurand
- * Fixed typo (ECHTREADERROR -> SECTHREADERR)
- *
- * Revision 1.10  1999/09/02 08:39:39  jdurand
- * Added serrno error values
- *
- * Revision 1.9  1999/08/24 15:50:03  jdurand
- * Changed debug printout for exported functions to have source:line information
- *
- * Revision 1.8  1999/07/26 07:20:27  obarring
- * Add Cthread_self in argument list of the new Cglobals_init()
- *
- * Revision 1.7  1999/07/20 20:05:11  jdurand
- * Changed _Cglobals_init call to Cglobals_init
- *
- * Revision 1.6  1999/07/20 13:49:49  obarring
- * Remove references to Cthread_errno.h
- *
- * Revision 1.5  1999/07/20 13:45:37  jdurand
- * *** empty log message ***
- *
- * Revision 1.4  1999/07/20 13:38:11  obarring
- * Add call to Cglobals_init()
- *
- * Revision 1.3  1999/07/20 13:26:52  obarring
- * empty line for test
- *
- * Revision 1.2  1999/07/20 08:49:20  jdurand
- * 20-JUL-1999 Jean-Damien Durand
- *   Added missing Id and Log CVS's directives
- *
+ * $Id: Cthread.c,v 1.14 1999/10/08 16:58:25 jdurand Exp $
  */
 
 #include <Cthread_api.h>
@@ -53,9 +14,14 @@
 #endif
 
 #ifdef CTHREAD_DEBUG
-#include <stdio.h>
+#include <log.h>
 #endif
 
+int Cthread_debug = 0;
+
+#ifdef CTHREAD_DEBUG
+#define _Cthread_obtain_mtx(a,b,c,d) _Cthread_obtain_mtx_debug(__FILE__,__LINE__,a,b,c,d)
+#endif
 
 /* ============================================ */
 /* CASTOR Thread Interface (Cthread)            */
@@ -138,7 +104,7 @@
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.13 $ $Date: 1999/09/10 15:49:42 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.14 $ $Date: 1999/10/08 16:58:25 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 
 /* ============================================ */
 /* Typedefs                                     */
@@ -286,6 +252,13 @@ typedef pthread_once_t Cth_once_t;
 #endif /* _WIN32 */
 #endif /* _CTHREAD */
 
+/* ------------------------------------ */
+/* For the Cthread_self() command       */
+/* (Thread-Specific Variable)           */
+/* ------------------------------------ */
+Cth_spec_t cid_key;
+Cth_once_t cid_once = CTHREAD_ONCE_INIT;
+
 /* ============================================ */
 /* Structures                                   */
 /* ============================================ */
@@ -398,9 +371,17 @@ int   _Cthread_addspec();
 #endif
 /* Obain a mutex lock */
 #ifdef __STDC__
+#ifndef CTHREAD_DEBUG
 int   _Cthread_obtain_mtx(char *, int, Cth_mtx_t *, int);
 #else
+int   _Cthread_obtain_mtx_debug(char *, int, char *, int, Cth_mtx_t *, int);
+#endif
+#else
+#ifndef CTHREAD_DEBUG
 int   _Cthread_obtain_mtx();
+#else
+int   _Cthread_obtain_mtx_debug();
+#endif
 #endif
 /* Release a mutex lock */
 #ifdef __STDC__
@@ -475,6 +456,19 @@ struct Cspec_element_t *_Cthread_findglobalkey(char *, int, int *);
 #else
 struct Cspec_element_t *_Cthread_findglobalkey();
 #endif
+/* Cthread-ID (as a Thread-Specific variable) destructor */
+#ifdef __STDC__
+void _Cthread_cid_destructor(void *);
+#else
+void _Cthread_cid_destructor();
+#endif
+/* Cthread-ID once for all... */
+#ifdef __STDC__
+void _Cthread_cid_once();
+#else
+void _Cthread_cid_once();
+#endif
+
 
 /* ============================================ */
 /* Static variables                             */
@@ -497,6 +491,75 @@ static struct Cmtx_element_t  Cmtx;
 static struct Cthread_protect_t Cthread;
 static struct Cspec_element_t Cspec;
 static Cth_once_t             once = CTHREAD_ONCE_INIT;
+
+/* ============================================ */
+/* Routine  : _Cthread_cid_destructor           */
+/* Arguments: address to destroy.               */
+/* -------------------------------------------- */
+/* Output   : <none>                            */
+/* -------------------------------------------- */
+/* History:                                     */
+/* 17-SEP-1999       First implementation       */
+/*                   Jean-Damien.Durand@cern.ch */
+/* ============================================ */
+/* Notes: See Cthread_Self().                   */
+/* ============================================ */
+void _Cthread_cid_destructor(ptr)
+     void *ptr;
+{
+  if (ptr != NULL)
+    free(ptr);
+}
+
+/* ============================================ */
+/* Routine  : _Cthread_cid_once                 */
+/* Arguments: <none>                            */
+/* -------------------------------------------- */
+/* Output   : <none>                            */
+/* -------------------------------------------- */
+/* History:                                     */
+/* 17-SEP-1999       First implementation       */
+/*                   Jean-Damien.Durand@cern.ch */
+/* ============================================ */
+/* Notes: See Cthread_Self().                   */
+/* ============================================ */
+void _Cthread_cid_once()
+{
+  int n;
+
+  /* Create the key... */
+#ifndef _CTHREAD
+  /* Oooopps... impossible */
+  serrno = SEOPNOTSUP;
+#else
+#if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+  /* Create the specific variable a-la POSIX */
+  if ((n = pthread_key_create(&cid_key, _Cthread_cid_destructor))) {
+    errno = n;
+    serrno = SECTHREADERR;
+  }
+#elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+  /* Create the specific variable a-la DCE */
+  if (pthread_keycreate(&cid_key, _Cthread_cid_destructor)) {
+    serrno = SECTHREADERR;
+  }
+#elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+  /* Create the specific variable a-la LinuxThreads */
+  if ((n = pthread_key_create(&cid_key, _Cthread_cid_destructor))) {
+    errno = n;
+    serrno = SECTHREADERR;
+  }
+#elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
+  if ( (n = TlsAlloc()) == 0xFFFFFFFF ) {
+    serrno = SECTHREADERR;
+  } else {
+    cid_key = n;
+  }
+#else
+  serrno = SEOPNOTSUP;
+#endif /* _CTHREAD_PROTO */
+#endif
+}
 
 /* ============================================ */
 /* Routine  : Cthread_init                      */
@@ -615,16 +678,18 @@ unsigned __stdcall _Cthread_start_threadex(void *arg) {
 	Cthread_start_params_t *start_params;
 	void                 *status;
     int                   thID;
+    Cth_pid_t             pid;
     void               *(*routine)(void *);
     void               *routineargs;
 
     thID = GetCurrentThreadId();
+    pid = (Cth_pid_t) getpid();
 	if ( arg == NULL ) {
       serrno = EINVAL;
       return(-1);
     }
 	start_params = (Cthread_start_params_t *)arg;
-    if (_Cthread_addcid(__FILE__,__LINE__,NULL,0,thID,start_params->_thread_routine,start_params->detached) < 0) {
+    if (_Cthread_addcid(__FILE__,__LINE__,NULL,0,&pid,thID,start_params->_thread_routine,start_params->detached) < 0) {
       free(arg);
       return(-1);
     }
@@ -670,17 +735,19 @@ void __cdecl _Cthread_start_thread(void *arg) {
 	Cthread_start_params_t *start_params;
 	void                 *status;
     int                   thID;
+    int                   pid;
     void               *(*routine)(void *);
     void               *routineargs;
 
 
     thID = GetCurrentThreadId();
+    pid = (Cth_pid_t) getpid();
 	if ( arg == NULL ) {
       serrno = EINVAL;
       return;
     }
 	start_params = (Cthread_start_params_t *)arg;
-    if (_Cthread_addcid(__FILE__,__LINE__,NULL,0,thID,start_params->_thread_routine,start_params->detached) < 0) {
+    if (_Cthread_addcid(__FILE__,__LINE__,NULL,0,&pid,thID,start_params->_thread_routine,start_params->detached) < 0) {
       free(arg);
       return;
     }
@@ -714,8 +781,9 @@ void *_Cthread_start_pthread(void *arg) {
   void               *routineargs;
 
 #ifdef CTHREAD_DEBUG
-  fprintf(stderr,"[Cthread    [%2d]] In _Cthread_start_pthread(0x%x)\n",
-          _Cthread_self(),(unsigned long) arg);
+  if (Cthread_debug != 0)
+    log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_start_pthread(0x%lx)\n",
+        _Cthread_self(),(unsigned long) arg);
 #endif
 
   if (arg == NULL) {
@@ -725,7 +793,7 @@ void *_Cthread_start_pthread(void *arg) {
   start_params = (Cthread_start_params_t *) arg;
 
 
-  pid = pthread_self();
+  pid = (Cth_pid_t) pthread_self();
   if (_Cthread_addcid(__FILE__,__LINE__,NULL,0,&pid,thID,start_params->_thread_routine,start_params->detached) < 0) {
     free(arg);
     return(NULL);
@@ -764,8 +832,9 @@ Sigfunc *_Cthread_signal(file, line, signo, func)
   
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
-    fprintf(stderr,"[Cthread    [%2d]] In _Cthread_signal(%d,0x%x) called at/behind %s:%d\n",
-            _Cthread_self(),signo,(unsigned long) func,file, line);
+    if (Cthread_debug != 0)
+      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_signal(%d,0x%x) called at/behind %s:%d\n",
+          _Cthread_self(),signo,(unsigned long) func,file, line);
   }
 #endif
 
@@ -811,21 +880,23 @@ void _Cthread_sigchld(errcode)
     /* We remove it from the list of processes */
     
 #ifdef CTHREAD_DEBUG
-    fprintf(stderr,"[Cthread    [%2d]] In _Cthread_sigchld(%d) for child PID=%d (exit status = %d)\n",
-            _Cthread_self(),
-            errcode,pid,status);
+    if (Cthread_debug != 0)
+      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_sigchld(%d) for child PID=%d (exit status = %d)\n",
+          _Cthread_self(),
+          errcode,pid,status);
 #endif
     /* We check that this pid correspond to a known */
-    /* Cthread ID                                   */
+    /* Cthread ID                                   */ 
     if (! _Cthread_obtain_mtx(NULL,0,&(Cthread.mtx),-1)) {
-      n = 1;
+     n = 1;
       while (current->next != NULL) {
         current = current->next;
         
 #ifdef CTHREAD_DEBUG
-        fprintf(stderr,"[Cthread    [%2d]] In _Cthread_sigchld(%d) for child PID=%d ... Current scanned PID=%d\n",
-                _Cthread_self(),
-                errcode,pid,current->pid);
+        if (Cthread_debug != 0)
+          log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_sigchld(%d) for child PID=%d ... Current scanned PID=%d\n",
+              _Cthread_self(),
+              errcode,pid,current->pid);
 #endif
         
         if (current->pid == pid) {
@@ -835,9 +906,10 @@ void _Cthread_sigchld(errcode)
           /* in the list...                                                          */
           if ( (kill(current->pid,0) == -1) && (errno == ESRCH) ) {
 #ifdef CTHREAD_DEBUG
-            fprintf(stderr,"[Cthread    [%2d]] In _Cthread_sigchld(%d) : Calling _Cthread_destroy(%d) for yet finished PID=%d\n",
-                    _Cthread_self(),
-                    errcode,current->cid,current->pid);
+            if (Cthread_debug != 0)
+              log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_sigchld(%d) : Calling _Cthread_destroy(%d) for yet finished PID=%d\n",
+                  _Cthread_self(),
+                  errcode,current->cid,current->pid);
 #endif
             _Cthread_destroy(NULL,0,current->cid);
           }
@@ -847,16 +919,18 @@ void _Cthread_sigchld(errcode)
       
       if (n == 0) {
 #ifdef CTHREAD_DEBUG
-        fprintf(stderr,"[Cthread    [%2d]] In _Cthread_sigchld(%d) : Calling _Cthread_destroy(%d) for PID=%d\n",
-                _Cthread_self(),
-                errcode,current->cid,pid);
+        if (Cthread_debug != 0)
+          log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_sigchld(%d) : Calling _Cthread_destroy(%d) for PID=%d\n",
+              _Cthread_self(),
+              errcode,current->cid,pid);
 #endif
         _Cthread_destroy(NULL,0,current->cid);
       } else {
 #ifdef CTHREAD_DEBUG
-        fprintf(stderr,"[Cthread    [%2d]] In _Cthread_sigchld(%d) : Can't find corresponding Cthread ID for PID=%d !\n",
-                _Cthread_self(),
-                errcode,pid);
+        if (Cthread_debug != 0)
+          log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_sigchld(%d) : Can't find corresponding Cthread ID for PID=%d !\n",
+              _Cthread_self(),
+              errcode,pid);
 #endif
       }
     }
@@ -904,7 +978,7 @@ void *_Cthread_start_nothread(startroutine, arg, old_sigchld)
     return(NULL);
   }
 
-  pid = getpid();
+  pid = (Cth_pid_t) getpid();
 
   /* If we want Cthread_self() to work... */
   if (_Cthread_addcid(__FILE__,__LINE__,NULL,0,&pid,thID,startroutine,0) < 0) {
@@ -989,11 +1063,12 @@ CTHREAD_DECL Cthread_Create(file, line, startroutine, arg)
   
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
-    fprintf(stderr,
-            "[Cthread    [%2d]] In Cthread_create(0x%x,0x%x) called at/behind %s:%d\n",
-            _Cthread_self(),
-            (unsigned long) startroutine, (unsigned long) arg,
-            file, line);
+    if (Cthread_debug != 0)
+      log(LOG_INFO,
+          "[Cthread    [%2d]] In Cthread_create(0x%lx,0x%lx) called at/behind %s:%d\n",
+          _Cthread_self(),
+          (unsigned long) startroutine, (unsigned long) arg,
+          file, line);
   }
 #endif
 
@@ -1018,11 +1093,12 @@ CTHREAD_DECL Cthread_Create(file, line, startroutine, arg)
     /* Error at process creation */
 #ifdef CTHREAD_DEBUG
     if (file != NULL) {
-      fprintf(stderr,
-              "[Cthread    [%2d]] In Cthread_create(0x%x,0x%x) called at/behind %s:%d : Error at fork\n",
-              _Cthread_self(),
-              (unsigned long) startroutine,(unsigned long) arg,
-              file,line);
+      if (Cthread_debug != 0)
+        log(LOG_INFO,
+            "[Cthread    [%2d]] In Cthread_create(0x%x,0x%x) called at/behind %s:%d : Error at fork\n",
+            _Cthread_self(),
+            (unsigned long) startroutine,(unsigned long) arg,
+            file,line);
     }
 #endif
     serrno = SEINTERNAL;
@@ -1043,12 +1119,13 @@ CTHREAD_DECL Cthread_Create(file, line, startroutine, arg)
   /* We will cleanup in the SIGCLHD handler   */
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
-    fprintf(stderr,
-            "[Cthread    [%2d]] In Cthread_create(0x%x,0x%x) called at/behind %s:%d : Created PID=%d\n",
-            _Cthread_self(),
-            (unsigned long) startroutine,(unsigned long) arg,
-            file,line,
-            pid);
+    if (Cthread_debug != 0)
+      log(LOG_INFO,
+          "[Cthread    [%2d]] In Cthread_create(0x%x,0x%x) called at/behind %s:%d : Created PID=%d\n",
+          _Cthread_self(),
+          (unsigned long) startroutine,(unsigned long) arg,
+          file,line,
+          pid);
   }
 #endif  
   return(_Cthread_addcid(__FILE__,__LINE__,file,line,&pid,thID,startroutine,0));
@@ -1190,11 +1267,12 @@ CTHREAD_DECL Cthread_Create_Detached(file, line, startroutine, arg)
   
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
-    fprintf(stderr,
-            "[Cthread    [%2d]] In Cthread_create_detached(0x%x,0x%x) called at/behind %s:%d\n",
-            _Cthread_self(),
-            (unsigned long) startroutine, (unsigned long) arg,
-            file, line);
+    if (Cthread_debug != 0)
+      log(LOG_INFO,
+          "[Cthread    [%2d]] In Cthread_create_detached(0x%lx,0x%lx) called at/behind %s:%d\n",
+          _Cthread_self(),
+          (unsigned long) startroutine, (unsigned long) arg,
+          file, line);
   }
 #endif
 
@@ -1329,11 +1407,12 @@ CTHREAD_DECL Cthread_Join(file, line, cid, status)
 
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
-    fprintf(stderr,
-            "[Cthread    [%2d]] In Cthread_join(%d,0x%x) called at/behind %s:%d\n",
-            _Cthread_self(),
-            (int) cid, (unsigned long) status,
-            file, line);
+    if (Cthread_debug != 0)
+      log(LOG_INFO,
+          "[Cthread    [%2d]] In Cthread_join(%d,0x%lx) called at/behind %s:%d\n",
+          _Cthread_self(),
+          (int) cid, (unsigned long) status,
+          file, line);
   }
 #endif
 
@@ -1443,9 +1522,10 @@ CTHREAD_DECL Cthread_Detach(file, line, cid)
 
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
-    fprintf(stderr,
-            "[Cthread    [%2d]] In Cthread_detach(%d) called at/behind %s:%d\n",
-            _Cthread_self(),cid,file,line);
+    if (Cthread_debug != 0)
+      log(LOG_INFO,
+          "[Cthread    [%2d]] In Cthread_detach(%d) called at/behind %s:%d\n",
+          _Cthread_self(),cid,file,line);
   }
 #endif
 
@@ -1534,90 +1614,157 @@ CTHREAD_DECL Cthread_Detach(file, line, cid)
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
 CTHREAD_DECL Cthread_Self0() {
-  return(Cthread_Self("Cthread.c(Cthread_Self0)",__LINE__));
+  return(_Cthread_self());
 }
 CTHREAD_DECL Cthread_Self(file, line)
      char *file;
      int line;
 {
-  struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
-#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
-  unsigned            thID;             /* WIN32 thread ID */
-#else /* _CTHREAD_PROTO_WIN32 */
-  Cth_pid_t             pid;              /* Current PID      */
-#endif /* _CTHREAD_PROTO_WIN32 */
-  int                 n;                /* Return value     */
+#ifdef _CTHREAD
+  void               *tsd = NULL;       /* Thread-Specific Variable */
+#else
+  struct Cid_element_t *current = &Cid; /* Curr Cid_element */
+  Cth_pid_t             pid;            /* Current PID      */
+#endif
+  int                   n;              /* Return value     */
 
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
-    fprintf(stderr,"[Cthread    [%2d]] In Cthread_self() called at/behind %s:%d\n",
-            _Cthread_self(),file,line);
+    if (Cthread_debug != 0)
+      log(LOG_INFO,"[Cthread    [%2d]] In Cthread_self() called at/behind %s:%d\n",
+          _Cthread_self(),file,line);
   }
 #endif
 
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
-  /* Get current pid */
+
 #ifdef _NOCTHREAD
-  pid = getpid();
-#else
-#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
-  thID = GetCurrentThreadId();
-#else /* _CTHREAD_PROTO_WIN32 */
-  pid = pthread_self();
-#endif /* _CTHREAD_PROTO_WIN32 */
-#endif
+  /* In a non-threaded environment, we just check */
+  /* the list.                                    */
 
   /* We check that this pid correspond to a known */
   /* process                                      */
-  if (_Cthread_obtain_mtx(file,line,&(Cthread.mtx),-1))
-    return(-1);
-
+  pid = getpid();
   n = -1;
   while (current->next != NULL) {
     current = current->next;
-#ifdef _NOCTHREAD
     if (current->pid == pid) {
       n = current->cid;
       break;
     }
-#else
-#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_POSIX
-#ifdef CTHREAD_DEBUG
-    if (file != NULL) {
-      fprintf(stderr,"[Cthread    [%2d]] In Cthread_self() called at/behind %s:%d : Comparing current->pid=%d and pid=%d\n",_Cthread_self(),
-              file,line,
-              (int) current->pid, (int) pid);
-    }
-#endif
-    if (pthread_equal(current->pid,pid)) {
-      n = current->cid;
-      break;
-    }
-#elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_DCE
-    if (pthread_equal(current->pid,pid)) {
-      n = current->cid;
-      break;
-    }
-#elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_LINUX
-    if (pthread_equal(current->pid,pid)) {
-      n = current->cid;
-      break;
-    }
-#elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
-    if ( current->thID == thID ) {
-      n = current->cid;
-	  break;
-	}
-#endif
-#endif
   }
-  _Cthread_release_mtx(file,line,&(Cthread.mtx));
 
   if (n < 0)
     serrno = EINVAL;
   return(n);
+
+#else /* _NOCTHREAD */
+
+  /* In a threaded environment, we get Thread Specific   */
+  /* Variable, directly with the thread interface        */
+  /* Yes, Because we want the less overhead as possible. */
+  /* A previous version of Cthread was always looking to */
+  /* the internal linked list. Generated a lot of        */
+  /* _Cthread_obtain_mtx()/_Cthread_release_mtx()        */
+  /* overhead. Now those two internal methods are called */
+  /* only once, to get the cid. After it is stored in a  */
+  /* Thread-Specific variable, whose associated key is   */
+  /* cid_key.                                            */
+
+  /* We makes sure that a key is associated once for all */
+  /* with what we want.                                  */
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
+  /* In WIN32 there is nothing corresponding to        */
+  /* pthread_once(). Instead we rely on that Cthread_..*/
+  /* is the unique thread interface.                   */
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+  if ((n = pthread_once(&cid_once,_Cthread_cid_once)) != 0) {
+    errno = n;
+    serrno = SECTHREADERR;
+    return(-1);
+  }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+  if (pthread_once(&cid_once,_Cthread_cid_once) != 0) {
+    serrno = SECTHREADERR;
+    return(-1);
+  }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+  /* On linux, pthread_once always returns 0... */
+  pthread_once(&cid_once,_Cthread_cid_once);
+#  else
+  serrno = SEOPNOTSUP;
+  return(-1);
+#  endif
+
+  /* We look if there is already a Thread-Specific       */
+  /* Variable.                                           */
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+  tsd = pthread_getspecific(cid_key);
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+  if (pthread_getspecific(cid_key,&tsd)) {
+    tsd = NULL;
+  }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+  tsd = pthread_getspecific(cid_key);
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
+  tsd = TlsGetValue(cid_key);
+#  else
+  serrno = SEOPNOTSUP;
+  return(-1);
+#  endif
+
+  if (tsd == NULL) {
+
+    /* We try to create the key-value */
+    if ((tsd = (void *) malloc(sizeof(int))) == NULL) {
+      serrno = SEINTERNAL;
+      return(-1);
+    }
+
+    /* We associate the key-value with the key   */
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+    if ((n = pthread_setspecific(cid_key, tsd))) {
+      errno = n;
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+    if (pthread_setspecific(cid_key, tsd)) {
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+    if ((n = pthread_setspecific(cid_key, tsd))) {
+      errno = n;
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
+    if ( !(n = TlsSetValue(cid_key, tsd)) ) {
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+#  else
+    serrno = SEOPNOTSUP;
+    return(-1);
+#  endif
+    
+    /* And we don't yet know the cid... So we set it to -2 */
+
+    * (int *) tsd = -2;
+    
+    return(-2);
+
+  } else {
+
+    /* Thread-Specific variable already exist ! */
+
+    return((int) * (int *) tsd);
+
+  }
+#endif /* _NOCTHREAD */
 }
 
 /* ============================================ */
@@ -1641,8 +1788,9 @@ int _Cthread_destroy(file, line, cid)
 
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
-    fprintf(stderr,"[Cthread    [%2d]] In _Cthread_destroy(%d) called at/behind %s:%d\n",
-            _Cthread_self(),cid,file,line);
+    if (Cthread_debug != 0)
+      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_destroy(%d) called at/behind %s:%d\n",
+          _Cthread_self(),cid,file,line);
   }
 #endif
 
@@ -1706,10 +1854,11 @@ CTHREAD_DECL Cthread_Cond_Broadcast(file, line, addr)
 
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
-    fprintf(stderr,
-            "[Cthread    [%2d]] In Cthread_cond_broadcast(0x%x) called at/behind %s:%d\n",
-            _Cthread_self(),(unsigned long) addr,
-            file, line);
+    if (Cthread_debug != 0)
+      log(LOG_INFO,
+          "[Cthread    [%2d]] In Cthread_cond_broadcast(0x%lx) called at/behind %s:%d\n",
+          _Cthread_self(),(unsigned long) addr,
+          file, line);
   }
 #endif
 
@@ -1834,11 +1983,12 @@ CTHREAD_DECL Cthread_Wait_Condition(file, line, addr, timeout)
   
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
-    fprintf(stderr,
-            "[Cthread    [%2d]] In Cthread_wait_condition(0x%x,%d) called at/behind %s:%d\n",
-            _Cthread_self(),
-            (unsigned long) addr,(int) timeout,
-            file, line);
+    if (Cthread_debug != 0)
+      log(LOG_INFO,
+          "[Cthread    [%2d]] In Cthread_wait_condition(0x%lx,%d) called at/behind %s:%d\n",
+          _Cthread_self(),
+          (unsigned long) addr,(int) timeout,
+          file, line);
   }
 #endif
 
@@ -2021,11 +2171,12 @@ CTHREAD_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
 
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
-    fprintf(stderr,
-            "[Cthread    [%2d]] In Cthread_lock_mtx(0x%x,%d) called at/behind %s:%d\n",
-            _Cthread_self(),
-            (unsigned long) addr,(int) timeout,
-            file, line);
+    if (Cthread_debug != 0)
+      log(LOG_INFO,
+          "[Cthread    [%2d]] In Cthread_lock_mtx(0x%lx,%d) called at/behind %s:%d\n",
+          _Cthread_self(),
+          (unsigned long) addr,(int) timeout,
+          file, line);
   }
 #endif
 
@@ -2058,7 +2209,9 @@ CTHREAD_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
     }
   }
 
-  _Cthread_release_mtx(file,line,&(Cthread.mtx));
+  /*
+    _Cthread_release_mtx(file,line,&(Cthread.mtx));
+  */
 
   if (n) {
     /* Not yet existing mutex : we have to create one */
@@ -2067,6 +2220,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
     if ((Cmtx_new = (struct Cmtx_element_t *) malloc(sizeof(struct Cmtx_element_t)))
         == NULL) {
       serrno = SEINTERNAL;
+      _Cthread_release_mtx(file,line,&(Cthread.mtx));
       return(-1);
     }
 
@@ -2088,6 +2242,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
         free(Cmtx_new);
         errno = n;
         serrno = SECTHREADERR;
+        _Cthread_release_mtx(file,line,&(Cthread.mtx));
         return(-1);
       }
       if ((n = pthread_mutex_init(&(Cmtx_new->mtx),&mattr))) {
@@ -2097,6 +2252,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
         free(Cmtx_new);
         errno = n;
         serrno = SECTHREADERR;
+        _Cthread_release_mtx(file,line,&(Cthread.mtx));
         return(-1);
       }
       /* Create the associate conditionnal variable attribute */
@@ -2109,6 +2265,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
         free(Cmtx_new);
         errno = n;
         serrno = SECTHREADERR;
+        _Cthread_release_mtx(file,line,&(Cthread.mtx));
         return(-1);
       }
       if ((n = pthread_cond_init(&(Cmtx_new->cond),&cattr))) {
@@ -2122,6 +2279,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
         free(Cmtx_new);
         errno = n;
         serrno = SECTHREADERR;
+        _Cthread_release_mtx(file,line,&(Cthread.mtx));
         return(-1);
       }
       /* Release cond attribute resources */
@@ -2134,6 +2292,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
         /* Release Cmtx element */
         free(Cmtx_new);
         serrno = SECTHREADERR;
+        _Cthread_release_mtx(file,line,&(Cthread.mtx));
         return(-1);
       }
       if (pthread_cond_init(&(Cmtx_new->cond),pthread_condattr_default)) {
@@ -2142,6 +2301,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
         /* Release Cmtx element */
         free(Cmtx_new);
         serrno = SECTHREADERR;
+        _Cthread_release_mtx(file,line,&(Cthread.mtx));
         return(-1);
       }
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
@@ -2154,6 +2314,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
         free(Cmtx_new);
         errno = n;
         serrno = SECTHREADERR;
+        _Cthread_release_mtx(file,line,&(Cthread.mtx));
         return(-1);
       }
       if ((n = pthread_mutex_init(&(Cmtx_new->mtx),&mattr))) {
@@ -2163,6 +2324,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
         free(Cmtx_new);
         errno = n;
         serrno = SECTHREADERR;
+        _Cthread_release_mtx(file,line,&(Cthread.mtx));
         return(-1);
       }
       /* Create the associate conditionnal variable attribute */
@@ -2175,6 +2337,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
         free(Cmtx_new);
         errno = n;
         serrno = SECTHREADERR;
+        _Cthread_release_mtx(file,line,&(Cthread.mtx));
         return(-1);
       }
       if ((n = pthread_cond_init(&(Cmtx_new->cond),&cattr))) {
@@ -2188,6 +2351,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
         free(Cmtx_new);
         errno = n;
         serrno = SECTHREADERR;
+        _Cthread_release_mtx(file,line,&(Cthread.mtx));
         return(-1);
       }
       /* Release cond attribute resources */
@@ -2200,6 +2364,7 @@ CTHREAD_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
         /* Release Cmtx element */
         free(Cmtx_new);
         serrno = SECTHREADERR;
+        _Cthread_release_mtx(file,line,&(Cthread.mtx));
         return(-1);
 	  }
 #  else /* _CTHREAD_WIN32MTX */
@@ -2221,15 +2386,17 @@ CTHREAD_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
 		/* Release Cmtx element */
         free(Cmtx_new);
         serrno = SECTHREADERR;
+        _Cthread_release_mtx(file,line,&(Cthread.mtx));
         return(-1);
       }
 #else
       serrno = SEOPNOTSUP;
+      _Cthread_release_mtx(file,line,&(Cthread.mtx));
       return(-1);
 #endif
     }
     /* Cmtx_new->mtx contains now a valid mutex   */
-    /* AND a valid contionnal variable            */
+    /* AND a valid conditional variable           */
     if (_Cthread_addmtx(file,line,Cmtx_new)) {
       /* Error ! Destroy what we have created */
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
@@ -2255,12 +2422,15 @@ CTHREAD_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
 #else
       /* Nothing to clear there */
 #endif
+      _Cthread_release_mtx(file,line,&(Cthread.mtx));
       return(-1);
     }
     /* We now have to obtain the lock on this mutex */
+    _Cthread_release_mtx(file,line,&(Cthread.mtx));
     return(_Cthread_obtain_mtx(file,line,&(Cmtx_new->mtx),timeout));
   } else {
     /* We have to obtain the lock on this mutex */
+    _Cthread_release_mtx(file,line,&(Cthread.mtx));
     return(_Cthread_obtain_mtx(file,line,&(current->mtx),timeout));
   }
 #endif /* _NOCTHREAD */
@@ -2290,10 +2460,11 @@ CTHREAD_DECL Cthread_Mutex_Unlock(file, line, addr)
 
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
-    fprintf(stderr,
-            "[Cthread    [%2d]] In Cthread_unlock_mtx(0x%x) called at/behind %s:%d\n",
-            _Cthread_self(),(unsigned long) addr,
-            file, line);
+    if (Cthread_debug != 0)
+      log(LOG_INFO,
+          "[Cthread    [%2d]] In Cthread_unlock_mtx(0x%lx) called at/behind %s:%d\n",
+          _Cthread_self(),(unsigned long) addr,
+          file, line);
   }
 #endif
 
@@ -2363,9 +2534,10 @@ CTHREAD_DECL Cthread_Mutex_Destroy(file, line, addr)
 
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
-    fprintf(stderr,
-            "[Cthread    [%2d]] In Cthread_mutex_destroy(0x%x) called at/behind %s:%d\n",
-            _Cthread_self(),(unsigned long) addr,file,line);
+    if (Cthread_debug != 0)
+      log(LOG_INFO,
+          "[Cthread    [%2d]] In Cthread_mutex_destroy(0x%lx) called at/behind %s:%d\n",
+          _Cthread_self(),(unsigned long) addr,file,line);
   }
 #endif
 
@@ -2468,8 +2640,9 @@ int _Cthread_release_mtx(file, line, mtx)
 
 #ifdef CTHREAD_DEBUG
    if (file != NULL) {
-     fprintf(stderr,"[Cthread    [%2d]] In _Cthread_release_mtx(0x%x) called at/behind %s:%d\n",
-             _Cthread_self(),(unsigned long) mtx, file, line);
+     if (Cthread_debug != 0)
+       log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_release_mtx(0x%lx) called at/behind %s:%d\n",
+           _Cthread_self(),(unsigned long) mtx, file, line);
    }
 #endif
 
@@ -2536,6 +2709,7 @@ int _Cthread_release_mtx(file, line, mtx)
 #endif
 }
 
+#ifndef CTHREAD_DEBUG
 /* ============================================ */
 /* Routine  : _Cthread_obtain_mtx               */
 /* Arguments: address of a mutex                */
@@ -2571,8 +2745,9 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
 
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
-    fprintf(stderr,"[Cthread    [%2d]] In _Cthread_obtain_mtx(0x%x,%d) called at/behind %s:%d\n",_Cthread_self(),
-            (unsigned long) mtx,(int) timeout, file, line);
+    if (Cthread_debug != 0)
+      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_obtain_mtx(0x%lx,%d) called at/behind %s:%d\n",_Cthread_self(),
+          (unsigned long) mtx,(int) timeout, file, line);
   }
 #endif
 
@@ -2610,8 +2785,9 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
      */
 #ifdef CTHREAD_DEBUG
     if (file != NULL) {
-      fprintf(stderr,"[Cthread    [%2d]] in _Cthread_obtain_mtx called at %s:%d : Enter Critical section 0x%x\n",
-              _Cthread_self(),file,line,mtx);
+      if (Cthread_debug != 0)
+        log(LOG_INFO,"[Cthread    [%2d]] in _Cthread_obtain_mtx called at %s:%d : Enter Critical section 0x%x\n",
+            _Cthread_self(),file,line,mtx);
     }
 #endif /* CTHREAD_DEBUG */
     EnterCriticalSection(&(mtx->mtx));
@@ -2734,6 +2910,215 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
 #endif /* ifndef _CTHREAD */
 }
 
+#else /* CTHREAD_DEBUG */
+
+/* ============================================ */
+/* Routine  : _Cthread_obtain_mtx_debug         */
+/* Arguments: address of a mutex                */
+/*            integer - timeout                 */
+/* -------------------------------------------- */
+/* Output   : 0 (OK) -1 (ERROR)                 */
+/* -------------------------------------------- */
+/* History:                                     */
+/* 07-APR-1999       First implementation       */
+/*                   Jean-Damien.Durand@cern.ch */
+/* ============================================ */
+/* Notes:                                       */
+/* This routine tries to get a mutex lock, with */
+/* the use of a conditionnal variable if there  */
+/* is one (the argument can be NULL), and an    */
+/* eventual timeout:                            */
+/* timeout < 0          - mutex_lock            */
+/* timeout = 0          - mutex_trylock         */
+/* timeout > 0          - cond_timedwait        */
+/*                     or lock_mutex            */
+/* The use of cond_timedwait is caution to the  */
+/* non-NULL value to the second argument.       */
+/* ============================================ */
+int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeout)
+     char *Cthread_file;
+     int Cthread_line;
+     char *file;
+     int line;
+     Cth_mtx_t *mtx;
+     int timeout;
+{
+#ifdef _CTHREAD
+  int               n;
+#endif
+
+#ifdef CTHREAD_DEBUG
+  if (file != NULL) {
+    if (Cthread_debug != 0)
+      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_obtain_mtx_debug(0x%lx,%d) called at %s:%d and behind %s:%d\n",
+          _Cthread_self(),
+          (unsigned long) mtx,(int) timeout, 
+          Cthread_file, Cthread_line,
+          file, line);
+  }
+#endif
+
+#ifndef _CTHREAD
+  /* This is not a thread implementation */
+  return(0);
+#elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32 && defined(_CTHREAD_WIN32MTX)
+  /*
+   * Use Win32 mutex handles
+   */
+  if ( timeout < 0 ) {
+	if ( (n = WaitForSingleObject((HANDLE)*mtx,INFINITE)) == WAIT_FAILED ) {
+      serrno = SECTHREADERR;
+      return(-1);
+	} else {
+      return(0);
+    }
+  } else {
+    if ( (n=WaitForSingleObject((HANDLE)*mtx,timeout * 1000)) == WAIT_FAILED ) {
+      serrno = SECTHREADERR;
+      return(-1);
+	} else if ( n == WAIT_TIMEOUT ) {
+      serrno = SETIMEDOUT;
+      return(-1);
+	} else {
+      return(0);
+    }
+  }
+#else 
+  /* This is a thread implementation */
+  if (timeout < 0) {
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 && !defined(_CTHREAD_WIN32MTX)
+    /*
+     * Use Win32 critical section
+     */
+#ifdef CTHREAD_DEBUG
+    if (file != NULL) {
+      if (Cthread_debug != 0)
+        log(LOG_INFO,"[Cthread    [%2d]] in _Cthread_obtain_mtx called at %s:%d : Enter Critical section 0x%x\n",
+            _Cthread_self(),file,line,mtx);
+    }
+#endif /* CTHREAD_DEBUG */
+    EnterCriticalSection(&(mtx->mtx));
+    mtx->nb_locks++;
+    return(0);
+#  else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 && _CTHREAD_WIN32MTX */
+    /* Try to get the lock */
+#    if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+    if ((n = pthread_mutex_lock(mtx))) {
+      serrno = SECTHREADERR;
+      errno = n;
+      return(-1);
+    }
+    return(0);
+#    elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+    if (pthread_mutex_lock(mtx)) {
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+    return(0);
+#    elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+    if ((n = pthread_mutex_lock(mtx))) {
+      serrno = SECTHREADERR;
+      errno = n;
+      return(-1);
+    }
+    return(0);
+#    else
+    serrno = SEOPNOTSUP;
+    return(-1);
+#    endif /* _CTHREAD_PROTO */
+#  endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 && _CTHREAD_WIN32MTX */
+  } else if (timeout == 0) {
+#if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+    if ((n = pthread_mutex_trylock(mtx))) {
+      /* EBUSY or EINVAL */
+      errno = n;
+      serrno = SECTHREADERR;
+      return(-1);
+    } else {
+      return(0);
+    }
+#elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+    if (pthread_mutex_trylock(mtx) != 1) {
+      serrno = SECTHREADERR;
+      return(-1);
+    } else {
+      return(0);
+    }
+#elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+    if ((n = pthread_mutex_trylock(mtx))) {
+      /* EBUSY or EINVAL */
+      errno = n;
+      serrno = SECTHREADERR;
+      return(-1);
+    } else {
+      return(0);
+    }
+#elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 && defined(_CTHREAD_WIN32MTX)
+    if ( TryEnterCriticalSection(&(mtx->mtx)) == TRUE ) {
+        mtx->nb_locks++;
+        return(0);
+    } else {
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+#else
+    serrno = SEOPNOTSUP;
+    return(-1);
+#endif /* _CTHREAD_PROTO */
+  } else {
+    /* This code has been kept from comp.programming.threads */
+    /* timeout > 0 */
+    int gotmutex   = 0;
+    unsigned long timewaited = 0;
+    unsigned long Timeout = 0;
+
+    /* Convert timeout in milliseconds */
+    Timeout = timeout * 1000;
+
+    while (timewaited < Timeout && ! gotmutex) {
+#if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+      if ((n = pthread_mutex_trylock(mtx)))
+        errno = n;
+#elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+      n = pthread_mutex_trylock(mtx);
+#elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+      if ((n = pthread_mutex_trylock(mtx)))
+        errno = n;
+#elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 && defined(_CTHREAD_WIN32MTX)
+      n = -1;
+      if ( TryEnterCriticalSection(&(mtx->mtx)) == TRUE ) {
+          n = 0;
+          mtx->nb_locks++;
+      } else {
+        errno = EBUSY;
+      }
+#else
+      serrno = SEOPNOTSUP;
+      return(-1);
+#endif /* _CTHREAD_PROTO */
+      if (errno == EDEADLK || n == 0) {
+        gotmutex = 1;
+        return(0);
+      }
+      if (errno == EBUSY) {
+        timewaited += Timeout / 20;
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
+        /* Win32 Sleep is in milliseconds */
+        Sleep(Timeout/20);
+#  else /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
+        /* usleep is in micro-seconds, not milli seconds... */
+        usleep((Timeout * 1000)/20);
+#endif /* _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32 */
+      }
+    }
+    serrno = ETIMEDOUT;
+    return(-1);
+  }
+#endif /* ifndef _CTHREAD */
+}
+
+#endif /* CTHREAD_DEBUG */
+
 /* ============================================ */
 /* Routine  : _Cthread_addmtx                   */
 /* Arguments: Cmtx_new - New Cmtx_element       */
@@ -2758,8 +3143,9 @@ int _Cthread_addmtx(file, line, Cmtx_new)
   
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
-    fprintf(stderr,"[Cthread    [%2d]] In _Cthread_addmtx(0x%x) called at/behind %s:%d\n",
-            _Cthread_self(),(unsigned long) Cmtx_new, file, line);
+    if (Cthread_debug != 0)
+      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addmtx(0x%lx) called at/behind %s:%d\n",
+          _Cthread_self(),(unsigned long) Cmtx_new, file, line);
   }
 #endif
 
@@ -2767,7 +3153,11 @@ int _Cthread_addmtx(file, line, Cmtx_new)
   /* Not a thread implementation */
   return(0);
 #else
-  if ( _Cthread_obtain_mtx(file,line,&(Cthread.mtx),-1) ) return(-1);
+  /*
+    if ( _Cthread_obtain_mtx(file,line,&(Cthread.mtx),-1) ) 
+      return(-1);
+  */
+
   /* First found the last element */
   while (current->next != NULL) {
     current = current->next;
@@ -2780,7 +3170,9 @@ int _Cthread_addmtx(file, line, Cmtx_new)
   /* element                                        */
   ((struct Cmtx_element_t *) current->next)->next = NULL;
   
-  _Cthread_release_mtx(file,line,&(Cthread.mtx));
+  /* 
+     _Cthread_release_mtx(file,line,&(Cthread.mtx));
+  */
 
   return(0);
 #endif
@@ -2827,126 +3219,284 @@ int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startrout
 {
   struct Cid_element_t *current = &Cid;    /* Curr Cid_element */
   int                 current_cid = -1;    /* Curr Cthread ID    */
+#ifdef _CTHREAD
+  int n;
+  void               *tsd = NULL;         /* Thread-Specific Variable */
+#endif
 
 #ifdef CTHREAD_DEBUG
-  fprintf(stderr,"[Cthread    [%2d]] In _Cthread_addcid(0x%x,%d,0x%x,%d) called at %s:%d and behind %s:%d\n",
-          _Cthread_self(),
-          (unsigned long) pid,(int) thID, (unsigned long) startroutine, (int) detached,
-          Cthread_file, Cthread_line,
-          file != NULL ? file : "(disabled)",
-          file != NULL ? line : -1);
+  if (Cthread_file != NULL) {
+    /* To avoid recursion */
+    if (file == NULL) {
+      if (Cthread_debug != 0)
+        log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid(0x%lx,%d,0x%lx,%d) called at %s:%d\n",
+            _Cthread_self(),
+            (unsigned long) pid,(int) thID, (unsigned long) startroutine, (int) detached,
+            Cthread_file, Cthread_line);
+    } else {
+      if (Cthread_debug != 0)
+        log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid(0x%lx,%d,0x%lx,%d) called at %s:%d and behind %s:%d\n",
+            _Cthread_self(),
+            (unsigned long) pid,(int) thID, (unsigned long) startroutine, (int) detached,
+            Cthread_file, Cthread_line,
+            file, line);
+    }
+  }
 #endif
   
+#ifdef _CTHREAD
+
+  /* In the case of threaded environment, and if the entry we wanted */
+  /* to insert is... us, then we check the Thread Specific Variable  */
+  /* right now.                                                      */
+  
+  /* In a threaded environment, we get Thread Specific   */
+  /* Variable, directly with the thread interface        */
+  /* Yes, Because we want the less overhead as possible. */
+  /* A previous version of Cthread was always looking to */
+  /* the internal linked list. Generated a lot of        */
+  /* _Cthread_obtain_mtx()/_Cthread_release_mtx()        */
+  /* overhead. Now those two internal methods are called */
+  /* only once, to get the cid. After it is stored in a  */
+  /* Thread-Specific variable, whose associated key is   */
+  /* cid_key.                                            */
+  
+  /* We makes sure that a key is associated once for all */
+  /* with what we want.                                  */
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
+  /* In WIN32 there is nothing corresponding to        */
+  /* pthread_once(). Instead we rely on that Cthread_..*/
+  /* is the unique thread interface.                   */
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+  if ((n = pthread_once(&cid_once,_Cthread_cid_once)) != 0) {
+    errno = n;
+    serrno = SECTHREADERR;
+    return(-1);
+  }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+  if (pthread_once(&cid_once,_Cthread_cid_once) != 0) {
+    serrno = SECTHREADERR;
+    return(-1);
+  }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+  /* On linux, pthread_once always returns 0... */
+  pthread_once(&cid_once,_Cthread_cid_once);
+#  else
+  serrno = SEOPNOTSUP;
+  return(-1);
+#  endif
+  
+  /* We look if there is already a Thread-Specific       */
+  /* Variable.                                           */
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+  tsd = pthread_getspecific(cid_key);
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+  if (pthread_getspecific(cid_key,&tsd)) {
+    tsd = NULL;
+  }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+  tsd = pthread_getspecific(cid_key);
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
+  tsd = TlsGetValue(cid_key);
+#  else
+  serrno = SEOPNOTSUP;
+  return(-1);
+#  endif
+  
+  if (tsd == NULL) {
+    /* We try to create the key-value */
+    if ((tsd = (void *) malloc(sizeof(int))) == NULL) {
+      serrno = SEINTERNAL;
+      return(-1);
+    }
+    
+    /* We associate the key-value with the key   */
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+    if ((n = pthread_setspecific(cid_key, tsd))) {
+      errno = n;
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+    if (pthread_setspecific(cid_key, tsd)) {
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+    if ((n = pthread_setspecific(cid_key, tsd))) {
+      errno = n;
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
+    if ( !(n = TlsSetValue(cid_key, tsd)) ) {
+      serrno = SECTHREADERR;
+        return(-1);
+    }
+#  else
+    serrno = SEOPNOTSUP;
+    return(-1);
+#  endif /* _CTHREAD_PROTO */
+
+    /* And we initialize it */
+    * (int *) tsd = -2;
+  }
+#endif /* CTHREAD */
+
   if (_Cthread_obtain_mtx(file,line,&(Cthread.mtx),-1))
     return(-1);
-  
-  /* First found the last element */
+
+  /* First find the last element */
   while (current->next != NULL) {
     current = current->next;
+
 #ifndef _CTHREAD
     if (current->pid == *pid) {
       current->detached = detached;
-#ifdef CTHREAD_DEBUG
-      fprintf(stderr,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d and behind %s:%d : Already existing cid = %d\n",_Cthread_self(),
-              Cthread_file,Cthread_line,
-              file != NULL ? file : "(disabled)",
-              file != NULL ? line : -1,
-              current->cid);
-#endif
-      _Cthread_release_mtx(file,line,&(Cthread.mtx));
-      return(current->cid);
+#  ifdef CTHREAD_DEBUG
+      if (Cthread_file != NULL) {
+        /* To avoid recursion */
+        if (file == NULL) {
+          if (Cthread_debug != 0)
+            log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d : Already existing cid = %d\n",_Cthread_self(),
+                Cthread_file,Cthread_line,
+                current->cid);
+        } else {
+          if (Cthread_debug != 0)
+            log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d and behind %s:%d : Already existing cid = %d\n",_Cthread_self(),
+                Cthread_file,Cthread_line,
+                file,line,
+                current->cid);
+        }
+        current_cid = current->cid;
+        break;
+      }
+#  endif
     }
 #else /* _CTHREAD */
-#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
+#  if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
     if (current->thID == thID) {
       current->detached = detached;
       if ( pid != NULL ) current->pid = *pid;
-#ifdef CTHREAD_DEBUG
-      fprintf(stderr,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d and behind %s:%d : Already existing cid = %d\n",_Cthread_self(),
-              Cthread_file,Cthread_line,
-              file != NULL ? file : "(disabled)",
-              file != NULL ? line : -1,
-              current->cid);
-#endif
-      _Cthread_release_mtx(&(Cthread.mtx));
-      return(current->cid);
+#    ifdef CTHREAD_DEBUG
+      if (Cthread_file != NULL) {
+        /* To avoid recursion */
+        if (file == NULL) {
+          if (Cthread_debug != 0)
+            log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d : Already existing cid = %d\n",_Cthread_self(),
+                Cthread_file,Cthread_line,
+                current->cid);
+        } else {
+          if (Cthread_debug != 0)
+            log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d and behind %s:%d : Already existing cid = %d\n",_Cthread_self(),
+                Cthread_file,Cthread_line,
+                file, line,
+                current->cid);
+        }
+      }
+#    endif
+      current_cid = current->cid;
+      break;
     }
-#else /* _CTHREAD_PROTO_WIN32 */
+#  else /* _CTHREAD_PROTO_WIN32 */
     if (pthread_equal(current->pid,*pid)) {
       current->detached = detached;
-#ifdef CTHREAD_DEBUG
-      fprintf(stderr,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d and behind %s:%d : Already existing cid = %d\n",_Cthread_self(),
-              Cthread_file,Cthread_line,
-              file != NULL ? file : "(disabled)",
-              file != NULL ? line : -1,
-              current->cid);
-#endif
-      _Cthread_release_mtx(file,line,&(Cthread.mtx));
-      return(current->cid);
+#    ifdef CTHREAD_DEBUG
+      if (Cthread_file != NULL) {
+        /* To avoid recursion */
+        if (file == NULL) {
+          if (Cthread_debug != 0)
+            log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d : Already existing cid=%d (current pid=%d)\n",_Cthread_self(),
+                Cthread_file,Cthread_line,
+                current->cid,getpid());
+        } else {
+          if (Cthread_debug != 0)
+            log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d and behind %s:%d : Already existing cid=%d (current pid=%d)\n",_Cthread_self(),
+                Cthread_file,Cthread_line,
+                file, line,
+                current->cid,getpid());
+        }
+      }
+#    endif
+      current_cid = current->cid;
+      break;
     }
-#endif /* _CTHREAD_PROTO_WIN32 */
+#  endif /* _CTHREAD_PROTO_WIN32 */
 #endif /* _CTHREAD */
-    current_cid = current->cid;
-  } /* End of while ( current->next != NULL ) */
+  }
   
   /* Not found                         */
   
-  /* Make sure next cid is positive... */
-  if (++current_cid < 0) {
-    _Cthread_release_mtx(file,line,&(Cthread.mtx));
-    serrno = SEINTERNAL;
-    return(-1);
-  }
-  
-  /* Change pointer of last element to its next one */
-  if ((current->next = malloc(sizeof(struct Cid_element_t))) == NULL) {
-    _Cthread_release_mtx(file,line,&(Cthread.mtx));
-    serrno = SEINTERNAL;
-    return(-1);
-  }
-  
-  /* Fill structure */
-  /* 
-   * For Windows pid may be == NULL because this routine may first
-   * be called by the thread startup where the thread handle is
-   * not accessible (only the thread ID is available within the
-   * thre thread itself).
-   */
-  if ( pid != NULL ) {
-    /* On some systems (like DCE) pthread_t is a structure */
-    /*
-    memcpy(&(((struct Cid_element_t *) current->next)->pid),
-           pid,
-           sizeof(Cth_pid_t));
-    */
+  if (current_cid < 0) {
+    /* Not found */
+    if (startroutine == NULL) {
+      /* This is the special case of initialization */
+      current_cid = -1;
+      * (int *) tsd = -1;
+    } else {
+      /* Make sure next cid is positive... */
+      if ((current_cid = current->cid + 1) < 0) {
+        _Cthread_release_mtx(file,line,&(Cthread.mtx));
+        serrno = SEINTERNAL;
+        return(-1);
+      }
+    }
+
+    /* Change pointer of last element to its next one */
+    if ((current->next = malloc(sizeof(struct Cid_element_t))) == NULL) {
+      _Cthread_release_mtx(file,line,&(Cthread.mtx));
+      serrno = SEINTERNAL;
+      return(-1);
+    }
+    
+    /* Fill structure */
     /* 
-	 * Normal assignment should work as well! even if *pid is
-     * a structure (Olof).
-	 */
-    /*
-     * Olof is right. Let's do normal C assigment, though
+     * For Windows pid may be == NULL because this routine may first
+     * be called by the thread startup where the thread handle is
+     * not accessible (only the thread ID is available within the
+     * thread itself).
      */
-    ((struct Cid_element_t *) current->next)->pid = *pid;
+    if ( pid != NULL ) {
+      ((struct Cid_element_t *) current->next)->pid = *pid;
+    }
+    /* ((struct Cid_element_t *) current->next)->pid      = pid; */
+    ((struct Cid_element_t *) current->next)->thID     = thID;
+    ((struct Cid_element_t *) current->next)->addr     = startroutine;
+    ((struct Cid_element_t *) current->next)->detached = detached;
+    ((struct Cid_element_t *) current->next)->next     = NULL;
+    ((struct Cid_element_t *) current->next)->cid      = current_cid;
+    
+  } else {
+
+    /* In any case we overwrite our TSD keyvalue   */
+    /* The fact that current_cid >= 0 says that we */
+    /* are executing in our namespace.             */
+    * (int *) tsd = current_cid;
+
   }
-  /* ((struct Cid_element_t *) current->next)->pid      = pid; */
-  ((struct Cid_element_t *) current->next)->thID     = thID;
-  ((struct Cid_element_t *) current->next)->addr     = startroutine;
-  ((struct Cid_element_t *) current->next)->detached = detached;
-  ((struct Cid_element_t *) current->next)->next     = NULL;
-  ((struct Cid_element_t *) current->next)->cid      = current_cid;
-  
+
   _Cthread_release_mtx(file,line,&(Cthread.mtx));
   
   /* Returns cid */
 #ifdef CTHREAD_DEBUG
-  fprintf(stderr,"[Cthread    [%2d]] _Cthread_addcid() called at %s:%d and behind %s:%d: Returning cid=%d\n",
-          _Cthread_self(),
-          Cthread_file,Cthread_line,
-          file != NULL ? file : "(disabled)",
-          file != NULL ? line : -1,
-          current_cid);
+  if (Cthread_file != NULL) {
+    /* To avoid recursion */
+    if (file == NULL) {
+      if (Cthread_debug != 0)
+        log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d : Returning cid=%d (current pid=%d)\n",
+            _Cthread_self(),
+            Cthread_file,Cthread_line,
+            current_cid,getpid());
+    } else {
+      if (Cthread_debug != 0)
+        log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addcid() called at %s:%d and behind %s:%d : Returning cid=%d (current pid=%d)\n",
+            _Cthread_self(),
+            Cthread_file,Cthread_line,
+            file, line,
+            current_cid,getpid());
+    }
+  }
 #endif
-  /* In a non-thread implementation is SHOULD return zero ! */
   return(current_cid);
 }
 
@@ -2966,16 +3516,25 @@ int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startrout
 /* Cthread variables.                           */
 /* ============================================ */
 void _Cthread_once() {
+  Cth_pid_t pid = -1;
+  unsigned thID = 0;       /* WIN32 thread ID  */
 #ifdef _CTHREAD
-#if _CTHREAD_PROTO !=  _CTHREAD_PROTO_WIN32
+#if _CTHREAD_PROTO != _CTHREAD_PROTO_WIN32
   pthread_mutexattr_t  mattr;
+#if _CTHREAD_PROTO != _CTHREAD_PROTO_LINUX
   int                  n;
+#endif
 #endif /* _CTHREAD_PROTO != _CTHREAD_PROTO_WIN32 */
 #endif
 
 #ifndef _CTHREAD
   /* In a non-thread environment, initialize the */
   /* pointers                                    */
+  Cid.cid      = -1;
+  Cid.pid      = -1;
+  Cid.thID     = 0;
+  Cid.addr     = NULL;
+  Cid.detached = 0;
   Cid.next     = NULL;
   Cspec.next   = NULL;
   _Cthread_once_status = 0;
@@ -2991,21 +3550,29 @@ void _Cthread_once() {
 	return;
   }
   if ((n = pthread_mutex_init(&(Cthread.mtx),&mattr)) != 0) {
+    pthread_mutexattr_destroy(&mattr);
     errno = n;
 	return;
   }
+  pthread_mutexattr_destroy(&mattr);
+  pid = (Cth_pid_t) pthread_self();
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
     /* Create the mutex a-la DCE */
   if (pthread_mutex_init(&(Cthread.mtx),pthread_mutexattr_default) != 0) {
     return;
   }
+  pid = (Cth_pid_t) pthread_self();
 #elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
   /* Create the mutex a-la LinuxThreads      */
   /* On this OS, pthread_mutexattr_init and  */
   /* pthread_mutex_init always returns 0 ... */
   pthread_mutexattr_init(&mattr);
   pthread_mutex_init(&(Cthread.mtx),&mattr);
+  pthread_mutexattr_destroy(&mattr);
+  pid = (Cth_pid_t) pthread_self();
 #elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
+  thID = GetCurrentThreadId();
+  pid = getpid();
 #  ifdef _CTHREAD_WIN32MTX
   if ( !once ) Cthread.mtx = CreateMutex(NULL,FALSE,NULL);
   once = 1;
@@ -3019,10 +3586,26 @@ void _Cthread_once() {
   /* Nothing to do ! */
 #endif
   /* Initialize the structures */
-  Cid.next   = NULL;
+  Cid.cid      = -1;
+  Cid.pid      = pid;
+  Cid.thID     = thID;
+  Cid.addr     = NULL;
+  Cid.detached = 0;
+  Cid.next     = NULL;
+  Cspec.next   = NULL;
   Cmtx.next  = NULL;
   Cspec.next = NULL;
   _Cthread_once_status = 0;
+  /* We now check if the caller has a Thread-Specific variable  */
+  /* If it has not such one, yet, then _Cthread_self() will     */
+  /* return -2, and by the way will have created the TSD for us */
+  if (_Cthread_self() == -2) {
+    /* Cthread do not know, yet, of this thread. This can occur   */
+    /* only in the main thread. We, so, just have to create an    */
+    /* entry in the Cthread linked list, so that subsequent calls */
+    /* will recognize the main thread.                            */
+    _Cthread_addcid(NULL,0,NULL,0,&pid,thID,NULL,0);
+  }
   /* Initialize thread specific globals environment*/
   Cglobals_init(Cthread_Getspecific_init,Cthread_Setspecific0,Cthread_Self0); 
   return;
@@ -3042,7 +3625,8 @@ void _Cthread_keydestructor(addr)
 {
   /* Release the Thread-Specific key */
 #ifdef CTHREAD_DEBUG
-  fprintf(stderr,"[Cthread    [%2d]] In _Cthread_keydestructor(0x%x)\n",_Cthread_self(),(unsigned long) addr);
+  if (Cthread_debug != 0)
+    log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_keydestructor(0x%lx)\n",_Cthread_self(),(unsigned long) addr);
 #endif
   free(addr);
 }
@@ -3086,8 +3670,8 @@ struct Cspec_element_t *_Cthread_findglobalkey(file, line, global_key)
   _Cthread_release_mtx(file,line,&(Cthread.mtx));
   if (n) {
     if (file != NULL) {
-      /* If file it is initialization, then we will have */
-      /* recursive call because of serrno.               */
+      /* If it is initialization, then we will have */
+      /* recursive call because of serrno.          */
       serrno = EINVAL;
     }
     return(NULL);
@@ -3116,7 +3700,7 @@ CTHREAD_DECL Cthread_Setspecific0(global_key, addr)
      int *global_key;
      void *addr;
 {
-  return(Cthread_Setspecific("Cthread.c(Cthread_Setspecfic0)",__LINE__,global_key,addr));
+  return(Cthread_Setspecific(NULL,0,global_key,addr));
 }
 
 CTHREAD_DECL Cthread_Setspecific(file, line, global_key, addr)
@@ -3132,10 +3716,12 @@ CTHREAD_DECL Cthread_Setspecific(file, line, global_key, addr)
 
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
-    fprintf(stderr,"[Cthread    [%2d]] In Cthread_setspecific(0x%x,0x%x) called at/behind %s:%d\n",
-            _Cthread_self(),
-            (unsigned long) global_key, (unsigned long) addr,
-            file, line);
+    /* To avoid recursion */
+    if (Cthread_debug != 0)
+      log(LOG_INFO,"[Cthread    [%2d]] In Cthread_setspecific(0x%lx,0x%lx) called at/behind %s:%d\n",
+          _Cthread_self(),
+          (unsigned long) global_key, (unsigned long) addr,
+          file, line);
   }
 #endif
 
@@ -3259,10 +3845,11 @@ CTHREAD_DECL Cthread_Getspecific(file, line, global_key, addr)
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
     /* to avoid recursion */
-    fprintf(stderr,"[Cthread    [%2d]] In Cthread_getspecific(0x%x) called at/behind %s:%d\n",
-            _Cthread_self(),
-            (unsigned long) global_key,
-            file, line);
+    if (Cthread_debug != 0)
+      log(LOG_INFO,"[Cthread    [%2d]] In Cthread_getspecific(0x%lx) called at/behind %s:%d\n",
+          _Cthread_self(),
+          (unsigned long) global_key,
+          file, line);
   }
 #endif
 
@@ -3428,8 +4015,9 @@ int _Cthread_addspec(file, line, Cspec_new)
   
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
-    fprintf(stderr,"[Cthread    [%2d]] In _Cthread_addspec(0x%x) called at/behind %s:%d\n",_Cthread_self(),
-            (unsigned long) Cspec_new,file,line);
+    if (Cthread_debug != 0)
+      log(LOG_INFO,"[Cthread    [%2d]] In _Cthread_addspec(0x%lx) called at/behind %s:%d\n",_Cthread_self(),
+          (unsigned long) Cspec_new,file,line);
   }
 #endif
 
@@ -3824,65 +4412,143 @@ CTHREAD_DECL Cthread_environment() {
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
 CTHREAD_DECL _Cthread_self() {
+#ifdef _CTHREAD
+  void               *tsd = NULL;       /* Thread-Specific Variable */
+#else
   struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
-#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
-  unsigned            thID;             /* WIN32 thread ID */
-#else /* _CTHREAD_PROTO_WIN32 */
-  Cth_pid_t             pid;              /* Current PID      */
-#endif /* _CTHREAD_PROTO_WIN32 */
-  int                 n;                /* Return value     */
+  Cth_pid_t             pid;            /* Current PID      */
+#endif  
+  int                   n;              /* Return value     */
 
   /* Make sure initialization is/was done */
   if ( _Cthread_once_status && _Cthread_init() ) return(-1);
 
-  /* Get current pid */
+
 #ifdef _NOCTHREAD
-  pid = getpid();
-#else
-#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
-  thID = GetCurrentThreadId();
-#else /* _CTHREAD_PROTO_WIN32 */
-  pid = pthread_self();
-#endif /* _CTHREAD_PROTO_WIN32 */
-#endif
+  /* In a non-threaded environment, we just check */
+  /* the list.                                    */
 
   /* We check that this pid correspond to a known */
   /* process                                      */
-
+  pid = getpid();
   n = -1;
   while (current->next != NULL) {
     current = current->next;
-#ifdef _NOCTHREAD
     if (current->pid == pid) {
       n = current->cid;
       break;
     }
-#else
-#if _CTHREAD_PROTO ==  _CTHREAD_PROTO_POSIX
-    if (pthread_equal(current->pid,pid)) {
-      n = current->cid;
-      break;
-    }
-#elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_DCE
-    if (pthread_equal(current->pid,pid)) {
-      n = current->cid;
-      break;
-    }
-#elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_LINUX
-    if (pthread_equal(current->pid,pid)) {
-      n = current->cid;
-      break;
-    }
-#elif _CTHREAD_PROTO ==  _CTHREAD_PROTO_WIN32
-    if ( current->thID == thID ) {
-      n = current->cid;
-	  break;
-	}
-#endif
-#endif
   }
 
+  if (n < 0)
+    serrno = EINVAL;
   return(n);
+
+#else /* _NOCTHREAD */
+
+  /* In a threaded environment, we get Thread Specific   */
+  /* Variable, directly with the thread interface        */
+  /* Yes, Because we want the less overhead as possible. */
+  /* A previous version of Cthread was always looking to */
+  /* the internal linked list. Generated a lot of        */
+  /* _Cthread_obtain_mtx()/_Cthread_release_mtx()        */
+  /* overhead. Now those two internal methods are called */
+  /* only once, to get the cid. After it is stored in a  */
+  /* Thread-Specific variable, whose associated key is   */
+  /* cid_key.                                            */
+
+  /* We makes sure that a key is associated once for all */
+  /* with what we want.                                  */
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
+  /* In WIN32 there is nothing corresponding to        */
+  /* pthread_once(). Instead we rely on that Cthread_..*/
+  /* is the unique thread interface.                   */
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+  if ((n = pthread_once(&cid_once,_Cthread_cid_once)) != 0) {
+    errno = n;
+    serrno = SECTHREADERR;
+    return(-1);
+  }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+  if (pthread_once(&cid_once,_Cthread_cid_once) != 0) {
+    serrno = SECTHREADERR;
+    return(-1);
+  }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+  /* On linux, pthread_once always returns 0... */
+  pthread_once(&cid_once,_Cthread_cid_once);
+#  else
+  serrno = SEOPNOTSUP;
+  return(-1);
+#  endif
+
+  /* We look if there is already a Thread-Specific       */
+  /* Variable.                                           */
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+  tsd = pthread_getspecific(cid_key);
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+  if (pthread_getspecific(cid_key,&tsd)) {
+    tsd = NULL;
+  }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+  tsd = pthread_getspecific(cid_key);
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
+  tsd = TlsGetValue(cid_key);
+#  else
+  serrno = SEOPNOTSUP;
+  return(-1);
+#  endif
+
+  if (tsd == NULL) {
+
+    /* We try to create the key-value */
+    if ((tsd = (void *) malloc(sizeof(int))) == NULL) {
+      serrno = SEINTERNAL;
+      return(-1);
+    }
+
+    /* We associate the key-value with the key   */
+#  if _CTHREAD_PROTO == _CTHREAD_PROTO_POSIX
+    if ((n = pthread_setspecific(cid_key, tsd))) {
+      errno = n;
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_DCE
+    if (pthread_setspecific(cid_key, tsd)) {
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_LINUX
+    if ((n = pthread_setspecific(cid_key, tsd))) {
+      errno = n;
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+#  elif _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
+    if ( !(n = TlsSetValue(cid_key, tsd)) ) {
+      serrno = SECTHREADERR;
+      return(-1);
+    }
+#  else
+    serrno = SEOPNOTSUP;
+    return(-1);
+#  endif
+    
+    /* And we don't yet know the cid... So we set it to -2 */
+
+    * (int *) tsd = -2;
+    
+    return(-2);
+
+  } else {
+
+    /* Thread-Specific variable already exist ! */
+
+    return((int) * (int *) tsd);
+
+  }
+#endif /* _NOCTHREAD */
 }
 
 

@@ -7,6 +7,7 @@
 static char sccsid[] = "@(#)wsacct.c	1.2 08/24/94 CERN CN-PDP/DH Jean-Philippe Baud";
 #endif /* not lint */
 
+#include <stdlib.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include "../h/sacct.h"
