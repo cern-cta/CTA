@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.52 2000/11/03 10:42:14 jdurand Exp $
+ * $Id: procio.c,v 1.53 2000/11/06 06:40:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.52 $ $Date: 2000/11/03 10:42:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.53 $ $Date: 2000/11/06 06:40:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1335,7 +1335,7 @@ void procputreq(req_data, clienthost)
 #else
 	optind = 1;
 #endif
-	while ((c = getopt (nargs, argv, "Gh:I:mM:q:U:V")) != EOF) {
+	while ((c = getopt (nargs, argv, "Gh:I:mM:q:U:V:")) != EOF) {
 		switch (c) {
 		case 'G':
 			break;
