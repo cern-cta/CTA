@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd_cmd.c,v 1.7 2001/12/05 10:07:04 jdurand Exp $
+ * $Id: send2stgd_cmd.c,v 1.8 2002/02/13 12:45:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd_cmd.c,v $ $Revision: 1.7 $ $Date: 2001/12/05 10:07:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd_cmd.c,v $ $Revision: 1.8 $ $Date: 2002/02/13 12:45:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -37,6 +37,7 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd_cmd.c,v $ $Revision: 1.7 $ $Date
 #include "Cnetdb.h"
 #include "stage_struct.h"
 #include "stage_messages.h"
+#include "socket_timeout.h"
 
 int nb_ovl;
 #ifndef _WIN32
@@ -78,6 +79,8 @@ int DLL_DECL send2stgd_cmd(host, reqp, reql, want_reply, user_repbuf, user_repbu
 	char stghost[CA_MAXHOSTNAMELEN+1];
 	char *stagehost = STAGEHOST;
 	int stg_service = 0;
+	int stage_timeout;
+	int save_serrno;
 
 	strcpy (func, "send2stgd");
 #ifndef _WIN32
@@ -113,6 +116,14 @@ int DLL_DECL send2stgd_cmd(host, reqp, reql, want_reply, user_repbuf, user_repbu
 	} else {
 		strcpy (stghost, host);
 	}
+
+	if ((p = getenv ("STAGE_TIMEOUT")) == NULL &&
+		(p = getconfent("STG", "TIMEOUT",0)) == NULL) {
+		stage_timeout = -1;
+	} else {
+		stage_timeout = atoi(p);
+	}
+
 	if ((hp = Cgethostbyname(stghost)) == NULL) {
 		stage_errmsg (func, STG09, "Host unknown:", stghost);
 		serrno = SENOSHOST;
@@ -152,12 +163,13 @@ int DLL_DECL send2stgd_cmd(host, reqp, reql, want_reply, user_repbuf, user_repbu
 		}
 	}
 	if ((n = netwrite_timeout (stg_s, reqp, reql, STGTIMEOUT)) != reql) {
+		save_serrno = serrno;
 		if (n == 0)
 			stage_errmsg (func, STG02, stghost, "send", sys_serrlist[SERRNO]);
 		else
 			stage_errmsg (func, STG02, stghost, "send", neterror());
 		(void) netclose (stg_s);
-		serrno = SECOMERR;
+		serrno = save_serrno;
 		return (-1);
 	}
 	if (! want_reply) {
@@ -166,13 +178,14 @@ int DLL_DECL send2stgd_cmd(host, reqp, reql, want_reply, user_repbuf, user_repbu
 	}
 	
 	while (1) {
-		if ((n = netread(stg_s, repbuf, 3 * LONGSIZE)) != (3 * LONGSIZE)) {
+		if ((n = netread_timeout(stg_s, repbuf, 3 * LONGSIZE, stage_timeout)) != (3 * LONGSIZE)) {
+			save_serrno = serrno;
 			if (n == 0)
 				stage_errmsg (func, STG02, stghost, "recv", sys_serrlist[SERRNO]);
 			else
 				stage_errmsg (func, STG02, stghost, "recv", neterror());
 			(void) netclose (stg_s);
-			serrno = SECOMERR;
+			serrno = save_serrno;
 			return (-1);
 		}
 		p = repbuf;
@@ -187,13 +200,14 @@ int DLL_DECL send2stgd_cmd(host, reqp, reql, want_reply, user_repbuf, user_repbu
 			}
 			break;
 		}
-		if ((n = netread(stg_s, repbuf, c)) != c) {
+		if ((n = netread_timeout(stg_s, repbuf, c, stage_timeout)) != c) {
+			save_serrno = serrno;
 			if (n == 0)
 				stage_errmsg (func, STG02, stghost, "recv", sys_serrlist[SERRNO]);
 			else
 				stage_errmsg (func, STG02, stghost, "recv", neterror());
 			(void) netclose (stg_s);
-			serrno = SECOMERR;
+			serrno = save_serrno;
 			return (-1);
 		}
 		p = repbuf;
