@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.39 $ $Date: 2000/06/14 10:07:45 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.40 $ $Date: 2000/06/14 14:05:18 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cthread_api.h>
@@ -4212,7 +4212,9 @@ void _Cthread_once() {
     _Cthread_addcid(NULL,0,NULL,0,&pid,thID,NULL,0);
   }
   /* Initialize thread specific globals environment*/
-  Cglobals_init(Cthread_Getspecific_init,Cthread_Setspecific0,Cthread_Self0); 
+
+Cglobals_init(Cthread_Getspecific_init,Cthread_Setspecific0,(int (*) 
+_PROTO((void))) Cthread_Self0); 
   return;
 #endif /* ifndef _CTHREAD */
 }
