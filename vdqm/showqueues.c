@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.21 $ $Date: 2004/05/27 10:14:22 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.22 $ $Date: 2004/05/27 12:10:13 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -34,7 +34,7 @@ static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.21 $ $Date: 
 #include "Csnprintf.h"
 
 #define BUF_SIZE     30
-#define BUF_ID_SIZE   100
+#define BUF_ID_SIZE   CA_MAXLINELEN+1
 #define NO_DEDICATION "No_dedication"
 #define NONE_VOLUME "None"
 #define NO_DED "ND"
