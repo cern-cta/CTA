@@ -1,5 +1,5 @@
 /*
- * $Id: stagechng.c,v 1.10 2001/09/18 21:14:15 jdurand Exp $
+ * $Id: stagechng.c,v 1.11 2001/11/30 12:12:00 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.10 $ $Date: 2001/09/18 21:14:15 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.11 $ $Date: 2001/11/30 12:12:00 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -26,10 +26,10 @@ static char sccsid[] = "@(#)$RCSfile: stagechng.c,v $ $Revision: 1.10 $ $Date: 2
 #include <netinet/in.h>
 #endif
 #include "marshall.h"
-#include "stage.h"
 #include "stage_api.h"
 #include "Cpwd.h"
 #include "Cgetopt.h"
+#include "serrno.h"
 
 #if !defined(linux)
 extern	char	*sys_errlist[];
@@ -78,14 +78,14 @@ int main(argc, argv)
 	char *poolname = NULL;
 	static struct Coptions longopts[] =
 	{
-		{"host",               REQUIRED_ARGUMENT,  NULL,               'h'},
-		{"migration_filename", REQUIRED_ARGUMENT,  NULL,               'M'},
-		{"mintime_beforemigr", REQUIRED_ARGUMENT,  &mintime_beforemigr_flag, 1},
-		{"poolname",           REQUIRED_ARGUMENT,  &poolname_flag,       1},
-		{"reqid",              REQUIRED_ARGUMENT,  &reqid_flag,          1},
-		{"retenp_on_disk",     REQUIRED_ARGUMENT,  &retenp_on_disk_flag, 1},
-		{"status",             REQUIRED_ARGUMENT,  &status_flag,         1},
-		{NULL,                 0,                  NULL,                 0}
+		{"host",               REQUIRED_ARGUMENT,  NULL,                    'h'},
+		{"migration_filename", REQUIRED_ARGUMENT,  NULL,                    'M'},
+		{"mintime_beforemigr", REQUIRED_ARGUMENT,  &mintime_beforemigr_flag,  1},
+		{"poolname",           REQUIRED_ARGUMENT,  &poolname_flag,            1},
+		{"reqid",              REQUIRED_ARGUMENT,  &reqid_flag,               1},
+		{"retenp_on_disk",     REQUIRED_ARGUMENT,  &retenp_on_disk_flag,      1},
+		{"status",             REQUIRED_ARGUMENT,  &status_flag,              1},
+		{NULL,                 0,                  NULL,                      0}
 	};
 
 	mintime_beforemigr_flag = 0;
@@ -250,6 +250,7 @@ int main(argc, argv)
 	while (1) {
 		c = send2stgd_cmd (stghost, sendbuf, msglen, 1, NULL, 0);
 		if (c == 0 || serrno == EINVAL || serrno == ENOSPC) break;
+		if (serrno == ESTNACT && ntries == 0) fprintf(stderr, STG161);
 		if (serrno != ESTNACT && ntries++ > MAXRETRY) break;
 		sleep (RETRYI);
 	}
@@ -275,6 +276,10 @@ void usage(cmd)
 	fprintf (stderr,
 				"usage: %s [-h stagehost] pathname(s)\n"
 				"\nor\n\n"
-				"%s [-h stagehost] -M filename [--mintime_beforemigr mintime_in_seconds] [-p poolname] [--reqid request_id] [--retenp_on_disk retention_in_days] [--status status]\n",
+				"%s [-h stagehost] [-p poolname] -M filename"
+				"[--mintime_beforemigr mintime_in_seconds]\n"
+				"[--reqid request_id]\n"
+				"[--retenp_on_disk retention_period[unit]]\n"
+				"[--status status]\n",
 				cmd, cmd);
 }
