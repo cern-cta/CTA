@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.15 $ $Date: 2000/02/13 12:01:28 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.16 $ $Date: 2000/02/13 12:03:13 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -362,7 +362,7 @@ int rtcpd_Mount(tape_list_t *tape) {
         } /* if ( rc == -1 ) */
         if ( save_serrno != ETVBSY ) break;
         else sleep(VOLBSYRI);   /* Retry on volume busy */
-    } / * for (;;) */
+    } /* for (;;) */
     if ( rc == 0 ) 
         rtcp_log(LOG_DEBUG,"rtcpd_Mount() Ctape_mount() successful\n");
 
