@@ -1,5 +1,5 @@
 /*
- * $Id: stage_macros.h,v 1.5 2004/01/28 23:01:46 jdurand Exp $
+ * $Id: stage_macros.h,v 1.6 2004/03/17 14:02:14 jdurand Exp $
  */
 
 #ifndef __stage_macros_h
@@ -13,62 +13,62 @@
 #ifdef ISSTAGED
 #undef ISSTAGED
 #endif
-#define ISSTAGED(stcp)     ((stcp->status & 0xF0) == STAGED)
+#define ISSTAGED(stcp)     (((stcp)->status & 0xF0) == STAGED)
 
 #ifdef ISPUT_FAILED
 #undef ISPUT_FAILED
 #endif
-#define ISPUT_FAILED(stcp) ((stcp->status & PUT_FAILED) == PUT_FAILED)
+#define ISPUT_FAILED(stcp) (((stcp)->status & PUT_FAILED) == PUT_FAILED)
 
 #ifdef ISSTAGEIN
 #undef ISSTAGEIN
 #endif
-#define ISSTAGEIN(stcp)    ((stcp->status & 0xF) == STAGEIN)
+#define ISSTAGEIN(stcp)    (((stcp)->status & 0xF) == STAGEIN)
 
 #ifdef ISSTAGEOUT
 #undef ISSTAGEOUT
 #endif
-#define ISSTAGEOUT(stcp)   ((stcp->status & 0xF) == STAGEOUT)
+#define ISSTAGEOUT(stcp)   (((stcp)->status & 0xF) == STAGEOUT)
 
 #ifdef ISSTAGEWRT
 #undef ISSTAGEWRT
 #endif
-#define ISSTAGEWRT(stcp)   ((stcp->status & 0xF) == STAGEWRT)
+#define ISSTAGEWRT(stcp)   (((stcp)->status & 0xF) == STAGEWRT)
 
 #ifdef ISSTAGEPUT
 #undef ISSTAGEPUT
 #endif
-#define ISSTAGEPUT(stcp)   ((stcp->status & 0xF) == STAGEPUT)
+#define ISSTAGEPUT(stcp)   (((stcp)->status & 0xF) == STAGEPUT)
 
 #ifdef ISSTAGEALLOC
 #undef ISSTAGEALLOC
 #endif
-#define ISSTAGEALLOC(stcp) ((stcp->status & 0xF) == STAGEALLOC)
+#define ISSTAGEALLOC(stcp) (((stcp)->status & 0xF) == STAGEALLOC)
 
 #ifdef ISWAITING
 #undef ISWAITING
 #endif
-#define ISWAITING(stcp)    (((stcp->status & 0xF0) == WAITING_SPC) || ((stcp->status & 0xF0) == WAITING_REQ) || ((stcp->status & (WAITING_MIGR|WAITING_NS)) != 0))
+#define ISWAITING(stcp)    ((((stcp)->status & 0xF0) == WAITING_SPC) || (((stcp)->status & 0xF0) == WAITING_REQ) || (((stcp)->status & (WAITING_MIGR|WAITING_NS)) != 0))
 
 #ifdef ISCASTORMIG
 #undef ISCASTORMIG
 #endif
-#define ISCASTORMIG(stcp) ((stcp->t_or_d == 'h') && (! ISPUT_FAILED(stcp)) && ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR))
+#define ISCASTORMIG(stcp) (((stcp)->t_or_d == 'h') && (! ISPUT_FAILED(stcp)) && (((stcp)->status & CAN_BE_MIGR) == CAN_BE_MIGR))
 
 #ifdef ISCASTORBEINGMIG
 #undef ISCASTORBEINGMIG
 #endif
-#define ISCASTORBEINGMIG(stcp) (ISCASTORMIG(stcp) && (((stcp->status & BEING_MIGR) == BEING_MIGR) || (stcp->status == (STAGEPUT|CAN_BE_MIGR))))
+#define ISCASTORBEINGMIG(stcp) (ISCASTORMIG(stcp) && ((((stcp)->status & BEING_MIGR) == BEING_MIGR) || ((stcp)->status == (STAGEPUT|CAN_BE_MIGR))))
 
 #ifdef ISCASTORWAITINGMIG
 #undef ISCASTORWAITINGMIG
 #endif
-#define ISCASTORWAITINGMIG(stcp) (ISCASTORMIG(stcp) && ((stcp->status & WAITING_MIGR) == WAITING_MIGR))
+#define ISCASTORWAITINGMIG(stcp) (ISCASTORMIG(stcp) && (((stcp)->status & WAITING_MIGR) == WAITING_MIGR))
 
 #ifdef ISCASTORWAITINGNS
 #undef ISCASTORWAITINGNS
 #endif
-#define ISCASTORWAITINGNS(stcp) ((stcp->t_or_d == 'h') && ((stcp->status & WAITING_NS) == WAITING_NS))
+#define ISCASTORWAITINGNS(stcp) (((stcp)->t_or_d == 'h') && (((stcp)->status & WAITING_NS) == WAITING_NS))
 
 #ifdef ISCASTORCANBEMIG
 #undef ISCASTORCANBEMIG
@@ -78,12 +78,12 @@
 #ifdef ISCASTORFREE4MIG
 #undef ISCASTORFREE4MIG
 #endif
-#define ISCASTORFREE4MIG(stcp) ((stcp->status == STAGEOUT) || (stcp->status == (STAGEOUT|PUT_FAILED)) || (stcp->status == (STAGEOUT|CAN_BE_MIGR)) || (stcp->status == (STAGEOUT|CAN_BE_MIGR|PUT_FAILED)) || (stcp->status == (STAGEWRT|CAN_BE_MIGR|PUT_FAILED)))
+#define ISCASTORFREE4MIG(stcp) (((stcp)->status == STAGEOUT) || ((stcp)->status == (STAGEOUT|PUT_FAILED)) || ((stcp)->status == (STAGEOUT|CAN_BE_MIGR)) || ((stcp)->status == (STAGEOUT|CAN_BE_MIGR|PUT_FAILED)) || ((stcp)->status == (STAGEWRT|CAN_BE_MIGR|PUT_FAILED)))
 
 #ifdef ISHPPSMIG
 #undef ISHPPSMIG
 #endif
-#define ISHPSSMIG(stcp) ((stcp->t_or_d == 'm') && ((stcp->status == STAGEPUT) || (stcp->status == STAGEWRT)))
+#define ISHPSSMIG(stcp) (((stcp)->t_or_d == 'm') && (((stcp)->status == STAGEPUT) || ((stcp)->status == STAGEWRT)))
 
 #ifdef ISUIDROOT
 #undef ISUIDROOT
