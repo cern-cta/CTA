@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.135 2001/07/04 12:20:22 jdurand Exp $
+ * $Id: procio.c,v 1.136 2001/07/12 06:36:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.135 $ $Date: 2001/07/04 12:20:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.136 $ $Date: 2001/07/12 06:36:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -216,6 +216,13 @@ int stageput_check_hsm _PROTO((struct stgcat_entry *, uid_t, gid_t));
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
 #endif /* _REENTRANT || _THREAD_SAFE */
+
+/* procioreq's real time spent in rfio connections is optimized using */
+/* rfio_mstat() - this maintains permanent connections that are freed */
+/* using rfio_end() */
+/* We neverthless do NOT call rfio_mstat(), but rfio_stat() instead, in */
+/* case of 'm' records, e.g. HPSS, to not overload the number of rfiod */
+/* number of thread from HPSS side */
 
 void procioreq(req_type, magic, req_data, clienthost)
 		 int req_type;
@@ -1537,8 +1544,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 				}
 				break;
 			case STAGED:		/* staged */
-				if (rfio_stat (stcp->ipath, &st) < 0) {
-					stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+				if (rfio_mstat (stcp->ipath, &st) < 0) {
+					stglogit (func, STG02, stcp->ipath, "rfio_mstat", rfio_serror());
 					if (delfile (stcp, 0, 1, 1, "not on disk", 0, 0, 0, 1) < 0) {
 						int save_serrno = rfio_serrno();
 						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
@@ -2035,11 +2042,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 						goto stagewrt_continue_loop;
 					}
 
-					if (rfio_stat((api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, &filemig_stat) < 0) {
+					if (rfio_mstat((api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, &filemig_stat) < 0) {
 						int save_serrno = rfio_serrno();
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
-						sendrep (rpfd, MSG_ERR, STG02, (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, "rfio_stat", rfio_serror());
+						sendrep (rpfd, MSG_ERR, STG02, (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, "rfio_mstat", rfio_serror());
 						global_c_stagewrt++;
 						c = (api_out != 0) ? save_serrno : USERR;
 						goto stagewrt_continue_loop;
@@ -2137,11 +2144,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 					goto stagewrt_continue_loop;
 				} else {
 					/* It is not point to try to migrated something of zero size */
-					if (rfio_stat((api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, &filemig_stat) < 0) {
+					if (rfio_mstat((api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, &filemig_stat) < 0) {
 						int save_serrno = rfio_serrno();
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
-						sendrep (rpfd, MSG_ERR, STG02, (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, "rfio_stat", rfio_serror());
+						sendrep (rpfd, MSG_ERR, STG02, (api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath, "rfio_mstat", rfio_serror());
 						global_c_stagewrt++;
 						c = (api_out != 0) ? save_serrno : USERR;
 						goto stagewrt_continue_loop;
@@ -2201,7 +2208,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			seteuid(start_passwd.pw_uid);
 			if (stgreq.t_or_d == 'h' && forced_Cns_creatx != 0) {
 				if (forced_rfio_stat != 0) {
-					if (rfio_stat (upath, &st) == 0) {
+					if (rfio_mstat (upath, &st) == 0) {
 						correct_size = (u_signed64) st.st_size;
 						if (stgreq.size && ((u_signed64) (stgreq.size * ONE_MB) < correct_size)) {
 							/* If user specified a maxsize of bytes to transfer and if this */
@@ -2212,7 +2219,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					} else {
 						int save_serrno = rfio_serrno();
 						sendrep (rpfd, MSG_ERR, STG02, upath,
-							"rfio_stat", rfio_serror());
+							"rfio_mstat", rfio_serror());
 						global_c_stagewrt++;
 						c = (api_out != 0) ? save_serrno : USERR;
 						goto stagewrt_continue_loop;
@@ -2251,11 +2258,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 			stcp->status = (Aflag ? (STAGEOUT|CAN_BE_MIGR) : STAGEWRT);
 			strcpy (stcp->poolname, actual_poolname);
 			if (stgreq.t_or_d != 'h') {
-				if (rfio_stat (upath, &st) == 0) {
+				if (rfio_mstat (upath, &st) == 0) {
 					stcp->actual_size = st.st_size;
 					stcp->c_time = st.st_mtime;
 				} else {
-					stglogit(func, STG02, upath, "rfio_stat", rfio_serror());
+					stglogit(func, STG02, upath, "rfio_mstat", rfio_serror());
 				}
 			} else {
 				/* Already done before */
@@ -2455,8 +2462,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 				stcp->reqid = reqid;
 			stcp->status = STAGEIN | STAGED;
 			strcpy (stcp->poolname, actual_poolname);
-			if (rfio_stat (upath, &st) < 0) {
-				sendrep (rpfd, MSG_ERR, STG02, upath, "rfio_stat",
+			if (rfio_mstat (upath, &st) < 0) {
+				sendrep (rpfd, MSG_ERR, STG02, upath, "rfio_mstat",
 								 rfio_serror());
 				delreq(stcp,1);
 				goto reply;
@@ -2500,6 +2507,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	if (hsmfiles != NULL) free(hsmfiles);
 	if (stcp_input != NULL) free(stcp_input);
 	if (stpp_input != NULL) free(stpp_input);
+	rfio_end();
 	return;
  reply:
 	if (fseq_list != NULL) free (fseq_list);
@@ -2525,7 +2533,13 @@ void procioreq(req_type, magic, req_data, clienthost)
 		}
 		rmfromwq (wqp);
 	}
+	rfio_end();
+	return;
 }
+
+/* procioreq's real time spent in rfio connections is optimized using */
+/* rfio_mstat() - this maintains permanent connections that are freed */
+/* using rfio_end() */
 
 void procputreq(req_type, req_data, clienthost)
 		 int req_type;
@@ -2773,13 +2787,13 @@ void procputreq(req_type, req_data, clienthost)
 			}
 			if (stcp->status == STAGEOUT) {
 				u_signed64 actual_size_block;
-				if (rfio_stat (stcp->ipath, &st) == 0) {
+				if (rfio_mstat (stcp->ipath, &st) == 0) {
 					stcp->actual_size = st.st_size;
 					if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 						actual_size_block = stcp->actual_size;
 					}
 				} else {
-					stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+					stglogit (func, STG02, stcp->ipath, "rfio_mstat", rfio_serror());
 					/* No block information - assume mismatch with actual_size will be acceptable */
 					actual_size_block = stcp->actual_size;
 				}
@@ -2897,13 +2911,13 @@ void procputreq(req_type, req_data, clienthost)
 			}
 			if (stcp->status == STAGEOUT) {
 				u_signed64 actual_size_block;
-				if (rfio_stat (stcp->ipath, &st) == 0) {
+				if (rfio_mstat (stcp->ipath, &st) == 0) {
 					stcp->actual_size = st.st_size;
 					if ((actual_size_block = BLOCKS_TO_SIZE(st.st_blocks,stcp->ipath)) < stcp->actual_size) {
 						actual_size_block = stcp->actual_size;
 					}
 				} else {
-					stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+					stglogit (func, STG02, stcp->ipath, "rfio_mstat", rfio_serror());
 					/* No block information - assume mismatch with actual_size will be acceptable */
 					actual_size_block = stcp->actual_size;
 				}
@@ -3254,6 +3268,7 @@ void procputreq(req_type, req_data, clienthost)
 	}
 	if (hsmfiles != NULL) free(hsmfiles);
 	if (hsmfilesstcp != NULL) free(hsmfilesstcp);
+	rfio_end();
 	return;
  reply:
 #if SACCT
@@ -3339,6 +3354,8 @@ void procputreq(req_type, req_data, clienthost)
 	free (argv);
 	if (hsmfiles != NULL) free(hsmfiles);
 	if (hsmfilesstcp != NULL) free(hsmfilesstcp);
+	rfio_end();
+	return;
 }
 
 int
