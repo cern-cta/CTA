@@ -1,6 +1,9 @@
 /*
- * $Id: Cglobals.c,v 1.4 1999/07/21 13:25:58 obarring Exp $
+ * $Id: Cglobals.c,v 1.5 1999/07/23 15:49:58 obarring Exp $
  * $Log: Cglobals.c,v $
+ * Revision 1.5  1999/07/23 15:49:58  obarring
+ * Add an argument for getTid() and the corresponding Cglobals_getTid()
+ *
  * Revision 1.4  1999/07/21 13:25:58  obarring
  * Add cvsId string
  *
@@ -10,7 +13,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: Cglobals.c,v 1.4 1999/07/21 13:25:58 obarring Exp $";
+static char cvsId[] = "$Id: Cglobals.c,v 1.5 1999/07/23 15:49:58 obarring Exp $";
 #endif /* lint */
 /*
  * Castor_globals.c - central entry to maintain all Castor globals
@@ -48,6 +51,7 @@ typedef struct Cglobals {
  */
 static int (*local_getspec)(int *, void **) = NULL;
 static int (*local_setspec)(int *, void *) = NULL;
+static int (*local_getTid)(void) = NULL;
 static Cglobals_t **single_thread_globals = NULL;
 static int nb_globals = 0;
 /*
@@ -81,13 +85,15 @@ int *__rfio_errno();
  * thread-specific to calling thread (normally the main thread).
  */
 void Cglobals_init(int (*getspec)(int *, void **),
-                            int (*setspec)(int *, void *)) {
+                   int (*setspec)(int *, void *),
+                   int (*getTid)(void) ) {
     int i,rc;
     int *key;
     void *addr;
 
     if ( getspec != NULL && local_getspec == NULL ) local_getspec = getspec;
     if ( setspec != NULL && local_setspec == NULL ) local_setspec = setspec;
+    if ( getTid  != NULL && local_getTid  == NULL ) local_getTid = getTid;
     if ( local_getspec != NULL  && local_setspec != NULL ) {
         if ( single_thread_globals != NULL ) {
             /*
@@ -160,6 +166,17 @@ void Cglobals_get(int *key, void **addr, size_t size) {
     }
     return;
 }
+
+/*
+ * Cglobals_getTid() - get current thread Id. Zero (0) is returned
+ * if Cglobals_init() has not been called.
+ */ 
+void Cglobals_getTid(int *Tid) {
+    if ( Tid == NULL ) return;
+    if ( local_getTid == NULL ) *Tid = 0;
+    else *Tid = local_getTid();
+    return;
+} 
 
 int *__serrno() {
     int rc;
