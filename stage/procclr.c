@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.65 2002/09/17 11:47:57 jdurand Exp $
+ * $Id: procclr.c,v 1.66 2002/10/17 22:33:52 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.65 $ $Date: 2002/09/17 11:47:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.66 $ $Date: 2002/10/17 22:33:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -113,6 +113,7 @@ extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern char *stglogflags _PROTO((char *, char *, u_signed64));
 extern int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
 extern char *findpoolname _PROTO((char *));
+extern int check_waiting_on_req _PROTO((int, int));
 
 int check_delete _PROTO((struct stgcat_entry *, gid_t, uid_t, char *, char *, int, int, int, char *));
 
@@ -773,6 +774,7 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag, clienth
 			}
 		}
 		if (Fflag && isadmin) {
+			int save_reqid = stcp->reqid;
 			sendrep (&rpfd, MSG_ERR,
 					 "Status=0x%x but req not in waitq - Deleting reqid %d\n",
 					 stcp->status, stcp->reqid);
@@ -786,6 +788,8 @@ int check_delete(stcp, gid, uid, group, user, rflag, Fflag, nodisk_flag, clienth
 						 rfio_serror());
 				return (rfio_serrno() > 0 ? rfio_serrno() : SESYSERR);
 			}
+			/* Any request waiting on this deleted record ? */
+			check_waiting_on_req(save_reqid,ESTKILLED);
 		} else {
 			sendrep (&rpfd, MSG_ERR, STG104, stcp->status);
 			return (rfio_serrno() > 0 ? rfio_serrno() : SESYSERR);
