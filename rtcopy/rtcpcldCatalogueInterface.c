@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.82 $ $Release$ $Date: 2004/11/26 10:02:13 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.83 $ $Release$ $Date: 2004/11/26 12:17:19 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.82 $ $Release$ $Date: 2004/11/26 10:02:13 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.83 $ $Release$ $Date: 2004/11/26 12:17:19 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -939,17 +939,42 @@ static int compareSegments(
   return(rc);
 }
 
+static int alreadySelected(
+                           tape,
+                           segment
+                           )
+     tape_list_t *tape;
+     struct Cstager_Segment_t *segment;
+{
+  struct Cstager_Segment_t *compSegment = NULL;
+  file_list_t *fl;
+  
+  if ( (tape == NULL) || (segment == NULL) ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  /*
+   * Check last element first
+   */
+  compSegment = tape->file->prev->dbRef->row;
+  if ( compareSegments(segment,compSegment) == 0 ) return(1);
+
+  CLIST_ITERATE_BEGIN(tape->file,fl) 
+    {
+      compSegment = fl->dbRef->row;
+      if ( compareSegments(segment,compSegment) == 0 ) return(1);
+    }
+  CLIST_ITERATE_END(tape->file,fl);
+  return(0);
+}
 
 /**
  * This method is only called from methods used by the recaller.
- * It first checks the file list for any remaining unprocessed segment.
- * If one is found, it calls bestFileSystemForSegment(), completes
- * the file request with a complete path and returns.
- * If there are no more unprocessed segments left, the catalogue
- * is queried for new segments to be processed for the tape using the
- * segmentsForTape() method. New file list items are created for the
- * new segments and finally bestFileSystemForSegment() is called for
- * the first segment (in tape fseq order).
+ * The catalogue is queried for new segments to be processed for the tape
+ * using the segmentsForTape() method. New file list items are created for the
+ * new segments. The newly file list items are incomplete (no path) and
+ * caller should do a subsequent call to bestFileSystemForSegment() in order
+ * complete the path.
  */
 static int procSegmentsForTape(
                                tape
@@ -1011,7 +1036,8 @@ static int procSegmentsForTape(
   tl = tape;
   for ( i=0; i<nbItems; i++ ) {
     Cstager_Segment_status(segmArray[i],&cmpStatus);
-    if ( cmpStatus == SEGMENT_UNPROCESSED ) {
+    if ( (cmpStatus == SEGMENT_UNPROCESSED) &&
+         (alreadySelected(tape,segmArray[i]) == 0) ) {
       Cstager_Segment_blockid(
                               segmArray[i],
                               (CONST unsigned char **)&blockid
