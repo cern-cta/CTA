@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.73 $ $Release$ $Date: 2004/11/03 16:14:31 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.74 $ $Release$ $Date: 2004/11/03 17:15:32 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.73 $ $Release$ $Date: 2004/11/03 16:14:31 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.74 $ $Release$ $Date: 2004/11/03 17:15:32 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -817,7 +817,7 @@ void rtcpcld_cleanupFile(
      file_list_t *file;
 {
   struct Cstager_Segment_t *segment = NULL;
-  struct Cstager_TapeCopy_t *tapeCopy = NULL, **tapeCopyArray = NULL;
+  struct Cstager_TapeCopy_t *tapeCopy = NULL;
   struct Cstager_CastorFile_t *castorFile = NULL;
   struct Cstager_DiskCopy_t **diskCopyArray = NULL;
   int i, nbCopies = 0;
@@ -827,10 +827,8 @@ void rtcpcld_cleanupFile(
     segment = (struct Cstager_Segment_t *)file->dbRef->row;
     if ( segment != NULL ) {
       Cstager_Segment_copy(segment,&tapeCopy);
-      Cstager_Segment_delete(segment);
       if ( tapeCopy != NULL ) {
         Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
-        Cstager_TapeCopy_delete(tapeCopy);
         if ( castorFile != NULL ) {
           Cstager_CastorFile_diskCopies(
                                         castorFile,
@@ -841,16 +839,10 @@ void rtcpcld_cleanupFile(
             Cstager_DiskCopy_delete(diskCopyArray[i]);
           }
           if ( diskCopyArray != NULL ) free(diskCopyArray);
-          nbCopies = 0;
-          Cstager_CastorFile_tapeCopies(
-                                        castorFile,
-                                        &tapeCopyArray,
-                                        &nbCopies
-                                        );
-          for ( i=0; i<nbCopies; i++ ) {
-            Cstager_TapeCopy_delete(tapeCopyArray[i]);
-          }
-          if ( tapeCopyArray != NULL ) free(tapeCopyArray);
+          /*
+           * Destroying the castor file will also destroy
+           * all the attached tape copies
+           */
           Cstager_CastorFile_delete(castorFile);
         }
       }
@@ -2014,7 +2006,7 @@ int rtcpcld_updcFileMigrated(
     for ( j=0; j<nbSegments; j++ ) {
       iObj = Cstager_Segment_getIObject(segmentArray[j]);
       Cstager_Segment_id(segmentArray[j],&key);
-      Cstager_Segment_setCopy(segmentArray[j],NULL);
+      Cstager_Tape_removeSegment(tp,segmentArray[j]);
       Cstager_Segment_setTape(segmentArray[j],NULL);
       rc = C_Services_fillRep(
                               *svcs,
@@ -2029,18 +2021,6 @@ int rtcpcld_updcFileMigrated(
         break;
       }
       
-      rc = C_Services_fillRep(
-                              *svcs,
-                              iAddr,
-                              iObj,
-                              OBJ_TapeCopy,
-                              0
-                              );
-      if ( rc == -1 ) {
-        LOG_DBCALL_ERR("C_Services_fillRep()",
-                       C_Services_errorMsg(*svcs));
-        break;
-      }
       rc = C_Services_deleteRep(
                                 *svcs,
                                 iAddr,
@@ -2052,7 +2032,6 @@ int rtcpcld_updcFileMigrated(
                        C_Services_errorMsg(*svcs));
         break;
       }
-      Cstager_Segment_delete(segmentArray[j]);
     }
     if ( segmentArray != NULL ) free(segmentArray);
 
@@ -2133,7 +2112,9 @@ int rtcpcld_updcFileMigrated(
   }
   if ( tapeCopyArray != NULL ) free(tapeCopyArray);  
   /*
-   * We don't need castorFile anymore
+   * We don't need CastorFile anymore. Because of the composition
+   * relationship, removing the CastorFile from memory will automatically 
+   * also remove the associated TapeCopy(s) and Segment(s)
    */
   Cstager_CastorFile_delete(castorFile);
 
@@ -2393,6 +2374,7 @@ int rtcpcld_returnStream(
       } else {
         for ( i=0; i<nbTapeCopies; i++ ) {
           Cstager_Stream_removeTapeCopy(stream,tapeCopyArray[i]);
+          Cstager_TapeCopy_removeStream(tapeCopyArrya[i],stream);
         }
         rc = C_Services_fillRep(
                                 *svcs,
