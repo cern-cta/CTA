@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.26 $ $Release$ $Date: 2004/07/30 09:11:42 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.27 $ $Release$ $Date: 2004/07/30 11:27:56 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.26 $ $Date: 2004/07/30 09:11:42 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.27 $ $Date: 2004/07/30 11:27:56 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1165,10 +1165,11 @@ static int getUpdates(
   return(0);
 }
 
-static int findTpReqMap(tape,tpList,killed)
+static int findTpReqMap(tape,tpList,killed,mapItem)
      tape_list_t *tape;
      RtcpcldTapeList_t **tpList;
      int *killed;
+     TpReqMap_t **mapItem;
 {
   int rc;
   TpReqMap_t *iterator = NULL;
@@ -1190,6 +1191,7 @@ static int findTpReqMap(tape,tpList,killed)
     {
       if ( iterator->tape == tape ) {
         if ( tpList != NULL ) *tpList = iterator->tpList;
+        if ( mapItem != NULL ) *mapItem = iterator;
         if ( killed != NULL ) {
           if ( *killed > 0 ) iterator->killed = *killed;
           *killed = iterator->killed;
@@ -1207,7 +1209,7 @@ int rtcpcld_findTpReqMap(tape,tpList)
      tape_list_t *tape;
      RtcpcldTapeList_t **tpList;
 {
-  return(findTpReqMap(tape,tpList,NULL));
+  return(findTpReqMap(tape,tpList,NULL,NULL));
 }
 
 int rtcpcld_killed(tape)
@@ -1215,7 +1217,7 @@ int rtcpcld_killed(tape)
 {
   int killed = 0, rc;
 
-  rc = findTpReqMap(tape,NULL,&killed);
+  rc = findTpReqMap(tape,NULL,&killed,NULL);
   if ( rc == -1 ) return(-1);
   if ( killed > 0 ) return(1);
   return(0);
@@ -1226,7 +1228,7 @@ int rtcpcld_setKilled(tape)
 {
   int killed = 1, rc;
 
-  rc = findTpReqMap(tape,NULL,&killed);
+  rc = findTpReqMap(tape,NULL,&killed,NULL);
   if ( rc == -1 ) return(-1);
   return(0);
 }
@@ -1269,6 +1271,44 @@ int rtcpcld_addTpReqMap(tape,tpList)
   
   CLIST_INSERT(runningReqsMap,runningReqMap);
   (void)Cmutex_unlock(&runningReqsMap);
+  return(0);
+}
+
+int rtcpcld_delTpReqMap(tape,tpList)
+     tape_list_t *tape;
+     RtcpcldTapeList_t *tpList;
+{
+  int rc;
+  RtcpcldTapeList_t *tpListTmp = NULL;
+  TpReqMap_t *reqMap = NULL;
+
+  if ( tape == NULL || tpList == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  rc = findTpReqMap(tape,&tpListTmp,NULL,&reqMap);
+  if ( rc == 1 ) {
+    if ( tpList != tpListTmp ) {
+      serrno = SEINTERNAL;
+      return(-1);
+    }
+  } else if ( rc == 0 ) {
+    return(0);
+  } else {
+    return(-1);
+  }
+
+  if ( reqMap == NULL ) return(-1);
+
+  rc = Cmutex_lock(&runningReqsMap,-1);
+  if ( rc == -1 ) {
+    LOG_FAILED_CALL("Cmutex_lock()");
+    return(-1);
+  }
+  
+  CLIST_DELETE(runningReqsMap,reqMap);
+  (void)Cmutex_unlock(&runningReqsMap);
+  free(reqMap);
   return(0);
 }
 
@@ -1547,13 +1587,6 @@ void rtcpcldc_cleanup(tape)
   RtcpcldSegmentList_t *segmItem;
   int rc;
   
-  dbSvc = NULL;
-  rc = rtcpcld_getDbSvc(&dbSvc);
-  if ( rc == 0 && dbSvc != NULL && *dbSvc != NULL ) {
-    C_Services_delete(*dbSvc);
-    *dbSvc = NULL;
-  }
-  
   if ( tape == NULL ) return;
   rc = rtcpcld_findTpReqMap(tape,&tpList);
   if ( rc == 1 ) {
@@ -1567,11 +1600,17 @@ void rtcpcldc_cleanup(tape)
       CLIST_DELETE(tpList,tpItem);
       if ( tpItem->tp != NULL ) Cstager_Tape_delete(tpItem->tp);
       tpItem->tp = NULL;
+      (void)rtcpcld_delTpReqMap(tape,tpItem);
       free(tpItem);
     }
   }
-  C_Services_delete(*dbSvc);
-  *dbSvc = NULL;
+
+  dbSvc = NULL;  
+  rc = rtcpcld_getDbSvc(&dbSvc);
+  if ( rc == 0 && dbSvc != NULL && *dbSvc != NULL ) {
+    C_Services_delete(*dbSvc);
+    *dbSvc = NULL;
+  }
   return;
 }
 
