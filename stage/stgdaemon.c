@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.189 2002/05/09 16:51:58 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.190 2002/05/09 17:04:31 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.189 $ $Date: 2002/05/09 16:51:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.190 $ $Date: 2002/05/09 17:04:31 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -372,13 +372,13 @@ int main(argc,argv)
 			break;
 		case 'F':
 			if ((rlimit_nofile = atoi(Coptarg)) <= 0) {
-				fprintf(stderr,"RLIMIT_NOFILE (-F option) value '%s' : must be > 0\n",Coptarg);
+				fprintf(stderr,"RLIMIT_NOFILE (-F/--rlimit_nofile option) value '%s' : must be > 0\n",Coptarg);
 				++errflg;
 			}
 			break;
 		case 'P':
 			if ((rlimit_nproc = atoi(Coptarg)) <= 0) {
-				fprintf(stderr,"RLIMIT_NPROC (-F option) value '%s' : must be > 0\n",Coptarg);
+				fprintf(stderr,"RLIMIT_NPROC (-P/--rlimit_nproc option) value '%s' : must be > 0\n",Coptarg);
 				++errflg;
 			}
 			break;
@@ -3861,11 +3861,11 @@ void check_child_exit()
 void stgdaemon_usage() {
 	printf("\nUsage : stgdaemon [options]\n"
 		   "  where options can be\n"
-		   "  -f                    Foreground\n"
-		   "  -h                    This help\n"
+		   "  -f                   Foreground\n"
+		   "  -h                   This help\n"
 		   "  -L <%%d>              Listen backlog\n"
-		   "  --rlimit_nproc  <%%d> Max number of processes\n"
-		   "  --rlimit_nofile <%%d> Max number of open file\n"
+		   "  --rlimit_nproc  <%%d> Max number of processes (or -P <%%d>)\n"
+		   "  --rlimit_nofile <%%d> Max number of open file (or -F <%%d>)\n"
  		   "\n"
 		);
 }
