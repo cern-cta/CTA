@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.29 $ $Date: 2002/04/09 15:30:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.30 $ $Date: 2003/02/07 12:30:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	tpdump - analyse the content of a tape */
@@ -345,7 +345,7 @@ int exit_code;
 {
 	Ctape_dmpend();
 	if (reserve_done)
-		(void) Ctape_rls (NULL, TPRLS_ALL);
+		(void) Ctape_rls (NULL, TPRLS_ALL|TPRLS_UNLOAD);
 	exit (exit_code);
 }
 
