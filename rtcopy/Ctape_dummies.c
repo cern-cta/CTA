@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.5 $ $Date: 2000/02/11 16:13:47 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.6 $ $Date: 2000/04/18 14:47:04 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -247,6 +247,36 @@ int wrthdrlbl(int a, char *b) {
 int checkeofeov(int a, char *b) {
     CTAPE_DECL
     CTAPE_BODY((stdout,"checkeofeov(%d,%s)\n",a,b));
+}
+
+int stage_updc_tppos(char *a, int b, int c, char *d, char *e, int f, int g,
+                     char *h, char *i) {
+    CTAPE_DECL
+    fprintf(stdout,"stage_updc_tppos(%s,%d,%d,%s,%s,%d,%d,%s,%s)\n",
+            a,b,c,d,e,f,g,h,i);
+    fprintf(stdout,"RC=?, errno=?, path=?\n"); 
+    scanf("%d %d %[^\n]",&rc,&value,msg); 
+    fflush(stdin); 
+    if ( *msg != '\0' ) strcpy(i,msg);
+    if ( rc == -1 ) {
+        serrno = value;
+    }
+    return(rc);
+}
+
+int stage_updc_filcp(char *a, int b, char *c, u_signed64 d, int e, int f,
+                     int g, char *h, char *i, int j, int k, char *l, char *m) {
+    CTAPE_DECL
+    fprintf(stdout,"stage_updc_filcp(%s,%d,%s,%d,%d,%d,%d,%s,%s,%d,%d,%s,%s)\n",
+            a,b,c,(int)d,e,f,g,h,i,j,k,l,m);
+    fprintf(stdout,"RC=?, errno=?, path=?\n");
+    scanf("%d %d %[^\n]",&rc,&value,msg);
+    fflush(stdin); 
+    if ( *msg != '\0' ) strcpy(m,msg);
+    if ( rc == -1 ) {
+        serrno = value;
+    }
+    return(rc);
 }
 
 #endif /* CTAPE_DUMMIES */
