@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.2 $ $Date: 2003/11/11 06:25:28 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.3 $ $Date: 2003/11/12 10:43:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      repack - copy the active segments from a set of volumes to another set */
@@ -16,7 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.2 $ $Date: 2003/
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
-#include <varargs.h>
+#include <stdarg.h>
 #include "Cgetopt.h"
 #include "Cns_api.h"
 #include "Ctape_api.h"
@@ -446,9 +446,7 @@ char *pool_name;
 	return (nbvol);
 }
 
-repack_callback (tl, fl)
-rtcpTapeRequest_t *tl;
-rtcpFileRequest_t *fl;
+repack_callback (rtcpTapeRequest_t *tl, rtcpFileRequest_t *fl)
 {
 	int compression_factor = 0;
 	u_signed64 fileid;
@@ -524,15 +522,11 @@ rtcpFileRequest_t *fl;
 }
 
 void
-repack_rtcplog(va_alist) va_dcl
+repack_rtcplog(int level, CONST char *format, ...)
 {
         va_list args;
-	int level;
-	char *format;
 
-	va_start (args);
-	level = va_arg(args, int);
-	format = va_arg(args, char *);
+	va_start (args, format);
 	if (level != LOG_DEBUG)
 		vprintf (format, args);
 	va_end(args);
