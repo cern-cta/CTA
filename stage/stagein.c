@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.26 2001/02/01 18:09:29 jdurand Exp $
+ * $Id: stagein.c,v 1.27 2001/02/02 14:18:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.26 $ $Date: 2001/02/01 18:09:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.27 $ $Date: 2001/02/02 14:18:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -409,7 +409,7 @@ int main(argc, argv)
 			errflg++;
 			break;
 		}
-        if (errflg) break;
+        if (errflg != 0) break;
 	}
 	if (req_type != STAGEIN && req_type != STAGEOUT &&
 			Coptind >= argc && fun == 0) {
@@ -436,7 +436,7 @@ int main(argc, argv)
 		errflg++;
 	}
 
-	if (errflg) {
+	if (errflg != 0) {
 		usage (argv[0]);
         freehsmfiles(nhsmfiles, hsmfiles);
 		exit (1);
@@ -488,7 +488,7 @@ int main(argc, argv)
 				strcpy (lbl, "sl");
 #endif
 		}
-		if (errflg) {
+		if (errflg != 0) {
 #if defined(_WIN32)
 			WSACleanup();
 #endif
@@ -623,7 +623,7 @@ int main(argc, argv)
 				marshall_STRING (sbp, path);
 		}
 	}
-	if (errflg) {
+	if (errflg != 0) {
 #if defined(_WIN32)
 		WSACleanup();
 #endif
@@ -720,7 +720,7 @@ int tmscheck(vid, vsn, dgn, den, lbl)
 		}
 		break;
 	}
-	if (errflg) return (1);
+	if (errflg != 0) return (1);
 	strncpy (tmsvsn, tmrepbuf, 6);
 	for  (j = 0; tmsvsn[j]; j++)
 		if (tmsvsn[j] == ' ') break;

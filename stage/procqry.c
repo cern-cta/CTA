@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.45 2001/02/02 12:30:32 jdurand Exp $
+ * $Id: procqry.c,v 1.46 2001/02/02 14:18:01 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.45 $ $Date: 2001/02/02 12:30:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.46 $ $Date: 2001/02/02 14:18:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Disable the update of the catalog in stageqry mode */
@@ -523,6 +523,7 @@ void procqryreq(req_type, req_data, clienthost)
 				errflg++;
 				break;
 			}
+			if (errflg != 0) break;
 		}
 		/* Since the --noregexp flag can be action whenever, we compile the regular expression */
 		/* after the Cgetopt_long() processing */
@@ -563,7 +564,7 @@ void procqryreq(req_type, req_data, clienthost)
 		sendrep (rpfd, MSG_ERR, STG17, "-s", "-p NOPOOL");
 		errflg++;
 	}
-	if (errflg) {
+	if (errflg != 0) {
 		c = USERR;
 		goto reply;
 	}

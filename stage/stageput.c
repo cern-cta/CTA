@@ -1,5 +1,5 @@
 /*
- * $Id: stageput.c,v 1.19 2001/02/01 18:09:29 jdurand Exp $
+ * $Id: stageput.c,v 1.20 2001/02/02 14:18:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.19 $ $Date: 2001/02/01 18:09:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageput.c,v $ $Revision: 1.20 $ $Date: 2001/02/02 14:18:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -248,7 +248,7 @@ int main(argc, argv)
 			errflg++;
 			break;
 		}
-        if (errflg) break;
+        if (errflg != 0) break;
 	}
 	if (Coptind >= argc && fun == 0 && numvid == 0 && Iflag == 0 && Mflag == 0) {
 		fprintf (stderr, STG46);
@@ -338,7 +338,7 @@ int main(argc, argv)
 		} else
 			marshall_STRING (sbp, path);
 	}
-	if (errflg) {
+	if (errflg != 0) {
 #if defined(_WIN32)
 		WSACleanup();
 #endif

@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.16 2001/02/02 12:30:32 jdurand Exp $
+ * $Id: stageqry.c,v 1.17 2001/02/02 14:18:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.16 $ $Date: 2001/02/02 12:30:32 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.17 $ $Date: 2001/02/02 14:18:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -177,6 +177,7 @@ int main(argc, argv)
 			errflg++;
 			break;
 		}
+        if (errflg != 0) break;
 	}
 	if (argc > Coptind) {
 		fprintf (stderr, STG16);
@@ -186,7 +187,7 @@ int main(argc, argv)
 	if (Aflag && Mflag)
 		errflg++;
 
-	if (errflg) {
+	if (errflg != 0) {
 		usage (argv[0]);
 		exit (USERR);
 	}
