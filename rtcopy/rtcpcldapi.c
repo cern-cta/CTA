@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/24 13:59:12 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/05/25 15:29:24 $ $Author: obarring $
  *
  * 
  *
@@ -25,11 +25,12 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.3 $ $Date: 2004/05/24 13:59:12 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.4 $ $Date: 2004/05/25 15:29:24 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 
 #include <errno.h>
+#include <string.h>
 #include <net.h>
 #include <osdep.h>
 #include <log.h>
@@ -625,10 +626,6 @@ static int addSegment(tpList,file,myNotificationAddr)
                               rtcpcldSegm->segment,
                               file->filereq.stgReqId
                               );
-  Cstager_Segment_setTape(
-                          rtcpcldSegm->segment,
-                          tpList->tp
-                          );
   if ( file->filereq.proc_status == RTCP_WAITING ||
        file->filereq.proc_status == RTCP_POSITIONED ) {
     segmentStatus = SEGMENT_UNPROCESSED;
@@ -654,6 +651,15 @@ static int addSegment(tpList,file,myNotificationAddr)
                                      notificationAddr
                                      );
   }
+
+  Cstager_Segment_setTape(
+                          rtcpcldSegm->segment,
+                          tpList->tp
+                          );
+  Cstager_Tape_addSegments(
+                           tpList->tp,
+                           rtcpcldSegm->segment
+                           );
   
   return(0);
 }
@@ -727,9 +733,8 @@ int rtcpcldc_appendFileReqs(tape,file)
      tape_list_t *tape;
      file_list_t *file;
 {
-  int rc, save_serrno;
-  file_list_t *fl;
-  TpReqMap_t *tpReqMap = NULL;
+  int rc, save_serrno, autocommit;
+  file_list_t *fl, *flCp;
   RtcpcldTapeList_t *tpList = NULL;
   RtcpcldSegmentList_t *rtcpcldSegm = NULL;
   struct C_Services_t **dbSvc = NULL;
@@ -744,19 +749,18 @@ int rtcpcldc_appendFileReqs(tape,file)
   rc = Cmutex_lock(tape);
   if ( rc == -1 ) return(-1);
   
-  rc = findTpReqMap(tape,&tpReqMap);
+  rc = findTpReqMap(tape,&tpList);
   if ( rc == -1 ) {
     save_serrno = serrno;
     (void)Cmutex_unlock(tape);
     serrno = save_serrno;
     return(-1);
   }
-  if ( rc == 0 || tpReqMap == NULL ) {
+  if ( rc == 0 || tpList == NULL ) {
     (void)Cmutex_unlock(tape);
     serrno = ENOENT;
     return(-1);
   }
-  tpList = tpReqMap->tpList;
   CLIST_ITERATE_BEGIN(file,fl) 
     {
       fl->filereq.err.severity = fl->filereq.err.severity &
@@ -764,6 +768,7 @@ int rtcpcldc_appendFileReqs(tape,file)
       fl->filereq.cprc = 0;
       if ( fl->filereq.proc_status <= RTCP_WAITING )
         fl->filereq.proc_status = RTCP_WAITING;
+      fl->tape = tape;
       rc = addSegment(
                       tpList,
                       fl,
@@ -791,6 +796,7 @@ int rtcpcldc_appendFileReqs(tape,file)
     save_serrno = serrno;
     if ( serrno == 0 ) save_serrno = errno;
     C_Services_delete(*dbSvc);
+    *dbSvc = NULL;
     (void)Cmutex_unlock(tape);
     serrno = save_serrno;
     return(-1);
@@ -804,34 +810,50 @@ int rtcpcldc_appendFileReqs(tape,file)
       save_serrno = serrno;
       if ( serrno == 0 ) save_serrno = errno;
       C_Services_delete(*dbSvc);
+      *dbSvc = NULL;
       (void)Cmutex_unlock(tape);
       serrno = save_serrno;
       return(-1);
     }
   }
+  flCp = file;
+  while ( (fl = flCp) != NULL ) {
+    CLIST_DELETE(flCp,fl);
+    CLIST_INSERT(tape->file,fl);
+  }
+
+  /*
+   * Assume it is more efficient to create the new segment one by one
+   * rather than updating the whole tape + all segments.
+   */
+  fl = file;
+  autocommit = 0;
   CLIST_ITERATE_BEGIN(tpList->segments,rtcpcldSegm) 
     {
-      segmIObj = Cstager_Segment_getIObject(rtcpcldSegm->segment);
-      rc = C_Services_createRep(*dbSvc,iAddr,segmIObj,1);
-      if ( rc != 0 ) {
-        save_serrno = serrno;
-        rtcpcldSegm->file->filereq.err.errorcode = serrno;
-        strcpy(rtcpcldSegm->file->filereq.err.errmsgtxt,
-               C_Services_errorMsg(*dbSvc));
-        rtcpcldSegm->file->filereq.err.severity = RTCP_FAILED|RTCP_SYERR;
-        C_IAddress_delete(iAddr);
-        C_Services_delete(*dbSvc);
-        (void)Cmutex_unlock(tape);
-        serrno = save_serrno;
-        return(-1);
+      if ( rtcpcldSegm->file == fl ) {
+        segmIObj = Cstager_Segment_getIObject(rtcpcldSegm->segment);
+        /* Group together all transactions in one commit */
+        if ( fl == tpList->segments->file->prev ) autocommit = 1;
+        rc = C_Services_createRep(*dbSvc,iAddr,segmIObj,autocommit);
+        if ( rc != 0 ) {
+          save_serrno = serrno;
+          fl->filereq.err.errorcode = serrno;
+          strcpy(fl->filereq.err.errmsgtxt,
+                 C_Services_errorMsg(*dbSvc));
+          fl->filereq.err.severity = RTCP_FAILED|RTCP_SYERR;
+          C_IAddress_delete(iAddr);
+          C_Services_delete(*dbSvc);
+          *dbSvc = NULL;
+          (void)Cmutex_unlock(tape);
+          serrno = save_serrno;
+          return(-1);
+        }
+        fl = fl->next;
+        /* Make sure to not go beyond the first file */
+        if ( autocommit == 1 ) break;
       }
     }
   CLIST_ITERATE_END(tpList->segments,rtcpcldSegm);
-  while ( (fl = file) != NULL ) {
-    CLIST_DELETE(file,fl);
-    CLIST_INSERT(tape->file,fl);
-  }
-  
   (void)Cmutex_unlock(tape);
 
   C_IAddress_delete(iAddr);
@@ -848,17 +870,26 @@ void rtcpcldc_cleanup(tape)
   
   dbSvc = NULL;
   (void)Cglobals_get(&dbSvcKey,(void **)&dbSvc,sizeof(struct C_Services_t **));
-  if ( dbSvc != NULL && *dbSvc != NULL ) C_Services_delete(*dbSvc);
+  if ( dbSvc != NULL && *dbSvc != NULL ) {
+    C_Services_delete(*dbSvc);
+    *dbSvc = NULL;
+  }
+  
   if ( tape == NULL ) return;
   rc = findTpReqMap(tape,&tpList);
   if ( rc == 1 ) {
     while ( (tpItem = tpList) != NULL ) {
       while ( (segmItem = tpItem->segments) != NULL ) {
         CLIST_DELETE(tpItem->segments,segmItem);
-        Cstager_Segment_delete(segmItem->segment);
+        if ( segmItem->segment != NULL ) 
+          Cstager_Segment_delete(segmItem->segment);
+        segmItem->segment = NULL;
+        free(segmItem);
       }
       CLIST_DELETE(tpList,tpItem);
-      Cstager_Tape_delete(tpItem->tp);
+      if ( tpItem->tp != NULL ) Cstager_Tape_delete(tpItem->tp);
+      tpItem->tp = NULL;
+      free(tpItem);
     }
   }
   return;
@@ -878,6 +909,7 @@ int rtcpcldc(tape)
   int rc, save_serrno, notificationPort = 0, maxfd = 0;
   SOCKET *notificationSocket = NULL;
   char myHost[CA_MAXHOSTNAMELEN+1], myNotificationAddr[CA_MAXHOSTNAMELEN+12], *p;
+  char tmp[1024];
   struct timeval timeout;
   time_t notificationTimeout;
   fd_set rd_set, rd_setcp;
@@ -968,6 +1000,7 @@ int rtcpcldc(tape)
     save_serrno = serrno;
     if ( serrno == 0 ) save_serrno = errno;
     C_Services_delete(*dbSvc);
+    *dbSvc = NULL;
     (void)Cmutex_unlock(tape);
     serrno = save_serrno;
     return(-1);
@@ -981,12 +1014,13 @@ int rtcpcldc(tape)
       save_serrno = serrno;
       if ( serrno == 0 ) save_serrno = errno;
       C_Services_delete(*dbSvc);
+      *dbSvc = NULL;
       (void)Cmutex_unlock(tape);
       serrno = save_serrno;
       return(-1);
     }
   }
-
+  
   CLIST_ITERATE_BEGIN(rtcpcldTpList,rtcpcldTp) 
     {
       tapeIObj = Cstager_Tape_getIObject(rtcpcldTp->tp);
@@ -999,29 +1033,11 @@ int rtcpcldc(tape)
         rtcpcldTp->tape->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
         C_IAddress_delete(iAddr);
         C_Services_delete(*dbSvc);
+        *dbSvc = NULL;
         (void)Cmutex_unlock(tape);
         serrno = save_serrno;
         return(-1);
       }
-        
-      CLIST_ITERATE_BEGIN(rtcpcldTp->segments,rtcpcldSegm) 
-        {
-          segmentIObj = Cstager_Segment_getIObject(rtcpcldSegm->segment);
-          rc = C_Services_createRep(*dbSvc,iAddr,segmentIObj,1);
-          if ( rc != 0 ) {
-            save_serrno = serrno;
-            rtcpcldSegm->file->filereq.err.errorcode = serrno;
-            strcpy(rtcpcldSegm->file->filereq.err.errmsgtxt,
-                   C_Services_errorMsg(*dbSvc));
-            rtcpcldSegm->file->filereq.err.severity = RTCP_FAILED|RTCP_SYERR;
-            C_IAddress_delete(iAddr);
-            C_Services_delete(*dbSvc);
-            (void)Cmutex_unlock(tape);
-            serrno = save_serrno;
-            return(-1);
-          }
-        }
-      CLIST_ITERATE_END(rtcpcldTp->segments,rtcpcldSegm);
     }
   CLIST_ITERATE_END(rtcpcldTpList,rtcpcldTp);
   (void)Cmutex_unlock(tape);
@@ -1047,16 +1063,37 @@ int rtcpcldc(tape)
         save_serrno = serrno;
         break;
       }
-      rc = getUpdates(rtcpcldTpList);
+      rc = getUpdates(*dbSvc,rtcpcldTpList);
       (void)Cmutex_unlock(tape);
       save_serrno = serrno;
       if ( rc == -1 ) break;
     } else {
-      if ( errno == EINTR ) {
-        save_serrno = serrno;
-        break;
-      }      
-      continue;
+      /** Test for appending requests */
+      /*       if ( errno == EINTR ) { */
+      /*         printf("Add more requests?\n"); */
+      /*         fflush(stdout); */
+      /*         scanf("%s",tmp); */
+      /*         if ( strstr(tmp,"Y") != NULL || strstr(tmp,"y") != NULL ) { */
+      /*           fl = (file_list_t *)calloc(1,sizeof(file_list_t)); */
+      /*           printf("fseq diskpath?\n"); */
+      /*           scanf("%d %s",&fl->filereq.tape_fseq,fl->filereq.file_path); */
+      /*           fl->filereq.concat = NOCONCAT; */
+      /*           CLIST_INSERT(fl,fl); */
+      /*           rc = rtcpcldc_appendFileReqs(tape,fl); */
+      /*           if ( rc == -1 ) { */
+      /*             save_serrno = serrno; */
+      /*             fprintf(stderr,"rtcpcldc_appendFileReqs(): %s, %s\n", */
+      /*                     sstrerror(serrno), */
+      /*                     fl->filereq.err.errmsgtxt); */
+      /*             break; */
+      /*           } */
+      /*           continue; */
+      /*         } */
+      /*         save_serrno = EINTR; */
+      /*         break; */
+      /*       } */
+      save_serrno = EINTR;
+      break;
     }
     rc = Cmutex_lock(tape);
     if ( rc == -1 ) {
