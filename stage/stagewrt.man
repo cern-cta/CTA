@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stagewrt.man,v $ $Revision: 1.13 $ $Date: 2002/01/30 08:21:10 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagewrt.man,v $ $Revision: 1.14 $ $Date: 2002/01/31 13:55:37 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEWRT l "$Date: 2002/01/30 08:21:10 $"
+.TH STAGEWRT l "$Date: 2002/01/31 13:55:37 $"
 .SH NAME
 stagewrt \- copy existing files from disk to tape, from disk to disk or from
 disk to a Hierarchical Storage Management System.
@@ -66,6 +66,10 @@ disk to a Hierarchical Storage Management System.
 .BI \-X " xparm"
 ] [
 .BI \-\-nohsmcreat
+] [ 
+.BI \-\-side " sidenumber"
+] [ 
+.BI \-\-silent
 ] [
 .BI \-\-tppool " tape_pool"
 ] 
@@ -395,6 +399,16 @@ in the same order.
 .TP
 .BI \-\-nohsmcreat
 Do not create entry in the HSM if it does not yet exist.
+.TP
+.B \-\-silent
+Tells the stager not to output you any message.
+.TP
+.B \-\-side "sidenumber"
+Tells which side of the device you want to stage in (applies to multi-side medias, like DVD). It apply only when used with
+.B \-V
+and/or
+.B \-v
+options.
 .TP
 .BI \-\-tppool " tape_pool "
 Forces a specific tape pool. This applies only to CASTOR HSM files to be migrated.
