@@ -1,0 +1,213 @@
+#
+#                      castor/Imakefile
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+#
+# Make Castor libraries and executables
+#
+# @author Sebastien Ponce, sebastien.ponce@cern.ch
+#
+
+#include <Project.tmpl>
+
+SUBDIRS = $(DBCPPDIR) $(RHCPPDIR) $(DSTAGECPPDIR)
+DEPENDDIRS = $(DBCPPDIR) $(RHCPPDIR) $(DSTAGECPPDIR)
+
+#if _AIX
+LIBS = -L../lib -lshift
+#else
+#if defined(__alpha) && defined(__osf__)
+LIBS = -no_so -L../lib -lshift -so_archive
+#else
+#if hpux
+LIBS = -L../lib -lshift
+#else
+#if linux
+LIBS = -L../lib -lshift $(ADNSLIB) -lnsl
+#else
+#if sgi
+LIBS = -L../lib -lshift
+#else
+#if SOLARIS
+LIBS = -L../lib -lshift -lsocket -lnsl
+#else
+#if _WIN32
+LIBS = ..\lib\shift.lib wsock32.lib advapi32.lib
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
+
+#if !defined(_WIN32)
+#if linux
+DEBUG  = -g -O
+#else
+DEBUG  = -g
+#endif
+#endif
+
+DEPLIB = DepLibraryTargetName(lib,shift)
+
+INCLUDES = -I FileName(..,h) -I FileName(..,)
+CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
+
+STGLIB_OBJS = BaseAddress.Osuf \
+              BaseAddressCInt.Osuf \
+              BaseCnvSvc.Osuf \
+              BaseObject.Osuf \
+              BaseServer.Osuf \
+              BaseSvc.Osuf \
+              Converters.Osuf \
+              Exception.Osuf \
+              Factories.Osuf \
+              IAddress.Osuf \
+              IClientCInt.Osuf \
+              IObjectCInt.Osuf \
+              IPersistentCInt.Osuf \
+              IPrintableCInt.Osuf \
+              MessageAck.Osuf \
+              MessageAckCInt.Osuf \
+              MsgSvc.Osuf \
+              ObjectCatalog.Osuf \
+              ObjectSet.Osuf \
+              Services.Osuf \
+              ServicesCInt.Osuf \
+              logstream.Osuf \
+              client/BaseClient.Osuf \
+              io/Socket.Osuf \
+              io/StreamAddress.Osuf \
+              io/StreamBaseCnv.Osuf \
+              io/StreamBlobRequestCnv.Osuf \
+              io/StreamClientCnv.Osuf \
+              io/StreamCnvSvc.Osuf \
+              io/StreamCopyCnv.Osuf \
+              io/StreamCuuidCnv.Osuf \
+              io/StreamFileCnv.Osuf \
+              io/StreamFlagCnv.Osuf \
+              io/StreamMessageAckCnv.Osuf \
+              io/StreamPtrCnv.Osuf \
+              io/StreamRequestHeaderCnv.Osuf \
+              io/StreamSegmentCnv.Osuf \
+              io/StreamStageInRequestCnv.Osuf \
+              io/StreamTapeInfoCnv.Osuf \
+              io/StreamTpFileInfoCnv.Osuf \
+              io/StreamTpInfoCnv.Osuf \
+              rh/BlobRequest.Osuf \
+              rh/BlobRequestCInt.Osuf \
+              rh/Client.Osuf \
+              rh/ClientCInt.Osuf \
+              rh/Copy.Osuf \
+              rh/CopyCInt.Osuf \
+              rh/File.Osuf \
+              rh/FileCInt.Osuf \
+              rh/FileRequest.Osuf \
+              rh/FileRequestCInt.Osuf \
+              rh/Flag.Osuf \
+              rh/FlagCInt.Osuf \
+              rh/Request.Osuf \
+              rh/RequestCInt.Osuf \
+              rh/RequestHeader.Osuf \
+              rh/RequestHeaderCInt.Osuf \
+              rh/Segment.Osuf \
+              rh/SegmentCInt.Osuf \
+              rh/StageInRequest.Osuf \
+              rh/StageInRequestCInt.Osuf \
+              rh/StageQryRequest.Osuf \
+              rh/StageQryRequestCInt.Osuf \
+              rh/TapeInfo.Osuf \
+              rh/TapeInfoCInt.Osuf \
+              stager/Cuuid.Osuf \
+              stager/TpFileInfo.Osuf \
+              stager/TpFileInfoCInt.Osuf \
+              stager/TpInfo.Osuf \
+              stager/TpInfoCInt.Osuf \
+              db/DbAddress.Osuf \
+              db/DbAddressCInt.Osuf
+
+STAGEIN_OBJ = client/StageIn.Osuf
+MTTEST_OBJ = client/Mttest.Osuf
+
+PROGS_C = ProgramTargetName(stagein) \
+          ProgramTargetName(mttest)
+
+COMMONLIB = LibraryTargetName(castorClient) SharedLibraryTargetName(castorClient)
+GLOBLIB = DepSharedLibraryTargetName(castor,castorClient)
+LDFLAGS = -L .
+LD = g++
+
+all: $(COMMONLIB) $(PROGS_C)
+
+SharedLibraryTarget(castorClient,$(STGLIB_OBJS),$(DEPLIB),$(LIBS))
+NormalLibraryTarget(castorClient,$(STGLIB_OBJS))
+
+NormalProgramTarget(stagein, $(STAGEIN_OBJ),$(GLOBLIB),-lcastorClient -lpthread)
+NormalProgramTarget(mttest, $(MTTEST_OBJ),$(GLOBLIB),-lcastorClient -lpthread)
+
+MakeSubdirs(all,$(SUBDIRS))
+MakeCondSubdirs(clean,$(SUBDIRS),)
+MakeCondSubdirs(clobber,$(SUBDIRS),)
+
+#if defined(_WIN32)
+Makefiles:
+	@for %i in ( $(SUBDIRS) ) \
+	do @(echo %i - & cd %i & \
+		..\..\imake\imake -I..\..\config & \
+		$(MAKE) $(MFLAGS) $@ & cd .. )
+
+depend:
+	@echo Not supported on this platform
+#else
+Makefiles:
+	@. ../setosflags ;\
+	for i in $(SUBDIRS) ;\
+	do (if [ -d $$i ] ;\
+	    then \
+	      (echo " $$i:" ; cd $$i ;\
+	      ../../imake/imake -I../../config -DOSMajorVersion="$$OSMAJNO" -DOSMinorVersion="$$OSMINNO" ;\
+	      $(MAKE) $(MFLAGS) $@) ;\
+	    else \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;\
+	    fi )\
+	done ;
+
+depend:
+	for i in $(DEPENDDIRS) ;\
+	do (if [ -d $$i ] ;\
+	    then \
+	      (echo " $$i:" ; cd $$i ;\
+	      $(MAKE) $(MFLAGS) $@) ;\
+	    else \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;\
+	    fi )\
+	done ;
+
+#endif
+
+clean::
+	@echo cleaning in CurDir
+	-@RemoveFiles($(STGLIB_OBJS) $(STAGEIN_OBJ) $(MTTEST_OBJ))
+
+clobber::	clean
+	@echo clobbering in CurDir
+	-@RemoveFiles($(COMMONLIB) $(PROGS_C))

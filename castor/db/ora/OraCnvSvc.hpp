@@ -1,0 +1,206 @@
+/******************************************************************************
+ *                      OraCnvSvc.hpp
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
+ *
+ *
+ *
+ * @author Sebastien Ponce
+ *****************************************************************************/
+
+#ifndef CASTOR_ORACNVSVC_HPP
+#define CASTOR_ORACNVSVC_HPP 1
+
+// Include Files
+#include "occi.h"
+#include "castor/BaseCnvSvc.hpp"
+#include "castor/IRequestHandler.hpp"
+
+namespace castor {
+
+  // Forward Declarations
+  class IAddress;
+  class IObject;
+
+  namespace db {
+
+    /**
+     * Conversion service for Oracle Database
+     */
+    class OraCnvSvc : public BaseCnvSvc, public IRequestHandler {
+
+    public:
+
+      /** default constructor */
+      OraCnvSvc(const std::string name);
+
+      /** default destructor */
+      ~OraCnvSvc();
+
+      /** Get the service id */
+      virtual inline const unsigned int id() const;
+
+      /** Get the service id */
+      static const unsigned int ID();
+
+      /**
+       * gets the representation type, that is the type of
+       * the representation this conversion service can deal with
+       */
+      virtual const unsigned int repType() const;
+
+      /**
+       * gets the representation type, that is the type of
+       * the representation this conversion service can deal with
+       */
+      static const unsigned int REPTYPE();
+
+      /**
+       * Get a connection to the database. The service opens
+       * this connection when this function is called for the
+       * first time and returns pointers to it for all
+       * subsequent calls. The does thus not own the connection
+       * @return the newly created connection
+       * @exception SQLException thrown by ORACLE
+       */
+      oracle::occi::Connection* getConnection()
+        throw (oracle::occi::SQLException);
+
+      /**
+       * deletes an existing connection to the database
+       */
+      void deleteConnection(oracle::occi::Connection* connection)
+        throw();
+
+      /**
+       * create C++ object from foreign representation.
+       * Reimplemented from BaseCnvSvc. This version is able to
+       * make use of OraAdresses and to deduce the object type in
+       * the address from the id by querying the database
+       * @param address the place where to find the foreign
+       * representation
+       * @param newlyCreated a map of object that were created as part of the
+       * last user call to createObj, indexed by id. If a reference to one if
+       * these id is found, the existing associated object should be used.
+       * This trick basically allows circular dependencies.
+       * @return the C++ object created from its reprensentation
+       * or 0 if unsuccessful. Note that the caller is responsible
+       * for the deallocation of the newly created object
+       * @exception Exception throws an Exception in case of error
+       */
+      IObject* createObj (IAddress* address, ObjectCatalog& newlyCreated)
+        throw (castor::Exception);
+
+      /**
+       * reserves a bunch of ids from the database and
+       * returns the first one. The others are obtained
+       * by increasing the first id by 1.
+       * @param nids number of ids to reserve
+       * @return the first allocated id or 0 if an error
+       * occured
+       */
+      const unsigned long getIds(const unsigned int nids)
+        throw (oracle::occi::SQLException);
+
+      /**
+       * returns an address to the next request to handle.
+       * Note that the caller is responsible for the deallocation
+       * of the address.
+       * Also Note that the database transaction is not commited
+       * after this call. The caller is responsible for the commit
+       * once it is sure that no request can be lost.
+       * @exception Exception throws an Exception in case of error
+       * @return the address to the next request to handle or 0
+       * if no request is left
+       */
+      virtual IAddress* nextRequestAddress() throw (castor::Exception);
+
+      /**
+       * returns the number of requests handle in the database.
+       * @exception Exception throws an Exception in case of error
+       */
+      virtual unsigned int nbRequestsToProcess() throw (Exception);
+
+    protected:
+
+      /**
+       * retrieves the type of an object given by its id
+       */
+      const unsigned int getTypeFromId(const unsigned long id)
+        throw (castor::Exception);
+
+    private:
+
+      /**
+       * gets the current time stamp
+       */
+      std::string getTimestamp();
+
+    private:
+
+      /// Oracle user name
+      std::string m_user;
+
+      /// Oracle user password
+      std::string m_passwd;
+
+      /// Oracle database name
+      std::string m_dbName;
+
+      /**
+       * The ORACLE environment for this service
+       */
+      oracle::occi::Environment* m_environment;
+
+      /**
+       * The ORACLE connection for this service
+       */
+      oracle::occi::Connection* m_connection;
+
+      /// SQL statement for type retrieval
+      static const std::string s_getTypeStatementString;
+
+      /// SQL statement object for type retrieval
+      oracle::occi::Statement *m_getTypeStatement;
+
+      /// SQL statement for id retrieval
+      static const std::string s_getIdStatementString;
+
+      /// SQL statement object for id retrieval
+      oracle::occi::Statement *m_getIdStatement;
+
+      /// SQL statement for next request retrieval
+      static const std::string s_getNRStatementString;
+
+      /// SQL statement object for next request retrieval
+      oracle::occi::Statement *m_getNRStatement;
+
+      /// SQL statement for number of request retrieval
+      static const std::string s_getNBRStatementString;
+
+      /// SQL statement object for number of request retrieval
+      oracle::occi::Statement *m_getNBRStatement;
+
+    };
+
+  } // end of namespace db
+
+} // end of namespace castor
+
+#endif // CASTOR_ORACNVSVC_HPP

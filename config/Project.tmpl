@@ -1,0 +1,306 @@
+/*
+ * Copyright (C) 1993-2002 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+/*
+ * @(#)Project.tmpl,v 1.24 2002/12/03 05:50:07 CERN IT-PDP/DM   Jean-Philippe Baud
+ */
+
+#if BuildHsmTools
+HSMTOOLSDIR = hsmtools
+#if BuildNameServerClient != YES && BuildNameServerLibrary != YES
+#define BuildNameServerLibrary YES
+#endif
+#if BuildVolumeMgrClient != YES && BuildVolumeMgrLibrary != YES
+#define BuildVolumeMgrLibrary YES
+#endif
+#endif
+
+#if BuildCopytapeClient || BuildCopytapeServer
+COPYTAPEDIR = copytape
+#if BuildCopytapeServer
+#if BuildStageClient != YES
+#define BuildStageClient	YES
+#endif
+#endif
+#endif
+
+#if BuildNameServerDaemon && !UseOracle && !UseRaima
+#if BuildDbClient != YES
+#define BuildDbClient YES
+#endif
+#endif
+#if BuildStageDaemon && UseStageCdb
+#if BuildDbClient != YES
+#define BuildDbClient YES
+#endif
+#endif
+#if BuildVolumeMgrDaemon && !UseOracle && !UseRaima
+#if BuildDbClient != YES
+#define BuildDbClient YES
+#endif
+#endif
+#if BuildDbClient || BuildDbDaemon
+DBDIR = db
+#endif
+
+#if BuildStageClient || BuildStageDaemon || BuildStageLibrary
+STAGEDIR = stage
+#if BuildStageClient || BuildStageLibrary
+#if UseTms
+#if BuildSysreq != YES
+#define BuildSysreq	YES
+#endif
+#endif
+#if BuildRfioClient != YES
+#define BuildRfioClient       YES
+#endif
+#endif
+
+#if BuildStageDaemon
+#if BuildCupvClient != YES
+#define BuildCupvClient	YES
+#endif
+#if BuildNameServerClient != YES && BuildNameServerLibrary != YES
+#define BuildNameServerLibrary YES
+#endif
+#if BuildRtcopyClient != YES
+#define BuildRtcopyClient	YES
+#endif
+#if BuildVolumeMgrClient != YES
+#define BuildVolumeMgrClient YES
+#endif
+#endif
+
+#if BuildStageLibrary
+#if BuildRfioClient != YES
+#define BuildRfioClient       YES
+#endif
+#endif
+#endif
+
+#if BuildRtcopyClient || BuildRtcopyServer
+RTCOPYDIR = rtcopy
+#if UseTms
+#if BuildSysreq != YES
+#define BuildSysreq	YES
+#endif
+#endif
+#if BuildVdqmClient != YES
+#define BuildVdqmClient	YES
+#endif
+#if BuildRtcopyClient
+#if BuildLib != YES
+#define BuildLib        YES
+#endif
+#endif
+#if BuildRtcopyServer
+#if BuildRfioClient != YES
+#define BuildRfioClient	YES
+#endif
+#if BuildTapeClient != YES
+#define BuildTapeClient	YES
+#endif
+#endif
+#endif
+
+#if BuildTapeClient || BuildTapeDaemon || BuildTpusage
+TAPEDIR = tape
+#if BuildTapeClient || BuildTapeDaemon
+#if UseTms
+#if BuildSysreq != YES
+#define BuildSysreq	YES
+#endif
+#endif
+#if BuildMsgClient != YES
+#define BuildMsgClient	YES
+#endif
+#if BuildRmcClient != YES
+#define BuildRmcClient	YES
+#endif
+#endif
+#if BuildTapeDaemon && UseVmgr
+#if BuildVolumeMgrClient != YES
+#define BuildVolumeMgrClient YES
+#endif
+#endif
+#if BuildTpusage
+#if BuildRfioClient != YES
+#define BuildRfioClient	YES
+#endif
+#endif
+#endif
+
+#if BuildRfioClient || BuildRfioServer
+RFIODIR = rfio
+#if BuildCommon != YES
+#define BuildCommon	YES
+#endif
+#if BuildRfioClient
+#if BuildNameServerClient != YES && BuildNameServerLibrary != YES
+#define BuildNameServerLibrary	YES
+#endif
+#if BuildStageClient != YES && BuildStageLibrary != YES
+#define BuildStageLibrary	YES
+#endif
+#if BuildLib != YES
+#define BuildLib	YES
+#endif
+#endif
+#endif
+
+#if BuildMsgClient
+MSGDIR = msg
+#if BuildCommon != YES
+#define BuildCommon	YES
+#endif
+#if BuildLib != YES
+#define BuildLib	YES
+#endif
+#endif
+
+#if BuildNameServerDaemon
+#if BuildCupvClient != YES
+#define BuildCupvClient	YES
+#endif
+#endif
+
+#if BuildNameServerClient || BuildNameServerDaemon || BuildNameServerLibrary
+NSDIR = ns
+#if BuildCommon != YES
+#define BuildCommon	YES
+#endif
+#if BuildNameServerClient || BuildNameServerLibrary
+#if BuildLib != YES
+#define BuildLib	YES
+#endif
+#endif
+#endif
+
+#if BuildRmcClient || BuildRmcServer
+RMCDIR = rmc
+#endif
+
+#if BuildVdqmClient || BuildVdqmServer
+VDQMDIR = vdqm
+#if BuildCommon != YES
+#define BuildCommon	YES
+#endif
+#if BuildVdqmClient
+#if BuildLib != YES
+#define BuildLib	YES
+#endif
+#endif
+#endif
+
+#if BuildVolumeMgrDaemon
+#if BuildCupvClient != YES
+#define BuildCupvClient	YES
+#endif
+#endif
+
+#if BuildDlfClient || BuildDlfDaemon
+DLFDIR = dlf
+#if BuildCommon != YES
+#define BuildCommon	YES
+#endif
+#if BuildDlfClient
+#if BuildLib != YES
+#define BuildLib	YES
+#endif
+#endif
+#endif
+
+#if BuildVolumeMgrClient || BuildVolumeMgrDaemon
+VMGRDIR = vmgr
+#if BuildCommon != YES
+#define BuildCommon     YES
+#endif
+#if BuildVolumeMgrClient
+#if BuildLib != YES
+#define BuildLib        YES
+#endif
+#endif
+#endif
+
+#if BuildCupvClient || BuildCupvDaemon
+UPVDIR = upv
+#if BuildCommon != YES
+#define BuildCommon	YES
+#endif
+#endif
+
+#if BuildMonitorClient || BuildMonitorServer
+MONITORDIR = monitor
+#if BuildCommon != YES
+#define BuildCommon	YES
+#endif
+#endif
+
+#if BuildCommon
+COMMONDIR = common
+#if BuildCommands != YES
+#define BuildCommands	YES
+#endif
+#if BuildLib != YES
+#define BuildLib	YES
+#endif
+#endif
+
+#if BuildSysreq
+SYSREQDIR = sysreq
+#if BuildLib != YES
+#define BuildLib	YES
+#endif
+#endif
+
+#if BuildLib
+LIBDIR = lib
+SHLIBDIR = shlib
+#endif
+
+#if BuildCommands
+COMMANDSDIR = commands
+#endif
+
+#if BuildDpm
+DPMDIR = dpm
+#endif
+
+#if BuildHpssServer || BuildHpssClient
+HPSSDIR = hpss
+#endif
+
+#if BuildDstageCpp
+#if BuildOraCpp != YES
+#define BuildOraCpp YES
+#endif
+DSTAGECPPDIR = dstage
+#endif
+
+#if BuildRHCpp
+#if BuildOraCpp != YES
+#define BuildOraCpp YES
+#endif
+RHCPPDIR = rh
+#endif
+
+#if BuildTestsCpp
+#if BuildOraCpp != YES
+#define BuildOraCpp YES
+#endif
+TESTSCPPDIR = $(COMMONCPPDIR)/tests
+#endif
+
+DBCPPDIR = db
+#if BuildOraCpp
+#if BuildClientCpp != YES
+#define BuildClientCpp YES
+#endif
+ORACPPDIR = ora
+#endif
+
+#if BuildClientCpp
+COMMONCPPDIR = castor
+#endif

@@ -1,0 +1,167 @@
+/*
+ * Copyright (C) 1993-2001 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+/*
+ * @(#)$RCSfile: Imake.rules,v $ $Revision: 1.1.1.1 $ $Date: 2004/05/12 12:13:33 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ */
+
+#define NullParameter
+
+#if HasNroff
+#define IMANPAGE(name,dir,suffix) \
+dir/name.suffix:	name.man	@@\
+	nroff -man name.man > dir/name.suffix
+#else
+#define IMANPAGE(name,dir,suffix) \
+dir/name.suffix:	name.man	@@\
+	cp name.cat dir/name.suffix
+#endif
+
+#define EMANPAGE(name,dir,suffix) \
+dir/name.suffix:	name.man	@@\
+	cp name.man dir/name.suffix
+
+#define IEXPORT(name,dir,mode) \
+dir/name: name  @@\
+	@(if [ ! -d dir ]; then mkdir -p dir ; fi ; ) @@\
+	@cp name dir/name @@\
+	@chmod mode dir/name @@\
+	@echo dir/name installed
+
+#define LinkFile(tofile,fromfile) \
+tofile: fromfile				@@\
+	RemoveFile($@)				@@\
+	$(LN) $? $@ 
+
+#ifndef DepSourceName
+#define DepSourceName(dirname,source)../dirname/source
+#endif
+
+#ifndef FileName
+#define FileName(dirname,basename)dirname/basename
+#endif
+
+#ifndef LibraryTargetName
+#if defined(__STDC__)
+#define LibraryTargetName(libname)lib##libname.a
+#else
+#define LibraryTargetName(libname)lib/**/libname.a
+#endif
+#endif
+
+#ifndef NormalLibraryTarget
+#define NormalLibraryTarget(libname,objects) \
+LibraryTargetName(libname): objects			@@\
+	$(AR) $(ARFLAGS) $@ $?				@@\
+	$(RANLIB) $@
+#endif
+
+#ifndef DepLibraryTargetName
+#define DepLibraryTargetName(dir,libname)../dir/LibraryTargetName(libname)
+#endif
+
+#ifndef SharedLibraryTargetName
+#if defined(__STDC__)
+#define SharedLibraryTargetName(libname)lib##libname.so
+#else
+#define SharedLibraryTargetName(libname)lib/**/libname.so
+#endif
+#endif
+
+#ifndef SharedLibraryTarget
+#define SharedLibraryTarget(libname,objects,deplibs,libs) \
+SharedLibraryTargetName(libname): objects deplibs     @@\
+	$(LD) -shared -o $@ $(LDFLAGS) objects libs
+#endif
+
+#ifndef DepSharedLibraryTargetName
+#define DepSharedLibraryTargetName(dir,libname)../dir/SharedLibraryTargetName(libname)
+#endif
+
+#ifndef MakeDepLibrary
+#define MakeDepLibrary(dir,libname) \
+DepLibraryTargetName(dir,libname):	FORCE		@@\
+	cd ../dir ; $(MAKE) LibraryTargetName(libname)
+#endif
+
+#ifndef ProgramTargetName
+#define ProgramTargetName(target)target
+#endif
+
+#ifndef NormalProgramTarget
+#define NormalProgramTarget(program,objects,deplibs,libs) \
+ProgramTargetName(program): objects deplibs		@@\
+	$(LD) -o $@ $(LDFLAGS) objects libs
+#endif
+
+#ifndef MakeSubdirs
+#define MakeSubdirs(name,dirs) \
+name:						@@\
+	@for i in dirs ;\			@@\
+	do (echo " $$i:" ; cd $$i ;\		@@\
+		$(MAKE) $(MFLAGS) $@ \		@@\
+	) ; done
+#endif
+
+#ifndef MakeCondSubdirs
+#define MakeCondSubdirs(name,dirs,cond) \
+name:: cond						@@\
+	@for i in dirs ;\			@@\
+	do (echo " $$i:" ; cd $$i ;\		@@\
+		$(MAKE) $(MFLAGS) $@ \		@@\
+	) ; done
+#endif
+
+#ifndef RemoveFile
+#define RemoveFile(file) $(RM) -f file
+#endif
+
+#ifndef RemoveFiles
+#define RemoveFiles(files) $(RM) -f files
+#endif
+
+#ifndef InstallTarget
+#define InstallTarget(file,owner,group,mode,dest)	@@\
+dest/file: file						@@\
+	-mv $@ dest/OLD$?				@@\
+	cp $? $@					@@\
+	chown owner $@					@@\
+	chgrp group $@					@@\
+	chmod mode $@
+#endif
+
+#ifndef InstallLibrary
+#define InstallLibrary(libname,dest,owner,group,mode)	@@\
+dest/LibraryTargetName(libname): LibraryTargetName(libname)	@@\
+	-mv $@ dest/OLD$?				@@\
+	cp $? $@					@@\
+	@$(RANLIB) $(LIB)/$?				@@\
+	chown owner $@					@@\
+	chgrp group $@					@@\
+	chmod mode $@
+#endif
+
+#define InstallNonExecFile(file,dest,owner,group,mode)	@@\
+InstallTarget(file,owner,group,mode,dest)
+
+#define InstallProgram(program,dest,owner,group,mode)	@@\
+InstallTarget(ProgramTargetName(program),owner,group,mode,dest)
+
+#ifndef InstallSharedLibrary
+#define InstallSharedLibrary(libname,rev,dest)		@@\
+dest/SharedLibraryTargetName(libname): SharedLibraryTargetName(libname)	@@\
+	cp $? $@.rev					@@\
+	-rm $@						@@\
+	ln -s $?.rev $@
+#endif
+
+#ifndef MakeDir
+#define MakeDir(dirname,owner,group,mode)		@@\
+dirname:						@@\
+	-mkdir -p $@					@@\
+	chown owner $@					@@\
+	chgrp group $@					@@\
+	chmod mode $@
+#endif

@@ -1,0 +1,217 @@
+/*
+ * $Id$
+*/
+/*
+ * Copyright (C) 1993-2003 by CERN/IT/ADC/CA
+ * All rights reserved
+ */
+
+/*
+ * @(#)$RCSfile$ $Revision$ $Date$ CERN IT-PDP/DM   Jean-Philippe Baud
+ */
+/* Platform is normally guessed from the CPP predefined symbols
+   But you may define special flags, for example
+   #define RS6000PCTA
+   if you have an RS6000 Parallel Channel Tape Attachment or ESCON
+   #define ADSTAR
+   if you have SCSI connected 3490 or 3590 
+   
+   If your platform is Digital Unix 4 and you have
+   a 100BT Ethernet interface on a busy CPU/Disk
+   server we advice you to enable the RFIODaemonRealTime
+   option : the RFIO daemon will then run as a real time process
+   This option has no efect on all other platforms.
+*/
+
+#define AdminHosts "castor tms-2 sure01 sure02"
+#define AuthorizedHosts	/etc/rtcopy.hosts
+#define CDKDir	/usr/local/src/CDK
+#define CopytapeHost	"stagepublic"
+#define CopytapeSpool	/usr/spool/copytape
+#if defined(_WIN32)
+#define CupvConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\CUPVCONFIG
+#else
+#define CupvConfigFile	/etc/CUPVCONFIG
+#endif
+#define CupvHost	"castor"
+#define CupvSpool	/usr/spool/upv
+#define	DMSCDir	/dms/fbs/src
+#if defined(_WIN32)
+#define DbConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\DBCONFIG
+#else
+#define DbConfigFile	/etc/DBCONFIG
+#endif
+#define DbSpool	/usr/spool/db
+#define DomainName	cern.ch
+#define FilManDir       /usr/local/man/man4
+#define FilManSuffix    4
+#define HsmToolsSpool	/usr/spool/hsmtools
+#if defined(_WIN32)
+#define InstallBinDir	\\cern.ch\dfs\Applications\CERN\CASTOR\bin
+#else
+#define InstallBinDir	/usr/local/bin
+#endif
+#if defined(_WIN32)
+#define InstallIncludeDir       \\cern.ch\dfs\Applications\CERN\CASTOR\include
+#else
+#define InstallIncludeDir       /usr/local/include
+#endif
+#if defined(_WIN32)
+#define InstallLibDir	\\cern.ch\dfs\Applications\CERN\CASTOR\lib
+#else
+#define InstallLibDir	/usr/local/lib
+#endif
+#define LibManDir       /usr/local/man/man3
+#define LibManSuffix    3
+#if defined(_WIN32)
+#define LocalHostsList 	%%SystemRoot%%\\system32\\drivers\\etc\\shift.localhosts
+#else
+#define LocalHostsList  /etc/shift.localhosts
+#endif
+#define ManDir  /usr/local/man/man1
+#define ManSuffix       1
+#if defined(_WIN32)
+#define MappingFile	%%SystemRoot%%\\system32\\drivers\\etc\\ext.users
+#else
+#define MappingFile	/etc/ext.users
+#endif
+#define MonitorHost	"castormon"
+#define MonitorSpool	/usr/spool/monitor
+#define MsgdaemonAuthHosts /etc/msg.hosts
+#define MsgdaemonHost	"coremsg"
+#define NfsRoot	/shift
+#if defined(_WIN32)
+#define NsConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\NSCONFIG
+#else
+#define NsConfigFile	/etc/NSCONFIG
+#endif
+#define NsHost	"castor"
+#define NsHostPfx	cns
+#define NsSpool	/usr/spool/ns
+#define NsRoot  "/castor"
+#define OperConfigFile	/etc/OPERCONFIG
+#define OperatorGid	operator
+#if defined(_WIN32)
+#define OperatorDir	%%SystemRoot%%
+#else
+#define OperatorDir	/etc/operator
+#endif
+#define RaimaDir	/usr/local/raima
+#if defined(_WIN32)
+#define RemoteHostsList	%%SystemRoot%%\\system32\\drivers\\etc\\shift.remhosts
+#else
+#define RemoteHostsList /etc/shift.remhosts
+#endif
+#define RfioAlarmFile	rfio_alrm
+#define RfioSpool	/usr/spool/rfio
+#define RmcSpool	/usr/spool/rmc
+#define RtcopySpool	/usr/spool/rtcopy
+#define RtcopyWorkDir	/usr/tmp/RTCOPY
+#define SacctDir	/usr/spool/sacct
+#define SconfigDir	/etc/shift
+#if defined(_WIN32)
+#define ShiftConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\shift.conf
+#else
+#define ShiftConfigFile	/etc/shift.conf
+#endif
+#define StageConfigFile	/etc/STGCONFIG
+#define StageConfigDbLogin	/etc/STGDBCONFIG
+#define StagerSuperGroup	st
+#define StagerSuperUser	stage
+#define StageHost	"stagepublic"
+#define StageSpool	/usr/spool/stage
+#define StagerGid	st
+#define SysreqHost	"sysreq tms-2 tms"
+#define TapeConfigFile	/etc/TPCONFIG
+#define TapeSpool	/usr/spool/tape
+#define VdqmHost        "castor tms-2"
+#define VdqmSpool	/usr/spool/vdqm
+#if defined(_WIN32)
+#define VmgrConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\VMGRCONFIG
+#else
+#define VmgrConfigFile	/etc/VMGRCONFIG
+#endif
+#define VmgrHost	"castor"
+#define VmgrSpool	/usr/spool/vmgr
+#if defined(_WIN32)
+#define DlfConfigFile  %%SystemRoot%%\\system32\\drivers\\etc\\DLFCONFIG
+#else
+#define DlfConfigFile  /etc/DLFCONFIG
+#endif
+#define DlfHost        "castordev"
+#define DlfSpool       /usr/spool/dlf
+
+#define W2000MapDir	\\\\cern.ch\\dfs\\Applications\\CERN\\CASTOR\\Config
+#define WntMapDir	\\\\cerndfs01\\dfs\\Applications\\CERN\\CASTOR\\Config
+
+#define BuildCommands		YES
+#define BuildCommon		YES
+#define BuildCopytapeClient	NO
+#define BuildCopytapeServer	NO
+#define BuildCupvClient		YES
+#define BuildCupvDaemon		NO
+#define BuildDbClient		NO
+#define BuildDbDaemon		NO
+#define BuildExamples		YES
+#define	BuildHpssClient		NO
+#define	BuildHpssServer		NO
+#define BuildHsmTools		NO
+#define BuildMonitorClient	YES
+#define BuildMonitorServer	NO
+#define BuildMsgClient		YES
+#define BuildMsgServer		YES
+#define BuildNameServerClient	NO
+#define BuildNameServerDaemon	NO
+#define BuildNameServerLibrary	YES
+#define BuildRfioClient		YES
+#define BuildRfioServer		YES
+#define BuildRmcClient		YES
+#define BuildRmcServer		NO
+#define BuildRtcopyClient	YES
+#define BuildRtcopyServer	YES
+#define BuildRtstat		YES
+#define BuildStageClient	NO
+#define BuildStageDaemon	NO
+#define BuildStageLibrary	YES
+#define BuildSysreq		YES
+#define BuildTapeClient		YES
+#define BuildTapeDaemon		YES
+#define BuildTest		NO
+#define BuildTpusage		YES
+#define BuildVdqmClient		YES
+#define BuildVdqmServer		NO 
+#define BuildVolumeMgrClient	YES
+#define BuildVolumeMgrDaemon	NO
+#define BuildDlfClient    	NO
+#define BuildDlfDaemon    	NO
+
+#define BuildClientCpp          YES
+#define BuildDstageCpp          YES
+#define BuildRHCpp              YES
+#define BuildOraCpp             YES
+#define BuildTestsCpp           YES
+
+
+#define Accounting		YES
+#define ClientLogging           NO
+#define HasNis			NO
+#define HasNroff		YES
+#define HasCDK			NO
+#define RFIODaemonRealTime 	NO	
+#define UseAdns			NO
+#define UseCupv			YES
+#define UseDMSCapi		NO
+#define	UseHpss			NO
+#define UseMtx			NO
+#define UseMySQL		NO
+#define UseOracle		NO
+#define UseRaima		NO
+#define UseStageCdb		YES
+#define UseTms			NO
+#define UseVmgr			YES
+
+/* 
+ * The following flag enables rfio client interface
+ * To follow links. It brings an overhead at rfio_open()
+ */
+#define FollowRtLinks		NO

@@ -1,0 +1,138 @@
+COMM       @(#)Imakefile,v 1.12 2002/11/28 06:54:12 CERN IT-PDP/DM Jean-Philippe Baud
+COMM
+COMM  Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+
+COMM		Make CASTOR libraries and executables
+
+#include <Project.tmpl>
+
+SUBDIRS = $(LIBDIR) $(SHLIBDIR) $(COMMONDIR) $(MONITORDIR) $(UPVDIR) $(DBDIR) \
+	  $(MSGDIR) $(NSDIR) $(RFIODIR) $(DLFDIR)\
+	  $(RMCDIR) $(SYSREQDIR) $(RTCOPYDIR) $(STAGEDIR) $(TAPEDIR) \
+	  $(VDQMDIR) $(VMGRDIR) $(COMMANDSDIR) $(COPYTAPEDIR) $(EXAMPLESDIR) \
+	  $(HPSSDIR) $(HSMTOOLSDIR) h $(COMMONCPPDIR)
+
+EXPORTSUBDIRS = $(LIBDIR) $(SHLIBDIR) $(COMMONDIR) $(MONITORDIR) $(UPVDIR) $(DBDIR) \
+	  $(MSGDIR) $(NSDIR) $(RFIODIR) $(DLFDIR)\
+	  $(RMCDIR) $(SYSREQDIR) $(RTCOPYDIR) $(STAGEDIR) $(TAPEDIR) \
+	  $(VDQMDIR) $(VMGRDIR) $(COMMANDSDIR) $(COPYTAPEDIR) $(EXAMPLESDIR) \
+	  $(HPSSDIR) $(HSMTOOLSDIR) h
+
+DEPENDDIRS = $(COMMONDIR) $(MONITORDIR) $(UPVDIR) $(DBDIR) \
+	  $(MSGDIR) $(NSDIR) $(RFIODIR) $(DLFDIR) \
+	  $(RMCDIR) $(SYSREQDIR) $(RTCOPYDIR) $(STAGEDIR) $(TAPEDIR) \
+	  $(VDQMDIR) $(VMGRDIR) $(COMMANDSDIR) $(COPYTAPEDIR) $(EXAMPLESDIR) \
+	  $(HPSSDIR) $(HSMTOOLSDIR) $(COMMONCPPDIR)
+
+EXPORTBIN=$(EXPORT)/bin
+EXPORTLIB=$(EXPORT)/lib
+EXPORTINC=$(EXPORTSHR)/include
+EXPORTH=$(EXPORTINC)/shift
+
+MakeSubdirs(all,$(SUBDIRS))
+MakeSubdirs(install,$(SUBDIRS))
+MakeSubdirs(install.man,$(SUBDIRS))
+MakeCondSubdirs(clean,$(SUBDIRS),imakeclean)
+MakeCondSubdirs(clobber,$(SUBDIRS),imakeclobber)
+
+
+#if defined(_WIN32)
+cernlib:
+	@(cd lib & $(MAKE) $(MFLAGS) & cd ..)
+imakeclean:
+	@(cd imake & $(MAKE) $(MFLAGS) -f Makefile.ini.Win32 clean & cd ..)
+imakeclobber:
+	@(cd imake & $(MAKE) $(MFLAGS) -f Makefile.ini.Win32 clobber & cd ..)
+#else
+cernlib:
+	@(cd lib; $(MAKE) $(MFLAGS))
+imakeclean:
+	@(cd imake; $(MAKE) $(MFLAGS) -f Makefile.ini clean)
+imakeclobber:
+	@(cd imake; $(MAKE) $(MFLAGS) -f Makefile.ini clobber)
+#endif
+
+export:
+	(if [ "x$(EXPORT)" = "x" ] ; \
+	 then \
+	 echo "EXPORT must be set (thru make or environment)" ; exit 1 ; \
+	 else \
+	 echo "exporting to $(EXPORT)" ; \
+	fi ; \
+	for i in $(EXPORTSUBDIRS) ;\
+	do (echo " $$i (EXPORT):" ; cd $$i ; \
+	    $(MAKE) $(MFLAGS) EXPORTBIN=$(EXPORTBIN) EXPORTLIB=$(EXPORTLIB) $@ ; \
+	 ) ; done ; \
+	) ;
+
+exportman:
+	(if [ "x$(EXPORTMAN)" = "x" ] ; \
+	 then \
+	 echo "EXPORTMAN must be set (thru make or environment)" ; exit 1 ; \
+	 else \
+	 echo "exporting to $(EXPORTMAN)" ; \
+	fi ; \
+	for i in $(EXPORTSUBDIRS) ;\
+	do (echo " $$i (EXPORTMAN):" ; cd $$i ; \
+	    $(MAKE) $(MFLAGS) EXPORTMAN=$(EXPORTMAN) $@ ; \
+	 ) ; done ; \
+	) ;
+
+exportshr:
+	(if [ "x$(EXPORTSHR)" = "x" ] ; \
+	 then \
+	 echo "EXPORTSHR must be set (thru make or environment)" ; exit 1 ; \
+	 else \
+	 echo "exporting to $(EXPORTSHR)" ; \
+	fi ; \
+	for i in $(EXPORTSUBDIRS) ;\
+	do (echo " $$i (EXPORTSHR):" ; cd $$i ; \
+	    $(MAKE) $(MFLAGS) EXPORTSHR=$(EXPORTSHR) EXPORTINC=$(EXPORTINC) EXPORTH=$(EXPORTH) $@ ; \
+	 ) ; done ; \
+	) ;
+
+#if defined(_WIN32)
+test: Makefiles
+	cd test & $(MAKE) all & cd ..
+
+Makefiles:
+	@for %i in ( $(SUBDIRS) test ) \
+	do @(echo %i - & cd %i & \
+		..\imake\imake -I..\config & \
+		$(MAKE) $(MFLAGS) $@ & cd .. )
+
+depend:
+	@echo Not supported on this platform
+#else
+test: Makefiles
+	(cd test; $(MAKE) all)
+
+Makefiles:
+	@. ./setosflags ;\
+	for i in $(SUBDIRS) test ;\
+	do (if [ -d $$i ] ;\
+	    then \
+	      (echo " $$i:" ; cd $$i ;\
+	      ../imake/imake -I../config -DOSMajorVersion="$$OSMAJNO" -DOSMinorVersion="$$OSMINNO" ;\
+	      $(MAKE) $(MFLAGS) $@) ;\
+	    else \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;\
+	    fi )\
+	done ;
+
+depend:
+	for i in $(DEPENDDIRS) test ;\
+	do (if [ -d $$i ] ;\
+	    then \
+	      (echo " $$i:" ; cd $$i ;\
+	      $(MAKE) $(MFLAGS) $@) ;\
+	    else \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;\
+	    fi )\
+	done ;
+
+#endif
