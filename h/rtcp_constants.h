@@ -1,12 +1,12 @@
 /*
- * $Id: rtcp_constants.h,v 1.2 2004/08/05 15:40:07 motiakov Exp $
+ * $Id: rtcp_constants.h,v 1.3 2005/03/15 15:40:51 obarring Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: rtcp_constants.h,v $ $Revision: 1.2 $ $Date: 2004/08/05 15:40:07 $ CERN IT/ADC Olof Barring
+ * @(#)$RCSfile: rtcp_constants.h,v $ $Revision: 1.3 $ $Date: 2005/03/15 15:40:51 $ CERN IT/ADC Olof Barring
  */
 
 /*
@@ -145,14 +145,18 @@
  *  CONCAT_TO_EOD    should be set if the client doesn't know the number
  *                   of files on tape but he want all data up to EOT
  *                   to be concatenated to the specified disk file.
+ *  OPEN_NOTRUNC     Prevents the rtcpd from opening disk file with O_TRUNC
+ *                   flag when offset==0. This flag is needed by the new
+ *                   stager for the support of multi-semgented file recalls
  */
 #define NOCONCAT_TO_EOD  (0x04) /* As NOCONCAT but without checking tape_fseq */
 #define   CONCAT_TO_EOD  (0x08) /* As CONCAT but without checking tape_fseq */
 #define VOLUME_SPANNING  (0x10) /* Tape file may spann over several vols. */
+#define OPEN_NOTRUNC     (0x20) /* Force always opening disk file without O_TRUNC */
 #define MASK_VS(X) ((X)->concat & ~VOLUME_SPANNING)
-#define VALID_CONCAT(X) (MASK_VS(X) == NOCONCAT || MASK_VS(X) == CONCAT || \
-    MASK_VS(X) == NOCONCAT_TO_EOD || MASK_VS(X) == CONCAT_TO_EOD || \
-    MASK_VS(X) == (CONCAT|CONCAT_TO_EOD) )
+#define VALID_CONCAT(X) ((MASK_VS(X) == NOCONCAT) || (MASK_VS(X) == CONCAT) || \
+    (MASK_VS(X) == NOCONCAT_TO_EOD) || (MASK_VS(X) == CONCAT_TO_EOD) || \
+    (MASK_VS(X) == (CONCAT|CONCAT_TO_EOD)) || (MASK_VS(X) == OPEN_NOTRUNC) )
 
 /*
  * Special tape mode to request device queue info. rather than
