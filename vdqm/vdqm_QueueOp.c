@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.9 $ $Date: 1999/11/18 12:48:09 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.10 $ $Date: 1999/11/18 15:36:04 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1305,6 +1305,24 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                 FreeDgnContext(&dgn_context);
                 vdqm_SetError(EVQBADVOLID);
                 return(-1);
+            }
+            /*
+             * If there are no assigned volume request it means that this
+             * is a local request. Make sure that server and reqhost are
+             * the same and that the volume is free.
+             */
+            if ( drvrec->vol == NULL ) {
+                if ( strcmp(drvrec->drv.server,DrvReq->reqhost) != 0 ) {
+                    FreeDgnContext(&dgn_context);
+                    vdqm_SetError(EPERM);
+                    return(-1);
+                 }
+                 if ( VolInUse(dgn_context,DrvReq->volid) ||
+                      VolMounted(dgn_context,DrvReq->volid) ) {
+                     FreeDgnContext(&dgn_context);
+                     vdqm_SetError(EBUSY);
+                     return(-1);
+                 }
             }
             strcpy(drvrec->drv.volid,DrvReq->volid);
             drvrec->drv.status |= VDQM_UNIT_BUSY;
