@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdcRequestCnv.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2004/11/04 10:26:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdcRequestCnv.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2004/11/04 14:26:56 $ $Author: sponcec3 $
  *
  * 
  *
@@ -59,71 +59,71 @@ const castor::IFactory<castor::IConverter>& OraStageUpdcRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_insertStatementString =
-"INSERT INTO rh_StageUpdcRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12)";
+"INSERT INTO StageUpdcRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_deleteStatementString =
-"DELETE FROM rh_StageUpdcRequest WHERE id = :1";
+"DELETE FROM StageUpdcRequest WHERE id = :1";
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, id, svcClass, client FROM rh_StageUpdcRequest WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, id, svcClass, client FROM StageUpdcRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_updateStatementString =
-"UPDATE rh_StageUpdcRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9 WHERE id = :10";
+"UPDATE StageUpdcRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9 WHERE id = :10";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_storeTypeStatementString =
-"INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_deleteTypeStatementString =
-"DELETE FROM rh_Id2Type WHERE id = :1";
+"DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL statement for request status insertion
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_insertStatusStatementString =
-"INSERT INTO rh_requestsStatus (id, status, creation, lastChange) VALUES (:1, 'NEW', SYSDATE, SYSDATE)";
+"INSERT INTO requestsStatus (id, status, creation, lastChange) VALUES (:1, 'NEW', SYSDATE, SYSDATE)";
 
 /// SQL statement for request status deletion
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_deleteStatusStatementString =
-"DELETE FROM rh_requestsStatus WHERE id = :1";
+"DELETE FROM requestsStatus WHERE id = :1";
 
 /// SQL select statement for member reqids
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_selectReqIdStatementString =
-"SELECT id from rh_ReqId WHERE request = :1";
+"SELECT id from ReqId WHERE request = :1";
 
 /// SQL delete statement for member reqids
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_deleteReqIdStatementString =
-"UPDATE rh_ReqId SET request = 0 WHERE request = :1";
+"UPDATE ReqId SET request = 0 WHERE request = :1";
 
 /// SQL remote update statement for member reqids
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_remoteUpdateReqIdStatementString =
-"UPDATE rh_ReqId SET request = : 1 WHERE id = :2";
+"UPDATE ReqId SET request = : 1 WHERE id = :2";
 
 /// SQL existence statement for member svcClass
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_checkSvcClassExistStatementString =
-"SELECT id from rh_SvcClass WHERE id = :1";
+"SELECT id from SvcClass WHERE id = :1";
 
 /// SQL update statement for member svcClass
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_updateSvcClassStatementString =
-"UPDATE rh_StageUpdcRequest SET svcClass = : 1 WHERE id = :2";
+"UPDATE StageUpdcRequest SET svcClass = : 1 WHERE id = :2";
 
 /// SQL select statement for member subRequests
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_selectSubRequestStatementString =
-"SELECT id from rh_SubRequest WHERE request = :1";
+"SELECT id from SubRequest WHERE request = :1";
 
 /// SQL delete statement for member subRequests
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_deleteSubRequestStatementString =
-"UPDATE rh_SubRequest SET request = 0 WHERE request = :1";
+"UPDATE SubRequest SET request = 0 WHERE request = :1";
 
 /// SQL remote update statement for member subRequests
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_remoteUpdateSubRequestStatementString =
-"UPDATE rh_SubRequest SET request = : 1 WHERE id = :2";
+"UPDATE SubRequest SET request = : 1 WHERE id = :2";
 
 /// SQL update statement for member client
 const std::string castor::db::ora::OraStageUpdcRequestCnv::s_updateIClientStatementString =
-"UPDATE rh_StageUpdcRequest SET client = : 1 WHERE id = :2";
+"UPDATE StageUpdcRequest SET client = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

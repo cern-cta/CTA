@@ -56,43 +56,43 @@ const castor::IFactory<castor::IConverter>& OraDiskCopyCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraDiskCopyCnv::s_insertStatementString =
-"INSERT INTO rh_DiskCopy (path, id, fileSystem, castorFile, status) VALUES (:1,:2,:3,:4,:5)";
+"INSERT INTO DiskCopy (path, id, fileSystem, castorFile, status) VALUES (:1,:2,:3,:4,:5)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraDiskCopyCnv::s_deleteStatementString =
-"DELETE FROM rh_DiskCopy WHERE id = :1";
+"DELETE FROM DiskCopy WHERE id = :1";
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraDiskCopyCnv::s_selectStatementString =
-"SELECT path, id, fileSystem, castorFile, status FROM rh_DiskCopy WHERE id = :1";
+"SELECT path, id, fileSystem, castorFile, status FROM DiskCopy WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraDiskCopyCnv::s_updateStatementString =
-"UPDATE rh_DiskCopy SET path = :1, status = :2 WHERE id = :3";
+"UPDATE DiskCopy SET path = :1, status = :2 WHERE id = :3";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraDiskCopyCnv::s_storeTypeStatementString =
-"INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::ora::OraDiskCopyCnv::s_deleteTypeStatementString =
-"DELETE FROM rh_Id2Type WHERE id = :1";
+"DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL existence statement for member fileSystem
 const std::string castor::db::ora::OraDiskCopyCnv::s_checkFileSystemExistStatementString =
-"SELECT id from rh_FileSystem WHERE id = :1";
+"SELECT id from FileSystem WHERE id = :1";
 
 /// SQL update statement for member fileSystem
 const std::string castor::db::ora::OraDiskCopyCnv::s_updateFileSystemStatementString =
-"UPDATE rh_DiskCopy SET fileSystem = : 1 WHERE id = :2";
+"UPDATE DiskCopy SET fileSystem = : 1 WHERE id = :2";
 
 /// SQL existence statement for member castorFile
 const std::string castor::db::ora::OraDiskCopyCnv::s_checkCastorFileExistStatementString =
-"SELECT id from rh_CastorFile WHERE id = :1";
+"SELECT id from CastorFile WHERE id = :1";
 
 /// SQL update statement for member castorFile
 const std::string castor::db::ora::OraDiskCopyCnv::s_updateCastorFileStatementString =
-"UPDATE rh_DiskCopy SET castorFile = : 1 WHERE id = :2";
+"UPDATE DiskCopy SET castorFile = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

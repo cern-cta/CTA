@@ -58,59 +58,59 @@ const castor::IFactory<castor::IConverter>& OraStageFileQueryRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_insertStatementString =
-"INSERT INTO rh_StageFileQueryRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12)";
+"INSERT INTO StageFileQueryRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_deleteStatementString =
-"DELETE FROM rh_StageFileQueryRequest WHERE id = :1";
+"DELETE FROM StageFileQueryRequest WHERE id = :1";
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, id, svcClass, client FROM rh_StageFileQueryRequest WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, id, svcClass, client FROM StageFileQueryRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_updateStatementString =
-"UPDATE rh_StageFileQueryRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9 WHERE id = :10";
+"UPDATE StageFileQueryRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9 WHERE id = :10";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_storeTypeStatementString =
-"INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_deleteTypeStatementString =
-"DELETE FROM rh_Id2Type WHERE id = :1";
+"DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL statement for request status insertion
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_insertStatusStatementString =
-"INSERT INTO rh_requestsStatus (id, status, creation, lastChange) VALUES (:1, 'NEW', SYSDATE, SYSDATE)";
+"INSERT INTO requestsStatus (id, status, creation, lastChange) VALUES (:1, 'NEW', SYSDATE, SYSDATE)";
 
 /// SQL statement for request status deletion
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_deleteStatusStatementString =
-"DELETE FROM rh_requestsStatus WHERE id = :1";
+"DELETE FROM requestsStatus WHERE id = :1";
 
 /// SQL existence statement for member svcClass
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_checkSvcClassExistStatementString =
-"SELECT id from rh_SvcClass WHERE id = :1";
+"SELECT id from SvcClass WHERE id = :1";
 
 /// SQL update statement for member svcClass
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_updateSvcClassStatementString =
-"UPDATE rh_StageFileQueryRequest SET svcClass = : 1 WHERE id = :2";
+"UPDATE StageFileQueryRequest SET svcClass = : 1 WHERE id = :2";
 
 /// SQL select statement for member subRequests
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_selectSubRequestStatementString =
-"SELECT id from rh_SubRequest WHERE request = :1";
+"SELECT id from SubRequest WHERE request = :1";
 
 /// SQL delete statement for member subRequests
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_deleteSubRequestStatementString =
-"UPDATE rh_SubRequest SET request = 0 WHERE request = :1";
+"UPDATE SubRequest SET request = 0 WHERE request = :1";
 
 /// SQL remote update statement for member subRequests
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_remoteUpdateSubRequestStatementString =
-"UPDATE rh_SubRequest SET request = : 1 WHERE id = :2";
+"UPDATE SubRequest SET request = : 1 WHERE id = :2";
 
 /// SQL update statement for member client
 const std::string castor::db::ora::OraStageFileQueryRequestCnv::s_updateIClientStatementString =
-"UPDATE rh_StageFileQueryRequest SET client = : 1 WHERE id = :2";
+"UPDATE StageFileQueryRequest SET client = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

@@ -56,39 +56,39 @@ const castor::IFactory<castor::IConverter>& OraDiskServerCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraDiskServerCnv::s_insertStatementString =
-"INSERT INTO rh_DiskServer (name, id, status) VALUES (:1,:2,:3)";
+"INSERT INTO DiskServer (name, id, status) VALUES (:1,:2,:3)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraDiskServerCnv::s_deleteStatementString =
-"DELETE FROM rh_DiskServer WHERE id = :1";
+"DELETE FROM DiskServer WHERE id = :1";
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraDiskServerCnv::s_selectStatementString =
-"SELECT name, id, status FROM rh_DiskServer WHERE id = :1";
+"SELECT name, id, status FROM DiskServer WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraDiskServerCnv::s_updateStatementString =
-"UPDATE rh_DiskServer SET name = :1, status = :2 WHERE id = :3";
+"UPDATE DiskServer SET name = :1, status = :2 WHERE id = :3";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraDiskServerCnv::s_storeTypeStatementString =
-"INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::ora::OraDiskServerCnv::s_deleteTypeStatementString =
-"DELETE FROM rh_Id2Type WHERE id = :1";
+"DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL select statement for member fileSystems
 const std::string castor::db::ora::OraDiskServerCnv::s_selectFileSystemStatementString =
-"SELECT id from rh_FileSystem WHERE diskserver = :1";
+"SELECT id from FileSystem WHERE diskserver = :1";
 
 /// SQL delete statement for member fileSystems
 const std::string castor::db::ora::OraDiskServerCnv::s_deleteFileSystemStatementString =
-"UPDATE rh_FileSystem SET diskserver = 0 WHERE diskserver = :1";
+"UPDATE FileSystem SET diskserver = 0 WHERE diskserver = :1";
 
 /// SQL remote update statement for member fileSystems
 const std::string castor::db::ora::OraDiskServerCnv::s_remoteUpdateFileSystemStatementString =
-"UPDATE rh_FileSystem SET diskserver = : 1 WHERE id = :2";
+"UPDATE FileSystem SET diskserver = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

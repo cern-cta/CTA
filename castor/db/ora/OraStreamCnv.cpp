@@ -59,67 +59,67 @@ const castor::IFactory<castor::IConverter>& OraStreamCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraStreamCnv::s_insertStatementString =
-"INSERT INTO rh_Stream (initialSizeToTransfer, id, tape, tapePool, status) VALUES (:1,:2,:3,:4,:5)";
+"INSERT INTO Stream (initialSizeToTransfer, id, tape, tapePool, status) VALUES (:1,:2,:3,:4,:5)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraStreamCnv::s_deleteStatementString =
-"DELETE FROM rh_Stream WHERE id = :1";
+"DELETE FROM Stream WHERE id = :1";
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraStreamCnv::s_selectStatementString =
-"SELECT initialSizeToTransfer, id, tape, tapePool, status FROM rh_Stream WHERE id = :1";
+"SELECT initialSizeToTransfer, id, tape, tapePool, status FROM Stream WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraStreamCnv::s_updateStatementString =
-"UPDATE rh_Stream SET initialSizeToTransfer = :1, status = :2 WHERE id = :3";
+"UPDATE Stream SET initialSizeToTransfer = :1, status = :2 WHERE id = :3";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraStreamCnv::s_storeTypeStatementString =
-"INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::ora::OraStreamCnv::s_deleteTypeStatementString =
-"DELETE FROM rh_Id2Type WHERE id = :1";
+"DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL insert statement for member tapeCopy
 const std::string castor::db::ora::OraStreamCnv::s_insertTapeCopyStatementString =
-"INSERT INTO rh_Stream2TapeCopy (Parent, Child) VALUES (:1, :2)";
+"INSERT INTO Stream2TapeCopy (Parent, Child) VALUES (:1, :2)";
 
 /// SQL delete statement for member tapeCopy
 const std::string castor::db::ora::OraStreamCnv::s_deleteTapeCopyStatementString =
-"DELETE FROM rh_Stream2TapeCopy WHERE Parent = :1 AND Child = :2";
+"DELETE FROM Stream2TapeCopy WHERE Parent = :1 AND Child = :2";
 
 /// SQL select statement for member tapeCopy
 const std::string castor::db::ora::OraStreamCnv::s_selectTapeCopyStatementString =
-"SELECT Child from rh_Stream2TapeCopy WHERE Parent = :1";
+"SELECT Child from Stream2TapeCopy WHERE Parent = :1";
 
 /// SQL select statement for member tape
 const std::string castor::db::ora::OraStreamCnv::s_selectTapeStatementString =
-"SELECT id from rh_Tape WHERE stream = :1";
+"SELECT id from Tape WHERE stream = :1";
 
 /// SQL delete statement for member tape
 const std::string castor::db::ora::OraStreamCnv::s_deleteTapeStatementString =
-"UPDATE rh_Tape SET stream = 0 WHERE stream = :1";
+"UPDATE Tape SET stream = 0 WHERE stream = :1";
 
 /// SQL remote update statement for member tape
 const std::string castor::db::ora::OraStreamCnv::s_remoteUpdateTapeStatementString =
-"UPDATE rh_Tape SET stream = : 1 WHERE id = :2";
+"UPDATE Tape SET stream = : 1 WHERE id = :2";
 
 /// SQL existence statement for member tape
 const std::string castor::db::ora::OraStreamCnv::s_checkTapeExistStatementString =
-"SELECT id from rh_Tape WHERE id = :1";
+"SELECT id from Tape WHERE id = :1";
 
 /// SQL update statement for member tape
 const std::string castor::db::ora::OraStreamCnv::s_updateTapeStatementString =
-"UPDATE rh_Stream SET tape = : 1 WHERE id = :2";
+"UPDATE Stream SET tape = : 1 WHERE id = :2";
 
 /// SQL existence statement for member tapePool
 const std::string castor::db::ora::OraStreamCnv::s_checkTapePoolExistStatementString =
-"SELECT id from rh_TapePool WHERE id = :1";
+"SELECT id from TapePool WHERE id = :1";
 
 /// SQL update statement for member tapePool
 const std::string castor::db::ora::OraStreamCnv::s_updateTapePoolStatementString =
-"UPDATE rh_Stream SET tapePool = : 1 WHERE id = :2";
+"UPDATE Stream SET tapePool = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

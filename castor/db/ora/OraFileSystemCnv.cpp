@@ -58,55 +58,55 @@ const castor::IFactory<castor::IConverter>& OraFileSystemCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraFileSystemCnv::s_insertStatementString =
-"INSERT INTO rh_FileSystem (free, weight, fsDeviation, mountPoint, id, diskPool, diskserver) VALUES (:1,:2,:3,:4,:5,:6,:7)";
+"INSERT INTO FileSystem (free, weight, fsDeviation, mountPoint, id, diskPool, diskserver) VALUES (:1,:2,:3,:4,:5,:6,:7)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraFileSystemCnv::s_deleteStatementString =
-"DELETE FROM rh_FileSystem WHERE id = :1";
+"DELETE FROM FileSystem WHERE id = :1";
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraFileSystemCnv::s_selectStatementString =
-"SELECT free, weight, fsDeviation, mountPoint, id, diskPool, diskserver FROM rh_FileSystem WHERE id = :1";
+"SELECT free, weight, fsDeviation, mountPoint, id, diskPool, diskserver FROM FileSystem WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraFileSystemCnv::s_updateStatementString =
-"UPDATE rh_FileSystem SET free = :1, weight = :2, fsDeviation = :3, mountPoint = :4 WHERE id = :5";
+"UPDATE FileSystem SET free = :1, weight = :2, fsDeviation = :3, mountPoint = :4 WHERE id = :5";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraFileSystemCnv::s_storeTypeStatementString =
-"INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::ora::OraFileSystemCnv::s_deleteTypeStatementString =
-"DELETE FROM rh_Id2Type WHERE id = :1";
+"DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL existence statement for member diskPool
 const std::string castor::db::ora::OraFileSystemCnv::s_checkDiskPoolExistStatementString =
-"SELECT id from rh_DiskPool WHERE id = :1";
+"SELECT id from DiskPool WHERE id = :1";
 
 /// SQL update statement for member diskPool
 const std::string castor::db::ora::OraFileSystemCnv::s_updateDiskPoolStatementString =
-"UPDATE rh_FileSystem SET diskPool = : 1 WHERE id = :2";
+"UPDATE FileSystem SET diskPool = : 1 WHERE id = :2";
 
 /// SQL select statement for member copies
 const std::string castor::db::ora::OraFileSystemCnv::s_selectDiskCopyStatementString =
-"SELECT id from rh_DiskCopy WHERE fileSystem = :1";
+"SELECT id from DiskCopy WHERE fileSystem = :1";
 
 /// SQL delete statement for member copies
 const std::string castor::db::ora::OraFileSystemCnv::s_deleteDiskCopyStatementString =
-"UPDATE rh_DiskCopy SET fileSystem = 0 WHERE fileSystem = :1";
+"UPDATE DiskCopy SET fileSystem = 0 WHERE fileSystem = :1";
 
 /// SQL remote update statement for member copies
 const std::string castor::db::ora::OraFileSystemCnv::s_remoteUpdateDiskCopyStatementString =
-"UPDATE rh_DiskCopy SET fileSystem = : 1 WHERE id = :2";
+"UPDATE DiskCopy SET fileSystem = : 1 WHERE id = :2";
 
 /// SQL existence statement for member diskserver
 const std::string castor::db::ora::OraFileSystemCnv::s_checkDiskServerExistStatementString =
-"SELECT id from rh_DiskServer WHERE id = :1";
+"SELECT id from DiskServer WHERE id = :1";
 
 /// SQL update statement for member diskserver
 const std::string castor::db::ora::OraFileSystemCnv::s_updateDiskServerStatementString =
-"UPDATE rh_FileSystem SET diskserver = : 1 WHERE id = :2";
+"UPDATE FileSystem SET diskserver = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

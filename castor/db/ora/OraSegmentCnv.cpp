@@ -57,43 +57,43 @@ const castor::IFactory<castor::IConverter>& OraSegmentCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraSegmentCnv::s_insertStatementString =
-"INSERT INTO rh_Segment (blockid, fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, id, tape, copy, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15)";
+"INSERT INTO Segment (blockid, fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, id, tape, copy, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraSegmentCnv::s_deleteStatementString =
-"DELETE FROM rh_Segment WHERE id = :1";
+"DELETE FROM Segment WHERE id = :1";
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraSegmentCnv::s_selectStatementString =
-"SELECT blockid, fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, id, tape, copy, status FROM rh_Segment WHERE id = :1";
+"SELECT blockid, fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, id, tape, copy, status FROM Segment WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraSegmentCnv::s_updateStatementString =
-"UPDATE rh_Segment SET blockid = :1, fseq = :2, offset = :3, bytes_in = :4, bytes_out = :5, host_bytes = :6, segmCksumAlgorithm = :7, segmCksum = :8, errMsgTxt = :9, errorCode = :10, severity = :11, status = :12 WHERE id = :13";
+"UPDATE Segment SET blockid = :1, fseq = :2, offset = :3, bytes_in = :4, bytes_out = :5, host_bytes = :6, segmCksumAlgorithm = :7, segmCksum = :8, errMsgTxt = :9, errorCode = :10, severity = :11, status = :12 WHERE id = :13";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraSegmentCnv::s_storeTypeStatementString =
-"INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::ora::OraSegmentCnv::s_deleteTypeStatementString =
-"DELETE FROM rh_Id2Type WHERE id = :1";
+"DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL existence statement for member tape
 const std::string castor::db::ora::OraSegmentCnv::s_checkTapeExistStatementString =
-"SELECT id from rh_Tape WHERE id = :1";
+"SELECT id from Tape WHERE id = :1";
 
 /// SQL update statement for member tape
 const std::string castor::db::ora::OraSegmentCnv::s_updateTapeStatementString =
-"UPDATE rh_Segment SET tape = : 1 WHERE id = :2";
+"UPDATE Segment SET tape = : 1 WHERE id = :2";
 
 /// SQL existence statement for member copy
 const std::string castor::db::ora::OraSegmentCnv::s_checkTapeCopyExistStatementString =
-"SELECT id from rh_TapeCopy WHERE id = :1";
+"SELECT id from TapeCopy WHERE id = :1";
 
 /// SQL update statement for member copy
 const std::string castor::db::ora::OraSegmentCnv::s_updateTapeCopyStatementString =
-"UPDATE rh_Segment SET copy = : 1 WHERE id = :2";
+"UPDATE Segment SET copy = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

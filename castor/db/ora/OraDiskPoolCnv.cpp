@@ -56,51 +56,51 @@ const castor::IFactory<castor::IConverter>& OraDiskPoolCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraDiskPoolCnv::s_insertStatementString =
-"INSERT INTO rh_DiskPool (name, id) VALUES (:1,:2)";
+"INSERT INTO DiskPool (name, id) VALUES (:1,:2)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraDiskPoolCnv::s_deleteStatementString =
-"DELETE FROM rh_DiskPool WHERE id = :1";
+"DELETE FROM DiskPool WHERE id = :1";
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraDiskPoolCnv::s_selectStatementString =
-"SELECT name, id FROM rh_DiskPool WHERE id = :1";
+"SELECT name, id FROM DiskPool WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraDiskPoolCnv::s_updateStatementString =
-"UPDATE rh_DiskPool SET name = :1 WHERE id = :2";
+"UPDATE DiskPool SET name = :1 WHERE id = :2";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraDiskPoolCnv::s_storeTypeStatementString =
-"INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::ora::OraDiskPoolCnv::s_deleteTypeStatementString =
-"DELETE FROM rh_Id2Type WHERE id = :1";
+"DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL select statement for member fileSystems
 const std::string castor::db::ora::OraDiskPoolCnv::s_selectFileSystemStatementString =
-"SELECT id from rh_FileSystem WHERE diskPool = :1";
+"SELECT id from FileSystem WHERE diskPool = :1";
 
 /// SQL delete statement for member fileSystems
 const std::string castor::db::ora::OraDiskPoolCnv::s_deleteFileSystemStatementString =
-"UPDATE rh_FileSystem SET diskPool = 0 WHERE diskPool = :1";
+"UPDATE FileSystem SET diskPool = 0 WHERE diskPool = :1";
 
 /// SQL remote update statement for member fileSystems
 const std::string castor::db::ora::OraDiskPoolCnv::s_remoteUpdateFileSystemStatementString =
-"UPDATE rh_FileSystem SET diskPool = : 1 WHERE id = :2";
+"UPDATE FileSystem SET diskPool = : 1 WHERE id = :2";
 
 /// SQL insert statement for member svcClasses
 const std::string castor::db::ora::OraDiskPoolCnv::s_insertSvcClassStatementString =
-"INSERT INTO rh_DiskPool2SvcClass (Parent, Child) VALUES (:1, :2)";
+"INSERT INTO DiskPool2SvcClass (Parent, Child) VALUES (:1, :2)";
 
 /// SQL delete statement for member svcClasses
 const std::string castor::db::ora::OraDiskPoolCnv::s_deleteSvcClassStatementString =
-"DELETE FROM rh_DiskPool2SvcClass WHERE Parent = :1 AND Child = :2";
+"DELETE FROM DiskPool2SvcClass WHERE Parent = :1 AND Child = :2";
 
 /// SQL select statement for member svcClasses
 const std::string castor::db::ora::OraDiskPoolCnv::s_selectSvcClassStatementString =
-"SELECT Child from rh_DiskPool2SvcClass WHERE Parent = :1";
+"SELECT Child from DiskPool2SvcClass WHERE Parent = :1";
 
 //------------------------------------------------------------------------------
 // Constructor

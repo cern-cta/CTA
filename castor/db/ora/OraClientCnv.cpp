@@ -53,31 +53,31 @@ const castor::IFactory<castor::IConverter>& OraClientCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraClientCnv::s_insertStatementString =
-"INSERT INTO rh_Client (ipAddress, port, id, request) VALUES (:1,:2,:3,:4)";
+"INSERT INTO Client (ipAddress, port, id, request) VALUES (:1,:2,:3,:4)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraClientCnv::s_deleteStatementString =
-"DELETE FROM rh_Client WHERE id = :1";
+"DELETE FROM Client WHERE id = :1";
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraClientCnv::s_selectStatementString =
-"SELECT ipAddress, port, id, request FROM rh_Client WHERE id = :1";
+"SELECT ipAddress, port, id, request FROM Client WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraClientCnv::s_updateStatementString =
-"UPDATE rh_Client SET ipAddress = :1, port = :2 WHERE id = :3";
+"UPDATE Client SET ipAddress = :1, port = :2 WHERE id = :3";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraClientCnv::s_storeTypeStatementString =
-"INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::ora::OraClientCnv::s_deleteTypeStatementString =
-"DELETE FROM rh_Id2Type WHERE id = :1";
+"DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL update statement for member request
 const std::string castor::db::ora::OraClientCnv::s_updateRequestStatementString =
-"UPDATE rh_Client SET request = : 1 WHERE id = :2";
+"UPDATE Client SET request = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

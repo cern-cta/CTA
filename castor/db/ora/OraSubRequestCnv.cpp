@@ -57,55 +57,55 @@ const castor::IFactory<castor::IConverter>& OraSubRequestCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraSubRequestCnv::s_insertStatementString =
-"INSERT INTO rh_SubRequest (retryCounter, fileName, protocol, poolName, xsize, priority, id, diskcopy, castorFile, parent, request, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12)";
+"INSERT INTO SubRequest (retryCounter, fileName, protocol, poolName, xsize, priority, id, diskcopy, castorFile, parent, request, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraSubRequestCnv::s_deleteStatementString =
-"DELETE FROM rh_SubRequest WHERE id = :1";
+"DELETE FROM SubRequest WHERE id = :1";
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraSubRequestCnv::s_selectStatementString =
-"SELECT retryCounter, fileName, protocol, poolName, xsize, priority, id, diskcopy, castorFile, parent, request, status FROM rh_SubRequest WHERE id = :1";
+"SELECT retryCounter, fileName, protocol, poolName, xsize, priority, id, diskcopy, castorFile, parent, request, status FROM SubRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraSubRequestCnv::s_updateStatementString =
-"UPDATE rh_SubRequest SET retryCounter = :1, fileName = :2, protocol = :3, poolName = :4, xsize = :5, priority = :6, status = :7 WHERE id = :8";
+"UPDATE SubRequest SET retryCounter = :1, fileName = :2, protocol = :3, poolName = :4, xsize = :5, priority = :6, status = :7 WHERE id = :8";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraSubRequestCnv::s_storeTypeStatementString =
-"INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::ora::OraSubRequestCnv::s_deleteTypeStatementString =
-"DELETE FROM rh_Id2Type WHERE id = :1";
+"DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL existence statement for member diskcopy
 const std::string castor::db::ora::OraSubRequestCnv::s_checkDiskCopyExistStatementString =
-"SELECT id from rh_DiskCopy WHERE id = :1";
+"SELECT id from DiskCopy WHERE id = :1";
 
 /// SQL update statement for member diskcopy
 const std::string castor::db::ora::OraSubRequestCnv::s_updateDiskCopyStatementString =
-"UPDATE rh_SubRequest SET diskcopy = : 1 WHERE id = :2";
+"UPDATE SubRequest SET diskcopy = : 1 WHERE id = :2";
 
 /// SQL existence statement for member castorFile
 const std::string castor::db::ora::OraSubRequestCnv::s_checkCastorFileExistStatementString =
-"SELECT id from rh_CastorFile WHERE id = :1";
+"SELECT id from CastorFile WHERE id = :1";
 
 /// SQL update statement for member castorFile
 const std::string castor::db::ora::OraSubRequestCnv::s_updateCastorFileStatementString =
-"UPDATE rh_SubRequest SET castorFile = : 1 WHERE id = :2";
+"UPDATE SubRequest SET castorFile = : 1 WHERE id = :2";
 
 /// SQL existence statement for member parent
 const std::string castor::db::ora::OraSubRequestCnv::s_checkSubRequestExistStatementString =
-"SELECT id from rh_SubRequest WHERE id = :1";
+"SELECT id from SubRequest WHERE id = :1";
 
 /// SQL update statement for member parent
 const std::string castor::db::ora::OraSubRequestCnv::s_updateSubRequestStatementString =
-"UPDATE rh_SubRequest SET parent = : 1 WHERE id = :2";
+"UPDATE SubRequest SET parent = : 1 WHERE id = :2";
 
 /// SQL update statement for member request
 const std::string castor::db::ora::OraSubRequestCnv::s_updateRequestStatementString =
-"UPDATE rh_SubRequest SET request = : 1 WHERE id = :2";
+"UPDATE SubRequest SET request = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

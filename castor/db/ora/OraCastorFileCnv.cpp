@@ -59,67 +59,67 @@ const castor::IFactory<castor::IConverter>& OraCastorFileCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraCastorFileCnv::s_insertStatementString =
-"INSERT INTO rh_CastorFile (fileId, nsHost, fileSize, id, svcClass, fileClass) VALUES (:1,:2,:3,:4,:5,:6)";
+"INSERT INTO CastorFile (fileId, nsHost, fileSize, id, svcClass, fileClass) VALUES (:1,:2,:3,:4,:5,:6)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraCastorFileCnv::s_deleteStatementString =
-"DELETE FROM rh_CastorFile WHERE id = :1";
+"DELETE FROM CastorFile WHERE id = :1";
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraCastorFileCnv::s_selectStatementString =
-"SELECT fileId, nsHost, fileSize, id, svcClass, fileClass FROM rh_CastorFile WHERE id = :1";
+"SELECT fileId, nsHost, fileSize, id, svcClass, fileClass FROM CastorFile WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraCastorFileCnv::s_updateStatementString =
-"UPDATE rh_CastorFile SET fileId = :1, nsHost = :2, fileSize = :3 WHERE id = :4";
+"UPDATE CastorFile SET fileId = :1, nsHost = :2, fileSize = :3 WHERE id = :4";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraCastorFileCnv::s_storeTypeStatementString =
-"INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::ora::OraCastorFileCnv::s_deleteTypeStatementString =
-"DELETE FROM rh_Id2Type WHERE id = :1";
+"DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL existence statement for member svcClass
 const std::string castor::db::ora::OraCastorFileCnv::s_checkSvcClassExistStatementString =
-"SELECT id from rh_SvcClass WHERE id = :1";
+"SELECT id from SvcClass WHERE id = :1";
 
 /// SQL update statement for member svcClass
 const std::string castor::db::ora::OraCastorFileCnv::s_updateSvcClassStatementString =
-"UPDATE rh_CastorFile SET svcClass = : 1 WHERE id = :2";
+"UPDATE CastorFile SET svcClass = : 1 WHERE id = :2";
 
 /// SQL existence statement for member fileClass
 const std::string castor::db::ora::OraCastorFileCnv::s_checkFileClassExistStatementString =
-"SELECT id from rh_FileClass WHERE id = :1";
+"SELECT id from FileClass WHERE id = :1";
 
 /// SQL update statement for member fileClass
 const std::string castor::db::ora::OraCastorFileCnv::s_updateFileClassStatementString =
-"UPDATE rh_CastorFile SET fileClass = : 1 WHERE id = :2";
+"UPDATE CastorFile SET fileClass = : 1 WHERE id = :2";
 
 /// SQL select statement for member diskCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_selectDiskCopyStatementString =
-"SELECT id from rh_DiskCopy WHERE castorFile = :1";
+"SELECT id from DiskCopy WHERE castorFile = :1";
 
 /// SQL delete statement for member diskCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_deleteDiskCopyStatementString =
-"UPDATE rh_DiskCopy SET castorFile = 0 WHERE castorFile = :1";
+"UPDATE DiskCopy SET castorFile = 0 WHERE castorFile = :1";
 
 /// SQL remote update statement for member diskCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_remoteUpdateDiskCopyStatementString =
-"UPDATE rh_DiskCopy SET castorFile = : 1 WHERE id = :2";
+"UPDATE DiskCopy SET castorFile = : 1 WHERE id = :2";
 
 /// SQL select statement for member tapeCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_selectTapeCopyStatementString =
-"SELECT id from rh_TapeCopy WHERE castorFile = :1";
+"SELECT id from TapeCopy WHERE castorFile = :1";
 
 /// SQL delete statement for member tapeCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_deleteTapeCopyStatementString =
-"UPDATE rh_TapeCopy SET castorFile = 0 WHERE castorFile = :1";
+"UPDATE TapeCopy SET castorFile = 0 WHERE castorFile = :1";
 
 /// SQL remote update statement for member tapeCopies
 const std::string castor::db::ora::OraCastorFileCnv::s_remoteUpdateTapeCopyStatementString =
-"UPDATE rh_TapeCopy SET castorFile = : 1 WHERE id = :2";
+"UPDATE TapeCopy SET castorFile = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

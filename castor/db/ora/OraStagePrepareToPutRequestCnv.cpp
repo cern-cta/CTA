@@ -58,59 +58,59 @@ const castor::IFactory<castor::IConverter>& OraStagePrepareToPutRequestCnvFactor
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraStagePrepareToPutRequestCnv::s_insertStatementString =
-"INSERT INTO rh_StagePrepareToPutRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12)";
+"INSERT INTO StagePrepareToPutRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraStagePrepareToPutRequestCnv::s_deleteStatementString =
-"DELETE FROM rh_StagePrepareToPutRequest WHERE id = :1";
+"DELETE FROM StagePrepareToPutRequest WHERE id = :1";
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraStagePrepareToPutRequestCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, id, svcClass, client FROM rh_StagePrepareToPutRequest WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, id, svcClass, client FROM StagePrepareToPutRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraStagePrepareToPutRequestCnv::s_updateStatementString =
-"UPDATE rh_StagePrepareToPutRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9 WHERE id = :10";
+"UPDATE StagePrepareToPutRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9 WHERE id = :10";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraStagePrepareToPutRequestCnv::s_storeTypeStatementString =
-"INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::ora::OraStagePrepareToPutRequestCnv::s_deleteTypeStatementString =
-"DELETE FROM rh_Id2Type WHERE id = :1";
+"DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL statement for request status insertion
 const std::string castor::db::ora::OraStagePrepareToPutRequestCnv::s_insertStatusStatementString =
-"INSERT INTO rh_requestsStatus (id, status, creation, lastChange) VALUES (:1, 'NEW', SYSDATE, SYSDATE)";
+"INSERT INTO requestsStatus (id, status, creation, lastChange) VALUES (:1, 'NEW', SYSDATE, SYSDATE)";
 
 /// SQL statement for request status deletion
 const std::string castor::db::ora::OraStagePrepareToPutRequestCnv::s_deleteStatusStatementString =
-"DELETE FROM rh_requestsStatus WHERE id = :1";
+"DELETE FROM requestsStatus WHERE id = :1";
 
 /// SQL existence statement for member svcClass
 const std::string castor::db::ora::OraStagePrepareToPutRequestCnv::s_checkSvcClassExistStatementString =
-"SELECT id from rh_SvcClass WHERE id = :1";
+"SELECT id from SvcClass WHERE id = :1";
 
 /// SQL update statement for member svcClass
 const std::string castor::db::ora::OraStagePrepareToPutRequestCnv::s_updateSvcClassStatementString =
-"UPDATE rh_StagePrepareToPutRequest SET svcClass = : 1 WHERE id = :2";
+"UPDATE StagePrepareToPutRequest SET svcClass = : 1 WHERE id = :2";
 
 /// SQL select statement for member subRequests
 const std::string castor::db::ora::OraStagePrepareToPutRequestCnv::s_selectSubRequestStatementString =
-"SELECT id from rh_SubRequest WHERE request = :1";
+"SELECT id from SubRequest WHERE request = :1";
 
 /// SQL delete statement for member subRequests
 const std::string castor::db::ora::OraStagePrepareToPutRequestCnv::s_deleteSubRequestStatementString =
-"UPDATE rh_SubRequest SET request = 0 WHERE request = :1";
+"UPDATE SubRequest SET request = 0 WHERE request = :1";
 
 /// SQL remote update statement for member subRequests
 const std::string castor::db::ora::OraStagePrepareToPutRequestCnv::s_remoteUpdateSubRequestStatementString =
-"UPDATE rh_SubRequest SET request = : 1 WHERE id = :2";
+"UPDATE SubRequest SET request = : 1 WHERE id = :2";
 
 /// SQL update statement for member client
 const std::string castor::db::ora::OraStagePrepareToPutRequestCnv::s_updateIClientStatementString =
-"UPDATE rh_StagePrepareToPutRequest SET client = : 1 WHERE id = :2";
+"UPDATE StagePrepareToPutRequest SET client = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

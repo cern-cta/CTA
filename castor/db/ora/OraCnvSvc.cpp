@@ -60,7 +60,7 @@ const castor::IFactory<castor::IService>& OraCnvSvcFactory = s_factoryOraCnvSvc;
 //------------------------------------------------------------------------------
 /// SQL statement for type retrieval
 const std::string castor::db::ora::OraCnvSvc::s_getTypeStatementString =
-  "SELECT type FROM rh_Id2Type WHERE id = :1";
+  "SELECT type FROM Id2Type WHERE id = :1";
 
 /// SQL statement for id retrieval
 const std::string castor::db::ora::OraCnvSvc::s_getIdStatementString =
@@ -72,7 +72,7 @@ const std::string castor::db::ora::OraCnvSvc::s_getNRStatementString =
 
 /// SQL statement for getting index of next request to be processed
 const std::string castor::db::ora::OraCnvSvc::s_getNBRStatementString =
-  "SELECT count(*) FROM rh_requestsStatus WHERE status = 'NEW'";
+  "SELECT count(*) FROM requestsStatus WHERE status = 'NEW'";
 
 // -----------------------------------------------------------------------
 // OraCnvSvc

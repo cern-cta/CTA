@@ -175,7 +175,7 @@ void CppCppOraCnvWriter::writeConstants() {
             << "Ora" << m_classInfo->className
             << "Cnv::s_insertStatementString =" << endl
             << getIndent()
-            << "\"INSERT INTO rh_" << m_classInfo->className
+            << "\"INSERT INTO " << m_classInfo->className
             << " (";
   int n = 0;
   // create a list of members
@@ -214,7 +214,7 @@ void CppCppOraCnvWriter::writeConstants() {
             << "Ora" << m_classInfo->className
             << "Cnv::s_deleteStatementString =" << endl
             << getIndent()
-            << "\"DELETE FROM rh_" << m_classInfo->className
+            << "\"DELETE FROM " << m_classInfo->className
             << " WHERE id = :1\";" << endl << endl
             << getIndent()
             << "/// SQL statement for request selection"
@@ -244,7 +244,7 @@ void CppCppOraCnvWriter::writeConstants() {
       n++;
     }
   }
-  *m_stream << " FROM rh_" << m_classInfo->className
+  *m_stream << " FROM " << m_classInfo->className
             << " WHERE id = :1\";" << endl << endl
             << getIndent()
             << "/// SQL statement for request update"
@@ -254,7 +254,7 @@ void CppCppOraCnvWriter::writeConstants() {
             << "Ora" << m_classInfo->className
             << "Cnv::s_updateStatementString =" << endl
             << getIndent()
-            << "\"UPDATE rh_" << m_classInfo->className
+            << "\"UPDATE " << m_classInfo->className
             << " SET ";
   n = 0;
   // Go through the members
@@ -285,7 +285,7 @@ void CppCppOraCnvWriter::writeConstants() {
             << "Ora" << m_classInfo->className
             << "Cnv::s_storeTypeStatementString =" << endl
             << getIndent()
-            << "\"INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)\";"
+            << "\"INSERT INTO Id2Type (id, type) VALUES (:1, :2)\";"
             << endl << endl << getIndent()
             << "/// SQL statement for type deletion"
             << endl << getIndent()
@@ -294,7 +294,7 @@ void CppCppOraCnvWriter::writeConstants() {
             << "Ora" << m_classInfo->className
             << "Cnv::s_deleteTypeStatementString =" << endl
             << getIndent()
-            << "\"DELETE FROM rh_Id2Type WHERE id = :1\";"
+            << "\"DELETE FROM Id2Type WHERE id = :1\";"
             << endl << endl;
   // Status dedicated statements
   if (isRequest()) {
@@ -306,7 +306,7 @@ void CppCppOraCnvWriter::writeConstants() {
               << "Ora" << m_classInfo->className
               << "Cnv::s_insertStatusStatementString =" << endl
               << getIndent()
-              << "\"INSERT INTO rh_requestsStatus (id, status, creation, lastChange)"
+              << "\"INSERT INTO requestsStatus (id, status, creation, lastChange)"
               << " VALUES (:1, 'NEW', SYSDATE, SYSDATE)\";"
               << endl << endl << getIndent()
               << "/// SQL statement for request status deletion"
@@ -316,7 +316,7 @@ void CppCppOraCnvWriter::writeConstants() {
               << "Ora" << m_classInfo->className
               << "Cnv::s_deleteStatusStatementString =" << endl
               << getIndent()
-              << "\"DELETE FROM rh_requestsStatus WHERE id = :1\";"
+              << "\"DELETE FROM requestsStatus WHERE id = :1\";"
               << endl << endl;
   }
   // Associations dedicated statements
@@ -350,7 +350,7 @@ void CppCppOraCnvWriter::writeConstants() {
                 << "Cnv::s_insert"
                 << capitalizeFirstLetter(as->remotePart.typeName)
                 << "StatementString =" << endl << getIndent()
-                << "\"INSERT INTO rh_"
+                << "\"INSERT INTO "
                 << capitalizeFirstLetter(firstMember->typeName)
                 << "2"
                 << capitalizeFirstLetter(secondMember->typeName)
@@ -366,7 +366,7 @@ void CppCppOraCnvWriter::writeConstants() {
                 << "Cnv::s_delete"
                 << capitalizeFirstLetter(as->remotePart.typeName)
                 << "StatementString =" << endl << getIndent()
-                << "\"DELETE FROM rh_"
+                << "\"DELETE FROM "
                 << capitalizeFirstLetter(firstMember->typeName)
                 << "2"
                 << capitalizeFirstLetter(secondMember->typeName)
@@ -382,7 +382,7 @@ void CppCppOraCnvWriter::writeConstants() {
                 << "Cnv::s_select"
                 << capitalizeFirstLetter(as->remotePart.typeName)
                 << "StatementString =" << endl << getIndent()
-                << "\"SELECT " << secondRole << " from rh_"
+                << "\"SELECT " << secondRole << " from "
                 << capitalizeFirstLetter(firstMember->typeName)
                 << "2"
                 << capitalizeFirstLetter(secondMember->typeName)
@@ -404,7 +404,7 @@ void CppCppOraCnvWriter::writeConstants() {
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "StatementString =" << endl
                   << getIndent()
-                  << "\"SELECT id from rh_"
+                  << "\"SELECT id from "
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << " WHERE " << as->localPart.name
                   << " = :1\";" << endl << endl
@@ -418,7 +418,7 @@ void CppCppOraCnvWriter::writeConstants() {
                   << "Cnv::s_delete"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "StatementString =" << endl << getIndent()
-                  << "\"UPDATE rh_"
+                  << "\"UPDATE "
                   << as->remotePart.typeName
                   << " SET " << as->localPart.name
                   << " = 0 WHERE " << as->localPart.name
@@ -433,7 +433,7 @@ void CppCppOraCnvWriter::writeConstants() {
                   << "Cnv::s_remoteUpdate"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "StatementString =" << endl << getIndent()
-                  << "\"UPDATE rh_"
+                  << "\"UPDATE "
                   << as->remotePart.typeName
                   << " SET " << as->localPart.name
                   << " = : 1 WHERE id = :2\";" << endl << endl;
@@ -452,7 +452,7 @@ void CppCppOraCnvWriter::writeConstants() {
                     << capitalizeFirstLetter(as->remotePart.typeName)
                     << "ExistStatementString =" << endl
                     << getIndent()
-                    << "\"SELECT id from rh_"
+                    << "\"SELECT id from "
                     << capitalizeFirstLetter(as->remotePart.typeName)
                     << " WHERE id = :1\";" << endl << endl;
         }
@@ -467,7 +467,7 @@ void CppCppOraCnvWriter::writeConstants() {
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "StatementString =" << endl
                   << getIndent()
-                  << "\"UPDATE rh_"
+                  << "\"UPDATE "
                   << m_classInfo->className
                   << " SET " << as->remotePart.name
                   << " = : 1 WHERE id = :2\";" << endl << endl;
@@ -489,10 +489,10 @@ void CppCppOraCnvWriter::writeSqlStatements() {
          << m_classInfo->className
          << " */"
          << endl
-         << "DROP TABLE rh_"
+         << "DROP TABLE "
          << m_classInfo->className
          << ";" << endl
-         << "CREATE TABLE rh_"
+         << "CREATE TABLE "
          << m_classInfo->className
          << " (";
   int n = 0;
@@ -536,44 +536,44 @@ void CppCppOraCnvWriter::writeSqlStatements() {
       Member* secondMember = 0;
       ordonnateMembersInAssoc(as, &firstMember, &secondMember);
       if (firstMember == &as->localPart) {
-        stream << "DROP TABLE rh_"
-               << capitalizeFirstLetter(firstMember->typeName)
-               << "2"
-               << capitalizeFirstLetter(secondMember->typeName)
-               << ";" << endl
-               << "CREATE TABLE rh_"
-               << capitalizeFirstLetter(firstMember->typeName)
-               << "2"
-               << capitalizeFirstLetter(secondMember->typeName)
-               << " (Parent INTEGER, Child INTEGER);"
-               << endl << getIndent()
-               << "DROP INDEX I_rh"
+        stream << getIndent()
+               << "DROP INDEX I_"
                << capitalizeFirstLetter(firstMember->typeName)
                << "2"
                << capitalizeFirstLetter(secondMember->typeName)
                << "_Child;"
                << endl << getIndent()
-               << "DROP INDEX I_rh"
+               << "DROP INDEX I_"
                << capitalizeFirstLetter(firstMember->typeName)
                << "2"
                << capitalizeFirstLetter(secondMember->typeName)
                << "_Parent;"
-               << endl << getIndent()
-               << "CREATE INDEX I_rh"
+               << endl << "DROP TABLE "
                << capitalizeFirstLetter(firstMember->typeName)
                << "2"
                << capitalizeFirstLetter(secondMember->typeName)
-               << "_Child on rh_"
+               << ";" << endl
+               << "CREATE TABLE "
+               << capitalizeFirstLetter(firstMember->typeName)
+               << "2"
+               << capitalizeFirstLetter(secondMember->typeName)
+               << " (Parent INTEGER, Child INTEGER);"
+               << endl << getIndent()
+               << "CREATE INDEX I_"
+               << capitalizeFirstLetter(firstMember->typeName)
+               << "2"
+               << capitalizeFirstLetter(secondMember->typeName)
+               << "_Child on "
                << capitalizeFirstLetter(firstMember->typeName)
                << "2"
                << capitalizeFirstLetter(secondMember->typeName)
                << " (child);"
                << endl << getIndent()
-               << "CREATE INDEX I_rh"
+               << "CREATE INDEX I_"
                << capitalizeFirstLetter(firstMember->typeName)
                << "2"
                << capitalizeFirstLetter(secondMember->typeName)
-               << "_Parent on rh_"
+               << "_Parent on "
                << capitalizeFirstLetter(firstMember->typeName)
                << "2"
                << capitalizeFirstLetter(secondMember->typeName)

@@ -59,59 +59,59 @@ const castor::IFactory<castor::IConverter>& OraTapeCopyCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraTapeCopyCnv::s_insertStatementString =
-"INSERT INTO rh_TapeCopy (id, castorFile, status) VALUES (:1,:2,:3)";
+"INSERT INTO TapeCopy (id, castorFile, status) VALUES (:1,:2,:3)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraTapeCopyCnv::s_deleteStatementString =
-"DELETE FROM rh_TapeCopy WHERE id = :1";
+"DELETE FROM TapeCopy WHERE id = :1";
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraTapeCopyCnv::s_selectStatementString =
-"SELECT id, castorFile, status FROM rh_TapeCopy WHERE id = :1";
+"SELECT id, castorFile, status FROM TapeCopy WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraTapeCopyCnv::s_updateStatementString =
-"UPDATE rh_TapeCopy SET status = :1 WHERE id = :2";
+"UPDATE TapeCopy SET status = :1 WHERE id = :2";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraTapeCopyCnv::s_storeTypeStatementString =
-"INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::ora::OraTapeCopyCnv::s_deleteTypeStatementString =
-"DELETE FROM rh_Id2Type WHERE id = :1";
+"DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL insert statement for member stream
 const std::string castor::db::ora::OraTapeCopyCnv::s_insertStreamStatementString =
-"INSERT INTO rh_Stream2TapeCopy (Child, Parent) VALUES (:1, :2)";
+"INSERT INTO Stream2TapeCopy (Child, Parent) VALUES (:1, :2)";
 
 /// SQL delete statement for member stream
 const std::string castor::db::ora::OraTapeCopyCnv::s_deleteStreamStatementString =
-"DELETE FROM rh_Stream2TapeCopy WHERE Child = :1 AND Parent = :2";
+"DELETE FROM Stream2TapeCopy WHERE Child = :1 AND Parent = :2";
 
 /// SQL select statement for member stream
 const std::string castor::db::ora::OraTapeCopyCnv::s_selectStreamStatementString =
-"SELECT Parent from rh_Stream2TapeCopy WHERE Child = :1";
+"SELECT Parent from Stream2TapeCopy WHERE Child = :1";
 
 /// SQL select statement for member segments
 const std::string castor::db::ora::OraTapeCopyCnv::s_selectSegmentStatementString =
-"SELECT id from rh_Segment WHERE copy = :1";
+"SELECT id from Segment WHERE copy = :1";
 
 /// SQL delete statement for member segments
 const std::string castor::db::ora::OraTapeCopyCnv::s_deleteSegmentStatementString =
-"UPDATE rh_Segment SET copy = 0 WHERE copy = :1";
+"UPDATE Segment SET copy = 0 WHERE copy = :1";
 
 /// SQL remote update statement for member segments
 const std::string castor::db::ora::OraTapeCopyCnv::s_remoteUpdateSegmentStatementString =
-"UPDATE rh_Segment SET copy = : 1 WHERE id = :2";
+"UPDATE Segment SET copy = : 1 WHERE id = :2";
 
 /// SQL existence statement for member castorFile
 const std::string castor::db::ora::OraTapeCopyCnv::s_checkCastorFileExistStatementString =
-"SELECT id from rh_CastorFile WHERE id = :1";
+"SELECT id from CastorFile WHERE id = :1";
 
 /// SQL update statement for member castorFile
 const std::string castor::db::ora::OraTapeCopyCnv::s_updateCastorFileStatementString =
-"UPDATE rh_TapeCopy SET castorFile = : 1 WHERE id = :2";
+"UPDATE TapeCopy SET castorFile = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

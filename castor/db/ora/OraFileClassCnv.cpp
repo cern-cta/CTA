@@ -55,39 +55,39 @@ const castor::IFactory<castor::IConverter>& OraFileClassCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraFileClassCnv::s_insertStatementString =
-"INSERT INTO rh_FileClass (name, minFileSize, maxFileSize, nbCopies, id) VALUES (:1,:2,:3,:4,:5)";
+"INSERT INTO FileClass (name, minFileSize, maxFileSize, nbCopies, id) VALUES (:1,:2,:3,:4,:5)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraFileClassCnv::s_deleteStatementString =
-"DELETE FROM rh_FileClass WHERE id = :1";
+"DELETE FROM FileClass WHERE id = :1";
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraFileClassCnv::s_selectStatementString =
-"SELECT name, minFileSize, maxFileSize, nbCopies, id FROM rh_FileClass WHERE id = :1";
+"SELECT name, minFileSize, maxFileSize, nbCopies, id FROM FileClass WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraFileClassCnv::s_updateStatementString =
-"UPDATE rh_FileClass SET name = :1, minFileSize = :2, maxFileSize = :3, nbCopies = :4 WHERE id = :5";
+"UPDATE FileClass SET name = :1, minFileSize = :2, maxFileSize = :3, nbCopies = :4 WHERE id = :5";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraFileClassCnv::s_storeTypeStatementString =
-"INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::ora::OraFileClassCnv::s_deleteTypeStatementString =
-"DELETE FROM rh_Id2Type WHERE id = :1";
+"DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL select statement for member 
 const std::string castor::db::ora::OraFileClassCnv::s_selectCastorFileStatementString =
-"SELECT id from rh_CastorFile WHERE fileClass = :1";
+"SELECT id from CastorFile WHERE fileClass = :1";
 
 /// SQL delete statement for member 
 const std::string castor::db::ora::OraFileClassCnv::s_deleteCastorFileStatementString =
-"UPDATE rh_CastorFile SET fileClass = 0 WHERE fileClass = :1";
+"UPDATE CastorFile SET fileClass = 0 WHERE fileClass = :1";
 
 /// SQL remote update statement for member 
 const std::string castor::db::ora::OraFileClassCnv::s_remoteUpdateCastorFileStatementString =
-"UPDATE rh_CastorFile SET fileClass = : 1 WHERE id = :2";
+"UPDATE CastorFile SET fileClass = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

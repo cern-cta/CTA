@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2004/10/28 16:48:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2004/11/04 14:26:56 $ $Author: sponcec3 $
  *
  *
  *
@@ -67,19 +67,19 @@ const castor::IFactory<castor::IService>& OraStagerSvcFactory = s_factoryOraStag
 //------------------------------------------------------------------------------
 /// SQL statement for tapesToDo
 const std::string castor::db::ora::OraStagerSvc::s_tapesToDoStatementString =
-  "SELECT id FROM rh_Tape WHERE status = :1";
+  "SELECT id FROM Tape WHERE status = :1";
 
 /// SQL statement for streamsToDo
 const std::string castor::db::ora::OraStagerSvc::s_streamsToDoStatementString =
-  "SELECT id FROM rh_Stream WHERE status = :1";
+  "SELECT id FROM Stream WHERE status = :1";
 
 /// SQL statement for selectTape
 const std::string castor::db::ora::OraStagerSvc::s_selectTapeStatementString =
-  "SELECT id FROM rh_Tape WHERE vid = :1 AND side = :2 AND tpmode = :3 FOR UPDATE";
+  "SELECT id FROM Tape WHERE vid = :1 AND side = :2 AND tpmode = :3 FOR UPDATE";
 
 /// SQL statement for anyTapeCopyForStream
 const std::string castor::db::ora::OraStagerSvc::s_anyTapeCopyForStreamStatementString =
-  "SELECT id FROM rh_TapeCopy, rh_Stream2TapeCopy WHERE status = :1 and child = id and ROWNUM < 2";
+  "SELECT id FROM TapeCopy, Stream2TapeCopy WHERE status = :1 and child = id and ROWNUM < 2";
 
 /// SQL statement for bestTapeCopyForStream
 const std::string castor::db::ora::OraStagerSvc::s_bestTapeCopyForStreamStatementString =
@@ -623,7 +623,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo()
     // Check whether the statements are ok
     if (0 == m_subRequestToDoStatement) {
       std::ostringstream stmtString;
-      stmtString << "UPDATE rh_SubRequest SET status = "
+      stmtString << "UPDATE SubRequest SET status = "
                  << castor::stager::SUBREQUEST_WAITSCHED
                  << " WHERE (status = "
                  << castor::stager::SUBREQUEST_START

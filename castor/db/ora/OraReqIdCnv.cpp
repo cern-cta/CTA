@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/04 10:26:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2004/11/04 14:26:55 $ $Author: sponcec3 $
  *
  * 
  *
@@ -53,31 +53,31 @@ const castor::IFactory<castor::IConverter>& OraReqIdCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraReqIdCnv::s_insertStatementString =
-"INSERT INTO rh_ReqId (value, id, request) VALUES (:1,:2,:3)";
+"INSERT INTO ReqId (value, id, request) VALUES (:1,:2,:3)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraReqIdCnv::s_deleteStatementString =
-"DELETE FROM rh_ReqId WHERE id = :1";
+"DELETE FROM ReqId WHERE id = :1";
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraReqIdCnv::s_selectStatementString =
-"SELECT value, id, request FROM rh_ReqId WHERE id = :1";
+"SELECT value, id, request FROM ReqId WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraReqIdCnv::s_updateStatementString =
-"UPDATE rh_ReqId SET value = :1 WHERE id = :2";
+"UPDATE ReqId SET value = :1 WHERE id = :2";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraReqIdCnv::s_storeTypeStatementString =
-"INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::ora::OraReqIdCnv::s_deleteTypeStatementString =
-"DELETE FROM rh_Id2Type WHERE id = :1";
+"DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL update statement for member request
 const std::string castor::db::ora::OraReqIdCnv::s_updateReqIdRequestStatementString =
-"UPDATE rh_ReqId SET request = : 1 WHERE id = :2";
+"UPDATE ReqId SET request = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor

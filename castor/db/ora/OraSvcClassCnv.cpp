@@ -56,51 +56,51 @@ const castor::IFactory<castor::IConverter>& OraSvcClassCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraSvcClassCnv::s_insertStatementString =
-"INSERT INTO rh_SvcClass (policy, nbDrives, name, id) VALUES (:1,:2,:3,:4)";
+"INSERT INTO SvcClass (policy, nbDrives, name, id) VALUES (:1,:2,:3,:4)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraSvcClassCnv::s_deleteStatementString =
-"DELETE FROM rh_SvcClass WHERE id = :1";
+"DELETE FROM SvcClass WHERE id = :1";
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraSvcClassCnv::s_selectStatementString =
-"SELECT policy, nbDrives, name, id FROM rh_SvcClass WHERE id = :1";
+"SELECT policy, nbDrives, name, id FROM SvcClass WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraSvcClassCnv::s_updateStatementString =
-"UPDATE rh_SvcClass SET policy = :1, nbDrives = :2, name = :3 WHERE id = :4";
+"UPDATE SvcClass SET policy = :1, nbDrives = :2, name = :3 WHERE id = :4";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraSvcClassCnv::s_storeTypeStatementString =
-"INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::ora::OraSvcClassCnv::s_deleteTypeStatementString =
-"DELETE FROM rh_Id2Type WHERE id = :1";
+"DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL insert statement for member tapePools
 const std::string castor::db::ora::OraSvcClassCnv::s_insertTapePoolStatementString =
-"INSERT INTO rh_SvcClass2TapePool (Parent, Child) VALUES (:1, :2)";
+"INSERT INTO SvcClass2TapePool (Parent, Child) VALUES (:1, :2)";
 
 /// SQL delete statement for member tapePools
 const std::string castor::db::ora::OraSvcClassCnv::s_deleteTapePoolStatementString =
-"DELETE FROM rh_SvcClass2TapePool WHERE Parent = :1 AND Child = :2";
+"DELETE FROM SvcClass2TapePool WHERE Parent = :1 AND Child = :2";
 
 /// SQL select statement for member tapePools
 const std::string castor::db::ora::OraSvcClassCnv::s_selectTapePoolStatementString =
-"SELECT Child from rh_SvcClass2TapePool WHERE Parent = :1";
+"SELECT Child from SvcClass2TapePool WHERE Parent = :1";
 
 /// SQL insert statement for member diskPools
 const std::string castor::db::ora::OraSvcClassCnv::s_insertDiskPoolStatementString =
-"INSERT INTO rh_DiskPool2SvcClass (Child, Parent) VALUES (:1, :2)";
+"INSERT INTO DiskPool2SvcClass (Child, Parent) VALUES (:1, :2)";
 
 /// SQL delete statement for member diskPools
 const std::string castor::db::ora::OraSvcClassCnv::s_deleteDiskPoolStatementString =
-"DELETE FROM rh_DiskPool2SvcClass WHERE Child = :1 AND Parent = :2";
+"DELETE FROM DiskPool2SvcClass WHERE Child = :1 AND Parent = :2";
 
 /// SQL select statement for member diskPools
 const std::string castor::db::ora::OraSvcClassCnv::s_selectDiskPoolStatementString =
-"SELECT Parent from rh_DiskPool2SvcClass WHERE Child = :1";
+"SELECT Parent from DiskPool2SvcClass WHERE Child = :1";
 
 //------------------------------------------------------------------------------
 // Constructor

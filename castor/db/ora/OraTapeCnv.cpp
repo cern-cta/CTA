@@ -58,59 +58,59 @@ const castor::IFactory<castor::IConverter>& OraTapeCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraTapeCnv::s_insertStatementString =
-"INSERT INTO rh_Tape (vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, stream, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10)";
+"INSERT INTO Tape (vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, stream, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraTapeCnv::s_deleteStatementString =
-"DELETE FROM rh_Tape WHERE id = :1";
+"DELETE FROM Tape WHERE id = :1";
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraTapeCnv::s_selectStatementString =
-"SELECT vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, stream, status FROM rh_Tape WHERE id = :1";
+"SELECT vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, stream, status FROM Tape WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraTapeCnv::s_updateStatementString =
-"UPDATE rh_Tape SET vid = :1, side = :2, tpmode = :3, errMsgTxt = :4, errorCode = :5, severity = :6, vwAddress = :7, status = :8 WHERE id = :9";
+"UPDATE Tape SET vid = :1, side = :2, tpmode = :3, errMsgTxt = :4, errorCode = :5, severity = :6, vwAddress = :7, status = :8 WHERE id = :9";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraTapeCnv::s_storeTypeStatementString =
-"INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)";
+"INSERT INTO Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
 const std::string castor::db::ora::OraTapeCnv::s_deleteTypeStatementString =
-"DELETE FROM rh_Id2Type WHERE id = :1";
+"DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL select statement for member stream
 const std::string castor::db::ora::OraTapeCnv::s_selectStreamStatementString =
-"SELECT id from rh_Stream WHERE tape = :1";
+"SELECT id from Stream WHERE tape = :1";
 
 /// SQL delete statement for member stream
 const std::string castor::db::ora::OraTapeCnv::s_deleteStreamStatementString =
-"UPDATE rh_Stream SET tape = 0 WHERE tape = :1";
+"UPDATE Stream SET tape = 0 WHERE tape = :1";
 
 /// SQL remote update statement for member stream
 const std::string castor::db::ora::OraTapeCnv::s_remoteUpdateStreamStatementString =
-"UPDATE rh_Stream SET tape = : 1 WHERE id = :2";
+"UPDATE Stream SET tape = : 1 WHERE id = :2";
 
 /// SQL existence statement for member stream
 const std::string castor::db::ora::OraTapeCnv::s_checkStreamExistStatementString =
-"SELECT id from rh_Stream WHERE id = :1";
+"SELECT id from Stream WHERE id = :1";
 
 /// SQL update statement for member stream
 const std::string castor::db::ora::OraTapeCnv::s_updateStreamStatementString =
-"UPDATE rh_Tape SET stream = : 1 WHERE id = :2";
+"UPDATE Tape SET stream = : 1 WHERE id = :2";
 
 /// SQL select statement for member segments
 const std::string castor::db::ora::OraTapeCnv::s_selectSegmentStatementString =
-"SELECT id from rh_Segment WHERE tape = :1";
+"SELECT id from Segment WHERE tape = :1";
 
 /// SQL delete statement for member segments
 const std::string castor::db::ora::OraTapeCnv::s_deleteSegmentStatementString =
-"UPDATE rh_Segment SET tape = 0 WHERE tape = :1";
+"UPDATE Segment SET tape = 0 WHERE tape = :1";
 
 /// SQL remote update statement for member segments
 const std::string castor::db::ora::OraTapeCnv::s_remoteUpdateSegmentStatementString =
-"UPDATE rh_Segment SET tape = : 1 WHERE id = :2";
+"UPDATE Segment SET tape = : 1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor
