@@ -1,14 +1,14 @@
 /*
- * $Id: Ctape_api.h,v 1.18 2001/07/25 05:16:48 baud Exp $
+ * $Id: Ctape_api.h,v 1.19 2002/04/08 07:55:33 baud Exp $
  */
 
 /*
- * Copyright (C) 1994-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1994-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.18 $ $Date: 2001/07/25 05:16:48 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.19 $ $Date: 2002/04/08 07:55:33 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -80,7 +80,7 @@ EXTERN_C int DLL_DECL Ctape_info _PROTO((char *, int *, unsigned char *, char *,
 EXTERN_C int DLL_DECL Ctape_kill _PROTO((char *));
 EXTERN_C int DLL_DECL Ctape_label _PROTO((char *, char *, int, char *, char *, char *, char *, char *, int, int, int));
 EXTERN_C int DLL_DECL Ctape_mount _PROTO((char *, char *, int, char *, char *, char *, int, char *, char *, int));
-EXTERN_C int DLL_DECL Ctape_position _PROTO((char *, int, int, int, unsigned char *, int, int, int, char *, char *, int, int, int, int));
+EXTERN_C int DLL_DECL Ctape_position _PROTO((char *, int, int, int, unsigned char *, int, int, int, char *, char *, char *, int, int, int, int));
 EXTERN_C int DLL_DECL Ctape_reserve _PROTO((int, struct dgn_rsv *));
 EXTERN_C int DLL_DECL Ctape_rls _PROTO((char *, int));
 EXTERN_C int DLL_DECL Ctape_rstatus _PROTO((char *, struct rsv_status *, int, int));
