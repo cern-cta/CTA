@@ -1,7 +1,10 @@
 /*
- * $Id: socket_timeout.h,v 1.3 1999/10/14 12:06:11 jdurand Exp $
+ * $Id: socket_timeout.h,v 1.4 1999/10/20 19:11:53 jdurand Exp $
  *
  * $Log: socket_timeout.h,v $
+ * Revision 1.4  1999/10/20 19:11:53  jdurand
+ * Introduced a typdef size_t ssize_t so that Windows is happy
+ *
  * Revision 1.3  1999/10/14 12:06:11  jdurand
  * *** empty log message ***
  *
@@ -16,6 +19,7 @@
 
 #if _WIN32
 #include <windows.h>
+typedef size_t ssize_t;
 #else
 #include <sys/types.h>
 #endif
