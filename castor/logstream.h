@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.h,v $ $Revision: 1.8 $ $Release$ $Date: 2004/07/29 16:57:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logstream.h,v $ $Revision: 1.9 $ $Release$ $Date: 2004/08/19 12:56:27 $ $Author: sponcec3 $
  *
  * A generic logstream for castor, handling IP addresses
  * and timestamps
@@ -38,10 +38,10 @@
 #include "castor/IObject.hpp"
 #include "castor/logbuf.h"
 
-#define OPERATOR(T)                               \
-  logstream& operator<< (T var) {                 \
-    *((std::ostream*)this) << var;                \
-    return *this;                                 \
+#define OPERATOR(T)                             \
+  logstream& operator<< (T var) {               \
+    *((std::ostream*)this) << var;              \
+    return *this;                               \
   }
 
 #define OPERATORINT(T)                          \
@@ -61,11 +61,11 @@
 #define MANIPULATOR(T) castor::logstream& T(castor::logstream& s);
 
 namespace castor {
-  
+
   class logstream : virtual public std::ostream {
 
   public:
-    
+
     /**
      * constructor
      */
@@ -74,148 +74,148 @@ namespace castor {
       m_logbuf(0),
       m_isIP(false),
       m_isTimeStamp(false) {
-    } 
-
-    /**
-     *  @brief  Close the file.
-     *
-     *  Calls @c std::basic_filebuf::close().  If that function
-     *  fails, @c failbit is set in the stream's error state.
-     */
-    void close() {
-      if (0 != m_logbuf) {
-        m_logbuf->sync();
-      }
     }
 
-    /**
-     * sets a log buffer for this stream
-     */
-    void setBuffer(castor::logbuf *buf) {
-      if (0 != m_logbuf) {
-        m_logbuf->sync();
-        delete m_logbuf;
-      }
-      m_logbuf = buf;
-      this->init(buf);
-    }
-
-  public:
-    /**
-     * Set of overwritten operators of this stream
-     */
-    OPERATOR(char);
-    OPERATOR(unsigned char);
-    OPERATOR(signed char);
-    OPERATOR(short);
-    OPERATOR(unsigned short);
-    OPERATOR(const char*);
-    OPERATOR(std::string);
-    OPERATOR(bool);
-    OPERATOR(float);
-    OPERATOR(double);
-    OPERATOR(u_signed64);
-    OPERATORINT(int);
-    OPERATORINT(unsigned int);
-    OPERATORINT(long);
-    OPERATORINT(unsigned long);
-
-    /**
-     * This operator deals with IObjects
-     */
-    logstream& operator<< (IObject& obj) {
-      ObjectSet set;
-      obj.print(*this, "", set);
-      return *this;
-    }
-
-    /**
-     * This operator deals with manipulators specific to
-     * castor::logstream
-     */
-    logstream& operator<< (logstream& (&f)(logstream&)) {
-      return f(*this);
-    }
-
-    /**
-     * This operator deals with manipulators specific to
-     * std::ostream
-     */
-    logstream& operator<< (std::ostream& (&f)(std::ostream&)) {
-      if (0 != m_logbuf) {
-        if (&f == (std::ostream& (&)(std::ostream&))std::endl) {
-          *((std::ostream*)this) << '\n';
+      /**
+       *  @brief  Close the file.
+       *
+       *  Calls @c std::basic_filebuf::close().  If that function
+       *  fails, @c failbit is set in the stream's error state.
+       */
+      void close() {
+        if (0 != m_logbuf) {
           m_logbuf->sync();
-        } else if (&f == (std::ostream& (&)(std::ostream&))std::flush) {
-          m_logbuf->sync();          
         }
       }
-      return *this;
-    }
 
-    /**
-     * set current output level
-     */
-    void setLevel(logbuf::Level l) {
-      if (0 != m_logbuf) {
-        m_logbuf->setLevel(l);
+      /**
+       * sets a log buffer for this stream
+       */
+      void setBuffer(castor::logbuf *buf) {
+        if (0 != m_logbuf) {
+          m_logbuf->sync();
+          delete m_logbuf;
+        }
+        m_logbuf = buf;
+        this->init(buf);
       }
-    }
 
-    /**
-     * set isIp
-     */
-    void setIsIP(bool i) { m_isIP = i; }
+  public:
+      /**
+       * Set of overwritten operators of this stream
+       */
+      OPERATOR(char);
+      OPERATOR(unsigned char);
+      OPERATOR(signed char);
+      OPERATOR(short);
+      OPERATOR(unsigned short);
+      OPERATOR(const char*);
+      OPERATOR(std::string);
+      OPERATOR(bool);
+      OPERATOR(float);
+      OPERATOR(double);
+      OPERATOR(u_signed64);
+      OPERATORINT(int);
+      OPERATORINT(unsigned int);
+      OPERATORINT(long);
+      OPERATORINT(unsigned long);
 
-    /**
-     * set isTimeStamp
-     */
-    void setIsTimeStamp(bool i) { m_isTimeStamp = i; }
+      /**
+       * This operator deals with IObjects
+       */
+      logstream& operator<< (IObject& obj) {
+        ObjectSet set;
+        obj.print(*this, "", set);
+        return *this;
+      }
+
+      /**
+       * This operator deals with manipulators specific to
+       * castor::logstream
+       */
+      logstream& operator<< (logstream& (&f)(logstream&)) {
+        return f(*this);
+      }
+
+      /**
+       * This operator deals with manipulators specific to
+       * std::ostream
+       */
+      logstream& operator<< (std::ostream& (&f)(std::ostream&)) {
+        if (0 != m_logbuf) {
+          if (&f == (std::ostream& (&)(std::ostream&))std::endl) {
+            *((std::ostream*)this) << '\n';
+            m_logbuf->sync();
+          } else if (&f == (std::ostream& (&)(std::ostream&))std::flush) {
+            m_logbuf->sync();
+          }
+        }
+        return *this;
+      }
+
+      /**
+       * set current output level
+       */
+      void setLevel(logbuf::Level l) {
+        if (0 != m_logbuf) {
+          m_logbuf->setLevel(l);
+        }
+      }
+
+      /**
+       * set isIp
+       */
+      void setIsIP(bool i) { m_isIP = i; }
+
+      /**
+       * set isTimeStamp
+       */
+      void setIsTimeStamp(bool i) { m_isTimeStamp = i; }
 
   private:
 
-    /**
-     * prints an IP address to the stream
-     */
-    void printIP(const unsigned int ip) {
-      *((std::ostream*)this)
-        << ((ip & 0xFF000000) >> 24) << "."
-        << ((ip & 0x00FF0000) >> 16) << "."
-        << ((ip & 0x0000FF00) >> 8) << "."
-        << ((ip & 0x000000FF));
-    }
+      /**
+       * prints an IP address to the stream
+       */
+      void printIP(const unsigned int ip) {
+        *((std::ostream*)this)
+          << ((ip & 0xFF000000) >> 24) << "."
+          << ((ip & 0x00FF0000) >> 16) << "."
+          << ((ip & 0x0000FF00) >> 8) << "."
+          << ((ip & 0x000000FF));
+      }
 
-    /**
-     * prints a timeStamp to the stream
-     */
-    void printTimeStamp(time_t t) {
-      struct tm tmstruc;
-      localtime_r (&t, &tmstruc);
-      *((std::ostream*)this)
-        << std::setw(2) << tmstruc.tm_mon+1
-        << "/" << tmstruc.tm_mday
-        << " " << tmstruc.tm_hour
-        << ":" << tmstruc.tm_min
-        << ":" << tmstruc.tm_sec;
-    }
+      /**
+       * prints a timeStamp to the stream
+       */
+      void printTimeStamp(time_t t) {
+        struct tm tmstruc;
+        localtime_r (&t, &tmstruc);
+        *((std::ostream*)this)
+          << std::setw(2) << tmstruc.tm_mon+1
+          << "/" << tmstruc.tm_mday
+          << " " << tmstruc.tm_hour
+          << ":" << tmstruc.tm_min
+          << ":" << tmstruc.tm_sec;
+      }
 
   private:
 
-    /**
-     * The log buffer used on top of the file buffer for
-     * prefixing the logs with timestamps
-     */
-    castor::logbuf *m_logbuf;
+      /**
+       * The log buffer used on top of the file buffer for
+       * prefixing the logs with timestamps
+       */
+      castor::logbuf *m_logbuf;
 
-    /**
-     * Whether next int should be printed as IP addresses
-     */
-    bool m_isIP;
+      /**
+       * Whether next int should be printed as IP addresses
+       */
+      bool m_isIP;
 
-    /**
-     * Whether next int should be printed as a timestamp
-     */
-    bool m_isTimeStamp;
+      /**
+       * Whether next int should be printed as a timestamp
+       */
+      bool m_isTimeStamp;
 
   };
 
@@ -231,6 +231,7 @@ namespace castor {
   MANIPULATOR(FATAL);
   MANIPULATOR(ALWAYS);
   MANIPULATOR(ip);
+  MANIPULATOR(trace);
   MANIPULATOR(timeStamp);
 
 } // End of namespace Castor
