@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_PoolOp.c,v $ $Revision: 1.7 $ $Date: 1999/09/27 15:29:29 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_PoolOp.c,v $ $Revision: 1.8 $ $Date: 2000/02/28 17:59:03 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -16,6 +16,13 @@ static char sccsid[] = "@(#)$RCSfile: vdqm_PoolOp.c,v $ $Revision: 1.7 $ $Date: 
 #endif /* _WIN32 */
 #include <stdlib.h>
 #include <errno.h>
+
+#if !defined(_WIN32)
+#include <regex.h>
+#else /* _WIN32 */
+typedef void * regex_t
+#endif /* _WIN32 */
+
 #include <Castor_limits.h>
 #include <serrno.h>
 #include <osdep.h>

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.7 $ $Date: 2000/01/18 09:09:44 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.8 $ $Date: 2000/02/28 17:59:09 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -14,6 +14,15 @@ static char sccsid[] = "@(#)$RCSfile: vdqmserv.c,v $ $Revision: 1.7 $ $Date: 200
 #if defined(_WIN32)
 #include <winsock2.h>    /* Needed for SOCKET definition */
 #endif /* _WIN32 */
+
+#if defined(VDQMSERV)
+#if !defined(_WIN32)
+#include <regex.h>
+#else /* _WIN32 */
+typedef void * regex_t
+#endif /* _WIN32 */
+#endif /* VDQMSERV */
+
 #include <stdlib.h>
 #include <errno.h>
 #include <Castor_limits.h>
