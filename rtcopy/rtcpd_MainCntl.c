@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.1 $ $Date: 1999/11/29 11:21:58 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.2 $ $Date: 1999/12/01 15:33:07 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -51,6 +51,9 @@ char rtcp_cmds[][10] = RTCOPY_CMD_STRINGS;
 
 extern char *getconfent(const char *, const char *, int);
 
+extern int Debug;
+int Debug = FALSE;
+
 extern int nb_bufs;
 int nb_bufs = NB_RTCP_BUFS;
 
@@ -68,6 +71,16 @@ buffer_table_t **databufs;
 
 extern int AbortFlag;
 int AbortFlag = 0;
+
+/*
+ * Set Debug flag if requested
+ */
+static void rtcpd_SetDebug() {
+    Debug = FALSE;
+    if ( getenv("RTCOPY_DEBUG") != NULL ||
+         getconfent("RTCOPY","DEBUG",1) != NULL ) Debug = TRUE;
+    return;
+}
 
 /*
  * Routine to check and authorize client.
@@ -118,7 +131,7 @@ static int rtcpd_AllocBuffers() {
         databufs[i]->maxlength = bufsz;
         databufs[i]->end_of_tpfile = FALSE;
         databufs[i]->last_buffer = FALSE;
-        databufs[i]->nb_recs = 0;
+        databufs[i]->nbrecs = 0;
         databufs[i]->lrecl_table = NULL;
         /*
          * Initialize semaphores
@@ -308,11 +321,11 @@ int rtcpd_AdmUformatInfo(file_list_t *file, int indxp) {
         serrno = SEINTERNAL;
         return(-1);
     }
-    if ( nb_blks > databufs[indxp]->nb_recs ) {
+    if ( nb_blks > databufs[indxp]->nbrecs ) {
         if ( databufs[indxp] != NULL ) {
             free(databufs[indxp]->lrecl_table);
             databufs[indxp]->lrecl_table = NULL;
-            databufs[indxp]->nb_recs = 0;
+            databufs[indxp]->nbrecs = 0;
         }
         databufs[indxp]->lrecl_table = (int *)calloc((size_t)nb_blks,sizeof(int));
         if ( databufs[indxp]->lrecl_table == NULL ) {
@@ -321,7 +334,7 @@ int rtcpd_AdmUformatInfo(file_list_t *file, int indxp) {
                 sstrerror(serrno));
             return(-1);
         }
-        databufs[indxp]->nb_recs = nb_blks;
+        databufs[indxp]->nbrecs = nb_blks;
     }
     return(0);
 }
@@ -543,6 +556,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
     struct passwd *pwd;
     char *cmd = NULL;
 
+    rtcpd_SetDebug();
     AbortFlag = 0;
     signal(SIGTERM,(void (*)(int))rtcpd_AbortHandler);
     client = (rtcpClientInfo_t *)calloc(1,sizeof(rtcpClientInfo_t));
