@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.62 $ $Release$ $Date: 2004/09/19 07:12:21 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.63 $ $Release$ $Date: 2004/09/20 09:59:46 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.62 $ $Date: 2004/09/19 07:12:21 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.63 $ $Date: 2004/09/20 09:59:46 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -71,7 +71,7 @@ static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.62 $ $Date: 
 #include <rtcpcld.h>
 #include <rtcpcldapi.h>
 
-#define MAX_INCOMPLETE_SEGMENTS (50)
+#define MAX_INCOMPLETE_SEGMENTS (2)
 
 #define LOG_FAILED_CALL(X,Y)  { \
         int _save_errno = errno; \
