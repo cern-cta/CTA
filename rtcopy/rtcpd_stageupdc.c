@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.52 $ $Date: 2001/08/17 13:52:40 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.53 $ $Date: 2003/07/14 11:30:14 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -288,7 +288,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
             rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() stage_updc_filcp(%s,%d,%d,%s,%d,%d,%d,%d,%s,%s,%d,%d,%s,%s)\n",
                      filereq->stageID,
                      filereq->stageSubreqID,
-                     retval,
+                     -retval,
                      filereq->ifce,
                      (int)nb_bytes,
                      WaitTime,
@@ -303,7 +303,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
 
             rc = stage_updc_filcp(filereq->stageID,
                                   filereq->stageSubreqID,
-                                  retval,
+                                  -retval,
                                   filereq->ifce,
                                   nb_bytes,
                                   WaitTime,

@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.27 2003/04/30 10:31:24 jdurand Exp $
+ * $Id: stage_updc.c,v 1.28 2003/07/14 11:30:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.27 $ $Date: 2003/04/30 10:31:24 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.28 $ $Date: 2003/07/14 11:30:18 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -174,10 +174,10 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
     u64tostr((u_signed64) size, tmpbuf, 0);
     sendbuf_size += strlen("-s") + strlen(tmpbuf) + 2; /* -s option and value */
   }
-  if (copyrc >= 0) {
+  /* if (copyrc >= 0) { */
     sprintf (tmpbuf, "%d", rc_castor2shift(copyrc));
     sendbuf_size += strlen("-R") + strlen(tmpbuf) + 2; /* -R option and value */
-  }
+	/* } */
   if (transfer_time > 0) {
     sprintf (tmpbuf, "%d", transfer_time);
     sendbuf_size += strlen("-T") + strlen(tmpbuf) + 2; /* -T option and value */
@@ -270,12 +270,12 @@ int DLL_DECL stage_updc_filcp(stageid, subreqid, copyrc, ifce, size, waiting_tim
     marshall_STRING (sbp, tmpbuf);
     nargs += 2;
   }
-  if (copyrc >= 0) {
+  /* if (copyrc >= 0) { */
     sprintf (tmpbuf, "%d", rc_castor2shift(copyrc));
     marshall_STRING (sbp, "-R");
     marshall_STRING (sbp, tmpbuf);
     nargs += 2;
-  }
+	/* } */
   if (transfer_time > 0) {
     sprintf (tmpbuf, "%d", transfer_time);
     marshall_STRING (sbp, "-T");

@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.64 2003/04/28 10:03:11 jdurand Exp $
+ * $Id: stage_api.c,v 1.65 2003/07/14 11:30:17 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -35,7 +35,7 @@
 #include "net.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.64 $ $Date: 2003/04/28 10:03:11 $ CERN IT/DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.65 $ $Date: 2003/07/14 11:30:17 $ CERN IT/DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifdef hpux
@@ -152,9 +152,21 @@ static int stage_api_vmgrcheck _PROTO((char *, char *, char *, char *, char *, i
 int DLL_DECL rc_castor2shift(rc)
 	int rc;
 {
+	int arc; /* Absolute rc */
+
 	/* Input  is a CASTOR return code (routine error code) */
 	/* Output is a SHIFT  return code (process exit code) */
-	switch (rc) {
+
+	/* If input is < 0 then the mapping is done on -rc, and -rc is */
+	/* is returned if no match */
+
+	if (rc < 0) {
+		arc = -rc;
+	} else {
+		arc = rc;
+	}
+
+	switch (arc) {
 	case 0:
 		return(0);
 	case ETHELD:
@@ -195,8 +207,14 @@ int DLL_DECL rc_castor2shift(rc)
 		return(SHIFT_ECUPVNACT);
 	case ENOUGHF:
 		return(ENOUGHF);
+	case ENOSPC:
+		return(ENOSPC);
 	default:
-		return(UNERR);
+		if (rc < 0) {
+			return(arc);
+		} else {
+			return(UNERR);
+		}
 	}
 }
 
