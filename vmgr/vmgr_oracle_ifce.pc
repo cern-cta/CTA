@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.20 $ $Date: 2001/02/23 15:14:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.21 $ $Date: 2001/03/08 15:25:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -59,7 +59,47 @@ vmgr_dbrec_addr *rec_addr;
 
 	strcpy (func, "vmgr_delete_denmap_entry");
 	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
-	EXEC SQL DELETE FROM vmgr_denmap_info WHERE ROWID = :rowid_value;
+	EXEC SQL DELETE FROM vmgr_tape_denmap WHERE ROWID = :rowid_value;
+	if (sqlca.sqlcode) {
+		vmgrlogit (func, "DELETE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		return (-1);
+	}
+	return (0);
+}
+
+vmgr_delete_dgnmap_entry(dbfd, rec_addr)
+struct vmgr_dbfd *dbfd;
+vmgr_dbrec_addr *rec_addr;
+{
+	char func[25];
+	char rowid_value[19];
+	struct sqlca sqlca;
+
+	strcpy (func, "vmgr_delete_dgnmap_entry");
+	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+	EXEC SQL DELETE FROM vmgr_tape_dgnmap WHERE ROWID = :rowid_value;
+	if (sqlca.sqlcode) {
+		vmgrlogit (func, "DELETE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		return (-1);
+	}
+	return (0);
+}
+
+vmgr_delete_library_entry(dbfd, rec_addr)
+struct vmgr_dbfd *dbfd;
+vmgr_dbrec_addr *rec_addr;
+{
+	char func[26];
+	char rowid_value[19];
+	struct sqlca sqlca;
+
+	strcpy (func, "vmgr_delete_library_entry");
+	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+	EXEC SQL DELETE FROM vmgr_model_info WHERE ROWID = :rowid_value;
 	if (sqlca.sqlcode) {
 		vmgrlogit (func, "DELETE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
 		    sqlca.sqlerrm.sqlerrmc);
@@ -79,7 +119,7 @@ vmgr_dbrec_addr *rec_addr;
 
 	strcpy (func, "vmgr_delete_model_entry");
 	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
-	EXEC SQL DELETE FROM vmgr_model_info WHERE ROWID = :rowid_value;
+	EXEC SQL DELETE FROM vmgr_tape_media WHERE ROWID = :rowid_value;
 	if (sqlca.sqlcode) {
 		vmgrlogit (func, "DELETE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
 		    sqlca.sqlerrm.sqlerrmc);
@@ -192,10 +232,113 @@ vmgr_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-vmgr_get_model_entry(dbfd, model, media_letter, model_entry, lock, rec_addr)
+vmgr_get_dgnmap_entry(dbfd, dgn, dgnmap_entry, lock, rec_addr)
+struct vmgr_dbfd *dbfd;
+char *dgn;
+struct vmgr_tape_dgnmap *dgnmap_entry;
+int lock;
+vmgr_dbrec_addr *rec_addr;
+{
+	char func[22];
+	char rowid_value[19];
+	struct sqlca sqlca;
+	EXEC SQL DECLARE dgnmap_cursor CURSOR FOR
+		SELECT
+		 DGN, MODEL, LIBRARY
+		FROM vmgr_tape_dgnmap
+		WHERE dgn = :dgn;
+	EXEC SQL DECLARE dgnmap_cursor4upd CURSOR FOR
+		SELECT ROWID,
+		 DGN, MODEL, LIBRARY
+		FROM vmgr_tape_dgnmap
+		WHERE dgn = :dgn
+		FOR UPDATE;
+
+	strcpy (func, "vmgr_get_dgnmap_entry");
+	if (lock) {
+		EXEC SQL OPEN dgnmap_cursor4upd;
+		EXEC SQL FETCH dgnmap_cursor4upd INTO
+		 :rowid_value,
+		 :dgnmap_entry->dgn, :dgnmap_entry->model,
+		 :dgnmap_entry->library;
+	} else {
+		EXEC SQL OPEN dgnmap_cursor;
+		EXEC SQL FETCH dgnmap_cursor INTO
+		 :dgnmap_entry->dgn, :dgnmap_entry->model,
+		 :dgnmap_entry->library;
+	}
+	switch (sqlca.sqlcode) {
+	case 0:
+		if (lock)
+			memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+		return (0);
+	case 1403:
+		serrno = ENOENT;
+		break;
+	default:
+		vmgrlogit (func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+	}
+	return (-1);
+}
+
+vmgr_get_library_entry(dbfd, library_name, library_entry, lock, rec_addr)
+struct vmgr_dbfd *dbfd;
+char *library_name;
+struct vmgr_tape_library *library_entry;
+int lock;
+vmgr_dbrec_addr *rec_addr;
+{
+	char func[23];
+	char rowid_value[19];
+	struct sqlca sqlca;
+	EXEC SQL DECLARE library_cursor CURSOR FOR
+		SELECT
+		 NAME, CAPACITY,
+		 NB_FREE_SLOTS, STATUS
+		FROM vmgr_tape_library
+		WHERE name = :library_name;
+	EXEC SQL DECLARE library_cursor4upd CURSOR FOR
+		SELECT ROWID,
+		 NAME, CAPACITY,
+		 NB_FREE_SLOTS, STATUS
+		FROM vmgr_tape_library
+		WHERE name = :library_name
+		FOR UPDATE;
+
+	strcpy (func, "vmgr_get_library_entry");
+	if (lock) {
+		EXEC SQL OPEN library_cursor4upd;
+		EXEC SQL FETCH library_cursor4upd INTO
+		 :rowid_value,
+		 :library_entry->name, :library_entry->capacity,
+		 :library_entry->nb_free_slots, :library_entry->status;
+	} else {
+		EXEC SQL OPEN library_cursor;
+		EXEC SQL FETCH library_cursor INTO
+		 :library_entry->name, :library_entry->capacity,
+		 :library_entry->nb_free_slots, :library_entry->status;
+	}
+	switch (sqlca.sqlcode) {
+	case 0:
+		if (lock)
+			memcpy (rec_addr, rowid_value, sizeof(rowid_value));
+		return (0);
+	case 1403:
+		serrno = ENOENT;
+		break;
+	default:
+		vmgrlogit (func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+	}
+	return (-1);
+}
+
+vmgr_get_model_entry(dbfd, model, model_entry, lock, rec_addr)
 struct vmgr_dbfd *dbfd;
 char *model;
-char *media_letter;
 struct vmgr_tape_media *model_entry;
 int lock;
 vmgr_dbrec_addr *rec_addr;
@@ -208,13 +351,13 @@ vmgr_dbrec_addr *rec_addr;
 		 M_MODEL, M_MEDIA_LETTER,
 		 NATIVE_CAPACITY, MEDIA_COST_GB
 		FROM vmgr_tape_media
-		WHERE m_model = :model AND m_media_letter = :media_letter;
+		WHERE m_model = :model;
 	EXEC SQL DECLARE model_cursor4upd CURSOR FOR
 		SELECT ROWID,
 		 M_MODEL, M_MEDIA_LETTER,
 		 NATIVE_CAPACITY, MEDIA_COST_GB
 		FROM vmgr_tape_media
-		WHERE m_model = :model AND m_media_letter = :media_letter
+		WHERE m_model = :model
 		FOR UPDATE;
 
 	strcpy (func, "vmgr_get_model_entry");
@@ -478,6 +621,68 @@ struct vmgr_tape_denmap *denmap_entry;
 	return (-1);
 }
 
+vmgr_insert_dgnmap_entry(dbfd, dgnmap_entry)
+struct vmgr_dbfd *dbfd;
+struct vmgr_tape_dgnmap *dgnmap_entry;
+{
+	char func[25];
+	struct sqlca sqlca;
+
+	strcpy (func, "vmgr_insert_dgnmap_entry");
+	EXEC SQL INSERT INTO vmgr_tape_dgnmap
+		(DGN, MODEL, LIBRARY)
+		VALUES
+		(:dgnmap_entry->dgn, :dgnmap_entry->model,
+		 :dgnmap_entry->library);
+	switch (sqlca.sqlcode) {
+	case 0:
+		return (0);
+	case -1:
+		serrno = EEXIST;
+		break;
+	case -1631:
+	case -1632:
+		serrno = ENOSPC;
+		break;
+	default:
+		vmgrlogit (func, "INSERT error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+	}
+	return (-1);
+}
+
+vmgr_insert_library_entry(dbfd, library_entry)
+struct vmgr_dbfd *dbfd;
+struct vmgr_tape_library *library_entry;
+{
+	char func[26];
+	struct sqlca sqlca;
+
+	strcpy (func, "vmgr_insert_library_entry");
+	EXEC SQL INSERT INTO vmgr_tape_library
+		(NAME, CAPACITY, NB_FREE_SLOTS, STATUS)
+		VALUES
+		(:library_entry->name, :library_entry->capacity,
+		 :library_entry->nb_free_slots, :library_entry->status);
+	switch (sqlca.sqlcode) {
+	case 0:
+		return (0);
+	case -1:
+		serrno = EEXIST;
+		break;
+	case -1631:
+	case -1632:
+		serrno = ENOSPC;
+		break;
+	default:
+		vmgrlogit (func, "INSERT error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+	}
+	return (-1);
+}
+
 vmgr_insert_model_entry(dbfd, model_entry)
 struct vmgr_dbfd *dbfd;
 struct vmgr_tape_media *model_entry;
@@ -602,6 +807,72 @@ struct vmgr_tape_denmap *denmap_entry;
 	EXEC SQL FETCH list_denmap_cursor INTO
 	 :denmap_entry->md_model, :denmap_entry->md_media_letter,
 	 :denmap_entry->md_density;
+	switch (sqlca.sqlcode) {
+	case 0:
+		return (0);
+	case 1403:
+		return (1);
+	default:
+		vmgrlogit (func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		return (-1);
+	}
+}
+
+vmgr_list_dgnmap_entry(dbfd, bol, dgnmap_entry)
+struct vmgr_dbfd *dbfd;
+int bol;
+struct vmgr_tape_dgnmap *dgnmap_entry;
+{
+	char func[23];
+	struct sqlca sqlca;
+	EXEC SQL DECLARE list_dgnmap_cursor CURSOR FOR
+		SELECT
+		 DGN, MODEL, LIBRARY
+		FROM vmgr_tape_dgnmap
+		ORDER BY dgn;
+
+	strcpy (func, "vmgr_list_dgnmap_entry");
+	if (bol) {
+		EXEC SQL OPEN list_dgnmap_cursor;
+	}
+	EXEC SQL FETCH list_dgnmap_cursor INTO
+	 :dgnmap_entry->dgn, :dgnmap_entry->model,
+	 :dgnmap_entry->library;
+	switch (sqlca.sqlcode) {
+	case 0:
+		return (0);
+	case 1403:
+		return (1);
+	default:
+		vmgrlogit (func, "FETCH error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		return (-1);
+	}
+}
+
+vmgr_list_library_entry(dbfd, bol, library_entry)
+struct vmgr_dbfd *dbfd;
+int bol;
+struct vmgr_tape_library *library_entry;
+{
+	char func[24];
+	struct sqlca sqlca;
+	EXEC SQL DECLARE list_library_cursor CURSOR FOR
+		SELECT
+		 NAME, CAPACITY, NB_FREE_SLOTS, STATUS
+		FROM vmgr_tape_library
+		ORDER BY name;
+
+	strcpy (func, "vmgr_list_library_entry");
+	if (bol) {
+		EXEC SQL OPEN list_library_cursor;
+	}
+	EXEC SQL FETCH list_library_cursor INTO
+	 :library_entry->name, :library_entry->capacity,
+	 :library_entry->nb_free_slots, :library_entry->status;
 	switch (sqlca.sqlcode) {
 	case 0:
 		return (0);
@@ -782,6 +1053,31 @@ int s;
 struct vmgr_dbfd *dbfd;
 {
 	dbfd->tr_started = 1;
+	return (0);
+}
+
+vmgr_update_library_entry(dbfd, rec_addr, library_entry)
+struct vmgr_dbfd *dbfd;
+vmgr_dbrec_addr *rec_addr;
+struct vmgr_tape_library *library_entry;
+{
+	char func[26];
+	char rowid_value[19];
+	struct sqlca sqlca;
+
+	strcpy (func, "vmgr_update_library_entry");
+	memcpy (rowid_value, rec_addr, sizeof(rowid_value));
+	EXEC SQL UPDATE vmgr_tape_library SET
+		CAPACITY = :library_entry->capacity,
+		NB_FREE_SLOTS = :library_entry->nb_free_slots,
+		STATUS = :library_entry->status
+		WHERE ROWID = :rowid_value;
+	if (sqlca.sqlcode) {
+		vmgrlogit (func, "UPDATE error: %.*s\n", sqlca.sqlerrm.sqlerrml,
+		    sqlca.sqlerrm.sqlerrmc);
+		serrno = SEINTERNAL;
+		return (-1);
+	}
 	return (0);
 }
 
