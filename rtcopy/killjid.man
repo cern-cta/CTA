@@ -1,13 +1,15 @@
-.\" @(#)$RCSfile: killjid.man,v $ $Revision: 1.1 $ $Date: 2000/04/25 14:03:28 $ CERN IT-PDP/DM Olof Barring
+.\" @(#)$RCSfile: killjid.man,v $ $Revision: 1.2 $ $Date: 2000/06/16 07:33:02 $ CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH KILLJID 1 "$Date: 2000/04/25 14:03:28 $" CASTOR "RTCOPY Operator Commands"
+.TH KILLJID 1 "$Date: 2000/06/16 07:33:02 $" CASTOR "RTCOPY Operator Commands"
 .SH NAME
 killjid \- kill RTCOPY job running on local host
 .SH SYNOPSIS
 .B killjid
 [
+.BI -j
+] [
 .BI -r
 ] [
 .BI jobID
@@ -28,9 +30,23 @@ can be found using the
 .B tpstat
 program.
 
-Use the
+The
+.B -j
+switch allows to specify the internal VDQM volume request ID rather
+than the job ID (process group leader of a running job). This is useful
+if the job has been stuck at an early stage, before the job ID has been
+assigned. Use the
+.B showqueues(1)
+command with the
+.B -j
+switch to display the VDQM volume request ID.
+
+The
 .B -r
-switch to tell client to re-select another tape server.
+switch tells client to re-select another tape server. This could be
+used to redirect running long requests from a server when an intervention
+is needed. It could also be used if the request is stuck because a target
+disk server did a reboot. 
 
 .SH EXAMPLE
 # tpstat
@@ -49,4 +65,5 @@ This program returns 0 if the operation was successful or >0 if the operation
 failed.
 
 .SH SEE ALSO
-.B tpstat(1)
+.B tpstat(1),
+.B showqueues(1)
