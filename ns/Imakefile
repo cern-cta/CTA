@@ -12,22 +12,22 @@ CNS_HOST = NsHost
 CNSHOSTPFX = NsHostPfx
 INCLUDES = FileName(..,h)
 #if _AIX
-LIBS = -L../lib -lshift
+LIBS = -L../shlib -lshift
 #else
 #if defined(__alpha) && defined(__osf__)
-LIBS = -no_so -L../lib -lshift -so_archive
+LIBS = -no_so -L../shlib -lshift -so_archive
 #else
 #if hpux
-LIBS = -L../lib -lshift
+LIBS = -L../shlib -lshift
 #else
 #if linux
-LIBS = -L../lib -lshift $(ADNSLIB) -lnsl
+LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl
 #else
 #if sgi
-LIBS = -L../lib -lshift
+LIBS = -L../shlib -lshift
 #else
 #if SOLARIS
-LIBS = -L../lib -lshift -lsocket -lnsl
+LIBS = -L../shlib -lshift -lsocket -lnsl
 #else
 #if _WIN32
 LIBS = ..\lib\shift.lib wsock32.lib advapi32.lib
@@ -104,7 +104,7 @@ CFLAGS =        -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(RDSINC) $(ORAINC) $(MYSIN
  
 COMM######################### DEPENDENCY LIBRARIES ###############
  
-DEPLIB = DepLibraryTargetName(lib,shift)
+DEPLIB = DepSharedLibraryTargetName(shlib,shift)
  
 COMM######################### RULES ##############################
 
@@ -225,9 +225,12 @@ EXPORTMANPAGES = $(EXPORTMAN)/man3/Cns_access.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man1/nssetcomment.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsshutdown.$(MANSUFFIX)
 
+#if BuildNameServerLibrary
+NSLIBTARGET=LibraryTargetName(ns)
+#endif
+
 #if BuildNameServerClient
-CLIENT = LibraryTargetName(ns) \
-	 ProgramTargetName(nschclass) \
+CLIENT = ProgramTargetName(nschclass) \
 	 ProgramTargetName(nschmod) \
 	 ProgramTargetName(nschown) \
 	 ProgramTargetName(nsdelcomment) \
@@ -287,9 +290,6 @@ PROGS_D = ProgramTargetName(nsdaemon)
 IPROGS_D = FileName($(BIN),ProgramTargetName(nsdaemon))
 EPROGS_D = $(EXPORTBIN)/nsdaemon
 #endif
-#if BuildNameServerLibrary == YES && BuildNameServerClient == NO
-CLIENT = LibraryTargetName(ns)
-#endif
 
 NSDAEMON_OBJS	=	Cns_main.Osuf \
 			Cns_chkperm.Osuf \
@@ -343,7 +343,7 @@ NSLIB_OBJS	=	Cns_access.Osuf \
 			Cns_utime.Osuf \
 			send2nsd.Osuf
 
-all: $(CLIENT) $(PROGS_D)
+all: $(NSLIBTARGET) $(CLIENT) $(PROGS_D)
 
 #undef YES
 Cns_oracle_ifce.c: Cns_oracle_ifce.pc
@@ -380,7 +380,7 @@ NormalProgramTarget(nstouch,nstouch.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB
 
 NormalLibraryTarget(ns,$(NSLIB_OBJS))
 
-MakeDepLibrary(lib,shift)
+MakeDepSharedLibrary(shlib,shift)
 
 #if UseOracle == NO && UseRaima == NO && UseMySQL == NO
 #if defined(_WIN32)
@@ -595,7 +595,7 @@ clean:
 	-@RemoveFiles(FilesToClean)
  
 clobber:        clean
-	-@RemoveFiles($(CLIENT) $(PROGS_D))
+	-@RemoveFiles($(NSLIBTARGET) $(CLIENT) $(PROGS_D))
  
 #if _WIN32
 depend:
