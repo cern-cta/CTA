@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.9 2004/11/28 20:16:32 jdurand Exp $
+ * $Id: stager_macros.h,v 1.10 2004/11/29 17:23:44 jdurand Exp $
  */
 
 #ifndef __stager_macros_h
@@ -43,7 +43,7 @@
   char tmpbuf1[21], tmpbuf2[21]; \
   int _save_serrno = serrno; \
   extern int optionStagerNoDlf; \
-  extern int optionStagerLog; \
+  extern char stagerLog[CA_MAXLINELEN+1]; \
   extern Cuuid_t stagerUuid; \
   if (message != NULL) { \
     if (message2 != NULL) { \
@@ -58,7 +58,7 @@
 	        message2,((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) ? DLF_MSG_PARAM_STR : DLF_MSG_PARAM_INT,value2, \
 	        STAGER_LOG_WHERE \
 	        ); \
-      if (optionStagerLog) { \
+      if (stagerLog[0] != '\0') { \
         if ((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) { \
 	  if ((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) { \
 	    log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %s : %s (errno=%d [%s], serrno=%d[%s])\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value, value2, errno, errno ? strerror(errno) : "", serrno, serrno ? sstrerror(serrno) : ""); \
@@ -84,7 +84,7 @@
 	        message,((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) ? DLF_MSG_PARAM_STR : DLF_MSG_PARAM_INT,value, \
 	        STAGER_LOG_WHERE \
 	        ); \
-      if (optionStagerLog) { \
+      if (stagerLog[0] != '\0') { \
 	if ((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) { \
 	  log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %s (errno=%d [%s], serrno=%d[%s])\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value, errno, errno ? strerror(errno) : "", serrno, serrno ? sstrerror(serrno) : ""); \
 	} else { \
@@ -104,7 +104,7 @@
 	        message2,((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) ? DLF_MSG_PARAM_STR : DLF_MSG_PARAM_INT,value2, \
 		STAGER_LOG_WHERE \
 		); \
-      if (optionStagerLog) { \
+      if (stagerLog[0] != '\0') { \
 	if ((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) { \
 	  log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s : %s\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt, value2); \
 	} else { \
@@ -121,7 +121,7 @@
 		stagerMessages[what].what2Type,DLF_MSG_PARAM_STR,func, \
 		STAGER_LOG_WHERE \
 		); \
-      if (optionStagerLog) { \
+      if (stagerLog != '\0') { \
 	log(stagerMessages[what].severity2LogLevel, "%s : %s:%d : %s\n", func, __FILE__, __LINE__, stagerMessages[what].messageTxt); \
       } \
     } \
