@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.55 $ $Release$ $Date: 2004/08/19 13:46:54 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.56 $ $Release$ $Date: 2004/08/19 14:45:21 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.55 $ $Date: 2004/08/19 13:46:54 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.56 $ $Date: 2004/08/19 14:45:21 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -113,7 +113,8 @@ typedef struct RtcpcldcReqmap
   struct RtcpcldcReqmap *prev;
 } RtcpcldcReqmap_t;
 
-static RtcpcldcReqmap_t *reqMap = NULL;
+RtcpcldcReqmap_t *rtcpcldc_reqMap = NULL;
+void *rtcpcldc_cleanupLock = NULL;
 
 int (*rtcpcld_ClientCallback) _PROTO((
                                       rtcpTapeRequest_t *,
@@ -123,7 +124,7 @@ int (*rtcpcld_MoreInfoCallback) _PROTO((
                                         tape_list_t *
                                         )) = NULL;
 
-static int ENOSPCkey = -1;
+int rtcpcldc_ENOSPCkey = -1;
 
 void rtcp_stglog(type,msg)
      int type;
@@ -141,7 +142,7 @@ static int initOldStgUpdc(tape)
        *tape->file->filereq.stageID == '\0' ) return(0);
   rc = stage_setlog(rtcp_stglog);
 
-  rc = Cglobals_get(&ENOSPCkey,(void **)&ENOSPC_occurred,sizeof(int));
+  rc = Cglobals_get(&rtcpcldc_ENOSPCkey,(void **)&ENOSPC_occurred,sizeof(int));
   if ( rc == -1 || ENOSPC_occurred == NULL ) {
     LOG_FAILED_CALL("Cglobals_get()","");
     return(-1);
@@ -170,7 +171,7 @@ static int updateOldStgCat(tape,file)
   tapereq = &tape->tapereq;
   filereq = &file->filereq;
   
-  rc = Cglobals_get(&ENOSPCkey,(void **)&ENOSPC_occurred,sizeof(int));
+  rc = Cglobals_get(&rtcpcldc_ENOSPCkey,(void **)&ENOSPC_occurred,sizeof(int));
   if ( rc == -1 || ENOSPC_occurred == NULL ) {
     LOG_FAILED_CALL("Cglobals_get()","");
     return(-1);
@@ -1304,7 +1305,7 @@ int _findReqMap(
   RtcpcldcReqmap_t *map;
 
   if ( foundMap != NULL ) *foundMap = NULL;
-  CLIST_ITERATE_BEGIN(reqMap,map) 
+  CLIST_ITERATE_BEGIN(rtcpcldc_reqMap,map) 
     {
       if ( ((clientCntx != NULL) && (map->clientCntx == clientCntx)) ||
            ((tape != NULL) && (map->tape == tape)) ) {
@@ -1312,7 +1313,7 @@ int _findReqMap(
         break;
       }
     }
-  CLIST_ITERATE_END(reqMap,map);
+  CLIST_ITERATE_END(rtcpcldc_reqMap,map);
 
   if ( (found == 1) && (foundMap != NULL) ) *foundMap = map;
   return(found);
@@ -1333,7 +1334,7 @@ int findReqMap(
   if ( clientCntx != NULL ) cc = *clientCntx;
   if ( tape != NULL ) tl = *tape;
 
-  rc = Cmutex_lock(&reqMap,-1);
+  rc = Cmutex_lock(&rtcpcldc_reqMap,-1);
   if ( rc == -1 ) return(-1);
   
   rc = _findReqMap(cc,tl,&map);
@@ -1342,7 +1343,7 @@ int findReqMap(
     if ( (clientCntx != NULL) && (cc == NULL) ) *clientCntx = map->clientCntx;
     if ( (tape != NULL) && (tl == NULL) ) *tape = map->tape;
   }
-  (void)Cmutex_unlock(&reqMap);
+  (void)Cmutex_unlock(&rtcpcldc_reqMap);
   if ( rc == -1 ) serrno = save_serrno;
   return(rc);
 }
@@ -1357,7 +1358,7 @@ int addReqMap(
   int rc,  save_serrno;
   RtcpcldcReqmap_t *newMap = NULL;
   
-  rc = Cmutex_lock(&reqMap,-1);
+  rc = Cmutex_lock(&rtcpcldc_reqMap,-1);
   if ( rc == -1 ) return(-1);
 
   rc = _findReqMap(clientCntx,tape,&newMap);
@@ -1366,15 +1367,15 @@ int addReqMap(
     newMap = (RtcpcldcReqmap_t *)calloc(1,sizeof(RtcpcldcReqmap_t));
     if ( newMap == NULL ) {
       save_serrno = errno;
-      (void)Cmutex_unlock(&reqMap);
+      (void)Cmutex_unlock(&rtcpcldc_reqMap);
       serrno = save_serrno;
       return(-1);
     }
     newMap->clientCntx = clientCntx;
     newMap->tape = tape;
-    CLIST_INSERT(reqMap,newMap);
+    CLIST_INSERT(rtcpcldc_reqMap,newMap);
   }
-  (void)Cmutex_unlock(&reqMap);
+  (void)Cmutex_unlock(&rtcpcldc_reqMap);
   if ( rc == -1 ) serrno = save_serrno;
   return(rc);
 }
@@ -1389,16 +1390,16 @@ int delReqMap(
   int rc,  save_serrno;
   RtcpcldcReqmap_t *map = NULL;
   
-  rc = Cmutex_lock(&reqMap,-1);
+  rc = Cmutex_lock(&rtcpcldc_reqMap,-1);
   if ( rc == -1 ) return(-1);
 
   rc = _findReqMap(clientCntx,tape,&map);
   if ( rc == -1 ) save_serrno = serrno;
   if ( rc == 1 ) {
-    CLIST_DELETE(reqMap,map);
+    CLIST_DELETE(rtcpcldc_reqMap,map);
     free(map);
   }
-  (void)Cmutex_unlock(&reqMap);
+  (void)Cmutex_unlock(&rtcpcldc_reqMap);
   if ( rc == -1 ) serrno = save_serrno;
   return(rc);
 }
@@ -1551,21 +1552,33 @@ void rtcpcldc_cleanup(
   char *clientAddr;
   int rc, i, nbSegms = 0;
 
+  (void)Cmutex_lock(&rtcpcldc_cleanupLock,-1);
   rc = findReqMap(&clientCntx,&tape);
-  if ( (rc == -1) || (clientCntx == NULL) ) return;
-
-  Cstager_Tape_segments(clientCntx->currentTp,&segmArray,&nbSegms);
-  if ( segmArray == NULL ) return;
-  
-  for ( i=0; i<nbSegms; i++ ) {
-    clientAddr = NULL;
-    Cstager_Segment_clientAddress(segmArray[i],(CONST char **)&clientAddr);
-    if ( (clientAddr == NULL) || 
-         (strcmp(clientAddr,clientCntx->clientAddr) == 0) )
-      (void)deleteFromDB(segmArray[i]);
+  if ( (rc == -1) || (clientCntx == NULL) ) {
+    (void)Cmutex_unlock(&rtcpcldc_cleanupLock);
+    return;
   }
-  
+
+  if ( clientCntx->currentTp != NULL ) {
+    Cstager_Tape_segments(clientCntx->currentTp,&segmArray,&nbSegms);
+    if ( segmArray == NULL ) {
+      (void)Cmutex_unlock(&rtcpcldc_cleanupLock);
+      return;
+    }
+    
+    for ( i=0; i<nbSegms; i++ ) {
+      clientAddr = NULL;
+      Cstager_Segment_clientAddress(segmArray[i],(CONST char **)&clientAddr);
+      if ( (clientAddr == NULL) || 
+           (strcmp(clientAddr,clientCntx->clientAddr) == 0) )
+        (void)deleteFromDB(segmArray[i]);
+    }
+    Cstager_Tape_delete(clientCntx->currentTp);
+    clientCntx->currentTp = NULL;
+  }
   (void)delReqMap(clientCntx,tape);
+  free(clientCntx);
+  (void)Cmutex_unlock(&rtcpcldc_cleanupLock);
   return;
 }
 
