@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.11 $ $Date: 2000/04/07 15:51:23 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.12 $ $Date: 2000/04/11 08:34:53 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -132,6 +132,9 @@ int main(int argc, char *argv[]) {
     switch (retval) {
     case 0:
         rtcp_log(LOG_INFO,"command successful\n");
+        break;
+    case RSLCT:
+        rtcp_log(LOG_INFO,"Re-selecting another tape server\n");
         break;
     case BLKSKPD:
         rtcp_log(LOG_INFO,"command partially successful since blocks were skipped\n");
