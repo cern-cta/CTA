@@ -1,10 +1,10 @@
-.\" $Id: stgdaemon.man,v 1.23 2003/05/13 16:23:07 jdurand Exp $
+.\" $Id: stgdaemon.man,v 1.24 2004/03/08 16:23:22 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.23 $ $Date: 2003/05/13 16:23:07 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.24 $ $Date: 2004/03/08 16:23:22 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STGDAEMON 1 "$Date: 2003/05/13 16:23:07 $" CASTOR "Stage Administrator Commands"
+.TH STGDAEMON 1 "$Date: 2004/03/08 16:23:22 $" CASTOR "Stage Administrator Commands"
 .SH NAME
 stgdaemon \- starts the stage daemon
 .SH SYNOPSIS
@@ -147,6 +147,19 @@ STG   STAGEINIT_FROM_LOCALHOST     YES
 ## Say YES if you want to limit stageshutdown to localhost
 #
 STG   STAGESHUTDOWN_FROM_LOCALHOST     YES
+.br
+#
+## Say NO if you do not want checksum check, any other value
+## but NO will mean YES...
+#
+STG   USE_CHECKSUM     YES
+#
+## Say YES if you want stager to try to change a checksum
+## algorithm in the name server. Any other value but YES
+## will mean NO... Note that this may require privilege and
+## is therefore not recommended for the moment.
+#
+STG   CHANGE_CHECKSUM_NAME     NO
 .ft
 .LP
 .fi
