@@ -721,6 +721,57 @@ static int GetDrvRecord(const dgn_element_t *dgn_context,
     return(0);
 }
 
+static int GetNextDrvOnSrv(const dgn_element_t *dgn_context,
+                           char *server, vdqm_drvrec_t **drvrec) {
+    vdqm_drvrec_t *drv;
+    int found = 0;
+
+    if ( INVALID_DGN_CONTEXT ) return(-1);
+    if ( server == NULL || *server == '\0' ) return(-1);
+    if ( drvrec != NULL ) *drvrec = NULL;
+
+    log(LOG_DEBUG,"GetNextDrvOnSrv(%s,%s) called\n",dgn_context->dgn,server);
+    CLIST_ITERATE_BEGIN(dgn_context->drv_queue,drv) {
+        if ( strcmp(drv->drv.server,server) == 0 ) {
+            found = 1;
+            break;
+        }
+    } CLIST_ITERATE_END(dgn_context->drv_queue,drv);
+    if ( found == 1 && drvrec != NULL ) *drvrec = drv;
+    return(found);
+} 
+
+ 
+
+static int DelAllDrvOnSrv(dgn_element_t *dgn_context,
+                          char *server) {
+    vdqm_drvrec_t *drv = NULL;
+    int rc;
+
+    if ( INVALID_DGN_CONTEXT ) return(-1);
+    if ( server == NULL || *server == '\0' ) return(-1);
+
+    while ( GetNextDrvOnSrv(dgn_context,server,&drv) == 1 && drv != NULL ) {
+        log(LOG_INFO,"DelAllDrvOnSrv(%s,%s) delete drive %s@%s\n",
+            dgn_context->dgn,server,drv->drv.drive,drv->drv.server);
+        /*
+         * A drive found on this server. Remove it and free memory
+         */
+        rc = DelDrvRecord(dgn_context,drv);
+        /*
+         * Make sure to remove any old volume request for this drive
+         */
+        if ( drv->vol != NULL ) {
+            rc = DelVolRecord(dgn_context,drv->vol);
+            free(drv->vol);
+        }
+        free(drv);
+    }
+
+    return(0);
+}
+
+
 static int SelectVolAndDrv(const dgn_element_t *dgn_context,
                            vdqm_volrec_t **vol,
                            vdqm_drvrec_t **drv) {
@@ -1192,6 +1243,10 @@ int vdqm_NewVolReq(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) {
     volrec->magic = hdr->magic;
     volrec->vol = *VolReq;
     volrec->vol.recvtime = time(NULL);
+    /*
+     * We don't allow client to set priority
+     */
+    volrec->vol.priority = VDQM_PRIORITY_NORMAL;
     
     /*
      * Add the record to the volume queue
@@ -1262,7 +1317,7 @@ int vdqm_NewVolReq(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) {
 }
 
 int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
-    dgn_element_t *dgn_context;
+    dgn_element_t *dgn_context = NULL;
     vdqm_volrec_t *volrec;
     vdqm_drvrec_t *drvrec;
     int rc,i,unknown;
@@ -1276,6 +1331,19 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
      */
     log(LOG_INFO,"vdqm_NewDrvReq() new %s request: %s@%s\n",
         DrvReq->dgn,DrvReq->drive,DrvReq->server);
+    /*
+     * If it is an tape daemon startup status we should reset the UNKNOWN 
+     * status for all drives on that tape server.
+     */
+    if ( DrvReq->status == VDQM_TPD_STARTED ) {
+        while (NextDgnContext(&dgn_context) != -1 && dgn_context != NULL ) {
+            log(LOG_INFO,"vdqm_NewDrvReq() dgn: %s, %s tape daemon startup\n",
+                dgn_context->dgn,DrvReq->reqhost);
+            rc = DelAllDrvOnSrv(dgn_context,DrvReq->reqhost);
+        }
+        return(0);
+    }
+
     rc = SetDgnContext(&dgn_context,DrvReq->dgn);
     if ( rc == -1 ) {
         log(LOG_ERR,"vdqm_NewDrvReq() cannot set Dgn context for %s\n",
@@ -1339,7 +1407,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
         DrvReq->drive,DrvReq->server,DrvReq->VolReqID,DrvReq->jobID,
         status_string);
     /*
-     * Reset UNKNOWN status if necessary. Remember that entry status
+     * Reset UNKNOWN status if necessary. However we remember that status
      * in case there is a RELEASE since we then cannot allow the unit
      * to be assigned to another job until it is FREE (i.e. we must
      * wait until volume has been unmounted). 
