@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.58 2002/10/26 13:18:23 jdurand Exp $
+ * $Id: stage_api.c,v 1.59 2002/12/13 15:02:58 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -35,7 +35,7 @@
 #include "net.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.58 $ $Date: 2002/10/26 13:18:23 $ CERN IT/DS/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.59 $ $Date: 2002/12/13 15:02:58 $ CERN IT/DS/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifdef hpux
@@ -177,6 +177,7 @@ int DLL_DECL rc_castor2shift(rc)
   case SEOPNOTSUP:
   case SECONNDROP:
   case SECOMERR:
+  case SETIMEDOUT:
     return(SYERR);
   case ESTNACT:
     return(SHIFT_ESTNACT);
@@ -191,7 +192,7 @@ int DLL_DECL rc_castor2shift(rc)
   case ECUPVNACT:
     return(SHIFT_ECUPVNACT);
   default:
-    return(rc);
+    return(UNERR);
   }
 }
 
