@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Date: 2001/05/23 11:15:57 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Date: 2001/06/12 07:42:08 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1999 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -19,12 +19,12 @@ COMM --------------------------
 CFLAGS         = $(MTCCFLAGS) -I$(INCLUDES) -I$(INCLUDESWIN32) $(DEBUG)
 LDFLAGS        = $(MTLDFLAGS)
 
-OBJS = Csched_test.Osuf tuxid.Osuf
+OBJS = Csched_test.Osuf Cglobals_test.Osuf tuxid.Osuf
 
 #ifdef _WIN32
-PROGS = ProgramTargetName(tuxid)
+PROGS = ProgramTargetName(Cglobals_test) ProgramTargetName(tuxid)
 #else
-PROGS = ProgramTargetName(Csched_test) ProgramTargetName(tuxid)
+PROGS = ProgramTargetName(Csched_test) ProgramTargetName(Cglobals_test) ProgramTargetName(tuxid)
 #endif
 
 DEPLIBS = DepLibraryTargetName(FileName(..,common),common)
@@ -47,6 +47,7 @@ all: $(PROGS)
 #ifndef _WIN32
 NormalProgramTarget(Csched_test,Csched_test.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
 #endif
+NormalProgramTarget(Cglobals_test,Cglobals_test.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
 NormalProgramTarget(tuxid,tuxid.Osuf,$(DEPLIBS),$(DEPLIBS) $(SLIB) $(ADNSLIB) $(MTLDLIBS))
 MakeDepLibrary(FileName(..,common),common)
 
