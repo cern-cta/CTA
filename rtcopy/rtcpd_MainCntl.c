@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.11 $ $Date: 2000/01/12 15:26:53 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.12 $ $Date: 2000/01/17 15:40:36 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -447,7 +447,8 @@ static void rtcpd_FreeResources(SOCKET **client_socket,
 }
 
 int rtcpd_AbortHandler(int sig) {
-    AbortFlag = 1;
+    if ( sig == SIGTERM ) AbortFlag = 2;
+    else AbortFlag = 1;
     return(0);
 }
 
@@ -455,7 +456,10 @@ static int rtcpd_ProcError(int *code) {
     static int global_code, rc;
 
     if ( AbortFlag != 0 ) {
-        rtcp_log(LOG_DEBUG,"rtcpd_ProcError() REQUEST IS ABORTING\n");
+        if ( AbortFlag == 1 ) 
+            rtcp_log(LOG_DEBUG,"rtcpd_ProcError() REQUEST ABORTED by user\n");
+        else
+            rtcp_log(LOG_DEBUG,"rtcpd_ProcError() REQUEST ABORTED by operator\n");
         return(proc_cntl.ProcError);
     }
     rc = Cthread_mutex_lock_ext(proc_cntl.ProcError_lock);
@@ -619,18 +623,23 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
 #endif /* _WIN32 */
 
     (void)setpgrp();
+    AbortFlag = 0;
 #if !defined(_WIN32)
     (void)sigemptyset(&sigset);
     sigact.sa_mask = sigset;
     sigact.sa_handler = SIG_IGN;
     sigaction(SIGPIPE,&sigact,NULL);
+    /*
+     * Should normally use sigwait(). 
+     */
+    sigact.sa_handler = (void (*)(int))rtcpd_AbortHandler;
+    sigaction(SIGTERM,&sigact,NULL);
 #else /* _WIN32 */
     signal(SIGPIPE,SIG_IGN);
+    signal(SIGTERM,(void (*)(int))rtcpd_AbortHandler);
 #endif /* _WIN32 */
     rtcp_log(LOG_DEBUG,"rtcpd_MainCntl() called\n");
     rtcpd_SetDebug();
-    AbortFlag = 0;
-    signal(SIGTERM,(void (*)(int))rtcpd_AbortHandler);
     client = (rtcpClientInfo_t *)calloc(1,sizeof(rtcpClientInfo_t));
     if ( client == NULL ) {
         rtcp_log(LOG_ERR,"rtcpd_MainCntl() malloc(): %s\n",
