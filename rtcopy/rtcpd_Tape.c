@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.48 $ $Date: 2000/03/16 12:53:00 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.49 $ $Date: 2000/03/20 13:09:11 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -85,8 +85,7 @@ int rtcpd_SignalFilePositioned(tape_list_t *tape, file_list_t *file) {
         serrno = EINVAL;
         return(-1);
     }
-    if ( tape->tapereq.mode == WRITE_ENABLE ||
-         *file->filereq.stageID == '\0' ) return(0);
+
     rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_mutex_lock_ext(proc_cntl): %s\n",
@@ -1286,10 +1285,12 @@ void *tapeIOthread(void *arg) {
 
                 tellClient(&client_socket,nexttape,NULL,rc);
                 tellClient(&client_socket,NULL,nextfile,rc);
-                TP_STATUS(RTCP_PS_STAGEUPDC);
-                rc = rtcpd_stageupdc(nexttape,nextfile);
-                TP_STATUS(RTCP_PS_NOBLOCKING);
-                CHECK_PROC_ERR(NULL,nextfile,"rtcpd_stageupdc() error");
+                if ( mode == WRITE_ENABLE ) {
+                    TP_STATUS(RTCP_PS_STAGEUPDC);
+                    rc = rtcpd_stageupdc(nexttape,nextfile);
+                    TP_STATUS(RTCP_PS_NOBLOCKING);
+                    CHECK_PROC_ERR(NULL,nextfile,"rtcpd_stageupdc() error");
+                }
 
                 TP_STATUS(RTCP_PS_WAITMTX);
                 rc = rtcpd_SignalFilePositioned(nexttape,nextfile);

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.23 $ $Date: 2000/03/16 12:52:56 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.24 $ $Date: 2000/03/20 13:09:07 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -297,8 +297,10 @@ int rtcpd_Mount(tape_list_t *tape) {
              * call VDQM for a new drive
              */
             rtcp_log(LOG_ERR,"rtcpd_Mount() Ctape_mount() %s\n",
-                CTP_ERRTXT);
-            rtcpd_AppendClientMsg(tape, NULL, "%s\n",CTP_ERRTXT);
+                     CTP_ERRTXT);
+            if ( save_serrno != ETVBSY ) 
+                rtcpd_AppendClientMsg(tape, NULL, "%s\n",CTP_ERRTXT);
+
             severity = 0;
             switch ( save_serrno ) {
             case EIO:
@@ -614,6 +616,7 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
     rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
     char unit[CA_MAXUNMLEN+1];
+    char recfm[CA_MAXRECFMLEN+1];
 
     if ( tape == NULL || file == NULL ) {
         serrno = EINVAL;
@@ -628,6 +631,7 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
         filereq->tape_path,tapereq->vid,filereq->tape_fseq,
         file->tape_fsec);
 
+    *recfm = '\0';
     rtcpd_ResetCtapeError();
     rc = Ctape_info( filereq->tape_path,
                     &filereq->blocksize,
@@ -638,7 +642,7 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
                      filereq->fid,
                     &filereq->tape_fseq,
                     &filereq->recordlength,
-                     filereq->recfm);
+                     recfm);
     filereq->cprc = rc;
     save_serrno = serrno;
     if ( rc == -1 ) {
@@ -677,10 +681,16 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
         rtcpd_SetReqStatus(NULL,file,SEINTERNAL,RTCP_FAILED | RTCP_UNERR);
         rc = -1;
     }
+    /*
+     * Only set recfm if user didn't specify it.
+     */
+    if ( *filereq->recfm == '\0' ) strcpy(filereq->recfm,recfm);
+    if ( *filereq->recfm == '\0' ) strcpy(filereq->recfm,"U");
     if ( rc == 0 ) {
-        rtcp_log(LOG_DEBUG,"rtcpd_Info(%s) returned vid=%s, fseq=%d, fsec=%d, unit=%s, blocksize=%d, recordlength=%d\n",
+        rtcp_log(LOG_DEBUG,"rtcpd_Info(%s) returned vid=%s, fseq=%d, fsec=%d, unit=%s, blocksize=%d, recordlength=%d, recfm=%s\n",
                  filereq->tape_path,tapereq->vid,filereq->tape_fseq,
-                 file->tape_fsec,unit,filereq->blocksize,filereq->recordlength);
+                 file->tape_fsec,unit,filereq->blocksize,filereq->recordlength,
+                 recfm);
         if ( fseq > 0 && (fseq != filereq->tape_fseq) ) {
             rtcp_log(LOG_ERR,"rtcpd_Info(%s) returned wrong TAPE FSEQ: %d (%d)\n",
                      filereq->tape_path,filereq->tape_fseq,fseq);

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.57 $ $Date: 2000/03/16 14:30:02 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.58 $ $Date: 2000/03/20 13:09:08 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -127,8 +127,8 @@ int rtcpd_WaitForPosition(tape_list_t *tape, file_list_t *file) {
         serrno = EINVAL;
         return(-1);
     }
-    if ( tape->tapereq.mode == WRITE_ENABLE ||
-         *file->filereq.stageID == '\0' ) return(0);
+    if ( *file->filereq.recfm != '\0' && (tape->tapereq.mode == WRITE_ENABLE ||
+         *file->filereq.stageID == '\0') ) return(0);
 
     rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
     if ( rc == -1 ) {
@@ -1137,7 +1137,8 @@ static int DiskToMemory(int disk_fd, int pool_index,
               ((Uformat == TRUE) && ((convert & NOF77CW) == 0))) ) {
             DEBUG_PRINT((LOG_DEBUG,"DiskToMemory() End of file %s reached in buffer %d\n",
                 filereq->file_path,i));
-            databufs[i]->end_of_tpfile = *end_of_tpfile;
+            if ( databufs[i]->end_of_tpfile == FALSE ) 
+                databufs[i]->end_of_tpfile = *end_of_tpfile;
             databufs[i]->last_buffer = *last_file;
             if ( *offset + rc > databufs[i]->bufendp )
                 databufs[i]->bufendp = *offset + rc;
@@ -1348,6 +1349,12 @@ void *diskIOthread(void *arg) {
     DK_STATUS(RTCP_PS_NOBLOCKING);
     CHECK_PROC_ERR(file->tape,file,"rtcpd_WaitForPosition() error");
 
+    if ( mode == WRITE_DISABLE ) {
+        DK_STATUS(RTCP_PS_STAGEUPDC);
+        rc = rtcpd_stageupdc(tape,file);
+        DK_STATUS(RTCP_PS_NOBLOCKING);
+        CHECK_PROC_ERR(NULL,file,"rtcpd_stageupdc() error");
+    }
     if ( (severity & RTCP_EOD) == 0 ) {
     retry = 0;
     do {

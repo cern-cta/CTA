@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.27 $ $Date: 2000/03/13 11:37:53 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.28 $ $Date: 2000/03/20 13:09:06 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -310,8 +310,8 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     /*
      * Record format.
      */
-    if ( *filereq->recfm == '\0' ) strcpy(filereq->recfm,"U");
-    if ( strcmp(filereq->recfm,"F") != 0 &&
+    if ( *filereq->recfm != '\0' &&
+         strcmp(filereq->recfm,"F") != 0 &&
          strcmp(filereq->recfm,"FB") != 0 &&
          strcmp(filereq->recfm,"FBS") != 0 &&
          strcmp(filereq->recfm,"FS") != 0 &&
