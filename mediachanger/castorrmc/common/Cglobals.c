@@ -1,6 +1,9 @@
 /*
- * $Id: Cglobals.c,v 1.5 1999/07/23 15:49:58 obarring Exp $
+ * $Id: Cglobals.c,v 1.6 1999/07/23 16:03:32 obarring Exp $
  * $Log: Cglobals.c,v $
+ * Revision 1.6  1999/07/23 16:03:32  obarring
+ * Change Cglobals_getTid() to return -1 if no MT.
+ *
  * Revision 1.5  1999/07/23 15:49:58  obarring
  * Add an argument for getTid() and the corresponding Cglobals_getTid()
  *
@@ -13,7 +16,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: Cglobals.c,v 1.5 1999/07/23 15:49:58 obarring Exp $";
+static char cvsId[] = "$Id: Cglobals.c,v 1.6 1999/07/23 16:03:32 obarring Exp $";
 #endif /* lint */
 /*
  * Castor_globals.c - central entry to maintain all Castor globals
@@ -168,12 +171,16 @@ void Cglobals_get(int *key, void **addr, size_t size) {
 }
 
 /*
- * Cglobals_getTid() - get current thread Id. Zero (0) is returned
- * if Cglobals_init() has not been called.
+ * Cglobals_getTid() - get current thread Id. -1 is returned
+ * if Cglobals_init() has not been called. Note that in a Cthread
+ * environment Tid = -1 will always refer to main thread since
+ * Cthread_self() returns an error for the main thread (the main
+ * thread has *NOT* been created with a Cthread_create()).
+ * 
  */ 
 void Cglobals_getTid(int *Tid) {
     if ( Tid == NULL ) return;
-    if ( local_getTid == NULL ) *Tid = 0;
+    if ( local_getTid == NULL ) *Tid = -1;
     else *Tid = local_getTid();
     return;
 } 
