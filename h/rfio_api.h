@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.17 $ $Date: 2000/06/16 15:48:45 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.18 $ $Date: 2000/06/16 15:52:58 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -163,7 +163,7 @@ EXTERN_C int DLL_DECL rfio_HsmIf_rename _PROTO((const char *, const char *));
 EXTERN_C int DLL_DECL rfio_HsmIf_read _PROTO((int, void *, int));
 EXTERN_C int DLL_DECL rfio_HsmIf_write _PROTO((int, void *, int));
 EXTERN_C int DLL_DECL rfio_HsmIf_FirstWrite _PROTO((int, void *, int));
-EXTERN_C int DLL_DECL rfio_HsmIf_IOError _PROTO((int, void *, int));
+EXTERN_C int DLL_DECL rfio_HsmIf_IOError _PROTO((int, int));
 EXTERN_C int DLL_DECL rfio_HsmIf_IsHsmFile _PROTO((const char *));
 EXTERN_C int DLL_DECL rfio_HsmIf_GetHsmType _PROTO((int, int *));
 
