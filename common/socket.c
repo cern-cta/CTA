@@ -1,5 +1,5 @@
 /*
- * $Id: socket.c,v 1.3 1999/12/09 13:39:47 jdurand Exp $
+ * $Id: socket.c,v 1.4 2000/04/05 09:55:24 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #if !defined(lint)
-static char cvsId[] =  "@(#)$RCSfile: socket.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:39:47 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] =  "@(#)$RCSfile: socket.c,v $ $Revision: 1.4 $ $Date: 2000/04/05 09:55:24 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* lint */
 
 /* socket.c     Generalized network interface                           */
@@ -175,6 +175,11 @@ int     nbytes;
 {
     register int    n, nb;
  
+    if (nbytes <= 0) {
+      serrno = SEINVAL;
+      return(-1);
+    }
+
 #if defined(DEBUG)
     log(LOG_DEBUG ,"dorecv(%x, %x, %d)\n", s, buf, nbytes);
 #endif /* DEBUG */
@@ -242,6 +247,11 @@ int     nbytes;
 {
     register int    n, nb;
  
+    if (nbytes <= 0) {
+      serrno = SEINVAL;
+      return(-1);
+    }
+
 #if defined(DEBUG)
     log(LOG_DEBUG, "dosend(%x, %x, %d)\n", s, buf, nbytes);
 #endif
