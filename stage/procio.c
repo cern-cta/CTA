@@ -1,14 +1,14 @@
 /*
- * $Id: procio.c,v 1.16 2000/03/24 13:19:27 jdurand Exp $
+ * $Id: procio.c,v 1.17 2000/04/14 13:35:27 baud Exp $
  */
 
 /*
- * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.16 $ $Date: 2000/03/24 13:19:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.17 $ $Date: 2000/04/14 13:35:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1265,26 +1265,32 @@ unpackfseq(fseq, req_type, trailing, fseq_list)
 	int n1, n2;
 	int nbtpf;
 	char *p, *q;
+	char tmp_fseq[CA_MAXFSEQLEN+1];
 
-	*trailing = *(fseq + strlen (fseq) - 1);
+	if (strlen (fseq) > CA_MAXFSEQLEN) {
+		sendrep (rpfd, MSG_ERR, STG06, "-q");
+		return (0);
+	}
+	strcpy (tmp_fseq, fseq);
+	*trailing = *(tmp_fseq + strlen (tmp_fseq) - 1);
 	if (*trailing == '-') {
 		if (req_type != STAGEIN) {
 			sendrep (rpfd, MSG_ERR, STG18);
 			return (0);
 		}
-		*(fseq + strlen (fseq) - 1) = '\0';
+		*(tmp_fseq + strlen (tmp_fseq) - 1) = '\0';
 	}
-	switch (*fseq) {
+	switch (*tmp_fseq) {
 	case 'n':
 		if (req_type == STAGEIN) {
 			sendrep (rpfd, MSG_ERR, STG17, "-qn", "stagein");
 			return (0);
 		}
 	case 'u':
-		if (strlen (fseq) == 1) {
+		if (strlen (tmp_fseq) == 1) {
 			nbtpf = 1;
 		} else {
-			nbtpf = strtol (fseq + 1, &dp, 10);
+			nbtpf = strtol (tmp_fseq + 1, &dp, 10);
 			if (*dp != '\0') {
 				sendrep (rpfd, MSG_ERR, STG06, "-q");
 				return (0);
@@ -1292,11 +1298,11 @@ unpackfseq(fseq, req_type, trailing, fseq_list)
 		}
 		*fseq_list = (fseq_elem *) calloc (nbtpf, sizeof(fseq_elem));
 		for (i = 0; i < nbtpf; i++)
-			sprintf ((char *)(*fseq_list + i), "%c", *fseq);
+			sprintf ((char *)(*fseq_list + i), "%c", *tmp_fseq);
 		break;
 	default:
 		nbtpf = 0;
-		p = strtok (fseq, ",");
+		p = strtok (tmp_fseq, ",");
 		while (p != NULL) {
 			if ((q = strchr (p, '-')) != NULL) {
 				*q = '\0';
@@ -1328,7 +1334,7 @@ unpackfseq(fseq, req_type, trailing, fseq_list)
 		}
 		*fseq_list = (fseq_elem *) calloc (nbtpf, sizeof(fseq_elem));
 		nbtpf = 0;
-		p = strtok (fseq, ",");
+		p = strtok (tmp_fseq, ",");
 		while (p != NULL) {
 			if ((q = strchr (p, '-')) != NULL) {
 				*q = '\0';
