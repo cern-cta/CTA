@@ -254,10 +254,10 @@ namespace castor {
         /// SQL statement object for request update
         oracle::occi::Statement *m_updateStatement;
 
-        /// SQL statement for new request insertion
+        /// SQL statement for request insertion into newRequests table
         static const std::string s_insertNewReqStatementString;
 
-        /// SQL statement object for request status insertion
+        /// SQL statement object for request status insertion into newRequests table
         oracle::occi::Statement *m_insertNewReqStatement;
 
         /// SQL statement for type storage 

@@ -79,7 +79,7 @@ const std::string castor::db::ora::OraStageFindRequestRequestCnv::s_storeTypeSta
 const std::string castor::db::ora::OraStageFindRequestRequestCnv::s_deleteTypeStatementString =
 "DELETE FROM Id2Type WHERE id = :1";
 
-/// SQL statement for request status insertion
+/// SQL statement for request insertion into newRequests table
 const std::string castor::db::ora::OraStageFindRequestRequestCnv::s_insertNewReqStatementString =
 "INSERT INTO newRequests (id, type, creation) VALUES (:1, :2, SYSDATE)";
 

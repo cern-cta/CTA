@@ -79,10 +79,6 @@ const std::string castor::db::ora::OraStageReleaseFilesRequestCnv::s_storeTypeSt
 const std::string castor::db::ora::OraStageReleaseFilesRequestCnv::s_deleteTypeStatementString =
 "DELETE FROM Id2Type WHERE id = :1";
 
-/// SQL statement for request status insertion
-const std::string castor::db::ora::OraStageReleaseFilesRequestCnv::s_insertNewReqStatementString =
-"INSERT INTO newRequests (id, type, creation) VALUES (:1, :2, SYSDATE)";
-
 /// SQL select statement for member subRequests
 const std::string castor::db::ora::OraStageReleaseFilesRequestCnv::s_selectSubRequestStatementString =
 "SELECT id from SubRequest WHERE request = :1 FOR UPDATE";
@@ -116,7 +112,6 @@ castor::db::ora::OraStageReleaseFilesRequestCnv::OraStageReleaseFilesRequestCnv(
   m_deleteStatement(0),
   m_selectStatement(0),
   m_updateStatement(0),
-  m_insertNewReqStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
   m_selectSubRequestStatement(0),
@@ -144,7 +139,6 @@ void castor::db::ora::OraStageReleaseFilesRequestCnv::reset() throw() {
     deleteStatement(m_deleteStatement);
     deleteStatement(m_selectStatement);
     deleteStatement(m_updateStatement);
-    deleteStatement(m_insertNewReqStatement);
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
     deleteStatement(m_deleteSubRequestStatement);
@@ -159,7 +153,6 @@ void castor::db::ora::OraStageReleaseFilesRequestCnv::reset() throw() {
   m_deleteStatement = 0;
   m_selectStatement = 0;
   m_updateStatement = 0;
-  m_insertNewReqStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
   m_selectSubRequestStatement = 0;
@@ -493,9 +486,6 @@ void castor::db::ora::OraStageReleaseFilesRequestCnv::createRep(castor::IAddress
       m_insertStatement = createStatement(s_insertStatementString);
       m_insertStatement->registerOutParam(15, oracle::occi::OCCIDOUBLE);
     }
-    if (0 == m_insertNewReqStatement) {
-      m_insertNewReqStatement = createStatement(s_insertNewReqStatementString);
-    }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
@@ -519,9 +509,6 @@ void castor::db::ora::OraStageReleaseFilesRequestCnv::createRep(castor::IAddress
     m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
-    m_insertNewReqStatement->setDouble(1, obj->id());
-    m_insertNewReqStatement->setInt(2, obj->type());
-    m_insertNewReqStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }
