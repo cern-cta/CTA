@@ -946,8 +946,6 @@ BEGIN
   WHERE id = rdcId
   RETURNING status, path
   INTO rdcStatus, rdcPath;
-EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
-  NULL;
 END;
 
 /* PL/SQL method implementing updateAndCheckSubRequest */
@@ -1028,7 +1026,7 @@ BEGIN
  SELECT ids_seq.nextval INTO dcId FROM DUAL;
  buildPathFromFileId(fid, nh, dcId, rpath);
  INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime)
-  VALUES (rpath, ids_seq.nextval, 0, cfId, 5, getTime()); -- status WAITFS
+  VALUES (rpath, dcId, 0, cfId, 5, getTime()); -- status WAITFS
  INSERT INTO Id2Type (id, type) VALUES (dcId, 5); -- OBJ_DiskCopy
  COMMIT;
  -- link SubRequest and DiskCopy
