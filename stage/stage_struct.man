@@ -1,18 +1,18 @@
-.\" $Id: stage_struct.man,v 1.5 2002/09/14 06:52:49 jdurand Exp $
+.\" $Id: stage_struct.man,v 1.6 2002/09/16 11:49:32 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stage_struct.man,v $ $Revision: 1.5 $ $Date: 2002/09/14 06:52:49 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" @(#)$RCSfile: stage_struct.man,v $ $Revision: 1.6 $ $Date: 2002/09/16 11:49:32 $ CERN IT-DS/HSM Jean-Damien Durand
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGE_STRUCT "3" "$Date: 2002/09/14 06:52:49 $" "CASTOR" "Stage Library Functions"
+.TH STAGE_STRUCT "3" "$Date: 2002/09/16 11:49:32 $" "CASTOR" "Stage Library Functions"
 .SH NAME
 stage structures \- Definition of the stager structures used by daemon and clients
 .SH SYNOPSIS
 .BI "#include <" stage_api.h ">"
 .sp
-struct stgcat_entry *stcp;
+.BI "struct stgcat_entry *" stcp ";"
 .br
-struct stgpath_entry *stpp;
+.BI "struct stgpath_entry *" stpp ";"
 
 .SH DESCRIPTION
 The \fBstage structures\fP are the the basis of stage information bookkeeping. They are used for everything, storing parameters of incoming requests, update of information, etc...
@@ -32,63 +32,65 @@ structures. Each member of the structure is described below with a keyword that 
 .ft CW
 .nf
 .sp
+\s-2
 struct stgcat_entry {
-       int	blksize;    /* TAPE   : maximum block size */
-       char	filler[2];  /* <none> : Used for padding */
-       char	charconv;   /* TAPE   : character conversion */
-       char	keep;       /* ALL    : keep data on disk after successful migration */
-       int	lrecl;      /* TAPE   : record length */
-       int	nread;      /* TAPE   : number of blocks/records to be copied */
-       char	poolname[CA_MAXPOOLNAMELEN+1]; /* ALL : pool where is internal path */
-       char	recfm[CA_MAXRECFMLEN+1];       /* TAPE: record format */
-       u_signed64 size; /* ALL    : size in bytes of data to be staged */
-       char	ipath[(CA_MAXHOSTNAMELEN+MAXPATH)+1]; /* ALL: internal path */
-       char	t_or_d;		/* ALL    : 't' for tape, 'd' for disk , 'm' for non-CASTOR HSM, 'h' for CASTOR HSM */
-       char	group[CA_MAXGRPNAMELEN+1]; /* ALL: group name of owner on disk */
-       char	user[CA_MAXUSRNAMELEN+1];  /* ALL: login name of owner on disk */
-       uid_t uid;       /* ALL    : owner id */
-       gid_t gid;       /* ALL    : group id */
-       mode_t mask;     /* ALL    : masked used at creation */
-       int reqid;       /* ALL    : request id */
-       int status;      /* ALL    : current status */
-       u_signed64 actual_size; /* ALL: current size */
-       time_t c_time;   /* ALL    : creation time */
-       time_t a_time;   /* ALL    : last access time from stage point of view */
-       int	nbaccesses; /* ALL    : number of times it was accessed */
-       union {
-             struct {   /* TAPE   : tape specific information */
-                    char den[CA_MAXDENLEN+1];	/* TAPE: density */
-                    char dgn[CA_MAXDGNLEN+1];	/* TAPE: device group */
-                    char fid[CA_MAXFIDLEN+1];	/* TAPE: file id */
-                    char filstat;	            /* TAPE: file status: new = 'n', old = 'o' */
-                    char fseq[CA_MAXFSEQLEN+1];	/* TAPE: file sequence number */
-                    char lbl[CA_MAXLBLTYPLEN+1];/* TAPE: label type: al, nl, sl, blp or aul */
-                    int  retentd;               /* TAPE: retention period in days */
-                    int  side;	/* size (for deviced like DVD accessed as if it was a tape request) */
-                    char tapesrvr[CA_MAXHOSTNAMELEN+1];	/* TAPE: tape server */
-                    char E_Tflags; /* TAPE: SKIPBAD, KEEPFILE, NOTRLCHK */
-                    char vid[MAXVSN][CA_MAXVIDLEN+1]; /* TAPE: volume Id */
-                    char vsn[MAXVSN][CA_MAXVSNLEN+1]; /* TAPE: volume Serial Number */
-                    } t;
-             struct { /* DISK     : info for disk file stageing */
-                    char xfile[(CA_MAXHOSTNAMELEN+MAXPATH)+1]; /* DISK: external name */
-                    char Xparm[23]; /* DISK: rfcp parameters (not used) */
-                    } d;
-             struct { /* HSM      : non-CASTOR HSM files */
-                    char xfile[STAGE_MAX_HSMLENGTH+1]; /* HSM: external name */
-                    } m;
-             struct { /* CASTOR   : CASTOR HSM files */
-                    char xfile[STAGE_MAX_HSMLENGTH+1]; /* CASTOR: external name */
-                    char server[CA_MAXHOSTNAMELEN+1];  /* CASTOR: name server */
-                    u_signed64 fileid;                 /* CASTOR: unique Id */
-                    short fileclass;                   /* CASTOR: file class */
-                    char tppool[CA_MAXPOOLNAMELEN+1];  /* CASTOR: tape pool */
-                    int  retenp_on_disk;               /* CASTOR: retention period */
-                    int  mintime_beforemigr;           /* CASTOR: mintime before migration */
-                    short flag;                        /* CASTOR: flags driving migration */
-                    } h;
-             } u1;
+  int        blksize;                            /* TAPE: maximum block size */
+  char       filler[2];                          /* <none>: Used for padding */
+  char       charconv;                           /* TAPE: character conversion */
+  char       keep;                               /* ALL: keep data on disk after successful migration */
+  int        lrecl;                              /* TAPE: record length */
+  int        nread;                              /* TAPE: number of blocks/records to be copied */
+  char       poolname[CA_MAXPOOLNAMELEN+1];      /* ALL: pool where is internal path */
+  char       recfm[CA_MAXRECFMLEN+1];            /* TAPE: record format */
+  u_signed64 size;                               /* ALL: size in bytes of data to be staged */
+  char       ipath[(CA_MAXHOSTNAMELEN+MAXPATH)+1]; /* ALL: internal path */
+  char       t_or_d;                             /* ALL: 't', 'd', 'a', 'm', or 'h' */
+  char       group[CA_MAXGRPNAMELEN+1];          /* ALL: group name of owner on disk */
+  char       user[CA_MAXUSRNAMELEN+1];           /* ALL: login name of owner on disk */
+  uid_t      uid;                                /* ALL: owner id */
+  gid_t      gid;                                /* ALL: group id */
+  mode_t     mask;                               /* ALL: mask used at creation */
+  int        reqid;                              /* ALL: request id */
+  int        status;                             /* ALL: current status */
+  u_signed64 actual_size;                        /* ALL: current size */
+  time_t     c_time;                             /* ALL: creation time */
+  time_t     a_time;                             /* ALL: last access time from stage point of view */
+  int        nbaccesses;                         /* ALL: number of times it was accessed */
+  union {
+    struct {                                     /* TAPE: tape specific information */
+      char den[CA_MAXDENLEN+1];                  /* TAPE: density */
+      char dgn[CA_MAXDGNLEN+1];	                 /* TAPE: device group */
+      char fid[CA_MAXFIDLEN+1];	                 /* TAPE: file id */
+      char filstat;	                             /* TAPE: file status: new = 'n', old = 'o' */
+      char fseq[CA_MAXFSEQLEN+1];	             /* TAPE: file sequence number/range */
+      char lbl[CA_MAXLBLTYPLEN+1];               /* TAPE: label type: al, nl, sl, blp or aul */
+      int  retentd;                              /* TAPE: retention period in days */
+      int side;	                                 /* TAPE: size (for deviced like DVD) */
+      char tapesrvr[CA_MAXHOSTNAMELEN+1];	     /* TAPE: tape server */
+      char E_Tflags;                             /* TAPE: SKIPBAD, KEEPFILE, NOTRLCHK */
+      char vid[MAXVSN][CA_MAXVIDLEN+1];          /* TAPE: volume Id */
+      char vsn[MAXVSN][CA_MAXVSNLEN+1];          /* TAPE: volume Serial Number */
+    } t;
+    struct { /* DISK     : info for disk file stageing */
+      char xfile[(CA_MAXHOSTNAMELEN+MAXPATH)+1]; /* DISK: external name */
+      char Xparm[23];                            /* DISK: rfcp parameters (not used) */
+    } d;
+    struct {                                     /* HSM: non-CASTOR HSM files */
+      char xfile[STAGE_MAX_HSMLENGTH+1];         /* HSM: external name */
+    } m;
+    struct {                                     /* CASTOR: CASTOR HSM files */
+      char       xfile[STAGE_MAX_HSMLENGTH+1];   /* CASTOR: external name */
+      char       server[CA_MAXHOSTNAMELEN+1];    /* CASTOR: name server */
+      u_signed64 fileid;                         /* CASTOR: unique Id */
+      short      fileclass;                      /* CASTOR: file class */
+      char       tppool[CA_MAXPOOLNAMELEN+1];    /* CASTOR: tape pool */
+      int        retenp_on_disk;                 /* CASTOR: retention period */
+      int        mintime_beforemigr;             /* CASTOR: mintime before migration */
+      short      flag;                           /* CASTOR: flags driving migration */
+    } h;
+  } u1;
 };
+\s+2
 .ft
 .LP
 .fi
@@ -102,7 +104,7 @@ request id.
 .nf
 .sp
 struct stgpath_entry {
-       int reqid;                                      /* Request ID, c.f. stgcat_entry */
+       int reqid;                        /* Request ID, c.f. stgcat_entry */
        char upath[(CA_MAXHOSTNAMELEN+MAXPATH)+1];      /* User path */
 };
 .ft
@@ -134,7 +136,7 @@ is a flag telling stager to keep data on disk after a successful migration.
 specifies the logical record length for fixed length record format files.
 .sp
 .BI nread
-, if specified, gives the number of records that will be copied to tape.
+, if specified, gives the number of records that will be copied to/from tape.
 .sp
 .BI poolname
 gives the pool name to which belong the internal disk file (c.f. ipath below)
@@ -178,6 +180,10 @@ gives the kind of record the structure is describing, it can be
 .HP
 .BI t
 for tape files, 
+.TP
+.HP
+.BI a
+for allocated files, 
 .TP
 .HP
 .BI d
@@ -330,6 +336,9 @@ for files f1 to the last file on the tape
 .BI f1\-f2,f4,f6\-
 for a non-consecutive ranges of files
 .br
+.BI n
+when appending to tape
+.br
 .BI u
 for positioning by fileid
 .RE
@@ -435,7 +444,7 @@ is the file class of
 .BI tppool
 is the tape pool on which 
 .BI xfile
-will be migrated, in case of creatino or update of it
+will be migrated, in case of creating or update of it
 .TP
 .HP
 .BI retenp_on_disk
