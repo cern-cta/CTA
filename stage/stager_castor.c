@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.27 2002/09/30 15:45:38 jdurand Exp $
+ * $Id: stager_castor.c,v 1.28 2002/09/30 16:54:38 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.27 $ $Date: 2002/09/30 15:45:38 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.28 $ $Date: 2002/09/30 16:54:38 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -167,6 +167,7 @@ int retryi_vmgr_gettape_enospc = 0; /* Retry Interval if vmgr_gettape() returns 
 #ifdef STAGE_CSETPROCNAME
 static char sav_argv0[1024+1];
 #endif
+int ismig_log = 0; /* Will ask to have few more entries in mig_log rather than in log */
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -459,7 +460,7 @@ int main(argc,argv,envp)
 	FILE *f;
 #endif
 
-	strcpy (func, "stager");
+	strcpy (func, "stager_castor");
 	stglogit (func, "function entered\n");
 
 	/* Some intialization */
@@ -549,6 +550,7 @@ int main(argc,argv,envp)
 	/* Init if of crucial variables for the signal handler */
 	vid[0] = '\0';
 	side = -1;
+	if ((api_flags & STAGE_MIGLOG) == STAGE_MIGLOG) ismig_log++;
 
 	if ((stcs = (struct stgcat_entry *) malloc (nbcat_ent * sizeof(struct stgcat_entry))) == NULL) {
 		exit (SYERR);
@@ -1739,6 +1741,10 @@ int stagein_castor_hsm_file() {
 	SAVE_EID;
 	stglogit (func, "Use [vid,side,vsn,dgn,aden,lbltype]=[%s,%d,%s,%s,%s,%s], fseqs=%s\n",
 			  vid,side,vmgr_tapeinfo.vsn,dgn,vmgr_tapeinfo.density,vmgr_tapeinfo.lbltype,fseq_for_log);
+	if (ismig_log) {
+		sendrep (&rpfd, MSG_OUT, "Use [vid,side,vsn,dgn,aden,lbltype]=[%s,%d,%s,%s,%s,%s], fseqs=%s\n",
+				 vid,side,vmgr_tapeinfo.vsn,dgn,vmgr_tapeinfo.density,vmgr_tapeinfo.lbltype,fseq_for_log);
+	}
 	RESTORE_EID;
 #endif
 
@@ -2222,6 +2228,10 @@ int stagewrt_castor_hsm_file() {
 		SAVE_EID;
 		stglogit (func, "Use [vid,side,vsn,dgn,aden,lbltype,fseqs]=[%s,%d,%s,%s,%s,%s,%d to %d]\n",
 				  vid,side,vsn,dgn,aden,lbltype,fseq_start,fseq_end);
+		if (ismig_log) {
+			sendrep (&rpfd, MSG_OUT, "Use [vid,side,vsn,dgn,aden,lbltype,fseqs]=[%s,%d,%s,%s,%s,%s,%d to %d]\n",
+					 vid,side,vsn,dgn,aden,lbltype,fseq_start,fseq_end);
+		}
 		RESTORE_EID;
 #endif
 
@@ -3391,6 +3401,18 @@ void stager_hsm_log_callback(tapereq,filereq)
 				 u64tostr((u_signed64) filereq->bytes_in, tmpbuf1, 0),
 				 u64tostr((u_signed64) filereq->bytes_out, tmpbuf2, 0),
 				 u64tostr((u_signed64) filereq->host_bytes, tmpbuf3, 0));
+		if (ismig_log) {
+			sendrep(&rpfd, MSG_OUT, "%s/%d.%d, File No %d (%s), cprc=%d, bytes_in=%s, bytes_out=%s, host_bytes=%s\n",
+					tapereq->vid,
+					tapereq->side,
+					(int) filereq->tape_fseq,
+					(int) filereq->disk_fseq,
+					filereq->file_path,
+					(int) filereq->cprc,
+					u64tostr((u_signed64) filereq->bytes_in, tmpbuf1, 0),
+					u64tostr((u_signed64) filereq->bytes_out, tmpbuf2, 0),
+					u64tostr((u_signed64) filereq->host_bytes, tmpbuf3, 0));
+		}
 	} else {
 		stglogit(func, "%s/%d.%d, File No %d (%s), cprc=%d, bytes_in=%s, bytes_out=%s, host_bytes=%s, proc_status=%d (0x%lx), filereq->err.severity=%d (0x%lx), filereq->err.errorcode=%d (0x%lx), tapereq->err.severity=%d (0x%lx), tapereq->err.errorcode=%d (0x%lx), errno=%d (%s), serrno=%d (%s)\n",
 				 tapereq->vid,
@@ -3416,6 +3438,32 @@ void stager_hsm_log_callback(tapereq,filereq)
 				 strerror(errno),
 				 serrno,
 				 sstrerror(serrno));
+		if (ismig_log) {
+			sendrep(&rpfd, MSG_OUT, "%s/%d.%d, File No %d (%s), cprc=%d, bytes_in=%s, bytes_out=%s, host_bytes=%s, proc_status=%d (0x%lx), filereq->err.severity=%d (0x%lx), filereq->err.errorcode=%d (0x%lx), tapereq->err.severity=%d (0x%lx), tapereq->err.errorcode=%d (0x%lx), errno=%d (%s), serrno=%d (%s)\n",
+					tapereq->vid,
+					tapereq->side,
+					(int) filereq->tape_fseq,
+					(int) filereq->disk_fseq,
+					filereq->file_path,
+					(int) filereq->cprc,
+					u64tostr((u_signed64) filereq->bytes_in, tmpbuf1, 0),
+					u64tostr((u_signed64) filereq->bytes_out, tmpbuf2, 0),
+					u64tostr((u_signed64) filereq->host_bytes, tmpbuf3, 0),
+					(int) filereq->proc_status,
+					(unsigned long) filereq->proc_status,
+					(int) filereq->err.severity,
+					(unsigned long) filereq->err.severity,
+					(int) filereq->err.errorcode,
+					(unsigned long) filereq->err.errorcode,
+					(int) tapereq->err.severity,
+					(unsigned long) tapereq->err.severity,
+					(int) tapereq->err.errorcode,
+					(unsigned long) tapereq->err.errorcode,
+					errno,
+					strerror(errno),
+					serrno,
+					sstrerror(serrno));
+		}
 	}
 #endif
 	RESTORE_EID;
