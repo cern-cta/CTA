@@ -311,13 +311,16 @@ BEGIN
 END;
 
 /* PL/SQL method implementing prepareForMigration */
-CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER) AS
+CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
+                                                 fs IN INTEGER) AS
   nc INTEGER;
   cfId INTEGER;
   tcId INTEGER;
 BEGIN
  -- get CastorFile
  SELECT castorFile INTO cfId FROM SubRequest where id = srId;
+ -- update CastorFile
+ UPDATE CastorFile set fileSize = fs WHERE id = cfId;
  -- get number of copies to create
  SELECT nbCopies INTO nc FROM FileClass, CastorFile
   WHERE CastorFile.id = cfId AND CastorFile.fileClass = FileClass.id;
