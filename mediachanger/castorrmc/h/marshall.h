@@ -1,13 +1,13 @@
 /*
- * $Id: marshall.h,v 1.7 1999/12/09 13:46:16 jdurand Exp $
+ * $Id: marshall.h,v 1.8 2000/03/31 08:59:12 baud Exp $
  */
 
 /*
- * @(#)$RCSfile: marshall.h,v $ $Revision: 1.7 $ $Date: 1999/12/09 13:46:16 $ CERN IT-PDP/DM  Fabrizio Cane
+ * @(#)$RCSfile: marshall.h,v $ $Revision: 1.8 $ $Date: 2000/03/31 08:59:12 $ CERN IT-PDP/DM  Fabrizio Cane
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
@@ -175,4 +175,16 @@ typedef  char*          bitvct; /* bit vector type definition           */
 					  INC_PTR(ptr,LONGSIZE); \
 					}
 #endif
+
+/*
+ *    O P A Q U E
+ */
+
+#define marshall_OPAQUE(ptr,raw,n)	{ (void) memcpy((ptr),(raw),(n)); \
+					  INC_PTR(ptr,(n)); \
+					}
+
+#define unmarshall_OPAQUE(ptr,raw,n)	{ (void) memcpy((raw),(ptr),(n)); \
+					  INC_PTR(ptr,(n)); \
+					}
 #endif /* _MARSHALL_H_INCLUDED_ */
