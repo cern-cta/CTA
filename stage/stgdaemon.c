@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.60 2000/09/27 08:15:25 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.61 2000/09/27 15:33:49 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.60 $ $Date: 2000/09/27 08:15:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.61 $ $Date: 2000/09/27 15:33:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -811,6 +811,7 @@ add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
 		wqp->wf = wfp = newwaitf;
 		wqp->nbdskf++;
 		wqp->nb_subreqs++;
+		wqp->nb_waiting_on_req++;
 		stcp_ok = newreq();
 		save_nextreqid = nextreqid();
 		memcpy(stcp_ok,stcp,sizeof(struct stgcat_entry));
