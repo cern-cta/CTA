@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.18 $ $Release$ $Date: 2004/07/29 08:18:58 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/07/29 09:39:18 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.18 $ $Release$ $Date: 2004/07/29 08:18:58 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/07/29 09:39:18 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -607,6 +607,7 @@ static int notifyTape(
                               );
             }
           }
+          rtcp_log(LOG_DEBUG,"notifyTape(): notified client %s\n",notifyAddr);
           notified[i] = 1;
         } else if ( (notifyAddr != NULL) &&
                     (strcmp(notifyAddr,currentNotifyAddr) == 0) ) {
