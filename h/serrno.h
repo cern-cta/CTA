@@ -242,7 +242,8 @@
 #define ERTOPINTR       ERTBASEOFF+7    /* Request interrupted by operator */
 #define ERTNOTCLIST     ERTBASEOFF+8    /* Request list is not circular */
 #define ERTBADREQ       ERTBASEOFF+9    /* Bad request structure */
-#define ERTMAXERR       ERTBASEOFF+9
+#define ERTMORETODO	ERTBASEOFF+10	/* Request partially processed */
+#define ERTMAXERR       ERTBASEOFF+10
 
 /*
  *------------------------------------------------------------------------
