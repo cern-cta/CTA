@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/10/11 13:43:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2004/10/18 13:04:04 $ $Author: sponcec3 $
  *
  *
  *
@@ -283,6 +283,9 @@ castor::db::ora::OraStagerSvc::streamsToDo()
       // Change stream status
       stream->setStatus(castor::stager::STREAM_WAITDRIVE);
       cnvSvc()->updateRep(0, stream, false);
+      // Fill TapePool pointer
+      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+      cnvSvc()->fillRep(&ad, obj, OBJ_TapePool, false);
       result.push_back(stream);
     }
   } catch (oracle::occi::SQLException e) {
