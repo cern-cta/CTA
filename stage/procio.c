@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.178 2002/05/06 17:17:15 jdurand Exp $
+ * $Id: procio.c,v 1.179 2002/05/15 06:49:12 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.178 $ $Date: 2002/05/06 17:17:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.179 $ $Date: 2002/05/15 06:49:12 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -36,28 +36,29 @@ struct _stage_times {
 	clock_t     time;
 };
 typedef struct _stage_times _stage_times_t;
-#define STAGE_TIME_START { \
+#define STAGE_TIME_START(comment) { \
 	char *thisfile = __FILE__; \
 	int thisline = __LINE__; \
-	_stage_times_t _stage_times_start; \
+    char *thiscomment = comment; \
+    _stage_times_t _stage_times_start; \
 	_stage_times_t _stage_times_end; \
 	long clktck; \
 	_stage_times_start.time = times(&_stage_times_start.tms);
 #define STAGE_TIME_END \
 	_stage_times_end.time = times(&_stage_times_end.tms); \
 	clktck = sysconf(_SC_CLK_TCK); \
-	stglogit("timer", "Between %s:%d and %s:%d, timer gives:\n", thisfile, thisline, __FILE__, __LINE__); \
-	stglogit("timer", "Real Time : %7.2f\n", (_stage_times_end.time - _stage_times_start.time) / (double) clktck); \
-	stglogit("timer", "User Time : %7.2f\n", (_stage_times_end.tms.tms_utime - _stage_times_start.tms.tms_utime) / (double) clktck); \
-	stglogit("timer", "Sys  Time : %7.2f\n", (_stage_times_end.tms.tms_stime - _stage_times_start.tms.tms_stime) / (double) clktck); \
+	stglogit("timer", "[%s] Between %s:%d and %s:%d, timer gives:\n", thiscomment, thisfile, thisline, __FILE__, __LINE__); \
+	stglogit("timer", "[%s] Real Time : %7.2f (%ld ticks)\n", thiscomment, (_stage_times_end.time - _stage_times_start.time) / (double) clktck, (long) (_stage_times_end.time - _stage_times_start.time) ); \
+	stglogit("timer", "[%s] User Time : %7.2f\n", thiscomment, (_stage_times_end.tms.tms_utime - _stage_times_start.tms.tms_utime) / (double) clktck); \
+	stglogit("timer", "[%s] Sys  Time : %7.2f\n", thiscomment, (_stage_times_end.tms.tms_stime - _stage_times_start.tms.tms_stime) / (double) clktck); \
 }
 #else
-#define STAGE_TIME_START {
-#define STAGE_TIME_END }
+#define STAGE_TIME_START(comment) {}
+#define STAGE_TIME_END {}
 #endif
 #else
-#define STAGE_TIME_START {
-#define STAGE_TIME_END }
+#define STAGE_TIME_START(comment) {}
+#define STAGE_TIME_END {}
 #endif
 
 #include "marshall.h"
@@ -174,6 +175,7 @@ static char one[2] = "1";
 static int silent_flag = 0;
 static int nowait_flag = 0;
 static int tppool_flag = 0;
+static int volatile_tppool_flag = 0;
 static int noretry_flag = 0;
 static int nohsmcreat_flag = 0;
 static int rdonly_flag = 0;
@@ -403,11 +405,14 @@ void procioreq(req_type, magic, req_data, clienthost)
 		{"nocopy",             NO_ARGUMENT,  &nocopy_flag,      1},
 		{"noretry",            NO_ARGUMENT,  &noretry_flag,      1},
 		{"tppool",             REQUIRED_ARGUMENT, &tppool_flag, 1},
+		{"volatile_tppool",    NO_ARGUMENT,  &volatile_tppool_flag, 1},
 		{"nohsmcreat",         NO_ARGUMENT,  &nohsmcreat_flag,  1},
 		{"rdonly",             NO_ARGUMENT,  &rdonly_flag,      1},
 		{NULL,                 0,                  NULL,        0}
 	};
 
+	STAGE_TIME_START("procioreq");
+	
 	memset ((char *)&stgreq, 0, sizeof(stgreq));
 	rbp = req_data;
 	local_unmarshall_STRING (rbp, user);	/* login name */
@@ -420,6 +425,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 	nocopy_flag = 0;
 	noretry_flag = 0;
 	tppool_flag = 0;
+	volatile_tppool_flag = 0;
 	nohsmcreat_flag = 0;
 	rdonly_flag = 0;
 	this_tppool[0] = '\0';
@@ -646,6 +652,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		if ((flags & STAGE_NORETRY)  == STAGE_NORETRY) noretry_flag = 1;
 		if ((flags & STAGE_NOWAIT)  == STAGE_NOWAIT) nowait_flag = 1;
 		if ((flags & STAGE_NOHSMCREAT)  == STAGE_NOHSMCREAT) nohsmcreat_flag = 1;
+		if ((flags & STAGE_VOLATILE_TPPOOL)  == STAGE_VOLATILE_TPPOOL) volatile_tppool_flag = 1;
 		if ((concat_off != 0) && (req_type != STAGE_IN)) {
 			sendrep (rpfd, MSG_ERR, STG17, "-c off", "any request but stage_in");
 			errflg++;
@@ -2112,10 +2119,14 @@ void procioreq(req_type, magic, req_data, clienthost)
 			}
 */
 			isstaged_rc = -1;
+			STAGE_TIME_START("while (isstaged_rc != NOTSTAGED)");
 			while (isstaged_rc != NOTSTAGED) {
 				/* We have to loop up to when we will be sure that all copies are removed */
 				isstaged_nomore = -1;
-				switch ((isstaged_rc = isstaged (&stgreq, &stcp, poolflag, stgreq.poolname, rdonly_flag, poolname_exclusion, &isstaged_nomore, NULL, NULL, isstaged_count++))) {
+				STAGE_TIME_START("isstaged()");
+				isstaged_rc = isstaged (&stgreq, &stcp, poolflag, stgreq.poolname, rdonly_flag, poolname_exclusion, &isstaged_nomore, NULL, NULL, isstaged_count++);
+				STAGE_TIME_END;
+				switch (isstaged_rc) {
 				case ISSTAGEDBUSY:
 					c = EBUSY;
 					goto reply;
@@ -2198,6 +2209,9 @@ void procioreq(req_type, magic, req_data, clienthost)
 				/* We loop unless isstaged() has been kind enough to detect this isn't necessary */
 				if (isstaged_nomore) break;
 			}
+			STAGE_TIME_END;
+			STAGE_TIME_START("stageout processing");
+			STAGE_TIME_START("creation of stcp");
 			stcp = newreq((int) stgreq.t_or_d);
 			memcpy (stcp, &stgreq, sizeof(stgreq));
 			/* memcpy overwritted the -1 default values */
@@ -2222,7 +2236,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 #endif
 				savereqs();
 			}
-			if ((c = build_ipath (upath, stcp, pool_user, 0)) < 0) {
+			STAGE_TIME_END;
+			STAGE_TIME_START("build_ipath");
+			c = build_ipath (upath, stcp, pool_user, 0);
+			STAGE_TIME_END;
+			if (c < 0) {
 				stcp->status |= WAITING_SPC;
 				if (!wqp) {
 					wqp = add2wq (clienthost,
@@ -2261,25 +2279,34 @@ void procioreq(req_type, magic, req_data, clienthost)
 			} else {
 				/* Space successfully allocated - Try to get rid of WAITING_NS */
 				if (stcp->t_or_d == 'h') {
-					if ((c = create_hsm_entry((int) rpfd, (struct stgcat_entry *) stcp, (int) api_out, (mode_t) openmode, (int) 1)) != 0) {
-						goto reply;
-					}				}
+					STAGE_TIME_START("create_hsm_entry");
+					c = create_hsm_entry((int) rpfd, (struct stgcat_entry *) stcp, (int) api_out, (mode_t) openmode, (int) 1);
+					STAGE_TIME_END;
+					if (c != 0) goto reply;
+				}
 				if (*upath && strcmp (stcp->ipath, upath))
 					create_link (stcp, upath);
 				if (Upluspath && ((api_out == 0) ? (argv[Coptind+1][0] != '\0') : (stpp_input[1].upath[0] != '\0')) &&
 					strcmp (stcp->ipath, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath))
 					create_link (stcp, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath);
+				STAGE_TIME_START("rwcountersfs");
 				rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT);
+				STAGE_TIME_END;
 			}
 #ifdef USECDB
+			STAGE_TIME_START("stgdb_ins_stgcat");
 			if (stcp->t_or_d != 'h') {
 				if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
 					stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
 				}
 			}
+			STAGE_TIME_END;
 #endif
+			STAGE_TIME_START("savereqs");
 			savereqs();
 			if (api_out != 0) sendrep(rpfd, API_STCP_OUT, stcp, magic);
+			STAGE_TIME_END;
+			STAGE_TIME_END;
 			break;
 		case STAGEWRT:
 			/* Note : create_hsm_entry will naturally fail if output is a directory */
@@ -2728,7 +2755,6 @@ void procioreq(req_type, magic, req_data, clienthost)
 				/* We copy sensible part of the structure */
 				stcp = newreq((int) stgreq.t_or_d);
 				memcpy (stcp, &stgreq, sizeof(stgreq));
-                /* Makes sure that it does not have keep thing */
 				COPY_SENSIBLE_STCP(stcp,&save_stcp);
 			} else {
 				stcp = newreq((int) stgreq.t_or_d);
@@ -2737,6 +2763,19 @@ void procioreq(req_type, magic, req_data, clienthost)
 				if (stcp->t_or_d == 'h') {
 					stcp->u1.h.retenp_on_disk = -1;
 					stcp->u1.h.mintime_beforemigr = -1;
+				}
+			}
+			if (stgreq.t_or_d == 'h') {
+				stcp->u1.h.flag = 0;
+				switch (stgreq.u1.h.tppool[0]) {
+				case '\0':
+					/* We will select a tape pool - giving us possiblity to change while migrating, if necessary */
+					stcp->u1.h.flag |= STAGE_AUTO_TPPOOL;
+					break;
+				default:
+					/* Use gave a tape pool and may have give us possibility to change while migrating, if necessary */
+					if (volatile_tppool_flag) stcp->u1.h.flag |= STAGE_AUTO_TPPOOL;
+					break;
 				}
 			}
 			if (i > 0)
@@ -2768,11 +2807,6 @@ void procioreq(req_type, magic, req_data, clienthost)
 			if (! stcp->c_time) stcp->c_time = stcp->a_time;
 			strcpy (stcp->ipath, upath);
 			stcp->nbaccesses = 1;
-#ifdef USECDB
-			if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-				stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
-			}
-#endif
 			iokstagewrt++;
 			if (stcp->t_or_d == 'h') {
 				int ifileclass;
@@ -2783,35 +2817,37 @@ void procioreq(req_type, magic, req_data, clienthost)
 						sendrep (rpfd, MSG_ERR, STG132, stcp->u1.h.xfile, sstrerror(serrno));
 						global_c_stagewrt++;
 						c = (api_out != 0) ? save_serrno : EINVAL;
-						delreq(stcp,0);
+						delreq(stcp,1);
 						goto stagewrt_continue_loop;
 					}
 					if (! Aflag) strcpy(stcp->u1.h.tppool,(this_tppool[0] != '\0') ? this_tppool : next_tppool(&(fileclasses[ifileclass])));
 					/* Remember this for eventual next iteration */
 					if (this_tppool[0] == '\0') strcpy(this_tppool,stcp->u1.h.tppool);
-				} else if (Aflag) {        /* If Aflag is not set - check is done a little bit after */
-					/* User specified a tape pool - We check the permission to access it */
-					{
-						struct stgcat_entry stcx = *stcp;
-						stcx.uid = save_uid;
-						stcx.gid = save_gid;
-						/* stcx is a dummy req which inherits the uid/gid of the caller. */
-						/* We use it at the first round to check that requestor's uid/gid is compatible */
-						/* the uid/gid under which migration will effectively run might be different (case of stage:st) */
-						if (euid_egid(&euid,&egid,stcp->u1.h.tppool,NULL,stcp,(iokstagewrt == 0) ? &stcx : NULL,NULL,0,0) != 0) {
+				} else {
+					if (Aflag) {        /* If Aflag is not set - check is done a little bit after */
+						/* User specified a tape pool - We check the permission to access it */
+						{
+							struct stgcat_entry stcx = *stcp;
+							stcx.uid = save_uid;
+							stcx.gid = save_gid;
+							/* stcx is a dummy req which inherits the uid/gid of the caller. */
+							/* We use it at the first round to check that requestor's uid/gid is compatible */
+							/* the uid/gid under which migration will effectively run might be different (case of stage:st) */
+							if (euid_egid(&euid,&egid,stcp->u1.h.tppool,NULL,stcp,(iokstagewrt == 0) ? &stcx : NULL,NULL,0,0) != 0) {
+								global_c_stagewrt++;
+								c = (api_out != 0) ? serrno : EINVAL;
+								delreq(stcp,1);
+								goto stagewrt_continue_loop;
+							}
+							/* Remember this for eventual next iteration */
+							if (this_tppool[0] == '\0') strcpy(this_tppool,stcp->u1.h.tppool);
+						}
+						if (verif_euid_egid(euid,egid,user_waitq,group_waitq) != 0) {
 							global_c_stagewrt++;
 							c = (api_out != 0) ? serrno : EINVAL;
-							delreq(stcp,0);
+							delreq(stcp,1);
 							goto stagewrt_continue_loop;
 						}
-						/* Remember this for eventual next iteration */
-						if (this_tppool[0] == '\0') strcpy(this_tppool,stcp->u1.h.tppool);
-					}
-					if (verif_euid_egid(euid,egid,user_waitq,group_waitq) != 0) {
-						global_c_stagewrt++;
-						c = (api_out != 0) ? serrno : EINVAL;
-						delreq(stcp,0);
-						goto stagewrt_continue_loop;
 					}
 				}
 				if ((stage_wrt_migration == 0) && (actual_poolname[0] != '\0')) {
@@ -2820,11 +2856,16 @@ void procioreq(req_type, magic, req_data, clienthost)
 					if (update_migpool(&stcp,1,Aflag ? 0 : 1) != 0) {
 						global_c_stagewrt++;
 						c = (api_out != 0) ? serrno : EINVAL;
-						delreq(stcp,0);
+						delreq(stcp,1);
 						goto stagewrt_continue_loop;
 					}
 				}
 			}
+#ifdef USECDB
+			if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
+				stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+			}
+#endif
 			if (! Aflag) {
 				/* This is immediate migration */
 				if (!wqp) {
@@ -3015,6 +3056,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 	if (stpp_input != NULL) free(stpp_input);
 	return;
   reply:
+	STAGE_TIME_START("end of processing");
+	STAGE_TIME_START("end of processing : free ressources");
 	if (fseq_list != NULL) free (fseq_list);
 	if (argv != NULL) free (argv);
 	if (hsmfiles != NULL) free(hsmfiles);
@@ -3025,7 +3068,10 @@ void procioreq(req_type, magic, req_data, clienthost)
 	stageacct (STGCMDC, stgreq.uid, stgreq.gid, clienthost,
 			   reqid, req_type, 0, c, NULL, "", (char) 0);
 #endif
+	STAGE_TIME_END;
+	STAGE_TIME_START("answer to client");
 	sendrep (rpfd, STAGERC, req_type, magic, c);
+	STAGE_TIME_END;
 	if (c && wqp) {
 		int found;
 		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
@@ -3090,6 +3136,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 		}
 		rmfromwq (wqp);
 	}
+	STAGE_TIME_END;
+	STAGE_TIME_END;
 	return;
 }
 
@@ -4620,7 +4668,7 @@ int check_hsm_type(arg,nhpssfiles,ncastorfiles,nexplevel,nuserlevel,t_or_d)
 	/* We check that user do not mix different hsm types (hpss and castor) */
 	if (ISHPSS(arg)) {
 		if (ISCASTORHOST(arg)) {
-			sendrep (rpfd, MSG_ERR, STG102, "castor", "hpss", arg);
+			sendrep (rpfd, MSG_ERR, STG102, "castor", "non-castor", arg);
 			return(EINVAL);
 		}
 		++(*nhpssfiles);
@@ -4628,7 +4676,7 @@ int check_hsm_type(arg,nhpssfiles,ncastorfiles,nexplevel,nuserlevel,t_or_d)
 	}
 	if (ISCASTOR(arg)) {
 		if (ISHPSSHOST(arg)) {
-			sendrep (rpfd, MSG_ERR, STG102, "hpss", "castor", arg);
+			sendrep (rpfd, MSG_ERR, STG102, "non-castor", "castor", arg);
 			return(EINVAL);
 		}
 		++(*ncastorfiles);
@@ -4658,7 +4706,7 @@ int check_hsm_type(arg,nhpssfiles,ncastorfiles,nexplevel,nuserlevel,t_or_d)
 	}
 	/* Mixed HSM types ? */
 	if (((*nhpssfiles) > 0) && ((*ncastorfiles) > 0)) {
-		sendrep (rpfd, MSG_ERR, "HPSS and CASTOR files on the same command-line is not allowed\n");
+		sendrep (rpfd, MSG_ERR, "non-CASTOR and CASTOR files on the same command-line is not allowed\n");
 		return(EINVAL);
 	} else if (((*ncastorfiles) > 0)) {
 		/* It is a CASTOR request, so stgreq.t_or_d is set to 'h' */
@@ -4691,14 +4739,14 @@ int check_hsm_type_light(arg,t_or_d)
 	/* We check that user do not mix different hsm types (hpss and castor) */
 	if (ISHPSS(arg)) {
 		if (ISCASTORHOST(arg)) {
-			sendrep (rpfd, MSG_ERR, STG102, "castor", "hpss", arg);
+			sendrep (rpfd, MSG_ERR, STG102, "castor", "non-castor", arg);
 			return(EINVAL);
 		}
 		++nhpssfiles;
 	}
 	if (ISCASTOR(arg)) {
 		if (ISHPSSHOST(arg)) {
-			sendrep (rpfd, MSG_ERR, STG102, "hpss", "castor", arg);
+			sendrep (rpfd, MSG_ERR, STG102, "non-castor", "castor", arg);
 			return(EINVAL);
 		}
 		++ncastorfiles;
@@ -4719,7 +4767,7 @@ int check_hsm_type_light(arg,t_or_d)
 	}
 	/* Mixed HSM types ? */
 	if ((nhpssfiles > 0) && (ncastorfiles > 0)) {
-		sendrep (rpfd, MSG_ERR, "HPSS and CASTOR files on the same command-line is not allowed\n");
+		sendrep (rpfd, MSG_ERR, "Non-CASTOR and CASTOR files on the same command-line is not allowed\n");
 		return(EINVAL);
 	} else if ((ncastorfiles > 0)) {
 		/* It is a CASTOR request, so stgreq.t_or_d is set to 'h' */
@@ -4762,6 +4810,7 @@ int create_hsm_entry(rpfd,stcp,api_out,openmode,immediate_delete)
 	} else {
 		okmode = (07777 & (openmode & ~ stcp->mask));
 	}
+	STAGE_TIME_START("Cns_creatx");
 	if (Cns_creatx(stcp->u1.h.xfile, okmode, &Cnsfileid) != 0) {
 		int save_serrno = serrno;
 		setegid(start_passwd.pw_gid);
@@ -4782,6 +4831,7 @@ int create_hsm_entry(rpfd,stcp,api_out,openmode,immediate_delete)
 			return(EINVAL);
 		}
 	}
+	STAGE_TIME_END;
 	strcpy(stcp->u1.h.server,Cnsfileid.server);
 	stcp->u1.h.fileid = Cnsfileid.fileid;
 	stcp->status &= ~WAITING_NS;
@@ -4789,10 +4839,12 @@ int create_hsm_entry(rpfd,stcp,api_out,openmode,immediate_delete)
 	seteuid(start_passwd.pw_uid);
 	/* The fileclass will be checked at next user call - in a stageupdc for example */
 #ifdef USECDB
+	STAGE_TIME_START("stgdb_upd_stgcat");
 	if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 		stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 	}
 #endif
+	STAGE_TIME_END;
 	savereqs();
 	return(0);
 }
