@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.181 2002/02/12 12:29:50 jdurand Exp $
+ * $Id: poolmgr.c,v 1.182 2002/02/14 12:34:21 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.181 $ $Date: 2002/02/12 12:29:50 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.182 $ $Date: 2002/02/14 12:34:21 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1851,7 +1851,7 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
     /* And restore rw counters + check poolname definition */
     for (stcp = stcs; stcp < stce; stcp++) {
       if (stcp->reqid == 0) break;
-      if (stcp->poolname[0] != '\0') {
+      if ((stcp->poolname[0] != '\0') && (stcp->ipath[0] != '\0')) {
         char *p;
 
         /* Check that poolname from catalog match current configuration */

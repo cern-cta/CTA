@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.169 2002/02/11 07:37:40 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.170 2002/02/14 12:33:11 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.169 $ $Date: 2002/02/11 07:37:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.170 $ $Date: 2002/02/14 12:33:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -693,7 +693,7 @@ int main(argc,argv)
 		if (stcp->reqid == 0) {
 			break;
 		}
-		if (stcp->poolname[0] != '\0') {
+		if ((stcp->poolname[0] != '\0') && (stcp->ipath[0] != '\0')) {
 			char *p;
 
 			/* Check that poolname from catalog match current startup configuration */
