@@ -1,5 +1,5 @@
 /*
- * $Id: stageupdc.c,v 1.9 2000/02/11 11:06:59 jdurand Exp $
+ * $Id: stageupdc.c,v 1.10 2000/02/16 10:23:39 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.9 $ $Date: 2000/02/11 11:06:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageupdc.c,v $ $Revision: 1.10 $ $Date: 2000/02/16 10:23:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -81,26 +81,23 @@ char	**argv;
 			}
 			break;
 		case 'Z':
-			strcpy (Zparm, optarg);
-			if ((p = strtok (Zparm, ".")) != NULL) {
-				reqid = strtol (p, &dp, 10);
-				if (*dp != '\0' ||
-				    (p = strtok (NULL, "@")) == NULL) {
-					fprintf (stderr, STG06, "-Z\n");
-					errflg++;
-				} else {
-					key = strtol (p, &dp, 10);
-					if (*dp != '\0' ||
-					    (stghost = strtok (NULL, " ")) == NULL) {
-						fprintf (stderr, STG06, "-Z\n");
-						errflg++;
-					}
-				} else {
-					fprintf (stderr, STG06, "-Z\n");
-					errflg++;
-				}
-			}
-			break;
+          strcpy (Zparm, optarg);
+          if ((p = strtok (Zparm, ".")) != NULL) {
+            reqid = strtol (p, &dp, 10);
+            if (*dp != '\0' ||
+                (p = strtok (NULL, "@")) == NULL) {
+              fprintf (stderr, STG06, "-Z\n");
+              errflg++;
+            } else {
+              key = strtol (p, &dp, 10);
+              if (*dp != '\0' ||
+                  (stghost = strtok (NULL, " ")) == NULL) {
+                fprintf (stderr, STG06, "-Z\n");
+                errflg++;
+              }
+            }
+          }
+          break;
 		case '?':
 			errflg++;
 			break;
