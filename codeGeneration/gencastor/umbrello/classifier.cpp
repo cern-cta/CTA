@@ -6,6 +6,7 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+#include "package.h"
 #include "classifier.h"
 #include "association.h"
 #include "umlassociationlist.h"
@@ -19,22 +20,24 @@
 #include <klocale.h>
 
 UMLClassifier::UMLClassifier(const QString & name, int id)
-  : UMLCanvasObject(name, id)
+  : UMLPackage(name, id)
 {
 	init();
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 UMLClassifier::~UMLClassifier() {
 }
 
 UMLOperation * UMLClassifier::checkOperationSignature( QString name,
-																UMLAttributeList *opParams,
-																UMLOperation *exemptOp)
+						       UMLAttributeList *opParams,
+						       UMLOperation *exemptOp)
 {
 	UMLObjectList list = findChildObject( Uml::ot_Operation, name );
 	if( list.count() == 0 )
 		return NULL;
+	int inputParmCount = (opParams ? opParams->count() : 0);
 
 	// there is at least one operation with the same name... compare the parameter list
 	for( UMLOperation *test = dynamic_cast<UMLOperation*>(list.first());
@@ -49,9 +52,9 @@ UMLOperation * UMLClassifier::checkOperationSignature( QString name,
 				return test;
 			continue;
 		}
-		if( testParams->count() != opParams->count() )
-			continue;
 		int pCount = testParams->count();
+		if( pCount != inputParmCount )
+			continue;
 		int i = 0;
 		for( ; i < pCount; ++i )
 		{
@@ -71,9 +74,16 @@ UMLOperation * UMLClassifier::checkOperationSignature( QString name,
 
 bool UMLClassifier::addOperation(UMLOperation* op, int position )
 {
-	if( m_OpsList.findRef( op ) != -1  ||
-	    checkOperationSignature(op->getName(), op->getParmList()) )
+	if (m_OpsList.findRef(op) != -1) {
+		kdDebug() << "UMLClassifier::addOperation: findRef("
+			  << op->getName() << ") finds op (bad)"
+			  << endl;
 		return false;
+	} else if (checkOperationSignature(op->getName(), op->getParmList()) ) {
+		kdDebug() << "UMLClassifier::addOperation: checkOperationSignature("
+			  << op->getName() << ") op is non-unique" << endl;
+		return false;
+	}
 
 	if( op -> parent() )
 		op -> parent() -> removeChild( op );
@@ -113,51 +123,27 @@ int UMLClassifier::removeOperation(UMLOperation *op) {
 	return m_OpsList.count();
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-bool UMLClassifier::addStereotype(UMLStereotype* newStereotype, UMLObject_Type list, IDChangeLog* log /* = 0*/) {
-	QString name = newStereotype->getName();
-	if (findChildObject(Uml::ot_Template, name).count() == 0) {
-		if(newStereotype->parent())
-			newStereotype->parent()->removeChild(newStereotype);
-		this->insertChild(newStereotype);
-		// What is this?? do we really want to store stereotypes in opsList?!?? -b.t.
-#ifdef __GNUC__
-#warning "addStereotype method needs review..conflicts with set/getStereoType in umlobject aswell as opList storage issues"
-#endif
-		if (list == ot_Operation) {
-			m_OpsList.append(newStereotype);
-			emit modified();
-			emit childObjectAdded(newStereotype);
-			emit stereotypeAdded(newStereotype);
-			connect(newStereotype, SIGNAL(modified()), this, SIGNAL(modified()));
-		} else {
-			kdWarning() << "unknown list type in addStereotype()" << endl;
-		}
-		return true;
-	} else if (log) {
-		log->removeChangeByNewID( newStereotype->getID() );
-		delete newStereotype;
+UMLOperation* UMLClassifier::takeOperation(UMLOperation* o) {
+	if (removeOperation(o) >= 0) {
+		return o;
 	}
-	return false;
+	return 0;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-int UMLClassifier::removeStereotype(UMLStereotype * /* stype*/) {
-#ifdef __GNUC__
-#warning "removeStereotype method not implemented yet"
-#endif
-	kdError() << "can't find stereotype given in list" << endl;
-	return -1;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-UMLObjectList UMLClassifier::findChildObject(UMLObject_Type t , QString n) {
-  	UMLObjectList list;
- 	if (t == ot_Association) {
+UMLObjectList UMLClassifier::findChildObject(UMLObject_Type t , QString n,
+					     bool seekStereo /* = false */) {
+	UMLObjectList list;
+	if (t == ot_Association) {
 		return UMLCanvasObject::findChildObject(t, n);
 	} else if (t == ot_Operation) {
 		UMLClassifierListItem* obj=0;
 		for(obj=m_OpsList.first();obj != 0;obj=m_OpsList.next()) {
-			if(obj->getBaseType() == t && obj -> getName() == n)
+			if (obj->getBaseType() != t)
+				continue;
+			if (seekStereo) {
+				if (obj->getStereotype() == n)
+					list.append( obj );
+			} else if (obj->getName() == n)
 				list.append( obj );
 		}
 	} else {
@@ -168,18 +154,27 @@ UMLObjectList UMLClassifier::findChildObject(UMLObject_Type t , QString n) {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 UMLObject* UMLClassifier::findChildObject(int id) {
-        UMLClassifierListItem * o=0;
+	UMLClassifierListItem * o=0;
 	for(o=m_OpsList.first();o != 0;o=m_OpsList.next()) {
 		if(o->getID() == id)
 			return o;
 	}
 	return UMLCanvasObject::findChildObject(id);
 }
+
+UMLObject* UMLClassifier::findChildObjectByIdStr(QString idStr) {
+	UMLClassifierListItem *o = NULL;
+	for (o = m_OpsList.first(); o; o = m_OpsList.next()) {
+		if (o->getAuxId() == idStr)
+			return o;
+	}
+	return NULL;
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 UMLClassifierList UMLClassifier::findSubClassConcepts (ClassifierType /*type*/) {
   UMLAssociationList list = this->getGeneralizations();
-  UMLClassifierList inheritingConcepts;
-  int myID = this->getID();
+	UMLClassifierList inheritingConcepts;
+	int myID = this->getID();
   for (UMLAssociation *a = list.first(); a; a = list.next())
   {
     // Concepts on the "A" side inherit FROM this class
@@ -188,34 +183,37 @@ UMLClassifierList UMLClassifier::findSubClassConcepts (ClassifierType /*type*/) 
     // from another class).
     // SO check for roleA id, it DOESNT match this concepts ID,
     // then its a concept which inherits from us
-    if (a->getRoleAId() != myID)
-    {
-      UMLObject* obj = a->getObjectA();
-      UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
-      if (concept)
-        inheritingConcepts.append(concept);
-    }
-    
-  }
-  return inheritingConcepts;
+		if (a->getRoleId(A) != myID)
+		{
+			UMLObject* obj = a->getObject(A);
+			UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
+			if (concept)
+				inheritingConcepts.append(concept);
+		}
+
+	}
+	return inheritingConcepts;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 UMLClassifierList UMLClassifier::findSuperClassConcepts (ClassifierType /*type*/) {
   UMLAssociationList list = this->getGeneralizations();
-  UMLClassifierList parentConcepts;
-  int myID = this->getID();
+	UMLClassifierList parentConcepts;
+	int myID = this->getID();
   for (UMLAssociation *a = list.first(); a; a = list.next()) {
-    // Concepts on the "B" side are parent (super) classes of this one
-    // So check for roleB id, it DOESNT match this concepts ID,
-    // then its a concept which we inherit from
-    if (a->getRoleBId() != myID) {
-      UMLObject* obj = a->getObjectB();
-      UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
-      if (concept)
-        parentConcepts.append(concept);
-    }
-  }
-  return parentConcepts;
+    // Concepts on the "A" side inherit FROM this class
+    // as long as the ID of the role A class isnt US (in
+    // that case, the generalization describes how we inherit
+    // from another class).
+    // SO check for roleA id, it DOESNT match this concepts ID,
+    // then its a concept which inherits from us
+		if (a->getRoleId(B) != myID) {
+			UMLObject* obj = a->getObject(B);
+			UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
+			if (concept)
+				parentConcepts.append(concept);
+		}
+	}
+	return parentConcepts;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 UMLClassifierList UMLClassifier::findSuperInterfaceConcepts () {
@@ -227,8 +225,8 @@ UMLClassifierList UMLClassifier::findSuperInterfaceConcepts () {
     // Concepts on the "B" side are parent (super) classes of this one
     // So check for roleB id, it DOESNT match this concepts ID,
     // then its a concept which we inherit from
-    if (a->getRoleBId() != myID) {
-      UMLObject* obj = a->getObjectB();
+    if (a->getRoleId(B) != myID) {
+      UMLObject* obj = a->getObject(B);
       UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
       if (concept)
         parentConcepts.append(concept);
@@ -258,8 +256,8 @@ UMLClassifierList UMLClassifier::findSuperAbstractConcepts () {
     // Concepts on the "B" side are parent (super) classes of this one
     // So check for roleB id, it DOESNT match this concepts ID,
     // then its a concept which we inherit from
-    if (a->getRoleBId() != myID) {
-      UMLObject* obj = a->getObjectB();
+    if (a->getRoleId(B) != myID) {
+      UMLObject* obj = a->getObject(B);
       UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
       if (concept && concept->getAbstract())
         parentConcepts.append(concept);
@@ -335,6 +333,15 @@ bool UMLClassifier::operator==( UMLClassifier & rhs ) {
 	return UMLCanvasObject::operator==(rhs);
 }
 
+
+void UMLClassifier::copyInto(UMLClassifier *rhs) const
+{
+	UMLCanvasObject::copyInto(rhs);
+
+	m_OpsList.copyInto(&(rhs->m_OpsList));
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // this perhaps should be in UMLClass/UMLInterface classes instead.
 bool UMLClassifier::acceptAssociationType(Uml::Association_Type type)
@@ -346,7 +353,7 @@ bool UMLClassifier::acceptAssociationType(Uml::Association_Type type)
 		case at_Dependency:
 		case at_Association:
 		case at_Association_Self:
-		case at_Implementation:
+		case at_Containment:
 		case at_Composition:
 		case at_Realization:
 		case at_UniAssociation:
@@ -358,11 +365,11 @@ bool UMLClassifier::acceptAssociationType(Uml::Association_Type type)
 }
 
 bool UMLClassifier::hasAbstractOps () {
-        UMLOperationList *opl = getFilteredOperationsList();
-        for(UMLOperation *op = opl->first(); op ; op = opl->next())
-                if(op->getAbstract())
-                        return true;
-        return false;
+	UMLOperationList opl(getFilteredOperationsList());
+	for(UMLOperation *op = opl.first(); op ; op = opl.next())
+		if(op->getAbstract())
+			return true;
+	return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -371,9 +378,27 @@ int UMLClassifier::operations() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-UMLClassifierListItemList* UMLClassifier::getOpList() {
-	return &m_OpsList;
+UMLClassifierListItemList UMLClassifier::getOpList(bool includeInherited) {
+	UMLClassifierListItemList ops(m_OpsList);
+	if (includeInherited) {
+		UMLClassifierList parents(findSuperClassConcepts());
+		for (UMLClassifierListIt pit(parents); pit.current(); ++pit) {
+			// get operations for each parent by recursive call
+			UMLClassifierListItemList pops = pit.current()->getOpList(includeInherited);
+			// add these operations to operation list, but only if unique.
+			for (UMLClassifierListItem *po = pops.first(); po; po = pops.next()) {
+				UMLClassifierListItem* o = ops.first();
+				QString po_as_string(po->toString(Uml::st_SigNoScope));
+				for (;o && o->toString(Uml::st_SigNoScope) != po_as_string ;o = ops.next())
+					;
+				if (!o)
+					ops.append(po);
+			}
+		}
+	}
+	return ops;
 }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 QPtrList<UMLOperation>*
 UMLClassifier::getFilteredOperationsList(Scope permitScope,
@@ -392,12 +417,13 @@ UMLClassifier::getFilteredOperationsList(Scope permitScope,
 	return operationList;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-UMLOperationList* UMLClassifier::getFilteredOperationsList()  {
-	UMLOperationList* operationList = new UMLOperationList;
-	for(UMLClassifierListItem* listItem = m_OpsList.first(); listItem;
-	    listItem = m_OpsList.next())  {
+UMLOperationList UMLClassifier::getFilteredOperationsList(bool includeInherited)  {
+	UMLClassifierListItemList classifierList(getOpList(includeInherited));
+	UMLOperationList operationList;
+	for(UMLClassifierListItem* listItem = classifierList.first(); listItem;
+	    listItem = classifierList.next())  {
 		if (listItem->getBaseType() == ot_Operation) {
-			operationList->append(static_cast<UMLOperation*>(listItem));
+			operationList.append(static_cast<UMLOperation*>(listItem));
 		}
 	}
 	return operationList;
@@ -408,60 +434,75 @@ void UMLClassifier::init() {
 	m_OpsList.setAutoDelete(false);
 
 	// make connections so that parent document is updated of list of uml objects
+
+/* CHECK: Can we remove this code:
 #ifdef __GNUC__
 #warning "Cheap add/removeOperation fix for slot add/RemoveUMLObject calls. Need long-term solution"
 #endif
-        UMLDoc * parent = UMLApp::app()->getDocument();
-        connect(this,SIGNAL(childObjectAdded(UMLObject *)),parent,SLOT(addUMLObject(UMLObject*)));
-        connect(this,SIGNAL(childObjectRemoved(UMLObject *)),parent,SLOT(slotRemoveUMLObject(UMLObject*)));
-
-}
-////////////////////////////////////////////////////////////////////////////////////////////////////
-bool UMLClassifier::saveToXMI( QDomDocument & qDoc, QDomElement & qElement ) {
-	QDomElement classElement = qDoc.createElement("UML:Interface");
-	bool status = UMLObject::saveToXMI( qDoc, classElement );
-	//save operations
-	UMLClassifierListItem* pOp = 0;
-	for ( pOp = m_OpsList.first(); pOp != 0; pOp = m_OpsList.next() ) {
-		pOp->saveToXMI(qDoc, classElement);
-	}
-	qElement.appendChild( classElement );
-	return status;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-bool UMLClassifier::loadFromXMI( QDomElement & element ) {
-	if( !UMLObject::loadFromXMI(element) ) {
-		return false;
-	}
-	return load(element);
+	UMLDoc * parent = UMLApp::app()->getDocument();
+	connect(this,SIGNAL(childObjectAdded(UMLObject *)),parent,SLOT(addUMLObject(UMLObject*)));
+	connect(this,SIGNAL(childObjectRemoved(UMLObject *)),parent,SLOT(slotRemoveUMLObject(UMLObject*)));
+ */
 }
 
 bool UMLClassifier::load(QDomElement& element) {
 	QDomNode node = element.firstChild();
-	QDomElement tempElement = node.toElement();
-	while( !tempElement.isNull() ) {
-		QString tag = tempElement.tagName();
-		if (tag == "UML:Classifier.feature") {
+	element = node.toElement();
+	while( !element.isNull() ) {
+		QString tag = element.tagName();
+		if (tagEq(tag, "Classifier.feature") ||
+		    tagEq(tag, "Namespace.ownedElement") ||
+		    tagEq(tag, "Namespace.contents")) {
 			//CHECK: Umbrello currently assumes that nested elements
-			// are features anyway.
-			// Therefore the <UML:Classifier.feature> tag is of no
-			// significance.
-			if (! load(tempElement))
+			// are features/ownedElements anyway.
+			// Therefore these tags are not further interpreted.
+			if (! load(element))
 				return false;
-		} else if (tag == "UML:Operation") {
+		} else if (tagEq(tag, "Operation")) {
 			UMLOperation* op = new UMLOperation(NULL);
-			if( !op->loadFromXMI(tempElement) ||
-			    !this->addOperation(op) ) {
+			if (!op->loadFromXMI(element)) {
+				kdError() << "UMLClassifier::load: error from op->loadFromXMI()"
+					  << endl;
 				delete op;
 				return false;
+			} else if (!this->addOperation(op) ) {
+				kdError() << "UMLClassifier::load: error from this->addOperation(op)"
+					  << endl;
+				//return false;
+				// Returning false here will spoil the entire
+				// load. At this point the user has been warned
+				// that something went wrong so let's still try
+				// our best effort.
+			}
+		} else if (!loadSpecialized(element)) {
+			UMLDoc *umldoc = UMLApp::app()->getDocument();
+			UMLObject *pObject = umldoc->makeNewUMLObject(tag);
+			if( !pObject ) {
+				kdWarning() << "UMLClassifier::load: "
+					    << "Unknown type of umlobject to create: "
+					    << tag << endl;
+				node = node.nextSibling();
+				element = node.toElement();
+				continue;
+			}
+			pObject->setUMLPackage(this);
+			if (pObject->loadFromXMI(element)) {
+				addObject(pObject);
+				if (tagEq(tag, "Generalization"))
+					umldoc->addAssocToConcepts((UMLAssociation *) pObject);
+			} else {
+				delete pObject;
 			}
 		}
 		node = node.nextSibling();
-		tempElement = node.toElement();
+		element = node.toElement();
 	}//end while
 	return true;
 }
 
+bool UMLClassifier::loadSpecialized(QDomElement& ) {
+	// The UMLClass will override this for reading UMLAttributes.
+	return true;
+}
 
 #include "classifier.moc"

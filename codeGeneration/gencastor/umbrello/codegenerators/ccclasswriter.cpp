@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ccclasswriter.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/15 12:54:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ccclasswriter.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/11/18 09:19:55 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -233,29 +233,29 @@ void CCClassWriter::writeAssociationMethods (QPtrList<UMLAssociation> associatio
     for(UMLAssociation *a = associations.first(); a; a = associations.next()) {
       // insert the methods to access the role of the other
       // class in the code of this one
-      if (a->getRoleAId() == myID && a->getVisibilityB() == Uml::Public) {
+      if (a->getRoleId(A) == myID && a->getVisibility(B) == Uml::Public) {
         // only write out IF there is a rolename given
-        if(!a->getRoleNameB().isEmpty()) {
-          QString className = a->getObjectB()->getName();
+        if(!a->getRoleName(B).isEmpty()) {
+          QString className = a->getObject(B)->getName();
           if (!isEnum(className)) className.append("*");
           writeAssociationRoleMethod
             (className,
-             a->getRoleNameB(),
-             parseMulti(a->getMultiB()),
-             a->getChangeabilityB(),
+             a->getRoleName(B),
+             parseMulti(a->getMulti(B)),
+             a->getChangeability(B),
              stream);
         }
       }
-      if (a->getRoleBId() == myID && a->getVisibilityA() == Uml::Public) {
+      if (a->getRoleId(B) == myID && a->getVisibility(A) == Uml::Public) {
         // only write out IF there is a rolename given
-        if(!a->getRoleNameA().isEmpty()) {
-          QString className = a->getObjectA()->getName();
+        if(!a->getRoleName(A).isEmpty()) {
+          QString className = a->getObject(A)->getName();
           if (!isEnum(className)) className.append("*");
           writeAssociationRoleMethod
             (className,
-             a->getRoleNameA(),
-             parseMulti(a->getMultiA()),
-             a->getChangeabilityA(),
+             a->getRoleName(A),
+             parseMulti(a->getMulti(A)),
+             a->getChangeability(A),
              stream);
         }
       }
@@ -647,7 +647,7 @@ QString CCClassWriter::getPrefix(QString type,
   if (m_typeConvertions.find(type) != m_typeConvertions.end()) {
     return m_typeConvertions[type];
   }
-  if (0 == m_doc->findUMLClassifier(getSimpleType(type))) {
+  if (0 == getClassifier(type)) {
     return type;
   }
   QString result = QString("C");

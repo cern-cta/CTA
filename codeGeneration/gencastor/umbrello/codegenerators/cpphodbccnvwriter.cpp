@@ -92,8 +92,7 @@ void CppHOdbcCnvWriter::writeMembers() {
             << "HSTMT m_updateStatement;"
             << endl << endl;    
   // Dealing with object status if we have a request
-  UMLObject* obj = m_doc->findUMLObject(QString("Request"),
-                                        Uml::ot_Class);
+  UMLObject* obj = getClassifier(QString("Request"));
   const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
   if (m_classInfo->allSuperclasses.contains(concept)) {
     *m_stream << getIndent()

@@ -39,8 +39,8 @@
 // Constructors/Destructors
 //
 
-SimpleCodeGenerator::SimpleCodeGenerator (UMLDoc * parentDoc , const char * name)
-    : CodeGenerator( parentDoc, name )
+SimpleCodeGenerator::SimpleCodeGenerator (UMLDoc * parentDoc , const char * name, bool /*createDirHierarchyForPackages*/)
+  : CodeGenerator( parentDoc, name)
 {
 	parentDoc->disconnect(this); // disconnect from UMLDoc.. we arent planning to be synced at all
 	initFields(parentDoc);
@@ -184,8 +184,8 @@ bool SimpleCodeGenerator::hasDefaultValueAttr(UMLClass *c) {
 }
 
 bool SimpleCodeGenerator::hasAbstractOps(UMLClassifier *c) {
-        QPtrList<UMLOperation> *opl = c->getFilteredOperationsList();
-        for(UMLOperation *op = opl->first(); op ; op = opl->next())
+        UMLOperationList opl = c->getFilteredOperationsList();
+        for(UMLOperation *op = opl.first(); op ; op = opl.next())
                 if(op->getAbstract())
                         return true;
         return false;

@@ -162,11 +162,11 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
 	hasAccessorMethods[Uml::Private] =
     atpriv.count() > 0 || static_atpriv.count() > 0;
 
-  QPtrList<UMLOperation>* opl = c->getFilteredOperationsList();
+  UMLOperationList opl = c->getFilteredOperationsList();
 	hasOperationMethods[Uml::Public] = false;
 	hasOperationMethods[Uml::Protected] = false;
 	hasOperationMethods[Uml::Private] = false;
-  for(UMLClassifierListItem* item = opl->first(); item; item = opl->next()) {
+  for(UMLClassifierListItem* item = opl.first(); item; item = opl.next()) {
     hasOperationMethods[item->getScope()] = true;
 	}
   if (!c->getAbstract()) {
@@ -174,7 +174,7 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
          interface !=0;
          interface = implementedAbstracts.next()) { 
       opl = interface->getFilteredOperationsList();
-      for(UMLClassifierListItem* item = opl->first(); item; item = opl->next()) {
+      for(UMLClassifierListItem* item = opl.first(); item; item = opl.next()) {
         if (item->getAbstract()) {
           hasOperationMethods[item->getScope()] = true;
         }
@@ -228,12 +228,12 @@ UMLClassifierList ClassifierInfo::findAssocClassifierObjsInRoles (UMLAssociation
 		// the association.
 		// We also ignore classfiers which are the same as the current one
 		// (e.g. id matches), we only want the "other" classfiers
-		if (a->getRoleAId() == m_nID && a->getRoleNameB() != "") {
-			UMLClassifier *c = dynamic_cast<UMLClassifier*>(a->getObjectB());
+		if (a->getRoleId(A) == m_nID && a->getRoleName(B) != "") {
+			UMLClassifier *c = dynamic_cast<UMLClassifier*>(a->getObject(B));
 			if(c)
 				classifiers.append(c);
-		} else if (a->getRoleBId() == m_nID && a->getRoleNameA() != "") {
-			UMLClassifier *c = dynamic_cast<UMLClassifier*>(a->getObjectA());
+		} else if (a->getRoleId(B) == m_nID && a->getRoleName(A) != "") {
+			UMLClassifier *c = dynamic_cast<UMLClassifier*>(a->getObject(A));
 			if(c)
 				classifiers.append(c);
 		}

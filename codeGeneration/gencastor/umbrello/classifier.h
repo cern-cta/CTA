@@ -11,24 +11,20 @@
 #define CONCEPT_H
 
 #include "umlcanvasobject.h"
-#include "umlobjectlist.h"
-#include "umldoc.h"
-#include "umlclassifierlist.h"
+#include "package.h"
 #include "umlattributelist.h"
 #include "umloperationlist.h"
 #include "umlclassifierlistitemlist.h"
-#include <qptrlist.h>
 
 class IDChangeLog;
-class UMLStereotype;
 
 /**
  * This is an abstract class which defines the non-graphical information/
- * interface required for a UML Concept (ie a class or interface).
- * This class inherits from @ref UMLCanvasObject which contains most of the
- * information.
+ * interface required for a UML Classifier (ie a class or interface).
+ * This class inherits from @ref UMLPackage which allows classifiers
+ * to also act as namespaces, i.e. it allows classifiers to nest.
  *
- * The @ref UMLDoc class creates instances of this type.  All Concepts will
+ * The @ref UMLDoc class creates instances of this type.  All Classifiers
  * need a unique id.  This will be given by the @ref UMLDoc class.  If you
  * don't leave it up to the @ref UMLDoc class then call the method @ref
  * UMLDoc::getUniqueID to get a unique id.
@@ -38,14 +34,15 @@ class UMLStereotype;
  * Bugs and comments to uml-devel@lists.sf.net or http://bugs.kde.org
  */
 
-class UMLClassifier : public UMLCanvasObject {
+class UMLClassifier : public UMLPackage {
 	Q_OBJECT
 public:
-	
+
 	/**
 	 * Enumeration identifying the type of classifier.
 	 */
 	enum ClassifierType { ALL = 0, CLASS, INTERFACE, DATATYPE };
+
 
 	/**
 	 * Sets up a Concept.
@@ -63,8 +60,21 @@ public:
 	/**
 	 * Overloaded '==' operator.
 	 */
-  	bool operator==( UMLClassifier & rhs );
-  
+	bool operator==( UMLClassifier & rhs );
+
+	/**
+	 * Copy the internal presentation of this object into the new
+	 * object.
+	 */
+	virtual void copyInto(UMLClassifier *rhs) const;
+
+	/**
+	 * Make a clone of this object. This function is abstract
+	 * since it is not possible to realise a clone. It has other abstract
+	 * functions. Underlying classes must implement the clone functionality.
+	 */
+	virtual UMLObject* clone() const = 0;
+
 	/**
 	 * Adds an operation to the classifier, at the given position.
 	 * If position is negative or too large, the attribute is added
@@ -77,7 +87,6 @@ public:
 	 * @return true if the Operation could be added to the Classifier.
 	 */
 	bool addOperation(UMLOperation* Op, int position = -1);
-	
 
 	/**
 	 * Appends an operation to the classifier.
@@ -89,7 +98,7 @@ public:
 	 * @return	True if the operation was added successfully.
 	 */
 	bool addOperation(UMLOperation* Op, IDChangeLog* Log);
-	
+
 	/**
 	 * Checks whether an operation is valid based on its signature -
 	 * An operation is "valid" if the operation's name and paramter list
@@ -97,7 +106,7 @@ public:
 	 *
 	 * @param name		Name of the operation to check.
 	 * @param opParams	Pointer to the method argument list.
-	 * @param exemptOp	Pointer to the exempt method (optional)
+	 * @param exemptOp	Pointer to the exempt method (optional.)
 	 * @return	NULL if the signature is valid (ok), else return a pointer
 	 *		to the existing UMLOperation that causes the conflict.
 	 */
@@ -117,27 +126,14 @@ public:
 	int removeOperation(UMLOperation *op);
 
 	/**
-	 * Add an already created stereotype to the list identified by the
-	 * UMLObject_Type.
+	 * Take and return an operation from class.
+	 * It is the callers responsibility to pass on ownership of
+	 * the returned operation (or to delete the operation)
 	 *
-	 * @param newStereotype	Pointer to the UMLStereotype to add.
-	 * @param list		Object type giving the list on which to add.
-	 * @param log		Pointer to the IDChangeLog.
-	 * @return	True if the stereotype was successfully added.
+	 * @param  o operation to take
+	 * @return pointer to the operation or null if not found.
 	 */
-	virtual bool addStereotype(UMLStereotype* newStereotype, UMLObject_Type list, IDChangeLog* log = 0);
-	
-
-        /**
-         * Remove a stereotype from the Classifier.
-         * The stereotype is not deleted so the caller is responsible for what
-         * happens to it after this.
-         *
-         * @param stype    The stereotype to remove.
-         * @return      Count of the remaining stereotypes after removal, or
-         *              -1 if the given operation was not found.
-         */
-        int removeStereotype (UMLStereotype *stype);
+	UMLOperation* takeOperation(UMLOperation* o);
 
 	/**
 	 * counts the number of operations in the Classifier.
@@ -147,18 +143,12 @@ public:
 	int operations();
 
 	/**
-	 * counts the number of stereotypes in the Classifier.
-	 *
-	 * @return	The number of stereotypes for the Classifier.
-	 */
-	int stereotypes();
-
-	/**
-	 * Return the list of operations for the Classifier.
+	 * Return a list of operations for the Classifier.
+	 * @param includeInherited Includes operations from superclasses.
 	 *
 	 * @return	The list of operations for the Classifier.
 	 */
-	UMLClassifierListItemList* getOpList();
+	UMLClassifierListItemList getOpList(bool includeInherited = false);
 
 	/**
 	 * Returns the entries in m_pOpsList that are actually operations
@@ -168,24 +158,13 @@ public:
 	UMLOperationList*
     getFilteredOperationsList(Uml::Scope permitScope,
                               bool keepAbstractOnly = false);
-  
+
 	/**
 	 * Returns the entries in m_pOpsList that are actually operations.
 	 *
 	 * @return	The list of true operations for the Concept.
 	 */
-	UMLOperationList* getFilteredOperationsList();
-
-	/**
-	 * Returns a name for the new association, operation, template
-	 * or attribute appended with a number if the default name is
-	 * taken e.g. new_association, new_association_1 etc.
-	 * The classes inheriting from UMLClassifier must implement this method.
-	 *
-	 * @param type		The object type for which to generate a name.
-	 * @return	Unique name for the UMLObject_Type given.
-	 */
-	virtual QString uniqChildName(const UMLObject_Type type) = 0;
+	UMLOperationList getFilteredOperationsList(bool includeInherited = false);
 
 	/**
 	 * Find a list of attributes, operations, associations or
@@ -193,9 +172,12 @@ public:
 	 *
 	 * @param t		The type to find.
 	 * @param n		The name of the object to find.
+	 * @param seekStereo	Set this true if we should look at the object's
+	 *			stereotype instead of its name.
 	 * @return	The list of objects found; will be empty if none found.
 	 */
-	virtual UMLObjectList findChildObject(UMLObject_Type t, QString n);
+	virtual UMLObjectList findChildObject(UMLObject_Type t, QString n,
+					      bool seekStereo = false);
 
 	/**
 	 * Find an attribute, operation, association or template.
@@ -206,12 +188,6 @@ public:
 	 */
 	virtual UMLObject* findChildObject(int id);
 
-  /**
-   * Returns a list of classes (not interfaces) which this concept inherits from.
-   * @return      list    a QPtrList of UMLClassifiers we inherit from.
-   */
-  UMLClassifierList findSuperClassConcepts ( ClassifierType type = ALL);
-  
   /**
    * Returns a list of interfaces which this concept inherits from.
    * @return      list    a QPtrList of UMLClassifiers we implement.
@@ -254,32 +230,40 @@ public:
    */
   UMLClassifierList findAllImplementedClasses ();
   
-  /**
-   * Returns a list of concepts which inherit from this concept.
-   * @return      list    a QPtrList of UMLClassifiers we inherit from.
-   */
-  UMLClassifierList findSubClassConcepts ( ClassifierType type = ALL);
-  
+	/**
+	 * Find the object of the given (non-numeric) auxiliary ID
+	 * in m_OpsList.  The auxiliary ID is the ID returned by
+	 * UMLObject::getAuxId() and is currently only used for
+	 * loading foreign XMI files.
+	 *
+	 * @param idStr		The ID to seek.
+	 * @return	Pointer to the UMLObject found or NULL if not found.
+	 */
+	UMLObject* findChildObjectByIdStr(QString idStr);
+
+	/**
+	 * Returns a list of concepts which this concept inherits from.
+	 *
+	 * @param type		The ClassifierType to seek.
+	 * @return	List of UMLClassifiers we inherit from.
+	 */
+	UMLClassifierList findSuperClassConcepts(ClassifierType type = ALL);
+
+	/**
+	 * Returns a list of concepts which inherit from this concept.
+	 *
+	 * @param type		The ClassifierType to seek.
+	 * @return	List of UMLClassifiers that inherit from us.
+	 */
+	UMLClassifierList findSubClassConcepts(ClassifierType type = ALL);
 
 	/** reimplemented from UMLObject */
 	virtual bool acceptAssociationType(Uml::Association_Type);
 
-	/**
-	 * Creates the XMI element including its operations and generalizations.
-	 * This method is usually overridden/extended by the inheriting classes.
-	 */
-	virtual bool saveToXMI( QDomDocument & qDoc, QDomElement & qElement );
-
-	/**
-	 * Creates the XMI element including its operations and generalizations.
-	 * This method is usually overridden/extended by the inheriting classes.
-	 */
-	virtual bool loadFromXMI( QDomElement & element );
-
 	//
 	// now a number of pure virtual methods..
 	//
-	
+
 	/**
 	 * Returns true if this classifier represents an interface.
 	 * This method must be implemented by the inheriting classes.
@@ -293,24 +277,14 @@ public:
 
 signals:
 	/** Signals that a new UMLOperation has been added to the classifer.
-	  * The signal is emitted in addition to the generic childObjectAdded()
-	  */
+	 * The signal is emitted in addition to the generic childObjectAdded()
+	 */
 	void operationAdded(UMLOperation *);
 
 	/** Signals that a UMLOperation has been removed from the classifer.
-	  * The signal is emitted in addition to the generic childObjectRemoved()
-	  */
+	 * The signal is emitted in addition to the generic childObjectRemoved()
+	 */
 	void operationRemoved(UMLOperation *);
-
- 	/** Signals that a new UMLStereotype has been added to the classifer.
-	  * The signal is emitted in addition to the generic childObjectAdded()
-	  */
-	void stereotypeAdded (UMLStereotype *);
-
-	/** Signals that a UMLStereotype has been removed from the classifer.
-	  * The signal is emitted in addition to the generic childObjectRemoved()
-	  */
-	void stereotypeRemoved(UMLStereotype *);
 
 protected:
 
@@ -323,14 +297,27 @@ private:
 
 	/**
 	 * Initializes key variables of the class.
-	 */ 
+	 */
 	void init();
 
+protected:
 	/**
-	 * Auxiliary to loadFromXMI.
+	 * Auxiliary to loadFromXMI:
+	 * The loading of operations is implemented here.
+	 * Calls loadSpecialized() for any other tag.
+	 * Child classes can override the loadSpecialized method
+	 * to load its additional tags.
 	 */
-	bool load(QDomElement& element);
+	virtual bool load(QDomElement& element);
+
+	/**
+	 * Auxiliary to load().
+	 * The implementation is empty here.
+	 * Child classes can override this method to implement
+	 * the loading of additional tags.
+	 */
+	virtual bool loadSpecialized(QDomElement& element);
 
 };
 
-#endif // CONCEPT_H 
+#endif // CONCEPT_H

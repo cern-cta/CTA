@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 
 	KApplication app;
   UMLApp *uml = new UMLApp();
-  KConfig * cfg = app.config();
+  app.config();
   uml->initGenerators();
 
   KCmdLineArgs *args = KCmdLineArgs::parsedArgs();

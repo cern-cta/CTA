@@ -622,12 +622,19 @@ QString CppBaseWriter::getSimpleType(QString type) {
     type = type.right(type.length()-2);
   return type;
 }
-  
+
 //=============================================================================
 // getClassifier
 //=============================================================================
 UMLClassifier* CppBaseWriter::getClassifier(QString type) {
-  return m_doc->findUMLClassifier(getSimpleType(type));
+  QString name = getSimpleType(type);
+  UMLClassifierList inList = m_doc->getConcepts();
+  for (UMLClassifier * obj = inList.first(); obj != 0; obj = inList.next()) {
+		if (obj->getName() == name) {
+      return obj;
+    }
+	}
+	return NULL;
 }
 
 //=============================================================================
@@ -724,27 +731,27 @@ void CppBaseWriter::singleAssocToPairList (UMLAssociation *a,
                                            AssocList &list,
                                            ClassifierInfo &ci) {
   Assoc* as;
-  if (ci.id() == a->getRoleAId() ||
-      ci.allSuperclassIds.contains(a->getRoleAId())) {
-    as = new Assoc(AssocType(parseMulti(a->getMultiB()),
-                             parseMulti(a->getMultiA()),
+  if (ci.id() == a->getRoleId(A) ||
+      ci.allSuperclassIds.contains(a->getRoleId(A))) {
+    as = new Assoc(AssocType(parseMulti(a->getMulti(B)),
+                             parseMulti(a->getMulti(A)),
                              parseAssocKind(a->getAssocType(), true)),
-                   Member(a->getRoleNameB(),
-                          a->getObjectB()->getName(),
-                          a->getObjectB()->getAbstract()),
-                   Member(a->getRoleNameA(),
-                          a->getObjectA()->getName(),
-                          a->getObjectA()->getAbstract()));
+                   Member(a->getRoleName(B),
+                          a->getObject(B)->getName(),
+                          a->getObject(B)->getAbstract()),
+                   Member(a->getRoleName(A),
+                          a->getObject(A)->getName(),
+                          a->getObject(A)->getAbstract()));
   } else {
-    as = new Assoc(AssocType(parseMulti(a->getMultiA()),
-                             parseMulti(a->getMultiB()),
+    as = new Assoc(AssocType(parseMulti(a->getMulti(A)),
+                             parseMulti(a->getMulti(B)),
                              parseAssocKind(a->getAssocType(), false)),
-                   Member(a->getRoleNameA(),
-                          a->getObjectA()->getName(),
-                          a->getObjectA()->getAbstract()),
-                   Member(a->getRoleNameB(),
-                          a->getObjectB()->getName(),
-                          a->getObjectB()->getAbstract()));
+                   Member(a->getRoleName(A),
+                          a->getObject(A)->getName(),
+                          a->getObject(A)->getAbstract()),
+                   Member(a->getRoleName(B),
+                          a->getObject(B)->getName(),
+                          a->getObject(B)->getAbstract()));
   }
   list.append(as);
 }
@@ -769,7 +776,6 @@ CppBaseWriter::AssocKind CppBaseWriter::parseAssocKind(Uml::Association_Type t,
                                                        bool isParent) {
   switch (t) {
   case Uml::at_Generalization:
-  case Uml::at_Implementation:
   case Uml::at_Realization:
     return isParent ? IMPL_PARENT : IMPL_CHILD;
   case Uml::at_Aggregation:
@@ -789,7 +795,7 @@ CppBaseWriter::AssocKind CppBaseWriter::parseAssocKind(Uml::Association_Type t,
 // isEnum
 //=============================================================================
 bool CppBaseWriter::isEnum(QString name) {
-  UMLObject* obj = m_doc->findUMLObject(name, Uml::ot_Class);
+  UMLObject* obj = getClassifier(name);
   if (0 == obj) return false;
   UMLClass *concept = dynamic_cast<UMLClass*>(obj);
   if (0 == concept) return false;

@@ -43,7 +43,8 @@ public:
 	 * @param id		The unique id of the Concept.
 	 */
 	UMLCanvasObject(const QString & name = "", int id = -1);
-	
+
+
 	/**
 	 * Standard deconstructor.
 	 */
@@ -52,33 +53,38 @@ public:
 	/**
 	 *  Overloaded '==' operator
 	 */
-  	virtual bool operator==(UMLCanvasObject& rhs);
-  
-  	/**
- 	 * Adds an association.
- 	 * Which role is "this" side (i.e. identifies the current concept)
- 	 * depends on the association type:
- 	 * For generalizations, role A is "this" side.
- 	 * For aggregations and compositions, role B is "this" side.
- 	 *
- 	 * @param assoc		The association to add.
- 	 */
- 	bool addAssociation(UMLAssociation* assoc);
- 
- 	/**
- 	 * Determine if this canvasobject has the given association.
+	virtual bool operator==(UMLCanvasObject& rhs);
+
+	/**
+	 * Copy the internal presentation of this object into the new
+	 * object.
+	 */
+	virtual void copyInto(UMLCanvasObject *rhs) const;
+
+	// The abstract method UMLObject::clone() is implemented
+	// in the classes inheriting from UMLCanvasObject.
+
+	/**
+	 * Adds an association.
 	 *
- 	 * @param assoc		The association to check.
- 	 */
- 	bool hasAssociation(UMLAssociation* assoc);
- 
- 	/**
- 	 * Remove an association from the CanvasObject.
- 	 *
- 	 * @param o		The association to remove.
- 	 */
- 	int removeAssociation(UMLAssociation *assoc);
- 
+	 * @param assoc		The association to add.
+	 */
+	bool addAssociation(UMLAssociation* assoc);
+
+	/**
+	 * Determine if this canvasobject has the given association.
+	 *
+	 * @param assoc		The association to check.
+	 */
+	bool hasAssociation(UMLAssociation* assoc);
+
+	/**
+	 * Remove an association from the CanvasObject.
+	 *
+	 * @param o		The association to remove.
+	 */
+	int removeAssociation(UMLAssociation *assoc);
+
 	/**
 	 * Returns the number of associations for the CanvasObject.
 	 * This is the sum of the aggregations and compositions.
@@ -103,21 +109,14 @@ public:
 	UMLAssociationList getSpecificAssocs(Uml::Association_Type assocType);
 
 	/**
-	 * Shorthand for getSpecificAssocs(Uml::at_Association)
+   * Shorthand for getSpecificAssocs(Uml::at_Association)
    * and getSpecificAssocs(Uml::at_UniAssoication)
-	 * 
-	 * @return	The list of "standard" associations for the Concept.
-	 */
+   * 
+   * @return      The list of "standard" associations for the Concept.
+   */
   UMLAssociationList getStdAssociations();
-
-	/**
-	 *	Shorthand for getSpecificAssocs(Uml::at_Generalization)
-	 *
-	 *	@return The list of generalizations for the Concept.
-	 */
-	virtual UMLAssociationList getGeneralizations();
-
-	/**
+  
+  /**
 	 * Return a list of the superclasses of this concept.
 	 * TODO: This overlaps with UMLClassifier::findSuperClassConcepts(),
 	 *       see if we can merge the two.
@@ -136,8 +135,15 @@ public:
 	UMLClassifierList getSubClasses();
 
 	/**
+	 * Shorthand for getSpecificAssocs(Uml::at_Generalization)
+	 *
+	 * @return	The list of generalizations for the Concept.
+	 */
+	virtual UMLAssociationList getGeneralizations();
+
+	/**
 	 * Shorthand for getSpecificAssocs(Uml::at_Realization)
-	 * 
+	 *
 	 * @return	The list of realizations for the Concept.
 	 */
 	virtual UMLAssociationList getRealizations();
@@ -161,9 +167,12 @@ public:
 	 *
 	 * @param t		The type to find.
 	 * @param n		The name of the object to find.
+	 * @param seekStereo	Set this true if we should look at the object's
+	 *			stereotype instead of its name.
 	 * @return	List of objects found (empty if none found.)
 	 */
-	virtual UMLObjectList findChildObject(UMLObject_Type t, QString n);
+	virtual UMLObjectList findChildObject(UMLObject_Type t, QString n,
+					      bool seekStereo = false);
 
 	/**
 	 * Find an association.
@@ -179,9 +188,15 @@ public:
 	 * taken e.g. new_association, new_association_1 etc.
 	 *
 	 * @param type		The object type for which to make a name.
+	 * @param seekStereo	Set this true if we should look at the object's
+	 *			stereotype instead of its name.
 	 * @return	Unique name string for the UMLObject_Type given.
 	 */
-	virtual QString uniqChildName(const UMLObject_Type type);
+	virtual QString uniqChildName(const UMLObject_Type type,
+				      bool seekStereo = false);
+
+	// The abstract method UMLObject::saveToXMI() is implemented
+	// in the classes inheriting from UMLCanvasObject.
 
 protected:
 
@@ -192,24 +207,24 @@ protected:
 
 private:
 
-        /**
-         * Initialises key variables of the class.
-         */
-        void init();
+	/**
+	 * Initialises key variables of the class.
+	 */
+	void init();
 
 signals:
 
-        /**
-         * Emit when new association is added.
-         * @param assoc Pointer to the association which has been added.
-         */
-        void sigAssociationAdded(UMLAssociation * assoc);
+	/**
+	 * Emit when new association is added.
+	 * @param assoc Pointer to the association which has been added.
+	 */
+	void sigAssociationAdded(UMLAssociation * assoc);
 
-        /**
-         * Emit when new association is removed.
-         * @param assoc Pointer to the association which has been removed.
-         */
-        void sigAssociationRemoved(UMLAssociation * assoc);
+	/**
+	 * Emit when new association is removed.
+	 * @param assoc Pointer to the association which has been removed.
+	 */
+	void sigAssociationRemoved(UMLAssociation * assoc);
 
 };
 

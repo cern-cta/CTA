@@ -490,7 +490,7 @@ class CppBaseWriter : public CppCastorWriter {
    */
   std::map<QString, void(*)(CppBaseWriter*, QTextStream&)>
     m_castorPrintImplementations;
-  
+
 };
 
 

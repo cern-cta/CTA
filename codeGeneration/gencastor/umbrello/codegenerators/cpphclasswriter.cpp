@@ -341,41 +341,41 @@ void CppHClassWriter::writeAssociationDecls(QPtrList<UMLAssociation> association
         a = associations.next()) {
       // it may seem counter intuitive, but you want to insert the role of the
       // *other* class into *this* class.
-      if (a->getRoleAId() == id && a->getRoleNameB() != "")
+      if (a->getRoleId(A) == id && a->getRoleName(B) != "")
         printRoleB = true;
-      if (a->getRoleBId() == id && a->getRoleNameA() != "")
+      if (a->getRoleId(B) == id && a->getRoleName(A) != "")
         printRoleA = true;
       // First: we insert documentaion for association IF it has either role AND some documentation (!)
       if ((printRoleA || printRoleB) && !(a->getDoc().isEmpty()))
         writeComment(a->getDoc(), getIndent(), h);
       // print RoleB decl
       if (printRoleB &&
-          a->getVisibilityB() == permitScope &&
-          !a->getRoleNameB().isEmpty()) {
-        QString rawClassName = a->getObjectB()->getName();
+          a->getVisibility(B) == permitScope &&
+          !a->getRoleName(B).isEmpty()) {
+        QString rawClassName = a->getObject(B)->getName();
         if (!isEnum(rawClassName)) rawClassName.append("*");
         QString fieldClassName = fixTypeName(rawClassName,
-                                             a->getObjectB()->getPackage(),
+                                             a->getObject(B)->getPackage(),
                                              m_classInfo->packageName);
         writeAssociationRoleDecl(fieldClassName,
-                                 a->getRoleNameB(),
-                                 parseMulti(a->getMultiB()),
-                                 a->getRoleBDoc(),
+                                 a->getRoleName(B),
+                                 parseMulti(a->getMulti(B)),
+                                 a->getRoleDoc(B),
                                  h);
       }
       // print RoleA decl
       if (printRoleA &&
-          a->getVisibilityA() == permitScope &&
-          !a->getRoleNameA().isEmpty()) {
-        QString rawClassName = a->getObjectA()->getName();
+          a->getVisibility(A) == permitScope &&
+          !a->getRoleName(A).isEmpty()) {
+        QString rawClassName = a->getObject(A)->getName();
         if (!isEnum(rawClassName)) rawClassName.append("*");
         QString fieldClassName = fixTypeName(rawClassName,
-                                             a->getObjectA()->getPackage(),
+                                             a->getObject(A)->getPackage(),
                                              m_classInfo->packageName);
         writeAssociationRoleDecl(fieldClassName,
-                                 a->getRoleNameA(),
-                                 parseMulti(a->getMultiA()),
-                                 a->getRoleADoc(),
+                                 a->getRoleName(A),
+                                 parseMulti(a->getMulti(A)),
+                                 a->getRoleDoc(A),
                                  h);
       }
       // reset for next association in our loop
@@ -433,33 +433,33 @@ void CppHClassWriter::writeAssociationMethods (QPtrList<UMLAssociation> associat
     for(UMLAssociation *a = associations.first(); a; a = associations.next()) {
       // insert the methods to access the role of the other
       // class in the code of this one
-      if (a->getRoleAId() == myID && a->getVisibilityA() == permitVisib) {
+      if (a->getRoleId(A) == myID && a->getVisibility(A) == permitVisib) {
         // only write out IF there is a rolename given
-        if(!a->getRoleNameB().isEmpty()) {
-          QString fieldClassName = a->getObjectB()->getName();
+        if(!a->getRoleName(B).isEmpty()) {
+          QString fieldClassName = a->getObject(B)->getName();
           if (writePointerVar && !isEnum(fieldClassName))
             fieldClassName.append("*");
           writeAssociationRoleMethod(fieldClassName,
                                      getNamespace(fieldClassName),
-                                     a->getRoleNameB(),
-                                     parseMulti(a->getMultiB()),
-                                     a->getRoleBDoc(),
-                                     a->getChangeabilityB(),
+                                     a->getRoleName(B),
+                                     parseMulti(a->getMulti(B)),
+                                     a->getRoleDoc(B),
+                                     a->getChangeability(B),
                                      stream);
         }
       }
-      if (a->getRoleBId() == myID && a->getVisibilityB() == permitVisib) {
+      if (a->getRoleId(B) == myID && a->getVisibility(B) == permitVisib) {
         // only write out IF there is a rolename given
-        if(!a->getRoleNameA().isEmpty()) {
-          QString fieldClassName = a->getObjectA()->getName();
+        if(!a->getRoleName(A).isEmpty()) {
+          QString fieldClassName = a->getObject(A)->getName();
           if (writePointerVar && !isEnum(fieldClassName))
             fieldClassName.append("*");
           writeAssociationRoleMethod(fieldClassName,
                                      getNamespace(fieldClassName),
-                                     a->getRoleNameA(),
-                                     parseMulti(a->getMultiA()),
-                                     a->getRoleADoc(),
-                                     a->getChangeabilityA(),
+                                     a->getRoleName(A),
+                                     parseMulti(a->getMulti(A)),
+                                     a->getRoleDoc(A),
+                                     a->getChangeability(A),
                                      stream);
         }
       }

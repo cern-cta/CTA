@@ -196,20 +196,20 @@ void CppCppClassWriter::writeInitInConstructor(QString name,
 //=============================================================================
 void CppCppClassWriter::writeAssocInitInConstructor (UMLAssociation *a,
                                                      bool& first) {
-  if (m_classInfo->id() == a->getRoleAId() ||
-      m_classInfo->allSuperclassIds.contains(a->getRoleAId())) {
-    if (parseMulti(a->getMultiB()) == MULT_ONE) {
-      QString className = a->getObjectB()->getName();
+  if (m_classInfo->id() == a->getRoleId(A) ||
+      m_classInfo->allSuperclassIds.contains(a->getRoleId(A))) {
+    if (parseMulti(a->getMulti(B)) == MULT_ONE) {
+      QString className = a->getObject(B)->getName();
       if (!isEnum(className)) className.append("*");
-      writeInitInConstructor (QString("m_") + a->getRoleNameB(),
+      writeInitInConstructor (QString("m_") + a->getRoleName(B),
                               className,
                               first);
     }
   } else {
-    if (parseMulti(a->getMultiA()) == MULT_ONE) {
-      QString className = a->getObjectA()->getName();
+    if (parseMulti(a->getMulti(A)) == MULT_ONE) {
+      QString className = a->getObject(A)->getName();
       if (!isEnum(className)) className.append("*");
-      writeInitInConstructor (QString("m_") + a->getRoleNameA(),
+      writeInitInConstructor (QString("m_") + a->getRoleName(A),
                               className,
                               first);
     }
@@ -291,29 +291,29 @@ void CppCppClassWriter::writeDeleteInDestructor(QString name,
 // writeAssocDeleteInDestructor
 //=============================================================================
 void CppCppClassWriter::writeAssocDeleteInDestructor(UMLAssociation *a) {
-  Multiplicity multA = parseMulti(a->getMultiA());
-  Multiplicity multB = parseMulti(a->getMultiB());
-  if (a->getRoleNameB() != "" && a->getRoleNameA() != "") {
-    if (m_classInfo->id() == a->getRoleAId() ||
-        m_classInfo->allSuperclassIds.contains(a->getRoleAId())) {
-      UMLClass* cl = dynamic_cast<UMLClass*>(a->getObjectB());
+  Multiplicity multA = parseMulti(a->getMulti(A));
+  Multiplicity multB = parseMulti(a->getMulti(B));
+  if (a->getRoleName(B) != "" && a->getRoleName(A) != "") {
+    if (m_classInfo->id() == a->getRoleId(A) ||
+        m_classInfo->allSuperclassIds.contains(a->getRoleId(A))) {
+      UMLClass* cl = dynamic_cast<UMLClass*>(a->getObject(B));
       if (0 == cl || !cl->isEnumeration()) {
-        fixTypeName(a->getObjectB()->getName(),
-                    getNamespace(a->getObjectB()->getName()),
+        fixTypeName(a->getObject(B)->getName(),
+                    getNamespace(a->getObject(B)->getName()),
                     m_classInfo->packageName);
         writeDeleteInDestructor
-          (a->getRoleNameB(), a->getRoleNameA(),
+          (a->getRoleName(B), a->getRoleName(A),
            multB, multA,
            a->getAssocType() == Uml::at_Composition);
       }
     } else {
-      UMLClass* cl = dynamic_cast<UMLClass*>(a->getObjectA());
+      UMLClass* cl = dynamic_cast<UMLClass*>(a->getObject(A));
       if (0 == cl || !cl->isEnumeration()) {
-        fixTypeName(a->getObjectA()->getName(),
-                    getNamespace(a->getObjectA()->getName()),
+        fixTypeName(a->getObject(A)->getName(),
+                    getNamespace(a->getObject(A)->getName()),
                     m_classInfo->packageName);
         writeDeleteInDestructor
-          (a->getRoleNameA(), a->getRoleNameB(),
+          (a->getRoleName(A), a->getRoleName(B),
            multA, multB, false);
       }
     }
@@ -459,28 +459,28 @@ void CppCppClassWriter::writeFullPrint(CppBaseWriter* obj,
 void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
                                         CppBaseWriter* obj,
                                         QTextStream &stream) {
-  if (obj->classInfo()->id() == a->getRoleAId() ||
-      obj->classInfo()->allSuperclassIds.contains(a->getRoleAId())) {
-    if (a->getRoleNameB() != "") {
-      Multiplicity multiB = obj->parseMulti(a->getMultiB());
+  if (obj->classInfo()->id() == a->getRoleId(A) ||
+      obj->classInfo()->allSuperclassIds.contains(a->getRoleId(A))) {
+    if (a->getRoleName(B) != "") {
+      Multiplicity multiB = obj->parseMulti(a->getMulti(B));
       switch (multiB) {
       case MULT_ONE:
         {
-          UMLInterface* in = dynamic_cast<UMLInterface*>(a->getObjectB());
-          UMLClass* cl = dynamic_cast<UMLClass*>(a->getObjectB());
+          UMLInterface* in = dynamic_cast<UMLInterface*>(a->getObject(B));
+          UMLClass* cl = dynamic_cast<UMLClass*>(a->getObject(B));
           if (in != 0 || (cl != 0 && ! cl->isEnumeration())) {
-            writeAssoc1Print (a->getRoleNameB(),
-                              a->getObjectB()->getName(),
+            writeAssoc1Print (a->getRoleName(B),
+                              a->getObject(B)->getName(),
                               obj,
                               stream);
           } else {
-            writeSimplePrint (obj->getIndent(), a->getRoleNameB(), stream);
+            writeSimplePrint (obj->getIndent(), a->getRoleName(B), stream);
           }
         }
         break;
       case MULT_N:
-        writeAssocNPrint (a->getRoleNameB(),
-                          a->getObjectB()->getName() + "*",
+        writeAssocNPrint (a->getRoleName(B),
+                          a->getObject(B)->getName() + "*",
                           obj,
                           stream);
         break;
@@ -489,26 +489,26 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
       }
     }
   } else {
-    if (a->getRoleNameA() != "") {
-      Multiplicity multiA = obj->parseMulti(a->getMultiA());
+    if (a->getRoleName(A) != "") {
+      Multiplicity multiA = obj->parseMulti(a->getMulti(A));
       switch (multiA) {
       case MULT_ONE:
         {
-          UMLInterface* in = dynamic_cast<UMLInterface*>(a->getObjectA());
-          UMLClass* cl = dynamic_cast<UMLClass*>(a->getObjectA());
+          UMLInterface* in = dynamic_cast<UMLInterface*>(a->getObject(A));
+          UMLClass* cl = dynamic_cast<UMLClass*>(a->getObject(A));
           if (in != 0 || (cl != 0 && ! cl->isEnumeration())) {
-            writeAssoc1Print (a->getRoleNameA(),
-                              a->getObjectA()->getName(),
+            writeAssoc1Print (a->getRoleName(A),
+                              a->getObject(A)->getName(),
                               obj,
                               stream);
           } else {
-            writeSimplePrint (obj->getIndent(), a->getRoleNameA(), stream);
+            writeSimplePrint (obj->getIndent(), a->getRoleName(A), stream);
           }
         }
         break;
       case MULT_N:
-        writeAssocNPrint (a->getRoleNameA(),
-                          a->getObjectA()->getName() + "*",
+        writeAssocNPrint (a->getRoleName(A),
+                          a->getObject(A)->getName() + "*",
                           obj,
                           stream);
         break;

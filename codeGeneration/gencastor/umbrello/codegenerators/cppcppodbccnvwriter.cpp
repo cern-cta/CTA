@@ -1428,8 +1428,7 @@ QString CppCppOdbcCnvWriter::getSQLType(QString& type) {
 // isRequest
 //=============================================================================
 bool CppCppOdbcCnvWriter::isRequest() {
-  UMLObject* obj = m_doc->findUMLObject(QString("Request"),
-                                        Uml::ot_Class);
+  UMLObject* obj = getClassifier(QString("Request"));
   const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
   return m_classInfo->allSuperclasses.contains(concept);
 }

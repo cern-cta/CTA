@@ -121,7 +121,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
   // Check whether some methods or members should be added
   {
     // first the print method for IObject descendants
-    UMLObject* obj = m_doc->findUMLObject(QString("IObject"),
+    UMLObject* obj = m_doc->findUMLObject(QString("castor::IObject"),
                                           Uml::ot_Interface);
     const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
     if (classInfo.allImplementedAbstracts.contains(concept) ||
@@ -154,7 +154,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
         (QString("The set of objects already printed.\n") +
          "This is to avoid looping when printing circular dependencies");
       printOp->getParmList()->append(alreadyPrintedParam);
-      c->getOpList()->append(printOp);
+      c->getOpList().append(printOp);
       // Second print method, with no arguments
       printOp = getDocument()->createOperation(c,"print const", &param);
       printOp->setReturnType("virtual void");
@@ -163,7 +163,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
       if (classInfo.isInterface) {
         printOp->setAbstract(true);
       }
-      c->getOpList()->append(printOp);
+      c->getOpList().append(printOp);
       // For first level of concrete implementations
       if (!c->getAbstract()) {
         // TYPE method
@@ -172,7 +172,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
         typeOp->setID(m_doc->getUniqueID());
         typeOp->setDoc("Gets the type of this kind of objects");
         typeOp->setStatic(true);
-        c->getOpList()->append(typeOp);
+        c->getOpList().append(typeOp);
         // check whether some ancester is non abstract
         // If yes, don't redefine id
         if (classInfo.allSuperclasses.count() ==
@@ -193,7 +193,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
           type2Op->setReturnType("int");
           type2Op->setID(m_doc->getUniqueID());
           type2Op->setDoc("Gets the type of the object");
-          c->getOpList()->append(type2Op);
+          c->getOpList().append(type2Op);
         }
       }
     }
@@ -225,7 +225,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
       // the IPersistent abstract interface
       if (!c->getAbstract() &&
           m_noCnvs.find(c->getName()) == m_noCnvs.end()) {
-        UMLObject* obj = m_doc->findUMLObject(QString("IPersistent"),
+        UMLObject* obj = m_doc->findUMLObject(QString("castor::IPersistent"),
                                               Uml::ot_Interface);
         const UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
         ClassifierInfo* classInfo = new ClassifierInfo(c, m_doc);
@@ -260,7 +260,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
 //           runGenerator(odbchw, "castor/db/odbc/Odbc" + file + "Cnv.hpp", c);
 //           runGenerator(odbccppw, "castor/db/odbc/Odbc" + file + "Cnv.cpp", c);
         }
-        obj = m_doc->findUMLObject(QString("IStreamable"),
+        obj = m_doc->findUMLObject(QString("castor::IStreamable"),
                                    Uml::ot_Interface);
         concept = dynamic_cast<UMLClassifier*>(obj);
         if (classInfo->implementedAbstracts.contains(concept)) {

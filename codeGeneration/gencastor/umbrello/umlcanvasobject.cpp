@@ -6,18 +6,20 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+#include "umldoc.h"
 #include "umlcanvasobject.h"
 #include "classifier.h"
 #include "association.h"
 #include "attribute.h"
 #include "operation.h"
 #include "template.h"
+#include "stereotype.h"
 #include "clipboard/idchangelog.h"
 #include <kdebug.h>
 #include <klocale.h>
 
-UMLCanvasObject::UMLCanvasObject(const QString & name, int id) 
-   : UMLObject(name, id) 
+UMLCanvasObject::UMLCanvasObject(const QString & name, int id)
+   : UMLObject(name, id)
 {
 	init();
 }
@@ -61,13 +63,25 @@ int UMLCanvasObject::removeAssociation(UMLAssociation * assoc) {
 	emit sigAssociationRemoved(assoc);
 	return m_AssocsList.count();
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////
-QString UMLCanvasObject::uniqChildName(const UMLObject_Type type) {
+
+QString UMLCanvasObject::uniqChildName( const UMLObject_Type type,
+					bool seekStereo /* = false */ ) {
 	QString currentName;
-	if (type == ot_Association) {
+	if (seekStereo) {
+		currentName = i18n("new_stereotype");
+	} else if (type == ot_Association) {
 		currentName = i18n("new_association");
+	} else if (type == ot_Attribute) {
+		currentName = i18n("new_attribute");
+	} else if (type == ot_Template) {
+		currentName = i18n("new_template");
+	} else if (type == ot_Operation) {
+		currentName = i18n("new_operation");
+	} else if (type == ot_EnumLiteral) {
+		currentName = i18n("new_literal");
 	} else {
-		kdWarning() << "uniqChildName() called for unknown child type" << endl;
+		kdWarning() << "uniqChildName() called for unknown child type " << type << endl;
+		return "ERROR_in_UMLCanvasObject_uniqChildName";
 	}
 
 	QString name = currentName;
@@ -76,13 +90,19 @@ QString UMLCanvasObject::uniqChildName(const UMLObject_Type type) {
 	}
 	return name;
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////
-UMLObjectList UMLCanvasObject::findChildObject(UMLObject_Type t, QString n) {
+
+UMLObjectList UMLCanvasObject::findChildObject(UMLObject_Type t, QString n,
+					       bool seekStereo /* = false */) {
 	UMLObjectList list;
 	if (t == ot_Association) {
 		UMLAssociation * obj=0;
 		for (obj = m_AssocsList.first(); obj != 0; obj = m_AssocsList.next()) {
-			if (obj->getBaseType() == t && obj -> getName() == n)
+			if (obj->getBaseType() != t)
+				continue;
+			if (seekStereo) {
+				if (obj->getStereotype() == n)
+					list.append( obj );
+			} else if (obj->getName() == n)
 				list.append( obj );
 		}
 	} else {
@@ -90,7 +110,7 @@ UMLObjectList UMLCanvasObject::findChildObject(UMLObject_Type t, QString n) {
 	}
 	return list;
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////
+
 UMLObject* UMLCanvasObject::findChildObject(int id) {
 	UMLAssociation * asso = 0;
 	for (asso = m_AssocsList.first(); asso != 0; asso = m_AssocsList.next()) {
@@ -120,6 +140,16 @@ bool UMLCanvasObject::operator==(UMLCanvasObject& rhs) {
 	return true;
 }
 
+void UMLCanvasObject::copyInto(UMLCanvasObject *rhs) const
+{
+	UMLObject::copyInto(rhs);
+
+	// TODO Associations are not copied at the moment. This because
+	// the duplicate function (on umlwidgets) do not copy the associations.
+	//
+	//rhs->m_AssocsList = m_AssocsList;
+}
+
 int UMLCanvasObject::associations() {
 	return m_AssocsList.count();
 }
@@ -130,27 +160,17 @@ const UMLAssociationList& UMLCanvasObject::getAssociations() {
 
 UMLClassifierList UMLCanvasObject::getSuperClasses() {
 	UMLClassifierList list;
-	// WARNING:
-	// Currently there's quite some chaos regarding role assignments in
-	// generalizations. The diagram code (AssociationWidget et al.) assumes
-	//    B -> A
-	// i.e. the specialized class is role B and the general class is role A,
-	// while the document code (i.e. UMLAssociation et al.) assumes
-	//    A -> B
-	// i.e. the general class is role B and the specialized class is role A,
-	// Right here, we have the A->B case.
-	// I hope to clean this up shortly   --okellogg 2003/12/22
 	for (UMLAssociation* a = m_AssocsList.first(); a; a = m_AssocsList.next()) {
 		if ( a->getAssocType() != Uml::at_Generalization ||
-		     a->getRoleAId() != this->getID() )
+		     a->getRoleId(A) != this->getID() )
 			continue;
-		UMLClassifier *c = dynamic_cast<UMLClassifier*>(a->getObjectB());
+		UMLClassifier *c = dynamic_cast<UMLClassifier*>(a->getObject(B));
 		if (c)
 			list.append(c);
 		else
 			kdDebug() << "UMLCanvasObject::getSuperClasses: generalization's"
 				  << " other end is not a UMLClassifier"
-				  << " (id= " << a->getRoleBId() << ")" << endl;
+				  << " (id= " << a->getRoleId(B) << ")" << endl;
 	}
 	return list;
 }
@@ -160,15 +180,15 @@ UMLClassifierList UMLCanvasObject::getSubClasses() {
 	// WARNING: See remark at getSuperClasses()
 	for (UMLAssociation* a = m_AssocsList.first(); a; a = m_AssocsList.next()) {
 		if ( a->getAssocType() != Uml::at_Generalization ||
-		     a->getRoleBId() != this->getID() )
+		     a->getRoleId(B) != this->getID() )
 			continue;
-		UMLClassifier *c = dynamic_cast<UMLClassifier*>(a->getObjectA());
+		UMLClassifier *c = dynamic_cast<UMLClassifier*>(a->getObject(A));
 		if (c)
 			list.append(c);
 		else
 			kdDebug() << "UMLCanvasObject::getSubClasses: specialization's"
 				  << " other end is not a UMLClassifier"
-				  << " (id=" << a->getRoleAId() << ")" << endl;
+				  << " (id=" << a->getRoleId(A) << ")" << endl;
 	}
 	return list;
 }
