@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.133 2001/06/22 16:40:51 jdurand Exp $
+ * $Id: procio.c,v 1.134 2001/06/25 08:58:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.133 $ $Date: 2001/06/22 16:40:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.134 $ $Date: 2001/06/25 08:58:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3546,8 +3546,22 @@ isstaged(cur, p, poolflag, poolname, rdonly)
 								stcp_regardless_of_rdonly = stcp;
 							} else {
 								/* We are in a readonly mode - this mean that preference is always given to an */
-								/* entry not matching STAGEWRT or STAGEPUT */
-								if ((ISSTAGEWRT(stcp_regardless_of_rdonly) || ISSTAGEPUT(stcp_regardless_of_rdonly)) && ISCASTORMIG(stcp)) {
+								/* entry not matching STAGEWRT or STAGEPUT or not PUT_FAILED */
+								if (
+									(
+										(
+											ISSTAGEWRT(stcp_regardless_of_rdonly) ||
+											ISSTAGEPUT(stcp_regardless_of_rdonly)
+										) &&
+										ISCASTORMIG(stcp)
+									) ||
+									(
+										(
+											((stcp->status & STAGED) == STAGED) && 
+											((stcp_regardless_of_rdonly->status & STAGED) != STAGED)
+										)
+									)
+								   ) {
 									stcp_regardless_of_rdonly = stcp;
 								}
 							}
