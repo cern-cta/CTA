@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.22 $ $Date: 2005/03/11 12:05:17 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.23 $ $Date: 2005/04/01 15:56:25 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -222,15 +222,18 @@ IPROGS_C += FileName($(BIN),ProgramTargetName(rtcpcldCleanupDB)) \
 	   FileName($(BIN),ProgramTargetName(MigHunter))
 PROGS_D += ProgramTargetName(rtcpclientd) \
 	   ProgramTargetName(recaller) \
-	   ProgramTargetName(migrator)
+	   ProgramTargetName(migrator) \
+	   ProgramTargetName(TapeErrorHandler)
 IPROGS_D += FileName($(BIN),ProgramTargetName(rtcpclientd)) \
 	    FileName($(BIN),ProgramTargetName(recaller)) \
-	    FileName($(BIN),ProgramTargetName(migrator))
+	    FileName($(BIN),ProgramTargetName(migrator)) \
+	    FileName($(BIN),ProgramTargetName(TapeErrorHandler)) 
 EPROGS_C += FileName($(EXPORTBIN),rtcpcldCleanupDB) \
 	   FileName($(EXPORTBIN),MigHunter) \
 	   FileName($(EXPORTBIN),rtcpclientd) \
 	   FileName($(EXPORTBIN),recaller) \
-	   FileName($(EXPORTBIN),migrator)
+	   FileName($(EXPORTBIN),migrator) \
+	   FileName($(EXPORTBIN),TapeErrorHandler)
 MANPAGES_C += FileName($(MANDIR),rtcpclientd.$(MANSUFFIX)) FileName($(MANDIR),rtcpcldCleanupDB.$(MANSUFFIX))
 EMANPAGES_C += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpclientd.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpcldCleanupDB.$(MANSUFFIX)))
 #endif
@@ -256,6 +259,7 @@ RTCPLIB_OBJS =	rtcpc_SendRecv.Osuf rtcp_InitNW.Osuf rtcpc_log.Osuf \
 TPREAD_OBJS =	tpread.Osuf
 RECALLER_OBJS = recaller.Osuf
 MIGRATOR_OBJS = migrator.Osuf
+TAPEERRORHANDLER_OBJS = TapeErrorHandler.Osuf
 RTCPCLIENTD_OBJS = rtcpclientd.Osuf
 RTCPCLD_OBJS =	rtcpcldcommon.Osuf rtcpcldCatalogueInterface.Osuf \
 		rtcpcldVmgrInterface.Osuf rtcpcldNsInterface.Osuf
@@ -313,6 +317,8 @@ NormalProgramTarget(recaller,$(RECALLER_OBJS) $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS)
 
 NormalProgramTarget(migrator,$(MIGRATOR_OBJS) $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
 
+NormalProgramTarget(TapeErrorHandler,$(TAPEERRORHANDLER_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
+
 NormalProgramTarget(rtcpclientd,$(RTCPCLIENTD_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 
 NormalProgramTarget(MigHunter,$(MIGHUNTER_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
@@ -351,6 +357,7 @@ InstallProgram(dumptape,$(BIN),root,bin,0755)
 InstallProgram(rtcpclientd,$(BIN),root,bin,0750)
 InstallProgram(recaller,$(BIN),root,bin,0750)
 InstallProgram(migrator,$(BIN),root,bin,0750)
+InstallProgram(TapeErrorHandler,$(BIN),root,bin,0750)
 InstallProgram(rtcpcldCleanupDB,$(BIN),root,bin,0750)
 InstallProgram(MigHunter,$(BIN),root,bin,0755)
 #if BuildRtstat
@@ -403,6 +410,7 @@ IEXPORT(rtcpd,$(EXPORTBIN),750)
 IEXPORT(rtcpclientd,$(EXPORTBIN),750)
 IEXPORT(recaller,$(EXPORTBIN),750)
 IEXPORT(migrator,$(EXPORTBIN),750)
+IEXPORT(TapeErrorHandler,$(EXPORTBIN),750)
 IEXPORT(rtcpcldCleanupDB,$(EXPORTBIN),750)
 IEXPORT(MigHunter,$(EXPORTBIN),755)
 #if BuildRtstat
