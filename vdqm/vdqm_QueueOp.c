@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.16 $ $Date: 2000/01/11 17:36:01 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.17 $ $Date: 2000/01/11 18:19:47 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -192,9 +192,11 @@ static int VolInUse(const dgn_element_t *dgn_context,
     if ( INVALID_DGN_CONTEXT || volid == NULL ) return(0);
     found = 0;
     CLIST_ITERATE_BEGIN(dgn_context->drv_queue,drv) {
-        if ( drv->vol != NULL &&
-            *drv->vol->vol.volid != '\0' && 
-            !strcmp(drv->vol->vol.volid,volid) ) {
+        if ( (drv->vol != NULL &&
+              *drv->vol->vol.volid != '\0' && 
+              !strcmp(drv->vol->vol.volid,volid)) ||
+             (!strcmp(drv->drv.volid,volid) && 
+              (drv->drv.status & VDQM_UNIT_UNKNOWN)) ) {
             found = 1;
             break;
         }
@@ -763,8 +765,10 @@ int vdqm_DelVolReq(vdqmVolReq_t *VolReq) {
     /*
      * Can only remove request if not assigned to a drive. Otherwise
      * it should be cleanup by resetting the drive status to RELEASE + FREE.
+     * Mark it as UNKNOWN until an unit status clarifies what has happened.
      */
     if ( (drvrec = volrec->drv) != NULL ) {
+        drvrec->drv.status |= VDQM_UNIT_UNKNOWN;
         vdqm_SetError(EVQREQASS);
         rc = -1;
     } else {
@@ -1130,7 +1134,7 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
     dgn_element_t *dgn_context;
     vdqm_volrec_t *volrec;
     vdqm_drvrec_t *drvrec;
-    int rc,i;
+    int rc,i,unknown;
     char status_string[256];
     
     if ( hdr == NULL || DrvReq == NULL ) return(-1);
@@ -1202,8 +1206,12 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
     log(LOG_INFO,"%s@%s DGN %s: requested status: %s\n",DrvReq->drive,
         DrvReq->server,DrvReq->dgn,status_string);
     /*
-     * Reset UNKNOWN status if necessary.
+     * Reset UNKNOWN status if necessary. Remember that entry status
+     * in case there is a RELEASE since we then cannot allow the unit
+     * to be assigned to another job until it is FREE (i.e. we must
+     * wait until volume has been unmounted). 
      */
+    unknown = drvrec->drv.status & VDQM_UNIT_UNKNOWN;
     drvrec->drv.status = drvrec->drv.status & ~VDQM_UNIT_UNKNOWN;
     /*
      * Verify that new unit status is consistent with the
@@ -1526,17 +1534,26 @@ int vdqm_NewDrvReq(vdqmHdr_t *hdr, vdqmDrvReq_t *DrvReq) {
                  * If a volume is mounted but current job ended: check if there
                  * are any other valid request for the same volume. The volume
                  * can only be re-used on this unit if the modes are the same.
+                 * If the drive status was UNKNOWN at entry we must force an
+                 * unmount in all cases.
                  */
-                rc = AnyVolRecForMountedVol(dgn_context,drvrec,&volrec);
-                if ( rc == -1 || volrec == NULL || 
+                rc = 0;
+                if (!unknown)
+                    rc = AnyVolRecForMountedVol(dgn_context,drvrec,&volrec);
+                if ( unknown || rc == -1 || volrec == NULL || 
                      volrec->vol.mode != drvrec->drv.mode ) {
                     if ( rc == -1 ) 
                         log(LOG_ERR,"vdqm_NewDrvReq(): AnyVolRecForVolid() returned error\n");
+                    if ( unknown )
+                        log(LOG_ERR,"vdqm_NewDrvReq(): drive in UNKNOWN status. Force unmount!\n");
                     /*
                      * No, there wasn't another job for that volume. Tell the
-                     * drive to unmount the volume
+                     * drive to unmount the volume. Maintain unknown status
+                     * until volume has been unmounted to prevent other
+                     * request from being assigned.
                      */
                     DrvReq->status  = VDQM_VOL_UNMOUNT;
+                    if ( unknown ) drvrec->drv.status |= VDQM_UNIT_UNKNOWN; 
                     volrec = NULL;
                 } else {
                     volrec->drv = drvrec;
