@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.82 $ $Date: 2001/09/25 13:50:21 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.83 $ $Date: 2002/05/30 12:52:47 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -24,6 +24,7 @@ extern char *geterr();
 #include <sys/socket.h>
 #include <netinet/in.h>                 /* Internet data types          */
 #include <sys/time.h>
+#include <sys/times.h>
 #endif /* _WIN32 */
 
 #include <errno.h>
@@ -44,6 +45,7 @@ extern char *geterr();
 #include <rtcp.h>
 #include <rtcp_server.h>
 #include <serrno.h>
+
 
 #define TP_STATUS(X) (proc_stat.tapeIOstatus.current_activity = (X))
 #define TP_SIZE(X)   (proc_stat.tapeIOstatus.nbbytes += (u_signed64)(X))
@@ -74,6 +76,14 @@ extern int AbortFlag;
 
 static int last_block_done = 0;
 static int WaitToJoin = FALSE;
+
+#ifdef MONITOR /* Added for Monitoring */
+time_t lasttime_monitor_msg_sent=0;
+u_signed64 last_qty_sent = 0;
+int nb_files = 0;
+int current_file = 0;
+long clktck;
+#endif
 
 /*
  * Signal to disk IO thread that file has been positioned (tape read with
@@ -421,7 +431,8 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                         tape,
                         file);
             TP_STATUS(RTCP_PS_NOBLOCKING);
-            if ( rc == -1 ) {
+            
+	    if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"MemoryToTape() tape write error\n");
                 if ( NoSyncAccess == 0 ) {
                     (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
@@ -433,7 +444,8 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                 }
                 return(-1);
             }
-            if ( rc == 0 ) {
+
+	    if ( rc == 0 ) {
                 /*
                  * EOV reached
                  */
@@ -447,6 +459,17 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                     filereq->nbrecs += (u_signed64)rc/lrecl;
                 else if ( rc > 0 ) filereq->nbrecs++;
             }
+
+#ifdef MONITOR  /* Monitoring Code */
+	    {
+	      int forceSend;
+
+	      forceSend = (file->tapebytes_sofar == 0) || (file->tapebytes_sofar ==  filereq->bytes_in);
+	      rtcpd_sendMonitoring(file->tapebytes_sofar, filereq->bytes_in, forceSend);
+	    }
+#endif /* End Monitoring Code */
+      
+
             TP_SIZE(rc);
             j++;
         } /* End of for (j=...) */
@@ -804,6 +827,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                            nb_bytes,
                            tape,
                            file);
+
                 TP_STATUS(RTCP_PS_NOBLOCKING);
                 if ( rc == -1 ) {
                     rtcp_log(LOG_ERR,"TapeToMemory() tape read error\n");
@@ -859,6 +883,17 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                     databufs[i]->lrecl_table[j] = rc;
                     databufs[i]->nbrecs++;
                 }
+
+#ifdef MONITOR	/* Monitoring Code */
+		{
+		  int forceSend;
+
+		  forceSend = (file->tapebytes_sofar == 0) || 
+		    (file->tapebytes_sofar ==  filereq->bytes_in);
+		    rtcpd_sendMonitoring(file->tapebytes_sofar, filereq->bytes_in, forceSend);
+		}
+#endif		/* End of Monitoring Code */
+
                 TP_SIZE(rc);
             } /* End of for (j=...) */
             /*  
@@ -1164,6 +1199,11 @@ void *tapeIOthread(void *arg) {
     int save_rc;
     extern char *u64tostr _PROTO((u_signed64, char *, int));
 
+
+#ifdef MONITOR
+    clktck = sysconf(_SC_CLK_TCK); 
+#endif
+
     if ( arg == NULL ) {
         rtcp_log(LOG_ERR,"tapeIOthread() received NULL argument\n");
         rtcpd_SetProcError(RTCP_FAILED);
@@ -1253,9 +1293,23 @@ void *tapeIOthread(void *arg) {
             serrno = save_serrno; errno = save_errno;
             CHECK_PROC_ERR(nexttape,NULL,"rtcpd_Mount() error");
         }
+	
+#ifdef MONITOR /* Monitoring - Loop to count the number of files in the request */
+	nb_files = 0;
+	last_qty_sent = 0;
+	CLIST_ITERATE_BEGIN(nexttape->file,nextfile) {
+	  nb_files++;
+	} CLIST_ITERATE_END(nexttape->file,nextfile);
+	current_file = 0;
+#endif /* End Monitoring */
 
         CLIST_ITERATE_BEGIN(nexttape->file,nextfile) {
-            mode = nexttape->tapereq.mode;
+ 
+#ifdef MONITOR
+	    current_file++;
+#endif	    /* End Monitoring */
+
+	    mode = nexttape->tapereq.mode;
             if ( mode == WRITE_DISABLE ) nextfile->filereq.err.severity =
                 nextfile->filereq.err.severity & ~RTCP_LOCAL_RETRY;
             /*
@@ -1449,6 +1503,14 @@ void *tapeIOthread(void *arg) {
                 TP_STATUS(RTCP_PS_NOBLOCKING);
                 if ( rc >= 0 ) tape_fd = rc;
                 CHECK_PROC_ERR(NULL,nextfile,"topen() error");
+
+#ifdef MONITOR
+		/* Reinit time counter for monitor */
+		{
+		  struct tms tmp_tms;
+		  lasttime_monitor_msg_sent = times(&tmp_tms);
+		}
+#endif
 
                 if ( nexttape->tapereq.mode == WRITE_ENABLE ) {
                     rc = MemoryToTape(tape_fd,&indxp,&firstblk,&diskIOfinished,
@@ -1734,3 +1796,40 @@ int rtcpd_WaitTapeIO(int *status) {
     }
     return(rc);
 }
+
+
+#ifdef MONITOR
+/*
+ * Method added for monitoring purpose.
+ * It uses the Cmonit_api to send a UDP message to the monitoring daemon
+ */
+int rtcpd_sendMonitoring(u_signed64 transfered, u_signed64 total, int forceSend) {
+  
+  pid_t pid;
+  struct tms tmp_tms;
+  clock_t tm = times(&tmp_tms);			       
+
+ 
+
+  if ( forceSend ||  
+       (tm - lasttime_monitor_msg_sent) >  (CMONIT_FTRANSFER_SENDMSG_PERIOD * clktck)) {
+
+    /* Getting the JID, that is the pid of the process. 
+       Under linux this is trickier as every thread has its pid */
+
+#if defined(linux)
+    pid = getpgrp();
+#else
+    pid = getpid();
+#endif
+
+    Cmonit_send_transfer_info(pid, transfered, total, (transfered - last_qty_sent) * clktck
+			      / (tm - lasttime_monitor_msg_sent), current_file, nb_files);
+    /*   rtcp_log(LOG_ERR,">>>>>>>>>>> Sent time: %d rate:%d\n", tm - lasttime_monitor_msg_sent,  
+	 (transfered - last_qty_sent) * CLOCKS_PER_SEC / (tm - lasttime_monitor_msg_sent) ); */
+    lasttime_monitor_msg_sent = tm;
+    last_qty_sent = transfered;
+  }
+  return(0);
+} 
+#endif

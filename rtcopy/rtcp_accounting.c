@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.15 $ $Date: 2001/08/17 13:52:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.16 $ $Date: 2002/05/30 12:52:47 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -209,6 +209,13 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
         exitcode = UNERR;
     }
 
+#ifdef MONITOR
+    Cmonit_send_rtcopy_status(subtype,(uid_t)client->uid,(gid_t)client->gid,jobID,
+                    stager_reqID,charcom,ifce,tapereq->vid,
+                    KBytes,retry_nb,exitcode,client->clienthost,disksrv,
+                    fseq,errmsgtxt, tapereq->unit);
+#endif
+
     rc = rtcp_wacct(subtype,(uid_t)client->uid,(gid_t)client->gid,jobID,
                     stager_reqID,charcom,ifce,tapereq->vid,
                     KBytes,retry_nb,exitcode,client->clienthost,disksrv,
@@ -218,3 +225,4 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
 #endif /* ACCTON */
     return(0);
 }
+
