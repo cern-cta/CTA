@@ -9,7 +9,7 @@ static char sccsid[] = "@(#)rfio_HsmIf.c,v 1.58 2004/02/10 15:05:17 CERN/IT/PDP/
 
 /* rfio_HsmIf.c       Remote File I/O - generic HSM client interface         */
 
-/* #define NEW_STAGER_SUPPORT 1 */
+#define NEW_STAGER_SUPPORT 1
 
 #include "Cmutex.h"
 #include <stdlib.h>
@@ -474,6 +474,32 @@ int DLL_DECL rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode6
         hsmfile->next = NULL;
 	/** NOW CALL THE NEW STAGER API */
 #ifdef NEW_STAGER_SUPPORT
+        {
+          struct stage_io_fileresp *response;
+          char *requestId, *url;
+
+          rc = stage_open(NULL,
+                          MOVER_PROTOCOL_RFIO,
+                          path,
+                          flags,
+                          mode,
+                          &response,
+                          &requestId,
+                          NULL);
+          if (rc < 0) {
+            return -1;
+          }
+
+          url = stage_geturl(response);
+          if (url == 0) {
+            free(response);
+            return -1;
+          }
+          
+          rc = rfio_open(url, flags, mode);
+          free(response);
+          free(url); 
+        }
 
 #else
 	if ((stage_getlog((void (**) _PROTO((int,char *))) &this_stglog) == 0) && (this_stglog == NULL)) {
