@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.21 $ $Release$ $Date: 2005/01/17 12:40:04 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.22 $ $Release$ $Date: 2005/01/18 17:06:23 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.21 $ $Release$ $Date: 2005/01/17 12:40:04 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.22 $ $Release$ $Date: 2005/01/18 17:06:23 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -541,15 +541,15 @@ static int checkVdqmReqs()
   return(0);
 }
 
-void  wait4Worker(
-                  signo
-                  )
-  int signo;
+static void workerFinished(
+                           signo
+                           )
+     int signo;
 {
   return;
 }
 
-void checkWorkerExit() 
+static void checkWorkerExit() 
 {
   int pid, status, rc = 0, sig=0, value = 0, stopped = 0;
   rtcpcld_RequestList_t *item = NULL;
@@ -626,8 +626,8 @@ void checkWorkerExit()
 }
 
 static int blockChild(
-                     yesNo
-                     )
+                      yesNo
+                      )
      int yesNo;
 {
   int rc = 0;
@@ -644,13 +644,32 @@ static int blockChild(
     LOG_SYSCALL_ERR("sigprocmask()");
   }
   saChld.sa_mask = sigset;
-  saChld.sa_handler = (void (*)(int))wait4Worker;
+  saChld.sa_handler = (void (*)(int))workerFinished;
   rc = sigaction(SIGCHLD,&saChld,NULL);
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("sigaction()");
   }
 #endif /* WIN32 */
   return(rc);
+}
+
+static void shutdownService(
+                            signo
+                            )
+     int signo;
+{
+  rtcpcld_RequestList_t *iterator = NULL;
+  (void)blockChild(1);
+  CLIST_ITERATE_BEGIN(requestList,iterator) {
+    if ( iterator->pid > 0 ) {
+      kill(iterator->pid,signo);
+    }
+  } CLIST_ITERATE_END(requestList,iterator);
+  sleep(1);
+  (void)blockChild(0);
+  (void)checkWorkerExit();
+  exit(0);
+  return;
 }
 
 static int startWorker(
@@ -866,6 +885,9 @@ int rtcpcld_main(
   saOther.sa_handler = SIG_IGN;
   sigaction(SIGPIPE,&saOther,NULL);
   sigaction(SIGXFSZ,&saOther,NULL);
+  saOther.sa_handler = shutdownService;
+  sigaction(SIGINT,&saOther,NULL);
+  sigaction(SIGTERM,&saOther,NULL);
 #endif /* _WIN32 */
 
   gethostname(serverName,CA_MAXHOSTNAMELEN);
