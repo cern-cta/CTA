@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.34 $ $Date: 2000/05/26 07:59:01 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.35 $ $Date: 2000/06/13 15:39:14 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -39,7 +39,7 @@ extern char *geterr();
 #include <net.h>
 #include <sacct.h>
 #define RFIO_KERNEL 1
-#include <rfio.h>
+#include <rfio_api.h>
 #include <rfio_errno.h>
 #include <Cthread_api.h>
 #include <vdqm_api.h>
@@ -52,7 +52,6 @@ extern char *geterr();
 #define SET_REQUEST_ERR(X,Z) {\
     (X)->err.severity = (Z); \
     (X)->err.errorcode = serrno; \
-    rtcp_log(LOG_ERR,errmsgtxt); \
     rtcpd_AppendClientMsg(tape,file,errmsgtxt); \
     if ( ((X)->err.severity & RTCP_FAILED) ) rc = -1;}
 
@@ -80,17 +79,19 @@ static int rtcp_CheckTapeReq(tape_list_t *tape) {
     /*
      * Retry limits
      */
-    if ( tapereq->err.max_tpretry <= 0 ) {
-        serrno = SERTYEXHAUST;
-        sprintf(errmsgtxt,"Exiting after %d retries\n",max_tpretry);
-        SET_REQUEST_ERR(tapereq,RTCP_USERR | RTCP_FAILED);
-        if ( rc == -1 ) return(rc);
-    }
-    if ( tapereq->err.max_cpretry <= 0 ) {
-        serrno = SERTYEXHAUST;
-        sprintf(errmsgtxt,"Exiting after %d retries\n",max_cpretry);
-        SET_REQUEST_ERR(tapereq,RTCP_USERR | RTCP_FAILED);
-        if ( rc == -1 ) return(rc);
+    if ( tapereq->tprc != 0 ) {
+        if ( tapereq->err.max_tpretry <= 0 ) {
+            serrno = SERTYEXHAUST;
+            sprintf(errmsgtxt,"Exiting after %d retries\n",max_tpretry);
+            SET_REQUEST_ERR(tapereq,RTCP_USERR | RTCP_FAILED);
+            if ( rc == -1 ) return(rc);
+        }
+        if ( tapereq->err.max_cpretry <= 0 ) {
+            serrno = SERTYEXHAUST;
+            sprintf(errmsgtxt,"Exiting after %d retries\n",max_cpretry);
+            SET_REQUEST_ERR(tapereq,RTCP_USERR | RTCP_FAILED);
+            if ( rc == -1 ) return(rc);
+        }
     }
     /*
      * VID and VSN
@@ -170,17 +171,19 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     /*
      * Retry limits
      */
-    if ( filereq->err.max_tpretry <= 0 ) {
-        serrno = SERTYEXHAUST;
-        sprintf(errmsgtxt,"Exiting after %d retries\n",max_tpretry);
-        SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
-        if ( rc == -1 ) return(rc);
-    }
-    if ( filereq->err.max_cpretry <= 0 ) {
-        serrno = SERTYEXHAUST;
-        sprintf(errmsgtxt,"Exiting after %d retries\n",max_cpretry);
-        SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
-        if ( rc == -1 ) return(rc);
+    if ( filereq->cprc != 0 ) {
+        if ( filereq->err.max_tpretry <= 0 ) {
+            serrno = SERTYEXHAUST;
+            sprintf(errmsgtxt,"Exiting after %d retries\n",max_tpretry);
+            SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
+            if ( rc == -1 ) return(rc);
+        }
+        if ( filereq->err.max_cpretry <= 0 ) {
+            serrno = SERTYEXHAUST;
+            sprintf(errmsgtxt,"Exiting after %d retries\n",max_cpretry);
+            SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
+            if ( rc == -1 ) return(rc);
+        }
     }
     /*
      * Deferred allocation only valid with stager
@@ -368,11 +371,6 @@ static int rtcp_CheckFileReq(file_list_t *file) {
             SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
             if ( rc == -1 ) return(rc);
         }
-        if ( *filereq->recfm == 'U' ) {
-            sprintf(errmsgtxt,"record length (%d) no effect for U format file\n",
-                filereq->recordlength);
-            SET_REQUEST_ERR(filereq,RTCP_OK);
-        }
     }
     /*
      * Retention date. If not set we put it to zero.
@@ -436,6 +434,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
             serrno = EISDIR;
             sprintf(errmsgtxt,RT110,CMD(mode),sstrerror(serrno));
             SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
+            if ( rc == -1 ) return(rc);
         }
         /*
          * Zero size?
@@ -444,6 +443,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
             sprintf(errmsgtxt,RT121,CMD(mode));
             serrno = EINVAL;
             SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
+            if ( rc == -1 ) return(rc);
         }
 
         filereq->bytes_in = (u_signed64)st.st_size;
@@ -452,6 +452,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                  sprintf(errmsgtxt,RT121,CMD(mode));
                  serrno = EINVAL;
                  SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
+                 if ( rc == -1 ) return(rc);
              } else filereq->bytes_in -= filereq->offset;
         }
         if ( filereq->maxsize > 0 ) {
@@ -508,6 +509,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                 serrno = EISDIR;
                 sprintf(errmsgtxt,RT110,CMD(mode),sstrerror(serrno));
                 SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
+                if ( rc == -1 ) return(rc);
             }
             /*
              * If the file doesn't exist we should at least make sure 
@@ -591,7 +593,7 @@ int rtcp_CheckReq(SOCKET *client_socket,
             if ( filereq->err.max_cpretry == -1 )
                 filereq->err.max_cpretry = max_cpretry;
             rc = rtcp_CheckFileReq(fl);
-            if ( *(filereq->err.errmsgtxt) != '\0' ) {
+            if ( rc == -1 ) {
                 tellClient(client_socket,NULL,fl,rc);
                 (void)rtcp_WriteAccountRecord(client,tl,fl,RTCPEMSG);
             }
