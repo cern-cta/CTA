@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.5 $ $Date: 1999/12/09 10:54:47 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.6 $ $Date: 1999/12/17 13:07:37 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* 
@@ -687,7 +687,7 @@ int tread(int fd,char *ptr,int len,
          * Returning number of bytes read.
          */
         if ( rc == 0 ) {
-            rtcp_log(LOG_DEBUG,"tread() check EOF/EOV\n");
+            rtcp_log(LOG_DEBUG,"tread(%d,%s) check EOF/EOV\n",fd,filereq->tape_path);
             if ((rc = checkeofeov(fd, filereq->tape_path)) < 0) {
                 if (rc == -ETLBL) {
                     rtcpd_AppendClientMsg(NULL, file, RT128,"CPTPDSK");
