@@ -21,6 +21,8 @@
 /* 07-JUN-1999       Jean-Damien Durand and Olof Barring     */
 
 #ifndef _WIN32
+#ifndef _CTHREAD
+/* Cthread_environment would return CTHREAD_MULTI_PROCESS */
 #ifndef malloc
 #define malloc(a)        Cpool_malloc(__FILE__,__LINE__,a)
 #endif
@@ -33,6 +35,7 @@
 #ifndef calloc
 #define calloc(a,b)      Cpool_calloc(__FILE__,__LINE__,a,b)
 #endif
+#endif /* _CTHREAD */
 #endif /* _WIN32 */
 
 #ifndef _WIN32

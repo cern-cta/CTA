@@ -53,6 +53,7 @@ static int lock_child;
 static int lock_parent;
 
 #ifndef _WIN32
+#ifndef _CTHREAD
 /* ------------------------------------ */
 /* Undefinition of memory wrappers      */
 /* ------------------------------------ */
@@ -62,6 +63,7 @@ static int lock_parent;
 #undef malloc
 #undef realloc
 #undef free
+#endif 
 #endif /* _WIN32 */
 
 /* ------------------------------------ */
