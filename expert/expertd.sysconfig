@@ -1,0 +1,21 @@
+#
+# $Id: expertd.sysconfig,v 1.1 2004/10/27 14:00:00 jdurand Exp $
+#
+# @(#)$RCSfile: expertd.sysconfig,v $ $Revision: 1.1 $ $Date: 2004/10/27 14:00:00 $ CERN/IT/ADC/CA Jean-Damien Durand
+#
+# should expertd run?
+# any string but "yes" will equivalent to "NO"
+#
+RUN_EXPERTD="yes"
+#
+# should we run with another limit on the number of file descriptors than the default?
+# any string will be passed to ulimit -n
+#ULIMIT_N=4096
+#
+# should we run with another limit on the core file size than the default?
+# any string will be passed to ulimit -c
+ULIMIT_C=unlimited
+
+if [ -r /etc/sysconfig/castor ]; then
+  . /etc/sysconfig/castor
+fi

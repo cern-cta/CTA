@@ -1,0 +1,19 @@
+#
+# $Id: expertd.logrotate,v 1.1 2004/10/27 14:00:00 jdurand Exp $
+#
+# @(#)$RCSfile: expertd.logrotate,v $ $Revision: 1.1 $ $Date: 2004/10/27 14:00:00 $ CERN/IT/ADC/CA Jean-Damien Durand
+#
+/var/log/expert {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}
+/usr/spool/expert/log {
+    compress
+    daily
+    delaycompress
+    missingok
+    rotate 15
+}
