@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.33 2001/12/19 17:26:50 jdurand Exp $
+ * $Id: stage_api.c,v 1.34 2002/02/15 18:02:31 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -498,22 +498,24 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
 #endif
       return(-1);
     }
-    user_path[0] = '\0';
-    if ((build_linkname_status = build_linkname(thispath->upath, user_path, sizeof(user_path), req_type)) == SYERR) {
-      serrno = ESTLINKNAME;
+	if ((flags & STAGE_NOLINKCHECK) != STAGE_NOLINKCHECK) {
+		user_path[0] = '\0';
+		if ((build_linkname_status = build_linkname(thispath->upath, user_path, sizeof(user_path), req_type)) == SYERR) {
+			serrno = ESTLINKNAME;
 #if defined(_WIN32)
-      WSACleanup();
+			WSACleanup();
 #endif
-      return(-1);
-    }
-    if (build_linkname_status) {
-      serrno = ESTLINKNAME;
+			return(-1);
+		}
+		if (build_linkname_status) {
+			serrno = ESTLINKNAME;
 #if defined(_WIN32)
-      WSACleanup();
+			WSACleanup();
 #endif
-      return(-1);
-    }
-    strcpy(thispath->upath,user_path);
+			return(-1);
+		}
+		strcpy(thispath->upath,user_path);
+	}
   }
   sendbuf_size += (nstpp_input * sizeof(struct stgpath_entry)); /* We overestimate by few bytes (gaps and strings zeroes) */
 
@@ -962,7 +964,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   uid_t euid;                   /* Current effective uid */
   gid_t egid;                   /* Current effective gid */
   int status;                   /* Variable overwritten by macros in header */
-  int c;                        /* Output of build_linkname() */
+  int c;                        /* Output of send2stgd() */
   int nstcp_output_internal = 0;
   struct stgcat_entry *stcp_output_internal = NULL;
   int nstpp_output_internal = 0;
@@ -1445,22 +1447,24 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
 #endif
       return(-1);
     }
-    user_path[0] = '\0';
-    if ((build_linkname_status = build_linkname(thispath->upath, user_path, sizeof(user_path), req_type)) == SYERR) {
-      serrno = ESTLINKNAME;
+	if ((flags & STAGE_NOLINKCHECK) != STAGE_NOLINKCHECK) {
+		user_path[0] = '\0';
+		if ((build_linkname_status = build_linkname(thispath->upath, user_path, sizeof(user_path), req_type)) == SYERR) {
+			serrno = ESTLINKNAME;
 #if defined(_WIN32)
-      WSACleanup();
+			WSACleanup();
 #endif
-      return(-1);
-    }
-    if (build_linkname_status) {
-      serrno = ESTLINKNAME;
+			return(-1);
+		}
+		if (build_linkname_status) {
+			serrno = ESTLINKNAME;
 #if defined(_WIN32)
-      WSACleanup();
+			WSACleanup();
 #endif
-      return(-1);
-    }
-    strcpy(thispath->upath,user_path);
+			return(-1);
+		}
+		strcpy(thispath->upath,user_path);
+	}
   }
   sendbuf_size += (nstpp_input * sizeof(struct stgpath_entry)); /* We overestimate by few bytes (gaps and strings zeroes) */
 
@@ -1788,22 +1792,24 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
 #endif
       return(-1);
     }
-    user_path[0] = '\0';
-    if ((build_linkname_status = build_linkname(thispath->upath, user_path, sizeof(user_path), req_type)) == SYERR) {
-      serrno = ESTLINKNAME;
+	if ((flags & STAGE_NOLINKCHECK) != STAGE_NOLINKCHECK) {
+		user_path[0] = '\0';
+		if ((build_linkname_status = build_linkname(thispath->upath, user_path, sizeof(user_path), req_type)) == SYERR) {
+			serrno = ESTLINKNAME;
 #if defined(_WIN32)
-      WSACleanup();
+			WSACleanup();
 #endif
-      return(-1);
-    }
-    if (build_linkname_status) {
-      serrno = ESTLINKNAME;
+			return(-1);
+		}
+		if (build_linkname_status) {
+			serrno = ESTLINKNAME;
 #if defined(_WIN32)
-      WSACleanup();
+			WSACleanup();
 #endif
-      return(-1);
-    }
-    strcpy(thispath->upath,user_path);
+			return(-1);
+		}
+		strcpy(thispath->upath,user_path);
+	}
   }
   sendbuf_size += (nstpp_input * sizeof(struct stgpath_entry)); /* We overestimate by few bytes (gaps and strings zeroes) */
 
@@ -2032,7 +2038,7 @@ int DLL_DECL stage_ping(flags,hostname)
   uid_t euid;                   /* Current effective uid */
   gid_t egid;                   /* Current effective gid */
   int status;                   /* Variable overwritten by macros in header */
-  int c;                        /* Output of build_linkname() */
+  int c;                        /* Output of send2stgd() */
   char stgpool_forced[CA_MAXPOOLNAMELEN + 1];
   int pid = 0;
   int Tid = 0;
