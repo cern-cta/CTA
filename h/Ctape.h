@@ -1,14 +1,14 @@
 /*
- * $Id: Ctape.h,v 1.41 2002/11/28 06:43:45 baud Exp $
+ * $Id: Ctape.h,v 1.42 2003/09/12 14:02:54 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.41 $ $Date: 2002/11/28 06:43:45 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.42 $ $Date: 2003/09/12 14:02:54 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -140,6 +140,7 @@
 #define UPDFIL	12	/* update blksize, cfseq, fid, lrecl, recfm in tpfil */
 #define TPINFO	13	/* get info for a given mounted tape */
 #define TPPOS	14	/* position tape and check HDR1/HDR2 */
+#define DRVINFO	15	/* get info for a given drive */
 
 			/* tape daemon reply types */
 
@@ -227,6 +228,7 @@
 #define	TP061	"TP061 - filstat value incompatible with read-only mode\n"
 #define	TP062	"TP062 - tape %s to be prelabelled %s%s"
 #define	TP063	"TP063 - invalid user %d\n"
+#define	TP064	"TP064 - invalid method for this label type\n"
 
 			/* tape daemon internal tables */
 
