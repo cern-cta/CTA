@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.54 2001/04/07 10:20:35 jdurand Exp $
+ * $Id: stage.h,v 1.55 2001/04/29 08:51:39 jdurand Exp $
  */
 
 /*
@@ -94,7 +94,6 @@
 #define	RETRYI	60
 #define STGMAGIC    0x13140701
 #define STGMAGIC2   0x13140702
-#define STG	"stage"	/* service name in /etc/services */
 
 #define SHIFT_ESTNACT 198 /* Old SHIFT value when nomorestage - remapped in send2stgd */
 
@@ -261,6 +260,7 @@
 #define	STG141	"STG141 - Invalid magic number 0x%lx\n"
 #define STG142  "STG142 - %s not removed - Retention period is %s\n"
 #define STG143  "STG143 - %s : stageout lifetime on disk exceeds %d seconds\n"
+#define	STG144	"STG144 - Configuration warning: %s %s %d\n"
 
 			/* stage daemon return codes and states */
 
