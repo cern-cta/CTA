@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_entermodel.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr_entermodel.man,v $ $Revision: 1.7 $ $Date: 2002/05/30 10:07:36 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_ENTERMODEL 3 "$Date: 2001/09/26 09:13:56 $" CASTOR "vmgr Library Functions"
+.TH VMGR_ENTERMODEL 3 "$Date: 2002/05/30 10:07:36 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_entermodel \- enter a new model of cartridge in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -29,6 +29,7 @@ is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood
 .TP
 .I native_capacity
 in Mbytes.
+For a multi-sided media like DVD, the native capacity corresponds to one side.
 .TP
 .I media_cost
 in Swiss Francs.

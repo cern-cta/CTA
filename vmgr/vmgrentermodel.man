@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrentermodel.man,v $ $Revision: 1.3 $ $Date: 2001/09/26 09:13:57 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgrentermodel.man,v $ $Revision: 1.4 $ $Date: 2002/05/30 10:14:29 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRENTERMODEL 1 "$Date: 2001/09/26 09:13:57 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRENTERMODEL 1 "$Date: 2002/05/30 10:14:29 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrentermodel \- enter a new model of cartridge in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -33,6 +33,7 @@ It must be at most CA_MAXMODELLEN characters long.
 .I native_capacity
 in bytes. The number may also have a suffix M or G to indicate Mbyte and
 Gbyte respectively.
+For a multi-sided media like DVD, the native capacity corresponds to one side.
 .SH EXAMPLES
 .nf
 .ft CW
