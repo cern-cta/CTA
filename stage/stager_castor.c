@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.25 2002/08/27 08:38:04 jdurand Exp $
+ * $Id: stager_castor.c,v 1.26 2002/09/04 10:09:08 jdurand Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.25 $ $Date: 2002/08/27 08:38:04 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.26 $ $Date: 2002/09/04 10:09:08 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1098,7 +1098,7 @@ int stagein_castor_hsm_file() {
 					if (hsm_segments[i][jsegments].copyno != hsm_segments[i][isegments].copyno) continue;
 					if (hsm_segments[i][jsegments].s_status == '-') {
 						SAVE_EID;
-						sendrep (&rpfd, MSG_ERR, STG137, castor_hsm, hsm_segments[i][isegments].copyno, jsegments, isegments);
+						sendrep (&rpfd, MSG_ERR, STG137, castor_hsm, hsm_segments[i][isegments].copyno, jsegments + 1, isegments + 1);
 						RESTORE_EID;
 						hsm_segments[i][jsegments].s_status = STGSEGMENT_NOTOK;
 					}
@@ -1141,7 +1141,7 @@ int stagein_castor_hsm_file() {
 								if (hsm_segments[i][ksegments].copyno != hsm_segments[i][jsegments].copyno) continue;
 								if (hsm_segments[i][ksegments].s_status == '-') {
 									SAVE_EID;
-									sendrep (&rpfd, MSG_ERR, STG137, castor_hsm, hsm_segments[i][ksegments].copyno, ksegments, jsegments);
+									sendrep (&rpfd, MSG_ERR, STG137, castor_hsm, hsm_segments[i][ksegments].copyno, ksegments + 1, jsegments + 1);
 									RESTORE_EID;
 									hsm_segments[i][ksegments].s_status = STGSEGMENT_NOTOK;
 								}
@@ -1165,7 +1165,7 @@ int stagein_castor_hsm_file() {
 						if (ksegments == jsegments) continue;
 						if (hsm_segments[i][ksegments].copyno != hsm_segments[i][jsegments].copyno) continue;
 						if (hsm_segments[i][ksegments].s_status == '-') {
-							sendrep (&rpfd, MSG_ERR, STG137, castor_hsm, hsm_segments[i][jsegments].copyno, ksegments, jsegments);
+							sendrep (&rpfd, MSG_ERR, STG137, castor_hsm, hsm_segments[i][jsegments].copyno, ksegments + 1, jsegments + 1);
 							hsm_segments[i][ksegments].s_status = STGSEGMENT_NOTOK;
 						}
         	    	}
@@ -2300,11 +2300,15 @@ int stagewrt_castor_hsm_file() {
 			/* rtcpc failed */
 			SAVE_EID;
 			if (side > 0) {
-				sendrep (&rpfd, MSG_ERR, STG202, vid, side, "rtcpc",sstrerror (serrno));
+				sendrep (&rpfd, MSG_ERR, STG202, vid, side, "rtcpc",sstrerror (save_serrno));
 			} else {
-				sendrep (&rpfd, MSG_ERR, STG02, vid, "rtcpc",sstrerror (serrno));
+				sendrep (&rpfd, MSG_ERR, STG02, vid, "rtcpc",sstrerror (save_serrno));
 			}
 			RESTORE_EID;
+
+			if (! error_already_processed) {
+				stager_process_error(save_serrno,&(rtcpcreqs[0]->tapereq),NULL,NULL);
+			}
 
 			if ((api_flags & STAGE_NORETRY) == STAGE_NORETRY) {
 				/* Error and user said to never retry */
@@ -2314,9 +2318,6 @@ int stagewrt_castor_hsm_file() {
 
 			if (callback_error != 0) {
 				/* This is a callback error - considered as fatal only if we run in non-asynchroneous mode */
-				SAVE_EID;
-				sendrep (&rpfd, MSG_ERR, STG02, "stagewrt_castor_hsm_file", "callback", sstrerror(serrno));
-				RESTORE_EID;
 				if ((use_subreqid != 0) && (fatal_callback_error == 0)) {
 					/* We continue as an acceptable error */
 					if ((Flags != TAPE_FULL) && (stagewrt_nomoreupdatetape == 0)) {
@@ -2337,6 +2338,8 @@ int stagewrt_castor_hsm_file() {
 								}
 								RESTORE_EID;
 							}
+							vid[0] = '\0';
+							side = -1;
 						}
 					}
 					/* We precede a bit the calculation that is done at the gettape: label */
@@ -2431,6 +2434,8 @@ int stagewrt_castor_hsm_file() {
 						}
 						RESTORE_EID;
 					}
+					vid[0] = '\0';
+					side = -1;
 				}
 			}
 			SAVE_EID;
@@ -2456,6 +2461,8 @@ int stagewrt_castor_hsm_file() {
 						}
 						RESTORE_EID;
 					}
+					vid[0] = '\0';
+					side = -1;
 				}
 			}
 		}
@@ -2483,6 +2490,8 @@ void cleanup() {
 				}
 				RESTORE_EID;
 			}
+			vid[0] = '\0';
+			side = -1;
 		}
 	}
 	if (rtcpc_kill_cleanup != 0) {
@@ -3438,6 +3447,7 @@ void stager_process_error(save_serrno,tapereq,filereq,castor_hsm)
 	case ETHELD:                          /* Volume held (TMS) */
 	case ETVUNKN:                         /* Volume unknown or absent (TMS) */
 	case ETOPAB:                          /* Operator cancel */
+	case ETNOSNS:                         /* No sense */
 #ifdef TMS
 	case EVQDGNINVL:                      /* Request for non-existing DGN */
 #endif
