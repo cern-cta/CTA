@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.6 2004/12/17 15:57:02 bcouturi Exp $
+ * $Id: stager_client_api_query.cpp,v 1.7 2005/01/27 16:35:05 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.6 $ $Date: 2004/12/17 15:57:02 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_query.cpp,v $ $Revision: 1.7 $ $Date: 2005/01/27 16:35:05 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -83,6 +83,7 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
       castor::stager::QueryParameter *par = new castor::stager::QueryParameter();
       par->setQueryType((castor::stager::RequestQueryType)(requests[i].type));
       par->setValue((const char *)requests[i].param);
+      par->setQuery(&req);
       req.addParameters(par);
     }
 
@@ -126,6 +127,8 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
         throw e;
       }
 
+      (*responses)[i].errorCode = fr->errorCode();
+      (*responses)[i].errorMessage = strdup(fr->errorMessage().c_str());
       (*responses)[i].filename = strdup(fr->fileName().c_str());
       (*responses)[i].fileid = fr->fileId();
       (*responses)[i].status = fr->status();
