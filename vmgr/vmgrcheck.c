@@ -1,19 +1,25 @@
 /*
- * Copyright (C) 2001-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 2001-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrcheck.c,v $ $Revision: 1.3 $ $Date: 2002/03/06 06:30:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrcheck.c,v $ $Revision: 1.4 $ $Date: 2003/10/14 12:33:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
+#include "Cupv_api.h"
 #include "serrno.h"
 #include "vmgr.h"
 #include "vmgr_api.h"
 vmgrcheck(char *vid, char *vsn, char *dgn, char *den, char *lbl, int mode, uid_t uid, gid_t gid)
+{
+	return (vmgrchecki (vid, vsn, dgn, den, lbl, mode, uid, gid, NULL));
+}
+
+vmgrchecki(char *vid, char *vsn, char *dgn, char *den, char *lbl, int mode, uid_t uid, gid_t gid, char *clienthost)
 {
 	int errflg = 0;
 	char func[16];
@@ -33,9 +39,12 @@ vmgrcheck(char *vid, char *vsn, char *dgn, char *den, char *lbl, int mode, uid_t
 			return (ETWPROT);
 	} else if (tape_info.status & EXPORTED)
 		return (ETABSENT);
-	else if (tape_info.status & DISABLED)
-		return (ETHELD);
-	else if (tape_info.status & ARCHIVED)
+	else if (tape_info.status & DISABLED) {
+		if (mode ||
+		    (Cupv_check (uid, gid, clienthost, "TAPE_SERVERS", P_TAPE_OPERATOR) &&
+		    Cupv_check (uid, gid, clienthost, NULL, P_TAPE_OPERATOR)))
+			return (ETHELD);
+	} else if (tape_info.status & ARCHIVED)
 		return (ETARCH);
 	if (mode) {	/* WRITE_ENABLE */
 		while (vmgr_querypool (tape_info.poolname, &pool_uid, &pool_gid,
@@ -45,7 +54,9 @@ vmgrcheck(char *vid, char *vsn, char *dgn, char *den, char *lbl, int mode, uid_t
 			sleep (60);
 		}
 		if ((pool_uid && pool_uid != uid && uid != 0) ||
-		    (pool_gid && pool_gid != gid && gid != 0))
+		    (pool_gid && pool_gid != gid && gid != 0) ||
+		    (Cupv_check (uid, gid, clienthost, "TAPE_SERVERS", P_ADMIN) &&
+		    Cupv_check (uid, gid, clienthost, NULL, P_ADMIN)))
 			return (EACCES);
 	}
 	if (*vsn) {
