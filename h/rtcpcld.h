@@ -54,6 +54,20 @@ void rtcpcld_extlog _PROTO((
 int rtcpcld_initNotify _PROTO((
                                SOCKET **
                                ));
+int rtcpcld_initNotifyByPort _PROTO((
+                                     SOCKET **,
+                                     int *
+                                     ));
+int rtcpcld_getNotifyWithAddr _PROTO((
+                                      SOCKET,
+                                      char *
+                                      ));
+int rtcpcld_getNotify _PROTO((
+                              SOCKET
+                              ));
+int rtcpcld_sendNotify _PROTO((
+                               char *
+                               ));
 int rtcpcld_getNotify _PROTO((SOCKET));
 int rtcpcld_getVIDsToDo _PROTO((
                                 tape_list_t ***,
