@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.6 $ $Date: 2000/08/08 11:24:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.7 $ $Date: 2000/08/09 05:36:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -125,6 +125,8 @@ int flags;
 	case D25GC:
 	case D35G:
 	case D35GC:
+	case D40G:
+	case D40GC:
 	case D50G:
 	case D50GC:
 	case DDS:
