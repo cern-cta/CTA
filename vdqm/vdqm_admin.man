@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vdqm_admin.man,v $ $Revision: 1.4 $ $Date: 2001/10/24 08:19:05 $ CERN IT-PDP/DM Olof Barring
+.\" @(#)$RCSfile: vdqm_admin.man,v $ $Revision: 1.5 $ $Date: 2002/11/05 16:41:50 $ CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VDQM_ADMIN 1 "$Date: 2001/10/24 08:19:05 $" CASTOR "VDQM Administrator Commands"
+.TH VDQM_ADMIN 1 "$Date: 2002/11/05 16:41:50 $" CASTOR "VDQM Administrator Commands"
 .SH NAME
 vdqm_admin \- administrate VDQM server
 .SH SYNOPSIS
@@ -81,7 +81,7 @@ If the
 .BI "-match"
 option is omitted any previous dedication of that drive will be revoked.
 The patter matching string must be of the form:
-.I uid=.*,gid=.*,name=.*,host=.*,vid=.*,mode=.*,datestr.*,timestr.*,age.*
+.I uid=.*,gid=.*,name=.*,host=.*,vid=.*,mode=.*,datestr=.*,timestr=.*,age=.*
 (only the fields to be changed need to be specified, see example below).
 .RE
 .RE
