@@ -1,7 +1,10 @@
 /*
- * $Id: send2stgd.c,v 1.3 1999/07/20 17:29:18 jdurand Exp $
+ * $Id: send2stgd.c,v 1.4 1999/07/20 20:07:32 jdurand Exp $
  *
  * $Log: send2stgd.c,v $
+ * Revision 1.4  1999/07/20 20:07:32  jdurand
+ * Added -lnsl for Linux
+ *
  * Revision 1.3  1999/07/20 17:29:18  jdurand
  * Added Id and Log CVS's directives
  *
@@ -158,7 +161,7 @@ int want_reply;
 	}
 
 	while (1) {
-		if ((n = netread_timeout (stg_s, repbuf, 3 * LONGSIZE)) != (3 * LONGSIZE)) {
+		if ((n = netread_timeout (stg_s, repbuf, 3 * LONGSIZE, STGTIMEOUT)) != (3 * LONGSIZE)) {
 			if (n == 0)
 				fprintf (stderr, STG02, "", "recv", sys_serrlist[SERRNO]);
 			else

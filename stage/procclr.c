@@ -1,7 +1,10 @@
 /*
- * $Id: procclr.c,v 1.3 1999/07/20 17:29:17 jdurand Exp $
+ * $Id: procclr.c,v 1.4 1999/07/20 20:07:31 jdurand Exp $
  *
  * $Log: procclr.c,v $
+ * Revision 1.4  1999/07/20 20:07:31  jdurand
+ * Added -lnsl for Linux
+ *
  * Revision 1.3  1999/07/20 17:29:17  jdurand
  * Added Id and Log CVS's directives
  *
@@ -264,66 +267,66 @@ char *clienthost;
 			}
 		} else {
 #ifdef DB
-			if (Cdb_altkey_fetch(db_stgcat, "ipath", path, (void **) &stgipath_entry, NULL) == 0) {
-				int thisreqid = atoi(stgipath_entry);
-				stglogit("procclrreq","Got ipath=%s\n",path);
-				found = 1;
-				stglogit("procclrreq","Now fetching main reqid=%d\n",thisreqid);
-				if (wrapCdb_fetch(db_stgcat, thisreqid, (void **) &stcp, NULL, 0) != 0) {
-					c = SYERR;
-					goto reply;
-				}
-				if (cflag && stcp->poolname[0] &&
-					enoughfreespace (stcp->poolname, minfree)) {
-					stglogit("procclrreq","Returning ENOUGHF\n");
-					c = ENOUGHF;
-					goto reply;
-				}
-				if (cflag && uid == 0 &&
-					checklastaccess (stcp->poolname, stcp->a_time)) {
-					stglogit("procclrreq","Returning EBUSY\n");
-					c = EBUSY;
-					goto reply;
-				}
-				if ((i = check_delete (stcp, gid, uid,
-										group, user, rflag)) > 0) {
-					stglogit("procclrreq","Returning check_delete status: %d\n",i);
-					c = i;
-					goto reply;
-				}
-			}
-			if (stgipath_entry != NULL)
-				free(stgipath_entry);
+          if (Cdb_altkey_fetch(db_stgcat, "ipath", path, (void **) &stgipath_entry, NULL) == 0) {
+            int thisreqid = atoi(stgipath_entry);
+            stglogit("procclrreq","Got ipath=%s\n",path);
+            found = 1;
+            stglogit("procclrreq","Now fetching main reqid=%d\n",thisreqid);
+            if (wrapCdb_fetch(db_stgcat, thisreqid, (void **) &stcp, NULL, 0) != 0) {
+              c = SYERR;
+              goto reply;
+            }
+            if (cflag && stcp->poolname[0] &&
+                enoughfreespace (stcp->poolname, minfree)) {
+              stglogit("procclrreq","Returning ENOUGHF\n");
+              c = ENOUGHF;
+              goto reply;
+            }
+            if (cflag && uid == 0 &&
+                checklastaccess (stcp->poolname, stcp->a_time)) {
+              stglogit("procclrreq","Returning EBUSY\n");
+              c = EBUSY;
+              goto reply;
+            }
+            if ((i = check_delete (stcp, gid, uid,
+                                   group, user, rflag)) > 0) {
+              stglogit("procclrreq","Returning check_delete status: %d\n",i);
+              c = i;
+              goto reply;
+            }
+          }
+          if (stgipath_entry != NULL)
+            free(stgipath_entry);
 #else /* DB */
-			for (stcp = stcs; stcp < stce; stcp++) {
-				if (stcp->reqid == 0) break;
-				if (strcmp (path, stcp->ipath) == 0) {
-					found = 1;
-					if (cflag && stcp->poolname[0] &&
-					    enoughfreespace (stcp->poolname, minfree)) {
-						c = ENOUGHF;
-						goto reply;
-					}
-					if (cflag && uid == 0 &&
-					    checklastaccess (stcp->poolname, stcp->a_time)) {
-						c = EBUSY;
-						goto reply;
-					}
-					if ((i = check_delete (stcp, gid, uid,
-					    group, user, rflag)) > 0) {
-						c = i;
-						goto reply;
-					}
-				}
-			}
-		}
+          for (stcp = stcs; stcp < stce; stcp++) {
+            if (stcp->reqid == 0) break;
+            if (strcmp (path, stcp->ipath) == 0) {
+              found = 1;
+              if (cflag && stcp->poolname[0] &&
+                  enoughfreespace (stcp->poolname, minfree)) {
+                c = ENOUGHF;
+                goto reply;
+              }
+              if (cflag && uid == 0 &&
+                  checklastaccess (stcp->poolname, stcp->a_time)) {
+                c = EBUSY;
+                goto reply;
+              }
+              if ((i = check_delete (stcp, gid, uid,
+                                     group, user, rflag)) > 0) {
+                c = i;
+                goto reply;
+              }
+            }
+          }
 #endif /* DB */
-		if (! found) {
-			sendrep (rpfd, MSG_ERR, STG33, path, "file not found");
-			c = USERR;
-			goto reply;
-		}
-	} else {
+        }
+        if (! found) {
+          sendrep (rpfd, MSG_ERR, STG33, path, "file not found");
+          c = USERR;
+          goto reply;
+        }
+    } else {
 #ifdef DB
 		/* We loop on the "poolname" database */
 		size_t db_size;

@@ -1,4 +1,13 @@
 /*
+ * $Id: rfio.h,v 1.2 1999/07/20 20:07:22 jdurand Exp $
+ *
+ * $Log: rfio.h,v $
+ * Revision 1.2  1999/07/20 20:07:22  jdurand
+ * Added -lnsl for Linux
+ *
+ */
+
+/*
  * @(#)rfio.h	3.51 01/08/99 CERN IT-PDP/IP Frederic Hemmer
  */
 
@@ -11,6 +20,9 @@
 
 #ifndef _RFIO_H_INCLUDED_
 #define _RFIO_H_INCLUDED_
+
+#define RFIO_CTRL_TIMEOUT 10
+#define RFIO_DATA_TIMEOUT 300
 
 #include <stdio.h>              /* standard Input/Output                */
 #if !defined(apollo) && ! defined(_WIN32)
@@ -282,6 +294,8 @@ extern RDIR *   rfio_opendir(); /* RFIO's opendir()                     */
 #endif /* AIX */
 
 #include <net.h>                        /* networking specifics         */
+
+#include <socket_timeout.h>             /* socket timeout routines */
 
 #define RFIO_MAGIC 	0X0100       /* Remote File I/O magic number         */
 #define B_RFIO_MAGIC 	0X0200       /* Remote File I/O magic number         */
