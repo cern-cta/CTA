@@ -1,5 +1,5 @@
 /*
- * $Id: popen.c,v 1.10 2003/09/14 06:38:57 jdurand Exp $
+ * $Id: popen.c,v 1.11 2003/09/25 16:28:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: popen.c,v $ $Revision: 1.10 $ $Date: 2003/09/14 06:38:57 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: popen.c,v $ $Revision: 1.11 $ $Date: 2003/09/25 16:28:17 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 /* popen.c       Remote pipe I/O - open file a file                      */
@@ -98,7 +98,7 @@ char *type 	;
    /* 
     * file is local       
     */
-   if ( (cp == NULL) || !strcmp( host, localhost)  ) {
+   if ( (cp == NULL) || !strcmp( host, localhost) || !strcmp(host,"localhost") ) {
       TRACE(3,"rfio","popen(%s,%s): local mode",command,type) ;
       if (cp == NULL) 
 #if defined(_WIN32)

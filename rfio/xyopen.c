@@ -1,5 +1,5 @@
 /*
- * $Id: xyopen.c,v 1.9 2003/09/14 06:38:58 jdurand Exp $
+ * $Id: xyopen.c,v 1.10 2003/09/25 16:28:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.9 $ $Date: 2003/09/14 06:38:58 $ CERN/IT/PDP/DM Frederic Hemmer, F. Hassine";
+static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.10 $ $Date: 2003/09/25 16:28:17 $ CERN/IT/PDP/DM Frederic Hemmer, F. Hassine";
 #endif /* not lint */
 
 /* xyopen.c     Remote File I/O - Open a Fortran Logical Unit           */
@@ -186,7 +186,7 @@ char *reqhost;
       return(-1);
    }
 
-   if  ( (strcmp(node,"") == 0) || (strcmp(localhost, node)==0 ) )      {
+   if  ( (strcmp(node,"") == 0) || (strcmp(localhost, node)==0 ) || (strcmp(node,"localhost") == 0))      {
       /*
        * The file is local 
        */
