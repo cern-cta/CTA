@@ -1,12 +1,12 @@
 /*
- * $Id: check_struct_len.c,v 1.7 2000/12/21 13:55:04 jdurand Exp $
+ * $Id: check_struct_len.c,v 1.8 2001/11/30 11:28:16 jdurand Exp $
  */
 
 #include <stdio.h>
 #include <stddef.h>            /* for NULL */
 #include <sys/types.h>
 #include <string.h>
-#include "stage.h"
+#include "stage_struct.h"
 #include "stage_shift.h"
 
 /* offset can be undef sometimes */

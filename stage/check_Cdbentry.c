@@ -1,5 +1,5 @@
 /*
-	$Id: check_Cdbentry.c,v 1.12 2001/07/12 10:55:59 jdurand Exp $
+	$Id: check_Cdbentry.c,v 1.13 2001/11/30 11:27:50 jdurand Exp $
 */
 
 #include "Cstage_db.h"
@@ -26,7 +26,7 @@
 #include "osdep.h"
 #include "Cdb_api.h"                /* CASTOR Cdb Interface */
 #include "Cstage_db.h"              /* Generated STAGE/Cdb header */
-#include "stage.h"                  /* CASTOR's STAGE header */
+#include "stage_struct.h"           /* CASTOR's STAGE structures */
 #include "serrno.h"                 /* CASTOR's serrno */
 #include "Cstage_ifce.h"            /* Conversion routines */
 #include "u64subr.h"
