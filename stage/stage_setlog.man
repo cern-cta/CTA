@@ -1,0 +1,79 @@
+.\" $Id: stage_setlog.man,v 1.1 2002/09/08 06:28:34 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_setlog.man,v $ $Revision: 1.1 $ $Date: 2002/09/08 06:28:34 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_SETLOG "3" "$Date: 2002/09/08 06:28:34 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_setlog \- Set receiving callback routine for error and output messages
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_setlog(void (*" logfunction ")(int " level ", char *" message "));"
+
+.SH DESCRIPTION
+The \fBstage_setlog\fP API method is setting the log callback of stage API. All messages sent by a stager daemon will not be printed on the default ttys (stdout and stderr) but will be given to this routine.
+
+.SH PARAMETERS
+.BI logfunction
+is the address of a function that have two parameters: the
+.BI level
+of the message, that can be MSG_ERR or MSG_OUT, and the
+.BI message
+itself.
+
+.SH EXAMPLE
+.ft CW
+.nf
+.sp
+#include <stdlib.h>
+#include <sys/types.h>
+#include <stdio.h>
+#include <stage_api.h>
+#include <serrno.h>
+
+void mystagelog _PROTO((int, char *));
+
+int main(argc,argv)
+     int argc;
+     char **argv;
+{
+  if (stage_setlog(&stcplog) != 0) {
+    fprintf(stderr,"### stage_setlog error (%s)\n", sstrerror(serrno));
+    exit(EXIT_FAILURE);
+  }
+  exit(0);
+}
+
+void stcplog(level,msg)
+     int level;
+     char *msg;
+{
+  fprintf(level == MSG_OUT ? stdout : stderr, "%s", msg);
+}
+.ft
+.LP
+.fi
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SEINTERNAL
+Internal error
+.TP
+.B SECTHREADERR
+Thread interface call error
+.TP
+.B SECTHREADINIT
+Cthread initialization error
+
+.SH SEE ALSO
+\fBstage_getlog\fP(3), \fBstage_seterrbuf\fP(3), \fBstage_setoutbuf\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
