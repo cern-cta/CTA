@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.7 2004/11/23 15:34:15 sponcec3 Exp $
+ * $Id: stager_client_api_get.cpp,v 1.8 2004/11/30 09:49:55 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.7 $ $Date: 2004/11/23 15:34:15 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.8 $ $Date: 2004/11/30 09:49:55 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -114,16 +114,16 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
       castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
 
       if (requests[i].protocol) {
-	std::string sprotocol(requests[i].protocol);
-	subreq->setProtocol(sprotocol);
+        std::string sprotocol(requests[i].protocol);
+        subreq->setProtocol(sprotocol);
       }    
-
+      
       if (!(requests[i].filename)) {
-	serrno = EINVAL;
-	stage_errmsg(func, "filename in request %d is NULL", i);
-	return -1;
+        serrno = EINVAL;
+        stage_errmsg(func, "filename in request %d is NULL", i);
+        return -1;
       }
-
+      
       req.addSubRequests(subreq);
       std::string sfilename(requests[i].filename);
       subreq->setFileName(sfilename);
@@ -132,7 +132,11 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
 
     }
 
-    client.sendRequest(&req, &rh);
+    std::string reqid = client.sendRequest(&req, &rh);
+    
+    if (requestId != NULL) {
+      *requestId = strdup(reqid.c_str());
+    }
 
   } catch (castor::exception::Exception e) {
     serrno = e.code();
@@ -200,8 +204,12 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
     // Submitting the request
     std::vector<castor::rh::Response *>respvec;    
     castor::client::VectorResponseHandler rh(&respvec);
-    client.sendRequest(&req, &rh);
+    std::string reqid = client.sendRequest(&req, &rh);
     
+    if (requestId != NULL) {
+      *requestId = strdup(reqid.c_str());
+    }
+ 
     // Checking the result
     // Parsing the responses which have been stored in the vector
     int nbResponses =  respvec.size();
