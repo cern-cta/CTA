@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.9 $ $Release$ $Date: 2004/11/22 22:00:00 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.10 $ $Release$ $Date: 2004/11/25 13:25:54 $ $Author: bcouturi $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.9 $
- * @date $Date: 2004/11/22 22:00:00 $
+ * @version $Revision: 1.10 $
+ * @date $Date: 2004/11/25 13:25:54 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.9 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.10 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -999,13 +999,20 @@ EXTERN_C int DLL_DECL stage_findrequest _PROTO((struct stage_query_req *requests
  *
  * @returns 0 in case of success, -1 otherwise
  */
-EXTERN_C int DLL_DECL stage_seterrbuf(char *buffer, int buflen);
+EXTERN_C int DLL_DECL stage_seterrbuf _PROTO((char *buffer, int buflen));
+
+
+
+////////////////////////////////////////////////////////////
+//    Utility to display status string                    //
+////////////////////////////////////////////////////////////
+EXTERN_C char* DLL_DECL stage_statusName _PROTO((int statusCode));
+
 
 
 ////////////////////////////////////////////////////////////
 //    MACROS                                              //
 ////////////////////////////////////////////////////////////
-
 
 /**
  * Macro to create a function that allocates a list of STRCNAME structures
