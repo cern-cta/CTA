@@ -1,0 +1,41 @@
+.\" $Id: stage_limits.man,v 1.1 2002/09/14 06:30:20 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_limits.man,v $ $Revision: 1.1 $ $Date: 2002/09/14 06:30:20 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_LIMITS "3" "$Date: 2002/09/14 06:30:20 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage limits \- Internal limits of stage
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+
+.SH DESCRIPTION
+The \fBstage structures\fP's members size are limited by CASTOR internal limits, and for some of them, stage internal limits. This is because catalog is kept in memory for performance and ease reasons.
+
+.SH LIMITS
+.TP 2.0i
+.BI MAXPATH
+give maximum length of an internal local path. Default is 80.
+.TP
+.BI STAGE_MAX_HSMLENGTH
+is the maximum total length of an HSM file. Default is 166.
+.TP
+.BI MAXVSN
+is the maximum number of VID or VSN within a single request. Default is 3.
+.TP
+.BI MAX_NETDATA_SIZE
+is the maximum size of a request a stager daemon can accept. Default is 1MB.
+.TP
+.BI ROOTUIDLIMIT
+is the user id under which a request is considered to come from an admin account. Default is 100.
+.TP
+.BI ROOTGIDLIMIT
+is the group id under which a request is considered to come from an admin account. Default is 100.
+
+.SH SEE ALSO
+\fBCastor_limits\fP(3), \fBstage_struct\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
