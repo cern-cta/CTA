@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.16 2002/02/05 16:13:11 jdurand Exp $
+ * $Id: stage_constants.h,v 1.17 2002/02/15 18:00:59 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -478,6 +478,7 @@
 #define STAGE_FILE_WCLOSE       0x08000000000LL  /* -C           [stage_updc]           */
 #define STAGE_REQID             0x10000000000LL  /* --reqid      [stage_clr,stage_qry]  */
 #define STAGE_HSM_ENOENT_OK     0x20000000000LL  /* --enoent_ok  [stage_wrt]            */
+#define STAGE_NOLINKCHECK       0x40000000000LL  /* --nolinkcheck [stage_iowc,stage_updc,stage_clr] */
 
 /* ======================================================================= */
 /* =================== DEFINITION OF API METHODS ========================= */
