@@ -65,6 +65,7 @@ struct rmjob {
 	int openflags; /* Hint to say O_RDONLY, O_WRONLY, etc... Any value >= 0 is meaningful - default is -1 */
 	char fs[CA_MAXPATHLEN+1]; /* name of wished filesystem in which job must run */
 	u_signed64 processid; /* processid, the one receiving a signal if the job is killed */
+	char partitionmask[RM_MAXPARTITIONLEN+1]; /* partition mask */
 	struct rmjob *next;
 	struct rmjob *prev;
 };
@@ -96,7 +97,8 @@ struct rmnode {
 	int nifce;     /* number of network interfaces */
 	struct Crm_ifconf *ifce; /* network interfaces with their status */
 	int load; /* one minute BSD load average times 100 */
-	char feature[1024]; /* generic attributes */
+	char feature[RM_MAXFEATURELEN+1]; /* generic attributes */
+	char partition[RM_MAXPARTITIONLEN+1]; /* partition */
 	int nfs; /* number of filesystems */
 	struct Crm_filesystem *fs; /* filesystems's totalspace,freespace */
 

@@ -38,7 +38,7 @@ EXTERN_C int DLL_DECL rm_dumpnode_relevant _PROTO((int *, struct rmnode *, int (
 EXTERN_C int DLL_DECL funcrep_to_log _PROTO((int *, int, ...));
 EXTERN_C void DLL_DECL rm_time _PROTO((time_t, char *));
 EXTERN_C char DLL_DECL **C__funcrep_name _PROTO(());
-EXTERN_C int DLL_DECL rm_adminnode _PROTO((char *, int, char *, char *, u_signed64, char *, char *, char *, char *, char *));
+EXTERN_C int DLL_DECL rm_adminnode _PROTO((char *, int, char *, char *, u_signed64, char *, char *, char *, char *, char *, char *));
 
 #define funcrep_name (*C__funcrep_name())
 

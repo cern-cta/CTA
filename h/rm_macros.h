@@ -112,6 +112,7 @@
 	marshall_HYPER(p, (rmnode)->n_wronly);                               \
 	marshall_HYPER(p, (rmnode)->n_rdwr);                                 \
 	marshall_HYPER(p, (rmnode)->maxtask);                                 \
+	marshall_STRING(p, (rmnode)->partition);                              \
 }
 
 #define unmarshall_RMNODE(p, rmnode) {                                     \
@@ -179,6 +180,7 @@
 	unmarshall_HYPER(p, (rmnode)->n_wronly);                               \
 	unmarshall_HYPER(p, (rmnode)->n_rdwr);                                 \
 	unmarshall_HYPER(p, (rmnode)->maxtask);                                 \
+	unmarshall_STRING(p, (rmnode)->partition);                              \
 }
 
 #define marshall_RMJOB(p, rmjob) {                      \
@@ -225,6 +227,7 @@
 	marshall_HYPER(p, (rmjob)->openflags);              \
 	marshall_STRING(p, (rmjob)->fs);                    \
 	marshall_HYPER(p, (rmjob)->processid);              \
+	marshall_STRING(p, (rmjob)->partitionmask);         \
 }
 
 #define unmarshall_RMJOB(p, rmjob) {                      \
@@ -271,6 +274,7 @@
 	unmarshall_HYPER(p, (rmjob)->openflags);              \
 	unmarshall_STRING(p, (rmjob)->fs);                    \
 	unmarshall_HYPER(p, (rmjob)->processid);              \
+	unmarshall_STRING(p, (rmjob)->partitionmask);         \
 }
 
 #define overwrite_RMJOB(out,in) {                                                   \
@@ -317,6 +321,7 @@
     if ((in)->openflags > 0) (out)->openflags = (in)->openflags;                    \
     if ((in)->fs[0] != '\0') strcpy((out)->fs,(in)->fs);                            \
     if ((in)->processid > 0) (out)->processid = (in)->processid;                    \
+    if ((in)->partitionmask[0] != '\0') strcpy((out)->partitionmask,(in)->partitionmask); \
 }
 
 #define cmp_RMJOB(status,filter,ref) {                                                                        \
@@ -363,6 +368,7 @@
     if ((filter)->openflags > 0 && (ref)->openflags != (filter)->openflags)                        status++;  \
     if ((filter)->fs[0] != '\0' && strcmp((ref)->fs,(filter)->fs) != 0)                            status++;  \
     if ((filter)->processid > 0 && (ref)->processid != (filter)->processid)                        status++;  \
+    if ((filter)->partitionmask[0] != '\0' && strcmp((ref)->partitionmask,(filter)->partitionmask) != 0) status++;  \
 }
 
 #define unmarshall_RELEVANT_RMJOB(p, out) {   \
@@ -404,6 +410,7 @@
     if ((in)->n_wronly > 0) (out)->n_wronly = (in)->n_wronly;                        \
     if ((in)->n_rdwr > 0) (out)->n_rdwr = (in)->n_rdwr;                              \
     if ((in)->maxtask > 0) (out)->maxtask = (in)->maxtask;                           \
+    if ((in)->partition[0] != '\0') strcpy((out)->partition,(in)->partition);        \
 }
 
 /* NOTE: IFCE and FS are not supported in this method */
@@ -432,6 +439,7 @@
     if ((filter)->n_wronly > 0 && (ref)->n_wronly != (filter)->n_wronly)                        status++;  \
     if ((filter)->n_rdwr > 0 && (ref)->n_rdwr != (filter)->n_rdwr)                              status++;  \
     if ((filter)->maxtask > 0 && (ref)->maxtask != (filter)->maxtask)                           status++;  \
+    if ((filter)->partition[0] != '\0' && strcmp((ref)->partition,(filter)->partition) != 0)    status++;  \
 }
 
 #define RM_ENTER() {                              \

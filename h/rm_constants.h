@@ -1,4 +1,4 @@
-/* $Id: rm_constants.h,v 1.4 2004/12/01 14:49:07 jdurand Exp $ */
+/* $Id: rm_constants.h,v 1.5 2004/12/02 11:41:50 jdurand Exp $ */
 
 #ifndef __rm_constants_h
 
@@ -282,7 +282,11 @@
 #endif
 
 #ifndef RM_MAXFEATURELEN
-#define RM_MAXFEATURELEN 1024
+#define RM_MAXFEATURELEN 1023
+#endif
+
+#ifndef RM_MAXPARTITIONLEN
+#define RM_MAXPARTITIONLEN 1023
 #endif
 
 #ifndef CA_MAXARCHNAMELEN
