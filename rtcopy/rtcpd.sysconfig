@@ -1,7 +1,7 @@
 #
-# $Id: rtcpd.sysconfig,v 1.1 2004/08/06 15:03:07 motiakov Exp $
+# $Id: rtcpd.sysconfig,v 1.2 2004/08/12 16:48:32 motiakov Exp $
 #
-# @(#)$RCSfile: rtcpd.sysconfig,v $ $Revision: 1.1 $ $Date: 2004/08/06 15:03:07 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: rtcpd.sysconfig,v $ $Revision: 1.2 $ $Date: 2004/08/12 16:48:32 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 # should rtcpd run?
 # any string but "yes" will equivalent to "NO"
@@ -21,6 +21,7 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ORACLE_HOME}/lib
 
 if [ -f /etc/sysconfig/castor_security ]; then
         . /etc/sysconfig/castor_security CENTRAL
+	export SECURE_CASTOR=1
         export CSEC_TRACE=1
         export CSEC_TRACEFILE=/usr/spool/rtcopy/rtcpd_trace
 fi
