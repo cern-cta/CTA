@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: osdep.h,v $ $Revision: 1.6 $ $Date: 1999/10/20 19:10:37 $ CERN IT-PDP/IP Frederic Hemmer
+ * @(#)$RCSfile: osdep.h,v $ $Revision: 1.7 $ $Date: 1999/11/08 07:48:09 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */
@@ -23,7 +23,8 @@
 #define HYPERSIZE       8
 
 typedef unsigned char   U_BYTE;
-typedef unsigned short  U_WORD;
+/* typedef unsigned short  U_WORD; */
+typedef unsigned short  U_SHORT;
 typedef unsigned int    U_LONG;
 typedef struct  {
         U_LONG      lslw;
