@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.30 2001/07/27 09:11:18 jdurand Exp $
+ * $Id: stgconvert.c,v 1.31 2001/11/30 12:21:24 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.30 $ $Date: 2001/07/27 09:11:18 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.31 $ $Date: 2001/11/30 12:21:24 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -36,7 +36,7 @@ static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.30 $ $Date: 2
 #include "osdep.h"
 #include "Cdb_api.h"                /* CASTOR Cdb Interface */
 #include "Cstage_db.h"              /* Generated STAGE/Cdb header */
-#include "stage.h"                  /* CASTOR's STAGE header */
+#include "stage_api.h"              /* CASTOR's STAGE API */
 #include "serrno.h"                 /* CASTOR's serrno */
 #include "Cstage_ifce.h"            /* Conversion routines */
 #include "u64subr.h"
