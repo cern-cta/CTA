@@ -1,8 +1,8 @@
-.\" $Id: serrno.man,v 1.1 2004/07/20 09:44:55 motiakov Exp $
+.\" $Id: serrno.man,v 1.2 2004/07/20 10:39:16 motiakov Exp $
 .\"
 .\" Man page for the CASTOR's error variable serrno
 .\"
-.TH SERRNO "3" "$Date: 2004/07/20 09:44:55 $" "CASTOR" "Castor Library Functions"
+.TH SERRNO "3" "$Date: 2004/07/20 10:39:16 $" "CASTOR" "Castor Library Functions"
 .SH NAME
 \fBserrno\fP \- CASTOR internal error variable
 
@@ -808,6 +808,7 @@ The following error values are returned only by the Expert Facility package:
 .TP
 .B EEXPCDWDIR
 (2907) Can't change to working directory
+
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
