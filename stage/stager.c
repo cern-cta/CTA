@@ -813,6 +813,8 @@ int stagewrt_castor_hsm_file() {
       Flags = 0;
       
       while (1) {
+        stagewrt_nomoreupdatetape == 0;
+
         /* Wait for a free tape */
 #ifdef STAGER_DEBUG
         sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] "
