@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: sendrep.c,v $ $Revision: 1.1 $ $Date: 2002/05/28 09:37:58 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "$RCSfile: sendrep.c,v $ $Revision: 1.2 $ $Date: 2003/09/08 17:16:43 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -15,11 +15,11 @@ static char sccsid[] = "$RCSfile: sendrep.c,v $ $Revision: 1.1 $ $Date: 2002/05/
 #else
 #include <netinet/in.h>
 #endif
-#include <varargs.h>
+#include <stdarg.h>
 #include "marshall.h"
 #include "net.h"
 #include "Cupv.h"
-sendrep(va_alist) va_dcl
+sendrep(int rpfd, int rep_type, ...)
 {
 	va_list args;
 	char func[16];
@@ -30,18 +30,13 @@ sendrep(va_alist) va_dcl
 	char *q;
 	char *rbp;
 	int rc;
-	int rep_type;
-	int req_type;
 	char repbuf[REPBUFSZ+12];
 	int repsize;
-	int rpfd;
 
 	strcpy (func, "sendrep");
 	rbp = repbuf;
 	marshall_LONG (rbp, CUPV_MAGIC);
-	va_start (args);
-	rpfd = va_arg (args, int);
-	rep_type = va_arg (args, int);
+	va_start (args, rep_type);
 	marshall_LONG (rbp, rep_type);
 	switch (rep_type) {
 	case MSG_ERR:

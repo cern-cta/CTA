@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: Cupvlogit.c,v $ $Revision: 1.1 $ $Date: 2002/05/28 09:37:58 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "$RCSfile: Cupvlogit.c,v $ $Revision: 1.2 $ $Date: 2003/09/08 17:16:43 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -12,16 +12,14 @@ static char sccsid[] = "$RCSfile: Cupvlogit.c,v $ $Revision: 1.1 $ $Date: 2002/0
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
-#include <varargs.h>
+#include <stdarg.h>
 #include "Cglobals.h"
 #include "Cupv.h"
 extern int jid;
 
-Cupvlogit(va_alist) va_dcl
+Cupvlogit(char *func, char *msg, ...)
 {
 	va_list args;
-	char *func;
-	char *msg;
 	char prtbuf[LOGBUFSZ];
 	int save_errno;
 	int Tid = 0;
@@ -33,9 +31,7 @@ Cupvlogit(va_alist) va_dcl
 	int fd_log;
 
 	save_errno = errno;
-	va_start (args);
-	func = va_arg (args, char *);
-	msg = va_arg (args, char *);
+	va_start (args, msg);
 	(void) time (&current_time);		/* Get current time */
 #if (defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32)
 	(void) localtime_r (&current_time, &tmstruc);
