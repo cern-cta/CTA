@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_admin.c,v $ $Revision: 1.1 $ $Date: 2000/06/15 13:00:35 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_admin.c,v $ $Revision: 1.2 $ $Date: 2000/06/15 17:08:24 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -41,8 +41,6 @@ static void usage(char *cmd, char cmds[][20]) {
 int main(int argc, char *argv[]) {
     int rc;
     int i,j,k;
-    vdqmDrvReq_t drv;
-    vdqmVolReq_t vol;
 
     char cmds[][20] =  {"-ping",
                         "-shutdown",
@@ -131,13 +129,22 @@ int main(int argc, char *argv[]) {
             if ( rc >= 0 ) {
                 fprintf(stdout,"Current queue position for reqid %d is %d\n",
                         reqid,rc);
+            } else if ( serrno != SECOMERR && serrno != EVQHOLD ) {
+                fprintf(stdout,"%s\n","ALIVE");
+                exit(0);
+            } else if ( serrno == EVQHOLD ) {
+                fprintf(stdout,"%s\n","HOLD");
+                exit(0);
+            } else {
+                fprintf(stdout,"%s\n","DEAD");
+                exit(1);
             } 
         } else if ( icmds[i] == VDQM_DEDICATE_DRV ) {
-            if ( *drv.dedicate == '\0' ) {
+            if ( *match == '\0' ) {
                 fprintf(stdout,"Revoke dedication of %s@%s\n",
                         drive,server);
             } else {
-                fprintf(stdout,"Dediate %s@%s to %s\n",
+                fprintf(stdout,"Dedicate %s@%s to %s\n",
                         drive,server,match);
             }
             rc = vdqm_DedicateDrive(NULL,dgn,server,drive,match);
