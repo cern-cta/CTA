@@ -1,14 +1,14 @@
 /*
- * $Id: socket.c,v 1.5 2000/04/05 09:58:20 jdurand Exp $
+ * $Id: socket.c,v 1.6 2000/05/05 14:26:10 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #if !defined(lint)
-static char cvsId[] =  "@(#)$RCSfile: socket.c,v $ $Revision: 1.5 $ $Date: 2000/04/05 09:58:20 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] =  "@(#)$RCSfile: socket.c,v $ $Revision: 1.6 $ $Date: 2000/05/05 14:26:10 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* lint */
 
 /* socket.c     Generalized network interface                           */
@@ -301,7 +301,7 @@ char *
 s_errmsg()                              /* return last error message    */
 {
 #if !defined(_WIN32)
-    return(sys_errlist[errno]);
+    return((char *)sys_errlist[errno]);
 #else /* _WIN32 */
     return(geterr());
 #endif /* _WIN32 */

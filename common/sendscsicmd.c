@@ -1,14 +1,14 @@
 /* 
- * $Id: sendscsicmd.c,v 1.6 1999/12/14 14:33:28 jdurand Exp $
+ * $Id: sendscsicmd.c,v 1.7 2000/05/05 14:26:11 baud Exp $
  */
 
 /*
- * Copyright (C) 1996-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1996-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.6 $ $Date: 1999/12/14 14:33:28 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.7 $ $Date: 2000/05/05 14:26:11 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	send_scsi_cmd - Send a SCSI command to a device */
@@ -640,14 +640,14 @@ char **msgaddr;
 		n+= buflen;
 	}
 	if (write (fd, sg_buffer, n) < 0) {
-		*msgaddr = sys_errlist[errno];
+		*msgaddr = (char *) sys_errlist[errno];
 		USRMSG (TP042, sgpath, "write", *msgaddr);
 		if (! do_not_open) close (fd);
 		return (-2);
 	}
 	if ((n = read (fd, sg_buffer, sizeof(struct sg_header) +
 	    ((flags & SCSI_IN) ? buflen : 0))) < 0) {
-		*msgaddr = sys_errlist[errno];
+		*msgaddr = (char *) sys_errlist[errno];
 		USRMSG (TP042, sgpath, "read", *msgaddr);
 		if (! do_not_open) close (fd);
 		return (-2);
@@ -670,7 +670,7 @@ char **msgaddr;
 		USRMSG (TP042, sgpath, "read", *msgaddr);
 		return (-4);
 	} else if (sg_hd->result) {
-		*msgaddr = sys_errlist[sg_hd->result];
+		*msgaddr = (char *) sys_errlist[sg_hd->result];
 		USRMSG (TP042, sgpath, "read", *msgaddr);
 		return (-2);
 	}
