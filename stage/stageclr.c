@@ -1,5 +1,5 @@
 /*
- * $Id: stageclr.c,v 1.37 2004/11/17 13:05:44 jdurand Exp $
+ * $Id: stageclr.c,v 1.38 2004/11/17 17:19:40 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.37 $ $Date: 2004/11/17 13:05:44 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageclr.c,v $ $Revision: 1.38 $ $Date: 2004/11/17 17:19:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -46,6 +46,7 @@ int reqid_flag = 0;
 int side_flag = 0;
 int nodisk_flag = 0;
 int dounlink_flag = 0;
+int done_munlink = 0;
 
 int main(argc, argv)
 		 int	argc;
@@ -330,6 +331,9 @@ int main(argc, argv)
 #if defined(_WIN32)
 				WSACleanup();
 #endif
+				if (done_munlink) {
+				  rfio_unend();
+				}
 				exit (SYERR);
 			} else if (c) {
 				if (! rc) rc = USERR;
@@ -343,6 +347,9 @@ int main(argc, argv)
 			  if (dounlink_flag) {
 			    /* We clear ourself the file */
 			    serrno = rfio_errno = 0;
+			    if (! done_munlink) {
+			      done_munlink = 1;
+			    }
 			    if ((rfio_munlink(path) == 0) || (rfio_serrno() == ENOENT)) {
 			      /* Deletion was successful or file absent */
 			      marshall_STRING (sbp, path);
@@ -372,6 +379,9 @@ int main(argc, argv)
 #if defined(_WIN32)
 		WSACleanup();
 #endif
+		if (done_munlink) {
+		  rfio_unend();
+		}
 		exit (rc == 0 ? 0 : rc_castor2shift(rc));
 	} else {
 		marshall_WORD (sbp, argc);
@@ -402,6 +412,9 @@ int main(argc, argv)
 #if defined(_WIN32)
 		WSACleanup();
 #endif
+		if (done_munlink) {
+		  rfio_unend();
+		}
 		exit (c == 0 ? 0 : rc_castor2shift(serrno));
 	}
 }
@@ -414,6 +427,9 @@ void cleanup(sig)
 #if defined(_WIN32)
 	WSACleanup();
 #endif
+	if (done_munlink) {
+	  rfio_unend();
+	}
 	exit (USERR);
 }
 
