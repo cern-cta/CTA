@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.5 2004/11/08 09:38:47 jdurand Exp $
+ * $Id: stager_macros.h,v 1.6 2004/11/08 10:55:29 jdurand Exp $
  */
 
 #ifndef __stager_macros_h
@@ -12,6 +12,7 @@
 #include "osdep.h"
 #include "Cuuid.h"
 #include "u64subr.h"
+#include "stager_uuid.h"
 
 /* --------------------------- */
 /* Macros for logging with DLF */
