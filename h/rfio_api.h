@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.9 $ $Date: 2000/05/29 16:31:13 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.10 $ $Date: 2000/05/30 10:39:36 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -17,6 +17,10 @@
 #ifndef _RFIO_CONSTANTS_H_INCLUDED_
 #include <rfio_constants.h>
 #endif /* _RFIO_CONSTANTS_H_INCLUDED_ */
+
+#ifndef _RFIO_ERRNO_H_INCLUDED_
+#include <rfio_errno.h>
+#endif /* _RFIO_ERRNO_H_INCLUDED_ */
 
 struct rfstatfs {
         long totblks  ;      /* Total number of blocks       */
