@@ -87,6 +87,7 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_VDQM_PING,
     RTCPCLD_MSG_CALLBACK_ADDGETW,
     RTCPCLD_MSG_RESTORESEGS,
+    RTCPCLD_MSG_TPNOTRETRIED,
     RTCPCLD_MSG_RESERVED0,
     RTCPCLD_MSG_RESERVED1
 };
@@ -163,6 +164,7 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_VDQM_PING, DLF_LVL_DEBUG,"Ping VDQM server"},
     { RTCPCLD_MSG_CALLBACK_ADDGETW, DLF_LVL_DEBUG, "Get more work callback: add placeholder"},
     { RTCPCLD_MSG_RESTORESEGS, DLF_LVL_SYSTEM,"Re-enable tape+segments for selection"},
+    { RTCPCLD_MSG_TPNOTRETRIED, DLF_LVL_ALERT,"Tape request failed without failed segments"},
     { RTCPCLD_MSG_RESERVED0, DLF_LVL_DEBUG,""},
     { RTCPCLD_MSG_RESERVED1, DLF_LVL_DEBUG,""}
 };
