@@ -1,11 +1,13 @@
 /*
- * $Id: stage_util.c,v 1.1 2001/01/31 19:03:46 jdurand Exp $
+ * $Id: stage_util.c,v 1.2 2001/02/05 20:56:11 jdurand Exp $
  */
 
-#include <sys/time.h>
 #include <sys/types.h>
 #ifndef _WIN32
+#include <sys/time.h>
 #include <unistd.h>
+#else
+#include <winsock2.h>
 #endif
 #include "stage_api.h"
 #include "osdep.h"
