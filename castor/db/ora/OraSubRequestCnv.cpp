@@ -33,7 +33,6 @@
 #include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
-#include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -240,7 +239,9 @@ void castor::db::ora::OraSubRequestCnv::fillRepDiskCopy(castor::stager::SubReque
     m_checkDiskCopyExistStatement->setDouble(1, obj->diskcopy()->id());
     oracle::occi::ResultSet *rset = m_checkDiskCopyExistStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("OraCnvSvc");
+      ad.setCnvSvcType(castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->diskcopy(), false);
     }
     // Close resultset
@@ -270,7 +271,9 @@ void castor::db::ora::OraSubRequestCnv::fillRepCastorFile(castor::stager::SubReq
     m_checkCastorFileExistStatement->setDouble(1, obj->castorFile()->id());
     oracle::occi::ResultSet *rset = m_checkCastorFileExistStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("OraCnvSvc");
+      ad.setCnvSvcType(castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->castorFile(), false);
     }
     // Close resultset
@@ -300,7 +303,9 @@ void castor::db::ora::OraSubRequestCnv::fillRepSubRequest(castor::stager::SubReq
     m_checkSubRequestExistStatement->setDouble(1, obj->parent()->id());
     oracle::occi::ResultSet *rset = m_checkSubRequestExistStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("OraCnvSvc");
+      ad.setCnvSvcType(castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->parent(), false);
     }
     // Close resultset
@@ -702,8 +707,8 @@ void castor::db::ora::OraSubRequestCnv::deleteRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraSubRequestCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
-  castor::db::DbAddress* ad = 
-    dynamic_cast<castor::db::DbAddress*>(address);
+  castor::BaseAddress* ad = 
+    dynamic_cast<castor::BaseAddress*>(address);
   try {
     // Check whether the statement is ok
     if (0 == m_selectStatement) {

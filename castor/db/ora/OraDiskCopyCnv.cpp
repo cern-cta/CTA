@@ -33,7 +33,6 @@
 #include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
-#include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -289,7 +288,9 @@ void castor::db::ora::OraDiskCopyCnv::fillRepFileSystem(castor::stager::DiskCopy
     m_checkFileSystemExistStatement->setDouble(1, obj->fileSystem()->id());
     oracle::occi::ResultSet *rset = m_checkFileSystemExistStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("OraCnvSvc");
+      ad.setCnvSvcType(castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->fileSystem(), false);
     }
     // Close resultset
@@ -319,7 +320,9 @@ void castor::db::ora::OraDiskCopyCnv::fillRepCastorFile(castor::stager::DiskCopy
     m_checkCastorFileExistStatement->setDouble(1, obj->castorFile()->id());
     oracle::occi::ResultSet *rset = m_checkCastorFileExistStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("OraCnvSvc");
+      ad.setCnvSvcType(castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->castorFile(), false);
     }
     // Close resultset
@@ -659,8 +662,8 @@ void castor::db::ora::OraDiskCopyCnv::deleteRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraDiskCopyCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
-  castor::db::DbAddress* ad = 
-    dynamic_cast<castor::db::DbAddress*>(address);
+  castor::BaseAddress* ad = 
+    dynamic_cast<castor::BaseAddress*>(address);
   try {
     // Check whether the statement is ok
     if (0 == m_selectStatement) {

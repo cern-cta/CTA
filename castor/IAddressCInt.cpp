@@ -26,8 +26,8 @@
 
 // Include Files
 #include "castor/IAddress.hpp"
+#include "castor/IObject.hpp"
 #include <iostream>
-#include <string>
 
 extern "C" {
 
@@ -37,6 +37,20 @@ extern "C" {
   int C_IAddress_delete(castor::IAddress* obj) {
     delete obj;
     return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // C_IAddress_getIObject
+  //----------------------------------------------------------------------------
+  castor::IObject* C_IAddress_getIObject(castor::IAddress* obj) {
+    return obj;
+  }
+
+  //----------------------------------------------------------------------------
+  // C_IAddress_fromIObject
+  //----------------------------------------------------------------------------
+  castor::IAddress* C_IAddress_fromIObject(castor::IObject* obj) {
+    return dynamic_cast<castor::IAddress*>(obj);
   }
 
   //----------------------------------------------------------------------------
@@ -61,8 +75,8 @@ extern "C" {
   // C_IAddress_cnvSvcName
   //----------------------------------------------------------------------------
   int C_IAddress_cnvSvcName(castor::IAddress* instance,
-                            std::string* ret) {
-    *ret = instance->cnvSvcName();
+                            const char** ret) {
+    *ret = instance->cnvSvcName().c_str();
     return 0;
   }
 

@@ -29,6 +29,7 @@
 
 // Include Files and Forward declarations for the C world
 struct C_IAddress_t;
+struct C_IObject_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -44,11 +45,21 @@ struct C_IAddress_t;
 int C_IAddress_delete(struct C_IAddress_t* obj);
 
 /**
+ * Cast into IObject
+ */
+struct C_IObject_t* C_IAddress_getIObject(struct C_IAddress_t* obj);
+
+/**
+ * Dynamic cast from IObject
+ */
+struct C_IAddress_t* C_IAddress_fromIObject(struct C_IObject_t* obj);
+
+/**
  * gets the object type, that is the type of object whose representation is pointed
  * to by this address
  */
 int C_IAddress_objType(struct C_IAddress_t* instance,
-                       const unsigned int* ret);
+                       unsigned int* ret);
 
 /**
  * sets the object type, that is the type of object whose representation is pointed
@@ -61,18 +72,22 @@ int C_IAddress_setObjType(struct C_IAddress_t* instance,
  * gets the name of the conversion service able to deal with this address
  */
 int C_IAddress_cnvSvcName(struct C_IAddress_t* instance,
-                          const string* ret);
+                          const char** ret);
 
 /**
  * gets the type of the conversion service able to deal with this address
  */
 int C_IAddress_cnvSvcType(struct C_IAddress_t* instance,
-                          const unsigned int* ret);
+                          unsigned int* ret);
 
 /**
  * prints the address into an output stream
  */
 int C_IAddress_print(struct C_IAddress_t* instance,
                      ostream& s);
+
+/***************************************/
+/* Implementation of IObject interface */
+/***************************************/
 
 #endif // CASTOR_IADDRESS_H

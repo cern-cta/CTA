@@ -27,7 +27,6 @@
 // Include Files
 #include "castor/IObject.hpp"
 #include "castor/Services.hpp"
-#include "castor/db/DbAddress.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 

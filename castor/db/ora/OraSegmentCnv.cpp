@@ -33,7 +33,6 @@
 #include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
-#include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -213,7 +212,9 @@ void castor::db::ora::OraSegmentCnv::fillRepTape(castor::stager::Segment* obj)
     m_checkTapeExistStatement->setDouble(1, obj->tape()->id());
     oracle::occi::ResultSet *rset = m_checkTapeExistStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("OraCnvSvc");
+      ad.setCnvSvcType(castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->tape(), false);
     }
     // Close resultset
@@ -243,7 +244,9 @@ void castor::db::ora::OraSegmentCnv::fillRepTapeCopy(castor::stager::Segment* ob
     m_checkTapeCopyExistStatement->setDouble(1, obj->copy()->id());
     oracle::occi::ResultSet *rset = m_checkTapeCopyExistStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("OraCnvSvc");
+      ad.setCnvSvcType(castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->copy(), false);
     }
     // Close resultset
@@ -559,8 +562,8 @@ void castor::db::ora::OraSegmentCnv::deleteRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraSegmentCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
-  castor::db::DbAddress* ad = 
-    dynamic_cast<castor::db::DbAddress*>(address);
+  castor::BaseAddress* ad = 
+    dynamic_cast<castor::BaseAddress*>(address);
   try {
     // Check whether the statement is ok
     if (0 == m_selectStatement) {

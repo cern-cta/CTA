@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2004/11/25 12:46:38 $ $Author: bcouturi $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2004/11/30 11:24:28 $ $Author: sponcec3 $
  *
  *
  *
@@ -233,7 +233,9 @@ void *castor::rh::Server::processRequest(void *param) throw() {
 void castor::rh::Server::handleRequest(castor::IObject* fr)
   throw (castor::exception::Exception) {
   // Stores it into Oracle
-  castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+  castor::BaseAddress ad;
+  ad.setCnvSvcName("OraCnvSvc");
+  ad.setCnvSvcType(castor::SVC_ORACNV);
   try {
     svcs()->createRep(&ad, fr, false);
     castor::stager::FileRequest* filreq =

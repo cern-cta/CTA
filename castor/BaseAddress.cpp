@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      BaseAddress.cpp
+ *                      castor/BaseAddress.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,27 +21,86 @@
  *
  * 
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files
-#include "Constants.hpp"
-#include "BaseAddress.hpp"
+#include "castor/BaseAddress.hpp"
+#include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
+#include "castor/ObjectSet.hpp"
+#include "osdep.h"
+#include <iostream>
+#include <string>
 
 //------------------------------------------------------------------------------
-// constructor
+// Constructor
 //------------------------------------------------------------------------------
-castor::BaseAddress::BaseAddress(const std::string cnvSvcName,
-                                 const unsigned int cnvSvcType,
-                                 const unsigned int objType) :
-  m_objType(objType), m_cnvSvcName(cnvSvcName),
-  m_cnvSvcType(cnvSvcType) {}
+castor::BaseAddress::BaseAddress() throw() :
+  m_objType(0),
+  m_cnvSvcName(""),
+  m_cnvSvcType(0),
+  m_id() {
+};
+
+//------------------------------------------------------------------------------
+// Destructor
+//------------------------------------------------------------------------------
+castor::BaseAddress::~BaseAddress() throw() {
+};
+
+//------------------------------------------------------------------------------
+// print
+//------------------------------------------------------------------------------
+void castor::BaseAddress::print(std::ostream& stream,
+                                std::string indent,
+                                castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# BaseAddress #]" << std::endl;
+  if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
+    // Circular dependency, this object was already printed
+    stream << indent << "Back pointer, see above" << std::endl;
+    return;
+  }
+  // Output of all members
+  stream << indent << "objType : " << m_objType << std::endl;
+  stream << indent << "cnvSvcName : " << m_cnvSvcName << std::endl;
+  stream << indent << "cnvSvcType : " << m_cnvSvcType << std::endl;
+  stream << indent << "id : " << m_id << std::endl;
+  alreadyPrinted.insert(this);
+}
+
+//------------------------------------------------------------------------------
+// print
+//------------------------------------------------------------------------------
+void castor::BaseAddress::print() const {
+  ObjectSet alreadyPrinted;
+  print(std::cout, "", alreadyPrinted);
+}
+
+//------------------------------------------------------------------------------
+// TYPE
+//------------------------------------------------------------------------------
+int castor::BaseAddress::TYPE() {
+  return OBJ_BaseAddress;
+}
 
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
 void castor::BaseAddress::print(std::ostream& s) const {
-  s << "ObjType " << m_objType
-    << ", CnvSvcName " << m_cnvSvcName
-    << ", CnvSvcType " << m_cnvSvcType;
 }
+
+//------------------------------------------------------------------------------
+// type
+//------------------------------------------------------------------------------
+int castor::BaseAddress::type() const {
+  return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::BaseAddress::clone() {
+  return new BaseAddress(*this);
+}
+

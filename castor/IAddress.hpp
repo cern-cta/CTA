@@ -28,10 +28,14 @@
 #define CASTOR_IADDRESS_HPP
 
 // Include Files
+#include "castor/IObject.hpp"
 #include <iostream>
 #include <string>
 
 namespace castor {
+
+  // Forward declarations
+  class ObjectSet;
 
   /**
    * class IAddress
@@ -39,7 +43,7 @@ namespace castor {
    * of an object. Fully empty except for an id telling the type of the address and
    * the infrastructure for printing any address
    */
-  class IAddress {
+  class IAddress : public virtual IObject {
 
   public:
 
@@ -52,7 +56,7 @@ namespace castor {
      * gets the object type, that is the type of object whose representation is pointed
      * to by this address
      */
-    virtual const unsigned int objType() const = 0;
+    virtual unsigned int objType() const = 0;
 
     /**
      * sets the object type, that is the type of object whose representation is pointed
@@ -64,12 +68,12 @@ namespace castor {
     /**
      * gets the name of the conversion service able to deal with this address
      */
-    virtual const std::string cnvSvcName() const = 0;
+    virtual std::string cnvSvcName() const = 0;
 
     /**
      * gets the type of the conversion service able to deal with this address
      */
-    virtual const unsigned int cnvSvcType() const = 0;
+    virtual unsigned int cnvSvcType() const = 0;
 
     /**
      * prints the address into an output stream
@@ -77,18 +81,26 @@ namespace castor {
      */
     virtual void print(std::ostream& s) const = 0;
 
+    /**
+     * Outputs this object in a human readable format
+     * @param stream The stream where to print this object
+     * @param indent The indentation to use
+     * @param alreadyPrinted The set of objects already printed.
+     * This is to avoid looping when printing circular dependencies
+     */
+    virtual void print(std::ostream& stream,
+                       std::string indent,
+                       castor::ObjectSet& alreadyPrinted) const = 0;
+
+    /**
+     * Outputs this object in a human readable format
+     */
+    virtual void print() const = 0;
+
   private:
 
   }; // end of class IAddress
 
 }; // end of namespace castor
-
-/**
- * outputs this IAddress to an output stream
- * This method is actually not virtual as is always the case for
- * streaming operators. However, it makes use of the print method
- * which is pure virtual.
- */
-std::ostream& operator<<(std::ostream& s, const castor::IAddress& addr);
 
 #endif // CASTOR_IADDRESS_HPP

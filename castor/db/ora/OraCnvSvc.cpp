@@ -30,7 +30,7 @@
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/SvcFactory.hpp"
-#include "castor/db/DbAddress.hpp"
+#include "castor/BaseAddress.hpp"
 #include "castor/db/ora/OraBaseObj.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -214,8 +214,8 @@ castor::IObject* castor::db::ora::OraCnvSvc::createObj (castor::IAddress* addres
   throw (castor::exception::Exception) {
   // If the address has no type, find it out
   if (OBJ_INVALID == address->objType()) {
-    castor::db::DbAddress* ad =
-      dynamic_cast<castor::db::DbAddress*>(address);
+    castor::BaseAddress* ad =
+      dynamic_cast<castor::BaseAddress*>(address);
     unsigned int type = getTypeFromId(ad->id());
     if (0 == type) return 0;
     ad->setObjType(type);
@@ -330,8 +330,11 @@ castor::IAddress* castor::db::ora::OraCnvSvc::nextRequestAddress()
     if (nb > 0) {
       clog() << VERBOSE << "Found a new requests : "
              << m_getNRStatement->getInt(1) << std::endl;
-      return new DbAddress(m_getNRStatement->getInt(1),
-                           "OraCnvSvc", castor::SVC_ORACNV);
+      castor::BaseAddress* ret = new castor::BaseAddress();
+      ret->setCnvSvcName("OraCnvSvc");
+      ret->setCnvSvcType(castor::SVC_ORACNV);
+      ret->setId(m_getNRStatement->getInt(1));
+      return ret;
     }
   } catch (oracle::occi::SQLException e) {
     if (1403 == e.getErrorCode()) {
@@ -455,6 +458,9 @@ castor::db::ora::OraCnvSvc::getTypeFromId(const u_signed64 id)
 castor::IObject* castor::db::ora::OraCnvSvc::getObjFromId
 (u_signed64 id)
   throw (castor::exception::Exception) {
-  castor::db::DbAddress clientAd(id, "OraCnvSvc", repType());
+  castor::BaseAddress clientAd;
+  clientAd.setId(id);
+  clientAd.setCnvSvcName("OraCnvSvc");
+  clientAd.setCnvSvcType(repType());
   return createObj(&clientAd);
 }

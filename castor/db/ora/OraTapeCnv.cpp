@@ -33,7 +33,6 @@
 #include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
-#include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -263,7 +262,9 @@ void castor::db::ora::OraTapeCnv::fillRepStream(castor::stager::Tape* obj)
     m_checkStreamExistStatement->setDouble(1, obj->stream()->id());
     oracle::occi::ResultSet *rset = m_checkStreamExistStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("OraCnvSvc");
+      ad.setCnvSvcType(castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->stream(), false, OBJ_Tape);
     } else {
       // Check remote update statement
@@ -637,8 +638,8 @@ void castor::db::ora::OraTapeCnv::deleteRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraTapeCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
-  castor::db::DbAddress* ad = 
-    dynamic_cast<castor::db::DbAddress*>(address);
+  castor::BaseAddress* ad = 
+    dynamic_cast<castor::BaseAddress*>(address);
   try {
     // Check whether the statement is ok
     if (0 == m_selectStatement) {

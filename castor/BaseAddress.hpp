@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      BaseAddress.hpp
+ *                      castor/BaseAddress.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,89 +21,179 @@
  *
  * 
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_BASEADDRESS_HPP 
-#define CASTOR_BASEADDRESS_HPP 1
+#ifndef CASTOR_BASEADDRESS_HPP
+#define CASTOR_BASEADDRESS_HPP
 
 // Include Files
-#include "IAddress.hpp"
-#include "Constants.hpp"
+#include "castor/IAddress.hpp"
+#include "osdep.h"
+#include <iostream>
+#include <string>
 
 namespace castor {
 
+  // Forward declarations
+  class ObjectSet;
+  class IObject;
+
   /**
+   * class BaseAddress
    * The most basic address : only a type.
    */
-  class BaseAddress : public IAddress {
+  class BaseAddress : public virtual IAddress {
 
   public:
 
     /**
-     * constructor
+     * Empty Constructor
      */
-    BaseAddress(const std::string cnvSvcName,
-                const unsigned int cnvSvcType,
-                const unsigned int objType = OBJ_INVALID);
-
-    /*
-     * destructor
-     */
-    virtual ~BaseAddress() throw() {}
+    BaseAddress() throw();
 
     /**
-     * gets the object type, that is the type of
-     * object whose representation is pointed to by
-     * this address.
+     * Empty Destructor
      */
-    virtual const unsigned int objType() const { return m_objType; }
-    
-    /**
-     * sets the object type, that is the type of
-     * object whose representation is pointed to by
-     * this address.
-     */
-    void setObjType(unsigned int type) { m_objType = type; }
-    
-    /**
-     * gets the name of the conversion service able
-     * to deal with this address
-     */
-    virtual const std::string cnvSvcName() const { return m_cnvSvcName; }
+    virtual ~BaseAddress() throw();
 
     /**
-     * gets the type of the conversion service able
-     * to deal with this address
+     * Outputs this object in a human readable format
+     * @param stream The stream where to print this object
+     * @param indent The indentation to use
+     * @param alreadyPrinted The set of objects already printed.
+     * This is to avoid looping when printing circular dependencies
      */
-    virtual const unsigned int cnvSvcType() const { return m_cnvSvcType; }
+    virtual void print(std::ostream& stream,
+                       std::string indent,
+                       castor::ObjectSet& alreadyPrinted) const;
 
+    /**
+     * Outputs this object in a human readable format
+     */
+    virtual void print() const;
+
+    /**
+     * Gets the type of this kind of objects
+     */
+    static int TYPE();
+
+    /*********************************************/
+    /* Implementation of IAddress abstract class */
+    /*********************************************/
     /**
      * prints the address into an output stream
+     * @param s The stream where to print
      */
     virtual void print(std::ostream& s) const;
 
+    /**********************************/
+    /* End of IAddress abstract class */
+    /**********************************/
+    /********************************************/
+    /* Implementation of IObject abstract class */
+    /********************************************/
+    /**
+     * Gets the type of the object
+     */
+    virtual int type() const;
+
+    /**
+     * virtual method to clone any object
+     */
+    virtual IObject* clone();
+
+    /*********************************/
+    /* End of IObject abstract class */
+    /*********************************/
+    /**
+     * Get the value of m_objType
+     * the object type of this address
+     * @return the value of m_objType
+     */
+    unsigned int objType() const {
+      return m_objType;
+    }
+
+    /**
+     * Set the value of m_objType
+     * the object type of this address
+     * @param new_var the new value of m_objType
+     */
+    void setObjType(unsigned int new_var) {
+      m_objType = new_var;
+    }
+
+    /**
+     * Get the value of m_cnvSvcName
+     * the name of the conversion service able to deal with this address
+     * @return the value of m_cnvSvcName
+     */
+    std::string cnvSvcName() const {
+      return m_cnvSvcName;
+    }
+
+    /**
+     * Set the value of m_cnvSvcName
+     * the name of the conversion service able to deal with this address
+     * @param new_var the new value of m_cnvSvcName
+     */
+    void setCnvSvcName(std::string new_var) {
+      m_cnvSvcName = new_var;
+    }
+
+    /**
+     * Get the value of m_cnvSvcType
+     * the type of the conversion service able to deal with this address
+     * @return the value of m_cnvSvcType
+     */
+    unsigned int cnvSvcType() const {
+      return m_cnvSvcType;
+    }
+
+    /**
+     * Set the value of m_cnvSvcType
+     * the type of the conversion service able to deal with this address
+     * @param new_var the new value of m_cnvSvcType
+     */
+    void setCnvSvcType(unsigned int new_var) {
+      m_cnvSvcType = new_var;
+    }
+
+    /**
+     * Get the value of m_id
+     * The id of this object
+     * @return the value of m_id
+     */
+    u_signed64 id() const {
+      return m_id;
+    }
+
+    /**
+     * Set the value of m_id
+     * The id of this object
+     * @param new_var the new value of m_id
+     */
+    void setId(u_signed64 new_var) {
+      m_id = new_var;
+    }
+
   private:
 
-    /**
-     * the object type of this address
-     */
-    unsigned long m_objType;
-    
-    /**
-     * the name of the conversion service able to deal
-     * with this address
-     */
-    const std::string m_cnvSvcName;
+    /// the object type of this address
+    unsigned int m_objType;
 
-    /**
-     * the type of the conversion service able to deal
-     * with this address
-     */
-    const unsigned int m_cnvSvcType;
+    /// the name of the conversion service able to deal with this address
+    std::string m_cnvSvcName;
 
-  };
+    /// the type of the conversion service able to deal with this address
+    unsigned int m_cnvSvcType;
 
-} // end of namespace castor
+    /// The id of this object
+    u_signed64 m_id;
+
+  }; // end of class BaseAddress
+
+}; // end of namespace castor
 
 #endif // CASTOR_BASEADDRESS_HPP

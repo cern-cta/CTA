@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.59 $ $Release$ $Date: 2004/11/29 15:49:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.60 $ $Release$ $Date: 2004/11/30 11:24:27 $ $Author: sponcec3 $
  *
  *
  *
@@ -58,7 +58,6 @@
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/BaseAddress.hpp"
-#include "castor/db/DbAddress.hpp"
 #include "occi.h"
 #include <string>
 #include <sstream>
@@ -261,7 +260,9 @@ castor::db::ora::OraStagerSvc::segmentsForTape
     }
   }
   if (result.size() > 0) {
-    castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+    castor::BaseAddress ad;
+    ad.setCnvSvcName("OraCnvSvc");
+    ad.setCnvSvcType(castor::SVC_ORACNV);
     cnvSvc()->updateRep(&ad, searchItem, true);
   }
   return result;
@@ -304,7 +305,9 @@ castor::db::ora::OraStagerSvc::bestFileSystemForSegment
     result->setId
       ((u_signed64)m_bestFileSystemForSegmentStatement->getDouble(5));
     // Fill result for CastorFile
-    castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+    castor::BaseAddress ad;
+    ad.setCnvSvcName("OraCnvSvc");
+    ad.setCnvSvcType(castor::SVC_ORACNV);
     cnvSvc()->fillObj(&ad, result, OBJ_CastorFile);
     // commit
     cnvSvc()->commit();
@@ -344,7 +347,9 @@ bool castor::db::ora::OraStagerSvc::anyTapeCopyForStream
     m_anyTapeCopyForStreamStatement->closeResultSet(rset);
     if (result) {
       searchItem->setStatus(castor::stager::STREAM_WAITMOUNT);
-      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("OraCnvSvc");
+      ad.setCnvSvcType(castor::SVC_ORACNV);
       cnvSvc()->updateRep(&ad, searchItem, true);
     }
     return result;
@@ -428,7 +433,9 @@ castor::db::ora::OraStagerSvc::bestTapeCopyForStream
     castorFile->addTapeCopies(result);
     // Fill result for TapeCopy, Segments and Tape
     cnvSvc()->updateObj(result);
-    castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+    castor::BaseAddress ad;
+    ad.setCnvSvcName("OraCnvSvc");
+    ad.setCnvSvcType(castor::SVC_ORACNV);
     cnvSvc()->fillObj(&ad, result, OBJ_Segment);
     for (std::vector<castor::stager::Segment*>::iterator it =
            result->segments().begin();
@@ -568,7 +575,9 @@ castor::db::ora::OraStagerSvc::streamsToDo()
       stream->setStatus(castor::stager::STREAM_WAITDRIVE);
       cnvSvc()->updateRep(0, stream, false);
       // Fill TapePool pointer
-      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("OraCnvSvc");
+      ad.setCnvSvcType(castor::SVC_ORACNV);
       cnvSvc()->fillObj(&ad, obj, OBJ_TapePool);
       result.push_back(stream);
     }
@@ -613,7 +622,9 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
       tape->setSide(side);
       tape->setTpmode(tpmode);
       tape->setStatus(castor::stager::TAPE_UNUSED);
-      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("OraCnvSvc");
+      ad.setCnvSvcType(castor::SVC_ORACNV);
       try {
         cnvSvc()->createRep(&ad, tape, false);
         return tape;
@@ -657,7 +668,10 @@ castor::db::ora::OraStagerSvc::selectTape(const std::string vid,
   }
   // Now get the tape from its id
   try {
-    castor::db::DbAddress ad(id, "OraCnvSvc", castor::SVC_ORACNV);
+    castor::BaseAddress ad;
+    ad.setId(id);
+    ad.setCnvSvcName("OraCnvSvc");
+    ad.setCnvSvcType(castor::SVC_ORACNV);
     castor::IObject* obj = cnvSvc()->createObj(&ad);
     castor::stager::Tape* tape =
       dynamic_cast<castor::stager::Tape*> (obj);

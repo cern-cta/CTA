@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamAddress.cpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamAddress.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/30 11:24:28 $ $Author: sponcec3 $
  *
  * 
  *
@@ -33,4 +33,7 @@
 castor::io::StreamAddress::StreamAddress(castor::io::biniostream& stream,
                                          const std::string cnvSvcName,
                                          const unsigned int cnvSvcType) :
-  BaseAddress(cnvSvcName, cnvSvcType), m_stream(stream) {}
+  BaseAddress(), m_stream(stream) {
+  setCnvSvcName(cnvSvcName);
+  setCnvSvcType(cnvSvcType);  
+}

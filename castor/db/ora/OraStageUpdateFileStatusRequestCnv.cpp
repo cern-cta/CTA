@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/23 15:13:18 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/30 11:24:27 $ $Author: sponcec3 $
  *
  * 
  *
@@ -34,7 +34,6 @@
 #include "castor/ICnvFactory.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
-#include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -295,7 +294,9 @@ void castor::db::ora::OraStageUpdateFileStatusRequestCnv::fillRepSvcClass(castor
     m_checkSvcClassExistStatement->setDouble(1, obj->svcClass()->id());
     oracle::occi::ResultSet *rset = m_checkSvcClassExistStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-      castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("OraCnvSvc");
+      ad.setCnvSvcType(castor::SVC_ORACNV);
       cnvSvc()->createRep(&ad, obj->svcClass(), false);
     }
     // Close resultset
@@ -687,8 +688,8 @@ void castor::db::ora::OraStageUpdateFileStatusRequestCnv::deleteRep(castor::IAdd
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraStageUpdateFileStatusRequestCnv::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
-  castor::db::DbAddress* ad = 
-    dynamic_cast<castor::db::DbAddress*>(address);
+  castor::BaseAddress* ad = 
+    dynamic_cast<castor::BaseAddress*>(address);
   try {
     // Check whether the statement is ok
     if (0 == m_selectStatement) {
