@@ -25,9 +25,12 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/IClient.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/ReqIdRequest.hpp"
 #include "castor/stager/Request.hpp"
+#include "castor/stager/SvcClass.hpp"
+#include "osdep.h"
 
 extern "C" {
 
@@ -58,6 +61,203 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_ReqIdRequest_print(castor::stager::ReqIdRequest* instance) {
     instance->print();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_flags
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_flags(castor::stager::ReqIdRequest* instance, u_signed64* var) {
+    *var = instance->flags();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_setFlags
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_setFlags(castor::stager::ReqIdRequest* instance, u_signed64 new_var) {
+    instance->setFlags(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_userName
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_userName(castor::stager::ReqIdRequest* instance, const char** var) {
+    *var = instance->userName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_setUserName
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_setUserName(castor::stager::ReqIdRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setUserName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_euid
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_euid(castor::stager::ReqIdRequest* instance, unsigned long* var) {
+    *var = instance->euid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_setEuid
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_setEuid(castor::stager::ReqIdRequest* instance, unsigned long new_var) {
+    instance->setEuid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_egid
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_egid(castor::stager::ReqIdRequest* instance, unsigned long* var) {
+    *var = instance->egid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_setEgid
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_setEgid(castor::stager::ReqIdRequest* instance, unsigned long new_var) {
+    instance->setEgid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_mask
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_mask(castor::stager::ReqIdRequest* instance, unsigned long* var) {
+    *var = instance->mask();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_setMask
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_setMask(castor::stager::ReqIdRequest* instance, unsigned long new_var) {
+    instance->setMask(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_pid
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_pid(castor::stager::ReqIdRequest* instance, unsigned long* var) {
+    *var = instance->pid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_setPid
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_setPid(castor::stager::ReqIdRequest* instance, unsigned long new_var) {
+    instance->setPid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_machine
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_machine(castor::stager::ReqIdRequest* instance, const char** var) {
+    *var = instance->machine().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_setMachine
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_setMachine(castor::stager::ReqIdRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setMachine(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_svcClassName
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_svcClassName(castor::stager::ReqIdRequest* instance, const char** var) {
+    *var = instance->svcClassName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_setSvcClassName
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_setSvcClassName(castor::stager::ReqIdRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setSvcClassName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_userTag
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_userTag(castor::stager::ReqIdRequest* instance, const char** var) {
+    *var = instance->userTag().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_setUserTag
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_setUserTag(castor::stager::ReqIdRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setUserTag(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_reqId
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_reqId(castor::stager::ReqIdRequest* instance, const char** var) {
+    *var = instance->reqId().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_setReqId
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_setReqId(castor::stager::ReqIdRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setReqId(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_svcClass
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_svcClass(castor::stager::ReqIdRequest* instance, castor::stager::SvcClass** var) {
+    *var = instance->svcClass();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_setSvcClass
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_setSvcClass(castor::stager::ReqIdRequest* instance, castor::stager::SvcClass* new_var) {
+    instance->setSvcClass(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_client
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_client(castor::stager::ReqIdRequest* instance, castor::IClient** var) {
+    *var = instance->client();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_ReqIdRequest_setClient
+  //----------------------------------------------------------------------------
+  int Cstager_ReqIdRequest_setClient(castor::stager::ReqIdRequest* instance, castor::IClient* new_var) {
+    instance->setClient(new_var);
     return 0;
   }
 

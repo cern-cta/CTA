@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ccclasswriter.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/11 07:57:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ccclasswriter.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/15 12:54:23 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -494,15 +494,15 @@ void CCClassWriter::writeOperations(UMLClassifier *c,
   writeOperations(*opl, stream, alreadyGenerated);
 
   // Then the implemented interfaces methods
-  if (!c->getAbstract()) {
-    for (UMLClassifier *interface = m_classInfo->implementedAbstracts.first();
-         interface !=0;
-         interface = m_classInfo->implementedAbstracts.next()) {
+  for (UMLClassifier *interface = m_classInfo->implementedAbstracts.first();
+       interface !=0;
+       interface = m_classInfo->implementedAbstracts.next()) {
+    if (!c->getAbstract()) {
       opl = interface->getFilteredOperationsList(Uml::Public, true);
       writeOperations(*opl, stream, alreadyGenerated);
-      ClassifierInfo aci(interface, m_doc);
-      writeHeaderAccessorMethod(interface, &aci, *m_stream);
     }
+    ClassifierInfo aci(interface, m_doc);
+    writeHeaderAccessorMethod(interface, &aci, *m_stream);
   }
 }
 

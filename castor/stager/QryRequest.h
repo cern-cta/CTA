@@ -28,8 +28,11 @@
 #define CASTOR_STAGER_QRYREQUEST_H
 
 // Include Files and Forward declarations for the C world
+#include "osdep.h"
+struct C_IClient_t;
 struct Cstager_QryRequest_t;
 struct Cstager_Request_t;
+struct Cstager_SvcClass_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -61,5 +64,147 @@ struct Cstager_QryRequest_t* Cstager_QryRequest_fromRequest(struct Cstager_Reque
  * Outputs this object in a human readable format
  */
 int Cstager_QryRequest_print(struct Cstager_QryRequest_t* instance);
+
+/********************************************/
+/* Implementation of Request abstract class */
+/********************************************/
+
+/**
+ * Get the value of flags
+ */
+int Cstager_QryRequest_flags(struct Cstager_QryRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of flags
+ */
+int Cstager_QryRequest_setFlags(struct Cstager_QryRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of userName
+ * Name of the user that submitted the request
+ */
+int Cstager_QryRequest_userName(struct Cstager_QryRequest_t* instance, const char** var);
+
+/**
+ * Set the value of userName
+ * Name of the user that submitted the request
+ */
+int Cstager_QryRequest_setUserName(struct Cstager_QryRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of euid
+ * Id of the user that submitted the request
+ */
+int Cstager_QryRequest_euid(struct Cstager_QryRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of euid
+ * Id of the user that submitted the request
+ */
+int Cstager_QryRequest_setEuid(struct Cstager_QryRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of egid
+ * Id of the group of the user that submitted the request
+ */
+int Cstager_QryRequest_egid(struct Cstager_QryRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of egid
+ * Id of the group of the user that submitted the request
+ */
+int Cstager_QryRequest_setEgid(struct Cstager_QryRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of mask
+ * Mask for accessing files in the user space
+ */
+int Cstager_QryRequest_mask(struct Cstager_QryRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of mask
+ * Mask for accessing files in the user space
+ */
+int Cstager_QryRequest_setMask(struct Cstager_QryRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of pid
+ * Process id of the user process
+ */
+int Cstager_QryRequest_pid(struct Cstager_QryRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of pid
+ * Process id of the user process
+ */
+int Cstager_QryRequest_setPid(struct Cstager_QryRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of machine
+ * The machine that submitted the request
+ */
+int Cstager_QryRequest_machine(struct Cstager_QryRequest_t* instance, const char** var);
+
+/**
+ * Set the value of machine
+ * The machine that submitted the request
+ */
+int Cstager_QryRequest_setMachine(struct Cstager_QryRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of svcClassName
+ */
+int Cstager_QryRequest_svcClassName(struct Cstager_QryRequest_t* instance, const char** var);
+
+/**
+ * Set the value of svcClassName
+ */
+int Cstager_QryRequest_setSvcClassName(struct Cstager_QryRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of userTag
+ * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
+ */
+int Cstager_QryRequest_userTag(struct Cstager_QryRequest_t* instance, const char** var);
+
+/**
+ * Set the value of userTag
+ * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
+ */
+int Cstager_QryRequest_setUserTag(struct Cstager_QryRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of reqId
+ * The Cuuid identifying the Request, stored as a human readable string
+ */
+int Cstager_QryRequest_reqId(struct Cstager_QryRequest_t* instance, const char** var);
+
+/**
+ * Set the value of reqId
+ * The Cuuid identifying the Request, stored as a human readable string
+ */
+int Cstager_QryRequest_setReqId(struct Cstager_QryRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of svcClass
+ */
+int Cstager_QryRequest_svcClass(struct Cstager_QryRequest_t* instance, struct Cstager_SvcClass_t** var);
+
+/**
+ * Set the value of svcClass
+ */
+int Cstager_QryRequest_setSvcClass(struct Cstager_QryRequest_t* instance, struct Cstager_SvcClass_t* new_var);
+
+/**
+ * Get the value of client
+ */
+int Cstager_QryRequest_client(struct Cstager_QryRequest_t* instance, struct C_IClient_t** var);
+
+/**
+ * Set the value of client
+ */
+int Cstager_QryRequest_setClient(struct Cstager_QryRequest_t* instance, struct C_IClient_t* new_var);
 
 #endif // CASTOR_STAGER_QRYREQUEST_H

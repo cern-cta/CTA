@@ -25,8 +25,11 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/IClient.hpp"
 #include "castor/stager/QryRequest.hpp"
 #include "castor/stager/Request.hpp"
+#include "castor/stager/SvcClass.hpp"
+#include "osdep.h"
 
 extern "C" {
 
@@ -57,6 +60,203 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_QryRequest_print(castor::stager::QryRequest* instance) {
     instance->print();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_flags
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_flags(castor::stager::QryRequest* instance, u_signed64* var) {
+    *var = instance->flags();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_setFlags
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_setFlags(castor::stager::QryRequest* instance, u_signed64 new_var) {
+    instance->setFlags(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_userName
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_userName(castor::stager::QryRequest* instance, const char** var) {
+    *var = instance->userName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_setUserName
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_setUserName(castor::stager::QryRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setUserName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_euid
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_euid(castor::stager::QryRequest* instance, unsigned long* var) {
+    *var = instance->euid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_setEuid
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_setEuid(castor::stager::QryRequest* instance, unsigned long new_var) {
+    instance->setEuid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_egid
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_egid(castor::stager::QryRequest* instance, unsigned long* var) {
+    *var = instance->egid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_setEgid
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_setEgid(castor::stager::QryRequest* instance, unsigned long new_var) {
+    instance->setEgid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_mask
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_mask(castor::stager::QryRequest* instance, unsigned long* var) {
+    *var = instance->mask();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_setMask
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_setMask(castor::stager::QryRequest* instance, unsigned long new_var) {
+    instance->setMask(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_pid
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_pid(castor::stager::QryRequest* instance, unsigned long* var) {
+    *var = instance->pid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_setPid
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_setPid(castor::stager::QryRequest* instance, unsigned long new_var) {
+    instance->setPid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_machine
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_machine(castor::stager::QryRequest* instance, const char** var) {
+    *var = instance->machine().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_setMachine
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_setMachine(castor::stager::QryRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setMachine(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_svcClassName
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_svcClassName(castor::stager::QryRequest* instance, const char** var) {
+    *var = instance->svcClassName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_setSvcClassName
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_setSvcClassName(castor::stager::QryRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setSvcClassName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_userTag
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_userTag(castor::stager::QryRequest* instance, const char** var) {
+    *var = instance->userTag().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_setUserTag
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_setUserTag(castor::stager::QryRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setUserTag(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_reqId
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_reqId(castor::stager::QryRequest* instance, const char** var) {
+    *var = instance->reqId().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_setReqId
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_setReqId(castor::stager::QryRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setReqId(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_svcClass
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_svcClass(castor::stager::QryRequest* instance, castor::stager::SvcClass** var) {
+    *var = instance->svcClass();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_setSvcClass
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_setSvcClass(castor::stager::QryRequest* instance, castor::stager::SvcClass* new_var) {
+    instance->setSvcClass(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_client
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_client(castor::stager::QryRequest* instance, castor::IClient** var) {
+    *var = instance->client();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_QryRequest_setClient
+  //----------------------------------------------------------------------------
+  int Cstager_QryRequest_setClient(castor::stager::QryRequest* instance, castor::IClient* new_var) {
+    instance->setClient(new_var);
     return 0;
   }
 

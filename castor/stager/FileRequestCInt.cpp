@@ -25,9 +25,12 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/IClient.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/SubRequest.hpp"
+#include "castor/stager/SvcClass.hpp"
+#include "osdep.h"
 #include <vector>
 
 extern "C" {
@@ -59,6 +62,203 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_FileRequest_print(castor::stager::FileRequest* instance) {
     instance->print();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_flags
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_flags(castor::stager::FileRequest* instance, u_signed64* var) {
+    *var = instance->flags();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_setFlags
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_setFlags(castor::stager::FileRequest* instance, u_signed64 new_var) {
+    instance->setFlags(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_userName
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_userName(castor::stager::FileRequest* instance, const char** var) {
+    *var = instance->userName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_setUserName
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_setUserName(castor::stager::FileRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setUserName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_euid
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_euid(castor::stager::FileRequest* instance, unsigned long* var) {
+    *var = instance->euid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_setEuid
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_setEuid(castor::stager::FileRequest* instance, unsigned long new_var) {
+    instance->setEuid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_egid
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_egid(castor::stager::FileRequest* instance, unsigned long* var) {
+    *var = instance->egid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_setEgid
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_setEgid(castor::stager::FileRequest* instance, unsigned long new_var) {
+    instance->setEgid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_mask
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_mask(castor::stager::FileRequest* instance, unsigned long* var) {
+    *var = instance->mask();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_setMask
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_setMask(castor::stager::FileRequest* instance, unsigned long new_var) {
+    instance->setMask(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_pid
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_pid(castor::stager::FileRequest* instance, unsigned long* var) {
+    *var = instance->pid();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_setPid
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_setPid(castor::stager::FileRequest* instance, unsigned long new_var) {
+    instance->setPid(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_machine
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_machine(castor::stager::FileRequest* instance, const char** var) {
+    *var = instance->machine().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_setMachine
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_setMachine(castor::stager::FileRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setMachine(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_svcClassName
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_svcClassName(castor::stager::FileRequest* instance, const char** var) {
+    *var = instance->svcClassName().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_setSvcClassName
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_setSvcClassName(castor::stager::FileRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setSvcClassName(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_userTag
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_userTag(castor::stager::FileRequest* instance, const char** var) {
+    *var = instance->userTag().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_setUserTag
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_setUserTag(castor::stager::FileRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setUserTag(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_reqId
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_reqId(castor::stager::FileRequest* instance, const char** var) {
+    *var = instance->reqId().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_setReqId
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_setReqId(castor::stager::FileRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setReqId(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_svcClass
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_svcClass(castor::stager::FileRequest* instance, castor::stager::SvcClass** var) {
+    *var = instance->svcClass();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_setSvcClass
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_setSvcClass(castor::stager::FileRequest* instance, castor::stager::SvcClass* new_var) {
+    instance->setSvcClass(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_client
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_client(castor::stager::FileRequest* instance, castor::IClient** var) {
+    *var = instance->client();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileRequest_setClient
+  //----------------------------------------------------------------------------
+  int Cstager_FileRequest_setClient(castor::stager::FileRequest* instance, castor::IClient* new_var) {
+    instance->setClient(new_var);
     return 0;
   }
 

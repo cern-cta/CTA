@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/11 07:57:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/15 12:54:23 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -450,17 +450,17 @@ void CHClassWriter::writeOperations(UMLClassifier *c,
   writeOperations(*opl, stream, alreadyGenerated);
 
   // Then the implemented interfaces methods
-  if (!c->getAbstract()) {
-    for (UMLClassifier *interface = m_classInfo->implementedAbstracts.first();
-         interface != 0;
-         interface = m_classInfo->implementedAbstracts.next()) {
-      QString com = " of " + interface->getName();
-      if (m_classInfo->isInterface)
-        com += " interface";
-      else
-        com += " abstract class";
+  for (UMLClassifier *interface = m_classInfo->implementedAbstracts.first();
+       interface != 0;
+       interface = m_classInfo->implementedAbstracts.next()) {
+    bool noTitle = true;
+    QString com = " of " + interface->getName();
+    if (m_classInfo->isInterface)
+      com += " interface";
+    else
+      com += " abstract class";
+    if (!c->getAbstract()) {
       opl = interface->getFilteredOperationsList(Uml::Public, true);
-      bool noTitle = true;
       if (opl->count()) {
         writeHeaderComment(QString("Implementation") + com,
                            getIndent(), stream);
@@ -468,19 +468,19 @@ void CHClassWriter::writeOperations(UMLClassifier *c,
         noTitle = false;
         writeOperations(*opl, stream, alreadyGenerated);
       }
-      ClassifierInfo aci(interface, m_doc);
-      if ((aci.static_atpub.count() ||
-           aci.atpub.count() ||
-           aci.plainAssociations.count() ||
-           aci.aggregations.count() ||
-           aci.compositions.count()) &&
-          noTitle) {
-        writeHeaderComment(QString("Implementation") + com,
-                           getIndent(), stream);
-        stream << endl;    
-      }
-      writeHeaderAccessorMethodDecl(interface, &aci, *m_stream);
     }
+    ClassifierInfo aci(interface, m_doc);
+    if ((aci.static_atpub.count() ||
+         aci.atpub.count() ||
+         aci.plainAssociations.count() ||
+         aci.aggregations.count() ||
+         aci.compositions.count()) &&
+        noTitle) {
+      writeHeaderComment(QString("Implementation") + com,
+                         getIndent(), stream);
+      stream << endl;    
+    }
+    writeHeaderAccessorMethodDecl(interface, &aci, *m_stream);
   }
 }
 

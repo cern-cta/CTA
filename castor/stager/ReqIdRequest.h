@@ -28,9 +28,12 @@
 #define CASTOR_STAGER_REQIDREQUEST_H
 
 // Include Files and Forward declarations for the C world
+#include "osdep.h"
+struct C_IClient_t;
 struct Cstager_FileRequest_t;
 struct Cstager_ReqIdRequest_t;
 struct Cstager_Request_t;
+struct Cstager_SvcClass_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
@@ -62,6 +65,148 @@ struct Cstager_ReqIdRequest_t* Cstager_ReqIdRequest_fromRequest(struct Cstager_R
  * Outputs this object in a human readable format
  */
 int Cstager_ReqIdRequest_print(struct Cstager_ReqIdRequest_t* instance);
+
+/********************************************/
+/* Implementation of Request abstract class */
+/********************************************/
+
+/**
+ * Get the value of flags
+ */
+int Cstager_ReqIdRequest_flags(struct Cstager_ReqIdRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of flags
+ */
+int Cstager_ReqIdRequest_setFlags(struct Cstager_ReqIdRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of userName
+ * Name of the user that submitted the request
+ */
+int Cstager_ReqIdRequest_userName(struct Cstager_ReqIdRequest_t* instance, const char** var);
+
+/**
+ * Set the value of userName
+ * Name of the user that submitted the request
+ */
+int Cstager_ReqIdRequest_setUserName(struct Cstager_ReqIdRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of euid
+ * Id of the user that submitted the request
+ */
+int Cstager_ReqIdRequest_euid(struct Cstager_ReqIdRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of euid
+ * Id of the user that submitted the request
+ */
+int Cstager_ReqIdRequest_setEuid(struct Cstager_ReqIdRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of egid
+ * Id of the group of the user that submitted the request
+ */
+int Cstager_ReqIdRequest_egid(struct Cstager_ReqIdRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of egid
+ * Id of the group of the user that submitted the request
+ */
+int Cstager_ReqIdRequest_setEgid(struct Cstager_ReqIdRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of mask
+ * Mask for accessing files in the user space
+ */
+int Cstager_ReqIdRequest_mask(struct Cstager_ReqIdRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of mask
+ * Mask for accessing files in the user space
+ */
+int Cstager_ReqIdRequest_setMask(struct Cstager_ReqIdRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of pid
+ * Process id of the user process
+ */
+int Cstager_ReqIdRequest_pid(struct Cstager_ReqIdRequest_t* instance, unsigned long* var);
+
+/**
+ * Set the value of pid
+ * Process id of the user process
+ */
+int Cstager_ReqIdRequest_setPid(struct Cstager_ReqIdRequest_t* instance, unsigned long new_var);
+
+/**
+ * Get the value of machine
+ * The machine that submitted the request
+ */
+int Cstager_ReqIdRequest_machine(struct Cstager_ReqIdRequest_t* instance, const char** var);
+
+/**
+ * Set the value of machine
+ * The machine that submitted the request
+ */
+int Cstager_ReqIdRequest_setMachine(struct Cstager_ReqIdRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of svcClassName
+ */
+int Cstager_ReqIdRequest_svcClassName(struct Cstager_ReqIdRequest_t* instance, const char** var);
+
+/**
+ * Set the value of svcClassName
+ */
+int Cstager_ReqIdRequest_setSvcClassName(struct Cstager_ReqIdRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of userTag
+ * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
+ */
+int Cstager_ReqIdRequest_userTag(struct Cstager_ReqIdRequest_t* instance, const char** var);
+
+/**
+ * Set the value of userTag
+ * This is a string that the user is free to use. It can be useful to classify and
+ * select requests.
+ */
+int Cstager_ReqIdRequest_setUserTag(struct Cstager_ReqIdRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of reqId
+ * The Cuuid identifying the Request, stored as a human readable string
+ */
+int Cstager_ReqIdRequest_reqId(struct Cstager_ReqIdRequest_t* instance, const char** var);
+
+/**
+ * Set the value of reqId
+ * The Cuuid identifying the Request, stored as a human readable string
+ */
+int Cstager_ReqIdRequest_setReqId(struct Cstager_ReqIdRequest_t* instance, const char* new_var);
+
+/**
+ * Get the value of svcClass
+ */
+int Cstager_ReqIdRequest_svcClass(struct Cstager_ReqIdRequest_t* instance, struct Cstager_SvcClass_t** var);
+
+/**
+ * Set the value of svcClass
+ */
+int Cstager_ReqIdRequest_setSvcClass(struct Cstager_ReqIdRequest_t* instance, struct Cstager_SvcClass_t* new_var);
+
+/**
+ * Get the value of client
+ */
+int Cstager_ReqIdRequest_client(struct Cstager_ReqIdRequest_t* instance, struct C_IClient_t** var);
+
+/**
+ * Set the value of client
+ */
+int Cstager_ReqIdRequest_setClient(struct Cstager_ReqIdRequest_t* instance, struct C_IClient_t* new_var);
 
 /**
  * Get the value of parent
