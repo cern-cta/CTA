@@ -1,4 +1,4 @@
-COMM       $Id: Imakefile,v 1.3 2004/06/23 16:34:58 jdurand Exp $
+COMM       $Id: Imakefile,v 1.4 2004/07/09 14:49:53 jdurand Exp $
 COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
@@ -24,6 +24,8 @@ exportshr:
 install.man:
 
 clobber:
+
+Makefiles:
 
 clean:
 
