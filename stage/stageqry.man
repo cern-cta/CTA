@@ -1,10 +1,10 @@
-.\" $Id: stageqry.man,v 1.27 2002/10/30 16:26:45 jdurand Exp $
+.\" $Id: stageqry.man,v 1.28 2002/11/07 15:33:40 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.27 $ $Date: 2002/10/30 16:26:45 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.28 $ $Date: 2002/11/07 15:33:40 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEQRY "1" "$Date: 2002/10/30 16:26:45 $" "CASTOR" "Stage User Commands"
+.TH STAGEQRY "1" "$Date: 2002/11/07 15:33:40 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageqry \- give the status of all files known to the stage system
 .SH SYNOPSIS
@@ -116,6 +116,8 @@ STAGED_TPE	successfully staged but blocks were skipped
 PUT_FAILED	stageput failed
 .TP
 CAN_BE_MIGR	candidate for the next automatic migration (CASTOR HSM only)
+.TP
+DELAY_MIGR	candidate for the automatic migration only when its 'minimum time before migration' will expire, see \fBCns_queryclass\fP(3) (CASTOR HSM only)
 .TP
 BEING_MIGR	being migrated by the automatic migrator (CASTOR HSM only)
 .TP
@@ -378,7 +380,7 @@ POOL stagetest DEFSIZE 200 MINFREE 10 GC shd02:/usr/local/bin/stage_clean
 2	System error.
 
 .SH SEE ALSO
-\fBstage_other_options\fP(1), \fBstagechng\fP(1), \fBstage_struct\fP(3)
+\fBstage_other_options\fP(1), \fBstagechng\fP(1), \fBstage_struct\fP(3), \fBCns_queryclass\fP(3)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
