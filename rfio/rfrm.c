@@ -1,5 +1,5 @@
 /*
- * $Id: rfrm.c,v 1.5 2000/05/04 13:46:09 baud Exp $
+ * $Id: rfrm.c,v 1.6 2000/09/01 08:01:27 obarring Exp $
  */
 
 /*
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.5 $ $Date: 2000/05/04 13:46:09 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.6 $ $Date: 2000/09/01 08:01:27 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -21,8 +21,9 @@ static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.5 $ $Date: 2000/05
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#if !defined(_WIN32)
 #include <dirent.h>
+#if defined(_WIN32)
+#include <winsock2.h>
 #endif
 #include <rfio.h>
 static char *ckpath();
@@ -40,6 +41,9 @@ char *argv[];
   char *path,*root_path;
   int recursive = 0;
   struct stat st;
+#if defined(_WIN32)
+  WSADATA wsadata;
+#endif /* _WIN32 */
 
   cmd = argv[0];
   if ( argc < 2 ) {
@@ -56,6 +60,12 @@ char *argv[];
       exit(2);
     }
   }
+#if defined(_WIN32)
+  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
+    fprintf (stderr, "WSAStartup unsuccessful\n");
+    exit (2);
+  }
+#endif
 
   for (;optind<argc;optind++) {
     path = ckpath(argv[optind]);

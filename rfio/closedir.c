@@ -1,5 +1,5 @@
 /*
- * $Id: closedir.c,v 1.6 2000/05/29 16:41:58 obarring Exp $
+ * $Id: closedir.c,v 1.7 2000/09/01 08:01:26 obarring Exp $
  */
 
 /*
@@ -8,12 +8,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: closedir.c,v $ $Revision: 1.6 $ $Date: 2000/05/29 16:41:58 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: closedir.c,v $ $Revision: 1.7 $ $Date: 2000/09/01 08:01:26 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* closedir.c      Remote File I/O - close a directory                     */
 
-#if !defined(_WIN32)
 #define RFIO_KERNEL     1 
 #include "rfio.h"        
 
@@ -48,7 +47,12 @@ RDIR *dirp;
       TRACE(2, "rfio", "rfio_closedir: check if HSM directory");
       if ( (status = rfio_HsmIf_closedir((DIR *)dirp)) != 0 ) {
           TRACE(2, "rfio", "rfio_closedir: using local closedir(0x%x)",dirp) ; 
+#if defined(_WIN32)
+          status = -1;
+          serrno = SEOPNOTSUP;
+#else /* _WIN32 */
           status= closedir((DIR *)dirp) ; 
+#endif /* _WIN32 */
       }
       END_TRACE() ; 
       return status ;
@@ -99,4 +103,3 @@ RDIR *dirp;
    END_TRACE() ; 
    return status ;
 }
-#endif /* _WIN32 */

@@ -1,5 +1,5 @@
 /*
- * $Id: rfdir.c,v 1.6 2000/05/04 13:46:10 baud Exp $
+ * $Id: rfdir.c,v 1.7 2000/09/01 08:01:26 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.6 $ $Date: 2000/05/04 13:46:10 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.7 $ $Date: 2000/09/01 08:01:26 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
@@ -50,7 +50,6 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
-#if !defined(_WIN32)
   extern char * optarg;
   extern int optind;
   struct stat st;
@@ -68,6 +67,9 @@ char *argv[];
   char path[PATH_MAX];
   int recursively = 0;
   int multiple = 0;
+#if defined(_WIN32)
+  WSADATA wsadata;
+#endif
 
   strcpy(ftype,"pcdb-ls");
   ftype_v[0] = S_IFIFO; ftype_v[1] = S_IFCHR; ftype_v[2] = S_IFDIR; 
@@ -91,6 +93,14 @@ char *argv[];
       exit(2);
     }
   }
+
+#if defined(_WIN32)
+  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
+    fprintf (stderr, "WSAStartup unsuccessful\n");
+    exit (2);
+  }
+#endif
+
   multiple = argc - optind - 1;
   for (;optind<argc;optind++) {
     
@@ -125,7 +135,6 @@ char *argv[];
     }
   }
   rfio_end();
-#endif
   exit(0);
 }
 
@@ -149,7 +158,6 @@ char *path;
   return(newpath);
 }
 
-#if !defined(_WIN32)
 static int rfio_pushdir(ds,dir)
 struct dirstack **ds;
 char *dir;
@@ -271,4 +279,3 @@ int recursively,multiple;
   }
   return(0);
 }
-#endif

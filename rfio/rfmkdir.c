@@ -1,14 +1,10 @@
 /*
- * $Id: rfmkdir.c,v 1.4 2000/05/04 13:46:10 baud Exp $
- */
-
-/*
  * Copyright (C) 1998-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfmkdir.c,v $ $Revision: 1.4 $ $Date: 2000/05/04 13:46:10 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfmkdir.c,v $ $Revision: 1.5 $ $Date: 2000/09/01 08:01:27 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
@@ -22,16 +18,16 @@ static char sccsid[] = "@(#)$RCSfile: rfmkdir.c,v $ $Revision: 1.4 $ $Date: 2000
 #include <sys/stat.h>
 #include <rfio.h>
 
-#if !defined(_WIN32)
-static char *ckpath();
-char *getconfent();
+#if defined(_WIN32)
+#include <winsock2.h>
 #endif /* _WIN32 */
+
+static char *ckpath();
 
 int main(argc, argv) 
 int argc;
 char *argv[];
 {
-#if !defined(_WIN32)
   extern char * optarg ; 
   extern int    optind ;
   int recursive = 0;
@@ -39,6 +35,9 @@ char *argv[];
   int rc, c;
   mode_t mode = 0777;
   struct stat st;
+#if defined(_WIN32)
+  WSADATA wsadata;
+#endif /* _WIN32 */
   
   if ( argc < 2 ) {
     fprintf(stderr,"Usage: %s [-m mode] [-p] dirname ...\n",argv[0]);
@@ -64,6 +63,13 @@ char *argv[];
     }
   }
 
+#if defined(_WIN32)
+  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
+    fprintf (stderr, "WSAStartup unsuccessful\n");
+    exit (2);
+  }
+#endif
+
   for (;optind<argc;optind++) {
     path = ckpath(argv[optind]);
     if ( recursive) {
@@ -88,11 +94,9 @@ char *argv[];
       }
     }
   }
-#endif /* _WIN32 */
   return(0);
 }
 
-#if !defined(_WIN32)
 
 static char *ckpath(path)
 char *path;
@@ -101,17 +105,15 @@ char *path;
   static char newpath[BUFSIZ];
  /* Special treatment for filenames starting with /scratch/... */
   if (!strncmp ("/scratch/", path, 9) &&
-      (cp = getconfent ("SHIFT", "SCRATCH", 0)) != NULL) {
+      (cp = (char *)getconfent ("SHIFT", "SCRATCH", 0)) != NULL) {
     strcpy (newpath, cp);
     strcat (newpath, path+9);
   } else 
  /* Special treatment for filenames starting with /hpss/... */
     if ( !strncmp("/hpss/",path,6) &&
-	 (cp = getconfent("SHIFT","HPSS",0)) != NULL) {
+	 (cp = (char *)getconfent("SHIFT","HPSS",0)) != NULL) {
       strcpy(newpath,cp);
       strcat(newpath,path+6);
     } else strcpy(newpath,path);
   return(newpath);
 }
-
-#endif /* _WIN32 */

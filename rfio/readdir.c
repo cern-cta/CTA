@@ -1,5 +1,5 @@
 /*
- * $Id: readdir.c,v 1.7 2000/05/29 16:42:04 obarring Exp $
+ * $Id: readdir.c,v 1.8 2000/09/01 08:01:26 obarring Exp $
  */
 
 /*
@@ -8,12 +8,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readdir.c,v $ $Revision: 1.7 $ $Date: 2000/05/29 16:42:04 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: readdir.c,v $ $Revision: 1.8 $ $Date: 2000/09/01 08:01:26 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* readdir.c       Remote File I/O - read  a directory entry            */
 
-#if !defined(_WIN32)
 #include <syslog.h>             /* system logger 			*/
 
 /*
@@ -61,7 +60,12 @@ RDIR *dirp;
       TRACE(2,"rfio","rfio_readdir: check if HSM directory");
       if ( (de = rfio_HsmIf_readdir((DIR *)dirp)) == NULL ) {
           TRACE(2,"rfio","rfio_readdir: using local readdir(%x)", dirp);
+#if defined(_WIN32)
+          de = NULL;
+          serrno = SEOPNOTSUP;
+#else /* _WIN32 */
           de = readdir((DIR *)dirp);
+#endif /* _WIN32 */
       }
       END_TRACE();
       return(de);
@@ -145,4 +149,3 @@ RDIR *dirp;
    END_TRACE();
    return(de);
 }
-#endif /* _WIN32 */

@@ -1,5 +1,5 @@
 /*
- * $Id: rewinddir.c,v 1.7 2000/05/29 16:42:05 obarring Exp $
+ * $Id: rewinddir.c,v 1.8 2000/09/01 08:01:26 obarring Exp $
  */
 
 /*
@@ -8,11 +8,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rewinddir.c,v $ $Revision: 1.7 $ $Date: 2000/05/29 16:42:05 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rewinddir.c,v $ $Revision: 1.8 $ $Date: 2000/09/01 08:01:26 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* rewinddir.c      Remote File I/O - rewind a directory                     */
-#if !defined(_WIN32)
 
 #define RFIO_KERNEL     1 
 #include "rfio.h"        
@@ -53,7 +52,12 @@ RDIR *dirp;
       TRACE(2, "rfio", "rfio_rewinddir: check if HSM directory");
       (void)rfio_HsmIf_rewinddir((DIR *)dirp);
       TRACE(2, "rfio", "rfio_rewinddir: using local rewinddir(0x%x)",dirp) ; 
+#if defined(_WIN32)
+      serrno = SEOPNOTSUP;
+      return(-1);
+#else /* _WIN32 */
       (void)rewinddir((DIR *)dirp) ; 
+#endif /* _WIN32 */
       END_TRACE() ; 
       return(0) ;
    }
@@ -104,4 +108,3 @@ RDIR *dirp;
    END_TRACE() ; 
    return status ;
 }
-#endif /* _WIN32 */

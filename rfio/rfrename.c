@@ -1,5 +1,5 @@
 /*
- * $Id: rfrename.c,v 1.4 2000/05/04 13:46:10 baud Exp $
+ * $Id: rfrename.c,v 1.5 2000/09/01 08:01:27 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrename.c,v $ $Revision: 1.4 $ $Date: 2000/05/04 13:46:10 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrename.c,v $ $Revision: 1.5 $ $Date: 2000/09/01 08:01:27 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
@@ -17,6 +17,9 @@ static char sccsid[] = "@(#)$RCSfile: rfrename.c,v $ $Revision: 1.4 $ $Date: 200
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif /* _WIN32 */
 #include <rfio.h>
 static char *ckpath();
 char *getconfent();
@@ -26,7 +29,10 @@ int argc;
 char *argv[];
 {
   char *old_path,*new_path;
-  
+#if defined(_WIN32)
+  WSADATA wsadata;
+#endif
+
   if ( argc < 3 ) {
     fprintf(stderr,"Usage: %s old-path new-path\n",argv[0]);
     exit(2);
@@ -34,6 +40,12 @@ char *argv[];
   old_path = ckpath(argv[1]);
   new_path = ckpath(argv[2]);
   
+#if defined(_WIN32)
+  if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
+    fprintf (stderr, "WSAStartup unsuccessful\n");
+    exit (2);
+  }
+#endif
   if ( rfio_rename(old_path,new_path) ) {
     rfio_perror("rename()");
     exit(1);

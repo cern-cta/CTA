@@ -1,5 +1,5 @@
 /*
- * $Id: opendir.c,v 1.8 2000/05/29 16:42:03 obarring Exp $
+ * $Id: opendir.c,v 1.9 2000/09/01 08:01:26 obarring Exp $
  */
 
 /*
@@ -8,11 +8,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.8 $ $Date: 2000/05/29 16:42:03 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.9 $ $Date: 2000/09/01 08:01:26 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* opendir.c       Remote File I/O - open a directory                   */
-#if !defined(_WIN32)
 #define RFIO_KERNEL     1       /* system part of Remote File I/O       */
 
 #include <syslog.h>             /* system logger                        */
@@ -20,7 +19,9 @@ static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.8 $ $Date: 2000
 #include <stdlib.h>
 #include "rfio.h"               /* remote file I/O definitions          */
 #include "rfcntl.h"             /* remote file control mapping macros   */
+#if !defined(_WIN32)
 #include <arpa/inet.h>          /* for inet_ntoa()                      */
+#endif /* _WIN32 */
 #include <Cpwd.h>
 
 #ifndef linux
@@ -163,7 +164,12 @@ char  	*vmstr ;
            rfio_errno = 0;
            dp = (RDIR *)rfio_HsmIf_opendir(dirname);
       } else {
+#if defined(_WIN32)
+           dp = NULL;
+           serrno = SEOPNOTSUP;
+#else /* _WIN32 */
            dp = (RDIR *)opendir(dirname);
+#endif /* _WIN32 */
       }
       END_TRACE() ; 
       return(dp);
@@ -314,4 +320,3 @@ char  	*vmstr ;
    END_TRACE() ;
    return(rdp);
 }
-#endif /* _WIN32 */
