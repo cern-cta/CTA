@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.28 $ $Date: 2004/10/27 07:15:30 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.29 $ $Date: 2004/11/24 15:20:10 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -18,7 +18,7 @@ SYMTABNAM = __.SYMDEF
 #endif
 
 COMM Libraries to include in SharedLibraryTargetName(shift)
-LIBRARIES0 = $(COMMONLIB) $(RFIOLIB) $(SYSREQLIB) $(HPSSLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHCLIENTLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB) $(EXPERTLIB)
+LIBRARIES0 = $(COMMONLIB) $(RFIOLIB) $(SYSREQLIB) $(HPSSLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHCLIENTLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB) $(EXPERTLIB) $(RESOURCEMONITORINGLIB)
 LIBRARIES1 = $(RHORALIB)
 SHLIBREQLIBS1 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshift
 LIBRARIES2 = $(RHPROTOLIB)
@@ -167,6 +167,8 @@ MakeDepLibrary(hpss,hpss_common)
 MakeDepLibrary(ns,ns)
 
 MakeDepLibrary(stager,stager)
+
+MakeDepLibrary(resourcemonitoring,resourcemonitoring)
 
 MakeDepLibrary(vmgr,vmgr)
 
