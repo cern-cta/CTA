@@ -1,5 +1,5 @@
 /*
- * $Id: vdqm_constants.h,v 1.1 2004/07/30 12:56:49 motiakov Exp $
+ * $Id: vdqm_constants.h,v 1.2 2004/08/12 16:12:47 motiakov Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vdqm_constants.h,v $ $Revision: 1.1 $ $Date: 2004/07/30 12:56:49 $ CERN IT-PDP/DM Olof Barring
+ * @(#)$RCSfile: vdqm_constants.h,v $ $Revision: 1.2 $ $Date: 2004/08/12 16:12:47 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -155,10 +155,9 @@
 
 #ifndef VDQM_PORT
 #ifdef CSEC
-#define VDQM_PORT        (5512)
-#else
+#define SVDQM_PORT       (5512)
+#endif
 #define VDQM_PORT        (5012)
-#endif /* CSEC */
 #endif /* VDQM_PORT */
 
 #ifndef VDQMBC_PORT
