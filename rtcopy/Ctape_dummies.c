@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.11 $ $Date: 2000/08/25 08:38:39 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.12 $ $Date: 2000/09/14 16:10:39 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -222,13 +222,13 @@ int Ctape_status(char *a, struct drv_status *b, int c) {
     CTAPE_BODY((stdout,"Ctape_rstatus(%s,0x%x,%d)\n",a,b,c));
 }
 
-int gettperror(int fd, char *msgaddr) {
+int gettperror(int fd, char *path, char **msgaddr) {
     int rc = 0;
-    char msg[80];
-    fprintf(stdout,"gettperror(%d,0x%x)\n",fd,msgaddr);
+    static char msg[80];
+    fprintf(stdout,"gettperror(%d,%s)\n",fd,path);
     fprintf(stdout,"RC=?, msg=?\n");
-    scanf("%d %s",&rc,msg);
-    msgaddr = msg;
+    scanf("%d %[^\n]",&rc,msg);
+    if ( msgaddr != NULL ) *msgaddr = msg;
     return(rc);
 }
 
@@ -284,6 +284,9 @@ int Ctape_dmpend() {
 /*
  * Some stage API routines needed by RTCOPY
  */
+int stage_setlog(void (*a) _PROTO((int, char *))) {
+    return(0);
+}
 
 int stage_updc_tppos(char *a, int b, int c, int d, char *e, char *f, int g, 
                      int h, char *i, char *j) {
