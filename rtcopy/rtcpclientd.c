@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/18 11:14:47 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/21 16:14:35 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/18 11:14:47 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/21 16:14:35 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -446,10 +446,10 @@ static int startVidWorker(
 {
   ID_TYPE key;
   int usePipe = 0;
-  int rc, c, argc, maxfds;
+  int rc, c, i, argc, maxfds;
   char **argv, volReqIDStr[16], sideStr[16], tStartRequestStr[16], keyStr[16];
   char usePipeStr[16];
-  char *cmd = RTCPCLD_VIDWORKER_CMD;
+  char *cmd = RTCPCLD_VIDWORKER_CMD, cmdline[CA_MAXLINELEN+1];
   
   if ( s == NULL || *s == INVALID_SOCKET || 
        tape == NULL || *tape->tapereq.vid == '\0' ) {
@@ -584,6 +584,27 @@ static int startVidWorker(
     argv[c++] = usePipeStr;
   }
   argv[c] = NULL;
+
+  c = 0;
+  *cmdline = '\0';
+  for (i=0; (i<CA_MAXLINELEN) && (c<argc);) {
+    if ( argv[c] != NULL ) {
+      strcat(cmdline,argv[c]);
+      strcat(cmdline," ");
+    }
+    c++;
+    i = strlen(cmdline)+1;
+  }
+  (void)dlf_write(
+                  mainUuid,
+                  DLF_LVL_SYSTEM,
+                  RTCPCLD_MSG_EXECCMD,
+                  (struct Cns_fileid *)NULL,
+                  1,
+                  "COMMAND",
+                  DLF_MSG_PARAM_STR,
+                  cmdline
+                  );
   execv(cmd,argv);
   /*
    * If we got here something went very wrong
@@ -873,7 +894,7 @@ int rtcpcld_main(
         (void)dlf_write(
                         childUuid,
                         DLF_LVL_ERROR,
-                        RTCPCLD_MSG_RTCP,
+                        RTCPCLD_MSG_VWFAILED,
                         (struct Cns_fileid *)NULL,
                         RTCPCLD_NB_PARAMS+1,
                         "ERROR_STR",
@@ -1090,19 +1111,23 @@ int main(
 
   (void)rtcpcld_initLogging(rtcpcldFacilityName);
 
-  if ( Debug == TRUE ) exit(rtcpcld_main(NULL));
-
+  if ( Debug == TRUE ) {
+    rc = rtcpcld_main(NULL);
+  } else {
 #if defined(_WIN32)
-  /*
-   * Windows
-   */
-  if ( Cinitservice("rtcpcld",rtcpcld_main) == -1 ) exit(1);
+    /*
+     * Windows
+     */
+    if ( Cinitservice("rtcpcld",rtcpcld_main) == -1 ) exit(1);
 #else /* _WIN32 */
-  /*
-   * UNIX
-   */
-  if ( Cinitdaemon("rtcpcld",SIG_IGN) == -1 ) exit(1);
+    /*
+     * UNIX
+     */
+    if ( Cinitdaemon("rtcpcld",SIG_IGN) == -1 ) exit(1);
 #endif /* _WIN32 */
-  exit(rtcpcld_main(NULL));
+    rc = rtcpcld_main(NULL);
+  }
+  if ( rc != 0 ) exit(1);
+  else exit(0);
 }
 
