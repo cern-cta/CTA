@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.16 $ $Date: 2000/03/06 07:47:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.17 $ $Date: 2000/04/06 08:42:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -103,8 +103,6 @@ char	**argv;
 		sonyraw = 0;
 #endif
 
-	if (*vid == '\0')	/* mount req failed or killed */
-		goto freedrv;	/* before volume was requested on drive */
 	gethostname (hostname, CA_MAXHOSTNAMELEN+1);
 
         /* initialize for select */
@@ -134,6 +132,8 @@ char	**argv;
 		goto freevol;
 	}
 #endif
+	if (*vid == '\0')	/* mount req failed or killed */
+		goto freedrv;	/* before volume was requested on drive */
 	if (rlsflags & TPRLS_NOUNLOAD)
 		goto freevol;
 
