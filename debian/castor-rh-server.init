@@ -5,9 +5,9 @@
 # chkconfig: 345 63 52
 # description: Request Handler daemon
 #
-# $Id: castor-rh-server.init,v 1.2 2005/01/31 10:01:01 jdurand Exp $
+# $Id: castor-rh-server.init,v 1.3 2005/03/11 08:43:09 jdurand Exp $
 #
-# @(#)$RCSfile: castor-rh-server.init,v $ $Revision: 1.2 $ $Date: 2005/01/31 10:01:01 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: castor-rh-server.init,v $ $Revision: 1.3 $ $Date: 2005/03/11 08:43:09 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 
 #
@@ -125,9 +125,17 @@ case "$1" in
                     # The point of $PIDFILE is that it kills only
                     # the master daemon.
                     rm -f $PIDFILE
-                    echo $pid > $PIDFILE
-                fi
-                RETVAL=0
+		    if [ -n "$pid" ]; then
+			echo $pid > $PIDFILE
+			RETVAL=0
+		    else
+			echo $ECHOOPT "rhserver not started: "
+			[ -n "$FAILURE" ] && $FAILURE "rhserver not started: "
+			RETVAL=1
+		    fi
+                else
+                  RETVAL=0
+		fi
             else
                 echo $ECHOOPT "rhserver not started: "
                 [ -n "$FAILURE" ] && $FAILURE "rhserver not started: "

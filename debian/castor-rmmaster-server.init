@@ -5,9 +5,9 @@
 # chkconfig: 345 72 33
 # description: RMMASTER (Node Resource Monitoring Master Daemon)
 #
-# $Id: castor-rmmaster-server.init,v 1.2 2005/01/31 10:01:01 jdurand Exp $
+# $Id: castor-rmmaster-server.init,v 1.3 2005/03/11 08:43:09 jdurand Exp $
 #
-# @(#)$RCSfile: castor-rmmaster-server.init,v $ $Revision: 1.2 $ $Date: 2005/01/31 10:01:01 $ CERN/IT/ADC/CA Vitaly Motyakov
+# @(#)$RCSfile: castor-rmmaster-server.init,v $ $Revision: 1.3 $ $Date: 2005/03/11 08:43:09 $ CERN/IT/ADC/CA Vitaly Motyakov
 #
 
 sysname=`uname -s`
@@ -124,14 +124,22 @@ case "$1" in
                 $DAEMON $RMMASTER $OPTIONS
                 if [ $? -eq 0 ]; then
                     [ -d $SUBSYSDIR ] && touch $SUBSYS
-                    if [ -d $PIDDIR ]; then
-                        pid=`ps -eo pid,ppid,$format4comm | grep " 1 rmmaster" | awk '{print $1}'`
+		    if [ -d $PIDDIR ]; then
+			pid=`ps -eo pid,ppid,$format4comm | grep " 1 rmmaster" | awk '{print $1}'`
                         # The point of $PIDFILE is that it kills only
                         # the master daemon.
-                        rm -f $PIDFILE
-                        echo $pid > $PIDFILE
-                    fi
-                    RETVAL=0
+			rm -f $PIDFILE
+			if [ -n "$pid" ]; then
+			    echo $pid > $PIDFILE
+			    RETVAL=0
+			else
+			    echo $ECHOOPT "rmmaster not started: "
+			    [ -n "$FAILURE" ] && $FAILURE "rmmaster not started: "
+			    RETVAL=1
+			fi
+		    else
+			RETVAL=0
+		    fi
                 else
                     echo $ECHOOPT "rmmaster not started: "
                     [ -n "$FAILURE" ] && $FAILURE "rmmaster not started: "
