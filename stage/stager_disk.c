@@ -1,5 +1,5 @@
 /*
- * $Id: stager_disk.c,v 1.3 2002/02/05 15:29:48 jdurand Exp $
+ * $Id: stager_disk.c,v 1.4 2002/02/07 18:07:08 jdurand Exp $
  */
 
 /*
@@ -11,13 +11,11 @@
 
 #ifdef STAGE_CSETPROCNAME
 #define STAGE_CSETPROCNAME_FORMAT_DISK "%s %s %s"
-#define STAGE_CSETPROCNAME_FORMAT_TAPE "%s %s %s.%d"
-#define STAGE_CSETPROCNAME_FORMAT_CASTOR "%s %s %s.%d %s"
 #include "Csetprocname.h"
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.3 $ $Date: 2002/02/05 15:29:48 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.4 $ $Date: 2002/02/07 18:07:08 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
