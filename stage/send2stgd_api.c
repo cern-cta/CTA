@@ -818,13 +818,15 @@ int send2stgd_api_cmp(stcp1,stcp2)
   if (stcp1->size        != 0    && stcp1->size     != stcp2->size)  {
     /* Is it ok to have stcp1->size != stcp2->size in case of a STAGEIN and only if */
     /* stcp2->size >= stcp1->size (file was already staged but with a larger req) */
-    if (! ISSTAGEIN(stcp2)) {
+	  /*
+	if (! ISSTAGEIN(stcp2)) {
       CMP_ERROR_U64(size);
       return(-1);
     } else if (stcp2->size < stcp1->size) {
       CMP_ERROR_U64(size);
       return(-1);
     }
+	  */
   }
   if (stcp1->t_or_d == '\0') {
     stage_errmsg(NULL, "### stcp1->t_or_d is empty !?\n");
