@@ -1,5 +1,5 @@
 /*
- * $Id: stage_struct.h,v 1.4 2001/07/12 10:54:28 jdurand Exp $
+ * $Id: stage_struct.h,v 1.5 2001/12/20 11:33:15 jdurand Exp $
  */
 
 #ifndef __stage_struct_h
@@ -54,7 +54,10 @@ struct stgcat_entry {		/* entry format in STGCAT table */
 			char	filstat;	/* file status: new = 'n', old = 'o' */
 			char	fseq[CA_MAXFSEQLEN+1];	/* file sequence number requested by user */
 			char	lbl[CA_MAXLBLTYPLEN+1];	/* label type: al, nl, sl or blp */
-			int	retentd;	/* retention period in days */
+			int		retentd;	/* retention period in days */
+#ifdef STAGER_SIDE_SERVER_SUPPORT
+			int		side;	/* size (for deviced like DVD accessed as if it was a tape request) */
+#endif
 			char	tapesrvr[CA_MAXHOSTNAMELEN+1];	/* tape server */
 			char	E_Tflags;	/* SKIPBAD, KEEPFILE, NOTRLCHK */
 			char	vid[MAXVSN][CA_MAXVIDLEN+1];
@@ -69,12 +72,12 @@ struct stgcat_entry {		/* entry format in STGCAT table */
 	    } m;
 	    struct {			/* HSM files (CASTOR) */
 			char	xfile[167];
-			char		server[CA_MAXHOSTNAMELEN+1];
+			char	server[CA_MAXHOSTNAMELEN+1];
 			u_signed64	fileid;
 			short	fileclass;
-			char tppool[CA_MAXPOOLNAMELEN+1];
-			int retenp_on_disk; /* Overwriten retention period on disk (-1 == default) */
-			int mintime_beforemigr; /* Overwriten mintime before migration (-1 == default) */
+			char	tppool[CA_MAXPOOLNAMELEN+1];
+			int		retenp_on_disk; /* Overwriten retention period on disk (-1 == default) */
+			int		mintime_beforemigr; /* Overwriten mintime before migration (-1 == default) */
 	    } h;
 	} u1;
 };
