@@ -169,6 +169,12 @@
 #define W2000MapDir	\\\\cern.ch\\dfs\\Applications\\CERN\\CASTOR\\Config
 #define WntMapDir	\\\\cerndfs01\\dfs\\Applications\\CERN\\CASTOR\\Config
 
+#if defined(_WIN32)
+#define LsfInstallDir %%SystemRoot%%\\system32
+#else
+#define LsfInstallDir /usr/local/lsf/lib
+#endif
+
 #define BuildCommands		YES
 #define BuildCommon		YES
 #define BuildCopytapeClient	NO
