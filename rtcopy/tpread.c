@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.15 $ $Date: 2000/06/19 15:16:12 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.16 $ $Date: 2000/07/28 15:29:42 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
          * retry loop.
          */ 
         dont_change_srv = 0;
-        if ( *tape->tapereq.server != '\0' ) dont_change_srv = 1;
+        if ( tape != NULL && *tape->tapereq.server != '\0' ) dont_change_srv = 1;
 
         signal(SIGINT,(void (*)(int))CntlC_handler);
 

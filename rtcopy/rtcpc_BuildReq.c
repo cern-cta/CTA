@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.28 $ $Date: 2000/06/26 11:01:12 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.29 $ $Date: 2000/07/28 15:29:41 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1822,6 +1822,7 @@ static int rtcpc_diskfiles(int mode,
     } else { 
         last_filename = NULL;
         disk_fseq = 0;
+        if ( tl == NULL || tl->file == NULL ) return(0);
         fl = tl->file->prev;
         if ( fl->filereq.tape_fseq == 0 ) {
             /*
@@ -1861,7 +1862,7 @@ static int rtcpc_diskfiles(int mode,
             if ( *filereq->file_path == '\0' ) {
                 if ( last_filename == NULL ) {
                     rtcp_log(LOG_ERR,
-                        "disk file pathnames must be specified\n");
+                        "Disk file pathnames must be specified\n");
                     serrno = EINVAL;
                     rc = -1;    
                     break;
