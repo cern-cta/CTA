@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.14 $ $Date: 2004/11/29 17:40:32 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.15 $ $Date: 2004/11/30 12:39:03 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -179,7 +179,7 @@ depend:
 	@echo Not supported on this platform
 #else
 depend:
-	makedepend -Y$(INCLUDES) *.c 2> /dev/null
+	makedepend  -Y -- $(CFLAGS) -- *.c 2> /dev/null
 #endif
 
 Makefiles:
