@@ -1,8 +1,10 @@
-.\" @(#)$RCSfile: stageping.man,v $ $Revision: 1.3 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Damien Durand
-.\" Copyright (C) 2001 by CERN/IT/PDP/DM
+.\" $Id: stageping.man,v 1.4 2002/10/03 14:00:07 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stageping.man,v $ $Revision: 1.4 $ $Date: 2002/10/03 14:00:07 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" Copyright (C) 2001-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEPING l "$Date: 2002/01/30 08:12:54 $"
+.TH STAGEPING "1" "$Date: 2002/10/03 14:00:07 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageping \- ping the stager daemon
 .SH SYNOPSIS
@@ -12,9 +14,11 @@ stageping \- ping the stager daemon
 ] [
 .BI \-v
 ]
+
 .SH DESCRIPTION
 .B stageping
 is used to check if the stager daemon answer to incoming requests.
+
 .SH OPTIONS
 .TP
 .BI \-h " host"
@@ -24,6 +28,7 @@ This may also be specified thru the environment variable STAGE_HOST.
 .TP
 .BI \-v
 Asks for additional information, like CASTOR package version, generated time and uptime.
+
 .SH RETURN CODES
 \
 .br
@@ -34,6 +39,7 @@ Asks for additional information, like CASTOR package version, generated time and
 2	System error.
 .br
 4	Configuration error.
+
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
 

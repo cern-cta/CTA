@@ -1,8 +1,10 @@
-.\" @(#)$RCSfile: stageinit.man,v $ $Revision: 1.11 $ $Date: 2002/06/10 16:44:15 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
+.\" $Id: stageinit.man,v 1.12 2002/10/03 13:59:33 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stageinit.man,v $ $Revision: 1.12 $ $Date: 2002/10/03 13:59:33 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1995-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEINIT l "$Date: 2002/06/10 16:44:15 $"
+.TH STAGEINIT "1" "$Date: 2002/10/03 13:59:33 $" "CASTOR" "Stage Administrator Commands"
 .SH NAME
 stageinit \- tells stgdaemon to reread the pool configuration file
 .SH SYNOPSIS
@@ -14,6 +16,7 @@ stageinit \- tells stgdaemon to reread the pool configuration file
 ] [
 .BI \-h " host"
 ]
+
 .SH DESCRIPTION
 .B stageinit
 tells stgdaemon to drain the service, i.e. rejects new stage requests but
@@ -23,6 +26,7 @@ have been added or removed; then adjust space information according to the
 new configuration and restart the service.
 .B stageinit
 is a privileged command restricted for use by an administrator.
+
 .SH OPTIONS
 .TP
 .B \-F
@@ -37,6 +41,7 @@ This may also be specified thru the environment variable STAGE_HOST.
 .TP
 .B \-X
 Updates all migration and fileclasses knowledge.
+
 .SH FILES
 .TP 1.5i
 .B /etc/STGCONFIG
@@ -55,5 +60,6 @@ configuration file
 187	User Privilege validation daemon not active
 .br
 198	Stager daemon not active
+
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,8 +1,10 @@
-.\" @(#)$RCSfile: stageshutdown.man,v $ $Revision: 1.7 $ $Date: 2002/06/10 16:44:16 $ CERN IT-PDP/DM Jean-Damien Durand
-.\" Copyright (C) 1995-2000 by CERN/IT/PDP/DM
+.\" $Id: stageshutdown.man,v 1.8 2002/10/03 14:00:37 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stageshutdown.man,v $ $Revision: 1.8 $ $Date: 2002/10/03 14:00:37 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" Copyright (C) 1995-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGESHUTDOWN l "$Date: 2002/06/10 16:44:16 $"
+.TH STAGESHUTDOWN "1" "$Date: 2002/10/03 14:00:37 $" "CASTOR" "Stager Administrator Commands"
 .SH NAME
 stageshutdown \- tells stgdaemon to exit
 .SH SYNOPSIS
@@ -11,11 +13,13 @@ stageshutdown \- tells stgdaemon to exit
 .B \-F
 ]
 .BI \-h " host"
+
 .SH DESCRIPTION
 .B stageshutdown
 tells stgdaemon to exit. Before such exit, stgdaemon will send a interrupt signal to all of its child processes he is aware of.
 .B stageshutdown
 is a privileged command restricted for use by an administrator.
+
 .SH OPTIONS
 .TP
 .B \-F
@@ -27,6 +31,7 @@ they just continue to run in parallel.
 Sends the request to the stager on
 .IR host .
 This option is mandatory, regardless of environment variable $STAGE_HOST.
+
 .SH RETURN CODES
 \
 .br
@@ -41,6 +46,7 @@ This option is mandatory, regardless of environment variable $STAGE_HOST.
 187	CASTOR User Privilege validation not active
 .br
 198	Stager daemon not active
+
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
 
