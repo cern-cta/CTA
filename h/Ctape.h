@@ -4,7 +4,7 @@
  */
 
 /*
- * %W% %G% CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.2 $ $Date: 1999/09/20 12:19:50 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -194,18 +194,20 @@
 #define	TP052	"TP052 - WSAStartup unsuccessful\n"
 #define	TP053	"TP053 - you are not registered in the unix group/passwd mapping file\n"
 #endif
-#define	TP054	"TP054 - no tape mounted\n"
+#define	TP054	"TP054 - tape not mounted or not ready\n"
 #define	TP055	"TP055 - parameter inconsistency with TMS for vid %s: %s<->%s\n"
 #define	TP056	"TP056 - %s request by %s (%d,%d) from %s\n"
 #define	TP057	"TP057 - drive %s is not free\n"
 #define	TP058	"TP058 - no free drive\n"
+#define	TP059	"TP059 - invalid reason\n"
+#define	TP060	"TP060 - invalid combination of method and filstat\n"
+#define	TP061	"TP061 - filstat value incompatible with read-only mode\n"
 
 			/* tape daemon internal tables */
 
 struct confq {		/* config queue */
 	struct confq *next;
 	struct confq *prev;
-	int	rpfd;
 	int	ovly_pid;
 	char	dgn[CA_MAXDGNLEN+1];
 	int	status;
