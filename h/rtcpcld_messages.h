@@ -28,7 +28,7 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_CALLBACK_CP, 
     RTCPCLD_MSG_CATALOGUE, 
     RTCPCLD_MSG_VDQM,
-    RTCPCLD_MSG_RTCP,
+    RTCPCLD_MSG_VWFAILED,
     RTCPCLD_MSG_VIDWORKER_STARTED,
     RTCPCLD_MSG_EXTINFO,
     RTCPCLD_MSG_EXTERR,
@@ -40,7 +40,7 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_WRONG_TAPE,
     RTCPCLD_MSG_FILEREQ,
     RTCPCLD_MSG_SEGMFAILED,
-    RTCPCLD_MSG_RESERVED23,
+    RTCPCLD_MSG_EXECCMD,
     RTCPCLD_MSG_RESERVED24,
     RTCPCLD_MSG_RESERVED25
 };
@@ -64,7 +64,7 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_CALLBACK_CP, DLF_LVL_SYSTEM, "rtcopy client daemon callback: file copy"},
     { RTCPCLD_MSG_CATALOGUE, DLF_LVL_ERROR, "catalogue lookup error"},
     { RTCPCLD_MSG_VDQM, DLF_LVL_ERROR, "VDQM call failed"},
-    { RTCPCLD_MSG_RTCP, DLF_LVL_ERROR, "RTCOPY call failed"},
+    { RTCPCLD_MSG_VWFAILED, DLF_LVL_ERROR, "Failed to start VidWorker"},
     { RTCPCLD_MSG_VIDWORKER_STARTED, DLF_LVL_SYSTEM, "VidWorker started"},
     { RTCPCLD_MSG_EXTINFO, DLF_LVL_DEBUG, "External logger info/debug message"},
     { RTCPCLD_MSG_EXTERR, DLF_LVL_ERROR, "External logger error message"},
@@ -76,7 +76,7 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_WRONG_TAPE, DLF_LVL_ALERT, "Retrieved inconsistent tape request"},
     { RTCPCLD_MSG_FILEREQ, DLF_LVL_SYSTEM, "New file request"},
     { RTCPCLD_MSG_SEGMFAILED, DLF_LVL_ERROR, "Attempt to update segment with SEGMENT_FAILED status "},
-    { RTCPCLD_MSG_RESERVED23, DLF_LVL_DEBUG, ""},
+    { RTCPCLD_MSG_EXECCMD, DLF_LVL_SYSTEM, "Execute command"},
     { RTCPCLD_MSG_RESERVED24, DLF_LVL_DEBUG, ""},
     { RTCPCLD_MSG_RESERVED25, DLF_LVL_DEBUG, ""}
 };
