@@ -302,6 +302,7 @@
 "ERROR OPENING DISK FILE:",6,
 "ERROR OPENING TAPE FILE: Write-protected media",6,
 "ERROR READING DISK FILE: I/O error",6,
+"ERROR READING DISK FILE: Input/output error",6,
 "ERROR READING DISK FILE: Stale NFS file handle",6,
 "ERROR WRITING ON DISK: I/O error",6,
 "ERROR WRITING ON DISK: mount device busy",6,
