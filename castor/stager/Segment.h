@@ -29,8 +29,8 @@
 
 // Include Files and Forward declarations for the C world
 #include "castor/stager/SegmentStatusCodes.h"
-#include "osdep.h"
 struct C_IObject_t;
+struct C_u_signed64_t;
 struct Cstager_Segment_t;
 struct Cstager_TapeCopy_t;
 struct Cstager_Tape_t;
@@ -121,45 +121,45 @@ int Cstager_Segment_setFseq(struct Cstager_Segment_t* instance, int new_var);
  * Get the value of offset
  * Start offset in the disk file (if segmented file)
  */
-int Cstager_Segment_offset(struct Cstager_Segment_t* instance, u_signed64* var);
+int Cstager_Segment_offset(struct Cstager_Segment_t* instance, struct C_u_signed64_t* var);
 
 /**
  * Set the value of offset
  * Start offset in the disk file (if segmented file)
  */
-int Cstager_Segment_setOffset(struct Cstager_Segment_t* instance, u_signed64 new_var);
+int Cstager_Segment_setOffset(struct Cstager_Segment_t* instance, struct C_u_signed64_t new_var);
 
 /**
  * Get the value of bytes_in
  * Size of the tape file (segment) to be copied
  */
-int Cstager_Segment_bytes_in(struct Cstager_Segment_t* instance, u_signed64* var);
+int Cstager_Segment_bytes_in(struct Cstager_Segment_t* instance, struct C_u_signed64_t* var);
 
 /**
  * Set the value of bytes_in
  * Size of the tape file (segment) to be copied
  */
-int Cstager_Segment_setBytes_in(struct Cstager_Segment_t* instance, u_signed64 new_var);
+int Cstager_Segment_setBytes_in(struct Cstager_Segment_t* instance, struct C_u_signed64_t new_var);
 
 /**
  * Get the value of bytes_out
  */
-int Cstager_Segment_bytes_out(struct Cstager_Segment_t* instance, u_signed64* var);
+int Cstager_Segment_bytes_out(struct Cstager_Segment_t* instance, struct C_u_signed64_t* var);
 
 /**
  * Set the value of bytes_out
  */
-int Cstager_Segment_setBytes_out(struct Cstager_Segment_t* instance, u_signed64 new_var);
+int Cstager_Segment_setBytes_out(struct Cstager_Segment_t* instance, struct C_u_signed64_t new_var);
 
 /**
  * Get the value of host_bytes
  */
-int Cstager_Segment_host_bytes(struct Cstager_Segment_t* instance, u_signed64* var);
+int Cstager_Segment_host_bytes(struct Cstager_Segment_t* instance, struct C_u_signed64_t* var);
 
 /**
  * Set the value of host_bytes
  */
-int Cstager_Segment_setHost_bytes(struct Cstager_Segment_t* instance, u_signed64 new_var);
+int Cstager_Segment_setHost_bytes(struct Cstager_Segment_t* instance, struct C_u_signed64_t new_var);
 
 /**
  * Get the value of segmCksumAlgorithm
@@ -205,39 +205,13 @@ int Cstager_Segment_setErrorCode(struct Cstager_Segment_t* instance, int new_var
 
 /**
  * Get the value of severity
- * RTCOPY severity if status == SEGMENT_FAILED
  */
 int Cstager_Segment_severity(struct Cstager_Segment_t* instance, int* var);
 
 /**
  * Set the value of severity
- * RTCOPY severity if status == SEGMENT_FAILED
  */
 int Cstager_Segment_setSeverity(struct Cstager_Segment_t* instance, int new_var);
-
-/**
- * Get the value of clientAddress
- * Used for communication between rtcpclient daemon and its clients
- */
-int Cstager_Segment_clientAddress(struct Cstager_Segment_t* instance, const char** var);
-
-/**
- * Set the value of clientAddress
- * Used for communication between rtcpclient daemon and its clients
- */
-int Cstager_Segment_setClientAddress(struct Cstager_Segment_t* instance, const char* new_var);
-
-/**
- * Get the value of fid
- * Tape file id
- */
-int Cstager_Segment_fid(struct Cstager_Segment_t* instance, const char** var);
-
-/**
- * Set the value of fid
- * Tape file id
- */
-int Cstager_Segment_setFid(struct Cstager_Segment_t* instance, const char* new_var);
 
 /**
  * Get the value of tape

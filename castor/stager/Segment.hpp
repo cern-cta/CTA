@@ -281,7 +281,6 @@ namespace castor {
 
       /**
        * Get the value of m_severity
-       * RTCOPY severity if status == SEGMENT_FAILED
        * @return the value of m_severity
        */
       int severity() const {
@@ -290,47 +289,10 @@ namespace castor {
 
       /**
        * Set the value of m_severity
-       * RTCOPY severity if status == SEGMENT_FAILED
        * @param new_var the new value of m_severity
        */
       void setSeverity(int new_var) {
         m_severity = new_var;
-      }
-
-      /**
-       * Get the value of m_clientAddress
-       * Used for communication between rtcpclient daemon and its clients
-       * @return the value of m_clientAddress
-       */
-      std::string clientAddress() const {
-        return m_clientAddress;
-      }
-
-      /**
-       * Set the value of m_clientAddress
-       * Used for communication between rtcpclient daemon and its clients
-       * @param new_var the new value of m_clientAddress
-       */
-      void setClientAddress(std::string new_var) {
-        m_clientAddress = new_var;
-      }
-
-      /**
-       * Get the value of m_fid
-       * Tape file id
-       * @return the value of m_fid
-       */
-      std::string fid() const {
-        return m_fid;
-      }
-
-      /**
-       * Set the value of m_fid
-       * Tape file id
-       * @param new_var the new value of m_fid
-       */
-      void setFid(std::string new_var) {
-        m_fid = new_var;
       }
 
       /**
@@ -425,14 +387,7 @@ namespace castor {
       /// RTCOPY serrno if status == SEGMENT_FAILED
       int m_errorCode;
 
-      /// RTCOPY severity if status == SEGMENT_FAILED
       int m_severity;
-
-      /// Used for communication between rtcpclient daemon and its clients
-      std::string m_clientAddress;
-
-      /// Tape file id
-      std::string m_fid;
 
       /// The id of this object
       unsigned long m_id;

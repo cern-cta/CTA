@@ -29,8 +29,8 @@
 
 // Include Files and Forward declarations for the C world
 #include "castor/stager/StreamStatusCodes.h"
-#include "osdep.h"
 struct C_IObject_t;
+struct C_u_signed64_t;
 struct Cstager_Stream_t;
 
 //------------------------------------------------------------------------------
@@ -94,13 +94,13 @@ int Cstager_Stream_type(struct Cstager_Stream_t* instance,
  * Get the value of initialSizeToTransfer
  * Initial data volume to be migrated (needed by vmgr_gettape())
  */
-int Cstager_Stream_initialSizeToTransfer(struct Cstager_Stream_t* instance, u_signed64* var);
+int Cstager_Stream_initialSizeToTransfer(struct Cstager_Stream_t* instance, struct C_u_signed64_t* var);
 
 /**
  * Set the value of initialSizeToTransfer
  * Initial data volume to be migrated (needed by vmgr_gettape())
  */
-int Cstager_Stream_setInitialSizeToTransfer(struct Cstager_Stream_t* instance, u_signed64 new_var);
+int Cstager_Stream_setInitialSizeToTransfer(struct Cstager_Stream_t* instance, struct C_u_signed64_t new_var);
 
 /**
  * Get the value of status

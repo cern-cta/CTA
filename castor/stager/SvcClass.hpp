@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/TapePool.hpp
+ *                      castor/stager/SvcClass.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,8 +24,8 @@
  * @author Sebastien Ponce, sebastien.ponce@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_STAGER_TAPEPOOL_HPP
-#define CASTOR_STAGER_TAPEPOOL_HPP
+#ifndef CASTOR_STAGER_SVCCLASS_HPP
+#define CASTOR_STAGER_SVCCLASS_HPP
 
 // Include Files
 #include "castor/IObject.hpp"
@@ -40,22 +40,23 @@ namespace castor {
   namespace stager {
 
     /**
-     * class TapePool
-     * A Pool of tapes
+     * class SvcClass
+     * A service, as seen by the user. A SvcClass is a container of resources and may be
+     * given as parameter of the request.
      */
-    class TapePool : public virtual castor::IObject {
+    class SvcClass : public virtual castor::IObject {
 
     public:
 
       /**
        * Empty Constructor
        */
-      TapePool() throw();
+      SvcClass() throw();
 
       /**
        * Empty Destructor
        */
-      virtual ~TapePool() throw();
+      virtual ~SvcClass() throw();
 
       /**
        * Outputs this object in a human readable format
@@ -101,37 +102,62 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
-       * Get the value of m_name
-       * Name of this pool
-       * @return the value of m_name
+       * Get the value of m_policy
+       * @return the value of m_policy
        */
-      std::string name() const {
-        return m_name;
+      std::string policy() const {
+        return m_policy;
       }
 
       /**
-       * Set the value of m_name
-       * Name of this pool
-       * @param new_var the new value of m_name
+       * Set the value of m_policy
+       * @param new_var the new value of m_policy
        */
-      void setName(std::string new_var) {
-        m_name = new_var;
+      void setPolicy(std::string new_var) {
+        m_policy = new_var;
+      }
+
+      /**
+       * Get the value of m_nbDrives
+       * Number of drives to use for this project. This is the default number, but it
+       * could be that occasionnally more drives are used, if a resource is shared with
+       * another project using more drives
+       * @return the value of m_nbDrives
+       */
+      unsigned int nbDrives() const {
+        return m_nbDrives;
+      }
+
+      /**
+       * Set the value of m_nbDrives
+       * Number of drives to use for this project. This is the default number, but it
+       * could be that occasionnally more drives are used, if a resource is shared with
+       * another project using more drives
+       * @param new_var the new value of m_nbDrives
+       */
+      void setNbDrives(unsigned int new_var) {
+        m_nbDrives = new_var;
       }
 
     private:
 
     private:
 
-      /// Name of this pool
-      std::string m_name;
+      std::string m_policy;
+
+      /*
+       * Number of drives to use for this project.
+       * This is the default number, but it could be that occasionnally more drives are used, if a resource is shared with another project using more drives
+      */
+      unsigned int m_nbDrives;
 
       /// The id of this object
       unsigned long m_id;
 
-    }; // end of class TapePool
+    }; // end of class SvcClass
 
   }; // end of namespace stager
 
 }; // end of namespace castor
 
-#endif // CASTOR_STAGER_TAPEPOOL_HPP
+#endif // CASTOR_STAGER_SVCCLASS_HPP

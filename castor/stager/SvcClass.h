@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/TapePool.h
+ *                      castor/stager/SvcClass.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,48 +24,49 @@
  * @author Sebastien Ponce, sebastien.ponce@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_STAGER_TAPEPOOL_H
-#define CASTOR_STAGER_TAPEPOOL_H
+#ifndef CASTOR_STAGER_SVCCLASS_H
+#define CASTOR_STAGER_SVCCLASS_H
 
 // Include Files and Forward declarations for the C world
 struct C_IObject_t;
-struct Cstager_TapePool_t;
+struct Cstager_SvcClass_t;
 
 //------------------------------------------------------------------------------
 // This defines a C interface to the following class
-// class TapePool
-// A Pool of tapes
+// class SvcClass
+// A service, as seen by the user. A SvcClass is a container of resources and may be
+// given as parameter of the request.
 //------------------------------------------------------------------------------
 
 /**
  * Empty Constructor
  */
-int Cstager_TapePool_create(struct Cstager_TapePool_t** obj);
+int Cstager_SvcClass_create(struct Cstager_SvcClass_t** obj);
 
 /**
  * Empty Destructor
  */
-int Cstager_TapePool_delete(struct Cstager_TapePool_t* obj);
+int Cstager_SvcClass_delete(struct Cstager_SvcClass_t* obj);
 
 /**
  * Cast into IObject
  */
-struct C_IObject_t* Cstager_TapePool_getIObject(struct Cstager_TapePool_t* obj);
+struct C_IObject_t* Cstager_SvcClass_getIObject(struct Cstager_SvcClass_t* obj);
 
 /**
  * Dynamic cast from IObject
  */
-struct Cstager_TapePool_t* Cstager_TapePool_fromIObject(struct C_IObject_t* obj);
+struct Cstager_SvcClass_t* Cstager_SvcClass_fromIObject(struct C_IObject_t* obj);
 
 /**
  * Outputs this object in a human readable format
  */
-int Cstager_TapePool_print(struct Cstager_TapePool_t* instance);
+int Cstager_SvcClass_print(struct Cstager_SvcClass_t* instance);
 
 /**
  * Gets the type of this kind of objects
  */
-int Cstager_TapePool_TYPE(int* ret);
+int Cstager_SvcClass_TYPE(int* ret);
 
 /********************************************/
 /* Implementation of IObject abstract class */
@@ -73,31 +74,45 @@ int Cstager_TapePool_TYPE(int* ret);
 /**
  * Sets the id of the object
  */
-int Cstager_TapePool_setId(struct Cstager_TapePool_t* instance,
+int Cstager_SvcClass_setId(struct Cstager_SvcClass_t* instance,
                            unsigned long id);
 
 /**
  * gets the id of the object
  */
-int Cstager_TapePool_id(struct Cstager_TapePool_t* instance,
+int Cstager_SvcClass_id(struct Cstager_SvcClass_t* instance,
                         unsigned long* ret);
 
 /**
  * Gets the type of the object
  */
-int Cstager_TapePool_type(struct Cstager_TapePool_t* instance,
+int Cstager_SvcClass_type(struct Cstager_SvcClass_t* instance,
                           int* ret);
 
 /**
- * Get the value of name
- * Name of this pool
+ * Get the value of policy
  */
-int Cstager_TapePool_name(struct Cstager_TapePool_t* instance, const char** var);
+int Cstager_SvcClass_policy(struct Cstager_SvcClass_t* instance, const char** var);
 
 /**
- * Set the value of name
- * Name of this pool
+ * Set the value of policy
  */
-int Cstager_TapePool_setName(struct Cstager_TapePool_t* instance, const char* new_var);
+int Cstager_SvcClass_setPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
 
-#endif // CASTOR_STAGER_TAPEPOOL_H
+/**
+ * Get the value of nbDrives
+ * Number of drives to use for this project. This is the default number, but it
+ * could be that occasionnally more drives are used, if a resource is shared with
+ * another project using more drives
+ */
+int Cstager_SvcClass_nbDrives(struct Cstager_SvcClass_t* instance, unsigned int* var);
+
+/**
+ * Set the value of nbDrives
+ * Number of drives to use for this project. This is the default number, but it
+ * could be that occasionnally more drives are used, if a resource is shared with
+ * another project using more drives
+ */
+int Cstager_SvcClass_setNbDrives(struct Cstager_SvcClass_t* instance, unsigned int new_var);
+
+#endif // CASTOR_STAGER_SVCCLASS_H

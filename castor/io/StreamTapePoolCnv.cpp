@@ -27,7 +27,6 @@
 // Include Files
 #include "StreamTapePoolCnv.hpp"
 #include "castor/CnvFactory.hpp"
-#include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IConverter.hpp"
 #include "castor/IFactory.hpp"
@@ -37,11 +36,8 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/io/StreamAddress.hpp"
-#include "castor/io/StreamCnvSvc.hpp"
-#include "castor/stager/Tape.hpp"
 #include "castor/stager/TapePool.hpp"
 #include <string>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -94,12 +90,6 @@ void castor::io::StreamTapePoolCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->id();
   // Mark object as done
   alreadyDone.insert(obj);
-  ad->stream() << obj->tapes().size();
-  for (std::vector<castor::stager::Tape*>::iterator it = obj->tapes().begin();
-       it != obj->tapes().end();
-       it++) {
-    marshalObject(*it, ad, alreadyDone);
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -149,12 +139,6 @@ castor::IObject* castor::io::StreamTapePoolCnv::createObj(castor::IAddress* addr
   ad->stream() >> id;
   object->setId(id);
   newlyCreated.insert(object);
-  unsigned int tapesNb;
-  ad->stream() >> tapesNb;
-  for (unsigned int i = 0; i < tapesNb; i++) {
-    IObject* obj = unmarshalObject(ad->stream(), newlyCreated);
-    object->addTapes(dynamic_cast<castor::stager::Tape*>(obj));
-  }
   return object;
 }
 

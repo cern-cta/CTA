@@ -29,8 +29,8 @@
 
 // Include Files and Forward declarations for the C world
 #include "castor/stager/SubRequestStatusCodes.h"
-#include "osdep.h"
 struct C_IObject_t;
+struct C_u_signed64_t;
 struct Cstager_Request_t;
 struct Cstager_SubRequest_t;
 
@@ -146,14 +146,14 @@ int Cstager_SubRequest_setPoolName(struct Cstager_SubRequest_t* instance, const 
  * The size of the file. This gives how many bytes should be allocated rather than
  * the default.
  */
-int Cstager_SubRequest_xsize(struct Cstager_SubRequest_t* instance, u_signed64* var);
+int Cstager_SubRequest_xsize(struct Cstager_SubRequest_t* instance, struct C_u_signed64_t* var);
 
 /**
  * Set the value of xsize
  * The size of the file. This gives how many bytes should be allocated rather than
  * the default.
  */
-int Cstager_SubRequest_setXsize(struct Cstager_SubRequest_t* instance, u_signed64 new_var);
+int Cstager_SubRequest_setXsize(struct Cstager_SubRequest_t* instance, struct C_u_signed64_t new_var);
 
 /**
  * Get the value of request

@@ -28,8 +28,8 @@
 #define CASTOR_STAGER_CASTORFILE_H
 
 // Include Files and Forward declarations for the C world
-#include "osdep.h"
 struct C_IObject_t;
+struct C_u_signed64_t;
 struct Cstager_CastorFile_t;
 struct Cstager_DiskCopy_t;
 struct Cstager_TapeCopy_t;
@@ -95,13 +95,13 @@ int Cstager_CastorFile_type(struct Cstager_CastorFile_t* instance,
  * Get the value of fileId
  * The id of this castor file. This identifies it uniquely
  */
-int Cstager_CastorFile_fileId(struct Cstager_CastorFile_t* instance, u_signed64* var);
+int Cstager_CastorFile_fileId(struct Cstager_CastorFile_t* instance, struct C_u_signed64_t* var);
 
 /**
  * Set the value of fileId
  * The id of this castor file. This identifies it uniquely
  */
-int Cstager_CastorFile_setFileId(struct Cstager_CastorFile_t* instance, u_signed64 new_var);
+int Cstager_CastorFile_setFileId(struct Cstager_CastorFile_t* instance, struct C_u_signed64_t new_var);
 
 /**
  * Get the value of nsHost
@@ -114,6 +114,18 @@ int Cstager_CastorFile_nsHost(struct Cstager_CastorFile_t* instance, const char*
  * The name server hosting this castor file
  */
 int Cstager_CastorFile_setNsHost(struct Cstager_CastorFile_t* instance, const char* new_var);
+
+/**
+ * Get the value of size
+ * Size of the file
+ */
+int Cstager_CastorFile_size(struct Cstager_CastorFile_t* instance, struct C_u_signed64_t* var);
+
+/**
+ * Set the value of size
+ * Size of the file
+ */
+int Cstager_CastorFile_setSize(struct Cstager_CastorFile_t* instance, struct C_u_signed64_t new_var);
 
 /**
  * Add a struct Cstager_DiskCopy_t* object to the diskFileCopies list

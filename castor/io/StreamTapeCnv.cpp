@@ -40,7 +40,6 @@
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Tape.hpp"
-#include "castor/stager/TapePool.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 #include <string>
 #include <vector>
@@ -109,7 +108,6 @@ void castor::io::StreamTapeCnv::createRep(castor::IAddress* address,
        it++) {
     marshalObject(*it, ad, alreadyDone);
   }
-  marshalObject(obj->pool(), ad, alreadyDone);
 }
 
 //------------------------------------------------------------------------------
@@ -186,8 +184,6 @@ castor::IObject* castor::io::StreamTapeCnv::createObj(castor::IAddress* address,
     IObject* obj = unmarshalObject(ad->stream(), newlyCreated);
     object->addSegments(dynamic_cast<castor::stager::Segment*>(obj));
   }
-  IObject* objPool = unmarshalObject(ad->stream(), newlyCreated);
-  object->setPool(dynamic_cast<castor::stager::TapePool*>(objPool));
   return object;
 }
 

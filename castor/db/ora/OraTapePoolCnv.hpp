@@ -206,12 +206,6 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL select statement for member tapes
-        static const std::string s_TapePool2TapeStatementString;
-
-        /// SQL select statement object for member tapes
-        oracle::occi::Statement *m_TapePool2TapeStatement;
-
       }; // end of class OraTapePoolCnv
 
     }; // end of namespace ora

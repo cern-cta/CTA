@@ -143,6 +143,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_size
+       * Size of the file
+       * @return the value of m_size
+       */
+      u_signed64 size() const {
+        return m_size;
+      }
+
+      /**
+       * Set the value of m_size
+       * Size of the file
+       * @param new_var the new value of m_size
+       */
+      void setSize(u_signed64 new_var) {
+        m_size = new_var;
+      }
+
+      /**
        * Add a DiskCopy* object to the m_diskFileCopiesVector list
        */
       void addDiskFileCopies(DiskCopy* add_object) {
@@ -209,6 +227,9 @@ namespace castor {
 
       /// The name server hosting this castor file
       std::string m_nsHost;
+
+      /// Size of the file
+      u_signed64 m_size;
 
       /// The id of this object
       unsigned long m_id;

@@ -287,40 +287,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_Segment_clientAddress
-  //----------------------------------------------------------------------------
-  int Cstager_Segment_clientAddress(castor::stager::Segment* instance, const char** var) {
-    *var = instance->clientAddress().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Segment_setClientAddress
-  //----------------------------------------------------------------------------
-  int Cstager_Segment_setClientAddress(castor::stager::Segment* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setClientAddress(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Segment_fid
-  //----------------------------------------------------------------------------
-  int Cstager_Segment_fid(castor::stager::Segment* instance, const char** var) {
-    *var = instance->fid().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Segment_setFid
-  //----------------------------------------------------------------------------
-  int Cstager_Segment_setFid(castor::stager::Segment* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setFid(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_Segment_tape
   //----------------------------------------------------------------------------
   int Cstager_Segment_tape(castor::stager::Segment* instance, castor::stager::Tape** var) {

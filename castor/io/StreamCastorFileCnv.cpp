@@ -94,6 +94,7 @@ void castor::io::StreamCastorFileCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->type();
   ad->stream() << obj->fileId();
   ad->stream() << obj->nsHost();
+  ad->stream() << obj->size();
   ad->stream() << obj->id();
   // Mark object as done
   alreadyDone.insert(obj);
@@ -157,6 +158,9 @@ castor::IObject* castor::io::StreamCastorFileCnv::createObj(castor::IAddress* ad
   std::string nsHost;
   ad->stream() >> nsHost;
   object->setNsHost(nsHost);
+  u_signed64 size;
+  ad->stream() >> size;
+  object->setSize(size);
   unsigned long id;
   ad->stream() >> id;
   object->setId(id);

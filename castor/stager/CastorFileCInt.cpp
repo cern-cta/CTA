@@ -140,6 +140,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_CastorFile_size
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_size(castor::stager::CastorFile* instance, u_signed64* var) {
+    *var = instance->size();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_CastorFile_setSize
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_setSize(castor::stager::CastorFile* instance, u_signed64 new_var) {
+    instance->setSize(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_CastorFile_addDiskFileCopies
   //----------------------------------------------------------------------------
   int Cstager_CastorFile_addDiskFileCopies(castor::stager::CastorFile* instance, castor::stager::DiskCopy* obj) {

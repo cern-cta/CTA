@@ -27,11 +27,9 @@
 // Include Files
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/stager/Tape.hpp"
 #include "castor/stager/TapePool.hpp"
 #include <iostream>
 #include <string>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -45,11 +43,6 @@ castor::stager::TapePool::TapePool() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::TapePool::~TapePool() throw() {
-  for (unsigned int i = 0; i < m_tapesVector.size(); i++) {
-    m_tapesVector[i]->setPool(0);
-    delete m_tapesVector[i];
-  }
-  m_tapesVector.clear();
 };
 
 //------------------------------------------------------------------------------
@@ -67,17 +60,6 @@ void castor::stager::TapePool::print(std::ostream& stream,
   stream << indent << "name : " << m_name << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  {
-    stream << indent << "Tapes : " << std::endl;
-    int i;
-    std::vector<Tape*>::const_iterator it;
-    for (it = m_tapesVector.begin(), i = 0;
-         it != m_tapesVector.end();
-         it++, i++) {
-      stream << indent << "  " << i << " :" << std::endl;
-      (*it)->print(stream, indent + "    ", alreadyPrinted);
-    }
-  }
 }
 
 //------------------------------------------------------------------------------

@@ -31,7 +31,6 @@
 #include "castor/stager/TapeStatusCodes.h"
 struct C_IObject_t;
 struct Cstager_Segment_t;
-struct Cstager_TapePool_t;
 struct Cstager_Tape_t;
 
 //------------------------------------------------------------------------------
@@ -187,16 +186,6 @@ int Cstager_Tape_removeSegments(struct Cstager_Tape_t* instance, struct Cstager_
  * Get the list of struct Cstager_Segment_t* objects held by segments
  */
 int Cstager_Tape_segments(struct Cstager_Tape_t* instance, struct Cstager_Segment_t*** var, int* len);
-
-/**
- * Get the value of pool
- */
-int Cstager_Tape_pool(struct Cstager_Tape_t* instance, struct Cstager_TapePool_t** var);
-
-/**
- * Set the value of pool
- */
-int Cstager_Tape_setPool(struct Cstager_Tape_t* instance, struct Cstager_TapePool_t* new_var);
 
 /**
  * Get the value of status

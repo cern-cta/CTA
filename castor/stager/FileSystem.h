@@ -28,8 +28,8 @@
 #define CASTOR_STAGER_FILESYSTEM_H
 
 // Include Files and Forward declarations for the C world
-#include "osdep.h"
 struct C_IObject_t;
+struct C_u_signed64_t;
 struct Cstager_DiskCopy_t;
 struct Cstager_DiskServer_t;
 struct Cstager_FileSystem_t;
@@ -95,13 +95,13 @@ int Cstager_FileSystem_type(struct Cstager_FileSystem_t* instance,
  * Get the value of free
  * Free space on the filesystem
  */
-int Cstager_FileSystem_free(struct Cstager_FileSystem_t* instance, u_signed64* var);
+int Cstager_FileSystem_free(struct Cstager_FileSystem_t* instance, struct C_u_signed64_t* var);
 
 /**
  * Set the value of free
  * Free space on the filesystem
  */
-int Cstager_FileSystem_setFree(struct Cstager_FileSystem_t* instance, u_signed64 new_var);
+int Cstager_FileSystem_setFree(struct Cstager_FileSystem_t* instance, struct C_u_signed64_t new_var);
 
 /**
  * Get the value of weight

@@ -51,8 +51,6 @@ castor::stager::Segment::Segment() throw() :
   m_errMsgTxt(""),
   m_errorCode(0),
   m_severity(0),
-  m_clientAddress(""),
-  m_fid(""),
   m_id(0),
   m_tape(0),
   m_copy(0),
@@ -99,8 +97,6 @@ void castor::stager::Segment::print(std::ostream& stream,
   stream << indent << "errMsgTxt : " << m_errMsgTxt << std::endl;
   stream << indent << "errorCode : " << m_errorCode << std::endl;
   stream << indent << "severity : " << m_severity << std::endl;
-  stream << indent << "clientAddress : " << m_clientAddress << std::endl;
-  stream << indent << "fid : " << m_fid << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Tape : " << std::endl;

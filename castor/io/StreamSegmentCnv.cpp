@@ -105,8 +105,6 @@ void castor::io::StreamSegmentCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->errMsgTxt();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->severity();
-  ad->stream() << obj->clientAddress();
-  ad->stream() << obj->fid();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
   // Mark object as done
@@ -189,12 +187,6 @@ castor::IObject* castor::io::StreamSegmentCnv::createObj(castor::IAddress* addre
   int severity;
   ad->stream() >> severity;
   object->setSeverity(severity);
-  std::string clientAddress;
-  ad->stream() >> clientAddress;
-  object->setClientAddress(clientAddress);
-  std::string fid;
-  ad->stream() >> fid;
-  object->setFid(fid);
   unsigned long id;
   ad->stream() >> id;
   object->setId(id);

@@ -41,7 +41,6 @@
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Tape.hpp"
-#include "castor/stager/TapePool.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 #include <list>
 #include <set>
@@ -59,7 +58,7 @@ const castor::IFactory<castor::IConverter>& OraTapeCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraTapeCnv::s_insertStatementString =
-"INSERT INTO rh_Tape (vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, pool, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10)";
+"INSERT INTO rh_Tape (vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraTapeCnv::s_deleteStatementString =
@@ -67,11 +66,11 @@ const std::string castor::db::ora::OraTapeCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraTapeCnv::s_selectStatementString =
-"SELECT vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, pool, status FROM rh_Tape WHERE id = :1";
+"SELECT vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, status FROM rh_Tape WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraTapeCnv::s_updateStatementString =
-"UPDATE rh_Tape SET vid = :1, side = :2, tpmode = :3, errMsgTxt = :4, errorCode = :5, severity = :6, vwAddress = :7, pool = :8, status = :9 WHERE id = :10";
+"UPDATE rh_Tape SET vid = :1, side = :2, tpmode = :3, errMsgTxt = :4, errorCode = :5, severity = :6, vwAddress = :7, status = :8 WHERE id = :9";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraTapeCnv::s_storeTypeStatementString =
@@ -85,14 +84,6 @@ const std::string castor::db::ora::OraTapeCnv::s_deleteTypeStatementString =
 const std::string castor::db::ora::OraTapeCnv::s_Tape2SegmentStatementString =
 "SELECT Child from rh_Tape2Segment WHERE Parent = :1";
 
-/// SQL insert statement for member pool
-const std::string castor::db::ora::OraTapeCnv::s_insertTapePool2TapeStatementString =
-"INSERT INTO rh_TapePool2Tape (Parent, Child) VALUES (:1, :2)";
-
-/// SQL delete statement for member pool
-const std::string castor::db::ora::OraTapeCnv::s_deleteTapePool2TapeStatementString =
-"DELETE FROM rh_TapePool2Tape WHERE Parent = :1 AND Child = :2";
-
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -104,9 +95,7 @@ castor::db::ora::OraTapeCnv::OraTapeCnv() :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_Tape2SegmentStatement(0),
-  m_insertTapePool2TapeStatement(0),
-  m_deleteTapePool2TapeStatement(0) {}
+  m_Tape2SegmentStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -129,8 +118,6 @@ void castor::db::ora::OraTapeCnv::reset() throw() {
     deleteStatement(m_storeTypeStatement);
     deleteStatement(m_deleteTypeStatement);
     deleteStatement(m_Tape2SegmentStatement);
-    deleteStatement(m_insertTapePool2TapeStatement);
-    deleteStatement(m_deleteTapePool2TapeStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -140,8 +127,6 @@ void castor::db::ora::OraTapeCnv::reset() throw() {
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
   m_Tape2SegmentStatement = 0;
-  m_insertTapePool2TapeStatement = 0;
-  m_deleteTapePool2TapeStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -200,22 +185,6 @@ void castor::db::ora::OraTapeCnv::createRep(castor::IAddress* address,
         }
       }
     }
-    if (alreadyDone.find(obj->pool()) == alreadyDone.end() &&
-        obj->pool() != 0) {
-      if (0 == obj->pool()->id()) {
-        if (!recursive) {
-          castor::exception::InvalidArgument ex;
-          ex.getMessage() << "CreateNoRep called on type Tape while its pool does not exist in the database.";
-          throw ex;
-        }
-        toBeSaved.push_back(obj->pool());
-        nids++;
-      } else {
-        if (recursive) {
-          toBeUpdated.push_back(obj->pool());
-        }
-      }
-    }
     unsigned long id = cnvSvc()->getIds(nids);
     if (0 == obj->id()) obj->setId(id++);
     for (std::list<castor::IObject*>::const_iterator it = toBeSaved.begin();
@@ -235,8 +204,7 @@ void castor::db::ora::OraTapeCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(6, obj->severity());
     m_insertStatement->setString(7, obj->vwAddress());
     m_insertStatement->setInt(8, obj->id());
-    m_insertStatement->setInt(9, obj->pool() ? obj->pool()->id() : 0);
-    m_insertStatement->setInt(10, (int)obj->status());
+    m_insertStatement->setInt(9, (int)obj->status());
     m_insertStatement->executeUpdate();
     if (recursive) {
       // Save dependant objects that need it
@@ -251,15 +219,6 @@ void castor::db::ora::OraTapeCnv::createRep(castor::IAddress* address,
            it++) {
         cnvSvc()->updateRep(0, *it, alreadyDone, false, true);
       }
-    }
-    // Deal with pool
-    if (0 != obj->pool()) {
-      if (0 == m_insertTapePool2TapeStatement) {
-        m_insertTapePool2TapeStatement = createStatement(s_insertTapePool2TapeStatementString);
-      }
-      m_insertTapePool2TapeStatement->setInt(1, obj->pool()->id());
-      m_insertTapePool2TapeStatement->setInt(2, obj->id());
-      m_insertTapePool2TapeStatement->executeUpdate();
     }
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -290,7 +249,6 @@ void castor::db::ora::OraTapeCnv::createRep(castor::IAddress* address,
                     << "  severity : " << obj->severity() << std::endl
                     << "  vwAddress : " << obj->vwAddress() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  pool : " << obj->pool() << std::endl
                     << "  status : " << obj->status() << std::endl;
     throw ex;
   }
@@ -320,64 +278,8 @@ void castor::db::ora::OraTapeCnv::updateRep(castor::IAddress* address,
                       << s_updateStatementString;
       throw ex;
     }
-    if (recursive) {
-      if (0 == m_selectStatement) {
-        m_selectStatement = createStatement(s_selectStatementString);
-      }
-      if (0 == m_selectStatement) {
-        castor::exception::Internal ex;
-        ex.getMessage() << "Unable to create statement :" << std::endl
-                        << s_selectStatementString;
-        throw ex;
-      }
-    }
     // Mark the current object as done
     alreadyDone.insert(obj);
-    if (recursive) {
-      // retrieve the object from the database
-      m_selectStatement->setInt(1, obj->id());
-      oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
-      if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
-        castor::exception::NoEntry ex;
-        ex.getMessage() << "No object found for id :" << obj->id();
-        throw ex;
-      }
-      // Dealing with pool
-      {
-        unsigned long poolId = rset->getInt(9);
-        castor::db::DbAddress ad(poolId, " ", 0);
-        if (0 != poolId &&
-            0 != obj->pool() &&
-            obj->pool()->id() != poolId) {
-          cnvSvc()->deleteRepByAddress(&ad, false);
-          poolId = 0;
-          if (0 == m_deleteTapePool2TapeStatement) {
-            m_deleteTapePool2TapeStatement = createStatement(s_deleteTapePool2TapeStatementString);
-          }
-          m_deleteTapePool2TapeStatement->setInt(1, obj->pool()->id());
-          m_deleteTapePool2TapeStatement->setInt(2, obj->id());
-          m_deleteTapePool2TapeStatement->executeUpdate();
-        }
-        if (poolId == 0) {
-          if (0 != obj->pool()) {
-            if (alreadyDone.find(obj->pool()) == alreadyDone.end()) {
-              cnvSvc()->createRep(&ad, obj->pool(), alreadyDone, false, true);
-              if (0 == m_insertTapePool2TapeStatement) {
-                m_insertTapePool2TapeStatement = createStatement(s_insertTapePool2TapeStatementString);
-              }
-              m_insertTapePool2TapeStatement->setInt(1, obj->pool()->id());
-              m_insertTapePool2TapeStatement->setInt(2, obj->id());
-              m_insertTapePool2TapeStatement->executeUpdate();
-            }
-          }
-        } else {
-          if (alreadyDone.find(obj->pool()) == alreadyDone.end()) {
-            cnvSvc()->updateRep(&ad, obj->pool(), alreadyDone, false, recursive);
-          }
-        }
-      }
-      m_selectStatement->closeResultSet(rset);
-    }
     // Now Update the current object
     m_updateStatement->setString(1, obj->vid());
     m_updateStatement->setInt(2, obj->side());
@@ -386,9 +288,8 @@ void castor::db::ora::OraTapeCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setInt(5, obj->errorCode());
     m_updateStatement->setInt(6, obj->severity());
     m_updateStatement->setString(7, obj->vwAddress());
-    m_updateStatement->setInt(8, obj->pool() ? obj->pool()->id() : 0);
-    m_updateStatement->setInt(9, (int)obj->status());
-    m_updateStatement->setInt(10, obj->id());
+    m_updateStatement->setInt(8, (int)obj->status());
+    m_updateStatement->setInt(9, obj->id());
     m_updateStatement->executeUpdate();
     if (recursive) {
       // Dealing with segments
@@ -485,17 +386,6 @@ void castor::db::ora::OraTapeCnv::deleteRep(castor::IAddress* address,
         cnvSvc()->deleteRep(0, *it, alreadyDone, false);
       }
     }
-    // Delete link to pool object
-    if (0 != obj->pool()) {
-      // Check whether the statement is ok
-      if (0 == m_deleteTapePool2TapeStatement) {
-        m_deleteTapePool2TapeStatement = createStatement(s_deleteTapePool2TapeStatementString);
-      }
-      // Delete links to objects
-      m_deleteTapePool2TapeStatement->setInt(1, obj->pool()->id());
-      m_deleteTapePool2TapeStatement->setInt(2, obj->id());
-      m_deleteTapePool2TapeStatement->executeUpdate();
-    }
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
     }
@@ -560,10 +450,7 @@ castor::IObject* castor::db::ora::OraTapeCnv::createObj(castor::IAddress* addres
     object->setVwAddress(rset->getString(7));
     object->setId(rset->getInt(8));
     newlyCreated[object->id()] = object;
-    unsigned long poolId = rset->getInt(9);
-    IObject* objPool = cnvSvc()->getObjFromId(poolId, newlyCreated);
-    object->setPool(dynamic_cast<castor::stager::TapePool*>(objPool));
-    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(10));
+    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(9));
     m_selectStatement->closeResultSet(rset);
     // Get ids of objs to retrieve
     if (0 == m_Tape2SegmentStatement) {
@@ -636,26 +523,7 @@ void castor::db::ora::OraTapeCnv::updateObj(castor::IObject* obj,
     object->setVwAddress(rset->getString(7));
     object->setId(rset->getInt(8));
     alreadyDone[obj->id()] = obj;
-    // Dealing with pool
-    unsigned long poolId = rset->getInt(9);
-    if (0 != object->pool() &&
-        (0 == poolId ||
-         object->pool()->id() != poolId)) {
-      delete object->pool();
-      object->setPool(0);
-    }
-    if (0 != poolId) {
-      if (0 == object->pool()) {
-        object->setPool
-          (dynamic_cast<castor::stager::TapePool*>
-           (cnvSvc()->getObjFromId(poolId, alreadyDone)));
-      } else if (object->pool()->id() == poolId) {
-        if (alreadyDone.find(object->pool()->id()) == alreadyDone.end()) {
-          cnvSvc()->updateObj(object->pool(), alreadyDone);
-        }
-      }
-    }
-    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(10));
+    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(9));
     m_selectStatement->closeResultSet(rset);
     // Deal with segments
     if (0 == m_Tape2SegmentStatement) {

@@ -28,7 +28,6 @@
 #include "castor/IObject.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Tape.hpp"
-#include "castor/stager/TapePool.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 #include <vector>
 
@@ -247,22 +246,6 @@ extern "C" {
     for (int i = 0; i < *len; i++) {
       (*var)[i] = result[i];
     }
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Tape_pool
-  //----------------------------------------------------------------------------
-  int Cstager_Tape_pool(castor::stager::Tape* instance, castor::stager::TapePool** var) {
-    *var = instance->pool();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_Tape_setPool
-  //----------------------------------------------------------------------------
-  int Cstager_Tape_setPool(castor::stager::Tape* instance, castor::stager::TapePool* new_var) {
-    instance->setPool(new_var);
     return 0;
   }
 

@@ -61,13 +61,11 @@ CREATE TABLE rh_StageUpdcRequest (flags NUMBER, userName VARCHAR(255), euid NUMB
 
 /* SQL statements for type Tape */
 DROP TABLE rh_Tape;
-CREATE TABLE rh_Tape (vid VARCHAR(255), side NUMBER, tpmode NUMBER, errMsgTxt VARCHAR(255), errorCode NUMBER, severity NUMBER, vwAddress VARCHAR(255), id NUMBER PRIMARY KEY, pool NUMBER, status NUMBER);
-DROP TABLE rh_TapePool2Tape;
-CREATE TABLE rh_TapePool2Tape (Parent NUMBER, Child NUMBER);
+CREATE TABLE rh_Tape (vid VARCHAR(255), side NUMBER, tpmode NUMBER, errMsgTxt VARCHAR(255), errorCode NUMBER, severity NUMBER, vwAddress VARCHAR(255), id NUMBER PRIMARY KEY, status NUMBER);
 
 /* SQL statements for type Segment */
 DROP TABLE rh_Segment;
-CREATE TABLE rh_Segment (blockid CHAR(4), fseq NUMBER, offset NUMBER, bytes_in NUMBER, bytes_out NUMBER, host_bytes NUMBER, segmCksumAlgorithm VARCHAR(255), segmCksum NUMBER, errMsgTxt VARCHAR(255), errorCode NUMBER, severity NUMBER, clientAddress VARCHAR(255), fid VARCHAR(255), id NUMBER PRIMARY KEY, tape NUMBER, copy NUMBER, stgReqId NUMBER, status NUMBER);
+CREATE TABLE rh_Segment (blockid CHAR(4), fseq NUMBER, offset NUMBER, bytes_in NUMBER, bytes_out NUMBER, host_bytes NUMBER, segmCksumAlgorithm VARCHAR(255), segmCksum NUMBER, errMsgTxt VARCHAR(255), errorCode NUMBER, severity NUMBER, id NUMBER PRIMARY KEY, tape NUMBER, copy NUMBER, stgReqId NUMBER, status NUMBER);
 DROP TABLE rh_Tape2Segment;
 CREATE TABLE rh_Tape2Segment (Parent NUMBER, Child NUMBER);
 DROP TABLE rh_TapeCopy2Segment;
@@ -89,7 +87,7 @@ CREATE TABLE rh_CastorFile2TapeCopy (Parent NUMBER, Child NUMBER);
 
 /* SQL statements for type CastorFile */
 DROP TABLE rh_CastorFile;
-CREATE TABLE rh_CastorFile (id NUMBER PRIMARY KEY);
+CREATE TABLE rh_CastorFile (fileId NUMBER, nsHost VARCHAR(255), size NUMBER, id NUMBER PRIMARY KEY);
 
 /* SQL statements for type DiskCopy */
 DROP TABLE rh_DiskCopy;
@@ -105,9 +103,9 @@ CREATE TABLE rh_FileSystem (free NUMBER, weight float, fsDeviation float, random
 DROP TABLE rh_DiskServer2FileSystem;
 CREATE TABLE rh_DiskServer2FileSystem (Parent NUMBER, Child NUMBER);
 
-/* SQL statements for type Project */
-DROP TABLE rh_Project;
-CREATE TABLE rh_Project (policy VARCHAR(255), nbDrives NUMBER, id NUMBER PRIMARY KEY);
+/* SQL statements for type SvcClass */
+DROP TABLE rh_SvcClass;
+CREATE TABLE rh_SvcClass (policy VARCHAR(255), nbDrives NUMBER, id NUMBER PRIMARY KEY);
 
 /* SQL statements for type DiskPool */
 DROP TABLE rh_DiskPool;

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/Tape.cpp
+ *                      castor/stager/SvcClass.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -27,76 +27,47 @@
 // Include Files
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/stager/Segment.hpp"
-#include "castor/stager/Tape.hpp"
+#include "castor/stager/SvcClass.hpp"
 #include <iostream>
 #include <string>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::stager::Tape::Tape() throw() :
-  m_vid(""),
-  m_side(0),
-  m_tpmode(0),
-  m_errMsgTxt(""),
-  m_errorCode(0),
-  m_severity(0),
-  m_vwAddress(""),
+castor::stager::SvcClass::SvcClass() throw() :
+  m_policy(""),
+  m_nbDrives(0),
   m_id(0) {
 };
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::stager::Tape::~Tape() throw() {
-  for (unsigned int i = 0; i < m_segmentsVector.size(); i++) {
-    m_segmentsVector[i]->setTape(0);
-    delete m_segmentsVector[i];
-  }
-  m_segmentsVector.clear();
+castor::stager::SvcClass::~SvcClass() throw() {
 };
 
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::stager::Tape::print(std::ostream& stream,
-                                 std::string indent,
-                                 castor::ObjectSet& alreadyPrinted) const {
+void castor::stager::SvcClass::print(std::ostream& stream,
+                                     std::string indent,
+                                     castor::ObjectSet& alreadyPrinted) const {
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
     stream << indent << "Back pointer, see above" << std::endl;
     return;
   }
   // Output of all members
-  stream << indent << "vid : " << m_vid << std::endl;
-  stream << indent << "side : " << m_side << std::endl;
-  stream << indent << "tpmode : " << m_tpmode << std::endl;
-  stream << indent << "errMsgTxt : " << m_errMsgTxt << std::endl;
-  stream << indent << "errorCode : " << m_errorCode << std::endl;
-  stream << indent << "severity : " << m_severity << std::endl;
-  stream << indent << "vwAddress : " << m_vwAddress << std::endl;
+  stream << indent << "policy : " << m_policy << std::endl;
+  stream << indent << "nbDrives : " << m_nbDrives << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  {
-    stream << indent << "Segments : " << std::endl;
-    int i;
-    std::vector<Segment*>::const_iterator it;
-    for (it = m_segmentsVector.begin(), i = 0;
-         it != m_segmentsVector.end();
-         it++, i++) {
-      stream << indent << "  " << i << " :" << std::endl;
-      (*it)->print(stream, indent + "    ", alreadyPrinted);
-    }
-  }
-  stream << indent << "status : " << m_status << std::endl;
 }
 
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::stager::Tape::print() const {
+void castor::stager::SvcClass::print() const {
   ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
@@ -104,28 +75,28 @@ void castor::stager::Tape::print() const {
 //------------------------------------------------------------------------------
 // TYPE
 //------------------------------------------------------------------------------
-int castor::stager::Tape::TYPE() {
-  return OBJ_Tape;
+int castor::stager::SvcClass::TYPE() {
+  return OBJ_SvcClass;
 }
 
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::stager::Tape::setId(unsigned long id) {
+void castor::stager::SvcClass::setId(unsigned long id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::stager::Tape::id() const {
+unsigned long castor::stager::SvcClass::id() const {
   return m_id;
 }
 
 //------------------------------------------------------------------------------
 // type
 //------------------------------------------------------------------------------
-int castor::stager::Tape::type() const {
+int castor::stager::SvcClass::type() const {
   return TYPE();
 }
 

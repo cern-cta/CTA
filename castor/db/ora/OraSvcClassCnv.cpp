@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/db/ora/OraTapePoolCnv.cpp
+ *                      castor/db/ora/OraSvcClassCnv.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 // Include Files
-#include "OraTapePoolCnv.hpp"
+#include "OraSvcClassCnv.hpp"
 #include "castor/CnvFactory.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IConverter.hpp"
@@ -39,46 +39,46 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
-#include "castor/stager/TapePool.hpp"
+#include "castor/stager/SvcClass.hpp"
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::db::ora::OraTapePoolCnv> s_factoryOraTapePoolCnv;
-const castor::IFactory<castor::IConverter>& OraTapePoolCnvFactory = 
-  s_factoryOraTapePoolCnv;
+static castor::CnvFactory<castor::db::ora::OraSvcClassCnv> s_factoryOraSvcClassCnv;
+const castor::IFactory<castor::IConverter>& OraSvcClassCnvFactory = 
+  s_factoryOraSvcClassCnv;
 
 //------------------------------------------------------------------------------
 // Static constants initialization
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
-const std::string castor::db::ora::OraTapePoolCnv::s_insertStatementString =
-"INSERT INTO rh_TapePool (name, id) VALUES (:1,:2)";
+const std::string castor::db::ora::OraSvcClassCnv::s_insertStatementString =
+"INSERT INTO rh_SvcClass (policy, nbDrives, id) VALUES (:1,:2,:3)";
 
 /// SQL statement for request deletion
-const std::string castor::db::ora::OraTapePoolCnv::s_deleteStatementString =
-"DELETE FROM rh_TapePool WHERE id = :1";
+const std::string castor::db::ora::OraSvcClassCnv::s_deleteStatementString =
+"DELETE FROM rh_SvcClass WHERE id = :1";
 
 /// SQL statement for request selection
-const std::string castor::db::ora::OraTapePoolCnv::s_selectStatementString =
-"SELECT name, id FROM rh_TapePool WHERE id = :1";
+const std::string castor::db::ora::OraSvcClassCnv::s_selectStatementString =
+"SELECT policy, nbDrives, id FROM rh_SvcClass WHERE id = :1";
 
 /// SQL statement for request update
-const std::string castor::db::ora::OraTapePoolCnv::s_updateStatementString =
-"UPDATE rh_TapePool SET name = :1 WHERE id = :2";
+const std::string castor::db::ora::OraSvcClassCnv::s_updateStatementString =
+"UPDATE rh_SvcClass SET policy = :1, nbDrives = :2 WHERE id = :3";
 
 /// SQL statement for type storage
-const std::string castor::db::ora::OraTapePoolCnv::s_storeTypeStatementString =
+const std::string castor::db::ora::OraSvcClassCnv::s_storeTypeStatementString =
 "INSERT INTO rh_Id2Type (id, type) VALUES (:1, :2)";
 
 /// SQL statement for type deletion
-const std::string castor::db::ora::OraTapePoolCnv::s_deleteTypeStatementString =
+const std::string castor::db::ora::OraSvcClassCnv::s_deleteTypeStatementString =
 "DELETE FROM rh_Id2Type WHERE id = :1";
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::db::ora::OraTapePoolCnv::OraTapePoolCnv() :
+castor::db::ora::OraSvcClassCnv::OraSvcClassCnv() :
   OraBaseCnv(),
   m_insertStatement(0),
   m_deleteStatement(0),
@@ -90,14 +90,14 @@ castor::db::ora::OraTapePoolCnv::OraTapePoolCnv() :
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::db::ora::OraTapePoolCnv::~OraTapePoolCnv() throw() {
+castor::db::ora::OraSvcClassCnv::~OraSvcClassCnv() throw() {
   reset();
 }
 
 //------------------------------------------------------------------------------
 // reset
 //------------------------------------------------------------------------------
-void castor::db::ora::OraTapePoolCnv::reset() throw() {
+void castor::db::ora::OraSvcClassCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
@@ -120,28 +120,28 @@ void castor::db::ora::OraTapePoolCnv::reset() throw() {
 //------------------------------------------------------------------------------
 // ObjType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraTapePoolCnv::ObjType() {
-  return castor::stager::TapePool::TYPE();
+const unsigned int castor::db::ora::OraSvcClassCnv::ObjType() {
+  return castor::stager::SvcClass::TYPE();
 }
 
 //------------------------------------------------------------------------------
 // objType
 //------------------------------------------------------------------------------
-const unsigned int castor::db::ora::OraTapePoolCnv::objType() const {
+const unsigned int castor::db::ora::OraSvcClassCnv::objType() const {
   return ObjType();
 }
 
 //------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
-void castor::db::ora::OraTapePoolCnv::createRep(castor::IAddress* address,
+void castor::db::ora::OraSvcClassCnv::createRep(castor::IAddress* address,
                                                 castor::IObject* object,
                                                 castor::ObjectSet& alreadyDone,
                                                 bool autocommit,
                                                 bool recursive)
   throw (castor::exception::Exception) {
-  castor::stager::TapePool* obj = 
-    dynamic_cast<castor::stager::TapePool*>(object);
+  castor::stager::SvcClass* obj = 
+    dynamic_cast<castor::stager::SvcClass*>(object);
   // check whether something needs to be done
   if (0 == obj) return;
   try {
@@ -162,8 +162,9 @@ void castor::db::ora::OraTapePoolCnv::createRep(castor::IAddress* address,
     m_storeTypeStatement->setInt(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
-    m_insertStatement->setString(1, obj->name());
-    m_insertStatement->setInt(2, obj->id());
+    m_insertStatement->setString(1, obj->policy());
+    m_insertStatement->setInt(2, obj->nbDrives());
+    m_insertStatement->setInt(3, obj->id());
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -186,7 +187,8 @@ void castor::db::ora::OraTapePoolCnv::createRep(castor::IAddress* address,
                     << "Statement was :" << std::endl
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
-                    << "  name : " << obj->name() << std::endl
+                    << "  policy : " << obj->policy() << std::endl
+                    << "  nbDrives : " << obj->nbDrives() << std::endl
                     << "  id : " << obj->id() << std::endl;
     throw ex;
   }
@@ -195,14 +197,14 @@ void castor::db::ora::OraTapePoolCnv::createRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // updateRep
 //------------------------------------------------------------------------------
-void castor::db::ora::OraTapePoolCnv::updateRep(castor::IAddress* address,
+void castor::db::ora::OraSvcClassCnv::updateRep(castor::IAddress* address,
                                                 castor::IObject* object,
                                                 castor::ObjectSet& alreadyDone,
                                                 bool autocommit,
                                                 bool recursive)
   throw (castor::exception::Exception) {
-  castor::stager::TapePool* obj = 
-    dynamic_cast<castor::stager::TapePool*>(object);
+  castor::stager::SvcClass* obj = 
+    dynamic_cast<castor::stager::SvcClass*>(object);
   // check whether something needs to be done
   if (0 == obj) return;
   try {
@@ -219,8 +221,9 @@ void castor::db::ora::OraTapePoolCnv::updateRep(castor::IAddress* address,
     // Mark the current object as done
     alreadyDone.insert(obj);
     // Now Update the current object
-    m_updateStatement->setString(1, obj->name());
-    m_updateStatement->setInt(2, obj->id());
+    m_updateStatement->setString(1, obj->policy());
+    m_updateStatement->setInt(2, obj->nbDrives());
+    m_updateStatement->setInt(3, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -250,13 +253,13 @@ void castor::db::ora::OraTapePoolCnv::updateRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // deleteRep
 //------------------------------------------------------------------------------
-void castor::db::ora::OraTapePoolCnv::deleteRep(castor::IAddress* address,
+void castor::db::ora::OraSvcClassCnv::deleteRep(castor::IAddress* address,
                                                 castor::IObject* object,
                                                 castor::ObjectSet& alreadyDone,
                                                 bool autocommit)
   throw (castor::exception::Exception) {
-  castor::stager::TapePool* obj = 
-    dynamic_cast<castor::stager::TapePool*>(object);
+  castor::stager::SvcClass* obj = 
+    dynamic_cast<castor::stager::SvcClass*>(object);
   // check whether something needs to be done
   if (0 == obj) return;
   try {
@@ -302,7 +305,7 @@ void castor::db::ora::OraTapePoolCnv::deleteRep(castor::IAddress* address,
 //------------------------------------------------------------------------------
 // createObj
 //------------------------------------------------------------------------------
-castor::IObject* castor::db::ora::OraTapePoolCnv::createObj(castor::IAddress* address,
+castor::IObject* castor::db::ora::OraSvcClassCnv::createObj(castor::IAddress* address,
                                                             castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
   castor::db::DbAddress* ad = 
@@ -327,10 +330,11 @@ castor::IObject* castor::db::ora::OraTapePoolCnv::createObj(castor::IAddress* ad
       throw ex;
     }
     // create the new Object
-    castor::stager::TapePool* object = new castor::stager::TapePool();
+    castor::stager::SvcClass* object = new castor::stager::SvcClass();
     // Now retrieve and set members
-    object->setName(rset->getString(1));
-    object->setId(rset->getInt(2));
+    object->setPolicy(rset->getString(1));
+    object->setNbDrives(rset->getInt(2));
+    object->setId(rset->getInt(3));
     newlyCreated[object->id()] = object;
     m_selectStatement->closeResultSet(rset);
     return object;
@@ -359,7 +363,7 @@ castor::IObject* castor::db::ora::OraTapePoolCnv::createObj(castor::IAddress* ad
 //------------------------------------------------------------------------------
 // updateObj
 //------------------------------------------------------------------------------
-void castor::db::ora::OraTapePoolCnv::updateObj(castor::IObject* obj,
+void castor::db::ora::OraSvcClassCnv::updateObj(castor::IObject* obj,
                                                 castor::ObjectCatalog& alreadyDone)
   throw (castor::exception::Exception) {
   try {
@@ -382,10 +386,11 @@ void castor::db::ora::OraTapePoolCnv::updateObj(castor::IObject* obj,
       throw ex;
     }
     // Now retrieve and set members
-    castor::stager::TapePool* object = 
-      dynamic_cast<castor::stager::TapePool*>(obj);
-    object->setName(rset->getString(1));
-    object->setId(rset->getInt(2));
+    castor::stager::SvcClass* object = 
+      dynamic_cast<castor::stager::SvcClass*>(obj);
+    object->setPolicy(rset->getString(1));
+    object->setNbDrives(rset->getInt(2));
+    object->setId(rset->getInt(3));
     alreadyDone[obj->id()] = obj;
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {

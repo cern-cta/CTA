@@ -58,7 +58,7 @@ const castor::IFactory<castor::IConverter>& OraCastorFileCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraCastorFileCnv::s_insertStatementString =
-"INSERT INTO rh_CastorFile (fileId, nsHost, id) VALUES (:1,:2,:3)";
+"INSERT INTO rh_CastorFile (fileId, nsHost, size, id) VALUES (:1,:2,:3,:4)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraCastorFileCnv::s_deleteStatementString =
@@ -66,11 +66,11 @@ const std::string castor::db::ora::OraCastorFileCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraCastorFileCnv::s_selectStatementString =
-"SELECT fileId, nsHost, id FROM rh_CastorFile WHERE id = :1";
+"SELECT fileId, nsHost, size, id FROM rh_CastorFile WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraCastorFileCnv::s_updateStatementString =
-"UPDATE rh_CastorFile SET fileId = :1, nsHost = :2 WHERE id = :3";
+"UPDATE rh_CastorFile SET fileId = :1, nsHost = :2, size = :3 WHERE id = :4";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraCastorFileCnv::s_storeTypeStatementString =
@@ -219,7 +219,8 @@ void castor::db::ora::OraCastorFileCnv::createRep(castor::IAddress* address,
     m_storeTypeStatement->executeUpdate();
     m_insertStatement->setInt(1, obj->fileId());
     m_insertStatement->setString(2, obj->nsHost());
-    m_insertStatement->setInt(3, obj->id());
+    m_insertStatement->setInt(3, obj->size());
+    m_insertStatement->setInt(4, obj->id());
     m_insertStatement->executeUpdate();
     if (recursive) {
       // Save dependant objects that need it
@@ -258,6 +259,7 @@ void castor::db::ora::OraCastorFileCnv::createRep(castor::IAddress* address,
                     << "and parameters' values were :" << std::endl
                     << "  fileId : " << obj->fileId() << std::endl
                     << "  nsHost : " << obj->nsHost() << std::endl
+                    << "  size : " << obj->size() << std::endl
                     << "  id : " << obj->id() << std::endl;
     throw ex;
   }
@@ -292,7 +294,8 @@ void castor::db::ora::OraCastorFileCnv::updateRep(castor::IAddress* address,
     // Now Update the current object
     m_updateStatement->setInt(1, obj->fileId());
     m_updateStatement->setString(2, obj->nsHost());
-    m_updateStatement->setInt(3, obj->id());
+    m_updateStatement->setInt(3, obj->size());
+    m_updateStatement->setInt(4, obj->id());
     m_updateStatement->executeUpdate();
     if (recursive) {
       // Dealing with diskFileCopies
@@ -480,7 +483,8 @@ castor::IObject* castor::db::ora::OraCastorFileCnv::createObj(castor::IAddress* 
     // Now retrieve and set members
     object->setFileId(rset->getInt(1));
     object->setNsHost(rset->getString(2));
-    object->setId(rset->getInt(3));
+    object->setSize(rset->getInt(3));
+    object->setId(rset->getInt(4));
     newlyCreated[object->id()] = object;
     m_selectStatement->closeResultSet(rset);
     // Get ids of objs to retrieve
@@ -557,7 +561,8 @@ void castor::db::ora::OraCastorFileCnv::updateObj(castor::IObject* obj,
       dynamic_cast<castor::stager::CastorFile*>(obj);
     object->setFileId(rset->getInt(1));
     object->setNsHost(rset->getString(2));
-    object->setId(rset->getInt(3));
+    object->setSize(rset->getInt(3));
+    object->setId(rset->getInt(4));
     alreadyDone[obj->id()] = obj;
     m_selectStatement->closeResultSet(rset);
     // Deal with diskFileCopies

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/db/ora/OraTapeCnv.hpp
+ *                      castor/db/ora/OraSvcClassCnv.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,8 +24,8 @@
  * @author Sebastien Ponce, sebastien.ponce@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_DB_ORA_TAPE_HPP
-#define CASTOR_DB_ORA_TAPE_HPP
+#ifndef CASTOR_DB_ORA_SVCCLASS_HPP
+#define CASTOR_DB_ORA_SVCCLASS_HPP
 
 // Include Files
 #include "castor/IAddress.hpp"
@@ -44,22 +44,22 @@ namespace castor {
     namespace ora {
 
       /**
-       * class OraTapeCnv
-       * A converter for storing/retrieving Tape into/from an Oracle database
+       * class OraSvcClassCnv
+       * A converter for storing/retrieving SvcClass into/from an Oracle database
        */
-      class OraTapeCnv : public OraBaseCnv {
+      class OraSvcClassCnv : public OraBaseCnv {
 
       public:
 
         /**
          * Constructor
          */
-        OraTapeCnv();
+        OraSvcClassCnv();
 
         /**
          * Destructor
          */
-        virtual ~OraTapeCnv() throw();
+        virtual ~OraSvcClassCnv() throw();
 
         /**
          * Gets the object type.
@@ -206,13 +206,7 @@ namespace castor {
         /// SQL statement object for type deletion
         oracle::occi::Statement *m_deleteTypeStatement;
 
-        /// SQL select statement for member segments
-        static const std::string s_Tape2SegmentStatementString;
-
-        /// SQL select statement object for member segments
-        oracle::occi::Statement *m_Tape2SegmentStatement;
-
-      }; // end of class OraTapeCnv
+      }; // end of class OraSvcClassCnv
 
     }; // end of namespace ora
 
@@ -220,4 +214,4 @@ namespace castor {
 
 }; // end of namespace castor
 
-#endif // CASTOR_DB_ORA_TAPE_HPP
+#endif // CASTOR_DB_ORA_SVCCLASS_HPP

@@ -60,7 +60,7 @@ const castor::IFactory<castor::IConverter>& OraSegmentCnvFactory =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::ora::OraSegmentCnv::s_insertStatementString =
-"INSERT INTO rh_Segment (blockid, fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, clientAddress, fid, id, tape, copy, stgReqId, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,:16,:17,:18)";
+"INSERT INTO rh_Segment (blockid, fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, id, tape, copy, stgReqId, status) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,:16)";
 
 /// SQL statement for request deletion
 const std::string castor::db::ora::OraSegmentCnv::s_deleteStatementString =
@@ -68,11 +68,11 @@ const std::string castor::db::ora::OraSegmentCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::ora::OraSegmentCnv::s_selectStatementString =
-"SELECT blockid, fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, clientAddress, fid, id, tape, copy, stgReqId, status FROM rh_Segment WHERE id = :1";
+"SELECT blockid, fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, id, tape, copy, stgReqId, status FROM rh_Segment WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::ora::OraSegmentCnv::s_updateStatementString =
-"UPDATE rh_Segment SET blockid = :1, fseq = :2, offset = :3, bytes_in = :4, bytes_out = :5, host_bytes = :6, segmCksumAlgorithm = :7, segmCksum = :8, errMsgTxt = :9, errorCode = :10, severity = :11, clientAddress = :12, fid = :13, tape = :14, copy = :15, stgReqId = :16, status = :17 WHERE id = :18";
+"UPDATE rh_Segment SET blockid = :1, fseq = :2, offset = :3, bytes_in = :4, bytes_out = :5, host_bytes = :6, segmCksumAlgorithm = :7, segmCksum = :8, errMsgTxt = :9, errorCode = :10, severity = :11, tape = :12, copy = :13, stgReqId = :14, status = :15 WHERE id = :16";
 
 /// SQL statement for type storage
 const std::string castor::db::ora::OraSegmentCnv::s_storeTypeStatementString =
@@ -260,13 +260,11 @@ void castor::db::ora::OraSegmentCnv::createRep(castor::IAddress* address,
     m_insertStatement->setString(9, obj->errMsgTxt());
     m_insertStatement->setInt(10, obj->errorCode());
     m_insertStatement->setInt(11, obj->severity());
-    m_insertStatement->setString(12, obj->clientAddress());
-    m_insertStatement->setString(13, obj->fid());
-    m_insertStatement->setInt(14, obj->id());
-    m_insertStatement->setInt(15, obj->tape() ? obj->tape()->id() : 0);
-    m_insertStatement->setInt(16, obj->copy() ? obj->copy()->id() : 0);
-    m_insertStatement->setInt(17, obj->stgReqId() ? obj->stgReqId()->id() : 0);
-    m_insertStatement->setInt(18, (int)obj->status());
+    m_insertStatement->setInt(12, obj->id());
+    m_insertStatement->setInt(13, obj->tape() ? obj->tape()->id() : 0);
+    m_insertStatement->setInt(14, obj->copy() ? obj->copy()->id() : 0);
+    m_insertStatement->setInt(15, obj->stgReqId() ? obj->stgReqId()->id() : 0);
+    m_insertStatement->setInt(16, (int)obj->status());
     m_insertStatement->executeUpdate();
     if (recursive) {
       // Save dependant objects that need it
@@ -332,8 +330,6 @@ void castor::db::ora::OraSegmentCnv::createRep(castor::IAddress* address,
                     << "  errMsgTxt : " << obj->errMsgTxt() << std::endl
                     << "  errorCode : " << obj->errorCode() << std::endl
                     << "  severity : " << obj->severity() << std::endl
-                    << "  clientAddress : " << obj->clientAddress() << std::endl
-                    << "  fid : " << obj->fid() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  tape : " << obj->tape() << std::endl
                     << "  copy : " << obj->copy() << std::endl
@@ -391,7 +387,7 @@ void castor::db::ora::OraSegmentCnv::updateRep(castor::IAddress* address,
       }
       // Dealing with tape
       {
-        unsigned long tapeId = rset->getInt(15);
+        unsigned long tapeId = rset->getInt(13);
         castor::db::DbAddress ad(tapeId, " ", 0);
         if (0 != tapeId &&
             0 != obj->tape() &&
@@ -425,7 +421,7 @@ void castor::db::ora::OraSegmentCnv::updateRep(castor::IAddress* address,
       }
       // Dealing with copy
       {
-        unsigned long copyId = rset->getInt(16);
+        unsigned long copyId = rset->getInt(14);
         castor::db::DbAddress ad(copyId, " ", 0);
         if (0 != copyId &&
             0 != obj->copy() &&
@@ -459,7 +455,7 @@ void castor::db::ora::OraSegmentCnv::updateRep(castor::IAddress* address,
       }
       // Dealing with stgReqId
       {
-        unsigned long stgReqIdId = rset->getInt(17);
+        unsigned long stgReqIdId = rset->getInt(15);
         castor::db::DbAddress ad(stgReqIdId, " ", 0);
         if (0 != stgReqIdId &&
             0 != obj->stgReqId() &&
@@ -494,13 +490,11 @@ void castor::db::ora::OraSegmentCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setString(9, obj->errMsgTxt());
     m_updateStatement->setInt(10, obj->errorCode());
     m_updateStatement->setInt(11, obj->severity());
-    m_updateStatement->setString(12, obj->clientAddress());
-    m_updateStatement->setString(13, obj->fid());
-    m_updateStatement->setInt(14, obj->tape() ? obj->tape()->id() : 0);
-    m_updateStatement->setInt(15, obj->copy() ? obj->copy()->id() : 0);
-    m_updateStatement->setInt(16, obj->stgReqId() ? obj->stgReqId()->id() : 0);
-    m_updateStatement->setInt(17, (int)obj->status());
-    m_updateStatement->setInt(18, obj->id());
+    m_updateStatement->setInt(12, obj->tape() ? obj->tape()->id() : 0);
+    m_updateStatement->setInt(13, obj->copy() ? obj->copy()->id() : 0);
+    m_updateStatement->setInt(14, obj->stgReqId() ? obj->stgReqId()->id() : 0);
+    m_updateStatement->setInt(15, (int)obj->status());
+    m_updateStatement->setInt(16, obj->id());
     m_updateStatement->executeUpdate();
     if (recursive) {
     }
@@ -648,20 +642,18 @@ castor::IObject* castor::db::ora::OraSegmentCnv::createObj(castor::IAddress* add
     object->setErrMsgTxt(rset->getString(9));
     object->setErrorCode(rset->getInt(10));
     object->setSeverity(rset->getInt(11));
-    object->setClientAddress(rset->getString(12));
-    object->setFid(rset->getString(13));
-    object->setId(rset->getInt(14));
+    object->setId(rset->getInt(12));
     newlyCreated[object->id()] = object;
-    unsigned long tapeId = rset->getInt(15);
+    unsigned long tapeId = rset->getInt(13);
     IObject* objTape = cnvSvc()->getObjFromId(tapeId, newlyCreated);
     object->setTape(dynamic_cast<castor::stager::Tape*>(objTape));
-    unsigned long copyId = rset->getInt(16);
+    unsigned long copyId = rset->getInt(14);
     IObject* objCopy = cnvSvc()->getObjFromId(copyId, newlyCreated);
     object->setCopy(dynamic_cast<castor::stager::TapeCopy*>(objCopy));
-    unsigned long stgReqIdId = rset->getInt(17);
+    unsigned long stgReqIdId = rset->getInt(15);
     IObject* objStgReqId = cnvSvc()->getObjFromId(stgReqIdId, newlyCreated);
     object->setStgReqId(dynamic_cast<castor::stager::Cuuid*>(objStgReqId));
-    object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(18));
+    object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(16));
     m_selectStatement->closeResultSet(rset);
     return object;
   } catch (oracle::occi::SQLException e) {
@@ -725,12 +717,10 @@ void castor::db::ora::OraSegmentCnv::updateObj(castor::IObject* obj,
     object->setErrMsgTxt(rset->getString(9));
     object->setErrorCode(rset->getInt(10));
     object->setSeverity(rset->getInt(11));
-    object->setClientAddress(rset->getString(12));
-    object->setFid(rset->getString(13));
-    object->setId(rset->getInt(14));
+    object->setId(rset->getInt(12));
     alreadyDone[obj->id()] = obj;
     // Dealing with tape
-    unsigned long tapeId = rset->getInt(15);
+    unsigned long tapeId = rset->getInt(13);
     if (0 != object->tape() &&
         (0 == tapeId ||
          object->tape()->id() != tapeId)) {
@@ -749,7 +739,7 @@ void castor::db::ora::OraSegmentCnv::updateObj(castor::IObject* obj,
       }
     }
     // Dealing with copy
-    unsigned long copyId = rset->getInt(16);
+    unsigned long copyId = rset->getInt(14);
     if (0 != object->copy() &&
         (0 == copyId ||
          object->copy()->id() != copyId)) {
@@ -768,7 +758,7 @@ void castor::db::ora::OraSegmentCnv::updateObj(castor::IObject* obj,
       }
     }
     // Dealing with stgReqId
-    unsigned long stgReqIdId = rset->getInt(17);
+    unsigned long stgReqIdId = rset->getInt(15);
     if (0 != object->stgReqId() &&
         (0 == stgReqIdId ||
          object->stgReqId()->id() != stgReqIdId)) {
@@ -786,7 +776,7 @@ void castor::db::ora::OraSegmentCnv::updateObj(castor::IObject* obj,
         }
       }
     }
-    object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(18));
+    object->setStatus((enum castor::stager::SegmentStatusCodes)rset->getInt(16));
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {
     try {

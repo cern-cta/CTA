@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/stager/TapePoolCInt.cpp
+ *                      castor/stager/SvcClassCInt.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -26,96 +26,112 @@
 
 // Include Files
 #include "castor/IObject.hpp"
-#include "castor/stager/TapePool.hpp"
+#include "castor/stager/SvcClass.hpp"
 
 extern "C" {
 
   //----------------------------------------------------------------------------
-  // Cstager_TapePool_create
+  // Cstager_SvcClass_create
   //----------------------------------------------------------------------------
-  int Cstager_TapePool_create(castor::stager::TapePool** obj) {
-    *obj = new castor::stager::TapePool();
+  int Cstager_SvcClass_create(castor::stager::SvcClass** obj) {
+    *obj = new castor::stager::SvcClass();
     return 0;
   }
   //----------------------------------------------------------------------------
-  // Cstager_TapePool_delete
+  // Cstager_SvcClass_delete
   //----------------------------------------------------------------------------
-  int Cstager_TapePool_delete(castor::stager::TapePool* obj) {
+  int Cstager_SvcClass_delete(castor::stager::SvcClass* obj) {
     delete obj;
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_TapePool_getIObject
+  // Cstager_SvcClass_getIObject
   //----------------------------------------------------------------------------
-  castor::IObject* Cstager_TapePool_getIObject(castor::stager::TapePool* obj) {
+  castor::IObject* Cstager_SvcClass_getIObject(castor::stager::SvcClass* obj) {
     return obj;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_TapePool_fromIObject
+  // Cstager_SvcClass_fromIObject
   //----------------------------------------------------------------------------
-  castor::stager::TapePool* Cstager_TapePool_fromIObject(castor::IObject* obj) {
-    return dynamic_cast<castor::stager::TapePool*>(obj);
+  castor::stager::SvcClass* Cstager_SvcClass_fromIObject(castor::IObject* obj) {
+    return dynamic_cast<castor::stager::SvcClass*>(obj);
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_TapePool_print
+  // Cstager_SvcClass_print
   //----------------------------------------------------------------------------
-  int Cstager_TapePool_print(castor::stager::TapePool* instance) {
+  int Cstager_SvcClass_print(castor::stager::SvcClass* instance) {
     instance->print();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_TapePool_TYPE
+  // Cstager_SvcClass_TYPE
   //----------------------------------------------------------------------------
-  int Cstager_TapePool_TYPE(int* ret) {
-    *ret = castor::stager::TapePool::TYPE();
+  int Cstager_SvcClass_TYPE(int* ret) {
+    *ret = castor::stager::SvcClass::TYPE();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_TapePool_setId
+  // Cstager_SvcClass_setId
   //----------------------------------------------------------------------------
-  int Cstager_TapePool_setId(castor::stager::TapePool* instance,
+  int Cstager_SvcClass_setId(castor::stager::SvcClass* instance,
                              unsigned long id) {
     instance->setId(id);
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_TapePool_id
+  // Cstager_SvcClass_id
   //----------------------------------------------------------------------------
-  int Cstager_TapePool_id(castor::stager::TapePool* instance,
+  int Cstager_SvcClass_id(castor::stager::SvcClass* instance,
                           unsigned long* ret) {
     *ret = instance->id();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_TapePool_type
+  // Cstager_SvcClass_type
   //----------------------------------------------------------------------------
-  int Cstager_TapePool_type(castor::stager::TapePool* instance,
+  int Cstager_SvcClass_type(castor::stager::SvcClass* instance,
                             int* ret) {
     *ret = instance->type();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_TapePool_name
+  // Cstager_SvcClass_policy
   //----------------------------------------------------------------------------
-  int Cstager_TapePool_name(castor::stager::TapePool* instance, const char** var) {
-    *var = instance->name().c_str();
+  int Cstager_SvcClass_policy(castor::stager::SvcClass* instance, const char** var) {
+    *var = instance->policy().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_TapePool_setName
+  // Cstager_SvcClass_setPolicy
   //----------------------------------------------------------------------------
-  int Cstager_TapePool_setName(castor::stager::TapePool* instance, const char* new_var) {
+  int Cstager_SvcClass_setPolicy(castor::stager::SvcClass* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
-    instance->setName(snew_var);
+    instance->setPolicy(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_nbDrives
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_nbDrives(castor::stager::SvcClass* instance, unsigned int* var) {
+    *var = instance->nbDrives();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_setNbDrives
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_setNbDrives(castor::stager::SvcClass* instance, unsigned int new_var) {
+    instance->setNbDrives(new_var);
     return 0;
   }
 

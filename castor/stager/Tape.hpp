@@ -42,7 +42,6 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
-    class TapePool;
     class Segment;
 
     /**
@@ -260,22 +259,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_pool
-       * @return the value of m_pool
-       */
-      TapePool* pool() const {
-        return m_pool;
-      }
-
-      /**
-       * Set the value of m_pool
-       * @param new_var the new value of m_pool
-       */
-      void setPool(TapePool* new_var) {
-        m_pool = new_var;
-      }
-
-      /**
        * Get the value of m_status
        * @return the value of m_status
        */
@@ -318,8 +301,6 @@ namespace castor {
       unsigned long m_id;
 
       std::vector<Segment*> m_segmentsVector;
-
-      TapePool* m_pool;
 
       TapeStatusCodes m_status;
 
