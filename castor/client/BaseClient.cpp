@@ -297,6 +297,11 @@ castor::IClient* castor::client::BaseClient::createClient()
 std::string castor::client::BaseClient::internalSendRequest(castor::stager::Request& request)
   throw (castor::exception::Exception) {
   std::string requestId;
+
+  // preparing the timing information
+  struct tms buf;
+  clock_t startTime = times(&buf);
+
   // creates a socket
   castor::io::ClientSocket s(RHSERVER_PORT, m_rhHost);
   s.connect();
@@ -323,6 +328,13 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
     throw e;
   }
   delete ack;
+
+  clock_t endTime = times(&buf);
+  stage_trace(3, "%s SND %.2f s to send the request", 
+              requestId.c_str(),
+              ((float)(endTime - startTime)) / ((float)sysconf(_SC_CLK_TCK)) );
+
+
   return requestId;
 }
 
@@ -373,7 +385,9 @@ castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
   }
 
   clock_t endTime = times(&buf);
-  stage_trace(3, "Received callback from stager after %.2f seconds\n", ((float)(endTime - startTime)) / ((float)sysconf(_SC_CLK_TCK)) );
+  stage_trace(3, "%s CBK %.2f s before callback was received", 
+              requestId().c_str(),
+              ((float)(endTime - startTime)) / ((float)sysconf(_SC_CLK_TCK)) );
 
   return m_callbackSocket->accept();
 }
