@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/08 08:48:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logstream.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/07 16:01:08 $ $Author: sponcec3 $
  *
  *
  *
@@ -29,7 +29,7 @@
 
 #define MANIPULATORIMPL(T)                      \
   castor::logstream& castor::T(castor::logstream& s) {  \
-    s.setLevel(castor::logstream::T);           \
+    s.setLevel(castor::logbuf::T);           \
     return s;                                   \
   }
 

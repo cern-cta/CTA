@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/23 12:44:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/07 16:01:07 $ $Author: sponcec3 $
  *
  * Basic object support, including pointer to Services and log support
  *
@@ -43,6 +43,16 @@ namespace castor {
   class BaseObject {
     
   public:
+
+    /**
+     * constructor
+     */
+    BaseObject() throw();
+    
+    /**
+     * destructor
+     */
+    virtual ~BaseObject() throw();
     
     /**
      * Static access to the underlying Services object
@@ -55,14 +65,21 @@ namespace castor {
     Services* svcs() throw(castor::exception::Exception);
     
     /**
-     * gets the message service.
+     * gets a given message service from its name.
      * Note that the service has to be released after usage
+     * @param name the name of the MsgSvc to retrieve
      * @return a pointer to the message service. This is always
      * a valid pointer if no exception was raised
      * @exception Exception if something went wrong
      */
-    MsgSvc* msgSvc() throw(castor::exception::Exception);
+    MsgSvc* msgSvc(std::string name) throw(castor::exception::Exception);
     
+    /**
+     * Initialization of to the log stream 
+     * @param name the name of the log stream
+     */
+    void initLog(std::string name) throw(castor::exception::Exception);
+
     /**
      * Access to the log stream
      */
@@ -74,6 +91,19 @@ namespace castor {
      * gets the thread local storage
      */
     static void getTLS(void** thip) throw(castor::exception::Exception);
+
+  private:
+
+    /**
+     * The message service to be used for logging
+     * This is shared among instances
+     */
+    static castor::MsgSvc* s_msgSvc;
+
+    /**
+     * a lock to synchronize the s_msgSvc creation/deletion
+     */
+    static int s_lock;
 
   }; // end of class BaseObject
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/07/02 09:10:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/07/07 16:01:11 $ $Author: sponcec3 $
  *
  *
  *
@@ -47,7 +47,6 @@
 #include "castor/io/biniostream.h"
 
 #include "castor/rh/Server.hpp"
-#include "castor/MsgSvc.hpp"
 #include "castor/MessageAck.hpp"
 
 #include <iostream>
@@ -67,18 +66,17 @@ int main(int argc, char *argv[]) {
 
 
   try {
-    std::cout << "Starting Request Handler" << std::endl;
     castor::rh::Server server;
     server.parseCommandLine(argc, argv);
-    std::cout << "Command line parsed, now starting" << std::endl;
+    std::cout << "Starting Request Handler" << std::endl;
     server.start();
     return 0;
   } catch (castor::exception::Exception e) {
-    std::cout << "Caught exception : "
+    std::cerr << "Caught exception : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
-  }catch (...) {
-    std::cout << "Caught exception!" << std::endl;
+  } catch (...) {
+    std::cerr << "Caught exception!" << std::endl;
   }
 }
 
@@ -87,7 +85,9 @@ int main(int argc, char *argv[]) {
 // Constructor
 //------------------------------------------------------------------------------
 castor::rh::Server::Server() :
-  castor::BaseServer("RHServer", 20) { }
+  castor::BaseServer("RHServer", 20) {
+  initLog("RHLog");
+}
 
 //------------------------------------------------------------------------------
 // main
@@ -149,7 +149,7 @@ void *castor::rh::Server::processRequest(void *param) throw() {
   }
 
   if (ack.status()) {
-    clog() << " Processing request" << std::endl;
+    clog() << INFO << "Processing request" << std::endl;
     try {
       // Complete its client field
       unsigned short port;
@@ -157,11 +157,11 @@ void *castor::rh::Server::processRequest(void *param) throw() {
       try {
         sock->getPeerIp(port, ip);
       } catch(castor::exception::Exception e) {
-        clog() << "Exception :" << sstrerror(e.code())
+        clog() << ERROR << "Exception :" << sstrerror(e.code())
                << std::endl << e.getMessage() << std::endl;
       }
       
-      clog() << " Got request from client "
+      clog() << INFO << "Got request from client "
              << castor::ip << ip << ":" << port << std::endl;
       castor::rh::Client *client =
         dynamic_cast<castor::rh::Client *>(fr->client());
@@ -206,7 +206,7 @@ void castor::rh::Server::handleRequest(castor::IObject* fr)
   // Stores it into Oracle
   castor::BaseAddress ad("OraCnvSvc", castor::SVC_ORACNV);
   svcs()->createRep(&ad, fr, true);
-  clog() << " request stored in Oracle, id "
+  clog() << "request stored in Oracle, id "
          << fr->id() << std::endl;
   // Send an UDP message to the stager
   int fd = socket(AF_INET, SOCK_DGRAM, 0);

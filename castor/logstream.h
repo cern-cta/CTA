@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.h,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/08 08:48:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logstream.h,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/07 16:01:08 $ $Author: sponcec3 $
  *
  *
  *
@@ -35,26 +35,22 @@
 #include "osdep.h"
 #include "castor/logbuf.h"
 
-#define OPERATOR(T)                             \
-  logstream& operator<< (T var) {               \
-    if (m_minLevel <= m_curLevel) {             \
-      *((std::ostream*)this) << var;            \
-    }                                           \
-    return *this;                               \
+#define OPERATOR(T)                               \
+  logstream& operator<< (T var) {                 \
+    *((std::ostream*)this) << var;                \
+    return *this;                                 \
   }
 
 #define OPERATORINT(T)                          \
   logstream& operator<< (T var) {               \
-    if (m_minLevel <= m_curLevel) {             \
-      if (m_isIP) {                             \
-        m_isIP = false;                         \
-        printIP(var);                           \
-      } else if (m_isTimeStamp) {               \
-        m_isTimeStamp = false;                  \
-        printTimeStamp(var);                    \
-      } else {                                  \
-        this->std::ostream::operator<<(var);    \
-      }                                         \
+    if (m_isIP) {                               \
+      m_isIP = false;                           \
+      printIP(var);                             \
+    } else if (m_isTimeStamp) {                 \
+      m_isTimeStamp = false;                    \
+      printTimeStamp(var);                      \
+    } else {                                    \
+      this->std::ostream::operator<<(var);      \
     }                                           \
     return *this;                               \
   }
@@ -64,43 +60,21 @@
 namespace castor {
   
   class logstream : virtual public std::ostream {
-    
-  public:
-    
-    /**
-     * The different possible level of output
-     */
-    typedef enum _Level_ {
-      NIL = 0,
-      VERBOSE,
-      DEBUG,
-      INFO,
-      WARNING,
-      ERROR,
-      FATAL,
-      ALWAYS,
-      NUM_LEVELS
-    } Level;
 
   public:
     
     /**
      * constructor
      */
-    explicit logstream(const char* p, Level l = INFO) :
+    explicit logstream(std::string name) :
       std::ostream(0),
-      m_logbuf(),
-      m_minLevel(l),
-      m_curLevel(INFO),
+      m_logbuf(name),
       m_isIP(false),
       m_isTimeStamp(false) {
       // Deal with the buffer
       this->init(&m_logbuf);
-      if (!m_logbuf.open(p, std::ios::app | std::ios_base::out)) {
-        this->setstate(ios_base::failbit);
-      }
-    }
- 
+    } 
+
     /**
      *  @brief  Close the file.
      *
@@ -108,14 +82,12 @@ namespace castor {
      *  fails, @c failbit is set in the stream's error state.
      */
     void close() {
-      if (!m_logbuf.close()) {
-        this->setstate(ios_base::failbit);
-      }
+      m_logbuf.sync();
     }
 
   public:
     /**
-     * Set of operators of this stream
+     * Set of overwritten operators of this stream
      */
     OPERATOR(char);
     OPERATOR(unsigned char);
@@ -147,15 +119,14 @@ namespace castor {
      */
     logstream& operator<< (std::ostream& (&f)(std::ostream&)) {
       if (&f == (std::ostream& (&)(std::ostream&))std::endl)
-        m_logbuf.setNewLine();
-      f(*this);
+        m_logbuf.sync();
       return *this;
     }
 
     /**
      * set current output level
      */
-    void setLevel(Level l) { m_curLevel = l; }
+    void setLevel(logbuf::Level l) { m_logbuf.setLevel(l); }
 
     /**
      * set isIp
@@ -201,18 +172,6 @@ namespace castor {
      * prefixing the logs with timestamps
      */
     castor::logbuf m_logbuf;
-
-    /**
-     * The current minimum level of output for the stream
-     * everything under it will not be output
-     */
-    Level m_minLevel;
-
-    /**
-     * The current level of output for the stream.
-     * Next calls to << will use this level
-     */
-    Level m_curLevel;
 
     /**
      * Whether next int should be printed as IP addresses

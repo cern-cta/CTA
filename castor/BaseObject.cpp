@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/23 12:44:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/07 16:01:07 $ $Author: sponcec3 $
  *
  * 
  *
@@ -32,14 +32,31 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "Cglobals.h"
+#include <Cthread_api.h>
+
+// -----------------------------------------------------------------------
+// static values initialization
+// -----------------------------------------------------------------------
+castor::MsgSvc* castor::BaseObject::s_msgSvc(0);
+int castor::BaseObject::s_lock(0);
+
+// -----------------------------------------------------------------------
+// constructor
+// -----------------------------------------------------------------------
+castor::BaseObject::BaseObject() throw() {}
+
+// -----------------------------------------------------------------------
+// destructor
+// -----------------------------------------------------------------------
+castor::BaseObject::~BaseObject() throw() {}
 
 // -----------------------------------------------------------------------
 // msgSvc
 // -----------------------------------------------------------------------
-castor::MsgSvc* castor::BaseObject::msgSvc()
+castor::MsgSvc* castor::BaseObject::msgSvc(std::string name)
   throw (castor::exception::Exception) {
-  IService* svc = svcs()->service("MsgSvc",
-                                  castor::MsgSvc::ID());
+  IService* svc = castor::Services::globalService
+    (name, castor::MsgSvc::ID());
   if (0 == svc) {
     castor::exception::Internal e;
     e.getMessage() << "Unable to retrieve MsgSvc";
@@ -94,9 +111,29 @@ void castor::BaseObject::getTLS(void **thip)
 }
 
 //------------------------------------------------------------------------------
+// initLog
+//------------------------------------------------------------------------------
+void castor::BaseObject::initLog(std::string name)
+  throw(castor::exception::Exception) {
+  Cthread_mutex_lock(&s_lock);
+  if (0 != s_msgSvc) {
+    s_msgSvc->release();
+    s_msgSvc = 0;
+  }
+  // This always return some sensible value if no exception is raised
+  s_msgSvc = msgSvc(name);
+  Cthread_mutex_unlock(&s_lock);
+}
+
+//------------------------------------------------------------------------------
 // clog
 //------------------------------------------------------------------------------
 castor::logstream& castor::BaseObject::clog()
  throw(castor::exception::Exception) {
-  return msgSvc()->stream();
+  if (0 == s_msgSvc) {
+    castor::exception::Internal e;
+    e.getMessage() << "Please call initLog() before calling clog()";
+    throw e;
+  }
+  return s_msgSvc->stream();
 }

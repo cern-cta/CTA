@@ -87,7 +87,8 @@ namespace castor {
          * @exception SQLException thrown by ORACLE
          */
         oracle::occi::Connection* getConnection()
-          throw (oracle::occi::SQLException);
+          throw (oracle::occi::SQLException,
+                 castor::exception::Exception);
 
         /**
          * deletes the connection to the database

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MsgSvc.cpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: MsgSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/07 16:01:07 $ $Author: sponcec3 $
  *
  * 
  *
@@ -44,40 +44,16 @@ std::string castor::MsgSvc::s_defaultLogfilename = "log";
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::MsgSvc::MsgSvc(const std::string name) :
+castor::MsgSvc::MsgSvc(const std::string name) throw() :
   BaseSvc(name) {
-  // Gather some configurations
-  char* logFileRead = getconfent("LogFile", (char*)name.c_str(), 0);
-  const char* logFile;
-  if (0 == logFileRead) {
-    logFile = s_defaultLogfilename.c_str();
-  } else {
-    logFile = strdup(logFileRead);
-  }
-  char* logLevel = getconfent((char*)logFile, "Level", 0);
-  castor::logstream::Level l = castor::logstream::INFO;
-  if (0 == logLevel) {
-  } else if (0 == strncmp(logLevel, "VER", 3)) {
-    l = castor::logstream::VERBOSE;
-  } else if (0 == strncmp(logLevel, "DEB", 3)) {
-    l = castor::logstream::DEBUG;
-  } else if (0 == strncmp(logLevel, "WAR", 3)) {
-    l = castor::logstream::WARNING;
-  } else if (0 == strncmp(logLevel, "ERR", 3)) {
-    l = castor::logstream::ERROR;
-  } else if (0 == strncmp(logLevel, "FAT", 3)) {
-    l = castor::logstream::FATAL;
-  } else if (0 == strncmp(logLevel, "ALW", 3)) {
-    l = castor::logstream::ALWAYS;
-  }
   // create the inner stream
-  m_stream = new castor::logstream(logFile, l);
+  m_stream = new castor::logstream(name);
 }
 
 // -----------------------------------------------------------------------
 // Destructor
 // -----------------------------------------------------------------------
-castor::MsgSvc::~MsgSvc() {
+castor::MsgSvc::~MsgSvc() throw() {
   m_stream->close();
   delete m_stream;
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logbuf.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/16 14:43:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logbuf.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/07 16:01:07 $ $Author: sponcec3 $
  *
  * 
  *
@@ -26,33 +26,3 @@
 
 // Include Files
 #include "castor/logbuf.h"
-#include <time.h>
-#include <sstream>
-#include <iomanip>
-#include <Cthread_api.h>
-
-//-----------------------------------------------------------------------------
-// getTimeStamp
-//-----------------------------------------------------------------------------
-std::string castor::logbuf::getTimeStamp() {
-  struct tm tmstruc, *tm;
-  time_t current_time;
-  
-  (void) time (&current_time);
-  (void) localtime_r (&current_time, &tmstruc);
-  tm = &tmstruc;
-
-  std::ostringstream buf;
-
-  buf << std::setw(2) << tm->tm_mon+1
-      << "/" << tm->tm_mday
-      << " " << tm->tm_hour
-      << ":" << tm->tm_min
-      << ":" << tm->tm_sec;
-#ifdef THREAD_SAFE
-    buf << " " << Cthread_self() << " ";
-#else
-    buf << " 0 ";
-#endif
-  return buf.str();
-}

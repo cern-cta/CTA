@@ -140,7 +140,8 @@ const unsigned int castor::db::ora::OraCnvSvc::REPTYPE() {
 // getConnection
 // -----------------------------------------------------------------------
 oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
-  throw (oracle::occi::SQLException) {
+  throw (oracle::occi::SQLException,
+         castor::exception::Exception) {
   // Quick answer if connection available
   if (0 != m_connection) return m_connection;
   // Else try to build one
@@ -151,7 +152,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
   if (0 == m_connection) {
     m_connection =
       m_environment->createConnection(m_user, m_passwd, m_dbName);
-    clog() << " Created new Oracle connection : "
+    clog() << "Created new Oracle connection : "
            << std::ios::hex << m_connection
            << std::ios::dec << std::endl;
     //oracle::occi::Statement* stmt = m_connection->createStatement
