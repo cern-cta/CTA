@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.231 2002/10/25 13:54:59 jdurand Exp $
+ * $Id: poolmgr.c,v 1.232 2002/10/30 16:19:11 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.231 $ $Date: 2002/10/25 13:54:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.232 $ $Date: 2002/10/30 16:19:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1753,6 +1753,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
 			sendrep (&rpfd, MSG_OUT, "reqid                    %d\n", wqp->reqid);
 			sendrep (&rpfd, MSG_OUT, "key                      %d\n", wqp->key);
 			sendrep (&rpfd, MSG_OUT, "rpfd                     %d\n", wqp->rpfd);
+			sendrep (&rpfd, MSG_OUT, "save_rpfd                %d\n", wqp->save_rpfd);
 			sendrep (&rpfd, MSG_OUT, "ovl_pid                  %d\n", wqp->ovl_pid);
 			sendrep (&rpfd, MSG_OUT, "nb_subreqs               %d\n", wqp->nb_subreqs);
 			sendrep (&rpfd, MSG_OUT, "nbdskf                   %d\n", wqp->nbdskf);
