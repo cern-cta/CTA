@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_entertape.man,v $ $Revision: 1.5 $ $Date: 2000/02/16 10:04:42 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_entertape.man,v $ $Revision: 1.6 $ $Date: 2000/02/18 15:25:02 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_ENTERTAPE 3 "$Date: 2000/02/16 10:04:42 $" CASTOR "vmgr Library Functions"
+.TH VMGR_ENTERTAPE 3 "$Date: 2000/02/18 15:25:02 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_entertape \- enter a new tape in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -65,11 +65,22 @@ or
 Default is
 .BR al .
 .TP
+.I model
+is the model of cartridge.
+It must be at most CA_MAXMODELLEN characters long.
+.TP
+.I media_letter
+is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood),
+"J" for IBM 3590, "R" for STK 9840.
+.TP
 .I manufacturer
 is an alphanumeric field CA_MAXMANUFLEN bytes long.
 .TP
 .I sn
 The cartridge serial number is an alphanumeric field CA_MAXSNLEN bytes long.
+.TP
+.I poolname
+is the tape pool name. It must be at most CA_MAXPOOLNAMELEN characters long.
 .LP
 Only
 .I vid
