@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Date: 2004/10/28 09:04:38 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Date: 2004/10/28 17:47:16 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -67,7 +67,7 @@ DEPLIB = DepSharedLibraryTargetName(shlib,shift)
 GLOBLIB = -L../shlib -lshift
 #endif
 
-PROGS_STAGER = ProgramTargetName(stager) ProgramTargetName(stageradmin)
+PROGS_STAGER = ProgramTargetName(stager) ProgramTargetName(stageradmin) ProgramTargetName(stagerNotifyService)
 IPROGS_STAGER = FileName($(BIN),ProgramTargetName(stager)) FileName($(BIN),ProgramTargetName(stageradmin))
 EPROGS_STAGER = FileName($(EXPORTBIN),stager) FileName($(EXPORTBIN),stageradmin)
 MANPAGES_STAGER = FileName($(MANDIR),stager.$(MANSUFFIX)) FileName($(MANDIR),stageradmin.$(MANSUFFIX))
@@ -86,15 +86,16 @@ SECURITYFLAG=-DCSEC
 GLOBLIB += -ldl
 #endif
 
-STAGER_OBJS = stager.Osuf stager_messages.Osuf stager_service.Osuf
+STAGER_OBJS = stager.Osuf stager_messages.Osuf stager_db_service.Osuf
 STAGERADMIN_OBJS = stageradmin.Osuf
 OBSOLETE_OBJS = stage_updc.Osuf stage_errmsg.Osuf stage_util.Osuf stage_api.Osuf buildupath.Osuf send2stgd_api.Osuf send2stgd_compat.Osuf
 
-STAGERLIB_OBJS = stager_admin_api.Osuf stager_errmsg.Osuf $(OBSOLETE_OBJS)
+STAGERLIB_OBJS = stager_admin_api.Osuf stager_errmsg.Osuf stager_service.Osuf $(OBSOLETE_OBJS)
 
 all: LibraryTargetName(stager) $(PROGS_STAGER)
 
 NormalProgramTarget(stager,$(STAGER_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
+NormalProgramTarget(stagerNotifyService,stagerNotifyService.Osuf,$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 NormalProgramTarget(stageradmin,$(STAGERADMIN_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 
 MakeDepLibrary(lib,shift)
