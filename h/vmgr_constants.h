@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_constants.h,v 1.1 2004/07/15 16:21:40 motiakov Exp $
+ * $Id: vmgr_constants.h,v 1.2 2004/08/12 13:39:24 motiakov Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vmgr_constants.h,v $ $Revision: 1.1 $ $Date: 2004/07/15 16:21:40 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr_constants.h,v $ $Revision: 1.2 $ $Date: 2004/08/12 13:39:24 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _VMGR_CONSTANTS_H
@@ -18,10 +18,9 @@
 #define MARSHALLED_TAPE_ENTRYSZ (CA_MAXVIDLEN+1+CA_MAXVSNLEN+1+CA_MAXTAPELIBLEN+1+CA_MAXDENLEN+1+CA_MAXLBLTYPLEN+1+CA_MAXMODELLEN+1+CA_MAXMLLEN+1+CA_MAXMANUFLEN+1+CA_MAXSNLEN+1+WORDSIZE+TIME_TSIZE+WORDSIZE+CA_MAXPOOLNAMELEN+1+LONGSIZE+LONGSIZE+LONGSIZE+LONGSIZE+CA_MAXSHORTHOSTLEN+1+CA_MAXSHORTHOSTLEN+1+LONGSIZE+LONGSIZE+TIME_TSIZE+TIME_TSIZE+LONGSIZE)
 
 #ifdef CSEC
-#define VMGR_PORT 5513
-#else
-#define VMGR_PORT 5013
+#define SVMGR_PORT 5513
 #endif
+#define VMGR_PORT 5013
 			/* status flags */
 
 #define	DISABLED  1
