@@ -1,14 +1,14 @@
 /*
- * $Id: setopt.c,v 1.4 2000/05/30 10:49:47 obarring Exp $
+ * $Id: setopt.c,v 1.5 2002/04/28 05:27:42 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: setopt.c,v $ $Revision: 1.4 $ $Date: 2000/05/30 10:49:47 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: setopt.c,v $ $Revision: 1.5 $ $Date: 2002/04/28 05:27:42 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 #define RFIO_KERNEL 1
 #include "rfio.h"               /* remote file I/O definitions          */
@@ -22,6 +22,11 @@ static int rfio_opt= RFIO_READBUF ;
  */
 static int rfio_net= RFIO_NET ;
 static int rfio_connretry = RFIO_RETRYIT ;
+/*
+ * Connect retry option
+ */
+static int rfio_connect_retry_counter = 0 ;
+static int rfio_connect_retry_interval = 0 ;
 /*
  * Force local I/O access. Required in some cases.
  */ 
@@ -48,6 +53,12 @@ int DLL_DECL rfiosetopt(opt,pval,len)
 		case RFIO_CONNECTOPT:
 			rfio_forcelocal= *pval ;
 			return 0 ;
+		case RFIO_CONNECT_RETRY_COUNT_OPT:
+			rfio_connect_retry_counter = *pval ;
+			return 0 ;
+		case RFIO_CONNECT_RETRY_INT_OPT:
+			rfio_connect_retry_interval = *pval ;
+			return 0 ;
 		default:
 			errno= EINVAL ;
 			return -1 ;
@@ -69,6 +80,10 @@ int 	opt ;
 			return ( rfio_connretry ) ;
 		case RFIO_CONNECTOPT:
 			return ( rfio_forcelocal ) ;
+		case RFIO_CONNECT_RETRY_COUNT_OPT:
+			return ( rfio_connect_retry_counter ) ;
+		case RFIO_CONNECT_RETRY_INT_OPT:
+			return ( rfio_connect_retry_interval ) ;
 		default:
 			errno= EINVAL ;
 			return -1 ;
