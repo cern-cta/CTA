@@ -6,7 +6,7 @@
 */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.10 $ $Date: 2004/06/07 16:35:30 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.11 $ $Date: 2004/06/09 14:55:35 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -97,7 +97,9 @@ const char *fac_name;
 	int port;
 	char dlfhost[CA_MAXHOSTNAMELEN + 1];
 	char dlfmsgfile[CA_MAXPATHLEN + 1];
+	char dlfupname[DLF_MAXFACNAMELEN + 1];
 	char dlfenvname[DLF_MAXFACNAMELEN + 2 + 16];
+	int dlfnamelen;
 	struct servent *sp;
     
 	/* Initialize global structure */
@@ -114,9 +116,15 @@ const char *fac_name;
 	g_dlf_fac_info.text_list.head = NULL;
 	g_dlf_fac_info.text_list.head = NULL;
 
+	dlfnamelen = strlen(fac_name);
+	if (dlfnamelen > DLF_MAXFACNAMELEN) return (-1);
+
+	strcpy (dlfupname, fac_name);
+	for (p = dlfupname; *p != '\0'; p++) *p = toupper(*p);
+
 	standalone = 0;
-	strcpy (dlfenvname, fac_name);
-	for (p = dlfenvname; *p != '\0'; p++) *p = toupper(*p);
+
+	strcpy (dlfenvname, dlfupname);
 	strcat (dlfenvname, "_LOGMODE");
 	if ((p = getenv (dlfenvname)) || (p = getconfent (fac_name, "LOGMODE", 0))) {
 		if (strcmp (p, "STANDALONE") == 0)
@@ -164,49 +172,81 @@ const char *fac_name;
 	    return (0);
 	}
     
-	/* Try to get log destinations from the configuration file */
+	/* Try to get log destinations from environment variables or from the configuration file */
     
-	if ((p = getconfent(fac_name, "LOGALL", 1)) != NULL)
+	dlfenvname[dlfnamelen] = '\0';           /* Set termination just after the name */
+	strcat (dlfenvname, "_LOGALL");
+	if ((p = getenv(dlfenvname)) || (p = getconfent(fac_name, "LOGALL", 1)))
 		if (dlf_store_log_destinations
-            (p, DLF_LVL_ALL, &g_dlf_fac_info.dest_list) < 0)
+                        (p, DLF_LVL_ALL, &g_dlf_fac_info.dest_list) < 0)
 			return (-1);
-	if ((p = getconfent(fac_name, "LOGEMERGENCY", 1)) != NULL)
+
+	dlfenvname[dlfnamelen] = '\0';           /* Set termination just after the name */
+	strcat (dlfenvname, "_LOGEMERGENCY");
+	if ((p = getenv(dlfenvname)) || (p = getconfent(fac_name, "LOGEMERGENCY", 1)))
 		if (dlf_store_log_destinations
 			(p, DLF_LVL_EMERGENCY, &g_dlf_fac_info.dest_list) < 0)
 			return (-1);
-	if ((p = getconfent(fac_name, "LOGALERT", 1)) != NULL)
+
+	dlfenvname[dlfnamelen] = '\0';           /* Set termination just after the name */
+	strcat (dlfenvname, "_LOGALERT");
+	if ((p = getenv(dlfenvname)) || (p = getconfent(fac_name, "LOGALERT", 1)))
 		if (dlf_store_log_destinations
 			(p, DLF_LVL_ALERT, &g_dlf_fac_info.dest_list) < 0)
 			return (-1);
-	if ((p = getconfent(fac_name, "LOGERROR", 1)) != NULL)
+
+	dlfenvname[dlfnamelen] = '\0';           /* Set termination just after the name */
+	strcat (dlfenvname, "_LOGERROR");
+	if ((p = getenv(dlfenvname)) || (p = getconfent(fac_name, "LOGERROR", 1)))
 		if (dlf_store_log_destinations
 			(p, DLF_LVL_ERROR, &g_dlf_fac_info.dest_list) < 0)
 			return (-1);
-	if ((p = getconfent(fac_name, "LOGWARNING", 1)) != NULL)
+
+	dlfenvname[dlfnamelen] = '\0';           /* Set termination just after the name */
+	strcat (dlfenvname, "_LOGWARNING");
+	if ((p = getenv(dlfenvname)) || (p = getconfent(fac_name, "LOGWARNING", 1)))
 		if (dlf_store_log_destinations
 			(p, DLF_LVL_WARNING, &g_dlf_fac_info.dest_list) < 0)
 			return (-1);
-	if ((p = getconfent(fac_name, "LOGAUTH", 1)) != NULL)
+
+	dlfenvname[dlfnamelen] = '\0';           /* Set termination just after the name */
+	strcat (dlfenvname, "_LOGAUTH");
+	if ((p = getenv(dlfenvname)) || (p = getconfent(fac_name, "LOGAUTH", 1)))
 		if (dlf_store_log_destinations
 			(p, DLF_LVL_AUTH, &g_dlf_fac_info.dest_list) < 0)
 			return (-1);
-	if ((p = getconfent(fac_name, "LOGSECURITY", 1)) != NULL)
+
+	dlfenvname[dlfnamelen] = '\0';           /* Set termination just after the name */
+	strcat (dlfenvname, "_LOGSECURITY");
+	if ((p = getenv(dlfenvname)) || (p = getconfent(fac_name, "LOGSECURITY", 1)))
 		if (dlf_store_log_destinations
 			(p, DLF_LVL_SECURITY, &g_dlf_fac_info.dest_list) < 0)
 			return (-1);
-	if ((p = getconfent(fac_name, "LOGUSAGE", 1)) != NULL)
+
+	dlfenvname[dlfnamelen] = '\0';           /* Set termination just after the name */
+	strcat (dlfenvname, "_LOGUSAGE");
+	if ((p = getenv(dlfenvname)) || (p = getconfent(fac_name, "LOGUSAGE", 1)))
 		if (dlf_store_log_destinations
 			(p, DLF_LVL_USAGE, &g_dlf_fac_info.dest_list) < 0)
 			return (-1);
-	if ((p = getconfent(fac_name, "LOGSYSTEM", 1)) != NULL)
+
+	dlfenvname[dlfnamelen] = '\0';           /* Set termination just after the name */
+	strcat (dlfenvname, "_LOGSYSTEM");
+	if ((p = getenv(dlfenvname)) || (p = getconfent(fac_name, "LOGSYSTEM", 1)))
 		if (dlf_store_log_destinations
 		(p, DLF_LVL_SYSTEM, &g_dlf_fac_info.dest_list) < 0)
 			return (-1);
-	if ((p = getconfent(fac_name, "LOGIMPORTANT", 1)) != NULL)
+
+	dlfenvname[dlfnamelen] = '\0';           /* Set termination just after the name */
+	strcat (dlfenvname, "_LOGIMPORTANT");
+	if ((p = getenv(dlfenvname)) || (p = getconfent(fac_name, "LOGIMPORTANT", 1)))
 		if (dlf_store_log_destinations
 		(p, DLF_LVL_IMPORTANT, &g_dlf_fac_info.dest_list) < 0)
 			return (-1);
-	if ((p = getconfent(fac_name, "LOGDEBUG", 1)) != NULL)
+
+	dlfenvname[dlfnamelen] = '\0';           /* Set termination just after the name */
+	strcat (dlfenvname, "_LOGDEBUG");
+	if ((p = getenv(dlfenvname)) || (p = getconfent(fac_name, "LOGDEBUG", 1)))
 		if (dlf_store_log_destinations
 		(p, DLF_LVL_DEBUG,&g_dlf_fac_info.dest_list) < 0)
 		        return (-1);
@@ -219,8 +259,7 @@ const char *fac_name;
           /* Other lines:                                             */
 	  /* <message_number><spaces><message text until end of line> */
 
-	  strcpy (dlfenvname, fac_name);
-	  for (p = dlfenvname; *p != '\0'; p++) *p = toupper(*p);
+	  dlfenvname[dlfnamelen] = '\0';           /* Set termination just after the name */
 	  strcat (dlfenvname, "_TXTFILE");
 	  if ((p = getenv (dlfenvname)) || (p = getconfent (fac_name, "TXTFILE", 0)))
 		strncpy (dlfmsgfile, p, CA_MAXPATHLEN);
