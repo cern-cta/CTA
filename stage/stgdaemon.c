@@ -1,8 +1,8 @@
 /*
- * $Id: stgdaemon.c,v 1.197 2002/05/26 07:43:48 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.198 2002/05/30 09:37:34 bcouturi Exp $
  */
 
-/*
+/*   
  * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.197 $ $Date: 2002/05/26 07:43:48 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.198 $ $Date: 2002/05/30 09:37:34 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -102,6 +102,9 @@ struct winsize {
 #include "Cgetopt.h"
 #include "u64subr.h"
 #include "Castor_limits.h"
+#ifdef MONITOR
+#include "Cmonit_api.h"
+#endif
 #ifdef STAGE_CSETPROCNAME
 #define STAGE_CSETPROCNAME_FORMAT "%s PORT=%d NBCAT=%d NBPATH=%d QUEUED=%d FREE_FD=%d"
 #include "Csetprocname.h"
@@ -213,6 +216,12 @@ time_t last_upd_fileclasses = 0;
 time_t started_time;
 char cns_error_buffer[512];         /* Cns error buffer */
 char *stgconfigfile = STGCONFIG;    /* Stager configuration file */
+
+/* For monitoring */
+time_t last_monitormsg_sent = 0;
+time_t last_init_time = 0;
+time_t monitormsg_int = 0;
+
 
 void prockilreq _PROTO((int, char *, char *));
 void procinireq _PROTO((int, unsigned long, char *, char *));
@@ -997,13 +1006,31 @@ int main(argc,argv)
 	/* Initialize check_upd_fileclasses time */
 	last_upd_fileclasses = time(NULL);
 
+	/* Initializing Last Init time */
+	last_init_time = last_upd_fileclasses;
+
+#ifdef MONITOR
+	{
+	  char buf[CA_MAXHOSTNAMELEN + 10]; 
+	  Cmonit_get_monitor_address(buf);
+	  stglogit(func, "Sending monitoring information to: %s\n", buf);
+	}
+#endif
+
 	stglogit(func, "Starting with %d free file descriptors (system max: %d)\n", (int) FREE_FD, (int) sysconf(_SC_OPEN_MAX));
 
 	/* main loop */
 	while (1) {
 
+    	        /* @@@@@@@@@@@@@ MONITOR @@@@@@@@@@@@@ */
+	        /* Every xxx seconds call monitor API  */
+	        /* @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  */
+
+#ifdef MONITOR
+	        check_send_monitormsg();
+#endif
 		/* Before accept() we execute some automatic thing that are client disconnected */
-		rpfd = -1;
+	        rpfd = -1;
 
 		stgcat_shrunk_pages();
 		stgpath_shrunk_pages();
@@ -1054,7 +1081,11 @@ int main(argc,argv)
 			if (c != 0) {
 				sendrep (rpfd, MSG_ERR, STG09, stgconfigfile, "incorrect");
 			} else {
-				stglogit(func, "Working with %d free file descriptors (system max: %d)\n", (int) FREE_FD, (int) sysconf(_SC_OPEN_MAX));
+			        /* @@@@@@@@@@@@@@@@@@@@@@@ */
+			        /* RESET MONITOR KNOWLEDGE */
+			        /* @@@@@@@@@@@@@@@@@@@@@@@ */
+			  last_init_time = time(NULL);
+			  stglogit(func, "Working with %d free file descriptors (system max: %d)\n", (int) FREE_FD, (int) sysconf(_SC_OPEN_MAX));
 			}
 			sendrep (rpfd, STAGERC, STAGEINIT, STGMAGIC, c);
 			force_init = migr_init = 0;
@@ -4027,6 +4058,27 @@ void check_upd_fileclasses() {
 	}
 }
 
+#ifdef MONITOR
+/*
+ * Function that sends the monitoring information to the Monitoring daemon when necessary
+ *
+ */
+int check_send_monitormsg() {
+  time_t this_time = time(NULL);
+
+  if ((this_time - last_monitormsg_sent) > CMONIT_STAGER_SEND_PERIOD) {
+    /* Using the Monitoring API to send the data */
+    Cmonit_send_stager_status(last_init_time);
+    last_monitormsg_sent = time(NULL);
+/*      stglogit(func, "Monitor message sent\n"); */
+  }
+  return(0);
+}
+#endif
+
+
+
+
 /* ----------------------------------------------------------- */
 /* Subroutine: stg_count_digits                                */
 /* ----------------------------------------------------------- */
@@ -4058,3 +4110,16 @@ size_t stg_count_digits(number, base)
 	rc = (size_t) digits;
 	return(rc);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
