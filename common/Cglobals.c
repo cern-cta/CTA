@@ -1,5 +1,5 @@
 /*
- * $Id: Cglobals.c,v 1.1 1999/07/20 13:34:21 obarring Exp $
+ * $Id: Cglobals.c,v 1.2 1999/07/20 15:09:33 obarring Exp $
 */
 
 /*
@@ -20,7 +20,7 @@
  */
 
 #include <stdlib.h>
-#include <Castor_globals.h>
+#include <Cglobals.h>
 
 /*
  * Define a structure to maintain global data in a single-threaded
