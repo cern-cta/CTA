@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/10 12:56:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/10 14:04:47 $ $Author: sponcec3 $
  *
  *
  *
@@ -170,7 +170,7 @@ castor::db::ora::OraStagerSvc::tapesToDo()
         throw ex;
       }
       // Change tape status
-      tape->setStatus(castor::stager::TAPE_WAITMOUNT);
+      tape->setStatus(castor::stager::TAPE_WAITVDQM);
       castor::ObjectSet alreadyDone;
       updateRep(0, tape, alreadyDone, false);
       result.push_back(tape);
