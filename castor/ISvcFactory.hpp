@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ISvcFactory.hpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ISvcFactory.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/04 08:54:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -41,6 +41,12 @@ namespace castor {
   class ISvcFactory : public IFactory<IService> {
 
   public:
+
+    /**
+     * virtual destructor
+     */
+    virtual ~ISvcFactory(){};
+
     /** Get ID of the factory, i.e. of the underlying Service */
     virtual const unsigned int id() const = 0;
 

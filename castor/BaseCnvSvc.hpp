@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/10/14 16:34:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/04 08:54:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -59,7 +59,7 @@ namespace castor {
     /**
      * Destructor
      */
-    virtual ~BaseCnvSvc() throw() {};    
+    virtual ~BaseCnvSvc() throw();
 
     /**
      * Add converter object to conversion service.

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IRequestHandler.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 16:37:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IRequestHandler.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/04 08:54:26 $ $Author: sponcec3 $
  *
  * 
  *
@@ -41,6 +41,12 @@ namespace castor {
   class IRequestHandler {
 
   public:
+
+    /**
+     * virtual destructor
+     */
+    virtual ~IRequestHandler(){};
+
     /**
      * returns an address to the next request to handle in
      * the database.

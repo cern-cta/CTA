@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IService.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/26 15:43:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IService.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/04 08:54:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -38,6 +38,11 @@ namespace castor {
   class IService {
 
   public:
+
+    /**
+     * virtual destructor
+     */
+    virtual ~IService(){};
 
     /**
      * Get the service id

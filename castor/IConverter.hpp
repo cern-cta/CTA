@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IConverter.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/01 09:13:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IConverter.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/11/04 08:54:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -46,6 +46,11 @@ namespace castor {
   class IConverter {
 
   public:
+
+    /**
+     * virtual destructor
+     */
+    virtual ~IConverter(){};
 
     /**
      * gets the object type, that is the type of

@@ -58,7 +58,7 @@ namespace castor {
         OraCnvSvc(const std::string name);
 
         /** default destructor */
-        ~OraCnvSvc() throw();
+        virtual ~OraCnvSvc() throw();
 
         /** Get the service id */
         virtual const unsigned int id() const;

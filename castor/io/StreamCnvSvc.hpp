@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCnvSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/10/14 16:34:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCnvSvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/11/04 08:54:27 $ $Author: sponcec3 $
  *
  *
  *
@@ -50,7 +50,7 @@ namespace castor {
       StreamCnvSvc(const std::string name);
 
       /** default destructor */
-      ~StreamCnvSvc() throw();
+      virtual ~StreamCnvSvc() throw();
 
       /** Get the service id */
       virtual inline const unsigned int id() const;

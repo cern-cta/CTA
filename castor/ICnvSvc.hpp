@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ICnvSvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/10/14 16:34:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ICnvSvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/04 08:54:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -45,6 +45,12 @@ namespace castor {
   class ICnvSvc : public virtual IService {
 
   public:
+
+    /**
+     * virtual destructor
+     */
+    virtual ~ICnvSvc(){};
+
     /** Add converter object to conversion service.
      *  @param pConverter Pointer to converter object
      *  @return boolean indicating success or failure.

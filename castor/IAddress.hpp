@@ -44,6 +44,11 @@ namespace castor {
   public:
 
     /**
+     * virtual destructor
+     */
+    virtual ~IAddress(){};
+
+    /**
      * gets the object type, that is the type of
      * object whose representation is pointed to by
      * this address

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/10/14 16:34:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/11/04 08:54:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -42,6 +42,20 @@
 // -----------------------------------------------------------------------
 castor::BaseCnvSvc::BaseCnvSvc(const std::string name) :
   BaseSvc(name) {}
+
+// -----------------------------------------------------------------------
+// Destructor
+// -----------------------------------------------------------------------
+castor::BaseCnvSvc::~BaseCnvSvc() throw() {
+  // release all converters
+  std::map<unsigned int, IConverter*>::iterator it;
+  for (it = m_converters.begin(); it != m_converters.end(); it++) {
+    if (it->second != 0) {
+      delete it->second;
+    }
+  }
+  m_converters.clear();
+}
 
 //-----------------------------------------------------------------------------
 // addConverter

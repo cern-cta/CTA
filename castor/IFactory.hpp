@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IFactory.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/26 15:43:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IFactory.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/04 08:54:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -41,6 +41,11 @@ namespace castor {
   template<class TYPE> class IFactory {
 
   public:
+
+    /**
+     * virtual destructor
+     */
+    virtual ~IFactory(){};
 
     /**
      * Instantiate an object
