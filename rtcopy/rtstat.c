@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.1 $ $Date: 2000/09/18 16:36:33 $ CERN IT-PDP/DM Claire Redmond";
+static char sccsid[] = "@(#)$RCSfile: rtstat.c,v $ $Revision: 1.2 $ $Date: 2000/09/20 16:03:52 $ CERN IT-PDP/DM Claire Redmond";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -156,6 +156,7 @@ struct sorted_ifce_stats *next;
 
 struct server {			/* Structure to store information by server */
   int failed;			/* set if server read failed */
+  int nb_dgns;                  /* Number of DGNs server by this server */
   char failure_msg[CA_MAXLINELEN+1];/* failure message */
   char dgn[MAXLEN];		/* first device group on server */
   char type[9];		/* type running on server */
@@ -307,6 +308,7 @@ int tapes_written = 0;
 
 int num_lines = 0;		/* number of lines in error messages file */
 int num_tperrs = 0;		/* number of tape errors */
+int vflag = 0;                  /* set if verbose requested */
 
 main (argc, argv) 
      int argc;
@@ -340,9 +342,8 @@ main (argc, argv)
   time_t starttime = 0;	/* time to start reading records from */
   int sub_time = 0;		/* seconds to subtruct */
   int swapped = 0;		/* set if byte order needs swapping */
-  int vflag = 0;		/* set if verbose requested */
+  int dflag = 0;                /* set if debug */
   int wflag = 0;		/* set if week number given */
-  int dflag = 0;        /* set if debug */
   int use_conffile = 0;         /* Use configuration file rather than VDQM */
   struct tms timestart, timeend;
   time_t realtime0, realtime1;
@@ -705,6 +706,7 @@ create_dg_s_list (gflag, Sflag, dev_group, server_name)
   /* for that server and the devices which run on it */
 
   do {
+    memset(&drvreq,'\0',sizeof(drvreq));
     rc = vdqm_NextDrive(&nw,&drvreq);
     if ( rc != -1 && *drvreq.server != '\0' && *drvreq.drive != '\0' &&
          drvreq.DrvReqID != last_id ) {
@@ -713,7 +715,9 @@ create_dg_s_list (gflag, Sflag, dev_group, server_name)
       if (strcmp (drvreq.dgn, "CT1") == 0) continue;
       if (gflag && (strcmp (drvreq.dgn, dev_group)) != 0) continue;
 
-      if (!Sflag) create_devrec(drvreq.dgn);
+      if (!Sflag) {
+          create_devrec(drvreq.dgn);
+      }
 
       strcpy (devgroup, drvreq.dgn);
       if (Sflag && (strcmp (drvreq.server, server_name)) != 0) continue;
@@ -722,8 +726,9 @@ create_dg_s_list (gflag, Sflag, dev_group, server_name)
         create_servrec(drvreq.server, devgroup);
         create_devrec(devgroup);
       }
-      else
+      else {
         create_servrec(drvreq.server, devgroup);
+      }
     }
   } while ( rc != -1 );
   return(0);
@@ -767,7 +772,9 @@ create_dg_s_list_from_conffile (gflag, Sflag, dev_group, server_name)
 		if (strcmp (d, "CT1") == 0) continue;
 		if (gflag && (strcmp (d, dev_group)) != 0) continue;
 
-		if (!Sflag) create_devrec(d);
+		if (!Sflag) {
+			create_devrec(d);
+                }
 		
 		strcpy (devgroup, d);
 		d = strtok (NULL, " \t\n");
@@ -781,8 +788,9 @@ create_dg_s_list_from_conffile (gflag, Sflag, dev_group, server_name)
 			create_servrec(d, devgroup);
 			create_devrec(devgroup);
           }
-          else 
+          else {
 			create_servrec(d, devgroup);
+          }
 
           d = strtok (NULL, " \t\n");
 		}
@@ -1206,6 +1214,7 @@ clear_tapeseq()
   free(tpseq);
   tpseq_first = NULL;
   tpseq_last = NULL;
+  tpseq_prev = NULL;
 }
 
 
@@ -1291,6 +1300,7 @@ create_servrec(d, devgroup)
 	svd = (struct server *) calloc (1, sizeof (struct server));
 	strcpy (svd->server_name, d);
 	strcpy (svd->dgn, devgroup);
+	svd->nb_dgns = 1;
     svd->netstats_first = NULL;
     svd->sorted_netstats_first = NULL;
 	svd->ifce_list_first = NULL;
@@ -1310,11 +1320,13 @@ create_servrec(d, devgroup)
       svd = (struct server *) calloc (1, sizeof (struct server));
       strcpy (svd->server_name, d);
       strcpy (svd->dgn, devgroup);
+      svd->nb_dgns = 1;
       svd->ifce_list_first = NULL; 
       svd->next = NULL;
       serv_prev->next = svd;
       serv_prev = svd;
-	}
+	} else if ( strcmp(svd->dgn,devgroup) != 0 && *devgroup != '\0' &&
+                    *svd->dgn != '\0' ) svd->nb_dgns++;
   }
 }
 
@@ -1622,7 +1634,12 @@ get_dgn (rq, serv)
 
   if (found == 0)
     {
-      strcpy(rq->dgn,serv->dgn);
+      if ( serv->nb_dgns == 1 ) strcpy(rq->dgn,serv->dgn);
+      else {
+        if ( vflag ) fprintf(stderr,"Unknown DGN: server %s job %d vid %s\n",
+                             rq->server,rq->jid,rq->vid);
+        strcpy(rq->dgn,"UNKN");
+      }
     }
 
   dg = dev_first;
@@ -1693,6 +1710,8 @@ insert_stats (rq, sr, errs)
 
   /* for each list group find then one that matches the current record */
 
+  dg = NULL;
+  ty = NULL;
   if ((strcmp (rq->dgn, "") == 0) && (errs == 0) ) {
 	group_match = 1;
   	strcpy (rq->type, sr->type);
@@ -3096,6 +3115,7 @@ sort_fill(serv_rec)
 {
   strcpy (serv_rec->server_name, serv_first->server_name);
   strcpy (serv_rec->type, serv_first->type);
+  serv_rec->nb_dgns = serv_first->nb_dgns;
   serv_rec->err_messages = (int *) calloc (num_lines, sizeof (int));
   serv_rec->next = NULL;
 }
