@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.70 2001/03/30 08:28:58 jdurand Exp $
+ * $Id: procupd.c,v 1.71 2001/03/30 09:45:20 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.70 $ $Date: 2001/03/30 08:28:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.71 $ $Date: 2001/03/30 09:45:20 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -117,7 +117,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		 char *req_data;
 		 char *clienthost;
 {
-	char **argv;
+	char **argv = NULL;
 	int blksize = -1;
 	int c, i, n;
 	struct stgcat_entry *cur;
@@ -1133,7 +1133,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 	}
 #endif
  reply:
-	free (argv);
+	if (argv != NULL) free (argv);
 	if (stpp_input != NULL) free(stpp_input);
 	reqid = upd_reqid;
 	rpfd = upd_rpfd;
