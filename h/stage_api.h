@@ -1,5 +1,5 @@
 /*
- * stage_api.h,v 1.2 2000-03-14 11:59:47+01 jdurand Exp
+ * $Id: stage_api.h,v 1.4 2000/05/08 10:04:38 jdurand Exp $
  */
 
 #ifndef __stage_api_h
