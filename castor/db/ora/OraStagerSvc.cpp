@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.122 $ $Release$ $Date: 2005/02/01 13:47:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.123 $ $Release$ $Date: 2005/02/01 14:12:18 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -2134,10 +2134,10 @@ void castor::db::ora::OraStagerSvc::bestFileSystemForJob
     // execute the statement and see whether we found something
     ub4 unused = fileSystemsNb;    
     m_bestFileSystemForJobStatement->setDataBufferArray
-      (1, fileSystems, oracle::occi::OCCI_SQLT_CHR,
+      (1, bufferFS, oracle::occi::OCCI_SQLT_CHR,
        fileSystemsNb, &unused, maxFS, lensFS);
     m_bestFileSystemForJobStatement->setDataBufferArray
-      (2, machines, oracle::occi::OCCI_SQLT_CHR,
+      (2, bufferM, oracle::occi::OCCI_SQLT_CHR,
        fileSystemsNb, &unused, maxM, lensM);
     m_bestFileSystemForJobStatement->setDouble(3, minFree);
     unsigned int nb = m_bestFileSystemForJobStatement->executeUpdate();
