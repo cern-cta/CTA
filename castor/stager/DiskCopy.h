@@ -29,6 +29,7 @@
 
 // Include Files and Forward declarations for the C world
 #include "castor/stager/DiskCopyStatusCode.h"
+#include "osdep.h"
 struct C_IObject_t;
 struct Cstager_CastorFile_t;
 struct Cstager_DiskCopy_t;
@@ -77,13 +78,13 @@ int Cstager_DiskCopy_TYPE(int* ret);
  * Sets the id of the object
  */
 int Cstager_DiskCopy_setId(struct Cstager_DiskCopy_t* instance,
-                           unsigned long id);
+                           u_signed64 id);
 
 /**
  * gets the id of the object
  */
 int Cstager_DiskCopy_id(struct Cstager_DiskCopy_t* instance,
-                        unsigned long* ret);
+                        u_signed64* ret);
 
 /**
  * Gets the type of the object

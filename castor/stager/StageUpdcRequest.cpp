@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdcRequest.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/01 14:26:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdcRequest.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/05 13:37:34 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,6 +29,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/ReqIdRequest.hpp"
 #include "castor/stager/StageUpdcRequest.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -37,7 +38,7 @@
 //------------------------------------------------------------------------------
 castor::stager::StageUpdcRequest::StageUpdcRequest() throw() :
   ReqIdRequest(),
-  m_id(0) {
+  m_id() {
 };
 
 //------------------------------------------------------------------------------
@@ -82,14 +83,14 @@ int castor::stager::StageUpdcRequest::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::stager::StageUpdcRequest::setId(unsigned long id) {
+void castor::stager::StageUpdcRequest::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::stager::StageUpdcRequest::id() const {
+u_signed64 castor::stager::StageUpdcRequest::id() const {
   return m_id;
 }
 

@@ -29,6 +29,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/rh/EndResponse.hpp"
 #include "castor/rh/Response.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -37,7 +38,7 @@
 //------------------------------------------------------------------------------
 castor::rh::EndResponse::EndResponse() throw() :
   Response(),
-  m_id(0) {
+  m_id() {
 };
 
 //------------------------------------------------------------------------------
@@ -82,14 +83,14 @@ int castor::rh::EndResponse::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::rh::EndResponse::setId(unsigned long id) {
+void castor::rh::EndResponse::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::rh::EndResponse::id() const {
+u_signed64 castor::rh::EndResponse::id() const {
   return m_id;
 }
 

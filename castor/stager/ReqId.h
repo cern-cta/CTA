@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ReqId.h,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/01 15:23:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ReqId.h,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/05 13:37:33 $ $Author: sponcec3 $
  *
  * 
  *
@@ -28,6 +28,7 @@
 #define CASTOR_STAGER_REQID_H
 
 // Include Files and Forward declarations for the C world
+#include "osdep.h"
 struct C_IObject_t;
 struct Cstager_ReqIdRequest_t;
 struct Cstager_ReqId_t;
@@ -75,13 +76,13 @@ int Cstager_ReqId_TYPE(int* ret);
  * Sets the id of the object
  */
 int Cstager_ReqId_setId(struct Cstager_ReqId_t* instance,
-                        unsigned long id);
+                        u_signed64 id);
 
 /**
  * gets the id of the object
  */
 int Cstager_ReqId_id(struct Cstager_ReqId_t* instance,
-                     unsigned long* ret);
+                     u_signed64* ret);
 
 /**
  * Gets the type of the object

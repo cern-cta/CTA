@@ -37,6 +37,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/rh/EndResponse.hpp"
+#include "osdep.h"
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -130,7 +131,7 @@ castor::IObject* castor::io::StreamEndResponseCnv::createObj(castor::IAddress* a
   // create the new Object
   castor::rh::EndResponse* object = new castor::rh::EndResponse();
   // Now retrieve and set members
-  unsigned long id;
+  u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
   newlyCreated.insert(object);

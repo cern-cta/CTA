@@ -42,6 +42,7 @@
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/TapeCopyStatusCodes.hpp"
+#include "osdep.h"
 #include <vector>
 
 //------------------------------------------------------------------------------
@@ -144,7 +145,7 @@ castor::IObject* castor::io::StreamTapeCopyCnv::createObj(castor::IAddress* addr
   // create the new Object
   castor::stager::TapeCopy* object = new castor::stager::TapeCopy();
   // Now retrieve and set members
-  unsigned long id;
+  u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
   int status;

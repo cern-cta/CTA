@@ -42,7 +42,7 @@ castor::stager::SubRequest::SubRequest() throw() :
   m_protocol(""),
   m_poolName(""),
   m_xsize(),
-  m_id(0),
+  m_id(),
   m_request(0) {
 };
 
@@ -101,14 +101,14 @@ int castor::stager::SubRequest::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::stager::SubRequest::setId(unsigned long id) {
+void castor::stager::SubRequest::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::stager::SubRequest::id() const {
+u_signed64 castor::stager::SubRequest::id() const {
   return m_id;
 }
 

@@ -143,7 +143,7 @@ castor::IObject* castor::io::StreamMessageAckCnv::createObj(castor::IAddress* ad
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
-  unsigned long id;
+  u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
   newlyCreated.insert(object);

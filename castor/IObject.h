@@ -28,6 +28,7 @@
 #define CASTOR_IOBJECT_H
 
 // Include Files and Forward declarations for the C world
+#include "osdep.h"
 struct C_IObject_t;
 
 //------------------------------------------------------------------------------
@@ -45,13 +46,13 @@ int C_IObject_delete(struct C_IObject_t* obj);
  * Sets the id of the object
  */
 int C_IObject_setId(struct C_IObject_t* instance,
-                    unsigned long id);
+                    u_signed64 id);
 
 /**
  * gets the id of the object
  */
 int C_IObject_id(struct C_IObject_t* instance,
-                 unsigned long* ret);
+                 u_signed64* ret);
 
 /**
  * Gets the type of the object

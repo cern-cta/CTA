@@ -29,6 +29,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/rh/FileResponse.hpp"
 #include "castor/rh/Response.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -42,7 +43,7 @@ castor::rh::FileResponse::FileResponse() throw() :
   m_server(""),
   m_port(0),
   m_protocol(""),
-  m_id(0) {
+  m_id() {
 };
 
 //------------------------------------------------------------------------------
@@ -92,14 +93,14 @@ int castor::rh::FileResponse::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::rh::FileResponse::setId(unsigned long id) {
+void castor::rh::FileResponse::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::rh::FileResponse::id() const {
+u_signed64 castor::rh::FileResponse::id() const {
   return m_id;
 }
 

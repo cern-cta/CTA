@@ -27,6 +27,7 @@
 // Include Files
 #include "castor/rh/Response.hpp"
 #include "castor/rh/StringResponse.hpp"
+#include "osdep.h"
 
 extern "C" {
 
@@ -79,7 +80,7 @@ extern "C" {
   // Crh_StringResponse_setId
   //----------------------------------------------------------------------------
   int Crh_StringResponse_setId(castor::rh::StringResponse* instance,
-                               unsigned long id) {
+                               u_signed64 id) {
     instance->setId(id);
     return 0;
   }
@@ -88,7 +89,7 @@ extern "C" {
   // Crh_StringResponse_id
   //----------------------------------------------------------------------------
   int Crh_StringResponse_id(castor::rh::StringResponse* instance,
-                            unsigned long* ret) {
+                            u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }

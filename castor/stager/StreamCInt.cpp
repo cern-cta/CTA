@@ -81,7 +81,7 @@ extern "C" {
   // Cstager_Stream_setId
   //----------------------------------------------------------------------------
   int Cstager_Stream_setId(castor::stager::Stream* instance,
-                           unsigned long id) {
+                           u_signed64 id) {
     instance->setId(id);
     return 0;
   }
@@ -90,7 +90,7 @@ extern "C" {
   // Cstager_Stream_id
   //----------------------------------------------------------------------------
   int Cstager_Stream_id(castor::stager::Stream* instance,
-                        unsigned long* ret) {
+                        u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }

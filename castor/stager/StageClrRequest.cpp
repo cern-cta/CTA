@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageClrRequest.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/01 14:26:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageClrRequest.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/05 13:37:33 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,6 +29,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/StageClrRequest.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -37,7 +38,7 @@
 //------------------------------------------------------------------------------
 castor::stager::StageClrRequest::StageClrRequest() throw() :
   Request(),
-  m_id(0) {
+  m_id() {
 };
 
 //------------------------------------------------------------------------------
@@ -82,14 +83,14 @@ int castor::stager::StageClrRequest::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::stager::StageClrRequest::setId(unsigned long id) {
+void castor::stager::StageClrRequest::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::stager::StageClrRequest::id() const {
+u_signed64 castor::stager::StageClrRequest::id() const {
   return m_id;
 }
 

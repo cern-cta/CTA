@@ -28,6 +28,7 @@
 #define CASTOR_RH_STRINGRESPONSE_H
 
 // Include Files and Forward declarations for the C world
+#include "osdep.h"
 struct Crh_Response_t;
 struct Crh_StringResponse_t;
 
@@ -74,13 +75,13 @@ int Crh_StringResponse_TYPE(int* ret);
  * Sets the id of the object
  */
 int Crh_StringResponse_setId(struct Crh_StringResponse_t* instance,
-                             unsigned long id);
+                             u_signed64 id);
 
 /**
  * gets the id of the object
  */
 int Crh_StringResponse_id(struct Crh_StringResponse_t* instance,
-                          unsigned long* ret);
+                          u_signed64* ret);
 
 /**
  * Gets the type of the object

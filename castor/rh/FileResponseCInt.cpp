@@ -28,6 +28,7 @@
 #include "castor/IObject.hpp"
 #include "castor/rh/FileResponse.hpp"
 #include "castor/rh/Response.hpp"
+#include "osdep.h"
 
 extern "C" {
 
@@ -94,7 +95,7 @@ extern "C" {
   // Crh_FileResponse_setId
   //----------------------------------------------------------------------------
   int Crh_FileResponse_setId(castor::rh::FileResponse* instance,
-                             unsigned long id) {
+                             u_signed64 id) {
     instance->setId(id);
     return 0;
   }
@@ -103,7 +104,7 @@ extern "C" {
   // Crh_FileResponse_id
   //----------------------------------------------------------------------------
   int Crh_FileResponse_id(castor::rh::FileResponse* instance,
-                          unsigned long* ret) {
+                          u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }

@@ -30,6 +30,7 @@
 // Include Files
 #include "castor/IObject.hpp"
 #include "castor/rh/Response.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -86,12 +87,12 @@ namespace castor {
        * Sets the id of the object
        * @param id The new id
        */
-      virtual void setId(unsigned long id);
+      virtual void setId(u_signed64 id);
 
       /**
        * gets the id of the object
        */
-      virtual unsigned long id() const;
+      virtual u_signed64 id() const;
 
       /**
        * Gets the type of the object
@@ -211,7 +212,7 @@ namespace castor {
       std::string m_protocol;
 
       /// The id of this object
-      unsigned long m_id;
+      u_signed64 m_id;
 
     }; // end of class FileResponse
 

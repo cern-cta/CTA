@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamCuuidCnv.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/08/19 10:12:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamCuuidCnv.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/05 13:37:29 $ $Author: sponcec3 $
  *
  *
  *
@@ -149,7 +149,7 @@ castor::IObject* castor::io::StreamCuuidCnv::createObj(castor::IAddress* address
                >> content.node[2] >> content.node[3]
                >> content.node[4] >> content.node[5];
   object->setContent(content);
-  unsigned long id;
+  u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
   newlyCreated.insert(object);

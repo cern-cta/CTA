@@ -28,8 +28,8 @@
 #define CASTOR_STAGER_CASTORFILE_H
 
 // Include Files and Forward declarations for the C world
+#include "osdep.h"
 struct C_IObject_t;
-struct C_u_signed64_t;
 struct Cstager_CastorFile_t;
 struct Cstager_DiskCopy_t;
 struct Cstager_TapeCopy_t;
@@ -77,13 +77,13 @@ int Cstager_CastorFile_TYPE(int* ret);
  * Sets the id of the object
  */
 int Cstager_CastorFile_setId(struct Cstager_CastorFile_t* instance,
-                             unsigned long id);
+                             u_signed64 id);
 
 /**
  * gets the id of the object
  */
 int Cstager_CastorFile_id(struct Cstager_CastorFile_t* instance,
-                          unsigned long* ret);
+                          u_signed64* ret);
 
 /**
  * Gets the type of the object
@@ -95,13 +95,13 @@ int Cstager_CastorFile_type(struct Cstager_CastorFile_t* instance,
  * Get the value of fileId
  * The id of this castor file. This identifies it uniquely
  */
-int Cstager_CastorFile_fileId(struct Cstager_CastorFile_t* instance, struct C_u_signed64_t* var);
+int Cstager_CastorFile_fileId(struct Cstager_CastorFile_t* instance, u_signed64* var);
 
 /**
  * Set the value of fileId
  * The id of this castor file. This identifies it uniquely
  */
-int Cstager_CastorFile_setFileId(struct Cstager_CastorFile_t* instance, struct C_u_signed64_t new_var);
+int Cstager_CastorFile_setFileId(struct Cstager_CastorFile_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of nsHost
@@ -119,13 +119,13 @@ int Cstager_CastorFile_setNsHost(struct Cstager_CastorFile_t* instance, const ch
  * Get the value of size
  * Size of the file
  */
-int Cstager_CastorFile_size(struct Cstager_CastorFile_t* instance, struct C_u_signed64_t* var);
+int Cstager_CastorFile_size(struct Cstager_CastorFile_t* instance, u_signed64* var);
 
 /**
  * Set the value of size
  * Size of the file
  */
-int Cstager_CastorFile_setSize(struct Cstager_CastorFile_t* instance, struct C_u_signed64_t new_var);
+int Cstager_CastorFile_setSize(struct Cstager_CastorFile_t* instance, u_signed64 new_var);
 
 /**
  * Add a struct Cstager_DiskCopy_t* object to the diskFileCopies list

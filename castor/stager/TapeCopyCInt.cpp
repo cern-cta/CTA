@@ -30,6 +30,7 @@
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/TapeCopyStatusCodes.hpp"
+#include "osdep.h"
 #include <vector>
 
 extern "C" {
@@ -83,7 +84,7 @@ extern "C" {
   // Cstager_TapeCopy_setId
   //----------------------------------------------------------------------------
   int Cstager_TapeCopy_setId(castor::stager::TapeCopy* instance,
-                             unsigned long id) {
+                             u_signed64 id) {
     instance->setId(id);
     return 0;
   }
@@ -92,7 +93,7 @@ extern "C" {
   // Cstager_TapeCopy_id
   //----------------------------------------------------------------------------
   int Cstager_TapeCopy_id(castor::stager::TapeCopy* instance,
-                          unsigned long* ret) {
+                          u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }

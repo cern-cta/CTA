@@ -29,9 +29,9 @@
 
 // Include Files and Forward declarations for the C world
 #include "castor/stager/RequestStatusCodes.h"
+#include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
-struct C_u_signed64_t;
 struct Cstager_Request_t;
 struct Cstager_SubRequest_t;
 
@@ -69,12 +69,12 @@ int Cstager_Request_print(struct Cstager_Request_t* instance);
 /**
  * Get the value of flags
  */
-int Cstager_Request_flags(struct Cstager_Request_t* instance, struct C_u_signed64_t* var);
+int Cstager_Request_flags(struct Cstager_Request_t* instance, u_signed64* var);
 
 /**
  * Set the value of flags
  */
-int Cstager_Request_setFlags(struct Cstager_Request_t* instance, struct C_u_signed64_t new_var);
+int Cstager_Request_setFlags(struct Cstager_Request_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of userName

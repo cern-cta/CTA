@@ -30,6 +30,7 @@
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/TapeCopy.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -38,7 +39,7 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::stager::TapeCopy::TapeCopy() throw() :
-  m_id(0),
+  m_id(),
   m_castorFile(0) {
 };
 
@@ -108,14 +109,14 @@ int castor::stager::TapeCopy::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::stager::TapeCopy::setId(unsigned long id) {
+void castor::stager::TapeCopy::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::stager::TapeCopy::id() const {
+u_signed64 castor::stager::TapeCopy::id() const {
   return m_id;
 }
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ReqIdCInt.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/01 14:26:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ReqIdCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/05 13:37:33 $ $Author: sponcec3 $
  *
  * 
  *
@@ -28,6 +28,7 @@
 #include "castor/IObject.hpp"
 #include "castor/stager/ReqId.hpp"
 #include "castor/stager/ReqIdRequest.hpp"
+#include "osdep.h"
 
 extern "C" {
 
@@ -80,7 +81,7 @@ extern "C" {
   // Cstager_ReqId_setId
   //----------------------------------------------------------------------------
   int Cstager_ReqId_setId(castor::stager::ReqId* instance,
-                          unsigned long id) {
+                          u_signed64 id) {
     instance->setId(id);
     return 0;
   }
@@ -89,7 +90,7 @@ extern "C" {
   // Cstager_ReqId_id
   //----------------------------------------------------------------------------
   int Cstager_ReqId_id(castor::stager::ReqId* instance,
-                       unsigned long* ret) {
+                       u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Cuuid.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/01 14:26:21 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Cuuid.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/05 13:37:30 $ $Author: sponcec3 $
  *
  * 
  *
@@ -30,6 +30,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/Cuuid.hpp"
 #include "castor/stager/Segment.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -38,7 +39,7 @@
 //------------------------------------------------------------------------------
 castor::stager::Cuuid::Cuuid() throw() :
   m_content(),
-  m_id(0) {
+  m_id() {
 };
 
 //------------------------------------------------------------------------------
@@ -94,14 +95,14 @@ int castor::stager::Cuuid::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::stager::Cuuid::setId(unsigned long id) {
+void castor::stager::Cuuid::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::stager::Cuuid::id() const {
+u_signed64 castor::stager::Cuuid::id() const {
   return m_id;
 }
 

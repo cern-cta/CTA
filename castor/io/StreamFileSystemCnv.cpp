@@ -164,7 +164,7 @@ castor::IObject* castor::io::StreamFileSystemCnv::createObj(castor::IAddress* ad
   std::string mountPoint;
   ad->stream() >> mountPoint;
   object->setMountPoint(mountPoint);
-  unsigned long id;
+  u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
   newlyCreated.insert(object);

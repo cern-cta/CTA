@@ -30,6 +30,7 @@
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskCopyStatusCode.hpp"
 #include "castor/stager/FileSystem.hpp"
+#include "osdep.h"
 
 extern "C" {
 
@@ -82,7 +83,7 @@ extern "C" {
   // Cstager_DiskCopy_setId
   //----------------------------------------------------------------------------
   int Cstager_DiskCopy_setId(castor::stager::DiskCopy* instance,
-                             unsigned long id) {
+                             u_signed64 id) {
     instance->setId(id);
     return 0;
   }
@@ -91,7 +92,7 @@ extern "C" {
   // Cstager_DiskCopy_id
   //----------------------------------------------------------------------------
   int Cstager_DiskCopy_id(castor::stager::DiskCopy* instance,
-                          unsigned long* ret) {
+                          u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }

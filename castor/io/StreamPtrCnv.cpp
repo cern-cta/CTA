@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamPtrCnv.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/08/19 10:12:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamPtrCnv.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/10/05 13:37:29 $ $Author: sponcec3 $
  *
  * 
  *
@@ -126,7 +126,7 @@ castor::IObject* castor::io::StreamPtrCnv::createObj
     dynamic_cast<StreamAddress*>(address);
   // Just retrieve the object from the newlyCreated catalog
   // using the id stored in the stream
-  unsigned long id;
+  u_signed64 id;
   ad->stream() >> id;
   // Case of a null pointer
   if (id == 0) return 0;

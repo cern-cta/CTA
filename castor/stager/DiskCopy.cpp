@@ -30,6 +30,7 @@
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/FileSystem.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -38,7 +39,7 @@
 //------------------------------------------------------------------------------
 castor::stager::DiskCopy::DiskCopy() throw() :
   m_path(""),
-  m_id(0),
+  m_id(),
   m_fileSystem(0),
   m_castorFile(0) {
 };
@@ -103,14 +104,14 @@ int castor::stager::DiskCopy::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::stager::DiskCopy::setId(unsigned long id) {
+void castor::stager::DiskCopy::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::stager::DiskCopy::id() const {
+u_signed64 castor::stager::DiskCopy::id() const {
   return m_id;
 }
 

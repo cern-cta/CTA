@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "osdep.h"
 
 extern "C" {
 
@@ -41,7 +42,7 @@ extern "C" {
   // C_IObject_setId
   //----------------------------------------------------------------------------
   int C_IObject_setId(castor::IObject* instance,
-                      unsigned long id) {
+                      u_signed64 id) {
     instance->setId(id);
     return 0;
   }
@@ -50,7 +51,7 @@ extern "C" {
   // C_IObject_id
   //----------------------------------------------------------------------------
   int C_IObject_id(castor::IObject* instance,
-                   unsigned long* ret) {
+                   u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }

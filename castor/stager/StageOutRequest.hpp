@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageOutRequest.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/01 14:26:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageOutRequest.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/05 13:37:33 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,6 +29,7 @@
 
 // Include Files
 #include "castor/stager/Request.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -85,12 +86,12 @@ namespace castor {
        * Sets the id of the object
        * @param id The new id
        */
-      virtual void setId(unsigned long id);
+      virtual void setId(u_signed64 id);
 
       /**
        * gets the id of the object
        */
-      virtual unsigned long id() const;
+      virtual u_signed64 id() const;
 
       /**
        * Gets the type of the object
@@ -128,7 +129,7 @@ namespace castor {
       int m_openmode;
 
       /// The id of this object
-      unsigned long m_id;
+      u_signed64 m_id;
 
     }; // end of class StageOutRequest
 

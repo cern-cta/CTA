@@ -28,6 +28,7 @@
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/rh/Client.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -37,7 +38,7 @@
 castor::rh::Client::Client() throw() :
   m_ipAddress(0),
   m_port(0),
-  m_id(0) {
+  m_id() {
 };
 
 //------------------------------------------------------------------------------
@@ -100,14 +101,14 @@ void castor::rh::Client::sendRep() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::rh::Client::setId(unsigned long id) {
+void castor::rh::Client::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::rh::Client::id() const {
+u_signed64 castor::rh::Client::id() const {
   return m_id;
 }
 

@@ -28,6 +28,7 @@
 #define CASTOR_RH_CLIENT_H
 
 // Include Files and Forward declarations for the C world
+#include "osdep.h"
 struct C_IClient_t;
 struct Crh_Client_t;
 
@@ -92,13 +93,13 @@ int Crh_Client_sendRep(struct Crh_Client_t* instance);
  * Sets the id of the object
  */
 int Crh_Client_setId(struct Crh_Client_t* instance,
-                     unsigned long id);
+                     u_signed64 id);
 
 /**
  * gets the id of the object
  */
 int Crh_Client_id(struct Crh_Client_t* instance,
-                  unsigned long* ret);
+                  u_signed64* ret);
 
 /**
  * Gets the type of the object

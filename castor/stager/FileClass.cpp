@@ -28,6 +28,7 @@
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/FileClass.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -39,7 +40,7 @@ castor::stager::FileClass::FileClass() throw() :
   m_minFileSize(0),
   m_maxFileSize(0),
   m_nbCopies(0),
-  m_id(0) {
+  m_id() {
 };
 
 //------------------------------------------------------------------------------
@@ -86,14 +87,14 @@ int castor::stager::FileClass::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::stager::FileClass::setId(unsigned long id) {
+void castor::stager::FileClass::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::stager::FileClass::id() const {
+u_signed64 castor::stager::FileClass::id() const {
   return m_id;
 }
 

@@ -82,7 +82,7 @@ extern "C" {
   // Cstager_SubRequest_setId
   //----------------------------------------------------------------------------
   int Cstager_SubRequest_setId(castor::stager::SubRequest* instance,
-                               unsigned long id) {
+                               u_signed64 id) {
     instance->setId(id);
     return 0;
   }
@@ -91,7 +91,7 @@ extern "C" {
   // Cstager_SubRequest_id
   //----------------------------------------------------------------------------
   int Cstager_SubRequest_id(castor::stager::SubRequest* instance,
-                            unsigned long* ret) {
+                            u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }

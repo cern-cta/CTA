@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/01 14:26:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraReqIdCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/05 13:37:28 $ $Author: sponcec3 $
  *
  * 
  *
@@ -191,7 +191,7 @@ void castor::db::ora::OraReqIdCnv::createRep(castor::IAddress* address,
         }
       }
     }
-    unsigned long id = cnvSvc()->getIds(nids);
+    u_signed64 id = cnvSvc()->getIds(nids);
     if (0 == obj->id()) obj->setId(id++);
     for (std::list<castor::IObject*>::const_iterator it = toBeSaved.begin();
          it != toBeSaved.end();
@@ -199,12 +199,12 @@ void castor::db::ora::OraReqIdCnv::createRep(castor::IAddress* address,
       (*it)->setId(id++);
     }
     // Now Save the current object
-    m_storeTypeStatement->setInt(1, obj->id());
+    m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
     m_insertStatement->setString(1, obj->value());
-    m_insertStatement->setInt(2, obj->id());
-    m_insertStatement->setInt(3, obj->request() ? obj->request()->id() : 0);
+    m_insertStatement->setDouble(2, obj->id());
+    m_insertStatement->setDouble(3, obj->request() ? obj->request()->id() : 0);
     m_insertStatement->executeUpdate();
     if (recursive) {
       // Save dependant objects that need it
@@ -225,8 +225,8 @@ void castor::db::ora::OraReqIdCnv::createRep(castor::IAddress* address,
       if (0 == m_insertReqIdRequest2ReqIdStatement) {
         m_insertReqIdRequest2ReqIdStatement = createStatement(s_insertReqIdRequest2ReqIdStatementString);
       }
-      m_insertReqIdRequest2ReqIdStatement->setInt(1, obj->request()->id());
-      m_insertReqIdRequest2ReqIdStatement->setInt(2, obj->id());
+      m_insertReqIdRequest2ReqIdStatement->setDouble(1, obj->request()->id());
+      m_insertReqIdRequest2ReqIdStatement->setDouble(2, obj->id());
       m_insertReqIdRequest2ReqIdStatement->executeUpdate();
     }
     if (autocommit) {
@@ -296,7 +296,7 @@ void castor::db::ora::OraReqIdCnv::updateRep(castor::IAddress* address,
     alreadyDone.insert(obj);
     if (recursive) {
       // retrieve the object from the database
-      m_selectStatement->setInt(1, obj->id());
+      m_selectStatement->setDouble(1, obj->id());
       oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
       if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
         castor::exception::NoEntry ex;
@@ -305,7 +305,7 @@ void castor::db::ora::OraReqIdCnv::updateRep(castor::IAddress* address,
       }
       // Dealing with request
       {
-        unsigned long requestId = rset->getInt(3);
+        u_signed64 requestId = rset->getInt(3);
         castor::db::DbAddress ad(requestId, " ", 0);
         if (0 != requestId &&
             0 != obj->request() &&
@@ -315,8 +315,8 @@ void castor::db::ora::OraReqIdCnv::updateRep(castor::IAddress* address,
           if (0 == m_deleteReqIdRequest2ReqIdStatement) {
             m_deleteReqIdRequest2ReqIdStatement = createStatement(s_deleteReqIdRequest2ReqIdStatementString);
           }
-          m_deleteReqIdRequest2ReqIdStatement->setInt(1, obj->request()->id());
-          m_deleteReqIdRequest2ReqIdStatement->setInt(2, obj->id());
+          m_deleteReqIdRequest2ReqIdStatement->setDouble(1, obj->request()->id());
+          m_deleteReqIdRequest2ReqIdStatement->setDouble(2, obj->id());
           m_deleteReqIdRequest2ReqIdStatement->executeUpdate();
         }
         if (requestId == 0) {
@@ -326,8 +326,8 @@ void castor::db::ora::OraReqIdCnv::updateRep(castor::IAddress* address,
               if (0 == m_insertReqIdRequest2ReqIdStatement) {
                 m_insertReqIdRequest2ReqIdStatement = createStatement(s_insertReqIdRequest2ReqIdStatementString);
               }
-              m_insertReqIdRequest2ReqIdStatement->setInt(1, obj->request()->id());
-              m_insertReqIdRequest2ReqIdStatement->setInt(2, obj->id());
+              m_insertReqIdRequest2ReqIdStatement->setDouble(1, obj->request()->id());
+              m_insertReqIdRequest2ReqIdStatement->setDouble(2, obj->id());
               m_insertReqIdRequest2ReqIdStatement->executeUpdate();
             }
           }
@@ -341,8 +341,8 @@ void castor::db::ora::OraReqIdCnv::updateRep(castor::IAddress* address,
     }
     // Now Update the current object
     m_updateStatement->setString(1, obj->value());
-    m_updateStatement->setInt(2, obj->request() ? obj->request()->id() : 0);
-    m_updateStatement->setInt(3, obj->id());
+    m_updateStatement->setDouble(2, obj->request() ? obj->request()->id() : 0);
+    m_updateStatement->setDouble(3, obj->id());
     m_updateStatement->executeUpdate();
     if (recursive) {
     }
@@ -394,9 +394,9 @@ void castor::db::ora::OraReqIdCnv::deleteRep(castor::IAddress* address,
     // Mark the current object as done
     alreadyDone.insert(obj);
     // Now Delete the object
-    m_deleteTypeStatement->setInt(1, obj->id());
+    m_deleteTypeStatement->setDouble(1, obj->id());
     m_deleteTypeStatement->executeUpdate();
-    m_deleteStatement->setInt(1, obj->id());
+    m_deleteStatement->setDouble(1, obj->id());
     m_deleteStatement->executeUpdate();
     // Delete link to request object
     if (0 != obj->request()) {
@@ -405,8 +405,8 @@ void castor::db::ora::OraReqIdCnv::deleteRep(castor::IAddress* address,
         m_deleteReqIdRequest2ReqIdStatement = createStatement(s_deleteReqIdRequest2ReqIdStatementString);
       }
       // Delete links to objects
-      m_deleteReqIdRequest2ReqIdStatement->setInt(1, obj->request()->id());
-      m_deleteReqIdRequest2ReqIdStatement->setInt(2, obj->id());
+      m_deleteReqIdRequest2ReqIdStatement->setDouble(1, obj->request()->id());
+      m_deleteReqIdRequest2ReqIdStatement->setDouble(2, obj->id());
       m_deleteReqIdRequest2ReqIdStatement->executeUpdate();
     }
     if (autocommit) {
@@ -454,7 +454,7 @@ castor::IObject* castor::db::ora::OraReqIdCnv::createObj(castor::IAddress* addre
       throw ex;
     }
     // retrieve the object from the database
-    m_selectStatement->setInt(1, ad->id());
+    m_selectStatement->setDouble(1, ad->id());
     oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::exception::NoEntry ex;
@@ -465,9 +465,9 @@ castor::IObject* castor::db::ora::OraReqIdCnv::createObj(castor::IAddress* addre
     castor::stager::ReqId* object = new castor::stager::ReqId();
     // Now retrieve and set members
     object->setValue(rset->getString(1));
-    object->setId(rset->getInt(2));
+    object->setId(rset->getDouble(2));
     newlyCreated[object->id()] = object;
-    unsigned long requestId = rset->getInt(3);
+    u_signed64 requestId = rset->getInt(3);
     IObject* objRequest = cnvSvc()->getObjFromId(requestId, newlyCreated);
     object->setRequest(dynamic_cast<castor::stager::ReqIdRequest*>(objRequest));
     m_selectStatement->closeResultSet(rset);
@@ -512,7 +512,7 @@ void castor::db::ora::OraReqIdCnv::updateObj(castor::IObject* obj,
       throw ex;
     }
     // retrieve the object from the database
-    m_selectStatement->setInt(1, obj->id());
+    m_selectStatement->setDouble(1, obj->id());
     oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::exception::NoEntry ex;
@@ -523,10 +523,10 @@ void castor::db::ora::OraReqIdCnv::updateObj(castor::IObject* obj,
     castor::stager::ReqId* object = 
       dynamic_cast<castor::stager::ReqId*>(obj);
     object->setValue(rset->getString(1));
-    object->setId(rset->getInt(2));
+    object->setId(rset->getDouble(2));
     alreadyDone[obj->id()] = obj;
     // Dealing with request
-    unsigned long requestId = rset->getInt(3);
+    u_signed64 requestId = rset->getInt(3);
     if (0 != object->request() &&
         (0 == requestId ||
          object->request()->id() != requestId)) {

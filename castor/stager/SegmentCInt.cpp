@@ -85,7 +85,7 @@ extern "C" {
   // Cstager_Segment_setId
   //----------------------------------------------------------------------------
   int Cstager_Segment_setId(castor::stager::Segment* instance,
-                            unsigned long id) {
+                            u_signed64 id) {
     instance->setId(id);
     return 0;
   }
@@ -94,7 +94,7 @@ extern "C" {
   // Cstager_Segment_id
   //----------------------------------------------------------------------------
   int Cstager_Segment_id(castor::stager::Segment* instance,
-                         unsigned long* ret) {
+                         u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }

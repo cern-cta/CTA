@@ -28,6 +28,7 @@
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/TapePool.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -36,7 +37,7 @@
 //------------------------------------------------------------------------------
 castor::stager::TapePool::TapePool() throw() :
   m_name(""),
-  m_id(0) {
+  m_id() {
 };
 
 //------------------------------------------------------------------------------
@@ -80,14 +81,14 @@ int castor::stager::TapePool::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::stager::TapePool::setId(unsigned long id) {
+void castor::stager::TapePool::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::stager::TapePool::id() const {
+u_signed64 castor::stager::TapePool::id() const {
   return m_id;
 }
 

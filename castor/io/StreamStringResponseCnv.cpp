@@ -37,6 +37,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/rh/StringResponse.hpp"
+#include "osdep.h"
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -135,7 +136,7 @@ castor::IObject* castor::io::StreamStringResponseCnv::createObj(castor::IAddress
   std::string content;
   ad->stream() >> content;
   object->setContent(content);
-  unsigned long id;
+  u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
   newlyCreated.insert(object);

@@ -28,6 +28,7 @@
 #include "castor/Constants.hpp"
 #include "castor/MessageAck.hpp"
 #include "castor/ObjectSet.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -38,7 +39,7 @@ castor::MessageAck::MessageAck() throw() :
   m_status(false),
   m_errorCode(0),
   m_errorMessage(""),
-  m_id(0) {
+  m_id() {
 };
 
 //------------------------------------------------------------------------------
@@ -84,14 +85,14 @@ int castor::MessageAck::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::MessageAck::setId(unsigned long id) {
+void castor::MessageAck::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::MessageAck::id() const {
+u_signed64 castor::MessageAck::id() const {
   return m_id;
 }
 

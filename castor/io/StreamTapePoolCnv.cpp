@@ -37,6 +37,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/stager/TapePool.hpp"
+#include "osdep.h"
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -135,7 +136,7 @@ castor::IObject* castor::io::StreamTapePoolCnv::createObj(castor::IAddress* addr
   std::string name;
   ad->stream() >> name;
   object->setName(name);
-  unsigned long id;
+  u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
   newlyCreated.insert(object);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbAddress.cpp,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DbAddress.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/05 13:37:28 $ $Author: sponcec3 $
  *
  *
  *
@@ -30,7 +30,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::db::DbAddress::DbAddress(const unsigned long id,
+castor::db::DbAddress::DbAddress(const u_signed64 id,
                                  const std::string cnvSvcName,
                                  const unsigned int objType) :
   BaseAddress(cnvSvcName, objType), m_id(id) {}

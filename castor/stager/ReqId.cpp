@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ReqId.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/01 14:26:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ReqId.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/05 13:37:33 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,6 +29,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/ReqId.hpp"
 #include "castor/stager/ReqIdRequest.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -37,7 +38,7 @@
 //------------------------------------------------------------------------------
 castor::stager::ReqId::ReqId() throw() :
   m_value(""),
-  m_id(0),
+  m_id(),
   m_request(0) {
 };
 
@@ -91,14 +92,14 @@ int castor::stager::ReqId::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::stager::ReqId::setId(unsigned long id) {
+void castor::stager::ReqId::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::stager::ReqId::id() const {
+u_signed64 castor::stager::ReqId::id() const {
   return m_id;
 }
 

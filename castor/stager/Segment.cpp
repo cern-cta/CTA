@@ -51,7 +51,7 @@ castor::stager::Segment::Segment() throw() :
   m_errMsgTxt(""),
   m_errorCode(0),
   m_severity(0),
-  m_id(0),
+  m_id(),
   m_tape(0),
   m_copy(0),
   m_stgReqId(0) {
@@ -138,14 +138,14 @@ int castor::stager::Segment::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::stager::Segment::setId(unsigned long id) {
+void castor::stager::Segment::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::stager::Segment::id() const {
+u_signed64 castor::stager::Segment::id() const {
   return m_id;
 }
 

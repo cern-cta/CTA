@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageQryRequestCnv.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/01 14:26:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageQryRequestCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/05 13:37:28 $ $Author: sponcec3 $
  *
  * 
  *
@@ -214,7 +214,7 @@ void castor::db::ora::OraStageQryRequestCnv::createRep(castor::IAddress* address
         }
       }
     }
-    unsigned long id = cnvSvc()->getIds(nids);
+    u_signed64 id = cnvSvc()->getIds(nids);
     if (0 == obj->id()) obj->setId(id++);
     for (std::list<castor::IObject*>::const_iterator it = toBeSaved.begin();
          it != toBeSaved.end();
@@ -222,12 +222,12 @@ void castor::db::ora::OraStageQryRequestCnv::createRep(castor::IAddress* address
       (*it)->setId(id++);
     }
     // Now Save the current object
-    m_storeTypeStatement->setInt(1, obj->id());
+    m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
-    m_insertStatusStatement->setInt(1, obj->id());
+    m_insertStatusStatement->setDouble(1, obj->id());
     m_insertStatusStatement->executeUpdate();
-    m_insertStatement->setInt(1, obj->flags());
+    m_insertStatement->setDouble(1, obj->flags());
     m_insertStatement->setString(2, obj->userName());
     m_insertStatement->setInt(3, obj->euid());
     m_insertStatement->setInt(4, obj->egid());
@@ -235,9 +235,9 @@ void castor::db::ora::OraStageQryRequestCnv::createRep(castor::IAddress* address
     m_insertStatement->setInt(6, obj->pid());
     m_insertStatement->setString(7, obj->machine());
     m_insertStatement->setString(8, obj->projectName());
-    m_insertStatement->setInt(9, obj->id());
-    m_insertStatement->setInt(10, obj->client() ? obj->client()->id() : 0);
-    m_insertStatement->setInt(11, (int)obj->status());
+    m_insertStatement->setDouble(9, obj->id());
+    m_insertStatement->setDouble(10, obj->client() ? obj->client()->id() : 0);
+    m_insertStatement->setDouble(11, (int)obj->status());
     m_insertStatement->executeUpdate();
     if (recursive) {
       // Save dependant objects that need it
@@ -328,7 +328,7 @@ void castor::db::ora::OraStageQryRequestCnv::updateRep(castor::IAddress* address
     alreadyDone.insert(obj);
     if (recursive) {
       // retrieve the object from the database
-      m_selectStatement->setInt(1, obj->id());
+      m_selectStatement->setDouble(1, obj->id());
       oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
       if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
         castor::exception::NoEntry ex;
@@ -337,7 +337,7 @@ void castor::db::ora::OraStageQryRequestCnv::updateRep(castor::IAddress* address
       }
       // Dealing with client
       {
-        unsigned long clientId = rset->getInt(10);
+        u_signed64 clientId = rset->getInt(10);
         castor::db::DbAddress ad(clientId, " ", 0);
         if (0 != clientId &&
             0 != obj->client() &&
@@ -360,7 +360,7 @@ void castor::db::ora::OraStageQryRequestCnv::updateRep(castor::IAddress* address
       m_selectStatement->closeResultSet(rset);
     }
     // Now Update the current object
-    m_updateStatement->setInt(1, obj->flags());
+    m_updateStatement->setDouble(1, obj->flags());
     m_updateStatement->setString(2, obj->userName());
     m_updateStatement->setInt(3, obj->euid());
     m_updateStatement->setInt(4, obj->egid());
@@ -368,9 +368,9 @@ void castor::db::ora::OraStageQryRequestCnv::updateRep(castor::IAddress* address
     m_updateStatement->setInt(6, obj->pid());
     m_updateStatement->setString(7, obj->machine());
     m_updateStatement->setString(8, obj->projectName());
-    m_updateStatement->setInt(9, obj->client() ? obj->client()->id() : 0);
-    m_updateStatement->setInt(10, (int)obj->status());
-    m_updateStatement->setInt(11, obj->id());
+    m_updateStatement->setDouble(9, obj->client() ? obj->client()->id() : 0);
+    m_updateStatement->setDouble(10, (int)obj->status());
+    m_updateStatement->setDouble(11, obj->id());
     m_updateStatement->executeUpdate();
     if (recursive) {
       // Dealing with subRequests
@@ -379,7 +379,7 @@ void castor::db::ora::OraStageQryRequestCnv::updateRep(castor::IAddress* address
           m_Request2SubRequestStatement = createStatement(s_Request2SubRequestStatementString);
         }
         std::set<int> subRequestsList;
-        m_Request2SubRequestStatement->setInt(1, obj->id());
+        m_Request2SubRequestStatement->setDouble(1, obj->id());
         oracle::occi::ResultSet *rset = m_Request2SubRequestStatement->executeQuery();
         while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
           subRequestsList.insert(rset->getInt(1));
@@ -459,11 +459,11 @@ void castor::db::ora::OraStageQryRequestCnv::deleteRep(castor::IAddress* address
     // Mark the current object as done
     alreadyDone.insert(obj);
     // Now Delete the object
-    m_deleteTypeStatement->setInt(1, obj->id());
+    m_deleteTypeStatement->setDouble(1, obj->id());
     m_deleteTypeStatement->executeUpdate();
-    m_deleteStatement->setInt(1, obj->id());
+    m_deleteStatement->setDouble(1, obj->id());
     m_deleteStatement->executeUpdate();
-    m_deleteStatusStatement->setInt(1, obj->id());
+    m_deleteStatusStatement->setDouble(1, obj->id());
     m_deleteStatusStatement->executeUpdate();
     for (std::vector<castor::stager::SubRequest*>::iterator it = obj->subRequests().begin();
          it != obj->subRequests().end();
@@ -521,7 +521,7 @@ castor::IObject* castor::db::ora::OraStageQryRequestCnv::createObj(castor::IAddr
       throw ex;
     }
     // retrieve the object from the database
-    m_selectStatement->setInt(1, ad->id());
+    m_selectStatement->setDouble(1, ad->id());
     oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::exception::NoEntry ex;
@@ -531,7 +531,7 @@ castor::IObject* castor::db::ora::OraStageQryRequestCnv::createObj(castor::IAddr
     // create the new Object
     castor::stager::StageQryRequest* object = new castor::stager::StageQryRequest();
     // Now retrieve and set members
-    object->setFlags(rset->getInt(1));
+    object->setFlags(rset->getDouble(1));
     object->setUserName(rset->getString(2));
     object->setEuid(rset->getInt(3));
     object->setEgid(rset->getInt(4));
@@ -539,9 +539,9 @@ castor::IObject* castor::db::ora::OraStageQryRequestCnv::createObj(castor::IAddr
     object->setPid(rset->getInt(6));
     object->setMachine(rset->getString(7));
     object->setProjectName(rset->getString(8));
-    object->setId(rset->getInt(9));
+    object->setId(rset->getDouble(9));
     newlyCreated[object->id()] = object;
-    unsigned long clientId = rset->getInt(10);
+    u_signed64 clientId = rset->getInt(10);
     IObject* objClient = cnvSvc()->getObjFromId(clientId, newlyCreated);
     object->setClient(dynamic_cast<castor::IClient*>(objClient));
     object->setStatus((enum castor::stager::RequestStatusCodes)rset->getInt(11));
@@ -550,7 +550,7 @@ castor::IObject* castor::db::ora::OraStageQryRequestCnv::createObj(castor::IAddr
     if (0 == m_Request2SubRequestStatement) {
       m_Request2SubRequestStatement = createStatement(s_Request2SubRequestStatementString);
     }
-    m_Request2SubRequestStatement->setInt(1, ad->id());
+    m_Request2SubRequestStatement->setDouble(1, ad->id());
     rset = m_Request2SubRequestStatement->executeQuery();
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
       IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), newlyCreated);
@@ -598,7 +598,7 @@ void castor::db::ora::OraStageQryRequestCnv::updateObj(castor::IObject* obj,
       throw ex;
     }
     // retrieve the object from the database
-    m_selectStatement->setInt(1, obj->id());
+    m_selectStatement->setDouble(1, obj->id());
     oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::exception::NoEntry ex;
@@ -608,7 +608,7 @@ void castor::db::ora::OraStageQryRequestCnv::updateObj(castor::IObject* obj,
     // Now retrieve and set members
     castor::stager::StageQryRequest* object = 
       dynamic_cast<castor::stager::StageQryRequest*>(obj);
-    object->setFlags(rset->getInt(1));
+    object->setFlags(rset->getDouble(1));
     object->setUserName(rset->getString(2));
     object->setEuid(rset->getInt(3));
     object->setEgid(rset->getInt(4));
@@ -616,10 +616,10 @@ void castor::db::ora::OraStageQryRequestCnv::updateObj(castor::IObject* obj,
     object->setPid(rset->getInt(6));
     object->setMachine(rset->getString(7));
     object->setProjectName(rset->getString(8));
-    object->setId(rset->getInt(9));
+    object->setId(rset->getDouble(9));
     alreadyDone[obj->id()] = obj;
     // Dealing with client
-    unsigned long clientId = rset->getInt(10);
+    u_signed64 clientId = rset->getInt(10);
     if (0 != object->client() &&
         (0 == clientId ||
          object->client()->id() != clientId)) {
@@ -644,7 +644,7 @@ void castor::db::ora::OraStageQryRequestCnv::updateObj(castor::IObject* obj,
       m_Request2SubRequestStatement = createStatement(s_Request2SubRequestStatementString);
     }
     std::set<int> subRequestsList;
-    m_Request2SubRequestStatement->setInt(1, obj->id());
+    m_Request2SubRequestStatement->setDouble(1, obj->id());
     rset = m_Request2SubRequestStatement->executeQuery();
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
       subRequestsList.insert(rset->getInt(1));

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbAddress.h,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/26 15:43:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DbAddress.h,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/05 13:37:28 $ $Author: sponcec3 $
  *
  * 
  *
@@ -35,7 +35,7 @@ typedef struct Cdb_DbAddress_t Cdb_DbAddress_t;
 /*
  * constructor
  */
-int Cdb_DbAddress_create(const unsigned long id,
+int Cdb_DbAddress_create(const u_signed64 id,
                          const char* cnvSvcName,
                          const unsigned int cnvSvcType,
                          Cdb_DbAddress_t** addr);
@@ -48,12 +48,12 @@ int Cdb_DbAddress_delete(Cdb_DbAddress_t* addr);
 /**
  * Get the id of this address
  */
-unsigned long Cdb_DbAddress_id(struct Cdb_DbAddress_t* obj);
+u_signed64 Cdb_DbAddress_id(struct Cdb_DbAddress_t* obj);
 
 /**
  * Set the id of this address
  */
-void Cdb_DbAddress_setId(struct Cdb_DbAddress_t* obj, unsigned long id);
+void Cdb_DbAddress_setId(struct Cdb_DbAddress_t* obj, u_signed64 id);
 
 /**
  * Cast into BaseAddress

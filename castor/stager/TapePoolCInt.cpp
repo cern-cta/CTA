@@ -27,6 +27,7 @@
 // Include Files
 #include "castor/IObject.hpp"
 #include "castor/stager/TapePool.hpp"
+#include "osdep.h"
 
 extern "C" {
 
@@ -79,7 +80,7 @@ extern "C" {
   // Cstager_TapePool_setId
   //----------------------------------------------------------------------------
   int Cstager_TapePool_setId(castor::stager::TapePool* instance,
-                             unsigned long id) {
+                             u_signed64 id) {
     instance->setId(id);
     return 0;
   }
@@ -88,7 +89,7 @@ extern "C" {
   // Cstager_TapePool_id
   //----------------------------------------------------------------------------
   int Cstager_TapePool_id(castor::stager::TapePool* instance,
-                          unsigned long* ret) {
+                          u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }

@@ -137,7 +137,7 @@ namespace castor {
          * @return the first allocated id or 0 if an error
          * occured
          */
-        const unsigned long getIds(const unsigned int nids)
+        const u_signed64 getIds(const unsigned int nids)
           throw (castor::exception::Exception);
 
         /**
@@ -167,7 +167,7 @@ namespace castor {
          * don't call it if the object is in the newlyCreated
          * vector
          */
-        castor::IObject* getObjFromId (unsigned long id,
+        castor::IObject* getObjFromId (u_signed64 id,
                                        ObjectCatalog& newlyCreated)
           throw (castor::exception::Exception);
 
@@ -203,7 +203,7 @@ namespace castor {
         /**
          * retrieves the type of an object given by its id
          */
-        const unsigned int getTypeFromId(const unsigned long id)
+        const unsigned int getTypeFromId(const u_signed64 id)
           throw (castor::exception::Exception);
 
       private:

@@ -28,6 +28,7 @@
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/rh/StringResponse.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -37,7 +38,7 @@
 castor::rh::StringResponse::StringResponse() throw() :
   Response(),
   m_content(""),
-  m_id(0) {
+  m_id() {
 };
 
 //------------------------------------------------------------------------------
@@ -73,14 +74,14 @@ int castor::rh::StringResponse::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::rh::StringResponse::setId(unsigned long id) {
+void castor::rh::StringResponse::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::rh::StringResponse::id() const {
+u_signed64 castor::rh::StringResponse::id() const {
   return m_id;
 }
 

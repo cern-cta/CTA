@@ -28,6 +28,7 @@
 #define CASTOR_STAGER_FILECLASS_H
 
 // Include Files and Forward declarations for the C world
+#include "osdep.h"
 struct C_IObject_t;
 struct Cstager_FileClass_t;
 
@@ -75,13 +76,13 @@ int Cstager_FileClass_TYPE(int* ret);
  * Sets the id of the object
  */
 int Cstager_FileClass_setId(struct Cstager_FileClass_t* instance,
-                            unsigned long id);
+                            u_signed64 id);
 
 /**
  * gets the id of the object
  */
 int Cstager_FileClass_id(struct Cstager_FileClass_t* instance,
-                         unsigned long* ret);
+                         u_signed64* ret);
 
 /**
  * Gets the type of the object

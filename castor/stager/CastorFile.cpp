@@ -42,7 +42,7 @@ castor::stager::CastorFile::CastorFile() throw() :
   m_fileId(),
   m_nsHost(""),
   m_size(),
-  m_id(0) {
+  m_id() {
 };
 
 //------------------------------------------------------------------------------
@@ -119,14 +119,14 @@ int castor::stager::CastorFile::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::stager::CastorFile::setId(unsigned long id) {
+void castor::stager::CastorFile::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::stager::CastorFile::id() const {
+u_signed64 castor::stager::CastorFile::id() const {
   return m_id;
 }
 

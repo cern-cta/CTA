@@ -131,7 +131,7 @@ void castor::db::ora::OraCuuidCnv::createRep(castor::IAddress* address,
     alreadyDone.insert(obj);
     // Set ids of all objects
     int nids = obj->id() == 0 ? 1 : 0;
-    unsigned long id = cnvSvc()->getIds(nids);
+    u_signed64 id = cnvSvc()->getIds(nids);
     if (0 == obj->id()) obj->setId(id++);
     // Now Save the current object
     m_storeTypeStatement->setInt(1, obj->id());

@@ -28,6 +28,7 @@
 #define CASTOR_IOBJECT_HPP
 
 // Include Files
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -53,12 +54,12 @@ namespace castor {
      * Sets the id of the object
      * @param id The new id
      */
-    virtual void setId(unsigned long id) = 0;
+    virtual void setId(u_signed64 id) = 0;
 
     /**
      * gets the id of the object
      */
-    virtual unsigned long id() const = 0;
+    virtual u_signed64 id() const = 0;
 
     /**
      * Gets the type of the object

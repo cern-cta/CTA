@@ -161,7 +161,7 @@ castor::IObject* castor::io::StreamCastorFileCnv::createObj(castor::IAddress* ad
   u_signed64 size;
   ad->stream() >> size;
   object->setSize(size);
-  unsigned long id;
+  u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
   newlyCreated.insert(object);

@@ -549,7 +549,7 @@ void CppCppOdbcCnvWriter::writeCreateRepContent() {
   }
   fixTypeName("OdbcCnvSvc", "castor::db::odbc", m_classInfo->packageName);
   *m_stream << getIndent()
-            << "unsigned long id = cnvSvc()->getIds(nids);"
+            << "u_signed64 id = cnvSvc()->getIds(nids);"
             << endl << getIndent()
             << "if (0 == obj->id()) obj->setId(id++);" << endl;
   if (! assocs.isEmpty()) {
@@ -1358,7 +1358,7 @@ void CppCppOdbcCnvWriter::writeSingleGetFromSelect(Member mem,
   // deal with arrays of chars
   bool isArray = mem.second.find('[') > 0;
   if (isAssoc) {
-    *m_stream << "unsigned long " << mem.first
+    *m_stream << "u_signed64 " << mem.first
               << "Id = ";
   } else {
     *m_stream << "object->set"

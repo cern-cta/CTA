@@ -83,7 +83,7 @@ extern "C" {
   // Cstager_FileSystem_setId
   //----------------------------------------------------------------------------
   int Cstager_FileSystem_setId(castor::stager::FileSystem* instance,
-                               unsigned long id) {
+                               u_signed64 id) {
     instance->setId(id);
     return 0;
   }
@@ -92,7 +92,7 @@ extern "C" {
   // Cstager_FileSystem_id
   //----------------------------------------------------------------------------
   int Cstager_FileSystem_id(castor::stager::FileSystem* instance,
-                            unsigned long* ret) {
+                            u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }

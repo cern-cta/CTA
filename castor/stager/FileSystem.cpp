@@ -44,7 +44,7 @@ castor::stager::FileSystem::FileSystem() throw() :
   m_fsDeviation(0.0),
   m_randomize(0),
   m_mountPoint(""),
-  m_id(0),
+  m_id(),
   m_diskserver(0) {
 };
 
@@ -117,14 +117,14 @@ int castor::stager::FileSystem::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::stager::FileSystem::setId(unsigned long id) {
+void castor::stager::FileSystem::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::stager::FileSystem::id() const {
+u_signed64 castor::stager::FileSystem::id() const {
   return m_id;
 }
 

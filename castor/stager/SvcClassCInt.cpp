@@ -27,6 +27,7 @@
 // Include Files
 #include "castor/IObject.hpp"
 #include "castor/stager/SvcClass.hpp"
+#include "osdep.h"
 
 extern "C" {
 
@@ -79,7 +80,7 @@ extern "C" {
   // Cstager_SvcClass_setId
   //----------------------------------------------------------------------------
   int Cstager_SvcClass_setId(castor::stager::SvcClass* instance,
-                             unsigned long id) {
+                             u_signed64 id) {
     instance->setId(id);
     return 0;
   }
@@ -88,7 +89,7 @@ extern "C" {
   // Cstager_SvcClass_id
   //----------------------------------------------------------------------------
   int Cstager_SvcClass_id(castor::stager::SvcClass* instance,
-                          unsigned long* ret) {
+                          u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }

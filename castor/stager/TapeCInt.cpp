@@ -29,6 +29,7 @@
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
+#include "osdep.h"
 #include <vector>
 
 extern "C" {
@@ -82,7 +83,7 @@ extern "C" {
   // Cstager_Tape_setId
   //----------------------------------------------------------------------------
   int Cstager_Tape_setId(castor::stager::Tape* instance,
-                         unsigned long id) {
+                         u_signed64 id) {
     instance->setId(id);
     return 0;
   }
@@ -91,7 +92,7 @@ extern "C" {
   // Cstager_Tape_id
   //----------------------------------------------------------------------------
   int Cstager_Tape_id(castor::stager::Tape* instance,
-                      unsigned long* ret) {
+                      u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }

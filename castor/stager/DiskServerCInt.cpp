@@ -29,6 +29,7 @@
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/stager/FileSystem.hpp"
+#include "osdep.h"
 #include <vector>
 
 extern "C" {
@@ -82,7 +83,7 @@ extern "C" {
   // Cstager_DiskServer_setId
   //----------------------------------------------------------------------------
   int Cstager_DiskServer_setId(castor::stager::DiskServer* instance,
-                               unsigned long id) {
+                               u_signed64 id) {
     instance->setId(id);
     return 0;
   }
@@ -91,7 +92,7 @@ extern "C" {
   // Cstager_DiskServer_id
   //----------------------------------------------------------------------------
   int Cstager_DiskServer_id(castor::stager::DiskServer* instance,
-                            unsigned long* ret) {
+                            u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }

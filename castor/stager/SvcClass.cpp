@@ -28,6 +28,7 @@
 #include "castor/Constants.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/SvcClass.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
@@ -37,7 +38,7 @@
 castor::stager::SvcClass::SvcClass() throw() :
   m_policy(""),
   m_nbDrives(0),
-  m_id(0) {
+  m_id() {
 };
 
 //------------------------------------------------------------------------------
@@ -82,14 +83,14 @@ int castor::stager::SvcClass::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::stager::SvcClass::setId(unsigned long id) {
+void castor::stager::SvcClass::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::stager::SvcClass::id() const {
+u_signed64 castor::stager::SvcClass::id() const {
   return m_id;
 }
 

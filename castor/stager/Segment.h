@@ -29,8 +29,8 @@
 
 // Include Files and Forward declarations for the C world
 #include "castor/stager/SegmentStatusCodes.h"
+#include "osdep.h"
 struct C_IObject_t;
-struct C_u_signed64_t;
 struct Cstager_Segment_t;
 struct Cstager_TapeCopy_t;
 struct Cstager_Tape_t;
@@ -81,13 +81,13 @@ int Cstager_Segment_TYPE(int* ret);
  * Sets the id of the object
  */
 int Cstager_Segment_setId(struct Cstager_Segment_t* instance,
-                          unsigned long id);
+                          u_signed64 id);
 
 /**
  * gets the id of the object
  */
 int Cstager_Segment_id(struct Cstager_Segment_t* instance,
-                       unsigned long* ret);
+                       u_signed64* ret);
 
 /**
  * Gets the type of the object
@@ -121,45 +121,45 @@ int Cstager_Segment_setFseq(struct Cstager_Segment_t* instance, int new_var);
  * Get the value of offset
  * Start offset in the disk file (if segmented file)
  */
-int Cstager_Segment_offset(struct Cstager_Segment_t* instance, struct C_u_signed64_t* var);
+int Cstager_Segment_offset(struct Cstager_Segment_t* instance, u_signed64* var);
 
 /**
  * Set the value of offset
  * Start offset in the disk file (if segmented file)
  */
-int Cstager_Segment_setOffset(struct Cstager_Segment_t* instance, struct C_u_signed64_t new_var);
+int Cstager_Segment_setOffset(struct Cstager_Segment_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of bytes_in
  * Size of the tape file (segment) to be copied
  */
-int Cstager_Segment_bytes_in(struct Cstager_Segment_t* instance, struct C_u_signed64_t* var);
+int Cstager_Segment_bytes_in(struct Cstager_Segment_t* instance, u_signed64* var);
 
 /**
  * Set the value of bytes_in
  * Size of the tape file (segment) to be copied
  */
-int Cstager_Segment_setBytes_in(struct Cstager_Segment_t* instance, struct C_u_signed64_t new_var);
+int Cstager_Segment_setBytes_in(struct Cstager_Segment_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of bytes_out
  */
-int Cstager_Segment_bytes_out(struct Cstager_Segment_t* instance, struct C_u_signed64_t* var);
+int Cstager_Segment_bytes_out(struct Cstager_Segment_t* instance, u_signed64* var);
 
 /**
  * Set the value of bytes_out
  */
-int Cstager_Segment_setBytes_out(struct Cstager_Segment_t* instance, struct C_u_signed64_t new_var);
+int Cstager_Segment_setBytes_out(struct Cstager_Segment_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of host_bytes
  */
-int Cstager_Segment_host_bytes(struct Cstager_Segment_t* instance, struct C_u_signed64_t* var);
+int Cstager_Segment_host_bytes(struct Cstager_Segment_t* instance, u_signed64* var);
 
 /**
  * Set the value of host_bytes
  */
-int Cstager_Segment_setHost_bytes(struct Cstager_Segment_t* instance, struct C_u_signed64_t new_var);
+int Cstager_Segment_setHost_bytes(struct Cstager_Segment_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of segmCksumAlgorithm

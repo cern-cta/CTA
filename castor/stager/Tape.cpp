@@ -29,6 +29,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Tape.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -44,7 +45,7 @@ castor::stager::Tape::Tape() throw() :
   m_errorCode(0),
   m_severity(0),
   m_vwAddress(""),
-  m_id(0) {
+  m_id() {
 };
 
 //------------------------------------------------------------------------------
@@ -111,14 +112,14 @@ int castor::stager::Tape::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::stager::Tape::setId(unsigned long id) {
+void castor::stager::Tape::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::stager::Tape::id() const {
+u_signed64 castor::stager::Tape::id() const {
   return m_id;
 }
 

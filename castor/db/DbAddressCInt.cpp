@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbAddressCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/19 06:56:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DbAddressCInt.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/05 13:37:28 $ $Author: sponcec3 $
  *
  * 
  *
@@ -32,7 +32,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cdb_DbAddress_create
   //----------------------------------------------------------------------------
-  int Cdb_DbAddress_create(const unsigned long id,
+  int Cdb_DbAddress_create(const u_signed64 id,
 			   const char* cnvSvcName,
 			   const unsigned int cnvSvcType,
 			   castor::db::DbAddress** addr) {
@@ -51,14 +51,14 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cdb_DbAddress_getId
   //----------------------------------------------------------------------------
-  unsigned long Cdb_DbAddress_id(castor::db::DbAddress* addr) {
+  u_signed64 Cdb_DbAddress_id(castor::db::DbAddress* addr) {
     return addr->id();
   }
 
   //----------------------------------------------------------------------------
   // Cdb_DbAddress_setId
   //----------------------------------------------------------------------------
-  void Cdb_DbAddress_setId(castor::db::DbAddress* addr, unsigned long id) {
+  void Cdb_DbAddress_setId(castor::db::DbAddress* addr, u_signed64 id) {
     addr->setId(id);
   }
 

@@ -29,6 +29,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/FileSystem.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -38,7 +39,7 @@
 //------------------------------------------------------------------------------
 castor::stager::DiskServer::DiskServer() throw() :
   m_name(""),
-  m_id(0) {
+  m_id() {
 };
 
 //------------------------------------------------------------------------------
@@ -98,14 +99,14 @@ int castor::stager::DiskServer::TYPE() {
 //------------------------------------------------------------------------------
 // setId
 //------------------------------------------------------------------------------
-void castor::stager::DiskServer::setId(unsigned long id) {
+void castor::stager::DiskServer::setId(u_signed64 id) {
   m_id = id;
 }
 
 //------------------------------------------------------------------------------
 // id
 //------------------------------------------------------------------------------
-unsigned long castor::stager::DiskServer::id() const {
+u_signed64 castor::stager::DiskServer::id() const {
   return m_id;
 }
 

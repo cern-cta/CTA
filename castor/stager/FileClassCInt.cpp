@@ -27,6 +27,7 @@
 // Include Files
 #include "castor/IObject.hpp"
 #include "castor/stager/FileClass.hpp"
+#include "osdep.h"
 
 extern "C" {
 
@@ -79,7 +80,7 @@ extern "C" {
   // Cstager_FileClass_setId
   //----------------------------------------------------------------------------
   int Cstager_FileClass_setId(castor::stager::FileClass* instance,
-                              unsigned long id) {
+                              u_signed64 id) {
     instance->setId(id);
     return 0;
   }
@@ -88,7 +89,7 @@ extern "C" {
   // Cstager_FileClass_id
   //----------------------------------------------------------------------------
   int Cstager_FileClass_id(castor::stager::FileClass* instance,
-                           unsigned long* ret) {
+                           u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }

@@ -187,7 +187,7 @@ castor::IObject* castor::io::StreamSegmentCnv::createObj(castor::IAddress* addre
   int severity;
   ad->stream() >> severity;
   object->setSeverity(severity);
-  unsigned long id;
+  u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
   int status;

@@ -42,6 +42,7 @@
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskCopyStatusCode.hpp"
 #include "castor/stager/FileSystem.hpp"
+#include "osdep.h"
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -143,7 +144,7 @@ castor::IObject* castor::io::StreamDiskCopyCnv::createObj(castor::IAddress* addr
   std::string path;
   ad->stream() >> path;
   object->setPath(path);
-  unsigned long id;
+  u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
   int status;

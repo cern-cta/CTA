@@ -156,15 +156,15 @@ void castor::db::ora::OraSvcClassCnv::createRep(castor::IAddress* address,
     alreadyDone.insert(obj);
     // Set ids of all objects
     int nids = obj->id() == 0 ? 1 : 0;
-    unsigned long id = cnvSvc()->getIds(nids);
+    u_signed64 id = cnvSvc()->getIds(nids);
     if (0 == obj->id()) obj->setId(id++);
     // Now Save the current object
-    m_storeTypeStatement->setInt(1, obj->id());
+    m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
     m_insertStatement->setString(1, obj->policy());
     m_insertStatement->setInt(2, obj->nbDrives());
-    m_insertStatement->setInt(3, obj->id());
+    m_insertStatement->setDouble(3, obj->id());
     m_insertStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -223,7 +223,7 @@ void castor::db::ora::OraSvcClassCnv::updateRep(castor::IAddress* address,
     // Now Update the current object
     m_updateStatement->setString(1, obj->policy());
     m_updateStatement->setInt(2, obj->nbDrives());
-    m_updateStatement->setInt(3, obj->id());
+    m_updateStatement->setDouble(3, obj->id());
     m_updateStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -273,9 +273,9 @@ void castor::db::ora::OraSvcClassCnv::deleteRep(castor::IAddress* address,
     // Mark the current object as done
     alreadyDone.insert(obj);
     // Now Delete the object
-    m_deleteTypeStatement->setInt(1, obj->id());
+    m_deleteTypeStatement->setDouble(1, obj->id());
     m_deleteTypeStatement->executeUpdate();
-    m_deleteStatement->setInt(1, obj->id());
+    m_deleteStatement->setDouble(1, obj->id());
     m_deleteStatement->executeUpdate();
     if (autocommit) {
       cnvSvc()->getConnection()->commit();
@@ -322,7 +322,7 @@ castor::IObject* castor::db::ora::OraSvcClassCnv::createObj(castor::IAddress* ad
       throw ex;
     }
     // retrieve the object from the database
-    m_selectStatement->setInt(1, ad->id());
+    m_selectStatement->setDouble(1, ad->id());
     oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::exception::NoEntry ex;
@@ -334,7 +334,7 @@ castor::IObject* castor::db::ora::OraSvcClassCnv::createObj(castor::IAddress* ad
     // Now retrieve and set members
     object->setPolicy(rset->getString(1));
     object->setNbDrives(rset->getInt(2));
-    object->setId(rset->getInt(3));
+    object->setId(rset->getDouble(3));
     newlyCreated[object->id()] = object;
     m_selectStatement->closeResultSet(rset);
     return object;
@@ -378,7 +378,7 @@ void castor::db::ora::OraSvcClassCnv::updateObj(castor::IObject* obj,
       throw ex;
     }
     // retrieve the object from the database
-    m_selectStatement->setInt(1, obj->id());
+    m_selectStatement->setDouble(1, obj->id());
     oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::exception::NoEntry ex;
@@ -390,7 +390,7 @@ void castor::db::ora::OraSvcClassCnv::updateObj(castor::IObject* obj,
       dynamic_cast<castor::stager::SvcClass*>(obj);
     object->setPolicy(rset->getString(1));
     object->setNbDrives(rset->getInt(2));
-    object->setId(rset->getInt(3));
+    object->setId(rset->getDouble(3));
     alreadyDone[obj->id()] = obj;
     m_selectStatement->closeResultSet(rset);
   } catch (oracle::occi::SQLException e) {

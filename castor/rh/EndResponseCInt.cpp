@@ -27,6 +27,7 @@
 // Include Files
 #include "castor/rh/EndResponse.hpp"
 #include "castor/rh/Response.hpp"
+#include "osdep.h"
 
 extern "C" {
 
@@ -79,7 +80,7 @@ extern "C" {
   // Crh_EndResponse_setId
   //----------------------------------------------------------------------------
   int Crh_EndResponse_setId(castor::rh::EndResponse* instance,
-                            unsigned long id) {
+                            u_signed64 id) {
     instance->setId(id);
     return 0;
   }
@@ -88,7 +89,7 @@ extern "C" {
   // Crh_EndResponse_id
   //----------------------------------------------------------------------------
   int Crh_EndResponse_id(castor::rh::EndResponse* instance,
-                         unsigned long* ret) {
+                         u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }

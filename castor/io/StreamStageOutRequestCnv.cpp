@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageOutRequestCnv.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/01 14:26:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageOutRequestCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/05 13:37:29 $ $Author: sponcec3 $
  *
  * 
  *
@@ -182,7 +182,7 @@ castor::IObject* castor::io::StreamStageOutRequestCnv::createObj(castor::IAddres
   int openmode;
   ad->stream() >> openmode;
   object->setOpenmode(openmode);
-  unsigned long id;
+  u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
   int status;

@@ -258,7 +258,7 @@ void castor::db::ora::OraCnvSvc::rollback()
 // -----------------------------------------------------------------------
 // getIds
 // -----------------------------------------------------------------------
-const unsigned long
+const u_signed64
 castor::db::ora::OraCnvSvc::getIds(const unsigned int nids)
   throw (castor::exception::Exception) {
   if (0 == nids) return 0;
@@ -400,7 +400,7 @@ unsigned int castor::db::ora::OraCnvSvc::nbRequestsToProcess()
 // getTypeFromId
 // -----------------------------------------------------------------------
 const unsigned int
-castor::db::ora::OraCnvSvc::getTypeFromId(const unsigned long id)
+castor::db::ora::OraCnvSvc::getTypeFromId(const u_signed64 id)
   throw (castor::exception::Exception) {
   // a null id has a null type
   if (0 == id) return 0;
@@ -450,7 +450,7 @@ castor::db::ora::OraCnvSvc::getTypeFromId(const unsigned long id)
 // getObjFromId
 // -----------------------------------------------------------------------
 castor::IObject* castor::db::ora::OraCnvSvc::getObjFromId
-(unsigned long id,
+(u_signed64 id,
  castor::ObjectCatalog& newlyCreated)
   throw (castor::exception::Exception) {
   if (newlyCreated.find(id) != newlyCreated.end()) {

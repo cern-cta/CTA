@@ -213,7 +213,7 @@ void castor::db::ora::OraDiskCopyCnv::createRep(castor::IAddress* address,
         }
       }
     }
-    unsigned long id = cnvSvc()->getIds(nids);
+    u_signed64 id = cnvSvc()->getIds(nids);
     if (0 == obj->id()) obj->setId(id++);
     for (std::list<castor::IObject*>::const_iterator it = toBeSaved.begin();
          it != toBeSaved.end();
@@ -221,14 +221,14 @@ void castor::db::ora::OraDiskCopyCnv::createRep(castor::IAddress* address,
       (*it)->setId(id++);
     }
     // Now Save the current object
-    m_storeTypeStatement->setInt(1, obj->id());
+    m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
     m_insertStatement->setString(1, obj->path());
-    m_insertStatement->setInt(2, obj->id());
-    m_insertStatement->setInt(3, obj->fileSystem() ? obj->fileSystem()->id() : 0);
-    m_insertStatement->setInt(4, obj->castorFile() ? obj->castorFile()->id() : 0);
-    m_insertStatement->setInt(5, (int)obj->status());
+    m_insertStatement->setDouble(2, obj->id());
+    m_insertStatement->setDouble(3, obj->fileSystem() ? obj->fileSystem()->id() : 0);
+    m_insertStatement->setDouble(4, obj->castorFile() ? obj->castorFile()->id() : 0);
+    m_insertStatement->setDouble(5, (int)obj->status());
     m_insertStatement->executeUpdate();
     if (recursive) {
       // Save dependant objects that need it
@@ -249,8 +249,8 @@ void castor::db::ora::OraDiskCopyCnv::createRep(castor::IAddress* address,
       if (0 == m_insertFileSystem2DiskCopyStatement) {
         m_insertFileSystem2DiskCopyStatement = createStatement(s_insertFileSystem2DiskCopyStatementString);
       }
-      m_insertFileSystem2DiskCopyStatement->setInt(1, obj->fileSystem()->id());
-      m_insertFileSystem2DiskCopyStatement->setInt(2, obj->id());
+      m_insertFileSystem2DiskCopyStatement->setDouble(1, obj->fileSystem()->id());
+      m_insertFileSystem2DiskCopyStatement->setDouble(2, obj->id());
       m_insertFileSystem2DiskCopyStatement->executeUpdate();
     }
     // Deal with castorFile
@@ -258,8 +258,8 @@ void castor::db::ora::OraDiskCopyCnv::createRep(castor::IAddress* address,
       if (0 == m_insertCastorFile2DiskCopyStatement) {
         m_insertCastorFile2DiskCopyStatement = createStatement(s_insertCastorFile2DiskCopyStatementString);
       }
-      m_insertCastorFile2DiskCopyStatement->setInt(1, obj->castorFile()->id());
-      m_insertCastorFile2DiskCopyStatement->setInt(2, obj->id());
+      m_insertCastorFile2DiskCopyStatement->setDouble(1, obj->castorFile()->id());
+      m_insertCastorFile2DiskCopyStatement->setDouble(2, obj->id());
       m_insertCastorFile2DiskCopyStatement->executeUpdate();
     }
     if (autocommit) {
@@ -331,7 +331,7 @@ void castor::db::ora::OraDiskCopyCnv::updateRep(castor::IAddress* address,
     alreadyDone.insert(obj);
     if (recursive) {
       // retrieve the object from the database
-      m_selectStatement->setInt(1, obj->id());
+      m_selectStatement->setDouble(1, obj->id());
       oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
       if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
         castor::exception::NoEntry ex;
@@ -340,7 +340,7 @@ void castor::db::ora::OraDiskCopyCnv::updateRep(castor::IAddress* address,
       }
       // Dealing with fileSystem
       {
-        unsigned long fileSystemId = rset->getInt(3);
+        u_signed64 fileSystemId = rset->getInt(3);
         castor::db::DbAddress ad(fileSystemId, " ", 0);
         if (0 != fileSystemId &&
             0 != obj->fileSystem() &&
@@ -350,8 +350,8 @@ void castor::db::ora::OraDiskCopyCnv::updateRep(castor::IAddress* address,
           if (0 == m_deleteFileSystem2DiskCopyStatement) {
             m_deleteFileSystem2DiskCopyStatement = createStatement(s_deleteFileSystem2DiskCopyStatementString);
           }
-          m_deleteFileSystem2DiskCopyStatement->setInt(1, obj->fileSystem()->id());
-          m_deleteFileSystem2DiskCopyStatement->setInt(2, obj->id());
+          m_deleteFileSystem2DiskCopyStatement->setDouble(1, obj->fileSystem()->id());
+          m_deleteFileSystem2DiskCopyStatement->setDouble(2, obj->id());
           m_deleteFileSystem2DiskCopyStatement->executeUpdate();
         }
         if (fileSystemId == 0) {
@@ -361,8 +361,8 @@ void castor::db::ora::OraDiskCopyCnv::updateRep(castor::IAddress* address,
               if (0 == m_insertFileSystem2DiskCopyStatement) {
                 m_insertFileSystem2DiskCopyStatement = createStatement(s_insertFileSystem2DiskCopyStatementString);
               }
-              m_insertFileSystem2DiskCopyStatement->setInt(1, obj->fileSystem()->id());
-              m_insertFileSystem2DiskCopyStatement->setInt(2, obj->id());
+              m_insertFileSystem2DiskCopyStatement->setDouble(1, obj->fileSystem()->id());
+              m_insertFileSystem2DiskCopyStatement->setDouble(2, obj->id());
               m_insertFileSystem2DiskCopyStatement->executeUpdate();
             }
           }
@@ -374,7 +374,7 @@ void castor::db::ora::OraDiskCopyCnv::updateRep(castor::IAddress* address,
       }
       // Dealing with castorFile
       {
-        unsigned long castorFileId = rset->getInt(4);
+        u_signed64 castorFileId = rset->getInt(4);
         castor::db::DbAddress ad(castorFileId, " ", 0);
         if (0 != castorFileId &&
             0 != obj->castorFile() &&
@@ -384,8 +384,8 @@ void castor::db::ora::OraDiskCopyCnv::updateRep(castor::IAddress* address,
           if (0 == m_deleteCastorFile2DiskCopyStatement) {
             m_deleteCastorFile2DiskCopyStatement = createStatement(s_deleteCastorFile2DiskCopyStatementString);
           }
-          m_deleteCastorFile2DiskCopyStatement->setInt(1, obj->castorFile()->id());
-          m_deleteCastorFile2DiskCopyStatement->setInt(2, obj->id());
+          m_deleteCastorFile2DiskCopyStatement->setDouble(1, obj->castorFile()->id());
+          m_deleteCastorFile2DiskCopyStatement->setDouble(2, obj->id());
           m_deleteCastorFile2DiskCopyStatement->executeUpdate();
         }
         if (castorFileId == 0) {
@@ -395,8 +395,8 @@ void castor::db::ora::OraDiskCopyCnv::updateRep(castor::IAddress* address,
               if (0 == m_insertCastorFile2DiskCopyStatement) {
                 m_insertCastorFile2DiskCopyStatement = createStatement(s_insertCastorFile2DiskCopyStatementString);
               }
-              m_insertCastorFile2DiskCopyStatement->setInt(1, obj->castorFile()->id());
-              m_insertCastorFile2DiskCopyStatement->setInt(2, obj->id());
+              m_insertCastorFile2DiskCopyStatement->setDouble(1, obj->castorFile()->id());
+              m_insertCastorFile2DiskCopyStatement->setDouble(2, obj->id());
               m_insertCastorFile2DiskCopyStatement->executeUpdate();
             }
           }
@@ -410,10 +410,10 @@ void castor::db::ora::OraDiskCopyCnv::updateRep(castor::IAddress* address,
     }
     // Now Update the current object
     m_updateStatement->setString(1, obj->path());
-    m_updateStatement->setInt(2, obj->fileSystem() ? obj->fileSystem()->id() : 0);
-    m_updateStatement->setInt(3, obj->castorFile() ? obj->castorFile()->id() : 0);
-    m_updateStatement->setInt(4, (int)obj->status());
-    m_updateStatement->setInt(5, obj->id());
+    m_updateStatement->setDouble(2, obj->fileSystem() ? obj->fileSystem()->id() : 0);
+    m_updateStatement->setDouble(3, obj->castorFile() ? obj->castorFile()->id() : 0);
+    m_updateStatement->setDouble(4, (int)obj->status());
+    m_updateStatement->setDouble(5, obj->id());
     m_updateStatement->executeUpdate();
     if (recursive) {
     }
@@ -465,9 +465,9 @@ void castor::db::ora::OraDiskCopyCnv::deleteRep(castor::IAddress* address,
     // Mark the current object as done
     alreadyDone.insert(obj);
     // Now Delete the object
-    m_deleteTypeStatement->setInt(1, obj->id());
+    m_deleteTypeStatement->setDouble(1, obj->id());
     m_deleteTypeStatement->executeUpdate();
-    m_deleteStatement->setInt(1, obj->id());
+    m_deleteStatement->setDouble(1, obj->id());
     m_deleteStatement->executeUpdate();
     // Delete link to fileSystem object
     if (0 != obj->fileSystem()) {
@@ -476,8 +476,8 @@ void castor::db::ora::OraDiskCopyCnv::deleteRep(castor::IAddress* address,
         m_deleteFileSystem2DiskCopyStatement = createStatement(s_deleteFileSystem2DiskCopyStatementString);
       }
       // Delete links to objects
-      m_deleteFileSystem2DiskCopyStatement->setInt(1, obj->fileSystem()->id());
-      m_deleteFileSystem2DiskCopyStatement->setInt(2, obj->id());
+      m_deleteFileSystem2DiskCopyStatement->setDouble(1, obj->fileSystem()->id());
+      m_deleteFileSystem2DiskCopyStatement->setDouble(2, obj->id());
       m_deleteFileSystem2DiskCopyStatement->executeUpdate();
     }
     // Delete link to castorFile object
@@ -487,8 +487,8 @@ void castor::db::ora::OraDiskCopyCnv::deleteRep(castor::IAddress* address,
         m_deleteCastorFile2DiskCopyStatement = createStatement(s_deleteCastorFile2DiskCopyStatementString);
       }
       // Delete links to objects
-      m_deleteCastorFile2DiskCopyStatement->setInt(1, obj->castorFile()->id());
-      m_deleteCastorFile2DiskCopyStatement->setInt(2, obj->id());
+      m_deleteCastorFile2DiskCopyStatement->setDouble(1, obj->castorFile()->id());
+      m_deleteCastorFile2DiskCopyStatement->setDouble(2, obj->id());
       m_deleteCastorFile2DiskCopyStatement->executeUpdate();
     }
     if (autocommit) {
@@ -536,7 +536,7 @@ castor::IObject* castor::db::ora::OraDiskCopyCnv::createObj(castor::IAddress* ad
       throw ex;
     }
     // retrieve the object from the database
-    m_selectStatement->setInt(1, ad->id());
+    m_selectStatement->setDouble(1, ad->id());
     oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::exception::NoEntry ex;
@@ -547,12 +547,12 @@ castor::IObject* castor::db::ora::OraDiskCopyCnv::createObj(castor::IAddress* ad
     castor::stager::DiskCopy* object = new castor::stager::DiskCopy();
     // Now retrieve and set members
     object->setPath(rset->getString(1));
-    object->setId(rset->getInt(2));
+    object->setId(rset->getDouble(2));
     newlyCreated[object->id()] = object;
-    unsigned long fileSystemId = rset->getInt(3);
+    u_signed64 fileSystemId = rset->getInt(3);
     IObject* objFileSystem = cnvSvc()->getObjFromId(fileSystemId, newlyCreated);
     object->setFileSystem(dynamic_cast<castor::stager::FileSystem*>(objFileSystem));
-    unsigned long castorFileId = rset->getInt(4);
+    u_signed64 castorFileId = rset->getInt(4);
     IObject* objCastorFile = cnvSvc()->getObjFromId(castorFileId, newlyCreated);
     object->setCastorFile(dynamic_cast<castor::stager::CastorFile*>(objCastorFile));
     object->setStatus((enum castor::stager::DiskCopyStatusCode)rset->getInt(5));
@@ -598,7 +598,7 @@ void castor::db::ora::OraDiskCopyCnv::updateObj(castor::IObject* obj,
       throw ex;
     }
     // retrieve the object from the database
-    m_selectStatement->setInt(1, obj->id());
+    m_selectStatement->setDouble(1, obj->id());
     oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::exception::NoEntry ex;
@@ -609,10 +609,10 @@ void castor::db::ora::OraDiskCopyCnv::updateObj(castor::IObject* obj,
     castor::stager::DiskCopy* object = 
       dynamic_cast<castor::stager::DiskCopy*>(obj);
     object->setPath(rset->getString(1));
-    object->setId(rset->getInt(2));
+    object->setId(rset->getDouble(2));
     alreadyDone[obj->id()] = obj;
     // Dealing with fileSystem
-    unsigned long fileSystemId = rset->getInt(3);
+    u_signed64 fileSystemId = rset->getInt(3);
     if (0 != object->fileSystem() &&
         (0 == fileSystemId ||
          object->fileSystem()->id() != fileSystemId)) {
@@ -631,7 +631,7 @@ void castor::db::ora::OraDiskCopyCnv::updateObj(castor::IObject* obj,
       }
     }
     // Dealing with castorFile
-    unsigned long castorFileId = rset->getInt(4);
+    u_signed64 castorFileId = rset->getInt(4);
     if (0 != object->castorFile() &&
         (0 == castorFileId ||
          object->castorFile()->id() != castorFileId)) {

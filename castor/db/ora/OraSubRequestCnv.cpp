@@ -192,7 +192,7 @@ void castor::db::ora::OraSubRequestCnv::createRep(castor::IAddress* address,
         }
       }
     }
-    unsigned long id = cnvSvc()->getIds(nids);
+    u_signed64 id = cnvSvc()->getIds(nids);
     if (0 == obj->id()) obj->setId(id++);
     for (std::list<castor::IObject*>::const_iterator it = toBeSaved.begin();
          it != toBeSaved.end();
@@ -200,17 +200,17 @@ void castor::db::ora::OraSubRequestCnv::createRep(castor::IAddress* address,
       (*it)->setId(id++);
     }
     // Now Save the current object
-    m_storeTypeStatement->setInt(1, obj->id());
+    m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
     m_insertStatement->setInt(1, obj->retryCounter());
     m_insertStatement->setString(2, obj->fileName());
     m_insertStatement->setString(3, obj->protocol());
     m_insertStatement->setString(4, obj->poolName());
-    m_insertStatement->setInt(5, obj->xsize());
-    m_insertStatement->setInt(6, obj->id());
-    m_insertStatement->setInt(7, obj->request() ? obj->request()->id() : 0);
-    m_insertStatement->setInt(8, (int)obj->status());
+    m_insertStatement->setDouble(5, obj->xsize());
+    m_insertStatement->setDouble(6, obj->id());
+    m_insertStatement->setDouble(7, obj->request() ? obj->request()->id() : 0);
+    m_insertStatement->setDouble(8, (int)obj->status());
     m_insertStatement->executeUpdate();
     if (recursive) {
       // Save dependant objects that need it
@@ -231,8 +231,8 @@ void castor::db::ora::OraSubRequestCnv::createRep(castor::IAddress* address,
       if (0 == m_insertRequest2SubRequestStatement) {
         m_insertRequest2SubRequestStatement = createStatement(s_insertRequest2SubRequestStatementString);
       }
-      m_insertRequest2SubRequestStatement->setInt(1, obj->request()->id());
-      m_insertRequest2SubRequestStatement->setInt(2, obj->id());
+      m_insertRequest2SubRequestStatement->setDouble(1, obj->request()->id());
+      m_insertRequest2SubRequestStatement->setDouble(2, obj->id());
       m_insertRequest2SubRequestStatement->executeUpdate();
     }
     if (autocommit) {
@@ -307,7 +307,7 @@ void castor::db::ora::OraSubRequestCnv::updateRep(castor::IAddress* address,
     alreadyDone.insert(obj);
     if (recursive) {
       // retrieve the object from the database
-      m_selectStatement->setInt(1, obj->id());
+      m_selectStatement->setDouble(1, obj->id());
       oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
       if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
         castor::exception::NoEntry ex;
@@ -316,7 +316,7 @@ void castor::db::ora::OraSubRequestCnv::updateRep(castor::IAddress* address,
       }
       // Dealing with request
       {
-        unsigned long requestId = rset->getInt(7);
+        u_signed64 requestId = rset->getInt(7);
         castor::db::DbAddress ad(requestId, " ", 0);
         if (0 != requestId &&
             0 != obj->request() &&
@@ -326,8 +326,8 @@ void castor::db::ora::OraSubRequestCnv::updateRep(castor::IAddress* address,
           if (0 == m_deleteRequest2SubRequestStatement) {
             m_deleteRequest2SubRequestStatement = createStatement(s_deleteRequest2SubRequestStatementString);
           }
-          m_deleteRequest2SubRequestStatement->setInt(1, obj->request()->id());
-          m_deleteRequest2SubRequestStatement->setInt(2, obj->id());
+          m_deleteRequest2SubRequestStatement->setDouble(1, obj->request()->id());
+          m_deleteRequest2SubRequestStatement->setDouble(2, obj->id());
           m_deleteRequest2SubRequestStatement->executeUpdate();
         }
         if (requestId == 0) {
@@ -337,8 +337,8 @@ void castor::db::ora::OraSubRequestCnv::updateRep(castor::IAddress* address,
               if (0 == m_insertRequest2SubRequestStatement) {
                 m_insertRequest2SubRequestStatement = createStatement(s_insertRequest2SubRequestStatementString);
               }
-              m_insertRequest2SubRequestStatement->setInt(1, obj->request()->id());
-              m_insertRequest2SubRequestStatement->setInt(2, obj->id());
+              m_insertRequest2SubRequestStatement->setDouble(1, obj->request()->id());
+              m_insertRequest2SubRequestStatement->setDouble(2, obj->id());
               m_insertRequest2SubRequestStatement->executeUpdate();
             }
           }
@@ -355,10 +355,10 @@ void castor::db::ora::OraSubRequestCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setString(2, obj->fileName());
     m_updateStatement->setString(3, obj->protocol());
     m_updateStatement->setString(4, obj->poolName());
-    m_updateStatement->setInt(5, obj->xsize());
-    m_updateStatement->setInt(6, obj->request() ? obj->request()->id() : 0);
-    m_updateStatement->setInt(7, (int)obj->status());
-    m_updateStatement->setInt(8, obj->id());
+    m_updateStatement->setDouble(5, obj->xsize());
+    m_updateStatement->setDouble(6, obj->request() ? obj->request()->id() : 0);
+    m_updateStatement->setDouble(7, (int)obj->status());
+    m_updateStatement->setDouble(8, obj->id());
     m_updateStatement->executeUpdate();
     if (recursive) {
     }
@@ -410,9 +410,9 @@ void castor::db::ora::OraSubRequestCnv::deleteRep(castor::IAddress* address,
     // Mark the current object as done
     alreadyDone.insert(obj);
     // Now Delete the object
-    m_deleteTypeStatement->setInt(1, obj->id());
+    m_deleteTypeStatement->setDouble(1, obj->id());
     m_deleteTypeStatement->executeUpdate();
-    m_deleteStatement->setInt(1, obj->id());
+    m_deleteStatement->setDouble(1, obj->id());
     m_deleteStatement->executeUpdate();
     // Delete link to request object
     if (0 != obj->request()) {
@@ -421,8 +421,8 @@ void castor::db::ora::OraSubRequestCnv::deleteRep(castor::IAddress* address,
         m_deleteRequest2SubRequestStatement = createStatement(s_deleteRequest2SubRequestStatementString);
       }
       // Delete links to objects
-      m_deleteRequest2SubRequestStatement->setInt(1, obj->request()->id());
-      m_deleteRequest2SubRequestStatement->setInt(2, obj->id());
+      m_deleteRequest2SubRequestStatement->setDouble(1, obj->request()->id());
+      m_deleteRequest2SubRequestStatement->setDouble(2, obj->id());
       m_deleteRequest2SubRequestStatement->executeUpdate();
     }
     if (autocommit) {
@@ -470,7 +470,7 @@ castor::IObject* castor::db::ora::OraSubRequestCnv::createObj(castor::IAddress* 
       throw ex;
     }
     // retrieve the object from the database
-    m_selectStatement->setInt(1, ad->id());
+    m_selectStatement->setDouble(1, ad->id());
     oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::exception::NoEntry ex;
@@ -484,10 +484,10 @@ castor::IObject* castor::db::ora::OraSubRequestCnv::createObj(castor::IAddress* 
     object->setFileName(rset->getString(2));
     object->setProtocol(rset->getString(3));
     object->setPoolName(rset->getString(4));
-    object->setXsize(rset->getInt(5));
-    object->setId(rset->getInt(6));
+    object->setXsize(rset->getDouble(5));
+    object->setId(rset->getDouble(6));
     newlyCreated[object->id()] = object;
-    unsigned long requestId = rset->getInt(7);
+    u_signed64 requestId = rset->getInt(7);
     IObject* objRequest = cnvSvc()->getObjFromId(requestId, newlyCreated);
     object->setRequest(dynamic_cast<castor::stager::Request*>(objRequest));
     object->setStatus((enum castor::stager::SubRequestStatusCodes)rset->getInt(8));
@@ -533,7 +533,7 @@ void castor::db::ora::OraSubRequestCnv::updateObj(castor::IObject* obj,
       throw ex;
     }
     // retrieve the object from the database
-    m_selectStatement->setInt(1, obj->id());
+    m_selectStatement->setDouble(1, obj->id());
     oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::exception::NoEntry ex;
@@ -547,11 +547,11 @@ void castor::db::ora::OraSubRequestCnv::updateObj(castor::IObject* obj,
     object->setFileName(rset->getString(2));
     object->setProtocol(rset->getString(3));
     object->setPoolName(rset->getString(4));
-    object->setXsize(rset->getInt(5));
-    object->setId(rset->getInt(6));
+    object->setXsize(rset->getDouble(5));
+    object->setId(rset->getDouble(6));
     alreadyDone[obj->id()] = obj;
     // Dealing with request
-    unsigned long requestId = rset->getInt(7);
+    u_signed64 requestId = rset->getInt(7);
     if (0 != object->request() &&
         (0 == requestId ||
          object->request()->id() != requestId)) {

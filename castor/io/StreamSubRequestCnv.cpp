@@ -158,7 +158,7 @@ castor::IObject* castor::io::StreamSubRequestCnv::createObj(castor::IAddress* ad
   u_signed64 xsize;
   ad->stream() >> xsize;
   object->setXsize(xsize);
-  unsigned long id;
+  u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
   int status;

@@ -28,6 +28,7 @@
 #define CASTOR_STAGER_DISKPOOL_H
 
 // Include Files and Forward declarations for the C world
+#include "osdep.h"
 struct C_IObject_t;
 struct Cstager_DiskPool_t;
 
@@ -75,13 +76,13 @@ int Cstager_DiskPool_TYPE(int* ret);
  * Sets the id of the object
  */
 int Cstager_DiskPool_setId(struct Cstager_DiskPool_t* instance,
-                           unsigned long id);
+                           u_signed64 id);
 
 /**
  * gets the id of the object
  */
 int Cstager_DiskPool_id(struct Cstager_DiskPool_t* instance,
-                        unsigned long* ret);
+                        u_signed64* ret);
 
 /**
  * Gets the type of the object

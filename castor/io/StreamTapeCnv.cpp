@@ -41,6 +41,7 @@
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
+#include "osdep.h"
 #include <string>
 #include <vector>
 
@@ -171,7 +172,7 @@ castor::IObject* castor::io::StreamTapeCnv::createObj(castor::IAddress* address,
   std::string vwAddress;
   ad->stream() >> vwAddress;
   object->setVwAddress(vwAddress);
-  unsigned long id;
+  u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
   int status;

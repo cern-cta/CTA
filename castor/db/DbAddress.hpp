@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbAddress.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/05/19 07:00:00 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DbAddress.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/10/05 13:37:28 $ $Author: sponcec3 $
  *
  *
  *
@@ -30,6 +30,7 @@
 // Include Files
 #include "castor/BaseAddress.hpp"
 #include "castor/Constants.hpp"
+#include "osdep.h"
 
 namespace castor {
 
@@ -49,7 +50,7 @@ namespace castor {
        * @param objType the type of object or OBJ_INVALID if not specified.
        * In this later case, the type will be deduced from the id.
        */
-      DbAddress(const unsigned long id,
+      DbAddress(const u_signed64 id,
                 const std::string cnvSvcName,
                 const unsigned int objType = OBJ_INVALID);
       
@@ -61,19 +62,19 @@ namespace castor {
       /**
        * gets the id of this address
        */
-      virtual const unsigned long id() const { return m_id; }
+      virtual const u_signed64 id() const { return m_id; }
 
       /**
        * set the id of this address
        */
-      virtual void setId(const unsigned long id) { m_id = id; }
+      virtual void setId(const u_signed64 id) { m_id = id; }
 
     private:
 
       /**
        * the id of this address
        */
-      unsigned long m_id;
+      u_signed64 m_id;
 
     };
 

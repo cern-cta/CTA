@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageQryRequestCnv.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/01 14:26:18 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageQryRequestCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/05 13:37:29 $ $Author: sponcec3 $
  *
  * 
  *
@@ -178,7 +178,7 @@ castor::IObject* castor::io::StreamStageQryRequestCnv::createObj(castor::IAddres
   std::string projectName;
   ad->stream() >> projectName;
   object->setProjectName(projectName);
-  unsigned long id;
+  u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
   int status;

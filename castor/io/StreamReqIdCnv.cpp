@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamReqIdCnv.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/01 14:26:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamReqIdCnv.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/05 13:37:29 $ $Author: sponcec3 $
  *
  * 
  *
@@ -40,6 +40,7 @@
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/ReqId.hpp"
 #include "castor/stager/ReqIdRequest.hpp"
+#include "osdep.h"
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -139,7 +140,7 @@ castor::IObject* castor::io::StreamReqIdCnv::createObj(castor::IAddress* address
   std::string value;
   ad->stream() >> value;
   object->setValue(value);
-  unsigned long id;
+  u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
   newlyCreated.insert(object);

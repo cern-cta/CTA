@@ -27,6 +27,7 @@
 // Include Files
 #include "castor/IClient.hpp"
 #include "castor/rh/Client.hpp"
+#include "osdep.h"
 
 extern "C" {
 
@@ -103,7 +104,7 @@ extern "C" {
   // Crh_Client_setId
   //----------------------------------------------------------------------------
   int Crh_Client_setId(castor::rh::Client* instance,
-                       unsigned long id) {
+                       u_signed64 id) {
     instance->setId(id);
     return 0;
   }
@@ -112,7 +113,7 @@ extern "C" {
   // Crh_Client_id
   //----------------------------------------------------------------------------
   int Crh_Client_id(castor::rh::Client* instance,
-                    unsigned long* ret) {
+                    u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageQryRequestCInt.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/01 14:26:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageQryRequestCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/05 13:37:34 $ $Author: sponcec3 $
  *
  * 
  *
@@ -27,6 +27,7 @@
 // Include Files
 #include "castor/stager/Request.hpp"
 #include "castor/stager/StageQryRequest.hpp"
+#include "osdep.h"
 
 extern "C" {
 
@@ -79,7 +80,7 @@ extern "C" {
   // Cstager_StageQryRequest_setId
   //----------------------------------------------------------------------------
   int Cstager_StageQryRequest_setId(castor::stager::StageQryRequest* instance,
-                                    unsigned long id) {
+                                    u_signed64 id) {
     instance->setId(id);
     return 0;
   }
@@ -88,7 +89,7 @@ extern "C" {
   // Cstager_StageQryRequest_id
   //----------------------------------------------------------------------------
   int Cstager_StageQryRequest_id(castor::stager::StageQryRequest* instance,
-                                 unsigned long* ret) {
+                                 u_signed64* ret) {
     *ret = instance->id();
     return 0;
   }

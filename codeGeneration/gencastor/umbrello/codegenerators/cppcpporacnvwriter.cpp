@@ -331,7 +331,7 @@ void CppCppOraCnvWriter::writeSqlStatements() {
     if (as->first.first == MULT_ONE) {
       // One to One associations
       if (n > 0) stream << ", ";
-      stream << as->second.first << " NUMBER";
+      stream << as->second.first << " INTEGER";
       n++;
     }
   }
@@ -351,7 +351,7 @@ void CppCppOraCnvWriter::writeSqlStatements() {
              << capitalizeFirstLetter(as->second.second)
              << "2"
              << capitalizeFirstLetter(as->second.third)
-             << " (Parent NUMBER, Child NUMBER);"
+             << " (Parent INTEGER, Child INTEGER);"
              << endl;
     }
   }
@@ -720,7 +720,7 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
   }
   fixTypeName("OraCnvSvc", "castor::db::ora", m_classInfo->packageName);
   *m_stream << getIndent()
-            << "unsigned long id = cnvSvc()->getIds(nids);"
+            << "u_signed64 id = cnvSvc()->getIds(nids);"
             << endl << getIndent()
             << "if (0 == obj->id()) obj->setId(id++);" << endl;
   if (! assocs.isEmpty()) {
@@ -743,7 +743,7 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
   *m_stream << getIndent()
             << "// Now Save the current object"
             << endl << getIndent()
-            << "m_storeTypeStatement->setInt(1, obj->id());"
+            << "m_storeTypeStatement->setDouble(1, obj->id());"
             << endl << getIndent()
             << "m_storeTypeStatement->setInt(2, obj->type());"
             << endl << getIndent()
@@ -751,7 +751,7 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
             << endl;
   if (isRequest()) {
     *m_stream << getIndent()
-              << "m_insertStatusStatement->setInt(1, obj->id());"
+              << "m_insertStatusStatement->setDouble(1, obj->id());"
               << endl << getIndent()
               << "m_insertStatusStatement->executeUpdate();"
               << endl;
@@ -859,14 +859,14 @@ void CppCppOraCnvWriter::writeCreateRepContent() {
                   << capitalizeFirstLetter(p->second.second)
                   << "2"
                   << capitalizeFirstLetter(p->second.third)
-                  << "Statement->setInt(1, obj->"
+                  << "Statement->setDouble(1, obj->"
                   << p->second.first << "()->id());"
                   << endl << getIndent()
                   << "m_insert"
                   << capitalizeFirstLetter(p->second.second)
                   << "2"
                   << capitalizeFirstLetter(p->second.third)
-                  << "Statement->setInt(2, obj->id());"
+                  << "Statement->setDouble(2, obj->id());"
                   << endl << getIndent()
                   << "m_insert"
                   << capitalizeFirstLetter(p->second.second)
@@ -1002,7 +1002,7 @@ void CppCppOraCnvWriter::writeUpdateRepContent() {
     *m_stream << getIndent()
               << "// retrieve the object from the database"
               << endl << getIndent()
-              << "m_selectStatement->setInt(1, obj->id());"
+              << "m_selectStatement->setDouble(1, obj->id());"
               << endl << getIndent()
               << "oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();"
               << endl << getIndent()
@@ -1076,14 +1076,14 @@ void CppCppOraCnvWriter::writeUpdateRepContent() {
                       << capitalizeFirstLetter(as->second.second)
                       << "2"
                       << capitalizeFirstLetter(as->second.third)
-                      << "Statement->setInt(1, obj->"
+                      << "Statement->setDouble(1, obj->"
                       << as->second.first << "()->id());"
                       << endl << getIndent()
                       << "m_delete"
                       << capitalizeFirstLetter(as->second.second)
                       << "2"
                       << capitalizeFirstLetter(as->second.third)
-                      << "Statement->setInt(2, obj->id());"
+                      << "Statement->setDouble(2, obj->id());"
                       << endl << getIndent()
                       << "m_delete"
                       << capitalizeFirstLetter(as->second.second)
@@ -1140,14 +1140,14 @@ void CppCppOraCnvWriter::writeUpdateRepContent() {
                       << capitalizeFirstLetter(as->second.second)
                       << "2"
                       << capitalizeFirstLetter(as->second.third)
-                      << "Statement->setInt(1, obj->"
+                      << "Statement->setDouble(1, obj->"
                       << as->second.first << "()->id());"
                       << endl << getIndent()
                       << "m_insert"
                       << capitalizeFirstLetter(as->second.second)
                       << "2"
                       << capitalizeFirstLetter(as->second.third)
-                      << "Statement->setInt(2, obj->id());"
+                      << "Statement->setDouble(2, obj->id());"
                       << endl << getIndent()
                       << "m_insert"
                       << capitalizeFirstLetter(as->second.second)
@@ -1268,7 +1268,7 @@ void CppCppOraCnvWriter::writeUpdateRepContent() {
                   << capitalizeFirstLetter(p->second.third)
                   << "2"
                   << capitalizeFirstLetter(p->second.second)
-                  << "Statement->setInt(1, obj->id());"
+                  << "Statement->setDouble(1, obj->id());"
                   << endl << getIndent()
                   << "oracle::occi::ResultSet *rset = "
                   << "m_"
@@ -1444,17 +1444,17 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
   *m_stream << getIndent()
             << "// Now Delete the object"
             << endl << getIndent()
-            << "m_deleteTypeStatement->setInt(1, obj->id());"
+            << "m_deleteTypeStatement->setDouble(1, obj->id());"
             << endl << getIndent()
             << "m_deleteTypeStatement->executeUpdate();"
             << endl << getIndent()
-            << "m_deleteStatement->setInt(1, obj->id());"
+            << "m_deleteStatement->setDouble(1, obj->id());"
             << endl << getIndent()
             << "m_deleteStatement->executeUpdate();"
             << endl;
   if (isRequest()) {
     *m_stream << getIndent()
-              << "m_deleteStatusStatement->setInt(1, obj->id());"
+              << "m_deleteStatusStatement->setDouble(1, obj->id());"
               << endl << getIndent()
               << "m_deleteStatusStatement->executeUpdate();"
               << endl;
@@ -1567,14 +1567,14 @@ void CppCppOraCnvWriter::writeDeleteRepContent() {
                   << capitalizeFirstLetter(p->second.second)
                   << "2"
                   << capitalizeFirstLetter(p->second.third)
-                  << "Statement->setInt(1, obj->"
+                  << "Statement->setDouble(1, obj->"
                   << p->second.first << "()->id());"
                   << endl << getIndent()
                   << "m_delete"
                   << capitalizeFirstLetter(p->second.second)
                   << "2"
                   << capitalizeFirstLetter(p->second.third)
-                  << "Statement->setInt(2, obj->id());"
+                  << "Statement->setDouble(2, obj->id());"
                   << endl << getIndent()
                   << "m_delete"
                   << capitalizeFirstLetter(p->second.second)
@@ -1674,7 +1674,7 @@ void CppCppOraCnvWriter::writeCreateObjContent() {
   *m_stream << getIndent() << "}" << endl;
   *m_stream << getIndent() << "// retrieve the object from the database"
             << endl << getIndent()
-            << "m_selectStatement->setInt(1, ad->id());"
+            << "m_selectStatement->setDouble(1, ad->id());"
             << endl << getIndent()
             << "oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();"
             << endl << getIndent()
@@ -1787,7 +1787,7 @@ void CppCppOraCnvWriter::writeCreateObjContent() {
                 << capitalizeFirstLetter(as->second.third)
                 << "2"
                 << capitalizeFirstLetter(as->second.second)
-                << "Statement->setInt(1, ad->id());"
+                << "Statement->setDouble(1, ad->id());"
                 << endl << getIndent()
                 << "rset = "
                 << "m_"
@@ -1869,7 +1869,7 @@ void CppCppOraCnvWriter::writeUpdateObjContent() {
   *m_stream << getIndent()
             << "// retrieve the object from the database"
             << endl << getIndent()
-            << "m_selectStatement->setInt(1, obj->id());"
+            << "m_selectStatement->setDouble(1, obj->id());"
             << endl << getIndent()
             << "oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();"
             << endl << getIndent()
@@ -2031,7 +2031,7 @@ void CppCppOraCnvWriter::writeUpdateObjContent() {
                 << capitalizeFirstLetter(as->second.third)
                 << "2"
                 << capitalizeFirstLetter(as->second.second)
-                << "Statement->setInt(1, obj->id());"
+                << "Statement->setDouble(1, obj->id());"
                 << endl << getIndent()
                 << "rset = "
                 << "m_"
@@ -2182,7 +2182,7 @@ CppCppOraCnvWriter::writeSingleSetIntoStatement(QString statement,
   *m_stream << getIndent()
             << "m_" << statement << "Statement->set";
   if (isAssoc) {
-    *m_stream << "Int";
+    *m_stream << "Double";
   } else {
     *m_stream << getOraType(pair.second);
   }
@@ -2213,7 +2213,7 @@ void CppCppOraCnvWriter::writeSingleGetFromSelect(Member pair,
   // deal with arrays of chars
   bool isArray = pair.second.find('[') > 0;
   if (isAssoc) {
-    *m_stream << "unsigned long " << pair.first
+    *m_stream << "u_signed64 " << pair.first
               << "Id = ";
   } else {
     *m_stream << "object->set"
@@ -2252,9 +2252,11 @@ QString CppCppOraCnvWriter::getOraType(QString& type) {
   if (oraType == "short" ||
       oraType == "long" ||
       oraType == "bool" ||
-      oraType == "int" ||
-      oraType == "u_signed64")
+      oraType == "int") {
     oraType = "int";
+  } else if (oraType == "u_signed64") {
+    oraType = "double";
+  }
   if (oraType.startsWith("char")) oraType = "string";
   oraType = capitalizeFirstLetter(oraType);
   return oraType;
@@ -2271,6 +2273,8 @@ QString CppCppOraCnvWriter::getSQLType(QString& type) {
       SQLType == "bool" ||
       SQLType == "int") {
     SQLType = "NUMBER";
+  } else if (type == "u_signed64") {
+    SQLType = "INTEGER";
   } else if (SQLType == "string") {
     SQLType = "VARCHAR(255)";
   } else if (SQLType.left(5) == "char["){

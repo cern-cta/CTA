@@ -210,7 +210,7 @@ void castor::db::ora::OraFileSystemCnv::createRep(castor::IAddress* address,
         }
       }
     }
-    unsigned long id = cnvSvc()->getIds(nids);
+    u_signed64 id = cnvSvc()->getIds(nids);
     if (0 == obj->id()) obj->setId(id++);
     for (std::list<castor::IObject*>::const_iterator it = toBeSaved.begin();
          it != toBeSaved.end();
@@ -218,16 +218,16 @@ void castor::db::ora::OraFileSystemCnv::createRep(castor::IAddress* address,
       (*it)->setId(id++);
     }
     // Now Save the current object
-    m_storeTypeStatement->setInt(1, obj->id());
+    m_storeTypeStatement->setDouble(1, obj->id());
     m_storeTypeStatement->setInt(2, obj->type());
     m_storeTypeStatement->executeUpdate();
-    m_insertStatement->setInt(1, obj->free());
+    m_insertStatement->setDouble(1, obj->free());
     m_insertStatement->setFloat(2, obj->weight());
     m_insertStatement->setFloat(3, obj->fsDeviation());
     m_insertStatement->setInt(4, obj->randomize());
     m_insertStatement->setString(5, obj->mountPoint());
-    m_insertStatement->setInt(6, obj->id());
-    m_insertStatement->setInt(7, obj->diskserver() ? obj->diskserver()->id() : 0);
+    m_insertStatement->setDouble(6, obj->id());
+    m_insertStatement->setDouble(7, obj->diskserver() ? obj->diskserver()->id() : 0);
     m_insertStatement->executeUpdate();
     if (recursive) {
       // Save dependant objects that need it
@@ -248,8 +248,8 @@ void castor::db::ora::OraFileSystemCnv::createRep(castor::IAddress* address,
       if (0 == m_insertDiskServer2FileSystemStatement) {
         m_insertDiskServer2FileSystemStatement = createStatement(s_insertDiskServer2FileSystemStatementString);
       }
-      m_insertDiskServer2FileSystemStatement->setInt(1, obj->diskserver()->id());
-      m_insertDiskServer2FileSystemStatement->setInt(2, obj->id());
+      m_insertDiskServer2FileSystemStatement->setDouble(1, obj->diskserver()->id());
+      m_insertDiskServer2FileSystemStatement->setDouble(2, obj->id());
       m_insertDiskServer2FileSystemStatement->executeUpdate();
     }
     if (autocommit) {
@@ -323,7 +323,7 @@ void castor::db::ora::OraFileSystemCnv::updateRep(castor::IAddress* address,
     alreadyDone.insert(obj);
     if (recursive) {
       // retrieve the object from the database
-      m_selectStatement->setInt(1, obj->id());
+      m_selectStatement->setDouble(1, obj->id());
       oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
       if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
         castor::exception::NoEntry ex;
@@ -332,7 +332,7 @@ void castor::db::ora::OraFileSystemCnv::updateRep(castor::IAddress* address,
       }
       // Dealing with diskserver
       {
-        unsigned long diskserverId = rset->getInt(7);
+        u_signed64 diskserverId = rset->getInt(7);
         castor::db::DbAddress ad(diskserverId, " ", 0);
         if (0 != diskserverId &&
             0 != obj->diskserver() &&
@@ -342,8 +342,8 @@ void castor::db::ora::OraFileSystemCnv::updateRep(castor::IAddress* address,
           if (0 == m_deleteDiskServer2FileSystemStatement) {
             m_deleteDiskServer2FileSystemStatement = createStatement(s_deleteDiskServer2FileSystemStatementString);
           }
-          m_deleteDiskServer2FileSystemStatement->setInt(1, obj->diskserver()->id());
-          m_deleteDiskServer2FileSystemStatement->setInt(2, obj->id());
+          m_deleteDiskServer2FileSystemStatement->setDouble(1, obj->diskserver()->id());
+          m_deleteDiskServer2FileSystemStatement->setDouble(2, obj->id());
           m_deleteDiskServer2FileSystemStatement->executeUpdate();
         }
         if (diskserverId == 0) {
@@ -353,8 +353,8 @@ void castor::db::ora::OraFileSystemCnv::updateRep(castor::IAddress* address,
               if (0 == m_insertDiskServer2FileSystemStatement) {
                 m_insertDiskServer2FileSystemStatement = createStatement(s_insertDiskServer2FileSystemStatementString);
               }
-              m_insertDiskServer2FileSystemStatement->setInt(1, obj->diskserver()->id());
-              m_insertDiskServer2FileSystemStatement->setInt(2, obj->id());
+              m_insertDiskServer2FileSystemStatement->setDouble(1, obj->diskserver()->id());
+              m_insertDiskServer2FileSystemStatement->setDouble(2, obj->id());
               m_insertDiskServer2FileSystemStatement->executeUpdate();
             }
           }
@@ -367,13 +367,13 @@ void castor::db::ora::OraFileSystemCnv::updateRep(castor::IAddress* address,
       m_selectStatement->closeResultSet(rset);
     }
     // Now Update the current object
-    m_updateStatement->setInt(1, obj->free());
+    m_updateStatement->setDouble(1, obj->free());
     m_updateStatement->setFloat(2, obj->weight());
     m_updateStatement->setFloat(3, obj->fsDeviation());
     m_updateStatement->setInt(4, obj->randomize());
     m_updateStatement->setString(5, obj->mountPoint());
-    m_updateStatement->setInt(6, obj->diskserver() ? obj->diskserver()->id() : 0);
-    m_updateStatement->setInt(7, obj->id());
+    m_updateStatement->setDouble(6, obj->diskserver() ? obj->diskserver()->id() : 0);
+    m_updateStatement->setDouble(7, obj->id());
     m_updateStatement->executeUpdate();
     if (recursive) {
       // Dealing with copies
@@ -382,7 +382,7 @@ void castor::db::ora::OraFileSystemCnv::updateRep(castor::IAddress* address,
           m_FileSystem2DiskCopyStatement = createStatement(s_FileSystem2DiskCopyStatementString);
         }
         std::set<int> copiesList;
-        m_FileSystem2DiskCopyStatement->setInt(1, obj->id());
+        m_FileSystem2DiskCopyStatement->setDouble(1, obj->id());
         oracle::occi::ResultSet *rset = m_FileSystem2DiskCopyStatement->executeQuery();
         while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
           copiesList.insert(rset->getInt(1));
@@ -459,9 +459,9 @@ void castor::db::ora::OraFileSystemCnv::deleteRep(castor::IAddress* address,
     // Mark the current object as done
     alreadyDone.insert(obj);
     // Now Delete the object
-    m_deleteTypeStatement->setInt(1, obj->id());
+    m_deleteTypeStatement->setDouble(1, obj->id());
     m_deleteTypeStatement->executeUpdate();
-    m_deleteStatement->setInt(1, obj->id());
+    m_deleteStatement->setDouble(1, obj->id());
     m_deleteStatement->executeUpdate();
     // Delete link to diskserver object
     if (0 != obj->diskserver()) {
@@ -470,8 +470,8 @@ void castor::db::ora::OraFileSystemCnv::deleteRep(castor::IAddress* address,
         m_deleteDiskServer2FileSystemStatement = createStatement(s_deleteDiskServer2FileSystemStatementString);
       }
       // Delete links to objects
-      m_deleteDiskServer2FileSystemStatement->setInt(1, obj->diskserver()->id());
-      m_deleteDiskServer2FileSystemStatement->setInt(2, obj->id());
+      m_deleteDiskServer2FileSystemStatement->setDouble(1, obj->diskserver()->id());
+      m_deleteDiskServer2FileSystemStatement->setDouble(2, obj->id());
       m_deleteDiskServer2FileSystemStatement->executeUpdate();
     }
     if (autocommit) {
@@ -519,7 +519,7 @@ castor::IObject* castor::db::ora::OraFileSystemCnv::createObj(castor::IAddress* 
       throw ex;
     }
     // retrieve the object from the database
-    m_selectStatement->setInt(1, ad->id());
+    m_selectStatement->setDouble(1, ad->id());
     oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::exception::NoEntry ex;
@@ -529,14 +529,14 @@ castor::IObject* castor::db::ora::OraFileSystemCnv::createObj(castor::IAddress* 
     // create the new Object
     castor::stager::FileSystem* object = new castor::stager::FileSystem();
     // Now retrieve and set members
-    object->setFree(rset->getInt(1));
+    object->setFree(rset->getDouble(1));
     object->setWeight(rset->getFloat(2));
     object->setFsDeviation(rset->getFloat(3));
     object->setRandomize(rset->getInt(4));
     object->setMountPoint(rset->getString(5));
-    object->setId(rset->getInt(6));
+    object->setId(rset->getDouble(6));
     newlyCreated[object->id()] = object;
-    unsigned long diskserverId = rset->getInt(7);
+    u_signed64 diskserverId = rset->getInt(7);
     IObject* objDiskserver = cnvSvc()->getObjFromId(diskserverId, newlyCreated);
     object->setDiskserver(dynamic_cast<castor::stager::DiskServer*>(objDiskserver));
     m_selectStatement->closeResultSet(rset);
@@ -544,7 +544,7 @@ castor::IObject* castor::db::ora::OraFileSystemCnv::createObj(castor::IAddress* 
     if (0 == m_FileSystem2DiskCopyStatement) {
       m_FileSystem2DiskCopyStatement = createStatement(s_FileSystem2DiskCopyStatementString);
     }
-    m_FileSystem2DiskCopyStatement->setInt(1, ad->id());
+    m_FileSystem2DiskCopyStatement->setDouble(1, ad->id());
     rset = m_FileSystem2DiskCopyStatement->executeQuery();
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
       IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1), newlyCreated);
@@ -592,7 +592,7 @@ void castor::db::ora::OraFileSystemCnv::updateObj(castor::IObject* obj,
       throw ex;
     }
     // retrieve the object from the database
-    m_selectStatement->setInt(1, obj->id());
+    m_selectStatement->setDouble(1, obj->id());
     oracle::occi::ResultSet *rset = m_selectStatement->executeQuery();
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       castor::exception::NoEntry ex;
@@ -602,15 +602,15 @@ void castor::db::ora::OraFileSystemCnv::updateObj(castor::IObject* obj,
     // Now retrieve and set members
     castor::stager::FileSystem* object = 
       dynamic_cast<castor::stager::FileSystem*>(obj);
-    object->setFree(rset->getInt(1));
+    object->setFree(rset->getDouble(1));
     object->setWeight(rset->getFloat(2));
     object->setFsDeviation(rset->getFloat(3));
     object->setRandomize(rset->getInt(4));
     object->setMountPoint(rset->getString(5));
-    object->setId(rset->getInt(6));
+    object->setId(rset->getDouble(6));
     alreadyDone[obj->id()] = obj;
     // Dealing with diskserver
-    unsigned long diskserverId = rset->getInt(7);
+    u_signed64 diskserverId = rset->getInt(7);
     if (0 != object->diskserver() &&
         (0 == diskserverId ||
          object->diskserver()->id() != diskserverId)) {
@@ -634,7 +634,7 @@ void castor::db::ora::OraFileSystemCnv::updateObj(castor::IObject* obj,
       m_FileSystem2DiskCopyStatement = createStatement(s_FileSystem2DiskCopyStatementString);
     }
     std::set<int> copiesList;
-    m_FileSystem2DiskCopyStatement->setInt(1, obj->id());
+    m_FileSystem2DiskCopyStatement->setDouble(1, obj->id());
     rset = m_FileSystem2DiskCopyStatement->executeQuery();
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
       copiesList.insert(rset->getInt(1));
