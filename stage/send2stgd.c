@@ -1,5 +1,5 @@
 /*
- * $Id: send2stgd.c,v 1.13 2000/01/19 08:43:58 jdurand Exp $
+ * $Id: send2stgd.c,v 1.14 2000/03/08 17:35:35 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.13 $ $Date: 2000/01/19 08:43:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.14 $ $Date: 2000/03/08 17:35:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -35,11 +35,15 @@ static char sccsid[] = "@(#)$RCSfile: send2stgd.c,v $ $Revision: 1.13 $ $Date: 2
 #include "osdep.h"
 extern int rfio_errno;
 int nb_ovl;
-#if (defined(_AIX) && defined(_IBMR2)) || defined(SOLARIS) || defined(IRIX5) || (defined(__osf__) && defined(__alpha)) || defined(linux)
+#ifndef _WIN32
 struct sigaction sa;
 #endif
 
-void dounlink _PROTO(());
+int dosymlink _PROTO((char *, char *));
+void dounlink _PROTO((char *));
+#ifndef _WIN32
+void wait4child _PROTO(());
+#endif
 
 send2stgd(host, reqp, reql, want_reply)
 char *host;
@@ -63,22 +67,11 @@ int want_reply;
 	struct servent *sp;
 	int stg_s;
 	char stghost[64];
-#if !defined(vms) && !defined(_WIN32)
-	void wait4child();
-#endif
 
-#if defined(ultrix) || (defined(sun) && !defined(SOLARIS)) || (defined(_AIX) && defined(_IBMESA))
-	signal (SIGCHLD, wait4child);
-#else
-#if (defined(sgi) && !defined(IRIX5)) || defined(hpux)
-	signal (SIGCLD, wait4child);
-#else
-#if (defined(_AIX) && defined(_IBMR2)) || defined(SOLARIS) || defined(IRIX5) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-	sa.sa_handler = wait4child;
-	sa.sa_flags = SA_RESTART;
-	sigaction (SIGCHLD, &sa, NULL);
-#endif
-#endif
+#ifndef _WIN32
+  sa.sa_handler = wait4child;
+  sa.sa_flags = SA_RESTART;
+  sigaction (SIGCHLD, &sa, NULL);
 #endif
 	link_rc = 0;
 	nb_ovl = 0;
@@ -154,9 +147,6 @@ int want_reply;
 		unmarshall_LONG (p, rep_type) ;
 		unmarshall_LONG (p, c) ;
 		if (rep_type == STAGERC) {
-#if defined(vms)
-			c = 2 * c;
-#endif
 			(void) netclose (stg_s);
 			break;
 		}
@@ -188,13 +178,13 @@ int want_reply;
 			dounlink (prtbuf);
 		}
 	}
-#if !defined(vms) && !defined(_WIN32)
+#if !defined(_WIN32)
 	while (nb_ovl > 0) sleep (1);
 #endif
 	return (c ? c : link_rc);
 }
 
-dosymlink (file1, file2)
+int dosymlink (file1, file2)
 char *file1;
 char *file2;
 {
@@ -223,7 +213,7 @@ char *path;
 {
 	char *filename;
 	char *host;
-#if !defined(vms) && !defined(_WIN32)
+#if !defined(_WIN32)
 	int pid;
 	struct stat st;
 #endif
@@ -233,7 +223,7 @@ char *path;
 	if (rfio_unlink (path)) {
 		if ((remote && rfio_errno == ENOENT) ||
 		    (remote == 0 && errno == ENOENT)) return;
-#if !defined(vms) && !defined(_WIN32)
+#if !defined(_WIN32)
 		if (getuid() || (remote && rfio_errno != EACCES) ||
 		    (remote == 0 && errno != EACCES) ||
 		    strncmp (filename, "/afs/", 5) == 0) {
@@ -241,9 +231,7 @@ char *path;
 			fprintf (stderr, STG02, path, "unlink", rfio_serror());
 			return;
 		}
-#if defined(vms) || defined(_WIN32)
-}
-#else
+#if !defined(_WIN32)
 		if (rfio_lstat (path, &st) != 0) {
 			fprintf (stderr, STG02, path, "unlink(lstat)", rfio_serror());
 			return;
@@ -264,34 +252,16 @@ char *path;
 		nb_ovl++;
 	}
 }
+#endif
 
-#if defined(ultrix) || (defined(sun) && !defined(SOLARIS))
+#if !defined(_WIN32)
 void wait4child()
 {
-	int pid;
-	union wait status;
-
-	while ((pid = wait3 (&status, WNOHANG, (struct rusage *) 0)) > 0)
-		nb_ovl--;
-}
-#else
-void wait4child()
-{
-        int pid;
-        int status;
-
-#if defined(_IBMR2) || defined(SOLARIS) || defined(IRIX5) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-        while ((pid = waitpid (-1, &status, WNOHANG)) > 0)
-		nb_ovl--;
-#else
-        pid = wait (&status);
-	nb_ovl--;
-#if _IBMESA
-        signal (SIGCHLD, wait4child);
-#else
-        signal (SIGCLD, wait4child);
-#endif
-#endif
+  int pid;
+  int status;
+  
+  while ((pid = waitpid (-1, &status, WNOHANG)) > 0)
+    nb_ovl--;
 }
 #endif
-#endif
+

@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.19 2000/02/11 11:07:00 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.20 2000/03/08 17:35:36 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.19 $ $Date: 2000/02/11 11:07:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.20 $ $Date: 2000/03/08 17:35:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -49,10 +49,10 @@ static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.19 $ $Date: 2
 #include <sys/ioccom.h>
 /* Windowing structure to support JWINSIZE/TIOCSWINSZ/TIOCGWINSZ */
 struct winsize {
-        unsigned short ws_row;       /* rows, in characters*/
-        unsigned short ws_col;       /* columns, in character */
-        unsigned short ws_xpixel;    /* horizontal size, pixels */
-        unsigned short ws_ypixel;    /* vertical size, pixels */
+  unsigned short ws_row;       /* rows, in characters*/
+  unsigned short ws_col;       /* columns, in character */
+  unsigned short ws_xpixel;    /* horizontal size, pixels */
+  unsigned short ws_ypixel;    /* vertical size, pixels */
 };
 #define TIOC    ('T'<<8)
 #define TIOCGWINSZ      _IOR('t', 104, struct winsize)  /* get window size */
@@ -112,7 +112,7 @@ int nbpath_ent;
 fd_set readfd, readmask;
 int reqid;
 int rpfd;
-#if (defined(_AIX) && defined(_IBMR2)) || defined(SOLARIS) || defined(IRIX5) || (defined(__osf__) && defined(__alpha)) || defined(linux)
+#ifndef _WIN32
 struct sigaction sa;
 #endif
 size_t stgcat_bufsz;
@@ -133,6 +133,7 @@ extern int optind;
 void prockilreq _PROTO((char *, char *));
 void procinireq _PROTO((char *, char *));
 void checkpoolstatus _PROTO(());
+void check_child_exit_q _PROTO(());
 void checkwaitq _PROTO(());
 void create_link _PROTO((struct stgcat_entry *, char *));
 void dellink _PROTO((struct stgpath_entry *));
@@ -140,6 +141,9 @@ void delreq _PROTO((struct stgcat_entry *, int));
 void rmfromwq _PROTO((struct waitq *));
 void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 void stgdaemon_usage _PROTO(());
+struct child_exit_q *child_exit_qp = NULL;	/* pointer to list of children
+                                               having exited */
+
 
 main(argc,argv)
      int argc;
@@ -168,8 +172,8 @@ main(argc,argv)
   struct stgpath_entry *stpp;
   struct timeval timeval;
   void wait4child();
-  int foreground = 0;
   int errflg = 0;
+  int foreground = 0;
 
 #ifdef linux
   optind = 0;
@@ -193,7 +197,7 @@ main(argc,argv)
     default:
       ++errflg;
       printf("?? getopt returned character code 0%o (octal) 0x%lx (hex) %d (int) '%c' (char) ?\n"
-          ,c,(unsigned long) c,c,(char) c);
+             ,c,(unsigned long) c,c,(char) c);
       break;
     }
   }
@@ -229,29 +233,21 @@ main(argc,argv)
 #endif
 #endif
 #endif
-  for (c = 0; c < maxfds; c++)
-    close (c);
+    for (c = 0; c < maxfds; c++)
+      close (c);
 #if ultrix || sun || sgi
-  c = open ("/dev/tty", O_RDWR);
-  if (c >= 0) {
-    ioctl (c, TIOCNOTTY, 0);
-    (void) close(c);
-  }
+    c = open ("/dev/tty", O_RDWR);
+    if (c >= 0) {
+      ioctl (c, TIOCNOTTY, 0);
+      (void) close(c);
+    }
 #endif
   }
 #endif /* not TEST */
-#if defined(ultrix) || (defined(sun) && !defined(SOLARIS)) || (defined(_AIX) && defined(_IBMESA))
-  signal (SIGCHLD, wait4child);
-#else
-#if (defined(sgi) && !defined(IRIX5)) || defined(hpux)
-  signal (SIGCLD, wait4child);
-#else
-#if (defined(_AIX) && defined(_IBMR2)) || defined(SOLARIS) || defined(IRIX5) || (defined(__osf__) && defined(__alpha)) || defined(linux)
+#ifndef _WIN32
   sa.sa_handler = wait4child;
   sa.sa_flags = SA_RESTART;
   sigaction (SIGCHLD, &sa, NULL);
-#endif
-#endif
 #endif
   strcpy (func, "stgdaemon");
   stglogit (func, "started\n");
@@ -373,60 +369,60 @@ main(argc,argv)
   }
 
 #else /* USECDB */
-        /* read stage catalog */
+  /* read stage catalog */
 
-        scfd = open (STGCAT, O_RDWR | O_CREAT, 0664);
-        fstat (scfd, &st);
-        if (st.st_size == 0) {
-                stgcat_bufsz = BUFSIZ;
-                stcs = (struct stgcat_entry *) calloc (1, stgcat_bufsz);
-                stce = stcs + (stgcat_bufsz/sizeof(struct stgcat_entry));
-                nbcat_ent = 0;
-                close (scfd);
-                last_reqid = 0;
-        } else {
-                stgcat_bufsz = (st.st_size + BUFSIZ -1) / BUFSIZ * BUFSIZ;
-                stcs = (struct stgcat_entry *) calloc (1, stgcat_bufsz);
-                stce = stcs + (stgcat_bufsz/sizeof(struct stgcat_entry));
-                nbcat_ent = st.st_size / sizeof(struct stgcat_entry);
-                read (scfd, (char *) stcs, st.st_size);
-                close (scfd);
-                if (st.st_size != nbcat_ent * sizeof(struct stgcat_entry)) {
-                        stglogit (func, STG48, STGCAT);
-                        exit (SYERR);
-                }
-                for (stcp = stcs, i = 0; i < nbcat_ent; i++, stcp++)
-                        if (stcp->reqid == 0) {
-                                stglogit (func, STG48, STGCAT);
-                                exit (SYERR);
-                }
-                last_reqid = (stcs + nbcat_ent - 1)->reqid;
-        }
-        spfd = open (STGPATH, O_RDWR | O_CREAT, 0664);
-        fstat (spfd, &st);
-        if (st.st_size == 0) {
-                stgpath_bufsz = BUFSIZ;
-                stps = (struct stgpath_entry *) calloc (1, stgpath_bufsz);
-                stpe = stps + (stgpath_bufsz/sizeof(struct stgpath_entry));
-                nbpath_ent = 0;
-                close (spfd);
-        } else {
-                stgpath_bufsz = (st.st_size + BUFSIZ -1) / BUFSIZ * BUFSIZ;
-                stps = (struct stgpath_entry *) calloc (1, stgpath_bufsz);
-                stpe = stps + (stgpath_bufsz/sizeof(struct stgpath_entry));
-                nbpath_ent = st.st_size / sizeof(struct stgpath_entry);
-                read (spfd, (char *) stps, st.st_size);
-                close (spfd);
-                if (st.st_size != nbpath_ent * sizeof(struct stgpath_entry)) {
-                        stglogit (func, STG48, STGPATH);
-                        exit (SYERR);
-                }
-                for (stpp = stps, i = 0; i < nbpath_ent; i++, stpp++)
-                        if (stpp->reqid == 0) {
-                                stglogit (func, STG48, STGPATH);
-                                exit (SYERR);
-                }
-        }
+  scfd = open (STGCAT, O_RDWR | O_CREAT, 0664);
+  fstat (scfd, &st);
+  if (st.st_size == 0) {
+    stgcat_bufsz = BUFSIZ;
+    stcs = (struct stgcat_entry *) calloc (1, stgcat_bufsz);
+    stce = stcs + (stgcat_bufsz/sizeof(struct stgcat_entry));
+    nbcat_ent = 0;
+    close (scfd);
+    last_reqid = 0;
+  } else {
+    stgcat_bufsz = (st.st_size + BUFSIZ -1) / BUFSIZ * BUFSIZ;
+    stcs = (struct stgcat_entry *) calloc (1, stgcat_bufsz);
+    stce = stcs + (stgcat_bufsz/sizeof(struct stgcat_entry));
+    nbcat_ent = st.st_size / sizeof(struct stgcat_entry);
+    read (scfd, (char *) stcs, st.st_size);
+    close (scfd);
+    if (st.st_size != nbcat_ent * sizeof(struct stgcat_entry)) {
+      stglogit (func, STG48, STGCAT);
+      exit (SYERR);
+    }
+    for (stcp = stcs, i = 0; i < nbcat_ent; i++, stcp++)
+      if (stcp->reqid == 0) {
+        stglogit (func, STG48, STGCAT);
+        exit (SYERR);
+      }
+    last_reqid = (stcs + nbcat_ent - 1)->reqid;
+  }
+  spfd = open (STGPATH, O_RDWR | O_CREAT, 0664);
+  fstat (spfd, &st);
+  if (st.st_size == 0) {
+    stgpath_bufsz = BUFSIZ;
+    stps = (struct stgpath_entry *) calloc (1, stgpath_bufsz);
+    stpe = stps + (stgpath_bufsz/sizeof(struct stgpath_entry));
+    nbpath_ent = 0;
+    close (spfd);
+  } else {
+    stgpath_bufsz = (st.st_size + BUFSIZ -1) / BUFSIZ * BUFSIZ;
+    stps = (struct stgpath_entry *) calloc (1, stgpath_bufsz);
+    stpe = stps + (stgpath_bufsz/sizeof(struct stgpath_entry));
+    nbpath_ent = st.st_size / sizeof(struct stgpath_entry);
+    read (spfd, (char *) stps, st.st_size);
+    close (spfd);
+    if (st.st_size != nbpath_ent * sizeof(struct stgpath_entry)) {
+      stglogit (func, STG48, STGPATH);
+      exit (SYERR);
+    }
+    for (stpp = stps, i = 0; i < nbpath_ent; i++, stpp++)
+      if (stpp->reqid == 0) {
+        stglogit (func, STG48, STGPATH);
+        exit (SYERR);
+      }
+  }
 
 #endif
 
@@ -473,6 +469,7 @@ main(argc,argv)
   /* main loop */
 
   while (1) {
+    check_child_exit_q(); /* check childs [pid,status] */
     checkpoolstatus ();	/* check if any pool just cleaned */
     checkwaitq ();	/* scan the wait queue */
     if (initreq_reqid && (waitqp == NULL || force_init)) {
@@ -1348,7 +1345,9 @@ fork_exec_stager(wqp)
     sprintf (arg_nretry, "%d", wqp->nretry);
     sprintf (arg_Aflag, "%d", wqp->Aflag);
 
-    stglogit (func, "execing stager, pid=%d\n", getpid());
+    stglogit (func, "execing stager %s %s %s %s %s %s, pid=%d\n",
+              arg_reqid, arg_key, arg_rpfd,
+              arg_nbsubreqs, arg_nretry, arg_Aflag, getpid());
     execl (progfullpath, "stager", arg_reqid, arg_key, arg_rpfd,
            arg_nbsubreqs, arg_nretry, arg_Aflag, 0);
     stglogit (func, STG02, "stager", "execl", sys_errlist[errno]);
@@ -1493,11 +1492,7 @@ savepath()
       return (-1);
     }
   }
-#if cray
-  trunc (spfd);
-#else
   ftruncate (spfd, n);
-#endif
   close (spfd);
 #endif
 
@@ -1524,11 +1519,7 @@ savereqs()
       return (-1);
     }
   }
-#if cray
-  trunc (scfd);
-#else
   ftruncate (scfd, n);
-#endif
   close (scfd);
 #endif
 
@@ -1616,36 +1607,55 @@ upd_stageout(req_type, upath, subreqid)
   return (0);
 }
 
-#if defined(ultrix) || (defined(sun) && !defined(SOLARIS))
+#if ! defined(_WIN32)
 void wait4child()
 {
+  struct child_exit_q *ceqp;
   int pid;
-  union wait status;
-
-  while ((pid = wait3 (&status, WNOHANG, (struct rusage *) 0)) > 0)
-    checkovlstatus (pid, status.w_status);
-}
-#else
-void wait4child()
-{
-  int pid;
+  struct child_exit_q *prev;
   int status;
 
-#if defined(_IBMR2) || defined(SOLARIS) || defined(IRIX5) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-  while ((pid = waitpid (-1, &status, WNOHANG)) > 0)
-    checkovlstatus (pid, status);
-#else
-  pid = wait (&status);
-  checkovlstatus (pid, status);
-#if _IBMESA
-  signal (SIGCHLD, wait4child);
-#else
-  signal (SIGCLD, wait4child);
-#endif
-#endif
+  while ((pid = waitpid (-1, &status, WNOHANG)) > 0) {
+    ceqp = child_exit_qp;
+    while (ceqp) {
+      prev = ceqp;
+      ceqp = ceqp->next;
+    }
+    ceqp = (struct child_exit_q *) malloc (sizeof(struct child_exit_q));
+    if (child_exit_qp)
+      prev->next = ceqp;
+    else
+      child_exit_qp = ceqp;
+    ceqp->next = 0;
+    ceqp->ovly_pid = pid;
+    ceqp->status = status;
+  }
+}
+
+void check_child_exit_q()
+{
+  struct child_exit_q *ceqp;
+  struct child_exit_q *ceqp_sav;
+  int i;
+  struct confq *rqp;
+  struct tptab *tunp;
+
+  sa.sa_handler = SIG_IGN;
+  sa.sa_flags = SA_RESTART;
+  sigaction (SIGCHLD, &sa, NULL);
+  ceqp = child_exit_qp;
+  while (ceqp) {
+    checkovlstatus(ceqp->ovly_pid,ceqp->status & 0xFFFF);
+    ceqp_sav = ceqp;
+    ceqp = ceqp->next;
+    free (ceqp_sav);
+  }
+  child_exit_qp = NULL;
+  sa.sa_handler = wait4child;
+  sa.sa_flags = SA_RESTART;
+  sigaction (SIGCHLD, &sa, NULL);
 }
 #endif
-
 void stgdaemon_usage() {
   printf("\nUsage : stgdaemon [options]\n"
          "  where options can be\n"
