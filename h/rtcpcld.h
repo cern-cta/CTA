@@ -189,4 +189,8 @@ int rtcpcld_setVIDFailedStatus _PROTO((
                                       tape_list_t *
                                       ));
 
+char *rtcpcld_fixStr _PROTO((
+                             CONST char *
+                             ));
+
 #endif /* RTCPCLD_H */
