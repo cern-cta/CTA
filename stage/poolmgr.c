@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.143 2001/06/22 17:49:09 jdurand Exp $
+ * $Id: poolmgr.c,v 1.144 2001/06/25 09:54:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.143 $ $Date: 2001/06/22 17:49:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.144 $ $Date: 2001/06/25 09:54:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1965,12 +1965,14 @@ int update_migpool(stcp,flag,immediate)
       }
       ngen = pool_p->migr->fileclass[ifileclass]->Cnsfileclass.nbcopies;
     } else {
+      /*
       stglogit(func, STG120,
                (*stcp)->u1.h.xfile,
                (*stcp)->u1.h.tppool,
                pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
                pool_p->migr->fileclass[ifileclass]->server,
                pool_p->migr->fileclass[ifileclass]->Cnsfileclass.classid);
+      */
       /* We flag this (*stcp) as a candidate for migration */
       (*stcp)->status |= CAN_BE_MIGR;
       /* We prepare the 'immediate' switch below because we can do this now and only now */
