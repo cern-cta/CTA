@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.48 2001/03/04 19:06:41 jdurand Exp $
+ * $Id: stage.h,v 1.49 2001/03/09 00:16:42 jdurand Exp $
  */
 
 /*
@@ -259,6 +259,7 @@
 #define STG139  "STG139 - %s : fileclass %s@%s (classid %d) specifies %d nbcopies and %d nbtppools - this file will not be migrated\n"
 #define	STG140	"STG140 - %s : could not find corresponding entry in catalog\n"
 #define	STG141	"STG141 - Invalid magic number 0x%lx\n"
+#define STG142  "STG142 - %s not removed - Retention period is %s\n"
 
 			/* stage daemon return codes and states */
 
@@ -370,6 +371,8 @@ struct predicates {
   u_signed64 space_canbemig;
   int nbfiles_beingmig;
   u_signed64 space_beingmig;
+  int nbfiles_to_mig;              /* Used for logging purpose when forking a migrator */
+  u_signed64 space_to_mig;         /* Used for logging purpose when forking a migrator */
 };
 
 struct fileclass {
