@@ -1,10 +1,10 @@
-.\" $Id: stgshift_to_castor.man,v 1.5 2002/10/03 14:02:53 jdurand Exp $
+.\" $Id: stgshift_to_castor.man,v 1.6 2002/10/03 14:07:51 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stgshift_to_castor.man,v $ $Revision: 1.5 $ $Date: 2002/10/03 14:02:53 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stgshift_to_castor.man,v $ $Revision: 1.6 $ $Date: 2002/10/03 14:07:51 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STGSHIFT_TO_CASTOR l "$Date: 2002/10/03 14:02:53 $"
+.TH STGSHIFT_TO_CASTOR "1" "$Date: 2002/10/03 14:07:51 $" "CASTOR" "Stage Administrator Commands"
 .SH NAME
 stgshift_to_castor \- Convert SHIFT stager catalogs to CASTOR disk ones
 .SH SYNOPSIS

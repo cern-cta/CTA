@@ -1,10 +1,10 @@
-.\" $Id: stagestat.man,v 1.15 2002/10/03 14:01:18 jdurand Exp $
+.\" $Id: stagestat.man,v 1.16 2002/10/03 14:07:51 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.15 $ $Date: 2002/10/03 14:01:18 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
+.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.16 $ $Date: 2002/10/03 14:07:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
 .\" Copyright (C) 1995-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGESTAT l "$Date: 2002/10/03 14:01:18 $"
+.TH STAGESTAT "1" "$Date: 2002/10/03 14:07:51 $" "CASTOR" "Stager User Commands"
 .SH NAME
 stagestat \- gives global statistics on stager usage and detailed statistics on
 each file staged in 

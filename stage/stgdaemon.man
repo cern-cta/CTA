@@ -1,10 +1,10 @@
-.\" $Id: stgdaemon.man,v 1.14 2002/10/03 14:02:00 jdurand Exp $
+.\" $Id: stgdaemon.man,v 1.15 2002/10/03 14:07:51 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.14 $ $Date: 2002/10/03 14:02:00 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.15 $ $Date: 2002/10/03 14:07:51 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STGDAEMON 1 "$Date: 2002/10/03 14:02:00 $" CASTOR "stage Administrator Commands"
+.TH STGDAEMON 1 "$Date: 2002/10/03 14:07:51 $" CASTOR "Stage Administrator Commands"
 .SH NAME
 stgdaemon \- starts the stage daemon
 .SH SYNOPSIS

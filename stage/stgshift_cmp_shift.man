@@ -1,10 +1,10 @@
-.\" $Id: stgshift_cmp_shift.man,v 1.5 2002/10/03 14:02:53 jdurand Exp $
+.\" $Id: stgshift_cmp_shift.man,v 1.6 2002/10/03 14:07:51 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stgshift_cmp_shift.man,v $ $Revision: 1.5 $ $Date: 2002/10/03 14:02:53 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stgshift_cmp_shift.man,v $ $Revision: 1.6 $ $Date: 2002/10/03 14:07:51 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STGSHIFT_CMP_SHIFT l "$Date: 2002/10/03 14:02:53 $"
+.TH STGSHIFT_CMP_SHIFT "1" "$Date: 2002/10/03 14:07:51 $" "CASTOR" "Stage Administrator Commands"
 .SH NAME
 stgshift_cmp_shift \- Compares two SHIFT stager catalogs
 .SH SYNOPSIS
