@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupvmodify.c,v $ $Revision: 1.1 $ $Date: 2002/05/28 09:37:58 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupvmodify.c,v $ $Revision: 1.2 $ $Date: 2002/05/28 17:30:55 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -36,13 +36,13 @@ char **argv;
     {"user", REQUIRED_ARGUMENT, 0, OPT_USR},
     {"group", REQUIRED_ARGUMENT, 0, OPT_GRP},
     {0, 0, 0, 0}
-  };
+  }; 
   uid_t uid = -1;
   gid_t gid = -1;
-  char src[CA_MAXHOSTNAMELEN + 1];
-  char tgt[CA_MAXHOSTNAMELEN + 1];
-  char newsrc[CA_MAXHOSTNAMELEN + 1];
-  char newtgt[CA_MAXHOSTNAMELEN + 1];
+  char src[MAXREGEXPLEN + 1];
+  char tgt[MAXREGEXPLEN + 1];
+  char newsrc[MAXREGEXPLEN + 1];
+  char newtgt[MAXREGEXPLEN + 1];
   char usr[CA_MAXUSRNAMELEN + 1];
   char grp[CA_MAXGRPNAMELEN + 1];
   int priv = -1;
@@ -105,8 +105,9 @@ char **argv;
   } 
 
   if (errflg) {
-    fprintf (stderr, "usage: %s %s%s%s%s", argv[0],
-	     "--uid uid --gid gid --src SourceHost --tgt TargetHost --newsrc NewSourceHost\n",
+    fprintf (stderr, "usage: %s %s%s%s%s%s", argv[0],
+	     "[--uid uid | --user username] [--gid gid | --group groupname]\n",
+	     "--src SourceHost --tgt TargetHost --newsrc NewSourceHost\n",
 	     "-- newtgt NewTargetHost --priv privilege\n",
 	     "Where privilege is one of: OPER, TP_OPER, ADMIN, EXPT_ADMIN or NONE\n",
 	     "--uid, --gid, --src and --tgt are mandatory.",

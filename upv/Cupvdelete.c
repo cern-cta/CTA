@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupvdelete.c,v $ $Revision: 1.1 $ $Date: 2002/05/28 09:37:58 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupvdelete.c,v $ $Revision: 1.2 $ $Date: 2002/05/28 17:30:55 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -31,8 +31,8 @@ main(argc, argv)
   };
   uid_t uid = -1;
   gid_t gid = -1;
-  char src[CA_MAXHOSTNAMELEN + 1];
-  char tgt[CA_MAXHOSTNAMELEN + 1];
+  char src[MAXREGEXPLEN + 1];
+  char tgt[MAXREGEXPLEN + 1]; 
   char usr[CA_MAXUSRNAMELEN + 1];
   char grp[CA_MAXGRPNAMELEN + 1];
 
@@ -83,9 +83,9 @@ main(argc, argv)
     errflg++;
   }
 
-  if (errflg) {
+ if (errflg) {
     fprintf (stderr, "usage: %s %s", argv[0],
-	     "--uid uid --gid gid --src SourceHost --tgt TargetHost \n");
+	     "[--uid uid | --user username] [--gid gid | --group groupname] --src SourceHost --tgt TargetHost\n");
     exit (USERR);
   }
 

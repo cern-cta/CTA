@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_oracle_ifce.pc,v $ $Revision: 1.1 $ $Date: 2002/05/28 10:06:20 $ CERN IT-PDP/DM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_oracle_ifce.pc,v $ $Revision: 1.2 $ $Date: 2002/05/28 17:30:55 $ CERN IT-PDP/DM Ben Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -236,7 +236,8 @@ Cupv_list_privilege(dbfd, bol, priv_entry)
     AND  ( ( :lensrc = 0) OR (SRC_HOST LIKE :priv_entry->srchost)) 
     AND  ( ( :lentgt = 0) OR (TGT_HOST LIKE :priv_entry->tgthost))   
     AND  ( (:priv_entry->privcat = -1) OR (PRIV_CAT = :priv_entry->privcat)) 
-    ORDER BY U_ID, G_ID, SRC_HOST, TGT_HOST;  
+    ORDER BY U_ID, G_ID, SRC_HOST, TGT_HOST;   
+
 
   if (bol) { 
 
@@ -250,10 +251,16 @@ Cupv_list_privilege(dbfd, bol, priv_entry)
     } 
   } 
 
+/*    Cupvlogit(func, "CURSOR opened\n"); */
+
   EXEC SQL FETCH list_cursor INTO 
     :priv_entry->uid, :priv_entry->gid, 
     :priv_entry->srchost, :priv_entry->tgthost, :priv_entry->privcat; 
   
+  
+/*    Cupvlogit(func, "Fetch done\n"); */
+
+
   switch (sqlca.sqlcode) { 
   case 0: 
     
@@ -286,7 +293,9 @@ struct Cupv_dbfd *dbfd;
 	ntries = 0;
 	while (1) {
 		EXEC SQL CONNECT :db_user IDENTIFIED BY :db_pwd;
-		if (sqlca.sqlcode == 0) return (0);
+		if (sqlca.sqlcode == 0) {
+		  return (0);
+		}
 		if (sqlca.sqlcode != -1014 && sqlca.sqlcode != -1033 &&
 		    sqlca.sqlcode != -1034) break;
 		if (ntries++ >= MAXRETRY) break;

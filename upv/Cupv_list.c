@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_list.c,v $ $Revision: 1.1 $ $Date: 2002/05/28 09:37:57 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: Cupv_list.c,v $ $Revision: 1.2 $ $Date: 2002/05/28 17:30:55 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
  
 /*      Cupv_list - list privileges */
@@ -93,7 +93,7 @@ Cupv_list(int flags, Cupv_entry_list *listp, struct Cupv_userpriv *filter)
 	 
 		marshall_LONG (sbp, uid);
 		marshall_LONG (sbp, gid);
-		marshall_WORD (sbp, listentsz);
+		marshall_WORD (sbp, listentsz); 
 		marshall_WORD (sbp, bol);
 
 		marshall_LONG (sbp, filter->uid);
@@ -104,6 +104,7 @@ Cupv_list(int flags, Cupv_entry_list *listp, struct Cupv_userpriv *filter)
 	 
 		msglen = sbp - sendbuf;
 		marshall_LONG (q, msglen);	/* update length field */
+
 
 		while ((c = send2Cupv (&listp->fd, sendbuf, msglen,
 		    repbuf, sizeof(repbuf))) && serrno == ECUPVNACT)
@@ -127,8 +128,8 @@ Cupv_list(int flags, Cupv_entry_list *listp, struct Cupv_userpriv *filter)
 		while (nbentries--) {
 			unmarshall_LONG (rbp, lp->uid);
 			unmarshall_LONG (rbp, lp->gid);
-			unmarshall_STRINGN (rbp, lp->srchost, CA_MAXHOSTNAMELEN);
-			unmarshall_STRINGN (rbp, lp->tgthost, CA_MAXHOSTNAMELEN);
+			unmarshall_STRINGN (rbp, lp->srchost, MAXREGEXPLEN);
+			unmarshall_STRINGN (rbp, lp->tgthost, MAXREGEXPLEN);
 			unmarshall_LONG (rbp, lp->privcat);
 			lp++;
 		}
