@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.161 2002/02/06 11:45:04 jdurand Exp $
+ * $Id: procio.c,v 1.162 2002/02/11 17:31:10 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.161 $ $Date: 2002/02/06 11:45:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.162 $ $Date: 2002/02/11 17:31:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1134,7 +1134,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 						int was_able_to_repair = 0;
 						char tmpbuf[21];
 						
-						if ((stcp_input[ihsmfiles].u1.h.server[0] != '\0') &&
+						if ((api_out) && (ncastorfiles) &&
+							(stcp_input[ihsmfiles].u1.h.server[0] != '\0') &&
 							(stcp_input[ihsmfiles].u1.h.fileid != 0)) {
 							strcpy(Cnsfileid.server,stcp_input[ihsmfiles].u1.h.server);
 							Cnsfileid.fileid = stcp_input[ihsmfiles].u1.h.fileid;
@@ -1151,7 +1152,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 							}
 						}
 
-						if ((stcp_input[jhsmfiles].u1.h.server[0] != '\0') &&
+						if ((api_out) && (ncastorfiles) &&
+							(stcp_input[jhsmfiles].u1.h.server[0] != '\0') &&
 							(stcp_input[jhsmfiles].u1.h.fileid != 0)) {
 							strcpy(Cnsfileid.server,stcp_input[jhsmfiles].u1.h.server);
 							Cnsfileid.fileid = stcp_input[jhsmfiles].u1.h.fileid;
