@@ -47,6 +47,7 @@
 "netread(): Interrupted system call",1,
 "No user mapping",1,
 "not owner",1,
+"Permission Denied: Volume ",1,
 "Physical End of Tape",1,
 "-qn option invalid for cptpdsk",1,
 "RECORD LENGTH HAS TO BE SPECIFIED",1,
