@@ -1,5 +1,5 @@
 /*
- * $Id: cleaner.c,v 1.11 2000/09/11 15:00:25 jdurand Exp $
+ * $Id: cleaner.c,v 1.12 2000/11/24 14:02:58 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: cleaner.c,v $ $Revision: 1.11 $ $Date: 2000/09/11 15:00:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: cleaner.c,v $ $Revision: 1.12 $ $Date: 2000/11/24 14:02:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -82,5 +82,8 @@ main(argc, argv)
 		stglogit (func, "%s\n", savebuf);
 	c = rfio_pclose (rf);
 	c = (c & 0xFF) ? SYERR : ((c >> 8) & 0xFF);
+	if (c) {
+		stglogit(func, STG02, "cleaner", "rfio_pclose", rfio_serror());
+	}
 	exit (c);
 }
