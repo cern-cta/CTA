@@ -1,4 +1,13 @@
 /*
+ * $Id: newacct.c,v 1.2 1999/07/21 16:25:00 jdurand Exp $
+ *
+ * $Log: newacct.c,v $
+ * Revision 1.2  1999/07/21 16:25:00  jdurand
+ * Declare external optarg and optind
+ *
+ */
+
+/*
  * Copyright (C) 1990-1999 by CERN/CN/SW/DC
  * All rights reserved
  */
@@ -94,6 +103,8 @@ main(argc,argv)
 	struct passwd    * pwd ;
 	char     * shell= NULL ; 
 	char 	     * account ; 
+    extern char *optarg;
+    extern int optind;
 
 	/*
 	 * Checking arguments
