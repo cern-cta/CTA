@@ -1,6 +1,9 @@
 /*
- * $Id: vdqm_api.h,v 1.1 1999/07/27 08:51:21 obarring Exp $
+ * $Id: vdqm_api.h,v 1.2 1999/08/30 12:39:31 obarring Exp $
  * $Log: vdqm_api.h,v $
+ * Revision 1.2  1999/08/30 12:39:31  obarring
+ * Add UID, GID and VolReqID in vdqm_GetClientAddr() call.
+ *
  * Revision 1.1  1999/07/27 08:51:21  obarring
  * First version.
  *
@@ -43,7 +46,7 @@ EXTERN_C int DLL_DECL vdqm_SendVolReq(vdqmnw_t *, int *, char *, char *, char *,
 EXTERN_C int DLL_DECL vdqm_UnitStatus(vdqmnw_t *, char *, char *, char *, char *, int *, int *);
 EXTERN_C int DLL_DECL vdqm_DelVolumeReq(vdqmnw_t *, int, char *, char *, char *, char *, int);
 EXTERN_C int DLL_DECL vdqm_DelDrive(vdqmnw_t *, char *, char *, char *);
-EXTERN_C int DLL_DECL vdqm_GetClientAddr(char *, char *, int *, char *, char *);
+EXTERN_C int DLL_DECL vdqm_GetClientAddr(char *, char *, int *, int *, int *, int *, char *, char *);
 EXTERN_C int DLL_DECL vdqm_AcknClientAddr(SOCKET, int, int, char *);
 EXTERN_C int DLL_DECL vdqm_NextDrive(vdqmnw_t **, vdqmDrvReq_t *);
 EXTERN_C int DLL_DECL vdqm_NextVol(vdqmnw_t **, vdqmVolReq_t *);
