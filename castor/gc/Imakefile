@@ -34,14 +34,17 @@ DEBUG  = -g
 #endif
 #endif
 
+MANPAGES = $(MANDIR)/gcdaemon.$(MANSUFFIX)
+EXPORTMANPAGES = $(EXPORTMAN)/man1/gcdaemon.$(MANSUFFIX)
+
 INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
 LIBS = -lshift
 
-RHBIN_SRCS = GcDaemon.cpp
+GCBIN_SRCS = GcDaemon.cpp
 
-RHBIN_OBJS = $(RHBIN_SRCS:.cpp=.Osuf)
+GCBIN_OBJS = $(GCBIN_SRCS:.cpp=.Osuf)
 
 DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift)
 
@@ -55,7 +58,7 @@ LIBS+= -ldl
 
 all: ProgramTargetName(gcDaemon)
 
-NormalProgramTarget(gcDaemon,$(RHBIN_OBJS),$(DEPLIB),$(LIBS))
+NormalProgramTarget(gcDaemon,$(GCBIN_OBJS),$(DEPLIB),$(LIBS))
 
 MakeDepSharedLibrary(FileName(..,shlib),shift)
 
@@ -66,14 +69,20 @@ depend:
 	@echo Not supported on this platform
 #else
 depend:
-	makedepend $(INCLUDES) $(RHBIN_SRCS) 2> /dev/null
+	makedepend $(INCLUDES) $(GCBIN_SRCS) 2> /dev/null
 #endif
 
 install: FileName($(BIN),gcDaemon)
 
 InstallProgram(gcDaemon,$(BIN),root,bin,755)
 
-exportman:
+install.man: $(MANDIR) $(MANPAGES)
+MakeDir($(MANDIR),root,bin,0755)
+IMANPAGE(gcdaemon,$(MANDIR),$(MANSUFFIX))
+EMANPAGE(gcdaemon,$(EXPORTMAN)/man1,$(MANSUFFIX))
+
+
+exportman: $(EXPORTMANPAGES)
 
 clean:
 	@echo cleaning in CurDir
