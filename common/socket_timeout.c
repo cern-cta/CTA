@@ -1,8 +1,12 @@
 /*
- * $Id: socket_timeout.c,v 1.4 1999/10/12 16:48:07 jdurand Exp $
+ * $Id: socket_timeout.c,v 1.5 1999/10/15 14:49:06 jdurand Exp $
  *
  * $Log: socket_timeout.c,v $
- * Revision 1.4  1999/10/12 16:48:07  jdurand
+ * Revision 1.5  1999/10/15 14:49:06  jdurand
+ * Wrapped sigaction aroung __INSURE__ #define because insure++ do not like at
+ * all the parameters we give to sigaction - another side effect of insure++ ?
+ *
+ * Revision 1.4  1999-10-12 18:48:07+02  jdurand
  * *** empty log message ***
  *
  * Revision 1.3  1999-07-21 15:59:23+02  jdurand
@@ -183,7 +187,8 @@ Sigfunc *_netsignal(signo, func)
      Sigfunc *func;
 {
   struct sigaction	act, oact;
-  
+  int n = 0;
+
   act.sa_handler = func;
   sigemptyset(&act.sa_mask);
   act.sa_flags = 0;
@@ -196,8 +201,18 @@ Sigfunc *_netsignal(signo, func)
     act.sa_flags |= SA_RESTART;		/* SVR4, 44BSD */
 #endif
   }
-  if (sigaction(signo, &act, &oact) < 0)
+#ifdef __INSURE__
+  /* Insure don't like the value I give to sigaction... */
+  _Insure_set_option("runtime","off");
+#endif
+  n = sigaction(signo, &act, &oact);
+#ifdef __INSURE__
+  /* Restore runtime checking */
+  _Insure_set_option("runtime","on");
+#endif
+  if (n < 0) {
     return(SIG_ERR);
+  }
   return(oact.sa_handler);
 }
 
