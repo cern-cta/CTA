@@ -1,5 +1,5 @@
 /*
- * $Id: stage_constants.h,v 1.23 2002/04/30 12:14:03 jdurand Exp $
+ * $Id: stage_constants.h,v 1.24 2002/05/06 17:14:40 jdurand Exp $
  */
 
 #ifndef __stage_constants_h
@@ -333,6 +333,11 @@
 #undef STGMAGIC4
 #endif
 #define STGMAGIC4   0x13140704
+
+#ifdef STGDAEMON_LEVEL
+#undef STGDAEMON_LEVEL
+#endif
+#define STGDAEMON_LEVEL STGMAGIC4
 
 #ifdef ONE_SECOND
 #undef ONE_SECOND
