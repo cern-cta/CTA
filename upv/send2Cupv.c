@@ -1,10 +1,12 @@
 /*
+ * $Id: send2Cupv.c,v 1.3 2004/08/12 14:25:49 motiakov Exp $
+ *
  * Copyright (C) 1999-2002 by CERN/IT-DS/HSM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2Cupv.c,v $ $Revision: 1.2 $ $Date: 2004/07/19 15:38:36 $ CERN IT-DS/HSM Ben Couturier";
+static char sccsid[] = "@(#)$RCSfile: send2Cupv.c,v $ $Revision: 1.3 $ $Date: 2004/08/12 14:25:49 $ CERN IT-DS/HSM Ben Couturier";
 #endif /* not lint */
 
 #include <errno.h>
@@ -60,18 +62,36 @@ int user_repbuf_len;
 	struct servent *sp;
 #ifdef CSEC
 	Csec_context_t ctx;
+	int secure_connection = 0;
 #endif
 
 	strcpy (func, "send2Cupv");
+#ifdef CSEC
+	if (getenv("SECURE_CASTOR") != NULL) secure_connection++;
+#endif
 	if (socketp == NULL || *socketp < 0) {	/* connection not opened yet */
 		sin.sin_family = AF_INET;
-		if ((p = getenv ("UPV_PORT")) || (p = getconfent ("UPV", "PORT", 0))) {
-			sin.sin_port = htons ((unsigned short)atoi (p));
-		} else if (sp = Cgetservbyname ("Cupv", "tcp")) {
-			sin.sin_port = sp->s_port;
+#ifdef CSEC
+		if (secure_connection) {
+		  if ((p = getenv ("SUPV_PORT")) || (p = getconfent ("SUPV", "PORT", 0))) {
+		    sin.sin_port = htons ((unsigned short)atoi (p));
+		  } else if (sp = Cgetservbyname ("sCupv", "tcp")) {
+		    sin.sin_port = sp->s_port;
+		  } else {
+		    sin.sin_port = htons ((unsigned short)SCUPV_PORT);
+		  }
 		} else {
-			sin.sin_port = htons ((unsigned short)CUPV_PORT);
+#endif
+		  if ((p = getenv ("UPV_PORT")) || (p = getconfent ("UPV", "PORT", 0))) {
+		    sin.sin_port = htons ((unsigned short)atoi (p));
+		  } else if (sp = Cgetservbyname ("Cupv", "tcp")) {
+		    sin.sin_port = sp->s_port;
+		  } else {
+		    sin.sin_port = htons ((unsigned short)CUPV_PORT);
+		  }
+#ifdef CSEC
 		}
+#endif
 		if ((p = getenv ("UPV_HOST")) || (p = getconfent ("UPV", "HOST", 0)))
 			strcpy (Cupvhost, p);
 		else
@@ -111,26 +131,25 @@ int user_repbuf_len;
 			}
 		}
 #ifdef CSEC
-
-
-			if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
-			  Cupv_errmsg (func, CUP02, "send", "Could not init context");
-			  (void) netclose (s);
-			  serrno = ESEC_CTX_NOT_INITIALIZED;
-			  return -1;
-			}
+			if (secure_connection) {
+			  if (Csec_client_init_context(&ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL) <0) {
+			    Cupv_errmsg (func, CUP02, "send", "Could not init context");
+			    (void) netclose (s);
+			    serrno = ESEC_CTX_NOT_INITIALIZED;
+			    return -1;
+			  }
 			
-			if(Csec_client_establish_context(&ctx, s)< 0) {
-			  Cupv_errmsg (func, "%s: %s\n",
-				      "send",
-				      "Could not establish context");
-			  (void) netclose (s);
-			  serrno = ESEC_NO_CONTEXT;
-			  return -1;
+			  if(Csec_client_establish_context(&ctx, s)< 0) {
+			    Cupv_errmsg (func, "%s: %s\n",
+					 "send",
+					 "Could not establish context");
+			    (void) netclose (s);
+			    serrno = ESEC_NO_CONTEXT;
+			    return -1;
+			  }
+
+			  Csec_clear_context(&ctx);
 			}
-
-			Csec_clear_context(&ctx);
-
 #endif
 		if (socketp)
 			*socketp = s;
