@@ -1,6 +1,9 @@
 /*
- * $Id: vdqm_CloseConn.c,v 1.3 1999/09/01 15:07:11 obarring Exp $
+ * $Id: vdqm_CloseConn.c,v 1.4 1999/09/02 15:20:38 obarring Exp $
  * $Log: vdqm_CloseConn.c,v $
+ * Revision 1.4  1999/09/02 15:20:38  obarring
+ * Add osdep.h because of new u_signed64 decl. in vdqm.h
+ *
  * Revision 1.3  1999/09/01 15:07:11  obarring
  * Fix sccsid string
  *
@@ -22,7 +25,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$Id: vdqm_CloseConn.c,v 1.3 1999/09/01 15:07:11 obarring Exp $";
+static char sccsid[] = "@(#)$Id: vdqm_CloseConn.c,v 1.4 1999/09/02 15:20:38 obarring Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -37,6 +40,7 @@ extern char *geterr();
 #include <errno.h>
 #include <Castor_limits.h>
 #include <log.h>
+#include <osdep.h>
 #include <net.h>
 #include <vdqm_constants.h>
 #include <vdqm.h>
