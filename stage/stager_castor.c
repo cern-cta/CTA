@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.7 2002/02/14 18:36:50 jdurand Exp $
+ * $Id: stager_castor.c,v 1.8 2002/02/15 09:32:57 jdurand Exp $
  */
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.7 $ $Date: 2002/02/14 18:36:50 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.8 $ $Date: 2002/02/15 09:32:57 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -1387,7 +1387,7 @@ int stagein_castor_hsm_file() {
 							RETURN (SYERR);
 						}
 					}
-					/* We accept this only hsm_vid[j] matches hsm_vid[i] as well as for side */
+					/* We accept this only if hsm_vid[j] matches hsm_vid[i] as well as for side */
 					if ((strcmp(hsm_segments[j][hsm_oksegment[j]].vid, hsm_vid[i]) == 0) &&
 						(hsm_segments[j][hsm_oksegment[j]].side == hsm_side[i])) {
 						if (use_subreqid) {
@@ -1411,6 +1411,7 @@ int stagein_castor_hsm_file() {
 							last_found = j;
 						} else if (j == (last_found + 1)) {
 							/* We are lucky : next stcp's segment shares also the same vid/side */
+
 							hsm_vid[j] = hsm_segments[j][hsm_oksegment[j]].vid;
 							hsm_side[j] = hsm_segments[j][hsm_oksegment[j]].side;
 							hsm_fseq[j] = hsm_segments[j][hsm_oksegment[j]].fseq;
@@ -1427,6 +1428,23 @@ int stagein_castor_hsm_file() {
 									(int) hsm_blockid[j][3]);
 							RESTORE_EID;
 #endif
+							/* But we definitely cannot continue with another stcp if by... */
+							/* bad luck this time, current file have another segment and this */
+							/* segment would (should, in theory, with a well configured pool) be on another tape... */
+							/* e.g. we do not add another logic if next segment would be on the same tape */
+							/* we break stream right now */
+							if (hsm_oksegment[j] != hsm_endsegment[j]) {
+#ifdef STAGER_DEBUG
+								/* Search for castor a-la-unix path in the file to stagein */
+								SAVE_EID;
+								sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEIN] %s : Not in a single segment. Forcing limitation of the stream\n",
+										castor_hsm);
+								RESTORE_EID;
+#endif
+								break;
+							}
+
+
 							last_found = j;
 						} else {
 							/* Bad luck : we are not allowed to stagein regardless of order and the next segment */
