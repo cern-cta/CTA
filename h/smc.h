@@ -1,14 +1,14 @@
 /*
- * $Id: smc.h,v 1.4 2001/08/24 06:04:55 baud Exp $
+ * $Id: smc.h,v 1.5 2002/07/24 07:18:43 baud Exp $
  */
 
 /*
- * Copyright (C) 1998-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1998-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: smc.h,v $ $Revision: 1.4 $ $Date: 2001/08/24 06:04:55 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: smc.h,v $ $Revision: 1.5 $ $Date: 2002/07/24 07:18:43 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 struct robot_info {
@@ -29,6 +29,7 @@ struct smc_element_info {
 	int state;
 	unsigned char asc;
 	unsigned char ascq;
+	int flags;
 	int source_address;
 	char name[9];
 };
