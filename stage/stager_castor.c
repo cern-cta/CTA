@@ -1,5 +1,5 @@
 /*
- * $Id: stager_castor.c,v 1.3 2001/12/20 11:43:22 jdurand Exp $
+ * $Id: stager_castor.c,v 1.4 2002/02/05 15:29:17 jdurand Exp $
  */
 
 /*
@@ -35,7 +35,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.3 $ $Date: 2001/12/20 11:43:22 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_castor.c,v $ $Revision: 1.4 $ $Date: 2002/02/05 15:29:17 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -81,6 +81,7 @@ extern int sendrep _PROTO((int, int, ...));
 extern int sendrep _PROTO(());
 #endif
 extern int stglogit _PROTO(());
+extern char *stglogflags _PROTO((char *, char *, u_signed64));
 
 int stagein_castor_hsm_file _PROTO(());
 int stagewrt_castor_hsm_file _PROTO(());
@@ -103,6 +104,7 @@ int copyfile _PROTO((int, int, char *, char *, u_signed64, u_signed64 *));
 char func[16];                      /* This executable name in logging */
 int Aflag;                          /* Allocation flag */
 int api_flag;                       /* Api flag, .e.g we will NOT re-arrange the file sequences in case of a tape request */
+u_signed64 api_flags;               /* Flags themselves of the Api call */
 int concat_off_fseq;                /* Fseq where begin concatenation off */
 int silent;                         /* Tells if we are running in silent mode or not */
 int use_subreqid;                   /* Tells if we allow asynchroneous callbacks from RTCOPY */
@@ -515,8 +517,12 @@ int main(argc,argv)
 #ifdef STAGER_DEBUG
 	sendrep(rpfd, MSG_ERR, "[DEBUG] api_flag = %d\n", api_flag);
 #endif
+	api_flags = strtou64(argv[11]);
+#ifdef STAGER_DEBUG
+	sendrep(rpfd, MSG_ERR, "[DEBUG] api_flags = %s\n", stglogflags(NULL,NULL,(u_signed64) api_flags));
+#endif
 #ifdef __INSURE__
-	tmpfile = argv[11];
+	tmpfile = argv[12];
 #ifdef STAGER_DEBUG
 	sendrep(rpfd, MSG_ERR, "[DEBUG] tmpfile = %s\n", tmpfile);
 #endif
@@ -2580,8 +2586,8 @@ int stager_hsm_callback(tapereq,filereq)
 	rtcpTapeRequest_t *tapereq;
 	rtcpFileRequest_t *filereq;
 {
-#ifdef STAGER_DEBUG
 	char tmpbuf1[21];
+#ifdef STAGER_DEBUG
 	char tmpbuf2[21];
 	char tmpbuf3[21];
 #endif
@@ -2813,13 +2819,23 @@ int stager_hsm_callback(tapereq,filereq)
 #endif
 					SAVE_EID;
 					if (Cns_statx (castor_hsm, &Cnsfileid, &statbuf) < 0) {
-						sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_statx", sstrerror (serrno));
+						int save_serrno = serrno;
+						sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_statx", sstrerror (save_serrno));
 						RESTORE_EID;
-						callback_error = 1;
-						if (use_subreqid) {
-							SET_HSM_IGNORE(stager_client_true_i,serrno);
+						if (((api_flags & STAGE_HSM_ENOENT_OK) == STAGE_HSM_ENOENT_OK) && (save_serrno == ENOENT)) {
+							/* This is OK for have an ENOENT here */
+							sendrep (rpfd, MSG_ERR, STG175,
+									 castor_hsm,
+									 u64tostr((u_signed64) Cnsfileid.fileid, tmpbuf1, 0),
+									 Cnsfileid.server,
+									 "skipped : STAGE_HSM_ENOENT_OK in action");
+						} else {
+							callback_error = 1;
+							if (use_subreqid) {
+								SET_HSM_IGNORE(stager_client_true_i,serrno);
+							}
+							return(-1);
 						}
-						return(-1);
 					}
 #ifdef STAGER_DEBUG
 					sendrep(rpfd, MSG_ERR, "[DEBUG-STAGEWRT/PUT-CALLBACK] Calling Cns_setsegattrs(\"%s\",&Cnsfileid={server=\"%s\",fileid=%s},nbseg=%d,segments)\n",
@@ -2845,6 +2861,7 @@ int stager_hsm_callback(tapereq,filereq)
 										&Cnsfileid,
 										hsm_nsegments[stager_client_true_i],
 										hsm_segments[stager_client_true_i]) < 0) {
+						int save_serrno = serrno;
 #ifdef SETSEGATTRS_WITH_OWNER_UID_GID
 						SETEID(0,0);
 #else
@@ -2852,11 +2869,20 @@ int stager_hsm_callback(tapereq,filereq)
 #endif
 						sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setsegattrs", sstrerror(serrno));
 						RESTORE_EID;
-						callback_error = 1;
-						if (use_subreqid) {
-							SET_HSM_IGNORE(stager_client_true_i,serrno);
+						if (((api_flags & STAGE_HSM_ENOENT_OK) == STAGE_HSM_ENOENT_OK) && (save_serrno == ENOENT)) {
+							/* This is OK for have an ENOENT here */
+							sendrep (rpfd, MSG_ERR, STG175,
+									 castor_hsm,
+									 u64tostr((u_signed64) Cnsfileid.fileid, tmpbuf1, 0),
+									 Cnsfileid.server,
+									 "skipped : STAGE_HSM_ENOENT_OK in action");
+						} else {
+							callback_error = 1;
+							if (use_subreqid) {
+								SET_HSM_IGNORE(stager_client_true_i,serrno);
+							}
+							return(-1);
 						}
-						return(-1);
 					}
 #ifdef SETSEGATTRS_WITH_OWNER_UID_GID
 					/* Go back to uid/gid before our change */
@@ -2938,11 +2964,21 @@ int stager_hsm_callback(tapereq,filereq)
 				RESTORE_EID;
 #endif
 				if (Cns_setatime (castor_hsm, &Cnsfileid) < 0) {
+					int save_serrno = serrno;
 					SAVE_EID;
 					sendrep (rpfd, MSG_ERR, STG02, castor_hsm, "Cns_setatime", sstrerror(serrno));
 					RESTORE_EID;
-					callback_error = 1;
-					return(-1);
+					if (((api_flags & STAGE_HSM_ENOENT_OK) == STAGE_HSM_ENOENT_OK) && (save_serrno == ENOENT)) {
+						/* This is OK for have an ENOENT here */
+						sendrep (rpfd, MSG_ERR, STG175,
+								 castor_hsm,
+								 u64tostr((u_signed64) Cnsfileid.fileid, tmpbuf1, 0),
+								 Cnsfileid.server,
+								 "skipped : STAGE_HSM_ENOENT_OK in action");
+					} else {
+						callback_error = 1;
+						return(-1);
+					}
 				}
 				/* If we reach this part of the code then we know undoubly */
 				/* that the transfer of this HSM file IS ok                */
