@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.72 $ $Date: 2000/05/24 12:17:43 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.73 $ $Date: 2000/06/13 16:37:27 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -583,8 +583,16 @@ static int rtcpd_ResetRequest(tape_list_t *tape) {
                 fl->tapebytes_sofar = 0;
                 fl->end_index = -1;
                 if ( mode == WRITE_DISABLE ) filereq->bytes_in = 0;
-                filereq->err.severity = RTCP_OK;
-                filereq->err.errorcode = 0;
+                /*
+                 * On tape write the limited by size status is set
+                 * already in rtcp_CheckReq() since disk file sizes are
+                 * all known. Therefor we cannot reset that status here. 
+                 */
+                if ( !(mode == WRITE_ENABLE &&
+                       filereq->err.severity == RTCP_OK | RTCP_LIMBYSZ) ) {
+                    filereq->err.severity = RTCP_OK;
+                    filereq->err.errorcode = 0;
+                }
                 *filereq->err.errmsgtxt = '\0';
                 tl->tapereq.err.severity = RTCP_OK;
                 tl->tapereq.err.errorcode = 0;
@@ -1585,6 +1593,8 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
             }
             tapereq.TStartRtcpd = (int)time(NULL);
             nexttape->tapereq = tapereq;
+            nexttape->tapereq.err.severity = nexttape->tapereq.err.severity &
+                                             ~RTCP_RESELECT_SERV;
             CLIST_INSERT(tape,nexttape);
             if ( tapereq.VolReqID != client->VolReqID ) {
                 rtcp_log(LOG_ERR,"rtcpd_MainCntl() wrong VolReqID %d, should be %d\n",
