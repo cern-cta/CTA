@@ -1,6 +1,9 @@
 /*
- * $Id: vdqm_PoolOp.c,v 1.3 1999/09/01 15:09:23 obarring Exp $
+ * $Id: vdqm_PoolOp.c,v 1.4 1999/09/01 15:09:59 obarring Exp $
  * $Log: vdqm_PoolOp.c,v $
+ * Revision 1.4  1999/09/01 15:09:59  obarring
+ * Fix (again) sccsid string
+ *
  * Revision 1.3  1999/09/01 15:09:23  obarring
  * Fix sccsid string
  *
@@ -22,7 +25,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$Id: vdqm_PoolOp.c,v 1.3 1999/09/01 15:09:23 obarring Exp $";
+static char sccsid[] = "@(#)$Id: vdqm_PoolOp.c,v 1.4 1999/09/01 15:09:59 obarring Exp $";
 #endif /* not lint */
 
 #if defined(_WIN32)
