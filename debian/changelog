@@ -1,3 +1,9 @@
+castor (2.0.0-19) unstable; urgency=low
+
+  * Packaged to have up-to-date s/w to install on tape servers
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Wed,  9 Mar 2005 18:21:31 +0100
+
 castor (2.0.0-18) unstable; urgency=low
 
   * Fix castor-job cron.hourly job
