@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.17 2005/02/14 17:28:15 bcouturi Exp $
+ * $Id: stager_client_api_get.cpp,v 1.18 2005/02/15 09:58:57 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.17 $ $Date: 2005/02/14 17:28:15 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_get.cpp,v $ $Revision: 1.18 $ $Date: 2005/02/15 09:58:57 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -72,6 +72,9 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
     return -1;
   }
 
+
+  const char *duserTag = (userTag != 0)?userTag:"NULL";
+  stage_trace(3, "%s Usertag=%s", func, duserTag);
 
   try {
     castor::BaseObject::initLog("", castor::SVC_NOMSG);
@@ -204,7 +207,9 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
     return -1;
   }
 
-  stage_trace(3, "%s %s %s %s", func, userTag, protocol, filename);
+  const char *duserTag = (userTag != 0)?userTag:"NULL";
+  const char *dprotocol = (protocol != 0)?protocol:"NULL";
+  stage_trace(3, "%s Usertag=%s Protocol=%s File=%s", func, duserTag, dprotocol, filename);
 
   try {
     castor::BaseObject::initLog("", castor::SVC_NOMSG);

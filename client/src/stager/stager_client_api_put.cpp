@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.19 2005/02/14 17:28:15 bcouturi Exp $
+ * $Id: stager_client_api_put.cpp,v 1.20 2005/02/15 09:58:57 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.19 $ $Date: 2005/02/14 17:28:15 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.20 $ $Date: 2005/02/15 09:58:57 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -73,6 +73,9 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
     stage_errmsg(func, "Invalid input parameter");
     return -1;
   }
+
+  const char *duserTag = (userTag != 0)?userTag:"NULL";
+  stage_trace(3, "%s Usertag=%s", func, duserTag);
 
 
   try {
@@ -202,8 +205,10 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
     return -1;
   }
 
-  stage_trace(3, "%s %s %s %s mode=%d/size=%llu", 
-	      func, userTag, protocol, filename, mode, size);
+  const char *duserTag = (userTag != 0)?userTag:"NULL";
+  const char *dprotocol = (protocol != 0)?protocol:"NULL";
+  stage_trace(3, "%s Usertag=%s Protocol=%s File=%s mode=%d/size=%llu", 
+	      func, duserTag, dprotocol, filename, mode, size);
 
 
   try {
