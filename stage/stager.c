@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.116 2001/02/01 18:09:29 jdurand Exp $
+ * $Id: stager.c,v 1.117 2001/02/02 12:18:16 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 /* #define TAPESRVR_EVEN "shd79" */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.116 $ $Date: 2001/02/01 18:09:29 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.117 $ $Date: 2001/02/02 12:18:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -143,6 +143,13 @@ int callback_fseq = 0;              /* Last fseq as transfered OK and seen in th
 int callback_nok = 0;               /* Number of fseq transfered OK and seen in the stage_tape callback */
 int dont_change_srv = 0;            /* If != 0 means that we will not change tape_server if rtcpc() retry - Only stage_tape() */
 char tape_pool[CA_MAXPOOLNAMELEN + 1]; /* Global tape pool for write migration */
+
+#if hpux
+/* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
+/* calls to setresuid().                                                */
+#define seteuid(euid) setresuid(-1,euid,-1)
+#define setegid(egid) setresgid(-1,egid,-1)
+#endif
 
 #ifdef STAGER_DEBUG
 #ifdef RETRYI
@@ -3286,6 +3293,6 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 }
 
 /*
- * Last Update: "Thursday 01 February, 2001 at 18:56:27 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Friday 02 February, 2001 at 13:17:59 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
 

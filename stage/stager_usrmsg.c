@@ -1,5 +1,5 @@
 /*
- * $Id: stager_usrmsg.c,v 1.12 2001/01/31 19:00:08 jdurand Exp $
+ * $Id: stager_usrmsg.c,v 1.13 2001/02/02 12:19:59 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.12 $ $Date: 2001/01/31 19:00:08 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_usrmsg.c,v $ $Revision: 1.13 $ $Date: 2001/02/02 12:19:59 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /* stager_usrmsg.c - callback rtcp routine */
@@ -39,6 +39,13 @@ int sendrep _PROTO(());
 int stglogit _PROTO(());
 int stgmiglogit _PROTO(());
 extern struct passwd start_passwd;
+
+#if hpux
+/* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
+/* calls to setresuid().                                                */
+#define seteuid(euid) setresuid(-1,euid,-1)
+#define setegid(egid) setresgid(-1,egid,-1)
+#endif
 
 #define SETEID(thiseuid,thisegid) {              \
 	setegid(start_passwd.pw_gid);                \
