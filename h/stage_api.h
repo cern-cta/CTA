@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.26 2001/02/01 18:08:30 jdurand Exp $
+ * $Id: stage_api.h,v 1.27 2001/02/02 12:08:39 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -243,6 +243,11 @@ typedef struct stage_hsm stage_hsm_t;
 /* -------------------------------------------------------- */
 /* Generic STAGE_IN/STAGE_OUT/STAGE_WRT/STAGE_CAT interface */
 /* -------------------------------------------------------- */
+#ifdef hpux
+/* Why does hpux's cc complain on the following proyotype when */
+/* compiled with -Ae ? */
+EXTERN_C int DLL_DECL stage_iowc _PROTO(());
+#else /* hpux */
 EXTERN_C int DLL_DECL stage_iowc _PROTO((int,                       /* req_type */
                                          char,                      /* t_or_d */
                                          u_signed64,                /* flags */
@@ -256,6 +261,7 @@ EXTERN_C int DLL_DECL stage_iowc _PROTO((int,                       /* req_type 
                                          struct stgcat_entry **,    /* stcp_output */
                                          int,                       /* nstpp_input */
                                          struct stgpath_entry *));  /* stpp_input */
+#endif /* hpux */
 #define stagein_tape(flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
   stage_iowc(STAGE_IN, 't',flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
 #define stagein_disk(flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input) \
@@ -303,6 +309,11 @@ EXTERN_C int  DLL_DECL  stage_updc_user _PROTO((char *, stage_hsm_t *));
 /* ---------------------------- */
 /* Generic STAGE_QRY interface */
 /* ---------------------------- */
+#ifdef hpux
+/* Why does hpux's cc complain on the following proyotype when */
+/* compiled with -Ae ? */
+EXTERN_C int DLL_DECL stage_qry _PROTO(());
+#else /* hpux */
 EXTERN_C int DLL_DECL stage_qry _PROTO((char,                      /* t_or_d */
                                         u_signed64,                /* flags */
                                         char *,                    /* hostname */
@@ -312,6 +323,7 @@ EXTERN_C int DLL_DECL stage_qry _PROTO((char,                      /* t_or_d */
                                         struct stgcat_entry **,    /* stcp_output */
                                         int *,                     /* nstpp_output */
                                         struct stgpath_entry **)); /* stpp_output */
+#endif /* hpux */
 #define stageqry_tape(flags,hostname,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output) \
   stage_qry('t',flags,hostname,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output)
 #define stageqry_disk(flags,hostname,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output) \
