@@ -1,48 +1,82 @@
+/*
+ * Copyright (C) 2000 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+ 
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: vmgrentermodel.c,v $ $Revision: 1.3 $ $Date: 2000/03/03 12:51:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
+#endif /* not lint */
+
+/*	vmgrentermodel - enter a new model of cartridge */
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include <sys/types.h>
+#include "Cgetopt.h"
 #include "serrno.h"
+#include "u64subr.h"
 #include "vmgr_api.h"
-
-int main(argc, argv)
-     int argc;
-     char **argv;
+main(argc, argv)
+int argc;
+char **argv;
 {
-  char buf[80];
-  char *dp;
-  int errflg = 0;
-  FILE *fopen(), *fs;
-  int media_cost;
-  char *media_letter;
-  char *model;
-  int native_capacity;
-  char *p;
+	int c;
+	char *dp;
+	int errflg = 0;
+	static struct Coptions longopts[] = {
+		{"media_cost", REQUIRED_ARGUMENT, 0, OPT_MEDIA_COST},
+		{"mc", REQUIRED_ARGUMENT, 0, OPT_MEDIA_COST},
+		{"media_letter", REQUIRED_ARGUMENT, 0, OPT_MEDIA_LETTER},
+		{"ml", REQUIRED_ARGUMENT, 0, OPT_MEDIA_LETTER},
+		{"model", REQUIRED_ARGUMENT, 0, OPT_MODEL},
+		{"mo", REQUIRED_ARGUMENT, 0, OPT_MODEL},
+		{"native_capacity", REQUIRED_ARGUMENT, 0, OPT_NATIVE_CAPACITY},
+		{"nc", REQUIRED_ARGUMENT, 0, OPT_NATIVE_CAPACITY},
+		{0, 0, 0, 0}
+	};
+	int media_cost = 0;
+	char *media_letter = NULL;
+	char *model = NULL;
+	int native_capacity = 0;
 
-  if (argc != 5) {
-    fprintf (stderr,
-             "usage: vmgrentermodel model media_letter native_capacity media_cost\n"
-             "\n"
-             "  where model            Model type         ex: SD3\n"
-             "        media_letter     Media Iden         ex: B\n"
-             "        native_capacity  Capacity in KBytes ex: 25000\n"
-             "        media_cost       Media Cost per GB  ex: 100\n"
-             "\n"
-             "Comments to the CASTOR Developpment Team <castor-dev@listbox.cern.ch>\n"
-             "\n");
-    return(EXIT_FAILURE);
-  }
-
-  model           = argv[1];
-  media_letter    = argv[2];
-  native_capacity = atoi(argv[3]);
-  media_cost      = atoi(argv[4]);
-
-  if (vmgr_entermodel (model, media_letter, native_capacity, media_cost)) {
-    fprintf (stderr, "%s: %s\n", model, sstrerror(serrno));
-    return(EXIT_FAILURE);
-  }
-
-  printf("--> OK\n");
-
-  return(EXIT_SUCCESS);
+	Coptind = 1;
+        while ((c = Cgetopt_long (argc, argv, "", longopts, NULL)) != EOF) {
+                switch (c) {
+		case OPT_MEDIA_COST:
+			if ((media_cost = strtol (Coptarg, &dp, 10)) <= 0 ||
+			    *dp != '\0') {
+				fprintf (stderr,
+				    "invalid media_cost %s\n", Coptarg);
+				errflg++;
+			}
+			break;
+                case OPT_MEDIA_LETTER:
+			media_letter = Coptarg;
+                        break;
+                case OPT_MODEL:
+			model = Coptarg;
+                        break;
+		case OPT_NATIVE_CAPACITY:
+			native_capacity = strutou64 (Coptarg) / ONE_MB;
+			break;
+                case '?':
+                        errflg++;
+                        break;
+                default:
+                        break;
+                }
+        }
+        if (Coptind < argc || model == NULL) {
+                errflg++;
+        }
+        if (errflg) {
+                fprintf (stderr, "usage: %s %s%s", argv[0],
+		    "--mo model [--ml media_letter] [--mc media_cost]\n",
+		    "[--nc native_capacity]\n");
+                exit (USERR);
+        }
+ 
+	if (vmgr_entermodel (model, media_letter, native_capacity, media_cost) < 0) {
+		fprintf (stderr, "vmgrentermodel %s: %s\n", model, sstrerror(serrno));
+		exit (USERR);
+	}
+	exit (0);
 }
