@@ -1,6 +1,9 @@
 /*
- * $Id: remote.c,v 1.2 1999/07/26 12:24:15 obarring Exp $
+ * $Id: remote.c,v 1.3 1999/07/28 16:16:19 obarring Exp $
  * $Log: remote.c,v $
+ * Revision 1.3  1999/07/28 16:16:19  obarring
+ * Fix aggregate initialization for HPUX
+ *
  * Revision 1.2  1999/07/26 12:24:15  obarring
  * Make MT safe
  *
@@ -12,7 +15,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: remote.c,v 1.2 1999/07/26 12:24:15 obarring Exp $";
+static char cvsId[] = "$Id: remote.c,v 1.3 1999/07/28 16:16:19 obarring Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -107,8 +110,13 @@ char *hostname ;
     char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
 
+#if defined(_WIN32) || defined(__STDC__)
     char lhfile[CA_MAXPATHLEN+1] =  LOCALHOSTSFILE;
     char rthfile[CA_MAXPATHLEN+1] = RTHOSTSFILE;
+#else
+    char *lhfile = LOCALHOSTSFILE;
+    char *rthfile = RTHOSTSFILE;
+#endif
    
     extern char *getconfent();
 
