@@ -4,7 +4,7 @@
  */
 
 /*
- * %W% %G% CERN IT-PDP/IP Frederic Hemmer
+ * @(#)$RCSfile: osdep.h,v $ $Revision: 1.2 $ $Date: 1999/10/08 06:33:36 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */
