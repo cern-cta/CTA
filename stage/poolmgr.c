@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.171 2002/01/21 11:43:51 jdurand Exp $
+ * $Id: poolmgr.c,v 1.172 2002/01/21 18:10:10 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.171 $ $Date: 2002/01/21 11:43:51 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.172 $ $Date: 2002/01/21 18:10:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2581,9 +2581,13 @@ int insert_in_migpool(stcp)
   if ((u_signed64) ((u_signed64) stcp->a_time + (u_signed64) thismintime_beforemigr) > (u_signed64) thistime) {
     pool_p->migr->global_predicates.nbfiles_delaymig++;
     pool_p->migr->global_predicates.space_delaymig += stcp->actual_size;
+	/* Makes sure it is flagged as delayed */
+	stcp->filler[0] = 'd';
   } else {
     pool_p->migr->global_predicates.nbfiles_canbemig++;
     pool_p->migr->global_predicates.space_canbemig += stcp->actual_size;
+	/* Makes sure it is flagged as non-delayed */
+	stcp->filler[0] = 'm';
   }
   if ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR)) {
     pool_p->migr->global_predicates.nbfiles_beingmig++;
