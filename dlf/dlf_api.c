@@ -6,7 +6,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.2 $ $Date: 2003/09/24 14:52:31 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.3 $ $Date: 2003/10/31 13:34:38 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -33,6 +33,7 @@ parameter value.
 
 ***********************************************************************/
 
+#include <stdarg.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -589,12 +590,7 @@ dlf_msg_text_slist_t *txt_list;
 }
 
 
-char DLL_DECL * dlf_format_str(buf, buf_len, fmt)
-char *buf;
-int buf_len;
-const char *fmt;
-{
-
+char DLL_DECL * dlf_format_str(char *buf, int buf_len, const char *fmt, ...) {
   va_list ap;
   int nb;
 
@@ -607,15 +603,8 @@ const char *fmt;
   return (buf);
 }
 
-int DLL_DECL dlf_write (request_id, severity, message_no,
-                        ns_invariant, numparams)
-Cuuid_t request_id;
-int severity;
-int message_no;
-U_HYPER ns_invariant;
-int numparams;
-{
-
+int DLL_DECL dlf_write (Cuuid_t request_id, int severity, int message_no,
+                        U_HYPER ns_invariant, int numparams, ...) {
   int i;
   HYPER par_int;
   double par_double;
