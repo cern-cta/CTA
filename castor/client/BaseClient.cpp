@@ -177,6 +177,9 @@ void castor::client::BaseClient::sendRequest
   while (!stop) {
     IObject* result = waitForCallBack();
     if (OBJ_EndResponse == result->type()) {
+      // flush messages
+      clog() << std::flush;
+      // terminate response handler
       rh->terminate();
       stop = true;
     } else {

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageUpdc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/08/20 16:00:13 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageUpdc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/09/01 13:45:28 $ $Author: sponcec3 $
  *
  *
  *
@@ -29,6 +29,7 @@
 #include <vector>
 #include "castor/rh/File.hpp"
 #include "castor/rh/StageUpdcRequest.hpp"
+#include "castor/rh/ReqId.hpp"
 #include "castor/exception/Exception.hpp"
 #include "stage_constants.h"
 
@@ -60,13 +61,11 @@ castor::rh::Request* castor::client::StageUpdc::buildRequest()
   for (std::vector<std::string>::const_iterator it = m_inputArguments.begin();
        it != m_inputArguments.end();
        it++) {
-    castor::rh::File* f = new castor::rh::File();
-    f->setName(*it);
-    f->setPoolname("");
-    f->setXsize(0);
+    castor::rh::ReqId* r = new castor::rh::ReqId();
+    r->setValue(*it);
     n++;
-    req->addFiles(f);
-    f->setRequest(req);
+    req->addReqids(r);
+    r->setRequest(req);
   }
   return req;
 }

@@ -64,7 +64,8 @@ namespace castor {
     OBJ_StringResponse,
     OBJ_EndResponse,
     OBJ_FileResponse,
-    OBJ_StageFilChgRequest
+    OBJ_StageFilChgRequest,
+    OBJ_ReqId
   };
     
   /**

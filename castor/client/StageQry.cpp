@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageQry.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/08/26 12:16:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageQry.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/09/01 13:45:28 $ $Author: sponcec3 $
  *
  *
  *
@@ -94,7 +94,7 @@ castor::client::StageQry::responseHandler() throw() {
 //------------------------------------------------------------------------------
 void castor::client::StageQry::usage(std::string error) throw() {
   std::cout << error << std::endl;
-  std::cout << "usage : stageqry [-a] [-h rh_host] [-p poolname] [--noretry] hsmfile..."
+  std::cout << "usage : stageqry [-af] [-h rh_host] [-p poolname] [--noretry] hsmfile..."
             << std::endl;
 }
 
