@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.108 2001/03/09 00:19:11 jdurand Exp $
+ * $Id: poolmgr.c,v 1.109 2001/03/09 02:46:59 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.108 $ $Date: 2001/03/09 00:19:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.109 $ $Date: 2001/03/09 02:46:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3329,17 +3329,17 @@ int euid_egid(euid,egid,tppool,migr,stcp,stcp_check,tppool_out,being_migr)
       }
     }
     if (found_fileclass == 0) continue;
+    /*
     if (being_migr != 0) {
-      /* Right, this fileclass appears in the migrator knowledge - but does it really trigger it ? */
       if (migr->fileclass[j]->being_migr <= 0) continue;
     } else {
-      /* Right, this fileclass appears in the migrator knowledge - but can it really trigger it ? */
       if ((migr->fileclass_predicates[j].nbfiles_canbemig - migr->fileclass_predicates[j].nbfiles_beingmig) <= 0) continue;
     }
     if (found_fileclass == 0) {
       sendrep(rpfd, MSG_ERR, "STG02 - Cannot find fileclass that can trigger your migration\n");
       return(-1);
     }
+    */
     /* From now on, we are sure that this fileclass contains files that are migration candidates */
     p = fileclasses[i].Cnsfileclass.tppools;
     found_tppool = 0;
