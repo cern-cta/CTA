@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.37 2000/12/12 14:44:14 jdurand Exp $
+ * $Id: procqry.c,v 1.38 2000/12/12 14:59:23 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.37 $ $Date: 2000/12/12 14:44:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.38 $ $Date: 2000/12/12 14:59:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -268,51 +268,52 @@ void procqryreq(req_data, clienthost)
 	c = 0;
 	if (strcmp (poolname, "NOPOOL") == 0)
 		poolflag = -1;
-	/* We systematically run procqry requests in a forked child */
-	if ((pid = fork ()) < 0) {
-		sendrep (rpfd, MSG_ERR, STG02, "", "fork", sys_errlist[errno]);
-		c = SYERR;
-		goto reply;
-	}
-	if (pid) {
-		stglogit (func, "forking procqry, pid=%d\n", pid);
+	if (! sflag) {
+		/* We run this procqry requests in a forked child */
+		if ((pid = fork ()) < 0) {
+			sendrep (rpfd, MSG_ERR, STG02, "", "fork", sys_errlist[errno]);
+			c = SYERR;
+			goto reply;
+		}
+		if (pid) {
+			stglogit (func, "forking procqry, pid=%d\n", pid);
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-		if (afile || mfile)
-			regfree (&preg);
+			if (afile || mfile)
+				regfree (&preg);
 #endif
-		free (argv);
-		close (rpfd);
-		if (fseq_list != NULL) free(fseq_list);
-		return;
-	} else {
-		/* We are in the child : we open a new connection to the Database Server so that   */
-		/* it will not clash with current one owned by the main process.                   */
+			free (argv);
+			close (rpfd);
+			if (fseq_list != NULL) free(fseq_list);
+			return;
+		} else {
+			/* We are in the child : we open a new connection to the Database Server so that   */
+			/* it will not clash with current one owned by the main process.                   */
 
 #ifdef USECDB
-		strcpy(dbfd_in_fork.username,dbfd.username);
-		strcpy(dbfd_in_fork.password,dbfd.password);
+			strcpy(dbfd_in_fork.username,dbfd.username);
+			strcpy(dbfd_in_fork.password,dbfd.password);
 
-		if (stgdb_login(&dbfd_in_fork) != 0) {
-			stglogit(func, STG100, "login", sstrerror(serrno), __FILE__, __LINE__);
-			stglogit(func, "Error loging to database server (%s)\n",sstrerror(serrno));
-			exit(SYERR);
-		}
+			if (stgdb_login(&dbfd_in_fork) != 0) {
+				stglogit(func, STG100, "login", sstrerror(serrno), __FILE__, __LINE__);
+				stglogit(func, "Error loging to database server (%s)\n",sstrerror(serrno));
+				exit(SYERR);
+			}
 
-		/* Open the database */
-		if (stgdb_open(&dbfd_in_fork,"stage") != 0) {
-			stglogit(func, STG100, "open", sstrerror(serrno), __FILE__, __LINE__);
-			stglogit(func, "Error opening \"stage\" database (%s)\n",sstrerror(serrno));
-			exit(SYERR);
-		}
+			/* Open the database */
+			if (stgdb_open(&dbfd_in_fork,"stage") != 0) {
+				stglogit(func, STG100, "open", sstrerror(serrno), __FILE__, __LINE__);
+				stglogit(func, "Error opening \"stage\" database (%s)\n",sstrerror(serrno));
+				exit(SYERR);
+			}
 
-		/* There is no need to ask for a dump of the catalog : we use the one that is */
-		/* already in memory.                                                         */
+			/* There is no need to ask for a dump of the catalog : we use the one that is */
+			/* already in memory.                                                         */
 
-		/* We set the pointer to use to the correct dbfd structure */
-		dbfd_query = &dbfd_in_fork;
+			/* We set the pointer to use to the correct dbfd structure */
+			dbfd_query = &dbfd_in_fork;
 #endif
+		}
 	}
-
 	if (Lflag) {
 		print_link_list (poolname, aflag, group, uflag, user,
 										 numvid, vid, fseq, fseq_list, xfile, afile, mfile);
