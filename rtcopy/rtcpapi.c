@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpapi.c,v $ $Revision: 1.3 $ $Date: 2004/08/05 15:38:39 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpapi.c,v $ $Revision: 1.4 $ $Date: 2004/08/06 13:03:43 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -833,11 +833,11 @@ void rtcpc_DumpRequest(SOCKET *s, tape_list_t *tape) {
   return;
 }
 
-static int rtcpc_SetLocalErrorStatus(tape_list_t *tape,
-                                     int errorcode,
-                                     char *errmsg,
-                                     int severity,
-                                     int rc) {
+int rtcpc_SetLocalErrorStatus(tape_list_t *tape,
+                              int errorcode,
+                              char *errmsg,
+                              int severity,
+                              int rc) {
   if ( tape == NULL ) return(rc);
   if ( errmsg != NULL && *tape->tapereq.err.errmsgtxt == '\0' )
     strcpy(tape->tapereq.err.errmsgtxt,errmsg);
