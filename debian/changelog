@@ -1,3 +1,10 @@
+castor (2.0.0-8) unstable; urgency=low
+
+  * Fix typo in PROTO2/job/stagerJob.c
+  * Added PROTO2/PACKAGING.howto
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Sun, 30 Jan 2005 13:14:48 +0100
+
 castor (2.0.0-7) unstable; urgency=low
 
   * Make resource monitoring and job use the file invariants when logging
