@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/06/16 14:45:09 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/06/28 13:41:25 $ $Author: sponcec3 $
  *
  *
  *
@@ -27,6 +27,7 @@
 // C++ Include Files
 #include <string>
 #include <iostream>
+#include <errno.h>
 #include <serrno.h>
 #include "castor/IService.hpp"
 #include "castor/Services.hpp"

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IRequestHandlerCInt.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/06/16 14:53:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IRequestHandlerCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/28 13:41:25 $ $Author: sponcec3 $
  *
  * 
  *
@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 // Include Files
+#include "errno.h"
 #include "castor/IService.hpp"
 #include "castor/IRequestHandler.hpp"
 #include "castor/IRequestHandlerCInt.hpp"

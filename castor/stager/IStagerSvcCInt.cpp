@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/28 12:57:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/28 13:41:26 $ $Author: sponcec3 $
  *
  * 
  *
@@ -27,6 +27,7 @@
 // Include Files
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/Services.hpp"
+#include <errno.h>
 #include <string>
 
 extern "C" {
