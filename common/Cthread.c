@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.41 2000/06/19 09:48:30 jdurand Exp $
+ * $Id: Cthread.c,v 1.42 2000/07/07 11:05:55 jdurand Exp $
  */
 
 /*
@@ -8,12 +8,13 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.41 $ $Date: 2000/06/19 09:48:30 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.42 $ $Date: 2000/07/07 11:05:55 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cthread_api.h>
 #include <Cthread_typedef.h>
 #include <Cglobals.h>
+#include <Cmutex.h>
 #include <serrno.h>
 #include <errno.h>
 #include <osdep.h>
@@ -3907,8 +3908,8 @@ void _Cthread_once() {
   }
   /* Initialize thread specific globals environment*/
 
-Cglobals_init(Cthread_Getspecific_init,Cthread_Setspecific0,(int (*) 
-_PROTO((void))) Cthread_Self0); 
+  Cglobals_init(Cthread_Getspecific_init,Cthread_Setspecific0,(int (*) _PROTO((void))) Cthread_Self0); 
+  Cmutex_init(Cthread_Lock_Mtx_init,Cthread_Mutex_Unlock_init);
   return;
 #endif /* ifndef _CTHREAD */
 }
@@ -4137,6 +4138,20 @@ int DLL_DECL Cthread_Getspecific_init(global_key, addr)
 {
   /* Just to avoid debug printing recursion from Cglobals_init() */
   return(Cthread_Getspecific(NULL,__LINE__,global_key,addr));
+}
+
+int DLL_DECL Cthread_Lock_Mtx_init(addr,timeout)
+     void *addr;
+     int timeout;
+{
+  return(Cthread_Lock_Mtx(__FILE__,__LINE__,addr,timeout));
+}
+
+int DLL_DECL Cthread_Mutex_Unlock_init(addr)
+     void *addr;
+{
+  /* Just to avoid debug printing recursion from Cmutex_init() */
+  return(Cthread_Mutex_Unlock(__FILE__,__LINE__,addr));
 }
 
 /* ==================================================================================== */
