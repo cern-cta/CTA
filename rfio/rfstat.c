@@ -1,5 +1,5 @@
 /*
- * $Id: rfstat.c,v 1.3 1999/12/09 13:47:15 jdurand Exp $
+ * $Id: rfstat.c,v 1.4 2000/02/03 09:35:59 obarring Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfstat.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:15 $ CERN/IT/PDP/DM fhe";
+static char sccsid[] = "@(#)$RCSfile: rfstat.c,v $ $Revision: 1.4 $ $Date: 2000/02/03 09:35:59 $ CERN/IT/PDP/DM fhe";
 #endif /* not lint */
 
 #define RFIO_KERNEL 1
@@ -183,7 +183,7 @@ char    **argv;
 #endif
 
 	if (rfio_stat(argv[1],&buf) < 0)     {
-		perror(argv[1]);
+		rfio_perror(argv[1]);
 #if defined(_WIN32)
 		WSACleanup();
 #endif
