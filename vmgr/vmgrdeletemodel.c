@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrdeletemodel.c,v $ $Revision: 1.1 $ $Date: 2002/01/17 15:46:09 $ CERN IT-DS/HSM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrdeletemodel.c,v $ $Revision: 1.2 $ $Date: 2002/08/26 14:50:47 $ CERN IT-DS/HSM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrdeletemodel - delete a media model definition */
@@ -22,6 +22,7 @@ char **argv;
 	int errflg = 0;
 	static struct Coptions longopts[] = {
 		{"media_letter", REQUIRED_ARGUMENT, 0, OPT_MEDIA_LETTER},
+		{"ml", REQUIRED_ARGUMENT, 0, OPT_MEDIA_LETTER},
 		{"model", REQUIRED_ARGUMENT, 0, OPT_MODEL},
 		{0, 0, 0, 0}
 	};
