@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.75 $ $Date: 2000/04/13 16:35:24 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.76 $ $Date: 2000/04/17 10:50:45 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1366,7 +1366,7 @@ void *diskIOthread(void *arg) {
                 rtcp_log(LOG_INFO,"diskIOthread() exit for synchronization due to ENOSPC\n");
                 filereq->proc_status = RTCP_WAITING;
                 (void) tellClient(&client_socket,NULL,NULL,-1);
-                diskIOfinished();
+                return((void *)&success);
             }
         }
 
