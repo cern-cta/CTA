@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.10 $ $Date: 2000/03/08 16:51:54 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_ProcReq.c,v $ $Revision: 1.11 $ $Date: 2000/03/09 15:08:15 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -173,6 +173,10 @@ void *vdqm_ProcReq(void *arg) {
             case VDQM_PING:
                 rc = vdqm_GetQueuePos(&volumeRequest);
                 (void) vdqm_AcknPing(client_connection,rc);
+                (void) vdqm_CloseConn(client_connection);
+                log(LOG_INFO,"vdqm_ProcReq(): end of %s request\n",req_string);
+                vdqm_ReturnPool(client_connection);
+                return((void *)&return_status);
                 break;
             default:
                 log(LOG_ERR,"vdqm_ProcReq(): no action for request %s\n",
