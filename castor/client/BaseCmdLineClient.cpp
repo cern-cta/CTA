@@ -227,12 +227,9 @@ std::string castor::client::BaseCmdLineClient::getPoolName()
   } else if ((pool = getenv ("STAGE_POOL")) != 0) {
     return pool;
   } else {
-    castor::exception::Exception e(ETPRM);
-    e.getMessage()
-      << "Unable to deduce the name of the stage pool.\n"
-      << "No -p option was given and STAGE_POOL is not set."
-      << std::endl;
-    throw e;
+    clog() << "No pool name, will be set by server."
+           << std::endl;
+    return "";
   }
 }
 
