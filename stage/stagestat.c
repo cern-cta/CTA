@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.31 2002/06/18 08:34:58 jdurand Exp $
+ * $Id: stagestat.c,v 1.32 2002/06/20 07:48:52 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.31 $ $Date: 2002/06/18 08:34:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.32 $ $Date: 2002/06/20 07:48:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -948,6 +948,7 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 	int c;
 	struct acctstage rp;		/* pointer to accstage record (backward compatibility) */
 	struct acctstage2 rp2;
+	size_t thislen;
 
 	rfio_errno = serrno = 0;
 	if ((c = rfio_read (fd_acct,accthdr,sizeof(struct accthdr))) != sizeof(struct accthdr)) {
@@ -1001,38 +1002,58 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 			exit (SYERR);
 		}
 		/* Convert acctstage to acctstage2 */
-		rp2.uid = rp.uid;
-		rp2.gid = rp.gid;
-		rp2.u2.s.actual_size = rp.u2.s.actual_size;
+		thislen = 0;
 		rp2.u2.s.c_time = 0; /* Not set in acctstage */
+
 		rp2.subtype = rp.subtype;
+		thislen += sizeof(rp.subtype);
+
+		rp2.uid = rp.uid;
+		thislen += sizeof(rp.uid);
+
+		rp2.gid = rp.gid;
+		thislen += sizeof(rp.gid);
+
 		rp2.reqid = rp.reqid;
+		thislen += sizeof(rp.reqid);
+
 		rp2.req_type = rp.req_type;
+		thislen += sizeof(rp.req_type);
+
 		rp2.retryn = rp.retryn;
+		thislen += sizeof(rp.retryn);
+
 		rp2.exitcode = rp.exitcode;
+		thislen += sizeof(rp.exitcode);
+
 		strcpy(rp2.u2.clienthost,rp.u2.clienthost);
-		rp2.u2.s.t_or_d = rp.u2.s.t_or_d;
-		if (rp.u2.s.t_or_d == 't' || rp.u2.s.t_or_d == 'd' || rp.u2.s.t_or_d == 'm' || rp.u2.s.t_or_d == 'h') {
+		thislen += (strlen(rp.u2.clienthost) + 1);
+
+		if ((accthdr->len > thislen) && (accthdr->len - thislen >= 8)) {
 			strcpy(rp2.u2.s.poolname,rp.u2.s.poolname);
-			rp2.u2.s.nbaccesses = rp.u2.s.nbaccesses;
-			switch (rp.u2.s.t_or_d) {
-			case 't':				
-				rp2.u2.s.u1.t.side = 0; /* Not set in acctstage */
-				strcpy(rp2.u2.s.u1.t.dgn, rp.u2.s.u1.t.dgn);
-				strcpy(rp2.u2.s.u1.t.fseq, rp.u2.s.u1.t.fseq);
-				strcpy(rp2.u2.s.u1.t.vid, rp.u2.s.u1.t.vid);
-				strcpy(rp2.u2.s.u1.t.tapesrvr, rp.u2.s.u1.t.tapesrvr);
-				break;
-			case 'd':
-				strcpy(rp2.u2.s.u1.d.xfile, rp.u2.s.u1.d.xfile);
-				break;
-			case 'm':
-				strcpy(rp2.u2.s.u1.m.xfile, rp.u2.s.u1.m.xfile);
-				break;
-			case 'h':
-				strcpy(rp2.u2.s.u1.h.xfile, rp.u2.s.u1.h.xfile);
-				rp2.u2.s.u1.h.fileid = rp.u2.s.u1.h.fileid;
-				break;
+			rp2.u2.s.t_or_d = rp.u2.s.t_or_d;
+			rp2.u2.s.actual_size = rp.u2.s.actual_size;
+			if (rp.u2.s.t_or_d == 't' || rp.u2.s.t_or_d == 'd' || rp.u2.s.t_or_d == 'm' || rp.u2.s.t_or_d == 'h') {
+				rp2.u2.s.nbaccesses = rp.u2.s.nbaccesses;
+				switch (rp.u2.s.t_or_d) {
+				case 't':				
+					rp2.u2.s.u1.t.side = 0; /* Not set in acctstage */
+					strcpy(rp2.u2.s.u1.t.dgn, rp.u2.s.u1.t.dgn);
+					strcpy(rp2.u2.s.u1.t.fseq, rp.u2.s.u1.t.fseq);
+					strcpy(rp2.u2.s.u1.t.vid, rp.u2.s.u1.t.vid);
+					strcpy(rp2.u2.s.u1.t.tapesrvr, rp.u2.s.u1.t.tapesrvr);
+					break;
+				case 'd':
+					strcpy(rp2.u2.s.u1.d.xfile, rp.u2.s.u1.d.xfile);
+					break;
+				case 'm':
+					strcpy(rp2.u2.s.u1.m.xfile, rp.u2.s.u1.m.xfile);
+					break;
+				case 'h':
+					strcpy(rp2.u2.s.u1.h.xfile, rp.u2.s.u1.h.xfile);
+					rp2.u2.s.u1.h.fileid = rp.u2.s.u1.h.fileid;
+					break;
+				}
 			}
 		}
 		memcpy((void *) buf,(void *) &rp2,sizeof(struct acctstage2));
@@ -1954,7 +1975,8 @@ void print_acct(accthdr,rp)
 	char gr_name_unknown[21];
 	char tmpbuf[21];
 	char tmpbuf2[21];
-	
+	size_t thislen;
+
 	pwd_unknown.pw_name = pw_name_unknown;
 	grp_unknown.gr_name = gr_name_unknown;
 	stage_util_time(accthdr->timestamp,timestr);
@@ -1992,7 +2014,9 @@ void print_acct(accthdr,rp)
 	fprintf(stderr,"... Retryn     : %d\n", rp->retryn);
 	fprintf(stderr,"... Exitcode   : %d\n", rp->exitcode);
 	fprintf(stderr,"... Clienthost : %s\n", rp->u2.clienthost);
+	thislen = sizeof(rp->subtype) + sizeof(rp->uid) + sizeof(rp->gid) + sizeof(rp->reqid) + sizeof(rp->req_type) + sizeof(rp->retryn) + sizeof(rp->exitcode) + strlen(rp->u2.clienthost) + 1;
 
+	if (! ((accthdr->len > thislen) && (accthdr->len - thislen >= 8))) return;
 	if (rp->u2.s.t_or_d != 't' &&
 		rp->u2.s.t_or_d != 'd' &&
 		rp->u2.s.t_or_d != 'm' &&
