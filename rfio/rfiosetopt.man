@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: rfiosetopt.man,v $ $Revision: 1.1 $ $Date: 2001/05/31 05:17:24 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfiosetopt.man,v $ $Revision: 1.2 $ $Date: 2001/05/31 06:12:23 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIOSETOPT 3 "$Date: 2001/05/31 05:17:24 $" CASTOR "Rfio Library Functions"
+.TH RFIOSETOPT 3 "$Date: 2001/05/31 06:12:23 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfiosetopt \- set RFIO options
 .SH SYNOPSIS
@@ -48,6 +48,10 @@ occurs. The transfer can be interrupted by sending a packet on the control
 socket.
 .br
 Default is RFIO_READBUF.
+.LP
+The default internal buffer size is 128kB, but the buffer size can be set with
+an entry RFIO IOBUFSIZE in
+.BR shift.conf .
 .RE
 .TP
 .B RFIO_NETOPT
