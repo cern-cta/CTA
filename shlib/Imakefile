@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.30 $ $Date: 2004/12/21 22:32:48 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.31 $ $Date: 2005/01/18 17:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -109,13 +109,13 @@ libcastorCommonOra.dll:	$(LIBRARIES1)
 
 MakeDir($(LIB),root,bin,0755)
 
-InstallSharedLibrary(shift,__CASTOR_VERSION__,$(LIB))
-InstallSharedLibrary(castorCommonOra,__CASTOR_VERSION__,$(LIB))
-InstallSharedLibrary(castorProto,__CASTOR_VERSION__,$(LIB))
+InstallSharedLibrary(shift,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
+InstallSharedLibrary(castorCommonOra,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
+InstallSharedLibrary(castorProto,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(LIB))
 
-InstallSharedLibrary(shift,__CASTOR_VERSION__,$(EXPORTLIB))
-InstallSharedLibrary(castorCommonOra,__CASTOR_VERSION__,$(EXPORTLIB))
-InstallSharedLibrary(castorProto,__CASTOR_VERSION__,$(EXPORTLIB))
+InstallSharedLibrary(shift,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
+InstallSharedLibrary(castorCommonOra,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
+InstallSharedLibrary(castorProto,__MAJOR_CASTOR_VERSION__,__MINOR_CASTOR_VERSION__,$(EXPORTLIB))
 
 install.man:
 
