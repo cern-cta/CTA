@@ -37,6 +37,7 @@ static struct Coptions longopts[] =
     {"usertag",            REQUIRED_ARGUMENT,  NULL,      'U'},
     {"host",               REQUIRED_ARGUMENT,  NULL,      'h'},
     {"display_reqid",      NO_ARGUMENT,        NULL,      'r'},
+    {"help",               NO_ARGUMENT,        NULL,      'e'},
     {NULL,                 0,                  NULL,        0}
   };
 
@@ -119,7 +120,7 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
   Copterr = 1;
   errflg = 0;
   nbargs = 0;  
-  while ((c = Cgetopt_long (argc, argv, "P:M:U:h:rm:s:S:", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "P:M:U:h:rm:s:S:e", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
       if (args->filename!= NULL) {
@@ -161,6 +162,9 @@ cmd_parse(int argc, char *argv[], struct cmd_args *args) {
     case 'r':
       args->display_reqid = 1;
       break;
+    case 'e':
+      errflg++;
+      break;
     default:
       errflg++;
       break;
@@ -178,5 +182,5 @@ void
 usage(char *cmd) {
   fprintf (stderr, "usage: %s ", cmd);
   fprintf (stderr, "%s",
-	   "[-P protocol] [-U usertag] [-S svc_class] [-m filemode] [-s filesize]  -M hsmfile\n");
+	   "[-h stager] [-P protocol] [-U usertag] [-S svc_class] [-m filemode] [-s filesize] [-r]  -M hsmfile\n");
 }
