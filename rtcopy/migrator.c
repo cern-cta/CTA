@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/11/03 17:15:58 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.18 $ $Release$ $Date: 2004/11/10 14:12:50 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.17 $ $Release$ $Date: 2004/11/03 17:15:58 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.18 $ $Release$ $Date: 2004/11/10 14:12:50 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -99,7 +99,7 @@ int migratorCallbackFileCopied(
      rtcpFileRequest_t *filereq;
 {
   file_list_t *file = NULL;
-  int rc, save_serrno;
+  int rc, save_serrno, tapeCopyNb = 0;
   struct Cns_fileid *castorFileId = NULL;
   char *blkid;
 
@@ -187,14 +187,15 @@ int migratorCallbackFileCopied(
     }
 
     if ( (filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED) ) {
-      rc = rtcpcld_updateNsSegmentAttributes(tape,file);
+      (void)rtcpcld_getTapeCopyNumber(file,&tapeCopyNb);
+      rc = rtcpcld_updateNsSegmentAttributes(tape,file,tapeCopyNb);
       if ( rc == -1 ) {
         save_serrno = serrno;
         (void)dlf_write(
                         (inChild == 0 ? mainUuid : childUuid),
                         RTCPCLD_LOG_MSG(RTCPCLD_MSG_FAILEDNSUPD),
                         (struct Cns_fileid *)castorFileId,
-                        RTCPCLD_NB_PARAMS+6,
+                        RTCPCLD_NB_PARAMS+7,
                         "",
                         DLF_MSG_PARAM_TPVID,
                         tapereq->vid,
@@ -210,7 +211,10 @@ int migratorCallbackFileCopied(
                         "BLOCKID",
                         DLF_MSG_PARAM_STR,
                         blkid,
-                      "ERROR",
+                        "COPYNB",
+                        DLF_MSG_PARAM_INT,
+                        tapeCopyNb,
+                        "ERROR",
                         DLF_MSG_PARAM_STR,
                         sstrerror(serrno),
                         RTCPCLD_LOG_WHERE
@@ -451,13 +455,22 @@ int migratorCallback(
                       level,
                       msgNo,
                       castorFileId,
-                      6,
+                      9,
                       "",
                       DLF_MSG_PARAM_TPVID,
                       tapereq->vid,
+                      "TPSERV",
+                      DLF_MSG_PARAM_STR,
+                      tapereq->server,
+                      "TPDRIVE",
+                      DLF_MSG_PARAM_STR,
+                      tapereq->unit,
                       "",
                       DLF_MSG_PARAM_UUID,
                       tapereq->rtcpReqId,
+                      "",
+                      DLF_MSG_PARAM_UUID,
+                      filereq->stgReqId,
                       "FSEQ",
                       DLF_MSG_PARAM_INT,
                       filereq->tape_fseq,
@@ -485,10 +498,16 @@ int migratorCallback(
                       childUuid,
                       RTCPCLD_LOG_MSG(msgNo),
                       castorFileId,
-                      10,
+                      12,
                       "",
                       DLF_MSG_PARAM_TPVID,
                       tapereq->vid,
+                     "TPSERV",
+                      DLF_MSG_PARAM_STR,
+                      tapereq->server,
+                      "TPDRIVE",
+                      DLF_MSG_PARAM_STR,
+                      tapereq->unit,
                       "",
                       DLF_MSG_PARAM_UUID,
                       tapereq->rtcpReqId,
