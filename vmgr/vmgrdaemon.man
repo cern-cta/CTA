@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrdaemon.man,v $ $Revision: 1.3 $ $Date: 2001/09/26 09:13:57 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrdaemon.man,v $ $Revision: 1.4 $ $Date: 2001/10/05 06:15:53 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRDAEMON 1 "$Date: 2001/09/26 09:13:57 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRDAEMON 1 "$Date: 2001/10/05 06:15:53 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrdaemon \- start the volume manager
 .SH SYNOPSIS
@@ -84,6 +84,13 @@ device group, density and status.
 .LP
 The volume manager configuration file contains password information for the
 database and must be readable/writable only by root.
+It contains a single line in the format:
+.RS
+.HP
+username/password@server
+.RE
+where 'username' and 'password' are the credentials to login to the database
+instance identified by 'server'.
 .LP
 In the log each entry has a timestamp.
 All entries corresponding to one request have the same request id.
