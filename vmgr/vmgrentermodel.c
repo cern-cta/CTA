@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrentermodel.c,v $ $Revision: 1.3 $ $Date: 2000/03/03 12:51:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrentermodel.c,v $ $Revision: 1.4 $ $Date: 2000/03/05 16:13:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrentermodel - enter a new model of cartridge */
@@ -70,7 +70,7 @@ char **argv;
         if (errflg) {
                 fprintf (stderr, "usage: %s %s%s", argv[0],
 		    "--mo model [--ml media_letter] [--mc media_cost]\n",
-		    "[--nc native_capacity]\n");
+		    "--nc native_capacity\n");
                 exit (USERR);
         }
  
