@@ -9,7 +9,8 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-
+# Always exclude CVS so that we can build from a cvs workdir
+export DH_ALWAYS_EXCLUDE=CVS
 
 
 CFLAGS = -Wall -g
