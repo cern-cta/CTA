@@ -717,6 +717,39 @@ int send2stgd_sort_stcp(req_type,flags,nstcp_input,stcp_input,nstcp_output,stcp_
 		return(-1);
 	}
 
+	/* It is possible that we identified output No i to a wrong input No j because, for example */
+	/* in case of CASTOR files, input did contain ONLY the HSM name */
+	/* So we look again to output structures only and resolve the cases when we said that */
+	/* too seen[] values were identical */
+	nstcp_output_duplicate_found = 1;      /* This statement just forces the while() to start... */
+	while (nstcp_output_duplicate_found != 0) {
+		nstcp_output_duplicate_found = 0;
+		for (i = 0; i < *nstcp_output; i++) {
+			for (j = i + 1; j < *nstcp_output; j++) {
+				if (seen[j] == seen[i]) {
+					/* Output structures are claimed to refer to same input structure No seen[i] */
+					if (send2stgd_api_cmp(&((*stcp_output)[i]),&((*stcp_output)[j])) != 0) {
+						/* But this is not true */
+						/* Since i != j per construction it is possible to find one of them */
+						/* that we can overwrite */
+						if (seen[i] != i) {
+							seen[i] = i;
+						} else {
+							seen[j] = j;
+						}
+						nstcp_output_duplicate_found = 1;
+					}
+				}
+			}
+			if (nstcp_output_duplicate_found != 0) {
+				/* We found a wrong duplicate */
+				/* Since we modified one entry we have to reverify since the beginning */
+				break;
+			}
+		}
+	}
+
+
 	/* We possibliy shrunk output structures to handle the special case when there was an */
 	/* internal retry by the stgdaemon - that assigned another catalog entry but for the */
 	/* same input entry - typically in case of ENOSPC entries successful after a retry */
