@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.146 2001/12/03 14:18:08 jdurand Exp $
+ * $Id: procio.c,v 1.147 2001/12/04 10:27:49 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.146 $ $Date: 2001/12/03 14:18:08 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.147 $ $Date: 2001/12/04 10:27:49 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -964,7 +964,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				break;
 			case 0:
 				/* Long option without short option correspondance */
-				if (tppool_flag != 0) {
+				if ((tppool_flag != 0) && (tppool == NULL)) {
 					tppool = Coptarg;
 				}
 				break;
