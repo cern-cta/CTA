@@ -129,7 +129,7 @@ int Cstager_IStagerSvc_tapesToDo(struct Cstager_IStagerSvc_t* stgSvc,
  */
 int Cstager_IStagerSvc_selectTape(struct Cstager_IStagerSvc_t* stgSvc,
                                   struct Cstager_Tape_t** tape,
-                                  const std::string vid,
+                                  const char* vid,
                                   const int side,
                                   const int tpmode);
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/06/28 12:15:59 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/28 12:57:12 $ $Author: sponcec3 $
  *
  * 
  *
@@ -143,7 +143,7 @@ extern "C" {
   //---------------------------------------------------------------------------
   int Cstager_IStagerSvc_selectTape(struct Cstager_IStagerSvc_t* stgSvc,
                                     castor::stager::Tape** tape,
-                                    const std::string vid,
+                                    const char* vid,
                                     const int side,
                                     const int tpmode) {
     if (0 == stgSvc || 0 == stgSvc->stgSvc) {
