@@ -19,6 +19,8 @@
 gencastor \- produces castor source code from UML diagrams
 .SH SYNOPSIS
 .B gencastor
+[ \-w  castor_workdir ]
+[ \-h ]
 .I xmiFile
 .SH DESCRIPTION
 gencastor is a tool to generate castor source code from UML diagrams.
@@ -32,6 +34,16 @@ as a DB and Odbc is produced but the code will not compile.
 In order for a class to get a Streaming service, it shoudl inherit from the
 interface castor::IStreamable. In order for a class to get a database conversion
 service, it should inherit from the interface castor::IPersistent.
+.SH OPTIONS
+The following options are supported:
+.TP
+.B -h
+Display the usage
+.TP
+.B -w castor_workdir
+considers castor_workdir as the directory where the castor code resides
+and where the code should be produced. If this option is not present,
+the default value is the current directory
 .SH SEE ALSO
 .BR umbrello (1),
 .br
