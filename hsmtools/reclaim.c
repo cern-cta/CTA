@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: reclaim.c,v $ $Revision: 1.3 $ $Date: 2002/01/22 16:23:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: reclaim.c,v $ $Revision: 1.4 $ $Date: 2002/01/23 07:25:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      reclaim - reset information concerning a volume */
@@ -30,6 +30,7 @@ char **argv;
 	int flags;
 	char *host = NULL;
 	Cns_list list;
+	char *p;
 	char p_stat[9];
 	char path[CA_MAXPATHLEN+1];
 	int status;
@@ -85,8 +86,15 @@ char **argv;
 		exit (USERR);
 	}
 
-	if (! host && (Cns_hosts = getconfent ("CNS", "HOST", 1)))
-		host = strtok (Cns_hosts, " \t\n");
+	if (! host && (Cns_hosts = getconfent ("CNS", "HOST", 1))) {
+		Cns_hosts = strdup (Cns_hosts);
+		host = Cns_hosts;
+		if (p = strpbrk (Cns_hosts, " \t\n")) {
+			*p = '\0';
+			Cns_hosts = p + 1;
+		} else
+			Cns_hosts = NULL;
+	}
 	while (1) {
 		flags = CNS_LIST_BEGIN;
 		while ((dtp = Cns_listtape (host, vid, flags, &list)) != NULL) {
@@ -110,8 +118,12 @@ char **argv;
 		}
 		(void) Cns_listtape (host, vid, CNS_LIST_END, &list);
 		if (! Cns_hosts) break;
-		host = strtok (NULL, " \t\n");
-		if (! host) break;
+		host = Cns_hosts;
+		if (p = strpbrk (Cns_hosts, " \t\n")) {
+			*p = '\0';
+			Cns_hosts = p + 1;
+		} else
+			Cns_hosts = NULL;
 	}
 
 	/* remove logically deleted files */
