@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.65 2000/10/03 15:28:01 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.66 2000/10/03 15:40:19 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.65 $ $Date: 2000/10/03 15:28:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.66 $ $Date: 2000/10/03 15:40:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -831,7 +831,7 @@ add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
 #ifdef STAGER_DEBUG
 					sendrep(wqp->rpfd, MSG_ERR, "STG33 - Updated wfp for eventual tape_fseq %d-\n",atoi(fseq_orig) + 1);
 #else
-					stglogit(func, "[DEBUG] add2otherwf : Updated wfp for eventual tape_fseq %d-\n",atoi(fseq_orig) + 1);
+					stglogit(func, "add2otherwf : Updated wfp for eventual tape_fseq %d-\n",atoi(fseq_orig) + 1);
 #endif
 				} else {
 					if ((newwaitf = (struct waitf *) realloc(wqp->wf, (wqp->nbdskf + 1) * sizeof(struct waitf))) == NULL) {
@@ -873,7 +873,7 @@ add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
 #ifdef STAGER_DEBUG
 					sendrep(wqp->rpfd, MSG_ERR, "STG33 - Extended wfp for eventual tape_fseq %s\n",stcp_ok->u1.t.fseq);
 #else
-					stglogit(func, "[DEBUG] add2otherwf : Extended wfp for eventual tape_fseq %s\n",stcp_ok->u1.t.fseq);
+					stglogit(func, "add2otherwf : Extended wfp for eventual tape_fseq %s\n",stcp_ok->u1.t.fseq);
 #endif
 				}
 			} else {
@@ -885,7 +885,7 @@ add2otherwf(wqp_orig,fseq_orig,wfp_orig,wfp_new)
 #ifdef STAGER_DEBUG
 				sendrep(wqp->rpfd, MSG_ERR, "STG33 - Updated wfp for eventual tape_fseq %d\n",atoi(fseq_orig) + 1);
 #else
-				stglogit(func, "[DEBUG] add2otherwf : Updated wfp for eventual tape_fseq %d\n",atoi(fseq_orig) + 1);
+				stglogit(func, "add2otherwf : Updated wfp for eventual tape_fseq %d\n",atoi(fseq_orig) + 1);
 #endif
 			}
 		}
