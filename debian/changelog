@@ -1,3 +1,9 @@
+castor (2.0.0-13) unstable; urgency=low
+
+  * In rmnode, and in case of shared i/o stat (like on xfs), redistribute the read stats to filesystems taking into account only those that have (observed) opened streams
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Tue,  1 Feb 2005 22:47:17 +0100
+
 castor (2.0.0-12) unstable; urgency=low
 
   * Fix in monitoring
