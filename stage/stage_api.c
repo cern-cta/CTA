@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.28 2001/11/30 12:05:50 jdurand Exp $
+ * $Id: stage_api.c,v 1.29 2001/12/03 14:12:22 jdurand Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -178,7 +178,7 @@ int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,poolus
   int istcp;                    /* Counter on catalog structures passed in the protocol */
   int istpp;                    /* Counter on path structures passed in the protocol */
   int msglen;                   /* Buffer length (incremental) */
-  int ntries;                   /* Number of retries */
+  int ntries = 0;               /* Number of retries */
   struct passwd *pw;            /* Password entry */
   struct group *gr;             /* Group entry */
 
@@ -934,7 +934,7 @@ int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output
   struct stgcat_entry *thiscat; /* Catalog current pointer */
   int istcp;                    /* Counter on catalog structures passed in the protocol */
   int msglen;                   /* Buffer length (incremental) */
-  int ntries;                   /* Number of retries */
+  int ntries = 0;               /* Number of retries */
   struct passwd *pw;            /* Password entry */
   char *sbp, *p, *q;            /* Internal pointers */
   char *sendbuf;                /* Socket send buffer pointer */
@@ -1266,7 +1266,7 @@ int DLL_DECL stageupdc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_output
   struct stgpath_entry *thispath; /* Path current pointer */
   int istpp;                    /* Counter on path structures passed in the protocol */
   int msglen;                   /* Buffer length (incremental) */
-  int ntries;                   /* Number of retries */
+  int ntries = 0;               /* Number of retries */
   struct passwd *pw;            /* Password entry */
   struct group *gr;             /* Group entry */
 
@@ -1542,7 +1542,7 @@ int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,
   int istcp;                    /* Counter on catalog structures passed in the protocol */
   int istpp;                    /* Counter on path structures passed in the protocol */
   int msglen;                   /* Buffer length (incremental) */
-  int ntries;                   /* Number of retries */
+  int ntries = 0;               /* Number of retries */
   struct passwd *pw;            /* Password entry */
   struct group *gr;             /* Group entry */
 
