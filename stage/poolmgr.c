@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.246 2003/06/30 10:29:22 jdurand Exp $
+ * $Id: poolmgr.c,v 1.247 2003/06/30 10:51:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.246 $ $Date: 2003/06/30 10:29:22 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.247 $ $Date: 2003/06/30 10:51:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3435,7 +3435,7 @@ void checkfile2mig()
 		if (pool_p->migr->mig_pid != 0)	/* migration already running */
 			continue;
 
-		if ((pool_p->migr->global_predicates.nbfiles_canbemig - pool_p->migr->global_predicates.nbfiles_beingmig - pool_p->migr->global_predicates.nbfiles_delaymig) <= 0)	/* No point anyway */
+		if ((pool_p->migr->global_predicates.nbfiles_canbemig - pool_p->migr->global_predicates.nbfiles_beingmig) <= 0)	/* No point anyway */
 			continue;
 
 		/* (Note that because of explicit migration there can be files in BEING_MIGR without going through this routine) */
