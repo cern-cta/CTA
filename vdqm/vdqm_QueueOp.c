@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.56 $ $Date: 2004/06/07 08:55:02 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: vdqm_QueueOp.c,v $ $Revision: 1.57 $ $Date: 2004/06/21 06:45:36 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1247,6 +1247,7 @@ int vdqm_OnRollback() {
                         drvrec->drv.status = drvrec->drv.status &
                          ~(VDQM_UNIT_RELEASE | VDQM_UNIT_BUSY | VDQM_VOL_MOUNT |
                            VDQM_VOL_UNMOUNT | VDQM_UNIT_ASSIGN);
+                        drvrec->drv.recvtime = (int)time(NULL);
                         /*
                          * Start the job
                          */
@@ -1503,6 +1504,7 @@ int vdqm_NewVolReq(vdqmHdr_t *hdr, vdqmVolReq_t *VolReq) {
             drvrec->drv.status = drvrec->drv.status & 
                 ~(VDQM_UNIT_RELEASE | VDQM_UNIT_BUSY | VDQM_VOL_MOUNT |
                 VDQM_VOL_UNMOUNT | VDQM_UNIT_ASSIGN);
+            drvrec->drv.recvtime = (int)time(NULL);
         
             /*
              * Start the job
