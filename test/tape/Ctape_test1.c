@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_test1.c,v $ $Revision: 1.5 $ $Date: 2002/10/08 14:23:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_test1.c,v $ $Revision: 1.6 $ $Date: 2005/01/20 16:32:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_test1 - test program 1: copy one tape to another */
@@ -16,9 +16,6 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_test1.c,v $ $Revision: 1.5 $ $Date: 
 #include <string.h>
 #include <sys/types.h>
 #include "Ctape_api.h"
-#ifndef linux
-extern char *sys_errlist[];
-#endif /* linux */
 char *dvrname;
 
 main(argc, argv)
@@ -139,12 +136,12 @@ char **argv;
 
 	if (ifd = open (ipath, O_RDONLY)) {
 		fprintf (stderr, "TP042 - %s : open error : %s\n", ipath,
-		    sys_errlist[errno]);
+		    strerror(errno));
 		exit (c);
 	}
 	if (ofd = open (opath, O_RDWR)) {
 		fprintf (stderr, "TP042 - %s : open error : %s\n", ipath,
-		    sys_errlist[errno]);
+		    strerror(errno));
 		exit (c);
 	}
 

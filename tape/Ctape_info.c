@@ -4,12 +4,13 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_info.c,v $ $Revision: 1.8 $ $Date: 2000/03/31 15:07:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_info.c,v $ $Revision: 1.9 $ $Date: 2005/01/20 16:29:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_info - get tape file information */
 
 #include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -20,7 +21,6 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_info.c,v $ $Revision: 1.8 $ $Date: 2
 #include "Ctape.h"
 #include "marshall.h"
 #include "serrno.h"
-extern char *sys_errlist[];
 
 Ctape_info(path, blksize, blockid, density, devtype, drive, fid, fseq, lrecl, recfm)
 char *path;
@@ -69,7 +69,7 @@ char *recfm;
 		fullpath[0] = '\0';
 		if (*path != '/') {
 			if (getcwd (fullpath, sizeof(fullpath) - 2) == NULL) {
-				Ctape_errmsg (func, TP002, "getcwd", sys_errlist[errno]);
+				Ctape_errmsg (func, TP002, "getcwd", strerror(errno));
 				errflg++;
 			} else {
 				strcat (fullpath, "/");

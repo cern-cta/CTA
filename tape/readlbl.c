@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.10 $ $Date: 2002/03/27 11:37:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.11 $ $Date: 2005/01/20 16:31:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	readlbl - read one possible label record */
@@ -19,7 +19,6 @@ static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.10 $ $Date: 200
 #include <sys/types.h>
 #include "Ctape.h"
 #include "serrno.h"
-extern char *sys_errlist[];
 readlbl(tapefd, path, lblbuf)
 int tapefd;
 char *path;
@@ -67,7 +66,7 @@ char *lblbuf;
 #endif
 				serrno = (errcat > 0) ? errcat : EIO;
 			} else {
-				msgaddr = sys_errlist[errno];
+				msgaddr = strerror(errno);
 				serrno = errno;
 #if defined(_IBMR2)
 				if (errno == EMEDIA) serrno = ETPARIT;

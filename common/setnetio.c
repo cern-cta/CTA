@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: setnetio.c,v $ $Revision: 1.6 $ $Date: 2004/11/29 22:23:28 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: setnetio.c,v $ $Revision: 1.7 $ $Date: 2005/01/20 16:26:03 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* setnetio.c   Set network input/output characteristics                */
@@ -19,14 +19,12 @@ static char cvsId[] = "@(#)$RCSfile: setnetio.c,v $ $Revision: 1.6 $ $Date: 2004
 #include <netdb.h>                      /* Network "data base"          */
 #endif
 #include <errno.h>                      /* Error numbers                */
+#include <string.h>
 #include <serrno.h>                     /* SHIFT error codes            */
 #include <log.h>                        /* Genralized error logger      */
 #include <trace.h>                      /* tracing definitions          */
 #include <Cnetdb.h>                     /* reentrant netdb funct.       */
 
-#if !defined(linux) && !defined(_WIN32)
-extern char     *sys_errlist[];         /* External error list          */
-#endif
 extern char     *getifnam();            /* get interface name           */
 extern  char    *getconfent();          /* get configuration entry      */
 
@@ -66,8 +64,8 @@ int     s;
 	}
 
 	if (getpeername(s,(struct sockaddr *)&from, &fromlen)<0)        {
-		log(LOG_ERR, "getpeername: %s\n",sys_errlist[errno]);
-		TRACE(1, "setnetio", "getpeername: %s\n",sys_errlist[errno]);
+		log(LOG_ERR, "getpeername: %s\n",strerror(errno));
+		TRACE(1, "setnetio", "getpeername: %s\n",strerror(errno));
 		END_TRACE();
 		return(-1);
 	}

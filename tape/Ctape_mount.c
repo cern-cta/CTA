@@ -4,13 +4,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.23 $ $Date: 2004/01/28 13:56:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.24 $ $Date: 2005/01/20 16:29:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_mount - send a request to the tape daemon to have a tape mounted
  *	and the VOL1 label verified
  */
 #include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -21,7 +22,6 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.23 $ $Date:
 #include "Ctape.h"
 #include "marshall.h"
 #include "serrno.h"
-extern char *sys_errlist[];
 
 Ctape_mount(path, vid, side, dgn, density, drive, mode, vsn, lbltype, vdqm_reqid)
 char *path;
@@ -93,7 +93,7 @@ int vdqm_reqid;
 		fullpath[0] = '\0';
 		if (*path != '/') {
 			if (getcwd (fullpath, sizeof(fullpath) - 2) == NULL) {
-				Ctape_errmsg (func, TP002, "getcwd", sys_errlist[errno]);
+				Ctape_errmsg (func, TP002, "getcwd", strerror(errno));
 				errflg++;
 			} else {
 				strcat (fullpath, "/");
@@ -107,7 +107,7 @@ int vdqm_reqid;
 		}
 		if (*fullpath == '/' && chkdirw (fullpath)) {
 			Ctape_errmsg (func, "TP002 - %s : access error : %s\n",
-				fullpath, sys_errlist[errno]);
+				fullpath, strerror(errno));
 			errflg++;
 		}
 	}

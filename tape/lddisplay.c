@@ -4,15 +4,16 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.5 $ $Date: 2001/03/08 10:00:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.6 $ $Date: 2005/01/20 16:30:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
+
+#include <errno.h>
+#include <string.h>
 
 /*	lddisplay - load display on 3480 compatible drives */
 #if defined(RS6000PCTA) || defined(ADSTAR) || defined(SOLARIS25) || defined(sgi) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-#include <errno.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <string.h>
 #if defined(_IBMESA) || defined(RS6000PCTA)
 #include <sys/mtio.h>
 #endif
@@ -26,7 +27,6 @@ static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.5 $ $Date: 20
 #if defined(_IBMR2)
 extern char *dvrname;
 #endif
-extern char *sys_errlist[];
 #endif
 lddisplay(fd, path, fcb, msg1, msg2, devtype)
 int fd;
@@ -84,7 +84,7 @@ int devtype;	/* 0 -> 3480, 1 -> 3590, 2 -> Vision Box */
 	} else {
 		if ((tapefd = open (path, O_RDONLY|O_NDELAY)) < 0) {
 			serrno = errno;
-			usrmsg (func, TP042, path, "open", sys_errlist[errno]);
+			usrmsg (func, TP042, path, "open", strerror(errno));
 			RETURN (-1);
 		}
 	}

@@ -4,13 +4,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.18 $ $Date: 2002/04/08 09:01:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.19 $ $Date: 2005/01/20 16:29:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_position - send a request to the tape daemon to get the tape
  *	positionned to a given file and the HDR labels checked
  */
 #include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -21,7 +22,6 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.18 $ $Da
 #include "Ctape.h"
 #include "marshall.h"
 #include "serrno.h"
-extern char *sys_errlist[];
 
 Ctape_position(path, method, fseq, fsec, blockid, Qfirst, Qlast, filstat, fid, fsid, recfm, blksize, lrecl, retentd, flags)
 char *path;
@@ -84,7 +84,7 @@ int flags;
 		*fullpath = '\0';
 		if (*path != '/') {
 			if (getcwd (fullpath, sizeof(fullpath) - 2) == NULL) {
-				Ctape_errmsg (func, TP002, "getcwd", sys_errlist[errno]);
+				Ctape_errmsg (func, TP002, "getcwd", strerror(errno));
 				errflg++;
 			} else {
 				strcat (fullpath, "/");

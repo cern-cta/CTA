@@ -4,13 +4,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_label.c,v $ $Revision: 1.22 $ $Date: 2002/07/30 05:40:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_label.c,v $ $Revision: 1.23 $ $Date: 2005/01/20 16:29:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_label - send a request to the tape daemon to have a tape mounted
  *	and the label written
  */
 #include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -21,7 +22,6 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_label.c,v $ $Revision: 1.22 $ $Date:
 #include "Ctape.h"
 #include "marshall.h"
 #include "serrno.h"
-extern char *sys_errlist[];
 
 Ctape_label(path, vid, side, dgn, density, drive, vsn, lbltype, nbhdr, flags, vdqm_reqid)
 char *path;

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: checkjobdied.c,v $ $Revision: 1.5 $ $Date: 2003/05/14 07:28:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: checkjobdied.c,v $ $Revision: 1.6 $ $Date: 2005/01/20 16:30:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	checkjobdied - returns the list of jobs that have died */
@@ -29,7 +29,6 @@ static char sccsid[] = "@(#)$RCSfile: checkjobdied.c,v $ $Revision: 1.5 $ $Date:
 #include "Ctape.h"
 #include "serrno.h"
 static char func[16];
-extern char *sys_errlist[];
 checkjobdied(jobs)
 int jobs[];
 {
@@ -79,14 +78,14 @@ int jobs[];
 	proctabaddr = nl[0].n_value;
 	if (sysconfig (SYS_GETPARMS, &var, sizeof(var)) < 0) {
 		serrno = errno;
-		tplogit (func, TP002, "sysconfig", sys_errlist[errno]);
+		tplogit (func, TP002, "sysconfig", strerror(errno));
 		RETURN (-1);
 	}
 	lastprocaddr = (long) var.ve_proc;
 	fdkmem = open ("/dev/kmem", 0);
 	if (fdkmem < 0) {
 		serrno = errno;
-		tplogit (func, "TP002 - /dev/kmem : open error : %s\n", sys_errlist[errno]);
+		tplogit (func, "TP002 - /dev/kmem : open error : %s\n", strerror(errno));
 		RETURN (-1);
 	}
 	proctabsiz = lastprocaddr - proctabaddr;
@@ -134,23 +133,23 @@ int data_len;
 	if (offset >= TWO_GIG) {
 		if (lseek (fd, offset - TWO_GIG, 0) < 0) {
 			tplogit (func, "TP002 - /dev/kmem : lseek error : %s\n",
-			    sys_errlist[errno]);
+			    strerror(errno));
 			return (-1);
 		}
 		if (readx (fd, data, data_len ,1) < 0) {
 			tplogit (func, "TP002 - /dev/kmem : readx error : %s\n",
-			    sys_errlist[errno]);
+			    strerror(errno));
 			return (-1);
 		}
 	} else {
 		if (lseek (fd, offset, 0) < 0) {
 			tplogit (func, "TP002 - /dev/kmem : lseek error : %s\n",
-			    sys_errlist[errno]);
+			    strerror(errno));
 			return (-1);
 		}
 		if (readx (fd, data, data_len ,0) < 0) {
 			tplogit (func, "TP002 - /dev/kmem : readx error : %s\n",
-			    sys_errlist[errno]);
+			    strerror(errno));
 			return (-1);
 		}
 	}

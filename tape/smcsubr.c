@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.7 $ $Date: 2003/10/23 07:13:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.8 $ $Date: 2005/01/20 16:31:35 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -17,9 +17,6 @@ static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.7 $ $Date: 2003
 #include "serrno.h"
 #include "smc.h"
 #define	RBT_XTRA_PROC 10
-#if !defined(linux)
-extern char *sys_errlist[];
-#endif
 static struct smc_status smc_status;
 static char *smc_msgaddr;
 
@@ -279,7 +276,7 @@ struct smc_element_info element_info[];
 #if defined(TAPE)
 		sprintf (err_msgbuf, TP005);
 #else
-		sprintf (err_msgbuf, "malloc error: %s", sys_errlist[errno]);
+		sprintf (err_msgbuf, "malloc error: %s", strerror(errno));
 #endif
 		msgaddr = err_msgbuf;
 		save_error (-1, 0, NULL, msgaddr);

@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.18 $ $Date: 2004/04/01 09:07:38 $ CERN IT/ADC Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.19 $ $Date: 2005/01/20 16:32:27 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -47,10 +47,6 @@ char *rtcpd_logfile = RTCOPY_LOGFILE;
 
 #define SAVE_ERRNO int save_errno, save_serrno; save_errno = errno; save_serrno = serrno;
 #define RESTORE_ERRNO {serrno = save_serrno; errno = save_errno;}
-
-#if !defined(linux)
-extern char *sys_errlist[];
-#endif /* linux */
 
 static int errmsg_key = -1;
 static int out_key = -1;

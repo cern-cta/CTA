@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.9 $ $Date: 2003/10/28 12:05:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.10 $ $Date: 2005/01/20 16:31:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -32,7 +32,6 @@ static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.9 $ $Date: 200
 #include "serrno.h"
 #if (defined(__alpha) && defined(__osf__)) || defined(ADSTAR) || defined(IRIX64) || defined(linux) || defined(hpux)
 extern int mt_rescnt;
-extern char *sys_errlist[];
 skiptpfff(tapefd, path, n)
 int tapefd;
 char *path;
@@ -65,7 +64,7 @@ int n;
 #endif
 					RETURN (tobeskipped - count + mt_rescnt);
 			} else
-				msgaddr = sys_errlist[errno];
+				msgaddr = strerror(errno);
 			serrno = errno;
 			usrmsg (func, TP042, path, "ioctl", msgaddr);
 			RETURN (-1);

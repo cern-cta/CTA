@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.20 $ $Date: 2004/01/26 14:25:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.21 $ $Date: 2005/01/20 16:28:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -14,6 +14,7 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.20 $ $Date
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <errno.h>
 #if defined(ADSTAR)
 #include <sys/Atape.h>
 #endif
@@ -21,9 +22,6 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.20 $ $Date
 #include "Ctape_api.h"
 #include "serrno.h"
 void DLL_DECL (*Ctape_dmpmsg) _PROTO((int, const char *, ...)) = NULL;
-#if !defined(linux)
-extern	char	*sys_errlist[];
-#endif
 static char *buffer;
 static int code;
 static char codes[4][7] = {"", "ASCII", "", "EBCDIC"};
@@ -194,7 +192,7 @@ int flags;
 
 	if (infd < 0 && (infd = open (path, O_RDONLY)) < 0) {
 		Ctape_dmpmsg (MSG_ERR, " DUMP ! ERROR OPENING TAPE FILE: %s\n",
-			sys_errlist[errno]);
+			strerror(errno));
 		serrno = errno;
 		return (-1);
 	}
@@ -485,7 +483,7 @@ u_signed64 *Size;
 					errcat = ETBLANK;
 				} else
 #endif
-					msgaddr = (char *) sys_errlist[errno];
+					msgaddr = (char *) strerror(errno);
 			if (errcat == ETBLANK && dev1tm && !qbov && irec == 0) break;
 			irec++;
 			fflush (stdout);

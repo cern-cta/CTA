@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.13 $ $Date: 2004/06/24 12:33:08 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.14 $ $Date: 2005/01/20 16:25:55 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	send_scsi_cmd - Send a SCSI command to a device */
@@ -74,9 +74,6 @@ static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.13 $ $Date:
 static char tp_err_msgbuf[132];
 #else
 #define USRMSG(fmt,p,f,msg) {}
-#endif
-#if !defined(linux)
-extern char *sys_errlist[];
 #endif
 static char nosensekey[] = "no sense key available";
 static char notsupp[] = "send_scsi_cmd not supported on this platform";
@@ -236,7 +233,7 @@ char **msgaddr;
 
 	if (ioctl (tapefd, USCSICMD, &ucmd) < 0 &&
 	    (errno != EIO || ucmd.uscsi_status == 0)) {
-		*msgaddr = sys_errlist[errno];
+		*msgaddr = strerror(errno);
 		serrno = errno;
 		USRMSG (TP042, path, "ioctl", *msgaddr);
 		return (-2);
@@ -278,9 +275,9 @@ char **msgaddr;
 		if (stat (path, &sbuf) < 0) {
 			serrno = errno;
 #if defined(TAPE)
-			USRMSG (TP042, path, "stat", sys_errlist[errno]);
+			USRMSG (TP042, path, "stat", strerror(errno));
 #else
-			sprintf (err_msgbuf, "stat error: %s", sys_errlist[errno]);
+			sprintf (err_msgbuf, "stat error: %s", strerror(errno));
 			*msgaddr = err_msgbuf;
 #endif
 			return (-1);
@@ -289,9 +286,9 @@ char **msgaddr;
 		if (attr_get (path, "_devname", canonical_dev, &canonical_dev_len, 0) < 0) {
 			serrno = errno;
 #if defined(TAPE)
-			USRMSG (TP042, path, "attr_get", sys_errlist[errno]);
+			USRMSG (TP042, path, "attr_get", strerror(errno));
 #else
-			sprintf (err_msgbuf, "attr_get error: %s", sys_errlist[errno]);
+			sprintf (err_msgbuf, "attr_get error: %s", strerror(errno));
 			*msgaddr = err_msgbuf;
 #endif
 			return (-1);
@@ -314,9 +311,9 @@ char **msgaddr;
 		if ((fd = open (dspath, O_RDWR|O_NDELAY)) < 0) {
 			serrno = errno;
 #if defined(TAPE)
-			USRMSG (TP042, dspath, "open", sys_errlist[errno]);
+			USRMSG (TP042, dspath, "open", strerror(errno));
 #else
-			sprintf (err_msgbuf, "open error: %s", sys_errlist[errno]);
+			sprintf (err_msgbuf, "open error: %s", strerror(errno));
 			*msgaddr = err_msgbuf;
 #endif
 			return (-1);
@@ -343,7 +340,7 @@ char **msgaddr;
 	dsreq.ds_time = timeout;
 
 	if (ioctl (fd, DS_ENTER, &dsreq) < 0 ) {
-		*msgaddr = sys_errlist[errno];
+		*msgaddr = strerror(errno);
 		serrno = errno;
 		USRMSG (TP042, dspath, "ioctl", *msgaddr);
 		if (! do_not_open) close (fd);
@@ -397,7 +394,7 @@ char **msgaddr;
 	sctl_io.data_length = buflen;
 	sctl_io.max_msecs = timeout;
 	if (ioctl (tapefd, SIOC_IO, &sctl_io) < 0) {
-		*msgaddr = sys_errlist[errno];
+		*msgaddr = strerror(errno);
 		serrno = errno;
 		USRMSG (TP042, path, "ioctl", *msgaddr);
 		return (-2);
@@ -446,9 +443,9 @@ char **msgaddr;
 	if (stat (path, &sbuf) < 0) {
 		serrno = errno;
 #if defined(TAPE)
-		USRMSG (TP042, path, "stat", sys_errlist[errno]);
+		USRMSG (TP042, path, "stat", strerror(errno));
 #else
-		sprintf (err_msgbuf, "stat error: %s", sys_errlist[errno]);
+		sprintf (err_msgbuf, "stat error: %s", strerror(errno));
 		*msgaddr = err_msgbuf;
 #endif
 		return (-1);
@@ -459,9 +456,9 @@ char **msgaddr;
 		if ((fd = open ("/dev/cam", O_RDWR, 0)) < 0) {
 			serrno = errno;
 #if defined(TAPE)
-			USRMSG (TP042, "/dev/cam", "open", sys_errlist[errno]);
+			USRMSG (TP042, "/dev/cam", "open", strerror(errno));
 #else
-			sprintf (err_msgbuf, "open error: %s", sys_errlist[errno]);
+			sprintf (err_msgbuf, "open error: %s", strerror(errno));
 			*msgaddr = err_msgbuf;
 #endif
 			return (-1);
@@ -501,7 +498,7 @@ char **msgaddr;
 	ua_ccb.uagt_cdblen = 0;
 
 	if (ioctl(fd, UAGT_CAM_IO, (caddr_t)&ua_ccb) < 0) {
-		*msgaddr = sys_errlist[errno];
+		*msgaddr = strerror(errno);
 		serrno = errno;
 		USRMSG (TP042, "/dev/cam", "ioctl", *msgaddr);
 		if (! do_not_open) close (fd);
@@ -607,7 +604,7 @@ char **msgaddr;
 			sprintf (tp_err_msgbuf, TP005);
 			*msgaddr = tp_err_msgbuf;
 #else
-			sprintf (err_msgbuf, "malloc error: %s", sys_errlist[errno]);
+			sprintf (err_msgbuf, "malloc error: %s", strerror(errno));
 			*msgaddr = err_msgbuf;
 #endif
 			return (-1);
@@ -621,9 +618,9 @@ char **msgaddr;
 		if (stat (path, &sbuf) < 0) {
 			serrno = errno;
 #if defined(TAPE)
-			USRMSG (TP042, path, "stat", sys_errlist[errno]);
+			USRMSG (TP042, path, "stat", strerror(errno));
 #else
-			sprintf (err_msgbuf, "stat error: %s", sys_errlist[errno]);
+			sprintf (err_msgbuf, "stat error: %s", strerror(errno));
 			*msgaddr = err_msgbuf;
 #endif
 			return (-1);
@@ -631,9 +628,9 @@ char **msgaddr;
 		if (stat ("/dev/sga", &sbufa) < 0) {
 			serrno = errno;
 #if defined(TAPE)
-			USRMSG (TP042, "/dev/sga", "stat", sys_errlist[errno]);
+			USRMSG (TP042, "/dev/sga", "stat", strerror(errno));
 #else
-			sprintf (err_msgbuf, "stat error: %s", sys_errlist[errno]);
+			sprintf (err_msgbuf, "stat error: %s", strerror(errno));
 			*msgaddr = err_msgbuf;
 #endif
 			return (-1);
@@ -657,9 +654,9 @@ char **msgaddr;
 		if ((fd = open (sgpath, O_RDWR)) < 0) {
 			serrno = errno;
 #if defined(TAPE)
-			USRMSG (TP042, sgpath, "open", sys_errlist[errno]);
+			USRMSG (TP042, sgpath, "open", strerror(errno));
 #else
-			sprintf (err_msgbuf, "open error: %s", sys_errlist[errno]);
+			sprintf (err_msgbuf, "open error: %s", strerror(errno));
 			*msgaddr = err_msgbuf;
 #endif
 			return (-1);
@@ -680,7 +677,7 @@ char **msgaddr;
 		n+= buflen;
 	}
 	if (write (fd, sg_buffer, n) < 0) {
-		*msgaddr = (char *) sys_errlist[errno];
+		*msgaddr = (char *) strerror(errno);
 		serrno = errno;
 		USRMSG (TP042, sgpath, "write", *msgaddr);
 		if (! do_not_open) close (fd);
@@ -688,7 +685,7 @@ char **msgaddr;
 	}
 	if ((n = read (fd, sg_buffer, sizeof(struct sg_header) +
 	    ((flags & SCSI_IN) ? buflen : 0))) < 0) {
-		*msgaddr = (char *) sys_errlist[errno];
+		*msgaddr = (char *) strerror(errno);
 		serrno = errno;
 		USRMSG (TP042, sgpath, "read", *msgaddr);
 		if (! do_not_open) close (fd);
@@ -713,7 +710,7 @@ char **msgaddr;
 		USRMSG (TP042, sgpath, "scsi", *msgaddr);
 		return (-4);
 	} else if (sg_hd->result) {
-		*msgaddr = (char *) sys_errlist[sg_hd->result];
+		*msgaddr = (char *) strerror(sg_hd->result);
 		serrno = sg_hd->result;
 		USRMSG (TP042, sgpath, "read", *msgaddr);
 		return (-2);

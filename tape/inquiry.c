@@ -4,15 +4,16 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: inquiry.c,v $ $Revision: 1.5 $ $Date: 2002/08/19 11:49:32 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: inquiry.c,v $ $Revision: 1.6 $ $Date: 2005/01/20 16:30:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
+
+#include <errno.h>
+#include <string.h>
 
 /*      inquiry - get information about the type of a drive */
 #if defined(ADSTAR) || defined(SOLARIS25) || defined(sgi) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-#include <errno.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <string.h>
 #if defined(ADSTAR)
 #include <sys/Atape.h>
 #include <sys/scsi.h>
@@ -24,7 +25,6 @@ static char sccsid[] = "@(#)$RCSfile: inquiry.c,v $ $Revision: 1.5 $ $Date: 2002
 #if defined(_IBMR2)
 extern char *dvrname;
 #endif
-extern char *sys_errlist[];
 #endif
 inquiry(fd, path, inq_data)
 int fd;
@@ -57,7 +57,7 @@ unsigned char *inq_data;
 	} else {
 		if ((tapefd = open (path, O_RDONLY|O_NDELAY)) < 0) {
 			serrno = errno;
-			usrmsg (func, TP042, path, "open", sys_errlist[errno]);
+			usrmsg (func, TP042, path, "open", strerror(errno));
 			RETURN (-1);
 		}
 	}
@@ -132,7 +132,7 @@ unsigned char *inq_data;
 	} else {
 		if ((tapefd = open (path, O_RDONLY|O_NDELAY)) < 0) {
 			serrno = errno;
-			usrmsg (func, TP042, path, "open", sys_errlist[errno]);
+			usrmsg (func, TP042, path, "open", strerror(errno));
 			RETURN (-1);
 		}
 	}

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.7 $ $Date: 2000/05/08 14:08:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.8 $ $Date: 2005/01/20 16:31:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      gettperror - get drive status after I/O error and
@@ -17,6 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.7 $ $Date: 2000
  *		ETNOSNS		no sense
  */
 #include <errno.h>
+#include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #if defined(_WIN32)
@@ -72,7 +73,6 @@ char **msgaddr;
 	return (rc);
 }
 #else
-extern char *sys_errlist[];
 static char nosensekey[] = "no sense key available";
 static char bbot[] = "BOT hit";
 #if ! defined(_AIX) || defined(ADSTAR)
@@ -485,7 +485,7 @@ char *cmd;
 		rc = ENOSPC;
 #endif
 	} else {
-		msgaddr = sys_errlist[errno];
+		msgaddr = strerror(errno);
 		rc = errno;
 #if defined(_IBMR2)
 		if (errno == EMEDIA) rc = ETPARIT;

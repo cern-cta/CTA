@@ -4,12 +4,13 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_rls.c,v $ $Revision: 1.11 $ $Date: 2000/10/03 07:48:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_rls.c,v $ $Revision: 1.12 $ $Date: 2005/01/20 16:30:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_rls - unload tape and release reservations */
 
 #include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -20,7 +21,6 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_rls.c,v $ $Revision: 1.11 $ $Date: 2
 #include "Ctape.h"
 #include "marshall.h"
 #include "serrno.h"
-extern char *sys_errlist[];
 
 Ctape_rls(path, flags)
 char *path;
@@ -63,7 +63,7 @@ int flags;
 			fullpath[0] = '\0';
 			if (*path != '/') {
 				if (getcwd (fullpath, sizeof(fullpath) - 2) == NULL) {
-					Ctape_errmsg (func, TP002, "getcwd", sys_errlist[errno]);
+					Ctape_errmsg (func, TP002, "getcwd", strerror(errno));
 					errflg++;
 				} else {
 					strcat (fullpath, "/");
