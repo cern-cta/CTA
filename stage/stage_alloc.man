@@ -1,0 +1,197 @@
+.\" $Id: stage_alloc.man,v 1.1 2002/10/04 09:26:45 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: stage_alloc.man,v $ $Revision: 1.1 $ $Date: 2002/10/04 09:26:45 $ CERN IT-DS/HSM Jean-Damien Durand
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\"
+.TH STAGE_ALLOC "3" "$Date: 2002/10/04 09:26:45 $" "CASTOR" "Stage Library Functions"
+.SH NAME
+stage_alloc \- Allocate space in a disk pool
+.SH SYNOPSIS
+.BI "#include <" stage_api.h ">"
+.sp
+.BI "int stage_alloc(u_signed64 " flags ,
+.BI "mode_t " openmode ,
+.BI "char *" hostname ,
+.BI "char *" pooluser ,
+.BI "char *" filename ,
+.BI "u_signed64 " filesize ,
+.BI "int *" nstcp_output ,
+.BI "struct stgcat_entry **" stcp_output ");"
+
+.SH DESCRIPTION
+The \fBstage_alloc\fP API method asks the stager to allocate space.
+
+.SH PARAMETERS
+.TP 1.5i
+.I flags
+Can be zero or a bit-wise of the following values:
+.RS
+.TP
+.I STAGE_NORETRY
+Prevents client to keep retrying. Can be set with environment variable $STAGE_NORETRY to a non\-zero value.
+.TP
+.I STAGE_PATHNAME
+When space is allocated, stager daemon will return to client's output buffer the full internal path of the disk file corresponding to this request. The same string will be present in
+.I u1.d.xfile
+member of the 
+.I stcp_output
+structure, in case 
+.I stcp_output
+is not NULL.
+.RE
+.TP
+.I openmode
+Specifies the permissions to use when creating the internal disk file. Modified by the process's umask (mode & ~umask).
+.TP
+.I hostname
+Gives explicitely the hostname where is the stager daemon. If it NULL, default value apply: either the environment variable $STAGE_HOST, an entry 'STG HOST' in /etc/shift.conf file, or the default "stagepublic".
+.TP
+.I pooluser
+A file allocated in a pool will be stored in a subdirectory user. This may also be specified thru the environment variable $STAGE_USER. The default subdirectory name is "stage". 
+.I user
+must be a valid user name and belong to the same group as the requestor.
+.TP
+.I filename
+External filename associated with this entry
+.TP
+.I filesize
+is the required size for allocation, in bytes. Can be zero. Application is directly responsible of doing a correct estimation of the size of the file, with the risk to run out of space if it is underestimated, or to affect the whole pool if it is too big.
+.TP
+.I nstcp_output
+Filled with the number of staged entries at return. Should be one. If you are not interested by this output, set a NULL value for this parameter.
+.TP
+.I stcp_output
+Filled with the address of an array containg the staged entries at return. Up to the user to free it if necessary. If you are not interested by this output, set a NULL value for this parameter.
+
+.SH EXAMPLE
+.ft CW
+.nf
+.sp
+\s-2
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <signal.h>
+#include "stage_api.h"
+#include "serrno.h"
+#include "osdep.h"
+
+struct stgcat_entry *stcp_output;
+int nstcp_output;
+
+void log_callback _PROTO((int, char *));
+
+int main(argc,argv)
+	int argc;
+	char **argv;
+{
+	int rc;
+	int i;
+
+
+	if (argc != 2) {
+		fprintf(stderr,"Usage: %s file\\n", argv[0]);
+		exit(1);
+	}
+
+	stage_setlog((void (*) _PROTO((int, char *))) &log_callback);
+
+	if ((rc = stage_alloc((u_signed64) STAGE_PATHNAME, /* flags */
+						  600, /* openmode */
+						  NULL, /* hostname */
+						  NULL, /* pooluser */
+						  argv[1],  /* filename */
+						  1024, /* filesize */
+						  &nstcp_output, /* nstcp_output */
+						  &stcp_output /* stcp_output */
+						  )) != 0) {
+		fprintf(stderr,"stage_alloc: %s\\n", sstrerror(serrno));
+	} else {
+		for (i = 0; i < nstcp_output; i++) {
+			print_stcp(stcp_output+i);
+		}
+	}
+	
+	exit(rc != 0 ? rc_castor2shift(serrno) : 0);
+	
+}
+
+void log_callback(level,message)
+	int level;
+	char *message;
+{
+	fprintf(level == MSG_ERR ? stderr : stdout,"<== %s ==> %s",level == MSG_ERR ? "MSG_ERR" : "MSG_OUT", message);
+	return;
+}
+\s+2
+.ft
+.LP
+.fi
+
+.SH RETURN VALUE
+0 on success, -1 on failure.
+
+.SH ERRORS
+If failure, the serrno variable might contain one of the following error codes:
+.TP 1.9i
+.B SENOMAPFND
+Can't open mapping database (Windows only)
+.TP
+.B EFAULT
+Bad address
+.TP
+.B EINVAL
+Invalid argument
+.TP
+.B ESTGROUP
+Invalid group
+.TP
+.B SECONNDROP
+Connection closed by remote end
+.TP
+.B SECOMERR
+Communication error
+.TP
+.B SEINTERNAL
+Internal error
+.TP
+.B SEUSERUNKN
+User unknown
+.TP
+.B SENAMETOOLONG
+Filename too long
+.TP
+.B SEOPNOTSUP
+Operation not supported (if stager daemon version is not uptodate)
+.TP
+.B ENOSPC
+No space left on device
+.TP
+.B SESYSERR
+System error
+.TP
+.B ESTNACT
+Stager not active (if you specify the STAGE_NORETRY flag - default is to retry forever)
+.TP
+.B SENOSHOST
+Host not known
+
+.SH NOTES
+A poolname other than the default can be specified either with environment variable $STAGE_POOL, or an entry 'STG POOL' in /etc/shift.conf
+.LP
+The
+.I filename
+parameter is not under control of the stager daemon, which will not attempt to do any operation with it. Therefore, for example, if you specify a CASTOR file it does not mean the castor file will be created in the Name Server. 
+.B stage_alloc
+is aimed to deal with disk files only, regardless of the meaning you assign to your
+.I filename.
+
+.SH SEE ALSO
+\fBstagealloc\fP(1), \fBstage_get\fP(3), \fBCastor_limits\fP(3), \fBstage_setlog\fP(3), \fBstage_setcallback\fP(3), \fBstageclr_link\fP(3), \fBrc_castor2shift\fP(3), \fBumask\fP(2), \fBopen\fP(3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
