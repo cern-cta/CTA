@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.22 2002/04/30 13:11:24 jdurand Exp $
+ * $Id: stagestat.c,v 1.23 2002/05/07 12:57:33 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.22 $ $Date: 2002/04/30 13:11:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.23 $ $Date: 2002/05/07 12:57:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -41,11 +41,6 @@ static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.22 $ $Date: 2
 
 #define swap_it(a) swab((char *)&a,(char *)&a,sizeof(a));\
 									 a=((unsigned int)a<<16)|((unsigned int)a>>16);
-
-#if !defined(linux)
-extern char *sys_errlist[];
-#endif
-
 int getacctrec _PROTO((int, struct accthdr *, char *, int *));
 int match_2_stgin _PROTO((struct acctstage2 *));
 time_t cvt_datime _PROTO((char *));
@@ -1838,11 +1833,11 @@ void show_progress() {
 		}
 		if (((done/100) != (last_done/100)) || (last_done == 0)) {
 			/* The '=' do change */
-			fprintf(stdout,"\r|%40s| (%7.2f %%) %c", bar, (float) (100. * size_read / size_total), last_slash);
+			fprintf(stdout,"\r|%40s| (%7.2f %%) %c", bar, (float) (100. * (signed64) size_read / (signed64) size_total), last_slash);
 			fflush(stdout);
 		} else {
 			/* The '=' do not change */
-			fprintf(stdout,"\b\b\b\b\b\b\b\b\b\b\b\b%7.2f %%) %c", (float) (100. * size_read / size_total), last_slash);
+			fprintf(stdout,"\b\b\b\b\b\b\b\b\b\b\b\b%7.2f %%) %c", (float) (100. * (signed64) size_read / (signed64) size_total), last_slash);
 			fflush(stdout);
 		}
 		last_done = done;
