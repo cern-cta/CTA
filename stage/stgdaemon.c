@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.73 2000/11/06 14:46:15 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.74 2000/11/07 09:55:04 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.73 $ $Date: 2000/11/06 14:46:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.74 $ $Date: 2000/11/07 09:55:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -472,6 +472,8 @@ main(argc,argv)
 					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 				}
 #endif
+			} else {
+				stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
 			}
 			updfreespace (stcp->poolname, stcp->ipath,
 										(signed64) ((signed64) stcp->actual_size - (signed64) stcp->size * (signed64) ONE_MB));
@@ -533,6 +535,8 @@ main(argc,argv)
 							stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
 						}
 #endif
+					} else {
+						stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
 					}
 					updfreespace (stcp->poolname, stcp->ipath,
 							(signed64) ((signed64) stcp->actual_size - (signed64) stcp->size * (signed64) ONE_MB));
@@ -1504,8 +1508,10 @@ void create_link(stcp, upath)
 		lpath[c] = '\0';
 		if (strcmp (lpath, stcp->ipath) == 0) goto create_link_return;
 	}
-	if (c > 0 || errno == EINVAL || rfio_errno == EINVAL)
+	if (c > 0 || errno == EINVAL || rfio_errno == EINVAL) {
+		stglogit (func, STG93, upath);
 		sendrep (rpfd, RMSYMLINK, upath);
+	}
 	stglogit (func, STG94, upath);
 	sendrep (rpfd, SYMLINK, stcp->ipath, upath);
  create_link_return:
@@ -1555,9 +1561,11 @@ delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
 			/* it's the last entry;
 				 we can remove the file and release the space */
 			if (! freersv) {
-				if ((stcp->status & 0xF0) != STAGED &&
-						rfio_stat (stcp->ipath, &st) == 0)
-					actual_size = st.st_size;
+				if ((stcp->status & 0xF0) != STAGED)
+					if (rfio_stat (stcp->ipath, &st) == 0)
+						actual_size = st.st_size;
+					else
+						stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
 				else
 					actual_size = stcp->actual_size;
 			}
@@ -2024,6 +2032,8 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 	if (stcp->status == STAGEOUT || stcp->status == STAGEALLOC) {
 		if (rfio_stat (stcp->ipath, &st) == 0)
 			stcp->actual_size = st.st_size;
+		else
+			stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
 		updfreespace (stcp->poolname, stcp->ipath,
 									(signed64) ((signed64) stcp->size * (signed64) ONE_MB - (signed64) stcp->actual_size));
 	}

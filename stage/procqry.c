@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.30 2000/11/06 14:46:14 jdurand Exp $
+ * $Id: procqry.c,v 1.31 2000/11/07 09:55:03 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.30 $ $Date: 2000/11/06 14:46:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.31 $ $Date: 2000/11/07 09:55:03 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -423,48 +423,51 @@ void procqryreq(req_data, clienthost)
 			strcpy (p_stat, "STAGEALLOC");
 		else
 			strcpy (p_stat, s_stat[stcp->status]);
-		if ((lflag || ((stcp->status & 0xFF0) == 0)) &&
-				rfio_mstat (stcp->ipath, &st) == 0) {
-			int has_been_updated = 0;
+		if (lflag || ((stcp->status & 0xFF0) == 0)) {
+			if (rfio_mstat(stcp->ipath, &st) == 0) {
+				int has_been_updated = 0;
 
-			if (st.st_size > stcp->actual_size) {
-				stcp->actual_size = st.st_size;
-				has_been_updated = 1;
-			}
-			if (st.st_atime > stcp->a_time) {
-				stcp->a_time = st.st_atime;
-				has_been_updated = 1;
-			}
-			if (st.st_mtime > stcp->a_time) {
-				stcp->a_time = st.st_mtime;
-				has_been_updated = 1;
-			}
-			if (has_been_updated != 0) {
-#ifdef USECDB
-				if (stgdb_upd_stgcat(dbfd_query,stcp) != 0) {
-					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				if (st.st_size > stcp->actual_size) {
+					stcp->actual_size = st.st_size;
+					has_been_updated = 1;
 				}
+				if (st.st_atime > stcp->a_time) {
+					stcp->a_time = st.st_atime;
+					has_been_updated = 1;
+				}
+				if (st.st_mtime > stcp->a_time) {
+					stcp->a_time = st.st_mtime;
+					has_been_updated = 1;
+				}
+				if (has_been_updated != 0) {
+#ifdef USECDB
+					if (stgdb_upd_stgcat(dbfd_query,stcp) != 0) {
+						stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					}
 #endif
+				}
+			} else {
+				stglogit (func, STG02, stcp->ipath, "rfio_mstat", rfio_serror());
 			}
 		}
 		if (stcp->t_or_d == 't') {
 			if (xflag) {
 				if (sendrep (rpfd, MSG_OUT,
-										 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n",
-										 stcp->u1.t.vid[0], stcp->u1.t.fseq, stcp->u1.t.lbl,
-										 p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
-										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
-										 stcp->poolname, stcp->reqid, stcp->ipath) < 0) {
+							"%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n",
+							 stcp->u1.t.vid[0], stcp->u1.t.fseq, stcp->u1.t.lbl,
+							 p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
+							 (float)(stcp->actual_size)/(1024.*1024.), p_size,
+							 stcp->poolname, stcp->reqid, stcp->ipath) < 0) {
 					c = SYERR;
 					goto reply;
 				}
 			} else {
 				if (sendrep (rpfd, MSG_OUT,
-										 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %s\n",
-										 stcp->u1.t.vid[0], stcp->u1.t.fseq, stcp->u1.t.lbl,
-										 p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
-										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
-										 stcp->poolname) < 0) {
+							 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %s\n",
+							 stcp->u1.t.vid[0], stcp->u1.t.fseq, stcp->u1.t.lbl,
+							 p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
+							 (float)(stcp->actual_size)/(1024.*1024.), p_size,
+							 stcp->poolname) < 0) {
 					c = SYERR;
 					goto reply;
 				}
@@ -475,30 +478,34 @@ void procqryreq(req_data, clienthost)
 			else
 				q++;
 			if (xflag) {
-				if ((stcp->t_or_d == 'd' && sendrep (rpfd, MSG_OUT,
-													"%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
-													stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
-													(float)(stcp->actual_size)/(1024.*1024.), p_size,
-													stcp->poolname, stcp->reqid, stcp->ipath) < 0) ||
-						(stcp->t_or_d == 'a' && sendrep (rpfd, MSG_OUT,
-													"%-36s %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
-													p_stat, stcp->nbaccesses,
-													(float)(stcp->actual_size)/(1024.*1024.), p_size,
-													stcp->poolname, stcp->reqid, stcp->ipath) < 0)) {
+				if ((stcp->t_or_d == 'd' &&
+						sendrep (rpfd, MSG_OUT,
+								"%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
+								stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
+								(float)(stcp->actual_size)/(1024.*1024.), p_size,
+								stcp->poolname, stcp->reqid, stcp->ipath) < 0) ||
+						(stcp->t_or_d == 'a' &&
+							sendrep (rpfd, MSG_OUT,
+									"%-36s %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
+									p_stat, stcp->nbaccesses,
+									(float)(stcp->actual_size)/(1024.*1024.), p_size,
+									stcp->poolname, stcp->reqid, stcp->ipath) < 0)) {
 					c = SYERR;
 					goto reply;
 				}
 			} else {
-				if ((stcp->t_or_d == 'd' && sendrep (rpfd, MSG_OUT,
-													"%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %s\n", q,
-													stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
-													(float)(stcp->actual_size)/(1024.*1024.), p_size,
-													stcp->poolname) < 0) ||
-						(stcp->t_or_d == 'a' && sendrep (rpfd, MSG_OUT,
-													"%-36s %-11s %5d %6.1f/%-4s %s\n", q,
-													p_stat, stcp->nbaccesses,
-													(float)(stcp->actual_size)/(1024.*1024.), p_size,
-													stcp->poolname) < 0)) {
+				if ((stcp->t_or_d == 'd' &&
+						sendrep (rpfd, MSG_OUT,
+								"%-17s %-3s  %s %6d %-11s %5d %6.1f/%-4s %s\n", q,
+								stcp->recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
+								(float)(stcp->actual_size)/(1024.*1024.), p_size,
+								stcp->poolname) < 0) ||
+						(stcp->t_or_d == 'a' &&
+							sendrep (rpfd, MSG_OUT,
+									"%-36s %-11s %5d %6.1f/%-4s %s\n", q,
+									p_stat, stcp->nbaccesses,
+									(float)(stcp->actual_size)/(1024.*1024.), p_size,
+									stcp->poolname) < 0)) {
 					c = SYERR;
 					goto reply;
 				}
@@ -510,19 +517,19 @@ void procqryreq(req_data, clienthost)
 				q++;
 			if (xflag) {
 				if (sendrep (rpfd, MSG_OUT,
-										 "%-36s %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
-										 p_stat, stcp->nbaccesses,
-										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
-										 stcp->poolname, stcp->reqid, stcp->ipath) < 0) {
+							 "%-36s %-11s %5d %6.1f/%-4s %-14s %6d %s\n", q,
+							 p_stat, stcp->nbaccesses,
+							 (float)(stcp->actual_size)/(1024.*1024.), p_size,
+							 stcp->poolname, stcp->reqid, stcp->ipath) < 0) {
 					c = SYERR;
 					goto reply;
 				}
 			} else {
 				if (sendrep (rpfd, MSG_OUT,
-										 "%-36s %-11s %5d %6.1f/%-4s %s\n", q,
-										 p_stat, stcp->nbaccesses,
-										 (float)(stcp->actual_size)/(1024.*1024.), p_size,
-										 stcp->poolname) < 0) {
+							 "%-36s %-11s %5d %6.1f/%-4s %s\n", q,
+							 p_stat, stcp->nbaccesses,
+							 (float)(stcp->actual_size)/(1024.*1024.), p_size,
+							 stcp->poolname) < 0) {
 					c = SYERR;
 					goto reply;
 				}
@@ -552,18 +559,18 @@ void procqryreq(req_data, clienthost)
 		if (lflag) {
 			tm = localtime (&stcp->c_time);
 			if (sendrep (rpfd, MSG_OUT,
-									 "\t\t\tcreated by  %-8.8s  %s  %04d/%02d/%02d %02d:%02d:%02d\n",
-									 stcp->user, stcp->group,
-									 tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-									 tm->tm_hour, tm->tm_min, tm->tm_sec) < 0) {
+						 "\t\t\tcreated by  %-8.8s  %s  %04d/%02d/%02d %02d:%02d:%02d\n",
+						 stcp->user, stcp->group,
+						 tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
+						 tm->tm_hour, tm->tm_min, tm->tm_sec) < 0) {
 				c = SYERR;
 				goto reply;
 			}
 			tm = localtime (&stcp->a_time);
 			if (sendrep (rpfd, MSG_OUT,
-									 "\t\t\tlast access               %04d/%02d/%02d %02d:%02d:%02d\n",
-									 tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-									 tm->tm_hour, tm->tm_min, tm->tm_sec) < 0) {
+						 "\t\t\tlast access               %04d/%02d/%02d %02d:%02d:%02d\n",
+						 tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
+						 tm->tm_hour, tm->tm_min, tm->tm_sec) < 0) {
 				c = SYERR;
 				goto reply;
 			}
@@ -791,6 +798,8 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 				}
 #endif
 			}
+		} else {
+			stglogit (func, STG02, stcp->ipath, "rfio_mstat", rfio_serror());
 		}
 		sci->weight = (double)stcp->a_time;
 		if (stcp->actual_size > 1024)
@@ -833,12 +842,12 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 	for (scc = scf; scc; scc = scc->next) {
 		tm = localtime (&scc->stcp->a_time);
 		if (sendrep (rpfd, MSG_OUT,
-								 "%04d/%02d/%02d %02d:%02d:%02d %6.1f %4d %s %s\n",
-								 tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-								 tm->tm_hour, tm->tm_min, tm->tm_sec,
-								 ((float)(scc->stcp->actual_size))/(1024.*1024.),
-								 scc->stcp->nbaccesses, scc->stcp->ipath,
-								 (scc->stpp) ? scc->stpp->upath : scc->stcp->ipath) < 0) {
+					 "%04d/%02d/%02d %02d:%02d:%02d %6.1f %4d %s %s\n",
+					 tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
+					 tm->tm_hour, tm->tm_min, tm->tm_sec,
+					 ((float)(scc->stcp->actual_size))/(1024.*1024.),
+					 scc->stcp->nbaccesses, scc->stcp->ipath,
+					 (scc->stpp) ? scc->stpp->upath : scc->stcp->ipath) < 0) {
 			free (scs);
 			return (-1);
 		}

@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.56 2000/11/06 14:46:13 jdurand Exp $
+ * $Id: procio.c,v 1.57 2000/11/07 09:55:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.56 $ $Date: 2000/11/06 14:46:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.57 $ $Date: 2000/11/07 09:55:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -847,7 +847,7 @@ void procioreq(req_type, req_data, clienthost)
 				break;
 			case STAGED:		/* staged */
 				if (rfio_stat (stcp->ipath, &st) < 0) {
-					stglogit (func, STG02, stcp->ipath, "stat", rfio_serror());
+					stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
 					if (delfile (stcp, 0, 1, 1, "not on disk", 0, 0, 0) < 0) {
 						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
 										 "rfio_unlink", rfio_serror());
@@ -1152,6 +1152,8 @@ void procioreq(req_type, req_data, clienthost)
 				if (rfio_stat (upath, &st) == 0) {
 					stcp->actual_size = st.st_size;
 					stcp->c_time = st.st_mtime;
+				} else {
+					stglogit(func, STG02, upath, "rfio_stat", rfio_serror());
 				}
 			} else {
 				/* Already done before */
@@ -1501,8 +1503,11 @@ void procputreq(req_data, clienthost)
 				goto reply;
 			}
 			if (stcp->status == STAGEOUT) {
-				if (rfio_stat (stcp->ipath, &st) == 0)
+				if (rfio_stat (stcp->ipath, &st) == 0) {
 					stcp->actual_size = st.st_size;
+				} else {
+					stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+				}
 				updfreespace (stcp->poolname, stcp->ipath,
 					(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) stcp->actual_size));
 			}
@@ -1558,8 +1563,11 @@ void procputreq(req_data, clienthost)
 				goto reply;
 			}
 			if (stcp->status == STAGEOUT) {
-				if (rfio_stat (stcp->ipath, &st) == 0)
+				if (rfio_stat (stcp->ipath, &st) == 0) {
 					stcp->actual_size = st.st_size;
+				} else {
+					stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+				}
 				updfreespace (stcp->poolname, stcp->ipath,
 					(signed64) (((signed64) stcp->size * (signed64) ONE_MB) - (signed64) stcp->actual_size));
 			}

@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.37 2000/11/06 14:46:14 jdurand Exp $
+ * $Id: procupd.c,v 1.38 2000/11/07 09:55:04 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.37 $ $Date: 2000/11/06 14:46:14 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.38 $ $Date: 2000/11/07 09:55:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -411,13 +411,17 @@ procupdreq(req_data, clienthost)
 		stglogit (func, STG97, dsksrvr, strrchr (stcp->ipath, '/')+1,
 						stcp->user, stcp->group,
 						clienthost, dvn, ifce, size, waiting_time, transfer_time, rc);
-		if (stcp->status == STAGEIN && rfio_stat (stcp->ipath, &st) == 0) {
-			stcp->actual_size = st.st_size;
+		if (stcp->status == STAGEIN) {
+			if (rfio_stat (stcp->ipath, &st) == 0) {
+				stcp->actual_size = st.st_size;
 #ifdef USECDB
-			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-			}
+				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
 #endif
+			} else {
+				stglogit (func, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+			}
 		}
 	}
 #if SACCT
@@ -656,6 +660,8 @@ void update_hsm_a_time(stcp)
 		/* HPSS */
 		if (rfio_stat(stcp->u1.m.xfile, &statbuf) == 0) {
 			stcp->a_time = statbuf.st_mtime;
+		} else {
+			stglogit (func, STG02, stcp->u1.m.xfile, "rfio_stat", rfio_serror());
 		}
 		break;
 	case 'h':
