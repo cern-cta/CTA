@@ -4,7 +4,7 @@
  */
 
 /*
- * $RCSfile: rtcp.h,v $ $Revision: 1.5 $ $Date: 1999/12/17 09:51:46 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rtcp.h,v $ $Revision: 1.6 $ $Date: 1999/12/17 16:50:02 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -30,8 +30,6 @@ typedef struct rtcpClientInfo {
     int jobID;                            /* Local RTCOPY server job ID */
     int uid;
     int gid;
-    int umask;
-    int rfio_key;
 } rtcpClientInfo_t;
 #define RTCP_CLINFOLEN(X) (7*LONGSIZE + strlen(X->clienthost) + 1)
 
@@ -58,6 +56,8 @@ typedef struct rtcpFileRequest {
 
     int VolReqID;                      /* VDQM volume request ID */
     int jobID;                         /* Local RTCOPY server job ID */
+    int umask;                         /* Client umask */
+    int rfio_key;                      /* RFIO key for remote client */
     int position_method;               /* TPPOSIT_FSEQ, TPPOSIT_FID, 
                                         * TPPOSIT_EOI and TPPOSIT_BLKID 
                                         */
@@ -136,7 +136,7 @@ typedef struct rtcpFileRequest {
 
 } rtcpFileRequest_t;
 
-#define RTCP_FILEREQLEN(X) (24*LONGSIZE + 8*QUADSIZE + \
+#define RTCP_FILEREQLEN(X) (26*LONGSIZE + 8*QUADSIZE + \
         strlen(X->file_path) + strlen(X->tape_path) + \
         strlen(X->recfm) + strlen(X->fid) + strlen(X->ifce) + \
         strlen(X->stageID) + strlen(X->vmsopt) + 7)
