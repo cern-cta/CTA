@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_entertape.man,v $ $Revision: 1.11 $ $Date: 2001/09/26 09:13:56 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: vmgr_entertape.man,v $ $Revision: 1.12 $ $Date: 2002/02/07 06:42:00 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_ENTERTAPE 3 "$Date: 2001/09/26 09:13:56 $" CASTOR "vmgr Library Functions"
+.TH VMGR_ENTERTAPE 3 "$Date: 2002/02/07 06:42:00 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_entertape \- enter a new tape in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -12,13 +12,14 @@ vmgr_entertape \- enter a new tape in the CASTOR Volume Manager
 .sp
 .BI "int vmgr_entertape (const char *" vid ,
 .BI "char *" vsn ,
-.BI "char *" dgn ,
+.BI "char *" library,
 .BI "char *" density ,
 .BI "char *" lbltype ,
 .BI "char *" model ,
 .BI "char *" media_letter ,
 .BI "char *" manufacturer ,
 .BI "char *" sn ,
+.BI "int " nbsides ,
 .BI "char *" poolname ,
 .BI "int " status )
 .SH DESCRIPTION
@@ -33,33 +34,47 @@ It must be at most CA_MAXVIDLEN characters long.
 specifies the magnetically recorded volume serial number of the tape.
 It must be at most six characters long.
 .TP
-.I dgn
-The device group name must be a member of an installation defined set of
-"device groups".
+.I library
+is the name of the library.
+It must be at most CA_MAXTAPELIBLEN characters long.
+The list of libraries can be obtained with
+.BR vmgrlistlibrary .
 .TP
 .I density
-The supported alphanumeric densities are:
-.br
+The list of supported alphanumeric densities can be obtained with
+.BR vmgrlistdenmap .
+They are for example:
+.BR 35G ,
+.BR 35GC ,
+.B 40G
+or
+.B 40GC
+for DLT cartridges,
 .B 10G
 or
 .B 10GC
 for IBM 3590 cartridges,
-.BR 10G ,
-.BR 10GC ,
-.BR 25G ,
-.BR 25GC ,
-.B 50G
+.B 40G
 or
-.B 50GC
-for Redwood cartridges,
+.B 40GC
+for IBM 3590K cartridges,
 .B 20G
 or
 .B 20GC
-for STK 9840 cassettes.
+for STK 9840 cassettes,
+.B 60G
+or
+.B 60GC
+for STK 9940 cartridges,
+.B 100G
+or
+.B 100GC
+for LTO cartridges.
 .TP
 .I lbltype
 may be
 .BR al ,
+.BR aul ,
 .B nl
 or
 .BR sl .
@@ -69,6 +84,8 @@ Default is
 .I model
 is the model of cartridge.
 It must be at most CA_MAXMODELLEN characters long.
+The list of models can be obtained with
+.BR vmgrlistmodel .
 .TP
 .I media_letter
 is the media identification letter. For example "A", "B" or "C" for SD3 (Redwood),
@@ -80,8 +97,13 @@ is an alphanumeric field CA_MAXMANUFLEN bytes long.
 .I sn
 The cartridge serial number is an alphanumeric field CA_MAXSNLEN bytes long.
 .TP
+.I nbsides
+specifies the number of sides offered by the piece of media (for example a DVD).
+.TP
 .I poolname
 is the tape pool name. It must be at most CA_MAXPOOLNAMELEN characters long.
+The list of pools can be obtained with
+.BR vmgrlistpool .
 .TP
 .I status
 can be set to a combination of
@@ -94,7 +116,8 @@ and
 .LP
 Only
 .IR vid ,
-.I dgn
+.IR library ,
+.I density
 and
 .I model
 are mandatory. The other fields can be set later.
@@ -105,16 +128,15 @@ failed. In the latter case,
 is set appropriately.
 .SH ERRORS
 .TP 1.3i
-.B ENOENT
-The named model or pool does not exist.
-.TP
 .B EACCES
 The requestor is not super-user.
 .TP
 .B EFAULT
-.I vid
+.IR vid ,
+.IR library ,
+.I density
 or
-.I dgn
+.I model
 is a NULL pointer.
 .TP
 .B EEXIST
@@ -124,7 +146,8 @@ The named volume exists already.
 The length of
 .I vid
 exceeds
-.BR CA_MAXVIDLEN .
+.B CA_MAXVIDLEN
+or the library/density/model/poolname does not exist.
 .TP
 .B ENOSPC
 The volume manager database is full.
