@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.74 2001/02/01 12:31:59 jdurand Exp $
+ * $Id: procio.c,v 1.75 2001/02/01 12:43:09 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.74 $ $Date: 2001/02/01 12:31:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.75 $ $Date: 2001/02/01 12:43:09 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -83,7 +83,7 @@ extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *
 extern int nextreqid _PROTO(());
 int isstaged _PROTO((struct stgcat_entry *, struct stgcat_entry **, int, char *));
 int maxfseq_per_vid _PROTO((struct stgcat_entry *, int, char *, char *));
-extern int update_migpoolv2 _PROTO((struct stgcat_entry *, int, int));
+extern int update_migpool _PROTO((struct stgcat_entry *, int, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
 extern u_signed64 stage_uniqueid;
 extern void getdefsize _PROTO((char *, int *));
@@ -111,7 +111,7 @@ extern int cleanpool _PROTO((char *));
 extern int fork_exec_stager _PROTO((struct waitq *));
 extern void rmfromwq _PROTO((struct waitq *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
-extern int euid_egid _PROTO((uid_t *, gid_t *, char *, struct migratorv2 *, struct stgcat_entry *, char **, int));
+extern int euid_egid _PROTO((uid_t *, gid_t *, char *, struct migrator *, struct stgcat_entry *, char **, int));
 extern int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 extern char *next_tppool _PROTO((struct fileclass *));
@@ -1524,7 +1524,7 @@ void procioreq(req_type, req_data, clienthost)
 				}
 				if ((stcp->status & (STAGEOUT|CAN_BE_MIGR)) == (STAGEOUT|CAN_BE_MIGR)) {
 					/* This is a file to delete from automatic migration */
-					update_migpoolv2(stcp,-1, 0);
+					update_migpool(stcp,-1, 0);
 				}
 				if (delfile (stcp, 1, 1, 1, user, stgreq.uid, stgreq.gid, 0) < 0) {
 					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath,
@@ -1744,7 +1744,7 @@ void procioreq(req_type, req_data, clienthost)
 					}
 					strcpy(stgreq.u1.h.server,Cnsfileid.server);
 					stgreq.u1.h.fileid = Cnsfileid.fileid;
-					/* The fileclass will be added if necessary by update_migpoolv2() called below */
+					/* The fileclass will be added if necessary by update_migpool() called below */
 				}
 				hsmmtime = time(NULL);
 				/* Here, in any case, Cnsfileid is filled */
@@ -1931,7 +1931,7 @@ void procioreq(req_type, req_data, clienthost)
 				}
 				if ((stage_wrt_migration == 0) && (actual_poolname[0] != '\0')) {
 					/* This entry is in the pool anyway and this is not for internal migration */
-					if (update_migpoolv2(stcp,1,Aflag ? 0 : 1) != 0) {
+					if (update_migpool(stcp,1,Aflag ? 0 : 1) != 0) {
 						c = USERR;
 #ifdef USECDB
 						if (stgdb_del_stgcat(&dbfd,stcp) != 0) {
@@ -2494,7 +2494,7 @@ void procputreq(req_type, req_data, clienthost)
 					}
 					hsmfilesstcp[ihsmfiles]->a_time = time(NULL);
 					strcpy(hsmfilesstcp[ihsmfiles]->u1.h.tppool,tppool);
-					if (update_migpoolv2(hsmfilesstcp[ihsmfiles],1,2) != 0) {
+					if (update_migpool(hsmfilesstcp[ihsmfiles],1,2) != 0) {
 						c = USERR;
 						goto reply;
 					}
@@ -2673,7 +2673,7 @@ void procputreq(req_type, req_data, clienthost)
 					}
 					hsmfilesstcp[ihsmfiles]->a_time = time(NULL);
 					strcpy(hsmfilesstcp[ihsmfiles]->u1.h.tppool,tppool);
-					if (update_migpoolv2(hsmfilesstcp[ihsmfiles],1,2) != 0) {
+					if (update_migpool(hsmfilesstcp[ihsmfiles],1,2) != 0) {
 						c = USERR;
 						goto reply;
 					}
@@ -2764,7 +2764,7 @@ void procputreq(req_type, req_data, clienthost)
 				}
 				if (found == 0) continue;
 				if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-					update_migpoolv2(stcp,-1,0);
+					update_migpool(stcp,-1,0);
 					if ((stcp->status & STAGEWRT) == STAGEWRT) {
 						delreq(stcp,0);
 					} else {
@@ -2802,7 +2802,7 @@ void procputreq(req_type, req_data, clienthost)
 						if (stcp->t_or_d != 'm' && stcp->t_or_d != 'h') continue;
 						if (strcmp(stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile, Coptarg) != 0) continue;
 						if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-							update_migpoolv2(stcp,-1,0);
+							update_migpool(stcp,-1,0);
 							if ((stcp->status & STAGEWRT) == STAGEWRT) {
 								delreq(stcp,0);
 							} else {

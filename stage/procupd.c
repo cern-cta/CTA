@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.49 2001/01/31 18:59:59 jdurand Exp $
+ * $Id: procupd.c,v 1.50 2001/02/01 12:43:10 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.49 $ $Date: 2001/01/31 18:59:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.50 $ $Date: 2001/02/01 12:43:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -62,7 +62,7 @@ extern int extend_waitf _PROTO((struct waitf *, struct waitf *));
 extern int check_waiting_on_req _PROTO((int, int));
 extern int check_coff_waiting_on_req _PROTO((int, int));
 extern struct stgcat_entry *newreq _PROTO(());
-extern int update_migpoolv2 _PROTO((struct stgcat_entry *, int, int));
+extern int update_migpool _PROTO((struct stgcat_entry *, int, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
 extern int req2argv _PROTO((char *, char ***));
 #if (defined(IRIX64) || defined(IRIX5) || defined(IRIX6))
@@ -710,7 +710,7 @@ procupdreq(req_data, clienthost)
 						((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR))) &&
 						(stcp->poolname[0] == '\0')) {
 						if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-							update_migpoolv2(stcp,-1,0);
+							update_migpool(stcp,-1,0);
 						}
 						delreq (stcp,0);
 					} else {
@@ -741,7 +741,7 @@ procupdreq(req_data, clienthost)
 								}
 							}
 							if ((stcp_found->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-								update_migpoolv2(stcp_found,-1,0);
+								update_migpool(stcp_found,-1,0);
 								stcp_found->status &= ~CAN_BE_MIGR;
 							}
 							stcp_found->u1.h.tppool[0] = '\0'; /* We reset the poolname */
@@ -770,7 +770,7 @@ procupdreq(req_data, clienthost)
 									}
 								}
 								if ((save_stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-									update_migpoolv2(save_stcp,-1,0);
+									update_migpool(save_stcp,-1,0);
 								}
 								delreq(save_stcp,0);
 								if (continue_flag != 0) {
@@ -790,7 +790,7 @@ procupdreq(req_data, clienthost)
 					}
 				} else {
 					if ((stcp->status & CAN_BE_MIGR) == CAN_BE_MIGR) {
-						update_migpoolv2(stcp,-1,0);
+						update_migpool(stcp,-1,0);
 						stcp->status &= ~CAN_BE_MIGR;
 					}
 					stcp->status |= STAGED;

@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.36 2001/02/01 10:36:59 jdurand Exp $
+ * $Id: stage.h,v 1.37 2001/02/01 12:43:04 jdurand Exp $
  */
 
 /*
@@ -425,7 +425,7 @@ struct pool {
 	time_t	cleanreqtime;
 	int	cleanstatus;	/* 0 = normal, 1 = just cleaned */
 	char	migr_name[CA_MAXMIGRNAMELEN+1];
-	struct migratorv2 *migrv2;
+	struct migrator *migr;
 	int	mig_start_thresh;
 	int	mig_stop_thresh;
 	u_signed64 mig_data_thresh;
@@ -447,7 +447,7 @@ struct fileclass {
 	int being_migr;                                 /* Number of files being migrated in this fileclass */
 };
 
-struct migratorv2 {
+struct migrator {
 	char name[CA_MAXMIGRNAMELEN+1];
 	int mig_pid;
 	time_t migreqtime;

@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.91 2001/02/01 12:16:56 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.92 2001/02/01 12:43:10 jdurand Exp $
  */
 
 /*
@@ -13,7 +13,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.91 $ $Date: 2001/02/01 12:16:56 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.92 $ $Date: 2001/02/01 12:43:10 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #define MAX_NETDATA_SIZE 20000
@@ -192,15 +192,15 @@ int upd_staged _PROTO((char *));
 void checkovlstatus _PROTO((int, int));
 void killallovl _PROTO((int));
 extern void killcleanovl _PROTO((int));
-extern void killmigovlv2 _PROTO((int));
+extern void killmigovl _PROTO((int));
 int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
 
 struct stgcat_entry *newreq _PROTO(());
 struct waitf *add2wf _PROTO((struct waitq *));
 int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct waitf *));
-extern int update_migpoolv2 _PROTO((struct stgcat_entry *, int, int));
+extern int update_migpool _PROTO((struct stgcat_entry *, int, int));
 extern int iscleanovl _PROTO((int, int));
-extern int ismigovlv2 _PROTO((int, int));
+extern int ismigovl _PROTO((int, int));
 extern int selectfs _PROTO((char *, int *, char *));
 extern int updfreespace _PROTO((char *, char *, signed64));
 extern void procupdreq _PROTO((char *, char *));
@@ -208,7 +208,7 @@ int stcp_cmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
 int stpp_cmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
 struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
 int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int));
-extern void checkfile2migv2 _PROTO(());
+extern void checkfile2mig _PROTO(());
 extern int updpoolconf _PROTO((char *, char *, char *));
 extern void procioreq _PROTO((int, char *, char *));
 extern void procputreq _PROTO((int, char *, char *));
@@ -632,7 +632,7 @@ int main(argc,argv)
 		} else if (stcp->status == (STAGEPUT|CAN_BE_MIGR)) {
 			stcp->status = STAGEOUT|CAN_BE_MIGR;
 			/* This is a file for automatic migration */
-			update_migpoolv2(stcp,1,0);
+			update_migpool(stcp,1,0);
 #ifdef USECDB
 			if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 				stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -648,7 +648,7 @@ int main(argc,argv)
 			}
 #endif
 			/* This is a file for automatic migration */
-			update_migpoolv2(stcp,1,0);
+			update_migpool(stcp,1,0);
 			stcp++;
 		} else stcp++;
 	}
@@ -696,7 +696,7 @@ int main(argc,argv)
 		checkwaitingspc ();	/* check requests that are waiting for space */
 		checkpoolspace ();	/* launch gc if necessary */
 		checkwaitq ();	/* scan the wait queue */
-		checkfile2migv2 ();	/* scan the pools vs. their migration policies */
+		checkfile2mig ();	/* scan the pools vs. their migration policies */
 		if ((shutdownreq_reqid != 0) && (waitqp == NULL || force_shutdown)) {
 			/* We send a kill to all processes we are aware about */
 			killallovl(SIGINT);
@@ -1402,7 +1402,7 @@ checkovlstatus(pid, status)
 	/* was it a "migrator" overlay ? */
 	} else if (ismigovl2 (pid, status)) {
 		reqid = 0;
-		stglogit (func, "migrationv2 process %d exiting with status %x\n",
+		stglogit (func, "migration process %d exiting with status %x\n",
 							pid, status & 0xFFFF);
 	} else {	/* it was a "stager" or a "stageqry" overlay */
 		found =  0;
@@ -1460,8 +1460,8 @@ killallovl(sig)
 	/* kill the cleaners */
 	killcleanovl(SIGINT);
 
-	/* kill the "migratorv2"s */
-	killmigovlv2(SIGINT);
+	/* kill the "migrator"s */
+	killmigovl(SIGINT);
 
 	/* Protect agsin the signal we are doing to send */
 	signal (SIGINT,SIG_IGN);
@@ -2015,7 +2015,7 @@ void checkwaitq()
 				case STAGEWRT:
 					if ((stcp->status & (CAN_BE_MIGR)) == CAN_BE_MIGR) {
 						/* This is a file coming from (being migrated or not) migration */
-						update_migpoolv2(stcp,-1,0);
+						update_migpool(stcp,-1,0);
 					}
 					/* There is intentionnaly no 'break' here */
 				case STAGEOUT:
@@ -2025,7 +2025,7 @@ void checkwaitq()
 				case STAGEPUT:
 					if ((stcp->status & (CAN_BE_MIGR)) == CAN_BE_MIGR) {
 						/* This is a file coming from (automatic or not) migration */
-						update_migpoolv2(stcp,-1,0);
+						update_migpool(stcp,-1,0);
 						stcp->status = STAGEOUT | PUT_FAILED | CAN_BE_MIGR;
 					} else {
 						stcp->status = STAGEOUT | PUT_FAILED;
@@ -2210,7 +2210,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm)
 					((stcp->status & PUT_FAILED) != PUT_FAILED)) ||
 				((stcp->status & (STAGEWRT|CAN_BE_MIGR)) == (STAGEWRT|CAN_BE_MIGR))) {
 				/* This is a file coming from (automatic or not) migration */
-				update_migpoolv2(stcp,-1,0);
+				update_migpool(stcp,-1,0);
 			}
 			updfreespace (stcp->poolname, stcp->ipath, (signed64) ((freersv) ?
 										((signed64) stcp->size * (signed64) ONE_MB) : ((signed64) actual_size)));
@@ -2784,7 +2784,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 					if (can_be_migr_flag) {
 						stcp->status |= CAN_BE_MIGR; /* Now status is STAGEOUT | CAN_BE_MIGR */
 						/* This is a file for automatic migration */
-						if (update_migpoolv2(stcp,1,0) != 0) {
+						if (update_migpool(stcp,1,0) != 0) {
 							stcp->status &= ~CAN_BE_MIGR;
 							return(USERR);
 						}
