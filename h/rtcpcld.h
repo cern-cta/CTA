@@ -48,9 +48,9 @@ int rtcpcld_getDbSvc _PROTO((
 #endif /* CASTOR_SERVICES_H */
 
 #if defined(CASTOR_ISTAGERSVC_H)
-int rtcpcld_getStgDbSvc _PROTO((
-                                struct Cstager_IStagerSvc_t **
-                                ));
+int rtcpcld_getStgSvc _PROTO((
+                              struct Cstager_IStagerSvc_t ***
+                              ));
 #endif /* CASTOR_ISTAGERSVC_H */
 
 int rtcpcld_InitNW  _PROTO((
