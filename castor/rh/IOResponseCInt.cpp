@@ -247,24 +247,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Crh_IOResponse_setId
-  //----------------------------------------------------------------------------
-  int Crh_IOResponse_setId(castor::rh::IOResponse* instance,
-                           u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Crh_IOResponse_id
-  //----------------------------------------------------------------------------
-  int Crh_IOResponse_id(castor::rh::IOResponse* instance,
-                        u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Crh_IOResponse_clone
   //----------------------------------------------------------------------------
   int Crh_IOResponse_clone(castor::rh::IOResponse* instance,

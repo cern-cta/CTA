@@ -228,24 +228,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_TapeCopyForMigration_setId
-  //----------------------------------------------------------------------------
-  int Cstager_TapeCopyForMigration_setId(castor::stager::TapeCopyForMigration* instance,
-                                         u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_TapeCopyForMigration_id
-  //----------------------------------------------------------------------------
-  int Cstager_TapeCopyForMigration_id(castor::stager::TapeCopyForMigration* instance,
-                                      u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_TapeCopyForMigration_clone
   //----------------------------------------------------------------------------
   int Cstager_TapeCopyForMigration_clone(castor::stager::TapeCopyForMigration* instance,

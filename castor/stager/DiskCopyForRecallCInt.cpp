@@ -233,24 +233,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_DiskCopyForRecall_setId
-  //----------------------------------------------------------------------------
-  int Cstager_DiskCopyForRecall_setId(castor::stager::DiskCopyForRecall* instance,
-                                      u_signed64 id) {
-    instance->setId(id);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_DiskCopyForRecall_id
-  //----------------------------------------------------------------------------
-  int Cstager_DiskCopyForRecall_id(castor::stager::DiskCopyForRecall* instance,
-                                   u_signed64* ret) {
-    *ret = instance->id();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_DiskCopyForRecall_clone
   //----------------------------------------------------------------------------
   int Cstager_DiskCopyForRecall_clone(castor::stager::DiskCopyForRecall* instance,
