@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.75 $ $Release$ $Date: 2004/11/03 17:18:29 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.76 $ $Release$ $Date: 2004/11/10 13:44:30 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.75 $ $Release$ $Date: 2004/11/03 17:18:29 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.76 $ $Release$ $Date: 2004/11/10 13:44:30 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1329,32 +1329,6 @@ int procTapeCopiesForStream(
     return(-1);
   }
 
-  serrno = 0;
-  tl = tape;
-  rc = rtcpcld_nextFileToProcess(tape,&file);
-  if ( rc == 0 ) {
-    rc = rtcp_NewFileList(&tl,&file,tape->tapereq.mode);
-  }
-  if ( rc == -1 ) {
-    if ( serrno != 0 ) save_serrno = serrno;
-    else save_serrno = errno;
-    LOG_SYSCALL_ERR("rtcp_NewFileList()");
-    C_IAddress_delete(iAddr);
-    serrno = save_serrno;
-    return(-1);
-  }
-  /*
-   * Initialize the usual defaults
-   */
-  filereq = &(file->filereq);
-  filereq->concat = NOCONCAT;
-  filereq->convert = ASCCONV;
-  filereq->position_method = TPPOSIT_FSEQ;
-  filereq->VolReqID = tape->tapereq.VolReqID;
-  strcpy(filereq->recfm,"F");
-  filereq->def_alloc = 0;
-  filereq->proc_status = RTCP_WAITING;
-
   /*
    * Now, we need to get the TapeCopy and create a Segment
    * associated with it. We never commit the Segment in the
@@ -1483,6 +1457,35 @@ int procTapeCopiesForStream(
     return(-1);
   }
 
+  /*
+   * Now we have everything we need to construct a valid filereq
+   */
+  serrno = 0;
+  tl = tape;
+  rc = rtcpcld_nextFileToProcess(tape,&file);
+  if ( rc == 0 ) {
+    rc = rtcp_NewFileList(&tl,&file,tape->tapereq.mode);
+  }
+  if ( rc == -1 ) {
+    if ( serrno != 0 ) save_serrno = serrno;
+    else save_serrno = errno;
+    LOG_SYSCALL_ERR("rtcp_NewFileList()");
+    C_IAddress_delete(iAddr);
+    serrno = save_serrno;
+    return(-1);
+  }
+  /*
+   * Initialize the usual defaults
+   */
+  filereq = &(file->filereq);
+  filereq->concat = NOCONCAT;
+  filereq->convert = ASCCONV;
+  filereq->position_method = TPPOSIT_FSEQ;
+  filereq->VolReqID = tape->tapereq.VolReqID;
+  strcpy(filereq->recfm,"F");
+  filereq->def_alloc = 0;
+  filereq->proc_status = RTCP_WAITING;
+
   if ( diskServer != NULL ) {
     sprintf(filereq->file_path,"%s:%s/%s",diskServer,mountPoint,relPath);
   } else {
@@ -1515,7 +1518,28 @@ int procTapeCopiesForStream(
                     filereq->fid,
                     -sizeof(filereq->fid)
                     );
-  C_IAddress_delete(iAddr);
+
+  C_IAddress_delete(iAddr);  
+  if ( rtcpcld_checkDualCopies(file) == -1 ) {
+    save_serrno = serrno;
+    if ( serrno == EEXIST ) {
+      struct Cns_fileid *fileid = NULL;
+      (void)rtcpcld_getFileId(file,&fileid);
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_CPEXIST),
+                      (struct Cns_fileid *)fileid,
+                      RTCPCLD_NB_PARAMS+1,
+                      "",
+                      DLF_MSG_PARAM_TPVID,
+                      tape->tapereq.vid
+                      );
+    } else {
+      LOG_SYSCALL_ERR("rtcpcld_checkDualCopy()");
+    }
+    serrno = save_serrno;
+    return(-1);
+  }
   return(0);
 }
 
@@ -1546,6 +1570,37 @@ int rtcpcld_getSegmentsToDo(
     serrno = EINVAL;
     return(-1);
   }
+}
+
+int rtcpcld_getTapeCopyNumber(
+                              file,
+                              tapeCopyNb
+                              )
+     file_list_t *file;
+     int *tapeCopyNb;
+{
+  struct Cstager_Segment_t *segment = NULL;
+  struct Cstager_TapeCopy_t *tapeCopy = NULL;
+  int copyNb = 0;
+  
+  if ( (file == NULL) || (file->dbRef == NULL) || (file->dbRef->row == NULL) ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  segment = (struct Cstager_Segment_t *)file->dbRef->row;
+  Cstager_Segment_copy(segment,&tapeCopy);
+  if ( tapeCopy == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+
+  Cstager_TapeCopy_copyNb(tapeCopy,&copyNb);
+  if ( tapeCopyNb != NULL ) {
+    if ( VALID_COPYNB(copyNb) ) *tapeCopyNb = copyNb;
+    else *tapeCopyNb = 0;
+  }
+  
+  return(0);
 }
 
 /**
@@ -2249,6 +2304,7 @@ int rtcpcld_returnStream(
   struct Cstager_Stream_t *stream = NULL;
   enum Cstager_TapeStatusCodes_t tpStatus;  
   struct Cstager_TapeCopy_t **tapeCopyArray = NULL;
+  struct Cstager_TapePool_t *tapePool = NULL;
   enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
   int i, waitingFound = 0, rc = 0, save_serrno, nbTapeCopies = 0;
   ID_TYPE key = 0;
@@ -2349,6 +2405,18 @@ int rtcpcld_returnStream(
                             OBJ_Tape,
                             doCommit
                             );
+    if ( rc == 0 ) {
+      /*
+       * Detach the tape pool (we keep the tape pool in DB)
+       */
+      rc = C_Services_fillRep(
+                              *svcs,
+                              iAddr,
+                              iObj,
+                              OBJ_TapePool,
+                              doCommit
+                              );
+    }
     if ( rc == 0 ) {
       doCommit = 1;
       if ( waitingFound == 1 ) {
