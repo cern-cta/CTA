@@ -1,4 +1,5 @@
 Source: castor
+Build-Depends: stk-ssi, stk-ssi-devel
 Section: science
 Priority: optional
 Maintainer: Jean-Damien Durand <Jean-Damien.Durand@cern.ch>
