@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.142 2001/09/24 13:54:54 jdurand Exp $
+ * $Id: procio.c,v 1.143 2001/10/04 18:01:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.142 $ $Date: 2001/09/24 13:54:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.143 $ $Date: 2001/10/04 18:01:19 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -2916,7 +2916,7 @@ void procputreq(req_type, req_data, clienthost)
 						/* If tppool specified in input very that it is compatible with eventual yet asisgned tppool */
 						/* if tppool is NULL at first iteration, it will be set by the euid_egid() call */
 						if ((stcp->u1.h.tppool[0] != '\0') && (tppool != NULL) && (strcmp(stcp->u1.h.tppool,tppool) != 0)) {
-							sendrep (rpfd, MSG_ERR, STG122);
+							sendrep (rpfd, MSG_ERR, STG159, tppool, stcp->u1.h.tppool);
 							c = USERR;
 							goto reply;
 						}
@@ -3131,7 +3131,7 @@ void procputreq(req_type, req_data, clienthost)
 					/* If tppool specified in input very that it is compatible with eventual yet asisgned tppool */
 					/* if tppool is NULL at first iteration, it will be set by the euid_egid() call */
 					if ((found_stcp->u1.h.tppool[0] != '\0') && (tppool != NULL) && (strcmp(found_stcp->u1.h.tppool,tppool) != 0)) {
-						sendrep (rpfd, MSG_ERR, STG122);
+						sendrep (rpfd, MSG_ERR, STG159, tppool, found_stcp->u1.h.tppool);
 						c = USERR;
 						goto reply;
 					}

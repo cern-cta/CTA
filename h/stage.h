@@ -1,5 +1,5 @@
 /*
- * $Id: stage.h,v 1.67 2001/10/02 17:14:56 jdurand Exp $
+ * $Id: stage.h,v 1.68 2001/10/04 18:01:16 jdurand Exp $
  */
 
 /*
@@ -301,6 +301,7 @@
 #define STG156  "STG156 - Requests from (uid,gid) smaller than (%d,%d) are rejected\n"
 #define STG157  "STG157 - HSM File %s was renamed to %s (fileid %s@%s), input updated\n"
 #define STG158  "STG158 - %s : Fileclass %s@%s (classid %d) retention period %d is overwriten to %d v.s. %d seconds lifetime\n"
+#define STG159  "STG159 - Tape pools differ : \"%s\" v.s. \"%s\"\n"
 
 			/* stage daemon stream modes */
 
