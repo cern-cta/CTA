@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.40 $ $Release$ $Date: 2005/02/24 15:06:43 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.41 $ $Release$ $Date: 2005/02/24 15:18:24 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.40 $ $Release$ $Date: 2005/02/24 15:06:43 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.41 $ $Release$ $Date: 2005/02/24 15:18:24 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -355,8 +355,8 @@ int migratorCallbackMoreWork(
      * media default).
      */
     filereq->blocksize = 32760;
-    if ( strcmp(tapereq->devtype,"3592") == 0 ) 
-      fl->filereq.blocksize = 256*1024;
+    if ( strstr(tapereq->dgn,"3592") == 0 ) 
+      filereq->blocksize = 256*1024;
     return(0);
   }
 
