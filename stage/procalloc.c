@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.15 2000/05/02 11:57:06 jdurand Exp $
+ * $Id: procalloc.c,v 1.16 2000/09/11 15:23:19 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.15 $ $Date: 2000/05/02 11:57:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.16 $ $Date: 2000/09/11 15:23:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -185,7 +185,7 @@ void procallocreq(req_data, clienthost)
 		cleanpool (stcp->poolname);
 	} else if (c) {
 		updfreespace (stcp->poolname, stcp->ipath,
-									stcp->size*1024*1024);
+									stcp->size * ONE_MB);
 		delreq (stcp,1);
 		goto reply;
 	} else {
@@ -223,7 +223,7 @@ void procallocreq(req_data, clienthost)
 			}
 			if (! wfp->waiting_on_req)
 				updfreespace (stcp->poolname, stcp->ipath,
-											stcp->size*1024*1024);
+											stcp->size * ONE_MB);
 			delreq (stcp,0);
 		}
 		rmfromwq (wqp);
