@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2004/11/18 13:14:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2004/11/19 11:40:26 $ $Author: sponcec3 $
  *
  *
  *
@@ -25,12 +25,7 @@
  *****************************************************************************/
 
 // Include Files
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <signal.h>
-#include <errno.h>
 
 #include "castor/io/ServerSocket.hpp"
 #include "castor/IObject.hpp"
@@ -49,6 +44,8 @@
 
 #include "castor/rh/Server.hpp"
 #include "castor/MessageAck.hpp"
+
+#include "h/stager_service_api.h"
 
 #include <iostream>
 
@@ -247,25 +244,6 @@ void castor::rh::Server::handleRequest(castor::IObject* fr)
   }
 
   // Send an UDP message to the stager
-  int fd = socket(AF_INET, SOCK_DGRAM, 0);
-  if (fd < 0) {
-    clog() << "Unable to open socket for UDP notification"
-           << std::endl;
-    return;
-  }
-  struct sockaddr_in serverAddress;
-  serverAddress.sin_family = AF_INET;
-  serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-  serverAddress.sin_port = htons(CSP_NOTIFICATION_PORT);
-  castor::io::biniostream buf;
-  buf << CSP_MSG_MAGIC << fr->id();
-  if (sendto (fd, buf.str().data(), buf.str().length(),
-              0, (struct sockaddr *)&serverAddress,
-              sizeof(serverAddress)) < 0) {
-    clog() << "Unable to send UDP notification"
-           << std::endl;
-    close(fd);
-    return;
-  }
-  close(fd);
+  stager_notifyServices();
+
 }
