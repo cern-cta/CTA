@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.16 2000/01/30 07:38:09 jdurand Exp $
+ * $Id: stgconvert.c,v 1.17 2000/01/30 09:13:26 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.16 $ $Date: 2000/01/30 07:38:09 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.17 $ $Date: 2000/01/30 09:13:26 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -2050,7 +2050,7 @@ void stgconvert_usage() {
          "       to convert from SHIFT to CASTOR, and from CASTOR to SHIFT catalogs, respectively.\n"
          "\n"
          " Example of CASTOR/DISK  ->  CASTOR/CDB convertion:\n"
-         "  stgconvert -g %2d /usr/spool/stage/stgcat_castor /usr/spool/stage/stgpath_castor\n"
+         "  stgconvert -q -g %2d /usr/spool/stage/stgcat_castor /usr/spool/stage/stgpath_castor\n"
          "\n"
          " Example of CASTOR/CDB  vs. CASTOR/DISK comparison:\n"
          "  stgconvert -g %2d /usr/spool/stage/stgcat_castor /usr/spool/stage/stgpath_castor\n"
