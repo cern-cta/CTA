@@ -37,6 +37,7 @@ namespace castor {
 
   // Forward declarations
   class IObject;
+  class ICnvSvc;
 
   // Forward declarations
   namespace rh {
@@ -61,7 +62,7 @@ namespace castor {
         /**
          * Constructor
          */
-        OraClientCnv();
+        OraClientCnv(castor::ICnvSvc* cnvSvc);
 
         /**
          * Destructor

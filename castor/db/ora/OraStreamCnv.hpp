@@ -37,6 +37,7 @@ namespace castor {
 
   // Forward declarations
   class IObject;
+  class ICnvSvc;
 
   // Forward declarations
   namespace stager {
@@ -61,7 +62,7 @@ namespace castor {
         /**
          * Constructor
          */
-        OraStreamCnv();
+        OraStreamCnv(castor::ICnvSvc* cnvSvc);
 
         /**
          * Destructor

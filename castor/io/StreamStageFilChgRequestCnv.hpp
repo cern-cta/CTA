@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageFilChgRequestCnv.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/11/04 10:26:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageFilChgRequestCnv.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/11/05 17:47:25 $ $Author: sponcec3 $
  *
  * 
  *
@@ -39,6 +39,7 @@ namespace castor {
   class ObjectSet;
   class ObjectCatalog;
   class IObject;
+  class ICnvSvc;
 
   namespace io {
 
@@ -57,7 +58,7 @@ namespace castor {
       /**
        * Constructor
        */
-      StreamStageFilChgRequestCnv();
+      StreamStageFilChgRequestCnv(castor::ICnvSvc* cnvSvc);
 
       /**
        * Destructor

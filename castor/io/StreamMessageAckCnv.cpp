@@ -21,37 +21,38 @@
  *
  * 
  *
- * @author Sebastien Ponce, sebastien.ponce@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 // Include Files
 #include "StreamMessageAckCnv.hpp"
 #include "castor/CnvFactory.hpp"
+#include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
-#include "castor/IConverter.hpp"
-#include "castor/IFactory.hpp"
+#include "castor/ICnvFactory.hpp"
+#include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/MessageAck.hpp"
 #include "castor/ObjectCatalog.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
+#include "osdep.h"
 #include <string>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
 static castor::CnvFactory<castor::io::StreamMessageAckCnv> s_factoryStreamMessageAckCnv;
-const castor::IFactory<castor::IConverter>& StreamMessageAckCnvFactory = 
+const castor::ICnvFactory& StreamMessageAckCnvFactory = 
   s_factoryStreamMessageAckCnv;
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::io::StreamMessageAckCnv::StreamMessageAckCnv() :
-  StreamBaseCnv() {}
+castor::io::StreamMessageAckCnv::StreamMessageAckCnv(castor::ICnvSvc* cnvSvc) :
+  StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -152,3 +153,4 @@ castor::IObject* castor::io::StreamMessageAckCnv::unmarshalObject(castor::io::bi
   newlyCreated.insert(object);
   return object;
 }
+

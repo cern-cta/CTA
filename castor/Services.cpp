@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/10/12 14:44:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/11/05 17:47:20 $ $Author: sponcec3 $
  *
  *
  *
@@ -44,13 +44,7 @@ castor::Services::Services() {}
 //-----------------------------------------------------------------------------
 // Destructor
 //-----------------------------------------------------------------------------
-castor::Services::~Services() {
-  std::map<const std::string, IService*>::iterator it;
-  for (it = m_services.begin(); it != m_services.end(); it++) {
-    it->second->release();
-  }
-  m_services.erase(m_services.begin(), m_services.end());
-}
+castor::Services::~Services() {}
 
 //-----------------------------------------------------------------------------
 // service
@@ -118,6 +112,7 @@ void castor::Services::createRep(castor::IAddress* address,
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->createRep(address, object, autocommit);
+  cnvSvc->release();
 }
 
 // -----------------------------------------------------------------------
@@ -130,6 +125,7 @@ void castor::Services::updateRep(castor::IAddress* address,
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->updateRep(address, object, autocommit);
+  cnvSvc->release();
 }
 
 // -----------------------------------------------------------------------
@@ -142,6 +138,7 @@ void castor::Services::deleteRep(castor::IAddress* address,
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->deleteRep(address, object, autocommit);
+  cnvSvc->release();
 }
 
 // -----------------------------------------------------------------------
@@ -176,7 +173,9 @@ castor::IObject* castor::Services::createObj(castor::IAddress* address)
   throw (castor::exception::Exception) {
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
-  return cnvSvc->createObj(address);
+  castor::IObject* result = cnvSvc->createObj(address);
+  cnvSvc->release();
+  return result;
 }
 
 
@@ -189,6 +188,7 @@ void castor::Services::updateObj(castor::IAddress* address,
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->updateObj(object);
+  cnvSvc->release();
 }
 
 //------------------------------------------------------------------------------
@@ -199,6 +199,7 @@ void castor::Services::commit(castor::IAddress* address)
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->commit();
+  cnvSvc->release();
 }
 
 
@@ -213,6 +214,7 @@ void castor::Services::fillRep(castor::IAddress* address,
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->fillRep(address, object, type, autocommit);
+  cnvSvc->release();
 }
 
 //------------------------------------------------------------------------------
@@ -225,6 +227,7 @@ void castor::Services::fillObj(castor::IAddress* address,
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->fillObj(address, object, type);
+  cnvSvc->release();
 }
 
 //------------------------------------------------------------------------------
@@ -235,4 +238,5 @@ void castor::Services::rollback(castor::IAddress* address)
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->rollback();
+  cnvSvc->release();
 }

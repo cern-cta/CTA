@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdcRequestCnv.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2004/11/04 14:26:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdcRequestCnv.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2004/11/05 17:47:23 $ $Author: sponcec3 $
  *
  * 
  *
@@ -31,8 +31,8 @@
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IClient.hpp"
-#include "castor/IConverter.hpp"
-#include "castor/IFactory.hpp"
+#include "castor/ICnvFactory.hpp"
+#include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
@@ -51,7 +51,7 @@
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
 static castor::CnvFactory<castor::db::ora::OraStageUpdcRequestCnv> s_factoryOraStageUpdcRequestCnv;
-const castor::IFactory<castor::IConverter>& OraStageUpdcRequestCnvFactory = 
+const castor::ICnvFactory& OraStageUpdcRequestCnvFactory = 
   s_factoryOraStageUpdcRequestCnv;
 
 //------------------------------------------------------------------------------
@@ -128,8 +128,8 @@ const std::string castor::db::ora::OraStageUpdcRequestCnv::s_updateIClientStatem
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::db::ora::OraStageUpdcRequestCnv::OraStageUpdcRequestCnv() :
-  OraBaseCnv(),
+castor::db::ora::OraStageUpdcRequestCnv::OraStageUpdcRequestCnv(castor::ICnvSvc* cnvSvc) :
+  OraBaseCnv(cnvSvc),
   m_insertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),

@@ -30,6 +30,7 @@
 // Include Files
 #include "castor/exception/Exception.hpp"
 #include "castor/client/IResponseHandler.hpp"
+#include "castor/BaseObject.hpp"
 
 namespace castor {
 
@@ -43,7 +44,7 @@ namespace castor {
     /**
      * A simple Response Handler for command line clients
      */
-    class CmdLineResponseHandler : public IResponseHandler {
+    class CmdLineResponseHandler : public IResponseHandler, BaseObject {
 
     public:
 

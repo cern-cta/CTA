@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/07/30 13:03:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/11/05 17:47:19 $ $Author: sponcec3 $
  *
  * Basic object support, including pointer to Services and log support
  *
@@ -70,7 +70,9 @@ namespace castor {
      * @param name the name of the MsgSvc to retrieve
      * @param name the type of the MsgSvc to retrieve
      * @return a pointer to the message service. This is always
-     * a valid pointer if no exception was raised
+     * a valid pointer if no exception was raised. The caller
+     * takes the responsability of releasing the service
+     * after usage
      * @exception Exception if something went wrong
      */
     static MsgSvc* msgSvc(std::string name,
@@ -91,7 +93,7 @@ namespace castor {
     /**
      * Access to the log stream
      */
-    static castor::logstream& clog() throw(castor::exception::Exception);
+    castor::logstream& clog() throw(castor::exception::Exception);
 
     /**
      * gets the thread local storage for a given key
@@ -99,7 +101,7 @@ namespace castor {
     static void getTLS(int* key, void** thip)
       throw(castor::exception::Exception);
 
-  private:
+  protected:
 
     /**
      * The name of the MsgSvc to use
@@ -110,6 +112,11 @@ namespace castor {
      * The type of MsgSvc to use
      */
     static unsigned long s_msgSvcId;
+
+    /**
+     * The current message service
+     */
+    MsgSvc* m_msgSvc;
 
   }; // end of class BaseObject
 

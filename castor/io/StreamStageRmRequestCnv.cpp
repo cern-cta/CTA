@@ -30,8 +30,8 @@
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IClient.hpp"
-#include "castor/IConverter.hpp"
-#include "castor/IFactory.hpp"
+#include "castor/ICnvFactory.hpp"
+#include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectCatalog.hpp"
 #include "castor/ObjectSet.hpp"
@@ -49,14 +49,14 @@
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
 static castor::CnvFactory<castor::io::StreamStageRmRequestCnv> s_factoryStreamStageRmRequestCnv;
-const castor::IFactory<castor::IConverter>& StreamStageRmRequestCnvFactory = 
+const castor::ICnvFactory& StreamStageRmRequestCnvFactory = 
   s_factoryStreamStageRmRequestCnv;
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::io::StreamStageRmRequestCnv::StreamStageRmRequestCnv() :
-  StreamBaseCnv() {}
+castor::io::StreamStageRmRequestCnv::StreamStageRmRequestCnv(castor::ICnvSvc* cnvSvc) :
+  StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor

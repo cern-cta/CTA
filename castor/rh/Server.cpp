@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/02 15:25:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2004/11/05 17:47:27 $ $Author: sponcec3 $
  *
  *
  *
@@ -85,8 +85,8 @@ int main(int argc, char *argv[]) {
 // Constructor
 //------------------------------------------------------------------------------
 castor::rh::Server::Server() :
-  castor::BaseServer("RHServer", 2) {
-  initLog("RHLog", SVC_STDMSG);
+  castor::BaseServer("RHServer", 20) {
+  initLog("RHLog", SVC_DLFMSG);
 }
 
 //------------------------------------------------------------------------------
@@ -94,22 +94,39 @@ castor::rh::Server::Server() :
 //------------------------------------------------------------------------------
 int castor::rh::Server::main () {
   try {
-    // create oracle conversion service
+    // create oracle and streaming conversion service
+    // so that it is not deleted and recreated all the time
     castor::ICnvSvc *svc =
       svcs()->cnvService("OraCnvSvc", castor::SVC_ORACNV);
-    if (svc == 0) {
+    if (0 == svc) {
       clog() << "Could not get Conversion Service for Oracle"
+             << std::endl;
+      return -1;
+    }
+    castor::ICnvSvc *svc2 =
+      svcs()->cnvService("StreamCnvSvc", castor::SVC_STREAMCNV);
+    if (0 == svc2) {
+      clog() << "Could not get Conversion Service for Streaming"
              << std::endl;
       return -1;
     }
     /* Create a socket for the server, bind, and listen */
     castor::io::ServerSocket sock(CSP_RHSERVER_PORT, true);  
-    /* Accept connexions */
     for (;;) {
+      /* Accept connexions */
       castor::io::ServerSocket* s = sock.accept();
       /* handle the command. */
       threadAssign(s);
     }
+    
+    // The code after this pint will never be used.
+    // However it can be useful to cleanup evrything correctly
+    // if one removes the loop for debug purposes
+
+    // release the Oracle Conversion Service
+    svc->release();
+    svc2->release();
+    
   } catch(castor::exception::Exception e) {
     clog() << sstrerror(e.code())
            << e.getMessage().str() << std::endl;
@@ -167,6 +184,7 @@ void *castor::rh::Server::processRequest(void *param) throw() {
       castor::rh::Client *client =
         dynamic_cast<castor::rh::Client *>(fr->client());
       if (0 == client) {
+        delete fr;
         castor::exception::Internal e;
         e.getMessage() << "Request arrived with no client object.";
         throw e;
@@ -194,7 +212,7 @@ void *castor::rh::Server::processRequest(void *param) throw() {
            << sstrerror(e.code()) << std::endl
            << e.getMessage().str() << std::endl;
   }
-
+  delete fr;
   delete sock;
   return 0;
 }
@@ -244,15 +262,5 @@ void castor::rh::Server::handleRequest(castor::IObject* fr)
     close(fd);
     return;
   }
-  //  clog() << "UDP notification sent" << std::endl;
   close(fd);
 }
-
-//------------------------------------------------------------------------------
-// Overriding start() to add logging
-//------------------------------------------------------------------------------
-/*int castor::rh::Server::start() {
-  clog() << "Now starting the threads" << std::endl;
-  return this->BaseServer::start();
-  }*/
-

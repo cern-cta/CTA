@@ -19,9 +19,9 @@
  *
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
+ * 
  *
- *
- * @author Sebastien Ponce, sebastien.ponce@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
 #ifndef CASTOR_IO_MESSAGEACK_HPP
@@ -30,17 +30,21 @@
 // Include Files
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
-#include "castor/ObjectCatalog.hpp"
-#include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/StreamBaseCnv.hpp"
 
 namespace castor {
 
   // Forward declarations
+  class ObjectSet;
+  class ObjectCatalog;
   class IObject;
+  class ICnvSvc;
 
   namespace io {
+
+    // Forward declarations
+    class StreamAddress;
 
     /**
      * class StreamMessageAckCnv
@@ -53,7 +57,7 @@ namespace castor {
       /**
        * Constructor
        */
-      StreamMessageAckCnv();
+      StreamMessageAckCnv(castor::ICnvSvc* cnvSvc);
 
       /**
        * Destructor

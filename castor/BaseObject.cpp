@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/07/30 13:03:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/11/05 17:47:19 $ $Author: sponcec3 $
  *
  * 
  *
@@ -43,12 +43,16 @@ unsigned long castor::BaseObject::s_msgSvcId(0);
 // -----------------------------------------------------------------------
 // constructor
 // -----------------------------------------------------------------------
-castor::BaseObject::BaseObject() throw() {}
+castor::BaseObject::BaseObject() throw() : m_msgSvc(0) {}
 
 // -----------------------------------------------------------------------
 // destructor
 // -----------------------------------------------------------------------
-castor::BaseObject::~BaseObject() throw() {}
+castor::BaseObject::~BaseObject() throw() {
+  if (0 != m_msgSvc) {
+    m_msgSvc->release();
+  }
+}
 
 // -----------------------------------------------------------------------
 // msgSvc
@@ -117,15 +121,8 @@ void castor::BaseObject::initLog(std::string name,
                                  const unsigned long id)
   throw() {
   Cthread_mutex_lock(&s_msgSvcId);
-  if (0 != s_msgSvcId) {
-    try {
-      // This always returns a valid service if no exception is raised
-      clog() << WARNING << "initLog called several times. "
-             << "Only the first is taken into account."
-             << std::endl;
-    } catch(castor::exception::Exception e) {}
-    return;
-  }
+  // Nothing to do if already called
+  if (0 != s_msgSvcId) return;
   s_msgSvcName = name;
   s_msgSvcId = id;
   Cthread_mutex_unlock(&s_msgSvcId);
@@ -142,6 +139,9 @@ castor::logstream& castor::BaseObject::clog()
                    << "Please call initLog first.";
     throw e;
   }
+  if (0 == m_msgSvc) {
+    m_msgSvc = msgSvc(s_msgSvcName, s_msgSvcId);
+  }
   // This always returns a valid service if no exception is raised
-  return msgSvc(s_msgSvcName, s_msgSvcId)->stream();
+  return m_msgSvc->stream();
 }

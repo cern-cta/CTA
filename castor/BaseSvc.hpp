@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/07 15:54:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/05 17:47:19 $ $Author: sponcec3 $
  *
  * 
  *
@@ -62,7 +62,7 @@ namespace castor {
     /**
      * adds a reference
      */
-    virtual void addRef() { m_refs++; };
+    virtual void addRef() throw() { m_refs++; };
     
     /**
      * removes a reference to the service and releases it

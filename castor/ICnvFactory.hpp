@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ICnvFactory.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/04 08:54:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ICnvFactory.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/05 17:47:20 $ $Author: sponcec3 $
  *
  *
  *
@@ -34,11 +34,12 @@ namespace castor {
 
   // Forward Declarations
   class IConverter;
-
+  class ICnvSvc;
+  
   /**
    * The interface for converters facotories
    */
-  class ICnvFactory : public IFactory<IConverter> {
+  class ICnvFactory {
 
   public:
 
@@ -53,7 +54,8 @@ namespace castor {
      * for service lookup by the new service
      * @param name the object name, if any
      */
-    virtual IConverter* instantiate(const std::string name = "") const = 0;
+    virtual IConverter* instantiate(castor::ICnvSvc* cnvSvc,
+                                    const std::string name = "") const = 0;
 
     /**
      * gets the object type, that is the type of

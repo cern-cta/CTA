@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamReqIdCnv.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/11/04 10:26:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamReqIdCnv.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/05 17:47:25 $ $Author: sponcec3 $
  *
  * 
  *
@@ -29,8 +29,8 @@
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
-#include "castor/IConverter.hpp"
-#include "castor/IFactory.hpp"
+#include "castor/ICnvFactory.hpp"
+#include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectCatalog.hpp"
 #include "castor/ObjectSet.hpp"
@@ -46,14 +46,14 @@
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
 static castor::CnvFactory<castor::io::StreamReqIdCnv> s_factoryStreamReqIdCnv;
-const castor::IFactory<castor::IConverter>& StreamReqIdCnvFactory = 
+const castor::ICnvFactory& StreamReqIdCnvFactory = 
   s_factoryStreamReqIdCnv;
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::io::StreamReqIdCnv::StreamReqIdCnv() :
-  StreamBaseCnv() {}
+castor::io::StreamReqIdCnv::StreamReqIdCnv(castor::ICnvSvc* cnvSvc) :
+  StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor

@@ -23,7 +23,11 @@ void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
   // Constructor and Destructor
   writeDocumentation("", "Constructor", "", *m_stream);
   *m_stream << getIndent() << m_prefix << m_classInfo->className
-            << "Cnv();" << endl << endl;
+            << "Cnv("
+            << fixTypeName("ICnvSvc*",
+                           "castor",
+                           m_classInfo->packageName)
+            << " cnvSvc);" << endl << endl;
   writeDocumentation("", "Destructor", "", *m_stream);
   *m_stream << getIndent() << "virtual " << "~" << m_prefix
             << m_classInfo->className << "Cnv() throw();" << endl

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/07 15:53:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/05 17:47:19 $ $Author: sponcec3 $
  *
  *
  *
@@ -26,7 +26,9 @@
 
 // Include Files
 #include <signal.h>
-#include "BaseServer.hpp"
+#include "castor/BaseServer.hpp"
+#include "castor/MsgSvc.hpp"
+#include "castor/Services.hpp"
 #include "Cgetopt.h"
 #include "Cinit.h"
 #include "Cpool_api.h"
@@ -42,6 +44,22 @@ castor::BaseServer::BaseServer(const std::string serverName,
                                const int nbThreads):
   m_foreground(false), m_singleThreaded(false), m_threadPoolId(-1),
   m_threadNumber(nbThreads), m_serverName(serverName) {}
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+castor::BaseServer::~BaseServer() throw() {
+  // First release the MsgSvc of our BaseObject
+  if (0 != m_msgSvc) {
+    m_msgSvc->release();
+    m_msgSvc = 0;
+  }
+  // hack to release thread specific allocated memory
+  castor::Services* svcs = services();
+  if (0 != svcs) {
+    delete svcs;
+  }
+}
 
 //------------------------------------------------------------------------------
 // start

@@ -37,6 +37,7 @@ namespace castor {
 
   // Forward Declarations
   class IObject;
+  class ICnvSvc;
 
   namespace db {
 
@@ -52,7 +53,7 @@ namespace castor {
         /**
          * Constructor
          */
-        OraBaseCnv();
+        OraBaseCnv(castor::ICnvSvc* cs);
 
         /**
          * Destructor

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/11/04 08:54:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseCnvSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2004/11/05 17:47:19 $ $Author: sponcec3 $
  *
  *
  *
@@ -99,7 +99,7 @@ castor::IConverter* castor::BaseCnvSvc::converter(const unsigned int objType)
     throw e;
   }
 
-  m_converters[objType] = fac->instantiate();
+  m_converters[objType] = fac->instantiate(this);
   if (0!= m_converters[objType]) return m_converters[objType];
   // Throw an exception since we did not find any suitable converter
   castor::exception::Internal e;

@@ -594,8 +594,12 @@ void CppCppOraCnvWriter::writeConstructors() {
   writeWideHeaderComment("Constructor", getIndent(), *m_stream);
   *m_stream << getIndent() << m_classInfo->fullPackageName
             << "Ora" << m_classInfo->className << "Cnv::Ora"
-            << m_classInfo->className << "Cnv() :" << endl
-            << getIndent() << "  OraBaseCnv()," << endl
+            << m_classInfo->className << "Cnv("
+            << fixTypeName("ICnvSvc*",
+                           "castor",
+                           m_classInfo->packageName)
+            << " cnvSvc) :" << endl
+            << getIndent() << "  OraBaseCnv(cnvSvc)," << endl
             << getIndent() << "  m_insertStatement(0)," << endl
             << getIndent() << "  m_deleteStatement(0)," << endl
             << getIndent() << "  m_selectStatement(0)," << endl

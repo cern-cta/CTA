@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/04 14:26:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/11/05 17:47:23 $ $Author: sponcec3 $
  *
  * 
  *
@@ -31,8 +31,8 @@
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IClient.hpp"
-#include "castor/IConverter.hpp"
-#include "castor/IFactory.hpp"
+#include "castor/ICnvFactory.hpp"
+#include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
@@ -50,7 +50,7 @@
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
 static castor::CnvFactory<castor::db::ora::OraStageUpdateFileStatusRequestCnv> s_factoryOraStageUpdateFileStatusRequestCnv;
-const castor::IFactory<castor::IConverter>& OraStageUpdateFileStatusRequestCnvFactory = 
+const castor::ICnvFactory& OraStageUpdateFileStatusRequestCnvFactory = 
   s_factoryOraStageUpdateFileStatusRequestCnv;
 
 //------------------------------------------------------------------------------
@@ -115,8 +115,8 @@ const std::string castor::db::ora::OraStageUpdateFileStatusRequestCnv::s_updateI
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::db::ora::OraStageUpdateFileStatusRequestCnv::OraStageUpdateFileStatusRequestCnv() :
-  OraBaseCnv(),
+castor::db::ora::OraStageUpdateFileStatusRequestCnv::OraStageUpdateFileStatusRequestCnv(castor::ICnvSvc* cnvSvc) :
+  OraBaseCnv(cnvSvc),
   m_insertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),

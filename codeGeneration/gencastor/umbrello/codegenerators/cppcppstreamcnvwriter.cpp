@@ -66,8 +66,12 @@ void CppCppStreamCnvWriter::writeConstructors() {
   writeWideHeaderComment("Constructor", getIndent(), *m_stream);
   *m_stream << getIndent() << m_classInfo->fullPackageName
             << "Stream" << m_classInfo->className << "Cnv::Stream"
-            << m_classInfo->className << "Cnv() :" << endl
-            << getIndent() << "  StreamBaseCnv() {}"
+            << m_classInfo->className << "Cnv("
+            << fixTypeName("ICnvSvc*",
+                           "castor",
+                           m_classInfo->packageName)
+            << " cnvSvc) :" << endl
+            << getIndent() << "  StreamBaseCnv(cnvSvc) {}"
             << endl << endl;
   // Destructor
   writeWideHeaderComment("Destructor", getIndent(), *m_stream);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: CnvFactory.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/13 09:15:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: CnvFactory.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/05 17:47:20 $ $Author: sponcec3 $
  *
  *
  *
@@ -35,6 +35,7 @@ namespace castor {
 
   // Forward Declarations
   class IConverter;
+  class ICnvSvc;
 
   /**
    * A basic factory for converters
@@ -52,7 +53,8 @@ namespace castor {
      * Instantiate the converter
      * @param name the object name. Actually ignored
      */
-    virtual IConverter* instantiate(const std::string name = "") const;
+    virtual IConverter* instantiate(castor::ICnvSvc* cnvSvc,
+                                    const std::string name = "") const;
 
     /**
      * gets the object type, that is the type of
@@ -69,8 +71,9 @@ namespace castor {
   };
 
   template<class Converter> inline IConverter*
-  CnvFactory<Converter>::instantiate(const std::string name) const {
-    return new Converter();
+  CnvFactory<Converter>::instantiate(castor::ICnvSvc* cnvsvc,
+                                     const std::string name) const {
+    return new Converter(cnvsvc);
   }
 
   template<class Converter>

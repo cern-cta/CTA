@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamPtrCnv.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/10/29 15:25:32 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamPtrCnv.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2004/11/05 17:47:25 $ $Author: sponcec3 $
  *
  * 
  *
@@ -32,7 +32,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IConverter.hpp"
-#include "castor/IFactory.hpp"
+#include "castor/ICnvFactory.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectCatalog.hpp"
 #include "castor/ObjectSet.hpp"
@@ -42,14 +42,14 @@
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
 static castor::CnvFactory<castor::io::StreamPtrCnv> s_factoryStreamPtrCnv;
-const castor::IFactory<castor::IConverter>& StreamPtrCnvFactory = 
+const castor::ICnvFactory& StreamPtrCnvFactory = 
   s_factoryStreamPtrCnv;
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::io::StreamPtrCnv::StreamPtrCnv() :
-  StreamBaseCnv() {}
+castor::io::StreamPtrCnv::StreamPtrCnv(castor::ICnvSvc* cnvSvc) :
+  StreamBaseCnv(cnvSvc) {}
 
 //------------------------------------------------------------------------------
 // Destructor

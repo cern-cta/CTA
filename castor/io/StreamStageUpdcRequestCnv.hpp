@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamStageUpdcRequestCnv.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/11/04 10:26:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamStageUpdcRequestCnv.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/11/05 17:47:27 $ $Author: sponcec3 $
  *
  * 
  *
@@ -39,6 +39,7 @@ namespace castor {
   class ObjectSet;
   class ObjectCatalog;
   class IObject;
+  class ICnvSvc;
 
   namespace io {
 
@@ -56,7 +57,7 @@ namespace castor {
       /**
        * Constructor
        */
-      StreamStageUpdcRequestCnv();
+      StreamStageUpdcRequestCnv(castor::ICnvSvc* cnvSvc);
 
       /**
        * Destructor

@@ -167,7 +167,14 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
 // dropConnection
 // -----------------------------------------------------------------------
 void castor::db::ora::OraCnvSvc::dropConnection () throw() {
-  // First try to drop the connection correctly
+  // make all registered converters aware
+  for (std::set<castor::db::ora::OraBaseObj*>::const_iterator it =
+         m_registeredCnvs.begin();
+       it != m_registeredCnvs.end();
+       it++) {
+    (*it)->reset();
+  }
+  // drop the connection
   try {
     if (0 != m_connection) {
       if (0 != m_getTypeStatement)
@@ -188,19 +195,12 @@ void castor::db::ora::OraCnvSvc::dropConnection () throw() {
       }
     }
   } catch (oracle::occi::SQLException e) {};
-  // Now reset all whatever the state is
+  // reset all whatever the state is
   m_connection = 0;
   m_getTypeStatement = 0;
   m_getIdStatement = 0;
   m_getNRStatement = 0;
   m_getNBRStatement = 0;
-  // And make all registered converters aware
-  for (std::set<castor::db::ora::OraBaseObj*>::const_iterator it =
-         m_registeredCnvs.begin();
-       it != m_registeredCnvs.end();
-       it++) {
-    (*it)->reset();
-  }
 }
 
 // -----------------------------------------------------------------------

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StageQryResponseHandler.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/07/29 16:59:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StageQryResponseHandler.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/05 17:47:20 $ $Author: sponcec3 $
  *
  * A response handler dedicated to stage queries
  *
@@ -30,6 +30,7 @@
 // Include Files
 #include "castor/exception/Exception.hpp"
 #include "castor/client/IResponseHandler.hpp"
+#include "castor/BaseObject.hpp"
 
 namespace castor {
 
@@ -43,7 +44,7 @@ namespace castor {
     /**
      * A Response Handler for StageQry clients
      */
-    class StageQryResponseHandler : public IResponseHandler {
+    class StageQryResponseHandler : public IResponseHandler, BaseObject {
 
     public:
 

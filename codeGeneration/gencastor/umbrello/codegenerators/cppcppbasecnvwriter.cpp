@@ -33,13 +33,10 @@ void CppCppBaseCnvWriter::writeFactory() {
             << m_prefix
             << m_classInfo->className << "Cnv;" << endl
             << getIndent() << "const "
-            << fixTypeName("IFactory",
+            << fixTypeName("ICnvFactory",
                            "castor",
                            m_classInfo->packageName)
-            << "<" << fixTypeName("IConverter",
-                                  "castor",
-                                  m_classInfo->packageName)
-            << ">& " << m_prefix << m_classInfo->className
+            << "& " << m_prefix << m_classInfo->className
             << "CnvFactory = " << endl << getIndent()
             << "  s_factory" << m_prefix << m_classInfo->className
             << "Cnv;" << endl << endl;

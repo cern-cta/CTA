@@ -26,6 +26,7 @@
 
 // Include Files
 #include "castor/exception/Internal.hpp"
+#include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "OraBaseCnv.hpp"
@@ -33,12 +34,17 @@
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::db::ora::OraBaseCnv::OraBaseCnv() : OraBaseObj() {}
+castor::db::ora::OraBaseCnv::OraBaseCnv(castor::ICnvSvc* cs) :
+  OraBaseObj(cs) {
+  cnvSvc()->registerCnv(this);
+}
 
 // -----------------------------------------------------------------------
 // Destructor
 // -----------------------------------------------------------------------
-castor::db::ora::OraBaseCnv::~OraBaseCnv() throw() {}
+castor::db::ora::OraBaseCnv::~OraBaseCnv() throw() {
+  cnvSvc()->unregisterCnv(this);
+}
 
 // -----------------------------------------------------------------------
 // RepType

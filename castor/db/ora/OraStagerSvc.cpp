@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2004/11/04 14:26:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2004/11/05 17:47:23 $ $Author: sponcec3 $
  *
  *
  *
@@ -105,7 +105,7 @@ const std::string castor::db::ora::OraStagerSvc::s_scheduleSubRequestStatementSt
 // OraStagerSvc
 // -----------------------------------------------------------------------
 castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
-  BaseSvc(name), OraBaseObj(),
+  BaseSvc(name), OraBaseObj(0),
   m_tapesToDoStatement(0), m_streamsToDoStatement(0),
   m_selectTapeStatement(0), m_anyTapeCopyForStreamStatement(0),
   m_bestTapeCopyForStreamStatement(0),

@@ -39,6 +39,7 @@ namespace castor {
   class ObjectSet;
   class ObjectCatalog;
   class IObject;
+  class ICnvSvc;
 
   namespace io {
 
@@ -56,7 +57,7 @@ namespace castor {
       /**
        * Constructor
        */
-      StreamTapePoolCnv();
+      StreamTapePoolCnv(castor::ICnvSvc* cnvSvc);
 
       /**
        * Destructor

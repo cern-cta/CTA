@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/11/04 10:26:04 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageUpdateFileStatusRequestCnv.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/11/05 17:47:23 $ $Author: sponcec3 $
  *
  * 
  *
@@ -37,6 +37,7 @@ namespace castor {
 
   // Forward declarations
   class IObject;
+  class ICnvSvc;
 
   // Forward declarations
   namespace stager {
@@ -62,7 +63,7 @@ namespace castor {
         /**
          * Constructor
          */
-        OraStageUpdateFileStatusRequestCnv();
+        OraStageUpdateFileStatusRequestCnv(castor::ICnvSvc* cnvSvc);
 
         /**
          * Destructor

@@ -39,6 +39,7 @@ namespace castor {
   class ObjectSet;
   class ObjectCatalog;
   class IObject;
+  class ICnvSvc;
 
   namespace io {
 
@@ -57,7 +58,7 @@ namespace castor {
       /**
        * Constructor
        */
-      StreamStagePutDoneRequestCnv();
+      StreamStagePutDoneRequestCnv(castor::ICnvSvc* cnvSvc);
 
       /**
        * Destructor

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/01 09:13:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamBaseCnv.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2004/11/05 17:47:24 $ $Author: sponcec3 $
  *
  *
  *
@@ -38,12 +38,11 @@
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::io::StreamBaseCnv::StreamBaseCnv() :
+castor::io::StreamBaseCnv::StreamBaseCnv(castor::ICnvSvc* cnvSvc) :
   BaseObject(),
   m_cnvSvc(0) {
-  m_cnvSvc = dynamic_cast<castor::io::StreamCnvSvc*>
-    (svcs()->cnvService("StreamCnvSvc", SVC_STREAMCNV));
-  if (!m_cnvSvc) {
+  m_cnvSvc = dynamic_cast<castor::io::StreamCnvSvc*>(cnvSvc);
+  if (0 == m_cnvSvc) {
     castor::exception::Internal ex;
     ex.getMessage() << "No StreamCnvSvc available";
     throw ex;
@@ -53,9 +52,7 @@ castor::io::StreamBaseCnv::StreamBaseCnv() :
 // -----------------------------------------------------------------------
 // Destructor
 // -----------------------------------------------------------------------
-castor::io::StreamBaseCnv::~StreamBaseCnv() throw() {
-  m_cnvSvc->release();
-}
+castor::io::StreamBaseCnv::~StreamBaseCnv() throw() {}
 
 // -----------------------------------------------------------------------
 // RepType

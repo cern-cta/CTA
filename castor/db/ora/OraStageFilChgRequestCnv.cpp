@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStageFilChgRequestCnv.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2004/11/04 14:26:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStageFilChgRequestCnv.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2004/11/05 17:47:21 $ $Author: sponcec3 $
  *
  * 
  *
@@ -31,8 +31,8 @@
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IClient.hpp"
-#include "castor/IConverter.hpp"
-#include "castor/IFactory.hpp"
+#include "castor/ICnvFactory.hpp"
+#include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
@@ -50,7 +50,7 @@
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
 static castor::CnvFactory<castor::db::ora::OraStageFilChgRequestCnv> s_factoryOraStageFilChgRequestCnv;
-const castor::IFactory<castor::IConverter>& OraStageFilChgRequestCnvFactory = 
+const castor::ICnvFactory& OraStageFilChgRequestCnvFactory = 
   s_factoryOraStageFilChgRequestCnv;
 
 //------------------------------------------------------------------------------
@@ -115,8 +115,8 @@ const std::string castor::db::ora::OraStageFilChgRequestCnv::s_updateIClientStat
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::db::ora::OraStageFilChgRequestCnv::OraStageFilChgRequestCnv() :
-  OraBaseCnv(),
+castor::db::ora::OraStageFilChgRequestCnv::OraStageFilChgRequestCnv(castor::ICnvSvc* cnvSvc) :
+  OraBaseCnv(cnvSvc),
   m_insertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),

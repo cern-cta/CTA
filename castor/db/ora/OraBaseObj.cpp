@@ -38,25 +38,28 @@
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::db::ora::OraBaseObj::OraBaseObj() :
-  BaseObject(),
-  m_cnvSvc(0) {
-  m_cnvSvc = dynamic_cast<castor::db::ora::OraCnvSvc*>
-    (svcs()->cnvService("OraCnvSvc", SVC_ORACNV));
-  if (!m_cnvSvc) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "No OraCnvSvc available";
-    throw ex;
+castor::db::ora::OraBaseObj::OraBaseObj(castor::ICnvSvc* cnvSvc) :
+  BaseObject(), m_cnvSvc(0), m_ownsCnvSvc(false) {
+  m_cnvSvc = dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc);
+  if (0 == m_cnvSvc) {
+    m_cnvSvc = dynamic_cast<castor::db::ora::OraCnvSvc*>
+      (svcs()->cnvService("OraCnvSvc", SVC_ORACNV));
+    if (!m_cnvSvc) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "No OraCnvSvc available";
+      throw ex;
+    }
+    m_ownsCnvSvc = true;
   }
-  m_cnvSvc->registerCnv(this);
 }
 
 // -----------------------------------------------------------------------
 // Destructor
 // -----------------------------------------------------------------------
 castor::db::ora::OraBaseObj::~OraBaseObj() throw() {
-  m_cnvSvc->unregisterCnv(this);
-  m_cnvSvc->release();
+  if (m_ownsCnvSvc) {
+    m_cnvSvc->release();
+  }
 }
 
 // -----------------------------------------------------------------------

@@ -31,8 +31,8 @@
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IClient.hpp"
-#include "castor/IConverter.hpp"
-#include "castor/IFactory.hpp"
+#include "castor/ICnvFactory.hpp"
+#include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
@@ -50,7 +50,7 @@
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
 static castor::CnvFactory<castor::db::ora::OraStagePrepareToUpdateRequestCnv> s_factoryOraStagePrepareToUpdateRequestCnv;
-const castor::IFactory<castor::IConverter>& OraStagePrepareToUpdateRequestCnvFactory = 
+const castor::ICnvFactory& OraStagePrepareToUpdateRequestCnvFactory = 
   s_factoryOraStagePrepareToUpdateRequestCnv;
 
 //------------------------------------------------------------------------------
@@ -115,8 +115,8 @@ const std::string castor::db::ora::OraStagePrepareToUpdateRequestCnv::s_updateIC
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::db::ora::OraStagePrepareToUpdateRequestCnv::OraStagePrepareToUpdateRequestCnv() :
-  OraBaseCnv(),
+castor::db::ora::OraStagePrepareToUpdateRequestCnv::OraStagePrepareToUpdateRequestCnv(castor::ICnvSvc* cnvSvc) :
+  OraBaseCnv(cnvSvc),
   m_insertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),

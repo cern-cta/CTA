@@ -30,8 +30,8 @@
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IAddress.hpp"
-#include "castor/IConverter.hpp"
-#include "castor/IFactory.hpp"
+#include "castor/ICnvFactory.hpp"
+#include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
 #include "castor/db/DbAddress.hpp"
 #include "castor/db/ora/OraCnvSvc.hpp"
@@ -49,7 +49,7 @@
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
 static castor::CnvFactory<castor::db::ora::OraSegmentCnv> s_factoryOraSegmentCnv;
-const castor::IFactory<castor::IConverter>& OraSegmentCnvFactory = 
+const castor::ICnvFactory& OraSegmentCnvFactory = 
   s_factoryOraSegmentCnv;
 
 //------------------------------------------------------------------------------
@@ -98,8 +98,8 @@ const std::string castor::db::ora::OraSegmentCnv::s_updateTapeCopyStatementStrin
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::db::ora::OraSegmentCnv::OraSegmentCnv() :
-  OraBaseCnv(),
+castor::db::ora::OraSegmentCnv::OraSegmentCnv(castor::ICnvSvc* cnvSvc) :
+  OraBaseCnv(cnvSvc),
   m_insertStatement(0),
   m_deleteStatement(0),
   m_selectStatement(0),

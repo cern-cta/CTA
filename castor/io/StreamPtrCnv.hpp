@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamPtrCnv.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2004/10/14 16:34:46 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StreamPtrCnv.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2004/11/05 17:47:25 $ $Author: sponcec3 $
  *
  *
  *
@@ -39,6 +39,7 @@ namespace castor {
 
   // Forward declarations
   class IObject;
+  class ICnvSvc;
 
   namespace io {
 
@@ -54,7 +55,7 @@ namespace castor {
       /**
        * Constructor
        */
-      StreamPtrCnv();
+      StreamPtrCnv(castor::ICnvSvc* cnvsvc);
 
       /**
        * Destructor

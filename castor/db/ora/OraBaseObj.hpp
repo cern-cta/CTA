@@ -36,6 +36,7 @@ namespace castor {
 
   // Forward Declarations
   class IObject;
+  class ICnvSvc;
 
   namespace db {
 
@@ -54,7 +55,7 @@ namespace castor {
         /**
          * Constructor
          */
-        OraBaseObj();
+        OraBaseObj(castor::ICnvSvc* cnvSvc);
 
         /**
          * Destructor
@@ -103,6 +104,9 @@ namespace castor {
         /// The corresponding conversion service
         castor::db::ora::OraCnvSvc* m_cnvSvc;
 
+        /// Whether the conversion service should be released
+        bool m_ownsCnvSvc;
+        
       };
 
     } // end of namespace ora

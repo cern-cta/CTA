@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.h,v $ $Revision: 1.10 $ $Release$ $Date: 2004/08/20 13:06:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logstream.h,v $ $Revision: 1.11 $ $Release$ $Date: 2004/11/05 17:47:20 $ $Author: sponcec3 $
  *
  * A generic logstream for castor, handling IP addresses
  * and timestamps
@@ -75,6 +75,16 @@ namespace castor {
       m_isIP(false),
       m_isTimeStamp(false) {
     }
+
+      /**
+       * destructor
+       */
+      ~logstream() {
+        if (0 != m_logbuf) {
+          m_logbuf->sync();
+          delete m_logbuf;
+        }
+      }
 
       /**
        *  @brief  Close the file.
