@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.101 2000/11/28 12:29:57 jdurand Exp $
+ * $Id: stager.c,v 1.102 2000/11/28 13:34:33 jdurand Exp $
  */
 
 /*
@@ -16,13 +16,13 @@
 /* #define SKIP_TAPE_POOL_TURNAROUND */
 
 /* If you want to disable blockid support in recall, use the following: */
-#define SKIP_RECALL_WITH_BLOCKID
+/* #define SKIP_RECALL_WITH_BLOCKID */
 
 /* If you want to force a specific tape server, compile it with: */
 /* -DTAPESRVR=\"your_tape_server_hostname\" */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.101 $ $Date: 2000/11/28 12:29:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.102 $ $Date: 2000/11/28 13:34:33 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -3325,5 +3325,5 @@ int rtcpd_PrintCmd(tape)
 #endif /* STAGER_DEBUG */
 
 /*
- * Last Update: "Tuesday 28 November, 2000 at 13:29:06 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Tuesday 28 November, 2000 at 14:34:12 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
