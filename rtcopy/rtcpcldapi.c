@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.22 $ $Release$ $Date: 2004/07/27 08:40:59 $ $Author: jdurand $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.23 $ $Release$ $Date: 2004/07/29 09:34:33 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.22 $ $Date: 2004/07/27 08:40:59 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.23 $ $Date: 2004/07/29 09:34:33 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -962,6 +962,9 @@ static int getUpdates(
             segmOldStatus = segmIterator->oldStatus;
             Cstager_Segment_status(segmIterator->segment,&segmNewStatus);
             if ( segmOldStatus != segmNewStatus ) {
+              rtcp_log(LOG_DEBUG,"getUpdates() segment (%d,%s) status updated %d -> %d\n",
+                       file->filereq.tape_fseq,file->filereq.file_path,
+                       segmOldStatus,segmNewStatus);
               segmIterator->oldStatus = segmNewStatus;
               switch (segmNewStatus) {
               case SEGMENT_FILECOPIED:
