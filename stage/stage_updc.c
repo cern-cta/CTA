@@ -1,5 +1,5 @@
 /*
- * $Id: stage_updc.c,v 1.10 2000/09/01 13:19:11 jdurand Exp $
+ * $Id: stage_updc.c,v 1.11 2000/11/17 07:45:45 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.10 $ $Date: 2000/09/01 13:19:11 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stage_updc.c,v $ $Revision: 1.11 $ $Date: 2000/11/17 07:45:45 $ CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -563,6 +563,7 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   uid_t uid;
   stage_hsm_t *hsm;
   char *command = "stage_updc_user";
+  int nupath;
 
   if (hsmstruct == NULL) {
     serrno = EFAULT;
@@ -591,18 +592,21 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   sendbuf_size += strlen(pw->pw_name) + 1;         /* Login name */
   sendbuf_size += 3 * WORDSIZE;                    /* uid, gid and nargs */
   sendbuf_size += strlen(command) + 1;                /* Command name */
+
+  /* Count the number of link files */
   hsm = hsmstruct;
+  nupath = 0;
   while (hsm != NULL) {
-    if (hsm->upath == NULL) {
-      serrno = EFAULT;
-      return (-1);
+    if (hsm->upath != NULL && hsm->upath[0] != '\0') {
+      sendbuf_size += strlen(hsm->upath) + 1; /* User path */
+      nupath++;
     }
-    if (hsm->upath[0] == '\0') {
-      serrno = EFAULT;
-      return (-1);
-    }
-    sendbuf_size += strlen(hsm->upath) + 1;        /* user path */
     hsm = hsm->next;
+  }
+
+  if (nupath == 0) {
+    serrno = EFAULT;
+    return(-1);
   }
 
   /* Allocate memory */
@@ -630,7 +634,6 @@ int DLL_DECL stage_updc_user(stghost,hsmstruct)
   marshall_WORD (sbp, nargs);
   marshall_STRING (sbp, command);
 
-  /* Build link files arguments */
   hsm = hsmstruct;
   while (hsm != NULL) {
     marshall_STRING (sbp, hsm->upath);
@@ -672,6 +675,7 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   stage_hsm_t *hsm;
   char *command = "stage_updc_filchg";
   int pid;
+  int nupath;
 
   if (hsmstruct == NULL) {
     serrno = EFAULT;
@@ -700,18 +704,21 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   sendbuf_size += strlen(pw->pw_name) + 1;         /* Login name */
   sendbuf_size += 4 * WORDSIZE;                    /* uid, gid, pid and nargs */
   sendbuf_size += strlen(command) + 1;                /* Command name */
+
+  /* Count the number of link files */
   hsm = hsmstruct;
+  nupath = 0;
   while (hsm != NULL) {
-    if (hsm->upath == NULL) {
-      serrno = EFAULT;
-      return (-1);
+    if (hsm->upath != NULL && hsm->upath[0] != '\0') {
+      sendbuf_size += strlen(hsm->upath) + 1; /* User path */
+      nupath++;
     }
-    if (hsm->upath[0] == '\0') {
-      serrno = EFAULT;
-      return (-1);
-    }
-    sendbuf_size += strlen(hsm->upath) + 1;        /* user path */
     hsm = hsm->next;
+  }
+
+  if (nupath == 0) {
+    serrno = EFAULT;
+    return(-1);
   }
 
   /* Allocate memory */
@@ -741,7 +748,6 @@ int DLL_DECL stage_updc_filchg(stghost,hsmstruct)
   marshall_WORD (sbp, nargs);
   marshall_STRING (sbp, command);
 
-  /* Build link files arguments */
   hsm = hsmstruct;
   while (hsm != NULL) {
     marshall_STRING (sbp, hsm->upath);
