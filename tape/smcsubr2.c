@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1998-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 1998-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smcsubr2.c,v $ $Revision: 1.2 $ $Date: 2002/12/03 09:58:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smcsubr2.c,v $ $Revision: 1.3 $ $Date: 2003/01/24 13:41:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -40,6 +40,10 @@ char *vid;
 	if ((element_info.state & 0x1) == 0) {
 		usrmsg (func, SR018, "demount", vid, drvord, "Medium Not Present");
 		RETURN (RBT_NORETRY);
+	}
+	if ((element_info.state & 0x8) == 0) {
+		usrmsg (func, SR018, "demount", vid, drvord, "Drive Not Unloaded");
+		RETURN (RBT_UNLD_DMNT);
 	}
 	if (*vid && strcmp (element_info.name, vid)) {
 		usrmsg (func, SR009, vid, element_info.name);

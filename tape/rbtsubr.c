@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1993-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.11 $ $Date: 2002/12/02 16:22:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.12 $ $Date: 2003/01/24 13:41:45 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -1230,6 +1230,14 @@ int force;
 				p ? p + 2 : msgaddr);
 		}
 		RETURN (c);
+	}
+	if ((element_info.state & 0x1) == 0) {
+		usrmsg (func, TP041, "demount", vid, cur_unm, "Medium Not Present");
+		RETURN (RBT_NORETRY);
+	}
+	if ((element_info.state & 0x8) == 0) {
+		usrmsg (func, TP041, "demount", vid, cur_unm, "Drive Not Unloaded");
+		RETURN (RBT_UNLD_DMNT);
 	}
 	if (*vid && !force && strcmp (element_info.name, vid)) {
 		usrmsg (func, TP050, vid, element_info.name);
