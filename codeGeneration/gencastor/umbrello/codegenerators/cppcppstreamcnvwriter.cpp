@@ -50,14 +50,8 @@ void CppCppStreamCnvWriter::writeClass(UMLClassifier */*c*/) {
   writeObjType();
   // createRep method
   writeCreateRep();
-  // updateRep method
-  writeUpdateRep();
-  // deleteRep method
-  writeDeleteRep();
   // createObj method
   writeCreateObj();
-  // updateObj method
-  writeUpdateObj();
   // marshal methods
   writeMarshal();
   // unmarshal methods
@@ -134,40 +128,6 @@ void CppCppStreamCnvWriter::writeCreateRepContent() {
                 << as->second.first << "();" << endl;
     }
   }
-}
-
-//=============================================================================
-// writeUpdateRepContent
-//=============================================================================
-void CppCppStreamCnvWriter::writeUpdateRepContent() {
-  // Get the precise address
-  *m_stream << getIndent() << fixTypeName("Internal",
-                                          "castor.exception",
-                                          m_classInfo->packageName)
-            << " ex;" << endl << getIndent()
-            << "ex.getMessage() << "
-            << "\"Cannot update representation in case of streaming.\""
-            << endl << getIndent()
-            << "                << std::endl;"
-            << endl << getIndent()
-            << "throw ex;" << endl;
-}
-
-//=============================================================================
-// writeDeleteRepContent
-//=============================================================================
-void CppCppStreamCnvWriter::writeDeleteRepContent() {
-  // Get the precise address
-  *m_stream << getIndent() << fixTypeName("Internal",
-                                          "castor.exception",
-                                          m_classInfo->packageName)
-            << " ex;" << endl << getIndent()
-            << "ex.getMessage() << "
-            << "\"Cannot delete representation in case of streaming.\""
-            << endl << getIndent()
-            << "                << std::endl;"
-            << endl << getIndent()
-            << "throw ex;" << endl;
 }
 
 //=============================================================================
@@ -255,23 +215,6 @@ void CppCppStreamCnvWriter::writeCreateObjContent() {
 }
 
 //=============================================================================
-// writeUpdateObjContent
-//=============================================================================
-void CppCppStreamCnvWriter::writeUpdateObjContent() {
-  // Get the precise address
-  *m_stream << getIndent() << fixTypeName("Internal",
-                                          "castor.exception",
-                                          m_classInfo->packageName)
-            << " ex;" << endl << getIndent()
-            << "ex.getMessage() << "
-            << "\"Cannot update object in case of streaming.\""
-            << endl << getIndent()
-            << "                << std::endl;"
-            << endl << getIndent()
-            << "throw ex;" << endl;
-}
-
-//=============================================================================
 // marshal
 //=============================================================================
 void CppCppStreamCnvWriter::writeMarshal() {
@@ -303,7 +246,7 @@ void CppCppStreamCnvWriter::writeMarshal() {
   *m_stream << getIndent()
             << "if (0 == obj) {" << endl;
   m_indent++;
-    addInclude("\"castor/Constants.hpp\"");
+  addInclude("\"castor/Constants.hpp\"");
   *m_stream << getIndent()
             << "// Case of a null pointer"
             << endl << getIndent()

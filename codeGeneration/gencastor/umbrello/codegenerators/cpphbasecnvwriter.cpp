@@ -19,7 +19,7 @@ CppHBaseCnvWriter::CppHBaseCnvWriter(UMLDoc *parent, const char *name) :
 //=============================================================================
 // writeMethods
 //=============================================================================
-void CppHBaseCnvWriter::writeMethods () {
+void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
   // Constructor and Destructor
   writeDocumentation("", "Constructor", "", *m_stream);
   *m_stream << getIndent() << m_prefix << m_classInfo->className
@@ -76,74 +76,76 @@ void CppHBaseCnvWriter::writeMethods () {
                            m_classInfo->packageName)
             << ");"
             << endl << endl;
-  writeDocumentation
-    ("Updates foreign representation from a C++ Object.",
-     "",
-     QString("@param address where the representation of\n") +
-     "the object is stored\n" +
-     "@param object the object to deal with\n" +
-     "@param autocommit whether the changes to the database\n" +
-     "should be commited or not\n" +
-     "@exception Exception throws an Exception in cas of error",
-     *m_stream);
-  *m_stream << getIndent()
-            << "virtual void updateRep("
-            << fixTypeName("IAddress*",
-                           "castor",
-                           m_classInfo->packageName)
-            << " address,"
-            << endl
-            << getIndent()
-            << "                       "
-            << fixTypeName("IObject*",
-                           "castor",
-                           m_classInfo->packageName)
-            << " object,"
-            << endl
-            << getIndent()
-            << "                       bool autocommit)"
-            << endl
-            << getIndent()
-            << "  throw ("
-            << fixTypeName("Exception",
-                           "castor.exception",
-                           m_classInfo->packageName)
-            << ");"
-            << endl << endl;
-  writeDocumentation
-    ("Deletes foreign representation of a C++ Object.",
-     "",
-     QString("@param address where the representation of\n") +
-     "the object is stored\n" +
-     "@param object the object to deal with\n" +
-     "@param autocommit whether the changes to the database\n" +
-     "should be commited or not\n" +
-     "@exception Exception throws an Exception in cas of error",
-     *m_stream);
-  *m_stream << getIndent()
-            << "virtual void deleteRep("
-            << fixTypeName("IAddress*",
-                           "castor",
-                           m_classInfo->packageName)
-            << " address,"
-            << endl
-            << getIndent()
-            << "                       "
-            << fixTypeName("IObject*",
-                           "castor",
-                           m_classInfo->packageName)
-            << " object,"
-            << endl
-            << getIndent()
-            << "                       bool autocommit)"
-            << endl
-            << getIndent()
-            << "  throw ("
-            << fixTypeName("Exception",
-                           "castor.exception",
-                           m_classInfo->packageName)
-            << ");"
-            << endl << endl;
+  if (delUpMethods){
+    writeDocumentation
+      ("Updates foreign representation from a C++ Object.",
+       "",
+       QString("@param address where the representation of\n") +
+       "the object is stored\n" +
+       "@param object the object to deal with\n" +
+       "@param autocommit whether the changes to the database\n" +
+       "should be commited or not\n" +
+       "@exception Exception throws an Exception in cas of error",
+       *m_stream);
+    *m_stream << getIndent()
+              << "virtual void updateRep("
+              << fixTypeName("IAddress*",
+                             "castor",
+                             m_classInfo->packageName)
+              << " address,"
+              << endl
+              << getIndent()
+              << "                       "
+              << fixTypeName("IObject*",
+                             "castor",
+                             m_classInfo->packageName)
+              << " object,"
+              << endl
+              << getIndent()
+              << "                       bool autocommit)"
+              << endl
+              << getIndent()
+              << "  throw ("
+              << fixTypeName("Exception",
+                             "castor.exception",
+                             m_classInfo->packageName)
+              << ");"
+              << endl << endl;
+    writeDocumentation
+      ("Deletes foreign representation of a C++ Object.",
+       "",
+       QString("@param address where the representation of\n") +
+       "the object is stored\n" +
+       "@param object the object to deal with\n" +
+       "@param autocommit whether the changes to the database\n" +
+       "should be commited or not\n" +
+       "@exception Exception throws an Exception in cas of error",
+       *m_stream);
+    *m_stream << getIndent()
+              << "virtual void deleteRep("
+              << fixTypeName("IAddress*",
+                             "castor",
+                             m_classInfo->packageName)
+              << " address,"
+              << endl
+              << getIndent()
+              << "                       "
+              << fixTypeName("IObject*",
+                             "castor",
+                             m_classInfo->packageName)
+              << " object,"
+              << endl
+              << getIndent()
+              << "                       bool autocommit)"
+              << endl
+              << getIndent()
+              << "  throw ("
+              << fixTypeName("Exception",
+                             "castor.exception",
+                             m_classInfo->packageName)
+              << ");"
+              << endl << endl;
+  }
   writeDocumentation
     ("Creates C++ object from foreign representation",
      "",
@@ -170,26 +172,28 @@ void CppHBaseCnvWriter::writeMethods () {
                            m_classInfo->packageName)
             << ");"
             << endl << endl;
-  writeDocumentation
-    ("Updates C++ object from its foreign representation.",
-     "",
-     QString("@param obj the object to deal with\n") +
-     "@exception Exception throws an Exception in cas of error",
-     *m_stream);
-  *m_stream << getIndent()
-            << "virtual void updateObj("
-            << fixTypeName("IObject*",
-                           "castor",
-                           m_classInfo->packageName)
-            << " obj)"
-            << endl
-            << getIndent()
-            << "  throw ("
-            << fixTypeName("Exception",
-                           "castor.exception",
-                           m_classInfo->packageName)
-            << ");"
-            << endl << endl;
+  if (delUpMethods) {
+    writeDocumentation
+      ("Updates C++ object from its foreign representation.",
+       "",
+       QString("@param obj the object to deal with\n") +
+       "@exception Exception throws an Exception in cas of error",
+       *m_stream);
+    *m_stream << getIndent()
+              << "virtual void updateObj("
+              << fixTypeName("IObject*",
+                             "castor",
+                             m_classInfo->packageName)
+              << " obj)"
+              << endl
+              << getIndent()
+              << "  throw ("
+              << fixTypeName("Exception",
+                             "castor.exception",
+                             m_classInfo->packageName)
+              << ");"
+              << endl << endl;
+  }
 }
 
 //=============================================================================

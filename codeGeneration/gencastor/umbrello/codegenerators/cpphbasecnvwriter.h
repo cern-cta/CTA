@@ -22,8 +22,12 @@ class CppHBaseCnvWriter : public CppHWriter {
 
  protected:
 
-  /// writes methods declarations
-  virtual void writeMethods();
+  /**
+   * writes methods declarations
+   * @param delUpMethods whether to generate methods
+   * for deletion and update of objects, default is yes
+   */
+  virtual void writeMethods(bool delUpMethods = true);
 
   /// get the class prefix
   QString& prefix() { return m_prefix; }

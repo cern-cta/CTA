@@ -41,17 +41,17 @@ class CppCppStreamCnvWriter : public CppCppBaseCnvWriter {
   /// writes createRep method's content
   void writeCreateRepContent();
     
-  /// writes updateRep method's content
-  void writeUpdateRepContent();
+  /// writes updateRep method's content, not used
+  void writeUpdateRepContent() {};
     
-  /// writes deleteRep method's content
-  void writeDeleteRepContent();
+  /// writes deleteRep method's content, not used
+  void writeDeleteRepContent() {};
     
   /// writes createObj method's content
   void writeCreateObjContent();
     
-  /// writes updateObj method's content
-  void writeUpdateObjContent();
+  /// writes updateObj method's content, not used
+  void writeUpdateObjContent() {};
     
   /**
    * write the marshal method declaration
