@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.106 2000/12/07 12:32:45 jdurand Exp $
+ * $Id: stager.c,v 1.107 2000/12/11 11:11:46 jdurand Exp $
  */
 
 /*
@@ -19,7 +19,7 @@
 /* -DTAPESRVR=\"your_tape_server_hostname\" */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.106 $ $Date: 2000/12/07 12:32:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.107 $ $Date: 2000/12/11 11:11:46 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -106,7 +106,6 @@ char model[CA_MAXMODELLEN+1];       /* Model returned by vmgr_gettape or vmgr_qu
 char lbltype[3];                    /* Lbltype returned by vmgr_gettape or vmgr_querytape */
 int fseq = -1;                      /* Fseq returned by vmgr_gettape or vmgr_querytape */
 char tmpbuf[21];                    /* Printout of u_signed64 quantity temp. buffer */
-char *fid = NULL;                   /* File ID */
 int nrtcpcreqs = 0;                 /* Number of rtcpcreq structures in circular list */
 tape_list_t **rtcpcreqs = NULL;     /* rtcp request itself (circular list) */
 
@@ -1785,16 +1784,7 @@ int filecopy(stcp, key, hostname)
 
 	/* Writing file */
 	if (((stcp->status & STAGEWRT) == STAGEWRT) || ((stcp->status & STAGEPUT) == STAGEPUT)) {
-#ifdef U1M_WRT_WITH_MAXSIZE
-		if (stcp->size) {
-			/* Here we support limitation of number of bytes in write-to-tape */
-			sprintf (command+strlen(command), " -s %d",(int) stcp->size * ONE_MB);
-		} else {
-			sprintf (command+strlen(command), " -s %d",(int) stcp->actual_size);
-		}
-#else
 		sprintf (command+strlen(command), " -s %d",(int) stcp->actual_size);
-#endif
 		sprintf (command+strlen(command), " %s", stcp->ipath);
 		if (stcp->t_or_d == 'm')
 			sprintf (command+strlen(command), " %s", stcp->u1.m.xfile);
@@ -2453,33 +2443,31 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 			strcpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.recfm, "F");
             /*
              * For HSM files - if the file is renamed, then the check on fid will NOT work.
-             * I leave this code commented because it can perhaps be useful sometime in the future.
+             * We set fid on write, but not on read, to prevent recall failure on renamed files.
              */
 
-            /*
-             * Nota : fid is maximum 17 characters
-             */
+			switch (stcp->status & 0xF) {
+			case STAGEWRT:
+			case STAGEPUT:
+				if ((castor_hsm = hsmpath(stcp)) == NULL) {
+					SAVE_EID;
+					sendrep (rpfd, MSG_ERR, STG02, stcp->u1.m.xfile, "hsmpath", sstrerror(serrno));
+					RESTORE_EID;
+					RETURN (USERR);
+				}
+				if (strlen(castor_hsm) > CA_MAXFIDLEN) {
+					/* Length more than CA_MAXFIDLEN, our target is of size [CA_MAXFIDLEN+1], the last one if for '\0' */
+					strncpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.fid, &(castor_hsm[strlen(castor_hsm) - CA_MAXFIDLEN]), CA_MAXFIDLEN);
+				} else {
+					strcpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.fid, castor_hsm);
+				}
+				/* We makes sure that last field is '\0' */
+				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.fid[CA_MAXFIDLEN] = '\0';
+				break;
+			default:
+				break;
+			}
 
-            /*
-			if ((castor_hsm = hsmpath(stcp)) == NULL) {
-				SAVE_EID;
-				sendrep (rpfd, MSG_ERR, STG02, stcp->u1.m.xfile, "hsmpath", sstrerror(serrno));
-				RESTORE_EID;
-				RETURN (USERR);
-			}
-			if ((fid = strrchr (castor_hsm, '/')) == NULL) {
-				SAVE_EID;
-				sendrep (rpfd, MSG_ERR, STG33, stcp->u1.m.xfile, "Invalid path");
-				RESTORE_EID;
-				return(-1);
-			}
-			fid++;
-			if (strlen(fid) > CA_MAXFIDLEN) {
-				strncpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.fid, &(fid[strlen(fid) - CA_MAXFIDLEN]), CA_MAXFIDLEN);
-			} else {
-				strcpy ((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.fid, fid);
-			}
-			*/
 			if (memcmp(hsm_blockid[ihsm],nullblockid,sizeof(blockid_t)) != 0) {
 				(*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.position_method = TPPOSIT_BLKID;
 				memcpy((*rtcpcreqs_in)[i]->file[nfile_list-1].filereq.blockid,hsm_blockid[ihsm],sizeof(blockid_t));
@@ -3320,5 +3308,6 @@ int rtcpd_PrintCmd(tape)
 #endif /* STAGER_DEBUG */
 
 /*
- * Last Update: "Thursday 07 December, 2000 at 13:29:03 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Monday 11 December, 2000 at 11:48:15 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
+
