@@ -1,5 +1,5 @@
 /*
- * $Id: rtcp_SendRecv.c,v 1.2 2004/08/05 15:38:39 motiakov Exp $
+ * $Id: rtcp_SendRecv.c,v 1.3 2004/08/06 15:03:07 motiakov Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -10,7 +10,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_SendRecv.c,v $ $Revision: 1.2 $ $Date: 2004/08/05 15:38:39 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_SendRecv.c,v $ $Revision: 1.3 $ $Date: 2004/08/06 15:03:07 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -662,8 +662,8 @@ int rtcp_Connect(
     /*
      * Try to establish secure connection.
      */
-    Csec_server_init_context(&sec_ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL);
-    if (Csec_server_establish_context(&sec_ctx, *connect_socket) < 0) {
+    n = Csec_server_init_context(&sec_ctx, CSEC_SERVICE_TYPE_CENTRAL, NULL);
+    if ((n = Csec_server_establish_context(&sec_ctx, *connect_socket)) < 0) {
       rtcp_log(LOG_ERR,"rtcp_Connect(): CSEC: Could not establish server context\n");
       closesocket(*connect_socket);
       *connect_socket = INVALID_SOCKET;

@@ -1,5 +1,5 @@
 /*
- * $Id: rtcpd.c,v 1.1 2004/08/05 15:38:39 motiakov Exp $
+ * $Id: rtcpd.c,v 1.2 2004/08/06 15:03:07 motiakov Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -10,7 +10,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd.c,v $ $Revision: 1.1 $ $Date: 2004/08/05 15:38:39 $ CERN IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd.c,v $ $Revision: 1.2 $ $Date: 2004/08/06 15:03:07 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -137,7 +137,7 @@ int rtcpd_main(struct main_args *main_args) {
     rtcp_log(LOG_INFO,"Rtcopy server generated at %s %s. Started in %s:%s\n",
              __DATE__,__TIME__,tpserver,workdir);
 #endif /* __DATE__ && __TIME__ */
-
+ 
     rc = 0;
     for (;;) {
         rc = rtcp_Listen(*listen_socket,&accept_socket,-1, RTCP_ACCEPT_FROM_CLIENT);

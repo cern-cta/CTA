@@ -1,0 +1,26 @@
+#
+# $Id: rtcpd.sysconfig,v 1.1 2004/08/06 15:03:07 motiakov Exp $
+#
+# @(#)$RCSfile: rtcpd.sysconfig,v $ $Revision: 1.1 $ $Date: 2004/08/06 15:03:07 $ CERN/IT/ADC/CA Jean-Damien Durand
+#
+# should rtcpd run?
+# any string but "yes" will equivalent to "NO"
+#
+RUN_RTCPD="yes"
+#
+# should we run with another limit on the number of file descriptors than the default?
+# any string will be passed to ulimit -n
+#ULIMIT_N=4096
+#
+# RTCPD needs ORACLE libraries.
+#
+export ORACLE_CERN=/afs/cern.ch/project/oracle
+export ORACLE_HOME=${ORACLE_CERN}/linux/10102gcc323
+export TNS_ADMIN=${ORACLE_CERN}/admin
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ORACLE_HOME}/lib
+
+if [ -f /etc/sysconfig/castor_security ]; then
+        . /etc/sysconfig/castor_security CENTRAL
+        export CSEC_TRACE=1
+        export CSEC_TRACEFILE=/usr/spool/rtcopy/rtcpd_trace
+fi
