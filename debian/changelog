@@ -1,3 +1,10 @@
+castor (2.0.0-7) unstable; urgency=low
+
+  * Make resource monitoring and job use the file invariants when logging
+  * Added few logs in DLF from rmmaster
+
+ -- Jean-Damien Durand <Jean-Damien.Durand@cern.ch>  Sun, 30 Jan 2005 09:07:13 +0100
+
 castor (2.0.0-6) unstable; urgency=low
 
   * Test
