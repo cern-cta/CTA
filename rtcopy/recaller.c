@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/12/01 11:59:52 $ $Author: obarring $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/12/01 13:14:53 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/12/01 11:59:52 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: recaller.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/12/01 13:14:53 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -344,7 +344,16 @@ int recallerCallbackMoreWork(
   static int requestToProcess = 0;
   int rc, save_serrno;
   file_list_t *file = NULL;
-  
+
+  /*
+   * Send requests one by one to make sure that the
+   * path is always optimal at the time for position
+   */
+  if ( requestToProcess > 0 ) {
+    requestToProcess = 0;
+    return(0);
+  }
+
   if ( rtcpcld_lockTape() == -1 ) {
     LOG_SYSCALL_ERR("rtcpcld_lockTape()");
     return(-1);
