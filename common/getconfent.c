@@ -1,3 +1,7 @@
+/*
+ * $Id: getconfent.c,v 1.3 1999/07/20 14:01:29 obarring Exp $
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <Cglobals.h>
