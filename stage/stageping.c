@@ -1,5 +1,5 @@
 /*
- * $Id: stageping.c,v 1.3 2002/03/05 14:44:04 jdurand Exp $
+ * $Id: stageping.c,v 1.4 2002/04/30 13:08:10 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageping.c,v $ $Revision: 1.3 $ $Date: 2002/03/05 14:44:04 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stageping.c,v $ $Revision: 1.4 $ $Date: 2002/04/30 13:08:10 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -41,7 +41,6 @@ int main(argc, argv)
 	int c, i;
 	int errflg = 0;
 	gid_t gid;
-	struct group *gr;
 	int msglen;
 	int ntries = 0;
 	int nstg161 = 0;
