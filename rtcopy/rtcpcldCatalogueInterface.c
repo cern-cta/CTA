@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.119 $ $Release$ $Date: 2005/02/17 17:51:48 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.120 $ $Release$ $Date: 2005/02/19 09:16:55 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.119 $ $Release$ $Date: 2005/02/17 17:51:48 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.120 $ $Release$ $Date: 2005/02/19 09:16:55 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -826,7 +826,7 @@ int rtcpcld_getTapesToDo(
   /*
    * If we got some tapes, we return success even
    * there were errors with other tapes. The errors
-   * have been logged and rtcpclientd cab continue
+   * have been logged and rtcpclientd can continue
    * to struggle with what we got...
    */
   if ( nbItems > 0 ) rc = 0;
@@ -1504,7 +1504,9 @@ int nextSegmentToMigrate(
                                                                 &nextMigrCandidate
                                                                 )));
   if ( rc == -1 ) {
+    const char *_msg;
     save_serrno = serrno;
+    _msg = Cstager_IStagerSvc_errorMsg(*stgsvc);
     if ( save_serrno == ENOENT ) {
       C_IAddress_delete(iAddr);
       serrno = ENOENT;
@@ -1512,6 +1514,10 @@ int nextSegmentToMigrate(
     } else {
       LOG_DBCALL_ERR("Cstager_IStagerSvc_bestTapeCopyForStream()",
                      Cstager_IStagerSvc_errorMsg(*stgsvc));
+    }
+    if ( strstr(_msg,"deadlock") != NULL ) {
+      sleep((((int)getpid()) % 10) + 1);
+      save_serrno = EAGAIN;
     }
     C_IAddress_delete(iAddr);
     serrno = save_serrno;
@@ -3253,7 +3259,7 @@ int rtcpcld_returnStream(
                     "",
                     DLF_MSG_PARAM_TPVID,
                     tape->tapereq.vid,
-                    "DBKEY",
+                    "STREAMID",
                     DLF_MSG_PARAM_INT64,
                     key
                     );
