@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.16 $ $Date: 2000/02/01 13:17:24 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.17 $ $Date: 2000/02/08 08:31:31 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -348,7 +348,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         if ( ((st.st_mode) & S_IFMT) == S_IFDIR ) {
             sprintf(errmsgtxt,"File %s is a directory !",filereq->file_path);
             serrno = EISDIR;
-            SET_REQUEST_ERR(filereq,RTCP_OK);
+            SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         }
         /*
          * Zero size?
@@ -356,7 +356,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         if ( st.st_size == 0 ) {
             sprintf(errmsgtxt,"File %s is empty !",filereq->file_path);
             serrno = EINVAL;
-            SET_REQUEST_ERR(filereq,RTCP_OK);
+            SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         }
 
         filereq->bytes_in = (u_signed64)st.st_size;
@@ -414,7 +414,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
             if ( rc != -1 && (((st.st_mode) & S_IFMT) == S_IFDIR) ) {
                 sprintf(errmsgtxt,"File %s is a directory !",filereq->file_path);
                 serrno = EISDIR;
-                SET_REQUEST_ERR(filereq,RTCP_OK);
+                SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
             }
             /*
              * If the file doesn't exist we should at least make sure 
