@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.9 $ $Date: 2000/10/30 13:54:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.10 $ $Date: 2000/10/31 15:57:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -251,7 +251,9 @@ u_signed64 *Size;
 		if (nbytes > 0) {		/* record found */
 			irec++;
 			if (strcmp (dmpparm.devtype, "SD3") == 0 ||
-			    strcmp (dmpparm.devtype, "9840") == 0)
+			    strcmp (dmpparm.devtype, "9840") == 0 ||
+			    strcmp (dmpparm.devtype, "9940") == 0 ||
+			    strcmp (dmpparm.devtype, "LTO") == 0)
 				tape_used = tape_used + (float) nbytes;
 			else if (strncmp (dmpparm.devtype, "DLT", 3) == 0)
 				tape_used = tape_used + ((float) ((nbytes + 4095) / 4096) * 4096.);
@@ -394,8 +396,6 @@ u_signed64 *Size;
 				tape_used += 4096.;
 			else if (strcmp (dmpparm.devtype, "SD3") == 0)
 				tape_used += 2048.;
-			else if (strcmp (dmpparm.devtype, "9840") == 0)
-				tape_used += 12345.;
 			else if (den == DDS || den == DDSC)
 				tape_used = tape_used + 4.0;
 			if (qbov) {	/* beginning of tape */
