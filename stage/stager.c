@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.17 2000/03/24 13:19:55 jdurand Exp $
+ * $Id: stager.c,v 1.18 2000/03/24 16:03:16 jdurand Exp $
  */
 
 /*
@@ -11,7 +11,7 @@
 /* #define SKIP_FILEREQ_MAXSIZE */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.17 $ $Date: 2000/03/24 13:19:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "$RCSfile: stager.c,v $ $Revision: 1.18 $ $Date: 2000/03/24 16:03:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,6 +54,7 @@ char *hsmpath _PROTO((struct stgcat_entry *));
 int hsmidx _PROTO((struct stgcat_entry *));
 void free_rtcpcreq _PROTO((tape_list_t ***));
 int unpackfseq _PROTO((char *, int, char *, fseq_elem **));
+void stager_log_callback _PROTO((int, char *));
 
 int Aflag;                          /* Allocation flag */
 int nbcat_ent = -1;                 /* Number of catalog entries in stdin */
@@ -255,7 +256,7 @@ int main(argc, argv)
 		sendrep(rpfd, MSG_OUT, "[DEBUG-STAGEWRT/PUT] Setting Cns_errbuf and vmgr_errbuf\n");
 		if (Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0 ||
 			vmgr_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0 ||
-			stage_setlog((void (*) _PROTO((int, CONST char *, ...))) &stager_usrmsg) != 0) {
+			stage_setlog((void (*) _PROTO((int, char *))) &stager_log_callback) != 0) {
 			sendrep(rpfd, MSG_ERR, "### Cannot set Cns or Vmgr API error buffer(s) or stager API callback function (%s)\n",sstrerror(serrno));
 			exit(SYERR);
 		}
@@ -1771,3 +1772,9 @@ void free_rtcpcreq(rtcpcreq)
 	}
 }
 
+void stager_log_callback(level,message)
+     int level;
+     char *message;
+{
+  sendrep(rpfd,level,"%s",message);
+}
