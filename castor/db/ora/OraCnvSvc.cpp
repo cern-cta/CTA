@@ -87,11 +87,11 @@ castor::db::ora::OraCnvSvc::OraCnvSvc(const std::string name) :
   m_getNRStatement(0),
   m_getNBRStatement(0) {
   char* cuser = getconfent(name.c_str(), "user", 0);
-  if (0!= cuser) m_user = std::string(cuser);
+  if (0 != cuser) m_user = std::string(cuser);
   char* cpasswd = getconfent(name.c_str(), "passwd", 0);
-  if (0!= cpasswd) m_passwd = std::string(cpasswd);
+  if (0 != cpasswd) m_passwd = std::string(cpasswd);
   char* cdbName = getconfent(name.c_str(), "dbName", 0);
-  if (0!= cdbName) m_dbName = std::string(cdbName);
+  if (0 != cdbName) m_dbName = std::string(cdbName);
 }
 
 // -----------------------------------------------------------------------
@@ -105,7 +105,9 @@ castor::db::ora::OraCnvSvc::~OraCnvSvc() {
     m_connection->terminateStatement(m_getNBRStatement);
     deleteConnection(m_connection);
   }
-  oracle::occi::Environment::terminateEnvironment(m_environment);
+  if (0 != m_environment) {
+    oracle::occi::Environment::terminateEnvironment(m_environment);
+  }
 }
 
 // -----------------------------------------------------------------------
