@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.59 $ $Date: 2000/04/12 16:56:33 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.60 $ $Date: 2000/04/13 13:10:59 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1612,6 +1612,8 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
             }
             nextfile->end_index = -1;
             nextfile->filereq = filereq;
+            nextfile->filereq.err.severity = nextfile->filereq.err.severity &
+                                             ~RTCP_RESELECT_SERV; 
             if ( nexttape == NULL ) {
                 rtcp_log(LOG_ERR,"rtcpd_MainCntl() invalid request sequence\n");
                 rc = -1;
