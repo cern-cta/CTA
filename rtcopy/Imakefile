@@ -1,5 +1,5 @@
 COMM
-COMM $RCSfile: Imakefile,v $ $Revision: 1.21 $ $Date: 2005/03/11 11:14:48 $ CERN IT-PDP/DM Olof Barring
+COMM $RCSfile: Imakefile,v $ $Revision: 1.22 $ $Date: 2005/03/11 12:05:17 $ CERN IT-PDP/DM Olof Barring
 COMM
 
 COMM
@@ -215,8 +215,7 @@ EMANPAGES_S =FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpd.$(MANSUFFIX)))
 #endif
 
 #if BuildRtcpclientd
-DEPLIB += DepSharedLibraryTargetName(shlib,castorCommonOra)
-DBLIB = -L../shlib -lcastorCommonOra
+DBLIBS += DepSharedLibraryTargetName(shlib,castorCommonOra)
 PROGS_C += ProgramTargetName(rtcpcldCleanupDB) \
 	  ProgramTargetName(MigHunter)
 IPROGS_C += FileName($(BIN),ProgramTargetName(rtcpcldCleanupDB)) \
@@ -308,7 +307,7 @@ rtstat.Osuf:		rtstat.c ../h/vdqm.h ../h/osdep.h ../h/net.h
 	$(CC) -c $(CFLAGS) rtstat.c
 #endif
 
-NormalProgramTarget(tpread,$(TPREAD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
+NormalProgramTarget(tpread,$(TPREAD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(GLOBLIB) $(LDLIBS))
 
 NormalProgramTarget(recaller,$(RECALLER_OBJS) $(RTCPCLD_OBJS) $(RTCPCLD_MT_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
 
@@ -320,17 +319,17 @@ NormalProgramTarget(MigHunter,$(MIGHUNTER_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),
 
 NormalProgramTarget(rtcpcldCleanupDB,$(RTCPCLD_CLEANUP_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 
-NormalProgramTarget(dumptape,$(DUMPTAPE_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
+NormalProgramTarget(dumptape,$(DUMPTAPE_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(MTLDLIBS))
 
 #if BuildRtstat
-NormalProgramTarget(rtstat,$(RTSTAT_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
+NormalProgramTarget(rtstat,$(RTSTAT_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(MTLDLIBS))
 #endif
 
 LinkFile(ProgramTargetName(tpwrite),ProgramTargetName(tpread))
 
-NormalProgramTarget(rtcpd,$(RTCPD_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(DBLIBS) $(CKSUMLIB) $(MTLDLIBS)) 
+NormalProgramTarget(rtcpd,$(RTCPD_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(CKSUMLIB) $(MTLDLIBS)) 
 
-NormalProgramTarget(killjid,killjid.Osuf $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(DBLIBS) $(LDLIBS) $(MTLDLIBS))
+NormalProgramTarget(killjid,killjid.Osuf $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(MTLDLIBS))
 
 NormalLibraryTarget(rtcpapi,$(RTCPLIB_OBJS))
 
