@@ -4,7 +4,7 @@
  */
 
 /*
- * $RCSfile: rtcp.h,v $ $Revision: 1.14 $ $Date: 2000/04/05 09:16:27 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rtcp.h,v $ $Revision: 1.15 $ $Date: 2000/08/03 09:22:39 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -142,6 +142,19 @@ typedef struct rtcpFileRequest {
         strlen(X->recfm) + strlen(X->fid) + strlen(X->ifce) + \
         strlen(X->stageID) + strlen(X->vmsopt) + 7)
 
+/*
+ * Sanity check of that all strings are terminated
+ */
+#define RTCP_FILEREQ_OK(X) ( \
+        memchr((X)->file_path,'\0',sizeof((X)->file_path)) && \
+        memchr((X)->tape_path,'\0',sizeof((X)->tape_path)) && \
+        memchr((X)->recfm,'\0',sizeof((X)->recfm)) && \
+        memchr((X)->fid,'\0',sizeof((X)->fid)) && \
+        memchr((X)->ifce,'\0',sizeof((X)->ifce)) && \
+        memchr((X)->stageID,'\0',sizeof((X)->stageID)) && \
+        memchr((X)->vmsopt,'\0',sizeof((X)->vmsopt)) && \
+        memchr((X)->err.errmsgtxt,'\0',sizeof((X)->err.errmsgtxt)) )
+
 typedef struct rtcpTapeRequest {
     char vid[CA_MAXVIDLEN+1];
     char vsn[CA_MAXVSNLEN+1];
@@ -175,6 +188,17 @@ typedef struct rtcpTapeRequest {
 #define RTCP_TAPEREQLEN(X) (14*LONGSIZE + strlen(X->vid) + \
         strlen(X->vsn) + strlen(X->label) +  \
         strlen(X->devtype) + strlen(X->density) + strlen(X->unit)+6)
+
+#define RTCP_TAPEREQ_OK(X) ( \
+        memchr((X)->vid,'\0',sizeof((X)->vid)) && \
+        memchr((X)->vsn,'\0',sizeof((X)->vsn)) && \
+        memchr((X)->label,'\0',sizeof((X)->label)) && \
+        memchr((X)->dgn,'\0',sizeof((X)->dgn)) && \
+        memchr((X)->devtype,'\0',sizeof((X)->devtype)) && \
+        memchr((X)->density,'\0',sizeof((X)->density)) && \
+        memchr((X)->server,'\0',sizeof((X)->server)) && \
+        memchr((X)->unit,'\0',sizeof((X)->unit)) && \
+        memchr((X)->err.errmsgtxt,'\0',sizeof((X)->err.errmsgtxt)) )
 
 /*
  * Special request for dumptape requests
