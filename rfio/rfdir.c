@@ -1,5 +1,5 @@
 /*
- * $Id: rfdir.c,v 1.3 1999/12/09 13:47:07 jdurand Exp $
+ * $Id: rfdir.c,v 1.4 1999/12/14 14:41:01 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:47:07 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.4 $ $Date: 1999/12/14 14:41:01 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
@@ -27,6 +27,12 @@ static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.3 $ $Date: 1999/1
 #include <pwd.h>
 #include <grp.h>
 #include <rfio.h>
+
+#ifndef PATH_MAX
+#include <Castor_limits.h>
+#define PATH_MAX CA_MAXPATHLEN + 1 /* == 1024 == PATH_MAX on IRIX */
+#endif
+
 char ftype[7];
 int ftype_v[7];
 char fmode[9];
