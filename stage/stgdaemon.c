@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.146 2001/07/13 12:30:11 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.147 2001/09/18 21:28:26 jdurand Exp $
  */
 
 /*
@@ -16,10 +16,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.146 $ $Date: 2001/07/13 12:30:11 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.147 $ $Date: 2001/09/18 21:28:26 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
-
-#define MAX_NETDATA_SIZE 1000000
 
 #include <unistd.h>
 #include <errno.h>
@@ -184,7 +182,7 @@ void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 void stgdaemon_usage _PROTO(());
 void stgdaemon_wait4child _PROTO(());
 int req2argv _PROTO((char *, char ***));
-int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *));
+int upd_stageout _PROTO((int, char *, int *, int, struct stgcat_entry *, int));
 int ask_stageout _PROTO((int, char *, struct stgcat_entry **));
 int file_modified _PROTO((int, char *, char *, uid_t, gid_t, int, char *));
 int check_coff_waiting_on_req _PROTO((int, int));
@@ -201,7 +199,7 @@ int create_dir _PROTO(());
 int create_dir _PROTO((char *, uid_t, gid_t, mode_t));
 #endif
 #endif
-int build_ipath _PROTO((char *, struct stgcat_entry *, char *));
+int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int));
 int fork_exec_stager _PROTO((struct waitq *));
 int savepath _PROTO(());
 int upd_staged _PROTO((char *));
@@ -218,7 +216,7 @@ int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct waitf *))
 extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
 extern int iscleanovl _PROTO((int, int));
 extern int ismigovl _PROTO((int, int));
-extern int selectfs _PROTO((char *, int *, char *, int));
+extern int selectfs _PROTO((char *, int *, char *, int, int));
 extern int updfreespace _PROTO((char *, char *, signed64));
 extern void procupdreq _PROTO((int, int, char *, char *));
 int stcp_cmp _PROTO((struct stgcat_entry *, struct stgcat_entry *));
@@ -248,6 +246,7 @@ extern int create_hsm_entry _PROTO((int, struct stgcat_entry *, int, mode_t, int
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 extern u_signed64 findblocksize _PROTO((char *));
+extern int stageput_check_hsm _PROTO((struct stgcat_entry *, uid_t, gid_t, int));
 
 /* Function with variable list of arguments - defined as in non-_STDC_ to avoir proto problem */
 extern int stglogit _PROTO(());
@@ -1329,10 +1328,11 @@ add2wf (wqp)
 	return(newwaitf);
 }
 
-int build_ipath(upath, stcp, pool_user)
+int build_ipath(upath, stcp, pool_user, noallocation)
 		 char *upath;
 		 struct stgcat_entry *stcp;
 		 char *pool_user;
+		 int noallocation;
 {
 	int c;
 	int fd;
@@ -1347,7 +1347,7 @@ int build_ipath(upath, stcp, pool_user)
 
 	/* allocate space */
 
-	if (selectfs (stcp->poolname, &stcp->size, stcp->ipath, stcp->status) < 0) {
+	if (selectfs (stcp->poolname, &stcp->size, stcp->ipath, stcp->status, noallocation) < 0) {
 		stcp->ipath[0] = '\0';
 		return (-1);	/* not enough space */
 	}
@@ -1382,7 +1382,7 @@ int build_ipath(upath, stcp, pool_user)
 	if (get_create_file_option (stcp->poolname)) {
 		/* Create group directory if needed */
 		*p_u = '\0';
-		c = create_dir (stcp->ipath, 0, stcp->gid, 0755);
+		c = create_dir (stcp->ipath, (uid_t) 0, stcp->gid, (mode_t) 0755);
 		*p_u = '/';
 		if (c) {
 			stcp->ipath[0] = '\0';
@@ -1394,7 +1394,7 @@ int build_ipath(upath, stcp, pool_user)
 			return (SYERR);
 		}
 		*p_f = '\0';
-		c = create_dir (stcp->ipath, pw->pw_uid, stcp->gid, 0775);
+		c = create_dir (stcp->ipath, pw->pw_uid, stcp->gid, (mode_t) 0775);
 		*p_f = '/';
 		if (c) {
 			stcp->ipath[0] = '\0';
@@ -1422,7 +1422,7 @@ int build_ipath(upath, stcp, pool_user)
 		/* create group and user directories */
 
 		*p_u = '\0';
-		c = create_dir (stcp->ipath, 0, stcp->gid, 0755);
+		c = create_dir (stcp->ipath, (uid_t) 0, stcp->gid, (mode_t) 0755);
 		*p_u = '/';
 		if (c) {
 			stcp->ipath[0] = '\0';
@@ -1434,7 +1434,7 @@ int build_ipath(upath, stcp, pool_user)
 			return (SYERR);
 		}
 		*p_f = '\0';
-		c = create_dir (stcp->ipath, pw->pw_uid, stcp->gid, 0775);
+		c = create_dir (stcp->ipath, pw->pw_uid, stcp->gid, (mode_t) 0775);
 		*p_f = '/';
 		if (c) {
 			stcp->ipath[0] = '\0';
@@ -1508,8 +1508,7 @@ checkovlstatus(pid, status)
 				pid, status & 0xFFFF);
 			wqp->ovl_pid = 0;
 			if (wqp->status == 0)
-				wqp->status = (status & 0xFF) ?
-					SYERR : ((status >> 8) & 0xFF);
+				if ((wqp->status = (status & 0xFF) ? SYERR : ((status >> 8) & 0xFF)) == ETHELDERR) wqp->status = ETHELD;
 			wqp->nretry++;
 		}
 	}
@@ -1642,7 +1641,7 @@ void checkpoolstatus()
 								stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] = '\0';
 							}
 						}
-						c = build_ipath (wfp->upath, stcp, wqp->pool_user);
+						c = build_ipath (wfp->upath, stcp, wqp->pool_user, 0);
 						if (has_trailing != 0) {
 							/* We restore the trailing '-' */
 							strcat(stcp->u1.t.fseq,"-");
@@ -1721,96 +1720,122 @@ void checkwaitingspc()
 	struct stgcat_entry *stcp;
 	struct waitf *wfp;
 	struct waitq *wqp;
-	int have_waiting_spc;
-	int have_found_spc;
+	int has_trailing;
+	int hsm_ns_error;
 
+	/* Look if there any waitq in WAITING_SPC mode */
 	for (wqp = waitqp; wqp; wqp = wqp->next) {
 		if (wqp->waiting_pool[0] == '\0') continue;
-		have_waiting_spc = 0;
-		have_found_spc = 0;
-		reqid = wqp->reqid;
-		rpfd = wqp->rpfd;
 		if ((shutdownreq_reqid != 0) && (wqp->status != STAGESHUTDOWN)) {
 			/* There is a coming shutdown */
-			sendrep (rpfd, STAGERC, STAGESHUTDOWN, SHIFT_ESTNACT);
+			reqid = wqp->reqid;
+			sendrep (wqp->rpfd, STAGERC, STAGESHUTDOWN, SHIFT_ESTNACT);
 			wqp->status = STAGESHUTDOWN;
 			continue;
 		}
-		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
-			if (wfp->waiting_on_req > 0) continue;
-			for (stcp = stcs; stcp < stce; stcp++) {
-				if (wfp->subreqid == stcp->reqid)
-					break;
-			}
-			if ((stcp->status & 0xF0) == WAITING_SPC) {
-				int has_trailing = 0;
-				++have_waiting_spc;       /* Count the number of entries in WAITING_SPC */
-				if ((wqp->concat_off_fseq > 0) && (i == (wqp->nbdskf - 1))) {
-					/* We remove the trailing '-' */
-					if (stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] == '-') {
-						has_trailing = 1;
-						stcp->u1.t.fseq[strlen(stcp->u1.t.fseq) - 1] = '\0';
-					}
-				}
-				c = build_ipath (wfp->upath, stcp, wqp->pool_user);
-				if (has_trailing != 0) {
-					/* We restore the trailing '-' */
-					strcat(stcp->u1.t.fseq,"-");
-				}
-				if (c == 0) {
-					int hsm_ns_error = 0;
+		/* Got one */
+		goto is_waiting_spc;
+	}
+	/* None */
+	return;
 
-					/* We succeeded to allocate space for this WAITING_SPC request */
-					/* regardless of an existing gc or not */
-					stcp->status &= 0xF;
-					if (ISSTAGEOUT(stcp)) {
-						if (stcp->t_or_d == 'h') {
-							stcp->status |= WAITING_NS;
-						}
+	is_waiting_spc:
+	/* Initialize all waitq counters */
+	for (wqp = waitqp; wqp; wqp = wqp->next) {
+		if (wqp->waiting_pool[0] == '\0') continue;
+		wqp->nb_waiting_spc = 0;
+		wqp->nb_found_spc = 0;
+    }
+
+	/* We know that there is at least one entry in waiting space mode */
+	for (stcp = stcs; stcp < stce; stcp++) {
+		if ((stcp->status & 0xF0) != WAITING_SPC) continue;
+		/* We need to know to which waiting queue this entry belong */
+		for (wqp = waitqp; wqp; wqp = wqp->next) {
+			if (wqp->waiting_pool[0] == '\0') continue;
+			for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
+				if (wfp->subreqid == stcp->reqid) goto have_found_wfp;
+			}
+		}
+		reqid = wqp->reqid;
+		/* Not found... */
+		stglogit(func, "STG02 - Reqid %d in WAITING_SPC not found in wait queue\n", stcp->reqid);
+		continue;
+
+	have_found_wfp:
+		/* Increment the number of entries in WAITING_SPC inside this waitq */
+		++(wqp->nb_waiting_spc);
+		has_trailing = 0;
+		if ((wqp->concat_off_fseq > 0) && (i == (wqp->nbdskf - 1))) {
+			size_t thislen = strlen(stcp->u1.t.fseq) - 1;
+			/* We remove the trailing '-' */
+			if (stcp->u1.t.fseq[thislen] == '-') {
+				has_trailing = 1;
+				stcp->u1.t.fseq[thislen] = '\0';
+			}
+		}
+		c = build_ipath (wfp->upath, stcp, wqp->pool_user, 0);
+		if (has_trailing != 0) {
+			/* We restore the trailing '-' */
+			strcat(stcp->u1.t.fseq,"-");
+		}
+		if (c == 0) {
+			hsm_ns_error = 0;
+
+			/* We succeeded to allocate space for this WAITING_SPC request */
+			/* regardless of an existing gc or not */
+			stcp->status &= 0xF;
+			if (ISSTAGEOUT(stcp)) {
+				if (stcp->t_or_d == 'h') {
+					stcp->status |= WAITING_NS;
+				}
 #ifdef USECDB
-						if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-							stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-						}
+				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
 #endif
-						if (stcp->t_or_d == 'h') {
-							int this_status;
-							/* Try now to create entry in the HSM name server */
-							if ((this_status = create_hsm_entry(wqp->rpfd, stcp, wqp->api_out, wqp->openmode, 0)) != 0) {
-								/* Too bad - finally this request fails because of the name server */
-								wqp->status = this_status;
-								hsm_ns_error = 1;
-							}
-						}
-					} else {
+				if (stcp->t_or_d == 'h') {
+					int this_status;
+					/* Try now to create entry in the HSM name server */
+					if ((this_status = create_hsm_entry(wqp->rpfd, stcp, wqp->api_out, wqp->openmode, 0)) != 0) {
+						/* Too bad - finally this request fails because of the name server */
+						wqp->status = this_status;
+						hsm_ns_error = 1;
+					}
+				}
+			} else {
 #ifdef USECDB
-						if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
-							stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
-						}
+				if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+					stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+				}
 #endif
-					}
-					if (hsm_ns_error == 0) {
-						++have_found_spc;           /* Count the number of entries WAITING_SPC recovered */
-						if ((stcp->status == STAGEOUT) ||
-							(stcp->status == STAGEALLOC)) {
-							if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
-							if (wqp->Pflag)
-								sendrep (rpfd, MSG_OUT,
-												 "%s\n", stcp->ipath);
-							if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
-								create_link (stcp, wfp->upath);
-							if (wqp->Upluspath && *((wfp+1)->upath) && strcmp (stcp->ipath, (wfp+1)->upath))
-								create_link (stcp, (wfp+1)->upath);
-							rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
-						}
-					}
+			}
+			if (hsm_ns_error == 0) {
+				/* Count the number of entries WAITING_SPC recovered */
+				++(wqp->nb_found_spc);
+				if ((stcp->status == STAGEOUT) ||
+					(stcp->status == STAGEALLOC)) {
+					if (wqp->api_out)
+						sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
+					if (wqp->Pflag)
+						sendrep (wqp->rpfd, MSG_OUT, "%s\n", stcp->ipath);
+					if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
+						create_link (stcp, wfp->upath);
+					if (wqp->Upluspath && *((wfp+1)->upath) && strcmp (stcp->ipath, (wfp+1)->upath))
+						create_link (stcp, (wfp+1)->upath);
+					rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
 				}
 			}
 		}
-		if ((have_waiting_spc > 0) && (have_waiting_spc == have_found_spc)) {
+    }
+	/* Look if we recovered a whole entry in the waitq */
+	for (wqp = waitqp; wqp; wqp = wqp->next) {
+		if (wqp->waiting_pool[0] == '\0') continue;
+		if ((wqp->nb_waiting_spc > 0) && (wqp->nb_waiting_spc == wqp->nb_found_spc)) {
 			/* All entries in WAITING_SPC state were recovered - we can remove the waiting_pool global entry */
 			wqp->waiting_pool[0] = '\0';
 		}
-	}
+    }
 }
 
 int
@@ -1914,7 +1939,7 @@ check_waiting_on_req(subreqid, state)
 					stcp->status &= 0xF;
 					if (! wqp->Aflag) {
                       /* Note that "-c off" request always have a Aflag */
-						if ((c = build_ipath (wfp->upath, stcp, wqp->pool_user)) < 0) {
+						if ((c = build_ipath (wfp->upath, stcp, wqp->pool_user, 0)) < 0) {
 							stcp->status |= WAITING_SPC;
 #ifdef USECDB
 							if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
@@ -2569,7 +2594,7 @@ void dellink(stpp)
 	}
 	nbpath_ent--;
 	p2 = (char *)stps + (nbpath_ent * sizeof(struct stgpath_entry));
-	if ((char *)stpp != p2) {	/* not last path in the list */
+	if ((char *)stpp < p2) {	/* not last path in the list */
 		p1 = (char *)stpp + sizeof(struct stgpath_entry);
 		n = p2 + sizeof(struct stgpath_entry) - p1;
 		memmove ((char *)stpp, p1, n);
@@ -2595,7 +2620,7 @@ void delreq(stcp,nodb_delete_flag)
 
 	nbcat_ent--;
 	p2 = (char *)stcs + (nbcat_ent * sizeof(struct stgcat_entry));
-	if ((char *)stcp != p2) {	/* not last request in the list */
+	if ((char *)stcp < p2) {	/* not last request in the list */
 		p1 = (char *)stcp + sizeof(struct stgcat_entry);
 		n = p2 + sizeof(struct stgcat_entry) - p1;
 		memmove ((char *)stcp, p1, n);
@@ -3027,12 +3052,13 @@ int ask_stageout(req_type, upath, found_stcp)
 	return (0);
 }
 
-int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
+int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_put_failed)
 		 int req_type;
 		 char *upath;
 		 int *subreqid;
 		 int can_be_migr_flag;
 		 struct stgcat_entry *forced_stcp;
+		 int was_put_failed;
 {
 	int found;
 	struct stat st;
@@ -3106,11 +3132,10 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp)
 				return(CLEARED);
 			} else {
 				if (stcp->t_or_d == 'h') {
-					extern int stageput_check_hsm _PROTO((struct stgcat_entry *, uid_t, gid_t));
 					int thisrc;
 
 					/* This is a CASTOR HSM file */
-					if ((thisrc = stageput_check_hsm(stcp,stcp->uid,stcp->gid)) != 0) return(thisrc);
+					if ((thisrc = stageput_check_hsm(stcp,stcp->uid,stcp->gid,was_put_failed)) != 0) return(thisrc);
 					if (can_be_migr_flag) {
 						stcp->status |= CAN_BE_MIGR; /* Now status is STAGEOUT | CAN_BE_MIGR */
 						/* This is a file for automatic migration */
@@ -3359,5 +3384,5 @@ void check_upd_fileclasses() {
 }
 
 /*
- * Last Update: "Friday 13 July, 2001 at 14:16:56 CEST by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Monday 17 September, 2001 at 13:04:17 CEST by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
