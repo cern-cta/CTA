@@ -323,7 +323,8 @@ void CppCppOraCnvWriter::writeConstants() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (isEnum(as->remotePart.typeName)) continue;
+    if (as->remotePart.name == "" ||
+        isEnum(as->remotePart.typeName)) continue;
     if (as->type.multiRemote == MULT_N &&
         as->type.multiLocal == MULT_N) {
       // N to N association
@@ -525,7 +526,8 @@ void CppCppOraCnvWriter::writeSqlStatements() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (isEnum(as->remotePart.typeName)) continue;
+    if (as->remotePart.name == "" ||
+        isEnum(as->remotePart.typeName)) continue;
     if (as->type.multiRemote == MULT_N &&
         as->type.multiLocal == MULT_N) {
       // N to N association
@@ -614,7 +616,8 @@ void CppCppOraCnvWriter::writeConstructors() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (isEnum(as->remotePart.typeName)) continue;
+    if (as->remotePart.name == "" ||
+        isEnum(as->remotePart.typeName)) continue;
     if (as->type.multiRemote == MULT_N &&
         as->type.multiLocal == MULT_N) {
       // N to N association
@@ -714,7 +717,8 @@ void CppCppOraCnvWriter::writeReset() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (isEnum(as->remotePart.typeName)) continue;
+    if (as->remotePart.name == "" ||
+        isEnum(as->remotePart.typeName)) continue;
     if (as->type.multiRemote == MULT_N &&
         as->type.multiLocal == MULT_N) {
       // N to N association
@@ -790,7 +794,8 @@ void CppCppOraCnvWriter::writeReset() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (isEnum(as->remotePart.typeName)) continue;
+    if (as->remotePart.name == "" ||
+        isEnum(as->remotePart.typeName)) continue;
     if (as->type.multiRemote == MULT_N &&
         as->type.multiLocal == MULT_N) {
       // N to N association
@@ -881,7 +886,8 @@ void CppCppOraCnvWriter::writeFillRep() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (!isEnum(as->remotePart.typeName)) {
+    if (as->remotePart.name != "" &&
+        !isEnum(as->remotePart.typeName)) {
       if (as->type.multiRemote == MULT_ONE ||
           as->type.multiRemote == MULT_N) {
         addInclude("\"castor/Constants.hpp\"");
@@ -942,7 +948,8 @@ void CppCppOraCnvWriter::writeFillRep() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (!isEnum(as->remotePart.typeName)) {
+    if (as->remotePart.name != "" &&
+        !isEnum(as->remotePart.typeName)) {
       if (as->type.multiRemote == MULT_ONE) {
         writeBasicMult1FillRep(as);
       } else if  (as->type.multiRemote == MULT_N) {
@@ -992,7 +999,8 @@ void CppCppOraCnvWriter::writeFillObj() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (!isEnum(as->remotePart.typeName)) {
+    if (as->remotePart.name != "" &&
+        !isEnum(as->remotePart.typeName)) {
       if (as->type.multiRemote == MULT_ONE ||
           as->type.multiRemote == MULT_N) {
         addInclude("\"castor/Constants.hpp\"");
@@ -1031,14 +1039,15 @@ void CppCppOraCnvWriter::writeFillObj() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (!isEnum(as->remotePart.typeName)) {
+    if (as->remotePart.name != "" &&
+        !isEnum(as->remotePart.typeName)) {
       if (as->type.multiRemote == MULT_ONE) {
         n++;
         writeBasicMult1FillObj(as, n);
       } else if  (as->type.multiRemote == MULT_N) {
         writeBasicMultNFillObj(as);
       }
-    } else {
+    } else if (isEnum(as->remotePart.typeName)) {
       n++;
     }
   }
@@ -2551,7 +2560,7 @@ QString CppCppOraCnvWriter::getSQLType(QString& type) {
   } else if (type == "u_signed64") {
     SQLType = "INTEGER";
   } else if (SQLType == "string") {
-    SQLType = "VARCHAR(255)";
+    SQLType = "VARCHAR(2048)";
   } else if (SQLType.left(5) == "char["){
     QString res = "CHAR(";
     res.append(SQLType.mid(5, SQLType.find("]")-5));

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ccclasswriter.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/11/19 11:15:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ccclasswriter.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/11/22 17:04:43 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -457,7 +457,7 @@ void CCClassWriter::writeVectorAttributeAccessorMethods (QString fieldClassName,
   m_indent++;
   stream << getIndent() << fixTypeName("vector", "", "")
          << "<" << fieldClassName
-         << "> result = instance->" << fieldName
+         << ">& result = instance->" << fieldName
          << "();" << endl << getIndent()
          << "*len = result.size();" << endl
          << getIndent() << "*var = ("
@@ -569,12 +569,7 @@ void CCClassWriter::writeOperations(QPtrList<UMLOperation> &oplist,
       if (pl->count() > 0 || !op->getStatic()) {
         stream << "," << endl << getIndent(paramIndent);
       }
-      stream << methodReturnType;
-      if (methodReturnType.stripWhiteSpace().right(1) != "*" ||
-          isLastTypeVector()) {
-        stream << "*";
-      }
-      stream << " ret";
+      stream << methodReturnType << "*" << " ret";
       if (isLastTypeVector()) {
         stream << ", int retlen";
       }

@@ -26,6 +26,8 @@ CppCppClassWriter::CppCppClassWriter(UMLDoc *parent, const char *name) :
     &CppCppClassWriter::writeType;
   m_methodImplementations[std::pair<QString, int>(QString("TYPE"),0)] =
     &CppCppClassWriter::writeTYPE;
+  m_methodImplementations[std::pair<QString, int>(QString("clone"),0)] =
+    &CppCppClassWriter::writeClone;
   m_methodImplementations[std::pair<QString, int>(QString("print const"),3)] =
     &CppCppClassWriter::writeFullPrint;
   m_methodImplementations[std::pair<QString, int>(QString("print const"),0)] =
@@ -40,11 +42,34 @@ CppCppClassWriter::CppCppClassWriter(UMLDoc *parent, const char *name) :
 // writeClass
 //=============================================================================
 void CppCppClassWriter::writeClass(UMLClassifier *c) {
-  // Constructors
+  if (m_classInfo->isEnum) {
+    // Deal With enum
+    UMLClass* k = dynamic_cast<UMLClass*>(c);
+    QPtrList<UMLAttribute>* atl = k->getFilteredAttributeList();
+    writeWideHeaderComment
+      (m_classInfo->className + "Strings", getIndent(), *m_stream);
+    *m_stream << getIndent() << "const char* "
+              << m_classInfo->fullPackageName
+              << m_classInfo->className << "Strings["
+              << atl->count() << "] = {" << endl;
+    m_indent++;
+    for (UMLAttribute *at=atl->first(); at ; ) {
+      QString attrName = at->getName();
+      *m_stream << getIndent() << "\"" << attrName << "\"";
+      UMLAttribute *next = atl->next();
+      bool isLast = next == 0;
+      if (!isLast) *m_stream << "," << endl;
+      at = next;
+    }
+    *m_stream << endl;
+    m_indent--;
+    *m_stream << getIndent() << "};" << endl << endl;
+    return;
+  }
+  // Deal with actual class, starting with Constructors
   if(!m_classInfo->isInterface) {
     writeConstructorMethods(*m_stream);
   }
-
   // Operation methods
   QValueList<std::pair<QString, int> > alreadyGenerated;
   writeOperations(c,false,Uml::Public,*m_stream, alreadyGenerated);
@@ -345,6 +370,14 @@ void CppCppClassWriter::writeType(CppBaseWriter* obj,
 }
 
 //=============================================================================
+// writeClone
+//=============================================================================
+void CppCppClassWriter::writeClone(CppBaseWriter* obj,
+                                   QTextStream &stream) {
+  stream << obj->getIndent() << "return this;" << endl;
+}
+
+//=============================================================================
 // writeTYPE
 //=============================================================================
 void CppCppClassWriter::writeTYPE(CppBaseWriter* obj,
@@ -473,6 +506,9 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
                               a->getObject(B)->getName(),
                               obj,
                               stream);
+          } else if (cl != 0 && cl->isEnumeration()) {
+            writeEnumPrint (obj->getIndent(), a->getRoleName(B),
+                            a->getObject(B)->getName(), stream);
           } else {
             writeSimplePrint (obj->getIndent(), a->getRoleName(B), stream);
           }
@@ -501,6 +537,9 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
                               a->getObject(A)->getName(),
                               obj,
                               stream);
+          } else if (cl != 0 && cl->isEnumeration()) {
+            writeEnumPrint (obj->getIndent(), a->getRoleName(A),
+                            a->getObject(A)->getName(), stream);
           } else {
             writeSimplePrint (obj->getIndent(), a->getRoleName(A), stream);
           }
@@ -528,6 +567,18 @@ void CppCppClassWriter::writeSimplePrint(QString indent,
   stream << indent << "stream << indent << \"" << name
          << " : \" << m_" << name
          << " << std::endl;" << endl;
+}
+
+//=============================================================================
+// writeEnumPrint
+//=============================================================================
+void CppCppClassWriter::writeEnumPrint(QString indent,
+                                       QString name,
+                                       QString type,
+                                       QTextStream &stream) {
+  stream << indent << "stream << indent << \"" << name
+         << " : \" << " << type << "Strings[m_" << name
+         << "] << std::endl;" << endl;
 }
 
 //=============================================================================

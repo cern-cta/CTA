@@ -214,8 +214,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
   // Determine whether the implementation file is required.
   // (It is not required if the class is an interface
   // or an enumeration.)
-  if ((dynamic_cast<UMLInterface*>(c)) == 0 &&
-      !classInfo.isEnum) {
+  if ((dynamic_cast<UMLInterface*>(c)) == 0) {
     runGenerator(cppw, fileName + ".cpp", c);
 
     // Persistency and streaming for castor type is done by hand

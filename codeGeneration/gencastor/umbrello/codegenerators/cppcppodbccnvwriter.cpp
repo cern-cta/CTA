@@ -1413,7 +1413,7 @@ QString CppCppOdbcCnvWriter::getSQLType(QString& type) {
       SQLType == "int") {
     SQLType = "NUMBER";
   } else if (SQLType == "string") {
-    SQLType = "VARCHAR(255)";
+    SQLType = "VARCHAR(2048)";
   } else if (SQLType.left(5) == "char["){
     QString res = "CHAR[";
     res.append(SQLType.mid(5, SQLType.find("]")-5));

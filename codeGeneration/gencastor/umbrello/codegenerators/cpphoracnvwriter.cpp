@@ -73,7 +73,8 @@ void CppHOraCnvWriter::writeFillRep() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (!isEnum(as->remotePart.typeName)) {
+    if (as->remotePart.name != "" &&
+        !isEnum(as->remotePart.typeName)) {
       if (as->type.multiRemote == MULT_ONE ||
           as->type.multiRemote == MULT_N) {
         writeBasicFillRep(as);
@@ -118,7 +119,8 @@ void CppHOraCnvWriter::writeFillObj() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
-    if (!isEnum(as->remotePart.typeName)) {
+    if (as->remotePart.name != "" &&
+        !isEnum(as->remotePart.typeName)) {
       if (as->type.multiRemote == MULT_ONE ||
           as->type.multiRemote == MULT_N) {
         writeBasicFillObj(as);

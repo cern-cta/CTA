@@ -96,6 +96,23 @@ void CppHClassWriter::writeClass(UMLClassifier *c) {
   }
   *m_stream << " " << m_classInfo->className
             << endl << endl;
+
+  // Enum strings
+  if (!m_classInfo->isInterface && m_classInfo->isEnum) {
+    UMLClass* k = dynamic_cast<UMLClass*>(c);
+    QPtrList<UMLAttribute>* atl = k->getFilteredAttributeList();
+    *m_stream << getIndent() << "/**" << endl
+              << getIndent()
+              << " * Names of the differents representations, used to display"
+              << endl << getIndent()
+              << " * correctly the " << m_classInfo->className
+              << " enum" << endl << getIndent()
+              << " */" << endl << getIndent()
+              << "extern const char* "
+              << m_classInfo->className << "Strings["
+              << atl->count() << "];" << endl << endl;
+  }
+
 }
 
 //=============================================================================

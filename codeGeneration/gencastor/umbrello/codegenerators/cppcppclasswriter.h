@@ -91,6 +91,12 @@ class CppCppClassWriter : public CppCppWriter {
                         QTextStream &stream);
 
   /**
+   * Writes the implementation of the Clone method
+   */
+  static void writeClone(CppBaseWriter* obj,
+                         QTextStream &stream);
+
+  /**
    * Writes the print method with 3 arguments
    */
   static void writeFullPrint(CppBaseWriter* obj,
@@ -115,6 +121,13 @@ class CppCppClassWriter : public CppCppWriter {
   static void writeSimplePrint(QString indent,
                                QString name,
                                QTextStream &stream);
+  /**
+   * writes an enum print statement
+   */
+  static void writeEnumPrint(QString indent,
+                             QString name,
+                             QString type,
+                             QTextStream &stream);
   /**
    * Writes a print statement for a one to one association
    */
