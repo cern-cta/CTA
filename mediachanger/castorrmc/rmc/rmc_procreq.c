@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmc_procreq.c,v $ $Revision: 1.1 $ $Date: 2002/11/29 08:51:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rmc_procreq.c,v $ $Revision: 1.2 $ $Date: 2002/12/16 14:33:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <stdlib.h>
@@ -129,6 +129,7 @@ char *clienthost;
 	}
 	c = smc_export (extended_robot_info.smc_fd, extended_robot_info.smc_ldr,
 	    &extended_robot_info.robot_info, vid);
+	if (c) c += ERMCRBTERR;
 	RETURN (c);
 }
 
@@ -197,6 +198,7 @@ char *clienthost;
 		c = smc_lasterror (&smc_status, &msgaddr);
 		free (element_info);
 		sendrep (rpfd, MSG_ERR, RMC02, "smc_find_cartridge", msgaddr);
+		c += ERMCRBTERR;
 		RETURN (c);
 	}
 	if ((repbuf = malloc (c * 18 + 4)) == NULL) {
@@ -293,6 +295,7 @@ char *clienthost;
 	}
 	c = smc_import (extended_robot_info.smc_fd, extended_robot_info.smc_ldr,
 	    &extended_robot_info.robot_info, vid);
+	if (c) c += ERMCRBTERR;
 	RETURN (c);
 }
 
@@ -338,6 +341,7 @@ char *clienthost;
 	}
 	c = smc_mount (extended_robot_info.smc_fd, extended_robot_info.smc_ldr,
 	    &extended_robot_info.robot_info, drvord, vid, invert);
+	if (c) c += ERMCRBTERR;
 	RETURN (c);
 }
 
@@ -399,6 +403,7 @@ char *clienthost;
 		c = smc_lasterror (&smc_status, &msgaddr);
 		free (element_info);
 		sendrep (rpfd, MSG_ERR, RMC02, "smc_read_elem_status", msgaddr);
+		c += ERMCRBTERR;
 		RETURN (c);
 	}
 	if ((repbuf = malloc (c * 18 + 4)) == NULL) {
@@ -457,5 +462,6 @@ char *clienthost;
 	}
 	c = smc_dismount (extended_robot_info.smc_fd, extended_robot_info.smc_ldr,
 	    &extended_robot_info.robot_info, drvord, force == 0 ? vid : "");
+	if (c) c += ERMCRBTERR;
 	RETURN (c);
 }
