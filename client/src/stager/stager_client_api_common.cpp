@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.6 2004/12/01 14:56:10 bcouturi Exp $
+ * $Id: stager_client_api_common.cpp,v 1.7 2004/12/06 20:36:28 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.6 $ $Date: 2004/12/01 14:56:10 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.7 $ $Date: 2004/12/06 20:36:28 $ CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
@@ -199,7 +199,7 @@ EXTERN_C char* DLL_DECL stage_geturl(struct stage_io_fileresp *io) {
   if (io->server != NULL) {
     sst << io->server;
     if (io->port > 0) {
-      sst << ":" << io->port;
+      sst << ":" << std::dec << io->port;;
     }    
     sst << "/";
   }
