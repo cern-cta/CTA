@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tplogit.c,v $ $Revision: 1.1 $ $Date: 1999/09/20 06:23:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tplogit.c,v $ $Revision: 1.2 $ $Date: 2000/05/04 10:04:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
 #include <fcntl.h>
+#include <string.h>
 #include <sys/types.h>
 #include <time.h>
 #include <varargs.h>
