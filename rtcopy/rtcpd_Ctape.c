@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.6 $ $Date: 2000/01/10 13:14:06 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.7 $ $Date: 2000/01/17 08:20:29 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -362,7 +362,7 @@ int rtcpd_Position(tape_list_t *tape,
     }
     tapereq = &tape->tapereq;
     filereq = &file->filereq;
-    prevreq = (file->prev == file ? NULL : &file->prev->filereq);
+    prevreq = (file == tape->file ? NULL : &file->prev->filereq);
 
     if ( *filereq->tape_path == '\0' ) {
         if ( prevreq != NULL ) 
@@ -391,8 +391,8 @@ int rtcpd_Position(tape_list_t *tape,
          * consecutive or if we already positioned to EOI for append.
          */
         if ((filereq->tape_fseq == prevreq->tape_fseq + 1) ||
-            ((filereq->position_method & TPPOSIT_EOI) && 
-             (prevreq->position_method & TPPOSIT_EOI)) ) {
+            ((filereq->position_method & TPPOSIT_EOI) != 0 && 
+             (prevreq->position_method & TPPOSIT_EOI) != 0) ) { 
             if ( prevreq->cprc == 0 || (prevreq->cprc == LIMBYSZ &&
                 tapereq->mode == WRITE_ENABLE ) ) {
                 flags |= NOPOS;
@@ -417,6 +417,7 @@ int rtcpd_Position(tape_list_t *tape,
      */
     strcpy(tape_path,filereq->tape_path);
     while (do_retry) {
+        rtcp_log(LOG_DEBUG,"rtcpd_Position() Ctape_position(%s,0x%x,%d,%d,%u,%d,%d,0x%x,%s,%s,%d,%d,%d,0x%x)\n",filereq->tape_path,filereq->position_method,filereq->tape_fseq,file->tape_fsec,filereq->blockid,tapereq->start_file,tapereq->end_file,filstat,filereq->fid,filereq->recfm,filereq->blocksize,filereq->recordlength,filereq->retention,flags);
         serrno = errno = 0;
         rc = Ctape_position(filereq->tape_path,
                             filereq->position_method,
