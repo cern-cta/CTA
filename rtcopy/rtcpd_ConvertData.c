@@ -4,17 +4,25 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_ConvertData.c,v $ $Revision: 1.2 $ $Date: 1999/12/03 08:42:32 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_ConvertData.c,v $ $Revision: 1.3 $ $Date: 1999/12/08 10:03:34 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
  * rtcpd_ConvertData.c - RTCOPY server data conversion routines
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <serrno.h>
+#include <rtcp_constants.h>
+
+#define SWAPIT(X) { int __a; \
+    swab((char *)&(X),(char *)&__a, sizeof((X))); \
+    (X) = ((unsigned int)__a <<16) | ((unsigned int)__a >>16); }
+
+
 
 int rtcpd_VarToFix(char *inbuf, 
                    char *outbuf, 
@@ -34,6 +42,9 @@ int rtcpd_VarToFix(char *inbuf,
     int nb_bytes;
     register char *p;
 
+    /*
+     * Allocate save context for static data
+     */
     if ( *context == NULL ) {
         current = (struct convert_statics *)
             calloc(1,sizeof(struct convert_statics));
@@ -135,3 +146,93 @@ int rtcpd_FixToVar(char *inbuf,
     }
     return(outbuf_p - outbuf);
 }
+
+/*
+ * Convert from FORTRAN sequential format to fix. Really not
+ * useful to anybody except L3 who asked for it. It implies
+ * that the FORTRAN file must have been written in F format to
+ * tape instead of U format. This routine only works for files
+ * with fixed record length which must be equal to the record
+ * length specified with -L. The routine removes the fortran
+ * control words from each of the records in the input buffer
+ * and copies the rest back to the buffer. Note that the enclosing
+ * lrecl words are NOT counted to the recrod which means that the
+ * actual logical records are lrecl + 8 bytes.
+ */
+int rtcpd_f77RecToFix(char *buffer,
+                      int length,
+                      int lrecl,
+                      char *errmsgtxt,
+                      void **context) {
+    struct f77conv_statics {
+        int do_swap;
+        int in_p;
+    } *current;
+    union {
+        char c[4];
+        int lrecl;
+    } f77rec;
+    int save_in_p = 0;
+    int out_len, remlen;
+
+    /*
+     * Allocate save context for static data
+     */
+    if ( *context == NULL ) {
+        current = (struct f77conv_statics *)
+            calloc(1,sizeof(struct f77conv_statics));
+        if ( current == NULL ) {
+            serrno = errno;
+            return(-1);
+        }
+        current->do_swap = -1;
+        current->in_p = 0;
+        *context = (void *)current;
+    } else current = (struct f77conv_statics *)(*context);
+
+    save_in_p = current->in_p;
+    out_len = remlen = length;
+    remlen -= current->in_p;
+    while ( remlen > 0 ) {
+        memcpy(f77rec.c,&buffer[current->in_p],4);
+        if ( current->do_swap == -1 ) {
+            if ( f77rec.lrecl == lrecl ) current->do_swap = 0;
+            else {
+                SWAPIT(f77rec.lrecl);
+                if ( f77rec.lrecl == lrecl ) current->do_swap = 1;
+            }
+        } else if ( current->do_swap == 1 ) SWAPIT(f77rec.lrecl);
+
+        if ( f77rec.lrecl != lrecl ) {
+            if ( errmsgtxt != NULL ) 
+                sprintf(errmsgtxt,RT149,"CPTPDSK",lrecl,f77rec.lrecl);
+            return(-1);
+        }
+
+        if ( current->in_p == 0 ) {
+            out_len -= 4;
+            memmove(&buffer[current->in_p],&buffer[current->in_p+4],remlen);
+        } else if ( current->in_p >=4 ) {
+            out_len -= 8;
+            current->in_p -= 4;
+            memmove(&buffer[current->in_p],&buffer[current->in_p+8],remlen);
+        }
+
+        current->in_p += f77rec.lrecl < remlen ? f77rec.lrecl + 4 : remlen;
+        remlen = out_len - current->in_p;
+    }
+
+    /* 
+     * Remove the enclosing control word for the last record
+     */
+    if ( remlen == 0 ) out_len -= 4; 
+    
+    /*
+     * Calculate new offset.
+     */
+    current->in_p = (f77rec.lrecl+8 - (length - save_in_p) % 
+        (f77rec.lrecl + 8) % (f77rec.lrecl + 8) );
+
+    return(out_len);
+}
+

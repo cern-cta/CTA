@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.3 $ $Date: 1999/12/03 08:44:28 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.4 $ $Date: 1999/12/08 10:03:36 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -403,6 +403,8 @@ static int MemoryToDisk(int disk_fd, int pool_index,
     register int debug = Debug;
     register int convert;
     char *convert_buffer = NULL;
+    char errmsgtxt[80] = {""};
+    void *f77conv_context = NULL;
     u_signed64 totsz;
     diskIOstatus_t *diskIOstatus = NULL;
     char *bufp;
@@ -444,6 +446,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
             rtcp_log(LOG_ERR,"MemoryToDisk() Cthread_mutex_lock_ext(): %s\n",
                 sstrerror(serrno));
             if ( convert_buffer != NULL ) free(convert_buffer);
+            if ( f77conv_context != NULL ) free(f77conv_context);
             return(-1);
         }
         /*
@@ -459,12 +462,14 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                 rtcp_log(LOG_ERR,"MemoryToDisk() Cthread_cond_wait_ext(): %s\n",
                     sstrerror(serrno));
                 if ( convert_buffer != NULL ) free(convert_buffer);
+                if ( f77conv_context != NULL ) free(f77conv_context);
                 return(-1);
             }
             if ( rtcpd_CheckProcError() & RTCP_FAILED ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 if ( convert_buffer != NULL ) free(convert_buffer);
+                if ( f77conv_context != NULL ) free(f77conv_context);
                 return(-1);
             }
             /*
@@ -495,6 +500,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
             (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
             (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
             if ( convert_buffer != NULL ) free(convert_buffer);
+            if ( f77conv_context != NULL ) free(f77conv_context);
             return(-1);
         }
         /*
@@ -511,6 +517,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                     sstrerror(errno));
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
+                if ( f77conv_context != NULL ) free(f77conv_context);
                 return(-1);
             }
         }
@@ -548,6 +555,11 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                         nb_bytes = rtcpd_FixToVar(bufp,
                             convert_buffer,nb_bytes,lrecl);
                         bufp = convert_buffer;
+                    } else if ( (convert & F77CONV) != 0 ) {
+                        nb_bytes = rtcpd_f77RecToFix(bufp,
+                            nb_bytes,lrecl,errmsgtxt,&f77conv_context);
+                        if ( *errmsgtxt != '\0' ) 
+                            rtcpd_AppendClientMsg(NULL, file,errmsgtxt);
                     }
                     DK_STATUS(RTCP_PS_WRITE);
                     rc = rfio_write(disk_fd,bufp,nb_bytes);
@@ -586,6 +598,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                         (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                         (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                         if ( convert_buffer != NULL ) free(convert_buffer);
+                        if ( f77conv_context != NULL ) free(f77conv_context);
                         return(-1);
                     }
                 }
@@ -628,6 +641,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
             rtcp_log(LOG_ERR,"MemoryToDisk() Cthread_cond_broadcast_ext(): %s\n",
                 sstrerror(serrno));
             if ( convert_buffer != NULL ) free(convert_buffer);
+            if ( f77conv_context != NULL ) free(f77conv_context);
             return(-1);
         }
         rc = Cthread_mutex_unlock_ext(databufs[i]->lock);
@@ -635,6 +649,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
             rtcp_log(LOG_ERR,"MemoryToDisk() Cthreda_mutex_unlock_ext(): %s\n",
                 sstrerror(serrno));
             if ( convert_buffer != NULL ) free(convert_buffer);
+            if ( f77conv_context != NULL ) free(f77conv_context);
             return(-1);
         }
 
@@ -664,6 +679,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                         rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED);
                     }
                     if ( convert_buffer != NULL ) free(convert_buffer);
+                    if ( f77conv_context != NULL ) free(f77conv_context);
                     return(-1);
                 }
             }
@@ -680,6 +696,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
     } /* for (;;) */
     
     if ( convert_buffer != NULL ) free(convert_buffer);
+    if ( f77conv_context != NULL ) free(f77conv_context);
     return(0);
 }
 static int DiskToMemory(int disk_fd, int pool_index,
