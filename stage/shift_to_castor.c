@@ -1,5 +1,5 @@
 /*
- * $Id: shift_to_castor.c,v 1.3 2000/01/10 10:29:00 jdurand Exp $
+ * $Id: shift_to_castor.c,v 1.4 2000/01/17 15:08:18 jdurand Exp $
  */
 
 /* ============== */
@@ -441,7 +441,7 @@ int convert_stgpath() {
 }
 
 void shift_to_castor_usage() {
-  printf("Usage : shift_to_castor [options] <stgcat_in> <stgpath_in> <stgcat_out> <stgpath_out>\n"
+  printf("Usage : stgshift_to_castor [options] <stgcat_in> <stgpath_in> <stgcat_out> <stgpath_out>\n"
          "\n"
          "  where options can be:\n"
          "  -h           This help\n"
@@ -452,7 +452,7 @@ void shift_to_castor_usage() {
          "  This program will convert SHIFT stager catalogs to CASTOR ones. The SHIFT stager catalogs are typically <stgcat_in> == /usr/spool/stage/stgcat and <stgpath_in> == /usr/spool/stage/stgpath\n"
          "\n"
          "  Example:\n"
-         "shift_to_castor /usr/spool/stage/stgcat /usr/spool/stage/stgpath ./stgcat ./stgpath\n"
+         "stgshift_to_castor /usr/spool/stage/stgcat /usr/spool/stage/stgpath ./stgcat ./stgpath\n"
          "Comments to castor-support@listbox.cern.ch\n"
          "\n",
          FREQUENCY

@@ -1,5 +1,5 @@
 /*
- * $Id: castor_to_shift.c,v 1.1 2000/01/09 11:42:20 jdurand Exp $
+ * $Id: castor_to_shift.c,v 1.2 2000/01/17 15:08:12 jdurand Exp $
  */
 
 /* ============== */
@@ -80,7 +80,7 @@ int frequency = FREQUENCY;
 /* ========== */
 /* Prototypes */
 /* ========== */
-void shift_to_castor_usage _PROTO(());
+void castor_to_shift_usage _PROTO(());
 int convert_stgcat _PROTO(());
 int convert_stgpath _PROTO(());
 
@@ -126,18 +126,18 @@ int main(argc, argv)
 
   if (errflg != 0) {
     printf("### getopt error\n");
-    shift_to_castor_usage();
+    castor_to_shift_usage();
     return(EXIT_FAILURE);
   }
 
   if (help != 0) {
-    shift_to_castor_usage();
+    castor_to_shift_usage();
     return(EXIT_SUCCESS);
   }
 
   if (optind >= argc || optind > (argc - 4)) {
     printf("?? Exactly four parameters are requested\n");
-    shift_to_castor_usage();
+    castor_to_shift_usage();
     return(EXIT_FAILURE);
   }
 
@@ -438,8 +438,8 @@ int convert_stgpath() {
   return(0);
 }
 
-void shift_to_castor_usage() {
-  printf("Usage : shift_to_castor [options] <stgcat_in> <stgpath_in> <stgcat_out> <stgpath_out>\n"
+void castor_to_shift_usage() {
+  printf("Usage : stgcastor_to_shift [options] <stgcat_in> <stgpath_in> <stgcat_out> <stgpath_out>\n"
          "\n"
          "  where options can be:\n"
          "  -h           This help\n"
@@ -450,7 +450,7 @@ void shift_to_castor_usage() {
          "  This program will convert SHIFT stager catalogs to CASTOR ones. The SHIFT stager catalogs are typically <stgcat_in> == /usr/spool/stage/stgcat and <stgpath_in> == /usr/spool/stage/stgpath\n"
          "\n"
          "  Example:\n"
-         "shift_to_castor /usr/spool/stage/stgcat /usr/spool/stage/stgpath ./stgcat ./stgpath\n"
+         "stgcastor_to_shift /usr/spool/stage/stgcat /usr/spool/stage/stgpath ./stgcat ./stgpath\n"
          "Comments to castor-support@listbox.cern.ch\n"
          "\n",
          FREQUENCY

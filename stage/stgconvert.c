@@ -1,5 +1,5 @@
 /*
- * $Id: stgconvert.c,v 1.10 2000/01/10 06:58:07 jdurand Exp $
+ * $Id: stgconvert.c,v 1.11 2000/01/17 15:08:20 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.10 $ $Date: 2000/01/10 06:58:07 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char *sccsid = "@(#)$RCSfile: stgconvert.c,v $ $Revision: 1.11 $ $Date: 2000/01/17 15:08:20 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif
 
 /*
@@ -58,9 +58,9 @@ int warns = 1;
 #define FILE_MODE ( S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH )
 #endif
 
-#define CASTOR_TO_CDB -1
-#define CDB_CMP_CASTOR 0
-#define CDB_TO_CASTOR  1
+#define CASTORCDB_TO_CASTORDISK -1
+#define CASTORCDB_CMP_CASTORDISK 0
+#define CASTORDISK_TO_CASTORCDB  1
 
 #define CDB_USERNAME "Cdb_Stage_User"
 #define CDB_PASSWORD "Cdb_Stage_Password"
@@ -172,7 +172,7 @@ int main(argc,argv)
   extern int optind, opterr, optopt;
   int errflg = 0;
   int c;
-  int convert_direction = 0;         /* 1 : CDB -> CASTOR, -1 : CASTOR -> CDB */
+  int convert_direction = 0;         /* 1 : CASTOR/CDB -> CASTOR/DISK, -1 : CASTOR/DISK -> CASTOR/CDB */
   int help = 0;                      /* 1 : help wanted */
   char *stgcat = NULL;               /* CASTOR's stager catalog path */
   int stgcat_fd = -1;
@@ -279,11 +279,11 @@ int main(argc,argv)
     return(EXIT_SUCCESS);
   }
 
-  if (convert_direction != CDB_TO_CASTOR && 
-      convert_direction != CASTOR_TO_CDB &&
-      convert_direction != CDB_CMP_CASTOR) {
-    printf("?? -g option is REQUIRED and HAS to be either %d (CDB->CASTOR), %d (CASTOR->CDB) or %d (CDB cmp CASTOR), nothing else.\n",
-            CDB_TO_CASTOR,CASTOR_TO_CDB,CDB_CMP_CASTOR);
+  if (convert_direction != CASTORDISK_TO_CASTORCDB && 
+      convert_direction != CASTORCDB_TO_CASTORDISK &&
+      convert_direction != CASTORCDB_CMP_CASTORDISK) {
+    printf("?? -g option is REQUIRED and HAS to be either %d (CASTOR/CDB->CASTOR/DISK), %d (CASTOR/DISK->CASTOR/CDB) or %d (CASTOR/CDB cmp CASTOR/DISK), nothing else.\n",
+            CASTORDISK_TO_CASTORCDB,CASTORCDB_TO_CASTORDISK,CASTORCDB_CMP_CASTORDISK);
     stgconvert_usage();
     return(EXIT_FAILURE);
   }
@@ -297,7 +297,7 @@ int main(argc,argv)
   stgcat = argv[optind];
   stgpath = argv[optind+1];
 
-  if (convert_direction == CASTOR_TO_CDB) {
+  if (convert_direction == CASTORCDB_TO_CASTORDISK) {
     if (no_stgcat == 0) {
       if ((stgcat_fd = open(stgcat, FILE_OFLAG | O_RDWR | O_CREAT, FILE_MODE)) < 0) {
         printf("### open of %s error, %s\n",stgcat,strerror(errno));
@@ -348,10 +348,10 @@ int main(argc,argv)
     }
   }
 
-  /* If the user said CASTOR -> CDB conversion and one of those files is of length > 0   */
+  /* If the user said CASTOR/DISK -> CASTOR/CDB conversion and one of those files is of length > 0   */
   /* he will overwrite existing non-zero length files. We then check if that's really what */
   /* he wants to do.                                                                       */
-  if (convert_direction == CASTOR_TO_CDB) {
+  if (convert_direction == CASTORCDB_TO_CASTORDISK) {
     if (warns != 0) {
       if ((no_stgcat == 0  && stgcat_statbuff.st_size > 0) || 
           (no_stgpath == 0 && stgpath_statbuff.st_size > 0)) {
@@ -416,10 +416,10 @@ int main(argc,argv)
 
   Cdb_db_opened = -1;
 
-  if (convert_direction == CDB_TO_CASTOR) {
-    /* ========================== */
-    /* CDB -> CASTOR conversion */
-    /* ========================== */
+  if (convert_direction == CASTORDISK_TO_CASTORCDB) {
+    /* ==================================== */
+    /* CASTOR/CDB -> CASTOR/DISK conversion */
+    /* ==================================== */
     int i = 0;
     int nstcp = 0;
     int nstpp = 0;
@@ -623,11 +623,11 @@ int main(argc,argv)
       }
     }
 
-  } else if (convert_direction == CASTOR_TO_CDB) {
+  } else if (convert_direction == CASTORCDB_TO_CASTORDISK) {
 
-    /* ========================== */
-    /* CASTOR -> CDB conversion */
-    /* ========================== */
+    /* ==================================== */
+    /* CASTOR/DISK -> CASTOR/CDB conversion */
+    /* ==================================== */
     
     int i = 0;
 
@@ -966,10 +966,10 @@ int main(argc,argv)
       }
     }
 
-  } else if (convert_direction == CDB_CMP_CASTOR) {
-    /* =========================== */
-    /* CDB cmp CASTOR conversion */
-    /* =========================== */
+  } else if (convert_direction == CASTORCDB_CMP_CASTORDISK) {
+    /* ========================== */
+    /* CASTOR/CDB cmp CASTOR/DISK */
+    /* ========================== */
 
     int i = 0;
     int nstcp = 0;
@@ -1029,7 +1029,7 @@ int main(argc,argv)
     }
 
     if (no_stgcat == 0) {
-      printf("\n*** COMPARING stgcat CATALOG for CASTOR/disk and CASTOR/CDB ***\n\n");
+      printf("\n*** COMPARING stgcat CATALOG for CASTOR/DISK and CASTOR/CDB ***\n\n");
 
       if (t_or_d != '\0' && t_or_d != 't') {
         goto no_tape_cmp;
@@ -1415,10 +1415,10 @@ void stgconvert_usage() {
          "  -C                Do nothing about stgcat\n"
          "  -c <number>       maximum number to convert from CASTOR/Cdb to/from CASTOR/disk for stgcat\n"
          "  -g <number>       Convert direction, where\n"
-         "                    -g %2d means: CDB -> CASTOR\n"
-         "                    -g %2d means: CDB cmp CASTOR\n"
-         "                    -g %2d means: CASTOR -> CDB\n"
-         "  -l <number>       maximum number to convert from CDB to CASTOR for stgpath\n"
+         "                    -g %2d means: CASTOR/CDB  -> CASTOR/DISK\n"
+         "                    -g %2d means: CASTOR/CDB cmp CASTOR/DISK\n"
+         "                    -g %2d means: CASTOR/DISK -> CASTOR/CDB\n"
+         "  -l <number>       maximum number to convert from CASTOR/CDB to CASTOR/DISK for stgpath\n"
          "  -L                Do nothing about stgpath\n"
          "  -n                Output frequency. Default is every %d entries\n"
          "  -u                Cdb username. Defaults to \"%s\"\n"
@@ -1436,25 +1436,32 @@ void stgconvert_usage() {
          "       If this is not the case and if you don't know the Cdb username and/or password\n"
          "       either contact somebody who knows, either delete the Cdb password file, which\n"
          "       should be located at /usr/spool/db/Cdb.pwd\n"
-         "       If you specify CDB -> CASTOR conversion you are suggested to reset the\n"
+         "       If you specify CASTOR/CDB -> CASTOR/DISK conversion you are suggested to reset the\n"
          "       \"stage\" database inside Cdb. This is achieved by removing the directory\n"
          "       /usr/spool/db/stage/.\n"
          "\n"
-         " Example of CDB->CASTOR convertion:\n"
-         "  stgconvert -g %2d /usr/spool/stage/stgcat /usr/spool/stage/stgpath\n"
+         "       I recall you that the SHIFT and CASTOR catalogs inside structures might be different,\n"
+         "       and that you must use the tools:\n"
+         "       stgshift_to_castor ./stgcat_shift ./stgpath_shift ./stgcat_castor ./stgpath_castor\n"
+         "       and\n"
+         "       stgcastor_to_shift ./stgcat_castor ./stgpath_castor ./stgcat_shift ./stgpath_shift\n"
+         "       to convert from SHIFT to CASTOR, and from CASTOR to SHIFT catalogs, respectively.\n"
          "\n"
-         " Example of CDB/CASTOR comparison:\n"
-         "  stgconvert -g %2d /usr/spool/stage/stgcat /usr/spool/stage/stgpath\n"
+         " Example of CASTOR/DISK  ->  CASTOR/CDB convertion:\n"
+         "  stgconvert -g %2d /usr/spool/stage/stgcat_castor /usr/spool/stage/stgpath_castor\n"
          "\n"
-         " Example of CASTOR->CDB convertion:\n"
-         "  stgconvert -g %2d /usr/spool/stage/stgcat.new /usr/spool/stage/stgpath.new\n"
+         " Example of CASTOR/CDB  vs. CASTOR/DISK comparison:\n"
+         "  stgconvert -g %2d /usr/spool/stage/stgcat_castor /usr/spool/stage/stgpath_castor\n"
+         "\n"
+         " Example of CASTOR/CDB ->  CASTOR/DISK convertion:\n"
+         "  stgconvert -g %2d /usr/spool/stage/stgcat_castor /usr/spool/stage/stgpath_castor\n"
          "\n"
          "Comments to castor-support@listbox.cern.ch\n"
          "\n",
-         CDB_TO_CASTOR,CDB_CMP_CASTOR,CASTOR_TO_CDB,
+         CASTORDISK_TO_CASTORCDB,CASTORCDB_CMP_CASTORDISK,CASTORCDB_TO_CASTORDISK,
          FREQUENCY,
          CDB_USERNAME,CDB_PASSWORD,
-         CDB_TO_CASTOR,CDB_CMP_CASTOR,CASTOR_TO_CDB
+         CASTORDISK_TO_CASTORCDB,CASTORCDB_CMP_CASTORDISK,CASTORCDB_TO_CASTORDISK
          );
 }
 
