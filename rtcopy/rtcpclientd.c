@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.22 $ $Release$ $Date: 2005/01/18 17:06:23 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.23 $ $Release$ $Date: 2005/01/27 14:45:09 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.22 $ $Release$ $Date: 2005/01/18 17:06:23 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.23 $ $Release$ $Date: 2005/01/27 14:45:09 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -888,6 +888,7 @@ int rtcpcld_main(
   saOther.sa_handler = shutdownService;
   sigaction(SIGINT,&saOther,NULL);
   sigaction(SIGTERM,&saOther,NULL);
+  sigaction(SIGABRT,&saOther,NULL);
 #endif /* _WIN32 */
 
   gethostname(serverName,CA_MAXHOSTNAMELEN);
