@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.105 $ $Release$ $Date: 2004/12/09 14:51:16 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.106 $ $Release$ $Date: 2004/12/15 16:36:14 $ $Author: jdurand $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.105 $ $Release$ $Date: 2004/12/09 14:51:16 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.106 $ $Release$ $Date: 2004/12/15 16:36:14 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -268,7 +268,7 @@ static int updateTapeFromDB(
   C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
   C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
   if ( (tp == NULL) && (key != 0) ) {
-    C_BaseAddress_setId(baseAddr,key);
+    C_BaseAddress_setTarget(baseAddr,key);
   } else {
     if ( tp != NULL ) Cstager_Tape_id(tp,&key);
   }
@@ -385,7 +385,7 @@ static int updateSegmentFromDB(
   C_BaseAddress_setCnvSvcName(baseAddr,"OraCnvSvc");
   C_BaseAddress_setCnvSvcType(baseAddr,SVC_ORACNV);
   if ( (segm == NULL) && (key != 0) ) {
-    C_BaseAddress_setId(baseAddr,key);
+    C_BaseAddress_setTarget(baseAddr,key);
   } else {
     if ( segm != NULL ) Cstager_Segment_id(segm,&key);
   }
