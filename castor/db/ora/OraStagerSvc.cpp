@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.95 $ $Release$ $Date: 2004/12/17 14:57:32 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.96 $ $Release$ $Date: 2005/01/03 16:41:16 $ $Author: bcouturi $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1370,10 +1370,10 @@ castor::db::ora::OraStagerSvc::selectCastorFile
     m_selectCastorFileStatement->setDouble(3, svcClass);
     m_selectCastorFileStatement->setDouble(4, fileClass);
     m_selectCastorFileStatement->setDouble(5, fileSize);
-    oracle::occi::ResultSet *rset = m_selectCastorFileStatement->executeQuery();
-    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+   
+    int nb  = m_selectCastorFileStatement->executeUpdate();
+    if (0 == nb) {
       // Nothing found, throw exception
-      m_selectCastorFileStatement->closeResultSet(rset);
       castor::exception::Internal e;
       e.getMessage()
         << "selectCastorFile returned no CastorFile";
@@ -1382,11 +1382,10 @@ castor::db::ora::OraStagerSvc::selectCastorFile
     // Found the CastorFile, so create it in memory
     castor::stager::CastorFile* result =
       new castor::stager::CastorFile();
-    result->setId((u_signed64)rset->getDouble(5));
+    result->setId((u_signed64)m_selectCastorFileStatement->getDouble(6));
     result->setFileId(fileId);
     result->setNsHost(nsHost);
-    result->setFileSize((u_signed64)rset->getDouble(6));
-    m_selectCastorFileStatement->closeResultSet(rset);
+    result->setFileSize((u_signed64)m_selectCastorFileStatement->getDouble(7));
     return result;
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
