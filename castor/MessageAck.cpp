@@ -34,7 +34,7 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::MessageAck::MessageAck() :
+castor::MessageAck::MessageAck() throw() :
   m_status(false),
   m_errorCode(0),
   m_errorMessage(""),
@@ -44,7 +44,7 @@ castor::MessageAck::MessageAck() :
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::MessageAck::~MessageAck() {
+castor::MessageAck::~MessageAck() throw() {
 };
 
 //------------------------------------------------------------------------------
@@ -52,7 +52,8 @@ castor::MessageAck::~MessageAck() {
 //------------------------------------------------------------------------------
 void castor::MessageAck::print(std::ostream& stream,
                                std::string indent,
-                               castor::ObjectSet& alreadyPrinted) const {
+                               castor::ObjectSet& alreadyPrinted) const
+  throw (){
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
     stream << indent << "Back pointer, see above" << std::endl;
@@ -69,7 +70,7 @@ void castor::MessageAck::print(std::ostream& stream,
 //------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
-void castor::MessageAck::print() const {
+void castor::MessageAck::print() const throw() {
   ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
 }
