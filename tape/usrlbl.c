@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.8 $ $Date: 2001/01/24 08:40:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.9 $ $Date: 2001/01/31 08:32:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	usrlbl - user callable routines to read/write header and trailer labels */
@@ -154,9 +154,13 @@ int	nblocks;
 #endif
 	if ((c = writelbl (tapefd, path, hdr1)) < 0) return (c);
 	if (dlip->lblcode == SL) asc2ebc (hdr2, 80);
-#if defined(hpux) || defined(linux)
+#if defined(hpux)
 	if (labelid[2] == 'V')	/* must clear EOT condition */
 		c = ioctl (tapefd, MTIOCGET, &mt_info);
+#endif
+#if defined(linux)
+	/* must clear EOT condition */
+	c = ioctl (tapefd, MTIOCGET, &mt_info);
 #endif
 #if defined(__alpha) && defined(__osf__)
 	if (labelid[2] == 'V') {
