@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logbuf.h,v $ $Revision: 1.7 $ $Release$ $Date: 2005/01/24 16:26:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logbuf.h,v $ $Revision: 1.8 $ $Release$ $Date: 2005/01/26 08:16:47 $ $Author: sponcec3 $
  *
  * An abstract string buffer for the log that is able
  * to handle levels of output
@@ -51,7 +51,10 @@ namespace castor {
      * Constructor
      */
     logbuf() throw() : std::stringbuf(std::ios_base::out),
-      m_curLevel(DLF_LVL_USAGE) {}
+      m_curLevel(DLF_LVL_USAGE) {
+      memset(&m_uuid, 0, sizeof(Cuuid_t));
+      memset(&m_fileId, 0, sizeof(Cns_fileid));
+    }
 
     /**
      * Sets current output level
