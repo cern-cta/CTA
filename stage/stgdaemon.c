@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.188 2002/04/30 13:14:16 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.189 2002/05/09 16:51:58 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.188 $ $Date: 2002/04/30 13:14:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.189 $ $Date: 2002/05/09 16:51:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -70,6 +70,7 @@ struct winsize {
 #include <signal.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/resource.h> /* For getrlimit()/setrlimit() */
 #if _AIX
 #include <sys/un.h>
 #endif
@@ -312,6 +313,9 @@ int main(argc,argv)
 	int errflg = 0;
 	int foreground = 0;
 	int backlog = 5;
+	int rlimit_nofile = 2048;
+	int rlimit_nproc = 512;
+	struct rlimit rlim;
 	struct sockaddr_in from;
 	int fromlen = sizeof(from);
 	struct hostent *hp;
@@ -340,10 +344,19 @@ int main(argc,argv)
 	char myenv[11 + CA_MAXHOSTNAMELEN + 1]; /* 11 == strlen("STAGE_HOST=") */
 	char *upd_fileclasses_int_p;
 	size_t read_size;
+	static struct Coptions longopts[] =
+	{
+		{"foreground",         NO_ARGUMENT,        NULL,      'f'},
+		{"help",               NO_ARGUMENT,        NULL,      'h'},
+		{"backlog",            REQUIRED_ARGUMENT,  NULL,      'L'},
+		{"rlimit_nproc",       REQUIRED_ARGUMENT,  NULL,      'F'},
+		{"rlimit_nofile",      REQUIRED_ARGUMENT,  NULL,     'P'},
+ 		{NULL,                 0,                  NULL,        0},
+	};
 
 	Coptind = 1;
 	Copterr = 0;
-	while ((c = Cgetopt (argc, argv, "fhL:")) != -1) {
+	while ((c = Cgetopt_long (argc, argv, "fhL:F:P:", longopts, NULL)) != -1) {
 		switch (c) {
 		case 'f':
 			foreground = 1;
@@ -353,7 +366,19 @@ int main(argc,argv)
 			exit(0);
 		case 'L':
 			if ((backlog = atoi(Coptarg)) <= 0) {
-				fprintf(stderr,"Listen queue -L option value '%s' : must be > 0\n",Coptarg);
+				fprintf(stderr,"Listen queue (-L option) value '%s' : must be > 0\n",Coptarg);
+				++errflg;
+			}
+			break;
+		case 'F':
+			if ((rlimit_nofile = atoi(Coptarg)) <= 0) {
+				fprintf(stderr,"RLIMIT_NOFILE (-F option) value '%s' : must be > 0\n",Coptarg);
+				++errflg;
+			}
+			break;
+		case 'P':
+			if ((rlimit_nproc = atoi(Coptarg)) <= 0) {
+				fprintf(stderr,"RLIMIT_NPROC (-F option) value '%s' : must be > 0\n",Coptarg);
 				++errflg;
 			}
 			break;
@@ -373,6 +398,61 @@ int main(argc,argv)
 		exit(1);
 	}
 
+	strcpy (func, "stgdaemon");
+	stglogit (func, "started\n");
+
+	/* Before getting system limit, change them right now - we do nothing if wanted value are below what system provide */
+	/* RLIMIT_NOFILE */
+	if (getrlimit(RLIMIT_NOFILE,&rlim) != 0) {
+		stglogit(func, "... getrlimit(RLIMIT_NOFILE,&rlim) error : %s\n", strerror(errno));
+	} else {
+		if (rlim.rlim_cur > rlimit_nofile) {
+			stglogit(func, "... RLIMIT_NOFILE says current limit is %d. Unchanged.\n", rlim.rlim_max);
+		} else {
+			rlim.rlim_cur = rlimit_nofile;
+			if (rlim.rlim_max < rlim.rlim_cur) {
+				stglogit(func, "... RLIMIT_NOFILE says h/w limit is %d, setting h/w and current limits to %d \n", rlim.rlim_max, rlimit_nofile);
+				rlim.rlim_max = rlim.rlim_cur;
+			} else {
+				stglogit(func, "... RLIMIT_NOFILE says h/w limit is %d, setting only current limit to %d \n", rlim.rlim_max, rlimit_nofile);
+			}
+			if (setrlimit(RLIMIT_NOFILE,&rlim) != 0) {
+				stglogit(func, "... setrlimit(RLIMIT_NOFILE,&rlim) error : %s\n", strerror(errno));
+			}
+		}
+		/* Verify */
+		if (getrlimit(RLIMIT_NOFILE,&rlim) != 0) {
+ 			stglogit(func, "... getrlimit(RLIMIT_NOFILE,&rlim) error : %s\n", strerror(errno));
+		} else {
+ 			stglogit(func, "==> Running with RLIMIT_NOFILE = { cur=%d, max=%d }\n", rlim.rlim_cur, rlim.rlim_max);
+		}
+	}
+	/* RLIMIT_NPROC */
+	if (getrlimit(RLIMIT_NPROC,&rlim) != 0) {
+		stglogit(func, "... getrlimit(RLIMIT_NPROC,&rlim) error : %s\n", strerror(errno));
+	} else {
+		if (rlim.rlim_cur > rlimit_nproc) {
+			stglogit(func, "... RLIMIT_NPROC says current limit is %d. Unchanged.\n", rlim.rlim_max);
+		} else {
+			rlim.rlim_cur = rlimit_nproc;
+			if (rlim.rlim_max < rlim.rlim_cur) {
+				stglogit(func, "... RLIMIT_NPROC says h/w limit is %d, setting h/w and current limits to %d\n", rlim.rlim_max, rlimit_nproc);
+				rlim.rlim_max = rlim.rlim_cur;
+			} else {
+				stglogit(func, "... RLIMIT_NPROC says h/w limit is %d, setting only current limit to %d \n", rlim.rlim_max, rlimit_nofile);
+			}
+			if (setrlimit(RLIMIT_NPROC,&rlim) != 0) {
+				stglogit(func, "... setrlimit(RLIMIT_NPROC,&rlim) error : %s\n", strerror(errno));
+			}
+		}
+		/* Verify */
+		if (getrlimit(RLIMIT_NPROC,&rlim) != 0) {
+ 			stglogit(func, "... getrlimit(RLIMIT_NPROC,&rlim) error : %s\n", strerror(errno));
+		} else {
+ 			stglogit(func, "==> Running with RLIMIT_NPROC = { cur=%d, max=%d }\n", rlim.rlim_cur, rlim.rlim_max);
+		}
+	}
+	
 #if defined(SOLARIS) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(sgi)
 	maxfds = getdtablesize();
 #else
@@ -382,7 +462,8 @@ int main(argc,argv)
 	if (foreground == 0) {
 		/* Background */
 		if ((c = fork()) < 0) {
-			fprintf (stderr, "stgdaemon: cannot fork\n");
+			stglogit (func, STG02, "", "fork", strerror(errno));
+			stglogit (func, "Exit.\n");
 			exit (1);
 		} else
 			if (c > 0) exit (0);
@@ -411,8 +492,6 @@ int main(argc,argv)
 	sa.sa_flags = SA_RESTART;
 	sigaction (SIGCHLD, &sa, NULL);
 #endif
-	strcpy (func, "stgdaemon");
-	stglogit (func, "started\n");
 	started_time = time(NULL);
 #if SACCT
 	stageacct (STGSTART, 0, 0, "", 0, 0, 0, 0, NULL, "", (char) 0);
@@ -459,12 +538,14 @@ int main(argc,argv)
 	if ((this_passwd = Cgetpwuid(getuid())) == NULL) {
 		stglogit(func, "### Cannot Cgetpwuid(%d) (%s)\n",(int) getuid(), strerror(errno));
 		stglogit(func, "### Please check existence of current uid %d in password file\n", (int) getuid());
+		stglogit (func, "Exit.\n");
  		exit (SYERR);
 	}
 	start_passwd = *this_passwd;
 	if (Cgetgrgid(start_passwd.pw_gid) == NULL) {
 		stglogit(func, "### Cannot Cgetgrgid(%d) (%s)\n",start_passwd.pw_gid,strerror(errno));
 		stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", start_passwd.pw_gid, start_passwd.pw_name);
+		stglogit (func, "Exit.\n");
  		exit (SYERR);
 	}
 	stglogit(func, "Running under \"%s\" account (uid=%d,gid=%d), pid=%d\n", start_passwd.pw_name, start_passwd.pw_uid, start_passwd.pw_gid, (int) getpid());
@@ -473,12 +554,14 @@ int main(argc,argv)
 	if ((this_passwd = Cgetpwnam(STAGERSUPERUSER)) == NULL) {
 		stglogit(func, "### Cannot Cgetpwnam(\"%s\") (%s)\n",STAGERSUPERUSER,strerror(errno));
 		stglogit(func, "### Please check existence of account \"%s\" in password file\n", STAGERSUPERUSER);
+		stglogit (func, "Exit.\n");
  		exit (SYERR);
 	}
 	stage_passwd = *this_passwd;
 	if (Cgetgrgid(stage_passwd.pw_gid) == NULL) {
 		stglogit(func, "### Cannot Cgetgrgid(%d) (%s)\n",stage_passwd.pw_gid,strerror(errno));
 		stglogit(func, "### Please check existence of group %d (gid of account \"%s\") in group file\n", (int) stage_passwd.pw_gid, STAGERSUPERUSER);
+		stglogit (func, "Exit.\n");
  		exit (SYERR);
 	}
 
@@ -515,12 +598,14 @@ int main(argc,argv)
 	/* Set Cns error buffer */
 	if (Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0) {
 		stglogit(func, "### Cns_seterrbuf error (%s)\n", sstrerror(serrno));
+		stglogit (func, "Exit.\n");
  		exit (SYERR);
 	}
 
 	/* Open request socket */
 	if ((stg_s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		stglogit (func, STG02, "", "socket", sys_errlist[errno]);
+		stglogit (func, "Exit.\n");
 		exit (CONFERR);
 	}
 	memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
@@ -542,6 +627,7 @@ int main(argc,argv)
 	*/
 	if (bind (stg_s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 		stglogit (func, STG02, "", "bind", sys_errlist[errno]);
+		stglogit (func, "Exit.\n");
 		exit (CONFERR);
 	}
 	stglogit (func, "Listen backlog set to %d on port %d\n", backlog, stgdaemon_port);
@@ -554,7 +640,10 @@ int main(argc,argv)
 
 	/* get pool configuration */
 
-	if ((c = getpoolconf (defpoolname, defpoolname_in, defpoolname_out))) exit (CONFERR);
+	if ((c = getpoolconf (defpoolname, defpoolname_in, defpoolname_out))) {
+		stglogit (func, "Exit.\n");
+		exit (CONFERR);
+	}
 
 #ifdef USECDB
 	/* Get stager/database login:password */
@@ -577,6 +666,7 @@ int main(argc,argv)
 					(p_p = strtok (NULL, "@\n")) != NULL) {
 			} else {
 				stglogit(func, "Error reading Db Configuration file %s\n",STGDBCONFIG);
+				stglogit(func, "Exit.\n");
 				exit (CONFERR);
 			}
 			fclose(configfd);
@@ -584,8 +674,9 @@ int main(argc,argv)
 
 		if (strlen(p_u) > CA_MAXUSRNAMELEN || strlen(p_p) > CA_MAXUSRNAMELEN) {
 			stglogit(func, 
-							 "Database username and/or password exceeds maximum length of %d characters !\n",
-							 CA_MAXUSRNAMELEN);
+					 "Database username and/or password exceeds maximum length of %d characters !\n",
+					 CA_MAXUSRNAMELEN);
+			stglogit (func, "Exit.\n");
 			exit (CONFERR);
 		}
 
@@ -597,18 +688,21 @@ int main(argc,argv)
 	/* Log to the database server */
 	if (stgdb_login(&dbfd) != 0) {
 		stglogit(func, STG100, "login", sstrerror(serrno), __FILE__, __LINE__);
+		stglogit (func, "Exit.\n");
 		exit(SYERR);
 	}
 
 	/* Open the database */
 	if (stgdb_open(&dbfd,"stage") != 0) {
 		stglogit(func, STG100, "open", sstrerror(serrno), __FILE__, __LINE__);
+		stglogit (func, "Exit.\n");
 		exit(SYERR);
 	}
 
 	/* Ask for a dump of the catalog */
 	if (stgdb_load(&dbfd,&stcs,&stce,&stgcat_bufsz,&stps,&stpe,&stgpath_bufsz) != 0) {
 		stglogit(func, STG100, "load", sstrerror(serrno), __FILE__, __LINE__);
+		stglogit (func, "Exit.\n");
 		exit(SYERR);
 	}
 
@@ -658,11 +752,13 @@ int main(argc,argv)
 		close (scfd);
 		if (st.st_size != nbcat_ent * sizeof(struct stgcat_entry)) {
 			stglogit (func, STG48, STGCAT);
+			stglogit (func, "Exit.\n");
 			exit (SYERR);
 		}
 		for (stcp = stcs, i = 0; i < nbcat_ent; i++, stcp++)
 			if (stcp->reqid == 0) {
 				stglogit (func, STG48, STGCAT);
+				stglogit (func, "Exit.\n");
 				exit (SYERR);
 			}
 		last_reqid = (stcs + nbcat_ent - 1)->reqid;
@@ -684,11 +780,13 @@ int main(argc,argv)
 		close (spfd);
 		if (st.st_size != nbpath_ent * sizeof(struct stgpath_entry)) {
 			stglogit (func, STG48, STGPATH);
+			stglogit (func, "Exit.\n");
 			exit (SYERR);
 		}
 		for (stpp = stps, i = 0; i < nbpath_ent; i++, stpp++)
 			if (stpp->reqid == 0) {
 				stglogit (func, STG48, STGPATH);
+				stglogit (func, "Exit.\n");
 				exit (SYERR);
 			}
 	}
@@ -1874,6 +1972,7 @@ killallovl(sig)
 	rfio_unend();
 
 	/* Global exit */
+	stglogit (func, "Exit.\n");
 	exit(0);
 }
 
@@ -3761,12 +3860,14 @@ void check_child_exit()
 
 void stgdaemon_usage() {
 	printf("\nUsage : stgdaemon [options]\n"
-				 "  where options can be\n"
-				 "  -f      Foreground\n"
-				 "  -h      This help\n"
-				 "  -L <%%d> Listen backlog\n"
-				 "\n"
-				 );
+		   "  where options can be\n"
+		   "  -f                    Foreground\n"
+		   "  -h                    This help\n"
+		   "  -L <%%d>              Listen backlog\n"
+		   "  --rlimit_nproc  <%%d> Max number of processes\n"
+		   "  --rlimit_nofile <%%d> Max number of open file\n"
+ 		   "\n"
+		);
 }
 
 int verif_euid_egid(euid,egid,username,group)
