@@ -1,16 +1,16 @@
-.\" @(#)$RCSfile: stageshutdown.man,v $ $Revision: 1.4 $ $Date: 2001/09/26 09:13:55 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stageshutdown.man,v $ $Revision: 1.5 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1995-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGESHUTDOWN l "$Date: 2001/09/26 09:13:55 $"
+.TH STAGESHUTDOWN l "$Date: 2002/01/30 08:12:54 $"
 .SH NAME
 stageshutdown \- tells stgdaemon to exit
 .SH SYNOPSIS
 .B stageshutdown
 [
-.B -F
+.B \-F
 ]
-.BI -h " host"
+.BI \-h " host"
 .SH DESCRIPTION
 .B stageshutdown
 tells stgdaemon to exit. Before such exit, stgdaemon will send a interrupt signal to all of its child processes he is aware of.

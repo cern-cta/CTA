@@ -1,47 +1,47 @@
-.\" @(#)$RCSfile: stageupdc.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageupdc.man,v $ $Revision: 1.7 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEUPDC l "$Date: 2001/09/26 09:13:55 $"
+.TH STAGEUPDC l "$Date: 2002/01/30 08:12:54 $"
 .SH NAME
 stageupdc \- update the stager catalog
 .SH SYNOPSIS
 .B stageupdc
 [
-.BI -h " host"
+.BI \-h " host"
 ] [
-.BI -U " fun"
+.BI \-U " fun"
 ] [
 .I files
 ]
 .LP
 .B stageupdc
 [
-.BI -b " max_block_size"
+.BI \-b " max_block_size"
 ] [
-.BI -D " tape_drive"
+.BI \-D " tape_drive"
 ] [
-.BI -F " record_format"
+.BI \-F " record_format"
 ] [
-.BI -f " file_id"
+.BI \-f " file_id"
 ] [
-.BI -h " host"
+.BI \-h " host"
 ] [
-.BI -I " network_ifce"
+.BI \-I " network_ifce"
 ] [
-.BI -L " record_length"
+.BI \-L " record_length"
 ] [
-.BI -q " file_sequence_number"
+.BI \-q " file_sequence_number"
 ] [
-.BI -R " exit_code"
+.BI \-R " exit_code"
 ] [
-.BI -s " size"
+.BI \-s " size"
 ] [
-.BI -T " transfer_time"
+.BI \-T " transfer_time"
 ] [
-.BI -W " wait_time"
+.BI \-W " wait_time"
 ]
-.BI -Z " stage_reqid"
+.BI \-Z " stage_reqid"
 .SH DESCRIPTION
 .B stageupdc
 updates the stager catalog.

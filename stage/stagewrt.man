@@ -1,69 +1,69 @@
-.\" @(#)$RCSfile: stagewrt.man,v $ $Revision: 1.11 $ $Date: 2001/11/13 13:53:49 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagewrt.man,v $ $Revision: 1.12 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEWRT l "$Date: 2001/11/13 13:53:49 $"
+.TH STAGEWRT l "$Date: 2002/01/30 08:12:54 $"
 .SH NAME
 stagewrt \- copy existing files from disk to tape, from disk to disk or from
 disk to a Hierarchical Storage Management System.
 .SH SYNOPSIS
 .B stagewrt 
 [
-.BI -A " deferred"
+.BI \-A " deferred"
 [
-.BI -b " max_block_size"
+.BI \-b " max_block_size"
 ] [
-.BI -C " charconv"
+.BI \-C " charconv"
 ] [
-.BI -d " density"
+.BI \-d " density"
 ] [ 
-.BI -F " record_format" 
+.BI \-F " record_format" 
 ] [
-.BI -f " file_id"
+.BI \-f " file_id"
 ] [
-.BI -G 
+.BI \-G 
 ] [ 
-.BI -g " device_group_name"
+.BI \-g " device_group_name"
 ] [
-.BI -h " host"
+.BI \-h " host"
 ] [
-.BI -I " external_filename"
+.BI \-I " external_filename"
 ] [ 
-.BI -K
+.BI \-K
 ] [
-.BI -L " record_length"
+.BI \-L " record_length"
 ] [ 
-.BI -l " label_type"
+.BI \-l " label_type"
 ] [
-.BI -M " hsmfile"
+.BI \-M " hsmfile"
 ] [
-.BI -N " nread"
+.BI \-N " nread"
 ] [
-.BI -n
+.BI \-n
 ] [
-.BI -o
+.BI \-o
 ] [
-.BI -p " pool"
+.BI \-p " pool"
 ] [
-.BI -q " file_sequence_number"
+.BI \-q " file_sequence_number"
 ] [
-.BI -S " tape_server"
+.BI \-S " tape_server"
 ] [
-.BI -s " size"
+.BI \-s " size"
 ] [
-.BI -t " retention_period_in_days"
+.BI \-t " retention_period_in_days"
 ] [
-.BI -U " fun"
+.BI \-U " fun"
 ] [
-.BI -V " visual_identifier(s)"
+.BI \-V " visual_identifier(s)"
 ] [ 
-.BI -v " volume_serial_number(s)"
+.BI \-v " volume_serial_number(s)"
 ] [
-.BI -X " xparm"
+.BI \-X " xparm"
 ] [
-.BI --nohsmcreat
+.BI \-\-nohsmcreat
 ] [
-.BI --tppool " tape_pool"
+.BI \-\-tppool " tape_pool"
 ] 
 .I files
 .SH DESCRIPTION
@@ -84,7 +84,7 @@ is valid only when doing stagewrt of CASTOR HSM files. It puts your request in t
 .TP
 .BI \-b " blocksize"
 Specifies the maximum block size.
-If not given and the input tape is labelled and -o is also specified, the
+If not given and the input tape is labelled and \-o is also specified, the
 block size is taken from the header label when the field is not zero;
 otherwise: for all drive types except Redwoods the default is 32760 if
 .I lrecl
@@ -111,7 +111,7 @@ Option values may be combined; they are separated by comma in this case.
 .br
 For example:
 .br
-	-C ebcdic,block
+	\-C ebcdic,block
 .TP
 .BI \-d " density"
 .B 1600
@@ -190,7 +190,7 @@ Each tape block created is exactly
 bytes long (See the \-b option) with the exception of the last block
 which may be shorter.
 .I lrecl
-must be specified (-L option) and if both
+must be specified (\-L option) and if both
 .I blocksize
 and
 .I lrecl
@@ -216,7 +216,7 @@ The default record format is
 .BI \-f " fid"
 Specifies the fileid in HDR1. If more than 17 characters long,
 only the last 17 are taken. It is then converted to upper case.
-If the -f parameter is absent, the internal
+If the \-f parameter is absent, the internal
 .B rtcopy
 tape pathname is used instead.
 In the case of multiple files, a series of file identifiers may be given,
@@ -304,7 +304,7 @@ overwrite an existing one, the old file expiry date is checked.
 .TP
 .BI \-o
 Implies old fileid. The existing fileid is checked if the option
-.B -f
+.B \-f
 is also specified.
 If the new file would overwrite an existing one,
 the old file expiry date is checked.
@@ -377,7 +377,7 @@ Specifies the tape
 .SM VID
 if different from the 
 .SM VSN .
-In the case of multi\-volume files a series of 
+In the case of multi-volume files a series of 
 .IR vid s
 may be given, separated by ":"s, in the order in which the tapes are to be used.
 .TP
@@ -392,16 +392,16 @@ must be matched by a
 .IR vid
 in the same order.
 .TP
-.BI \--nohsmcreat
+.BI \-\-nohsmcreat
 Do not create entry in the HSM if it does not yet exist.
 .TP
-.BI \--tppool " tape_pool "
+.BI \-\-tppool " tape_pool "
 Forces a specific tape pool. This applies only to CASTOR HSM files to be migrated.
 .SH EXAMPLES
 .LP
 To save onto tape an existing tar file:
 .RS
-stagewrt -v CUT333 -F F -L 10240 -b 10240 myfiles.tar
+stagewrt \-v CUT333 \-F F \-L 10240 \-b 10240 myfiles.tar
 .RE
 .SH RETURN CODES
 \

@@ -1,50 +1,50 @@
-.\" @(#)$RCSfile: stagecat.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagecat.man,v $ $Revision: 1.7 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECAT l "$Date: 2001/09/26 09:13:54 $"
+.TH STAGECAT l "$Date: 2002/01/30 08:12:54 $"
 .SH NAME
 stagecat \- put an entry in the stage daemon catalog for an existing file
 .SH SYNOPSIS
 .B stagecat 
 [
-.BI -b " max_block_size"
+.BI \-b " max_block_size"
 ] [
-.BI -C " charconv"
+.BI \-C " charconv"
 ] [
-.BI -d " density"
+.BI \-d " density"
 ] [
-.BI -F " record_format" 
+.BI \-F " record_format" 
 ] [
-.BI -f " file_id"
+.BI \-f " file_id"
 ] [
-.BI -G 
+.BI \-G 
 ] [ 
-.BI -g " device_group_name"
+.BI \-g " device_group_name"
 ] [
-.BI -h " host"
+.BI \-h " host"
 ] [
-.BI -I " external_filename"
+.BI \-I " external_filename"
 ] [ 
-.BI -L " record_length"
+.BI \-L " record_length"
 ] [ 
-.BI -l " label_type"
+.BI \-l " label_type"
 ] [
-.BI -N " nread"
+.BI \-N " nread"
 ] [
-.BI -p " pool"
+.BI \-p " pool"
 ] [
-.BI -q " file_sequence_number"
+.BI \-q " file_sequence_number"
 ] [
-.BI -S " tape_server"
+.BI \-S " tape_server"
 ] [
-.BI -s " size"
+.BI \-s " size"
 ] [
-.BI -V " visual_identifier(s)"
+.BI \-V " visual_identifier(s)"
 ] [ 
-.BI -v " volume_serial_number(s)"
+.BI \-v " volume_serial_number(s)"
 ] [
-.BI -X " xparm"
+.BI \-X " xparm"
 ] 
 .I file
 .SH DESCRIPTION
@@ -79,7 +79,7 @@ Option values may be combined; they are separated by comma in this case.
 .br
 For example:
 .br
-	-C ebcdic,block
+	\-C ebcdic,block
 .TP
 .BI \-d " density"
 .B 1600
@@ -155,7 +155,7 @@ Each tape block is exactly
 bytes long (See the \-b option) with the exception of the last block
 which may be shorter.
 .I lrecl
-must be specified (-L option) and if both
+must be specified (\-L option) and if both
 .I blocksize
 and
 .I lrecl
@@ -266,8 +266,8 @@ Files
 .I f1
 to the last file on the tape.
 .TP
-.I f1\-f2,\|f4,\|f6- 
-A series of non\-consecutive ranges of files.
+.I f1\-f2,\|f4,\|f6\- 
+A series of non-consecutive ranges of files.
 .RE
 .TP
 .BI \-S " server"
@@ -285,7 +285,7 @@ Specifies the tape
 .SM VID
 if different from the 
 .SM VSN .
-In the case of multi\-volume files a series of 
+In the case of multi-volume files a series of 
 .IR vid s
 may be given, separated by ":"s, in the order in which the tapes are to be used.
 .TP

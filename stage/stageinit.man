@@ -1,18 +1,18 @@
-.\" @(#)$RCSfile: stageinit.man,v $ $Revision: 1.7 $ $Date: 2001/09/26 09:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageinit.man,v $ $Revision: 1.8 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEINIT l "$Date: 2001/09/26 09:13:55 $"
+.TH STAGEINIT l "$Date: 2002/01/30 08:12:54 $"
 .SH NAME
 stageinit \- tells stgdaemon to reread the pool configuration file
 .SH SYNOPSIS
 .B stageinit
 [
-.B -F
+.B \-F
 ] [
-.BI -X
+.BI \-X
 ] [
-.BI -h " host"
+.BI \-h " host"
 ]
 .SH DESCRIPTION
 .B stageinit

@@ -1,109 +1,109 @@
-.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.10 $ $Date: 2002/01/20 12:03:41 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageclr.man,v $ $Revision: 1.11 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGECLR l "$Date: 2002/01/20 12:03:41 $"
+.TH STAGECLR l "$Date: 2002/01/30 08:12:54 $"
 .SH NAME
 stageclr \- remove staged files
 .SH SYNOPSIS
 .B stageclr
 [
-.BI -c
+.BI \-c
 ] [
-.BI -F
+.BI \-F
 ] [
-.BI -h " host"
+.BI \-h " host"
 ] [
-.BI -l " label_type"
+.BI \-l " label_type"
 ] [
-.BI -m " minfree"
+.BI \-m " minfree"
 ] [
-.BI -p " pool"
+.BI \-p " pool"
 ] [
-.BI -q " file_sequence_number"
+.BI \-q " file_sequence_number"
 ] [
-.BI --reqid " reqid"
+.BI \-\-reqid " reqid"
 ] [
-.BI -Q " file_sequence_range"
+.BI \-Q " file_sequence_range"
 ]
-.BI -V " visual_identifier(s)"
+.BI \-V " visual_identifier(s)"
 ] [
-.BI --side " sidenumber"
+.BI \-\-side " sidenumber"
 .br
 .B stageclr
 [
-.BI -c
+.BI \-c
 ] [
-.BI -F
+.BI \-F
 ] [
-.BI -h " host"
+.BI \-h " host"
 ] [
-.BI -m " minfree"
+.BI \-m " minfree"
 ] [
-.BI -p " pool"
+.BI \-p " pool"
 ]
-.BI -I " external_filename"
+.BI \-I " external_filename"
 ] [
-.BI --reqid " reqid"
-]
-.br
-.B stageclr
-[
-.BI -c
-] [
-.BI -F
-] [
-.BI -h " host"
-] [
-.BI -m " minfree"
-] [
-.BI -p " pool"
-] [
-.BI -remove_from_hsm
-] [
-.BI --reqid " reqid"
-]
-.BI -M " hsmfile"
-.br
-.B stageclr
-[
-.BI -c
-] [
-.BI -F
-] [
-.BI -h " host"
-] [
-.BI -m " minfree"
-]
-.BI -P " pathname"
-] [
-.BI --reqid " reqid"
+.BI \-\-reqid " reqid"
 ]
 .br
 .B stageclr
 [
-.BI -c
+.BI \-c
 ] [
-.BI -F
+.BI \-F
 ] [
-.BI -h " host"
+.BI \-h " host"
 ] [
-.BI -m " minfree"
+.BI \-m " minfree"
+] [
+.BI \-p " pool"
+] [
+.BI \-remove_from_hsm
+] [
+.BI \-\-reqid " reqid"
 ]
-.BI -i
+.BI \-M " hsmfile"
+.br
+.B stageclr
+[
+.BI \-c
 ] [
-.BI --reqid " reqid"
+.BI \-F
+] [
+.BI \-h " host"
+] [
+.BI \-m " minfree"
+]
+.BI \-P " pathname"
+] [
+.BI \-\-reqid " reqid"
 ]
 .br
 .B stageclr
 [
-.BI -h " host"
+.BI \-c
 ] [
-.BI -F
+.BI \-F
+] [
+.BI \-h " host"
+] [
+.BI \-m " minfree"
 ]
-.BI -L " link_name"
+.BI \-i
 ] [
-.BI --reqid " reqid"
+.BI \-\-reqid " reqid"
+]
+.br
+.B stageclr
+[
+.BI \-h " host"
+] [
+.BI \-F
+]
+.BI \-L " link_name"
+] [
+.BI \-\-reqid " reqid"
 ]
 .SH DESCRIPTION
 .B stageclr
@@ -118,7 +118,7 @@ This minimum may be specified thru the option
 .BR \-m .
 .TP
 .BI \-F
-Forces request to be deleted - admin user only except when used with with -M option, for which deletion in the HSM is forced and done under requestor uid/gid.
+Forces request to be deleted - admin user only except when used with with \-M option, for which deletion in the HSM is forced and done under requestor uid/gid.
 .TP
 .BI \-h " host"
 Sends the request to the stager on
@@ -154,13 +154,13 @@ clears in the stager catalog the entry corresponding to this HSM file and
 remove the staged file from the pool, but it does not remove the file from
 the Hierarchical Storage Management System.
 This operation should be explicitely requested with the option
-.BR -remove_from_hsm .
+.BR \-remove_from_hsm .
 .TP
 .BI \-m " minfree"
 specifies the minimum free space to be available in the pool.
 This is a percentage.
 For example,
-.B -m 10
+.B \-m 10
 corresponds to 10% of free space.
 The default minfree value is taken from the configuration file
 .B /etc/STGCONFIG.
@@ -186,14 +186,14 @@ It is exclusive with \-q option.
 .BI \-remove_from_hsm
 to remove the file from the Hierarchical Storage Management System as well.
 .TP
-.BI \--reqid " reqid"
+.BI \-\-reqid " reqid"
 to remove only entry that has this explicit request ID.
 .TP
 .BI \-V " vid(s)"
 restricts the search to files corresponding to given vids.
 Multiple vids will be separated by colons.
 .TP
-.B \--side "sidenumber"
+.B \-\-side "sidenumber"
 Tells which side of the device you refer to (applies to multi-side medias files yet in the disk pool, like DVD). Only when used with
 .B \-V
 option.

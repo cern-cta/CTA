@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.9 $ $Date: 2001/09/26 09:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stgdaemon.man,v $ $Revision: 1.10 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STGDAEMON 1 "$Date: 2001/09/26 09:13:55 $" CASTOR "stage Administrator Commands"
+.TH STGDAEMON 1 "$Date: 2002/01/30 08:12:54 $" CASTOR "stage Administrator Commands"
 .SH NAME
 stgdaemon \- starts the stage daemon
 .SH SYNOPSIS
@@ -268,41 +268,41 @@ POOL stagetest DEFSIZE 200 MINFREE 10 GC shd02:/usr/local/bin/stage_clean
 .TP
 Here is a simple example of a stage_clean script:
 
-stageqry -a -p $1 -S  |  cut -c33-  |  cut -d" " -f1  |  stageclr -c -i -p $1
+stageqry \-a \-p $1 \-S  |  cut \-c33\-  |  cut \-d" " \-f1  |  stageclr \-c \-i \-p $1
 .br
 
 .TP
 Here is a small log:
 
-01/12 17:52:18     1 stgdaemon: STG98 - stageqry
+01/12 17:52:18     1 stgdaemon: STG98 \- stageqry
 .br
-01/12 17:52:27     2 stgdaemon: STG98 - stageqry -s
+01/12 17:52:27     2 stgdaemon: STG98 \- stageqry \-s
 .br
-01/12 17:54:45     3 stgdaemon: STG98 - stagein -vCZ0134 -g CART -d 38000 -l al fort.41
+01/12 17:54:45     3 stgdaemon: STG98 \- stagein \-v CZ0134 \-g CART \-d 38000 \-l al fort.41
 .br
-01/12 18:11:42     3 stgdaemon: STG97 - shd02:CZ0134.1.al staged by (baud,c3), server shd03.cern.ch  unit cartST0  ifce le0  size 324000  wtim 1006  ttim 4 rc 0
+01/12 18:11:42     3 stgdaemon: STG97 \- shd02:CZ0134.1.al staged by (baud,c3), server shd03.cern.ch  unit cartST0  ifce le0  size 324000  wtim 1006  ttim 4 rc 0
 .br
-01/12 18:11:52     3 sendrep: STG99 - stage returns 0
+01/12 18:11:52     3 sendrep: STG99 \- stage returns 0
 .br
-01/13 07:13:50     8 stgdaemon: STG98 - stageqry -P
+01/13 07:13:50     8 stgdaemon: STG98 \- stageqry \-P
 .br
-01/13 07:15:39     9 stgdaemon: STG98 - stagein -vCZ0134 -g CART -d 38000 -l al fort.42
+01/13 07:15:39     9 stgdaemon: STG98 \- stagein \-v CZ0134 \-g CART \-d 38000 \-l al fort.42
 .br
-01/13 07:15:39     9 stgdaemon: STG96 - CZ0134.1.al already staged, size = 324000 (.3MB), nbaccess = 2
+01/13 07:15:39     9 stgdaemon: STG96 \- CZ0134.1.al already staged, size = 324000 (.3MB), nbaccess = 2
 .br
-01/13 07:15:39     9 sendrep: STG99 - stage returns 0
+01/13 07:15:39     9 sendrep: STG99 \- stage returns 0
 .br
-01/13 07:15:46    10 stgdaemon: STG98 - stageqry
+01/13 07:15:46    10 stgdaemon: STG98 \- stageqry
 .br
-01/13 07:18:28    12 stgdaemon: STG98 - stagein -vCZ0134 -q1,2 -g CART -d 38000 -l al fort.43 fort.44
+01/13 07:18:28    12 stgdaemon: STG98 \- stagein \-v CZ0134 \-q1,2 \-g CART \-d 38000 \-l al fort.43 fort.44
 .br
-01/13 07:18:28    12 stgdaemon: STG96 - CZ0134.1.al already staged, size = 324000 (.3MB), nbaccess = 3
+01/13 07:18:28    12 stgdaemon: STG96 \- CZ0134.1.al already staged, size = 324000 (.3MB), nbaccess = 3
 .br
-01/13 07:18:41    14 stgdaemon: STG98 - stageqry
+01/13 07:18:41    14 stgdaemon: STG98 \- stageqry
 .br
-01/13 07:30:07    12 stgdaemon: STG97 - shd02:CZ0134.2.al staged by (baud,c3), server shd03.cern.ch  unit cartST1  ifce le0  size 648000  wtim 687  ttim 6 rc 0
+01/13 07:30:07    12 stgdaemon: STG97 \- shd02:CZ0134.2.al staged by (baud,c3), server shd03.cern.ch  unit cartST1  ifce le0  size 648000  wtim 687  ttim 6 rc 0
 .br
-01/13 07:30:17    12 sendrep: STG99 - stage returns 0
+01/13 07:30:17    12 sendrep: STG99 \- stage returns 0
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .B Cdbserver(1)

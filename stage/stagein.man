@@ -1,75 +1,79 @@
-.\" @(#)$RCSfile: stagein.man,v $ $Revision: 1.15 $ $Date: 2001/09/26 09:13:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagein.man,v $ $Revision: 1.16 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEIN l "$Date: 2001/09/26 09:13:54 $"
+.TH STAGEIN l "$Date: 2002/01/30 08:12:54 $"
 .SH NAME
 stagein \- allocate space in a disk pool and copy files from tape to disk or
 from disk to disk
 .SH SYNOPSIS
 .B stagein  
 [
-.BI -A " allocation_policy"
+.BI \-A " allocation_policy"
 ] [
-.BI -b " max_block_size"
+.BI \-b " max_block_size"
 ] [
-.BI -c " off"
+.BI \-c " off"
 ] [
-.BI -C " charconv"
+.BI \-C " charconv"
 ] [
-.BI -d " density"
+.BI \-d " density"
 ] [ 
-.BI -E " error_action"
+.BI \-E " error_action"
 ] [
-.BI -F " record_format" 
+.BI \-F " record_format" 
 ] [
-.BI -f " file_id"
+.BI \-f " file_id"
 ] [
-.BI -G 
+.BI \-G 
 ] [ 
-.BI -g " device_group_name"
+.BI \-g " device_group_name"
 ] [
-.BI -h " host"
+.BI \-h " host"
 ] [
-.BI -I " external_filename"
+.BI \-I " external_filename"
 ] [ 
-.BI -L " record_length"
+.BI \-L " record_length"
 ] [ 
-.BI -l " label_type"
+.BI \-l " label_type"
 ] [
-.BI -M " hsmfile"
+.BI \-M " hsmfile"
 ] [ 
-.BI -N " nread"
+.BI \-N " nread"
 ] [
-.BI -o
+.BI \-o
 ] [
-.BI -p " pool"
+.BI \-p " pool"
 ] [
-.BI -q " file_sequence_number"
+.BI \-q " file_sequence_number"
 ] [
-.BI -S " tape_server"
+.BI \-S " tape_server"
 ] [
-.BI -s " size"
+.BI \-s " size"
 ] [
-.BI -T
+.BI \-T
 ] [
-.BI -U " fun"
+.BI \-U " fun"
 ] [
-.BI -u " user"
+.BI \-u " user"
 ] [
-.BI -V " visual_identifier(s)"
+.BI \-V " visual_identifier(s)"
 ] [ 
-.BI -v " volume_serial_number(s)"
+.BI \-v " volume_serial_number(s)"
 ] [
-.BI -X " xparm"
+.BI \-X " xparm"
 ] [ 
-.BI -z
+.BI \-z
 ] [ 
-.BI --nowait
+.BI \-\-nocopy
 ] [ 
-.BI --rdonly
+.BI \-\-nowait
 ] [ 
-.BI --silent
+.BI \-\-rdonly
+] [ 
+.BI \-\-silent
+] [ 
+.BI \-\-side " sidenumber"
 ] [ 
 .I files
 ] 
@@ -81,16 +85,16 @@ If the file has already been staged, the catalog is updated
 is different from previous job, a symbolic link is created and the control
 given back to the user.
 If the file is not staged yet, pools have been configured and
-.B -p NOPOOL
+.B \-p NOPOOL
 is not specified, the file is allocated in a pool of which the space is managed
 by the stage daemon.
 If the request gives tape parameters, the internal file name is in the form
 .B vid.fseq.label
-while if an external file name is specified with the option -I (disk stageing),
+while if an external file name is specified with the option \-I (disk stageing),
 the internal file name is in the form
 .BR xfile_basename.reqid .
 If no pool has been configured or
-.B -p NOPOOL
+.B \-p NOPOOL
 is specified, the tape is staged directly in the location given by
 .I file
 and no space management is done.
@@ -141,7 +145,7 @@ is not specified or the largest multiple of
 below 262144.
 .TP
 .BI \-c " off"
-Stages \fBall\fP the file sequences of a tape onto separate disk files, given that you specify the starting file sequence through option -q followed by the file sequence number itself, followed again by a '-' character. This option is useless if not used in a tape request context. For example: 'stagein -V AB1234 -c off -q 17-' will stage all the file sequences on tape AB1234 from file sequence 17, up to the last one, into as many separate disk files.
+Stages \fBall\fP the file sequences of a tape onto separate disk files, given that you specify the starting file sequence through option \-q followed by the file sequence number itself, followed again by a '\-' character. This option is useless if not used in a tape request context. For example: 'stagein \-V AB1234 \-c off \-q 17\-' will stage all the file sequences on tape AB1234 from file sequence 17, up to the last one, into as many separate disk files.
 .TP
 .BI \-C " charconv"
 The data is converted from this character set when doing the copy.
@@ -158,7 +162,7 @@ Option values may be combined; they are separated by comma in this case.
 .br
 For example:
 .br
-	-C ebcdic,block
+	\-C ebcdic,block
 .TP
 .BI \-d " density"
 .B 1600
@@ -275,7 +279,7 @@ bytes.
 must be a multiple of
 .IR lrecl .
 .TP
-.B F,\|-f77
+.B F,\|\-f77
 The tape file is known to be formatted according to the convention 
 for sequential 
 .SM FORTRAN 
@@ -284,7 +288,7 @@ is suitable for use with direct access
 .SM FORTRAN
 unformatted I/O or C I/O.
 The logical record length on the tape file must correspond to the record 
-length specified either with the -L option or, if the -L option is not 
+length specified either with the \-L option or, if the \-L option is not 
 specified, the record length given in the label.
 .LP
 If the tape is labelled, the record format is taken from the header label;
@@ -361,7 +365,7 @@ defaults to
 Gives the name of a file stored in an Hierarchical Storage Manager (HSM).
 .B rfcp
 is used to copy the file to the staging pool. The option
-.B -s
+.B \-s
 is not needed for a complete file stageing: the stager queries the HSM system
 about the file size and allocates correctly the disk space in the pool.
 Partial stageing is supported.
@@ -378,7 +382,7 @@ a single nread value may be given which applies to all files on the tape.
 .TP
 .BI \-o
 Implies old fileid. The existing fileid is checked if the option
-.B -f
+.B \-f
 is also specified.
 .TP
 .BI \-p " poolname"
@@ -404,8 +408,8 @@ Files
 .I f1
 to the last file on the tape.
 .TP
-.I f1\-f2,\|f4,\|f6- 
-A series of non\-consecutive ranges of files.
+.I f1\-f2,\|f4,\|f6\- 
+A series of non-consecutive ranges of files.
 .TP
 .B u
 Position the tape by fid.
@@ -416,7 +420,7 @@ Position the tape by fid on
 different files.  A series of
 .I x
 fileids must be given as
-.B -f
+.B \-f
 option value.
 .RE
 .TP
@@ -465,7 +469,7 @@ Specifies the tape
 .SM VID
 if different from the 
 .SM VSN .
-In the case of multi\-volume files a series of 
+In the case of multi-volume files a series of 
 .IR vid s
 may be given, separated by ":"s, in the order in which the tapes are to be used.
 .TP
@@ -482,27 +486,37 @@ in the same order.
 .TP
 .B \-z
 Gives on standard error, as an option string, the main characteristics of the 
-tape file just staged. This includes block size (-b), record format (-F), file
-identifier (-f), record length (-L), full pathname of diskfile in the pool (-P)
-and file sequence number (-q).
-The line is prefixed by the string "STG47 - ". This flag is set by
+tape file just staged. This includes block size (\-b), record format (\-F), file
+identifier (\-f), record length (\-L), full pathname of diskfile in the pool (\-P)
+and file sequence number (\-q).
+The line is prefixed by the string "STG47 \- ". This flag is set by
 .BR copytape .
 For non-tape requests, this prints only the full pathname.
 .TP
-.B \--nowait
+.B \-\-nocopy
+If disk pools does allow export of HSM file, then the stager might decide to do a disk-to-disk copy instead of a real recall. This option supresses the optionnal internal copy between pools.
+.TP
+.B \-\-nowait
 Does not hang the client. Recall is done internally without further notification.
 .TP
-.B \--rdonly
+.B \-\-rdonly
 Tells the stager that you are requesting this file for read-only purpose.
 .TP
-.B \--silent
-Tells the stager not to output you any message
+.B \-\-silent
+Tells the stager not to output you any message.
+.TP
+.B \-\-side "sidenumber"
+Tells which side of the device you want to stage in (applies to multi-side medias, like DVD). It apply only when used with
+.B \-V
+and/or
+.B \-v
+options.
 .TP
 .SH EXAMPLES
 .LP
 To get the data from a tape into the default stage pool:
 .RS
-stagein -v CIN111 inp
+stagein \-v CIN111 inp
 .RE
 .SH RETURN CODES
 \
@@ -527,7 +541,7 @@ stagein -v CIN111 inp
 .br
 194	Blocks were skipped and stageing limited by size.
 .br
-195	Stagein stopped: too many tape errors, but -E keep.
+195	Stagein stopped: too many tape errors, but \-E keep.
 .br
 196	Request killed
 .br

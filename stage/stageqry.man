@@ -1,174 +1,174 @@
-.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.17 $ $Date: 2002/01/27 08:55:30 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.18 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEQRY l "$Date: 2002/01/27 08:55:30 $"
+.TH STAGEQRY l "$Date: 2002/01/30 08:12:54 $"
 .SH NAME
 stageqry \- give the status of all staged tapes
 .SH SYNOPSIS
 .B stageqry
 [
-.BI -a
+.BI \-a
 ] [
-.BI -h " host"
+.BI \-h " host"
 ] [
-.BI -L
+.BI \-L
 ] [
-.BI -l
+.BI \-l
 ] [
-.BI -P
+.BI \-P
 ] [
-.BI -p " pool"
+.BI \-p " pool"
 ] [
-.BI -q " file_sequence_number"
+.BI \-q " file_sequence_number"
 ] [
-.BI -Q " file_sequence_range"
+.BI \-Q " file_sequence_range"
 ] [
-.BI -S
+.BI \-S
 ] [
-.BI -T
+.BI \-T
 ] [
-.BI -u
+.BI \-u
 ] [
-.BI -V " visual_identifier(s)"
+.BI \-V " visual_identifier(s)"
 ] [
-.BI -x
+.BI \-x
 ] [
-.BI --dump
+.BI \-\-dump
 ] [
-.BI --mintime
+.BI \-\-mintime
 ] [
-.BI --reqid " reqid "
+.BI \-\-reqid " reqid "
 ] [
-.BI --retenp
+.BI \-\-retenp
 ] [
-.BI --side " sidenumber"
+.BI \-\-side " sidenumber"
 ] [
-.BI --display_side
+.BI \-\-display_side
 ]
 .LP
 .B stageqry
 [
-.BI -a
+.BI \-a
 ] [
-.BI -f
+.BI \-f
 ] [
-.BI -h " host"
+.BI \-h " host"
 ] [
-.BI -I " external_filename"
+.BI \-I " external_filename"
 ] [
-.BI -L
+.BI \-L
 ] [
-.BI -l
+.BI \-l
 ] [
-.BI -P
+.BI \-P
 ] [
-.BI -p " pool"
+.BI \-p " pool"
 ] [
-.BI -S
+.BI \-S
 ] [
-.BI -u
+.BI \-u
 ] [
-.BI -x
+.BI \-x
 ] [
-.BI --dump
+.BI \-\-dump
 ] [
-.BI --mintime
+.BI \-\-mintime
 ] [
-.BI --reqid " reqid "
+.BI \-\-reqid " reqid "
 ] [
-.BI --retenp
+.BI \-\-retenp
 ]
 .LP
 .B stageqry
 [
-.BI -a
+.BI \-a
 ] [
-.BI -f
+.BI \-f
 ] [
-.BI -h " host"
+.BI \-h " host"
 ] [
-.BI -L
+.BI \-L
 ] [
-.BI -l
+.BI \-l
 ] [
-.BI -M " hsmfile | pattern"
+.BI \-M " hsmfile | pattern"
 ] [
-.BI -P
+.BI \-P
 ] [
-.BI -p " pool"
+.BI \-p " pool"
 ] [
-.BI -S
+.BI \-S
 ] [
-.BI -u
+.BI \-u
 ] [
-.BI -x
+.BI \-x
 ] [
-.BI --dump
+.BI \-\-dump
 ] [
-.BI --mintime
+.BI \-\-mintime
 ] [
-.BI --noregexp
+.BI \-\-noregexp
 ] [
-.BI --reqid " reqid "
+.BI \-\-reqid " reqid "
 ] [
-.BI --retenp
+.BI \-\-retenp
 ]
 .LP
 .B stageqry
 [
-.BI -A " pattern"
+.BI \-A " pattern"
 ] [
-.BI -a
+.BI \-a
 ] [
-.BI -f
+.BI \-f
 ] [
-.BI -h " host"
+.BI \-h " host"
 ] [
-.BI -L
+.BI \-L
 ] [
-.BI -l
+.BI \-l
 ] [
-.BI -P
+.BI \-P
 ] [
-.BI -p " pool"
+.BI \-p " pool"
 ] [
-.BI -S
+.BI \-S
 ] [
-.BI -u
+.BI \-u
 ] [
-.BI -x
+.BI \-x
 ] [
-.BI --dump
+.BI \-\-dump
 ] [
-.BI --mintime
+.BI \-\-mintime
 ] [
-.BI --noregexp
+.BI \-\-noregexp
 ] [
-.BI --reqid " reqid "
+.BI \-\-reqid " reqid "
 ] [
-.BI --retenp
+.BI \-\-retenp
 ]
 .LP
 .B stageqry
 [
-.BI -h " host"
+.BI \-h " host"
 ] [
-.BI -p " pool"
+.BI \-p " pool"
 ] [
-.BI -s
+.BI \-s
 ] [
-.BI --class
+.BI \-\-class
 ] [
-.BI --counters
+.BI \-\-counters
 ] [
-.BI --mintime
+.BI \-\-mintime
 ] [
-.BI --migrator
+.BI \-\-migrator
 ] [
-.BI --queue
+.BI \-\-queue
 ] [
-.BI --retenp
+.BI \-\-retenp
 ]
 .SH DESCRIPTION
 .B stageqry
@@ -291,7 +291,7 @@ It is exclusive with \-q option.
 gives on stdout a list of staged files sorted in ascending order of last access
 time weighted by file size.
 .br
-        W = max (atime, mtime) - (86400 * log (size / 1024))
+        W = max (atime, mtime) \- (86400 * log (size / 1024))
 .br
 There are six fields per file: date of last access, time of last access, size
 in Mbytes, number of accesses, internal path and user path.
@@ -302,7 +302,7 @@ gives statistics on pool utilization.
 .BI \-T
 gives on standard output, as an option string, the main characteristics of a
 tape file. The information is taken from the header labels. This includes
-block size (-b), record format (-F), file identifier (-f) and record length (-L).
+block size (\-b), record format (\-F), file identifier (\-f) and record length (\-L).
 .TP
 .BI \-u
 restricts the query to files that belong to the requestor.
@@ -315,39 +315,39 @@ Multiple vids will be separated by colons.
 adds two columns to the output: they give the request id and the internal
 pathname.
 .TP
-.BI \--class
+.BI \-\-class
 gives CASTOR's file classes specifications. Please note that the fileclasses specifications listed will only be those that were concerned by any file that was or is beeing migrated. In particular if a given entry is already STAGED when the stager daemon starts up and no new file, belonging to the same fileclass, appears to be or have be a candidate for migration up to when you run this stageqry command, such a fileclass will not be listed. Used only if -s option is set.
 .TP
-.BI \--counters
+.BI \-\-counters
 gives CASTOR's read/write counters for stageout pools. Those counters are used to select the best filesystem while doing a stageout, taking into account other running stageout's as well as running migrations.
 .TP
-.BI \--dump
-dumps the content of the found entry(ies) in the main catalog, or in the path catalog in case of -L option.
+.BI \-\-dump
+dumps the content of the found entry(ies) in the main catalog, or in the path catalog in case of \-L option.
 .TP
-.BI \--migrator
-gives statistics on migration rules. Used only if -s option is set.
+.BI \-\-migrator
+gives statistics on migration rules. Used only if \-s option is set.
 .TP
-.BI \--mintime
+.BI \-\-mintime
 gives current minimum time before migration. This concerns only entries that are in the CAN_BE_MIGR state.
 .TP
-.BI \--noregexp
-prevents regular expression to be applied in case of -A of -M options. You then have to give the full (hsm) name as it was given when the entry was created inside the stager.
+.BI \-\-noregexp
+prevents regular expression to be applied in case of \-A of \-M options. You then have to give the full (hsm) name as it was given when the entry was created inside the stager.
 .TP
-.BI \--queue
+.BI \-\-queue
 gives CASTOR's waiting queue content.
 .TP
-.BI \--reqid " reqid "
+.BI \-\-reqid " reqid "
 outputs only entries that have this given reqid.
 .TP
-.BI \--retenp
+.BI \-\-retenp
 gives current retention period on disk. This period will be showed in terms of either maximum timestamp, or generic keywords that are: AS_LONG_AS_POSSIBLE and INFINITE_LIFETIME, or Exhausted. The CASTOR files lifetime can be changed using the \fBstagesetretenp\fP command. A retention period of INFINITE_LIFETIME guarantees that the corresponding entry will never be purged. A retention period of AS_LONG_AS_POSSIBLE says that the corresponding entry can be purged if there is missing space into internal disks. Another value specifies that the corresponding entry will be automatically removed if local time of the stager daemon exceeds printed value, or will be removed almost immediated if it says Exhausted.
 .TP
-.BI \--side " sidenumber "
+.BI \-\-side " sidenumber "
 outputs only entries coming from multi-sided media (like DVD). Only with
 .BI \-V
 option. Please see the NOTES section.
 .TP
-.BI \--display_side
+.BI \-\-display_side
 Forces 'tape' files with a side number greater than zero to follow the multi-sided format as quoted in the NOTES section below. Please see the NOTES section.
 .SH EXAMPLES
 .TP
@@ -360,7 +360,7 @@ CZ0134    2 al  U         *  32760 STAGEIN           1    0.0/200  stagetest
 .cs R
 .fi
 .TP
-stageqry -A '^MyDice' 
+stageqry \-A '^MyDice' 
 .nf
 .cs R 18
 File name                          State      Nbaccess     Size    Pool
@@ -368,7 +368,7 @@ MyDice.sav                         STAGED            2    0.2/1    stagetest
 .cs R
 .fi
 .TP
-stageqry -l
+stageqry \-l
 .nf
 .cs R 18
 Vid    Fseq Lbl Recfm Lrecl Blksiz State      Nbaccess     Size    Pool
@@ -381,7 +381,7 @@ CZ0134    2 al  U         *  32760 STAGED            1    0.6/200
 .cs R
 .fi
 .TP
-stageqry -L
+stageqry \-L
 .nf
 .cs R 18
 shd02:/u4/c3/baud/SHIFT/stage/fort.41
@@ -389,7 +389,7 @@ shd02:/u4/c3/baud/SHIFT/stage/xxx
 .cs R
 .fi
 .TP
-stageqry -M run1193.raw -f
+stageqry \-M run1193.raw \-f
 .nf
 .cs R 18
 File name                            State      Nbacc.     Size    Pool
@@ -398,7 +398,7 @@ run1193.raw                           STAGED         1  191.7/250  wa97_stage
 .cs R
 .fi
 .TP
-stageqry -P
+stageqry \-P
 .nf
 .cs R 18
 shd02:/stage/c3/stage/CZ0134.1.al
@@ -406,14 +406,14 @@ shd02:/stage/c3/stage/CZ0134.2.al
 .cs R
 .fi
 .TP
-stageqry -S
+stageqry \-S
 .nf
 .cs R 18
 1994/01/13 07:18:28    0.3    3 shd02:/stage/c3/stage/CZ0134.1.al shd02:/tmp/fort.41
 .cs R
 .fi
 .TP
-stageqry -s
+stageqry \-s
 .nf
 .cs R 18
 POOL stagetest DEFSIZE 200 MINFREE 10 GC shd02:/usr/local/bin/stage_clean
@@ -422,10 +422,10 @@ POOL stagetest DEFSIZE 200 MINFREE 10 GC shd02:/usr/local/bin/stage_clean
 .cs R
 .fi
 .TP
-stageqry -T
+stageqry \-T
 .nf
 .cs R 18
--b 32760 -F U -f SOMEDATA -L 32760
+\-b 32760 \-F U \-f SOMEDATA \-L 32760
 .cs R
 .fi
 .SH NOTES

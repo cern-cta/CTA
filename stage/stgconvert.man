@@ -1,12 +1,12 @@
-.\" @(#)$RCSfile: stgconvert.man,v $ $Revision: 1.3 $ $Date: 2001/09/26 09:13:55 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: stgconvert.man,v $ $Revision: 1.4 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STGCONVERT l "$Date: 2001/09/26 09:13:55 $"
+.TH STGCONVERT l "$Date: 2002/01/30 08:12:54 $"
 .SH NAME
 stgconvert \- Convert CASTOR stager catalogs in Cdb to and from disk
 .SH SYNOPSIS
-.B stgconvert -g <convert_direction> [options] stgcat_path stgpath_path
+.B stgconvert \-g <convert_direction> [options] stgcat_path stgpath_path
 .SH DESCRIPTION
 .LP
 The
@@ -16,7 +16,7 @@ command will dial with the
 server that holds the stager catalog, in the CASTOR framework. It is used
 to convert CASTOR catalogs
 .RS
-from Cdb to local disk if \fBconvert_direction\fP is \fB-1\fP
+from Cdb to local disk if \fBconvert_direction\fP is \fB\-1\fP
 .BR
 from local disk to Cdb if \fBconvert_direction\fP is \fB1\fP
 .RE
@@ -24,61 +24,61 @@ or to compare a local catalog with one in \fBCdb\fP if \fBconvert_direction\fP i
 .P
 See the \fBEXAMPLES\fP section below.
 .SH OPTIONS
-The required option, \fB-g convert_direction\fP, which tells what you want to do:
+The required option, \fB\-g convert_direction\fP, which tells what you want to do:
 .RS
 if \fBconvert_direction\fP is \fB1\fP : local disk to Cdb
 .br
-if \fBconvert_direction\fP is \fB-1\fP : Cdb to local disk
+if \fBconvert_direction\fP is \fB\-1\fP : Cdb to local disk
 .br
 if \fBconvert_direction\fP is \fB0\fP : Cdb compared to local disk
 .RE
 Other options are:
 .RS
-.B -h
+.B \-h
 .RS
 Online help
 .RE
-.B -b
+.B \-b
 .RS
 Do a binary (\fBmemcmp()\fP) diff (used only if \fBconvert_direction\fP is \fB0\fP)
 .RE
-.B -C
+.B \-C
 .RS
 Ignore main catalog (stgcat) processing
 .RE
-.BI "-c <" number ">"
+.BI "\-c <" number ">"
 .RS
 Compute only
 .I number
 entries from main catalog (stgcat)
 .RE
-.B -L
+.B \-L
 .RS
 Ignore second catalog (stgpath) processing
 .RE
-.BI "-l <" number ">"
+.BI "\-l <" number ">"
 .RS
 Compute only
 .I number
 entries from second catalog (stgpath)
 .RE
-.BI "-n <" number ">"
+.BI "\-n <" number ">"
 .RS
 Online output frequency on your terminal. Default is every 1000 processed entries
 .RE
-.BI "-u <" login ">"
+.BI "\-u <" login ">"
 .RS
 \fBCdb\fP login.
 .RE
-.BI "-p <" password ">"
+.BI "\-p <" password ">"
 .RS
 \fBCdb\fP password.
 .RE
-.B -q
+.B \-q
 .RS
 Run in non-verbose mode (there might be a lot of anoying warnings because of the secondary catalog). The return code is neverthless not changed: if there is a fatal error, \fBstgconvert\fP will exit with the appropriate (e.g. not zero) status code.
 .RE
-.BI "-t <" type ">"
+.BI "\-t <" type ">"
 .RS
 Will restrict to
 .br
@@ -90,19 +90,19 @@ Will restrict to
 .br
 - \fBallocated\fP entries if equal to \fBa\fP while processing secondary catalog (stgpath)
 .RE
-.B -v
+.B \-v
 .RS
 Prints version and exit
 .RE
 .RE
 
 .SH EXAMPLE
-Example of CASTOR/DISK  ->  CASTOR/CDB convertion:
+Example of CASTOR/DISK  \->  CASTOR/CDB convertion:
 .RS
 .ft 3
 .nf
 .sp
-stgconvert -g  1 /usr/spool/stage/stgcat_castor /usr/spool/stage/stgpath_castor
+stgconvert \-g  1 /usr/spool/stage/stgcat_castor /usr/spool/stage/stgpath_castor
 .ft
 .LP
 .fi
@@ -112,17 +112,17 @@ Example of CASTOR/CDB  vs. CASTOR/DISK comparison:
 .ft 3
 .nf
 .sp
-stgconvert -g  0 /usr/spool/stage/stgcat_castor /usr/spool/stage/stgpath_castor
+stgconvert \-g  0 /usr/spool/stage/stgcat_castor /usr/spool/stage/stgpath_castor
 .ft
 .LP
 .fi
 .RE
-Example of CASTOR/CDB ->  CASTOR/DISK convertion:
+Example of CASTOR/CDB \->  CASTOR/DISK convertion:
 .RS
 .ft 3
 .nf
 .sp
-stgconvert -g -1 /usr/spool/stage/stgcat_castor.bak /usr/spool/stage/stgpath_castor.bak
+stgconvert \-g \-1 /usr/spool/stage/stgcat_castor.bak /usr/spool/stage/stgpath_castor.bak
 .ft
 .LP
 .fi

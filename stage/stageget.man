@@ -1,22 +1,22 @@
-.\" @(#)$RCSfile: stageget.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageget.man,v $ $Revision: 1.7 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1996-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEGET l "$Date: 2001/09/26 09:13:54 $"
+.TH STAGEGET l "$Date: 2002/01/30 08:12:54 $"
 .SH NAME
 stageget \- find file allocated in a disk pool with stagealloc
 .SH SYNOPSIS
 .B stageget  
 [
-.BI -h " host"
+.BI \-h " host"
 ] [
-.BI -P 
+.BI \-P 
 ] [
-.BI -p " pool"
+.BI \-p " pool"
 ] [
-.BI -U " fun"
+.BI \-U " fun"
 ] [
-.BI -u " user"
+.BI \-u " user"
 ]
 .I file
 .SH DESCRIPTION
@@ -77,7 +77,7 @@ The default subdirectory name is
 .TP
 A first session could save a large program in the pool:
 .sp
-stagealloc -s 20 -u baud MyDice_XXX.sav
+stagealloc \-s 20 \-u baud MyDice_XXX.sav
 .br
 rfcp MyDice_XXX MyDice_XXX.sav
 .br
@@ -85,7 +85,7 @@ stageupdc MyDice_XXX.sav
 .TP
 A new job could retrieve it and use it by saying:
 .sp
-stageget -u baud MyDice_XXX.sav
+stageget \-u baud MyDice_XXX.sav
 .br
 rfcp MyDice_XXX.sav MyDice_XXX
 .br

@@ -1,59 +1,59 @@
-.\" @(#)$RCSfile: stageput.man,v $ $Revision: 1.9 $ $Date: 2001/09/26 09:13:55 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageput.man,v $ $Revision: 1.10 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGEPUT l "$Date: 2001/09/26 09:13:55 $"
+.TH STAGEPUT l "$Date: 2002/01/30 08:12:54 $"
 .SH NAME
 stageput \- copy disk files to tape, to an external disk file or to a
 Hierarchical Storage Management System.
 .SH SYNOPSIS
 .B stageput
 [
-.BI -G
+.BI \-G
 ] [
-.BI -h " host"
+.BI \-h " host"
 ] [
-.BI -U " fun"
+.BI \-U " fun"
 ] [
-.BI --nowait
+.BI \-\-nowait
 ] [
 .I files
 ]
 .LP
 .B stageput
 [
-.BI -G
+.BI \-G
 ] [
-.BI -h " host"
+.BI \-h " host"
 ] [
-.BI -q " file_sequence_number(s)"
+.BI \-q " file_sequence_number(s)"
 ] [
-.BI --nowait
+.BI \-\-nowait
 ]
-.BI -V " visual_identifier"
+.BI \-V " visual_identifier"
 .LP
 .B stageput
 [
-.BI -G
+.BI \-G
 ] [
-.BI -h " host"
+.BI \-h " host"
 ] [
-.BI -I " external_filename"
+.BI \-I " external_filename"
 ] [
-.BI --nowait
+.BI \-\-nowait
 ]
 .LP
 .B stageput
 [
-.BI -G
+.BI \-G
 ] [
-.BI -h " host"
+.BI \-h " host"
 ] [
-.BI -M " hsmfile"
+.BI \-M " hsmfile"
 [
-.BI -M ...
+.BI \-M ...
 ] [
-.BI --nowait
+.BI \-\-nowait
 ]
 .SH DESCRIPTION
 .B stageput
@@ -116,7 +116,7 @@ if the first command format is used.
 .BI \-V " vid"
 copy the files corresponding to the given vid.
 .TP
-.BI \--nowait
+.BI \-\-nowait
 specifies that the command should return immediately. Copy in done in the background of the stager daemon.
 .SH RETURN CODES
 \
