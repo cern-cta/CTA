@@ -19,7 +19,10 @@ int DLL_DECL  Csec_server_reinit_context  _PROTO ((Csec_context_t *,
 int DLL_DECL  Csec_clear_context _PROTO ((Csec_context_t *));
 
 /* Credentials and context establishment */
-int DLL_DECL  Csec_server_acquire_creds _PROTO ((Csec_context_t *));
+
+int DLL_DECL *Csec_check_creds _PROTO ((Csec_context_t *ctx));
+
+int DLL_DECL  Csec_acquire_creds _PROTO ((Csec_context_t *));
 
 int DLL_DECL  Csec_server_establish_context _PROTO ((Csec_context_t *,
                                                      int s));

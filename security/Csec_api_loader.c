@@ -55,6 +55,31 @@ static char sccsid[] = "@(#)Csec_api_loader.c,v 1.1 2004/01/12 10:31:39 CERN IT/
     CTX->shhandle = NULL;						\
     return NULL; }
 
+
+void Csec_unload_shlib(Csec_context_t *ctx) {
+  char *func = "Csec_unload_shlib";
+
+  Csec_trace(func, "Starting\n");
+
+  if (ctx->shhandle != NULL) {
+    dlclose(ctx->shhandle);
+  }
+
+  ctx->flags &= ~CSEC_CTX_CREDENTIALS_LOADED;
+  ctx->flags &= ~CSEC_CTX_SERVICE_NAME_SET;
+  ctx->flags &= ~CSEC_CTX_SHLIB_LOADED;
+  ctx->Csec_init_context = NULL;
+  ctx->Csec_reinit_context = NULL;
+  ctx->Csec_delete_connection_context = NULL;
+  ctx->Csec_delete_creds = NULL;
+  ctx->Csec_acquire_creds = NULL;
+  ctx->Csec_server_establish_context_ext = NULL;
+  ctx->Csec_client_establish_context = NULL;
+  ctx->Csec_map2name = NULL;
+  ctx->Csec_get_service_name = NULL;
+ 
+}
+
 /**
  * Gets the shared library corresponding to the context !
  */
@@ -68,6 +93,13 @@ void *Csec_get_shlib(Csec_context_t *ctx) {
     serrno = EINVAL;
     Csec_errmsg(func, "Context is NULL !");
     return NULL;
+  }
+
+  /* Checking that a shared library isn't already loaded,
+     and closing in case ! */
+  if (ctx->shhandle != NULL) {
+    Csec_trace(func, "Foring unload of shlib\n");
+    Csec_unload_shlib(ctx);
   }
 
   /* Creating the library name */
@@ -98,7 +130,7 @@ void *Csec_get_shlib(Csec_context_t *ctx) {
   DLSETFUNC(ctx, handle, Csec_reinit_context);
   DLSETFUNC(ctx, handle, Csec_delete_connection_context);
   DLSETFUNC(ctx, handle, Csec_delete_creds);
-  DLSETFUNC(ctx, handle, Csec_server_acquire_creds);
+  DLSETFUNC(ctx, handle, Csec_acquire_creds);
   DLSETFUNC(ctx, handle, Csec_server_establish_context_ext);
   DLSETFUNC(ctx, handle, Csec_client_establish_context);
   DLSETFUNC(ctx, handle, Csec_map2name);

@@ -42,6 +42,8 @@ int Csec_client_lookup_protocols(Csec_protocol **protocols, int *nbprotocols) {
   Csec_protocol *prots;
   char *func="Csec_client_lookup_protocols";
 
+  Csec_trace(func, "Looking up protocols from the environment\n");
+
   /* Getting the protocol list from environment variable, configuration file
      or default value */
   if (!((p = (char *)getenv (CSEC_MECH)) 
@@ -50,7 +52,7 @@ int Csec_client_lookup_protocols(Csec_protocol **protocols, int *nbprotocols) {
     p = CSEC_DEFAULT_MECHS;
   }
 
-  Csec_trace(func, "Protocols are <%s>\n", p);
+  Csec_trace(func, "Protocols looked up are <%s>\n", p);
   
   buf = (char *)malloc(strlen(p)+1);
   if (NULL == buf) {

@@ -70,7 +70,7 @@ int Csec_init_context_impl(ctx)
 {
 
   memset(ctx, 0, sizeof(Csec_context_t));
-  ctx->flags = CSEC_CTX_INITIALIZED;
+  ctx->flags |= CSEC_CTX_INITIALIZED;
   return 0;
 }
 
@@ -140,22 +140,30 @@ int Csec_delete_creds_impl(ctx)
  * This function caches the credentials in the Csec_context_t object.
  * This function must be called again to refresh the credentials.
  */
-int Csec_server_acquire_creds_impl(ctx, service_name)
+int Csec_acquire_creds_impl(ctx, service_name, is_client)
      Csec_context_t *ctx;
      char *service_name;
+     int is_client;
 {
   gss_buffer_desc name_buf;
   gss_name_t server_name;
   OM_uint32 maj_stat, min_stat;
-  char *func = "Csec_server_acquire_creds";
-
+  char *func = "Csec_acquire_creds_impl";
+  gss_cred_usage_t usage;
   
-    
+  if (is_client) {
+    usage = GSS_C_INITIATE;
+  } else {
+    usage = GSS_C_ACCEPT;
+  }
+
   if (service_name == NULL) {
-    Csec_trace(func, "Acquiring default credentials\n");
+    Csec_trace(func, "Acquiring default credentials (is_client: %d)\n", is_client);
     server_name = GSS_C_NO_NAME;
   } else {
-    Csec_trace(func, "Acquiring credentials for <%s>\n", service_name);
+    Csec_trace(func, "Acquiring credentials for <%s> (is_client: %d)\n", 
+	       service_name,
+	       is_client);
     /* Importing the service_name to a gss_buffer_desc */
     name_buf.length = strlen(service_name) + 1;
     name_buf.value = malloc(name_buf.length);
@@ -170,7 +178,7 @@ int Csec_server_acquire_creds_impl(ctx, service_name)
     if (maj_stat != GSS_S_COMPLETE) {
       serrno = _Csec_map_gssapi_err(maj_stat, min_stat);
       _Csec_process_gssapi_err("importing name", maj_stat, min_stat);
-      ctx->flags &= !CSEC_CTX_CREDENTIALS_LOADED;
+      ctx->flags &= ~CSEC_CTX_CREDENTIALS_LOADED;
       return -1;
     }
   }
@@ -180,13 +188,13 @@ int Csec_server_acquire_creds_impl(ctx, service_name)
 			      server_name, 
 			      0,
 			      GSS_C_NULL_OID_SET,
-			      GSS_C_ACCEPT,
+			      usage,
 			      &(ctx->credentials), NULL, NULL);
 
   if (maj_stat != GSS_S_COMPLETE) {
     serrno = _Csec_map_gssapi_err(maj_stat, min_stat);
     _Csec_process_gssapi_err("acquiring credentials", maj_stat, min_stat);
-    ctx->flags &= !CSEC_CTX_CREDENTIALS_LOADED;
+    ctx->flags &= ~CSEC_CTX_CREDENTIALS_LOADED;
     return -1;
   }
 
@@ -235,7 +243,7 @@ int Csec_server_establish_context_ext_impl(ctx, s, buf, len)
       Csec_errmsg(func, "No service name specified to load credentials");
       return -1;
     } else {
-      if (Csec_server_acquire_creds_impl(ctx, ctx->local_name)<0) {
+      if (Csec_acquire_creds_impl(ctx, ctx->local_name, Csec_context_is_client(ctx))<0) {
 	Csec_errmsg(func, "Could no acquire credentials for mechanism");
 	return -1;
       }

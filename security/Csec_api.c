@@ -90,8 +90,82 @@ int Csec_client_init_context(Csec_context_t *ctx,
   ctx->magic = CSEC_CONTEXT_MAGIC_CLIENT_1;
   ctx->server_service_type = service_type;
   ctx->flags = CSEC_CTX_INITIALIZED|CSEC_CTX_SERVICE_TYPE_SET;
+  
+
+  /* Setting the list of protocols from what was passed */
+  if (protocol != NULL) {
+    int rc, i;
+    Csec_protocol *p = protocol;
+
+    Csec_trace(func, "Protocols specified at init\n");
+    
+    for (i = 0; p[i].id[0] != '\0'; i++);
+    /* BEWARE, empty loop */
+
+    ctx->nb_protocols = i;
+    ctx->protocols = (Csec_protocol *)malloc(ctx->nb_protocols * sizeof(Csec_protocol));
+    if (ctx->protocols == NULL) {
+      serrno = ESEC_NO_SECPROT;
+      Csec_errmsg(func, "Error allocating buffer of size %d\n",
+		  ctx->nb_protocols * sizeof(Csec_protocol));
+      return -1;
+    }
+    memcpy(ctx->protocols, protocol, ctx->nb_protocols * sizeof(Csec_protocol));
+    ctx->current_protocol = 0;
+    ctx->flags |= CSEC_CTX_PROTOCOL_LOADED;
+    
+    /* Now loading the correspong shared library */
+    if (Csec_get_shlib(ctx) == NULL) {  
+       return -1; 
+    } 
+  }
 
   return 0;
+}
+
+
+/**
+ * Check the various credentials
+ */
+int *Csec_check_creds(Csec_context_t *ctx) {
+  int i, current_protocol_save;
+
+  current_protocol_save = ctx->current_protocol;
+  int *result;
+
+  result = calloc(ctx->nb_protocols, sizeof(int));
+  if (result == NULL) 
+    return NULL;
+	
+  for (i=0; i<ctx->nb_protocols; i++) {
+    ctx->current_protocol = i;
+    if (Csec_get_shlib(ctx) == NULL) {  
+      result[i] |= CSEC_PROT_NOSHLIB;
+      continue;
+    } 
+    
+    if (!Csec_context_is_client(ctx)) {
+      Csec_server_set_service_name(ctx);
+    }
+
+    if (Csec_acquire_creds(ctx) != 0) {
+      if (serrno == ENOSYS) {
+	result[i] |= CSEC_PROT_NOCHECK;
+      } else {
+	result[i] |= CSEC_PROT_NOCREDS;
+      }
+    } else {                                                                                                                    /* Clear the credentials that have been acquired ! */
+      if (ctx->flags & CSEC_CTX_CREDENTIALS_LOADED) {
+	if (ctx->Csec_delete_creds != NULL)
+	  (*(ctx->Csec_delete_creds))(ctx);
+      }
+    } /* else */
+    /* Now clear the shared lib */
+    Csec_unload_shlib(ctx);
+  } /* for */
+  ctx->current_protocol =  current_protocol_save;
+  Csec_get_shlib(ctx);
+  return result;
 }
 
 /**
@@ -106,6 +180,34 @@ int Csec_server_init_context(Csec_context_t *ctx,
   ctx->magic = CSEC_CONTEXT_MAGIC_SERVER_1;
   ctx->server_service_type = service_type;
   ctx->flags = CSEC_CTX_INITIALIZED|CSEC_CTX_SERVICE_TYPE_SET;
+
+  /* Setting the list of protocols from what was passed */
+  if (protocol != NULL) {
+    int rc, i;
+    Csec_protocol *p = protocol;
+
+    Csec_trace(func, "Protocols specified at init\n");
+    
+    for (i = 0; p[i].id[0] != '\0'; i++);
+    /* BEWARE, empty loop */
+
+    ctx->nb_protocols = i;
+    ctx->protocols = (Csec_protocol *)malloc(ctx->nb_protocols * sizeof(Csec_protocol));
+    if (ctx->protocols == NULL) {
+      serrno = ESEC_NO_SECPROT;
+      Csec_errmsg(func, "Error allocating buffer of size %d\n",
+		  ctx->nb_protocols * sizeof(Csec_protocol));
+      return -1;
+    }
+    memcpy(ctx->protocols, protocol, ctx->nb_protocols * sizeof(Csec_protocol));
+    ctx->current_protocol = 0;
+    ctx->flags |= CSEC_CTX_PROTOCOL_LOADED;
+    
+    /* Now loading the correspong shared library */
+    if (Csec_get_shlib(ctx) == NULL) {  
+       return -1; 
+    } 
+  }
 
   return 0;
 }
@@ -277,7 +379,6 @@ int Csec_client_establish_context(ctx, s)
     ctx->flags |= CSEC_CTX_PROTOCOL_LOADED;
     
     if (Csec_get_shlib(ctx) == NULL) {
-
       return -1;
     }
   }
@@ -476,13 +577,28 @@ int Csec_get_local_service_name(Csec_context_t *ctx,
  * This function caches the credentials in the Csec_context_t object.
  * This function must be called again to refresh the credentials.
  */
-int Csec_server_acquire_creds(Csec_context_t *ctx) {
+int Csec_acquire_creds(Csec_context_t *ctx) {
   /* XXX the credentials are not cached, but looked up
-   every time for the moment */
-  return (*(ctx->Csec_server_acquire_creds))(ctx,
-					     Csec_server_get_service_name(ctx));
+     every time for the moment */
+  char *func = "Csec_acquire_creds";
+  int rc;
+  
+  if (ctx->Csec_acquire_creds != NULL) {
+    Csec_trace(func, "Acquiting creds for service %s\n", Csec_server_get_service_name(ctx));
+    rc = (*(ctx->Csec_acquire_creds))(ctx,
+				      Csec_server_get_service_name(ctx),
+				      Csec_context_is_client(ctx));
+    if (rc != 0) {
+      ctx->flags &= ~CSEC_CTX_CREDENTIALS_LOADED;  
+    } else {
+      ctx->flags |= CSEC_CTX_CREDENTIALS_LOADED;  
+    }    
+    return rc;
+  } else {
+    /* XX What error should be returned here ? */
+    return -1;
+  }
 }
-
 
 /**
  * On a client, sets up the service name, according to the protocol
@@ -675,4 +791,15 @@ Csec_context_t *Csec_get_default_context() {
     return NULL;
 
   return &(thip->default_context);
+}
+
+/**
+ * Checks whether we have a client context or a server context
+ */
+int Csec_context_is_client(Csec_context_t *ctx) {
+  if (ctx->magic & CSEC_CONTEXT_MAGIC_CLIENT_MASK) {
+    return 1;
+  } else {
+    return 0;
+  }
 }

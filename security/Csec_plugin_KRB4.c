@@ -149,11 +149,14 @@ int Csec_delete_creds_impl(ctx)
  * This function caches the credentials in the Csec_context_t object.
  * This function must be called again to refresh the credentials.
  */
-int Csec_server_acquire_creds_impl(ctx, service_name)
+int Csec_acquire_creds_impl(ctx, service_name, is_client)
     Csec_context_t *ctx;
     char *service_name;
+    int is_client;
 {
-    return 0;
+ 
+  serrno = ENOSYS;
+  return -1;
 }
 
 /**

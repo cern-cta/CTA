@@ -69,7 +69,7 @@ typedef struct Csec_context {
   int (*Csec_reinit_context)(struct Csec_context *);
   int (*Csec_delete_connection_context)(struct Csec_context *);
   int (*Csec_delete_creds)(struct Csec_context *);
-  int (*Csec_server_acquire_creds)(struct Csec_context *, char *);
+  int (*Csec_acquire_creds)(struct Csec_context *, char *, int);
   int (*Csec_server_establish_context)(struct Csec_context *, int);
   int (*Csec_server_establish_context_ext)(struct Csec_context *, int,char *, int);
   int (*Csec_client_establish_context)(struct Csec_context *, int);
@@ -92,6 +92,7 @@ struct Csec_api_thread_info {
 
 
 int DLL_DECL check_ctx _PROTO ((Csec_context_t *, char *));
+void DLL_DECL Csec_unload_shlib _PROTO ((Csec_context_t *)); 
 void DLL_DECL *Csec_get_shlib _PROTO ((Csec_context_t *)); 
 /* int DLL_DECL Csec_init_context_ext _PROTO ((Csec_context_t *, int, int)) ; */
 int DLL_DECL Csec_errmsg _PROTO((char *func, char *msg, ...));
