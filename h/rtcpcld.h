@@ -40,7 +40,7 @@
                     RTCPCLD_LOG_MSG(RTCPCLD_MSG_DBSVC), \
                     (struct Cns_fileid *)NULL, \
                     RTCPCLD_NB_PARAMS+3, \
-                    "SYSCALL", \
+                    "DBCALL", \
                     DLF_MSG_PARAM_STR, \
                     func, \
                     "ERROR_STRING", \
@@ -53,6 +53,33 @@
                     ); \
     if ( _dbErr != NULL ) free(_dbErr); \
     serrno = _save_serrno;}
+
+#define LOG_DBCALLANDKEY_ERR(func,dbMsg,dbKey) { \
+    char *_dbErr = NULL; \
+    int _save_serrno = serrno; \
+    (void)dlf_write( \
+                    childUuid, \
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_DBSVC), \
+                    (struct Cns_fileid *)NULL, \
+                    RTCPCLD_NB_PARAMS+4, \
+                    "DBCALL", \
+                    DLF_MSG_PARAM_STR, \
+                    func, \
+                    "DBKEY", \
+                    DLF_MSG_PARAM_INT64, \
+                    dbKey, \
+                    "ERROR_STRING", \
+                    DLF_MSG_PARAM_STR, \
+                    sstrerror(serrno), \
+                    "DB_ERROR", \
+                    DLF_MSG_PARAM_STR, \
+                    (_dbErr = rtcpcld_fixStr(dbMsg)), \
+                    RTCPCLD_LOG_WHERE \
+                    ); \
+    if ( _dbErr != NULL ) free(_dbErr); \
+    serrno = _save_serrno;}
+
+
 
 #define LOG_SECURITY_ERR(func) {\
     int _save_serrno = serrno; \
