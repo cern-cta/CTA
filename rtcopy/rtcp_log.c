@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.14 $ $Date: 2001/08/17 13:52:39 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.15 $ $Date: 2002/11/26 15:02:32 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -27,6 +27,7 @@ extern char *geterr();
 #endif /* _WIN32 */
 
 #include <errno.h>
+#include <serrno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -42,6 +43,8 @@ extern char *geterr();
 #include <rtcp_server.h>
 #endif /* RTCP_SERVER */
 
+#define SAVE_ERRNO int save_errno, save_serrno; save_errno = errno; save_serrno = serrno;
+#define RESTORE_ERRNO {serrno = save_serrno; errno = save_errno;}
 
 #if !defined(linux)
 extern char *sys_errlist[];
@@ -65,12 +68,14 @@ void rtcpc_SetErrTxt(int level, char *format, ...) {
     FILE **err_p, **out_p;
     SOCKET **client_socket_p;
 
+    SAVE_ERRNO
+
     err_p = out_p = NULL;
     client_socket_p = NULL;
     Cglobals_get(&errmsg_key,(void *)&msgbuf_p,sizeof(char *));
-    if ( msgbuf_p == NULL ) return;
+    if ( msgbuf_p == NULL ) {RESTORE_ERRNO; return;}
     msgbuf = *msgbuf_p;
-    if ( msgbuf == NULL ) return;
+    if ( msgbuf == NULL ) {RESTORE_ERRNO; return;}
     if ( (p = getenv("RTCOPY_LOGLEVEL")) != NULL ) {
         loglevel = atoi(p);
     }
@@ -90,6 +95,7 @@ void rtcpc_SetErrTxt(int level, char *format, ...) {
              strncmp(msgbuf," DUMP",5) != 0 && 
              *msgbuf != '\0' && *msgbuf != '\n') ) {
             if ( tpread_command == TRUE ) log(LOG_INFO,"%s",msgbuf);
+            RESTORE_ERRNO;
             return;
         }
 
@@ -108,6 +114,7 @@ void rtcpc_SetErrTxt(int level, char *format, ...) {
         }
 
     }
+    RESTORE_ERRNO;
     return;
 }
 
@@ -118,6 +125,8 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
     FILE **out_p, **err_p;
     SOCKET **client_socket_p;
 
+    SAVE_ERRNO
+
     if ( (p = getenv("RTCOPY_LOGLEVEL")) != NULL ) {
         loglevel = atoi(p);
     }
@@ -126,6 +135,7 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
         initlog("rtcopyd",loglevel,RTCOPY_LOGFILE);
         if ( msgbuf == NULL && client_socket == NULL ) {
             rtcp_log = (void (*)(int, const char *, ...))log;
+            RESTORE_ERRNO;
             return(0);
         }
     }
@@ -135,22 +145,23 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
         else loglevel = LOG_INFO;
     }
     Cglobals_get(&errmsg_key,(void **)&msgbuf_p,sizeof(char *));
-    if ( msgbuf != NULL && msgbuf_p == NULL ) return(-1);
+    if ( msgbuf != NULL && msgbuf_p == NULL ) {RESTORE_ERRNO; return(-1);}
     else *msgbuf_p = msgbuf;
 
     Cglobals_get(&out_key,(void **)&out_p,sizeof(FILE *));
-    if ( out != NULL && out_p == NULL ) return(-1);
+    if ( out != NULL && out_p == NULL ) {RESTORE_ERRNO; return(-1);}
     else *out_p = out;
 
     Cglobals_get(&err_key,(void **)&err_p,sizeof(FILE *));
-    if ( err != NULL && err_p == NULL ) return(-1);
+    if ( err != NULL && err_p == NULL ) {RESTORE_ERRNO; return(-1);}
     else *err_p = err;
 
     Cglobals_get(&client_socket_key,(void **)&client_socket_p,sizeof(SOCKET *));
-    if ( client_socket != NULL && client_socket_p == NULL ) return(-1);
+    if ( client_socket != NULL && client_socket_p == NULL ) {RESTORE_ERRNO; return(-1);}
     else *client_socket_p = client_socket;
 
     rtcp_log = (void (*)(int, const char *, ...))rtcpc_SetErrTxt;
+    RESTORE_ERRNO;
     return(0);
 }
 
@@ -168,9 +179,11 @@ void rtcpd_AppendClientMsg(tape_list_t *tape, file_list_t *file,
     char *buf;
     int l_buf;
 
+    SAVE_ERRNO
+
     buf = NULL;
     rtcp_log(LOG_DEBUG,"rtcpd_AppendClientMsg() called\n");
-    if ( format == NULL || *format == '\0' ) return;
+    if ( format == NULL || *format == '\0' ) {RESTORE_ERRNO; return;}
     if ( file != NULL ) {
         filereq = &file->filereq;
         buf = filereq->err.errmsgtxt;
@@ -189,5 +202,7 @@ void rtcpd_AppendClientMsg(tape_list_t *tape, file_list_t *file,
         l_buf = strlen(buf) + strlen(tmpbuf);
         if ( l_buf < CA_MAXLINELEN ) strcat(buf,tmpbuf);
     }
+    RESTORE_ERRNO;
+    return;
 }
 #endif /* RTCP_SERVER */
