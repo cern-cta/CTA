@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.25 $ $Date: 2000/01/21 11:43:29 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.26 $ $Date: 2000/01/21 13:29:14 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1175,6 +1175,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
     diskIOstatus_t *diskIOstatus = NULL;
     u_signed64 nbbytes;
     char *p, u64buf[22];
+    register int debug = Debug;
     int pool_index = -1;
     int indxp = 0;
     int offset = 0;
@@ -1183,6 +1184,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
     int end_of_tpfile = FALSE;
     int rc, mode, severity, save_errno,save_serrno;
     int rc, severity, save_serrno;
+    extern int ENOSPC_occurred;
     rtcp_log(LOG_DEBUG,"diskIOthread() started\n");
         rtcp_log(LOG_ERR,"diskIOthread() received NULL argument\n");
         rtcpd_SetProcError(RTCP_FAILED);
@@ -1294,6 +1296,11 @@ static int DiskToMemory(int disk_fd, int pool_index,
             (unsigned long)file->diskbytes_sofar,filereq->cprc,
             (unsigned long)filereq->bytes_out,filereq->cprc,
         if ( (filereq->convert & FIXVAR) != 0 && fl != NULL ) free(fl);
+        p = u64tostr(filereq->bytes_out,u64buf,0);
+        p = strchr(u64buf,' ');
+        if ( p != NULL ) p = '\0';
+        rtcp_log(LOG_INFO,"network interface for data transfer (%s bytes) is %s\n",
+                 u64buf,filereq->ifce);
         if ( (rc == -1) || ((rtcpd_CheckProcError() & RTCP_FAILED) == 0) ) 
             tellClient(&client_socket,NULL,file,rc);
 
@@ -1327,7 +1334,7 @@ int rtcpd_InitDiskIO(int *poolsize) {
     
     rc = Cpool_create(*poolsize,poolsize);
     rtcp_log(LOG_DEBUG,"rtcpd_InitDiskIO() thread pool (id=%d): pool size = %d\n",
-    rtcp_log(LOG_INFO,"rtcpd_InitDiskIO() thread pool (id=%d): pool size = %d\n",
+        rc,*poolsize);
     /*
      * Create the diskIOstatus array in the processing status structure
      */

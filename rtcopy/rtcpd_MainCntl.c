@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.15 $ $Date: 2000/01/20 15:48:21 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.16 $ $Date: 2000/01/21 13:29:18 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -121,7 +121,7 @@ static int rtcpd_AllocBuffers() {
     if ( (p = getconfent("RTCOPYD","BUFSZ",0)) != NULL ) {
         bufsz = atoi(p);
     }
-    rtcp_log(LOG_INFO,"rtcpd_AllocBuffers() allocate %d x %d buffers\n",
+    rtcp_log(LOG_DEBUG,"rtcpd_AllocBuffers() allocate %d x %d buffers\n",
         nb_bufs,bufsz);
 
     databufs = (buffer_table_t **)calloc((size_t)nb_bufs, sizeof(buffer_table_t *));
@@ -559,7 +559,14 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
          */
         if ( (tapereq->err.severity & RTCP_FAILED) == 0 ) {
             tapereq->err.errorcode = status;
-            tapereq->err.severity = severity;
+            if ( (severity & (RTCP_FAILED | RTCP_RESELECT_SERV | RTCP_USERR |
+                              RTCP_SYERR | RTCP_UNERR | RTCP_SEERR)) != 0 ) {
+                tapereq->err.severity = tapereq->err.severity & ~RTCP_OK;
+                tapereq->err.severity = tapereq->err.severity & ~RTCP_RETRY_OK;
+                tapereq->err.severity |= severity;
+            } else { 
+                tapereq->err.severity |= severity;
+            } 
         }
     }
     if ( filereq != NULL ) {
@@ -568,7 +575,14 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
          */
         if ( (filereq->err.severity & RTCP_FAILED) == 0 ) {
             filereq->err.errorcode = status;
-            filereq->err.severity = severity;
+            if ( (severity & (RTCP_FAILED | RTCP_RESELECT_SERV | RTCP_USERR | 
+                              RTCP_SYERR | RTCP_UNERR | RTCP_SEERR)) != 0 ) {
+                filereq->err.severity = filereq->err.severity & ~RTCP_OK;
+                filereq->err.severity = filereq->err.severity & ~RTCP_RETRY_OK;
+                filereq->err.severity |= severity;
+            } else {
+                filereq->err.severity |= severity;
+            } 
         }
     }
     (void)Cthread_mutex_unlock_ext(proc_cntl.ReqStatus_lock);
@@ -975,7 +989,7 @@ int rtcpd_MainCntl(SOCKET *accept_socket) {
             rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_WaitTapeIO(): %s\n",
                 sstrerror(serrno));
         }
-        rtcp_log(LOG_INFO,"rtcpd_MainCntl() tape I/O thread returned status=%d\n",
+        rtcp_log(LOG_DEBUG,"rtcpd_MainCntl() tape I/O thread returned status=%d\n",
             status);
         if ( (rtcpd_CheckProcError() & RTCP_LOCAL_RETRY) != 0 ) { 
             retry++;

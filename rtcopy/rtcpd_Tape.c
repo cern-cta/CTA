@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.15 $ $Date: 2000/01/21 11:43:32 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.16 $ $Date: 2000/01/21 13:29:12 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -933,11 +933,13 @@ void *tapeIOthread(void *arg) {
     tape_list_t *tape, *nexttape;
     file_list_t *nextfile, *tmpfile;
     SOCKET client_socket;
+    char *p, u64buf[22];
     u_signed64 totsz;
     int indxp = 0;
     int firstblk = 0;
     int tape_fd = -1;
     int rc,BroadcastInfo,severity;
+    extern char *u64tostr _PROTO((u_signed64, char *, int));
 
     if ( arg == NULL ) {
         rtcp_log(LOG_ERR,"tapeIOthread() received NULL argument\n");
@@ -1083,7 +1085,7 @@ void *tapeIOthread(void *arg) {
                         tmpfile->filereq.proc_status = RTCP_WAITING;
                         tmpfile->tape = nexttape;
                         CLIST_INSERT(nexttape->file,tmpfile);
-                        rtcp_log(LOG_INFO,"tapeIOthread() create temporary file element for tape fseq=%d\n",tmpfile->filereq.tape_fseq);
+                        rtcp_log(LOG_DEBUG,"tapeIOthread() create temporary file element for tape fseq=%d\n",tmpfile->filereq.tape_fseq);
                     }
                 }
                 /*
@@ -1202,6 +1204,8 @@ void *tapeIOthread(void *arg) {
                         TP_STATUS(RTCP_PS_RELEASE);
                         rtcpd_Release(nexttape,NULL);
                         TP_STATUS(RTCP_PS_NOBLOCKING);
+                        tellClient(&client_socket,NULL,NULL,0);
+                        (void) rtcp_CloseConnection(&client_socket);
                         return((void *)&failure);
                     }
                     break;
@@ -1229,7 +1233,7 @@ void *tapeIOthread(void *arg) {
                     if ( nextfile->filereq.maxsize > 0 ) {
                         if ( nextfile->filereq.maxsize !=
                             nextfile->next->filereq.maxsize ) {
-                            rtcp_log(LOG_INFO,"tapeIOthread() inconsistent maxsize for concat to disk. Repaired.\n");
+                            rtcp_log(LOG_DEBUG,"tapeIOthread() inconsistent maxsize for concat to disk. Repaired.\n");
                             nextfile->next->filereq.maxsize = 
                                 nextfile->filereq.maxsize;
                         }
@@ -1288,6 +1292,11 @@ void *tapeIOthread(void *arg) {
                      */ 
                 }
                 nextfile->filereq.proc_status = RTCP_FINISHED;
+                p = u64tostr(nextfile->filereq.bytes_out,u64buf,0);
+                p = strchr(u64buf,' ');
+                if ( p != NULL ) p = '\0';
+                rtcp_log(LOG_INFO,"network interface for data transfer (%s bytes) is %s\n",
+                         u64buf,nextfile->filereq.ifce);
                 tellClient(&client_socket,NULL,nextfile,0);
                 TP_STATUS(RTCP_PS_STAGEUPDC);
                 rc = rtcpd_stageupdc(nexttape,nextfile);
@@ -1354,7 +1363,7 @@ int rtcpd_StartTapeIO(rtcpClientInfo_t *client, tape_list_t *tape) {
 int rtcpd_WaitTapeIO(int *status) {
     int rc,*_status;
 
-    rtcp_log(LOG_INFO,"rtcpd_WaitTapeIO() waiting for tape I/O thread\n");
+    rtcp_log(LOG_DEBUG,"rtcpd_WaitTapeIO() waiting for tape I/O thread\n");
 
     _status = NULL;
     rc = Cthread_join(proc_cntl.tapeIOthreadID,&_status);

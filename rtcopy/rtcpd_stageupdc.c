@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.9 $ $Date: 2000/01/21 11:44:34 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.10 $ $Date: 2000/01/21 13:29:16 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -165,8 +165,9 @@ int rtcpd_stageupdc(tape_list_t *tape,
     }
     while ( !feof(stgupdc_fd) ) {
         if ( fgets(newpath,CA_MAXPATHLEN+1,stgupdc_fd) == NULL ) {
-            rtcp_log(LOG_ERR,"rtcpd_stageupdc() fgets(): %s\n",
-                sstrerror(errno));
+            if ( errno > 0 ) 
+                rtcp_log(LOG_ERR,"rtcpd_stageupdc() fgets(): %s\n",
+                         sstrerror(errno));
         }
     }
     rc = PCLOSE(stgupdc_fd);

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.13 $ $Date: 2000/01/20 15:23:11 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.14 $ $Date: 2000/01/21 13:29:17 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -219,7 +219,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         tmpfile->filereq = file->filereq;
         tmpfile->filereq.tape_fseq++;
         tmpfile->tape = tape;
-        rtcp_log(LOG_INFO,"rtcp_CheckFileReq() create temporary file element for tape fseq %d\n",tmpfile->filereq.tape_fseq);
+        rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq() create temporary file element for tape fseq %d\n",tmpfile->filereq.tape_fseq);
         CLIST_INSERT(tape->file,tmpfile);
     }
 
