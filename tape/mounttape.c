@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.3 $ $Date: 1999/11/10 14:20:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.4 $ $Date: 1999/11/10 14:32:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -723,7 +723,6 @@ int mode;
 
 void cleanup()
 {
-	int c;
 	int flags;
 	int msglen;
 	char *q;
@@ -775,7 +774,7 @@ void cleanup()
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	c = send2tpd (NULL, sendbuf, msglen, NULL, 0);
+	(void) send2tpd (NULL, sendbuf, msglen, NULL, 0);
 }
 
 configdown(drive)
