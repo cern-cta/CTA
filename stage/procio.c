@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.107 2001/03/13 14:35:54 jdurand Exp $
+ * $Id: procio.c,v 1.108 2001/03/14 15:22:36 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.107 $ $Date: 2001/03/13 14:35:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.108 $ $Date: 2001/03/14 15:22:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -184,6 +184,7 @@ extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 extern char *next_tppool _PROTO((struct fileclass *));
 extern void bestnextpool_out _PROTO((char *, int));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
+int stageput_check_hsm _PROTO((struct stgcat_entry *, uid_t, gid_t));
 
 #ifdef MIN
 #undef MIN
@@ -1874,7 +1875,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					} else if (correct_size <= 0) {
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
-						sendrep (rpfd, MSG_OUT,
+						sendrep (rpfd, MSG_ERR,
 									"STG98 - %s size is of zero size - not migrated\n",
 									(api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath);
 						global_c_stagewrt++;
@@ -1885,7 +1886,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 						if (Cnsfilestat.filesize > 0) {
 							setegid(start_passwd.pw_gid);
 							seteuid(start_passwd.pw_uid);
-							sendrep (rpfd, MSG_OUT,
+							sendrep (rpfd, MSG_ERR,
 										"STG98 - %s renewed (size differs vs. %s)\n",
 										hsmfiles[ihsmfiles],
 										(api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath);
@@ -1907,7 +1908,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					if (filemig_stat.st_size <= 0) {
 						setegid(start_passwd.pw_gid);
 						seteuid(start_passwd.pw_uid);
-						sendrep (rpfd, MSG_OUT,
+						sendrep (rpfd, MSG_ERR,
 									"STG98 - %s size is of zero size - not migrated\n",
 									(api_out == 0) ? argv[Coptind + ihsmfiles] : stpp_input[ihsmfiles].upath);
 						global_c_stagewrt++;
@@ -2722,6 +2723,8 @@ void procputreq(req_type, req_data, clienthost)
 					}
 #endif
 				}
+				/* We check if the file yet exist in the name server and if we have to recreate it */
+				if (stageput_check_hsm(hsmfilesstcp[ihsmfiles],uid,gid) != 0) continue;
 				if (!wqp) {
 					wqp = add2wq (clienthost,
 									user, uid, gid,
@@ -2927,6 +2930,8 @@ void procputreq(req_type, req_data, clienthost)
 					goto reply;
 				}
 			} else {
+				/* We check if the file yet exist in the name server and if we have to recreate it */
+				if (stageput_check_hsm(hsmfilesstcp[i],uid,gid) != 0) continue;
 				subreqid = hsmfilesstcp[i]->reqid;
 			}
 			if (!wqp) {
@@ -3115,8 +3120,9 @@ isstaged(cur, p, poolflag, poolname)
 				(cur->u1.h.fileid == stcp->u1.h.fileid)) stcp_castor_invariants = stcp;
 
 			if (stcp_castor_name != NULL) {
-				if (stcp_castor_name == stcp_castor_invariants) {
+				if ((stcp_castor_name == stcp_castor_invariants) || ((cur->u1.h.server[0] == '\0') && (cur->u1.h.fileid == 0))) {
 					/* If we matched totally name + invariants, with same stcp, we got it */
+					/* If we matched totally name and there is no invariants in input, we also got it */
 					found = 1;
 					break;
 				} else if (stcp_castor_invariants != NULL) {
@@ -3528,5 +3534,132 @@ int create_hsm_entry(rpfd,stcp,api_out,openmode,immediate_delete)
 	}
 #endif
 	savereqs();
+	return(0);
+}
+
+/* Return 0 if ok                  */
+/*       -1 if nothing to migrated */
+/*      > 0 if error               */
+
+int stageput_check_hsm(stcp,uid,gid)
+	struct stgcat_entry *stcp;
+	uid_t uid;
+	gid_t gid;
+{
+	struct stat filemig_stat;          /* For non-CASTOR HSM stat() */
+	struct Cns_filestat Cnsfilestat;   /* For     CASTOR hsm stat() */
+	struct Cns_fileid Cnsfileid;       /* For     CASTOR hsm IDs */
+	u_signed64 correct_size;
+	time_t hsmmtime = 0;
+	extern struct passwd start_passwd;             /* Start uid/gid stage:st */
+	extern struct passwd stage_passwd;             /* Generic uid/gid stage:st */
+	int forced_Cns_creatx = 0;
+	int have_okmode_before = 0;
+	int this_okmode_before = 0;
+
+	memset(&Cnsfileid,0,sizeof(struct Cns_fileid));
+	setegid(gid);
+	seteuid(uid);
+	if (Cns_statx(stcp->u1.h.xfile, &Cnsfileid, &Cnsfilestat) == 0) {
+		have_okmode_before = 1;
+		this_okmode_before = Cnsfilestat.filemode;
+		hsmmtime = Cnsfilestat.mtime;
+		/* We compare the size of the disk file with the size in Name Server */
+		if (rfio_stat(stcp->ipath, &filemig_stat) < 0) {
+			setegid(start_passwd.pw_gid);
+			seteuid(start_passwd.pw_uid);
+			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+			return(USERR);
+		}
+		correct_size = (u_signed64) filemig_stat.st_size;
+		if ((hsmmtime <= stcp->a_time) && (correct_size > 0 && correct_size == Cnsfilestat.filesize)) {
+			/* Same size and > 0 and mtimes compatible: we assume user asks for a new copy */
+			setegid(start_passwd.pw_gid);
+			seteuid(start_passwd.pw_uid);
+			return(0);
+		} else if (correct_size <= 0) {
+			setegid(start_passwd.pw_gid);
+			seteuid(start_passwd.pw_uid);
+			sendrep (rpfd, MSG_ERR,
+						"STG98 - %s size is of zero size - not migrated\n",
+						stcp->ipath);
+			return(-1);
+		} else {
+			/* Not the same size or diskfile size is zero*/
+			if (Cnsfilestat.filesize > 0) {
+				setegid(start_passwd.pw_gid);
+				seteuid(start_passwd.pw_uid);
+				sendrep (rpfd, MSG_ERR,
+							"STG98 - %s renewed (size differs vs. %s)\n",
+							stcp->u1.h.xfile,
+							stcp->ipath);
+				setegid(gid);
+				seteuid(uid);
+			}
+			forced_Cns_creatx = 1;
+		}
+	} else {
+		/* It is not point to try to migrated something of zero size */
+		if (rfio_stat(stcp->ipath, &filemig_stat) < 0) {
+			setegid(start_passwd.pw_gid);
+			seteuid(start_passwd.pw_uid);
+			sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, "rfio_stat", rfio_serror());
+			return(USERR);
+		}
+		if (filemig_stat.st_size <= 0) {
+			setegid(start_passwd.pw_gid);
+			seteuid(start_passwd.pw_uid);
+			sendrep (rpfd, MSG_ERR,
+						"STG98 - %s size is of zero size - not migrated\n",
+						stcp->ipath);
+			return(-1);
+		}
+		/* We will have to create it */
+		forced_Cns_creatx = 1;
+		correct_size = (u_signed64) filemig_stat.st_size;
+	}
+	if (forced_Cns_creatx != 0) {
+		mode_t okmode;
+		mode_t openmode = 0;
+		/* The following will make sure that we use user's umask and uid/gid for creation */
+		int have_save_stcp_for_Cns_creatx = 0;
+		struct stgcat_entry save_stcp_for_Cns_creatx;
+		struct stgcat_entry stgreq;
+		int api_out = 0; /* There is stageput API for the moment */
+
+		stgreq.uid = uid;
+		stgreq.gid = gid;
+		SET_CORRECT_OKMODE;
+		if (have_okmode_before) okmode = this_okmode_before;
+
+		if (Cns_creatx(stcp->u1.h.xfile, okmode, &Cnsfileid) != 0) {
+			setegid(start_passwd.pw_gid);
+			seteuid(start_passwd.pw_uid);
+			sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_creatx", sstrerror(serrno));
+			return((serrno == EPERM) ? USERR : SYERR);
+		}
+		strcpy(stcp->u1.h.server,Cnsfileid.server);
+		stcp->u1.h.fileid = Cnsfileid.fileid;
+		stcp->actual_size = correct_size;
+		/* We set the size in the name server */
+		if (Cns_setfsize(NULL,&Cnsfileid,correct_size) != 0) {
+			setegid(start_passwd.pw_gid);
+			seteuid(start_passwd.pw_uid);
+			sendrep (rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "Cns_setfsize", sstrerror(serrno));
+			return((serrno == EPERM) ? USERR : SYERR);
+		}
+		/* The fileclass will be added if necessary by update_migpool() called below */
+		setegid(start_passwd.pw_gid);
+		seteuid(start_passwd.pw_uid);
+#ifdef USECDB
+		if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+			stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+		}
+#endif
+		savereqs();
+		return(0);
+	}
+	setegid(start_passwd.pw_gid);
+	seteuid(start_passwd.pw_uid);
 	return(0);
 }
