@@ -100,16 +100,6 @@ namespace castor {
           throw (oracle::occi::SQLException);
         
         /**
-         * Get an object from its id.
-         * Essentially a wrapper around createObj that
-         * don't call it if the object is in the newlyCreated
-         * vector
-         */
-        castor::IObject* getObjFromId (unsigned long id,
-                                       ObjectCatalog& newlyCreated)
-          throw (castor::exception::Exception);
-        
-        /**
          * access to the Oracle connection for child classes
          */
         oracle::occi::Connection* connection() const;

@@ -353,3 +353,18 @@ castor::db::ora::OraCnvSvc::getTypeFromId(const unsigned long id)
   // never reached
   return OBJ_INVALID;
 }
+
+// -----------------------------------------------------------------------
+// getObjFromId
+// -----------------------------------------------------------------------
+castor::IObject* castor::db::ora::OraCnvSvc::getObjFromId
+(unsigned long id,
+ castor::ObjectCatalog& newlyCreated)
+  throw (castor::exception::Exception) {
+  if (newlyCreated.find(id) != newlyCreated.end()) {
+    return newlyCreated[id];
+  } else {
+    castor::db::DbAddress clientAd(id, "OraCnvSvc", repType());
+    return createObj(&clientAd, newlyCreated);
+  }
+}

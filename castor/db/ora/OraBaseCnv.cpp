@@ -131,18 +131,3 @@ oracle::occi::Connection* castor::db::ora::OraBaseCnv::connection() const {
 castor::db::ora::OraCnvSvc* castor::db::ora::OraBaseCnv::cnvSvc() const {
   return m_cnvSvc;
 }
-
-// -----------------------------------------------------------------------
-// getObjFromId
-// -----------------------------------------------------------------------
-castor::IObject* castor::db::ora::OraBaseCnv::getObjFromId
-(unsigned long id,
- castor::ObjectCatalog& newlyCreated)
-  throw (castor::exception::Exception) {
-  if (newlyCreated.find(id) != newlyCreated.end()) {
-    return newlyCreated[id];
-  } else {
-    castor::db::DbAddress clientAd(id, "OraCnvSvc", repType());
-    return cnvSvc()->createObj(&clientAd, newlyCreated);
-  }
-}

@@ -57,7 +57,7 @@ namespace castor {
         ~OraCnvSvc();
 
         /** Get the service id */
-        virtual inline const unsigned int id() const;
+        virtual const unsigned int id() const;
 
         /** Get the service id */
         static const unsigned int ID();
@@ -141,6 +141,16 @@ namespace castor {
          */
         virtual unsigned int nbRequestsToProcess()
           throw (castor::exception::Exception);
+
+        /**
+         * Get an object from its id.
+         * Essentially a wrapper around createObj that
+         * don't call it if the object is in the newlyCreated
+         * vector
+         */
+        castor::IObject* getObjFromId (unsigned long id,
+                                       ObjectCatalog& newlyCreated)
+          throw (castor::exception::Exception);        
 
       protected:
 
