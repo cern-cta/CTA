@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/01 15:38:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: testdb.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/07/19 10:10:19 $ $Author: sponcec3 $
  *
  * 
  *
@@ -35,9 +35,13 @@
 #include "castor/IClient.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/BaseObject.hpp"
 #include <iostream>
 
 int main (int argc, char** argv) {
+  // initalizes log
+  castor::BaseObject::initLog("", castor::SVC_STDMSG);
+
   // Prepare a request
   castor::rh::StageInRequest* fr = new castor::rh::StageInRequest();
   

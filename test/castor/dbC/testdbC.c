@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: testdbC.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/01 15:38:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: testdbC.c,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/19 10:10:19 $ $Author: sponcec3 $
  *
  * 
  *
@@ -31,6 +31,7 @@
 #include "castor/rh/Client.h"
 #include "castor/Services.h"
 #include "castor/BaseAddress.h"
+#include "castor/BaseObject.h"
 #include "castor/db/DbAddress.h"
 #include "castor/IObject.h"
 #include "castor/IClient.h"
@@ -57,6 +58,9 @@ int main (int argc, char** argv) {
   struct Crh_Request_t* fr2r;
   struct Crh_FileRequest_t* fr2;
   unsigned long id;
+
+  // initalizes log
+  C_BaseObject_initLog("", SVC_STDMSG);
 
   Crh_StageInRequest_create(&fr);
   frfr = Crh_StageInRequest_getFileRequest(fr);

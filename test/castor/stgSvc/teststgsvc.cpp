@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: teststgsvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/05/26 10:14:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: teststgsvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/07/19 10:10:19 $ $Author: sponcec3 $
  *
  * 
  *
@@ -36,12 +36,16 @@
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/BaseObject.hpp"
 #include <iostream>
 
 void processTapes(castor::stager::IStagerSvc* stgSvc)
   throw (castor::exception::Exception);
 
 int main (int argc, char** argv) {
+  // initalizes log
+  castor::BaseObject::initLog("", castor::SVC_STDMSG);
+
   // Prepare 2 tapes and some segments with different status
   castor::stager::Tape* t1 = new castor::stager::Tape();
   t1->setVid("1234");
