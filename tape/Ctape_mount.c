@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.19 $ $Date: 2001/09/19 06:34:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.20 $ $Date: 2002/04/08 08:00:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_mount - send a request to the tape daemon to have a tape mounted
@@ -134,7 +134,7 @@ int vdqm_reqid;
 
 	/* Set default values */
 
-#if TMS
+#if TMS || VMGR
 	if (! vsn)
 		actual_vsn[0] = '\0';
 	else {
@@ -154,11 +154,27 @@ int vdqm_reqid;
 	else
 		strcpy (actual_lbltype, lbltype);
 
-	if (c = tmscheck (actual_vid, actual_vsn, actual_dgn, actual_den,
-	    actual_lbltype, mode, acctname)) {
-		serrno = c;
-		return (-1);
+#if VMGR
+	if (c = vmgrcheck (actual_vid, actual_vsn, actual_dgn, actual_den,
+	    actual_lbltype, mode, uid, gid)) {
+#if TMS
+		if (c != ETVUNKN)
+#endif
+		{
+			serrno = c;
+			return (-1);
+		}
+#endif
+#if TMS
+		if (c = tmscheck (actual_vid, actual_vsn, actual_dgn, actual_den,
+		    actual_lbltype, mode, acctname)) {
+			serrno = c;
+			return (-1);
+		}
+#endif
+#if VMGR
 	}
+#endif
 #else
 	if (! vsn)
 		strcpy (actual_vsn, actual_vid);
