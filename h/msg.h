@@ -1,9 +1,9 @@
 /*
- * $Id: msg.h,v 1.2 2001/04/29 16:04:04 baud Exp $
+ * $Id: msg.h,v 1.3 2005/02/28 14:09:58 obarring Exp $
  */
 
 /*
- * @(#)$RCSfile: msg.h,v $ $Revision: 1.2 $ $Date: 2001/04/29 16:04:04 $ CERN IT-PDP/DC Antoine Trannoy
+ * @(#)$RCSfile: msg.h,v $ $Revision: 1.3 $ $Date: 2005/02/28 14:09:58 $ CERN IT-PDP/DC Antoine Trannoy
  */
 
 /*
@@ -26,6 +26,11 @@
  * Maximum message size.
  */
 #define MSGSIZ		256
+
+/*
+ * Default network connect/read/write timeout
+ */
+#define MSG_DEFTIMEOUT  60
 
 /*
  * Possible requests, and acknowledgment, to message daemon.
