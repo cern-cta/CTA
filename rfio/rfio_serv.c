@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_serv.c,v 1.10 2004/08/12 13:05:59 motiakov Exp $
+ * $Id: rfio_serv.c,v 1.11 2004/09/28 12:51:05 obarring Exp $
  */
 
 /*
@@ -69,6 +69,10 @@ static char sccsid[] = "@(#)rfio_serv.c,v 1.4 2004/03/22 12:50:01 CERN/IT/PDP/DM
 #include <sys/types.h>
 #include <sys/wait.h>                   /* wait, wait3, wait4 (BSD)     */
 #endif /* __alpha ** __osf__ || linux */
+
+#if defined(linux)
+#include <sys/resource.h>
+#endif /* linux */
 
 #include <Cpwd.h>
 #include <Cgrp.h>
@@ -1087,6 +1091,18 @@ char tmpbuf[21], tmpbuf2[21];
          log(LOG_INFO,"schedctl(%d,%d,%d) done\n",NDPRI,0,ndpri) ;
    }
 #endif /* sgi */
+
+#if defined(linux)
+   if ( (p1 = getconfent(from_host,"RFIOD_SCHED",0)) != NULL ) {
+     int priority, sched_rc;
+     priority = atoi(p1);
+     log(LOG_INFO,"Trying to set scheduling priority to %d\n",priority);
+     sched_rc = setpriority(PRIO_PGRP,0,priority);
+     if ( sched_rc == -1 ) log(LOG_ERR,"setpriority(%d,%d,%d): %s\n",
+                               PRIO_PGRP,0,priority,strerror(errno));
+   }
+#endif /* linux */
+   
    /*
     * Loop on request.
     */
