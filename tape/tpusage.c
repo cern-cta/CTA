@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.6 $ $Date: 2002/09/19 06:54:52 $ CERN CN-PDP/DM Claire Redmond/Andrew Askew/Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.7 $ $Date: 2002/09/19 12:09:01 $ CERN CN-PDP/DM Claire Redmond/Andrew Askew/Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -362,6 +362,7 @@ char **argv;
                  break;
       case 'u':			/* Details of the most active user for each tape */      
                  uflag++;
+                 printf("User statistics");
                  break;		 
       case 'V':			/* List of specific volume details */
                  if ((chk_vol(Coptarg, &expstruct)) == 0)
@@ -1298,7 +1299,6 @@ sort_usrstats(num_devs,device_group_counter)
   }
 
   usr = users_requests;
-  printf("\n");
   while (usr != NULL) {
     element_count++;
     usr = usr->next;
@@ -1380,7 +1380,9 @@ printsorted_list(sortedlist_start,device_group_counter)
   int i=0;
   sortedlist = sortedlist_start;
   {
-    while (i<20 && sortedlist!=NULL && sortedlist->nb[device_group_counter]){
+    if (sortedlist && sortedlist->nb[device_group_counter])
+      printf("\n\nDevice group name: %-8s\n\n",devgrps[device_group_counter]);
+    while (i < 20 && sortedlist && sortedlist->nb[device_group_counter]) {
       
       if (pw = getpwuid(sortedlist->uid)) {
         printf("%-10s ", pw->pw_name);
@@ -2102,30 +2104,28 @@ char devgroup[CA_MAXDGNLEN+1];
 /* requests for that group only. */
 
   if (option == 'M') {
-    int device_group_counter;
-    usr = users_requests;
-    if (usr == NULL) {
-      fprintf(stderr, "User list empty\n");
-      return(1);
-    }
+    printf("\nNumber of tape mount requests");
   }
   else if (option == 'm') {
     printf("\nNumber of physical tape mounts");
   }
   else if (option == 'u'){
     int device_group_counter;
-    printf("\n\n**************************************");
-    printf("\n** Most active users by device group **");
-    printf("\n**************************************");
+    usr = users_requests;
+    if (usr == NULL) {
+      fprintf(stderr, "User list empty\n");
+      return(1);
+    }
+    printf("\nMost active users by device group");
+    print_time_interval(starttime, endtime);
 
     for(device_group_counter=0; device_group_counter<num_devs; device_group_counter++) {
-      printf("\n\nDevice group name: %-8s\n",devgrps[device_group_counter]);
       sort_usrstats(num_devs,device_group_counter);
     }
   }
 
-  print_time_interval(starttime, endtime);
   if (option != 'u'){
+    print_time_interval(starttime, endtime);
     printf("\n\nGroup    ");
     if (devgroupnum == -1) {
       for (i = 0; i < num_devs; i++) {
