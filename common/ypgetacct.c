@@ -1,23 +1,22 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: ypgetacct.c,v $ $Revision: 1.5 $ $Date: 2000/05/31 10:33:54 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: ypgetacct.c,v $ $Revision: 1.6 $ $Date: 2001/09/16 05:43:03 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* ypgetacct()              Getting account id in YP      */
 
 #if defined(NIS)
 #include <stdio.h>
-#if !defined(apollo)
 #include <unistd.h>
-#endif
 #include <string.h>
 #include <sys/types.h>
 #include <pwd.h>
 #include <rpcsvc/ypclnt.h>
+#include "osdep.h"
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
