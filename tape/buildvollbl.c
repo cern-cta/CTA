@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildvollbl.c,v $ $Revision: 1.3 $ $Date: 2000/05/04 10:23:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: buildvollbl.c,v $ $Revision: 1.4 $ $Date: 2002/04/09 07:46:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	buildvollbl - build VOL1 */
@@ -28,6 +28,11 @@ char *name;
 	memcpy (vol1 + 4, vsn, strlen(vsn));
 	if (lblcode == SL)
 		memcpy (vol1 + 41, name, strlen(name));
-	if (lblcode == AL)
+	else
+		if (strcmp (name, STAGERSUPERUSER))
+			memcpy (vol1 + 37, name, strlen(name));
+		else
+			memcpy (vol1 + 37, "CASTOR", 6);
+	if (lblcode == AL || lblcode == AUL)
 		vol1[79] = '3';
 }
