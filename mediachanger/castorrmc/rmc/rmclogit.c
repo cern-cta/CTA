@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmclogit.c,v $ $Revision: 1.1 $ $Date: 2002/11/29 08:51:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rmclogit.c,v $ $Revision: 1.2 $ $Date: 2003/09/08 17:10:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -12,15 +12,13 @@ static char sccsid[] = "@(#)$RCSfile: rmclogit.c,v $ $Revision: 1.1 $ $Date: 200
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
-#include <varargs.h>
+#include <stdarg.h>
 #include "rmc.h"
 extern int jid;
 
-rmclogit(va_alist) va_dcl
+rmclogit(char *func, char *msg, ...)
 {
 	va_list args;
-	char *func;
-	char *msg;
 	char prtbuf[PRTBUFSZ];
 	int save_errno;
 	struct tm *tm;
@@ -28,9 +26,7 @@ rmclogit(va_alist) va_dcl
 	int fd_log;
 
 	save_errno = errno;
-	va_start (args);
-	func = va_arg (args, char *);
-	msg = va_arg (args, char *);
+	va_start (args, msg);
 	time (&current_time);		/* Get current time */
 	tm = localtime (&current_time);
 	sprintf (prtbuf, "%02d/%02d %02d:%02d:%02d %5d %s: ", tm->tm_mon+1,

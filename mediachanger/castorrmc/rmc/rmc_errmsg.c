@@ -4,13 +4,13 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmc_errmsg.c,v $ $Revision: 1.1 $ $Date: 2002/11/29 08:51:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rmc_errmsg.c,v $ $Revision: 1.2 $ $Date: 2003/09/08 17:10:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include <varargs.h>
+#include <stdarg.h>
 #include <sys/types.h>
 #include "rmc.h"
 
@@ -30,7 +30,7 @@ int buflen;
 
 /* rmc_errmsg - send error message to user defined client buffer or to stderr */
 
-rmc_errmsg(va_alist) va_dcl
+rmc_errmsg(char *func, char *msg, ...)
 {
 	va_list args;
 	char *func;
@@ -39,9 +39,7 @@ rmc_errmsg(va_alist) va_dcl
 	int save_errno;
 
 	save_errno = errno;
-        va_start (args);
-        func = va_arg (args, char *);
-        msg = va_arg (args, char *);
+	va_start (args, msg);
 	if (func)
 		sprintf (prtbuf, "%s: ", func);
 	else
@@ -58,6 +56,7 @@ rmc_errmsg(va_alist) va_dcl
 	} else {
 		fprintf (stderr, "%s", prtbuf);
 	}
+	va_end (args);
 	errno = save_errno;
 	return (0);
 }
