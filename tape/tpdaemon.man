@@ -1,0 +1,104 @@
+.\" @(#)$RCSfile: tpdaemon.man,v $ $Revision: 1.1 $ $Date: 1999/11/11 08:50:06 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH TPDAEMON l "$Date: 1999/11/11 08:50:06 $"
+.SH NAME
+tpdaemon \- starts the tape daemon
+.SH SYNOPSIS
+.B  /usr/local/bin/tpdaemon
+.SH DESCRIPTION
+.LP
+The 
+.B tpdaemon
+command starts the tape daemon.
+This command is usually executed at system startup time
+.RB ( /etc/rc.local ).
+This will read the configuration file
+/etc/TPCONFIG and look for requests. Short requests like
+.B tpstat
+are processed in the main loop. The daemon forks overlays to execute
+long requests like mounting, positionning, unloading tapes or configuring
+drives.
+.LP
+All error messages and statistical information are kept in a log.
+.LP
+The tape daemon listen port number must be defined on all client hosts and
+on the tape server itself with an entry in
+.B /etc/services
+like:
+.RS
+.HP
+tape           5011/tcp                        # CASTOR tape daemon
+.RE
+.LP
+There must be one entry in the configuration file per tape drive giving:
+.HP
+drive name	as seen by the operators in the mount messages. The name
+cannot exceed 8 characters.
+.HP
+device group	CART, 8200, 8500, DAT, DLT, NTP, SD3 (Redwood) or 9840
+.HP
+device name	as defined in /dev.
+The device must not rewind on close and have a Berkeley behaviour.
+.HP
+density		corresponding to the entry in /dev
+.HP
+initial status	up or down
+.HP
+robot/manual	if the drive is defined as part of a
+.BR robot ,
+there will be no check on the ring status. This field may also be set to
+.BI lmcp xxxx
+(Library Manager Control Point as defined in /dev)
+if the IBM 3494/3495 robot is driven directly from an RS 6000,
+.BI acs a,l,p,d
+for an STK robot driven by ACSLS,
+.BI R x
+for a SONY DMS-24 or
+.BI smc x
+for a SCSI robot.
+.HP
+device type	for IBM
+.B 3480
+compatible drives, IBM
+.BR 3590 ,
+STK
+.B SD3
+(Redwood), STK
+.B 9840
+or drives equipped with Vision Boxes from Peripheral Vision
+.RB ( /VB ) ,
+the drive LED display will show
+the vid requested or mounted or error messages like "wrong ring" or "wrong vsn".
+For
+.BR DLT s,
+.BR SD3 s
+and
+.BR 9840 s
+connected to DEC alpha or Linux systems or IBM
+.BR 3590 s
+connected to AIX or Linux platforms, fast tape positionning is used.
+.TP 0
+If a tape drive supports several densities, there must be one line per density.
+.SH FILES
+.TP 1.5i
+.B /etc/TPCONFIG
+configuration file
+.TP
+.B /usr/spool/tape/log
+.SH EXAMPLES
+.TP
+Here is an example of a configuration file:
+
+.nf
+#
+# 				Tape configuration
+#
+# drive	  dev		dev		density		initial	robot/	dev
+# name	  group		name		(0 = N/A)	status	manual	type
+#
+cart0     CART		/dev/nrmt0	0		up	manual	3480
+cart1     CART		/dev/nrmt1	0		up	manual	3480
+exab0     8500		/dev/nrmt9	8500		up	manual	8500/VB
+.fi
