@@ -1,24 +1,36 @@
-.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.8 $ $Date: 2002/01/30 08:12:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stagestat.man,v $ $Revision: 1.9 $ $Date: 2002/04/05 13:36:54 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1995-1999 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH STAGESTAT l "$Date: 2002/01/30 08:12:54 $"
+.TH STAGESTAT l "$Date: 2002/04/05 13:36:54 $"
 .SH NAME
 stagestat \- gives global statistics on stager usage and detailed statistics on
 each file staged in 
 .SH SYNOPSIS
 .B stagestat
 [
+.BI \-D " diskfile"
+] [
 .BI \-e " end_time"
 ] [
 .BI \-f " accounting_file"
+] [
+.BI \-H " castorfile"
+] [
+.BI \-h
+] [
+.BI \-H " noncastorfile"
 ] [
 .BI \-p " pool_name"
 ] [
 .BI \-S " sorting_criteria"
 ] [
 .BI \-s " start_time"
+] [
+.BI \-T " vid"
 ]
+.BI \-v
+] [
 .SH DESCRIPTION
 .B stagestat
 obtains information on the usage of a stager by reading the 
@@ -36,6 +48,10 @@ average lifetime per file and per group if garbage collected, and
 average number of accesses per file and per group.
 .SH OPTIONS
 .TP
+.BI \-D " diskfile"
+print records of disk type and matching
+.BI diskfile
+.TP
 .BI \-e " end_time"
 The date and time up to which information should be collated.  If not
 specified the default is the time of the last record in the accounting 
@@ -52,6 +68,17 @@ The file from which information is to be read.  If not specified the
 default is the current 
 .B sacct
 file
+.TP
+.BI \-H " castorfile"
+print records of castor type and matching
+.BI castorfile
+.TP
+.BI \-h
+prints usage
+.TP
+.BI \-M " noncastorfile"
+print records of HSM but non-castor type and matching
+.BI noncastorfile
 .TP
 .BI \-p " pool_name"
 The name of the particular pool on which information is required.  If not 
@@ -80,6 +107,13 @@ is the year in the century and is optional:
 if yy between 00 and 37, 21th century is assumed,
 if yy between 70 and 99, 20th century is assumed
 else the command fails.
+.TP
+.BI \-T " vid"
+print records of tape type and matching
+.BI vid
+.TP
+.BI \-v
+shows accouting records with problem and a progress bar
 .SH EXAMPLES
 To get information on pool atlas_stage sorted by lifetime type the following command :
 .br

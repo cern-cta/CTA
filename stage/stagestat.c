@@ -1,5 +1,5 @@
 /*
- * $Id: stagestat.c,v 1.19 2002/03/26 09:15:04 jdurand Exp $
+ * $Id: stagestat.c,v 1.20 2002/04/05 13:36:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.19 $ $Date: 2002/03/26 09:15:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stagestat.c,v $ $Revision: 1.20 $ $Date: 2002/04/05 13:36:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -69,10 +69,10 @@ struct file_inf{
 			char xfile[CA_MAXHOSTNAMELEN + 1 + MAXPATH];	/* filename and path */
 		}d;
 		struct{				/* non-CASTOR HSM files */
-			char xfile[167];
+			char xfile[STAGE_MAX_HSMLENGTH+1];
 		}m;
 		struct{				/* CASTOR HSM files */
-			char xfile[167];
+			char xfile[STAGE_MAX_HSMLENGTH+1];
 			u_signed64 fileid;
 		}h;
 	}u1;
@@ -158,7 +158,13 @@ void print_ddetails _PROTO((struct file_inf *));
 void print_mdetails _PROTO((struct file_inf *));
 void print_hdetails _PROTO((struct file_inf *));
 void show_progress _PROTO(());
+char *req_type_2_char _PROTO((int));
+char *subtype_2_char _PROTO((int));
 
+char *Tflag = NULL;
+char *Dflag = NULL;
+char *Mflag = NULL;
+char *Hflag = NULL;
 
 int main(argc, argv)
 	int argc;
@@ -195,13 +201,13 @@ int main(argc, argv)
 
 	Coptind = 1;
 	Copterr = 1;
-	while ((c = Cgetopt (argc, argv, "de:f:s:p:r:S:v")) != -1) {
+	while ((c = Cgetopt (argc, argv, "dD:e:f:hH:M:p:r:S:s:T:v")) != -1) {
 		switch (c) {
 		case 'd':
 			debug++;
 			break;
-		case 'v':
-			verbose++;
+		case 'D':
+ 			Dflag = Coptarg;
 			break;
 		case 'e':
 			if ((endtime = cvt_datime (Coptarg)) < 0) {
@@ -215,11 +221,15 @@ int main(argc, argv)
 			}
 			strcpy (acctfile, Coptarg);
 			break;
-		case 's':
-			if ((starttime = cvt_datime (Coptarg)) < 0) {
-				fprintf (stderr, "incorrect time value %s\n", Coptarg);
-				errflg++;
-			}
+		case 'h':
+			usage (argv[0]);
+			exit (0);
+			break;
+		case 'H':
+ 			Hflag = Coptarg;
+			break;
+		case 'M':
+ 			Mflag = Coptarg;
 			break;
 		case 'p':
 			pflag++;
@@ -239,6 +249,18 @@ int main(argc, argv)
 						 Coptarg);
 				errflg++;
 			}
+			break;
+		case 's':
+			if ((starttime = cvt_datime (Coptarg)) < 0) {
+				fprintf (stderr, "incorrect time value %s\n", Coptarg);
+				errflg++;
+			}
+			break;
+		case 'T':
+ 			Tflag = Coptarg;
+			break;
+		case 'v':
+			verbose++;
 			break;
 		case '?':
 			errflg++;
@@ -308,7 +330,26 @@ int main(argc, argv)
 			swap_fields (&rp);
 			swapped = 0;
 		}
-		if (debug) print_acct(&accthdr, &rp);
+		if (debug) {
+			print_acct(&accthdr, &rp);
+		} else {
+			switch (rp.u2.s.t_or_d) {
+			case 't':
+				if (Tflag && strstr(rp.u2.s.u1.t.vid,Tflag)) print_acct(&accthdr, &rp);
+				break;
+			case 'd':
+				if (Dflag && strstr(rp.u2.s.u1.d.xfile,Dflag)) print_acct(&accthdr, &rp);
+				break;
+			case 'm':
+				if (Mflag && strstr(rp.u2.s.u1.m.xfile,Mflag)) print_acct(&accthdr, &rp);
+				break;
+			case 'h':
+				if (Hflag && strstr(rp.u2.s.u1.h.xfile,Hflag)) print_acct(&accthdr, &rp);
+				break;
+			default:
+				break;
+			}
+		}
 		if (!starttime && nrec == 1) starttime = accthdr.timestamp;
 		if (accthdr.timestamp < starttime) {
 			nrecfiltered++;
@@ -378,7 +419,16 @@ int main(argc, argv)
 			if (rp.exitcode < 5) {
 				rc[rp.req_type][rp.exitcode]++; /* 1==USERR, 2==SYERR, 3==UNERR, 4==CONFERR */
 				nrecok++;
-			} else if (rp.exitcode == EINVAL) {
+			} else if (rp.exitcode == SEUSERUNKN || /* User unknown */
+					   rp.exitcode == ESTGROUP   || /* Group unknown */
+					   rp.exitcode == SECOMERR   || /* Communication error */
+					   rp.exitcode == SECONNDROP    /* Connection closed by remote end */
+				) { 
+				rc[rp.req_type][2]++;
+				nrecok++;
+			} else if (rp.exitcode == EINVAL     ||
+					   rp.exitcode == SEOPNOTSUP    /* Operation not supported */
+				) {
 				rc[rp.req_type][1]++;
 				nrecok++;
 			} else if (rp.exitcode == EISDIR) {
@@ -1601,7 +1651,14 @@ void usage (cmd)
 {
 	fprintf (stderr, "usage: %s ", cmd);
 	fprintf (stderr, "%s",
-			 "[-e end_time][-f accounting_file][-s start_time][-p pool_name][-S <a or t>][-v]\n");
+			 "[-e end_time][-f accounting_file][-h][-s start_time][-p pool_name][-S <a or t>][-v]\n"
+			 "[-D diskfile][-H castorfile][-M noncastorfile][-T vid]\n"
+			 "\n"
+			 "where -D diskfile   is for searching and dumping accounting for DISK entries matching \"diskfile\"\n"
+			 "      -H castorfile is for searching and dumping accounting for CASTOR entries matching \"castorfile\"\n"
+			 "      -M hsmfile    is for searching and dumping accounting for HSM and NON-CASTOR entries matching \"hsmfile\"\n"
+			 "      -T vid        is for searching and dumping accounting for TAPE entries matching \"vid\"\n"
+		);
 }
 
 
@@ -1641,44 +1698,49 @@ void print_acct(accthdr,rp)
 	}
  	u64tostru((u_signed64) rp->u2.s.actual_size, tmpbuf, 0);
 	
-	fprintf(stderr,"[VERBOSE] Timestamp  : %s\n", timestr);
-	fprintf(stderr,"[VERBOSE] Package    : %d\n", accthdr->package);
-	fprintf(stderr,"[VERBOSE] Length     : %d bytes\n", accthdr->len);
-	fprintf(stderr,"[VERBOSE] Subtype    : %d\n", rp->subtype);
-	fprintf(stderr,"[VERBOSE] Uid        : %d (%s)\n", rp->uid, pwd->pw_name);
-	fprintf(stderr,"[VERBOSE] Gid        : %d (%s)\n", rp->gid, grp->gr_name);
-	fprintf(stderr,"[VERBOSE] Reqid      : %d\n", rp->reqid);
-	fprintf(stderr,"[VERBOSE] Reqtype    : %d\n", rp->req_type);
-	fprintf(stderr,"[VERBOSE] Retryn     : %d\n", rp->retryn);
-	fprintf(stderr,"[VERBOSE] Exitcode   : %d\n", rp->exitcode);
-	fprintf(stderr,"[VERBOSE] Clienthost : %s\n", rp->u2.clienthost);
+	fprintf(stderr,"... -------------------\n");
+	fprintf(stderr,"... Timestamp  : %s\n", timestr);
+	fprintf(stderr,"... Package    : %d\n", accthdr->package);
+	fprintf(stderr,"... Length     : %d bytes\n", accthdr->len);
+	fprintf(stderr,"... Subtype    : %d (%s)\n", rp->subtype, subtype_2_char(rp->subtype));
+	fprintf(stderr,"... Uid        : %d (%s)\n", rp->uid, pwd->pw_name);
+	fprintf(stderr,"... Gid        : %d (%s)\n", rp->gid, grp->gr_name);
+	fprintf(stderr,"... Reqid      : %d\n", rp->reqid);
+	fprintf(stderr,"... Reqtype    : %d (%s)\n", rp->req_type, req_type_2_char(rp->req_type));
+	fprintf(stderr,"... Retryn     : %d\n", rp->retryn);
+	fprintf(stderr,"... Exitcode   : %d\n", rp->exitcode);
+	fprintf(stderr,"... Clienthost : %s\n", rp->u2.clienthost);
 
-	if (rp->u2.s.t_or_d == 0) return;
+	if (rp->u2.s.t_or_d != 't' &&
+		rp->u2.s.t_or_d != 'd' &&
+		rp->u2.s.t_or_d != 'm' &&
+		rp->u2.s.t_or_d != 'h'
+		) return;
 
-	fprintf(stderr,"[VERBOSE] Poolname   : %s\n", rp->u2.s.poolname);
-	fprintf(stderr,"[VERBOSE] Actualsize : %s\n", tmpbuf);
-	fprintf(stderr,"[VERBOSE] Nbaccesses : %d\n", rp->u2.s.nbaccesses);
-	fprintf(stderr,"[VERBOSE] t_or_d     : %c\n", rp->u2.s.t_or_d);
+	fprintf(stderr,"... Poolname   : %s\n", rp->u2.s.poolname);
+	fprintf(stderr,"... Actualsize : %s\n", tmpbuf);
+	fprintf(stderr,"... Nbaccesses : %d\n", rp->u2.s.nbaccesses);
+	fprintf(stderr,"... t_or_d     : %c\n", rp->u2.s.t_or_d);
 	switch (rp->u2.s.t_or_d) {
 	case 't':
 #ifdef STAGER_SIDE_SERVER_SUPPORT
-		fprintf(stderr,"[VERBOSE] Side       : %d\n", rp->u2.s.u1.t.side);
+		fprintf(stderr,"... Side       : %d\n", rp->u2.s.u1.t.side);
 #endif
-		fprintf(stderr,"[VERBOSE] Dgn        : %s\n", rp->u2.s.u1.t.dgn);
-		fprintf(stderr,"[VERBOSE] Fseq       : %s\n", rp->u2.s.u1.t.fseq);
-		fprintf(stderr,"[VERBOSE] Vid        : %s\n", rp->u2.s.u1.t.vid);
-		fprintf(stderr,"[VERBOSE] Tapesrvr   : %s\n", rp->u2.s.u1.t.tapesrvr);
+		fprintf(stderr,"... Dgn        : %s\n", rp->u2.s.u1.t.dgn);
+		fprintf(stderr,"... Fseq       : %s\n", rp->u2.s.u1.t.fseq);
+		fprintf(stderr,"... Vid        : %s\n", rp->u2.s.u1.t.vid);
+		fprintf(stderr,"... Tapesrvr   : %s\n", rp->u2.s.u1.t.tapesrvr);
 		break;
 	case 'd':
-		fprintf(stderr,"[VERBOSE] Xfile      : %s\n", rp->u2.s.u1.d.xfile);
+		fprintf(stderr,"... Xfile      : %s\n", rp->u2.s.u1.d.xfile);
 		break;
 	case 'm':
-		fprintf(stderr,"[VERBOSE] Xfile      : %s\n", rp->u2.s.u1.m.xfile);
+		fprintf(stderr,"... Xfile      : %s\n", rp->u2.s.u1.m.xfile);
 		break;
 	case 'h':
-		fprintf(stderr,"[VERBOSE] Xfile      : %s\n", rp->u2.s.u1.h.xfile);
+		fprintf(stderr,"... Xfile      : %s\n", rp->u2.s.u1.h.xfile);
 		u64tostru((u_signed64) rp->u2.s.u1.h.fileid, tmpbuf, 0);
-		fprintf(stderr,"[VERBOSE] Fileid     : %s\n", tmpbuf);
+		fprintf(stderr,"... Fileid     : %s\n", tmpbuf);
 		break;
 	}
 }
@@ -1731,5 +1793,169 @@ void show_progress() {
 			fflush(stdout);
 		}
 		last_done = done;
+	}
+}
+
+char *subtype_2_char(subtype)
+	int subtype;
+{
+	static char *unknown_subtype = "Unknown";
+	static char *STGSTART_subtype = "Stager daemon started";
+	static char *STGCMDR_subtype = "Command received";
+	static char *STGFILS_subtype = "File staged";
+	static char *STGCMDC_subtype = "Command finished";
+	static char *STGCMDS_subtype = "Stager started";
+	static char *STGFILC_subtype = "File cleared";
+
+	switch (subtype) {
+	case STGSTART:
+		return(STGSTART_subtype);
+	case STGCMDR:
+		return(STGCMDR_subtype);
+	case STGFILS:
+		return(STGFILS_subtype);
+	case STGCMDC:
+		return(STGCMDC_subtype);
+	case STGCMDS:
+		return(STGCMDS_subtype);
+	case STGFILC:
+		return(STGFILC_subtype);
+	default:
+		return(unknown_subtype);
+	}
+}
+
+char *req_type_2_char(req_type)
+	int req_type;
+{
+	static char *unknown_req_type = "Unknown";
+	static char *STAGEIN_req_type = "STAGEIN";
+	static char *STAGEOUT_req_type = "STAGEOUT";
+	static char *STAGEWRT_req_type = "STAGEWRT";
+	static char *STAGEPUT_req_type = "STAGEPUT";
+	static char *STAGEQRY_req_type = "STAGEQRY";
+	static char *STAGECLR_req_type = "STAGECLR";
+	static char *STAGEKILL_req_type = "STAGEKILL";
+	static char *STAGEUPDC_req_type = "STAGEUPDC";
+	static char *STAGEINIT_req_type = "STAGEINIT";
+	static char *STAGECAT_req_type = "STAGECAT";
+	static char *STAGEALLOC_req_type = "STAGEALLOC";
+	static char *STAGEGET_req_type = "STAGEGET";
+	static char *STAGEMIGPOOL_req_type = "STAGEMIGPOOL";
+	static char *STAGEFILCHG_req_type = "STAGEFILCHG";
+	static char *STAGESHUTDOWN_req_type = "STAGESHUTDOWN";
+	static char *STAGEPING_req_type = "STAGEPING";
+    static char *STAGE_IN_req_type = "STAGE_IN";
+    static char *STAGE_OUT_req_type = "STAGE_OUT";
+    static char *STAGE_WRT_req_type = "STAGE_WRT";
+    static char *STAGE_PUT_req_type = "STAGE_PUT";
+    static char *STAGE_QRY_req_type = "STAGE_QRY";
+    static char *STAGE_CLR_req_type = "STAGE_CLR";
+    static char *STAGE_KILL_req_type = "STAGE_KILL";
+    static char *STAGE_UPDC_req_type = "STAGE_UPDC";
+    static char *STAGE_INIT_req_type = "STAGE_INIT";
+    static char *STAGE_CAT_req_type = "STAGE_CAT";
+    static char *STAGE_ALLOC_req_type = "STAGE_ALLOC";
+    static char *STAGE_GET_req_type = "STAGE_GET";
+    static char *STAGE_FILCHG_req_type = "STAGE_FILCHG";
+    static char *STAGE_SHUTDOWN_req_type = "STAGE_SHUTDOWN";
+    static char *STAGE_PING_req_type = "STAGE_PING";
+
+	switch (req_type) {
+	case STAGEIN:
+		return(STAGEIN_req_type);
+		break;
+	case STAGEOUT:
+		return(STAGEOUT_req_type);
+		break;
+	case STAGEWRT:
+		return(STAGEWRT_req_type);
+		break;
+	case STAGEPUT:
+		return(STAGEPUT_req_type);
+		break;
+	case STAGEQRY:
+		return(STAGEQRY_req_type);
+		break;
+	case STAGECLR:
+		return(STAGECLR_req_type);
+		break;
+	case STAGEKILL:
+		return(STAGEKILL_req_type);
+		break;
+	case STAGEUPDC:
+		return(STAGEUPDC_req_type);
+		break;
+	case STAGEINIT:
+		return(STAGEINIT_req_type);
+		break;
+	case STAGECAT:
+		return(STAGECAT_req_type);
+		break;
+	case STAGEALLOC:
+		return(STAGEALLOC_req_type);
+		break;
+	case STAGEGET:
+		return(STAGEGET_req_type);
+		break;
+	case STAGEMIGPOOL:
+		return(STAGEMIGPOOL_req_type);
+		break;
+	case STAGEFILCHG:
+		return(STAGEFILCHG_req_type);
+		break;
+	case STAGESHUTDOWN:
+		return(STAGESHUTDOWN_req_type);
+		break;
+	case STAGEPING:
+		return(STAGEPING_req_type);
+		break;
+    case STAGE_IN:
+		return(STAGE_IN_req_type);
+		break;
+    case STAGE_OUT:
+		return(STAGE_OUT_req_type);
+		break;
+    case STAGE_WRT:
+		return(STAGE_WRT_req_type);
+		break;
+    case STAGE_PUT:
+		return(STAGE_PUT_req_type);
+		break;
+    case STAGE_QRY:
+		return(STAGE_QRY_req_type);
+		break;
+    case STAGE_CLR:
+		return(STAGE_CLR_req_type);
+		break;
+    case STAGE_KILL:
+		return(STAGE_KILL_req_type);
+		break;
+    case STAGE_UPDC:
+		return(STAGE_UPDC_req_type);
+		break;
+    case STAGE_INIT:
+		return(STAGE_INIT_req_type);
+		break;
+    case STAGE_CAT:
+		return(STAGE_CAT_req_type);
+		break;
+    case STAGE_ALLOC:
+		return(STAGE_ALLOC_req_type);
+		break;
+    case STAGE_GET:
+		return(STAGE_GET_req_type);
+		break;
+    case STAGE_FILCHG:
+		return(STAGE_FILCHG_req_type);
+		break;
+    case STAGE_SHUTDOWN:
+		return(STAGE_SHUTDOWN_req_type);
+		break;
+    case STAGE_PING:
+		return(STAGE_PING_req_type);
+		break;
+	default:
+		return(unknown_req_type);
 	}
 }
