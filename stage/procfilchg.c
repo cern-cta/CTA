@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.15 2001/11/30 11:48:32 jdurand Exp $
+ * $Id: procfilchg.c,v 1.16 2001/12/10 16:18:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.15 $ $Date: 2001/11/30 11:48:32 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.16 $ $Date: 2001/12/10 16:18:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -54,7 +54,7 @@ extern int sendrep _PROTO((int, int, ...));
 #else
 extern int sendrep _PROTO(());
 #endif
-extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
+extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern int stglogit _PROTO(());
 #ifdef USECDB
 extern struct stgdb_fd dbfd;
@@ -154,7 +154,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 	nargs = req2argv (rbp, &argv);
 #if SACCT
 	stageacct (STGCMDR, uid, gid, clienthost,
-						 reqid, STAGEFILCHG, 0, 0, NULL, "");
+						 reqid, STAGEFILCHG, 0, 0, NULL, "", (char) 0);
 #endif
 
 	Coptind = 1;

@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.87 2001/12/05 10:07:38 jdurand Exp $
+ * $Id: procupd.c,v 1.88 2001/12/10 16:19:56 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.87 $ $Date: 2001/12/05 10:07:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.88 $ $Date: 2001/12/10 16:19:56 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -84,7 +84,7 @@ extern void delreq _PROTO((struct stgcat_entry *, int));
 extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int));
 extern void sendinfo2cptape _PROTO((int, struct stgcat_entry *));
 extern void create_link _PROTO((struct stgcat_entry *, char *));
-extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
+extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern int retenp_on_disk _PROTO((int));
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
@@ -222,7 +222,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		stglogflags(func,flags);
 
 #if SACCT
-		stageacct (STGCMDR, uid, gid, clienthost, reqid, STAGE_UPDC, 0, 0, NULL, "");
+		stageacct (STGCMDR, uid, gid, clienthost, reqid, STAGE_UPDC, 0, 0, NULL, "", (char) 0);
 #endif
 
 	} else {
@@ -236,7 +236,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 		nargs = req2argv (rbp, &argv);
 
 #if SACCT
-		stageacct (STGCMDR, uid, gid, clienthost, reqid, STAGEUPDC, 0, 0, NULL, "");
+		stageacct (STGCMDR, uid, gid, clienthost, reqid, STAGEUPDC, 0, 0, NULL, "", (char) 0);
 #endif
 
 		dvn = unknown;
@@ -802,7 +802,7 @@ procupdreq(req_type, magic, req_data, clienthost)
 	}
 #if SACCT
 	stageacct (STGFILS, wqp->req_uid, wqp->req_gid, wqp->clienthost,
-						 wqp->reqid, wqp->req_type, wqp->nretry, rc, stcp, clienthost);
+						 wqp->reqid, wqp->req_type, wqp->nretry, rc, stcp, clienthost, (char) 0);
 #endif
 	if (rc == 211) {	/* no more file on tape */
 		/* flag previous file as last file on tape */

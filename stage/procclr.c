@@ -1,5 +1,5 @@
 /*
- * $Id: procclr.c,v 1.39 2001/12/05 10:04:40 jdurand Exp $
+ * $Id: procclr.c,v 1.40 2001/12/10 16:18:30 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.39 $ $Date: 2001/12/05 10:04:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procclr.c,v $ $Revision: 1.40 $ $Date: 2001/12/10 16:18:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -71,7 +71,7 @@ extern int enoughfreespace _PROTO((char *, int));
 extern int checklastaccess _PROTO((char *, time_t));
 extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int));
 extern int savepath _PROTO(());
-extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
+extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern int stglogflags _PROTO(());
 extern int unpackfseq _PROTO((char *, int, char *, fseq_elem **, int, int *));
@@ -150,7 +150,7 @@ void procclrreq(req_type, magic, req_data, clienthost)
 #endif
 #if SACCT
 	stageacct (STGCMDR, uid, gid, clienthost,
-						 reqid, req_type, 0, 0, NULL, "");
+						 reqid, req_type, 0, 0, NULL, "", (char) 0);
 #endif
 	if ((gr = Cgetgrgid (gid)) == NULL) {
 		sendrep (rpfd, MSG_ERR, STG36, gid);

@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.33 2001/11/30 11:46:14 jdurand Exp $
+ * $Id: procalloc.c,v 1.34 2001/12/10 16:17:50 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.33 $ $Date: 2001/11/30 11:46:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.34 $ $Date: 2001/12/10 16:17:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -69,7 +69,7 @@ extern void create_link _PROTO((struct stgcat_entry *, char *));
 extern int savepath _PROTO(());
 extern int savereqs _PROTO(());
 extern void rmfromwq _PROTO((struct waitq *));
-extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *));
+extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern void bestnextpool_out _PROTO((char *, int));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 
@@ -114,7 +114,7 @@ void procallocreq(req_data, clienthost)
 	stglogit (func, STG92, "stagealloc", stgreq.user, stgreq.uid, stgreq.gid, clienthost);
 #if SACCT
 	stageacct (STGCMDR, stgreq.uid, stgreq.gid, clienthost,
-						 reqid, STAGEALLOC, 0, 0, NULL, "");
+						 reqid, STAGEALLOC, 0, 0, NULL, "", (char) 0);
 #endif
 
 	wqp = NULL;
@@ -236,7 +236,7 @@ void procallocreq(req_data, clienthost)
 	free (argv);
 #if SACCT
 	stageacct (STGCMDC, stgreq.uid, stgreq.gid, clienthost,
-						 reqid, STAGEALLOC, 0, c, NULL, "");
+						 reqid, STAGEALLOC, 0, c, NULL, "", (char) 0);
 #endif
 	sendrep (rpfd, STAGERC, STAGEALLOC, c);
 	if (c && wqp) {
@@ -288,7 +288,7 @@ void procgetreq(req_data, clienthost)
 	nargs = req2argv (rbp, &argv);
 #if SACCT
 	stageacct (STGCMDR, uid, gid, clienthost,
-						 reqid, STAGEGET, 0, 0, NULL, "");
+						 reqid, STAGEGET, 0, 0, NULL, "", (char) 0);
 #endif
 
 	if ((gr = Cgetgrgid (gid)) == NULL) {
@@ -389,7 +389,7 @@ void procgetreq(req_data, clienthost)
 	free (argv);
 #if SACCT
 	stageacct (STGCMDC, uid, gid, clienthost,
-						 reqid, STAGEGET, 0, c, NULL, "");
+						 reqid, STAGEGET, 0, c, NULL, "", (char) 0);
 #endif
 	sendrep (rpfd, STAGERC, STAGEGET, c);
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: procping.c,v 1.1 2001/12/05 10:14:54 jdurand Exp $
+ * $Id: procping.c,v 1.2 2001/12/10 16:19:41 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.1 $ $Date: 2001/12/05 10:14:54 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.2 $ $Date: 2001/12/10 16:19:41 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -30,6 +30,7 @@ static char sccsid[] = "@(#)$RCSfile: procping.c,v $ $Revision: 1.1 $ $Date: 200
 #define __PATCHLEVEL__ 0
 
 void procpingreq _PROTO((int, int, char *, char *));
+extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 
 extern char func[16];
 extern int rpfd;
@@ -80,7 +81,7 @@ void procpingreq(req_type, magic, req_data, clienthost)
 	}
 #if SACCT
 	stageacct (STGCMDR, -1, gid, clienthost,
-						 reqid, req_type, 0, 0, NULL, "");
+						 reqid, req_type, 0, 0, NULL, "", (char) 0);
 #endif
 	
 	if ((gr = Cgetgrgid (gid)) == NULL) {
