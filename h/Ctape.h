@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.6 $ $Date: 1999/11/07 16:02:18 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.7 $ $Date: 1999/11/12 07:26:04 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -86,18 +86,18 @@
 #define ENTRY(x) \
 	{ \
 	strcpy (func, #x); \
-	tplogit (func, "function entered"); \
+	tplogit (func, "function entered\n"); \
 	}
 #else
 #define ENTRY(x) \
 	{ \
 	strcpy (func, "x"); \
-	tplogit (func, "function entered"); \
+	tplogit (func, "function entered\n"); \
 	}
 #endif
 #define RETURN(x) \
 	{ \
-	tplogit (func, "returns %d", (x)); \
+	tplogit (func, "returns %d\n", (x)); \
 	return ((x)); \
 	}
 #endif
