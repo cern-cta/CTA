@@ -6,7 +6,7 @@
 */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.8 $ $Date: 2003/12/28 11:42:56 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.9 $ $Date: 2004/04/05 05:15:49 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -789,20 +789,24 @@ dlf_log_message_t *msg;
 	int written;
 	char uuidhex[2 * sizeof(Cuuid_t) + 1];
 	
-	if ((fd = open (dst->name, O_WRONLY | O_CREAT | O_APPEND, 0664)) < 0)
-		return (-1);
-	
+	if (strcmp("stdout", dst->name) == 0)
+	        fd = 1;
+	else {
+	        if ((fd = open (dst->name, O_WRONLY | O_CREAT | O_APPEND, 0664)) < 0)
+		     return (-1);
+	}
 #if !defined(_WIN32)
 	/* Lock file */
-	fl_struct.l_type = F_WRLCK;
-	fl_struct.l_whence = SEEK_SET;
-	fl_struct.l_start = 0;
-	fl_struct.l_len = 0;
-	fl_struct.l_pid = 0;
+	if (fd != 1) {
+	        fl_struct.l_type = F_WRLCK;
+	        fl_struct.l_whence = SEEK_SET;
+	        fl_struct.l_start = 0;
+	        fl_struct.l_len = 0;
+	        fl_struct.l_pid = 0;
 	
-	if (fcntl(fd, F_SETLKW64, &fl_struct) < 0)
-		return (-1);
-	
+	        if (fcntl(fd, F_SETLKW64, &fl_struct) < 0)
+		     return (-1);
+	}
 #endif
 	n = Csnprintf
 		(prtbuf, sizeof(prtbuf), fmt1, 
@@ -817,8 +821,9 @@ dlf_log_message_t *msg;
 		msg->ns_fileid.server,
 		msg->ns_fileid.fileid);
 	/* Go to the end of the file */
-	if ((lseek (fd, 0, SEEK_END)) < 0) return (-1);
-	
+	if (fd != 1) {
+	        if ((lseek (fd, 0, SEEK_END)) < 0) return (-1);
+	}
 	written = write (fd, prtbuf, n);
 	if (written < n)
 		return (-1);
@@ -853,12 +858,12 @@ dlf_log_message_t *msg;
 	write (fd, "\n", 1);
 #if !defined(_WIN32)
 	/* Flush buffers */
-	fsync (fd);
-	
+		fsync (fd);
 	/* Unlock the file */
 #endif
 	/* Lock is removed when file is closed */
-	close (fd);
+		if (fd != 1)
+		        close (fd);
 	return (0);
 }
 
