@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.48 $ $Release$ $Date: 2004/09/17 15:40:04 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.49 $ $Release$ $Date: 2004/09/27 11:02:29 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.48 $ $Release$ $Date: 2004/09/17 15:40:04 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.49 $ $Release$ $Date: 2004/09/27 11:02:29 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -2129,8 +2129,14 @@ int rtcpcld_updateVIDFileStatus(
     return(-1);  
   }
   
-  segments = NULL;
+  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
+  if ( rc == -1 ) {
+    UNLOCKTP;
+    return(-1);
+  }
+  iAddr = C_BaseAddress_getIAddress(baseAddr);
 
+  segments = NULL;
   Cstager_Tape_segments(tapeItem,&segments,&nbItems);
   for ( i=0; i<nbItems; i++ ) {
     segmItem = segments[i];
@@ -2226,55 +2232,44 @@ int rtcpcld_updateVIDFileStatus(
                                        filereq->err.errmsgtxt);
         }
       }
-      updated = 1;
+      iObj = Cstager_Segment_getIObject(segmItem);
+      Cstager_Segment_id(segmItem,&_key);
+      rc = C_Services_updateRepNoRec(*svcs,iAddr,iObj,1);
+      if ( rc == -1 ) {
+        save_serrno = serrno;
+        C_IAddress_delete(iAddr);
+        if ( dontLog == 0 ) {
+          char *_dbErr = NULL;
+          (void)dlf_write(
+                          (inChild == 0 ? mainUuid : childUuid),
+                          DLF_LVL_ERROR,
+                          RTCPCLD_MSG_DBSVC,
+                          (struct Cns_fileid *)NULL,
+                          RTCPCLD_NB_PARAMS+4,
+                          "DBSVCCALL",
+                          DLF_MSG_PARAM_STR,
+                          "C_Services_updateRepNoRec()",
+                          "DBKEY",
+                          DLF_MSG_PARAM_INT,
+                          (int)_key,
+                          "ERROR_STR",
+                          DLF_MSG_PARAM_STR,
+                          sstrerror(serrno),
+                          "DB_ERROR",
+                          DLF_MSG_PARAM_STR,
+                          (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
+                          RTCPCLD_LOG_WHERE
+                          );
+          if ( _dbErr != NULL ) free(_dbErr);
+        }
+      } else updated = 1;
     }
   }
   if ( segments != NULL ) free(segments);
   if ( updated == 1 ) {
-    rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
-    if ( rc == -1 ) {
-      UNLOCKTP;
-      return(-1);
-    }
-
-    iAddr = C_BaseAddress_getIAddress(baseAddr);
-    iObj = Cstager_Tape_getIObject(tapeItem);
-    Cstager_Tape_id(tapeItem,&_key);
-    rc = C_Services_updateRep(*svcs,iAddr,iObj,1);
-    if ( rc == -1 ) {
-      save_serrno = serrno;
-      C_IAddress_delete(iAddr);
-      if ( dontLog == 0 ) {
-        char *_dbErr = NULL;
-        (void)dlf_write(
-                        (inChild == 0 ? mainUuid : childUuid),
-                        DLF_LVL_ERROR,
-                        RTCPCLD_MSG_DBSVC,
-                        (struct Cns_fileid *)NULL,
-                        RTCPCLD_NB_PARAMS+4,
-                        "DBSVCCALL",
-                        DLF_MSG_PARAM_STR,
-                        "C_Services_updateRep()",
-                        "DBKEY",
-                        DLF_MSG_PARAM_INT,
-                        (int)_key,
-                        "ERROR_STR",
-                        DLF_MSG_PARAM_STR,
-                        sstrerror(serrno),
-                        "DB_ERROR",
-                        DLF_MSG_PARAM_STR,
-                        (_dbErr = rtcpcld_fixStr(C_Services_errorMsg(*svcs))),
-                        RTCPCLD_LOG_WHERE
-                        );
-        if ( _dbErr != NULL ) free(_dbErr);
-      }
-      UNLOCKTP;
-      serrno = save_serrno;
-      return(-1);
-    }
     (void)notifyTape(tapeItem);
-    C_IAddress_delete(iAddr);
   }
+  C_IAddress_delete(iAddr);
   UNLOCKTP;
   return(0);
 }
