@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2004/11/22 14:43:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.49 $ $Release$ $Date: 2004/11/23 16:27:17 $ $Author: sponcec3 $
  *
  *
  *
@@ -98,11 +98,11 @@ const std::string castor::db::ora::OraStagerSvc::s_fileRecalledStatementString =
 
 /// SQL statement for isSubRequestToSchedule
 const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStatementString =
-  "BEGIN isSubRequestToSchedule(:1, :2) END;";
+  "BEGIN isSubRequestToSchedule(:1, :2); END;";
 
 /// SQL statement for scheduleSubRequest
 const std::string castor::db::ora::OraStagerSvc::s_scheduleSubRequestStatementString =
-  "BEGIN scheduleSubRequest(:1, :2, :3, :4, :5) END;";
+  "BEGIN scheduleSubRequest(:1, :2, :3, :4, :5); END;";
 
 /// SQL statement for selectSvcClass
 const std::string castor::db::ora::OraStagerSvc::s_selectSvcClassStatementString =
