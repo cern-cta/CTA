@@ -1,5 +1,5 @@
 /*
- * $Id: rfrm.c,v 1.10 2001/02/12 14:17:23 jdurand Exp $
+ * $Id: rfrm.c,v 1.11 2001/03/16 18:19:01 obarring Exp $
  */
 
 /*
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.10 $ $Date: 2001/02/12 14:17:23 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.11 $ $Date: 2001/03/16 18:19:01 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -200,7 +200,7 @@ int *yesno;
   int empty = 1;
   
   if ( !rfio_lstat(path,&st) ) {
-    if ( (st.st_mode & S_IFDIR) ) {
+    if ( S_ISDIR(st.st_mode) ) {
       if ( yesno == NULL || *yesno ) {
         printf("%s: decend into directory `%s'? ",cmd,path);
         if ( read_yesno() != 'y' ) return(-1);
@@ -240,12 +240,17 @@ int *yesno;
             exit(2);
         }
       }
+    } else { /* if ( S_ISDIR(st.st_mode) ) ... */
+      if ( rfio_unlink(path) ) {
+        fprintf(stderr,"unlink(%s): %s\n",path,rfio_serror());
+        exit(1);
+      }
     }
     while ( ds != NULL ) {
       while ( rm_recursive(ds->dir,&ask_yesno) == 0 );
       rfio_popdir(&ds);
     }
-  } else {
+  } else { /* if ( !rfio_lstat(path,&st) ) .... */
     return(-1);
   }
   return(0);
