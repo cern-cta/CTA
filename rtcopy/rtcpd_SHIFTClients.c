@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.28 $ $Date: 2000/06/14 10:13:19 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.29 $ $Date: 2000/07/28 15:23:28 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -190,8 +190,6 @@ static int rtcp_GetOldCMsg(SOCKET *s,
         if ( msgbuf == NULL ) {
             rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() malloc(%d): %s\n",
                 hdr->len,sstrerror(errno));
-            free(*req);
-            *req = NULL;
             return(-1);
         }
 
@@ -200,14 +198,19 @@ static int rtcp_GetOldCMsg(SOCKET *s,
         case -1:
             rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() netread(%d): %s\n",
                 hdr->len,neterror());
+            free(msgbuf);
             return(-1);
         case 0:
             rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() netread(%d): connection dropped\n",
                 hdr->len);
+            free(msgbuf);
             return(-1);
         }
         rc = rtcp_SendOldCAckn(s,hdr);
-        if ( rc == -1 ) return(-1);
+        if ( rc == -1 ) {
+            free(msgbuf);
+            return(-1);
+        }
 
         p = msgbuf;
         unmarshall_STRING(p,(*req)->name);
@@ -215,6 +218,7 @@ static int rtcp_GetOldCMsg(SOCKET *s,
         unmarshall_WORD(p,(*req)->gid);
         if ( hdr->reqtype == RQST_INFO ) {
             unmarshall_STRING(p,(*req)->dgn);
+            free(msgbuf);
         } else if ( hdr->reqtype == RQST_DKTP ||
                     hdr->reqtype == RQST_TPDK ||
                     hdr->reqtype == RQST_DPTP ) {
@@ -223,10 +227,19 @@ static int rtcp_GetOldCMsg(SOCKET *s,
             umask(mask);
             unmarshall_LONG(p,argc);
             if ( argc < 0 ) {
+                rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() argc=%d received\n",argc);
+                free(msgbuf);
                 serrno = SEINTERNAL;
                 return(-1);
             }
             argv = (char **)malloc((argc+1) * sizeof(char *));
+            if ( argv == NULL ) {
+                rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() malloc(%d): %s\n",
+                         (argc+1) * sizeof(char *),sstrerror(errno));
+                free(msgbuf);
+                serrno = SEINTERNAL;
+                return(-1);
+            }
             if ( hdr->reqtype == RQST_TPDK ) argv[0] = commands[0];
             else if ( hdr->reqtype == RQST_DKTP ) argv[0] = commands[1];
             else if ( hdr->reqtype == RQST_DPTP ) argv[0] = commands[2];
@@ -251,6 +264,7 @@ static int rtcp_GetOldCMsg(SOCKET *s,
         } else {
             rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() unknown request type 0x%x\n",
                 hdr->reqtype);
+            free(msgbuf);
             serrno = SEINTERNAL;
             return(-1);
         }
@@ -376,12 +390,19 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
     char envacct[20];
     char *client_msg_buf = NULL;
 
-    if ( s == NULL || hdr == NULL ) {
+    if ( s == NULL || *s == INVALID_SOCKET || hdr == NULL ) {
         serrno = EINVAL;
+        if ( s != NULL && *s == INVALID_SOCKET ) serrno = SECOMERR;
         return(-1);
     }
 
     client_msg_buf = (char *)calloc(1,RTCP_SHIFT_BUFSZ);
+    if ( client_msg_buf == NULL ) {
+        rtcp_log(LOG_ERR,"rtcp_RunOld() calloc(1,%d): %s\n",
+                 RTCP_SHIFT_BUFSZ,sstrerror(errno));
+        serrno = SESYSERR;
+        return(-1);
+    }
 
     rtcp_log(LOG_DEBUG,"rtcp_RunOld() Get SHIFT request\n");
 
@@ -421,7 +442,12 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
     /*
      * Redirect logging to client socket
      */
-    rtcp_InitLog(client_msg_buf,NULL,NULL,s);
+    rc = rtcp_InitLog(client_msg_buf,NULL,NULL,s);
+    if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"rtcp_RunOld() rtcp_InitLog(): %s\n",
+                 sstrerror(errno));
+        return(rtcpd_CleanUpSHIFT(&req,client_msg_buf,-1));
+    }
     /*
      * Check access
      */
