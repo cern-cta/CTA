@@ -1,18 +1,19 @@
 /*
- * $Id: stglogit.c,v 1.10 2000/03/23 01:42:06 jdurand Exp $
+ * $Id: stglogit.c,v 1.11 2000/08/14 13:26:54 baud Exp $
  */
 
 /*
- * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.10 $ $Date: 2000/03/23 01:42:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit.c,v $ $Revision: 1.11 $ $Date: 2000/08/14 13:26:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <fcntl.h>
+#include <string.h>
 #include <time.h>
 #include <varargs.h>
 #include "stage.h"
