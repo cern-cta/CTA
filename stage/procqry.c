@@ -1,5 +1,5 @@
 /*
- * $Id: procqry.c,v 1.85 2002/04/11 16:40:42 jdurand Exp $
+ * $Id: procqry.c,v 1.86 2002/04/30 12:39:27 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.85 $ $Date: 2002/04/11 16:40:42 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.86 $ $Date: 2002/04/30 12:39:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 /* Enable this if you want stageqry to always run within the same process - usefull for debugging */
@@ -24,6 +24,7 @@ static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.85 $ $Date: 200
 #include <stdio.h>
 #include <sys/types.h>
 #include <math.h>
+#include <limits.h> /* For INT_MAX */
 #if defined(_IBMR2) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
 #include <regex.h>
 #else
@@ -58,6 +59,7 @@ static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.85 $ $Date: 200
 #include "rfio_api.h"
 #include "Cgetopt.h"
 #include "Castor_limits.h"
+#include "u64subr.h"
 
 void procqryreq _PROTO((int, int, char *, char *));
 void print_link_list _PROTO((char *, int, char *, int, char *, int, char (*)[7], char *, fseq_elem *, char *, char *, char *, int, int, int, int, int));
@@ -131,10 +133,8 @@ static int queue_flag;
 static int counters_flag;
 static int retenp_flag;
 static int mintime_flag;
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 static int side_flag;
 static int display_side_flag;
-#endif
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #define strtok(X,Y) strtok_r(X,Y,&last)
@@ -161,12 +161,12 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	static char l_stat[5][12] = {"", "STAGED_LSZ", "STAGED_TPE", "", "CAN_BE_MIGR"};
 	int lflag = 0;
 	char *mfile = NULL;
-	int nargs;
+	int nargs = 0;
 	int numvid = 0;
 	char *p;
 	char p_lrecl[7];
 	char p_recfm[6];
-	char p_size[6];
+	char p_size[21];
 	char p_stat[13];
 	int Pflag = 0;
 	int pid = -1;
@@ -238,18 +238,16 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	char trailing;
 	fseq_elem *fseq_list = NULL;
 	int inbtpf;
-	u_signed64  flags;
-	char t_or_d;
+	u_signed64  flags = 0;
+	char t_or_d = 0;
 	int  nstcp_input, struct_status;
 	struct stgcat_entry stcp_input;
 	int this_reqid = -1;
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 	char *last = NULL;
 #endif /* _REENTRANT || _THREAD_SAFE */
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 	int side = 0; /* The default */
 	int have_parsed_side = 0;
-#endif
 	static struct Coptions longopts[] =
 	{
 		{"allocated",          REQUIRED_ARGUMENT,  NULL,      'A'},
@@ -280,15 +278,13 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		{"queue",              NO_ARGUMENT,  &queue_flag,       1},
 		{"counters",           NO_ARGUMENT,  &counters_flag,    1},
 		{"retenp",             NO_ARGUMENT,  &retenp_flag,      1},
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 		{"side",               REQUIRED_ARGUMENT, &side_flag,   1},
 		{"display_side",       NO_ARGUMENT, &display_side_flag, 1},
 		{"ds",                 NO_ARGUMENT, &display_side_flag, 1},
-#endif
 		{"mintime",            NO_ARGUMENT,  &mintime_flag,     1},
 		{NULL,                 0,                  NULL,        0}
 	};
-	int thismintime_beforemigr;
+	int thismintime_beforemigr = 0;
 	int ifileclass = -1;
 	time_t this_time = time(NULL);
 	int save_rpfd;
@@ -296,11 +292,10 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	char timestr2[64] ;   /* Time in its ASCII format             */
 	char *dp;
 	int api_out = 0;
+	char tmpbuf[21];
 
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 	side_flag = 0;
 	display_side_flag = 0;
-#endif
 	noregexp_flag = 0;
 	reqid_flag = 0;
 	dump_flag = 0;
@@ -371,12 +366,10 @@ void procqryreq(req_type, magic, req_data, clienthost)
 			}
 			logit[0] = '\0';
 			stcp_input.t_or_d = t_or_d;
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 			if ((flags & STAGE_SIDE) != STAGE_SIDE) {
 				/* We prepare the fact that there is no explicit side, otherwise stage_stcp2buf() would always log --side 0 */
 				if (t_or_d == 't') stcp_input.u1.t.side = -1;
 			}
-#endif
 			if (stage_stcp2buf(logit,BUFSIZ,&(stcp_input)) == 0 || serrno == SEUMSG2LONG) {
 				logit[BUFSIZ] = '\0';
 				stglogit("stage_qry","stcp[1/1] : %s\n",logit);
@@ -539,7 +532,6 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		if ((flags & STAGE_MINTIME) == STAGE_MINTIME) {
 			mintime_flag++;
 		}
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 		if ((flags & STAGE_DISPLAY_SIDE) == STAGE_DISPLAY_SIDE) {
 			display_side_flag++;
 		}
@@ -558,7 +550,6 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				goto reply;
 			}
 		}
-#endif
 		/* Print the flags */
 		stglogflags("stage_qry",LOGFILE,(u_signed64) flags);
 	} else {
@@ -643,7 +634,6 @@ void procqryreq(req_type, magic, req_data, clienthost)
 						this_reqid = 0;
 					}
 				}
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 				if ((side_flag != 0) && (! have_parsed_side)) {  /* Not yet done */
 					stage_strtoi(&side, Coptarg, &dp, 10);
 					if ((*dp != '\0') || (side < 0)) {
@@ -652,7 +642,6 @@ void procqryreq(req_type, magic, req_data, clienthost)
 					}
 					have_parsed_side = 1;
 				}
-#endif
 				break;
 			default:
 				errflg++;
@@ -760,11 +749,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	if (Lflag) {
 		print_link_list (poolname, aflag, group, uflag, user,
 						 numvid, vid, fseq, fseq_list, xfile, afile, mfile, req_type, this_reqid, magic,
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 						 side_flag, side
-#else
-						 0, 0
-#endif
 			);
 		goto reply;
 	}
@@ -775,11 +760,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	if (Sflag) {
 		if (print_sorted_list (poolname, aflag, group, uflag, user,
 							   numvid, vid, fseq, fseq_list, xfile, afile, mfile, req_type, this_reqid, magic, class_flag,
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 							   side_flag, side
-#else
-							   0, 0
-#endif
 			) < 0)
 			c = SESYSERR;
 		goto reply;
@@ -787,11 +768,7 @@ void procqryreq(req_type, magic, req_data, clienthost)
 	if (Tflag) {
 		print_tape_info (poolname, aflag, group, uflag, user,
 						 numvid, vid, fseq, fseq_list, req_type, this_reqid, magic, 
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 						 side_flag, side
-#else
-						 0, 0
-#endif
 			);
 		goto reply;
 	}
@@ -804,12 +781,10 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
 		if (!aflag && strcmp (group, stcp->group)) continue;
 		if (uflag && strcmp (user, stcp->user)) continue;
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 		if (side_flag) {
 			if (stcp->t_or_d != 't') continue;
 			if (stcp->u1.t.side != side) continue;
 		}
-#endif
 		if (numvid) {
 			if (stcp->t_or_d != 't') continue;
 			for (j = 0; j < numvid; j++)
@@ -960,7 +935,10 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				/* a STAGEWRT stcp that is doing migration of another STAGEOUT|CAN_BE_MIGR|BEING_MIGR stcp */
 				strcpy (p_size, "*");
 			else
-				sprintf (p_size, "%d", stcp->size);
+				if ((stcp->size / ONE_MB) <= (u_signed64) INT_MAX)
+					sprintf (p_size, "%d", stcp->size / ONE_MB); /* Compatibility with old stageqry output */
+				else
+					sprintf (p_size, "%s", u64tostru(stcp->size,tmpbuf,0)); /* Cannot represent this quantity with an integer - switch to u64 mode */
 		else if (stcp->status == (STAGEIN|STAGED))
 			/* Case of stageing of a zero-length file */
 			strcpy (p_size, "0");
@@ -1032,7 +1010,6 @@ void procqryreq(req_type, magic, req_data, clienthost)
 		if (stcp->t_or_d == 't') {
 			char vid_and_side[CA_MAXVIDLEN+1+10+1]; /* VID[/%d].%d */
 
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 			if ((stcp->u1.t.side > 0) && (display_side_flag)) {
 #if (defined(__osf__) && defined(__alpha))
 				sprintf(vid_and_side, "%s/%d", stcp->u1.t.vid[0], stcp->u1.t.side);
@@ -1040,20 +1017,15 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				snprintf(vid_and_side, CA_MAXVIDLEN+1+10+1, "%s/%d", stcp->u1.t.vid[0], stcp->u1.t.side);
 #endif
 			} else {
-#endif /* STAGER_SIDE_SERVER_SUPPORT */
 				strcpy(vid_and_side, stcp->u1.t.vid[0]);
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 			}
-#endif
             vid_and_side[CA_MAXVIDLEN+1+10] = '\0';
 			if (xflag) {
 				if (retenp_flag != 0) {
 					if (mintime_flag != 0) {
 						if (sendrep (rpfd, MSG_OUT,
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n" :
-#endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %-18s %6d %s\n",
 									 vid_and_side, stcp->u1.t.fseq, stcp->u1.t.lbl,
 									 p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
@@ -1068,10 +1040,8 @@ void procqryreq(req_type, magic, req_data, clienthost)
 						}
 					} else {
 						if (sendrep (rpfd, MSG_OUT,
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n" :
-#endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %6d %s\n",
 									 vid_and_side, stcp->u1.t.fseq, stcp->u1.t.lbl,
 									 p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
@@ -1087,10 +1057,8 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				} else {
 					if (mintime_flag != 0) {
 						if (sendrep (rpfd, MSG_OUT,
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n" :
-#endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-18s %6d %s\n",
 									 vid_and_side, stcp->u1.t.fseq, stcp->u1.t.lbl,
 									 p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
@@ -1104,10 +1072,8 @@ void procqryreq(req_type, magic, req_data, clienthost)
 						}
 					} else {
 						if (sendrep (rpfd, MSG_OUT,
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n" :
-#endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %6d %s\n",
 									 vid_and_side, stcp->u1.t.fseq, stcp->u1.t.lbl,
 									 p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
@@ -1124,10 +1090,8 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				if (retenp_flag != 0) {
 					if (mintime_flag != 0) {
 						if (sendrep (rpfd, MSG_OUT,
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %s\n" :
-#endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %-19s %s\n",
 									 vid_and_side, stcp->u1.t.fseq, stcp->u1.t.lbl,
 									 p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
@@ -1141,10 +1105,8 @@ void procqryreq(req_type, magic, req_data, clienthost)
 						}
 					} else {
 						if (sendrep (rpfd, MSG_OUT,
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n" :
-#endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n",
 									 vid_and_side, stcp->u1.t.fseq, stcp->u1.t.lbl,
 									 p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
@@ -1158,10 +1120,8 @@ void procqryreq(req_type, magic, req_data, clienthost)
 				} else {
 					if (mintime_flag != 0) {
 						if (sendrep (rpfd, MSG_OUT,
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n" :
-#endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %-14s %s\n",
 									 vid_and_side, stcp->u1.t.fseq, stcp->u1.t.lbl,
 									 p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
@@ -1174,10 +1134,8 @@ void procqryreq(req_type, magic, req_data, clienthost)
 						}
 					} else {
 						if (sendrep (rpfd, MSG_OUT,
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 									 (display_side_flag) ?
 									 "%-8s %4s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %s\n" :
-#endif
 									 "%-6s %6s %-3s %-5s%s %6d %-11s %5d %6.1f/%-4s %s\n",
 									 vid_and_side, stcp->u1.t.fseq, stcp->u1.t.lbl,
 									 p_recfm, p_lrecl, stcp->blksize, p_stat, stcp->nbaccesses,
@@ -1729,12 +1687,10 @@ void print_link_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 		} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
 		if (!aflag && strcmp (group, stcp->group)) continue;
 		if (uflag && strcmp (user, stcp->user)) continue;
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 		if (side_flag) {
 			if (stcp->t_or_d != 't') continue;
 			if (side != stcp->u1.t.side) continue;
 		}
-#endif
 		if (numvid) {
 			if (stcp->t_or_d != 't') continue;
 			for (j = 0; j < numvid; j++)
@@ -1872,12 +1828,10 @@ int print_sorted_list(poolname, aflag, group, uflag, user, numvid, vid, fseq, fs
 		} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
 		if (!aflag && strcmp (group, stcp->group)) continue;
 		if (uflag && strcmp (user, stcp->user)) continue;
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 		if (side_flag) {
 			if (stcp->t_or_d != 't') continue;
 			if (side != stcp->u1.t.side) continue;
 		}
-#endif
 		if (numvid) {
 			if (stcp->t_or_d != 't') continue;
 			for (j = 0; j < numvid; j++)
@@ -2083,11 +2037,9 @@ void print_tape_info(poolname, aflag, group, uflag, user, numvid, vid, fseq, fse
 		if (!aflag && strcmp (group, stcp->group)) continue;
 		if (uflag && strcmp (user, stcp->user)) continue;
 		if (stcp->t_or_d != 't') continue;
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 		if (side_flag) {
 			if (side != stcp->u1.t.side) continue;
 		}
-#endif
 		if (numvid) {
 			for (j = 0; j < numvid; j++)
 				if (strcmp (stcp->u1.t.vid[0], vid[j]) == 0) break;
