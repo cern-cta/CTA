@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.147 2001/06/07 08:23:06 jdurand Exp $
+ * $Id: stager.c,v 1.148 2001/06/07 09:09:13 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.147 $ $Date: 2001/06/07 08:23:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.148 $ $Date: 2001/06/07 09:09:13 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -78,7 +78,7 @@ void cleanup _PROTO(());
 void stagekilled _PROTO(());
 int build_rtcpcreq _PROTO((int *, tape_list_t ***, struct stgcat_entry *, struct stgcat_entry *, struct stgcat_entry *, struct stgcat_entry *));
 char *hsmpath _PROTO((struct stgcat_entry *));
-int hsmidx_vs_ipath _PROTO((char *));
+int hsmidx_vs_ipath _PROTO((char *, int));
 int hsmidx _PROTO((struct stgcat_entry *));
 void free_rtcpcreq _PROTO((tape_list_t ***));
 int unpackfseq _PROTO((char *, int, char *, fseq_elem **));
@@ -842,8 +842,9 @@ int getnamespace(namespace,path)
 
 /* This routine will return the index in the nbcat_ent entries of an HSM file       */
 /* given its internal path */
-int hsmidx_vs_ipath(ipath)
+int hsmidx_vs_ipath(ipath,use_flags)
      char *ipath;
+     int use_flags;
 {
 	struct stgcat_entry *stcx;
 	int i;
@@ -876,10 +877,12 @@ int hsmidx_vs_ipath(ipath)
 		path1[0] = '\0';
 	}
 	for (stcx = stcs, i = 0; stcx < stce; stcx++, i++) {
-		/* if hsm_flag[] != 0 this mean it has already been transfered in a previous rtcpc() call */
-		/* if hsm_ignore[] != 0 this mean we have to ignore it */
-		/* if hsm_status[] != 0 this mean it has already been transfered in current rtcpc() call */
-		if ((hsm_flag[i] != 0) || (hsm_ignore[i] != 0) || (hsm_status[i] != 0)) continue;
+		if (use_flags) {
+			/* if hsm_flag[] != 0 this mean it has already been transfered in a previous rtcpc() call */
+			/* if hsm_ignore[] != 0 this mean we have to ignore it */
+			/* if hsm_status[] != 0 this mean it has already been transfered in current rtcpc() call */
+			if ((hsm_flag[i] != 0) || (hsm_ignore[i] != 0) || (hsm_status[i] != 0)) continue;
+		}
 		strcpy(save_ipath,stcx->ipath);
 		(void) rfio_parseln (save_ipath, &host, &filename, NORDLINKS);
 		if (host != NULL) {
@@ -2946,7 +2949,7 @@ int build_rtcpcreq(nrtcpcreqs_in, rtcpcreqs_in, stcs, stce, fixed_stcs, fixed_st
 				RESTORE_EID;
 				return(-1);
 			}
-			if ((ihsm = hsmidx_vs_ipath(stcp->ipath)) < 0) {
+			if ((ihsm = hsmidx_vs_ipath(stcp->ipath,1)) < 0) {
 				if ((ihsm = hsmidx(stcp)) < 0) {
 					serrno = SEINTERNAL;
 					SAVE_EID;
@@ -3363,8 +3366,10 @@ int stager_hsm_callback(tapereq,filereq)
 
 	stager_client_callback_i = filereq->disk_fseq - 1;
 	stager_client_true_i = stager_client_callback_i + istart;
-	if ((stager_client_true_i = hsmidx_vs_ipath(filereq->file_path)) < 0) {
-		stager_client_true_i = hsmidx(&stcp_start[stager_client_callback_i]);
+	if ((stager_client_true_i = hsmidx_vs_ipath(filereq->file_path,1)) < 0) {
+		if ((stager_client_true_i = hsmidx(&stcp_start[stager_client_callback_i])) < 0) {
+			stager_client_true_i = hsmidx_vs_ipath(filereq->file_path,0);
+		}
 	}
 
 	if ((stager_client_callback_i < 0) || (stager_client_callback_i > iend) || (stager_client_true_i >= nbcat_ent) || (stager_client_true_i < 0)) {
@@ -3842,6 +3847,6 @@ void stager_process_error(tapereq,filereq,castor_hsm)
 
 
 /*
- * Last Update: "Thursday 07 June, 2001 at 10:22:32 CEST by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Thursday 07 June, 2001 at 11:06:46 CEST by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
 
