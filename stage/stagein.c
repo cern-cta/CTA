@@ -1,5 +1,5 @@
 /*
- * $Id: stagein.c,v 1.52 2002/10/30 15:53:00 jdurand Exp $
+ * $Id: stagein.c,v 1.53 2002/11/20 08:06:38 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)RCSfile$ $Revision: 1.52 $ $Date: 2002/10/30 15:53:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.53 $ $Date: 2002/11/20 08:06:38 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1016,7 +1016,7 @@ static int tmscheck(vid, vsn, dgn, den, lbl, fseq1, fseq2)
 #endif
 
 #if VMGR
-int stage_vmgrcheck(vid, vsn, dgn, den, lbl, mode)
+static int stage_vmgrcheck(vid, vsn, dgn, den, lbl, mode)
      char *vid;
      char *vsn;
      char *dgn;
