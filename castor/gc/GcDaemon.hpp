@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcDaemon.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2005/02/25 18:00:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: GcDaemon.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2005/03/16 10:37:01 $ $Author: jiltsov $
  *
  * Garbage collector daemon handling the deletion of local
  * files on a filesystem. Makes remote calls to the stager
@@ -63,10 +63,19 @@ namespace castor {
       /**
        * parses a command line to set the server oprions
        */
-      void parseCommandLine(int argc, char *argv[]);
+      void 	GCparseCommandLine(int argc, char *argv[]);
+
+      /**
+       * get size (bytes) of the file to be removed
+       */
+      long 	GCgetFileSize( std::string gcfilepath);
+
+      /**
+       * actually remove the file from local filesystem
+       */
+      long 	GCremoveFilePath( std::string gcfilepath);
 
     private:
-
       /**
        * UUID of the server (for log purposes)
        */
