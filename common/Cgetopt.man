@@ -1,0 +1,400 @@
+.\" $Id: Cgetopt.man,v 1.1 2000/02/28 12:51:52 jdurand Exp $
+.\"
+.\"	$NetBSD: getopt_long.3,v 1.1 1999/07/23 03:55:27 mcr Exp $
+.\"
+.\" Copyright (c) 1988, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)getopt.3	8.5 (Berkeley) 4/27/95
+.\"
+.TH CGETOPT_LONG "3" "$Date: 2000/02/28 12:51:52 $" "CASTOR" "Common Library"
+.SH NAME
+Cgetopt_long - get long options from command line argument list
+.SH SYNOPSIS
+.BI "#include < "Cgetopt.h ">"
+.sp
+.BI "int Cgetopt (int " argc ", char **argv ", char * "optstring ")"
+.br
+.BI "int Cgetopt_long (int " argc ", char ** " argv ", char * " optstring ", Coptions_t * " long_options ", int * " index ")"
+
+.SH DESCRIPTION
+The
+.B Cgetopt
+function incrementally parses a command line argument list
+.BI argv
+and returns the next known option character.
+An option character is known if it has been specified in the string of accepted option characters,
+.BI optstring .
+.P
+The 
+.B Cgetopt_long
+function is similar to 
+.B Cgetopt
+but it accepts options in two forms: words and characters. The
+.B Cgetopt_long
+function provides a superset of of the functionality of 
+.B Cgetopt
+The additional functionality is described in the section CGETOPT_LONG.
+.P
+The option string
+.BI optstring
+may contain the following elements: individual characters, and
+characters followed by a colon to indicate an option argument
+is to follow.
+For example, an option string
+.B x
+recognizes an option
+.B x ,
+and an option string
+.B x:
+recognizes an option and argument
+.B x argument .
+It does not matter to
+.B Cgetopt
+if a following argument has leading white space.
+.P
+On return from
+.BI Cgetopt ,
+.BI Coptarg
+points to an option argument, if it is anticipated,
+and the variable
+.BI Coptind
+contains the index to the next
+.BI argv
+argument for a subsequent call
+to
+.B Cgetopt .
+The variable
+.BI Coptopt
+saves the last known option character returned by
+.B Cgetopt .
+.P
+The variable
+.BI Copterr
+and
+.BI Coptind
+are both initialized to 1.
+The
+.BI Coptind
+variable may be set to another value before a set of calls to
+.B Cgetopt
+in order to skip over more or less argv entries.
+.P
+In order to use
+.B Cgetopt
+to evaluate multiple sets of arguments, or to evaluate a single set of
+arguments multiple times,
+the variable
+.BI Coptreset
+must be set to 1 before the second and each additional set of calls to
+.B Cgetopt ,
+and the variable
+.BI Coptind
+must be reinitialized.
+.P
+The
+.B Cgetopt
+function returns -1 when the argument list is exhausted, or a non-recognized option is encountered.
+The interpretation of options in the argument list may be cancelled
+by the option
+.B --
+(double dash) which causes
+.B Cgetopt
+to signal the end of argument processing and returns -1.
+When all options have been processed (i.e., up to the first non-option argument),
+.B Cgetopt
+returns -1.
+.S CGETOPT_LONG
+.P
+.B Cgetopt_long
+can be used in two ways. In the first way, every long option understood by the program has a coresponding short option, and the option structure is only used to translate from long option to short options. When used in this fashion, 
+.B Cgetopt_long
+behaves identically to 
+.B Cgetopt.
+This is good way to add long option processing to an existing program with the minimum of rewriting.
+.P
+In the second mechanism, a long option set a flag in the 
+.BI option
+structure passed, or will store a pointer to the command line argument in the 
+.BI option 
+structure passed to it for options that take arguments. Additionally, the long option's argument may be specified as a single argument with an equal sign, e.g
+.B myprogram --myoption=somevalue
+.P
+When a long option is processed the call to 
+.B Cgetopt_long
+will return 0. For this reason, long option processing without shortcuts are not backwards compatible with 
+.B Cgetopt.
+.P
+It is possible to combine these methods, providing for long options processing with short option equivalents for some options. Less frequently used options would be processed as long options only.
+.SH USAGE OF CGETOPT_LONG
+.P
+The 
+.B Cgetopt_long
+call requires a structure to be initialized describing the long options. The structure is:
+.B
+.ft CW
+.nf
+.sp
+Coptions_t {
+    char *name;
+    int has_arg;
+    int *flag;
+    int val;
+};
+.ft
+.LP
+.fi
+
+.P
+The 
+.BI name
+field should contain the option name without the leading double dash.
+.P
+The 
+.BI has_arg
+field should be one of
+.B NO_ARGUMENT
+no argument to the option is expect.
+.B REQUIRED_ARGUMENT
+an argument to the option is required.
+.B OPTIONAL_ARGUMENT
+an argument to the option may be presented.
+.P
+If
+.BI flag
+is non-NULL, then the integer pointed to by it will set to the value  in the 
+.BI val
+field. If the 
+.BI flag 
+field is NULL, then the 
+.BI val
+field will be returned. Setting 
+.BI flag
+to NULL and setting
+.BI val
+to the corresponding short option will make this function act just
+like
+.B Cgetopt.
+.SH DIAGNOSTICS
+If the
+.B Cgetopt
+function encounters a character not found in the string
+.BI optstring
+or detects a missing option argument it writes an error message to
+.B stderr
+and returns
+.B ? .
+Setting
+.BI Copterr
+to a zero will disable these error messages.
+If
+.BI optstring
+has a leading
+.B :
+then a missing option argument causes a
+.B :
+to be returned in addition to suppressing any error messages.
+.P
+Option arguments are allowed to begin with
+.B -
+; this is reasonable but reduces the amount of error checking possible.
+.SH CGETOPT_LONG
+.SH CEXTENSIONS
+The
+.BI Coptreset
+variable was added to make it possible to call the
+.B Cgetopt
+function multiple times.
+This is an extension to the
+.B -p1003.2
+specification.
+.SH EXAMPLE
+.ft CW
+.nf
+.sp
+#include <Cgetopt.h>
+int bflag, ch, fd;
+
+Coptind = 1;            /* Required */
+Copterr = 1;            /* Some stderr output if you want */
+
+bflag = 0;
+while ((ch = Cgetopt(argc, argv, "bf:")) != -1)
+	switch(ch) {
+	case 'b':
+		bflag = 1;
+		break;
+	case 'f':
+		if ((fd = open(optarg, O_RDONLY, 0)) < 0) {
+			(void)fprintf(stderr,
+			    "myname: %s: %s\en", optarg, strerror(errno));
+			exit(1);
+		}
+		break;
+	case '?':
+	default:
+		usage();
+}
+argc -= Coptind;
+argv += Coptind;
+.ft
+.LP
+.fi
+
+.SH LONG EXAMPLE 
+.ft CW
+.nf
+.sp
+#include <Cgetopt.h>
+int bflag, ch, fd;
+int daggerset;
+
+/* options descriptor */
+Coptions_t longopts[] =
+{
+  {"buffy",       NO_ARGUMENT,        NULL,      'b'},
+  {"floride",     REQUIRED_ARGUMENT,  NULL,      'f'},
+  {"daggerset",   NO_ARGUMENT,        &daggerset,  1},
+  {NULL, 		  0,                  NULL,        0}
+};
+
+Coptind = 1;            /* Required */
+Copterr = 1;            /* Some stderr output if you want */
+
+bflag = 0;
+while ((ch = Cgetopt_long(argc, argv, "bf:", longopts, NULL)) != -1)
+	switch(ch) {
+	case 'b':
+		bflag = 1;
+		break;
+	case 'f':
+		if ((fd = open(optarg, O_RDONLY, 0)) < 0) {
+			(void)fprintf(stderr,
+			    "myname: %s: %s\en", optarg, strerror(errno));
+			exit(1);
+		}
+		break;
+	case 0:
+		if(daggerset) {
+			fprintf(stderr,"Buffy will put use her dagger"
+				       "to apply floride to dracula's teeth");
+		}
+		break;
+	case '?':
+	default:
+		usage();
+}
+argc -= Coptind;
+argv += Coptind;
+.ft
+.LP
+.fi
+
+.SH HISTORY
+The
+.B Cgetopt
+function appeared
+.Bx 4.3 .
+The 
+.B Cgetopt_long
+function first appeared in GNU libiberty. This implementation was imported to NetBSD from a Kerberos distribution.
+.SH BUGS
+The
+.B Cgetopt
+function was once specified to return
+.B EOF
+instead of -1. This was changed by
+.B -p1003.2-92
+to decouple
+.B Cgetopt
+from <stdio.h> .
+.P
+A single dash
+.B -
+may be specified as an character in
+.BI optstring ,
+however it should
+.B never
+have an argument associated with it.
+This allows
+.B Cgetopt
+to be used with programs that expect
+.B -
+as an option flag.
+This practice is wrong, and should not be used in any current development.
+It is provided for backward compatibility
+.B only .
+By default, a single dash causes
+.B Cgetopt
+to return -1.
+This is, we believe, compatible with System V.
+.P
+It is also possible to handle digits as option letters.
+This allows
+.B Cgetopt
+to be used with programs that expect a number
+.B -3
+as an option.
+This practice is wrong, and should not be used in any current development.
+It is provided for backward compatibility
+.B only .
+The following code fragment works in most cases.
+.ft CW
+.nf
+.sp
+int length;
+char *p;
+
+Coptind = 1;            /* Required */
+Copterr = 1;            /* Some stderr output if you want */
+
+while ((c = Cgetopt(argc, argv, "0123456789")) != -1)
+	switch (c) {
+	case '0': case '1': case '2': case '3': case '4':
+	case '5': case '6': case '7': case '8': case '9':
+		p = argv[Coptind - 1];
+		if (p[0] == '-' && p[1] == ch && !p[2])
+			length = atoi(++p);
+		else
+			length = atoi(argv[Coptind] + 1);
+		break;
+	}
+}
+.ft
+.LP
+.fi
+.P
+The 
+.BI OPTIONAL_ARGUMENT
+always eats the following argument unless the argument is included via
+the 
+.B --option=argument 
+notation.
