@@ -442,4 +442,5 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN
   DELETE FROM Stream2TapeCopy WHERE Parent = sid;
   DELETE FROM Stream WHERE id = sid;
+  UPDATE Tape SET Stream = 0 WHERE Stream = sid;
 END;
