@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.108 2001/03/14 15:22:36 jdurand Exp $
+ * $Id: procio.c,v 1.109 2001/03/16 11:59:07 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.108 $ $Date: 2001/03/14 15:22:36 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.109 $ $Date: 2001/03/16 11:59:07 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3572,8 +3572,10 @@ int stageput_check_hsm(stcp,uid,gid)
 			return(USERR);
 		}
 		correct_size = (u_signed64) filemig_stat.st_size;
-		if ((hsmmtime <= stcp->a_time) && (correct_size > 0 && correct_size == Cnsfilestat.filesize)) {
+		/* if ((hsmmtime <= stcp->a_time) && (correct_size > 0 && correct_size == Cnsfilestat.filesize)) { */
 			/* Same size and > 0 and mtimes compatible: we assume user asks for a new copy */
+		if ((correct_size > 0) && (correct_size == Cnsfilestat.filesize)) {
+			/* Same size and > 0: we assume user asks for a new copy */
 			setegid(start_passwd.pw_gid);
 			seteuid(start_passwd.pw_uid);
 			return(0);
