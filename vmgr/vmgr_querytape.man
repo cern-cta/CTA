@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_querytape.man,v $ $Revision: 1.6 $ $Date: 2000/02/16 10:54:26 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_querytape.man,v $ $Revision: 1.7 $ $Date: 2000/02/18 14:01:35 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_QUERYTAPE 3 "$Date: 2000/02/16 10:54:26 $" CASTOR "vmgr Library Functions"
+.TH VMGR_QUERYTAPE 3 "$Date: 2000/02/18 14:01:35 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_querytape \- query the CASTOR Volume Manager about a tape
 .SH SYNOPSIS
@@ -22,6 +22,10 @@ vmgr_querytape \- query the CASTOR Volume Manager about a tape
 .BI "char *" poolname ,
 .BI "int *" free_space ,
 .BI "int *" nbfiles ,
+.BI "int *" rcount ,
+.BI "int *" wcount ,
+.BI "time_t *" rtime ,
+.BI "time_t *" wtime ,
 .BI "int *" status )
 .SH DESCRIPTION
 .B vmgr_querytape
@@ -50,6 +54,15 @@ The buffer must be at least CA_MAXDENLEN+1 characters long.
 points at a buffer to receive the label type corresponding to the tape.
 The buffer must be at least 3 characters long.
 .TP
+.I model
+points at a buffer to receive the model of cartridge.
+It should be at least CA_MAXMODELLEN+1 characters long.
+.TP
+.I media_letter
+points at a buffer to receive the media identification letter. For example "A",
+"B" or "C" for SD3 (Redwood), "J" for IBM 3590, "R" for STK 9840.
+It should be 2 characters long.
+.TP
 .I manufacturer
 The buffer should be at least CA_MAXMANUFLEN+1 characters long.
 .TP
@@ -62,6 +75,21 @@ The buffer should be at least CA_MAXPOOLNAMELEN+1 characters long.
 .TP
 .I free_space
 in kbytes.
+.TP
+.I nbfiles
+number of files written on the tape.
+.TP
+.I rcount
+number of times the volume has been mounted for read.
+.TP
+.I wcount
+number of times the volume has been mounted for write.
+.TP
+.I rtime
+indicates the last time the volume was mounted for read.
+.TP
+.I wtime
+indicates the last time the volume was mounted for write.
 .TP
 .I status
 will be returned as a combination of

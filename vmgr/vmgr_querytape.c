@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_querytape.c,v $ $Revision: 1.3 $ $Date: 2000/01/05 09:30:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_querytape.c,v $ $Revision: 1.4 $ $Date: 2000/02/18 14:01:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 /*      vmgr_querytape - query about a tape volume */
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_querytape.c,v $ $Revision: 1.3 $ $Dat
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_querytape(const char *vid, char *vsn, char *dgn, char *density, char *lbltype, char *model, char *media_letter, char *manufacturer, char *sn, char *poolname, int *free_space, int *nbfiles, int *status)
+vmgr_querytape(const char *vid, char *vsn, char *dgn, char *density, char *lbltype, char *model, char *media_letter, char *manufacturer, char *sn, char *poolname, int *free_space, int *nbfiles, int *rcount, int *wcount, time_t *rtime, time_t *wtime, int *status)
 {
 	int c;
 	char func[15];
@@ -31,7 +31,7 @@ vmgr_querytape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
 	int n;
 	char *q;
 	char *rbp;
-	char repbuf[110];
+	char repbuf[124];
 	char *sbp;
 	char sendbuf[REQBUFSZ];
 	struct vmgr_api_thread_info *thip;
@@ -110,6 +110,18 @@ vmgr_querytape(const char *vid, char *vsn, char *dgn, char *density, char *lblty
 		unmarshall_LONG (rbp, n);
 		if (nbfiles)
 			*nbfiles = n;
+		unmarshall_LONG (rbp, n);
+		if (rcount)
+			*rcount = n;
+		unmarshall_LONG (rbp, n);
+		if (wcount)
+			*wcount = n;
+		unmarshall_LONG (rbp, n);
+		if (rtime)
+			*rtime = n;
+		unmarshall_LONG (rbp, n);
+		if (wtime)
+			*wtime = n;
 		unmarshall_LONG (rbp, n);
 		if (status)
 			*status = n;
