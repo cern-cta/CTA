@@ -714,8 +714,6 @@ BEGIN
   WHERE id = rdcId
   RETURNING status, path
   INTO rdcStatus, rdcPath;
-EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
-  NULL;
 END;
 
 /* PL/SQL method implementing updateAndCheckSubRequest */
