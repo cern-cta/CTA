@@ -39,6 +39,7 @@ static char sccsid[] = "@(#)send2stgd_api.c,v 1.19 2001/05/31 13:52:27 CERN IT-P
 #include "stage_struct.h"
 #include "stage_messages.h"
 #include "stage_protocol.h"
+#include "socket_timeout.h"
 
 int dosymlink _PROTO((char *, char *));
 void dounlink _PROTO((char *));
@@ -222,12 +223,14 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 	char stghost[CA_MAXHOSTNAMELEN+1];
 	char *stagehost = STAGEHOST;
 	int stg_service = 0;
+	int stage_timeout;
 	int _nstcp_output = 0;
 	struct stgcat_entry *_stcp_output = NULL;
 	int _nstpp_output = 0;
 	struct stgpath_entry *_stpp_output = NULL;
 	u_signed64 uniqueid = 0;
 	u_signed64 current_uniqueid = 0;
+	int save_serrno;
 
 	strcpy (func, "send2stgd");
 
@@ -278,6 +281,13 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 		strcpy (stghost, host);
 	}
 
+	if ((p = getenv ("STAGE_TIMEOUT")) == NULL &&
+		(p = getconfent("STG", "TIMEOUT",0)) == NULL) {
+		stage_timeout = -1;
+	} else {
+		stage_timeout = atoi(p);
+	}
+
 	if ((hp = Cgethostbyname(stghost)) == NULL) {
 		stage_errmsg (func, STG09, "Host unknown:", stghost);
 		serrno = SENOSHOST;
@@ -318,12 +328,13 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 	}
 
 	if ((n = netwrite_timeout (stg_s, reqp, reql, STGTIMEOUT)) != reql) {
+		save_serrno = serrno;
 		if (n == 0)
 			stage_errmsg (func, STG02, "", "send", sys_serrlist[SERRNO]);
 		else
 			stage_errmsg (func, STG02, "", "send", neterror());
 		(void) netclose (stg_s);
-		serrno = SECOMERR;
+		serrno = save_serrno;
 		SEND2STGD_API_ERROR(-1);
 	}
 	if (! want_reply) {
@@ -342,14 +353,15 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
     stage_setlaststghost(stghost);
 
 	while (1) {
-      
-		if ((n = netread(stg_s, repbuf, 3 * LONGSIZE)) != (3 * LONGSIZE)) {
+
+		if ((n = netread_timeout(stg_s, repbuf, 3 * LONGSIZE, stage_timeout)) != (3 * LONGSIZE)) {
+			save_serrno = serrno;
 			if (n == 0)
 				stage_errmsg (func, STG02, "", "recv", sys_serrlist[SERRNO]);
 			else
 				stage_errmsg (func, STG02, "", "recv", neterror());
 			(void) netclose (stg_s);
-			serrno = SECOMERR;
+			serrno = save_serrno;
 			SEND2STGD_API_ERROR(-1);
 		}
 		p = repbuf;
@@ -378,13 +390,14 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 				serrno = SEINTERNAL;
 				SEND2STGD_API_ERROR(-1);
 			}
-			if ((noutput_data = netread(stg_s, msgbuf_out, c)) != c) {
+			if ((noutput_data = netread_timeout(stg_s, msgbuf_out, c, stage_timeout)) != c) {
+				save_serrno = serrno;
 				if (noutput_data == 0)
 					stage_errmsg (func, STG02, "", "recv", sys_serrlist[SERRNO]);
 				else
 					stage_errmsg (func, STG02, "", "recv", neterror());
 				(void) netclose (stg_s);
-				serrno = SECOMERR;
+				serrno = save_serrno;
 				free(msgbuf_out);
 				SEND2STGD_API_ERROR(-1);
 			}
@@ -428,13 +441,14 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 				serrno = SEINTERNAL;
 				SEND2STGD_API_ERROR(-1);
 			}
-			if ((noutput_data = netread(stg_s, msgbuf_out, c)) != c) {
+			if ((noutput_data = netread_timeout(stg_s, msgbuf_out, c, stage_timeout)) != c) {
+				save_serrno = serrno;
 				if (noutput_data == 0)
 					stage_errmsg (func, STG02, "", "recv", sys_serrlist[SERRNO]);
 				else
 					stage_errmsg (func, STG02, "", "recv", neterror());
 				(void) netclose (stg_s);
-				serrno = SECOMERR;
+				serrno = save_serrno;
 				free(msgbuf_out);
 				SEND2STGD_API_ERROR(-1);
 			}
@@ -468,13 +482,14 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 			char uniqueidbuf[HYPERSIZE];
 			int  nread;
 
-			if ((nread = netread(stg_s, uniqueidbuf, HYPERSIZE)) != HYPERSIZE) {
+			if ((nread = netread_timeout(stg_s, uniqueidbuf, HYPERSIZE, stage_timeout)) != HYPERSIZE) {
+				save_serrno = serrno;
 				if (nread == 0)
 					stage_errmsg (func, STG02, "", "recv", sys_serrlist[SERRNO]);
 				else
 					stage_errmsg (func, STG02, "", "recv", neterror());
 				(void) netclose (stg_s);
-				serrno = SECOMERR;
+				serrno = save_serrno;
 				SEND2STGD_API_ERROR(-1);
 			}
 			p = uniqueidbuf;
@@ -486,13 +501,14 @@ int DLL_DECL send2stgd(host, req_type, flags, reqp, reql, want_reply, user_repbu
 			}
 			continue;
 		}
-		if ((n = netread(stg_s, repbuf, c)) != c) {
+		if ((n = netread_timeout(stg_s, repbuf, c, stage_timeout)) != c) {
+			save_serrno = serrno;
 			if (n == 0)
 				stage_errmsg (func, STG02, "", "recv", sys_serrlist[SERRNO]);
 			else
 				stage_errmsg (func, STG02, "", "recv", neterror());
 			(void) netclose (stg_s);
-			serrno = SECOMERR;
+			serrno = save_serrno;
 			SEND2STGD_API_ERROR(-1);
 		}
 		p = repbuf;
