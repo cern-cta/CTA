@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.127 $ $Release$ $Date: 2005/04/01 13:32:48 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.128 $ $Release$ $Date: 2005/04/01 14:44:58 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.127 $ $Release$ $Date: 2005/04/01 13:32:48 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.128 $ $Release$ $Date: 2005/04/01 14:44:58 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -2829,7 +2829,8 @@ int rtcpcld_updcFileRecalled(
                            segmentArray[i],
                            &segmentStatus
                            );
-    if ( segmentStatus != SEGMENT_FILECOPIED ) {
+    if ( (segmentStatus != SEGMENT_FILECOPIED) &&
+         (segmentStatus != SEGMENT_RETRIED) ) {
       (void)dlf_write(
                       (inChild == 0 ? mainUuid : childUuid),
                       RTCPCLD_LOG_MSG(RTCPCLD_MSG_REMAININGSEGMS),
