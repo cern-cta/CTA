@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.7 $ $Date: 1999/11/12 07:26:04 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.8 $ $Date: 1999/11/12 08:48:53 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -198,7 +198,7 @@
 #endif
 #define	TP054	"TP054 - tape not mounted or not ready\n"
 #define	TP055	"TP055 - parameter inconsistency with TMS for vid %s: %s<->%s\n"
-#define	TP056	"TP056 - %s request by %s (%d,%d) from %s\n"
+#define	TP056	"TP056 - %s request by %d,%d from %s\n"
 #define	TP057	"TP057 - drive %s is not free\n"
 #define	TP058	"TP058 - no free drive\n"
 #define	TP059	"TP059 - invalid reason\n"
