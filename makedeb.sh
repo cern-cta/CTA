@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: makedeb.sh,v 1.6 2005/01/24 11:35:47 jdurand Exp $
+# $Id: makedeb.sh,v 1.7 2005/01/24 15:08:44 jdurand Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable"
@@ -69,14 +69,19 @@ perl -pi -e s/__MINOR_CASTOR_VERSION__/${MINOR_CASTOR_VERSION}/g */Imakefile deb
 ## Replace __BASEVERSION__, __PATCHLEVEL__ and __TIMESTAMP__ in patchlevel.h
 #
 timestamp=`date "+%s"`
-perl -pi -e s/__BASEVERSION__/${a}.${b}.${c}/g h/patchlevel.h
+perl -pi -e s/__BASEVERSION__/\"${a}.${b}.${c}\"/g h/patchlevel.h
 perl -pi -e s/__PATCHLEVEL__/${d}/g h/patchlevel.h
-perl -pi -e s/__TIMESTAMP__/${timestamp}/g h/patchlevel.h
+perl -pi -e s/__TIMESTAMP__/\"${timestamp}\"/g h/patchlevel.h
 
+#
+## Ask for a changelog
+## We need an editor that supports the +n option
+#
+fakeroot dch --newversion ${a}.${b}.${c}-${d}
+cvs commit  -m "Version ${a}.${b}.${c}-${d}" debian/changelog
 #
 ## Build the packages
 #
-fakeroot dch --newversion ${a}.${b}.${c}-${d}
 fakeroot dpkg-buildpackage
 status=$?
 
