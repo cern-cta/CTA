@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.23 $ $Date: 2000/04/12 16:56:34 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.24 $ $Date: 2000/04/25 13:12:20 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -452,13 +452,15 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
         gethostname(req->tape->tapereq.server,namelen);
  
         rc = rtcpc(req->tape);
-        if ( rc == -1 && serrno == EINTR ) (void)rtcp_CloseConnection(s);
+        if ( rc == -1 && serrno == ERTUSINTR ) (void)rtcp_CloseConnection(s);
         if ( rc == -1 && serrno == ETVBSY ) sleep(60);
         else break;
     }
     (void) rtcp_SendRC(s,hdr,&retval,req);
 
     rtcp_log = (void (*)(int, const char *, ...))log;
+    rtcp_log(LOG_DEBUG,"rtcp_RunOld() sent back status=%d to client\n",
+             retval);
 
     if ( CLThId != -1 ) (void)rtcpd_WaitCLThread(CLThId,&status);
     return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,rc));

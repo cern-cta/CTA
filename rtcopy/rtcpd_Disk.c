@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.76 $ $Date: 2000/04/17 10:50:45 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.77 $ $Date: 2000/04/25 13:12:18 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -87,6 +87,8 @@ extern processing_status_t proc_stat;
 extern buffer_table_t **databufs;
 
 extern rtcpClientInfo_t *client;
+
+extern int AbortFlag;
 
 static int FortranUnitTable[NB_FORTRAN_UNITS];  /* Table of Fortran units */
 
@@ -1267,6 +1269,8 @@ static int DiskToMemory(int disk_fd, int pool_index,
                 rtcpd_CheckReqStatus((X),(Y),NULL,&severity); \
                 rtcp_log(LOG_DEBUG,"diskIOthread() return RC=-1 to client\n"); \
                 if ( rc == 0 && AbortFlag != 0 && (severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) \
+                    rtcpd_SetReqStatus(X,Y,(AbortFlag == 1 ? ERTUSINTR : ERTOPINTR),rtcpd_CheckProcError()); \
+                (void) tellClient(&client_socket,X,Y,-1); \
             } else { \
                 rtcp_log(LOG_DEBUG,"diskIOthread() return RC=0 to client\n"); \
                 (void) tellClient(&client_socket,X,Y,0); \

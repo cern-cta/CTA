@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "$RCSfile: rtcp_RetvalSHIFT.c,v $ $Revision: 1.8 $ $Date: 2000/03/15 14:44:22 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "$RCSfile: rtcp_RetvalSHIFT.c,v $ $Revision: 1.9 $ $Date: 2000/04/25 13:12:16 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -59,12 +59,15 @@ static int rtcp_Retval(tape_list_t *tape, file_list_t *file,
     CLIST_ITERATE_BEGIN(tape,tl) {
         if ( tl->tapereq.tprc != 0 ) {
             err = &(tl->tapereq.err);
+            rtcp_log(LOG_DEBUG,"rtcp_Retval() tape RC==%d\n",tl->tapereq.tprc);
             break;
         }
         if ( file == NULL ) {
             CLIST_ITERATE_BEGIN(tl->file,fl) {
                 if ( fl->filereq.cprc != 0 ) {
                     err = &(fl->filereq.err);
+                    rtcp_log(LOG_DEBUG,"rtcp_Retval() file RC=%d\n",
+                             fl->filereq.cprc);
                     break;
                 }
             } CLIST_ITERATE_END(tl->file,fl);
@@ -76,7 +79,7 @@ static int rtcp_Retval(tape_list_t *tape, file_list_t *file,
     } CLIST_ITERATE_END(tape,tl);
 
     if ( err != NULL ) {
-        if ( (err->severity & (RTCP_FAILED|RTCP_LOCAL_RETRY) ) != 0 ) {
+        if ( (err->severity & (RTCP_FAILED|RTCP_RESELECT_SERV) ) != 0 ) {
             if ( what == map_castor ) retval = err->errorcode;
             else {
                 if ( (err->severity & RTCP_RESELECT_SERV) != 0 ) retval = RSLCT;
@@ -105,6 +108,7 @@ static int rtcp_Retval(tape_list_t *tape, file_list_t *file,
                 else retval = ENDVOL;
             else retval = 0;
         }
+        rtcp_log(LOG_DEBUG,"rtcp_Retval() map severity %d to status %d\n",err->severity,retval);
     } else retval = 0;
 
     if ( Retval != NULL ) *Retval = retval;

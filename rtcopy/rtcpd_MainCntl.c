@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.66 $ $Date: 2000/04/18 15:09:25 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.67 $ $Date: 2000/04/25 13:12:19 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1115,8 +1115,6 @@ static int rtcpd_ProcError(int *code) {
     static int global_code, rc;
 
     if ( AbortFlag != 0 ) {
-        if ( AbortFlag == 2 ) 
-            rtcp_log(LOG_DEBUG,"request aborted by operator\n");
         return(proc_cntl.ProcError);
     }
     rc = Cthread_mutex_lock_ext(proc_cntl.ProcError_lock);
@@ -1155,7 +1153,7 @@ void rtcpd_SetProcError(int code) {
          * the error is set (although thread-unsafe).
          */
         rtcp_log(LOG_ERR,"rtcpd_SetProcError() force FAILED status\n");
-        proc_cntl.ProcError = RTCP_FAILED;
+        rc = proc_cntl.ProcError = RTCP_FAILED;
     }
     if ( (rc & (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV|RTCP_EOD)) != 0 ) 
         rtcpd_BroadcastException(); 

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.62 $ $Date: 2000/04/10 13:56:11 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.63 $ $Date: 2000/04/25 13:12:20 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -70,6 +70,7 @@ extern rtcpClientInfo_t *client;
 
 extern int success;
 extern int failure;
+extern int AbortFlag;
 
 static int last_block_done = 0;
 
@@ -1086,6 +1087,8 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                          tmpfile = tmpfile->next; \
                      if ( *tmpfile->filereq.err.errmsgtxt != '\0' ) nextfile = tmpfile; \
                  } \
+                if ( rc == 0 && AbortFlag != 0 && (severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) \
+                    rtcpd_SetReqStatus(X,Y,(AbortFlag == 1 ? ERTUSINTR : ERTOPINTR),rtcpd_CheckProcError()); \
                  (void) tellClient(&client_socket,X,Y,-1); \
                  (void) rtcpd_stageupdc(nexttape,(tmpfile!=NULL?tmpfile:nextfile)); \
                  (void)rtcp_WriteAccountRecord(client,nexttape,(tmpfile!=NULL?tmpfile:nextfile),RTCPEMSG); \
