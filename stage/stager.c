@@ -1,5 +1,5 @@
 /*
- * $Id: stager.c,v 1.125 2001/02/14 15:27:45 jdurand Exp $
+ * $Id: stager.c,v 1.126 2001/02/16 06:26:04 jdurand Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
 /* #define FULL_STAGEWRT_HSM */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.125 $ $Date: 2001/02/14 15:27:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager.c,v $ $Revision: 1.126 $ $Date: 2001/02/16 06:26:04 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -3459,7 +3459,7 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 
 	SAVE_EID;
 #ifdef STAGER_DEBUG
-	sendrep(rpfd, MSG_ERR, "[DEBUG-CALLBACK] VID.FSEQ=%s.%d, File No %d (%s), filereq->cprc=%d, bytes_in=%s, bytes_out=%s, host_bytes=%s, filereq->proc_status=%d (0x%lx), filereq->err.severity=%d (0x%lx), filereq->err.errorcode=%d (0x%lx), tapereq->err.severity=%d (0x%lx), tapereq->err.errorcode=%d (0x%lx), errno=%d (%s), serrno=%d (%s)\n",
+	sendrep(rpfd, MSG_ERR, "[DEBUG-CALLBACK] VID.FSEQ=%s.%d, File No %d (%s), filereq->cprc=%d, bytes_in=%s, bytes_out=%s, host_bytes=%s\n",
 		tapereq->vid,
 		(int) filereq->tape_fseq,
 		(int) filereq->disk_fseq,
@@ -3467,7 +3467,10 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 		(int) filereq->cprc,
 		u64tostr((u_signed64) filereq->bytes_in, tmpbuf1, 0),
 		u64tostr((u_signed64) filereq->bytes_out, tmpbuf2, 0),
-		u64tostr((u_signed64) filereq->host_bytes, tmpbuf3, 0),
+		u64tostr((u_signed64) filereq->host_bytes, tmpbuf3, 0));
+	sendrep(rpfd, MSG_ERR, "[DEBUG-CALLBACK] VID.FSEQ=%s.%d, filereq->proc_status=%d (0x%lx), filereq->err.severity=%d (0x%lx), filereq->err.errorcode=%d (0x%lx), tapereq->err.severity=%d (0x%lx), tapereq->err.errorcode=%d (0x%lx)\n",
+		tapereq->vid,
+		(int) filereq->tape_fseq,
 		(int) filereq->proc_status,
 		(unsigned long) filereq->proc_status,
 		(int) filereq->err.severity,
@@ -3477,7 +3480,10 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 		(int) tapereq->err.severity,
 		(unsigned long) tapereq->err.severity,
 		(int) tapereq->err.errorcode,
-		(unsigned long) tapereq->err.errorcode,
+		(unsigned long) tapereq->err.errorcode);
+	sendrep(rpfd, MSG_ERR, "[DEBUG-CALLBACK] VID.FSEQ=%s.%d, errno=%d (%s), serrno=%d (%s)\n",
+		tapereq->vid,
+		(int) filereq->tape_fseq,
 		errno,
 		strerror(errno),
 		serrno,
@@ -3495,7 +3501,7 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 						u64tostr((u_signed64) filereq->bytes_out, tmpbuf2, 0),
 						u64tostr((u_signed64) filereq->host_bytes, tmpbuf3, 0));
 	} else {
-		stglogit(func, "%s.%d, File No %d (%s), cprc=%d, bytes_in=%s, bytes_out=%s, host_bytes=%s, proc_status=%d (0x%lx), filereq->err.severity=%d (0x%lx), filereq->err.errorcode=%d (0x%lx), tapereq->err.severity=%d (0x%lx), tapereq->err.errorcode=%d (0x%lx), bytes_in=%s, bytes_out=%s, host_bytes=%s, errno=%d (%s), serrno=%d (%s)\n",
+		stglogit(func, "%s.%d, File No %d (%s), cprc=%d, bytes_in=%s, bytes_out=%s, host_bytes=%s, proc_status=%d (0x%lx), filereq->err.severity=%d (0x%lx), filereq->err.errorcode=%d (0x%lx), tapereq->err.severity=%d (0x%lx), tapereq->err.errorcode=%d (0x%lx), errno=%d (%s), serrno=%d (%s)\n",
 						tapereq->vid,
 						(int) filereq->tape_fseq,
 						(int) filereq->disk_fseq,
@@ -3514,9 +3520,6 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 						(unsigned long) tapereq->err.severity,
 						(int) tapereq->err.errorcode,
 						(unsigned long) tapereq->err.errorcode,
-						u64tostr((u_signed64) filereq->bytes_in, tmpbuf1, 0),
-						u64tostr((u_signed64) filereq->bytes_out, tmpbuf2, 0),
-						u64tostr((u_signed64) filereq->host_bytes, tmpbuf3, 0),
 						errno,
 						strerror(errno),
 						serrno,
@@ -3527,6 +3530,6 @@ void stager_hsm_or_tape_log_callback(tapereq,filereq)
 }
 
 /*
- * Last Update: "Wednesday 14 February, 2001 at 16:13:40 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Friday 16 February, 2001 at 07:24:39 CET by Jean-Damien DURAND (<A HREF='mailto:Jean-Damien.Durand@cern.ch'>Jean-Damien.Durand@cern.ch</A>)"
  */
 
