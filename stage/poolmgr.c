@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.56 2000/12/19 15:39:52 jdurand Exp $
+ * $Id: poolmgr.c,v 1.57 2000/12/20 11:14:37 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.56 $ $Date: 2000/12/19 15:39:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.57 $ $Date: 2000/12/20 11:14:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -621,8 +621,7 @@ reply:
 	fclose (s);
 	if (errflg) {
 		for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
-			for (j = 0, elemp = pool_p->elemp; j < pool_p->nbelem; j++, elemp++)
-				if (elemp) free (elemp);
+			if (pool_p->elemp != NULL) free (pool_p->elemp);
 		}
 		free (pools);
 		for (i = 0, migp_p = migpolicies; i < nbmigpolicy; i++, migp_p++) {
