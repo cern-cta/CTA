@@ -1,5 +1,5 @@
 /*
- * $Id: stage_server_struct.h,v 1.1 2001/11/30 10:52:24 jdurand Exp $
+ * $Id: stage_server_struct.h,v 1.2 2001/12/05 10:02:02 jdurand Exp $
  */
 
 #ifndef __stage_server_struct_h
@@ -148,6 +148,7 @@ struct pool_element {
 	int nbwriteaccess;      /* Number of known accesses in write mode */
 	time_t last_allocation; /* last known allocation timestamp */
 	u_signed64	bsize;		/* filesystem block size in bytes */
+	int flag;               /* Internal flag used to not double count elements when evaluating number of hosts in all the pools */
 };
 
 struct sorted_ent {
