@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.21 $ $Date: 2005/01/20 16:28:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.22 $ $Date: 2005/03/01 13:52:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -134,8 +134,12 @@ int flags;
 	case D100GC:
 	case D110G:
 	case D110GC:
+	case D160G:
+	case D160GC:
 	case D200G:
 	case D200GC:
+	case D300G:
+	case D300GC:
 	case DDS:
 	case DDSC:
 		break;
@@ -261,6 +265,7 @@ u_signed64 *Size;
 			if (strcmp (dmpparm.devtype, "SD3") == 0 ||
 			    strcmp (dmpparm.devtype, "9840") == 0 ||
 			    strcmp (dmpparm.devtype, "9940") == 0 ||
+			    strcmp (dmpparm.devtype, "3592") == 0 ||
 			    strcmp (dmpparm.devtype, "SDLT") == 0 ||
 			    strcmp (dmpparm.devtype, "LTO") == 0)
 				tape_used = tape_used + (float) nbytes;
@@ -615,6 +620,10 @@ u_signed64 *Size;
 		perc = tape_used / 1100000000;
 		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN SDLT CARTRIDGE (110GB) *****\n",
 			perc);
+	} else if (den == D160G || den == D160GC) {
+		perc = tape_used / 1600000000;
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN SDLT CARTRIDGE (160GB) *****\n",
+			perc);
 	} else if (den == D200G || den == D200GC) {
 		perc = tape_used / 2000000000;
 		if (strcmp (dmpparm.devtype, "9940") == 0)
@@ -623,6 +632,10 @@ u_signed64 *Size;
 		else
 			Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF AN LTO2 CARTRIDGE (200GB) *****\n",
 				perc);
+	} else if (den == D300G || den == D300GC) {
+		perc = tape_used / 3000000000UL;
+		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF AN 3592 CARTRIDGE (300GB) *****\n",
+			perc);
 	} else if (den == DDS || den == DDSC) {
 		perc = tape_used / 40000000;
 		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %d %%  OF A DDS2 CARTRIDGE (4GB) *****\n",
