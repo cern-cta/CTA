@@ -1,19 +1,19 @@
 /*
- * stagein.c,v 1.11 2000-03-24 11:10:06+01 jdurand Exp
+ * $Id: stagein.c,v 1.14 2000/05/08 10:46:53 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1993-2000 by CERN/IT/PDP/DM
+ * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)stagein.c,v 1.11 2000-03-24 11:10:06+01 CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)RCSfile$ $Revision: 1.14 $ $Date: 2000/05/08 10:46:53 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
+#include <string.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -53,6 +53,7 @@ int tmscheck _PROTO((char *, char *, char *, char *, char *));
 int chkdirw _PROTO((char *));
 void cleanup _PROTO((int));
 void usage _PROTO((char *));
+void freehsmfiles _PROTO((int, char **));
 
 int main(argc, argv)
 		 int	argc;
@@ -266,7 +267,7 @@ int main(argc, argv)
 						argv[optind - 1] = hsmfiles[nhsmfiles - 1];
 					} else {
 						/* Here we believe that the user gave a hostname */
-						hsmfiles[nhsmfiles++] = optarg;
+						hsmfiles[nhsmfiles++] = NULL;
                     }
 				} else {
 					fprintf (stderr, "Cannot parse hsm file %s\n", optarg);
@@ -348,12 +349,14 @@ int main(argc, argv)
 
 	if (errflg) {
 		usage (argv[0]);
+        freehsmfiles(nhsmfiles, hsmfiles);
 		exit (1);
 	}
 
 #if defined(_WIN32)
 	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
 		fprintf (stderr, STG51);
+        freehsmfiles(nhsmfiles, hsmfiles);
 		exit (SYERR);
 	}
 #endif
@@ -368,6 +371,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 		WSACleanup();
 #endif
+        freehsmfiles(nhsmfiles, hsmfiles);
 		exit (SYERR);
 	}
 	strcpy (user, pw->pw_name);	/* login name */
@@ -399,6 +403,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 			WSACleanup();
 #endif
+            freehsmfiles(nhsmfiles, hsmfiles);
 			exit (1);
 		}
 		
@@ -490,6 +495,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 			WSACleanup();
 #endif
+            freehsmfiles(nhsmfiles, hsmfiles);
 			exit (SYERR);
 		} else if (c) {
 			errflg++;
@@ -513,6 +519,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 			WSACleanup();
 #endif
+            freehsmfiles(nhsmfiles, hsmfiles);
 			exit (SYERR);
 		} else if (c)
 			errflg++;
@@ -531,6 +538,7 @@ int main(argc, argv)
 #if defined(_WIN32)
 		WSACleanup();
 #endif
+        freehsmfiles(nhsmfiles, hsmfiles);
 		exit (1);
 	}
 	
@@ -561,7 +569,25 @@ int main(argc, argv)
 #if defined(_WIN32)
 	WSACleanup();
 #endif
+    freehsmfiles(nhsmfiles, hsmfiles);
 	exit (c == 0 ? 0 : serrno);
+}
+
+void freehsmfiles(nhsmfiles,hsmfiles)
+     int nhsmfiles;
+     char **hsmfiles;
+{
+  int i;
+
+  if (hsmfiles == NULL) return;
+
+  for (i = 0; i < nhsmfiles; i++) {
+    if (hsmfiles[i] != NULL) {
+      free(hsmfiles[i]);
+    }
+  }
+
+  free(hsmfiles);
 }
 
 #if TMS
