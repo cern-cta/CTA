@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.27 $ $Date: 2002/11/21 13:24:30 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.28 $ $Date: 2002/12/05 06:45:36 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -228,11 +228,15 @@ struct rfiostat	{
 #if defined(ferror)
 #undef  ferror
 #endif /* ferror */
+#if defined(fileno)
+#undef  fileno
+#endif /* fileno */
 #if defined(getc)
 #undef  getc
 #endif /* getc */
 #define feof            rfio_feof
 #define ferror          rfio_ferror
+#define fileno          rfio_fileno
 #define fopen           rfio_fopen
 #define fclose          rfio_fclose
 #define fflush          rfio_fflush
@@ -251,6 +255,7 @@ struct rfiostat	{
 #define perror          rfio_perror
 #define fstat           rfio_fstat
 #define lstat           rfio_lstat
+#define lockf           rfio_lockf
 #define lseek           rfio_lseek
 #define rename          rfio_rename
 #define unlink          rfio_unlink
