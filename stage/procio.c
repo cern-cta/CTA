@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.152 2002/01/21 11:05:27 jdurand Exp $
+ * $Id: procio.c,v 1.153 2002/01/21 17:37:57 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.152 $ $Date: 2002/01/21 11:05:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.153 $ $Date: 2002/01/21 17:37:57 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1060,23 +1060,23 @@ void procioreq(req_type, magic, req_data, clienthost)
 	if (nhsmfiles > 0) {
 		/* We check that there is no redundant hsm files (multiple equivalent ones) */
 
-		if (ncastorfiles) {
+		if ((api_out) && (ncastorfiles)) {
 			for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
 				stcp_input[ihsmfiles].filler[0] = '\0'; /* We will use this internal flag few lines below */
 			}
 		}
 		for (ihsmfiles = 0; ihsmfiles < nhsmfiles; ihsmfiles++) {
-			if (ncastorfiles) {
+			if ((api_out) && (ncastorfiles)) {
 				if (stcp_input[ihsmfiles].filler[0] != '\0') continue; /* Yet skipped */
 			}
 			for (jhsmfiles = ihsmfiles + 1; jhsmfiles < nhsmfiles; jhsmfiles++) {
-				if (ncastorfiles) {
+				if ((api_out) && (ncastorfiles)) {
 					if (stcp_input[jhsmfiles].filler[0] != '\0') continue; /* Yet skipped */
 				}
 				if (strcmp(hsmfiles[ihsmfiles],hsmfiles[jhsmfiles]) == 0) {
 					/* If both ihsmfiles and jhsmfiles have exactly the same invariants */
 					/* We neverthless continue, skipping the offending entry */
-					if ((ncastorfiles) &&
+					if ((api_out) && (ncastorfiles) &&
 						(stcp_input[ihsmfiles].u1.h.server[0] != '\0') &&
 						(strcmp(stcp_input[ihsmfiles].u1.h.server, stcp_input[jhsmfiles].u1.h.server) == 0) &&
 						(stcp_input[ihsmfiles].u1.h.fileid != 0) &&
@@ -1088,7 +1088,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 						sendrep (rpfd, MSG_ERR, STG59, hsmfiles[ihsmfiles]);
 						errflg++;
 					}
-				} else if (ncastorfiles &&
+				} else if ((api_out) && (ncastorfiles) &&
 						   (stcp_input[ihsmfiles].u1.h.server[0] != '\0') &&
 						   (strcmp(stcp_input[ihsmfiles].u1.h.server, stcp_input[jhsmfiles].u1.h.server) == 0) &&
 						   (stcp_input[ihsmfiles].u1.h.fileid != 0) &&
@@ -1438,7 +1438,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		} else if (stgreq.t_or_d == 'm') {
 			strcpy(stgreq.u1.m.xfile,hsmfiles[ihsmfiles]);
 		} else if (stgreq.t_or_d == 'h') {
-			if (stcp_input[ihsmfiles].filler[0] != '\0') continue; /* Skipped */
+			if ((api_out) && (stcp_input[ihsmfiles].filler[0] != '\0')) continue; /* Skipped */
 			strcpy(stgreq.u1.h.xfile,hsmfiles[ihsmfiles]);
 			/* Unless API request we make sure those fields are initialized */
 			if (api_out == 0) {
@@ -1815,6 +1815,19 @@ void procioreq(req_type, magic, req_data, clienthost)
 			  sendrep (rpfd, MSG_ERR, STG37);
 			  c = USERR;
 			  goto reply;
+		  case STAGEOUT|PUT_FAILED:
+		  case STAGEOUT|CAN_BE_MIGR|PUT_FAILED:
+			  /* We accept this only in read-only mode for CASTOR files */
+
+			  /* This stcp is physically on disk forever - not migrated */
+			  if (rdonly_flag && (stcp->t_or_d == 'h')) {
+				  /* We force the yet staged branch */
+				  forced_yet_staged_branch = 1;
+				  goto forced_yet_staged_branch;
+			  } else {
+				  /* We go to the normal branch - backward compatibility */
+				  goto notstaged;
+			  }
 		  case STAGEOUT|CAN_BE_MIGR|WAITING_MIGR:
 		  case STAGEOUT|CAN_BE_MIGR|BEING_MIGR:
 		  case STAGEPUT|CAN_BE_MIGR:
