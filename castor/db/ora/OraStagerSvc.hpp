@@ -480,21 +480,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Updates a SubRequest status in the DB and tells
-         * whether the request to which it belongs still
-         * has some SubRequests in SUBREQUEST_START status.
-         * The two operations are executed atomically.
-         * The update is commited before returning.
-         * @param subreq the SubRequest to update
-         * @return whether there are still SubRequests in
-         * SUBREQUEST_START status within the same request
-         * @exception Exception in case of error
-         */
-        virtual bool updateAndCheckSubRequest
-        (castor::stager::SubRequest *subreq)
-          throw (castor::exception::Exception);
-
-        /**
          * Updates database after successful completion of a
          * disk to disk copy. This includes setting the DiskCopy
          * status to DISKCOPY_STAGED and setting the SubRequest
@@ -844,12 +829,6 @@ namespace castor {
 
         /// SQL statement object for function selectTapeCopiesForMigration
         oracle::occi::Statement *m_selectTapeCopiesForMigrationStatement;
-
-        /// SQL statement for function updateAndCheckSubRequest
-        static const std::string s_updateAndCheckSubRequestStatementString;
-
-        /// SQL statement object for function updateAndCheckSubRequest
-        oracle::occi::Statement *m_updateAndCheckSubRequestStatement;
 
         /// SQL statement for function disk2DiskCopyDone
         static const std::string s_disk2DiskCopyDoneStatementString;
