@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.120 2001/03/24 03:47:30 jdurand Exp $
+ * $Id: poolmgr.c,v 1.121 2001/03/24 04:20:20 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.120 $ $Date: 2001/03/24 03:47:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.121 $ $Date: 2001/03/24 04:20:20 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3754,6 +3754,7 @@ void bestnextpool_out(nextout,mode)
   /* We loop until we find a poolout that have no migrator, the bigger space available, the less */
   /* contention possible */
 
+  firstpool_out[0] = '\0';
   nextpool_out(firstpool_out);
   strcpy(thispool_out, firstpool_out);
 
