@@ -1,5 +1,5 @@
 /*
- * $Id: Cuuid.c,v 1.2 2003/09/24 14:52:27 sponcec3 Exp $
+ * $Id: Cuuid.c,v 1.3 2003/10/31 12:45:54 jdurand Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.2 $ $Date: 2003/09/24 14:52:27 $ CERN IT-ADC/CA Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.3 $ $Date: 2003/10/31 12:45:54 $ CERN IT-ADC/CA Jean-Damien Durand";
 #endif /* not lint */
 
 /*
@@ -20,6 +20,8 @@ static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.2 $ $Date: 2003/0
 #ifdef _WIN32
 #include <time.h>
 #else
+#include <unistd.h>
+#include <time.h>
 #include <sys/time.h>
 #endif
 #include <serrno.h>
