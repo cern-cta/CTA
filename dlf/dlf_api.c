@@ -6,7 +6,7 @@
 */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.13 $ $Date: 2004/07/08 09:30:33 $ CERN IT-ADC/CA Vitaly Motyakov";
+static char sccsid[] = "@(#)$RCSfile: dlf_api.c,v $ $Revision: 1.14 $ $Date: 2004/07/08 11:16:30 $ CERN IT-ADC/CA Vitaly Motyakov";
 #endif /* not lint */
 
 
@@ -616,7 +616,7 @@ dlf_msg_text_slist_t *txt_list;
 	end_rc = 0;
 	do {
 		if (getrep (socket, &reply, &rep_size, &rep_type) < 0) {
-			dlf_errmsg(NULL, DLF02, "gettexts", sstrerror(serrno));
+			dlf_errmsg(NULL, DLF05, "gettexts", sstrerror(serrno), fac_name);
 			return(-1);
 		}
 		if (rep_type == MSG_DATA) {
@@ -654,7 +654,7 @@ dlf_msg_text_slist_t *txt_list;
 	/* Get completion status */
 	if (!end_rc) {
 		if (getrep (socket, &reply, &rep_size, &rep_type) < 0) {
-			dlf_errmsg(NULL, DLF02, "gettexts", sstrerror(serrno));
+			dlf_errmsg(NULL, DLF05, "gettexts", sstrerror(serrno), fac_name);
 			return(-1);
 		}
 		else if (rep_type != DLF_RC) {
