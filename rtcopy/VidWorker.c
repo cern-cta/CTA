@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/08/11 12:02:28 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/08/12 14:19:25 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.20 $ $Release$ $Date: 2004/08/11 12:02:28 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/08/12 14:19:25 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -249,6 +249,7 @@ static int processGetMoreWorkCallback(
    */
   static int nbInProgress = 0;
   int rc, found, allFinished = 0, totalWaittime = 0;
+  time_t tBefore, tNow;
   char *p;
   file_list_t *fl = NULL;
 
@@ -274,6 +275,7 @@ static int processGetMoreWorkCallback(
        * Internal list empty or has no waiting requests (however that
        * happened?). Get more file requests from Catalogue.
        */
+      tBefore = time(NULL);
       for (;;) {
         rc = rtcpcld_getReqsForVID(
                                    vidChildTape
@@ -282,14 +284,19 @@ static int processGetMoreWorkCallback(
         if ( rc == -1 ) {
           if ( serrno == EAGAIN ) {
             if ( nbInProgress > 0 ) break; /* There was already something todo */
+            tNow = time(NULL);
+            totalWaittime += (int)(tNow-tBefore);
+            tBefore = tNow;
             (void)dlf_write(
                             childUuid,
                             DLF_LVL_SYSTEM,
                             RTCPCLD_MSG_WAITSEGMS,
                             (struct Cns_fileid *)NULL,
-                            0
+                            1,
+                            "WAITTIME",
+                            DLF_MSG_PARAM_INT,
+                            totalWaittime
                             );
-            totalWaittime += 2;
             if ( totalWaittime > (RTCP_NETTIMEOUT*3)/4 ) {
               (void)dlf_write(
                               childUuid,
@@ -297,7 +304,7 @@ static int processGetMoreWorkCallback(
                               RTCPCLD_MSG_WAITTIMEOUT,
                               (struct Cns_fileid *)NULL,
                               1,
-                              "WTIME",
+                              "WAITTIME",
                               DLF_MSG_PARAM_INT,
                               totalWaittime
                               );
