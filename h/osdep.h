@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: osdep.h,v $ $Revision: 1.5 $ $Date: 1999/10/14 12:03:56 $ CERN IT-PDP/IP Frederic Hemmer
+ * @(#)$RCSfile: osdep.h,v $ $Revision: 1.6 $ $Date: 1999/10/20 19:10:37 $ CERN IT-PDP/IP Frederic Hemmer
  */
 
 /* osdep.h      Operating system dependencies                           */
@@ -21,7 +21,7 @@
 #define LONGSIZE        4
 #define QUADSIZE        8
 #define HYPERSIZE       8
- 
+
 typedef unsigned char   U_BYTE;
 typedef unsigned short  U_WORD;
 typedef unsigned int    U_LONG;
@@ -29,7 +29,7 @@ typedef struct  {
         U_LONG      lslw;
         U_LONG      mslw;
 } U_QUAD;
-#if !defined(_WINDEF_)
+#ifndef _WINDEF_
 typedef          char   BYTE;
 typedef          short  WORD;
 typedef          int    LONG;
