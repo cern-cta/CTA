@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.206 2003/03/11 15:54:04 jdurand Exp $
+ * $Id: procio.c,v 1.207 2003/03/11 17:07:53 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.206 $ $Date: 2003/03/11 15:54:04 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.207 $ $Date: 2003/03/11 17:07:53 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3108,6 +3108,21 @@ void procioreq(req_type, magic, req_data, clienthost)
 						wqp->save_rpfd = save_rpfd;
 					}
 				}
+#ifndef NON_WORD_READABLE_SUPPORT
+				else {
+					if (stcp->t_or_d == 'h') {
+						/* We check if (euid,egid) will be able to open that file */
+						if (stage_access(euid,egid,R_OK,&hsmstat[ihsmfiles]) != 0) {
+							sendrep (&rpfd, MSG_ERR, STG02, stcp->u1.h.xfile, "migrator access", sstrerror(serrno));
+							global_c_stagewrt++;
+							c = (api_out != 0) ? serrno : EINVAL;
+							delreq(stcp,1);
+							goto stagewrt_continue_loop;
+						}
+					}
+				}
+#endif
+
 				wfp->subreqid = stcp->reqid;
 				if (save_subreqid != NULL) {
 					*save_subreqid = stcp->reqid;
