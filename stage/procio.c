@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.183 2002/06/19 06:55:01 jdurand Exp $
+ * $Id: procio.c,v 1.184 2002/07/18 11:12:17 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.183 $ $Date: 2002/06/19 06:55:01 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.184 $ $Date: 2002/07/18 11:12:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -229,7 +229,7 @@ extern void rmfromwq _PROTO((struct waitq *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern int euid_egid _PROTO((uid_t *, gid_t *, char *, struct migrator *, struct stgcat_entry *, struct stgcat_entry *, char **, int, int));
 extern int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
-extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int));
+extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int, int));
 extern char *next_tppool _PROTO((struct fileclass *));
 extern void bestnextpool_out _PROTO((char *, int));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
@@ -2025,7 +2025,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			  if ((nhsmfiles > 0) && (hsmsize == 0)) {
 				  int ifileclass;
 
-				  if ((ncastorfiles > 0) && ((ifileclass = upd_fileclass(NULL,stcp,0,0)) < 0)) {
+				  if ((ncastorfiles > 0) && ((ifileclass = upd_fileclass(NULL,stcp,0,0,1)) < 0)) {
 					  int save_serrno = serrno;
 					  sendrep (rpfd, MSG_ERR, STG132, stcp->u1.h.xfile, sstrerror(serrno));
 					  c = (api_out != 0) ? save_serrno : EINVAL;
@@ -2409,7 +2409,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					}
 				}
 				/* We need to know fileclass for our predicates */
-				if ((ifileclass = upd_fileclass(pool_p,stcp,0,0)) < 0) {
+				if ((ifileclass = upd_fileclass(pool_p,stcp,0,0,0)) < 0) {
 					global_c_stagewrt++;
 					c = EINVAL;
 					if (stgreq.t_or_d == 'h') {
@@ -2815,7 +2815,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				int ifileclass;
 
 				if (stcp->u1.h.tppool[0] == '\0') {
-					if ((ifileclass = upd_fileclass(NULL,stcp,0,0)) < 0) {
+					if ((ifileclass = upd_fileclass(NULL,stcp,0,0,1)) < 0) {
 						int save_serrno = serrno;
 						sendrep (rpfd, MSG_ERR, STG132, stcp->u1.h.xfile, sstrerror(serrno));
 						global_c_stagewrt++;
@@ -2855,18 +2855,28 @@ void procioreq(req_type, magic, req_data, clienthost)
 				}
 				if ((stage_wrt_migration == 0) && (actual_poolname[0] != '\0')) {
 					/* This entry is in the pool anyway and this is not for internal migration */
-					/* if (! Aflag) update_migpool(&stcp,1,4); */ /* Don't needed in theory - Condition move DELAY -> CAN_BE_MIGR */
+					/* if (! Aflag) update_migpool(&stcp,1,4); */
+					/* Upper line comment: don't needed in theory - Condition move DELAY -> CAN_BE_MIGR */
+#ifdef USECDB
+					/* Because update_migpool can do a call to stgdb_upd_stgcat() */
+					if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
+						stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+					}
+#endif
 					if (update_migpool(&stcp,1,Aflag ? 0 : 1) != 0) {
 						global_c_stagewrt++;
 						c = (api_out != 0) ? serrno : EINVAL;
-						delreq(stcp,1);
+						delreq(stcp,0);
 						goto stagewrt_continue_loop;
 					}
 				}
 			}
 #ifdef USECDB
-			if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
-				stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+			if (! ((stcp->t_or_d == 'h') && (stage_wrt_migration == 0) && (actual_poolname[0] != '\0'))) {
+				/* Avoid doing twice an insert */
+				if (stgdb_ins_stgcat(&dbfd,stcp) != 0) {
+					stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
+				}
 			}
 #endif
 			if (! Aflag) {
@@ -3472,7 +3482,7 @@ void procputreq(req_type, magic, req_data, clienthost)
 #endif
 						}
 						if (stcp->u1.h.tppool[0] == '\0') {
-							if ((ifileclass = upd_fileclass(NULL,stcp,0,0)) < 0) {
+							if ((ifileclass = upd_fileclass(NULL,stcp,0,0,0)) < 0) {
 								sendrep (rpfd, MSG_ERR, STG132, stcp->u1.h.xfile, sstrerror(serrno));
 								c = EINVAL;
 								goto reply;
@@ -3700,7 +3710,7 @@ void procputreq(req_type, magic, req_data, clienthost)
 #endif
 					}
 					if (found_stcp->u1.h.tppool[0] == '\0') {
-						if ((ifileclass = upd_fileclass(NULL,found_stcp,0,0)) < 0) {
+						if ((ifileclass = upd_fileclass(NULL,found_stcp,0,0,0)) < 0) {
 							sendrep (rpfd, MSG_ERR, STG132, found_stcp->u1.h.xfile, sstrerror(serrno));
 							c = EINVAL;
 							goto reply;
