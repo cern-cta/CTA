@@ -88,7 +88,7 @@ CTHREAD_FLAGS = $(MTCCFLAGS)
 COMM
 COMM Uncomment the following to compile in debug mode RFIO package
 COMM
-COMM DEBUG  = -g
+DEBUG  = -g
 COMM
 #endif
 
