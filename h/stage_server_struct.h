@@ -1,5 +1,5 @@
 /*
- * $Id: stage_server_struct.h,v 1.8 2002/06/13 05:40:04 jdurand Exp $
+ * $Id: stage_server_struct.h,v 1.9 2002/07/27 06:44:38 jdurand Exp $
  */
 
 #ifndef __stage_server_struct_h
@@ -98,6 +98,8 @@ struct pool {
 	u_signed64	free;		/* Free space in bytes */
 	int	ovl_pid;
 	time_t	cleanreqtime;
+	time_t	cleanreqtime_previous;
+	time_t	cleanreqtime_previous_end;
 	int	cleanstatus;	/* 0 = normal, 1 = just cleaned */
 	char	migr_name[CA_MAXMIGRNAMELEN+1];
 	struct migrator *migr;
@@ -107,6 +109,7 @@ struct pool {
 	int	max_setretenp;	/* maximum value for explicit setting of retention period (days) */
 	int	put_failed_retenp;	/* minimum value for put_failed retention period (days) */
 	int	stageout_retenp;	/* minimum value for stageout retention period (days) */
+	int	stagealloc_retenp;	/* minimum value for stagealloc retention period (days) */
 	int	export_hsm;	/* exportable flag for HSM files */
 };
 
@@ -137,6 +140,8 @@ struct migrator {
 	char name[CA_MAXMIGRNAMELEN+1];
 	int mig_pid;
 	time_t migreqtime;
+	time_t migreqtime_previous;
+	time_t migreqtime_previous_end;
 	time_t migreqtime_last_start;
 	time_t migreqtime_last_end;
 	int nfileclass;
