@@ -25,7 +25,6 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/MessageAck.hpp"
 #include "castor/IObject.hpp"
 #include "castor/MessageAck.hpp"
 

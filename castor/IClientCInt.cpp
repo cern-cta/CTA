@@ -26,7 +26,6 @@
 
 // Include Files
 #include "castor/IClient.hpp"
-#include "castor/IClient.hpp"
 #include "castor/IObject.hpp"
 #include "castor/rh/Request.hpp"
 

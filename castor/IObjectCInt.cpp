@@ -26,7 +26,6 @@
 
 // Include Files
 #include "castor/IObject.hpp"
-#include "castor/IObject.hpp"
 #include "castor/IPersistent.hpp"
 
 extern "C" {
