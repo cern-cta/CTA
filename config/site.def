@@ -123,9 +123,9 @@
 #define SacctDir	/usr/spool/sacct
 #define SconfigDir	/etc/shift
 #if defined(_WIN32)
-#define ShiftConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\shift.conf
+#define ShiftConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor.conf
 #else
-#define ShiftConfigFile	/etc/shift.conf
+#define ShiftConfigFile	/etc/castor.conf
 #endif
 #define StageConfigFile	/etc/STGCONFIG
 #define StageConfigDbLogin	/etc/STGDBCONFIG
