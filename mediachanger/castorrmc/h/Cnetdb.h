@@ -1,6 +1,9 @@
 /*
- * $Id: Cnetdb.h,v 1.1 1999/07/30 15:02:29 obarring Exp $
+ * $Id: Cnetdb.h,v 1.2 1999/07/30 15:58:06 obarring Exp $
  * $Log: Cnetdb.h,v $
+ * Revision 1.2  1999/07/30 15:58:06  obarring
+ * Add __STDC__ compilation branch for __h_errno() declaration
+ *
  * Revision 1.1  1999/07/30 15:02:29  obarring
  * First version
  *
@@ -32,7 +35,11 @@
 
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
 #if defined(hpux) || defined(HPUX10) || defined(sgi) || defined(SOLARIS)
+#if defined(__STDC__)
 EXTERN_C int DLL_DECL *__h_errno(void);
+#else /* __STDC__ */
+EXTERN_C int DLL_DECL *__h_errno();
+#endif /* __STDC__ */
 #define h_errno (*__h_errno())
 #endif /* hpux || HPUX10 || sgi || SOLARIS */
 #endif /* _REENTRANT || _THREAD_SAFE */
