@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.144 2001/06/25 09:54:02 jdurand Exp $
+ * $Id: poolmgr.c,v 1.145 2001/07/12 11:08:54 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.144 $ $Date: 2001/06/25 09:54:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.145 $ $Date: 2001/07/12 11:08:54 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -52,10 +52,21 @@ static char strftime_format[] = "%b %d %H:%M:%S";
 static char strftime_format[] = "%b %e %H:%M:%S";
 #endif /* _WIN32 */
 
+#if defined(_WIN32)
+static char strftime_format_sixmonthsold[] = "%b %d %Y";
+#else /* _WIN32 */
+static char strftime_format_sixmonthsold[] = "%b %e %Y";
+#endif /* _WIN32 */
+
 #if (defined(IRIX5) || defined(IRIX6) || defined(IRIX64))
 /* Surpringly, on Silicon Graphics, strdup declaration depends on non-obvious macros */
 extern char *strdup _PROTO((CONST char *));
 #endif
+
+#ifdef SIXMONTHS
+#undef SIXMONTHS
+#endif
+#define SIXMONTHS (6*30*24*60*60)
 
 extern char *getconfent();
 extern char defpoolname[];
@@ -75,7 +86,7 @@ extern int sendrep _PROTO((int, int, ...));
 #else
 extern int sendrep _PROTO(());
 #endif
-extern struct stgcat_entry *newreq _PROTO(());
+extern struct stgcat_entry *newreq _PROTO((char));
 extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int));
 extern int nextreqid _PROTO(());
 
@@ -136,6 +147,7 @@ void killcleanovl _PROTO((int));
 int ismigovl _PROTO((int, int));
 void killmigovl _PROTO((int));
 int isvalidpool _PROTO((char *));
+int max_setretenp _PROTO((char *));
 void migpoolfiles_log_callback _PROTO((int, char *));
 int isuserlevel _PROTO((char *));
 void poolmgr_wait4child _PROTO(());
@@ -150,6 +162,10 @@ int checkpoolcleaned _PROTO((char ***));
 void checkpoolspace _PROTO(());
 int cleanpool _PROTO((char *));
 int get_create_file_option _PROTO((char *));
+int get_retenp _PROTO((struct stgcat_entry *, char *));
+int get_mintime _PROTO((struct stgcat_entry *, char *));
+signed64 get_put_failed_retenp _PROTO((char *));
+signed64 get_stageout_retenp _PROTO((char *));
 int poolalloc _PROTO((struct pool *, int));
 int checklastaccess _PROTO((char *, time_t));
 int enoughfreespace _PROTO((char *, int));
@@ -162,6 +178,7 @@ extern int verif_euid_egid _PROTO((uid_t, gid_t, char *, char *));
 void stglogfileclass _PROTO((struct Cns_fileclass *));
 void printfileclass _PROTO((int, struct fileclass *));
 int retenp_on_disk _PROTO((int));
+int mintime_beforemigr _PROTO((int));
 void check_lifetime_on_disk _PROTO(());
 int ispool_out _PROTO((char *));
 void nextpool_out _PROTO((char *));
@@ -288,6 +305,10 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
         goto reply;
       }
       strcpy (pool_p->name, p);
+      /* Initialize some critical values */
+      pool_p->max_setretenp = -1;
+      pool_p->put_failed_retenp = -1;
+      pool_p->stageout_retenp = -1;
       while ((p = strtok (NULL, " \t\n")) != NULL) {
         if (strcmp (p, "DEFSIZE") == 0) {
           if ((p = strtok (NULL, " \t\n")) == NULL) {
@@ -321,6 +342,42 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
           }
           pool_p->gc_start_thresh = strtol (p, &dp, 10);
           if (*dp != '\0' || pool_p->gc_start_thresh < 0) {
+            stglogit (func, STG26, "pool", pool_p->name);
+            errflg++;
+            goto reply;
+          }
+        } else if (strcmp (p, "MAX_SETRETENP") == 0) {
+          if ((p = strtok (NULL, " \t\n")) == NULL) {
+            stglogit (func, STG26, "pool", pool_p->name);
+            errflg++;
+            goto reply;
+          }
+          pool_p->max_setretenp = strtol (p, &dp, 10);
+          if (*dp != '\0') {
+            stglogit (func, STG26, "pool", pool_p->name);
+            errflg++;
+            goto reply;
+          }
+        } else if (strcmp (p, "PUT_FAILED_RETENP") == 0) {
+          if ((p = strtok (NULL, " \t\n")) == NULL) {
+            stglogit (func, STG26, "pool", pool_p->name);
+            errflg++;
+            goto reply;
+          }
+          pool_p->put_failed_retenp = strtol (p, &dp, 10);
+          if (*dp != '\0' || pool_p->put_failed_retenp <= 0) {
+            stglogit (func, STG26, "pool", pool_p->name);
+            errflg++;
+            goto reply;
+          }
+        } else if (strcmp (p, "STAGEOUT_RETENP") == 0) {
+          if ((p = strtok (NULL, " \t\n")) == NULL) {
+            stglogit (func, STG26, "pool", pool_p->name);
+            errflg++;
+            goto reply;
+          }
+          pool_p->stageout_retenp = strtol (p, &dp, 10);
+          if (*dp != '\0' || pool_p->stageout_retenp <= 0) {
             stglogit (func, STG26, "pool", pool_p->name);
             errflg++;
             goto reply;
@@ -572,6 +629,28 @@ int getpoolconf(defpoolname,defpoolname_in,defpoolname_out)
 				*(pool_p->gc) != '\0' ? pool_p->gc : "<none>");
       stglogit (func,".... NO_FILE_CREATION %s\n",
 				(pool_p->no_file_creation ? "NO (== 0)" : "YES (!= 0)"));
+      if (pool_p->max_setretenp < 0) {
+        stglogit (func,".... MAX_SETRETENP <none>\n");
+      } else {
+        stglogit (func,".... MAX_SETRETENP %d DAY%s\n",
+                  pool_p->max_setretenp,
+                  pool_p->max_setretenp > 1 ? "S" : ""
+                  );
+      }
+      if (pool_p->put_failed_retenp < 0) {
+        stglogit (func,".... PUT_FAILED_RETENP <infinite>\n");
+      } else {
+        stglogit (func,".... PUT_FAILED_RETENP %d DAY%s\n",
+                  pool_p->put_failed_retenp,
+                  pool_p->put_failed_retenp > 1 ? "S" : "");
+      }
+      if (pool_p->stageout_retenp < 0) {
+        stglogit (func,".... STAGEOUT_RETENP <infinite>\n");
+      } else {
+        stglogit (func,".... STAGEOUT_RETENP %d DAY%s\n",
+                  pool_p->stageout_retenp,
+                  pool_p->stageout_retenp > 1 ? "S" : "");
+      }
       if (pool_p->migr_name[0] != '\0') {
         stglogit (func,".... MIGRATOR %s\n", pool_p->migr_name);
         stglogit (func,".... MIG_STOP_THRESH %d MIG_START_THRESH %d\n",
@@ -925,6 +1004,18 @@ int isvalidpool(poolname)
   return (i == nbpool ? 0 : 1);
 }
 
+int max_setretenp(poolname)
+     char *poolname;
+{
+  int i;
+  struct pool *pool_p;
+
+  if (nbpool == 0) return (0);
+  for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+    if (strcmp (poolname, pool_p->name) == 0) break;
+  return (i == nbpool ? -1 : pool_p->max_setretenp);
+}
+
 int poolalloc(pool_p, nbpool_ent)
      struct pool *pool_p;
      int nbpool_ent;
@@ -977,7 +1068,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
   for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++) {
     if (*poolname && strcmp (poolname, pool_p->name)) continue;
     if (*poolname) pool_p_migr = pool_p->migr;
-    sendrep (rpfd, MSG_OUT, "POOL %s%s DEFSIZE %d GC_START_THRESH %d GC_STOP_THRESH %d GC %s%s%s%s%s%s%s%s%s\n",
+    sendrep (rpfd, MSG_OUT, "POOL %s%s DEFSIZE %d GC_START_THRESH %d GC_STOP_THRESH %d GC %s%s%s%s%s%s%s%s%s MAX_SETRETENP %d PUT_FAILED_RETENP %d STAGEOUT_RETENP %d\n",
              pool_p->name,
              pool_p->no_file_creation ? " NO_FILE_CREATION" : "",
              pool_p->defsize,
@@ -991,7 +1082,10 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
              (pool_p->migr_name[0] != '\0') ? " MIG_STOP_THRESH " : "",
              (pool_p->migr_name[0] != '\0') ? u64tostr(pool_p->mig_stop_thresh, tmpbuf2, 0) : "",
              (pool_p->migr_name[0] != '\0') ? " MIG_DATA_THRESH " : "",
-             (pool_p->migr_name[0] != '\0') ? u64tostru(pool_p->mig_data_thresh, tmpbuf3, 0) : ""
+             (pool_p->migr_name[0] != '\0') ? u64tostru(pool_p->mig_data_thresh, tmpbuf3, 0) : "",
+             pool_p->max_setretenp,
+             pool_p->put_failed_retenp,
+             pool_p->stageout_retenp
              );
     if (pool_p->cleanreqtime > 0) {
 #if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
@@ -1051,6 +1145,8 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
       sendrep (rpfd, MSG_OUT, "MIGRATOR %s\n",migr_p->name);
       sendrep (rpfd, MSG_OUT, "\tNBFILES_CAN_BE_MIGR    %d\n", migr_p->global_predicates.nbfiles_canbemig);
       sendrep (rpfd, MSG_OUT, "\tSPACE_CAN_BE_MIGR      %s\n", u64tostru(migr_p->global_predicates.space_canbemig, tmpbuf, 0));
+      sendrep (rpfd, MSG_OUT, "\tNBFILES_DELAY_MIGR     %d\n", migr_p->global_predicates.nbfiles_delaymig);
+      sendrep (rpfd, MSG_OUT, "\tSPACE_DELAY_MIGR       %s\n", u64tostru(migr_p->global_predicates.space_delaymig, tmpbuf, 0));
       sendrep (rpfd, MSG_OUT, "\tNBFILES_BEING_MIGR     %d\n", migr_p->global_predicates.nbfiles_beingmig);
       sendrep (rpfd, MSG_OUT, "\tSPACE_BEING_MIGR       %s\n", u64tostru(migr_p->global_predicates.space_beingmig, tmpbuf, 0));
       if (migr_p->migreqtime > 0) {
@@ -1072,6 +1168,8 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
                  migr_p->fileclass[j]->Cnsfileclass.classid);
         sendrep (rpfd, MSG_OUT, "\t\tNBFILES_CAN_BE_MIGR    %d\n", migr_p->fileclass_predicates[j].nbfiles_canbemig);
         sendrep (rpfd, MSG_OUT, "\t\tSPACE_CAN_BE_MIGR      %s\n", u64tostru(migr_p->fileclass_predicates[j].space_canbemig, tmpbuf, 0));
+        sendrep (rpfd, MSG_OUT, "\t\tNBFILES_DELAY_MIGR     %d\n", migr_p->fileclass_predicates[j].nbfiles_delaymig);
+        sendrep (rpfd, MSG_OUT, "\t\tSPACE_DELAY_MIGR       %s\n", u64tostru(migr_p->fileclass_predicates[j].space_delaymig, tmpbuf, 0));
         sendrep (rpfd, MSG_OUT, "\t\tNBFILES_BEING_MIGR     %d\n", migr_p->fileclass_predicates[j].nbfiles_beingmig);
         sendrep (rpfd, MSG_OUT, "\t\tSPACE_BEING_MIGR       %s\n", u64tostru(migr_p->fileclass_predicates[j].space_beingmig, tmpbuf, 0));
       }
@@ -1127,6 +1225,7 @@ void print_pool_utilization(rpfd, poolname, defpoolname, defpoolname_in, defpool
       sendrep (rpfd, MSG_OUT, "nretry                   %d\n", wqp->nretry);
       sendrep (rpfd, MSG_OUT, "Aflag                    %d\n", wqp->Aflag);
       sendrep (rpfd, MSG_OUT, "concat_off_fseq          %d\n", wqp->concat_off_fseq);
+      sendrep (rpfd, MSG_OUT, "magic                    0x%lx\n", (unsigned long) wqp->magic);
       sendrep (rpfd, MSG_OUT, "api_out                  %d\n", wqp->api_out);
       sendrep (rpfd, MSG_OUT, "openmode                 %d\n", (int) wqp->openmode);
       sendrep (rpfd, MSG_OUT, "openflags                0x%lx\n", (unsigned long) wqp->openflags);
@@ -1581,16 +1680,20 @@ int updpoolconf(defpoolname,defpoolname_in,defpoolname_out)
       if (pool_n->migr != NULL) {
         int k;
 
-        if ((pool_n->migr->global_predicates.nbfiles_canbemig != 0) ||
-            (pool_n->migr->global_predicates.space_canbemig   != 0) ||
-            (pool_n->migr->global_predicates.nbfiles_beingmig != 0) ||
-            (pool_n->migr->global_predicates.space_beingmig   != 0)) {
+        if ((pool_n->migr->global_predicates.nbfiles_canbemig  != 0) ||
+            (pool_n->migr->global_predicates.space_canbemig    != 0) ||
+            (pool_n->migr->global_predicates.nbfiles_delaymig  != 0) ||
+            (pool_n->migr->global_predicates.space_delaymig    != 0) ||
+            (pool_n->migr->global_predicates.nbfiles_beingmig  != 0) ||
+            (pool_n->migr->global_predicates.space_beingmig    != 0)) {
           migr_init = 1;
           break;
         }
         for (k = 0; k < pool_n->migr->nfileclass; k++) {
           if ((pool_n->migr->fileclass_predicates[k].nbfiles_canbemig != 0) ||
               (pool_n->migr->fileclass_predicates[k].space_canbemig   != 0) ||
+              (pool_n->migr->fileclass_predicates[k].nbfiles_delaymig != 0) ||
+              (pool_n->migr->fileclass_predicates[k].space_delaymig   != 0) ||
               (pool_n->migr->fileclass_predicates[k].nbfiles_beingmig != 0) ||
               (pool_n->migr->fileclass_predicates[k].space_beingmig   != 0)) {
             migr_init = 1;
@@ -1711,14 +1814,221 @@ int get_create_file_option(poolname)
   return (0);
 }
 
-/* flag means :                                           */
-/*  1             file put in stack can_be_migr           */
-/* -1             file removed from stack can_be_migr     */
-/* immediate parameter: used only if flag == 1;           */
-/* If 0           set only canbemigr stack                */
-/* If 1           set both canbemigr and beingmigr stacks */
-/* If 2           set only being migr stack               */
-/* Returns: 0 (OK) or -1 (NOT OK)                         */
+signed64 get_put_failed_retenp(poolname)
+     char *poolname;
+{
+  int i;
+  struct pool *pool_p;
+
+  if (nbpool == 0) return (0);
+  for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+    if (strcmp (poolname, pool_p->name) == 0) 
+      return((time_t) (pool_p->put_failed_retenp * ONE_DAY));
+  return (-1);
+}
+
+signed64 get_stageout_retenp(poolname)
+     char *poolname;
+{
+  int i;
+  struct pool *pool_p;
+
+  if (nbpool == 0) return (0);
+  for (i = 0, pool_p = pools; i < nbpool; i++, pool_p++)
+    if (strcmp (poolname, pool_p->name) == 0) 
+      return((time_t) (pool_p->stageout_retenp * ONE_DAY));
+  return (-1);
+}
+
+/* return value will be 0 or -1, where 0 means that timestr is trustable, -1 means that timestr would have has non-sense */
+/* timestr, if return value is zero, contains contains a human-readable format of retention period on disk */
+int get_retenp(stcp,timestr)
+     struct stgcat_entry *stcp;
+     char *timestr;
+{
+  signed64 this_retenp;
+  time_t this_time = time(NULL);
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+  struct tm tmstruc;
+#endif /* _REENTRANT || _THREAD_SAFE */
+  struct tm *tp;
+  int ifileclass;
+
+  /* Depending of the status of the stcp we will return the correct current retention period on disk */
+  switch (stcp->status) {
+  case STAGEOUT:
+    /* stageout entry */
+    if ((this_retenp = get_stageout_retenp(stcp->poolname)) >= 0) {
+      /* There is a stageout retention period */
+      if ((this_time - stcp->a_time) > this_retenp) {
+        strcpy(timestr,"Exhausted");
+      } else {
+        time_t dummy_retenp;
+        this_retenp += stcp->a_time;
+        dummy_retenp = (time_t) this_retenp;
+        /* Retention period not yet exhausted */
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+        localtime_r(&(dummy_retenp),&tmstruc);
+        tp = &tmstruc;
+#else
+        tp = localtime(&(dummy_retenp));
+#endif /* _REENTRANT || _THREAD_SAFE */
+        if ((this_retenp - this_time) > SIXMONTHS) {
+          strftime(timestr,64,strftime_format_sixmonthsold,tp);
+        } else {
+          strftime(timestr,64,strftime_format,tp);
+        }
+      }
+    } else {
+      strcpy(timestr,"INFINITE_LIFETIME");
+    }
+    break;
+  case STAGEOUT|PUT_FAILED:
+  case STAGEOUT|PUT_FAILED|CAN_BE_MIGR:
+    /* put_failed entry (castor or not) */
+    if ((this_retenp = get_put_failed_retenp(stcp->poolname)) >= 0) {
+      /* There is a put_failed retention period */
+      if ((this_time - stcp->a_time) > this_retenp) {
+        strcpy(timestr,"Exhausted");
+      } else {
+        time_t dummy_retenp;
+        this_retenp += stcp->a_time;
+        dummy_retenp = (time_t) this_retenp;
+        /* Retention period not yet exhausted */
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+        localtime_r(&(dummy_retenp),&tmstruc);
+        tp = &tmstruc;
+#else
+        tp = localtime(&(dummy_retenp));
+#endif /* _REENTRANT || _THREAD_SAFE */
+        if ((this_retenp - this_time) > SIXMONTHS) {
+          strftime(timestr,64,strftime_format_sixmonthsold,tp);
+        } else {
+          strftime(timestr,64,strftime_format,tp);
+        }
+      }
+    } else {
+      return(-1);
+    }
+    break;
+  default:
+    if ((stcp->status & (STAGEOUT|STAGED)) != (STAGEOUT|STAGED) &&
+        (stcp->status & (STAGEWRT|STAGED)) != (STAGEWRT|STAGED) &&
+        (stcp->status & ( STAGEIN|STAGED)) != ( STAGEIN|STAGED) &&
+        (stcp->status & (STAGEPUT|STAGED)) != (STAGEPUT|STAGED)) {
+      /* Not a STAGEd migrated file */
+      return(-1);
+    }
+    /* We distinguish between CASTOR entries and non-CASTOR entry */
+    switch (stcp->t_or_d) {
+    case 'h':
+      /* CASTOR entry */
+      if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) {
+        return(-1);
+      }
+      if ((this_retenp = stcp->u1.h.retenp_on_disk) < 0) /* No explicit value */
+        this_retenp = retenp_on_disk(ifileclass); /* So we take the default */
+      switch (this_retenp) {
+      case AS_LONG_AS_POSSIBLE:
+        strcpy(timestr,"AS_LONG_AS_POSSIBLE");
+        break;
+      case INFINITE_LIFETIME:
+        strcpy(timestr,"INFINITE_LIFETIME");
+        break;
+      default:
+        if ((this_time - stcp->a_time) > this_retenp) {
+          strcpy(timestr,"Exhausted");
+        } else {
+          time_t dummy_retenp;
+          this_retenp += stcp->a_time;
+          dummy_retenp = (time_t) this_retenp;
+          /* Retention period not yet exhausted */
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+          localtime_r(&(dummy_retenp),&tmstruc);
+          tp = &tmstruc;
+#else
+          tp = localtime(&(dummy_retenp));
+#endif /* _REENTRANT || _THREAD_SAFE */
+          if ((this_retenp - this_time) > SIXMONTHS) {
+            strftime(timestr,64,strftime_format_sixmonthsold,tp);
+          } else {
+            strftime(timestr,64,strftime_format,tp);
+          }
+        }
+        break;
+      }
+      break;
+    default:
+      return(-1);
+      break;
+    }
+  }
+  /* Okay */
+  return(0);
+}
+
+/* return value will be 0 or -1, where 0 means that timestr is trustable, -1 means that timestr would have has non-sense */
+/* timestr, if return value is zero, contains contains a human-readable format of retention period on disk */
+int get_mintime(stcp,timestr)
+     struct stgcat_entry *stcp;
+     char *timestr;
+{
+  time_t this_mintime_beforemigr;
+  time_t this_time = time(NULL);
+#if defined(_REENTRANT) || defined(_THREAD_SAFE)
+  struct tm tmstruc;
+#endif /* _REENTRANT || _THREAD_SAFE */
+  struct tm *tp;
+  int ifileclass;
+
+  if (stcp->t_or_d != 'h') return(-1);
+
+  /* Depending of the status of the stcp we will return the correct current retention period on disk */
+  switch (stcp->status) {
+  case STAGEOUT|CAN_BE_MIGR:
+    /* CASTOR entry */
+    if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) {
+      return(-1);
+    }
+    if ((this_mintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0) /* No explicit value */
+      this_mintime_beforemigr = mintime_beforemigr(ifileclass); /* So we take the default */
+    if ((this_time - stcp->a_time) > this_mintime_beforemigr) {
+      strcpy(timestr,"Exhausted");
+    } else {
+      time_t dummy_mintime_beforemigr;
+      this_mintime_beforemigr += stcp->a_time;
+      dummy_mintime_beforemigr = (time_t) this_mintime_beforemigr;
+      /* Retention period not yet exhausted */
+#if ((defined(_REENTRANT) || defined(_THREAD_SAFE)) && !defined(_WIN32))
+      localtime_r(&(dummy_mintime_beforemigr),&tmstruc);
+      tp = &tmstruc;
+#else
+      tp = localtime(&(dummy_mintime_beforemigr));
+#endif /* _REENTRANT || _THREAD_SAFE */
+      if ((this_mintime_beforemigr - this_time) > SIXMONTHS) {
+        strftime(timestr,64,strftime_format_sixmonthsold,tp);
+      } else {
+        strftime(timestr,64,strftime_format,tp);
+      }
+    }
+    break;
+  default:
+    return(-1);
+  }
+  /* Okay */
+  return(0);
+}
+
+/* flag means :                                                */
+/*  1             file put in stack can_be_migr                */
+/* -1             file removed from stack can_be_migr          */
+/* immediate parameter: used only if flag == 1;                */
+/* If 0           set only canbemigr or delaymigr stack        */
+/* If 1           set both canbemigr and beingmigr stacks      */
+/* If 2           set only being migr stack                    */
+/* If 3           move from delaymigr to canbemigr             */
+/* If 4           conditional move from delaymigr to canbemigr */
+/* Returns: 0 (OK) or -1 (NOT OK)                              */
 int update_migpool(stcp,flag,immediate)
      struct stgcat_entry **stcp;
      int flag;
@@ -1732,9 +2042,11 @@ int update_migpool(stcp,flag,immediate)
   int savereqid = reqid;
   int rc = 0;
   int ngen = 0;
+  time_t thistime = time(NULL); /* To have exactly the same time within this routine */
+  int thismintime_beforemigr;
 
-  if (((flag != 1) && (flag != -1)) || ((immediate != 0) && (immediate != 1) && (immediate != 2))) {
-    stglogit (func, STG105, func,  "flag should be 1 or -1, and immediate should be 0, 1 or 2");
+  if (((flag != 1) && (flag != -1)) || ((immediate != 0) && (immediate != 1) && (immediate != 2) && (immediate != 3) && (immediate != 4))) {
+    stglogit (func, STG105, func,  "flag should be 1 or -1, and immediate should be 0, 1, 2, 3 or 4");
     serrno = EINVAL;
     rc = -1;
     goto update_migpool_return;
@@ -1799,6 +2111,7 @@ int update_migpool(stcp,flag,immediate)
   case -1:
     if (((*stcp)->status & CAN_BE_MIGR) != CAN_BE_MIGR) {
       /* This is a not a return from automatic migration */
+      (*stcp)->filler[0] = '\0'; /* To be sure */
       return(0);
     }
     /* This is a return from automatic migration */
@@ -1879,6 +2192,7 @@ int update_migpool(stcp,flag,immediate)
         pool_p->migr->fileclass_predicates[ifileclass].space_beingmig -= (*stcp)->actual_size;
       }
     }
+    (*stcp)->filler[0] = '\0'; /* Not in delayed not being migrated, of course */
     if (((*stcp)->status & BEING_MIGR) == BEING_MIGR) {
       (*stcp)->status &= ~BEING_MIGR;
 #ifdef USECDB
@@ -1918,7 +2232,7 @@ int update_migpool(stcp,flag,immediate)
           /* Because this may generate a realloc we need to restore afterwhile */
           /* the correct original *stcp */
           index_found = (*stcp) - stcs;
-          stcp_ok = newreq();
+          stcp_ok = newreq('h');
           memcpy(stcp_ok, &savestcp, sizeof(struct stgcat_entry));
           stcp_ok->reqid = nextreqid();
           reqid = savereqid;
@@ -1931,7 +2245,7 @@ int update_migpool(stcp,flag,immediate)
                    i,
                    stcp_ok->u1.h.tppool);
           /* We prepare the 'immediate' switch below because we can do this now and only now */
-          if (immediate >= 1) {
+          if ((immediate >= 1) && (immediate <= 2)) {
             if (stcp_ok->status != (STAGEPUT|CAN_BE_MIGR)) stcp_ok->status |= BEING_MIGR;
           }
 #ifdef USECDB
@@ -1952,7 +2266,7 @@ int update_migpool(stcp,flag,immediate)
                    i,
                    (*stcp)->u1.h.tppool);
           /* We prepare the 'immediate' switch below because we can do this now and only now */
-          if (immediate >= 1) {
+          if ((immediate >= 1) && (immediate <= 2)) {
             if ((*stcp)->status != (STAGEPUT|CAN_BE_MIGR)) (*stcp)->status |= BEING_MIGR;
           }
 #ifdef USECDB
@@ -1976,7 +2290,7 @@ int update_migpool(stcp,flag,immediate)
       /* We flag this (*stcp) as a candidate for migration */
       (*stcp)->status |= CAN_BE_MIGR;
       /* We prepare the 'immediate' switch below because we can do this now and only now */
-      if (immediate >= 1) {
+      if ((immediate >= 1) && (immediate <= 2)) {
         if ((*stcp)->status != (STAGEPUT|CAN_BE_MIGR)) (*stcp)->status |= BEING_MIGR;
       }
 #ifdef USECDB
@@ -1987,14 +2301,45 @@ int update_migpool(stcp,flag,immediate)
       savereqs();
       ngen = 1;
     }
+
+    if ((thismintime_beforemigr = (*stcp)->u1.h.mintime_beforemigr) < 0) {
+      thismintime_beforemigr = mintime_beforemigr(ifileclass);
+    }
+
     switch (immediate) {
     case 0:
-      /* We udpate global migrator variables */
-      pool_p->migr->global_predicates.nbfiles_canbemig += ngen;
-      pool_p->migr->global_predicates.space_canbemig += ((*stcp)->actual_size * ngen);
-      /* We udpate global fileclass variables */
-      pool_p->migr->fileclass_predicates[ifileclass].nbfiles_canbemig += ngen;
-      pool_p->migr->fileclass_predicates[ifileclass].space_canbemig += ((*stcp)->actual_size * ngen);
+      /* We check (*stcp)->a_time and default mintime_beforemigr */
+      /* If there is a delay in migration for this stcp, we increment correspondingly the */
+      /* correct counters */
+      /* We maintain an interval and non-persistent flag so that we remember what action to do at */
+      /* next iteration */
+      /* Default value for this non-persistent flag is always 0 */
+      if (((*stcp)->filler[0] == 0) && (((*stcp)->a_time + thismintime_beforemigr) >= thistime)) {
+        /* We udpate global migrator variables (wait mode) */
+        pool_p->migr->global_predicates.nbfiles_delaymig += ngen;
+        pool_p->migr->global_predicates.space_delaymig += ((*stcp)->actual_size * ngen);
+        /* We udpate global fileclass variables (wait mode) */
+        pool_p->migr->fileclass_predicates[ifileclass].nbfiles_delaymig += ngen;
+        pool_p->migr->fileclass_predicates[ifileclass].space_delaymig += ((*stcp)->actual_size * ngen);
+        (*stcp)->filler[0] = 'd'; /* 'd' for 'putted in delayed mode' */
+      } else if (((*stcp)->filler[0] != 'm') && (((*stcp)->a_time + thismintime_beforemigr) < thistime)) {
+        if ((*stcp)->filler[0] == 'd') {
+          char tmpbuf[21];
+          /* We log the fact that we moved this entry from delayed mode to non-delayed mode */
+          stglogit (func, STG155,
+                    (*stcp)->u1.h.xfile,
+                    (*stcp)->poolname,
+                    u64tostr((u_signed64) (*stcp)->u1.h.fileid, tmpbuf, 0),
+                    (*stcp)->u1.h.server);
+        }
+        /* We udpate global migrator variables */
+        pool_p->migr->global_predicates.nbfiles_canbemig += ngen;
+        pool_p->migr->global_predicates.space_canbemig += ((*stcp)->actual_size * ngen);
+        /* We udpate global fileclass variables */
+        pool_p->migr->fileclass_predicates[ifileclass].nbfiles_canbemig += ngen;
+        pool_p->migr->fileclass_predicates[ifileclass].space_canbemig += ((*stcp)->actual_size * ngen);
+        (*stcp)->filler[0] = 'm'; /* 'm' for 'putted in canbemigr (non-delayed) mode' */
+      }
       break;
     case 1:
       /* We udpate global migrator variables */
@@ -2003,6 +2348,7 @@ int update_migpool(stcp,flag,immediate)
       /* We udpate global fileclass variables */
       pool_p->migr->fileclass_predicates[ifileclass].nbfiles_canbemig += ngen;
       pool_p->migr->fileclass_predicates[ifileclass].space_canbemig += ((*stcp)->actual_size * ngen);
+      (*stcp)->filler[0] = 'm'; /* 'm' for 'putted in canbemigr (non-delayed) mode' */
       /* No break here - intentionnally */
     case 2:
       /* We udpate global migrator variables */
@@ -2011,6 +2357,66 @@ int update_migpool(stcp,flag,immediate)
       /* We udpate global fileclass variables */
       pool_p->migr->fileclass_predicates[ifileclass].nbfiles_beingmig += ngen;
       pool_p->migr->fileclass_predicates[ifileclass].space_beingmig += ((*stcp)->actual_size * ngen);
+      break;
+    case 3:
+    case_3:
+      /* We udpate global migrator variables (wait mode) */
+      if ((pool_p->migr->global_predicates.nbfiles_delaymig -= ngen) < 0) {
+        stglogit (func, STG106, func,
+                  (*stcp)->poolname,
+                  "nbfiles_delaymig < 0 (resetted to 0)");
+        pool_p->migr->global_predicates.nbfiles_delaymig = 0;
+      }
+      if (pool_p->migr->global_predicates.space_delaymig < ((*stcp)->actual_size * ngen)) {
+        stglogit (func, STG106, func,
+                  (*stcp)->poolname,
+                  "space_delaymig predicted to be < 0 (resetted to 0)");
+        pool_p->migr->global_predicates.space_delaymig = 0;
+      } else {
+        pool_p->migr->global_predicates.space_delaymig -= ((*stcp)->actual_size * ngen);
+      }
+      /* We udpate global fileclass variables (wait mode) */
+      if ((pool_p->migr->fileclass_predicates[ifileclass].nbfiles_delaymig -= ngen) < 0) {
+        stglogit (func, STG110,
+                  func,
+                  (*stcp)->poolname,
+                  pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
+                  pool_p->migr->fileclass[ifileclass]->server,
+                  "nbfiles_delaymig < 0 (resetted to 0)");
+        pool_p->migr->fileclass_predicates[ifileclass].nbfiles_delaymig = 0;
+      }
+      if (pool_p->migr->fileclass_predicates[ifileclass].space_delaymig < ((*stcp)->actual_size * ngen)) {
+        stglogit (func, STG110,
+                  func,
+                  (*stcp)->poolname,
+                  pool_p->migr->fileclass[ifileclass]->Cnsfileclass.name,
+                  pool_p->migr->fileclass[ifileclass]->server,
+                  "space_delaymig predicted to be < 0 (resetted to 0)");
+        pool_p->migr->fileclass_predicates[ifileclass].space_delaymig = 0;
+      } else {
+        pool_p->migr->fileclass_predicates[ifileclass].space_delaymig -= ((*stcp)->actual_size * ngen);
+      }
+      /* We udpate global migrator variables */
+      pool_p->migr->global_predicates.nbfiles_canbemig += ngen;
+      pool_p->migr->global_predicates.space_canbemig += ((*stcp)->actual_size * ngen);
+      /* We udpate global fileclass variables */
+      pool_p->migr->fileclass_predicates[ifileclass].nbfiles_canbemig += ngen;
+      pool_p->migr->fileclass_predicates[ifileclass].space_canbemig += ((*stcp)->actual_size * ngen);
+      (*stcp)->filler[0] = 'm'; /* 'm' for 'putted in canbemigr (non-delayed) mode' */
+      break;
+    case 4:
+      /* We udpate global migrator variables (wait mode) if necessary */
+      if (((*stcp)->filler[0] == 'd') && ((*stcp)->a_time + thismintime_beforemigr) >= thistime) {
+        /* Latency time has not yet exhausted by we move neverthless DELAY counters to CAN_BE_MIGR ones */
+        (*stcp)->u1.h.mintime_beforemigr = 0;
+#ifdef USECDB
+        if (stgdb_upd_stgcat(&dbfd,(*stcp)) != 0) {
+          stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+        }
+#endif
+        savereqs();
+        goto case_3;
+      }
       break;
     default:
       break;
@@ -2045,6 +2451,8 @@ int insert_in_migpool(stcp)
   int i, ifileclass, ipool;
   struct pool *pool_p;
   char *func = "insert_in_migpool";
+  time_t thistime = time(NULL);         /* To have same time baseline for all of this routine */
+  int thismintime_beforemigr;
 
   /* We check that this poolname exist */
   ipool = -1;
@@ -2064,15 +2472,33 @@ int insert_in_migpool(stcp)
     stglogit(func, STG33, stcp->ipath, "New configuration makes it orphan of migrator");
     return(0);
   }
-  pool_p->migr->global_predicates.nbfiles_canbemig++;
-  pool_p->migr->global_predicates.space_canbemig += stcp->actual_size;
+  if ((ifileclass = upd_fileclass(pool_p,stcp)) < 0) {
+    return(-1);
+  }
+
+  if ((thismintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0) {
+    thismintime_beforemigr = mintime_beforemigr(ifileclass);
+  }
+
+  if ((stcp->a_time + thismintime_beforemigr) > thistime) {
+    pool_p->migr->global_predicates.nbfiles_delaymig++;
+    pool_p->migr->global_predicates.space_delaymig += stcp->actual_size;
+  } else {
+    pool_p->migr->global_predicates.nbfiles_canbemig++;
+    pool_p->migr->global_predicates.space_canbemig += stcp->actual_size;
+  }
   if ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR)) {
     pool_p->migr->global_predicates.nbfiles_beingmig++;
     pool_p->migr->global_predicates.space_beingmig += stcp->actual_size;
   }
   if ((ifileclass = upd_fileclass(pool_p,stcp)) >= 0) {
-    pool_p->migr->fileclass_predicates[ifileclass].nbfiles_canbemig++;
-    pool_p->migr->fileclass_predicates[ifileclass].space_canbemig += stcp->actual_size;
+    if ((stcp->a_time + thismintime_beforemigr) > thistime) {
+      pool_p->migr->fileclass_predicates[ifileclass].nbfiles_delaymig++;
+      pool_p->migr->fileclass_predicates[ifileclass].space_delaymig += stcp->actual_size;
+    } else {
+      pool_p->migr->fileclass_predicates[ifileclass].nbfiles_canbemig++;
+      pool_p->migr->fileclass_predicates[ifileclass].space_canbemig += stcp->actual_size;
+    }
     if ((stcp->status == (STAGEPUT|CAN_BE_MIGR)) || ((stcp->status & BEING_MIGR) == BEING_MIGR)) {
       pool_p->migr->fileclass_predicates[ifileclass].nbfiles_beingmig++;
       pool_p->migr->fileclass_predicates[ifileclass].space_beingmig += stcp->actual_size;
@@ -2631,6 +3057,8 @@ int migpoolfiles(pool_p)
         (stcp+j)->poolname[0] = '\0';
         /* We remove other arguments - not needed - will be logged for nothing */
         (stcp+j)->u1.h.fileclass = 0;
+        (stcp+j)->u1.h.retenp_on_disk = -1;
+        (stcp+j)->u1.h.mintime_beforemigr = -1;
         /* Please note that the (stcp+j)->ipath will be our user path (stpp) */
         strcpy((stpp+j)->upath, (stcp+j)->ipath);
         scc->scanned = 1;
@@ -2939,7 +3367,15 @@ int migpoolfiles(pool_p)
     } else if (fork_pid == 0) {
       /* We are in the child */
       int rc;
+      char *myenv = "STAGE_STGMAGIC=0x13140703"; /* STGMAGIC3 explicit value */
       
+      /* Set explicitely STGMAGIC3 protocol */
+      if (putenv(myenv) != 0) {
+		stglogit(func, "Cannot putenv(\"%s\"), %s\n", myenv, strerror(errno));
+      } else {
+		stglogit(func, "Setted environment variable %s\n", myenv);
+      }
+
 #ifdef STAGER_DEBUG
       stglogit(func, "### stagewrt_hsm request : Please gdb /usr/local/bin/stgdaemon %d, then break %d\n",getpid(),__LINE__+2);
       sleep(9);
@@ -3143,6 +3579,7 @@ int upd_fileclass(pool_p,stcp)
 
     /* @@@@ EXCEPTIONNAL @@@@ */
     /* Cnsfileclass.migr_time_interval = 1; */
+    /* Cnsfileclass.mintime_beforemigr = 0; */
     /* Cnsfileclass.maxdrives = 1; */
     /* Cnsfileclass.retenp_on_disk = 0; */
     /* @@@@ END OF EXCEPTIONNAL @@@@ */
@@ -3352,6 +3789,12 @@ int upd_fileclasses()
     if (fileclasses[i].Cnsfileclass.tppools != NULL) {
       free(fileclasses[i].Cnsfileclass.tppools);
     }
+    /* @@@@ EXCEPTIONNAL @@@@ */
+    /* Cnsfileclass.migr_time_interval = 10; */
+    /* Cnsfileclass.mintime_beforemigr = 0; */
+    /* Cnsfileclass.maxdrives = 1; */
+    /* Cnsfileclass.retenp_on_disk = 0; */
+    /* @@@@ END OF EXCEPTIONNAL @@@@ */
     fileclasses[i].Cnsfileclass = Cnsfileclass;
 	/* File class at index (nbfileclasses - 1) has been created */
     /* We check if the last tape pool used still belongs to this fileclass */
@@ -3781,25 +4224,27 @@ int retenp_on_disk(ifileclass)
   return(fileclasses[ifileclass].Cnsfileclass.retenp_on_disk);
 }
 
+int mintime_beforemigr(ifileclass)
+     int ifileclass;
+{
+  return(fileclasses[ifileclass].Cnsfileclass.mintime_beforemigr);
+}
+
 void check_lifetime_on_disk() {
 	time_t thistime = time(NULL);
 	struct stgcat_entry *stcp;
 	char *func = "check_lifetime_on_disk";
 	extern struct fileclass *fileclasses;
 	extern struct passwd start_passwd;             /* Start uid/gid at startup (admin) */
-    char *stageout_lifetime_p = NULL;
-    int stageout_lifetime = -1;
-
-    /* We check if there is a maximum stageout lifetime on disk */
-    if ((stageout_lifetime_p = getconfent("STG","STAGEOUT_LIFETIME", 0)) != NULL) {
-      stageout_lifetime = atoi(stageout_lifetime_p);
-    }
+    signed64 put_failed_retenp;
+    signed64 stageout_retenp;
 
  check_lifetime_on_disk_redo:
 	for (stcp = stcs; stcp < stce; stcp++) {
 		int ifileclass;
 		int thisretenp;
 		int thisnextreqid;
+		int thismintime_beforemigr;
 
 		if (stcp->reqid == 0) break;
         /* We keep in mind what would be the next reqid */
@@ -3810,13 +4255,13 @@ void check_lifetime_on_disk() {
         /* ======================= */
 
         /* Is is a STAGEOUT file not yet STAGED and its exceeds the STAGEOUT lifetime limit ? */
-        if (ISSTAGEOUT(stcp) && (! ISCASTORMIG(stcp)) && ((stcp->status & STAGED) != STAGED) && ((stcp->status & PUT_FAILED) != PUT_FAILED) && (stageout_lifetime >= 0) && ((thistime - stcp->a_time) > stageout_lifetime)) {
+        if (ISSTAGEOUT(stcp) && (! ISCASTORMIG(stcp)) && ((stcp->status & STAGED) != STAGED) && ((stcp->status & PUT_FAILED) != PUT_FAILED) && ((stageout_retenp = get_stageout_retenp(stcp->poolname)) >= 0) && ((thistime - stcp->a_time) > stageout_retenp)) {
           u_signed64 actual_size_block;
           struct stat st;
           int save_reqid = reqid;
 
           reqid = 0;
-          stglogit (func, STG143, stcp->ipath, "stageout", (int) (stageout_lifetime / ONE_DAY), "move to PUT_FAILED");
+          stglogit (func, STG143, stcp->ipath, "stageout", (int) (stageout_retenp / ONE_DAY), "move to PUT_FAILED");
           reqid = save_reqid;
           if (rfio_stat(stcp->ipath, &st) == 0) {
             stcp->actual_size = (u_signed64) st.st_size;
@@ -3848,6 +4293,20 @@ void check_lifetime_on_disk() {
           continue;
         }
 
+        /* ================================= */
+        /* CHECK STAGEOUT|PUTFAILED LIFETIME */
+        /* ================================= */
+
+        /* Is it a PUT_FAILED file that exceeds PUT_FAILED lifetime on disk ? */
+        if (ISSTAGEOUT(stcp) && ((stcp->status & PUT_FAILED) == PUT_FAILED) && ((put_failed_retenp = get_put_failed_retenp(stcp->poolname)) >= 0) && ((thistime - stcp->a_time) > put_failed_retenp)) {
+          stglogit (func, STG143, stcp->ipath, "put_failed", (int) (put_failed_retenp / ONE_DAY), "deletion");
+          /* Candidate for garbage */
+          if (delfile (stcp, 0, 1, 1, "check_lifetime_on_disk", start_passwd.pw_uid, start_passwd.pw_gid, 0, 0) < 0) {
+            stglogit (STG02, stcp->ipath, "rfio_unlink", rfio_serror());
+          }
+          goto check_lifetime_on_disk_continue;
+        }
+
 		if (stcp->t_or_d != 'h') continue;      /* Not a CASTOR file */
 		if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) continue; /* Unknown fileclass */
 
@@ -3858,7 +4317,7 @@ void check_lifetime_on_disk() {
 		if ((stcp->status & (STAGEOUT|STAGED)) == (STAGEOUT|STAGED)) {
 			/* We grab retention period on disk */
 			if (stcp->keep) continue;               /* Has -K option */
-			thisretenp = retenp_on_disk(ifileclass);
+			if ((thisretenp = stcp->u1.h.retenp_on_disk) < 0) thisretenp = retenp_on_disk(ifileclass);
 			if ((thisretenp == INFINITE_LIFETIME) || (thisretenp == AS_LONG_AS_POSSIBLE)) continue;
 			if (((int) (thistime - stcp->a_time)) > thisretenp) { /* Lifetime exceeds ? */
 				/* Candidate for garbage */
@@ -3868,6 +4327,19 @@ void check_lifetime_on_disk() {
 				}
     	        goto check_lifetime_on_disk_continue;
 			}
+		}
+
+        /* ============================================================================= */
+        /* CHECK CASTOR's STAGEOUT|CAN_BE_MIGR LATENCY (mintime_beforemigr -> canbemigr) */
+        /* ============================================================================= */
+        
+		if (stcp->status == (STAGEOUT|CAN_BE_MIGR)) {
+          if ((thismintime_beforemigr = stcp->u1.h.mintime_beforemigr) < 0)
+            thismintime_beforemigr = mintime_beforemigr(ifileclass);
+          if ((stcp->filler[0] != 'm') && (stcp->a_time + thismintime_beforemigr) < thistime) {
+            /* This entry had a mintime_beforemigr and we have reached its latency value */
+            update_migpool(&stcp, 1, 3);   /* immediate flag is 3 */
+          }
 		}
 
         continue;
