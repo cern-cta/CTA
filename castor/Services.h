@@ -27,20 +27,11 @@
 #ifndef CASTOR_SERVICES_H
 #define CASTOR_SERVICES_H 1
 
-/**
- * Forward declaration of IObject for the C world
- */
-struct C_IObject_t;
-
-/**
- * Forward declaration of IAddress for the C world
- */
-struct C_IAddress_t;
-
-/**
- * The Services struct in the C world
- */
+/// Forward declarations for the C world
 struct C_Services_t;
+struct C_IObject_t;
+struct C_IAddress_t;
+struct C_IService_t;
 
 /**
  * Constructor
@@ -53,13 +44,31 @@ int C_Services_create(struct C_Services_t** svcs);
 int C_Services_delete(struct C_Services_t* svcs);
 
 /**
+ * gets a service by name.
+ * @param svcs the services object to use
+ * @param name the name of the service
+ * @param id the type of service. If id not 0 and the
+ * service does not exist, it will created with this type
+ * @param svc the service
+ * @return -1 in case of error, 0 if successful
+ * A detailed error message can be retrieved by calling
+ * C_Services_errorMsg
+ */
+int C_Services_service(struct C_Services_t* svcs,
+                       char* name,
+                       unsigned int id,
+                       C_IService_t** svc);
+
+/**
  * create foreign representation from a C++ Object
  * @param address where to store the representation of
  * the object
  * @param object the object to deal with
  * @param autocommit whether the changes to the database
  * should be commited or not.
- * @exception Exception throws an Exception in cas of error
+ * @return -1 in case of error, 0 if successful
+ * A detailed error message can be retrieved by calling
+ * C_Services_errorMsg
  */
 int C_Services_createRep(struct C_Services_t* svcs,
                          struct C_IAddress_t* address,
@@ -73,7 +82,9 @@ int C_Services_createRep(struct C_Services_t* svcs,
  * @param object the object to deal with
  * @param autocommit whether the changes to the database
  * should be commited or not
- * @exception Exception throws an Exception in cas of error
+ * @return -1 in case of error, 0 if successful
+ * A detailed error message can be retrieved by calling
+ * C_Services_errorMsg
  */
 int C_Services_updateRep(struct C_Services_t* svcs,
                          struct C_IAddress_t* address,
@@ -87,7 +98,9 @@ int C_Services_updateRep(struct C_Services_t* svcs,
  * @param object the object to deal with
  * @param autocommit whether the changes to the database
  * should be commited or not.
- * @exception Exception throws an Exception in case of error
+ * @return -1 in case of error, 0 if successful
+ * A detailed error message can be retrieved by calling
+ * C_Services_errorMsg
  */
 int C_Services_deleteRep(struct C_Services_t* svcs,
                          struct C_IAddress_t* address,
@@ -101,7 +114,9 @@ int C_Services_deleteRep(struct C_Services_t* svcs,
  * @return the C++ object created from its reprensentation
  * or 0 if unsuccessful. Note that the caller is responsible
  * for the deallocation of the newly created object
- * @exception Exception throws an Exception in cas of error
+ * @return -1 in case of error, 0 if successful
+ * A detailed error message can be retrieved by calling
+ * C_Services_errorMsg
  */
 int C_Services_createObj(struct C_Services_t* svcs,
                          struct C_IAddress_t* address,

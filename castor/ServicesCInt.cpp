@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/05/19 16:37:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServicesCInt.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/05/26 15:44:35 $ $Author: sponcec3 $
  *
  *
  *
@@ -28,21 +28,14 @@
 #include <string>
 #include <iostream>
 #include <serrno.h>
+#include "castor/IService.hpp"
 #include "castor/Services.hpp"
 #include "castor/exception/Exception.hpp"
 
 extern "C" {
 
   // C include files
-  #include "castor/Services.h"
-
-  /// Definition of the Services C struct
-  struct C_Services_t {
-    /// The C++ object
-    castor::Services* svcs;
-    /// A placeholder for an error message
-    std::string errorMsg;
-  };
+  #include "castor/ServicesCInt.hpp"
 
   //------------------------------------------------------------------------------
   // C_Services_create
@@ -66,6 +59,22 @@ extern "C" {
       return -1;
     }
     free(svcs);
+    return 0;
+  }
+
+  //------------------------------------------------------------------------------
+  // C_Services_service
+  //------------------------------------------------------------------------------
+  int C_Services_service(C_Services_t* svcs,
+                         char* name,
+                         unsigned int id,
+                         castor::IService** svc) {
+    *svc = svcs->svcs->service(name, id);
+    if (0 == *svc) {
+      serrno = SEINTERNAL;
+      svcs->errorMsg = "Unable to locate/create service";
+      return -1;
+    }
     return 0;
   }
 
