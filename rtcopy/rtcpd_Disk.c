@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.74 $ $Date: 2000/04/12 13:35:14 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.75 $ $Date: 2000/04/13 16:35:24 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1306,6 +1306,7 @@ void *diskIOthread(void *arg) {
     int rc, mode, severity, save_errno,save_serrno;
     extern char *u64tostr _PROTO((u_signed64, char *, int));
     extern int ENOSPC_occurred;
+
     rtcp_log(LOG_DEBUG,"diskIOthread() started\n");
     if ( arg == NULL ) {
         rtcp_log(LOG_ERR,"diskIOthread() received NULL argument\n");
@@ -1362,6 +1363,12 @@ void *diskIOthread(void *arg) {
             DK_STATUS(RTCP_PS_NOBLOCKING);
             CHECK_PROC_ERR(NULL,file,"rtcpd_stageupdc() error");
             if ( ENOSPC_occurred == TRUE ) {
+                rtcp_log(LOG_INFO,"diskIOthread() exit for synchronization due to ENOSPC\n");
+                filereq->proc_status = RTCP_WAITING;
+                (void) tellClient(&client_socket,NULL,NULL,-1);
+                diskIOfinished();
+            }
+        }
 
         rc = DiskFileOpen(pool_index,tape,file);
         disk_fd = rc;
