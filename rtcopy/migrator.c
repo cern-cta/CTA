@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.18 $ $Release$ $Date: 2004/11/10 14:12:50 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/11/15 07:37:01 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.18 $ $Release$ $Date: 2004/11/10 14:12:50 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/11/15 07:37:01 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -288,8 +288,8 @@ int migratorCallbackMoreWork(
     LOG_SYSCALL_ERR("rtcpcld_lockTape()");
     return(-1);
   }
-  rc = rtcpcld_getSegmentsToDo(tape);  
-  if ( rc == -1 ) {
+  rc = rtcpcld_getSegmentToDo(tape,&fl);  
+  if ( (rc == -1) || (fl == NULL) ) {
     save_serrno = serrno;
     if ( serrno == ENOENT ) {
       /*
@@ -329,7 +329,6 @@ int migratorCallbackMoreWork(
    * We got a new file to migrate. Assign the next
    * tape fseq.
    */
-  fl = tape->file->prev;
   if ( fl->filereq.proc_status != RTCP_WAITING ) {
     /*
      * Shouldn't happen
