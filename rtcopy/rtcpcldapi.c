@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.12 $ $Release$ $Date: 2004/06/21 16:43:02 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.13 $ $Release$ $Date: 2004/06/24 14:38:45 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.12 $ $Date: 2004/06/21 16:43:02 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.13 $ $Date: 2004/06/24 14:38:45 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -68,6 +68,7 @@ static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.12 $ $Date: 
 #include <rtcpcld_constants.h>
 #include <rtcpcld_messages.h>
 #include <rtcpcld.h>
+#include <rtcpcldapi.h>
 
 #define LOG_FAILED_CALL(X)  { \
         int _save_errno = errno; \
@@ -802,6 +803,10 @@ static int addSegment(tpList,file,myNotificationAddr)
                              rtcpcldSegm->segment,
                              file->filereq.blockid
                              );
+  Cstager_Segment_setSegmCksumAlgorithm(
+                                        rtcpcldSegm->segment,
+                                        file->filereq.castorSegAttr.segmCksumAlgorithm
+                                        );
   Cstager_Segment_setStgReqId(
                               rtcpcldSegm->segment,
                               file->filereq.stgReqId
@@ -1048,37 +1053,17 @@ int rtcpcldc_appendFileReqs(tape,file)
   return(0);
 }
 
-int rtcpcldc_deleteFromDB(tape)
-     tape_list_t *tape;
+static int deleteFromDB(tpItem)
+     RtcpcldTapeList_t *tpItem;
 {
   int rc, save_serrno;
-  RtcpcldTapeList_t *tpList = NULL;
   struct C_Services_t **dbSvc = NULL;
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *tapeIObj;
   
-  if ( tape == NULL ) {
+  if ( tpItem == NULL ) {
     serrno = EINVAL;
-    return(-1);
-  }
-  rc = Cmutex_lock(tape,-1);
-  if ( rc == -1 ) {
-    LOG_FAILED_CALL("Cmutex_lock()");
-    return(-1);
-  }
-  
-  rc = rtcpcld_findTpReqMap(tape,&tpList);
-  if ( rc == -1 ) {
-    LOG_FAILED_CALL("rtcpcld_findTpReqMap()");
-    save_serrno = serrno;
-    (void)Cmutex_unlock(tape);
-    serrno = save_serrno;
-    return(-1);
-  }
-  if ( rc == 0 || tpList == NULL ) {
-    (void)Cmutex_unlock(tape);
-    serrno = ENOENT;
     return(-1);
   }
 
@@ -1087,7 +1072,6 @@ int rtcpcldc_deleteFromDB(tape)
   if ( rc == -1 ) {
     save_serrno = serrno;
     LOG_FAILED_CALL("C_BaseAddress_create()");
-    (void)Cmutex_unlock(tape);
     serrno = save_serrno;
     return(-1);
   }
@@ -1099,12 +1083,11 @@ int rtcpcldc_deleteFromDB(tape)
   if ( rc == -1 || dbSvc == NULL || *dbSvc == NULL ) {
     save_serrno = serrno;
     LOG_FAILED_CALL("rtcpcld_getDbSvc()");
-    (void)Cmutex_unlock(tape);
     serrno = save_serrno;
     return(-1);
   }
 
-  tapeIObj = Cstager_Tape_getIObject(tpList->tp);
+  tapeIObj = Cstager_Tape_getIObject(tpItem->tp);
   rc = C_Services_deleteRep(*dbSvc,iAddr,tapeIObj,1);
   if ( rc != 0 ) {
     save_serrno = serrno;
@@ -1113,11 +1096,9 @@ int rtcpcldc_deleteFromDB(tape)
     C_IAddress_delete(iAddr);
     C_Services_delete(*dbSvc);
     *dbSvc = NULL;
-    (void)Cmutex_unlock(tape);
     serrno = save_serrno;
     return(-1);
   }
-  (void)Cmutex_unlock(tape);
 
   C_IAddress_delete(iAddr);
   return(0);
@@ -1144,12 +1125,11 @@ void rtcpcldc_cleanup(tape)
     while ( (tpItem = tpList) != NULL ) {
       while ( (segmItem = tpItem->segments) != NULL ) {
         CLIST_DELETE(tpItem->segments,segmItem);
-        if ( segmItem->segment != NULL ) 
-          Cstager_Segment_delete(segmItem->segment);
         segmItem->segment = NULL;
         free(segmItem);
       }
       CLIST_DELETE(tpList,tpItem);
+      (void)deleteFromDB(tpItem);
       if ( tpItem->tp != NULL ) Cstager_Tape_delete(tpItem->tp);
       tpItem->tp = NULL;
       free(tpItem);
@@ -1179,7 +1159,8 @@ int rtcpcldc(tape)
     serrno = EINVAL;
     return(-1);
   }
-  
+  dontLog = 1;
+
   rc = rtcpcld_initNotifyByPort(&notificationSocket,&notificationPort);
   if ( (rc == -1) || (notificationSocket == NULL) ) {
     LOG_FAILED_CALL("rtcpcld_initNotifyByPort()");
