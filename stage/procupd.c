@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.95 2002/02/05 15:28:23 jdurand Exp $
+ * $Id: procupd.c,v 1.96 2002/02/06 11:47:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.95 $ $Date: 2002/02/05 15:28:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.96 $ $Date: 2002/02/06 11:47:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1137,33 +1137,42 @@ procupdreq(req_type, magic, req_data, clienthost)
 	if ((stcp->t_or_d != 'm') && (stcp->t_or_d != 'h')) {
 		int has_been_updated = 0;
 
-		if (blksize > 0) {
+		if ((blksize > 0) && (stcp->blksize != blksize)) {
 			stcp->blksize = blksize;
 			has_been_updated = 1;
 		}
-		if (lrecl > 0) {
+		if ((lrecl > 0) && (stcp->lrecl != lrecl)) {
 			stcp->lrecl = lrecl;
 			has_been_updated = 1;
 		}
-		if (recfm) {
-			strncpy (stcp->recfm, recfm, 3);
+		if ((recfm != NULL) && (strcmp(stcp->recfm,recfm) != 0)) {
+			strncpy (stcp->recfm, recfm, CA_MAXRECFMLEN);
+			stcp->recfm[CA_MAXRECFMLEN] = '\0';
 			has_been_updated = 1;
 		}
 		if (stcp->recfm[0] == 'U') {
-			stcp->lrecl = 0;
-			has_been_updated = 1;
+			if (stcp->lrecl != 0) {
+				stcp->lrecl = 0;
+				has_been_updated = 1;
+			}
 		} else if (stcp->lrecl == 0) {
-			stcp->lrecl = stcp->blksize;
+			if (stcp->lrecl != stcp->blksize) {
+				stcp->lrecl = stcp->blksize;
+				has_been_updated = 1;
+			}
+		}
+		if ((fid != NULL) && (strcmp(stcp->u1.t.fid,fid) != 0)) {
+			strncpy (stcp->u1.t.fid, fid, CA_MAXFIDLEN);
+			stcp->u1.t.fid[CA_MAXFIDLEN] = '\0';
 			has_been_updated = 1;
 		}
-		if (fid) {
-			strcpy (stcp->u1.t.fid, fid);
-			has_been_updated = 1;
-		}
-		if (fseq &&
+		if ((fseq != NULL) &&
 				(stcp->u1.t.fseq[0] == 'u' || stcp->u1.t.fseq[0] == 'n')) {
-			strcpy (stcp->u1.t.fseq, fseq);
-			has_been_updated = 1;
+			if (strcmp(stcp->u1.t.fseq,fseq) != 0) {
+				strncpy (stcp->u1.t.fseq, fseq, CA_MAXFSEQLEN);
+				stcp->u1.t.fseq[CA_MAXFSEQLEN] = '\0';
+				has_been_updated = 1;
+			}
 		}
 		if (has_been_updated != 0) {
 #ifdef USECDB
