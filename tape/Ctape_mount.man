@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Ctape_mount.man,v $ $Revision: 1.13 $ $Date: 2001/01/29 07:35:34 $ CERN IT-PDP/DM Jean-Philippe Baud
-.\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
+.\" @(#)$RCSfile: Ctape_mount.man,v $ $Revision: 1.14 $ $Date: 2001/07/25 06:08:48 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_MOUNT 3 "$Date: 2001/01/29 07:35:34 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_MOUNT 3 "$Date: 2001/07/25 06:08:48 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_mount \- send a request to the tape daemon to have a tape mounted
 .SH SYNOPSIS
@@ -175,7 +175,7 @@ Too many drives requested.
 Invalid device group name.
 .TP
 .B ETNRS
-Reserv not done.
+Reserve not done.
 .TP
 .B ETIDN
 No unit with requested characteristics.
