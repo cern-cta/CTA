@@ -6,7 +6,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cnetdb.c,v $ $Revision: 1.10 $ $Date: 2003/04/24 07:32:46 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: Cnetdb.c,v $ $Revision: 1.11 $ $Date: 2003/09/27 09:02:54 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -329,7 +329,7 @@ CONST char *name;
     struct hostent *result = (struct hostent *)NULL;
     char *buffer = (char *)NULL;
     int bufsize = 1024;
-    int h_errnoop;
+    int h_errnoop = 0;
     
     Cglobals_get(&hostent_key,(void **)&result,sizeof(struct hostent));
     Cglobals_get(&hostdata_key,(void **)&buffer,bufsize);
@@ -368,7 +368,7 @@ CONST char *name;
     struct hostent *result = (struct hostent *)NULL;
     char *buffer = (char *)NULL;
     int bufsize = 1024;
-    int h_errnoop;
+    int h_errnoop = 0;
 
     Cglobals_get(&hostent_key,(void **)&result,sizeof(struct hostent));
     Cglobals_get(&hostdata_key,(void **)&buffer,bufsize);
@@ -456,7 +456,7 @@ int type;
     struct hostent *result = (struct hostent *)NULL;
     char *buffer = (char *)NULL;
     int bufsize = 1024;
-    int h_errnoop;
+    int h_errnoop = 0;
     
     Cglobals_get(&hostent_key,(void **)&result,sizeof(struct hostent));
     Cglobals_get(&hostdata_key,(void **)&buffer,bufsize);
@@ -495,7 +495,7 @@ int type;
     struct hostent *result = (struct hostent *)NULL;
     char *buffer = (char *)NULL;
     int bufsize = 1024;
-    int h_errnoop;
+    int h_errnoop = 0;
 
     Cglobals_get(&hostent_key,(void **)&result,sizeof(struct hostent));
     Cglobals_get(&hostdata_key,(void **)&buffer,bufsize);
