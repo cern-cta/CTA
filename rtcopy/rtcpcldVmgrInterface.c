@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/01 15:07:37 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/11 15:53:12 $ $Author: obarring $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.1 $ $Release$ $Date: 2004/10/01 15:07:37 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/11 15:53:12 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -181,9 +181,9 @@ char *rtcpcld_tapeStatusStr(
   return(buf);
 }
 
-int rtcpcld_getVmgrErrBufs(
-                             vmgrErrBuf
-                             )
+int getVmgrErrBuf(
+                  vmgrErrBuf
+                  )
      char **vmgrErrBuf;
 {
   static int nsErrBufKey = -1;
@@ -203,56 +203,30 @@ int rtcpcld_getVmgrErrBufs(
   return(0);
 }
 
-int rtcpcld_getFileId(
-                      filereq,
-                      fileId
-                      )
-     rtcpFileRequest_t *filereq;
-     struct Cns_fileid **fileId;
-{
-  if ( (filereq == NULL) || (fileId == NULL) ) {
-    serrno = EINVAL;
-    return(-1);
-  }
-  *fileId = (struct Cns_fileid *)calloc(1,sizeof(struct Cns_fileid));
-  if ( *fileId == NULL ) {
-    serrno = SESYSERR;
-    return(-1);
-  }
-  (*fileId)->fileid = filereq->castorSegAttr.castorFileId;
-  strncpy(
-          (*fileId)->server,
-          filereq->castorSegAttr.nameServerHostName,
-          sizeof((*fileId)->server)-1
-          );
-  return(0);
-}
-
 /*
  * VMGR interface
  */
 int rtcpcld_gettape(
                     tapePool,
                     initialSizeToTransfer,
-                    tape,
-                    startFseq
+                    tape
                     )
      char *tapePool;
      tape_list_t **tape;
      u_signed64 initialSizeToTransfer;
-     int *startFseq;
 {
   int rc, rcGetTape, i, nbRetries, maxNbRetries = RTCPCLD_GETTAPE_RETRIES;
   int retryTime, retryTimeENOSPC;
   int maxRetryTime = RTCPCLD_GETTAPE_RETRY_TIME;
   int maxRetryTimeENOSPC = RTCPCLD_GETTAPE_ENOSPC_RETRY_TIME;
   char model[CA_MAXMODELLEN+1];
-  int maxFseq, save_serrno;
+  int maxFseq, startFseq, save_serrno;
   char *vmgrErrMsg = NULL;
   u_signed64 estimatedFreeSpace;
   rtcpTapeRequest_t *tapereq;
+  file_list_t *fl;
 
-  if ( (tapePool == NULL) || (tape == NULL) || (startFseq == NULL) ) {
+  if ( (tapePool == NULL) || (tape == NULL) ) {
     serrno = EINVAL;
     return(-1);
   }
@@ -279,8 +253,34 @@ int rtcpcld_gettape(
     serrno = save_serrno;
     return(-1);
   }
+  /*
+   * Create a file request to hold the start fseq
+   */
+  fl = NULL;
+  rc = rtcp_NewFileList(tape,&fl,WRITE_ENABLE);
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    if ( dontLog == 0 ) {
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_SYSCALL,
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+2,
+                      "SYSCALL",
+                      DLF_MSG_PARAM_STR,
+                      "rtcp_NewFileList()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(serrno),
+                      RTCPCLD_LOG_WHERE
+                      );
+    }
+    serrno = save_serrno;
+    return(-1);
+  }
   tapereq = &((*tape)->tapereq);
-  (void)rtcpcld_getNsVmgrErrBufs(NULL,&vmgrErrMsg);
+  (void)getVmgrErrBuf(&vmgrErrMsg);
   for ( i=0; i<maxNbRetries; i++ ) {
     serrno = 0;
     rtcp_log(LOG_DEBUG,"rtcpcld_gettape() calling vmgr_gettape(%s,%d,...)\n",
@@ -304,7 +304,7 @@ int rtcpcld_gettape(
                              tapereq->label,
                              model,
                              &(tapereq->side),
-                             startFseq,
+                             &startFseq,
                              &estimatedFreeSpace
                              );
     if ( rcGetTape != 0 ) {
@@ -365,7 +365,7 @@ int rtcpcld_gettape(
        * vmgr_gettape() was successful. Check that the returned start fseq is OK.
        */
       maxFseq = maxTapeFseq(tapereq->label);
-      if ( (maxFseq > 0) && (*startFseq > maxFseq) ) {
+      if ( (maxFseq > 0) && (startFseq > maxFseq) ) {
         if ( dontLog == 0 ) {
           (void)dlf_write(
                           (inChild == 0 ? mainUuid : childUuid),
@@ -387,7 +387,7 @@ int rtcpcld_gettape(
                           tapereq->label,
                           "",
                           DLF_MSG_PARAM_INT,
-                          *startFseq,
+                          startFseq,
                           "",
                           DLF_MSG_PARAM_INT,
                           maxFseq
@@ -472,10 +472,11 @@ int rtcpcld_gettape(
                     tapereq->side,
                     "STARTFSEQ",
                     DLF_MSG_PARAM_INT,
-                    *startFseq
+                    startFseq
                     );
   }
 
+  fl->filereq.tape_fseq = startFseq;
   return(0);
 }
 
@@ -496,7 +497,7 @@ int rtcpcld_tapeOK(
   }
 
   tapereq = &(tape->tapereq);
-  (void)rtcpcld_getNsVmgrErrBufs(NULL,&vmgrErrMsg);
+  (void)rtcpcld_getVmgrErrBuf(&vmgrErrMsg);
   for (;;) {
     if ( vmgrErrMsg != NULL ) *vmgrErrMsg = '\0';
     serrno = 0;
@@ -568,12 +569,12 @@ int rtcpcld_tapeOK(
   return(0);
 }
 
-rtcpcld_updateTape(
-                   tapereq,
-                   filereq,
-                   endOfRequest,
-                   rtcpc_serrno
-                   )
+int rtcpcld_updateTape(
+                       tapereq,
+                       filereq,
+                       endOfRequest,
+                       rtcpc_serrno
+                       )
      rtcpTapeRequest_t *tapereq;
      rtcpFileRequest_t *filereq;
      int endOfRequest, rtcpc_serrno;
@@ -702,7 +703,7 @@ rtcpcld_updateTape(
 
   statusStr = rtcpcld_tapeStatusStr(flags);
 
-  (void)rtcpcld_getNsVmgrErrBufs(NULL,&vmgrErrMsg);
+  (void)rtcpcld_getVmgrErrBuf(&vmgrErrMsg);
   rc = vmgr_updatetape(
                        tapereq->vid,
                        tapereq->side,
