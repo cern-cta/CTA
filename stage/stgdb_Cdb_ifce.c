@@ -1,5 +1,5 @@
 /*
- * $Id: stgdb_Cdb_ifce.c,v 1.24 2002/01/24 10:44:48 jdurand Exp $
+ * $Id: stgdb_Cdb_ifce.c,v 1.25 2002/04/30 13:14:42 jdurand Exp $
  */
 
 /*
@@ -18,7 +18,7 @@
 #include "Cstage_ifce.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.24 $ $Date: 2002/01/24 10:44:48 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdb_Cdb_ifce.c,v $ $Revision: 1.25 $ $Date: 2002/04/30 13:14:42 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 int stgdb_stcpcmp _PROTO((CONST void *, CONST void *));
@@ -632,14 +632,13 @@ int DLL_DECL Stgdb_upd_stgcat(dbfd,stcp,file,line)
 {
 #ifdef USECDB
 	int find_status = -1;
-	int update_status;
+	int update_status = 0;
 	Cdb_off_t Cdb_offset;
 	struct stgcat_tape tape;
 	struct stgcat_disk disk;
 	struct stgcat_hpss hsm;
 	struct stgcat_hsm castor;
 	struct stgcat_alloc alloc;
-	char tmpbuf[21];
 	
 	PING;
 
@@ -846,7 +845,7 @@ int DLL_DECL Stgdb_del_stgcat(dbfd,stcp,file,line)
 {
 #ifdef USECDB
 	int find_status;
-	int delete_status;
+	int delete_status = 0;
 	Cdb_off_t Cdb_offset;
 	struct stgcat_tape tape;
 	struct stgcat_disk disk;
