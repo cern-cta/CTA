@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.18 $ $Release$ $Date: 2004/08/03 15:38:45 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/08/03 16:06:45 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.18 $ $Release$ $Date: 2004/08/03 15:38:45 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.19 $ $Release$ $Date: 2004/08/03 16:06:45 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -137,6 +137,23 @@ static int updateSegmCount(
   segmSubmitted += submitted;
   segmCompleted += completed;
   segmFailed += failed;
+  (void)dlf_write(
+                  childUuid,
+                  DLF_LVL_DEBUG,
+                  RTCPCLD_MSG_SEGMCNTS,
+                  (struct Cns_fileid *)NULL,
+                  RTCPCLD_NB_PARAMS+3,
+                  "SUBM",
+                  DLF_MSG_PARAM_INT,
+                  segmSubmitted,
+                  "COMPL",
+                  DLF_MSG_PARAM_INT,
+                  segmCompleted,
+                  "FAILED",
+                  DLF_MSG_PARAM_INT,
+                  segmFailed,
+                  RTCPCLD_LOG_WHERE
+                  );
   rc = Cthread_mutex_unlock_ext(segmCountLock);
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("Cthread_mutex_unlock_ext()");
@@ -155,6 +172,23 @@ static int nbRunningSegms()
   }
   if ( segmFailed > 0 ) nbRunning = 0;
   else nbRunning = segmSubmitted - segmCompleted;
+  (void)dlf_write(
+                  childUuid,
+                  DLF_LVL_DEBUG,
+                  RTCPCLD_MSG_SEGMCNTS,
+                  (struct Cns_fileid *)NULL,
+                  RTCPCLD_NB_PARAMS+3,
+                  "SUBM",
+                  DLF_MSG_PARAM_INT,
+                  segmSubmitted,
+                  "COMPL",
+                  DLF_MSG_PARAM_INT,
+                  segmCompleted,
+                  "FAILED",
+                  DLF_MSG_PARAM_INT,
+                  segmFailed,
+                  RTCPCLD_LOG_WHERE
+                  );
   rc = Cthread_mutex_unlock_ext(segmCountLock);
   if ( rc == -1 ) {
     LOG_SYSCALL_ERR("Cthread_mutex_unlock_ext()");
@@ -190,7 +224,7 @@ static int processFileCopyCallback(
   if ( (filereq != NULL) && 
        (filereq->cprc == 0) && 
        (filereq->proc_status == RTCP_FINISHED) ) {
-    rc = updateSegmCount(1,0,0);
+    rc = updateSegmCount(0,1,0);
   } else if ( filereq->cprc == -1 ) {
     rc = updateSegmCount(0,0,1);
   }
@@ -264,7 +298,7 @@ static int processGetMoreWorkCallback(
                               (struct Cns_fileid *)NULL,
                               1,
                               "WTIME",
-                              DLF_MSG_PARAM_STR,
+                              DLF_MSG_PARAM_INT,
                               totalWaittime
                               );
               filereq->proc_status = RTCP_FINISHED;
@@ -357,7 +391,7 @@ static int processGetMoreWorkCallback(
     
       CLIST_DELETE(vidChildTape->file,fl);
       free(fl);
-      (void)updateSegmCount(0,1,0);
+      (void)updateSegmCount(1,0,0);
       break;
     } else {
       if ( nbInProgress > 0 ) {
@@ -386,7 +420,7 @@ static int processGetMoreWorkCallback(
                                                   (struct Cns_fileid *)NULL,
                                                   1,
                                                   "WTIME",
-                                                  DLF_MSG_PARAM_STR,
+                                                  DLF_MSG_PARAM_INT,
                                                   totalWaittime
                                                   );
           filereq->proc_status = RTCP_FINISHED;
