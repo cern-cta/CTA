@@ -40,6 +40,13 @@ MakeSubdirs(install.man,$(SUBDIRS))
 MakeCondSubdirs(clean,$(SUBDIRS),imakeclean)
 MakeCondSubdirs(clobber,$(SUBDIRS),imakeclobber)
 
+#ifndef _WIN32
+purge: clobber
+	find . -name Makefile -print | grep -v codeGeneration | xargs rm -f;	\
+	find . -name Makefile.bak -print | grep -v codeGeneration | xargs rm -f
+#else
+purge: clobber
+#endif
 
 #if defined(_WIN32)
 cernlib:
