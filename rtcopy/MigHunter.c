@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.11 $ $Release$ $Date: 2005/01/24 16:58:05 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.12 $ $Release$ $Date: 2005/02/17 17:45:42 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.11 $ $Release$ $Date: 2005/01/24 16:58:05 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.12 $ $Release$ $Date: 2005/02/17 17:45:42 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -201,11 +201,11 @@ int getSvcClass(
     return(-1);
   }
 
-  rc = Cstager_IStagerSvc_selectSvcClass(
-                                         stgSvc,
-                                         &svcClassTmp,
-                                         svcClassName
-                                         );
+  LOG_CALL_TRACE((rc = Cstager_IStagerSvc_selectSvcClass(
+                                                         stgSvc,
+                                                         &svcClassTmp,
+                                                         svcClassName
+                                                         )));
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"Cstager_IStagerSvc_selectSvcClass(%s): %s, %s\n",
@@ -283,7 +283,7 @@ int getStreamsFromDB(
     return(-1);
   }
   iObj = Cstager_TapePool_getIObject(tapePool);
-  rc = Cstager_IStagerSvc_streamsForTapePool(stgSvc,tapePool);
+  LOG_CALL_TRACE((rc = Cstager_IStagerSvc_streamsForTapePool(stgSvc,tapePool)));
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"Cstager_IStagerSvc_streamsForTapePool %s, %s\n",
@@ -772,12 +772,12 @@ int getMigrCandidates(
     return(-1);
   }
 
-  rc = Cstager_IStagerSvc_selectTapeCopiesForMigration(
-                                                       stgSvc,
-                                                       svcClass,
-                                                       &tapeCopyArray,
-                                                       &nbTapeCopies
-                                                       );
+  LOG_CALL_TRACE((rc = Cstager_IStagerSvc_selectTapeCopiesForMigration(
+                                                                       stgSvc,
+                                                                       svcClass,
+                                                                       &tapeCopyArray,
+                                                                       &nbTapeCopies
+                                                                       )));
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"Cstager_IStagerSvc_selectTapeCopiesForMigration(): %s, %s\n",
