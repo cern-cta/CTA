@@ -27,7 +27,7 @@
 /* 			       "OOB" }; */
 
 /** Buffer size for errors */
-#define PRTBUFSZ 2000
+#define SECPRTBUFSZ 2000
 /** Timeout used in the netread/netwrites */
 #define CSEC_NET_TIMEOUT 10000
 
