@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape.h,v 1.15 2000/01/07 07:59:53 baud Exp $
+ * $Id: Ctape.h,v 1.16 2000/01/07 13:44:26 baud Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.15 $ $Date: 2000/01/07 07:59:53 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape.h,v $ $Revision: 1.16 $ $Date: 2000/01/07 13:44:26 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_H
@@ -178,7 +178,7 @@
 #define	TP030	"TP030 - I/O error\n"
 #define	TP031	"TP031 - no vid specified\n"
 #define	TP032	"TP032 - %s: drive name too long\n"
-#define	TP033	"TP033 - drive %s@%s not operational\n"
+#define	TP033	"TP033 - drive %s@%s not operational"
 #define	TP034	"TP034 - all entries for a given device group must be grouped together\n"
 #define TP035	"TP035 - configuring %s %s\n"
 #define	TP036	"TP036 - path is mandatory when rls flags is %d\n"
@@ -186,7 +186,7 @@
 #define TP038	"TP038 - pathname too long\n"
 #define TP039	"TP039 - vsn mismatch: request %s, tape vsn is %s\n"
 #define TP040	"TP040 - release pending\n"
-#define	TP041	"TP041 - %s of %s on %s failed : %s\n"
+#define	TP041	"TP041 - %s of %s on %s failed : %s"
 #define	TP042	"TP042 - %s : %s error : %s\n"
 #define	TP043	"TP043 - configuration line too long: %s\n"
 #define TP044	"TP044 - fid mismatch: request %s, tape fid for file %d is %s\n"
@@ -208,7 +208,7 @@
 #define	TP059	"TP059 - invalid reason\n"
 #define	TP060	"TP060 - invalid combination of method and filstat\n"
 #define	TP061	"TP061 - filstat value incompatible with read-only mode\n"
-#define	TP062	"TP062 - tape %s to be prelabelled %s%s, ok to continue"
+#define	TP062	"TP062 - tape %s to be prelabelled %s%s, ok to continue?"
 
 			/* tape daemon internal tables */
 
