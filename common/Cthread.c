@@ -1,7 +1,10 @@
 /*
- * $Id: Cthread.c,v 1.5 1999/07/20 13:45:37 jdurand Exp $
+ * $Id: Cthread.c,v 1.6 1999/07/20 13:49:49 obarring Exp $
  *
  * $Log: Cthread.c,v $
+ * Revision 1.6  1999/07/20 13:49:49  obarring
+ * Remove references to Cthread_errno.h
+ *
  * Revision 1.5  1999/07/20 13:45:37  jdurand
  * *** empty log message ***
  *
@@ -106,14 +109,6 @@
 /* Let's analyse the compile flags              */
 /* -------------------------------------------- */
 #include <Cthread_flags.h>
-
-#if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
-/* -------------------------------------------- */
-/* This is needed to mimic key desctructors for */
-/* rfio_errno and serrno under Windows.         */
-/* -------------------------------------------- */
-#include <Cthread_errno.h>
-#endif /* _CTHREAD_PROTO_WIN32 */
 
 /* ============================================ */
 /* Typedefs                                     */
@@ -501,7 +496,7 @@ int _Cthread_init() {
 /* should be closed with CloseHandle() when the */
 /* thread has exit (see _Cthread_destroy()).    */
 /* Profit from wrapper to do some cleanup at end*/
-/* of thread (free _rfio_errno and _serrno).    */
+/* of thread.                                   */
 /* ============================================ */
 unsigned __stdcall _Cthread_start_threadex(void *arg) {
 	Cthread_start_params_t *start_params;
@@ -523,8 +518,6 @@ unsigned __stdcall _Cthread_start_threadex(void *arg) {
     /* status = start_params->_thread_routine(start_params->_thread_arg); */
     status = routine(routineargs);
 
-    _rfio_errno_destructor(NULL);
-	_serrno_destructor(NULL);
     /* Destroy the entry in Cthread internal linked list */
     _Cthread_destroy(Cthread_self());
 	return((unsigned)status);
@@ -555,7 +548,7 @@ unsigned __stdcall _Cthread_start_threadex(void *arg) {
 /* CloseHandle() is automatically called by     */
 /* system at thread exit).                      */
 /* Profit from wrapper to do some cleanup at end*/
-/* of thread (free _rfio_errno and _serrno).    */
+/* of thread.                                   */
 /* ============================================ */
 void __cdecl _Cthread_start_thread(void *arg) {
 	Cthread_start_params_t *start_params;
@@ -578,8 +571,6 @@ void __cdecl _Cthread_start_thread(void *arg) {
     /* status = start_params->_thread_routine(start_params->_thread_arg); */
     status = routine(routineargs);
 
-    _rfio_errno_destructor(NULL);
-	_serrno_destructor(NULL);
     /* Destroy the entry in Cthread internal linked list */
     _Cthread_destroy(Cthread_self());
 	return;
@@ -2470,7 +2461,7 @@ void _Cthread_once(void) {
   Cmtx.next  = NULL;
   Cspec.next = NULL;
   _Cthread_once_status = 0;
-  _Cglobals_init(Cthread_getspecific,Cthread_setspecific);
+  _Cglobals_init(Cthread_getspecific,Cthread_setspecific); /* Initialize globals */
   return;
 #endif /* ifndef _CTHREAD */
 }
