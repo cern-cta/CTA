@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/18 06:55:40 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/25 15:21:03 $ $Author: obarring $
  *
  * 
  *
@@ -30,7 +30,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.2 $ $Release$ $Date: 2004/10/18 06:55:40 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/10/25 15:21:03 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -166,8 +166,8 @@ static int tapeFseq(
       save_serrno = EINVAL;
       rc = -1;
     } else {
-      if ( newValue == 0 ) currentTapeFseq++;
       rc = currentTapeFseq;
+      if ( newValue == 0 ) currentTapeFseq++;
     }
   } else {
     currentTapeFseq = newValue;
@@ -200,7 +200,7 @@ int rtcpcld_getTapeFseq()
   return(tapeFseq(-1));
 }
 
-int rtcpcld_incrementTapeFseq() 
+int rtcpcld_getAndIncrementTapeFseq() 
 {
   return(tapeFseq(0));
 }
