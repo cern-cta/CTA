@@ -109,7 +109,8 @@ const char* Creplier_RequestReplier_errorMsg
  * Waits until all messages are sent
  * @param rr the request replier instance
  */
-int Creplier_RequestReplier_terminate(struct Creplier_RequestReplier_t *rr)
+int Creplier_RequestReplier_terminate(struct Creplier_RequestReplier_t *rr);
+
 
 
 
