@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.38 $ $Date: 2003/08/26 14:37:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.39 $ $Date: 2003/10/14 12:24:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -38,8 +38,8 @@ static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.38 $ $Date: 2
 #include "net.h"
 #include "vdqm_api.h"
 #endif
-#if !defined(linux)
-extern char *sys_errlist[];
+#if VMGR
+#include "vmgr_api.h"
 #endif
 char *acctname;
 char *devtype;
@@ -69,8 +69,10 @@ int	argc;
 char	**argv;
 {
 	int c;
+	char *clienthost;
 	unsigned int demountforce;
 	int den;
+	char density [CA_MAXDENLEN+1];
 	struct devinfo *devinfo;
 	char *dgn;
 	char *dvn;
@@ -145,6 +147,7 @@ char	**argv;
 	vdqm_reqid = atoi (argv[21]);
 	tpmounted = atoi (argv[22]);
 	side = atoi (argv[23]);
+	clienthost = argv[24];
 
 	if (prelabel > 2) {
 		prelabel -= DOUBLETM;
@@ -199,6 +202,11 @@ char	**argv;
 		sleep (10);
 	}
 	if (c)
+		goto reply;
+#endif
+#if VMGR
+	density[0] = '\0';
+	if (c = vmgrchecki (vid, vsn, dgn, density, labels[lblcode], mode, uid, gid, clienthost))
 		goto reply;
 #endif
 
@@ -350,7 +358,7 @@ remount_loop:
 					configdown (drive);
 				else
 					usrmsg (func, TP042, path, "open",
-						sys_errlist[errno]);
+						strerror(errno));
 				goto reply;
 			}
 			if (testorep (&readfds)) {
@@ -502,7 +510,7 @@ unload_loop1:
 		if (!scsi) {
 			close (tapefd);         /* to avoid errno 22 on read */
 			if ((tapefd = open (path, O_RDONLY)) < 0) {
-				usrmsg (func, TP042, path, "reopen", sys_errlist[errno]);
+				usrmsg (func, TP042, path, "reopen", strerror(errno));
 				c = errno;
 				goto reply;
 			}
@@ -661,7 +669,7 @@ mounted:
 		if ((c = rwndtape (tapefd, path))) goto reply;
 		close (tapefd);
 		if ((tapefd = open (path, O_WRONLY)) < 0) {
-			usrmsg (func, TP042, path, "reopen", sys_errlist[errno]);
+			usrmsg (func, TP042, path, "reopen", strerror(errno));
 			c = errno;
 			goto reply;
 		}
