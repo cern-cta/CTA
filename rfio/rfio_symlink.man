@@ -1,0 +1,98 @@
+.\"
+.\" $Id: rfio_symlink.man,v 1.1 2001/05/30 11:18:52 baud Exp $
+.\"
+.\" @(#)$RCSfile: rfio_symlink.man,v $ $Revision: 1.1 $ $Date: 2001/05/30 11:18:52 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RFIO_SYMLINK 3 "$Date: 2001/05/30 11:18:52 $" CASTOR "Rfio Library Functions"
+.SH NAME
+rfio_symlink \- create a symbolic link to a file
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "int rfio_symlink (const char *" oldpath ,
+.BI "const char *" newpath )
+.SH DESCRIPTION
+.B rfio_symlink
+creates a symbolic link 
+.I newpath
+which contains the string
+.IR oldpath .
+.LP
+.I newpath
+may point to a non existing file.
+.br
+If
+.I newpath
+exists already, it will not be overwritten.
+.br
+Write permission is required on 
+.I newpath
+parent.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+A component of
+.I newpath
+prefix does not exist or
+.I oldpath
+is a null pathname.
+.TP
+.B ENOMEM
+Insufficient memory.
+.TP
+.B EACCES
+Search permission is denied on a component of the 
+.I newpath
+prefix or write permission on the 
+.I newpath
+parent directory is denied.
+.TP
+.B EFAULT
+.I oldpath
+or
+.I newpath
+is a NULL pointer.
+.TP
+.B EEXIST
+.I newpath
+already exists.
+.TP
+.B ENOTDIR
+A component of the 
+.I newpath
+prefix is not a directory.
+.TP
+.B ENAMETOOLONG
+The length of
+.I oldpath
+or
+.I newpath
+exceeds
+.B CA_MAXPATHLEN
+or the length of a path component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B SEOPNOTSUP
+Not supported on Windows.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR rfio_readlink(3) ,
+.BR rfio_unlink(3)

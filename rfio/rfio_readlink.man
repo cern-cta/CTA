@@ -1,0 +1,92 @@
+.\"
+.\" $Id: rfio_readlink.man,v 1.1 2001/05/30 11:18:52 baud Exp $
+.\"
+.\" @(#)$RCSfile: rfio_readlink.man,v $ $Revision: 1.1 $ $Date: 2001/05/30 11:18:52 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RFIO_READLINK 3 "$Date: 2001/05/30 11:18:52 $" CASTOR "Rfio Library Functions"
+.SH NAME
+rfio_readlink \- get the content of a symbolic link
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "int rfio_readlink (const char *" path ,
+.BI "char *" buf ,
+.BI "int " length )
+.SH DESCRIPTION
+.B rfio_readlink
+gets the content of the symbolic link identified by
+.IR path .
+.LP
+.I buf
+content is not null terminated.
+.br
+Symbolic link content can be truncated to
+.I length
+if
+.I buf
+is too small.
+.SH RETURN VALUE
+This routine returns the count of bytes placed in
+.I buf
+if the operation was successful or -1 if the operation failed.
+In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+.I path
+does not exist.
+.TP
+.B ENOMEM
+Insufficient memory.
+.TP
+.B EACCES
+Search permission is denied on a component of the 
+.I path
+prefix.
+.TP
+.B EFAULT
+.I path
+or
+.I buf
+is a NULL pointer.
+.TP
+.B ENOTDIR
+A component of the 
+.I path
+prefix is not a directory.
+.TP
+.B EINVAL
+.I path
+is not a symbolic link or
+.I length
+is not positive.
+.TP
+.B ENAMETOOLONG
+The length of
+.I path
+exceeds
+.B CA_MAXPATHLEN
+or the length of a path component exceeds
+.BR CA_MAXNAMELEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B SEOPNOTSUP
+Not supported on Windows.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR rfio_symlink(3) ,
+.BR rfio_unlink(3)
