@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.37 2001/03/22 10:57:21 jdurand Exp $
+ * $Id: stage_api.h,v 1.38 2001/03/28 14:01:06 jdurand Exp $
  */
 
 #ifndef __stage_api_h
@@ -200,36 +200,39 @@ typedef struct stage_hsm stage_hsm_t;
   }                                                  \
 }
 
-/* ========================================================================== */
-/* ====================== DEFINITION OF API FLAGS =========================== */
-/* ========================================================================== */
-#define STAGE_DEFERRED    0x0000001    /* -A deferred  [stage_iowc]           */
-#define STAGE_GRPUSER     0x0000002    /* -G           [stage_iowc,stage_qry] */
-#define STAGE_COFF        0x0000004    /* -c off       [stage_iowc]           */
-#define STAGE_UFUN        0x0000008    /* -U           [stage_iowc]           */
-#define STAGE_INFO        0x0000010    /* -z           [stage_iowc]           */
-#define STAGE_ALL         0x0000020    /* -a           [stage_qry]            */
-#define STAGE_LINKNAME    0x0000040    /* -L           [stage_qry]            */
-#define STAGE_LONG        0x0000080    /* -l           [stage_qry]            */
-#define STAGE_PATHNAME    0x0000100    /* -P           [stage_qry]            */
-#define STAGE_SORTED      0x0000200    /* -S           [stage_qry]            */
-#define STAGE_STATPOOL    0x0000400    /* -s           [stage_qry]            */
-#define STAGE_TAPEINFO    0x0000800    /* -T           [stage_qry]            */
-#define STAGE_USER        0x0001000    /* -u           [stage_qry]            */
-#define STAGE_EXTENDED    0x0002000    /* -x           [stage_qry]            */
-#define STAGE_ALLOCED     0x0004000    /* -A           [stage_qry]            */
-#define STAGE_FILENAME    0x0008000    /* -f           [stage_qry]            */
-#define STAGE_EXTERNAL    0x0010000    /* -I           [stage_qry]            */
-#define STAGE_MULTIFSEQ   0x0020000    /* -Q           [stage_qry]            */
-#define STAGE_MIGRULES    0x0040000    /* --migrator   [stage_qry]            */
-#define STAGE_SILENT      0x0080000    /* --silent     [stage_iowc]           */
-#define STAGE_NOWAIT      0x0100000    /* --nowait     [stage_iowc]           */
-#define STAGE_NOREGEXP    0x0200000    /* --noregexp   [stage_qry]            */
-#define STAGE_DUMP        0x0400000    /* --dump       [stage_qry]            */
-#define STAGE_CLASS       0x0800000    /* --fileclass  [stage_qry]            */
-#define STAGE_QUEUE       0x1000000    /* --queue      [stage_qry]            */
-#define STAGE_COUNTERS    0x2000000    /* --counters   [stage_qry]            */
-#define STAGE_NOHSMCREAT  0x4000000    /* --nohsmcreat [stage_iowc]           */
+/* =========================================================================== */
+/* ======================= DEFINITION OF API FLAGS =========================== */
+/* =========================================================================== */
+#define STAGE_DEFERRED    0x00000001    /* -A deferred  [stage_iowc]           */
+#define STAGE_GRPUSER     0x00000002    /* -G           [stage_iowc,stage_qry] */
+#define STAGE_COFF        0x00000004    /* -c off       [stage_iowc]           */
+#define STAGE_UFUN        0x00000008    /* -U           [stage_iowc]           */
+#define STAGE_INFO        0x00000010    /* -z           [stage_iowc]           */
+#define STAGE_ALL         0x00000020    /* -a           [stage_qry]            */
+#define STAGE_LINKNAME    0x00000040    /* -L           [stage_qry,stage_clr]  */
+#define STAGE_LONG        0x00000080    /* -l           [stage_qry]            */
+#define STAGE_PATHNAME    0x00000100    /* -P           [stage_qry,stage_clr]  */
+#define STAGE_SORTED      0x00000200    /* -S           [stage_qry]            */
+#define STAGE_STATPOOL    0x00000400    /* -s           [stage_qry]            */
+#define STAGE_TAPEINFO    0x00000800    /* -T           [stage_qry]            */
+#define STAGE_USER        0x00001000    /* -u           [stage_qry]            */
+#define STAGE_EXTENDED    0x00002000    /* -x           [stage_qry]            */
+#define STAGE_ALLOCED     0x00004000    /* -A           [stage_qry]            */
+#define STAGE_FILENAME    0x00008000    /* -f           [stage_qry]            */
+#define STAGE_EXTERNAL    0x00010000    /* -I           [stage_qry]            */
+#define STAGE_MULTIFSEQ   0x00020000    /* -Q           [stage_qry]            */
+#define STAGE_MIGRULES    0x00040000    /* --migrator   [stage_qry]            */
+#define STAGE_SILENT      0x00080000    /* --silent     [stage_iowc]           */
+#define STAGE_NOWAIT      0x00100000    /* --nowait     [stage_iowc]           */
+#define STAGE_NOREGEXP    0x00200000    /* --noregexp   [stage_qry]            */
+#define STAGE_DUMP        0x00400000    /* --dump       [stage_qry]            */
+#define STAGE_CLASS       0x00800000    /* --fileclass  [stage_qry]            */
+#define STAGE_QUEUE       0x01000000    /* --queue      [stage_qry]            */
+#define STAGE_COUNTERS    0x02000000    /* --counters   [stage_qry]            */
+#define STAGE_NOHSMCREAT  0x04000000    /* --nohsmcreat [stage_iowc]           */
+#define STAGE_CONDITIONAL 0x08000000    /* -c           [stage_clr]            */
+#define STAGE_FORCE       0x10000000    /* -F           [stage_clr]            */
+#define STAGE_REMOVEHSM   0x20000000    /* -remove_from_hsm [stage_clr]        */
 
 /* For stage_qry only */
 /* ------------------ */
@@ -321,7 +324,7 @@ EXTERN_C int  DLL_DECL  stage_updc_user _PROTO((char *, stage_hsm_t *));
 EXTERN_C int  DLL_DECL  stage_updc_error _PROTO((char *, int, stage_hsm_t *));
 
 /* ---------------------------- */
-/* Generic STAGE_QRY interface */
+/* Generic STAGE_QRY interface  */
 /* ---------------------------- */
 #ifdef hpux
 /* Why does hpux's cc complain on the following proyotype when */
@@ -344,6 +347,10 @@ EXTERN_C int DLL_DECL stage_qry _PROTO((char,                      /* t_or_d */
   stage_qry('d',flags,hostname,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output)
 #define stageqry_hsm(flags,hostname,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output) \
   stage_qry('m',flags,hostname,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output)
+
+/* ----------------------------- */
+/* Shorthand STAGE_QRY interface */
+/* ----------------------------- */
 
 EXTERN_C int DLL_DECL stageqry_Tape _PROTO((u_signed64,                /* flags */
                                             char *,                    /* hostname */
@@ -371,9 +378,71 @@ EXTERN_C int DLL_DECL stageqry_Hsm _PROTO((u_signed64,                /* flags *
                                            int *,                     /* nstpp_output */
                                            struct stgpath_entry **)); /* stpp_output */
 
+/* ---------------------------- */
+/* Generic STAGE_CLR interface  */
+/* ---------------------------- */
+#ifdef hpux
+/* Why does hpux's cc complain on the following proyotype when */
+/* compiled with -Ae ? */
+EXTERN_C int DLL_DECL stage_clr _PROTO(());
+#else /* hpux */
+EXTERN_C int DLL_DECL stage_clr _PROTO((char,                      /* t_or_d */
+                                        u_signed64,                /* flags */
+                                        char *,                    /* hostname */
+                                        int,                       /* nstcp_input */
+                                        struct stgcat_entry *,     /* stcp_input */
+                                        int,                       /* nstpp_input */
+                                        struct stgpath_entry *));  /* stpp_input */
+#endif /* hpux */
+#define stageclr_tape(flags,hostname,nstcp_input,stcp_input) \
+  stage_clr('t',flags,hostname,nstcp_input,stcp_input,0,NULL)
+#define stageclr_disk(flags,hostname,nstcp_input,stcp_input) \
+  stage_clr('d',flags,hostname,nstcp_input,stcp_input,0,NULL)
+#define stageclr_hsm(flags,hostname,nstcp_input,stcp_input) \
+  stage_clr('m',flags,hostname,nstcp_input,stcp_input,0,NULL)
+#define stageclr_path(flags,hostname,nstpp_input,stpp_input) \
+  stage_clr('p',flags,hostname,0,NULL,nstpp_input,stpp_input)
+#define stageclr_link(flags,hostname,nstpp_input,stpp_input) \
+  stage_clr('l',flags,hostname,0,NULL,nstpp_input,stpp_input)
+
 /* ----------------------------- */
-/* Shorthand STAGE_QRY interface */
+/* Shorthand STAGE_CLR interface */
 /* ----------------------------- */
+
+EXTERN_C int DLL_DECL stageclr_Tape _PROTO((u_signed64,                /* flags */
+                                            char *,                    /* hostname */
+                                            char *,                    /* tape */
+                                            char *));                  /* fseq */
+EXTERN_C int DLL_DECL stageclr_Disk _PROTO((u_signed64,                /* flags */
+                                            char *,                    /* hostname */
+                                            char *));                  /* filename */
+EXTERN_C int DLL_DECL stageclr_Hsm _PROTO((u_signed64,                 /* flags */
+                                           char *,                     /* hostname */
+                                           char *));                   /* hsmname */
+EXTERN_C int DLL_DECL stageclr_Path _PROTO((u_signed64,                /* flags */
+                                           char *,                     /* hostname */
+                                           char *));                   /* pathname */
+EXTERN_C int DLL_DECL stageclr_Link _PROTO((u_signed64,                /* flags */
+                                           char *,                     /* hostname */
+                                           char *));                   /* pathname */
+
+/* ---------------------------- */
+/* Generic STAGE_UPDC interface */
+/* ---------------------------- */
+#ifdef hpux
+/* Why does hpux's cc complain on the following proyotype when */
+/* compiled with -Ae ? */
+EXTERN_C int DLL_DECL stageupdc _PROTO(());
+#else /* hpux */
+EXTERN_C int DLL_DECL stageupdc _PROTO((u_signed64,               /* flags */
+                                        char *,                    /* hostname */
+                                        char *,                    /* pooluser */
+                                        int,                       /* status */
+                                        int *,                     /* nstcp_output */
+                                        struct stgcat_entry **,    /* stcp_output */
+                                        int,                       /* nstpp_input */
+                                        struct stgpath_entry *));  /* stpp_input */
+#endif /* hpux */
 
 /* --------------------------- */
 /* Generic STAGE_PUT interface */
