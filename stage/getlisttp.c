@@ -1,5 +1,5 @@
 /*
- * $Id: getlisttp.c,v 1.12 2001/02/05 20:54:54 jdurand Exp $
+ * $Id: getlisttp.c,v 1.13 2001/11/30 11:29:37 jdurand Exp $
  */
 
 /*
@@ -8,13 +8,15 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getlisttp.c,v $ $Revision: 1.12 $ $Date: 2001/02/05 20:54:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: getlisttp.c,v $ $Revision: 1.13 $ $Date: 2001/11/30 11:29:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <sys/types.h>
 #include <string.h>
-#include "stage.h"
+#include "stage_constants.h"
+#include "stage_messages.h"
+#include "stage_macros.h"
 #include "Cgetopt.h"
 
 #ifndef _WIN32
