@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tmscheck.c,v $ $Revision: 1.7 $ $Date: 2001/01/29 07:35:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tmscheck.c,v $ $Revision: 1.8 $ $Date: 2001/01/30 13:31:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
@@ -56,11 +56,15 @@ char *acctname;
 		case 0:
 			break;
 		case 8:
+			Ctape_errmsg (func, "%s\n", tmrepbuf);
+			return (EINVAL);
 		case 100:
+			Ctape_errmsg (func, "%s\n", tmrepbuf);
+			return (ETVUNKN);
 		case 312:
 		case 315:
 			Ctape_errmsg (func, "%s\n", tmrepbuf);
-			return (EINVAL);
+			return (ETARCH);
 		case 12:
 			if (tmrepbuf[41] == 'R') {
 				Ctape_errmsg (func, "Volume locked read-only\n");
