@@ -1,5 +1,5 @@
 /*
- * $Id: stglogit_term.c,v 1.8 2001/12/13 17:52:15 jdurand Exp $
+ * $Id: stglogit_term.c,v 1.9 2003/09/09 15:39:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stglogit_term.c,v $ $Revision: 1.8 $ $Date: 2001/12/13 17:52:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stglogit_term.c,v $ $Revision: 1.9 $ $Date: 2003/09/09 15:39:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -17,22 +17,17 @@ static char sccsid[] = "@(#)$RCSfile: stglogit_term.c,v $ $Revision: 1.8 $ $Date
 #include <fcntl.h>
 #include <string.h>
 #include <time.h>
-#include <varargs.h>
+#include <stdarg.h>
 #include "stage_constants.h"
 extern int reqid;
 
-int stglogit(va_alist) va_dcl
-{
+int stglogit(char *func, char *msg, ...) {
 	va_list args;
-	char *func;
-	char *msg;
 	char prtbuf[PRTBUFSZ];
 	struct tm *tm;
 	time_t current_time;
 
-	va_start (args);
-	func = va_arg (args, char *);
-	msg = va_arg (args, char *);
+	va_start (args, msg);
 	time (&current_time);		/* Get current time */
 	tm = localtime (&current_time);
 #if (defined(__osf__) && defined(__alpha))
