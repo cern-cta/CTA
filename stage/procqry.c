@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.6 $ $Date: 1999/12/08 15:57:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procqry.c,v $ $Revision: 1.7 $ $Date: 1999/12/09 06:55:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -63,8 +63,6 @@ static char expbuf[256];
 extern struct stgdb_fd dbfd;
 extern char *Default_db_user;
 extern char *Default_db_pwd;
-char db_user[33];
-char db_pwd[33];
 
 struct stgdb_fd dbfd_in_fork;
 struct stgdb_fd *dbfd_query;
@@ -249,6 +247,8 @@ char *clienthost;
 			close (rpfd);
 			return;
 		} else {
+			char db_user[33];
+			char db_pwd[33];
 			/* We are in the child : we open a new connection to the Database Server so that   */
 			/* it will not clash with current one owned by the main process.                   */
 
