@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.199 2002/05/26 07:43:45 jdurand Exp $
+ * $Id: poolmgr.c,v 1.200 2002/05/26 09:44:43 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.199 $ $Date: 2002/05/26 07:43:45 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.200 $ $Date: 2002/05/26 09:44:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -4443,7 +4443,17 @@ void stglogfileclass(Cnsfileclass)
 	stglogit(func,"MIGR INTERVAL  %d\n", Cnsfileclass->migr_time_interval);
 	stglogit(func,"MIN TIME       %d\n", Cnsfileclass->mintime_beforemigr);
 	stglogit(func,"NBCOPIES       %d\n", Cnsfileclass->nbcopies);
-	stglogit(func,"RETENP_ON_DISK %d\n", Cnsfileclass->retenp_on_disk);
+	switch (Cnsfileclass->retenp_on_disk) {
+	case AS_LONG_AS_POSSIBLE:
+		stglogit(func,"RETENP_ON_DISK %s\n", "AS_LONG_AS_POSSIBLE");
+		break;
+	case INFINITE_LIFETIME:
+		stglogit(func,"RETENP_ON_DISK %s\n", "INFINITE_LIFETIME");
+		break;
+	default:
+		stglogit(func,"RETENP_ON_DISK %d\n", Cnsfileclass->retenp_on_disk);
+		break;
+	}
 	stglogit(func,"NBTPPOOLS      %d\n", Cnsfileclass->nbtppools);
 	if (*p != '\0') {
 		verif_nbtppools++;
@@ -4538,7 +4548,17 @@ void printfileclass(rpfd,fileclass)
 	sendrep(rpfd,MSG_OUT,"\tMIGR INTERVAL  %d\n", fileclass->Cnsfileclass.migr_time_interval);
 	sendrep(rpfd,MSG_OUT,"\tMIN TIME       %d\n", fileclass->Cnsfileclass.mintime_beforemigr);
 	sendrep(rpfd,MSG_OUT,"\tNBCOPIES       %d\n", fileclass->Cnsfileclass.nbcopies);
-	sendrep(rpfd,MSG_OUT,"\tRETENP_ON_DISK %d\n", fileclass->Cnsfileclass.retenp_on_disk);
+	switch (fileclass->Cnsfileclass.retenp_on_disk) {
+	case AS_LONG_AS_POSSIBLE:
+		sendrep(rpfd,MSG_OUT,"\tRETENP_ON_DISK %s\n", "AS_LONG_AS_POSSIBLE");
+		break;
+	case INFINITE_LIFETIME:
+		sendrep(rpfd,MSG_OUT,"\tRETENP_ON_DISK %s\n", "INFINITE_LIFETIME");
+		break;
+	default:
+		sendrep(rpfd,MSG_OUT,"\tRETENP_ON_DISK %d\n", fileclass->Cnsfileclass.retenp_on_disk);
+		break;
+	}
 	sendrep(rpfd,MSG_OUT,"\tNBTPPOOLS      %d\n", fileclass->Cnsfileclass.nbtppools);
 	if (*p != '\0') {
 		verif_nbtppools++;
