@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/16 15:00:18 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.8 $ $Release$ $Date: 2004/06/18 08:46:32 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.7 $ $Date: 2004/06/16 15:00:18 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldapi.c,v $ $Revision: 1.8 $ $Date: 2004/06/18 08:46:32 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 #include <errno.h>
@@ -538,6 +538,7 @@ static int getUpdates(
   int rc, save_serrno;
   char *segmCksumAlgorithm, *errmsgtxt;
   unsigned char *blockid;
+  ID_TYPE key;
 
   CLIST_ITERATE_BEGIN(tpList,tpIterator) 
     {
@@ -560,8 +561,11 @@ static int getUpdates(
         strcpy(tape->tapereq.err.errmsgtxt,
                C_Services_errorMsg(svcs));
         tape->tapereq.err.severity = RTCP_FAILED|RTCP_SYERR;
+        serrno = save_serrno;
         return(-1);
       }
+      Cstager_Tape_id(tpIterator->tp,&key);
+      (void)rtcpcld_setTapeKey(key);
       tpOldStatus = tpIterator->oldStatus;
       Cstager_Tape_status(tpIterator->tp,&tpNewStatus);
       if ( tpOldStatus != tpNewStatus ) {
@@ -641,6 +645,12 @@ static int getUpdates(
                 file->filereq.convert = ASCCONV;
                 (void)rtcpc_GiveInfo(tape,file,0);
                 rc = updateCaller(tape,file);
+                if ( rc == -1 ) {
+                  save_serrno = serrno;
+                  rtcp_log(LOG_DEBUG,"updateCaller() returned %d, serrno=%d. Set VID FAILED\n",
+                           rc,save_serrno);
+                  (void)rtcpcld_setVIDFailedStatus(tape);
+                }
                 break;
               case SEGMENT_FAILED:
                 Cstager_Segment_errMsgTxt(
@@ -664,6 +674,7 @@ static int getUpdates(
                                          &file->filereq.err.severity
                                          );
                 file->filereq.cprc = -1;
+                save_serrno = file->filereq.err.errorcode;
                 (void)rtcpc_GiveInfo(tape,file,0);
                 rc = updateCaller(tape,file);
                 break;
@@ -673,6 +684,7 @@ static int getUpdates(
                 if ( rc != -1 ) {
                   rc = updateSegment(segmIterator);
                 }
+                if ( rc == -1 ) save_serrno = serrno;
                 break;
               case SEGMENT_UNKNOWN:
                 rtcp_log(
@@ -681,13 +693,14 @@ static int getUpdates(
                          (file != NULL ? file->filereq.tape_fseq : -1),
                          (file != NULL ? file->filereq.file_path : "(null)")
                          );
-                serrno = SEINTERNAL;
+                save_serrno = SEINTERNAL;
                 rc = -1;
                 break;
               default:
                 break;
               }
               if ( rc == -1 ) {
+                serrno = save_serrno;
                 return(-1);
               }
             }

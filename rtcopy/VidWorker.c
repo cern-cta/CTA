@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/16 15:00:18 $ $Author: obarring $
+ * @(#)$RCSfile: VidWorker.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/18 08:46:33 $ $Author: obarring $
  *
  *
  *
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.3 $ $Release$ $Date: 2004/06/16 15:00:18 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: VidWorker.c,v $ $Revision: 1.4 $ $Release$ $Date: 2004/06/18 08:46:33 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -263,6 +263,7 @@ static int processGetMoreWorkCallback(
                                &fl->filereq,
                                SEGMENT_COPYRUNNING
                                );
+    if ( rc == -1 ) return(-1);
     rc = 0;
   }
   

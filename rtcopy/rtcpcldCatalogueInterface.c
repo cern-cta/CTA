@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/06/16 15:00:18 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/18 08:46:32 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.6 $ $Release$ $Date: 2004/06/16 15:00:18 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.7 $ $Release$ $Date: 2004/06/18 08:46:32 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -435,6 +435,62 @@ static int updateTapeFromDB(
   return(0);
 }
 
+/**
+ * Update the memory copy of the segment from the database.
+ */
+static int updateSegmentFromDB(
+                               segm
+                               )
+     struct Cstager_Segment_t *segm;
+{
+  struct Cdb_DbAddress_t *dbAddr;
+  struct C_Services_t *svcs = NULL;
+  struct C_BaseAddress_t *baseAddr = NULL;
+  struct C_IAddress_t *iAddr;
+  struct C_IObject_t *iObj;
+  int rc = 0, save_serrno;
+  ID_TYPE key;
+
+  if ( segm == NULL ) {
+    serrno = EINVAL;
+    return(-1);
+  }
+  
+  rc = getDbSvc(&svcs);
+  if ( rc == -1 || svcs == NULL ) return(-1);
+
+  rc = C_BaseAddress_create("OraCnvSvc",SVC_ORACNV,&baseAddr);
+  if ( rc == -1 ) return(-1);
+
+  iAddr = C_BaseAddress_getIAddress(baseAddr);
+  iObj = Cstager_Segment_getIObject(segm);
+  rc = C_Services_updateObj(svcs,iAddr,iObj);
+  
+  if ( rc == -1 ) {
+    save_serrno = serrno;
+    C_IAddress_delete(iAddr);
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    DLF_LVL_ERROR,
+                    RTCPCLD_MSG_DBSVC,
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+3,
+                    "DBSVCCALL",
+                    DLF_MSG_PARAM_STR,
+                    "C_Services_updateObj()",
+                    "ERROR_STR",
+                    DLF_MSG_PARAM_STR,
+                    sstrerror(save_serrno),
+                    "DB_ERROR",
+                    DLF_MSG_PARAM_STR,
+                    C_Services_errorMsg(svcs),
+                    RTCPCLD_LOG_WHERE
+                    );
+    serrno = save_serrno;
+    return(-1);
+  }
+  return(0);
+}
 /**
  * Send notification (UDP) to all clients that submitted segment requests for this tape.
  * Only one notification message is sent per client, even if the client owns several
@@ -1306,6 +1362,11 @@ int rtcpcld_updateVIDStatus(
   if ( rc == -1 || svcs == NULL ) return(-1);
 
   rc = findTape(&(tape->tapereq),&tapeItem);
+  if ( tapeItem == NULL ) {
+    (void)updateTapeFromDB(NULL);
+    rc = findTape(&(tape->tapereq),&tapeItem);
+  }
+
   if ( rc != 1 || tapeItem == NULL ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
@@ -1419,6 +1480,10 @@ int rtcpcld_updateVIDFileStatus(
   if ( rc == -1 || svcs == NULL ) return(-1);
 
   rc = findTape(&(tape->tapereq),&tapeItem);
+  if ( tapeItem == NULL ) {
+    (void)updateTapeFromDB(NULL);
+    rc = findTape(&(tape->tapereq),&tapeItem);
+  }
   if ( rc != 1 || tapeItem == NULL ) {
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
@@ -1566,6 +1631,7 @@ int rtcpcld_setFileStatus(
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj;
   struct Cstager_Segment_t *segmItem;
+  enum Cstager_SegmentStatusCodes_t currentStatus;
   char *diskPath;
   unsigned char *blockid = NULL;
   int rc = 0, updated = 0, save_serrno, fseq;
@@ -1596,6 +1662,28 @@ int rtcpcld_setFileStatus(
       serrno = ENOENT;
       return(-1);
     }
+  } else {
+    rc = updateSegmentFromDB(segmItem);
+    if ( rc == -1 ) return(-1);
+  }
+
+  Cstager_Segment_status(
+                         segmItem,
+                         &currentStatus
+                         );
+
+  if ( (currentStatus == SEGMENT_FAILED) &&
+       (newStatus != SEGMENT_FAILED) ) {
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      DLF_LVL_ERROR,
+                      RTCPCLD_MSG_SEGMFAILED,
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS,
+                      RTCPCLD_LOG_WHERE
+                      );
+      serrno = EPERM;
+      return(-1);
   }
 
   diskPath = NULL;
