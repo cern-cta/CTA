@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.18 $ $Date: 2001/06/17 14:04:28 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.19 $ $Date: 2001/06/19 09:22:53 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -231,6 +231,7 @@ struct rfiostat	{
 #define read            rfio_read
 #define perror          rfio_perror
 #define fstat           rfio_fstat
+#define lstat           rfio_lstat
 #define lseek           rfio_lseek
 #define unlink          rfio_unlink
 #define symlink         rfio_symlink
