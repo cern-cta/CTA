@@ -1,12 +1,5 @@
 /*
- * $Id: log.c,v 1.3 1999/07/26 11:27:03 obarring Exp $
- * $Log: log.c,v $
- * Revision 1.3  1999/07/26 11:27:03  obarring
- * Change call to localtime_r since HPUX is different
- *
- * Revision 1.2  1999/07/23 16:05:48  obarring
- * Make MT safe. Add thread ID to log-line.
- *
+ * $Id: log.c,v 1.4 1999/12/09 13:39:41 jdurand Exp $
  */
 
 /*
@@ -15,7 +8,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: log.c,v 1.3 1999/07/26 11:27:03 obarring Exp $";
+static char cvsId[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:39:41 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* log.c        - generalized logging routines                          */

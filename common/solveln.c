@@ -1,10 +1,14 @@
 /*
- * Copyright (C) 1993-1998 by CERN/CN/SW/DC
+ * $Id: solveln.c,v 1.2 1999/12/09 13:39:48 jdurand Exp $
+ */
+
+/*
+ * Copyright (C) 1993-1999 by CERN/ID/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)solveln.c	1.5 06/04/98 CERN CN-SW/DC Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: solveln.c,v $ $Revision: 1.2 $ $Date: 1999/12/09 13:39:48 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 

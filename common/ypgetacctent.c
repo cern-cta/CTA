@@ -1,12 +1,5 @@
 /*
- * $Id: ypgetacctent.c,v 1.3 1999/07/28 16:17:28 obarring Exp $
- * $Log: ypgetacctent.c,v $
- * Revision 1.3  1999/07/28 16:17:28  obarring
- * Fix recursive macro for HPUX
- *
- * Revision 1.2  1999/07/22 14:47:34  obarring
- * MT safe version
- *
+ * $Id: ypgetacctent.c,v 1.4 1999/12/09 13:39:51 jdurand Exp $
  */
 
 /*
@@ -15,7 +8,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: ypgetacctent.c,v 1.3 1999/07/28 16:17:28 obarring Exp $";
+static char cvsId[] = "@(#)$RCSfile: ypgetacctent.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:39:51 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*  ypgetacctent() - Get account id in YP   */

@@ -1,18 +1,14 @@
 /*
- * $Id: setnetio.c,v 1.3 1999/07/31 15:42:10 obarring Exp $
- * $Log: setnetio.c,v $
- * Revision 1.3  1999/07/31 15:42:10  obarring
- * Add CVS keywords
- *
+ * $Id: setnetio.c,v 1.4 1999/12/09 13:39:46 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN IT-PDP/DM
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: setnetio.c,v 1.3 1999/07/31 15:42:10 obarring Exp $";
+static char cvsId[] = "@(#)$RCSfile: setnetio.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:39:46 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 /* setnetio.c   Set network input/output characteristics                */

@@ -1,18 +1,14 @@
 /*
- * $Id: socket.c,v 1.2 1999/07/27 11:03:01 obarring Exp $
- * $Log: socket.c,v $
- * Revision 1.2  1999/07/27 11:03:01  obarring
- * Make MT safe and cleanup from the VMS/Cray era
- *
+ * $Id: socket.c,v 1.3 1999/12/09 13:39:47 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN IT-PDP/DM
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #if !defined(lint)
-static char cvsId[] =  "$Id: socket.c,v 1.2 1999/07/27 11:03:01 obarring Exp $";
+static char cvsId[] =  "@(#)$RCSfile: socket.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:39:47 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* lint */
 
 /* socket.c     Generalized network interface                           */

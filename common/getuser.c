@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1994-1999 by CERN IT-PDP/DC
+ * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: getuser.c,v $ $Revision: 1.6 $ $Date: 1999/11/23 08:47:02 $ CERN IT-PDP/DC Felix Hassine";
+static char cvsId[] = "@(#)$RCSfile: getuser.c,v $ $Revision: 1.7 $ $Date: 1999/12/09 13:39:40 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 #include <stdio.h>

@@ -1,10 +1,14 @@
 /*
+ * $Id: sendscsicmd.c,v 1.4 1999/12/09 13:39:44 jdurand Exp $
+ */
+
+/*
  * Copyright (C) 1996-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.3 $ $Date: 1999/12/01 07:39:04 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.4 $ $Date: 1999/12/09 13:39:44 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	send_scsi_cmd - Send a SCSI command to a device */

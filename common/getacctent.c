@@ -1,24 +1,14 @@
 /*
- * $Id: getacctent.c,v 1.4 1999/07/22 12:32:36 obarring Exp $
- * $Log: getacctent.c,v $
- * Revision 1.4  1999/07/22 12:32:36  obarring
- * Remove the _r.
- *
- * Revision 1.3  1999/07/21 16:58:07  jdurand
- * *** empty log message ***
- *
- * Revision 1.2  1999/07/21 16:26:06  obarring
- * Make MT safe. Static buffers were not needed anyway...?
- *
+ * $Id: getacctent.c,v 1.5 1999/12/09 13:39:36 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN IT-PDP/DM
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "$Id: getacctent.c,v 1.4 1999/07/22 12:32:36 obarring Exp $";
+static char sccsid[] = "@(#)$RCSfile: getacctent.c,v $ $Revision: 1.5 $ $Date: 1999/12/09 13:39:36 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 

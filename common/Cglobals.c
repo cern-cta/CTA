@@ -1,31 +1,14 @@
 /*
- * $Id: Cglobals.c,v 1.9 1999/09/10 15:49:41 jdurand Exp $
- * $Log: Cglobals.c,v $
- * Revision 1.9  1999/09/10 15:49:41  jdurand
- * Made non __STDC__ compliant
- *
- * Revision 1.8  1999/08/18 13:56:30  obarring
- * Externalize the local_getspec() and local_setspec() functions
- *
- * Revision 1.7  1999/07/30 15:57:21  obarring
- * Add __h_errno() for systems which don't provide any themselves.
- *
- * Revision 1.6  1999/07/23 16:03:32  obarring
- * Change Cglobals_getTid() to return -1 if no MT.
- *
- * Revision 1.5  1999/07/23 15:49:58  obarring
- * Add an argument for getTid() and the corresponding Cglobals_getTid()
- *
- * Revision 1.4  1999/07/21 13:25:58  obarring
- * Add cvsId string
- *
- * Revision 1.3  1999/07/20 15:10:56  obarring
- * Add CVS log directive
- *
+ * $Id: Cglobals.c,v 1.10 1999/12/09 13:39:21 jdurand Exp $
+ */
+
+/*
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
+ * All rights reserved
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: Cglobals.c,v 1.9 1999/09/10 15:49:41 jdurand Exp $";
+static char cvsId[] = "@(#)$RCSfile: Cglobals.c,v $ $Revision: 1.10 $ $Date: 1999/12/09 13:39:21 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* lint */
 /*
  * Castor_globals.c - central entry to maintain all Castor globals

@@ -1,10 +1,14 @@
 /*
- * Copyright (C) 1990,1991 by CERN/CN/SW/DC
+ * $Id: compat.c,v 1.2 1999/12/09 13:39:32 jdurand Exp $
+ */
+
+/*
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)compat.c	1.1 03/15/91 CERN CN-SW/DC Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: compat.c,v $ $Revision: 1.2 $ $Date: 1999/12/09 13:39:32 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* compat.c     Compatibility library                                   */

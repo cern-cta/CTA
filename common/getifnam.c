@@ -1,10 +1,14 @@
 /*
- * Copyright (C) 1991-1999 by CERN IT-PDP/DM
+ * $Id: getifnam.c,v 1.7 1999/12/09 13:39:39 jdurand Exp $
+ */
+
+/*
+ * Copyright (C) 1991-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getifnam.c,v $ $Revision: 1.6 $ $Date: 1999/10/14 12:05:12 $ CERN IT-PDP/SC Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: getifnam.c,v $ $Revision: 1.7 $ $Date: 1999/12/09 13:39:39 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* getifnam.c   Get connected socket interface name                     */

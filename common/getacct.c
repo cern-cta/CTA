@@ -1,11 +1,11 @@
 
 /*
- * Copyright (C) 1990-1999 by CERN IT-PDP/DM
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char cvsId[] = "$RCSfile: getacct.c,v $ $Revision: 1.5 $ $Date: 1999/11/23 08:46:06 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "$RCSfile: getacct.c,v $ $Revision: 1.6 $ $Date: 1999/12/09 13:39:33 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*  getacct() - Getting the current account id  */

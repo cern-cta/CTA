@@ -1,10 +1,14 @@
 /*
- * Copyright (C) 1994 by CERN/CN/PDP/DH
+ * $Id: wsacct.c,v 1.3 1999/12/09 13:39:50 jdurand Exp $
+ */
+
+/*
+ * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)wsacct.c	1.2 08/24/94 CERN CN-PDP/DH Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: wsacct.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:39:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdlib.h>

@@ -1,6 +1,15 @@
 /*
- * $Id: Cthread.c,v 1.27 1999/12/01 08:00:58 obarring Exp $
+ * $Id: Cthread.c,v 1.28 1999/12/09 13:39:29 jdurand Exp $
  */
+
+/*
+ * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.28 $ $Date: 1999/12/09 13:39:29 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+#endif /* not lint */
 
 #include <Cthread_api.h>
 #include <Cglobals.h>
@@ -101,11 +110,6 @@ int Cthread_debug = 0;
 /* -------------------------------------------- */
 #include <Cthread_flags.h>
 #include <Cglobals.h>
-
-/* ------------------------------------ */
-/* For the what command                 */
-/* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.27 $ $Date: 1999/12/01 08:00:58 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 
 /* ============================================ */
 /* Typedefs                                     */

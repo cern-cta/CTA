@@ -1,25 +1,14 @@
 /*
- * $Id: newacct.c,v 1.4 1999/09/03 09:25:59 obarring Exp $
- *
- * $Log: newacct.c,v $
- * Revision 1.4  1999/09/03 09:25:59  obarring
- * Remove reference to getacctent_r() (getacctent() is already re-entrant).
- *
- * Revision 1.3  1999/07/21 20:07:38  jdurand
- * *** empty log message ***
- *
- * Revision 1.2  1999/07/21 16:25:00  jdurand
- * Declare external optarg and optind
- *
+ * $Id: newacct.c,v 1.5 1999/12/09 13:39:07 jdurand Exp $
  */
 
 /*
- * Copyright (C) 1990-1999 by CERN/CN/SW/DC
+ * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)newacct.c	1.4 03/04/99  CERN CN-SW/DC Antoine Trannoy";
+static char sccsid[] = "@(#)$RCSfile: newacct.c,v $ $Revision: 1.5 $ $Date: 1999/12/09 13:39:07 $ CERN/IT/PDP/DM Antoine Trannoy";
 #endif /* not lint */
 
 /* newacct		Command to change current account	*/

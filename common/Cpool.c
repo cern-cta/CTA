@@ -1,6 +1,18 @@
 /*
- * $Id: Cpool.c,v 1.15 1999/11/25 15:36:19 jdurand Exp $
+ * $Id: Cpool.c,v 1.16 1999/12/09 13:39:26 jdurand Exp $
  */
+
+/*
+ * Copyright (C) 1999 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+/* ------------------------------------ */
+/* For the what command                 */
+/* ------------------------------------ */
+#ifndef lint
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.16 $ $Date: 1999/12/09 13:39:26 $ CERN IT-PDP/DM Jean-Damien Durand";
+#endif /* not lint */
 
 #include <Cpool_api.h>
 #include <serrno.h>
@@ -31,11 +43,6 @@
 #include <osdep.h>
 
 int Cpool_debug = 0;
-
-/* ------------------------------------ */
-/* For the what command                 */
-/* ------------------------------------ */
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.15 $ $Date: 1999/11/25 15:36:19 $ CERN IT-PDP/DM Jean-Damien Durand";
 
 /* ------------------------------------ */
 /* Mutex static variables a-la-Cthread  */

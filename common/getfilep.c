@@ -1,10 +1,14 @@
 /*
- * Copyright (C) 1991 by CERN/CN/SW/DC
+ * $Id: getfilep.c,v 1.2 1999/12/09 13:39:38 jdurand Exp $
+ */
+
+/*
+ * Copyright (C) 1991-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)getfilep.c	1.4 09/23/92 CERN CN-SW/DC Frederic Hemmer";
+static char sccsid[] = "@(#)$RCSfile: getfilep.c,v $ $Revision: 1.2 $ $Date: 1999/12/09 13:39:38 $ CERN/IT/PDP/DM Frederic Hemmer";
 #endif /* not lint */
 
 /* getfilep.c   Fortran I/O to C mapper                                 */
