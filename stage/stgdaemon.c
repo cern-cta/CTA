@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.152 2001/11/30 12:24:15 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.153 2001/12/04 10:34:28 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.152 $ $Date: 2001/11/30 12:24:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.153 $ $Date: 2001/12/04 10:34:28 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -270,13 +270,13 @@ extern int sendrep _PROTO(());
  * one for the log
  * two for the pipe() in fork_exec_stager
  * As many as there are entries in the waitq
- * nbpool for the rfio_mstat()
- * nbpool for the rfio_munlink()
+ * nbhost for the rfio_mstat()
+ * nbhost for the rfio_munlink()
  */
-extern int nbpool;
+extern int nbhost;
 static int nwaitq = 0;
 
-#define RESERVED_FD (4 + nwaitq + 2 * nbpool)
+#define RESERVED_FD (4 + nwaitq + 2 * nbhost)
 #define FREE_FD (sysconf(_SC_OPEN_MAX) - RESERVED_FD)
 
 #ifdef STAGE_CSETPROCNAME
@@ -757,6 +757,8 @@ int main(argc,argv)
 	/* Initialize check_upd_fileclasses time */
 	last_upd_fileclasses = time(NULL);
 
+	stglogit(func, "Starting with %d free file descriptors (system max: %d)\n", (int) FREE_FD, (int) sysconf(_SC_OPEN_MAX));
+
 	/* main loop */
 	while (1) {
 
@@ -823,7 +825,11 @@ int main(argc,argv)
 							(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB));
 				}
 			}
-			if (c != 0) sendrep (rpfd, MSG_ERR, STG09, STGCONFIG, "incorrect");
+			if (c != 0) {
+				sendrep (rpfd, MSG_ERR, STG09, STGCONFIG, "incorrect");
+			} else {
+				stglogit(func, "Working with %d free file descriptors (system max: %d)\n", (int) FREE_FD, (int) sysconf(_SC_OPEN_MAX));
+			}
 			sendrep (rpfd, STAGERC, STAGEINIT, c);
 			force_init = migr_init = 0;
 			initreq_reqid = 0;
@@ -2384,6 +2390,7 @@ void checkwaitq()
 						if (HAVE_SENSIBLE_STCP(stcp)) {
 							struct stgcat_entry *stcp_search, *stcp_found;
 							struct stgcat_entry *save_stcp = stcp;
+							int logged_once = 0;
 
 							stcp_found = NULL;
 							for (stcp_search = stcs; stcp_search < stce; stcp_search++) {
@@ -2411,7 +2418,11 @@ void checkwaitq()
 								savereqs();
 							} else {
 								update_migpool(&stcp,-1,0);
-								stglogit(func, "STG02 - Could not find corresponding original request - decrementing anyway migrator counters\n");
+								if (! logged_once) {
+									/* Print this only once per migration request */
+									stglogit(func, "STG02 - Could not find corresponding original request - decrementing anyway migrator counters\n");
+									logged_once++;
+								}
 #ifdef USECDB
 								if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
 									stglogit(func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
@@ -3596,5 +3607,5 @@ void check_upd_fileclasses() {
 }
 
 /*
- * Last Update: "Wednesday 21 November, 2001 at 11:16:01 CET by Jean-Damien DURAND (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
+ * Last Update: "Monday 03 December, 2001 at 18:12:21 CET by Jean-Damien Durand (<A HREF=mailto:Jean-Damien.Durand@cern.ch>Jean-Damien.Durand@cern.ch</A>)"
  */
