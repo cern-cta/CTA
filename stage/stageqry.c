@@ -1,5 +1,5 @@
 /*
- * $Id: stageqry.c,v 1.35 2002/10/26 13:19:43 jdurand Exp $
+ * $Id: stageqry.c,v 1.36 2002/10/30 16:26:44 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.35 $ $Date: 2002/10/26 13:19:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: stageqry.c,v $ $Revision: 1.36 $ $Date: 2002/10/30 16:26:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -80,6 +80,8 @@ int withtimenumber_flag = 0;
 int check_format_string = 0;
 u_signed64 flags = 0;
 int noretry_flag = 0;
+int delimiter_flag = 0;
+char *delimiter = NULL;
 
 int main(argc, argv)
 	int	argc;
@@ -137,6 +139,7 @@ int main(argc, argv)
         {"withstatusnumber",   NO_ARGUMENT, &withstatusnumber_flag, 1},
         {"withtimenumber",     NO_ARGUMENT, &withtimenumber_flag, 1},
 		{"noretry",            NO_ARGUMENT,     &noretry_flag,  1},
+		{"delimiter",          REQUIRED_ARGUMENT,  &delimiter_flag,  1},
 		{NULL,                 0,                  NULL,        0}
 	};
 
@@ -261,6 +264,9 @@ int main(argc, argv)
 			}
 			if (format_flag && ! format) {
 				format = Coptarg;
+			}
+			if (delimiter_flag && ! delimiter) {
+				delimiter = Coptarg;
 			}
 			break;
 		case '?':
@@ -426,7 +432,7 @@ void record_callback(stcp,stpp)
 	char *p, *q, *qnext;
 	FILE *fd = output_fd != NULL ? output_fd : stdout;
 	int dospace = 0;
-	char *thespace = " ";
+	char *thespace = (delimiter != NULL) ? delimiter : " ";
 	char *thena = withna_flag ? "N/A" : "";
 
 	if ((stcp == NULL) && (stpp == NULL)) {

@@ -1,10 +1,10 @@
-.\" $Id: stageqry.man,v 1.26 2002/10/28 15:36:12 jdurand Exp $
+.\" $Id: stageqry.man,v 1.27 2002/10/30 16:26:45 jdurand Exp $
 .\"
-.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.26 $ $Date: 2002/10/28 15:36:12 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: stageqry.man,v $ $Revision: 1.27 $ $Date: 2002/10/30 16:26:45 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1994-2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH STAGEQRY "1" "$Date: 2002/10/28 15:36:12 $" "CASTOR" "Stage User Commands"
+.TH STAGEQRY "1" "$Date: 2002/10/30 16:26:45 $" "CASTOR" "Stage User Commands"
 .SH NAME
 stageqry \- give the status of all files known to the stage system
 .SH SYNOPSIS
@@ -33,6 +33,8 @@ stageqry \- give the status of all files known to the stage system
 .BI \-x
 ] [
 .BI \-\-dump
+] [
+.BI \-\-delimiter " delimiter"
 ] [
 .BI \-\-format " formatstring"
 ] [
@@ -183,6 +185,11 @@ gives CASTOR's read/write counters for stageout pools. Those counters are used t
 .TP
 .BI \-\-dump
 dumps the content of the found entry(ies) in the main catalog, or in the path catalog in case of \-L option.
+.TP
+.BI \-\-delimiter
+If you use the
+.BI \-\-format
+mode, this option will use this option value instead of the default delimiter, e.g. a space, between structure members printed out.
 .TP
 .BI \-\-format
 will switch off the default output in favour to a user defined
