@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.4 $ $Date: 2000/04/12 16:05:07 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.5 $ $Date: 2000/05/04 12:24:07 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -22,7 +22,9 @@ static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.4 $ $Date: 2
 #include <serrno.h>
 #include <net.h>
 #include <osdep.h>
+#if !defined(VDQMSERV)
 #define VDQMSERV
+#endif /* VDQMSERV */
 #include <vdqm_constants.h>
 #include <vdqm.h>
 #include <vdqm_api.h>
