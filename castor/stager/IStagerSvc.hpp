@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.20 $ $Release$ $Date: 2004/11/24 13:33:04 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.21 $ $Release$ $Date: 2004/11/26 09:33:12 $ $Author: sponcec3 $
  *
  * This class provides methods usefull to the stager to
  * deal with database queries
@@ -283,7 +283,7 @@ namespace castor {
        * has to wait until the end of the copy.
        * The DiskCopy found is returned, sources remains empty.
        *  - one DiskCopy on the selected FileSystem in
-       * DISKCOPY_STAGOUT or DISKCOPY_STAGED status :
+       * DISKCOPY_STAGEOUT or DISKCOPY_STAGED status :
        * the SubRequest is ready, the DiskCopy is returned and
        * sources remains empty.
        * @param subreq  the SubRequest to consider
