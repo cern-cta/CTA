@@ -25,6 +25,7 @@ main(argc, argv)
   int c;
   char *dp;
   int errflg = 0;
+  int tmp;
   static struct Coptions longopts[] = {
     {"uid", REQUIRED_ARGUMENT, 0, OPT_UID},
     {"gid", REQUIRED_ARGUMENT, 0, OPT_GID},
@@ -54,13 +55,17 @@ main(argc, argv)
   while ((c = Cgetopt_long (argc, argv, "", longopts, NULL)) != EOF) {
     switch (c) {
     case OPT_UID:
-      if (Cupv_strtoi(&uid, Coptarg, &dp, 10) == -1) {
+      if (Cupv_strtoi(&tmp, Coptarg, &dp, 10) == -1) {
 	errflg++;
+      } else {
+	uid = tmp;
       }
       break;
     case OPT_GID:
-      if (Cupv_strtoi(&gid, Coptarg, &dp, 10) == -1) {
+      if (Cupv_strtoi(&tmp, Coptarg, &dp, 10) == -1) {
 	errflg++;
+      } else {
+	gid = tmp;
       }
       break;
     case OPT_SRC:

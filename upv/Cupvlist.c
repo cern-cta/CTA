@@ -35,6 +35,8 @@ main(argc, argv)
   int flags;
   int errflg = 0;
   int verbose = 0;
+  int tmp;
+
   Cupv_entry_list list;
   struct Cupv_userpriv *lp;
   struct Cupv_userpriv filter;
@@ -76,13 +78,17 @@ main(argc, argv)
   while ((c = Cgetopt_long (argc, argv, "v", longopts, NULL)) != EOF) {
     switch (c) {
     case OPT_UID:
-      if (Cupv_strtoi(&uid, Coptarg, &dp, 10) == -1) {
+      if (Cupv_strtoi(&tmp, Coptarg, &dp, 10) == -1) {
 	errflg++;
+      } else {
+	uid = tmp;
       }
       break;
     case OPT_GID:
-      if (Cupv_strtoi(&gid, Coptarg, &dp, 10) == -1) {
+      if (Cupv_strtoi(&tmp, Coptarg, &dp, 10) == -1) {
 	errflg++;
+      } else {
+	gid = tmp;
       }
       break;
     case OPT_SRC:
