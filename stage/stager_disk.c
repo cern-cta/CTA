@@ -1,5 +1,5 @@
 /*
- * $Id: stager_disk.c,v 1.9 2002/08/27 08:38:04 jdurand Exp $
+ * $Id: stager_disk.c,v 1.10 2002/09/17 11:48:58 jdurand Exp $
  */
 
 /*
@@ -15,7 +15,7 @@
 #endif
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.9 $ $Date: 2002/08/27 08:38:04 $ CERN IT-PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stager_disk.c,v $ $Revision: 1.10 $ $Date: 2002/09/17 11:48:58 $ CERN IT-PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 #ifndef _WIN32
@@ -156,8 +156,6 @@ int main(argc,argv)
 	int l;
 	int nretry;
 #ifdef STAGER_DEBUG
-	int i;
-#else
 	int thisrpfd;
 #endif
 	struct stgcat_entry *stcp;
