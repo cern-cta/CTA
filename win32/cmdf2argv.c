@@ -1,5 +1,5 @@
 /*
- * $Id: cmdf2argv.c,v 1.2 1999/12/09 13:47:50 jdurand Exp $
+ * $Id: cmdf2argv.c,v 1.3 2003/09/14 06:05:51 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: cmdf2argv.c,v $ $Revision: 1.2 $ $Date: 1999/12/09 13:47:50 $ CERN/IT/PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: cmdf2argv.c,v $ $Revision: 1.3 $ $Date: 2003/09/14 06:05:51 $ CERN/IT/PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	cmdf2argv - build argv array from a command file */
@@ -17,7 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: cmdf2argv.c,v $ $Revision: 1.2 $ $Date: 19
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-extern char *sys_errlist[];
+#include <string.h>
 
 cmdf2argv(cmdfil, argvp)
 char *cmdfil;
@@ -34,7 +34,7 @@ char ***argvp;
 	struct stat st;
 
 	if ((cmdfd = open (cmdfil, O_RDONLY)) < 0) {
-		fprintf (stderr, "Command file open error: %s\n", sys_errlist[errno]);
+		fprintf (stderr, "Command file open error: %s\n", strerror(errno));
 		return (-1);
 	}
 	fstat (cmdfd, &st);
