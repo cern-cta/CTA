@@ -1,8 +1,8 @@
-.\" $Id: sacct.man,v 1.3 2002/08/23 12:30:44 bcouturi Exp $
+.\" $Id: sacct.man,v 1.4 2002/10/01 07:59:19 bcouturi Exp $
 .\"
 .\" Man page for the CASTOR accounting header file sacct.h
 .\"
-.TH SACCT "4" "$Date: 2002/08/23 12:30:44 $" "CASTOR" "Accounting records"
+.TH SACCT "4" "$Date: 2002/10/01 07:59:19 $" "CASTOR" "Accounting records"
 .SH NAME
 \fBsacct\fP \- CASTOR accounting records
 
@@ -138,14 +138,14 @@ int main(argc, argv)
   char *stgcmd[20] = { "STGSTART", "STGCMDR", "STGFILS", 
 		       "STGCMDC", "STGCMDS", "STGFILC" };
 
-  printf("Opening accounting file\n");
+  printf("Opening accounting file\\n");
 
   if ((fd_acct = rfio_open (STAGER_ACCT, O_RDONLY)) < 0) {
-    fprintf (stderr, "%s : rfio_open error : %s\n", STAGER_ACCT, rfio_serror());
+    fprintf (stderr, "%s : rfio_open error : %s\\n", STAGER_ACCT, rfio_serror());
     exit (EXIT_FAILURE);
   }
   
-  printf("Reading all records\n");
+  printf("Reading all records\\n");
   
   while (getacctrec (fd_acct, &accthdr, (char *) &rp, &swapped) > 0) {
     if (accthdr.package == ACCTSTAGE2) {
@@ -154,7 +154,7 @@ int main(argc, argv)
 	swap_it(rp.uid);
         swap_it(rp.gid);
       }
-      printf("Request Type: %s, from %d/%d\n", 
+      printf("Request Type: %s, from %d/%d\\n", 
       stgcmd[rp.subtype], rp.uid, rp.gid);
     }
   }
@@ -180,9 +180,9 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
   != sizeof(struct accthdr)) {
     if (c == 0) return (0);
     if (c > 0)
-      fprintf (stderr, "rfio_read returns %d\n", c);
+      fprintf (stderr, "rfio_read returns %d\\n", c);
     else
-      fprintf (stderr, "rfio_read error : %s\n", rfio_serror());
+      fprintf (stderr, "rfio_read error : %s\\n", rfio_serror());
     exit(EXIT_FAILURE);
   }
   
@@ -201,7 +201,7 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
     /* Not a STAGE accouting record - we just seek the pointer */
     rfio_errno = serrno = 0;
     if (rfio_lseek(fd_acct, accthdr->len, SEEK_CUR) < 0) {
-      fprintf (stderr, "rfio_lseek error : %s\n", rfio_serror());
+      fprintf (stderr, "rfio_lseek error : %s\\n", rfio_serror());
       exit (EXIT_FAILURE);
     }
     size_read += accthdr->len;
@@ -212,9 +212,9 @@ int getacctrec (fd_acct, accthdr, buf,swapped)
 
   if ((c = rfio_read (fd_acct, buf, accthdr->len)) != accthdr->len) {
     if (c >= 0)
-      fprintf (stderr, "rfio_read returns %d\n",c);
+      fprintf (stderr, "rfio_read returns %d\\n",c);
     else
-      fprintf (stderr, "rfio_read error : %s\n", rfio_serror());
+      fprintf (stderr, "rfio_read error : %s\\n", rfio_serror());
     exit (EXIT_FAILURE);
   }
   
