@@ -44,7 +44,8 @@ castor::MessageAck::MessageAck() :
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::MessageAck::~MessageAck() {};
+castor::MessageAck::~MessageAck() {
+};
 
 //------------------------------------------------------------------------------
 // print
@@ -54,7 +55,7 @@ void castor::MessageAck::print(std::ostream& stream,
                                castor::ObjectSet& alreadyPrinted) const {
   if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
     // Circular dependency, this object was already printed
-    stream << "Back pointer, see above" << std::endl;
+    stream << indent << "Back pointer, see above" << std::endl;
     return;
   }
   // Output of all members
