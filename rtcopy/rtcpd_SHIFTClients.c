@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.8 $ $Date: 2000/01/09 09:59:20 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.9 $ $Date: 2000/01/12 15:25:49 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -251,7 +251,7 @@ static int rtcp_GetOldCMsg(SOCKET *s,
             return(-1);
         }
 
-        rc = netread(*s,msgbuf,hdr->len);
+        rc = netread_timeout(*s,msgbuf,hdr->len,RTCP_NETTIMEOUT);
         switch (rc) {
         case -1:
             rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() netread(%d): %s\n",
@@ -383,7 +383,7 @@ static int rtcp_SendRC(SOCKET *s,
     marshall_LONG(p,GIVE_RESU);
     marshall_LONG(p,LONGSIZE);
     marshall_LONG(p,retval);
-    rc = netwrite(*s, msgbuf, 4*LONGSIZE);
+    rc = netwrite_timeout(*s, msgbuf, 4*LONGSIZE,RTCP_NETTIMEOUT);
     switch (rc) {
     case -1:
         rtcp_log(LOG_ERR,"rtcp_SendRC() netwrite(): %s\n",neterror());
