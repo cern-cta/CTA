@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_rdirfdt.c,v 1.2 2000/11/20 09:51:19 jdurand Exp $
+ * $Id: rfio_rdirfdt.c,v 1.3 2000/11/20 14:59:33 jdurand Exp $
  */
 
 /*
@@ -109,6 +109,59 @@ int DLL_DECL rfio_rdirfdt_findentry(s,scanflag)
     return(-1);
   } else {
     return(((s >= 0) && (s < MAXRFD) && (rdirfdt[s] != NULL)) ? s : -1);
+  }
+#endif /* _WIN32 */
+}
+
+
+/*
+ * Seach for a given pointer in the rdirfdt table
+ * On UNIX, if scanflag is FINDRDIR_WITH_SCAN,
+ * a scan of table content is performed, otherwise
+ * only boundary and content within the boundary
+ * is performed.
+ */
+int DLL_DECL rfio_rdirfdt_findptr(ptr,scanflag)
+     RDIR *ptr;
+     int scanflag;
+{
+  int i;
+#ifdef _WIN32
+  int rc;
+
+  if (Cmutex_lock((void *) rdirfdt,-1) != 0) {
+    return(-1);
+  }
+  /* Scan it */
+
+  for (i = 0; i < MAXRFD; i++) {
+    if (rdirfdt[i] == ptr) {
+      rc = i;
+      goto _rfio_rdirfdt_findentry_return;
+    }
+  }
+
+  serrno = ENOENT;
+  rc = -1;
+
+ _rfio_rdirfdt_findentry_return:
+  if (Cmutex_unlock((void *) rdirfdt) != 0) {
+    return(-1);
+  }
+  return(rc);
+#else /* _WIN32 */
+  if (scanflag == FINDRDIR_WITH_SCAN) {
+    for (i = 0; i < MAXRFD; i++) {
+      if (rdirfdt[i] == ptr) {
+        return(i);
+        break;
+      }
+    }
+    return(-1);
+  } else {
+    /* This method works only in FINDRDIR_WITH_SCAN mode */
+    serrno = EINVAL;
+    return(-1);
   }
 #endif /* _WIN32 */
 }
