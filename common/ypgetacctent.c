@@ -1,6 +1,9 @@
 /*
- * $Id: ypgetacctent.c,v 1.2 1999/07/22 14:47:34 obarring Exp $
+ * $Id: ypgetacctent.c,v 1.3 1999/07/28 16:17:28 obarring Exp $
  * $Log: ypgetacctent.c,v $
+ * Revision 1.3  1999/07/28 16:17:28  obarring
+ * Fix recursive macro for HPUX
+ *
  * Revision 1.2  1999/07/22 14:47:34  obarring
  * MT safe version
  *
@@ -12,7 +15,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "$Id: ypgetacctent.c,v 1.2 1999/07/22 14:47:34 obarring Exp $";
+static char cvsId[] = "$Id: ypgetacctent.c,v 1.3 1999/07/28 16:17:28 obarring Exp $";
 #endif /* not lint */
 
 /*  ypgetacctent() - Get account id in YP   */
@@ -36,14 +39,14 @@ static char cvsId[] = "$Id: ypgetacctent.c,v 1.2 1999/07/22 14:47:34 obarring Ex
 #endif /* _REENTRANT || _THREAD_SAFE */
 
 typedef struct Cyp_spec {
-        char name[NAME_LEN];
-        char account[ACCT_LEN];
-        int firsttime;
+        char _name[NAME_LEN];
+        char _account[ACCT_LEN];
+        int _firsttime;
 } Cyp_spec_t;
 static int Cypent_key = -1;
-#define name Cyp->name
-#define account Cyp->account
-#define firsttime Cyp->firsttime
+#define name Cyp->_name
+#define account Cyp->_account
+#define firsttime Cyp->_firsttime
 
 static int ypcall(instatus, inkey, inkeylen, inval, invallen, indata)
     int instatus;
