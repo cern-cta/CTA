@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.1.1.1 $ $Release$ $Date: 2004/05/12 12:13:34 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/17 14:46:39 $ $Author: sponcec3 $
 #
 # Make Castor DB libraries
 #
@@ -40,20 +40,23 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 LIBS = -L$(ORACLE_HOME)/lib -locci -lclntsh -lcastorClient
 
 ORALIB_OBJS = OraBaseCnv.Osuf \
-              OraBlobRequestCnv.Osuf \
+              OraCastorFileCnv.Osuf \
               OraClientCnv.Osuf \
               OraCnvSvc.Osuf \
-              OraCopyCnv.Osuf \
               OraCuuidCnv.Osuf \
+              OraDiskFileCnv.Osuf \
+              OraDiskFileCopyCnv.Osuf \
+              OraDiskFileSystemCnv.Osuf \
+              OraDiskServerCnv.Osuf \
               OraFileCnv.Osuf \
               OraFlagCnv.Osuf \
               OraMessageAckCnv.Osuf \
-              OraRequestHeaderCnv.Osuf \
               OraSegmentCnv.Osuf \
               OraStageInRequestCnv.Osuf \
-              OraTapeInfoCnv.Osuf \
-              OraTpFileInfoCnv.Osuf \
-              OraTpInfoCnv.Osuf
+              OraTapeCnv.Osuf \
+              OraTapePoolCnv.Osuf \
+              OraTapeRequestCnv.Osuf \
+              OraTpFileCopyCnv.Osuf
 
 COMMONLIB = SharedLibraryTargetName(castorCommonOra)
 LDFLAGS = -L ../..

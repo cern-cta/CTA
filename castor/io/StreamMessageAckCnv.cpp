@@ -84,10 +84,10 @@ void castor::io::StreamMessageAckCnv::createRep(castor::IAddress* address,
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
-  ad->stream() << obj->id();
   ad->stream() << obj->status();
   ad->stream() << obj->errorCode();
   ad->stream() << obj->errorMessage();
+  ad->stream() << obj->id();
   // Mark object as done
   alreadyDone.insert(obj);
 }
@@ -131,9 +131,6 @@ castor::IObject* castor::io::StreamMessageAckCnv::createObj(castor::IAddress* ad
   // create the new Object
   castor::MessageAck* object = new castor::MessageAck();
   // Now retrieve and set members
-  unsigned long id;
-  ad->stream() >> id;
-  object->setId(id);
   bool status;
   ad->stream() >> status;
   object->setStatus(status);
@@ -143,6 +140,9 @@ castor::IObject* castor::io::StreamMessageAckCnv::createObj(castor::IAddress* ad
   std::string errorMessage;
   ad->stream() >> errorMessage;
   object->setErrorMessage(errorMessage);
+  unsigned long id;
+  ad->stream() >> id;
+  object->setId(id);
   newlyCreated.insert(object);
   return object;
 }

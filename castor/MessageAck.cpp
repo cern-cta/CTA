@@ -47,13 +47,6 @@ castor::MessageAck::MessageAck() :
 castor::MessageAck::~MessageAck() {};
 
 //------------------------------------------------------------------------------
-// TYPE
-//------------------------------------------------------------------------------
-int castor::MessageAck::TYPE() {
-  return OBJ_MessageAck;
-}
-
-//------------------------------------------------------------------------------
 // print
 //------------------------------------------------------------------------------
 void castor::MessageAck::print(std::ostream& stream,
@@ -65,10 +58,10 @@ void castor::MessageAck::print(std::ostream& stream,
     return;
   }
   // Output of all members
-  stream << indent << "id : " << m_id << std::endl;
   stream << indent << "status : " << m_status << std::endl;
   stream << indent << "errorCode : " << m_errorCode << std::endl;
   stream << indent << "errorMessage : " << m_errorMessage << std::endl;
+  stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
 
@@ -78,6 +71,13 @@ void castor::MessageAck::print(std::ostream& stream,
 void castor::MessageAck::print() const {
   ObjectSet alreadyPrinted;
   print(std::cout, "", alreadyPrinted);
+}
+
+//------------------------------------------------------------------------------
+// TYPE
+//------------------------------------------------------------------------------
+int castor::MessageAck::TYPE() {
+  return OBJ_MessageAck;
 }
 
 //------------------------------------------------------------------------------

@@ -41,20 +41,21 @@ namespace castor {
   enum ObjectsIds {
     OBJ_INVALID,
     OBJ_Ptr, // Only used for streaming for circular dependencies
-    OBJ_BlobRequest,
-    OBJ_RequestHeader,
     OBJ_File,
     OBJ_Client,
-    OBJ_Copy,
-    OBJ_Segment,
-    OBJ_TapeInfo,
     OBJ_Flag,
     OBJ_StageInRequest,
-    OBJ_StageQryRequest,
     OBJ_MessageAck,
-    OBJ_TpFileInfo,
-    OBJ_TpInfo,
-    OBJ_Cuuid
+    OBJ_Cuuid,
+    OBJ_CastorFile,
+    OBJ_DiskFile,
+    OBJ_DiskFileCopy,
+    OBJ_DiskFileSystem,
+    OBJ_DiskServer,
+    OBJ_Segment,
+    OBJ_Tape,
+    OBJ_TapePool,
+    OBJ_TapeRequest
   };
     
   /**
