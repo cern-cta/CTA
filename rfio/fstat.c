@@ -1,14 +1,14 @@
 /*
- * $Id: fstat.c,v 1.12 2002/11/19 12:55:33 baud Exp $
+ * $Id: fstat.c,v 1.13 2003/04/22 11:08:46 baud Exp $
  */
 
 /*
- * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fstat.c,v $ $Revision: 1.12 $ $Date: 2002/11/19 12:55:33 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
+static char sccsid[] = "@(#)$RCSfile: fstat.c,v $ $Revision: 1.13 $ $Date: 2003/04/22 11:08:46 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
 #endif /* not lint */
 
 /* fstat.c      Remote File I/O - get file status                       */
@@ -151,8 +151,10 @@ struct stat *statbuf;
 	  END_TRACE() ;
 	  return status ;
        case RQST_READAHEAD:
+       case RQST_READAHD64:
        case RQST_LASTSEEK:
        case RQST_PRESEEK:
+       case RQST_PRESEEK64:
 	  /* 
 	   * At this point a temporary buffer may need to be created
 	   * to receive data which is going to be thrown away.
