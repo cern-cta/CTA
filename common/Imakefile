@@ -1,0 +1,277 @@
+COMM       @(#)Imakefile,v 1.52 2004/06/09 16:10:29 CERN IT-PDP/DM Jean-Philippe Baud
+COMM
+COMM  Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+
+COMM		Make common routines library
+
+#include <Project.tmpl>
+
+#if HasNis
+COMM -DNIS to compile with Yellow Pages (aka NIS) code for getacct()
+#if _AIX || hpux || sun || ( __osf__ && __alpha ) || linux
+CCOPTFLAGS = -DNIS
+#endif
+#if sgi
+COMM -cckr on Irix 4.0.1 because the NIS function prototypes are
+COMM buggy (e.g. <rpcsvc/ypclnt.h>)
+CCOPTFLAGS = -DNIS -cckr
+#endif
+#endif
+#if hpux && BuildExamples
+SYSDEP_OBJS = getarghp.o
+#endif
+#if _WIN32
+SYSDEP_OBJS = Cinitservice.obj cmdf2argv.obj getopt.obj sleep.obj syslog.obj uxid.obj ws_errmsg.obj inet_netof.obj getregkey.obj
+#endif
+
+#ifdef USESCONFIGD
+NEWGETCONF=-DNEWGETCONF
+#endif
+
+PATH_CONFIG = ShiftConfigFile
+MAPPING = MappingFile
+LOCHOSTSFILE = LocalHostsList
+RTHOSTSFILE = RemoteHostsList
+ADMINHOSTS = AdminHosts
+#if _WIN32
+W2000MAPDIR = -DW2000MAPDIR=\"W2000MapDir\"
+WNTMAPDIR = -DWNTMAPDIR=\"WntMapDir\"
+#endif
+#if Accounting
+SACCTFILE = SacctDir/sacct
+ACCTFILE = -DACCTFILE=\"$(SACCTFILE)\"
+WSACCTO = wsacct.Osuf
+#endif
+#if BuildHpssServer
+#if defined(_AIX)
+CC = xlc_r4 -qlanglvl=extended -Dunix -DAIX42
+#endif
+#if defined(__osf__) && defined(__alpha)
+CC = cc -threads -DDUXV4
+#endif
+#endif
+COMM
+COMM Set this flag to -O for optimization, or -g for debug
+COMM
+#ifdef _WIN32
+CCOPTIM = 
+#else
+#if linux
+LINUXOPTIM = -O
+#else
+COMM
+COMM CCOPTIM = -g
+COMM
+#endif
+#endif
+COMM
+COMM Set this flag to tell where are headers
+COMM
+INCLUDES = FileName(..,h)
+COMM
+COMM Set this flag if you want to allow debug output from Cpool
+COMM
+CPOOL_DEBUG = -DCPOOL_DEBUG
+COMM CPOOL_DEBUG = 
+COMM
+COMM Set this flag if you want to allow debug output from Cthread
+COMM
+CTHREAD_DEBUG = -DCTHREAD_DEBUG
+COMM CTHREAD_DEBUG = 
+CTHREAD_FLAGS = $(MTCCFLAGS)
+#if UseAdns
+ADNS = -DADNS
+#endif
+#ifdef NfsRoot
+NFSROOT0 = NfsRoot
+NFSROOT  = -DNFSROOT=\"$(NFSROOT0)\"
+#endif
+CFLAGS = $(CCOPTIM) -I$(INCLUDES) $(CTHREAD_FLAGS) $(CTHREAD_DEBUG) $(CPOOL_DEBUG) -DPATH_CONFIG=\"$(PATH_CONFIG)\" -DLOCALHOSTSFILE=\"$(LOCHOSTSFILE)\" -DMAPPING_FILE=\"$(MAPPING)\" -DRTHOSTSFILE=\"$(RTHOSTSFILE)\" -DADMIN_HOSTS=\"$(ADMINHOSTS)\" $(W2000MAPDIR) $(WNTMAPDIR) $(CCOPTFLAGS) $(DEFCFLAGS) $(NEWGETCONF) $(ACCTFILE) $(ADNS) $(NFSROOT)
+FFLAGS = $(FFOPTFLAGS)
+
+.PRECIOUS:	LibraryTargetName(common)
+
+COMMONLIB_OBJS = $(SYSDEP_OBJS) \
+		 compat.Osuf getacct.Osuf getacctent.Osuf getconfent.Osuf \
+		 getfilep.Osuf getifnam.Osuf getuser.Osuf log.Osuf marshall.Osuf \
+		 readc.Osuf remote.Osuf segment.Osuf sendscsicmd.Osuf \
+		 serror.Osuf setnetio.Osuf socket.Osuf solveln.Osuf trace.Osuf \
+		 $(WSACCTO) ypgetacct.Osuf ypgetacctent.Osuf \
+		 Cthread.Osuf Csched.Osuf Cglobals.Osuf Cgrp.Osuf Cmutex.Osuf Cuuid.Osuf \
+		 Cdomainname.Osuf Cnetdb.Osuf Cpool.Osuf Cpwd.Osuf \
+		 socket_timeout.Osuf u64subr.Osuf Cinitdaemon.Osuf Cgetopt.Osuf \
+		 Cregexp.Osuf Csetprocname.Osuf Cexportconf.Osuf Csnprintf.Osuf
+
+MANPAGES = $(FILMANDIR)/account.$(FILMANSUFFIX) \
+	   $(LIBMANDIR)/getacct.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/getacctent.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/getconfent.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/log.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/netclose.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/netread.$(LIBMANSUFFIX) \
+	   $(LIBMANDIR)/netwrite.$(LIBMANSUFFIX) \
+		$(LIBMANDIR)/Cglobals.$(LIBMANSUFFIX) \
+		$(LIBMANDIR)/Cgetopt.$(LIBMANSUFFIX) \
+		$(LIBMANDIR)/Cgrp.$(LIBMANSUFFIX) \
+		$(LIBMANDIR)/Cuuid.$(LIBMANSUFFIX) \
+		$(LIBMANDIR)/Cthread.$(LIBMANSUFFIX) \
+		$(LIBMANDIR)/Cmutex.$(LIBMANSUFFIX) \
+		$(LIBMANDIR)/Cpool.$(LIBMANSUFFIX) \
+		$(LIBMANDIR)/Cpwd.$(LIBMANSUFFIX) \
+		$(LIBMANDIR)/Csetprocname.$(LIBMANSUFFIX) \
+		$(LIBMANDIR)/Csched.$(LIBMANSUFFIX)
+EXPORTMANPAGES = $(EXPORTMAN)/man4/account.$(FILMANSUFFIX) \
+	   $(EXPORTMAN)/man3/getacct.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/getacctent.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/getconfent.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/log.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/netclose.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/netread.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/netwrite.$(LIBMANSUFFIX) \
+		$(EXPORTMAN)/man3/Cgetopt.$(LIBMANSUFFIX) \
+		$(EXPORTMAN)/man3/Cglobals.$(LIBMANSUFFIX) \
+		$(EXPORTMAN)/man3/Cgrp.$(LIBMANSUFFIX) \
+		$(EXPORTMAN)/man3/Cuuid.$(LIBMANSUFFIX) \
+		$(EXPORTMAN)/man3/Cthread.$(LIBMANSUFFIX) \
+		$(EXPORTMAN)/man3/Cmutex.$(LIBMANSUFFIX) \
+		$(EXPORTMAN)/man3/Cpool.$(LIBMANSUFFIX) \
+		$(EXPORTMAN)/man3/Cpwd.$(LIBMANSUFFIX) \
+		$(EXPORTMAN)/man3/Csetprocname.$(LIBMANSUFFIX) \
+		$(EXPORTMAN)/man3/Csched.$(LIBMANSUFFIX)
+
+all:	LibraryTargetName(common)
+
+#if linux
+sendscsicmd.o: sendscsicmd.c
+	@if [ -f "/usr/src/linux/include/scsi/sg.h" ] ;\
+	then \
+		echo $(CC) $(CFLAGS) -DSCSIINC="\"/usr/src/linux/include/scsi/sg.h\"" -c sendscsicmd.c ;\
+		$(CC) $(CFLAGS) -DSCSIINC="\"/usr/src/linux/include/scsi/sg.h\"" -c sendscsicmd.c ;\
+	else \
+		echo $(CC) $(CFLAGS) -DSCSIINC="\"/usr/include/scsi/sg.h\"" -c sendscsicmd.c ;\
+		$(CC) $(CFLAGS) -DSCSIINC="\"/usr/include/scsi/sg.h\"" -c sendscsicmd.c ;\
+	fi
+#endif
+#ifndef _WIN32
+COMM
+COMM We overwrite the default compiler option only for objects with which we want
+COMM explicitely the debug option
+COMM
+Cthread.Osuf: Cthread.c
+	$(CC) $(CFLAGS) -g $(LINUXOPTIM) -c Cthread.c
+Cpool.Osuf: Cpool.c
+	$(CC) $(CFLAGS) -g $(LINUXOPTIM) -c Cpool.c
+Csched.Osuf: Csched.c
+	$(CC) $(CFLAGS) -g $(LINUXOPTIM) -c Csched.c
+Cmutex.Osuf: Cmutex.c
+	$(CC) $(CFLAGS) -g $(LINUXOPTIM) -c Cmutex.c
+Csetprocname.Osuf: Csetprocname.c
+	$(CC) $(CFLAGS) -g $(LINUXOPTIM) -c Csetprocname.c
+#endif
+#if _WIN32
+Cinitservice.c:	..\win32\Cinitservice.c
+	RemoveFile(Cinitservice.c)
+	copy ..\win32\Cinitservice.c Cinitservice.c
+cmdf2argv.c:	..\win32\cmdf2argv.c
+	RemoveFile(cmdf2argv.c)
+	copy ..\win32\cmdf2argv.c cmdf2argv.c
+getopt.c:	..\win32\getopt.c
+	RemoveFile(getopt.c)
+	copy ..\win32\getopt.c getopt.c
+sleep.c:	..\win32\sleep.c
+	RemoveFile(sleep.c)
+	copy ..\win32\sleep.c sleep.c
+syslog.c:	..\win32\syslog.c
+	RemoveFile(syslog.c)
+	copy ..\win32\syslog.c syslog.c
+uxid.c:	..\win32\uxid.c
+	RemoveFile(uxid.c)
+	copy ..\win32\uxid.c uxid.c
+ws_errmsg.c:	..\win32\ws_errmsg.c
+	RemoveFile(ws_errmsg.c)
+	copy ..\win32\ws_errmsg.c ws_errmsg.c
+inet_netof.c:	..\win32\inet_netof.c
+	RemoveFile(inet_netof.c)
+	copy ..\win32\inet_netof.c inet_netof.c
+getregkey.c:	..\win32\getregkey.c
+	RemoveFile(getregkey.c)
+	copy..\win32\getregkey.c getregkey.c
+#endif
+
+NormalLibraryTarget(common,$(COMMONLIB_OBJS))
+
+install:	all
+
+export:
+
+exportman: $(EXPORTMANPAGES)
+
+exportshr:
+
+install.man: $(FILMANDIR) $(LIBMANDIR) $(MANPAGES)
+
+MakeDir($(FILMANDIR),root,bin,0755)
+MakeDir($(LIBMANDIR),root,bin,0755)
+
+IMANPAGE(account,$(FILMANDIR),$(FILMANSUFFIX))
+IMANPAGE(getacct,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(getacctent,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(getconfent,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(log,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(netclose,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(netread,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(netwrite,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cgetopt,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cglobals,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cgrp,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cuuid,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cmutex,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cpool,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cpwd,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Csched,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Csetprocname,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cthread,$(LIBMANDIR),$(LIBMANSUFFIX))
+EMANPAGE(account,$(EXPORTMAN)/man4,$(FILMANSUFFIX))
+EMANPAGE(getacct,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(getacctent,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(getconfent,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(log,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(netclose,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(netread,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(netwrite,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cgetopt,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cglobals,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cgrp,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cuuid,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cmutex,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cpool,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cpwd,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Csched,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Csetprocname,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cthread,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+
+clean:
+	@echo cleaning in CurDir
+	-@RemoveFiles(FilesToClean)
+
+clobber: clean
+
+#if _WIN32
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend -Y$(INCLUDES) *.c 2> /dev/null
+#endif
+
+Makefiles:
+
+#if _WIN32
+syslog.obj:	..\win32\syslog.h ..\win32\slogmsg.h
+uxid.obj:	..\win32\grp.h ..\win32\pwd.h
+ws_errmsg.obj:	..\win32\ws_errmsg.h
+#endif
+
+COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
