@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.186 2002/08/27 08:39:37 jdurand Exp $
+ * $Id: procio.c,v 1.187 2002/08/31 06:39:52 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.186 $ $Date: 2002/08/27 08:39:37 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.187 $ $Date: 2002/08/31 06:39:52 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -1418,6 +1418,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 					sprintf((char *)(fseq_list + new_nbtpf - 1), "%d", maxfseq + (concat_off_flag == 'c' ? 0 : 1));
 					/* Nota : packfseq will take care of adding the leading "-" ... */
 					nbtpf = new_nbtpf;
+					/* concat_off_fseq is now the one after maxfseq */
+					concat_off_fseq = maxfseq + 1;
 				}
 			}
 		}
