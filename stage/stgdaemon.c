@@ -238,7 +238,7 @@ void checkpoolstatus _PROTO(());
 void checkwaitingspc _PROTO(());
 void check_child_exit _PROTO(());
 void checkwaitq _PROTO(());
-void create_link _PROTO((struct stgcat_entry *, char *));
+void create_link _PROTO((int *, struct stgcat_entry *, char *));
 void dellink _PROTO((struct stgpath_entry *));
 void delreq _PROTO((struct stgcat_entry *, int));
 void stgcat_shrunk_pages _PROTO(());
@@ -2506,10 +2506,10 @@ void checkpoolstatus()
 										sendrep (&(wqp->rpfd), MSG_OUT,
 														 "%s\n", stcp->ipath);
 									if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
-										create_link (stcp, wfp->upath);
+										create_link (&(wqp->rpfd), stcp, wfp->upath);
 									if (wqp->Upluspath && *((wfp+1)->upath) &&
 											strcmp (stcp->ipath, (wfp+1)->upath))
-										create_link (stcp, (wfp+1)->upath);
+										create_link (&(wqp->rpfd), stcp, (wfp+1)->upath);
 									rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
 								}
 							}
@@ -2640,9 +2640,9 @@ void checkwaitingspc()
 					if (wqp->Pflag)
 						sendrep (&(wqp->rpfd), MSG_OUT, "%s\n", stcp->ipath);
 					if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
-						create_link (stcp, wfp->upath);
+						create_link (&(wqp->rpfd), stcp, wfp->upath);
 					if (wqp->Upluspath && *((wfp+1)->upath) && strcmp (stcp->ipath, (wfp+1)->upath))
-						create_link (stcp, (wfp+1)->upath);
+						create_link (&(wqp->rpfd), stcp, (wfp+1)->upath);
 					rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
 				}
 			}
@@ -2718,10 +2718,10 @@ check_waiting_on_req(subreqid, state)
 				if (wqp->copytape)
 					sendinfo2cptape (&(wqp->rpfd), stcp);
 				if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
-					create_link (stcp, wfp->upath);
+					create_link (&(wqp->rpfd), stcp, wfp->upath);
 				if (wqp->Upluspath && *((wfp+1)->upath) &&
 						strcmp (stcp->ipath, (wfp+1)->upath))
-					create_link (stcp, (wfp+1)->upath);
+					create_link (&(wqp->rpfd), stcp, (wfp+1)->upath);
 				for (stcp = stcs; stcp < stce; stcp++) {
 					if (wfp->subreqid == stcp->reqid)
 						break;
@@ -3199,9 +3199,10 @@ int create_dir(dirname, uid, gid, mask)
 	return (0);
 }
 
-void create_link(stcp, upath)
-		 struct stgcat_entry *stcp;
-		 char *upath;
+void create_link(rpfd, stcp, upath)
+	int *rpfd;
+	struct stgcat_entry *stcp;
+	char *upath;
 {
 	int c;
 	int found;
@@ -3234,10 +3235,10 @@ void create_link(stcp, upath)
 	}
 	if (c > 0 || errno == EINVAL || rfio_errno == EINVAL) {
 		stglogit (func, STG93, upath);
-		sendrep (&rpfd, RMSYMLINK, upath);
+		sendrep (rpfd, RMSYMLINK, upath);
 	}
 	stglogit (func, STG94, upath);
-	sendrep (&rpfd, SYMLINK, stcp->ipath, upath);
+	sendrep (rpfd, SYMLINK, stcp->ipath, upath);
  create_link_return:
 	savepath ();
 #ifdef USECDB
@@ -4331,7 +4332,7 @@ int upd_staged(upath)
 	stcp->a_time = time(NULL);
 	stcp->nbaccesses++;
 	if (*upath && strcmp (stcp->ipath, upath))
-		create_link (stcp, upath);
+		create_link (&rpfd, stcp, upath);
 
 	savereqs();
 	PRE_RFIO;

@@ -86,7 +86,7 @@ extern int cleanpool _PROTO((char *));
 extern void delreq _PROTO((struct stgcat_entry *, int));
 extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int, int));
 extern void sendinfo2cptape _PROTO((int *, struct stgcat_entry *));
-extern void create_link _PROTO((struct stgcat_entry *, char *));
+extern void create_link _PROTO((int *, struct stgcat_entry *, char *));
 extern void stageacct _PROTO((int, uid_t, gid_t, char *, int, int, int, int, struct stgcat_entry *, char *, char));
 extern int retenp_on_disk _PROTO((int));
 extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *, int, int, int));
@@ -1736,10 +1736,10 @@ procupdreq(req_type, magic, req_data, clienthost)
 			if (wqp->copytape)
 				sendinfo2cptape (&(wqp->rpfd), stcp);
 			if (*(wfp->upath) && strcmp (stcp->ipath, wfp->upath))
-				create_link (stcp, wfp->upath);
+				create_link (&(wqp->rpfd), stcp, wfp->upath);
 			if (wqp->Upluspath && *((wfp+1)->upath) &&
 					strcmp (stcp->ipath, (wfp+1)->upath))
-				create_link (stcp, (wfp+1)->upath);
+				create_link (&(wqp->rpfd), stcp, (wfp+1)->upath);
 			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
 						(signed64) (((signed64) stcp->size) - (signed64) actual_size_block));
 			check_waiting_on_req (subreqid, STAGED);

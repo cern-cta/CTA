@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.204 2003/01/13 17:26:53 jdurand Exp $
+ * $Id: procio.c,v 1.205 2003/01/30 09:14:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.204 $ $Date: 2003/01/13 17:26:53 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.205 $ $Date: 2003/01/30 09:14:15 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -220,7 +220,7 @@ extern int isvalidpool _PROTO((char *));
 extern int packfseq _PROTO((fseq_elem *, int, int, int, char, char *, int));
 extern int delfile _PROTO((struct stgcat_entry *, int, int, int, char *, uid_t, gid_t, int, int, int));
 extern void sendinfo2cptape _PROTO((int *, struct stgcat_entry *));
-extern void create_link _PROTO((struct stgcat_entry *, char *));
+extern void create_link _PROTO((int *, struct stgcat_entry *, char *));
 extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int, int, mode_t));
 extern void delreq _PROTO((struct stgcat_entry *, int));
 extern int savepath _PROTO(());
@@ -2013,10 +2013,10 @@ void procioreq(req_type, magic, req_data, clienthost)
 			if (copytape)
 				sendinfo2cptape (&rpfd, stcp);
 			if (*upath && strcmp (stcp->ipath, upath))
-				create_link (stcp, upath);
+				create_link (&rpfd, stcp, upath);
 			if (Upluspath && ((api_out == 0) ? (argv[Coptind+1][0] != '\0') : (stpp_input[1].upath[0] != '\0')) &&
 				strcmp (stcp->ipath, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath))
-				create_link (stcp, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath);
+				create_link (&rpfd, stcp, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath);
 			break;
 		  case STAGEOUT:
 		  case STAGEOUT|WAITING_SPC:
@@ -2378,10 +2378,10 @@ void procioreq(req_type, magic, req_data, clienthost)
 					if (c != 0) goto reply;
 				}
 				if (*upath && strcmp (stcp->ipath, upath))
-					create_link (stcp, upath);
+					create_link (&rpfd, stcp, upath);
 				if (Upluspath && ((api_out == 0) ? (argv[Coptind+1][0] != '\0') : (stpp_input[1].upath[0] != '\0')) &&
 					strcmp (stcp->ipath, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath))
-					create_link (stcp, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath);
+					create_link (&rpfd, stcp, (api_out == 0) ? argv[Coptind+1] : stpp_input[1].upath);
 				STAGE_TIME_START("rwcountersfs");
 				rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT);
 				STAGE_TIME_END;

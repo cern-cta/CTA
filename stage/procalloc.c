@@ -1,5 +1,5 @@
 /*
- * $Id: procalloc.c,v 1.52 2002/10/04 09:20:12 jdurand Exp $
+ * $Id: procalloc.c,v 1.53 2003/01/30 09:14:14 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.52 $ $Date: 2002/10/04 09:20:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: procalloc.c,v $ $Revision: 1.53 $ $Date: 2003/01/30 09:14:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -67,7 +67,7 @@ extern int isvalidpool _PROTO((char *));
 extern int build_ipath _PROTO((char *, struct stgcat_entry *, char *, int, int, mode_t));
 extern int cleanpool _PROTO((char *));
 extern void delreq _PROTO((struct stgcat_entry *, int));
-extern void create_link _PROTO((struct stgcat_entry *, char *));
+extern void create_link _PROTO((int *, struct stgcat_entry *, char *));
 extern int savepath _PROTO(());
 extern int savereqs _PROTO(());
 extern void rmfromwq _PROTO((struct waitq *));
@@ -325,12 +325,12 @@ void procallocreq(req_type, magic, req_data, clienthost)
 			if (api_out != 0) sendrep(&rpfd, API_STCP_OUT, stcp, magic);
 		}
 		if (*upath && strcmp (stcp->ipath, upath)) {
-			create_link (stcp, upath);
+			create_link (&rpfd, stcp, upath);
 		}
 		if (Upluspath) {
 			/* Never happen in API mode (argv == NULL there, btw) */
 			if ((argv[Coptind+1][0] != '\0') && strcmp (stcp->ipath, argv[Coptind+1])) {
-				create_link (stcp, argv[Coptind+1]);
+				create_link (&rpfd, stcp, argv[Coptind+1]);
 			}
 		}
 		rwcountersfs(stcp->poolname, stcp->ipath, STAGEALLOC, STAGEALLOC);
@@ -581,10 +581,10 @@ void procgetreq(req_type, magic, req_data, clienthost)
 		if (api_out != 0) sendrep(&rpfd, API_STCP_OUT, stcp, magic);
 	}
 	if (*upath && strcmp (stcp->ipath, upath))
-		create_link (stcp, upath);
+		create_link (&rpfd, stcp, upath);
 	if (Upluspath && (argv[Coptind+1][0] != '\0') &&
 			strcmp (stcp->ipath, argv[Coptind+1]))
-		create_link (stcp, argv[Coptind+1]);
+		create_link (&rpfd, stcp, argv[Coptind+1]);
 	savereqs ();
 	c = 0;
  reply:
