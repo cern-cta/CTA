@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgr_listtape.man,v $ $Revision: 1.2 $ $Date: 2000/09/11 06:03:03 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgr_listtape.man,v $ $Revision: 1.3 $ $Date: 2001/01/08 07:12:40 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_LISTTAPE 3 "$Date: 2000/09/11 06:03:03 $" CASTOR "vmgr Library Functions"
+.TH VMGR_LISTTAPE 3 "$Date: 2001/01/08 07:12:40 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_listtape \- list all existing tape entries in the CASTOR Volume Manager
 .SH SYNOPSIS
@@ -10,11 +10,15 @@ vmgr_listtape \- list all existing tape entries in the CASTOR Volume Manager
 .br
 \fB#include "vmgr_api.h"\fR
 .sp
-.BI "struct vmgr_tape_info *vmgr_listtape (int " flags ,
+.BI "struct vmgr_tape_info *vmgr_listtape (char *" pool_name ,
+.BI "int " flags ,
 .BI "vmgr_list *" listp )
 .SH DESCRIPTION
 .B vmgr_listtape
 lists all existing tape entries in the CASTOR Volume Manager.
+.TP
+.I pool_name
+if not NULL, restricts the list to the tapes belonging to this pool.
 .TP
 .I flags
 may be one of the following constant:
@@ -45,6 +49,12 @@ memory could not be allocated for the output buffer.
 .I listp
 is a NULL pointer.
 .TP
+.B EINVAL
+The length of
+.I pool_name
+exceeds
+.BR CA_MAXPOOLNAMELEN .
+.TP
 .B SENOSHOST
 Host unknown.
 .TP
@@ -57,5 +67,5 @@ Communication error.
 .B EVMGRNACT
 Volume manager is not running or is being shutdown.
 .SH SEE ALSO
-.BR vmgr_entertape(3) ,
-.B vmgrlisttape(1)
+.BR Castor_limits(4) ,
+.BR vmgr_entertape(3)
