@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.3 $ $Date: 2003/11/12 10:43:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.4 $ $Date: 2003/11/12 14:12:31 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      repack - copy the active segments from a set of volumes to another set */
@@ -17,6 +17,9 @@ static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.3 $ $Date: 2003/
 #include <sys/types.h>
 #include <time.h>
 #include <stdarg.h>
+#if defined(_WIN32)
+#include <winsock2.h>
+#endif
 #include "Cgetopt.h"
 #include "Cns_api.h"
 #include "Ctape_api.h"
@@ -82,6 +85,9 @@ char **argv;
 	struct passwd *pw;
 	char pool_name[CA_MAXPOOLNAMELEN+1];
 	char *vids = NULL;
+#if defined(_WIN32)
+	WSADATA wsadata;
+#endif
 
 	Copterr = 1;
 	Coptind = 1;
@@ -130,14 +136,14 @@ char **argv;
 			if (*dp != '\0') {
 				fprintf (stderr, "invalid min_free value: %s\n",
 				    Coptarg);
-				exit (USERR);
+				errflg++;
 			}
 		case 'n':
 			max_vol_to_repack = strtol (Coptarg, &dp, 10);
 			if (*dp != '\0' || max_vol_to_repack <= 0) {
 				fprintf (stderr, "invalid number of volumes: %s\n",
 				    Coptarg);
-				exit (USERR);
+				errflg++;
 			}
 			break;
 		case 'o':
@@ -176,6 +182,12 @@ char **argv;
 		    "\t[--otp output_tppool] [-P pool_name] [-V vid(s)]\n");
 		exit (USERR);
 	}
+#if defined(_WIN32)
+	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
+		fprintf (stderr, "WSAStartup unsuccessful\n");
+		exit (SYERR);
+	}
+#endif
 	gethostname (localhost, CA_MAXHOSTNAMELEN+1);
 	pw = getpwuid (getuid());
 	printf ("%s Repack run by %s on %s\n", timestamp(), pw->pw_name, localhost);
@@ -189,6 +201,9 @@ char **argv;
 		nbvol = get_vidlist_from_db (pool_name, library, model, density,
 			max_vol_to_repack);
 	if (nbvol == 0) {
+#if defined(_WIN32)
+		WSACleanup();
+#endif
 		exit (usr_errflg ? USERR : sys_errflg ? SYERR : 0);
 	}
 
@@ -207,6 +222,9 @@ char **argv;
 		if (c = copy_active_segments (vol_list[i].vid, *output_pool ?
 		    output_pool : vol_list[i].poolname)) break;
 	}
+#if defined(_WIN32)
+	WSACleanup();
+#endif
 	exit (c);
 }
 
@@ -269,6 +287,9 @@ int sig;
 	}
 	if (stage_kill_needed)
 		stage_kill (sig);
+#if defined(_WIN32)
+	WSACleanup();
+#endif
 	exit (USERR);
 }
 
@@ -295,7 +316,7 @@ char *pool_name;
 		if ((nbsegs+1) * sizeof(struct Cns_segattrs) > seg_list_size) {
 			seg_list_size += BUFSIZ;
 			if ((seg_list = realloc (seg_list, seg_list_size)) == NULL) {
-				fprintf (stderr, "repack error: %s\n", strerror(errno));
+				fprintf (stderr, "repack error: %s\n", strerror(ENOMEM));
 				return (USERR);
 			}
 		}
@@ -314,7 +335,7 @@ char *pool_name;
 
 	if ((stcp_input = calloc ((nbsegs <= 1000) ? nbsegs : 1000,
 	    sizeof(struct stgcat_entry))) == NULL) {
-		fprintf (stderr, "repack error: %s\n", strerror(errno));
+		fprintf (stderr, "repack error: %s\n", strerror(ENOMEM));
 		return (USERR);
 	}
 	j = 0;
@@ -396,7 +417,8 @@ int max_vol_to_repack;
 		fprintf (stderr, "repack %s: %s\n", pool_name,
 		    (serrno == ENOENT) ?
 		    "No such pool" : sstrerror(serrno));
-		exit (USERR);
+		usr_errflg++;
+		return (0);
 	}
 
 	/* get list of volumes with status FULL in pool_name */
@@ -565,7 +587,7 @@ char *pool_name;
 	/* build the tape list for rtcopy */
 
 	if (rtcp_NewTapeList (&tl, NULL, WRITE_ENABLE) < 0) {
-		fprintf (stderr, "repack error: %s\n", strerror(errno));
+		fprintf (stderr, "repack error: %s\n", sstrerror(serrno));
 		return (USERR);
 	}
 
@@ -592,7 +614,7 @@ char *pool_name;
 		requested_space += stcp->actual_size;
 		if (requested_space > estimated_free_space) break;
 		if (rtcp_NewFileList (&tl, &fl, WRITE_ENABLE) < 0) {
-			fprintf (stderr, "repack error: %s\n", strerror(errno));
+			fprintf (stderr, "repack error: %s\n", sstrerror(serrno));
 			return (USERR);
 		}
 		strcpy (fl->filereq.file_path, stcp->ipath);
