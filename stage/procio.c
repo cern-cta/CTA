@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.63 2000/12/12 14:49:23 jdurand Exp $
+ * $Id: procio.c,v 1.64 2000/12/13 09:50:18 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.63 $ $Date: 2000/12/12 14:49:23 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.64 $ $Date: 2000/12/13 09:50:18 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -680,10 +680,8 @@ void procioreq(req_type, req_data, clienthost)
 				nread = p + 1;
 			}
 		}
-		if (req_type == STAGEIN && nhsmfiles > 0 && ! size) {
-			/* We have the actual_size in the NameServer                           */
-			/* If the user did not specified -s option (max bytes to transfer) we  */
-			/* use this information.                                               */
+		if (req_type == STAGEIN && nhsmfiles > 0) {
+			/* We get statistic information from the nameserver */
 			struct Cns_fileid Cnsfileid;
 
 			setegid(stgreq.gid);
@@ -692,10 +690,10 @@ void procioreq(req_type, req_data, clienthost)
 			case 'h':
 				memset(&Cnsfileid,0,sizeof(struct Cns_fileid));
 				if (Cns_statx(hsmfiles[ihsmfiles], &Cnsfileid, &Cnsfilestat) != 0) {
-					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_statx", sstrerror(serrno));
-					c = USERR;
 					setegid(0);
 					seteuid(0);
+					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_statx", sstrerror(serrno));
+					c = USERR;
 					goto reply;
 				}
 				strcpy(stgreq.u1.h.server,Cnsfileid.server);
@@ -705,10 +703,10 @@ void procioreq(req_type, req_data, clienthost)
 				break;
 			case 'm':
 				if (rfio_stat(hsmfiles[ihsmfiles], &filemig_stat) < 0) {
-					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat", rfio_serror());
-					c = USERR;
 					setegid(0);
 					seteuid(0);
+					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat", rfio_serror());
+					c = USERR;
 					goto reply;
 				}
 				hsmmtime = filemig_stat.st_mtime;
@@ -719,8 +717,14 @@ void procioreq(req_type, req_data, clienthost)
 			}
 			setegid(0);
 			seteuid(0);
-			stgreq.size = (int) ((hsmsize > ONE_MB) ? (((hsmsize - ((hsmsize / ONE_MB) * ONE_MB)) == 0) ? (hsmsize / ONE_MB) : ((hsmsize / ONE_MB) + 1)) : 1);
+			if (! size) {
+				/* We force size to be allocated to exactly what we need */
+				stgreq.size = (int) ((hsmsize > ONE_MB) ? (((hsmsize - ((hsmsize / ONE_MB) * ONE_MB)) == 0) ? (hsmsize / ONE_MB) : ((hsmsize / ONE_MB) + 1)) : 1);
+			} else {
+				goto get_size_from_user;
+			}
 		} else if (size) {
+		get_size_from_user:
 			if ((p = strchr (size, ':')) != NULL) *p = '\0';
 			stgreq.size = strtol (size, &dp, 10);
 			if (p != NULL) {
@@ -1001,10 +1005,10 @@ void procioreq(req_type, req_data, clienthost)
 				setegid(stgreq.gid);
 				seteuid(stgreq.uid);
 				if (Cns_creatx(hsmfiles[ihsmfiles], 0777 & ~ stgreq.mask, &Cnsfileid) != 0) {
-					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_creatx", sstrerror(serrno));
-					c = USERR;
 					setegid(0);
 					seteuid(0);
+					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_creatx", sstrerror(serrno));
+					c = USERR;
 					goto reply;
 				}
 				setegid(0);
@@ -1085,10 +1089,10 @@ void procioreq(req_type, req_data, clienthost)
 					/* immediately to the correct disk file associated with this HSM file */
 					/* We compare the size of the disk file with the size in Name Server */
 					if (rfio_stat(argv[Coptind + ihsmfiles], &filemig_stat) < 0) {
-						sendrep (rpfd, MSG_ERR, STG02, argv[Coptind + ihsmfiles], "rfio_stat", rfio_serror());
-						c = USERR;
 						setegid(0);
 						seteuid(0);
+						sendrep (rpfd, MSG_ERR, STG02, argv[Coptind + ihsmfiles], "rfio_stat", rfio_serror());
+						c = USERR;
 						goto reply;
 					}
 					correct_size = (u_signed64) filemig_stat.st_size;
@@ -1103,20 +1107,24 @@ void procioreq(req_type, req_data, clienthost)
 						strcpy(stgreq.u1.h.server,Cnsfileid.server);
 						stgreq.u1.h.fileid = Cnsfileid.fileid;
 					} else if (correct_size <= 0) {
+						setegid(0);
+						seteuid(0);
 						sendrep (rpfd, MSG_OUT,
 									"STG98 - %s size is of zero size - not migrated\n",
 									argv[Coptind + ihsmfiles]);
 						c = USERR;
-						setegid(0);
-						seteuid(0);
 						goto reply;
 					} else {
 						/* Not the same size or diskfile size is zero */
 						if (Cnsfilestat.filesize > 0) {
+							setegid(0);
+							seteuid(0);
 							sendrep (rpfd, MSG_OUT,
 										"STG98 - %s renewed (size differs vs. %s)\n",
 										hsmfiles[ihsmfiles],
 										argv[Coptind + ihsmfiles]);
+							setegid(stgreq.gid);
+							seteuid(stgreq.uid);
 						}
 						forced_Cns_creatx = 1;
 					}
@@ -1127,10 +1135,10 @@ void procioreq(req_type, req_data, clienthost)
 				}
 				if (forced_Cns_creatx != 0) {
 					if (Cns_creatx(hsmfiles[ihsmfiles], 0777 & ~ stgreq.mask, &Cnsfileid) != 0) {
-						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_creatx", sstrerror(serrno));
-						c = USERR;
 						setegid(0);
 						seteuid(0);
+						sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "Cns_creatx", sstrerror(serrno));
+						c = USERR;
 						goto reply;
 					}
 					strcpy(stgreq.u1.h.server,Cnsfileid.server);
@@ -1142,10 +1150,10 @@ void procioreq(req_type, req_data, clienthost)
 			case 'm':
 				/* Overwriting an existing non-CASTOR HSM file is not allowed */
 				if (rfio_stat(hsmfiles[ihsmfiles], &filemig_stat) == 0) {
-					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat", "file already exists");
-					c = USERR;
 					setegid(0);
 					seteuid(0);
+					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles], "rfio_stat", "file already exists");
+					c = USERR;
 					goto reply;
 				}
 				break;
@@ -1214,10 +1222,10 @@ void procioreq(req_type, req_data, clienthost)
 				setegid(stgreq.gid);
 				seteuid(stgreq.uid);
 				if (Cns_setfsize(NULL,&Cnsfileid,correct_size) != 0) {
-					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles],
-						"Cns_setfsize", sstrerror(serrno));
 					setegid(0);
 					seteuid(0);
+					sendrep (rpfd, MSG_ERR, STG02, hsmfiles[ihsmfiles],
+						"Cns_setfsize", sstrerror(serrno));
 					c = SYERR;
 					goto reply;
 				}
