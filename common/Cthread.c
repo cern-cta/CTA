@@ -1,7 +1,10 @@
 /*
- * $Id: Cthread.c,v 1.2 1999/07/20 08:49:20 jdurand Exp $
+ * $Id: Cthread.c,v 1.3 1999/07/20 13:26:52 obarring Exp $
  *
  * $Log: Cthread.c,v $
+ * Revision 1.3  1999/07/20 13:26:52  obarring
+ * empty line for test
+ *
  * Revision 1.2  1999/07/20 08:49:20  jdurand
  * 20-JUL-1999 Jean-Damien Durand
  *   Added missing Id and Log CVS's directives
@@ -19,6 +22,7 @@
 #ifdef CTHREAD_DEBUG
 #include <stdio.h>
 #endif
+
 
 /* ============================================ */
 /* CASTOR Thread Interface (Cthread)            */
