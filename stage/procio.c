@@ -1,5 +1,5 @@
 /*
- * $Id: procio.c,v 1.136 2001/07/12 06:36:58 jdurand Exp $
+ * $Id: procio.c,v 1.137 2001/07/12 11:06:02 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.136 $ $Date: 2001/07/12 06:36:58 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procio.c,v $ $Revision: 1.137 $ $Date: 2001/07/12 11:06:02 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -124,7 +124,7 @@ extern int reqid;
 extern int rpfd;
 extern struct stgcat_entry *stce;	/* end of stage catalog */
 extern struct stgcat_entry *stcs;	/* start of stage catalog */
-extern struct stgcat_entry *newreq _PROTO(());
+extern struct stgcat_entry *newreq _PROTO((char));
 extern char *findpoolname _PROTO((char *));
 extern u_signed64 findblocksize _PROTO((char *));
 
@@ -468,7 +468,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 			char logit[BUFSIZ + 1];
 
 			struct_status = 0;
-			unmarshall_STAGE_CAT(STAGE_INPUT_MODE, struct_status, rbp, &(stcp_input[i]));
+			unmarshall_STAGE_CAT(magic,STAGE_INPUT_MODE, struct_status, rbp, &(stcp_input[i]));
 			if (struct_status != 0) {
 				sendrep(rpfd, MSG_ERR, "STG02 - Bad input (catalog input structure No %d/%d)\n", ++i, nstcp_input);
 				c = USERR;
@@ -480,6 +480,11 @@ void procioreq(req_type, magic, req_data, clienthost)
 					sendrep(rpfd, MSG_ERR, "STG02 - Bad input (catalog input structure No %d/%d)\n", ++i, nstcp_input);
 					c = USERR;
 					goto reply;
+				}
+				if (stcp_input[i].t_or_d == 'h') {
+					/* mintime and retenp are ignored through this interface */
+					stcp_input[i].u1.h.retenp_on_disk = -1;
+					stcp_input[i].u1.h.mintime_beforemigr = -1;
 				}
 			}
 			logit[0] = '\0';
@@ -517,7 +522,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 		}
 		for (i = 0; i < nstpp_input; i++) {
 			path_status = 0;
-			unmarshall_STAGE_PATH(STAGE_INPUT_MODE, path_status, rbp, &(stpp_input[i]));
+			unmarshall_STAGE_PATH(magic, STAGE_INPUT_MODE, path_status, rbp, &(stpp_input[i]));
 			if (path_status != 0) {
 				sendrep(rpfd, MSG_ERR, "STG02 - Bad input (path input structure No %d/%d)\n", ++i, nstpp_input);
 				c = USERR;
@@ -1364,6 +1369,8 @@ void procioreq(req_type, magic, req_data, clienthost)
 				stgreq.u1.h.server[0] = '\0';
 				stgreq.u1.h.fileid = 0;
 				stgreq.u1.h.fileclass = 0;
+				stgreq.u1.h.retenp_on_disk = -1;
+				stgreq.u1.h.mintime_beforemigr = -1;
 			}
 			if (tppool != NULL) {
 				strcpy(stgreq.u1.h.tppool,tppool);
@@ -1474,7 +1481,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				}
 #endif
 				savereqid = stcp->reqid;
-				stcp = newreq ();
+				stcp = newreq (stgreq.t_or_d);
 				memcpy (stcp, &stgreq, sizeof(stgreq));
 				if (i > 0)
 					stcp->reqid = nextreqid();
@@ -1515,6 +1522,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					wqp->concat_off_fseq = concat_off_fseq;
 #endif
 					wqp->api_out = api_out;
+					wqp->magic = magic;
 					wqp->uniqueid = stage_uniqueid;
 					wqp->silent = silent_flag;
 					if (nowait_flag != 0) {
@@ -1615,7 +1623,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					/* We create a new entry with state STAGEIN|STAGED|STAGE_RDONLY */
 					struct stgcat_entry save_this_stcp = *stcp;
 
-					stcp = newreq ();
+					stcp = newreq (save_this_stcp.t_or_d);
 					memcpy (stcp, &save_this_stcp, sizeof(struct stgcat_entry));
 					if (i > 0)
 						stcp->reqid = nextreqid();
@@ -1638,7 +1646,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 								 stcp->actual_size,
 								 (float)(stcp->actual_size)/(1024.*1024.),
 								 stcp->nbaccesses);
-				if (api_out != 0) sendrep(rpfd, API_STCP_OUT, stcp);
+				if (api_out != 0) sendrep(rpfd, API_STCP_OUT, stcp, magic);
 				if (copytape)
 					sendinfo2cptape (rpfd, stcp);
 				if (*upath && strcmp (stcp->ipath, upath))
@@ -1677,7 +1685,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					nbdskf = i;
 					continue;	/* exit from the loop */
 				}
-				stcp = newreq ();
+				stcp = newreq (stgreq.t_or_d);
 				memcpy (stcp, &stgreq, sizeof(stgreq));
 				if (i > 0)
 					stcp->reqid = nextreqid();
@@ -1711,6 +1719,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 					wqp->concat_off_fseq = concat_off_fseq;
 #endif
 					wqp->api_out = api_out;
+					wqp->magic = magic;
 					wqp->uniqueid = stage_uniqueid;
 					wqp->silent = silent_flag;
 					if (nowait_flag != 0) {
@@ -1818,8 +1827,13 @@ void procioreq(req_type, magic, req_data, clienthost)
 				c = USERR;
 				goto reply;
 			}
-			stcp = newreq ();
+			stcp = newreq (stgreq.t_or_d);
 			memcpy (stcp, &stgreq, sizeof(stgreq));
+			/* memcpy overwritted the -1 default values */
+			if (stcp->t_or_d == 'h') {
+				stcp->u1.h.retenp_on_disk = -1;
+				stcp->u1.h.mintime_beforemigr = -1;
+			}
 			if (i > 0)
 				stcp->reqid = nextreqid();
 			else
@@ -1848,6 +1862,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 									Upluspath, reqid, req_type, nbdskf, &wfp, NULL, 
 									stcp->t_or_d == 't' ? stcp->u1.t.vid[0] : NULL, fseq, 0);
 					wqp->api_out = api_out;
+					wqp->magic = magic;
 					wqp->openflags = openflags;
 					wqp->openmode = openmode;
 					wqp->uniqueid = stage_uniqueid;
@@ -1894,7 +1909,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				}
 			}
 #endif
-			if (api_out != 0) sendrep(rpfd, API_STCP_OUT, stcp);
+			if (api_out != 0) sendrep(rpfd, API_STCP_OUT, stcp, magic);
 			break;
 		case STAGEWRT:
 			if ((p = findpoolname (upath)) != NULL) {
@@ -2243,13 +2258,18 @@ void procioreq(req_type, magic, req_data, clienthost)
 			if ((stgreq.t_or_d == 'h') && (stage_wrt_migration != 0)) {
 				struct stgcat_entry save_stcp = *stcp;
 				/* We copy sensible part of the structure */
-				stcp = newreq ();
+				stcp = newreq (stgreq.t_or_d);
 				memcpy (stcp, &stgreq, sizeof(stgreq));
                 /* Makes sure that it does not have keep thing */
 				COPY_SENSIBLE_STCP(stcp,&save_stcp);
 			} else {
-				stcp = newreq ();
+				stcp = newreq (stgreq.t_or_d);
 				memcpy (stcp, &stgreq, sizeof(stgreq));
+				/* memcpy overwritted the -1 default values */
+				if (stcp->t_or_d == 'h') {
+					stcp->u1.h.retenp_on_disk = -1;
+					stcp->u1.h.mintime_beforemigr = -1;
+				}
 			}
 			if (i > 0)
 				stcp->reqid = nextreqid();
@@ -2368,6 +2388,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 									(nohsmcreat_flag != 0) ? 1 : 0);
 					wqp->copytape = copytape;
 					wqp->api_out = api_out;
+					wqp->magic = magic;
 					wqp->uniqueid = stage_uniqueid;
 					wqp->silent = silent_flag;
 					if (nowait_flag != 0) {
@@ -2454,7 +2475,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				c = USERR;
 				goto reply;
 			}
-			stcp = newreq ();
+			stcp = newreq (stgreq.t_or_d);
 			memcpy (stcp, &stgreq, sizeof(stgreq));
 			if (i > 0)
 				stcp->reqid = nextreqid();
@@ -2478,7 +2499,7 @@ void procioreq(req_type, magic, req_data, clienthost)
 				stglogit (func, STG100, "insert", sstrerror(serrno), __FILE__, __LINE__);
 			}
 #endif
-			if (api_out != 0) sendrep(rpfd, API_STCP_OUT, stcp);
+			if (api_out != 0) sendrep(rpfd, API_STCP_OUT, stcp, magic);
 			break;
 		}
 	}
@@ -2963,6 +2984,7 @@ void procputreq(req_type, req_data, clienthost)
 					} else {
 						hsmfilesstcp[ihsmfiles]->status = STAGEPUT|CAN_BE_MIGR;
 					}
+					if (! had_put_failed) update_migpool(&(hsmfilesstcp[ihsmfiles]),1,4); /* Condition move DELAY -> CAN_BE_MIGR */
 					hsmfilesstcp[ihsmfiles]->a_time = time(NULL);
 					strcpy(hsmfilesstcp[ihsmfiles]->u1.h.tppool,tppool);
 					if (update_migpool(&(hsmfilesstcp[ihsmfiles]),1,had_put_failed ? 1 : 2) != 0) {
@@ -3175,6 +3197,7 @@ void procputreq(req_type, req_data, clienthost)
 					} else {
 						hsmfilesstcp[ihsmfiles]->status = STAGEPUT|CAN_BE_MIGR;
 					}
+					if (! had_put_failed) update_migpool(&(hsmfilesstcp[ihsmfiles]),1,4); /* Condition move DELAY -> CAN_BE_MIGR */
 					hsmfilesstcp[ihsmfiles]->a_time = time(NULL);
 					strcpy(hsmfilesstcp[ihsmfiles]->u1.h.tppool,tppool);
 					if (update_migpool(&(hsmfilesstcp[ihsmfiles]),1,had_put_failed ? 1 : 2) != 0) {
