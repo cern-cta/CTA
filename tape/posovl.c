@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
+ * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.24 $ $Date: 2001/06/18 05:43:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.25 $ $Date: 2002/04/08 14:36:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -55,15 +55,19 @@ char	**argv;
 	int cfseq;
 	int den;
 	char *dgn;
+	char *domainname;
 	char *drive;
+	char drive_serial_no[13];
 	char fid[CA_MAXFIDLEN+1];
 	int filstat;
 	int flags;
 	int fsec;
 	int fseq;
+	char *fsid;
 	char hdr1[LBLBUFSZ];
 	char hdr2[LBLBUFSZ];
 	int i;
+	char inq_data[29];
 	int lblcode;
 	int lrecl;
 	int method;
@@ -83,6 +87,7 @@ char	**argv;
 	char sendbuf[REQBUFSZ];
 	int sonyraw;
 	char tpfid[CA_MAXFIDLEN+1];
+	char uhl1[LBLBUFSZ];
 	int ux;
 	char *vid;
 	char vol1[LBLBUFSZ];
@@ -129,6 +134,8 @@ char	**argv;
 	lrecl = atoi (argv[28]);
 	den = atoi (argv[29]);
 	flags = atoi (argv[30]);
+	fsid = argv[31];
+	domainname = argv[32];
  
 #if _AIX
 	scsi = strncmp (dvrname, "mtdd", 4);
@@ -213,7 +220,7 @@ char	**argv;
 		}
 		if ((c = posittape (tapefd, path, devtype, lblcode, mode,
 		    &cfseq, fid, filstat, fsec, fseq, den, flags, Qfirst, Qlast,
-		    vol1, hdr1, hdr2)))
+		    vol1, hdr1, hdr2, uhl1)))
 			goto reply;
 		if (mode == WRITE_ENABLE)
 			if (c = read_pos (tapefd, path, blockid))
@@ -227,7 +234,7 @@ char	**argv;
 #if SACCT
 	tapeacct (TPPOSIT, uid, gid, jid, dgn, drive, vid, cfseq, 0);
 #endif
-	if (lblcode == AL || lblcode == SL) {
+	if (lblcode == AL || lblcode == AUL || lblcode == SL) {
 		if (filstat != NEW_FILE) {	/* set defaults from label */
 			if (fid[0] == '\0') {
 				strncpy (tpfid, hdr1 + 4, 17);
@@ -246,8 +253,16 @@ char	**argv;
 							recfm[1] = hdr2[38];
 					}
 				}
-				if (blksize == 0) sscanf (hdr2 + 5, "%5d", &blksize);
-				if (lrecl == 0) sscanf (hdr2 + 10, "%5d", &lrecl);
+				if (blksize == 0)
+					if (*uhl1)
+						sscanf (uhl1 + 14, "%10d", &blksize);
+					else
+						sscanf (hdr2 + 5, "%5d", &blksize);
+				if (lrecl == 0)
+					if (*uhl1)
+						sscanf (uhl1 + 24, "%10d", &lrecl);
+					else
+						sscanf (hdr2 + 10, "%5d", &lrecl);
 			}
 		} else {
 			if (fid[0] == '\0') {
@@ -308,27 +323,39 @@ char	**argv;
 	if ((c = send2tpd (NULL, sendbuf, msglen, NULL, 0)) == 0) {
 		sbp = repbuf;
 		marshall_LONG (sbp, cfseq);
-		if (lblcode == AL || lblcode == SL) {
+		if (lblcode == AL || lblcode == AUL || lblcode == SL) {
 			buildvollbl (vol1, vsn, lblcode, name);
 			if (mode == WRITE_DISABLE || filstat == APPEND)
 				for (i = 0; i < 80; i++)
 					actual_hdr1[i] = hdr1[i] ? hdr1[i] : ' ';
 			buildhdrlbl (hdr1, hdr2,
-				fid, fsec, cfseq, retentd,
+				fid, fsid, fsec, cfseq, retentd,
 				recfm, blksize, lrecl, den, lblcode);
 			if (mode == WRITE_ENABLE && filstat != APPEND)
 				memcpy (actual_hdr1, hdr1, 80);
 			vol1[80] = '\0';
 			actual_hdr1[80] = '\0';
 			hdr2[80] = '\0';
+			if (lblcode == AUL) {
+				inq_data[0] = '\0';
+				(void) inquiry (tapefd, path, inq_data);
+				drive_serial_no[0] = '\0';
+				(void) inquiry80 (tapefd, path, drive_serial_no);
+				builduhl (uhl1, cfseq, blksize, lrecl, domainname,
+				    hostname, inq_data, drive_serial_no);
+				uhl1[80] = '\0';
+			} else
+				uhl1[0] = '\0';
 		} else {
 			vol1[0] = '\0';
 			actual_hdr1[0] = '\0';
 			hdr2[0] = '\0';
+			uhl1[0] = '\0';
 		}
                 marshall_STRING (sbp, vol1);
                 marshall_STRING (sbp, actual_hdr1);
                 marshall_STRING (sbp, hdr2);
+		marshall_STRING (sbp, uhl1);
 		sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
 	} else
 		usrmsg (func, "%s", errbuf);
