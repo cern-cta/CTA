@@ -938,7 +938,9 @@ procupdreq(req_type, magic, req_data, clienthost)
 			/* of opening for different indexes */
 			if (wqp->last_rwcounterfs_index != callback_index) {
 				wqp->last_rwcounterfs_index = callback_index;
-				goto forced_rwcounters_tppos;
+				if (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) {
+					goto forced_rwcounters_tppos;
+				}
 			}
 		}
 		if (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) {
@@ -956,7 +958,9 @@ procupdreq(req_type, magic, req_data, clienthost)
 		/* of opening for different indexes */
 		if (wqp->last_rwcounterfs_index != callback_index) {
 			wqp->last_rwcounterfs_index = callback_index;
-			goto forced_rwcounters_filcp;
+			if (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) {
+				goto forced_rwcounters_filcp;
+			}
 		}
 	}
 	if (ISSTAGEWRT(stcp) || ISSTAGEPUT(stcp)) {
