@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.8 $ $Date: 2000/05/31 10:33:53 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.9 $ $Date: 2000/07/05 13:47:26 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	send_scsi_cmd - Send a SCSI command to a device */
@@ -187,7 +187,7 @@ struct scsi_info scsi_codmsg[] = {
 	SCSI_STATUS_RESERVATION_CONFLICT, "Reservation conflict",
 	0xFF,				 NULL
 };
-static char err_msgbuf[32];
+static char err_msgbuf[132];
 send_scsi_cmd (tapefd, path, do_not_open, cdb, cdblen, buffer, buflen, sense, senselen, timeout, flags, nb_sense_ret, msgaddr)
 int tapefd;
 char *path;
