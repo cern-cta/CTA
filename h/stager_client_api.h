@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.20 $ $Release$ $Date: 2005/02/01 16:37:40 $ $Author: bcouturi $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.21 $ $Release$ $Date: 2005/02/02 18:09:00 $ $Author: bcouturi $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.20 $
- * @date $Date: 2005/02/01 16:37:40 $
+ * @version $Revision: 1.21 $
+ * @date $Date: 2005/02/02 18:09:00 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.20 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.21 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -1137,7 +1137,8 @@ enum stage_fileStatus {
   FILE_STAGED=3,
   FILE_CANBEMIGR=4,
   FILE_WAITINGMIGR=5,
-  FILE_BEINGMIGR=6
+  FILE_BEINGMIGR=6,
+  FILE_PUTFAILED=7
 };
 
 /**

@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.12 2005/02/01 16:37:40 bcouturi Exp $
+ * $Id: stager_client_api_common.cpp,v 1.13 2005/02/02 18:09:33 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.12 $ $Date: 2005/02/01 16:37:40 $ CERN IT-ADC/CA Benjamin COuturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_common.cpp,v $ $Revision: 1.13 $ $Date: 2005/02/02 18:09:33 $ CERN IT-ADC/CA Benjamin COuturier";
 #endif
 
 /* ============== */
@@ -172,7 +172,7 @@ EXTERN_C char *stage_requestStatusName(int statusCode) {
   return ret;
 }
 
-#define NB_FILE_STATUS 7
+#define NB_FILE_STATUS 8
 static char* stage_fileStatusNameStr[NB_FILE_STATUS] = {
   "INVALID_STATUS",
   "STAGEOUT",
@@ -180,7 +180,8 @@ static char* stage_fileStatusNameStr[NB_FILE_STATUS] = {
   "STAGED",
   "CANBEMIGR",
   "WAITINGMIGR",
-  "BEINGMIGR"};
+  "BEINGMIGR",
+  "PUT_FAILED"};
 
 EXTERN_C char *stage_fileStatusName(int statusCode) {
   char *ret = STATUS_NA;
