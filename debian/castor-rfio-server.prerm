@@ -16,16 +16,17 @@ set -e
 # for details, see http://www.debian.org/doc/debian-policy/ or
 # the debian-policy package
 
+servicename=`basename $0 | sed 's/\..*//g'`
 
 case "$1" in
     remove)
 	[ -x /sbin/chkconfig ] && /sbin/chkconfig --del castor-rfio-server
 	if [ -x /sbin/service ]; then
-	    /sbin/service `basename $0` stop
+	    /sbin/service $servicename stop
 	elif [ -x /usr/sbin/invoke-rc.d ]; then
-	    /usr/sbin/invoke-rc.d `basename $0` stop || true
+	    /usr/sbin/invoke-rc.d $servicename stop || true
 	else
-	    /etc/init.d/`basename $0` stop
+	    /etc/init.d/$servicename stop
 	fi
 	;;
     upgrade|deconfigure)

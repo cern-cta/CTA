@@ -18,18 +18,20 @@ set -e
 # the debian-policy package
 
 
+servicename=`basename $0 | sed 's/\..*//g'`
+
 case "$1" in
        remove)
 
-	[ -x /sbin/chkconfig ] && /sbin/chkconfig --del `basename $0`
+	[ -x /sbin/chkconfig ] && /sbin/chkconfig --del $servicename
 
 	;;
 
        purge)
 
-	[ -x /sbin/chkconfig ] && /sbin/chkconfig --del `basename $0`
-	rm -f /etc/init.d/`basename $0`
-	[ -x /usr/sbin/update-rc.d ] && update-rc.d -f `basename $0` remove >/dev/null
+	[ -x /sbin/chkconfig ] && /sbin/chkconfig --del $servicename
+	rm -f /etc/init.d/$servicename
+	[ -x /usr/sbin/update-rc.d ] && update-rc.d -f $servicename remove >/dev/null
 	;;
 
        upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)

@@ -17,10 +17,12 @@ set -e
 # the debian-policy package
 #
 
+servicename=`basename $0 | sed 's/\..*//g'`
+
 case "$1" in
     configure)
 
-	[ -x /sbin/chkconfig ] && /sbin/chkconfig --add `basename $0`
+	[ -x /sbin/chkconfig ] && /sbin/chkconfig --add $servicename
 
 	if [ "$2" = "" ] ; then
 	    action="start"
@@ -28,11 +30,11 @@ case "$1" in
 	    action="restart"
 	fi
 	if [ -x /sbin/service ]; then
-	    /sbin/service `basename $0` $action
+	    /sbin/service $servicename $action
 	elif [ -x /usr/sbin/invoke-rc.d ]; then
-	    /usr/sbin/invoke-rc.d `basename $0` $action || true
+	    /usr/sbin/invoke-rc.d $servicename $action || true
 	else
-	    /etc/init.d/`basename $0` $action
+	    /etc/init.d/$servicename $action
 	fi
 
     ;;
@@ -43,11 +45,11 @@ case "$1" in
 
     abort-remove)
 	if [ -x /sbin/service ]; then
-	    /sbin/service `basename $0` start
+	    /sbin/service $servicename start
 	elif [ -x /usr/sbin/invoke-rc.d ]; then
-	    /usr/sbin/invoke-rc.d `basename $0` start || true
+	    /usr/sbin/invoke-rc.d $servicename start || true
 	else
-	    /etc/init.d/`basename $0` start
+	    /etc/init.d/$servicename start
 	fi
 
     ;;
