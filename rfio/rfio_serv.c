@@ -99,6 +99,7 @@ const char KeyTabFile[] = RFIO_KEYTAB;
 Csec_context_t ctx;
 int peer_uid;
 int peer_gid;
+int Csec_service_type;
 #endif
 
 extern char     *getconfent();
@@ -930,28 +931,37 @@ char tmpbuf[21], tmpbuf2[21];
 
    if (Csec_server_init_context(&ctx, CSEC_SERVICE_TYPE_DISK, NULL)<0) {
      log(LOG_ERR, "Could not initailize context: %s\n", Csec_geterrmsg()); 
+     closesocket(s);
      exit(1);
    }
 
    if (Csec_server_establish_context(&ctx, s)<0) {
      log(LOG_ERR, "Could not establish context: %s\n", Csec_geterrmsg());
+     closesocket(s);
      exit(1);
    }
    
   /*  sleep(30); */
 
    log(LOG_INFO, "The client principal is: %s\n", ctx.peer_name);
-
-   username = (char *)Csec_server_get_client_username(&ctx, &peer_uid, &peer_gid);
-
-   if (username == NULL) {
-     log(LOG_ERR,"Could not map user %s !\n", ctx.peer_name);
-     exit(1);
-   } else {
-     log(LOG_INFO, "User is is %s (%d/%d) !\n", username, peer_uid, peer_gid);
+   /* Connection could be done from another castor service */
+   if ((Csec_service_type = Csec_server_is_castor_service(&ctx)) >= 0) {
+     log(LOG_INFO, "CSEC: Client is castor service type: %d\n", Csec_service_type);
    }
-
-
+   else {
+     if ((username = Csec_server_get_client_username(&ctx, &peer_uid, &peer_gid)) != NULL) {
+       log(LOG_INFO, "CSEC: Client is %s (%d/%d)\n",
+		 username,
+		 peer_uid,
+		 peer_gid);
+       Csec_service_type = -1;
+     }
+     else {
+       log(LOG_ERR, "CSEC: Could not map user %s\n", ctx.peer_name);
+       closesocket(s);
+       exit(1);
+     }
+   }
  }
 #endif
 
