@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.54 $ $Date: 2004/02/12 15:59:07 $ CERN IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.55 $ $Date: 2004/08/02 10:37:11 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -103,7 +103,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
     char newpath[CA_MAXPATHLEN+1];
     char recfm[10];   /* Record format (could include ,bin or ,-f77) */
     u_signed64 nb_bytes;
-    int retry = 0;
+    int retry = 0, tpPosCalled = 0;
 
     if ( tape == NULL || file == NULL ) {
         serrno = EINVAL;
@@ -169,6 +169,7 @@ int rtcpd_stageupdc(tape_list_t *tape,
                      (void)rtcpd_LockForTpPos(0);
                  return(0);
             }
+            tpPosCalled = 1;
 
             rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() stage_updc_tppos(%s,%d,%d,%d,%s,%s,%d,%d,%s,%s)\n",
                      filereq->stageID,
@@ -411,9 +412,10 @@ int rtcpd_stageupdc(tape_list_t *tape,
             serrno = save_serrno;
             return(-1);
         }
-        if ( *newpath == '\0' && tapereq->mode == WRITE_DISABLE &&
-             filereq->proc_status == RTCP_POSITIONED &&
-             strcmp(filereq->file_path,".") == 0 ) {
+        if ( (tpPosCalled == 1) && 
+             (*newpath == '\0') && (tapereq->mode == WRITE_DISABLE) &&
+             (filereq->proc_status == RTCP_POSITIONED) &&
+             (strcmp(filereq->file_path,".") == 0) ) {
             if ( save_serrno == 0 ) save_serrno = SEINTERNAL;
             rtcpd_AppendClientMsg(NULL,file,
                                   "stageupdc failed, no path returned\n");
