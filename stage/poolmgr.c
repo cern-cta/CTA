@@ -1,5 +1,5 @@
 /*
- * $Id: poolmgr.c,v 1.117 2001/03/24 00:22:27 jdurand Exp $
+ * $Id: poolmgr.c,v 1.118 2001/03/24 02:18:15 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.117 $ $Date: 2001/03/24 00:22:27 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: poolmgr.c,v $ $Revision: 1.118 $ $Date: 2001/03/24 02:18:15 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -3919,10 +3919,12 @@ void nextpool_out(nextout)
   } else {
     char *p2;
 
-    /* If curent pool is not migrating, we still return it */
+    /* If current pool is not migrating, we still return it unless it is also the input */
     if (ispoolmigrating(currentpool_out) == 0) {
-      strcpy(nextout, currentpool_out);
-      return;
+      if (strcmp(nextout, currentpool_out) != 0) {
+        strcpy(nextout, currentpool_out);
+        return;
+      }
     }
     /* We return the next one in the list */
     if ((p = strstr(defpoolname_out, currentpool_out)) == NULL) {
