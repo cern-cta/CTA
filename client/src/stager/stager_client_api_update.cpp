@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_update.cpp,v 1.2 2004/12/10 08:47:01 bcouturi Exp $
+ * $Id: stager_client_api_update.cpp,v 1.3 2005/01/17 10:42:27 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_update.cpp,v $ $Revision: 1.2 $ $Date: 2004/12/10 08:47:01 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_update.cpp,v $ $Revision: 1.3 $ $Date: 2005/01/17 10:42:27 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -74,8 +74,14 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate(const char *userTag,
     castor::client::BaseClient client;
     castor::stager::StagePrepareToUpdateRequest req;
 
-    std::string suserTag(userTag);
-    req.setUserTag(suserTag);
+    // Setting the service class
+    if (0 != opts && opts->service_class != 0) {
+      req.setSvcClassName(std::string(opts->service_class));
+    }
+
+   if (0 != userTag) {
+      req.setUserTag(std::string(userTag));
+    }    
     
     // Preparing the requests
     for(int i=0; i<nbreqs; i++) {
@@ -190,6 +196,11 @@ EXTERN_C int DLL_DECL stage_update(const char *userTag,
 
     if (0 != userTag) {
       req.setUserTag(std::string(userTag));
+    }
+
+    // Setting the service class
+    if (0 != opts && opts->service_class != 0) {
+      req.setSvcClassName(std::string(opts->service_class));
     }
 
     if (0 != protocol) {

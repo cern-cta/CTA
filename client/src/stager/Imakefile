@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC/CA
 COMM  All rights reserved
 COMM
-COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.24 $ $Date: 2005/01/11 07:50:24 $ CERN IT-ADC/CA Jean-Damien Durand
+COMM  @(#)$RCSfile: Imakefile,v $ $Revision: 1.25 $ $Date: 2005/01/17 10:42:27 $ CERN IT-ADC/CA Jean-Damien Durand
 
 COMM 	Make stager daemon programs.
 
@@ -134,7 +134,14 @@ STAGERLIB_OBJS = \
 STAGELIBTARGET=LibraryTargetName(stager)
 #endif
 
-all: $(STAGELIBTARGET) $(PROGS_STAGER)
+#if BuildStageClient
+PROGS_STAGERCLIENT=ProgramTargetName(stagein)
+IPROGS_STAGERCLIENT = FileName($(BIN),ProgramTargetName(stagein)) 
+EPROGS_STAGERCLIENT = FileName($(EXPORTBIN),stagein) 
+#endif
+
+
+all: $(STAGELIBTARGET) $(PROGS_STAGER) $(PROGS_STAGERCLIENT)
 
 NormalProgramTarget(stager,$(STAGER_OBJS),$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 NormalProgramTarget(stagerNotifyService,stagerNotifyService.Osuf,$(DEPLIB),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
@@ -155,7 +162,7 @@ MakeDepSharedLibrary(shlib,castorCommonOra)
 
 NormalLibraryTarget(stager,$(STAGERLIB_OBJS))
 
-install: $(BIN) $(IPROGS_STAGER) $(SPOOL)
+install: $(BIN) $(IPROGS_STAGER) $(IPROGS_STAGERCLIENT) $(SPOOL)
 
 InstallProgram(stager,$(BIN),root,bin,0750)
 InstallProgram(stageradmin,$(BIN),root,bin,0750)
@@ -165,7 +172,7 @@ install.man: $(MANDIR) $(MANPAGES_STAGER)
 IMANPAGE(stager,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(stageradmin,$(MANDIR),$(MANSUFFIX))
 
-export: $(EPROGS_STAGER)
+export: $(EPROGS_STAGER) $(EPROGS_STAGERCLIENT)
 
 IEXPORT(stager,$(EXPORTBIN),755)
 IEXPORT(stageradmin,$(EXPORTBIN),755)

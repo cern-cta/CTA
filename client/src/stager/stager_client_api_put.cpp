@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.13 2004/12/15 21:39:02 bcouturi Exp $
+ * $Id: stager_client_api_put.cpp,v 1.14 2005/01/17 10:42:27 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.13 $ $Date: 2004/12/15 21:39:02 $ CERN IT-ADC/CA Benjamin Couturier";
+static char *sccsid = "@(#)$RCSfile: stager_client_api_put.cpp,v $ $Revision: 1.14 $ $Date: 2005/01/17 10:42:27 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif
 
 /* ============== */
@@ -76,6 +76,11 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client;
     castor::stager::StagePrepareToPutRequest req;
+
+    // Setting the service class
+    if (0 != opts && opts->service_class != 0) {
+      req.setSvcClassName(std::string(opts->service_class));
+    }
 
     if (0 != userTag) {
       req.setUserTag(std::string(userTag));
@@ -194,6 +199,11 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
     castor::stager::StagePutRequest req;
     castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
 
+    // Setting the service class
+    if (0 != opts && opts->service_class != 0) {
+      req.setSvcClassName(std::string(opts->service_class));
+    }
+
     if (0 != userTag) {
       req.setUserTag(std::string(userTag));
     }
@@ -309,6 +319,11 @@ EXTERN_C int DLL_DECL stage_putDone(struct stage_filereq *requests,
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client;
     castor::stager::StagePutDoneRequest req;
+
+    // Setting the service class
+    if (0 != opts && opts->service_class != 0) {
+      req.setSvcClassName(std::string(opts->service_class));
+    }
 
     // Setting the mask on the request
     mode_t mask;
