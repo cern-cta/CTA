@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_callhandlers.c,v 1.2 2005/01/24 16:21:51 bcouturi Exp $
+ * $Id: rfio_callhandlers.c,v 1.3 2005/01/24 16:23:25 bcouturi Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_callhandlers.c,v $ $Revision: 1.2 $ $Date: 2005/01/24 16:21:51 $ CERN IT-ADC/CA Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: rfio_callhandlers.c,v $ $Revision: 1.3 $ $Date: 2005/01/24 16:23:25 $ CERN IT-ADC/CA Benjamin Couturier";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -25,17 +25,14 @@ int rfio_handle_open(const char *lfn,
 
   *ctx = (void *)strdup(lfn);
   *pfn = (char *)strdup(lfn);
-  printf("===> Opening %s/%d/%d by %d/%d\n", lfn, flags, mode, uid,gid);
-
   return 0;
 }
 
 int rfio_handle_firstwrite(void *ctx) {
-  printf("===> First write %s\n", (char *)ctx);
+
 }
 
 int rfio_handle_close(void *ctx,
 		      struct stat *filestat,
 		      int close_status) {
-  printf("===> Close %s size:%d\n", (char *)ctx, filestat->st_size);
 }
