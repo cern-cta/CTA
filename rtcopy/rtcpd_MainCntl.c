@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.91 $ $Date: 2004/02/12 15:59:07 $ CERN-IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.92 $ $Date: 2004/05/11 12:25:28 $ CERN-IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -1674,8 +1674,9 @@ int rtcpd_GetRequestList(SOCKET *client_socket,
             if ( startFile != NULL ) {
                 rc = rtcpd_CheckFileReq(nextfile);
                 if ( rc == -1 ) {
+                    save_serrno = serrno;
                     rtcp_log(LOG_ERR,"rtcpd_GetRequestList() rtcpd_CheckFileReq(): %s\n",
-                        sstrerror(errno));
+                        sstrerror(save_serrno));
                     /*
                      * We cannot break here because the client is in a loop
                      * sending us new requests. We first have to receive all requests
