@@ -252,12 +252,13 @@ void *arg;
 	int req_type = 0;
 	struct Cns_srv_thread_info *thip = (struct Cns_srv_thread_info *) arg;
 
-	
+#ifdef CSEC
 	Csec_server_reinit_context(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
 	if (Csec_server_establish_context(&(thip->sec_ctx),thip->s) < 0) {
 	  nslogit(func, "Could not establish context: %s !\n", Csec_geterrmsg());
 	  return -1;
 	}
+#endif
 
 	if ((c = getreq (thip->s, &magic, &req_type, req_data, &clienthost)) == 0)
 		procreq (magic, req_type, req_data, clienthost, thip);
