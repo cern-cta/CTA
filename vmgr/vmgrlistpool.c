@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlistpool.c,v $ $Revision: 1.1 $ $Date: 2000/03/10 12:45:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgrlistpool.c,v $ $Revision: 1.2 $ $Date: 2000/03/10 13:12:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	vmgrlistpool - query a given pool or list all existing tape pools */
@@ -22,7 +22,6 @@ int argc;
 char **argv;
 {
 	int c;
-	char *dp;
 	int errflg = 0;
 	gid_t pool_gid = 0;
 	char *pool_name = NULL;
