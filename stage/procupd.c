@@ -1,5 +1,5 @@
 /*
- * $Id: procupd.c,v 1.89 2001/12/20 11:46:17 jdurand Exp $
+ * $Id: procupd.c,v 1.90 2001/12/20 13:25:25 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.89 $ $Date: 2001/12/20 11:46:17 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procupd.c,v $ $Revision: 1.90 $ $Date: 2001/12/20 13:25:25 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -91,6 +91,7 @@ extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
 extern char *findpoolname _PROTO((char *));
 extern u_signed64 findblocksize _PROTO((char *));
+extern int findfs _PROTO((char *, char **, char **));
 
 #define IS_RC_OK(rc) (rc == 0)
 #define IS_RC_WARNING(rc) (rc == LIMBYSZ || rc == BLKSKPD || rc == TPE_LSZ || (rc == MNYPARI && (stcp->u1.t.E_Tflags & KEEPFILE)))
@@ -389,6 +390,10 @@ procupdreq(req_type, magic, req_data, clienthost)
 				struct stgcat_entry stgreq;
 				char save_fseq[CA_MAXFSEQLEN+1];
 				char *fseq = NULL;
+				char *found_server;
+				char *found_dirpath;
+				char *new_server;
+				char *new_dirpath;
 
 				found = 0;
 				for (stpp = stps; stpp < stpe; stpp++) {
@@ -424,6 +429,15 @@ procupdreq(req_type, magic, req_data, clienthost)
 				/* So we now end up in the case where we simulate a stageout on */
 				/* an entry that is already in stageout */
 
+				/* We look if this entry is known to the stagein pool */
+				if ((findfs(stcp->ipath,&found_server,&found_dirpath) != 0) ||
+					(found_server == NULL) || (found_dirpath == NULL)) {
+					/* Strange - seems to not be in a known fs or a known pool - this is not legal */
+					sendrep (rpfd, MSG_ERR, STG166, stcp->ipath);
+					c = USERR;
+					goto reply;
+				}
+
 				/* We decrement the r/w counter on this file system */
 				rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
 
@@ -441,17 +455,15 @@ procupdreq(req_type, magic, req_data, clienthost)
 				} else {
 					save_fseq[0] = '\0';
 				}
-				if ((stcp->t_or_d != 't') || (stcp->u1.t.fseq[0] != 'n')) {
-					if (strcmp (user, stcp->user)) {
-						sendrep (rpfd, MSG_ERR, STG37);
-						c = USERR;
-						goto reply;
-					}
-					if (delfile (stcp, 1, 1, 1, "no more space", uid, gid, 0, 0) < 0) {
-						sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
-						c = SYERR;
-						goto reply;
-					}
+				if (strcmp (user, stcp->user)) {
+					sendrep (rpfd, MSG_ERR, STG37);
+					c = USERR;
+					goto reply;
+				}
+				if (delfile (stcp, 1, 1, 1, "no more space", uid, gid, 0, 0) < 0) {
+					sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+					c = SYERR;
+					goto reply;
 				}
 				stcp = newreq((int) stgreq.t_or_d);
 				memcpy (stcp, &stgreq, sizeof(stgreq));
@@ -505,11 +517,42 @@ procupdreq(req_type, magic, req_data, clienthost)
 					goto reply;
 				} else {
 					/* Space successfully allocated - Here c == 0 per construction */
+
+					/* We neverthless check if the selected filesystem is the same as on which there was an ENOSPC */
+					/* In such a case we prefer to go back to usual processing */
+					if ((findfs(stcp->ipath,&new_server,&new_dirpath) != 0) ||
+						(new_server == NULL) || (new_dirpath == NULL)) {
+						/* Strange - seems to not be in a known fs or a known pool - this is impossible */
+						sendrep (rpfd, MSG_ERR, STG166, stcp->ipath);
+						if (delfile (stcp, 1, 1, 1, "same [server,fs] selected", uid, gid, 0, 0) < 0) {
+							sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+						}
+						c = SYERR;
+						goto reply;
+					}
+
+					/* We check if we ever selected again the same filesystem... */
+					/* There is a time-window that give you the right to say: */
+					/* Within the time ENOSPC was reached and the time stgdaemon */
+					/* processes the ENOSPC, some data could have been freed on the */
+					/* filesystem. Yes. I think neverthless this time is small */
+					/* enough so that not taking it into account gives good behaviour */
+					/* in > 95% of the cases - at least in the CASTOR framework */
+					if ((strcmp(found_server,new_server) == 0) && (strcmp(found_dirpath,new_dirpath) == 0)) {
+						/* Same server - same filesystem */
+						sendrep (rpfd, MSG_ERR, STG167, stcp->ipath);
+						if (delfile (stcp, 1, 1, 1, "same [server,fs] selected", uid, gid, 0, 0) < 0) {
+							sendrep (rpfd, MSG_ERR, STG02, stcp->ipath, RFIO_UNLINK_FUNC(stcp->ipath), rfio_serror());
+							c = SYERR;
+						} else {
+							c = ENOSPC;
+						}
+						goto reply;
+					}
 					if (api_out) sendrep(rpfd, API_STCP_OUT, stcp, magic);
 					sendrep (rpfd, MSG_OUT, "%s", stcp->ipath);
 					/* We increment r/w counter on this new file system */
 					rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
-					/* wqp->status = 0; */
 				}
 			} else if ((req_type == STAGE_UPDC) && (cflag || oflag || Cflag || Oflag)) {
 				struct stgpath_entry *stpp;
