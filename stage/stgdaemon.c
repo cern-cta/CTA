@@ -1,5 +1,5 @@
 /*
- * $Id: stgdaemon.c,v 1.187 2002/04/19 10:01:55 jdurand Exp $
+ * $Id: stgdaemon.c,v 1.188 2002/04/30 13:14:16 jdurand Exp $
  */
 
 /*
@@ -17,7 +17,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.187 $ $Date: 2002/04/19 10:01:55 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: stgdaemon.c,v $ $Revision: 1.188 $ $Date: 2002/04/30 13:14:16 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -233,7 +233,7 @@ int add2otherwf _PROTO((struct waitq *, char *, struct waitf *, struct waitf *))
 extern int update_migpool _PROTO((struct stgcat_entry **, int, int));
 extern int iscleanovl _PROTO((int, int));
 extern int ismigovl _PROTO((int, int));
-extern int selectfs _PROTO((char *, int *, char *, int, int));
+extern int selectfs _PROTO((char *, u_signed64 *, char *, int, int));
 extern int updfreespace _PROTO((char *, char *, int, u_signed64 *, signed64));
 extern void procupdreq _PROTO((int, int, char *, char *));
 struct waitq *add2wq _PROTO((char *, char *, uid_t, gid_t, char *, char *, uid_t, gid_t, int, int, int, int, int, struct waitf **, int **, char *, char *, int));
@@ -263,6 +263,7 @@ extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern u_signed64 findblocksize _PROTO((char *));
 extern int stageput_check_hsm _PROTO((struct stgcat_entry *, uid_t, gid_t, int, int *, struct Cns_filestat *));
 extern char *findpoolname _PROTO((char *));
+extern int rc_shift2castor _PROTO((int,int));
 
 /* Function with variable list of arguments - defined as in non-_STDC_ to avoir proto problem */
 extern int stglogit _PROTO(());
@@ -775,7 +776,7 @@ int main(argc,argv)
 				actual_size_block = stcp->actual_size;
 			}
 			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
-						(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB));
+						(signed64) ((signed64) actual_size_block - (signed64) stcp->size));
 			rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, stcp->status);
 			stcp++;
 		} else if (stcp->status == (STAGEIN|STAGED|STAGE_RDONLY)) {
@@ -873,7 +874,7 @@ int main(argc,argv)
 						actual_size_block = stcp->actual_size;
 					}
 					updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
-							(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB));
+							(signed64) ((signed64) actual_size_block - (signed64) stcp->size));
 				}
 			}
 			if (c != 0) {
@@ -932,11 +933,7 @@ int main(argc,argv)
 				rbp = req_hdr;
 				unmarshall_LONG (rbp, magic);
 
-				if ((magic != STGMAGIC) && (magic != STGMAGIC2) && (magic != STGMAGIC3)
-#ifdef STAGER_SIDE_SERVER_SUPPORT
-					&& (magic != STGMAGIC4)
-#endif
-					) {
+				if ((magic != STGMAGIC) && (magic != STGMAGIC2) && (magic != STGMAGIC3) && (magic != STGMAGIC4)) {
 					stglogit(func, STG141, (unsigned long) magic);
 					close(rqfd);
 					goto endreq;
@@ -971,21 +968,13 @@ int main(argc,argv)
 							goto endreq;
 						}
 					}
-					if ((req_type == STAGE_UPDC) && (magic != STGMAGIC2) && (magic != STGMAGIC3)
-#ifdef STAGER_SIDE_SERVER_SUPPORT
-						&& (magic != STGMAGIC4)
-#endif
-						) {
+					if ((req_type == STAGE_UPDC) && (magic != STGMAGIC2) && (magic != STGMAGIC3) && (magic != STGMAGIC4)) {
 						/* The API of stage_updc only exist with magic number version >= 2 */
 						stglogit(func, STG141, (unsigned long) magic);
 						close(rqfd);
 						goto endreq;
 					}
-					if ((req_type == STAGE_CLR) && (magic != STGMAGIC2) && (magic != STGMAGIC3)
-#ifdef STAGER_SIDE_SERVER_SUPPORT
-						&& (magic != STGMAGIC4)
-#endif
-						) {
+					if ((req_type == STAGE_CLR) && (magic != STGMAGIC2) && (magic != STGMAGIC3) && (magic != STGMAGIC4)) {
 						/* The API of stage_clr only exist with magic number version >= 2 */
 						stglogit(func, STG141, (unsigned long) magic);
 						close(rqfd);
@@ -1357,7 +1346,7 @@ add2wq (clienthost, req_user, req_uid, req_gid, rtcp_user, rtcp_group, rtcp_uid,
 		 int use_subreqid;
 {
 	/* add request to the wait queue */
-	struct waitq *prev, *wqp;
+	struct waitq *prev = NULL, *wqp;
 
 	wqp = waitqp;
 	while (wqp) {
@@ -1560,7 +1549,7 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 			stcp->ipath[0] = '\0';
 			serrno = SENAMETOOLONG;
 			sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
-			return(EINVAL);
+			return(serrno);
 		}
 		strcpy (stcp->ipath, upath);
 		return (0);
@@ -1568,7 +1557,7 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 
 	/* allocate space */
 
-	if (selectfs (stcp->poolname, &stcp->size, stcp->ipath, stcp->status, noallocation) < 0) {
+	if (selectfs (stcp->poolname, &(stcp->size), stcp->ipath, stcp->status, noallocation) < 0) {
 		stcp->ipath[0] = '\0';
 		return (-1);	/* not enough space */
 	}
@@ -1576,53 +1565,54 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 	/* build full internal path name */
 
 	if ((strlen(stcp->ipath) + 1 + strlen(stcp->group)) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
-		stcp->ipath[0] = '\0';
 		serrno = SENAMETOOLONG;
 		sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
-		return(EINVAL);
+		updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
+		stcp->ipath[0] = '\0';
+		return(serrno);
 	}
 	sprintf (stcp->ipath+strlen(stcp->ipath), "/%s", stcp->group);
 
 	p_u = stcp->ipath + strlen (stcp->ipath);
 	if ((strlen(stcp->ipath) + 1 + strlen(pool_user)) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
-		stcp->ipath[0] = '\0';
 		serrno = SENAMETOOLONG;
 		sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
-		return(EINVAL);
+		updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
+		stcp->ipath[0] = '\0';
+		return(serrno);
 	}
 	sprintf (p_u, "/%s", pool_user);
 
 	p_f = stcp->ipath + strlen (stcp->ipath);
 	if (stcp->t_or_d == 't') {
 		if (*(stcp->u1.t.fseq) != 'n') {
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 			if (stcp->u1.t.side > 0) {
 				if ((strlen(stcp->ipath) + 1 + strlen(stcp->u1.t.vid[0]) + 1 + stg_count_digits(stcp->u1.t.side,10) + 1 + strlen(stcp->u1.t.fseq) + 1 + strlen(stcp->u1.t.lbl)) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
-					stcp->ipath[0] = '\0';
 					serrno = SENAMETOOLONG;
 					sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
-					return(EINVAL);
+					updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
+					stcp->ipath[0] = '\0';
+					return(serrno);
 				}
 				sprintf (p_f, "/%s.%d.%s.%s", stcp->u1.t.vid[0], stcp->u1.t.side, stcp->u1.t.fseq, stcp->u1.t.lbl);
 			} else {
 				/* Backward compatiblity */
-#endif
 				if ((strlen(stcp->ipath) + 1 + strlen(stcp->u1.t.vid[0]) + 1 + strlen(stcp->u1.t.fseq) + 1 + strlen(stcp->u1.t.lbl)) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
-					stcp->ipath[0] = '\0';
 					serrno = SENAMETOOLONG;
 					sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
-					return(EINVAL);
+					updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
+					stcp->ipath[0] = '\0';
+					return(serrno);
 				}
 				sprintf (p_f, "/%s.%s.%s", stcp->u1.t.vid[0], stcp->u1.t.fseq, stcp->u1.t.lbl);
-#ifdef STAGER_SIDE_SERVER_SUPPORT
 			}
-#endif
 		} else {
 			if ((strlen(stcp->ipath) + 1 + strlen(stcp->u1.t.vid[0]) + 1 + strlen(stcp->u1.t.fseq) + 1 + strlen(stcp->u1.t.lbl) + 1 + stg_count_digits(stcp->reqid,10)) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
-				stcp->ipath[0] = '\0';
 				serrno = SENAMETOOLONG;
 				sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
-				return(EINVAL);
+				updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
+				stcp->ipath[0] = '\0';
+				return(serrno);
 			}
 			sprintf (p_f, "/%s.%s.%s.%d", stcp->u1.t.vid[0], stcp->u1.t.fseq, stcp->u1.t.lbl, stcp->reqid);
 		}
@@ -1633,10 +1623,11 @@ int build_ipath(upath, stcp, pool_user, noallocation)
 			p++;
 		}
 		if ((strlen(stcp->ipath) + 1 + strlen(p) + 1 + stg_count_digits(stcp->reqid,10)) > (CA_MAXHOSTNAMELEN+MAXPATH)) {
-			stcp->ipath[0] = '\0';
 			serrno = SENAMETOOLONG;
 			sendrep (rpfd, MSG_ERR, STG33, "build_ipath", sstrerror(serrno));
-			return(EINVAL);
+			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) stcp->size);
+			stcp->ipath[0] = '\0';
+			return(serrno);
 		}
 		sprintf (p_f, "/%s.%d", p, stcp->reqid);
 	}
@@ -2139,6 +2130,7 @@ check_waiting_on_req(subreqid, state)
 	struct stgcat_entry *stcp, *stcp_check;
 	struct waitf *wfp;
 	struct waitq *wqp;
+	char tmpbuf[21];
 
 	found = 0;
 	firstreqid = 0;
@@ -2180,7 +2172,7 @@ check_waiting_on_req(subreqid, state)
 #endif
 				sendrep (rpfd, RTCOPY_OUT, STG96,
 								 strrchr (stcp->ipath, '/')+1,
-								 stcp->actual_size,
+								 u64tostr(stcp->actual_size,tmpbuf,0),
 								 (float)(stcp->actual_size)/(1024.*1024.),
 								 stcp->nbaccesses);
 				if (wqp->api_out) sendrep(wqp->rpfd, API_STCP_OUT, stcp, wqp->magic);
@@ -2668,7 +2660,7 @@ void create_link(stcp, upath)
 	char lpath[CA_MAXHOSTNAMELEN + 1 + MAXPATH];
 	struct stgpath_entry *newpath();
 	struct stgpath_entry *stpp;
-	int found_reqid;
+	int found_reqid = 0;
 
 	found = 0;
 	for (stpp = stps; stpp < stpe; stpp++) {
@@ -2732,7 +2724,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 	struct stgpath_entry *stpp;
 	int found = 0;
 	struct stgcat_entry *stcp_perhaps_stagein = NULL;
-	u_signed64 actual_size_block;
+	u_signed64 actual_size_block = 0;
 
 	if (stcp->ipath[0]) {
 		/* Is there any other entry pointing at the same disk file?
@@ -2815,7 +2807,7 @@ int delfile(stcp, freersv, dellinks, delreqflg, by, byuid, bygid, remove_hsm, al
 				update_migpool(&stcp,-1,0);
 			}
 			updfreespace (stcp->poolname, stcp->ipath, 0, NULL, (signed64) ((freersv) ?
-						((signed64) stcp->size * (signed64) ONE_MB) : ((signed64) actual_size_block)));
+						(signed64) (stcp->size) : ((signed64) actual_size_block)));
 		} else {
 			/* We neverthless take into account the migration counters */
 			if ((((stcp->status & (STAGEPUT|CAN_BE_MIGR)) == (STAGEPUT|CAN_BE_MIGR)) && ((stcp->status & PUT_FAILED) != PUT_FAILED)) ||
@@ -3040,7 +3032,7 @@ void delreqid(thisreqid,nodb_delete_flag)
 int fork_exec_stager(wqp)
 		 struct waitq *wqp;
 {
-	char arg_Aflag[2], arg_silent[2], arg_use_subreqid[2], t_or_d;
+	char arg_Aflag[2], arg_silent[2], arg_use_subreqid[2], t_or_d = 0;
 	char arg_key[6], arg_nbsubreqs[7], arg_reqid[7], arg_nretry[3], arg_rpfd[3], arg_concat_off_fseq[CA_MAXFSEQLEN + 1];
 	char arg_api_flag[2];      /* Flag telling if this is an API call or not */
 	char arg_api_flags[21];    /* Flag giving the API flags themselves */
@@ -3246,8 +3238,8 @@ int fork_exec_stager(wqp)
 		for (i = 0, wfp = wqp->wf; i < wqp->nbdskf; i++, wfp++) {
 			char save_user[CA_MAXUSRNAMELEN+1];
 			char save_group[CA_MAXUSRNAMELEN+1];
-			uid_t save_uid;
-			gid_t save_gid;
+			uid_t save_uid = 0;
+			gid_t save_gid = 0;
 
 			if (wfp->waiting_on_req > 0) continue;
 			if (wfp->waiting_on_req < 0) wfp->waiting_on_req = 0;
@@ -3601,7 +3593,7 @@ int upd_stageout(req_type, upath, subreqid, can_be_migr_flag, forced_stcp, was_p
 			actual_size_block = stcp->actual_size;
 		}
 		updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
-						(signed64) ((signed64) stcp->size * (signed64) ONE_MB - (signed64) actual_size_block));
+						(signed64) ((signed64) stcp->size - (signed64) actual_size_block));
 		rwcountersfs(stcp->poolname, stcp->ipath, stcp->status, STAGEUPDC);
 	}
 	if (req_type == STAGEPUT) {
@@ -3727,25 +3719,26 @@ int upd_staged(upath)
 #endif
 	/* We instruct updfreespace() that we reject overflow */
 	if (updfreespace (stcp->poolname, stcp->ipath, 1, (u_signed64 *) &elemp_free, 
-					  (signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB)) != 0) {
+					  (signed64) ((signed64) actual_size_block - (signed64) stcp->size)) != 0) {
 		u_signed64 elemp_free_plus_blocks;
 		int sav_stcp_size = stcp->size;
+		char tmpbuf1[21], tmpbuf2[21];
 
 		/* There is overflow - this mean that incrementing elemp->free and pool_p->free by */
-		/* (actual_size_block - stcp->size * ONE_MB) would have make free space > capacity... */
+		/* (actual_size_block - stcp->size) would have make free space > capacity... */
 		/* We give it another try by reajusting stcp->size to the exact value v.s. elemp_free */
-		/* We have to make sure that elemp_free + (actual_size_block - stcp->size * ONE_MB) >= 0 */
-		/* e.g. stcp->size * ONE_MB <= elemp_free + actual_size_block */
+		/* We have to make sure that elemp_free + (actual_size_block - stcp->size) >= 0 */
+		/* e.g. stcp->size <= elemp_free + actual_size_block */
 		elemp_free_plus_blocks = elemp_free + actual_size_block;
 
 		/* The following have to underestimate as less as possible the size */
 		/* Note that in rfio/rfcp.c there is almost the same line, but then there is a +1 to overestimate */
 		/* as less as possible the size...! */
-		stcp->size = (int) ((elemp_free_plus_blocks > ONE_MB) ? (((elemp_free_plus_blocks - ((elemp_free_plus_blocks / ONE_MB) * ONE_MB)) == 0) ? (elemp_free_plus_blocks / ONE_MB) : ((elemp_free / ONE_MB))) : 0);
-		sendrep (rpfd, MSG_ERR, "STG02 - %s : Filesystem too low in space, underestimating initial allocated size from %dM to %dM\n",  stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile, sav_stcp_size, stcp->size);
+		stcp->size = elemp_free_plus_blocks;
+		sendrep (rpfd, MSG_ERR, "STG02 - %s : Filesystem too low in space, underestimating initial allocated size from %s to %s\n",  stcp->t_or_d == 'm' ? stcp->u1.m.xfile : stcp->u1.h.xfile, u64tostru(sav_stcp_size,tmpbuf1,0), u64tostru(stcp->size,tmpbuf2,0));
 		/* Give it another try, then allowing overflow in order to allow user to continue */
 		updfreespace (stcp->poolname, stcp->ipath, 0, NULL, 
-					  (signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB));
+					  (signed64) ((signed64) actual_size_block - (signed64) stcp->size));
 	}
 	return (0);
 }
