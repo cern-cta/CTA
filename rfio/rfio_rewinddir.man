@@ -1,0 +1,30 @@
+.\"
+.\" $Id: rfio_rewinddir.man,v 1.1 2000/07/07 14:14:18 jdurand Exp $
+.\"
+.\" @(#)$RCSfile: rfio_rewinddir.man,v $ $Revision: 1.1 $ $Date: 2000/07/07 14:14:18 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RFIO_REWINDDIR 3 "$Date: 2000/07/07 14:14:18 $" CASTOR "Rfio Library Functions"
+.SH NAME
+rfio_rewinddir \- reset position to the beginning of a directory opened by
+.B Cns_opendir
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rfio_api.h"\fR
+.sp
+.BI "void rfio_rewinddir (RDIR *" dirp ")"
+.SH DESCRIPTION
+.B rfio_rewinddir
+resets the position to the beginning of a directory opened by
+.B rfio_opendir
+.
+.TP
+.I dirp
+specifies the pointer value returned by
+.BR rfio_opendir .
+.SH SEE ALSO
+.BR rfio_closedir(3) ,
+.BR rfio_opendir(3) ,
+.BR rfio_readdir(3)
