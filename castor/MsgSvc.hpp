@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MsgSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/07 16:37:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: MsgSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/12 14:19:02 $ $Author: sponcec3 $
  *
- * 
+ * A message service internaly using a castor log stream
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -54,19 +54,9 @@ namespace castor {
     virtual ~MsgSvc() throw();
 
     /**
-     * Get the service id
-     */
-    virtual const unsigned int id() const;
-
-    /**
-     * Get the service id, statically
-     */
-    static const unsigned int ID();
-
-    /**
      * get the output stream associated to this service
      */
-    castor::logstream& stream() const;
+    castor::logstream& stream() const { return *m_stream; }
 
   private:
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/07/08 08:26:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/07/12 14:19:01 $ $Author: sponcec3 $
  *
  * Basic object support, including pointer to Services and log support
  *
@@ -68,24 +68,30 @@ namespace castor {
      * gets a given message service from its name.
      * Note that the service has to be released after usage
      * @param name the name of the MsgSvc to retrieve
+     * @param name the type of the MsgSvc to retrieve
      * @return a pointer to the message service. This is always
      * a valid pointer if no exception was raised
      * @exception Exception if something went wrong
      */
-    MsgSvc* msgSvc(std::string name) throw(castor::exception::Exception);
+    static MsgSvc* msgSvc(std::string name,
+                          const unsigned long id)
+      throw(castor::exception::Exception);
 
     /**
-     * Sets the name of the MsgSvc to use for logging
-     * Note that this name should be set only once if DLF
-     * is used due to limitations in the current implementation
-     * of DLF itsef
+     * Defines which logging service should be used in
+     * the future by giving a name and a service type.
+     * Note that this method should only be called once.
+     * In case of other calls, they will be ignored and
+     * a warning will be issued in the already configured
+     * log
      */
-    void initLog(std::string name) throw();
+    static void initLog(std::string name,
+                        const unsigned long id) throw();
 
     /**
      * Access to the log stream
      */
-    castor::logstream& clog() throw(castor::exception::Exception);
+    static castor::logstream& clog() throw(castor::exception::Exception);
 
   private:
     
@@ -100,6 +106,11 @@ namespace castor {
      * The name of the MsgSvc to use
      */
     static std::string s_msgSvcName;
+
+    /**
+     * The type of MsgSvc to use
+     */
+    static unsigned long s_msgSvcId;
 
   }; // end of class BaseObject
 

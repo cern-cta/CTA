@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      logbuf.cpp
+ *                      stdbuf.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,13 +17,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logbuf.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/12 14:19:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stdbuf.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/07/12 14:19:03 $ $Author: sponcec3 $
  *
- * An abstract string buffer for the log that is able
- * to handle levels of output
+ * A string buffer for logging into standard output
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
 // Include Files
-#include "castor/logbuf.h"
+#include "castor/stdbuf.h"
+
+// -----------------------------------------------------------------------
+// static values initialization
+// -----------------------------------------------------------------------
+int castor::stdbuf::s_lock(0);
+

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      logbuf.cpp
+ *                      NoMsgSvc.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,13 +17,50 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logbuf.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/12 14:19:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: NoMsgSvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/07/12 14:19:02 $ $Author: sponcec3 $
  *
- * An abstract string buffer for the log that is able
- * to handle levels of output
+ * A message service writing nowhere
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-// Include Files
-#include "castor/logbuf.h"
+#ifndef CASTOR_NOMSGSVC_HPP 
+#define CASTOR_NOMSGSVC_HPP 1
+
+// Local Includes
+#include "castor/MsgSvc.hpp"
+
+namespace castor {
+
+  /**
+   * A message service not logging at all
+   */
+  class NoMsgSvc : public MsgSvc {
+
+  public:
+    
+    /**
+     * Constructor
+     */
+    NoMsgSvc(const std::string name) throw();
+    
+    /**
+     * Destructor
+     */
+    virtual ~NoMsgSvc() throw() {};
+
+    /**
+     * Get the service id
+     */
+    virtual const unsigned int id() const;
+
+    /**
+     * Get the service id, statically
+     */
+    static const unsigned int ID();
+
+  };
+  
+} // end of namespace castor
+
+#endif // CASTOR_NOMSGSVC_HPP

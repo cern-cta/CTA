@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2004/07/08 08:26:33 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/07/12 14:19:01 $ $Author: sponcec3 $
  *
  * 
  *
@@ -38,6 +38,7 @@
 // static values initialization
 // -----------------------------------------------------------------------
 std::string castor::BaseObject::s_msgSvcName("");
+unsigned long castor::BaseObject::s_msgSvcId(0);
 
 // -----------------------------------------------------------------------
 // constructor
@@ -52,9 +53,10 @@ castor::BaseObject::~BaseObject() throw() {}
 // -----------------------------------------------------------------------
 // msgSvc
 // -----------------------------------------------------------------------
-castor::MsgSvc* castor::BaseObject::msgSvc(std::string name)
+castor::MsgSvc* castor::BaseObject::msgSvc(std::string name,
+                                           const unsigned long id)
   throw (castor::exception::Exception) {
-  IService* svc = svcs()->service(name, castor::MsgSvc::ID());
+  IService* svc = services()->service(name, id);
   if (0 == svc) {
     castor::exception::Internal e;
     e.getMessage() << "Unable to retrieve MsgSvc";
@@ -111,10 +113,22 @@ void castor::BaseObject::getTLS(void **thip)
 //------------------------------------------------------------------------------
 // initlog
 //------------------------------------------------------------------------------
-void castor::BaseObject::initLog(std::string name) throw() {
-  Cthread_mutex_lock(&s_msgSvcName);
+void castor::BaseObject::initLog(std::string name,
+                                 const unsigned long id)
+  throw() {
+  Cthread_mutex_lock(&s_msgSvcId);
+  if (0 != s_msgSvcId) {
+    try {
+      // This always returns a valid service if no exception is raised
+      clog() << WARNING << "initLog called several times. "
+             << "Only the first is taken into account."
+             << std::endl;
+    } catch(castor::exception::Exception e) {}
+    return;
+  }
   s_msgSvcName = name;
-  Cthread_mutex_unlock(&s_msgSvcName);
+  s_msgSvcId = id;
+  Cthread_mutex_unlock(&s_msgSvcId);
 }
 
 //------------------------------------------------------------------------------
@@ -122,5 +136,12 @@ void castor::BaseObject::initLog(std::string name) throw() {
 //------------------------------------------------------------------------------
 castor::logstream& castor::BaseObject::clog()
  throw(castor::exception::Exception) {
-  return msgSvc(s_msgSvcName)->stream();
+  if (0 == s_msgSvcId) {
+    castor::exception::Internal e;
+    e.getMessage() << "clog() was called before initialization of the log facility.\n"
+                   << "Please call initLog first.";
+    throw e;
+  }
+  // This always returns a valid service if no exception is raised
+  return msgSvc(s_msgSvcName, s_msgSvcId)->stream();
 }

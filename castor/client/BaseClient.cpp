@@ -74,7 +74,7 @@ castor::client::BaseClient::~BaseClient() throw() {
 //------------------------------------------------------------------------------
 void castor::client::BaseClient::run(int argc, char** argv)
   throw() {
-  initLog("Client");
+  initLog("ClientLog", SVC_STDMSG);
   try {
     // parses the command line
     if (!parseInput(argc, argv)) {

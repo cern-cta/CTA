@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SvcFactory.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2004/05/26 15:43:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: SvcFactory.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/12 14:19:03 $ $Author: sponcec3 $
  *
  *
  *
@@ -30,6 +30,7 @@
 // Include Files
 #include "ISvcFactory.hpp"
 #include "Factories.hpp"
+#include "castor/exception/Exception.hpp"
 
 namespace castor {
 
@@ -43,16 +44,17 @@ namespace castor {
 
   public:
     /** Default constructor */
-    SvcFactory();
+    SvcFactory() throw();
 
     /** Default destructor */
-    virtual ~SvcFactory() {};
+    virtual ~SvcFactory() throw() {};
 
     /**
      * Instantiate the service 
      * @param name the service name
      */
-    virtual IService* instantiate(const std::string name) const;
+    virtual IService* instantiate(const std::string name) const
+      throw (castor::exception::Exception);
 
     /** Get ID of the factory, i.e. of the underlying Service */
     const unsigned int id() const;
@@ -62,12 +64,13 @@ namespace castor {
 } // end of namespace castor
 
 template <class Service>
-inline castor::SvcFactory<Service>::SvcFactory() {
+inline castor::SvcFactory<Service>::SvcFactory() throw() {
   castor::Factories::instance()->addFactory(this);
 }
 
 template <class Service> inline castor::IService*
-castor::SvcFactory<Service>::instantiate(const std::string name) const {
+castor::SvcFactory<Service>::instantiate(const std::string name) const
+  throw (castor::exception::Exception) {
   return new Service(name);
 }
 

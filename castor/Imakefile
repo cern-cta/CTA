@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.24 $ $Release$ $Date: 2004/07/05 14:12:01 $ $Author: jdurand $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.25 $ $Release$ $Date: 2004/07/12 14:19:02 $ $Author: sponcec3 $
 #
 # Make Castor libraries and executables
 #
@@ -76,6 +76,7 @@ STGLIB_SRCS = IAddressCInt.cpp \
               BaseAddressCInt.cpp \
               BaseCnvSvc.cpp \
               BaseObject.cpp \
+              BaseObjectCInt.cpp \
               BaseServer.cpp \
               BaseSvc.cpp \
               Converters.cpp \
@@ -87,12 +88,17 @@ STGLIB_SRCS = IAddressCInt.cpp \
               MessageAck.cpp \
               MessageAckCInt.cpp \
               MsgSvc.cpp \
+              NoMsgSvc.cpp \
+              StdMsgSvc.cpp \
+              DlfMsgSvc.cpp \
               ObjectCatalog.cpp \
               ObjectSet.cpp \
               Services.cpp \
               ServicesCInt.cpp \
               logstream.cpp \
               logbuf.cpp \
+              stdbuf.cpp \
+              dlfbuf.cpp \
               client/BaseClient.cpp \
               io/Socket.cpp \
               io/StreamAddress.cpp \
@@ -167,7 +173,11 @@ STGLIB_SRCS = IAddressCInt.cpp \
               exception/Exception.cpp \
               exception/InvalidArgument.cpp \
               exception/Internal.cpp \
-              exception/NoEntry.cpp
+              exception/NoEntry.cpp 
+
+#if BuildDlfClient
+STGLIB_SRCS += DlfMsgSvc.cpp
+#endif
 
 STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
 

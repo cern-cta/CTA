@@ -17,9 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2004/07/07 16:01:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logstream.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/12 14:19:03 $ $Author: sponcec3 $
  *
- *
+ * A generic logstream for castor, handling IP addresses
+ * and timestamps
  *
  * @author Sebastien Ponce
  *****************************************************************************/

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      MsgSvc.cpp
+ *                      NoMsgSvc.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,32 +17,43 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MsgSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/12 14:19:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: NoMsgSvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/07/12 14:19:02 $ $Author: sponcec3 $
  *
- * A message service internaly using a castor log stream
+ * A message service writing nowhere
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
 // Include Files
-#include "castor/logstream.h"
+#include "castor/Constants.hpp"
+#include "castor/IService.hpp"
+#include "castor/SvcFactory.hpp"
 
 // Local Includes
-#include "MsgSvc.hpp"
+#include "NoMsgSvc.hpp"
+
+// -----------------------------------------------------------------------
+// Instantiation of a static factory class
+// -----------------------------------------------------------------------
+static castor::SvcFactory<castor::NoMsgSvc> s_factoryNoMsgSvc;
+const castor::IFactory<castor::IService>& NoMsgSvcFactory = s_factoryNoMsgSvc;
 
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::MsgSvc::MsgSvc(const std::string name) throw() :
-  BaseSvc(name) {
-  // create the inner stream
-  m_stream = new castor::logstream(name);
+castor::NoMsgSvc::NoMsgSvc(const std::string name) throw() :
+  MsgSvc(name) {}
+
+// -----------------------------------------------------------------------
+// id
+// -----------------------------------------------------------------------
+const unsigned int castor::NoMsgSvc::id() const {
+  return ID();
 }
 
 // -----------------------------------------------------------------------
-// Destructor
+// ID
 // -----------------------------------------------------------------------
-castor::MsgSvc::~MsgSvc() throw() {
-  m_stream->close();
-  delete m_stream;
+const unsigned int castor::NoMsgSvc::ID() {
+  return SVC_NOMSG;
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2004/07/08 08:37:33 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2004/07/12 14:19:02 $ $Author: sponcec3 $
  *
  *
  *
@@ -58,7 +58,8 @@ castor::Services::~Services() {
 // service
 //-----------------------------------------------------------------------------
 castor::IService* castor::Services::service(const std::string name,
-                                            const unsigned int id) throw() {
+                                            const unsigned int id)
+  throw(castor::exception::Exception) {
   std::map<const std::string, IService*>::const_iterator it =
     m_services.find(name);
   if (it == m_services.end()) {
@@ -88,7 +89,8 @@ castor::IService* castor::Services::service(const std::string name,
 // cnvService
 //-----------------------------------------------------------------------------
 castor::ICnvSvc* castor::Services::cnvService(const std::string name,
-                                              const unsigned int id) throw() {
+                                              const unsigned int id)
+  throw(castor::exception::Exception) {
   IService* svc = service(name, id);
   if (0 == svc) {
     return 0;
@@ -151,7 +153,8 @@ void castor::Services::deleteRep(castor::IAddress* address,
 // cnvSvcFromAddress
 // -----------------------------------------------------------------------
 castor::ICnvSvc*
-castor::Services::cnvSvcFromAddress(castor::IAddress* address) {
+castor::Services::cnvSvcFromAddress(castor::IAddress* address)
+  throw (castor::exception::Exception) {
   // check address
   if (0 == address) {
     castor::exception::Internal ex;

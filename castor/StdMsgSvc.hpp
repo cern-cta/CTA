@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      logbuf.cpp
+ *                      StdMsgSvc.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,13 +17,53 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logbuf.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/12 14:19:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StdMsgSvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/07/12 14:19:02 $ $Author: sponcec3 $
  *
- * An abstract string buffer for the log that is able
- * to handle levels of output
+ * A message service writing into the standard output
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
+#ifndef CASTOR_STDMSGSVC_HPP 
+#define CASTOR_STDMSGSVC_HPP 1
+
 // Include Files
-#include "castor/logbuf.h"
+#include "castor/logstream.h"
+
+// Local Includes
+#include "castor/MsgSvc.hpp"
+
+namespace castor {
+
+  /**
+   * A message service logging into STD
+   */
+  class StdMsgSvc : public MsgSvc {
+
+  public:
+    
+    /**
+     * Constructor
+     */
+    StdMsgSvc(const std::string name) throw();
+    
+    /**
+     * Destructor
+     */
+    virtual ~StdMsgSvc() throw() {};
+
+    /**
+     * Get the service id
+     */
+    virtual const unsigned int id() const;
+
+    /**
+     * Get the service id, statically
+     */
+    static const unsigned int ID();
+
+  };
+  
+} // end of namespace castor
+
+#endif // CASTOR_STDMSGSVC_HPP

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2004/07/08 08:37:33 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Services.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2004/07/12 14:19:02 $ $Author: sponcec3 $
  *
  *
  *
@@ -58,7 +58,8 @@ namespace castor {
      * is created.
      */
     IService* service (const std::string name,
-                       const unsigned int id = 0) throw();
+                       const unsigned int id = 0)
+      throw(castor::exception::Exception);
 
     /**
      * gets a conversion service by name.
@@ -66,7 +67,8 @@ namespace castor {
      * is created.
      */
     ICnvSvc* cnvService (const std::string name,
-                         const unsigned int id = 0) throw();
+                         const unsigned int id = 0)
+      throw(castor::exception::Exception);
 
     /**
      * removes reference to a service. This means that it will be
@@ -164,7 +166,8 @@ namespace castor {
      * gets a conversion service able to deal with a given
      * address
      */
-    castor::ICnvSvc* cnvSvcFromAddress(castor::IAddress* address);
+    castor::ICnvSvc* cnvSvcFromAddress(castor::IAddress* address)
+      throw (castor::exception::Exception);
 
   private:
 

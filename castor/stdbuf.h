@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      logbuf.cpp
+ *                      stdbuf.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,13 +17,52 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logbuf.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/12 14:19:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stdbuf.h,v $ $Revision: 1.1 $ $Release$ $Date: 2004/07/12 14:19:03 $ $Author: sponcec3 $
  *
- * An abstract string buffer for the log that is able
- * to handle levels of output
+ * A string buffer for logging into standard output
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
+#ifndef CASTOR_STDBUF_H
+#define CASTOR_STDBUF_H 1
+
 // Include Files
 #include "castor/logbuf.h"
+#include <stdio.h>
+#include <Cthread_api.h>
+
+namespace castor {
+
+  class stdbuf : public castor::logbuf {
+      
+  public:
+
+    /**
+     * Synchronizes the buffer but writing it to stdout
+     */
+    virtual int sync() throw() {
+      if (0 == str().size()) return 0;
+      // Write current message to stdout
+      Cthread_mutex_lock(&s_lock);
+      printf("%s\n", str().c_str());
+      Cthread_mutex_unlock(&s_lock);
+      // Erase buffer
+      str("");
+      return 0;
+    }
+
+  private:
+
+      /**
+       * A lock to ensure that printf is never called
+       * simultaneously by two threads
+       */
+      static int s_lock;
+
+  };
+
+
+} // End of namespace Castor
+
+#endif // CASTOR_STDBUF_H

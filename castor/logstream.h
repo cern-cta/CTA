@@ -17,9 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: logstream.h,v $ $Revision: 1.4 $ $Release$ $Date: 2004/07/07 16:01:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: logstream.h,v $ $Revision: 1.5 $ $Release$ $Date: 2004/07/12 14:19:03 $ $Author: sponcec3 $
  *
- *
+ * A generic logstream for castor, handling IP addresses
+ * and timestamps
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -68,11 +69,9 @@ namespace castor {
      */
     explicit logstream(std::string name) :
       std::ostream(0),
-      m_logbuf(name),
+      m_logbuf(0),
       m_isIP(false),
       m_isTimeStamp(false) {
-      // Deal with the buffer
-      this->init(&m_logbuf);
     } 
 
     /**
@@ -82,7 +81,21 @@ namespace castor {
      *  fails, @c failbit is set in the stream's error state.
      */
     void close() {
-      m_logbuf.sync();
+      if (0 != m_logbuf) {
+        m_logbuf->sync();
+      }
+    }
+
+    /**
+     * sets a log buffer for this stream
+     */
+    void setBuffer(castor::logbuf *buf) {
+      if (0 != m_logbuf) {
+        m_logbuf->sync();
+        delete m_logbuf;
+      }
+      m_logbuf = buf;
+      this->init(buf);
     }
 
   public:
@@ -118,15 +131,21 @@ namespace castor {
      * castor::logstream
      */
     logstream& operator<< (std::ostream& (&f)(std::ostream&)) {
-      if (&f == (std::ostream& (&)(std::ostream&))std::endl)
-        m_logbuf.sync();
+      if (0 != m_logbuf) {
+        if (&f == (std::ostream& (&)(std::ostream&))std::endl)
+          m_logbuf->sync();
+      }
       return *this;
     }
 
     /**
      * set current output level
      */
-    void setLevel(logbuf::Level l) { m_logbuf.setLevel(l); }
+    void setLevel(logbuf::Level l) {
+      if (0 != m_logbuf) {
+        m_logbuf->setLevel(l);
+      }
+    }
 
     /**
      * set isIp
@@ -171,7 +190,7 @@ namespace castor {
      * The log buffer used on top of the file buffer for
      * prefixing the logs with timestamps
      */
-    castor::logbuf m_logbuf;
+    castor::logbuf *m_logbuf;
 
     /**
      * Whether next int should be printed as IP addresses

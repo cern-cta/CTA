@@ -69,7 +69,9 @@ namespace castor {
    */
   enum ServicesIds {
     SVC_INVALID,
-    SVC_MSG,
+    SVC_NOMSG,
+    SVC_DLFMSG,
+    SVC_STDMSG,
     SVC_ORACNV,
     SVC_ODBCCNV,
     SVC_STREAMCNV,
