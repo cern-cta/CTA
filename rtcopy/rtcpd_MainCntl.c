@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.24 $ $Date: 2000/02/11 18:03:14 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.25 $ $Date: 2000/02/13 11:59:52 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -159,6 +159,8 @@ static int rtcpd_PrintCmd(tape_list_t *tape) {
         LOGLINE_APPEND(" -E %s","keep");
     if ( filereq->tp_err_action == IGNOREEOI ) 
         LOGLINE_APPEND(" -E %s","ignoreeoi");
+    if ( *filereq->stageID != '\0' )
+        LOGLINE_APPEND(" -Z %s",filereq->stageID);
     if ( filereq->convert > 0 && (filereq->convert & (EBCCONV|FIXVAR)) != 0 ) { 
         LOGLINE_APPEND("%s"," -C "); 
         if ( (filereq->convert & EBCCONV) != 0 ) {
@@ -215,6 +217,13 @@ static int rtcpd_PrintCmd(tape_list_t *tape) {
             }
         }
     } CLIST_ITERATE_END(tape->file,fl);
+    if ( filereq->position_method == TPPOSIT_FSEQ && qstr != NULL &&
+         strlen(qstr) + 6 < CA_MAXLINELEN &&
+         qstr[strlen(qstr)-1] == '-' && 
+        (tape->file->prev->filereq.concat & 
+         (CONCAT_TO_EOD|NOCONCAT_TO_EOD)) == 0 ) {
+        sprintf(&qstr[strlen(qstr)],"%d",fseq);
+    }
 
     if ( fidstr != NULL ) LOGLINE_APPEND(" -f %s",fidstr);
     if ( szstr != NULL ) LOGLINE_APPEND(" -s %s",szstr);
