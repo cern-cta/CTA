@@ -1,5 +1,5 @@
 /*
- * $Id: procfilchg.c,v 1.16 2001/12/10 16:18:30 jdurand Exp $
+ * $Id: procfilchg.c,v 1.17 2002/01/23 13:52:00 jdurand Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.16 $ $Date: 2001/12/10 16:18:30 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: procfilchg.c,v $ $Revision: 1.17 $ $Date: 2002/01/23 13:52:00 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
 #endif /* not lint */
 
 #include <errno.h>
@@ -80,6 +80,7 @@ extern int upd_fileclass _PROTO((struct pool *, struct stgcat_entry *));
 extern void rwcountersfs _PROTO((char *, char *, int, int));
 extern u_signed64 findblocksize _PROTO((char *));
 extern int updfreespace _PROTO((char *, char *, signed64));
+extern int stageput_check_hsm _PROTO((struct stgcat_entry *, uid_t, gid_t, int));
 
 #if hpux
 /* On HP-UX seteuid() and setegid() do not exist and have to be wrapped */
@@ -91,13 +92,13 @@ extern int updfreespace _PROTO((char *, char *, signed64));
 
 void
 procfilchgreq(req_type, magic, req_data, clienthost)
-		 int req_type;
-		 int magic;
-		 char *req_data;
-		 char *clienthost;
+	int req_type;
+	int magic;
+	char *req_data;
+	char *clienthost;
 {
 	char **argv;
-	int c, i;
+	int c, i, rc;
 	gid_t gid;
 	int nargs;
 	uid_t uid;
@@ -154,7 +155,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 	nargs = req2argv (rbp, &argv);
 #if SACCT
 	stageacct (STGCMDR, uid, gid, clienthost,
-						 reqid, STAGEFILCHG, 0, 0, NULL, "", (char) 0);
+			   reqid, STAGEFILCHG, 0, 0, NULL, "", (char) 0);
 #endif
 
 	Coptind = 1;
@@ -178,7 +179,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			break;
 		case 'p':
 			if (strcmp (Coptarg, "NOPOOL") == 0 ||
-					isvalidpool (Coptarg)) {
+				isvalidpool (Coptarg)) {
 				strcpy (poolname, Coptarg);
 			} else {
 				sendrep (rpfd, MSG_ERR, STG32, Coptarg);
@@ -216,7 +217,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 						break;
 					}
 				}
-				if (stage_strtoi(&thismintime_beforemigr, Coptarg, &dp, 10) != 0) {
+				if (stage_strtoi(&thismintime_beforemigr, Coptarg, &dp, 0) != 0) {
 					sendrep (rpfd, MSG_ERR, STG06, (serrno != ERANGE) ? "--mintime_beforemigr" : "--mintime_beforemigr (out of range)");
 					errflg++;
 				}
@@ -260,7 +261,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 						break;
 					}
 				}
-				if (stage_strtoi(&thisretenp_on_disk, Coptarg, &dp, 10) != 0) {
+				if (stage_strtoi(&thisretenp_on_disk, Coptarg, &dp, 0) != 0) {
 					sendrep (rpfd, MSG_ERR, STG06, (serrno != ERANGE) ? "--retenp_on_disk" : "--retenp_on_disk (out of range)");
 					errflg++;
 				}
@@ -339,9 +340,12 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 	} else if (doneretenp_on_disk) { /* --retenp_on_dik */
 		/* Note: MAX_SETRETENP can be < 0, e.g. allow no retention period set... */
 		if ((max_setretenp(poolname) != 0) && (thisretenp_on_disk > (max_setretenp(poolname) * ONE_DAY))) {
-			sendrep (rpfd, MSG_ERR, STG147, "--retenp_on_disk", max_setretenp(poolname), (max_setretenp(poolname) > 1 ? "days" : "day"));
-			c = USERR;
-			goto reply;
+			/* This apply unless user gave special value corresponding to AS_LONG_AS_POSSIBLE */
+			if (thisretenp_on_disk != AS_LONG_AS_POSSIBLE) {
+				sendrep (rpfd, MSG_ERR, STG147, "--retenp_on_disk", max_setretenp(poolname), (max_setretenp(poolname) > 1 ? "days" : "day"));
+				c = USERR;
+				goto reply;
+			}
 		}
 	}
 
@@ -361,43 +365,70 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 			struct Cns_fileid Cnsfileid;       /* For     CASTOR hsm IDs */
 			struct Cns_filestat Cnsfilestat;   /* For     CASTOR hsm stat() */
 			extern struct passwd start_passwd; /* Start uid/gid stage:st */
-			int changed;
+			int changed, loop_break;
 			int currentmintime_beforemigr;
 			struct stgcat_entry thisstcp;
+			char checkpath[CA_MAXPATHLEN+1];
+			char tmpbuf1[21];
+			char tmpbuf2[21];
+			u_signed64 hsmsize;
 
-			changed = 0;
+			changed = loop_break = 0;
 			if (stcp->reqid == 0) break;
 			if (donereqid && stcp->reqid != thisreqid) continue; /* --reqid */
 			if (stcp->t_or_d != 'h') continue; /* Only CASTOR HSM filename supported */
+			if (donestatus)
+				/* Should be a complete record if user want to change status */
+				if ((stcp->u1.h.server[0] == '\0') || (stcp->u1.h.fileid == 0)) continue;
 			/* Grab the fileclass */
+			if (poolflag < 0) { /* -p NOPOOL */
+				if (stcp->poolname[0]) continue;
+			} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
 			if ((ifileclass = upd_fileclass(NULL,stcp)) < 0) {
 				c = USERR;
 				goto reply;
 			}
-			if (poolflag < 0) { /* -p NOPOOL */
-				if (stcp->poolname[0]) continue;
-			} else if (*poolname && strcmp (poolname, stcp->poolname)) continue;
 			if (strcmp(stcp->u1.h.xfile, hsmfile) != 0) continue; /* -M */
+			/* We check if the name of this file in the name server is really the one we have in input */
+			if (Cns_getpath(stcp->u1.h.server, stcp->u1.h.fileid, checkpath) == 0) {
+				if (strcmp(checkpath, stcp->u1.h.xfile) != 0) {
+					sendrep (rpfd, MSG_ERR, STG157, stcp->u1.h.xfile, checkpath, u64tostr((u_signed64) stcp->u1.h.fileid, tmpbuf1, 0), stcp->u1.h.server);
+					strncpy(stcp->u1.h.xfile, checkpath, (CA_MAXHOSTNAMELEN+MAXPATH));
+					stcp->u1.h.xfile[(CA_MAXHOSTNAMELEN+MAXPATH)] = '\0';
+#ifdef USECDB
+					if (stgdb_upd_stgcat(&dbfd,stcp) != 0) {
+						stglogit (func, STG100, "update", sstrerror(serrno), __FILE__, __LINE__);
+					}
+#endif
+					savereqs();
+					/* So, by definition, stcp->u1.h.xfile and hsmfile do not match anymore */
+					continue;
+				}
+			}
+
 			found++;
-			/* We check if we have permissions to do so using the NameServer */
-			memset(&Cnsfileid,0,sizeof(struct Cns_fileid));
-			strcpy(Cnsfileid.server,stcp->u1.h.server);
-			Cnsfileid.fileid = stcp->u1.h.fileid;
-			setegid(gid);
-			seteuid(uid);
-			if (Cns_statx(hsmfile, &Cnsfileid, &Cnsfilestat) != 0) {
+
+			if (donestatus) {
+				/* We check if we have permissions to do so using the NameServer */
+				memset(&Cnsfileid,0,sizeof(struct Cns_fileid));
+				strcpy(Cnsfileid.server,stcp->u1.h.server);
+				Cnsfileid.fileid = stcp->u1.h.fileid;
+				setegid(gid);
+				seteuid(uid);
+				rc = Cns_statx(hsmfile, &Cnsfileid, &Cnsfilestat);
 				setegid(start_passwd.pw_gid);
 				seteuid(start_passwd.pw_uid);
-				sendrep (rpfd, MSG_ERR, STG02, hsmfile, "Cns_statx", sstrerror(serrno));
-				c = USERR;
-				goto reply;
+				if (rc != 0) {
+					sendrep (rpfd, MSG_ERR, STG02, hsmfile, "Cns_statx", sstrerror(serrno));
+					c = USERR;
+					goto reply;			
+				}
+				/* Thanks to Cns_stat we can also verify the size of the file */
+				hsmsize = Cnsfilestat.filesize;
 			}
-			setegid(start_passwd.pw_gid);
-			seteuid(start_passwd.pw_uid);
 
-			/* From now on we assume that permission to change parameters on this file is granted */
+			/* From now on we assume that permission to change status for this file is granted */
 
-			/* We will now work on thisstcp */
 			thisstcp = *stcp;
 			if (donemintime_beforemigr) { /* --mintime_beforemigr */
 				/* Changing mintime_beforemigr is possible only on records with STAGEOUT|CAN_BE_MIGR status */
@@ -412,17 +443,17 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 				if ((thisstcp.u1.h.mintime_beforemigr = thismintime_beforemigr) != stcp->u1.h.mintime_beforemigr) {
 					changed++;
 					sendrep (rpfd, MSG_OUT, STG152, hsmfile,
-								currentmintime_beforemigr,
-								(currentmintime_beforemigr > 1 ? "s" : ""),
-								(stcp->u1.h.mintime_beforemigr < 0 ? "fileclass" : "explicit"),
-								thismintime_beforemigr >= 0 ? thismintime_beforemigr : mintime_beforemigr(ifileclass),
-								(thismintime_beforemigr >= 0 ? thismintime_beforemigr : mintime_beforemigr(ifileclass)) > 1 ? "s" : "",
-								(thismintime_beforemigr < 0 ? "fileclass" : "explicit"));
+							 currentmintime_beforemigr,
+							 (currentmintime_beforemigr > 1 ? "s" : ""),
+							 (stcp->u1.h.mintime_beforemigr < 0 ? "fileclass" : "explicit"),
+							 thismintime_beforemigr >= 0 ? thismintime_beforemigr : mintime_beforemigr(ifileclass),
+							 (thismintime_beforemigr >= 0 ? thismintime_beforemigr : mintime_beforemigr(ifileclass)) > 1 ? "s" : "",
+							 (thismintime_beforemigr < 0 ? "fileclass" : "explicit"));
 				} else {
 					sendrep (rpfd, MSG_OUT, STG150, hsmfile,
-								thismintime_beforemigr >= 0 ? thismintime_beforemigr : mintime_beforemigr(ifileclass),
-								(thismintime_beforemigr >= 0 ? thismintime_beforemigr : mintime_beforemigr(ifileclass)) > 1 ? "s" : "",
-								(thismintime_beforemigr < 0 ? "fileclass" : "explicit"));
+							 thismintime_beforemigr >= 0 ? thismintime_beforemigr : mintime_beforemigr(ifileclass),
+							 (thismintime_beforemigr >= 0 ? thismintime_beforemigr : mintime_beforemigr(ifileclass)) > 1 ? "s" : "",
+							 (thismintime_beforemigr < 0 ? "fileclass" : "explicit"));
 				}
 			}
 			if (doneretenp_on_disk) { /* --retenp_on_disk */
@@ -441,6 +472,62 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 					switch (stcp->status) {
 					case STAGEOUT|PUT_FAILED:
 					case STAGEOUT|CAN_BE_MIGR|PUT_FAILED:
+
+						/* We have to find if there are other stcp's refering the same file */
+						/* If yes - we have to check also their status and delete them */
+						/* Note that this is safe to continue the loop from where we are: */
+						/* If being there this mean that we are dealing with the first of */
+						/* the entries in the catalog that match the option values */
+						/* and we know by construction that delreq() will not realloc() the */
+						/* memory so our current pointer, stcp, will be safe even if we delete */
+						/* any other entry that is after */
+						if (! donereqid) {
+							/* No need to do this loop if reqid was explicitely given */
+							struct stgcat_entry *stcp2;
+
+							for (stcp2 = stcp+1; stcp2 < stce; stcp2++) {
+								if (stcp2->reqid == 0) break;
+								if (stcp2->t_or_d != 'h') continue;
+								if (poolflag < 0) { /* -p NOPOOL */
+									if (stcp2->poolname[0]) continue;
+								} else if (*poolname && strcmp (poolname, stcp2->poolname)) continue;
+								/* By definition we made sure that stcp contains valid [server,fileid] */
+								if ((stcp->u1.h.fileid != 0) &&
+									(stcp2->u1.h.fileid != stcp->u1.h.fileid)) continue;
+								if ((stcp->u1.h.server[0] != '\0') &&
+									(strcmp(stcp2->u1.h.server,stcp->u1.h.server) != 0)) continue;
+								/* From now on we should be able to say that stcp2 and stcp really */
+								/* refers to the SAME CASTOR HSM file */
+								/* The last protection is to check if they have the same internal */
+								/* path - this must match - otherwise it indicates that there are two */
+								/* entries in the catalog that use two different physical */
+								/* files themselves refering to the SAME CASTOR HSM file */
+								/* This is a consistency problem for us */
+								if (strcmp(stcp->ipath,stcp2->ipath) != 0) {
+									sendrep (rpfd, MSG_ERR, STG169, hsmfile, stcp->ipath, stcp2->ipath);
+									c = USERR;
+									goto reply;			
+								}
+								/* We repeat the test on the status */
+								switch (stcp2->status) {
+								case STAGEOUT|PUT_FAILED:
+								case STAGEOUT|CAN_BE_MIGR|PUT_FAILED:
+									break;
+								default:
+									sendrep(rpfd, MSG_ERR, STG170, hsmfile, stcp->reqid, stcp2->reqid);
+									c = USERR;
+									goto reply;			
+								}
+								/* Good - we can delete this entry - it has no indicence on */
+								/* migration counters btw, since it was already in PUT_FAILED */
+								/* e.g. not a candidate */
+								delreq(stcp2);
+                                stcp2--;
+							}
+						}
+						/* From now on there should be only ONE entry to deal with */
+						/* Either because --reqid was specified, either because */
+						/* we deleted all but stcp entries that match option values */
 						/* We simulate a stageout followed by a stageupdc */
 						PRE_RFIO;
 						if (RFIO_STAT(stcp->ipath, &st) == 0) {
@@ -453,14 +540,26 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 							/* No block information - assume mismatch with actual_size will be acceptable */
 							actual_size_block = stcp->actual_size;
 						}
+						/* We grabbed the size in the name server before. We verify consistency */
+						if (hsmsize != stcp->actual_size) {
+							sendrep(rpfd, MSG_ERR, STG171, hsmfile, u64tostr((u_signed64) hsmsize, tmpbuf1, 0), u64tostr((u_signed64) stcp->actual_size, tmpbuf2, 0));
+							c = USERR;
+							goto reply;			
+						}
 						save_stcp_status = stcp->status;
 						stcp->status = STAGEOUT;
 						updfreespace (
-										stcp->poolname,
-										stcp->ipath,
-										(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB)
-						);
+							stcp->poolname,
+							stcp->ipath,
+							(signed64) ((signed64) actual_size_block - (signed64) stcp->size * (signed64) ONE_MB)
+							);
 						rwcountersfs(stcp->poolname, stcp->ipath, STAGEOUT, STAGEOUT);
+						if (! donereqid) {
+							/* No specific reqid, this mean that other entries could have been deleted and it is */
+							/* really a new starting point - if there was a tape pool yet assigned we remove it */
+							/* so that it is automatically expanded */
+							stcp->u1.h.tppool[0] = '\0';
+						}
 						if ((c = upd_stageout(STAGEUPDC, NULL, NULL, 1, stcp, 1)) != 0) {
 							if (c != CLEARED) {
 								stcp->status = save_stcp_status;
@@ -493,6 +592,9 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 				}
 				/* Either no executions */
 				/* Either success and upd_stageout will take care about updating the catalog */
+				/* In any case, we have already performed cross-check with the rest of the catalog */
+				/* and another pass is not anymore necessary */
+				loop_break = 1;
 			}
 			if (changed) {
 #ifdef USECDB
@@ -507,7 +609,8 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 				}
 #endif
 				savereqs();
-            }
+			}
+			if (loop_break) break;
 		}
 		if (! found) {
 			sendrep (rpfd, MSG_ERR, STG153, hsmfile, "file not found", poolname);
@@ -523,7 +626,7 @@ procfilchgreq(req_type, magic, req_data, clienthost)
 	}
 
 
- reply:
+  reply:
 	free (argv);
 	sendrep (rpfd, STAGERC, STAGEFILCHG, c);
 }
