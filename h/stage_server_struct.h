@@ -1,5 +1,5 @@
 /*
- * $Id: stage_server_struct.h,v 1.3 2001/12/20 11:32:17 jdurand Exp $
+ * $Id: stage_server_struct.h,v 1.4 2002/02/05 16:14:40 jdurand Exp $
  */
 
 #ifndef __stage_server_struct_h
@@ -78,6 +78,7 @@ struct waitq {
 	int last_rwcounterfs_vs_R; /* Last -R option value that triggered the rwcountersfs call */
 	int nb_waiting_spc; /* See routine checkwaitingspc() in stgdaemon.c */
 	int nb_found_spc; /* See routine checkwaitingspc() in stgdaemon.c */
+	u_signed64 flags; /* API flags */
 };
 
 struct pool {
