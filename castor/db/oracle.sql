@@ -237,15 +237,21 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskS
 BEGIN
 SELECT DiskServer.name, FileSystem.mountPoint, DiskCopy.path, DiskCopy.id
  INTO diskServerName, mountPoint, path, diskCopyId
- FROM DiskServer, FileSystem, DiskPool2SvcClass, StageInRequest,
+ FROM DiskServer, FileSystem, DiskPool2SvcClass,
+      (SELECT id, svcClass from StageGetRequest UNION
+       SELECT id, svcClass from StagePrepareToGetRequest UNION
+       SELECT id, svcClass from StageGetNextRequest UNION
+       SELECT id, svcClass from StageUpdateRequest UNION
+       SELECT id, svcClass from StagePrepareToUpdateRequest UNION
+       SELECT id, svcClass from StageUpdateNextRequest) Request,
       SubRequest, TapeCopy, Segment, DiskCopy, CastorFile
   WHERE Segment.id = segmentId
     AND Segment.copy = TapeCopy.id
     AND SubRequest.castorfile = TapeCopy.castorfile
     AND DiskCopy.castorfile = TapeCopy.castorfile
     AND Castorfile.id = TapeCopy.castorfile
-    AND StageInRequest.id = SubRequest.request
-    AND StageInRequest.svcclass = DiskPool2SvcClass.child
+    AND Request.id = SubRequest.request
+    AND Request.svcclass = DiskPool2SvcClass.child
     AND FileSystem.diskpool = DiskPool2SvcClass.parent
     AND FileSystem.free > CastorFile.fileSize
     AND DiskServer.id = FileSystem.diskServer
