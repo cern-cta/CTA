@@ -131,10 +131,21 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
     AND TapeCopy.status = 2 -- WAITINSTREAMS
    ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
             FileSystem.fsDeviation ASC;
+  tpStatus NUMBER;
 BEGIN
- OPEN c1;
- FETCH c1 INTO diskServerName, mountPoint, deviation, fsDiskServer, path, dci, fileSystemId, castorFileId, fileId, nsHost, fileSize, tapeCopyId;
- CLOSE c1;
+ LOOP
+   OPEN c1;
+   FETCH c1 INTO diskServerName, mountPoint, deviation, fsDiskServer, path, dci, fileSystemId, castorFileId, fileId, nsHost, fileSize, tapeCopyId;
+   CLOSE c1;
+   -- Lock the TapeCopy for update
+   SELECT status INTO tpStatus FROM TapeCopy WHERE id = tapeCopyId FOR UPDATE;
+   -- not selected by anyone else in between selection and
+   -- locking, this is fine, we stop looping
+   EXIT WHEN tpStatus = 2; -- WAITINSTREAMS
+   -- selected by someone else while we were locking,
+   -- release this one, go for another one TapeCopy
+   COMMIT;
+ END LOOP;
  UPDATE TapeCopy SET status = 3 -- SELECTED
   WHERE id = tapeCopyId;
  UPDATE Stream SET status = 3 -- RUNNING
