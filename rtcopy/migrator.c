@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/12/01 12:01:38 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.22 $ $Release$ $Date: 2004/12/01 18:02:24 $ $Author: obarring $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.21 $ $Release$ $Date: 2004/12/01 12:01:38 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.22 $ $Release$ $Date: 2004/12/01 18:02:24 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -304,42 +304,49 @@ int migratorCallbackMoreWork(
     LOG_SYSCALL_ERR("rtcpcld_lockTape()");
     return(-1);
   }
-  rc = rtcpcld_getSegmentToDo(tape,&fl);  
-  if ( (rc == -1) || (fl == NULL) ) {
-    save_serrno = serrno;
-    if ( serrno == ENOENT ) {
-      /*
-       * Nothing more to do. Flag the file request as finished in order to
-       * stop the processing (any value different from RTCP_REQUEST_MORE_WORK
-       * or RTCP_WAITING would do the job).
-       */
-      (void)dlf_write(
-                      childUuid,
-                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_NOMORESEGMS),
-                      (struct Cns_fileid *)NULL,
-                      0
-                      );
-      filereq->proc_status = RTCP_FINISHED;
-      (void)rtcpcld_unlockTape();
-      return(0);
-    } else {
-      (void)dlf_write(
-                      childUuid,
-                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
-                      (struct Cns_fileid *)NULL,
-                      RTCPCLD_NB_PARAMS+2,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "rtcpcld_getSegmentsToDo()",
-                      "ERROR_STRING",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(serrno),
-                      RTCPCLD_LOG_WHERE
-                      );
-      serrno = save_serrno;
-      (void)rtcpcld_unlockTape();
-      return(-1);
+
+  for (;;) {
+    rc = rtcpcld_getSegmentToDo(tape,&fl);
+    if ( (rc == -1) || (fl == NULL) ) {
+      save_serrno = serrno;
+      if ( serrno == ENOENT ) {
+        /*
+         * Nothing more to do. Flag the file request as finished in order to
+         * stop the processing (any value different from RTCP_REQUEST_MORE_WORK
+         * or RTCP_WAITING would do the job).
+         */
+        (void)dlf_write(
+                        childUuid,
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_NOMORESEGMS),
+                        (struct Cns_fileid *)NULL,
+                        0
+                        );
+        filereq->proc_status = RTCP_FINISHED;
+        (void)rtcpcld_unlockTape();
+        return(0);
+      } else if ( save_serrno == EAGAIN ) {
+        sleep(1);
+        continue;
+      } else {
+        (void)dlf_write(
+                        childUuid,
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
+                        (struct Cns_fileid *)NULL,
+                        RTCPCLD_NB_PARAMS+2,
+                        "SYSCALL",
+                        DLF_MSG_PARAM_STR,
+                        "rtcpcld_getSegmentsToDo()",
+                        "ERROR_STRING",
+                        DLF_MSG_PARAM_STR,
+                        sstrerror(serrno),
+                        RTCPCLD_LOG_WHERE
+                        );
+        serrno = save_serrno;
+        (void)rtcpcld_unlockTape();
+        return(-1);
+      }
     }
+    break;
   }
   /*
    * We got a new file to migrate. Assign the next

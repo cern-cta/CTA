@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.92 $ $Release$ $Date: 2004/12/01 11:54:39 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.93 $ $Release$ $Date: 2004/12/01 18:02:24 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.92 $ $Release$ $Date: 2004/12/01 11:54:39 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.93 $ $Release$ $Date: 2004/12/01 18:02:24 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -1339,6 +1339,7 @@ int nextSegmentToMigrate(
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj;
+  struct Cns_fileid *castorFileId = NULL;
   rtcpFileRequest_t *filereq = NULL;
   tape_list_t *tl = NULL;
   file_list_t *fl = NULL;
@@ -1617,6 +1618,28 @@ int nextSegmentToMigrate(
                       DLF_MSG_PARAM_TPVID,
                       tape->tapereq.vid
                       );
+    } else  if ( save_serrno == ENOENT ) {
+      /*
+       * CASTOR file removed. Not fatal but we can mark the
+       * the tape copy INVALID
+       */
+      (void)rtcpcld_getFileId(fl,&castorFileId);
+      (void)dlf_write(
+                      (inChild == 0 ? mainUuid : childUuid),
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_IGNORE_ENOENT),
+                      (struct Cns_fileid *)&castorFileId,
+                      2,
+                      "SYSCALL",
+                      DLF_MSG_PARAM_STR,
+                      "rtcpcld_checkDualCopy()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      sstrerror(save_serrno)
+                      );
+      Cstager_TapeCopy_setStatus(tpCp,TAPECOPY_INVALID);
+      (void)rtcpcld_updcFileMigrated(tape,fl);
+      serrno = EAGAIN;
+      return(-1);
     } else {
       LOG_SYSCALL_ERR("rtcpcld_checkDualCopy()");
     }
@@ -2633,7 +2656,10 @@ int rtcpcld_updcFileMigrated(
   /**
    * TODO: take into account TAPECOPY_INVALID !
    */
-  Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_STAGED);
+  Cstager_TapeCopy_status(tapeCopy,&tapeCopyStatus);
+  if ( tapeCopyStatus != TAPECOPY_INVALID ) {
+    Cstager_TapeCopy_setStatus(tapeCopy,TAPECOPY_STAGED);
+  }
 
   for ( i=0; i<nbTapeCopies; i++ ) {
     Cstager_TapeCopy_status(
@@ -2648,9 +2674,25 @@ int rtcpcld_updcFileMigrated(
                       0
                       );
       /**
-       * TODO: update my tape copy in DB
+       * OK, not all TapeCopies migrated. Just update my
+       * tape copy in DB
        */
       if ( tapeCopyArray != NULL ) free(tapeCopyArray);
+      iObj = Cstager_TapeCopy_getIObject(tapeCopy);
+      rc = C_Services_updateRep(
+                                *svcs,
+                                iAddr,
+                                iObj,
+                                1
+                                );
+      if ( rc == -1 ) {
+        save_serrno = serrno;
+        LOG_DBCALL_ERR("C_Services_updateRep()",
+                       C_Services_errorMsg(*svcs));
+        C_IAddress_delete(iAddr);
+        serrno = save_serrno;
+        return(-1);
+      }
       C_IAddress_delete(iAddr);
       return(0);
     }
